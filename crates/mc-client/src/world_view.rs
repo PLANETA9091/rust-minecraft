@@ -2,11 +2,12 @@
 //!
 //! `materialize` projects a window of the client's `WorldModel` (chunk
 //! columns with resolved global state ids) into the voxel grid the mesher
-//! and raster already consume (`world::World`). `materialize_snapshot` is
-//! the frame-loop entry the join worker calls: the world-load milestone's
-//! snapshot adopts into a fresh model and the player-centered window
-//! lands on the world screen — the first world VIEW from network chunks.
-//! The stream itself stays one-shot for now (the join pump returns at the
+//! and raster already consume (`world::World`). `materialize_snapshot_view`
+//! is the frame-loop entry the join worker calls: the world-load
+//! milestone's snapshot adopts into a fresh model and the player-centered
+//! window lands on the world screen — the first world VIEW from network
+//! chunks. The stream itself stays one-shot for now (the join pump returns
+//! at the
 //! milestone); a live, continuously-updated view is future work.
 //!
 //! Documented decisions (all deliberate, no silent guesses):
@@ -164,9 +165,9 @@ pub fn snapshot_camera(player: &PlayerPosition, min_y: Option<i32>, side: usize)
     let origin = snapshot_window_origin(player, side);
     let y_base = snapshot_y_base(player, Some(min_y));
     let feet = Vec3::new(
-        player.x - (origin.0 * CHUNK_X as i32) as f32,
-        player.y - y_base as f32,
-        player.z - (origin.1 * CHUNK_Z as i32) as f32,
+        player.x as f32 - (origin.0 * CHUNK_X as i32) as f32,
+        player.y as f32 - y_base as f32,
+        player.z as f32 - (origin.1 * CHUNK_Z as i32) as f32,
     );
     Some(Camera {
         pos: feet.add(Vec3::new(0.0, PLAYER_EYE_HEIGHT, 0.0)),
@@ -175,26 +176,11 @@ pub fn snapshot_camera(player: &PlayerPosition, min_y: Option<i32>, side: usize)
     })
 }
 
-/// Materialize the join milestone's world: the snapshot adopts into a
-/// fresh `WorldModel` (replace-on-collision semantics included) and the
-/// player-centered, player-anchored window projects into the renderer
-/// grid — x/z from the player's chunk, y from the player's feet through
-/// the pinned dimension layout. `mapper` is the caller's id policy (see
-/// the module notes) — the GUI join path resolves through the GENERATED
-/// registry table (`runtime_mapper`); tests pin the mapping with
-/// concrete ids.
-pub fn materialize_snapshot(
-    snap: WorldSnapshot,
-    side: usize,
-    mapper: impl FnMut(u32) -> u16,
-) -> World {
-    materialize_snapshot_view(snap, side, mapper).world
-}
-
 /// The full join view: the materialized grid PLUS the camera pose from
-/// the same window decisions ([`materialize_snapshot`] is the world-only
-/// projection of this). The join worker calls this off the frame thread
-/// and ships both parts in the join result.
+/// the same window decisions. The join worker calls this off the frame
+/// thread and ships both parts in the join result — the world screen
+/// renders the grid FROM the pose and the two can never disagree about
+/// where the player stands.
 pub fn materialize_snapshot_view(
     snap: WorldSnapshot,
     side: usize,
@@ -600,7 +586,7 @@ mod tests {
             .collect();
         // base = 64 - 16 = 48: the stone surface lands at grid y 0 and
         // the feet row (world 64) is sky
-        let world = materialize_snapshot(snap.clone(), 5, example_mapper);
+        let world = materialize_snapshot_view(snap.clone(), 5, example_mapper).world;
         assert_eq!(world.get(32, 0, 32), STONE, "world y 48 = feet 64 - anchor 16");
         assert_eq!(world.get(35, 1, 34), DIRT, "dirt one above the stone");
         assert_eq!(world.get(32, 16, 32), AIR, "the feet row is sky in this mock");
@@ -611,7 +597,7 @@ mod tests {
         // mock's example ids the same way
         let mut higher = snap;
         higher.player.y = 71.0;
-        let world = materialize_snapshot(higher, 5, runtime_mapper);
+        let world = materialize_snapshot_view(higher, 5, runtime_mapper).world;
         assert_eq!(world.get(32, 0, 32), AIR, "world 48 is now 7 below the window");
         assert_eq!(world.get(35, 1, 34), AIR);
     }
@@ -678,14 +664,14 @@ mod tests {
     fn materialize_snapshot_builds_the_player_centered_join_world() {
         // player at (56.5, -27.25) -> chunk (3,-2) -> origin (1,-4): the
         // mock column sits at grid chunk (2,2)
-        let world = materialize_snapshot(join_snapshot(), 5, example_mapper);
+        let world = materialize_snapshot_view(join_snapshot(), 5, example_mapper).world;
         assert_eq!(world.chunks_per_side, 5);
         assert_eq!(world.get(32, 0, 32), STONE, "stone of column (3,-2)");
         assert_eq!(world.get(35, 1, 34), DIRT, "dirt at column-local (3,1,2)");
         // the REAL generated mapper resolves the mock's ids too — the
         // mock's example ids (1=stone, 10=dirt) coincide with the real
         // registry facts, and the mapper now proves it from the table
-        let real_world = materialize_snapshot(join_snapshot(), 5, runtime_mapper);
+        let real_world = materialize_snapshot_view(join_snapshot(), 5, runtime_mapper).world;
         assert_eq!(real_world.get(32, 0, 32), STONE, "stone through the generated table");
         assert_eq!(real_world.get(35, 1, 34), DIRT, "dirt through the generated table");
     }

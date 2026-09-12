@@ -90,7 +90,13 @@ hand-drawn:
   vertical window on the teleport's feet (`min_y` + `player.y`,
   clamped at the world floor) — the first player-exact network world
   view: a real overworld join shows the surface the player stands
-  on, not the first 48 blocks of deepslate above bedrock.
+  on, not the first 48 blocks of deepslate above bedrock. The
+  **camera is the teleport too**: the materialized view ships the
+  join teleport's exact pose (feet + the vanilla standing eye
+  height, the server-directed yaw/pitch converted from the vanilla
+  angle conventions) and the world screen renders FROM the player —
+  the vanilla first person; without layout knowledge the
+  deterministic flight camera stands (never a guess).
   The **play wire ids themselves are generated too**:
   `mc2rs-gen dump-packet-ids` binds the official jar's REAL play
   clientbound/serverbound protocols and dumps each packet's live wire id

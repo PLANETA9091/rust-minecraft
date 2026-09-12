@@ -1558,6 +1558,7 @@ mod tests {
                         4
                     ],
                 },
+                camera: None,
             }),
         );
         assert_eq!(app.screen, ScreenKind::World, "the join lands in the network world");
@@ -1944,6 +1945,46 @@ mod tests {
         assert_eq!(app.screen, ScreenKind::World);
         assert!(!app.world_is_network, "singleplayer renders the procedural world");
         assert!(!app.world_quads.unwrap().is_empty(), "procedural terrain meshes");
+    }
+
+    #[test]
+    fn world_camera_follows_the_teleport_and_falls_back_to_the_flight_camera() {
+        let mut app = App::new(3);
+        app.open(ScreenKind::Connect);
+        // a network world installed WITHOUT a pose (no join carried it):
+        // the deterministic flight camera stands — never a guess about
+        // where the player is
+        app.net_world = Some(crate::world::World {
+            chunks_per_side: 2,
+            seed: 0,
+            chunks: vec![
+                vec![crate::world::AIR; crate::world::CHUNK_X * crate::world::CHUNK_Y * crate::world::CHUNK_Z];
+                4
+            ],
+        });
+        app.enter_network_world();
+        let flight = app.world_camera();
+        let n = app.world_size as f32;
+        assert_eq!(
+            flight.pos,
+            Vec3::new(
+                n / 2.0,
+                app.spawn_y as f32 + 12.0 + crate::world_view::PLAYER_EYE_HEIGHT,
+                n / 2.0
+            ),
+            "the flight camera over the spawn surface, eye 1.62 up"
+        );
+        assert_eq!(flight.yaw, std::f32::consts::FRAC_PI_2, "facing east at dawn");
+        assert_eq!(flight.pitch, -0.08);
+        // a REAL pose (what the join worker ships) takes over: the world
+        // screen renders from the player, not from the stand-in
+        let pose = crate::camera::Camera {
+            pos: Vec3::new(40.5, 17.62, 36.75),
+            yaw: 5.5,
+            pitch: 0.1,
+        };
+        app.net_camera = Some(pose);
+        assert_eq!(app.world_camera(), pose, "the teleport pose drives the camera");
     }
 
     #[test]

@@ -194,10 +194,13 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize) -> anyhow::Result<()>
                         // GENERATED table: `mc2rs-gen dump-block-states`
                         // booted the official registry and emitted the
                         // bytecode-true global state ids; palette blocks
-                        // resolve, everything else renders as air.
+                        // resolve, everything else renders as air. The
+                        // teleport's exact camera pose comes from the SAME
+                        // window decisions — the world screen renders FROM
+                        // the player.
                         let (entity_id, view_distance, chunks) =
                             (snap.info.entity_id, snap.info.view_distance, snap.chunks.len());
-                        let world = crate::world_view::materialize_snapshot(
+                        let view = crate::world_view::materialize_snapshot_view(
                             snap,
                             crate::screens::WORLD_CHUNKS,
                             crate::world_view::runtime_mapper,
@@ -207,7 +210,8 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize) -> anyhow::Result<()>
                             entity_id,
                             view_distance,
                             chunks,
-                            world,
+                            world: view.world,
+                            camera: view.camera,
                         }
                     }
                     mc_protocol::WorldOutcome::Disconnected { reason } => {
