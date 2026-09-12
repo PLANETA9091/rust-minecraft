@@ -1954,9 +1954,9 @@ mod tests {
         let req = app.login_requests[0].clone();
         assert_eq!(req.port, port, "explicit port parsed from the address");
 
-        // the exact mapping the window worker performs: facts off the
-        // snapshot, then the player-centered window materialized for the
-        // world screen (the example mapper — the ids the mock streams;
+        // the exact mapping the window worker performs: the milestone
+        // adopts into the LIVE view and the first refresh IS the one-shot
+        // snapshot view (the example mapper — the ids the mock streams;
         // the GUI resolves through the GENERATED registry table) — plus
         // the teleport's exact camera pose from the same decisions
         let res = mc_protocol::connect_and_join_world(
@@ -1969,22 +1969,19 @@ mod tests {
             mc_protocol::WorldOutcome::Loaded(snap) => {
                 let (entity_id, view_distance, chunks) =
                     (snap.info.entity_id, snap.info.view_distance, snap.chunks.len());
-                let view = crate::world_view::materialize_snapshot_view(
-                    snap,
-                    WORLD_CHUNKS,
-                    |id| match id {
+                let first = crate::world_view::LiveView::from_snapshot(snap, WORLD_CHUNKS)
+                    .refresh(|id| match id {
                         1 => crate::world::STONE,
                         10 => crate::world::DIRT,
                         _ => crate::world::AIR,
-                    },
-                );
+                    });
                 LoginResult::Loaded {
                     username: crate::screens::PLAYER_NAME.to_string(),
                     entity_id,
                     view_distance,
                     chunks,
-                    world: view.world,
-                    camera: view.camera,
+                    world: first.world,
+                    camera: first.camera,
                 }
             }
             mc_protocol::WorldOutcome::Disconnected { reason } => {
@@ -2156,6 +2153,190 @@ mod tests {
             "a cancelled join's late success is dropped"
         );
         assert!(app.net_world.is_none());
+    }
+
+    /// An all-air network window of `side` chunks per side (the state
+    /// machine must not care about content) with a distinguishable seed.
+    fn air_net_world(side: usize, seed: u64) -> crate::world::World {
+        crate::world::World {
+            chunks_per_side: side,
+            seed,
+            chunks: vec![
+                vec![crate::world::AIR; crate::world::CHUNK_X * crate::world::CHUNK_Y * crate::world::CHUNK_Z];
+                side * side
+            ],
+        }
+    }
+
+    #[test]
+    fn live_view_updates_swap_the_network_world_in_place() {
+        let mut app = App::new(3);
+        app.open(ScreenKind::Connect);
+        // the join landed (an all-air window: the state machine must not care)
+        app.net_world = Some(air_net_world(2, 0));
+        app.enter_network_world();
+        assert!(app.world_is_network);
+        assert!(app.world_quads.as_ref().unwrap().is_empty(), "air meshes to nothing");
+
+        // a live update ships a world WITH content + a pose: the swap is
+        // IN PLACE — net_world/net_camera refresh and the showing screen
+        // re-meshes (the terrain changes under the player's eyes, the
+        // vanilla chunk-update behavior)
+        let mut streamed = air_net_world(2, 7);
+        streamed.chunks[0][0] = crate::world::STONE;
+        let pose = crate::camera::Camera {
+            pos: Vec3::new(1.0, 2.0, 3.0),
+            yaw: 0.5,
+            pitch: -0.1,
+        };
+        app.live_view_updated(streamed, Some(pose));
+        let w = app.net_world.as_ref().expect("the streamed world swapped in");
+        assert_eq!(w.seed, 7, "the update REPLACED the join world (newest wins)");
+        assert_eq!(w.get(0, 0, 0), crate::world::STONE, "the streamed block shows");
+        assert_eq!(app.net_camera, Some(pose), "the refreshed pose drives the camera");
+        assert_eq!(app.world_camera(), pose, "world_is_network renders FROM the pose");
+        assert!(
+            !app.world_quads.as_ref().expect("re-meshed on the live update").is_empty(),
+            "the streamed terrain re-meshed under the player"
+        );
+    }
+
+    #[test]
+    fn live_updates_drop_after_save_and_quit() {
+        let mut app = App::new(3);
+        app.open(ScreenKind::Connect);
+        app.net_world = Some(air_net_world(2, 0));
+        app.enter_network_world();
+        // Save and Quit unloads the level AND closes the live session
+        let run = std::sync::Arc::new(std::sync::atomic::AtomicBool::new(true));
+        app.attach_live_run(1, std::sync::Arc::clone(&run));
+        app.paused = true;
+        app.render_title_buttons_for_test();
+        let quit = app.buttons.iter().find(|b| b.id == "saveandquit").expect("saveandquit").clone();
+        app.on_click(quit.x + quit.w / 2, quit.y + quit.h / 2);
+        assert_eq!(app.screen, ScreenKind::Title);
+        assert!(!run.load(std::sync::atomic::Ordering::Relaxed), "the session's flag flipped");
+        assert!(app.live_runs.is_empty(), "the closed session's entry is gone");
+
+        // a LATE live update (the worker raced its final refresh): the
+        // world the UI no longer shows — dropped honestly, nothing
+        // re-meshes, the title screen stays
+        let mut late = air_net_world(2, 9);
+        late.chunks[0][0] = crate::world::STONE;
+        app.live_view_updated(late, Some(crate::camera::Camera {
+            pos: Vec3::new(1.0, 2.0, 3.0),
+            yaw: 0.0,
+            pitch: 0.0,
+        }));
+        assert_eq!(app.screen, ScreenKind::Title, "the late update never opens a screen");
+        assert_eq!(
+            app.net_world.as_ref().expect("net_world dormant, not cleared").seed,
+            0,
+            "the stale join world is untouched by the dropped update"
+        );
+        assert!(app.world_quads.is_none(), "no mesh reappeared");
+        assert!(app.net_camera.is_none(), "no pose reappeared");
+        // a late session death drops equally silently
+        app.live_session_lost("late kick".to_string());
+        assert_eq!(app.screen, ScreenKind::Title, "no world to lose — no disconnect screen");
+    }
+
+    #[test]
+    fn live_session_lost_kicks_to_the_disconnect_screen() {
+        // IN the network world: a session death is the vanilla kick
+        let mut app = App::new(3);
+        app.open(ScreenKind::Connect);
+        app.net_world = Some(air_net_world(2, 0));
+        app.enter_network_world();
+        let run = std::sync::Arc::new(std::sync::atomic::AtomicBool::new(true));
+        app.attach_live_run(1, run);
+        app.live_session_lost("Server closed".to_string());
+        assert_eq!(app.screen, ScreenKind::Disconnect);
+        assert_eq!(app.disconnect_reason, "Server closed");
+        assert_eq!(
+            app.disconnect_title,
+            tr("disconnect.lost").unwrap_or("Connection lost"),
+            "the vanilla lost-connection title"
+        );
+        assert!(!app.world_is_network, "the level unloaded with the session");
+        assert!(app.world_quads.is_none(), "the mesh dropped with the level");
+        assert!(app.net_camera.is_none(), "the pose dropped with the level");
+    }
+
+    #[test]
+    fn live_run_flags_close_on_cancel_supersede_and_quit() {
+        let mut app = App::new(3);
+        app.open(ScreenKind::Connect);
+        // two joins dispatched (the frame thread attaches a flag each)
+        let run_a = std::sync::Arc::new(std::sync::atomic::AtomicBool::new(true));
+        let run_b = std::sync::Arc::new(std::sync::atomic::AtomicBool::new(true));
+        app.attach_live_run(1, std::sync::Arc::clone(&run_a));
+        app.attach_live_run(2, std::sync::Arc::clone(&run_b));
+        // join A's success arrives while the Connect screen shows: A is
+        // THE session, B (superseded) closes
+        app.login_requests.push(LoginRequest { id: 1, entry: 0, host: "h".into(), port: 1 });
+        app.login_requests.push(LoginRequest { id: 2, entry: 0, host: "h".into(), port: 2 });
+        app.login_finished(
+            1,
+            Ok(LoginResult::Loaded {
+                username: crate::screens::PLAYER_NAME.to_string(),
+                entity_id: 1,
+                view_distance: 8,
+                chunks: 1,
+                world: air_net_world(2, 0),
+                camera: None,
+            }),
+        );
+        assert!(app.world_is_network, "A adopted");
+        assert!(
+            run_a.load(std::sync::atomic::Ordering::Relaxed),
+            "the adopted session keeps running"
+        );
+        assert!(
+            !run_b.load(std::sync::atomic::Ordering::Relaxed),
+            "the superseded session closed"
+        );
+        assert_eq!(app.live_runs.len(), 1, "only the adopted flag remains");
+
+        // Save and Quit closes the adopted session too
+        app.paused = true;
+        app.render_title_buttons_for_test();
+        let quit = app.buttons.iter().find(|b| b.id == "saveandquit").expect("saveandquit").clone();
+        app.on_click(quit.x + quit.w / 2, quit.y + quit.h / 2);
+        assert!(
+            !run_a.load(std::sync::atomic::Ordering::Relaxed),
+            "the quit closed the network session"
+        );
+
+        // a cancelled join's late success closes ITS session (C), and
+        // nothing else is disturbed
+        let run_c = std::sync::Arc::new(std::sync::atomic::AtomicBool::new(true));
+        app.attach_live_run(3, std::sync::Arc::clone(&run_c));
+        app.open(ScreenKind::Connect);
+        app.on_escape(); // the user cancelled while C was in flight
+        assert_eq!(app.screen, ScreenKind::Servers);
+        app.login_requests.push(LoginRequest { id: 3, entry: 0, host: "h".into(), port: 3 });
+        app.login_finished(
+            3,
+            Ok(LoginResult::Loaded {
+                username: crate::screens::PLAYER_NAME.to_string(),
+                entity_id: 3,
+                view_distance: 8,
+                chunks: 1,
+                world: air_net_world(2, 3),
+                camera: None,
+            }),
+        );
+        assert!(
+            !run_c.load(std::sync::atomic::Ordering::Relaxed),
+            "the cancelled join's session closed"
+        );
+        assert_eq!(app.screen, ScreenKind::Servers, "the late success is still dropped");
+        assert_eq!(
+            app.net_world.as_ref().expect("dormant from the earlier join").seed,
+            0,
+            "nothing adopted from a cancelled join (the old world stays dormant)"
+        );
     }
 
     impl App {

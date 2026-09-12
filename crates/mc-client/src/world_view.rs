@@ -751,13 +751,35 @@ mod tests {
         assert_eq!(real_world.get(35, 1, 34), DIRT, "dirt through the generated table");
     }
 
+    /// The join milestone shaped like the e2e mock's AND like a real
+    /// overworld join: the registry knowledge (overworld min_y -64) plus
+    /// a vanilla-shaped column — 7 air sections below, the stone/dirt
+    /// section at index 7, so the terrain sits at world y 48..63 right
+    /// under the teleport's feet y 64 (the player-anchored window then
+    /// shows the surface, not deepslate).
+    fn surface_snapshot() -> WorldSnapshot {
+        let mut snap = join_snapshot();
+        snap.registry = RegistryData {
+            dimension_types: vec![mc_protocol::DimensionTypeEntry {
+                name: "minecraft:overworld".to_string(),
+                min_y: -64,
+                height: 384,
+            }],
+        };
+        snap.chunks[0].sections = (0..7)
+            .map(|_| air_section())
+            .chain(std::iter::once(stone_dirt_section()))
+            .collect();
+        snap
+    }
+
     #[test]
     fn live_view_first_refresh_equals_the_one_shot_snapshot_view() {
         // the live view's FIRST refresh is exactly the one-shot snapshot
         // view: same window decisions, same grid, same pose — going live
         // never changes the join frame's shape (the pixel contract of the
         // first world screen survives the live view switch bit for bit)
-        let snap = join_snapshot();
+        let snap = surface_snapshot();
         let one_shot = materialize_snapshot_view(snap.clone(), 5, example_mapper);
         let live = LiveView::from_snapshot(snap, 5);
         let first = live.refresh(example_mapper);
@@ -773,9 +795,10 @@ mod tests {
 
     #[test]
     fn live_view_streams_chunks_and_follows_the_player() {
-        let mut live = LiveView::from_snapshot(join_snapshot(), 5);
+        let mut live = LiveView::from_snapshot(surface_snapshot(), 5);
         // the join view: the mock column at grid chunk (2,2), stone at
-        // (32, 0, 32), pose from teleport 42
+        // (32, 0, 32) (world y 48 = feet 64 - anchor 16), pose from
+        // teleport 42
         let view = live.refresh(example_mapper);
         assert_eq!(view.world.get(32, 0, 32), STONE);
         let cam0 = view.camera.expect("join pose");
@@ -783,11 +806,15 @@ mod tests {
 
         // a second column streams in NEXT DOOR (chunk (3,-1) -> grid
         // (2,3)): the SAME model absorbs it, the refreshed window shows it
-        assert!(live.apply(PlayEvent::Chunk(ChunkColumn {
+        let second_col = ChunkColumn {
             x: 3,
             z: -1,
-            sections: vec![stone_dirt_section()],
-        })));
+            sections: (0..7)
+                .map(|_| air_section())
+                .chain(std::iter::once(stone_dirt_section()))
+                .collect(),
+        };
+        assert!(live.apply(PlayEvent::Chunk(second_col)));
         let w = live.refresh(example_mapper).world;
         assert_eq!(w.get(32, 0, 32), STONE, "the join column is still there");
         assert_eq!(w.get(32, 0, 48), STONE, "the streamed column landed next door");
@@ -836,7 +863,7 @@ mod tests {
         // no teleport ever arrived: the deterministic window (origin
         // 0,0), the layout-known y base or column-local 0, NO camera —
         // the honest state, never a guess
-        let mut live = LiveView::from_snapshot(join_snapshot(), 5);
+        let mut live = LiveView::from_snapshot(surface_snapshot(), 5);
         live.model.player = None; // the model field is pub: tests may strip the pose
         let view = live.refresh(example_mapper);
         assert!(view.camera.is_none(), "no pose known, no pose shipped");

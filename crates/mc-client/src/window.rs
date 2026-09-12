@@ -272,12 +272,16 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize) -> anyhow::Result<()>
             });
         }
         net_seen = app.net_requests.len();
-        for req in &app.login_requests[login_seen..] {
+        // snapshot the new requests first (the dispatch loop attaches the
+        // live-session flags — a mutable borrow of the app)
+        let dispatched: Vec<(u64, String, u16)> = app.login_requests[login_seen..]
+            .iter()
+            .map(|r| (r.id, r.host.clone(), r.port))
+            .collect();
+        login_seen = app.login_requests.len();
+        for (id, host, port) in dispatched {
             let tx = login_tx.clone();
             let live_tx = live_tx.clone();
-            let id = req.id;
-            let host = req.host.clone();
-            let port = req.port;
             // the live session's stop flag: the App flips it when the join
             // is cancelled, superseded or quit — the worker checks it
             // between packets and closes the socket (like the vanilla
@@ -286,7 +290,6 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize) -> anyhow::Result<()>
             app.attach_live_run(id, std::sync::Arc::clone(&run));
             std::thread::spawn(move || run_join(id, host, port, tx, live_tx, run));
         }
-        login_seen = app.login_requests.len();
         while let Ok((id, res)) = net_rx.try_recv() {
             app.ping_finished(id, res);
         }
