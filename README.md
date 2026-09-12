@@ -28,11 +28,16 @@ client for that exact version:
 Everything on screen is driven by **generated official data** — nothing
 hand-drawn:
 
-- **Mojang Studios loading screen** — red studio screen with the two-bar boot
-  progress (`--screen loading`).
-- **Title screen** — wordmark, the real splash text picked from the official
-  `texts/splashes.txt` (pulsing, seeded), vanilla-layout button grid using the
-  official `widget/button*.png` nine-slice sprites, version + copyright
+- **Mojang Studios loading screen** — the real `title/mojangstudios.png`
+  wordmark (512×512 at quarter scale) on the studio red screen with the
+  two-bar boot progress (`--screen loading`).
+- **Title screen** — the **real title panorama** (the six official
+  1024×1024 cube faces streamed from the asset index — the jar only ships
+  1×1 placeholders — sliding like the vanilla rotating cube), the **real
+  `title/minecraft.png` logo** at vanilla LogoRenderer proportions, the real
+  splash text picked from the official `texts/splashes.txt` (pulsing,
+  seeded), vanilla-layout button grid using the official
+  `widget/button*.png` nine-slice sprites, version + copyright
   overlay (`--screen title`).
 - **Server list** — `Play Multiplayer` screen with server entries, `§`-color
   MOTDs, official `server_list/ping_*` icons, Join/Refresh/Cancel
