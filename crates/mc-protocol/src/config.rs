@@ -251,6 +251,32 @@ fn run_configuration<S: Read + Write>(
     }
 }
 
+/// Handshake + offline login + full configuration phase on an ALREADY
+/// open packet connection (play.rs continues on the same wire after the
+/// finish-configuration ack — the vanilla client never reopens the
+/// socket between the phases).
+pub fn join_play_conn<S: Read + Write>(
+    conn: &mut PacketConn<S>,
+    host: &str,
+    port: u16,
+    protocol_version: i32,
+    username: &str,
+) -> Result<PlayOutcome> {
+    conn.send_packet(&encode_handshake(protocol_version, host, port, NEXT_STATE_LOGIN))?;
+    let uuid = crate::login::offline_uuid(username);
+    match login_conn(conn, username, &uuid)? {
+        LoginOutcome::Disconnected { reason } => Ok(PlayOutcome::Disconnected { reason }),
+        LoginOutcome::Success { .. } => {
+            // switch both sides to configuration
+            conn.send_packet(&encode_login_acknowledged())?;
+            // the vanilla client's mandatory introductions
+            conn.send_packet(&encode_client_information(&ClientInfo::default()))?;
+            conn.send_packet(&encode_plugin_brand(BRAND))?;
+            run_configuration(conn, uuid, username.to_string())
+        }
+    }
+}
+
 /// Handshake + offline login + full configuration phase on one connection
 /// (the vanilla client never reopens the socket between the phases).
 pub fn join_play<S: Read + Write>(
@@ -261,19 +287,7 @@ pub fn join_play<S: Read + Write>(
     username: &str,
 ) -> Result<PlayOutcome> {
     let mut conn = PacketConn::new(stream);
-    conn.send_packet(&encode_handshake(protocol_version, host, port, NEXT_STATE_LOGIN))?;
-    let uuid = crate::login::offline_uuid(username);
-    match login_conn(&mut conn, username, &uuid)? {
-        LoginOutcome::Disconnected { reason } => Ok(PlayOutcome::Disconnected { reason }),
-        LoginOutcome::Success { .. } => {
-            // switch both sides to configuration
-            conn.send_packet(&encode_login_acknowledged())?;
-            // the vanilla client's mandatory introductions
-            conn.send_packet(&encode_client_information(&ClientInfo::default()))?;
-            conn.send_packet(&encode_plugin_brand(BRAND))?;
-            run_configuration(&mut conn, uuid, username.to_string())
-        }
-    }
+    join_play_conn(&mut conn, host, port, protocol_version, username)
 }
 
 /// Connect + full join (login + configuration) with the vanilla offline
