@@ -539,7 +539,7 @@ pub fn parse_chunk_data(payload: &[u8]) -> Result<ChunkColumn> {
     // sky array list, then the block array list; everything after the
     // block entities IS light data, and it is the packet's end), shared
     // with the standalone Update Light packet
-    let mut light = parse_light_tail(&mut rest, Some(sections.len() + 2))?;
+    let light = parse_light_tail(&mut rest, Some(sections.len() + 2))?;
     anyhow::ensure!(
         rest.is_empty(),
         "{} trailing bytes after the chunk light data",

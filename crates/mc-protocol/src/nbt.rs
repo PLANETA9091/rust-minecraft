@@ -83,6 +83,16 @@ impl Nbt {
         }
     }
 
+    /// Float view (the timeline track values: the element codecs write
+    /// FLOAT, but a DOUBLE rides just as legally — both widen honestly).
+    pub fn as_f32(&self) -> Option<f32> {
+        match *self {
+            Nbt::Float(v) => Some(v),
+            Nbt::Double(v) => Some(v as f32),
+            _ => None,
+        }
+    }
+
     /// String view.
     pub fn as_str(&self) -> Option<&str> {
         match self {

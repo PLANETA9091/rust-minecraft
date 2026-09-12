@@ -110,7 +110,7 @@ pub mod clientbound {
         CCB_COOKIE_REQUEST as COOKIE_REQUEST, CCB_DISCONNECT as DISCONNECT,
         CCB_FINISH_CONFIGURATION as FINISH, CCB_KEEP_ALIVE as KEEP_ALIVE,
         CCB_PING as PING, CCB_REGISTRY_DATA as REGISTRY_DATA,
-        CCB_SELECT_KNOWN_PACKS as SELECT_KNOWN_PACKS,
+        CCB_SELECT_KNOWN_PACKS as SELECT_KNOWN_PACKS, CCB_UPDATE_TAGS as UPDATE_TAGS,
     };
 }
 
@@ -132,6 +132,41 @@ pub struct DimensionTypeEntry {
     /// Time clock states resolve through this name via the synced
     /// `minecraft:world_clock` table.
     pub default_clock: Option<String>,
+    /// The dimension's timelines reference, VERBATIM from the element
+    /// (the overworld carries the TAG form `#minecraft:in_overworld` —
+    /// the field is a HolderSet and a tag reference rides the leading
+    /// `#`). The tag's member ids resolve through the Update Tags
+    /// packet's `minecraft:timeline` payload; without the `#` it is a
+    /// direct timeline id.
+    pub timelines: Option<String>,
+}
+
+/// One synced timeline: the 26.2 data-driven time system's element
+/// (javap `Timeline.DIRECT_CODEC`: required string `clock`, optional
+/// int `period_ticks`, optional `tracks` map whose values are
+/// KeyframeTrack records — required `keyframes` list of {int ticks,
+/// float value} + optional `ease` defaulting to LINEAR + optional
+/// `modifier`). The client consumes ONE track today —
+/// `minecraft:visual/sky_light_factor` — so only THAT track's
+/// keyframes are decoded; every other track (bools, strings,
+/// gameplay curves) is walked past. Real data: `minecraft:day`
+/// (overworld clock, period 24000) is the only timeline carrying the
+/// track — `minecraft:moon` (period 192000) and `minecraft:early_game`
+/// (no period) do not.
+#[derive(Debug, Clone, PartialEq)]
+pub struct TimelineEntry {
+    /// Registry key (e.g. `minecraft:day`).
+    pub name: String,
+    /// The clock the timeline binds to (required by the element
+    /// codec — the overworld's timelines all name
+    /// `minecraft:overworld`).
+    pub clock: String,
+    /// The cycle the keyframes repeat over (day: 24000). A timeline
+    /// without one is non-cyclic (early_game: a one-shot ramp).
+    pub period_ticks: Option<i32>,
+    /// The `visual/sky_light_factor` keyframes, (tick, value) in
+    /// arrival order — `None` when the timeline carries no such track.
+    pub sky_light_factor: Option<Vec<(i64, f32)>>,
 }
 
 /// The registry knowledge the client retained from the configuration
@@ -156,9 +191,31 @@ pub struct RegistryData {
     /// (`WorldClock.DIRECT_CODEC = MapCodec.unitCodec`), so real
     /// entries ride WITHOUT a tag — nothing decodable beyond the name.
     pub world_clocks: Vec<String>,
+    /// The `minecraft:timeline` entries in ARRIVAL ORDER (javap:
+    /// `Registries.TIMELINE` = the "minecraft:timeline" registry key,
+    /// in `RegistryDataLoader`'s synced list). The sky-light curve the
+    /// renderer consumes resolves through this table + the tags below.
+    pub timelines: Vec<TimelineEntry>,
+    /// The `minecraft:timeline` TAG contents from the Update Tags
+    /// packet — javap: Registry Data itself is ELEMENTS ONLY
+    /// (`ClientboundRegistryDataPacket` is the record (registry,
+    /// entries); the client's `handleUpdateTags` feeds a SEPARATE
+    /// common-phase `ClientboundUpdateTagsPacket` whose map value is
+    /// `TagNetworkSerialization$NetworkPayload` = a readMap of tag
+    /// name -> VarInt id list). Tag name -> member entry ids.
+    pub timeline_tags: Vec<(String, Vec<i32>)>,
 }
 
 impl RegistryData {
+    /// The entry ids one timeline tag names (e.g.
+    /// `minecraft:in_overworld` -> the day/moon/early_game ids on a
+    /// real server) — `None` for a tag the server never sent.
+    pub fn timeline_tag_ids(&self, tag: &str) -> Option<&[i32]> {
+        self.timeline_tags
+            .iter()
+            .find(|(name, _)| name == tag)
+            .map(|(_, ids)| ids.as_slice())
+    }
     /// The vertical layout of one dimension, by registry key.
     pub fn dimension(&self, name: &str) -> Option<&DimensionTypeEntry> {
         self.dimension_types.iter().find(|d| d.name == name)
@@ -187,6 +244,8 @@ impl RegistryData {
         self.dimension_types.extend(other.dimension_types);
         self.biomes.extend(other.biomes);
         self.world_clocks.extend(other.world_clocks);
+        self.timelines.extend(other.timelines);
+        self.timeline_tags.extend(other.timeline_tags);
     }
 }
 
@@ -474,6 +533,29 @@ pub fn parse_registry_data(payload: &[u8]) -> Result<RegistryData> {
             }
             continue;
         }
+        if registry_name == "minecraft:timeline" {
+            // every timeline entry occupies one id slot in arrival order;
+            // the element codec's `clock` is REQUIRED, so a tagless entry
+            // would be the drift it is — error, like the dimension elements
+            anyhow::ensure!(
+                present,
+                "timeline {entry_id} rides without its element tag (the codec requires `clock`)"
+            );
+            let element = read_network_nbt(&mut c)
+                .with_context(|| format!("decode timeline {entry_id} element nbt"))?;
+            let clock = element
+                .get("clock")
+                .and_then(Nbt::as_str)
+                .with_context(|| format!("timeline {entry_id} without `clock`"))?
+                .to_string();
+            let period_ticks = element.get("period_ticks").and_then(Nbt::as_i32);
+            let sky_light_factor = element
+                .get("tracks")
+                .and_then(|tracks| tracks.get("minecraft:visual/sky_light_factor"))
+                .and_then(read_sky_light_track);
+            out.timelines.push(TimelineEntry { name: entry_id, clock, period_ticks, sky_light_factor });
+            continue;
+        }
         if !present {
             // an entry without data: nothing to decode, honestly skipped
             continue;
@@ -496,13 +578,88 @@ pub fn parse_registry_data(payload: &[u8]) -> Result<RegistryData> {
         // the day/night clock name: present for the overworld (and the
         // end), ABSENT for the nether — no day cycle there
         let default_clock = element.get("default_clock").and_then(Nbt::as_str).map(String::from);
-        out.dimension_types
-            .push(DimensionTypeEntry { name: entry_id, min_y, height, default_clock });
+        // the timelines reference, VERBATIM (the overworld's tag form
+        // "#minecraft:in_overworld"; a direct id rides without the #)
+        let timelines = element.get("timelines").and_then(Nbt::as_str).map(String::from);
+        out.dimension_types.push(DimensionTypeEntry {
+            name: entry_id,
+            min_y,
+            height,
+            default_clock,
+            timelines,
+        });
     }
     anyhow::ensure!(
         c.is_empty(),
         "trailing bytes after the {registry_name} registry entries"
     );
+    Ok(out)
+}
+
+/// The `visual/sky_light_factor` track's keyframes, (tick, value): the
+/// track compound's required `keyframes` list of {int ticks, float
+/// value}. `ease` (default LINEAR — the only easing the client's
+/// evaluation implements) and `modifier` are walked past. A malformed
+/// keyframe yields None — the honest no-curve, the same way an absent
+/// track is no-curve (the model falls back to the compile-time day
+/// curve; a half-decoded curve would be a guess).
+fn read_sky_light_track(track: &Nbt) -> Option<Vec<(i64, f32)>> {
+    let frames = track.get("keyframes")?.as_list()?;
+    let mut out = Vec::with_capacity(frames.len());
+    for frame in frames {
+        let ticks = frame.get("ticks")?.as_i32()? as i64;
+        let value = frame.get("value")?.as_f32()?;
+        out.push((ticks, value));
+    }
+    Some(out)
+}
+
+/// Parse Update Tags (the common-phase clientbound packet — javap:
+/// `ClientboundUpdateTagsPacket` = a readMap of { Identifier registry
+/// name -> `TagNetworkSerialization$NetworkPayload` }, each payload a
+/// readMap of { Identifier tag name -> VarInt id list }). Registry
+/// Data is ELEMENTS ONLY — the tags ride THIS packet, and the
+/// client's `handleUpdateTags` feeds them to the registry collector
+/// alongside the elements. Only the `minecraft:timeline` payload is
+/// retained (the one registry whose tags the client consumes today —
+/// the dimension's `timelines` reference narrows through it); every
+/// other registry's tags are walked past.
+pub fn parse_update_tags(payload: &[u8]) -> Result<RegistryData> {
+    let mut c: &[u8] = payload;
+    let id = read_varint(&mut c)?;
+    anyhow::ensure!(id == clientbound::UPDATE_TAGS, "not an update-tags packet (0x{id:02X})");
+    let registry_count = read_varint(&mut c)?;
+    anyhow::ensure!(
+        registry_count <= 256,
+        "update tags carries {registry_count} registries (past any sane flow)"
+    );
+    let mut out = RegistryData::default();
+    for _ in 0..registry_count {
+        let registry_name = read_string(&mut c)?;
+        let tag_count = read_varint(&mut c)?;
+        // the block/item tag maps number in the thousands on real
+        // servers — anything past 65536 is the drift it is
+        anyhow::ensure!(
+            tag_count <= 65_536,
+            "update tags registry {registry_name} carries {tag_count} tags"
+        );
+        for _ in 0..tag_count {
+            let tag_name = read_string(&mut c)?;
+            let value_count = read_varint(&mut c)?;
+            anyhow::ensure!(
+                value_count <= 65_536,
+                "update tags tag {registry_name}:{tag_name} carries {value_count} values"
+            );
+            let mut ids = Vec::with_capacity(value_count.min(4096) as usize);
+            for _ in 0..value_count {
+                ids.push(read_varint(&mut c)?);
+            }
+            if registry_name == "minecraft:timeline" {
+                out.timeline_tags.push((tag_name, ids));
+            }
+        }
+    }
+    anyhow::ensure!(c.is_empty(), "trailing bytes after the update tags");
     Ok(out)
 }
 
@@ -583,6 +740,11 @@ fn run_configuration<S: Read + Write>(
             }
             clientbound::REGISTRY_DATA => {
                 registry.merge(parse_registry_data(&pkt)?);
+            }
+            clientbound::UPDATE_TAGS => {
+                // the common-phase tag payload the Registry Data
+                // elements reference (the timeline tags among them)
+                registry.merge(parse_update_tags(&pkt)?);
             }
             clientbound::SELECT_KNOWN_PACKS => {
                 // validated, then answered with what we truly know:
