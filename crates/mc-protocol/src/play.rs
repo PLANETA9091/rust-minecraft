@@ -33,8 +33,17 @@
 //!   Confirm Teleportation (serverbound 0x00, the id verbatim).
 //! - Chunk Data and Update Light (clientbound: generated id 45): Chunk X/Z (Int),
 //!   Heightmaps (network NBT — walked and skipped), chunk buffer (VarInt
-//!   length) of sections back to back, block entities (skipped), light
-//!   masks (ignored — the sky-light layer is future work).
+//!   length) of sections back to back, block entities (skipped), then the
+//!   light tail — javap-proven 26.2 (`ClientboundLightUpdatePacketData`):
+//!   four BitSets (sky/block lit masks + empty masks), then the sky array
+//!   list, then the block array list, each `readList(byteArray(2048))` —
+//!   one 2048-byte nibble array per section in the lit mask, bottom to
+//!   top, the count == the mask's popcount. The light sections span ONE
+//!   EXTRA LAYER below and above the block sections (javap:
+//!   `getLightSectionCount() = getSectionsCount() + 2`,
+//!   `getMinLightSection() = minSectionY - 1`), so mask bit 0 is the
+//!   layer under the column's bottom section and bit len+1 the layer
+//!   above its top.
 //!   One section = Block Count (Short) + block states + biomes, each a
 //!   palette + packed data array in VANILLA LONG PACKING: entries fill
 //!   64-bit longs LSB-first and NEVER span two longs (valuesPerLong =
@@ -179,6 +188,34 @@ pub struct ChunkSection {
     pub biomes: Vec<u32>,
 }
 
+/// One light section's server-side truth.
+#[derive(Debug, Clone, PartialEq)]
+pub enum LightData {
+    /// The server marked the section KNOWN-EMPTY — light 0 everywhere
+    /// (the vanilla writer sets the empty bit for an all-default layer,
+    /// javap: `prepareSectionData` for a `DataLayer.isEmpty()` section).
+    Empty,
+    /// The server sent the 2048-byte nibble array — 4096 4-bit values,
+    /// vanilla YZX order (index y*256 + z*16 + x, javap:
+    /// `DataLayer.getIndex(x,y,z) = (y << 8) | (z << 4) | x`), the even
+    /// index in the LOW nibble (javap: getByteIndex = i >> 1,
+    /// getNibbleIndex = i & 1).
+    Data(Vec<u8>),
+}
+
+/// The light tail of one chunk column, decoded. Indexed by LIGHT
+/// section — the vanilla engine keeps one extra layer BELOW and one
+/// ABOVE the block sections (see the module doc), so index 0 is the
+/// layer under the column's bottom section, 1..=len are the column's
+/// own sections and len+1 the layer above; each Vec is len+2 long. A
+/// `None` slot means the server sent NOTHING for that layer — the
+/// honest unknown, never a guess.
+#[derive(Debug, Clone, PartialEq, Default)]
+pub struct ChunkLight {
+    pub sky: Vec<Option<LightData>>,
+    pub block: Vec<Option<LightData>>,
+}
+
 /// One chunk column as sent by Chunk Data and Update Light.
 #[derive(Debug, Clone, PartialEq)]
 pub struct ChunkColumn {
@@ -186,6 +223,8 @@ pub struct ChunkColumn {
     pub z: i32,
     /// Sections in buffer order — bottom of the world first.
     pub sections: Vec<ChunkSection>,
+    /// The decoded light tail — sky/block data per light section.
+    pub light: ChunkLight,
 }
 
 /// The "loading screen finished" milestone: world info, the first
@@ -460,7 +499,9 @@ pub fn parse_respawn(payload: &[u8]) -> Result<SpawnInfo> {
 
 /// Parse Chunk Data and Update Light (clientbound: generated id 45) into a decoded
 /// column. Heightmaps and block entities are walked and skipped; the
-/// light masks after them are ignored (sky-light is future work).
+/// light tail after them is decoded into per-light-section sky/block
+/// data (see [`ChunkLight`]) — and it is the packet's END: trailing
+/// bytes after the light lists are the drift they look like.
 pub fn parse_chunk_data(payload: &[u8]) -> Result<ChunkColumn> {
     let mut c: &[u8] = payload;
     let id = read_varint(&mut c)?;
@@ -489,7 +530,123 @@ pub fn parse_chunk_data(payload: &[u8]) -> Result<ChunkColumn> {
         let _ty = read_varint(&mut rest)?;
         skip_network_nbt(&mut rest)?;
     }
-    Ok(ChunkColumn { x, z, sections })
+    // the light tail: four BitSets, then the sky array list, then the
+    // block array list (javap read order: skyYMask, blockYMask,
+    // emptySkyYMask, emptyBlockYMask, skyUpdates, blockUpdates)
+    let sky_mask = read_bitset(&mut rest)?;
+    let block_mask = read_bitset(&mut rest)?;
+    let empty_sky_mask = read_bitset(&mut rest)?;
+    let empty_block_mask = read_bitset(&mut rest)?;
+    let total = sections.len() + 2; // +1 below, +1 above (getLightSectionCount)
+    let mut light = ChunkLight::default();
+    light.sky = parse_light_arrays(&mut rest, &sky_mask, total, "sky light")?;
+    light.block = parse_light_arrays(&mut rest, &block_mask, total, "block light")?;
+    apply_empty_mask(&mut light.sky, &empty_sky_mask, total, "sky light")?;
+    apply_empty_mask(&mut light.block, &empty_block_mask, total, "block light")?;
+    anyhow::ensure!(
+        rest.is_empty(),
+        "{} trailing bytes after the chunk light data",
+        rest.len()
+    );
+    Ok(ChunkColumn { x, z, sections, light })
+}
+
+/// Read a protocol BitSet: VarInt long count then that many big-endian
+/// longs (javap: `FriendlyByteBuf.readBitSet`). The long count is
+/// validated BEFORE any allocation — a lying VarInt must not reserve
+/// gigabytes for a packet that cannot back it.
+fn read_bitset(r: &mut &[u8]) -> std::io::Result<Vec<u64>> {
+    let longs = read_varint(r)?;
+    if !(0..=4096).contains(&longs) {
+        return Err(corrupt(&format!("absurd bitset long count {longs}")));
+    }
+    let mut out = Vec::new();
+    for _ in 0..longs {
+        let mut b = [0u8; 8];
+        r.read_exact(&mut b)?;
+        out.push(u64::from_be_bytes(b));
+    }
+    Ok(out)
+}
+
+/// The set-bit positions of a BitSet, low to high — the order the
+/// vanilla writer emits the arrays in.
+fn bitset_bits(mask: &[u64]) -> Vec<usize> {
+    let mut out = Vec::new();
+    for (li, l) in mask.iter().enumerate() {
+        for b in 0..64 {
+            if (l >> b) & 1 == 1 {
+                out.push(li * 64 + b);
+            }
+        }
+    }
+    out
+}
+
+/// Parse one layer's array list (javap: `readList(byteArray(2048))`):
+/// a VarInt count that MUST equal the lit mask's popcount (the vanilla
+/// writer emits exactly one array per set bit — anything else is
+/// drift), then one 2048-byte array per set bit, bottom to top, placed
+/// at the bit's light-section index. Bits the mask never sets stay
+/// `None` — the server said nothing about them.
+fn parse_light_arrays(
+    r: &mut &[u8],
+    mask: &[u64],
+    total: usize,
+    kind: &str,
+) -> std::io::Result<Vec<Option<LightData>>> {
+    let count = read_varint(r)?;
+    let bits = bitset_bits(mask);
+    if count < 0 || count as usize != bits.len() {
+        return Err(corrupt(&format!(
+            "{kind}: {count} light arrays for {} mask bits",
+            bits.len()
+        )));
+    }
+    let mut out: Vec<Option<LightData>> = vec![None; total];
+    for bit in bits {
+        if bit >= total {
+            return Err(corrupt(&format!(
+                "{kind}: mask bit {bit} outside the column's light range ({total})"
+            )));
+        }
+        let len = read_varint(r)?;
+        if len != 2048 {
+            return Err(corrupt(&format!(
+                "{kind}: light array length {len}, expected 2048"
+            )));
+        }
+        let mut arr = vec![0u8; 2048];
+        r.read_exact(&mut arr)?;
+        out[bit] = Some(LightData::Data(arr));
+    }
+    Ok(out)
+}
+
+/// Apply an EMPTY mask — the server's known-zero sections (the vanilla
+/// writer marks an all-default layer empty and NEVER also sends an
+/// array for it). A section both lit and empty is drift; so is a bit
+/// outside the column's light range.
+fn apply_empty_mask(
+    layer: &mut [Option<LightData>],
+    mask: &[u64],
+    total: usize,
+    kind: &str,
+) -> std::io::Result<()> {
+    for bit in bitset_bits(mask) {
+        if bit >= total {
+            return Err(corrupt(&format!(
+                "{kind}: empty-mask bit {bit} outside the column's light range ({total})"
+            )));
+        }
+        if layer[bit].is_some() {
+            return Err(corrupt(&format!(
+                "{kind}: light section {bit} marked both lit and empty"
+            )));
+        }
+        layer[bit] = Some(LightData::Empty);
+    }
+    Ok(())
 }
 
 /// Parse Keep Alive (clientbound play 0x22): i64 id.
@@ -839,6 +996,71 @@ pub fn connect_and_join_world(
     })
 }
 
+/// Mock-server wire builders shared by the mc-protocol tests and the
+/// mc-client model/view tests — one truth for the chunk light tail,
+/// not hand-duplicated bytes in every test.
+pub mod test_support {
+    use super::clientbound;
+    use crate::varint::write_varint;
+
+    /// One full Chunk Data packet: chunk coords, an empty heightmaps
+    /// compound, the section buffers back to back, no block entities,
+    /// then the javap-proven light tail. `sky`/`block` map LIGHT-SECTION
+    /// bits (0 = one section below the column, 1..=sections.len() the
+    /// column's own sections, sections.len()+1 one above) to their
+    /// 2048-byte nibble arrays; `empty_sky`/`empty_block` mark
+    /// known-zero bits. The lit masks derive from the maps, so the
+    /// vanilla writer's count == popcount invariant holds by
+    /// construction (lying packets are built by hand in the error
+    /// tests, never here).
+    pub fn chunk_packet_with_light(
+        x: i32,
+        z: i32,
+        sections: &[Vec<u8>],
+        sky: &[(usize, Vec<u8>)],
+        empty_sky: &[usize],
+        block: &[(usize, Vec<u8>)],
+        empty_block: &[usize],
+    ) -> Vec<u8> {
+        let mut p = Vec::new();
+        write_varint(&mut p, clientbound::CHUNK_DATA);
+        p.extend_from_slice(&x.to_be_bytes());
+        p.extend_from_slice(&z.to_be_bytes());
+        p.push(0x0A);
+        p.push(0x00); // empty heightmaps compound
+        let buffer_len: usize = sections.iter().map(|s| s.len()).sum();
+        write_varint(&mut p, buffer_len as i32);
+        for s in sections {
+            p.extend_from_slice(s);
+        }
+        write_varint(&mut p, 0); // no block entities
+        let write_mask = |p: &mut Vec<u8>, bits: &[usize]| {
+            write_varint(p, 1); // one mask long (fixtures are far below 64 sections)
+            let mut long = 0u64;
+            for &b in bits {
+                assert!(b < 64, "light fixture bit {b} needs more than one mask long");
+                long |= 1 << b;
+            }
+            p.extend_from_slice(&long.to_be_bytes());
+        };
+        write_mask(&mut p, &sky.iter().map(|e| e.0).collect::<Vec<_>>());
+        write_mask(&mut p, &block.iter().map(|e| e.0).collect::<Vec<_>>());
+        write_mask(&mut p, empty_sky);
+        write_mask(&mut p, empty_block);
+        let write_arrays = |p: &mut Vec<u8>, arrays: &[(usize, Vec<u8>)]| {
+            write_varint(p, arrays.len() as i32);
+            for (_, a) in arrays {
+                assert_eq!(a.len(), 2048, "light fixture arrays are 2048 bytes");
+                write_varint(p, a.len() as i32);
+                p.extend_from_slice(a);
+            }
+        };
+        write_arrays(&mut p, sky);
+        write_arrays(&mut p, block);
+        p
+    }
+}
+
 // ---------------------------------------------------------------------------
 // little-endian-free cursor helpers (everything on the wire is big-endian)
 // ---------------------------------------------------------------------------
@@ -1185,7 +1407,7 @@ mod tests {
         write_varint(&mut p, buffer.len() as i32);
         p.extend_from_slice(&buffer);
         write_varint(&mut p, 0); // no block entities
-        p.extend_from_slice(&[0, 0, 0, 0, 0, 0]); // light masks — ignored
+        p.extend_from_slice(&[0, 0, 0, 0, 0, 0]); // the EMPTY light tail: four zeroed BitSets + two zero counts
         let col = parse_chunk_data(&p).unwrap();
         assert_eq!(col.x, 3);
         assert_eq!(col.z, -2);
@@ -1196,12 +1418,126 @@ mod tests {
         assert_eq!(s.blocks[291], 10, "dirt at (1,2,3), resolved from palette index 2");
         assert_eq!(s.blocks[1], 0, "air next to it");
         assert_eq!(s.biomes, vec![1u32; 64]);
+        // the empty light tail decodes to "no light anywhere": the vecs
+        // span the column's light range (1 section + the two engine
+        // layers) but every slot stays the honest None
+        assert_eq!(col.light.sky.len(), 3);
+        assert_eq!(col.light.block.len(), 3);
+        assert!(col.light.sky.iter().all(Option::is_none));
+        assert!(col.light.block.iter().all(Option::is_none));
         // truncated buffer is rejected, not misparsed (cut deep into the
         // section data array — the declared chunk-buffer size no longer
         // fits the packet)
         let mut cut = p.clone();
         cut.truncate(cut.len() - 300);
         assert!(parse_chunk_data(&cut).is_err());
+    }
+
+    #[test]
+    fn chunk_light_tail_decodes_masks_arrays_and_engine_layers() {
+        // the four fixture arrays carry DISTINCT bytes at the indices
+        // the queries later walk, pinning both the YZX index order and
+        // the low/high nibble split (javap: DataLayer.getByteIndex =
+        // i >> 1, getNibbleIndex = i & 1 — even index, low nibble)
+        let mut own = vec![0u8; 2048];
+        own[0] = 0x5A; // idx 0 (x0,y0,z0) low = 0xA; idx 1 (x1) high = 0x5
+        own[1] = 0x34; // idx 2 (x2) low = 0x4
+        own[16] = 0x0F; // idx 32 (z2) low = 0xF
+        own[128] = 0x21; // idx 256 (y1) low = 0x1
+        let below = vec![0xF0u8; 2048]; // idx 0 low = 0x0 — the under-world layer
+        let above = vec![0xFFu8; 2048]; // full-bright layer above the top
+        let mut blocky = vec![0u8; 2048];
+        blocky[0] = 0x23; // idx 0 low = 3; idx 1 high = 2
+        let p = test_support::chunk_packet_with_light(
+            3,
+            -2,
+            &[build_stone_dirt_section(1), build_stone_dirt_section(1)],
+            // the full light-section spread: bit 0 below, bits 1-2 the
+            // column's own sections (1 data + 1 known-empty), bit 3 above
+            &[(0, below), (1, own), (3, above)],
+            &[2],
+            &[(1, blocky)],
+            &[],
+        );
+        let col = parse_chunk_data(&p).unwrap();
+        assert_eq!(col.sections.len(), 2);
+        assert_eq!(
+            col.light.sky.len(),
+            4,
+            "2 sections + the two engine layers below/above"
+        );
+        assert_eq!(col.light.block.len(), 4);
+        assert_eq!(col.light.sky[0], Some(LightData::Data(vec![0xF0u8; 2048])));
+        assert_eq!(col.light.sky[1], Some(LightData::Data(vec![0x5A, 0x34].into_iter().chain(vec![0u8; 2046]).collect())));
+        assert_eq!(col.light.sky[2], Some(LightData::Empty), "the empty mask");
+        assert_eq!(col.light.sky[3], Some(LightData::Data(vec![0xFFu8; 2048])));
+        assert_eq!(col.light.block[1], Some(LightData::Data(vec![0x23].into_iter().chain(vec![0u8; 2047]).collect())));
+        // untouched bits stay the honest None
+        assert_eq!(col.light.block[0], None);
+        assert_eq!(col.light.block[2], None);
+        assert_eq!(col.light.block[3], None);
+    }
+
+    #[test]
+    fn corrupt_light_tails_are_rejected() {
+        // hand-rolled tails — the mock builder cannot lie by construction
+        let arr = vec![0u8; 2048];
+        let one_section_packet = |tail: &[u8]| {
+            let buffer = build_stone_dirt_section(1);
+            let mut p = Vec::new();
+            write_varint(&mut p, clientbound::CHUNK_DATA);
+            p.extend_from_slice(&0i32.to_be_bytes());
+            p.extend_from_slice(&0i32.to_be_bytes());
+            p.push(0x0A);
+            p.push(0x00);
+            write_varint(&mut p, buffer.len() as i32);
+            p.extend_from_slice(&buffer);
+            write_varint(&mut p, 0);
+            p.extend_from_slice(tail);
+            p
+        };
+        let tail = |sky: u64,
+                    block: u64,
+                    empty_sky: u64,
+                    empty_block: u64,
+                    sky_arrays: &[&[u8]],
+                    block_arrays: &[&[u8]]| {
+            let mut t = Vec::new();
+            for mask in [sky, block, empty_sky, empty_block] {
+                write_varint(&mut t, 1);
+                t.extend_from_slice(&mask.to_be_bytes());
+            }
+            for arrays in [sky_arrays, block_arrays] {
+                write_varint(&mut t, arrays.len() as i32);
+                for a in arrays {
+                    write_varint(&mut t, a.len() as i32);
+                    t.extend_from_slice(a);
+                }
+            }
+            t
+        };
+        // a lying count: one mask bit but no array behind it
+        let t = tail(0b10, 0, 0, 0, &[], &[]);
+        assert!(parse_chunk_data(&one_section_packet(&t)).is_err());
+        // an array too short for the nibble grid (10 bytes, not 2048)
+        let t = tail(0b10, 0, 0, 0, &[&arr[..10]], &[]);
+        assert!(parse_chunk_data(&one_section_packet(&t)).is_err());
+        // a mask bit outside the column's light range: one section
+        // spans bits 0..=2 (below/own/above), bit 4 is beyond them
+        let t = tail(0b10000, 0, 0, 0, &[&arr], &[]);
+        assert!(parse_chunk_data(&one_section_packet(&t)).is_err());
+        // the same section marked lit AND empty — the writer never does
+        let t = tail(0b10, 0, 0b10, 0, &[&arr], &[]);
+        assert!(parse_chunk_data(&one_section_packet(&t)).is_err());
+        // trailing bytes after the block array list are drift
+        let mut t = tail(0, 0, 0, 0, &[], &[]);
+        t.push(0x00);
+        assert!(parse_chunk_data(&one_section_packet(&t)).is_err());
+        // an absurd (negative) bitset long count — rejected BEFORE any
+        // allocation
+        let mut t = Vec::new();
+        write_varint(&mut t, -1);
+        assert!(parse_chunk_data(&one_section_packet(&t)).is_err());
     }
 
     /// Mock server: login -> configuration -> play (the FULL vanilla

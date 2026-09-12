@@ -330,7 +330,8 @@ mod tests {
     use mc_protocol::play::clientbound;
     use mc_registry::generated::atlas;
     use mc_protocol::{
-        ChunkColumn, PlayEvent, RegistryData, SpawnInfo, WorldInfo, varint::write_varint,
+        ChunkColumn, ChunkLight, PlayEvent, RegistryData, SpawnInfo, WorldInfo,
+        varint::write_varint,
     };
 
     /// Decode a section buffer through the REAL parser (the same wire
@@ -506,6 +507,7 @@ mod tests {
             x: 3,
             z: -2,
             sections: vec![stone_dirt_section()],
+            light: ChunkLight::default(),
         }));
         // window origin (1,-3): chunk (3,-2) sits at grid (2, 1)
         let world = materialize(&m, (1, -3), 4, 0, example_mapper);
@@ -520,6 +522,7 @@ mod tests {
             x: 10,
             z: 10,
             sections: vec![stone_dirt_section()],
+            light: ChunkLight::default(),
         }));
         let world = materialize(&m, (1, -3), 4, 0, example_mapper);
         assert_eq!(world.get(32, 0, 16), STONE, "window content unchanged");
@@ -534,6 +537,7 @@ mod tests {
             x: 0,
             z: 0,
             sections: vec![stone_dirt_section()],
+            light: ChunkLight::default(),
         }));
         let world = materialize(&m, (0, 0), 2, 0, example_mapper);
         assert_eq!(world.get(0, 0, 0), STONE);
@@ -556,6 +560,7 @@ mod tests {
             x: 0,
             z: 0,
             sections: vec![stone_dirt_section()],
+            light: ChunkLight::default(),
         }));
         // the mapper receives every resolved id verbatim (air included) —
         // nothing is pre-filtered, the caller owns the full decision
@@ -743,6 +748,7 @@ mod tests {
                 x: 3,
                 z: -2,
                 sections: vec![stone_dirt_section()],
+                light: ChunkLight::default(),
             }],
             registry: RegistryData::default(),
         }
@@ -855,6 +861,7 @@ mod tests {
                 .map(|_| air_section())
                 .chain(std::iter::once(stone_dirt_section()))
                 .collect(),
+            light: ChunkLight::default(),
         };
         assert!(live.apply(PlayEvent::Chunk(second_col)));
         let w = live.refresh(example_mapper).world;
@@ -1000,6 +1007,7 @@ mod tests {
             x: 3,
             z: -2,
             sections: vec![stone_dirt_section()],
+            light: ChunkLight::default(),
         })));
         assert!(live.apply(PlayEvent::Position(PlayerPosition {
             teleport_id: 44,

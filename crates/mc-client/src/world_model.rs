@@ -20,6 +20,12 @@
 //!   CLEARS the loaded columns — the vanilla level recreation: another
 //!   dimension's blocks are meaningless (and, re-read under the new
 //!   min_y, pure fiction), so the map starts empty in the new world.
+//! - Light travels WITH the columns: each decoded column carries the
+//!   server's sky/block light arrays (`ChunkLight`), and `sky_light()`/
+//!   `block_light()` answer through the engine-layer grid (one extra
+//!   section below/above the column). No client-side propagation model
+//!   exists — the network's arrays ARE the truth (the server runs the
+//!   light engine); a local BFS for future local edits is future work.
 //! - The join path is WIRED into the frame loop: the world-load
 //!   milestone's snapshot adopts here and the player-centered window
 //!   materializes into the renderer grid (see `world_view`). A live,
@@ -28,7 +34,7 @@
 
 use std::collections::HashMap;
 
-use mc_protocol::{ChunkColumn, PlayEvent, PlayerPosition, RegistryData, WorldInfo, WorldSnapshot};
+use mc_protocol::{ChunkColumn, ChunkLight, LightData, PlayEvent, PlayerPosition, RegistryData, WorldInfo, WorldSnapshot};
 
 /// The client's view of ONE server world: loaded chunk columns, the
 /// server-declared center chunk, the world's static description and the
@@ -219,6 +225,59 @@ impl WorldModel {
         let id = self.biome(x, y, z)?;
         self.registry.biome_name(id)
     }
+
+    /// Sky light (0..=15) at (x, y, z) — the same coordinate conventions
+    /// as [`WorldModel::block`], on the vanilla LIGHT section grid: the
+    /// engine keeps one extra layer below and above the block sections
+    /// (javap: `getLightSectionCount() = getSectionsCount() + 2`), so
+    /// the column's section sy answers through light bit sy + 1 — and
+    /// the layers just OUTSIDE the column (world y one section below
+    /// its bottom / above its top) answer through bits 0 and len+1.
+    /// `None` outside the loaded columns, beyond the engine's light
+    /// range, or where the server sent nothing — the honest unknown,
+    /// never a guess.
+    pub fn sky_light(&self, x: i32, y: i32, z: i32) -> Option<u8> {
+        self.light_at(x, y, z, |l| &l.sky)
+    }
+
+    /// Block light (0..=15) at (x, y, z) — [`WorldModel::sky_light`]
+    /// reading the block-light layer instead of the sky layer.
+    pub fn block_light(&self, x: i32, y: i32, z: i32) -> Option<u8> {
+        self.light_at(x, y, z, |l| &l.block)
+    }
+
+    /// The shared light walk: column lookup, the min_y shift, the
+    /// engine-layer bit (sy + 1 — unlike `block()` a section index of
+    /// -1 is LEGITIMATE here, it is the under-world layer), then the
+    /// section's server truth: known-empty answers 0, a data array
+    /// answers its YZX nibble (even index in the low nibble, the
+    /// decoder's javap-pinned DataLayer convention).
+    fn light_at(
+        &self,
+        x: i32,
+        y: i32,
+        z: i32,
+        layer: impl Fn(&ChunkLight) -> &Vec<Option<LightData>>,
+    ) -> Option<u8> {
+        let col = self.columns.get(&(x >> 4, z >> 4))?;
+        let y = match self.min_y {
+            Some(min_y) => y - min_y,
+            None => y,
+        };
+        let (sy, ly) = (y >> 4, y & 15);
+        let bit = sy + 1; // light bit 0 is one section BELOW the column
+        if bit < 0 {
+            return None;
+        }
+        match layer(&col.light).get(bit as usize)? {
+            LightData::Empty => Some(0),
+            LightData::Data(arr) => {
+                let idx = (ly as usize) * 256 + ((z & 15) as usize) * 16 + (x & 15) as usize;
+                let b = *arr.get(idx >> 1)?;
+                Some(if idx & 1 == 0 { b & 0xF } else { b >> 4 })
+            }
+        }
+    }
 }
 
 #[cfg(test)]
@@ -288,6 +347,7 @@ mod tests {
             x: 3,
             z: -2,
             sections: vec![parse_section_buffer(&stone_dirt_section(2))],
+            light: ChunkLight::default(),
         };
         assert!(m.apply(PlayEvent::Chunk(col_a)));
         assert_eq!(m.loaded_chunks(), 1);
@@ -297,6 +357,7 @@ mod tests {
             x: 3,
             z: -2,
             sections: vec![parse_section_buffer(&air_section())],
+            light: ChunkLight::default(),
         };
         assert!(m.apply(PlayEvent::Chunk(col_b)));
         assert_eq!(m.loaded_chunks(), 1);
@@ -329,6 +390,7 @@ mod tests {
                 parse_section_buffer(&stone_dirt_section(2)),
                 parse_section_buffer(&air_section()),
             ],
+            light: ChunkLight::default(),
         };
         m.apply(PlayEvent::Chunk(col));
         // chunk (3, -2) spans world x 48..=63, z -32..=17 — the column-local
@@ -356,6 +418,7 @@ mod tests {
             x: -1,
             z: -1,
             sections: vec![parse_section_buffer(&stone_dirt_section(2))],
+            light: ChunkLight::default(),
         };
         m.apply(PlayEvent::Chunk(neg));
         assert_eq!(m.block(-1, -64, -1), Some(0), "world (-1,-64,-1) is local (15,0,15): air");
@@ -418,6 +481,7 @@ mod tests {
             x: 0,
             z: 0,
             sections: vec![parse_section_buffer(&biome_cells_section(&[0, 1, 2], &cells))],
+            light: ChunkLight::default(),
         };
         m.apply(PlayEvent::Chunk(col));
         // cell 0 covers block positions 0..4 in each axis — every query
@@ -440,6 +504,7 @@ mod tests {
             x: -1,
             z: -1,
             sections: vec![parse_section_buffer(&biome_cells_section(&[0, 1, 2], &cells))],
+            light: ChunkLight::default(),
         }));
         assert_eq!(m.biome(-1, -64, -1), Some(0), "local (15,0,15) -> cell (3,0,3), still plains");
         assert_eq!(m.biome_name(-16, -64, -16), Some("minecraft:plains"), "local (0,0,0)");
@@ -453,9 +518,80 @@ mod tests {
             x: 7,
             z: 7,
             sections: vec![parse_section_buffer(&air_section())],
+            light: ChunkLight::default(),
         }));
         assert_eq!(m.biome(112, -64, 112), Some(187), "the id is real");
         assert_eq!(m.biome_name(112, -64, 112), None, "the name is unknown");
+    }
+
+    #[test]
+    fn light_queries_walk_the_nibble_grid_across_the_engine_layers() {
+        let mut m = WorldModel::new();
+        m.min_y = Some(-64);
+        // a 2-section column parsed from a REAL light-carrying packet
+        // (mc-protocol's own mock builder — the wire shape, not a
+        // hand-assembled struct): light bits 0..=3 = below / own
+        // section 0 / own section 1 / above (the engine's -1/+1 layers)
+        let mut sec0 = vec![0u8; 2048];
+        sec0[0] = 0x5A; // idx 0 (x0,y0,z0) low = 0xA; idx 1 (x1) high = 0x5
+        sec0[1] = 0x34; // idx 2 (x2) low = 0x4
+        sec0[16] = 0x0F; // idx 32 (z2) low = 0xF
+        sec0[128] = 0x21; // idx 256 (y1) low = 0x1
+        let mut below = vec![0u8; 2048];
+        below[0] = 0x0F; // idx 0 low = 0xF under the world's floor
+        let above = vec![0xFFu8; 2048]; // full-bright layer above the top
+        let mut block_arr = vec![0u8; 2048];
+        block_arr[0] = 0x23; // idx 0 low = 3; idx 1 high = 2
+        let p = mc_protocol::play::test_support::chunk_packet_with_light(
+            3,
+            -2,
+            &[stone_dirt_section(2), air_section()],
+            &[(0, below), (1, sec0), (3, above)],
+            &[2], // the column's own section 1 is KNOWN-EMPTY sky
+            &[(1, block_arr)],
+            &[],
+        );
+        let col = mc_protocol::play::parse_chunk_data(&p).expect("chunk parses");
+        m.apply(PlayEvent::Chunk(col));
+        // chunk (3, -2) spans world x 48..=63, z -32..=-17; min_y -64
+        // puts section 0 at world y -64..=-49
+        assert_eq!(
+            m.sky_light(48, -64, -32),
+            Some(10),
+            "local (0,0,0), the LOW nibble of 0x5A"
+        );
+        assert_eq!(
+            m.sky_light(49, -64, -32),
+            Some(5),
+            "local (1,0,0), the HIGH nibble of 0x5A"
+        );
+        assert_eq!(m.sky_light(50, -64, -32), Some(4), "idx 2, low of 0x34");
+        assert_eq!(m.sky_light(48, -63, -32), Some(1), "idx 256 (y stride), low of 0x21");
+        assert_eq!(m.sky_light(48, -64, -30), Some(15), "idx 32 (z stride), low of 0x0F");
+        // the engine's extra layers: one section BELOW the column
+        // (bit 0) and one ABOVE the top (bit 3, world y -32)
+        assert_eq!(m.sky_light(48, -80, -32), Some(15), "world -80 is the under-world layer");
+        assert_eq!(m.sky_light(48, -32, -32), Some(15), "world -32 is the above-top layer");
+        // a known-empty section (the empty mask) answers ZERO — the
+        // server said so, it is not an unknown
+        assert_eq!(m.sky_light(48, -48, -32), Some(0), "section 1 is Empty, not unknown");
+        // beyond the engine's light range — the honest unknown
+        assert_eq!(m.sky_light(48, -96, -32), None, "two sections below: no such bit");
+        assert_eq!(m.sky_light(48, -16, -32), None, "one section above the above-layer");
+        // the block-light layer rides the same walk
+        assert_eq!(m.block_light(48, -64, -32), Some(3), "low nibble of 0x23");
+        assert_eq!(m.block_light(49, -64, -32), Some(2), "high nibble");
+        assert_eq!(m.block_light(48, -48, -32), None, "no block data for section 1");
+        // an unloaded column is unknown; a hand-built lightless column
+        // (ChunkLight::default) too — no light tail, no invented values
+        assert_eq!(m.sky_light(0, -64, 0), None);
+        m.apply(PlayEvent::Chunk(ChunkColumn {
+            x: 7,
+            z: 7,
+            sections: vec![parse_section_buffer(&air_section())],
+            light: ChunkLight::default(),
+        }));
+        assert_eq!(m.sky_light(112, -64, 112), None, "no light tail in the column");
     }
 
     #[test]
@@ -486,6 +622,7 @@ mod tests {
             x: 3,
             z: -2,
             sections: vec![parse_section_buffer(&stone_dirt_section(2))],
+            light: ChunkLight::default(),
         };
         m.adopt_snapshot(WorldSnapshot {
             info: info.clone(),
@@ -604,6 +741,7 @@ mod tests {
             x: 0,
             z: 0,
             sections: vec![parse_section_buffer(&stone_dirt_section(2))],
+            light: ChunkLight::default(),
         }));
         assert_eq!(m.block(0, -64, 0), Some(1), "world -64 = section 0 local 0");
         assert_eq!(m.block(3, -63, 2), Some(10), "local (3,1,2) at world -63");
@@ -627,6 +765,7 @@ mod tests {
             x: 0,
             z: 0,
             sections: vec![parse_section_buffer(&stone_dirt_section(2))],
+            light: ChunkLight::default(),
         }));
         assert_eq!(m.block(0, 0, 0), Some(1), "nether world 0 = section 0 local 0");
         assert_eq!(m.block(0, -1, 0), None, "below the nether floor: outside");
