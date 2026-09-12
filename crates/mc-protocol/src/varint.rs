@@ -79,6 +79,22 @@ pub fn write_string(out: &mut Vec<u8>, s: &str) {
     out.extend_from_slice(s.as_bytes());
 }
 
+/// Read a Minecraft-encoded string (VarInt length + UTF-8 bytes). The
+/// length must be sane (>= 0, < 16 MiB) — garbage lengths are rejected.
+pub fn read_string(r: &mut impl Read) -> io::Result<String> {
+    let len = read_varint(r)?;
+    if len < 0 || len as usize > 16 * 1024 * 1024 {
+        return Err(io::Error::new(
+            io::ErrorKind::InvalidData,
+            format!("invalid string length {len}"),
+        ));
+    }
+    let mut bytes = vec![0u8; len as usize];
+    r.read_exact(&mut bytes)?;
+    String::from_utf8(bytes)
+        .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, format!("utf-8: {e}")))
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

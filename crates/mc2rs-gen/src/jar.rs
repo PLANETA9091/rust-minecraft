@@ -25,6 +25,11 @@ pub struct JarReport {
     pub texture_count: usize,
     pub sound_count: usize,
     pub has_lang_en_us: bool,
+    /// Protocol version from the jar's embedded version.json (26.2: 776);
+    /// None when the version ships no embedded manifest.
+    pub protocol_version: Option<i32>,
+    /// World/data format version from version.json (26.2: 4903).
+    pub world_version: Option<i32>,
     pub blocks: Vec<BlockGen>,
     pub items: Vec<String>,
 }
@@ -87,6 +92,23 @@ pub fn analyze(jar_bytes: &[u8]) -> Result<JarReport> {
     };
     let obfuscated = obfuscation_ratio > 0.5 && net_minecraft_classes == 0;
 
+    // The jar embeds its own manifest: the protocol number the LOGIN
+    // handshake must speak (launchermeta version.json no longer carries it
+    // in the 26.x era).
+    let (protocol_version, world_version) = match archive.by_name("version.json") {
+        Ok(mut f) => {
+            let mut bytes = Vec::new();
+            f.read_to_end(&mut bytes)?;
+            let v: Value = serde_json::from_slice(&bytes)
+                .with_context("parse embedded version.json")?;
+            (
+                v.get("protocol_version").and_then(Value::as_i64).map(|x| x as i32),
+                v.get("world_version").and_then(Value::as_i64).map(|x| x as i32),
+            )
+        }
+        Err(_) => (None, None),
+    };
+
     // Parse blockstate JSON files for state properties.
     let mut blocks: Vec<BlockGen> = Vec::with_capacity(blockstate_paths.len());
     for path in &blockstate_paths {
@@ -118,6 +140,8 @@ pub fn analyze(jar_bytes: &[u8]) -> Result<JarReport> {
         texture_count,
         sound_count,
         has_lang_en_us,
+        protocol_version,
+        world_version,
         blocks,
         items: item_paths,
     })
