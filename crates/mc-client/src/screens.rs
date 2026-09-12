@@ -103,7 +103,7 @@ pub struct LoginRequest {
 
 /// The slice of a join outcome the UI renders — screens stay
 /// protocol-agnostic (window.rs maps `mc_protocol::WorldOutcome` over).
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum LoginResult {
     /// The full join arc completed and the world-load milestone was hit:
     /// world info + the first position teleport + at least one decoded
@@ -123,6 +123,14 @@ pub enum LoginResult {
         /// chunk — the World screen's terrain until a newer join replaces
         /// it. Built by the join worker off the frame thread.
         world: crate::world::World,
+        /// The join teleport's EXACT pose in the grid frame (feet + the
+        /// vanilla standing eye height, the server-directed yaw/pitch
+        /// converted from the vanilla angle conventions) — the World
+        /// screen renders FROM the player, the vanilla first person.
+        /// `None` without dimension layout knowledge (the grid is
+        /// column-local then and the player's world y means nothing in
+        /// it): the deterministic flight camera stands instead.
+        camera: Option<crate::camera::Camera>,
     },
     /// The server refused or kicked (login disconnect, config kick or a
     /// play-state disconnect), reason flattened from chat.
@@ -225,6 +233,11 @@ pub struct App {
     /// snapshot window), kept for re-meshing when the id table / vertical
     /// layout resolve; dormant after Save and Quit until a newer join.
     pub net_world: Option<crate::world::World>,
+    /// The join teleport's exact camera pose in the grid frame (shipped
+    /// with the world by the join worker); `None` = no pose known (a
+    /// hand-installed world, or a join without layout knowledge) — the
+    /// deterministic flight camera stands. Cleared with the level.
+    pub net_camera: Option<crate::camera::Camera>,
     /// True while the World screen shows the NETWORK world (the quad mesh
     /// came from a join snapshot, not the procedural singleplayer world).
     pub world_is_network: bool,
@@ -302,6 +315,7 @@ impl App {
             disconnect_title: String::new(),
             disconnect_reason: String::new(),
             net_world: None,
+            net_camera: None,
             world_is_network: false,
         }
     }
@@ -356,15 +370,13 @@ impl App {
     /// ConnectScreen → world handoff after a successful join. The screen
     /// machinery (sky, celestials, fog, clouds, HUD, pause) is shared
     /// with singleplayer; only the terrain source differs: the mesh comes
-    /// from the materialized join snapshot. Camera: the window is centered
-    /// on the player's chunk and VERTICALLY ANCHORED on the player's feet
-    /// (`world_view::snapshot_y_base` — min_y + player.y, clamped at the
-    /// world floor), so the grid's center column stands over the surface
-    /// the player actually occupies; the exact player-follow camera
-    /// (position + yaw/pitch from the teleport) is future work. Music:
-    /// the spawn biome is unknown until section biomes decode, so the
-    /// unknown-key lookup falls back to the generic music.game situation
-    /// (no seeded guess about a network world).
+    /// from the materialized join snapshot. Camera: the join teleport's
+    /// EXACT pose (position + yaw/pitch, the vanilla first person — see
+    /// [`App::world_camera`]) when the worker shipped one; without it the
+    /// deterministic flight camera stands. Music: the spawn biome is
+    /// unknown until section biomes decode, so the unknown-key lookup
+    /// falls back to the generic music.game situation (no seeded guess
+    /// about a network world).
     pub fn enter_network_world(&mut self) {
         let (size, spawn_y, quads) = {
             let Some(world) = self.net_world.as_ref() else { return };
@@ -423,9 +435,11 @@ impl App {
                     if self.world_is_network {
                         // vanilla Save and Quit unloads the level: the
                         // network mesh drops (a newer join rematerializes
-                        // it; singleplayer rebuilds its own world)
+                        // it; singleplayer rebuilds its own world) — and
+                        // the teleport pose rides along with it
                         self.world_quads = None;
                         self.world_is_network = false;
+                        self.net_camera = None;
                     }
                     self.open(ScreenKind::Title);
                     self.music.on_menu_open();
@@ -552,9 +566,10 @@ impl App {
             return;
         }
         match outcome {
-            Ok(LoginResult::Loaded { world, .. }) => {
+            Ok(LoginResult::Loaded { world, camera, .. }) => {
                 if self.screen == ScreenKind::Connect {
                     self.net_world = Some(world);
+                    self.net_camera = camera;
                     self.enter_network_world();
                 }
             }
@@ -603,22 +618,43 @@ impl App {
         }
     }
 
-    /// The in-world 3D view: deterministic first-person camera at the spawn
-    /// column facing east (+X — the direction the official 26.x sun rises),
-    /// official day-night sky (timeline data + celestial textures), textured
-    /// quads from the generated atlas, fog in the official color — the exact
-    /// same raster path the headless pixel tests exercise.
-    fn render_world_3d(&mut self, fb: &mut crate::raster::Framebuf) {
-        self.ensure_world();
+    /// The World screen camera. NETWORK world with a shipped pose: the
+    /// join teleport's EXACT pose — the vanilla first person at the
+    /// player's feet + the standing eye height, looking the way the
+    /// server directed (`world_view::snapshot_camera` converted the
+    /// vanilla angle conventions at materialization time, from the SAME
+    /// window decisions that placed the grid — pose and terrain can never
+    /// disagree about where the player stands). PROCEDURAL world (and any
+    /// network world without a pose): the deterministic creative-flight
+    /// camera above the spawn surface facing east (+X — the direction the
+    /// official 26.x sun rises), the exact camera the headless pixel
+    /// tests pin.
+    fn world_camera(&self) -> crate::camera::Camera {
+        if self.world_is_network {
+            if let Some(pose) = self.net_camera {
+                return pose;
+            }
+        }
         let n = self.world_size as f32;
         // Creative-flight camera: 12 blocks above the spawn surface clears
         // the canopy so the official sky (sun/moon/stars) stays in frame.
-        let eye = Vec3::new(n / 2.0, self.spawn_y as f32 + 12.0 + 1.62, n / 2.0);
-        let cam = crate::camera::Camera {
-            pos: eye,
+        crate::camera::Camera {
+            pos: Vec3::new(n / 2.0, self.spawn_y as f32 + 12.0 + crate::world_view::PLAYER_EYE_HEIGHT, n / 2.0),
             yaw: std::f32::consts::FRAC_PI_2, // face +X (east): sun visible at dawn
             pitch: -0.08,
-        };
+        }
+    }
+
+    /// The in-world 3D view: first-person camera (the network join's
+    /// exact teleport pose, or the deterministic flight camera for the
+    /// procedural world), official day-night sky (timeline data +
+    /// celestial textures), textured quads from the generated atlas, fog
+    /// in the official color — the exact same raster path the headless
+    /// pixel tests exercise.
+    fn render_world_3d(&mut self, fb: &mut crate::raster::Framebuf) {
+        self.ensure_world();
+        let n = self.world_size as f32;
+        let cam = self.world_camera();
         let day_time = (self.day_time_base + self.frame) as i64;
         let sky = crate::sky::sample(day_time);
         let ctx = RenderCtx {
@@ -1787,7 +1823,8 @@ mod tests {
         // the exact mapping the window worker performs: facts off the
         // snapshot, then the player-centered window materialized for the
         // world screen (the example mapper — the ids the mock streams;
-        // the GUI resolves through the GENERATED registry table)
+        // the GUI resolves through the GENERATED registry table) — plus
+        // the teleport's exact camera pose from the same decisions
         let res = mc_protocol::connect_and_join_world(
             &req.host,
             req.port,
@@ -1798,7 +1835,7 @@ mod tests {
             mc_protocol::WorldOutcome::Loaded(snap) => {
                 let (entity_id, view_distance, chunks) =
                     (snap.info.entity_id, snap.info.view_distance, snap.chunks.len());
-                let world = crate::world_view::materialize_snapshot(
+                let view = crate::world_view::materialize_snapshot_view(
                     snap,
                     WORLD_CHUNKS,
                     |id| match id {
@@ -1812,7 +1849,8 @@ mod tests {
                     entity_id,
                     view_distance,
                     chunks,
-                    world,
+                    world: view.world,
+                    camera: view.camera,
                 }
             }
             mc_protocol::WorldOutcome::Disconnected { reason } => {
@@ -1844,6 +1882,22 @@ mod tests {
         // the camera column (grid center) is air in this one-column world:
         // the spawn scan honestly reports the grid top
         assert_eq!(app.spawn_y, crate::world::CHUNK_Y as i32);
+        // the camera is the teleport's EXACT pose in the grid frame:
+        // feet (56.5, 64, -27.25) with the window origin (1,-4) and base
+        // 48 -> grid (40.5, 16, 36.75) + the standing eye height; the
+        // server's yaw 90 (facing west) converts to camera yaw 90+180;
+        // pitch 0 stays 0. The world screen renders FROM the player.
+        let cam = app.net_camera.expect("the join shipped the teleport pose");
+        assert_eq!(cam.pos.x, 40.5);
+        assert_eq!(cam.pos.y, 64.0 - 48.0 + crate::world_view::PLAYER_EYE_HEIGHT);
+        assert_eq!(cam.pos.z, 36.75);
+        assert_eq!(cam.yaw, 90.0f32.to_radians() + std::f32::consts::PI);
+        assert_eq!(cam.pitch, 0.0);
+        assert_eq!(
+            app.world_camera(),
+            cam,
+            "the world screen renders FROM the teleport pose"
+        );
     }
 
     #[test]
@@ -1881,6 +1935,7 @@ mod tests {
         assert_eq!(app.screen, ScreenKind::Title);
         assert!(!app.world_is_network);
         assert!(app.world_quads.is_none(), "the network mesh is unloaded");
+        assert!(app.net_camera.is_none(), "the teleport pose unloads with the level");
 
         // singleplayer afterwards rebuilds the PROCEDURAL world
         app.render_title_buttons_for_test();
@@ -1918,6 +1973,7 @@ mod tests {
                         4
                     ],
                 },
+                camera: None,
             }),
         );
         assert_eq!(

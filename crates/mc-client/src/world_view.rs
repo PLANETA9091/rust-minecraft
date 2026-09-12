@@ -28,9 +28,19 @@
 //!   guess. The top is deliberately unclamped: a player high above the
 //!   terrain truthfully sees sky in a window that follows them, not a
 //!   surface the code guessed.
+//! - The materialized view ships the player's CAMERA too: the join
+//!   teleport's exact pose (feet + the vanilla standing eye height, the
+//!   server-directed look direction converted from the vanilla angle
+//!   conventions) in the grid frame — the world screen renders FROM the
+//!   player, not from a stand-in vantage. Without dimension layout
+//!   knowledge there is no pose (the grid is column-local then and the
+//!   player's world y means nothing in it) — the deterministic flight
+//!   camera stands instead; never a guess.
 //! - Columns missing from the model stay AIR (the vanilla client would
 //!   still be streaming them — holes are the truthful render).
 
+use crate::camera::Camera;
+use crate::math::Vec3;
 use crate::world::{
     World, AIR, ANDESITE, BEDROCK, CHUNK_X, CHUNK_Y, CHUNK_Z, COAL_ORE, COBBLED_DEEPSLATE,
     COPPER_ORE, DEEPSLATE, DIAMOND_ORE, DIORITE, DIRT, EMERALD_ORE, GOLD_ORE, GRANITE, GRASS,
@@ -110,6 +120,11 @@ pub fn snapshot_window_origin(player: &PlayerPosition, side: usize) -> (i32, i32
 /// ground in view, room to see the sky).
 pub const PLAYER_GRID_Y: i32 = crate::world::CHUNK_Y as i32 / 3;
 
+/// The vanilla standing eye height over the feet — the same offset the
+/// procedural flight camera adds over its scanned surface (one constant,
+/// two users: every first-person eye sits 1.62 above its feet).
+pub const PLAYER_EYE_HEIGHT: f32 = 1.62;
+
 /// The vertical anchor of the snapshot window: the world-y that grid row
 /// 0 will represent. With the dimension layout known (`min_y`), the
 /// window anchors on the PLAYER — the join teleport's feet land at grid
@@ -121,6 +136,43 @@ pub const PLAYER_GRID_Y: i32 = crate::world::CHUNK_Y as i32 / 3;
 pub fn snapshot_y_base(player: &PlayerPosition, min_y: Option<i32>) -> i32 {
     let Some(min_y) = min_y else { return 0 };
     (player.y.floor() as i32 - PLAYER_GRID_Y).max(min_y)
+}
+
+/// The materialized join view: the renderer grid AND the camera pose
+/// computed from the SAME window decisions (origin, y_base, layout
+/// knowledge) — the world screen renders the grid from the pose and the
+/// two can never disagree about where the player stands.
+pub struct SnapshotView {
+    pub world: World,
+    /// The teleport's exact pose in the grid frame, or `None` without
+    /// dimension layout knowledge (see [`snapshot_camera`]).
+    pub camera: Option<Camera>,
+}
+
+/// The grid-local first-person camera for the materialized window: the
+/// join teleport's EXACT pose — the vanilla standing eye height over the
+/// feet, the server-directed look direction converted from the vanilla
+/// angle conventions (yaw degrees, clockwise, 0 = facing south/+Z;
+/// pitch degrees, positive = down) into the camera crate's (yaw radians,
+/// 0 = -Z, counterclockwise; pitch positive = up): `yaw_cam =
+/// yaw_mc + pi`, `pitch_cam = -pitch_mc`. `None` without dimension
+/// layout knowledge: the window is column-local then and the player's
+/// world y has no meaning in it — the honest state is "no pose", never a
+/// guess (the world screen keeps its deterministic flight camera).
+pub fn snapshot_camera(player: &PlayerPosition, min_y: Option<i32>, side: usize) -> Option<Camera> {
+    let min_y = min_y?;
+    let origin = snapshot_window_origin(player, side);
+    let y_base = snapshot_y_base(player, Some(min_y));
+    let feet = Vec3::new(
+        player.x - (origin.0 * CHUNK_X as i32) as f32,
+        player.y - y_base as f32,
+        player.z - (origin.1 * CHUNK_Z as i32) as f32,
+    );
+    Some(Camera {
+        pos: feet.add(Vec3::new(0.0, PLAYER_EYE_HEIGHT, 0.0)),
+        yaw: player.yaw.to_radians() + std::f32::consts::PI,
+        pitch: -player.pitch.to_radians(),
+    })
 }
 
 /// Materialize the join milestone's world: the snapshot adopts into a
@@ -136,12 +188,28 @@ pub fn materialize_snapshot(
     side: usize,
     mapper: impl FnMut(u32) -> u16,
 ) -> World {
+    materialize_snapshot_view(snap, side, mapper).world
+}
+
+/// The full join view: the materialized grid PLUS the camera pose from
+/// the same window decisions ([`materialize_snapshot`] is the world-only
+/// projection of this). The join worker calls this off the frame thread
+/// and ships both parts in the join result.
+pub fn materialize_snapshot_view(
+    snap: WorldSnapshot,
+    side: usize,
+    mapper: impl FnMut(u32) -> u16,
+) -> SnapshotView {
     let origin = snapshot_window_origin(&snap.player, side);
     let mut model = WorldModel::new();
     model.adopt_snapshot(snap);
     let player = model.player.as_ref().expect("adopt_snapshot pins the player");
     let y_base = snapshot_y_base(player, model.min_y);
-    materialize(&model, origin, side, y_base, mapper)
+    let camera = snapshot_camera(player, model.min_y, side);
+    SnapshotView {
+        world: materialize(&model, origin, side, y_base, mapper),
+        camera,
+    }
 }
 
 /// The REAL id mapper, GENERATED from the official jar's bootstrapped
@@ -456,6 +524,59 @@ mod tests {
         assert_eq!(snapshot_y_base(&p(-48.0), Some(-64)), -64, "exactly the anchor's reach");
         // nether layout (min_y 0): the same math over its own floor
         assert_eq!(snapshot_y_base(&p(40.0), Some(0)), 24);
+    }
+
+    #[test]
+    fn snapshot_camera_converts_the_vanilla_pose_into_the_grid_frame() {
+        let pose = |yaw: f32, pitch: f32| PlayerPosition {
+            x: 8.5,
+            y: 64.0,
+            z: -3.25,
+            yaw,
+            pitch,
+            flags: 0,
+            teleport_id: 1,
+        };
+        // without layout knowledge there is NO pose: the grid is
+        // column-local then and the player's world y means nothing in it
+        // — the honest state is "no pose", never a guess
+        assert!(snapshot_camera(&pose(0.0, 0.0), None, 5).is_none());
+
+        // grid-local placement: (8.5, -3.25) sits in chunk (0,-1), so the
+        // 5x5 window origin is (-2,-3) and the eye lands at
+        // (8.5+32, feet 64 - base 48 + eye, -3.25+48)
+        let cam = snapshot_camera(&pose(0.0, 0.0), Some(-64), 5).expect("pose with layout");
+        assert_eq!(cam.pos.x, 8.5 - (-2 * 16) as f32, "grid x over the window origin");
+        assert_eq!(cam.pos.y, 64.0 - 48.0 + PLAYER_EYE_HEIGHT, "feet anchor 16 up + the standing eye");
+        assert_eq!(cam.pos.z, -3.25 - (-3 * 16) as f32, "grid z over the window origin");
+        // vanilla yaw 0 = facing south (+Z) -> camera yaw pi (0 = -Z);
+        // the camera then looks exactly along +Z
+        assert_eq!(cam.yaw, std::f32::consts::PI);
+        assert_eq!(cam.pitch, 0.0);
+        assert_eq!(cam.forward().z, 1.0, "south is +Z");
+        assert!(cam.forward().x.abs() < 1e-6, "no sideways drift");
+        // vanilla yaw 270 = east (+X): the camera faces +X exactly like
+        // the procedural camera's FRAC_PI_2 east-facing default
+        let cam = snapshot_camera(&pose(270.0, 0.0), Some(-64), 5).unwrap();
+        assert_eq!(cam.yaw, 270.0f32.to_radians() + std::f32::consts::PI);
+        assert_eq!(cam.forward().x, 1.0, "east is +X");
+        assert!(cam.forward().z.abs() < 1e-6);
+        // vanilla yaw 180 = north (-Z) -> camera yaw 0
+        let cam = snapshot_camera(&pose(180.0, 0.0), Some(-64), 5).unwrap();
+        assert_eq!(cam.forward().z, -1.0, "north is -Z");
+        // vanilla pitch positive = DOWN: camera pitch flips the sign
+        let cam = snapshot_camera(&pose(0.0, 30.0), Some(-64), 5).unwrap();
+        assert_eq!(cam.pitch, -30.0f32.to_radians());
+        assert!(cam.forward().y < 0.0, "vanilla +30 looks 30 degrees down");
+        // near the world floor the clamp slides the feet up the grid
+        // (y_base clamped at min_y) and the eye rides along
+        let low = PlayerPosition { y: -60.0, ..pose(0.0, 0.0) };
+        let cam = snapshot_camera(&low, Some(-64), 5).unwrap();
+        assert_eq!(
+            cam.pos.y,
+            -60.0 - -64.0 as f32 + PLAYER_EYE_HEIGHT,
+            "feet at grid 4 through the clamp, eye 1.62 above"
+        );
     }
 
     #[test]

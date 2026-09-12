@@ -2,6 +2,9 @@
 
 use crate::math::{Mat4, Vec3};
 
+/// A plain pose value — the join result ships one to the frame thread
+/// (the teleport's exact look direction), so derives follow the data.
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Camera {
     pub pos: Vec3,
     /// Radians, 0 = looking toward -Z.
