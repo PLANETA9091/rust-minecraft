@@ -269,15 +269,16 @@ fn generate(agent: &ureq::Agent, cache: &util::Cache, version: &str, out: &Path)
         }),
         None => 0,
     };
-    // Menu music: the real .ogg files stream as asset-index objects (the
-    // jar ships only sounds.json). Fetch every `music.menu` track into the
-    // runtime asset root so the client decodes + plays identical audio.
-    let music_files = match &index {
-        Some(i) => fetch_menu_music(agent, cache, i, &sounds_json, &workspace_root).unwrap_or_else(|e| {
-            eprintln!("      warning: menu music fetch failed ({e}); client falls back to silence");
-            0
+    // Menu music + UI sounds: the real .ogg files stream as asset-index
+    // objects (the jar ships only sounds.json). Fetch every `music.menu`
+    // track AND the vanilla UI click (the sound every button press plays)
+    // into the runtime asset root so the client decodes + plays them.
+    let (music_files, ui_sound_files) = match &index {
+        Some(i) => fetch_ui_audio(agent, cache, i, &sounds_json, &workspace_root).unwrap_or_else(|e| {
+            eprintln!("      warning: menu audio fetch failed ({e}); client falls back to silence");
+            (0, 0)
         }),
-        None => 0,
+        None => (0, 0),
     };
     let pano_root = workspace_root.join("assets-cache/jar");
     let pano_names: Vec<(String, String)> = (0..6)
@@ -290,7 +291,7 @@ fn generate(agent: &ureq::Agent, cache: &util::Cache, version: &str, out: &Path)
         .collect();
     uigen::merge_from_disk(&mut ui, &pano_root, &pano_names, true)?;
     println!(
-        "      glyphs: {} ({} textures) | lang: {} | splashes: {} | sprites: {} | sound events: {} | biomes: {} | panorama faces: {} | menu music: {}",
+        "      glyphs: {} ({} textures) | lang: {} | splashes: {} | sprites: {} | sound events: {} | biomes: {} | panorama faces: {} | menu music: {} | ui sounds: {}",
         font.glyphs.len(),
         font.textures.len(),
         lang.map.len(),
@@ -299,7 +300,8 @@ fn generate(agent: &ureq::Agent, cache: &util::Cache, version: &str, out: &Path)
         sounds_json.events.len(),
         worldgen.biomes.len(),
         panorama_faces,
-        music_files
+        music_files,
+        ui_sound_files
     );
     println!(
         "      sky: day period {} ticks, {} moon phases, celestial textures {}x{}",
@@ -391,27 +393,33 @@ fn fetch_title_panorama(
     Ok(n)
 }
 
-/// Fetch the real menu music .ogg files through the asset index. sounds.json
-/// names are relative to `assets/minecraft/sounds/` (extension optional — the
-/// vanilla sound engine appends `.ogg`); the asset index keys include the
-/// `minecraft/` prefix. Every file is sha1-verified against the index object.
-/// Returns the number of files fetched (duplicates across events deduped).
-fn fetch_menu_music(
+/// Sound events the client plays beyond menu music, by exact id. The vanilla
+/// UI button press sound lives here: every GUI button click plays
+/// `ui.button.click` (26.2: one file, `random/click_stereo`).
+const UI_SOUND_EVENTS: [&str; 1] = ["ui.button.click"];
+
+/// Fetch the real menu music + UI sound .ogg files through the asset index.
+/// sounds.json names are relative to `assets/minecraft/sounds/` (extension
+/// optional — the vanilla sound engine appends `.ogg`); the asset index keys
+/// include the `minecraft/` prefix. Every file is sha1-verified against the
+/// index object. Returns (music files, ui sound files) fetched (duplicates
+/// across events deduped).
+fn fetch_ui_audio(
     agent: &ureq::Agent,
     cache: &util::Cache,
     index: &mc_assets::AssetIndex,
     sounds: &soundgen::SoundData,
     workspace_root: &Path,
-) -> Result<usize> {
+) -> Result<(usize, usize)> {
     // 26.2 ships one `music.menu` event with many weighted files (older
     // versions had per-track `music.menu.menu1` children) — match both.
-    let mut fetched = 0usize;
+    let wanted = |id: &str| {
+        id.starts_with("music.menu") || UI_SOUND_EVENTS.contains(&id)
+    };
+    let mut music = 0usize;
+    let mut ui = 0usize;
     let mut seen = std::collections::BTreeSet::new();
-    for ev in sounds
-        .events
-        .values()
-        .filter(|e| e.id.starts_with("music.menu"))
-    {
+    for ev in sounds.events.values().filter(|e| wanted(&e.id)) {
         for f in &ev.files {
             let name = if f.name.ends_with(".ogg") {
                 f.name.clone()
@@ -435,10 +443,14 @@ fn fetch_menu_music(
                 .join(&name);
             std::fs::create_dir_all(dest.parent().unwrap())?;
             std::fs::write(&dest, &bytes)?;
-            fetched += 1;
+            if ev.id.starts_with("music.menu") {
+                music += 1;
+            } else {
+                ui += 1;
+            }
         }
     }
-    Ok(fetched)
+    Ok((music, ui))
 }
 
 /// Fetch the jar (cache-first), resolve the atlas, write generated/atlas.rs.
