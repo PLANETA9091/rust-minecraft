@@ -56,8 +56,10 @@ hand-drawn:
   connected line carrying the network's real world facts — entity id,
   view distance, decoded chunk count). Decoded columns land in a compact
   client-side **world model** (chunk-keyed storage, vanilla block-index
-  queries, replace/unload semantics) — the substrate the in-world view of
-  a network server builds on.
+  queries, replace/unload semantics) with a **materializer** that projects
+  any window of it into the renderer's voxel grid (injectable id mapping —
+  numeric global ids stay bytecode-true generator work) — the substrate
+  the in-world view of a network server builds on.
 - **Singleplayer world** — clicking `Singleplayer` enters a live 3D world
   view rendered by the same deterministic CPU raster path as the pixel
   tests: real block textures from the generated atlas, the **official
