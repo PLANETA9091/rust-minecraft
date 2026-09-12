@@ -323,10 +323,57 @@ impl WorldModel {
     /// any Set Time: the world with no clock opinion is day, and the
     /// factor multiplies the sky brightness term exactly as the
     /// vanilla lightmap shader's `SkyFactor` does.
+    ///
+    /// The curve is DATA-DRIVEN when the configuration knowledge can
+    /// name one: the synced TIMELINE registry's entry whose track the
+    /// dimension carries, evaluated through the same math as the
+    /// compile-time snapshot ([`crate::timeline::evaluate`]). A server
+    /// with no timeline knowledge falls back to the snapshot — the
+    /// jar's day.json keyframes, bit-identical values.
     pub fn sky_factor(&self) -> f32 {
-        self.day_tick()
-            .map(crate::timeline::sky_light_factor)
-            .unwrap_or(1.0)
+        match self.day_tick() {
+            None => 1.0,
+            Some(tick) => match self.timeline_curve() {
+                Some((keyframes, period)) => {
+                    crate::timeline::evaluate(keyframes, Some(period), tick)
+                }
+                None => crate::timeline::sky_light_factor(tick),
+            },
+        }
+    }
+
+    /// The dimension's `visual/sky_light_factor` curve from the synced
+    /// TIMELINE registry — `Some((keyframes, period))` when the
+    /// configuration knowledge names one. The chain (each narrowing,
+    /// the first hit wins): the current dimension's `timelines`
+    /// reference names the candidates — the TAG form
+    /// `#minecraft:in_overworld` resolves through the Update Tags
+    /// payload's member ids, a bare id names one timeline directly —
+    /// and with NO reference the fallback candidates are every
+    /// timeline whose `clock` matches the dimension's `default_clock`.
+    /// Among the candidates the first timeline CARRYING the track
+    /// serves: vanilla merges multiple timelines per attribute track,
+    /// but in real data exactly one overworld timeline
+    /// (`minecraft:day`) carries `visual/sky_light_factor` — the
+    /// first-carrier rule is the honest minimal contract, the
+    /// multi-timeline merge (the track's `modifier`) is future work.
+    fn timeline_curve(&self) -> Option<(&[(i64, f32)], i64)> {
+        let dim = self.current_dimension.as_ref()?;
+        let entry = self.registry.dimension(dim)?;
+        let clock_name = entry.default_clock.as_deref()?;
+        let mut candidates: Vec<&mc_protocol::TimelineEntry> = Vec::new();
+        match entry.timelines.as_deref() {
+            Some(t) if t.starts_with('#') => {
+                let ids = self.registry.timeline_tag_ids(&t[1..])?;
+                candidates.extend(ids.iter().filter_map(|&id| self.registry.timelines.get(id as usize)));
+            }
+            Some(id) => candidates.extend(self.registry.timelines.iter().filter(|e| e.name == id)),
+            None => candidates.extend(
+                self.registry.timelines.iter().filter(|e| e.clock == clock_name),
+            ),
+        }
+        let tl = candidates.into_iter().find(|e| e.sky_light_factor.is_some())?;
+        Some((tl.sky_light_factor.as_deref()?, tl.period_ticks? as i64))
     }
 
     /// Sky light (0..=15) at (x, y, z) — the same coordinate conventions
@@ -556,6 +603,7 @@ mod tests {
                 min_y: -64,
                 height: 384,
                 default_clock: Some("minecraft:overworld".into()),
+                timelines: None,
             }],
             // the synced biome table: ids 0/1/2, arrival order
             biomes: vec![
@@ -564,6 +612,8 @@ mod tests {
                 "minecraft:desert".to_string(),
             ],
             world_clocks: Vec::new(),
+            timelines: Vec::new(),
+            timeline_tags: Vec::new(),
         };
         // the login pins the dimension: min_y goes live (world y -64 is
         // section 0's bottom, like every real overworld join)
@@ -800,17 +850,21 @@ mod tests {
                     min_y: -64,
                     height: 384,
                     default_clock: Some("minecraft:overworld".into()),
+                    timelines: None,
                 },
                 DimensionTypeEntry {
                     name: "minecraft:the_nether".into(),
                     min_y: 0,
                     height: 256,
                     default_clock: None, // no day cycle in the nether
+                    timelines: None,
                 },
             ],
             biomes: Vec::new(),
             // the synced id table: overworld = 0, the_end = 1
             world_clocks: vec!["minecraft:overworld".to_string(), "minecraft:the_end".to_string()],
+            timelines: Vec::new(),
+            timeline_tags: Vec::new(),
         };
         // BOTH clocks sync in ONE packet, the END's FIRST: the naive
         // first-clock rule would take the end's ticks; the named
@@ -841,6 +895,106 @@ mod tests {
         assert!(m.apply(PlayEvent::Time(ts2)));
         assert_eq!(m.day_tick(), None, "the overworld clock never arrived: no opinion");
         assert_eq!(m.sky_factor(), 1.0, "no opinion renders as day");
+    }
+
+    #[test]
+    fn sky_factor_reads_the_synced_timeline_registry_through_the_dimension_tag() {
+        let mut m = WorldModel::new();
+        m.current_dimension = Some("minecraft:overworld".into());
+        // the registry knowledge a real vanilla server streams: the
+        // overworld dimension with its default_clock AND its
+        // `timelines` tag reference; FOUR timelines in arrival order
+        // with an OFF-TAG curve-carrier FIRST (a clock-name filter
+        // would wrongly take it); the tag names ids 1..=3 only
+        m.registry = RegistryData {
+            dimension_types: vec![DimensionTypeEntry {
+                name: "minecraft:overworld".into(),
+                min_y: -64,
+                height: 384,
+                default_clock: Some("minecraft:overworld".into()),
+                timelines: Some("#minecraft:in_overworld".into()),
+            }],
+            biomes: Vec::new(),
+            world_clocks: vec!["minecraft:overworld".to_string()],
+            timelines: vec![
+                // id 0: carries a curve but is NOT in the dimension's
+                // tag — vanilla merges only the tag's members, so this
+                // half-day plateau must never serve
+                mc_protocol::TimelineEntry {
+                    name: "minecraft:test_alt".into(),
+                    clock: "minecraft:overworld".into(),
+                    period_ticks: Some(24_000),
+                    sky_light_factor: Some(vec![(0, 1.0), (12_000, 0.5)]),
+                },
+                // id 1: THE curve-carrier (the real day.json keyframes)
+                mc_protocol::TimelineEntry {
+                    name: "minecraft:day".into(),
+                    clock: "minecraft:overworld".into(),
+                    period_ticks: Some(24_000),
+                    sky_light_factor: Some(vec![
+                        (730, 1.0),
+                        (11_270, 1.0),
+                        (13_140, 0.24),
+                        (22_860, 0.24),
+                    ]),
+                },
+                // id 2: the moon — overworld clock, NO visual track
+                mc_protocol::TimelineEntry {
+                    name: "minecraft:moon".into(),
+                    clock: "minecraft:overworld".into(),
+                    period_ticks: Some(192_000),
+                    sky_light_factor: None,
+                },
+                // id 3: early_game — no period at all
+                mc_protocol::TimelineEntry {
+                    name: "minecraft:early_game".into(),
+                    clock: "minecraft:overworld".into(),
+                    period_ticks: None,
+                    sky_light_factor: None,
+                },
+            ],
+            timeline_tags: vec![("minecraft:in_overworld".to_string(), vec![1, 2, 3])],
+        };
+        // the overworld clock at midnight: the TAG path picks
+        // minecraft:day -> the night plateau 0.24, NOT test_alt's 0.5
+        let p = mc_protocol::play::test_support::set_time_packet(1, &[(0, 18_000, 0.0, 1.0)]);
+        let ts = mc_protocol::play::parse_set_time(&p).expect("set time parses");
+        assert!(m.apply(PlayEvent::Time(ts)));
+        assert_eq!(
+            m.sky_factor(),
+            0.24,
+            "the tag narrowed to minecraft:day — the off-tag carrier never serves"
+        );
+        // noon through the registry curve
+        let p2 = mc_protocol::play::test_support::set_time_packet(2, &[(0, 6_000, 0.0, 1.0)]);
+        let ts2 = mc_protocol::play::parse_set_time(&p2).unwrap();
+        assert!(m.apply(PlayEvent::Time(ts2)));
+        assert_eq!(m.sky_factor(), 1.0, "noon is full day through the registry curve");
+        // back to midnight for the fallback contracts
+        let p3 = mc_protocol::play::test_support::set_time_packet(3, &[(0, 18_000, 0.0, 1.0)]);
+        let ts3 = mc_protocol::play::parse_set_time(&p3).unwrap();
+        assert!(m.apply(PlayEvent::Time(ts3)));
+        // the tag UNKNOWN: the clock-name filter serves (a partial-
+        // knowledge client uses what it can) — the first carrier among
+        // the overworld-clocked timelines, which is test_alt here: its
+        // dusk ramp (12000 -> 24000) is halfway through at 18_000
+        m.registry.timeline_tags.clear();
+        assert_eq!(
+            m.sky_factor(),
+            0.75,
+            "no tag knowledge: the clock filter's first carrier serves"
+        );
+        // NO registry knowledge at all (a bare mock server): the
+        // compile-time day.json snapshot — the same values bit-for-bit
+        m.registry.timelines.clear();
+        assert_eq!(m.sky_factor(), 0.24, "midnight through the snapshot's curve");
+        // and with neither table the snapshot is the day.json constants
+        let mut bare = WorldModel::new();
+        bare.current_dimension = Some("minecraft:overworld".into());
+        let p4 = mc_protocol::play::test_support::set_time_packet(4, &[(0, 18_000, 0.0, 1.0)]);
+        let ts4 = mc_protocol::play::parse_set_time(&p4).unwrap();
+        assert!(bare.apply(PlayEvent::Time(ts4)));
+        assert_eq!(bare.sky_factor(), 0.24, "the snapshot IS the jar's day.json curve");
     }
 
     #[test]
@@ -883,9 +1037,12 @@ mod tests {
                     min_y: -64,
                     height: 384,
                     default_clock: Some("minecraft:overworld".into()),
+                    timelines: None,
                 }],
                 biomes: Vec::new(),
                 world_clocks: Vec::new(),
+            timelines: Vec::new(),
+            timeline_tags: Vec::new(),
             },
         });
         assert_eq!(m.loaded_chunks(), 1);
@@ -947,10 +1104,13 @@ mod tests {
                         min_y: *min_y,
                         height: *height,
                         default_clock: None,
+                        timelines: None,
                     })
                     .collect(),
                 biomes: Vec::new(),
                 world_clocks: Vec::new(),
+            timelines: Vec::new(),
+            timeline_tags: Vec::new(),
             },
         };
         m.adopt_snapshot(snap(&[
@@ -971,11 +1131,13 @@ mod tests {
         let mut m = WorldModel::new();
         m.registry = RegistryData {
             dimension_types: vec![
-                DimensionTypeEntry { name: "minecraft:overworld".into(), min_y: -64, height: 384, default_clock: Some("minecraft:overworld".into()) },
-                DimensionTypeEntry { name: "minecraft:the_nether".into(), min_y: 0, height: 256, default_clock: None },
+                DimensionTypeEntry { name: "minecraft:overworld".into(), min_y: -64, height: 384, default_clock: Some("minecraft:overworld".into()) , timelines: None },
+                DimensionTypeEntry { name: "minecraft:the_nether".into(), min_y: 0, height: 256, default_clock: None , timelines: None },
             ],
             biomes: Vec::new(),
             world_clocks: Vec::new(),
+            timelines: Vec::new(),
+            timeline_tags: Vec::new(),
         };
         assert_eq!(m.min_y, None, "no knowledge before the server speaks");
         // the login carries the current dimension (CommonPlayerSpawnInfo)

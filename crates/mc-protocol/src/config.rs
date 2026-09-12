@@ -898,6 +898,9 @@ pub mod test_support {
                 ("height".into(), Nbt::Int(384)),
                 ("has_skylight".into(), Nbt::Byte(1)),
                 ("default_clock".into(), Nbt::String("minecraft:overworld".into())),
+                // the dimension's timelines reference, VERBATIM from the
+                // vanilla overworld element (the tag form)
+                ("timelines".into(), Nbt::String("#minecraft:in_overworld".into())),
             ]);
             crate::nbt::write_network_nbt(&ow, &mut p).expect("overworld element writes");
             // entry 2: nether — NO default_clock (no day cycle), the
@@ -941,6 +944,136 @@ pub mod test_support {
         p.push(0); // no tag — the unit element
         write_string(&mut p, "minecraft:the_end");
         p.push(0);
+        p
+    }
+
+    /// A `minecraft:timeline` Registry Data packet: the FOUR built-in
+    /// overworld timelines in the in_overworld tag's id reality —
+    /// `minecraft:day` (overworld clock, period 24000, the REAL
+    /// day.json visual/sky_light_factor keyframes), `minecraft:moon`
+    /// (period 192000, a moon_phase track only — no visual track),
+    /// `minecraft:early_game` (NO period, a gameplay bool track),
+    /// `minecraft:villager_schedule` (a gameplay track). The other
+    /// tracks ride the shapes the real data uses (string keyframes,
+    /// bool keyframes, an ease field) so the parse's walk-past
+    /// discipline is exercised against honest shapes.
+    pub fn timeline_packet() -> Vec<u8> {
+        let day_kfs = Nbt::List(vec![
+            Nbt::Compound(vec![("ticks".into(), Nbt::Int(730)), ("value".into(), Nbt::Float(1.0))]),
+            Nbt::Compound(vec![("ticks".into(), Nbt::Int(11_270)), ("value".into(), Nbt::Float(1.0))]),
+            Nbt::Compound(vec![("ticks".into(), Nbt::Int(13_140)), ("value".into(), Nbt::Float(0.24))]),
+            Nbt::Compound(vec![("ticks".into(), Nbt::Int(22_860)), ("value".into(), Nbt::Float(0.24))]),
+        ]);
+        let day = Nbt::Compound(vec![
+            ("clock".into(), Nbt::String("minecraft:overworld".into())),
+            ("period_ticks".into(), Nbt::Int(24_000)),
+            (
+                "tracks".into(),
+                Nbt::Compound(vec![(
+                    "minecraft:visual/sky_light_factor".into(),
+                    Nbt::Compound(vec![("keyframes".into(), day_kfs)]),
+                )]),
+            ),
+        ]);
+        // the moon timeline: a STRING-valued track (the real
+        // moon_phase keyframes) — walked past, no visual track
+        let moon = Nbt::Compound(vec![
+            ("clock".into(), Nbt::String("minecraft:overworld".into())),
+            ("period_ticks".into(), Nbt::Int(192_000)),
+            (
+                "tracks".into(),
+                Nbt::Compound(vec![(
+                    "minecraft:visual/moon_phase".into(),
+                    Nbt::Compound(vec![(
+                        "keyframes".into(),
+                        Nbt::List(vec![
+                            Nbt::Compound(vec![
+                                ("ticks".into(), Nbt::Int(0)),
+                                ("value".into(), Nbt::String("minecraft:full_moon".into())),
+                            ]),
+                            Nbt::Compound(vec![
+                                ("ticks".into(), Nbt::Int(24000)),
+                                ("value".into(), Nbt::String("minecraft:waning_gibbous".into())),
+                            ]),
+                        ]),
+                    )]),
+                )]),
+            ),
+        ]);
+        // early_game: NO period, a BOOL track with an ease field — the
+        // non-cyclic + walk-past shapes in one entry
+        let early = Nbt::Compound(vec![
+            ("clock".into(), Nbt::String("minecraft:overworld".into())),
+            (
+                "tracks".into(),
+                Nbt::Compound(vec![(
+                    "minecraft:gameplay/can_pillager_patrol_spawn".into(),
+                    Nbt::Compound(vec![
+                        ("ease".into(), Nbt::String("constant".into())),
+                        (
+                            "keyframes".into(),
+                            Nbt::List(vec![
+                                Nbt::Compound(vec![
+                                    ("ticks".into(), Nbt::Int(0)),
+                                    ("value".into(), Nbt::Byte(0)),
+                                ]),
+                                Nbt::Compound(vec![
+                                    ("ticks".into(), Nbt::Int(120_000)),
+                                    ("value".into(), Nbt::Byte(1)),
+                                ]),
+                            ]),
+                        ),
+                    ]),
+                )]),
+            ),
+        ]);
+        let villager = Nbt::Compound(vec![
+            ("clock".into(), Nbt::String("minecraft:overworld".into())),
+            ("period_ticks".into(), Nbt::Int(24_000)),
+        ]);
+        let mut p = Vec::new();
+        write_varint(&mut p, clientbound::REGISTRY_DATA);
+        write_string(&mut p, "minecraft:timeline");
+        write_varint(&mut p, 4);
+        for (name, element) in [
+            ("minecraft:day", &day),
+            ("minecraft:moon", &moon),
+            ("minecraft:early_game", &early),
+            ("minecraft:villager_schedule", &villager),
+        ] {
+            write_string(&mut p, name);
+            p.push(1); // the element codec requires `clock` — tag present
+            crate::nbt::write_network_nbt(element, &mut p).expect("timeline element writes");
+        }
+        p
+    }
+
+    /// An Update Tags packet: TWO registries — `minecraft:timeline`
+    /// with the REAL built-in tag contents (in_overworld = the day/
+    /// moon/early_game ids, universal = the villager_schedule id) and
+    /// a walked-past biome tag registry (the shape a real server's
+    /// huge block/biome tag maps ride in).
+    pub fn update_tags_packet() -> Vec<u8> {
+        let mut p = Vec::new();
+        write_varint(&mut p, clientbound::UPDATE_TAGS);
+        write_varint(&mut p, 2); // two registries
+        // registry 1: the timeline tags the client retains
+        write_string(&mut p, "minecraft:timeline");
+        write_varint(&mut p, 2); // two tags
+        write_string(&mut p, "minecraft:in_overworld");
+        write_varint(&mut p, 3);
+        write_varint(&mut p, 0); // day
+        write_varint(&mut p, 1); // moon
+        write_varint(&mut p, 2); // early_game
+        write_string(&mut p, "minecraft:universal");
+        write_varint(&mut p, 1);
+        write_varint(&mut p, 3); // villager_schedule
+        // registry 2: walked past (nothing consumes biome tags yet)
+        write_string(&mut p, "minecraft:worldgen/biome");
+        write_varint(&mut p, 1);
+        write_string(&mut p, "minecraft:is_overworld");
+        write_varint(&mut p, 1);
+        write_varint(&mut p, 0); // plains
         p
     }
 }
@@ -1124,12 +1257,18 @@ mod tests {
             Some("minecraft:overworld"),
             "the element's default_clock name is retained"
         );
+        assert_eq!(
+            ow.timelines.as_deref(),
+            Some("#minecraft:in_overworld"),
+            "the element's timelines reference is retained VERBATIM (the tag form)"
+        );
         let nether = data.dimension("minecraft:the_nether").expect("nether");
         assert_eq!((nether.min_y, nether.height), (0, 256));
         assert_eq!(
             nether.default_clock, None,
             "the nether has no day cycle — no default_clock on the element"
         );
+        assert_eq!(nether.timelines, None, "the nether references no timelines either");
         assert!(data.dimension("minecraft:the_end").is_none());
         // the biome registry: names RETAINED in arrival order (the id ->
         // name table the chunk biome palettes resolve through), the tag
@@ -1150,6 +1289,53 @@ mod tests {
         assert_eq!(clocks.world_clock_id("minecraft:the_end"), Some(1));
         assert_eq!(clocks.world_clock_id("minecraft:nowhere"), None);
         assert!(clocks.biomes.is_empty() && clocks.dimension_types.is_empty());
+        // the timeline registry: FOUR entries in arrival order, only
+        // `minecraft:day` carrying the visual/sky_light_factor track —
+        // the string/bool tracks and the ease field are walked past
+        let timelines = parse_registry_data(&timeline_packet()).expect("timeline parses");
+        assert_eq!(
+            timelines.timelines.iter().map(|t| t.name.as_str()).collect::<Vec<_>>(),
+            vec![
+                "minecraft:day",
+                "minecraft:moon",
+                "minecraft:early_game",
+                "minecraft:villager_schedule",
+            ]
+        );
+        let day = &timelines.timelines[0];
+        assert_eq!(day.clock, "minecraft:overworld");
+        assert_eq!(day.period_ticks, Some(24_000));
+        assert_eq!(
+            day.sky_light_factor.as_deref(),
+            Some(&[
+                (730i64, 1.0f32),
+                (11_270, 1.0),
+                (13_140, 0.24),
+                (22_860, 0.24),
+            ][..]),
+            "the REAL day.json keyframes decode"
+        );
+        let moon = &timelines.timelines[1];
+        assert_eq!(moon.period_ticks, Some(192_000));
+        assert_eq!(
+            moon.sky_light_factor, None,
+            "the moon's string-valued track is walked past, not misread"
+        );
+        assert_eq!(timelines.timelines[2].period_ticks, None, "early_game is non-cyclic");
+        assert_eq!(timelines.timelines[2].sky_light_factor, None, "bool track walked past");
+        assert_eq!(timelines.timelines[3].sky_light_factor, None);
+        // a timeline entry WITHOUT its element tag is the drift it is —
+        // the element codec requires `clock`
+        let mut tagless = Vec::new();
+        write_varint(&mut tagless, clientbound::REGISTRY_DATA);
+        write_string(&mut tagless, "minecraft:timeline");
+        write_varint(&mut tagless, 1);
+        write_string(&mut tagless, "minecraft:day");
+        tagless.push(0); // NO tag — required-element drift
+        assert!(
+            parse_registry_data(&tagless).is_err(),
+            "a tagless timeline entry errors, never guesses"
+        );
         // wrong packet id is rejected, not guessed
         let mut wrong = Vec::new();
         write_varint(&mut wrong, 0x99);
@@ -1276,6 +1462,57 @@ mod tests {
         assert_eq!(log[1], "ack:0x03:0x03");
         assert_eq!(log[2], "info:0x00:0x00");
         assert_eq!(log[3], "brand:0x02:0x02");
+    }
+
+    #[test]
+    fn update_tags_narrow_the_timelines_and_walk_the_rest() {
+        // the common-phase tag payload: only the timeline tags are
+        // retained, the biome registry's payload is walked past
+        let tags = parse_update_tags(&update_tags_packet()).expect("update tags parse");
+        assert_eq!(
+            tags.timeline_tags,
+            vec![
+                ("minecraft:in_overworld".to_string(), vec![0, 1, 2]),
+                ("minecraft:universal".to_string(), vec![3]),
+            ]
+        );
+        assert_eq!(
+            tags.timeline_tag_ids("minecraft:in_overworld"),
+            Some(&[0, 1, 2][..]),
+            "the tag the overworld dimension's `timelines` reference names"
+        );
+        assert_eq!(tags.timeline_tag_ids("minecraft:in_the_void"), None);
+        assert!(tags.timelines.is_empty(), "tags carry names+ids, never elements");
+        // wrong packet id is rejected, not guessed
+        let mut wrong = Vec::new();
+        write_varint(&mut wrong, 0x99);
+        assert!(parse_update_tags(&wrong).is_err());
+        // a truncated tag stream (value count lies) errors
+        let mut short = Vec::new();
+        write_varint(&mut short, clientbound::UPDATE_TAGS);
+        write_varint(&mut short, 1);
+        write_string(&mut short, "minecraft:timeline");
+        write_varint(&mut short, 1);
+        write_string(&mut short, "minecraft:in_overworld");
+        write_varint(&mut short, 5); // says five values...
+        write_varint(&mut short, 0);
+        assert!(parse_update_tags(&short).is_err(), "...and delivers one");
+        // the merged flow: registry packets AND update tags land in ONE
+        // RegistryData (the run_configuration accumulation)
+        let mut merged = parse_registry_data(&timeline_packet()).expect("timelines");
+        merged.merge(parse_update_tags(&update_tags_packet()).expect("tags"));
+        assert_eq!(merged.timelines.len(), 4);
+        assert_eq!(merged.timeline_tags.len(), 2);
+        // the full chain the model resolves through: tag -> ids ->
+        // arrival-order names
+        let names: Vec<&str> = merged
+            .timeline_tag_ids("minecraft:in_overworld")
+            .expect("tag")
+            .iter()
+            .filter_map(|&id| merged.timelines.get(id as usize))
+            .map(|t| t.name.as_str())
+            .collect();
+        assert_eq!(names, vec!["minecraft:day", "minecraft:moon", "minecraft:early_game"]);
     }
 
     #[test]

@@ -788,9 +788,12 @@ mod tests {
                 min_y: -64,
                 height: 384,
                 default_clock: Some("minecraft:overworld".into()),
+                timelines: None,
             }],
             biomes: Vec::new(),
             world_clocks: Vec::new(),
+            timelines: Vec::new(),
+            timeline_tags: Vec::new(),
         };
         snap.chunks[0].sections = (0..7)
             .map(|_| air_section())
@@ -909,9 +912,12 @@ mod tests {
                 min_y: -64,
                 height: 384,
                 default_clock: Some("minecraft:overworld".into()),
+                timelines: None,
             }],
             biomes: Vec::new(),
             world_clocks: Vec::new(),
+            timelines: Vec::new(),
+            timeline_tags: Vec::new(),
         };
         snap.chunks[0].sections = (0..7)
             .map(|_| air_section())
@@ -1062,6 +1068,7 @@ mod tests {
             min_y: 0,
             height: 256,
             default_clock: None,
+            timelines: None,
         });
         // the synced biome table BOTH dimensions share (a real vanilla
         // server streams the whole worldgen/biome registry): plains 0,

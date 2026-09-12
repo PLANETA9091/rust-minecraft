@@ -24,7 +24,7 @@ pub mod status;
 pub mod varint;
 
 pub use config::{
-    connect_and_join_play, join_play, join_play_conn, DimensionTypeEntry, PlayOutcome, RegistryData,
+    connect_and_join_play, join_play, join_play_conn, DimensionTypeEntry, PlayOutcome, RegistryData, TimelineEntry,
 };
 pub use nbt::Nbt;
 pub use play::{
