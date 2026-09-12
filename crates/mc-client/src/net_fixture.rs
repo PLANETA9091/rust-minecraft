@@ -34,17 +34,20 @@ use mc_registry::generated::block_ids::BLOCK_RANGES;
 /// procedural goldens' geometry exactly.
 pub const FIXTURE_SIDE: usize = 5;
 
-/// The torch cell (grid x, world y, grid z): under the shelf, one above
-/// the ground skin — the emitter whose gradient the block arrays carry.
-const TORCH: (i32, i32, i32) = (40, 31, 45);
+/// The torch cell (grid x, world y, grid z): under the shelf, mid-gap
+/// above the ground skin — the emitter whose gradient the arrays carry.
+const TORCH: (i32, i32, i32) = (48, 15, 48);
 
 /// The shelf: footprint (grid x/z ranges) and the solid slab rows. The
 /// sky arrays mark every cell inside the footprint at or below
-/// [`SHELF_TOP`] as sky 0 — the server's shadow.
-const SHELF_X: (i32, i32) = (36, 44);
-const SHELF_Z: (i32, i32) = (42, 48);
-const SHELF_BOTTOM: i32 = 32;
-const SHELF_TOP: i32 = 34;
+/// [`SHELF_TOP`] as sky 0 — the server's shadow. The slab floats high
+/// enough (five rows of headroom) that the fixed orbit camera looks
+/// UNDER it: the shadowed ground and the torch glow face the lens
+/// through the open near corner.
+const SHELF_X: (i32, i32) = (44, 52);
+const SHELF_Z: (i32, i32) = (44, 52);
+const SHELF_BOTTOM: i32 = 20;
+const SHELF_TOP: i32 = 22;
 
 /// One block's first global state id, resolved FROM the generated table
 /// (never hardcoded): if the jar's registry drifts, the fixture panics
@@ -72,9 +75,12 @@ fn set_nibble(arr: &mut [u8; 2048], x: usize, y: usize, z: usize, level: u8) {
 }
 
 /// The stepped hill: a Chebyshev falloff from the grid center, integer
-/// only — 30 at the center, 25 at the rim, one step per 8 blocks.
+/// only — 14 at the center, 9 at the rim, one step per 8 blocks. The
+/// whole scene sits BELOW the orbit camera's eye (y 18.5, fixed by the
+/// CPU goldens' framing): a taller world would swallow the camera in
+/// solid stone.
 fn terrain_height(gx: i32, gz: i32) -> i32 {
-    30 - (gx - 40).abs().max((gz - 40).abs()) / 8
+    14 - (gx - 40).abs().max((gz - 40).abs()) / 8
 }
 
 fn on_shelf(gx: i32, gz: i32) -> bool {
@@ -119,13 +125,14 @@ fn build_section(palette: &[u32], entries: &[u32; 4096]) -> Vec<u8> {
     s
 }
 
-/// One column's FULL Chunk Data packet: three sections (underground,
-/// terrain skin, open sky) + the light tail with the engine layers.
-/// Sky: bit 1 (underground) known-empty, bit 2 mixed, bit 3 (open sky
-/// section) mixed by the shelf shadow, bit 4 (above the column) full
-/// 15. Block: bit 2 carries the torch gradient, everything else
-/// known-zero. Count == popcount holds by construction (the shared
-/// writer enforces it).
+/// One column's FULL Chunk Data packet: three sections (terrain skin +
+/// shelf, open sky, empty sky) + the light tail with the engine layers.
+/// Sky: bit 1 mixed (open air above the rim skin, 0 underground and
+/// under the shelf), bit 2 mixed (the shelf's shadow rows), bit 3 (the
+/// empty sky section) full 15, bit 4 (above the column) full 15, bit 0
+/// known-zero. Block: bits 1..=2 carry the torch gradient (it straddles
+/// the section border), the rest known-zero. Count == popcount holds by
+/// construction (the shared writer enforces it).
 fn fixture_packet(cx: i32, cz: i32) -> Vec<u8> {
     let air = 0u32;
     let stone = state_id("minecraft:stone");
@@ -141,19 +148,34 @@ fn fixture_packet(cx: i32, cz: i32) -> Vec<u8> {
     // palette carries the global state ids
     let pidx = |p: &[u32], id: u32| p.iter().position(|&x| x == id).expect("id in its palette") as u32;
 
-    // section 0: bedrock floor, stone body, deterministic ore sprinkles
-    let p0 = [air, stone, bedrock, coal, iron];
+    // section 0 (rows 0..=15): bedrock floor AND the terrain skin — the
+    // hill tops out at 14, so grass/dirt/stone-with-ores all live here;
+    // the pillars start here too
+    let p0 = [air, stone, bedrock, coal, iron, andesite, grass, dirt];
     let mut e0 = [0u32; 4096];
     for y in 0..16usize {
         for z in 0..16usize {
             for x in 0..16usize {
                 let (wy, wx, wz) = (y as i32, cx * 16 + x as i32, cz * 16 + z as i32);
-                let id = if y == 0 {
+                let h = terrain_height(wx, wz);
+                let id = if (wx == SHELF_X.0 && wz == SHELF_Z.1 || wx == SHELF_X.1 && wz == SHELF_Z.0)
+                    && (9..=SHELF_BOTTOM - 1).contains(&wy)
+                {
+                    stone // the two support pillars, ground to slab
+                } else if y == 0 {
                     bedrock
+                } else if wy > h {
+                    air
+                } else if wy == h {
+                    grass
+                } else if wy >= h - 3 {
+                    dirt
                 } else if (wx * 7 + wy * 13 + wz * 29) % 53 == 0 {
                     coal
                 } else if (wx * 11 + wy * 5 + wz * 17) % 71 == 5 {
                     iron
+                } else if (wx * 3 + wy * 19 + wz * 7) % 89 == 11 {
+                    andesite
                 } else {
                     stone
                 };
@@ -162,34 +184,21 @@ fn fixture_packet(cx: i32, cz: i32) -> Vec<u8> {
         }
     }
 
-    // section 1: the terrain skin — grass at h, dirt for 3 below, stone
-    // (with an andesite sprinkle) under that; the shelf slab and its
-    // pillars ride here too (rows 25..=31)
-    let p1 = [air, stone, andesite, grass, dirt];
+    // section 1 (rows 16..=31): the shelf slab (rows 20..=22) and the
+    // pillars' upper runs, open sky around them
+    let p1 = [air, stone];
     let mut e1 = [0u32; 4096];
     for y in 0..16usize {
         for z in 0..16usize {
             for x in 0..16usize {
                 let (wy, wx, wz) = (16 + y as i32, cx * 16 + x as i32, cz * 16 + z as i32);
-                let h = terrain_height(wx, wz);
-                let id = if on_shelf(wx, wz) && (SHELF_BOTTOM..=SHELF_TOP).contains(&wy) {
-                    stone
-                } else if (wx == SHELF_X.0 && wz == SHELF_Z.1 || wx == SHELF_X.1 && wz == SHELF_Z.0)
-                    && (25..=SHELF_BOTTOM - 1).contains(&wy)
+                let pillar = wx == SHELF_X.0 && wz == SHELF_Z.1
+                    || wx == SHELF_X.1 && wz == SHELF_Z.0;
+                if on_shelf(wx, wz) && (SHELF_BOTTOM..=SHELF_TOP).contains(&wy)
+                    || pillar && (16..=SHELF_BOTTOM - 1).contains(&wy)
                 {
-                    stone // the two support pillars, ground to slab
-                } else if wy > h {
-                    air
-                } else if wy == h {
-                    grass
-                } else if wy >= h - 3 {
-                    dirt
-                } else if (wx * 3 + wy * 19 + wz * 7) % 89 == 11 {
-                    andesite
-                } else {
-                    stone
-                };
-                e1[idx(x, y, z)] = pidx(&p1, id);
+                    e1[idx(x, y, z)] = pidx(&p1, stone);
+                }
             }
         }
     }
@@ -199,23 +208,25 @@ fn fixture_packet(cx: i32, cz: i32) -> Vec<u8> {
     let s1 = build_section(&p1, &e1);
     let s2 = build_section(&[air], &[0u32; 4096]);
 
-    // light arrays for the column's own sections (bits 1..=3), the
-    // engine layers (bit 0 below = known-zero, bit 4 above = full 15)
+    // light arrays for the column's own sections (bits 1..=3) — the
+    // torch's gradient and the open-air rows straddle sections 0 and 1,
+    // so BOTH carry real data; the engine layers: bit 0 below =
+    // known-zero, bit 4 above = full 15
+    let mut sky0 = [0u8; 2048];
+    let mut block0 = [0u8; 2048];
     let mut sky1 = [0u8; 2048];
     let mut sky2 = [0u8; 2048];
     let mut block1 = [0u8; 2048];
     for y in 0..16usize {
         for z in 0..16usize {
             for x in 0..16usize {
-                // section 1 rows 16..=31
+                let (wx, wz) = (cx * 16 + x as i32, cz * 16 + z as i32);
+                set_nibble(&mut sky0, x, y, z, sky_level(wx, y as i32, wz));
+                set_nibble(&mut block0, x, y, z, block_level(wx, y as i32, wz));
                 let wy1 = 16 + y as i32;
-                let (wx1, wz1) = (cx * 16 + x as i32, cz * 16 + z as i32);
-                set_nibble(&mut sky1, x, y, z, sky_level(wx1, wy1, wz1));
-                set_nibble(&mut block1, x, y, z, block_level(wx1, wy1, wz1));
-                // section 2 rows 32..=47
-                let wy2 = 32 + y as i32;
-                let (wx2, wz2) = (wx1, wz1);
-                set_nibble(&mut sky2, x, y, z, sky_level(wx2, wy2, wz2));
+                set_nibble(&mut sky1, x, y, z, sky_level(wx, wy1, wz));
+                set_nibble(&mut block1, x, y, z, block_level(wx, wy1, wz));
+                set_nibble(&mut sky2, x, y, z, sky_level(wx, 32 + y as i32, wz));
             }
         }
     }
@@ -224,10 +235,15 @@ fn fixture_packet(cx: i32, cz: i32) -> Vec<u8> {
         cx,
         cz,
         &[s0, s1, s2],
-        &[(2, sky1.to_vec()), (3, sky2.to_vec()), (4, vec![0xFF; 2048])],
-        &[0, 1],
-        &[(2, block1.to_vec())],
-        &[0, 1, 3, 4],
+        &[
+            (1, sky0.to_vec()),
+            (2, sky1.to_vec()),
+            (3, sky2.to_vec()),
+            (4, vec![0xFF; 2048]),
+        ],
+        &[0],
+        &[(1, block0.to_vec()), (2, block1.to_vec())],
+        &[0, 3, 4],
     )
 }
 
@@ -267,28 +283,29 @@ mod tests {
         // the light layer rode the whole chain: packets -> parse -> model
         // -> materialize
         let light = w.light.as_ref().expect("the fixture carries its light");
-        // grass skin at the hill's center (h(40,40) = 30)
-        assert_eq!(w.get(40, 30, 40), GRASS);
+        // grass skin at the hill's center (h(40,40) = 14)
+        assert_eq!(w.get(40, 14, 40), GRASS);
         // bedrock floor straight from the packet's first section
         assert_eq!(w.get(40, 0, 40), BEDROCK);
         // the shelf slab is stone, floating above the skin
-        assert_eq!(w.get(40, 33, 45), STONE);
+        assert_eq!(w.get(48, 21, 48), STONE);
         // open terrain: sky 15 (the ramp's top end — legacy-identical)
         let (sky, block) = light.cell(FIXTURE_SIDE, 40, 40, 40);
         assert_eq!(sky, Some(15));
         assert_eq!(block, Some(0));
         // under the shelf the server's shadow is HARD: sky 0 …
-        let (sky, block) = light.cell(FIXTURE_SIDE, 40, 30, 45);
+        let (sky, block) = light.cell(FIXTURE_SIDE, 48, 13, 48);
         assert_eq!(sky, Some(0));
-        // … and the torch paints the gradient: (40,30,45) is manhattan
-        // 2 from the emitter cell -> light 12
+        // … and the torch (48,15,48) paints the gradient: manhattan 2
+        // below the emitter -> light 12
         assert_eq!(block, Some(12));
-        // the air gap cell beside the emitter: manhattan 5 -> light 9
-        let (sky, block) = light.cell(FIXTURE_SIDE, 36, 31, 46);
+        // an air gap cell in the shadow, off the emitter: manhattan 4
+        // -> light 10
+        let (sky, block) = light.cell(FIXTURE_SIDE, 46, 15, 50);
         assert_eq!(sky, Some(0));
-        assert_eq!(block, Some(9));
+        assert_eq!(block, Some(10));
         // above the shelf the sky opens again
-        let (sky, _) = light.cell(FIXTURE_SIDE, 40, 36, 45);
+        let (sky, _) = light.cell(FIXTURE_SIDE, 48, 26, 48);
         assert_eq!(sky, Some(15));
     }
 
