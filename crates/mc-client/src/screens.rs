@@ -86,6 +86,34 @@ pub struct PingInfo {
     pub ping_ms: i32,
 }
 
+/// One requested offline-mode login: which row, which address. Append-only
+/// request log — the window backend drains new entries (by cursor), runs
+/// the blocking `mc_protocol::connect_and_login` on a worker thread and
+/// hands the outcome back through `App::login_finished`.
+#[derive(Debug, Clone, PartialEq)]
+pub struct LoginRequest {
+    pub id: u64,
+    /// Index into `App::servers` this request belongs to.
+    pub entry: usize,
+    pub host: String,
+    pub port: u16,
+}
+
+/// The slice of a login outcome the UI renders — screens stay
+/// protocol-agnostic (window.rs maps `mc_protocol::LoginOutcome` over).
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum LoginResult {
+    /// Login Success: the server accepted the offline profile.
+    Success { username: String },
+    /// Login Disconnect: the server refused, reason flattened from chat.
+    Disconnected { reason: String },
+}
+
+/// The vanilla client joins with its launcher session name; this build has
+/// no session service, so the offline profile "mc2rs" is the documented
+/// stand-in (the profile UUID is the real vanilla offline derivation).
+pub const PLAYER_NAME: &str = "mc2rs";
+
 /// Split a vanilla server address ("host" or "host:port") — the port
 /// defaults to 25565 exactly like the original server list.
 fn parse_address(addr: &str) -> (String, u16) {
@@ -119,6 +147,12 @@ pub enum ScreenKind {
     Options,
     /// In-world 3D view with the vanilla HUD (Singleplayer).
     World,
+    /// Vanilla ConnectScreen shown while a join is in flight (the blocking
+    /// login runs off the frame thread; Escape/Cancel returns to the list).
+    Connect,
+    /// Vanilla DisconnectedScreen: the join outcome (server-side login
+    /// disconnect reason, transport error, or the offline profile line).
+    Disconnect,
 }
 
 pub struct App {
@@ -157,6 +191,16 @@ pub struct App {
     pub net_requests: Vec<PingRequest>,
     /// Monotonic id for the next ping request (pairs requests with results).
     pub next_ping_id: u64,
+    /// Offline-mode login requests (append-only log, same protocol as the
+    /// pings): recorded by the "join" button, run off the frame thread by
+    /// the window backend, outcomes delivered via `login_finished`.
+    pub login_requests: Vec<LoginRequest>,
+    /// Monotonic id for the next login request.
+    pub next_login_id: u64,
+    /// DisconnectedScreen text (vanilla `disconnect.lost` title + the
+    /// flattened reason line; the Success path shows the factual outcome).
+    pub disconnect_title: String,
+    pub disconnect_reason: String,
 }
 
 /// World size for the in-game screen (chunks per side — same as the
@@ -226,6 +270,10 @@ impl App {
             ui_sounds: Vec::new(),
             net_requests: Vec::new(),
             next_ping_id: 0,
+            login_requests: Vec::new(),
+            next_login_id: 0,
+            disconnect_title: String::new(),
+            disconnect_reason: String::new(),
         }
     }
 
@@ -272,11 +320,15 @@ impl App {
     }
 
     /// Escape: toggles the pause menu while in game (vanilla behavior);
-    /// no-op on other screens.
+    /// leaves the connecting/outcome screens back to the server list
+    /// (in-flight logins keep running — late results carry unknown ids and
+    /// are ignored, exactly like the original's cancelled screens).
     pub fn on_escape(&mut self) {
         if self.screen == ScreenKind::World {
             self.paused = !self.paused;
             self.buttons.clear();
+        } else if matches!(self.screen, ScreenKind::Connect | ScreenKind::Disconnect) {
+            self.open(ScreenKind::Servers);
         }
     }
 
@@ -308,7 +360,16 @@ impl App {
                 // vanilla Refresh: re-ping every hosted server row; the
                 // blocking network work happens off the frame thread
                 "refresh" => self.refresh_servers(),
-                // "join" stays a no-op until the play state exists
+                // vanilla Join Server: hosted rows fire the real offline-mode
+                // login (ConnectScreen flow); placeholder rows keep the
+                // click a no-op — there is nothing reachable to join
+                "join" => self.join_selected_server(),
+                // vanilla ConnectScreen Cancel: abandon the in-flight join
+                // (late results carry unknown ids and are ignored)
+                "cancel" => self.open(ScreenKind::Servers),
+                // vanilla DisconnectedScreen back button: parent is the
+                // server list the join came from
+                "backtoservers" => self.open(ScreenKind::Servers),
                 _ => {}
             }
             // vanilla AbstractButton.playDownSound: EVERY activated button
@@ -377,6 +438,60 @@ impl App {
         }
     }
 
+    /// Vanilla "Join Server" on the selected row: only entries with a real
+    /// address can actually connect (placeholder rows keep the click a no-op
+    /// — there is nothing reachable to join). Records the login request in
+    /// the append-only log and opens the vanilla ConnectScreen; the window
+    /// backend runs the blocking `mc_protocol::connect_and_login` off the
+    /// frame thread and delivers the outcome through `login_finished`.
+    pub fn join_selected_server(&mut self) {
+        let Some(addr) = self
+            .servers
+            .get(self.selected_server)
+            .and_then(|s| s.host.clone())
+        else {
+            return;
+        };
+        let (host, port) = parse_address(&addr);
+        self.login_requests.push(LoginRequest {
+            id: self.next_login_id,
+            entry: self.selected_server,
+            host,
+            port,
+        });
+        self.next_login_id += 1;
+        self.open(ScreenKind::Connect);
+    }
+
+    /// Feed one finished login back into the UI (vanilla flow: a Login
+    /// Disconnect or transport error lands on the DisconnectedScreen with
+    /// the flattened reason; Login Success would proceed to the play state,
+    /// which does not exist yet — the documented stand-in shows the factual
+    /// outcome instead of pretending a world joined). Unknown or
+    /// already-consumed ids are ignored — the request log stays append-only.
+    pub fn login_finished(&mut self, id: u64, outcome: Result<LoginResult, String>) {
+        if !self.login_requests.iter().any(|r| r.id == id) {
+            return;
+        }
+        match outcome {
+            Ok(LoginResult::Success { username }) => {
+                self.disconnect_title = "Connected".to_string();
+                self.disconnect_reason = format!("Logged in as {username}");
+            }
+            Ok(LoginResult::Disconnected { reason }) => {
+                self.disconnect_title =
+                    tr("disconnect.lost").unwrap_or("Connection lost").to_string();
+                self.disconnect_reason = reason;
+            }
+            Err(e) => {
+                self.disconnect_title =
+                    tr("disconnect.lost").unwrap_or("Connection lost").to_string();
+                self.disconnect_reason = e;
+            }
+        }
+        self.open(ScreenKind::Disconnect);
+    }
+
     fn buttons_row_cx(&self) -> i32 {
         100 // gui center for 160x90 (scale 2 @ 320x180); screens recenter dynamically
     }
@@ -391,6 +506,8 @@ impl App {
             ScreenKind::Title => self.render_title(&mut g, a, w, h),
             ScreenKind::Servers => self.render_servers(&mut g, a, w, h),
             ScreenKind::Options => self.render_options(&mut g, a, w, h),
+            ScreenKind::Connect => self.render_connect(&mut g, a, w, h),
+            ScreenKind::Disconnect => self.render_disconnect(&mut g, a, w, h),
             ScreenKind::World => {
                 // 3D world first (full framebuffer resolution), then the
                 // HUD and pause overlay on top in GUI space.
@@ -751,6 +868,72 @@ impl App {
             b.render(g, a, -1, -1);
         }
     }
+    /// Vanilla ConnectScreen: dark backdrop, the official "Connecting to
+    /// server" line and a Cancel button (the blocking login runs off the
+    /// frame thread — the screen itself is static exactly like the original).
+    fn render_connect(&mut self, g: &mut Gui, a: &mut GuiAssets, w: i32, h: i32) {
+        g.fill(0, 0, w, h, [0.06, 0.06, 0.06, 1.0]);
+        let msg = tr("connect.connecting").unwrap_or("Connecting to server");
+        g.text_centered(a, w / 2, h / 2 - 14, msg, WHITE, true);
+        let bw = 100;
+        self.buttons.push(Button::new(
+            "cancel",
+            tr("gui.cancel").unwrap_or("Cancel").to_string(),
+            w / 2 - bw / 2,
+            h - 28,
+            bw,
+        ));
+        for b in &self.buttons.clone() {
+            b.render(g, a, -1, -1);
+        }
+    }
+
+    /// Vanilla DisconnectedScreen: the "Connection lost" title (official
+    /// disconnect.lost), the wrapped reason lines and the Back button
+    /// (the parent is the server list the join came from).
+    fn render_disconnect(&mut self, g: &mut Gui, a: &mut GuiAssets, w: i32, h: i32) {
+        g.fill(0, 0, w, h, [0.06, 0.06, 0.06, 1.0]);
+        g.text_centered(a, w / 2, h / 2 - 20, &self.disconnect_title, WHITE, true);
+        let lines = wrap_lines(g, &self.disconnect_reason, w - 20);
+        for (i, line) in lines.iter().take(4).enumerate() {
+            g.text_centered(a, w / 2, h / 2 - 6 + i as i32 * 10, line, GRAY, true);
+        }
+        let bw = 140;
+        self.buttons.push(Button::new(
+            "backtoservers",
+            tr("gui.back").unwrap_or("Back").to_string(),
+            w / 2 - bw / 2,
+            h - 28,
+            bw,
+        ));
+        for b in &self.buttons.clone() {
+            b.render(g, a, -1, -1);
+        }
+    }
+}
+
+/// Minimal greedy word wrap (the vanilla Font splitter wraps the disconnect
+/// reason the same way — one string per rendered row).
+fn wrap_lines(g: &Gui, text: &str, max_w: i32) -> Vec<String> {
+    let mut lines = Vec::new();
+    for para in text.split('\n') {
+        let mut cur = String::new();
+        for word in para.split(' ') {
+            let candidate = if cur.is_empty() {
+                word.to_string()
+            } else {
+                format!("{cur} {word}")
+            };
+            if !cur.is_empty() && g.text_width(&candidate) as i32 > max_w {
+                lines.push(std::mem::take(&mut cur));
+                cur = word.to_string();
+            } else {
+                cur = candidate;
+            }
+        }
+        lines.push(cur);
+    }
+    lines
 }
 
 /// Deterministic splitmix64 (same primitive as the world seed).

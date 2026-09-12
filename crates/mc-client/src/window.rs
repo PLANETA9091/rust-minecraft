@@ -126,6 +126,13 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize) -> anyhow::Result<()>
         (u64, Result<crate::screens::PingInfo, String>),
     >();
     let mut net_seen = 0usize; // cursor into the append-only request log
+    // offline-mode logins ride the same architecture: the "join" button
+    // records the request, a detached worker runs the blocking
+    // connect_and_login, the outcome lands on the DisconnectedScreen
+    let (login_tx, login_rx) = std::sync::mpsc::channel::<
+        (u64, Result<crate::screens::LoginResult, String>),
+    >();
+    let mut login_seen = 0usize; // cursor into the append-only request log
 
     while window.is_open() {
         if window.is_key_pressed(Key::Escape, minifb::KeyRepeat::No) {
@@ -156,8 +163,39 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize) -> anyhow::Result<()>
             });
         }
         net_seen = app.net_requests.len();
+        for req in &app.login_requests[login_seen..] {
+            let tx = login_tx.clone();
+            let id = req.id;
+            let host = req.host.clone();
+            let port = req.port;
+            std::thread::spawn(move || {
+                // the REAL protocol number (login tolerates no 0-ping) and
+                // the vanilla offline profile for the documented stand-in
+                // session name (screens::PLAYER_NAME)
+                let res = mc_protocol::connect_and_login(
+                    &host,
+                    port,
+                    crate::build_info::PROTOCOL_VERSION,
+                    crate::screens::PLAYER_NAME,
+                )
+                .map(|out| match out {
+                    mc_protocol::LoginOutcome::Success { username, .. } => {
+                        crate::screens::LoginResult::Success { username }
+                    }
+                    mc_protocol::LoginOutcome::Disconnected { reason } => {
+                        crate::screens::LoginResult::Disconnected { reason }
+                    }
+                })
+                .map_err(|e| format!("{e:#}"));
+                let _ = tx.send((id, res)); // receiver may be gone at shutdown
+            });
+        }
+        login_seen = app.login_requests.len();
         while let Ok((id, res)) = net_rx.try_recv() {
             app.ping_finished(id, res);
+        }
+        while let Ok((id, res)) = login_rx.try_recv() {
+            app.login_finished(id, res);
         }
         music.sync(&app.music);
         // UI one-shots (ui.button.click) ride the independent UI channel
