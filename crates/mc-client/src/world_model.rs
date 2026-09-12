@@ -16,7 +16,10 @@
 //!   `min_y` is looked up from the decoded dimension-type registry the
 //!   moment the dimension is known. Until then `block()` takes
 //!   COLUMN-LOCAL y (0 = bottom of the lowest section); once known,
-//!   world-Y queries subtract it before the section math.
+//!   world-Y queries subtract it before the section math. A Respawn
+//!   CLEARS the loaded columns — the vanilla level recreation: another
+//!   dimension's blocks are meaningless (and, re-read under the new
+//!   min_y, pure fiction), so the map starts empty in the new world.
 //! - The join path is WIRED into the frame loop: the world-load
 //!   milestone's snapshot adopts here and the player-centered window
 //!   materializes into the renderer grid (see `world_view`). A live,
@@ -97,6 +100,15 @@ impl WorldModel {
                 true
             }
             PlayEvent::Respawn(spawn) => {
+                // a dimension change is a NEW WORLD: the vanilla client
+                // recreates its level on Respawn, so every loaded column
+                // of the old dimension is meaningless in the new one and
+                // would be worse than missing — its blocks re-read under
+                // the NEW min_y are pure fiction. The honest state is an
+                // empty map the new dimension's chunks fill; the
+                // mid-transition window truthfully shows air (the vanilla
+                // loading screen's world state).
+                self.columns.clear();
                 self.pin_dimension(&spawn.dimension);
                 true
             }
@@ -595,7 +607,11 @@ mod tests {
         }));
         assert_eq!(m.block(0, -64, 0), Some(1), "world -64 = section 0 local 0");
         assert_eq!(m.block(3, -63, 2), Some(10), "local (3,1,2) at world -63");
-        // Respawn: a dimension change re-pins from the same registry
+        // Respawn: a dimension change re-pins from the same registry AND
+        // CLEARS the loaded columns — the vanilla level recreation. The
+        // overworld column re-read under the nether min_y would be pure
+        // fiction (its blocks sit at world -64..-49, far below the nether
+        // floor 0); the honest state is an empty map.
         assert!(m.apply(PlayEvent::Respawn(SpawnInfo {
             dimension_type_id: 1,
             dimension: "minecraft:the_nether".to_string(),
@@ -603,9 +619,19 @@ mod tests {
         })));
         assert_eq!(m.current_dimension.as_deref(), Some("minecraft:the_nether"));
         assert_eq!(m.min_y, Some(0), "nether layout takes over");
+        assert_eq!(m.loaded_chunks(), 0, "the old dimension's level dropped");
+        assert_eq!(m.block(0, 0, 0), None, "no stale column survives the crossing");
+        // the NEW dimension's own chunks land fresh — nether world 0 is
+        // section 0's bottom now
+        m.apply(PlayEvent::Chunk(ChunkColumn {
+            x: 0,
+            z: 0,
+            sections: vec![parse_section_buffer(&stone_dirt_section(2))],
+        }));
         assert_eq!(m.block(0, 0, 0), Some(1), "nether world 0 = section 0 local 0");
         assert_eq!(m.block(0, -1, 0), None, "below the nether floor: outside");
-        // an unknown dimension key keeps the previous min_y — never a guess
+        // an unknown dimension key keeps the previous min_y — never a
+        // guess — but STILL clears the level (any Respawn is a crossing)
         assert!(m.apply(PlayEvent::Respawn(SpawnInfo {
             dimension_type_id: 9,
             dimension: "minecraft:custom_dim".to_string(),
@@ -613,5 +639,6 @@ mod tests {
         })));
         assert_eq!(m.current_dimension.as_deref(), Some("minecraft:custom_dim"));
         assert_eq!(m.min_y, Some(0), "stale-but-honest: unknown key, layout unchanged");
+        assert_eq!(m.loaded_chunks(), 0, "the level drops on every dimension change");
     }
 }

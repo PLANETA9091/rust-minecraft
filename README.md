@@ -122,6 +122,15 @@ hand-drawn:
   CHANGE only (the vanilla biome-music behavior — a same-biome refresh
   never restarts the track); an unresolvable biome keeps what is
   playing; the situation unloads with the level on Save and Quit/kick.
+  A **dimension change is the vanilla level recreation**: the Respawn
+  (the proven packet id 82) re-pins the vertical layout through the
+  registry (the nether's min_y 0 takes over) and DROPS every loaded
+  column of the old dimension — its blocks re-read under the new min_y
+  would be pure fiction — so the window truthfully shows air until the
+  new dimension's own chunks stream in and re-anchor on the new pose;
+  the whole crossing is pinned end to end by the live e2e's
+  dimension-change leg (Respawn → nether chunk → teleport, all on the
+  SAME retained wire).
   The **wire ids of every phase are generated**:
   `mc2rs-gen dump-packet-ids` binds the official jar's REAL protocols —
   play, login, configuration, status AND handshake — and dumps each

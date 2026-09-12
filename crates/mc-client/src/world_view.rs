@@ -330,7 +330,7 @@ mod tests {
     use mc_protocol::play::clientbound;
     use mc_registry::generated::atlas;
     use mc_protocol::{
-        ChunkColumn, PlayEvent, RegistryData, WorldInfo, varint::write_varint,
+        ChunkColumn, PlayEvent, RegistryData, SpawnInfo, WorldInfo, varint::write_varint,
     };
 
     /// Decode a section buffer through the REAL parser (the same wire
@@ -940,6 +940,73 @@ mod tests {
         // the honest None, never a guess
         live.model.registry.biomes.clear();
         assert_eq!(live.refresh(example_mapper).biome, None);
+    }
+
+    #[test]
+    fn live_view_respawn_crosses_the_dimension() {
+        // the vanilla crossing: Respawn re-pins the layout (the nether's
+        // min_y 0), DROPS the old dimension's level (the columns clear —
+        // overworld blocks re-read under the nether min_y would be pure
+        // fiction) and the window truthfully shows air until the new
+        // dimension's own chunks stream in, which then anchor on the new
+        // pose — the full arc, the same model the screen renders
+        let mut snap = surface_snapshot();
+        snap.registry.dimension_types.push(mc_protocol::DimensionTypeEntry {
+            name: "minecraft:the_nether".to_string(),
+            min_y: 0,
+            height: 256,
+        });
+        let mut live = LiveView::from_snapshot(snap, 5);
+        // the overworld join view stands (stone at grid y 0, feet-anchored)
+        assert_eq!(live.refresh(example_mapper).world.get(32, 0, 32), STONE);
+        assert_eq!(live.model.min_y, Some(-64));
+        assert_eq!(live.model.loaded_chunks(), 1);
+        // THE CROSSING: Respawn to the nether
+        assert!(live.apply(PlayEvent::Respawn(SpawnInfo {
+            dimension_type_id: 1,
+            dimension: "minecraft:the_nether".to_string(),
+            portal_cooldown: 60,
+        })));
+        assert_eq!(live.model.min_y, Some(0), "the nether layout re-pins");
+        assert_eq!(live.model.loaded_chunks(), 0, "the overworld level dropped");
+        let mid = live.refresh(example_mapper);
+        assert!(
+            mid.world.chunks.iter().all(|c| c.iter().all(|&b| b == AIR)),
+            "the mid-transition window is honestly all air (the loading state)"
+        );
+        assert!(mid.biome.is_none(), "no biome without a loaded column");
+        // the nether's own chunk + spawn teleport land: the window
+        // re-anchors on the NEW dimension — the stone at nether world 0
+        // sits at grid y 0 again (feet 0, anchor 0 through the clamp)
+        assert!(live.apply(PlayEvent::Chunk(ChunkColumn {
+            x: 3,
+            z: -2,
+            sections: vec![stone_dirt_section()],
+        })));
+        assert!(live.apply(PlayEvent::Position(PlayerPosition {
+            teleport_id: 44,
+            x: 56.5,
+            y: 0.0,
+            z: -27.25,
+            dx: 0.0,
+            dy: 0.0,
+            dz: 0.0,
+            yaw: 90.0,
+            pitch: 0.0,
+            flags: 0,
+        })));
+        let nether = live.refresh(example_mapper);
+        assert_eq!(
+            nether.world.get(32, 0, 32),
+            STONE,
+            "the nether column under the nether min_y, feet-anchored like the join"
+        );
+        let cam = nether.camera.expect("the nether pose drives the camera");
+        assert_eq!(cam.pos.y, PLAYER_EYE_HEIGHT, "feet world 0, base 0, the standing eye");
+        assert_eq!(
+            nether.biome, None,
+            "no synced biome names in this fixture — the honest unknown"
+        );
     }
 
     #[test]

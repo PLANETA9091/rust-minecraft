@@ -1434,6 +1434,50 @@ mod tests {
                 99_999_999_999,
                 "live keep-alive echoed"
             );
+            // ---- the DIMENSION CHANGE leg: the vanilla crossing to the
+            // nether — Respawn (the proven id 82 + CommonPlayerSpawnInfo),
+            // then the new dimension's own chunk, then its spawn teleport
+            let mut rp = Vec::new();
+            write_varint(&mut rp, clientbound::RESPAWN);
+            write_varint(&mut rp, 1); // dimension_type registry id (the nether entry)
+            write_string(&mut rp, "minecraft:the_nether");
+            rp.extend_from_slice(&0i64.to_be_bytes()); // seed
+            rp.push(1);
+            rp.push(1); // game types
+            rp.push(0);
+            rp.push(0); // debug/flat
+            rp.push(0); // no death location
+            write_varint(&mut rp, 60); // portal cooldown
+            write_varint(&mut rp, 31); // sea level
+            srv.send_packet(&rp).unwrap();
+            let mut cd3 = Vec::new();
+            write_varint(&mut cd3, clientbound::CHUNK_DATA);
+            cd3.extend_from_slice(&0i32.to_be_bytes());
+            cd3.extend_from_slice(&0i32.to_be_bytes());
+            cd3.push(0x0A);
+            cd3.push(0x00); // empty heightmaps compound
+            write_varint(&mut cd3, buffer2.len() as i32);
+            cd3.extend_from_slice(&buffer2);
+            write_varint(&mut cd3, 0); // no block entities
+            cd3.extend_from_slice(&[0, 0, 0, 0, 0, 0]); // light masks
+            srv.send_packet(&cd3).unwrap();
+            let mut pos3 = Vec::new();
+            write_varint(&mut pos3, clientbound::SYNCHRONIZE_POSITION);
+            write_varint(&mut pos3, 44);
+            pos3.extend_from_slice(&8.5f64.to_be_bytes());
+            pos3.extend_from_slice(&0.0f64.to_be_bytes()); // nether floor
+            pos3.extend_from_slice(&(-3.25f64).to_be_bytes());
+            pos3.extend_from_slice(&0.0f64.to_be_bytes()); // delta movement
+            pos3.extend_from_slice(&0.0f64.to_be_bytes());
+            pos3.extend_from_slice(&0.0f64.to_be_bytes());
+            pos3.extend_from_slice(&90.0f32.to_be_bytes());
+            pos3.extend_from_slice(&0.0f32.to_be_bytes());
+            pos3.extend_from_slice(&0i32.to_be_bytes()); // all values absolute
+            srv.send_packet(&pos3).unwrap();
+            let resp = srv.read_packet().expect("confirm teleportation 44");
+            let mut c: &[u8] = &resp;
+            assert_eq!(read_varint(&mut c).unwrap(), serverbound::CONFIRM_TELEPORTATION);
+            assert_eq!(read_varint(&mut c).unwrap(), 44, "nether teleport id verbatim");
             // the server ends the session with a play disconnect: the live
             // caller surfaces the reason instead of an io error
             let mut d2 = Vec::new();
@@ -1519,7 +1563,33 @@ mod tests {
                     PlayEvent::KeepAlive(v) => assert_eq!(v, 99_999_999_999),
                     other => panic!("expected KeepAlive, got {other:?}"),
                 }
-                // 4) the server's play disconnect surfaces with its reason
+                // 4) THE DIMENSION CHANGE: the Respawn rides the SAME live
+                // wire — the spawn info carries the new dimension verbatim
+                match session.pump().expect("live respawn") {
+                    PlayEvent::Respawn(spawn) => {
+                        assert_eq!(spawn.dimension, "minecraft:the_nether");
+                        assert_eq!(spawn.dimension_type_id, 1);
+                        assert_eq!(spawn.portal_cooldown, 60);
+                    }
+                    other => panic!("expected Respawn, got {other:?}"),
+                }
+                // 5) the nether's own chunk streams in (chunk (0,0))
+                match session.pump().expect("nether chunk") {
+                    PlayEvent::Chunk(col) => {
+                        assert_eq!((col.x, col.z), (0, 0), "the new dimension's column");
+                        assert_eq!(col.sections[0].blocks[291], 10, "the decoded dirt");
+                    }
+                    other => panic!("expected Chunk, got {other:?}"),
+                }
+                // 6) the nether spawn teleport is confirmed in place
+                match session.pump().expect("nether teleport") {
+                    PlayEvent::Position(p) => {
+                        assert_eq!(p.teleport_id, 44);
+                        assert!((p.y - 0.0).abs() < 1e-9, "the nether floor pose");
+                    }
+                    other => panic!("expected Position, got {other:?}"),
+                }
+                // 7) the server's play disconnect surfaces with its reason
                 match session.pump().expect("live disconnect") {
                     PlayEvent::Disconnected { reason } => assert_eq!(reason, "Time"),
                     other => panic!("expected Disconnected, got {other:?}"),
