@@ -1700,6 +1700,7 @@ mod tests {
                         vec![crate::world::AIR; crate::world::CHUNK_X * crate::world::CHUNK_Y * crate::world::CHUNK_Z];
                         4
                     ],
+                    light: None,
                 },
                 camera: None,
                 spawn_biome: Some("minecraft:plains".into()),
@@ -2104,6 +2105,7 @@ mod tests {
                 vec![crate::world::AIR; crate::world::CHUNK_X * crate::world::CHUNK_Y * crate::world::CHUNK_Z];
                 4
             ],
+            light: None,
         });
         app.enter_network_world(None);
         assert_eq!(app.screen, ScreenKind::World);
@@ -2154,6 +2156,7 @@ mod tests {
                 vec![crate::world::AIR; crate::world::CHUNK_X * crate::world::CHUNK_Y * crate::world::CHUNK_Z];
                 4
             ],
+            light: None,
         });
         app.enter_network_world(None);
         let flight = app.world_camera();
@@ -2206,6 +2209,7 @@ mod tests {
                         vec![crate::world::AIR; crate::world::CHUNK_X * crate::world::CHUNK_Y * crate::world::CHUNK_Z];
                         4
                     ],
+                    light: None,
                 },
                 camera: None,
                 spawn_biome: None,
@@ -2229,6 +2233,7 @@ mod tests {
                 vec![crate::world::AIR; crate::world::CHUNK_X * crate::world::CHUNK_Y * crate::world::CHUNK_Z];
                 side * side
             ],
+            light: None,
         }
     }
 

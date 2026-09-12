@@ -43,9 +43,10 @@
 use crate::camera::Camera;
 use crate::math::Vec3;
 use crate::world::{
-    World, AIR, ANDESITE, BEDROCK, CHUNK_X, CHUNK_Y, CHUNK_Z, COAL_ORE, COBBLED_DEEPSLATE,
-    COPPER_ORE, DEEPSLATE, DIAMOND_ORE, DIORITE, DIRT, EMERALD_ORE, GOLD_ORE, GRANITE, GRASS,
-    GRAVEL, IRON_ORE, LAPIS_ORE, LEAVES, LOG, NETHERRACK, REDSTONE_ORE, SAND, STONE, WATER,
+    LightGrid, World, AIR, ANDESITE, BEDROCK, CHUNK_X, CHUNK_Y, CHUNK_Z, COAL_ORE,
+    COBBLED_DEEPSLATE, COPPER_ORE, DEEPSLATE, DIAMOND_ORE, DIORITE, DIRT, EMERALD_ORE, GOLD_ORE,
+    GRANITE, GRASS, GRAVEL, IRON_ORE, LAPIS_ORE, LEAVES, LIGHT_UNKNOWN, LOG, NETHERRACK,
+    REDSTONE_ORE, SAND, STONE, WATER,
 };
 use crate::world_model::WorldModel;
 use mc_protocol::{PlayEvent, PlayerPosition, WorldSnapshot};
@@ -58,6 +59,10 @@ use mc_protocol::{PlayEvent, PlayerPosition, WorldSnapshot};
 /// meaningful copy then). `mapper` converts every resolved global state
 /// id (air included) to the runtime palette; blocks outside a column's
 /// vertical extent and columns the server has not sent (yet) stay air.
+/// The view also carries the model's LIGHT — sky and block separately,
+/// every cell in a sent column's extent (air included), the honest
+/// [`LIGHT_UNKNOWN`] where the engine never answered — the raw material
+/// the mesher's per-corner smooth lighting consumes.
 pub fn materialize(
     model: &WorldModel,
     origin: (i32, i32),
@@ -69,13 +74,17 @@ pub fn materialize(
         chunks_per_side: side,
         seed: 0,
         chunks: vec![vec![AIR; CHUNK_X * CHUNK_Y * CHUNK_Z]; side * side],
+        light: Some(LightGrid {
+            sky: vec![vec![LIGHT_UNKNOWN; CHUNK_X * CHUNK_Y * CHUNK_Z]; side * side],
+            block: vec![vec![LIGHT_UNKNOWN; CHUNK_X * CHUNK_Y * CHUNK_Z]; side * side],
+        }),
     };
     let side_i = side as i32;
     for gz in 0..side_i {
         for gx in 0..side_i {
             let (cx, cz) = (origin.0 + gx, origin.1 + gz);
             let Some(_col) = model.column(cx, cz) else {
-                continue; // unsent column -> the grid's fresh air
+                continue; // unsent column -> the grid's fresh air + unknown light
             };
             let grid = &mut world.chunks[(gx + gz * side_i) as usize];
             // the caller anchors the copy; the model answers column-local
@@ -86,8 +95,9 @@ pub fn materialize(
                 let wy = y_base + gy;
                 for lz in 0..CHUNK_Z as i32 {
                     for lx in 0..CHUNK_X as i32 {
-                        let Some(id) = model.block(cx * CHUNK_X as i32 + lx, wy, cz * CHUNK_Z as i32 + lz)
-                        else {
+                        let wx = cx * CHUNK_X as i32 + lx;
+                        let wz = cz * CHUNK_Z as i32 + lz;
+                        let Some(id) = model.block(wx, wy, wz) else {
                             continue; // above/below the column's extent -> air
                         };
                         let mapped = mapper(id);
@@ -95,6 +105,24 @@ pub fn materialize(
                             grid[lx as usize + lz as usize * CHUNK_X + gy as usize * CHUNK_X * CHUNK_Z] =
                                 mapped;
                         }
+                    }
+                }
+            }
+            // the light layer rides the SAME walk — every cell in the
+            // column's extent (air INCLUDED: the mesher's face cells are
+            // usually air), the model's honest None left as LIGHT_UNKNOWN
+            let li = (gx + gz * side_i) as usize;
+            for gy in 0..CHUNK_Y as i32 {
+                let wy = y_base + gy;
+                for lz in 0..CHUNK_Z as i32 {
+                    for lx in 0..CHUNK_X as i32 {
+                        let wx = cx * CHUNK_X as i32 + lx;
+                        let wz = cz * CHUNK_Z as i32 + lz;
+                        let idx =
+                            lx as usize + lz as usize * CHUNK_X + gy as usize * CHUNK_X * CHUNK_Z;
+                        let light = world.light.as_mut().expect("just built");
+                        light.sky[li][idx] = model.sky_light(wx, wy, wz).unwrap_or(LIGHT_UNKNOWN);
+                        light.block[li][idx] = model.block_light(wx, wy, wz).unwrap_or(LIGHT_UNKNOWN);
                     }
                 }
             }
@@ -409,6 +437,45 @@ mod tests {
             10 => DIRT,
             _ => AIR,
         }
+    }
+
+    #[test]
+    fn materialize_carries_the_models_light() {
+        use mc_protocol::LightData;
+        let mut m = WorldModel::new();
+        // one section, column-local y 0..16; the sky light layer for that
+        // section (light bit 1 = section sy 0 + 1) is all 0xFF -> sky 15
+        // everywhere in it; NO block layer at all (the honest unknown)
+        m.apply(PlayEvent::Chunk(ChunkColumn {
+            x: 0,
+            z: 0,
+            sections: vec![stone_dirt_section()],
+            light: ChunkLight {
+                sky: vec![None, Some(LightData::Data(vec![0xFF; 2048])), None],
+                block: vec![None, None, None],
+            },
+        }));
+        let world = materialize(&m, (0, 0), 1, 0, example_mapper);
+        let light = world.light.as_ref().expect("the view carries a light layer");
+        // inside the section: the model's sky 15 landed; the block layer
+        // stays unknown — the mesher's partial-layer rule consumes exactly
+        // the sky opinion
+        let (sky, block) = light.cell(1, 0, 5, 0);
+        assert_eq!(sky, Some(15), "the section's sky light landed in the grid");
+        assert_eq!(block, None, "no block layer was ever sent");
+        // the stone cell itself (y 0) is also lit sky-15 (light fills air AND blocks)
+        let (sky, _) = light.cell(1, 0, 0, 0);
+        assert_eq!(sky, Some(15));
+        // above the column's extent: the honest unknown — never a guess
+        let (sky, block) = light.cell(1, 0, 20, 0);
+        assert_eq!(sky, None, "outside the column: unknown, not zero");
+        assert_eq!(block, None);
+        // below: unknown too
+        let (sky, _) = light.cell(1, 0, -1, 0);
+        assert_eq!(sky, None);
+        // and a cell in an UNSENT window column: unknown (the grid's fresh state)
+        let (sky, _) = light.cell(1, 20, 5, 20);
+        assert_eq!(sky, None, "unsent column: unknown");
     }
 
     #[test]

@@ -352,17 +352,13 @@ mod tests {
 
     /// The light layer value at a cell of the single test chunk.
     fn set_light(w: &mut World, sky: Option<u8>, block: Option<u8>, x: i32, y: i32, z: i32) {
-        let layer = |v: Option<u8>| {
-            v.map_or(LIGHT_UNKNOWN, |v| v)
-        };
         let idx = x as usize + z as usize * CHUNK_X + y as usize * CHUNK_X * CHUNK_Z;
-        w.light.as_mut().unwrap().sky[0][idx] = layer(sky);
-        w.light.as_mut().unwrap().block[0][idx] = layer(block);
+        w.light.as_mut().unwrap().sky[0][idx] = sky.unwrap_or(LIGHT_UNKNOWN);
+        w.light.as_mut().unwrap().block[0][idx] = block.unwrap_or(LIGHT_UNKNOWN);
     }
 
-    /// The top-face vertex multiplier the mesher must produce for the
-    /// stone block at (8,8,8): shade(top)=1.0, open-sky AO=3 (1.0),
-    /// times the light multiplier of each corner.
+    /// The top-face quad of the stone block at (8,8,8): shade(top)=1.0,
+    /// open-sky AO=3 (1.0) — the multiplier is then light's alone.
     fn top_face(w: &World) -> crate::mesher::Quad {
         let q = mesh_chunk(w, 0, 0, None);
         q.iter()
@@ -371,7 +367,7 @@ mod tests {
             .clone()
     }
 
-    fn vertex_multiplier(w: &World, quad: &crate::mesher::Quad) -> [f32; 4] {
+    fn vertex_multiplier(quad: &crate::mesher::Quad) -> [f32; 4] {
         // the textured path carries the pure multiplier (base = [1;3]);
         // the flat path divides the base color out
         let tile = atlas::FACE_TILES[STONE as usize][2];
@@ -403,6 +399,80 @@ mod tests {
         assert_eq!(vertex_ao(false, false, true), 2);
         assert_eq!(vertex_ao(true, false, true), 1);
         assert_eq!(vertex_ao(false, true, true), 1);
+    }
+
+    #[test]
+    fn light_brightness_matches_the_vanilla_ramp() {
+        assert_eq!(light_brightness(15.0), 1.0, "open sky keeps the legacy look");
+        assert_eq!(light_brightness(0.0), 0.0, "known-dark renders black");
+        assert!(
+            (light_brightness(8.0) - 0.222_222_22).abs() < 1e-4,
+            "level 8 is about 22% — the curve's aggressive low end"
+        );
+        for l in 0..15u8 {
+            assert!(
+                light_brightness(l as f32) < light_brightness((l + 1) as f32),
+                "monotonic at {l}"
+            );
+        }
+    }
+
+    #[test]
+    fn light_layer_shades_known_cells_and_spares_unknown() {
+        // stone at (8,8,8) in an all-air world; the top face cell is (8,9,8)
+        let mut w = empty_world();
+        put(&mut w, 8, 8, 8, STONE);
+        let legacy = {
+            let mut w2 = empty_world();
+            put(&mut w2, 8, 8, 8, STONE);
+            vertex_multiplier(&top_face(&w2))
+        };
+        // an ALL-UNKNOWN layer (materialize over a silent model) changes nothing
+        w.light = Some(unknown_light());
+        assert_eq!(
+            vertex_multiplier(&top_face(&w)),
+            legacy,
+            "all-unknown light must be invisible"
+        );
+        // known full sky at the face cell — brightness 1.0, still the legacy look
+        set_light(&mut w, Some(15), None, 8, 9, 8);
+        assert_eq!(vertex_multiplier(&top_face(&w)), legacy, "full sky is the legacy look");
+        // the engine says the cell is DARK (both layers known zero) -> black
+        set_light(&mut w, Some(0), Some(0), 8, 9, 8);
+        for m in vertex_multiplier(&top_face(&w)) {
+            assert!(m.abs() < 1e-6, "known-dark cell is black: {m}");
+        }
+        // torch-lit: no sky opinion, block 14 -> the whole face at brightness(14)
+        let mut w = empty_world();
+        put(&mut w, 8, 8, 8, STONE);
+        w.light = Some(unknown_light());
+        set_light(&mut w, None, Some(14), 8, 9, 8);
+        let expect = light_brightness(14.0);
+        for m in vertex_multiplier(&top_face(&w)) {
+            assert!((m - expect).abs() < 1e-6, "block-only light: {m} vs {expect}");
+        }
+    }
+
+    #[test]
+    fn corner_light_averages_the_four_face_plane_cells() {
+        // face cell (8,9,8) full sky; ONE known dark diagonal (7,9,7) —
+        // exactly corner 0 samples it (x=0,z=0 -> d1=-x, d2=-z)
+        let mut w = empty_world();
+        put(&mut w, 8, 8, 8, STONE);
+        w.light = Some(unknown_light());
+        set_light(&mut w, Some(15), None, 8, 9, 8);
+        set_light(&mut w, Some(0), None, 7, 9, 7);
+        let m = vertex_multiplier(&top_face(&w));
+        // corner 0 averages its known cells (15+0)/2 = 7.5 -> brightness 0.2
+        assert!((light_brightness(7.5) - 0.2).abs() < 1e-6, "ramp sanity");
+        assert!(
+            (m[0] - light_brightness(7.5)).abs() < 1e-6,
+            "the dark diagonal drags only its corner: {m:?}"
+        );
+        // the other corners know only the face cell
+        assert_eq!(m[1], 1.0, "corner 1 untouched: {m:?}");
+        assert_eq!(m[2], 1.0, "corner 2 untouched: {m:?}");
+        assert_eq!(m[3], 1.0, "corner 3 untouched: {m:?}");
     }
 
     #[test]

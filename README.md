@@ -164,6 +164,21 @@ hand-drawn:
   storage for the column, so unmentioned sections drop to the honest
   None); the live e2e grew the leg (chunk → teleport → light update →
   disconnect, eight pump steps).
+- **The light layer reached the RENDERER (v0.3.37 — the first render
+  change driven by real server data)**: `materialize` now carries the
+  model's sky/block light into the view grid (sky and block SEPARATELY,
+  every cell of a sent column, air included; the honest `LIGHT_UNKNOWN`
+  where the engine never answered), and the mesher consumes it
+  vanilla-style: each corner averages the 4 face-plane cells (the face
+  cell plus the 3 AO diagonals — the same cells the AO walk samples),
+  KNOWN cells only, through the vanilla brightness ramp
+  `f/(4 - 3f)` (level 15 → exactly 1.0 — open-sky faces keep the legacy
+  look; level 0 → 0.0 — a known-dark cave face is black). Corners with
+  no known cell keep the legacy look (unsent neighbors never darken
+  what they touch). A world without a light layer — the whole
+  procedural scene, every golden — meshes BIT-IDENTICALLY to the legacy
+  path: no golden changed, and the all-unknown layer is proven
+  invisible by test.
   The **wire ids of every phase are generated**:
   `mc2rs-gen dump-packet-ids` binds the official jar's REAL protocols —
   play, login, configuration, status AND handshake — and dumps each
@@ -341,7 +356,10 @@ cargo run -p mc2rs-pixel -- --a render.png --b goldens/cpu_320x180.png --out dif
 * Culled + greedy meshing, parallel across chunks (`rayon`).
 * Vanilla-style smooth lighting: per-vertex ambient occlusion (levels 0-3,
   brightness curve `[0.55, 0.70, 0.85, 1.00]`) with the classic quad-diagonal
-  flip against crease artifacts; water/leaves never occlude.
+  flip against crease artifacts; water/leaves never occlude. Network worlds
+  add the REAL light layer on top: per-corner sky/block averages through the
+  vanilla brightness ramp `f/(4 - 3f)` — cave darkness and torch-lit faces
+  straight from the server's engine arrays.
 * Face-shaded, distance-fogged rendering; per-face color fetched from a
   texture-average LUT (built from the real textures when assets are present).
 * CPU reference renderer = *deterministic* (bit-for-bit reproducible frames,
