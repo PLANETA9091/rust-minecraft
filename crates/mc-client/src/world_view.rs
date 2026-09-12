@@ -34,7 +34,7 @@ pub fn materialize(
     model: &WorldModel,
     origin: (i32, i32),
     side: usize,
-    mapper: impl Fn(u32) -> u16,
+    mut mapper: impl FnMut(u32) -> u16,
 ) -> World {
     let mut world = World {
         chunks_per_side: side,
