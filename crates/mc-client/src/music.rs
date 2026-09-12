@@ -1,8 +1,12 @@
 //! Music scheduler driven by the GENERATED sound-event tables
 //! (official sounds.json via the asset index). Implements the vanilla menu
 //! music behavior: pick a track from `music.menu`, play it, then wait a
-//! randomized delay before the next one. Audio output backends plug in on
-//! top of this schedule (headless/CI runs the deterministic silent backend).
+//! randomized delay before the next one. Track lengths come from the REAL
+//! decoded .ogg data when the runtime assets are present (see audio.rs);
+//! the output backend is injected on top of this schedule (headless/CI runs
+//! the deterministic silent backend).
+
+use std::collections::BTreeMap;
 
 use mc_registry::generated::sounds as snd;
 
@@ -21,12 +25,15 @@ pub struct MusicScheduler {
     rng: u64,
     current: usize,
     tick: u64,
-    /// event log (deterministic; tests + future audio backend consume it)
+    /// real track lengths (frames) from decoded OGG data, keyed by event id
+    track_frames: BTreeMap<&'static str, u64>,
+    /// event log (deterministic; tests + audio backend consume it)
     pub events: Vec<String>,
 }
 
-/// Track length placeholder until OGG decoding lands (rodio backend):
-/// menu tracks are several minutes; the scheduler only needs relative time.
+/// Fallback track length until real OGG data is loaded (audio.rs injects
+/// the decoded length): menu tracks are several minutes; the scheduler only
+/// needs relative time.
 const DEFAULT_TRACK_FRAMES: u64 = 60 * 20;
 const MIN_DELAY_FRAMES: u64 = 30 * 20;
 const DELAY_SPAN_FRAMES: u64 = 90 * 20;
@@ -45,12 +52,26 @@ impl MusicScheduler {
             rng: seed ^ 0x5EED_C0FF_EE12_3456,
             current: 0,
             tick: 0,
+            track_frames: BTreeMap::new(),
             events: Vec::new(),
         }
     }
 
     pub fn state(&self) -> &MusicState {
         &self.state
+    }
+
+    /// The official menu track ids (from the generated sounds.json table).
+    pub fn menu_tracks(&self) -> &[&'static str] {
+        &self.menu_tracks
+    }
+
+    /// Real track length in frames from the decoded official .ogg; overrides
+    /// the fallback default so the schedule matches the actual audio.
+    pub fn set_track_frames(&mut self, id: &'static str, frames: u64) {
+        if frames > 0 {
+            self.track_frames.insert(id, frames);
+        }
     }
 
     /// The menu opened: start the first track right away (vanilla behavior).
@@ -73,7 +94,7 @@ impl MusicScheduler {
             return;
         }
         let track = self.menu_tracks[self.current % self.menu_tracks.len()];
-        let len = DEFAULT_TRACK_FRAMES;
+        let len = self.track_frames.get(track).copied().unwrap_or(DEFAULT_TRACK_FRAMES);
         self.events.push(format!("play {} @{}", track, self.tick));
         self.state = MusicState::Playing(track, self.tick, len);
     }
@@ -160,5 +181,29 @@ mod tests {
             b.update();
         }
         assert_eq!(a.events, b.events);
+    }
+
+    #[test]
+    fn real_track_length_from_decoded_ogg_overrides_default() {
+        let mut s = MusicScheduler::new(7);
+        let id = s.menu_tracks()[0];
+        // the audio backend injects the real decoded length (e.g. ~3 min at
+        // 44.1 kHz) and the schedule must honor it, not the default
+        s.set_track_frames(id, 132_300_000);
+        s.on_menu_open();
+        match s.state() {
+            MusicState::Playing(t, start, len) => {
+                assert_eq!(*t, id);
+                assert_eq!(*start, 0);
+                assert_eq!(*len, 132_300_000, "real decoded length must be used");
+            }
+            other => panic!("expected playing, got {:?}", other),
+        }
+        // zero/garbage lengths are rejected (never create instant loops)
+        s.set_track_frames(id, 0);
+        match s.state() {
+            MusicState::Playing(_, _, len) => assert_eq!(*len, 132_300_000),
+            other => panic!("expected still playing, got {:?}", other),
+        }
     }
 }

@@ -269,6 +269,16 @@ fn generate(agent: &ureq::Agent, cache: &util::Cache, version: &str, out: &Path)
         }),
         None => 0,
     };
+    // Menu music: the real .ogg files stream as asset-index objects (the
+    // jar ships only sounds.json). Fetch every `music.menu` track into the
+    // runtime asset root so the client decodes + plays identical audio.
+    let music_files = match &index {
+        Some(i) => fetch_menu_music(agent, cache, i, &sounds_json, &workspace_root).unwrap_or_else(|e| {
+            eprintln!("      warning: menu music fetch failed ({e}); client falls back to silence");
+            0
+        }),
+        None => 0,
+    };
     let pano_root = workspace_root.join("assets-cache/jar");
     let pano_names: Vec<(String, String)> = (0..6)
         .map(|i| {
@@ -280,7 +290,7 @@ fn generate(agent: &ureq::Agent, cache: &util::Cache, version: &str, out: &Path)
         .collect();
     uigen::merge_from_disk(&mut ui, &pano_root, &pano_names, true)?;
     println!(
-        "      glyphs: {} ({} textures) | lang: {} | splashes: {} | sprites: {} | sound events: {} | biomes: {} | panorama faces: {}",
+        "      glyphs: {} ({} textures) | lang: {} | splashes: {} | sprites: {} | sound events: {} | biomes: {} | panorama faces: {} | menu music: {}",
         font.glyphs.len(),
         font.textures.len(),
         lang.map.len(),
@@ -288,7 +298,8 @@ fn generate(agent: &ureq::Agent, cache: &util::Cache, version: &str, out: &Path)
         ui.sprites.len(),
         sounds_json.events.len(),
         worldgen.biomes.len(),
-        panorama_faces
+        panorama_faces,
+        music_files
     );
     println!(
         "      sky: day period {} ticks, {} moon phases, celestial textures {}x{}",
@@ -378,6 +389,50 @@ fn fetch_title_panorama(
         n += 1;
     }
     Ok(n)
+}
+
+/// Fetch the real menu music .ogg files through the asset index. sounds.json
+/// names are relative to `assets/minecraft/sounds/` (extension optional — the
+/// vanilla sound engine appends `.ogg`); the asset index keys include the
+/// `minecraft/` prefix. Every file is sha1-verified against the index object.
+/// Returns the number of files fetched (duplicates across events deduped).
+fn fetch_menu_music(
+    agent: &ureq::Agent,
+    cache: &util::Cache,
+    index: &mc_assets::AssetIndex,
+    sounds: &soundgen::SoundData,
+    workspace_root: &Path,
+) -> Result<usize> {
+    let mut fetched = 0usize;
+    let mut seen = std::collections::BTreeSet::new();
+    for ev in sounds.events_with_prefix("music.menu.") {
+        for f in &ev.files {
+            let name = if f.name.ends_with(".ogg") {
+                f.name.clone()
+            } else {
+                format!("{}.ogg", f.name)
+            };
+            if !seen.insert(name.clone()) {
+                continue;
+            }
+            let key = format!("minecraft/sounds/{name}");
+            let Some(obj) = index.objects.get(&key) else { continue };
+            let url = format!(
+                "https://resources.download.minecraft.net/{}/{}",
+                &obj.hash[..2],
+                obj.hash
+            );
+            let bytes = cache.fetch(agent, &format!("asset:music:{}", obj.hash), &url)?;
+            util::verify(&bytes, Some(obj.hash.as_str()), &key)?;
+            let dest = workspace_root
+                .join("assets-cache/jar/assets/minecraft/sounds")
+                .join(&name);
+            std::fs::create_dir_all(dest.parent().unwrap())?;
+            std::fs::write(&dest, &bytes)?;
+            fetched += 1;
+        }
+    }
+    Ok(fetched)
 }
 
 /// Fetch the jar (cache-first), resolve the atlas, write generated/atlas.rs.

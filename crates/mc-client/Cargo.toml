@@ -9,6 +9,9 @@ description = "Minecraft client (Rust): CPU reference renderer + windowed fly ca
 [features]
 default = []
 gpu = []
+# real speaker output (rodio/CPAL). Off by default: CI/headless has no audio
+# device; the code falls back to the deterministic silent backend.
+audio = ["dep:rodio"]
 
 [dependencies]
 anyhow.workspace = true
@@ -17,6 +20,10 @@ rayon.workspace = true
 clap.workspace = true
 mc-assets = { path = "../mc-assets" }
 mc-registry = { path = "../mc-registry" }
+# official menu music: decode real .ogg bytes (no device needed -> tested in CI)
+symphonia = { version = "0.5", default-features = false, features = ["ogg", "vorbis", "wav", "pcm"] }
+# output backend, feature-gated (needs the OS audio stack + ALSA headers on Linux)
+rodio = { version = "0.20", optional = true, default-features = false, features = ["playback"] }
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 minifb.workspace = true

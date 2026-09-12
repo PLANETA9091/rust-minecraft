@@ -111,6 +111,11 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize) -> anyhow::Result<()>
         WindowOptions { resize: true, ..WindowOptions::default() },
     )?;
     let mut app = App::new(seed);
+    // menu music: decode the real official .ogg tracks (fetched by mc2rs-gen
+    // through the asset index), feed the scheduler real lengths and play the
+    // schedule through the best output backend (rodio when built with
+    // `--features audio` and a device exists; deterministic silence otherwise)
+    let mut music = crate::audio::MenuMusic::start(&mut app);
     let mut assets = GuiAssets::open("assets-cache/jar");
     let mut fb = Framebuf::new(width, height);
     let mut buf: Vec<u32> = vec![0; width * height];
@@ -126,6 +131,7 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize) -> anyhow::Result<()>
             app.on_click(gmx, gmy);
         }
         app.update();
+        music.sync(&app.music);
         fb.clear(crate::headless::SKY_TOP, crate::headless::SKY_BOTTOM);
         app.render(&mut fb, &mut assets);
         buf.iter_mut().zip(fb.to_argb()).for_each(|(o, c)| *o = c);
