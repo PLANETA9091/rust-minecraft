@@ -88,9 +88,10 @@ pub struct PingInfo {
 
 /// One requested offline-mode join: which row, which address. Append-only
 /// request log — the window backend drains new entries (by cursor), runs
-/// the blocking `mc_protocol::connect_and_join_play` (login + the
-/// configuration phase) on a worker thread and hands the outcome back
-/// through `App::login_finished`.
+/// the blocking `mc_protocol::connect_and_join_world` (login, the
+/// configuration phase, then the play state pumped to the world-load
+/// milestone) on a worker thread and hands the outcome back through
+/// `App::login_finished`.
 #[derive(Debug, Clone, PartialEq)]
 pub struct LoginRequest {
     pub id: u64,
@@ -100,13 +101,26 @@ pub struct LoginRequest {
     pub port: u16,
 }
 
-/// The slice of a login outcome the UI renders — screens stay
-/// protocol-agnostic (window.rs maps `mc_protocol::LoginOutcome` over).
+/// The slice of a join outcome the UI renders — screens stay
+/// protocol-agnostic (window.rs maps `mc_protocol::WorldOutcome` over).
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum LoginResult {
-    /// Login Success: the server accepted the offline profile.
-    Success { username: String },
-    /// Login Disconnect: the server refused, reason flattened from chat.
+    /// The full join arc completed and the world-load milestone was hit:
+    /// world info + the first position teleport + at least one decoded
+    /// chunk. Every field below is REAL network data from the server —
+    /// no placeholder values.
+    Loaded {
+        /// The offline profile name the client joined with.
+        username: String,
+        /// The client player's entity id for this session (play Login).
+        entity_id: i32,
+        /// The server's view distance for this session (play Login).
+        view_distance: i32,
+        /// Chunk columns decoded by the world-load milestone.
+        chunks: usize,
+    },
+    /// The server refused or kicked (login disconnect, config kick or a
+    /// play-state disconnect), reason flattened from chat.
     Disconnected { reason: String },
 }
 
@@ -441,11 +455,12 @@ impl App {
 
     /// Vanilla "Join Server" on the selected row: only entries with a real
     /// address can actually connect (placeholder rows keep the click a no-op
-    /// — there is nothing reachable to join). Records the login request in
+    /// — there is nothing reachable to join). Records the join request in
     /// the append-only log and opens the vanilla ConnectScreen; the window
-    /// backend runs the blocking `mc_protocol::connect_and_join_play` (the
-    /// full login + configuration arc) off the frame thread and delivers
-    /// the outcome through `login_finished`.
+    /// backend runs the blocking `mc_protocol::connect_and_join_world` (the
+    /// full login + configuration arc, then the play state pumped to the
+    /// world-load milestone) off the frame thread and delivers the outcome
+    /// through `login_finished`.
     pub fn join_selected_server(&mut self) {
         let Some(addr) = self
             .servers
@@ -465,21 +480,25 @@ impl App {
         self.open(ScreenKind::Connect);
     }
 
-    /// Feed one finished join back into the UI (vanilla flow: a Login
-    /// Disconnect, config kick or transport error lands on the
-    /// DisconnectedScreen with the flattened reason; a Joined outcome means
-    /// the client genuinely reached the play state — the outcome screen's
-    /// connected line is the truth now, the world view itself is future
-    /// work). Unknown or already-consumed ids are ignored — the request
-    /// log stays append-only.
+    /// Feed one finished join back into the UI (vanilla flow: a login
+    /// disconnect, config kick or play-state kick lands on the
+    /// DisconnectedScreen with the flattened reason; a Loaded outcome means
+    /// the client genuinely holds a network world — the outcome screen's
+    /// connected line states the REAL snapshot facts, the world view itself
+    /// is future work). Unknown or already-consumed ids are ignored — the
+    /// request log stays append-only.
     pub fn login_finished(&mut self, id: u64, outcome: Result<LoginResult, String>) {
         if !self.login_requests.iter().any(|r| r.id == id) {
             return;
         }
         match outcome {
-            Ok(LoginResult::Success { username }) => {
+            Ok(LoginResult::Loaded { username, entity_id, view_distance, chunks }) => {
                 self.disconnect_title = "Connected".to_string();
-                self.disconnect_reason = format!("Logged in as {username}");
+                self.disconnect_reason = format!(
+                    "Logged in as {username}\n{} chunk{}, view distance {view_distance}, entity id {entity_id}",
+                    chunks,
+                    if chunks == 1 { "" } else { "s" },
+                );
             }
             Ok(LoginResult::Disconnected { reason }) => {
                 self.disconnect_title =
@@ -1424,21 +1443,31 @@ mod tests {
         app.login_finished(id2, Err("tcp connect to 127.0.0.1:1".into()));
         assert_eq!(app.screen, ScreenKind::Disconnect);
         assert_eq!(app.disconnect_reason, "tcp connect to 127.0.0.1:1");
-        // Joined means the client genuinely reached the play state (the
-        // protocol arc completes); the world view itself is future work, so
-        // the outcome screen shows the factual connected line
+        // Loaded means the client genuinely holds a network world: the
+        // outcome screen's connected line carries the REAL snapshot facts
         app.join_selected_server();
         let id3 = app.login_requests[2].id;
         app.login_finished(
             id3,
-            Ok(LoginResult::Success { username: "mc2rs".into() }),
+            Ok(LoginResult::Loaded {
+                username: "mc2rs".into(),
+                entity_id: 17,
+                view_distance: 8,
+                chunks: 1,
+            }),
         );
         assert_eq!(app.screen, ScreenKind::Disconnect);
         assert_eq!(app.disconnect_title, "Connected");
-        assert_eq!(app.disconnect_reason, "Logged in as mc2rs");
+        assert_eq!(
+            app.disconnect_reason,
+            "Logged in as mc2rs\n1 chunk, view distance 8, entity id 17"
+        );
         // unknown/already-consumed ids are ignored, the log stays append-only
         app.login_finished(999, Err("nope".into()));
-        assert_eq!(app.disconnect_reason, "Logged in as mc2rs");
+        assert_eq!(
+            app.disconnect_reason,
+            "Logged in as mc2rs\n1 chunk, view distance 8, entity id 17"
+        );
         assert_eq!(app.login_requests.len(), 3);
     }
 
@@ -1471,10 +1500,13 @@ mod tests {
     }
 
     #[test]
-    fn server_join_runs_the_real_login_and_configuration() {
+    fn server_join_runs_the_real_join_into_the_world() {
         // in-process vanilla-shaped join server (same dogfooding as the
-        // mc-protocol config tests): handshake + login start -> compression
-        // switch -> Login Success -> introductions -> probes + finish
+        // mc-protocol config/play tests): handshake + login start ->
+        // compression switch -> Login Success -> introductions -> probes +
+        // finish -> the play state: world info, center chunk, chunk batch,
+        // a REAL chunk (stone+dirt), keep-alive, ping, position teleport —
+        // the worker pumps all the way to the world-load milestone
         let listener = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
         let port = listener.local_addr().unwrap().port();
         let server = std::thread::spawn(move || {

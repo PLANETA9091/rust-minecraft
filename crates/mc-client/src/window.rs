@@ -128,8 +128,9 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize) -> anyhow::Result<()>
     let mut net_seen = 0usize; // cursor into the append-only request log
     // offline-mode joins ride the same architecture: the "join" button
     // records the request, a detached worker runs the blocking
-    // connect_and_join_play (login + configuration), the outcome lands on
-    // the DisconnectedScreen
+    // connect_and_join_world (login + configuration + the play state pumped
+    // to the world-load milestone), the outcome lands on the outcome screen
+    // — a Loaded result carries REAL world facts from the network
     let (login_tx, login_rx) = std::sync::mpsc::channel::<
         (u64, Result<crate::screens::LoginResult, String>),
     >();
@@ -171,22 +172,28 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize) -> anyhow::Result<()>
             let port = req.port;
             std::thread::spawn(move || {
                 // the REAL protocol number (login tolerates no 0-ping) and
-                // the vanilla offline profile for the documented stand-in
-                // session name (screens::PLAYER_NAME). The full join arc:
-                // login -> Login Acknowledged -> configuration phase -> the
-                // play state begins (a Joined outcome is now the TRUTH
-                // behind the outcome screen's connected line).
-                let res = mc_protocol::connect_and_join_play(
+                // the vanilla offline profile for the session name
+                // (screens::PLAYER_NAME). The full join arc: login -> Login
+                // Acknowledged -> configuration phase -> the play state,
+                // pumped to the world-load milestone (world info + first
+                // teleport + a decoded chunk) — the outcome screen's facts
+                // are the network's truth.
+                let res = mc_protocol::connect_and_join_world(
                     &host,
                     port,
                     crate::build_info::PROTOCOL_VERSION,
                     crate::screens::PLAYER_NAME,
                 )
                 .map(|out| match out {
-                    mc_protocol::PlayOutcome::Joined { username, .. } => {
-                        crate::screens::LoginResult::Success { username }
+                    mc_protocol::WorldOutcome::Loaded(snap) => {
+                        crate::screens::LoginResult::Loaded {
+                            username: crate::screens::PLAYER_NAME.to_string(),
+                            entity_id: snap.info.entity_id,
+                            view_distance: snap.info.view_distance,
+                            chunks: snap.chunks.len(),
+                        }
                     }
-                    mc_protocol::PlayOutcome::Disconnected { reason } => {
+                    mc_protocol::WorldOutcome::Disconnected { reason } => {
                         crate::screens::LoginResult::Disconnected { reason }
                     }
                 })

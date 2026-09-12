@@ -48,8 +48,9 @@ use crate::framing::PacketConn;
 use crate::varint::{read_string, read_varint, write_varint};
 use crate::DEFAULT_TIMEOUT_SECS;
 
-/// Clientbound play packet ids (wiki.vg play state).
-mod clientbound {
+/// Clientbound play packet ids (wiki.vg play state). Public protocol
+/// facts — mock servers / tooling assert against them.
+pub mod clientbound {
     pub const BATCH_START: i32 = 0x0D;
     pub const DISCONNECT: i32 = 0x1A;
     pub const UNLOAD_CHUNK: i32 = 0x1D;
@@ -61,8 +62,9 @@ mod clientbound {
     pub const CENTER_CHUNK: i32 = 0x4E;
 }
 
-/// Serverbound play packet ids (wiki.vg play state).
-mod serverbound {
+/// Serverbound play packet ids (wiki.vg play state). Public protocol
+/// facts — mock servers / tooling assert against them.
+pub mod serverbound {
     pub const CONFIRM_TELEPORTATION: i32 = 0x00;
     pub const CHUNK_BATCH_RECEIVED: i32 = 0x07;
     pub const KEEP_ALIVE: i32 = 0x14;
