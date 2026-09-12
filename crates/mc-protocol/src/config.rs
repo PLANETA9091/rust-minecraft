@@ -409,10 +409,11 @@ pub fn connect_and_join_play(
     join_play(stream, host, port, protocol_version, username)
 }
 
-/// Shared test fixtures (same-crate mock servers reuse these — the play
-/// state's full-arc mock streams the same registry packets).
-#[cfg(test)]
-pub(crate) mod test_support {
+/// Shared e2e mock fixtures. The same-crate mock servers reuse these,
+/// and downstream crates' mock servers do too (the GUI join e2e streams
+/// the SAME registry bytes the mc-protocol arc mock does — one truth for
+/// the mock registry, not hand-duplicated NBT in every mock).
+pub mod test_support {
     use super::clientbound;
     use crate::nbt::Nbt;
     use crate::varint::{write_string, write_varint};

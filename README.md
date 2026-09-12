@@ -85,6 +85,12 @@ hand-drawn:
   turns the login's dimension into the model's live `min_y` —
   `block()` answers real world-Y coordinates, and Respawn (the
   proven packet id 82) re-pins the layout on dimension change.
+  The **world window is anchored on the player**: the materialized
+  join view centers the player's chunk in x/z and anchors its
+  vertical window on the teleport's feet (`min_y` + `player.y`,
+  clamped at the world floor) — the first player-exact network world
+  view: a real overworld join shows the surface the player stands
+  on, not the first 48 blocks of deepslate above bedrock.
   The **play wire ids themselves are generated too**:
   `mc2rs-gen dump-packet-ids` binds the official jar's REAL play
   clientbound/serverbound protocols and dumps each packet's live wire id

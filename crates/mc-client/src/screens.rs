@@ -357,12 +357,14 @@ impl App {
     /// machinery (sky, celestials, fog, clouds, HUD, pause) is shared
     /// with singleplayer; only the terrain source differs: the mesh comes
     /// from the materialized join snapshot. Camera: the window is centered
-    /// on the player's chunk, so the grid's center column stands in for
-    /// the exact player position (the player-exact camera needs the
-    /// dimension vertical layout to un-bottom-anchor the grid — future
-    /// work). Music: the spawn biome is unknown until section biomes
-    /// decode, so the unknown-key lookup falls back to the generic
-    /// music.game situation (no seeded guess about a network world).
+    /// on the player's chunk and VERTICALLY ANCHORED on the player's feet
+    /// (`world_view::snapshot_y_base` — min_y + player.y, clamped at the
+    /// world floor), so the grid's center column stands over the surface
+    /// the player actually occupies; the exact player-follow camera
+    /// (position + yaw/pitch from the teleport) is future work. Music:
+    /// the spawn biome is unknown until section biomes decode, so the
+    /// unknown-key lookup falls back to the generic music.game situation
+    /// (no seeded guess about a network world).
     pub fn enter_network_world(&mut self) {
         let (size, spawn_y, quads) = {
             let Some(world) = self.net_world.as_ref() else { return };
@@ -1604,6 +1606,14 @@ mod tests {
                 let mut c: &[u8] = &pkt;
                 assert_eq!(read_varint(&mut c).unwrap(), expected, "introduction id");
             }
+            // Registry Data (a real vanilla server ALWAYS streams it in
+            // the configuration phase): the shared mock fixture's
+            // dimension_type registry (overworld -64/384) — the same
+            // bytes the mc-protocol arc mock sends. Without it the join's
+            // snapshot carries no layout knowledge and the world window
+            // honestly falls back to the column-local copy.
+            conn.send_packet(&mc_protocol::config::test_support::registry_packet(true))
+                .unwrap();
             // probes + finish
             let mut ka = Vec::new();
             write_varint(&mut ka, 0x03); // config keep alive (clientbound)
@@ -1693,6 +1703,24 @@ mod tests {
             buffer.extend_from_slice(&mc_protocol::pack_entries(&entries, 5));
             buffer.push(0); // biomes: single valued
             write_varint(&mut buffer, 1);
+            // a real vanilla join streams the FULL column (24 sections for
+            // an overworld): 7 air sections below put the stone/dirt
+            // section at index 7 — world y 48..63 with min_y -64, surface
+            // terrain right under the teleport's feet y 64. The
+            // player-anchored window (base 48 = 64 - 16) then shows the
+            // stone at grid y 0 — a bottom-anchored copy would miss it.
+            let mut air = Vec::new();
+            air.extend_from_slice(&0i16.to_be_bytes()); // block count 0
+            air.push(0); // bits per entry: single valued
+            write_varint(&mut air, 0); // the single value: air
+            air.push(0); // biomes: single valued
+            write_varint(&mut air, 187);
+            let mut column = Vec::new();
+            for _ in 0..7 {
+                column.extend_from_slice(&air); // sections arrive bottom-first
+            }
+            column.extend_from_slice(&buffer);
+            let buffer = column;
             let mut cd = Vec::new();
             write_varint(&mut cd, clientbound::CHUNK_DATA);
             cd.extend_from_slice(&3i32.to_be_bytes());
@@ -1797,13 +1825,18 @@ mod tests {
 
         // the join landed IN the world (vanilla ConnectScreen → world):
         // the world screen renders the materialized network window, the
-        // mock column (3,-2) sits at grid chunk (2,2) of the 5x5 window
+        // mock column (3,-2) sits at grid chunk (2,2) of the 5x5 window.
+        // The stone at world y 48 landing at grid y 0 PINS the
+        // player-anchored vertical placement (feet 64 - anchor 16 = base
+        // 48): a bottom-anchored copy would show world -64..-16 — all air
+        // this far above the one real section's world y 48.
         assert_eq!(app.screen, ScreenKind::World);
         assert!(app.world_is_network, "the world screen shows the network world");
         assert_eq!(app.world_size, (WORLD_CHUNKS * crate::world::CHUNK_X) as i32);
         let w = app.net_world.as_ref().expect("network world retained");
-        assert_eq!(w.get(32, 0, 32), crate::world::STONE, "stone through the real join");
-        assert_eq!(w.get(35, 1, 34), crate::world::DIRT, "dirt through the real join");
+        assert_eq!(w.get(32, 0, 32), crate::world::STONE, "stone at world 48 = feet 64 - 16");
+        assert_eq!(w.get(35, 1, 34), crate::world::DIRT, "dirt at world 49");
+        assert_eq!(w.get(32, 16, 32), crate::world::AIR, "the feet row (world 64) is sky");
         assert!(
             !app.world_quads.as_ref().expect("meshed network world").is_empty(),
             "the network terrain meshes"
