@@ -49,6 +49,8 @@ impl Default for WorldModel {
 }
 
 impl WorldModel {
+    #![allow(dead_code)] // wired into the frame loop when the mesher input lands
+
     pub fn new() -> Self {
         WorldModel {
             center: (0, 0),
