@@ -351,12 +351,16 @@ impl WorldModel {
     /// payload's member ids, a bare id names one timeline directly —
     /// and with NO reference the fallback candidates are every
     /// timeline whose `clock` matches the dimension's `default_clock`.
-    /// Among the candidates the first timeline CARRYING the track
-    /// serves: vanilla merges multiple timelines per attribute track,
-    /// but in real data exactly one overworld timeline
-    /// (`minecraft:day`) carries `visual/sky_light_factor` — the
-    /// first-carrier rule is the honest minimal contract, the
-    /// multi-timeline merge (the track's `modifier`) is future work.
+    /// An UNKNOWN tag (its Update Tags payload never arrived) resolves
+    /// NOTHING — the compile-time snapshot serves instead, never a
+    /// blind clock filter that could resurrect an off-tag carrier
+    /// (the exact thing the tag exists to prevent). Among the
+    /// candidates the first timeline CARRYING the track serves:
+    /// vanilla merges multiple timelines per attribute track, but in
+    /// real data exactly one overworld timeline (`minecraft:day`)
+    /// carries `visual/sky_light_factor` — the first-carrier rule is
+    /// the honest minimal contract, the multi-timeline merge (the
+    /// track's `modifier`) is future work.
     fn timeline_curve(&self) -> Option<(&[(i64, f32)], i64)> {
         let dim = self.current_dimension.as_ref()?;
         let entry = self.registry.dimension(dim)?;
@@ -974,18 +978,19 @@ mod tests {
         let p3 = mc_protocol::play::test_support::set_time_packet(3, &[(0, 18_000, 0.0, 1.0)]);
         let ts3 = mc_protocol::play::parse_set_time(&p3).unwrap();
         assert!(m.apply(PlayEvent::Time(ts3)));
-        // the tag UNKNOWN: the clock-name filter serves (a partial-
-        // knowledge client uses what it can) — the first carrier among
-        // the overworld-clocked timelines, which is test_alt here: its
-        // dusk ramp (12000 -> 24000) is halfway through at 18_000
+        // the tag UNKNOWN (its Update Tags payload never arrived): the
+        // narrowing cannot happen, so the compile-time day.json
+        // snapshot serves — the jar's own overworld curve, NOT a
+        // blind clock filter that could resurrect an off-tag carrier
+        // (the exact thing the tag exists to prevent)
         m.registry.timeline_tags.clear();
         assert_eq!(
             m.sky_factor(),
-            0.75,
-            "no tag knowledge: the clock filter's first carrier serves"
+            0.24,
+            "unknown tag: the snapshot curve serves, the off-tag carrier never does"
         );
-        // NO registry knowledge at all (a bare mock server): the
-        // compile-time day.json snapshot — the same values bit-for-bit
+        // NO registry knowledge at all (a bare mock server): the same
+        // snapshot — the same values bit-for-bit
         m.registry.timelines.clear();
         assert_eq!(m.sky_factor(), 0.24, "midnight through the snapshot's curve");
         // and with neither table the snapshot is the day.json constants

@@ -1081,7 +1081,7 @@ pub mod test_support {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use super::test_support::{registry_packet, world_clock_packet};
+    use super::test_support::{registry_packet, timeline_packet, update_tags_packet, world_clock_packet};
     use crate::login::{encode_login_disconnect, encode_login_success, encode_set_compression};
     use crate::varint::write_varint;
     use std::net::{TcpListener, TcpStream};

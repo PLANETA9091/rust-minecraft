@@ -1878,6 +1878,13 @@ mod tests {
             // through it (a real vanilla server streams this registry too)
             srv.send_packet(&crate::config::test_support::world_clock_packet())
                 .unwrap();
+            // the timeline registry + the common-phase Update Tags
+            // payload: the day/night sky curve resolves DATA-DRIVEN
+            // through them (a real vanilla server streams both)
+            srv.send_packet(&crate::config::test_support::timeline_packet())
+                .unwrap();
+            srv.send_packet(&crate::config::test_support::update_tags_packet())
+                .unwrap();
             let mut fin = Vec::new();
             write_varint(&mut fin, crate::config::clientbound::FINISH);
             srv.send_packet(&fin).unwrap();
@@ -2201,6 +2208,15 @@ mod tests {
                 assert_eq!(snapshot.info.entity_id, 17);
                 assert_eq!(snapshot.player.teleport_id, 42);
                 assert_eq!(snapshot.chunks.len(), 1);
+                // the configuration's timeline knowledge rode the live
+                // join: FOUR synced timelines + the in_overworld tag
+                // (the day/night curve resolves DATA-DRIVEN through them)
+                assert_eq!(session.registry.timelines.len(), 4);
+                assert_eq!(
+                    session.registry.timeline_tag_ids("minecraft:in_overworld"),
+                    Some(&[0, 1, 2][..])
+                );
+                assert!(session.registry.timelines[0].sky_light_factor.is_some());
                 // THE LIVE LEG: the retained session keeps speaking
                 // 1) the second chunk column streams in
                 match session.pump().expect("live chunk") {
