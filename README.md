@@ -277,6 +277,14 @@ hand-drawn:
   bit-identically, and an unknown tag never resurrects an off-tag
   carrier. The e2e mock streams the timeline registry + Update Tags
   like a real vanilla server; the live join carries the table.
+  The **net golden grew a sibling (v0.3.43 — the second matrix size)**:
+  `goldens/net_480x270.png` pins the wire pipeline at 480x270 — the
+  cpu golden matrix has carried two sizes since its first run, the net
+  path had one, and resolution-dependent raster drift (aspect, fog
+  curve, frustum culling) is exactly the class a single-size gate
+  cannot see. Rendered once with the exact CI flags, bit-exact on
+  re-render (rms 0.000), gated at rms <= 8 like its 320x180 sibling;
+  verify_goldens.sh and the CI pixel job grew the tenth check.
   The **wire ids of every phase are generated**:
   `mc2rs-gen dump-packet-ids` binds the official jar's REAL protocols —
   play, login, configuration, status AND handshake — and dumps each
