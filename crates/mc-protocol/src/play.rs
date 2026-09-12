@@ -58,6 +58,7 @@
 use std::io::{Read, Write};
 
 use anyhow::{Context, Result};
+use std::net::TcpStream;
 
 use crate::config::{join_play_conn, PlayOutcome, RegistryData};
 use crate::framing::PacketConn;
@@ -777,15 +778,36 @@ pub fn join_world<S: Read + Write>(session: &mut PlaySession<S>) -> Result<World
     }
 }
 
+/// How a live join ended. `Live` carries the milestone snapshot AND the
+/// session to keep pumping: the connection stays open past the world-load
+/// milestone and every later packet (re-sent chunks, teleports, probes,
+/// the dimension changes) rides the SAME wire — the live view's input
+/// stream. Dropping the session closes the socket (the vanilla client's
+/// disconnect).
+pub enum LiveJoin<S: Read + Write> {
+    /// World info + the first position teleport + at least one decoded
+    /// chunk (the vanilla "loading screen finished" milestone), plus the
+    /// live session.
+    Live {
+        snapshot: WorldSnapshot,
+        session: PlaySession<S>,
+    },
+    /// Login/config refusal or kick; carries the flattened reason.
+    Disconnected { reason: String },
+}
+
 /// Connect + full vanilla join (login, configuration, play) with the
-/// offline profile UUID for `username`, pumped to the world-load
-/// milestone.
-pub fn connect_and_join_world(
+/// offline profile UUID for `username`, retaining the LIVE session after
+/// the world-load milestone: the caller keeps pumping the returned
+/// session for as long as the join lives (chunks keep streaming in,
+/// teleports re-anchor the view, probes are answered in place — the
+/// live view's input stream).
+pub fn connect_and_join_live(
     host: &str,
     port: u16,
     protocol_version: i32,
     username: &str,
-) -> Result<WorldOutcome> {
+) -> Result<LiveJoin<TcpStream>> {
     let addr = format!("{host}:{port}");
     let timeout = std::time::Duration::from_secs(DEFAULT_TIMEOUT_SECS);
     let stream =
@@ -793,9 +815,28 @@ pub fn connect_and_join_world(
     stream.set_read_timeout(Some(timeout))?;
     stream.set_write_timeout(Some(timeout))?;
     match begin_play(stream, host, port, protocol_version, username)? {
-        PlayStart::Session(mut session) => join_world(&mut session),
-        PlayStart::Disconnected { reason } => Ok(WorldOutcome::Disconnected { reason }),
+        PlayStart::Session(mut session) => match join_world(&mut session)? {
+            WorldOutcome::Loaded(snapshot) => Ok(LiveJoin::Live { snapshot, session }),
+            WorldOutcome::Disconnected { reason } => Ok(LiveJoin::Disconnected { reason }),
+        },
+        PlayStart::Disconnected { reason } => Ok(LiveJoin::Disconnected { reason }),
     }
+}
+
+/// Connect + full vanilla join, pumped to the world-load milestone. The
+/// ONE-SHOT contract: the session closes when the milestone returns
+/// (the snapshot is the whole world the caller gets). For a join whose
+/// stream keeps living, [`connect_and_join_live`] returns the session.
+pub fn connect_and_join_world(
+    host: &str,
+    port: u16,
+    protocol_version: i32,
+    username: &str,
+) -> Result<WorldOutcome> {
+    Ok(match connect_and_join_live(host, port, protocol_version, username)? {
+        LiveJoin::Live { snapshot, .. } => WorldOutcome::Loaded(snapshot),
+        LiveJoin::Disconnected { reason } => WorldOutcome::Disconnected { reason },
+    })
 }
 
 // ---------------------------------------------------------------------------
@@ -1164,8 +1205,21 @@ mod tests {
     /// arc), then a real world burst: login, center chunk, chunk batch,
     /// chunk data, keep-alive, ping, junk, unload, position teleport.
     /// Asserts every client reply server-side and returns nothing (the
-    /// client-side snapshot is asserted by the caller).
+    /// client-side snapshot is asserted by the caller). With `live_tail`
+    /// the server keeps speaking AFTER the milestone — a second chunk, a
+    /// second teleport, a keep-alive and a play disconnect — the traffic
+    /// only a caller still pumping the retained session can serve (the
+    /// live view's input stream).
     fn spawn_world_mock() -> (u16, JoinHandle<()>) {
+        spawn_world_mock_with_tail(false)
+    }
+
+    /// The live-tail variant of the world mock (see `spawn_world_mock`).
+    fn spawn_world_mock_live() -> (u16, JoinHandle<()>) {
+        spawn_world_mock_with_tail(true)
+    }
+
+    fn spawn_world_mock_with_tail(live_tail: bool) -> (u16, JoinHandle<()>) {
         let listener = TcpListener::bind("127.0.0.1:0").expect("bind");
         let port = listener.local_addr().unwrap().port();
         let handle = std::thread::spawn(move || {
@@ -1330,6 +1384,62 @@ mod tests {
                 "confirm id"
             );
             assert_eq!(read_varint(&mut c).unwrap(), 42, "teleport id verbatim");
+            if !live_tail {
+                return;
+            }
+            // ---- the LIVE leg (post-milestone traffic on the same wire) ----
+            // a second chunk column (3,-1): the same stone+dirt section —
+            // the stream keeps filling the view while the client plays
+            let buffer2 = build_stone_dirt_section();
+            let mut cd2 = Vec::new();
+            write_varint(&mut cd2, clientbound::CHUNK_DATA);
+            cd2.extend_from_slice(&3i32.to_be_bytes());
+            cd2.extend_from_slice(&(-1i32).to_be_bytes());
+            cd2.push(0x0A);
+            cd2.push(0x00);
+            write_varint(&mut cd2, buffer2.len() as i32);
+            cd2.extend_from_slice(&buffer2);
+            write_varint(&mut cd2, 0);
+            cd2.extend_from_slice(&[0, 0, 0, 0, 0, 0]);
+            srv.send_packet(&cd2).unwrap();
+            // a second teleport (id 43): the view re-anchors server-side —
+            // pose (7.0, 65.0, -2.5), yaw 180, pitch 10 (looking down)
+            let mut pos2 = Vec::new();
+            write_varint(&mut pos2, clientbound::SYNCHRONIZE_POSITION);
+            write_varint(&mut pos2, 43);
+            pos2.extend_from_slice(&7.0f64.to_be_bytes());
+            pos2.extend_from_slice(&65.0f64.to_be_bytes());
+            pos2.extend_from_slice(&(-2.5f64).to_be_bytes());
+            pos2.extend_from_slice(&0.0f64.to_be_bytes()); // delta movement
+            pos2.extend_from_slice(&0.0f64.to_be_bytes());
+            pos2.extend_from_slice(&0.0f64.to_be_bytes());
+            pos2.extend_from_slice(&180.0f32.to_be_bytes());
+            pos2.extend_from_slice(&10.0f32.to_be_bytes());
+            pos2.extend_from_slice(&0i32.to_be_bytes());
+            srv.send_packet(&pos2).unwrap();
+            let resp = srv.read_packet().expect("confirm teleportation 43");
+            let mut c: &[u8] = &resp;
+            assert_eq!(read_varint(&mut c).unwrap(), serverbound::CONFIRM_TELEPORTATION);
+            assert_eq!(read_varint(&mut c).unwrap(), 43, "second teleport id verbatim");
+            // a play keep-alive: the LIVE session must keep answering probes
+            let mut kap2 = Vec::new();
+            write_varint(&mut kap2, clientbound::KEEP_ALIVE);
+            kap2.extend_from_slice(&99_999_999_999i64.to_be_bytes());
+            srv.send_packet(&kap2).unwrap();
+            let resp = srv.read_packet().expect("play keep alive echo (live)");
+            let mut c: &[u8] = &resp;
+            assert_eq!(read_varint(&mut c).unwrap(), serverbound::KEEP_ALIVE);
+            assert_eq!(
+                i64::from_be_bytes(c[..8].try_into().unwrap()),
+                99_999_999_999,
+                "live keep-alive echoed"
+            );
+            // the server ends the session with a play disconnect: the live
+            // caller surfaces the reason instead of an io error
+            let mut d2 = Vec::new();
+            write_varint(&mut d2, clientbound::DISCONNECT);
+            write_string(&mut d2, r#"{"text":"Time"}"#);
+            srv.send_packet(&d2).unwrap();
         });
         (port, handle)
     }
@@ -1363,6 +1473,59 @@ mod tests {
                 assert_eq!((nether.min_y, nether.height), (0, 256));
             }
             other => panic!("expected Loaded, got {other:?}"),
+        }
+        srv.join().unwrap();
+    }
+
+    #[test]
+    fn live_join_keeps_the_session_pumping_past_the_milestone() {
+        // the milestone returns the snapshot AND the session; the server's
+        // post-milestone traffic (second chunk, second teleport, probe,
+        // disconnect) streams through the SAME wire — the live view's
+        // input stream. The one-shot caller (connect_and_join_world) could
+        // never serve this mock: its tail would sit unread.
+        let (port, srv) = spawn_world_mock_live();
+        let out = connect_and_join_live("127.0.0.1", port, 776, "mc2rs").expect("live join");
+        match out {
+            LiveJoin::Live { snapshot, mut session } => {
+                // the milestone facts arrived intact
+                assert_eq!(snapshot.info.entity_id, 17);
+                assert_eq!(snapshot.player.teleport_id, 42);
+                assert_eq!(snapshot.chunks.len(), 1);
+                // THE LIVE LEG: the retained session keeps speaking
+                // 1) the second chunk column streams in
+                match session.pump().expect("live chunk") {
+                    PlayEvent::Chunk(col) => {
+                        assert_eq!((col.x, col.z), (3, -1), "the post-milestone column");
+                        assert_eq!(col.sections[0].blocks[291], 10, "the decoded dirt");
+                    }
+                    other => panic!("expected Chunk, got {other:?}"),
+                }
+                // 2) the second teleport arrives (the pump confirms it in
+                // place — the server-side assert proves the reply)
+                match session.pump().expect("live teleport") {
+                    PlayEvent::Position(p) => {
+                        assert_eq!(p.teleport_id, 43);
+                        assert!((p.x - 7.0).abs() < 1e-9);
+                        assert!((p.y - 65.0).abs() < 1e-9);
+                        assert!((p.z + 2.5).abs() < 1e-9);
+                        assert!((p.yaw - 180.0).abs() < 1e-6);
+                        assert!((p.pitch - 10.0).abs() < 1e-6);
+                    }
+                    other => panic!("expected Position, got {other:?}"),
+                }
+                // 3) the probe is answered (server-side assert again)
+                match session.pump().expect("live keep-alive") {
+                    PlayEvent::KeepAlive(v) => assert_eq!(v, 99_999_999_999),
+                    other => panic!("expected KeepAlive, got {other:?}"),
+                }
+                // 4) the server's play disconnect surfaces with its reason
+                match session.pump().expect("live disconnect") {
+                    PlayEvent::Disconnected { reason } => assert_eq!(reason, "Time"),
+                    other => panic!("expected Disconnected, got {other:?}"),
+                }
+            }
+            LiveJoin::Disconnected { reason } => panic!("expected Live, got kicked: {reason}"),
         }
         srv.join().unwrap();
     }
