@@ -77,6 +77,8 @@ jobs:
           - { screen: title, frame: 30 }
           - { screen: servers, frame: 60 }
           - { screen: loading, frame: 15 }
+          - { screen: world, frame: 30 }
+          - { screen: pause, frame: 30 }
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable

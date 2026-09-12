@@ -113,7 +113,16 @@ pub fn render_gui_screen(
         }
         "servers" => app.open(ScreenKind::Servers),
         "options" => app.open(ScreenKind::Options),
-        other => anyhow::bail!("unknown screen {other} (loading|title|servers|options)"),
+        "world" => {
+            app.enter_world();
+            app.frame = frame;
+        }
+        "pause" => {
+            app.enter_world();
+            app.paused = true;
+            app.frame = frame;
+        }
+        other => anyhow::bail!("unknown screen {other} (loading|title|servers|options|world|pause)"),
     }
 
     let mut fb = Framebuf::new(width, height);

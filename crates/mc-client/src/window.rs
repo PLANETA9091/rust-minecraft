@@ -116,6 +116,9 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize) -> anyhow::Result<()>
     let mut buf: Vec<u32> = vec![0; width * height];
 
     while window.is_open() {
+        if window.is_key_pressed(Key::Escape, minifb::KeyRepeat::No) {
+            app.on_escape();
+        }
         let (mx, my) = window.get_mouse_pos(minifb::MouseMode::Discard).unwrap_or((0.0, 0.0));
         let gmx = (mx as usize / 2) as i32;
         let gmy = (my as usize / 2) as i32;
