@@ -2,10 +2,17 @@
 
 mod atlas;
 mod codegen;
+mod extract;
+mod fontgen;
 mod jar;
+mod langgen;
 mod manifest;
+mod soundgen;
+mod splashgen;
+mod uigen;
 mod util;
 mod version;
+mod worldgen;
 
 use std::path::Path;
 
@@ -59,6 +66,10 @@ enum Cmd {
         version: String,
         #[arg(long, default_value = "assets-cache")]
         dir: String,
+        /// Comma-separated object-key prefixes to download (empty = all).
+        /// Example: "font/,gui/,texts/"
+        #[arg(long, default_value = "")]
+        filter: String,
     },
     /// Ping a server using the generated protocol layer (smoke test).
     Ping {
@@ -115,7 +126,7 @@ fn main() -> Result<()> {
         Cmd::Atlas { version, out } => {
             atlas_cmd(&agent, &cache, &version, Path::new(&out))?;
         }
-        Cmd::Assets { version, dir } => {
+        Cmd::Assets { version, dir, filter } => {
             let m = manifest::load(&agent)?;
             let entry = m
                 .find(&version)
@@ -128,14 +139,37 @@ fn main() -> Result<()> {
             let idx_bytes = cache.fetch(&agent, &format!("asset-index:{}", ai.sha1.as_deref().unwrap_or(&ai.id)), &ai.url)?;
             util::verify(&idx_bytes, ai.sha1.as_deref(), "asset index")?;
             let index = mc_assets::AssetIndex::parse(&idx_bytes)?;
+            let prefixes: Vec<String> = filter
+                .split(',')
+                .map(str::trim)
+                .filter(|s| !s.is_empty())
+                .map(String::from)
+                .collect();
+            let filtered = if prefixes.is_empty() {
+                index
+            } else {
+                let objects: std::collections::BTreeMap<String, mc_assets::AssetObject> = index
+                    .objects
+                    .iter()
+                    .filter(|(k, _)| prefixes.iter().any(|p| k.starts_with(p.as_str())))
+                    .map(|(k, v)| (k.clone(), v.clone()))
+                    .collect();
+                mc_assets::AssetIndex { map_to_resources: index.map_to_resources, objects }
+            };
+            println!(
+                "asset index: {} object(s), filter {:?} -> {} to download",
+                index.object_count(),
+                prefixes,
+                filtered.object_count()
+            );
             std::fs::create_dir_all(&dir)?;
             let t0 = std::time::Instant::now();
-            mc_assets::download_all(&index, Path::new(&dir), &agent, |done, total| {
+            mc_assets::download_all(&filtered, Path::new(&dir), &agent, |done, total| {
                 println!("  assets {done}/{total}");
             })?;
             println!(
                 "downloaded/verified {} objects ({:.1}s) -> {}",
-                index.object_count(),
+                filtered.object_count(),
                 t0.elapsed().as_secs_f32(),
                 dir
             );
@@ -187,25 +221,84 @@ fn generate(agent: &ureq::Agent, cache: &util::Cache, version: &str, out: &Path)
     util::verify(&jar_bytes, dl.sha1.as_deref(), "client jar")?;
     let client_sha1 = util::sha1_hex(&jar_bytes);
 
-    println!("[3/5] analyzing jar (obfuscation detection, registry extraction)...");
+    println!("[3/7] analyzing jar (obfuscation detection, registry extraction)...");
     let report = jar::analyze(&jar_bytes)?;
     println!(
         "      obfuscated: {} (ratio {:.2}), classes: {}, net/minecraft classes: {}",
         report.obfuscated, report.obfuscation_ratio, report.class_count, report.net_minecraft_classes
     );
 
-    println!("[4/6] generating registry + build info...");
-    let report_path = codegen::emit(&workspace_root, version, &client_sha1, &report)?;
+    println!("[4/7] extracting official data (font chain, lang, splashes, GUI sprites, sounds, worldgen)...");
+    let mut zip = zip::ZipArchive::new(std::io::Cursor::new(jar_bytes.as_slice()))
+        .context("open client jar as zip")?;
+    let font = fontgen::generate(&mut zip)?;
+    let lang = langgen::generate(&mut zip)?;
+    let splashes = splashgen::generate(&mut zip)?;
+    let ui = uigen::generate(&mut zip)?;
+    let worldgen = worldgen::generate(&mut zip)?;
+    let sounds_json = match fetch_sounds_json(agent, cache, vj) {
+        Ok(b) => soundgen::generate(&b)?,
+        Err(e) => {
+            eprintln!("      warning: sounds.json unavailable ({e}); emitting empty sound table");
+            soundgen::SoundData::default()
+        }
+    };
+    println!(
+        "      glyphs: {} ({} textures) | lang: {} | splashes: {} | sprites: {} | sound events: {} | biomes: {}",
+        font.glyphs.len(),
+        font.textures.len(),
+        lang.map.len(),
+        splashes.lines.len(),
+        ui.sprites.len(),
+        sounds.events.len(),
+        worldgen.biomes.len()
+    );
 
-    println!("[5/6] extracting REAL texture atlas (blockstates -> models -> PNGs)...");
+    println!("[5/7] generating registry + build info...");
+    let gen = codegen::GenAll { font, lang, splashes, ui, sounds: sounds_json, worldgen };
+    let report_path = codegen::emit(&workspace_root, version, &client_sha1, &report, &gen)?;
+
+    println!("[6/7] extracting REAL texture atlas (blockstates -> models -> PNGs)...");
     write_atlas(&workspace_root, version, &client_sha1, &jar_bytes)?;
 
-    println!("[6/6] done in {:.1}s", t0.elapsed().as_secs_f32());
-    println!("      blocks: {} | items: {} | textures: {} | sounds: {}",
-        report.blockstate_count, report.item_count, report.texture_count, report.sound_count);
+    let extracted = codegen::extract_runtime_assets(&mut zip, &workspace_root, &gen.ui, &gen.font)?;
+    println!("[7/7] done in {:.1}s ({} runtime asset files -> assets-cache/jar)", t0.elapsed().as_secs_f32(), extracted);
+    println!(
+        "      blocks: {} | items: {} | textures: {} | sounds: {}",
+        report.blockstate_count, report.item_count, report.texture_count, report.sound_count
+    );
     println!("      report: {}", report_path.display());
     println!("      next: cargo test -p mc-registry && cargo run -p mc-client --release -- --headless");
     Ok(())
+}
+
+/// Fetch the official sounds.json through the asset index (it ships as an
+/// index object, not inside the client jar).
+fn fetch_sounds_json(
+    agent: &ureq::Agent,
+    cache: &util::Cache,
+    vj: &crate::version::VersionJson,
+) -> Result<Vec<u8>> {
+    let ai = vj
+        .asset_index
+        .as_ref()
+        .context("version json has no asset index")?;
+    let idx_bytes = cache.fetch(
+        agent,
+        &format!("asset-index:{}", ai.sha1.as_deref().unwrap_or(&ai.id)),
+        &ai.url,
+    )?;
+    util::verify(&idx_bytes, ai.sha1.as_deref(), "asset index")?;
+    let index = mc_assets::AssetIndex::parse(&idx_bytes)?;
+    let obj = index
+        .objects
+        .get("minecraft/sounds.json")
+        .context("sounds.json not in asset index")?
+        .clone();
+    let url = format!("https://resources.download.minecraft.net/{}/{}", &obj.hash[..2], obj.hash);
+    let bytes = cache.fetch(agent, &format!("sounds-json:{}", obj.hash), &url)?;
+    util::verify(&bytes, Some(obj.hash.as_str()), "sounds.json")?;
+    Ok(bytes)
 }
 
 /// Fetch the jar (cache-first), resolve the atlas, write generated/atlas.rs.

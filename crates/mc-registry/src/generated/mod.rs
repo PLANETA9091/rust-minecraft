@@ -1,3 +1,9 @@
 pub mod atlas;
 pub mod blocks;
+pub mod font;
+pub mod gui;
 pub mod items;
+pub mod lang;
+pub mod sounds;
+pub mod splashes;
+pub mod worldgen;

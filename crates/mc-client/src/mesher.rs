@@ -390,8 +390,10 @@ mod tests {
         put(&mut w, 8, 5, 8, WATER);
         let q = mesh_chunk(&w, 0, 0, None);
         for quad in &q {
-            let is_water_surface = quad.pts[0][1] == 6.0 && quad.pts[2][1] == 6.0;
-            assert_eq!(quad.translucent, is_water_surface, "only water surface quads are translucent");
+            // every face of the water block (sides/top/bottom) is translucent;
+            // every face of the stone block (y 8..9) is opaque
+            let in_water_span = quad.pts.iter().all(|p| (5.0..=6.0).contains(&p[1]));
+            assert_eq!(quad.translucent, in_water_span);
         }
     }
 

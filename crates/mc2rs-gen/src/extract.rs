@@ -76,7 +76,7 @@ pub fn parse_sprite_mcmeta(bytes: &[u8]) -> Result<SpriteMeta> {
 
 /// Decode a PNG into RGBA8 (expanding palette/grayscale/16-bit forms).
 pub fn decode_rgba(bytes: &[u8]) -> Result<(u32, u32, Vec<u8>)> {
-    let decoder = png::Decoder::new(std::io::Cursor::new(bytes));
+    let mut decoder = png::Decoder::new(std::io::Cursor::new(bytes));
     decoder.set_transformations(png::Transformations::EXPAND | png::Transformations::STRIP_16);
     let mut reader = decoder.read_info().context("png read_info")?;
     let mut buf = vec![0u8; reader.output_buffer_size()];

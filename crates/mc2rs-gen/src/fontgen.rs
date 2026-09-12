@@ -281,7 +281,7 @@ mod tests {
     }
 
     /// Build a 2-glyph font: 'A' solid 3px wide, 'B' empty, plus a space provider.
-    fn tiny_png(w: u32, h: u32, paint: impl Fn(u32, u32) -> [u8; 4>) -> Vec<u8> {
+    fn tiny_png(w: u32, h: u32, paint: impl Fn(u32, u32) -> [u8; 4]) -> Vec<u8> {
         let mut rgba = Vec::with_capacity((w * h * 4) as usize);
         for y in 0..h {
             for x in 0..w {

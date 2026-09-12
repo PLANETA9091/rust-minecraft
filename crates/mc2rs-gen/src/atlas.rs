@@ -138,22 +138,19 @@ fn resolve_flat_stem(stem: &str, tinted: bool) -> [ResolvedFace; 6] {
 }
 
 /// Load a model JSON and follow `parent` links, merging texture maps
-/// (child overrides parent). Returns (textures, deepest model json).
+/// (child overrides parent). Returns (merged textures, child-most model JSON
+/// that defines `elements` — geometry lives on ancestors like block/cube).
 fn load_model_chain(
     archive: &mut ZipArchive<std::io::Cursor<&[u8]>>,
     model_ref: &str,
 ) -> Result<(BTreeMap<String, String>, Value)> {
-    let mut chain = Vec::new();
+    let mut models_seen: Vec<Value> = Vec::new();
     let mut current = model_ref.to_string();
     let mut textures = BTreeMap::new();
-    let mut deepest = Value::Null;
     for _ in 0..12 {
         let bytes = read_jar(archive, &format!("assets/minecraft/models/{current}.json"))?;
         let json: Value = serde_json::from_slice(&bytes)
             .with_context(|| format!("model {current}: json parse"))?;
-        if deepest.is_null() {
-            deepest = json.clone(); // first loaded = the block's own model
-        }
         if let Some(t) = json.get("textures").and_then(|t| t.as_object()) {
             for (k, v) in t {
                 if let Some(s) = v.as_str() {
@@ -161,15 +158,21 @@ fn load_model_chain(
                 }
             }
         }
-        chain.push(current.clone());
+        models_seen.push(json.clone());
         match json.get("parent").and_then(|p| p.as_str()) {
             Some(p) => current = p.trim_start_matches("minecraft:").to_string(),
             None => break,
         }
     }
-    if chain.is_empty() {
+    if models_seen.is_empty() {
         bail!("model chain empty for {model_ref}");
     }
+    // Child-most model that carries the element geometry.
+    let geometry = models_seen
+        .iter()
+        .find(|j| j.get("elements").is_some())
+        .cloned()
+        .unwrap_or(Value::Null);
     // Resolve internal "#ref" links now that the full map is merged.
     let resolved: BTreeMap<String, String> = textures
         .iter()
@@ -188,7 +191,7 @@ fn load_model_chain(
             (k.clone(), val)
         })
         .collect();
-    Ok((resolved, deepest))
+    Ok((resolved, geometry))
 }
 
 fn read_jar(
