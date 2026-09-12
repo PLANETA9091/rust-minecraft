@@ -42,6 +42,15 @@ hand-drawn:
 - **Server list** — `Play Multiplayer` screen with server entries, `§`-color
   MOTDs, official `server_list/ping_*` icons, Join/Refresh/Cancel
   (`--screen servers`).
+- **Singleplayer world** — clicking `Singleplayer` enters a live 3D world
+  view rendered by the same deterministic CPU raster path as the pixel
+  tests: real block textures from the generated atlas, sky gradient + fog,
+  and the **vanilla HUD** (official `hud/crosshair`, `hud/hotbar` +
+  selection sprite, ten `hud/heart/full`, ten `hud/food_full`) at vanilla
+  geometry (`--screen world`).
+- **Pause menu** — `Game Paused` over the dimmed frozen world with
+  Back to Game / Options... / Save and Quit to Title, all official strings
+  and widgets; Escape toggles it in `--gui` (`--screen pause`).
 - **Options** — `Options` screen with volume/FOV controls (`--screen options`).
 - **Music scheduler** — the vanilla menu-music behavior (play `music.menu`
   track → random delay → next) driven by the official `sounds.json` tables.
