@@ -48,7 +48,7 @@ use crate::world::{
     GRAVEL, IRON_ORE, LAPIS_ORE, LEAVES, LOG, NETHERRACK, REDSTONE_ORE, SAND, STONE, WATER,
 };
 use crate::world_model::WorldModel;
-use mc_protocol::{PlayerPosition, WorldSnapshot};
+use mc_protocol::{PlayEvent, PlayerPosition, WorldSnapshot};
 
 /// Project the window of `side * side` chunks starting at chunk
 /// `(origin.0, origin.1)` into a fresh renderer grid. `y_base` is the
@@ -195,6 +195,69 @@ pub fn materialize_snapshot_view(
     SnapshotView {
         world: materialize(&model, origin, side, y_base, mapper),
         camera,
+    }
+}
+
+/// The LIVE world view: one `WorldModel` fed by the play stream for the
+/// session's whole life and re-materialized into the renderer window on
+/// demand — the SAME model the screen renders, not a one-shot snapshot.
+/// The window decisions (origin, y base, camera) are recomputed from the
+/// LATEST player pose on every [`LiveView::refresh`]: a new teleport
+/// re-anchors the grid AND the pose (the view follows the player like
+/// the original), a re-sent chunk replaces its column in place, an
+/// unload drops it — the play state's whole vocabulary lands here.
+pub struct LiveView {
+    /// The live model — the session's world state, exactly as streamed.
+    pub model: WorldModel,
+    side: usize,
+}
+
+impl LiveView {
+    /// Adopt the join milestone as the live model's starting state (the
+    /// session that produced it keeps pumping INTO this view — the first
+    /// [`LiveView::refresh`] reproduces the one-shot snapshot view
+    /// exactly, same window decisions, same grid, same pose).
+    pub fn from_snapshot(snap: WorldSnapshot, side: usize) -> Self {
+        let mut model = WorldModel::new();
+        model.adopt_snapshot(snap);
+        LiveView { model, side }
+    }
+
+    /// Feed one play event into the live model. Returns `true` when the
+    /// event touched world state (info, position, chunk, unload, center)
+    /// — the caller re-materializes only then; probes and skipped
+    /// packets never dirty the view.
+    pub fn apply(&mut self, event: PlayEvent) -> bool {
+        self.model.apply(event)
+    }
+
+    /// The CURRENT view: the model's chunks projected into the renderer
+    /// window plus the camera pose from the SAME window decisions — both
+    /// recomputed from the latest player pose (the view follows the
+    /// player, the vanilla behavior). No pose known (no teleport ever
+    /// arrived): the deterministic window (origin 0,0, the layout-known
+    /// y base or column-local 0) with no camera — the honest state,
+    /// never a guess.
+    pub fn refresh(&self, mapper: impl FnMut(u32) -> u16) -> SnapshotView {
+        let Some(player) = self.model.player.as_ref() else {
+            return SnapshotView {
+                world: materialize(
+                    &self.model,
+                    (0, 0),
+                    self.side,
+                    self.model.min_y.unwrap_or(0),
+                    mapper,
+                ),
+                camera: None,
+            };
+        };
+        let origin = snapshot_window_origin(player, self.side);
+        let y_base = snapshot_y_base(player, self.model.min_y);
+        let camera = snapshot_camera(player, self.model.min_y, self.side);
+        SnapshotView {
+            world: materialize(&self.model, origin, self.side, y_base, mapper),
+            camera,
+        }
     }
 }
 
@@ -686,5 +749,103 @@ mod tests {
         let real_world = materialize_snapshot_view(join_snapshot(), 5, runtime_mapper).world;
         assert_eq!(real_world.get(32, 0, 32), STONE, "stone through the generated table");
         assert_eq!(real_world.get(35, 1, 34), DIRT, "dirt through the generated table");
+    }
+
+    #[test]
+    fn live_view_first_refresh_equals_the_one_shot_snapshot_view() {
+        // the live view's FIRST refresh is exactly the one-shot snapshot
+        // view: same window decisions, same grid, same pose — going live
+        // never changes the join frame's shape (the pixel contract of the
+        // first world screen survives the live view switch bit for bit)
+        let snap = join_snapshot();
+        let one_shot = materialize_snapshot_view(snap.clone(), 5, example_mapper);
+        let live = LiveView::from_snapshot(snap, 5);
+        let first = live.refresh(example_mapper);
+        assert_eq!(first.world.chunks_per_side, one_shot.world.chunks_per_side);
+        assert_eq!(
+            first.world.chunks, one_shot.world.chunks,
+            "bit-identical grid: the live model's first refresh IS the snapshot"
+        );
+        let (a, b) = (first.camera.expect("pose"), one_shot.camera.expect("pose"));
+        assert_eq!((a.pos.x, a.pos.y, a.pos.z), (b.pos.x, b.pos.y, b.pos.z));
+        assert_eq!((a.yaw, a.pitch), (b.yaw, b.pitch));
+    }
+
+    #[test]
+    fn live_view_streams_chunks_and_follows_the_player() {
+        let mut live = LiveView::from_snapshot(join_snapshot(), 5);
+        // the join view: the mock column at grid chunk (2,2), stone at
+        // (32, 0, 32), pose from teleport 42
+        let view = live.refresh(example_mapper);
+        assert_eq!(view.world.get(32, 0, 32), STONE);
+        let cam0 = view.camera.expect("join pose");
+        assert_eq!(cam0.pos.x, 56.5 - 16.0, "grid x over origin (1,-4)");
+
+        // a second column streams in NEXT DOOR (chunk (3,-1) -> grid
+        // (2,3)): the SAME model absorbs it, the refreshed window shows it
+        assert!(live.apply(PlayEvent::Chunk(ChunkColumn {
+            x: 3,
+            z: -1,
+            sections: vec![stone_dirt_section()],
+        })));
+        let w = live.refresh(example_mapper).world;
+        assert_eq!(w.get(32, 0, 32), STONE, "the join column is still there");
+        assert_eq!(w.get(32, 0, 48), STONE, "the streamed column landed next door");
+
+        // an unload drops it again — the model is the CURRENT world
+        assert!(live.apply(PlayEvent::UnloadChunk { x: 3, z: -1 }));
+        assert_eq!(live.refresh(example_mapper).world.get(32, 0, 48), AIR);
+
+        // probes never dirty the view (nothing world-state-shaped arrived)
+        assert!(!live.apply(PlayEvent::KeepAlive(3)));
+        assert!(!live.apply(PlayEvent::ChunkBatch));
+
+        // a new teleport re-anchors the window AND the pose: the player
+        // moves one chunk east (x 56.5 -> 72.5, chunk 3 -> 4) — the
+        // window origin slides to (2,-4), the join column moves to grid
+        // chunk (1,2) and the camera rides the server's new pose
+        assert!(live.apply(PlayEvent::Position(PlayerPosition {
+            teleport_id: 43,
+            x: 72.5,
+            y: 64.0,
+            z: -27.25,
+            dx: 0.0,
+            dy: 0.0,
+            dz: 0.0,
+            yaw: 180.0,
+            pitch: 0.0,
+            flags: 0,
+        })));
+        let view = live.refresh(example_mapper);
+        assert_eq!(
+            view.world.get(16, 0, 32),
+            STONE,
+            "the join column slid one grid chunk west with the window"
+        );
+        let cam = view.camera.expect("the pose follows the teleport");
+        assert_eq!(cam.pos.x, 72.5 - 32.0, "grid x over the NEW origin (2,-4)");
+        assert_eq!(
+            cam.yaw,
+            180.0f32.to_radians() + std::f32::consts::PI,
+            "the server's new look direction"
+        );
+    }
+
+    #[test]
+    fn live_view_without_a_pose_materializes_the_honest_window() {
+        // no teleport ever arrived: the deterministic window (origin
+        // 0,0), the layout-known y base or column-local 0, NO camera —
+        // the honest state, never a guess
+        let mut live = LiveView::from_snapshot(join_snapshot(), 5);
+        live.model.player = None; // the model field is pub: tests may strip the pose
+        let view = live.refresh(example_mapper);
+        assert!(view.camera.is_none(), "no pose known, no pose shipped");
+        // origin (0,0) covers chunks 0..=4 / 0..=4 — the join column at
+        // (3,-2) is OUTSIDE it: the window is honestly all air
+        assert!(view
+            .world
+            .chunks
+            .iter()
+            .all(|c| c.iter().all(|&b| b == AIR)));
     }
 }

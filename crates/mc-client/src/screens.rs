@@ -241,6 +241,16 @@ pub struct App {
     /// True while the World screen shows the NETWORK world (the quad mesh
     /// came from a join snapshot, not the procedural singleplayer world).
     pub world_is_network: bool,
+    /// Live-session stop flags by login-request id (the frame thread
+    /// attaches one per dispatched join; the worker checks its flag
+    /// between packets). The App closes every session it no longer
+    /// wants: a cancelled join's late success, a superseded join, and
+    /// the network world's own session on Save and Quit — a ghost
+    /// client would linger on the server otherwise. A fully idle
+    /// connection keeps the worker blocked until the next packet
+    /// arrives (vanilla servers always stream keep-alives, so a quit
+    /// closes within seconds).
+    pub live_runs: Vec<(u64, std::sync::Arc<std::sync::atomic::AtomicBool>)>,
 }
 
 /// World size for the in-game screen (chunks per side — same as the
@@ -317,6 +327,7 @@ impl App {
             net_world: None,
             net_camera: None,
             world_is_network: false,
+            live_runs: Vec::new(),
         }
     }
 
@@ -436,10 +447,13 @@ impl App {
                         // vanilla Save and Quit unloads the level: the
                         // network mesh drops (a newer join rematerializes
                         // it; singleplayer rebuilds its own world) — and
-                        // the teleport pose rides along with it
+                        // the teleport pose rides along with it. The live
+                        // session closes too: the socket goes down like
+                        // the original's, no ghost client lingers.
                         self.world_quads = None;
                         self.world_is_network = false;
                         self.net_camera = None;
+                        self.close_all_live_runs();
                     }
                     self.open(ScreenKind::Title);
                     self.music.on_menu_open();
@@ -570,7 +584,16 @@ impl App {
                 if self.screen == ScreenKind::Connect {
                     self.net_world = Some(world);
                     self.net_camera = camera;
+                    // the live view's stream: this join's session is THE
+                    // one — every other in-flight join's session closes
+                    // now (superseded joins never haunt the server)
+                    self.prune_live_runs(Some(id));
                     self.enter_network_world();
+                } else {
+                    // a late success after Escape: the join is cancelled —
+                    // close its session exactly like the vanilla client
+                    // closes the connection on a cancelled join
+                    self.close_live_run(id);
                 }
             }
             Ok(LoginResult::Disconnected { reason }) => {
@@ -586,6 +609,94 @@ impl App {
                 self.open(ScreenKind::Disconnect);
             }
         }
+    }
+
+    /// The frame thread registers a dispatched join's live-session stop
+    /// flag (the worker checks it between packets and closes the socket
+    /// when it flips).
+    pub fn attach_live_run(&mut self, id: u64, run: std::sync::Arc<std::sync::atomic::AtomicBool>) {
+        self.live_runs.push((id, run));
+    }
+
+    /// Close every live session EXCEPT `keep`'s (the adopted join):
+    /// cancelled or superseded joins' workers stop between packets and
+    /// their sockets close — a ghost client never lingers on the server.
+    fn prune_live_runs(&mut self, keep: Option<u64>) {
+        self.live_runs.retain(|(id, run)| {
+            if Some(*id) == keep {
+                true
+            } else {
+                run.store(false, std::sync::atomic::Ordering::Relaxed);
+                false
+            }
+        });
+    }
+
+    /// Close one join's live session by request id (a cancelled join's
+    /// late success): that worker stops between packets and its socket
+    /// closes; every other in-flight join keeps running.
+    fn close_live_run(&mut self, id: u64) {
+        self.live_runs.retain(|(rid, run)| {
+            if *rid == id {
+                run.store(false, std::sync::atomic::Ordering::Relaxed);
+                false
+            } else {
+                true
+            }
+        });
+    }
+
+    /// Close EVERY live session (Save and Quit unloads the network
+    /// world; a live kick ends it): all workers stop between packets,
+    /// the sockets go down like the original's.
+    fn close_all_live_runs(&mut self) {
+        for (_, run) in self.live_runs.drain(..) {
+            run.store(false, std::sync::atomic::Ordering::Relaxed);
+        }
+    }
+
+    /// The live view refreshed: the play session's stream landed in the
+    /// SAME model the screen renders and the worker shipped the new
+    /// window — swap the network world in place (a re-sent chunk
+    /// replaces its column, a new teleport re-anchors the grid and the
+    /// pose). Updates for a world the UI no longer shows (Save and
+    /// Quit, a cancelled join) drop honestly.
+    pub fn live_view_updated(
+        &mut self,
+        world: crate::world::World,
+        camera: Option<crate::camera::Camera>,
+    ) {
+        if !self.world_is_network {
+            return;
+        }
+        self.net_world = Some(world);
+        self.net_camera = camera;
+        if self.screen == ScreenKind::World {
+            // re-mesh while the screen shows: the terrain refreshes under
+            // the player's eyes exactly like the original's chunk updates
+            if let Some(w) = self.net_world.as_ref() {
+                self.world_quads = Some(crate::mesher::mesh_world(w, None));
+            }
+        }
+    }
+
+    /// The live session ended (a server kick or a transport error) while
+    /// the client was IN the network world: the vanilla kick lands on
+    /// the DisconnectedScreen and the level unloads exactly like Save
+    /// and Quit. A dead session nobody adopted (a cancelled join's
+    /// transport error) drops silently — there is no world to lose.
+    pub fn live_session_lost(&mut self, reason: String) {
+        if !self.world_is_network {
+            return;
+        }
+        self.disconnect_title =
+            tr("disconnect.lost").unwrap_or("Connection lost").to_string();
+        self.disconnect_reason = reason;
+        self.world_quads = None;
+        self.world_is_network = false;
+        self.net_camera = None;
+        self.close_all_live_runs();
+        self.open(ScreenKind::Disconnect);
     }
 
     fn buttons_row_cx(&self) -> i32 {

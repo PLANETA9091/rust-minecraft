@@ -15,6 +15,14 @@ use crate::world::World;
 const MOVE_SPEED: f32 = 14.0;
 const LOOK_SPEED: f32 = 1.6;
 
+/// The live view's refresh cadence: re-materializing the world window is
+/// the heavy part of an update, so streamed refreshes ship at most this
+/// often (the FIRST refresh — the join frame itself — is never delayed;
+/// a pending refresh flushes with the next packet, and vanilla servers
+/// always have one in flight). The frame thread re-meshes each shipped
+/// window in a few ms — the same work the join frame already paid.
+const VIEW_CADENCE: std::time::Duration = std::time::Duration::from_millis(250);
+
 pub fn run_windowed(world: &World, lut: Option<&TextureLut>, width: usize, height: usize) -> anyhow::Result<()> {
     let mut window = Window::new(
         &format!("mc2rs — Minecraft {} in Rust", crate::build_info::MINECRAFT_VERSION),
@@ -98,6 +106,100 @@ pub fn run_windowed(world: &World, lut: Option<&TextureLut>, width: usize, heigh
     Ok(())
 }
 
+/// The live join worker (off the frame thread): the full vanilla join
+/// arc, the milestone shipped as the world screen's first view, then the
+/// session KEEPS PUMPING — chunks, teleports and probes stream into the
+/// SAME `LiveView` and every refreshed window ships to the frame thread
+/// (cadence-limited, see [`VIEW_CADENCE`]). The stop flag ends the loop
+/// between packets; dropping the session closes the socket — the
+/// vanilla client's disconnect (no ghost client on the server).
+fn run_join(
+    id: u64,
+    host: String,
+    port: u16,
+    tx: std::sync::mpsc::Sender<(u64, Result<crate::screens::LoginResult, String>)>,
+    live_tx: std::sync::mpsc::Sender<
+        Result<(crate::world::World, Option<crate::camera::Camera>), String>,
+    >,
+    run: std::sync::Arc<std::sync::atomic::AtomicBool>,
+) {
+    // the REAL protocol number (login tolerates no 0-ping) and the
+    // vanilla offline profile for the session name (screens::PLAYER_NAME).
+    // The live join retains the session past the world-load milestone —
+    // the one-shot `connect_and_join_world` would close the stream there.
+    match mc_protocol::connect_and_join_live(
+        &host,
+        port,
+        crate::build_info::PROTOCOL_VERSION,
+        crate::screens::PLAYER_NAME,
+    ) {
+        Ok(mc_protocol::LiveJoin::Live { snapshot, mut session }) => {
+            let (entity_id, view_distance, chunks) =
+                (snapshot.info.entity_id, snapshot.info.view_distance, snapshot.chunks.len());
+            // the network world view: the milestone adopts into the LIVE
+            // model and the first refresh IS the one-shot snapshot view
+            // (same window decisions, same grid, same pose — pinned by
+            // the world_view tests). Materializing happens here off the
+            // frame thread; the frame thread only installs results.
+            let mut view =
+                crate::world_view::LiveView::from_snapshot(snapshot, crate::screens::WORLD_CHUNKS);
+            let first = view.refresh(crate::world_view::runtime_mapper);
+            let shipped = tx.send((
+                id,
+                Ok(crate::screens::LoginResult::Loaded {
+                    username: crate::screens::PLAYER_NAME.to_string(),
+                    entity_id,
+                    view_distance,
+                    chunks,
+                    world: first.world,
+                    camera: first.camera,
+                }),
+            ));
+            if shipped.is_err() {
+                return; // receiver gone at shutdown — the session drops
+            }
+            // THE LIVE VIEW: the stream keeps feeding the same model —
+            // re-sent chunks replace their columns, teleports re-anchor
+            // the window and the pose, probes are answered in place
+            let mut last_ship = std::time::Instant::now();
+            loop {
+                if !run.load(std::sync::atomic::Ordering::Relaxed) {
+                    break; // the App closed the session (quit/cancel)
+                }
+                match session.pump() {
+                    Ok(mc_protocol::PlayEvent::Disconnected { reason }) => {
+                        // the server ended the session: report it (the App
+                        // drops the report when it already left the world)
+                        let _ = live_tx.send(Err(reason));
+                        break;
+                    }
+                    Ok(event) => {
+                        if view.apply(event) && last_ship.elapsed() >= VIEW_CADENCE {
+                            let upd = view.refresh(crate::world_view::runtime_mapper);
+                            if live_tx.send(Ok((upd.world, upd.camera))).is_err() {
+                                break; // receiver gone at shutdown
+                            }
+                            last_ship = std::time::Instant::now();
+                        }
+                    }
+                    Err(e) => {
+                        // a transport or decode error kills the stream (a
+                        // framed stream cannot resync) — report and end
+                        let _ = live_tx.send(Err(format!("{e:#}")));
+                        break;
+                    }
+                }
+            }
+        }
+        Ok(mc_protocol::LiveJoin::Disconnected { reason }) => {
+            let _ = tx.send((id, Ok(crate::screens::LoginResult::Disconnected { reason })));
+        }
+        Err(e) => {
+            let _ = tx.send((id, Err(format!("{e:#}"))));
+        }
+    }
+}
+
 /// Windowed GUI application: boot chain -> title -> menus, all driven by
 /// generated data (official fonts, sprites, language, splashes).
 pub fn run_gui_app(seed: u64, width: usize, height: usize) -> anyhow::Result<()> {
@@ -127,14 +229,19 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize) -> anyhow::Result<()>
     >();
     let mut net_seen = 0usize; // cursor into the append-only request log
     // offline-mode joins ride the same architecture: the "join" button
-    // records the request, a detached worker runs the blocking
-    // connect_and_join_world (login + configuration + the play state pumped
-    // to the world-load milestone), the outcome lands on the outcome screen
-    // — a Loaded result carries REAL world facts from the network
+    // records the request, a detached worker runs the live join (login +
+    // configuration + the play state pumped to the world-load milestone,
+    // then the session keeps pumping), the outcome lands on the outcome
+    // screen — a Loaded result carries REAL world facts from the network
+    // and the LIVE VIEW channel keeps refreshing them while the session
+    // lives (chunks stream in, teleports re-anchor the view)
     let (login_tx, login_rx) = std::sync::mpsc::channel::<
         (u64, Result<crate::screens::LoginResult, String>),
     >();
     let mut login_seen = 0usize; // cursor into the append-only request log
+    let (live_tx, live_rx) = std::sync::mpsc::channel::<
+        Result<(crate::world::World, Option<crate::camera::Camera>), String>,
+    >();
 
     while window.is_open() {
         if window.is_key_pressed(Key::Escape, minifb::KeyRepeat::No) {
@@ -167,60 +274,17 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize) -> anyhow::Result<()>
         net_seen = app.net_requests.len();
         for req in &app.login_requests[login_seen..] {
             let tx = login_tx.clone();
+            let live_tx = live_tx.clone();
             let id = req.id;
             let host = req.host.clone();
             let port = req.port;
-            std::thread::spawn(move || {
-                // the REAL protocol number (login tolerates no 0-ping) and
-                // the vanilla offline profile for the session name
-                // (screens::PLAYER_NAME). The full join arc: login -> Login
-                // Acknowledged -> configuration phase -> the play state,
-                // pumped to the world-load milestone (world info + first
-                // teleport + a decoded chunk) — a success puts the client
-                // IN the world, exactly like the original.
-                let res = mc_protocol::connect_and_join_world(
-                    &host,
-                    port,
-                    crate::build_info::PROTOCOL_VERSION,
-                    crate::screens::PLAYER_NAME,
-                )
-                .map(|out| match out {
-                    mc_protocol::WorldOutcome::Loaded(snap) => {
-                        // the network world view: facts off the snapshot,
-                        // then the player-centered window materialized for
-                        // the world screen — here on the worker thread
-                        // (meshing is the heavy part, the frame thread
-                        // only installs the result). The id policy is the
-                        // GENERATED table: `mc2rs-gen dump-block-states`
-                        // booted the official registry and emitted the
-                        // bytecode-true global state ids; palette blocks
-                        // resolve, everything else renders as air. The
-                        // teleport's exact camera pose comes from the SAME
-                        // window decisions — the world screen renders FROM
-                        // the player.
-                        let (entity_id, view_distance, chunks) =
-                            (snap.info.entity_id, snap.info.view_distance, snap.chunks.len());
-                        let view = crate::world_view::materialize_snapshot_view(
-                            snap,
-                            crate::screens::WORLD_CHUNKS,
-                            crate::world_view::runtime_mapper,
-                        );
-                        crate::screens::LoginResult::Loaded {
-                            username: crate::screens::PLAYER_NAME.to_string(),
-                            entity_id,
-                            view_distance,
-                            chunks,
-                            world: view.world,
-                            camera: view.camera,
-                        }
-                    }
-                    mc_protocol::WorldOutcome::Disconnected { reason } => {
-                        crate::screens::LoginResult::Disconnected { reason }
-                    }
-                })
-                .map_err(|e| format!("{e:#}"));
-                let _ = tx.send((id, res)); // receiver may be gone at shutdown
-            });
+            // the live session's stop flag: the App flips it when the join
+            // is cancelled, superseded or quit — the worker checks it
+            // between packets and closes the socket (like the vanilla
+            // client's disconnect; no ghost client lingers on the server)
+            let run = std::sync::Arc::new(std::sync::atomic::AtomicBool::new(true));
+            app.attach_live_run(id, std::sync::Arc::clone(&run));
+            std::thread::spawn(move || run_join(id, host, port, tx, live_tx, run));
         }
         login_seen = app.login_requests.len();
         while let Ok((id, res)) = net_rx.try_recv() {
@@ -228,6 +292,16 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize) -> anyhow::Result<()>
         }
         while let Ok((id, res)) = login_rx.try_recv() {
             app.login_finished(id, res);
+        }
+        // the live view: refreshed world windows swap in (a re-sent chunk
+        // replaces its column on screen, a teleport re-anchors the view);
+        // a session death while in the network world lands on the
+        // Disconnect screen, exactly like the original's kick
+        while let Ok(upd) = live_rx.try_recv() {
+            match upd {
+                Ok((world, camera)) => app.live_view_updated(world, camera),
+                Err(reason) => app.live_session_lost(reason),
+            }
         }
         music.sync(&app.music);
         // UI one-shots (ui.button.click) ride the independent UI channel
