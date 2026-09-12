@@ -79,7 +79,13 @@ hand-drawn:
   and carries it through the join into the world model; the other
   registries (biomes, worldgen...) are walked and skipped, and pinning
   the *current* dimension (min_y shifting for `block()`) waits on the
-  Respawn packet.
+  Respawn packet. The **play wire ids themselves are generated too**:
+  `mc2rs-gen dump-packet-ids` binds the official jar's REAL play
+  clientbound/serverbound protocols and dumps each packet's live wire id
+  from the vanilla dispatch codec's id map — the previous hand-kept
+  wiki-era table had drifted for the 26.2 protocol (login 0x27 -> 49,
+  chunk data 0x23 -> 45, respawn = 82, ...), a drift the self-consistent
+  e2e mocks could never expose.
 - **Singleplayer world** — clicking `Singleplayer` enters a live 3D world
   view rendered by the same deterministic CPU raster path as the pixel
   tests: real block textures from the generated atlas, the **official

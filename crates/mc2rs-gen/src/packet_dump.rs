@@ -81,9 +81,15 @@ fn check_flow(table: &FlowTable) -> Result<()> {
 }
 
 /// "minecraft:chunk_batch_start" + prefix "CB" -> "CB_CHUNK_BATCH_START".
+/// Any character outside [A-Z0-9_] (e.g. the `/` in debug/block_value)
+/// folds to `_` so every name is a valid Rust const.
 fn const_name(prefix: &str, name: &str) -> String {
     let tail = name.trim_start_matches("minecraft:").to_uppercase();
-    format!("{prefix}_{tail}")
+    let safe: String = tail
+        .chars()
+        .map(|c| if c.is_ascii_alphanumeric() { c } else { '_' })
+        .collect();
+    format!("{prefix}_{safe}")
 }
 
 /// Generate crates/mc-protocol/src/generated/packet_ids.rs from dump text.
@@ -119,12 +125,16 @@ pub fn emit_packet_ids(
 
     src.push_str("/// Named wire ids (sanitized vanilla names), the compile-time mirror\n");
     src.push_str("/// of the tables above.\n");
+    let mut seen_names: std::collections::BTreeMap<String, String> = Default::default();
     for table in [&cb, &sb] {
         for (id, name) in &table.entries {
-            src.push_str(&format!(
-                "pub const {}: i32 = {id}; // {name}\n",
-                const_name(table.prefix, name)
-            ));
+            let cname = const_name(table.prefix, name);
+            if let Some(prev) = seen_names.insert(cname.clone(), name.clone()) {
+                bail!(
+                    "const name collision: {cname} for both {prev:?} and {name:?}"
+                );
+            }
+            src.push_str(&format!("pub const {}: i32 = {id}; // {name}\n", cname));
         }
         src.push('\n');
     }
@@ -210,15 +220,17 @@ pub fn dump_packet_ids(
 mod tests {
     use super::*;
 
+    // the fixture is DENSE (ids tile 0..n per flow) — exactly the shape
+    // real dumps carry; a sparse sample must be rejected by the check
     const SAMPLE: &str = "\
 cb 0 minecraft:bundle_delimiter
 cb 1 minecraft:add_entity
-cb 12 minecraft:chunk_batch_start
-cb 45 minecraft:level_chunk_with_light
-cb 49 minecraft:login
-cb 82 minecraft:respawn
+cb 2 minecraft:chunk_batch_start
+cb 3 minecraft:level_chunk_with_light
+cb 4 minecraft:login
+cb 5 minecraft:respawn
 sb 0 minecraft:accept_teleportation
-sb 45 minecraft:pong
+sb 1 minecraft:pong
 ";
 
     #[test]
@@ -226,8 +238,8 @@ sb 45 minecraft:pong
         let (cb, sb) = parse_packet_dump(SAMPLE).expect("parses");
         assert_eq!(cb.entries.len(), 6);
         assert_eq!(sb.entries.len(), 2);
-        assert_eq!(cb.entries[5], (82, "minecraft:respawn".to_string()));
-        assert_eq!(sb.entries[1], (45, "minecraft:pong".to_string()));
+        assert_eq!(cb.entries[5], (5, "minecraft:respawn".to_string()));
+        assert_eq!(sb.entries[1], (1, "minecraft:pong".to_string()));
     }
 
     #[test]
@@ -257,8 +269,8 @@ sb 45 minecraft:pong
         let src = std::fs::read_to_string(&path).unwrap();
         assert!(src.contains("pub static PLAY_CLIENTBOUND: &[(u32, &str)]"));
         assert!(src.contains("pub static PLAY_SERVERBOUND: &[(u32, &str)]"));
-        assert!(src.contains("pub const CB_RESPAWN: i32 = 82; // minecraft:respawn"));
-        assert!(src.contains("pub const SB_PONG: i32 = 45; // minecraft:pong"));
+        assert!(src.contains("pub const CB_RESPAWN: i32 = 5; // minecraft:respawn"));
+        assert!(src.contains("pub const SB_PONG: i32 = 1; // minecraft:pong"));
         assert!(src.contains("client sha1 deadbeef"));
         std::fs::remove_dir_all(&dir).ok();
     }
