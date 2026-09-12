@@ -52,6 +52,68 @@ pub struct World {
     pub seed: u64,
     /// chunk-major: chunk = cx + cz * chunks_per_side
     pub chunks: Vec<Vec<u16>>,
+    /// Optional per-cell light layer — the NETWORK world's sky/block
+    /// light as the server's engine reported it (`materialize` fills it
+    /// from the model's javap-proven light queries). `None` for the
+    /// procedural scene: the mesher then behaves exactly as it always
+    /// did (no light opinion -> the legacy look, bit for bit).
+    pub light: Option<LightGrid>,
+}
+
+/// A light cell with no opinion — the server never answered for it
+/// (outside the column's extent, an unsent column, an unmentioned
+/// light layer). Never rendered as zero: the mesher skips unknown
+/// cells in its per-corner average, and a corner with NO known cell
+/// keeps the legacy unshaded look.
+pub const LIGHT_UNKNOWN: u8 = 255;
+
+/// The network world's light grid: one array per chunk (the same
+/// chunk-major layout as [`World::chunks`]), each cell 0..=15 or
+/// [`LIGHT_UNKNOWN`]. Sky and block are carried SEPARATELY — the day
+/// combine (`max(sky, block)`) happens at mesh time, so a future
+/// night renderer can re-combine with its own sky-darken factor
+/// without re-materializing.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct LightGrid {
+    /// per-chunk sky-light cell levels; 255 = unknown
+    pub sky: Vec<Vec<u8>>,
+    /// per-chunk block-light cell levels; 255 = unknown
+    pub block: Vec<Vec<u8>>,
+}
+
+impl LightGrid {
+    fn chunk_index(&self, chunks_per_side: usize, cx: i32, cz: i32) -> Option<usize> {
+        if cx < 0 || cz < 0 {
+            return None;
+        }
+        let s = chunks_per_side as i32;
+        if cx >= s || cz >= s {
+            return None;
+        }
+        Some((cx + cz * s) as usize)
+    }
+
+    /// The cell's (sky, block) levels at world-grid coordinates —
+    /// `None` per layer where unknown, both `None` outside the grid
+    /// or above/below the world (the honest unknown, matching
+    /// [`World::get`]'s conventions: div_euclid chunks, rem_euclid
+    /// locals, y clamped to the grid's height).
+    pub fn cell(&self, chunks_per_side: usize, wx: i32, wy: i32, wz: i32) -> (Option<u8>, Option<u8>) {
+        if wy < 0 || wy >= CHUNK_Y as i32 {
+            return (None, None);
+        }
+        let cx = wx.div_euclid(CHUNK_X as i32);
+        let cz = wz.div_euclid(CHUNK_Z as i32);
+        let Some(ci) = self.chunk_index(chunks_per_side, cx, cz) else {
+            return (None, None);
+        };
+        let lx = wx.rem_euclid(CHUNK_X as i32) as usize;
+        let lz = wz.rem_euclid(CHUNK_Z as i32) as usize;
+        let idx = lx + lz * CHUNK_X + wy as usize * CHUNK_X * CHUNK_Z;
+        let (s, b) = (self.sky[ci][idx], self.block[ci][idx]);
+        let layer = |v: u8| (v != LIGHT_UNKNOWN).then_some(v);
+        (layer(s), layer(b))
+    }
 }
 
 /// Deterministic 64-bit mix (xorshift-based) — identical output on all platforms.
@@ -73,6 +135,7 @@ impl World {
             chunks_per_side,
             seed,
             chunks: vec![vec![AIR; CHUNK_X * CHUNK_Y * CHUNK_Z]; chunks_per_side * chunks_per_side],
+            light: None, // the procedural scene carries no light layer
         };
         w.generate();
         w

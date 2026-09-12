@@ -1,5 +1,12 @@
 //! Culled face meshing with vanilla-style smooth lighting (per-vertex AO),
 //! parallel across chunks with `rayon`.
+//!
+//! The network world's light layer (when the `World` carries one) rides
+//! the same per-vertex shading: each corner averages the 4 face-plane
+//! cells' light the vanilla smooth-lighting way (the face cell plus the
+//! 3 AO diagonals), known cells only, through the vanilla brightness
+//! ramp. A world WITHOUT a light layer (the procedural scene) meshes
+//! bit-identically to the legacy path — no opinion, no change.
 
 use rayon::prelude::*;
 
@@ -114,6 +121,79 @@ fn flip_order(ao: &[u8; 4]) -> [usize; 4] {
     }
 }
 
+/// The vanilla LightTexture brightness ramp: `f = level/15`, `f/(4 - 3f)`.
+/// Level 15 maps to EXACTLY 1.0 (open-sky faces keep the legacy look) and
+/// level 0 to 0.0 (a known-dark cell is black — the vanilla cave look);
+/// the curve's aggressive low end (level 8 ≈ 0.22) is the original's.
+#[inline]
+pub fn light_brightness(level: f32) -> f32 {
+    let f = level / 15.0;
+    f / (4.0 - 3.0 * f)
+}
+
+/// The cell's effective light level: the max over the KNOWN layers (day
+/// semantics — the sky contributes at full strength; night sky-darken
+/// threading is future work). A layer the model never answered for is
+/// skipped, not zero; a cell with no opinion at all is `None`.
+#[inline]
+fn cell_light(light: &LightGrid, side: usize, x: i32, y: i32, z: i32) -> Option<f32> {
+    let (s, b) = light.cell(side, x, y, z);
+    match (s, b) {
+        (None, None) => None,
+        (Some(s), None) => Some(s as f32),
+        (None, Some(b)) => Some(b as f32),
+        (Some(s), Some(b)) => Some(s.max(b) as f32),
+    }
+}
+
+/// Per-corner smooth-light levels (FACE_CORNERS order): the average of
+/// the 4 face-plane cells around each corner — the face cell plus the 3
+/// AO diagonals, the SAME cells [`ao_levels`] samples — over the KNOWN
+/// cells only (the average is float: smoother than the vanilla packed
+/// int average, a deliberate minimal departure). `None` when the corner
+/// has no known cell at all — unsent neighbors never darken the faces
+/// they touch; that corner keeps the legacy unshaded look.
+fn corner_light(
+    light: &LightGrid,
+    side: usize,
+    wx: i32,
+    wy: i32,
+    wz: i32,
+    face: usize,
+) -> [Option<f32>; 4] {
+    let (nx, ny, nz) = NEIGHBOR[face];
+    let normal_axis = if nx != 0 { 0 } else if ny != 0 { 1 } else { 2 };
+    let (t1, t2) = match normal_axis {
+        0 => (1usize, 2usize),
+        1 => (0usize, 2usize),
+        _ => (0usize, 1usize),
+    };
+    let (bx, by, bz) = (wx + nx, wy + ny, wz + nz);
+    let mut out = [None; 4];
+    for (i, c) in FACE_CORNERS[face].iter().enumerate() {
+        let s1 = if c[t1] >= 0.5 { 1 } else { -1 };
+        let s2 = if c[t2] >= 0.5 { 1 } else { -1 };
+        let d1 = axis_delta(t1, s1);
+        let d2 = axis_delta(t2, s2);
+        let cells = [
+            (bx, by, bz),
+            (bx + d1.0, by + d1.1, bz + d1.2),
+            (bx + d2.0, by + d2.1, bz + d2.2),
+            (bx + d1.0 + d2.0, by + d1.1 + d2.1, bz + d1.2 + d2.2),
+        ];
+        let mut sum = 0.0f32;
+        let mut n = 0u32;
+        for &(x, y, z) in &cells {
+            if let Some(v) = cell_light(light, side, x, y, z) {
+                sum += v;
+                n += 1;
+            }
+        }
+        out[i] = (n > 0).then(|| sum / n as f32);
+    }
+    out
+}
+
 /// Vanilla face->UV orientation. Texture row 0 is the top; side faces keep
 /// the block's +Y at v=0; each side is unmirrored when viewed from outside;
 /// top maps u=x, v=z (north at texture top), bottom mirrors v.
@@ -131,6 +211,7 @@ pub fn face_uv(face: usize, c: [f32; 3]) -> [f32; 2] {
 /// Mesh one chunk: all faces where a solid block touches a transparent one.
 pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>) -> Vec<Quad> {
     let mut out = Vec::with_capacity(2048);
+    let light = world.light.as_ref();
     let bx0 = (cx * CHUNK_X) as i32;
     let bz0 = (cz * CHUNK_Z) as i32;
     for ly in 0..CHUNK_Y {
@@ -174,6 +255,9 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                     // Smooth lighting: per-corner AO from the 3 diagonal
                     // neighbors in front of this face.
                     let ao = ao_levels(world, wx, wy, wz, face);
+                    // Per-corner light sample — only when the world
+                    // carries a light layer; `None` keeps the legacy path.
+                    let clight = light.map(|l| corner_light(l, world.chunks_per_side, wx, wy, wz, face));
                     let order = flip_order(&ao);
                     let mut pts = [[0f32; 3]; 4];
                     let mut colors = [[0f32; 3]; 4];
@@ -181,7 +265,14 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                     for (i, &src) in order.iter().enumerate() {
                         let c = FACE_CORNERS[face][src];
                         pts[i] = [wx as f32 + c[0], wy as f32 + c[1], wz as f32 + c[2]];
-                        let m = shade * AO_CURVE[ao[src] as usize];
+                        let lm = match clight.as_ref() {
+                            Some(samples) => match samples[src] {
+                                Some(avg) => light_brightness(avg),
+                                None => 1.0, // no light opinion here — legacy look
+                            },
+                            None => 1.0, // no light layer — legacy look
+                        };
+                        let m = shade * AO_CURVE[ao[src] as usize] * lm;
                         colors[i] = [base[0] * m, base[1] * m, base[2] * m];
                         uvs[i] = face_uv(face, c);
                     }
@@ -246,7 +337,54 @@ mod tests {
             chunks_per_side: 1,
             seed: 0,
             chunks: vec![vec![AIR; CHUNK_X * CHUNK_Y * CHUNK_Z]],
+            light: None,
         }
+    }
+
+    /// An all-unknown light layer: same shape as `materialize` produces
+    /// when the model never answers — the mesher must not change a pixel.
+    fn unknown_light() -> LightGrid {
+        LightGrid {
+            sky: vec![vec![LIGHT_UNKNOWN; CHUNK_X * CHUNK_Y * CHUNK_Z]],
+            block: vec![vec![LIGHT_UNKNOWN; CHUNK_X * CHUNK_Y * CHUNK_Z]],
+        }
+    }
+
+    /// The light layer value at a cell of the single test chunk.
+    fn set_light(w: &mut World, sky: Option<u8>, block: Option<u8>, x: i32, y: i32, z: i32) {
+        let layer = |v: Option<u8>| {
+            v.map_or(LIGHT_UNKNOWN, |v| v)
+        };
+        let idx = x as usize + z as usize * CHUNK_X + y as usize * CHUNK_X * CHUNK_Z;
+        w.light.as_mut().unwrap().sky[0][idx] = layer(sky);
+        w.light.as_mut().unwrap().block[0][idx] = layer(block);
+    }
+
+    /// The top-face vertex multiplier the mesher must produce for the
+    /// stone block at (8,8,8): shade(top)=1.0, open-sky AO=3 (1.0),
+    /// times the light multiplier of each corner.
+    fn top_face(w: &World) -> crate::mesher::Quad {
+        let q = mesh_chunk(w, 0, 0, None);
+        q.iter()
+            .find(|quad| quad.pts[0][1] == 9.0 && quad.pts[1][1] == 9.0)
+            .expect("top face quad")
+            .clone()
+    }
+
+    fn vertex_multiplier(w: &World, quad: &crate::mesher::Quad) -> [f32; 4] {
+        // the textured path carries the pure multiplier (base = [1;3]);
+        // the flat path divides the base color out
+        let tile = atlas::FACE_TILES[STONE as usize][2];
+        let base = if tile == atlas::TILE_NONE {
+            default_color(STONE, 2)
+        } else {
+            [1.0; 3]
+        };
+        let mut out = [0f32; 4];
+        for (i, c) in quad.colors.iter().enumerate() {
+            out[i] = if base[0].abs() > 1e-9 { c[0] / base[0] } else { c[0] };
+        }
+        out
     }
 
     fn put(w: &mut World, x: i32, y: i32, z: i32, id: u16) {
