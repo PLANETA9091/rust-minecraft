@@ -10,6 +10,20 @@ use serde_json::Value;
 
 use crate::extract::read_entry;
 
+/// One entry of the official biome background-music data: the 26.x
+/// `attributes["minecraft:audio/background_music"]` object of one biome
+/// maps situational contexts ("default" | "creative" | "underwater") to a
+/// music event + real delay bounds in game ticks.
+#[derive(Debug, Clone)]
+pub struct BiomeMusicEntry {
+    pub biome: String,
+    pub context: String,
+    /// bare event id ("minecraft:" prefix stripped, matches the sounds table)
+    pub event: String,
+    pub min_delay: u32,
+    pub max_delay: u32,
+}
+
 #[derive(Debug, Clone)]
 pub struct BiomeDef {
     pub name: String,
@@ -28,6 +42,9 @@ pub struct BiomeDef {
 #[derive(Debug, Default)]
 pub struct WorldgenData {
     pub biomes: BTreeMap<String, BiomeDef>,
+    /// situational background music per biome, straight from the official
+    /// biome JSONs (empty for versions without the attribute)
+    pub biome_music: Vec<BiomeMusicEntry>,
     pub noise_settings: Vec<String>,
     pub density_functions: usize,
     pub noises: usize,
@@ -75,6 +92,27 @@ pub fn generate<R: std::io::Read + std::io::Seek>(archive: &mut zip::ZipArchive<
                     let ax = |key: &str, k: &str| {
                         attr_color(key).or_else(|| color_value(v.get("effects").and_then(|e| e.get(k)))).unwrap_or(0)
                     };
+                    // 26.x situational music moved into attributes:
+                    // {"default": {"sound": "minecraft:music.overworld…",
+                    //  "min_delay": 12000, "max_delay": 24000}, …}
+                    if let Some(music) = v
+                        .get("attributes")
+                        .and_then(|a| a.get("minecraft:audio/background_music"))
+                        .and_then(Value::as_object)
+                    {
+                        for (ctx, spec) in music {
+                            let Some(sound) = spec.get("sound").and_then(Value::as_str) else {
+                                continue;
+                            };
+                            data.biome_music.push(BiomeMusicEntry {
+                                biome: format!("minecraft:{id}"),
+                                context: ctx.clone(),
+                                event: sound.strip_prefix("minecraft:").unwrap_or(sound).to_string(),
+                                min_delay: spec.get("min_delay").and_then(Value::as_u64).unwrap_or(0) as u32,
+                                max_delay: spec.get("max_delay").and_then(Value::as_u64).unwrap_or(0) as u32,
+                            });
+                        }
+                    }
                     data.biomes.insert(
                         id.to_string(),
                         BiomeDef {
@@ -111,6 +149,9 @@ pub fn generate<R: std::io::Read + std::io::Seek>(archive: &mut zip::ZipArchive<
         }
     }
     data.noise_settings.sort();
+    // deterministic emit order (and a lookup-ready table): biome, then context
+    data.biome_music
+        .sort_by(|a, b| (&a.biome, &a.context).cmp(&(&b.biome, &b.context)));
     Ok(data)
 }
 
@@ -152,6 +193,29 @@ pub fn emit(data: &WorldgenData) -> Result<String> {
     out.push_str("/// Biome by registry id (\"minecraft:plains\").\n");
     out.push_str("pub fn biome(name: &str) -> Option<&'static BiomeDef> {\n");
     out.push_str("    BIOMES.binary_search_by_key(&name, |b| b.name).ok().map(|i| &BIOMES[i])\n}\n\n");
+
+    out.push_str("/// One situational background-music entry from the official biome data\n");
+    out.push_str("/// (attributes[\"minecraft:audio/background_music\"]).\n");
+    out.push_str("#[derive(Debug, Clone, Copy, PartialEq)]\npub struct BiomeMusicDef {\n    pub biome: &'static str,\n    pub context: &'static str,\n    pub event: &'static str,\n    pub min_delay: u32,\n    pub max_delay: u32,\n}\n\n");
+    out.push_str("pub static BIOME_MUSIC: [BiomeMusicDef; ");
+    out.push_str(&data.biome_music.len().to_string());
+    out.push_str("] = [\n");
+    for m in &data.biome_music {
+        out.push_str(&format!(
+            "    BiomeMusicDef {{ biome: \"{}\", context: \"{}\", event: \"{}\", min_delay: {}, max_delay: {} }},\n",
+            rust_str(&m.biome),
+            rust_str(&m.context),
+            rust_str(&m.event),
+            m.min_delay,
+            m.max_delay
+        ));
+    }
+    out.push_str("];\n\n");
+    out.push_str("/// Situational music of one biome context (\"minecraft:plains\", \"default\"),\n");
+    out.push_str("/// sorted for binary search. None = the official biome ships no music for\n");
+    out.push_str("/// that context (the client falls back to the vanilla in-game default).\n");
+    out.push_str("pub fn biome_music(biome: &str, context: &str) -> Option<&'static BiomeMusicDef> {\n");
+    out.push_str("    BIOME_MUSIC\n        .binary_search_by_key(&(biome, context), |m| (m.biome, m.context))\n        .ok()\n        .map(|i| &BIOME_MUSIC[i])\n}\n\n");
 
     out.push_str("pub static NOISE_SETTINGS: [&str; ");
     out.push_str(&data.noise_settings.len().to_string());
