@@ -37,7 +37,9 @@ impl TextureLut {
     pub fn load(index_json: &Path, objects_root: &Path) -> Result<Self> {
         let index = mc_assets::AssetIndex::from_file(index_json)?;
         let mut map = HashMap::new();
-        for kind in 1..=7u16 {
+        // every non-air palette member (the generated atlas is the kind
+        // count's source of truth — new members resolve automatically)
+        for kind in 1..atlas::N_KINDS as u16 {
             for face in 0..6usize {
                 let Some(stem) = texture_stem(kind, face) else {
                     continue;

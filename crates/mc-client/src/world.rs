@@ -1,6 +1,8 @@
 //! Deterministic voxel world for the reference renderer.
-//! Block ids match a compact runtime palette; `mc-registry` supplies the
-//! full version registry, this scene uses the survival-classic subset.
+//! Block ids match the compact runtime palette (mirrored by mc2rs-gen's
+//! atlas generator); `mc-registry` supplies the full version registry —
+//! the original survival-classic subset generates the deterministic scene,
+//! generated members extend it for network terrain.
 
 pub const CHUNK_X: usize = 16;
 pub const CHUNK_Y: usize = 48;
@@ -15,10 +17,31 @@ pub const LOG: u16 = 4;
 pub const LEAVES: u16 = 5;
 pub const WATER: u16 = 6;
 pub const SAND: u16 = 7;
+// Generated members (mc2rs-gen atlas RUNTIME_PALETTE, same order): network
+// terrain that previously stayed air now renders with its official texture.
+pub const GRANITE: u16 = 8;
+pub const DIORITE: u16 = 9;
+pub const ANDESITE: u16 = 10;
+pub const DEEPSLATE: u16 = 11;
+pub const COBBLED_DEEPSLATE: u16 = 12;
+pub const GRAVEL: u16 = 13;
+pub const BEDROCK: u16 = 14;
+pub const COAL_ORE: u16 = 15;
+pub const COPPER_ORE: u16 = 16;
+pub const IRON_ORE: u16 = 17;
+pub const GOLD_ORE: u16 = 18;
+pub const REDSTONE_ORE: u16 = 19;
+pub const LAPIS_ORE: u16 = 20;
+pub const DIAMOND_ORE: u16 = 21;
+pub const EMERALD_ORE: u16 = 22;
+pub const NETHERRACK: u16 = 23;
 
 /// Block -> texture-group mapping used by the real-colors LUT.
-pub const NAME_OF: [&str; 8] = [
+pub const NAME_OF: [&str; 24] = [
     "air", "stone", "dirt", "grass_block", "oak_log", "oak_leaves", "water", "sand",
+    "granite", "diorite", "andesite", "deepslate", "cobbled_deepslate", "gravel",
+    "bedrock", "coal_ore", "copper_ore", "iron_ore", "gold_ore", "redstone_ore",
+    "lapis_ore", "diamond_ore", "emerald_ore", "netherrack",
 ];
 
 /// A plain data grid — derives follow the data (the join result carries a

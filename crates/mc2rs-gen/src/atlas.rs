@@ -18,8 +18,13 @@ use zip::ZipArchive;
 
 /// Runtime block ids of the reference client (must mirror
 /// `mc-client/src/world.rs`). air is never meshed but keeps the ids aligned.
-pub const RUNTIME_PALETTE: [&str; 8] = [
+/// Members after the original survival-classic eight render network terrain
+/// that previously stayed air (stone variants, deepslate, ores, netherrack).
+pub const RUNTIME_PALETTE: [&str; 24] = [
     "air", "stone", "dirt", "grass_block", "oak_log", "oak_leaves", "water", "sand",
+    "granite", "diorite", "andesite", "deepslate", "cobbled_deepslate", "gravel",
+    "bedrock", "coal_ore", "copper_ore", "iron_ore", "gold_ore", "redstone_ore",
+    "lapis_ore", "diamond_ore", "emerald_ore", "netherrack",
 ];
 
 /// Renderer face order: 0:+X 1:-X 2:+Y 3:-Y 4:+Z 5:-Z.
@@ -413,13 +418,31 @@ mod tests {
 
     #[test]
     fn runtime_palette_matches_client_ids() {
-        // world.rs: AIR=0 STONE=1 DIRT=2 GRASS=3 LOG=4 LEAVES=5 WATER=6 SAND=7
+        // world.rs: AIR=0 STONE=1 DIRT=2 GRASS=3 LOG=4 LEAVES=5 WATER=6
+        // SAND=7, then the generated members 8..=23
         assert_eq!(RUNTIME_PALETTE[0], "air");
         assert_eq!(RUNTIME_PALETTE[1], "stone");
         assert_eq!(RUNTIME_PALETTE[3], "grass_block");
         assert_eq!(RUNTIME_PALETTE[5], "oak_leaves");
         assert_eq!(RUNTIME_PALETTE[6], "water");
         assert_eq!(RUNTIME_PALETTE[7], "sand");
+        // the generated members — ids 8..=23, appended after the classics
+        assert_eq!(RUNTIME_PALETTE[8], "granite");
+        assert_eq!(RUNTIME_PALETTE[9], "diorite");
+        assert_eq!(RUNTIME_PALETTE[10], "andesite");
+        assert_eq!(RUNTIME_PALETTE[11], "deepslate");
+        assert_eq!(RUNTIME_PALETTE[12], "cobbled_deepslate");
+        assert_eq!(RUNTIME_PALETTE[13], "gravel");
+        assert_eq!(RUNTIME_PALETTE[14], "bedrock");
+        assert_eq!(RUNTIME_PALETTE[15], "coal_ore");
+        assert_eq!(RUNTIME_PALETTE[16], "copper_ore");
+        assert_eq!(RUNTIME_PALETTE[17], "iron_ore");
+        assert_eq!(RUNTIME_PALETTE[18], "gold_ore");
+        assert_eq!(RUNTIME_PALETTE[19], "redstone_ore");
+        assert_eq!(RUNTIME_PALETTE[20], "lapis_ore");
+        assert_eq!(RUNTIME_PALETTE[21], "diamond_ore");
+        assert_eq!(RUNTIME_PALETTE[22], "emerald_ore");
+        assert_eq!(RUNTIME_PALETTE[23], "netherrack");
         assert_eq!(FACE_KEYS, ["east", "west", "up", "down", "south", "north"]);
     }
 
