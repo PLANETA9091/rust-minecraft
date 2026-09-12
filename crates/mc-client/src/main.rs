@@ -5,7 +5,7 @@
 //!   --headless      deterministic offscreen render -> PNG (pixel CI)
 //!   --window        force windowed mode
 //!   --gui           windowed GUI app (boot -> title -> menus), generated data
-//!   --screen S      headless GUI screenshot: loading|title|servers|options|world|pause
+//!   --screen S      headless GUI screenshot: loading|title|servers|options|world|worldnight|pause
 
 mod build_info;
 mod camera;
@@ -19,6 +19,7 @@ mod music;
 mod png_io;
 mod raster;
 mod screens;
+mod sky;
 mod textures;
 mod world;
 

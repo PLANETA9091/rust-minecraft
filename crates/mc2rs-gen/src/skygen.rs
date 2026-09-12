@@ -373,8 +373,8 @@ mod tests {
     fn parses_hex_and_int_colors() {
         assert_eq!(parse_color(&json!("#78a7ff")).unwrap(), [0x78, 0xa7, 0xff, 0xFF]);
         assert_eq!(parse_color(&json!("#5fefa333")).unwrap(), [0xef, 0xa3, 0x33, 0x5f]);
-        // -15132378 == 0xFF192026 as ARGB
-        assert_eq!(parse_color(&json!(-15132378i64)).unwrap(), [0x19, 0x20, 0x26, 0xFF]);
+        // -15132378 == 0xFF191926 as ARGB
+        assert_eq!(parse_color(&json!(-15132378i64)).unwrap(), [0x19, 0x19, 0x26, 0xFF]);
     }
 
     #[test]

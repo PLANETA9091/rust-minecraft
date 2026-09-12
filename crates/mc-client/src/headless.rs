@@ -117,12 +117,21 @@ pub fn render_gui_screen(
             app.enter_world();
             app.frame = frame;
         }
+        "worldnight" => {
+            // Same world view at midnight (official tick 18000): stars at
+            // brightness 0.5, full moon at the zenith, night sky/fog colors.
+            app.enter_world();
+            app.day_time_base = 18000;
+            app.frame = frame;
+        }
         "pause" => {
             app.enter_world();
             app.paused = true;
             app.frame = frame;
         }
-        other => anyhow::bail!("unknown screen {other} (loading|title|servers|options|world|pause)"),
+        other => anyhow::bail!(
+            "unknown screen {other} (loading|title|servers|options|world|worldnight|pause)"
+        ),
     }
 
     let mut fb = Framebuf::new(width, height);

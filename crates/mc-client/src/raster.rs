@@ -26,6 +26,19 @@ pub struct RenderCtx {
     pub fog_far: f32,
 }
 
+/// One celestial quad (sun / moon / star) in world space. Rendered with the
+/// official CELESTIAL/STARS pipeline semantics: no depth test or write, no
+/// fog, no backface cull — drawn right after the sky-color clear, before
+/// terrain, so terrain always overdraws it.
+pub struct FlatQuad {
+    pub pts: [[f32; 3]; 4],
+    pub colors: [[f32; 3]; 4],
+    /// (rgba pixels, side length) for textured celestial sprites (sun/moon);
+    /// None = solid vertex-color quad blended with alpha = color.r
+    /// (the official setShaderColor(f,f,f,f) + SRC_ALPHA blend of STARS).
+    pub rgba: Option<(&'static [u8], u32)>,
+}
+
 impl Framebuf {
     pub fn new(w: usize, h: usize) -> Self {
         Self { w, h, color: vec![0u8; w * h * 3], depth: vec![f32::MAX; w * h] }
@@ -182,6 +195,121 @@ impl Framebuf {
         }
     }
 
+    /// Rasterize celestial quads (sun/moon/stars): depthless, fogless,
+    /// double-sided, drawn before terrain which overdraws them. Textured
+    /// quads sample nearest with alpha cutout at 0.5 (official atlas
+    /// behavior); color quads alpha-blend with alpha = color.r (official
+    /// STARS setShaderColor + SRC_ALPHA blend).
+    pub fn draw_flat(&mut self, ctx: &RenderCtx, quads: &[FlatQuad]) {
+        let vp = ctx.proj.mul(&ctx.view);
+        let w_px = self.w as f32;
+        let h_px = self.h as f32;
+        for quad in quads {
+            let clip: Vec<[f32; 4]> =
+                quad.pts.iter().map(|p| vp.transform_point(Vec3::new(p[0], p[1], p[2]))).collect();
+            let clipped = clip_near(&clip);
+            if clipped.len() < 3 {
+                continue;
+            }
+            let mut sx = vec![0f32; clipped.len()];
+            let mut sy = vec![0f32; clipped.len()];
+            let mut ow = vec![0f32; clipped.len()];
+            let mut minx = f32::MAX;
+            let mut miny = f32::MAX;
+            let mut maxx = f32::MIN;
+            let mut maxy = f32::MIN;
+            for i in 0..clipped.len() {
+                let c = clipped[i];
+                let iw = 1.0 / c[3];
+                sx[i] = (c[0] * iw * 0.5 + 0.5) * w_px;
+                sy[i] = (1.0 - (c[1] * iw * 0.5 + 0.5)) * h_px;
+                ow[i] = iw;
+                minx = minx.min(sx[i]);
+                miny = miny.min(sy[i]);
+                maxx = maxx.max(sx[i]);
+                maxy = maxy.max(sy[i]);
+            }
+            // No backface cull: the sun/moon are seen from both sides of
+            // their orbit plane (vanilla renders them double-sided).
+            let x0 = (minx.floor().max(0.0)) as isize;
+            let y0 = (miny.floor().max(0.0)) as isize;
+            let x1 = (maxx.ceil().min(w_px - 1.0)) as isize;
+            let y1 = (maxy.ceil().min(h_px - 1.0)) as isize;
+            if x1 < x0 || y1 < y0 {
+                continue;
+            }
+            for tri in 1..clipped.len() - 1 {
+                let (ax, ay, a_ow) = (sx[0], sy[0], ow[0]);
+                let (bx, by, b_ow) = (sx[tri], sy[tri], ow[tri]);
+                let (cx, cy, c_ow) = (sx[tri + 1], sy[tri + 1], ow[tri + 1]);
+                let (ca, cb, cc) = (quad.colors[0], quad.colors[tri], quad.colors[tri + 1]);
+                let area_ab = edge(ax, ay, bx, by, cx, cy);
+                if area_ab.abs() < 1e-9 {
+                    continue;
+                }
+                let inv_area = 1.0 / area_ab;
+                for py in y0..=y1 {
+                    for px in x0..=x1 {
+                        let fx = px as f32 + 0.5;
+                        let fy = py as f32 + 0.5;
+                        let w0 = edge(bx, by, cx, cy, fx, fy);
+                        let w1 = edge(cx, cy, ax, ay, fx, fy);
+                        let w2 = edge(ax, ay, bx, by, fx, fy);
+                        if w0 < 0.0 || w1 < 0.0 || w2 < 0.0 {
+                            continue;
+                        }
+                        let b0 = w0 * inv_area;
+                        let b1 = w1 * inv_area;
+                        let b2 = w2 * inv_area;
+                        let dist = 1.0 / (b0 * a_ow + b1 * b_ow + b2 * c_ow);
+                        let o = ((py as usize) * self.w + px as usize) * 3;
+                        let mut c0 = [0f32; 3];
+                        for ch in 0..3 {
+                            c0[ch] = b0 * ca[ch] + b1 * cb[ch] + b2 * cc[ch];
+                        }
+                        if let Some((rgba, side)) = quad.rgba {
+                            // perspective-correct nearest texel; corner UVs
+                            // (0,0) (1,0) (1,1) (0,1) cover the full sprite
+                            // (official buildCelestialQuad layout).
+                            let tri_uv = [(0.0f32, 0.0f32), (1.0, 0.0), (1.0, 1.0)];
+                            let (ub, vb) = tri_uv[tri - 1];
+                            let (uc, vc) = tri_uv[tri];
+                            let u = (b0 * 0.0 * a_ow
+                                + b1 * ub * b_ow
+                                + b2 * uc * c_ow)
+                                * dist;
+                            let v = (b0 * 0.0 * a_ow
+                                + b1 * vb * b_ow
+                                + b2 * vc * c_ow)
+                                * dist;
+                            let s = side as f32;
+                            let xi = ((u * s).floor() as isize).clamp(0, side as isize - 1) as usize;
+                            let yi = ((v * s).floor() as isize).clamp(0, side as isize - 1) as usize;
+                            let off = (yi * side as usize + xi) * 4;
+                            let a = rgba[off + 3] as f32 / 255.0;
+                            if a < 0.5 {
+                                continue; // transparent celestial texel
+                            }
+                            for ch in 0..3 {
+                                c0[ch] *= rgba[off + ch] as f32 / 255.0;
+                            }
+                        } else {
+                            // STARS: color (b,b,b) with alpha b over background.
+                            let a = c0[0];
+                            for ch in 0..3 {
+                                let bg = self.color[o + ch] as f32 / 255.0;
+                                c0[ch] = c0[ch] * a + bg * (1.0 - a);
+                            }
+                        }
+                        for ch in 0..3 {
+                            self.color[o + ch] = (c0[ch].clamp(0.0, 1.0) * 255.0 + 0.5) as u8;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     /// Convert to 0xAARRGGBB buffer (minifb layout).
     pub fn to_argb(&self) -> Vec<u32> {
         self.color
@@ -189,10 +317,6 @@ impl Framebuf {
             .map(|c| 0xFF00_0000 | ((c[0] as u32) << 16) | ((c[1] as u32) << 8) | c[2] as u32)
             .collect()
     }
-}
-
-fn edge(ax: f32, ay: f32, bx: f32, by: f32, px: f32, py: f32) -> f32 {
-    (px - ax) * (by - ay) - (py - ay) * (bx - ax)
 }
 
 /// Clip a clip-space polygon against w >= eps.
@@ -219,6 +343,10 @@ fn clip_near(poly: &[[f32; 4]]) -> Vec<[f32; 4]> {
         }
     }
     out
+}
+
+fn edge(ax: f32, ay: f32, bx: f32, by: f32, px: f32, py: f32) -> f32 {
+    (px - ax) * (by - ay) - (py - ay) * (bx - ax)
 }
 
 #[test]

@@ -99,6 +99,22 @@ impl Mat4 {
         ])
     }
 
+    /// Rotation about the X axis (radians), column-major.
+    pub fn rot_x(rad: f32) -> Mat4 {
+        let (s, c) = rad.sin_cos();
+        Mat4([
+            1.0, 0.0, 0.0, 0.0, 0.0, c, s, 0.0, 0.0, -s, c, 0.0, 0.0, 0.0, 0.0, 1.0,
+        ])
+    }
+
+    /// Rotation about the Y axis (radians), column-major.
+    pub fn rot_y(rad: f32) -> Mat4 {
+        let (s, c) = rad.sin_cos();
+        Mat4([
+            c, 0.0, -s, 0.0, 0.0, 1.0, 0.0, 0.0, s, 0.0, c, 0.0, 0.0, 0.0, 0.0, 1.0,
+        ])
+    }
+
     pub fn transform_point(&self, p: Vec3) -> [f32; 4] {
         let m = &self.0;
         [
@@ -129,5 +145,19 @@ mod tests {
         let b = Vec3::new(0.0, 1.0, 0.0);
         assert!((a.cross(b).z - 1.0).abs() < 1e-6);
         assert!((a.dot(b)).abs() < 1e-6);
+    }
+
+    #[test]
+    fn rotations_match_right_handed_convention() {
+        // rot_x(+90°) maps +Y -> +Z.
+        let p = Mat4::rot_x(std::f32::consts::FRAC_PI_2).transform_point(Vec3::new(0.0, 1.0, 0.0));
+        assert!(p[1].abs() < 1e-6 && (p[2] - 1.0).abs() < 1e-6, "{p:?}");
+        // rot_y(+90°) maps +Z -> +X.
+        let p = Mat4::rot_y(std::f32::consts::FRAC_PI_2).transform_point(Vec3::new(0.0, 0.0, 1.0));
+        assert!((p[0] - 1.0).abs() < 1e-6 && p[2].abs() < 1e-6, "{p:?}");
+        // rot_y(-90°) maps -Z -> +X (the celestial frame: sun rises at +X).
+        let p = Mat4::rot_y(-std::f32::consts::FRAC_PI_2)
+            .transform_point(Vec3::new(0.0, 0.0, -1.0));
+        assert!((p[0] - 1.0).abs() < 1e-6, "{p:?}");
     }
 }

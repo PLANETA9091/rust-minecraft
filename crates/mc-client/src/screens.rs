@@ -107,6 +107,9 @@ pub struct App {
     pub options_return: ScreenKind,
     /// Active hotbar slot (vanilla HUD selection).
     pub selected_hotbar: usize,
+    /// Base world tick for the day-night cycle (0 = vanilla dawn; the frame
+    /// counter advances time 1 tick per frame like the vanilla clock).
+    pub day_time_base: u64,
 }
 
 /// World size for the in-game screen (chunks per side — same as the
@@ -169,6 +172,7 @@ impl App {
             spawn_y: 0,
             options_return: ScreenKind::Title,
             selected_hotbar: 0,
+            day_time_base: 0,
         }
     }
 
@@ -288,13 +292,21 @@ impl App {
     }
 
     /// The in-world 3D view: deterministic first-person camera at the spawn
-    /// column, textured quads from the generated atlas, sky gradient + fog —
-    /// the exact same raster path the headless pixel tests exercise.
+    /// column facing east (+X — the direction the official 26.x sun rises),
+    /// official day-night sky (timeline data + celestial textures), textured
+    /// quads from the generated atlas, fog in the official color — the exact
+    /// same raster path the headless pixel tests exercise.
     fn render_world_3d(&mut self, fb: &mut crate::raster::Framebuf) {
         self.ensure_world();
         let n = self.world_size as f32;
         let eye = Vec3::new(n / 2.0, self.spawn_y as f32 + 1.62, n / 2.0);
-        let cam = crate::camera::Camera { pos: eye, yaw: 0.0, pitch: -0.08 };
+        let cam = crate::camera::Camera {
+            pos: eye,
+            yaw: std::f32::consts::FRAC_PI_2, // face +X (east): sun visible at dawn
+            pitch: -0.08,
+        };
+        let day_time = (self.day_time_base + self.frame) as i64;
+        let sky = crate::sky::sample(day_time);
         let ctx = RenderCtx {
             view: cam.view(),
             proj: Mat4::perspective(
@@ -303,11 +315,13 @@ impl App {
                 0.1,
                 512.0,
             ),
-            fog_color: crate::headless::FOG_COLOR,
+            fog_color: sky.fog_color,
             fog_near: n * 0.55,
             fog_far: n * 1.7,
         };
-        fb.clear(crate::headless::SKY_TOP, crate::headless::SKY_BOTTOM);
+        // Official render order: sky color -> sun/moon/stars -> terrain.
+        fb.clear(sky.sky_color, sky.fog_color);
+        crate::sky::render_celestials(fb, &ctx, &cam, day_time);
         if let Some(quads) = &self.world_quads {
             fb.draw_quads(&ctx, quads);
         }
