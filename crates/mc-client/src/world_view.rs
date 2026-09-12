@@ -2,10 +2,12 @@
 //!
 //! `materialize` projects a window of the client's `WorldModel` (chunk
 //! columns with resolved global state ids) into the voxel grid the mesher
-//! and raster already consume (`world::World`). This is the renderer-side
-//! half of the first world VIEW from network chunks: the window/camera
-//! wiring into the frame loop is the NEXT step, until then the module is
-//! exercised by its own tests only.
+//! and raster already consume (`world::World`). `materialize_snapshot` is
+//! the frame-loop entry the join worker calls: the world-load milestone's
+//! snapshot adopts into a fresh model and the player-centered window
+//! lands on the world screen — the first world VIEW from network chunks.
+//! The stream itself stays one-shot for now (the join pump returns at the
+//! milestone); a live, continuously-updated view is future work.
 //!
 //! Documented decisions (all deliberate, no silent guesses):
 //! - The global-state-id -> runtime-palette mapping is a REQUIRED caller
@@ -23,13 +25,13 @@
 
 use crate::world::{World, AIR, CHUNK_X, CHUNK_Y, CHUNK_Z};
 use crate::world_model::WorldModel;
+use mc_protocol::{PlayerPosition, WorldSnapshot};
 
 /// Project the window of `side * side` chunks starting at chunk
 /// `(origin.0, origin.1)` into a fresh renderer grid. `mapper` converts
 /// every resolved global state id (air included) to the runtime palette;
 /// blocks outside a column's vertical extent and columns the server has
 /// not sent (yet) stay air.
-#[allow(dead_code)] // wired into the frame loop when the view lands (next step)
 pub fn materialize(
     model: &WorldModel,
     origin: (i32, i32),
@@ -74,13 +76,55 @@ pub fn materialize(
     world
 }
 
-#[cfg(test)]
+/// The window origin that centers the PLAYER's chunk: a vanilla server
+/// streams chunks around the player, so the view window anchors on the
+/// chunk the player stands in (`floor(x) >> 4` — the floor before the
+/// arithmetic shift keeps the negative half-plane honest). With an odd
+/// side the player's chunk is the exact window center; the world screen's
+/// camera scans the window's center column.
+pub fn snapshot_window_origin(player: &PlayerPosition, side: usize) -> (i32, i32) {
+    let half = (side / 2) as i32;
+    let pcx = (player.x.floor() as i32) >> 4;
+    let pcz = (player.z.floor() as i32) >> 4;
+    (pcx - half, pcz - half)
+}
+
+/// Materialize the join milestone's world: the snapshot adopts into a
+/// fresh `WorldModel` (replace-on-collision semantics included) and the
+/// player-centered window projects into the renderer grid. `mapper` is
+/// the caller's id policy (see the module notes) — the GUI join path uses
+/// `placeholder_mapper` today; tests pin the mapping with concrete ids.
+pub fn materialize_snapshot(
+    snap: WorldSnapshot,
+    side: usize,
+    mapper: impl FnMut(u32) -> u16,
+) -> World {
+    let origin = snapshot_window_origin(&snap.player, side);
+    let mut model = WorldModel::new();
+    model.adopt_snapshot(snap);
+    materialize(&model, origin, side, mapper)
+}
+
+/// The GUI join path's id policy TODAY: the project has no bytecode-true
+/// global-state-id table yet (mc-registry carries names, not vanilla's
+/// registration-order ids — the generated-table arc is future work), so
+/// every network id is unresolved and the honest render is AIR: the world
+/// screen shows the vanilla sky, celestials and HUD over the truthful
+/// holes until the generated table slots in as the real mapper. Nothing
+/// here bakes in remembered constants.
+pub fn placeholder_mapper(_id: u32) -> u16 {
+    AIR
+}
+
+#[cfg(test]
 mod tests {
     use super::*;
     use crate::world::{DIRT, STONE};
     use crate::world_model::WorldModel;
     use mc_protocol::play::clientbound;
-    use mc_protocol::{ChunkColumn, PlayEvent, varint::write_varint};
+    use mc_protocol::{
+        ChunkColumn, PlayEvent, RegistryData, WorldInfo, varint::write_varint,
+    };
 
     /// Decode a section buffer through the REAL parser (the same wire
     /// shape the world_model tests use): stone at (0,0,0), dirt at (3,1,2).
@@ -202,5 +246,79 @@ mod tests {
         assert_eq!(world.get(0, 0, 0), STONE, "bottom anchor is min_y stable");
         assert_eq!(world.get(3, 1, 2), DIRT);
         assert_eq!(world.get(0, 16, 0), AIR);
+    }
+
+    /// A join milestone shaped like the e2e mock's: one real section at
+    /// chunk (3,-2) (stone@(0,0,0), dirt@(3,1,2)) and the player standing
+    /// inside the centered chunk (a real vanilla join burst is exactly
+    /// this — the spawn position inside the view-distance center).
+    fn join_snapshot() -> WorldSnapshot {
+        WorldSnapshot {
+            info: WorldInfo {
+                entity_id: 17,
+                hardcore: false,
+                dimensions: vec!["minecraft:overworld".to_string()],
+                view_distance: 8,
+                simulation_distance: 8,
+                portal_cooldown: 300,
+            },
+            player: PlayerPosition {
+                x: 56.5,
+                y: 64.0,
+                z: -27.25,
+                yaw: 90.0,
+                pitch: 0.0,
+                flags: 0,
+                teleport_id: 42,
+            },
+            chunks: vec![ChunkColumn {
+                x: 3,
+                z: -2,
+                sections: vec![stone_dirt_section()],
+            }],
+            registry: RegistryData::default(),
+        }
+    }
+
+    #[test]
+    fn snapshot_window_origin_centers_the_player_chunk() {
+        let p = |x: f64, z: f64| PlayerPosition {
+            x,
+            y: 64.0,
+            z,
+            yaw: 0.0,
+            pitch: 0.0,
+            flags: 0,
+            teleport_id: 0,
+        };
+        // floor before the shift: the negative half-plane stays honest
+        assert_eq!(
+            snapshot_window_origin(&p(56.5, -27.25), 5),
+            (1, -4),
+            "player chunk (3,-2) centers the 5x5 window"
+        );
+        assert_eq!(
+            snapshot_window_origin(&p(-0.5, 15.9), 5),
+            (-3, -2),
+            "floor(-0.5) = -1 -> chunk (-1,0); floor(15.9) = 15 -> chunk (0,0)"
+        );
+        assert_eq!(snapshot_window_origin(&p(0.0, 0.0), 5), (-2, -2));
+    }
+
+    #[test]
+    fn materialize_snapshot_builds_the_player_centered_join_world() {
+        // player at (56.5, -27.25) -> chunk (3,-2) -> origin (1,-4): the
+        // mock column sits at grid chunk (2,2)
+        let world = materialize_snapshot(join_snapshot(), 5, example_mapper);
+        assert_eq!(world.chunks_per_side, 5);
+        assert_eq!(world.get(32, 0, 32), STONE, "stone of column (3,-2)");
+        assert_eq!(world.get(35, 1, 34), DIRT, "dirt at column-local (3,1,2)");
+        // the placeholder policy (the GUI's real one today): every
+        // unresolved id renders as air — the truthful sky world
+        let air_world = materialize_snapshot(join_snapshot(), 5, placeholder_mapper);
+        assert!(air_world
+            .chunks
+            .iter()
+            .all(|c| c.iter().all(|&b| b == AIR)));
     }
 }

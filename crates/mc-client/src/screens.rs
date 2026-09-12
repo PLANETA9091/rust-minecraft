@@ -118,6 +118,11 @@ pub enum LoginResult {
         view_distance: i32,
         /// Chunk columns decoded by the world-load milestone.
         chunks: usize,
+        /// The materialized network world: the snapshot's chunks projected
+        /// into the renderer grid, the window centered on the player's
+        /// chunk — the World screen's terrain until a newer join replaces
+        /// it. Built by the join worker off the frame thread.
+        world: crate::world::World,
     },
     /// The server refused or kicked (login disconnect, config kick or a
     /// play-state disconnect), reason flattened from chat.
@@ -216,6 +221,13 @@ pub struct App {
     /// flattened reason line; the Success path shows the factual outcome).
     pub disconnect_title: String,
     pub disconnect_reason: String,
+    /// The network world from the last successful join (the materialized
+    /// snapshot window), kept for re-meshing when the id table / vertical
+    /// layout resolve; dormant after Save and Quit until a newer join.
+    pub net_world: Option<crate::world::World>,
+    /// True while the World screen shows the NETWORK world (the quad mesh
+    /// came from a join snapshot, not the procedural singleplayer world).
+    pub world_is_network: bool,
 }
 
 /// World size for the in-game screen (chunks per side — same as the
@@ -289,6 +301,8 @@ impl App {
             next_login_id: 0,
             disconnect_title: String::new(),
             disconnect_reason: String::new(),
+            net_world: None,
+            world_is_network: false,
         }
     }
 
@@ -323,21 +337,56 @@ impl App {
     /// (the seeded pick stands in for the future climate-driven biome
     /// source; the music data itself is fully official).
     pub fn enter_world(&mut self) {
-        if self.world_quads.is_none() {
+        // rebuild when the current mesh belongs to a network world (a
+        // stale procedural mesh is also rebuilt — the guard keeps each
+        // terrain source out of the other's screen)
+        if self.world_is_network || self.world_quads.is_none() {
             let world = crate::world::World::new(WORLD_CHUNKS, self.seed);
             self.world_size = world.size_blocks();
             self.spawn_y = top_solid_y(&world, self.world_size / 2, self.world_size / 2);
             self.world_quads = Some(crate::mesher::mesh_world(&world, None));
+            self.world_is_network = false;
         }
         self.paused = false;
         self.music.on_world_enter_biome(spawn_biome(self.seed));
         self.open(ScreenKind::World);
     }
 
+    /// Enter the world screen with the NETWORK world — the vanilla
+    /// ConnectScreen → world handoff after a successful join. The screen
+    /// machinery (sky, celestials, fog, clouds, HUD, pause) is shared
+    /// with singleplayer; only the terrain source differs: the mesh comes
+    /// from the materialized join snapshot. Camera: the window is centered
+    /// on the player's chunk, so the grid's center column stands in for
+    /// the exact player position (the player-exact camera needs the
+    /// dimension vertical layout to un-bottom-anchor the grid — future
+    /// work). Music: the spawn biome is unknown until section biomes
+    /// decode, so the unknown-key lookup falls back to the generic
+    /// music.game situation (no seeded guess about a network world).
+    pub fn enter_network_world(&mut self) {
+        let (size, spawn_y, quads) = {
+            let Some(world) = self.net_world.as_ref() else { return };
+            let size = world.size_blocks();
+            let c = size / 2;
+            (
+                size,
+                top_solid_y(world, c, c),
+                crate::mesher::mesh_world(world, None),
+            )
+        };
+        self.world_size = size;
+        self.spawn_y = spawn_y;
+        self.world_quads = Some(quads);
+        self.world_is_network = true;
+        self.paused = false;
+        self.music.on_world_enter_biome("");
+        self.open(ScreenKind::World);
+    }
+
     /// Escape: toggles the pause menu while in game (vanilla behavior);
     /// leaves the connecting/outcome screens back to the server list
-    /// (in-flight logins keep running — late results carry unknown ids and
-    /// are ignored, exactly like the original's cancelled screens).
+    /// (in-flight logins keep running: a late success after Escape is
+    /// dropped with the cancelled screen, a late disconnect still reports).
     pub fn on_escape(&mut self) {
         if self.screen == ScreenKind::World {
             self.paused = !self.paused;
@@ -369,6 +418,13 @@ impl App {
                 }
                 "saveandquit" => {
                     self.paused = false;
+                    if self.world_is_network {
+                        // vanilla Save and Quit unloads the level: the
+                        // network mesh drops (a newer join rematerializes
+                        // it; singleplayer rebuilds its own world)
+                        self.world_quads = None;
+                        self.world_is_network = false;
+                    }
                     self.open(ScreenKind::Title);
                     self.music.on_menu_open();
                 }
@@ -483,22 +539,22 @@ impl App {
     /// Feed one finished join back into the UI (vanilla flow: a login
     /// disconnect, config kick or play-state kick lands on the
     /// DisconnectedScreen with the flattened reason; a Loaded outcome means
-    /// the client genuinely holds a network world — the outcome screen's
-    /// connected line states the REAL snapshot facts, the world view itself
-    /// is future work). Unknown or already-consumed ids are ignored — the
+    /// the client genuinely holds a network world — and just like the
+    /// original, the completed join puts you IN it: the world screen renders
+    /// the materialized snapshot window. A join whose ConnectScreen was
+    /// already escaped drops the late success, exactly like the original's
+    /// cancelled flow). Unknown or already-consumed ids are ignored — the
     /// request log stays append-only.
     pub fn login_finished(&mut self, id: u64, outcome: Result<LoginResult, String>) {
         if !self.login_requests.iter().any(|r| r.id == id) {
             return;
         }
         match outcome {
-            Ok(LoginResult::Loaded { username, entity_id, view_distance, chunks }) => {
-                self.disconnect_title = "Connected".to_string();
-                self.disconnect_reason = format!(
-                    "Logged in as {username}\n{} chunk{}, view distance {view_distance}, entity id {entity_id}",
-                    chunks,
-                    if chunks == 1 { "" } else { "s" },
-                );
+            Ok(LoginResult::Loaded { world, .. }) => {
+                if self.screen == ScreenKind::Connect {
+                    self.net_world = Some(world);
+                    self.enter_network_world();
+                }
             }
             Ok(LoginResult::Disconnected { reason }) => {
                 self.disconnect_title =
@@ -1649,12 +1705,16 @@ mod tests {
             let mut c: &[u8] = &resp;
             assert_eq!(read_varint(&mut c).unwrap(), serverbound::PONG);
             assert_eq!(i32::from_be_bytes(c[..4].try_into().unwrap()), -7);
-            // position teleport id 42 -> confirm teleportation (0x00)
+            // position teleport id 42 -> confirm teleportation (0x00).
+            // The spawn sits INSIDE the centered chunk (3,-2) — a real
+            // vanilla join burst is exactly this: the player position
+            // within the view-distance center. floor(56.5)>>4 = 3,
+            // floor(-27.25)>>4 = -2.
             let mut pos = Vec::new();
             write_varint(&mut pos, clientbound::SYNCHRONIZE_POSITION);
-            pos.extend_from_slice(&8.5f64.to_be_bytes());
+            pos.extend_from_slice(&56.5f64.to_be_bytes());
             pos.extend_from_slice(&64.0f64.to_be_bytes());
-            pos.extend_from_slice(&(-3.25f64).to_be_bytes());
+            pos.extend_from_slice(&(-27.25f64).to_be_bytes());
             pos.extend_from_slice(&90.0f32.to_be_bytes());
             pos.extend_from_slice(&0.0f32.to_be_bytes());
             pos.push(0x00); // all values absolute
@@ -1679,8 +1739,10 @@ mod tests {
         let req = app.login_requests[0].clone();
         assert_eq!(req.port, port, "explicit port parsed from the address");
 
-        // the exact mapping the window worker performs — the join now
-        // pumps to the world-load milestone
+        // the exact mapping the window worker performs: facts off the
+        // snapshot, then the player-centered window materialized for the
+        // world screen (the example mapper — the ids the mock streams;
+        // the GUI's placeholder policy maps every unresolved id to air)
         let res = mc_protocol::connect_and_join_world(
             &req.host,
             req.port,
@@ -1688,12 +1750,26 @@ mod tests {
             crate::screens::PLAYER_NAME,
         )
         .map(|out| match out {
-            mc_protocol::WorldOutcome::Loaded(snap) => LoginResult::Loaded {
-                username: crate::screens::PLAYER_NAME.to_string(),
-                entity_id: snap.info.entity_id,
-                view_distance: snap.info.view_distance,
-                chunks: snap.chunks.len(),
-            },
+            mc_protocol::WorldOutcome::Loaded(snap) => {
+                let (entity_id, view_distance, chunks) =
+                    (snap.info.entity_id, snap.info.view_distance, snap.chunks.len());
+                let world = crate::world_view::materialize_snapshot(
+                    snap,
+                    WORLD_CHUNKS,
+                    |id| match id {
+                        1 => crate::world::STONE,
+                        10 => crate::world::DIRT,
+                        _ => crate::world::AIR,
+                    },
+                );
+                LoginResult::Loaded {
+                    username: crate::screens::PLAYER_NAME.to_string(),
+                    entity_id,
+                    view_distance,
+                    chunks,
+                    world,
+                }
+            }
             mc_protocol::WorldOutcome::Disconnected { reason } => {
                 LoginResult::Disconnected { reason }
             }
@@ -1702,12 +1778,104 @@ mod tests {
         server.join().unwrap();
         app.login_finished(req.id, res);
 
-        assert_eq!(app.screen, ScreenKind::Disconnect);
-        assert_eq!(app.disconnect_title, "Connected");
-        assert_eq!(
-            app.disconnect_reason,
-            "Logged in as mc2rs\n1 chunk, view distance 8, entity id 17"
+        // the join landed IN the world (vanilla ConnectScreen → world):
+        // the world screen renders the materialized network window, the
+        // mock column (3,-2) sits at grid chunk (2,2) of the 5x5 window
+        assert_eq!(app.screen, ScreenKind::World);
+        assert!(app.world_is_network, "the world screen shows the network world");
+        assert_eq!(app.world_size, (WORLD_CHUNKS * crate::world::CHUNK_X) as i32);
+        let w = app.net_world.as_ref().expect("network world retained");
+        assert_eq!(w.get(32, 0, 32), crate::world::STONE, "stone through the real join");
+        assert_eq!(w.get(35, 1, 34), crate::world::DIRT, "dirt through the real join");
+        assert!(
+            !app.world_quads.as_ref().expect("meshed network world").is_empty(),
+            "the network terrain meshes"
         );
+        // the camera column (grid center) is air in this one-column world:
+        // the spawn scan honestly reports the grid top
+        assert_eq!(app.spawn_y, crate::world::CHUNK_Y as i32);
+    }
+
+    #[test]
+    fn network_world_lands_in_the_world_screen_and_quits_cleanly() {
+        let mut app = App::new(3);
+        app.open(ScreenKind::Connect);
+        // an all-air network window: the state machine must not care
+        app.net_world = Some(crate::world::World {
+            chunks_per_side: 2,
+            seed: 0,
+            chunks: vec![
+                vec![crate::world::AIR; crate::world::CHUNK_X * crate::world::CHUNK_Y * crate::world::CHUNK_Z];
+                4
+            ],
+        });
+        app.enter_network_world();
+        assert_eq!(app.screen, ScreenKind::World);
+        assert!(app.world_is_network);
+        assert_eq!(app.world_size, 32);
+        assert_eq!(
+            app.spawn_y,
+            crate::world::CHUNK_Y as i32,
+            "all-air window: the spawn scan reports the grid top"
+        );
+        assert!(
+            app.world_quads.as_ref().unwrap().is_empty(),
+            "an air world meshes to nothing"
+        );
+
+        // save and quit unloads the network level
+        app.paused = true;
+        app.render_title_buttons_for_test();
+        let quit = app.buttons.iter().find(|b| b.id == "saveandquit").expect("saveandquit").clone();
+        app.on_click(quit.x + quit.w / 2, quit.y + quit.h / 2);
+        assert_eq!(app.screen, ScreenKind::Title);
+        assert!(!app.world_is_network);
+        assert!(app.world_quads.is_none(), "the network mesh is unloaded");
+
+        // singleplayer afterwards rebuilds the PROCEDURAL world
+        app.render_title_buttons_for_test();
+        let sp = app.buttons.iter().find(|b| b.id == "singleplayer").expect("singleplayer").clone();
+        app.on_click(sp.x + sp.w / 2, sp.y + sp.h / 2);
+        assert_eq!(app.screen, ScreenKind::World);
+        assert!(!app.world_is_network, "singleplayer renders the procedural world");
+        assert!(!app.world_quads.unwrap().is_empty(), "procedural terrain meshes");
+    }
+
+    #[test]
+    fn late_loaded_join_after_escape_is_dropped() {
+        let mut app = App::new(3);
+        app.open(ScreenKind::Connect);
+        app.on_escape(); // the user cancelled the join
+        assert_eq!(app.screen, ScreenKind::Servers);
+        app.login_requests.push(LoginRequest {
+            id: 7,
+            entry: 0,
+            host: "127.0.0.1".to_string(),
+            port: 1,
+        });
+        app.login_finished(
+            7,
+            Ok(LoginResult::Loaded {
+                username: crate::screens::PLAYER_NAME.to_string(),
+                entity_id: 1,
+                view_distance: 8,
+                chunks: 1,
+                world: crate::world::World {
+                    chunks_per_side: 2,
+                    seed: 0,
+                    chunks: vec![
+                        vec![crate::world::AIR; crate::world::CHUNK_X * crate::world::CHUNK_Y * crate::world::CHUNK_Z];
+                        4
+                    ],
+                },
+            }),
+        );
+        assert_eq!(
+            app.screen,
+            ScreenKind::Servers,
+            "a cancelled join's late success is dropped"
+        );
+        assert!(app.net_world.is_none());
     }
 
     impl App {
