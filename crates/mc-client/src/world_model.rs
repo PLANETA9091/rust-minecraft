@@ -25,7 +25,7 @@
 
 use std::collections::HashMap;
 
-use mc_protocol::{ChunkColumn, PlayEvent, PlayerPosition, RegistryData, SpawnInfo, WorldInfo, WorldSnapshot};
+use mc_protocol::{ChunkColumn, PlayEvent, PlayerPosition, RegistryData, WorldInfo, WorldSnapshot};
 
 /// The client's view of ONE server world: loaded chunk columns, the
 /// server-declared center chunk, the world's static description and the
@@ -182,6 +182,7 @@ impl WorldModel {
 mod tests {
     use super::*;
     use mc_protocol::DimensionTypeEntry;
+    use mc_protocol::SpawnInfo;
     use mc_protocol::varint::write_varint;
 
     /// One palettized section buffer (the mc-protocol mock shape): stone
@@ -360,7 +361,12 @@ mod tests {
         assert_eq!(m.loaded_chunks(), 1);
         assert_eq!(m.info.as_ref().unwrap().entity_id, 17);
         assert_eq!(m.player.as_ref().unwrap().teleport_id, 42);
-        assert_eq!(m.block(48, 0, -32), Some(1));
+        // the login's current dimension + the registry knowledge rode
+        // along: min_y is LIVE, so block() takes WORLD-y now — the stone
+        // at the column's local (0,0,0) sits at world y -64
+        assert_eq!(m.min_y, Some(-64));
+        assert_eq!(m.block(48, -64, -32), Some(1), "world-y query");
+        assert_eq!(m.block(48, 0, -32), None, "local y no longer matches");
         // the registry knowledge rode along: the decoded dimension-type
         // vertical layout answers by registry key
         assert_eq!(m.dimension_min_y("minecraft:overworld"), Some(-64));
@@ -447,7 +453,11 @@ mod tests {
         assert_eq!(m.current_dimension.as_deref(), Some("minecraft:overworld"));
         assert_eq!(m.min_y, Some(-64), "the registry layout goes live at login");
         // block() now answers WORLD-y: section 0 of a column starts at -64
-        m.apply(PlayEvent::Chunk(ChunkColumn { x: 0, z: 0, sections: vec![stone_dirt_section(2)] }));
+        m.apply(PlayEvent::Chunk(ChunkColumn {
+            x: 0,
+            z: 0,
+            sections: vec![parse_section_buffer(&stone_dirt_section(2))],
+        }));
         assert_eq!(m.block(0, -64, 0), Some(1), "world -64 = section 0 local 0");
         assert_eq!(m.block(3, -63, 2), Some(10), "local (3,1,2) at world -63");
         // Respawn: a dimension change re-pins from the same registry

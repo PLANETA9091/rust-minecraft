@@ -77,9 +77,15 @@ hand-drawn:
   reader/writer pulls the `minecraft:dimension_type` registry (every
   dimension's min_y/height vertical layout) out of the streamed packets
   and carries it through the join into the world model; the other
-  registries (biomes, worldgen...) are walked and skipped, and pinning
-  the *current* dimension (min_y shifting for `block()`) waits on the
-  Respawn packet. The **play wire ids themselves are generated too**:
+  registries (biomes, worldgen...) are walked and skipped. The
+  **current dimension is pinned at login**: the Login and Respawn
+  payloads were re-aligned to the javap-proven vanilla 26.2 shapes
+  (CommonPlayerSpawnInfo — dimension type registry id, dimension,
+  portal cooldown, sea level), so the decoded registry immediately
+  turns the login's dimension into the model's live `min_y` —
+  `block()` answers real world-Y coordinates, and Respawn (the
+  proven packet id 82) re-pins the layout on dimension change.
+  The **play wire ids themselves are generated too**:
   `mc2rs-gen dump-packet-ids` binds the official jar's REAL play
   clientbound/serverbound protocols and dumps each packet's live wire id
   from the vanilla dispatch codec's id map — the previous hand-kept

@@ -1636,14 +1636,27 @@ mod tests {
             login_pkt.push(0); // not hardcore
             write_varint(&mut login_pkt, 1); // one dimension
             write_string(&mut login_pkt, "minecraft:overworld");
-            write_varint(&mut login_pkt, 20); // max players
-            write_varint(&mut login_pkt, 8); // view distance
+            write_varint(&mut login_pkt, 20); // max players (dropped)
+            write_varint(&mut login_pkt, 8); // chunk radius (view distance)
             write_varint(&mut login_pkt, 8); // simulation distance
-            login_pkt.push(0); // reduced debug
-            login_pkt.push(1); // respawn screen
-            login_pkt.push(0); // limited crafting
+            login_pkt.push(0); // reduced debug (dropped)
+            login_pkt.push(1); // show death screen (dropped)
+            login_pkt.push(0); // do limited crafting (dropped)
+            // CommonPlayerSpawnInfo (vanilla 26.2): dimension_type id,
+            // dimension, seed, game types, debug/flat, no death location,
+            // portal cooldown, sea level
+            write_varint(&mut login_pkt, 0);
+            write_string(&mut login_pkt, "minecraft:overworld");
+            login_pkt.extend_from_slice(&0i64.to_be_bytes()); // seed
+            login_pkt.push(1); // game type
+            login_pkt.push(1); // previous game type
+            login_pkt.push(0); // is debug
+            login_pkt.push(0); // is flat
             login_pkt.push(0); // no death location
             write_varint(&mut login_pkt, 300); // portal cooldown
+            write_varint(&mut login_pkt, 63); // sea level
+            login_pkt.push(1); // online mode (dropped)
+            login_pkt.push(1); // enforces secure chat (dropped)
             conn.send_packet(&login_pkt).unwrap();
             let mut cc = Vec::new();
             write_varint(&mut cc, clientbound::CENTER_CHUNK);
