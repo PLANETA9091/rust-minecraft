@@ -132,6 +132,8 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize) -> anyhow::Result<()>
         }
         app.update();
         music.sync(&app.music);
+        // UI one-shots (ui.button.click) ride the independent UI channel
+        music.sync_ui(&app.ui_sounds);
         fb.clear(crate::headless::SKY_TOP, crate::headless::SKY_BOTTOM);
         app.render(&mut fb, &mut assets);
         buf.iter_mut().zip(fb.to_argb()).for_each(|(o, c)| *o = c);

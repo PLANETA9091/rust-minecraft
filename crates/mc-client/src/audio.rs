@@ -151,12 +151,18 @@ pub fn probe_frames(bytes: &[u8]) -> Result<(u32, u64)> {
 
 /// Output backends. `play` takes ownership of the decoded track and replaces
 /// whatever was playing (the vanilla menu music is a sequence of full files;
-/// the scheduler decides the timing). NOT Send: the CPAL device stream must
-/// stay on the thread that opened it — the GUI loop is single-threaded.
+/// the scheduler decides the timing); `play_ui` overlays a one-shot UI sound
+/// WITHOUT interrupting the music — exactly how the vanilla sound engine
+/// keeps music and UI clicks on independent channels. NOT Send: the CPAL
+/// device stream must stay on the thread that opened it — the GUI loop is
+/// single-threaded.
 pub trait AudioOutput {
     fn play(&mut self, track: Track);
     fn stop(&mut self);
     fn playing(&self) -> bool;
+    /// Fire-and-forget UI one-shot (ui.button.click), overlapping music.
+    fn play_ui(&mut self, track: Track);
+    fn ui_playing(&self) -> bool;
 }
 
 /// Deterministic silent backend: records state, emits nothing. Default for
@@ -165,6 +171,7 @@ pub trait AudioOutput {
 #[derive(Default)]
 pub struct SilentOutput {
     active: bool,
+    ui_active: bool,
 }
 
 impl AudioOutput for SilentOutput {
@@ -177,6 +184,12 @@ impl AudioOutput for SilentOutput {
     fn playing(&self) -> bool {
         self.active
     }
+    fn play_ui(&mut self, _track: Track) {
+        self.ui_active = true;
+    }
+    fn ui_playing(&self) -> bool {
+        self.ui_active
+    }
 }
 
 /// Real output through rodio/CPAL. Only compiled with `--features audio`;
@@ -184,9 +197,11 @@ impl AudioOutput for SilentOutput {
 /// without speakers and the caller falls back to `SilentOutput`.
 #[cfg(feature = "audio")]
 pub struct RodioOutput {
-    // the stream must outlive the sink (dropping it closes the device)
+    // the stream must outlive the sinks (dropping it closes the device)
     _stream: rodio::OutputStream,
     sink: rodio::Sink,
+    /// independent channel for UI one-shots so a click never cuts music
+    ui_sink: rodio::Sink,
 }
 
 #[cfg(feature = "audio")]
@@ -195,7 +210,8 @@ impl RodioOutput {
         let (_stream, handle) =
             rodio::OutputStream::try_default().context("no audio output device")?;
         let sink = rodio::Sink::try_new(&handle).context("audio sink")?;
-        Ok(Self { _stream, sink })
+        let ui_sink = rodio::Sink::try_new(&handle).context("ui audio sink")?;
+        Ok(Self { _stream, sink, ui_sink })
     }
 }
 
@@ -212,6 +228,16 @@ impl AudioOutput for RodioOutput {
     }
     fn playing(&self) -> bool {
         !self.sink.empty()
+    }
+    fn play_ui(&mut self, track: Track) {
+        // append (never clear): one-shots must not interrupt music; the sink
+        // drains itself when the short click finishes
+        let src =
+            rodio::buffer::SamplesBuffer::new(track.channels as u16, track.sample_rate, track.samples);
+        self.ui_sink.append(src);
+    }
+    fn ui_playing(&self) -> bool {
+        !self.ui_sink.empty()
     }
 }
 
@@ -231,34 +257,47 @@ pub fn default_output() -> Box<dyn AudioOutput> {
 /// through the asset index; missing files are skipped silently — audio must
 /// never break the client.
 pub fn discover_menu_music(root: &Path, tracks: &[&'static str]) -> Vec<(String, PathBuf)> {
-    use mc_registry::generated::sounds as snd;
     let mut out = Vec::new();
     for id in tracks {
-        let Some(ev) = snd::event(id) else { continue };
-        for (idx, file) in snd::files(ev).iter().enumerate() {
-            // sounds.json names are relative to assets/minecraft/sounds/, the
-            // vanilla engine appends ".ogg" when the name has no extension
-            let rel = if file.name.ends_with(".ogg") {
-                file.name.to_string()
-            } else {
-                format!("{}.ogg", file.name)
-            };
-            let path = root.join("assets/minecraft/sounds").join(&rel);
-            if path.is_file() {
-                out.push((crate::music::file_key(id, idx), path));
-            }
+        out.extend(discover_event_files(root, id));
+    }
+    out
+}
+
+/// Resolve the runtime paths of ONE sound event's files through the
+/// GENERATED sounds.json table (keys from `music::file_key()`). sounds.json
+/// names are relative to assets/minecraft/sounds/, the vanilla engine
+/// appends ".ogg" when the name has no extension. Missing files are skipped
+/// silently — audio must never break the client.
+pub fn discover_event_files(root: &Path, event_id: &str) -> Vec<(String, PathBuf)> {
+    use mc_registry::generated::sounds as snd;
+    let mut out = Vec::new();
+    let Some(ev) = snd::event(event_id) else { return out };
+    for (idx, file) in snd::files(ev).iter().enumerate() {
+        let rel = if file.name.ends_with(".ogg") {
+            file.name.to_string()
+        } else {
+            format!("{}.ogg", file.name)
+        };
+        let path = root.join("assets/minecraft/sounds").join(&rel);
+        if path.is_file() {
+            out.push((crate::music::file_key(event_id, idx), path));
         }
     }
     out
 }
 
-/// Menu music player: owns the output backend + the discovered file paths,
-/// mirrors the deterministic `MusicScheduler` event log onto real audio.
-/// Lives for the whole GUI session (dropping it closes the device stream).
+/// Menu audio player: owns the output backend + the discovered file paths,
+/// mirrors the deterministic `MusicScheduler` event log onto real music and
+/// the App UI-sound log onto real one-shots (ui.button.click). Lives for the
+/// whole GUI session (dropping it closes the device stream).
 pub struct MenuMusic {
     output: Box<dyn AudioOutput>,
     files: HashMap<String, PathBuf>,
     seen: usize,
+    /// ui.button.click files, keyed file_key() ("ui.button.click#0")
+    ui_files: HashMap<String, PathBuf>,
+    ui_seen: usize,
 }
 
 impl MenuMusic {
@@ -268,8 +307,14 @@ impl MenuMusic {
     /// silence. Startup cost: one frame-counting decode pass over the
     /// playlist (samples are not retained).
     pub fn start(app: &mut crate::screens::App) -> Self {
+        Self::start_with_root(app, Path::new("assets-cache/jar"))
+    }
+
+    /// `start` against an explicit runtime asset root (tests redirect this
+    /// to a temp tree holding synthesized sound files).
+    pub fn start_with_root(app: &mut crate::screens::App, root: &Path) -> Self {
         let tracks = app.music.menu_tracks().to_vec();
-        let files = discover_menu_music(Path::new("assets-cache/jar"), &tracks);
+        let files = discover_menu_music(root, &tracks);
         for (key, path) in &files {
             if let Ok(bytes) = std::fs::read(path) {
                 if let Ok((_, frames)) = probe_frames(&bytes) {
@@ -277,27 +322,61 @@ impl MenuMusic {
                 }
             }
         }
-        Self { output: default_output(), files: files.into_iter().collect(), seen: 0 }
+        let ui_files = discover_event_files(root, "ui.button.click").into_iter().collect();
+        Self {
+            output: default_output(),
+            files: files.into_iter().collect(),
+            seen: 0,
+            ui_files,
+            ui_seen: 0,
+        }
     }
 
-    /// Mirror new scheduler "play <event#file>" events onto the output
-    /// backend, decoding the chosen file on demand (one track in memory).
+    /// Decode one official sound file and hand it to the backend (music
+    /// channel or UI one-shot channel). Failures degrade to a stderr note —
+    /// audio must never break the client.
+    fn play_file(&mut self, key: &str, path: &Path, ui: bool) {
+        match std::fs::read(path) {
+            Ok(bytes) => match decode_audio(&bytes) {
+                Ok(t) => {
+                    if ui {
+                        self.output.play_ui(t);
+                    } else {
+                        self.output.play(t);
+                    }
+                }
+                Err(e) => eprintln!("      audio: {key} undecodable ({e})"),
+            },
+            Err(e) => eprintln!("      audio: {key} unreadable ({e})"),
+        }
+    }
+
+    /// Mirror new scheduler "play <event#file>" events onto the music
+    /// channel, decoding the chosen file on demand (one track in memory).
     /// Called once per frame; cheap when the event log did not grow.
     pub fn sync(&mut self, music: &crate::music::MusicScheduler) {
         let seen = self.seen.min(music.events.len());
         for ev in &music.events[seen..] {
             if let Some(key) = ev.strip_prefix("play ").and_then(|s| s.split(" @").next()) {
                 let Some(path) = self.files.get(key).cloned() else { continue };
-                match std::fs::read(&path) {
-                    Ok(bytes) => match decode_audio(&bytes) {
-                        Ok(t) => self.output.play(t),
-                        Err(e) => eprintln!("      music: {key} undecodable ({e})"),
-                    },
-                    Err(e) => eprintln!("      music: {key} unreadable ({e})"),
-                }
+                self.play_file(key, &path, false);
             }
         }
         self.seen = music.events.len();
+    }
+
+    /// Mirror new App UI-sound events ("ui.button.click @<frame>") onto the
+    /// UI one-shot channel. The vanilla click event has exactly one file, so
+    /// file #0 is the correct pick; unknown/garbled entries are skipped.
+    pub fn sync_ui(&mut self, events: &[String]) {
+        let seen = self.ui_seen.min(events.len());
+        for ev in &events[seen..] {
+            let Some(id) = ev.split(" @").next() else { continue };
+            let key = crate::music::file_key(id, 0);
+            let Some(path) = self.ui_files.get(&key).cloned() else { continue };
+            self.play_file(&key, &path, true);
+        }
+        self.ui_seen = events.len();
     }
 }
 
@@ -371,6 +450,56 @@ mod tests {
         assert!(!o.playing());
     }
 
+    #[test]
+    fn ui_channel_is_independent_of_music() {
+        let t = decode_audio(&synth_wav()).unwrap();
+        let mut o = SilentOutput::default();
+        o.play(t.clone());
+        assert!(o.playing() && !o.ui_playing(), "music alone");
+        o.play_ui(t);
+        assert!(o.playing() && o.ui_playing(), "click overlays music, never cuts it");
+        o.stop();
+        assert!(!o.playing() && o.ui_playing(), "stopping music leaves the one-shot alone");
+    }
+
+    #[test]
+    fn discover_skips_missing_event_and_files() {
+        let dir = std::env::temp_dir().join(format!("mc2rs-disc-{}", std::process::id()));
+        std::fs::create_dir_all(&dir).unwrap();
+        // event exists in the generated table but the file is absent
+        assert!(discover_event_files(&dir, "ui.button.click").is_empty());
+        // event not in the generated table at all
+        assert!(discover_event_files(&dir, "no.such.event").is_empty());
+        std::fs::remove_dir_all(&dir).ok();
+    }
+
+    #[test]
+    fn sync_ui_plays_click_on_the_ui_channel() {
+        // temp runtime root holding a sound file at the exact official path
+        // the generated table resolves ui.button.click to
+        // (random/click_stereo); a synthesized WAV decodes fine — the probe
+        // reads content, not the file extension
+        let dir = std::env::temp_dir().join(format!("mc2rs-click-{}", std::process::id()));
+        let click_path = dir.join("assets/minecraft/sounds/random/click_stereo.ogg");
+        std::fs::create_dir_all(click_path.parent().unwrap()).unwrap();
+        std::fs::write(&click_path, synth_wav()).unwrap();
+
+        let mut app = crate::screens::App::new(1);
+        let mut m = MenuMusic::start_with_root(&mut app, &dir);
+        // garbled + unknown events are skipped, never fatal
+        m.sync_ui(&["nonsense".to_string(), "not.an.event @5".to_string()]);
+        assert!(!m.output.ui_playing());
+        assert!(!m.output.playing(), "music untouched by UI events");
+        // the vanilla click plays through the independent UI channel
+        m.sync_ui(&["ui.button.click @7".to_string()]);
+        assert!(m.output.ui_playing(), "click one-shot reaches the UI channel");
+        assert!(!m.output.playing());
+        // a second click replays (the log cursor advances)
+        m.sync_ui(&["ui.button.click @8".to_string()]);
+        assert!(m.output.ui_playing());
+        std::fs::remove_dir_all(&dir).ok();
+    }
+
     /// Real-data check (NOT run on CI): discover + probe + decode the actual
     /// official menu music fetched by `mc2rs-gen generate`. Run here with:
     ///   cargo test -p mc-client -- --ignored
@@ -413,5 +542,36 @@ mod tests {
                 t.channels
             );
         }
+    }
+
+    /// Real-data check (NOT run on CI): the official ui.button.click file
+    /// fetched by `mc2rs-gen generate` decodes and is click-length short.
+    #[test]
+    #[ignore = "needs runtime assets (assets-cache/jar) from mc2rs-gen generate"]
+    fn real_official_ui_click_decodes() {
+        let candidates = [
+            PathBuf::from("assets-cache/jar"),
+            Path::new(env!("CARGO_MANIFEST_DIR")).join("../../assets-cache/jar"),
+        ];
+        let Some(root) = candidates.into_iter().find(|p| p.is_dir()) else {
+            eprintln!("skipping: assets-cache/jar not present (run mc2rs-gen generate)");
+            return;
+        };
+        let files = discover_event_files(&root, "ui.button.click");
+        assert_eq!(
+            files.len(),
+            1,
+            "ui.button.click must resolve to its one official file: {files:?}"
+        );
+        let (key, path) = &files[0];
+        assert_eq!(key, "ui.button.click#0");
+        let bytes = std::fs::read(path).expect("read");
+        let (rate, frames) =
+            probe_frames(&bytes).unwrap_or_else(|e| panic!("{key}: probe failed: {e}"));
+        let t = decode_audio(&bytes).unwrap_or_else(|e| panic!("{key}: decode failed: {e}"));
+        assert_eq!(t.frames, frames, "{key}: probe and decode must agree");
+        let secs = frames as f64 / rate as f64;
+        assert!(secs > 0.0 && secs < 1.5, "a UI click is short, got {secs:.3}s");
+        println!("  {key} <- {} ({frames} frames, {secs:.3}s, {rate} Hz)", path.display());
     }
 }

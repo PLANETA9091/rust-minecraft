@@ -110,6 +110,10 @@ pub struct App {
     /// Base world tick for the day-night cycle (0 = vanilla dawn; the frame
     /// counter advances time 1 tick per frame like the vanilla clock).
     pub day_time_base: u64,
+    /// UI one-shot sound log ("ui.button.click @<frame>"), mirroring the
+    /// vanilla rule that EVERY activated button plays the click; consumed by
+    /// the audio backend (audio.rs) like the music event log.
+    pub ui_sounds: Vec<String>,
 }
 
 /// World size for the in-game screen (chunks per side — same as the
@@ -173,6 +177,7 @@ impl App {
             options_return: ScreenKind::Title,
             selected_hotbar: 0,
             day_time_base: 0,
+            ui_sounds: Vec::new(),
         }
     }
 
@@ -248,6 +253,11 @@ impl App {
                 }
                 _ => {}
             }
+            // vanilla AbstractButton.playDownSound: EVERY activated button
+            // plays the UI click (disabled buttons can't be hit — hovered()
+            // rejects them), even when the action itself is a no-op here
+            // (quit/realms still click exactly like the original menus).
+            self.ui_sounds.push(format!("ui.button.click @{}", self.frame));
             self.buttons.clear();
             return;
         }
@@ -858,6 +868,30 @@ mod tests {
         let mp = app.buttons.iter().find(|b| b.id == "multiplayer").expect("multiplayer button").clone();
         app.on_click(mp.x + mp.w / 2, mp.y + mp.h / 2);
         assert_eq!(app.screen, ScreenKind::Servers);
+    }
+
+    #[test]
+    fn button_click_records_the_vanilla_ui_sound() {
+        let mut app = App::new(3);
+        for _ in 0..30 {
+            app.update();
+        }
+        app.render_title_buttons_for_test();
+        let mp = app.buttons.iter().find(|b| b.id == "multiplayer").expect("multiplayer button").clone();
+        app.on_click(mp.x + mp.w / 2, mp.y + mp.h / 2);
+        // vanilla AbstractButton.playDownSound: exactly one ui.button.click
+        // per activated button, stamped with the pressing frame
+        assert_eq!(app.ui_sounds, vec![format!("ui.button.click @{}", app.frame)]);
+        // a click on empty space (no button) is silent
+        app.on_click(1, 1);
+        assert_eq!(app.ui_sounds.len(), 1, "no button -> no click sound");
+        // no-op actions (quit has no headless behavior) still play the click
+        app.open(ScreenKind::Title);
+        app.render_title_buttons_for_test();
+        let quit = app.buttons.iter().find(|b| b.id == "quit").expect("quit button").clone();
+        app.on_click(quit.x + quit.w / 2, quit.y + quit.h / 2);
+        assert_eq!(app.ui_sounds.len(), 2, "quit still clicks, like vanilla");
+        assert_eq!(app.screen, ScreenKind::Title);
     }
 
     impl App {
