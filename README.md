@@ -41,7 +41,10 @@ hand-drawn:
   overlay (`--screen title`).
 - **Server list** — `Play Multiplayer` screen with server entries, `§`-color
   MOTDs, official `server_list/ping_*` icons, Join/Refresh/Cancel
-  (`--screen servers`).
+  (`--screen servers`). **Refresh runs the real protocol**: a vanilla status
+  ping (`mc-protocol`) against every hosted row, off the frame thread —
+  MOTD, version and latency bars update from the server's actual response
+  (unreachable rows render the vanilla *Failed to connect* offline state).
 - **Singleplayer world** — clicking `Singleplayer` enters a live 3D world
   view rendered by the same deterministic CPU raster path as the pixel
   tests: real block textures from the generated atlas, the **official

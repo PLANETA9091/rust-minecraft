@@ -119,6 +119,13 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize) -> anyhow::Result<()>
     let mut assets = GuiAssets::open("assets-cache/jar");
     let mut fb = Framebuf::new(width, height);
     let mut buf: Vec<u32> = vec![0; width * height];
+    // server-list pings run on detached worker threads (blocking status
+    // requests, vanilla-style async pinger); finished results come back
+    // through this channel and are applied at the top of each frame
+    let (net_tx, net_rx) = std::sync::mpsc::channel::<
+        (u64, Result<crate::screens::PingInfo, String>),
+    >();
+    let mut net_seen = 0usize; // cursor into the append-only request log
 
     while window.is_open() {
         if window.is_key_pressed(Key::Escape, minifb::KeyRepeat::No) {
@@ -131,6 +138,27 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize) -> anyhow::Result<()>
             app.on_click(gmx, gmy);
         }
         app.update();
+        // dispatch newly requested server-list pings to worker threads
+        for req in &app.net_requests[net_seen..] {
+            let tx = net_tx.clone();
+            let id = req.id;
+            let host = req.host.clone();
+            let port = req.port;
+            std::thread::spawn(move || {
+                let res = mc_protocol::ping(&host, port)
+                    .map(|r| crate::screens::PingInfo {
+                        motd: r.motd,
+                        version: r.version_name,
+                        ping_ms: r.latency_ms.min(i32::MAX as u128) as i32,
+                    })
+                    .map_err(|e| format!("{e:#}"));
+                let _ = tx.send((id, res)); // receiver may be gone at shutdown
+            });
+        }
+        net_seen = app.net_requests.len();
+        while let Ok((id, res)) = net_rx.try_recv() {
+            app.ping_finished(id, res);
+        }
         music.sync(&app.music);
         // UI one-shots (ui.button.click) ride the independent UI channel
         music.sync_ui(&app.ui_sounds);

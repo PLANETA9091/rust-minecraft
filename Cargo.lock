@@ -1076,7 +1076,7 @@ dependencies = [
 
 [[package]]
 name = "mc-assets"
-version = "0.3.10"
+version = "0.3.11"
 dependencies = [
  "anyhow",
  "hex",
@@ -1088,11 +1088,12 @@ dependencies = [
 
 [[package]]
 name = "mc-client"
-version = "0.3.10"
+version = "0.3.11"
 dependencies = [
  "anyhow",
  "clap",
  "mc-assets",
+ "mc-protocol",
  "mc-registry",
  "minifb",
  "png",
@@ -1103,7 +1104,7 @@ dependencies = [
 
 [[package]]
 name = "mc-protocol"
-version = "0.3.10"
+version = "0.3.11"
 dependencies = [
  "anyhow",
  "flate2",
@@ -1113,11 +1114,11 @@ dependencies = [
 
 [[package]]
 name = "mc-registry"
-version = "0.3.10"
+version = "0.3.11"
 
 [[package]]
 name = "mc2rs-gen"
-version = "0.3.10"
+version = "0.3.11"
 dependencies = [
  "anyhow",
  "clap",
@@ -1134,7 +1135,7 @@ dependencies = [
 
 [[package]]
 name = "mc2rs-pixel"
-version = "0.3.10"
+version = "0.3.11"
 dependencies = [
  "anyhow",
  "clap",

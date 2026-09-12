@@ -59,6 +59,42 @@ pub struct ServerEntry {
     pub ping_ms: i32,
     pub online: bool,
     pub version: String,
+    /// Real address ("host" or "host:port", vanilla default port 25565)
+    /// the client can actually ping; `None` marks placeholder rows with
+    /// no reachable endpoint (they always render offline).
+    pub host: Option<String>,
+}
+
+/// One requested server-list ping: which row, which address. Append-only
+/// request log — the window backend drains new entries (by cursor), runs
+/// the blocking `mc_protocol::ping` on a worker thread and hands the
+/// outcome back through `App::ping_finished`.
+#[derive(Debug, Clone, PartialEq)]
+pub struct PingRequest {
+    pub id: u64,
+    /// Index into `App::servers` this request belongs to.
+    pub entry: usize,
+    pub host: String,
+    pub port: u16,
+}
+
+/// The slice of a real status response the server list renders.
+#[derive(Debug, Clone, PartialEq)]
+pub struct PingInfo {
+    pub motd: String,
+    pub version: String,
+    pub ping_ms: i32,
+}
+
+/// Split a vanilla server address ("host" or "host:port") — the port
+/// defaults to 25565 exactly like the original server list.
+fn parse_address(addr: &str) -> (String, u16) {
+    match addr.rsplit_once(':') {
+        Some((h, p)) if !p.is_empty() && p.bytes().all(|b| b.is_ascii_digit()) => {
+            (h.to_string(), p.parse().unwrap_or(25565))
+        }
+        _ => (addr.to_string(), 25565),
+    }
 }
 
 impl ServerEntry {
@@ -114,6 +150,13 @@ pub struct App {
     /// vanilla rule that EVERY activated button plays the click; consumed by
     /// the audio backend (audio.rs) like the music event log.
     pub ui_sounds: Vec<String>,
+    /// Server-list ping requests (append-only log, same protocol as
+    /// ui_sounds/music events): the headless logic records WHAT to ping,
+    /// the window backend performs the blocking network call off the
+    /// frame thread and delivers results via `ping_finished`.
+    pub net_requests: Vec<PingRequest>,
+    /// Monotonic id for the next ping request (pairs requests with results).
+    pub next_ping_id: u64,
 }
 
 /// World size for the in-game screen (chunks per side — same as the
@@ -150,6 +193,8 @@ impl App {
                 ping_ms: 0,
                 online: false,
                 version: "".to_string(),
+                // placeholder row: nothing reachable to ping yet
+                host: None,
             },
             ServerEntry {
                 name: "hypixel.net".to_string(),
@@ -157,6 +202,7 @@ impl App {
                 ping_ms: 34,
                 online: true,
                 version: "Requires MC 1.8/1.21".to_string(),
+                host: Some("hypixel.net".to_string()),
             },
         ];
         Self {
@@ -178,6 +224,8 @@ impl App {
             selected_hotbar: 0,
             day_time_base: 0,
             ui_sounds: Vec::new(),
+            net_requests: Vec::new(),
+            next_ping_id: 0,
         }
     }
 
@@ -257,6 +305,10 @@ impl App {
                     self.open(ScreenKind::Title);
                     self.music.on_menu_open();
                 }
+                // vanilla Refresh: re-ping every hosted server row; the
+                // blocking network work happens off the frame thread
+                "refresh" => self.refresh_servers(),
+                // "join" stays a no-op until the play state exists
                 _ => {}
             }
             // vanilla AbstractButton.playDownSound: EVERY activated button
@@ -275,6 +327,52 @@ impl App {
                     self.selected_server = i;
                     break;
                 }
+            }
+        }
+    }
+
+    /// Vanilla "Refresh": request a real server-list ping (status request)
+    /// for every entry that has an address. Rows without one have nothing
+    /// reachable to ask and stay untouched. The actual network round-trip
+    /// runs off the frame thread in the window backend — the headless
+    /// logic only records the request (deterministic, like vanilla's
+    /// async pinger from the renderer's point of view).
+    pub fn refresh_servers(&mut self) {
+        for (i, s) in self.servers.iter().enumerate() {
+            let Some(addr) = &s.host else { continue };
+            let (host, port) = parse_address(addr);
+            self.net_requests.push(PingRequest {
+                id: self.next_ping_id,
+                entry: i,
+                host,
+                port,
+            });
+            self.next_ping_id += 1;
+        }
+    }
+
+    /// Feed one completed server-list ping back into the list (vanilla
+    /// updates the row in place: MOTD, version string, latency bars; an
+    /// unreachable server renders the vanilla "Failed to connect" offline
+    /// row). Unknown or already-consumed ids are ignored — the request
+    /// log itself stays append-only.
+    pub fn ping_finished(&mut self, id: u64, result: Result<PingInfo, String>) {
+        let Some(req) = self.net_requests.iter().find(|r| r.id == id).cloned() else {
+            return;
+        };
+        let Some(entry) = self.servers.get_mut(req.entry) else { return };
+        match result {
+            Ok(info) => {
+                entry.online = true;
+                entry.motd = info.motd;
+                entry.version = info.version;
+                entry.ping_ms = info.ping_ms.max(0);
+            }
+            Err(_) => {
+                // vanilla marks the row offline: red connect.failed line
+                // + the unreachable icon (render_servers)
+                entry.online = false;
+                entry.ping_ms = 0;
             }
         }
     }
@@ -865,6 +963,7 @@ mod tests {
             ping_ms: 10,
             online: true,
             version: String::new(),
+            host: None,
         };
         assert_eq!(e.ping_icon(), "server_list/ping_5");
         e.ping_ms = 90;
@@ -935,6 +1034,136 @@ mod tests {
         app.on_click(quit.x + quit.w / 2, quit.y + quit.h / 2);
         assert_eq!(app.ui_sounds.len(), 2, "quit still clicks, like vanilla");
         assert_eq!(app.screen, ScreenKind::Title);
+    }
+
+    // ---- server-list refresh: the REAL mc-protocol status ping ----
+
+    #[test]
+    fn server_addresses_parse_with_the_vanilla_default_port() {
+        assert_eq!(parse_address("hypixel.net"), ("hypixel.net".to_string(), 25565));
+        assert_eq!(parse_address("localhost:25500"), ("localhost".to_string(), 25500));
+        // non-numeric / empty ports leave the whole string as the host
+        assert_eq!(parse_address("host:notaport"), ("host:notaport".to_string(), 25565));
+        assert_eq!(parse_address("mc.example.com:"), ("mc.example.com:".to_string(), 25565));
+    }
+
+    #[test]
+    fn refresh_pings_only_rows_with_real_addresses() {
+        let mut app = App::new(3);
+        for _ in 0..30 {
+            app.update();
+        }
+        app.open(ScreenKind::Servers);
+        // render once to build the servers-screen buttons (the helper
+        // renders whichever screen is active)
+        app.render_title_buttons_for_test();
+        let refresh = app
+            .buttons
+            .iter()
+            .find(|b| b.id == "refresh")
+            .expect("refresh button")
+            .clone();
+        app.on_click(refresh.x + refresh.w / 2, refresh.y + refresh.h / 2);
+        // the sandbox row has no address and stays unpinged; hypixel.net
+        // is requested with the vanilla default port
+        assert_eq!(app.net_requests.len(), 1);
+        let req = &app.net_requests[0];
+        assert_eq!(req.entry, 1);
+        assert_eq!(req.host, "hypixel.net");
+        assert_eq!(req.port, 25565);
+        assert_eq!(req.id, 0);
+        // and the click still played the vanilla ui sound
+        assert_eq!(app.ui_sounds.len(), 1);
+    }
+
+    #[test]
+    fn ping_result_updates_the_row_in_place() {
+        let mut app = App::new(3);
+        app.open(ScreenKind::Servers);
+        app.refresh_servers();
+        let id = app.net_requests[0].id;
+        app.ping_finished(
+            id,
+            Ok(PingInfo {
+                motd: "A Minecraft Server".to_string(),
+                version: "26.2".to_string(),
+                ping_ms: 42,
+            }),
+        );
+        let s = &app.servers[1];
+        assert!(s.online);
+        assert_eq!(s.motd, "A Minecraft Server");
+        assert_eq!(s.version, "26.2");
+        assert_eq!(s.ping_ms, 42);
+        // unknown/already-consumed ids are ignored, the log stays intact
+        app.ping_finished(999, Err("nope".into()));
+        assert!(app.servers[1].online);
+        assert_eq!(app.net_requests.len(), 1);
+    }
+
+    #[test]
+    fn unreachable_ping_renders_the_vanilla_offline_row() {
+        let mut app = App::new(3);
+        app.open(ScreenKind::Servers);
+        app.refresh_servers();
+        let id = app.net_requests[0].id;
+        app.servers[1].online = true; // cached list says online until pinged
+        app.ping_finished(id, Err("tcp connect to 127.0.0.1:1".into()));
+        let s = &app.servers[1];
+        assert!(!s.online);
+        assert_eq!(s.ping_ms, 0);
+        assert_eq!(s.ping_icon(), "server_list/unreachable");
+    }
+
+    #[test]
+    fn server_list_refresh_runs_a_real_status_ping() {
+        // in-process vanilla-shaped status server (same dogfooding as the
+        // mc-protocol login tests): handshake + request -> canned JSON
+        let listener = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+        let port = listener.local_addr().unwrap().port();
+        let server = std::thread::spawn(move || {
+            use mc_protocol::framing::PacketConn;
+            use mc_protocol::varint::{write_string, write_varint};
+            let (stream, _) = listener.accept().unwrap();
+            let mut conn = PacketConn::new(stream);
+            let hs = conn.read_packet().unwrap();
+            assert_eq!(hs[0], 0x00, "handshake packet id");
+            let rq = conn.read_packet().unwrap();
+            assert_eq!(rq[0], 0x00, "status request packet id");
+            let mut payload = Vec::new();
+            write_varint(&mut payload, 0x00);
+            write_string(
+                &mut payload,
+                r#"{"version":{"name":"26.2","protocol":776},"players":{"online":3,"max":42},"description":{"text":"mc2rs test server"}}"#,
+            );
+            conn.send_packet(&payload).unwrap();
+        });
+
+        let mut app = App::new(3);
+        app.open(ScreenKind::Servers);
+        // point the hosted row at the mock server
+        app.servers[1].host = Some(format!("127.0.0.1:{port}"));
+        app.refresh_servers();
+        let req = app.net_requests[0].clone();
+        assert_eq!(req.port, port, "explicit port parsed from the address");
+
+        // the exact mapping the window worker performs
+        let res = mc_protocol::ping(&req.host, req.port)
+            .map(|r| PingInfo {
+                motd: r.motd,
+                version: r.version_name,
+                ping_ms: r.latency_ms.min(i32::MAX as u128) as i32,
+            })
+            .map_err(|e| format!("{e:#}"));
+        server.join().unwrap();
+        app.ping_finished(req.id, res);
+
+        let s = &app.servers[1];
+        assert!(s.online, "the mock server answered the status request");
+        assert_eq!(s.motd, "mc2rs test server");
+        assert_eq!(s.version, "26.2");
+        assert!(s.ping_ms >= 0);
+        assert!(s.ping_icon().starts_with("server_list/ping_"));
     }
 
     impl App {
