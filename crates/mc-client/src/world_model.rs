@@ -270,12 +270,13 @@ impl WorldModel {
             return None;
         }
         match layer(&col.light).get(bit as usize)? {
-            LightData::Empty => Some(0),
-            LightData::Data(arr) => {
+            Some(LightData::Empty) => Some(0),
+            Some(LightData::Data(arr)) => {
                 let idx = (ly as usize) * 256 + ((z & 15) as usize) * 16 + (x & 15) as usize;
                 let b = *arr.get(idx >> 1)?;
                 Some(if idx & 1 == 0 { b & 0xF } else { b >> 4 })
             }
+            None => None, // the server said nothing about this layer
         }
     }
 }

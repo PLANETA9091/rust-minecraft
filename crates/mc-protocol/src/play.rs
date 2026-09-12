@@ -1468,10 +1468,20 @@ mod tests {
         );
         assert_eq!(col.light.block.len(), 4);
         assert_eq!(col.light.sky[0], Some(LightData::Data(vec![0xF0u8; 2048])));
-        assert_eq!(col.light.sky[1], Some(LightData::Data(vec![0x5A, 0x34].into_iter().chain(vec![0u8; 2046]).collect())));
+        let own_data = match &col.light.sky[1] {
+            Some(LightData::Data(a)) => a,
+            other => panic!("sky bit 1 should be data, got {other:?}"),
+        };
+        assert_eq!(own_data[0], 0x5A, "idx 0 and 1 both live in byte 0");
+        assert_eq!(own_data[16], 0x0F, "idx 32 (z2) lives in byte 16");
+        assert_eq!(own_data[128], 0x21, "idx 256 (y1) lives in byte 128");
         assert_eq!(col.light.sky[2], Some(LightData::Empty), "the empty mask");
         assert_eq!(col.light.sky[3], Some(LightData::Data(vec![0xFFu8; 2048])));
-        assert_eq!(col.light.block[1], Some(LightData::Data(vec![0x23].into_iter().chain(vec![0u8; 2047]).collect())));
+        let block_data = match &col.light.block[1] {
+            Some(LightData::Data(a)) => a,
+            other => panic!("block bit 1 should be data, got {other:?}"),
+        };
+        assert_eq!(block_data[0], 0x23, "the block layer carries its own array");
         // untouched bits stay the honest None
         assert_eq!(col.light.block[0], None);
         assert_eq!(col.light.block[2], None);

@@ -138,6 +138,23 @@ hand-drawn:
   the crossing's full biome chain (named → honestly None mid-transition
   → the nether's own name at the new pose) is pinned at the view layer
   and on the wire.
+  The **chunk light tail is REAL now** (the fifth javap audit —
+  `ClientboundLightUpdatePacketData` from the official 26.2 jar): after
+  the block entities, the packet carries four BitSets (sky/block lit
+  masks + empty masks) and two `byteArray(2048)` lists (sky then
+  block) — one 2048-byte nibble array per section in the lit mask,
+  count == popcount, and the light sections span ONE EXTRA LAYER below
+  and above the block sections (`getLightSectionCount() =
+  getSectionsCount() + 2`). The parser decodes all of it strictly
+  (a lying array count, a short array, an out-of-range mask bit, a
+  section marked both lit and empty, and trailing bytes after the
+  lists are all hard errors), the columns carry the result, and the
+  world model answers `sky_light()`/`block_light()` at any world
+  position through the engine-layer grid — a known-empty section
+  honestly answers 0, an unmentioned layer the honest None; the even
+  nibble index lives in the low half-byte (javap-pinned DataLayer
+  convention). The renderer wiring (cave darkness under the sky layer)
+  is the next step; no pixel changed here.
   The **wire ids of every phase are generated**:
   `mc2rs-gen dump-packet-ids` binds the official jar's REAL protocols —
   play, login, configuration, status AND handshake — and dumps each
