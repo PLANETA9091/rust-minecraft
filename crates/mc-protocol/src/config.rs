@@ -134,6 +134,14 @@ pub struct DimensionTypeEntry {
 #[derive(Debug, Clone, PartialEq, Default)]
 pub struct RegistryData {
     pub dimension_types: Vec<DimensionTypeEntry>,
+    /// The `minecraft:worldgen/biome` entries in ARRIVAL ORDER — the
+    /// index IS the network id the chunk section biome palettes
+    /// reference (the vanilla synced-registry contract, the same order
+    /// the `dimension_type_id` index already relies on through
+    /// CommonPlayerSpawnInfo). Names only: the tags (temperature,
+    /// effects, carvers...) are walked and skipped — nothing consumes
+    /// them yet.
+    pub biomes: Vec<String>,
 }
 
 impl RegistryData {
@@ -142,10 +150,18 @@ impl RegistryData {
         self.dimension_types.iter().find(|d| d.name == name)
     }
 
+    /// The registry name of one synced biome id (the palette values in
+    /// a chunk section resolve through this) — `None` for an id the
+    /// server never streamed (the honest "unknown biome").
+    pub fn biome_name(&self, id: u32) -> Option<&str> {
+        self.biomes.get(id as usize).map(|s| s.as_str())
+    }
+
     /// Absorb one decoded Registry Data packet (vanilla streams one
     /// registry per packet; entries append in arrival order).
     fn merge(&mut self, other: RegistryData) {
         self.dimension_types.extend(other.dimension_types);
+        self.biomes.extend(other.biomes);
     }
 }
 
@@ -378,13 +394,16 @@ pub fn parse_config_disconnect(payload: &[u8]) -> Result<String> {
 /// Parse Registry Data (clientbound config 0x07 — generated): the
 /// javap-proven 26.2 shape — registry Identifier + VarInt entry count
 /// (vanilla readCount max 256) + per entry { Identifier id, optional
-/// network NBT tag }. Only `minecraft:dimension_type` is decoded (the
-/// entry tag IS the dimension element: min_y/height at the top level,
-/// the name from the entry id); every other registry's entries are
-/// walked and dropped. Strict on the decoded registry: an entry WITH a
-/// tag missing min_y/height is a protocol drift worth erroring on, the
-/// same way vanilla's own registry loader refuses malformed data; an
-/// entry with NO tag carries nothing decodable and is skipped.
+/// network NBT tag }. `minecraft:dimension_type` is decoded (the entry
+/// tag IS the dimension element: min_y/height at the top level, the
+/// name from the entry id) and `minecraft:worldgen/biome` is RETAINED
+/// as the id -> name table the chunk biome palettes resolve through
+/// (the entry tags are walked and skipped); every other registry's
+/// entries are walked and dropped. Strict on the decoded registry: an
+/// entry WITH a tag missing min_y/height is a protocol drift worth
+/// erroring on, the same way vanilla's own registry loader refuses
+/// malformed data; an entry with NO tag carries nothing decodable and
+/// is skipped.
 pub fn parse_registry_data(payload: &[u8]) -> Result<RegistryData> {
     let mut c: &[u8] = payload;
     let id = read_varint(&mut c)?;
@@ -407,6 +426,17 @@ pub fn parse_registry_data(payload: &[u8]) -> Result<RegistryData> {
         );
         let present = c[0] != 0;
         c = &c[1..];
+        if registry_name == "minecraft:worldgen/biome" {
+            // EVERY biome entry occupies one id slot — record the name
+            // in arrival order whether or not a tag rode along (a tag
+            // is walked and skipped: nothing consumes it yet)
+            out.biomes.push(entry_id);
+            if present {
+                crate::play::skip_network_nbt(&mut c)
+                    .with_context(|| format!("skip {registry_name} entry nbt"))?;
+            }
+            continue;
+        }
         if !present {
             // an entry without data: nothing to decode, honestly skipped
             continue;
@@ -604,6 +634,30 @@ pub mod test_support {
     use super::clientbound;
     use crate::nbt::Nbt;
     use crate::varint::{write_string, write_varint};
+
+    /// A REAL `minecraft:worldgen/biome` registry data packet: ONE entry
+    /// (the named biome, id 0 in the chunk biome palettes), with the
+    /// realistic tag shape (temperature + effects compound) the client
+    /// walks and skips. Mock servers that exercise biome music stream
+    /// this alongside [`registry_packet`] — one truth for the mock
+    /// registries, not hand-duplicated bytes in every mock.
+    pub fn biome_registry_packet(biome: &str) -> Vec<u8> {
+        let mut p = Vec::new();
+        write_varint(&mut p, clientbound::REGISTRY_DATA);
+        write_string(&mut p, "minecraft:worldgen/biome");
+        write_varint(&mut p, 1); // one entry
+        write_string(&mut p, biome);
+        p.push(1); // tag present
+        let tag = Nbt::Compound(vec![
+            ("temperature".into(), Nbt::Float(0.8)),
+            (
+                "effects".into(),
+                Nbt::Compound(vec![("fog_color".into(), Nbt::Int(0xC0D8FF))]),
+            ),
+        ]);
+        crate::nbt::write_network_nbt(&tag, &mut p).expect("biome element writes");
+        p
+    }
 
     /// A REAL registry data packet: the javap-proven 26.2 shape —
     /// registry Identifier + VarInt entry count + per entry { Identifier
@@ -822,7 +876,7 @@ mod tests {
 
 
     #[test]
-    fn registry_data_decodes_the_dimension_layout_and_skips_other_registries() {
+    fn registry_data_decodes_dimensions_keeps_biomes_and_skips_other_registries() {
         // the decoded registry: both dimensions land with their layouts
         let data = parse_registry_data(&registry_packet(true)).expect("dimension_type parses");
         assert_eq!(data.dimension_types.len(), 2);
@@ -831,9 +885,14 @@ mod tests {
         let nether = data.dimension("minecraft:the_nether").expect("nether");
         assert_eq!((nether.min_y, nether.height), (0, 256));
         assert!(data.dimension("minecraft:the_end").is_none());
-        // any other registry: walked, dropped, no entries
-        let empty = parse_registry_data(&registry_packet(false)).expect("biome parses");
-        assert_eq!(empty, RegistryData::default());
+        // the biome registry: names RETAINED in arrival order (the id ->
+        // name table the chunk biome palettes resolve through), the tag
+        // walked and skipped without a trailing-bytes error
+        let biomes = parse_registry_data(&registry_packet(false)).expect("biome parses");
+        assert_eq!(biomes.biomes, vec!["minecraft:plains".to_string()]);
+        assert_eq!(biomes.biome_name(0), Some("minecraft:plains"));
+        assert_eq!(biomes.biome_name(1), None, "an id the server never streamed");
+        assert!(biomes.dimension_types.is_empty(), "no dimension knowledge rides along");
         // wrong packet id is rejected, not guessed
         let mut wrong = Vec::new();
         write_varint(&mut wrong, 0x99);
@@ -876,6 +935,57 @@ mod tests {
     }
 
     #[test]
+    fn biome_registries_retain_the_id_to_name_table_in_arrival_order() {
+        // three entries: the FIRST with no tag (the id slot exists anyway
+        // — arrival order is the network id, tag presence is irrelevant
+        // to the numbering), the second tagged, the third again bare —
+        // all three resolve through their arrival-order ids
+        let mut p = Vec::new();
+        write_varint(&mut p, clientbound::REGISTRY_DATA);
+        write_string(&mut p, "minecraft:worldgen/biome");
+        write_varint(&mut p, 3);
+        write_string(&mut p, "minecraft:the_void");
+        p.push(0); // NO tag — the id slot is still real
+        write_string(&mut p, "minecraft:swamp");
+        p.push(1);
+        let tag = Nbt::Compound(vec![("temperature".into(), Nbt::Float(0.8))]);
+        crate::nbt::write_network_nbt(&tag, &mut p).unwrap();
+        write_string(&mut p, "minecraft:plains");
+        p.push(0);
+        let data = parse_registry_data(&p).expect("three biomes parse");
+        assert_eq!(
+            data.biomes,
+            vec![
+                "minecraft:the_void".to_string(),
+                "minecraft:swamp".to_string(),
+                "minecraft:plains".to_string(),
+            ]
+        );
+        assert_eq!(data.biome_name(0), Some("minecraft:the_void"));
+        assert_eq!(data.biome_name(1), Some("minecraft:swamp"));
+        assert_eq!(data.biome_name(2), Some("minecraft:plains"));
+        assert_eq!(data.biome_name(3), None, "past the streamed ids: unknown");
+        // a biome entry with a MALFORMED tag is a hard error, not a
+        // silent swallow — the walk must stay strict
+        let mut broken = Vec::new();
+        write_varint(&mut broken, clientbound::REGISTRY_DATA);
+        write_string(&mut broken, "minecraft:worldgen/biome");
+        write_varint(&mut broken, 1);
+        write_string(&mut broken, "minecraft:swamp");
+        broken.push(1);
+        broken.extend_from_slice(&[0xFF, 0xFF]); // garbage tag bytes
+        assert!(parse_registry_data(&broken).is_err(), "broken tag -> error");
+        // a LYING count (two entries, one sent) errors the same way
+        let mut short = Vec::new();
+        write_varint(&mut short, clientbound::REGISTRY_DATA);
+        write_string(&mut short, "minecraft:worldgen/biome");
+        write_varint(&mut short, 2);
+        write_string(&mut short, "minecraft:plains");
+        short.push(0);
+        assert!(parse_registry_data(&short).is_err(), "count lies -> error");
+    }
+
+    #[test]
     fn configuration_reaches_the_play_state() {
         let (port, srv) = spawn_join_mock();
         let stream = TcpStream::connect(("127.0.0.1", port)).expect("connect");
@@ -896,6 +1006,10 @@ mod tests {
                 assert_eq!((ow.min_y, ow.height), (-64, 384));
                 let nether = registry.dimension("minecraft:the_nether").expect("nether");
                 assert_eq!((nether.min_y, nether.height), (0, 256));
+                // the biome registry rode the same phase: the id -> name
+                // table survives into the play state (the merge path)
+                assert_eq!(registry.biomes, vec!["minecraft:plains".to_string()]);
+                assert_eq!(registry.biome_name(0), Some("minecraft:plains"));
             }
             other => panic!("expected Joined, got {other:?}"),
         }

@@ -176,6 +176,37 @@ impl WorldModel {
         let idx = (ly as usize) * 256 + ((z & 15) as usize) * 16 + (x & 15) as usize;
         sec.blocks.get(idx).copied()
     }
+
+    /// Resolved biome id at (x, y, z) — the same coordinate conventions
+    /// as [`WorldModel::block`], on the biome grid: each section carries
+    /// a 4×4×4 cell array (64 entries, index = y*16 + z*4 + x on the
+    /// QUARTER cells — the decoder's own convention), so a query rounds
+    /// the block position down to its 4-block cell. `None` outside the
+    /// loaded columns or the column's vertical extent.
+    pub fn biome(&self, x: i32, y: i32, z: i32) -> Option<u32> {
+        let col = self.columns.get(&(x >> 4, z >> 4))?;
+        let y = match self.min_y {
+            Some(min_y) => y - min_y,
+            None => y,
+        };
+        let (sy, ly) = (y >> 4, y & 15);
+        if sy < 0 {
+            return None;
+        }
+        let sec = col.sections.get(sy as usize)?;
+        let idx = (ly as usize >> 2) * 16 + (((z & 15) as usize) >> 2) * 4 + (((x & 15) as usize) >> 2);
+        sec.biomes.get(idx).copied()
+    }
+
+    /// The biome's registry NAME at (x, y, z) — the chunk palette's
+    /// resolved id walked through the configuration-phase biome table
+    /// (the arrival-order ids the server synced). `None` when the
+    /// position is outside the loaded world OR the id is one the server
+    /// never named — the honest "unknown biome", never a guess.
+    pub fn biome_name(&self, x: i32, y: i32, z: i32) -> Option<&str> {
+        let id = self.biome(x, y, z)?;
+        self.registry.biome_name(id)
+    }
 }
 
 #[cfg(test)]
@@ -320,6 +351,90 @@ mod tests {
         assert_eq!(m.block(-13, -63, -14), Some(10), "local (3,1,2) of chunk (-1,-1)");
     }
 
+    /// One all-air section whose biomes ride a 2-bit indirect palette
+    /// (the vanilla 4×4×4 cell array — 64 entries of PALETTE INDICES
+    /// into the given global-bio-me-id palette).
+    fn biome_cells_section(palette: &[u32], cells: &[u32; 64]) -> Vec<u8> {
+        let mut s = Vec::new();
+        s.extend_from_slice(&0i16.to_be_bytes()); // block count 0
+        s.push(0); // blocks: single valued
+        write_varint(&mut s, 0); // air
+        s.push(2); // biomes: bits 2 -> indirect
+        write_varint(&mut s, palette.len() as i32);
+        for id in palette {
+            write_varint(&mut s, *id as i32);
+        }
+        s.extend_from_slice(&mc_protocol::pack_entries(cells, 2));
+        s
+    }
+
+    #[test]
+    fn biome_queries_walk_the_4x4x4_cell_grid() {
+        let mut m = WorldModel::new();
+        m.registry = RegistryData {
+            dimension_types: vec![DimensionTypeEntry {
+                name: "minecraft:overworld".into(),
+                min_y: -64,
+                height: 384,
+            }],
+            // the synced biome table: ids 0/1/2, arrival order
+            biomes: vec![
+                "minecraft:plains".to_string(),
+                "minecraft:swamp".to_string(),
+                "minecraft:desert".to_string(),
+            ],
+        };
+        // cell index = (y>>2)*16 + (z>>2)*4 + (x>>2); four cells carry
+        // distinct biomes, everything else stays plains (0)
+        let mut cells = [0u32; 64];
+        cells[1] = 2; // x-cell stride: local x 4..7
+        cells[4] = 1; // z-cell stride: local z 4..7
+        cells[16] = 1; // y-cell stride: local y 4..7 (the SECOND 4-block row)
+        cells[63] = 2; // the far corner
+        let col = ChunkColumn {
+            x: 0,
+            z: 0,
+            sections: vec![parse_section_buffer(&biome_cells_section(&[0, 1, 2], &cells))],
+        };
+        m.apply(PlayEvent::Chunk(col));
+        // cell 0 covers block positions 0..4 in each axis — every query
+        // inside it rounds to the SAME entry (min_y -64: world -64..-49
+        // is section 0)
+        assert_eq!(m.biome(0, -64, 0), Some(0));
+        assert_eq!(m.biome_name(0, -64, 0), Some("minecraft:plains"));
+        assert_eq!(m.biome(3, -61, 3), Some(0), "the whole 4-block cell");
+        // the x stride: local x 4 lands in the NEXT cell
+        assert_eq!(m.biome(4, -64, 0), Some(2));
+        assert_eq!(m.biome_name(4, -64, 0), Some("minecraft:desert"));
+        // the z stride and the y stride
+        assert_eq!(m.biome(0, -64, 4), Some(1));
+        assert_eq!(m.biome(0, -60, 0), Some(1));
+        assert_eq!(m.biome_name(0, -60, 0), Some("minecraft:swamp"));
+        // the far corner of the section
+        assert_eq!(m.biome(15, -49, 15), Some(2));
+        // negative chunks: chunk (-1,-1) local (15,y,15) is world (-1,y,-1)
+        m.apply(PlayEvent::Chunk(ChunkColumn {
+            x: -1,
+            z: -1,
+            sections: vec![parse_section_buffer(&biome_cells_section(&[0, 1, 2], &cells))],
+        }));
+        assert_eq!(m.biome(-1, -64, -1), Some(0), "local (15,0,15) -> cell (3,0,3), still plains");
+        assert_eq!(m.biome_name(-16, -64, -16), Some("minecraft:plains"), "local (0,0,0)");
+        // out of bounds mirrors block(): absent columns and sections
+        assert_eq!(m.biome(64, -64, 0), None, "unloaded column");
+        assert_eq!(m.biome(0, -48, 0), None, "above the one-section column");
+        assert_eq!(m.biome(0, -65, 0), None, "below the column");
+        // an id the server never named resolves to NO name (honest
+        // unknown): the mock air sections carry single-valued 187
+        m.apply(PlayEvent::Chunk(ChunkColumn {
+            x: 7,
+            z: 7,
+            sections: vec![parse_section_buffer(&air_section())],
+        }));
+        assert_eq!(m.biome(112, -64, 112), Some(187), "the id is real");
+        assert_eq!(m.biome_name(112, -64, 112), None, "the name is unknown");
+    }
+
     #[test]
     fn snapshot_adoption_fills_the_model() {
         let mut m = WorldModel::new();
@@ -359,6 +474,7 @@ mod tests {
                     min_y: -64,
                     height: 384,
                 }],
+                biomes: Vec::new(),
             },
         });
         assert_eq!(m.loaded_chunks(), 1);
@@ -421,6 +537,7 @@ mod tests {
                         height: *height,
                     })
                     .collect(),
+                biomes: Vec::new(),
             },
         };
         m.adopt_snapshot(snap(&[
@@ -444,6 +561,7 @@ mod tests {
                 DimensionTypeEntry { name: "minecraft:overworld".into(), min_y: -64, height: 384 },
                 DimensionTypeEntry { name: "minecraft:the_nether".into(), min_y: 0, height: 256 },
             ],
+            biomes: Vec::new(),
         };
         assert_eq!(m.min_y, None, "no knowledge before the server speaks");
         // the login carries the current dimension (CommonPlayerSpawnInfo)

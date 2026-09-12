@@ -6,9 +6,9 @@
 //! is the frame-loop entry the join worker calls: the world-load
 //! milestone's snapshot adopts into a fresh model and the player-centered
 //! window lands on the world screen — the first world VIEW from network
-//! chunks. The stream itself stays one-shot for now (the join pump returns
-//! at the
-//! milestone); a live, continuously-updated view is future work.
+//! chunks. The stream is LIVE: `LiveView` keeps feeding the SAME model
+//! for the session's whole life (re-sent chunks, teleports, probes) and
+//! every refresh re-anchors the window on the latest pose.
 //!
 //! Documented decisions (all deliberate, no silent guesses):
 //! - The global-state-id -> runtime-palette mapping is a REQUIRED caller
@@ -142,12 +142,19 @@ pub fn snapshot_y_base(player: &PlayerPosition, min_y: Option<i32>) -> i32 {
 /// The materialized join view: the renderer grid AND the camera pose
 /// computed from the SAME window decisions (origin, y_base, layout
 /// knowledge) — the world screen renders the grid from the pose and the
-/// two can never disagree about where the player stands.
+/// two can never disagree about where the player stands. The view also
+/// carries the biome AT THE PLAYER's feet (the synced registry name) —
+/// the situation key the biome music resolves through.
 pub struct SnapshotView {
     pub world: World,
     /// The teleport's exact pose in the grid frame, or `None` without
     /// dimension layout knowledge (see [`snapshot_camera`]).
     pub camera: Option<Camera>,
+    /// The biome at the player's feet (full registry id, e.g.
+    /// "minecraft:plains"), or `None` without a pose / outside the
+    /// loaded columns / for an id the server never named — the honest
+    /// unknown, never a guess.
+    pub biome: Option<String>,
 }
 
 /// The grid-local first-person camera for the materialized window: the
@@ -176,9 +183,20 @@ pub fn snapshot_camera(player: &PlayerPosition, min_y: Option<i32>, side: usize)
     })
 }
 
+/// The biome AT THE PLAYER's feet: the model's biome walk (the 4×4×4
+/// cell grid, world-y through the dimension layout) resolved through the
+/// synced registry names. `None` without a pose, outside the loaded
+/// columns, or for an id the server never streamed — the honest unknown.
+fn player_biome(model: &WorldModel) -> Option<String> {
+    let p = model.player.as_ref()?;
+    model
+        .biome_name(p.x.floor() as i32, p.y.floor() as i32, p.z.floor() as i32)
+        .map(|s| s.to_string())
+}
+
 /// The full join view: the materialized grid PLUS the camera pose from
 /// the same window decisions. The join worker calls this off the frame
-/// thread and ships both parts in the join result — the world screen
+/// thread and ships all three parts in the join result — the world screen
 /// renders the grid FROM the pose and the two can never disagree about
 /// where the player stands.
 pub fn materialize_snapshot_view(
@@ -192,9 +210,11 @@ pub fn materialize_snapshot_view(
     let player = model.player.as_ref().expect("adopt_snapshot pins the player");
     let y_base = snapshot_y_base(player, model.min_y);
     let camera = snapshot_camera(player, model.min_y, side);
+    let biome = player_biome(&model);
     SnapshotView {
         world: materialize(&model, origin, side, y_base, mapper),
         camera,
+        biome,
     }
 }
 
@@ -249,14 +269,17 @@ impl LiveView {
                     mapper,
                 ),
                 camera: None,
+                biome: None,
             };
         };
         let origin = snapshot_window_origin(player, self.side);
         let y_base = snapshot_y_base(player, self.model.min_y);
         let camera = snapshot_camera(player, self.model.min_y, self.side);
+        let biome = player_biome(&self.model);
         SnapshotView {
             world: materialize(&self.model, origin, self.side, y_base, mapper),
             camera,
+            biome,
         }
     }
 }
