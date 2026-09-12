@@ -116,7 +116,7 @@ pub fn placeholder_mapper(_id: u32) -> u16 {
     AIR
 }
 
-#[cfg(test]
+#[cfg(test)]
 mod tests {
     use super::*;
     use crate::world::{DIRT, STONE};

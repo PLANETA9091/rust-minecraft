@@ -21,6 +21,9 @@ pub const NAME_OF: [&str; 8] = [
     "air", "stone", "dirt", "grass_block", "oak_log", "oak_leaves", "water", "sand",
 ];
 
+/// A plain data grid — derives follow the data (the join result carries a
+/// World through the `Debug/Clone/PartialEq/Eq` LoginResult surface).
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct World {
     pub chunks_per_side: usize,
     pub seed: u64,

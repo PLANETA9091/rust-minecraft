@@ -20,8 +20,11 @@
 //!   COLUMN-LOCAL y (0 = bottom of the lowest section) — the honest
 //!   convention, no guessed world offset. Once `min_y` is known,
 //!   world-Y queries subtract it before the section math.
-//! - This module is wired into the frame loop when the mesher input lands
-//!   (the next step); until then it is exercised by its own tests only.
+//! - The join path is WIRED into the frame loop: the world-load
+//!   milestone's snapshot adopts here and the player-centered window
+//!   materializes into the renderer grid (see `world_view`). A live,
+//!   continuously-updated model (streaming chunks into the SAME model the
+//!   screen renders) is the future work.
 
 use std::collections::HashMap;
 

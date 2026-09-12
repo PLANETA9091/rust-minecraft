@@ -176,8 +176,8 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize) -> anyhow::Result<()>
                 // (screens::PLAYER_NAME). The full join arc: login -> Login
                 // Acknowledged -> configuration phase -> the play state,
                 // pumped to the world-load milestone (world info + first
-                // teleport + a decoded chunk) — the outcome screen's facts
-                // are the network's truth.
+                // teleport + a decoded chunk) — a success puts the client
+                // IN the world, exactly like the original.
                 let res = mc_protocol::connect_and_join_world(
                     &host,
                     port,
@@ -186,11 +186,27 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize) -> anyhow::Result<()>
                 )
                 .map(|out| match out {
                     mc_protocol::WorldOutcome::Loaded(snap) => {
+                        // the network world view: facts off the snapshot,
+                        // then the player-centered window materialized for
+                        // the world screen — here on the worker thread
+                        // (meshing is the heavy part, the frame thread
+                        // only installs the result). The id policy is the
+                        // honest placeholder: no bytecode-true global-
+                        // state table exists yet, so every unresolved id
+                        // renders as air.
+                        let (entity_id, view_distance, chunks) =
+                            (snap.info.entity_id, snap.info.view_distance, snap.chunks.len());
+                        let world = crate::world_view::materialize_snapshot(
+                            snap,
+                            crate::screens::WORLD_CHUNKS,
+                            crate::world_view::placeholder_mapper,
+                        );
                         crate::screens::LoginResult::Loaded {
                             username: crate::screens::PLAYER_NAME.to_string(),
-                            entity_id: snap.info.entity_id,
-                            view_distance: snap.info.view_distance,
-                            chunks: snap.chunks.len(),
+                            entity_id,
+                            view_distance,
+                            chunks,
+                            world,
                         }
                     }
                     mc_protocol::WorldOutcome::Disconnected { reason } => {

@@ -51,15 +51,19 @@ hand-drawn:
   Information + brand, keep-alive/ping probes, Finish Configuration, then
   the **play state**: world info, chunk streaming answered, real chunk
   data decoded) fires on a worker thread against the selected row and is
-  pumped to the world-load milestone; the outcome lands on the vanilla
-  *Connection Lost* screen with the server's own reason (or the factual
-  connected line carrying the network's real world facts — entity id,
-  view distance, decoded chunk count). Decoded columns land in a compact
+  pumped to the world-load milestone; a disconnect lands on the vanilla
+  *Connection Lost* screen with the server's own reason, while a success
+  does what the original does — **puts you in the world**: the join
+  worker materializes the snapshot's player-centered window into the
+  renderer grid and the world screen (official sky, celestials, fog,
+  clouds, HUD, pause) renders the network terrain with the exact same
+  raster path as the pixel tests. Decoded columns land in a compact
   client-side **world model** (chunk-keyed storage, vanilla block-index
   queries, replace/unload semantics) with a **materializer** that projects
   any window of it into the renderer's voxel grid (injectable id mapping —
-  numeric global ids stay bytecode-true generator work) — the substrate
-  the in-world view of a network server builds on. The configuration
+  until the bytecode-true global-state table is generated the honest
+  placeholder policy renders unresolved ids as air); the substrate of the
+  in-world view of a network server. The configuration
   phase's **Registry Data is decoded**: the project's first retained NBT
   reader/writer pulls the `minecraft:dimension_type` registry (every
   dimension's min_y/height vertical layout) out of the streamed packets

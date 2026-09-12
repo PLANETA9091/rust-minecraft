@@ -560,14 +560,15 @@ impl App {
                 self.disconnect_title =
                     tr("disconnect.lost").unwrap_or("Connection lost").to_string();
                 self.disconnect_reason = reason;
+                self.open(ScreenKind::Disconnect);
             }
             Err(e) => {
                 self.disconnect_title =
                     tr("disconnect.lost").unwrap_or("Connection lost").to_string();
                 self.disconnect_reason = e;
+                self.open(ScreenKind::Disconnect);
             }
         }
-        self.open(ScreenKind::Disconnect);
     }
 
     fn buttons_row_cx(&self) -> i32 {
@@ -1478,7 +1479,7 @@ mod tests {
     }
 
     #[test]
-    fn login_outcomes_land_on_the_vanilla_disconnect_screen() {
+    fn login_outcomes_route_like_vanilla() {
         let mut app = App::new(3);
         app.open(ScreenKind::Servers);
         app.selected_server = 1;
@@ -1499,8 +1500,9 @@ mod tests {
         app.login_finished(id2, Err("tcp connect to 127.0.0.1:1".into()));
         assert_eq!(app.screen, ScreenKind::Disconnect);
         assert_eq!(app.disconnect_reason, "tcp connect to 127.0.0.1:1");
-        // Loaded means the client genuinely holds a network world: the
-        // outcome screen's connected line carries the REAL snapshot facts
+        // Loaded means the client genuinely holds a network world: just
+        // like the original, the completed join puts you IN it — the
+        // world screen renders the materialized snapshot window
         app.join_selected_server();
         let id3 = app.login_requests[2].id;
         app.login_finished(
@@ -1510,20 +1512,22 @@ mod tests {
                 entity_id: 17,
                 view_distance: 8,
                 chunks: 1,
+                world: crate::world::World {
+                    chunks_per_side: 2,
+                    seed: 0,
+                    chunks: vec![
+                        vec![crate::world::AIR; crate::world::CHUNK_X * crate::world::CHUNK_Y * crate::world::CHUNK_Z];
+                        4
+                    ],
+                },
             }),
         );
-        assert_eq!(app.screen, ScreenKind::Disconnect);
-        assert_eq!(app.disconnect_title, "Connected");
-        assert_eq!(
-            app.disconnect_reason,
-            "Logged in as mc2rs\n1 chunk, view distance 8, entity id 17"
-        );
+        assert_eq!(app.screen, ScreenKind::World, "the join lands in the network world");
+        assert!(app.world_is_network);
+        assert_eq!(app.world_size, 32);
         // unknown/already-consumed ids are ignored, the log stays append-only
         app.login_finished(999, Err("nope".into()));
-        assert_eq!(
-            app.disconnect_reason,
-            "Logged in as mc2rs\n1 chunk, view distance 8, entity id 17"
-        );
+        assert_eq!(app.screen, ScreenKind::World, "an unknown id changes nothing");
         assert_eq!(app.login_requests.len(), 3);
     }
 
