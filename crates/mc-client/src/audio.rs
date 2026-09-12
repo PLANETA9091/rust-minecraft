@@ -54,7 +54,7 @@ fn open_decoder(
             &MetadataOptions::default(),
         )
         .context("audio format probe")?;
-    let mut format = probed.format;
+    let format = probed.format;
     let track = format
         .tracks()
         .iter()
@@ -151,8 +151,9 @@ pub fn probe_frames(bytes: &[u8]) -> Result<(u32, u64)> {
 
 /// Output backends. `play` takes ownership of the decoded track and replaces
 /// whatever was playing (the vanilla menu music is a sequence of full files;
-/// the scheduler decides the timing).
-pub trait AudioOutput: Send {
+/// the scheduler decides the timing). NOT Send: the CPAL device stream must
+/// stay on the thread that opened it — the GUI loop is single-threaded.
+pub trait AudioOutput {
     fn play(&mut self, track: Track);
     fn stop(&mut self);
     fn playing(&self) -> bool;
@@ -201,7 +202,6 @@ impl RodioOutput {
 #[cfg(feature = "audio")]
 impl AudioOutput for RodioOutput {
     fn play(&mut self, track: Track) {
-        use rodio::Source;
         self.sink.clear();
         let src =
             rodio::buffer::SamplesBuffer::new(track.channels as u16, track.sample_rate, track.samples);
