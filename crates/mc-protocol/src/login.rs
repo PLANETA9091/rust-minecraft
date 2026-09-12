@@ -230,6 +230,18 @@ pub fn login<S: Read + Write>(
 ) -> Result<LoginOutcome> {
     let mut conn = PacketConn::new(stream);
     conn.send_packet(&encode_handshake(protocol_version, host, port, NEXT_STATE_LOGIN))?;
+    login_conn(&mut conn, username, uuid)
+}
+
+/// Run the login exchange on an ALREADY-handshaked connection (the caller
+/// keeps ownership of the `PacketConn`, so the configuration driver can
+/// continue on the same wire after Login Success — the vanilla client
+/// never reopens the socket between login and configuration).
+pub fn login_conn<S: Read + Write>(
+    conn: &mut PacketConn<S>,
+    username: &str,
+    uuid: &[u8; 16],
+) -> Result<LoginOutcome> {
     conn.send_packet(&encode_login_start(username, *uuid))?;
 
     loop {
