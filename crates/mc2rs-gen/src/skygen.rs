@@ -437,6 +437,24 @@ pub fn emit(data: &SkyData) -> Result<String> {
     }
     out.push_str("];\n");
 
+    // Cloud cell bitmap (environment/clouds.png, official alpha>=10 rule):
+    // 1 = solid 12x12-block cell, indexed x + z * CLOUDS_SIZE.
+    out.push_str(&format!(
+        "\n/// environment/clouds.png cell map ({}x{}): 1 = solid cloud cell,\n\
+         /// indexed x + z * {} (the game's TextureData.cells layout,\n\
+         /// isCellEmpty: alpha < 10 = empty).\n\
+         pub const CLOUDS_SIZE: u32 = {};\n\
+         pub static CLOUDS: [u8; {}] = [",
+        data.clouds_size, data.clouds_size, data.clouds_size, data.clouds_size, data.clouds.len(),
+    ));
+    for (i, b) in data.clouds.iter().enumerate() {
+        if i % 32 == 0 {
+            out.push('\n');
+        }
+        out.push_str(&format!("{b}, "));
+    }
+    out.push_str("\n];\n");
+
     Ok(out)
 }
 
@@ -471,5 +489,26 @@ mod tests {
         let tracks = json!({"minecraft:visual/sky_color": {"keyframes": []}});
         assert!(track(&tracks, "day.json", "visual/sun_angle").is_err());
         assert!(track(&tracks, "day.json", "visual/sky_color").is_ok());
+    }
+
+    #[test]
+    fn cloud_color_track_official_values() {
+        // The exact official visual/cloud_color track (transcribed from
+        // data/minecraft/timeline/day.json of the 26.2 jar): modifier
+        // "multiply", white day keyframes, #FF191926 night hold.
+        let t = json!({
+            "modifier": "multiply",
+            "keyframes": [
+                {"ticks": 133, "value": -1},
+                {"ticks": 11867, "value": -1},
+                {"ticks": 13670, "value": -15132378},
+                {"ticks": 22330, "value": -15132378}
+            ]
+        });
+        let tr = parse_color_track(&t).unwrap();
+        // -1 == 0xFFFFFFFF -> RGBA white; -15132378 -> RGBA #191926FF.
+        assert_eq!(tr.keyframes[0], (133, [255, 255, 255, 255]));
+        assert_eq!(tr.keyframes[2], (13670, [0x19, 0x19, 0x26, 0xFF]));
+        assert_eq!(t["modifier"].as_str(), Some("multiply"));
     }
 }

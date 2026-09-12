@@ -22,7 +22,7 @@ use mc_registry::generated::sky as S;
 
 use crate::camera::Camera;
 use crate::math::{Mat4, Vec3};
-use crate::raster::{FlatQuad, RenderCtx};
+use crate::raster::{CloudQuad, FlatQuad, RenderCtx};
 
 /// One evaluated frame of the official day-night cycle.
 #[derive(Debug, Clone)]
@@ -41,6 +41,10 @@ pub struct SkyState {
     pub sunrise_color: [f32; 4],
     /// MoonPhase ordinal (full moon = 0, matching the official enum order).
     pub moon_phase: u8,
+    /// Final cloud color (RGBA floats): the official
+    /// ARGB.multiply(CLOUD_BASE_COLOR, visual/cloud_color track) — the value
+    /// uploaded as the CloudColor uniform by the game's render().
+    pub cloud_color: [f32; 4],
 }
 
 const DEG_TO_RAD: f32 = 0.017_453_292; // the exact f32 the game uses
@@ -229,6 +233,10 @@ pub fn sample(day_time: i64) -> SkyState {
             moon_phase = *idx;
         }
     }
+    // Cloud color: the dimension base multiplied by the official
+    // visual/cloud_color track (modifier "multiply" == ARGB.multiply).
+    let cloud_track = sample_color_rgba(&S::CLOUD_COLOR_KF, day_time, S::DAY_PERIOD_TICKS);
+    let cloud_rgba = argb_multiply_rgba(S::CLOUD_BASE_COLOR, &cloud_track);
     SkyState {
         sun_angle: sun_deg * DEG_TO_RAD,
         moon_angle: moon_deg * DEG_TO_RAD,
@@ -238,6 +246,7 @@ pub fn sample(day_time: i64) -> SkyState {
         fog_color,
         sunrise_color,
         moon_phase,
+        cloud_color: cloud_rgba,
     }
 }
 
@@ -454,6 +463,186 @@ pub fn render_celestials(fb: &mut crate::raster::Framebuf, ctx: &RenderCtx, cam:
         });
     }
     fb.draw_flat(ctx, &quads);
+}
+
+// ---------------------------------------------------------------------------
+// Clouds — the official CloudRenderer, verified against javap of the 26.2 jar
+// (CloudRenderer.class + TextureData + rendertype_clouds.vsh/.fsh).
+// ---------------------------------------------------------------------------
+
+/// CELL_SIZE_IN_BLOCKS (CloudRenderer ConstantValue): one texture texel =
+/// one 12x12-block cloud cell.
+const CLOUD_CELL: f64 = 12.0;
+/// Fancy cloud box height: the CloudInfo UBO carries CellSize (12, 4, 12).
+const CLOUD_CELL_H: f64 = 4.0;
+/// BLOCKS_PER_SECOND 0.6 / 20 ticks = the literal f32 0.030000001 the
+/// bytecode multiplies the drift offset by (blocks per tick, toward -X).
+const CLOUD_DRIFT_PER_TICK: f32 = 0.030_000_001;
+/// The constant Z alignment offset added to the camera Z in render()
+/// (double 3.9600000381469727 == 3.96f32 widened).
+const CLOUD_Z_OFFSET: f64 = 3.960_000_038_146_972_7;
+/// TICKS_PER_CELL (ConstantValue 400): 400 ticks * 0.03 blocks = one cell.
+const CLOUD_TICKS_PER_CELL: i64 = 400;
+/// Options.cloudRange default (IntRange(2, 128) constructed with 128).
+const CLOUD_RANGE_CHUNKS: i64 = 128;
+/// Official face shading (rendertype_clouds.vsh faceColors[]):
+/// bottom 0.7, top 1.0, north/south 0.8, west/east 0.9.
+const FACE_BOTTOM: f32 = 0.7;
+const FACE_NORTH_SOUTH: f32 = 0.8;
+const FACE_WEST_EAST: f32 = 0.9;
+
+/// net.minecraft.util.ARGB.multiply(base, track): -1 shortcuts, then
+/// per-channel (c1 * c2) / 255 integer division. Inputs/outputs RGBA here;
+/// the math packs both colors as 0xAARRGGBB exactly like the game.
+fn argb_multiply_rgba(base: [u8; 4], track: &[f32; 4]) -> [f32; 4] {
+    // RGBA -> ARGB u32 (track arrives as floats 0..1).
+    let pack = |c: [u8; 4]| -> u32 {
+        ((c[3] as u32) << 24) | ((c[0] as u32) << 16) | ((c[1] as u32) << 8) | c[2] as u32
+    };
+    let to_bytes = |v: u32| -> [u8; 4] {
+        [((v >> 16) & 0xFF) as u8, ((v >> 8) & 0xFF) as u8, (v & 0xFF) as u8, ((v >> 24) & 0xFF) as u8]
+    };
+    let round_track = |f: f32| -> u8 { (f * 255.0 + 0.5) as u8 };
+    let t = [
+        round_track(track[0]),
+        round_track(track[1]),
+        round_track(track[2]),
+        round_track(track[3]),
+    ];
+    let (b, t) = (pack(base), pack(t));
+    let mul = |x: u32, y: u32| -> u32 { (x * y) / 255 };
+    let out = if b == 0xFFFF_FFFF {
+        t
+    } else if t == 0xFFFF_FFFF {
+        b
+    } else {
+        (mul(b >> 24 & 0xFF, t >> 24 & 0xFF) << 24)
+            | (mul(b >> 16 & 0xFF, t >> 16 & 0xFF) << 16)
+            | (mul(b >> 8 & 0xFF, t >> 8 & 0xFF) << 8)
+            | mul(b & 0xFF, t & 0xFF)
+    };
+    let c = to_bytes(out);
+    [c[0] as f32 / 255.0, c[1] as f32 / 255.0, c[2] as f32 / 255.0, c[3] as f32 / 255.0]
+}
+
+/// The official cloud drift: `render()` computes
+/// `f = gameTime % (width * 400) + partialTicks`, then
+/// `x = camX + f * 0.030000001` — a westward slide of 0.03 blocks/tick that
+/// wraps exactly at the texture period (256 cells * 400 ticks).
+pub fn cloud_drift(game_time: i64, partial_ticks: f32) -> f64 {
+    let width = S::CLOUDS_SIZE as i64;
+    let f = (game_time.rem_euclid(width * CLOUD_TICKS_PER_CELL)) as f32 + partial_ticks;
+    (f * CLOUD_DRIFT_PER_TICK) as f64
+}
+
+/// Is there a cloud cell covering world position (wx, wz) at the given
+/// drift? The pattern is the 256x256 cell map tiled over the world, sampled
+/// at `floor((w + offset) / 12) mod 256` (camera cancels out of the game's
+/// mesh anchoring — derived from the CloudInfo UBO offsets).
+pub fn is_cloud_cell(wx: f64, wz: f64, drift: f64) -> bool {
+    let size = S::CLOUDS_SIZE as f64;
+    let tx = (((wx + drift) / CLOUD_CELL).floor().rem_euclid(size)) as usize;
+    let tz = (((wz + CLOUD_Z_OFFSET) / CLOUD_CELL).floor().rem_euclid(size)) as usize;
+    S::CLOUDS[tx + tz * S::CLOUDS_SIZE as usize] != 0
+}
+
+/// Build and render the cloud layer for world tick `day_time`.
+///
+/// Replicates the official FANCY mesh (default CloudStatus): boxes of
+/// 12x4x12 cells at y = [cloud_height, cloud_height + 4]; camera below sees
+/// the shaded BOTTOM faces (0.7) plus side faces adjacent to empty cells
+/// (north/south 0.8, west/east 0.9); mesh radius = ceil(cloudRange*16/12)
+/// cells with a Euclidean cap, exactly the buildMesh domain.
+pub fn render_clouds(
+    fb: &mut crate::raster::Framebuf,
+    ctx: &RenderCtx,
+    cam: &Camera,
+    day_time: i64,
+    partial_ticks: f32,
+) {
+    let st = sample(day_time);
+    // The extractor skips the layer entirely when the track alpha hits 0
+    // (LevelExtractor: ARGB.alpha(cloudColor) <= 0 -> no cloud pass).
+    if st.cloud_color[3] <= 0.0 {
+        return;
+    }
+    let drift = cloud_drift(day_time, partial_ticks);
+    let height = S::CLOUD_HEIGHT as f64;
+    let yb = height;
+    let yt = height + CLOUD_CELL_H;
+    let size = S::CLOUDS_SIZE as i64;
+    // Mesh radius: ceil(cloudRange * 16 / 12) cells (render() bytecode).
+    let r = ((CLOUD_RANGE_CHUNKS * 16) as f64 / CLOUD_CELL).ceil() as i64;
+    // The cell containing the camera's anchor point (cellX/cellZ in render()).
+    let cx = ((cam.pos.x as f64 + drift) / CLOUD_CELL).floor() as i64;
+    let cz = ((cam.pos.z as f64 + CLOUD_Z_OFFSET) / CLOUD_CELL).floor() as i64;
+    let tex = |i: i64, k: i64| -> bool {
+        let tx = i.rem_euclid(size) as usize;
+        let tz = k.rem_euclid(size) as usize;
+        S::CLOUDS[tx + tz * S::CLOUDS_SIZE as usize] != 0
+    };
+    let cell = |i: i64, k: i64| -> bool { tex(i, k) };
+    let color = st.cloud_color;
+    let mut quads: Vec<CloudQuad> = Vec::new();
+    for dz in -r..=r {
+        for dx in -r..=r {
+            if dx * dx + dz * dz > r * r {
+                continue; // official buildMesh Euclidean cap
+            }
+            let (i, k) = (cx + dx, cz + dz);
+            if !cell(i, k) {
+                continue;
+            }
+            // World-space cell rect (the lattice slides with the drift).
+            let x0 = (i * 12) as f64 - drift;
+            let x1 = x0 + CLOUD_CELL;
+            let z0 = (k * 12) as f64 - CLOUD_Z_OFFSET;
+            let z1 = z0 + CLOUD_CELL;
+            let (x0, x1, z0, z1) = (x0 as f32, x1 as f32, z0 as f32, z1 as f32);
+            let c = |shade: f32| -> [f32; 4] {
+                [color[0] * shade, color[1] * shade, color[2] * shade, color[3]]
+            };
+            // BOTTOM face (camera below the layer): visible bottom 0.7.
+            // Corners follow the shader's bottom-face table (1,0,0)(1,0,1)(0,0,1)(0,0,0).
+            quads.push(CloudQuad {
+                pts: [[x1, yb as f32, z0], [x1, yb as f32, z1], [x0, yb as f32, z1], [x0, yb as f32, z0]],
+                color: c(FACE_BOTTOM),
+            });
+            // Side faces only where the neighbor cell is empty (the packed
+            // isNorthEmpty/isEastEmpty/... face flags).
+            if !tex(i, k - 1) {
+                // NORTH (-Z): (0,0,0)(0,1,0)(1,1,0)(1,0,0)
+                quads.push(CloudQuad {
+                    pts: [[x0, yb as f32, z0], [x0, yt as f32, z0], [x1, yt as f32, z0], [x1, yb as f32, z0]],
+                    color: c(FACE_NORTH_SOUTH),
+                });
+            }
+            if !tex(i, k + 1) {
+                // SOUTH (+Z): (1,0,1)(1,1,1)(0,1,1)(0,0,1)
+                quads.push(CloudQuad {
+                    pts: [[x1, yb as f32, z1], [x1, yt as f32, z1], [x0, yt as f32, z1], [x0, yb as f32, z1]],
+                    color: c(FACE_NORTH_SOUTH),
+                });
+            }
+            if !tex(i - 1, k) {
+                // WEST (-X): (0,0,1)(0,1,1)(0,1,0)(0,0,0)
+                quads.push(CloudQuad {
+                    pts: [[x0, yb as f32, z1], [x0, yt as f32, z1], [x0, yt as f32, z0], [x0, yb as f32, z0]],
+                    color: c(FACE_WEST_EAST),
+                });
+            }
+            if !tex(i + 1, k) {
+                // EAST (+X): (1,0,0)(1,1,0)(1,1,1)(1,0,1)
+                quads.push(CloudQuad {
+                    pts: [[x1, yb as f32, z0], [x1, yt as f32, z0], [x1, yt as f32, z1], [x1, yb as f32, z1]],
+                    color: c(FACE_WEST_EAST),
+                });
+            }
+        }
+    }
+    // FogCloudsEnd = min(cloudRange * 16, visual/cloud_fog_end_distance 2048).
+    let fog_end = ((CLOUD_RANGE_CHUNKS * 16) as f32).min(2048.0);
+    fb.draw_clouds(ctx, [cam.pos.x, cam.pos.y, cam.pos.z], fog_end, &quads);
 }
 
 #[cfg(test)]

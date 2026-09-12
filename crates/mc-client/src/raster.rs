@@ -52,6 +52,16 @@ pub struct FlatQuad {
     pub blend: FlatBlend,
 }
 
+/// One uniform-color cloud quad (bottom or side face of a cloud cell box).
+/// Rendered with the official CLOUDS pipeline semantics (rendertype_clouds):
+/// TRANSLUCENT blend, depth-tested + depth-written, per-pixel alpha fog
+/// `a *= 1 - linear_fog_value(d, 0, FogCloudsEnd)`.
+pub struct CloudQuad {
+    pub pts: [[f32; 3]; 4],
+    /// Face color * CloudColor (the uniform `vertexColor` of the shader).
+    pub color: [f32; 4],
+}
+
 impl Framebuf {
     pub fn new(w: usize, h: usize) -> Self {
         Self { w, h, color: vec![0u8; w * h * 3], depth: vec![f32::MAX; w * h] }
@@ -344,6 +354,128 @@ impl Framebuf {
                         }
                         for ch in 0..3 {
                             self.color[o + ch] = (c0[ch].clamp(0.0, 1.0) * 255.0 + 0.5) as u8;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    /// Rasterize the cloud layer with the official CLOUDS pipeline semantics
+    /// (rendertype_clouds.vsh/.fsh + RenderPipelines.CLOUDS):
+    /// - TRANSLUCENT blend: out = src·a + dst·(1-a)
+    /// - depth-tested AND depth-written against terrain (DepthStencilState
+    ///   DEFAULT), so terrain correctly occludes clouds
+    /// - per-pixel alpha fade `a *= 1 - clamp(d / fog_alpha_end)` where d is
+    ///   the SPHERICAL (Euclidean) view distance, perspective-correctly
+    ///   interpolated like the shader's vertexDistance varying
+    /// - no fog-color mixing (the fragment shader only fades alpha)
+    /// - no backface cull (faces are built per visibility rule upstream)
+    pub fn draw_clouds(
+        &mut self,
+        ctx: &RenderCtx,
+        cam_pos: [f32; 3],
+        fog_alpha_end: f32,
+        quads: &[CloudQuad],
+    ) {
+        let vp = ctx.proj.mul(&ctx.view);
+        let w_px = self.w as f32;
+        let h_px = self.h as f32;
+        for quad in quads {
+            // Per-vertex Euclidean distance to the camera (the shader's
+            // fog_spherical_distance = length(pos), pos camera-relative).
+            let vd: Vec<f32> = quad
+                .pts
+                .iter()
+                .map(|p| {
+                    let dx = p[0] - cam_pos[0];
+                    let dy = p[1] - cam_pos[1];
+                    let dz = p[2] - cam_pos[2];
+                    (dx * dx + dy * dy + dz * dz).sqrt()
+                })
+                .collect();
+            let clip: Vec<[f32; 4]> =
+                quad.pts.iter().map(|p| vp.transform_point(Vec3::new(p[0], p[1], p[2]))).collect();
+            let clipped = clip_near(&clip);
+            if clipped.len() < 3 {
+                continue;
+            }
+            let mut sx = vec![0f32; clipped.len()];
+            let mut sy = vec![0f32; clipped.len()];
+            let mut ow = vec![0f32; clipped.len()];
+            let mut ov = vec![0f32; clipped.len()];
+            let mut minx = f32::MAX;
+            let mut miny = f32::MAX;
+            let mut maxx = f32::MIN;
+            let mut maxy = f32::MIN;
+            for i in 0..clipped.len() {
+                let c = clipped[i];
+                let iw = 1.0 / c[3];
+                sx[i] = (c[0] * iw * 0.5 + 0.5) * w_px;
+                sy[i] = (1.0 - (c[1] * iw * 0.5 + 0.5)) * h_px;
+                ow[i] = iw;
+                // clip_near reprojects corners on the near plane; keep the
+                // attribute indices aligned with the original corners.
+                let vi = i.min(3);
+                ov[i] = vd[vi];
+                minx = minx.min(sx[i]);
+                miny = miny.min(sy[i]);
+                maxx = maxx.max(sx[i]);
+                maxy = maxy.max(sy[i]);
+            }
+            let x0 = (minx.floor().max(0.0)) as isize;
+            let y0 = (miny.floor().max(0.0)) as isize;
+            let x1 = (maxx.ceil().min(w_px - 1.0)) as isize;
+            let y1 = (maxy.ceil().min(h_px - 1.0)) as isize;
+            if x1 < x0 || y1 < y0 {
+                continue;
+            }
+            for tri in 1..clipped.len() - 1 {
+                let (ax, ay, a_ow) = (sx[0], sy[0], ow[0]);
+                let (bx, by, b_ow) = (sx[tri], sy[tri], ow[tri]);
+                let (cx, cy, c_ow) = (sx[tri + 1], sy[tri + 1], ow[tri + 1]);
+                let (a_vd, b_vd, c_vd) = (ov[0], ov[tri.min(3)], ov[(tri + 1).min(3)]);
+                let area_ab = edge(ax, ay, bx, by, cx, cy);
+                if area_ab.abs() < 1e-9 {
+                    continue;
+                }
+                let inv_area = 1.0 / area_ab;
+                for py in y0..=y1 {
+                    for px in x0..=x1 {
+                        let fx = px as f32 + 0.5;
+                        let fy = py as f32 + 0.5;
+                        let w0 = edge(bx, by, cx, cy, fx, fy);
+                        let w1 = edge(cx, cy, ax, ay, fx, fy);
+                        let w2 = edge(ax, ay, bx, by, fx, fy);
+                        if w0 < 0.0 || w1 < 0.0 || w2 < 0.0 {
+                            continue;
+                        }
+                        let b0 = w0 * inv_area;
+                        let b1 = w1 * inv_area;
+                        let b2 = w2 * inv_area;
+                        let dist = 1.0 / (b0 * a_ow + b1 * b_ow + b2 * c_ow);
+                        // perspective-correct view distance (shader varying)
+                        let d = (b0 * a_vd * a_ow + b1 * b_vd * b_ow + b2 * c_vd * c_ow) * dist;
+                        // perspective-correct depth, same convention as terrain
+                        let z = dist;
+                        let idx = (py as usize) * self.w + px as usize;
+                        if z >= self.depth[idx] {
+                            continue;
+                        }
+                        // alpha *= 1 - linear_fog_value(d, 0, FogCloudsEnd)
+                        let fade =
+                            (1.0 - ((d / fog_alpha_end).clamp(0.0, 1.0))).clamp(0.0, 1.0);
+                        if fade <= 0.0 {
+                            continue;
+                        }
+                        let a = quad.color[3] * fade;
+                        let o = idx * 3;
+                        self.depth[idx] = z;
+                        for ch in 0..3 {
+                            let src = quad.color[ch] * a;
+                            let bg = self.color[o + ch] as f32 / 255.0;
+                            self.color[o + ch] =
+                                ((src + bg * (1.0 - a)).clamp(0.0, 1.0) * 255.0 + 0.5) as u8;
                         }
                     }
                 }
