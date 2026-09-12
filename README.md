@@ -45,6 +45,12 @@ hand-drawn:
   ping (`mc-protocol`) against every hosted row, off the frame thread —
   MOTD, version and latency bars update from the server's actual response
   (unreachable rows render the vanilla *Failed to connect* offline state).
+  **Join runs the real protocol too**: the vanilla ConnectScreen flow — the
+  offline-mode login (handshake, Login Start with the official offline
+  profile UUID, Set Compression, Login Success/Disconnect) fires on a worker
+  thread against the selected row, and the outcome lands on the vanilla
+  *Connection Lost* screen with the server's own reason (or the factual
+  connected line for offline-mode servers that accept the join).
 - **Singleplayer world** — clicking `Singleplayer` enters a live 3D world
   view rendered by the same deterministic CPU raster path as the pixel
   tests: real block textures from the generated atlas, the **official

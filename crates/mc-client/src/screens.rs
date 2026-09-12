@@ -1349,6 +1349,185 @@ mod tests {
         assert!(s.ping_icon().starts_with("server_list/ping_"));
     }
 
+    #[test]
+    fn join_click_fires_the_real_login_for_hosted_rows() {
+        let mut app = App::new(3);
+        app.open(ScreenKind::Servers);
+        // select the hosted row (second row, vanilla click-to-select), then
+        // click through the REAL join button
+        app.render_title_buttons_for_test();
+        app.on_click(80, 34 + 28 + 12);
+        assert_eq!(app.selected_server, 1);
+        app.render_title_buttons_for_test();
+        let join = app
+            .buttons
+            .iter()
+            .find(|b| b.id == "join")
+            .expect("join button")
+            .clone();
+        app.on_click(join.x + join.w / 2, join.y + join.h / 2);
+        // the vanilla ConnectScreen flow: one login request against the
+        // hosted row's address, screen switched while the login is in flight
+        assert_eq!(app.login_requests.len(), 1);
+        let req = &app.login_requests[0];
+        assert_eq!(req.entry, 1);
+        assert_eq!(req.host, "hypixel.net");
+        assert_eq!(req.port, 25565);
+        assert_eq!(req.id, 0);
+        assert_eq!(app.screen, ScreenKind::Connect);
+        // and the click still played the vanilla ui sound
+        assert_eq!(app.ui_sounds.len(), 1);
+    }
+
+    #[test]
+    fn join_on_placeholder_rows_stays_a_noop_click() {
+        let mut app = App::new(3);
+        app.open(ScreenKind::Servers);
+        app.render_title_buttons_for_test();
+        // selected row 0 = the sandbox placeholder: nothing reachable to join
+        let join = app
+            .buttons
+            .iter()
+            .find(|b| b.id == "join")
+            .expect("join button")
+            .clone();
+        app.on_click(join.x + join.w / 2, join.y + join.h / 2);
+        assert!(app.login_requests.is_empty());
+        assert_eq!(app.screen, ScreenKind::Servers);
+        // but the button still activated, so the click sound still fired
+        // (vanilla AbstractButton.playDownSound rule)
+        assert_eq!(app.ui_sounds.len(), 1);
+    }
+
+    #[test]
+    fn login_outcomes_land_on_the_vanilla_disconnect_screen() {
+        let mut app = App::new(3);
+        app.open(ScreenKind::Servers);
+        app.selected_server = 1;
+        app.join_selected_server();
+        let id = app.login_requests[0].id;
+        // server-side Login Disconnect: the official disconnect.lost title
+        // + the flattened server reason
+        app.login_finished(
+            id,
+            Ok(LoginResult::Disconnected { reason: "invalid session".into() }),
+        );
+        assert_eq!(app.screen, ScreenKind::Disconnect);
+        assert_eq!(app.disconnect_title, tr("disconnect.lost").unwrap_or("Connection Lost"));
+        assert_eq!(app.disconnect_reason, "invalid session");
+        // transport errors surface the same vanilla way
+        app.join_selected_server();
+        let id2 = app.login_requests[1].id;
+        app.login_finished(id2, Err("tcp connect to 127.0.0.1:1".into()));
+        assert_eq!(app.screen, ScreenKind::Disconnect);
+        assert_eq!(app.disconnect_reason, "tcp connect to 127.0.0.1:1");
+        // Login Success would enter the play state (not built yet); the
+        // documented stand-in shows the factual outcome instead
+        app.join_selected_server();
+        let id3 = app.login_requests[2].id;
+        app.login_finished(
+            id3,
+            Ok(LoginResult::Success { username: "mc2rs".into() }),
+        );
+        assert_eq!(app.screen, ScreenKind::Disconnect);
+        assert_eq!(app.disconnect_title, "Connected");
+        assert_eq!(app.disconnect_reason, "Logged in as mc2rs");
+        // unknown/already-consumed ids are ignored, the log stays append-only
+        app.login_finished(999, Err("nope".into()));
+        assert_eq!(app.disconnect_reason, "Logged in as mc2rs");
+        assert_eq!(app.login_requests.len(), 3);
+    }
+
+    #[test]
+    fn connect_and_outcome_screens_return_to_the_server_list() {
+        let mut app = App::new(3);
+        app.open(ScreenKind::Servers);
+        app.selected_server = 1;
+        app.join_selected_server();
+        assert_eq!(app.screen, ScreenKind::Connect);
+        // Escape leaves the in-flight join (late results carry known ids and
+        // still land — vanilla shows outcome screens whenever they arrive)
+        app.on_escape();
+        assert_eq!(app.screen, ScreenKind::Servers);
+        // the DisconnectedScreen's Back button returns to the list
+        app.login_finished(
+            app.login_requests[0].id,
+            Ok(LoginResult::Disconnected { reason: "bye".into() }),
+        );
+        assert_eq!(app.screen, ScreenKind::Disconnect);
+        app.render_title_buttons_for_test();
+        let back = app
+            .buttons
+            .iter()
+            .find(|b| b.id == "backtoservers")
+            .expect("back button")
+            .clone();
+        app.on_click(back.x + back.w / 2, back.y + back.h / 2);
+        assert_eq!(app.screen, ScreenKind::Servers);
+    }
+
+    #[test]
+    fn server_join_runs_a_real_login() {
+        // in-process vanilla-shaped login server (same dogfooding as the
+        // mc-protocol login tests): handshake + login start -> compression
+        // switch -> Login Success
+        let listener = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+        let port = listener.local_addr().unwrap().port();
+        let server = std::thread::spawn(move || {
+            use mc_protocol::framing::PacketConn;
+            use mc_protocol::varint::{read_string, read_varint};
+            let (stream, _) = listener.accept().unwrap();
+            let mut conn = PacketConn::new(stream);
+            let hs = conn.read_packet().unwrap();
+            assert_eq!(hs[0], 0x00, "handshake packet id");
+            let start = conn.read_packet().unwrap();
+            let mut c: &[u8] = &start;
+            assert_eq!(read_varint(&mut c).unwrap(), 0x00, "login start id");
+            let name = read_string(&mut c).unwrap();
+            assert_eq!(name, crate::screens::PLAYER_NAME);
+            conn.send_packet(&mc_protocol::login::encode_set_compression(256))
+                .unwrap();
+            conn.enable_compression(256);
+            conn.send_packet(&mc_protocol::login::encode_login_success(
+                &mc_protocol::login::offline_uuid(&name),
+                &name,
+            ))
+            .unwrap();
+        });
+
+        let mut app = App::new(3);
+        app.open(ScreenKind::Servers);
+        // point the hosted row at the mock login server and join it
+        app.servers[1].host = Some(format!("127.0.0.1:{port}"));
+        app.selected_server = 1;
+        app.join_selected_server();
+        let req = app.login_requests[0].clone();
+        assert_eq!(req.port, port, "explicit port parsed from the address");
+
+        // the exact mapping the window worker performs
+        let res = mc_protocol::connect_and_login(
+            &req.host,
+            req.port,
+            crate::build_info::PROTOCOL_VERSION,
+            crate::screens::PLAYER_NAME,
+        )
+        .map(|out| match out {
+            mc_protocol::LoginOutcome::Success { username, .. } => {
+                LoginResult::Success { username }
+            }
+            mc_protocol::LoginOutcome::Disconnected { reason } => {
+                LoginResult::Disconnected { reason }
+            }
+        })
+        .map_err(|e| format!("{e:#}"));
+        server.join().unwrap();
+        app.login_finished(req.id, res);
+
+        assert_eq!(app.screen, ScreenKind::Disconnect);
+        assert_eq!(app.disconnect_title, "Connected");
+        assert_eq!(app.disconnect_reason, "Logged in as mc2rs");
+    }
+
     impl App {
         fn render_title_buttons_for_test(&mut self) {
             let mut fb = crate::raster::Framebuf::new(320, 180);
