@@ -2118,6 +2118,15 @@ mod tests {
                 &[],
             ));
             srv.send_packet(&ul).unwrap();
+            // ---- the SET TIME leg: the world's live clock — the
+            // javap-proven 26.2 shape (LONG game time + the clock map),
+            // the nether's own clock at total ticks 1_002_018_000 (day
+            // tick 18_000, midnight — the timeline's night plateau)
+            srv.send_packet(&test_support::set_time_packet(
+                1_234_567_890,
+                &[(0, 1_002_018_000, 0.0, 1.0)],
+            ))
+            .unwrap();
             // the server ends the session with a play disconnect: the live
             // caller surfaces the reason instead of an io error
             let mut d2 = Vec::new();
@@ -2259,7 +2268,19 @@ mod tests {
                     }
                     other => panic!("expected Light, got {other:?}"),
                 }
-                // 8) the server's play disconnect surfaces with its reason
+                // 8) THE SET TIME: the live clock rides the same wire —
+                // game time + the clock map (the night plateau lands)
+                match session.pump().expect("live set time") {
+                    PlayEvent::Time(ts) => {
+                        assert_eq!(ts.game_time, 1_234_567_890);
+                        assert_eq!(ts.clocks.len(), 1, "one clock: the dimension's default");
+                        assert_eq!(ts.clocks[0].id, 0);
+                        assert_eq!(ts.clocks[0].total_ticks, 1_002_018_000);
+                        assert_eq!(ts.clocks[0].rate, 1.0);
+                    }
+                    other => panic!("expected Time, got {other:?}"),
+                }
+                // 9) the server's play disconnect surfaces with its reason
                 match session.pump().expect("live disconnect") {
                     PlayEvent::Disconnected { reason } => assert_eq!(reason, "Time"),
                     other => panic!("expected Disconnected, got {other:?}"),

@@ -97,9 +97,11 @@ mod tests {
         // linear ramps: the midpoint of the 11270..13140 dusk ramp
         let mid = sky_light_factor((11_270 + 13_140) / 2);
         assert!((mid - 0.62).abs() < 1e-6, "dusk midpoint {mid} = (1.0 + 0.24)/2");
-        // wrap-around: tick 23_430 is halfway through 22_860..24_730
+        // wrap-around: tick 23_430 sits (23430-22860)/(24730-22860) of
+        // the way through the dawn segment 22_860 -> 730 (+24_000)
+        let f = (23_430 - 22_860) as f64 / (24_730 - 22_860) as f64;
         let wrap = sky_light_factor(23_430);
-        assert!((wrap - 0.62).abs() < 1e-6, "dawn wrap midpoint {wrap}");
+        assert!((wrap - (0.24 + f as f32 * 0.76)).abs() < 1e-6, "dawn wrap {wrap}");
         // and one full period is the same moment as tick 0
         assert!((sky_light_factor(24_000) - sky_light_factor(0)).abs() < 1e-9);
     }

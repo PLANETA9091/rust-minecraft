@@ -483,6 +483,30 @@ mod tests {
     }
 
     #[test]
+    fn materialize_carries_the_models_day_tick() {
+        let mut m = WorldModel::new();
+        m.apply(PlayEvent::Chunk(ChunkColumn {
+            x: 0,
+            z: 0,
+            sections: vec![stone_dirt_section()],
+            light: ChunkLight::default(),
+        }));
+        // no clock yet: the view is day (None), and the grid is fresh
+        let world = materialize(&m, (0, 0), 1, 0, example_mapper);
+        assert_eq!(world.day_tick, None, "no Set Time: the honest day");
+        // the server's Set Time lands in the view: midnight total ticks
+        m.apply(PlayEvent::Time(mc_protocol::play::parse_set_time(
+            &mc_protocol::play::test_support::set_time_packet(5, &[(0, 18_000, 0.0, 1.0)]),
+        ).expect("set time parses")));
+        let world = materialize(&m, (0, 0), 1, 0, example_mapper);
+        assert_eq!(
+            world.day_tick,
+            Some(18_000),
+            "the view carries the clock's day tick for the mesher's SkyFactor"
+        );
+    }
+
+    #[test]
     fn runtime_mapper_resolves_through_the_generated_table() {
         // GENERATED facts from the official 26.2 registry (block_ids.rs):
         // the real global state ids of the palette blocks

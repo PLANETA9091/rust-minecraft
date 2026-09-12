@@ -306,7 +306,7 @@ impl WorldModel {
             .unwrap_or(1.0)
     }
 
-    /// Sky light (0..=15) at (x, y, z)
+    /// Sky light (0..=15) at (x, y, z) — the same coordinate conventions
     /// as [`WorldModel::block`], on the vanilla LIGHT section grid: the
     /// engine keeps one extra layer below and above the block sections
     /// (javap: `getLightSectionCount() = getSectionsCount() + 2`), so
@@ -737,6 +737,31 @@ mod tests {
             "out-of-range bit refused"
         );
         assert_eq!(m.sky_light(48, -64, -32), Some(15), "the old light intact");
+    }
+
+    #[test]
+    fn set_time_feeds_the_day_tick_and_sky_factor() {
+        let mut m = WorldModel::new();
+        // no clock opinion yet: day, honestly
+        assert_eq!(m.day_tick(), None);
+        assert_eq!(m.sky_factor(), 1.0);
+        // the server's Set Time: game time + the dimension's default
+        // clock at midnight (total ticks 18_000 -> day tick 18_000)
+        let p = mc_protocol::play::test_support::set_time_packet(
+            7_777,
+            &[(0, 1_002_018_000, 0.0, 1.0)],
+        );
+        let ts = mc_protocol::play::parse_set_time(&p).expect("set time parses");
+        assert!(m.apply(PlayEvent::Time(ts)), "time touches world state");
+        assert_eq!(m.game_time, 7_777);
+        assert_eq!(m.day_tick(), Some(18_000), "total ticks mod the day period");
+        assert_eq!(m.sky_factor(), 0.24, "midnight is the night plateau");
+        // a re-sync REPLACES the clocks (the current state, not a delta)
+        let p2 = mc_protocol::play::test_support::set_time_packet(7_778, &[(0, 6_000, 0.0, 1.0)]);
+        let ts2 = mc_protocol::play::parse_set_time(&p2).unwrap();
+        assert!(m.apply(PlayEvent::Time(ts2)));
+        assert_eq!(m.day_tick(), Some(6_000), "noon after the re-sync");
+        assert_eq!(m.sky_factor(), 1.0, "noon is full day");
     }
 
     #[test]

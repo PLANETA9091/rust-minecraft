@@ -269,6 +269,13 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                     // carries a light layer; `None` keeps the legacy path.
                     let clight =
                         light.map(|l| corner_light(l, world.chunks_per_side, wx, wy, wz, face));
+                    // The timeline sky factor: the day tick's curve value
+                    // (1.0 day / 0.24 night; None = day). Constant per
+                    // mesh — the shader's SkyFactor uniform equivalent.
+                    let sky_factor = world
+                        .day_tick
+                        .map(crate::timeline::sky_light_factor)
+                        .unwrap_or(1.0);
                     let order = flip_order(&ao);
                     let mut pts = [[0f32; 3]; 4];
                     let mut colors = [[0f32; 3]; 4];
@@ -286,7 +293,7 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                         // level-max math). No known cell -> legacy look.
                         let lm = match clight.as_ref() {
                             Some((sky, block)) => {
-                                let sky_b = sky[src].map(|v| light_brightness(v) * world.sky_factor);
+                                let sky_b = sky[src].map(|v| light_brightness(v) * sky_factor);
                                 let block_b = block[src].map(light_brightness);
                                 match (sky_b, block_b) {
                                     (Some(s), Some(b)) => s.max(b),
@@ -362,7 +369,7 @@ mod tests {
             seed: 0,
             chunks: vec![vec![AIR; CHUNK_X * CHUNK_Y * CHUNK_Z]],
             light: None,
-            sky_factor: 1.0,
+            day_tick: None,
         }
     }
 
@@ -489,8 +496,8 @@ mod tests {
         set_light(&mut w, Some(15), Some(0), 8, 9, 8);
         // day: brightness(15) = 1.0 -> legacy
         assert_eq!(vertex_multiplier(&top_face(&w)), [1.0; 4], "day sky-15 is legacy");
-        // night (the day timeline's 0.24 plateau): brightness(15) * 0.24
-        w.sky_factor = 0.24;
+        // night (the day timeline's midnight tick -> the 0.24 plateau)
+        w.day_tick = Some(18_000);
         for m in vertex_multiplier(&top_face(&w)) {
             assert!(
                 (m - light_brightness(15.0) * 0.24).abs() < 1e-6,
@@ -512,7 +519,7 @@ mod tests {
         let mut w2 = empty_world();
         put(&mut w2, 8, 8, 8, STONE);
         w2.light = Some(unknown_light());
-        w2.sky_factor = 0.24;
+        w2.day_tick = Some(18_000);
         set_light(&mut w2, None, Some(14), 8, 9, 8);
         for m in vertex_multiplier(&top_face(&w2)) {
             assert!(

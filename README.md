@@ -199,6 +199,33 @@ hand-drawn:
   above) ride the tail for real. `goldens/net_320x180.png` joins the
   CI pixel job and the local verifier at rms <= 8 — the same class as
   the CPU goldens (shared float raster math).
+  The **night is wired end to end (v0.3.39 — the seventh javap
+  audit)**: 26.2
+  broke the old Set Time packet — the real `ClientboundSetTimePacket`
+  is `LONG gameTime` + a `ByteBufCodecs.map` of `WorldClock` holders
+  (`holderRegistry(WORLD_CLOCK)` = VarInt registry ids) to
+  `ClockNetworkState` records (`VAR_LONG totalTicks, FLOAT
+  partialTick, FLOAT rate`); `parse_set_time` decodes it with the
+  usual lying-count and trailing-byte guards, the pump grew a ninth
+  live step, and the model stores game time + the synced clocks
+  (`day_tick` = the first clock's total ticks mod the day period —
+  the multi-clock disambiguation waits for the WORLD_CLOCK registry
+  names). The darkening itself is no longer a formula in 26.2:
+  `Level.updateSkyBrightness` reads the dimension's ENVIRONMENT
+  ATTRIBUTES, which are TIMELINE TRACKS (`data/minecraft/timeline/
+  day.json`, bound to the overworld clock, period 24000), and the
+  lightmap fragment shader (`assets/minecraft/shaders/core/
+  lightmap.fsh`, read verbatim from the jar) applies
+  `get_brightness(sky) * SkyFactor` — additive with the block term.
+  The mesher therefore keeps sky and block SEPARATE through the
+  per-corner smooth-lighting average (the vanilla packed-int halves —
+  the golden's mixed torch/sky corners shifted by rms 0.475, the
+  golden regenerated to pin the corrected math) and scales the sky
+  term by the day timeline's `visual/sky_light_factor` (1.0 day ->
+  0.24 night, jar-extracted keyframes in `timeline.rs`; the curve is
+  cyclic-linear, wrap segment included). Worlds with no Set Time yet
+  stay day — every procedural and GUI golden is bit-identical, the
+  8 legacy checks untouched.
   The **wire ids of every phase are generated**:
   `mc2rs-gen dump-packet-ids` binds the official jar's REAL protocols —
   play, login, configuration, status AND handshake — and dumps each
