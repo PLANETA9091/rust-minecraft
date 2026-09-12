@@ -107,6 +107,13 @@ hand-drawn:
   the official font textures with the vanilla trim rule, `§`-color codes and
   1px shadow, exactly like the original renderer.
 
+- **Login sequence** — the protocol layer speaks the offline-mode login
+  (handshake state 2 -> Login Start -> Set Compression -> Success /
+  Disconnect) with the REAL protocol number from the jar's embedded
+  `version.json` (26.2 = 776; launchermeta no longer carries it), vanilla
+  offline-UUID derivation (`NameUUIDFromBytes`), and an in-process mock
+  server exercising every path including the compressed envelope.
+
 ## Why a generator
 
 Minecraft changes every release: block states, item components, protocol

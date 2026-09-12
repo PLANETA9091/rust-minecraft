@@ -100,7 +100,7 @@ pub fn analyze(jar_bytes: &[u8]) -> Result<JarReport> {
             let mut bytes = Vec::new();
             f.read_to_end(&mut bytes)?;
             let v: Value = serde_json::from_slice(&bytes)
-                .with_context("parse embedded version.json")?;
+                .context("parse embedded version.json")?;
             (
                 v.get("protocol_version").and_then(Value::as_i64).map(|x| x as i32),
                 v.get("world_version").and_then(Value::as_i64).map(|x| x as i32),
@@ -197,6 +197,47 @@ fn when_properties(w: &Value, out: &mut Vec<String>) {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn analyze_reads_embedded_version_json() {
+        // the jar's own manifest carries the protocol number the login
+        // handshake needs (launchermeta dropped it in the 26.x era)
+        let vjson = br#"{"id":"26.2","world_version":4903,"protocol_version":776,"stable":true}"#;
+        let blockstate = br#"{"variants":{"facing=north":{}}}"#;
+        let mut buf = std::io::Cursor::new(Vec::new());
+        {
+            let mut w = zip::ZipWriter::new(&mut buf);
+            let opts = zip::write::SimpleFileOptions::default();
+            for (name, data) in [
+                ("version.json", vjson.to_vec()),
+                ("assets/minecraft/blockstates/stone.json", blockstate.to_vec()),
+                ("net/minecraft/client/Main.class", vec![0u8; 8]),
+            ] {
+                w.start_file(name, opts).unwrap();
+                std::io::Write::write_all(&mut w, &data).unwrap();
+            }
+            w.finish().unwrap();
+        }
+        let report = analyze(&buf.into_inner()).expect("analyze");
+        assert_eq!(report.protocol_version, Some(776));
+        assert_eq!(report.world_version, Some(4903));
+        assert_eq!(report.blockstate_count, 1);
+        assert!(!report.obfuscated, "net/minecraft classes present");
+    }
+
+    #[test]
+    fn analyze_tolerates_missing_version_json() {
+        let mut buf = std::io::Cursor::new(Vec::new());
+        {
+            let mut w = zip::ZipWriter::new(&mut buf);
+            w.start_file("assets/minecraft/blockstates/stone.json", zip::write::SimpleFileOptions::default()).unwrap();
+            std::io::Write::write_all(&mut w, br#"{"variants":{}}"#).unwrap();
+            w.finish().unwrap();
+        }
+        let report = analyze(&buf.into_inner()).expect("analyze");
+        assert_eq!(report.protocol_version, None);
+        assert_eq!(report.world_version, None);
+    }
 
     #[test]
     fn variant_properties() {

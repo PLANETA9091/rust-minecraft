@@ -1,12 +1,14 @@
 //! mc-protocol — hand-rolled Minecraft protocol layer (clean-room, wiki.vg-based).
 //!
 //! Includes: VarInt/VarLong, packet framing with zlib compression support,
-//! handshake + status (server list ping), login-start encoding.
+//! handshake + status (server list ping), offline-mode login sequence.
 
 pub mod framing;
+pub mod login;
 pub mod status;
 pub mod varint;
 
+pub use login::{connect_and_login, login, LoginOutcome};
 pub use status::{ping, PingResponse};
 
 /// Default network timeout used by blocking IO helpers (seconds).

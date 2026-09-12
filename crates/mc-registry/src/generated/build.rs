@@ -2,3 +2,8 @@
 pub const MINECRAFT_VERSION: &str = "26.2";
 pub const CLIENT_SHA1: &str = "2dc72797acbc1b63fc16a11c4ac393605f453754";
 pub const OBFUSCATED: bool = false;
+/// Protocol version from the jar's embedded version.json (-1 if
+/// none); the LOGIN handshake must speak this.
+pub const PROTOCOL_VERSION: i32 = 776;
+/// World/data format version from version.json (-1 if unknown).
+pub const WORLD_VERSION: i32 = 4903;
