@@ -169,6 +169,81 @@ pub struct TimelineEntry {
     pub sky_light_factor: Option<Vec<(i64, f32)>>,
 }
 
+/// The grass-tint modifier one synced biome may carry (javap:
+/// `BiomeSpecialEffects$GrassColorModifier` — exactly THREE constants,
+/// serialized by their lowercase names `none`/`swamp`/`dark_forest`,
+/// pinned from both the bytecode and the class constant pool). Vanilla
+/// binds it as optionalFieldOf("grass_color_modifier", NONE) — ABSENT
+/// and `none` are the SAME verdict, so the decode collapses both into
+/// [`GrassColorModifier::None`] and the field is not an Option. An
+/// unknown name is the drift it is (vanilla's own enum codec refuses
+/// it the same way).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum GrassColorModifier {
+    None,
+    Swamp,
+    DarkForest,
+}
+
+impl GrassColorModifier {
+    fn from_wire(name: &str) -> Option<Self> {
+        match name {
+            "none" => Some(Self::None),
+            "swamp" => Some(Self::Swamp),
+            "dark_forest" => Some(Self::DarkForest),
+            _ => None,
+        }
+    }
+}
+
+/// The tint-relevant slice of one synced biome's `effects` compound
+/// (javap `BiomeSpecialEffects.CODEC`, 26.2 — the class carries ONLY
+/// the water color + THREE optional color overrides + the grass
+/// modifier; sky/fog/water-fog colors left the biome in the 26.x
+/// environment-attributes migration and ride the optional
+/// `attributes` compound instead, which the decode walks past — the
+/// generator's own worldgen data agrees: overworld fog_color comes
+/// out 0, the `minecraft:visual/fog_color` ATTRIBUTE carries it).
+/// Colors ride the wire as the vanilla RGB ints verbatim (e.g. water
+/// 4159204 = 0x3F76E4).
+#[derive(Debug, Clone, PartialEq)]
+pub struct BiomeEffects {
+    pub water_color: u32,
+    pub grass_color: Option<u32>,
+    pub foliage_color: Option<u32>,
+    pub dry_foliage_color: Option<u32>,
+    pub grass_color_modifier: GrassColorModifier,
+}
+
+/// One synced biome element — javap `Biome.NETWORK_CODEC` (the codec
+/// `RegistryDataLoader`'s networked list binds for the synced
+/// `minecraft:worldgen/biome` registry — NOT the disk DIRECT_CODEC,
+/// which additionally carries generation/mob settings): a record of
+/// exactly THREE — the climate settings (required `has_precipitation`
+/// bool, `temperature` float, optional `temperature_modifier` string,
+/// `downfall` float), the OPTIONAL `attributes` compound (the
+/// environment-attribute overrides — real overworld biomes carry
+/// `minecraft:visual/sky_color`, `minecraft:visual/fog_color` and
+/// `minecraft:audio/background_music` there; walked past: nothing
+/// consumes them yet), and the required `effects` compound decoded
+/// into [`BiomeEffects`]. A tagless entry is the drift it is — every
+/// codec field is required or defaulted — the same way vanilla's own
+/// registry loader refuses malformed data.
+#[derive(Debug, Clone, PartialEq)]
+pub struct BiomeEntry {
+    /// Registry key (e.g. `minecraft:plains`); the ARRIVAL ORDER of
+    /// the entries IS the network id the chunk biome palettes
+    /// reference.
+    pub name: String,
+    pub has_precipitation: bool,
+    pub temperature: f32,
+    /// The vanilla enum is `none`/`frozen`; kept verbatim — nothing
+    /// consumes it yet.
+    pub temperature_modifier: Option<String>,
+    pub downfall: f32,
+    pub effects: BiomeEffects,
+}
+
 /// The registry knowledge the client retained from the configuration
 /// phase. `Default` is the honest empty table — a server that never sent
 /// Registry Data yields no entries.
@@ -179,10 +254,14 @@ pub struct RegistryData {
     /// index IS the network id the chunk section biome palettes
     /// reference (the vanilla synced-registry contract, the same order
     /// the `dimension_type_id` index already relies on through
-    /// CommonPlayerSpawnInfo). Names only: the tags (temperature,
-    /// effects, carvers...) are walked and skipped — nothing consumes
-    /// them yet.
-    pub biomes: Vec<String>,
+    /// CommonPlayerSpawnInfo). The element's climate + effects colors
+    /// are decoded (the tint foundation); the `attributes` compound is
+    /// walked past — nothing consumes it yet.
+    pub biomes: Vec<BiomeEntry>,
+    /// The `minecraft:worldgen/biome` TAG contents from the Update
+    /// Tags packet, tag name -> member entry ids (the same wire shape
+    /// as `timeline_tags` — `TagNetworkSerialization$NetworkPayload`).
+    pub biome_tags: Vec<(String, Vec<i32>)>,
     /// The `minecraft:world_clock` entries in ARRIVAL ORDER — the id
     /// table the Set Time clock states resolve through (javap: the Set
     /// Time map keys are `holderRegistry(WORLD_CLOCK)` VarInt ids; the
@@ -225,7 +304,23 @@ impl RegistryData {
     /// a chunk section resolve through this) — `None` for an id the
     /// server never streamed (the honest "unknown biome").
     pub fn biome_name(&self, id: u32) -> Option<&str> {
-        self.biomes.get(id as usize).map(|s| s.as_str())
+        self.biomes.get(id as usize).map(|b| b.name.as_str())
+    }
+
+    /// One synced biome element, by network id — the tint path's
+    /// lookup (palette id -> element -> effects colors).
+    pub fn biome(&self, id: u32) -> Option<&BiomeEntry> {
+        self.biomes.get(id as usize)
+    }
+
+    /// The entry ids one biome tag names (e.g. `minecraft:is_overworld`
+    /// -> the plains/forest/... ids on a real server) — `None` for a
+    /// tag the server never sent.
+    pub fn biome_tag_ids(&self, tag: &str) -> Option<&[i32]> {
+        self.biome_tags
+            .iter()
+            .find(|(name, _)| name == tag)
+            .map(|(_, ids)| ids.as_slice())
     }
 
     /// The network id of one clock, by registry name — the reverse of
@@ -243,6 +338,7 @@ impl RegistryData {
     fn merge(&mut self, other: RegistryData) {
         self.dimension_types.extend(other.dimension_types);
         self.biomes.extend(other.biomes);
+        self.biome_tags.extend(other.biome_tags);
         self.world_clocks.extend(other.world_clocks);
         self.timelines.extend(other.timelines);
         self.timeline_tags.extend(other.timeline_tags);
@@ -478,16 +574,16 @@ pub fn parse_config_disconnect(payload: &[u8]) -> Result<String> {
 /// Parse Registry Data (clientbound config 0x07 — generated): the
 /// javap-proven 26.2 shape — registry Identifier + VarInt entry count
 /// (vanilla readCount max 256) + per entry { Identifier id, optional
-/// network NBT tag }. `minecraft:dimension_type` is decoded (the entry
-/// tag IS the dimension element: min_y/height at the top level, the
-/// name from the entry id) and `minecraft:worldgen/biome` is RETAINED
-/// as the id -> name table the chunk biome palettes resolve through
-/// (the entry tags are walked and skipped); every other registry's
-/// entries are walked and dropped. Strict on the decoded registry: an
-/// entry WITH a tag missing min_y/height is a protocol drift worth
-/// erroring on, the same way vanilla's own registry loader refuses
-/// malformed data; an entry with NO tag carries nothing decodable and
-/// is skipped.
+/// network NBT tag }. `minecraft:dimension_type` and
+/// `minecraft:worldgen/biome` are decoded (the entry tag IS the
+/// element: min_y/height, resp. the NETWORK_CODEC climate + effects —
+/// the name from the entry id); `minecraft:world_clock` and
+/// `minecraft:timeline` likewise have their own shapes; every other
+/// registry's entries are walked and dropped. Strict on the decoded
+/// registries: an entry WITH a tag missing a required field, or a
+/// tagless entry where the codec requires one, is a protocol drift
+/// worth erroring on, the same way vanilla's own registry loader
+/// refuses malformed data.
 pub fn parse_registry_data(payload: &[u8]) -> Result<RegistryData> {
     let mut c: &[u8] = payload;
     let id = read_varint(&mut c)?;
@@ -511,14 +607,48 @@ pub fn parse_registry_data(payload: &[u8]) -> Result<RegistryData> {
         let present = c[0] != 0;
         c = &c[1..];
         if registry_name == "minecraft:worldgen/biome" {
-            // EVERY biome entry occupies one id slot — record the name
-            // in arrival order whether or not a tag rode along (a tag
-            // is walked and skipped: nothing consumes it yet)
-            out.biomes.push(entry_id);
-            if present {
-                crate::play::skip_network_nbt(&mut c)
-                    .with_context(|| format!("skip {registry_name} entry nbt"))?;
-            }
+            // every biome entry occupies one id slot in arrival order;
+            // the NETWORK_CODEC's climate + effects fields are required,
+            // so a tagless entry would be the drift it is — error, like
+            // the dimension and timeline elements. The optional
+            // `attributes` compound (the 26.x home of sky/fog/music)
+            // is walked past by simply not reading it.
+            anyhow::ensure!(
+                present,
+                "biome {entry_id} rides without its element tag (the codec requires climate + effects)"
+            );
+            let element = read_network_nbt(&mut c)
+                .with_context(|| format!("decode biome {entry_id} element nbt"))?;
+            let has_precipitation = element
+                .get("has_precipitation")
+                .and_then(Nbt::as_i32)
+                .with_context(|| format!("biome {entry_id} without has_precipitation"))?
+                != 0;
+            let temperature = element
+                .get("temperature")
+                .and_then(Nbt::as_f32)
+                .with_context(|| format!("biome {entry_id} without temperature"))?;
+            let temperature_modifier = element
+                .get("temperature_modifier")
+                .and_then(Nbt::as_str)
+                .map(String::from);
+            let downfall = element
+                .get("downfall")
+                .and_then(Nbt::as_f32)
+                .with_context(|| format!("biome {entry_id} without downfall"))?;
+            let effects = element
+                .get("effects")
+                .with_context(|| format!("biome {entry_id} without effects"))?;
+            let effects = read_biome_effects(effects)
+                .with_context(|| format!("biome {entry_id} carries a malformed effects compound"))?;
+            out.biomes.push(BiomeEntry {
+                name: entry_id,
+                has_precipitation,
+                temperature,
+                temperature_modifier,
+                downfall,
+                effects,
+            });
             continue;
         }
         if registry_name == "minecraft:world_clock" {
@@ -614,16 +744,39 @@ fn read_sky_light_track(track: &Nbt) -> Option<Vec<(i64, f32)>> {
     Some(out)
 }
 
+/// The biome `effects` compound — javap `BiomeSpecialEffects.CODEC`:
+/// required `water_color` int; the THREE optional color overrides
+/// (`grass_color`, `foliage_color`, `dry_foliage_color`); optional
+/// `grass_color_modifier` (absent ≡ "none", vanilla's own default —
+/// an unknown name refuses the decode, like the vanilla enum codec).
+fn read_biome_effects(effects: &Nbt) -> Option<BiomeEffects> {
+    let water_color = effects.get("water_color")?.as_i32()? as u32;
+    let color = |key: &str| effects.get(key).and_then(Nbt::as_i32).map(|v| v as u32);
+    let grass_color_modifier = match effects.get("grass_color_modifier") {
+        Some(name) => GrassColorModifier::from_wire(name.as_str()?)?,
+        None => GrassColorModifier::None,
+    };
+    Some(BiomeEffects {
+        water_color,
+        grass_color: color("grass_color"),
+        foliage_color: color("foliage_color"),
+        dry_foliage_color: color("dry_foliage_color"),
+        grass_color_modifier,
+    })
+}
+
 /// Parse Update Tags (the common-phase clientbound packet — javap:
 /// `ClientboundUpdateTagsPacket` = a readMap of { Identifier registry
 /// name -> `TagNetworkSerialization$NetworkPayload` }, each payload a
 /// readMap of { Identifier tag name -> VarInt id list }). Registry
 /// Data is ELEMENTS ONLY — the tags ride THIS packet, and the
 /// client's `handleUpdateTags` feeds them to the registry collector
-/// alongside the elements. Only the `minecraft:timeline` payload is
-/// retained (the one registry whose tags the client consumes today —
-/// the dimension's `timelines` reference narrows through it); every
-/// other registry's tags are walked past.
+/// alongside the elements. The `minecraft:timeline` AND
+/// `minecraft:worldgen/biome` payloads are retained (the two
+/// registries whose tags the client resolves references through —
+/// the dimension's `timelines` reference, and the biome tag
+/// membership the tint/tint-adjacent consumers resolve through);
+/// every other registry's tags are walked past.
 pub fn parse_update_tags(payload: &[u8]) -> Result<RegistryData> {
     let mut c: &[u8] = payload;
     let id = read_varint(&mut c)?;
@@ -656,6 +809,8 @@ pub fn parse_update_tags(payload: &[u8]) -> Result<RegistryData> {
             }
             if registry_name == "minecraft:timeline" {
                 out.timeline_tags.push((tag_name, ids));
+            } else if registry_name == "minecraft:worldgen/biome" {
+                out.biome_tags.push((tag_name, ids));
             }
         }
     }
@@ -839,11 +994,12 @@ pub mod test_support {
     use crate::varint::{write_string, write_varint};
 
     /// A REAL `minecraft:worldgen/biome` registry data packet: ONE entry
-    /// (the named biome, id 0 in the chunk biome palettes), with the
-    /// realistic tag shape (temperature + effects compound) the client
-    /// walks and skips. Mock servers that exercise biome music stream
-    /// this alongside [`registry_packet`] — one truth for the mock
-    /// registries, not hand-duplicated bytes in every mock.
+    /// (the named biome, id 0 in the chunk biome palettes), carrying the
+    /// REAL 26.2 `Biome.NETWORK_CODEC` element shape (climate + effects
+    /// + an `attributes` compound the decode walks past). Mock servers
+    /// that exercise biome music stream this alongside
+    /// [`registry_packet`] — one truth for the mock registries, not
+    /// hand-duplicated bytes in every mock.
     pub fn biome_registry_packet(biome: &str) -> Vec<u8> {
         biome_registry_packet_multi(&[biome])
     }
@@ -854,7 +1010,11 @@ pub mod test_support {
     /// id the chunk biome palettes reference. Mock servers that exercise
     /// dimension crossings stream two entries so the new dimension's
     /// chunks can carry a DIFFERENT biome id (the crossing re-fires the
-    /// music only when the resolved name actually changes).
+    /// music only when the resolved name actually changes). The element
+    /// is the real NETWORK_CODEC shape — required climate, the effects
+    /// compound with its water color, and the optional `attributes`
+    /// compound (the 26.x home of sky/fog/music) riding along to
+    /// exercise the decode's walk-past.
     pub fn biome_registry_packet_multi(names: &[&str]) -> Vec<u8> {
         let mut p = Vec::new();
         write_varint(&mut p, clientbound::REGISTRY_DATA);
@@ -862,15 +1022,9 @@ pub mod test_support {
         write_varint(&mut p, names.len() as i32);
         for biome in names {
             write_string(&mut p, biome);
-            p.push(1); // tag present
-            let tag = Nbt::Compound(vec![
-                ("temperature".into(), Nbt::Float(0.8)),
-                (
-                    "effects".into(),
-                    Nbt::Compound(vec![("fog_color".into(), Nbt::Int(0xC0D8FF))]),
-                ),
-            ]);
-            crate::nbt::write_network_nbt(&tag, &mut p).expect("biome element writes");
+            p.push(1); // tag present — the codec requires the element
+            crate::nbt::write_network_nbt(&real_biome_element(), &mut p)
+                .expect("biome element writes");
         }
         p
     }
@@ -880,8 +1034,8 @@ pub mod test_support {
     /// id, optional network NBT tag }. `dimension` selects between the
     /// decoded `minecraft:dimension_type` registry (overworld -64/384,
     /// nether 0/256 — the vanilla values; the entry tag IS the element)
-    /// and a non-decoded one (biomes, with a richly nested compound
-    /// inside).
+    /// and the decoded `minecraft:worldgen/biome` registry (plains, the
+    /// real NETWORK_CODEC element shape).
     pub fn registry_packet(dimension: bool) -> Vec<u8> {
         let mut p = Vec::new();
         write_varint(&mut p, clientbound::REGISTRY_DATA);
@@ -917,17 +1071,46 @@ pub mod test_support {
             write_string(&mut p, "minecraft:worldgen/biome");
             write_varint(&mut p, 1); // one entry
             write_string(&mut p, "minecraft:plains");
-            p.push(1); // tag present — walked and skipped by the client
-            let plains = Nbt::Compound(vec![
-                ("temperature".into(), Nbt::Float(0.8)),
-                (
-                    "effects".into(),
-                    Nbt::Compound(vec![("fog_color".into(), Nbt::Int(0xC0D8FF))]),
-                ),
-            ]);
-            crate::nbt::write_network_nbt(&plains, &mut p).expect("biome element writes");
+            p.push(1); // tag present — the codec requires the element
+            crate::nbt::write_network_nbt(&real_biome_element(), &mut p)
+                .expect("biome element writes");
         }
         p
+    }
+
+    /// The REAL 26.2 biome element as the `Biome.NETWORK_CODEC` decodes
+    /// it (the plains values): required climate (has_precipitation/
+    /// temperature/downfall), the required effects compound (water_color
+    /// 4159204 = 0x3F76E4 — the vanilla plains water), and the OPTIONAL
+    /// attributes compound with the keys the real overworld biomes
+    /// carry (`minecraft:visual/sky_color`, `minecraft:visual/fog_color`,
+    /// `minecraft:audio/background_music` — the 26.x environment-
+    /// attribute migration's home; the decode walks past them).
+    fn real_biome_element() -> Nbt {
+        Nbt::Compound(vec![
+            ("has_precipitation".into(), Nbt::Byte(1)),
+            ("temperature".into(), Nbt::Float(0.8)),
+            ("downfall".into(), Nbt::Float(0.4)),
+            (
+                "effects".into(),
+                Nbt::Compound(vec![("water_color".into(), Nbt::Int(4_159_204))]),
+            ),
+            (
+                "attributes".into(),
+                Nbt::Compound(vec![
+                    ("minecraft:visual/sky_color".into(), Nbt::Int(7_907_327)),
+                    ("minecraft:visual/fog_color".into(), Nbt::Int(12_638_463)),
+                    (
+                        "minecraft:audio/background_music".into(),
+                        Nbt::Compound(vec![
+                            ("sound".into(), Nbt::String("minecraft:music.game".into())),
+                            ("min_delay".into(), Nbt::Int(12_000)),
+                            ("max_delay".into(), Nbt::Int(24_000)),
+                        ]),
+                    ),
+                ]),
+            ),
+        ])
     }
 
     /// The synced `minecraft:world_clock` registry as real vanilla
@@ -1048,15 +1231,17 @@ pub mod test_support {
         p
     }
 
-    /// An Update Tags packet: TWO registries — `minecraft:timeline`
+    /// An Update Tags packet: THREE registries — `minecraft:timeline`
     /// with the REAL built-in tag contents (in_overworld = the day/
-    /// moon/early_game ids, universal = the villager_schedule id) and
-    /// a walked-past biome tag registry (the shape a real server's
-    /// huge block/biome tag maps ride in).
+    /// moon/early_game ids, universal = the villager_schedule id),
+    /// `minecraft:worldgen/biome` whose tag the client RETAINS (the
+    /// tint consumers' membership table), and a walked-past block tag
+    /// registry (the shape a real server's huge block tag map rides
+    /// in).
     pub fn update_tags_packet() -> Vec<u8> {
         let mut p = Vec::new();
         write_varint(&mut p, clientbound::UPDATE_TAGS);
-        write_varint(&mut p, 2); // two registries
+        write_varint(&mut p, 3); // three registries
         // registry 1: the timeline tags the client retains
         write_string(&mut p, "minecraft:timeline");
         write_varint(&mut p, 2); // two tags
@@ -1068,12 +1253,18 @@ pub mod test_support {
         write_string(&mut p, "minecraft:universal");
         write_varint(&mut p, 1);
         write_varint(&mut p, 3); // villager_schedule
-        // registry 2: walked past (nothing consumes biome tags yet)
+        // registry 2: the biome tags the client retains
         write_string(&mut p, "minecraft:worldgen/biome");
         write_varint(&mut p, 1);
         write_string(&mut p, "minecraft:is_overworld");
         write_varint(&mut p, 1);
         write_varint(&mut p, 0); // plains
+        // registry 3: walked past (nothing consumes block tags)
+        write_string(&mut p, "minecraft:block");
+        write_varint(&mut p, 1);
+        write_string(&mut p, "minecraft:mineable/pickaxe");
+        write_varint(&mut p, 1);
+        write_varint(&mut p, 42);
         p
     }
 }
@@ -1270,13 +1461,23 @@ mod tests {
         );
         assert_eq!(nether.timelines, None, "the nether references no timelines either");
         assert!(data.dimension("minecraft:the_end").is_none());
-        // the biome registry: names RETAINED in arrival order (the id ->
-        // name table the chunk biome palettes resolve through), the tag
-        // walked and skipped without a trailing-bytes error
+        // the biome registry: the element DECODED (the NETWORK_CODEC
+        // climate + effects — plains' real values), the arrival order
+        // still the id table the chunk biome palettes resolve through,
+        // the `attributes` compound walked past without an error
         let biomes = parse_registry_data(&registry_packet(false)).expect("biome parses");
-        assert_eq!(biomes.biomes, vec!["minecraft:plains".to_string()]);
         assert_eq!(biomes.biome_name(0), Some("minecraft:plains"));
         assert_eq!(biomes.biome_name(1), None, "an id the server never streamed");
+        let plains = biomes.biome(0).expect("the one decoded element");
+        assert!(plains.has_precipitation);
+        assert_eq!(plains.temperature, 0.8);
+        assert_eq!(plains.downfall, 0.4);
+        assert_eq!(plains.temperature_modifier, None);
+        assert_eq!(plains.effects.water_color, 4_159_204);
+        assert_eq!(plains.effects.grass_color, None, "plains overrides nothing");
+        assert_eq!(plains.effects.foliage_color, None);
+        assert_eq!(plains.effects.dry_foliage_color, None);
+        assert_eq!(plains.effects.grass_color_modifier, GrassColorModifier::None);
         assert!(biomes.dimension_types.is_empty(), "no dimension knowledge rides along");
         // the world_clock registry: the tagless unit entries land as the
         // arrival-order id table (the Set Time map keys resolve here)
@@ -1379,35 +1580,45 @@ mod tests {
 
     #[test]
     fn biome_registries_retain_the_id_to_name_table_in_arrival_order() {
-        // three entries: the FIRST with no tag (the id slot exists anyway
-        // — arrival order is the network id, tag presence is irrelevant
-        // to the numbering), the second tagged, the third again bare —
-        // all three resolve through their arrival-order ids
+        // three FULL elements in arrival order (every id slot carries
+        // the element its codec requires): the middle one is the real
+        // swamp — the grass_color_modifier "swamp" decode rides along —
+        // and all three resolve through their arrival-order ids
+        let element = |modifier: Option<&str>| {
+            let mut effects = vec![("water_color".into(), Nbt::Int(4_159_204))];
+            if let Some(m) = modifier {
+                effects.push(("grass_color_modifier".into(), Nbt::String(m.into())));
+            }
+            Nbt::Compound(vec![
+                ("has_precipitation".into(), Nbt::Byte(1)),
+                ("temperature".into(), Nbt::Float(0.8)),
+                ("downfall".into(), Nbt::Float(0.4)),
+                ("effects".into(), Nbt::Compound(effects)),
+            ])
+        };
         let mut p = Vec::new();
         write_varint(&mut p, clientbound::REGISTRY_DATA);
         write_string(&mut p, "minecraft:worldgen/biome");
         write_varint(&mut p, 3);
-        write_string(&mut p, "minecraft:the_void");
-        p.push(0); // NO tag — the id slot is still real
-        write_string(&mut p, "minecraft:swamp");
-        p.push(1);
-        let tag = Nbt::Compound(vec![("temperature".into(), Nbt::Float(0.8))]);
-        crate::nbt::write_network_nbt(&tag, &mut p).unwrap();
-        write_string(&mut p, "minecraft:plains");
-        p.push(0);
+        for (name, modifier) in [
+            ("minecraft:the_void", None),
+            ("minecraft:swamp", Some("swamp")),
+            ("minecraft:plains", None),
+        ] {
+            write_string(&mut p, name);
+            p.push(1); // the codec requires the element
+            crate::nbt::write_network_nbt(&element(modifier), &mut p).unwrap();
+        }
         let data = parse_registry_data(&p).expect("three biomes parse");
-        assert_eq!(
-            data.biomes,
-            vec![
-                "minecraft:the_void".to_string(),
-                "minecraft:swamp".to_string(),
-                "minecraft:plains".to_string(),
-            ]
-        );
         assert_eq!(data.biome_name(0), Some("minecraft:the_void"));
         assert_eq!(data.biome_name(1), Some("minecraft:swamp"));
         assert_eq!(data.biome_name(2), Some("minecraft:plains"));
         assert_eq!(data.biome_name(3), None, "past the streamed ids: unknown");
+        assert_eq!(
+            data.biome(1).expect("swamp").effects.grass_color_modifier,
+            GrassColorModifier::Swamp,
+            "the modifier rides the wire name and decodes"
+        );
         // a biome entry with a MALFORMED tag is a hard error, not a
         // silent swallow — the walk must stay strict
         let mut broken = Vec::new();
@@ -1418,6 +1629,15 @@ mod tests {
         broken.push(1);
         broken.extend_from_slice(&[0xFF, 0xFF]); // garbage tag bytes
         assert!(parse_registry_data(&broken).is_err(), "broken tag -> error");
+        // a TAGLESS entry is now the drift it is (the codec requires
+        // climate + effects — vanilla's loader refuses it too)
+        let mut bare = Vec::new();
+        write_varint(&mut bare, clientbound::REGISTRY_DATA);
+        write_string(&mut bare, "minecraft:worldgen/biome");
+        write_varint(&mut bare, 1);
+        write_string(&mut bare, "minecraft:plains");
+        bare.push(0);
+        assert!(parse_registry_data(&bare).is_err(), "tagless element -> error");
         // a LYING count (two entries, one sent) errors the same way
         let mut short = Vec::new();
         write_varint(&mut short, clientbound::REGISTRY_DATA);
@@ -1450,9 +1670,13 @@ mod tests {
                 let nether = registry.dimension("minecraft:the_nether").expect("nether");
                 assert_eq!((nether.min_y, nether.height), (0, 256));
                 // the biome registry rode the same phase: the id -> name
-                // table survives into the play state (the merge path)
-                assert_eq!(registry.biomes, vec!["minecraft:plains".to_string()]);
+                // table survives into the play state (the merge path),
+                // the element's effects decoded with it
                 assert_eq!(registry.biome_name(0), Some("minecraft:plains"));
+                assert_eq!(
+                    registry.biome(0).expect("plains").effects.water_color,
+                    4_159_204
+                );
             }
             other => panic!("expected Joined, got {other:?}"),
         }
@@ -1466,8 +1690,8 @@ mod tests {
 
     #[test]
     fn update_tags_narrow_the_timelines_and_walk_the_rest() {
-        // the common-phase tag payload: only the timeline tags are
-        // retained, the biome registry's payload is walked past
+        // the common-phase tag payload: the timeline AND biome tags are
+        // retained, the block registry's payload is walked past
         let tags = parse_update_tags(&update_tags_packet()).expect("update tags parse");
         assert_eq!(
             tags.timeline_tags,
@@ -1483,6 +1707,19 @@ mod tests {
         );
         assert_eq!(tags.timeline_tag_ids("minecraft:in_the_void"), None);
         assert!(tags.timelines.is_empty(), "tags carry names+ids, never elements");
+        // the biome tags are retained the same way (the tint consumers'
+        // membership table); the block registry's payload is walked past
+        assert_eq!(
+            tags.biome_tags,
+            vec![("minecraft:is_overworld".to_string(), vec![0])]
+        );
+        assert_eq!(
+            tags.biome_tag_ids("minecraft:is_overworld"),
+            Some(&[0][..]),
+            "the plains id the fixture's biome table resolves"
+        );
+        assert_eq!(tags.biome_tag_ids("minecraft:is_forest"), None);
+        assert!(tags.biomes.is_empty(), "tags carry names+ids, never elements");
         // wrong packet id is rejected, not guessed
         let mut wrong = Vec::new();
         write_varint(&mut wrong, 0x99);
@@ -1503,6 +1740,14 @@ mod tests {
         merged.merge(parse_update_tags(&update_tags_packet()).expect("tags"));
         assert_eq!(merged.timelines.len(), 4);
         assert_eq!(merged.timeline_tags.len(), 2);
+        // the biome knowledge merges the same way: the element table AND
+        // the tag payload accumulate into one RegistryData
+        assert_eq!(merged.biome_tags, vec![("minecraft:is_overworld".to_string(), vec![0])]);
+        assert!(merged.biomes.is_empty(), "this flow streamed no biome elements");
+        let mut with_biomes = parse_registry_data(&registry_packet(false)).expect("biomes");
+        with_biomes.merge(merged);
+        assert_eq!(with_biomes.biome_name(0), Some("minecraft:plains"));
+        assert_eq!(with_biomes.biome_tag_ids("minecraft:is_overworld"), Some(&[0][..]));
         // the full chain the model resolves through: tag -> ids ->
         // arrival-order names
         let names: Vec<&str> = merged
