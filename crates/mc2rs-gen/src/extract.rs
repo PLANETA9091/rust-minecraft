@@ -10,7 +10,7 @@ use serde_json::Value;
 use zip::ZipArchive;
 
 /// Read a single file from the jar into memory.
-pub fn read_entry(archive: &mut ZipArchive<std::io::Cursor<&[u8]>>, name: &str) -> Result<Vec<u8>> {
+pub fn read_entry<R: std::io::Read + std::io::Seek>(archive: &mut ZipArchive<R>, name: &str) -> Result<Vec<u8>> {
     let mut f = archive
         .by_name(name)
         .with_context(|| format!("jar entry {name} not found"))?;
@@ -20,7 +20,7 @@ pub fn read_entry(archive: &mut ZipArchive<std::io::Cursor<&[u8]>>, name: &str) 
 }
 
 /// Optionally read a file from the jar.
-pub fn try_read_entry(archive: &mut ZipArchive<std::io::Cursor<&[u8]>>, name: &str) -> Option<Vec<u8>> {
+pub fn try_read_entry<R: std::io::Read + std::io::Seek>(archive: &mut ZipArchive<R>, name: &str) -> Option<Vec<u8>> {
     read_entry(archive, name).ok()
 }
 

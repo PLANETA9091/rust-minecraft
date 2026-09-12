@@ -84,7 +84,7 @@ pub fn generate(bytes: &[u8]) -> Result<SoundData> {
 
 fn f(x: f32) -> String {
     if x == x.trunc() && x.abs() < 1e6 {
-        format!("{}", x as i64)
+        format!("{x:.1}") // keep it a float literal (f32 field)
     } else {
         format!("{x}")
     }

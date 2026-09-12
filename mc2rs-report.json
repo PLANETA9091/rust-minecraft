@@ -1,13 +1,21 @@
 {
+  "biomes": 66,
   "blocks": 1198,
   "classes": 10952,
   "clientSha1": "2dc72797acbc1b63fc16a11c4ac393605f453754",
+  "fontTextures": 3,
+  "glyphs": 2414,
+  "guiSprites": 466,
   "hasLang": true,
   "items": 2074,
+  "langEntries": 8123,
   "netMinecraftClasses": 10372,
+  "noiseSettings": 7,
   "obfuscated": false,
   "obfuscationRatio": 0.0,
+  "soundEvents": 1968,
   "sounds": 0,
+  "splashes": 454,
   "textures": 3855,
   "version": "26.2"
 }

@@ -8,7 +8,7 @@ pub struct SplashData {
     pub lines: Vec<String>,
 }
 
-pub fn generate(archive: &mut zip::ZipArchive<std::io::Cursor<&[u8]>>) -> Result<SplashData> {
+pub fn generate<R: std::io::Read + std::io::Seek>(archive: &mut zip::ZipArchive<R>) -> Result<SplashData> {
     let bytes = read_entry(archive, "assets/minecraft/texts/splashes.txt")?;
     let text = String::from_utf8_lossy(&bytes);
     let lines: Vec<String> = text

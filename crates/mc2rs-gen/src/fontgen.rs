@@ -40,7 +40,7 @@ pub struct FontData {
 }
 
 /// Parse `font/default.json` and every reachable bitmap/space provider.
-pub fn generate(archive: &mut zip::ZipArchive<std::io::Cursor<&[u8]>>) -> Result<FontData> {
+pub fn generate<R: std::io::Read + std::io::Seek>(archive: &mut zip::ZipArchive<R>) -> Result<FontData> {
     let root: Value = serde_json::from_slice(&read_entry(archive, "assets/minecraft/font/default.json")?)
         .context("default.json")?;
     let mut data = FontData::default();
@@ -54,7 +54,7 @@ pub fn generate(archive: &mut zip::ZipArchive<std::io::Cursor<&[u8]>>) -> Result
     Ok(data)
 }
 
-fn load_json(archive: &mut zip::ZipArchive<std::io::Cursor<&[u8]>>, path: &str) -> Result<Value> {
+fn load_json<R: std::io::Read + std::io::Seek>(archive: &mut zip::ZipArchive<R>, path: &str) -> Result<Value> {
     let bytes = read_entry(archive, path).with_context(|| format!("read {path}"))?;
     serde_json::from_slice(&bytes).with_context(|| format!("parse {path}"))
 }
@@ -65,8 +65,8 @@ fn reference_path(id: &str) -> String {
     format!("assets/minecraft/font/{id}.json")
 }
 
-fn walk_provider(
-    archive: &mut zip::ZipArchive<std::io::Cursor<&[u8]>>,
+fn walk_provider<R: std::io::Read + std::io::Seek>(
+    archive: &mut zip::ZipArchive<R>,
     p: &Value,
     data: &mut FontData,
 ) -> Result<()> {
@@ -98,8 +98,8 @@ fn texture_file(file: &str) -> String {
     format!("assets/minecraft/textures/{f}")
 }
 
-fn bitmap_provider(
-    archive: &mut zip::ZipArchive<std::io::Cursor<&[u8]>>,
+fn bitmap_provider<R: std::io::Read + std::io::Seek>(
+    archive: &mut zip::ZipArchive<R>,
     p: &Value,
     data: &mut FontData,
 ) -> Result<()> {
@@ -321,14 +321,14 @@ mod tests {
         assert_eq!(data.glyphs.len(), 3); // A, B, space
         assert_eq!(data.skipped_providers, 0);
 
-        let a = data.glyphs[&'A' as u32].clone();
+        let a = data.glyphs[&(u32::from('A'))].clone();
         assert_eq!(a.gw, 3, "trimmed to rightmost opaque column");
         assert_eq!(a.gh, 8, "cell height 8");
         assert_eq!(a.ascent, 7);
         assert_eq!(a.u, 0);
-        let b = data.glyphs[&'B' as u32].clone();
+        let b = data.glyphs[&(u32::from('B'))].clone();
         assert_eq!(b.gw, 0, "empty glyph");
-        assert_eq!(data.glyphs[&' ' as u32].space_advance, 4);
+        assert_eq!(data.glyphs[&(u32::from(' '))].space_advance, 4);
 
         let emitted = emit(&data).unwrap();
         assert!(emitted.contains("pub fn glyph(ch: char) -> Option<&'static GlyphDef>"));

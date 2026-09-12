@@ -28,7 +28,7 @@ pub struct AssetIndex {
     pub objects: BTreeMap<String, AssetObject>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Clone, Deserialize)]
 pub struct AssetObject {
     pub hash: String,
     pub size: u64,

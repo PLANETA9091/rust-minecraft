@@ -13,7 +13,7 @@ pub struct LangData {
     pub map: BTreeMap<String, String>,
 }
 
-pub fn generate(archive: &mut zip::ZipArchive<std::io::Cursor<&[u8]>>) -> Result<LangData> {
+pub fn generate<R: std::io::Read + std::io::Seek>(archive: &mut zip::ZipArchive<R>) -> Result<LangData> {
     let bytes = read_entry(archive, "assets/minecraft/lang/en_us.json")?;
     let v: Value = serde_json::from_slice(&bytes).context("en_us.json parse")?;
     let obj = v.as_object().context("en_us.json is not an object")?;

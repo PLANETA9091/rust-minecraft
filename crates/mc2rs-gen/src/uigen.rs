@@ -28,7 +28,7 @@ pub struct UiData {
 
 const SPRITES_ROOT: &str = "assets/minecraft/textures/gui/sprites/";
 
-pub fn generate(archive: &mut zip::ZipArchive<std::io::Cursor<&[u8]>>) -> Result<UiData> {
+pub fn generate<R: std::io::Read + std::io::Seek>(archive: &mut zip::ZipArchive<R>) -> Result<UiData> {
     let mut data = UiData::default();
     let names: Vec<String> = archive
         .file_names()

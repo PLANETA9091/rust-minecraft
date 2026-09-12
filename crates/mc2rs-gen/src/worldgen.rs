@@ -40,7 +40,16 @@ fn hex_color(s: &str) -> Option<u32> {
     u32::from_str_radix(s, 16).ok()
 }
 
-pub fn generate(archive: &mut zip::ZipArchive<std::io::Cursor<&[u8]>>) -> Result<WorldgenData> {
+/// Biome colors are integers in vanilla JSON; some packs use "#rrggbb".
+fn color_value(v: Option<&Value>) -> Option<u32> {
+    match v {
+        Some(Value::Number(n)) => n.as_u64().map(|x| x as u32),
+        Some(Value::String(s)) => hex_color(s),
+        _ => None,
+    }
+}
+
+pub fn generate<R: std::io::Read + std::io::Seek>(archive: &mut zip::ZipArchive<R>) -> Result<WorldgenData> {
     let mut data = WorldgenData::default();
     let names: Vec<String> = archive
         .file_names()
@@ -54,12 +63,17 @@ pub fn generate(archive: &mut zip::ZipArchive<std::io::Cursor<&[u8]>>) -> Result
                 if let Ok(v) = serde_json::from_slice::<Value>(&bytes) {
                     let id = rest.trim_end_matches(".json");
                     let fx = |k: &str, d: f32| v.get(k).and_then(Value::as_f64).unwrap_or(d as f64) as f32;
-                    let bx = |k: &str| {
-                        v.get("effects")
-                            .and_then(|e| e.get(k))
-                            .and_then(Value::as_str)
+                    // 26.x layout: display colors moved to attributes["minecraft:visual/*"]
+                    // as "#rrggbb" strings; classic effects.* integers still accepted.
+                    let attrs = || v.get("attributes").and_then(Value::as_object);
+                    let attr_color = |key: &str| {
+                        attrs()
+                            .and_then(|a| a.get(key))
+                            .and_then(|val| val.as_str())
                             .and_then(hex_color)
-                            .unwrap_or(0)
+                    };
+                    let ax = |key: &str, k: &str| {
+                        attr_color(key).or_else(|| color_value(v.get("effects").and_then(|e| e.get(k)))).unwrap_or(0)
                     };
                     data.biomes.insert(
                         id.to_string(),
@@ -68,20 +82,16 @@ pub fn generate(archive: &mut zip::ZipArchive<std::io::Cursor<&[u8]>>) -> Result
                             has_precipitation: v.get("has_precipitation").and_then(Value::as_bool).unwrap_or(true),
                             temperature: fx("temperature", 0.5),
                             downfall: fx("downfall", 0.5),
-                            sky_color: bx("sky_color"),
-                            fog_color: bx("fog_color"),
-                            water_color: bx("water_color"),
-                            water_fog_color: bx("water_fog_color"),
-                            grass_color: v
-                                .get("effects")
-                                .and_then(|e| e.get("grass_color"))
-                                .and_then(Value::as_str)
-                                .and_then(hex_color),
-                            foliage_color: v
-                                .get("effects")
-                                .and_then(|e| e.get("foliage_color"))
-                                .and_then(Value::as_str)
-                                .and_then(hex_color),
+                            sky_color: ax("minecraft:visual/sky_color", "sky_color"),
+                            fog_color: ax("minecraft:visual/fog_color", "fog_color"),
+                            water_color: color_value(v.get("effects").and_then(|e| e.get("water_color"))).unwrap_or(0),
+                            water_fog_color: color_value(v.get("effects").and_then(|e| e.get("water_fog_color"))).unwrap_or(0),
+                            grass_color: color_value(
+                                v.get("effects").and_then(|e| e.get("grass_color")),
+                            ),
+                            foliage_color: color_value(
+                                v.get("effects").and_then(|e| e.get("foliage_color")),
+                            ),
                         },
                     );
                 }
@@ -124,7 +134,7 @@ pub fn emit(data: &WorldgenData) -> Result<String> {
             None => "None".to_string(),
         };
         out.push_str(&format!(
-            "    BiomeDef {{ name: \"{}\", has_precipitation: {}, temperature: {}, downfall: {}, sky_color: {}, fog_color: {}, water_color: {}, water_fog_color: {}, grass_color: {}, foliage_color: {} }},\n",
+            "    BiomeDef {{ name: \"{}\", has_precipitation: {}, temperature: {:?}, downfall: {:?}, sky_color: {}, fog_color: {}, water_color: {}, water_fog_color: {}, grass_color: {}, foliage_color: {} }},\n",
             rust_str(&b.name),
             b.has_precipitation,
             b.temperature,

@@ -139,6 +139,7 @@ fn main() -> Result<()> {
             let idx_bytes = cache.fetch(&agent, &format!("asset-index:{}", ai.sha1.as_deref().unwrap_or(&ai.id)), &ai.url)?;
             util::verify(&idx_bytes, ai.sha1.as_deref(), "asset index")?;
             let index = mc_assets::AssetIndex::parse(&idx_bytes)?;
+            let total_objects = index.object_count();
             let prefixes: Vec<String> = filter
                 .split(',')
                 .map(str::trim)
@@ -152,13 +153,13 @@ fn main() -> Result<()> {
                     .objects
                     .iter()
                     .filter(|(k, _)| prefixes.iter().any(|p| k.starts_with(p.as_str())))
-                    .map(|(k, v)| (k.clone(), v.clone()))
+                    .map(|(k, v)| (k.as_str().to_string(), (*v).clone()))
                     .collect();
                 mc_assets::AssetIndex { map_to_resources: index.map_to_resources, objects }
             };
             println!(
                 "asset index: {} object(s), filter {:?} -> {} to download",
-                index.object_count(),
+                total_objects,
                 prefixes,
                 filtered.object_count()
             );
@@ -236,7 +237,7 @@ fn generate(agent: &ureq::Agent, cache: &util::Cache, version: &str, out: &Path)
     let splashes = splashgen::generate(&mut zip)?;
     let ui = uigen::generate(&mut zip)?;
     let worldgen = worldgen::generate(&mut zip)?;
-    let sounds_json = match fetch_sounds_json(agent, cache, vj) {
+    let sounds_json = match fetch_sounds_json(agent, cache, &vj) {
         Ok(b) => soundgen::generate(&b)?,
         Err(e) => {
             eprintln!("      warning: sounds.json unavailable ({e}); emitting empty sound table");
@@ -250,7 +251,7 @@ fn generate(agent: &ureq::Agent, cache: &util::Cache, version: &str, out: &Path)
         lang.map.len(),
         splashes.lines.len(),
         ui.sprites.len(),
-        sounds.events.len(),
+        sounds_json.events.len(),
         worldgen.biomes.len()
     );
 
