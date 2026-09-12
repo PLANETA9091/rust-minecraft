@@ -60,10 +60,14 @@ hand-drawn:
   raster path as the pixel tests. Decoded columns land in a compact
   client-side **world model** (chunk-keyed storage, vanilla block-index
   queries, replace/unload semantics) with a **materializer** that projects
-  any window of it into the renderer's voxel grid (injectable id mapping —
-  until the bytecode-true global-state table is generated the honest
-  placeholder policy renders unresolved ids as air); the substrate of the
-  in-world view of a network server. The configuration
+  any window of it into the renderer's voxel grid. The id mapping is
+  **bytecode-true and generated**: `mc2rs-gen dump-block-states` boots the
+  official jar's REAL vanilla registry (client jar + official libraries,
+  all sha1-verified, through the checked-in runtime dumper) and emits the
+  global state id table the join mapper resolves through — palette blocks
+  (stone, dirt, grass, logs, leaves, water, sand) render as themselves,
+  blocks the palette has no member for stay truthful air; the substrate
+  of the in-world view of a network server. The configuration
   phase's **Registry Data is decoded**: the project's first retained NBT
   reader/writer pulls the `minecraft:dimension_type` registry (every
   dimension's min_y/height vertical layout) out of the streamed packets

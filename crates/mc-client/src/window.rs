@@ -191,15 +191,16 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize) -> anyhow::Result<()>
                         // the world screen — here on the worker thread
                         // (meshing is the heavy part, the frame thread
                         // only installs the result). The id policy is the
-                        // honest placeholder: no bytecode-true global-
-                        // state table exists yet, so every unresolved id
-                        // renders as air.
+                        // GENERATED table: `mc2rs-gen dump-block-states`
+                        // booted the official registry and emitted the
+                        // bytecode-true global state ids; palette blocks
+                        // resolve, everything else renders as air.
                         let (entity_id, view_distance, chunks) =
                             (snap.info.entity_id, snap.info.view_distance, snap.chunks.len());
                         let world = crate::world_view::materialize_snapshot(
                             snap,
                             crate::screens::WORLD_CHUNKS,
-                            crate::world_view::placeholder_mapper,
+                            crate::world_view::runtime_mapper,
                         );
                         crate::screens::LoginResult::Loaded {
                             username: crate::screens::PLAYER_NAME.to_string(),

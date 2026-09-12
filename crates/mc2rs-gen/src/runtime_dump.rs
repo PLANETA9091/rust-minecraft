@@ -19,7 +19,6 @@
 //! NO Mojang code is read into the repository: only the emitted id/name
 //! structure, the same class of data as the blockstate JSONs.
 
-use std::io::Write;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
@@ -265,7 +264,9 @@ pub fn dump_block_states(
         .with_context(|| format!("run the dumper with {}", java.display()))?;
     if !status.status.success() {
         let err = String::from_utf8_lossy(&status.stderr);
-        bail!("dumper failed:\n{}", err.lines().rev().take(12).rev().collect::<Vec<_>>().join("\n"));
+        let tail: Vec<&str> = err.lines().collect::<Vec<_>>();
+        let tail = &tail[tail.len().saturating_sub(12)..];
+        bail!("dumper failed:\n{}", tail.join("\n"));
     }
     let dump_text = std::fs::read_to_string(&out_txt).context("read dumper output")?;
     println!("[4/4] registry bootstrapped and dumped in {:.1}s", t0.elapsed().as_secs_f32());
@@ -340,8 +341,8 @@ mod tests {
     #[test]
     fn dump_parses_dense_and_collapses_into_block_ranges() {
         let dump = parse_dump(
-            "0|minecraft:air|\n1|minecraft:stone|\n8|minecraft:grass_block|snowy=true\n\
-             9|minecraft:grass_block|snowy=false\n10|minecraft:dirt|\n",
+            "0|minecraft:air|\n1|minecraft:stone|\n2|minecraft:grass_block|snowy=true\n\
+             3|minecraft:grass_block|snowy=false\n4|minecraft:dirt|\n",
         )
         .expect("parses");
         assert_eq!(dump.len(), 5);
@@ -351,8 +352,8 @@ mod tests {
             vec![
                 (0, 1, "minecraft:air"),
                 (1, 2, "minecraft:stone"),
-                (8, 10, "minecraft:grass_block"),
-                (10, 11, "minecraft:dirt"),
+                (2, 4, "minecraft:grass_block"),
+                (4, 5, "minecraft:dirt"),
             ]
         );
         // non-dense input (a gap) is refused — the registry is dense

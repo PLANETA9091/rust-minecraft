@@ -1746,7 +1746,7 @@ mod tests {
         // the exact mapping the window worker performs: facts off the
         // snapshot, then the player-centered window materialized for the
         // world screen (the example mapper — the ids the mock streams;
-        // the GUI's placeholder policy maps every unresolved id to air)
+        // the GUI resolves through the GENERATED registry table)
         let res = mc_protocol::connect_and_join_world(
             &req.host,
             req.port,

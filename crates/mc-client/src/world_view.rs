@@ -11,10 +11,11 @@
 //!
 //! Documented decisions (all deliberate, no silent guesses):
 //! - The global-state-id -> runtime-palette mapping is a REQUIRED caller
-//!   parameter. The project has no bytecode-true numeric id table yet
-//!   (mc-registry carries names, not vanilla's registration-order ids),
-//!   so nothing here bakes in remembered constants — clean-room
-//!   discipline. The future generated table slots in as another mapper.
+//!   parameter. The bytecode-true numeric id table now EXISTS — GENERATED
+//!   by `mc2rs-gen dump-block-states` from the official jar's real
+//!   bootstrapped registry (mc-registry's block_ids) — and `runtime_mapper`
+//!   is the GUI's policy through it; tests inject other mappers freely.
+//!   Nothing bakes in remembered constants.
 //! - The copy is BOTTOM-ANCHORED: grid y 0 is the column's bottom section
 //!   bottom, columns shorter than the grid leave sky above. Placing the
 //!   surface nicely needs the dimension's real vertical layout (min_y /
@@ -23,7 +24,7 @@
 //! - Columns missing from the model stay AIR (the vanilla client would
 //!   still be streaming them — holes are the truthful render).
 
-use crate::world::{World, AIR, CHUNK_X, CHUNK_Y, CHUNK_Z};
+use crate::world::{World, AIR, CHUNK_X, CHUNK_Y, CHUNK_Z, DIRT, GRASS, LEAVES, LOG, SAND, STONE, WATER};
 use crate::world_model::WorldModel;
 use mc_protocol::{PlayerPosition, WorldSnapshot};
 
@@ -105,15 +106,24 @@ pub fn materialize_snapshot(
     materialize(&model, origin, side, mapper)
 }
 
-/// The GUI join path's id policy TODAY: the project has no bytecode-true
-/// global-state-id table yet (mc-registry carries names, not vanilla's
-/// registration-order ids — the generated-table arc is future work), so
-/// every network id is unresolved and the honest render is AIR: the world
-/// screen shows the vanilla sky, celestials and HUD over the truthful
-/// holes until the generated table slots in as the real mapper. Nothing
-/// here bakes in remembered constants.
-pub fn placeholder_mapper(_id: u32) -> u16 {
-    AIR
+/// The REAL id mapper, GENERATED from the official jar's bootstrapped
+/// runtime registry (`mc2rs-gen dump-block-states` -> the block_ids
+/// table): a global state id resolves to its block NAME, and the runtime
+/// palette carries the block when we render it. Ids the palette has no
+/// member for (granite, deepslate, ores, ...) map to AIR — the truthful
+/// holes — until the palette itself grows generated members. Nothing here
+/// is remembered: the table is regenerated from the jar.
+pub fn runtime_mapper(id: u32) -> u16 {
+    match mc_registry::generated::block_ids::block_name_of(id) {
+        Some("minecraft:stone") => STONE,
+        Some("minecraft:dirt") => DIRT,
+        Some("minecraft:grass_block") => GRASS,
+        Some("minecraft:oak_log") => LOG,
+        Some("minecraft:oak_leaves") => LEAVES,
+        Some("minecraft:water") => WATER,
+        Some("minecraft:sand") => SAND,
+        _ => AIR, // air and every block the palette doesn't render yet
+    }
 }
 
 #[cfg(test)]
@@ -167,6 +177,26 @@ mod tests {
             10 => DIRT,
             _ => AIR,
         }
+    }
+
+    #[test]
+    fn runtime_mapper_resolves_through_the_generated_table() {
+        // GENERATED facts from the official 26.2 registry (block_ids.rs):
+        // the real global state ids of the palette blocks
+        assert_eq!(runtime_mapper(0), AIR, "air");
+        assert_eq!(runtime_mapper(1), STONE, "stone = global id 1, generated");
+        assert_eq!(runtime_mapper(9), GRASS, "grass_block snowy=false (its default state)");
+        assert_eq!(runtime_mapper(10), DIRT, "dirt = global id 10, generated");
+        assert_eq!(runtime_mapper(86), WATER, "water level=0");
+        assert_eq!(runtime_mapper(118), SAND);
+        assert_eq!(runtime_mapper(137), LOG, "oak_log axis=y");
+        assert_eq!(runtime_mapper(252), LEAVES);
+        // state details collapse: any state of a palette block maps
+        assert_eq!(runtime_mapper(90), WATER, "water level=4");
+        assert_eq!(runtime_mapper(136), LOG, "oak_log axis=x");
+        // blocks the palette has no member for stay truthful holes
+        assert_eq!(runtime_mapper(2), AIR, "granite renders as air");
+        assert_eq!(runtime_mapper(32_365), AIR, "past the table edge: air");
     }
 
     #[test]
@@ -313,12 +343,11 @@ mod tests {
         assert_eq!(world.chunks_per_side, 5);
         assert_eq!(world.get(32, 0, 32), STONE, "stone of column (3,-2)");
         assert_eq!(world.get(35, 1, 34), DIRT, "dirt at column-local (3,1,2)");
-        // the placeholder policy (the GUI's real one today): every
-        // unresolved id renders as air — the truthful sky world
-        let air_world = materialize_snapshot(join_snapshot(), 5, placeholder_mapper);
-        assert!(air_world
-            .chunks
-            .iter()
-            .all(|c| c.iter().all(|&b| b == AIR)));
+        // the REAL generated mapper resolves the mock's ids too — the
+        // mock's example ids (1=stone, 10=dirt) coincide with the real
+        // registry facts, and the mapper now proves it from the table
+        let real_world = materialize_snapshot(join_snapshot(), 5, runtime_mapper);
+        assert_eq!(real_world.get(32, 0, 32), STONE, "stone through the generated table");
+        assert_eq!(real_world.get(35, 1, 34), DIRT, "dirt through the generated table");
     }
 }

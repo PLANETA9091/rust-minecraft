@@ -56,6 +56,7 @@ pub struct DirectDownload {
 }
 
 #[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct JavaVersion {
     #[serde(default)]
     pub major_version: u32,
