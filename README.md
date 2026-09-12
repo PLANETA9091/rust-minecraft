@@ -93,6 +93,10 @@ hand-drawn:
   `ui.button.click` (fetched, sha1-verified, decoded like the music), on an
   independent one-shot channel that never interrupts the music — the same
   rule as vanilla `AbstractButton.playDownSound`.
+- **In-game music** — entering a world interrupts the menu track and hands
+  the scheduler the `music.game` situation: the full 26.2 overworld pool
+  (32 sha1-verified files, weighted pick, real decoded lengths) with
+  randomized gaps; Save and Quit hands back to the menu situation.
 - **Windowed app** — `--gui` runs the interactive boot chain (mouse + clicks,
   with menu music when built with the audio feature).
 - Text rendering uses the **real bitmap font**: glyph metrics measured from
