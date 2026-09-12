@@ -18,7 +18,7 @@ client for that exact version:
 |---|---|
 | `mc2rs-gen` | The generator CLI. Fetches manifests, downloads official jars, analyzes them, emits generated code. |
 | `mc-registry` | **Generated** from official data: blocks/items registry, the full bitmap font (real glyph metrics from the real font textures), the complete `en_us` language table, all 454 official splashes, the GUI sprite inventory (real sizes + nine-slice borders from `.mcmeta`), the sound-event table (official `sounds.json` via the asset index), biome/worldgen tables, and the block texture atlas (blockstates → models → PNG pixels, first frame, biome tints). |
-| `mc-protocol` | Hand-rolled protocol layer: VarInt/VarLong, packet framing (incl. zlib compression), handshake, **server list ping**, **offline-mode login + the configuration phase** (client information, brand, keep-alive/ping, finish-configuration ack), **play state** — the first real world from the network (world login, keep-alive/ping/teleport/chunk-batch answered, chunk-data decoded into resolved block/biome ids with vanilla palette packing). |
+| `mc-protocol` | Hand-rolled protocol layer: VarInt/VarLong, packet framing (incl. zlib compression), handshake, **server list ping**, **offline-mode login + the configuration phase** (client information, brand, keep-alive/ping, **select-known-packs + cookie replies**, finish-configuration ack), **play state** — the first real world from the network (world login, keep-alive/ping/teleport/chunk-batch answered, chunk-data decoded into resolved block/biome ids with vanilla palette packing). |
 | `mc-assets` | Asset index parsing + parallel downloader (runtime, from official CDN, sha1-verified). |
 | `mc-client` | The client itself: CPU reference renderer (deterministic, pixel-perfect tests), the GUI runtime (boot chain → title → menus) rendering official fonts/sprites/strings, and a windowed fly-camera. |
 | `mc2rs-pixel` | Golden-image pixel diff harness (RMS / heatmap) used by CI. |
@@ -123,7 +123,15 @@ hand-drawn:
   Information** grew a ninth field (particle status) with the view
   distance as a raw BYTE, not a VarInt. The e2e mocks were rebuilt to
   the proven shapes — the self-consistency mask is broken at the
-  payload level too.
+  payload level too. The **configuration probes are now answered**
+  (javap-proven off the 26.2 codec bytecode): **Select Known Packs** —
+  a list of three-STRING KnownPack records (the version is a string,
+  not a VarInt; the serverbound reply capped at 64 by the vanilla's
+  own `list(64)`) — gets the honest EMPTY reply, because the vanilla
+  server BLOCKS on it before finishing configuration (the old
+  wholesale skip stalled a real join for 30 seconds); **Cookie
+  Requests** get the vanilla client's own no-cookie answer (key echoed
+  + the absent nullable payload, `byteArray(5120)` under the flag).
 - **Singleplayer world** — clicking `Singleplayer` enters a live 3D world
   view rendered by the same deterministic CPU raster path as the pixel
   tests: real block textures from the generated atlas, the **official
