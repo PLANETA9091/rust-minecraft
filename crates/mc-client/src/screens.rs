@@ -1568,6 +1568,106 @@ mod tests {
             let resp = conn.read_packet().unwrap();
             let mut c: &[u8] = &resp;
             assert_eq!(read_varint(&mut c).unwrap(), 0x03, "ack finish id");
+            // ---- the play state: the world burst ----
+            use mc_protocol::play::{clientbound, serverbound};
+            let mut login_pkt = Vec::new();
+            write_varint(&mut login_pkt, clientbound::LOGIN);
+            login_pkt.extend_from_slice(&17i32.to_be_bytes()); // entity id
+            login_pkt.push(0); // not hardcore
+            write_varint(&mut login_pkt, 1); // one dimension
+            write_string(&mut login_pkt, "minecraft:overworld");
+            write_varint(&mut login_pkt, 20); // max players
+            write_varint(&mut login_pkt, 8); // view distance
+            write_varint(&mut login_pkt, 8); // simulation distance
+            login_pkt.push(0); // reduced debug
+            login_pkt.push(1); // respawn screen
+            login_pkt.push(0); // limited crafting
+            login_pkt.push(0); // no death location
+            write_varint(&mut login_pkt, 300); // portal cooldown
+            conn.send_packet(&login_pkt).unwrap();
+            let mut cc = Vec::new();
+            write_varint(&mut cc, clientbound::CENTER_CHUNK);
+            write_varint(&mut cc, 3);
+            write_varint(&mut cc, -2);
+            conn.send_packet(&cc).unwrap();
+            // chunk batch start -> the pacing reply MUST arrive
+            let mut bs = Vec::new();
+            write_varint(&mut bs, clientbound::BATCH_START);
+            conn.send_packet(&bs).unwrap();
+            let resp = conn.read_packet().expect("chunk batch received");
+            let mut c: &[u8] = &resp;
+            assert_eq!(
+                read_varint(&mut c).unwrap(),
+                serverbound::CHUNK_BATCH_RECEIVED,
+                "batch reply id"
+            );
+            let pace = f32::from_be_bytes(c[..4].try_into().unwrap());
+            assert!(pace > 0.0, "server must be asked to keep streaming");
+            // the real chunk (section 0): stone at (0,0,0), dirt at (1,2,3)
+            // — the data array carries PALETTE INDICES, not global ids
+            let palette = [0u32, 1, 10]; // air, stone, dirt
+            let idx = |x: usize, y: usize, z: usize| (y << 8) | (z << 4) | x;
+            let mut entries = vec![0u32; 4096];
+            entries[idx(0, 0, 0)] = 1;
+            entries[idx(3, 1, 2)] = 2;
+            let mut buffer = Vec::new();
+            buffer.extend_from_slice(&2i16.to_be_bytes()); // block count
+            buffer.push(5); // bits per entry -> indirect palette
+            write_varint(&mut buffer, palette.len() as i32);
+            for id in palette {
+                write_varint(&mut buffer, id as i32);
+            }
+            buffer.extend_from_slice(&mc_protocol::pack_entries(&entries, 5));
+            buffer.push(0); // biomes: single valued
+            write_varint(&mut buffer, 1);
+            let mut cd = Vec::new();
+            write_varint(&mut cd, clientbound::CHUNK_DATA);
+            cd.extend_from_slice(&3i32.to_be_bytes());
+            cd.extend_from_slice(&(-2i32).to_be_bytes());
+            cd.push(0x0A);
+            cd.push(0x00); // empty heightmaps compound
+            write_varint(&mut cd, buffer.len() as i32);
+            cd.extend_from_slice(&buffer);
+            write_varint(&mut cd, 0); // no block entities
+            cd.extend_from_slice(&[0, 0, 0, 0, 0, 0]); // light masks
+            conn.send_packet(&cd).unwrap();
+            // keep alive -> echo (serverbound play 0x14)
+            let mut kap = Vec::new();
+            write_varint(&mut kap, clientbound::KEEP_ALIVE);
+            kap.extend_from_slice(&(-5_000_000_000i64).to_be_bytes());
+            conn.send_packet(&kap).unwrap();
+            let resp = conn.read_packet().expect("play keep alive echo");
+            let mut c: &[u8] = &resp;
+            assert_eq!(read_varint(&mut c).unwrap(), serverbound::KEEP_ALIVE);
+            assert_eq!(i64::from_be_bytes(c[..8].try_into().unwrap()), -5_000_000_000);
+            // ping -> pong (serverbound play 0x22)
+            let mut pgp = Vec::new();
+            write_varint(&mut pgp, clientbound::PING);
+            pgp.extend_from_slice(&(-7i32).to_be_bytes());
+            conn.send_packet(&pgp).unwrap();
+            let resp = conn.read_packet().expect("play pong");
+            let mut c: &[u8] = &resp;
+            assert_eq!(read_varint(&mut c).unwrap(), serverbound::PONG);
+            assert_eq!(i32::from_be_bytes(c[..4].try_into().unwrap()), -7);
+            // position teleport id 42 -> confirm teleportation (0x00)
+            let mut pos = Vec::new();
+            write_varint(&mut pos, clientbound::SYNCHRONIZE_POSITION);
+            pos.extend_from_slice(&8.5f64.to_be_bytes());
+            pos.extend_from_slice(&64.0f64.to_be_bytes());
+            pos.extend_from_slice(&(-3.25f64).to_be_bytes());
+            pos.extend_from_slice(&90.0f32.to_be_bytes());
+            pos.extend_from_slice(&0.0f32.to_be_bytes());
+            pos.push(0x00); // all values absolute
+            write_varint(&mut pos, 42);
+            conn.send_packet(&pos).unwrap();
+            let resp = conn.read_packet().expect("confirm teleportation");
+            let mut c: &[u8] = &resp;
+            assert_eq!(
+                read_varint(&mut c).unwrap(),
+                serverbound::CONFIRM_TELEPORTATION,
+                "confirm id"
+            );
+            assert_eq!(read_varint(&mut c).unwrap(), 42, "teleport id verbatim");
         });
 
         let mut app = App::new(3);
@@ -1579,18 +1679,22 @@ mod tests {
         let req = app.login_requests[0].clone();
         assert_eq!(req.port, port, "explicit port parsed from the address");
 
-        // the exact mapping the window worker performs
-        let res = mc_protocol::connect_and_join_play(
+        // the exact mapping the window worker performs — the join now
+        // pumps to the world-load milestone
+        let res = mc_protocol::connect_and_join_world(
             &req.host,
             req.port,
             crate::build_info::PROTOCOL_VERSION,
             crate::screens::PLAYER_NAME,
         )
         .map(|out| match out {
-            mc_protocol::PlayOutcome::Joined { username, .. } => {
-                LoginResult::Success { username }
-            }
-            mc_protocol::PlayOutcome::Disconnected { reason } => {
+            mc_protocol::WorldOutcome::Loaded(snap) => LoginResult::Loaded {
+                username: crate::screens::PLAYER_NAME.to_string(),
+                entity_id: snap.info.entity_id,
+                view_distance: snap.info.view_distance,
+                chunks: snap.chunks.len(),
+            },
+            mc_protocol::WorldOutcome::Disconnected { reason } => {
                 LoginResult::Disconnected { reason }
             }
         })
@@ -1600,7 +1704,10 @@ mod tests {
 
         assert_eq!(app.screen, ScreenKind::Disconnect);
         assert_eq!(app.disconnect_title, "Connected");
-        assert_eq!(app.disconnect_reason, "Logged in as mc2rs");
+        assert_eq!(
+            app.disconnect_reason,
+            "Logged in as mc2rs\n1 chunk, view distance 8, entity id 17"
+        );
     }
 
     impl App {

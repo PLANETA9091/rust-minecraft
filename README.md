@@ -48,11 +48,13 @@ hand-drawn:
   **Join runs the real protocol too**: the vanilla ConnectScreen flow — the
   full join arc (handshake, Login Start with the official offline profile
   UUID, Set Compression, Login Success, Login Acknowledged, Client
-  Information + brand, keep-alive/ping probes, Finish Configuration) fires
-  on a worker thread against the selected row, and the outcome lands on the
-  vanilla *Connection Lost* screen with the server's own reason (or the
-  factual connected line once the server accepts the join and the play
-  state begins).
+  Information + brand, keep-alive/ping probes, Finish Configuration, then
+  the **play state**: world info, chunk streaming answered, real chunk
+  data decoded) fires on a worker thread against the selected row and is
+  pumped to the world-load milestone; the outcome lands on the vanilla
+  *Connection Lost* screen with the server's own reason (or the factual
+  connected line carrying the network's real world facts — entity id,
+  view distance, decoded chunk count).
 - **Singleplayer world** — clicking `Singleplayer` enters a live 3D world
   view rendered by the same deterministic CPU raster path as the pixel
   tests: real block textures from the generated atlas, the **official
