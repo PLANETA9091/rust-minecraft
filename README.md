@@ -240,6 +240,20 @@ hand-drawn:
   and only a server with NO world_clock knowledge falls back to the
   first clock in the packet. The e2e mock streams the world_clock
   registry like vanilla does.
+  The **lightmap combine is the shader's own (v0.3.41 — the true
+  additive sum)**: where sky and block light meet at a corner the
+  mesher now computes `get_brightness(sky) * SkyFactor +
+  get_brightness(block)` clamped at 1.0 — the lightmap fragment
+  shader's arithmetic verbatim — instead of the pre-night max() of
+  the two terms. A torch under the night sky is fully bright again
+  (0.24 + brightness(14) clamps to 1.0), a dusk-lit wall next to a
+  lantern glows warmer than either term alone, and the single-layer
+  and sky-15-day corners stay bit-identical (the clamp returns the
+  old max's verdict there). The net golden re-pins the corrected
+  math (old vs new rms 0.363 — the shadow-boundary corners where the
+  smooth average carries both terms; the regenerated golden re-renders
+  at rms 0.000), and the eight legacy goldens are untouched by
+  construction (procedural scenes carry no light layer).
   The **wire ids of every phase are generated**:
   `mc2rs-gen dump-packet-ids` binds the official jar's REAL protocols —
   play, login, configuration, status AND handshake — and dumps each

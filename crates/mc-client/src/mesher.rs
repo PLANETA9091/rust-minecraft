@@ -283,20 +283,20 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                     for (i, &src) in order.iter().enumerate() {
                         let c = FACE_CORNERS[face][src];
                         pts[i] = [wx as f32 + c[0], wy as f32 + c[1], wz as f32 + c[2]];
-                        // The vanilla lightmap shader's combine: the sky
-                        // brightness scaled by the timeline SkyFactor,
-                        // additive with the block brightness — expressed as
-                        // the max of the two terms (the scalar render path's
-                        // documented combine; with one term absent it is
-                        // the other term exactly, and at day factor 1.0 a
-                        // single-layer corner is bit-identical to the old
-                        // level-max math). No known cell -> legacy look.
+                        // The vanilla lightmap shader's combine, VERBATIM
+                        // now: `get_brightness(sky) * SkyFactor +
+                        // get_brightness(block)` — the true additive SUM,
+                        // clamped at 1.0 (the lightmap texture's range).
+                        // With one term absent it is the other term
+                        // exactly; at day factor 1.0 a sky-15 corner is
+                        // bit-identical (1.0 + b clamps back to 1.0, the
+                        // old max's verdict). No known cell -> legacy look.
                         let lm = match clight.as_ref() {
                             Some((sky, block)) => {
                                 let sky_b = sky[src].map(|v| light_brightness(v) * sky_factor);
                                 let block_b = block[src].map(light_brightness);
                                 match (sky_b, block_b) {
-                                    (Some(s), Some(b)) => s.max(b),
+                                    (Some(s), Some(b)) => (s + b).min(1.0),
                                     (Some(s), None) | (None, Some(s)) => s,
                                     (None, None) => 1.0,
                                 }
@@ -489,7 +489,7 @@ mod tests {
     fn sky_factor_scales_only_the_sky_term() {
         // the stone block's top face under full sky: day is the legacy
         // look; the night factor drags the SKY term down the ramp while
-        // the BLOCK term is untouched — the torch wins at night.
+        // the BLOCK term is untouched — and the two SUM, clamped at 1.0.
         let mut w = empty_world();
         put(&mut w, 8, 8, 8, STONE);
         w.light = Some(unknown_light());
@@ -504,14 +504,30 @@ mod tests {
                 "night sky-15 scales the sky term: {m}"
             );
         }
-        // the same night sky over a TORCH-lit cell (block 14): the block
-        // term exceeds the scaled sky term, so the face stays torch-bright
+        // the same night sky over a TORCH-lit cell (block 14): the
+        // ADDITIVE combine sums 0.24 + brightness(14) = 1.0178 and the
+        // lightmap clamps at 1.0 — a torch under the night sky is fully
+        // bright, the vanilla shader's verdict
         set_light(&mut w, Some(15), Some(14), 8, 9, 8);
-        let expect = light_brightness(14.0);
         for m in vertex_multiplier(&top_face(&w)) {
             assert!(
+                (m - 1.0).abs() < 1e-6,
+                "at night the additive torch+sky sum clamps to full: {m}"
+            );
+        }
+        // the sum WITHOUT the clamp: day, sky 12 (brightness 0.5) over
+        // block 10 (brightness 1/3) — max(0.5, 1/3) was 0.5, the true
+        // shader sum is 0.5 + 1/3 = 5/6
+        let mut w3 = empty_world();
+        put(&mut w3, 8, 8, 8, STONE);
+        w3.light = Some(unknown_light());
+        set_light(&mut w3, Some(12), Some(10), 8, 9, 8);
+        let expect = light_brightness(12.0) + light_brightness(10.0);
+        assert!((expect - 5.0 / 6.0).abs() < 1e-6, "ramp sanity: {expect}");
+        for m in vertex_multiplier(&top_face(&w3)) {
+            assert!(
                 (m - expect).abs() < 1e-6,
-                "at night the block term wins over 0.24 sky: {m} vs {expect}"
+                "the combine is the additive sum, not the max: {m} vs {expect}"
             );
         }
         // an unknown sky layer is never scaled into an opinion: a corner
