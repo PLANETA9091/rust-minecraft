@@ -362,9 +362,30 @@ mod tests {
     use mc_protocol::play::clientbound;
     use mc_registry::generated::atlas;
     use mc_protocol::{
-        ChunkColumn, ChunkLight, PlayEvent, RegistryData, SpawnInfo, WorldInfo,
+        BiomeEffects, BiomeEntry, ChunkColumn, ChunkLight, GrassColorModifier, PlayEvent,
+        RegistryData, SpawnInfo, WorldInfo,
         varint::write_varint,
     };
+
+    /// One synced biome element under the mock tables (the real
+    /// NETWORK_CODEC shape, plains' climate — the name is what the
+    /// assertions resolve).
+    fn biome_entry(name: &str) -> BiomeEntry {
+        BiomeEntry {
+            name: name.into(),
+            has_precipitation: true,
+            temperature: 0.8,
+            temperature_modifier: None,
+            downfall: 0.4,
+            effects: BiomeEffects {
+                water_color: 4_159_204,
+                grass_color: None,
+                foliage_color: None,
+                dry_foliage_color: None,
+                grass_color_modifier: GrassColorModifier::None,
+            },
+        }
+    }
 
     /// Decode a section buffer through the REAL parser (the same wire
     /// shape the world_model tests use): stone at (0,0,0), dirt at (3,1,2).
@@ -791,6 +812,7 @@ mod tests {
                 timelines: None,
             }],
             biomes: Vec::new(),
+            biome_tags: Vec::new(),
             world_clocks: Vec::new(),
             timelines: Vec::new(),
             timeline_tags: Vec::new(),
@@ -915,6 +937,7 @@ mod tests {
                 timelines: None,
             }],
             biomes: Vec::new(),
+            biome_tags: Vec::new(),
             world_clocks: Vec::new(),
             timelines: Vec::new(),
             timeline_tags: Vec::new(),
@@ -1021,7 +1044,7 @@ mod tests {
         let mut cells = [0u32; 64];
         cells[6] = 1;
         let mut snap = surface_snapshot();
-        snap.registry.biomes = vec!["minecraft:plains".to_string(), "minecraft:swamp".to_string()];
+        snap.registry.biomes = vec![biome_entry("minecraft:plains"), biome_entry("minecraft:swamp")];
         snap.chunks[0].sections.push(biome_cells_section(&[0, 1], &cells));
         // the one-shot materialize fills the SAME field (the join
         // worker's milestone ship reads it)
@@ -1075,8 +1098,8 @@ mod tests {
         // crimson_forest 1 — and the player's own overworld section
         // (world y 64..79) carries the overworld biome's cells
         snap.registry.biomes = vec![
-            "minecraft:plains".to_string(),
-            "minecraft:crimson_forest".to_string(),
+            biome_entry("minecraft:plains"),
+            biome_entry("minecraft:crimson_forest"),
         ];
         snap.chunks[0]
             .sections

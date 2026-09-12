@@ -1649,6 +1649,112 @@ mod tests {
     }
 
     #[test]
+    fn biome_effects_decode_the_overrides_and_refuse_the_drift() {
+        // the FULL effects surface: all three optional overrides + the
+        // dark_forest modifier (the real dark_forest biome's verdict)
+        let mut p = Vec::new();
+        write_varint(&mut p, clientbound::REGISTRY_DATA);
+        write_string(&mut p, "minecraft:worldgen/biome");
+        write_varint(&mut p, 1);
+        write_string(&mut p, "minecraft:dark_forest");
+        p.push(1);
+        let element = Nbt::Compound(vec![
+            ("has_precipitation".into(), Nbt::Byte(1)),
+            ("temperature".into(), Nbt::Float(0.7)),
+            ("downfall".into(), Nbt::Float(0.8)),
+            (
+                "effects".into(),
+                Nbt::Compound(vec![
+                    ("water_color".into(), Nbt::Int(4_159_204)),
+                    ("grass_color".into(), Nbt::Int(5_066_409)),
+                    ("foliage_color".into(), Nbt::Int(5_066_409)),
+                    ("dry_foliage_color".into(), Nbt::Int(4_683_620)),
+                    ("grass_color_modifier".into(), Nbt::String("dark_forest".into())),
+                ]),
+            ),
+        ]);
+        crate::nbt::write_network_nbt(&element, &mut p).unwrap();
+        let data = parse_registry_data(&p).expect("dark_forest parses");
+        let effects = &data.biome(0).expect("dark_forest").effects;
+        assert_eq!(effects.water_color, 4_159_204);
+        assert_eq!(effects.grass_color, Some(5_066_409));
+        assert_eq!(effects.foliage_color, Some(5_066_409));
+        assert_eq!(effects.dry_foliage_color, Some(4_683_620));
+        assert_eq!(effects.grass_color_modifier, GrassColorModifier::DarkForest);
+        // the "none" name decodes like the absence does (vanilla's
+        // optionalFieldOf default — the SAME verdict)
+        let none_named = {
+            let mut p = Vec::new();
+            write_varint(&mut p, clientbound::REGISTRY_DATA);
+            write_string(&mut p, "minecraft:worldgen/biome");
+            write_varint(&mut p, 1);
+            write_string(&mut p, "minecraft:plains");
+            p.push(1);
+            let element = Nbt::Compound(vec![
+                ("has_precipitation".into(), Nbt::Byte(0)),
+                ("temperature".into(), Nbt::Float(0.5)),
+                ("downfall".into(), Nbt::Float(0.5)),
+                (
+                    "effects".into(),
+                    Nbt::Compound(vec![
+                        ("water_color".into(), Nbt::Int(4_159_204)),
+                        ("grass_color_modifier".into(), Nbt::String("none".into())),
+                    ]),
+                ),
+            ]);
+            crate::nbt::write_network_nbt(&element, &mut p).unwrap();
+            parse_registry_data(&p).expect("none-named parses")
+        };
+        assert_eq!(
+            none_named.biome(0).expect("plains").effects.grass_color_modifier,
+            GrassColorModifier::None
+        );
+        // the DRIFTS, each refused like vanilla's own loader refuses
+        // them: an unknown modifier name, a missing water_color, a
+        // missing effects compound, a missing climate field
+        let build = |effects: Nbt, climate: bool| {
+            let mut fields = vec![("effects".into(), effects)];
+            if climate {
+                fields.push(("has_precipitation".into(), Nbt::Byte(1)));
+                fields.push(("temperature".into(), Nbt::Float(0.5)));
+                fields.push(("downfall".into(), Nbt::Float(0.5)));
+            }
+            let mut p = Vec::new();
+            write_varint(&mut p, clientbound::REGISTRY_DATA);
+            write_string(&mut p, "minecraft:worldgen/biome");
+            write_varint(&mut p, 1);
+            write_string(&mut p, "minecraft:swamp");
+            p.push(1);
+            crate::nbt::write_network_nbt(&Nbt::Compound(fields), &mut p).unwrap();
+            p
+        };
+        let full = || {
+            Nbt::Compound(vec![
+                ("water_color".into(), Nbt::Int(4_159_204)),
+                ("grass_color_modifier".into(), Nbt::String("swamp".into())),
+            ])
+        };
+        let mut unknown = full();
+        if let Nbt::Compound(fields) = &mut unknown {
+            fields[1].1 = Nbt::String("modded_whatever".into());
+        }
+        for (name, effects) in [
+            ("unknown modifier", unknown),
+            ("no water_color", Nbt::Compound(vec![])),
+        ] {
+            assert!(
+                parse_registry_data(&build(effects, true)).is_err(),
+                "{name} -> the drift it is"
+            );
+        }
+        let no_effects = Nbt::Compound(vec![("water_color".into(), Nbt::Int(1))]);
+        assert!(
+            parse_registry_data(&build(no_effects, false)).is_err(),
+            "missing effects + climate -> error"
+        );
+    }
+
+    #[test]
     fn configuration_reaches_the_play_state() {
         let (port, srv) = spawn_join_mock();
         let stream = TcpStream::connect(("127.0.0.1", port)).expect("connect");
@@ -1740,14 +1846,6 @@ mod tests {
         merged.merge(parse_update_tags(&update_tags_packet()).expect("tags"));
         assert_eq!(merged.timelines.len(), 4);
         assert_eq!(merged.timeline_tags.len(), 2);
-        // the biome knowledge merges the same way: the element table AND
-        // the tag payload accumulate into one RegistryData
-        assert_eq!(merged.biome_tags, vec![("minecraft:is_overworld".to_string(), vec![0])]);
-        assert!(merged.biomes.is_empty(), "this flow streamed no biome elements");
-        let mut with_biomes = parse_registry_data(&registry_packet(false)).expect("biomes");
-        with_biomes.merge(merged);
-        assert_eq!(with_biomes.biome_name(0), Some("minecraft:plains"));
-        assert_eq!(with_biomes.biome_tag_ids("minecraft:is_overworld"), Some(&[0][..]));
         // the full chain the model resolves through: tag -> ids ->
         // arrival-order names
         let names: Vec<&str> = merged
@@ -1758,6 +1856,18 @@ mod tests {
             .map(|t| t.name.as_str())
             .collect();
         assert_eq!(names, vec!["minecraft:day", "minecraft:moon", "minecraft:early_game"]);
+        // the biome knowledge merges the same way: the element table AND
+        // the tag payload accumulate into one RegistryData
+        assert_eq!(merged.biome_tags, vec![("minecraft:is_overworld".to_string(), vec![0])]);
+        assert!(merged.biomes.is_empty(), "this flow streamed no biome elements");
+        let mut with_biomes = parse_registry_data(&registry_packet(false)).expect("biomes");
+        with_biomes.merge(merged);
+        assert_eq!(with_biomes.biome_name(0), Some("minecraft:plains"));
+        assert_eq!(
+            with_biomes.biome_tag_ids("minecraft:is_overworld"),
+            Some(&[0][..]),
+            "tag -> ids -> arrival-order names, for biomes too"
+        );
     }
 
     #[test]

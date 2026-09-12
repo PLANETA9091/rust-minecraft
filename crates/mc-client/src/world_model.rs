@@ -441,6 +441,27 @@ mod tests {
     use mc_protocol::DimensionTypeEntry;
     use mc_protocol::SpawnInfo;
     use mc_protocol::varint::write_varint;
+    use mc_protocol::{BiomeEffects, BiomeEntry, GrassColorModifier};
+
+    /// One synced biome element under the mock tables — the real
+    /// NETWORK_CODEC shape with plains' climate (the name is what the
+    /// assertions resolve; the tint fields are the plains defaults).
+    fn biome_entry(name: &str) -> BiomeEntry {
+        BiomeEntry {
+            name: name.into(),
+            has_precipitation: true,
+            temperature: 0.8,
+            temperature_modifier: None,
+            downfall: 0.4,
+            effects: BiomeEffects {
+                water_color: 4_159_204,
+                grass_color: None,
+                foliage_color: None,
+                dry_foliage_color: None,
+                grass_color_modifier: GrassColorModifier::None,
+            },
+        }
+    }
 
     /// One palettized section buffer (the mc-protocol mock shape): stone
     /// at (0,0,0) and dirt at (3,1,2) of the section, via a 5-bit indirect
@@ -611,10 +632,11 @@ mod tests {
             }],
             // the synced biome table: ids 0/1/2, arrival order
             biomes: vec![
-                "minecraft:plains".to_string(),
-                "minecraft:swamp".to_string(),
-                "minecraft:desert".to_string(),
+                biome_entry("minecraft:plains"),
+                biome_entry("minecraft:swamp"),
+                biome_entry("minecraft:desert"),
             ],
+            biome_tags: Vec::new(),
             world_clocks: Vec::new(),
             timelines: Vec::new(),
             timeline_tags: Vec::new(),
@@ -865,6 +887,7 @@ mod tests {
                 },
             ],
             biomes: Vec::new(),
+            biome_tags: Vec::new(),
             // the synced id table: overworld = 0, the_end = 1
             world_clocks: vec!["minecraft:overworld".to_string(), "minecraft:the_end".to_string()],
             timelines: Vec::new(),
@@ -919,6 +942,7 @@ mod tests {
                 timelines: Some("#minecraft:in_overworld".into()),
             }],
             biomes: Vec::new(),
+            biome_tags: Vec::new(),
             world_clocks: vec!["minecraft:overworld".to_string()],
             timelines: vec![
                 // id 0: carries a curve but is NOT in the dimension's
@@ -1045,6 +1069,7 @@ mod tests {
                     timelines: None,
                 }],
                 biomes: Vec::new(),
+                biome_tags: Vec::new(),
                 world_clocks: Vec::new(),
             timelines: Vec::new(),
             timeline_tags: Vec::new(),
@@ -1113,6 +1138,7 @@ mod tests {
                     })
                     .collect(),
                 biomes: Vec::new(),
+                biome_tags: Vec::new(),
                 world_clocks: Vec::new(),
             timelines: Vec::new(),
             timeline_tags: Vec::new(),
@@ -1140,6 +1166,7 @@ mod tests {
                 DimensionTypeEntry { name: "minecraft:the_nether".into(), min_y: 0, height: 256, default_clock: None , timelines: None },
             ],
             biomes: Vec::new(),
+            biome_tags: Vec::new(),
             world_clocks: Vec::new(),
             timelines: Vec::new(),
             timeline_tags: Vec::new(),
