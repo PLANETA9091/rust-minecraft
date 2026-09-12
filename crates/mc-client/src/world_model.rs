@@ -38,7 +38,10 @@
 
 use std::collections::HashMap;
 
-use mc_protocol::{ChunkColumn, ChunkLight, LightData, PlayEvent, PlayerPosition, RegistryData, WorldInfo, WorldSnapshot};
+use mc_protocol::{
+    ChunkColumn, ChunkLight, ClockUpdate, LightData, PlayEvent, PlayerPosition, RegistryData,
+    TimeSync, WorldInfo, WorldSnapshot,
+};
 
 /// The client's view of ONE server world: loaded chunk columns, the
 /// server-declared center chunk, the world's static description and the
@@ -62,6 +65,15 @@ pub struct WorldModel {
     /// decoded (registry key -> min_y/height). `min_y` above resolves
     /// through it once `current_dimension` is pinned.
     pub registry: RegistryData,
+    /// The latest Set Time: the world's monotonic game time (0 until
+    /// the server's first sync).
+    pub game_time: i64,
+    /// The latest Set Time's clock states, keyed by order of arrival
+    /// (a vanilla overworld server syncs its dimension's default
+    /// clock). Multi-clock worlds need the WORLD_CLOCK registry names
+    /// to disambiguate — the first entry serves until that parse
+    /// lands; with NONE the world is honestly at day (no opinion).
+    clocks: Vec<ClockUpdate>,
     columns: HashMap<(i32, i32), ChunkColumn>,
 }
 
@@ -82,6 +94,8 @@ impl WorldModel {
             min_y: None,
             current_dimension: None,
             registry: RegistryData::default(),
+            game_time: 0,
+            clocks: Vec::new(),
             columns: HashMap::new(),
         }
     }
@@ -128,6 +142,11 @@ impl WorldModel {
             }
             PlayEvent::Chunk(col) => {
                 self.columns.insert((col.x, col.z), col);
+                true
+            }
+            PlayEvent::Time(ts) => {
+                self.game_time = ts.game_time;
+                self.clocks = ts.clocks;
                 true
             }
             PlayEvent::Light { x, z, light } => {
@@ -272,6 +291,34 @@ impl WorldModel {
     /// `None` outside the loaded columns, beyond the engine's light
     /// range, or where the server sent nothing — the honest unknown,
     /// never a guess.
+    /// The current dimension's day tick — the synced clock's total
+    /// ticks mod the day timeline's period — or `None` before the
+    /// server's first Set Time (the honest state: no opinion, the
+    /// renderer stays at day). The clock used is the first entry the
+    /// server sent: a vanilla overworld server syncs its dimension's
+    /// default clock, and multi-clock disambiguation needs the
+    /// WORLD_CLOCK registry names (future work).
+    pub fn day_tick(&self) -> Option<i64> {
+        self.clocks
+            .first()
+            .map(|c| c.total_ticks.rem_euclid(crate::timeline::DAY_PERIOD_TICKS))
+    }
+
+    /// The renderer's sky factor for the current clock state — the day
+    /// timeline's `visual/sky_light_factor` at [`WorldModel::day_tick`]
+    /// (jar-extracted keyframes: 1.0 day / 0.24 night). `1.0` before
+    /// any Set Time: the world with no clock opinion is day, and the
+    /// factor multiplies the sky brightness term exactly as the
+    /// vanilla lightmap shader's `SkyFactor` does.
+    pub fn sky_factor(&self) -> f32 {
+        self.day_tick()
+            .map(crate::timeline::sky_light_factor)
+            .unwrap_or(1.0)
+    }
+
+    /// The client's view of ONE server world's light: sky light at a
+    /// world position through the ENGINE-layer grid (see the method
+    /// body for the +1 section convention).
     pub fn sky_light(&self, x: i32, y: i32, z: i32) -> Option<u8> {
         self.light_at(x, y, z, |l| &l.sky)
     }

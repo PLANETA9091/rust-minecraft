@@ -23,6 +23,7 @@ mod raster;
 mod screens;
 mod sky;
 mod textures;
+mod timeline;
 mod world;
 mod world_model;
 mod world_view;

@@ -58,6 +58,12 @@ pub struct World {
     /// procedural scene: the mesher then behaves exactly as it always
     /// did (no light opinion -> the legacy look, bit for bit).
     pub light: Option<LightGrid>,
+    /// The timeline sky factor — the day/night scale applied to the
+    /// SKY brightness term after the vanilla ramp (the proven 26.2
+    /// lightmap shader: `get_brightness(sky) * SkyFactor`). 1.0 = full
+    /// day — the default for every world the server has not yet sent a
+    /// Set Time for (procedural and golden scenes stay day, bit for bit).
+    pub sky_factor: f32,
 }
 
 /// A light cell with no opinion — the server never answered for it
@@ -136,6 +142,7 @@ impl World {
             seed,
             chunks: vec![vec![AIR; CHUNK_X * CHUNK_Y * CHUNK_Z]; chunks_per_side * chunks_per_side],
             light: None, // the procedural scene carries no light layer
+            sky_factor: 1.0, // full day until a server's clock says otherwise
         };
         w.generate();
         w

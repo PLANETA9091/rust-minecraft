@@ -75,7 +75,7 @@ use std::net::TcpStream;
 
 use crate::config::{join_play_conn, PlayOutcome, RegistryData};
 use crate::framing::PacketConn;
-use crate::varint::{read_string, read_varint, write_varint};
+use crate::varint::{read_string, read_varint, read_varlong, write_varint};
 use crate::DEFAULT_TIMEOUT_SECS;
 
 /// Clientbound play packet ids, GENERATED from the official jar's REAL
@@ -92,7 +92,7 @@ pub mod clientbound {
         CB_LEVEL_CHUNK_WITH_LIGHT as CHUNK_DATA, CB_LIGHT_UPDATE as UPDATE_LIGHT,
         CB_LOGIN as LOGIN, CB_PING as PING,
         CB_PLAYER_POSITION as SYNCHRONIZE_POSITION, CB_RESPAWN as RESPAWN,
-        CB_SET_CHUNK_CACHE_CENTER as CENTER_CHUNK,
+        CB_SET_CHUNK_CACHE_CENTER as CENTER_CHUNK, CB_SET_TIME as SET_TIME,
     };
 }
 
@@ -609,6 +609,43 @@ pub fn parse_update_light(payload: &[u8]) -> Result<(i32, i32, ChunkLight)> {
     Ok((x, z, light))
 }
 
+/// Parse Set Time (clientbound play, generated id 113). The javap-proven
+/// 26.2 shape: `LONG gameTime` then `ByteBufCodecs.map(IntFunction,
+/// WorldClock.STREAM_CODEC, ClockNetworkState.STREAM_CODEC)` — a VarInt
+/// count then that many (VarInt clock id, VAR_LONG totalTicks,
+/// FLOAT partialTick, FLOAT rate) entries. The count is validated
+/// against the remaining bytes BEFORE any allocation — each entry is at
+/// least 10 bytes on the wire (min 1-byte VarInt id, 1-byte VarLong,
+/// 4 + 4 floats), so a lying count cannot reserve memory the packet
+/// cannot back.
+pub fn parse_set_time(payload: &[u8]) -> Result<TimeSync> {
+    let mut c: &[u8] = payload;
+    let id = read_varint(&mut c)?;
+    anyhow::ensure!(id == clientbound::SET_TIME, "not a set time packet (0x{id:02X})");
+    let game_time = read_i64(&mut c)?;
+    let count = read_varint(&mut c)?;
+    if count < 0 || count as usize > c.len() / 10 {
+        return Err(anyhow::anyhow!(
+            "absurd clock count {count} for {} remaining bytes",
+            c.len()
+        ));
+    }
+    let mut clocks = Vec::with_capacity(count as usize);
+    for _ in 0..count {
+        let id = read_varint(&mut c)?;
+        let total_ticks = read_varlong(&mut c)?;
+        let partial_tick = read_f32(&mut c)?;
+        let rate = read_f32(&mut c)?;
+        clocks.push(ClockUpdate { id, total_ticks, partial_tick, rate });
+    }
+    anyhow::ensure!(
+        c.is_empty(),
+        "{} trailing bytes after the set time data",
+        c.len()
+    );
+    Ok(TimeSync { game_time, clocks })
+}
+
 /// Read a protocol BitSet: VarInt long count then that many big-endian
 /// longs (javap: `FriendlyByteBuf.readBitSet`). The long count is
 /// validated BEFORE any allocation — a lying VarInt must not reserve
@@ -832,6 +869,40 @@ pub fn encode_play_pong(id: i32) -> Vec<u8> {
 // the session pump
 // ---------------------------------------------------------------------------
 
+/// One clock entry of the Set Time packet (javap of the real 26.2 record:
+/// `ClockNetworkState(long totalTicks, float partialTick, float rate)`,
+/// each field VAR_LONG/FLOAT/FLOAT on the wire). The map KEY is a
+/// `Holder<WorldClock>` — `holderRegistry(WORLD_CLOCK)` — a VarInt
+/// registry id on the wire; the id -> name mapping rides the
+/// configuration Registry Data (the WORLD_CLOCK registry is synced).
+#[derive(Debug, Clone, PartialEq)]
+pub struct ClockUpdate {
+    /// The WORLD_CLOCK registry id of the clock this state belongs to.
+    pub id: i32,
+    /// The clock's total ticks (the overworld clock's day tick is this
+    /// mod the day timeline's 24000 period).
+    pub total_ticks: i64,
+    /// Sub-tick fraction for smooth client-side interpolation.
+    pub partial_tick: f32,
+    /// The clock's tick rate (a paused clock sends rate 0).
+    pub rate: f32,
+}
+
+/// Set Time (clientbound play, generated id 113): the world's game time
+/// plus a map of per-clock states. The 26.2 shape is a REAL protocol
+/// break with the wiki-era `(gameTime, dayTime, doDaylightCycle)` triple
+/// — javap of the actual record proves `LONG gameTime` followed by a
+/// `ByteBufCodecs.map` of `WorldClock` holders to `ClockNetworkState`.
+#[derive(Debug, Clone, PartialEq)]
+pub struct TimeSync {
+    /// The world's monotonic game time (used for daytime mob-spawn and
+    /// other mechanics; NOT the day/night clock).
+    pub game_time: i64,
+    /// One entry per clock the server is syncing (a vanilla overworld
+    /// server sends its dimension's default clock).
+    pub clocks: Vec<ClockUpdate>,
+}
+
 /// One clientbound play packet, handled.
 #[derive(Debug, Clone, PartialEq)]
 pub enum PlayEvent {
@@ -853,6 +924,10 @@ pub enum PlayEvent {
     /// state (the standalone sibling of the chunk packet's tail — the
     /// model replaces the stored light with it).
     Light { x: i32, z: i32, light: ChunkLight },
+    /// Set Time: the world's game time and the synced clocks' states
+    /// (the day/night timeline driver — the renderer's sky factor is a
+    /// pure function of the clock's day tick).
+    Time(TimeSync),
     /// Keep-alive probe answered.
     KeepAlive(i64),
     /// Ping probe answered.
@@ -889,6 +964,7 @@ impl<S: Read + Write> PlaySession<S> {
             clientbound::LOGIN => Ok(PlayEvent::WorldInfo(parse_world_info(&pkt)?)),
             clientbound::RESPAWN => Ok(PlayEvent::Respawn(parse_respawn(&pkt)?)),
             clientbound::CHUNK_DATA => Ok(PlayEvent::Chunk(parse_chunk_data(&pkt)?)),
+            clientbound::SET_TIME => Ok(PlayEvent::Time(parse_set_time(&pkt)?)),
             clientbound::UPDATE_LIGHT => {
                 let (x, z, light) = parse_update_light(&pkt)?;
                 Ok(PlayEvent::Light { x, z, light })
@@ -1155,6 +1231,23 @@ pub mod test_support {
         write_varint(&mut p, x);
         write_varint(&mut p, z);
         p.extend_from_slice(&light_tail(sky, empty_sky, block, empty_block));
+        p
+    }
+
+    /// The Set Time packet (generated id 113): LONG game time, then the
+    /// clock map — per entry VarInt id, VAR_LONG totalTicks, FLOAT
+    /// partialTick, FLOAT rate (the javap-proven 26.2 shape).
+    pub fn set_time_packet(game_time: i64, clocks: &[(i32, i64, f32, f32)]) -> Vec<u8> {
+        let mut p = Vec::new();
+        write_varint(&mut p, clientbound::SET_TIME);
+        p.extend_from_slice(&game_time.to_be_bytes());
+        write_varint(&mut p, clocks.len() as i32);
+        for (id, total, partial, rate) in clocks {
+            write_varint(&mut p, *id);
+            crate::varint::write_varlong(&mut p, *total);
+            p.extend_from_slice(&partial.to_be_bytes());
+            p.extend_from_slice(&rate.to_be_bytes());
+        }
         p
     }
 }
@@ -1688,6 +1781,41 @@ mod tests {
         write_varint(&mut p3, 0); // ...but ZERO sky arrays — the lie
         write_varint(&mut p3, 0);
         assert!(parse_update_light(&p3).is_err());
+    }
+
+    #[test]
+    fn set_time_parses_the_clock_map() {
+        assert_eq!(clientbound::SET_TIME, 113, "set_time (generated id)");
+        let p = test_support::set_time_packet(
+            123_456,
+            &[(0, 18_000, 0.5, 1.0), (1, -2_400, 0.0, 0.0)],
+        );
+        let ts = parse_set_time(&p).unwrap();
+        assert_eq!(ts.game_time, 123_456, "the LONG game time verbatim");
+        assert_eq!(ts.clocks.len(), 2, "VarInt count then that many entries");
+        assert_eq!(
+            ts.clocks[0],
+            ClockUpdate { id: 0, total_ticks: 18_000, partial_tick: 0.5, rate: 1.0 }
+        );
+        assert_eq!(
+            ts.clocks[1],
+            ClockUpdate { id: 1, total_ticks: -2_400, partial_tick: 0.0, rate: 0.0 },
+            "negative total ticks roundtrip through the VarLong"
+        );
+        // trailing bytes after the clock map are drift
+        let mut p2 = test_support::set_time_packet(0, &[]);
+        p2.push(0x00);
+        assert!(parse_set_time(&p2).is_err());
+        // a lying clock count must not reserve memory the packet cannot
+        // back: each entry is >= 10 bytes on the wire, so a count far
+        // above the remaining length is refused BEFORE allocation (the
+        // mock builder cannot lie by construction — hand-rolled here)
+        let mut p3 = Vec::new();
+        write_varint(&mut p3, clientbound::SET_TIME);
+        p3.extend_from_slice(&0i64.to_be_bytes());
+        write_varint(&mut p3, 100_000); // claims 100k entries...
+        // ...but zero entry bytes follow
+        assert!(parse_set_time(&p3).is_err());
     }
 
     /// Mock server: login -> configuration -> play (the FULL vanilla
