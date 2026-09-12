@@ -26,6 +26,10 @@
 //!   section below/above the column). No client-side propagation model
 //!   exists — the network's arrays ARE the truth (the server runs the
 //!   light engine); a local BFS for future local edits is future work.
+//!   The standalone Update Light packet REPLACES a column's light on
+//!   the live wire (the vanilla masks are the engine's full current
+//!   storage for the column) — refused honestly for unloaded columns or
+//!   out-of-range bits, never half-applied.
 //! - The join path is WIRED into the frame loop: the world-load
 //!   milestone's snapshot adopts here and the player-centered window
 //!   materializes into the renderer grid (see `world_view`). A live,
@@ -124,6 +128,38 @@ impl WorldModel {
             }
             PlayEvent::Chunk(col) => {
                 self.columns.insert((col.x, col.z), col);
+                true
+            }
+            PlayEvent::Light { x, z, light } => {
+                let Some(col) = self.columns.get_mut(&(x, z)) else {
+                    // no column — nothing to relight (vanilla: the chunk
+                    // is not loaded; an update for a crossed dimension's
+                    // dead column finds nothing after the Respawn drop)
+                    return false;
+                };
+                let total = col.sections.len() + 2;
+                // strict: a documented slot outside the column's light
+                // range is drift — the WHOLE update is refused and the
+                // old light stays (never a half-applied lie)
+                let fits = |v: &Vec<Option<LightData>>| {
+                    v.iter().enumerate().all(|(i, s)| s.is_none() || i < total)
+                };
+                if !fits(&light.sky) || !fits(&light.block) {
+                    return false;
+                }
+                // full replace: the update carries the column's COMPLETE
+                // light state (the vanilla masks are the engine's full
+                // current storage); slots it never mentions drop to the
+                // honest None
+                let adopt = |v: &Vec<Option<LightData>>| {
+                    (0..total)
+                        .map(|i| v.get(i).cloned().unwrap_or(None))
+                        .collect::<Vec<_>>()
+                };
+                col.light = ChunkLight {
+                    sky: adopt(&light.sky),
+                    block: adopt(&light.block),
+                };
                 true
             }
             PlayEvent::UnloadChunk { x, z } => self.columns.remove(&(x, z)).is_some(),
@@ -593,6 +629,70 @@ mod tests {
             light: ChunkLight::default(),
         }));
         assert_eq!(m.sky_light(112, -64, 112), None, "no light tail in the column");
+    }
+
+    #[test]
+    fn light_update_replaces_the_columns_light_on_the_live_wire() {
+        let mut m = WorldModel::new();
+        m.min_y = Some(-64);
+        // the join column: sky bit 1 data (0x5A in byte 0), bit 2 empty
+        let p = mc_protocol::play::test_support::chunk_packet_with_light(
+            3,
+            -2,
+            &[stone_dirt_section(2)],
+            &[(1, vec![0x5Au8; 2048])],
+            &[2],
+            &[],
+            &[],
+        );
+        m.apply(PlayEvent::Chunk(
+            mc_protocol::play::parse_chunk_data(&p).expect("chunk parses"),
+        ));
+        assert_eq!(m.sky_light(48, -64, -32), Some(10));
+        assert_eq!(m.sky_light(48, -48, -32), Some(0), "bit 2 is Empty");
+        assert_eq!(m.sky_light(48, -80, -32), None, "bit 0 unmentioned");
+        // an update re-sends the column's COMPLETE light state: bit 1
+        // full-bright, bit 0 marked Empty, bit 2 UNMENTIONED (drops to
+        // the honest None — the vanilla masks are the engine's full
+        // current storage, not a delta)
+        let mut arr = vec![0u8; 2048];
+        arr[0] = 0xFF;
+        let up = mc_protocol::play::test_support::update_light_packet(
+            3,
+            -2,
+            &[(1, arr)],
+            &[0],
+            &[],
+            &[],
+        );
+        let (ux, uz, ulight) = mc_protocol::play::parse_update_light(&up).unwrap();
+        assert_eq!((ux, uz), (3, -2));
+        assert!(m.apply(PlayEvent::Light { x: ux, z: uz, light: ulight }));
+        assert_eq!(m.sky_light(48, -64, -32), Some(15), "the update's array wins");
+        assert_eq!(m.sky_light(48, -80, -32), Some(0), "bit 0 is Empty now");
+        assert_eq!(m.sky_light(48, -48, -32), None, "unmentioned -> the honest None");
+        // an update for a column that never landed is refused
+        let up2 = mc_protocol::play::test_support::update_light_packet(9, 9, &[], &[], &[], &[]);
+        let (_, _, l2) = mc_protocol::play::parse_update_light(&up2).unwrap();
+        assert!(!m.apply(PlayEvent::Light { x: 9, z: 9, light: l2 }));
+        // a documented bit outside the column's light range is drift:
+        // the WHOLE update is refused, the old light survives intact
+        let mut arr3 = vec![0u8; 2048];
+        arr3[0] = 0xEE;
+        let up3 = mc_protocol::play::test_support::update_light_packet(
+            3,
+            -2,
+            &[(7, arr3)], // a 1-section column spans light bits 0..=2
+            &[],
+            &[],
+            &[],
+        );
+        let (_, _, l3) = mc_protocol::play::parse_update_light(&up3).unwrap();
+        assert!(
+            !m.apply(PlayEvent::Light { x: 3, z: -2, light: l3 }),
+            "out-of-range bit refused"
+        );
+        assert_eq!(m.sky_light(48, -64, -32), Some(15), "the old light intact");
     }
 
     #[test]

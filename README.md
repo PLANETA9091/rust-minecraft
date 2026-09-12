@@ -154,7 +154,16 @@ hand-drawn:
   honestly answers 0, an unmentioned layer the honest None; the even
   nibble index lives in the low half-byte (javap-pinned DataLayer
   convention). The renderer wiring (cave darkness under the sky layer)
-  is the next step; no pixel changed here.
+  is the next step; no pixel changed here. The **standalone Update
+  Light packet (generated id 48) rides the live wire too** (the sixth
+  javap check — the real constructor reads VarInt chunk X/Z, NOT the
+  chunk packet's Ints, then the exact same light data): the pump
+  dispatches it, and the model REPLACES the stored column's light —
+  refused honestly for unloaded columns or out-of-range mask bits,
+  never half-applied (the vanilla masks are the engine's full current
+  storage for the column, so unmentioned sections drop to the honest
+  None); the live e2e grew the leg (chunk → teleport → light update →
+  disconnect, eight pump steps).
   The **wire ids of every phase are generated**:
   `mc2rs-gen dump-packet-ids` binds the official jar's REAL protocols —
   play, login, configuration, status AND handshake — and dumps each

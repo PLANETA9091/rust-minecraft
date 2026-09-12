@@ -53,6 +53,10 @@
 //!   9..=15 direct; biomes 0 = single, 1..=3 indirect, 4..=15 direct.
 //!   Decoded arrays are fully RESOLVED global ids (flat Vec<u32>) —
 //!   compact client-side storage is the future mesher's concern.
+//! - Update Light (clientbound: generated id 48): VarInt chunk X/Z
+//!   (NOT the chunk packet's Ints) + the SAME light tail — the
+//!   standalone sibling, the column's full-replace light state on the
+//!   live wire (see `parse_update_light`).
 //! - Set Center Chunk (clientbound: generated id 94): VarInt chunk X/Z.
 //! - Unload Chunk (clientbound: generated id 37): Long ((z << 32) | (x & 0xFFFFFFFF)).
 //! - Keep Alive (clientbound: generated id 44 / serverbound: generated id 28): i64 verbatim.
@@ -85,7 +89,8 @@ pub mod clientbound {
     pub use crate::generated::packet_ids::{
         CB_CHUNK_BATCH_START as BATCH_START, CB_DISCONNECT as DISCONNECT,
         CB_FORGET_LEVEL_CHUNK as UNLOAD_CHUNK, CB_KEEP_ALIVE as KEEP_ALIVE,
-        CB_LEVEL_CHUNK_WITH_LIGHT as CHUNK_DATA, CB_LOGIN as LOGIN, CB_PING as PING,
+        CB_LEVEL_CHUNK_WITH_LIGHT as CHUNK_DATA, CB_LIGHT_UPDATE as UPDATE_LIGHT,
+        CB_LOGIN as LOGIN, CB_PING as PING,
         CB_PLAYER_POSITION as SYNCHRONIZE_POSITION, CB_RESPAWN as RESPAWN,
         CB_SET_CHUNK_CACHE_CENTER as CENTER_CHUNK,
     };
@@ -530,25 +535,78 @@ pub fn parse_chunk_data(payload: &[u8]) -> Result<ChunkColumn> {
         let _ty = read_varint(&mut rest)?;
         skip_network_nbt(&mut rest)?;
     }
-    // the light tail: four BitSets, then the sky array list, then the
-    // block array list (javap read order: skyYMask, blockYMask,
-    // emptySkyYMask, emptyBlockYMask, skyUpdates, blockUpdates)
-    let sky_mask = read_bitset(&mut rest)?;
-    let block_mask = read_bitset(&mut rest)?;
-    let empty_sky_mask = read_bitset(&mut rest)?;
-    let empty_block_mask = read_bitset(&mut rest)?;
-    let total = sections.len() + 2; // +1 below, +1 above (getLightSectionCount)
-    let mut light = ChunkLight::default();
-    light.sky = parse_light_arrays(&mut rest, &sky_mask, total, "sky light")?;
-    light.block = parse_light_arrays(&mut rest, &block_mask, total, "block light")?;
-    apply_empty_mask(&mut light.sky, &empty_sky_mask, total, "sky light")?;
-    apply_empty_mask(&mut light.block, &empty_block_mask, total, "block light")?;
+    // the light tail — javap-proven 26.2 shape (four BitSets, then the
+    // sky array list, then the block array list; everything after the
+    // block entities IS light data, and it is the packet's end), shared
+    // with the standalone Update Light packet
+    let mut light = parse_light_tail(&mut rest, Some(sections.len() + 2))?;
     anyhow::ensure!(
         rest.is_empty(),
         "{} trailing bytes after the chunk light data",
         rest.len()
     );
     Ok(ChunkColumn { x, z, sections, light })
+}
+
+/// The light tail shared by Chunk Data and the standalone Update Light
+/// (javap: both carry the exact same `ClientboundLightUpdatePacketData`):
+/// four BitSets (sky/block lit masks + empty masks), then the sky array
+/// list, then the block list. `total` is the column's light-section
+/// count when the caller knows it (the chunk packet: sections + 2);
+/// `None` (the standalone packet — the wire carries no world height
+/// there) sizes the result to the masks' own span, where the range
+/// checks below pass vacuously and the MODEL validates the bits against
+/// its stored column.
+fn parse_light_tail(r: &mut &[u8], total: Option<usize>) -> Result<ChunkLight> {
+    let sky_mask = read_bitset(r)?;
+    let block_mask = read_bitset(r)?;
+    let empty_sky_mask = read_bitset(r)?;
+    let empty_block_mask = read_bitset(r)?;
+    let size = total.unwrap_or_else(|| {
+        light_span(&[&sky_mask, &block_mask, &empty_sky_mask, &empty_block_mask])
+    });
+    let mut light = ChunkLight::default();
+    light.sky = parse_light_arrays(r, &sky_mask, size, "sky light")?;
+    light.block = parse_light_arrays(r, &block_mask, size, "block light")?;
+    apply_empty_mask(&mut light.sky, &empty_sky_mask, size, "sky light")?;
+    apply_empty_mask(&mut light.block, &empty_block_mask, size, "block light")?;
+    Ok(light)
+}
+
+/// The span (max documented bit + 1) across a set of masks — the
+/// standalone Update Light parser's section count.
+fn light_span(masks: &[&[u64]]) -> usize {
+    masks
+        .iter()
+        .flat_map(|m| bitset_bits(m))
+        .max()
+        .map_or(0, |b| b + 1)
+}
+
+/// Parse Update Light (clientbound: generated id 48) — the standalone
+/// sibling of the chunk packet's light tail: VarInt chunk X/Z (VarInts
+/// here, NOT the chunk packet's Ints — javap of the real constructor)
+/// followed by the SAME light data. The update carries the column's
+/// COMPLETE light state (the vanilla writer serializes the engine's
+/// current storage), so the model REPLACES the stored light with it;
+/// the model also validates the mask bits against the column's real
+/// range — the wire has no world height for that check.
+pub fn parse_update_light(payload: &[u8]) -> Result<(i32, i32, ChunkLight)> {
+    let mut c: &[u8] = payload;
+    let id = read_varint(&mut c)?;
+    anyhow::ensure!(
+        id == clientbound::UPDATE_LIGHT,
+        "not an update light packet (0x{id:02X})"
+    );
+    let x = read_varint(&mut c)?;
+    let z = read_varint(&mut c)?;
+    let light = parse_light_tail(&mut c, None)?;
+    anyhow::ensure!(
+        c.is_empty(),
+        "{} trailing bytes after the update light data",
+        c.len()
+    );
+    Ok((x, z, light))
 }
 
 /// Read a protocol BitSet: VarInt long count then that many big-endian
@@ -791,6 +849,10 @@ pub enum PlayEvent {
     /// Respawn: a dimension change (the spawn info carries the new
     /// dimension; the model re-pins min_y from the registry).
     Respawn(SpawnInfo),
+    /// Update Light: the server re-sent a column's COMPLETE light
+    /// state (the standalone sibling of the chunk packet's tail — the
+    /// model replaces the stored light with it).
+    Light { x: i32, z: i32, light: ChunkLight },
     /// Keep-alive probe answered.
     KeepAlive(i64),
     /// Ping probe answered.
@@ -827,6 +889,10 @@ impl<S: Read + Write> PlaySession<S> {
             clientbound::LOGIN => Ok(PlayEvent::WorldInfo(parse_world_info(&pkt)?)),
             clientbound::RESPAWN => Ok(PlayEvent::Respawn(parse_respawn(&pkt)?)),
             clientbound::CHUNK_DATA => Ok(PlayEvent::Chunk(parse_chunk_data(&pkt)?)),
+            clientbound::UPDATE_LIGHT => {
+                let (x, z, light) = parse_update_light(&pkt)?;
+                Ok(PlayEvent::Light { x, z, light })
+            }
             clientbound::KEEP_ALIVE => {
                 let probe = parse_play_keep_alive(&pkt)?;
                 self.conn.send_packet(&encode_play_keep_alive_response(probe))?;
@@ -1003,37 +1069,19 @@ pub mod test_support {
     use super::clientbound;
     use crate::varint::write_varint;
 
-    /// One full Chunk Data packet: chunk coords, an empty heightmaps
-    /// compound, the section buffers back to back, no block entities,
-    /// then the javap-proven light tail. `sky`/`block` map LIGHT-SECTION
-    /// bits (0 = one section below the column, 1..=sections.len() the
-    /// column's own sections, sections.len()+1 one above) to their
-    /// 2048-byte nibble arrays; `empty_sky`/`empty_block` mark
-    /// known-zero bits. The lit masks derive from the maps, so the
+    /// The javap-proven light tail shared by both packet shapes: four
+    /// BitSets (sky/block lit + empty masks) then the sky array list,
+    /// then the block list. The lit masks derive from the maps, so the
     /// vanilla writer's count == popcount invariant holds by
     /// construction (lying packets are built by hand in the error
     /// tests, never here).
-    pub fn chunk_packet_with_light(
-        x: i32,
-        z: i32,
-        sections: &[Vec<u8>],
+    pub fn light_tail(
         sky: &[(usize, Vec<u8>)],
         empty_sky: &[usize],
         block: &[(usize, Vec<u8>)],
         empty_block: &[usize],
     ) -> Vec<u8> {
         let mut p = Vec::new();
-        write_varint(&mut p, clientbound::CHUNK_DATA);
-        p.extend_from_slice(&x.to_be_bytes());
-        p.extend_from_slice(&z.to_be_bytes());
-        p.push(0x0A);
-        p.push(0x00); // empty heightmaps compound
-        let buffer_len: usize = sections.iter().map(|s| s.len()).sum();
-        write_varint(&mut p, buffer_len as i32);
-        for s in sections {
-            p.extend_from_slice(s);
-        }
-        write_varint(&mut p, 0); // no block entities
         let write_mask = |p: &mut Vec<u8>, bits: &[usize]| {
             write_varint(p, 1); // one mask long (fixtures are far below 64 sections)
             let mut long = 0u64;
@@ -1057,6 +1105,56 @@ pub mod test_support {
         };
         write_arrays(&mut p, sky);
         write_arrays(&mut p, block);
+        p
+    }
+
+    /// One full Chunk Data packet: chunk coords, an empty heightmaps
+    /// compound, the section buffers back to back, no block entities,
+    /// then the light tail. `sky`/`block` map LIGHT-SECTION bits (0 =
+    /// one section below the column, 1..=sections.len() the column's
+    /// own sections, sections.len()+1 one above) to their 2048-byte
+    /// nibble arrays; `empty_sky`/`empty_block` mark known-zero bits.
+    pub fn chunk_packet_with_light(
+        x: i32,
+        z: i32,
+        sections: &[Vec<u8>],
+        sky: &[(usize, Vec<u8>)],
+        empty_sky: &[usize],
+        block: &[(usize, Vec<u8>)],
+        empty_block: &[usize],
+    ) -> Vec<u8> {
+        let mut p = Vec::new();
+        write_varint(&mut p, clientbound::CHUNK_DATA);
+        p.extend_from_slice(&x.to_be_bytes());
+        p.extend_from_slice(&z.to_be_bytes());
+        p.push(0x0A);
+        p.push(0x00); // empty heightmaps compound
+        let buffer_len: usize = sections.iter().map(|s| s.len()).sum();
+        write_varint(&mut p, buffer_len as i32);
+        for s in sections {
+            p.extend_from_slice(s);
+        }
+        write_varint(&mut p, 0); // no block entities
+        p.extend_from_slice(&light_tail(sky, empty_sky, block, empty_block));
+        p
+    }
+
+    /// The standalone Update Light packet (generated id 48): VarInt
+    /// chunk X/Z — NOT the chunk packet's Ints, javap of the real
+    /// constructor — followed by the SAME light tail.
+    pub fn update_light_packet(
+        x: i32,
+        z: i32,
+        sky: &[(usize, Vec<u8>)],
+        empty_sky: &[usize],
+        block: &[(usize, Vec<u8>)],
+        empty_block: &[usize],
+    ) -> Vec<u8> {
+        let mut p = Vec::new();
+        write_varint(&mut p, clientbound::UPDATE_LIGHT);
+        write_varint(&mut p, x);
+        write_varint(&mut p, z);
+        p.extend_from_slice(&light_tail(sky, empty_sky, block, empty_block));
         p
     }
 }
@@ -1550,6 +1648,48 @@ mod tests {
         assert!(parse_chunk_data(&one_section_packet(&t)).is_err());
     }
 
+    #[test]
+    fn update_light_parses_the_standalone_tail() {
+        assert_eq!(clientbound::UPDATE_LIGHT, 48, "light_update (generated id)");
+        let p = test_support::update_light_packet(
+            3,
+            -2,
+            &[(1, vec![0x5Au8; 2048])],
+            &[2],
+            &[],
+            &[],
+        );
+        let (x, z, light) = parse_update_light(&p).unwrap();
+        assert_eq!((x, z), (3, -2), "VarInt coords, not the chunk packet's Ints");
+        assert_eq!(
+            light.sky.len(),
+            3,
+            "no world height on this wire: sized to the masks' own span (max bit 2 + 1)"
+        );
+        assert_eq!(light.sky[1], Some(LightData::Data(vec![0x5Au8; 2048])));
+        assert_eq!(light.sky[2], Some(LightData::Empty));
+        assert_eq!(light.block.len(), 3, "both layers span the same masks");
+        assert_eq!(light.block[1], None, "the block layer carries nothing here");
+        // trailing bytes after the standalone tail are drift
+        let mut p2 = test_support::update_light_packet(0, 0, &[], &[], &[], &[]);
+        p2.push(0x00);
+        assert!(parse_update_light(&p2).is_err());
+        // a lying array count fails on the standalone wire too (the mock
+        // builder cannot lie by construction — hand-rolled here)
+        let mut p3 = Vec::new();
+        write_varint(&mut p3, clientbound::UPDATE_LIGHT);
+        write_varint(&mut p3, 0);
+        write_varint(&mut p3, 0);
+        for mask in [0b10u64, 0, 0, 0] {
+            // sky bit 1 lit...
+            write_varint(&mut p3, 1);
+            p3.extend_from_slice(&mask.to_be_bytes());
+        }
+        write_varint(&mut p3, 0); // ...but ZERO sky arrays — the lie
+        write_varint(&mut p3, 0);
+        assert!(parse_update_light(&p3).is_err());
+    }
+
     /// Mock server: login -> configuration -> play (the FULL vanilla
     /// arc), then a real world burst: login, center chunk, chunk batch,
     /// chunk data, keep-alive, ping, junk, unload, position teleport.
@@ -1835,6 +1975,21 @@ mod tests {
             let mut c: &[u8] = &resp;
             assert_eq!(read_varint(&mut c).unwrap(), serverbound::CONFIRM_TELEPORTATION);
             assert_eq!(read_varint(&mut c).unwrap(), 44, "nether teleport id verbatim");
+            // ---- the LIGHT UPDATE leg: the engine's live correction —
+            // the standalone packet (VarInt coords + the SAME light
+            // tail) for the nether's own column, its section going
+            // full-bright
+            let mut ul = Vec::new();
+            write_varint(&mut ul, clientbound::UPDATE_LIGHT);
+            write_varint(&mut ul, 0); // chunk x
+            write_varint(&mut ul, 0); // chunk z
+            ul.extend_from_slice(&test_support::light_tail(
+                &[(1, vec![0xFFu8; 2048])],
+                &[],
+                &[],
+                &[],
+            ));
+            srv.send_packet(&ul).unwrap();
             // the server ends the session with a play disconnect: the live
             // caller surfaces the reason instead of an io error
             let mut d2 = Vec::new();
@@ -1963,7 +2118,20 @@ mod tests {
                     }
                     other => panic!("expected Position, got {other:?}"),
                 }
-                // 7) the server's play disconnect surfaces with its reason
+                // 7) THE LIGHT UPDATE: the standalone packet rides the
+                // same live wire — VarInt coords + the shared tail
+                match session.pump().expect("live light update") {
+                    PlayEvent::Light { x, z, light } => {
+                        assert_eq!((x, z), (0, 0));
+                        assert_eq!(light.sky.len(), 2, "span from the masks (max bit 1)");
+                        assert!(
+                            matches!(&light.sky[1], Some(LightData::Data(a)) if a[0] == 0xFF),
+                            "the nether column's section went full-bright"
+                        );
+                    }
+                    other => panic!("expected Light, got {other:?}"),
+                }
+                // 8) the server's play disconnect surfaces with its reason
                 match session.pump().expect("live disconnect") {
                     PlayEvent::Disconnected { reason } => assert_eq!(reason, "Time"),
                     other => panic!("expected Disconnected, got {other:?}"),
