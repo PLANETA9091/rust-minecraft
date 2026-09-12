@@ -81,9 +81,16 @@ hand-drawn:
   Back to Game / Options... / Save and Quit to Title, all official strings
   and widgets; Escape toggles it in `--gui` (`--screen pause`).
 - **Options** — `Options` screen with volume/FOV controls (`--screen options`).
-- **Music scheduler** — the vanilla menu-music behavior (play `music.menu`
-  track → random delay → next) driven by the official `sounds.json` tables.
-- **Windowed app** — `--gui` runs the interactive boot chain (mouse + clicks).
+- **Music, generated — and now audible** — the vanilla menu-music behavior
+  (weighted-random file from `music.menu` → play → random delay → next),
+  driven by the official `sounds.json` tables. `mc2rs-gen` fetches the real
+  26.2 menu pool (9 sha1-verified .ogg files — the five `music/game` tracks
+  the menu event mixes in plus the four classics) through the asset index;
+  symphonia decodes those exact bytes, the scheduler gets the REAL per-file
+  lengths, and playback goes through rodio behind `--features audio`
+  (deterministic silent backend everywhere else — CI has no speakers).
+- **Windowed app** — `--gui` runs the interactive boot chain (mouse + clicks,
+  with menu music when built with the audio feature).
 - Text rendering uses the **real bitmap font**: glyph metrics measured from
   the official font textures with the vanilla trim rule, `§`-color codes and
   1px shadow, exactly like the original renderer.
