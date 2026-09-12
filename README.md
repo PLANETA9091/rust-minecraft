@@ -94,9 +94,13 @@ hand-drawn:
   independent one-shot channel that never interrupts the music — the same
   rule as vanilla `AbstractButton.playDownSound`.
 - **In-game music** — entering a world interrupts the menu track and hands
-  the scheduler the `music.game` situation: the full 26.2 overworld pool
-  (32 sha1-verified files, weighted pick, real decoded lengths) with
-  randomized gaps; Save and Quit hands back to the menu situation.
+  the scheduler the spawn biome's official background-music situation
+  (`attributes["minecraft:audio/background_music"]` of the real
+  `data/minecraft/worldgen/biome/*.json`): biome-specific pools
+  (`music.overworld.*`, `music.nether.*`, …) with their REAL 12000–24000
+  delay bounds, the vanilla `music.game` default for biomes without an
+  entry (32 sha1-verified files, weighted pick, real decoded lengths);
+  Save and Quit hands back to the menu situation.
 - **Windowed app** — `--gui` runs the interactive boot chain (mouse + clicks,
   with menu music when built with the audio feature).
 - Text rendering uses the **real bitmap font**: glyph metrics measured from

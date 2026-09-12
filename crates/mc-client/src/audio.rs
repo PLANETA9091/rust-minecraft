@@ -664,9 +664,11 @@ mod tests {
         loop {
             match app.music.state() {
                 crate::music::MusicState::Playing(t, _, _) => {
-                    assert!(
-                        t.starts_with("music.overworld.swamp#"),
-                        "the biome situation must play its own pool, got {t}"
+                    // Playing stores the EVENT id; the picked FILE appears
+                    // in the event log ("play music.overworld.swamp#<i>")
+                    assert_eq!(
+                        *t, "music.overworld.swamp",
+                        "the biome situation must play its own pool"
                     );
                     break;
                 }

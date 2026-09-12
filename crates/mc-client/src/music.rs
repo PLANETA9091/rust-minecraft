@@ -357,9 +357,7 @@ mod tests {
         // ...and game music waits out its randomized delay (official bounds:
         // 12000–24000 in 26.2)
         assert!(matches!(s.state(), MusicState::Delay(_)), "{:?}", s.state());
-        for _ in 0..(GAME_MAX_DELAY_TICKS + 1) {
-            s.update();
-        }
+        wait_for_play(&mut s, 30_000);
         match s.state() {
             MusicState::Playing(t, _, _) => assert!(
                 t.starts_with("music.game"),
@@ -373,9 +371,7 @@ mod tests {
     fn returning_to_title_plays_menu_again() {
         let mut s = MusicScheduler::new(42);
         s.on_world_enter();
-        for _ in 0..(GAME_MAX_DELAY_TICKS + 1) {
-            s.update();
-        }
+        wait_for_play(&mut s, 30_000);
         assert!(matches!(s.state(), MusicState::Playing(t, _, _) if t.starts_with("music.game")));
         let stops_before = s.events.iter().filter(|e| e.starts_with("stop")).count();
         s.on_menu_open();
@@ -448,6 +444,19 @@ mod tests {
             .expect("delay number")
     }
 
+    /// Bounded wait until a track plays. The OFFICIAL in-game delay bounds
+    /// (12000–24000) mean the first track starts late; a blind frame count
+    /// would run PAST the play into the next gap (the fallback track length
+    /// is only 1200 ticks).
+    fn wait_for_play(s: &mut MusicScheduler, bound: u64) {
+        let mut i = 0u64;
+        while !matches!(s.state(), MusicState::Playing(..)) {
+            s.update();
+            i += 1;
+            assert!(i < bound, "no play within {bound} updates: {:?}", s.events);
+        }
+    }
+
     #[test]
     fn biome_situation_plays_the_official_biome_event() {
         // 26.2 badlands ships its own default event (music.overworld.badlands)
@@ -466,9 +475,7 @@ mod tests {
             table.min_delay,
             table.max_delay
         );
-        for _ in 0..(GAME_MAX_DELAY_TICKS + 1) {
-            s.update();
-        }
+        wait_for_play(&mut s, 30_000);
         match s.state() {
             MusicState::Playing(t, _, _) => assert_eq!(*t, table.event),
             other => panic!("expected biome music playing, got {:?}", other),
@@ -486,9 +493,7 @@ mod tests {
             (GAME_MIN_DELAY_TICKS..GAME_MAX_DELAY_TICKS).contains(&d),
             "fallback delay {d} outside the vanilla bounds"
         );
-        for _ in 0..(GAME_MAX_DELAY_TICKS + 1) {
-            s.update();
-        }
+        wait_for_play(&mut s, 30_000);
         match s.state() {
             MusicState::Playing(t, _, _) => assert_eq!(*t, "music.game"),
             other => panic!("expected default game music, got {:?}", other),
