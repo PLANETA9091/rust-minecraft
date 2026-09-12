@@ -150,6 +150,18 @@ impl<'a> Gui<'a> {
         Self { fb, scale }
     }
 
+    /// Vanilla auto GUI scale: the largest s (1..=4) where the framebuffer
+    /// still fits the minimum 320x240 GUI workspace, else 1.
+    pub fn auto_scale(fb_w: usize, fb_h: usize) -> u32 {
+        let mut best = 1u32;
+        for s in 1..=4u32 {
+            if fb_w / s as usize >= 320 && fb_h / s as usize >= 240 {
+                best = s;
+            }
+        }
+        best
+    }
+
     /// GUI-space width of the framebuffer.
     pub fn w(&self) -> i32 {
         (self.fb.w / self.scale as usize) as i32

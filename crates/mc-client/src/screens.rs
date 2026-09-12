@@ -180,7 +180,7 @@ impl App {
         if self.screen == ScreenKind::Servers {
             // click a server row to select it
             for (i, _) in self.servers.iter().enumerate() {
-                let y = 46 + i as i32 * 24;
+                let y = 32 + i as i32 * 28;
                 if my >= y && my < y + 24 && mx >= 20 && mx < self.buttons_row_cx() * 2 - 20 {
                     self.selected_server = i;
                     break;
@@ -195,7 +195,7 @@ impl App {
 
     /// Render the current screen.
     pub fn render(&mut self, fb: &mut crate::raster::Framebuf, a: &mut GuiAssets) {
-        let mut g = Gui::new(fb, 2);
+        let mut g = Gui::new(fb, Gui::auto_scale(fb.w, fb.h));
         let (w, h) = (g.w(), g.h());
         self.buttons.clear();
         match self.screen {
@@ -252,13 +252,18 @@ impl App {
         let splash = SPLASHES.get(self.splash_index).copied().unwrap_or("Now in Rust!");
         let pulse = ((self.frame as f32 * 0.1).sin() * 0.5 + 0.5) * 2.0;
         let splash_scale = 1 + (pulse.round() as i32);
-        let sw = g.text_width(splash) * splash_scale;
-        g.text_centered(a, w / 2 + lw / 2 + sw / 2 / 2, ly + 26, splash, YELLOW, true);
+        let sx = lx + lw + 4;
+        let sy = ly + 20;
+        if splash_scale > 1 {
+            // pulse emphasis: stamp twice at 1px offsets (cheap big mode)
+            g.text(a, sx, sy, splash, YELLOW, true);
+        }
+        g.text(a, sx, sy, splash, YELLOW, true);
 
         // button grid (vanilla layout: two half-width rows + full-width row)
         let cx = w / 2;
-        let bw = 100;
-        let y0 = h / 2 + 8;
+        let bw = 200;
+        let y0 = h / 4 + 44;
         let half = bw / 2 - 2;
         self.buttons.push(Button::new(
             "singleplayer",
@@ -313,14 +318,14 @@ impl App {
         let cx = w / 2;
         // server rows
         for (i, s) in self.servers.iter().enumerate() {
-            let y = 24 + i as i32 * 24;
+            let y = 34 + i as i32 * 28;
             let selected = i == self.selected_server;
             if selected {
-                g.fill(cx - 70, y - 2, 140, 22, [1.0, 1.0, 1.0, 0.10]);
+                g.fill(cx - 100, y - 2, 200, 22, [1.0, 1.0, 1.0, 0.10]);
             }
             let name_color = if s.online { WHITE } else { [0.5, 0.5, 0.5] };
-            g.text(a, cx - 68, y, &s.name, name_color, true);
-            g.text(a, cx - 68, y + 10, &s.motd, GRAY, true);
+            g.text(a, cx - 98, y, &s.name, name_color, true);
+            g.text(a, cx - 98, y + 10, &s.motd, GRAY, true);
             if s.online {
                 let ver = format!("{} - {}", s.ping_ms, s.version);
                 let vw = g.text_width(&ver);
@@ -334,7 +339,7 @@ impl App {
             }
         }
         // action buttons
-        let bw = 60;
+        let bw = 100;
         let half = bw / 2 - 2;
         self.buttons.push(Button::new(
             "join",

@@ -159,7 +159,9 @@ pub fn extract_runtime_assets(
         }
     }
     for t in &font.textures {
-        let dest = out_root.join(t);
+        // store under the same short path the generated FONT_TEXTURES uses
+        let rel = t.strip_prefix("assets/minecraft/textures/").unwrap_or(t);
+        let dest = out_root.join(rel);
         if dest.exists() {
             continue;
         }

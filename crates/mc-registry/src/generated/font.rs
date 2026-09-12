@@ -23,7 +23,7 @@ pub struct GlyphDef {
 }
 
 pub static GLYPHS: [GlyphDef; 2414] = [
-    GlyphDef { ch: 32, tex: 2, u: 0, v: 16, gw: 0, gh: 8, ascent: 7, space_advance: 0 },
+    GlyphDef { ch: 32, tex: 65535, u: 0, v: 0, gw: 0, gh: 0, ascent: 0, space_advance: 4 },
     GlyphDef { ch: 33, tex: 2, u: 8, v: 16, gw: 1, gh: 8, ascent: 7, space_advance: 0 },
     GlyphDef { ch: 34, tex: 2, u: 16, v: 16, gw: 3, gh: 8, ascent: 7, space_advance: 0 },
     GlyphDef { ch: 35, tex: 2, u: 24, v: 16, gw: 5, gh: 8, ascent: 7, space_advance: 0 },
