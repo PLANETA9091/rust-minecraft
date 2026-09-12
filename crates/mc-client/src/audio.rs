@@ -1,13 +1,15 @@
-//! Real audio for the generated client: official menu music decoded with
-//! symphonia and played through pluggable output backends.
+//! Real audio for the generated client: official menu + in-game music and
+//! UI one-shots decoded with symphonia and played through pluggable output
+//! backends.
 //!
-//! Generator-first truth chain: `mc2rs-gen` fetches the real `music.menu`
-//! .ogg files through the asset index (sha1-verified) into `assets-cache/jar`
-//! — this module decodes THOSE bytes and feeds the scheduler the REAL
-//! per-file lengths. Output backends: `SilentOutput` (deterministic, default
-//! for headless/CI and when no device exists) and `RodioOutput` (the real
-//! speaker path, compiled behind the `audio` cargo feature because the OS
-//! audio stack is a runtime environment property, not a code property).
+//! Generator-first truth chain: `mc2rs-gen` fetches the real `music.menu`,
+//! `music.game` and `ui.button.click` .ogg files through the asset index
+//! (sha1-verified) into `assets-cache/jar` — this module decodes THOSE bytes
+//! and feeds the scheduler the REAL per-file lengths. Output backends:
+//! `SilentOutput` (deterministic, default for headless/CI and when no device
+//! exists) and `RodioOutput` (the real speaker path, compiled behind the
+//! `audio` cargo feature because the OS audio stack is a runtime environment
+//! property, not a code property).
 //!
 //! Memory policy: files are decoded on demand at play time (one track at a
 //! time); startup only counts frames (`probe_frames`) so the scheduler gets
@@ -251,14 +253,14 @@ pub fn default_output() -> Box<dyn AudioOutput> {
     Box::new(SilentOutput::default())
 }
 
-/// Resolve the runtime paths of the official menu music files through the
-/// GENERATED sounds.json table (every file of every event, keys from
-/// `music::file_key()`). Files were fetched + sha1-verified by `mc2rs-gen`
-/// through the asset index; missing files are skipped silently — audio must
-/// never break the client.
-pub fn discover_menu_music(root: &Path, tracks: &[&'static str]) -> Vec<(String, PathBuf)> {
+/// Resolve the runtime paths of the official sound files for a list of
+/// events through the GENERATED sounds.json table (every file of every
+/// event, keys from `music::file_key()`). Files were fetched +
+/// sha1-verified by `mc2rs-gen` through the asset index; missing files are
+/// skipped silently — audio must never break the client.
+pub fn discover_events(root: &Path, event_ids: &[&str]) -> Vec<(String, PathBuf)> {
     let mut out = Vec::new();
-    for id in tracks {
+    for id in event_ids {
         out.extend(discover_event_files(root, id));
     }
     out
@@ -313,8 +315,9 @@ impl MenuMusic {
     /// `start` against an explicit runtime asset root (tests redirect this
     /// to a temp tree holding synthesized sound files).
     pub fn start_with_root(app: &mut crate::screens::App, root: &Path) -> Self {
-        let tracks = app.music.menu_tracks().to_vec();
-        let files = discover_menu_music(root, &tracks);
+        let menu = app.music.menu_tracks().to_vec();
+        let game = app.music.game_tracks().to_vec();
+        let files = discover_events(root, &[menu.as_slice(), game.as_slice()].concat());
         for (key, path) in &files {
             if let Ok(bytes) = std::fs::read(path) {
                 if let Ok((_, frames)) = probe_frames(&bytes) {
@@ -351,12 +354,18 @@ impl MenuMusic {
         }
     }
 
-    /// Mirror new scheduler "play <event#file>" events onto the music
-    /// channel, decoding the chosen file on demand (one track in memory).
-    /// Called once per frame; cheap when the event log did not grow.
+    /// Mirror new scheduler events onto the music channel: "play
+    /// <event#file>" decodes the chosen file on demand (one track in
+    /// memory), "stop" interrupts whatever plays — vanilla stops music on
+    /// situation change (entering/leaving a world). Called once per frame;
+    /// cheap when the event log did not grow.
     pub fn sync(&mut self, music: &crate::music::MusicScheduler) {
         let seen = self.seen.min(music.events.len());
         for ev in &music.events[seen..] {
+            if ev.starts_with("stop") {
+                self.output.stop();
+                continue;
+            }
             if let Some(key) = ev.strip_prefix("play ").and_then(|s| s.split(" @").next()) {
                 let Some(path) = self.files.get(key).cloned() else { continue };
                 self.play_file(key, &path, false);
@@ -525,7 +534,7 @@ mod tests {
         };
         // the scheduler knows the official pool from the generated table
         let sched_tracks = vec!["music.menu"];
-        let files = discover_menu_music(&root, &sched_tracks);
+        let files = discover_events(&root, &sched_tracks);
         assert_eq!(
             files.len(),
             9,
@@ -581,5 +590,72 @@ mod tests {
         let secs = frames as f64 / rate as f64;
         assert!(secs > 0.0 && secs < 1.5, "a UI click is short, got {secs:.3}s");
         println!("  {key} <- {} ({frames} frames, {secs:.3}s, {rate} Hz)", path.display());
+    }
+
+    #[test]
+    fn sync_plays_and_stops_game_music() {
+        // temp runtime root holding a sound file at EVERY official path the
+        // generated music.game table resolves to, so the weighted pick
+        // always lands on an existing file
+        let dir = std::env::temp_dir().join(format!("mc2rs-game-{}", std::process::id()));
+        use mc_registry::generated::sounds as snd;
+        let ev = snd::event("music.game").expect("music.game in table");
+        for f in snd::files(ev) {
+            let p = dir
+                .join("assets/minecraft/sounds")
+                .join(format!("{}.ogg", f.name));
+            std::fs::create_dir_all(p.parent().unwrap()).unwrap();
+            std::fs::write(&p, synth_wav()).unwrap();
+        }
+
+        let mut app = crate::screens::App::new(1);
+        let mut m = MenuMusic::start_with_root(&mut app, &dir);
+        // enter the world and wait (bounded) for the first game track to
+        // start after its randomized delay
+        app.music.on_world_enter();
+        let mut waited = 0u64;
+        while !matches!(
+            app.music.state(),
+            crate::music::MusicState::Playing(..)
+        ) {
+            app.music.update();
+            waited += 1;
+            assert!(waited < 10_000, "game music never started");
+        }
+        m.sync(&app.music);
+        assert!(m.output.playing(), "game track plays through the music channel");
+        // returning to the title logs a stop: the game track is interrupted
+        app.music.on_menu_open();
+        m.sync(&app.music);
+        assert!(!m.output.playing(), "stop event interrupts the game track");
+        std::fs::remove_dir_all(&dir).ok();
+    }
+
+    /// Real-data check (NOT run on CI): the official music.game in-game
+    /// pool (32 weighted files in 26.2) resolves and decodes.
+    #[test]
+    #[ignore = "needs runtime assets (assets-cache/jar) from mc2rs-gen generate"]
+    fn real_official_game_music_resolves() {
+        let candidates = [
+            PathBuf::from("assets-cache/jar"),
+            Path::new(env!("CARGO_MANIFEST_DIR")).join("../../assets-cache/jar"),
+        ];
+        let Some(root) = candidates.into_iter().find(|p| p.is_dir()) else {
+            eprintln!("skipping: assets-cache/jar not present (run mc2rs-gen generate)");
+            return;
+        };
+        let files = discover_event_files(&root, "music.game");
+        assert_eq!(
+            files.len(),
+            32,
+            "26.2 music.game pool must resolve to 32 real files: {files:?}"
+        );
+        for (key, path) in &files {
+            let bytes = std::fs::read(path).expect("read");
+            let (rate, frames) = probe_frames(&bytes)
+                .unwrap_or_else(|e| panic!("{key}: probe failed: {e}"));
+            assert!(frames > 60 * 30_000, "{key}: suspiciously short ({frames} frames)");
+            assert!(rate >= 32_000, "{key}: rate {rate}");
+        }
     }
 }

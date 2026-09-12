@@ -20,6 +20,15 @@ pub enum MusicState {
     Delay(u64),
 }
 
+/// Which situation the scheduler is serving — vanilla's situational music:
+/// the title screen plays `music.menu`, a loaded world plays `music.game`
+/// (biome-specific pools are a future step).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum MusicMode {
+    Menu,
+    Game,
+}
+
 /// Table key for one file of an event: "music.menu#3" (index = position in
 /// the event's official file list). Shared by the scheduler, the audio
 /// loader and the event log so all three stay in lockstep.
@@ -28,7 +37,9 @@ pub fn file_key(event: &str, idx: usize) -> String {
 }
 
 pub struct MusicScheduler {
+    mode: MusicMode,
     menu_tracks: Vec<&'static str>,
+    game_tracks: Vec<&'static str>,
     state: MusicState,
     rng: u64,
     current: usize,
@@ -48,14 +59,13 @@ const DELAY_SPAN_FRAMES: u64 = 90 * 20;
 
 impl MusicScheduler {
     pub fn new(seed: u64) -> Self {
-        // real menu tracks from the official sounds.json
-        let menu_tracks = snd::SOUND_EVENTS
-            .iter()
-            .filter(|e| e.id.starts_with("music.menu") && e.len > 0)
-            .map(|e| e.id)
-            .collect();
+        // real menu + game tracks from the official sounds.json
+        let menu_tracks = Self::tracks_for("music.menu");
+        let game_tracks = Self::tracks_for("music.game");
         Self {
+            mode: MusicMode::Menu,
             menu_tracks,
+            game_tracks,
             state: MusicState::Idle,
             rng: seed ^ 0x5EED_C0FF_EE12_3456,
             current: 0,
@@ -65,13 +75,32 @@ impl MusicScheduler {
         }
     }
 
+    /// Official event ids under a prefix (from the generated sounds.json
+    /// table), only events that actually ship files.
+    fn tracks_for(prefix: &str) -> Vec<&'static str> {
+        snd::SOUND_EVENTS
+            .iter()
+            .filter(|e| e.id.starts_with(prefix) && e.len > 0)
+            .map(|e| e.id)
+            .collect()
+    }
+
     pub fn state(&self) -> &MusicState {
         &self.state
+    }
+
+    pub fn mode(&self) -> MusicMode {
+        self.mode
     }
 
     /// The official menu track ids (from the generated sounds.json table).
     pub fn menu_tracks(&self) -> &[&'static str] {
         &self.menu_tracks
+    }
+
+    /// The official in-game track ids (music.game — the 26.2 overworld pool).
+    pub fn game_tracks(&self) -> &[&'static str] {
+        &self.game_tracks
     }
 
     /// Real file length in frames from the decoded official .ogg (key from
@@ -84,10 +113,30 @@ impl MusicScheduler {
     }
 
     /// The menu opened: start the first track right away (vanilla behavior).
+    /// Switches back to the menu situation: any in-game track is interrupted.
     pub fn on_menu_open(&mut self) {
-        if matches!(self.state, MusicState::Idle) && !self.menu_tracks.is_empty() {
+        self.mode = MusicMode::Menu;
+        if matches!(self.state, MusicState::Playing(..)) {
+            self.events.push(format!("stop @{}", self.tick));
+            self.state = MusicState::Idle;
+        }
+        if !self.menu_tracks.is_empty() {
             self.play_current();
         }
+    }
+
+    /// A world was entered: the menu track stops AT ONCE (vanilla interrupts
+    /// music on situation change) and game music waits out a randomized
+    /// delay before its first track, like the vanilla music engine's gap
+    /// between tracks (exact Musics constants remain a javap-recon step).
+    pub fn on_world_enter(&mut self) {
+        self.mode = MusicMode::Game;
+        if matches!(self.state, MusicState::Playing(..)) {
+            self.events.push(format!("stop @{}", self.tick));
+        }
+        let delay = MIN_DELAY_FRAMES + self.next_rand() % DELAY_SPAN_FRAMES;
+        self.events.push(format!("delay {} @{}", delay, self.tick));
+        self.state = MusicState::Delay(self.tick + delay);
     }
 
     fn next_rand(&mut self) -> u64 {
@@ -124,10 +173,14 @@ impl MusicScheduler {
     }
 
     fn play_current(&mut self) {
-        if self.menu_tracks.is_empty() {
+        let tracks = match self.mode {
+            MusicMode::Menu => &self.menu_tracks,
+            MusicMode::Game => &self.game_tracks,
+        };
+        if tracks.is_empty() {
             return;
         }
-        let track = self.menu_tracks[self.current % self.menu_tracks.len()];
+        let track = tracks[self.current % tracks.len()];
         let (file_idx, _) = self.pick_file(track);
         let key = file_key(track, file_idx);
         let len = self.file_frames.get(&key).copied().unwrap_or(DEFAULT_TRACK_FRAMES);
@@ -203,6 +256,66 @@ mod tests {
             "event log must record the picked file: {:?}",
             s.events
         );
+    }
+
+    #[test]
+    fn game_tracks_come_from_official_sounds_json() {
+        let s = MusicScheduler::new(1);
+        // 26.2 ships one `music.game` event — the 32-file overworld pool
+        assert_eq!(s.game_tracks(), &["music.game"] as &[&str]);
+        assert!(
+            !s.game_tracks.is_empty() && s.game_tracks[0].starts_with("music.game"),
+            "official sounds.json must provide music.game: {:?}",
+            s.game_tracks
+        );
+    }
+
+    #[test]
+    fn world_enter_stops_menu_and_schedules_game_music() {
+        let mut s = MusicScheduler::new(42);
+        s.on_menu_open();
+        assert!(matches!(s.state(), MusicState::Playing(t, _, _) if t.starts_with("music.menu")));
+        s.on_world_enter();
+        assert_eq!(s.mode(), MusicMode::Game);
+        // the menu track was interrupted at once...
+        assert!(
+            s.events.iter().any(|e| e.starts_with("stop")),
+            "entering a world stops the playing menu track: {:?}",
+            s.events
+        );
+        // ...and game music waits out its randomized first delay
+        assert!(matches!(s.state(), MusicState::Delay(_)), "{:?}", s.state());
+        for _ in 0..(MIN_DELAY_FRAMES + DELAY_SPAN_FRAMES + 1) {
+            s.update();
+        }
+        match s.state() {
+            MusicState::Playing(t, _, _) => assert!(
+                t.starts_with("music.game"),
+                "in-game situation must play music.game, got {t}"
+            ),
+            other => panic!("expected game music playing, got {:?}", other),
+        }
+    }
+
+    #[test]
+    fn returning_to_title_plays_menu_again() {
+        let mut s = MusicScheduler::new(42);
+        s.on_world_enter();
+        for _ in 0..(MIN_DELAY_FRAMES + DELAY_SPAN_FRAMES + 1) {
+            s.update();
+        }
+        assert!(matches!(s.state(), MusicState::Playing(t, _, _) if t.starts_with("music.game")));
+        let stops_before = s.events.iter().filter(|e| e.starts_with("stop")).count();
+        s.on_menu_open();
+        // the game track is interrupted and a menu track starts immediately
+        assert_eq!(s.mode(), MusicMode::Menu);
+        assert_eq!(
+            s.events.iter().filter(|e| e.starts_with("stop")).count(),
+            stops_before + 1,
+            "returning to title stops the game track: {:?}",
+            s.events
+        );
+        assert!(matches!(s.state(), MusicState::Playing(t, _, _) if t.starts_with("music.menu")));
     }
 
     #[test]

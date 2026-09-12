@@ -194,8 +194,9 @@ impl App {
                     self.music.on_menu_open();
                 }
             }
-            // in-game: the menu music scheduler is suspended
-            ScreenKind::World => {}
+            // the scheduler serves the current situation everywhere: menu
+            // music on screens, music.game in-world (on_world_enter /
+            // on_menu_open performed the vanilla-style switch)
             _ => self.music.update(),
         }
     }
@@ -206,6 +207,8 @@ impl App {
     }
 
     /// Enter the singleplayer world (3D view + HUD), building the mesh once.
+    /// Vanilla situational music: the menu track is interrupted at once and
+    /// the game-music schedule takes over.
     pub fn enter_world(&mut self) {
         if self.world_quads.is_none() {
             let world = crate::world::World::new(WORLD_CHUNKS, self.seed);
@@ -214,6 +217,7 @@ impl App {
             self.world_quads = Some(crate::mesher::mesh_world(&world, None));
         }
         self.paused = false;
+        self.music.on_world_enter();
         self.open(ScreenKind::World);
     }
 
