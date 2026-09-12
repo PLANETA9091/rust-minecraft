@@ -131,28 +131,29 @@ pub fn light_brightness(level: f32) -> f32 {
     f / (4.0 - 3.0 * f)
 }
 
-/// The cell's effective light level: the max over the KNOWN layers (day
-/// semantics — the sky contributes at full strength; night sky-darken
-/// threading is future work). A layer the model never answered for is
-/// skipped, not zero; a cell with no opinion at all is `None`.
+/// The cell's two RAW light layers, as the engine reported them — sky
+/// and block are kept apart through the whole smooth-lighting walk so
+/// the night sky factor can scale the sky term AFTER the brightness
+/// ramp, exactly where the vanilla lightmap shader applies SkyFactor
+/// (`get_brightness(sky) * SkyFactor`, additive with the block term;
+/// 26.2 jar: `assets/minecraft/shaders/core/lightmap.fsh` +
+/// `LightmapRenderState.skyFactor`). A layer the model never answered
+/// for is `None`, not zero.
 #[inline]
-fn cell_light(light: &LightGrid, side: usize, x: i32, y: i32, z: i32) -> Option<f32> {
-    let (s, b) = light.cell(side, x, y, z);
-    match (s, b) {
-        (None, None) => None,
-        (Some(s), None) => Some(s as f32),
-        (None, Some(b)) => Some(b as f32),
-        (Some(s), Some(b)) => Some(s.max(b) as f32),
-    }
+fn cell_layers(light: &LightGrid, side: usize, x: i32, y: i32, z: i32) -> (Option<u8>, Option<u8>) {
+    light.cell(side, x, y, z)
 }
 
 /// Per-corner smooth-light levels (FACE_CORNERS order): the average of
 /// the 4 face-plane cells around each corner — the face cell plus the 3
-/// AO diagonals, the SAME cells [`ao_levels`] samples — over the KNOWN
-/// cells only (the average is float: smoother than the vanilla packed
-/// int average, a deliberate minimal departure). `None` when the corner
-/// has no known cell at all — unsent neighbors never darken the faces
-/// they touch; that corner keeps the legacy unshaded look.
+/// AO diagonals, the SAME cells [`ao_levels`] samples. SKY and BLOCK
+/// are averaged SEPARATELY (each over its own known cells — the
+/// vanilla client averages the packed light's two halves independently;
+/// the old combined-cell max was the pre-night simplification). The
+/// average is float (smoother than the vanilla packed int average, a
+/// deliberate minimal departure). A corner with no known cell at all
+/// in BOTH layers keeps the legacy unshaded look — unsent neighbors
+/// never darken the faces they touch. Returns `([sky; 4], [block; 4])`.
 fn corner_light(
     light: &LightGrid,
     side: usize,
@@ -160,7 +161,7 @@ fn corner_light(
     wy: i32,
     wz: i32,
     face: usize,
-) -> [Option<f32>; 4] {
+) -> ([Option<f32>; 4], [Option<f32>; 4]) {
     let (nx, ny, nz) = NEIGHBOR[face];
     let normal_axis = if nx != 0 { 0 } else if ny != 0 { 1 } else { 2 };
     let (t1, t2) = match normal_axis {
@@ -169,7 +170,8 @@ fn corner_light(
         _ => (0usize, 1usize),
     };
     let (bx, by, bz) = (wx + nx, wy + ny, wz + nz);
-    let mut out = [None; 4];
+    let mut out_sky = [None; 4];
+    let mut out_block = [None; 4];
     for (i, c) in FACE_CORNERS[face].iter().enumerate() {
         let s1 = if c[t1] >= 0.5 { 1 } else { -1 };
         let s2 = if c[t2] >= 0.5 { 1 } else { -1 };
@@ -181,17 +183,25 @@ fn corner_light(
             (bx + d2.0, by + d2.1, bz + d2.2),
             (bx + d1.0 + d2.0, by + d1.1 + d2.1, bz + d1.2 + d2.2),
         ];
-        let mut sum = 0.0f32;
-        let mut n = 0u32;
+        let mut sum_sky = 0.0f32;
+        let mut n_sky = 0u32;
+        let mut sum_block = 0.0f32;
+        let mut n_block = 0u32;
         for &(x, y, z) in &cells {
-            if let Some(v) = cell_light(light, side, x, y, z) {
-                sum += v;
-                n += 1;
+            let (s, b) = cell_layers(light, side, x, y, z);
+            if let Some(v) = s {
+                sum_sky += v as f32;
+                n_sky += 1;
+            }
+            if let Some(v) = b {
+                sum_block += v as f32;
+                n_block += 1;
             }
         }
-        out[i] = (n > 0).then(|| sum / n as f32);
+        out_sky[i] = (n_sky > 0).then(|| sum_sky / n_sky as f32);
+        out_block[i] = (n_block > 0).then(|| sum_block / n_block as f32);
     }
-    out
+    (out_sky, out_block)
 }
 
 /// Vanilla face->UV orientation. Texture row 0 is the top; side faces keep
@@ -257,7 +267,8 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                     let ao = ao_levels(world, wx, wy, wz, face);
                     // Per-corner light sample — only when the world
                     // carries a light layer; `None` keeps the legacy path.
-                    let clight = light.map(|l| corner_light(l, world.chunks_per_side, wx, wy, wz, face));
+                    let clight =
+                        light.map(|l| corner_light(l, world.chunks_per_side, wx, wy, wz, face));
                     let order = flip_order(&ao);
                     let mut pts = [[0f32; 3]; 4];
                     let mut colors = [[0f32; 3]; 4];
@@ -265,11 +276,24 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                     for (i, &src) in order.iter().enumerate() {
                         let c = FACE_CORNERS[face][src];
                         pts[i] = [wx as f32 + c[0], wy as f32 + c[1], wz as f32 + c[2]];
+                        // The vanilla lightmap shader's combine: the sky
+                        // brightness scaled by the timeline SkyFactor,
+                        // additive with the block brightness — expressed as
+                        // the max of the two terms (the scalar render path's
+                        // documented combine; with one term absent it is
+                        // the other term exactly, and at day factor 1.0 a
+                        // single-layer corner is bit-identical to the old
+                        // level-max math). No known cell -> legacy look.
                         let lm = match clight.as_ref() {
-                            Some(samples) => match samples[src] {
-                                Some(avg) => light_brightness(avg),
-                                None => 1.0, // no light opinion here — legacy look
-                            },
+                            Some((sky, block)) => {
+                                let sky_b = sky[src].map(|v| light_brightness(v) * world.sky_factor);
+                                let block_b = block[src].map(light_brightness);
+                                match (sky_b, block_b) {
+                                    (Some(s), Some(b)) => s.max(b),
+                                    (Some(s), None) | (None, Some(s)) => s,
+                                    (None, None) => 1.0,
+                                }
+                            }
                             None => 1.0, // no light layer — legacy look
                         };
                         let m = shade * AO_CURVE[ao[src] as usize] * lm;
@@ -338,6 +362,7 @@ mod tests {
             seed: 0,
             chunks: vec![vec![AIR; CHUNK_X * CHUNK_Y * CHUNK_Z]],
             light: None,
+            sky_factor: 1.0,
         }
     }
 
@@ -450,6 +475,50 @@ mod tests {
         let expect = light_brightness(14.0);
         for m in vertex_multiplier(&top_face(&w)) {
             assert!((m - expect).abs() < 1e-6, "block-only light: {m} vs {expect}");
+        }
+    }
+
+    #[test]
+    fn sky_factor_scales_only_the_sky_term() {
+        // the stone block's top face under full sky: day is the legacy
+        // look; the night factor drags the SKY term down the ramp while
+        // the BLOCK term is untouched — the torch wins at night.
+        let mut w = empty_world();
+        put(&mut w, 8, 8, 8, STONE);
+        w.light = Some(unknown_light());
+        set_light(&mut w, Some(15), Some(0), 8, 9, 8);
+        // day: brightness(15) = 1.0 -> legacy
+        assert_eq!(vertex_multiplier(&top_face(&w)), [1.0; 4], "day sky-15 is legacy");
+        // night (the day timeline's 0.24 plateau): brightness(15) * 0.24
+        w.sky_factor = 0.24;
+        for m in vertex_multiplier(&top_face(&w)) {
+            assert!(
+                (m - light_brightness(15.0) * 0.24).abs() < 1e-6,
+                "night sky-15 scales the sky term: {m}"
+            );
+        }
+        // the same night sky over a TORCH-lit cell (block 14): the block
+        // term exceeds the scaled sky term, so the face stays torch-bright
+        set_light(&mut w, Some(15), Some(14), 8, 9, 8);
+        let expect = light_brightness(14.0);
+        for m in vertex_multiplier(&top_face(&w)) {
+            assert!(
+                (m - expect).abs() < 1e-6,
+                "at night the block term wins over 0.24 sky: {m} vs {expect}"
+            );
+        }
+        // an unknown sky layer is never scaled into an opinion: a corner
+        // with only block known keeps the plain block term (no factor)
+        let mut w2 = empty_world();
+        put(&mut w2, 8, 8, 8, STONE);
+        w2.light = Some(unknown_light());
+        w2.sky_factor = 0.24;
+        set_light(&mut w2, None, Some(14), 8, 9, 8);
+        for m in vertex_multiplier(&top_face(&w2)) {
+            assert!(
+                (m - light_brightness(14.0)).abs() < 1e-6,
+                "unknown sky is not darkened, the block term is exact: {m}"
+            );
         }
     }
 

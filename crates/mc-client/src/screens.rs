@@ -1701,6 +1701,7 @@ mod tests {
                         4
                     ],
                     light: None,
+                    day_tick: None, // test scenes stay day
                 },
                 camera: None,
                 spawn_biome: Some("minecraft:plains".into()),
@@ -2106,6 +2107,7 @@ mod tests {
                 4
             ],
             light: None,
+            day_tick: None, // test scenes stay day
         });
         app.enter_network_world(None);
         assert_eq!(app.screen, ScreenKind::World);
@@ -2157,6 +2159,7 @@ mod tests {
                 4
             ],
             light: None,
+            day_tick: None, // test scenes stay day
         });
         app.enter_network_world(None);
         let flight = app.world_camera();
@@ -2210,6 +2213,7 @@ mod tests {
                         4
                     ],
                     light: None,
+                    day_tick: None, // test scenes stay day
                 },
                 camera: None,
                 spawn_biome: None,
@@ -2234,6 +2238,7 @@ mod tests {
                 side * side
             ],
             light: None,
+            day_tick: None, // test scenes stay day
         }
     }
 

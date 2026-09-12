@@ -78,6 +78,10 @@ pub fn materialize(
             sky: vec![vec![LIGHT_UNKNOWN; CHUNK_X * CHUNK_Y * CHUNK_Z]; side * side],
             block: vec![vec![LIGHT_UNKNOWN; CHUNK_X * CHUNK_Y * CHUNK_Z]; side * side],
         }),
+        // the clock's day tick rides the SAME snapshot: the model's
+        // Set Time state decides day or night; no clock yet = None, the
+        // honest day
+        day_tick: model.day_tick(),
     };
     let side_i = side as i32;
     for gz in 0..side_i {

@@ -58,12 +58,14 @@ pub struct World {
     /// procedural scene: the mesher then behaves exactly as it always
     /// did (no light opinion -> the legacy look, bit for bit).
     pub light: Option<LightGrid>,
-    /// The timeline sky factor — the day/night scale applied to the
-    /// SKY brightness term after the vanilla ramp (the proven 26.2
-    /// lightmap shader: `get_brightness(sky) * SkyFactor`). 1.0 = full
-    /// day — the default for every world the server has not yet sent a
-    /// Set Time for (procedural and golden scenes stay day, bit for bit).
-    pub sky_factor: f32,
+    /// The server clock's day tick — total ticks mod the day timeline's
+    /// period, as the latest Set Time reported (`materialize` copies the
+    /// model's clock state). `None` = the server has sent no time yet:
+    /// the honest day, and every procedural/golden scene stays bit for
+    /// bit. The mesher derives the vanilla lightmap's SkyFactor from
+    /// this through [`crate::timeline::sky_light_factor`] (1.0 day /
+    /// 0.24 night, the jar-extracted day.json keyframes).
+    pub day_tick: Option<i64>,
 }
 
 /// A light cell with no opinion — the server never answered for it
@@ -142,7 +144,7 @@ impl World {
             seed,
             chunks: vec![vec![AIR; CHUNK_X * CHUNK_Y * CHUNK_Z]; chunks_per_side * chunks_per_side],
             light: None, // the procedural scene carries no light layer
-            sky_factor: 1.0, // full day until a server's clock says otherwise
+            day_tick: None, // no clock yet: full day
         };
         w.generate();
         w

@@ -40,7 +40,7 @@ use std::collections::HashMap;
 
 use mc_protocol::{
     ChunkColumn, ChunkLight, ClockUpdate, LightData, PlayEvent, PlayerPosition, RegistryData,
-    TimeSync, WorldInfo, WorldSnapshot,
+    WorldInfo, WorldSnapshot,
 };
 
 /// The client's view of ONE server world: loaded chunk columns, the
@@ -281,16 +281,6 @@ impl WorldModel {
         self.registry.biome_name(id)
     }
 
-    /// Sky light (0..=15) at (x, y, z) — the same coordinate conventions
-    /// as [`WorldModel::block`], on the vanilla LIGHT section grid: the
-    /// engine keeps one extra layer below and above the block sections
-    /// (javap: `getLightSectionCount() = getSectionsCount() + 2`), so
-    /// the column's section sy answers through light bit sy + 1 — and
-    /// the layers just OUTSIDE the column (world y one section below
-    /// its bottom / above its top) answer through bits 0 and len+1.
-    /// `None` outside the loaded columns, beyond the engine's light
-    /// range, or where the server sent nothing — the honest unknown,
-    /// never a guess.
     /// The current dimension's day tick — the synced clock's total
     /// ticks mod the day timeline's period — or `None` before the
     /// server's first Set Time (the honest state: no opinion, the
@@ -316,9 +306,16 @@ impl WorldModel {
             .unwrap_or(1.0)
     }
 
-    /// The client's view of ONE server world's light: sky light at a
-    /// world position through the ENGINE-layer grid (see the method
-    /// body for the +1 section convention).
+    /// Sky light (0..=15) at (x, y, z)
+    /// as [`WorldModel::block`], on the vanilla LIGHT section grid: the
+    /// engine keeps one extra layer below and above the block sections
+    /// (javap: `getLightSectionCount() = getSectionsCount() + 2`), so
+    /// the column's section sy answers through light bit sy + 1 — and
+    /// the layers just OUTSIDE the column (world y one section below
+    /// its bottom / above its top) answer through bits 0 and len+1.
+    /// `None` outside the loaded columns, beyond the engine's light
+    /// range, or where the server sent nothing — the honest unknown,
+    /// never a guess.
     pub fn sky_light(&self, x: i32, y: i32, z: i32) -> Option<u8> {
         self.light_at(x, y, z, |l| &l.sky)
     }
