@@ -67,6 +67,16 @@ hand-drawn:
   alpha 0, `rotX(90°)·rotZ(90°[+180°])`, `scale(1,1,alpha)`), blended with
   the official TRANSLUCENT function — golden-orange glow at the rising
   horizon, crimson at the setting one.
+- **Clouds, generated** — the official `CloudRenderer` replicated from
+  bytecode: the real `environment/clouds.png` cell map (256×256 texels, one
+  12×12-block cell each, solid iff alpha ≥ 10) tiles the world at
+  `visual/cloud_height` 192.33 as 12×4×12 FANCY boxes, slides westward at
+  the official 0.03 blocks/tick (`(gameTime % (width·400)) · 0.030000001`,
+  wrapping exactly at the texture period; constant Z offset 3.96), colors
+  via `ARGB.multiply(#CCFFFFFF, visual/cloud_color track)` — white by day,
+  `#191926` by night — with the shader's face shading (bottom 0.7, N/S 0.8,
+  W/E 0.9), the CLOUDS pipeline's TRANSLUCENT blend + depth test against
+  terrain, and the per-pixel alpha fade to `cloud_fog_end` 2048.
 - **Pause menu** — `Game Paused` over the dimmed frozen world with
   Back to Game / Options... / Save and Quit to Title, all official strings
   and widgets; Escape toggles it in `--gui` (`--screen pause`).
