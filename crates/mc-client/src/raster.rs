@@ -140,10 +140,21 @@ impl Framebuf {
                 let (ax, ay, a_ow, a_vz) = (sx[0], sy[0], ow[0], vz[0]);
                 let (bx, by, b_ow, b_vz) = (sx[tri], sy[tri], ow[tri], vz[tri]);
                 let (cx, cy, c_ow, c_vz) = (sx[tri + 1], sy[tri + 1], ow[tri + 1], vz[tri + 1]);
-                let (ca, cb, cc) = (quad.colors[0], quad.colors[tri], quad.colors[tri + 1]);
+                // near-clipping can emit 5-vertex polygons; vertex attributes
+                // stay per-corner so the extra fan step reuses the last corner
+                // (the case never triggers for terrain from the orbit/spawn
+                // cameras, but must not panic)
+                let (ca, cb, cc) = (
+                    quad.colors[0],
+                    quad.colors[tri.min(3)],
+                    quad.colors[(tri + 1).min(3)],
+                );
                 let (ua, va) = (quad.uvs[0][0], quad.uvs[0][1]);
-                let (ub, vb) = (quad.uvs[tri][0], quad.uvs[tri][1]);
-                let (uc, vc) = (quad.uvs[tri + 1][0], quad.uvs[tri + 1][1]);
+                let (ub, vb) = (quad.uvs[tri.min(3)][0], quad.uvs[tri.min(3)][1]);
+                let (uc, vc) = (
+                    quad.uvs[(tri + 1).min(3)][0],
+                    quad.uvs[(tri + 1).min(3)][1],
+                );
                 let area_ab = edge(ax, ay, bx, by, cx, cy);
                 if area_ab.abs() < 1e-9 {
                     continue;
@@ -276,7 +287,11 @@ impl Framebuf {
                         let dist = 1.0 / (b0 * a_ow + b1 * b_ow + b2 * c_ow);
                         let o = ((py as usize) * self.w + px as usize) * 3;
                         let mut c0 = [0f32; 4];
-                        let (ca, cb, cc) = (quad.colors[0], quad.colors[tri], quad.colors[tri + 1]);
+                        let (ca, cb, cc) = (
+                            quad.colors[0],
+                            quad.colors[tri.min(3)],
+                            quad.colors[(tri + 1).min(3)],
+                        );
                         for ch in 0..4 {
                             c0[ch] = b0 * ca[ch] + b1 * cb[ch] + b2 * cc[ch];
                         }

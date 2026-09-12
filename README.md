@@ -60,6 +60,13 @@ hand-drawn:
   radius 100 — LCG cross-checked against real `java.util.Random` on
   OpenJDK 21). `--screen worldnight` pins the night state (full moon over
   the eastern horizon, stars at the official 0.5 brightness).
+- **Sunrise/sunset glow** — the official `visual/sunrise_sunset_color`
+  track (`#AARRGGBB`, alpha 0 at midday -> the game's early-out) tints the
+  18-vertex horizon fan replicated from `SkyRenderer.buildSunriseFan`
+  (center (0,100,0) alpha 1, 17-vertex ring `(sin·120, cos·120, -cos·40)`
+  alpha 0, `rotX(90°)·rotZ(90°[+180°])`, `scale(1,1,alpha)`), blended with
+  the official TRANSLUCENT function — golden-orange glow at the rising
+  horizon, crimson at the setting one.
 - **Pause menu** — `Game Paused` over the dimmed frozen world with
   Back to Game / Options... / Save and Quit to Title, all official strings
   and widgets; Escape toggles it in `--gui` (`--screen pause`).
