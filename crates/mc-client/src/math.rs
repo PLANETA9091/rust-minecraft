@@ -115,6 +115,14 @@ impl Mat4 {
         ])
     }
 
+    /// Rotation about the Z axis (radians), column-major.
+    pub fn rot_z(rad: f32) -> Mat4 {
+        let (s, c) = rad.sin_cos();
+        Mat4([
+            c, s, 0.0, 0.0, -s, c, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0,
+        ])
+    }
+
     pub fn transform_point(&self, p: Vec3) -> [f32; 4] {
         let m = &self.0;
         [
@@ -159,5 +167,8 @@ mod tests {
         let p = Mat4::rot_y(-std::f32::consts::FRAC_PI_2)
             .transform_point(Vec3::new(0.0, 0.0, -1.0));
         assert!((p[0] - 1.0).abs() < 1e-6, "{p:?}");
+        // rot_z(+90°) maps +Y -> -X (official sunrise-disc placement).
+        let p = Mat4::rot_z(std::f32::consts::FRAC_PI_2).transform_point(Vec3::new(0.0, 1.0, 0.0));
+        assert!((p[0] + 1.0).abs() < 1e-6 && p[1].abs() < 1e-6, "{p:?}");
     }
 }

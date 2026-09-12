@@ -36,6 +36,9 @@ pub struct SkyState {
     /// Dimension base color multiplied by the official color track (RGB).
     pub sky_color: [f32; 3],
     pub fog_color: [f32; 3],
+    /// Official `visual/sunrise_sunset_color` track value (RGBA) — the tint
+    /// of the horizon glow disc.
+    pub sunrise_color: [f32; 4],
     /// MoonPhase ordinal (full moon = 0, matching the official enum order).
     pub moon_phase: u8,
 }
@@ -148,21 +151,30 @@ fn sample_f32(kf: &[(i32, f32)], bezier: Option<[f32; 4]>, t: i64, period: i32) 
         .unwrap_or_else(|| first.1.max(last.1))
 }
 
-/// Sample one RGBA color track (LINEAR in the official data), returning RGB.
-fn sample_color_rgb(kf: &[(i32, [u8; 4])], t: i64, period: i32) -> [f32; 3] {
+/// Sample one RGBA color track (LINEAR in the official data).
+fn sample_color_rgba(kf: &[(i32, [u8; 4])], t: i64, period: i32) -> [f32; 4] {
     if kf.len() == 1 {
-        let c = kf[0].1;
-        return [c[0] as f32 / 255.0, c[1] as f32 / 255.0, c[2] as f32 / 255.0];
+        return [
+            kf[0].1[0] as f32 / 255.0,
+            kf[0].1[1] as f32 / 255.0,
+            kf[0].1[2] as f32 / 255.0,
+            kf[0].1[3] as f32 / 255.0,
+        ];
     }
     let lt = t.rem_euclid(period as i64) as i32;
     let first = &kf[0];
     let last = &kf[kf.len() - 1];
-    let eval = |ft: i32, fv: [u8; 4], tt: i32, tv: [u8; 4]| -> Option<[f32; 3]> {
+    let eval = |ft: i32, fv: [u8; 4], tt: i32, tv: [u8; 4]| -> Option<[f32; 4]> {
         if lt <= tt {
             let lerp = |a: u8, b: u8| -> f32 {
                 (a as f32 + (b as f32 - a as f32) * ((lt - ft) as f32 / (tt - ft) as f32)) / 255.0
             };
-            return Some([lerp(fv[0], tv[0]), lerp(fv[1], tv[1]), lerp(fv[2], tv[2])]);
+            return Some([
+                lerp(fv[0], tv[0]),
+                lerp(fv[1], tv[1]),
+                lerp(fv[2], tv[2]),
+                lerp(fv[3], tv[3]),
+            ]);
         }
         None
     };
@@ -174,10 +186,13 @@ fn sample_color_rgb(kf: &[(i32, [u8; 4])], t: i64, period: i32) -> [f32; 3] {
             return v;
         }
     }
-    match eval(last.0, last.1, first.0 + period, first.1) {
-        Some(v) => v,
-        None => [1.0, 1.0, 1.0],
-    }
+    eval(last.0, last.1, first.0 + period, first.1).unwrap_or([1.0, 1.0, 1.0, 1.0])
+}
+
+/// Sample one RGBA color track, returning RGB only.
+fn sample_color_rgb(kf: &[(i32, [u8; 4])], t: i64, period: i32) -> [f32; 3] {
+    let c = sample_color_rgba(kf, t, period);
+    [c[0], c[1], c[2]]
 }
 
 /// Evaluate the whole official day-night cycle at world tick `day_time`.
@@ -191,6 +206,7 @@ pub fn sample(day_time: i64) -> SkyState {
         sample_f32(&S::STAR_BRIGHTNESS_KF, None, day_time, S::DAY_PERIOD_TICKS).max(0.0);
     let sky_track = sample_color_rgb(&S::SKY_COLOR_KF, day_time, S::DAY_PERIOD_TICKS);
     let fog_track = sample_color_rgb(&S::FOG_COLOR_KF, day_time, S::DAY_PERIOD_TICKS);
+    let sunrise_color = sample_color_rgba(&S::SUNRISE_COLOR_KF, day_time, S::DAY_PERIOD_TICKS);
     let base = |c: [u8; 4]| [c[0] as f32 / 255.0, c[1] as f32 / 255.0, c[2] as f32 / 255.0];
     let dim_sky = base(S::DIM_SKY_COLOR);
     let dim_fog = base(S::DIM_FOG_COLOR);
@@ -220,6 +236,7 @@ pub fn sample(day_time: i64) -> SkyState {
         star_brightness,
         sky_color,
         fog_color,
+        sunrise_color,
         moon_phase,
     }
 }
@@ -343,28 +360,84 @@ fn celestial_quad(m: &Mat4, cam: &Camera, scale: f32) -> [[f32; 3]; 4] {
     pts
 }
 
-/// Render the sun, moon (current phase) and stars for world tick `day_time`.
-/// Must be called after the sky-color clear and BEFORE terrain quads
-/// (official order: sky disc -> celestials -> terrain).
+/// The official horizon glow disc (renderSunriseAndSunset): an 18-vertex
+/// triangle fan — center (0, 100, 0) with vertex alpha 1, a 17-vertex ring
+/// (sin·120, cos·120, -cos·40) with vertex alpha 0 — tinted by the official
+/// `visual/sunrise_sunset_color` track and blended TRANSLUCENT
+/// (BlendFunction.TRANSLUCENT, the official SUNRISE_SUNSET pipeline).
+/// Transform: rotX(90°) · rotZ(90° [+180° when sin(sun_angle) < 0]), then
+/// scale(1, 1, alpha) applied in the fan's local space; early-out when the
+/// track alpha <= 0.001.
+pub fn render_sunrise_disc(
+    quads: &mut Vec<FlatQuad>,
+    cam: &Camera,
+    day_time: i64,
+) {
+    let st = sample(day_time);
+    let alpha = st.sunrise_color[3];
+    if alpha <= 0.001 {
+        return;
+    }
+    let flip = if st.sun_angle.sin() < 0.0 { 180.0f32 } else { 0.0 };
+    let m = Mat4::rot_x(90.0f32.to_radians())
+        .mul(&Mat4::rot_z((90.0f32 + flip).to_radians()));
+    let tint = st.sunrise_color;
+    // center vertex (fan root), alpha = tint alpha
+    let center_local = Vec3::new(0.0, 100.0, 0.0);
+    let cw = m.transform_point(center_local);
+    let center = [cw[0] + cam.pos.x, cw[1] + cam.pos.y, cw[2] + cam.pos.z];
+    let center_color = [tint[0], tint[1], tint[2], alpha];
+    // 17 ring vertices (i = 0..=16), alpha 0; local z scaled by alpha.
+    let mut ring: Vec<([f32; 3], [f32; 4])> = Vec::with_capacity(17);
+    for i in 0..=16i32 {
+        let ang = i as f32 * (6.2831855f32 / 16.0);
+        let (s, c) = (ang.sin(), ang.cos());
+        let local = Vec3::new(s * 120.0, c * 120.0, -c * 40.0 * alpha);
+        let w = m.transform_point(local);
+        ring.push((
+            [w[0] + cam.pos.x, w[1] + cam.pos.y, w[2] + cam.pos.z],
+            [tint[0], tint[1], tint[2], 0.0],
+        ));
+    }
+    // TRIANGLE_FAN: triangles (center, ring[i], ring[i+1]) for i in 0..=15.
+    for i in 0..=15 {
+        quads.push(FlatQuad {
+            pts: [center, ring[i].0, ring[i + 1].0, ring[i + 1].0],
+            colors: [center_color, ring[i].1, ring[i + 1].1, ring[i + 1].1],
+            rgba: None,
+            blend: crate::raster::FlatBlend::Translucent,
+        });
+    }
+}
+
+/// Render the sunrise disc, sun, moon (current phase) and stars for world
+/// tick `day_time`. Must be called after the sky-color clear and BEFORE
+/// terrain quads (official order: sky disc -> sunrise glow -> celestials ->
+/// terrain).
 pub fn render_celestials(fb: &mut crate::raster::Framebuf, ctx: &RenderCtx, cam: &Camera, day_time: i64) {
     let st = sample(day_time);
-    let mut quads: Vec<FlatQuad> = Vec::with_capacity(stars().len() + 2);
+    let mut quads: Vec<FlatQuad> = Vec::with_capacity(stars().len() + 18);
+
+    // sunrise/sunset glow (drawn first, official render order)
+    render_sunrise_disc(&mut quads, cam, day_time);
 
     // sun
     let sun = celestial_quad(&celestial(st.sun_angle), cam, 30.0);
     quads.push(FlatQuad {
         pts: sun,
-        colors: [[1.0; 3]; 4],
+        colors: [[1.0, 1.0, 1.0, 1.0]; 4],
         rgba: Some((&S::SUN_RGBA, S::CELESTIAL_SIZE)),
+        blend: crate::raster::FlatBlend::Additive,
     });
     // moon (phase-selected texture, mirrored UVs like the official buffer)
     let moon = celestial_quad(&celestial(st.moon_angle), cam, 20.0);
     quads.push(FlatQuad {
         pts: moon,
-        colors: [[1.0; 3]; 4],
+        colors: [[1.0, 1.0, 1.0, 1.0]; 4],
         rgba: Some((&S::MOON_RGBA[st.moon_phase as usize], S::CELESTIAL_SIZE)),
+        blend: crate::raster::FlatBlend::Additive,
     });
-    // stars: brightness-tinted, alpha-blended (official STARS pipeline).
+    // stars: brightness-tinted, additive (official STARS pipeline = OVERLAY).
     let m = celestial(st.star_angle);
     let b = st.star_brightness;
     for star in stars() {
@@ -373,7 +446,12 @@ pub fn render_celestials(fb: &mut crate::raster::Framebuf, ctx: &RenderCtx, cam:
             let w = m.transform_point(Vec3::new(c[0], c[1], c[2]));
             pts[i] = [w[0] + cam.pos.x, w[1] + cam.pos.y, w[2] + cam.pos.z];
         }
-        quads.push(FlatQuad { pts, colors: [[b, b, b]; 4], rgba: None });
+        quads.push(FlatQuad {
+            pts,
+            colors: [[b, b, b, b]; 4],
+            rgba: None,
+            blend: crate::raster::FlatBlend::Additive,
+        });
     }
     fb.draw_flat(ctx, &quads);
 }
@@ -517,6 +595,51 @@ mod tests {
                 / 4.0;
             assert!((r2 - 100.0 * 100.0).abs() < 2.0, "radius² {r2}");
         }
+    }
+
+    #[test]
+    fn sunrise_color_official_anchors() {
+        // Keyframes are #AARRGGBB. Midday holds #00FFE533: alpha 00 -> the
+        // official early-out skips the glow disc entirely at noon.
+        let noon = sample(6000);
+        assert!((noon.sunrise_color[0] - 0xff as f32 / 255.0).abs() < 1e-6);
+        assert!((noon.sunrise_color[1] - 0xe5 as f32 / 255.0).abs() < 1e-6);
+        assert!((noon.sunrise_color[2] - 0x33 as f32 / 255.0).abs() < 1e-6);
+        assert!(noon.sunrise_color[3] <= 0.001, "noon alpha must early-out");
+        // Dawn (t=0) blends the wrap segment toward #5FEFA333 (~44% alpha,
+        // golden-orange) — the disc renders.
+        let dawn = sample(0);
+        assert!(dawn.sunrise_color[3] > 0.3, "dawn alpha {:?}", dawn.sunrise_color);
+        // Sunset peak (~t=23159, #FED75C33) is nearly opaque alpha.
+        let peak = sample(23159);
+        assert!((peak.sunrise_color[3] - 0xfe as f32 / 255.0).abs() < 1e-6);
+        assert!((peak.sunrise_color[0] - 0xd7 as f32 / 255.0).abs() < 1e-6);
+    }
+
+    #[test]
+    fn sunrise_disc_places_glow_at_rise_and_set_horizons() {
+        let cam = Camera { pos: Vec3::ZERO, yaw: 0.0, pitch: 0.0 };
+        let mut collect = |t: i64| {
+            let mut q = Vec::new();
+            render_sunrise_disc(&mut q, &cam, t);
+            q
+        };
+        // Dawn (t=0): sin(sun_angle) < 0 -> flip 180 -> disc center at +X (east).
+        let dawn = collect(0);
+        assert!(!dawn.is_empty(), "dawn disc must render");
+        let c = dawn[0].pts[0];
+        assert!(c[0] > 95.0 && c[0] < 105.0, "east center x {c:?}");
+        assert!(c[1].abs() < 1e-3 && c[2].abs() < 1e-3, "on horizon {c:?}");
+        // Center vertex alpha = track alpha; ring vertex alpha = 0.
+        assert!((dawn[0].colors[0][3] - sample(0).sunrise_color[3]).abs() < 1e-6);
+        assert!(dawn[0].colors[1][3].abs() < 1e-6);
+        // Dusk (t=12000): sin(sun_angle) >= 0 -> disc center at -X (west).
+        let dusk = collect(12000);
+        assert!(!dusk.is_empty());
+        let c = dusk[0].pts[0];
+        assert!(c[0] < -95.0 && c[0] > -105.0, "west center x {c:?}");
+        // 18-vertex fan = 16 triangles.
+        assert_eq!(dawn.len(), 16);
     }
 
     #[test]

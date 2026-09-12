@@ -26,18 +26,30 @@ pub struct RenderCtx {
     pub fog_far: f32,
 }
 
-/// One celestial quad (sun / moon / star) in world space. Rendered with the
-/// official CELESTIAL/STARS pipeline semantics: no depth test or write, no
-/// fog, no backface cull, additive color blend (BlendFunction.OVERLAY =
-/// SRC_ALPHA, ONE — the black surroundings of the celestial textures add
-/// nothing) — drawn right after the sky-color clear, before terrain, so
-/// terrain always overdraws it.
+/// Blend function for color-only FlatQuads (official pipeline semantics).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum FlatBlend {
+    /// BlendFunction.OVERLAY (SRC_ALPHA, ONE): out = rgb·a + dst — STARS,
+    /// and textured sun/moon.
+    Additive,
+    /// BlendFunction.TRANSLUCENT (SRC_ALPHA, ONE_MINUS_SRC_ALPHA):
+    /// out = rgb·a + dst·(1-a) — the sunrise/sunset glow disc.
+    Translucent,
+}
+
+/// One celestial quad (sun / moon / star / sunrise disc) in world space.
+/// Rendered with the official sky-pipeline semantics: no depth test or
+/// write, no fog, no backface cull — drawn right after the sky-color clear,
+/// before terrain, so terrain always overdraws it.
 pub struct FlatQuad {
     pub pts: [[f32; 3]; 4],
-    pub colors: [[f32; 3]; 4],
+    /// Per-vertex RGBA (the game interpolates vertex color in screen space;
+    /// the sunrise fan uses alpha 1 at the center falling to 0 on the ring).
+    pub colors: [[f32; 4]; 4],
     /// (rgba pixels, side length) for textured celestial sprites (sun/moon);
-    /// None = solid vertex-color quad (stars, official STARS pipeline).
+    /// None = solid vertex-color quad.
     pub rgba: Option<(&'static [u8], u32)>,
+    pub blend: FlatBlend,
 }
 
 impl Framebuf {
@@ -243,7 +255,6 @@ impl Framebuf {
                 let (ax, ay, a_ow) = (sx[0], sy[0], ow[0]);
                 let (bx, by, b_ow) = (sx[tri], sy[tri], ow[tri]);
                 let (cx, cy, c_ow) = (sx[tri + 1], sy[tri + 1], ow[tri + 1]);
-                let (ca, cb, cc) = (quad.colors[0], quad.colors[tri], quad.colors[tri + 1]);
                 let area_ab = edge(ax, ay, bx, by, cx, cy);
                 if area_ab.abs() < 1e-9 {
                     continue;
@@ -264,8 +275,9 @@ impl Framebuf {
                         let b2 = w2 * inv_area;
                         let dist = 1.0 / (b0 * a_ow + b1 * b_ow + b2 * c_ow);
                         let o = ((py as usize) * self.w + px as usize) * 3;
-                        let mut c0 = [0f32; 3];
-                        for ch in 0..3 {
+                        let mut c0 = [0f32; 4];
+                        let (ca, cb, cc) = (quad.colors[0], quad.colors[tri], quad.colors[tri + 1]);
+                        for ch in 0..4 {
                             c0[ch] = b0 * ca[ch] + b1 * cb[ch] + b2 * cc[ch];
                         }
                         if let Some((rgba, side)) = quad.rgba {
@@ -297,12 +309,22 @@ impl Framebuf {
                                 c0[ch] = src + bg;
                             }
                         } else {
-                            // STARS (same OVERLAY blend): color (b,b,b) with
-                            // alpha b added over the sky.
-                            let a = c0[0];
-                            for ch in 0..3 {
-                                let bg = self.color[o + ch] as f32 / 255.0;
-                                c0[ch] = c0[ch] * a + bg;
+                            let bg = [
+                                self.color[o] as f32 / 255.0,
+                                self.color[o + 1] as f32 / 255.0,
+                                self.color[o + 2] as f32 / 255.0,
+                            ];
+                            match quad.blend {
+                                FlatBlend::Additive => {
+                                    for ch in 0..3 {
+                                        c0[ch] = c0[ch] * c0[3] + bg[ch];
+                                    }
+                                }
+                                FlatBlend::Translucent => {
+                                    for ch in 0..3 {
+                                        c0[ch] = c0[ch] * c0[3] + bg[ch] * (1.0 - c0[3]);
+                                    }
+                                }
                             }
                         }
                         for ch in 0..3 {

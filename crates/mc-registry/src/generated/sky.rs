@@ -33,11 +33,17 @@ pub static STAR_ANGLE_BEZIER: [f32; 4] = [0.362, 0.241, 0.638, 0.759];
 /// visual/star_brightness keyframes (tick, 0..1) — LINEAR, modifier maximum.
 pub static STAR_BRIGHTNESS_KF: [(i32, f32); 12] = [(92, 0.037), (627, 0.0), (11373, 0.0), (11732, 0.016), (11959, 0.044), (12399, 0.143), (12729, 0.258), (13228, 0.5), (22772, 0.5), (23032, 0.364), (23356, 0.225), (23758, 0.101), ];
 
-/// visual/sky_color keyframes (tick, RGBA) — LINEAR, modifier multiply over DIM_*_COLOR.
+/// visual/sky_color keyframes (tick, RGBA) — LINEAR (sunrise_sunset_color
+/// tints the official horizon glow disc).
 pub static SKY_COLOR_KF: [(i32, [u8; 4]); 4] = [(133, [255, 255, 255, 255]), (11867, [255, 255, 255, 255]), (13670, [0, 0, 0, 255]), (22330, [0, 0, 0, 255]), ];
 
-/// visual/fog_color keyframes (tick, RGBA) — LINEAR, modifier multiply over DIM_*_COLOR.
+/// visual/fog_color keyframes (tick, RGBA) — LINEAR (sunrise_sunset_color
+/// tints the official horizon glow disc).
 pub static FOG_COLOR_KF: [(i32, [u8; 4]); 4] = [(133, [255, 255, 255, 255]), (11867, [255, 255, 255, 255]), (13670, [12, 12, 22, 255]), (22330, [22, 22, 22, 255]), ];
+
+/// visual/sunrise_color keyframes (tick, RGBA) — LINEAR (sunrise_sunset_color
+/// tints the official horizon glow disc).
+pub static SUNRISE_COLOR_KF: [(i32, [u8; 4]); 32] = [(71, [239, 163, 51, 95]), (310, [245, 186, 51, 41]), (565, [251, 212, 51, 6]), (730, [255, 229, 51, 0]), (11270, [255, 229, 51, 0]), (11397, [252, 216, 51, 4]), (11522, [249, 203, 51, 15]), (11690, [245, 186, 51, 41]), (11929, [239, 163, 51, 95]), (12243, [231, 135, 51, 177]), (12358, [228, 126, 51, 204]), (12512, [224, 114, 51, 233]), (12613, [221, 107, 51, 246]), (12732, [218, 99, 51, 254]), (12841, [215, 92, 51, 254]), (13035, [210, 81, 51, 236]), (13252, [204, 71, 51, 193]), (13775, [190, 55, 51, 54]), (13888, [187, 53, 51, 31]), (14039, [183, 51, 51, 9]), (14192, [179, 51, 51, 0]), (21807, [178, 51, 51, 0]), (21961, [183, 51, 51, 9]), (22112, [187, 53, 51, 31]), (22225, [190, 55, 51, 54]), (22748, [204, 71, 51, 193]), (22965, [210, 81, 51, 236]), (23159, [215, 92, 51, 254]), (23272, [218, 99, 51, 254]), (23488, [224, 114, 51, 233]), (23642, [228, 126, 51, 204]), (23757, [231, 135, 51, 177]), ];
 
 /// visual/moon_phase keyframes (tick, phase index) over MOON_PERIOD_TICKS.
 pub static MOON_PHASE_KF: [(i32, u8); 8] = [(0, 0), (24000, 1), (48000, 2), (72000, 3), (96000, 4), (120000, 5), (144000, 6), (168000, 7), ];
