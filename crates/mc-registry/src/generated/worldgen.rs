@@ -89,6 +89,89 @@ pub fn biome(name: &str) -> Option<&'static BiomeDef> {
     BIOMES.binary_search_by_key(&name, |b| b.name).ok().map(|i| &BIOMES[i])
 }
 
+/// One situational background-music entry from the official biome data
+/// (attributes["minecraft:audio/background_music"]).
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct BiomeMusicDef {
+    pub biome: &'static str,
+    pub context: &'static str,
+    pub event: &'static str,
+    pub min_delay: u32,
+    pub max_delay: u32,
+}
+
+pub static BIOME_MUSIC: [BiomeMusicDef; 59] = [
+    BiomeMusicDef { biome: "minecraft:badlands", context: "default", event: "music.overworld.badlands", min_delay: 12000, max_delay: 24000 },
+    BiomeMusicDef { biome: "minecraft:bamboo_jungle", context: "default", event: "music.overworld.bamboo_jungle", min_delay: 12000, max_delay: 24000 },
+    BiomeMusicDef { biome: "minecraft:basalt_deltas", context: "default", event: "music.nether.basalt_deltas", min_delay: 12000, max_delay: 24000 },
+    BiomeMusicDef { biome: "minecraft:birch_forest", context: "default", event: "music.overworld.forest", min_delay: 12000, max_delay: 24000 },
+    BiomeMusicDef { biome: "minecraft:cherry_grove", context: "default", event: "music.overworld.cherry_grove", min_delay: 12000, max_delay: 24000 },
+    BiomeMusicDef { biome: "minecraft:cold_ocean", context: "creative", event: "music.creative", min_delay: 12000, max_delay: 24000 },
+    BiomeMusicDef { biome: "minecraft:cold_ocean", context: "default", event: "music.game", min_delay: 12000, max_delay: 24000 },
+    BiomeMusicDef { biome: "minecraft:cold_ocean", context: "underwater", event: "music.under_water", min_delay: 12000, max_delay: 24000 },
+    BiomeMusicDef { biome: "minecraft:crimson_forest", context: "default", event: "music.nether.crimson_forest", min_delay: 12000, max_delay: 24000 },
+    BiomeMusicDef { biome: "minecraft:dark_forest", context: "default", event: "music.overworld.forest", min_delay: 12000, max_delay: 24000 },
+    BiomeMusicDef { biome: "minecraft:deep_cold_ocean", context: "creative", event: "music.creative", min_delay: 12000, max_delay: 24000 },
+    BiomeMusicDef { biome: "minecraft:deep_cold_ocean", context: "default", event: "music.game", min_delay: 12000, max_delay: 24000 },
+    BiomeMusicDef { biome: "minecraft:deep_cold_ocean", context: "underwater", event: "music.under_water", min_delay: 12000, max_delay: 24000 },
+    BiomeMusicDef { biome: "minecraft:deep_dark", context: "default", event: "music.overworld.deep_dark", min_delay: 12000, max_delay: 24000 },
+    BiomeMusicDef { biome: "minecraft:deep_lukewarm_ocean", context: "creative", event: "music.creative", min_delay: 12000, max_delay: 24000 },
+    BiomeMusicDef { biome: "minecraft:deep_lukewarm_ocean", context: "default", event: "music.game", min_delay: 12000, max_delay: 24000 },
+    BiomeMusicDef { biome: "minecraft:deep_lukewarm_ocean", context: "underwater", event: "music.under_water", min_delay: 12000, max_delay: 24000 },
+    BiomeMusicDef { biome: "minecraft:deep_ocean", context: "creative", event: "music.creative", min_delay: 12000, max_delay: 24000 },
+    BiomeMusicDef { biome: "minecraft:deep_ocean", context: "default", event: "music.game", min_delay: 12000, max_delay: 24000 },
+    BiomeMusicDef { biome: "minecraft:deep_ocean", context: "underwater", event: "music.under_water", min_delay: 12000, max_delay: 24000 },
+    BiomeMusicDef { biome: "minecraft:desert", context: "default", event: "music.overworld.desert", min_delay: 12000, max_delay: 24000 },
+    BiomeMusicDef { biome: "minecraft:dripstone_caves", context: "default", event: "music.overworld.dripstone_caves", min_delay: 12000, max_delay: 24000 },
+    BiomeMusicDef { biome: "minecraft:eroded_badlands", context: "default", event: "music.overworld.badlands", min_delay: 12000, max_delay: 24000 },
+    BiomeMusicDef { biome: "minecraft:flower_forest", context: "default", event: "music.overworld.flower_forest", min_delay: 12000, max_delay: 24000 },
+    BiomeMusicDef { biome: "minecraft:forest", context: "default", event: "music.overworld.forest", min_delay: 12000, max_delay: 24000 },
+    BiomeMusicDef { biome: "minecraft:frozen_peaks", context: "default", event: "music.overworld.frozen_peaks", min_delay: 12000, max_delay: 24000 },
+    BiomeMusicDef { biome: "minecraft:frozen_river", context: "creative", event: "music.creative", min_delay: 12000, max_delay: 24000 },
+    BiomeMusicDef { biome: "minecraft:frozen_river", context: "default", event: "music.game", min_delay: 12000, max_delay: 24000 },
+    BiomeMusicDef { biome: "minecraft:frozen_river", context: "underwater", event: "music.under_water", min_delay: 12000, max_delay: 24000 },
+    BiomeMusicDef { biome: "minecraft:grove", context: "default", event: "music.overworld.grove", min_delay: 12000, max_delay: 24000 },
+    BiomeMusicDef { biome: "minecraft:jagged_peaks", context: "default", event: "music.overworld.jagged_peaks", min_delay: 12000, max_delay: 24000 },
+    BiomeMusicDef { biome: "minecraft:jungle", context: "default", event: "music.overworld.jungle", min_delay: 12000, max_delay: 24000 },
+    BiomeMusicDef { biome: "minecraft:lukewarm_ocean", context: "creative", event: "music.creative", min_delay: 12000, max_delay: 24000 },
+    BiomeMusicDef { biome: "minecraft:lukewarm_ocean", context: "default", event: "music.game", min_delay: 12000, max_delay: 24000 },
+    BiomeMusicDef { biome: "minecraft:lukewarm_ocean", context: "underwater", event: "music.under_water", min_delay: 12000, max_delay: 24000 },
+    BiomeMusicDef { biome: "minecraft:lush_caves", context: "default", event: "music.overworld.lush_caves", min_delay: 12000, max_delay: 24000 },
+    BiomeMusicDef { biome: "minecraft:mangrove_swamp", context: "default", event: "music.overworld.swamp", min_delay: 12000, max_delay: 24000 },
+    BiomeMusicDef { biome: "minecraft:meadow", context: "default", event: "music.overworld.meadow", min_delay: 12000, max_delay: 24000 },
+    BiomeMusicDef { biome: "minecraft:nether_wastes", context: "default", event: "music.nether.nether_wastes", min_delay: 12000, max_delay: 24000 },
+    BiomeMusicDef { biome: "minecraft:ocean", context: "creative", event: "music.creative", min_delay: 12000, max_delay: 24000 },
+    BiomeMusicDef { biome: "minecraft:ocean", context: "default", event: "music.game", min_delay: 12000, max_delay: 24000 },
+    BiomeMusicDef { biome: "minecraft:ocean", context: "underwater", event: "music.under_water", min_delay: 12000, max_delay: 24000 },
+    BiomeMusicDef { biome: "minecraft:old_growth_birch_forest", context: "default", event: "music.overworld.forest", min_delay: 12000, max_delay: 24000 },
+    BiomeMusicDef { biome: "minecraft:old_growth_pine_taiga", context: "default", event: "music.overworld.old_growth_taiga", min_delay: 12000, max_delay: 24000 },
+    BiomeMusicDef { biome: "minecraft:old_growth_spruce_taiga", context: "default", event: "music.overworld.old_growth_taiga", min_delay: 12000, max_delay: 24000 },
+    BiomeMusicDef { biome: "minecraft:river", context: "creative", event: "music.creative", min_delay: 12000, max_delay: 24000 },
+    BiomeMusicDef { biome: "minecraft:river", context: "default", event: "music.game", min_delay: 12000, max_delay: 24000 },
+    BiomeMusicDef { biome: "minecraft:river", context: "underwater", event: "music.under_water", min_delay: 12000, max_delay: 24000 },
+    BiomeMusicDef { biome: "minecraft:snowy_slopes", context: "default", event: "music.overworld.snowy_slopes", min_delay: 12000, max_delay: 24000 },
+    BiomeMusicDef { biome: "minecraft:soul_sand_valley", context: "default", event: "music.nether.soul_sand_valley", min_delay: 12000, max_delay: 24000 },
+    BiomeMusicDef { biome: "minecraft:sparse_jungle", context: "default", event: "music.overworld.sparse_jungle", min_delay: 12000, max_delay: 24000 },
+    BiomeMusicDef { biome: "minecraft:stony_peaks", context: "default", event: "music.overworld.stony_peaks", min_delay: 12000, max_delay: 24000 },
+    BiomeMusicDef { biome: "minecraft:sulfur_caves", context: "default", event: "music.overworld.sulfur_caves", min_delay: 12000, max_delay: 24000 },
+    BiomeMusicDef { biome: "minecraft:swamp", context: "default", event: "music.overworld.swamp", min_delay: 12000, max_delay: 24000 },
+    BiomeMusicDef { biome: "minecraft:warm_ocean", context: "creative", event: "music.creative", min_delay: 12000, max_delay: 24000 },
+    BiomeMusicDef { biome: "minecraft:warm_ocean", context: "default", event: "music.game", min_delay: 12000, max_delay: 24000 },
+    BiomeMusicDef { biome: "minecraft:warm_ocean", context: "underwater", event: "music.under_water", min_delay: 12000, max_delay: 24000 },
+    BiomeMusicDef { biome: "minecraft:warped_forest", context: "default", event: "music.nether.warped_forest", min_delay: 12000, max_delay: 24000 },
+    BiomeMusicDef { biome: "minecraft:wooded_badlands", context: "default", event: "music.overworld.badlands", min_delay: 12000, max_delay: 24000 },
+];
+
+/// Situational music of one biome context ("minecraft:plains", "default"),
+/// sorted for binary search. None = the official biome ships no music for
+/// that context (the client falls back to the vanilla in-game default).
+pub fn biome_music(biome: &str, context: &str) -> Option<&'static BiomeMusicDef> {
+    BIOME_MUSIC
+        .binary_search_by_key(&(biome, context), |m| (m.biome, m.context))
+        .ok()
+        .map(|i| &BIOME_MUSIC[i])
+}
+
 pub static NOISE_SETTINGS: [&str; 7] = ["amplified", "caves", "end", "floating_islands", "large_biomes", "nether", "overworld"];
 
 /// Worldgen resource counts (real inventory of the version jar).

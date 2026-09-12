@@ -208,7 +208,9 @@ impl App {
 
     /// Enter the singleplayer world (3D view + HUD), building the mesh once.
     /// Vanilla situational music: the menu track is interrupted at once and
-    /// the game-music schedule takes over.
+    /// the SPAWN BIOME's official background-music situation takes over
+    /// (the seeded pick stands in for the future climate-driven biome
+    /// source; the music data itself is fully official).
     pub fn enter_world(&mut self) {
         if self.world_quads.is_none() {
             let world = crate::world::World::new(WORLD_CHUNKS, self.seed);
@@ -217,7 +219,7 @@ impl App {
             self.world_quads = Some(crate::mesher::mesh_world(&world, None));
         }
         self.paused = false;
-        self.music.on_world_enter();
+        self.music.on_world_enter_biome(spawn_biome(self.seed));
         self.open(ScreenKind::World);
     }
 
@@ -661,6 +663,16 @@ fn splitmix(x: u64) -> u64 {
     z ^ (z >> 31)
 }
 
+/// The world's spawn biome: a seeded pick from the OFFICIAL biome registry
+/// (generated worldgen table). Until the terrain generator evaluates the
+/// real climate source, this stands in as the situation's biome owner —
+/// deterministic per seed, always an official id.
+fn spawn_biome(seed: u64) -> &'static str {
+    use mc_registry::generated::worldgen as wm;
+    let i = (splitmix(seed) % wm::BIOMES.len() as u64) as usize;
+    wm::BIOMES[i].name
+}
+
 /// Horizontal panorama offset for a frame — deterministic, wraps the strip
 /// (vanilla pans the panorama slowly; we slide the cube strip at a similar
 /// pace: one face every ~360 frames).
@@ -750,6 +762,33 @@ mod tests {
         let quads = app.world_quads.as_ref().expect("world meshed on entry");
         assert!(!quads.is_empty(), "mesh produced faces");
         assert!(app.spawn_y > 0, "spawn eye above bedrock");
+    }
+
+    #[test]
+    fn world_music_follows_the_official_spawn_biome() {
+        // the situation is resolved from the seeded spawn biome through the
+        // generated biome-music table: the playing event is either the
+        // biome's official background-music event or the vanilla in-game
+        // default for biomes without one; deterministic per seed either way
+        use mc_registry::generated::worldgen as wm;
+        let seed = 3;
+        let biome = spawn_biome(seed);
+        assert!(wm::biome(biome).is_some(), "{biome} must be an official biome");
+        let expect = wm::biome_music(biome, "default")
+            .map(|m| m.event)
+            .unwrap_or("music.game");
+        let mut app = App::new(seed);
+        app.enter_world();
+        assert_eq!(app.music.mode(), crate::music::MusicMode::Game);
+        assert_eq!(
+            app.music.game_tracks(),
+            &[expect] as &[&str],
+            "seed {seed} biome {biome} must resolve to {expect}"
+        );
+        // determinism: the same seed resolves the same situation
+        let mut again = App::new(seed);
+        again.enter_world();
+        assert_eq!(again.music.game_tracks(), app.music.game_tracks());
     }
 
     #[test]

@@ -255,8 +255,8 @@ mod tests {
 
     #[test]
     fn parses_biome_colors_and_counts() {
-        let plains = br#"{"temperature":0.8,"downfall":0.4,"has_precipitation":true,"effects":{"fog_color":12638463,"sky_color":7946167,"water_color":4159204,"water_fog_color":329011}}"#;
-        let desert = br#"{"temperature":2.0,"downfall":0.0,"has_precipitation":false,"effects":{"fog_color":12638463,"sky_color":7946167,"water_color":4159204,"water_fog_color":329011,"grass_color":11590961}}"#;
+        let plains = br#"{"temperature":0.8,"downfall":0.4,"has_precipitation":true,"attributes":{"minecraft:audio/background_music":{"default":{"sound":"minecraft:music.game","min_delay":12000,"max_delay":24000},"underwater":{"sound":"minecraft:music.under_water","min_delay":12000,"max_delay":24000}}},"effects":{"fog_color":12638463,"sky_color":7946167,"water_color":4159204,"water_fog_color":329011}}"#;
+        let desert = br#"{"temperature":2.0,"downfall":0.0,"has_precipitation":false,"attributes":{"minecraft:audio/background_music":{"default":{"sound":"minecraft:music.overworld.desert","min_delay":12000,"max_delay":24000}}},"effects":{"fog_color":12638463,"sky_color":7946167,"water_color":4159204,"water_fog_color":329011,"grass_color":11590961}}"#;
         let mut zip = zip_of(&[
             ("data/minecraft/worldgen/biome/plains.json", plains.to_vec()),
             ("data/minecraft/worldgen/biome/desert.json", desert.to_vec()),
@@ -284,5 +284,14 @@ mod tests {
         assert!(emitted.contains("name: \"minecraft:plains\""));
         assert!(emitted.contains("pub fn biome(name: &str)"));
         assert!(emitted.contains("pub const PLACED_FEATURES: usize = 1;"));
+        // the situational music table: 3 entries, sorted, contexts kept,
+        // "minecraft:" stripped from the event id
+        assert_eq!(data.biome_music.len(), 3);
+        assert_eq!(data.biome_music[0].biome, "minecraft:desert");
+        assert_eq!(data.biome_music[0].event, "music.overworld.desert");
+        assert_eq!((data.biome_music[0].min_delay, data.biome_music[0].max_delay), (12000, 24000));
+        assert!(emitted.contains("event: \"music.under_water\""));
+        assert!(emitted.contains("pub fn biome_music(biome: &str, context: &str)"));
+        assert!(emitted.contains("pub static BIOME_MUSIC: [BiomeMusicDef; 3]"));
     }
 }

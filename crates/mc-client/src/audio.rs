@@ -317,7 +317,14 @@ impl MenuMusic {
     pub fn start_with_root(app: &mut crate::screens::App, root: &Path) -> Self {
         let menu = app.music.menu_tracks().to_vec();
         let game = app.music.game_tracks().to_vec();
-        let files = discover_events(root, &[menu.as_slice(), game.as_slice()].concat());
+        // every event the official biome data references: ANY seed's spawn
+        // biome must resolve to real paths + decoded lengths, whatever the
+        // situation turns out to be
+        let biome = crate::music::MusicScheduler::all_biome_events();
+        let files = discover_events(
+            root,
+            &[menu.as_slice(), game.as_slice(), biome.as_slice()].concat(),
+        );
         for (key, path) in &files {
             if let Ok(bytes) = std::fs::read(path) {
                 if let Ok((_, frames)) = probe_frames(&bytes) {
@@ -611,7 +618,8 @@ mod tests {
         let mut app = crate::screens::App::new(1);
         let mut m = MenuMusic::start_with_root(&mut app, &dir);
         // enter the world and wait (bounded) for the first game track to
-        // start after its randomized delay
+        // start after its randomized delay — the OFFICIAL bounds are
+        // 12000–24000 ticks in 26.2, so the bound must cover the max
         app.music.on_world_enter();
         let mut waited = 0u64;
         while !matches!(
@@ -620,7 +628,7 @@ mod tests {
         ) {
             app.music.update();
             waited += 1;
-            assert!(waited < 10_000, "game music never started");
+            assert!(waited < 30_000, "game music never started");
         }
         m.sync(&app.music);
         assert!(m.output.playing(), "game track plays through the music channel");
@@ -628,6 +636,49 @@ mod tests {
         app.music.on_menu_open();
         m.sync(&app.music);
         assert!(!m.output.playing(), "stop event interrupts the game track");
+        std::fs::remove_dir_all(&dir).ok();
+    }
+
+    #[test]
+    fn sync_plays_biome_situation_music() {
+        // a biome whose DEFAULT event is small (26.2 swamp: 4 files in
+        // music.overworld.swamp) — synthesized at every official path so the
+        // weighted pick always lands, discovered through the SAME all-events
+        // scan the real backend uses
+        let dir = std::env::temp_dir().join(format!("mc2rs-biome-{}", std::process::id()));
+        use mc_registry::generated::sounds as snd;
+        let ev = snd::event("music.overworld.swamp").expect("swamp event in table");
+        assert!(ev.len > 0 && ev.len <= 8, "26.2 swamp pool: {} files", ev.len);
+        for f in snd::files(ev) {
+            let p = dir
+                .join("assets/minecraft/sounds")
+                .join(format!("{}.ogg", f.name));
+            std::fs::create_dir_all(p.parent().unwrap()).unwrap();
+            std::fs::write(&p, synth_wav()).unwrap();
+        }
+
+        let mut app = crate::screens::App::new(1);
+        let mut m = MenuMusic::start_with_root(&mut app, &dir);
+        app.music.on_world_enter_biome("minecraft:swamp");
+        let mut waited = 0u64;
+        loop {
+            match app.music.state() {
+                crate::music::MusicState::Playing(t, _, _) => {
+                    assert!(
+                        t.starts_with("music.overworld.swamp#"),
+                        "the biome situation must play its own pool, got {t}"
+                    );
+                    break;
+                }
+                _ => {
+                    app.music.update();
+                    waited += 1;
+                    assert!(waited < 30_000, "biome music never started");
+                }
+            }
+        }
+        m.sync(&app.music);
+        assert!(m.output.playing(), "biome track plays through the music channel");
         std::fs::remove_dir_all(&dir).ok();
     }
 

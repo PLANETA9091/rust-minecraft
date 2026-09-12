@@ -21,8 +21,9 @@ pub enum MusicState {
 }
 
 /// Which situation the scheduler is serving — vanilla's situational music:
-/// the title screen plays `music.menu`, a loaded world plays `music.game`
-/// (biome-specific pools are a future step).
+/// the title screen plays `music.menu`, a loaded world plays the biome's
+/// official background-music event (or the vanilla in-game default
+/// `music.game` when the biome ships none).
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum MusicMode {
     Menu,
@@ -39,7 +40,11 @@ pub fn file_key(event: &str, idx: usize) -> String {
 pub struct MusicScheduler {
     mode: MusicMode,
     menu_tracks: Vec<&'static str>,
+    /// the CURRENT in-game situation's event list (one official event id, or
+    /// empty for a biome whose event ships no files — vanilla silence)
     game_tracks: Vec<&'static str>,
+    /// (min, span) of the in-game randomized gap, in scheduler ticks
+    game_delay: (u64, u64),
     state: MusicState,
     rng: u64,
     current: usize,
@@ -57,6 +62,12 @@ const DEFAULT_TRACK_FRAMES: u64 = 60 * 20;
 const MIN_DELAY_FRAMES: u64 = 30 * 20;
 const DELAY_SPAN_FRAMES: u64 = 90 * 20;
 
+/// Vanilla in-game default (Musics.GAME): the official 26.2 biome data ships
+/// 12000–24000 for every `music.game` reference (ocean defaults) — the same
+/// bounds the client uses for biomes without a background-music attribute.
+const GAME_MIN_DELAY_TICKS: u64 = 12_000;
+const GAME_MAX_DELAY_TICKS: u64 = 24_000;
+
 impl MusicScheduler {
     pub fn new(seed: u64) -> Self {
         // real menu + game tracks from the official sounds.json
@@ -66,6 +77,10 @@ impl MusicScheduler {
             mode: MusicMode::Menu,
             menu_tracks,
             game_tracks,
+            game_delay: (
+                GAME_MIN_DELAY_TICKS,
+                GAME_MAX_DELAY_TICKS - GAME_MIN_DELAY_TICKS,
+            ),
             state: MusicState::Idle,
             rng: seed ^ 0x5EED_C0FF_EE12_3456,
             current: 0,
@@ -98,9 +113,22 @@ impl MusicScheduler {
         &self.menu_tracks
     }
 
-    /// The official in-game track ids (music.game — the 26.2 overworld pool).
+    /// The official in-game track ids — the situation's event (from the
+    /// generated biome-music table via on_world_enter_biome, or the vanilla
+    /// in-game default `music.game`, the 26.2 32-file overworld pool).
     pub fn game_tracks(&self) -> &[&'static str] {
         &self.game_tracks
+    }
+
+    /// Every music event the official biome data references (distinct,
+    /// sorted) — the audio backend discovers all of them so ANY seed's
+    /// spawn-biome pool has real paths + lengths regardless of the pick.
+    pub fn all_biome_events() -> Vec<&'static str> {
+        use mc_registry::generated::worldgen as wm;
+        let mut out: Vec<&'static str> = wm::BIOME_MUSIC.iter().map(|m| m.event).collect();
+        out.sort_unstable();
+        out.dedup();
+        out
     }
 
     /// Real file length in frames from the decoded official .ogg (key from
@@ -126,15 +154,52 @@ impl MusicScheduler {
     }
 
     /// A world was entered: the menu track stops AT ONCE (vanilla interrupts
-    /// music on situation change) and game music waits out a randomized
-    /// delay before its first track, like the vanilla music engine's gap
-    /// between tracks (exact Musics constants remain a javap-recon step).
+    /// music on situation change) and the in-game music waits out a
+    /// randomized delay before its first track. The situation is the vanilla
+    /// in-game default `music.game` with its official 12000–24000 gap.
     pub fn on_world_enter(&mut self) {
+        self.enter_game_situation(
+            Self::tracks_for("music.game"),
+            GAME_MIN_DELAY_TICKS,
+            GAME_MAX_DELAY_TICKS - GAME_MIN_DELAY_TICKS,
+        );
+    }
+
+    /// A world was entered in a specific biome (full official id,
+    /// "minecraft:plains"). The situation's event + REAL delay bounds come
+    /// from the generated biome-music table (the official
+    /// `attributes["minecraft:audio/background_music"]` of
+    /// data/minecraft/worldgen/biome/*.json); biomes without an attribute
+    /// fall back to the vanilla in-game default `music.game`. An official
+    /// event may ship zero files (26.2: music.nether.warped_forest) — that
+    /// situation is vanilla silence, honestly empty.
+    pub fn on_world_enter_biome(&mut self, biome: &str) {
+        use mc_registry::generated::worldgen as wm;
+        let (event, min, max) = wm::biome_music(biome, "default")
+            .map(|m| (m.event, m.min_delay as u64, m.max_delay as u64))
+            .unwrap_or(("music.game", GAME_MIN_DELAY_TICKS, GAME_MAX_DELAY_TICKS));
+        let tracks: Vec<&'static str> = if Self::event_has_files(event) {
+            vec![event]
+        } else {
+            Vec::new()
+        };
+        self.enter_game_situation(tracks, min, max.saturating_sub(min));
+    }
+
+    /// The official event ships at least one file (empty events are real:
+    /// vanilla plays nothing there).
+    fn event_has_files(event: &str) -> bool {
+        snd::event(event).map(|e| e.len > 0).unwrap_or(false)
+    }
+
+    fn enter_game_situation(&mut self, tracks: Vec<&'static str>, min: u64, span: u64) {
         self.mode = MusicMode::Game;
+        self.game_tracks = tracks;
+        self.game_delay = (min, span);
         if matches!(self.state, MusicState::Playing(..)) {
             self.events.push(format!("stop @{}", self.tick));
         }
-        let delay = MIN_DELAY_FRAMES + self.next_rand() % DELAY_SPAN_FRAMES;
+        let delay = min + self.next_rand() % span.max(1);
         self.events.push(format!("delay {} @{}", delay, self.tick));
         self.state = MusicState::Delay(self.tick + delay);
     }
@@ -190,7 +255,13 @@ impl MusicScheduler {
 
     fn advance_track(&mut self) {
         self.current += 1;
-        let delay = MIN_DELAY_FRAMES + self.next_rand() % DELAY_SPAN_FRAMES;
+        let (min, span) = match self.mode {
+            MusicMode::Menu => (MIN_DELAY_FRAMES, DELAY_SPAN_FRAMES),
+            // the in-game gap uses the situation's REAL bounds from the
+            // official biome data (12000–24000 in 26.2)
+            MusicMode::Game => self.game_delay,
+        };
+        let delay = min + self.next_rand() % span.max(1);
         self.events.push(format!("delay {} @{}", delay, self.tick));
         self.state = MusicState::Delay(self.tick + delay);
     }
@@ -283,9 +354,10 @@ mod tests {
             "entering a world stops the playing menu track: {:?}",
             s.events
         );
-        // ...and game music waits out its randomized first delay
+        // ...and game music waits out its randomized delay (official bounds:
+        // 12000–24000 in 26.2)
         assert!(matches!(s.state(), MusicState::Delay(_)), "{:?}", s.state());
-        for _ in 0..(MIN_DELAY_FRAMES + DELAY_SPAN_FRAMES + 1) {
+        for _ in 0..(GAME_MAX_DELAY_TICKS + 1) {
             s.update();
         }
         match s.state() {
@@ -301,7 +373,7 @@ mod tests {
     fn returning_to_title_plays_menu_again() {
         let mut s = MusicScheduler::new(42);
         s.on_world_enter();
-        for _ in 0..(MIN_DELAY_FRAMES + DELAY_SPAN_FRAMES + 1) {
+        for _ in 0..(GAME_MAX_DELAY_TICKS + 1) {
             s.update();
         }
         assert!(matches!(s.state(), MusicState::Playing(t, _, _) if t.starts_with("music.game")));
@@ -362,6 +434,114 @@ mod tests {
             b.update();
         }
         assert_eq!(a.events, b.events);
+    }
+
+    /// Parse the latest "delay <n> @<tick>" log entry -> n.
+    fn last_delay(s: &MusicScheduler) -> u64 {
+        s.events
+            .iter()
+            .rev()
+            .find(|e| e.starts_with("delay "))
+            .and_then(|e| e.split(' ').nth(1))
+            .expect("delay event")
+            .parse()
+            .expect("delay number")
+    }
+
+    #[test]
+    fn biome_situation_plays_the_official_biome_event() {
+        // 26.2 badlands ships its own default event (music.overworld.badlands)
+        use mc_registry::generated::worldgen as wm;
+        let table = wm::biome_music("minecraft:badlands", "default").expect("badlands music");
+        assert_eq!(table.event, "music.overworld.badlands");
+        let mut s = MusicScheduler::new(42);
+        s.on_world_enter_biome("minecraft:badlands");
+        assert_eq!(s.mode(), MusicMode::Game);
+        assert_eq!(s.game_tracks(), &[table.event] as &[&str]);
+        // the first gap honors the OFFICIAL delay bounds from the biome JSON
+        let d = last_delay(&s);
+        assert!(
+            (table.min_delay as u64..table.max_delay as u64).contains(&d),
+            "delay {d} outside the official [{}, {}) bounds",
+            table.min_delay,
+            table.max_delay
+        );
+        for _ in 0..(GAME_MAX_DELAY_TICKS + 1) {
+            s.update();
+        }
+        match s.state() {
+            MusicState::Playing(t, _, _) => assert_eq!(*t, table.event),
+            other => panic!("expected biome music playing, got {:?}", other),
+        }
+    }
+
+    #[test]
+    fn biome_without_music_falls_back_to_game_default() {
+        // plains ships no background-music attribute in 26.2: the vanilla
+        // in-game default music.game takes over (12000–24000)
+        let mut s = MusicScheduler::new(42);
+        s.on_world_enter_biome("minecraft:plains");
+        let d = last_delay(&s);
+        assert!(
+            (GAME_MIN_DELAY_TICKS..GAME_MAX_DELAY_TICKS).contains(&d),
+            "fallback delay {d} outside the vanilla bounds"
+        );
+        for _ in 0..(GAME_MAX_DELAY_TICKS + 1) {
+            s.update();
+        }
+        match s.state() {
+            MusicState::Playing(t, _, _) => assert_eq!(*t, "music.game"),
+            other => panic!("expected default game music, got {:?}", other),
+        }
+    }
+
+    #[test]
+    fn empty_official_event_is_vanilla_silence() {
+        // 26.2 ships music.nether.warped_forest with ZERO files: the situation
+        // is honestly empty — no play events ever fire, no fake pool
+        use mc_registry::generated::worldgen as wm;
+        let table = wm::biome_music("minecraft:warped_forest", "default")
+            .expect("warped_forest ships a music attribute");
+        assert_eq!(table.event, "music.nether.warped_forest");
+        let mut s = MusicScheduler::new(42);
+        s.on_world_enter_biome("minecraft:warped_forest");
+        assert!(s.game_tracks().is_empty(), "empty event must yield no tracks");
+        for _ in 0..(GAME_MAX_DELAY_TICKS + 1) {
+            s.update();
+        }
+        assert!(
+            !s.events.iter().any(|e| e.starts_with("play ")),
+            "an empty official event must never log a play: {:?}",
+            s.events
+        );
+    }
+
+    #[test]
+    fn biome_music_table_is_official_and_searchable() {
+        use mc_registry::generated::worldgen as wm;
+        // sorted for the binary search
+        assert!(
+            wm::BIOME_MUSIC.windows(2).all(|w| (w[0].biome, w[0].context)
+                <= (w[1].biome, w[1].context)),
+            "BIOME_MUSIC must be sorted by (biome, context)"
+        );
+        // real 26.2 entries: ocean contexts + nether + overworld specials
+        let uw = wm::biome_music("minecraft:warm_ocean", "underwater").expect("underwater ctx");
+        assert_eq!(uw.event, "music.under_water");
+        let ocean = wm::biome_music("minecraft:warm_ocean", "default").expect("ocean default");
+        assert_eq!(ocean.event, "music.game");
+        assert!(wm::biome_music("minecraft:plains", "default").is_none());
+        // every table event exists in the official sounds table, and the
+        // audio-facing helper lists them all
+        let all = MusicScheduler::all_biome_events();
+        for m in wm::BIOME_MUSIC {
+            assert!(
+                snd::event(m.event).is_some(),
+                "{} must exist in sounds.json",
+                m.event
+            );
+            assert!(all.contains(&m.event));
+        }
     }
 
     #[test]
