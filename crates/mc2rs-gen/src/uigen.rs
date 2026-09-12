@@ -27,6 +27,10 @@ pub struct UiData {
 }
 
 const SPRITES_ROOT: &str = "assets/minecraft/textures/gui/sprites/";
+/// Title-screen textures (logo, panorama faces) — in 26.2 the panorama PNGs
+/// in the jar are 1x1 placeholders; the real pixels stream via the asset
+/// index (merged in by the caller). The logo textures are real in-jar.
+const TITLE_ROOT: &str = "assets/minecraft/textures/gui/title/";
 
 pub fn generate<R: std::io::Read + std::io::Seek>(archive: &mut zip::ZipArchive<R>) -> Result<UiData> {
     let mut data = UiData::default();
@@ -55,23 +59,56 @@ pub fn generate<R: std::io::Read + std::io::Seek>(archive: &mut zip::ZipArchive<
             },
         );
     }
-    Ok(data)
-}
-
-/// Merge sprites discovered outside the jar (asset index downloads, e.g.
-/// title panorama / studio logo). Files must exist on disk.
-pub fn merge_from_disk(data: &mut UiData, root: &std::path::Path, names: &[(String, String)]) -> Result<()> {
-    for (rel_name, rel_file) in names {
-        let path = root.join(rel_file);
-        let Ok(bytes) = std::fs::read(&path) else { continue };
+    // Title textures: registry names like "title/minecraft",
+    // "title/background/panorama_0"; files "gui/title/....png".
+    let title_names: Vec<String> = archive
+        .file_names()
+        .filter(|n| n.starts_with(TITLE_ROOT) && n.ends_with(".png"))
+        .map(String::from)
+        .collect();
+    for path in title_names {
+        let bytes = read_entry(archive, &path)?;
         let (w, h) = png_size(&bytes)?;
-        data.sprites.entry(rel_name.clone()).or_insert(Sprite {
-            name: rel_name.clone(),
-            file: rel_file.clone(),
+        let rel = &path[TITLE_ROOT.len()..path.len() - ".png".len()];
+        data.sprites.entry(rel.to_string()).or_insert_with(|| Sprite {
+            name: rel.to_string(),
+            file: format!("gui/{rel}.png"),
             w,
             h,
             nine_slice: None,
         });
+    }
+    Ok(data)
+}
+
+/// Merge sprites discovered outside the jar (asset index downloads, e.g.
+/// the real title panorama). Files must exist on disk. With `overwrite`,
+/// on-disk entries replace jar-inventoried placeholders (the 26.2 jar ships
+/// 1x1 panorama stubs); with `overwrite=false` existing entries win.
+pub fn merge_from_disk(
+    data: &mut UiData,
+    root: &std::path::Path,
+    names: &[(String, String)],
+    overwrite: bool,
+) -> Result<()> {
+    for (rel_name, rel_file) in names {
+        let path = root.join(rel_file);
+        let Ok(bytes) = std::fs::read(&path) else { continue };
+        let (w, h) = png_size(&bytes)?;
+        let exists = data.sprites.contains_key(rel_name);
+        if exists && !overwrite {
+            continue;
+        }
+        data.sprites.insert(
+            rel_name.clone(),
+            Sprite {
+                name: rel_name.clone(),
+                file: rel_file.clone(),
+                w,
+                h,
+                nine_slice: None,
+            },
+        );
     }
     Ok(())
 }
@@ -174,5 +211,79 @@ mod tests {
         assert!(emitted.contains("name: \"widget/button\""));
         assert!(emitted.contains("Some((200, 20, 3))"));
         assert!(emitted.contains("pub fn sprite(name: &str)"));
+    }
+
+    #[test]
+    fn inventories_title_textures_from_jar() {
+        let mut zip = zip_of(&[
+            // real in-jar logo texture
+            (
+                "assets/minecraft/textures/gui/title/minecraft.png",
+                tiny_png(1024, 256),
+            ),
+            // panorama placeholder (1x1 stub as shipped in 26.2)
+            (
+                "assets/minecraft/textures/gui/title/background/panorama_0.png",
+                tiny_png(1, 1),
+            ),
+            // directory entry + non-title file must be ignored
+            ("assets/minecraft/textures/gui/title/", Vec::new()),
+            ("assets/minecraft/textures/env/moon.png", tiny_png(3, 3)),
+        ]);
+        let data = generate(&mut zip).unwrap();
+        let logo = &data.sprites["title/minecraft"];
+        assert_eq!((logo.w, logo.h), (1024, 256));
+        assert_eq!(logo.file, "gui/title/minecraft.png");
+        let pano = &data.sprites["title/background/panorama_0"];
+        assert_eq!((pano.w, pano.h), (1, 1));
+        assert_eq!(pano.file, "gui/title/background/panorama_0.png");
+        assert!(data.sprites.get("env/moon").is_none());
+    }
+
+    #[test]
+    fn merge_from_disk_overwrite_replaces_stub() {
+        let dir = std::env::temp_dir().join(format!("mc2rs-uigen-{}", std::process::id()));
+        std::fs::create_dir_all(dir.join("gui/title/background")).unwrap();
+        std::fs::write(
+            dir.join("gui/title/background/panorama_0.png"),
+            tiny_png(1024, 1024),
+        )
+        .unwrap();
+        let names = vec![(
+            "title/background/panorama_0".to_string(),
+            "gui/title/background/panorama_0.png".to_string(),
+        )];
+
+        // stub present, overwrite=false -> stub wins
+        let mut data = UiData::default();
+        data.sprites.insert(
+            "title/background/panorama_0".to_string(),
+            Sprite {
+                name: "title/background/panorama_0".into(),
+                file: "gui/title/background/panorama_0.png".into(),
+                w: 1,
+                h: 1,
+                nine_slice: None,
+            },
+        );
+        merge_from_disk(&mut data, &dir, &names, false).unwrap();
+        assert_eq!(data.sprites["title/background/panorama_0"].w, 1);
+
+        // overwrite=true -> real on-disk pixels win
+        merge_from_disk(&mut data, &dir, &names, true).unwrap();
+        let m = &data.sprites["title/background/panorama_0"];
+        assert_eq!((m.w, m.h), (1024, 1024));
+
+        // missing files never insert entries
+        let mut fresh = UiData::default();
+        merge_from_disk(
+            &mut fresh,
+            &dir,
+            &[("title/nope".to_string(), "gui/title/nope.png".to_string())],
+            true,
+        )
+        .unwrap();
+        assert!(fresh.sprites.is_empty());
+        std::fs::remove_dir_all(&dir).ok();
     }
 }

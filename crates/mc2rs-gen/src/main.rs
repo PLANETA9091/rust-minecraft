@@ -235,24 +235,56 @@ fn generate(agent: &ureq::Agent, cache: &util::Cache, version: &str, out: &Path)
     let font = fontgen::generate(&mut zip)?;
     let lang = langgen::generate(&mut zip)?;
     let splashes = splashgen::generate(&mut zip)?;
-    let ui = uigen::generate(&mut zip)?;
+    let mut ui = uigen::generate(&mut zip)?;
     let worldgen = worldgen::generate(&mut zip)?;
-    let sounds_json = match fetch_sounds_json(agent, cache, &vj) {
-        Ok(b) => soundgen::generate(&b)?,
+    // The asset index drives sounds.json AND the real title panorama
+    // (the 26.2 jar ships 1x1 panorama placeholders in its place).
+    let index = match fetch_asset_index(agent, cache, &vj) {
+        Ok(i) => Some(i),
         Err(e) => {
-            eprintln!("      warning: sounds.json unavailable ({e}); emitting empty sound table");
-            soundgen::SoundData::default()
+            eprintln!("      warning: asset index unavailable ({e}); sounds.json + panorama skipped");
+            None
         }
     };
+    let sounds_json = match &index {
+        Some(i) => match fetch_sounds_json(agent, cache, i) {
+            Ok(b) => soundgen::generate(&b)?,
+            Err(e) => {
+                eprintln!("      warning: sounds.json unavailable ({e}); emitting empty sound table");
+                soundgen::SoundData::default()
+            }
+        },
+        None => soundgen::SoundData::default(),
+    };
+    // Real title panorama faces (1024x1024, sha1-verified) into the runtime
+    // asset root; then let their real sizes replace the 1x1 jar stubs.
+    let panorama_faces = match &index {
+        Some(i) => fetch_title_panorama(agent, cache, i, &workspace_root).unwrap_or_else(|e| {
+            eprintln!("      warning: title panorama fetch failed ({e}); keeping jar stubs");
+            0
+        }),
+        None => 0,
+    };
+    let pano_root = workspace_root.join("assets-cache/jar");
+    let pano_names: Vec<(String, String)> = (0..6)
+        .map(|i| {
+            (
+                format!("title/background/panorama_{i}"),
+                format!("gui/title/background/panorama_{i}.png"),
+            )
+        })
+        .collect();
+    uigen::merge_from_disk(&mut ui, &pano_root, &pano_names, true)?;
     println!(
-        "      glyphs: {} ({} textures) | lang: {} | splashes: {} | sprites: {} | sound events: {} | biomes: {}",
+        "      glyphs: {} ({} textures) | lang: {} | splashes: {} | sprites: {} | sound events: {} | biomes: {} | panorama faces: {}",
         font.glyphs.len(),
         font.textures.len(),
         lang.map.len(),
         splashes.lines.len(),
         ui.sprites.len(),
         sounds_json.events.len(),
-        worldgen.biomes.len()
+        worldgen.biomes.len(),
+        panorama_faces
     );
 
     println!("[5/7] generating registry + build info...");
@@ -273,13 +305,12 @@ fn generate(agent: &ureq::Agent, cache: &util::Cache, version: &str, out: &Path)
     Ok(())
 }
 
-/// Fetch the official sounds.json through the asset index (it ships as an
-/// index object, not inside the client jar).
-fn fetch_sounds_json(
+/// Fetch + parse the official asset index for a version.
+fn fetch_asset_index(
     agent: &ureq::Agent,
     cache: &util::Cache,
     vj: &crate::version::VersionJson,
-) -> Result<Vec<u8>> {
+) -> Result<mc_assets::AssetIndex> {
     let ai = vj
         .asset_index
         .as_ref()
@@ -290,7 +321,16 @@ fn fetch_sounds_json(
         &ai.url,
     )?;
     util::verify(&idx_bytes, ai.sha1.as_deref(), "asset index")?;
-    let index = mc_assets::AssetIndex::parse(&idx_bytes)?;
+    mc_assets::AssetIndex::parse(&idx_bytes)
+}
+
+/// Fetch the official sounds.json through the asset index (it ships as an
+/// index object, not inside the client jar).
+fn fetch_sounds_json(
+    agent: &ureq::Agent,
+    cache: &util::Cache,
+    index: &mc_assets::AssetIndex,
+) -> Result<Vec<u8>> {
     let obj = index
         .objects
         .get("minecraft/sounds.json")
@@ -300,6 +340,33 @@ fn fetch_sounds_json(
     let bytes = cache.fetch(agent, &format!("sounds-json:{}", obj.hash), &url)?;
     util::verify(&bytes, Some(obj.hash.as_str()), "sounds.json")?;
     Ok(bytes)
+}
+
+/// The 26.2 jar ships the title-screen panorama as 1x1 placeholder PNGs; the
+/// real 1024x1024 faces stream as asset-index objects. Download + sha1-verify
+/// all six faces into the runtime asset root (assets-cache/jar) so the client
+/// renders the identical backdrop. Returns the number of faces fetched.
+fn fetch_title_panorama(
+    agent: &ureq::Agent,
+    cache: &util::Cache,
+    index: &mc_assets::AssetIndex,
+    workspace_root: &Path,
+) -> Result<usize> {
+    let mut n = 0usize;
+    for i in 0..6 {
+        let key = format!("minecraft/textures/gui/title/background/panorama_{i}.png");
+        let Some(obj) = index.objects.get(&key) else { continue };
+        let url = format!("https://resources.download.minecraft.net/{}/{}", &obj.hash[..2], obj.hash);
+        let bytes = cache.fetch(agent, &format!("asset:panorama-{i}:{}", obj.hash), &url)?;
+        util::verify(&bytes, Some(obj.hash.as_str()), &key)?;
+        let dest = workspace_root
+            .join("assets-cache/jar/gui/title/background")
+            .join(format!("panorama_{i}.png"));
+        std::fs::create_dir_all(dest.parent().unwrap())?;
+        std::fs::write(&dest, &bytes)?;
+        n += 1;
+    }
+    Ok(n)
 }
 
 /// Fetch the jar (cache-first), resolve the atlas, write generated/atlas.rs.

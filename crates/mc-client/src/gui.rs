@@ -233,6 +233,35 @@ impl<'a> Gui<'a> {
         }
     }
 
+    /// Blit a sprite stretched to an arbitrary destination size (nearest
+    /// sampling, like the GL_NEAREST path vanilla uses for the title logo /
+    /// panorama). Down- and up-scaling both allowed.
+    pub fn sprite_at(
+        &mut self,
+        a: &mut GuiAssets,
+        name: &'static str,
+        x: i32,
+        y: i32,
+        dw: i32,
+        dh: i32,
+    ) {
+        let Some(s) = a.sprite(name).cloned() else { return };
+        if dw <= 0 || dh <= 0 || s.w == 0 || s.h == 0 {
+            return;
+        }
+        for dy in 0..dh {
+            let sy = (dy as u32 * s.h / dh as u32).min(s.h - 1);
+            for dx in 0..dw {
+                let sx = (dx as u32 * s.w / dw as u32).min(s.w - 1);
+                let c = s.sample(sx, sy);
+                if c[3] <= 0.0 {
+                    continue;
+                }
+                self.px(x + dx, y + dy, c);
+            }
+        }
+    }
+
     /// Vanilla nine-slice blit per the sprite's .mcmeta border.
     pub fn sprite_9slice(
         &mut self,
