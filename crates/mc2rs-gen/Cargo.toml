@@ -15,5 +15,6 @@ ureq.workspace = true
 sha1.workspace = true
 hex.workspace = true
 zip.workspace = true
+png.workspace = true
 mc-assets = { path = "../mc-assets" }
 mc-protocol = { path = "../mc-protocol" }
