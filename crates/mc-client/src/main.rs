@@ -16,6 +16,7 @@ mod gui;
 mod headless;
 mod math;
 mod mesher;
+mod net_fixture;
 mod music;
 mod png_io;
 mod raster;
@@ -63,6 +64,11 @@ struct Cli {
     /// World size in chunks per side.
     #[arg(long, default_value_t = 5)]
     chunks: usize,
+    /// Render the NETWORK world fixture (real packet bytes -> parse ->
+    /// model -> materialize, light layer active) instead of the
+    /// procedural scene — the golden path for the wire view.
+    #[arg(long)]
+    net_world: bool,
     #[arg(long, default_value = "render.png")]
     out: PathBuf,
     /// Path to official asset index json (enables real texture-average colors).
@@ -89,7 +95,11 @@ fn main() -> Result<()> {
         return Ok(());
     }
 
-    let world = world::World::new(cli.chunks, cli.seed);
+    let world = if cli.net_world {
+        net_fixture::fixture_world(cli.chunks)
+    } else {
+        world::World::new(cli.chunks, cli.seed)
+    };
     println!(
         "world: {}x{} chunks ({}x{} blocks), {} blocks total",
         cli.chunks,
