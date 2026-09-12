@@ -759,10 +759,10 @@ mod tests {
         // the wiki index conventions land where they say
         let idx = |x: usize, y: usize, z: usize| (y << 8) | (z << 4) | x;
         assert_eq!(idx(0, 0, 0), 0);
-        assert_eq!(idx(3, 1, 2), 275);
+        assert_eq!(idx(3, 1, 2), 291, "y*256 + z*16 + x");
         assert_eq!(idx(15, 15, 15), 4095);
         let bidx = |x: usize, y: usize, z: usize| (y << 4) | (z << 2) | x;
-        assert_eq!(bidx(3, 1, 2), 22);
+        assert_eq!(bidx(3, 1, 2), 27, "y*16 + z*4 + x");
         assert_eq!(bidx(3, 3, 3), 63);
     }
 
@@ -808,7 +808,7 @@ mod tests {
         // compound (int + int list + string) — all skipped exactly
         let mut nbt = vec![0x0A];
         nbt.push(0x0C); // long array
-        nbt.extend_from_slice(&16u16.to_be_bytes());
+        nbt.extend_from_slice(&15u16.to_be_bytes()); // len("MOTION_BLOCKING")
         nbt.extend_from_slice(b"MOTION_BLOCKING");
         nbt.extend_from_slice(&37i32.to_be_bytes());
         nbt.extend_from_slice(&[0u8; 37 * 8]);
@@ -832,9 +832,10 @@ mod tests {
         nbt.extend_from_slice(&5i32.to_be_bytes());
         nbt.extend_from_slice(&6i32.to_be_bytes());
         nbt.push(0x00); // end of nested
-        nbt.push(0x08); // string
-        nbt.extend_from_slice(&3u16.to_be_bytes());
+        nbt.push(0x08); // string tag: name length + name + PAYLOAD length + bytes
+        nbt.extend_from_slice(&3u16.to_be_bytes()); // name length
         nbt.extend_from_slice(b"log");
+        nbt.extend_from_slice(&3u16.to_be_bytes()); // payload length
         nbt.extend_from_slice(b"hi!");
         nbt.push(0x00); // end of root
         let mut cursor: &[u8] = &nbt;
@@ -854,19 +855,22 @@ mod tests {
     }
 
     /// One section with an indirect 5-bit palette: stone at (0,0,0),
-    /// dirt at (1,2,3) — the shape the e2e mock reuses.
+    /// dirt at (1,2,3) — the shape the e2e mock reuses. The data array
+    /// carries PALETTE INDICES; the parser resolves them to global ids.
     fn build_stone_dirt_section() -> Vec<u8> {
-        let mut blocks = vec![0u32; 4096];
-        blocks[0] = 1; // stone at y0 z0 x0
-        blocks[275] = 10; // dirt at y1 z2 x3
+        let palette = [0u32, 1, 10]; // air, stone, dirt (global state ids)
+        let idx = |x: usize, y: usize, z: usize| (y << 8) | (z << 4) | x;
+        let mut entries = vec![0u32; 4096]; // palette index 0 = air
+        entries[idx(0, 0, 0)] = 1; // stone
+        entries[idx(3, 1, 2)] = 2; // dirt
         let mut section = Vec::new();
         section.extend_from_slice(&2i16.to_be_bytes()); // block count
         section.push(5); // bits per entry -> indirect
-        write_varint(&mut section, 3); // palette: air, stone, dirt
-        for id in [0u32, 1, 10] {
+        write_varint(&mut section, palette.len() as i32);
+        for id in palette {
             write_varint(&mut section, id as i32);
         }
-        section.extend_from_slice(&pack_entries(&blocks, 5));
+        section.extend_from_slice(&pack_entries(&entries, 5));
         section.push(0); // biomes: single valued
         write_varint(&mut section, 1);
         section
@@ -891,13 +895,15 @@ mod tests {
         assert_eq!(col.sections.len(), 1);
         let s = &col.sections[0];
         assert_eq!(s.block_count, 2);
-        assert_eq!(s.blocks[0], 1, "stone at (0,0,0)");
-        assert_eq!(s.blocks[275], 10, "dirt at (1,2,3)");
+        assert_eq!(s.blocks[0], 1, "stone at (0,0,0), resolved from palette index 1");
+        assert_eq!(s.blocks[291], 10, "dirt at (1,2,3), resolved from palette index 2");
         assert_eq!(s.blocks[1], 0, "air next to it");
         assert_eq!(s.biomes, vec![1u32; 64]);
-        // truncated buffer is rejected, not misparsed
+        // truncated buffer is rejected, not misparsed (cut deep into the
+        // section data array — the declared chunk-buffer size no longer
+        // fits the packet)
         let mut cut = p.clone();
-        cut.truncate(cut.len() - 4);
+        cut.truncate(cut.len() - 300);
         assert!(parse_chunk_data(&cut).is_err());
     }
 
@@ -1061,7 +1067,7 @@ mod tests {
                 assert_eq!(snap.chunks.len(), 1, "center-chunk junk and unload are not chunks");
                 assert_eq!(snap.chunks[0].x, 3);
                 assert_eq!(snap.chunks[0].z, -2);
-                assert_eq!(snap.chunks[0].sections[0].blocks[275], 10, "the decoded dirt");
+                assert_eq!(snap.chunks[0].sections[0].blocks[291], 10, "the decoded dirt");
             }
             other => panic!("expected Loaded, got {other:?}"),
         }
