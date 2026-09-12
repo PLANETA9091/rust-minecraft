@@ -412,9 +412,9 @@ checksum = "217698eaf96b4a3f0bc4f3662aaa55bdf913cd54d7204591faa790070c6d0853"
 
 [[package]]
 name = "crc32fast"
-version = "1.5.1"
+version = "1.5.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8498c871161e1742aaa9d52551b2d6ebdd4c3d45a3be423e3728f33b955be550"
+checksum = "01a7799fd6b852db0e61728dde9a204c423b44d689dbd432522543614b490e78"
 dependencies = [
  "cfg-if",
 ]
@@ -1076,7 +1076,7 @@ dependencies = [
 
 [[package]]
 name = "mc-assets"
-version = "0.3.33"
+version = "0.3.34"
 dependencies = [
  "anyhow",
  "hex",
@@ -1088,7 +1088,7 @@ dependencies = [
 
 [[package]]
 name = "mc-client"
-version = "0.3.33"
+version = "0.3.34"
 dependencies = [
  "anyhow",
  "clap",
@@ -1104,7 +1104,7 @@ dependencies = [
 
 [[package]]
 name = "mc-protocol"
-version = "0.3.33"
+version = "0.3.34"
 dependencies = [
  "anyhow",
  "flate2",
@@ -1114,11 +1114,11 @@ dependencies = [
 
 [[package]]
 name = "mc-registry"
-version = "0.3.33"
+version = "0.3.34"
 
 [[package]]
 name = "mc2rs-gen"
-version = "0.3.33"
+version = "0.3.34"
 dependencies = [
  "anyhow",
  "clap",
@@ -1135,7 +1135,7 @@ dependencies = [
 
 [[package]]
 name = "mc2rs-pixel"
-version = "0.3.33"
+version = "0.3.34"
 dependencies = [
  "anyhow",
  "clap",

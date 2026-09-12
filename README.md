@@ -130,7 +130,14 @@ hand-drawn:
   new dimension's own chunks stream in and re-anchor on the new pose;
   the whole crossing is pinned end to end by the live e2e's
   dimension-change leg (Respawn → nether chunk → teleport, all on the
-  SAME retained wire).
+  SAME retained wire). The crossing also **resolves the new
+  dimension's own biome**: the synced biome table carries every
+  dimension's biomes in one registry, the nether's chunks reference
+  their own id (crimson_forest, not the overworld's plains), and the
+  change-only rule re-fires the music with the nether situation —
+  the crossing's full biome chain (named → honestly None mid-transition
+  → the nether's own name at the new pose) is pinned at the view layer
+  and on the wire.
   The **wire ids of every phase are generated**:
   `mc2rs-gen dump-packet-ids` binds the official jar's REAL protocols —
   play, login, configuration, status AND handshake — and dumps each
