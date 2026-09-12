@@ -16,11 +16,18 @@
 //!   bootstrapped registry (mc-registry's block_ids) — and `runtime_mapper`
 //!   is the GUI's policy through it; tests inject other mappers freely.
 //!   Nothing bakes in remembered constants.
-//! - The copy is BOTTOM-ANCHORED: grid y 0 is the column's bottom section
-//!   bottom, columns shorter than the grid leave sky above. Placing the
-//!   surface nicely needs the dimension's real vertical layout (min_y /
-//!   height) plus a surface scan — future work; the honest default is the
-//!   deterministic one.
+//! - The vertical copy is PLAYER-ANCHORED when the dimension layout is
+//!   known: the join teleport's feet land at grid y [`PLAYER_GRID_Y`]
+//!   (`snapshot_y_base` — min_y + player.y, clamped at the world floor),
+//!   so a real overworld join shows the surface the player actually
+//!   stands on instead of the first 48 blocks of deepslate above bedrock
+//!   (the bottom-anchored copy a live min_y made WRONG: world y -64..-16
+//!   is deep underground, the player at y 64 far outside the window).
+//!   Without layout knowledge world coordinates are meaningless, so the
+//!   copy stays column-local (the deterministic bottom anchor) — never a
+//!   guess. The top is deliberately unclamped: a player high above the
+//!   terrain truthfully sees sky in a window that follows them, not a
+//!   surface the code guessed.
 //! - Columns missing from the model stay AIR (the vanilla client would
 //!   still be streaming them — holes are the truthful render).
 
@@ -33,14 +40,18 @@ use crate::world_model::WorldModel;
 use mc_protocol::{PlayerPosition, WorldSnapshot};
 
 /// Project the window of `side * side` chunks starting at chunk
-/// `(origin.0, origin.1)` into a fresh renderer grid. `mapper` converts
-/// every resolved global state id (air included) to the runtime palette;
-/// blocks outside a column's vertical extent and columns the server has
-/// not sent (yet) stay air.
+/// `(origin.0, origin.1)` into a fresh renderer grid. `y_base` is the
+/// vertical anchor: the y coordinate grid row 0 represents — WORLD-y when
+/// the model's `min_y` is known (the snapshot path passes
+/// [`snapshot_y_base`]), column-local y when it is not (pass 0; the only
+/// meaningful copy then). `mapper` converts every resolved global state
+/// id (air included) to the runtime palette; blocks outside a column's
+/// vertical extent and columns the server has not sent (yet) stay air.
 pub fn materialize(
     model: &WorldModel,
     origin: (i32, i32),
     side: usize,
+    y_base: i32,
     mut mapper: impl FnMut(u32) -> u16,
 ) -> World {
     let mut world = World {
@@ -56,10 +67,10 @@ pub fn materialize(
                 continue; // unsent column -> the grid's fresh air
             };
             let grid = &mut world.chunks[(gx + gz * side_i) as usize];
-            // bottom-anchored copy: the model answers column-local y when
-            // min_y is unknown and world-y when it is — querying through
-            // block() keeps ONE source of truth for the index conventions
-            let y_base = model.min_y.unwrap_or(0);
+            // the caller anchors the copy; the model answers column-local
+            // y when min_y is unknown and world-y when it is — querying
+            // through block() keeps ONE source of truth for the index
+            // conventions
             for gy in 0..CHUNK_Y as i32 {
                 let wy = y_base + gy;
                 for lz in 0..CHUNK_Z as i32 {
@@ -94,11 +105,32 @@ pub fn snapshot_window_origin(player: &PlayerPosition, side: usize) -> (i32, i32
     (pcx - half, pcz - half)
 }
 
+/// The grid y the player's feet anchor to: a third of the window up —
+/// 16 rows of world below the feet, sky above (the vanilla spawn spirit:
+/// ground in view, room to see the sky).
+pub const PLAYER_GRID_Y: i32 = crate::world::CHUNK_Y as i32 / 3;
+
+/// The vertical anchor of the snapshot window: the world-y that grid row
+/// 0 will represent. With the dimension layout known (`min_y`), the
+/// window anchors on the PLAYER — the join teleport's feet land at grid
+/// y [`PLAYER_GRID_Y`], clamped at the world floor so a spawn near the
+/// bottom never wastes rows on void (the feet slide up the grid
+/// instead). Without layout knowledge world coordinates are meaningless:
+/// the deterministic column-local copy (0) stands. The top is
+/// deliberately unclamped — see the module notes.
+pub fn snapshot_y_base(player: &PlayerPosition, min_y: Option<i32>) -> i32 {
+    let Some(min_y) = min_y else { return 0 };
+    (player.y.floor() as i32 - PLAYER_GRID_Y).max(min_y)
+}
+
 /// Materialize the join milestone's world: the snapshot adopts into a
 /// fresh `WorldModel` (replace-on-collision semantics included) and the
-/// player-centered window projects into the renderer grid. `mapper` is
-/// the caller's id policy (see the module notes) — the GUI join path uses
-/// `placeholder_mapper` today; tests pin the mapping with concrete ids.
+/// player-centered, player-anchored window projects into the renderer
+/// grid — x/z from the player's chunk, y from the player's feet through
+/// the pinned dimension layout. `mapper` is the caller's id policy (see
+/// the module notes) — the GUI join path resolves through the GENERATED
+/// registry table (`runtime_mapper`); tests pin the mapping with
+/// concrete ids.
 pub fn materialize_snapshot(
     snap: WorldSnapshot,
     side: usize,
@@ -107,7 +139,9 @@ pub fn materialize_snapshot(
     let origin = snapshot_window_origin(&snap.player, side);
     let mut model = WorldModel::new();
     model.adopt_snapshot(snap);
-    materialize(&model, origin, side, mapper)
+    let player = model.player.as_ref().expect("adopt_snapshot pins the player");
+    let y_base = snapshot_y_base(player, model.min_y);
+    materialize(&model, origin, side, y_base, mapper)
 }
 
 /// The REAL id mapper, GENERATED from the official jar's bootstrapped
@@ -177,15 +211,32 @@ mod tests {
         s.extend_from_slice(&mc_protocol::pack_entries(&entries, 5));
         s.push(0); // biomes: single valued
         write_varint(&mut s, 1);
-        // package into a one-section chunk packet and parse for real
+        parse_one_section(s)
+    }
+
+    /// One all-air section through the REAL parser (single-valued air,
+    /// the exact shape the world_model tests package).
+    fn air_section() -> mc_protocol::ChunkSection {
+        let mut s = Vec::new();
+        s.extend_from_slice(&0i16.to_be_bytes());
+        s.push(0); // bits per entry: single valued
+        write_varint(&mut s, 0); // the single value: air
+        s.push(0); // biomes: single valued
+        write_varint(&mut s, 187);
+        parse_one_section(s)
+    }
+
+    /// Package one section buffer into a one-section chunk packet and
+    /// parse it, so tests run against the actual wire shape.
+    fn parse_one_section(buffer: Vec<u8>) -> mc_protocol::ChunkSection {
         let mut p = Vec::new();
         write_varint(&mut p, clientbound::CHUNK_DATA);
         p.extend_from_slice(&0i32.to_be_bytes());
         p.extend_from_slice(&0i32.to_be_bytes());
         p.push(0x0A);
         p.push(0x00); // empty heightmaps compound
-        write_varint(&mut p, s.len() as i32);
-        p.extend_from_slice(&s);
+        write_varint(&mut p, buffer.len() as i32);
+        p.extend_from_slice(&buffer);
         write_varint(&mut p, 0); // no block entities
         p.extend_from_slice(&[0, 0, 0, 0, 0, 0]); // light masks
         let col = mc_protocol::play::parse_chunk_data(&p).expect("chunk parses");
@@ -300,7 +351,7 @@ mod tests {
             sections: vec![stone_dirt_section()],
         }));
         // window origin (1,-3): chunk (3,-2) sits at grid (2, 1)
-        let world = materialize(&m, (1, -3), 4, example_mapper);
+        let world = materialize(&m, (1, -3), 4, 0, example_mapper);
         assert_eq!(world.chunks_per_side, 4);
         // column-local stone (0,0,0) -> grid chunk (2,1) local (0,0,0)
         // -> world grid coords (2*16, 0, 1*16)
@@ -313,7 +364,7 @@ mod tests {
             z: 10,
             sections: vec![stone_dirt_section()],
         }));
-        let world = materialize(&m, (1, -3), 4, example_mapper);
+        let world = materialize(&m, (1, -3), 4, 0, example_mapper);
         assert_eq!(world.get(32, 0, 16), STONE, "window content unchanged");
         assert_eq!(world.get(0, 0, 0), AIR, "outside window stays air");
     }
@@ -327,14 +378,14 @@ mod tests {
             z: 0,
             sections: vec![stone_dirt_section()],
         }));
-        let world = materialize(&m, (0, 0), 2, example_mapper);
+        let world = materialize(&m, (0, 0), 2, 0, example_mapper);
         assert_eq!(world.get(0, 0, 0), STONE);
         assert_eq!(world.get(0, 15, 0), AIR, "column top slice is air blocks");
         assert_eq!(world.get(0, 16, 0), AIR, "above the short column: sky");
         assert_eq!(world.get(0, 47, 0), AIR, "grid top: sky");
         // an empty model: the whole window is fresh air
         let empty = WorldModel::new();
-        let world = materialize(&empty, (5, 5), 2, example_mapper);
+        let world = materialize(&empty, (5, 5), 2, 0, example_mapper);
         assert!(world
             .chunks
             .iter()
@@ -342,7 +393,7 @@ mod tests {
     }
 
     #[test]
-    fn mapper_sees_raw_ids_and_bottom_anchor_survives_min_y() {
+    fn mapper_sees_raw_ids_and_y_base_drives_the_copy() {
         let mut m = WorldModel::new();
         m.apply(PlayEvent::Chunk(ChunkColumn {
             x: 0,
@@ -352,7 +403,7 @@ mod tests {
         // the mapper receives every resolved id verbatim (air included) —
         // nothing is pre-filtered, the caller owns the full decision
         let mut seen = Vec::new();
-        let world = materialize(&m, (0, 0), 1, |id| {
+        let world = materialize(&m, (0, 0), 1, 0, |id| {
             if !seen.contains(&id) {
                 seen.push(id);
             }
@@ -361,13 +412,87 @@ mod tests {
         seen.sort_unstable();
         assert_eq!(seen, vec![0, 1, 10], "raw global ids reach the mapper");
         assert_eq!(world.get(0, 0, 0), STONE);
-        // with a known min_y the SAME bottom-anchored copy results: the
-        // materializer queries world-y (min_y + gy), block() shifts back
+        // the caller owns the vertical anchor. With min_y known, an
+        // explicit y_base = min_y reproduces the old bottom-anchored copy
+        // (world-y queries shift back through block() — the min_y-stable
+        // property, now spelled out at the call site)
         m.min_y = Some(-64);
-        let world = materialize(&m, (0, 0), 1, example_mapper);
-        assert_eq!(world.get(0, 0, 0), STONE, "bottom anchor is min_y stable");
+        let world = materialize(&m, (0, 0), 1, -64, example_mapper);
+        assert_eq!(world.get(0, 0, 0), STONE, "y_base = min_y: bottom anchor");
         assert_eq!(world.get(3, 1, 2), DIRT);
         assert_eq!(world.get(0, 16, 0), AIR);
+        // anchor ABOVE the one-section column: the window slid up, the
+        // column content is below the view (the truthful render)
+        let world = materialize(&m, (0, 0), 1, -48, example_mapper);
+        assert_eq!(world.get(0, 0, 0), AIR, "world -48..0: the section is below");
+        // anchor BELOW it: the content slides up into view
+        let world = materialize(&m, (0, 0), 1, -80, example_mapper);
+        assert_eq!(world.get(0, 16, 0), STONE, "world -64 at grid 16");
+        assert_eq!(world.get(3, 17, 2), DIRT);
+    }
+
+    #[test]
+    fn snapshot_y_base_anchors_the_player_and_clamps_to_the_world_floor() {
+        let p = |y: f64| PlayerPosition {
+            x: 0.0,
+            y,
+            z: 0.0,
+            yaw: 0.0,
+            pitch: 0.0,
+            flags: 0,
+            teleport_id: 0,
+        };
+        // no layout knowledge: the deterministic column-local copy (0),
+        // whatever the teleport says — never a guess
+        assert_eq!(snapshot_y_base(&p(64.0), None), 0);
+        assert_eq!(snapshot_y_base(&p(-59.0), None), 0);
+        // overworld: feet 64 anchor at grid 16 -> the window base 48
+        assert_eq!(snapshot_y_base(&p(64.0), Some(-64)), 48);
+        assert_eq!(snapshot_y_base(&p(64.7), Some(-64)), 48, "floor before the math");
+        // near the world floor the clamp holds the window on solid ground:
+        // feet -60 cannot sit at grid 16 (base -76 < min_y) -> base -64,
+        // the feet land at grid 4 instead
+        assert_eq!(snapshot_y_base(&p(-60.0), Some(-64)), -64);
+        assert_eq!(snapshot_y_base(&p(-48.0), Some(-64)), -64, "exactly the anchor's reach");
+        // nether layout (min_y 0): the same math over its own floor
+        assert_eq!(snapshot_y_base(&p(40.0), Some(0)), 24);
+    }
+
+    #[test]
+    fn materialize_snapshot_anchors_the_window_on_the_player_feet() {
+        // the join_snapshot with the registry knowledge (overworld -64)
+        // and a vanilla-shaped column: 7 air sections below, the
+        // stone/dirt section at index 7 — the terrain sits at world y
+        // 48..63, right under the teleport's feet y 64 (a real vanilla
+        // join burst is exactly this: surface terrain under the spawn)
+        let mut snap = join_snapshot();
+        snap.registry = RegistryData {
+            dimension_types: vec![mc_protocol::DimensionTypeEntry {
+                name: "minecraft:overworld".to_string(),
+                min_y: -64,
+                height: 384,
+            }],
+        };
+        snap.chunks[0].sections = (0..7)
+            .map(|_| air_section())
+            .chain(std::iter::once(stone_dirt_section()))
+            .collect();
+        // base = 64 - 16 = 48: the stone surface lands at grid y 0 and
+        // the feet row (world 64) is sky
+        let world = materialize_snapshot(snap.clone(), 5, example_mapper);
+        assert_eq!(world.get(32, 0, 32), STONE, "world y 48 = feet 64 - anchor 16");
+        assert_eq!(world.get(35, 1, 34), DIRT, "dirt one above the stone");
+        assert_eq!(world.get(32, 16, 32), AIR, "the feet row is sky in this mock");
+        assert_eq!(world.get(32, 47, 32), AIR, "sky up to the grid top");
+        // the window FOLLOWS the player: a teleport 7 blocks higher slides
+        // the view up — the surface slides out below (the truthful render,
+        // no surface guess) and the real generated mapper resolves the
+        // mock's example ids the same way
+        let mut higher = snap;
+        higher.player.y = 71.0;
+        let world = materialize_snapshot(higher, 5, runtime_mapper);
+        assert_eq!(world.get(32, 0, 32), AIR, "world 48 is now 7 below the window");
+        assert_eq!(world.get(35, 1, 34), AIR);
     }
 
     /// A join milestone shaped like the e2e mock's: one real section at
