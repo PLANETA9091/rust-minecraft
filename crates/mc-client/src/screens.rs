@@ -86,10 +86,11 @@ pub struct PingInfo {
     pub ping_ms: i32,
 }
 
-/// One requested offline-mode login: which row, which address. Append-only
+/// One requested offline-mode join: which row, which address. Append-only
 /// request log — the window backend drains new entries (by cursor), runs
-/// the blocking `mc_protocol::connect_and_login` on a worker thread and
-/// hands the outcome back through `App::login_finished`.
+/// the blocking `mc_protocol::connect_and_join_play` (login + the
+/// configuration phase) on a worker thread and hands the outcome back
+/// through `App::login_finished`.
 #[derive(Debug, Clone, PartialEq)]
 pub struct LoginRequest {
     pub id: u64,
@@ -442,8 +443,9 @@ impl App {
     /// address can actually connect (placeholder rows keep the click a no-op
     /// — there is nothing reachable to join). Records the login request in
     /// the append-only log and opens the vanilla ConnectScreen; the window
-    /// backend runs the blocking `mc_protocol::connect_and_login` off the
-    /// frame thread and delivers the outcome through `login_finished`.
+    /// backend runs the blocking `mc_protocol::connect_and_join_play` (the
+    /// full login + configuration arc) off the frame thread and delivers
+    /// the outcome through `login_finished`.
     pub fn join_selected_server(&mut self) {
         let Some(addr) = self
             .servers
@@ -463,12 +465,13 @@ impl App {
         self.open(ScreenKind::Connect);
     }
 
-    /// Feed one finished login back into the UI (vanilla flow: a Login
-    /// Disconnect or transport error lands on the DisconnectedScreen with
-    /// the flattened reason; Login Success would proceed to the play state,
-    /// which does not exist yet — the documented stand-in shows the factual
-    /// outcome instead of pretending a world joined). Unknown or
-    /// already-consumed ids are ignored — the request log stays append-only.
+    /// Feed one finished join back into the UI (vanilla flow: a Login
+    /// Disconnect, config kick or transport error lands on the
+    /// DisconnectedScreen with the flattened reason; a Joined outcome means
+    /// the client genuinely reached the play state — the outcome screen's
+    /// connected line is the truth now, the world view itself is future
+    /// work). Unknown or already-consumed ids are ignored — the request
+    /// log stays append-only.
     pub fn login_finished(&mut self, id: u64, outcome: Result<LoginResult, String>) {
         if !self.login_requests.iter().any(|r| r.id == id) {
             return;
@@ -1421,8 +1424,9 @@ mod tests {
         app.login_finished(id2, Err("tcp connect to 127.0.0.1:1".into()));
         assert_eq!(app.screen, ScreenKind::Disconnect);
         assert_eq!(app.disconnect_reason, "tcp connect to 127.0.0.1:1");
-        // Login Success would enter the play state (not built yet); the
-        // documented stand-in shows the factual outcome instead
+        // Joined means the client genuinely reached the play state (the
+        // protocol arc completes); the world view itself is future work, so
+        // the outcome screen shows the factual connected line
         app.join_selected_server();
         let id3 = app.login_requests[2].id;
         app.login_finished(
@@ -1467,19 +1471,27 @@ mod tests {
     }
 
     #[test]
-    fn server_join_runs_a_real_login() {
-        // in-process vanilla-shaped login server (same dogfooding as the
-        // mc-protocol login tests): handshake + login start -> compression
-        // switch -> Login Success
+    fn server_join_runs_the_real_login_and_configuration() {
+        // in-process vanilla-shaped join server (same dogfooding as the
+        // mc-protocol config tests): handshake + login start -> compression
+        // switch -> Login Success -> introductions -> probes + finish
         let listener = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
         let port = listener.local_addr().unwrap().port();
         let server = std::thread::spawn(move || {
             use mc_protocol::framing::PacketConn;
-            use mc_protocol::varint::{read_string, read_varint};
+            use mc_protocol::varint::{read_string, read_varint, write_string, write_varint};
             let (stream, _) = listener.accept().unwrap();
             let mut conn = PacketConn::new(stream);
             let hs = conn.read_packet().unwrap();
-            assert_eq!(hs[0], 0x00, "handshake packet id");
+            let mut c: &[u8] = &hs;
+            assert_eq!(read_varint(&mut c).unwrap(), 0x00, "handshake packet id");
+            assert_eq!(read_varint(&mut c).unwrap(), 776, "REAL protocol number");
+            let _host = read_string(&mut c).unwrap();
+            let mut port_b = [0u8; 2];
+            std::io::Read::read_exact(&mut c, &mut port_b).unwrap();
+            assert_eq!(read_varint(&mut c).unwrap(), 2, "handshake targets login");
+            // login start BEFORE the compression switch (it travels
+            // uncompressed — the client has not seen Set Compression yet)
             let start = conn.read_packet().unwrap();
             let mut c: &[u8] = &start;
             assert_eq!(read_varint(&mut c).unwrap(), 0x00, "login start id");
@@ -1493,11 +1505,42 @@ mod tests {
                 &name,
             ))
             .unwrap();
+            // the introductions: login acknowledged (0x03), client
+            // information (0x00), plugin brand (0x02)
+            for expected in [0x03, 0x00, 0x02] {
+                let pkt = conn.read_packet().unwrap();
+                let mut c: &[u8] = &pkt;
+                assert_eq!(read_varint(&mut c).unwrap(), expected, "introduction id");
+            }
+            // probes + finish
+            let mut ka = Vec::new();
+            write_varint(&mut ka, 0x03); // config keep alive (clientbound)
+            ka.extend_from_slice(&0x1122334455667788u64.to_be_bytes());
+            conn.send_packet(&ka).unwrap();
+            let mut pg = Vec::new();
+            write_varint(&mut pg, 0x04); // config ping (clientbound)
+            pg.extend_from_slice(&77i32.to_be_bytes());
+            conn.send_packet(&pg).unwrap();
+            let mut fin = Vec::new();
+            write_varint(&mut fin, 0x02); // finish configuration
+            conn.send_packet(&fin).unwrap();
+            // responses: keep-alive echo (0x04), pong (0x05), ack (0x03)
+            let resp = conn.read_packet().unwrap();
+            let mut c: &[u8] = &resp;
+            assert_eq!(read_varint(&mut c).unwrap(), 0x04, "keep alive response id");
+            assert_eq!(i64::from_be_bytes(c[..8].try_into().unwrap()), 0x1122334455667788);
+            let resp = conn.read_packet().unwrap();
+            let mut c: &[u8] = &resp;
+            assert_eq!(read_varint(&mut c).unwrap(), 0x05, "pong id");
+            assert_eq!(i32::from_be_bytes(c[..4].try_into().unwrap()), 77);
+            let resp = conn.read_packet().unwrap();
+            let mut c: &[u8] = &resp;
+            assert_eq!(read_varint(&mut c).unwrap(), 0x03, "ack finish id");
         });
 
         let mut app = App::new(3);
         app.open(ScreenKind::Servers);
-        // point the hosted row at the mock login server and join it
+        // point the hosted row at the mock join server and join it
         app.servers[1].host = Some(format!("127.0.0.1:{port}"));
         app.selected_server = 1;
         app.join_selected_server();
@@ -1505,17 +1548,17 @@ mod tests {
         assert_eq!(req.port, port, "explicit port parsed from the address");
 
         // the exact mapping the window worker performs
-        let res = mc_protocol::connect_and_login(
+        let res = mc_protocol::connect_and_join_play(
             &req.host,
             req.port,
             crate::build_info::PROTOCOL_VERSION,
             crate::screens::PLAYER_NAME,
         )
         .map(|out| match out {
-            mc_protocol::LoginOutcome::Success { username, .. } => {
+            mc_protocol::PlayOutcome::Joined { username, .. } => {
                 LoginResult::Success { username }
             }
-            mc_protocol::LoginOutcome::Disconnected { reason } => {
+            mc_protocol::PlayOutcome::Disconnected { reason } => {
                 LoginResult::Disconnected { reason }
             }
         })

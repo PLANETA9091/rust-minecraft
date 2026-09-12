@@ -126,9 +126,10 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize) -> anyhow::Result<()>
         (u64, Result<crate::screens::PingInfo, String>),
     >();
     let mut net_seen = 0usize; // cursor into the append-only request log
-    // offline-mode logins ride the same architecture: the "join" button
+    // offline-mode joins ride the same architecture: the "join" button
     // records the request, a detached worker runs the blocking
-    // connect_and_login, the outcome lands on the DisconnectedScreen
+    // connect_and_join_play (login + configuration), the outcome lands on
+    // the DisconnectedScreen
     let (login_tx, login_rx) = std::sync::mpsc::channel::<
         (u64, Result<crate::screens::LoginResult, String>),
     >();
@@ -171,18 +172,21 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize) -> anyhow::Result<()>
             std::thread::spawn(move || {
                 // the REAL protocol number (login tolerates no 0-ping) and
                 // the vanilla offline profile for the documented stand-in
-                // session name (screens::PLAYER_NAME)
-                let res = mc_protocol::connect_and_login(
+                // session name (screens::PLAYER_NAME). The full join arc:
+                // login -> Login Acknowledged -> configuration phase -> the
+                // play state begins (a Joined outcome is now the TRUTH
+                // behind the outcome screen's connected line).
+                let res = mc_protocol::connect_and_join_play(
                     &host,
                     port,
                     crate::build_info::PROTOCOL_VERSION,
                     crate::screens::PLAYER_NAME,
                 )
                 .map(|out| match out {
-                    mc_protocol::LoginOutcome::Success { username, .. } => {
+                    mc_protocol::PlayOutcome::Joined { username, .. } => {
                         crate::screens::LoginResult::Success { username }
                     }
-                    mc_protocol::LoginOutcome::Disconnected { reason } => {
+                    mc_protocol::PlayOutcome::Disconnected { reason } => {
                         crate::screens::LoginResult::Disconnected { reason }
                     }
                 })
