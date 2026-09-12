@@ -1,0 +1,36 @@
+[workspace]
+resolver = "2"
+members = [
+    "crates/mc2rs-gen",
+    "crates/mc-protocol",
+    "crates/mc-registry",
+    "crates/mc-assets",
+    "crates/mc-client",
+    "crates/mc2rs-pixel",
+]
+
+[workspace.package]
+version = "0.2.0"
+edition = "2021"
+license = "MIT"
+repository = "https://github.com/PLANETA9091/rust-minecraft"
+
+[workspace.dependencies]
+anyhow = "1"
+clap = { version = "4", features = ["derive"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+ureq = { version = "2", features = ["json", "gzip"] }
+sha1 = "0.10"
+hex = "0.4"
+zip = "2"
+flate2 = "1"
+png = "0.17"
+rayon = "1"
+minifb = "0.27"
+
+[profile.release]
+opt-level = 3
+lto = "thin"
+codegen-units = 1
+panic = "abort"

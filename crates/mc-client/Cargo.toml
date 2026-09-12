@@ -1,0 +1,21 @@
+[package]
+name = "mc-client"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "Minecraft client (Rust): CPU reference renderer + windowed fly camera"
+
+[features]
+default = []
+gpu = []
+
+[dependencies]
+anyhow.workspace = true
+png.workspace = true
+rayon.workspace = true
+clap.workspace = true
+mc-assets = { path = "../mc-assets" }
+
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+minifb.workspace = true

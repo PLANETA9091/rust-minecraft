@@ -1,0 +1,13 @@
+[package]
+name = "mc-protocol"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "Minecraft protocol layer: varint, framing, compression, status ping"
+
+[dependencies]
+anyhow.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+flate2.workspace = true

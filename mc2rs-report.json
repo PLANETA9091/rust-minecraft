@@ -1,0 +1,13 @@
+{
+  "blocks": 1198,
+  "classes": 10952,
+  "clientSha1": "2dc72797acbc1b63fc16a11c4ac393605f453754",
+  "hasLang": true,
+  "items": 2074,
+  "netMinecraftClasses": 10372,
+  "obfuscated": false,
+  "obfuscationRatio": 0.0,
+  "sounds": 0,
+  "textures": 3855,
+  "version": "26.2"
+}

@@ -1,0 +1,54 @@
+name: Pixel-perfect
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 3 * * *" # nightly regression guard
+
+jobs:
+  golden:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { w: 320, h: 180, seed: 20260214 }
+          - { w: 480, h: 270, seed: 1337 }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: Render deterministic frame
+        run: |
+          cargo run --release -p mc-client -- \
+            --headless --width ${{ matrix.w }} --height ${{ matrix.h }} \
+            --frames 1 --seed ${{ matrix.seed }} --out render.png
+      - name: Golden present?
+        id: golden
+        run: echo "present=$(test -f goldens/cpu_${{ matrix.w }}x${{ matrix.h }}.png && echo yes || echo no)" >> "$GITHUB_OUTPUT"
+      - name: Pixel compare vs golden
+        if: steps.golden.outputs.present == 'yes'
+        run: |
+          cargo run --release -p mc2rs-pixel -- \
+            --a render.png --b goldens/cpu_${{ matrix.w }}x${{ matrix.h }}.png \
+            --out diff.png --max-rms 8
+      - name: First run — upload candidate golden (baseline to review)
+        if: steps.golden.outputs.present == 'no'
+        uses: actions/upload-artifact@v4
+        with:
+          name: candidate-golden-${{ matrix.w }}x${{ matrix.h }}
+          path: render.png
+      - name: Upload diff artifacts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: pixel-report-${{ matrix.w }}x${{ matrix.h }}
+          path: |
+            diff.png
+            render.png
+          if-no-files-found: ignore
+      - name: Step summary
+        run: |
+          echo "### Pixel-perfect ${{ matrix.w }}x${{ matrix.h }} (seed ${{ matrix.seed }})" >> "$GITHUB_STEP_SUMMARY"
+          echo "- renderer: CPU reference (deterministic)" >> "$GITHUB_STEP_SUMMARY"
+          echo "- gate: RMS <= 8.0 against goldens/" >> "$GITHUB_STEP_SUMMARY"

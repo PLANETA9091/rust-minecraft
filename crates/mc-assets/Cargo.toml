@@ -1,0 +1,15 @@
+[package]
+name = "mc-assets"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "Minecraft asset index + parallel sha1-verified downloader (official CDN)"
+
+[dependencies]
+anyhow.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+ureq.workspace = true
+sha1.workspace = true
+hex.workspace = true

@@ -1,0 +1,7 @@
+/target
+Cargo.lock.orig
+.mc2rs/
+assets-cache/
+*.log
+.DS_Store
+gen-report-tmp/

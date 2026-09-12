@@ -1,0 +1,92 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: Workspace tests (protocol, registry, mesher, raster)
+        run: cargo test --workspace
+      - name: Build generator + pixel harness (release)
+        run: cargo build --release -p mc2rs-gen -p mc2rs-pixel
+
+  generate:
+    needs: build-test
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # 26.2 = latest unobfuscated release; 1.21.1 = obfuscated-era regression target
+        version: [26.2, 1.21.1]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: Cache Mojang downloads
+        uses: actions/cache@v4
+        with:
+          path: .mc2rs
+          key: mojang-${{ matrix.version }}-v1
+      - name: Generate workspace for ${{ matrix.version }}
+        run: cargo run -p mc2rs-gen --release -- generate --version ${{ matrix.version }}
+      - name: Generated registry must compile
+        run: cargo check -p mc-registry
+      - name: Codegen drift detection (byte-stable output)
+        run: |
+          if ! git diff --exit-code -- crates/mc-registry/src/generated crates/mc-client/src/build_info.rs mc2rs-report.json; then
+            echo "::error::generated code drifted for ${{ matrix.version }}"
+            git diff --stat
+            exit 1
+          fi
+
+  client:
+    needs: build-test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: Build client (CPU reference renderer)
+        run: cargo build --release -p mc-client
+      - name: Headless deterministic render
+        run: cargo run --release -p mc-client -- --headless --width 320 --height 180 --frames 2 --out shots/render.png
+      - uses: actions/upload-artifact@v4
+        with:
+          name: render-320x180
+          path: shots/
+
+  pixel:
+    needs: client
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: Render fresh frame (identical seed/camera)
+        run: cargo run --release -p mc-client -- --headless --width 320 --height 180 --frames 1 --out fresh.png
+      - name: Golden present?
+        id: golden
+        run: echo "present=$(test -f goldens/cpu_320x180.png && echo yes || echo no)" >> "$GITHUB_OUTPUT"
+      - name: Pixel compare vs golden
+        if: steps.golden.outputs.present == 'yes'
+        run: cargo run --release -p mc2rs-pixel -- --a fresh.png --b goldens/cpu_320x180.png --out diff.png --max-rms 8
+      - name: Upload pixel artifacts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: pixel-diff
+          path: |
+            diff.png
+            fresh.png
+          if-no-files-found: ignore
