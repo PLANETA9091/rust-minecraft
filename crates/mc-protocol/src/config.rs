@@ -409,9 +409,90 @@ pub fn connect_and_join_play(
     join_play(stream, host, port, protocol_version, username)
 }
 
+/// Shared test fixtures (same-crate mock servers reuse these — the play
+/// state's full-arc mock streams the same registry packets).
+#[cfg(test)]
+pub(crate) mod test_support {
+    use super::clientbound;
+    use crate::nbt::Nbt;
+    use crate::varint::{write_string, write_varint};
+
+    /// A REAL registry data packet: identifier + network NBT. `dimension`
+    /// selects between the decoded `minecraft:dimension_type` registry
+    /// (overworld -64/384, nether 0/256 — the vanilla values) and a
+    /// non-decoded one (biomes, with a richly nested compound inside).
+    pub fn registry_packet(dimension: bool) -> Vec<u8> {
+        let (name, nbt) = if dimension {
+            (
+                "minecraft:dimension_type",
+                Nbt::Compound(vec![
+                    ("type".into(), Nbt::String("minecraft:dimension_type".into())),
+                    (
+                        "value".into(),
+                        Nbt::List(vec![
+                            Nbt::Compound(vec![
+                                ("name".into(), Nbt::String("minecraft:overworld".into())),
+                                ("id".into(), Nbt::Int(0)),
+                                (
+                                    "element".into(),
+                                    Nbt::Compound(vec![
+                                        ("min_y".into(), Nbt::Int(-64)),
+                                        ("height".into(), Nbt::Int(384)),
+                                        ("has_skylight".into(), Nbt::Byte(1)),
+                                    ]),
+                                ),
+                            ]),
+                            Nbt::Compound(vec![
+                                ("name".into(), Nbt::String("minecraft:the_nether".into())),
+                                ("id".into(), Nbt::Int(2)),
+                                (
+                                    "element".into(),
+                                    Nbt::Compound(vec![
+                                        ("min_y".into(), Nbt::Int(0)),
+                                        ("height".into(), Nbt::Int(256)),
+                                        ("fixed_time".into(), Nbt::Long(18_000)),
+                                    ]),
+                                ),
+                            ]),
+                        ]),
+                    ),
+                ]),
+            )
+        } else {
+            (
+                "minecraft:worldgen/biome",
+                Nbt::Compound(vec![
+                    ("type".into(), Nbt::String("minecraft:worldgen/biome".into())),
+                    (
+                        "value".into(),
+                        Nbt::List(vec![Nbt::Compound(vec![
+                            ("name".into(), Nbt::String("minecraft:plains".into())),
+                            (
+                                "element".into(),
+                                Nbt::Compound(vec![
+                                    ("temperature".into(), Nbt::Float(0.8)),
+                                    ("effects".into(), Nbt::Compound(vec![
+                                        ("fog_color".into(), Nbt::Int(0xC0D8FF)),
+                                    ])),
+                                ]),
+                            ),
+                        ])]),
+                    ),
+                ]),
+            )
+        };
+        let mut p = Vec::new();
+        write_varint(&mut p, clientbound::REGISTRY_DATA);
+        write_string(&mut p, name);
+        crate::nbt::write_network_nbt(&nbt, &mut p).expect("registry nbt writes");
+        p
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+    use super::test_support::registry_packet;
     use crate::login::{encode_login_disconnect, encode_login_success, encode_set_compression};
     use crate::varint::write_varint;
     use std::net::{TcpListener, TcpStream};
@@ -534,76 +615,6 @@ mod tests {
         (port, handle)
     }
 
-    /// A REAL registry data packet: identifier + network NBT. `dimension`
-    /// selects between the decoded `minecraft:dimension_type` registry
-    /// (overworld -64/384, nether 0/256 — the vanilla values) and a
-    /// non-decoded one (biomes, with a richly nested compound inside).
-    fn registry_packet(dimension: bool) -> Vec<u8> {
-        let (name, nbt) = if dimension {
-            (
-                "minecraft:dimension_type",
-                Nbt::Compound(vec![
-                    ("type".into(), Nbt::String("minecraft:dimension_type".into())),
-                    (
-                        "value".into(),
-                        Nbt::List(vec![
-                            Nbt::Compound(vec![
-                                ("name".into(), Nbt::String("minecraft:overworld".into())),
-                                ("id".into(), Nbt::Int(0)),
-                                (
-                                    "element".into(),
-                                    Nbt::Compound(vec![
-                                        ("min_y".into(), Nbt::Int(-64)),
-                                        ("height".into(), Nbt::Int(384)),
-                                        ("has_skylight".into(), Nbt::Byte(1)),
-                                    ]),
-                                ),
-                            ]),
-                            Nbt::Compound(vec![
-                                ("name".into(), Nbt::String("minecraft:the_nether".into())),
-                                ("id".into(), Nbt::Int(2)),
-                                (
-                                    "element".into(),
-                                    Nbt::Compound(vec![
-                                        ("min_y".into(), Nbt::Int(0)),
-                                        ("height".into(), Nbt::Int(256)),
-                                        ("fixed_time".into(), Nbt::Long(18_000)),
-                                    ]),
-                                ),
-                            ]),
-                        ]),
-                    ),
-                ]),
-            )
-        } else {
-            (
-                "minecraft:worldgen/biome",
-                Nbt::Compound(vec![
-                    ("type".into(), Nbt::String("minecraft:worldgen/biome".into())),
-                    (
-                        "value".into(),
-                        Nbt::List(vec![Nbt::Compound(vec![
-                            ("name".into(), Nbt::String("minecraft:plains".into())),
-                            (
-                                "element".into(),
-                                Nbt::Compound(vec![
-                                    ("temperature".into(), Nbt::Float(0.8)),
-                                    ("effects".into(), Nbt::Compound(vec![
-                                        ("fog_color".into(), Nbt::Int(0xC0D8FF)),
-                                    ])),
-                                ]),
-                            ),
-                        ])]),
-                    ),
-                ]),
-            )
-        };
-        let mut p = Vec::new();
-        write_varint(&mut p, clientbound::REGISTRY_DATA);
-        write_string(&mut p, name);
-        crate::nbt::write_network_nbt(&nbt, &mut p).expect("registry nbt writes");
-        p
-    }
 
     #[test]
     fn registry_data_decodes_the_dimension_layout_and_skips_other_registries() {
@@ -632,7 +643,7 @@ mod tests {
                 ("name".into(), Nbt::String("minecraft:overworld".into())),
                 ("element".into(), Nbt::Compound(vec![])),
             ])]),
-        ]);
+        )]);
         crate::nbt::write_network_nbt(&broken_tree, &mut broken).unwrap();
         assert!(parse_registry_data(&broken).is_err());
     }

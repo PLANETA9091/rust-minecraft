@@ -59,7 +59,14 @@ hand-drawn:
   queries, replace/unload semantics) with a **materializer** that projects
   any window of it into the renderer's voxel grid (injectable id mapping —
   numeric global ids stay bytecode-true generator work) — the substrate
-  the in-world view of a network server builds on.
+  the in-world view of a network server builds on. The configuration
+  phase's **Registry Data is decoded**: the project's first retained NBT
+  reader/writer pulls the `minecraft:dimension_type` registry (every
+  dimension's min_y/height vertical layout) out of the streamed packets
+  and carries it through the join into the world model; the other
+  registries (biomes, worldgen...) are walked and skipped, and pinning
+  the *current* dimension (min_y shifting for `block()`) waits on the
+  Respawn packet.
 - **Singleplayer world** — clicking `Singleplayer` enters a live 3D world
   view rendered by the same deterministic CPU raster path as the pixel
   tests: real block textures from the generated atlas, the **official

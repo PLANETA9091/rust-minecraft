@@ -11,18 +11,24 @@
 //!   keyed `(chunk_x, chunk_z)`; a re-sent column REPLACES the stored one
 //!   (vanilla semantics: the newest Chunk Data wins), Unload Chunk drops
 //!   the entry.
-//! - `min_y` is `None` until the dimension type's vertical layout is
-//!   decoded (the client currently read-and-skips the configuration
-//!   registry traffic where vanilla carries it). Until then `block()`
-//!   takes COLUMN-LOCAL y (0 = bottom of the lowest section) — the honest
-//!   convention, no guessed world offset. Once `min_y` is known, world-Y
-//!   queries subtract it before the section math.
+//! - `min_y` is `None` until the world's CURRENT dimension is pinned:
+//!   the configuration Registry Data is now DECODED (the dimension-type
+//!   vertical layout table lives in `registry`, see `dimension_min_y`),
+//!   but the play-state Login no longer names the current dimension —
+//!   vanilla conveys it via the Respawn packet, whose id still needs
+//!   proof against real servers. Until then `block()` takes
+//!   COLUMN-LOCAL y (0 = bottom of the lowest section) — the honest
+//!   convention, no guessed world offset. Once `min_y` is known,
+//!   world-Y queries subtract it before the section math.
 //! - This module is wired into the frame loop when the mesher input lands
 //!   (the next step); until then it is exercised by its own tests only.
 
 use std::collections::HashMap;
 
-use mc_protocol::{ChunkColumn, PlayEvent, PlayerPosition, WorldInfo, WorldSnapshot};
+use mc_protocol::{
+    ChunkColumn, DimensionTypeEntry, PlayEvent, PlayerPosition, RegistryData, WorldInfo,
+    WorldSnapshot,
+};
 
 /// The client's view of ONE server world: loaded chunk columns, the
 /// server-declared center chunk, the world's static description and the
@@ -39,6 +45,10 @@ pub struct WorldModel {
     /// World-Y offset of the bottom section (dimension type), when known.
     /// `None` = `block()` takes column-local y.
     pub min_y: Option<i32>,
+    /// The dimension-type vertical layout table the configuration phase
+    /// decoded (registry key -> min_y/height). The `min_y` field above
+    /// pins the CURRENT dimension only once the Respawn packet is parsed.
+    pub registry: RegistryData,
     columns: HashMap<(i32, i32), ChunkColumn>,
 }
 
@@ -57,6 +67,7 @@ impl WorldModel {
             info: None,
             player: None,
             min_y: None,
+            registry: RegistryData::default(),
             columns: HashMap::new(),
         }
     }
@@ -97,14 +108,24 @@ impl WorldModel {
 
     /// Adopt a join milestone: the snapshot's columns move into the map
     /// (replace-on-collision, like any re-sent chunk) and the info/player
-    /// facts fill in where missing or newer.
+    /// facts fill in where missing or newer. The snapshot's registry
+    /// table REPLACES whatever is stored — the join's registry is the
+    /// session's truth (a re-join re-decodes it wholesale).
     pub fn adopt_snapshot(&mut self, snap: WorldSnapshot) {
-        let WorldSnapshot { info, player, chunks } = snap;
+        let WorldSnapshot { info, player, chunks, registry } = snap;
         self.info = Some(info);
         self.player = Some(player);
+        self.registry = registry;
         for col in chunks {
             self.columns.insert((col.x, col.z), col);
         }
+    }
+
+    /// The decoded vertical layout of one dimension (by registry key),
+    /// from the configuration registry knowledge. `None` when the server
+    /// never sent that key (or no registry data at all).
+    pub fn dimension_min_y(&self, name: &str) -> Option<i32> {
+        self.registry.dimension(name).map(|d| d.min_y)
     }
 
     /// How many chunk columns are currently loaded.
@@ -308,11 +329,22 @@ mod tests {
             info: info.clone(),
             player: player.clone(),
             chunks: vec![col],
+            registry: RegistryData {
+                dimension_types: vec![DimensionTypeEntry {
+                    name: "minecraft:overworld".to_string(),
+                    min_y: -64,
+                    height: 384,
+                }],
+            },
         });
         assert_eq!(m.loaded_chunks(), 1);
         assert_eq!(m.info.as_ref().unwrap().entity_id, 17);
         assert_eq!(m.player.as_ref().unwrap().teleport_id, 42);
         assert_eq!(m.block(48, 0, -32), Some(1));
+        // the registry knowledge rode along: the decoded dimension-type
+        // vertical layout answers by registry key
+        assert_eq!(m.dimension_min_y("minecraft:overworld"), Some(-64));
+        assert_eq!(m.dimension_min_y("minecraft:the_end"), None);
         // a later sync position updates in place (the model holds the truth)
         let newer = PlayerPosition { y: 65.0, ..player };
         assert!(m.apply(PlayEvent::Position(newer)));
@@ -322,5 +354,52 @@ mod tests {
         let old_info = WorldInfo { entity_id: 1, ..info };
         assert!(m.apply(PlayEvent::WorldInfo(old_info)));
         assert_eq!(m.info.as_ref().unwrap().entity_id, 1);
+    }
+
+    #[test]
+    fn registry_table_replaces_wholesale_with_each_adopted_snapshot() {
+        let mut m = WorldModel::new();
+        assert_eq!(m.dimension_min_y("minecraft:overworld"), None, "empty before any join");
+        let snap = |names: &[(&str, i32, i32)]| WorldSnapshot {
+            info: WorldInfo {
+                entity_id: 1,
+                hardcore: false,
+                dimensions: vec!["minecraft:overworld".to_string()],
+                view_distance: 8,
+                simulation_distance: 8,
+                portal_cooldown: 300,
+            },
+            player: PlayerPosition {
+                x: 0.0,
+                y: 0.0,
+                z: 0.0,
+                yaw: 0.0,
+                pitch: 0.0,
+                flags: 0,
+                teleport_id: 1,
+            },
+            chunks: vec![],
+            registry: RegistryData {
+                dimension_types: names
+                    .iter()
+                    .map(|(n, min_y, height)| DimensionTypeEntry {
+                        name: n.to_string(),
+                        min_y: *min_y,
+                        height: *height,
+                    })
+                    .collect(),
+            },
+        };
+        m.adopt_snapshot(snap(&[
+            ("minecraft:overworld", -64, 384),
+            ("minecraft:the_nether", 0, 256),
+        ]));
+        assert_eq!(m.dimension_min_y("minecraft:overworld"), Some(-64));
+        assert_eq!(m.dimension_min_y("minecraft:the_nether"), Some(0));
+        // a re-join REPLACES the table wholesale — no stale entries linger
+        m.adopt_snapshot(snap(&[("minecraft:flat", 0, 16)]));
+        assert_eq!(m.dimension_min_y("minecraft:overworld"), None);
+        assert_eq!(m.dimension_min_y("minecraft:the_nether"), None);
+        assert_eq!(m.dimension_min_y("minecraft:flat"), Some(0));
     }
 }

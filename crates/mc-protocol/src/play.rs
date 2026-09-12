@@ -949,8 +949,8 @@ mod tests {
             srv.send_packet(&pg).unwrap();
             // bulk registry traffic (configuration): the dimension_type
             // registry the client DECODES + a second registry it skips
-            srv.send_packet(&config_tests::registry_packet(true)).unwrap();
-            srv.send_packet(&config_tests::registry_packet(false)).unwrap();
+            srv.send_packet(&crate::config::test_support::registry_packet(true)).unwrap();
+            srv.send_packet(&crate::config::test_support::registry_packet(false)).unwrap();
             let mut fin = Vec::new();
             write_varint(&mut fin, 0x02); // clientbound config finish
             srv.send_packet(&fin).unwrap();
