@@ -76,6 +76,9 @@ cargo run -p mc2rs-pixel -- --a render.png --b goldens/cpu_320x180.png --out dif
 
 * Palette-compressed chunk storage (u16 ids, 16×48×16 sections).
 * Culled + greedy meshing, parallel across chunks (`rayon`).
+* Vanilla-style smooth lighting: per-vertex ambient occlusion (levels 0-3,
+  brightness curve `[0.55, 0.70, 0.85, 1.00]`) with the classic quad-diagonal
+  flip against crease artifacts; water/leaves never occlude.
 * Face-shaded, distance-fogged rendering; per-face color fetched from a
   texture-average LUT (built from the real textures when assets are present).
 * CPU reference renderer = *deterministic* (bit-for-bit reproducible frames,

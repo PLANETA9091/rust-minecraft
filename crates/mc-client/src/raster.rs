@@ -62,8 +62,6 @@ impl Framebuf {
             let mut sy = vec![0f32; clipped.len()];
             let mut ow = vec![0f32; clipped.len()];
             let mut vz = vec![0f32; clipped.len()];
-            let mut off_x = [0f32; 2] ;
-            let _ = &mut off_x;
             let mut minx = f32::MAX;
             let mut miny = f32::MAX;
             let mut maxx = f32::MIN;
@@ -95,11 +93,13 @@ impl Framebuf {
             if x1 < x0 || y1 < y0 {
                 continue;
             }
-            // ---- fan rasterization with perspective-correct depth ----
+            // ---- fan rasterization with perspective-correct depth +
+            // per-vertex color (smooth lighting) ----
             for tri in 1..clipped.len() - 1 {
                 let (ax, ay, a_ow, a_vz) = (sx[0], sy[0], ow[0], vz[0]);
                 let (bx, by, b_ow, b_vz) = (sx[tri], sy[tri], ow[tri], vz[tri]);
                 let (cx, cy, c_ow, c_vz) = (sx[tri + 1], sy[tri + 1], ow[tri + 1], vz[tri + 1]);
+                let (ca, cb, cc) = (quad.colors[0], quad.colors[tri], quad.colors[tri + 1]);
                 let area_ab = edge(ax, ay, bx, by, cx, cy);
                 if area_ab.abs() < 1e-9 {
                     continue;
@@ -127,8 +127,10 @@ impl Framebuf {
                             let fog = ((z - ctx.fog_near) / (ctx.fog_far - ctx.fog_near))
                                 .clamp(0.0, 1.0);
                             let o = idx * 3;
+                            // affine screen-space vertex-color interpolation
+                            // (same as GPU linear interpolation across the quad)
                             for ch in 0..3 {
-                                let c0 = quad.color[ch];
+                                let c0 = b0 * ca[ch] + b1 * cb[ch] + b2 * cc[ch];
                                 let c = c0 + (ctx.fog_color[ch] - c0) * fog;
                                 self.color[o + ch] = (c.clamp(0.0, 1.0) * 255.0 + 0.5) as u8;
                             }
