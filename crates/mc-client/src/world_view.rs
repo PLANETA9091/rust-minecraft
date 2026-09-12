@@ -789,6 +789,7 @@ mod tests {
                 height: 384,
             }],
             biomes: Vec::new(),
+            world_clocks: Vec::new(),
         };
         snap.chunks[0].sections = (0..7)
             .map(|_| air_section())
@@ -908,6 +909,7 @@ mod tests {
                 height: 384,
             }],
             biomes: Vec::new(),
+            world_clocks: Vec::new(),
         };
         snap.chunks[0].sections = (0..7)
             .map(|_| air_section())

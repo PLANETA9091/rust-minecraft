@@ -126,6 +126,12 @@ pub struct DimensionTypeEntry {
     pub min_y: i32,
     /// Total height in blocks (a multiple of 16).
     pub height: i32,
+    /// The dimension's day/night clock (`default_clock` element field:
+    /// `minecraft:overworld` for the overworld, `minecraft:the_end` for
+    /// the end, ABSENT for the nether — it has no day cycle). The Set
+    /// Time clock states resolve through this name via the synced
+    /// `minecraft:world_clock` table.
+    pub default_clock: Option<String>,
 }
 
 /// The registry knowledge the client retained from the configuration
@@ -142,6 +148,14 @@ pub struct RegistryData {
     /// effects, carvers...) are walked and skipped — nothing consumes
     /// them yet.
     pub biomes: Vec<String>,
+    /// The `minecraft:world_clock` entries in ARRIVAL ORDER — the id
+    /// table the Set Time clock states resolve through (javap: the Set
+    /// Time map keys are `holderRegistry(WORLD_CLOCK)` VarInt ids; the
+    /// built-in clocks are `minecraft:overworld` and
+    /// `minecraft:the_end`). Names only: the element codec is UNIT
+    /// (`WorldClock.DIRECT_CODEC = MapCodec.unitCodec`), so real
+    /// entries ride WITHOUT a tag — nothing decodable beyond the name.
+    pub world_clocks: Vec<String>,
 }
 
 impl RegistryData {
@@ -157,11 +171,22 @@ impl RegistryData {
         self.biomes.get(id as usize).map(|s| s.as_str())
     }
 
+    /// The network id of one clock, by registry name — the reverse of
+    /// the arrival-order table (the Set Time clock states carry ids;
+    /// the dimension's `default_clock` carries a name).
+    pub fn world_clock_id(&self, name: &str) -> Option<i32> {
+        self.world_clocks
+            .iter()
+            .position(|n| n == name)
+            .map(|i| i as i32)
+    }
+
     /// Absorb one decoded Registry Data packet (vanilla streams one
     /// registry per packet; entries append in arrival order).
     fn merge(&mut self, other: RegistryData) {
         self.dimension_types.extend(other.dimension_types);
         self.biomes.extend(other.biomes);
+        self.world_clocks.extend(other.world_clocks);
     }
 }
 
@@ -437,6 +462,18 @@ pub fn parse_registry_data(payload: &[u8]) -> Result<RegistryData> {
             }
             continue;
         }
+        if registry_name == "minecraft:world_clock" {
+            // same arrival-order id table (the Set Time map keys are
+            // these ids); the element codec is UNIT so real vanilla
+            // entries ride tagless — a tag, if one ever rides, is
+            // walked and skipped
+            out.world_clocks.push(entry_id);
+            if present {
+                crate::play::skip_network_nbt(&mut c)
+                    .with_context(|| format!("skip {registry_name} entry nbt"))?;
+            }
+            continue;
+        }
         if !present {
             // an entry without data: nothing to decode, honestly skipped
             continue;
@@ -456,7 +493,11 @@ pub fn parse_registry_data(payload: &[u8]) -> Result<RegistryData> {
             .get("height")
             .and_then(Nbt::as_i32)
             .with_context(|| format!("dimension_type {entry_id} without height"))?;
-        out.dimension_types.push(DimensionTypeEntry { name: entry_id, min_y, height });
+        // the day/night clock name: present for the overworld (and the
+        // end), ABSENT for the nether — no day cycle there
+        let default_clock = element.get("default_clock").and_then(Nbt::as_str).map(String::from);
+        out.dimension_types
+            .push(DimensionTypeEntry { name: entry_id, min_y, height, default_clock });
     }
     anyhow::ensure!(
         c.is_empty(),
@@ -686,15 +727,19 @@ pub mod test_support {
             write_string(&mut p, "minecraft:dimension_type");
             write_varint(&mut p, 2); // two entries
             // entry 1: overworld — the optional tag IS the element
+            // (the vanilla element carries default_clock: the overworld
+            // clock name the Set Time states resolve through)
             write_string(&mut p, "minecraft:overworld");
             p.push(1); // tag present
             let ow = Nbt::Compound(vec![
                 ("min_y".into(), Nbt::Int(-64)),
                 ("height".into(), Nbt::Int(384)),
                 ("has_skylight".into(), Nbt::Byte(1)),
+                ("default_clock".into(), Nbt::String("minecraft:overworld".into())),
             ]);
             crate::nbt::write_network_nbt(&ow, &mut p).expect("overworld element writes");
-            // entry 2: nether
+            // entry 2: nether — NO default_clock (no day cycle), the
+            // vanilla element's fixed_time instead
             write_string(&mut p, "minecraft:the_nether");
             p.push(1);
             let nether = Nbt::Compound(vec![
@@ -719,12 +764,29 @@ pub mod test_support {
         }
         p
     }
+
+    /// The synced `minecraft:world_clock` registry as real vanilla
+    /// streams it: BOTH built-in clocks in bootstrap order, entries
+    /// TAGLESS — the element codec is UNIT
+    /// (`WorldClock.DIRECT_CODEC = MapCodec.unitCodec`), so the wire
+    /// carries names only and the arrival order IS the id table.
+    pub fn world_clock_packet() -> Vec<u8> {
+        let mut p = Vec::new();
+        write_varint(&mut p, clientbound::REGISTRY_DATA);
+        write_string(&mut p, "minecraft:world_clock");
+        write_varint(&mut p, 2);
+        write_string(&mut p, "minecraft:overworld");
+        p.push(0); // no tag — the unit element
+        write_string(&mut p, "minecraft:the_end");
+        p.push(0);
+        p
+    }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use super::test_support::registry_packet;
+    use super::test_support::{registry_packet, world_clock_packet};
     use crate::login::{encode_login_disconnect, encode_login_success, encode_set_compression};
     use crate::varint::write_varint;
     use std::net::{TcpListener, TcpStream};
@@ -895,8 +957,17 @@ mod tests {
         assert_eq!(data.dimension_types.len(), 2);
         let ow = data.dimension("minecraft:overworld").expect("overworld");
         assert_eq!((ow.min_y, ow.height), (-64, 384));
+        assert_eq!(
+            ow.default_clock.as_deref(),
+            Some("minecraft:overworld"),
+            "the element's default_clock name is retained"
+        );
         let nether = data.dimension("minecraft:the_nether").expect("nether");
         assert_eq!((nether.min_y, nether.height), (0, 256));
+        assert_eq!(
+            nether.default_clock, None,
+            "the nether has no day cycle — no default_clock on the element"
+        );
         assert!(data.dimension("minecraft:the_end").is_none());
         // the biome registry: names RETAINED in arrival order (the id ->
         // name table the chunk biome palettes resolve through), the tag
@@ -906,6 +977,17 @@ mod tests {
         assert_eq!(biomes.biome_name(0), Some("minecraft:plains"));
         assert_eq!(biomes.biome_name(1), None, "an id the server never streamed");
         assert!(biomes.dimension_types.is_empty(), "no dimension knowledge rides along");
+        // the world_clock registry: the tagless unit entries land as the
+        // arrival-order id table (the Set Time map keys resolve here)
+        let clocks = parse_registry_data(&world_clock_packet()).expect("world_clock parses");
+        assert_eq!(
+            clocks.world_clocks,
+            vec!["minecraft:overworld".to_string(), "minecraft:the_end".to_string()]
+        );
+        assert_eq!(clocks.world_clock_id("minecraft:overworld"), Some(0));
+        assert_eq!(clocks.world_clock_id("minecraft:the_end"), Some(1));
+        assert_eq!(clocks.world_clock_id("minecraft:nowhere"), None);
+        assert!(clocks.biomes.is_empty() && clocks.dimension_types.is_empty());
         // wrong packet id is rejected, not guessed
         let mut wrong = Vec::new();
         write_varint(&mut wrong, 0x99);

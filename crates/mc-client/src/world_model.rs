@@ -284,14 +284,37 @@ impl WorldModel {
     /// The current dimension's day tick — the synced clock's total
     /// ticks mod the day timeline's period — or `None` before the
     /// server's first Set Time (the honest state: no opinion, the
-    /// renderer stays at day). The clock used is the first entry the
-    /// server sent: a vanilla overworld server syncs its dimension's
-    /// default clock, and multi-clock disambiguation needs the
-    /// WORLD_CLOCK registry names (future work).
+    /// renderer stays at day). The clock is resolved through the
+    /// configuration knowledge: the current dimension's
+    /// `default_clock` NAME walks the synced `minecraft:world_clock`
+    /// table to an id, and the clock state with THAT id wins (the
+    /// end's clock never masquerades as the overworld's, whatever
+    /// order the server sent them in). A resolved name whose clock
+    /// state never arrived is `None` — the honest no-opinion, never
+    /// another clock's ticks. Without any registry knowledge (a bare
+    /// mock server) the first clock in the packet serves — documented
+    /// fallback, the arrival-order guess the table replaces.
     pub fn day_tick(&self) -> Option<i64> {
-        self.clocks
-            .first()
-            .map(|c| c.total_ticks.rem_euclid(crate::timeline::DAY_PERIOD_TICKS))
+        let named = self.current_dimension.as_ref().and_then(|dim| {
+            let clock_name = self.registry.dimension(dim)?.default_clock.as_deref()?;
+            let id = self.registry.world_clock_id(clock_name)?;
+            Some(self.clocks.iter().find(|c| c.id == id).map(|c| c.total_ticks))
+        });
+        match named {
+            // the named clock's state arrived — its ticks are the truth
+            Some(Some(ticks)) => Some(ticks.rem_euclid(crate::timeline::DAY_PERIOD_TICKS)),
+            // a default_clock + table resolved the id but no state for
+            // it ever arrived: the honest no-opinion (never another
+            // clock's ticks)
+            Some(None) => None,
+            // no registry knowledge at all (a bare mock server): the
+            // first clock in the packet serves — documented fallback,
+            // the arrival-order guess the table replaces
+            None => self
+                .clocks
+                .first()
+                .map(|c| c.total_ticks.rem_euclid(crate::timeline::DAY_PERIOD_TICKS)),
+        }
     }
 
     /// The renderer's sky factor for the current clock state — the day
@@ -532,6 +555,7 @@ mod tests {
                 name: "minecraft:overworld".into(),
                 min_y: -64,
                 height: 384,
+                default_clock: Some("minecraft:overworld".into()),
             }],
             // the synced biome table: ids 0/1/2, arrival order
             biomes: vec![
@@ -803,8 +827,10 @@ mod tests {
                     name: "minecraft:overworld".to_string(),
                     min_y: -64,
                     height: 384,
+                    default_clock: Some("minecraft:overworld".into()),
                 }],
                 biomes: Vec::new(),
+                world_clocks: Vec::new(),
             },
         });
         assert_eq!(m.loaded_chunks(), 1);
@@ -865,9 +891,11 @@ mod tests {
                         name: n.to_string(),
                         min_y: *min_y,
                         height: *height,
+                        default_clock: None,
                     })
                     .collect(),
                 biomes: Vec::new(),
+                world_clocks: Vec::new(),
             },
         };
         m.adopt_snapshot(snap(&[
@@ -888,10 +916,11 @@ mod tests {
         let mut m = WorldModel::new();
         m.registry = RegistryData {
             dimension_types: vec![
-                DimensionTypeEntry { name: "minecraft:overworld".into(), min_y: -64, height: 384 },
-                DimensionTypeEntry { name: "minecraft:the_nether".into(), min_y: 0, height: 256 },
+                DimensionTypeEntry { name: "minecraft:overworld".into(), min_y: -64, height: 384, default_clock: Some("minecraft:overworld".into()) },
+                DimensionTypeEntry { name: "minecraft:the_nether".into(), min_y: 0, height: 256, default_clock: None },
             ],
             biomes: Vec::new(),
+            world_clocks: Vec::new(),
         };
         assert_eq!(m.min_y, None, "no knowledge before the server speaks");
         // the login carries the current dimension (CommonPlayerSpawnInfo)
