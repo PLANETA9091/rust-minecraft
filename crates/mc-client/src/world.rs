@@ -3,11 +3,18 @@
 //! atlas generator); `mc-registry` supplies the full version registry —
 //! the original survival-classic subset generates the deterministic scene,
 //! generated members extend it for network terrain.
+//!
+//! The network world also carries the optional BIOME layer (ids + the
+//! per-biome tint triples) — the raw material the mesher's tint fold
+//! consumes; the procedural scene carries none and keeps the baked look.
 
 pub const CHUNK_X: usize = 16;
 pub const CHUNK_Y: usize = 48;
 pub const CHUNK_Z: usize = 16;
 pub const WATER_LEVEL: i32 = 10;
+
+use crate::tint;
+use mc_registry::generated::atlas;
 
 pub const AIR: u16 = 0;
 pub const STONE: u16 = 1;
@@ -66,6 +73,32 @@ pub struct World {
     /// this through [`crate::timeline::sky_light_factor`] (1.0 day /
     /// 0.24 night, the jar-extracted day.json keyframes).
     pub day_tick: Option<i64>,
+    /// The network world's biome layer — `materialize` fills it from the
+    /// model's chunk biomes plus the synced registry (the tint triples
+    /// ride along). `None` for the procedural scene: the mesher keeps
+    /// the baked look bit for bit.
+    pub biomes: Option<BiomeLayer>,
+}
+
+/// A biome cell with no opinion — the server never answered for the
+/// voxel (outside the column's extent, an unsent column, an
+/// unresolvable y). Never rendered as a tint:
+/// [`World::face_tint`] keeps the baked look.
+pub const BIOME_UNKNOWN: u32 = u32::MAX;
+
+/// The network world's biome layer: the per-voxel resolved registry ids
+/// (expanded from the wire's 4×4×4 cell grids through the model's proven
+/// queries — the SAME index conventions as [`World::chunks`]) plus the
+/// per-biome tint triple resolved from the synced registry table
+/// (slot order: grass top override / foliage override / water color —
+/// see [`crate::tint`]).
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct BiomeLayer {
+    /// per-chunk per-voxel registry biome ids; [`BIOME_UNKNOWN`] where unsent
+    pub ids: Vec<Vec<u32>>,
+    /// per registry id (the arrival order IS the network id): the tint
+    /// triple [grass override, foliage override, water color]
+    pub tints: Vec<[Option<u32>; 3]>,
 }
 
 /// A light cell with no opinion — the server never answered for it
@@ -145,6 +178,7 @@ impl World {
             chunks: vec![vec![AIR; CHUNK_X * CHUNK_Y * CHUNK_Z]; chunks_per_side * chunks_per_side],
             light: None, // the procedural scene carries no light layer
             day_tick: None, // no clock yet: full day
+            biomes: None, // the procedural scene carries no biome layer
         };
         w.generate();
         w
@@ -176,6 +210,38 @@ impl World {
             let lz = wz.rem_euclid(CHUNK_Z as i32) as usize;
             self.chunks[ci][lx + lz * CHUNK_X + wy as usize * CHUNK_X * CHUNK_Z] = id;
         }
+    }
+
+    /// The data-driven biome tint for one block face — the synced
+    /// registry's color for the voxel's biome, `None` when the baked
+    /// look stands: no biome layer, an unsent cell, an id the server
+    /// never named, an untinted face, or a color equal to the baked
+    /// default (the atlas pixels already carry it exactly — see the
+    /// `tint` module's no-op rule). The mesher folds a `Some` into the
+    /// vertex-color carrier: the vanilla tint multiply.
+    pub fn face_tint(&self, kind: u16, face: usize, wx: i32, wy: i32, wz: i32) -> Option<u32> {
+        let layer = self.biomes.as_ref()?;
+        let slot = tint::slot_for(kind, face)?;
+        let id = self.biome_id(layer, wx, wy, wz)?;
+        let t = layer.tints.get(id as usize)?;
+        let c = t[slot]?;
+        (c != atlas::TINTS[kind as usize][face]).then_some(c)
+    }
+
+    /// The voxel's resolved registry biome id — `None` outside the grid
+    /// (above/below the world, an unsent chunk) or where the server
+    /// never answered ([`BIOME_UNKNOWN`]).
+    fn biome_id(&self, layer: &BiomeLayer, wx: i32, wy: i32, wz: i32) -> Option<u32> {
+        if wy < 0 || wy >= CHUNK_Y as i32 {
+            return None;
+        }
+        let cx = wx.div_euclid(CHUNK_X as i32);
+        let cz = wz.div_euclid(CHUNK_Z as i32);
+        let ci = self.chunk_index(cx, cz)?;
+        let lx = wx.rem_euclid(CHUNK_X as i32) as usize;
+        let lz = wz.rem_euclid(CHUNK_Z as i32) as usize;
+        let id = layer.ids[ci][lx + lz * CHUNK_X + wy as usize * CHUNK_X * CHUNK_Z];
+        (id != BIOME_UNKNOWN).then_some(id)
     }
 
     pub fn get(&self, wx: i32, wy: i32, wz: i32) -> u16 {
@@ -252,5 +318,70 @@ impl World {
                 }
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// One biome layer over a single chunk: every voxel resolved id 0,
+    /// the tint table given.
+    fn layer(tints: Vec<[Option<u32>; 3]>) -> BiomeLayer {
+        BiomeLayer { ids: vec![vec![0; CHUNK_X * CHUNK_Y * CHUNK_Z]], tints }
+    }
+
+    #[test]
+    fn procedural_world_has_no_biome_opinion() {
+        let w = World::new(1, 42);
+        assert!(w.biomes.is_none());
+        assert_eq!(
+            w.face_tint(GRASS, 2, 8, 12, 8),
+            None,
+            "no layer -> the baked look, bit for bit"
+        );
+    }
+
+    #[test]
+    fn face_tint_folds_only_a_changed_color() {
+        let baked = atlas::TINTS[WATER as usize][0];
+        assert_ne!(baked, 0, "water is a tinted texture");
+        assert_eq!(baked, 0x3F76E4, "the baked water default IS vanilla plains");
+        let mut w = World::new(1, 42);
+        // id 0 = plains (water == the baked constant), id 1 = swamp-ish
+        w.biomes = Some(layer(vec![[None, None, Some(baked)], [None, None, Some(0x617B64)]]));
+        assert_eq!(
+            w.face_tint(WATER, 0, 8, 10, 8),
+            None,
+            "a tint matching the baked default is a no-op"
+        );
+        // switch the voxel's cell to id 1 — the changed color folds
+        let idx = 8 + 8 * CHUNK_X + 10 * CHUNK_X * CHUNK_Z;
+        w.biomes.as_mut().unwrap().ids[0][idx] = 1;
+        assert_eq!(w.face_tint(WATER, 0, 8, 10, 8), Some(0x617B64));
+        // an untinted face never tints, with or without an entry
+        assert_eq!(w.face_tint(STONE, 2, 8, 10, 8), None);
+        // grass top without an override keeps the baked plains grass
+        assert_eq!(w.face_tint(GRASS, 2, 8, 12, 8), None);
+        assert_eq!(w.face_tint(GRASS, 0, 8, 12, 8), None, "grass side untinted");
+    }
+
+    #[test]
+    fn face_tint_walks_overrides_and_unknowns() {
+        let mut w = World::new(1, 42);
+        // the badlands family: real overrides on both tint slots
+        w.biomes = Some(layer(vec![[Some(0x90814D), Some(0x9E814D), Some(0x3F76E4)]]));
+        assert_eq!(w.face_tint(GRASS, 2, 0, 0, 0), Some(0x90814D), "the grass override");
+        assert_eq!(w.face_tint(LEAVES, 2, 0, 20, 0), Some(0x9E814D), "the foliage override");
+        // above the world and outside the grid: no opinion
+        assert_eq!(w.face_tint(LEAVES, 2, 0, CHUNK_Y as i32, 0), None);
+        assert_eq!(w.face_tint(LEAVES, 2, 20, 0, 0), None, "past chunks_per_side");
+        assert_eq!(w.face_tint(LEAVES, 2, 0, -1, 0), None, "below the world");
+        // an id the tint table never named: the baked look
+        w.biomes.as_mut().unwrap().ids[0][0] = 7;
+        assert_eq!(w.face_tint(GRASS, 2, 0, 0, 0), None);
+        // the UNKNOWN cell: the baked look
+        w.biomes.as_mut().unwrap().ids[0][0] = BIOME_UNKNOWN;
+        assert_eq!(w.face_tint(GRASS, 2, 0, 0, 0), None);
     }
 }

@@ -14,6 +14,7 @@ use mc_registry::generated::atlas;
 
 use crate::colors::{default_color, FACE_SHADE};
 use crate::textures::TextureLut;
+use crate::tint;
 use crate::world::*;
 
 /// One shaded world-space quad: 4 CCW corner points, per-vertex shading and
@@ -259,7 +260,18 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                             .and_then(|l| l.color(id, face))
                             .unwrap_or_else(|| default_color(id, face))
                     } else {
-                        [1.0; 3] // multiplier carrier for the textured path
+                        // The multiplier carrier for the textured path, PLUS
+                        // the synced biome tint when it differs from the
+                        // baked default (the atlas pixels carry the vanilla
+                        // plains constants — a matching tint is a no-op by
+                        // construction, the existing scenes stay bit for
+                        // bit). The tint rides the SAME vertex carrier as
+                        // shade×AO×light: the vanilla vertex-color multiply
+                        // (`vertexColor * texelColor`).
+                        world
+                            .face_tint(id, face, wx, wy, wz)
+                            .map(tint::unpack)
+                            .unwrap_or([1.0; 3])
                     };
                     let shade = FACE_SHADE[face];
                     // Smooth lighting: per-corner AO from the 3 diagonal
@@ -370,6 +382,7 @@ mod tests {
             chunks: vec![vec![AIR; CHUNK_X * CHUNK_Y * CHUNK_Z]],
             light: None,
             day_tick: None,
+            biomes: None,
         }
     }
 

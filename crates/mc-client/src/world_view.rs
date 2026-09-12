@@ -42,10 +42,11 @@
 
 use crate::camera::Camera;
 use crate::math::Vec3;
+use crate::tint;
 use crate::world::{
-    LightGrid, World, AIR, ANDESITE, BEDROCK, CHUNK_X, CHUNK_Y, CHUNK_Z, COAL_ORE,
-    COBBLED_DEEPSLATE, COPPER_ORE, DEEPSLATE, DIAMOND_ORE, DIORITE, DIRT, EMERALD_ORE, GOLD_ORE,
-    GRANITE, GRASS, GRAVEL, IRON_ORE, LAPIS_ORE, LEAVES, LIGHT_UNKNOWN, LOG, NETHERRACK,
+    BiomeLayer, LightGrid, World, AIR, ANDESITE, BEDROCK, BIOME_UNKNOWN, CHUNK_X, CHUNK_Y, CHUNK_Z,
+    COAL_ORE, COBBLED_DEEPSLATE, COPPER_ORE, DEEPSLATE, DIAMOND_ORE, DIORITE, DIRT, EMERALD_ORE,
+    GOLD_ORE, GRANITE, GRASS, GRAVEL, IRON_ORE, LAPIS_ORE, LEAVES, LIGHT_UNKNOWN, LOG, NETHERRACK,
     REDSTONE_ORE, SAND, STONE, WATER,
 };
 use crate::world_model::WorldModel;
@@ -62,7 +63,11 @@ use mc_protocol::{PlayEvent, PlayerPosition, WorldSnapshot};
 /// The view also carries the model's LIGHT — sky and block separately,
 /// every cell in a sent column's extent (air included), the honest
 /// [`LIGHT_UNKNOWN`] where the engine never answered — the raw material
-/// the mesher's per-corner smooth lighting consumes.
+/// the mesher's per-corner smooth lighting consumes. The BIOME layer
+/// rides the same window: per-voxel registry ids through the model's
+/// proven biome queries (the honest [`BIOME_UNKNOWN`] where it never
+/// answers) plus the synced registry's tint triples — the raw material
+/// the mesher's tint fold consumes.
 pub fn materialize(
     model: &WorldModel,
     origin: (i32, i32),
@@ -70,6 +75,12 @@ pub fn materialize(
     y_base: i32,
     mut mapper: impl FnMut(u32) -> u16,
 ) -> World {
+    // the biome layer rides the SAME window: the synced registry's tint
+    // triples resolve here (the registry's home) and the per-voxel ids
+    // copy during the walk below; the layer lands on the world after it
+    let tints: Vec<[Option<u32>; 3]> =
+        model.registry.biomes.iter().map(tint::entry_tints).collect();
+    let mut biome_ids = vec![vec![BIOME_UNKNOWN; CHUNK_X * CHUNK_Y * CHUNK_Z]; side * side];
     let mut world = World {
         chunks_per_side: side,
         seed: 0,
@@ -82,6 +93,8 @@ pub fn materialize(
         // Set Time state decides day or night; no clock yet = None, the
         // honest day
         day_tick: model.day_tick(),
+        // filled after the walk (the ids copy needs the mutable local)
+        biomes: None,
     };
     let side_i = side as i32;
     for gz in 0..side_i {
@@ -114,7 +127,9 @@ pub fn materialize(
             }
             // the light layer rides the SAME walk — every cell in the
             // column's extent (air INCLUDED: the mesher's face cells are
-            // usually air), the model's honest None left as LIGHT_UNKNOWN
+            // usually air), the model's honest None left as LIGHT_UNKNOWN —
+            // and the biome ids ride it too, expanded from the wire's
+            // 4×4×4 cell grids through the model's proven queries
             let li = (gx + gz * side_i) as usize;
             for gy in 0..CHUNK_Y as i32 {
                 let wy = y_base + gy;
@@ -127,11 +142,13 @@ pub fn materialize(
                         let light = world.light.as_mut().expect("just built");
                         light.sky[li][idx] = model.sky_light(wx, wy, wz).unwrap_or(LIGHT_UNKNOWN);
                         light.block[li][idx] = model.block_light(wx, wy, wz).unwrap_or(LIGHT_UNKNOWN);
+                        biome_ids[li][idx] = model.biome(wx, wy, wz).unwrap_or(BIOME_UNKNOWN);
                     }
                 }
             }
         }
     }
+    world.biomes = Some(BiomeLayer { ids: biome_ids, tints });
     world
 }
 
@@ -524,6 +541,55 @@ mod tests {
             world.day_tick,
             Some(18_000),
             "the view carries the clock's day tick for the mesher's SkyFactor"
+        );
+    }
+
+    #[test]
+    fn materialize_carries_the_models_biome_layer() {
+        let mut m = WorldModel::new();
+        // the synced table: id 0 plains (the baked water default), id 1
+        // a swamp-ish water color — the wire id IS the arrival order
+        let mut swamp = biome_entry("minecraft:swamp");
+        swamp.effects.water_color = 0x617B64;
+        m.registry.biomes = vec![biome_entry("minecraft:plains"), swamp];
+        // one column arrives (single-valued biome wire id 1 = the SECOND
+        // element, the mock sections' convention)
+        m.apply(PlayEvent::Chunk(ChunkColumn {
+            x: 0,
+            z: 0,
+            sections: vec![stone_dirt_section()],
+            light: ChunkLight::default(),
+        }));
+        let world = materialize(&m, (0, 0), 1, 0, example_mapper);
+        let layer = world.biomes.as_ref().expect("the biome layer rides the window");
+        assert_eq!(layer.tints.len(), 2, "one triple per synced element");
+        assert_eq!(
+            layer.tints[0],
+            [None, None, Some(4_159_204)],
+            "plains: no overrides, the baked water default"
+        );
+        assert_eq!(layer.tints[1], [None, None, Some(0x617B64)]);
+        // the column's vertical extent (one section, y 0..15) resolved the
+        // single-valued id everywhere; above it the honest UNKNOWN
+        for y in 0..16usize {
+            let idx = y * CHUNK_X * CHUNK_Z;
+            assert_eq!(layer.ids[0][idx], 1, "y {y} inside the column");
+        }
+        assert_eq!(
+            layer.ids[0][20 * CHUNK_X * CHUNK_Z],
+            BIOME_UNKNOWN,
+            "above the column's extent: no opinion"
+        );
+        // the tint is one face_tint away from the mesher's fold
+        assert_eq!(
+            world.face_tint(WATER, 0, 0, 8, 0),
+            Some(0x617B64),
+            "wire id 1 -> the second element's water color (differs from baked)"
+        );
+        assert_eq!(
+            world.face_tint(WATER, 0, 0, 20, 0),
+            None,
+            "above the extent: the baked look"
         );
     }
 

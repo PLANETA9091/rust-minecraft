@@ -24,6 +24,7 @@ mod screens;
 mod sky;
 mod textures;
 mod timeline;
+mod tint;
 mod world;
 mod world_model;
 mod world_view;
