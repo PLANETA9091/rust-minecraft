@@ -13,16 +13,26 @@
 //! registry_data is 0x07 on the real 26.2 wire, not 0x06):
 //! - Login Acknowledged (serverbound login 0x03): empty payload — from the
 //!   NEXT packet on, both sides speak configuration.
-//! - Client Information (serverbound config 0x00): Locale (String 16),
-//!   View Distance (VarInt), Chat Mode (VarInt 0 = enabled), Chat Colors
-//!   (Bool), Displayed Skin Parts (UByte 0x7F = all), Main Hand (VarInt
+//! - Client Information (serverbound config 0x00): javap-proven 26.2
+//!   shape — ServerboundClientInformationPacket delegates to
+//!   ClientInformation.write: Locale (String 16), View Distance (BYTE,
+//!   not a VarInt), Chat Mode (VarInt enum 0 = enabled), Chat Colors
+//!   (Bool), Displayed Skin Parts (Byte 0x7F = all), Main Hand (VarInt
 //!   1 = right), Disable Text Filtering (Bool), Allow Server Listings
-//!   (Bool).
+//!   (Bool), Particle Status (VarInt enum 0 = full) — the wiki-era
+//!   encoder was one field SHORT and used the wrong primitive for the
+//!   view distance.
 //! - Registry Data (clientbound 0x07, one registry per packet):
-//!   Identifier + network NBT. The `minecraft:dimension_type` registry is
-//!   DECODED — every registered dimension's vertical layout (min_y,
-//!   height) — the first retained NBT in the client (crate::nbt); every
-//!   other registry (biomes, worldgen, banners...) is walked and skipped.
+//!   javap-proven 26.2 shape — ClientboundRegistryDataPacket is the
+//!   record (ResourceKey registry, List<PackedRegistryEntry>):
+//!   Identifier + VarInt count (max 256) + per entry { Identifier id,
+//!   optional network NBT tag }. The wiki-era "Identifier + whole NBT"
+//!   shape would have read the entry count as an NBT root and FAILED on
+//!   a real server — the same self-consistent-mock mask the id drift
+//!   had. The `minecraft:dimension_type` registry is DECODED — every
+//!   entry's optional tag IS the dimension element (min_y, height at
+//!   the top level, the name from the entry id); every other registry
+//!   (biomes, worldgen, banners...) is walked and skipped.
 //! - Plugin Message (serverbound config 0x02): Channel (String) + Data —
 //!   the brand channel carries one UTF string ("mc2rs").
 //! - Keep Alive (clientbound config 0x04 / serverbound 0x04): i64 id,
@@ -146,6 +156,7 @@ pub enum PlayOutcome {
 /// fresh vanilla install sends: en_us locale, all skin parts, right hand).
 pub struct ClientInfo {
     pub locale: String,
+    /// Wire type: a single BYTE (vanilla writeByte).
     pub view_distance: i32,
     /// 0 = enabled, 1 = commands only, 2 = hidden.
     pub chat_mode: i32,
@@ -155,6 +166,9 @@ pub struct ClientInfo {
     pub main_hand: i32,
     pub disable_text_filtering: bool,
     pub allow_server_listings: bool,
+    /// 0 = all, 1 = decreased, 2 = minimal — the ninth ClientInformation
+    /// field the wiki-era shape never knew about.
+    pub particle_status: i32,
 }
 
 impl Default for ClientInfo {
@@ -168,6 +182,7 @@ impl Default for ClientInfo {
             main_hand: 1,
             disable_text_filtering: false,
             allow_server_listings: true,
+            particle_status: 0,
         }
     }
 }
@@ -183,18 +198,23 @@ pub fn encode_login_acknowledged() -> Vec<u8> {
     p
 }
 
-/// Client Information (serverbound config 0x00).
+/// Client Information (serverbound config 0x00), the javap-proven 26.2
+/// field order and primitives: locale String, view distance BYTE, chat
+/// mode VarInt enum, chat colors Bool, skin parts Byte, main hand VarInt
+/// enum, text filtering Bool, server listings Bool, particle status
+/// VarInt enum.
 pub fn encode_client_information(info: &ClientInfo) -> Vec<u8> {
     let mut p = Vec::with_capacity(24);
     write_varint(&mut p, serverbound::CLIENT_INFORMATION);
     write_string(&mut p, &info.locale);
-    write_varint(&mut p, info.view_distance);
+    p.push(info.view_distance as u8); // writeByte, NOT a varint
     write_varint(&mut p, info.chat_mode);
     p.push(u8::from(info.chat_colors));
     p.push(info.skin_parts);
     write_varint(&mut p, info.main_hand);
     p.push(u8::from(info.disable_text_filtering));
     p.push(u8::from(info.allow_server_listings));
+    write_varint(&mut p, info.particle_status);
     p
 }
 
@@ -236,7 +256,7 @@ pub fn encode_config_ack() -> Vec<u8> {
 // packet parsers (full payload including the packet id)
 // ---------------------------------------------------------------------------
 
-/// Parse Keep Alive (clientbound config 0x03): i64 id.
+/// Parse Keep Alive (clientbound config 0x04 — generated): i64 id.
 pub fn parse_config_keep_alive(payload: &[u8]) -> Result<i64> {
     let mut c: &[u8] = payload;
     let id = read_varint(&mut c)?;
@@ -248,7 +268,7 @@ pub fn parse_config_keep_alive(payload: &[u8]) -> Result<i64> {
     Ok(i64::from_be_bytes(c[..8].try_into()?))
 }
 
-/// Parse Ping (clientbound config 0x04): i32 id.
+/// Parse Ping (clientbound config 0x05 — generated): i32 id.
 pub fn parse_config_ping(payload: &[u8]) -> Result<i32> {
     let mut c: &[u8] = payload;
     let id = read_varint(&mut c)?;
@@ -257,8 +277,9 @@ pub fn parse_config_ping(payload: &[u8]) -> Result<i32> {
     Ok(i32::from_be_bytes(c[..4].try_into()?))
 }
 
-/// Parse Disconnect (clientbound config 0x01): chat JSON reason, flattened
-/// to plain text (raw string kept when the JSON does not parse).
+/// Parse Disconnect (clientbound config 0x02 — generated): chat JSON
+/// reason, flattened to plain text (raw string kept when the JSON does
+/// not parse).
 pub fn parse_config_disconnect(payload: &[u8]) -> Result<String> {
     let mut c: &[u8] = payload;
     let id = read_varint(&mut c)?;
@@ -273,12 +294,16 @@ pub fn parse_config_disconnect(payload: &[u8]) -> Result<String> {
     Ok(flat)
 }
 
-/// Parse Registry Data (clientbound config 0x06): one registry per
-/// packet — Identifier + network NBT. Only `minecraft:dimension_type` is
-/// decoded (the vertical layout per entry); every other registry's NBT is
-/// walked and dropped. Strict on the decoded registry: an entry missing
-/// name/element/min_y/height is a protocol drift worth erroring on, the
-/// same way vanilla's own registry loader refuses malformed data.
+/// Parse Registry Data (clientbound config 0x07 — generated): the
+/// javap-proven 26.2 shape — registry Identifier + VarInt entry count
+/// (vanilla readCount max 256) + per entry { Identifier id, optional
+/// network NBT tag }. Only `minecraft:dimension_type` is decoded (the
+/// entry tag IS the dimension element: min_y/height at the top level,
+/// the name from the entry id); every other registry's entries are
+/// walked and dropped. Strict on the decoded registry: an entry WITH a
+/// tag missing min_y/height is a protocol drift worth erroring on, the
+/// same way vanilla's own registry loader refuses malformed data; an
+/// entry with NO tag carries nothing decodable and is skipped.
 pub fn parse_registry_data(payload: &[u8]) -> Result<RegistryData> {
     let mut c: &[u8] = payload;
     let id = read_varint(&mut c)?;
@@ -287,41 +312,45 @@ pub fn parse_registry_data(payload: &[u8]) -> Result<RegistryData> {
         "not a registry data packet (0x{id:02X})"
     );
     let registry_name = read_string(&mut c)?;
-    if registry_name != "minecraft:dimension_type" {
-        crate::play::skip_network_nbt(&mut c)
-            .with_context(|| format!("skip {registry_name} registry nbt"))?;
-        return Ok(RegistryData::default());
-    }
-    let nbt = read_network_nbt(&mut c)
-        .with_context(|| "decode minecraft:dimension_type registry nbt")?;
+    let count = read_varint(&mut c)?;
     anyhow::ensure!(
-        c.is_empty(),
-        "trailing bytes after the dimension_type registry nbt"
+        count <= 256,
+        "registry {registry_name} carries {count} entries (vanilla max 256)"
     );
-    let values = nbt
-        .get("value")
-        .and_then(Nbt::as_list)
-        .with_context(|| "dimension_type nbt has no value list")?;
     let mut out = RegistryData::default();
-    for entry in values {
-        let name = entry
-            .get("name")
-            .and_then(Nbt::as_str)
-            .with_context(|| "dimension_type entry without a name")?
-            .to_string();
-        let element = entry
-            .get("element")
-            .with_context(|| format!("dimension_type {name} without an element"))?;
+    for _ in 0..count {
+        let entry_id = read_string(&mut c)?;
+        anyhow::ensure!(
+            !c.is_empty(),
+            "registry {registry_name} entry {entry_id} truncated (tag flag)"
+        );
+        let present = c[0] != 0;
+        c = &c[1..];
+        if !present {
+            // an entry without data: nothing to decode, honestly skipped
+            continue;
+        }
+        if registry_name != "minecraft:dimension_type" {
+            crate::play::skip_network_nbt(&mut c)
+                .with_context(|| format!("skip {registry_name} entry {entry_id} nbt"))?;
+            continue;
+        }
+        let element = read_network_nbt(&mut c)
+            .with_context(|| format!("decode dimension_type {entry_id} element nbt"))?;
         let min_y = element
             .get("min_y")
             .and_then(Nbt::as_i32)
-            .with_context(|| format!("dimension_type {name} without min_y"))?;
+            .with_context(|| format!("dimension_type {entry_id} without min_y"))?;
         let height = element
             .get("height")
             .and_then(Nbt::as_i32)
-            .with_context(|| format!("dimension_type {name} without height"))?;
-        out.dimension_types.push(DimensionTypeEntry { name, min_y, height });
+            .with_context(|| format!("dimension_type {entry_id} without height"))?;
+        out.dimension_types.push(DimensionTypeEntry { name: entry_id, min_y, height });
     }
+    anyhow::ensure!(
+        c.is_empty(),
+        "trailing bytes after the {registry_name} registry entries"
+    );
     Ok(out)
 }
 
@@ -436,74 +465,51 @@ pub mod test_support {
     use crate::nbt::Nbt;
     use crate::varint::{write_string, write_varint};
 
-    /// A REAL registry data packet: identifier + network NBT. `dimension`
-    /// selects between the decoded `minecraft:dimension_type` registry
-    /// (overworld -64/384, nether 0/256 — the vanilla values) and a
-    /// non-decoded one (biomes, with a richly nested compound inside).
+    /// A REAL registry data packet: the javap-proven 26.2 shape —
+    /// registry Identifier + VarInt entry count + per entry { Identifier
+    /// id, optional network NBT tag }. `dimension` selects between the
+    /// decoded `minecraft:dimension_type` registry (overworld -64/384,
+    /// nether 0/256 — the vanilla values; the entry tag IS the element)
+    /// and a non-decoded one (biomes, with a richly nested compound
+    /// inside).
     pub fn registry_packet(dimension: bool) -> Vec<u8> {
-        let (name, nbt) = if dimension {
-            (
-                "minecraft:dimension_type",
-                Nbt::Compound(vec![
-                    ("type".into(), Nbt::String("minecraft:dimension_type".into())),
-                    (
-                        "value".into(),
-                        Nbt::List(vec![
-                            Nbt::Compound(vec![
-                                ("name".into(), Nbt::String("minecraft:overworld".into())),
-                                ("id".into(), Nbt::Int(0)),
-                                (
-                                    "element".into(),
-                                    Nbt::Compound(vec![
-                                        ("min_y".into(), Nbt::Int(-64)),
-                                        ("height".into(), Nbt::Int(384)),
-                                        ("has_skylight".into(), Nbt::Byte(1)),
-                                    ]),
-                                ),
-                            ]),
-                            Nbt::Compound(vec![
-                                ("name".into(), Nbt::String("minecraft:the_nether".into())),
-                                ("id".into(), Nbt::Int(2)),
-                                (
-                                    "element".into(),
-                                    Nbt::Compound(vec![
-                                        ("min_y".into(), Nbt::Int(0)),
-                                        ("height".into(), Nbt::Int(256)),
-                                        ("fixed_time".into(), Nbt::Long(18_000)),
-                                    ]),
-                                ),
-                            ]),
-                        ]),
-                    ),
-                ]),
-            )
-        } else {
-            (
-                "minecraft:worldgen/biome",
-                Nbt::Compound(vec![
-                    ("type".into(), Nbt::String("minecraft:worldgen/biome".into())),
-                    (
-                        "value".into(),
-                        Nbt::List(vec![Nbt::Compound(vec![
-                            ("name".into(), Nbt::String("minecraft:plains".into())),
-                            (
-                                "element".into(),
-                                Nbt::Compound(vec![
-                                    ("temperature".into(), Nbt::Float(0.8)),
-                                    ("effects".into(), Nbt::Compound(vec![
-                                        ("fog_color".into(), Nbt::Int(0xC0D8FF)),
-                                    ])),
-                                ]),
-                            ),
-                        ])]),
-                    ),
-                ]),
-            )
-        };
         let mut p = Vec::new();
         write_varint(&mut p, clientbound::REGISTRY_DATA);
-        write_string(&mut p, name);
-        crate::nbt::write_network_nbt(&nbt, &mut p).expect("registry nbt writes");
+        if dimension {
+            write_string(&mut p, "minecraft:dimension_type");
+            write_varint(&mut p, 2); // two entries
+            // entry 1: overworld — the optional tag IS the element
+            write_string(&mut p, "minecraft:overworld");
+            p.push(1); // tag present
+            let ow = Nbt::Compound(vec![
+                ("min_y".into(), Nbt::Int(-64)),
+                ("height".into(), Nbt::Int(384)),
+                ("has_skylight".into(), Nbt::Byte(1)),
+            ]);
+            crate::nbt::write_network_nbt(&ow, &mut p).expect("overworld element writes");
+            // entry 2: nether
+            write_string(&mut p, "minecraft:the_nether");
+            p.push(1);
+            let nether = Nbt::Compound(vec![
+                ("min_y".into(), Nbt::Int(0)),
+                ("height".into(), Nbt::Int(256)),
+                ("fixed_time".into(), Nbt::Long(18_000)),
+            ]);
+            crate::nbt::write_network_nbt(&nether, &mut p).expect("nether element writes");
+        } else {
+            write_string(&mut p, "minecraft:worldgen/biome");
+            write_varint(&mut p, 1); // one entry
+            write_string(&mut p, "minecraft:plains");
+            p.push(1); // tag present — walked and skipped by the client
+            let plains = Nbt::Compound(vec![
+                ("temperature".into(), Nbt::Float(0.8)),
+                (
+                    "effects".into(),
+                    Nbt::Compound(vec![("fog_color".into(), Nbt::Int(0xC0D8FF))]),
+                ),
+            ]);
+            crate::nbt::write_network_nbt(&plains, &mut p).expect("biome element writes");
+        }
         p
     }
 }
@@ -521,14 +527,19 @@ mod tests {
     fn packet_shapes() {
         assert_eq!(encode_login_acknowledged(), vec![0x03]);
         assert_eq!(encode_config_ack(), vec![0x03]);
-        // client information: locale "en_us", vd 8, chat 0, colors 1,
-        // parts 0x7F, hand 1, filters 0, listings 1
+        // client information: the javap-proven 26.2 shape — locale "en_us",
+        // vd 8 (a BYTE, not a varint), chat 0, colors 1, parts 0x7F, hand
+        // 1, filters 0, listings 1, particle status 0 (the ninth field)
         let p = encode_client_information(&ClientInfo::default());
         assert_eq!(p[0], 0x00);
         assert_eq!(p[1], 5, "string length prefix");
         assert_eq!(&p[2..7], b"en_us");
-        assert_eq!(p[7], 8);
-        assert_eq!(&p[p.len() - 5..], &[0x01, 0x7F, 0x01, 0x00, 0x01]);
+        assert_eq!(p[7], 8, "view distance is a raw byte");
+        assert_eq!(
+            &p[p.len() - 6..],
+            &[0x01, 0x7F, 0x01, 0x00, 0x01, 0x00],
+            "skin parts .. particle status"
+        );
         // brand: channel + nested string payload
         let b = encode_plugin_brand("mc2rs");
         assert_eq!(b[0], 0x02);
@@ -661,19 +672,41 @@ mod tests {
         let mut wrong = Vec::new();
         write_varint(&mut wrong, 0x99);
         assert!(parse_registry_data(&wrong).is_err());
-        // a dimension entry without min_y is a hard error (protocol drift)
+        // a dimension entry WITH a tag but no min_y is a hard error
         let mut broken = Vec::new();
         write_varint(&mut broken, clientbound::REGISTRY_DATA);
         write_string(&mut broken, "minecraft:dimension_type");
-        let broken_tree = Nbt::Compound(vec![(
-            "value".into(),
-            Nbt::List(vec![Nbt::Compound(vec![
-                ("name".into(), Nbt::String("minecraft:overworld".into())),
-                ("element".into(), Nbt::Compound(vec![])),
-            ])]),
-        )]);
+        write_varint(&mut broken, 1);
+        write_string(&mut broken, "minecraft:overworld");
+        broken.push(1); // tag present
+        let broken_tree = Nbt::Compound(vec![]);
         crate::nbt::write_network_nbt(&broken_tree, &mut broken).unwrap();
         assert!(parse_registry_data(&broken).is_err());
+        // an entry with NO tag is skipped (nothing decodable, not drift)
+        let mut absent = Vec::new();
+        write_varint(&mut absent, clientbound::REGISTRY_DATA);
+        write_string(&mut absent, "minecraft:dimension_type");
+        write_varint(&mut absent, 2);
+        write_string(&mut absent, "minecraft:overworld");
+        absent.push(1);
+        let ow = Nbt::Compound(vec![
+            ("min_y".into(), Nbt::Int(-64)),
+            ("height".into(), Nbt::Int(384)),
+        ]);
+        crate::nbt::write_network_nbt(&ow, &mut absent).unwrap();
+        write_string(&mut absent, "minecraft:the_end");
+        absent.push(0); // NO tag — the honest skip
+        let data = parse_registry_data(&absent).expect("absent-tag entry skipped");
+        assert_eq!(data.dimension_types.len(), 1, "only the tagged entry");
+        assert_eq!(data.dimension("minecraft:overworld").unwrap().min_y, -64);
+        // a truncated entry stream (count says 2, one entry) errors
+        let mut short = Vec::new();
+        write_varint(&mut short, clientbound::REGISTRY_DATA);
+        write_string(&mut short, "minecraft:dimension_type");
+        write_varint(&mut short, 2);
+        write_string(&mut short, "minecraft:overworld");
+        short.push(0);
+        assert!(parse_registry_data(&short).is_err(), "count lies -> error");
     }
 
     #[test]

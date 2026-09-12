@@ -2,14 +2,28 @@
 //! to join a server — handshake(next_state=2) → Login Start → [Set
 //! Compression] → Login Success | Login Disconnect.
 //!
-//! Clean-room wiki.vg shapes for 1.20.5+ / 26.x:
-//! - Login Start (serverbound 0x00): Name (String 16) + UUID (16 bytes).
-//!   The vanilla client sends the OFFLINE profile UUID in offline mode:
-//!   `UUID.nameUUIDFromBytes("OfflinePlayer:" + name)` — MD5 with version 3
-//!   + IETF variant bits (reimplemented here, no crypto dependency).
+//! Payload shapes javap-proven against the official 26.2 jar (the ids
+//! are GENERATED — see the clientbound module docs for the drift story;
+//! the SHAPES below replaced wiki-era guesses the same way):
+//! - Login Start (serverbound 0x00): Name (String 16) + UUID (16 bytes)
+//!   — ServerboundHelloPacket writes name THEN uuid (bytecode-proven
+//!   order). The vanilla client sends the OFFLINE profile UUID in
+//!   offline mode: `UUID.nameUUIDFromBytes("OfflinePlayer:" + name)` —
+//!   MD5 with version 3 + IETF variant bits (reimplemented here, no
+//!   crypto dependency).
 //! - Set Compression (clientbound 0x03): Threshold (VarInt) — both sides
 //!   switch to the compressed envelope from the NEXT packet on.
-//! - Login Success (clientbound 0x02): UUID (16 bytes) + Username (String).
+//! - Login Success (clientbound 0x02): GameProfile(uuid, name,
+//!   properties) + sessionId — ClientboundLoginFinishedPacket is the
+//!   record (GameProfile, UUID sessionId) composited as
+//!   ByteBufCodecs.GAME_PROFILE then UUIDUtil.STREAM_CODEC, and
+//!   GAME_PROFILE = composite(UUID, String(16), PropertyMap): a VarInt
+//!   property count (max 16) then per property name (String 64), value
+//!   (String 32767), nullable signature (Bool + String). The wiki-era
+//!   "UUID + Username" shape was one full field pair SHORT — a real
+//!   26.2 server sends at least the empty property list (VarInt 0) and
+//!   a 16-byte session id after the username; the old parser only
+//!   survived because it ignored trailing bytes.
 //! - Login Disconnect (clientbound 0x00): Reason (chat JSON string).
 //!
 //! Online-mode servers answer with Encryption Request (0x01) instead of
@@ -43,6 +57,17 @@ pub mod clientbound {
     };
 }
 
+/// One authenticated profile property from Login Success (the `textures`
+/// entry carries the skin/cape — the surface a later run will decode).
+#[derive(Debug, Clone, PartialEq)]
+pub struct ProfileProperty {
+    pub name: String,
+    pub value: String,
+    /// The signed-property signature (present only for Mojang-signed
+    /// entries; offline servers send none).
+    pub signature: Option<String>,
+}
+
 /// How a login attempt ended.
 #[derive(Debug, Clone, PartialEq)]
 pub enum LoginOutcome {
@@ -52,6 +77,12 @@ pub enum LoginOutcome {
         /// offline mode).
         uuid: [u8; 16],
         username: String,
+        /// The profile properties (empty on offline servers; the signed
+        /// `textures` entry is what a real account carries).
+        properties: Vec<ProfileProperty>,
+        /// The server-minted session UUID (the second record component
+        /// of the 26.2 login_finished — new vs the wiki-era shape).
+        session: [u8; 16],
     },
     /// The server refused the profile (Login Disconnect); carries the
     /// flattened chat-component reason.
@@ -153,12 +184,18 @@ pub fn encode_set_compression(threshold: i32) -> Vec<u8> {
     p
 }
 
-/// Login Success (0x02): UUID (16 bytes) + Username (String).
+/// Login Success (0x02): the full 26.2 shape — UUID + Username + EMPTY
+/// property list (VarInt 0) + a zero session UUID. Test-fixture builder
+/// (the production client only PARSES this packet); a real vanilla
+/// server mints a random session id, offline servers carry no
+/// properties, so this is the honest minimal server answer.
 pub fn encode_login_success(uuid: &[u8; 16], username: &str) -> Vec<u8> {
-    let mut p = Vec::with_capacity(24 + username.len());
+    let mut p = Vec::with_capacity(48 + username.len());
     write_varint(&mut p, clientbound::LOGIN_SUCCESS);
     p.extend_from_slice(uuid);
     write_string(&mut p, username);
+    write_varint(&mut p, 0); // empty property list
+    p.extend_from_slice(&[0u8; 16]); // session id
     p
 }
 
@@ -189,8 +226,13 @@ pub fn parse_set_compression(payload: &[u8]) -> Result<i32> {
     Ok(threshold)
 }
 
-/// Parse Login Success payload: 16-byte UUID + username string.
-pub fn parse_login_success(payload: &[u8]) -> Result<([u8; 16], String)> {
+/// Parse Login Success payload — the javap-proven 26.2 shape: 16-byte
+/// UUID + username + property list (VarInt count, max 16, then per
+/// entry name/value/nullable-signature) + 16-byte session UUID.
+/// Strict on the trailing session id: the wiki-era parser silently
+/// ignored it, and a payload that ends early is protocol drift worth
+/// erroring on, the way vanilla's own decoder would refuse it.
+pub fn parse_login_success(payload: &[u8]) -> Result<([u8; 16], String, Vec<ProfileProperty>, [u8; 16])> {
     let mut c: &[u8] = payload;
     let id = read_varint(&mut c)?;
     anyhow::ensure!(
@@ -202,7 +244,24 @@ pub fn parse_login_success(payload: &[u8]) -> Result<([u8; 16], String)> {
     uuid.copy_from_slice(&c[..16]);
     c = &c[16..];
     let username = read_string(&mut c)?;
-    Ok((uuid, username))
+    let count = read_varint(&mut c)?;
+    anyhow::ensure!(count <= 16, "login success carries {count} properties (max 16)");
+    let mut properties = Vec::with_capacity(count as usize);
+    for _ in 0..count {
+        let name = read_string(&mut c)?;
+        let value = read_string(&mut c)?;
+        anyhow::ensure!(!c.is_empty(), "login success truncated (property signature flag)");
+        let signed = c[0] != 0;
+        c = &c[1..];
+        let signature = if signed { Some(read_string(&mut c)?) } else { None };
+        properties.push(ProfileProperty { name, value, signature });
+    }
+    anyhow::ensure!(c.len() >= 16, "login success truncated (session id)");
+    let mut session = [0u8; 16];
+    session.copy_from_slice(&c[..16]);
+    c = &c[16..];
+    anyhow::ensure!(c.is_empty(), "trailing bytes after the login success session id");
+    Ok((uuid, username, properties, session))
 }
 
 /// Parse Login Disconnect payload: the chat-JSON reason, flattened to plain
@@ -265,8 +324,8 @@ pub fn login_conn<S: Read + Write>(
                 conn.enable_compression(threshold);
             }
             clientbound::LOGIN_SUCCESS => {
-                let (uuid, username) = parse_login_success(&pkt)?;
-                return Ok(LoginOutcome::Success { uuid, username });
+                let (uuid, username, properties, session) = parse_login_success(&pkt)?;
+                return Ok(LoginOutcome::Success { uuid, username, properties, session });
             }
             clientbound::DISCONNECT => {
                 let reason = parse_login_disconnect(&pkt)?;
@@ -341,10 +400,13 @@ mod tests {
     fn login_packet_shapes() {
         let p = encode_set_compression(256);
         assert_eq!(p, vec![0x03, 0x80, 0x02]);
-        let (uuid, name) = parse_login_success(&encode_login_success(&[7u8; 16], "Steve"))
-            .expect("parse success");
+        let (uuid, name, properties, session) =
+            parse_login_success(&encode_login_success(&[7u8; 16], "Steve"))
+                .expect("parse success");
         assert_eq!(uuid, [7u8; 16]);
         assert_eq!(name, "Steve");
+        assert_eq!(properties, vec![], "offline server: no properties");
+        assert_eq!(session, [0u8; 16]);
         let reason = parse_login_disconnect(&encode_login_disconnect(
             r#"{"text":"You are ","extra":[{"text":"banned","color":"red"}]}"#,
         ))
@@ -360,6 +422,62 @@ mod tests {
         assert!(parse_set_compression(&[0x00, 0x01]).is_err());
         assert!(parse_login_success(&[0x00, 1, 2, 3]).is_err());
         assert!(parse_login_disconnect(&[0x02, 1]).is_err());
+    }
+
+    #[test]
+    fn login_success_carries_properties_and_the_session_uuid() {
+        // the javap-proven 26.2 shape, hand-assembled: GameProfile (uuid,
+        // name, ONE signed property) + the session uuid — the exact bytes
+        // a real authenticated server sends
+        let mut p = Vec::new();
+        write_varint(&mut p, clientbound::LOGIN_SUCCESS);
+        p.extend_from_slice(&[0xA5u8; 16]); // profile uuid
+        write_string(&mut p, "Notch");
+        write_varint(&mut p, 1); // one property
+        write_string(&mut p, "textures");
+        write_string(&mut p, "eyJza2lu");
+        p.push(1); // signed
+        write_string(&mut p, "sig==");
+        p.extend_from_slice(&[0x5Eu8; 16]); // session uuid
+        let (uuid, name, props, session) = parse_login_success(&p).expect("full shape parses");
+        assert_eq!(uuid, [0xA5u8; 16]);
+        assert_eq!(name, "Notch");
+        assert_eq!(
+            props,
+            vec![ProfileProperty {
+                name: "textures".into(),
+                value: "eyJza2lu".into(),
+                signature: Some("sig==".into()),
+            }]
+        );
+        assert_eq!(session, [0x5Eu8; 16]);
+        // an unsigned property (offline server with plugins) parses too
+        let mut q = Vec::new();
+        write_varint(&mut q, clientbound::LOGIN_SUCCESS);
+        q.extend_from_slice(&[1u8; 16]);
+        write_string(&mut q, "Steve");
+        write_varint(&mut q, 1);
+        write_string(&mut q, "note");
+        write_string(&mut q, "hi");
+        q.push(0); // unsigned
+        q.extend_from_slice(&[2u8; 16]);
+        let (_, _, props, _) = parse_login_success(&q).expect("unsigned property parses");
+        assert_eq!(props[0].signature, None);
+        // TRUNCATION now errors: the wiki-era parser accepted a uuid+name
+        // payload and silently dropped the property list + session id —
+        // the drift that masked the 26.2 shape
+        let mut t = Vec::new();
+        write_varint(&mut t, clientbound::LOGIN_SUCCESS);
+        t.extend_from_slice(&[7u8; 16]);
+        write_string(&mut t, "Steve");
+        assert!(parse_login_success(&t).is_err(), "no property list, no session");
+        // a 17th property is vanilla's own readCount cap
+        let mut many = Vec::new();
+        write_varint(&mut many, clientbound::LOGIN_SUCCESS);
+        many.extend_from_slice(&[3u8; 16]);
+        write_string(&mut many, "X");
+        write_varint(&mut many, 17);
+        assert!(parse_login_success(&many).is_err(), "count > 16 rejected");
     }
 
     /// One mock server scenario: read the client's handshake + login start
