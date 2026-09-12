@@ -1,11 +1,16 @@
-//! Play packet id table generation from the official jar's REAL
-//! bootstrapped protocol. The same arc as `dump_block_states`: version
-//! json -> client jar (sha1) -> linux-relevant libraries -> classpath
-//! files -> java source-launcher run of the checked-in dumper — but the
-//! dumper (`dump/DumpPacketIds.java`) binds the vanilla play flows at
-//! runtime and prints each packet type's LIVE wire id from the built
-//! dispatch codec's id map. The emitted table replaces the hand-kept
-//! wiki-era constants, which were stale for the 26.2 protocol.
+//! Packet id table generation from the official jar's REAL bootstrapped
+//! protocol — for EVERY protocol phase, not just play. The same arc as
+//! `dump_block_states`: version json -> client jar (sha1) -> linux
+//! libraries -> classpath files -> java source-launcher run of the
+//! checked-in dumper — but the dumper (`dump/DumpPacketIds.java`) binds
+//! all nine vanilla flows at runtime (play/login/configuration/status
+//! clientbound+serverbound, handshake serverbound) and prints each packet
+//! type's LIVE wire id from the built dispatch codec's id map. The
+//! emitted tables replace the hand-kept wiki-era constants, which were
+//! stale for the 26.2 protocol in BOTH waves: the play ids drifted
+//! (login 0x27 -> 49) and the configuration clientbound ids drift +1
+//! (registry_data 0x06 -> 0x07 — the wiki-era table forgot
+//! cookie_request's head slot).
 
 use std::path::{Path, PathBuf};
 
@@ -20,12 +25,39 @@ pub struct FlowTable {
     pub entries: Vec<(u32, String)>,
 }
 
-/// Parse dumper lines "cb <id> <name>" / "sb <id> <name>"; each flow's
-/// ids must be unique, names unique, and dense 0..n (the wire dispatch
-/// has no holes).
-pub fn parse_packet_dump(text: &str) -> Result<(FlowTable, FlowTable)> {
-    let mut cb: Vec<(u32, String)> = Vec::new();
-    let mut sb: Vec<(u32, String)> = Vec::new();
+/// Every protocol phase's wire tables, exactly what the runtime dumper
+/// emits: play/login/configuration/status as (clientbound, serverbound)
+/// pairs and handshake as its single serverbound flow.
+#[derive(Debug, Clone, PartialEq)]
+pub struct PacketDump {
+    pub play: (FlowTable, FlowTable),
+    pub login: (FlowTable, FlowTable),
+    pub config: (FlowTable, FlowTable),
+    pub status: (FlowTable, FlowTable),
+    pub handshake: FlowTable,
+}
+
+/// The dump line vocabulary -> (field, prefix): the dumper's flow token,
+/// where it lands in [`PacketDump`], and the Rust const prefix it emits.
+const FLOWS: &[(&str, u8, &str)] = &[
+    ("cb", 0, "CB"),
+    ("sb", 1, "SB"),
+    ("login-cb", 2, "LCB"),
+    ("login-sb", 3, "LSB"),
+    ("config-cb", 4, "CCB"),
+    ("config-sb", 5, "CSB"),
+    ("status-cb", 6, "TCB"),
+    ("status-sb", 7, "TSB"),
+    ("handshake-sb", 8, "HSB"),
+];
+
+/// Parse dumper lines "<flow> <id> <name>" (flow: cb/sb = play, plus the
+/// login-/config-/status-/handshake- prefixed flows); each flow's ids
+/// must be unique, names unique, and dense 0..n (the wire dispatch has no
+/// holes), and EVERY flow must be present (the runtime dumper always
+/// binds all nine).
+pub fn parse_packet_dump(text: &str) -> Result<PacketDump> {
+    let mut buckets: Vec<Vec<(u32, String)>> = vec![Vec::new(); FLOWS.len()];
     for (i, line) in text.lines().enumerate() {
         if line.trim().is_empty() {
             continue;
@@ -41,23 +73,29 @@ pub fn parse_packet_dump(text: &str) -> Result<(FlowTable, FlowTable)> {
         if !name.starts_with("minecraft:") {
             bail!("dump line {}: name {name:?} is not a minecraft identifier", i + 1);
         }
-        match flow {
-            "cb" => cb.push((id, name)),
-            "sb" => sb.push((id, name)),
-            other => bail!("dump line {}: unknown flow {other:?}", i + 1),
-        }
+        let Some((_, slot, _)) = FLOWS.iter().find(|(tok, _, _)| *tok == flow) else {
+            bail!("dump line {}: unknown flow {flow:?}", i + 1);
+        };
+        buckets[*slot as usize].push((id, name));
     }
-    let cb = FlowTable { prefix: "CB", entries: cb };
-    let sb = FlowTable { prefix: "SB", entries: sb };
-    for table in [&cb, &sb] {
-        check_flow(table)?;
-    }
-    Ok((cb, sb))
+    let mut table = |slot: usize, prefix: &'static str| -> Result<FlowTable> {
+        let t = FlowTable { prefix, entries: std::mem::take(&mut buckets[slot]) };
+        check_flow(&t)?;
+        Ok(t)
+    };
+    let dump = PacketDump {
+        play: (table(0, "CB")?, table(1, "SB")?),
+        login: (table(2, "LCB")?, table(3, "LSB")?),
+        config: (table(4, "CCB")?, table(5, "CSB")?),
+        status: (table(6, "TCB")?, table(7, "TSB")?),
+        handshake: table(8, "HSB")?,
+    };
+    Ok(dump)
 }
 
 fn check_flow(table: &FlowTable) -> Result<()> {
     if table.entries.is_empty() {
-        bail!("{} flow table is empty", table.prefix);
+        bail!("{} flow table is empty — the dumper binds all nine flows", table.prefix);
     }
     let mut ids: Vec<u32> = table.entries.iter().map(|(id, _)| *id).collect();
     ids.sort_unstable();
@@ -99,34 +137,56 @@ pub fn emit_packet_ids(
     client_sha1: &str,
     dump_text: &str,
 ) -> Result<PathBuf> {
-    let (cb, sb) = parse_packet_dump(dump_text)?;
+    let dump = parse_packet_dump(dump_text)?;
+    let phases: [(&str, [(&str, &FlowTable); 2]); 4] = [
+        ("play", [("CLIENTBOUND", &dump.play.0), ("SERVERBOUND", &dump.play.1)]),
+        ("login", [("CLIENTBOUND", &dump.login.0), ("SERVERBOUND", &dump.login.1)]),
+        ("config", [("CLIENTBOUND", &dump.config.0), ("SERVERBOUND", &dump.config.1)]),
+        ("status", [("CLIENTBOUND", &dump.status.0), ("SERVERBOUND", &dump.status.1)]),
+    ];
 
     let mut src = String::with_capacity(64 * 1024);
     src.push_str(&format!(
         "// @generated by `mc2rs-gen dump-packet-ids` for Minecraft {version} — DO NOT EDIT BY HAND.\n\
-         // Source of truth: the official client jar's REAL bootstrapped play\n\
-         // protocol (client sha1 {client_sha1}); both flows dumped from the\n\
-         // live dispatch codec's id map by the checked-in runtime dumper.\n\
+         // Source of truth: the official client jar's REAL bootstrapped\n\
+         // protocol (client sha1 {client_sha1}); all nine phase flows dumped\n\
+         // from the live dispatch codecs' id maps by the checked-in runtime\n\
+         // dumper.\n\
          // Regenerate: `cargo run -p mc2rs-gen -- dump-packet-ids --version {version}`\n\n"
     ));
 
-    for (label, table) in [("clientbound", &cb), ("serverbound", &sb)] {
-        let count = table.entries.len();
-        src.push_str(&format!(
-            "/// The {label} play flow: (id, packet name), dense 0..{count}.\n\
-             pub static PLAY_{label_upper}: &[(u32, &str)] = &[\n",
-            label_upper = label.to_uppercase()
-        ));
-        for (id, name) in &table.entries {
-            src.push_str(&format!("    ({id}, \"{name}\"),\n"));
+    let mut flow_list: Vec<(&str, &FlowTable)> = Vec::new();
+    for (phase, flows) in phases {
+        for (flow, table) in flows {
+            flow_list.push((flow, table));
+            let count = table.entries.len();
+            src.push_str(&format!(
+                "/// The {phase} phase's {flow_label} flow: (id, packet name), dense 0..{count}.\n\
+                 pub static {phase}_{flow_label}: &[(u32, &str)] = &[\n",
+                flow_label = flow.to_uppercase(),
+                phase = phase.to_uppercase()
+            ));
+            for (id, name) in &table.entries {
+                src.push_str(&format!("    ({id}, \"{name}\"),\n"));
+            }
+            src.push_str("];\n\n");
         }
-        src.push_str("];\n\n");
     }
+    flow_list.push(("SERVERBOUND", &dump.handshake));
+    let count = dump.handshake.entries.len();
+    src.push_str(&format!(
+        "/// The handshake phase's single SERVERBOUND flow: (id, packet name), dense 0..{count}.\n\
+         pub static HANDSHAKE_SERVERBOUND: &[(u32, &str)] = &[\n"
+    ));
+    for (id, name) in &dump.handshake.entries {
+        src.push_str(&format!("    ({id}, \"{name}\"),\n"));
+    }
+    src.push_str("];\n\n");
 
     src.push_str("/// Named wire ids (sanitized vanilla names), the compile-time mirror\n");
     src.push_str("/// of the tables above.\n");
     let mut seen_names: std::collections::BTreeMap<String, String> = Default::default();
-    for table in [&cb, &sb] {
+    for (_, table) in &flow_list {
         for (id, name) in &table.entries {
             let cname = const_name(table.prefix, name);
             if let Some(prev) = seen_names.insert(cname.clone(), name.clone()) {
@@ -144,9 +204,12 @@ pub fn emit_packet_ids(
     let path = proto_dir.join("packet_ids.rs");
     std::fs::write(&path, src).context("write packet_ids.rs")?;
     println!(
-        "packet_ids.rs written: {} clientbound / {} serverbound -> {}",
-        cb.entries.len(),
-        sb.entries.len(),
+        "packet_ids.rs written: play {}/{}, login {}/{}, config {}/{}, status {}/{}, handshake {} -> {}",
+        dump.play.0.entries.len(), dump.play.1.entries.len(),
+        dump.login.0.entries.len(), dump.login.1.entries.len(),
+        dump.config.0.entries.len(), dump.config.1.entries.len(),
+        dump.status.0.entries.len(), dump.status.1.entries.len(),
+        dump.handshake.entries.len(),
         path.display()
     );
     Ok(path)
@@ -211,7 +274,7 @@ pub fn dump_packet_ids(
         bail!("dumper failed:\n{}", tail.join("\n"));
     }
     let dump_text = std::fs::read_to_string(&out_txt).context("read dumper output")?;
-    println!("[4/4] play protocols bound and dumped in {:.1}s", t0.elapsed().as_secs_f32());
+    println!("[4/4] all nine phase protocols bound and dumped in {:.1}s", t0.elapsed().as_secs_f32());
 
     emit_packet_ids(workspace_root, version, &client_sha1, &dump_text)
 }
@@ -231,26 +294,63 @@ cb 4 minecraft:login
 cb 5 minecraft:respawn
 sb 0 minecraft:accept_teleportation
 sb 1 minecraft:pong
+login-cb 0 minecraft:login_disconnect
+login-cb 1 minecraft:hello
+login-cb 2 minecraft:login_finished
+login-cb 3 minecraft:login_compression
+login-sb 0 minecraft:hello
+login-sb 1 minecraft:key
+login-sb 2 minecraft:custom_query_answer
+login-sb 3 minecraft:login_acknowledged
+config-cb 0 minecraft:cookie_request
+config-cb 1 minecraft:custom_payload
+config-cb 2 minecraft:disconnect
+config-cb 3 minecraft:finish_configuration
+config-cb 4 minecraft:keep_alive
+config-cb 5 minecraft:ping
+config-cb 6 minecraft:reset_chat
+config-cb 7 minecraft:registry_data
+config-sb 0 minecraft:client_information
+config-sb 1 minecraft:cookie_response
+config-sb 2 minecraft:custom_payload
+config-sb 3 minecraft:finish_configuration
+status-cb 0 minecraft:status_response
+status-cb 1 minecraft:pong_response
+status-sb 0 minecraft:status_request
+status-sb 1 minecraft:ping_request
+handshake-sb 0 minecraft:intention
 ";
 
     #[test]
-    fn dump_parses_into_dense_flow_tables() {
-        let (cb, sb) = parse_packet_dump(SAMPLE).expect("parses");
-        assert_eq!(cb.entries.len(), 6);
-        assert_eq!(sb.entries.len(), 2);
-        assert_eq!(cb.entries[5], (5, "minecraft:respawn".to_string()));
-        assert_eq!(sb.entries[1], (1, "minecraft:pong".to_string()));
+    fn dump_parses_into_dense_phase_tables() {
+        let d = parse_packet_dump(SAMPLE).expect("parses");
+        assert_eq!(d.play.0.entries.len(), 6);
+        assert_eq!(d.play.1.entries.len(), 2);
+        assert_eq!(d.login.0.entries.len(), 4);
+        assert_eq!(d.login.1.entries.len(), 4);
+        assert_eq!(d.config.0.entries.len(), 8);
+        assert_eq!(d.config.1.entries.len(), 4);
+        assert_eq!(d.status.0.entries.len(), 2);
+        assert_eq!(d.status.1.entries.len(), 2);
+        assert_eq!(d.handshake.entries.len(), 1);
+        assert_eq!(d.play.0.entries[5], (5, "minecraft:respawn".to_string()));
+        assert_eq!(d.login.1.entries[3], (3, "minecraft:login_acknowledged".to_string()));
+        assert_eq!(d.config.0.entries[7], (7, "minecraft:registry_data".to_string()));
+        assert_eq!(d.handshake.entries[0], (0, "minecraft:intention".to_string()));
+        assert_eq!(d.config.0.prefix, "CCB");
+        assert_eq!(d.status.0.prefix, "TCB");
     }
 
     #[test]
     fn const_names_sanitize_vanilla_names() {
         assert_eq!(const_name("CB", "minecraft:chunk_batch_start"), "CB_CHUNK_BATCH_START");
         assert_eq!(const_name("SB", "minecraft:pong"), "SB_PONG");
-        assert_eq!(const_name("CB", "minecraft:level_chunk_with_light"), "CB_LEVEL_CHUNK_WITH_LIGHT");
+        assert_eq!(const_name("CCB", "minecraft:registry_data"), "CCB_REGISTRY_DATA");
+        assert_eq!(const_name("HSB", "minecraft:intention"), "HSB_INTENTION");
     }
 
     #[test]
-    fn sparse_or_duplicate_flows_are_rejected() {
+    fn sparse_or_duplicate_or_partial_flows_are_rejected() {
         let sparse = SAMPLE.replace("cb 1 ", "cb 3 ");
         assert!(parse_packet_dump(&sparse).is_err(), "density check");
         let dup = format!("{SAMPLE}cb 46 minecraft:level_chunk_with_light\n");
@@ -258,19 +358,30 @@ sb 1 minecraft:pong
         let bad_flow = format!("{SAMPLE}xx 5 minecraft:stone\n");
         assert!(parse_packet_dump(&bad_flow).is_err(), "flow whitelist");
         let empty = "";
-        assert!(parse_packet_dump(empty).is_err(), "empty table");
+        assert!(parse_packet_dump(empty).is_err(), "empty dump");
+        // a missing flow (the dumper always binds all nine) is rejected
+        let partial: String = SAMPLE.lines().filter(|l| !l.starts_with("status-sb")).collect::<Vec<_>>().join("\n");
+        assert!(parse_packet_dump(&partial).is_err(), "every flow must be present");
     }
 
     #[test]
-    fn emitted_source_carries_tables_and_consts() {
+    fn emitted_source_carries_all_phase_tables_and_consts() {
         let dir = std::env::temp_dir().join(format!("mc2rs-pids-{}", std::process::id()));
         std::fs::create_dir_all(&dir).unwrap();
         let path = emit_packet_ids(&dir, "26.2", "deadbeef", SAMPLE).expect("emits");
         let src = std::fs::read_to_string(&path).unwrap();
-        assert!(src.contains("pub static PLAY_CLIENTBOUND: &[(u32, &str)]"));
-        assert!(src.contains("pub static PLAY_SERVERBOUND: &[(u32, &str)]"));
+        for stat in [
+            "PLAY_CLIENTBOUND", "PLAY_SERVERBOUND", "LOGIN_CLIENTBOUND", "LOGIN_SERVERBOUND",
+            "CONFIG_CLIENTBOUND", "CONFIG_SERVERBOUND", "STATUS_CLIENTBOUND",
+            "STATUS_SERVERBOUND", "HANDSHAKE_SERVERBOUND",
+        ] {
+            assert!(src.contains(&format!("pub static {stat}: &[(u32, &str)]")), "{stat} static");
+        }
         assert!(src.contains("pub const CB_RESPAWN: i32 = 5; // minecraft:respawn"));
-        assert!(src.contains("pub const SB_PONG: i32 = 1; // minecraft:pong"));
+        assert!(src.contains("pub const LSB_LOGIN_ACKNOWLEDGED: i32 = 3; // minecraft:login_acknowledged"));
+        assert!(src.contains("pub const CCB_REGISTRY_DATA: i32 = 7; // minecraft:registry_data"));
+        assert!(src.contains("pub const TSB_PING_REQUEST: i32 = 1; // minecraft:ping_request"));
+        assert!(src.contains("pub const HSB_INTENTION: i32 = 0; // minecraft:intention"));
         assert!(src.contains("client sha1 deadbeef"));
         std::fs::remove_dir_all(&dir).ok();
     }

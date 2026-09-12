@@ -105,11 +105,16 @@ public class DumpPacketIds {
         while (c != null) {
             for (Field f : c.getDeclaredFields()) {
                 if (java.lang.reflect.Modifier.isStatic(f.getModifiers())) continue;
-                f.setAccessible(true);
-                Object v;
-                try { v = f.get(o); } catch (Exception e) { continue; }
-                Map<Object, Integer> hit = findIdMap(v, depth + 1);
-                if (hit != null) return hit;
+                try {
+                    f.setAccessible(true);
+                    Object v = f.get(o);
+                    Map<Object, Integer> hit = findIdMap(v, depth + 1);
+                    if (hit != null) return hit;
+                } catch (Exception e) {
+                    // inaccessible (module system) or failed read — the id
+                    // map lives in an accessible Minecraft class; skip
+                    continue;
+                }
             }
             c = c.getSuperclass();
         }

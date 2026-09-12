@@ -26,12 +26,21 @@ use crate::framing::{encode_handshake, encode_login_start, PacketConn};
 use crate::varint::{read_string, read_varint, write_string, write_varint};
 use crate::{DEFAULT_TIMEOUT_SECS, NEXT_STATE_LOGIN};
 
-/// Clientbound login packet ids (wiki.vg, login state).
+/// Clientbound login packet ids, GENERATED from the official jar's REAL
+/// bootstrapped login protocol (`mc2rs-gen dump-packet-ids` binds the
+/// vanilla LoginProtocols and dumps the live dispatch codec's id map).
+/// The runtime facts for 26.2: the four ids the wiki-era table carried
+/// are numerically right, but the vanilla names moved on — disconnect is
+/// login_disconnect, the encryption request is "hello", login success is
+/// "login_finished" and set compression is "login_compression" — and
+/// the flow grew custom_query (4) + cookie_request (5) past them. The
+/// public names below are the client's own vocabulary, aliased onto the
+/// generated truth.
 mod clientbound {
-    pub const DISCONNECT: i32 = 0x00;
-    pub const ENCRYPTION_REQUEST: i32 = 0x01;
-    pub const LOGIN_SUCCESS: i32 = 0x02;
-    pub const SET_COMPRESSION: i32 = 0x03;
+    pub use crate::generated::packet_ids::{
+        LCB_HELLO as ENCRYPTION_REQUEST, LCB_LOGIN_COMPRESSION as SET_COMPRESSION,
+        LCB_LOGIN_DISCONNECT as DISCONNECT, LCB_LOGIN_FINISHED as LOGIN_SUCCESS,
+    };
 }
 
 /// How a login attempt ended.
