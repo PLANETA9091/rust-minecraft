@@ -13,6 +13,11 @@
 //!   (Bool), Displayed Skin Parts (UByte 0x7F = all), Main Hand (VarInt
 //!   1 = right), Disable Text Filtering (Bool), Allow Server Listings
 //!   (Bool).
+//! - Registry Data (clientbound 0x06, one registry per packet):
+//!   Identifier + network NBT. The `minecraft:dimension_type` registry is
+//!   DECODED — every registered dimension's vertical layout (min_y,
+//!   height) — the first retained NBT in the client (crate::nbt); every
+//!   other registry (biomes, worldgen, banners...) is walked and skipped.
 //! - Plugin Message (serverbound config 0x02): Channel (String) + Data —
 //!   the brand channel carries one UTF string ("mc2rs").
 //! - Keep Alive (clientbound config 0x03 / serverbound 0x04): i64 id,
@@ -22,11 +27,11 @@
 //! - Finish Configuration (clientbound 0x02) → Acknowledge Finish
 //!   Configuration (serverbound 0x03): both empty; after the ack the play
 //!   state begins.
-//! - Everything else (Cookie Request, Registry Data, Feature Flags,
-//!   Resource Pack Push/Pop, Select Known Packs, Custom Report Details,
-//!   Server Links) is read and SKIPPED — the client has no data-pack or
-//!   resource-pack surface yet; the vanilla server finishes configuration
-//!   fine without answering any of them.
+//! - Everything else (Cookie Request, Feature Flags, Resource Pack
+//!   Push/Pop, Select Known Packs, Custom Report Details, Server Links) is
+//!   read and SKIPPED — the client has no data-pack or resource-pack
+//!   surface yet; the vanilla server finishes configuration fine without
+//!   answering any of them.
 
 use std::io::{Read, Write};
 
@@ -34,6 +39,7 @@ use anyhow::{Context, Result};
 
 use crate::framing::{encode_handshake, PacketConn};
 use crate::login::{login_conn, LoginOutcome};
+use crate::nbt::{read_network_nbt, Nbt};
 use crate::varint::{read_string, read_varint, write_string, write_varint};
 use crate::{DEFAULT_TIMEOUT_SECS, NEXT_STATE_LOGIN};
 
@@ -57,6 +63,42 @@ mod clientbound {
     pub const FINISH: i32 = 0x02;
     pub const KEEP_ALIVE: i32 = 0x03;
     pub const PING: i32 = 0x04;
+    pub const REGISTRY_DATA: i32 = 0x06;
+}
+
+/// One registered dimension type: the world's vertical layout, decoded
+/// from the `minecraft:dimension_type` registry the server streams during
+/// configuration (a real vanilla server sends overworld -64/384, nether
+/// 0/256, end 0/256).
+#[derive(Debug, Clone, PartialEq)]
+pub struct DimensionTypeEntry {
+    /// Registry key (e.g. `minecraft:overworld`).
+    pub name: String,
+    /// World Y of the bottom section.
+    pub min_y: i32,
+    /// Total height in blocks (a multiple of 16).
+    pub height: i32,
+}
+
+/// The registry knowledge the client retained from the configuration
+/// phase. `Default` is the honest empty table — a server that never sent
+/// Registry Data yields no entries.
+#[derive(Debug, Clone, PartialEq, Default)]
+pub struct RegistryData {
+    pub dimension_types: Vec<DimensionTypeEntry>,
+}
+
+impl RegistryData {
+    /// The vertical layout of one dimension, by registry key.
+    pub fn dimension(&self, name: &str) -> Option<&DimensionTypeEntry> {
+        self.dimension_types.iter().find(|d| d.name == name)
+    }
+
+    /// Absorb one decoded Registry Data packet (vanilla streams one
+    /// registry per packet; entries append in arrival order).
+    fn merge(&mut self, other: RegistryData) {
+        self.dimension_types.extend(other.dimension_types);
+    }
 }
 
 /// The brand the vanilla server reports through its player list and logs
@@ -72,6 +114,9 @@ pub enum PlayOutcome {
         /// offline mode).
         uuid: [u8; 16],
         username: String,
+        /// The registry knowledge retained during the phase (the
+        /// dimension-type vertical layout table).
+        registry: RegistryData,
     },
     /// The server refused the login (Login Disconnect) or kicked the
     /// client during configuration (config Disconnect); carries the
@@ -210,18 +255,73 @@ pub fn parse_config_disconnect(payload: &[u8]) -> Result<String> {
     Ok(flat)
 }
 
+/// Parse Registry Data (clientbound config 0x06): one registry per
+/// packet — Identifier + network NBT. Only `minecraft:dimension_type` is
+/// decoded (the vertical layout per entry); every other registry's NBT is
+/// walked and dropped. Strict on the decoded registry: an entry missing
+/// name/element/min_y/height is a protocol drift worth erroring on, the
+/// same way vanilla's own registry loader refuses malformed data.
+pub fn parse_registry_data(payload: &[u8]) -> Result<RegistryData> {
+    let mut c: &[u8] = payload;
+    let id = read_varint(&mut c)?;
+    anyhow::ensure!(
+        id == clientbound::REGISTRY_DATA,
+        "not a registry data packet (0x{id:02X})"
+    );
+    let registry_name = read_string(&mut c)?;
+    if registry_name != "minecraft:dimension_type" {
+        crate::play::skip_network_nbt(&mut c)
+            .with_context(|| format!("skip {registry_name} registry nbt"))?;
+        return Ok(RegistryData::default());
+    }
+    let nbt = read_network_nbt(&mut c)
+        .with_context(|| "decode minecraft:dimension_type registry nbt")?;
+    anyhow::ensure!(
+        c.is_empty(),
+        "trailing bytes after the dimension_type registry nbt"
+    );
+    let values = nbt
+        .get("value")
+        .and_then(Nbt::as_list)
+        .with_context(|| "dimension_type nbt has no value list")?;
+    let mut out = RegistryData::default();
+    for entry in values {
+        let name = entry
+            .get("name")
+            .and_then(Nbt::as_str)
+            .with_context(|| "dimension_type entry without a name")?
+            .to_string();
+        let element = entry
+            .get("element")
+            .with_context(|| format!("dimension_type {name} without an element"))?;
+        let min_y = element
+            .get("min_y")
+            .and_then(Nbt::as_i32)
+            .with_context(|| format!("dimension_type {name} without min_y"))?;
+        let height = element
+            .get("height")
+            .and_then(Nbt::as_i32)
+            .with_context(|| format!("dimension_type {name} without height"))?;
+        out.dimension_types.push(DimensionTypeEntry { name, min_y, height });
+    }
+    Ok(out)
+}
+
 // ---------------------------------------------------------------------------
 // the configuration driver
 // ---------------------------------------------------------------------------
 
 /// Answer the server's configuration probes until Finish Configuration is
-/// acknowledged. Registry/feature/resource-pack/cookie traffic is skipped;
-/// a config Disconnect surfaces as `PlayOutcome::Disconnected`.
+/// acknowledged. Registry Data is decoded for the dimension-type vertical
+/// layout (everything else in it — other registries — is skipped);
+/// feature/resource-pack/cookie traffic is skipped wholesale; a config
+/// Disconnect surfaces as `PlayOutcome::Disconnected`.
 fn run_configuration<S: Read + Write>(
     conn: &mut PacketConn<S>,
     uuid: [u8; 16],
     username: String,
 ) -> Result<PlayOutcome> {
+    let mut registry = RegistryData::default();
     loop {
         let pkt = conn.read_packet().context("read configuration packet")?;
         anyhow::ensure!(!pkt.is_empty(), "empty configuration packet");
@@ -236,16 +336,19 @@ fn run_configuration<S: Read + Write>(
                 let probe = parse_config_ping(&pkt)?;
                 conn.send_packet(&encode_config_pong(probe))?;
             }
+            clientbound::REGISTRY_DATA => {
+                registry.merge(parse_registry_data(&pkt)?);
+            }
             clientbound::FINISH => {
                 conn.send_packet(&encode_config_ack())?;
-                return Ok(PlayOutcome::Joined { uuid, username });
+                return Ok(PlayOutcome::Joined { uuid, username, registry });
             }
             clientbound::DISCONNECT => {
                 let reason = parse_config_disconnect(&pkt)?;
                 return Ok(PlayOutcome::Disconnected { reason });
             }
-            // cookie request / registry data / feature flags / resource
-            // packs / report details / server links — read and skip
+            // cookie request / feature flags / resource packs / report
+            // details / server links — read and skip
             _ => {}
         }
     }
@@ -406,10 +509,10 @@ mod tests {
             write_varint(&mut pg, clientbound::PING);
             pg.extend_from_slice(&77i32.to_be_bytes());
             srv.send_packet(&pg).unwrap();
-            let mut junk = Vec::new();
-            write_varint(&mut junk, 0x06); // registry data — must be skipped
-            write_string(&mut junk, "{\"minecraft:worldgen\":{}}");
-            srv.send_packet(&junk).unwrap();
+            // bulk registry traffic: the dimension_type registry is
+            // DECODED by the client, a second registry is walked+skipped
+            srv.send_packet(&registry_packet(true)).unwrap();
+            srv.send_packet(&registry_packet(false)).unwrap();
             let mut fin = Vec::new();
             write_varint(&mut fin, clientbound::FINISH);
             srv.send_packet(&fin).unwrap();
@@ -431,6 +534,109 @@ mod tests {
         (port, handle)
     }
 
+    /// A REAL registry data packet: identifier + network NBT. `dimension`
+    /// selects between the decoded `minecraft:dimension_type` registry
+    /// (overworld -64/384, nether 0/256 — the vanilla values) and a
+    /// non-decoded one (biomes, with a richly nested compound inside).
+    fn registry_packet(dimension: bool) -> Vec<u8> {
+        let (name, nbt) = if dimension {
+            (
+                "minecraft:dimension_type",
+                Nbt::Compound(vec![
+                    ("type".into(), Nbt::String("minecraft:dimension_type".into())),
+                    (
+                        "value".into(),
+                        Nbt::List(vec![
+                            Nbt::Compound(vec![
+                                ("name".into(), Nbt::String("minecraft:overworld".into())),
+                                ("id".into(), Nbt::Int(0)),
+                                (
+                                    "element".into(),
+                                    Nbt::Compound(vec![
+                                        ("min_y".into(), Nbt::Int(-64)),
+                                        ("height".into(), Nbt::Int(384)),
+                                        ("has_skylight".into(), Nbt::Byte(1)),
+                                    ]),
+                                ),
+                            ]),
+                            Nbt::Compound(vec![
+                                ("name".into(), Nbt::String("minecraft:the_nether".into())),
+                                ("id".into(), Nbt::Int(2)),
+                                (
+                                    "element".into(),
+                                    Nbt::Compound(vec![
+                                        ("min_y".into(), Nbt::Int(0)),
+                                        ("height".into(), Nbt::Int(256)),
+                                        ("fixed_time".into(), Nbt::Long(18_000)),
+                                    ]),
+                                ),
+                            ]),
+                        ]),
+                    ),
+                ]),
+            )
+        } else {
+            (
+                "minecraft:worldgen/biome",
+                Nbt::Compound(vec![
+                    ("type".into(), Nbt::String("minecraft:worldgen/biome".into())),
+                    (
+                        "value".into(),
+                        Nbt::List(vec![Nbt::Compound(vec![
+                            ("name".into(), Nbt::String("minecraft:plains".into())),
+                            (
+                                "element".into(),
+                                Nbt::Compound(vec![
+                                    ("temperature".into(), Nbt::Float(0.8)),
+                                    ("effects".into(), Nbt::Compound(vec![
+                                        ("fog_color".into(), Nbt::Int(0xC0D8FF)),
+                                    ])),
+                                ]),
+                            ),
+                        ])]),
+                    ),
+                ]),
+            )
+        };
+        let mut p = Vec::new();
+        write_varint(&mut p, clientbound::REGISTRY_DATA);
+        write_string(&mut p, name);
+        crate::nbt::write_network_nbt(&nbt, &mut p).expect("registry nbt writes");
+        p
+    }
+
+    #[test]
+    fn registry_data_decodes_the_dimension_layout_and_skips_other_registries() {
+        // the decoded registry: both dimensions land with their layouts
+        let data = parse_registry_data(&registry_packet(true)).expect("dimension_type parses");
+        assert_eq!(data.dimension_types.len(), 2);
+        let ow = data.dimension("minecraft:overworld").expect("overworld");
+        assert_eq!((ow.min_y, ow.height), (-64, 384));
+        let nether = data.dimension("minecraft:the_nether").expect("nether");
+        assert_eq!((nether.min_y, nether.height), (0, 256));
+        assert!(data.dimension("minecraft:the_end").is_none());
+        // any other registry: walked, dropped, no entries
+        let empty = parse_registry_data(&registry_packet(false)).expect("biome parses");
+        assert_eq!(empty, RegistryData::default());
+        // wrong packet id is rejected, not guessed
+        let mut wrong = Vec::new();
+        write_varint(&mut wrong, 0x99);
+        assert!(parse_registry_data(&wrong).is_err());
+        // a dimension entry without min_y is a hard error (protocol drift)
+        let mut broken = Vec::new();
+        write_varint(&mut broken, clientbound::REGISTRY_DATA);
+        write_string(&mut broken, "minecraft:dimension_type");
+        let broken_tree = Nbt::Compound(vec![(
+            "value".into(),
+            Nbt::List(vec![Nbt::Compound(vec![
+                ("name".into(), Nbt::String("minecraft:overworld".into())),
+                ("element".into(), Nbt::Compound(vec![])),
+            ])]),
+        ]);
+        crate::nbt::write_network_nbt(&broken_tree, &mut broken).unwrap();
+        assert!(parse_registry_data(&broken).is_err());
+    }
+
     #[test]
     fn configuration_reaches_the_play_state() {
         let (port, srv) = spawn_join_mock();
@@ -443,9 +649,15 @@ mod tests {
             .unwrap();
         let out = join_play(stream, "127.0.0.1", port, 776, "mc2rs").expect("join play");
         match out {
-            PlayOutcome::Joined { username, uuid } => {
+            PlayOutcome::Joined { username, uuid, registry } => {
                 assert_eq!(username, "mc2rs");
                 assert_eq!(uuid, crate::login::offline_uuid("mc2rs"));
+                // the registry knowledge survived the phase: both
+                // dimension layouts decoded from the streamed NBT
+                let ow = registry.dimension("minecraft:overworld").expect("overworld");
+                assert_eq!((ow.min_y, ow.height), (-64, 384));
+                let nether = registry.dimension("minecraft:the_nether").expect("nether");
+                assert_eq!((nether.min_y, nether.height), (0, 256));
             }
             other => panic!("expected Joined, got {other:?}"),
         }

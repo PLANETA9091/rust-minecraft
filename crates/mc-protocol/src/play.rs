@@ -43,7 +43,7 @@ use std::io::{Read, Write};
 
 use anyhow::{Context, Result};
 
-use crate::config::{join_play_conn, PlayOutcome};
+use crate::config::{join_play_conn, PlayOutcome, RegistryData};
 use crate::framing::PacketConn;
 use crate::varint::{read_string, read_varint, write_varint};
 use crate::DEFAULT_TIMEOUT_SECS;
@@ -134,12 +134,15 @@ pub struct ChunkColumn {
 }
 
 /// The "loading screen finished" milestone: world info, the first
-/// position teleport and at least one decoded chunk.
+/// position teleport and at least one decoded chunk — plus the
+/// configuration registry knowledge (the dimension-type vertical layout
+/// table the server streamed before the play state began).
 #[derive(Debug, Clone, PartialEq)]
 pub struct WorldSnapshot {
     pub info: WorldInfo,
     pub player: PlayerPosition,
     pub chunks: Vec<ChunkColumn>,
+    pub registry: RegistryData,
 }
 
 // ---------------------------------------------------------------------------
@@ -542,9 +545,11 @@ pub enum PlayEvent {
 }
 
 /// A live play-state session on an established connection (login and
-/// configuration already finished on the SAME wire).
+/// configuration already finished on the SAME wire). Carries the registry
+/// knowledge the configuration phase retained (dimension-type layouts).
 pub struct PlaySession<S: Read + Write> {
     conn: PacketConn<S>,
+    pub registry: RegistryData,
 }
 
 impl<S: Read + Write> PlaySession<S> {
@@ -619,7 +624,10 @@ pub fn begin_play<S: Read + Write>(
 ) -> Result<PlayStart<S>> {
     let mut conn = PacketConn::new(stream);
     match join_play_conn(&mut conn, host, port, protocol_version, username)? {
-        PlayOutcome::Joined { .. } => Ok(PlayStart::Session(PlaySession { conn })),
+        PlayOutcome::Joined { registry, .. } => Ok(PlayStart::Session(PlaySession {
+            conn,
+            registry,
+        })),
         PlayOutcome::Disconnected { reason } => Ok(PlayStart::Disconnected { reason }),
     }
 }
@@ -661,6 +669,7 @@ pub fn join_world<S: Read + Write>(session: &mut PlaySession<S>) -> Result<World
                 info: info.unwrap(),
                 player: player.unwrap(),
                 chunks,
+                registry: session.registry.clone(),
             }));
         }
     }
@@ -938,6 +947,10 @@ mod tests {
             write_varint(&mut pg, 0x04); // clientbound config ping
             pg.extend_from_slice(&77i32.to_be_bytes());
             srv.send_packet(&pg).unwrap();
+            // bulk registry traffic (configuration): the dimension_type
+            // registry the client DECODES + a second registry it skips
+            srv.send_packet(&config_tests::registry_packet(true)).unwrap();
+            srv.send_packet(&config_tests::registry_packet(false)).unwrap();
             let mut fin = Vec::new();
             write_varint(&mut fin, 0x02); // clientbound config finish
             srv.send_packet(&fin).unwrap();
@@ -1070,6 +1083,12 @@ mod tests {
                 assert_eq!(snap.chunks[0].x, 3);
                 assert_eq!(snap.chunks[0].z, -2);
                 assert_eq!(snap.chunks[0].sections[0].blocks[291], 10, "the decoded dirt");
+                // the configuration registry knowledge rode along: the
+                // dimension-type vertical layouts decoded pre-play
+                let ow = snap.registry.dimension("minecraft:overworld").expect("overworld");
+                assert_eq!((ow.min_y, ow.height), (-64, 384));
+                let nether = snap.registry.dimension("minecraft:the_nether").expect("nether");
+                assert_eq!((nether.min_y, nether.height), (0, 256));
             }
             other => panic!("expected Loaded, got {other:?}"),
         }
