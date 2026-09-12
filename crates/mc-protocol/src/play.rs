@@ -1874,6 +1874,10 @@ mod tests {
                 "minecraft:crimson_forest",
             ]))
             .unwrap();
+            // the world_clock id table: the Set Time map keys resolve
+            // through it (a real vanilla server streams this registry too)
+            srv.send_packet(&crate::config::test_support::world_clock_packet())
+                .unwrap();
             let mut fin = Vec::new();
             write_varint(&mut fin, crate::config::clientbound::FINISH);
             srv.send_packet(&fin).unwrap();

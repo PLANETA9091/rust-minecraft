@@ -226,6 +226,20 @@ hand-drawn:
   cyclic-linear, wrap segment included). Worlds with no Set Time yet
   stay day — every procedural and GUI golden is bit-identical, the
   8 legacy checks untouched.
+  The **clock ids got their names (v0.3.40 — the multi-clock
+  disambiguation)**: the configuration phase now retains the synced
+  `minecraft:world_clock` registry as the arrival-order id table (the
+  element codec is UNIT — `WorldClock.DIRECT_CODEC =
+  MapCodec.unitCodec` — so real entries ride tagless, names only) and
+  the dimension-type elements keep their `default_clock` name
+  (overworld/end carry one, the nether has none — no day cycle).
+  `WorldModel::day_tick` resolves the CURRENT dimension's clock by
+  NAME through that table: the end's clock state never masquerades as
+  the overworld's, whatever order the server syncs them in; a named
+  clock whose state never arrived is the honest no-opinion (day),
+  and only a server with NO world_clock knowledge falls back to the
+  first clock in the packet. The e2e mock streams the world_clock
+  registry like vanilla does.
   The **wire ids of every phase are generated**:
   `mc2rs-gen dump-packet-ids` binds the official jar's REAL protocols —
   play, login, configuration, status AND handshake — and dumps each

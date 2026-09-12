@@ -563,6 +563,7 @@ mod tests {
                 "minecraft:swamp".to_string(),
                 "minecraft:desert".to_string(),
             ],
+            world_clocks: Vec::new(),
         };
         // the login pins the dimension: min_y goes live (world y -64 is
         // section 0's bottom, like every real overworld join)
@@ -786,6 +787,60 @@ mod tests {
         assert!(m.apply(PlayEvent::Time(ts2)));
         assert_eq!(m.day_tick(), Some(6_000), "noon after the re-sync");
         assert_eq!(m.sky_factor(), 1.0, "noon is full day");
+    }
+
+    #[test]
+    fn day_tick_resolves_the_dimension_default_clock_by_name() {
+        let mut m = WorldModel::new();
+        m.current_dimension = Some("minecraft:overworld".into());
+        m.registry = RegistryData {
+            dimension_types: vec![
+                DimensionTypeEntry {
+                    name: "minecraft:overworld".into(),
+                    min_y: -64,
+                    height: 384,
+                    default_clock: Some("minecraft:overworld".into()),
+                },
+                DimensionTypeEntry {
+                    name: "minecraft:the_nether".into(),
+                    min_y: 0,
+                    height: 256,
+                    default_clock: None, // no day cycle in the nether
+                },
+            ],
+            biomes: Vec::new(),
+            // the synced id table: overworld = 0, the_end = 1
+            world_clocks: vec!["minecraft:overworld".to_string(), "minecraft:the_end".to_string()],
+        };
+        // BOTH clocks sync in ONE packet, the END's FIRST: the naive
+        // first-clock rule would take the end's ticks; the named
+        // resolution takes the overworld's (1_002_006_000 mod 24000 =
+        // 6000, noon)
+        let p = mc_protocol::play::test_support::set_time_packet(
+            1,
+            &[(1, 999_999, 0.0, 1.0), (0, 1_002_006_000, 0.0, 1.0)],
+        );
+        let ts = mc_protocol::play::parse_set_time(&p).expect("set time parses");
+        assert!(m.apply(PlayEvent::Time(ts)));
+        assert_eq!(
+            m.day_tick(),
+            Some(6_000),
+            "the dimension's named clock wins over arrival order"
+        );
+        assert_eq!(m.sky_factor(), 1.0, "noon");
+        // the nether: no default_clock on its element — the documented
+        // bare-mock fallback (first clock = the end's 999_999 mod 24000)
+        m.current_dimension = Some("minecraft:the_nether".into());
+        assert_eq!(m.day_tick(), Some(15_999), "no day cycle named: the fallback serves");
+        // back in the overworld with only THE END's state synced: the
+        // named clock is known but absent — the honest no-opinion, never
+        // another clock's ticks
+        m.current_dimension = Some("minecraft:overworld".into());
+        let p2 = mc_protocol::play::test_support::set_time_packet(2, &[(1, 999_999, 0.0, 1.0)]);
+        let ts2 = mc_protocol::play::parse_set_time(&p2).unwrap();
+        assert!(m.apply(PlayEvent::Time(ts2)));
+        assert_eq!(m.day_tick(), None, "the overworld clock never arrived: no opinion");
+        assert_eq!(m.sky_factor(), 1.0, "no opinion renders as day");
     }
 
     #[test]

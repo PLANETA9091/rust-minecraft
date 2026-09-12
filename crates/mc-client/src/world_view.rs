@@ -787,6 +787,7 @@ mod tests {
                 name: "minecraft:overworld".to_string(),
                 min_y: -64,
                 height: 384,
+                default_clock: Some("minecraft:overworld".into()),
             }],
             biomes: Vec::new(),
             world_clocks: Vec::new(),
@@ -907,6 +908,7 @@ mod tests {
                 name: "minecraft:overworld".to_string(),
                 min_y: -64,
                 height: 384,
+                default_clock: Some("minecraft:overworld".into()),
             }],
             biomes: Vec::new(),
             world_clocks: Vec::new(),
@@ -1059,6 +1061,7 @@ mod tests {
             name: "minecraft:the_nether".to_string(),
             min_y: 0,
             height: 256,
+            default_clock: None,
         });
         // the synced biome table BOTH dimensions share (a real vanilla
         // server streams the whole worldgen/biome registry): plains 0,
