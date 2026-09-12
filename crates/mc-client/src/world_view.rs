@@ -366,6 +366,23 @@ mod tests {
         parse_one_section(s)
     }
 
+    /// One all-air section whose biomes ride a 2-bit indirect palette
+    /// (the vanilla 4×4×4 cell array — 64 entries of PALETTE INDICES),
+    /// through the REAL parser like every other test section here.
+    fn biome_cells_section(palette: &[u32], cells: &[u32; 64]) -> mc_protocol::ChunkSection {
+        let mut s = Vec::new();
+        s.extend_from_slice(&0i16.to_be_bytes()); // block count 0
+        s.push(0); // blocks: single valued
+        write_varint(&mut s, 0); // air
+        s.push(2); // biomes: bits 2 -> indirect
+        write_varint(&mut s, palette.len() as i32);
+        for id in palette {
+            write_varint(&mut s, *id as i32);
+        }
+        s.extend_from_slice(&mc_protocol::pack_entries(cells, 2));
+        parse_one_section(s)
+    }
+
     /// Package one section buffer into a one-section chunk packet and
     /// parse it, so tests run against the actual wire shape.
     fn parse_one_section(buffer: Vec<u8>) -> mc_protocol::ChunkSection {
@@ -671,6 +688,7 @@ mod tests {
                 min_y: -64,
                 height: 384,
             }],
+            biomes: Vec::new(),
         };
         snap.chunks[0].sections = (0..7)
             .map(|_| air_section())
@@ -788,6 +806,7 @@ mod tests {
                 min_y: -64,
                 height: 384,
             }],
+            biomes: Vec::new(),
         };
         snap.chunks[0].sections = (0..7)
             .map(|_| air_section())
@@ -882,6 +901,48 @@ mod tests {
     }
 
     #[test]
+    fn snapshot_view_carries_the_biome_at_the_player() {
+        // the synced biome table (ids 0/1) + the player's section
+        // (index 8, world y 64..79): the player's cell (2,0,1) — local
+        // x 8, z 5, y row 0 — carries swamp (id 1), everything else
+        // plains (id 0)
+        let mut cells = [0u32; 64];
+        cells[6] = 1;
+        let mut snap = surface_snapshot();
+        snap.registry.biomes = vec!["minecraft:plains".to_string(), "minecraft:swamp".to_string()];
+        snap.chunks[0].sections.push(biome_cells_section(&[0, 1], &cells));
+        // the one-shot materialize fills the SAME field (the join
+        // worker's milestone ship reads it)
+        let one_shot = materialize_snapshot_view(snap.clone(), 5, example_mapper);
+        assert_eq!(
+            one_shot.biome.as_deref(),
+            Some("minecraft:swamp"),
+            "the biome at the teleport's feet, through the synced names"
+        );
+        let mut live = LiveView::from_snapshot(snap, 5);
+        let first = live.refresh(example_mapper);
+        assert_eq!(first.biome, one_shot.biome, "first refresh == one-shot, biome too");
+        // four blocks up: the NEXT y cell (local y 6 -> cell row 1) —
+        // the biome follows the pose like the window and the camera do
+        let pose = live.model.player.clone().expect("pose");
+        assert!(live.apply(PlayEvent::Position(PlayerPosition {
+            teleport_id: 43,
+            y: 70.0,
+            ..pose
+        })));
+        let second = live.refresh(example_mapper);
+        assert_eq!(
+            second.biome.as_deref(),
+            Some("minecraft:plains"),
+            "a new teleport re-reads the biome at the new pose"
+        );
+        // the synced names gone: the id is real, the name unknown —
+        // the honest None, never a guess
+        live.model.registry.biomes.clear();
+        assert_eq!(live.refresh(example_mapper).biome, None);
+    }
+
+    #[test]
     fn live_view_without_a_pose_materializes_the_honest_window() {
         // no teleport ever arrived: the deterministic window (origin
         // 0,0), the layout-known y base or column-local 0, NO camera —
@@ -890,6 +951,7 @@ mod tests {
         live.model.player = None; // the model field is pub: tests may strip the pose
         let view = live.refresh(example_mapper);
         assert!(view.camera.is_none(), "no pose known, no pose shipped");
+        assert!(view.biome.is_none(), "no pose known, no biome shipped");
         // origin (0,0) covers chunks 0..=4 / 0..=4 — the join column at
         // (3,-2) is OUTSIDE it: the window is honestly all air
         assert!(view

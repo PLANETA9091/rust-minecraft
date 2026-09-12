@@ -131,6 +131,13 @@ pub enum LoginResult {
         /// column-local then and the player's world y means nothing in
         /// it): the deterministic flight camera stands instead.
         camera: Option<crate::camera::Camera>,
+        /// The biome at the player's feet (the synced registry name,
+        /// e.g. "minecraft:plains") — the situation key the biome music
+        /// resolves through. `None` when the server streamed no biome
+        /// registry, the section under the player is not loaded (yet),
+        /// or the id is one the server never named: the generic
+        /// `music.game` situation stands instead, never a guess.
+        spawn_biome: Option<String>,
     },
     /// The server refused or kicked (login disconnect, config kick or a
     /// play-state disconnect), reason flattened from chat.
@@ -241,6 +248,12 @@ pub struct App {
     /// True while the World screen shows the NETWORK world (the quad mesh
     /// came from a join snapshot, not the procedural singleplayer world).
     pub world_is_network: bool,
+    /// The last biome the network world's music situation resolved to
+    /// (the synced registry name at the player's feet). `None` until a
+    /// join resolves one; cleared with the level (Save and Quit, a kick).
+    /// Live updates fire the situation change ONLY when this differs —
+    /// the vanilla biome-music behavior, not a restart per refresh.
+    pub net_biome: Option<String>,
     /// Live-session stop flags by login-request id (the frame thread
     /// attaches one per dispatched join; the worker checks its flag
     /// between packets). The App closes every session it no longer
@@ -327,6 +340,7 @@ impl App {
             net_world: None,
             net_camera: None,
             world_is_network: false,
+            net_biome: None,
             live_runs: Vec::new(),
         }
     }
@@ -384,11 +398,14 @@ impl App {
     /// from the materialized join snapshot. Camera: the join teleport's
     /// EXACT pose (position + yaw/pitch, the vanilla first person — see
     /// [`App::world_camera`]) when the worker shipped one; without it the
-    /// deterministic flight camera stands. Music: the spawn biome is
-    /// unknown until section biomes decode, so the unknown-key lookup
-    /// falls back to the generic music.game situation (no seeded guess
-    /// about a network world).
-    pub fn enter_network_world(&mut self) {
+    /// deterministic flight camera stands. Music: the SPAWN BIOME the
+    /// worker resolved from the decoded section biomes + the synced
+    /// registry names drives the situation (the biome's official
+    /// background-music event); without one (no registry streamed, the
+    /// section under the player not loaded) the unknown-key lookup falls
+    /// back to the generic `music.game` situation — no seeded guess
+    /// about a network world.
+    pub fn enter_network_world(&mut self, spawn_biome: Option<String>) {
         let (size, spawn_y, quads) = {
             let Some(world) = self.net_world.as_ref() else { return };
             let size = world.size_blocks();
@@ -403,8 +420,10 @@ impl App {
         self.spawn_y = spawn_y;
         self.world_quads = Some(quads);
         self.world_is_network = true;
+        self.net_biome = spawn_biome.clone();
         self.paused = false;
-        self.music.on_world_enter_biome("");
+        self.music
+            .on_world_enter_biome(spawn_biome.as_deref().unwrap_or(""));
         self.open(ScreenKind::World);
     }
 
@@ -453,6 +472,7 @@ impl App {
                         self.world_quads = None;
                         self.world_is_network = false;
                         self.net_camera = None;
+                        self.net_biome = None;
                         self.close_all_live_runs();
                     }
                     self.open(ScreenKind::Title);
@@ -580,7 +600,7 @@ impl App {
             return;
         }
         match outcome {
-            Ok(LoginResult::Loaded { world, camera, .. }) => {
+            Ok(LoginResult::Loaded { world, camera, spawn_biome, .. }) => {
                 if self.screen == ScreenKind::Connect {
                     self.net_world = Some(world);
                     self.net_camera = camera;
@@ -588,7 +608,7 @@ impl App {
                     // one — every other in-flight join's session closes
                     // now (superseded joins never haunt the server)
                     self.prune_live_runs(Some(id));
-                    self.enter_network_world();
+                    self.enter_network_world(spawn_biome);
                 } else {
                     // a late success after Escape: the join is cancelled —
                     // close its session exactly like the vanilla client
@@ -659,18 +679,29 @@ impl App {
     /// SAME model the screen renders and the worker shipped the new
     /// window — swap the network world in place (a re-sent chunk
     /// replaces its column, a new teleport re-anchors the grid and the
-    /// pose). Updates for a world the UI no longer shows (Save and
-    /// Quit, a cancelled join) drop honestly.
+    /// pose). The shipped biome AT THE PLAYER re-resolves the music
+    /// situation on CHANGE only (the vanilla biome-music behavior — a
+    /// same-biome refresh never restarts the track); an unresolvable
+    /// biome (None: outside the loaded columns, an unnamed id) keeps
+    /// what is playing. Updates for a world the UI no longer shows
+    /// (Save and Quit, a cancelled join) drop honestly.
     pub fn live_view_updated(
         &mut self,
         world: crate::world::World,
         camera: Option<crate::camera::Camera>,
+        biome: Option<String>,
     ) {
         if !self.world_is_network {
             return;
         }
         self.net_world = Some(world);
         self.net_camera = camera;
+        if let Some(b) = biome {
+            if self.net_biome.as_deref() != Some(b.as_str()) {
+                self.net_biome = Some(b.clone());
+                self.music.on_world_enter_biome(&b);
+            }
+        }
         if self.screen == ScreenKind::World {
             // re-mesh while the screen shows: the terrain refreshes under
             // the player's eyes exactly like the original's chunk updates
@@ -695,6 +726,7 @@ impl App {
         self.world_quads = None;
         self.world_is_network = false;
         self.net_camera = None;
+        self.net_biome = None;
         self.close_all_live_runs();
         self.open(ScreenKind::Disconnect);
     }
@@ -1670,11 +1702,13 @@ mod tests {
                     ],
                 },
                 camera: None,
+                spawn_biome: Some("minecraft:plains".into()),
             }),
         );
         assert_eq!(app.screen, ScreenKind::World, "the join lands in the network world");
         assert!(app.world_is_network);
         assert_eq!(app.world_size, 32);
+        assert_eq!(app.net_biome.as_deref(), Some("minecraft:plains"), "the spawn biome rides the adoption");
         // unknown/already-consumed ids are ignored, the log stays append-only
         app.login_finished(999, Err("nope".into()));
         assert_eq!(app.screen, ScreenKind::World, "an unknown id changes nothing");
@@ -1765,9 +1799,15 @@ mod tests {
             // dimension_type registry (overworld -64/384) — the same
             // bytes the mc-protocol arc mock sends. Without it the join's
             // snapshot carries no layout knowledge and the world window
-            // honestly falls back to the column-local copy.
+            // honestly falls back to the column-local copy. The BIOME
+            // registry rides alongside (one entry: swamp, id 0) — the
+            // synced name table the chunk biome palettes resolve through.
             conn.send_packet(&mc_protocol::config::test_support::registry_packet(true))
                 .unwrap();
+            conn.send_packet(&mc_protocol::config::test_support::biome_registry_packet(
+                "minecraft:swamp",
+            ))
+            .unwrap();
             // probes + finish — ids from the GENERATED configuration
             // table (4/5/3 on the real 26.2 wire; the wiki-era literals
             // these replaced were one low)
@@ -1867,24 +1907,27 @@ mod tests {
             }
             buffer.extend_from_slice(&mc_protocol::pack_entries(&entries, 5));
             buffer.push(0); // biomes: single valued
-            write_varint(&mut buffer, 1);
+            write_varint(&mut buffer, 0); // the synced biome: swamp (id 0)
             // a real vanilla join streams the FULL column (24 sections for
             // an overworld): 7 air sections below put the stone/dirt
             // section at index 7 — world y 48..63 with min_y -64, surface
             // terrain right under the teleport's feet y 64. The
             // player-anchored window (base 48 = 64 - 16) then shows the
             // stone at grid y 0 — a bottom-anchored copy would miss it.
+            // An 8th air section (index 8, world y 64..79) sits UNDER THE
+            // PLAYER: its biome cells are what the music situation reads.
             let mut air = Vec::new();
             air.extend_from_slice(&0i16.to_be_bytes()); // block count 0
             air.push(0); // bits per entry: single valued
             write_varint(&mut air, 0); // the single value: air
             air.push(0); // biomes: single valued
-            write_varint(&mut air, 187);
+            write_varint(&mut air, 0); // the synced biome: swamp (id 0)
             let mut column = Vec::new();
             for _ in 0..7 {
                 column.extend_from_slice(&air); // sections arrive bottom-first
             }
             column.extend_from_slice(&buffer);
+            column.extend_from_slice(&air); // section 8: the player's own
             let buffer = column;
             let mut cd = Vec::new();
             write_varint(&mut cd, clientbound::CHUNK_DATA);
@@ -1982,6 +2025,7 @@ mod tests {
                     chunks,
                     world: first.world,
                     camera: first.camera,
+                    spawn_biome: first.biome,
                 }
             }
             mc_protocol::WorldOutcome::Disconnected { reason } => {
@@ -2029,6 +2073,23 @@ mod tests {
             cam,
             "the world screen renders FROM the teleport pose"
         );
+        // the REAL spawn biome: the synced registry (one entry, swamp) +
+        // the section under the player resolve to the situation's key,
+        // and the music is that biome's official background-music event
+        assert_eq!(
+            app.net_biome.as_deref(),
+            Some("minecraft:swamp"),
+            "the biome at the player's feet, decoded from the sections"
+        );
+        use mc_registry::generated::worldgen as wm;
+        let expect = wm::biome_music("minecraft:swamp", "default")
+            .map(|m| m.event)
+            .unwrap_or("music.game");
+        assert_eq!(
+            app.music.game_tracks(),
+            [expect],
+            "the join's music situation is the spawn biome's own event"
+        );
     }
 
     #[test]
@@ -2044,10 +2105,11 @@ mod tests {
                 4
             ],
         });
-        app.enter_network_world();
+        app.enter_network_world(None);
         assert_eq!(app.screen, ScreenKind::World);
         assert!(app.world_is_network);
         assert_eq!(app.world_size, 32);
+        assert!(app.net_biome.is_none(), "no biome shipped, no situation claimed");
         assert_eq!(
             app.spawn_y,
             crate::world::CHUNK_Y as i32,
@@ -2067,6 +2129,7 @@ mod tests {
         assert!(!app.world_is_network);
         assert!(app.world_quads.is_none(), "the network mesh is unloaded");
         assert!(app.net_camera.is_none(), "the teleport pose unloads with the level");
+        assert!(app.net_biome.is_none(), "the biome situation unloads with the level");
 
         // singleplayer afterwards rebuilds the PROCEDURAL world
         app.render_title_buttons_for_test();
@@ -2092,7 +2155,7 @@ mod tests {
                 4
             ],
         });
-        app.enter_network_world();
+        app.enter_network_world(None);
         let flight = app.world_camera();
         let n = app.world_size as f32;
         assert_eq!(
@@ -2145,6 +2208,7 @@ mod tests {
                     ],
                 },
                 camera: None,
+                spawn_biome: None,
             }),
         );
         assert_eq!(

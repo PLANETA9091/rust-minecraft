@@ -119,7 +119,14 @@ fn run_join(
     port: u16,
     tx: std::sync::mpsc::Sender<(u64, Result<crate::screens::LoginResult, String>)>,
     live_tx: std::sync::mpsc::Sender<
-        Result<(crate::world::World, Option<crate::camera::Camera>), String>,
+        Result<
+            (
+                crate::world::World,
+                Option<crate::camera::Camera>,
+                Option<String>,
+            ),
+            String,
+        >,
     >,
     run: std::sync::Arc<std::sync::atomic::AtomicBool>,
 ) {
@@ -138,12 +145,13 @@ fn run_join(
                 (snapshot.info.entity_id, snapshot.info.view_distance, snapshot.chunks.len());
             // the network world view: the milestone adopts into the LIVE
             // model and the first refresh IS the one-shot snapshot view
-            // (same window decisions, same grid, same pose — pinned by
-            // the world_view tests). Materializing happens here off the
-            // frame thread; the frame thread only installs results.
+            // (same window decisions, same grid, same pose, same biome —
+            // pinned by the world_view tests). Materializing happens here
+            // off the frame thread; the frame thread only installs results.
             let mut view =
                 crate::world_view::LiveView::from_snapshot(snapshot, crate::screens::WORLD_CHUNKS);
             let first = view.refresh(crate::world_view::runtime_mapper);
+            let spawn_biome = first.biome.clone();
             let shipped = tx.send((
                 id,
                 Ok(crate::screens::LoginResult::Loaded {
@@ -153,6 +161,7 @@ fn run_join(
                     chunks,
                     world: first.world,
                     camera: first.camera,
+                    spawn_biome,
                 }),
             ));
             if shipped.is_err() {
@@ -176,7 +185,10 @@ fn run_join(
                     Ok(event) => {
                         if view.apply(event) && last_ship.elapsed() >= VIEW_CADENCE {
                             let upd = view.refresh(crate::world_view::runtime_mapper);
-                            if live_tx.send(Ok((upd.world, upd.camera))).is_err() {
+                            if live_tx
+                                .send(Ok((upd.world, upd.camera, upd.biome)))
+                                .is_err()
+                            {
                                 break; // receiver gone at shutdown
                             }
                             last_ship = std::time::Instant::now();
@@ -240,7 +252,14 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize) -> anyhow::Result<()>
     >();
     let mut login_seen = 0usize; // cursor into the append-only request log
     let (live_tx, live_rx) = std::sync::mpsc::channel::<
-        Result<(crate::world::World, Option<crate::camera::Camera>), String>,
+        Result<
+            (
+                crate::world::World,
+                Option<crate::camera::Camera>,
+                Option<String>,
+            ),
+            String,
+        >,
     >();
 
     while window.is_open() {
@@ -302,7 +321,7 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize) -> anyhow::Result<()>
         // Disconnect screen, exactly like the original's kick
         while let Ok(upd) = live_rx.try_recv() {
             match upd {
-                Ok((world, camera)) => app.live_view_updated(world, camera),
+                Ok((world, camera, biome)) => app.live_view_updated(world, camera, biome),
                 Err(reason) => app.live_session_lost(reason),
             }
         }
