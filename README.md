@@ -17,11 +17,33 @@ client for that exact version:
 | Crate | Purpose |
 |---|---|
 | `mc2rs-gen` | The generator CLI. Fetches manifests, downloads official jars, analyzes them, emits generated code. |
-| `mc-registry` | Blocks/items/properties for the target version — **generated** from the official jar data. |
+| `mc-registry` | **Generated** from official data: blocks/items registry, the full bitmap font (real glyph metrics from the real font textures), the complete `en_us` language table, all 454 official splashes, the GUI sprite inventory (real sizes + nine-slice borders from `.mcmeta`), the sound-event table (official `sounds.json` via the asset index), biome/worldgen tables, and the block texture atlas (blockstates → models → PNG pixels, first frame, biome tints). |
 | `mc-protocol` | Hand-rolled protocol layer: VarInt/VarLong, packet framing (incl. zlib compression), handshake, **server list ping**. |
 | `mc-assets` | Asset index parsing + parallel downloader (runtime, from official CDN, sha1-verified). |
-| `mc-client` | The client itself: CPU reference renderer (deterministic, pixel-perfect tests) + windowed fly-camera. |
+| `mc-client` | The client itself: CPU reference renderer (deterministic, pixel-perfect tests), the GUI runtime (boot chain → title → menus) rendering official fonts/sprites/strings, and a windowed fly-camera. |
 | `mc2rs-pixel` | Golden-image pixel diff harness (RMS / heatmap) used by CI. |
+
+### The client experience (v0.3)
+
+Everything on screen is driven by **generated official data** — nothing
+hand-drawn:
+
+- **Mojang Studios loading screen** — red studio screen with the two-bar boot
+  progress (`--screen loading`).
+- **Title screen** — wordmark, the real splash text picked from the official
+  `texts/splashes.txt` (pulsing, seeded), vanilla-layout button grid using the
+  official `widget/button*.png` nine-slice sprites, version + copyright
+  overlay (`--screen title`).
+- **Server list** — `Play Multiplayer` screen with server entries, `§`-color
+  MOTDs, official `server_list/ping_*` icons, Join/Refresh/Cancel
+  (`--screen servers`).
+- **Options** — `Options` screen with volume/FOV controls (`--screen options`).
+- **Music scheduler** — the vanilla menu-music behavior (play `music.menu`
+  track → random delay → next) driven by the official `sounds.json` tables.
+- **Windowed app** — `--gui` runs the interactive boot chain (mouse + clicks).
+- Text rendering uses the **real bitmap font**: glyph metrics measured from
+  the official font textures with the vanilla trim rule, `§`-color codes and
+  1px shadow, exactly like the original renderer.
 
 ## Why a generator
 

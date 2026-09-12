@@ -42,7 +42,8 @@ jobs:
         run: cargo run -p mc2rs-gen --release -- generate --version ${{ matrix.version }}
       - name: Generated registry must compile
         run: cargo check -p mc-registry
-      - name: Codegen drift detection (byte-stable output)
+      - name: Codegen drift detection (byte-stable output, pinned target 26.2)
+        if: matrix.version == '26.2'
         run: |
           if ! git diff --exit-code -- crates/mc-registry/src/generated crates/mc-client/src/build_info.rs mc2rs-report.json; then
             echo "::error::generated code drifted for ${{ matrix.version }}"
@@ -65,6 +66,49 @@ jobs:
         with:
           name: render-320x180
           path: shots/
+
+  gui-pixel:
+    needs: client
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { screen: title, frame: 30 }
+          - { screen: servers, frame: 60 }
+          - { screen: loading, frame: 15 }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: Cache Mojang downloads
+        uses: actions/cache@v4
+        with:
+          path: .mc2rs
+          key: mojang-26.2-v1
+      - name: Generate official data (fonts, lang, sprites, sounds, worldgen, atlas)
+        run: cargo run -p mc2rs-gen --release -- generate --version 26.2
+      - name: Render deterministic GUI screen
+        run: |
+          cargo run --release -p mc-client -- \
+            --screen ${{ matrix.screen }} --ui-frame ${{ matrix.frame }} \
+            --seed 20260214 --width 320 --height 180 \
+            --out gui_${{ matrix.screen }}.png
+      - name: Pixel compare vs golden (bit-exact)
+        run: |
+          cargo run --release -p mc2rs-pixel -- \
+            --a gui_${{ matrix.screen }}.png \
+            --b goldens/gui_${{ matrix.screen }}_320x180.png \
+            --out diff_${{ matrix.screen }}.png --max-rms 0
+      - name: Upload GUI pixel artifacts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: gui-pixel-${{ matrix.screen }}
+          path: |
+            gui_${{ matrix.screen }}.png
+            diff_${{ matrix.screen }}.png
+          if-no-files-found: ignore
 
   pixel:
     needs: client
