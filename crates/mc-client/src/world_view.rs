@@ -488,13 +488,16 @@ mod tests {
     #[test]
     fn snapshot_y_base_anchors_the_player_and_clamps_to_the_world_floor() {
         let p = |y: f64| PlayerPosition {
+            teleport_id: 0,
             x: 0.0,
             y,
             z: 0.0,
+            dx: 0.0,
+            dy: 0.0,
+            dz: 0.0,
             yaw: 0.0,
             pitch: 0.0,
             flags: 0,
-            teleport_id: 0,
         };
         // no layout knowledge: the deterministic column-local copy (0),
         // whatever the teleport says — never a guess
@@ -515,13 +518,16 @@ mod tests {
     #[test]
     fn snapshot_camera_converts_the_vanilla_pose_into_the_grid_frame() {
         let pose = |yaw: f32, pitch: f32| PlayerPosition {
+            teleport_id: 1,
             x: 8.5,
             y: 64.0,
             z: -3.25,
+            dx: 0.0,
+            dy: 0.0,
+            dz: 0.0,
             yaw,
             pitch,
             flags: 0,
-            teleport_id: 1,
         };
         // without layout knowledge there is NO pose: the grid is
         // column-local then and the player's world y means nothing in it
@@ -618,13 +624,16 @@ mod tests {
                 current_dimension: "minecraft:overworld".to_string(),
             },
             player: PlayerPosition {
+                teleport_id: 42,
                 x: 56.5,
                 y: 64.0,
                 z: -27.25,
+                dx: 0.0,
+                dy: 0.0,
+                dz: 0.0,
                 yaw: 90.0,
                 pitch: 0.0,
                 flags: 0,
-                teleport_id: 42,
             },
             chunks: vec![ChunkColumn {
                 x: 3,
@@ -638,13 +647,16 @@ mod tests {
     #[test]
     fn snapshot_window_origin_centers_the_player_chunk() {
         let p = |x: f64, z: f64| PlayerPosition {
+            teleport_id: 0,
             x,
             y: 64.0,
             z,
+            dx: 0.0,
+            dy: 0.0,
+            dz: 0.0,
             yaw: 0.0,
             pitch: 0.0,
             flags: 0,
-            teleport_id: 0,
         };
         // floor before the shift: the negative half-plane stays honest
         assert_eq!(

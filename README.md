@@ -132,6 +132,17 @@ hand-drawn:
   wholesale skip stalled a real join for 30 seconds); **Cookie
   Requests** get the vanilla client's own no-cookie answer (key echoed
   + the absent nullable payload, `byteArray(5120)` under the flag).
+  The **play-phase packets got the same audit** — and a fifth drift
+  wave fell out: **Synchronize Player Position** is the composite
+  (VAR_INT teleportId, PositionMoveRotation, Relative.SET) — the
+  teleport id comes FIRST (the wiki-era tail), the position rides a
+  record with a **deltaMovement Vec3 the wiki-era shape never knew**,
+  and the relativity flags are a full INT bitmask (the 1.21.2+ nine
+  Relative bits), not a byte; on a real server the old parser would
+  have misread every teleport. Everything else play-phase (Login,
+  CommonPlayerSpawnInfo, Respawn, Chunk Data, keep-alive/ping, center
+  chunk, unload chunk, chunk batch, Accept Teleportation) is
+  javap-proven UNCHANGED off the same classes.
 - **Singleplayer world** — clicking `Singleplayer` enters a live 3D world
   view rendered by the same deterministic CPU raster path as the pixel
   tests: real block textures from the generated atlas, the **official
