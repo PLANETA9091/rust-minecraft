@@ -159,7 +159,7 @@ mod tests {
 
     #[test]
     fn framing_uncompressed_roundtrip() {
-        let mut conn = PacketConn::new(Cursor::new(Vec::new()));
+        let conn = PacketConn::new(Cursor::new(Vec::new()));
         let framed = conn.encode_packet(&[0x01, 0x02, 0x03]).unwrap();
         assert_eq!(framed, vec![0x03, 0x01, 0x02, 0x03]);
     }

@@ -736,9 +736,9 @@ fn read_bool(r: &mut &[u8]) -> std::io::Result<bool> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::login::{encode_login_disconnect, encode_login_success, encode_set_compression};
+    use crate::login::{encode_login_success, encode_set_compression};
     use crate::varint::write_string;
-    use std::net::{TcpListener, TcpStream};
+    use std::net::TcpListener;
     use std::thread::JoinHandle;
 
     #[test]
