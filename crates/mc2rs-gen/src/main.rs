@@ -1,5 +1,6 @@
 //! mc2rs-gen — the version-agnostic Minecraft → Rust generator CLI.
 
+mod atlas;
 mod codegen;
 mod jar;
 mod manifest;
@@ -37,6 +38,15 @@ enum Cmd {
     },
     /// THE pipeline: download jar -> analyze -> regenerate the workspace.
     Generate {
+        #[arg(long)]
+        version: String,
+        /// Workspace root (contains crates/).
+        #[arg(long, default_value = ".")]
+        out: String,
+    },
+    /// Extract the REAL texture atlas from the official jar into
+    /// mc-registry/src/generated/atlas.rs (blockstates -> models -> PNGs).
+    Atlas {
         #[arg(long)]
         version: String,
         /// Workspace root (contains crates/).
@@ -101,6 +111,9 @@ fn main() -> Result<()> {
         }
         Cmd::Generate { version, out } => {
             generate(&agent, &cache, &version, Path::new(&out))?;
+        }
+        Cmd::Atlas { version, out } => {
+            atlas_cmd(&agent, &cache, &version, Path::new(&out))?;
         }
         Cmd::Assets { version, dir } => {
             let m = manifest::load(&agent)?;
@@ -181,14 +194,55 @@ fn generate(agent: &ureq::Agent, cache: &util::Cache, version: &str, out: &Path)
         report.obfuscated, report.obfuscation_ratio, report.class_count, report.net_minecraft_classes
     );
 
-    println!("[4/5] generating registry + build info...");
+    println!("[4/6] generating registry + build info...");
     let report_path = codegen::emit(&workspace_root, version, &client_sha1, &report)?;
 
-    println!("[5/5] done in {:.1}s", t0.elapsed().as_secs_f32());
+    println!("[5/6] extracting REAL texture atlas (blockstates -> models -> PNGs)...");
+    write_atlas(&workspace_root, version, &client_sha1, &jar_bytes)?;
+
+    println!("[6/6] done in {:.1}s", t0.elapsed().as_secs_f32());
     println!("      blocks: {} | items: {} | textures: {} | sounds: {}",
         report.blockstate_count, report.item_count, report.texture_count, report.sound_count);
     println!("      report: {}", report_path.display());
     println!("      next: cargo test -p mc-registry && cargo run -p mc-client --release -- --headless");
+    Ok(())
+}
+
+/// Fetch the jar (cache-first), resolve the atlas, write generated/atlas.rs.
+fn atlas_cmd(agent: &ureq::Agent, cache: &util::Cache, version: &str, out: &Path) -> Result<()> {
+    let t0 = std::time::Instant::now();
+    let workspace_root = out
+        .canonicalize()
+        .with_context(|| format!("workspace root {} not found", out.display()))?;
+    let m = manifest::load(agent)?;
+    let entry = m
+        .find(version)
+        .with_context(|| format!("version {version} not in manifest"))?
+        .clone();
+    let vj = version::resolve(agent, cache, &entry.url, entry.sha1.as_deref())?;
+    let dl = &vj.downloads.client;
+    let jar_bytes = cache.fetch(
+        agent,
+        &format!("client-jar:{}", dl.sha1.as_deref().unwrap_or(vj.id.as_str())),
+        &dl.url,
+    )?;
+    util::verify(&jar_bytes, dl.sha1.as_deref(), "client jar")?;
+    let sha = util::sha1_hex(&jar_bytes);
+    write_atlas(&workspace_root, version, &sha, &jar_bytes)?;
+    println!("atlas written in {:.1}s (jar {})", t0.elapsed().as_secs_f32(), sha[..8].to_string());
+    Ok(())
+}
+
+/// Resolve + write crates/mc-registry/src/generated/atlas.rs.
+fn write_atlas(workspace_root: &Path, version: &str, client_sha1: &str, jar_bytes: &[u8]) -> Result<()> {
+    let reg_dir = workspace_root.join("crates/mc-registry/src/generated");
+    std::fs::create_dir_all(&reg_dir)?;
+    let src = atlas::build(jar_bytes, version, client_sha1)
+        .with_context(|| format!("atlas build for {version}"))?;
+    let path = reg_dir.join("atlas.rs");
+    std::fs::write(&path, &src)?;
+    let tiles = src.matches("static TILE_").count();
+    println!("      atlas: {} tiles -> {}", tiles, path.display());
     Ok(())
 }
 

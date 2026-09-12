@@ -6,9 +6,26 @@ use std::fs;
 use std::path::Path;
 
 use anyhow::Result;
+use mc_registry::generated::atlas;
 
 use crate::colors::{texture_stem, FACE_NAMES};
 use crate::world::*;
+
+/// Nearest-neighbor texel lookup in the generated atlas (vanilla block
+/// filtering). Returns RGBA in 0..1. Out-of-range UVs are clamped.
+pub fn sample_tile(idx: u16, u: f32, v: f32) -> [f32; 4] {
+    let rgba = atlas::tile_rgba(idx);
+    let s = atlas::TILE_SIZE;
+    let xi = ((u * s as f32).floor() as isize).clamp(0, s as isize - 1) as usize;
+    let yi = ((v * s as f32).floor() as isize).clamp(0, s as isize - 1) as usize;
+    let off = (yi * s + xi) * 4;
+    [
+        rgba[off] as f32 / 255.0,
+        rgba[off + 1] as f32 / 255.0,
+        rgba[off + 2] as f32 / 255.0,
+        rgba[off + 3] as f32 / 255.0,
+    ]
+}
 
 pub struct TextureLut {
     /// (kind, face) -> average color 0..1

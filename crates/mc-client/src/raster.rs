@@ -3,6 +3,11 @@
 //! this is the pixel-perfect reference every optimization must match.
 
 use crate::math::{Mat4, Vec3};
+use crate::textures;
+use mc_registry::generated::atlas;
+
+/// Vanilla-style water translucency (surface alpha over the background).
+pub const WATER_OPACITY: f32 = 0.80;
 
 pub struct Framebuf {
     pub w: usize,
@@ -45,12 +50,21 @@ impl Framebuf {
         self.depth.iter_mut().for_each(|d| *d = f32::MAX);
     }
 
-    /// Rasterize a batch of world-space quads.
+    /// Rasterize a batch of world-space quads. Opaque quads first, then
+    /// translucent (water) — the translucent pass blends over the framebuffer.
     pub fn draw_quads(&mut self, ctx: &RenderCtx, quads: &[super::mesher::Quad]) {
+        self.draw_pass(ctx, quads, false);
+        self.draw_pass(ctx, quads, true);
+    }
+
+    fn draw_pass(&mut self, ctx: &RenderCtx, quads: &[super::mesher::Quad], translucent: bool) {
         let vp = ctx.proj.mul(&ctx.view);
         let w_px = self.w as f32;
         let h_px = self.h as f32;
         for quad in quads {
+            if quad.translucent != translucent {
+                continue;
+            }
             // ---- transform + near-plane clip (Sutherland–Hodgman in clip space) ----
             let clip: Vec<[f32; 4]> = quad.pts.iter().map(|p| vp.transform_point(Vec3::new(p[0], p[1], p[2]))).collect();
             let clipped = clip_near(&clip);
@@ -93,13 +107,17 @@ impl Framebuf {
             if x1 < x0 || y1 < y0 {
                 continue;
             }
-            // ---- fan rasterization with perspective-correct depth +
+            // ---- fan rasterization with perspective-correct depth + UV and
             // per-vertex color (smooth lighting) ----
+            let textured = quad.tile != atlas::TILE_NONE && atlas::has_tiles();
             for tri in 1..clipped.len() - 1 {
                 let (ax, ay, a_ow, a_vz) = (sx[0], sy[0], ow[0], vz[0]);
                 let (bx, by, b_ow, b_vz) = (sx[tri], sy[tri], ow[tri], vz[tri]);
                 let (cx, cy, c_ow, c_vz) = (sx[tri + 1], sy[tri + 1], ow[tri + 1], vz[tri + 1]);
                 let (ca, cb, cc) = (quad.colors[0], quad.colors[tri], quad.colors[tri + 1]);
+                let (ua, va) = (quad.uvs[0][0], quad.uvs[0][1]);
+                let (ub, vb) = (quad.uvs[tri][0], quad.uvs[tri][1]);
+                let (uc, vc) = (quad.uvs[tri + 1][0], quad.uvs[tri + 1][1]);
                 let area_ab = edge(ax, ay, bx, by, cx, cy);
                 if area_ab.abs() < 1e-9 {
                     continue;
@@ -123,15 +141,38 @@ impl Framebuf {
                         let z = (b0 * a_vz * a_ow + b1 * b_vz * b_ow + b2 * c_vz * c_ow) * dist;
                         let idx = (py as usize) * self.w + px as usize;
                         if z < self.depth[idx] {
-                            self.depth[idx] = z;
                             let fog = ((z - ctx.fog_near) / (ctx.fog_far - ctx.fog_near))
                                 .clamp(0.0, 1.0);
                             let o = idx * 3;
                             // affine screen-space vertex-color interpolation
                             // (same as GPU linear interpolation across the quad)
+                            let mut c0 = [0f32; 3];
                             for ch in 0..3 {
-                                let c0 = b0 * ca[ch] + b1 * cb[ch] + b2 * cc[ch];
-                                let c = c0 + (ctx.fog_color[ch] - c0) * fog;
+                                c0[ch] = b0 * ca[ch] + b1 * cb[ch] + b2 * cc[ch];
+                            }
+                            if textured {
+                                // perspective-correct texture coordinates, nearest texel
+                                let u = (b0 * ua * a_ow + b1 * ub * b_ow + b2 * uc * c_ow) * dist;
+                                let v = (b0 * va * a_ow + b1 * vb * b_ow + b2 * vc * c_ow) * dist;
+                                let texel = textures::sample_tile(quad.tile, u, v);
+                                if texel[3] < 0.5 {
+                                    continue; // cutout hole (leaves): no color, no depth
+                                }
+                                for ch in 0..3 {
+                                    c0[ch] *= texel[ch];
+                                }
+                            }
+                            if translucent {
+                                // vanilla-style water translucency over background
+                                let a = WATER_OPACITY;
+                                for ch in 0..3 {
+                                    let bg = self.color[o + ch] as f32 / 255.0;
+                                    c0[ch] = bg * (1.0 - a) + c0[ch] * a;
+                                }
+                            }
+                            self.depth[idx] = z;
+                            for ch in 0..3 {
+                                let c = c0[ch] + (ctx.fog_color[ch] - c0[ch]) * fog;
                                 self.color[o + ch] = (c.clamp(0.0, 1.0) * 255.0 + 0.5) as u8;
                             }
                         }

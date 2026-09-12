@@ -3,16 +3,23 @@
 
 use rayon::prelude::*;
 
+use mc_registry::generated::atlas;
+
 use crate::colors::{default_color, FACE_SHADE};
 use crate::textures::TextureLut;
 use crate::world::*;
 
-/// One shaded world-space quad: 4 CCW corner points, per-vertex pre-shaded
-/// RGB (smooth lighting / ambient occlusion baked into the vertex colors).
+/// One shaded world-space quad: 4 CCW corner points, per-vertex shading and
+/// texture mapping. When `tile` is a real atlas index the vertex colors carry
+/// the shade×AO multiplier and the rasterizer samples the official texture;
+/// when `tile == TILE_NONE` the vertex colors carry the full flat base color.
 #[derive(Debug, Clone)]
 pub struct Quad {
     pub pts: [[f32; 3]; 4],
     pub colors: [[f32; 3]; 4],
+    pub uvs: [[f32; 2]; 4],
+    pub tile: u16,
+    pub translucent: bool,
 }
 
 /// Brightness multiplier per ambient-occlusion level (reference curve).
@@ -107,6 +114,20 @@ fn flip_order(ao: &[u8; 4]) -> [usize; 4] {
     }
 }
 
+/// Vanilla face->UV orientation. Texture row 0 is the top; side faces keep
+/// the block's +Y at v=0; each side is unmirrored when viewed from outside;
+/// top maps u=x, v=z (north at texture top), bottom mirrors v.
+pub fn face_uv(face: usize, c: [f32; 3]) -> [f32; 2] {
+    match face {
+        0 => [1.0 - c[2], 1.0 - c[1]], // +X east
+        1 => [c[2], 1.0 - c[1]],       // -X west
+        2 => [c[0], c[2]],             // +Y up
+        3 => [c[0], 1.0 - c[2]],       // -Y down
+        4 => [c[0], 1.0 - c[1]],       // +Z south
+        _ => [1.0 - c[0], 1.0 - c[1]], // -Z north
+    }
+}
+
 /// Mesh one chunk: all faces where a solid block touches a transparent one.
 pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>) -> Vec<Quad> {
     let mut out = Vec::with_capacity(2048);
@@ -135,9 +156,20 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                     if !draw {
                         continue;
                     }
-                    let base = lut
-                        .and_then(|l| l.color(id, face))
-                        .unwrap_or_else(|| default_color(id, face));
+                    // Real texture tile from the generated atlas when present;
+                    // otherwise the flat palette path (avg color or defaults).
+                    let tile = if (id as usize) < atlas::N_KINDS {
+                        atlas::FACE_TILES[id as usize][face]
+                    } else {
+                        atlas::TILE_NONE
+                    };
+                    let base = if tile == atlas::TILE_NONE {
+                        lut
+                            .and_then(|l| l.color(id, face))
+                            .unwrap_or_else(|| default_color(id, face))
+                    } else {
+                        [1.0; 3] // multiplier carrier for the textured path
+                    };
                     let shade = FACE_SHADE[face];
                     // Smooth lighting: per-corner AO from the 3 diagonal
                     // neighbors in front of this face.
@@ -145,13 +177,21 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                     let order = flip_order(&ao);
                     let mut pts = [[0f32; 3]; 4];
                     let mut colors = [[0f32; 3]; 4];
+                    let mut uvs = [[0f32; 2]; 4];
                     for (i, &src) in order.iter().enumerate() {
                         let c = FACE_CORNERS[face][src];
                         pts[i] = [wx as f32 + c[0], wy as f32 + c[1], wz as f32 + c[2]];
                         let m = shade * AO_CURVE[ao[src] as usize];
                         colors[i] = [base[0] * m, base[1] * m, base[2] * m];
+                        uvs[i] = face_uv(face, c);
                     }
-                    out.push(Quad { pts, colors });
+                    out.push(Quad {
+                        pts,
+                        colors,
+                        uvs,
+                        tile,
+                        translucent: water_self,
+                    });
                 }
             }
         }
@@ -302,13 +342,72 @@ mod tests {
         let mut w = empty_world();
         put(&mut w, 8, 8, 8, STONE);
         let q = mesh_chunk(&w, 0, 0, None);
-        // top face of the lone block: shade 1.0, open sky -> full base color
+        // top face of the lone block: shade 1.0, open sky -> full brightness
         let top = q.iter().find(|quad| quad.pts[0][1] == 9.0 && quad.pts[1][1] == 9.0).expect("top face quad");
-        let expected = default_color(STONE, 2);
-        for c in &top.colors {
-            for ch in 0..3 {
-                assert!((c[ch] - expected[ch]).abs() < 1e-6, "{:?} vs {:?}", c, expected);
+        let tile = atlas::FACE_TILES[STONE as usize][2];
+        if tile == atlas::TILE_NONE {
+            let expected = default_color(STONE, 2);
+            for c in &top.colors {
+                for ch in 0..3 {
+                    assert!((c[ch] - expected[ch]).abs() < 1e-6, "{:?} vs {:?}", c, expected);
+                }
             }
+        } else {
+            // textured path: vertex colors carry the shade*AO multiplier only
+            for c in &top.colors {
+                assert!((c[0] - 1.0).abs() < 1e-6, "open-sky top multiplier must be 1.0: {:?}", c);
+                assert_eq!(c[0], c[1]);
+                assert_eq!(c[1], c[2]);
+            }
+        }
+    }
+
+    #[test]
+    fn face_uv_orientation() {
+        // side faces keep +Y at the texture top (v=0)
+        for face in [0usize, 1, 4, 5] {
+            assert_eq!(face_uv(face, [0.0, 1.0, 0.0])[1], 0.0, "face {face}: y=1 must be v=0");
+            assert_eq!(face_uv(face, [0.0, 0.0, 0.0])[1], 1.0, "face {face}: y=0 must be v=1");
+        }
+        // east (+X): looking down -X, screen-right is -Z -> u = 1-z
+        assert_eq!(face_uv(0, [1.0, 0.5, 0.0])[0], 1.0);
+        assert_eq!(face_uv(0, [1.0, 0.5, 1.0])[0], 0.0);
+        // west (-X): u = z
+        assert_eq!(face_uv(1, [0.0, 0.5, 0.0])[0], 0.0);
+        assert_eq!(face_uv(1, [0.0, 0.5, 1.0])[0], 1.0);
+        // south (+Z): u = x; north (-Z): u = 1-x
+        assert_eq!(face_uv(4, [0.0, 0.5, 1.0])[0], 0.0);
+        assert_eq!(face_uv(5, [0.0, 0.5, 0.0])[0], 1.0);
+        // top: u=x, v=z (north at texture top); bottom mirrors v
+        assert_eq!(face_uv(2, [0.25, 1.0, 0.75]), [0.25, 0.75]);
+        assert_eq!(face_uv(3, [0.25, 0.0, 0.75]), [0.25, 0.25]);
+    }
+
+    #[test]
+    fn water_quads_translucent_others_not() {
+        let mut w = empty_world();
+        put(&mut w, 8, 8, 8, STONE);
+        put(&mut w, 8, 5, 8, WATER);
+        let q = mesh_chunk(&w, 0, 0, None);
+        for quad in &q {
+            let is_water_surface = quad.pts[0][1] == 6.0 && quad.pts[2][1] == 6.0;
+            assert_eq!(quad.translucent, is_water_surface, "only water surface quads are translucent");
+        }
+    }
+
+    #[test]
+    fn uv_order_follows_vertex_reorder() {
+        // after flip_order rotation, uv[i] must equal face_uv of the SAME corner
+        let mut w = empty_world();
+        put(&mut w, 8, 8, 8, GRASS);
+        put(&mut w, 9, 9, 8, STONE); // force asymmetric AO -> flip
+        put(&mut w, 8, 9, 9, STONE);
+        let q = mesh_chunk(&w, 0, 0, None);
+        let top = q.iter().find(|quad| quad.pts[0][1] == 9.0).expect("top face");
+        let ao = ao_levels(&w, 8, 8, 8, 2);
+        let order = flip_order(&ao);
+        for (i, &src) in order.iter().enumerate() {
+            assert_eq!(top.uvs[i], face_uv(2, FACE_CORNERS[2][src]), "uv must track corner {src}");
         }
     }
 }
