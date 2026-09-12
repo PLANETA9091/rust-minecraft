@@ -168,8 +168,8 @@ impl<'a> Gui<'a> {
         let (ux, uy) = (x as usize, y as usize);
         for sy in 0..self.scale {
             for sx in 0..self.scale {
-                let fx = ux * self.scale as usize + sx;
-                let fy = uy * self.scale as usize + sy;
+                let fx = ux * self.scale as usize + sx as usize;
+                let fy = uy * self.scale as usize + sy as usize;
                 if fx >= self.fb.w || fy >= self.fb.h {
                     continue;
                 }
@@ -348,7 +348,10 @@ impl<'a> Gui<'a> {
                     let top = y + g.ascent as i32 - g.gh as i32;
                     for gy in 0..g.gh {
                         for gx in 0..g.gw {
-                            let c = tex.sample(g.u + gx, g.v + gy);
+                            let c = tex.sample(
+                                g.u as u32 + gx as u32,
+                                g.v as u32 + gy as u32,
+                            );
                             if c[3] <= 0.1 {
                                 continue;
                             }

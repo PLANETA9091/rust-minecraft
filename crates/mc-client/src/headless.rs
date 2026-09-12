@@ -85,3 +85,44 @@ pub fn render_frames(
     println!("saved {}", out_path.display());
     Ok(timings)
 }
+
+/// Render one deterministic GUI screen (boot chain / menus) to PNG.
+/// `frame` drives boot progress, splash pulse and music scheduling.
+pub fn render_gui_screen(
+    screen: &str,
+    frame: u64,
+    seed: u64,
+    width: usize,
+    height: usize,
+    out_path: &Path,
+) -> Result<()> {
+    use crate::gui::GuiAssets;
+    use crate::screens::{App, ScreenKind};
+
+    let mut app = App::new(seed);
+    match screen {
+        "loading" => {
+            app.screen = ScreenKind::Loading;
+            for _ in 0..frame.min(19) {
+                app.update();
+            }
+        }
+        "title" => {
+            app.screen = ScreenKind::Title;
+            app.frame = frame;
+        }
+        "servers" => app.open(ScreenKind::Servers),
+        "options" => app.open(ScreenKind::Options),
+        other => anyhow::bail!("unknown screen {other} (loading|title|servers|options)"),
+    }
+
+    let mut fb = Framebuf::new(width, height);
+    let mut assets = GuiAssets::open("assets-cache/jar");
+    app.render(&mut fb, &mut assets);
+    write_rgb_png(out_path, width, height, &fb.color)?;
+    println!(
+        "gui screen '{screen}' (frame {frame}, seed {seed}) -> {}",
+        out_path.display()
+    );
+    Ok(())
+}

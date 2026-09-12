@@ -309,7 +309,7 @@ impl App {
     fn render_servers(&mut self, g: &mut Gui, a: &mut GuiAssets, w: i32, h: i32) {
         // dark list backdrop
         g.fill(0, 0, w, h, [0.06, 0.06, 0.06, 1.0]);
-        g.text_centered(a, w / 2, 12, tr("selectServer.title").unwrap_or("Select Server"), WHITE, true);
+        g.text_centered(a, w / 2, 12, tr("multiplayer.title").unwrap_or("Play Multiplayer"), WHITE, true);
         let cx = w / 2;
         // server rows
         for (i, s) in self.servers.iter().enumerate() {
@@ -327,7 +327,7 @@ impl App {
                 g.text(a, cx + 68 - vw, y, &ver, GRAY, true);
                 g.sprite(a, s.ping_icon(), cx + 58, y + 10);
             } else {
-                let msg = tr("selectServer.oldMessage").unwrap_or("Can't connect to server");
+                let msg = tr("connect.failed").unwrap_or("Failed to connect to the server");
                 g.sprite(a, s.ping_icon(), cx + 58, y + 10);
                 let mw = g.text_width(msg);
                 g.text(a, cx + 56 - mw, y + 10, msg, [0.667, 0.333, 0.333], true);
@@ -460,7 +460,8 @@ mod tests {
         assert_eq!(tr("menu.multiplayer"), Some("Multiplayer"));
         assert_eq!(tr("menu.options"), Some("Options..."));
         assert_eq!(tr("menu.quit"), Some("Quit Game"));
-        assert_eq!(tr("selectServer.title"), Some("Select Server"));
+        assert_eq!(tr("multiplayer.title"), Some("Play Multiplayer"));
+        assert_eq!(tr("connect.failed"), Some("Failed to connect to the server"));
         assert_eq!(tr("selectServer.select"), Some("Join Server"));
         assert_eq!(tr("options.title"), Some("Options"));
         assert_eq!(tr("menu.online"), Some("Minecraft Realms"));

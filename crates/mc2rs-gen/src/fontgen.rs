@@ -149,6 +149,11 @@ fn bitmap_provider<R: std::io::Read + std::io::Seek>(
             } else {
                 trim_width(&rgba, tex_w as u16, tex_h as u16, u, v, cell_w, cell_h)
             };
+            if gw == 0 && cell_w > 0 {
+                // Vanilla drops fully-blank cells (e.g. the space character in
+                // ascii.png) so the space provider's advance stays effective.
+                continue;
+            }
             data.glyphs.insert(
                 ch_u32,
                 Glyph {
@@ -318,7 +323,7 @@ mod tests {
         ]);
         let data = generate(&mut zip).unwrap();
         assert_eq!(data.textures.len(), 1);
-        assert_eq!(data.glyphs.len(), 3); // A, B, space
+        assert_eq!(data.glyphs.len(), 2); // A + space (blank B dropped, vanilla rule)
         assert_eq!(data.skipped_providers, 0);
 
         let a = data.glyphs[&(u32::from('A'))].clone();
@@ -326,8 +331,10 @@ mod tests {
         assert_eq!(a.gh, 8, "cell height 8");
         assert_eq!(a.ascent, 7);
         assert_eq!(a.u, 0);
-        let b = data.glyphs[&(u32::from('B'))].clone();
-        assert_eq!(b.gw, 0, "empty glyph");
+        assert!(
+            !data.glyphs.contains_key(&(u32::from('B'))),
+            "blank glyph cell must be dropped so space advance survives"
+        );
         assert_eq!(data.glyphs[&(u32::from(' '))].space_advance, 4);
 
         let emitted = emit(&data).unwrap();

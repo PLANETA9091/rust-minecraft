@@ -4,16 +4,21 @@
 //!   default         windowed fly-camera (falls back to headless w/o display)
 //!   --headless      deterministic offscreen render -> PNG (pixel CI)
 //!   --window        force windowed mode
+//!   --gui           windowed GUI app (boot -> title -> menus), generated data
+//!   --screen S      headless GUI screenshot: loading|title|servers|options
 
 mod build_info;
 mod camera;
 mod colors;
 mod gpu;
+mod gui;
 mod headless;
 mod math;
 mod mesher;
+mod music;
 mod png_io;
 mod raster;
+mod screens;
 mod textures;
 mod world;
 
@@ -34,6 +39,15 @@ struct Cli {
     /// Force windowed mode.
     #[arg(long)]
     window: bool,
+    /// Windowed GUI application (boot chain + menus from generated data).
+    #[arg(long)]
+    gui: bool,
+    /// Headless GUI screen render: loading|title|servers|options.
+    #[arg(long)]
+    screen: Option<String>,
+    /// UI frame to capture (drives splash pulse / boot progress).
+    #[arg(long, default_value_t = 60)]
+    ui_frame: u64,
     #[arg(long, default_value_t = 640)]
     width: usize,
     #[arg(long, default_value_t = 360)]
@@ -65,6 +79,12 @@ fn main() -> Result<()> {
         build_info::OBFUSCATED
     );
 
+    // ---- headless GUI screenshots (boot chain / menus) ----
+    if let Some(screen) = &cli.screen {
+        headless::render_gui_screen(screen, cli.ui_frame, cli.seed, cli.width, cli.height, &cli.out)?;
+        return Ok(());
+    }
+
     let world = world::World::new(cli.chunks, cli.seed);
     println!(
         "world: {}x{} chunks ({}x{} blocks), {} blocks total",
@@ -79,6 +99,16 @@ fn main() -> Result<()> {
         println!("real colors: {}", l.describe());
         l
     });
+
+    if cli.gui && !cli.headless {
+        #[cfg(not(target_arch = "wasm32"))]
+        {
+            match window::run_gui_app(cli.seed, cli.width, cli.height) {
+                Ok(()) => return Ok(()),
+                Err(e) => eprintln!("gui mode unavailable ({e}); falling back to headless"),
+            }
+        }
+    }
 
     if cli.window || (!cli.headless && !cfg!(target_os = "linux")) {
         #[cfg(not(target_arch = "wasm32"))]

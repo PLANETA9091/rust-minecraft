@@ -97,3 +97,37 @@ pub fn run_windowed(world: &World, lut: Option<&TextureLut>, width: usize, heigh
     }
     Ok(())
 }
+
+/// Windowed GUI application: boot chain -> title -> menus, all driven by
+/// generated data (official fonts, sprites, language, splashes).
+pub fn run_gui_app(seed: u64, width: usize, height: usize) -> anyhow::Result<()> {
+    use crate::gui::GuiAssets;
+    use crate::screens::App;
+
+    let mut window = Window::new(
+        &format!("mc2rs — Minecraft {} (generated GUI)", crate::build_info::MINECRAFT_VERSION),
+        width,
+        height,
+        WindowOptions { resize: true, ..WindowOptions::default() },
+    )?;
+    let mut app = App::new(seed);
+    let mut assets = GuiAssets::open("assets-cache/jar");
+    let mut fb = Framebuf::new(width, height);
+    let mut buf: Vec<u32> = vec![0; width * height];
+
+    while window.is_open() {
+        let (mx, my) = window.get_mouse_pos(minifb::MouseMode::Discard).unwrap_or((0.0, 0.0));
+        let gmx = (mx as usize / 2) as i32;
+        let gmy = (my as usize / 2) as i32;
+        if window.get_mouse_down(minifb::MouseButton::Left) {
+            app.on_click(gmx, gmy);
+        }
+        app.update();
+        fb.clear(crate::headless::SKY_TOP, crate::headless::SKY_BOTTOM);
+        app.render(&mut fb, &mut assets);
+        buf.iter_mut().zip(fb.to_argb()).for_each(|(o, c)| *o = c);
+        window.update_with_buffer(&buf, width, height)?;
+        std::thread::sleep(std::time::Duration::from_millis(16));
+    }
+    Ok(())
+}
