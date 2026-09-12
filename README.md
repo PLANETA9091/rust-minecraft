@@ -109,6 +109,21 @@ hand-drawn:
   -> 0x02: the vanilla flow grew cookie_request at its head), a drift
   the self-consistent e2e mocks could never expose — a real 26.2 join
   would have failed to recognize a single configuration packet.
+  The **payload shapes got the same runtime proof** (javap on the
+  official 26.2 classes — a third drift wave, this time in the wire
+  DATA the ids point at): **Login Success** is the record
+  (GameProfile, sessionId) — uuid + name + a property list (count +
+  name/value/nullable-signature entries) + a 16-byte session UUID the
+  wiki-era "uuid + username" shape never knew; **Registry Data** is
+  (registry key, List<PackedRegistryEntry>) — a VarInt entry count of
+  {entry id, optional network NBT} pairs, NOT "identifier + whole
+  NBT" (the old parse would have read the entry count as an NBT root
+  and failed on a real server; the dimension element now arrives per
+  entry with min_y/height at its top level); and **Client
+  Information** grew a ninth field (particle status) with the view
+  distance as a raw BYTE, not a VarInt. The e2e mocks were rebuilt to
+  the proven shapes — the self-consistency mask is broken at the
+  payload level too.
 - **Singleplayer world** — clicking `Singleplayer` enters a live 3D world
   view rendered by the same deterministic CPU raster path as the pixel
   tests: real block textures from the generated atlas, the **official
