@@ -7,6 +7,7 @@ mod fontgen;
 mod jar;
 mod langgen;
 mod manifest;
+mod runtime_dump;
 mod skygen;
 mod soundgen;
 mod splashgen;
@@ -60,6 +61,21 @@ enum Cmd {
         /// Workspace root (contains crates/).
         #[arg(long, default_value = ".")]
         out: String,
+    },
+    /// Generate the bytecode-true global block state id table: boot the
+    /// REAL vanilla registries from the official jar + libraries (all
+    /// sha1-verified) with the checked-in runtime dumper and emit
+    /// mc-registry/src/generated/block_ids.rs.
+    DumpBlockStates {
+        #[arg(long)]
+        version: String,
+        /// Workspace root (contains crates/).
+        #[arg(long, default_value = ".")]
+        out: String,
+        /// Explicit java binary (>= the version's java requirement from
+        /// the manifest). Default: `java` on PATH.
+        #[arg(long)]
+        java: Option<String>,
     },
     /// Download official game assets into a local cache (requires owning MC).
     Assets {
@@ -126,6 +142,9 @@ fn main() -> Result<()> {
         }
         Cmd::Atlas { version, out } => {
             atlas_cmd(&agent, &cache, &version, Path::new(&out))?;
+        }
+        Cmd::DumpBlockStates { version, out, java } => {
+            runtime_dump::dump_block_states(&agent, &cache, &version, Path::new(&out), java.as_deref())?;
         }
         Cmd::Assets { version, dir, filter } => {
             let m = manifest::load(&agent)?;

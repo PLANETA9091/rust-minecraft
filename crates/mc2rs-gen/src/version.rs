@@ -68,6 +68,60 @@ pub struct LibraryRef {
     pub name: String,
     #[serde(default)]
     pub url: Option<String>,
+    /// Vanilla launcher rule list (os/action); absent = unconditional.
+    #[serde(default)]
+    pub rules: Option<Vec<LibraryRule>>,
+    /// v2 manifest per-artifact download (authoritative url + sha1).
+    #[serde(default)]
+    pub downloads: Option<LibraryDownloads>,
+}
+
+impl LibraryRef {
+    /// Vanilla launcher rule semantics: no rules -> allowed; with rules,
+    /// the LAST matching rule wins and an unmatched-only list rejects.
+    /// `os` is the host platform name ("linux", "windows", "osx").
+    pub fn allowed_on(&self, os: &str) -> bool {
+        let Some(rules) = &self.rules else {
+            return true;
+        };
+        let mut allowed = false;
+        for r in rules {
+            let applies = match &r.os {
+                None => true,
+                Some(spec) => spec.name.as_deref() == Some(os),
+            };
+            if applies {
+                allowed = r.action == "allow";
+            }
+        }
+        allowed
+    }
+
+    /// The main artifact to put on the runtime classpath (natives and
+    /// per-os classifiers are separate entries and not needed for a
+    /// headless registry bootstrap).
+    pub fn artifact(&self) -> Option<&DirectDownload> {
+        self.downloads.as_ref().and_then(|d| d.artifact.as_ref())
+    }
+}
+
+#[derive(Debug, Deserialize)]
+pub struct LibraryRule {
+    pub action: String,
+    #[serde(default)]
+    pub os: Option<LibraryOs>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct LibraryOs {
+    #[serde(default)]
+    pub name: Option<String>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct LibraryDownloads {
+    #[serde(default)]
+    pub artifact: Option<DirectDownload>,
 }
 
 /// Fetch (cache-first) and parse the version json for a manifest entry.

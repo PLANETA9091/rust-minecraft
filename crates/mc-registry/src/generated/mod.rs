@@ -1,4 +1,5 @@
 pub mod atlas;
+pub mod block_ids;
 pub mod blocks;
 pub mod font;
 pub mod gui;
