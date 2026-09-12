@@ -11,7 +11,7 @@ pub struct SpriteDef {
     pub nine_slice: Option<(u32, u32, u32)>,
 }
 
-pub static SPRITES: [SpriteDef; 466] = [
+pub static SPRITES: [SpriteDef; 478] = [
     SpriteDef { name: "advancements/box_obtained", file: "gui/sprites/advancements/box_obtained.png", w: 200, h: 26, nine_slice: Some((200, 26, 10)) },
     SpriteDef { name: "advancements/box_unobtained", file: "gui/sprites/advancements/box_unobtained.png", w: 200, h: 26, nine_slice: Some((200, 26, 10)) },
     SpriteDef { name: "advancements/challenge_frame_obtained", file: "gui/sprites/advancements/challenge_frame_obtained.png", w: 26, h: 26, nine_slice: None },
@@ -415,6 +415,18 @@ pub static SPRITES: [SpriteDef; 466] = [
     SpriteDef { name: "statistics/item_used", file: "gui/sprites/statistics/item_used.png", w: 18, h: 18, nine_slice: None },
     SpriteDef { name: "statistics/sort_down", file: "gui/sprites/statistics/sort_down.png", w: 18, h: 18, nine_slice: None },
     SpriteDef { name: "statistics/sort_up", file: "gui/sprites/statistics/sort_up.png", w: 18, h: 18, nine_slice: None },
+    SpriteDef { name: "title/background/panorama_0", file: "gui/title/background/panorama_0.png", w: 1024, h: 1024, nine_slice: None },
+    SpriteDef { name: "title/background/panorama_1", file: "gui/title/background/panorama_1.png", w: 1024, h: 1024, nine_slice: None },
+    SpriteDef { name: "title/background/panorama_2", file: "gui/title/background/panorama_2.png", w: 1024, h: 1024, nine_slice: None },
+    SpriteDef { name: "title/background/panorama_3", file: "gui/title/background/panorama_3.png", w: 1024, h: 1024, nine_slice: None },
+    SpriteDef { name: "title/background/panorama_4", file: "gui/title/background/panorama_4.png", w: 1024, h: 1024, nine_slice: None },
+    SpriteDef { name: "title/background/panorama_5", file: "gui/title/background/panorama_5.png", w: 1024, h: 1024, nine_slice: None },
+    SpriteDef { name: "title/background/panorama_overlay", file: "gui/title/background/panorama_overlay.png", w: 1, h: 1, nine_slice: None },
+    SpriteDef { name: "title/edition", file: "gui/title/edition.png", w: 512, h: 64, nine_slice: None },
+    SpriteDef { name: "title/minceraft", file: "gui/title/minceraft.png", w: 1024, h: 256, nine_slice: None },
+    SpriteDef { name: "title/minecraft", file: "gui/title/minecraft.png", w: 1024, h: 256, nine_slice: None },
+    SpriteDef { name: "title/mojangstudios", file: "gui/title/mojangstudios.png", w: 512, h: 512, nine_slice: None },
+    SpriteDef { name: "title/realms", file: "gui/title/realms.png", w: 512, h: 256, nine_slice: None },
     SpriteDef { name: "toast/advancement", file: "gui/sprites/toast/advancement.png", w: 160, h: 32, nine_slice: None },
     SpriteDef { name: "toast/mouse", file: "gui/sprites/toast/mouse.png", w: 20, h: 20, nine_slice: None },
     SpriteDef { name: "toast/movement_keys", file: "gui/sprites/toast/movement_keys.png", w: 20, h: 20, nine_slice: None },

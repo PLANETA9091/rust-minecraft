@@ -27,9 +27,11 @@ pub struct UiData {
 }
 
 const SPRITES_ROOT: &str = "assets/minecraft/textures/gui/sprites/";
-/// Title-screen textures (logo, panorama faces) — in 26.2 the panorama PNGs
+/// Title-screen textures are registered from the `gui/` root so the names
+/// keep their "title/" prefix ("title/minecraft"). In 26.2 the panorama PNGs
 /// in the jar are 1x1 placeholders; the real pixels stream via the asset
 /// index (merged in by the caller). The logo textures are real in-jar.
+const GUI_ROOT: &str = "assets/minecraft/textures/gui/";
 const TITLE_ROOT: &str = "assets/minecraft/textures/gui/title/";
 
 pub fn generate<R: std::io::Read + std::io::Seek>(archive: &mut zip::ZipArchive<R>) -> Result<UiData> {
@@ -69,7 +71,7 @@ pub fn generate<R: std::io::Read + std::io::Seek>(archive: &mut zip::ZipArchive<
     for path in title_names {
         let bytes = read_entry(archive, &path)?;
         let (w, h) = png_size(&bytes)?;
-        let rel = &path[TITLE_ROOT.len()..path.len() - ".png".len()];
+        let rel = &path[GUI_ROOT.len()..path.len() - ".png".len()];
         data.sprites.entry(rel.to_string()).or_insert_with(|| Sprite {
             name: rel.to_string(),
             file: format!("gui/{rel}.png"),

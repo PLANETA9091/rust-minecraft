@@ -482,4 +482,35 @@ mod tests {
         assert_eq!(g.h(), 90);
         drop(fb);
     }
+
+    #[test]
+    fn sprite_at_stretches_and_skips_transparent() {
+        let dir = std::env::temp_dir().join(format!("mc2rs-gui-{}", std::process::id()));
+        std::fs::create_dir_all(dir.join("gui/sprites/widget")).unwrap();
+        // 2x1 sprite: opaque red left half, transparent right half
+        let mut rgba = vec![0u8; 8];
+        rgba[0] = 255;
+        rgba[3] = 255;
+        let mut out = Vec::new();
+        {
+            let mut enc = png::Encoder::new(&mut out, 2, 1);
+            enc.set_color(png::ColorType::Rgba);
+            enc.set_depth(png::BitDepth::Eight);
+            let mut wr = enc.write_header().unwrap();
+            wr.write_image_data(&rgba).unwrap();
+        }
+        std::fs::write(dir.join("gui/sprites/widget/button.png"), &out).unwrap();
+
+        let mut fb = Framebuf::new(16, 8);
+        fb.clear([0.0, 0.0, 0.0], [0.0, 0.0, 0.0]);
+        let mut g = Gui::new(&mut fb, 1);
+        let mut a = GuiAssets::open(&dir);
+        // stretch 2x1 -> 4x2; sx mapping: dx 0,1 -> src 0 (red), dx 2,3 -> src 1 (clear)
+        g.sprite_at(&mut a, "widget/button", 0, 0, 4, 2);
+        assert_eq!(g.fb.color[(0 * 16 + 0) * 3], 255, "left half red");
+        assert_eq!(g.fb.color[(0 * 16 + 1) * 3], 255, "left half red");
+        assert_eq!(g.fb.color[(0 * 16 + 3) * 3], 0, "transparent half skipped");
+        assert_eq!(g.fb.color[(1 * 16 + 0) * 3], 255, "second dest row red");
+        std::fs::remove_dir_all(&dir).ok();
+    }
 }

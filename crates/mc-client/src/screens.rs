@@ -209,11 +209,17 @@ impl App {
     fn render_loading(&mut self, g: &mut Gui, a: &mut GuiAssets) {
         let (w, h) = (g.w(), g.h());
         g.fill(0, 0, w, h, [MOJANG_RED[0], MOJANG_RED[1], MOJANG_RED[2], 1.0]);
-        // The studio wordmark ships outside the jar in modern versions; the
-        // title-style text rendering keeps the layout identical meanwhile.
-        let logo = "MOJANG STUDIOS";
-        let lw = g.text_width(logo);
-        g.text(a, w / 2 - lw / 2, h / 2 - 14, logo, WHITE, false);
+        // studio wordmark: the REAL Mojang Studios texture (title/mojangstudios,
+        // 512x512 drawn at quarter scale = 128x128 like the vanilla loading
+        // overlay); text fallback keeps the layout while assets are absent.
+        let has_mark = a.sprite("title/mojangstudios").map(|s| s.w >= 16).unwrap_or(false);
+        if has_mark {
+            g.sprite_at(a, "title/mojangstudios", w / 2 - 64, h / 2 - 74, 128, 128);
+        } else {
+            let logo = "MOJANG STUDIOS";
+            let lw = g.text_width(logo);
+            g.text(a, w / 2 - lw / 2, h / 2 - 14, logo, WHITE, false);
+        }
         // two progress bars along the bottom (vanilla loading layout)
         let bar_w = 70;
         let bar_y = h - 26;
@@ -232,28 +238,44 @@ impl App {
     }
 
     fn render_title(&mut self, g: &mut Gui, a: &mut GuiAssets, w: i32, h: i32) {
-        // darkened panorama-ish backdrop (real panorama textures ship via the
-        // asset index; the gradient keeps the layout while assets stream in)
-        for y in 0..h {
-            let t = y as f32 / h.max(1) as f32;
-            let c = [0.12 + 0.05 * t, 0.16 + 0.07 * t, 0.25 + 0.10 * t];
-            g.fill(0, y, w, 1, [c[0], c[1], c[2], 1.0]);
+        // backdrop: the REAL title panorama — six official cube faces sliding
+        // horizontally (linear stand-in for the vanilla rotating cube). Flat
+        // gradient fallback while the panorama assets are unavailable.
+        let panorama = self.render_panorama(g, a, w, h);
+        if !panorama {
+            for y in 0..h {
+                let t = y as f32 / h.max(1) as f32;
+                let c = [0.12 + 0.05 * t, 0.16 + 0.07 * t, 0.25 + 0.10 * t];
+                g.fill(0, y, w, 1, [c[0], c[1], c[2], 1.0]);
+            }
         }
-        // wordmark: scaled text logo (real logo texture streams via asset index)
-        let logo = "MINECRAFT";
-        let lw = g.text_width(logo);
-        let lx = w / 2 - lw / 2;
-        let ly = h / 4 - 6;
-        // draw the wordmark 3x by triple-stamping the font rows
-        for k in 0..3 {
-            g.text(a, lx, ly + k * 8, logo, WHITE, true);
-        }
-        // splash text (yellow, pulsing, deterministic pick)
+        // wordmark: the REAL Minecraft logo texture (title/minecraft, 1024x256
+        // drawn at quarter scale = 256x64, vanilla LogoRenderer proportions);
+        // text fallback when the texture is missing or the GUI is too small.
+        let (logo_x, logo_w, logo_bottom) = if w >= 260 {
+            let lw = 256;
+            let lx = w / 2 - lw / 2;
+            let ly = h / 4 - 30;
+            g.sprite_at(a, "title/minecraft", lx, ly, lw, 64);
+            (lx, lw, ly + 64)
+        } else {
+            let logo = "MINECRAFT";
+            let lw = g.text_width(logo);
+            let lx = w / 2 - lw / 2;
+            let ly = h / 4 - 6;
+            for k in 0..3 {
+                g.text(a, lx, ly + k * 8, logo, WHITE, true);
+            }
+            (lx, lw, ly + 24)
+        };
+        // splash text (yellow, pulsing, deterministic pick) anchored at the
+        // logo's bottom-right corner like vanilla
         let splash = SPLASHES.get(self.splash_index).copied().unwrap_or("Now in Rust!");
         let pulse = ((self.frame as f32 * 0.1).sin() * 0.5 + 0.5) * 2.0;
         let splash_scale = 1 + (pulse.round() as i32);
-        let sx = lx + lw + 4;
-        let sy = ly + 20;
+        let sw = g.text_width(splash);
+        let sx = logo_x + logo_w - sw - 2;
+        let sy = logo_bottom - 12;
         if splash_scale > 1 {
             // pulse emphasis: stamp twice at 1px offsets (cheap big mode)
             g.text(a, sx, sy, splash, YELLOW, true);
@@ -309,6 +331,36 @@ impl App {
         let cp = "Copyright Mojang AB. Do not distribute!";
         let cw = g.text_width(cp);
         g.text(a, w - cw - 2, h - 10, cp, WHITE, true);
+    }
+
+    /// Draw the six official panorama faces as one horizontal strip sliding
+    /// with `frame` (a linear stand-in for the vanilla cube rotation; the
+    /// spherical warp is future work). Returns false when the real faces are
+    /// unavailable — 1x1 jar placeholders don't count.
+    fn render_panorama(&mut self, g: &mut Gui, a: &mut GuiAssets, w: i32, h: i32) -> bool {
+        const FACES: [&str; 6] = [
+            "title/background/panorama_0",
+            "title/background/panorama_1",
+            "title/background/panorama_2",
+            "title/background/panorama_3",
+            "title/background/panorama_4",
+            "title/background/panorama_5",
+        ];
+        let face = match a.sprite(FACES[0]) {
+            Some(s) if s.w >= 16 && s.h >= 16 => (s.w, s.h),
+            _ => return false,
+        };
+        let face_w = (h as f32 * face.0 as f32 / face.1 as f32).max(1.0);
+        let strip = face_w * FACES.len() as f32;
+        let off = panorama_offset(self.frame, strip);
+        let mut x = -off;
+        let mut i = 0usize;
+        while x < w as f32 {
+            g.sprite_at(a, FACES[i % 6], x.round() as i32, 0, face_w.round() as i32, h);
+            x += face_w;
+            i += 1;
+        }
+        true
     }
 
     fn render_servers(&mut self, g: &mut Gui, a: &mut GuiAssets, w: i32, h: i32) {
@@ -405,6 +457,13 @@ fn splitmix(x: u64) -> u64 {
     z ^ (z >> 31)
 }
 
+/// Horizontal panorama offset for a frame — deterministic, wraps the strip
+/// (vanilla pans the panorama slowly; we slide the cube strip at a similar
+/// pace: one face every ~360 frames).
+fn panorama_offset(frame: u64, strip_w: f32) -> f32 {
+    (frame as f32 * 0.25) % strip_w.max(1.0)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -416,6 +475,20 @@ mod tests {
         assert_eq!(a.splash_index, b.splash_index);
         assert!(a.splash_index < SPLASHES.len(), "splash index in range");
         assert!(!SPLASHES.is_empty());
+    }
+
+    #[test]
+    fn panorama_offset_is_deterministic_and_wraps() {
+        let strip = 540.0;
+        assert_eq!(panorama_offset(0, strip), 0.0);
+        assert_eq!(panorama_offset(30, strip), 7.5);
+        assert_eq!(panorama_offset(30, strip), panorama_offset(30, strip));
+        // wraps: frame (strip/0.25) is exactly one full strip
+        let wrap_frame = (strip / 0.25) as u64;
+        assert!(panorama_offset(wrap_frame, strip) < 0.25);
+        // degenerate strip never NaNs; offset stays within [0, strip)
+        let o = panorama_offset(123, 0.0);
+        assert!(o.is_finite() && (0.0..1.0).contains(&o));
     }
 
     #[test]
