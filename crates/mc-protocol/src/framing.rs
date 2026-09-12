@@ -106,10 +106,12 @@ impl<S: Read + Write> PacketConn<S> {
     }
 }
 
-/// Encode a handshake packet payload (packet id 0x00).
+/// Encode a handshake packet payload (packet id 0x00, GENERATED from the
+/// official jar's real handshake protocol — vanilla names it
+/// "minecraft:intention").
 pub fn encode_handshake(protocol_version: i32, host: &str, port: u16, next_state: i32) -> Vec<u8> {
     let mut p = Vec::with_capacity(16 + host.len());
-    crate::varint::write_varint(&mut p, 0x00);
+    crate::varint::write_varint(&mut p, crate::generated::packet_ids::HSB_INTENTION);
     crate::varint::write_varint(&mut p, protocol_version);
     crate::varint::write_string(&mut p, host);
     p.extend_from_slice(&port.to_be_bytes());
@@ -117,17 +119,20 @@ pub fn encode_handshake(protocol_version: i32, host: &str, port: u16, next_state
     p
 }
 
-/// Encode an empty status-request packet payload (packet id 0x00).
+/// Encode an empty status-request packet payload (packet id 0x00,
+/// GENERATED from the official jar's real status protocol).
 pub fn encode_status_request() -> Vec<u8> {
     let mut p = Vec::with_capacity(1);
-    crate::varint::write_varint(&mut p, 0x00);
+    crate::varint::write_varint(&mut p, crate::generated::packet_ids::TSB_STATUS_REQUEST);
     p
 }
 
-/// Encode a login-start packet payload (packet id 0x00, protocol >= 1.20.5 shape).
+/// Encode a login-start packet payload (packet id 0x00, protocol >= 1.20.5
+/// shape, GENERATED from the official jar's real login protocol — vanilla
+/// names it "minecraft:hello").
 pub fn encode_login_start(username: &str, uuid: [u8; 16]) -> Vec<u8> {
     let mut p = Vec::with_capacity(32 + username.len());
-    crate::varint::write_varint(&mut p, 0x00);
+    crate::varint::write_varint(&mut p, crate::generated::packet_ids::LSB_HELLO);
     crate::varint::write_string(&mut p, username);
     p.extend_from_slice(&uuid);
     p

@@ -6,8 +6,13 @@
 //! decoded — the dimension-type vertical layout), network NBT read/write,
 //! and the play state itself — the first real world from the network
 //! (probes answered, chunk data decoded into resolved block/biome ids).
-//! The play wire ids are GENERATED from the official jar's own
-//! bootstrapped protocol (see `generated::packet_ids`).
+//! The wire ids of EVERY phase are GENERATED from the official jar's own
+//! bootstrapped protocol (see `generated::packet_ids`): play, login,
+//! configuration, status and handshake all dump their ids from the
+//! vanilla dispatch codecs' live id maps — the hand-kept wiki-era tables
+//! had drifted in BOTH waves (the play ids drifted several packets; the
+//! configuration clientbound ids were all one low: registry_data is 0x07
+//! on the real 26.2 wire, not 0x06).
 
 pub mod config;
 pub mod framing;

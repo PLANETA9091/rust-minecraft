@@ -78,9 +78,10 @@ enum Cmd {
         #[arg(long)]
         java: Option<String>,
     },
-    /// Generate the bytecode-true play packet id tables: bind the REAL
-    /// vanilla play clientbound + serverbound protocols from the official
-    /// jar (all sha1-verified) with the checked-in runtime dumper and emit
+    /// Generate the bytecode-true packet id tables for EVERY phase: bind
+    /// the REAL vanilla play, login, configuration, status and handshake
+    /// protocols from the official jar (all sha1-verified) with the
+    /// checked-in runtime dumper and emit
     /// mc-protocol/src/generated/packet_ids.rs.
     DumpPacketIds {
         #[arg(long)]

@@ -1114,13 +1114,16 @@ mod tests {
             for _ in 0..3 {
                 srv.read_packet().unwrap(); // ack, info, brand
             }
-            // probes + bulk traffic + finish (configuration)
+            // probes + bulk traffic + finish (configuration) — the ids
+            // come from the GENERATED configuration table (values 4/5/3
+            // on the real 26.2 wire; the raw wiki-era literals these
+            // replaced were one low)
             let mut ka = Vec::new();
-            write_varint(&mut ka, 0x03); // clientbound config keep alive
+            write_varint(&mut ka, crate::config::clientbound::KEEP_ALIVE);
             ka.extend_from_slice(&0x1122334455667788u64.to_be_bytes());
             srv.send_packet(&ka).unwrap();
             let mut pg = Vec::new();
-            write_varint(&mut pg, 0x04); // clientbound config ping
+            write_varint(&mut pg, crate::config::clientbound::PING);
             pg.extend_from_slice(&77i32.to_be_bytes());
             srv.send_packet(&pg).unwrap();
             // bulk registry traffic (configuration): the dimension_type
@@ -1128,14 +1131,18 @@ mod tests {
             srv.send_packet(&crate::config::test_support::registry_packet(true)).unwrap();
             srv.send_packet(&crate::config::test_support::registry_packet(false)).unwrap();
             let mut fin = Vec::new();
-            write_varint(&mut fin, 0x02); // clientbound config finish
+            write_varint(&mut fin, crate::config::clientbound::FINISH);
             srv.send_packet(&fin).unwrap();
-            for (id, tail) in [(0x04, 8i64), (0x05, 77i64), (0x03, -1)] {
+            for (id, tail) in [
+                (crate::config::serverbound::KEEP_ALIVE, 8i64),
+                (crate::config::serverbound::PONG, 77i64),
+                (crate::config::serverbound::ACKNOWLEDGE_FINISH, -1),
+            ] {
                 let resp = srv.read_packet().expect("config reply");
                 let mut c: &[u8] = &resp;
                 assert_eq!(read_varint(&mut c).unwrap(), id, "config reply id");
                 if tail >= 0 {
-                    let n = if id == 0x05 { 4 } else { 8 };
+                    let n = if id == crate::config::serverbound::PONG { 4 } else { 8 };
                     assert_eq!(c.len(), n, "config reply size");
                 } else {
                     assert!(c.is_empty(), "ack empty");
@@ -1304,7 +1311,7 @@ mod tests {
                 conn.read_packet().unwrap();
             }
             let mut fin = Vec::new();
-            write_varint(&mut fin, 0x02); // config finish
+            write_varint(&mut fin, crate::config::clientbound::FINISH); // config finish
             conn.send_packet(&fin).unwrap();
             let _ack = conn.read_packet().unwrap();
             // kick during the world load (clientbound play disconnect)

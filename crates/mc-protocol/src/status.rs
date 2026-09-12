@@ -72,7 +72,11 @@ pub fn ping(host: &str, port: u16) -> Result<PingResponse> {
     anyhow::ensure!(!response.is_empty(), "empty status packet");
     let mut cursor: &[u8] = &response;
     let packet_id = crate::varint::read_varint(&mut cursor)?;
-    anyhow::ensure!(packet_id == 0x00, "expected status response (0x00), got 0x{packet_id:02X}");
+    // GENERATED from the official jar's real status protocol
+    anyhow::ensure!(
+        packet_id == crate::generated::packet_ids::TCB_STATUS_RESPONSE,
+        "expected the status response packet, got 0x{packet_id:02X}"
+    );
     let str_len = crate::varint::read_varint(&mut cursor)? as usize;
     anyhow::ensure!(cursor.len() >= str_len, "truncated status json");
     let json_bytes = &cursor[..str_len];

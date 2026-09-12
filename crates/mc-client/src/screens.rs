@@ -1636,9 +1636,15 @@ mod tests {
                 &name,
             ))
             .unwrap();
-            // the introductions: login acknowledged (0x03), client
-            // information (0x00), plugin brand (0x02)
-            for expected in [0x03, 0x00, 0x02] {
+            // the introductions: login acknowledged, client information,
+            // plugin brand — ids from the GENERATED tables (all three
+            // kept their wiki-era numbers; now they're pinned to the
+            // runtime truth instead of remembered constants)
+            for expected in [
+                mc_protocol::generated::packet_ids::LSB_LOGIN_ACKNOWLEDGED,
+                mc_protocol::generated::packet_ids::CSB_CLIENT_INFORMATION,
+                mc_protocol::generated::packet_ids::CSB_CUSTOM_PAYLOAD,
+            ] {
                 let pkt = conn.read_packet().unwrap();
                 let mut c: &[u8] = &pkt;
                 assert_eq!(read_varint(&mut c).unwrap(), expected, "introduction id");
@@ -1651,30 +1657,41 @@ mod tests {
             // honestly falls back to the column-local copy.
             conn.send_packet(&mc_protocol::config::test_support::registry_packet(true))
                 .unwrap();
-            // probes + finish
+            // probes + finish — ids from the GENERATED configuration
+            // table (4/5/3 on the real 26.2 wire; the wiki-era literals
+            // these replaced were one low)
             let mut ka = Vec::new();
-            write_varint(&mut ka, 0x03); // config keep alive (clientbound)
+            write_varint(&mut ka, mc_protocol::config::clientbound::KEEP_ALIVE);
             ka.extend_from_slice(&0x1122334455667788u64.to_be_bytes());
             conn.send_packet(&ka).unwrap();
             let mut pg = Vec::new();
-            write_varint(&mut pg, 0x04); // config ping (clientbound)
+            write_varint(&mut pg, mc_protocol::config::clientbound::PING);
             pg.extend_from_slice(&77i32.to_be_bytes());
             conn.send_packet(&pg).unwrap();
             let mut fin = Vec::new();
-            write_varint(&mut fin, 0x02); // finish configuration
+            write_varint(&mut fin, mc_protocol::config::clientbound::FINISH);
             conn.send_packet(&fin).unwrap();
-            // responses: keep-alive echo (0x04), pong (0x05), ack (0x03)
+            // responses: keep-alive echo, pong, ack — ids from the same
+            // generated truth
             let resp = conn.read_packet().unwrap();
             let mut c: &[u8] = &resp;
-            assert_eq!(read_varint(&mut c).unwrap(), 0x04, "keep alive response id");
+            assert_eq!(
+                read_varint(&mut c).unwrap(),
+                mc_protocol::config::serverbound::KEEP_ALIVE,
+                "keep alive response id"
+            );
             assert_eq!(i64::from_be_bytes(c[..8].try_into().unwrap()), 0x1122334455667788);
             let resp = conn.read_packet().unwrap();
             let mut c: &[u8] = &resp;
-            assert_eq!(read_varint(&mut c).unwrap(), 0x05, "pong id");
+            assert_eq!(read_varint(&mut c).unwrap(), mc_protocol::config::serverbound::PONG, "pong id");
             assert_eq!(i32::from_be_bytes(c[..4].try_into().unwrap()), 77);
             let resp = conn.read_packet().unwrap();
             let mut c: &[u8] = &resp;
-            assert_eq!(read_varint(&mut c).unwrap(), 0x03, "ack finish id");
+            assert_eq!(
+                read_varint(&mut c).unwrap(),
+                mc_protocol::config::serverbound::ACKNOWLEDGE_FINISH,
+                "ack finish id"
+            );
             // ---- the play state: the world burst ----
             use mc_protocol::play::{clientbound, serverbound};
             let mut login_pkt = Vec::new();

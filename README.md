@@ -97,13 +97,18 @@ hand-drawn:
   angle conventions) and the world screen renders FROM the player —
   the vanilla first person; without layout knowledge the
   deterministic flight camera stands (never a guess).
-  The **play wire ids themselves are generated too**:
-  `mc2rs-gen dump-packet-ids` binds the official jar's REAL play
-  clientbound/serverbound protocols and dumps each packet's live wire id
-  from the vanilla dispatch codec's id map — the previous hand-kept
-  wiki-era table had drifted for the 26.2 protocol (login 0x27 -> 49,
-  chunk data 0x23 -> 45, respawn = 82, ...), a drift the self-consistent
-  e2e mocks could never expose.
+  The **wire ids of every phase are generated**:
+  `mc2rs-gen dump-packet-ids` binds the official jar's REAL protocols —
+  play, login, configuration, status AND handshake — and dumps each
+  packet's live wire id from the vanilla dispatch codec's id map. The
+  hand-kept wiki-era tables had drifted in two waves: the play ids
+  (login 0x27 -> 49, chunk data 0x23 -> 45, respawn = 82, ...) and —
+  found by the second, all-phase dump — **every clientbound
+  configuration id one low** (registry data 0x06 -> 0x07, finish 0x02
+  -> 0x03, keep alive 0x03 -> 0x04, ping 0x04 -> 0x05, disconnect 0x01
+  -> 0x02: the vanilla flow grew cookie_request at its head), a drift
+  the self-consistent e2e mocks could never expose — a real 26.2 join
+  would have failed to recognize a single configuration packet.
 - **Singleplayer world** — clicking `Singleplayer` enters a live 3D world
   view rendered by the same deterministic CPU raster path as the pixel
   tests: real block textures from the generated atlas, the **official

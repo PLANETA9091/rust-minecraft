@@ -36,7 +36,7 @@ use crate::{DEFAULT_TIMEOUT_SECS, NEXT_STATE_LOGIN};
 /// the flow grew custom_query (4) + cookie_request (5) past them. The
 /// public names below are the client's own vocabulary, aliased onto the
 /// generated truth.
-mod clientbound {
+pub mod clientbound {
     pub use crate::generated::packet_ids::{
         LCB_HELLO as ENCRYPTION_REQUEST, LCB_LOGIN_COMPRESSION as SET_COMPRESSION,
         LCB_LOGIN_DISCONNECT as DISCONNECT, LCB_LOGIN_FINISHED as LOGIN_SUCCESS,

@@ -5,7 +5,12 @@
 //! registry/feature/resource-pack traffic and acknowledges the server's
 //! Finish Configuration — then the play state begins.
 //!
-//! Clean-room wiki.vg shapes for 1.20.5+ / 26.x:
+//! Runtime-true shapes for 1.20.5+ / 26.x (the wire IDS are GENERATED —
+//! `mc2rs-gen dump-packet-ids` binds the vanilla ConfigurationProtocols
+//! and dumps the live dispatch codec's id map; the wiki-era table they
+//! replaced had drifted: every clientbound id from disconnect onward was
+//! one LOW, the wiki table forgetting cookie_request's head slot —
+//! registry_data is 0x07 on the real 26.2 wire, not 0x06):
 //! - Login Acknowledged (serverbound login 0x03): empty payload — from the
 //!   NEXT packet on, both sides speak configuration.
 //! - Client Information (serverbound config 0x00): Locale (String 16),
@@ -13,18 +18,18 @@
 //!   (Bool), Displayed Skin Parts (UByte 0x7F = all), Main Hand (VarInt
 //!   1 = right), Disable Text Filtering (Bool), Allow Server Listings
 //!   (Bool).
-//! - Registry Data (clientbound 0x06, one registry per packet):
+//! - Registry Data (clientbound 0x07, one registry per packet):
 //!   Identifier + network NBT. The `minecraft:dimension_type` registry is
 //!   DECODED — every registered dimension's vertical layout (min_y,
 //!   height) — the first retained NBT in the client (crate::nbt); every
 //!   other registry (biomes, worldgen, banners...) is walked and skipped.
 //! - Plugin Message (serverbound config 0x02): Channel (String) + Data —
 //!   the brand channel carries one UTF string ("mc2rs").
-//! - Keep Alive (clientbound config 0x03 / serverbound 0x04): i64 id,
+//! - Keep Alive (clientbound config 0x04 / serverbound 0x04): i64 id,
 //!   echoed verbatim.
-//! - Ping/Pong (clientbound 0x04 / serverbound 0x05): i32 id, echoed.
-//! - Disconnect (clientbound config 0x01): chat JSON reason.
-//! - Finish Configuration (clientbound 0x02) → Acknowledge Finish
+//! - Ping/Pong (clientbound 0x05 / serverbound 0x05): i32 id, echoed.
+//! - Disconnect (clientbound config 0x02): chat JSON reason.
+//! - Finish Configuration (clientbound 0x03) → Acknowledge Finish
 //!   Configuration (serverbound 0x03): both empty; after the ack the play
 //!   state begins.
 //! - Everything else (Cookie Request, Feature Flags, Resource Pack
@@ -43,27 +48,40 @@ use crate::nbt::{read_network_nbt, Nbt};
 use crate::varint::{read_string, read_varint, write_string, write_varint};
 use crate::{DEFAULT_TIMEOUT_SECS, NEXT_STATE_LOGIN};
 
-/// Serverbound login packet id (the state switch happens at the server).
-mod loginbound {
-    pub const LOGIN_ACKNOWLEDGED: i32 = 0x03;
+/// Serverbound login packet id (the state switch happens at the server),
+/// GENERATED from the official jar's real login protocol.
+pub mod loginbound {
+    pub use crate::generated::packet_ids::LSB_LOGIN_ACKNOWLEDGED as LOGIN_ACKNOWLEDGED;
 }
 
-/// Serverbound configuration packet ids.
-mod serverbound {
-    pub const CLIENT_INFORMATION: i32 = 0x00;
-    pub const PLUGIN_MESSAGE: i32 = 0x02;
-    pub const ACKNOWLEDGE_FINISH: i32 = 0x03;
-    pub const KEEP_ALIVE: i32 = 0x04;
-    pub const PONG: i32 = 0x05;
+/// Serverbound configuration packet ids, GENERATED from the official
+/// jar's real configuration protocol (see the module notes for the drift
+/// story). The vanilla names moved on (plugin_message → custom_payload,
+/// acknowledge_finish → finish_configuration); the public names are the
+/// client's own vocabulary, aliased onto the generated truth.
+pub mod serverbound {
+    pub use crate::generated::packet_ids::{
+        CSB_CLIENT_INFORMATION as CLIENT_INFORMATION,
+        CSB_CUSTOM_PAYLOAD as PLUGIN_MESSAGE,
+        CSB_FINISH_CONFIGURATION as ACKNOWLEDGE_FINISH, CSB_KEEP_ALIVE as KEEP_ALIVE,
+        CSB_PONG as PONG,
+    };
 }
 
-/// Clientbound configuration packet ids.
-mod clientbound {
-    pub const DISCONNECT: i32 = 0x01;
-    pub const FINISH: i32 = 0x02;
-    pub const KEEP_ALIVE: i32 = 0x03;
-    pub const PING: i32 = 0x04;
-    pub const REGISTRY_DATA: i32 = 0x06;
+/// Clientbound configuration packet ids, GENERATED from the official
+/// jar's real configuration protocol — the ids the wiki-era table had
+/// ALL one low (disconnect 0x01 → 0x02, finish 0x02 → 0x03, keep alive
+/// 0x03 → 0x04, ping 0x04 → 0x05, registry data 0x06 → 0x07): the
+/// vanilla flow grew cookie_request at its head and everything after it
+/// shifted. A real 26.2 join would have failed to recognize ANY of
+/// these packets; the e2e mocks were self-consistent with the old table
+/// and masked it (the same mask the play-id drift had).
+pub mod clientbound {
+    pub use crate::generated::packet_ids::{
+        CCB_DISCONNECT as DISCONNECT, CCB_FINISH_CONFIGURATION as FINISH,
+        CCB_KEEP_ALIVE as KEEP_ALIVE, CCB_PING as PING,
+        CCB_REGISTRY_DATA as REGISTRY_DATA,
+    };
 }
 
 /// One registered dimension type: the world's vertical layout, decoded
@@ -522,13 +540,22 @@ mod tests {
             p.extend_from_slice(&0x0123456789ABCDEFi64.to_be_bytes());
             p
         });
-        // parse expects the CLIENTBOUND id (0x03), so build that shape here
+        // parse expects the CLIENTBOUND id (4 on the real 26.2 wire —
+        // generated), so build that shape here
         let mut ka = Vec::new();
         write_varint(&mut ka, clientbound::KEEP_ALIVE);
         ka.extend_from_slice(&(-42i64).to_be_bytes());
         assert_eq!(parse_config_keep_alive(&ka).unwrap(), -42);
-        // the pong encoder (0x05) must be REJECTED by the ping parser (0x04)
-        assert!(parse_config_ping(&encode_config_pong(777)).is_err());
+        // the real wire has the clientbound ping and the serverbound pong
+        // at the SAME id (both 5, generated) — different flows, no wire
+        // ambiguity; the parser distinguishes within ONE flow: a
+        // keep-alive id (4) is rejected by the ping parser (5)
+        assert_eq!(
+            clientbound::PING,
+            crate::generated::packet_ids::CSB_PONG,
+            "cross-flow id coincidence, the real 26.2 wire"
+        );
+        assert!(parse_config_ping(&encode_config_keep_alive_response(777)).is_err());
         let ok = {
             let mut p = Vec::new();
             write_varint(&mut p, clientbound::PING);
@@ -741,5 +768,53 @@ mod tests {
         let out = connect_and_join_play("127.0.0.1", port, 776, "Steve").expect("connect");
         assert!(matches!(out, PlayOutcome::Joined { ref username, .. } if username == "Steve"));
         srv.join().unwrap();
+    }
+
+    #[test]
+    fn pre_play_ids_are_the_generated_runtime_facts() {
+        // The configuration/login tables are GENERATED from the official
+        // jar's own bootstrapped protocols (`mc2rs-gen dump-packet-ids`
+        // binds LoginProtocols + ConfigurationProtocols + the rest and
+        // dumps the live dispatch codecs' id maps). These pins come from
+        // the real 26.2 runtime dump — the wiki-era constants they
+        // replaced had EVERY clientbound config id one low (registry
+        // data was 0x06 there, 0x07 on the real wire): a real join would
+        // have failed to recognize any of these packets, and the e2e
+        // mocks were self-consistent with the old table and masked it.
+        use crate::generated::packet_ids as gen;
+        // clientbound configuration: the +1 drift wave
+        assert_eq!(clientbound::DISCONNECT, gen::CCB_DISCONNECT);
+        assert_eq!(clientbound::DISCONNECT, 2, "disconnect — the wiki-era 0x01 was one low");
+        assert_eq!(clientbound::FINISH, 3, "finish_configuration — wiki-era 0x02");
+        assert_eq!(clientbound::KEEP_ALIVE, 4, "wiki-era 0x03");
+        assert_eq!(clientbound::PING, 5, "wiki-era 0x04");
+        assert_eq!(clientbound::REGISTRY_DATA, 7, "registry_data — wiki-era 0x06");
+        // serverbound configuration: numerically stable, names moved
+        assert_eq!(serverbound::CLIENT_INFORMATION, 0);
+        assert_eq!(serverbound::PLUGIN_MESSAGE, 2, "minecraft:custom_payload");
+        assert_eq!(serverbound::ACKNOWLEDGE_FINISH, 3, "minecraft:finish_configuration");
+        assert_eq!(serverbound::KEEP_ALIVE, 4);
+        assert_eq!(serverbound::PONG, 5);
+        // login acknowledged lives in the LOGIN serverbound flow
+        assert_eq!(loginbound::LOGIN_ACKNOWLEDGED, gen::LSB_LOGIN_ACKNOWLEDGED);
+        assert_eq!(loginbound::LOGIN_ACKNOWLEDGED, 3);
+        // the full flows are dense: the last id is the entry count - 1
+        for (flow, count) in [
+            (&gen::CONFIG_CLIENTBOUND, 20),
+            (&gen::CONFIG_SERVERBOUND, 10),
+            (&gen::LOGIN_CLIENTBOUND, 6),
+            (&gen::LOGIN_SERVERBOUND, 5),
+            (&gen::STATUS_CLIENTBOUND, 2),
+            (&gen::STATUS_SERVERBOUND, 2),
+            (&gen::HANDSHAKE_SERVERBOUND, 1),
+        ] {
+            assert_eq!(flow.last().unwrap().0, (flow.len() - 1) as u32, "dense flow");
+            assert_eq!(flow.len(), count, "flow size pinned from the 26.2 dump");
+        }
+        // the status/handshake facts the framers now reference
+        assert_eq!(gen::TCB_STATUS_RESPONSE, 0);
+        assert_eq!(gen::TSB_STATUS_REQUEST, 0);
+        assert_eq!(gen::HSB_INTENTION, 0);
+        assert_eq!(gen::LSB_HELLO, 0, "login start is hello");
     }
 }
