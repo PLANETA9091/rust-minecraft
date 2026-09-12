@@ -6,16 +6,16 @@
 //! client world needs.
 //!
 //! Clean-room wiki.vg shapes for 1.20.5+ / 26.x (play state):
-//! - Login (clientbound 0x27): Entity ID (Int), Is Hardcore (Bool),
+//! - Login (clientbound: generated id 49): Entity ID (Int), Is Hardcore (Bool),
 //!   Dimension Count (VarInt) + names (String), Max Players (VarInt,
 //!   unused by vanilla), View Distance (VarInt), Simulation Distance
 //!   (VarInt), Reduced Debug (Bool), Enable Respawn Screen (Bool), Do
 //!   Limited Crafting (Bool), Has Death Location (Bool [+ dimension name
 //!   + 8-byte position]), Portal Cooldown (VarInt).
-//! - Synchronize Player Position (clientbound 0x3C): X/Y/Z (Double),
+//! - Synchronize Player Position (clientbound: generated id 72): X/Y/Z (Double),
 //!   Yaw/Pitch (Float), Relativity Flags (UByte), Teleport ID (VarInt) —
 //!   answered with Confirm Teleportation (serverbound 0x00, id verbatim).
-//! - Chunk Data and Update Light (clientbound 0x23): Chunk X/Z (Int),
+//! - Chunk Data and Update Light (clientbound: generated id 45): Chunk X/Z (Int),
 //!   Heightmaps (network NBT — walked and skipped), chunk buffer (VarInt
 //!   length) of sections back to back, block entities (skipped), light
 //!   masks (ignored — the sky-light layer is future work).
@@ -28,14 +28,14 @@
 //!   9..=15 direct; biomes 0 = single, 1..=3 indirect, 4..=15 direct.
 //!   Decoded arrays are fully RESOLVED global ids (flat Vec<u32>) —
 //!   compact client-side storage is the future mesher's concern.
-//! - Set Center Chunk (clientbound 0x4E): VarInt chunk X/Z.
-//! - Unload Chunk (clientbound 0x1D): Long ((z << 32) | (x & 0xFFFFFFFF)).
+//! - Set Center Chunk (clientbound: generated id 94): VarInt chunk X/Z.
+//! - Unload Chunk (clientbound: generated id 37): Long ((z << 32) | (x & 0xFFFFFFFF)).
 //! - Keep Alive (clientbound 0x22 / serverbound 0x14): i64 verbatim.
 //! - Ping (clientbound 0x31 / serverbound 0x22): i32 verbatim.
 //! - Chunk Batch Start (clientbound 0x0D) → Chunk Batch Received
-//!   (serverbound 0x07, f32 desired chunks per tick) — a vanilla server
+//!   (serverbound: generated id 11, f32 desired chunks per tick) — a vanilla server
 //!   PAUSES chunk streaming until this reply arrives.
-//! - Disconnect (clientbound 0x1A): chat JSON reason, flattened.
+//! - Disconnect (clientbound: generated id 32): chat JSON reason, flattened.
 //! - Everything else is read and SKIPPED (entity metadata, time, sounds,
 //!   scoreboard... — no gameplay surface yet; unknown ids never error).
 
@@ -48,27 +48,33 @@ use crate::framing::PacketConn;
 use crate::varint::{read_string, read_varint, write_varint};
 use crate::DEFAULT_TIMEOUT_SECS;
 
-/// Clientbound play packet ids (wiki.vg play state). Public protocol
-/// facts — mock servers / tooling assert against them.
+/// Clientbound play packet ids, GENERATED from the official jar's REAL
+/// bootstrapped play protocol (`mc2rs-gen dump-packet-ids` binds the
+/// vanilla flows and dumps the live dispatch codec's id map). The previous
+/// hand-kept wiki-era table was stale for the 26.2 protocol — every id
+/// below had drifted (login 0x27 -> 49, chunk data 0x23 -> 45, ...); the
+/// e2e mocks were self-consistent with the old table and masked it.
+/// Runtime facts: login = 49, respawn = 82, chunk data = 45.
 pub mod clientbound {
-    pub const BATCH_START: i32 = 0x0D;
-    pub const DISCONNECT: i32 = 0x1A;
-    pub const UNLOAD_CHUNK: i32 = 0x1D;
-    pub const KEEP_ALIVE: i32 = 0x22;
-    pub const CHUNK_DATA: i32 = 0x23;
-    pub const LOGIN: i32 = 0x27;
-    pub const PING: i32 = 0x31;
-    pub const SYNCHRONIZE_POSITION: i32 = 0x3C;
-    pub const CENTER_CHUNK: i32 = 0x4E;
+    pub use crate::generated::packet_ids::{
+        CB_CHUNK_BATCH_START as BATCH_START, CB_DISCONNECT as DISCONNECT,
+        CB_FORGET_LEVEL_CHUNK as UNLOAD_CHUNK, CB_KEEP_ALIVE as KEEP_ALIVE,
+        CB_LEVEL_CHUNK_WITH_LIGHT as CHUNK_DATA, CB_LOGIN as LOGIN, CB_PING as PING,
+        CB_PLAYER_POSITION as SYNCHRONIZE_POSITION, CB_RESPAWN as RESPAWN,
+        CB_SET_CHUNK_CACHE_CENTER as CENTER_CHUNK,
+    };
 }
 
-/// Serverbound play packet ids (wiki.vg play state). Public protocol
-/// facts — mock servers / tooling assert against them.
+/// Serverbound play packet ids, GENERATED from the official jar's REAL
+/// bootstrapped play protocol (see `clientbound` for the full story).
+/// Runtime facts: accept teleportation = 0, chunk batch received = 11,
+/// keep alive = 28, pong = 45.
 pub mod serverbound {
-    pub const CONFIRM_TELEPORTATION: i32 = 0x00;
-    pub const CHUNK_BATCH_RECEIVED: i32 = 0x07;
-    pub const KEEP_ALIVE: i32 = 0x14;
-    pub const PONG: i32 = 0x22;
+    pub use crate::generated::packet_ids::{
+        SB_ACCEPT_TELEPORTATION as CONFIRM_TELEPORTATION,
+        SB_CHUNK_BATCH_RECEIVED as CHUNK_BATCH_RECEIVED, SB_KEEP_ALIVE as KEEP_ALIVE,
+        SB_PONG as PONG,
+    };
 }
 
 /// Fixed chunk-streaming pace requested in Chunk Batch Received. The
@@ -338,7 +344,7 @@ fn skip_bytes(r: &mut &[u8], n: i64) -> std::io::Result<()> {
 // packet parsers (full payload including the packet id)
 // ---------------------------------------------------------------------------
 
-/// Parse the play-state Login (clientbound 0x27).
+/// Parse the play-state Login (clientbound: generated id 49).
 pub fn parse_world_info(payload: &[u8]) -> Result<WorldInfo> {
     let mut c: &[u8] = payload;
     let id = read_varint(&mut c)?;
@@ -374,7 +380,7 @@ pub fn parse_world_info(payload: &[u8]) -> Result<WorldInfo> {
     })
 }
 
-/// Parse Chunk Data and Update Light (clientbound 0x23) into a decoded
+/// Parse Chunk Data and Update Light (clientbound: generated id 45) into a decoded
 /// column. Heightmaps and block entities are walked and skipped; the
 /// light masks after them are ignored (sky-light is future work).
 pub fn parse_chunk_data(payload: &[u8]) -> Result<ChunkColumn> {
@@ -426,7 +432,7 @@ pub fn parse_play_ping(payload: &[u8]) -> Result<i32> {
     Ok(i32::from_be_bytes(c[..4].try_into()?))
 }
 
-/// Parse Synchronize Player Position (clientbound play 0x3C).
+/// Parse Synchronize Player Position (clientbound: generated id 72).
 pub fn parse_synchronize_position(payload: &[u8]) -> Result<PlayerPosition> {
     let mut c: &[u8] = payload;
     let id = read_varint(&mut c)?;
@@ -445,7 +451,7 @@ pub fn parse_synchronize_position(payload: &[u8]) -> Result<PlayerPosition> {
     Ok(PlayerPosition { x, y, z, yaw, pitch, flags, teleport_id })
 }
 
-/// Parse Set Center Chunk (clientbound play 0x4E): VarInt chunk X/Z.
+/// Parse Set Center Chunk (clientbound: generated id 94): VarInt chunk X/Z.
 pub fn parse_center_chunk(payload: &[u8]) -> Result<(i32, i32)> {
     let mut c: &[u8] = payload;
     let id = read_varint(&mut c)?;
@@ -455,7 +461,7 @@ pub fn parse_center_chunk(payload: &[u8]) -> Result<(i32, i32)> {
     Ok((x, z))
 }
 
-/// Parse Unload Chunk (clientbound play 0x1D): the packed coordinate long.
+/// Parse Unload Chunk (clientbound: generated id 37): the packed coordinate long.
 pub fn parse_unload_chunk(payload: &[u8]) -> Result<(i32, i32)> {
     let mut c: &[u8] = payload;
     let id = read_varint(&mut c)?;
@@ -751,6 +757,35 @@ mod tests {
     use crate::varint::write_string;
     use std::net::TcpListener;
     use std::thread::JoinHandle;
+
+    #[test]
+    fn play_ids_are_the_generated_runtime_facts() {
+        // The table is GENERATED from the official jar's own bootstrapped
+        // protocol (`mc2rs-gen dump-packet-ids`); these pins come from the
+        // real 26.2 runtime dump — the wiki-era constants they replaced
+        // were stale for this protocol version (login was 0x27 there).
+        assert_eq!(clientbound::LOGIN, 49, "login, runtime-dumped");
+        assert_eq!(clientbound::CHUNK_DATA, 45, "level_chunk_with_light");
+        assert_eq!(clientbound::KEEP_ALIVE, 44);
+        assert_eq!(clientbound::PING, 61);
+        assert_eq!(clientbound::DISCONNECT, 32);
+        assert_eq!(clientbound::BATCH_START, 12, "chunk_batch_start");
+        assert_eq!(clientbound::UNLOAD_CHUNK, 37, "forget_level_chunk");
+        assert_eq!(clientbound::SYNCHRONIZE_POSITION, 72, "player_position");
+        assert_eq!(clientbound::CENTER_CHUNK, 94, "set_chunk_cache_center");
+        assert_eq!(clientbound::RESPAWN, 82, "the dimension-change packet");
+        assert_eq!(serverbound::CONFIRM_TELEPORTATION, 0, "accept_teleportation");
+        assert_eq!(serverbound::CHUNK_BATCH_RECEIVED, 11);
+        assert_eq!(serverbound::KEEP_ALIVE, 28);
+        assert_eq!(serverbound::PONG, 45);
+        // both flows are dense: the last id is the entry count - 1
+        let cb = &crate::generated::packet_ids::PLAY_CLIENTBOUND;
+        let sb = &crate::generated::packet_ids::PLAY_SERVERBOUND;
+        assert_eq!(cb.last().unwrap().0, (cb.len() - 1) as u32, "clientbound dense");
+        assert_eq!(sb.last().unwrap().0, (sb.len() - 1) as u32, "serverbound dense");
+        assert_eq!(cb.len(), 141);
+        assert_eq!(sb.len(), 69);
+    }
 
     #[test]
     fn palette_packing_roundtrips_without_spanning_longs() {

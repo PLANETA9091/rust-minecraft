@@ -1,6 +1,7 @@
 import io.netty.buffer.ByteBuf;
 import net.minecraft.network.ProtocolInfo;
 import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.protocol.PacketType;
 import net.minecraft.network.protocol.SimpleUnboundProtocol;
 import net.minecraft.network.protocol.UnboundProtocol;
 import net.minecraft.network.protocol.game.GameProtocols;
@@ -39,7 +40,7 @@ public class DumpPacketIds {
             Method bind = SimpleUnboundProtocol.class.getMethod("bind", Function.class);
             Object cbInfo = bind.invoke(GameProtocols.CLIENTBOUND_TEMPLATE, decorator);
             for (Map.Entry<Object, Integer> e : sortedIds(codec.invoke(cbInfo))) {
-                out.println("cb " + e.getValue() + " " + e.getKey());
+                out.println("cb " + e.getValue() + " " + identifier(e.getKey()));
             }
             // serverbound play binds through the context protocol with an
             // empty vanilla Context (hasInfiniteMaterials=false default path)
@@ -52,7 +53,7 @@ public class DumpPacketIds {
                         }
                     });
             for (Map.Entry<Object, Integer> e : sortedIds(codec.invoke(sbInfo))) {
-                out.println("sb " + e.getValue() + " " + e.getKey());
+                out.println("sb " + e.getValue() + " " + identifier(e.getKey()));
             }
         }
     }
@@ -64,6 +65,12 @@ public class DumpPacketIds {
         List<Map.Entry<Object, Integer>> entries = new ArrayList<>(map.entrySet());
         entries.sort(Comparator.comparingInt(Map.Entry::getValue));
         return entries;
+    }
+
+    /** The packet type's identifier ("minecraft:respawn") via the record accessor. */
+    static String identifier(Object type) throws Exception {
+        Method id = PacketType.class.getMethod("id");
+        return id.invoke(type).toString();
     }
 
     /** Depth-limited object-graph search for the fastutil id map. */

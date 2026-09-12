@@ -7,6 +7,7 @@ mod fontgen;
 mod jar;
 mod langgen;
 mod manifest;
+mod packet_dump;
 mod runtime_dump;
 mod skygen;
 mod soundgen;
@@ -67,6 +68,21 @@ enum Cmd {
     /// sha1-verified) with the checked-in runtime dumper and emit
     /// mc-registry/src/generated/block_ids.rs.
     DumpBlockStates {
+        #[arg(long)]
+        version: String,
+        /// Workspace root (contains crates/).
+        #[arg(long, default_value = ".")]
+        out: String,
+        /// Explicit java binary (>= the version's java requirement from
+        /// the manifest). Default: `java` on PATH.
+        #[arg(long)]
+        java: Option<String>,
+    },
+    /// Generate the bytecode-true play packet id tables: bind the REAL
+    /// vanilla play clientbound + serverbound protocols from the official
+    /// jar (all sha1-verified) with the checked-in runtime dumper and emit
+    /// mc-protocol/src/generated/packet_ids.rs.
+    DumpPacketIds {
         #[arg(long)]
         version: String,
         /// Workspace root (contains crates/).
@@ -145,6 +161,9 @@ fn main() -> Result<()> {
         }
         Cmd::DumpBlockStates { version, out, java } => {
             runtime_dump::dump_block_states(&agent, &cache, &version, Path::new(&out), java.as_deref())?;
+        }
+        Cmd::DumpPacketIds { version, out, java } => {
+            packet_dump::dump_packet_ids(&agent, &cache, &version, Path::new(&out), java.as_deref())?;
         }
         Cmd::Assets { version, dir, filter } => {
             let m = manifest::load(&agent)?;

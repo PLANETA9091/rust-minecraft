@@ -83,7 +83,7 @@ pub fn resolve_java(explicit: Option<&str>, required_major: u32) -> Result<PathB
 /// Materialize one artifact as a classpath FILE (cache-first: the bytes
 /// already sit in the content-addressed cache; the file only appears when
 /// its sha1 matches).
-fn materialize(
+pub(crate) fn materialize(
     agent: &ureq::Agent,
     cache: &Cache,
     cp_dir: &Path,

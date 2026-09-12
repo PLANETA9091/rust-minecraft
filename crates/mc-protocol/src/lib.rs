@@ -1,4 +1,4 @@
-//! mc-protocol — hand-rolled Minecraft protocol layer (clean-room, wiki.vg-based).
+//! mc-protocol — hand-rolled Minecraft protocol layer (clean-room).
 //!
 //! Includes: VarInt/VarLong, packet framing with zlib compression support,
 //! handshake + status (server list ping), offline-mode login sequence, the
@@ -6,9 +6,12 @@
 //! decoded — the dimension-type vertical layout), network NBT read/write,
 //! and the play state itself — the first real world from the network
 //! (probes answered, chunk data decoded into resolved block/biome ids).
+//! The play wire ids are GENERATED from the official jar's own
+//! bootstrapped protocol (see `generated::packet_ids`).
 
 pub mod config;
 pub mod framing;
+pub mod generated;
 pub mod login;
 pub mod nbt;
 pub mod play;
