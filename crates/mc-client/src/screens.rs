@@ -321,12 +321,15 @@ impl App {
             fog_near: n * 0.55,
             fog_far: n * 1.7,
         };
-        // Official render order: sky color -> sun/moon/stars -> terrain.
+        // Official render order: sky color -> sun/moon/stars -> terrain ->
+        // clouds (depth-tested against terrain, the CLOUDS pass runs with
+        // the main depth buffer in the game's frame graph).
         fb.clear(sky.sky_color, sky.fog_color);
         crate::sky::render_celestials(fb, &ctx, &cam, day_time);
         if let Some(quads) = &self.world_quads {
             fb.draw_quads(&ctx, quads);
         }
+        crate::sky::render_clouds(fb, &ctx, &cam, day_time, 0.0);
     }
 
     fn ensure_world(&mut self) {

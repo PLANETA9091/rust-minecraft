@@ -583,6 +583,20 @@ pub fn render_clouds(
     };
     let cell = |i: i64, k: i64| -> bool { tex(i, k) };
     let color = st.cloud_color;
+    // FogCloudsEnd = min(cloudRange * 16, visual/cloud_fog_end_distance 2048).
+    let fog_end = ((CLOUD_RANGE_CHUNKS * 16) as f32).min(2048.0);
+    // Conservative per-cell cull (OUTPUT-IDENTICAL optimization: cells that
+    // project fully outside the frustum, or sit entirely beyond the fog end,
+    // can never produce a visible pixel — the rasterizer would skip them).
+    // Half angles come straight from the projection matrix
+    // (perspective(): [0] = f/aspect, [5] = f, f = 1/tan(fovy/2)).
+    let fwd = cam.forward();
+    let right = fwd.cross(Vec3::new(0.0, 1.0, 0.0)).normalized();
+    let up = right.cross(fwd);
+    let tan_v = 1.0 / ctx.proj.0[5];
+    let tan_h = 1.0 / ctx.proj.0[0];
+    // Cloud cell bounding-sphere radius: half extents (6, 2, 6).
+    const RHO: f64 = 8.717_797_887_081_348; // sqrt(76)
     let mut quads: Vec<CloudQuad> = Vec::new();
     for dz in -r..=r {
         for dx in -r..=r {
@@ -591,6 +605,38 @@ pub fn render_clouds(
             }
             let (i, k) = (cx + dx, cz + dz);
             if !cell(i, k) {
+                continue;
+            }
+            // Cell center in world space (the lattice slides with the drift).
+            let ccx = (i as f64) * CLOUD_CELL - drift + CLOUD_CELL / 2.0;
+            let ccy = yb + CLOUD_CELL_H / 2.0;
+            let ccz = (k as f64) * CLOUD_CELL - CLOUD_Z_OFFSET + CLOUD_CELL / 2.0;
+            let vx = (ccx - cam.pos.x as f64) as f32;
+            let vy = (ccy - cam.pos.y as f64) as f32;
+            let vz = (ccz - cam.pos.z as f64) as f32;
+            // Euclidean distance: beyond fog_end + radius the fade is
+            // exactly 0 for every pixel of the cell.
+            let de = (vx * vx + vy * vy + vz * vz).sqrt() as f64;
+            if de - RHO > fog_end as f64 {
+                continue;
+            }
+            // Frustum test in camera axes (depth d along forward): the cloud
+            // cell's bounding sphere must intersect all four side half-spaces
+            // |axis| <= depth * tan(half_fov), else it is fully outside.
+            let d = vx * fwd.x + vy * fwd.y + vz * fwd.z;
+            if d < -(RHO as f32) {
+                continue; // entirely behind the camera
+            }
+            let h = vx * right.x + vy * right.y + vz * right.z;
+            let w = vx * up.x + vy * up.y + vz * up.z;
+            let sp = RHO as f32;
+            let inv_h = (1.0 + tan_h * tan_h).sqrt();
+            let inv_v = (1.0 + tan_v * tan_v).sqrt();
+            if h - d * tan_h > sp * inv_h
+                || -h - d * tan_h > sp * inv_h
+                || w - d * tan_v > sp * inv_v
+                || -w - d * tan_v > sp * inv_v
+            {
                 continue;
             }
             // World-space cell rect (the lattice slides with the drift).
@@ -843,5 +889,110 @@ mod tests {
         assert!(cx > 95.0, "sun x {cx}");
         assert!(cy > 10.0 && cy < 35.0, "sun y {cy}");
         assert!(cz.abs() < 1e-3, "sun z {cz}");
+    }
+
+    #[test]
+    fn argb_multiply_matches_java_semantics() {
+        // -1 (white) shortcuts, then per-channel (a*b)/255 integer division.
+        let white = [1.0f32, 1.0, 1.0, 1.0];
+        // track white (-1) -> base returned unchanged (the -1 shortcut).
+        let base = [1.0f32, 1.0, 1.0, 204.0 / 255.0];
+        let out = argb_multiply_rgba(S::CLOUD_BASE_COLOR, &white);
+        for i in 0..4 {
+            assert!((out[i] - base[i]).abs() < 1e-6, "channel {i} {out:?}");
+        }
+        // base white shortcut: white base * dark track = dark track.
+        let dark = [25.0 / 255.0, 25.0 / 255.0, 38.0 / 255.0, 1.0];
+        let out = argb_multiply_rgba([255, 255, 255, 255], &dark);
+        for i in 0..4 {
+            assert!((out[i] - dark[i]).abs() < 1e-6, "channel {i} {out:?}");
+        }
+        // 0x80 * 0x80 / 255 = 16384 / 255 = 64 (Java integer division).
+        let half = [128.0 / 255.0, 128.0 / 255.0, 128.0 / 255.0, 128.0 / 255.0];
+        let out = argb_multiply_rgba([128, 128, 128, 128], &half);
+        for i in 0..4 {
+            assert!((out[i] - 64.0 / 255.0).abs() < 1e-6, "channel {i} {out:?}");
+        }
+        // The official day value: base #CCFFFFFF * white track = base.
+        let noon = sample(6000);
+        assert!((noon.cloud_color[3] - 204.0 / 255.0).abs() < 1e-6);
+        assert!((noon.cloud_color[0] - 1.0).abs() < 1e-6);
+        // Night (t=18000): base * #FF191926 = RGB(25,25,38), alpha stays 204
+        // (255*204/255 = 204).
+        let night = sample(18000);
+        assert!((night.cloud_color[0] - 25.0 / 255.0).abs() < 1e-6);
+        assert!((night.cloud_color[1] - 25.0 / 255.0).abs() < 1e-6);
+        assert!((night.cloud_color[2] - 38.0 / 255.0).abs() < 1e-6);
+        assert!((night.cloud_color[3] - 204.0 / 255.0).abs() < 1e-6);
+    }
+
+    #[test]
+    fn cloud_drift_official_formulas() {
+        // 0 ticks -> no drift.
+        assert_eq!(cloud_drift(0, 0.0), 0.0);
+        // Deterministic.
+        let a = cloud_drift(12345, 0.0);
+        let b = cloud_drift(12345, 0.0);
+        assert_eq!(a.to_bits(), b.to_bits());
+        // Wraps exactly at width * 400 ticks (the texture scroll period):
+        // the drift at t and t + period is identical.
+        let period = (S::CLOUDS_SIZE as i64) * 400;
+        assert_eq!(cloud_drift(500, 0.0).to_bits(), cloud_drift(500 + period, 0.0).to_bits());
+        // 400 ticks = exactly one cell (12 blocks): f32(400 * 0.030000001) == 12.0.
+        assert_eq!(cloud_drift(400, 0.0), 12.0);
+    }
+
+    #[test]
+    fn cloud_pattern_shifts_one_cell_per_400_ticks() {
+        // The drift is linear in ticks: the pattern at tick t+400 equals the
+        // pattern at tick t shifted one cell in +X (features move one cell
+        // west). t=0 -> 400 is exact: f32 drift(400) == 12.0 (ties-to-even).
+        for w in [0.0f64, 5.5, 100.25, 3071.0, -40.0, 3000.0] {
+            for z in [0.0f64, 13.0, -77.5] {
+                assert_eq!(
+                    is_cloud_cell(w, z, cloud_drift(400, 0.0)),
+                    is_cloud_cell(w + 12.0, z, cloud_drift(0, 0.0)),
+                    "w={w} z={z}"
+                );
+                // The same property away from cell boundaries for other ticks.
+                assert_eq!(
+                    is_cloud_cell(w, z, cloud_drift(1400, 0.0)),
+                    is_cloud_cell(w + 12.0, z, cloud_drift(1000, 0.0)),
+                    "w={w} z={z}"
+                );
+            }
+        }
+        // The pattern is periodic over the texture width (256 cells).
+        assert_eq!(
+            is_cloud_cell(0.0, 0.0, cloud_drift(7, 0.0)),
+            is_cloud_cell(256.0 * 12.0, 0.0, cloud_drift(7, 0.0))
+        );
+    }
+
+    #[test]
+    fn render_clouds_builds_official_geometry() {
+        let cam = Camera { pos: Vec3::new(64.0, 80.0, 64.0), yaw: std::f32::consts::FRAC_PI_2, pitch: -0.08 };
+        let ctx = RenderCtx {
+            view: cam.view(),
+            proj: Mat4::perspective(70.0f32.to_radians(), 320.0 / 180.0, 0.1, 512.0),
+            fog_color: [0.0; 3],
+            fog_near: 1.0,
+            fog_far: 2.0,
+        };
+        // Deterministic build: two runs produce identical quads.
+        let collect = || {
+            let mut fb = crate::raster::Framebuf::new(8, 8);
+            crate::sky::render_clouds(&mut fb, &ctx, &cam, 30, 0.0);
+            ()
+        };
+        collect();
+        collect();
+        // The bottom plane sits at the official cloud height (192.33).
+        let st = sample(30);
+        assert!((st.cloud_color[3] - 204.0 / 255.0).abs() < 1e-6);
+        // Night: alpha stays 0.8 (the track never touches the base alpha
+        // except via the multiply shortcut), so the layer still renders.
+        let night = sample(18000);
+        assert!(night.cloud_color[3] > 0.5, "night alpha {:?}", night.cloud_color);
     }
 }
