@@ -329,13 +329,12 @@ impl App {
             if s.online {
                 let ver = format!("{} - {}", s.ping_ms, s.version);
                 let vw = g.text_width(&ver);
-                g.text(a, cx + 68 - vw, y, &ver, GRAY, true);
-                g.sprite(a, s.ping_icon(), cx + 58, y + 10);
+                g.text(a, cx + 98 - vw, y, &ver, GRAY, true);
+                g.sprite(a, s.ping_icon(), cx + 88, y + 10);
             } else {
                 let msg = tr("connect.failed").unwrap_or("Failed to connect to the server");
-                g.sprite(a, s.ping_icon(), cx + 58, y + 10);
-                let mw = g.text_width(msg);
-                g.text(a, cx + 56 - mw, y + 10, msg, [0.667, 0.333, 0.333], true);
+                g.text(a, cx - 98, y + 10, msg, [0.667, 0.333, 0.333], true);
+                g.sprite(a, s.ping_icon(), cx + 88, y + 10);
             }
         }
         // action buttons
