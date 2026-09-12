@@ -254,6 +254,29 @@ hand-drawn:
   smooth average carries both terms; the regenerated golden re-renders
   at rms 0.000), and the eight legacy goldens are untouched by
   construction (procedural scenes carry no light layer).
+  The **day/night curve is data-driven (v0.3.42 — the TIMELINE
+  registry parse)**: the eighth javap audit proved the wire facts —
+  `Registries.TIMELINE` = the `minecraft:timeline` registry
+  (synced); the Registry Data packet is ELEMENTS ONLY
+  (`ClientboundRegistryDataPacket` is the record (registry, entries))
+  and the tags ride a separate common-phase `ClientboundUpdateTagsPacket`
+  (a map of registry name -> tag name -> VarInt id list); the
+  timeline element (`Timeline.DIRECT_CODEC`) is `clock` (required
+  string) + `period_ticks` (optional int) + `tracks` (a map whose
+  values are `keyframes` of {ticks, value} with `ease` defaulting to
+  LINEAR). The client decodes ONE track today —
+  `visual/sky_light_factor` (the string/bool gameplay tracks are
+  walked past) — and resolves the dimension's curve DATA-DRIVEN: the
+  element's `timelines` reference (the tag form
+  `#minecraft:in_overworld`) narrows through the Update Tags ids to
+  the tag's timelines, the first track-carrier serves (real data:
+  only `minecraft:day` carries it — moon/early_game do not), and the
+  cyclic-linear evaluation is the golden-pinned math from the
+  snapshot era. The compile-time day.json keyframes REMAIN as the
+  documented fallback: a server with no timeline knowledge renders
+  bit-identically, and an unknown tag never resurrects an off-tag
+  carrier. The e2e mock streams the timeline registry + Update Tags
+  like a real vanilla server; the live join carries the table.
   The **wire ids of every phase are generated**:
   `mc2rs-gen dump-packet-ids` binds the official jar's REAL protocols —
   play, login, configuration, status AND handshake — and dumps each
