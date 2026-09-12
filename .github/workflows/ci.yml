@@ -128,6 +128,14 @@ jobs:
       - name: Pixel compare vs golden
         if: steps.golden.outputs.present == 'yes'
         run: cargo run --release -p mc2rs-pixel -- --a fresh.png --b goldens/cpu_320x180.png --out diff.png --max-rms 8
+      - name: Render network-view frame (wire fixture)
+        run: cargo run --release -p mc-client -- --headless --net-world --width 320 --height 180 --frames 1 --out net.png
+      - name: Network golden present?
+        id: net_golden
+        run: echo "present=$(test -f goldens/net_320x180.png && echo yes || echo no)" >> "$GITHUB_OUTPUT"
+      - name: Pixel compare network view vs golden
+        if: steps.net_golden.outputs.present == 'yes'
+        run: cargo run --release -p mc2rs-pixel -- --a net.png --b goldens/net_320x180.png --out net_diff.png --max-rms 8
       - name: Upload pixel artifacts
         uses: actions/upload-artifact@v4
         if: always()
@@ -136,4 +144,6 @@ jobs:
           path: |
             diff.png
             fresh.png
+            net.png
+            net_diff.png
           if-no-files-found: ignore

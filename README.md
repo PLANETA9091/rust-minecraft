@@ -179,6 +179,26 @@ hand-drawn:
   procedural scene, every golden — meshes BIT-IDENTICALLY to the legacy
   path: no golden changed, and the all-unknown layer is proven
   invisible by test.
+- **The NETWORK view has its own golden (v0.3.38 — the wire pipeline is
+  now pixel-pinned)**: `--net-world` renders a deterministic scene that
+  never exists as Rust data: full Chunk Data packets (the shared
+  `test_support` writer) are decoded by the REAL `parse_chunk_data`,
+  applied to the `WorldModel`, materialized through the generated
+  runtime mapper, then meshed WITH the light layer active. The scene is
+  a pure function of grid coordinates — a stepped hill whose bedrock,
+  ore sprinkles and grass skin ride section 0, one floating stone shelf
+  whose footprint the sky arrays mark as hard shadow (sky 0 under it),
+  and a torch cell painting the vanilla 14..0 block-light gradient over
+  the shadowed ground. The fixed CPU orbit camera (the same framing as
+  the procedural goldens) looks under the slab: bright sky-15 terrain
+  proves the ramp's top end renders legacy-identical, the shadow proves
+  the dark end, the gradient pins the corner-averaging. Block state ids
+  resolve FROM the generated table at build time (a registry drift
+  panics the fixture instead of silently misrendering), the palette
+  entries are wire indices, and the engine layers (bit 0 below, bit 4
+  above) ride the tail for real. `goldens/net_320x180.png` joins the
+  CI pixel job and the local verifier at rms <= 8 — the same class as
+  the CPU goldens (shared float raster math).
   The **wire ids of every phase are generated**:
   `mc2rs-gen dump-packet-ids` binds the official jar's REAL protocols —
   play, login, configuration, status AND handshake — and dumps each
