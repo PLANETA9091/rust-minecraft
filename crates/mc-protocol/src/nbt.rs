@@ -103,11 +103,14 @@ impl Nbt {
 /// Write one NBT value as an anonymous-root network compound (the root
 /// MUST be a compound — the network format has no named root).
 pub fn write_network_nbt(value: &Nbt, out: &mut Vec<u8>) -> io::Result<()> {
-    if !matches!(value, Nbt::Compound(_)) {
-        return Err(corrupt("network NBT root must be a compound"));
-    }
+    let entries = match value {
+        Nbt::Compound(entries) => entries,
+        _ => return Err(corrupt("network NBT root must be a compound")),
+    };
+    // the root tag is written HERE (write_payload emits its own tag for
+    // nested values — the root must not get a second one)
     out.push(0x0A);
-    write_payload(value, out, 0)
+    write_compound_contents(entries, out, 0)
 }
 
 // ---------------------------------------------------------------------------
@@ -196,6 +199,10 @@ fn read_u8(r: &mut &[u8]) -> io::Result<u8> {
     Ok(b[0])
 }
 
+fn read_u16(r: &mut &[u8]) -> io::Result<u16> {
+    Ok(u16::from_be_bytes(read_arr(r)?))
+}
+
 fn read_i16(r: &mut &[u8]) -> io::Result<i16> {
     Ok(i16::from_be_bytes(read_arr(r)?))
 }
@@ -222,42 +229,21 @@ fn write_payload(value: &Nbt, out: &mut Vec<u8>, depth: u32) -> io::Result<()> {
     if depth > MAX_DEPTH {
         return Err(corrupt("nbt: nesting deeper than 128"));
     }
+    // PAYLOAD ONLY — no tag byte (compound entries and list elements are
+    // named/tagged by their CONTAINER; the container writes the tag)
     match value {
-        Nbt::Byte(v) => {
-            out.push(0x01);
-            out.push(*v as u8);
-        }
-        Nbt::Short(v) => {
-            out.push(0x02);
-            out.extend_from_slice(&v.to_be_bytes());
-        }
-        Nbt::Int(v) => {
-            out.push(0x03);
-            out.extend_from_slice(&v.to_be_bytes());
-        }
-        Nbt::Long(v) => {
-            out.push(0x04);
-            out.extend_from_slice(&v.to_be_bytes());
-        }
-        Nbt::Float(v) => {
-            out.push(0x05);
-            out.extend_from_slice(&v.to_be_bytes());
-        }
-        Nbt::Double(v) => {
-            out.push(0x06);
-            out.extend_from_slice(&v.to_be_bytes());
-        }
+        Nbt::Byte(v) => out.push(*v as u8),
+        Nbt::Short(v) => out.extend_from_slice(&v.to_be_bytes()),
+        Nbt::Int(v) => out.extend_from_slice(&v.to_be_bytes()),
+        Nbt::Long(v) => out.extend_from_slice(&v.to_be_bytes()),
+        Nbt::Float(v) => out.extend_from_slice(&v.to_be_bytes()),
+        Nbt::Double(v) => out.extend_from_slice(&v.to_be_bytes()),
         Nbt::ByteArray(bytes) => {
-            out.push(0x07);
             out.extend_from_slice(&(bytes.len() as i32).to_be_bytes());
             out.extend_from_slice(bytes);
         }
-        Nbt::String(s) => {
-            out.push(0x08);
-            write_nbt_string(s, out)?;
-        }
+        Nbt::String(s) => write_nbt_string(s, out)?,
         Nbt::List(items) => {
-            out.push(0x09);
             // inner tag: derived from the first item; the conventional
             // TAG_End for an empty list (documented tradeoff)
             let inner = match items.first() {
@@ -281,19 +267,14 @@ fn write_payload(value: &Nbt, out: &mut Vec<u8>, depth: u32) -> io::Result<()> {
                 write_payload(item, out, depth + 1)?;
             }
         }
-        Nbt::Compound(entries) => {
-            out.push(0x0A);
-            write_compound_contents(entries, out, depth + 1)?;
-        }
+        Nbt::Compound(entries) => write_compound_contents(entries, out, depth + 1)?,
         Nbt::IntArray(items) => {
-            out.push(0x0B);
             out.extend_from_slice(&(items.len() as i32).to_be_bytes());
             for v in items {
                 out.extend_from_slice(&v.to_be_bytes());
             }
         }
         Nbt::LongArray(items) => {
-            out.push(0x0C);
             out.extend_from_slice(&(items.len() as i32).to_be_bytes());
             for v in items {
                 out.extend_from_slice(&v.to_be_bytes());
@@ -303,14 +284,33 @@ fn write_payload(value: &Nbt, out: &mut Vec<u8>, depth: u32) -> io::Result<()> {
     Ok(())
 }
 
+/// The tag id byte for one value.
+fn tag_of(value: &Nbt) -> u8 {
+    match value {
+        Nbt::Byte(_) => 0x01,
+        Nbt::Short(_) => 0x02,
+        Nbt::Int(_) => 0x03,
+        Nbt::Long(_) => 0x04,
+        Nbt::Float(_) => 0x05,
+        Nbt::Double(_) => 0x06,
+        Nbt::ByteArray(_) => 0x07,
+        Nbt::String(_) => 0x08,
+        Nbt::List(_) => 0x09,
+        Nbt::Compound(_) => 0x0A,
+        Nbt::IntArray(_) => 0x0B,
+        Nbt::LongArray(_) => 0x0C,
+    }
+}
+
 fn write_compound_contents(entries: &[(String, Nbt)], out: &mut Vec<u8>, depth: u32) -> io::Result<()> {
+    if depth > MAX_DEPTH {
+        return Err(corrupt("nbt: nesting deeper than 128"));
+    }
     for (name, value) in entries {
-        // named entry: the TAG id travels with the payload
-        let mut tmp = Vec::new();
-        write_payload(value, &mut tmp, depth)?;
-        out.push(tmp[0]);
+        // every named entry: tag id + u16 name + payload
+        out.push(tag_of(value));
         write_nbt_string(name, out)?;
-        out.extend_from_slice(&tmp[1..]);
+        write_payload(value, out, depth)?;
     }
     out.push(0x00); // end of compound
     Ok(())
@@ -418,7 +418,7 @@ mod tests {
         assert_eq!(element.get("height").and_then(Nbt::as_i32), Some(384));
         assert_eq!(element.get("ultrawarm").and_then(Nbt::as_i32), Some(0), "byte widens");
         assert_eq!(element.get("absent").and_then(Nbt::as_i32), None);
-        assert_eq!(element.get("min_y"), None, "wrong level lookup is None, not an error");
+        assert_eq!(tree.get("min_y"), None, "a deep key is not found at the wrong level");
         let nether = &dims[1];
         assert_eq!(
             nether.get("element").and_then(|e| e.get("fixed_time")).and_then(Nbt::as_i32),
