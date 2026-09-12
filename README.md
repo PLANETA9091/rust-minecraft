@@ -285,6 +285,29 @@ hand-drawn:
   cannot see. Rendered once with the exact CI flags, bit-exact on
   re-render (rms 0.000), gated at rms <= 8 like its 320x180 sibling;
   verify_goldens.sh and the CI pixel job grew the tenth check.
+  The **biomes are decoded (v0.3.44 — the tint foundation)**: the synced
+  `minecraft:worldgen/biome` registry grew from a name table to real
+  elements — the NINTH javap audit pinned `Biome.NETWORK_CODEC` (the
+  codec `RegistryDataLoader`'s networked list binds — NOT the disk
+  DIRECT_CODEC): a record of exactly THREE, the climate settings
+  (`has_precipitation`/`temperature`/optional `temperature_modifier`/
+  `downfall`), the OPTIONAL `attributes` compound (the 26.x
+  environment-attribute migration's home for sky/fog/music —
+  `minecraft:visual/sky_color`, `minecraft:visual/fog_color`,
+  `minecraft:audio/background_music`; walked past: nothing consumes
+  them yet), and the required `effects` compound — and
+  `BiomeSpecialEffects` in 26.2 carries ONLY water color + the three
+  optional overrides (`grass_color`/`foliage_color`/the new
+  `dry_foliage_color`) + `grass_color_modifier` (exactly THREE
+  constants serialized `none`/`swamp`/`dark_forest`; absent ≡ "none",
+  vanilla's own optionalFieldOf default). The Update Tags payload's
+  biome tags are retained beside the timeline tags (tag -> ids ->
+  arrival-order names, the same chain the model resolves). Tagless
+  biome entries, missing climate/effects fields and unknown modifier
+  names are the drifts they are — errors, like vanilla's own loader.
+  Zero render-path pixels: the tint CONSUMERS come next; the ten
+  goldens are bit-identical by construction (the wire fixture carries
+  no registry knowledge).
   The **wire ids of every phase are generated**:
   `mc2rs-gen dump-packet-ids` binds the official jar's REAL protocols —
   play, login, configuration, status AND handshake — and dumps each
