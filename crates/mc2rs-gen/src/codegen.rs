@@ -14,6 +14,7 @@ use crate::fontgen::FontData;
 use crate::langgen::LangData;
 use crate::uigen::UiData;
 use crate::worldgen::WorldgenData;
+use crate::skygen::SkyData;
 
 /// All extractor outputs for one version.
 pub struct GenAll {
@@ -23,6 +24,7 @@ pub struct GenAll {
     pub ui: UiData,
     pub sounds: SoundData,
     pub worldgen: WorldgenData,
+    pub sky: SkyData,
 }
 
 /// Write/refresh all generated Rust files for a version.
@@ -79,6 +81,7 @@ pub fn emit(
     fs::write(reg_dir.join("sounds.rs"), crate::soundgen::emit(&gen.sounds)?).context("write sounds.rs")?;
     fs::write(reg_dir.join("worldgen.rs"), crate::worldgen::emit(&gen.worldgen)?)
         .context("write worldgen.rs")?;
+    fs::write(reg_dir.join("sky.rs"), crate::skygen::emit(&gen.sky)?).context("write sky.rs")?;
 
     // ---- build.rs (version stamp; deterministic — NO timestamps, CI drift-checks this) ----
     let build_info = format!(
@@ -126,6 +129,11 @@ pub fn emit(
         "soundEvents": gen.sounds.events.len(),
         "biomes": gen.worldgen.biomes.len(),
         "noiseSettings": gen.worldgen.noise_settings.len(),
+        "moonPhases": gen.sky.moon_phase_names.len(),
+        "dayTimelineKeyframes": gen.sky.sun_angle.keyframes.len()
+            + gen.sky.moon_angle.keyframes.len()
+            + gen.sky.star_angle.keyframes.len()
+            + gen.sky.star_brightness.keyframes.len(),
     });
     let report_path = workspace_root.join("mc2rs-report.json");
     fs::write(&report_path, serde_json::to_string_pretty(&report_json)?)

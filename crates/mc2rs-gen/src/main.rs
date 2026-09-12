@@ -7,6 +7,7 @@ mod fontgen;
 mod jar;
 mod langgen;
 mod manifest;
+mod skygen;
 mod soundgen;
 mod splashgen;
 mod uigen;
@@ -237,6 +238,9 @@ fn generate(agent: &ureq::Agent, cache: &util::Cache, version: &str, out: &Path)
     let splashes = splashgen::generate(&mut zip)?;
     let mut ui = uigen::generate(&mut zip)?;
     let worldgen = worldgen::generate(&mut zip)?;
+    // The 26.x day-night cycle is data: timeline tracks + dimension colors +
+    // real sun/moon-phase textures.
+    let sky = skygen::generate(&mut zip)?;
     // The asset index drives sounds.json AND the real title panorama
     // (the 26.2 jar ships 1x1 panorama placeholders in its place).
     let index = match fetch_asset_index(agent, cache, &vj) {
@@ -286,9 +290,16 @@ fn generate(agent: &ureq::Agent, cache: &util::Cache, version: &str, out: &Path)
         worldgen.biomes.len(),
         panorama_faces
     );
+    println!(
+        "      sky: day period {} ticks, {} moon phases, celestial textures {}x{}",
+        sky.day_period,
+        sky.moon_phase_names.len(),
+        sky.sun_rgba.0,
+        sky.sun_rgba.1
+    );
 
     println!("[5/7] generating registry + build info...");
-    let gen = codegen::GenAll { font, lang, splashes, ui, sounds: sounds_json, worldgen };
+    let gen = codegen::GenAll { font, lang, splashes, ui, sounds: sounds_json, worldgen, sky };
     let report_path = codegen::emit(&workspace_root, version, &client_sha1, &report, &gen)?;
 
     println!("[6/7] extracting REAL texture atlas (blockstates -> models -> PNGs)...");

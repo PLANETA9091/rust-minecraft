@@ -5,5 +5,6 @@ pub mod gui;
 pub mod items;
 pub mod lang;
 pub mod sounds;
+pub mod sky;
 pub mod splashes;
 pub mod worldgen;
