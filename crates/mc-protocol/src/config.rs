@@ -1,9 +1,10 @@
 //! Configuration (protocol state 3): the phase both sides enter after
 //! Login Success (via the serverbound Login Acknowledged). The vanilla
 //! client introduces itself (Client Information + the `minecraft:brand`
-//! plugin message), answers Keep Alive / Ping probes, skips the bulk
-//! registry/feature/resource-pack traffic and acknowledges the server's
-//! Finish Configuration — then the play state begins.
+//! plugin message), answers Keep Alive / Ping probes, Select Known Packs
+//! and Cookie Requests, skips the bulk feature/resource-pack traffic and
+//! acknowledges the server's Finish Configuration — then the play state
+//! begins.
 //!
 //! Runtime-true shapes for 1.20.5+ / 26.x (the wire IDS are GENERATED —
 //! `mc2rs-gen dump-packet-ids` binds the vanilla ConfigurationProtocols
@@ -42,11 +43,28 @@
 //! - Finish Configuration (clientbound 0x03) → Acknowledge Finish
 //!   Configuration (serverbound 0x03): both empty; after the ack the play
 //!   state begins.
-//! - Everything else (Cookie Request, Feature Flags, Resource Pack
-//!   Push/Pop, Select Known Packs, Custom Report Details, Server Links) is
-//!   read and SKIPPED — the client has no data-pack or resource-pack
-//!   surface yet; the vanilla server finishes configuration fine without
-//!   answering any of them.
+//! - Select Known Packs (clientbound 0x0E → serverbound 0x07, both
+//!   GENERATED): javap-proven 26.2 shape — a list of KnownPack records,
+//!   each THREE UTF STRINGS (namespace, id, version — the version is a
+//!   string, not a VarInt; `ByteBufCodecs.list(64)` caps the serverbound
+//!   reply). The vanilla server BLOCKS on this reply before finishing
+//!   configuration — an unanswered packet stalls a real join until the
+//!   30s timeout kicks it. The client replies with what it truly knows:
+//!   an EMPTY list (claiming a pack version we have not extracted would
+//!   make the server skip registry traffic we never received; empty
+//!   means the server streams its registries, which the Registry Data
+//!   parser already walks).
+//! - Cookie Request (clientbound 0x00 → serverbound Cookie Response 0x01,
+//!   both GENERATED): javap-proven 26.2 shapes — the request is one
+//!   Identifier key; the response is the key echoed + a nullable
+//!   byte-array payload (`ByteBufCodecs.byteArray(5120)` under the
+//!   nullable). The vanilla client ALWAYS answers — `Map.get` returning
+//!   null encodes as the absent payload — and the client stores no
+//!   server cookies, so the reply is key + Bool 0.
+//! - Everything else (Feature Flags, Resource Pack Push/Pop, Custom
+//!   Report Details, Server Links) is read and SKIPPED — the client has
+//!   no data-pack or resource-pack surface yet; the vanilla server
+//!   finishes configuration fine without answering those.
 
 use std::io::{Read, Write};
 
@@ -72,9 +90,10 @@ pub mod loginbound {
 pub mod serverbound {
     pub use crate::generated::packet_ids::{
         CSB_CLIENT_INFORMATION as CLIENT_INFORMATION,
+        CSB_COOKIE_RESPONSE as COOKIE_RESPONSE,
         CSB_CUSTOM_PAYLOAD as PLUGIN_MESSAGE,
         CSB_FINISH_CONFIGURATION as ACKNOWLEDGE_FINISH, CSB_KEEP_ALIVE as KEEP_ALIVE,
-        CSB_PONG as PONG,
+        CSB_PONG as PONG, CSB_SELECT_KNOWN_PACKS as SELECT_KNOWN_PACKS,
     };
 }
 
@@ -88,9 +107,10 @@ pub mod serverbound {
 /// and masked it (the same mask the play-id drift had).
 pub mod clientbound {
     pub use crate::generated::packet_ids::{
-        CCB_DISCONNECT as DISCONNECT, CCB_FINISH_CONFIGURATION as FINISH,
-        CCB_KEEP_ALIVE as KEEP_ALIVE, CCB_PING as PING,
-        CCB_REGISTRY_DATA as REGISTRY_DATA,
+        CCB_COOKIE_REQUEST as COOKIE_REQUEST, CCB_DISCONNECT as DISCONNECT,
+        CCB_FINISH_CONFIGURATION as FINISH, CCB_KEEP_ALIVE as KEEP_ALIVE,
+        CCB_PING as PING, CCB_REGISTRY_DATA as REGISTRY_DATA,
+        CCB_SELECT_KNOWN_PACKS as SELECT_KNOWN_PACKS,
     };
 }
 
@@ -127,6 +147,16 @@ impl RegistryData {
     fn merge(&mut self, other: RegistryData) {
         self.dimension_types.extend(other.dimension_types);
     }
+}
+
+/// One pack identity the server offers and the client may claim to know:
+/// the javap-proven 26.2 `KnownPack` record — THREE UTF STRINGS on the
+/// wire (the version is a string like "26.2", NOT a VarInt).
+#[derive(Debug, Clone, PartialEq)]
+pub struct KnownPack {
+    pub namespace: String,
+    pub id: String,
+    pub version: String,
 }
 
 /// The brand the vanilla server reports through its player list and logs
@@ -252,6 +282,57 @@ pub fn encode_config_ack() -> Vec<u8> {
     p
 }
 
+/// Select Known Packs reply (serverbound config 0x07 — generated): the
+/// javap-proven 26.2 shape — VarInt count (`ByteBufCodecs.list(64)`, the
+/// vanilla server's own cap) + per pack THREE UTF strings. The honest
+/// client answer is `&[]`: we claim nothing, so the server streams its
+/// registries instead of assuming we have them (claiming an unverified
+/// pack version would make a real server skip traffic we never got).
+pub fn encode_select_known_packs_reply(known: &[KnownPack]) -> Result<Vec<u8>> {
+    anyhow::ensure!(
+        known.len() <= 64,
+        "{} known packs exceeds the vanilla serverbound cap of 64",
+        known.len()
+    );
+    let mut p = Vec::with_capacity(2);
+    write_varint(&mut p, serverbound::SELECT_KNOWN_PACKS);
+    write_varint(&mut p, known.len() as i32);
+    for k in known {
+        write_string(&mut p, &k.namespace);
+        write_string(&mut p, &k.id);
+        write_string(&mut p, &k.version);
+    }
+    Ok(p)
+}
+
+/// Cookie Response (serverbound config 0x01 — generated): the javap-proven
+/// 26.2 shape — Identifier key + a NULLABLE byte-array payload
+/// (`ByteBufCodecs.byteArray(5120)` under the nullable). `None` is what
+/// the vanilla client sends when it has no stored cookie for the key —
+/// `Map.get` returning null encodes as Bool false — and the client
+/// stores no server cookies, so the driver always passes `None`.
+pub fn encode_cookie_response(key: &str, payload: Option<&[u8]>) -> Result<Vec<u8>> {
+    if let Some(bytes) = payload {
+        anyhow::ensure!(
+            bytes.len() <= 5120,
+            "cookie payload of {} bytes exceeds the vanilla cap of 5120",
+            bytes.len()
+        );
+    }
+    let mut p = Vec::with_capacity(4 + key.len());
+    write_varint(&mut p, serverbound::COOKIE_RESPONSE);
+    write_string(&mut p, key);
+    match payload {
+        None => p.push(0), // nullable absent — the vanilla no-cookie reply
+        Some(bytes) => {
+            p.push(1);
+            write_varint(&mut p, bytes.len() as i32);
+            p.extend_from_slice(bytes);
+        }
+    }
+    Ok(p)
+}
+
 // ---------------------------------------------------------------------------
 // packet parsers (full payload including the packet id)
 // ---------------------------------------------------------------------------
@@ -354,14 +435,60 @@ pub fn parse_registry_data(payload: &[u8]) -> Result<RegistryData> {
     Ok(out)
 }
 
+/// Parse Select Known Packs (clientbound config 0x0E — generated): the
+/// javap-proven 26.2 shape — VarInt pack count + per pack THREE UTF
+/// strings (namespace, id, version — the version is a STRING, not a
+/// VarInt). Vanilla's clientbound list uses the default collection cap
+/// (no small bound in the codec); real configuration flows carry a
+/// handful, so anything past 1024 is treated as the drift it is rather
+/// than allocated for.
+pub fn parse_select_known_packs(payload: &[u8]) -> Result<Vec<KnownPack>> {
+    let mut c: &[u8] = payload;
+    let id = read_varint(&mut c)?;
+    anyhow::ensure!(
+        id == clientbound::SELECT_KNOWN_PACKS,
+        "not a select-known-packs packet (0x{id:02X})"
+    );
+    let count = read_varint(&mut c)?;
+    anyhow::ensure!(
+        (0..=1024).contains(&count),
+        "select-known-packs carries {count} packs (past any sane flow)"
+    );
+    let mut out = Vec::with_capacity(count as usize);
+    for _ in 0..count {
+        let namespace = read_string(&mut c)?;
+        let id = read_string(&mut c)?;
+        let version = read_string(&mut c)?;
+        out.push(KnownPack { namespace, id, version });
+    }
+    anyhow::ensure!(c.is_empty(), "trailing bytes after the known packs");
+    Ok(out)
+}
+
+/// Parse Cookie Request (clientbound config 0x00 — generated): the
+/// javap-proven 26.2 shape — one Identifier key, nothing else.
+pub fn parse_cookie_request(payload: &[u8]) -> Result<String> {
+    let mut c: &[u8] = payload;
+    let id = read_varint(&mut c)?;
+    anyhow::ensure!(
+        id == clientbound::COOKIE_REQUEST,
+        "not a cookie request packet (0x{id:02X})"
+    );
+    let key = read_string(&mut c)?;
+    anyhow::ensure!(c.is_empty(), "trailing bytes after the cookie key");
+    Ok(key)
+}
+
 // ---------------------------------------------------------------------------
 // the configuration driver
 // ---------------------------------------------------------------------------
 
 /// Answer the server's configuration probes until Finish Configuration is
 /// acknowledged. Registry Data is decoded for the dimension-type vertical
-/// layout (everything else in it — other registries — is skipped);
-/// feature/resource-pack/cookie traffic is skipped wholesale; a config
+/// layout (everything else in it — other registries — is skipped); Select
+/// Known Packs gets the honest empty reply and Cookie Requests the
+/// no-cookie one (both BLOCK a real vanilla server otherwise);
+/// feature/resource-pack traffic is skipped wholesale; a config
 /// Disconnect surfaces as `PlayOutcome::Disconnected`.
 fn run_configuration<S: Read + Write>(
     conn: &mut PacketConn<S>,
@@ -386,6 +513,19 @@ fn run_configuration<S: Read + Write>(
             clientbound::REGISTRY_DATA => {
                 registry.merge(parse_registry_data(&pkt)?);
             }
+            clientbound::SELECT_KNOWN_PACKS => {
+                // validated, then answered with what we truly know:
+                // nothing beyond our own built-in (an empty list keeps
+                // the server streaming its registries — the safe path)
+                parse_select_known_packs(&pkt)?;
+                conn.send_packet(&encode_select_known_packs_reply(&[])?)?;
+            }
+            clientbound::COOKIE_REQUEST => {
+                let key = parse_cookie_request(&pkt)?;
+                // the vanilla client answers unconditionally; with no
+                // stored cookie the payload is the absent one (Bool 0)
+                conn.send_packet(&encode_cookie_response(&key, None)?)?;
+            }
             clientbound::FINISH => {
                 conn.send_packet(&encode_config_ack())?;
                 return Ok(PlayOutcome::Joined { uuid, username, registry });
@@ -394,8 +534,8 @@ fn run_configuration<S: Read + Write>(
                 let reason = parse_config_disconnect(&pkt)?;
                 return Ok(PlayOutcome::Disconnected { reason });
             }
-            // cookie request / feature flags / resource packs / report
-            // details / server links — read and skip
+            // feature flags / resource packs / report details /
+            // server links — read and skip
             _ => {}
         }
     }
@@ -629,14 +769,7 @@ mod tests {
             write_varint(&mut pg, clientbound::PING);
             pg.extend_from_slice(&77i32.to_be_bytes());
             srv.send_packet(&pg).unwrap();
-            // bulk registry traffic: the dimension_type registry is
-            // DECODED by the client, a second registry is walked+skipped
-            srv.send_packet(&registry_packet(true)).unwrap();
-            srv.send_packet(&registry_packet(false)).unwrap();
-            let mut fin = Vec::new();
-            write_varint(&mut fin, clientbound::FINISH);
-            srv.send_packet(&fin).unwrap();
-            // responses: keep-alive echo, pong, acknowledge finish
+            // replies arrive inline in read order: keep-alive echo + pong
             let resp = srv.read_packet().expect("keep alive response");
             let mut c: &[u8] = &resp;
             assert_eq!(read_varint(&mut c).unwrap(), serverbound::KEEP_ALIVE);
@@ -645,6 +778,39 @@ mod tests {
             let mut c: &[u8] = &resp;
             assert_eq!(read_varint(&mut c).unwrap(), serverbound::PONG);
             assert_eq!(i32::from_be_bytes(c[..4].try_into().unwrap()), 77);
+            // the BLOCKING probes: select known packs (the vanilla server
+            // waits for the reply before finishing configuration — the
+            // vanilla-era skip would stall a real join for 30s) + a cookie
+            // request (the vanilla client answers unconditionally)
+            let mut skp = Vec::new();
+            write_varint(&mut skp, clientbound::SELECT_KNOWN_PACKS);
+            write_varint(&mut skp, 1); // one offered pack
+            write_string(&mut skp, "minecraft");
+            write_string(&mut skp, "core");
+            write_string(&mut skp, "26.2");
+            srv.send_packet(&skp).unwrap();
+            let mut crq = Vec::new();
+            write_varint(&mut crq, clientbound::COOKIE_REQUEST);
+            write_string(&mut crq, "minecraft:join_cookie");
+            srv.send_packet(&crq).unwrap();
+            let resp = srv.read_packet().expect("select known packs reply");
+            let mut c: &[u8] = &resp;
+            assert_eq!(read_varint(&mut c).unwrap(), serverbound::SELECT_KNOWN_PACKS);
+            assert_eq!(read_varint(&mut c).unwrap(), 0, "the honest empty claim");
+            assert!(c.is_empty(), "nothing after the empty list");
+            let resp = srv.read_packet().expect("cookie response");
+            let mut c: &[u8] = &resp;
+            assert_eq!(read_varint(&mut c).unwrap(), serverbound::COOKIE_RESPONSE);
+            assert_eq!(read_string(&mut c).unwrap(), "minecraft:join_cookie");
+            assert_eq!(c, &[0x00], "no stored cookie -> the absent payload");
+            // bulk registry traffic: the dimension_type registry is
+            // DECODED by the client, a second registry is walked+skipped
+            srv.send_packet(&registry_packet(true)).unwrap();
+            srv.send_packet(&registry_packet(false)).unwrap();
+            let mut fin = Vec::new();
+            write_varint(&mut fin, clientbound::FINISH);
+            srv.send_packet(&fin).unwrap();
+            // the finish ack closes the phase
             let resp = srv.read_packet().expect("ack");
             let mut c: &[u8] = &resp;
             assert_eq!(read_varint(&mut c).unwrap(), serverbound::ACKNOWLEDGE_FINISH);
@@ -742,6 +908,100 @@ mod tests {
     }
 
     #[test]
+    fn select_known_packs_and_cookies_roundtrip_with_the_proven_bounds() {
+        // clientbound select known packs: two packs, THREE strings each
+        // (the version is a string, not a VarInt — javap-proven)
+        let mut p = Vec::new();
+        write_varint(&mut p, clientbound::SELECT_KNOWN_PACKS);
+        write_varint(&mut p, 2);
+        write_string(&mut p, "minecraft");
+        write_string(&mut p, "core");
+        write_string(&mut p, "26.2");
+        write_string(&mut p, "example_mod");
+        write_string(&mut p, "example");
+        write_string(&mut p, "7");
+        let packs = parse_select_known_packs(&p).expect("packs parse");
+        assert_eq!(
+            packs,
+            vec![
+                KnownPack {
+                    namespace: "minecraft".into(),
+                    id: "core".into(),
+                    version: "26.2".into()
+                },
+                KnownPack {
+                    namespace: "example_mod".into(),
+                    id: "example".into(),
+                    version: "7".into()
+                }
+            ]
+        );
+        // drift guards: wrong id, lying count, trailing bytes
+        let mut wrong = Vec::new();
+        write_varint(&mut wrong, 0x77);
+        assert!(parse_select_known_packs(&wrong).is_err());
+        let mut liar = Vec::new();
+        write_varint(&mut liar, clientbound::SELECT_KNOWN_PACKS);
+        write_varint(&mut liar, 3);
+        write_string(&mut liar, "minecraft");
+        write_string(&mut liar, "core");
+        write_string(&mut liar, "26.2");
+        assert!(parse_select_known_packs(&liar).is_err(), "count lies -> error");
+        let mut trailing = p.clone();
+        trailing.push(0xFF);
+        assert!(parse_select_known_packs(&trailing).is_err());
+        // the honest serverbound reply: EMPTY (claims nothing) — id 7 + 0
+        assert_eq!(encode_select_known_packs_reply(&[]).unwrap(), vec![0x07, 0x00]);
+        // a non-empty reply is the same three-string shape
+        let reply = encode_select_known_packs_reply(&packs).unwrap();
+        assert_eq!(reply[0], serverbound::SELECT_KNOWN_PACKS as u8);
+        assert_eq!(reply[1], 2, "pack count");
+        assert!(reply.windows(4).any(|w| w == b"26.2"), "version is a plain string");
+        // the vanilla serverbound cap of 64 is enforced
+        let mut too_many = Vec::new();
+        for _ in 0..65 {
+            too_many.push(KnownPack {
+                namespace: "minecraft".into(),
+                id: "core".into(),
+                version: "26.2".into(),
+            });
+        }
+        assert!(encode_select_known_packs_reply(&too_many).is_err());
+        // cookie request: one Identifier key, nothing else
+        let mut crq = Vec::new();
+        write_varint(&mut crq, clientbound::COOKIE_REQUEST);
+        write_string(&mut crq, "minecraft:join_cookie");
+        assert_eq!(parse_cookie_request(&crq).unwrap(), "minecraft:join_cookie");
+        crq.push(0x01);
+        assert!(parse_cookie_request(&crq).is_err(), "trailing byte -> error");
+        let mut wrong_key = Vec::new();
+        write_varint(&mut wrong_key, 0x66);
+        write_string(&mut wrong_key, "minecraft:nope");
+        assert!(parse_cookie_request(&wrong_key).is_err());
+        // cookie response: the key echoed + the absent payload (Bool 0) —
+        // exactly the vanilla client's no-cookie answer
+        assert_eq!(
+            encode_cookie_response("minecraft:join_cookie", None).unwrap(),
+            {
+                let mut p = vec![0x01];
+                write_string(&mut p, "minecraft:join_cookie");
+                p.push(0);
+                p
+            }
+        );
+        // a payload rides the nullable form; 5120 is the vanilla cap
+        let with_payload = encode_cookie_response("minecraft:join_cookie", Some(&[9, 9])).unwrap();
+        assert_eq!(
+            &with_payload[with_payload.len() - 4..],
+            &[0x01, 0x02, 9, 9],
+            "present flag, length, bytes"
+        );
+        let mut big = vec![0u8; 5121];
+        big[5120] = 1;
+        assert!(encode_cookie_response("minecraft:join_cookie", Some(&big)).is_err());
+    }
+
+    #[test]
     fn configuration_disconnect_surfaces_the_reason() {
         let listener = TcpListener::bind("127.0.0.1:0").unwrap();
         let port = listener.local_addr().unwrap().port();
@@ -822,6 +1082,11 @@ mod tests {
         assert_eq!(clientbound::KEEP_ALIVE, 4, "wiki-era 0x03");
         assert_eq!(clientbound::PING, 5, "wiki-era 0x04");
         assert_eq!(clientbound::REGISTRY_DATA, 7, "registry_data — wiki-era 0x06");
+        // the answered configuration probes (this run's javap proofs)
+        assert_eq!(clientbound::SELECT_KNOWN_PACKS, 14, "minecraft:select_known_packs");
+        assert_eq!(clientbound::COOKIE_REQUEST, 0, "minecraft:cookie_request — the flow head");
+        assert_eq!(serverbound::SELECT_KNOWN_PACKS, 7, "minecraft:select_known_packs");
+        assert_eq!(serverbound::COOKIE_RESPONSE, 1, "minecraft:cookie_response");
         // serverbound configuration: numerically stable, names moved
         assert_eq!(serverbound::CLIENT_INFORMATION, 0);
         assert_eq!(serverbound::PLUGIN_MESSAGE, 2, "minecraft:custom_payload");
