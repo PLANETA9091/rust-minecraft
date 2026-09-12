@@ -118,10 +118,12 @@ pub fn render_gui_screen(
             app.frame = frame;
         }
         "worldnight" => {
-            // Same world view at midnight (official tick 18000): stars at
-            // brightness 0.5, full moon at the zenith, night sky/fog colors.
+            // Night world view (tick 14040 = ~20:00 in-game): full moon ~25
+            // degrees above the eastern horizon (in view of the east-facing
+            // camera), stars at the official full brightness 0.5, night
+            // sky/fog colors from the timeline.
             app.enter_world();
-            app.day_time_base = 18000;
+            app.day_time_base = 14010;
             app.frame = frame;
         }
         "pause" => {

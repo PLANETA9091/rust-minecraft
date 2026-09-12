@@ -28,14 +28,15 @@ pub struct RenderCtx {
 
 /// One celestial quad (sun / moon / star) in world space. Rendered with the
 /// official CELESTIAL/STARS pipeline semantics: no depth test or write, no
-/// fog, no backface cull — drawn right after the sky-color clear, before
-/// terrain, so terrain always overdraws it.
+/// fog, no backface cull, additive color blend (BlendFunction.OVERLAY =
+/// SRC_ALPHA, ONE — the black surroundings of the celestial textures add
+/// nothing) — drawn right after the sky-color clear, before terrain, so
+/// terrain always overdraws it.
 pub struct FlatQuad {
     pub pts: [[f32; 3]; 4],
     pub colors: [[f32; 3]; 4],
     /// (rgba pixels, side length) for textured celestial sprites (sun/moon);
-    /// None = solid vertex-color quad blended with alpha = color.r
-    /// (the official setShaderColor(f,f,f,f) + SRC_ALPHA blend of STARS).
+    /// None = solid vertex-color quad (stars, official STARS pipeline).
     pub rgba: Option<(&'static [u8], u32)>,
 }
 
@@ -271,9 +272,9 @@ impl Framebuf {
                             // perspective-correct nearest texel; corner UVs
                             // (0,0) (1,0) (1,1) (0,1) cover the full sprite
                             // (official buildCelestialQuad layout).
-                            let tri_uv = [(0.0f32, 0.0f32), (1.0, 0.0), (1.0, 1.0)];
-                            let (ub, vb) = tri_uv[tri - 1];
-                            let (uc, vc) = tri_uv[tri];
+                            let uv = [[0.0f32, 0.0], [1.0, 0.0], [1.0, 1.0], [0.0, 1.0]];
+                            let (ub, vb) = (uv[tri][0], uv[tri][1]);
+                            let (uc, vc) = (uv[tri + 1][0], uv[tri + 1][1]);
                             let u = (b0 * 0.0 * a_ow
                                 + b1 * ub * b_ow
                                 + b2 * uc * c_ow)
@@ -287,18 +288,21 @@ impl Framebuf {
                             let yi = ((v * s).floor() as isize).clamp(0, side as isize - 1) as usize;
                             let off = (yi * side as usize + xi) * 4;
                             let a = rgba[off + 3] as f32 / 255.0;
-                            if a < 0.5 {
-                                continue; // transparent celestial texel
-                            }
+                            // Official CELESTIAL pipeline = BlendFunction.OVERLAY:
+                            // additive color (src.rgb * src.a + dst) — the black
+                            // surroundings of the sun/moon textures add nothing.
                             for ch in 0..3 {
-                                c0[ch] *= rgba[off + ch] as f32 / 255.0;
+                                let src = c0[ch] * (rgba[off + ch] as f32 / 255.0) * a;
+                                let bg = self.color[o + ch] as f32 / 255.0;
+                                c0[ch] = src + bg;
                             }
                         } else {
-                            // STARS: color (b,b,b) with alpha b over background.
+                            // STARS (same OVERLAY blend): color (b,b,b) with
+                            // alpha b added over the sky.
                             let a = c0[0];
                             for ch in 0..3 {
                                 let bg = self.color[o + ch] as f32 / 255.0;
-                                c0[ch] = c0[ch] * a + bg * (1.0 - a);
+                                c0[ch] = c0[ch] * a + bg;
                             }
                         }
                         for ch in 0..3 {

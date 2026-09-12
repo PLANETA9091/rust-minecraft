@@ -121,7 +121,7 @@ fn sample_f32(kf: &[(i32, f32)], bezier: Option<[f32; 4]>, t: i64, period: i32) 
     let first = &kf[0];
     let last = &kf[kf.len() - 1];
     // Segment as (from_ticks, from_value, to_ticks, to_value) — lazy list.
-    let mut eval = |ft: i32, fv: f32, tt: i32, tv: f32| -> Option<f32> {
+    let eval = |ft: i32, fv: f32, tt: i32, tv: f32| -> Option<f32> {
         if lt <= tt {
             let v = if tt == ft {
                 fv // zero-length segment (official wrap pair): hold from-value
@@ -157,7 +157,7 @@ fn sample_color_rgb(kf: &[(i32, [u8; 4])], t: i64, period: i32) -> [f32; 3] {
     let lt = t.rem_euclid(period as i64) as i32;
     let first = &kf[0];
     let last = &kf[kf.len() - 1];
-    let mut eval = |ft: i32, fv: [u8; 4], tt: i32, tv: [u8; 4]| -> Option<[f32; 3]> {
+    let eval = |ft: i32, fv: [u8; 4], tt: i32, tv: [u8; 4]| -> Option<[f32; 3]> {
         if lt <= tt {
             let lerp = |a: u8, b: u8| -> f32 {
                 (a as f32 + (b as f32 - a as f32) * ((lt - ft) as f32 / (tt - ft) as f32)) / 255.0
@@ -182,7 +182,6 @@ fn sample_color_rgb(kf: &[(i32, [u8; 4])], t: i64, period: i32) -> [f32; 3] {
 
 /// Evaluate the whole official day-night cycle at world tick `day_time`.
 pub fn sample(day_time: i64) -> SkyState {
-    let day = S::DAY_PERIOD_TICKS as i64;
     let sun_deg = sample_f32(&S::SUN_ANGLE_KF, Some(S::SUN_ANGLE_BEZIER), day_time, S::DAY_PERIOD_TICKS);
     let moon_deg =
         sample_f32(&S::MOON_ANGLE_KF, Some(S::MOON_ANGLE_BEZIER), day_time, S::DAY_PERIOD_TICKS);

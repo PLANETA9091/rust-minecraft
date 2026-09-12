@@ -44,10 +44,22 @@ hand-drawn:
   (`--screen servers`).
 - **Singleplayer world** — clicking `Singleplayer` enters a live 3D world
   view rendered by the same deterministic CPU raster path as the pixel
-  tests: real block textures from the generated atlas, sky gradient + fog,
-  and the **vanilla HUD** (official `hud/crosshair`, `hud/hotbar` +
-  selection sprite, ten `hud/heart/full`, ten `hud/food_full`) at vanilla
-  geometry (`--screen world`).
+  tests: real block textures from the generated atlas, the **official
+  day-night sky** and the **vanilla HUD** (official `hud/crosshair`,
+  `hud/hotbar` + selection sprite, ten `hud/heart/full`, ten
+  `hud/food_full`) at vanilla geometry (`--screen world`).
+- **Day-night cycle, generated** — the 26.x cycle is *data*: the generator
+  extracts `timeline/day.json` + `timeline/moon.json` +
+  `dimension_type/overworld.json`, and the client evaluates the official
+  keyframe tracks (cubic-bezier-eased sun/moon/star arcs, sky/fog color
+  fades, star brightness) exactly like the game's `KeyframeTrackSampler`.
+  The **real `environment/celestial` sun + 8 moon-phase textures** render
+  additively (official `BlendFunction.OVERLAY`) in the rotY(-90°)·rotX
+  celestial frame, and the **star field replicates the official
+  `SkyRenderer.buildStars`** (`RandomSource(10842L)`, 1500 candidates,
+  radius 100 — LCG cross-checked against real `java.util.Random` on
+  OpenJDK 21). `--screen worldnight` pins the night state (full moon over
+  the eastern horizon, stars at the official 0.5 brightness).
 - **Pause menu** — `Game Paused` over the dimmed frozen world with
   Back to Game / Options... / Save and Quit to Title, all official strings
   and widgets; Escape toggles it in `--gui` (`--screen pause`).
