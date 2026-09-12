@@ -25,10 +25,7 @@
 
 use std::collections::HashMap;
 
-use mc_protocol::{
-    ChunkColumn, DimensionTypeEntry, PlayEvent, PlayerPosition, RegistryData, WorldInfo,
-    WorldSnapshot,
-};
+use mc_protocol::{ChunkColumn, PlayEvent, PlayerPosition, RegistryData, WorldInfo, WorldSnapshot};
 
 /// The client's view of ONE server world: loaded chunk columns, the
 /// server-declared center chunk, the world's static description and the
@@ -163,6 +160,7 @@ impl WorldModel {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use mc_protocol::DimensionTypeEntry;
     use mc_protocol::varint::write_varint;
 
     /// One palettized section buffer (the mc-protocol mock shape): stone
