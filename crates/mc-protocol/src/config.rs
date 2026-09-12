@@ -33,7 +33,7 @@ use std::io::{Read, Write};
 use anyhow::{Context, Result};
 
 use crate::framing::{encode_handshake, PacketConn};
-use crate::login::login_conn;
+use crate::login::{login_conn, LoginOutcome};
 use crate::varint::{read_string, read_varint, write_string, write_varint};
 use crate::{DEFAULT_TIMEOUT_SECS, NEXT_STATE_LOGIN};
 
@@ -315,7 +315,7 @@ mod tests {
         // brand: channel + nested string payload
         let b = encode_plugin_brand("mc2rs");
         assert_eq!(b[0], 0x02);
-        assert!(b.windows(16).any(|w| w == b"minecraft:brand"), "channel");
+        assert!(b.windows(15).any(|w| w == b"minecraft:brand"), "channel");
         assert!(b.windows(5).any(|w| w == b"mc2rs"), "nested payload");
         // keep alive / pong roundtrips
         assert_eq!(encode_config_keep_alive_response(0x0123456789ABCDEF), {
@@ -358,14 +358,18 @@ mod tests {
             let mut c: &[u8] = &hs;
             assert_eq!(read_varint(&mut c).unwrap(), 0x00);
             assert_eq!(read_varint(&mut c).unwrap(), 776, "REAL protocol number");
+            let _host = read_string(&mut c).unwrap();
+            let mut port_b = [0u8; 2];
+            std::io::Read::read_exact(&mut c, &mut port_b).unwrap();
             assert_eq!(read_varint(&mut c).unwrap(), NEXT_STATE_LOGIN);
-            // login, compression on
-            srv.send_packet(&encode_set_compression(256)).unwrap();
-            srv.enable_compression(256);
+            // login start FIRST (the client has not seen Set Compression
+            // yet — it travels uncompressed), then the compression switch
             let start = srv.read_packet().expect("login start");
             let mut c: &[u8] = &start;
             assert_eq!(read_varint(&mut c).unwrap(), 0x00);
             let name = read_string(&mut c).unwrap();
+            srv.send_packet(&encode_set_compression(256)).unwrap();
+            srv.enable_compression(256);
             srv.send_packet(&encode_login_success(
                 &crate::login::offline_uuid(&name),
                 &name,
