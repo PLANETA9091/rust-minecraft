@@ -97,6 +97,18 @@ hand-drawn:
   angle conventions) and the world screen renders FROM the player —
   the vanilla first person; without layout knowledge the
   deterministic flight camera stands (never a guess).
+  The join is **LIVE**: the one-shot milestone grew a session that
+  stays — `connect_and_join_live` returns the snapshot AND the play
+  session, and the join worker keeps pumping it while you play.
+  Chunks, teleports, unloads, dimension changes and probes stream into
+  the SAME `LiveView` model the screen renders; every world-state change
+  re-materializes the player-centered window (cadence-limited) and the
+  world screen swaps it in place — the terrain refreshes under the
+  player's eyes and the camera rides every server teleport, exactly
+  like the original's chunk updates. A session death in-world is the
+  vanilla kick (the DisconnectedScreen with the server's reason), and
+  Save and Quit closes the socket like the original's — no ghost client
+  lingers on the server.
   The **wire ids of every phase are generated**:
   `mc2rs-gen dump-packet-ids` binds the official jar's REAL protocols —
   play, login, configuration, status AND handshake — and dumps each
