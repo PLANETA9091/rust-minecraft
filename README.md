@@ -64,9 +64,14 @@ hand-drawn:
   **bytecode-true and generated**: `mc2rs-gen dump-block-states` boots the
   official jar's REAL vanilla registry (client jar + official libraries,
   all sha1-verified, through the checked-in runtime dumper) and emits the
-  global state id table the join mapper resolves through — palette blocks
-  (stone, dirt, grass, logs, leaves, water, sand) render as themselves,
-  blocks the palette has no member for stay truthful air; the substrate
+  global state id table the join mapper resolves through — the palette
+  itself is **generated and grown**: the survival classics (stone, dirt,
+  grass, logs, leaves, water, sand) plus the generated members (granite,
+  diorite, andesite, deepslate, cobbled deepslate, gravel, bedrock, the
+  coal/copper/iron/gold/redstone/lapis/diamond/emerald ores, netherrack —
+  24 kinds, all official textures in the generated atlas) render as
+  themselves, blocks the palette has no member for stay truthful air; the
+  substrate
   of the in-world view of a network server. The configuration
   phase's **Registry Data is decoded**: the project's first retained NBT
   reader/writer pulls the `minecraft:dimension_type` registry (every
