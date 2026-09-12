@@ -46,6 +46,9 @@ pub struct SkyData {
     pub star_brightness: FloatTrack,
     pub sky_color: ColorTrack,
     pub fog_color: ColorTrack,
+    /// Official `visual/sunrise_sunset_color` — the tint of the horizon glow
+    /// disc rendered by the game's renderSunriseAndSunset (ARGB, LINEAR).
+    pub sunrise_color: ColorTrack,
     /// Dimension base colors the multiply-tracks apply over (RGBA).
     pub dim_sky_color: [u8; 4],
     pub dim_fog_color: [u8; 4],
@@ -166,6 +169,12 @@ pub fn generate<R: std::io::Read + std::io::Seek>(
     let star_brightness = parse_float_track(track(dt, "day.json", "visual/star_brightness")?)?;
     let sky_color = parse_color_track(track(dt, "day.json", "visual/sky_color")?)?;
     let fog_color = parse_color_track(track(dt, "day.json", "visual/fog_color")?)?;
+    let sunrise_color = parse_color_track(track(dt, "day.json", "visual/sunrise_sunset_color")?);
+
+    let sunrise_color = match sunrise_color {
+        Ok(c) => c,
+        Err(e) => bail!("day.json sunrise_sunset_color: {e}"),
+    };
 
     let attrs = &dim["attributes"];
     let dim_sky = attrs
@@ -225,6 +234,7 @@ pub fn generate<R: std::io::Read + std::io::Seek>(
         star_brightness,
         sky_color,
         fog_color,
+        sunrise_color,
         dim_sky_color: parse_color(dim_sky)?,
         dim_fog_color: parse_color(dim_fog)?,
         moon_phase_names,
@@ -303,9 +313,14 @@ pub fn emit(data: &SkyData) -> Result<String> {
     }
     out.push_str("];\n\n");
 
-    for (label, tr) in [("SKY_COLOR", &data.sky_color), ("FOG_COLOR", &data.fog_color)] {
+    for (label, tr) in [
+        ("SKY_COLOR", &data.sky_color),
+        ("FOG_COLOR", &data.fog_color),
+        ("SUNRISE_COLOR", &data.sunrise_color),
+    ] {
         out.push_str(&format!(
-            "/// visual/{} keyframes (tick, RGBA) — LINEAR, modifier multiply over DIM_*_COLOR.\n\
+            "/// visual/{} keyframes (tick, RGBA) — LINEAR (sunrise_sunset_color\n\
+             /// tints the official horizon glow disc).\n\
              pub static {label}_KF: [(i32, [u8; 4]); {}] = [",
             label.to_lowercase(),
             tr.keyframes.len()
