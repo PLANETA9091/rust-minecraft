@@ -384,6 +384,17 @@ mod tests {
                 "minecraft:desert".to_string(),
             ],
         };
+        // the login pins the dimension: min_y goes live (world y -64 is
+        // section 0's bottom, like every real overworld join)
+        assert!(m.apply(PlayEvent::WorldInfo(WorldInfo {
+            entity_id: 17,
+            hardcore: false,
+            dimensions: vec!["minecraft:overworld".to_string()],
+            view_distance: 8,
+            simulation_distance: 8,
+            portal_cooldown: 300,
+            current_dimension: "minecraft:overworld".to_string(),
+        })));
         // cell index = (y>>2)*16 + (z>>2)*4 + (x>>2); four cells carry
         // distinct biomes, everything else stays plains (0)
         let mut cells = [0u32; 64];

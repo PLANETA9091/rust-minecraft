@@ -77,7 +77,10 @@ hand-drawn:
   reader/writer pulls the `minecraft:dimension_type` registry (every
   dimension's min_y/height vertical layout) out of the streamed packets
   and carries it through the join into the world model; the other
-  registries (biomes, worldgen...) are walked and skipped. The
+  registries (worldgen, banners...) are walked and skipped — EXCEPT the
+  **`minecraft:worldgen/biome` registry, now RETAINED** as the id -> name
+  table in arrival order (the index IS the synced network id the chunk
+  biome palettes reference), the entry tags walked and skipped. The
   **current dimension is pinned at login**: the Login and Respawn
   payloads were re-aligned to the javap-proven vanilla 26.2 shapes
   (CommonPlayerSpawnInfo — dimension type registry id, dimension,
@@ -109,6 +112,16 @@ hand-drawn:
   vanilla kick (the DisconnectedScreen with the server's reason), and
   Save and Quit closes the socket like the original's — no ghost client
   lingers on the server.
+  The **spawn biome is REAL now** — the section biomes the chunk decoder
+  already resolved meet the synced registry: the model answers
+  `biome()`/`biome_name()` at any world position (the vanilla 4×4×4 cell
+  grid, world-Y through the dimension layout), the live view ships the
+  biome AT THE PLAYER's feet with every refresh, and the join's music
+  situation is the spawn biome's own official background-music event —
+  no more empty-key fallback. Live updates re-fire the situation on
+  CHANGE only (the vanilla biome-music behavior — a same-biome refresh
+  never restarts the track); an unresolvable biome keeps what is
+  playing; the situation unloads with the level on Save and Quit/kick.
   The **wire ids of every phase are generated**:
   `mc2rs-gen dump-packet-ids` binds the official jar's REAL protocols —
   play, login, configuration, status AND handshake — and dumps each
@@ -213,7 +226,11 @@ hand-drawn:
   (`music.overworld.*`, `music.nether.*`, …) with their REAL 12000–24000
   delay bounds, the vanilla `music.game` default for biomes without an
   entry (32 sha1-verified files, weighted pick, real decoded lengths);
-  Save and Quit hands back to the menu situation.
+  Save and Quit hands back to the menu situation. On a NETWORK join the
+  biome is the server's own truth: the synced registry names + the
+  decoded section biomes under the player drive the situation (see the
+  multiplayer section) — the seeded pick remains only for the
+  procedural singleplayer world.
 - **Windowed app** — `--gui` runs the interactive boot chain (mouse + clicks,
   with menu music when built with the audio feature).
 - Text rendering uses the **real bitmap font**: glyph metrics measured from

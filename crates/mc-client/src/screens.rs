@@ -2238,14 +2238,17 @@ mod tests {
         app.open(ScreenKind::Connect);
         // the join landed (an all-air window: the state machine must not care)
         app.net_world = Some(air_net_world(2, 0));
-        app.enter_network_world();
+        app.enter_network_world(None);
         assert!(app.world_is_network);
         assert!(app.world_quads.as_ref().unwrap().is_empty(), "air meshes to nothing");
+        // no biome known: the vanilla in-game default situation
+        assert_eq!(app.music.game_tracks(), ["music.game"]);
 
-        // a live update ships a world WITH content + a pose: the swap is
-        // IN PLACE — net_world/net_camera refresh and the showing screen
-        // re-meshes (the terrain changes under the player's eyes, the
-        // vanilla chunk-update behavior)
+        // a live update ships a world WITH content + a pose + the biome
+        // at the player: the swap is IN PLACE — net_world/net_camera
+        // refresh, the showing screen re-meshes (the terrain changes
+        // under the player's eyes, the vanilla chunk-update behavior)
+        // and the music situation resolves to the biome's own event
         let mut streamed = air_net_world(2, 7);
         streamed.chunks[0][0] = crate::world::STONE;
         let pose = crate::camera::Camera {
@@ -2253,7 +2256,7 @@ mod tests {
             yaw: 0.5,
             pitch: -0.1,
         };
-        app.live_view_updated(streamed, Some(pose));
+        app.live_view_updated(streamed, Some(pose), Some("minecraft:swamp".into()));
         let w = app.net_world.as_ref().expect("the streamed world swapped in");
         assert_eq!(w.seed, 7, "the update REPLACED the join world (newest wins)");
         assert_eq!(w.get(0, 0, 0), crate::world::STONE, "the streamed block shows");
@@ -2263,6 +2266,32 @@ mod tests {
             !app.world_quads.as_ref().expect("re-meshed on the live update").is_empty(),
             "the streamed terrain re-meshed under the player"
         );
+        // the biome change re-resolved the music situation — the swamp's
+        // official background-music event, from the GENERATED table
+        assert_eq!(app.net_biome.as_deref(), Some("minecraft:swamp"));
+        use mc_registry::generated::worldgen as wm;
+        let swamp_event = wm::biome_music("minecraft:swamp", "default")
+            .map(|m| m.event)
+            .unwrap_or("music.game");
+        assert_eq!(app.music.game_tracks(), [swamp_event]);
+        // a SAME-biome refresh never restarts the situation (the vanilla
+        // behavior — the scheduler is not touched, its event log frozen)
+        let events_before = app.music.events.len();
+        app.live_view_updated(air_net_world(2, 8), Some(pose), Some("minecraft:swamp".into()));
+        assert_eq!(app.net_biome.as_deref(), Some("minecraft:swamp"));
+        assert_eq!(app.music.events.len(), events_before, "no situation restart");
+        // an UNRESOLVABLE biome (None) keeps what is playing — no
+        // knowledge is not a change
+        app.live_view_updated(air_net_world(2, 9), Some(pose), None);
+        assert_eq!(app.net_biome.as_deref(), Some("minecraft:swamp"));
+        assert_eq!(app.music.events.len(), events_before);
+        // and a real change re-fires once
+        app.live_view_updated(air_net_world(2, 10), Some(pose), Some("minecraft:desert".into()));
+        assert_eq!(app.net_biome.as_deref(), Some("minecraft:desert"));
+        let desert_event = wm::biome_music("minecraft:desert", "default")
+            .map(|m| m.event)
+            .unwrap_or("music.game");
+        assert_eq!(app.music.game_tracks(), [desert_event]);
     }
 
     #[test]
@@ -2270,7 +2299,8 @@ mod tests {
         let mut app = App::new(3);
         app.open(ScreenKind::Connect);
         app.net_world = Some(air_net_world(2, 0));
-        app.enter_network_world();
+        app.enter_network_world(Some("minecraft:swamp".into()));
+        assert_eq!(app.net_biome.as_deref(), Some("minecraft:swamp"));
         // Save and Quit unloads the level AND closes the live session
         let run = std::sync::Arc::new(std::sync::atomic::AtomicBool::new(true));
         app.attach_live_run(1, std::sync::Arc::clone(&run));
@@ -2287,11 +2317,15 @@ mod tests {
         // re-meshes, the title screen stays
         let mut late = air_net_world(2, 9);
         late.chunks[0][0] = crate::world::STONE;
-        app.live_view_updated(late, Some(crate::camera::Camera {
-            pos: Vec3::new(1.0, 2.0, 3.0),
-            yaw: 0.0,
-            pitch: 0.0,
-        }));
+        app.live_view_updated(
+            late,
+            Some(crate::camera::Camera {
+                pos: Vec3::new(1.0, 2.0, 3.0),
+                yaw: 0.0,
+                pitch: 0.0,
+            }),
+            Some("minecraft:plains".into()),
+        );
         assert_eq!(app.screen, ScreenKind::Title, "the late update never opens a screen");
         assert_eq!(
             app.net_world.as_ref().expect("net_world dormant, not cleared").seed,
@@ -2300,6 +2334,7 @@ mod tests {
         );
         assert!(app.world_quads.is_none(), "no mesh reappeared");
         assert!(app.net_camera.is_none(), "no pose reappeared");
+        assert!(app.net_biome.is_none(), "no situation reappeared for a dead world");
         // a late session death drops equally silently
         app.live_session_lost("late kick".to_string());
         assert_eq!(app.screen, ScreenKind::Title, "no world to lose — no disconnect screen");
@@ -2311,7 +2346,7 @@ mod tests {
         let mut app = App::new(3);
         app.open(ScreenKind::Connect);
         app.net_world = Some(air_net_world(2, 0));
-        app.enter_network_world();
+        app.enter_network_world(Some("minecraft:swamp".into()));
         let run = std::sync::Arc::new(std::sync::atomic::AtomicBool::new(true));
         app.attach_live_run(1, run);
         app.live_session_lost("Server closed".to_string());
@@ -2325,6 +2360,7 @@ mod tests {
         assert!(!app.world_is_network, "the level unloaded with the session");
         assert!(app.world_quads.is_none(), "the mesh dropped with the level");
         assert!(app.net_camera.is_none(), "the pose dropped with the level");
+        assert!(app.net_biome.is_none(), "the biome situation dropped with the level");
     }
 
     #[test]
@@ -2349,6 +2385,7 @@ mod tests {
                 chunks: 1,
                 world: air_net_world(2, 0),
                 camera: None,
+                spawn_biome: None,
             }),
         );
         assert!(app.world_is_network, "A adopted");
@@ -2389,6 +2426,7 @@ mod tests {
                 chunks: 1,
                 world: air_net_world(2, 3),
                 camera: None,
+                spawn_biome: None,
             }),
         );
         assert!(
