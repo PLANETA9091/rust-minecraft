@@ -486,16 +486,24 @@ mod tests {
 
         let mut app = crate::screens::App::new(1);
         let mut m = MenuMusic::start_with_root(&mut app, &dir);
-        // garbled + unknown events are skipped, never fatal
-        m.sync_ui(&["nonsense".to_string(), "not.an.event @5".to_string()]);
+        // the App log is append-only; mirror exactly that protocol here
+        let mut log: Vec<String> = Vec::new();
+        m.sync_ui(&log);
+        assert!(!m.output.ui_playing());
+        // garbled + unknown entries are skipped, never fatal
+        log.push("nonsense".to_string());
+        log.push("not.an.event @5".to_string());
+        m.sync_ui(&log);
         assert!(!m.output.ui_playing());
         assert!(!m.output.playing(), "music untouched by UI events");
         // the vanilla click plays through the independent UI channel
-        m.sync_ui(&["ui.button.click @7".to_string()]);
+        log.push("ui.button.click @7".to_string());
+        m.sync_ui(&log);
         assert!(m.output.ui_playing(), "click one-shot reaches the UI channel");
         assert!(!m.output.playing());
         // a second click replays (the log cursor advances)
-        m.sync_ui(&["ui.button.click @8".to_string()]);
+        log.push("ui.button.click @8".to_string());
+        m.sync_ui(&log);
         assert!(m.output.ui_playing());
         std::fs::remove_dir_all(&dir).ok();
     }

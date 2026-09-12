@@ -89,6 +89,10 @@ hand-drawn:
   symphonia decodes those exact bytes, the scheduler gets the REAL per-file
   lengths, and playback goes through rodio behind `--features audio`
   (deterministic silent backend everywhere else — CI has no speakers).
+- **UI button click sounds** — every activated button plays the official
+  `ui.button.click` (fetched, sha1-verified, decoded like the music), on an
+  independent one-shot channel that never interrupts the music — the same
+  rule as vanilla `AbstractButton.playDownSound`.
 - **Windowed app** — `--gui` runs the interactive boot chain (mouse + clicks,
   with menu music when built with the audio feature).
 - Text rendering uses the **real bitmap font**: glyph metrics measured from
