@@ -383,6 +383,7 @@ mod tests {
                 view_distance: 8,
                 simulation_distance: 8,
                 portal_cooldown: 300,
+                current_dimension: "minecraft:overworld".to_string(),
             },
             player: PlayerPosition {
                 x: 56.5,

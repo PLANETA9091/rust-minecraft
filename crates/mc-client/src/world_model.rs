@@ -11,14 +11,11 @@
 //!   keyed `(chunk_x, chunk_z)`; a re-sent column REPLACES the stored one
 //!   (vanilla semantics: the newest Chunk Data wins), Unload Chunk drops
 //!   the entry.
-//! - `min_y` is `None` until the world's CURRENT dimension is pinned:
-//!   the configuration Registry Data is now DECODED (the dimension-type
-//!   vertical layout table lives in `registry`, see `dimension_min_y`),
-//!   but the play-state Login no longer names the current dimension —
-//!   vanilla conveys it via the Respawn packet, whose id still needs
-//!   proof against real servers. Until then `block()` takes
-//!   COLUMN-LOCAL y (0 = bottom of the lowest section) — the honest
-//!   convention, no guessed world offset. Once `min_y` is known,
+//! - The CURRENT dimension is pinned at login (vanilla 1.20.5+ carries it
+//!   in CommonPlayerSpawnInfo — javap-proven) and updated by Respawn;
+//!   `min_y` is looked up from the decoded dimension-type registry the
+//!   moment the dimension is known. Until then `block()` takes
+//!   COLUMN-LOCAL y (0 = bottom of the lowest section); once known,
 //!   world-Y queries subtract it before the section math.
 //! - The join path is WIRED into the frame loop: the world-load
 //!   milestone's snapshot adopts here and the player-centered window
@@ -28,7 +25,7 @@
 
 use std::collections::HashMap;
 
-use mc_protocol::{ChunkColumn, PlayEvent, PlayerPosition, RegistryData, WorldInfo, WorldSnapshot};
+use mc_protocol::{ChunkColumn, PlayEvent, PlayerPosition, RegistryData, SpawnInfo, WorldInfo, WorldSnapshot};
 
 /// The client's view of ONE server world: loaded chunk columns, the
 /// server-declared center chunk, the world's static description and the
@@ -45,9 +42,12 @@ pub struct WorldModel {
     /// World-Y offset of the bottom section (dimension type), when known.
     /// `None` = `block()` takes column-local y.
     pub min_y: Option<i32>,
+    /// The dimension the player is currently in, as the server named it
+    /// (pinned at login, updated on Respawn).
+    pub current_dimension: Option<String>,
     /// The dimension-type vertical layout table the configuration phase
-    /// decoded (registry key -> min_y/height). The `min_y` field above
-    /// pins the CURRENT dimension only once the Respawn packet is parsed.
+    /// decoded (registry key -> min_y/height). `min_y` above resolves
+    /// through it once `current_dimension` is pinned.
     pub registry: RegistryData,
     columns: HashMap<(i32, i32), ChunkColumn>,
 }
@@ -67,8 +67,20 @@ impl WorldModel {
             info: None,
             player: None,
             min_y: None,
+            current_dimension: None,
             registry: RegistryData::default(),
             columns: HashMap::new(),
+        }
+    }
+
+    /// Pin the current dimension and resolve its vertical layout from the
+    /// registry when the entry exists (login pins it; Respawn re-pins it
+    /// on a dimension change). An unknown key keeps the previous min_y —
+    /// the honest state is "no knowledge", never a guess.
+    fn pin_dimension(&mut self, dimension: &str) {
+        self.current_dimension = Some(dimension.to_string());
+        if let Some(min_y) = self.dimension_min_y(dimension) {
+            self.min_y = Some(min_y);
         }
     }
 
@@ -80,7 +92,12 @@ impl WorldModel {
     pub fn apply(&mut self, event: PlayEvent) -> bool {
         match event {
             PlayEvent::WorldInfo(w) => {
+                self.pin_dimension(&w.current_dimension);
                 self.info = Some(w);
+                true
+            }
+            PlayEvent::Respawn(spawn) => {
+                self.pin_dimension(&spawn.dimension);
                 true
             }
             PlayEvent::Position(p) => {
@@ -113,9 +130,10 @@ impl WorldModel {
     /// session's truth (a re-join re-decodes it wholesale).
     pub fn adopt_snapshot(&mut self, snap: WorldSnapshot) {
         let WorldSnapshot { info, player, chunks, registry } = snap;
+        self.registry = registry;
+        self.pin_dimension(&info.current_dimension);
         self.info = Some(info);
         self.player = Some(player);
-        self.registry = registry;
         for col in chunks {
             self.columns.insert((col.x, col.z), col);
         }
@@ -311,6 +329,7 @@ mod tests {
             view_distance: 8,
             simulation_distance: 8,
             portal_cooldown: 300,
+            current_dimension: "minecraft:overworld".to_string(),
         };
         let player = PlayerPosition {
             x: 8.5,
@@ -369,6 +388,7 @@ mod tests {
                 view_distance: 8,
                 simulation_distance: 8,
                 portal_cooldown: 300,
+                current_dimension: "minecraft:overworld".to_string(),
             },
             player: PlayerPosition {
                 x: 0.0,
@@ -402,5 +422,51 @@ mod tests {
         assert_eq!(m.dimension_min_y("minecraft:overworld"), None);
         assert_eq!(m.dimension_min_y("minecraft:the_nether"), None);
         assert_eq!(m.dimension_min_y("minecraft:flat"), Some(0));
+    }
+
+    #[test]
+    fn dimension_pins_at_login_and_respawn_repins_min_y() {
+        let mut m = WorldModel::new();
+        m.registry = RegistryData {
+            dimension_types: vec![
+                DimensionTypeEntry { name: "minecraft:overworld".into(), min_y: -64, height: 384 },
+                DimensionTypeEntry { name: "minecraft:the_nether".into(), min_y: 0, height: 256 },
+            ],
+        };
+        assert_eq!(m.min_y, None, "no knowledge before the server speaks");
+        // the login carries the current dimension (CommonPlayerSpawnInfo)
+        assert!(m.apply(PlayEvent::WorldInfo(WorldInfo {
+            entity_id: 17,
+            hardcore: false,
+            dimensions: vec!["minecraft:overworld".to_string()],
+            view_distance: 8,
+            simulation_distance: 8,
+            portal_cooldown: 300,
+            current_dimension: "minecraft:overworld".to_string(),
+        })));
+        assert_eq!(m.current_dimension.as_deref(), Some("minecraft:overworld"));
+        assert_eq!(m.min_y, Some(-64), "the registry layout goes live at login");
+        // block() now answers WORLD-y: section 0 of a column starts at -64
+        m.apply(PlayEvent::Chunk(ChunkColumn { x: 0, z: 0, sections: vec![stone_dirt_section(2)] }));
+        assert_eq!(m.block(0, -64, 0), Some(1), "world -64 = section 0 local 0");
+        assert_eq!(m.block(3, -63, 2), Some(10), "local (3,1,2) at world -63");
+        // Respawn: a dimension change re-pins from the same registry
+        assert!(m.apply(PlayEvent::Respawn(SpawnInfo {
+            dimension_type_id: 1,
+            dimension: "minecraft:the_nether".to_string(),
+            portal_cooldown: 60,
+        })));
+        assert_eq!(m.current_dimension.as_deref(), Some("minecraft:the_nether"));
+        assert_eq!(m.min_y, Some(0), "nether layout takes over");
+        assert_eq!(m.block(0, 0, 0), Some(1), "nether world 0 = section 0 local 0");
+        assert_eq!(m.block(0, -1, 0), None, "below the nether floor: outside");
+        // an unknown dimension key keeps the previous min_y — never a guess
+        assert!(m.apply(PlayEvent::Respawn(SpawnInfo {
+            dimension_type_id: 9,
+            dimension: "minecraft:custom_dim".to_string(),
+            portal_cooldown: 0,
+        })));
+        assert_eq!(m.current_dimension.as_deref(), Some("minecraft:custom_dim"));
+        assert_eq!(m.min_y, Some(0), "stale-but-honest: unknown key, layout unchanged");
     }
 }

@@ -5,13 +5,22 @@
 //! decodes chunk data into resolved block/biome ids — the raw material a
 //! client world needs.
 //!
-//! Clean-room wiki.vg shapes for 1.20.5+ / 26.x (play state):
-//! - Login (clientbound: generated id 49): Entity ID (Int), Is Hardcore (Bool),
-//!   Dimension Count (VarInt) + names (String), Max Players (VarInt,
-//!   unused by vanilla), View Distance (VarInt), Simulation Distance
-//!   (VarInt), Reduced Debug (Bool), Enable Respawn Screen (Bool), Do
-//!   Limited Crafting (Bool), Has Death Location (Bool [+ dimension name
-//!   + 8-byte position]), Portal Cooldown (VarInt).
+//! Clean-room javap-proven vanilla 26.2 shapes (play state):
+//! - Login (clientbound: generated id 49): Player ID (Int), Hardcore (Bool),
+//!   Levels (VarInt count + strings), Max Players (VarInt, dropped),
+//!   Chunk Radius (VarInt — the view distance), Simulation Distance
+//!   (VarInt), Reduced Debug / Show Death Screen / Do Limited Crafting
+//!   (Bool, dropped), CommonPlayerSpawnInfo, Online Mode + Enforces
+//!   Secure Chat (Bool, dropped).
+//! - CommonPlayerSpawnInfo (shared by Login and Respawn): Dimension Type
+//!   (VarInt registry id), Dimension (ResourceKey string), Seed (Long,
+//!   dropped), Game Type + Previous Game Type (UByte, dropped), Is Debug
+//!   + Is Flat (Bool, dropped), Has Death Location (Bool [+ dimension
+//!   string + 8-byte position], dropped), Portal Cooldown (VarInt), Sea
+//!   Level (VarInt, dropped). The CURRENT dimension and the portal
+//!   cooldown are kept; the login pins the dimension, Respawn updates it.
+//! - Respawn (clientbound: generated id 82): CommonPlayerSpawnInfo + a
+//!   dataToKeep byte (stays in the framed payload, safely skipped).
 //! - Synchronize Player Position (clientbound: generated id 72): X/Y/Z (Double),
 //!   Yaw/Pitch (Float), Relativity Flags (UByte), Teleport ID (VarInt) —
 //!   answered with Confirm Teleportation (serverbound 0x00, id verbatim).
@@ -30,9 +39,9 @@
 //!   compact client-side storage is the future mesher's concern.
 //! - Set Center Chunk (clientbound: generated id 94): VarInt chunk X/Z.
 //! - Unload Chunk (clientbound: generated id 37): Long ((z << 32) | (x & 0xFFFFFFFF)).
-//! - Keep Alive (clientbound 0x22 / serverbound 0x14): i64 verbatim.
-//! - Ping (clientbound 0x31 / serverbound 0x22): i32 verbatim.
-//! - Chunk Batch Start (clientbound 0x0D) → Chunk Batch Received
+//! - Keep Alive (clientbound: generated id 44 / serverbound: generated id 28): i64 verbatim.
+//! - Ping (clientbound: generated id 61 / serverbound: generated id 45): i32 verbatim.
+//! - Chunk Batch Start (clientbound: generated id 12) → Chunk Batch Received
 //!   (serverbound: generated id 11, f32 desired chunks per tick) — a vanilla server
 //!   PAUSES chunk streaming until this reply arrives.
 //! - Disconnect (clientbound: generated id 32): chat JSON reason, flattened.
@@ -91,7 +100,11 @@ const SECTION_BIOMES: usize = 64;
 // world model
 // ---------------------------------------------------------------------------
 
-/// The play-state Login packet: the world's static description.
+/// The play-state Login packet: the world's static description. The wire
+/// shape is the PROVEN vanilla 26.2 order (javap of the real record):
+/// playerId, hardcore, levels, maxPlayers (dropped), chunkRadius,
+/// simulationDistance, 3 bools (dropped), CommonPlayerSpawnInfo,
+/// onlineMode + enforcesSecureChat (dropped).
 #[derive(Debug, Clone, PartialEq)]
 pub struct WorldInfo {
     /// The client player's entity id for this session.
@@ -101,6 +114,24 @@ pub struct WorldInfo {
     pub dimensions: Vec<String>,
     pub view_distance: i32,
     pub simulation_distance: i32,
+    pub portal_cooldown: i32,
+    /// The CURRENT dimension, from CommonPlayerSpawnInfo (vanilla carries
+    /// it at login since 1.20.5; Respawn updates it on dimension change).
+    pub current_dimension: String,
+}
+
+/// The spawn description vanilla shares between Login (initial) and
+/// Respawn (dimension change) — CommonPlayerSpawnInfo, proven by javap:
+/// dimensionType (registry id varint), dimension (ResourceKey = string),
+/// seed (i64, dropped), gameType + previousGameType (u8, dropped),
+/// isDebug + isFlat (bool, dropped), lastDeathLocation (optional GlobalPos
+/// = [string, i64], dropped), portalCooldown (varint), seaLevel (dropped).
+#[derive(Debug, Clone, PartialEq)]
+pub struct SpawnInfo {
+    /// Index into the configuration-phase dimension_type registry.
+    pub dimension_type_id: i32,
+    /// The dimension this spawn lives in (e.g. `minecraft:overworld`).
+    pub dimension: String,
     pub portal_cooldown: i32,
 }
 
@@ -344,7 +375,29 @@ fn skip_bytes(r: &mut &[u8], n: i64) -> std::io::Result<()> {
 // packet parsers (full payload including the packet id)
 // ---------------------------------------------------------------------------
 
-/// Parse the play-state Login (clientbound: generated id 49).
+/// Parse CommonPlayerSpawnInfo — the shared Login/Respawn tail (the
+/// layout is javap-proven; see `SpawnInfo`).
+fn parse_common_spawn_info(c: &mut &[u8]) -> Result<SpawnInfo> {
+    let dimension_type_id = read_varint(c)?;
+    let dimension = read_string(c)?;
+    let _seed = read_i64(c)?;
+    let _game_type = read_u8(c)?;
+    let _previous_game_type = read_u8(c)?;
+    let _is_debug = read_bool(c)?;
+    let _is_flat = read_bool(c)?;
+    let has_death_location = read_bool(c)?;
+    if has_death_location {
+        let _dim = read_string(c)?;
+        let mut pos = [0u8; 8];
+        c.read_exact(&mut pos)?;
+    }
+    let portal_cooldown = read_varint(c)?;
+    let _sea_level = read_varint(c)?;
+    Ok(SpawnInfo { dimension_type_id, dimension, portal_cooldown })
+}
+
+/// Parse the play-state Login (clientbound: generated id 49) — the
+/// PROVEN vanilla 26.2 field order.
 pub fn parse_world_info(payload: &[u8]) -> Result<WorldInfo> {
     let mut c: &[u8] = payload;
     let id = read_varint(&mut c)?;
@@ -361,23 +414,30 @@ pub fn parse_world_info(payload: &[u8]) -> Result<WorldInfo> {
     let view_distance = read_varint(&mut c)?;
     let simulation_distance = read_varint(&mut c)?;
     let _reduced_debug = read_bool(&mut c)?;
-    let _respawn_screen = read_bool(&mut c)?;
+    let _show_death_screen = read_bool(&mut c)?;
     let _limited_crafting = read_bool(&mut c)?;
-    let has_death_location = read_bool(&mut c)?;
-    if has_death_location {
-        let _dim = read_string(&mut c)?;
-        let mut pos = [0u8; 8];
-        c.read_exact(&mut pos)?;
-    }
-    let portal_cooldown = read_varint(&mut c)?;
+    let spawn = parse_common_spawn_info(&mut c)?;
+    let _online_mode = read_bool(&mut c)?;
+    let _enforces_secure_chat = read_bool(&mut c)?;
     Ok(WorldInfo {
         entity_id,
         hardcore,
         dimensions,
         view_distance,
         simulation_distance,
-        portal_cooldown,
+        portal_cooldown: spawn.portal_cooldown,
+        current_dimension: spawn.dimension,
     })
+}
+
+/// Parse Respawn (clientbound: generated id 82) — a dimension change.
+/// The payload is CommonPlayerSpawnInfo + a dataToKeep byte; the fields
+/// the model doesn't need stay in the framed payload (skipped safely).
+pub fn parse_respawn(payload: &[u8]) -> Result<SpawnInfo> {
+    let mut c: &[u8] = payload;
+    let id = read_varint(&mut c)?;
+    anyhow::ensure!(id == clientbound::RESPAWN, "not a respawn packet (0x{id:02X})");
+    parse_common_spawn_info(&mut c)
 }
 
 /// Parse Chunk Data and Update Light (clientbound: generated id 45) into a decoded
@@ -538,6 +598,9 @@ pub enum PlayEvent {
     UnloadChunk { x: i32, z: i32 },
     /// The view center moved.
     CenterChunk { x: i32, z: i32 },
+    /// Respawn: a dimension change (the spawn info carries the new
+    /// dimension; the model re-pins min_y from the registry).
+    Respawn(SpawnInfo),
     /// Keep-alive probe answered.
     KeepAlive(i64),
     /// Ping probe answered.
@@ -572,6 +635,7 @@ impl<S: Read + Write> PlaySession<S> {
         };
         match id {
             clientbound::LOGIN => Ok(PlayEvent::WorldInfo(parse_world_info(&pkt)?)),
+            clientbound::RESPAWN => Ok(PlayEvent::Respawn(parse_respawn(&pkt)?)),
             clientbound::CHUNK_DATA => Ok(PlayEvent::Chunk(parse_chunk_data(&pkt)?)),
             clientbound::KEEP_ALIVE => {
                 let probe = parse_play_keep_alive(&pkt)?;
@@ -734,6 +798,12 @@ fn read_i32(r: &mut &[u8]) -> std::io::Result<i32> {
     Ok(i32::from_be_bytes(b))
 }
 
+fn read_i64(r: &mut &[u8]) -> std::io::Result<i64> {
+    let mut b = [0u8; 8];
+    r.read_exact(&mut b)?;
+    Ok(i64::from_be_bytes(b))
+}
+
 fn read_f32(r: &mut &[u8]) -> std::io::Result<f32> {
     let mut b = [0u8; 4];
     r.read_exact(&mut b)?;
@@ -785,6 +855,77 @@ mod tests {
         assert_eq!(sb.last().unwrap().0, (sb.len() - 1) as u32, "serverbound dense");
         assert_eq!(cb.len(), 141);
         assert_eq!(sb.len(), 69);
+    }
+
+    /// Build a vanilla 26.2 Login payload (the javap-proven field order).
+    fn vanilla_login_payload(dimension: &str, view: i32, portal: i32) -> Vec<u8> {
+        let mut p = Vec::new();
+        write_varint(&mut p, clientbound::LOGIN);
+        p.extend_from_slice(&17i32.to_be_bytes()); // playerId
+        p.push(0); // hardcore
+        write_varint(&mut p, 2); // two levels
+        write_string(&mut p, "minecraft:overworld");
+        write_string(&mut p, "minecraft:the_nether");
+        write_varint(&mut p, 20); // max players (dropped)
+        write_varint(&mut p, view); // chunk radius
+        write_varint(&mut p, 8); // simulation distance
+        p.push(0);
+        p.push(0);
+        p.push(0); // 3 dropped bools
+        write_varint(&mut p, 0); // dimension_type registry id
+        write_string(&mut p, dimension);
+        p.extend_from_slice(&1234i64.to_be_bytes()); // seed (dropped)
+        p.push(1); // game type (dropped)
+        p.push(1); // previous game type (dropped)
+        p.push(0); // is debug (dropped)
+        p.push(0); // is flat (dropped)
+        p.push(0); // no death location
+        write_varint(&mut p, portal); // portal cooldown
+        write_varint(&mut p, 63); // sea level (dropped)
+        p.push(1); // online mode (dropped)
+        p.push(1); // enforces secure chat (dropped)
+        p
+    }
+
+    #[test]
+    fn login_parses_the_proven_vanilla_shape_and_pins_the_dimension() {
+        let info = parse_world_info(&vanilla_login_payload("minecraft:overworld", 12, 300))
+            .expect("vanilla login parses");
+        assert_eq!(info.entity_id, 17);
+        assert_eq!(info.view_distance, 12, "chunkRadius, not maxPlayers");
+        assert_eq!(info.simulation_distance, 8);
+        assert_eq!(info.portal_cooldown, 300, "from CommonPlayerSpawnInfo");
+        assert_eq!(info.current_dimension, "minecraft:overworld");
+        assert_eq!(
+            info.dimensions,
+            vec!["minecraft:overworld".to_string(), "minecraft:the_nether".to_string()]
+        );
+    }
+
+    #[test]
+    fn respawn_parses_the_shared_spawn_info() {
+        // Respawn = CommonPlayerSpawnInfo + dataToKeep (dropped rest)
+        let mut p = Vec::new();
+        write_varint(&mut p, clientbound::RESPAWN);
+        write_varint(&mut p, 1); // dimension_type registry id (nether entry)
+        write_string(&mut p, "minecraft:the_nether");
+        p.extend_from_slice(&0i64.to_be_bytes()); // seed
+        p.push(1);
+        p.push(1); // game types
+        p.push(0);
+        p.push(0); // debug/flat
+        // a PRESENT death location: dimension string + packed pos — the
+        // skip must consume exactly this shape
+        p.push(1);
+        write_string(&mut p, "minecraft:overworld");
+        p.extend_from_slice(&42i64.to_be_bytes());
+        write_varint(&mut p, 60); // portal cooldown
+        write_varint(&mut p, 31); // sea level
+        p.push(3); // dataToKeep (ignored — stays in the framed payload)
+        let spawn = parse_respawn(&p).expect("respawn parses");
+        assert_eq!(spawn.dimension, "minecraft:the_nether");
+        assert_eq!(spawn.dimension_type_id, 1);
+        assert_eq!(spawn.portal_cooldown, 60);
     }
 
     #[test]
@@ -1001,20 +1142,37 @@ mod tests {
                 }
             }
             // ---- play ----
+            // login in the PROVEN vanilla 26.2 shape (playerId, hardcore,
+            // levels, maxPlayers, chunkRadius, simulationDistance, 3 bools,
+            // CommonPlayerSpawnInfo, onlineMode, enforcesSecureChat)
             let mut login_pkt = Vec::new();
             write_varint(&mut login_pkt, clientbound::LOGIN);
             login_pkt.extend_from_slice(&17i32.to_be_bytes()); // entity id
             login_pkt.push(0); // not hardcore
             write_varint(&mut login_pkt, 1); // one dimension
             write_string(&mut login_pkt, "minecraft:overworld");
-            write_varint(&mut login_pkt, 20); // max players
-            write_varint(&mut login_pkt, 8); // view distance
+            write_varint(&mut login_pkt, 20); // max players (dropped)
+            write_varint(&mut login_pkt, 8); // chunk radius (view distance)
             write_varint(&mut login_pkt, 8); // simulation distance
-            login_pkt.push(0); // reduced debug
-            login_pkt.push(1); // respawn screen
-            login_pkt.push(0); // limited crafting
-            login_pkt.push(0); // no death location
+            login_pkt.push(0); // reduced debug (dropped)
+            login_pkt.push(1); // show death screen (dropped)
+            login_pkt.push(0); // do limited crafting (dropped)
+            // CommonPlayerSpawnInfo: dimension_type registry id 0 (the
+            // mock's registry streams overworld first), dimension, seed,
+            // game types, debug/flat, no death location, portal cooldown,
+            // sea level
+            write_varint(&mut login_pkt, 0); // dimension_type = overworld entry
+            write_string(&mut login_pkt, "minecraft:overworld");
+            login_pkt.extend_from_slice(&0i64.to_be_bytes()); // seed (dropped)
+            login_pkt.push(1); // game type survival (dropped)
+            login_pkt.push(1); // previous game type (dropped)
+            login_pkt.push(0); // is debug (dropped)
+            login_pkt.push(0); // is flat (dropped)
+            login_pkt.push(0); // no death location (dropped)
             write_varint(&mut login_pkt, 300); // portal cooldown
+            write_varint(&mut login_pkt, 63); // sea level (dropped)
+            login_pkt.push(1); // online mode (dropped)
+            login_pkt.push(1); // enforces secure chat (dropped)
             srv.send_packet(&login_pkt).unwrap();
             let mut cc = Vec::new();
             write_varint(&mut cc, clientbound::CENTER_CHUNK);
