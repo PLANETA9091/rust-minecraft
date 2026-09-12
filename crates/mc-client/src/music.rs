@@ -1,10 +1,11 @@
 //! Music scheduler driven by the GENERATED sound-event tables
 //! (official sounds.json via the asset index). Implements the vanilla menu
-//! music behavior: pick a track from `music.menu`, play it, then wait a
-//! randomized delay before the next one. Track lengths come from the REAL
-//! decoded .ogg data when the runtime assets are present (see audio.rs);
-//! the output backend is injected on top of this schedule (headless/CI runs
-//! the deterministic silent backend).
+//! music behavior: pick a track from `music.menu`, then (like the vanilla
+//! sound engine) a weighted-random FILE inside that event, play it, then
+//! wait a randomized delay before the next one. Per-file lengths come from
+//! the REAL decoded .ogg data when the runtime assets are present (see
+//! audio.rs); the output backend plugs in on top of this schedule
+//! (headless/CI runs the deterministic silent backend).
 
 use std::collections::BTreeMap;
 
@@ -13,10 +14,17 @@ use mc_registry::generated::sounds as snd;
 #[derive(Debug, Clone, PartialEq)]
 pub enum MusicState {
     Idle,
-    /// (track name, start frame, length frames)
+    /// (event id, start frame, length frames)
     Playing(&'static str, u64, u64),
     /// waiting until this frame
     Delay(u64),
+}
+
+/// Table key for one file of an event: "music.menu#3" (index = position in
+/// the event's official file list). Shared by the scheduler, the audio
+/// loader and the event log so all three stay in lockstep.
+pub fn file_key(event: &str, idx: usize) -> String {
+    format!("{event}#{idx}")
 }
 
 pub struct MusicScheduler {
@@ -25,14 +33,14 @@ pub struct MusicScheduler {
     rng: u64,
     current: usize,
     tick: u64,
-    /// real track lengths (frames) from decoded OGG data, keyed by event id
-    track_frames: BTreeMap<&'static str, u64>,
+    /// real per-file lengths (frames) from decoded OGG data, keyed file_key()
+    file_frames: BTreeMap<String, u64>,
     /// event log (deterministic; tests + audio backend consume it)
     pub events: Vec<String>,
 }
 
-/// Fallback track length until real OGG data is loaded (audio.rs injects
-/// the decoded length): menu tracks are several minutes; the scheduler only
+/// Fallback file length until real OGG data is loaded (audio.rs injects the
+/// decoded lengths): menu tracks are several minutes; the scheduler only
 /// needs relative time.
 const DEFAULT_TRACK_FRAMES: u64 = 60 * 20;
 const MIN_DELAY_FRAMES: u64 = 30 * 20;
@@ -52,7 +60,7 @@ impl MusicScheduler {
             rng: seed ^ 0x5EED_C0FF_EE12_3456,
             current: 0,
             tick: 0,
-            track_frames: BTreeMap::new(),
+            file_frames: BTreeMap::new(),
             events: Vec::new(),
         }
     }
@@ -66,11 +74,12 @@ impl MusicScheduler {
         &self.menu_tracks
     }
 
-    /// Real track length in frames from the decoded official .ogg; overrides
-    /// the fallback default so the schedule matches the actual audio.
-    pub fn set_track_frames(&mut self, id: &'static str, frames: u64) {
+    /// Real file length in frames from the decoded official .ogg (key from
+    /// file_key()); overrides the fallback default so the schedule matches
+    /// the actual audio. Zero/garbage lengths are rejected.
+    pub fn set_track_frames(&mut self, key: &str, frames: u64) {
         if frames > 0 {
-            self.track_frames.insert(id, frames);
+            self.file_frames.insert(key.to_string(), frames);
         }
     }
 
@@ -89,13 +98,40 @@ impl MusicScheduler {
         self.rng >> 16
     }
 
+    /// Weighted-random file pick, exactly like the vanilla sound engine:
+    /// roll over the sum of the official `weight` fields, walk the list.
+    /// Returns (file index, file count).
+    fn pick_file(&mut self, event: &'static str) -> (usize, usize) {
+        match snd::event(event) {
+            Some(ev) if ev.len > 0 => {
+                let files = snd::files(ev);
+                let total: u32 = files.iter().map(|f| f.weight).sum();
+                let mut roll = if total > 0 {
+                    (self.next_rand() % total as u64) as u32
+                } else {
+                    0
+                };
+                for (i, f) in files.iter().enumerate() {
+                    if roll < f.weight {
+                        return (i, files.len());
+                    }
+                    roll -= f.weight;
+                }
+                (files.len() - 1, files.len())
+            }
+            _ => (0, 1),
+        }
+    }
+
     fn play_current(&mut self) {
         if self.menu_tracks.is_empty() {
             return;
         }
         let track = self.menu_tracks[self.current % self.menu_tracks.len()];
-        let len = self.track_frames.get(track).copied().unwrap_or(DEFAULT_TRACK_FRAMES);
-        self.events.push(format!("play {} @{}", track, self.tick));
+        let (file_idx, _) = self.pick_file(track);
+        let key = file_key(track, file_idx);
+        let len = self.file_frames.get(&key).copied().unwrap_or(DEFAULT_TRACK_FRAMES);
+        self.events.push(format!("play {key} @{}", self.tick));
         self.state = MusicState::Playing(track, self.tick, len);
     }
 
@@ -129,10 +165,23 @@ impl MusicScheduler {
 mod tests {
     use super::*;
 
+    /// Parse "play <key> @<tick>" -> the file key ("music.menu#4").
+    fn played_key(s: &MusicScheduler) -> String {
+        let ev = s
+            .events
+            .iter()
+            .find(|e| e.starts_with("play "))
+            .expect("a play event");
+        ev.strip_prefix("play ")
+            .and_then(|s| s.split(" @").next())
+            .expect("file key")
+            .to_string()
+    }
+
     #[test]
     fn menu_tracks_come_from_official_sounds_json() {
         let s = MusicScheduler::new(1);
-        // 26.2 ships music.menu tracks (menu1..menu4 + stacked variants)
+        // 26.2 ships music.menu as one event with 9 weighted files
         assert!(
             s.menu_tracks.iter().any(|t| t.starts_with("music.menu")),
             "official sounds.json must provide music.menu events: {:?}",
@@ -149,7 +198,26 @@ mod tests {
             MusicState::Playing(t, _, _) => assert!(t.starts_with("music.menu")),
             other => panic!("expected playing, got {:?}", other),
         }
-        assert_eq!(s.events.first().map(String::as_str), Some("play music.menu @0"));
+        assert!(
+            s.events.first().map(String::as_str).unwrap_or("").starts_with("play music.menu#"),
+            "event log must record the picked file: {:?}",
+            s.events
+        );
+    }
+
+    #[test]
+    fn weighted_file_pick_stays_in_range() {
+        // a fixed seed must pick a legal file index of the official pool
+        let mut s = MusicScheduler::new(20260214);
+        s.on_menu_open();
+        let key = played_key(&s);
+        let idx: usize = key.split('#').nth(1).expect("#idx").parse().expect("idx");
+        let ev = snd::event("music.menu").expect("music.menu event");
+        assert!(idx < ev.len, "picked file {idx} out of range (pool {})", ev.len);
+        // determinism: same seed, same pick
+        let mut s2 = MusicScheduler::new(20260214);
+        s2.on_menu_open();
+        assert_eq!(played_key(&s2), key);
     }
 
     #[test]
@@ -184,12 +252,15 @@ mod tests {
     }
 
     #[test]
-    fn real_track_length_from_decoded_ogg_overrides_default() {
+    fn real_file_length_from_decoded_ogg_overrides_default() {
         let mut s = MusicScheduler::new(7);
+        // the audio backend injects the real decoded length for EVERY file of
+        // the event (it cannot know which one the weighted pick will choose)
         let id = s.menu_tracks()[0];
-        // the audio backend injects the real decoded length (e.g. ~3 min at
-        // 44.1 kHz) and the schedule must honor it, not the default
-        s.set_track_frames(id, 132_300_000);
+        let ev = snd::event(id).expect("event");
+        for i in 0..ev.len {
+            s.set_track_frames(&file_key(id, i), 132_300_000);
+        }
         s.on_menu_open();
         match s.state() {
             MusicState::Playing(t, start, len) => {
@@ -200,7 +271,9 @@ mod tests {
             other => panic!("expected playing, got {:?}", other),
         }
         // zero/garbage lengths are rejected (never create instant loops)
-        s.set_track_frames(id, 0);
+        for i in 0..ev.len {
+            s.set_track_frames(&file_key(id, i), 0);
+        }
         match s.state() {
             MusicState::Playing(_, _, len) => assert_eq!(*len, 132_300_000),
             other => panic!("expected still playing, got {:?}", other),

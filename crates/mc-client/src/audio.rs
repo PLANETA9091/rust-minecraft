@@ -3,14 +3,18 @@
 //!
 //! Generator-first truth chain: `mc2rs-gen` fetches the real `music.menu`
 //! .ogg files through the asset index (sha1-verified) into `assets-cache/jar`
-//! — this module decodes THOSE bytes and feeds the scheduler the REAL track
-//! lengths. Output backends: `SilentOutput` (deterministic, default for
-//! headless/CI and when no device exists) and `RodioOutput` (the real
+//! — this module decodes THOSE bytes and feeds the scheduler the REAL
+//! per-file lengths. Output backends: `SilentOutput` (deterministic, default
+//! for headless/CI and when no device exists) and `RodioOutput` (the real
 //! speaker path, compiled behind the `audio` cargo feature because the OS
 //! audio stack is a runtime environment property, not a code property).
+//!
+//! Memory policy: files are decoded on demand at play time (one track at a
+//! time); startup only counts frames (`probe_frames`) so the scheduler gets
+//! the real lengths without retaining hundreds of MB of PCM.
 
 use std::collections::HashMap;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 use anyhow::{Context, Result};
 
@@ -24,12 +28,14 @@ pub struct Track {
     pub samples: Vec<f32>,
 }
 
-/// Decode any format the symphonia default registry supports (ogg/vorbis for
-/// the official music, wav/pcm for tests) into interleaved f32 samples.
-pub fn decode_audio(bytes: &[u8]) -> Result<Track> {
-    use symphonia::core::audio::SampleBuffer;
-    use symphonia::core::codecs::{DecoderOptions, CODEC_TYPE_NULL};
-    use symphonia::core::errors::Error as SymphoniaError;
+fn open_decoder(
+    bytes: &[u8],
+) -> Result<(
+    Box<dyn symphonia::core::codecs::Decoder>,
+    Box<dyn symphonia::core::formats::FormatReader>,
+    u32,
+)> {
+    use symphonia::core::codecs::CODEC_TYPE_NULL;
     use symphonia::core::formats::FormatOptions;
     use symphonia::core::io::MediaSourceStream;
     use symphonia::core::meta::MetadataOptions;
@@ -56,11 +62,19 @@ pub fn decode_audio(bytes: &[u8]) -> Result<Track> {
         .context("no audio track in stream")?;
     let track_id = track.id;
     let codec_params = track.codec_params.clone();
-
-    let mut decoder = symphonia::default::get_codecs()
-        .make(&codec_params, &DecoderOptions::default())
+    let decoder = symphonia::default::get_codecs()
+        .make(&codec_params, &Default::default())
         .context("audio codec unsupported")?;
+    Ok((decoder, format, track_id))
+}
 
+/// Decode any format the symphonia default registry supports (ogg/vorbis for
+/// the official music, wav/pcm for tests) into interleaved f32 samples.
+pub fn decode_audio(bytes: &[u8]) -> Result<Track> {
+    use symphonia::core::audio::SampleBuffer;
+    use symphonia::core::errors::Error as SymphoniaError;
+
+    let (mut decoder, mut format, track_id) = open_decoder(bytes)?;
     let mut samples: Vec<f32> = Vec::new();
     let mut sample_rate = 0u32;
     let mut channels = 0usize;
@@ -88,7 +102,6 @@ pub fn decode_audio(bytes: &[u8]) -> Result<Track> {
             Err(e) => return Err(anyhow::Error::new(e).context("audio decode")),
         }
     }
-
     anyhow::ensure!(
         sample_rate > 0 && channels > 0 && !samples.is_empty(),
         "no audio frames decoded"
@@ -101,10 +114,46 @@ pub fn decode_audio(bytes: &[u8]) -> Result<Track> {
     })
 }
 
-/// Output backends. `play` replaces whatever was playing (the vanilla menu
-/// music is a sequence of full tracks; the scheduler decides the timing).
+/// (sample_rate, frames) WITHOUT retaining samples — memory-light startup
+/// probe so the scheduler gets the real lengths for the whole playlist.
+pub fn probe_frames(bytes: &[u8]) -> Result<(u32, u64)> {
+    use symphonia::core::audio::SampleBuffer;
+    use symphonia::core::errors::Error as SymphoniaError;
+
+    let (mut decoder, mut format, track_id) = open_decoder(bytes)?;
+    let mut frames = 0u64;
+    let mut rate = 0u32;
+    loop {
+        let packet = match format.next_packet() {
+            Ok(p) => p,
+            Err(SymphoniaError::IoError(e)) if e.kind() == std::io::ErrorKind::UnexpectedEof => break,
+            Err(e) => return Err(anyhow::Error::new(e).context("audio packet read")),
+        };
+        if packet.track_id() != track_id {
+            continue;
+        }
+        match decoder.decode(&packet) {
+            Ok(decoded) => {
+                let spec = *decoded.spec();
+                rate = spec.rate;
+                let ch = spec.channels.count();
+                let mut buf = SampleBuffer::<f32>::new(decoded.capacity() as u64, spec);
+                buf.copy_interleaved_ref(decoded);
+                frames += (buf.samples().len() / ch.max(1)) as u64;
+            }
+            Err(SymphoniaError::DecodeError(_)) => continue,
+            Err(e) => return Err(anyhow::Error::new(e).context("audio decode")),
+        }
+    }
+    anyhow::ensure!(rate > 0 && frames > 0, "no audio frames decoded");
+    Ok((rate, frames))
+}
+
+/// Output backends. `play` takes ownership of the decoded track and replaces
+/// whatever was playing (the vanilla menu music is a sequence of full files;
+/// the scheduler decides the timing).
 pub trait AudioOutput: Send {
-    fn play(&mut self, track: &Track);
+    fn play(&mut self, track: Track);
     fn stop(&mut self);
     fn playing(&self) -> bool;
 }
@@ -118,7 +167,7 @@ pub struct SilentOutput {
 }
 
 impl AudioOutput for SilentOutput {
-    fn play(&mut self, _track: &Track) {
+    fn play(&mut self, _track: Track) {
         self.active = true;
     }
     fn stop(&mut self) {
@@ -130,7 +179,7 @@ impl AudioOutput for SilentOutput {
 }
 
 /// Real output through rodio/CPAL. Only compiled with `--features audio`;
-/// at runtime `OutputStream::try_default()` fails gracefully on devices
+/// at runtime `OutputStream::try_default()` fails gracefully on machines
 /// without speakers and the caller falls back to `SilentOutput`.
 #[cfg(feature = "audio")]
 pub struct RodioOutput {
@@ -142,8 +191,8 @@ pub struct RodioOutput {
 #[cfg(feature = "audio")]
 impl RodioOutput {
     pub fn try_new() -> Result<Self> {
-        let (_stream, handle) = rodio::OutputStream::try_default()
-            .context("no audio output device")?;
+        let (_stream, handle) =
+            rodio::OutputStream::try_default().context("no audio output device")?;
         let sink = rodio::Sink::try_new(&handle).context("audio sink")?;
         Ok(Self { _stream, sink })
     }
@@ -151,14 +200,11 @@ impl RodioOutput {
 
 #[cfg(feature = "audio")]
 impl AudioOutput for RodioOutput {
-    fn play(&mut self, track: &Track) {
+    fn play(&mut self, track: Track) {
         use rodio::Source;
         self.sink.clear();
-        let src = rodio::buffer::SamplesBuffer::new(
-            track.channels as u16,
-            track.sample_rate,
-            track.samples.clone(),
-        );
+        let src =
+            rodio::buffer::SamplesBuffer::new(track.channels as u16, track.sample_rate, track.samples);
         self.sink.append(src);
     }
     fn stop(&mut self) {
@@ -179,65 +225,75 @@ pub fn default_output() -> Box<dyn AudioOutput> {
     Box::new(SilentOutput::default())
 }
 
-/// Load + decode the official menu music tracks from the runtime asset root
-/// (populated by `mc2rs-gen generate` through the asset index). Track ids are
-/// resolved through the GENERATED sounds.json table, file bytes sha1-verified
-/// at fetch time. Missing/undecodable tracks are skipped: audio must never
-/// break the client.
-pub fn load_menu_music(root: &Path, tracks: &[&'static str]) -> Vec<(&'static str, Track)> {
+/// Resolve the runtime paths of the official menu music files through the
+/// GENERATED sounds.json table (every file of every event, keys from
+/// `music::file_key()`). Files were fetched + sha1-verified by `mc2rs-gen`
+/// through the asset index; missing files are skipped silently — audio must
+/// never break the client.
+pub fn discover_menu_music(root: &Path, tracks: &[&'static str]) -> Vec<(String, PathBuf)> {
     use mc_registry::generated::sounds as snd;
     let mut out = Vec::new();
     for id in tracks {
         let Some(ev) = snd::event(id) else { continue };
-        let Some(file) = snd::files(ev).first() else { continue };
-        // sounds.json names are relative to assets/minecraft/sounds/, the
-        // vanilla engine appends ".ogg" when the name has no extension
-        let rel = if file.name.ends_with(".ogg") {
-            file.name.to_string()
-        } else {
-            format!("{}.ogg", file.name)
-        };
-        let path = root.join("assets/minecraft/sounds").join(&rel);
-        let Ok(bytes) = std::fs::read(&path) else { continue };
-        match decode_audio(&bytes) {
-            Ok(t) => out.push((*id, t)),
-            Err(e) => eprintln!("      music: {} undecodable ({e})", path.display()),
+        for (idx, file) in snd::files(ev).iter().enumerate() {
+            // sounds.json names are relative to assets/minecraft/sounds/, the
+            // vanilla engine appends ".ogg" when the name has no extension
+            let rel = if file.name.ends_with(".ogg") {
+                file.name.to_string()
+            } else {
+                format!("{}.ogg", file.name)
+            };
+            let path = root.join("assets/minecraft/sounds").join(&rel);
+            if path.is_file() {
+                out.push((crate::music::file_key(id, idx), path));
+            }
         }
     }
     out
 }
 
-/// Menu music player: owns the output backend + decoded tracks and mirrors
-/// the deterministic `MusicScheduler` event log onto real audio. Lives for
-/// the whole GUI session (dropping it closes the device stream).
+/// Menu music player: owns the output backend + the discovered file paths,
+/// mirrors the deterministic `MusicScheduler` event log onto real audio.
+/// Lives for the whole GUI session (dropping it closes the device stream).
 pub struct MenuMusic {
     output: Box<dyn AudioOutput>,
-    tracks: HashMap<&'static str, Track>,
+    files: HashMap<String, PathBuf>,
     seen: usize,
 }
 
 impl MenuMusic {
-    /// Load real menu tracks (if the runtime assets exist), give the
-    /// scheduler the REAL track lengths, and take the best output backend.
-    /// Never fails: missing assets or no device degrade to silence.
+    /// Discover the real menu music files (if the runtime assets exist),
+    /// give the scheduler the REAL per-file lengths, and take the best
+    /// output backend. Never fails: missing assets or no device degrade to
+    /// silence. Startup cost: one frame-counting decode pass over the
+    /// playlist (samples are not retained).
     pub fn start(app: &mut crate::screens::App) -> Self {
         let tracks = app.music.menu_tracks().to_vec();
-        let mut decoded = load_menu_music(Path::new("assets-cache/jar"), &tracks);
-        for (id, t) in &decoded {
-            app.music.set_track_frames(id, t.frames);
+        let files = discover_menu_music(Path::new("assets-cache/jar"), &tracks);
+        for (key, path) in &files {
+            if let Ok(bytes) = std::fs::read(path) {
+                if let Ok((_, frames)) = probe_frames(&bytes) {
+                    app.music.set_track_frames(key, frames);
+                }
+            }
         }
-        let tracks = decoded.drain(..).collect();
-        Self { output: default_output(), tracks, seen: 0 }
+        Self { output: default_output(), files: files.into_iter().collect(), seen: 0 }
     }
 
-    /// Mirror new scheduler "play ..." events onto the output backend.
+    /// Mirror new scheduler "play <event#file>" events onto the output
+    /// backend, decoding the chosen file on demand (one track in memory).
     /// Called once per frame; cheap when the event log did not grow.
     pub fn sync(&mut self, music: &crate::music::MusicScheduler) {
         let seen = self.seen.min(music.events.len());
         for ev in &music.events[seen..] {
-            if let Some(id) = ev.strip_prefix("play ").and_then(|s| s.split(" @").next()) {
-                if let Some(t) = self.tracks.get(id) {
-                    self.output.play(t);
+            if let Some(key) = ev.strip_prefix("play ").and_then(|s| s.split(" @").next()) {
+                let Some(path) = self.files.get(key).cloned() else { continue };
+                match std::fs::read(&path) {
+                    Ok(bytes) => match decode_audio(&bytes) {
+                        Ok(t) => self.output.play(t),
+                        Err(e) => eprintln!("      music: {key} undecodable ({e})"),
+                    },
+                    Err(e) => eprintln!("      music: {key} unreadable ({e})"),
                 }
             }
         }
@@ -287,6 +343,10 @@ mod tests {
             let expect = (((i * 137) % 1000) as i16) as f32 / 32768.0;
             assert!((s - expect).abs() < 1.0 / 4096.0, "sample {i}: {s} vs {expect}");
         }
+        // the probe agrees on rate + frame count without keeping samples
+        let (rate, frames) = probe_frames(&synth_wav()).expect("probe wav");
+        assert_eq!(rate, 22050);
+        assert_eq!(frames, 100);
     }
 
     #[test]
@@ -295,6 +355,7 @@ mod tests {
         assert!(decode_audio(&[]).is_err());
         // ogg container magic but no valid codec bisection inside
         assert!(decode_audio(b"OggS\x00\x02truncated").is_err());
+        assert!(probe_frames(b"definitely not audio").is_err());
     }
 
     #[test]
@@ -302,38 +363,55 @@ mod tests {
         let t = decode_audio(&synth_wav()).unwrap();
         let mut o = SilentOutput::default();
         assert!(!o.playing());
-        o.play(&t);
+        o.play(t.clone());
+        assert!(o.playing());
+        o.play(t);
         assert!(o.playing());
         o.stop();
         assert!(!o.playing());
     }
 
-    /// Real-data check (NOT run on CI): decode the actual official menu
-    /// music fetched by `mc2rs-gen generate`. Run here with:
+    /// Real-data check (NOT run on CI): discover + probe + decode the actual
+    /// official menu music fetched by `mc2rs-gen generate`. Run here with:
     ///   cargo test -p mc-client -- --ignored
     #[test]
     #[ignore = "needs runtime assets (assets-cache/jar) from mc2rs-gen generate"]
-    fn real_official_menu_ogg_decodes() {
-        // music.menu.menu1 is the canonical vanilla menu track
-        let path = Path::new("assets-cache/jar/assets/minecraft/sounds/music/menu/menu1.ogg");
-        let bytes = match std::fs::read(path) {
-            Ok(b) => b,
-            Err(_) => {
-                eprintln!("skipping: {path:?} not present (run mc2rs-gen generate)");
-                return;
-            }
+    fn real_official_menu_music_decodes() {
+        // cargo test runs from the package dir; the GUI runs from the repo root
+        let candidates = [
+            PathBuf::from("assets-cache/jar"),
+            Path::new(env!("CARGO_MANIFEST_DIR")).join("../../assets-cache/jar"),
+        ];
+        let Some(root) = candidates.into_iter().find(|p| p.is_dir()) else {
+            eprintln!("skipping: assets-cache/jar not present (run mc2rs-gen generate)");
+            return;
         };
-        let t = decode_audio(&bytes).expect("official menu1.ogg must decode");
-        // menu tracks are minutes long, 44.1/48 kHz stereo
-        assert!(t.frames > 60 * 30_000, "suspiciously short: {} frames", t.frames);
-        assert!(t.sample_rate >= 32_000, "rate {}", t.sample_rate);
-        assert!((1..=2).contains(&t.channels), "channels {}", t.channels);
-        println!(
-            "official menu1.ogg: {} frames ({:.1}s), {} Hz, {} ch",
-            t.frames,
-            t.frames as f64 / t.sample_rate as f64,
-            t.sample_rate,
-            t.channels
+        // the scheduler knows the official pool from the generated table
+        let sched_tracks = vec!["music.menu"];
+        let files = discover_menu_music(&root, &sched_tracks);
+        assert_eq!(
+            files.len(),
+            9,
+            "26.2 music.menu pool must resolve to 9 real files: {files:?}"
         );
+        for (key, path) in &files {
+            let bytes = std::fs::read(path).expect("read");
+            let (rate, frames) = probe_frames(&bytes)
+                .unwrap_or_else(|e| panic!("{key}: probe failed: {e}"));
+            // menu tracks are minutes long, 44.1/48 kHz
+            assert!(frames > 60 * 30_000, "{key}: suspiciously short ({frames} frames)");
+            assert!(rate >= 32_000, "{key}: rate {rate}");
+            let t = decode_audio(&bytes)
+                .unwrap_or_else(|e| panic!("{key}: decode failed: {e}"));
+            assert_eq!(t.frames, frames, "{key}: probe and decode must agree");
+            println!(
+                "  {key} <- {} ({} frames, {:.1}s, {} Hz, {} ch)",
+                path.display(),
+                t.frames,
+                t.frames as f64 / t.sample_rate as f64,
+                t.sample_rate,
+                t.channels
+            );
+        }
     }
 }
