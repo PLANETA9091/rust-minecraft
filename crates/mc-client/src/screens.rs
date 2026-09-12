@@ -299,7 +299,9 @@ impl App {
     fn render_world_3d(&mut self, fb: &mut crate::raster::Framebuf) {
         self.ensure_world();
         let n = self.world_size as f32;
-        let eye = Vec3::new(n / 2.0, self.spawn_y as f32 + 1.62, n / 2.0);
+        // Creative-flight camera: 12 blocks above the spawn surface clears
+        // the canopy so the official sky (sun/moon/stars) stays in frame.
+        let eye = Vec3::new(n / 2.0, self.spawn_y as f32 + 12.0 + 1.62, n / 2.0);
         let cam = crate::camera::Camera {
             pos: eye,
             yaw: std::f32::consts::FRAC_PI_2, // face +X (east): sun visible at dawn
