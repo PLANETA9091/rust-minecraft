@@ -21,9 +21,16 @@
 //!   cooldown are kept; the login pins the dimension, Respawn updates it.
 //! - Respawn (clientbound: generated id 82): CommonPlayerSpawnInfo + a
 //!   dataToKeep byte (stays in the framed payload, safely skipped).
-//! - Synchronize Player Position (clientbound: generated id 72): X/Y/Z (Double),
-//!   Yaw/Pitch (Float), Relativity Flags (UByte), Teleport ID (VarInt) —
-//!   answered with Confirm Teleportation (serverbound 0x00, id verbatim).
+//! - Synchronize Player Position (clientbound: generated id 72): the
+//!   FIFTH javap drift wave — the 26.2 codec is the composite
+//!   (VAR_INT teleportId, PositionMoveRotation, Relative.SET): the
+//!   teleport id comes FIRST (the wiki-era tail), the position rides a
+//!   PositionMoveRotation record — X/Y/Z (Double x3) + a DELTA MOVEMENT
+//!   Vec3 (Double x3) the wiki-era shape never knew — then Yaw/Pitch
+//!   (Float x2) and the relativity flags as a full INT bitmask (the
+//!   1.21.2+ Relative enum: X, Y, Z, Y_ROT, X_ROT, DELTA_X/Y/Z,
+//!   ROTATE_DELTA — 9 bits, not the wiki-era byte). Answered with
+//!   Confirm Teleportation (serverbound 0x00, the id verbatim).
 //! - Chunk Data and Update Light (clientbound: generated id 45): Chunk X/Z (Int),
 //!   Heightmaps (network NBT — walked and skipped), chunk buffer (VarInt
 //!   length) of sections back to back, block entities (skipped), light
@@ -135,18 +142,28 @@ pub struct SpawnInfo {
     pub portal_cooldown: i32,
 }
 
-/// Synchronize Player Position: where the server says the player is.
+/// Synchronize Player Position: where the server says the player is —
+/// the javap-proven 26.2 field order (teleport id FIRST, position +
+/// delta movement as the PositionMoveRotation record, int flags LAST).
 #[derive(Debug, Clone, PartialEq)]
 pub struct PlayerPosition {
+    /// The VarInt the serverbound Accept Teleportation must echo —
+    /// first on the 26.2 wire.
+    pub teleport_id: i32,
     pub x: f64,
     pub y: f64,
     pub z: f64,
+    /// The deltaMovement Vec3 the teleport carries (the relative
+    /// velocity component the wiki-era shape never knew).
+    pub dx: f64,
+    pub dy: f64,
+    pub dz: f64,
     pub yaw: f32,
     pub pitch: f32,
-    /// Relativity flags (0x01 X, 0x02 Y, 0x04 Z, 0x08 yaw, 0x10 pitch,
-    /// higher bits velocity/deltas in newer shapes) — kept raw.
-    pub flags: u8,
-    pub teleport_id: i32,
+    /// Relativity flags — a full INT bitmask in 26.2 (the Relative
+    /// enum: bit 0 X, 1 Y, 2 Z, 3 Y_ROT, 4 X_ROT, 5 DELTA_X, 6 DELTA_Y,
+    /// 7 DELTA_Z, 8 ROTATE_DELTA) — kept raw.
+    pub flags: i32,
 }
 
 /// One 16×16×16 chunk section, fully decoded.
@@ -492,7 +509,12 @@ pub fn parse_play_ping(payload: &[u8]) -> Result<i32> {
     Ok(i32::from_be_bytes(c[..4].try_into()?))
 }
 
-/// Parse Synchronize Player Position (clientbound: generated id 72).
+/// Parse Synchronize Player Position (clientbound: generated id 72) —
+/// the javap-proven 26.2 composite (VAR_INT teleportId,
+/// PositionMoveRotation.STREAM_CODEC, Relative.SET_STREAM_CODEC):
+/// VarInt teleport id, X/Y/Z + delta-movement (six doubles), yaw/pitch
+/// (two floats), the relativity flags as a raw i32 bitmask. Strict:
+/// trailing bytes are the drift they look like.
 pub fn parse_synchronize_position(payload: &[u8]) -> Result<PlayerPosition> {
     let mut c: &[u8] = payload;
     let id = read_varint(&mut c)?;
@@ -500,15 +522,25 @@ pub fn parse_synchronize_position(payload: &[u8]) -> Result<PlayerPosition> {
         id == clientbound::SYNCHRONIZE_POSITION,
         "not a position synchronization packet (0x{id:02X})"
     );
-    anyhow::ensure!(c.len() >= 8 * 3 + 4 * 2 + 1, "position synchronization truncated");
+    anyhow::ensure!(
+        c.len() >= 1 + 8 * 6 + 4 * 2 + 4,
+        "position synchronization truncated"
+    );
+    let teleport_id = read_varint(&mut c)?;
     let x = read_f64(&mut c)?;
     let y = read_f64(&mut c)?;
     let z = read_f64(&mut c)?;
+    let dx = read_f64(&mut c)?;
+    let dy = read_f64(&mut c)?;
+    let dz = read_f64(&mut c)?;
     let yaw = read_f32(&mut c)?;
     let pitch = read_f32(&mut c)?;
-    let flags = read_u8(&mut c)?;
-    let teleport_id = read_varint(&mut c)?;
-    Ok(PlayerPosition { x, y, z, yaw, pitch, flags, teleport_id })
+    let flags = read_i32(&mut c)?;
+    anyhow::ensure!(
+        c.is_empty(),
+        "trailing bytes after the position synchronization fields"
+    );
+    Ok(PlayerPosition { teleport_id, x, y, z, dx, dy, dz, yaw, pitch, flags })
 }
 
 /// Parse Set Center Chunk (clientbound: generated id 94): VarInt chunk X/Z.
@@ -929,6 +961,40 @@ mod tests {
     }
 
     #[test]
+    fn synchronize_position_parses_the_proven_26_2_composite() {
+        // the javap-proven 26.2 shape: VAR_INT teleportId FIRST, the
+        // PositionMoveRotation (position Vec3 + deltaMovement Vec3 +
+        // yaw/pitch floats), then the INT relativity bitmask LAST
+        let mut p = Vec::new();
+        write_varint(&mut p, clientbound::SYNCHRONIZE_POSITION);
+        write_varint(&mut p, 42);
+        p.extend_from_slice(&8.5f64.to_be_bytes());
+        p.extend_from_slice(&64.0f64.to_be_bytes());
+        p.extend_from_slice(&(-3.25f64).to_be_bytes());
+        p.extend_from_slice(&0.5f64.to_be_bytes());
+        p.extend_from_slice(&(-1.25f64).to_be_bytes());
+        p.extend_from_slice(&0.75f64.to_be_bytes()); // the delta movement
+        p.extend_from_slice(&90.0f32.to_be_bytes());
+        p.extend_from_slice(&(-12.5f32).to_be_bytes());
+        p.extend_from_slice(&0b1_0000_0101i32.to_be_bytes()); // X + Z + DELTA_Z
+        let pos = parse_synchronize_position(&p).expect("26.2 teleport parses");
+        assert_eq!(pos.teleport_id, 42, "the id leads the 26.2 wire");
+        assert_eq!((pos.x, pos.y, pos.z), (8.5, 64.0, -3.25));
+        assert_eq!((pos.dx, pos.dy, pos.dz), (0.5, -1.25, 0.75));
+        assert_eq!((pos.yaw, pos.pitch), (90.0, -12.5));
+        assert_eq!(pos.flags, 0b1_0000_0101, "a full int bitmask, 9 Relative bits");
+        // wrong id and truncation are errors, not guesses
+        let mut wrong = Vec::new();
+        write_varint(&mut wrong, 0x77);
+        assert!(parse_synchronize_position(&wrong).is_err());
+        assert!(parse_synchronize_position(&p[..p.len() - 6]).is_err());
+        // trailing bytes (the wiki-era on-ground byte habit) are drift
+        let mut trailing = p.clone();
+        trailing.push(0x01);
+        assert!(parse_synchronize_position(&trailing).is_err());
+    }
+
+    #[test]
     fn palette_packing_roundtrips_without_spanning_longs() {
         // 5-bit entries: 12 per long — the entry stream must never
         // straddle a long boundary (vanilla packing rule).
@@ -1239,16 +1305,22 @@ mod tests {
             write_varint(&mut un, clientbound::UNLOAD_CHUNK);
             un.extend_from_slice(&(((-2i64) << 32) | 3).to_be_bytes());
             srv.send_packet(&un).unwrap();
-            // position teleport id 42 -> confirm teleportation (0x00)
+            // position teleport id 42 -> confirm teleportation (0x00) —
+            // the javap-proven 26.2 shape: teleport id FIRST, then the
+            // PositionMoveRotation (position + delta movement Vec3s +
+            // yaw/pitch), then the int relativity flags
             let mut pos = Vec::new();
             write_varint(&mut pos, clientbound::SYNCHRONIZE_POSITION);
+            write_varint(&mut pos, 42);
             pos.extend_from_slice(&8.5f64.to_be_bytes());
             pos.extend_from_slice(&64.0f64.to_be_bytes());
             pos.extend_from_slice(&(-3.25f64).to_be_bytes());
+            pos.extend_from_slice(&0.0f64.to_be_bytes()); // delta movement
+            pos.extend_from_slice(&0.0f64.to_be_bytes());
+            pos.extend_from_slice(&0.0f64.to_be_bytes());
             pos.extend_from_slice(&90.0f32.to_be_bytes());
             pos.extend_from_slice(&0.0f32.to_be_bytes());
-            pos.push(0x00); // all values absolute
-            write_varint(&mut pos, 42);
+            pos.extend_from_slice(&0i32.to_be_bytes()); // all values absolute
             srv.send_packet(&pos).unwrap();
             let resp = srv.read_packet().expect("confirm teleportation");
             let mut c: &[u8] = &resp;

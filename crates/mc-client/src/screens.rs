@@ -1808,16 +1808,21 @@ mod tests {
             // The spawn sits INSIDE the centered chunk (3,-2) — a real
             // vanilla join burst is exactly this: the player position
             // within the view-distance center. floor(56.5)>>4 = 3,
-            // floor(-27.25)>>4 = -2.
+            // floor(-27.25)>>4 = -2. The javap-proven 26.2 shape:
+            // teleport id FIRST, then the PositionMoveRotation (position
+            // + delta movement Vec3s + yaw/pitch), then the int flags.
             let mut pos = Vec::new();
             write_varint(&mut pos, clientbound::SYNCHRONIZE_POSITION);
+            write_varint(&mut pos, 42);
             pos.extend_from_slice(&56.5f64.to_be_bytes());
             pos.extend_from_slice(&64.0f64.to_be_bytes());
             pos.extend_from_slice(&(-27.25f64).to_be_bytes());
+            pos.extend_from_slice(&0.0f64.to_be_bytes()); // delta movement
+            pos.extend_from_slice(&0.0f64.to_be_bytes());
+            pos.extend_from_slice(&0.0f64.to_be_bytes());
             pos.extend_from_slice(&90.0f32.to_be_bytes());
             pos.extend_from_slice(&0.0f32.to_be_bytes());
-            pos.push(0x00); // all values absolute
-            write_varint(&mut pos, 42);
+            pos.extend_from_slice(&0i32.to_be_bytes()); // all values absolute
             conn.send_packet(&pos).unwrap();
             let resp = conn.read_packet().expect("confirm teleportation");
             let mut c: &[u8] = &resp;

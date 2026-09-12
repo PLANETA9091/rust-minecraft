@@ -333,13 +333,16 @@ mod tests {
             current_dimension: "minecraft:overworld".to_string(),
         };
         let player = PlayerPosition {
+            teleport_id: 42,
             x: 8.5,
             y: 64.0,
             z: -3.25,
+            dx: 0.0,
+            dy: 0.0,
+            dz: 0.0,
             yaw: 90.0,
             pitch: 0.0,
             flags: 0,
-            teleport_id: 42,
         };
         let col = ChunkColumn {
             x: 3,
@@ -397,13 +400,16 @@ mod tests {
                 current_dimension: "minecraft:overworld".to_string(),
             },
             player: PlayerPosition {
+                teleport_id: 1,
                 x: 0.0,
                 y: 0.0,
                 z: 0.0,
+                dx: 0.0,
+                dy: 0.0,
+                dz: 0.0,
                 yaw: 0.0,
                 pitch: 0.0,
                 flags: 0,
-                teleport_id: 1,
             },
             chunks: vec![],
             registry: RegistryData {
