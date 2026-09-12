@@ -956,9 +956,27 @@ mod tests {
             min_y: 0,
             height: 256,
         });
+        // the synced biome table BOTH dimensions share (a real vanilla
+        // server streams the whole worldgen/biome registry): plains 0,
+        // crimson_forest 1 — and the player's own overworld section
+        // (world y 64..79) carries the overworld biome's cells
+        snap.registry.biomes = vec![
+            "minecraft:plains".to_string(),
+            "minecraft:crimson_forest".to_string(),
+        ];
+        snap.chunks[0]
+            .sections
+            .push(biome_cells_section(&[0], &[0u32; 64]));
         let mut live = LiveView::from_snapshot(snap, 5);
         // the overworld join view stands (stone at grid y 0, feet-anchored)
-        assert_eq!(live.refresh(example_mapper).world.get(32, 0, 32), STONE);
+        // and the biome at the player's feet is the spawn biome's NAME
+        let join = live.refresh(example_mapper);
+        assert_eq!(join.world.get(32, 0, 32), STONE);
+        assert_eq!(
+            join.biome.as_deref(),
+            Some("minecraft:plains"),
+            "the overworld biome resolves through the synced names"
+        );
         assert_eq!(live.model.min_y, Some(-64));
         assert_eq!(live.model.loaded_chunks(), 1);
         // THE CROSSING: Respawn to the nether
@@ -1004,8 +1022,10 @@ mod tests {
         let cam = nether.camera.expect("the nether pose drives the camera");
         assert_eq!(cam.pos.y, PLAYER_EYE_HEIGHT, "feet world 0, base 0, the standing eye");
         assert_eq!(
-            nether.biome, None,
-            "no synced biome names in this fixture — the honest unknown"
+            nether.biome.as_deref(),
+            Some("minecraft:crimson_forest"),
+            "the crossing resolves the NETHER's own biome at the new pose — \
+             the shipped change re-fires the music situation (screens layer)"
         );
     }
 

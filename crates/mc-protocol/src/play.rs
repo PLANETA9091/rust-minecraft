@@ -1151,7 +1151,10 @@ mod tests {
     /// One section with an indirect 5-bit palette: stone at (0,0,0),
     /// dirt at (1,2,3) — the shape the e2e mock reuses. The data array
     /// carries PALETTE INDICES; the parser resolves them to global ids.
-    fn build_stone_dirt_section() -> Vec<u8> {
+    /// `biome` picks the section's single-valued biome id — the caller
+    /// names it through the synced table (plains 0 for the overworld
+    /// stream, crimson_forest 1 for the nether's own chunk).
+    fn build_stone_dirt_section(biome: u32) -> Vec<u8> {
         let palette = [0u32, 1, 10]; // air, stone, dirt (global state ids)
         let idx = |x: usize, y: usize, z: usize| (y << 8) | (z << 4) | x;
         let mut entries = vec![0u32; 4096]; // palette index 0 = air
@@ -1166,13 +1169,13 @@ mod tests {
         }
         section.extend_from_slice(&pack_entries(&entries, 5));
         section.push(0); // biomes: single valued
-        write_varint(&mut section, 1);
+        write_varint(&mut section, biome as i32);
         section
     }
 
     #[test]
     fn chunk_packet_decodes_palettized_sections() {
-        let buffer = build_stone_dirt_section();
+        let buffer = build_stone_dirt_section(1);
         let mut p = Vec::new();
         write_varint(&mut p, clientbound::CHUNK_DATA);
         p.extend_from_slice(&3i32.to_be_bytes()); // chunk x
@@ -1247,9 +1250,16 @@ mod tests {
             pg.extend_from_slice(&77i32.to_be_bytes());
             srv.send_packet(&pg).unwrap();
             // bulk registry traffic (configuration): the dimension_type
-            // registry the client DECODES + a second registry it skips
+            // registry the client DECODES + the biome registry it RETAINS
+            // (a real vanilla server streams the WHOLE worldgen/biome
+            // table — here two entries, plains 0 and crimson_forest 1, so
+            // the nether's own chunk can carry a different biome id)
             srv.send_packet(&crate::config::test_support::registry_packet(true)).unwrap();
-            srv.send_packet(&crate::config::test_support::registry_packet(false)).unwrap();
+            srv.send_packet(&crate::config::test_support::biome_registry_packet_multi(&[
+                "minecraft:plains",
+                "minecraft:crimson_forest",
+            ]))
+            .unwrap();
             let mut fin = Vec::new();
             write_varint(&mut fin, crate::config::clientbound::FINISH);
             srv.send_packet(&fin).unwrap();
@@ -1319,8 +1329,8 @@ mod tests {
             );
             let pace = f32::from_be_bytes(c[..4].try_into().unwrap());
             assert!(pace > 0.0, "server must be asked to keep streaming");
-            // chunk data (the stone+dirt section)
-            let buffer = build_stone_dirt_section();
+            // chunk data (the stone+dirt section, plains underneath)
+            let buffer = build_stone_dirt_section(0);
             let mut cd = Vec::new();
             write_varint(&mut cd, clientbound::CHUNK_DATA);
             cd.extend_from_slice(&3i32.to_be_bytes());
@@ -1390,7 +1400,7 @@ mod tests {
             // ---- the LIVE leg (post-milestone traffic on the same wire) ----
             // a second chunk column (3,-1): the same stone+dirt section —
             // the stream keeps filling the view while the client plays
-            let buffer2 = build_stone_dirt_section();
+            let buffer2 = build_stone_dirt_section(0);
             let mut cd2 = Vec::new();
             write_varint(&mut cd2, clientbound::CHUNK_DATA);
             cd2.extend_from_slice(&3i32.to_be_bytes());
@@ -1450,14 +1460,15 @@ mod tests {
             write_varint(&mut rp, 60); // portal cooldown
             write_varint(&mut rp, 31); // sea level
             srv.send_packet(&rp).unwrap();
+            let buffer3 = build_stone_dirt_section(1); // crimson_forest — the NETHER's own biome
             let mut cd3 = Vec::new();
             write_varint(&mut cd3, clientbound::CHUNK_DATA);
             cd3.extend_from_slice(&0i32.to_be_bytes());
             cd3.extend_from_slice(&0i32.to_be_bytes());
             cd3.push(0x0A);
             cd3.push(0x00); // empty heightmaps compound
-            write_varint(&mut cd3, buffer2.len() as i32);
-            cd3.extend_from_slice(&buffer2);
+            write_varint(&mut cd3, buffer3.len() as i32);
+            cd3.extend_from_slice(&buffer3);
             write_varint(&mut cd3, 0); // no block entities
             cd3.extend_from_slice(&[0, 0, 0, 0, 0, 0]); // light masks
             srv.send_packet(&cd3).unwrap();
@@ -1515,6 +1526,18 @@ mod tests {
                 assert_eq!((ow.min_y, ow.height), (-64, 384));
                 let nether = snap.registry.dimension("minecraft:the_nether").expect("nether");
                 assert_eq!((nether.min_y, nether.height), (0, 256));
+                // the synced biome table: both dimensions' biomes in one
+                // registry, the arrival order the chunk palettes reference
+                assert_eq!(snap.registry.biome_name(0), Some("minecraft:plains"));
+                assert_eq!(
+                    snap.registry.biome_name(1),
+                    Some("minecraft:crimson_forest")
+                );
+                assert_eq!(
+                    snap.chunks[0].sections[0].biomes,
+                    vec![0u32; 64],
+                    "the overworld chunk's own biome, named through the table"
+                );
             }
             other => panic!("expected Loaded, got {other:?}"),
         }
@@ -1578,6 +1601,11 @@ mod tests {
                     PlayEvent::Chunk(col) => {
                         assert_eq!((col.x, col.z), (0, 0), "the new dimension's column");
                         assert_eq!(col.sections[0].blocks[291], 10, "the decoded dirt");
+                        assert_eq!(
+                            col.sections[0].biomes,
+                            vec![1u32; 64],
+                            "the crossing carries the NETHER's own biome (crimson_forest)"
+                        );
                     }
                     other => panic!("expected Chunk, got {other:?}"),
                 }

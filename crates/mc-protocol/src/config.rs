@@ -642,20 +642,33 @@ pub mod test_support {
     /// this alongside [`registry_packet`] — one truth for the mock
     /// registries, not hand-duplicated bytes in every mock.
     pub fn biome_registry_packet(biome: &str) -> Vec<u8> {
+        biome_registry_packet_multi(&[biome])
+    }
+
+    /// The MULTI-entry form: a real vanilla server streams the WHOLE
+    /// `minecraft:worldgen/biome` registry in one packet — both
+    /// dimensions' biomes together, the ARRIVAL ORDER being the network
+    /// id the chunk biome palettes reference. Mock servers that exercise
+    /// dimension crossings stream two entries so the new dimension's
+    /// chunks can carry a DIFFERENT biome id (the crossing re-fires the
+    /// music only when the resolved name actually changes).
+    pub fn biome_registry_packet_multi(names: &[&str]) -> Vec<u8> {
         let mut p = Vec::new();
         write_varint(&mut p, clientbound::REGISTRY_DATA);
         write_string(&mut p, "minecraft:worldgen/biome");
-        write_varint(&mut p, 1); // one entry
-        write_string(&mut p, biome);
-        p.push(1); // tag present
-        let tag = Nbt::Compound(vec![
-            ("temperature".into(), Nbt::Float(0.8)),
-            (
-                "effects".into(),
-                Nbt::Compound(vec![("fog_color".into(), Nbt::Int(0xC0D8FF))]),
-            ),
-        ]);
-        crate::nbt::write_network_nbt(&tag, &mut p).expect("biome element writes");
+        write_varint(&mut p, names.len() as i32);
+        for biome in names {
+            write_string(&mut p, biome);
+            p.push(1); // tag present
+            let tag = Nbt::Compound(vec![
+                ("temperature".into(), Nbt::Float(0.8)),
+                (
+                    "effects".into(),
+                    Nbt::Compound(vec![("fog_color".into(), Nbt::Int(0xC0D8FF))]),
+                ),
+            ]);
+            crate::nbt::write_network_nbt(&tag, &mut p).expect("biome element writes");
+        }
         p
     }
 
