@@ -403,9 +403,15 @@ fn fetch_menu_music(
     sounds: &soundgen::SoundData,
     workspace_root: &Path,
 ) -> Result<usize> {
+    // 26.2 ships one `music.menu` event with many weighted files (older
+    // versions had per-track `music.menu.menu1` children) — match both.
     let mut fetched = 0usize;
     let mut seen = std::collections::BTreeSet::new();
-    for ev in sounds.events_with_prefix("music.menu.") {
+    for ev in sounds
+        .events
+        .values()
+        .filter(|e| e.id.starts_with("music.menu"))
+    {
         for f in &ev.files {
             let name = if f.name.ends_with(".ogg") {
                 f.name.clone()

@@ -193,7 +193,7 @@ pub fn load_menu_music(root: &Path, tracks: &[&'static str]) -> Vec<(&'static st
         // sounds.json names are relative to assets/minecraft/sounds/, the
         // vanilla engine appends ".ogg" when the name has no extension
         let rel = if file.name.ends_with(".ogg") {
-            file.name.clone()
+            file.name.to_string()
         } else {
             format!("{}.ogg", file.name)
         };
