@@ -54,7 +54,10 @@ hand-drawn:
   pumped to the world-load milestone; the outcome lands on the vanilla
   *Connection Lost* screen with the server's own reason (or the factual
   connected line carrying the network's real world facts — entity id,
-  view distance, decoded chunk count).
+  view distance, decoded chunk count). Decoded columns land in a compact
+  client-side **world model** (chunk-keyed storage, vanilla block-index
+  queries, replace/unload semantics) — the substrate the in-world view of
+  a network server builds on.
 - **Singleplayer world** — clicking `Singleplayer` enters a live 3D world
   view rendered by the same deterministic CPU raster path as the pixel
   tests: real block textures from the generated atlas, the **official

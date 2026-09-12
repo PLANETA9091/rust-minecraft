@@ -23,6 +23,7 @@ mod screens;
 mod sky;
 mod textures;
 mod world;
+mod world_model;
 
 #[cfg(not(target_arch = "wasm32"))]
 mod window;
