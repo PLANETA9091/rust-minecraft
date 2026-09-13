@@ -67,7 +67,9 @@ const FACE_CORNERS: [[[f32; 3]; 4]; 6] = [
 ];
 
 fn is_transparent(kind: u16) -> bool {
-    kind == AIR || kind == WATER || kind == LEAVES
+    // the leaves FAMILY: oak (foliage-tinted) and pale oak (the audited
+    // no-tint verdict — still cutout leaves, non-occluding, no AO)
+    kind == AIR || kind == WATER || kind == LEAVES || kind == PALE_LEAVES
 }
 
 /// Only opaque blocks cast ambient occlusion (air/water/leaves never darken
@@ -446,6 +448,39 @@ mod tests {
     }
 
     #[test]
+    fn pale_leaves_mesh_transparent_and_untinted() {
+        // the twelfth-audit kind: pale oak leaves are non-occluding (the
+        // stone face UNDER them still draws — the transparency verdict)
+        // and consume NO tint slot: even a biome table carrying an
+        // extreme dry-foliage opinion never folds into their carrier
+        // (vanilla's BlockColors registers no source for the block).
+        let mut w = empty_world();
+        put(&mut w, 8, 8, 8, STONE);
+        put(&mut w, 8, 9, 8, PALE_LEAVES);
+        w.biomes = Some(BiomeLayer {
+            ids: vec![vec![0; CHUNK_X * CHUNK_Y * CHUNK_Z]],
+            // grass slot carries an extreme color on every cell — if
+            // pale leaves wrongly selected a slot, some face would fold
+            tints: vec![[Some(0xFF0000), Some(0xFF0000), Some(0xFF0000), Some(0xFF0000)]],
+        });
+        let quads = mesh_chunk(&w, 0, 0, None);
+        // the stone top face at y 9 (under the pale leaves) DRAWS —
+        // non-occluding, exactly the oak-leaves policy
+        assert!(
+            quads.iter().any(|quad| quad.pts[0][1] == 9.0
+                && quad.pts.iter().all(|p| (p[1] - 9.0).abs() < f32::EPSILON)),
+            "the stone face under pale leaves renders (non-occluding)"
+        );
+        // every pale-leaves face rides the UNTINTED carrier: no channel
+        // is killed (a red fold would zero g/b on some corner)
+        for quad in quads.iter().filter(|quad| quad.pts[0][1] == 10.0) {
+            for c in quad.colors {
+                assert!(c[0] > 0.0 && c[1] > 0.0 && c[2] > 0.0, "untinted: {c:?}");
+            }
+        }
+    }
+
+    #[test]
     fn biome_tint_folds_into_the_textured_carrier_only_when_it_differs() {
         let mut w = empty_world();
         put(&mut w, 8, 8, 8, WATER);
@@ -463,7 +498,7 @@ mod tests {
         put(&mut plains, 8, 8, 8, WATER);
         plains.biomes = Some(BiomeLayer {
             ids: vec![vec![0; CHUNK_X * CHUNK_Y * CHUNK_Z]],
-            tints: vec![[None, None, Some(baked)]],
+            tints: vec![[None, None, Some(baked), None]],
         });
         assert_eq!(
             water_top_corner(&plains),
@@ -475,7 +510,7 @@ mod tests {
         put(&mut red, 8, 8, 8, WATER);
         red.biomes = Some(BiomeLayer {
             ids: vec![vec![0; CHUNK_X * CHUNK_Y * CHUNK_Z]],
-            tints: vec![[None, None, Some(0xFF0000)]],
+            tints: vec![[None, None, Some(0xFF0000), None]],
         });
         let tinted = water_top_corner(&red);
         assert_eq!(tinted[1], 0.0, "green killed by the tint");

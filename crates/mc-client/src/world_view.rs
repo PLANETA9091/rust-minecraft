@@ -47,7 +47,7 @@ use crate::world::{
     BiomeLayer, LightGrid, World, AIR, ANDESITE, BEDROCK, BIOME_UNKNOWN, CHUNK_X, CHUNK_Y, CHUNK_Z,
     COAL_ORE, COBBLED_DEEPSLATE, COPPER_ORE, DEEPSLATE, DIAMOND_ORE, DIORITE, DIRT, EMERALD_ORE,
     GOLD_ORE, GRANITE, GRASS, GRAVEL, IRON_ORE, LAPIS_ORE, LEAVES, LIGHT_UNKNOWN, LOG, NETHERRACK,
-    REDSTONE_ORE, SAND, STONE, WATER,
+    PALE_LEAVES, REDSTONE_ORE, SAND, STONE, WATER,
 };
 use crate::world_model::WorldModel;
 use mc_protocol::{PlayEvent, PlayerPosition, WorldSnapshot};
@@ -375,7 +375,7 @@ pub fn runtime_mapper(id: u32) -> u16 {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::world::{DIRT, NAME_OF, STONE};
+    use crate::world::{DIRT, NAME_OF, PALE_LEAVES, STONE};
     use crate::world_model::WorldModel;
     use mc_protocol::play::clientbound;
     use mc_registry::generated::atlas;
@@ -573,7 +573,7 @@ mod tests {
         );
         assert_eq!(
             layer.tints[1],
-            [Some(0x6AC44E), Some(0x45B421), Some(0x617B64), Some(0xA36D46)],
+            [Some(0x6AC44E), Some(0x45B421), Some(0x617B64), Some(0xA36946)],
             "swamp climate (0.8, 0.9): the REAL grid samples (the modifier stays unconsumed); dry rides its climate"
         );
         // the column's vertical extent (one section, y 0..15) resolved the
@@ -629,6 +629,10 @@ mod tests {
         assert_eq!(runtime_mapper(5_307), DIAMOND_ORE, "diamond_ore = global id 5307");
         assert_eq!(runtime_mapper(9_573), EMERALD_ORE, "emerald_ore = global id 9573");
         assert_eq!(runtime_mapper(6_997), NETHERRACK, "netherrack = global id 6997");
+        // the twelfth-audit kind: pale_oak_leaves (states 448..476) maps
+        // and carries NO tint slot (the audited BlockColors verdict)
+        assert_eq!(runtime_mapper(448), PALE_LEAVES, "pale_oak_leaves distance=0 persistent=true");
+        assert_eq!(runtime_mapper(475), PALE_LEAVES, "any state collapses");
         // deepslate carries an axis property — any state collapses (the
         // same policy as oak_log); redstone_ore has the lit state
         assert_eq!(runtime_mapper(30_416), DEEPSLATE, "deepslate axis=x");

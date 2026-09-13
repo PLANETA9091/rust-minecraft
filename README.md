@@ -308,6 +308,43 @@ hand-drawn:
   Zero render-path pixels: the tint CONSUMERS come next; the ten
   goldens are bit-identical by construction (the wire fixture carries
   no registry knowledge).
+  The **dry foliage is consumed + pale oak leaves render (v0.3.48 — the
+  twelfth audit and a verdict)**: the next documented deviation lands —
+  and the audit CORRECTED the assumption that came with it. The TWELFTH
+  javap audit pinned the dry chain byte-for-byte:
+  `Biome.getDryFoliageColor()` is
+  `effects.dryFoliageColorOverride().orElseGet(climate lookup)`, the
+  climate lookup (`getDryFoliageColorFromTexture`) is bytecode-identical
+  to its foliage sibling (RAW climate fields, caller-side
+  `Mth.clamp(0,1)`, f2d widening), and `DryFoliageColor.get` delegates
+  the SAME `ColorMapColorUtil.get` with the not-loaded default
+  -10732494 (ConstantValue of `FOLIAGE_DRY_DEFAULT`; the 0xFF5C3C32
+  argb word → RGB 0x5C3C32). The client consumed the resolution
+  surface end to end: the generator bakes the jar's
+  `textures/colormap/dry_foliage.png` as a THIRD grid
+  (`mc-registry/generated/colormap.rs`, REAL_GRIDS-gated, probe-verified
+  through the same `ColorMapColorUtil.get` arithmetic — plains climate
+  0xA37546, pale_garden climate 0xA36D46, desert corner 0xA38046,
+  jungle 0xA36346, swamp climate 0xA36946), and
+  `tint::entry_tints` grew to a FOUR-slot quad
+  (grass / foliage / water / dry) whose dry leg mirrors the audited
+  `orElseGet` shape exactly (the real pale_garden override #A0A69C
+  pinned as a test). THE VERDICT the audit surfaced: vanilla's ONLY
+  block-color registration for `BlockTintSources.dryFoliage()` is
+  leaf_litter — a non-cube ground cover whose mesh path is future work
+  (the DRY_SLOT is carried, ready, selected by no kind yet) — while
+  `pale_oak_leaves` carries NO tint source at all: its model's
+  tintindex falls back to `BlockColors.BLANK_LAYER` (constant white)
+  and the texture is PRE-COLORED (probe-verified: zero pure-gray
+  pixels), so it renders as authored. pale_oak_leaves therefore joined
+  the runtime palette (kind 24, the leaves family — non-occluding, no
+  AO, cutout holes) with NO tint slot, exactly vanilla; the atlas
+  regenerated with its official tile appended (28 tiles) and the old
+  26 tiles byte-identical. Tests +3 (workspace 233 passed / 0 failed /
+  3 ignored). Ten goldens bit-identical by construction (no golden
+  scene places pale oak leaves or flows biome entries; the tint quads
+  resolve only where a synced registry exists), verified on the fresh
+  v0.3.48 release build.
   The **grass modifier is consumed (v0.3.47 — the dark_forest blend)**:
   the next documented deviation lands. The ELEVENTH javap audit pinned
   `BiomeSpecialEffects.GrassColorModifier` (declaration order NONE,
