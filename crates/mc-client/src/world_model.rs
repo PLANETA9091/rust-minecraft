@@ -39,15 +39,16 @@
 use std::collections::HashMap;
 
 use mc_protocol::{
-    ChunkColumn, ChunkLight, ClockUpdate, LightData, PlayEvent, PlayerPosition, RegistryData,
-    WorldInfo, WorldSnapshot,
+    ChunkColumn, ChunkLight, ClockUpdate, EntityDeltaPos, EntityDeltaPosRot, EntityDeltaRot,
+    EntityHeadRot, LightData, PlayEvent, PlayerPosition, RegistryData, WorldInfo, WorldSnapshot,
 };
 
 /// The model's view of ONE entity — the facts the entity packets have
 /// actually delivered (the spawn's registry-typed existence, the latest
 /// authoritative position). Rotation rides the spawn's byte-unpacked
-/// degrees until a sync overrides it (the sync's floats are exact;
-/// the spawn's bytes are the vanilla `b * 360 / 256` quantization).
+/// degrees until a sync or move packet overrides it (the sync's floats
+/// are exact; the spawn's and move bytes are the vanilla
+/// `b * 360 / 256` quantization).
 #[derive(Debug, Clone, PartialEq)]
 pub struct EntitySnapshot {
     /// The entity type's registry id (resolved by the synced registry).
@@ -57,11 +58,15 @@ pub struct EntitySnapshot {
     pub y: f64,
     pub z: f64,
     /// Yaw in degrees (the latest sync's float, else the spawn byte
-    /// unpacked the vanilla way).
+    /// unpacked the vanilla way; the move packets' bytes override).
     pub y_rot: f32,
     /// Pitch in degrees (the latest sync's float, else the spawn byte
-    /// unpacked the vanilla way).
+    /// unpacked the vanilla way; the move packets' bytes override).
     pub x_rot: f32,
+    /// Head yaw in degrees (the spawn byte unpacked the vanilla way,
+    /// kept current by Rotate Head — the head's own channel, distinct
+    /// from the body's yaw).
+    pub y_head_rot: f32,
 }
 
 /// The client's view of ONE server world: loaded chunk columns, the
@@ -105,6 +110,35 @@ pub struct WorldModel {
 impl Default for WorldModel {
     fn default() -> Self {
         Self::new()
+    }
+}
+
+/// Java's `Math.round(double)`: the closest long with TIES TOWARD
+/// POSITIVE INFINITY. Rust's `f64::round` rounds halves AWAY FROM
+/// ZERO — on a negative half-grid base the two differ by one 1/4096
+/// grid step (`Math.round(-0.5)` is 0, `(-0.5f64).round()` is -1),
+/// exactly the negative-coordinate class the wire keeps burning, so
+/// the walk pins the vanilla direction.
+fn vanilla_round(d: f64) -> f64 {
+    let r = d.floor();
+    if d - r >= 0.5 {
+        r + 1.0
+    } else {
+        r
+    }
+}
+
+/// ONE axis of the `VecDeltaCodec` walk (javap of the 26.2
+/// `VecDeltaCodec.decode(JJJ)`, the per-tick move's own arithmetic): a
+/// ZERO delta keeps the axis EXACT — the lane returns the base
+/// untouched, no quantization; a non-zero delta moves the QUANTIZED
+/// base, `(Math.round(base * 4096) + delta) / 4096` — every real step
+/// snaps the accumulated position onto the 1/4096 grid.
+fn delta_axis(base: f64, delta: i16) -> f64 {
+    if delta == 0 {
+        base
+    } else {
+        (vanilla_round(base * 4096.0) + delta as f64) / 4096.0
     }
 }
 
@@ -303,6 +337,7 @@ impl WorldModel {
                         z: e.z,
                         y_rot: e.y_rot,
                         x_rot: e.x_rot,
+                        y_head_rot: e.y_head_rot,
                     },
                 );
                 true
@@ -331,6 +366,62 @@ impl WorldModel {
                 e.z = sync.z;
                 e.y_rot = sync.y_rot;
                 e.x_rot = sync.x_rot;
+                true
+            }
+            PlayEvent::EntityDeltaPos(m) => {
+                // the per-tick walk names an entity the client tracks;
+                // an unknown id is refused (the spawn packet stays the
+                // ONLY creator). The walk is the vanilla codec's, not a
+                // naive += : the ALL-ZERO payload is the codec's own
+                // early return (the base comes back UNCHANGED — nothing
+                // moved), each non-zero lane moves the QUANTIZED base
+                // and each zero lane keeps its axis exact.
+                let Some(e) = self.entities.get_mut(&m.id) else {
+                    return false;
+                };
+                if m.dx == 0 && m.dy == 0 && m.dz == 0 {
+                    return false;
+                }
+                e.x = delta_axis(e.x, m.dx);
+                e.y = delta_axis(e.y, m.dy);
+                e.z = delta_axis(e.z, m.dz);
+                true
+            }
+            PlayEvent::EntityDeltaPosRot(m) => {
+                // the same walk plus the wire's angle bytes — the
+                // sign-extended byte's `b * 360 / 256` degrees, the Add
+                // Entity angles' own quantization; the rotation is
+                // asserted even on an all-zero walk
+                let Some(e) = self.entities.get_mut(&m.id) else {
+                    return false;
+                };
+                if m.dx != 0 || m.dy != 0 || m.dz != 0 {
+                    e.x = delta_axis(e.x, m.dx);
+                    e.y = delta_axis(e.y, m.dy);
+                    e.z = delta_axis(e.z, m.dz);
+                }
+                e.y_rot = m.y_rot;
+                e.x_rot = m.x_rot;
+                true
+            }
+            PlayEvent::EntityDeltaRot(r) => {
+                // rotation-only: the position is untouched, the body
+                // turns in place (the wire carries no position lane)
+                let Some(e) = self.entities.get_mut(&r.id) else {
+                    return false;
+                };
+                e.y_rot = r.y_rot;
+                e.x_rot = r.x_rot;
+                true
+            }
+            PlayEvent::EntityHeadRot(h) => {
+                // the head yaw is its OWN channel (Rotate Head rides
+                // beside the move packets, never inside them); an
+                // unknown id is refused like every other mover
+                let Some(e) = self.entities.get_mut(&h.id) else {
+                    return false;
+                };
+                e.y_head_rot = h.y_head_rot;
                 true
             }
             PlayEvent::CenterChunk { x, z } => {
@@ -970,7 +1061,10 @@ mod tests {
     use mc_protocol::DimensionTypeEntry;
     use mc_protocol::SpawnInfo;
     use mc_protocol::varint::write_varint;
-    use mc_protocol::{BiomeEffects, BiomeEntry, EntityPositionSync, EntitySpawn, GrassColorModifier};
+    use mc_protocol::{
+        BiomeEffects, BiomeEntry, EntityDeltaPos, EntityDeltaPosRot, EntityDeltaRot,
+        EntityHeadRot, EntityPositionSync, EntitySpawn, GrassColorModifier,
+    };
 
     /// One synced biome element under the mock tables — the real
     /// NETWORK_CODEC shape with plains' climate (the name is what the
@@ -2424,6 +2518,198 @@ mod tests {
             data: 0,
         })));
         assert_eq!(m.entity(7).unwrap().x, 8.0);
+    }
+
+    /// The delta walk IS the vanilla codec, not a naive `+=`: a
+    /// non-zero lane moves the QUANTIZED base (the position snaps to
+    /// the 1/4096 grid), a zero lane keeps its axis EXACT, and the
+    /// all-zero payload is the codec's own early return — nothing
+    /// moved, nothing changed. The spawn's fractional positions prove
+    /// both halves: the zero lane survives UNQUANTIZED while the moved
+    /// axes land on the grid.
+    #[test]
+    fn entity_delta_walk_is_the_vanilla_codec() {
+        let mut m = WorldModel::new();
+        spawn_at(&mut m, 7, 8.0001, 32.0, -8.0001);
+        // a real step: the moved axes quantize, the untouched axis does
+        // not — (round(8.0001*4096) + 1)/4096 = 32769/4096 on the x,
+        // the exact 32.0 on the y, the grid-snapped -32769/4096 on the z
+        assert!(m.apply(PlayEvent::EntityDeltaPos(EntityDeltaPos {
+            id: 7,
+            dx: 1,
+            dy: 0,
+            dz: -1,
+            on_ground: true,
+        })));
+        let e = m.entity(7).unwrap();
+        assert_eq!(e.x, 32769.0 / 4096.0, "the moved axis snapped to the grid");
+        assert_eq!(e.y, 32.0, "the zero lane kept the axis EXACT (unquantized)");
+        assert_eq!(e.z, -32769.0 / 4096.0, "the negative axis walked the grid");
+        // the all-zero payload is the codec's early return: the base
+        // comes back UNCHANGED — including its off-grid fraction
+        spawn_at(&mut m, 9, 0.0001, 64.0002, -0.0003);
+        let before = m.entity(9).unwrap().clone();
+        assert!(
+            !m.apply(PlayEvent::EntityDeltaPos(EntityDeltaPos {
+                id: 9,
+                dx: 0,
+                dy: 0,
+                dz: 0,
+                on_ground: false,
+            })),
+            "the all-zero walk moved nothing"
+        );
+        assert_eq!(m.entity(9).unwrap(), &before, "no quantization on the idle walk");
+    }
+
+    /// The walk's round direction is JAVA's `Math.round` — TIES TOWARD
+    /// POSITIVE INFINITY. Rust's `f64::round` rounds halves away from
+    /// zero, so on a negative half-grid base the naive port lands ONE
+    /// 1/4096 GRID STEP LOW: `Math.round(-0.5)` is 0, not -1. The
+    /// spawn position is `2^-13` (exact in f64, `* 4096` = -0.5 on the
+    /// tie) — the vanilla direction walks to 1/4096, the wrong one to
+    /// 0.0, and the test pins the vanilla one.
+    #[test]
+    fn the_delta_walk_rounds_ties_toward_positive_infinity() {
+        let mut m = WorldModel::new();
+        spawn_at(&mut m, 7, -0.0001220703125, 0.0, 0.0); // = -2^-13
+        assert!(m.apply(PlayEvent::EntityDeltaPos(EntityDeltaPos {
+            id: 7,
+            dx: 1,
+            dy: 0,
+            dz: 0,
+            on_ground: true,
+        })));
+        let e = m.entity(7).unwrap();
+        assert_eq!(
+            e.x,
+            1.0 / 4096.0,
+            "Math.round(-0.5) is 0 (ties to +inf), then +1 delta = 1/4096"
+        );
+    }
+
+    /// The rotation family: the pos-rot packet walks AND turns (the
+    /// angle bytes are the Add Entity quantization), the rot-only
+    /// packet turns WITHOUT touching the position, and the pos-rot
+    /// walk's rotation is asserted even on an all-zero walk.
+    #[test]
+    fn the_rotation_family_turns_the_body_without_moving_it() {
+        let mut m = WorldModel::new();
+        spawn_at(&mut m, 7, 8.0, 32.0, -8.0);
+        // pos + rot: the walk AND the angles land
+        assert!(m.apply(PlayEvent::EntityDeltaPosRot(EntityDeltaPosRot {
+            id: 7,
+            dx: 16,
+            dy: 0,
+            dz: 0,
+            y_rot: -180.0,
+            x_rot: 178.59375,
+            on_ground: true,
+        })));
+        let e = m.entity(7).unwrap();
+        assert_eq!(e.x, 8.00390625, "the 16-unit grid delta walked");
+        assert_eq!((e.y_rot, e.x_rot), (-180.0, 178.59375));
+        // rot-only: the position is untouched, the body turns in place
+        assert!(m.apply(PlayEvent::EntityDeltaRot(EntityDeltaRot {
+            id: 7,
+            y_rot: 45.0,
+            x_rot: -45.0,
+            on_ground: false,
+        })));
+        let e = m.entity(7).unwrap();
+        assert_eq!(e.x, 8.00390625, "the rot packet carries no position lane");
+        assert_eq!((e.y_rot, e.x_rot), (45.0, -45.0));
+        // the all-zero pos-rot walk still asserts its rotation
+        assert!(m.apply(PlayEvent::EntityDeltaPosRot(EntityDeltaPosRot {
+            id: 7,
+            dx: 0,
+            dy: 0,
+            dz: 0,
+            y_rot: 90.0,
+            x_rot: 0.0,
+            on_ground: false,
+        })));
+        let e = m.entity(7).unwrap();
+        assert_eq!(e.x, 8.00390625, "no walk on the zero lanes");
+        assert_eq!(e.y_rot, 90.0, "the rotation landed anyway");
+    }
+
+    /// The head yaw is its OWN channel: the spawn seeds it (the spawn
+    /// byte unpacked the vanilla way), Rotate Head keeps it current,
+    /// and the body packets NEVER touch it. An unknown id is refused
+    /// by every mover — the spawn packet stays the ONLY creator.
+    #[test]
+    fn the_head_yaw_is_its_own_channel() {
+        let mut m = WorldModel::new();
+        m.apply(PlayEvent::Spawn(EntitySpawn {
+            id: 7,
+            uuid: 1,
+            type_id: 3,
+            x: 0.0,
+            y: 32.0,
+            z: 0.0,
+            movement: [0.0; 3],
+            x_rot: 0.0,
+            y_rot: 10.0,
+            y_head_rot: 20.0,
+            data: 0,
+        }));
+        assert_eq!(m.entity(7).unwrap().y_head_rot, 20.0, "the spawn seeds the head");
+        // the head turns WITHOUT the body following
+        assert!(m.apply(PlayEvent::EntityHeadRot(EntityHeadRot {
+            id: 7,
+            y_head_rot: -90.0,
+        })));
+        let e = m.entity(7).unwrap();
+        assert_eq!(e.y_head_rot, -90.0);
+        assert_eq!(e.y_rot, 10.0, "the body's yaw is a different channel");
+        // every mover refuses an unknown id — no phantom entities
+        assert!(!m.apply(PlayEvent::EntityDeltaPos(EntityDeltaPos {
+            id: 99,
+            dx: 1,
+            dy: 0,
+            dz: 0,
+            on_ground: true,
+        })));
+        assert!(!m.apply(PlayEvent::EntityDeltaPosRot(EntityDeltaPosRot {
+            id: 99,
+            dx: 0,
+            dy: 0,
+            dz: 0,
+            y_rot: 0.0,
+            x_rot: 0.0,
+            on_ground: false,
+        })));
+        assert!(!m.apply(PlayEvent::EntityDeltaRot(EntityDeltaRot {
+            id: 99,
+            y_rot: 0.0,
+            x_rot: 0.0,
+            on_ground: false,
+        })));
+        assert!(!m.apply(PlayEvent::EntityHeadRot(EntityHeadRot {
+            id: 99,
+            y_head_rot: 0.0,
+        })));
+        assert!(m.entity(99).is_none(), "no mover creates");
+        assert!(m.entity(7).is_some(), "the neighbor is untouched");
+    }
+
+    /// Spawn ONE entity at the named position (the full-precision
+    /// doubles are exact — the walk tests rely on that).
+    fn spawn_at(m: &mut WorldModel, id: i32, x: f64, y: f64, z: f64) {
+        m.apply(PlayEvent::Spawn(EntitySpawn {
+            id,
+            uuid: 1,
+            type_id: 3,
+            x,
+            y,
+            z,
+            movement: [0.0; 3],
+            x_rot: 0.0,
+            y_rot: 0.0,
+            y_head_rot: 0.0,
+            data: 0,
+        }));
     }
 
     #[test]

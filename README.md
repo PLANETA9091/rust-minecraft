@@ -885,6 +885,47 @@ hand-drawn:
   empty batch), the sync record (both ground-flag bytes), and the
   model's lifecycle (spawn/move/despawn in place, the no-phantom-sync
   rule, the dimension swap).
+  The **entities walk the world — the MOVE-family deltas land
+  (v0.3.102)**: Move Entity Pos (generated id 53), Move Entity Pos and
+  Rotation (id 54), Move Entity Rot (id 56) and Rotate Head (id 83) —
+  the per-tick traffic the sync's teleports don't cover. The audit
+  re-derived all FOUR wire formats from the 26.2 bytecode: Pos = a
+  VarInt id + three SHORT deltas + BOOL; PosRot adds yaw/pitch angle
+  BYTES (yaw THEN pitch, `Mth.unpackDegrees(b) = b * 360 / 256` — the
+  Add Entity quantization); Rot drops the position lane entirely; and
+  Rotate Head (whose read IS its private constructor) is ONE head-yaw
+  byte. TWO traps named by the artifacts themselves: the generated id
+  table puts the MINECART at 55 (`move_minecart_along_track`) — the
+  wiki-era guess would have shipped Rot on the wrong id — and the
+  head yaw is its OWN channel, riding beside the body packets, never
+  inside them. The consumer is the interesting half: the vanilla
+  client's `handleMoveEntity` runs the deltas through
+  `VecDeltaCodec.decode(JJJ)`, and the javap walk shows that is NOT a
+  naive `pos += delta / 4096` — the ALL-ZERO payload is the codec's
+  own early return (the base comes back UNCHANGED), a ZERO lane keeps
+  its axis EXACT (no quantization), and a non-zero lane moves the
+  QUANTIZED base: `(Math.round(base * 4096) + delta) / 4096` — every
+  real step snaps the accumulated position onto the 1/4096 grid. And
+  `Math.round` is JAVA's round — ties toward POSITIVE INFINITY, where
+  Rust's `f64::round` rounds halves away from zero, a one-grid-step
+  difference on negative half-grid bases (the negative-coordinate
+  class again). The model grows the four `apply` arms (unknown id
+  refused — the spawn packet stays the ONLY creator; `EntitySnapshot`
+  gains the head-yaw channel the spawn seeds and Rotate Head keeps
+  current) plus the private `vanilla_round`/`delta_axis` pair
+  carrying the bytecode's arithmetic verbatim. GOLDENS UNTOUCHED BY
+  CONSTRUCTION: 12/12 at rms 0.000 (no golden flow carries entity
+  packets; the mesher untouched). Tests +8 (workspace 435 -> 443
+  passed / 0 failed / 3 ignored): the Pos layout (both short
+  boundaries, the all-zero payload legal, the rot id refused on the
+  pos parser), the angle unpack (-128 floors to -180.0, 127 lands at
+  178.59375), the Rot packet's missing lane, the one-byte head read,
+  the codec walk (the moved axes snapped to the grid, the zero lane
+  unquantized, the idle walk a no-op), the Java tie direction
+  (Math.round(-0.5) = 0 pinned at 2^-13), the rotation family (turn
+  in place, rotation asserted on the zero walk), and the head
+  channel (spawn-seeded, Rotate-Head-kept, body-independent, unknown
+  ids refused by every mover).
   The **night-vision color is STATE — the fourth decoded light attribute,
   under the effect-state factor (v0.3.99)**: the `night_vision_color`
   consumer closes the four-attribute arc. The audit pinned BOTH ends of

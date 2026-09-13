@@ -1164,6 +1164,192 @@ pub fn parse_entity_position_sync(payload: &[u8]) -> Result<EntityPositionSync> 
     })
 }
 
+/// The unpacked Move Entity Pos payload (clientbound play, generated
+/// id 53 — `minecraft:move_entity_pos`). javap of the 26.2
+/// `ClientboundMoveEntityPacket$Pos.read`: a VarInt entity id, THREE
+/// SHORT deltas and a BOOL ground flag. The deltas ride RAW 1/4096
+/// grid units — the client's `VecDeltaCodec` holds the base and does
+/// the quantize-and-add walk, so this side of the wire is exactly the
+/// shorts the server wrote (no scaling, no absolute positions).
+#[derive(Debug, Clone, PartialEq)]
+pub struct EntityDeltaPos {
+    /// The entity's numeric id.
+    pub id: i32,
+    /// The raw x delta (1/4096 grid units; the consumer quantizes the
+    /// base and adds — see the model's `delta_axis`).
+    pub dx: i16,
+    /// The raw y delta (1/4096 grid units).
+    pub dy: i16,
+    /// The raw z delta (1/4096 grid units).
+    pub dz: i16,
+    /// The entity's ground contact flag (verbatim).
+    pub on_ground: bool,
+}
+
+/// Parse Move Entity Pos — the per-tick walk the sync's teleports
+/// don't cover.
+pub fn parse_move_entity_pos(payload: &[u8]) -> Result<EntityDeltaPos> {
+    let mut c: &[u8] = payload;
+    let id = read_varint(&mut c)?;
+    anyhow::ensure!(
+        id == clientbound::MOVE_ENTITY_POS,
+        "not a move entity pos packet (0x{id:02X})"
+    );
+    let entity_id = read_varint(&mut c)?;
+    let dx = read_i16(&mut c)?;
+    let dy = read_i16(&mut c)?;
+    let dz = read_i16(&mut c)?;
+    let on_ground = read_u8(&mut c)? != 0;
+    anyhow::ensure!(
+        c.is_empty(),
+        "{} trailing bytes after the move entity pos packet",
+        c.len()
+    );
+    Ok(EntityDeltaPos {
+        id: entity_id,
+        dx,
+        dy,
+        dz,
+        on_ground,
+    })
+}
+
+/// The unpacked Move Entity Pos and Rotation payload (clientbound
+/// play, generated id 54 — `minecraft:move_entity_pos_rot`). javap of
+/// the 26.2 `ClientboundMoveEntityPacket$PosRot.read`: the Pos layout
+/// plus TWO angle BYTES (yaw then pitch, each `Mth.unpackDegrees(b) =
+/// b * 360 / 256` — the Add Entity angles' own quantization).
+#[derive(Debug, Clone, PartialEq)]
+pub struct EntityDeltaPosRot {
+    /// The entity's numeric id.
+    pub id: i32,
+    /// The raw x delta (1/4096 grid units).
+    pub dx: i16,
+    /// The raw y delta (1/4096 grid units).
+    pub dy: i16,
+    /// The raw z delta (1/4096 grid units).
+    pub dz: i16,
+    /// Yaw in degrees (the byte unpacked the vanilla way).
+    pub y_rot: f32,
+    /// Pitch in degrees (the byte unpacked the vanilla way).
+    pub x_rot: f32,
+    /// The entity's ground contact flag (verbatim).
+    pub on_ground: bool,
+}
+
+/// Parse Move Entity Pos and Rotation — the walk plus the turn.
+pub fn parse_move_entity_pos_rot(payload: &[u8]) -> Result<EntityDeltaPosRot> {
+    let mut c: &[u8] = payload;
+    let id = read_varint(&mut c)?;
+    anyhow::ensure!(
+        id == clientbound::MOVE_ENTITY_POS_ROT,
+        "not a move entity pos rot packet (0x{id:02X})"
+    );
+    let entity_id = read_varint(&mut c)?;
+    let dx = read_i16(&mut c)?;
+    let dy = read_i16(&mut c)?;
+    let dz = read_i16(&mut c)?;
+    let unpack_degrees = |b: i8| (b as i32 * 360) as f32 / 256.0;
+    let y_rot = unpack_degrees(read_i8(&mut c)?);
+    let x_rot = unpack_degrees(read_i8(&mut c)?);
+    let on_ground = read_u8(&mut c)? != 0;
+    anyhow::ensure!(
+        c.is_empty(),
+        "{} trailing bytes after the move entity pos rot packet",
+        c.len()
+    );
+    Ok(EntityDeltaPosRot {
+        id: entity_id,
+        dx,
+        dy,
+        dz,
+        y_rot,
+        x_rot,
+        on_ground,
+    })
+}
+
+/// The unpacked Move Entity Rot payload (clientbound play, generated
+/// id 56 — `minecraft:move_entity_rot`). javap of the 26.2
+/// `ClientboundMoveEntityPacket$Rot.read`: a VarInt entity id, TWO
+/// angle BYTES and a BOOL — no position lane (the body turns in
+/// place). NOTE the generated table: 55 is the minecart, 56 is this
+/// packet — the wiki-era numbering would have shipped the wrong id.
+#[derive(Debug, Clone, PartialEq)]
+pub struct EntityDeltaRot {
+    /// The entity's numeric id.
+    pub id: i32,
+    /// Yaw in degrees (the byte unpacked the vanilla way).
+    pub y_rot: f32,
+    /// Pitch in degrees (the byte unpacked the vanilla way).
+    pub x_rot: f32,
+    /// The entity's ground contact flag (verbatim).
+    pub on_ground: bool,
+}
+
+/// Parse Move Entity Rot — rotation-only, position untouched.
+pub fn parse_move_entity_rot(payload: &[u8]) -> Result<EntityDeltaRot> {
+    let mut c: &[u8] = payload;
+    let id = read_varint(&mut c)?;
+    anyhow::ensure!(
+        id == clientbound::MOVE_ENTITY_ROT,
+        "not a move entity rot packet (0x{id:02X})"
+    );
+    let entity_id = read_varint(&mut c)?;
+    let unpack_degrees = |b: i8| (b as i32 * 360) as f32 / 256.0;
+    let y_rot = unpack_degrees(read_i8(&mut c)?);
+    let x_rot = unpack_degrees(read_i8(&mut c)?);
+    let on_ground = read_u8(&mut c)? != 0;
+    anyhow::ensure!(
+        c.is_empty(),
+        "{} trailing bytes after the move entity rot packet",
+        c.len()
+    );
+    Ok(EntityDeltaRot {
+        id: entity_id,
+        y_rot,
+        x_rot,
+        on_ground,
+    })
+}
+
+/// The unpacked Rotate Head payload (clientbound play, generated id
+/// 83 — `minecraft:rotate_head`). javap of the 26.2
+/// `ClientboundRotateHeadPacket`: the read is the private
+/// constructor — a VarInt entity id and ONE angle BYTE (`yHeadRot`).
+/// The head yaw is its own channel: a mob's body can face one way
+/// while its head tracks the player, so the packet family rides
+/// alongside the move packets, never inside them.
+#[derive(Debug, Clone, PartialEq)]
+pub struct EntityHeadRot {
+    /// The entity's numeric id.
+    pub id: i32,
+    /// Head yaw in degrees (the byte unpacked the vanilla way).
+    pub y_head_rot: f32,
+}
+
+/// Parse Rotate Head — the head's own wire channel.
+pub fn parse_rotate_head(payload: &[u8]) -> Result<EntityHeadRot> {
+    let mut c: &[u8] = payload;
+    let id = read_varint(&mut c)?;
+    anyhow::ensure!(
+        id == clientbound::ROTATE_HEAD,
+        "not a rotate head packet (0x{id:02X})"
+    );
+    let entity_id = read_varint(&mut c)?;
+    let unpack_degrees = |b: i8| (b as i32 * 360) as f32 / 256.0;
+    let y_head_rot = unpack_degrees(read_i8(&mut c)?);
+    anyhow::ensure!(
+        c.is_empty(),
+        "{} trailing bytes after the rotate head packet",
+        c.len()
+    );
+    Ok(EntityHeadRot {
+        id: entity_id,
+        y_head_rot,
+    })
+}
+
 // ---------------------------------------------------------------------------
 // serverbound replies
 // ---------------------------------------------------------------------------
@@ -1286,6 +1472,17 @@ pub enum PlayEvent {
     /// Entity Position Sync: the server's authoritative position
     /// correction for ONE entity (the model moves it in place).
     EntityMoved(EntityPositionSync),
+    /// Move Entity Pos: ONE entity's per-tick walk — the raw 1/4096
+    /// grid deltas the model applies through the vanilla codec's
+    /// quantize-and-add (the deltas are motion, not absolute truth).
+    EntityDeltaPos(EntityDeltaPos),
+    /// Move Entity Pos and Rotation: the walk plus the body angles.
+    EntityDeltaPosRot(EntityDeltaPosRot),
+    /// Move Entity Rot: the body turns in place (no position lane).
+    EntityDeltaRot(EntityDeltaRot),
+    /// Rotate Head: the head yaw's own channel (a mob can look at you
+    /// while it walks — the body and the head rotate separately).
+    EntityHeadRot(EntityHeadRot),
     /// Any packet without a client surface yet (skipped silently).
     Skipped,
 }
@@ -1370,6 +1567,16 @@ impl<S: Read + Write> PlaySession<S> {
             clientbound::ENTITY_POSITION_SYNC => {
                 Ok(PlayEvent::EntityMoved(parse_entity_position_sync(&pkt)?))
             }
+            clientbound::MOVE_ENTITY_POS => {
+                Ok(PlayEvent::EntityDeltaPos(parse_move_entity_pos(&pkt)?))
+            }
+            clientbound::MOVE_ENTITY_POS_ROT => {
+                Ok(PlayEvent::EntityDeltaPosRot(parse_move_entity_pos_rot(&pkt)?))
+            }
+            clientbound::MOVE_ENTITY_ROT => {
+                Ok(PlayEvent::EntityDeltaRot(parse_move_entity_rot(&pkt)?))
+            }
+            clientbound::ROTATE_HEAD => Ok(PlayEvent::EntityHeadRot(parse_rotate_head(&pkt)?)),
             _ => Ok(PlayEvent::Skipped),
         }
     }
@@ -1760,6 +1967,66 @@ pub mod test_support {
         p.extend_from_slice(&y_rot.to_be_bytes());
         p.extend_from_slice(&x_rot.to_be_bytes());
         p.push(if on_ground { 1 } else { 0 });
+        p
+    }
+
+    /// One full Move Entity Pos packet (generated id 53): the VarInt
+    /// id, the three RAW SHORT deltas and the BOOL ground flag.
+    pub fn move_entity_pos_packet(id: i32, dx: i16, dy: i16, dz: i16, on_ground: bool) -> Vec<u8> {
+        let mut p = Vec::new();
+        write_varint(&mut p, clientbound::MOVE_ENTITY_POS);
+        write_varint(&mut p, id);
+        p.extend_from_slice(&dx.to_be_bytes());
+        p.extend_from_slice(&dy.to_be_bytes());
+        p.extend_from_slice(&dz.to_be_bytes());
+        p.push(if on_ground { 1 } else { 0 });
+        p
+    }
+
+    /// One full Move Entity Pos and Rotation packet (generated id 54):
+    /// the Pos layout plus the yaw/pitch angle BYTES (raw — the tests
+    /// pin the unpack).
+    pub fn move_entity_pos_rot_packet(
+        id: i32,
+        dx: i16,
+        dy: i16,
+        dz: i16,
+        y_rot: i8,
+        x_rot: i8,
+        on_ground: bool,
+    ) -> Vec<u8> {
+        let mut p = Vec::new();
+        write_varint(&mut p, clientbound::MOVE_ENTITY_POS_ROT);
+        write_varint(&mut p, id);
+        p.extend_from_slice(&dx.to_be_bytes());
+        p.extend_from_slice(&dy.to_be_bytes());
+        p.extend_from_slice(&dz.to_be_bytes());
+        p.push(y_rot as u8);
+        p.push(x_rot as u8);
+        p.push(if on_ground { 1 } else { 0 });
+        p
+    }
+
+    /// One full Move Entity Rot packet (generated id 56 — NOT the
+    /// minecart's 55): the VarInt id, the yaw/pitch angle BYTES and
+    /// the BOOL; no position lane.
+    pub fn move_entity_rot_packet(id: i32, y_rot: i8, x_rot: i8, on_ground: bool) -> Vec<u8> {
+        let mut p = Vec::new();
+        write_varint(&mut p, clientbound::MOVE_ENTITY_ROT);
+        write_varint(&mut p, id);
+        p.push(y_rot as u8);
+        p.push(x_rot as u8);
+        p.push(if on_ground { 1 } else { 0 });
+        p
+    }
+
+    /// One full Rotate Head packet (generated id 83): the VarInt id
+    /// and the ONE head-yaw angle BYTE.
+    pub fn rotate_head_packet(id: i32, y_head_rot: i8) -> Vec<u8> {
+        let mut p = Vec::new();
+        write_varint(&mut p, clientbound::ROTATE_HEAD);
+        write_varint(&mut p, id);
+        p.push(y_head_rot as u8);
         p
     }
 }
@@ -2581,6 +2848,86 @@ mod tests {
         let mut p3 = p.clone();
         p3.push(0x00);
         assert!(parse_entity_position_sync(&p3).is_err());
+    }
+
+    /// Move Entity Pos: the VarInt id + three RAW SHORT deltas + the
+    /// BOOL, verbatim off the javap walk — negative deltas, both short
+    /// boundaries, the ground flag's byte, trailing drift and the
+    /// wrong id refused.
+    #[test]
+    fn move_entity_pos_deltas_decode_raw() {
+        // the VarInt id, the three big-endian SHORTs and the BOOL —
+        // exactly the javap read's five fields
+        let p = test_support::move_entity_pos_packet(42, -1, 32767, -32768, true);
+        let m = parse_move_entity_pos(&p).unwrap();
+        assert_eq!(m.id, 42);
+        assert_eq!((m.dx, m.dy, m.dz), (-1, 32767, -32768));
+        assert!(m.on_ground);
+        // the ground flag is a real wire byte, not an omission
+        let p2 = test_support::move_entity_pos_packet(42, 0, 0, 0, false);
+        assert!(!parse_move_entity_pos(&p2).unwrap().on_ground);
+        assert_eq!(
+            (parse_move_entity_pos(&p2).unwrap().dx, 0),
+            (0, 0),
+            "the all-zero payload is a legal packet"
+        );
+        // trailing bytes are drift
+        let mut p3 = p.clone();
+        p3.push(0x00);
+        assert!(parse_move_entity_pos(&p3).is_err());
+        // the wrong id is refused (the minecart's 55 or the rot's 56
+        // must not pass the pos check)
+        let mut p4 = p;
+        p4[0] = clientbound::MOVE_ENTITY_ROT as u8;
+        assert!(parse_move_entity_pos(&p4).is_err());
+    }
+
+    /// Move Entity Pos and Rotation: the Pos layout plus the TWO
+    /// angle BYTES — the unpack is the Add Entity walk (the
+    /// sign-extended byte's `b * 360 / 256`: -128 floors to -180.0,
+    /// 127 lands at 178.59375), and the field order is yaw THEN pitch.
+    #[test]
+    fn move_entity_pos_rot_unpacks_the_angle_bytes() {
+        let p = test_support::move_entity_pos_rot_packet(7, 16, -16, 0, -128, 127, false);
+        let m = parse_move_entity_pos_rot(&p).unwrap();
+        assert_eq!(m.id, 7);
+        assert_eq!((m.dx, m.dy, m.dz), (16, -16, 0));
+        assert_eq!(m.y_rot, -180.0, "the -128 byte floors to -180.0");
+        assert_eq!(m.x_rot, 178.59375, "the 127 byte lands at 178.59375");
+        assert!(!m.on_ground);
+        // trailing bytes are drift
+        let mut p2 = p.clone();
+        p2.push(0x01);
+        assert!(parse_move_entity_pos_rot(&p2).is_err());
+    }
+
+    /// Move Entity Rot: NO position lane — id, two angle bytes, BOOL.
+    /// The generated id is 56; the wire's 55 is the minecart's.
+    #[test]
+    fn move_entity_rot_has_no_position_lane() {
+        let p = test_support::move_entity_rot_packet(9, 64, -32, true);
+        let m = parse_move_entity_rot(&p).unwrap();
+        assert_eq!(m.id, 9);
+        assert_eq!(m.y_rot, 90.0);
+        assert_eq!(m.x_rot, -45.0);
+        assert!(m.on_ground);
+        // a truncated packet (missing the ground byte) is refused
+        let p2 = &p[..p.len() - 1];
+        assert!(parse_move_entity_rot(p2).is_err());
+    }
+
+    /// Rotate Head: the VarInt id and the ONE head-yaw byte (the
+    /// private constructor IS the read), unpacked the vanilla way.
+    #[test]
+    fn rotate_head_is_one_byte_of_head_yaw() {
+        let p = test_support::rotate_head_packet(11, -128);
+        let h = parse_rotate_head(&p).unwrap();
+        assert_eq!(h.id, 11);
+        assert_eq!(h.y_head_rot, -180.0);
+        // trailing bytes are drift
+        let mut p2 = p.clone();
+        p2.push(0x00);
+        assert!(parse_rotate_head(&p2).is_err());
     }
 
     /// Mock server: login -> configuration -> play (the FULL vanilla
