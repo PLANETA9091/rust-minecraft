@@ -103,15 +103,16 @@ pub fn block_face_colors(block_name: &str, state: &[(&str, &str)]) -> Option<Vec
         return None;
     }
     // Stable Cull order (the enum order — Down..East) for a
-    // deterministic result regardless of apply order.
+    // deterministic result regardless of apply order. The face average
+    // rounds HALF-UP like the quad averages (the oracle's convention).
     let mut out: Vec<FaceColor> = acc
         .into_iter()
         .map(|(face, sum, n)| FaceColor {
             face,
             color: [
-                (sum[0] / n as u64) as u8,
-                (sum[1] / n as u64) as u8,
-                (sum[2] / n as u64) as u8,
+                (sum[0] as f64 / n as f64).round() as u8,
+                (sum[1] as f64 / n as f64).round() as u8,
+                (sum[2] as f64 / n as f64).round() as u8,
             ],
         })
         .collect();
@@ -229,8 +230,12 @@ mod tests {
 
     /// grass_block's variants model splits the faces: up is the UNTINTED
     /// grass_block_top (a grayscale texture — the biome tint rides the
-    /// quads, not the texels), down is dirt, the sides are
-    /// grass_block_side. Each face must equal its own oracle average.
+    /// quads, not the texels), down is dirt. The sides carry TWO quads
+    /// (the #side cube face + the #overlay grass-fringe element,
+    /// tintindex 0), so the face color is their equal-weight average —
+    /// the oracle composes it from the two texture averages (side
+    /// (127,107,66) + overlay (155,155,155) over its 45 opaque pixels,
+    /// the tRNS-transparent fringe gaps excluded) = (141,131,111).
     /// The state rides: the block's variants are ALL conditional
     /// (snowy=false / snowy=true), so the empty state matches nothing —
     /// a real block state always carries the full property set.
@@ -241,24 +246,33 @@ mod tests {
         let get = |f: Cull| colors.iter().find(|fc| fc.face == f).map(|fc| fc.color);
         assert_eq!(get(Cull::Up), Some([147, 147, 147]), "the untinted top gray");
         assert_eq!(get(Cull::Down), Some([134, 96, 67]), "dirt");
-        let side = [127, 107, 66];
+        let side = [141, 131, 111];
         for f in [Cull::North, Cull::South, Cull::West, Cull::East] {
             assert_eq!(get(f), Some(side), "grass_block_side, face {f:?}");
         }
         assert_ne!(get(Cull::Up), get(Cull::Down), "top and bottom differ");
     }
 
-    /// The state selector rides: snowy_grass_block (snowy=true) swaps
-    /// ALL six faces to snow. And the fail-closed edges: unknown blocks
-    /// and multipart fences behave.
+    /// The state selector rides: snowy=true selects block/grass_block_snow,
+    /// and 26.2's REAL data splits it — bottom=dirt, top=**grass_block_top**
+    /// (the snow look comes from a runtime tint, the palette reports the
+    /// raw texels), side=the grass_block_snow TEXTURE (the snowy-side
+    /// grass). And the fail-closed edges: unknown blocks and multipart
+    /// fences behave.
     #[test]
     fn the_state_selector_and_the_edges_hold() {
-        // snowy=true selects the snow model (the oracle's snow average)
         let colors =
             block_face_colors("grass_block", &[("snowy", "true")]).expect("snowy parses");
         assert_eq!(colors.len(), 6);
-        for fc in colors {
-            assert_eq!(fc.color, [249, 254, 254], "all snow: {fc:?}");
+        let get = |f: Cull| colors.iter().find(|fc| fc.face == f).map(|fc| fc.color);
+        assert_eq!(get(Cull::Down), Some([134, 96, 67]), "dirt bottom");
+        assert_eq!(
+            get(Cull::Up),
+            Some([147, 147, 147]),
+            "the top stays grass_block_top (the snow is a runtime tint, not texels)"
+        );
+        for f in [Cull::North, Cull::South, Cull::West, Cull::East] {
+            assert_eq!(get(f), Some([170, 151, 133]), "the snowy-side texture, {f:?}");
         }
         // unknown block
         assert!(block_face_colors("definitely_not_a_block", &[]).is_none());
@@ -272,20 +286,22 @@ mod tests {
 
     /// The palette covers the procedural world's renderable blocks
     /// (the consumer's contract for the next round): every NAME_OF id
-    /// except air resolves to at least one face color — the propertyed
-    /// blocks carry a REAL state (a real block state always has the
-    /// full property set; the empty state matches nothing when every
-    /// variant key is conditional). Water and the leaves ride untinted
+    /// except air and water resolves to at least one face color — the
+    /// propertyed blocks carry a REAL state (a real block state always
+    /// has the full property set; the empty state matches nothing when
+    /// every variant key is conditional). WATER is honestly absent: its
+    /// blockstate points at block/water, a particle-only TEMPLATE with
+    /// no elements and no parent — the fluids are vanilla's special
+    /// render path, not a blockstate model. The leaves ride untinted
     /// here (the tint is the consumer's).
     #[test]
     fn the_palette_covers_the_procedural_world_blocks() {
-        let world_blocks: [(&str, &[(&str, &str)]); 25] = [
+        let world_blocks: [(&str, &[(&str, &str)]); 24] = [
             ("stone", &[]),
             ("dirt", &[]),
             ("grass_block", &[("snowy", "false")]),
             ("oak_log", &[("axis", "y")]),
             ("oak_leaves", &[]),
-            ("water", &[]),
             ("sand", &[]),
             ("granite", &[]),
             ("diorite", &[]),
@@ -318,5 +334,9 @@ mod tests {
             }
         }
         assert!(block_face_colors("air", &[]).is_none(), "air stays unpainted");
+        assert!(
+            block_face_colors("water", &[]).is_none(),
+            "water is a particle template, not a model"
+        );
     }
 }
