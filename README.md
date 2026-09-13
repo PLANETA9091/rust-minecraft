@@ -841,6 +841,50 @@ hand-drawn:
   state, the lying count refused), the single update's in-place
   mutation + the refused shapes, and the batch's all-or-nothing rule
   (the valid prefix must NOT land when a later entry fails).
+  The **entities exist in the world — Add Entity, Remove Entities and
+  Entity Position Sync land (v0.3.101)**: the population layer the
+  mutable world was waiting for. The audit re-derived all THREE wire
+  formats from the 26.2 bytecode, and the first one broke the wiki-era
+  assumption outright: `Vec3.LP_STREAM_CODEC` delegates to
+  `net.minecraft.network.LpVec3` — NOT the old three-shorts-times-8000
+  layout. The real shape is 6 bytes packed as a 48-bit big-endian
+  integer: byte 0 carries the scale's low 2 bits, a continuation flag
+  (`(i & 4) == 4`) and the data's low 5 bits (a zero FIRST byte is the
+  ZERO sentinel — nothing else is read); three 15-bit lanes sit at
+  shifts 3 / 18 / 33, each `unpack(v) = min(v & 32767, 32766) * 2 /
+  32766 - 1` (the clamp IS the bytecode: `Math.min`), and the whole
+  vector multiplies by a scale that can grow past the 2-bit field
+  through ONE continuation VarInt (`scale |= (varint & 0xFFFFFFFF) <<
+  2`) — a magnitude-times-quantized-direction encoding. Add Entity
+  (generated id 1) is VarInt id, UUID (two big-endian longs, most
+  first), VarInt entity-type registry id, three full-precision doubles,
+  the LpVec3 movement, three angle BYTES (`Mth.unpackDegrees(b) = b *
+  360 / 256`, the sign-extended byte's [-180, 180)) and the VarInt
+  entity-type data. Entity Position Sync (generated id 35) is the
+  `PositionMoveRotation` record — TWO full-precision Vec3s (position,
+  deltaMovement), FLOAT yaw, FLOAT pitch — plus the BOOL ground flag.
+  Remove Entities (generated id 77) is `readIntIdList`: a VarInt count
+  validated against the remaining bytes BEFORE any allocation, then
+  that many VarInt ids. The model grows the entity registry (keyed by
+  entity id): the spawn CREATES (re-spawning an id REPLACES — the
+  vanilla lookup's own semantics), the sync MOVES in place (an unknown
+  id is refused — the spawn packet stays the only creator, no phantom
+  entities from a correction), the batch removal drops whatever exists
+  and reports whether ANYTHING changed (unknown ids are honest no-ops,
+  the same `.is_some()` honesty UnloadChunk carries), and the Respawn
+  crossing clears the population WITH the columns — the vanilla client
+  swaps the whole level, so the old dimension's mobs do not follow the
+  player through the portal. GOLDENS UNTOUCHED BY CONSTRUCTION: 12/12
+  at rms 0.000 (no golden flow carries entity packets; the mesher
+  untouched). Tests +6 (workspace 429 -> 435 passed / 0 failed /
+  3 ignored): the Add Entity layout (the bit-exact grid movement, the
+  -128 -> -180.0 angle floor, the UUID's 128 bits), the LpVec3 decode
+  (the zero sentinel's exact one-byte consumption, the scale-100
+  continuation reassembled, the quantization step, the hand-rolled
+  32767 clamp), the id-list batch (the lying count refused, the honest
+  empty batch), the sync record (both ground-flag bytes), and the
+  model's lifecycle (spawn/move/despawn in place, the no-phantom-sync
+  rule, the dimension swap).
   The **night-vision color is STATE — the fourth decoded light attribute,
   under the effect-state factor (v0.3.99)**: the `night_vision_color`
   consumer closes the four-attribute arc. The audit pinned BOTH ends of
