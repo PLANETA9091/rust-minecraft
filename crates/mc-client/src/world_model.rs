@@ -243,20 +243,31 @@ impl WorldModel {
         self.columns.get(&(cx, cz))
     }
 
-    /// The current dimension's lightmap AmbientColor base — the built-in
+    /// The current dimension's lightmap AmbientColor base — the
     /// `visual/ambient_light_color` attribute as RAW 0..=255 channel
-    /// bytes (overworld #0a0a0a, nether #302821, end #3f473f), the
-    /// shader's `max(AmbientColor, nightVisionColor)` starting color.
-    /// Resolved through the BUILT-IN table the generator emitted from
-    /// the same jar (the synced `minecraft:dimension_type` wire decode
-    /// does not carry the attribute yet — the documented next consumer,
-    /// the sky_light_factor track's precedent); a dimension the table
-    /// does not know (a custom synced entry, or no dimension pinned
-    /// yet) keeps `None` — the mesher reads the BYTECODE default
-    /// (black), never a guess.
+    /// bytes (the vanilla overworld #0a0a0a, nether #302821, end
+    /// #3f473f), the shader's `max(AmbientColor, nightVisionColor)`
+    /// starting color. THE SYNCED REGISTRY IS THE SERVER'S TRUTH: a
+    /// synced dimension entry answers with its own decoded attribute
+    /// (v0.3.89's wire decode — an element that states none reads the
+    /// bytecode-default black, the vanilla EnvironmentAttribute
+    /// fallback). When the sync carried NO dimension table at all (a
+    /// bare server, or one that skipped Registry Data because the
+    /// client claimed its known packs), the BUILT-IN table the
+    /// generator emitted from the same jar serves — the skip-sync
+    /// fallback, the same shape [`Self::dimension_min_y`] rides. A sync
+    /// that DID arrive but omits the key keeps `None`: the server's own
+    /// truth is "not a vanilla built-in", never a guess.
     pub fn ambient_light_color(&self) -> Option<[u8; 3]> {
         let dim = self.current_dimension.as_deref()?;
-        mc_registry::generated::worldgen::dimension_type(dim).map(|d| d.ambient_light_color)
+        if let Some(d) = self.registry.dimension(dim) {
+            return d.ambient_light_color;
+        }
+        if self.registry.dimension_types.is_empty() {
+            return mc_registry::generated::worldgen::dimension_type(dim)
+                .map(|d| d.ambient_light_color);
+        }
+        None
     }
 
     /// Global block state id at (x, y, z) — world coordinates for x/z
@@ -1791,6 +1802,71 @@ mod tests {
             m.ambient_light_color(),
             None,
             "unknown custom key: the black default, never a guess"
+        );
+    }
+
+    #[test]
+    fn the_ambient_light_color_prefers_the_synced_truth() {
+        // the dimension_min_y discipline, ambient edition: the synced
+        // registry is the server's truth (its stated value wins even
+        // over the built-in, its SILENCE reads the bytecode default —
+        // black, the vanilla EnvironmentAttribute fallback); the
+        // built-in table serves ONLY when the sync carried no dimension
+        // table at all (the skip-sync fallback); a sync that arrived
+        // but omits the key keeps None, never a guess.
+        let mut m = WorldModel::new();
+        m.apply(PlayEvent::WorldInfo(WorldInfo {
+            entity_id: 17,
+            hardcore: false,
+            dimensions: vec!["minecraft:overworld".to_string()],
+            view_distance: 8,
+            simulation_distance: 8,
+            portal_cooldown: 300,
+            current_dimension: "minecraft:overworld".to_string(),
+        }));
+        // no sync yet: the built-in table's overworld floor
+        assert_eq!(
+            m.ambient_light_color(),
+            Some([0x0a, 0x0a, 0x0a]),
+            "skip-sync fallback: the built-in table serves"
+        );
+        // the sync arrives WITH the attribute: its value wins, even
+        // where it differs from the built-in
+        m.registry = RegistryData {
+            dimension_types: vec![DimensionTypeEntry {
+                name: "minecraft:overworld".into(),
+                min_y: -64,
+                height: 384,
+                default_clock: Some("minecraft:overworld".into()),
+                timelines: None,
+                ambient_light_color: Some([0x11, 0x22, 0x33]),
+            }],
+            biomes: Vec::new(),
+            biome_tags: Vec::new(),
+            world_clocks: Vec::new(),
+            timelines: Vec::new(),
+            timeline_tags: Vec::new(),
+        };
+        assert_eq!(
+            m.ambient_light_color(),
+            Some([0x11, 0x22, 0x33]),
+            "the synced value is the server's truth, not the built-in"
+        );
+        // a synced entry that states NONE of the attributes: the
+        // vanilla default (black) — NOT the built-in's opinion
+        m.registry.dimension_types[0].ambient_light_color = None;
+        assert_eq!(
+            m.ambient_light_color(),
+            None,
+            "the sync arrived and is silent: the bytecode-default black, its own truth"
+        );
+        // a sync that arrived but omits the KEY entirely: None — the
+        // server's truth is "not a vanilla built-in", never a guess
+        m.registry.dimension_types[0].name = "minecraft:custom_dim".into();
+        assert_eq!(
+            m.ambient_light_color(),
+            None,
+            "a live sync without the key: no built-in fallback"
         );
     }
 }

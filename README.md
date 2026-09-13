@@ -616,6 +616,35 @@ hand-drawn:
   cutout rule. Also repairs a pre-existing doctest break (an unannotated
   pseudo-code fence in the item_bake docs compiled as Rust and failed
   `cargo test --workspace` on the clean tree).
+  The **synced ambient rides the wire (v0.3.89 — the server's truth)**:
+  the ambient arc's wire half closes. The audit ran first-hand on the
+  26.2 jar: `DimensionType.NETWORK_CODEC` builds on
+  `EnvironmentAttributeMap.NETWORK_CODEC` — the attributes field RIDES
+  the registry sync (the network codec xmaps the same dispatchedMap the
+  JSON uses, filtered to the SYNCABLE attributes, and the ambient
+  attribute's builder chains `.syncable()`); the map codec is a FLAT
+  compound keyed by the full attribute ids (the JSON shape, learned in
+  v0.3.88, holds on the wire), and the rgb_color type serializes the
+  `"#rrggbb"` STRING form (`ExtraCodecs.hexColor` — the `#` prefix
+  REQUIRED, exactly six digits). mc-protocol's dimension_type decode
+  grows `ambient_light_color: Option<[u8; 3]>` with the hand-rolled
+  `parse_rgb_hex` (dependency-free, the base64/MD5 precedent; every
+  non-`#rrggbb` shape is None — never a guess). The model accessor
+  grows the dimension_min_y discipline: the SYNCED entry is the
+  server's truth (its value wins over the built-in; its SILENCE reads
+  the bytecode-default black — the vanilla EnvironmentAttribute
+  fallback); the built-in table serves ONLY the skip-sync case (no
+  dimension table at all); a live sync omitting the key keeps None.
+  The mock registry fixture now carries the attribute, riding the REAL
+  e2e packet path. Goldens untouched BY CONSTRUCTION: no render-path
+  change (the mesher/lightmap never see this round), the fallback
+  values are bit-identical — 12/12 pass at rms 0.000 on the rebuilt
+  release binaries. Tests +2 (workspace 396 → 398 passed / 0 failed /
+  3 ignored): the hex vectors (three vanilla colors + the refusals —
+  no prefix / short / the argb form / non-hex / empty) and the
+  synced-truth precedence (no sync → built-in; sync with the value →
+  it wins; sync silent → black, its own truth; sync without the key →
+  None, never the built-in).
   The **lightmap's AmbientColor base lands (v0.3.88 — the world has a
   floor)**: the lightmap.fsh line's LAST term is consumed — the shader's
   `color = max(AmbientColor, nightVisionColor)` starting color, the base

@@ -1130,6 +1130,18 @@ pub mod test_support {
                 // the dimension's timelines reference, VERBATIM from the
                 // vanilla overworld element (the tag form)
                 ("timelines".into(), Nbt::String("#minecraft:in_overworld".into())),
+                // the vanilla element's attributes compound — FLAT, the
+                // keys are the full namespaced attribute ids (javap:
+                // `EnvironmentAttributeMap`'s dispatchedMap codec) —
+                // carrying the lightmap's AmbientColor base as the
+                // `"#rrggbb"` string the rgb_color type serializes
+                (
+                    "attributes".into(),
+                    Nbt::Compound(vec![(
+                        "minecraft:visual/ambient_light_color".into(),
+                        Nbt::String("#0a0a0a".into()),
+                    )]),
+                ),
             ]);
             crate::nbt::write_network_nbt(&ow, &mut p).expect("overworld element writes");
             // entry 2: nether — NO default_clock (no day cycle), the
@@ -1523,6 +1535,26 @@ mod tests {
 
 
     #[test]
+    fn parse_rgb_hex_reads_the_wire_color_strings() {
+        // the rgb_color attribute type's serialized form: `#` REQUIRED
+        // (javap ExtraCodecs.hexColor's startsWith check), exactly six
+        // hex digits, per channel bytes — and every other shape is None,
+        // the caller's black default, never a guess
+        assert_eq!(parse_rgb_hex("#0a0a0a"), Some([0x0a, 0x0a, 0x0a]));
+        assert_eq!(parse_rgb_hex("#302821"), Some([0x30, 0x28, 0x21]));
+        assert_eq!(parse_rgb_hex("#3f473f"), Some([0x3f, 0x47, 0x3f]));
+        assert_eq!(parse_rgb_hex("#FFFFFF"), Some([255, 255, 255]));
+        assert_eq!(parse_rgb_hex("#000000"), Some([0, 0, 0]));
+        // the refusals: no prefix, wrong length, non-hex, empty
+        assert_eq!(parse_rgb_hex("0a0a0a"), None, "the # prefix is required");
+        assert_eq!(parse_rgb_hex("#0a0a"), None, "short");
+        assert_eq!(parse_rgb_hex("#0a0a0a0a"), None, "argb is a different type");
+        assert_eq!(parse_rgb_hex("#0a0a0g"), None, "non-hex digit");
+        assert_eq!(parse_rgb_hex("#"), None, "empty body");
+        assert_eq!(parse_rgb_hex(""), None, "empty string");
+    }
+
+    #[test]
     fn registry_data_decodes_dimensions_keeps_biomes_and_skips_other_registries() {
         // the decoded registry: both dimensions land with their layouts
         let data = parse_registry_data(&registry_packet(true)).expect("dimension_type parses");
@@ -1539,8 +1571,17 @@ mod tests {
             Some("#minecraft:in_overworld"),
             "the element's timelines reference is retained VERBATIM (the tag form)"
         );
+        assert_eq!(
+            ow.ambient_light_color,
+            Some([0x0a, 0x0a, 0x0a]),
+            "the element's stated ambient attribute rides the sync (the jar's overworld floor)"
+        );
         let nether = data.dimension("minecraft:the_nether").expect("nether");
         assert_eq!((nether.min_y, nether.height), (0, 256));
+        assert_eq!(
+            nether.ambient_light_color, None,
+            "an element without the attribute: the bytecode-default black, never a guess"
+        );
         assert_eq!(
             nether.default_clock, None,
             "the nether has no day cycle — no default_clock on the element"
