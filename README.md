@@ -437,6 +437,37 @@ hand-drawn:
   (workspace 261 → 262 passed / 0 failed / 3 ignored): the cross-pin
   (both surfaces agree; the manifest's number is a real stated one,
   never a fallback).
+  The **timelines join the skip-sync fallback (v0.3.58 — the last
+  registry surface without one)**: a claim-accepted vanilla server
+  streams no Registry Data, and `WorldModel::sky_factor`'s curve
+  resolution now walks the BUILT-IN jar tables when (and only when) no
+  sync arrived — the same `dimension_types.is_empty()` gate the
+  v0.3.52/55/56 fallbacks run under, sync precedence strict, a partial
+  sync rescued by nothing. The chain is the one the synced path runs,
+  ported to the generated twins: the dimension's `timelines` reference
+  (the overworld names `#minecraft:in_overworld`) resolves through the
+  built-in TIMELINE_TAGS — whose members are the RAW jar form, nested
+  `#` references included (`in_overworld` → `#universal` →
+  `villager_schedule`; a vanilla server streams tags pre-resolved as
+  flat wire-id lists, so only the built-in walk needs the recursive
+  expansion, with a visited set stopping cycles) — and the first
+  timeline carrying `visual/sky_light_factor` serves. For the real
+  26.2 jar every path CONVERGES on the day curve (`minecraft:day` is
+  the only carrier; the end's `in_end` resolves to a non-carrier and
+  the snapshot serves, unchanged), and that convergence is the
+  contract: the snapshot has been byte-pinned to the generated
+  TL_DAY_SKY_LIGHT_FACTOR since the timeline arc, so a future jar whose
+  tables drift fails the pin instead of the pixels. Zero golden-path
+  pixels by construction (golden scenes carry a synced registry or no
+  Set Time knowledge — the new path is unreachable in both); the
+  goldens verified with the EXACT CI flags. Tests +2 (workspace 262 →
+  264 passed / 0 failed / 3 ignored): the skip-sync curve (overworld
+  midnight/noon through the tag chain, overworld_caves same tag, the
+  end's chain-miss → snapshot at the end's own ticks, the partial-sync
+  no-rescue) and the expansion itself (nested order verbatim:
+  villager_schedule first via #universal, then day/moon/early_game;
+  in_end/in_nether single-member; unknown tag empty; the visited-set
+  guard).
   The **registry-order evidence is dumped from the real runtime (v0.3.53 —
   the pack-version claim's LAST prerequisite)**: the generator grew its
   third runtime dumper — the checked-in clean-room `DumpRegistries.java` —
