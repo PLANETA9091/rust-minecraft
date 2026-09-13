@@ -187,6 +187,37 @@ pub struct DimensionTypeEntry {
     /// only a custom server's statement). `None` = the element states
     /// nothing — the consumer reads the bytecode default, never a guess.
     pub cloud_fog_end_distance: Option<f32>,
+    /// The dimension's STATED block-light tint — the element's
+    /// `attributes` compound's `minecraft:visual/block_light_tint` entry,
+    /// the `"#rrggbb"` string the rgb_color type serializes (javap
+    /// EnvironmentAttributes: RGB_COLOR, the builder chain
+    /// `.spatiallyInterpolated().syncable()`, so it RIDES the registry
+    /// sync; the bytecode default is -10100 = #FFD88C, the warm
+    /// block-light cast). `None` = the element states nothing — the
+    /// consumer reads the bytecode default, never a guess. DECODE ONLY
+    /// for now: no client consumer yet, the data rides the wire.
+    pub block_light_tint: Option<[u8; 3]>,
+    /// The dimension's STATED sky-light color — the element's
+    /// `attributes` compound's `minecraft:visual/sky_light_color` entry,
+    /// the `"#rrggbb"` string (javap: RGB_COLOR,
+    /// `.spatiallyInterpolated().syncable()`; the bytecode default is -1
+    /// = #FFFFFF, white). `None` = the element states nothing. DECODE
+    /// ONLY for now: no client consumer yet, the data rides the wire.
+    pub sky_light_color: Option<[u8; 3]>,
+    /// The dimension's STATED sky-light factor — the element's
+    /// `attributes` compound's `minecraft:visual/sky_light_factor` FLOAT
+    /// entry (javap: FLOAT, UNIT_FLOAT range,
+    /// `.spatiallyInterpolated().syncable()`; the bytecode default is
+    /// 1.0). `None` = the element states nothing. DECODE ONLY for now:
+    /// no client consumer yet, the data rides the wire.
+    pub sky_light_factor: Option<f32>,
+    /// The dimension's STATED night-vision color — the element's
+    /// `attributes` compound's `minecraft:visual/night_vision_color`
+    /// entry, the `"#rrggbb"` string (javap: RGB_COLOR,
+    /// `.spatiallyInterpolated().syncable()`; the bytecode default is
+    /// -6710887 = #999999). `None` = the element states nothing. DECODE
+    /// ONLY for now: no client consumer yet, the data rides the wire.
+    pub night_vision_color: Option<[u8; 3]>,
 }
 
 /// The skybox kinds one synced dimension type may state (javap
@@ -849,6 +880,30 @@ pub fn parse_registry_data(payload: &[u8]) -> Result<RegistryData> {
             .get("attributes")
             .and_then(|a| a.get("minecraft:visual/cloud_fog_end_distance"))
             .and_then(Nbt::as_f32);
+        // the remaining syncable VISUAL attributes: the three rgb_color
+        // entries (the `"#rrggbb"` strings, the ambient-light decode
+        // shape) and one FLOAT — all four
+        // `.spatiallyInterpolated().syncable()` (javap), so all four RIDE
+        // the registry sync; ABSENT reads None per field, never a guess
+        let block_light_tint = element
+            .get("attributes")
+            .and_then(|a| a.get("minecraft:visual/block_light_tint"))
+            .and_then(Nbt::as_str)
+            .and_then(parse_rgb_hex);
+        let sky_light_color = element
+            .get("attributes")
+            .and_then(|a| a.get("minecraft:visual/sky_light_color"))
+            .and_then(Nbt::as_str)
+            .and_then(parse_rgb_hex);
+        let sky_light_factor = element
+            .get("attributes")
+            .and_then(|a| a.get("minecraft:visual/sky_light_factor"))
+            .and_then(Nbt::as_f32);
+        let night_vision_color = element
+            .get("attributes")
+            .and_then(|a| a.get("minecraft:visual/night_vision_color"))
+            .and_then(Nbt::as_str)
+            .and_then(parse_rgb_hex);
         out.dimension_types.push(DimensionTypeEntry {
             name: entry_id,
             min_y,
@@ -860,6 +915,10 @@ pub fn parse_registry_data(payload: &[u8]) -> Result<RegistryData> {
             fog_start_distance: fog.0,
             fog_end_distance: fog.1,
             cloud_fog_end_distance,
+            block_light_tint,
+            sky_light_color,
+            sky_light_factor,
+            night_vision_color,
         });
     }
     anyhow::ensure!(
@@ -1714,6 +1773,69 @@ mod tests {
     }
 
     #[test]
+    fn the_wire_light_attributes_decode_the_stated_values() {
+        // the remaining syncable VISUAL attributes (javap
+        // EnvironmentAttributes.<clinit>): block_light_tint (RGB_COLOR,
+        // default -10100 = #FFD88C), sky_light_color (RGB_COLOR, default
+        // -1 = #FFFFFF), sky_light_factor (FLOAT/UNIT_FLOAT, default 1.0)
+        // and night_vision_color (RGB_COLOR, default -6710887 = #999999)
+        // — all four `.spatiallyInterpolated().syncable()`, so all four
+        // RIDE the registry sync; no vanilla dimension states any of
+        // them, so a CUSTOM server's element carries the statement
+n        let mut p = Vec::new();
+        write_varint(&mut p, clientbound::REGISTRY_DATA);
+        crate::varint::write_string(&mut p, "minecraft:dimension_type");
+        write_varint(&mut p, 1);
+        crate::varint::write_string(&mut p, "minecraft:custom");
+        p.push(1); // tag present — the element rides
+        let element = Nbt::Compound(vec![
+            ("min_y".into(), Nbt::Int(-64)),
+            ("height".into(), Nbt::Int(384)),
+            ("has_skylight".into(), Nbt::Byte(1)),
+            (
+                "attributes".into(),
+                Nbt::Compound(vec![
+                    (
+                        "minecraft:visual/block_light_tint".into(),
+                        Nbt::String("#302821".into()),
+                    ),
+                    (
+                        "minecraft:visual/sky_light_color".into(),
+                        Nbt::String("#FFFFFF".into()),
+                    ),
+                    ("minecraft:visual/sky_light_factor".into(), Nbt::Float(0.75)),
+                    (
+                        "minecraft:visual/night_vision_color".into(),
+                        Nbt::String("#999999".into()),
+                    ),
+                ]),
+            ),
+        ]);
+        crate::nbt::write_network_nbt(&element, &mut p).expect("element writes");
+        let data = parse_registry_data(&p).expect("the custom element parses");
+        let d = data.dimension("minecraft:custom").expect("custom");
+        assert_eq!(
+            d.block_light_tint,
+            Some([0x30, 0x28, 0x21]),
+            "the stated rgb_color rides the sync as the parsed triple"
+        );
+        assert_eq!(
+            d.sky_light_color,
+            Some([0xFF, 0xFF, 0xFF]),
+            "the stated sky-light color rides verbatim"
+        );
+        assert_eq!(
+            d.sky_light_factor, Some(0.75),
+            "the stated FLOAT rides verbatim"
+        );
+        assert_eq!(
+            d.night_vision_color,
+            Some([0x99, 0x99, 0x99]),
+            "the stated night-vision color rides verbatim"
+        );
+    }
+
+    #[test]
     fn registry_data_decodes_dimensions_keeps_biomes_and_skips_other_registries() {
         // the decoded registry: both dimensions land with their layouts
         let data = parse_registry_data(&registry_packet(true)).expect("dimension_type parses");
@@ -1769,6 +1891,26 @@ mod tests {
             (nether.cloud_fog_end_distance, ow.cloud_fog_end_distance),
             (None, None),
             "no vanilla dimension states the cloud-fog end — the absent shape"
+        );
+        assert_eq!(
+            (
+                nether.block_light_tint,
+                nether.sky_light_color,
+                nether.sky_light_factor,
+                nether.night_vision_color
+            ),
+            (None, None, None, None),
+            "no vanilla dimension states the four light attributes — the absent shape, each field its own None"
+        );
+        assert_eq!(
+            (
+                ow.block_light_tint,
+                ow.sky_light_color,
+                ow.sky_light_factor,
+                ow.night_vision_color
+            ),
+            (None, None, None, None),
+            "the overworld's absent shape too"
         );
         assert!(data.dimension("minecraft:the_end").is_none());
         // the biome registry: the element DECODED (the NETWORK_CODEC
