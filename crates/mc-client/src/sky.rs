@@ -266,7 +266,7 @@ impl JavaRandom {
         JavaRandom { seed: (seed ^ Self::MUL) & Self::MASK }
     }
 
-    fn next(&mut self, bits: u32) -> i64 {
+    pub(crate) fn next(&mut self, bits: u32) -> i64 {
         self.seed = (self.seed.wrapping_mul(Self::MUL).wrapping_add(Self::ADD)) & Self::MASK;
         self.seed >> (48 - bits) // sign-extended like (int)(seed >>> (48-bits))
     }
@@ -1111,5 +1111,49 @@ mod tests {
         let overworld = render(Skybox::Overworld);
         assert_ne!(overworld, cleared, "OVERWORLD must paint the stars");
         assert!(sample(midnight).star_brightness > 0.0, "the witness needs a night sky");
+    }
+
+    #[test]
+    fn the_end_flash_paints_only_when_active() {
+        // renderEndFlash's verdict: the END sky renders ONLY the flash —
+        // an intensity-0 state draws nothing (the early-out), an active
+        // window paints the tinted sprite quad, and the OVERWORLD pass is
+        // byte-identical with and without a flash riding along (the state
+        // is the END extract's alone).
+        let cam = Camera { pos: Vec3::new(0.0, 80.0, 0.0), yaw: std::f32::consts::FRAC_PI_2, pitch: -0.3 };
+        let ctx = RenderCtx {
+            view: cam.view(),
+            proj: Mat4::perspective(70.0f32.to_radians(), 320.0 / 180.0, 0.1, 512.0),
+            fog_color: [0.0; 3],
+            fog_near: 1.0,
+            fog_far: 2.0,
+        };
+        let render = |skybox: Skybox, flash: &crate::end_flash::EndFlashState| {
+            let mut fb = crate::raster::Framebuf::new(32, 32);
+            fb.clear([0.004, 0.008, 0.012], [0.0; 3]);
+            render_celestials(&mut fb, &ctx, &cam, 888, skybox, flash);
+            fb.color
+        };
+        let cleared = {
+            let mut fb = crate::raster::Framebuf::new(32, 32);
+            fb.clear([0.004, 0.008, 0.012], [0.0; 3]);
+            fb.color
+        };
+        // window 1 mid-flash (t = 288: the hump near its 1.0 peak) — the
+        // END sky provably paints
+        let mut active = crate::end_flash::EndFlashState::new();
+        active.tick(888);
+        assert!(active.current() > 0.9, "the witness needs the hump's peak, got {}", active.current());
+        let lit = render(Skybox::End, &active);
+        assert_ne!(lit, cleared, "an active flash paints the END sky");
+        // the NONE sky still renders nothing even with an active flash
+        assert_eq!(render(Skybox::None, &active), cleared, "NONE returns before any state");
+        // the OVERWORLD path ignores the flash state entirely
+        let quiet = crate::end_flash::EndFlashState::new();
+        assert_eq!(
+            render(Skybox::Overworld, &active),
+            render(Skybox::Overworld, &quiet),
+            "the flash is the END extract's alone"
+        );
     }
 }

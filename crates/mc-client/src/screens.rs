@@ -875,6 +875,11 @@ impl App {
         let n = self.world_size as f32;
         let cam = self.world_camera();
         let day_time = (self.day_time_base + self.frame) as i64;
+        // the END sky's flash state ticks on the client's game-time clock
+        // (vanilla ticks ClientLevel.endFlashState on the level's game
+        // time); tick() is idempotent per tick, so the per-frame call is
+        // the vanilla cadence under the frame == tick model
+        self.end_flash.tick(day_time);
         let sky = crate::sky::sample(day_time);
         let ctx = RenderCtx {
             view: cam.view(),
@@ -894,7 +899,7 @@ impl App {
         // (vanilla renders the first-person arm after the level with a
         // cleared depth buffer, before any HUD).
         fb.clear(sky.sky_color, sky.fog_color);
-        crate::sky::render_celestials(fb, &ctx, &cam, day_time, self.world_skybox);
+        crate::sky::render_celestials(fb, &ctx, &cam, day_time, self.world_skybox, &self.end_flash);
         if let Some(quads) = &self.world_quads {
             fb.draw_quads(&ctx, quads);
         }

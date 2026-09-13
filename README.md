@@ -688,6 +688,50 @@ hand-drawn:
   overworld element states NO key, the nether STATES none); the
   retired helper's built-in pins moved into the model accessor tests
   one-for-one.
+  The **END sky's flash lands (v0.3.92 — the end-flash consumer)**: the
+  END skybox's remaining visual is now rendered, and it is DETERMINISTIC.
+  The audit ran first-hand on the 26.2 jar: `EndFlashState` redraws its
+  parameters only when the 600-tick window index changes, from an LCG
+  SEEDED by that index (`RandomSource.createThreadLocalInstance(
+  gameTime / 600)` — a SingleThreadedRandomSource, the classic Java
+  random) — so the flash is a pure function of game time and a
+  pixel-deterministic client reproduces it exactly, no dropped shimmer,
+  no documented drift. The draw order is pinned and observable: one
+  DISCARDED `nextFloat`, the offset `randomBetweenInclusive(0, 200)`,
+  the duration `randomBetweenInclusive(100, min(380, 600 - offset))`,
+  then the angles `randomBetween(-60, 10)` and `randomBetween(-180,
+  180)` (Mth.randomBetween = `nextFloat * (max - min) + min` in f32);
+  the intensity is the SIN-TABLE hump `Mth.sin((t - offset) * PI /
+  duration)` — the 65536-entry table (`SIN[i] = (float)
+  Math.sin(i / 10430.378350470453)`, the DIVISION the bytecode does),
+  NOT libm sin — and `getIntensity` lerps the last tick's fade. The
+  vanilla quirk the port preserves: the state's defaults ride window 0
+  (`flashSeed == 0 == window(0)`), so the FIRST window never redraws
+  and renders nothing — the first real flash is window 1 (offset 133,
+  duration 311, cross-checked against a Python f32/f64 oracle). The
+  generator reads `celestial/end_flash.png` (64x64 — its OWN
+  END_FLASH_SIZE, not the sun/moon 32x32) into the generated sky table
+  (the regenerated table's diff is exactly 6 lines; every other table
+  byte-stable). The client: `mc-client/src/end_flash.rs` (the state +
+  the Mth pieces; the shared sky::JavaRandom grows the javap-exact
+  `nextInt` — power-of-two shift shortcut or the wrapping rejection
+  loop), the sky gate becomes the extract's match (NONE returns before
+  ANY state, END renders ONLY the flash — `rotY(180 - y) * rotX(-90 -
+  x)`, base (±1,0,±1) scaled (60,1,60) translated (0,100,0) inside the
+  rotated frame, tinted `(i,i,i,i)` through the CELESTIAL pipeline
+  whose BlendFunction.OVERLAY is exactly the raster's Additive), and
+  the App ticks the state on its game-time clock (the frame == tick
+  model — the draw reads the tick-exact current intensity, the lerp
+  machinery pinned at both partials). Goldens untouched BY DATA: every
+  golden world is overworld/procedural and the render path never saw
+  the END branch — 12/12 pass. Tests +5 (workspace 403 -> 408 passed /
+  0 failed / 3 ignored): the LCG vectors (the scramble, the
+  power-of-two shortcut, the rejection loop, the oracle's window-0
+  draw), the first-window quirk, the window-1 flash against the oracle
+  (offset/duration/angles/peak), the window-2 redraw + the lerp at
+  both partials, and the render witness (an active flash paints the
+  END sky, NONE still returns before any state, OVERWORLD is
+  byte-identical with and without a flash riding along).
   The **synced ambient rides the wire (v0.3.89 — the server's truth)**:
   the ambient arc's wire half closes. The audit ran first-hand on the
   26.2 jar: `DimensionType.NETWORK_CODEC` builds on
