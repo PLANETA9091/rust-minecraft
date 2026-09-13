@@ -3611,6 +3611,13 @@ mod tests {
         // the villager record: THREE VarInts (type, profession, level)
         entries.extend(test_support::entity_data_entry(20, s::VILLAGER_DATA,
             &[test_support::entity_data_varint(2), test_support::entity_data_varint(14), test_support::entity_data_varint(3)].concat()));
+        // the item stack: count, item registry id, patch — added damage
+        // (VarInt) + unbreakable (the ZERO-BYTE unit), removed rarity
+        let mut stack_value = Vec::new();
+        for v in [3i32, 745, 2, 1, 35, 4, 1, 12] {
+            stack_value.extend_from_slice(&test_support::entity_data_varint(v));
+        }
+        entries.extend(test_support::entity_data_entry(21, s::ITEM_STACK, &stack_value));
 
         let p = test_support::set_entity_data_packet(77, &entries);
         let d = parse_set_entity_data(&p).unwrap();
@@ -3639,8 +3646,24 @@ mod tests {
                 SetEntityDataEntry { index: 18, serializer: s::OPTIONAL_UNSIGNED_INT, value: EntityDataEntry::OptionalUnsignedInt(Some(1)) },
                 SetEntityDataEntry { index: 19, serializer: s::POSE, value: EntityDataEntry::Pose(6) },
                 SetEntityDataEntry { index: 20, serializer: s::VILLAGER_DATA, value: EntityDataEntry::VillagerData { type_id: 2, profession_id: 14, level: 3 } },
+                SetEntityDataEntry { index: 21, serializer: s::ITEM_STACK, value: EntityDataEntry::ItemStack { count: 3, item_id: 745, patch: ComponentPatch { added: vec![(3, ComponentValue::VarInt(35)), (4, ComponentValue::Unit)], removed: vec![12] } } },
             ]
         );
+    }
+
+
+    #[test]
+    fn probe_stack_bytes() {
+        use entity_data_serializers as s;
+        let mut stack_value = Vec::new();
+        for v in [3i32, 745, 2, 1, 35, 4, 1, 12] {
+            stack_value.extend_from_slice(&test_support::entity_data_varint(v));
+        }
+        eprintln!("stack_value bytes: {stack_value:02X?}");
+        let p = test_support::set_entity_data_packet(77, &test_support::entity_data_entry(21, s::ITEM_STACK, &stack_value));
+        let d = parse_set_entity_data(&p);
+        eprintln!("stack-only parse: {d:?}");
+        panic!("probe done");
     }
 
     /// Set Entity Data: the 0xFF index is the EOF marker — an empty
@@ -3755,6 +3778,286 @@ mod tests {
         let entries = test_support::entity_data_entry(24, s::VILLAGER_DATA,
             &[test_support::entity_data_varint(1), test_support::entity_data_varint(2)].concat());
         let p = test_support::set_entity_data_packet(3, &entries);
+        assert!(parse_set_entity_data(&p).is_err());
+    }
+
+    /// Set Entity Data, serializer 7: the item stack's THREE layers —
+    /// the count (the emptiness SENTINEL: ItemStack$1's `ifgt` means
+    /// count <= 0 is the EMPTY stack and NOTHING else rides the wire,
+    /// the count retained verbatim — a negative count is an empty stack
+    /// too, and any byte behind it is trailing drift), the item's
+    /// numeric registry id (the $29 byIdOrThrow VarInt, the villager
+    /// round's shape), and the component patch (DataComponentPatch$3:
+    /// VarInt added, VarInt removed, added entries as {type id, the
+    /// type's OWN value}, removed entries as {type id} — the absence
+    /// IS the payload). The FULL decodable slice: all SIXTEEN component
+    /// types of [`data_component_types`] in one added list, each value
+    /// through its own codec — the four VarInt lanes, the two ZERO-BYTE
+    /// unit lanes, the bare component tags, the compound-only custom
+    /// data, the BE f32, the three UTF identifier strings, the capped
+    /// lore list, the idMapper ordinal, and the bool.
+    #[test]
+    fn the_item_stack_is_count_item_and_a_component_patch() {
+        use data_component_types as t;
+        use entity_data_serializers as s;
+
+        // the empty stack, both sentinel shapes
+        for count in [0i32, -7] {
+            let p = test_support::set_entity_data_packet(5, &test_support::entity_data_entry(
+                8,
+                s::ITEM_STACK,
+                &test_support::entity_data_varint(count),
+            ));
+            let d = parse_set_entity_data(&p).unwrap();
+            assert_eq!(
+                d.entries[0].value,
+                EntityDataEntry::ItemStack {
+                    count,
+                    item_id: 0,
+                    patch: ComponentPatch::default()
+                }
+            );
+        }
+        // the empty stack with DRIFT behind it: the decoder returned at
+        // the count, so the follower is trailing bytes — refused
+        let mut drift = test_support::entity_data_varint(0);
+        drift.push(0x01);
+        let p = test_support::set_entity_data_packet(
+            5,
+            &test_support::entity_data_entry(8, s::ITEM_STACK, &drift),
+        );
+        assert!(parse_set_entity_data(&p).is_err());
+
+        // the plain stack: an EMPTY patch (both counts zero — the $3
+        // early return) rides nothing but the four-byte header
+        let mut plain = Vec::new();
+        for v in [1i32, 1, 0, 0] {
+            plain.extend_from_slice(&test_support::entity_data_varint(v));
+        }
+        let p = test_support::set_entity_data_packet(
+            5,
+            &test_support::entity_data_entry(8, s::ITEM_STACK, &plain),
+        );
+        let d = parse_set_entity_data(&p).unwrap();
+        assert_eq!(
+            d.entries[0].value,
+            EntityDataEntry::ItemStack {
+                count: 1,
+                item_id: 1,
+                patch: ComponentPatch::default()
+            }
+        );
+
+        // the removal-only patch: removed entries carry the type id
+        // ALONE — the absence is the payload
+        let mut removed_only = Vec::new();
+        for v in [2i32, 5, 0, 2, 3, 4] {
+            removed_only.extend_from_slice(&test_support::entity_data_varint(v));
+        }
+        let p = test_support::set_entity_data_packet(
+            5,
+            &test_support::entity_data_entry(8, s::ITEM_STACK, &removed_only),
+        );
+        let d = parse_set_entity_data(&p).unwrap();
+        match &d.entries[0].value {
+            EntityDataEntry::ItemStack { count, item_id, patch } => {
+                assert_eq!((*count, *item_id), (2, 5));
+                assert!(patch.added.is_empty());
+                assert_eq!(patch.removed, vec![3, 4]);
+            }
+            other => panic!("expected an item stack, got {other:?}"),
+        }
+
+        // the FULL decodable slice: all SIXTEEN types in one added list
+        let mut value = Vec::new();
+        for v in [4i32, 977, 16, 0] {
+            value.extend_from_slice(&test_support::entity_data_varint(v));
+        }
+        // 0 custom_data: a bare COMPOUND tag (compoundTagCodec's decode
+        // map throws on any other shape)
+        value.extend_from_slice(&test_support::entity_data_varint(t::CUSTOM_DATA));
+        crate::nbt::write_bare_nbt(
+            &Nbt::Compound(vec![("tag".into(), Nbt::Byte(1))]),
+            &mut value,
+        )
+        .unwrap();
+        // 1 max_stack_size, 2 max_damage, 3 damage: the VarInt lanes
+        for (tid, v) in [(t::MAX_STACK_SIZE, 64i32), (t::MAX_DAMAGE, 2031), (t::DAMAGE, 35)] {
+            value.extend_from_slice(&test_support::entity_data_varint(tid));
+            value.extend_from_slice(&test_support::entity_data_varint(v));
+        }
+        // 4 unbreakable: the ZERO-BYTE unit
+        value.extend_from_slice(&test_support::entity_data_varint(t::UNBREAKABLE));
+        // 6 custom_name: a bare component tag (a plain-text string)
+        value.extend_from_slice(&test_support::entity_data_varint(t::CUSTOM_NAME));
+        crate::nbt::write_bare_nbt(&Nbt::String("Excalibur".into()), &mut value).unwrap();
+        // 7 minimum_attack_charge: a BE f32
+        value.extend_from_slice(&test_support::entity_data_varint(t::MINIMUM_ATTACK_CHARGE));
+        value.extend_from_slice(&0.5f32.to_be_bytes());
+        // 9 item_name: a structured bare tag
+        value.extend_from_slice(&test_support::entity_data_varint(t::ITEM_NAME));
+        crate::nbt::write_bare_nbt(
+            &Nbt::Compound(vec![("text".into(), Nbt::String("Sword".into()))]),
+            &mut value,
+        )
+        .unwrap();
+        // 10 item_model: a UTF identifier
+        value.extend_from_slice(&test_support::entity_data_varint(t::ITEM_MODEL));
+        write_string(&mut value, "minecraft:glow");
+        // 11 lore: a VarInt count (<= 256) of bare tags
+        value.extend_from_slice(&test_support::entity_data_varint(t::LORE));
+        value.extend_from_slice(&test_support::entity_data_varint(2));
+        crate::nbt::write_bare_nbt(&Nbt::String("line one".into()), &mut value).unwrap();
+        crate::nbt::write_bare_nbt(&Nbt::String("line two".into()), &mut value).unwrap();
+        // 12 rarity: the idMapper ordinal
+        value.extend_from_slice(&test_support::entity_data_varint(t::RARITY));
+        value.extend_from_slice(&test_support::entity_data_varint(3));
+        // 19 repair_cost: back to the VarInt lanes
+        value.extend_from_slice(&test_support::entity_data_varint(t::REPAIR_COST));
+        value.extend_from_slice(&test_support::entity_data_varint(37));
+        // 20 creative_slot_lock: the second zero-byte unit
+        value.extend_from_slice(&test_support::entity_data_varint(t::CREATIVE_SLOT_LOCK));
+        // 21 enchantment_glint_override: one bool byte
+        value.extend_from_slice(&test_support::entity_data_varint(t::ENCHANTMENT_GLINT_OVERRIDE));
+        value.push(1);
+        // 35 tooltip_style, 71 note_block_sound: the UTF identifiers
+        value.extend_from_slice(&test_support::entity_data_varint(t::TOOLTIP_STYLE));
+        write_string(&mut value, "minecraft:epic");
+        value.extend_from_slice(&test_support::entity_data_varint(t::NOTE_BLOCK_SOUND));
+        write_string(&mut value, "minecraft:block.note_block.pling");
+
+        let p = test_support::set_entity_data_packet(
+            5,
+            &test_support::entity_data_entry(8, s::ITEM_STACK, &value),
+        );
+        let d = parse_set_entity_data(&p).unwrap();
+        let expected_patch = ComponentPatch {
+            added: vec![
+                (
+                    t::CUSTOM_DATA,
+                    ComponentValue::CompoundTag(Nbt::Compound(vec![("tag".into(), Nbt::Byte(1))])),
+                ),
+                (t::MAX_STACK_SIZE, ComponentValue::VarInt(64)),
+                (t::MAX_DAMAGE, ComponentValue::VarInt(2031)),
+                (t::DAMAGE, ComponentValue::VarInt(35)),
+                (t::UNBREAKABLE, ComponentValue::Unit),
+                (t::CUSTOM_NAME, ComponentValue::Component(Nbt::String("Excalibur".into()))),
+                (t::MINIMUM_ATTACK_CHARGE, ComponentValue::Float(0.5)),
+                (
+                    t::ITEM_NAME,
+                    ComponentValue::Component(Nbt::Compound(vec![(
+                        "text".into(),
+                        Nbt::String("Sword".into()),
+                    )])),
+                ),
+                (t::ITEM_MODEL, ComponentValue::String("minecraft:glow".into())),
+                (
+                    t::LORE,
+                    ComponentValue::Lore(vec![
+                        Nbt::String("line one".into()),
+                        Nbt::String("line two".into()),
+                    ]),
+                ),
+                (t::RARITY, ComponentValue::Rarity(3)),
+                (t::REPAIR_COST, ComponentValue::VarInt(37)),
+                (t::CREATIVE_SLOT_LOCK, ComponentValue::Unit),
+                (t::ENCHANTMENT_GLINT_OVERRIDE, ComponentValue::Bool(true)),
+                (t::TOOLTIP_STYLE, ComponentValue::String("minecraft:epic".into())),
+                (
+                    t::NOTE_BLOCK_SOUND,
+                    ComponentValue::String("minecraft:block.note_block.pling".into()),
+                ),
+            ],
+            removed: vec![],
+        };
+        assert_eq!(
+            d.entries[0].value,
+            EntityDataEntry::ItemStack {
+                count: 4,
+                item_id: 977,
+                patch: expected_patch
+            }
+        );
+    }
+
+    /// Set Entity Data, serializer 7: the patch REFUSES what it cannot
+    /// size — the wire is UNFRAMED (no length prefix; $3 hands the
+    /// buffer straight to the type's streamCodec), so the refusal map
+    /// is three-directional: an UNKNOWN type id refuses where vanilla's
+    /// byIdOrThrow throws, a NEGATIVE one refuses (outside every
+    /// IdMap), and a KNOWN-but-unimplemented one refuses because its
+    /// byte length is only knowable through a codec the port does not
+    /// carry — there is no honest skip. Two shape refusals pin the
+    /// frame: the negative ADDED count (vanilla's fastutil map
+    /// constructor throws on the negative capacity) and the lore list
+    /// over its codec's 256-entry cap; custom_data's compound-only
+    /// decode map is the DecoderException direction.
+    #[test]
+    fn the_patch_refuses_what_it_cannot_size() {
+        use entity_data_serializers as s;
+
+        // a positive-count stack whose patch carries ONE added entry
+        let stack_with = |added_bytes: &[u8]| -> Vec<u8> {
+            let mut v = Vec::new();
+            for prefix in [1i32, 1, 1, 0] {
+                v.extend_from_slice(&test_support::entity_data_varint(prefix));
+            }
+            v.extend_from_slice(added_bytes);
+            v
+        };
+        let one_stack = |added_bytes: &[u8]| -> Vec<u8> {
+            test_support::set_entity_data_packet(
+                5,
+                &test_support::entity_data_entry(8, s::ITEM_STACK, &stack_with(added_bytes)),
+            )
+        };
+        // the unknown registry id (999) and the negative one (-1)
+        for tid in [999i32, -1] {
+            assert!(
+                parse_set_entity_data(&one_stack(&test_support::entity_data_varint(tid)))
+                    .is_err(),
+                "component type {tid} must refuse"
+            );
+        }
+        // known to the registry but unimplemented here (13 enchantments)
+        assert!(parse_set_entity_data(&one_stack(&test_support::entity_data_varint(13))).is_err());
+        // the negative ADDED count
+        let mut neg = Vec::new();
+        neg.extend_from_slice(&test_support::entity_data_varint(1));
+        neg.extend_from_slice(&test_support::entity_data_varint(1));
+        neg.extend_from_slice(&test_support::entity_data_varint(-1));
+        neg.extend_from_slice(&test_support::entity_data_varint(0));
+        let p = test_support::set_entity_data_packet(
+            5,
+            &test_support::entity_data_entry(8, s::ITEM_STACK, &neg),
+        );
+        assert!(parse_set_entity_data(&p).is_err());
+        // the lore cap: a 257-entry list is over the codec's limit
+        let mut over = Vec::new();
+        over.extend_from_slice(&test_support::entity_data_varint(1));
+        over.extend_from_slice(&test_support::entity_data_varint(1));
+        over.extend_from_slice(&test_support::entity_data_varint(1));
+        over.extend_from_slice(&test_support::entity_data_varint(0));
+        over.extend_from_slice(&test_support::entity_data_varint(11));
+        over.extend_from_slice(&test_support::entity_data_varint(257));
+        let p = test_support::set_entity_data_packet(
+            5,
+            &test_support::entity_data_entry(8, s::ITEM_STACK, &over),
+        );
+        assert!(parse_set_entity_data(&p).is_err());
+        // custom_data's compound-only map: a TAG_String is the
+        // DecoderException
+        let mut str_tag = Vec::new();
+        str_tag.extend_from_slice(&test_support::entity_data_varint(1));
+        str_tag.extend_from_slice(&test_support::entity_data_varint(1));
+        str_tag.extend_from_slice(&test_support::entity_data_varint(1));
+        str_tag.extend_from_slice(&test_support::entity_data_varint(0));
+        str_tag.extend_from_slice(&test_support::entity_data_varint(0));
+        crate::nbt::write_bare_nbt(&Nbt::String("not a compound".into()), &mut str_tag).unwrap();
+        let p = test_support::set_entity_data_packet(
+            5,
+            &test_support::entity_data_entry(8, s::ITEM_STACK, &str_tag),
+        );
         assert!(parse_set_entity_data(&p).is_err());
     }
 
