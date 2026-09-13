@@ -383,6 +383,30 @@ impl WorldModel {
         None
     }
 
+    /// The dimension's STATED sky-light factor — `None` when no
+    /// dimension states one: the consumer's bytecode-default verdict
+    /// (`visual/sky_light_factor` 1.0, javap) covers the absence. THE
+    /// VANILLA SHAPE (the raw jar JSON, this round's discovery): the
+    /// END and the NETHER state **0.0** — their lightmap's sky term is
+    /// pinned to ZERO (no sky light reaches those lightmaps); the
+    /// overworlds state none. The three-branch precedence: the synced
+    /// entry wins, the built-in table serves skip-sync, None is the
+    /// default's verdict. The COMPOSED render value is [`sky_factor()`]
+    /// — this accessor is the stated attribute, the multiply-BASE the
+    /// attribute-system fold applies BEFORE the timeline's track.
+    pub fn sky_light_factor(&self) -> Option<f32> {
+        let dim = self.current_dimension.as_deref()?;
+        if let Some(d) = self.registry.dimension(dim) {
+            return d.sky_light_factor;
+        }
+        if self.registry.dimension_types.is_empty() {
+            if let Some(d) = mc_registry::generated::worldgen::dimension_type(dim) {
+                return d.sky_light_factor;
+            }
+        }
+        None
+    }
+
     /// Global block state id at (x, y, z) — world coordinates for x/z
     /// (arithmetic shift, so negative chunks index correctly), and world-y
     /// when `min_y` is known else column-local y. `None` outside loaded
@@ -546,13 +570,22 @@ impl WorldModel {
     /// with no timeline knowledge falls back to the snapshot — the
     /// jar's day.json keyframes, bit-identical values.
     pub fn sky_factor(&self) -> f32 {
+        // the attribute-system fold (javap EnvironmentAttributeSystem:
+        // the sampler folds the layers in add order — the dimension's
+        // constant layer OVERRIDES the registered default, the
+        // timeline's TimeBased layer applies LAST with the track's
+        // modifier; the day track's modifier is multiply): the stated
+        // factor is the multiply-BASE, the timeline track scales it.
+        // No clock -> no TimeBased layer -> the stated (override of
+        // the default 1.0) alone.
+        let stated = self.sky_light_factor().unwrap_or(1.0);
         match self.day_tick() {
-            None => 1.0,
+            None => stated,
             Some(tick) => match self.timeline_curve() {
                 Some((keyframes, period)) => {
-                    crate::timeline::evaluate(keyframes, Some(period), tick)
+                    stated * crate::timeline::evaluate(keyframes, Some(period), tick)
                 }
-                None => crate::timeline::sky_light_factor(tick),
+                None => stated * crate::timeline::sky_light_factor(tick),
             },
         }
     }

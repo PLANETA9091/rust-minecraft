@@ -392,16 +392,22 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                     } else {
                         atlas::TILE_NONE
                     };
-                    let sky_factor = world
-                        .day_tick
-                        .map(crate::timeline::sky_light_factor)
-                        .unwrap_or(1.0);
+                    // The attribute-system fold (javap EnvironmentAttributeSystem:
+                    // the dimension's constant layer OVERRIDES the default, the
+                    // timeline's multiply track applies last): the stated factor
+                    // is the BASE, the day tick's curve value scales it. None =
+                    // the default 1.0 — an exact f32 identity, the golden
+                    // scenes' bit-stability. Constant per mesh — the shader's
+                    // SkyFactor uniform equivalent.
+                    let sky_factor = world.sky_light_factor.unwrap_or(1.0)
+                        * world
+                            .day_tick
+                            .map(crate::timeline::sky_light_factor)
+                            .unwrap_or(1.0);
                     let sky_tint = world
                         .day_tick
                         .map(crate::timeline::sky_light_color)
                         .unwrap_or([1.0; 3]);
-                    // The shader's AmbientColor base (see the main path):
-                    // None = the bytecode-default black, a no-op base.
                     let ambient = world.ambient_light.map_or([0.0f32; 3], |a| {
                         [a[0] as f32 / 255.0, a[1] as f32 / 255.0, a[2] as f32 / 255.0]
                     });
@@ -567,13 +573,16 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                     // carries a light layer; `None` keeps the legacy path.
                     let clight =
                         light.map(|l| corner_light(l, world.chunks_per_side, wx, wy, wz, face));
-                    // The timeline sky factor: the day tick's curve value
-                    // (1.0 day / 0.24 night; None = day). Constant per
-                    // mesh — the shader's SkyFactor uniform equivalent.
-                    let sky_factor = world
-                        .day_tick
-                        .map(crate::timeline::sky_light_factor)
-                        .unwrap_or(1.0);
+                    // The attribute-system fold (see the flat path): the
+                    // stated factor OVERRIDES the default 1.0, the day
+                    // tick's curve value scales it; None = the exact f32
+                    // identity. Constant per mesh — the shader's
+                    // SkyFactor uniform equivalent.
+                    let sky_factor = world.sky_light_factor.unwrap_or(1.0)
+                        * world
+                            .day_tick
+                            .map(crate::timeline::sky_light_factor)
+                            .unwrap_or(1.0);
                     // The shader's SkyLightColor uniform: the timeline's
                     // visual/sky_light_color track (white day, the #7a7aff
                     // moonlight blue at night); None = day = white.
@@ -695,6 +704,7 @@ mod tests {
             // pinned in its own tests, explicitly staged)
             ambient_light: None,
             block_light_tint: None,
+            sky_light_factor: None,
         }
     }
 

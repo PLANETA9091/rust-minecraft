@@ -1310,12 +1310,21 @@ pub mod test_support {
                 ("skybox".into(), Nbt::String("none".into())),
                 // the REAL nether fog: the only dimension that states the
                 // distances (10/96 — the fogged walls), the flat
-                // attributes compound's FLOAT entries
+                // attributes compound's FLOAT entries, plus the nether's
+                // stated sky-light pair (the raw jar JSON): the moonlight
+                // blue as the SPATIAL base and the 0.0 factor that pins
+                // the lightmap's sky term to zero — no vanilla sky light
+                // reaches the nether's lightmap
                 (
                     "attributes".into(),
                     Nbt::Compound(vec![
                         ("minecraft:visual/fog_start_distance".into(), Nbt::Float(10.0)),
                         ("minecraft:visual/fog_end_distance".into(), Nbt::Float(96.0)),
+                        (
+                            "minecraft:visual/sky_light_color".into(),
+                            Nbt::String("#7a7aff".into()),
+                        ),
+                        ("minecraft:visual/sky_light_factor".into(), Nbt::Float(0.0)),
                     ]),
                 ),
             ]);
@@ -1895,22 +1904,27 @@ mod tests {
         assert_eq!(
             (
                 nether.block_light_tint,
-                nether.sky_light_color,
                 nether.sky_light_factor,
                 nether.night_vision_color
             ),
-            (None, None, None, None),
-            "no vanilla dimension states the four light attributes — the absent shape, each field its own None"
+            (None, Some(0.0), None),
+            "the real nether STATES the 0.0 factor (no sky light reaches its lightmap) — \
+             while the tint and night-vision stay unstated (the honest absent shape)"
         );
         assert_eq!(
             (
-                ow.block_light_tint,
+                nether.sky_light_color,
                 ow.sky_light_color,
-                ow.sky_light_factor,
-                ow.night_vision_color
+                ow.sky_light_factor
             ),
-            (None, None, None, None),
-            "the overworld's absent shape too"
+            (Some([0x7a, 0x7a, 0xff]), None, None),
+            "the nether's stated moonlight-blue rides the sync; the overworld states no \
+             sky-light keys — the bytecode defaults' shape"
+        );
+        assert_eq!(
+            (ow.block_light_tint, ow.night_vision_color),
+            (None, None),
+            "no vanilla dimension states the tint or the night-vision color"
         );
         assert!(data.dimension("minecraft:the_end").is_none());
         // the biome registry: the element DECODED (the NETWORK_CODEC

@@ -125,6 +125,15 @@ pub struct World {
     /// procedural/golden scene and every unknown dimension keeps the
     /// default-tint arithmetic (modulo the correction itself).
     pub block_light_tint: Option<[u8; 3]>,
+    /// The dimension's STATED sky-light factor — the multiply-BASE the
+    /// lightmap's sky term scales by (the attribute-system fold: the
+    /// stated value OVERRIDES the bytecode default 1.0, the timeline's
+    /// multiply track applies after). `None` = no opinion: the default
+    /// 1.0 — an exact f32 identity under the track multiply, so every
+    /// procedural/golden scene keeps the pre-attribute arithmetic bit
+    /// for bit. The real jar's END and NETHER state **0.0** — their
+    /// sky term is pinned to zero (vanilla's own verdict).
+    pub sky_light_factor: Option<f32>,
 }
 
 /// A biome cell with no opinion — the server never answered for the
@@ -230,6 +239,7 @@ impl World {
             variants: None, // the procedural scene carries no state variants
             ambient_light: None, // the procedural scene: the black bytecode default
             block_light_tint: None, // the procedural scene: the bytecode default tint
+            sky_light_factor: None, // the procedural scene: the bytecode default 1.0
         };
         w.generate();
         w

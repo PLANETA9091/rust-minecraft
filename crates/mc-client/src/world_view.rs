@@ -112,6 +112,12 @@ pub fn materialize(
         // an unknown custom one) — the mesher reads the bytecode default
         // #FFD88C (the corrected blue 140)
         block_light_tint: model.block_light_tint(),
+        // the stated sky-light factor rides the SAME snapshot (the
+        // attribute-system fold's multiply-base): the model's dimension
+        // resolves through the built-in visual/sky_light_factor column —
+        // the real jar's end/nether carry Some(0.0), the overworlds
+        // None (the mesher's multiply identity)
+        sky_light_factor: model.sky_light_factor(),
     };
     let side_i = side as i32;
     for gz in 0..side_i {
