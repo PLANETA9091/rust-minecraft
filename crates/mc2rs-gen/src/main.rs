@@ -110,6 +110,19 @@ enum Cmd {
         #[arg(long, default_value = ".")]
         out: String,
     },
+    /// Re-emit mc-registry/src/generated/worldgen.rs (biomes + the built-in
+    /// dimension_type/timeline/timeline-tag registry tables) from a LOCAL
+    /// client jar — the offline half of the worldgen arc: no network, no java.
+    Worldgen {
+        #[arg(long)]
+        version: String,
+        /// Path to the official client jar (e.g. .mc2rs/classpath/client.jar).
+        #[arg(long)]
+        jar: String,
+        /// Workspace root (contains crates/).
+        #[arg(long, default_value = ".")]
+        out: String,
+    },
     /// Download official game assets into a local cache (requires owning MC).
     Assets {
         #[arg(long)]
@@ -190,6 +203,14 @@ fn main() -> Result<()> {
                 .with_context(|| format!("workspace root {out} not found"))?;
             let path = runtime_dump::emit_block_ids(&root, &version, &client_sha1, &text)?;
             println!("block-ids: {}", path.display());
+        }
+        Cmd::Worldgen { version, jar, out } => {
+            let bytes = std::fs::read(&jar).with_context(|| format!("read jar {jar}"))?;
+            let root = Path::new(&out)
+                .canonicalize()
+                .with_context(|| format!("workspace root {out} not found"))?;
+            let path = write_worldgen(&root, &bytes)?;
+            println!("worldgen ({version}): {}", path.display());
         }
         Cmd::Assets { version, dir, filter } => {
             let m = manifest::load(&agent)?;
@@ -578,6 +599,26 @@ fn atlas_cmd(agent: &ureq::Agent, cache: &util::Cache, version: &str, out: &Path
     write_atlas(&workspace_root, version, &sha, &jar_bytes)?;
     println!("atlas written in {:.1}s (jar {})", t0.elapsed().as_secs_f32(), sha[..8].to_string());
     Ok(())
+}
+
+/// Resolve + write crates/mc-registry/src/generated/worldgen.rs (biomes +
+/// the built-in dimension_type/timeline registry tables) from a local jar.
+fn write_worldgen(workspace_root: &Path, jar_bytes: &[u8]) -> Result<std::path::PathBuf> {
+    let mut zip =
+        zip::ZipArchive::new(std::io::Cursor::new(jar_bytes)).context("open client jar as zip")?;
+    let data = worldgen::generate(&mut zip)?;
+    let reg_dir = workspace_root.join("crates/mc-registry/src/generated");
+    std::fs::create_dir_all(&reg_dir)?;
+    let path = reg_dir.join("worldgen.rs");
+    std::fs::write(&path, worldgen::emit(&data)?)?;
+    println!(
+        "      biomes: {} | dimension types: {} | timelines: {} | timeline tags: {}",
+        data.biomes.len(),
+        data.dimension_types.len(),
+        data.timelines.len(),
+        data.timeline_tags.len()
+    );
+    Ok(path)
 }
 
 /// Resolve + write crates/mc-registry/src/generated/{atlas,colormap}.rs.

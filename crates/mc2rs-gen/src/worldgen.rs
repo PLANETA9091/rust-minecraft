@@ -39,12 +39,55 @@ pub struct BiomeDef {
     pub foliage_color: Option<u32>,
 }
 
+/// One built-in `minecraft:dimension_type` entry: the jar's
+/// `data/minecraft/dimension_type/*.json` — the world layout (min_y/height)
+/// and environment (skylight, fixed time, ambient light) a server's synced
+/// dimension registry mirrors per element.
+#[derive(Debug, Clone)]
+pub struct DimensionTypeEntry {
+    pub name: String,
+    pub min_y: i32,
+    pub height: u32,
+    pub logical_height: u32,
+    pub has_skylight: bool,
+    pub has_fixed_time: bool,
+    pub ambient_light: f32,
+    pub coordinate_scale: f64,
+    /// the `timelines` reference — a tag ("#minecraft:in_overworld") in the
+    /// real jar; inline list references are not emitted (none exist there)
+    pub timelines: Option<String>,
+    pub default_clock: Option<String>,
+}
+
+/// One built-in `minecraft:timeline` entry: the jar's
+/// `data/minecraft/timeline/*.json` — a keyframe curve set over a world
+/// clock. The per-track data the CLIENT consumes today is the
+/// `minecraft:visual/sky_light_factor` render track (the SkyFactor the
+/// lightmap multiplies the sky term by); every other track rides the count.
+#[derive(Debug, Clone)]
+pub struct TimelineEntry {
+    pub name: String,
+    pub clock: String,
+    pub period_ticks: Option<i64>,
+    pub tracks: usize,
+    /// (tick, value) pairs of `minecraft:visual/sky_light_factor`, sorted by
+    /// tick — empty when the timeline carries no such track
+    pub sky_light_factor: Vec<(i64, f32)>,
+}
+
 #[derive(Debug, Default)]
 pub struct WorldgenData {
     pub biomes: BTreeMap<String, BiomeDef>,
     /// situational background music per biome, straight from the official
     /// biome JSONs (empty for versions without the attribute)
     pub biome_music: Vec<BiomeMusicEntry>,
+    /// the built-in `minecraft:dimension_type` registry entries, sorted by id
+    pub dimension_types: BTreeMap<String, DimensionTypeEntry>,
+    /// the built-in `minecraft:timeline` registry entries, sorted by id
+    pub timelines: BTreeMap<String, TimelineEntry>,
+    /// `data/minecraft/tags/timeline/*.json` verbatim (name -> values; the
+    /// values may be nested "#tag" references)
+    pub timeline_tags: BTreeMap<String, Vec<String>>,
     pub noise_settings: Vec<String>,
     pub density_functions: usize,
     pub noises: usize,
@@ -132,6 +175,105 @@ pub fn generate<R: std::io::Read + std::io::Seek>(archive: &mut zip::ZipArchive<
                             ),
                         },
                     );
+                }
+            }
+        } else if let Some(rest) = name.strip_prefix("data/minecraft/dimension_type/") {
+            if rest.ends_with(".json") {
+                let bytes = read_entry(archive, &name)?;
+                if let Ok(v) = serde_json::from_slice::<Value>(&bytes) {
+                    let id = rest.trim_end_matches(".json").to_string();
+                    let height = v.get("height").and_then(Value::as_u64).unwrap_or(384) as u32;
+                    data.dimension_types.insert(
+                        id.clone(),
+                        DimensionTypeEntry {
+                            name: format!("minecraft:{id}"),
+                            min_y: v.get("min_y").and_then(Value::as_i64).unwrap_or(0) as i32,
+                            height,
+                            logical_height: v
+                                .get("logical_height")
+                                .and_then(Value::as_u64)
+                                .unwrap_or(height as u64) as u32,
+                            has_skylight: v.get("has_skylight").and_then(Value::as_bool).unwrap_or(true),
+                            has_fixed_time: v.get("has_fixed_time").and_then(Value::as_bool).unwrap_or(false),
+                            ambient_light: v
+                                .get("ambient_light")
+                                .and_then(Value::as_f64)
+                                .unwrap_or(0.0) as f32,
+                            coordinate_scale: v
+                                .get("coordinate_scale")
+                                .and_then(Value::as_f64)
+                                .unwrap_or(1.0),
+                            // string tag references only — the inline list
+                            // form does not occur in the real jar
+                            timelines: v
+                                .get("timelines")
+                                .and_then(Value::as_str)
+                                .map(String::from),
+                            default_clock: v
+                                .get("default_clock")
+                                .and_then(Value::as_str)
+                                .map(String::from),
+                        },
+                    );
+                }
+            }
+        } else if let Some(rest) = name.strip_prefix("data/minecraft/timeline/") {
+            if rest.ends_with(".json") {
+                let bytes = read_entry(archive, &name)?;
+                if let Ok(v) = serde_json::from_slice::<Value>(&bytes) {
+                    let id = rest.trim_end_matches(".json").to_string();
+                    let tracks = v
+                        .get("tracks")
+                        .and_then(Value::as_object)
+                        .map(|t| t.len())
+                        .unwrap_or(0);
+                    let mut sky_light_factor: Vec<(i64, f32)> = v
+                        .get("tracks")
+                        .and_then(|t| t.get("minecraft:visual/sky_light_factor"))
+                        .and_then(|t| t.get("keyframes"))
+                        .and_then(Value::as_array)
+                        .map(|kfs| {
+                            kfs.iter()
+                                .filter_map(|kf| {
+                                    let t = kf.get("ticks")?.as_i64()?;
+                                    let val = kf.get("value")?.as_f64()?;
+                                    Some((t, val as f32))
+                                })
+                                .collect()
+                        })
+                        .unwrap_or_default();
+                    sky_light_factor.sort_by_key(|(t, _)| *t);
+                    data.timelines.insert(
+                        id,
+                        TimelineEntry {
+                            name: format!("minecraft:{}", id),
+                            clock: v
+                                .get("clock")
+                                .and_then(Value::as_str)
+                                .unwrap_or("")
+                                .to_string(),
+                            period_ticks: v.get("period_ticks").and_then(Value::as_i64),
+                            tracks,
+                            sky_light_factor,
+                        },
+                    );
+                }
+            }
+        } else if let Some(rest) = name.strip_prefix("data/minecraft/tags/timeline/") {
+            if rest.ends_with(".json") {
+                let bytes = read_entry(archive, &name)?;
+                if let Ok(v) = serde_json::from_slice::<Value>(&bytes) {
+                    let values: Vec<String> = v
+                        .get("values")
+                        .and_then(Value::as_array)
+                        .map(|a| {
+                            a.iter()
+                                .filter_map(|x| x.as_str().map(String::from))
+                                .collect()
+                        })
+                        .unwrap_or_default();
+                    data.timeline_tags
+                        .insert(rest.trim_end_matches(".json").to_string(), values);
                 }
             }
         } else if let Some(rest) = name.strip_prefix("data/minecraft/worldgen/noise_settings/") {
@@ -232,6 +374,109 @@ pub fn emit(data: &WorldgenData) -> Result<String> {
         "/// Worldgen resource counts (real inventory of the version jar).\npub const DENSITY_FUNCTIONS: usize = {};\npub const NOISES: usize = {};\npub const CONFIGURED_FEATURES: usize = {};\npub const PLACED_FEATURES: usize = {};\n",
         data.density_functions, data.noises, data.configured_features, data.placed_features
     ));
+
+    // ---- built-in dimension_type / timeline registry tables ----
+    // The data/minecraft/{dimension_type,timeline,tags/timeline} side of the
+    // jar: the registry entries a vanilla server syncs and a matching client
+    // could claim as known packs. Appended here so the biome tables above
+    // stay byte-stable across the arc.
+    out.push_str("/// One built-in `minecraft:dimension_type` registry entry (the jar's\n");
+    out.push_str("/// `data/minecraft/dimension_type/*.json`): world layout + environment.\n");
+    out.push_str("#[derive(Debug, Clone, Copy, PartialEq)]\npub struct DimensionTypeDef {\n    pub name: &'static str,\n    pub min_y: i32,\n    pub height: u32,\n    pub logical_height: u32,\n    pub has_skylight: bool,\n    pub has_fixed_time: bool,\n    pub ambient_light: f32,\n    pub coordinate_scale: f64,\n    pub timelines: Option<&'static str>,\n    pub default_clock: Option<&'static str>,\n}\n\n");
+    out.push_str("pub static DIMENSION_TYPES: [DimensionTypeDef; ");
+    out.push_str(&data.dimension_types.len().to_string());
+    out.push_str("] = [\n");
+    for d in data.dimension_types.values() {
+        let opt = |s: &Option<String>| match s {
+            Some(v) => format!("Some(\"{}\")", rust_str(v)),
+            None => "None".to_string(),
+        };
+        out.push_str(&format!(
+            "    DimensionTypeDef {{ name: \"{}\", min_y: {}, height: {}, logical_height: {}, has_skylight: {}, has_fixed_time: {}, ambient_light: {:?}, coordinate_scale: {:?}, timelines: {}, default_clock: {} }},\n",
+            rust_str(&d.name),
+            d.min_y,
+            d.height,
+            d.logical_height,
+            d.has_skylight,
+            d.has_fixed_time,
+            d.ambient_light,
+            d.coordinate_scale,
+            opt(&d.timelines),
+            opt(&d.default_clock),
+        ));
+    }
+    out.push_str("];\n\n");
+    out.push_str("/// Dimension type by registry id (\"minecraft:overworld\"), sorted for binary search.\n");
+    out.push_str("pub fn dimension_type(name: &str) -> Option<&'static DimensionTypeDef> {\n");
+    out.push_str("    DIMENSION_TYPES.binary_search_by_key(&name, |d| d.name).ok().map(|i| &DIMENSION_TYPES[i])\n}\n\n");
+
+    out.push_str("/// One built-in `minecraft:timeline` registry entry (the jar's\n");
+    out.push_str("/// `data/minecraft/timeline/*.json`): keyframe tracks over a world clock.\n");
+    out.push_str("#[derive(Debug, Clone, Copy, PartialEq)]\npub struct TimelineDef {\n    pub name: &'static str,\n    pub clock: &'static str,\n    pub period_ticks: Option<i64>,\n    pub tracks: usize,\n    /// `minecraft:visual/sky_light_factor` keyframes, sorted by tick — the\n    /// render track the lightmap's SkyFactor multiplies the sky term by\n    /// (empty when the timeline carries no such track)\n    pub sky_light_factor: &'static [(i64, f32)],\n}\n\n");
+    for (id, t) in &data.timelines {
+        if t.sky_light_factor.is_empty() {
+            continue;
+        }
+        let ident = format!(
+            "TL_{}_SKY_LIGHT_FACTOR",
+            id.chars().map(|c| if c.is_ascii_alphanumeric() { c } else { '_' }).collect::<String>().to_uppercase()
+        );
+        out.push_str(&format!("pub static {ident}: [(i64, f32); {}] = [", t.sky_light_factor.len()));
+        for (i, (tick, val)) in t.sky_light_factor.iter().enumerate() {
+            if i > 0 {
+                out.push_str(", ");
+            }
+            out.push_str(&format!("({tick}, {val:?})"));
+        }
+        out.push_str("];\n");
+    }
+    out.push_str("pub static TIMELINES: [TimelineDef; ");
+    out.push_str(&data.timelines.len().to_string());
+    out.push_str("] = [\n");
+    for t in data.timelines.values() {
+        let skf = if t.sky_light_factor.is_empty() {
+            "&[]".to_string()
+        } else {
+            let ident = format!(
+                "TL_{}_SKY_LIGHT_FACTOR",
+                t.name.trim_start_matches("minecraft:").chars().map(|c| if c.is_ascii_alphanumeric() { c } else { '_' }).collect::<String>().to_uppercase()
+            );
+            format!("&{ident}")
+        };
+        out.push_str(&format!(
+            "    TimelineDef {{ name: \"{}\", clock: \"{}\", period_ticks: {}, tracks: {}, sky_light_factor: {} }},\n",
+            rust_str(&t.name),
+            rust_str(&t.clock),
+            match t.period_ticks {
+                Some(p) => format!("Some({p})"),
+                None => "None".to_string(),
+            },
+            t.tracks,
+            skf,
+        ));
+    }
+    out.push_str("];\n\n");
+    out.push_str("/// Timeline by registry id (\"minecraft:day\"), sorted for binary search.\n");
+    out.push_str("pub fn timeline(name: &str) -> Option<&'static TimelineDef> {\n");
+    out.push_str("    TIMELINES.binary_search_by_key(&name, |t| t.name).ok().map(|i| &TIMELINES[i])\n}\n\n");
+
+    out.push_str("/// The jar's `data/minecraft/tags/timeline/*.json` verbatim — (tag id\n");
+    out.push_str("/// with the minecraft: prefix, values; \"#\"-prefixed values name other tags).\n");
+    out.push_str("pub static TIMELINE_TAGS: [(&str, &[&str]); ");
+    out.push_str(&data.timeline_tags.len().to_string());
+    out.push_str("] = [\n");
+    for (id, values) in &data.timeline_tags {
+        let vals: Vec<String> = values.iter().map(|v| format!("\"{}\"", rust_str(v))).collect();
+        out.push_str(&format!(
+            "    (\"minecraft:{}\", &[{}]),\n",
+            rust_str(id),
+            vals.join(", ")
+        ));
+    }
+    out.push_str("];\n\n");
+    out.push_str("/// Timeline tag values by full tag id (\"minecraft:in_overworld\").\n");
+    out.push_str("pub fn timeline_tag(name: &str) -> Option<&'static [&'static str]> {\n");
+    out.push_str("    TIMELINE_TAGS.binary_search_by_key(&name, |t| t.0).ok().map(|i| TIMELINE_TAGS[i].1)\n}\n");
     Ok(out)
 }
 
@@ -293,5 +538,66 @@ mod tests {
         assert!(emitted.contains("event: \"music.under_water\""));
         assert!(emitted.contains("pub fn biome_music(biome: &str, context: &str)"));
         assert!(emitted.contains("pub static BIOME_MUSIC: [BiomeMusicDef; 3]"));
+    }
+
+    #[test]
+    fn parses_dimension_types_timelines_and_tags() {
+        // the REAL 26.2 shapes: the nether's logical_height < height, the
+        // overworld carries default_clock while the nether does not, the day
+        // timeline's sky_light_factor rides numeric keyframes next to
+        // string-valued visual tracks, and tags nest "#"-references
+        let nether = br#"{"ambient_light":0.1,"cardinal_light":"nether","coordinate_scale":8.0,"has_ceiling":true,"has_fixed_time":true,"has_skylight":false,"height":256,"logical_height":128,"min_y":0,"timelines":"#minecraft:in_nether"}"#;
+        let overworld = br#"{"ambient_light":0.0,"coordinate_scale":1.0,"default_clock":"minecraft:overworld","has_skylight":true,"height":384,"logical_height":384,"min_y":-64,"timelines":"#minecraft:in_overworld"}"#;
+        let day = br#"{"clock":"minecraft:overworld","period_ticks":24000,"tracks":{"minecraft:gameplay/monsters_burn":{"keyframes":[{"ticks":12542,"value":true},{"ticks":23460,"value":false}],"modifier":"or"},"minecraft:visual/sky_color":{"keyframes":[{"ticks":133,"value":"#ffffff"},{"ticks":11867,"value":"#000000"}],"modifier":"multiply"},"minecraft:visual/sky_light_factor":{"keyframes":[{"ticks":22860,"value":0.24},{"ticks":730,"value":1.0},{"ticks":11270,"value":1.0},{"ticks":13140,"value":0.24}],"modifier":"multiply"}}}"#;
+        let early_game = br#"{"clock":"minecraft:overworld","tracks":{"minecraft:gameplay/can_sleep":{"keyframes":[{"ticks":0,"value":true}]}}}"#;
+        let mut zip = zip_of(&[
+            ("data/minecraft/dimension_type/the_nether.json", nether.to_vec()),
+            ("data/minecraft/dimension_type/overworld.json", overworld.to_vec()),
+            ("data/minecraft/timeline/day.json", day.to_vec()),
+            ("data/minecraft/timeline/early_game.json", early_game.to_vec()),
+            ("data/minecraft/tags/timeline/universal.json", br#"{"values":["minecraft:villager_schedule"]}"#.to_vec()),
+            ("data/minecraft/tags/timeline/in_overworld.json", br#"{"values":["#minecraft:universal","minecraft:day","minecraft:early_game"]}"#.to_vec()),
+        ]);
+        let data = generate(&mut zip).unwrap();
+
+        let n = &data.dimension_types["the_nether"];
+        assert_eq!((n.min_y, n.height, n.logical_height), (0, 256, 128));
+        assert!(n.has_fixed_time && !n.has_skylight);
+        assert_eq!((n.ambient_light, n.coordinate_scale), (0.1, 8.0));
+        assert_eq!(n.timelines.as_deref(), Some("#minecraft:in_nether"));
+        assert_eq!(n.default_clock, None);
+        let o = &data.dimension_types["overworld"];
+        assert_eq!((o.min_y, o.height), (-64, 384));
+        assert!(!o.has_fixed_time, "absent has_fixed_time defaults false");
+        assert_eq!(o.default_clock.as_deref(), Some("minecraft:overworld"));
+
+        let d = &data.timelines["day"];
+        assert_eq!(d.clock, "minecraft:overworld");
+        assert_eq!(d.period_ticks, Some(24_000));
+        assert_eq!(d.tracks, 3);
+        // unsorted keyframes arrive sorted; the hex-string visual track is
+        // not the numeric render track
+        assert_eq!(
+            d.sky_light_factor,
+            vec![(730, 1.0), (11_270, 1.0), (13_140, 0.24), (22_860, 0.24)]
+        );
+        assert!(data.timelines["early_game"].sky_light_factor.is_empty());
+        assert_eq!(data.timelines["early_game"].period_ticks, None);
+        assert_eq!(
+            data.timeline_tags["in_overworld"],
+            vec!["#minecraft:universal", "minecraft:day", "minecraft:early_game"]
+        );
+
+        let emitted = emit(&data).unwrap();
+        assert!(emitted.contains("pub static DIMENSION_TYPES: [DimensionTypeDef; 2]"));
+        assert!(emitted.contains("min_y: -64, height: 384, logical_height: 384"));
+        assert!(emitted.contains("ambient_light: 0.1, coordinate_scale: 8.0"));
+        assert!(emitted.contains("pub static TL_DAY_SKY_LIGHT_FACTOR: [(i64, f32); 4] = [(730, 1.0), (11270, 1.0), (13140, 0.24), (22860, 0.24)];"));
+        assert!(emitted.contains("pub static TIMELINES: [TimelineDef; 2]"));
+        assert!(emitted.contains("period_ticks: Some(24000), tracks: 3"));
+        assert!(emitted.contains("pub fn dimension_type(name: &str)"));
+        assert!(emitted.contains("pub fn timeline(name: &str)"));
+        assert!(emitted.contains("(\"minecraft:in_overworld\", &[\"#minecraft:universal\", \"minecraft:day\", \"minecraft:early_game\"])"));
+        assert!(emitted.contains("pub fn timeline_tag(name: &str)"));
     }
 }
