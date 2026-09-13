@@ -581,6 +581,41 @@ hand-drawn:
   timeline (−1 → 0..5/6 → rest at exactly 6 ticks), the re-trigger
   guard, the wrap-guard lerp, the mid-swing geometry delta, and the
   bit-identical rest pose.
+  The **held-item client consumer lands (v0.3.74 — the display arc's
+  final wiring)**: the client now DRAWS a held item. The registry gains
+  `display::posed_item_quads` — the generated-item bake quads through
+  the resolved display pose (the bake's block-unit vertices are already
+  the vanilla BakedQuad space: FaceBakery.bakeVertex divides the
+  FaceInfo-selected corner by 16.0f immediately after VertexInfo.select,
+  javap — and the first posed sword vertex is bit-pinned against the
+  joml oracle's stdin mode: `3d4a3d70 3eba99c6 bec32df1`). The client
+  gains `hand::HeldItem`: the quads ride the ITEM-IN-HAND ANCHOR chain,
+  op-for-op from ItemInHandRenderer's bytecode — `applyItemArmTransform`
+  `translate(side·0.56, −0.52, equip·−0.6 + −0.72)`, `swingArm`'s WHACK
+  translate terms (exact zeros at rest), and
+  `applyItemArmAttackTransform` `rotY(side·(45 + f5·−20)°) ·
+  rotZ(side·f6·−20°) · rotX(f6·−80°) · rotY(side·−45°)` (the ±45° pair
+  is composed every frame, never collapsed). Rendering replaces the arm
+  exactly like vanilla's `submitArmWithItem`: a non-empty main hand
+  draws the item INSTEAD of the empty-hand arm, after the clouds pass,
+  with a cleared depth buffer. The texels stream from the generated
+  texture namespace through `sprite_uv::sample_uv` (embedded, sha-pinned
+  — no runtime file), rasterized by the new `raster::draw_sampled_quads`
+  (same clip / perspective-correct uv / depth conventions as the arm
+  path, which stays bit-frozen; the alpha<128 cutout rule applies to
+  the sampler output). The item is chosen via `--held-item <model_id>`
+  (e.g. `item/iron_sword`) — the deterministic stand-in for inventory
+  state; the default scenes hold NOTHING, so the goldens never see it.
+  All 10 goldens verified at the exact CI flags, every one rms 0.000,
+  none regenerated. Tests +6 (workspace 353 → 359 passed / 0 failed /
+  3 ignored): the posed-item composition (the oracle pin, the uv/texture
+  ride, the domain refusals), the anchored rest region (every corner in
+  front of the camera, right of center, the bulk below — the blade tip
+  quads cross the midline like the real held sword), the swing geometry
+  delta, the client pixel draw (right half only), and the sampler
+  cutout rule. Also repairs a pre-existing doctest break (an unannotated
+  pseudo-code fence in the item_bake docs compiled as Rust and failed
+  `cargo test --workspace` on the clean tree).
   The **item-model bake lands (v0.3.73 — the held-item geometry link)**:
   `crates/mc-registry/src/item_bake.rs` derives the generated item
   models' quads — the sprite extrusion of 26.2's
