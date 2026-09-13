@@ -1472,8 +1472,10 @@ pub mod entity_data_serializers {
 /// (each type's own `streamCodec()`, javap of the 26.2 builder
 /// lambdas): VarInt × 4, Unit (ZERO bytes) × 2, the bare component
 /// tag × 2, the compound-only bare tag, the BE f32, the UTF string ×
-/// 3, the capped tag list, the idMapper ordinal, and the bool. The
-/// other 95 types refuse — see [`EntityDataEntry::ItemStack`].
+/// 3, the capped tag list, the idMapper ordinal, and the bool — plus
+/// the second wave's three composites (the enchantment map, the
+/// four-list model data, the tooltip display). The other 92 types
+/// refuse — see [`EntityDataEntry::ItemStack`].
 pub mod data_component_types {
     /// `CustomData.STREAM_CODEC` = `ByteBufCodecs.COMPOUND_TAG` =
     /// `compoundTagCodec(..)` = the tagCodec bare tag + a decode-side
@@ -1520,6 +1522,33 @@ pub mod data_component_types {
     pub const TOOLTIP_STYLE: i32 = 35;
     /// `Identifier.STREAM_CODEC` — the UTF string.
     pub const NOTE_BLOCK_SOUND: i32 = 71;
+    // ---- the second wave: the record codecs ----
+    /// `ItemEnchantments.STREAM_CODEC` = `composite(ByteBufCodecs.map(
+    /// factory, Enchantment.STREAM_CODEC, VAR_INT), ..)` — ONE field:
+    /// a VarInt count, then count × {the enchantment's registry id,
+    /// the level}. The key id is the $29 byIdOrThrow holderRegistry
+    /// VarInt (no enchantment tables client-side; a consumer resolves).
+    /// The LEVEL rides the wire as a PLAIN VAR_INT — the
+    /// `intRange(1, 255)` LEVEL_CODEC is the NBT-schema side, not the
+    /// wire's (the wiki-era instinct to clamp at decode invents a
+    /// data flow vanilla does not have).
+    pub const ENCHANTMENTS: i32 = 13;
+    /// `CustomModelData.STREAM_CODEC` = `composite(FLOAT.list(),
+    /// BOOL.list(), STRING_UTF8.list(), INT.list(), ..)` — FOUR
+    /// VarInt-count lists in composite order: floats (BE f32), flags
+    /// (one-byte bools), strings (UTF), colors (`ByteBufCodecs.INT` =
+    /// `readInt` = a BIG-ENDIAN i32 — NOT a VarInt; the same trap
+    /// family as the LONG/VAR_LONG discovery: the codec's construction
+    /// site is the shape, the field's name is not).
+    pub const CUSTOM_MODEL_DATA: i32 = 17;
+    /// `TooltipDisplay.STREAM_CODEC` = `composite(BOOL,
+    /// DataComponentType.STREAM_CODEC.collection(factory), ..)` —
+    /// one hide-tooltip byte, then a VarInt count of component type
+    /// registry ids (the SAME $29 VarInt the patch entries ride; the
+    /// ids are SELF-DELIMITING here — one VarInt each, no value
+    /// attached — so any non-negative id is retained verbatim, the
+    /// DIRECTION/RARITY line; the consumer resolves or refuses).
+    pub const TOOLTIP_DISPLAY: i32 = 18;
 }
 
 /// One decoded component-patch VALUE — the codec-shape variants of
@@ -1556,6 +1585,36 @@ pub enum ComponentValue {
     Rarity(i32),
     /// The one-byte bool lane: enchantment_glint_override (21).
     Bool(bool),
+    /// The map lane: enchantments (13) — (enchantment registry id,
+    /// level) pairs in wire order (a vanilla Map.put would collapse
+    /// duplicate keys last-wins; the decode retains the wire's order
+    /// verbatim, the dedup is a consumer's concern).
+    Enchantments(Vec<(i32, i32)>),
+    /// The four-list composite lane: custom_model_data (17) — floats
+    /// (BE f32), flags (one-byte bools), strings (UTF), colors (BE
+    /// i32), each a VarInt count followed by its items, in composite
+    /// order.
+    CustomModelData {
+        /// The float modifiers (BE f32 each).
+        floats: Vec<f32>,
+        /// The boolean flags (one byte each).
+        flags: Vec<bool>,
+        /// The string keys (UTF each).
+        strings: Vec<String>,
+        /// The color integers (BE i32 each — `ByteBufCodecs.INT`, not
+        /// a VarInt).
+        colors: Vec<i32>,
+    },
+    /// The display lane: tooltip_display (18) — the hide-tooltip byte
+    /// and the hidden components' type registry ids in wire order (a
+    /// vanilla Set would collapse duplicates; the decode retains the
+    /// wire's order verbatim).
+    TooltipDisplay {
+        /// The hide-everything byte.
+        hide_tooltip: bool,
+        /// The hidden components' type registry ids, in wire order.
+        hidden: Vec<i32>,
+    },
 }
 
 /// The item stack's component patch — the `DataComponentPatch$3`
@@ -1682,6 +1741,17 @@ pub struct EntityDataSet {
     pub entries: Vec<SetEntityDataEntry>,
 }
 
+/// The shared `ByteBufCodecs.readCount` walk: a VarInt count. readCount
+/// itself only enforces the maxSize CEILING (count > maxSize is the
+/// DecoderException); a NEGATIVE count passes the check and fails the
+/// read at the collection/map constructor's negative capacity — the
+/// read fails either way, so the port refuses at the same lane.
+fn read_component_count(c: &mut &[u8], what: &str) -> Result<i32> {
+    let n = read_varint(c)?;
+    anyhow::ensure!(n >= 0, "negative {what} count {n}");
+    Ok(n)
+}
+
 /// Read ONE component-patch VALUE through the type's own codec. The
 /// wire is UNFRAMED (no length prefix — `DataComponentPatch$3.decode`
 /// hands the buffer straight to the type's `streamCodec()`), so an id
@@ -1734,6 +1804,64 @@ fn read_component_value(type_id: i32, c: &mut &[u8]) -> Result<ComponentValue> {
             ComponentValue::Rarity(r)
         }
         t::ENCHANTMENT_GLINT_OVERRIDE => ComponentValue::Bool(read_u8(c)? != 0),
+        t::ENCHANTMENTS => {
+            // ByteBufCodecs.map: the readCount VarInt, then count x
+            // {key VarInt, value VarInt} — the level rides the wire
+            // verbatim (the intRange(1,255) LEVEL_CODEC is the NBT
+            // schema, not this codec)
+            let n = read_component_count(c, "enchantment map")?;
+            let mut entries = Vec::with_capacity(n as usize);
+            for _ in 0..n {
+                let id = read_varint(c)?;
+                anyhow::ensure!(id >= 0, "negative enchantment registry id {id}");
+                let level = read_varint(c)?;
+                entries.push((id, level));
+            }
+            ComponentValue::Enchantments(entries)
+        }
+        t::CUSTOM_MODEL_DATA => {
+            // the composite's FOUR lists in order: FLOAT, BOOL,
+            // STRING_UTF8, INT — the colors ride BIG-ENDIAN i32s
+            // (ByteBufCodecs.INT = readInt), not VarInts
+            let nf = read_component_count(c, "model-data floats")?;
+            let mut floats = Vec::with_capacity(nf as usize);
+            for _ in 0..nf {
+                floats.push(read_f32(c)?);
+            }
+            let nbool = read_component_count(c, "model-data flags")?;
+            let mut flags = Vec::with_capacity(nbool as usize);
+            for _ in 0..nbool {
+                flags.push(read_u8(c)? != 0);
+            }
+            let ns = read_component_count(c, "model-data strings")?;
+            let mut strings = Vec::with_capacity(ns as usize);
+            for _ in 0..ns {
+                strings.push(read_string(c)?);
+            }
+            let nc = read_component_count(c, "model-data colors")?;
+            let mut colors = Vec::with_capacity(nc as usize);
+            for _ in 0..nc {
+                colors.push(read_i32(c)?);
+            }
+            ComponentValue::CustomModelData {
+                floats,
+                flags,
+                strings,
+                colors,
+            }
+        }
+        t::TOOLTIP_DISPLAY => {
+            // composite(BOOL, DataComponentType.STREAM_CODEC.collection)
+            let hide_tooltip = read_u8(c)? != 0;
+            let n = read_component_count(c, "hidden components")?;
+            let mut hidden = Vec::with_capacity(n as usize);
+            for _ in 0..n {
+                let id = read_varint(c)?;
+                anyhow::ensure!(id >= 0, "negative component type id {id}");
+                hidden.push(id);
+            }
+            ComponentValue::TooltipDisplay { hide_tooltip, hidden }
+        }
         other => anyhow::bail!(
             "no value codec for component type {other} (the patch wire is unframed; \
              the value cannot be skipped honestly)"
@@ -4007,8 +4135,10 @@ mod tests {
                 "component type {tid} must refuse"
             );
         }
-        // known to the registry but unimplemented here (13 enchantments)
-        assert!(parse_set_entity_data(&one_stack(&test_support::entity_data_varint(13))).is_err());
+        // known to the registry but unimplemented here (14
+        // can_place_on — 13 enchantments left the refusal list the
+        // round the wave-two record codecs landed)
+        assert!(parse_set_entity_data(&one_stack(&test_support::entity_data_varint(14))).is_err());
         // the negative ADDED count
         let mut neg = Vec::new();
         neg.extend_from_slice(&test_support::entity_data_varint(1));
@@ -4047,6 +4177,209 @@ mod tests {
             &test_support::entity_data_entry(8, s::ITEM_STACK, &str_tag),
         );
         assert!(parse_set_entity_data(&p).is_err());
+    }
+
+    /// The patch value codecs' SECOND WAVE: the three record codecs
+    /// decode their composites. The audit (javap, one hop each):
+    /// enchantments 13 = `composite(ByteBufCodecs.map(factory,
+    /// Enchantment.STREAM_CODEC, VAR_INT), ..)` — a VarInt count then
+    /// count x {registry id, level}, the level a PLAIN VarInt (the
+    /// intRange(1,255) LEVEL_CODEC is the NBT schema, not the wire);
+    /// custom_model_data 17 = `composite(FLOAT.list(), BOOL.list(),
+    /// STRING_UTF8.list(), INT.list(), ..)` — FOUR VarInt-count lists
+    /// in composite order, the colors riding `ByteBufCodecs.INT` =
+    /// `readInt` = a BIG-ENDIAN i32 (the same trap family as
+    /// LONG/VAR_LONG: the construction site is the shape); tooltip_
+    /// display 18 = `composite(BOOL, DataComponentType.STREAM_CODEC
+    /// .collection(factory), ..)` — the hide byte, then a VarInt
+    /// count of self-delimiting type ids (retained verbatim, the
+    /// DIRECTION/RARITY line). The shared readCount: a negative count
+    /// refuses (readCount checks only the maxSize ceiling; the
+    /// negative fails at the collection constructor — the read fails
+    /// either way).
+    #[test]
+    fn the_patch_value_records_decode_their_composites() {
+        use data_component_types as t;
+        use entity_data_serializers as s;
+
+        let mut value = Vec::new();
+        for v in [1i32, 1, 3, 0] {
+            value.extend_from_slice(&test_support::entity_data_varint(v));
+        }
+        // 13 enchantments: two {id, level} pairs
+        value.extend_from_slice(&test_support::entity_data_varint(t::ENCHANTMENTS));
+        value.extend_from_slice(&test_support::entity_data_varint(2));
+        value.extend_from_slice(&test_support::entity_data_varint(9));
+        value.extend_from_slice(&test_support::entity_data_varint(3));
+        value.extend_from_slice(&test_support::entity_data_varint(70));
+        value.extend_from_slice(&test_support::entity_data_varint(1));
+        // 17 custom_model_data: floats [1.5, -0.25], flags [true],
+        // strings ["a", "b"], colors [0xFF00FF00] — BE i32, NOT a VarInt
+        value.extend_from_slice(&test_support::entity_data_varint(t::CUSTOM_MODEL_DATA));
+        value.extend_from_slice(&test_support::entity_data_varint(2));
+        value.extend_from_slice(&1.5f32.to_be_bytes());
+        value.extend_from_slice(&(-0.25f32).to_be_bytes());
+        value.extend_from_slice(&test_support::entity_data_varint(1));
+        value.push(1);
+        value.extend_from_slice(&test_support::entity_data_varint(2));
+        write_string(&mut value, "a");
+        write_string(&mut value, "b");
+        value.extend_from_slice(&test_support::entity_data_varint(1));
+        value.extend_from_slice(&0xFF00FF00u32.to_be_bytes());
+        // 18 tooltip_display: hide = true, hidden [3, 12]
+        value.extend_from_slice(&test_support::entity_data_varint(t::TOOLTIP_DISPLAY));
+        value.push(1);
+        value.extend_from_slice(&test_support::entity_data_varint(2));
+        value.extend_from_slice(&test_support::entity_data_varint(3));
+        value.extend_from_slice(&test_support::entity_data_varint(12));
+
+        let p = test_support::set_entity_data_packet(
+            5,
+            &test_support::entity_data_entry(8, s::ITEM_STACK, &value),
+        );
+        let d = parse_set_entity_data(&p).unwrap();
+        assert_eq!(
+            d.entries[0].value,
+            EntityDataEntry::ItemStack {
+                count: 1,
+                item_id: 1,
+                patch: ComponentPatch {
+                    added: vec![
+                        (
+                            t::ENCHANTMENTS,
+                            ComponentValue::Enchantments(vec![(9, 3), (70, 1)])
+                        ),
+                        (
+                            t::CUSTOM_MODEL_DATA,
+                            ComponentValue::CustomModelData {
+                                floats: vec![1.5, -0.25],
+                                flags: vec![true],
+                                strings: vec!["a".into(), "b".into()],
+                                colors: vec![0xFF00FF00u32 as i32],
+                            }
+                        ),
+                        (
+                            t::TOOLTIP_DISPLAY,
+                            ComponentValue::TooltipDisplay {
+                                hide_tooltip: true,
+                                hidden: vec![3, 12]
+                            }
+                        ),
+                    ],
+                    removed: vec![]
+                }
+            }
+        );
+
+        // the EMPTY shapes: a zero-count map, all four model-data
+        // lists empty, the hidden set empty with hide = false — the
+        // readCount walks consume nothing but their own count bytes
+        let mut value = Vec::new();
+        for v in [1i32, 1, 3, 0] {
+            value.extend_from_slice(&test_support::entity_data_varint(v));
+        }
+        value.extend_from_slice(&test_support::entity_data_varint(t::ENCHANTMENTS));
+        value.extend_from_slice(&test_support::entity_data_varint(0));
+        value.extend_from_slice(&test_support::entity_data_varint(t::CUSTOM_MODEL_DATA));
+        for _ in 0..4 {
+            value.extend_from_slice(&test_support::entity_data_varint(0));
+        }
+        value.extend_from_slice(&test_support::entity_data_varint(t::TOOLTIP_DISPLAY));
+        value.push(0);
+        value.extend_from_slice(&test_support::entity_data_varint(0));
+        let p = test_support::set_entity_data_packet(
+            5,
+            &test_support::entity_data_entry(8, s::ITEM_STACK, &value),
+        );
+        let d = parse_set_entity_data(&p).unwrap();
+        assert_eq!(
+            d.entries[0].value,
+            EntityDataEntry::ItemStack {
+                count: 1,
+                item_id: 1,
+                patch: ComponentPatch {
+                    added: vec![
+                        (t::ENCHANTMENTS, ComponentValue::Enchantments(vec![])),
+                        (
+                            t::CUSTOM_MODEL_DATA,
+                            ComponentValue::CustomModelData {
+                                floats: vec![],
+                                flags: vec![],
+                                strings: vec![],
+                                colors: vec![]
+                            }
+                        ),
+                        (
+                            t::TOOLTIP_DISPLAY,
+                            ComponentValue::TooltipDisplay {
+                                hide_tooltip: false,
+                                hidden: vec![]
+                            }
+                        ),
+                    ],
+                    removed: vec![]
+                }
+            }
+        );
+    }
+
+    /// The wave-two records' SHAPE refusals: a negative count on each
+    /// lane (the enchantment map, the model-data floats, the hidden
+    /// set — readCount's negative passes its ceiling check and fails
+    /// at the constructor; the read fails either way) and a negative
+    /// registry id inside the map's key and the hidden set.
+    #[test]
+    fn the_wave_two_records_refuse_their_shape_drift() {
+        use data_component_types as t;
+        use entity_data_serializers as s;
+
+        let stack_with = |value: &[u8]| -> Vec<u8> {
+            test_support::set_entity_data_packet(
+                5,
+                &test_support::entity_data_entry(8, s::ITEM_STACK, &value),
+            )
+        };
+        // header: count 1, item 1, added 1, removed 0
+        let mut base = Vec::new();
+        for v in [1i32, 1, 1, 0] {
+            base.extend_from_slice(&test_support::entity_data_varint(v));
+        }
+        let with_base = |tail: &[u8]| -> Vec<u8> {
+            let mut v = base.clone();
+            v.extend_from_slice(tail);
+            v
+        };
+        // a negative map count
+        let mut tail = Vec::new();
+        tail.extend_from_slice(&test_support::entity_data_varint(t::ENCHANTMENTS));
+        tail.extend_from_slice(&test_support::entity_data_varint(-3));
+        assert!(parse_set_entity_data(&stack_with(&with_base(&tail))).is_err());
+        // a negative map KEY
+        let mut tail = Vec::new();
+        tail.extend_from_slice(&test_support::entity_data_varint(t::ENCHANTMENTS));
+        tail.extend_from_slice(&test_support::entity_data_varint(1));
+        tail.extend_from_slice(&test_support::entity_data_varint(-9));
+        tail.extend_from_slice(&test_support::entity_data_varint(1));
+        assert!(parse_set_entity_data(&stack_with(&with_base(&tail))).is_err());
+        // a negative floats count inside the model data (the first of
+        // the four list lanes)
+        let mut tail = Vec::new();
+        tail.extend_from_slice(&test_support::entity_data_varint(t::CUSTOM_MODEL_DATA));
+        tail.extend_from_slice(&test_support::entity_data_varint(-1));
+        assert!(parse_set_entity_data(&stack_with(&with_base(&tail))).is_err());
+        // a negative hidden-set count
+        let mut tail = Vec::new();
+        tail.extend_from_slice(&test_support::entity_data_varint(t::TOOLTIP_DISPLAY));
+        tail.push(0);
+        tail.extend_from_slice(&test_support::entity_data_varint(-2));
+        assert!(parse_set_entity_data(&stack_with(&with_base(&tail))).is_err());
+        // a negative id inside the hidden set
+        let mut tail = Vec::new();
+        tail.extend_from_slice(&test_support::entity_data_varint(t::TOOLTIP_DISPLAY));
+        tail.push(0);
+        tail.extend_from_slice(&test_support::entity_data_varint(1));
+        tail.extend_from_slice(&test_support::entity_data_varint(-5));
+        assert!(parse_set_entity_data(&stack_with(&with_base(&tail))).is_err());
     }
 
     /// Set Entity Data: the COMPONENT wire is a BARE NBT tag — the

@@ -919,6 +919,41 @@ hand-drawn:
   (VILLAGER_DATA at 18 doubles as the order proof), the generated-id
   pin, and the model's merge semantics (replace-one-leave-others, the
   null-lookup drop, the re-spawn reset).
+  The **the patch values grow their record codecs — the wave two
+  (v0.3.107)**: three more component types leave the patch-value
+  refusal list, each audited one hop from its own builder lambda.
+  enchantments (13) = `composite(ByteBufCodecs.map(factory,
+  Enchantment.STREAM_CODEC, VAR_INT), ..)` — a VarInt count then
+  count x {the enchantment's registry id, the level}: the key id is
+  the $29 byIdOrThrow holderRegistry VarInt (retained verbatim, no
+  enchantment tables client-side), and the LEVEL rides the wire as a
+  PLAIN VarInt — the `intRange(1, 255)` LEVEL_CODEC is the NBT-schema
+  side, not the wire's, and clamping at decode would invent a data
+  flow vanilla does not have. custom_model_data (17) =
+  `composite(FLOAT.list(), BOOL.list(), STRING_UTF8.list(),
+  INT.list(), ..)` — FOUR VarInt-count lists in composite order,
+  whose colors ride `ByteBufCodecs.INT` = `readInt` = a BIG-ENDIAN
+  i32 — NOT a VarInt (the same trap family as the LONG/VAR_LONG
+  discovery: the codec's construction site is the shape, the field's
+  name is not). tooltip_display (18) = `composite(BOOL,
+  DataComponentType.STREAM_CODEC.collection(factory), ..)` — one
+  hide-tooltip byte, then a VarInt count of component type registry
+  ids, SELF-DELIMITING (one VarInt each, no value attached), so any
+  non-negative id is retained verbatim — the DIRECTION/RARITY line —
+  where the patch's added entries refuse unknowns because of the
+  sizing problem. The shared `ByteBufCodecs.readCount` shape: it
+  checks only the maxSize CEILING; a NEGATIVE count passes the check
+  and fails at the collection/map constructor's negative capacity —
+  the read fails either way, so the port refuses at the same lane.
+  The decode census: NINETEEN of the registry's 111 component types
+  carry value codecs; the other 92 refuse. Tests +2 (workspace 453 ->
+  455 passed / 0 failed / 3 ignored): the three composites decoded
+  bit-exact (the two-entry enchantment map, the four-list model data
+  with its BE-i32 color, the hidden set) plus their EMPTY shapes, and
+  the shape-refusal map (a negative count on each lane, a negative
+  map key, a negative hidden id); the refusal test's
+  known-but-unimplemented probe moved from 13 (now decodes) to 14
+  (can_place_on).
   The **the items carry their state — ITEM_STACK decodes (v0.3.106)**:
   serializer 7 leaves the object-graph refusal list. The audit walked
   three bytecode hops: `ItemStack.OPTIONAL_STREAM_CODEC` = the
