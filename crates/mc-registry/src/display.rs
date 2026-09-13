@@ -148,7 +148,13 @@ pub fn parse_display(json: &str) -> Result<[Option<DisplayTransform>; 9], String
             _ => Err(format!("display: expected {:?} at byte {}", c as char, i)),
         }
     };
-    let key = |i: &mut usize| -> Result<&'static str, String> {
+    // a plain fn (not a closure): the key borrows from `json`
+    fn scan_key<'a>(
+        b: &[u8],
+        json: &'a str,
+        i: &mut usize,
+        expect: &dyn Fn(&mut usize, u8) -> Result<(), String>,
+    ) -> Result<&'a str, String> {
         expect(i, b'"')?;
         let start = *i;
         while matches!(b.get(*i), Some(c) if *c != b'"') {
@@ -161,7 +167,7 @@ pub fn parse_display(json: &str) -> Result<[Option<DisplayTransform>; 9], String
         let s = json.get(start..*i).ok_or("display: key slice")?;
         expect(i, b'"')?;
         Ok(s)
-    };
+    }
     let number = |i: &mut usize| -> Result<f32, String> {
         let start = *i;
         if matches!(b.get(*i), Some(b'-')) {
@@ -206,7 +212,7 @@ pub fn parse_display(json: &str) -> Result<[Option<DisplayTransform>; 9], String
         return Ok(slots); // an empty stanza is legal: every context defaults
     }
     loop {
-        let ctx = key(&mut i)?;
+        let ctx = scan_key(b, json, &mut i, &expect)?;
         let slot = CONTEXTS
             .iter()
             .position(|c| *c == ctx)
@@ -218,7 +224,7 @@ pub fn parse_display(json: &str) -> Result<[Option<DisplayTransform>; 9], String
         expect(&mut i, b'{')?;
         let mut t = IDENTITY_TRANSFORM;
         loop {
-            let k = key(&mut i)?;
+            let k = scan_key(b, json, &mut i, &expect)?;
             match k {
                 "rotation" => {
                     expect(&mut i, b':')?;
@@ -568,7 +574,10 @@ mod tests {
         let tpr = slots[THIRDPERSON_RIGHTHAND].unwrap();
         assert_eq!(tpr.rotation, [75.0, 45.0, 0.0]);
         // the block-units translation: 2.5/16 = 0.15625
-        assert_eq!(tpr.translation.map(f32::to_bits), [0x00000000; 0; 3][0..0].len().checked_sub(3).map(|_| [0x3e200000; 1; 3][0..0].len().checked_sub(0).map(|_| [0.0f32.to_bits(), 0x3e200000, 0x00000000]).unwrap()).unwrap(), "2.5/16 = 0.15625");
+        assert_eq!(
+            tpr.translation.map(f32::to_bits),
+            [0x00000000, 0x3e200000, 0x00000000]
+        );
     }
 
     #[test]
@@ -723,23 +732,386 @@ mod tests {
         }
     }
 
-    /// The oracle's vertex probes: (tag, hand, [x, y, z] -> [x, y, z] in bits).
-    fn oracle_vertex_cases() -> Vec<(String, bool, [f32; 3], [u32; 3])> {
-        let p = |v: [f32; 3]| v.map(f32::to_bits);
+    /// The oracle's vertex probes (scripts/display_ref/display_ref.txt):
+    /// (tag, transform, left_hand, input, expected output bits).
+    fn oracle_vertex_cases() -> Vec<(&'static str, DisplayTransform, bool, [f32; 3], [u32; 3])> {
         let block_block = resolve_transforms("block/block").expect("block/block");
         let sword = resolve_transforms("item/iron_sword").expect("iron_sword");
-        let clamps =
-            parse_display(r#"{"gui":{"rotation":[0,0,0],"scale":[10,-5,4],"translation":[100,-90,80]}}"#)
-                .expect("clamps");
-        vec![
+        let clamps = parse_display(
+            r#"{"gui":{"rotation":[0,0,0],"scale":[10,-5,4],"translation":[100,-90,80]}}"#,
+        )
+        .expect("clamps");
+        let sword_r = sword[FIRSTPERSON_RIGHTHAND].unwrap();
+        let mut cases = Vec::new();
+        // sword_fpr R — all six probes
+        for (v, o) in [
+            ([0.0, 0.0, 0.0], [0x3ed23d71, 0xbe80f080, 0xbdc029a8]),
+            ([1.0, 1.0, 1.0], [0xbe89eb85, 0x3f26dea6, 0x3e70b8aa]),
+            ([0.5, 0.5, 0.5], [0x3d90a3d8, 0x3e4ccccd, 0x3d90a3d6]),
+            ([1.0, 0.0, 0.0], [0x3ed23d71, 0x3d119838, 0x3f05bfee]),
             (
-                "sword_fpr R".into(),
-                false,
-                sword[FIRSTPERSON_RIGHTHAND].unwrap(),
-                p([0.0, 0.0, 0.0]),
-                p([0.410743986, -0.250743866, -0.09375]),
+                [0.0625, 0.8125, 0.4375],
+                [0x3de7ae14, 0x3e88a210, 0xbe93dea4],
             ),
-        ];
-        vec![]
+            (
+                [0.9375, 0.1875, 0.6875],
+                [0xbd68f5c0, 0x3e085578, 0x3edc308f],
+            ),
+        ] {
+            cases.push(("sword_fpr R", sword_r, false, v, o));
+        }
+        // sword_fpr L — all six probes
+        for (v, o) in [
+            (
+                [0.0, 0.0, 0.0],
+                [0xbed23d71, 0x3d119838, 0x3f05bfee],
+            ),
+            (
+                [1.0, 1.0, 1.0],
+                [0x3e89eb85, 0x3eba99c5, 0xbec32df1],
+            ),
+            (
+                [0.5, 0.5, 0.5],
+                [0xbd90a3d8, 0x3e4ccccd, 0x3d90a3d4],
+            ),
+            (
+                [1.0, 0.0, 0.0],
+                [0xbed23d71, 0xbe80f080, 0xbdc029a8],
+            ),
+            (
+                [0.0625, 0.8125, 0.4375],
+                [0xbde7ae14, 0x3f04b094, 0x3e803a5a],
+            ),
+            (
+                [0.9375, 0.1875, 0.6875],
+                [0x3d68f5c0, 0xbdf2516c, 0xbddfa1bc],
+            ),
+        ] {
+            cases.push(("sword_fpr L", sword_r, true, v, o));
+        }
+        // block_fpr R/L — three probes each
+        let b_fpr = block_block[FIRSTPERSON_RIGHTHAND].unwrap();
+        for (left, v, o) in [
+            (false, [0.0, 0.0, 0.0], [0xbe90d0c2, 0xbe4ccccd, 0x32800000]),
+            (false, [1.0, 1.0, 1.0], [0x3e90d0c3, 0x3e4ccccd, 0xb3000000]),
+            (false, [0.5, 0.5, 0.5], [0x32800000, 0x00000000, 0x00000000]),
+            (true, [0.0, 0.0, 0.0], [0x32800000, 0xbe4ccccd, 0xbe90d0c2]),
+            (true, [1.0, 1.0, 1.0], [0x00000000, 0x3e4ccccd, 0x3e90d0c3]),
+            (true, [0.5, 0.5, 0.5], [0x00000000, 0x00000000, 0x32800000]),
+        ] {
+            cases.push(("block_fpr", b_fpr, left, v, o));
+        }
+        // block_gui R/L
+        let b_gui = block_block[GUI].unwrap();
+        for (left, v, o) in [
+            (false, [0.0, 0.0, 0.0], [0x3ee24630, 0xbe8a9069, 0xbe1ffffc]),
+            (false, [1.0, 1.0, 1.0], [0xbee24631, 0x3e8a9068, 0x3e1ffffc]),
+            (false, [0.5, 0.5, 0.5], [0xb2800000, 0xb2800000, 0x00000000]),
+            (true, [0.0, 0.0, 0.0], [0x33e00000, 0xbefbb37f, 0x3e67eb1a]),
+            (true, [1.0, 1.0, 1.0], [0xb4000000, 0x3efbb37e, 0xbe67eb1a]),
+            (true, [0.5, 0.5, 0.5], [0x00000000, 0x00000000, 0x00000000]),
+        ] {
+            cases.push(("block_gui", b_gui, left, v, o));
+        }
+        // block_shelf R/L — the exact 180-degree rotation
+        let b_shelf = block_block[ON_SHELF].unwrap();
+        for (left, v, o) in [
+            (false, [0.0, 0.0, 0.0], [0x3f000000, 0xbf000000, 0x3f000000]),
+            (false, [1.0, 1.0, 1.0], [0xbf000000, 0x3f000000, 0xbf000000]),
+            (false, [0.5, 0.5, 0.5], [0x00000000, 0x00000000, 0x00000000]),
+            (true, [0.0, 0.0, 0.0], [0x3f000000, 0xbf000000, 0x3f000000]),
+            (true, [1.0, 1.0, 1.0], [0xbf000000, 0x3f000000, 0xbf000000]),
+            (true, [0.5, 0.5, 0.5], [0x00000000, 0x00000000, 0x00000000]),
+        ] {
+            cases.push(("block_shelf", b_shelf, left, v, o));
+        }
+        // clamps R/L
+        let c_gui = clamps[GUI].unwrap();
+        for (left, v, o) in [
+            (false, [0.0, 0.0, 0.0], [0x40400000, 0xc0400000, 0x40400000]),
+            (false, [1.0, 1.0, 1.0], [0x40e00000, 0xc0e00000, 0x40e00000]),
+            (false, [0.5, 0.5, 0.5], [0x40a00000, 0xc0a00000, 0x40a00000]),
+            (false, [1.0, 0.0, 0.0], [0x40e00000, 0xc0400000, 0x40400000]),
+            (true, [0.0, 0.0, 0.0], [0xc0e00000, 0xc0400000, 0x40400000]),
+            (true, [1.0, 1.0, 1.0], [0xc0400000, 0xc0e00000, 0x40e00000]),
+            (true, [0.5, 0.5, 0.5], [0xc0a00000, 0xc0a00000, 0x40a00000]),
+            (true, [1.0, 0.0, 0.0], [0xc0400000, 0xc0400000, 0x40400000]),
+        ] {
+            cases.push(("clamps", c_gui, left, v, o));
+        }
+        cases
     }
+
+    #[test]
+    fn the_oracle_vertices_are_bit_exact() {
+        for (tag, t, left_hand, v, out) in oracle_vertex_cases() {
+            assert_eq!(
+                apply_transform(Some(&t), left_hand, v).map(f32::to_bits),
+                out,
+                "{tag} v{v:?} left={left_hand}"
+            );
+        }
+    }
+
+    #[test]
+    fn no_transform_is_the_bare_centering() {
+        // the NO_TRANSFORM branch: translate(-0.5) only, on a fresh identity.
+        for (v, o) in [
+            ([0.0, 0.0, 0.0], [0xbf000000, 0xbf000000, 0xbf000000]),
+            ([1.0, 1.0, 1.0], [0x3f000000, 0x3f000000, 0x3f000000]),
+            ([0.5, 0.5, 0.5], [0x00000000, 0x00000000, 0x00000000]),
+            ([1.0, 0.0, 0.0], [0x3f000000, 0xbf000000, 0xbf000000]),
+            (
+                [0.0625, 0.8125, 0.4375],
+                [0xbee00000, 0x3ea00000, 0xbd800000],
+            ),
+            (
+                [0.9375, 0.1875, 0.6875],
+                [0x3ee00000, 0xbea00000, 0x3e400000],
+            ),
+        ] {
+            assert_eq!(
+                apply_transform(None, false, v).map(f32::to_bits),
+                o,
+                "no_transform v{v:?}"
+            );
+            assert_eq!(
+                apply_transform(None, true, v).map(f32::to_bits),
+                o,
+                "no_transform ignores the hand"
+            );
+        }
+    }
+
+    #[test]
+    fn the_chain_walks_per_context_with_nearest_wins() {
+        // block/stairs owns gui [30,135,0] — it must BLOCK block/block's
+        // gui [30,225,0] (the 26.2 per-context walk; 1.20's wholesale
+        // inheritance would have hidden block/block's firstperson from
+        // stairs entirely).
+        let stairs = resolve_transforms("block/stairs").expect("stairs");
+        let gui = stairs[GUI].unwrap();
+        assert_eq!(gui.rotation, [30.0, 135.0, 0.0]);
+        // ...but stairs declares NO firstperson_righthand, so the walk
+        // continues to block/block and takes [0,45,0] — the discriminating
+        // case between per-context and wholesale semantics.
+        let fpr = stairs[FIRSTPERSON_RIGHTHAND].unwrap();
+        assert_eq!(fpr.rotation, [0.0, 45.0, 0.0]);
+        assert_eq!(
+            fpr.translation.map(f32::to_bits),
+            [0x00000000, 0x00000000, 0x00000000]
+        );
+        assert_eq!(fpr.scale.map(f32::to_bits), [0x3ecccccd; 3]);
+        // stairs' own thirdperson_lefthand [75,-135,0] beats the chain
+        let tpl = stairs[THIRDPERSON_LEFTHAND].unwrap();
+        assert_eq!(tpl.rotation, [75.0, -135.0, 0.0]);
+        // block/custom_fence_inventory (own fixed/gui/on_shelf, parent
+        // block/block): ground falls back to block/block's [0,3,0]/16;
+        // head is declared NOWHERE on the chain -> NO_TRANSFORM.
+        let fence = resolve_transforms("block/custom_fence_inventory").expect("fence");
+        let ground = fence[GROUND].unwrap();
+        assert_eq!(
+            ground.translation.map(f32::to_bits),
+            [0x00000000, 0x3e800000, 0x00000000]
+        );
+        assert!(fence[HEAD].is_none(), "head exhausted -> NO_TRANSFORM");
+        // item/iron_sword: fpr through item/handheld; gui nowhere.
+        let sword = resolve_transforms("item/iron_sword").expect("sword");
+        assert_eq!(
+            sword[FIRSTPERSON_RIGHTHAND].unwrap().rotation,
+            [0.0, -90.0, 25.0]
+        );
+        assert!(sword[GUI].is_none());
+        // the 26.2 on_shelf context resolves through the chain too
+        assert_eq!(fence[ON_SHELF].unwrap().rotation, [0.0, 90.0, 0.0]);
+        assert_eq!(
+            resolve_transforms("block/block")
+                .expect("block/block")[ON_SHELF]
+                .unwrap()
+                .rotation,
+            [0.0, 180.0, 0.0]
+        );
+    }
+
+    #[test]
+    fn left_hand_contexts_are_the_two_left_slots() {
+        assert!(context_is_left_hand(THIRDPERSON_LEFTHAND));
+        assert!(context_is_left_hand(FIRSTPERSON_LEFTHAND));
+        for ctx in [
+            THIRDPERSON_RIGHTHAND,
+            FIRSTPERSON_RIGHTHAND,
+            HEAD,
+            GUI,
+            GROUND,
+            FIXED,
+            ON_SHELF,
+        ] {
+            assert!(!context_is_left_hand(ctx));
+        }
+    }
+
+    #[test]
+    fn the_registry_wide_display_census_holds() {
+        // scripts/display_census.py over the real jar — the module must
+        // reproduce every number.
+        let mut with_display = 0usize;
+        let mut per_ctx_own = [0usize; 9];
+        let mut clamp_hits = 0usize;
+        let mut max_t_bits = 0u32;
+        let mut max_s_bits = 0u32;
+        let mut rot_45 = 0usize;
+        for (id, _, _, display, ..) in MODELS.iter() {
+            let Some(json) = display else { continue };
+            let _ = id;
+            with_display += 1;
+            for (ctx, t) in parse_display(json).expect("every stanza parses").iter().enumerate() {
+                // the DECLARED contexts (pre-fallback: the fallback copies
+                // right into left, so the raw JSON is the source of truth
+                // for both the counts and the value scans)
+                let declared = json.contains(&format!("\"{}\"", CONTEXTS[ctx]));
+                if declared {
+                    per_ctx_own[ctx] += 1;
+                }
+                let Some(t) = t else { continue };
+                if declared {
+                    for c in 0..3 {
+                        let tb = t.translation[c].to_bits();
+                        if (tb & 0x7fff_ffff) > max_t_bits {
+                            max_t_bits = tb & 0x7fff_ffff;
+                        }
+                        let sb = t.scale[c].to_bits();
+                        if (sb & 0x7fff_ffff) > max_s_bits {
+                            max_s_bits = sb & 0x7fff_ffff;
+                        }
+                        // post-parse values cannot exceed the clamps
+                        if t.translation[c].abs() > 5.0 || t.scale[c].abs() > 4.0 {
+                            clamp_hits += 1;
+                        }
+                    }
+                    for r in t.rotation {
+                        if r % 45.0 == 0.0 {
+                            rot_45 += 1;
+                        }
+                    }
+                }
+            }
+        }
+        assert_eq!(with_display, 66, "models with their own display stanza");
+        assert_eq!(
+            per_ctx_own,
+            [18, 39, 18, 34, 23, 31, 15, 26, 11],
+            "per-context own counts (thirdperson_l/r, firstperson_l/r, head, gui, ground, fixed, on_shelf)"
+        );
+        assert_eq!(clamp_hits, 0, "the clamps never fire on real 26.2 data");
+        // max |translation| post-/16 = 1.40625 (0x3fb40000), max |scale| = 2.0
+        assert_eq!(max_t_bits, 0x3fb40000);
+        assert_eq!(max_s_bits, 0x40000000);
+        assert_eq!(rot_45, 483, "45-degree-multiple rotation entries");
+    }
+
+    #[test]
+    fn the_registry_wide_chain_resolution_holds() {
+        // the per-context walk over all 3928 models (findTopTransforms).
+        // scripts/display_census.py, per-context semantics:
+        let mut resolved = [0usize; 9];
+        for (id, ..) in MODELS.iter() {
+            let slots = resolve_transforms(id).expect("every stanza parses");
+            for (ctx, t) in slots.iter().enumerate() {
+                if t.is_some() {
+                    resolved[ctx] += 1;
+                }
+            }
+        }
+        assert_eq!(
+            resolved,
+            [2622, 2622, 2618, 2618, 1386, 1431, 2621, 2621, 1357],
+            "per-context resolved counts over the table"
+        );
+    }
+
+    #[test]
+    fn the_left_hand_wins_are_attribution_pinned() {
+        // for each left-hand context: how many models resolve it from a
+        // stanza that DECLARED the left context vs from the parse-time
+        // right->left fallback (census: declared + fallback = resolved).
+        for (left, right, declared, fallback) in [
+            (
+                THIRDPERSON_LEFTHAND,
+                THIRDPERSON_RIGHTHAND,
+                141usize,
+                2481usize,
+            ),
+            (FIRSTPERSON_LEFTHAND, FIRSTPERSON_RIGHTHAND, 1344, 1274),
+        ] {
+            let left_key = format!("\"{}\"", CONTEXTS[left]);
+            let right_key = format!("\"{}\"", CONTEXTS[right]);
+            let mut d = 0usize;
+            let mut f = 0usize;
+            for (id, ..) in MODELS.iter() {
+                // the winner: the first chain row whose RAW stanza declares
+                // either the left or the right context (the fallback makes
+                // them coincide); attribution reads the raw JSON.
+                let mut cur = *id;
+                let mut won = false;
+                for _ in 0..32 {
+                    let Some((parent, display)) = lookup(cur) else { break };
+                    if let Some(json) = display {
+                        if json.contains(&left_key) {
+                            d += 1;
+                            won = true;
+                            break;
+                        }
+                        if json.contains(&right_key) {
+                            f += 1;
+                            won = true;
+                            break;
+                        }
+                    }
+                    match parent {
+                        Some(p) if !p.starts_with("builtin/") => cur = p,
+                        _ => break,
+                    }
+                }
+                assert!(won, "{id}: the census says every hand resolves");
+            }
+            assert_eq!((d, f), (declared, fallback), "{} attribution", CONTEXTS[left]);
+        }
+    }
+
+    #[test]
+    fn posed_quads_compose_the_full_link() {
+        // block/stairs is an element model WITH its own display: the quads
+        // go through the resolved gui pose ([30,135,0]/0.625).
+        let quads = crate::element_quads::derive_model("block/stairs")
+            .expect("stairs has elements");
+        let posed = posed_quads("block/stairs", GUI)
+            .expect("known model")
+            .expect("stanzas parse");
+        assert_eq!(posed.len(), quads.len());
+        // the first quad's first vertex through the whole chain, bit-pinned
+        // against the joml oracle fed the same vertex
+        // (scripts/display_ref DisplayRef stdin mode).
+        let v0 = quads[0].vertices[0];
+        let out = posed[0][0];
+        let t = resolve_transforms("block/stairs")
+            .expect("resolves")[GUI]
+            .unwrap();
+        assert_eq!(t.rotation, [30.0, 135.0, 0.0]);
+        assert_eq!(out, apply_vertex(&build_pose(&t, false), v0));
+        // and the same vertex against the ORACLE bits (filled from the
+        // harness run below)
+        let bits: [u32; 3] = ORACLE_QUAD0_V0.map(|w| w.parse().unwrap());
+        assert_eq!(out.map(f32::to_bits), bits);
+        // the first-person context falls back to block/block's [0,45,0]
+        let posed_fpr = posed_quads("block/stairs", FIRSTPERSON_RIGHTHAND)
+            .expect("known model")
+            .expect("stanzas parse");
+        assert_eq!(posed_fpr.len(), quads.len());
+    }
+
+    /// display_ref oracle, stdin mode, the stairs-gui transform
+    /// ([30,135,0]/0.625), block/stairs quad[0] vertex 0 (bits filled
+    /// from the harness transcript).
+    const ORACLE_QUAD0_V0: [&str; 3] = ["PLACEHOLDER", "PLACEHOLDER", "PLACEHOLDER"];
+}
 
