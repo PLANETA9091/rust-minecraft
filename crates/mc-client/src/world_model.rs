@@ -36,11 +36,12 @@
 //!   continuously-updated model (streaming chunks into the SAME model the
 //!   screen renders) is the future work.
 
-use std::collections::HashMap;
+use std::collections::{BTreeMap, HashMap};
 
 use mc_protocol::{
-    ChunkColumn, ChunkLight, ClockUpdate, EntityDeltaPos, EntityDeltaPosRot, EntityDeltaRot,
-    EntityHeadRot, LightData, PlayEvent, PlayerPosition, RegistryData, WorldInfo, WorldSnapshot,
+    ChunkColumn, ChunkLight, ClockUpdate, EntityDataEntry, EntityDataSet, EntityDeltaPos,
+    EntityDeltaPosRot, EntityDeltaRot, EntityHeadRot, LightData, PlayEvent, PlayerPosition,
+    RegistryData, WorldInfo, WorldSnapshot,
 };
 
 /// The model's view of ONE entity — the facts the entity packets have
@@ -67,6 +68,12 @@ pub struct EntitySnapshot {
     /// kept current by Rotate Head — the head's own channel, distinct
     /// from the body's yaw).
     pub y_head_rot: f32,
+    /// The entity's metadata store — the accessor-indexed entries the
+    /// Set Entity Data packets have delivered (a BTreeMap: deterministic
+    /// order for tests and for any future rendering diff). The spawn
+    /// starts it empty; each packet's entries REPLACE the listed
+    /// accessors and leave the unmentioned ones (the assignValues walk).
+    pub data: BTreeMap<u8, EntityDataEntry>,
 }
 
 /// The client's view of ONE server world: loaded chunk columns, the
@@ -338,6 +345,7 @@ impl WorldModel {
                         y_rot: e.y_rot,
                         x_rot: e.x_rot,
                         y_head_rot: e.y_head_rot,
+                        data: BTreeMap::new(),
                     },
                 );
                 true
@@ -422,6 +430,24 @@ impl WorldModel {
                     return false;
                 };
                 e.y_head_rot = h.y_head_rot;
+                true
+            }
+            PlayEvent::EntityData(d) => {
+                // the metadata packets name entities the client tracks;
+                // vanilla's handleSetEntityData looks the entity up and
+                // a NULL lookup DROPS the packet (javap: `ifnull ->
+                // return`) — metadata keeps current entities current
+                // and NEVER creates one (the spawn packet stays the
+                // only creator). The entries are the assignValues walk:
+                // each listed accessor's value REPLACES the stored one,
+                // the accessors the packet does not mention are
+                // untouched.
+                let Some(e) = self.entities.get_mut(&d.id) else {
+                    return false;
+                };
+                for entry in d.entries {
+                    e.data.insert(entry.index, entry.value);
+                }
                 true
             }
             PlayEvent::CenterChunk { x, z } => {
@@ -1063,7 +1089,7 @@ mod tests {
     use mc_protocol::varint::write_varint;
     use mc_protocol::{
         BiomeEffects, BiomeEntry, EntityDeltaPos, EntityDeltaPosRot, EntityDeltaRot,
-        EntityHeadRot, EntityPositionSync, EntitySpawn, GrassColorModifier,
+        EntityHeadRot, EntityPositionSync, EntitySpawn, GrassColorModifier, SetEntityDataEntry,
     };
 
     /// One synced biome element under the mock tables — the real
@@ -2692,6 +2718,65 @@ mod tests {
         })));
         assert!(m.entity(99).is_none(), "no mover creates");
         assert!(m.entity(7).is_some(), "the neighbor is untouched");
+    }
+
+    /// Set Entity Data merges into the entity's metadata store: the
+    /// spawn starts it empty, each packet's entries REPLACE the listed
+    /// accessors and leave the unmentioned ones (the assignValues
+    /// walk), a null lookup DROPS the packet (vanilla's handle — no
+    /// phantom entity, no panic), and a re-spawn replaces the whole
+    /// snapshot — the metadata store with it.
+    #[test]
+    fn entity_data_merges_into_the_metadata_store() {
+        let mut m = WorldModel::new();
+        spawn_at(&mut m, 7, 0.0, 32.0, 0.0);
+        // the first set seeds the store
+        assert!(m.apply(PlayEvent::EntityData(EntityDataSet {
+            id: 7,
+            entries: vec![
+                SetEntityDataEntry {
+                    index: 0,
+                    serializer: 0,
+                    value: EntityDataEntry::Byte(1),
+                },
+                SetEntityDataEntry {
+                    index: 6,
+                    serializer: 20,
+                    value: EntityDataEntry::Pose(6),
+                },
+            ],
+        })));
+        let e = m.entity(7).unwrap();
+        assert_eq!(e.data.get(&0), Some(&EntityDataEntry::Byte(1)));
+        assert_eq!(e.data.get(&6), Some(&EntityDataEntry::Pose(6)));
+        // the second set replaces ONE accessor and leaves the other —
+        // never a wholesale reset (the vanilla assignValues walk)
+        assert!(m.apply(PlayEvent::EntityData(EntityDataSet {
+            id: 7,
+            entries: vec![SetEntityDataEntry {
+                index: 0,
+                serializer: 0,
+                value: EntityDataEntry::Byte(0),
+            }],
+        })));
+        let e = m.entity(7).unwrap();
+        assert_eq!(e.data.get(&0), Some(&EntityDataEntry::Byte(0)), "replaced");
+        assert_eq!(e.data.get(&6), Some(&EntityDataEntry::Pose(6)), "untouched");
+        // a null lookup DROPS the packet: no phantom entity, the real
+        // one untouched (the vanilla `ifnull -> return`)
+        assert!(!m.apply(PlayEvent::EntityData(EntityDataSet {
+            id: 99,
+            entries: vec![SetEntityDataEntry {
+                index: 0,
+                serializer: 0,
+                value: EntityDataEntry::Byte(1),
+            }],
+        })));
+        assert!(m.entity(99).is_none());
+        assert_eq!(m.entity(7).unwrap().data.get(&0), Some(&EntityDataEntry::Byte(0)));
+        // the re-spawn replaces the WHOLE snapshot — the store with it
+        spawn_at(&mut m, 7, 1.0, 32.0, 1.0);
+        assert!(m.entity(7).unwrap().data.is_empty(), "the re-spawn resets the store");
     }
 
     /// Spawn ONE entity at the named position (the full-precision

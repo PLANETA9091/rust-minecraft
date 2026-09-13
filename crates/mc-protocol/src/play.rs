@@ -1743,6 +1743,10 @@ pub enum PlayEvent {
     /// Rotate Head: the head yaw's own channel (a mob can look at you
     /// while it walks — the body and the head rotate separately).
     EntityHeadRot(EntityHeadRot),
+    /// Set Entity Data: the accessor-indexed metadata the syncs don't
+    /// carry (the on-fire/crouched/pose surfaces' wire transport) — the
+    /// decoded entries the model merges into the entity's store.
+    EntityData(EntityDataSet),
     /// Any packet without a client surface yet (skipped silently).
     Skipped,
 }
@@ -1837,6 +1841,7 @@ impl<S: Read + Write> PlaySession<S> {
                 Ok(PlayEvent::EntityDeltaRot(parse_move_entity_rot(&pkt)?))
             }
             clientbound::ROTATE_HEAD => Ok(PlayEvent::EntityHeadRot(parse_rotate_head(&pkt)?)),
+            clientbound::SET_ENTITY_DATA => Ok(PlayEvent::EntityData(parse_set_entity_data(&pkt)?)),
             _ => Ok(PlayEvent::Skipped),
         }
     }
@@ -2287,6 +2292,38 @@ pub mod test_support {
         write_varint(&mut p, clientbound::ROTATE_HEAD);
         write_varint(&mut p, id);
         p.push(y_head_rot as u8);
+        p
+    }
+
+    /// ONE metadata entry's wire bytes: the index byte, the VarInt
+    /// serializer id, then the value bytes the caller assembled (the
+    /// test shapes the codec outputs — floats as BE f32, packed longs
+    /// as BE i64, strings through `write_string`).
+    pub fn entity_data_entry(index: u8, serializer: i32, value: &[u8]) -> Vec<u8> {
+        let mut p = Vec::new();
+        p.push(index);
+        write_varint(&mut p, serializer);
+        p.extend_from_slice(value);
+        p
+    }
+
+    /// A VarInt value's wire bytes (the i32-family serializers'
+    /// payloads).
+    pub fn entity_data_varint(v: i32) -> Vec<u8> {
+        let mut p = Vec::new();
+        write_varint(&mut p, v);
+        p
+    }
+
+    /// One full Set Entity Data packet (generated id 99): the VarInt
+    /// packet id, the VarInt entity id, the entries' bytes, then the
+    /// 0xFF EOF marker the vanilla `pack` writes after the list.
+    pub fn set_entity_data_packet(id: i32, entries: &[u8]) -> Vec<u8> {
+        let mut p = Vec::new();
+        write_varint(&mut p, clientbound::SET_ENTITY_DATA);
+        write_varint(&mut p, id);
+        p.extend_from_slice(entries);
+        p.push(255);
         p
     }
 }
@@ -3188,6 +3225,138 @@ mod tests {
         let mut p2 = p.clone();
         p2.push(0x00);
         assert!(parse_rotate_head(&p2).is_err());
+    }
+
+    /// Set Entity Data: one packet, ALL FOURTEEN supported
+    /// serializers, distinctive values — the entry list round-trips
+    /// bit-exact and the REGISTRATION-ORDER table is pinned (the
+    /// wiki-era table would have decoded VILLAGER_DATA at 19 where the
+    /// real wire carries the OptionalInt).
+    #[test]
+    fn the_entity_data_wire_round_trips_the_primitive_serializers() {
+        use entity_data_serializers as s;
+        let mut entries = Vec::new();
+        entries.extend(test_support::entity_data_entry(0, s::BYTE, &[0xF7]));
+        entries.extend(test_support::entity_data_entry(1, s::INT, &test_support::entity_data_varint(65536)));
+        entries.extend(test_support::entity_data_entry(2, s::LONG, &42i64.to_be_bytes()));
+        entries.extend(test_support::entity_data_entry(3, s::FLOAT, &1.5f32.to_be_bytes()));
+        let mut string_value = Vec::new();
+        write_string(&mut string_value, "hi");
+        entries.extend(test_support::entity_data_entry(4, s::STRING, &string_value));
+        entries.extend(test_support::entity_data_entry(5, s::BOOLEAN, &[1]));
+        let mut rots = Vec::new();
+        for v in [1.0f32, 2.0, 3.5] {
+            rots.extend_from_slice(&v.to_be_bytes());
+        }
+        entries.extend(test_support::entity_data_entry(6, s::ROTATIONS, &rots));
+        entries.extend(test_support::entity_data_entry(
+            7,
+            s::BLOCK_POS,
+            &test_support::encode_block_pos(16, -64, -16).to_be_bytes(),
+        ));
+        // the optional lane, both shapes
+        entries.extend(test_support::entity_data_entry(8, s::OPTIONAL_BLOCK_POS, &[0]));
+        let mut some_pos = vec![1u8];
+        some_pos.extend_from_slice(&test_support::encode_block_pos(-1, 320, -2).to_be_bytes());
+        entries.extend(test_support::entity_data_entry(9, s::OPTIONAL_BLOCK_POS, &some_pos));
+        entries.extend(test_support::entity_data_entry(10, s::DIRECTION, &test_support::entity_data_varint(5)));
+        entries.extend(test_support::entity_data_entry(11, s::BLOCK_STATE, &test_support::entity_data_varint(12345)));
+        entries.extend(test_support::entity_data_entry(12, s::OPTIONAL_BLOCK_STATE, &[0]));
+        let mut some_state = vec![1u8];
+        some_state.extend(test_support::entity_data_varint(42));
+        entries.extend(test_support::entity_data_entry(13, s::OPTIONAL_BLOCK_STATE, &some_state));
+        // the OptionalInt's BIAS-BY-ONE arithmetic: wire 0 = empty,
+        // wire 2 = Some(1)
+        entries.extend(test_support::entity_data_entry(14, s::OPTIONAL_UNSIGNED_INT, &test_support::entity_data_varint(0)));
+        entries.extend(test_support::entity_data_entry(15, s::OPTIONAL_UNSIGNED_INT, &test_support::entity_data_varint(2)));
+        entries.extend(test_support::entity_data_entry(16, s::POSE, &test_support::entity_data_varint(6)));
+
+        let p = test_support::set_entity_data_packet(77, &entries);
+        let d = parse_set_entity_data(&p).unwrap();
+        assert_eq!(d.id, 77);
+        assert_eq!(
+            d.entries,
+            vec![
+                SetEntityDataEntry { index: 0, serializer: s::BYTE, value: EntityDataEntry::Byte(-9) },
+                SetEntityDataEntry { index: 1, serializer: s::INT, value: EntityDataEntry::Int(65536) },
+                SetEntityDataEntry { index: 2, serializer: s::LONG, value: EntityDataEntry::Long(42) },
+                SetEntityDataEntry { index: 3, serializer: s::FLOAT, value: EntityDataEntry::Float(1.5) },
+                SetEntityDataEntry { index: 4, serializer: s::STRING, value: EntityDataEntry::String("hi".into()) },
+                SetEntityDataEntry { index: 5, serializer: s::BOOLEAN, value: EntityDataEntry::Bool(true) },
+                SetEntityDataEntry { index: 6, serializer: s::ROTATIONS, value: EntityDataEntry::Rotations([1.0, 2.0, 3.5]) },
+                SetEntityDataEntry { index: 7, serializer: s::BLOCK_POS, value: EntityDataEntry::BlockPos([16, -64, -16]) },
+                SetEntityDataEntry { index: 8, serializer: s::OPTIONAL_BLOCK_POS, value: EntityDataEntry::OptionalBlockPos(None) },
+                SetEntityDataEntry { index: 9, serializer: s::OPTIONAL_BLOCK_POS, value: EntityDataEntry::OptionalBlockPos(Some([-1, 320, -2])) },
+                SetEntityDataEntry { index: 10, serializer: s::DIRECTION, value: EntityDataEntry::Direction(5) },
+                SetEntityDataEntry { index: 11, serializer: s::BLOCK_STATE, value: EntityDataEntry::BlockState(12345) },
+                SetEntityDataEntry { index: 12, serializer: s::OPTIONAL_BLOCK_STATE, value: EntityDataEntry::OptionalBlockState(None) },
+                SetEntityDataEntry { index: 13, serializer: s::OPTIONAL_BLOCK_STATE, value: EntityDataEntry::OptionalBlockState(Some(42)) },
+                SetEntityDataEntry { index: 14, serializer: s::OPTIONAL_UNSIGNED_INT, value: EntityDataEntry::OptionalUnsignedInt(None) },
+                SetEntityDataEntry { index: 15, serializer: s::OPTIONAL_UNSIGNED_INT, value: EntityDataEntry::OptionalUnsignedInt(Some(1)) },
+                SetEntityDataEntry { index: 16, serializer: s::POSE, value: EntityDataEntry::Pose(6) },
+            ]
+        );
+    }
+
+    /// Set Entity Data: the 0xFF index is the EOF marker — an empty
+    /// list is legal, and ANY bytes after the marker are drift (the
+    /// vanilla reader stops at the marker; a well-formed packet ends).
+    #[test]
+    fn the_entity_data_eof_marker_ends_the_list_and_refuses_drift() {
+        // id + marker: the empty set
+        let p = test_support::set_entity_data_packet(9, &[]);
+        let d = parse_set_entity_data(&p).unwrap();
+        assert_eq!(d.id, 9);
+        assert!(d.entries.is_empty());
+        // trailing bytes after the marker never reach the model
+        let mut p2 = p.clone();
+        p2.extend_from_slice(&[0x01, 0x02]);
+        assert!(parse_set_entity_data(&p2).is_err());
+        // a truncated entry (index + serializer, no value) is refused
+        let mut truncated = Vec::new();
+        write_varint(&mut truncated, 9);
+        truncated.extend_from_slice(&test_support::entity_data_entry(3, 3, &[]));
+        truncated.push(255);
+        assert!(parse_set_entity_data(&truncated).is_err());
+    }
+
+    /// Set Entity Data: the object-graph serializers (known to the
+    /// registry but outside this client's primitive decode set) and
+    /// the ids the registry itself does not know ALL refuse the
+    /// packet — the vanilla read side fails the packet exactly the
+    /// same way (an unknown serializer id throws in
+    /// `getSerializer`). The VILLAGER_DATA pin doubles as the
+    /// registration-order proof: 18 is NOT the optional-global-pos
+    /// lane the wiki-era table claims.
+    #[test]
+    fn the_entity_data_object_graph_and_unknown_serializers_refuse() {
+        use entity_data_serializers as s;
+        for serializer in [s::COMPONENT, s::ITEM_STACK, s::VILLAGER_DATA, s::PARTICLE, 200] {
+            let entries = test_support::entity_data_entry(0, serializer, &[0x00]);
+            let p = test_support::set_entity_data_packet(3, &entries);
+            assert!(
+                parse_set_entity_data(&p).is_err(),
+                "serializer {serializer} must refuse, not skip"
+            );
+        }
+        // ...and the id on the other side of the wiki-era swap decodes
+        // as the OptionalInt the registration order says it is
+        let entries = test_support::entity_data_entry(0, s::OPTIONAL_UNSIGNED_INT, &[1]);
+        let p = test_support::set_entity_data_packet(3, &entries);
+        let d = parse_set_entity_data(&p).unwrap();
+        assert_eq!(d.entries[0].value, EntityDataEntry::OptionalUnsignedInt(Some(0)));
+    }
+
+    /// Set Entity Data: the generated id and the re-exported constant
+    /// agree (the re-export list is part of the wire surface — the
+    /// pump arm is `SET_ENTITY_DATA => EntityData(parse_set_entity_data)`,
+    /// a one-line match the compiler type-checks against the variant).
+    #[test]
+    fn the_entity_data_id_is_the_generated_runtime_fact() {
+        assert_eq!(clientbound::SET_ENTITY_DATA, 99, "minecraft:set_entity_data");
+        let entries = test_support::entity_data_entry(0, entity_data_serializers::BOOLEAN, &[1]);
+        let p = test_support::set_entity_data_packet(4, &entries);
+        assert_eq!(parse_set_entity_data(&p).unwrap().id, 4);
     }
 
     /// Mock server: login -> configuration -> play (the FULL vanilla

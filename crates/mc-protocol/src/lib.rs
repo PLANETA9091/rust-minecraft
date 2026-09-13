@@ -30,10 +30,10 @@ pub use config::{
 pub use nbt::Nbt;
 pub use play::{
     begin_play, connect_and_join_live, connect_and_join_world, join_world, ChunkColumn,
-    ChunkLight, ChunkSection, ClockUpdate, EntityDeltaPos, EntityDeltaPosRot, EntityDeltaRot,
-    EntityHeadRot, EntityPositionSync, EntitySpawn, LightData, LiveJoin, PlayEvent, PlaySession,
-    PlayStart, PlayerPosition, SpawnInfo, TimeSync, WorldInfo, WorldOutcome, WorldSnapshot,
-    DESIRED_CHUNKS_PER_TICK, pack_entries,
+    ChunkLight, ChunkSection, ClockUpdate, EntityDataEntry, EntityDataSet, EntityDeltaPos,
+    EntityDeltaPosRot, EntityDeltaRot, EntityHeadRot, EntityPositionSync, EntitySpawn, LightData,
+    LiveJoin, PlayEvent, PlaySession, PlayStart, PlayerPosition, SetEntityDataEntry, SpawnInfo,
+    TimeSync, WorldInfo, WorldOutcome, WorldSnapshot, DESIRED_CHUNKS_PER_TICK, pack_entries,
 };
 pub use login::{connect_and_login, login, LoginOutcome};
 pub use status::{ping, PingResponse};
