@@ -147,6 +147,10 @@ fn run_join(
         Ok(mc_protocol::LiveJoin::Live { snapshot, mut session }) => {
             let (entity_id, view_distance, chunks) =
                 (snapshot.info.entity_id, snapshot.info.view_distance, snapshot.chunks.len());
+            // the profile's skin model: the login `textures` metadata the
+            // session carried from the login phase — the slim/wide
+            // selection the first-person arm renders with (None = classic)
+            let slim_arm = session.skin_model.as_deref() == Some("slim");
             // the network world view: the milestone adopts into the LIVE
             // model and the first refresh IS the one-shot snapshot view
             // (same window decisions, same grid, same pose, same biome —
@@ -166,6 +170,7 @@ fn run_join(
                     world: first.world,
                     camera: first.camera,
                     spawn_biome,
+                    slim_arm,
                 }),
             ));
             if shipped.is_err() {

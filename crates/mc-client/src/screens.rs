@@ -138,6 +138,10 @@ pub enum LoginResult {
         /// or the id is one the server never named: the generic
         /// `music.game` situation stands instead, never a guess.
         spawn_biome: Option<String>,
+        /// The skin model the login profile named (`true` = slim) — the
+        /// profile-metadata fact the first-person arm renders with; the
+        /// offline/no-metadata shape is the classic wide default.
+        slim_arm: bool,
     },
     /// The server refused or kicked (login disconnect, config kick or a
     /// play-state disconnect), reason flattened from chat.
@@ -637,8 +641,12 @@ impl App {
             return;
         }
         match outcome {
-            Ok(LoginResult::Loaded { world, camera, spawn_biome, .. }) => {
+            Ok(LoginResult::Loaded { world, camera, spawn_biome, slim_arm, .. }) => {
                 if self.screen == ScreenKind::Connect {
+                    // the profile's skin model rides the join: the first
+                    // world frame's lazy arm load reads THIS flag (set
+                    // before the screen switches, so the load sees it)
+                    self.slim_arm = slim_arm;
                     self.net_world = Some(world);
                     self.net_camera = camera;
                     // the live view's stream: this join's session is THE
@@ -1786,6 +1794,7 @@ mod tests {
                 },
                 camera: None,
                 spawn_biome: Some("minecraft:plains".into()),
+                slim_arm: false,
             }),
         );
         assert_eq!(app.screen, ScreenKind::World, "the join lands in the network world");
@@ -2109,6 +2118,7 @@ mod tests {
                     world: first.world,
                     camera: first.camera,
                     spawn_biome: first.biome,
+                    slim_arm: false,
                 }
             }
             mc_protocol::WorldOutcome::Disconnected { reason } => {
@@ -2304,6 +2314,7 @@ mod tests {
                 },
                 camera: None,
                 spawn_biome: None,
+                slim_arm: false,
             }),
         );
         assert_eq!(
@@ -2485,6 +2496,7 @@ mod tests {
                 world: air_net_world(2, 0),
                 camera: None,
                 spawn_biome: None,
+                slim_arm: false,
             }),
         );
         assert!(app.world_is_network, "A adopted");
@@ -2526,6 +2538,7 @@ mod tests {
                 world: air_net_world(2, 3),
                 camera: None,
                 spawn_biome: None,
+                slim_arm: false,
             }),
         );
         assert!(

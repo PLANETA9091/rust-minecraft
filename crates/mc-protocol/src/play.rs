@@ -946,6 +946,11 @@ pub enum PlayEvent {
 pub struct PlaySession<S: Read + Write> {
     conn: PacketConn<S>,
     pub registry: RegistryData,
+    /// The skin model the login profile named (`Some("slim")` or `None`
+    /// for the classic wide default) — the profile-metadata fact the
+    /// first-person arm renders with. See
+    /// [`crate::login::profile_skin_model`].
+    pub skin_model: Option<String>,
 }
 
 impl<S: Read + Write> PlaySession<S> {
@@ -1026,9 +1031,10 @@ pub fn begin_play<S: Read + Write>(
 ) -> Result<PlayStart<S>> {
     let mut conn = PacketConn::new(stream);
     match join_play_conn(&mut conn, host, port, protocol_version, username)? {
-        PlayOutcome::Joined { registry, .. } => Ok(PlayStart::Session(PlaySession {
+        PlayOutcome::Joined { registry, skin_model, .. } => Ok(PlayStart::Session(PlaySession {
             conn,
             registry,
+            skin_model,
         })),
         PlayOutcome::Disconnected { reason } => Ok(PlayStart::Disconnected { reason }),
     }

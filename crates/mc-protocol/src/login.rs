@@ -190,13 +190,108 @@ pub fn encode_set_compression(threshold: i32) -> Vec<u8> {
 /// server mints a random session id, offline servers carry no
 /// properties, so this is the honest minimal server answer.
 pub fn encode_login_success(uuid: &[u8; 16], username: &str) -> Vec<u8> {
+    encode_login_success_with_properties(uuid, username, &[])
+}
+
+/// Login Success with an EXPLICIT property list — the mock-server shape
+/// a profile-metadata test needs (the `textures` entry a real account
+/// carries). `props` = (name, value) pairs, no signatures (offline
+/// servers never sign).
+pub fn encode_login_success_with_properties(
+    uuid: &[u8; 16],
+    username: &str,
+    props: &[(&str, &str)],
+) -> Vec<u8> {
     let mut p = Vec::with_capacity(48 + username.len());
     write_varint(&mut p, clientbound::LOGIN_SUCCESS);
     p.extend_from_slice(uuid);
     write_string(&mut p, username);
-    write_varint(&mut p, 0); // empty property list
+    write_varint(&mut p, props.len() as i32);
+    for (name, value) in props {
+        write_string(&mut p, name);
+        write_string(&mut p, value);
+        // the signature flag: absent (Bool 0) — unsigned entries
+        p.push(0);
+    }
     p.extend_from_slice(&[0u8; 16]); // session id
     p
+}
+
+// ---------------------------------------------------------------------------
+// the profile's skin model (the textures property's metadata)
+// ---------------------------------------------------------------------------
+
+/// Standard-alphabet base64 decode (RFC 4648, with padding) — local so
+/// the protocol layer stays dependency-free, like the MD5 above. `None`
+/// on any malformed input (length, padding, alphabet) — profile data is
+/// untrusted and a decode failure means "no opinion", never a panic.
+fn base64_decode(input: &str) -> Option<Vec<u8>> {
+    fn val(b: u8) -> Option<u32> {
+        match b {
+            b'A'..=b'Z' => Some((b - b'A') as u32),
+            b'a'..=b'z' => Some((b - b'a') as u32 + 26),
+            b'0'..=b'9' => Some((b - b'0') as u32 + 52),
+            b'+' => Some(62),
+            b'/' => Some(63),
+            _ => None,
+        }
+    }
+    let raw = input.as_bytes();
+    // strip newlines/whitespace (real profile payloads may wrap)
+    let bytes: Vec<u8> = raw.iter().copied().filter(|b| !b.is_ascii_whitespace()).collect();
+    if bytes.is_empty() || bytes.len() % 4 != 0 {
+        return None;
+    }
+    let mut out = Vec::with_capacity(bytes.len() / 4 * 3);
+    for chunk in bytes.chunks_exact(4) {
+        let pad = chunk.iter().rev().take_while(|&&b| b == b'=').count();
+        if pad > 2 {
+            return None;
+        }
+        let mut acc = 0u32;
+        for (i, &b) in chunk.iter().enumerate() {
+            if b == b'=' {
+                // '=' is legal only in the last two positions
+                if i < 2 {
+                    return None;
+                }
+            } else {
+                acc |= val(b)? << (18 - 6 * i);
+            }
+        }
+        for k in 0..3 {
+            if k < 3 - pad {
+                out.push(((acc >> (16 - 8 * k)) & 0xFF) as u8);
+            }
+        }
+    }
+    Some(out)
+}
+
+/// The skin model the login profile's `textures` property names — the
+/// slim/wide selection a real account carries (vanilla reads
+/// `SKIN.metadata.model` out of the base64 property value; `"slim"` is
+/// the only value that changes the first-person arm, everything else is
+/// the classic wide model). `None` = the wide default: no textures
+/// property, no SKIN entry, no metadata, an unknown model value, or ANY
+/// malformed input (the profile data is untrusted — a decode/parse
+/// failure is "no opinion", never a panic and never a guess).
+pub fn profile_skin_model(properties: &[ProfileProperty]) -> Option<String> {
+    let textures = properties.iter().find(|p| p.name == "textures")?;
+    let bytes = base64_decode(&textures.value)?;
+    let json: serde_json::Value = serde_json::from_slice(&bytes).ok()?;
+    let model = json
+        .get("SKIN")?
+        .get("metadata")?
+        .get("model")?
+        .as_str()?
+        .to_string();
+    // the only value the client acts on; anything else is the classic
+    if model == "slim" {
+        Some(model)
+    } else {
+        None
+    }
 }
 
 /// Login Disconnect (0x00): Reason (chat JSON string).

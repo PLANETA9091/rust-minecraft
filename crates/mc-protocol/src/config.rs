@@ -396,6 +396,12 @@ pub enum PlayOutcome {
         /// The registry knowledge retained during the phase (the
         /// dimension-type vertical layout table).
         registry: RegistryData,
+        /// The skin model the login profile's `textures` property named
+        /// (`Some("slim")` is the only client-visible value; `None` is
+        /// the classic wide default — absent property, absent metadata,
+        /// an unknown model value, or malformed input). See
+        /// [`crate::login::profile_skin_model`].
+        skin_model: Option<String>,
     },
     /// The server refused the login (Login Disconnect) or kicked the
     /// client during configuration (config Disconnect); carries the
@@ -900,6 +906,7 @@ fn run_configuration<S: Read + Write>(
     conn: &mut PacketConn<S>,
     uuid: [u8; 16],
     username: String,
+    skin_model: Option<String>,
 ) -> Result<PlayOutcome> {
     let mut registry = RegistryData::default();
     loop {
@@ -943,7 +950,7 @@ fn run_configuration<S: Read + Write>(
             }
             clientbound::FINISH => {
                 conn.send_packet(&encode_config_ack())?;
-                return Ok(PlayOutcome::Joined { uuid, username, registry });
+                return Ok(PlayOutcome::Joined { uuid, username, registry, skin_model });
             }
             clientbound::DISCONNECT => {
                 let reason = parse_config_disconnect(&pkt)?;
@@ -971,13 +978,18 @@ pub fn join_play_conn<S: Read + Write>(
     let uuid = crate::login::offline_uuid(username);
     match login_conn(conn, username, &uuid)? {
         LoginOutcome::Disconnected { reason } => Ok(PlayOutcome::Disconnected { reason }),
-        LoginOutcome::Success { .. } => {
+        LoginOutcome::Success { properties, .. } => {
+            // the profile's skin model (the textures property's metadata)
+            // rides the session: the slim/wide selection the first-person
+            // arm renders with. `None` = the classic wide default (the
+            // offline shape, the malformed shape, every unknown value).
+            let skin_model = crate::login::profile_skin_model(&properties);
             // switch both sides to configuration
             conn.send_packet(&encode_login_acknowledged())?;
             // the vanilla client's mandatory introductions
             conn.send_packet(&encode_client_information(&ClientInfo::default()))?;
             conn.send_packet(&encode_plugin_brand(BRAND))?;
-            run_configuration(conn, uuid, username.to_string())
+            run_configuration(conn, uuid, username.to_string(), skin_model)
         }
     }
 }
