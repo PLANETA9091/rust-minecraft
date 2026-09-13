@@ -799,6 +799,7 @@ mod tests {
                 height: 384,
                 default_clock: Some("minecraft:overworld".into()),
                 timelines: None,
+            ambient_light_color: None,
             }],
             // the synced biome table: ids 0/1/2, arrival order
             biomes: vec![
@@ -982,6 +983,7 @@ mod tests {
             height: 256,
             default_clock: None,
             timelines: None,
+        ambient_light_color: None,
         }];
         let p3 =
             mc_protocol::play::test_support::set_time_packet(3, &[(0, 1_002_006_000, 0.0, 1.0)]);
@@ -1165,6 +1167,7 @@ mod tests {
                     height: 384,
                     default_clock: Some("minecraft:overworld".into()),
                     timelines: None,
+                ambient_light_color: None,
                 },
                 DimensionTypeEntry {
                     name: "minecraft:the_nether".into(),
@@ -1172,6 +1175,7 @@ mod tests {
                     height: 256,
                     default_clock: None, // no day cycle in the nether
                     timelines: None,
+                ambient_light_color: None,
                 },
             ],
             biomes: Vec::new(),
@@ -1228,6 +1232,7 @@ mod tests {
                 height: 384,
                 default_clock: Some("minecraft:overworld".into()),
                 timelines: Some("#minecraft:in_overworld".into()),
+                ambient_light_color: None,
             }],
             biomes: Vec::new(),
             biome_tags: Vec::new(),
@@ -1368,6 +1373,7 @@ mod tests {
             height: 256,
             default_clock: None,
             timelines: None,
+        ambient_light_color: None,
         }];
         let p5 = mc_protocol::play::test_support::set_time_packet(5, &[(0, 18_000, 0.0, 1.0)]);
         let ts5 = mc_protocol::play::parse_set_time(&p5).unwrap();
@@ -1481,6 +1487,7 @@ mod tests {
                     height: 384,
                     default_clock: Some("minecraft:overworld".into()),
                     timelines: None,
+                ambient_light_color: None,
                 }],
                 biomes: Vec::new(),
                 biome_tags: Vec::new(),
@@ -1557,6 +1564,7 @@ mod tests {
                         height: *height,
                         default_clock: None,
                         timelines: None,
+                    ambient_light_color: None,
                     })
                     .collect(),
                 biomes: Vec::new(),
@@ -1650,6 +1658,7 @@ mod tests {
                         height: *height,
                         default_clock: None,
                         timelines: None,
+                    ambient_light_color: None,
                     })
                     .collect(),
                 biomes: Vec::new(),
@@ -1678,8 +1687,8 @@ mod tests {
         let mut m = WorldModel::new();
         m.registry = RegistryData {
             dimension_types: vec![
-                DimensionTypeEntry { name: "minecraft:overworld".into(), min_y: -64, height: 384, default_clock: Some("minecraft:overworld".into()) , timelines: None },
-                DimensionTypeEntry { name: "minecraft:the_nether".into(), min_y: 0, height: 256, default_clock: None , timelines: None },
+                DimensionTypeEntry { name: "minecraft:overworld".into(), min_y: -64, height: 384, default_clock: Some("minecraft:overworld".into()) , timelines: None, ambient_light_color: None },
+                DimensionTypeEntry { name: "minecraft:the_nether".into(), min_y: 0, height: 256, default_clock: None , timelines: None, ambient_light_color: None },
             ],
             biomes: Vec::new(),
             biome_tags: Vec::new(),

@@ -139,6 +139,18 @@ pub struct DimensionTypeEntry {
     /// packet's `minecraft:timeline` payload; without the `#` it is a
     /// direct timeline id.
     pub timelines: Option<String>,
+    /// The lightmap's AmbientColor base — the element's `attributes`
+    /// compound's `minecraft:visual/ambient_light_color` entry, the
+    /// `"#rrggbb"` string the rgb_color type serializes (javap:
+    /// `DimensionType.NETWORK_CODEC` builds on
+    /// `EnvironmentAttributeMap.NETWORK_CODEC` — the attributes field
+    /// RIDES the registry sync; the map codec is `dispatchedMap` keyed
+    /// by the full attribute id, a FLAT compound; `ExtraCodecs`
+    /// `hexColor` REQUIRES the `#` prefix). The syncable filter keeps
+    /// the attribute (the builder chains `.syncable()`). `None` when
+    /// the element states none — the bytecode-default black, never a
+    /// guess.
+    pub ambient_light_color: Option<[u8; 3]>,
 }
 
 /// One synced timeline: the 26.2 data-driven time system's element
@@ -739,12 +751,22 @@ pub fn parse_registry_data(payload: &[u8]) -> Result<RegistryData> {
         // the timelines reference, VERBATIM (the overworld's tag form
         // "#minecraft:in_overworld"; a direct id rides without the #)
         let timelines = element.get("timelines").and_then(Nbt::as_str).map(String::from);
+        // the lightmap's AmbientColor base: the element's `attributes`
+        // compound is FLAT (the keys are the full namespaced attribute
+        // ids) and the rgb_color value is the `"#rrggbb"` string —
+        // the audited wire shape (see the struct field's doc)
+        let ambient_light_color = element
+            .get("attributes")
+            .and_then(|a| a.get("minecraft:visual/ambient_light_color"))
+            .and_then(Nbt::as_str)
+            .and_then(parse_rgb_hex);
         out.dimension_types.push(DimensionTypeEntry {
             name: entry_id,
             min_y,
             height,
             default_clock,
             timelines,
+            ambient_light_color,
         });
     }
     anyhow::ensure!(
@@ -752,6 +774,20 @@ pub fn parse_registry_data(payload: &[u8]) -> Result<RegistryData> {
         "trailing bytes after the {registry_name} registry entries"
     );
     Ok(out)
+}
+
+/// The `#rrggbb` string the rgb_color attribute type serializes, as
+/// RGB channel bytes (vanilla `ExtraCodecs.hexColor`: the `#` prefix is
+/// REQUIRED, exactly six hex digits). `None` for any other shape — the
+/// caller reads the bytecode-default black, never a guess. The decode
+/// stays dependency-free (the hand-rolled base64/MD5 precedent).
+fn parse_rgb_hex(s: &str) -> Option<[u8; 3]> {
+    let hex = s.strip_prefix('#')?;
+    if hex.len() != 6 || !hex.bytes().all(|b| b.is_ascii_hexdigit()) {
+        return None;
+    }
+    let byte = |i: usize| u8::from_str_radix(&hex[i..i + 2], 16).ok();
+    Some([byte(0)?, byte(2)?, byte(4)?])
 }
 
 /// The `visual/sky_light_factor` track's keyframes, (tick, value): the
