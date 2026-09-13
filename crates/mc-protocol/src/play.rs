@@ -1659,6 +1659,109 @@ pub mod test_support {
         }
         p
     }
+
+    /// The wire's low-precision Vec3 ENCODER — the exact inverse of the
+    /// javap-proven `LpVec3.read` (the mirror of `LpVec3.write`'s byte
+    /// order: byte0, byte1, then a 4-byte int of bits 16-47, then the
+    /// optional scale continuation VarInt when the scale exceeds the
+    /// 2-bit field). `scale` is the magnitude the packed lanes multiply
+    /// back to; callers pass it explicitly so tests can pin both the
+    /// short-scale (no continuation) and the continuation shapes.
+    pub fn encode_lp_vec3(x: f64, y: f64, z: f64, scale: u64) -> Vec<u8> {
+        let pack = |d: f64| -> u64 {
+            ((d * 0.5 + 0.5) * 32766.0).round() as u64
+        };
+        let lane = |v: f64| -> u64 { pack(v / scale as f64) };
+        let packed = (scale & 3)
+            | (if scale > 3 { 4 } else { 0 })
+            | (lane(x) << 3)
+            | (lane(y) << 18)
+            | (lane(z) << 33);
+        let mut p = Vec::new();
+        p.push((packed & 0xFF) as u8);
+        p.push(((packed >> 8) & 0xFF) as u8);
+        p.extend_from_slice(&(((packed >> 16) & 0xFFFF_FFFF) as u32).to_be_bytes());
+        if scale > 3 {
+            crate::varint::write_varint(&mut p, (scale >> 2) as i32);
+        }
+        p
+    }
+
+    /// One full Add Entity packet (generated id 1): the VarInt id, the
+    /// UUID's two big-endian longs, the VarInt type, three big-endian
+    /// doubles, the low-precision movement, three angle bytes, the
+    /// VarInt data.
+    #[allow(clippy::too_many_arguments)]
+    pub fn add_entity_packet(
+        id: i32,
+        uuid: u128,
+        type_id: i32,
+        x: f64,
+        y: f64,
+        z: f64,
+        movement: &[u8],
+        x_rot: i8,
+        y_rot: i8,
+        y_head_rot: i8,
+        data: i32,
+    ) -> Vec<u8> {
+        let mut p = Vec::new();
+        write_varint(&mut p, clientbound::ADD_ENTITY);
+        write_varint(&mut p, id);
+        p.extend_from_slice(&((uuid >> 64) as u64).to_be_bytes());
+        p.extend_from_slice(&(uuid as u64).to_be_bytes());
+        write_varint(&mut p, type_id);
+        p.extend_from_slice(&x.to_be_bytes());
+        p.extend_from_slice(&y.to_be_bytes());
+        p.extend_from_slice(&z.to_be_bytes());
+        p.extend_from_slice(movement);
+        p.push(x_rot as u8);
+        p.push(y_rot as u8);
+        p.push(y_head_rot as u8);
+        write_varint(&mut p, data);
+        p
+    }
+
+    /// One full Remove Entities packet (generated id 77): the VarInt
+    /// count then that many VarInt ids (`readIntIdList` verbatim).
+    pub fn remove_entities_packet(ids: &[i32]) -> Vec<u8> {
+        let mut p = Vec::new();
+        write_varint(&mut p, clientbound::REMOVE_ENTITIES);
+        write_varint(&mut p, ids.len() as i32);
+        for &id in ids {
+            write_varint(&mut p, id);
+        }
+        p
+    }
+
+    /// One full Entity Position Sync packet (generated id 35): the
+    /// VarInt id, the PositionMoveRotation record (two full-precision
+    /// Vec3s then FLOAT yaw, FLOAT pitch) and the BOOL ground flag.
+    #[allow(clippy::too_many_arguments)]
+    pub fn entity_position_sync_packet(
+        id: i32,
+        x: f64,
+        y: f64,
+        z: f64,
+        delta: [f64; 3],
+        y_rot: f32,
+        x_rot: f32,
+        on_ground: bool,
+    ) -> Vec<u8> {
+        let mut p = Vec::new();
+        write_varint(&mut p, clientbound::ENTITY_POSITION_SYNC);
+        write_varint(&mut p, id);
+        p.extend_from_slice(&x.to_be_bytes());
+        p.extend_from_slice(&y.to_be_bytes());
+        p.extend_from_slice(&z.to_be_bytes());
+        p.extend_from_slice(&delta[0].to_be_bytes());
+        p.extend_from_slice(&delta[1].to_be_bytes());
+        p.extend_from_slice(&delta[2].to_be_bytes());
+        p.extend_from_slice(&y_rot.to_be_bytes());
+        p.extend_from_slice(&x_rot.to_be_bytes());
+        p.push(if on_ground { 1 } else { 0 });
+        p
+    }
 }
 
 // ---------------------------------------------------------------------------
@@ -1679,6 +1782,16 @@ fn read_u16(r: &mut &[u8]) -> std::io::Result<u16> {
     let mut b = [0u8; 2];
     r.read_exact(&mut b)?;
     Ok(u16::from_be_bytes(b))
+}
+
+fn read_u32(r: &mut &[u8]) -> std::io::Result<u32> {
+    let mut b = [0u8; 4];
+    r.read_exact(&mut b)?;
+    Ok(u32::from_be_bytes(b))
+}
+
+fn read_i8(r: &mut &[u8]) -> std::io::Result<i8> {
+    Ok(read_u8(r)? as i8)
 }
 
 fn read_i16(r: &mut &[u8]) -> std::io::Result<i16> {

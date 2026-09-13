@@ -43,6 +43,27 @@ use mc_protocol::{
     WorldInfo, WorldSnapshot,
 };
 
+/// The model's view of ONE entity — the facts the entity packets have
+/// actually delivered (the spawn's registry-typed existence, the latest
+/// authoritative position). Rotation rides the spawn's byte-unpacked
+/// degrees until a sync overrides it (the sync's floats are exact;
+/// the spawn's bytes are the vanilla `b * 360 / 256` quantization).
+#[derive(Debug, Clone, PartialEq)]
+pub struct EntitySnapshot {
+    /// The entity type's registry id (resolved by the synced registry).
+    pub type_id: i32,
+    /// World position (the latest full-precision doubles).
+    pub x: f64,
+    pub y: f64,
+    pub z: f64,
+    /// Yaw in degrees (the latest sync's float, else the spawn byte
+    /// unpacked the vanilla way).
+    pub y_rot: f32,
+    /// Pitch in degrees (the latest sync's float, else the spawn byte
+    /// unpacked the vanilla way).
+    pub x_rot: f32,
+}
+
 /// The client's view of ONE server world: loaded chunk columns, the
 /// server-declared center chunk, the world's static description and the
 /// latest player sync — everything the play state has actually sent.
@@ -75,6 +96,10 @@ pub struct WorldModel {
     /// lands; with NONE the world is honestly at day (no opinion).
     clocks: Vec<ClockUpdate>,
     columns: HashMap<(i32, i32), ChunkColumn>,
+    /// The world's living population, keyed by entity id (the Add
+    /// Entity packet's numeric key). Cleared on Respawn — the entities
+    /// of the crossed dimension's level do not follow the player.
+    entities: HashMap<i32, EntitySnapshot>,
 }
 
 impl Default for WorldModel {
@@ -97,7 +122,13 @@ impl WorldModel {
             game_time: 0,
             clocks: Vec::new(),
             columns: HashMap::new(),
+            entities: HashMap::new(),
         }
+    }
+
+    /// One entity's current snapshot, by id.
+    pub fn entity(&self, id: i32) -> Option<&EntitySnapshot> {
+        self.entities.get(&id)
     }
 
     /// Pin the current dimension and resolve its vertical layout from the
@@ -133,6 +164,10 @@ impl WorldModel {
                 // mid-transition window truthfully shows air (the vanilla
                 // loading screen's world state).
                 self.columns.clear();
+                // the entity registry follows the level: a dimension
+                // swap's population does not cross (the vanilla client
+                // swaps the whole ClientLevel — entities included)
+                self.entities.clear();
                 self.pin_dimension(&spawn.dimension);
                 true
             }
@@ -253,6 +288,49 @@ impl WorldModel {
                 for (idx, &(_, _, _, state)) in indices.iter().zip(sb.blocks.iter()) {
                     sec.blocks[*idx] = state;
                 }
+                true
+            }
+            PlayEvent::Spawn(e) => {
+                // the registry's insert IS the vanilla semantics: adding
+                // an id that already exists REPLACES the old entity (the
+                // client's entity lookup is keyed by id)
+                self.entities.insert(
+                    e.id,
+                    EntitySnapshot {
+                        type_id: e.type_id,
+                        x: e.x,
+                        y: e.y,
+                        z: e.z,
+                        y_rot: e.y_rot,
+                        x_rot: e.x_rot,
+                    },
+                );
+                true
+            }
+            PlayEvent::EntitiesRemoved(ids) => {
+                // vanilla ignores unknown ids in the batch (the entity is
+                // already gone client-side); the model removes whatever
+                // exists and reports whether ANYTHING changed — the same
+                // no-op honesty UnloadChunk's `.is_some()` carries
+                let mut any = false;
+                for id in ids {
+                    any |= self.entities.remove(&id).is_some();
+                }
+                any
+            }
+            PlayEvent::EntityMoved(sync) => {
+                // a position correction names an entity the client is
+                // tracking; for an unknown id there is nothing to move —
+                // refusing (not spawning) keeps the spawn packet the
+                // ONLY creator of entities
+                let Some(e) = self.entities.get_mut(&sync.id) else {
+                    return false;
+                };
+                e.x = sync.x;
+                e.y = sync.y;
+                e.z = sync.z;
+                e.y_rot = sync.y_rot;
+                e.x_rot = sync.x_rot;
                 true
             }
             PlayEvent::CenterChunk { x, z } => {
