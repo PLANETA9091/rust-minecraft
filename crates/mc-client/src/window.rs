@@ -169,6 +169,9 @@ fn run_join(
             // the fog pair rides with it: the dimension's STATED distances
             // (the nether's 10/96) or None — the window treatment's domain
             let fog = view.model.fog_distances();
+            // the cloud-fog end rides with it: the dimension's STATED
+            // cloud fog or None — the bytecode default's domain
+            let cloud_fog_end = view.model.cloud_fog_end_distance();
             let first = view.refresh(crate::world_view::runtime_mapper);
             let spawn_biome = first.biome.clone();
             let shipped = tx.send((
@@ -184,6 +187,7 @@ fn run_join(
                     slim_arm,
                     skybox,
                     fog,
+                    cloud_fog_end,
                 }),
             ));
             if shipped.is_err() {

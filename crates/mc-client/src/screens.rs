@@ -156,6 +156,10 @@ pub enum LoginResult {
         /// documented window treatment's domain (see
         /// `WorldModel::fog_distances`).
         fog: Option<(f32, f32)>,
+        /// The dimension's STATED cloud-fog end (blocks) — `None` when
+        /// no dimension states one, the consumer's 2048.0 bytecode
+        /// default's shape (see `WorldModel::cloud_fog_end_distance`).
+        cloud_fog_end: Option<f32>,
     },
     /// The server refused or kicked (login disconnect, config kick or a
     /// play-state disconnect), reason flattened from chat.
@@ -284,6 +288,10 @@ pub struct App {
     /// this client's 5x5-chunk window, where the documented window
     /// treatment renders).
     pub world_fog: Option<(f32, f32)>,
+    /// The dimension's STATED cloud-fog end (blocks) — pinned at level
+    /// entry like the fog pair; `None` = no dimension states one (the
+    /// cloud fog rides the 2048.0 bytecode default, `sky::DEFAULT_CLOUD_FOG_END`).
+    pub world_cloud_fog_end: Option<f32>,
     /// The first-person hand (the empty main-hand arm from the official
     /// player skin), loaded lazily from the runtime asset root on the first
     /// world frame; `None` = the skin asset is absent or failed its sha1
@@ -400,6 +408,7 @@ impl App {
             world_is_network: false,
             world_skybox: Skybox::Overworld,
             world_fog: None,
+            world_cloud_fog_end: None,
             net_biome: None,
             live_runs: Vec::new(),
             arm: None,
@@ -465,6 +474,7 @@ impl App {
             // extract pins the dimension's skybox on entering the level
             self.world_skybox = Skybox::Overworld;
             self.world_fog = None;
+            self.world_cloud_fog_end = None;
         }
         self.paused = false;
         self.music.on_world_enter_biome(spawn_biome(self.seed));
@@ -485,7 +495,7 @@ impl App {
     /// section under the player not loaded) the unknown-key lookup falls
     /// back to the generic `music.game` situation — no seeded guess
     /// about a network world.
-    pub fn enter_network_world(&mut self, spawn_biome: Option<String>, skybox: Skybox, fog: Option<(f32, f32)>) {
+    pub fn enter_network_world(&mut self, spawn_biome: Option<String>, skybox: Skybox, fog: Option<(f32, f32)>, cloud_fog_end: Option<f32>) {
         let (size, spawn_y, quads) = {
             let Some(world) = self.net_world.as_ref() else { return };
             let size = world.size_blocks();
@@ -508,6 +518,7 @@ impl App {
         // the fog pair pins with it: the dimension's stated distances are
         // the level-entry render state (None = the window treatment)
         self.world_fog = fog;
+        self.world_cloud_fog_end = cloud_fog_end;
         self.net_biome = spawn_biome.clone();
         self.paused = false;
         self.music
@@ -688,7 +699,7 @@ impl App {
             return;
         }
         match outcome {
-            Ok(LoginResult::Loaded { world, camera, spawn_biome, slim_arm, skybox, fog, .. }) => {
+            Ok(LoginResult::Loaded { world, camera, spawn_biome, slim_arm, skybox, fog, cloud_fog_end, .. }) => {
                 if self.screen == ScreenKind::Connect {
                     // the profile's skin model rides the join: the first
                     // world frame's lazy arm load reads THIS flag (set
@@ -700,7 +711,7 @@ impl App {
                     // one — every other in-flight join's session closes
                     // now (superseded joins never haunt the server)
                     self.prune_live_runs(Some(id));
-                    self.enter_network_world(spawn_biome, skybox, fog);
+                    self.enter_network_world(spawn_biome, skybox, fog, cloud_fog_end);
                 } else {
                     // a late success after Escape: the join is cancelled —
                     // close its session exactly like the vanilla client
@@ -923,7 +934,7 @@ impl App {
         if let Some(quads) = &self.world_quads {
             fb.draw_quads(&ctx, quads);
         }
-        crate::sky::render_clouds(fb, &ctx, &cam, day_time, 0.0);
+        crate::sky::render_clouds(fb, &ctx, &cam, day_time, 0.0, self.world_cloud_fog_end);
         if self.arm.is_none() {
             let kind = if self.slim_arm {
                 crate::hand::ArmKind::Slim
@@ -1854,6 +1865,7 @@ mod tests {
                 slim_arm: false,
                 skybox: Skybox::Overworld,
                 fog: None,
+                cloud_fog_end: None,
             }),
         );
         assert_eq!(app.screen, ScreenKind::World, "the join lands in the network world");
@@ -2171,6 +2183,7 @@ mod tests {
                 let view = crate::world_view::LiveView::from_snapshot(snap, WORLD_CHUNKS);
                 let skybox = view.model.skybox();
                 let fog = view.model.fog_distances();
+                let cloud_fog_end = view.model.cloud_fog_end_distance();
                 let first = view.refresh(|id| match id {
                     1 => crate::world::STONE,
                     10 => crate::world::DIRT,
@@ -2187,6 +2200,7 @@ mod tests {
                     slim_arm: false,
                     skybox,
                     fog,
+                    cloud_fog_end,
                 }
             }
             mc_protocol::WorldOutcome::Disconnected { reason } => {
@@ -2271,7 +2285,7 @@ mod tests {
             variants: None, // test scenes carry no state variants
             ambient_light: None, // no dimension opinion — the black bytecode default
         });
-        app.enter_network_world(None, Skybox::Overworld, None);
+        app.enter_network_world(None, Skybox::Overworld, None, None);
         assert_eq!(app.screen, ScreenKind::World);
         assert!(app.world_is_network);
         assert_eq!(app.world_size, 32);
@@ -2326,7 +2340,7 @@ mod tests {
             variants: None, // test scenes carry no state variants
             ambient_light: None, // no dimension opinion — the black bytecode default
         });
-        app.enter_network_world(None, Skybox::Overworld, None);
+        app.enter_network_world(None, Skybox::Overworld, None, None);
         let flight = app.world_camera();
         let n = app.world_size as f32;
         assert_eq!(
@@ -2388,6 +2402,7 @@ mod tests {
                 slim_arm: false,
                 skybox: Skybox::Overworld,
                 fog: None,
+                cloud_fog_end: None,
             }),
         );
         assert_eq!(
@@ -2422,7 +2437,7 @@ mod tests {
         app.open(ScreenKind::Connect);
         // the join landed (an all-air window: the state machine must not care)
         app.net_world = Some(air_net_world(2, 0));
-        app.enter_network_world(None, Skybox::Overworld, None);
+        app.enter_network_world(None, Skybox::Overworld, None, None);
         assert!(app.world_is_network);
         assert!(app.world_quads.as_ref().unwrap().is_empty(), "air meshes to nothing");
         // no biome known: the vanilla in-game default situation
@@ -2483,7 +2498,7 @@ mod tests {
         let mut app = App::new(3);
         app.open(ScreenKind::Connect);
         app.net_world = Some(air_net_world(2, 0));
-        app.enter_network_world(Some("minecraft:swamp".into()), Skybox::Overworld, None);
+        app.enter_network_world(Some("minecraft:swamp".into()), Skybox::Overworld, None, None);
         assert_eq!(app.net_biome.as_deref(), Some("minecraft:swamp"));
         // Save and Quit unloads the level AND closes the live session
         let run = std::sync::Arc::new(std::sync::atomic::AtomicBool::new(true));
@@ -2530,7 +2545,7 @@ mod tests {
         let mut app = App::new(3);
         app.open(ScreenKind::Connect);
         app.net_world = Some(air_net_world(2, 0));
-        app.enter_network_world(Some("minecraft:swamp".into()), Skybox::Overworld, None);
+        app.enter_network_world(Some("minecraft:swamp".into()), Skybox::Overworld, None, None);
         let run = std::sync::Arc::new(std::sync::atomic::AtomicBool::new(true));
         app.attach_live_run(1, run);
         app.live_session_lost("Server closed".to_string());
@@ -2555,15 +2570,25 @@ mod tests {
         let mut app = App::new(3);
         assert_eq!(app.world_skybox, Skybox::Overworld, "the App default");
         assert_eq!(app.world_fog, None, "no fog pair: the window treatment");
+        assert_eq!(
+            app.world_cloud_fog_end,
+            None,
+            "no stated cloud-fog end: the 2048.0 default's shape"
+        );
         // a nether join ships Skybox::None: the sky pipeline renders no
         // sky state at all there (the extract returns before any exists)
         app.open(ScreenKind::Connect);
         app.net_world = Some(air_net_world(2, 0));
         // the nether's real 10/96 pins with the join (the fogged walls)
-        app.enter_network_world(None, Skybox::None, Some((10.0, 96.0)));
+        app.enter_network_world(None, Skybox::None, Some((10.0, 96.0)), Some(512.0));
         assert!(app.world_is_network);
         assert_eq!(app.world_skybox, Skybox::None, "the nether pin");
         assert_eq!(app.world_fog, Some((10.0, 96.0)), "the stated pair pins");
+        assert_eq!(
+            app.world_cloud_fog_end,
+            Some(512.0),
+            "the stated cloud-fog end pins with the join"
+        );
         // a procedural re-entry re-pins the overworld sky AND drops the
         // fog pair (the extract re-runs on every level entry — a network
         // nether never haunts the singleplayer world's sky or fog)
@@ -2571,6 +2596,11 @@ mod tests {
         assert!(!app.world_is_network);
         assert_eq!(app.world_skybox, Skybox::Overworld, "the procedural re-pin");
         assert_eq!(app.world_fog, None, "the pair drops with the level");
+        assert_eq!(
+            app.world_cloud_fog_end,
+            None,
+            "the cloud-fog end drops with the level"
+        );
         // the resolution discipline itself lives in the model: the
         // synced registry's own skybox, the codec default, or the
         // built-in table (WorldModel::skybox — pinned by the
@@ -2603,6 +2633,7 @@ mod tests {
                 slim_arm: true,
                 skybox: Skybox::Overworld,
                 fog: None,
+                cloud_fog_end: None,
             }),
         );
         assert!(app.world_is_network, "A adopted");
@@ -2651,6 +2682,7 @@ mod tests {
                 slim_arm: false,
                 skybox: Skybox::Overworld,
                 fog: None,
+                cloud_fog_end: None,
             }),
         );
         assert!(
