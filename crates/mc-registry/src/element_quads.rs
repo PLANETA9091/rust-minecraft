@@ -455,6 +455,8 @@ fn recalculate_winding(vertices: &mut [[f32; 3]; 4], uvs: &mut [[f32; 2]; 4], fa
 
 #[cfg(test)]
 mod tests {
+    fn f32_pre_check(a: f32, b: f32) -> f32 { a - b }
+
     #[test]
     fn dump_bits_for_census_diff() {
         let (_, elements) = ELEMENTS.iter().find(|(mid, _)| *mid == "block/brewing_stand_bottle2").unwrap();
@@ -468,9 +470,14 @@ mod tests {
         };
         println!("rescale_flag={} m00={:08x} m02={:08x} m20={:08x} m22={:08x}",
             rescale_flag, m[0][0].to_bits(), m[0][2].to_bits(), m[2][0].to_bits(), m[2][2].to_bits());
+
         let org = match el.rotation { Some(ElementRotation::Axis { origin, .. }) => origin, _ => unreachable!() };
         let origin_block = [org[0] / 16.0, org[1] / 16.0, org[2] / 16.0];
         let pre = faceinfo_corners(Direction::North, el.from, el.to);
+        {
+            let d0 = pre[0][0] - origin_block[0];
+            println!("d0={:08x} prod={:08x} sum={:08x}", d0.to_bits(), (m[2][0] * d0).to_bits(), (m[2][0] * d0 + origin_block[2]).to_bits());
+        }
         for (i, v) in pre.iter().enumerate() {
             let r = rotate_vertex(*v, origin_block, &m);
             println!("v{i} pre=({:08x},{:08x},{:08x}) post=({:08x},{:08x},{:08x})",
