@@ -203,5 +203,17 @@ pub fn extract_runtime_assets(
             }
         }
     }
+    // The slim (Alex) skin: the `--slim-arm` variant's pixel source, the
+    // same sha1-verified stream pattern.
+    {
+        let dest = out_root.join(crate::skingen::SLIM_RUNTIME_PATH);
+        if !dest.exists() {
+            if let Ok(bytes) = read_entry(archive, crate::skingen::SLIM_ALEX_JAR_PATH) {
+                fs::create_dir_all(dest.parent().unwrap())?;
+                fs::write(dest, bytes)?;
+                n += 1;
+            }
+        }
+    }
     Ok(n)
 }
