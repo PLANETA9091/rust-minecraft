@@ -581,6 +581,52 @@ hand-drawn:
   timeline (−1 → 0..5/6 → rest at exactly 6 ticks), the re-trigger
   guard, the wrap-guard lerp, the mid-swing geometry delta, and the
   bit-identical rest pose.
+  The **vanilla FaceBakery quad derivation lands (v0.3.68 — the
+  element-geometry consumer, the bridge to block/item display)**:
+  `crates/mc-registry/src/element_quads.rs` turns the typed elements
+  table (v0.3.65) into quads as plain data — zero dependencies, zero
+  render-path contact (mc-client carries no references; the goldens
+  are safe by construction AND by measurement). Every formula is
+  javap evidence from the 26.2 client jar
+  (net.minecraft.client.resources.model.cuboid.*): the FaceInfo
+  corner table (Extent MIN->from / MAX->to, the 6-arg bbox select),
+  the absent-uv bounds projection (defaultFaceUV per direction), the
+  vertex-uv quadrant walk ((i + rotation/90) % 4 over
+  (minU,minV)(minU,maxV)(maxU,maxV)(maxU,minV) — mirrored rects
+  legal), the rotation forms (single-axis Rodrigues with angle==0 ->
+  identity; euler = JOML rotationZYX(z,y,x) = Rz*Ry*Rx, X applied
+  first; rescale = diag(1/max|M*unit|) per axis, POST-multiplied —
+  the vector scales FIRST, then rotates), the origin semantics (the
+  deserializer stores origin *0.0625 in BLOCK units while the
+  generated table keeps pixels — the consumer divides by 16), the
+  computed facing ((v1-v0) x (v2-v0), argmax positive dot in the
+  vanilla enum order, requireNonNullElse(facing, UP) for the
+  degenerate zero-area quads), and the winding recalculation (ONLY
+  when rotation is absent and the facing resolved; canonical corners
+  from the quad's own bbox; exact float equality; vertices AND uvs
+  swap together). The bytecode homework is banked: heavy_core's bare
+  texture refs resolve IDENTICALLY to "#var" refs
+  (TextureSlots.getMaterial strips the leading '#' and looks the
+  string up — the slots merge is the texture round), and the
+  from/to domain is REFUSED outside [-16, 32], never clamped. The
+  census discipline caught a real trap: the first python draft ran
+  f64 math (drift 273) and an unfaithful f64-trig draft (356) — the
+  JOML-faithful f32 census (scripts/quads_census.py, per-op f32
+  rounding, f64-trig-then-f32-store) agrees with this implementation
+  PER MODEL, all 344 lines: 4238 quads (every face exactly one),
+  362 facing drifts, 6 rewound quads (the inner-faces cubes'
+  reversed from/to [15.998..]->[0.002..] mirror trick), 160 UP
+  fallbacks (the mangrove propagule's collinear strands), rotation
+  forms 882 none / 301 axis / 2 euler, 97 rescale carriers (all
+  axis-form), face-rotation histogram 3993/151/39/55. Tests +9
+  (workspace 300 -> 309 passed / 0 failed / 3 ignored): the
+  canonical cube quads bit-exact, the six default-uv projections,
+  the uv quadrants, the axis+euler forms against the census (the
+  euler carrier's north quad lands facing EAST — the
+  45-degree-diagonal tie), the rescale fixed point, the inner-faces
+  rewind, the degenerate UP fallback, and the registry-wide census
+  pin. All 10 goldens verified at the exact CI flags, every one
+  rms 0.000, none regenerated.
   The **blockstate consumer's selection layer lands (v0.3.67 — the
   when-condition homework, the state-id → model+rotation link)**:
   `crates/mc-registry/src/blockstate_lookup.rs` is the hand-written
