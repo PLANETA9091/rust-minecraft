@@ -616,6 +616,38 @@ hand-drawn:
   cutout rule. Also repairs a pre-existing doctest break (an unannotated
   pseudo-code fence in the item_bake docs compiled as Rust and failed
   `cargo test --workspace` on the clean tree).
+  The **per-dimension skybox gates the celestials (v0.3.90 — the nether
+  has no sky)**: the sky pipeline's dimension gate lands. The audit ran
+  first-hand on the 26.2 jar: `DimensionType$Skybox` is the vanilla
+  string-representable enum (`none` / `overworld` / `end`), the codec is
+  `optionalFieldOf("skybox", OVERWORLD)` — an ABSENT JSON key is the
+  Overworld default (the real jar: the overworld pair states nothing,
+  the end states `"end"`, the nether states `"none"`) — and the client's
+  own `SkyRenderer.extractRenderState` stores `dimensionType.skybox()`
+  and returns BEFORE any sky state is extracted when it is NONE, while
+  END extracts only the end-flash triple and returns: the disc / sun /
+  moon / stars path is the OVERWORLD skybox's alone. The generator
+  parses the field into the generated table (`DimensionTypeDef.skybox`,
+  the values verified against the raw JSONs: overworld/caves Overworld,
+  end End, nether None; an unknown string the vanilla codec would
+  reject outright, so the parse falls back to the codec default — never
+  a guess). The client consumes it the vanilla way: the App pins the
+  dimension's skybox as render state at LEVEL ENTRY (procedural →
+  Overworld; a network join resolves the snapshot's dimension through
+  the built-in table — the same skip-sync fallback slice the dimension
+  layout rides; an unknown custom dimension rides the Overworld sky
+  path until the synced-skybox wire decode lands, the ambient arc's
+  shape) and `render_celestials` renders nothing unless the skybox is
+  Overworld. Goldens untouched BY DATA: every golden world is an
+  overworld world, and the headless orbit/net scenes never render the
+  sky pipeline at all — 12/12 pass (the two net scenes at their
+  designed shared-float tolerance, byte-identical before and after the
+  round, proven by a d395db6 worktree re-render). Tests +3 (workspace
+  398 → 401 passed / 0 failed / 3 ignored): the render gate witness
+  (at midnight the stars tile the sphere — OVERWORLD provably paints,
+  NONE and END leave the cleared framebuffer untouched), the built-in
+  table pins, and the App pin discipline (a nether join pins None, a
+  procedural re-entry re-pins Overworld).
   The **synced ambient rides the wire (v0.3.89 — the server's truth)**:
   the ambient arc's wire half closes. The audit ran first-hand on the
   26.2 jar: `DimensionType.NETWORK_CODEC` builds on
