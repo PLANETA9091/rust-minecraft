@@ -154,14 +154,14 @@ mod tests {
     fn override_less_climates_sample_the_real_grids() {
         // desert (temp clamps 2.0 -> 1.0) and jungle — the colormap
         // verdicts the baked atlas could never produce
-        let desert = entry(0x3F76E4, None, None);
+        let mut desert = entry(0x3F76E4, None, None);
         desert.temperature = 2.0;
         desert.downfall = 0.0;
         assert_eq!(
             entry_tints(&desert),
             [Some(0xBFB755), Some(0xAEA42A), Some(0x3F76E4)]
         );
-        let jungle = entry(0x3F76E4, None, None);
+        let mut jungle = entry(0x3F76E4, None, None);
         jungle.temperature = 0.95;
         jungle.downfall = 0.9;
         assert_eq!(

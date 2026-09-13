@@ -47,7 +47,7 @@
 //!   lookup — the audited vanilla path reads the RAW climate field (the
 //!   modifier steers freeze/snow logic elsewhere).
 
-use mc_registry::generated::colormap::{self, FOLIAGE, GRASS, REAL_GRIDS};
+use mc_registry::generated::colormap::{FOLIAGE, GRASS, REAL_GRIDS};
 
 /// The vanilla not-loaded defaults — unreachable for clamped inputs (the
 /// generated grids hold 65536 entries), carried verbatim from the
@@ -163,8 +163,15 @@ mod tests {
     fn clamp01_mirrors_mth_clamp() {
         assert_eq!(clamp01(-0.25), 0.0);
         assert_eq!(clamp01(2.0), 1.0);
-        assert_eq!(clamp01(0.8), 0.8, "in-range value widens unchanged");
-        assert_eq!(clamp01(f32::NAN), f64::NAN, "NaN passes through, like Mth.clamp");
+        assert_eq!(
+            clamp01(0.8),
+            0.8f32 as f64,
+            "in-range value widens unchanged (f32 -> f64 exact)"
+        );
+        assert!(
+            clamp01(f32::NAN).is_nan(),
+            "NaN passes through, like Mth.clamp's comparison chain"
+        );
         // and the util's d2i lands NaN at 0 — the vanilla (int) cast
         assert_eq!(((1.0 - clamp01(f32::NAN)) * 255.0) as i32, 0);
     }
@@ -195,7 +202,10 @@ mod tests {
             assert_eq!(grass_from_climate(0.8, 0.4), None);
             assert_eq!(foliage_from_climate(0.8, 0.4), None);
         }
-        assert_eq!(colormap::COLORMAP_VERSION, "26.2");
+        assert_eq!(
+            mc_registry::generated::colormap::COLORMAP_VERSION,
+            "26.2"
+        );
         assert_eq!(GRASS.len(), 65536);
         assert_eq!(FOLIAGE.len(), 65536);
     }

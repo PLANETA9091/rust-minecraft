@@ -308,6 +308,42 @@ hand-drawn:
   Zero render-path pixels: the tint CONSUMERS come next; the ten
   goldens are bit-identical by construction (the wire fixture carries
   no registry knowledge).
+  The **colormap is consumed (v0.3.46 — the climate-driven tints)**:
+  the top documented candidate lands — an override-less biome now
+  samples the REAL jar colormap grids instead of keeping the baked
+  plains tint. The TENTH javap audit pinned the full vanilla chain
+  (`ColorMapColorUtil.get` + its callers): the util itself does NOT
+  clamp — `Biome.getGrassColorFromTexture` clamps the RAW climate
+  floats to [0,1] (`temperature_modifier` is NOT in the path) and
+  widens; the util scales the downfall by the temperature FIRST
+  (`rain *= temp`), picks column `i = (int)((1-temp)*255)` and row
+  `j = (int)((1-rain)*255)` of the row-major 256×256 grid, and falls
+  to the passed default out of range (unreachable clamped; vanilla
+  CRASHES on unclamped inputs — the port returns the default, a
+  strictly-safer documented deviation). The generator now also emits
+  `mc-registry/src/generated/colormap.rs`: the jar's
+  `textures/colormap/{grass,foliage}.png` decoded row-major to opaque
+  0xRRGGBB (256×256 verified, `REAL_GRIDS` pins real-vs-fallback — a
+  no-jar build zeroes the grids and the client keeps the pre-colormap
+  baked-plains verdicts). THE PLAINS EQUIVALENCE is the chain's
+  end-to-end proof, verified against the real grids BEFORE a line of
+  client code existed and pinned as tests: the sample at the plains
+  climate (0.8, 0.4) IS the baked `TINT_GRASS` 0x91BD59 /
+  `TINT_FOLIAGE` 0x77AB2F — so plains folds as a no-op while desert
+  (0xBFB755), jungle (0x59C93C) and snowy (0x80B497) climates now
+  carry their vanilla-canonical colors. The resolution chain in
+  `tint.rs` is vanilla-verbatim: override wins, else the clamped
+  climate through the grids; the modifier (applied AFTER the base in
+  vanilla) and `dry_foliage_color` stay decoded-but-unconsumed. Tests
+  +8 (workspace 227 passed / 0 failed / 3 ignored): the plains
+  equivalence, the known-biome climate spots, the `rain *= temp`
+  ordering (a (0.5, 1.0) climate samples row 127, not the downfall-only
+  row 0), the hand-indexed cell, the `Mth.clamp` mirror (NaN passes —
+  and `(int)NaN` lands at 0 exactly like the bytecode), the
+  out-of-range default, the real-vs-fallback gate, and the desert/
+  jungle verdicts through `entry_tints`. Ten goldens bit-identical by
+  construction (no golden scene flows biome entries), verified on the
+  v0.3.46 release build.
   The **biome tints are consumed (v0.3.45 — the tint foundation pays)**:
   the first RENDER-FACING use of the decoded table. The client gained
   `tint.rs` (the resolution: `entry_tints` — grass/foliage overrides
