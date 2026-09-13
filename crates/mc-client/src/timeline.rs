@@ -236,6 +236,27 @@ mod tests {
     }
 
     #[test]
+    fn sky_light_color_bytes_lands_on_integers() {
+        // the fold's operand: the track sample as the BYTE vanilla's
+        // attribute system multiplies against (ARGB.multiply takes two
+        // Ints — javap). Plateau ticks exact, the float and byte
+        // samplers agree there (the golden ticks' identity).
+        assert_eq!(sky_light_color_bytes(6_000), [255, 255, 255], "noon: white");
+        assert_eq!(sky_light_color_bytes(14_010), [122, 122, 255], "the golden night tick");
+        assert_eq!(sky_light_color_bytes(18_000), [122, 122, 255], "midnight plateau");
+        assert_eq!(sky_light_color_bytes(730), [255, 255, 255], "the sunrise keyframe");
+        // the dusk midpoint: raw 188.5 rounds to 189 — the Integer the
+        // stated fold consumes (the srgbLerp-vs-raw-lerp note is the
+        // sampler's documented approximation)
+        assert_eq!(sky_light_color_bytes(12_205), [189, 189, 255]);
+        // byte/float agreement at the plateaus
+        let f = sky_light_color(14_010);
+        let b = sky_light_color_bytes(14_010);
+        assert!(((f[0] * 255.0).round() - b[0] as f32).abs() < 1e-3);
+        assert!(((f[2] * 255.0).round() - b[2] as f32).abs() < 1e-3);
+    }
+
+    #[test]
     fn evaluate_serves_the_registry_driven_curves() {
         // the constants ARE a valid curve input: the day.json keyframes
         // through the general path equal the pinned fn exactly

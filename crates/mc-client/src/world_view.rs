@@ -793,6 +793,47 @@ mod tests {
     }
 
     #[test]
+    fn materialize_carries_the_models_sky_light_color() {
+        // the stated sky-light color rides the SAME snapshot (the
+        // lightmap family's transport): the model's dimension resolves
+        // through the built-in visual/sky_light_color column. THE REAL
+        // JAR'S SHAPE: the built-in END states #ac60cd (the moonlight
+        // pair), the overworlds state None — the mesher's white
+        // identity.
+        let mut m = WorldModel::new();
+        m.apply(PlayEvent::Chunk(ChunkColumn {
+            x: 0,
+            z: 0,
+            sections: vec![stone_dirt_section()],
+            light: ChunkLight::default(),
+        }));
+        let world = materialize(&m, (0, 0), 1, 0, example_mapper);
+        assert_eq!(
+            world.sky_light_color, None,
+            "no dimension: the white default's shape"
+        );
+        // the built-in end lands the stated #ac60cd — the jar's own
+        // verdict, raw channel bytes for the mesher's integer fold
+        m.apply(PlayEvent::Respawn(SpawnInfo {
+            dimension_type_id: 0,
+            dimension: "minecraft:the_end".to_string(),
+            portal_cooldown: 0,
+        }));
+        m.apply(PlayEvent::Chunk(ChunkColumn {
+            x: 0,
+            z: 0,
+            sections: vec![stone_dirt_section()],
+            light: ChunkLight::default(),
+        }));
+        let world = materialize(&m, (0, 0), 1, 0, example_mapper);
+        assert_eq!(
+            world.sky_light_color,
+            Some([0xac, 0x60, 0xcd]),
+            "the view carries the end's stated #ac60cd for the mesher's fold"
+        );
+    }
+
+    #[test]
     fn materialize_carries_the_models_biome_layer() {
         let mut m = WorldModel::new();
         // the synced table: id 0 plains (the baked water default), id 1

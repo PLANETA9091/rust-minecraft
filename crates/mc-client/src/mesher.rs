@@ -755,6 +755,9 @@ mod tests {
             ambient_light: None,
             block_light_tint: None,
             sky_light_factor: None,
+            // None = the -1 default's white identity: the sky term's
+            // tint stays the track verbatim, the pre-attribute shape
+            sky_light_color: None,
         }
     }
 
@@ -1431,6 +1434,75 @@ mod tests {
                 assert!(
                     (ch - e).abs() < 1e-6,
                     "the stated tint reaches the block term: {ch} vs {e}"
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn the_stated_sky_light_color_folds_under_the_track() {
+        // the sky-light color's consumer contract is the attribute-system
+        // FOLD for the COLOR attribute (javap ColorModifier.MULTIPLY_RGB
+        // -> ARGB.multiply(int, int): the -1 white default short-circuits
+        // to the other operand, else per-channel imul / idiv 255 — the
+        // probe's folded value IS an Integer the extractor unpacks): the
+        // stated base (the end #ac60cd, the nether #7a7aff, a custom
+        // server's wire) multiplies the BYTE-space day track per channel.
+        // The integer floor bites: (128*122)/255 = 61 (61.24 floored),
+        // blue (128*255)/255 = 128 exact.
+        let stated = [0x80u8, 0x80, 0x80];
+        let track = crate::timeline::sky_light_color_bytes(14_010); // the #7a7aff plateau
+        assert_eq!(track, [122, 122, 255], "the night plateau's bytes");
+        let folded = [
+            ((stated[0] as u32 * track[0] as u32) / 255) as f32 / 255.0,
+            ((stated[1] as u32 * track[1] as u32) / 255) as f32 / 255.0,
+            ((stated[2] as u32 * track[2] as u32) / 255) as f32 / 255.0,
+        ];
+        assert_eq!(folded[0], 61.0 / 255.0, "the integer floor: 15616/255 = 61");
+        assert_eq!(folded[1], 61.0 / 255.0);
+        assert_eq!(folded[2], 128.0 / 255.0, "blue: (128*255)/255 = 128 exact");
+        // the fold is NOT the float multiply — the arithmetic is the
+        // bytecode's integer space, the fidelity round's verdict
+        let float_mul = 128.0f32 / 255.0 * (122.0f32 / 255.0);
+        assert!(
+            (float_mul - folded[0]).abs() > 1e-4,
+            "float {float_mul} vs integer-folded {}",
+            folded[0]
+        );
+        // the mesher witness: the stated color reaches the sky term
+        // through lightmap_combine — the night plateau's factor (0.24)
+        // scales the brightness, the folded tint colors it
+        let mut w = empty_world();
+        put(&mut w, 8, 8, 8, STONE);
+        w.light = Some(unknown_light());
+        w.day_tick = Some(14_010);
+        w.sky_light_color = Some(stated);
+        set_light(&mut w, Some(15), None, 8, 9, 8);
+        let s = light_brightness(15.0) * 0.24; // the factor fold at the plateau
+        let expect_w = [s * folded[0], s * folded[1], s * folded[2]];
+        for corner in &top_face(&w).colors {
+            for (ch, e) in corner.iter().zip(expect_w.iter()) {
+                assert!(
+                    (ch - e).abs() < 1e-6,
+                    "the stated color reaches the sky term: {ch} vs {e}"
+                );
+            }
+        }
+        // the None world keeps the track verbatim (the -1 default's
+        // white identity): the same scene unstated reads the track's
+        // night blue directly — the exact expression the goldens pin
+        let mut w = empty_world();
+        put(&mut w, 8, 8, 8, STONE);
+        w.light = Some(unknown_light());
+        w.day_tick = Some(14_010);
+        set_light(&mut w, Some(15), None, 8, 9, 8);
+        let t = crate::timeline::sky_light_color(14_010);
+        let expect_none = [s * t[0], s * t[1], s * t[2]];
+        for corner in &top_face(&w).colors {
+            for (ch, e) in corner.iter().zip(expect_none.iter()) {
+                assert!(
+                    (ch - e).abs() < 1e-6,
+                    "the None world is the track verbatim: {ch} vs {e}"
                 );
             }
         }

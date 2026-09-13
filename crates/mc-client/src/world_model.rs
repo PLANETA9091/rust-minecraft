@@ -2540,4 +2540,83 @@ mod tests {
         m.registry.dimension_types[0].sky_light_factor = None;
         assert_eq!(m.sky_factor(), night, "silent sync: the default 1.0 x track");
     }
+
+    #[test]
+    fn the_sky_light_color_reads_the_stated_attribute() {
+        // the sky-light color is the lightmap's stated attribute: the
+        // overworlds state none (the built-in None — the -1 = #FFFFFF
+        // white bytecode default covers the absence, the ARGB multiply
+        // identity), the END and the NETHER state their moonlight pairs
+        // (#ac60cd / #7a7aff — the generated table's honest rows, the
+        // raw jar JSON), and a custom server's stated rgb_color is the
+        // synced truth. The three-branch precedence, the factor's shape.
+        let mut m = WorldModel::new();
+        assert_eq!(m.sky_light_color(), None, "no dimension: no opinion");
+        // the built-in end: the stated #ac60cd — the real jar's verdict
+        m.apply(PlayEvent::Respawn(SpawnInfo {
+            dimension_type_id: 0,
+            dimension: "minecraft:the_end".to_string(),
+            portal_cooldown: 0,
+        }));
+        assert_eq!(
+            m.sky_light_color(),
+            Some([0xac, 0x60, 0xcd]),
+            "the built-in end STATES #ac60cd — the moonlight pair"
+        );
+        // the built-in nether: #7a7aff
+        m.apply(PlayEvent::Respawn(SpawnInfo {
+            dimension_type_id: 0,
+            dimension: "minecraft:the_nether".to_string(),
+            portal_cooldown: 0,
+        }));
+        assert_eq!(
+            m.sky_light_color(),
+            Some([0x7a, 0x7a, 0xff]),
+            "the built-in nether STATES #7a7aff"
+        );
+        // the overworld: unstated — the white default's shape
+        m.apply(PlayEvent::Respawn(SpawnInfo {
+            dimension_type_id: 0,
+            dimension: "minecraft:overworld".to_string(),
+            portal_cooldown: 0,
+        }));
+        assert_eq!(m.sky_light_color(), None);
+        // the synced truth wins: a custom server's own stated rgb_color
+        m.registry = RegistryData {
+            dimension_types: vec![DimensionTypeEntry {
+                name: "minecraft:overworld".into(),
+                min_y: -64,
+                height: 384,
+                default_clock: Some("minecraft:overworld".into()),
+                timelines: Some("#minecraft:in_overworld".into()),
+                ambient_light_color: None,
+                skybox: None,
+                fog_start_distance: None,
+                fog_end_distance: None,
+                cloud_fog_end_distance: None,
+                block_light_tint: None,
+                sky_light_color: Some([0x30, 0x28, 0x21]),
+                sky_light_factor: None,
+                night_vision_color: None,
+            }],
+            biomes: Vec::new(),
+            biome_tags: Vec::new(),
+            world_clocks: Vec::new(),
+            timelines: Vec::new(),
+            timeline_tags: Vec::new(),
+        };
+        assert_eq!(
+            m.sky_light_color(),
+            Some([0x30, 0x28, 0x21]),
+            "the synced value is the server's truth"
+        );
+        // the sync arrives and is silent: None — the white default's
+        // shape, the sync's own silence, never a guess
+        m.registry.dimension_types[0].sky_light_color = None;
+        assert_eq!(
+            m.sky_light_color(),
+            None,
+            "the sync arrived and is silent: no stated value, never a guess"
+        );
+    }
 }
