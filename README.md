@@ -616,6 +616,47 @@ hand-drawn:
   cutout rule. Also repairs a pre-existing doctest break (an unannotated
   pseudo-code fence in the item_bake docs compiled as Rust and failed
   `cargo test --workspace` on the clean tree).
+  The **slim arm variant lands (v0.3.84 — the Alex model, data-driven
+  end-to-end)**: the first-person arm gains the SLIM (3×12×4) geometry —
+  javap-evidenced from the official 26.2 jar's
+  `PlayerModel.createMesh(CubeDeformation, slim = true)` bytecode: the
+  right arm is `texOffs(40, 16)` (UNCHANGED from the wide model),
+  `addBox(-2, -2, -2, 3, 12, 4)`, pivot `(-5, 2, 0)` (UNCHANGED — the
+  whole transform chain is kind-independent; only the box shrinks one
+  model unit inward, so the OUTER plane x = +1 is shared and the INNER
+  plane moves x = -3 → -2). The generator extracts BOTH official skins
+  from the jar (wide `steve.png` + slim `alex.png`, each sha1-pinned
+  verbatim), emits the slim constants + the parameterized unwrap
+  (`arm_faces_for` — the same `ModelPart$Cube` layout at width 3: the
+  strip right(outer)→front→left(inner)→back shifts with w, front 3 wide,
+  left at u+d+w, back at u+d+w+d), and materializes alex.png into the
+  runtime root next to steve.png. The client (`hand.rs`) gains
+  `ArmKind::{Wide, Slim}` + `load_kind` (per-kind sha1 gate — each file
+  verifies against ITS OWN generated digest) with the quad builder
+  parameterized by (origin, box, shared texOffs): the wide path performs
+  the SAME arithmetic it always did (the pre-variant `build_quads_at`
+  delegates bit-identically — the bit-identity and sweep tests ride it
+  unchanged). Vanilla picks the variant from the profile's texture
+  metadata; this client has no profile yet, so the selection is explicit
+  (`--slim-arm`, the same deterministic stand-in pattern as
+  `--held-item`) — the DEFAULT stays the wide classic. GOLDENS:
+  untouched — BY CONSTRUCTION AND BY MATRIX: the default never selects
+  slim, and the full matrix re-verified through verify_goldens.sh on the
+  rebuilt release binaries, 12/12 pass, every one rms 0.000. The e2e
+  flag was probed on the binary (`--screen world` wide vs slim: different
+  sha1s). Tests +6 (workspace 378 → 384 passed / 0 failed / 3 ignored;
+  mc2rs-gen skingen 2 → 3, mc-client hand 17 → 22): the javap box pin +
+  slim unwrap rects, the per-quad UV-rect reconstruction (min/max over
+  the Polygon corner assignment, robust to the V-flipped wrist face),
+  the inner-plane/outer-plane geometry witness (EAST quad corners
+  kind-identical, WEST moves; EAST UV shifts), the real-alex hermetic
+  load, and the PROBE-FIRST pixel pin — the slim rest pose moves EXACTLY
+  2534 pixels vs wide in the in-test render (the moved plane + the
+  shifted unwrap texels), probed before pinning (the probe discipline
+  caught the hermetic-skip trap: the test asset root is anchored at the
+  workspace root via CARGO_MANIFEST_DIR, not the crate-relative path
+  that silently skips). The generator refuses a jar without alex.png
+  (no fabricated defaults).
   The **timeline-tag single truth lands (v0.3.83 — the client's private
   tag walk retires into the registry's resolver)**: the skip-sync
   fallback (`WorldModel::built_in_timeline_curve`) now resolves the
