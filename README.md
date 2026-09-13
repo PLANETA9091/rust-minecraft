@@ -809,6 +809,39 @@ hand-drawn:
   The golden-policy lesson: an rms move inside the tolerance is not
   a pass to keep quiet about — the render changed, so the reference
   changed with it, and the diff explained the regen.
+  The **night-vision color is STATE — the fourth decoded light attribute,
+  under the effect-state factor (v0.3.99)**: the `night_vision_color`
+  consumer closes the four-attribute arc. The audit pinned BOTH ends of
+  the shader term: the COLOR rides the probe like its three siblings
+  (`LightmapRenderStateExtractor.extract` reads
+  `EnvironmentAttributes.NIGHT_VISION_COLOR` — the bytecode default
+  `ldc -6710887` = 0xFF999999 = **#999999 gray**,
+  `spatiallyInterpolated().syncable()`), while the FACTOR is the
+  player's EFFECT STATE, not a timeline: `hasEffect(NIGHT_VISION)` ->
+  `GameRenderer.nightVisionScale` (1.0, or `0.7 + sin((duration -
+  partialTick) · π · 0.2) · 0.3` while the effect ends within 200 ticks
+  — the fade-out flicker), conduit power + water vision ->
+  `getWaterVision()`, else exactly **0.0**. lightmap.fsh consumes
+  `max(AmbientColor, NightVisionColor * NightVisionFactor)` — with the
+  factor at this client's floor the term is the ambient base BIT FOR
+  BIT for any tint (`max(A, C·0.0) = A`, a color is non-negative), so
+  the attribute rides the fold structured for the day the effect system
+  lifts it. Implementation the cloud_fog way: the generator column (the
+  regenerated table's diff exactly the struct doc + 4 rows — NO vanilla
+  dimension states it, the honest all-None shape), the model accessor
+  `night_vision_color()` (the three-branch precedence), the materialize
+  stamp beside its lightmap siblings, and the mesher's
+  `night_vision_base(ambient, tint, factor)` at both render paths — the
+  factor rides as a parameter so the term's contract is pinnable at a
+  lifted state. GOLDENS UNTOUCHED BY CONSTRUCTION: 12/12 at rms 0.000.
+  Tests +3 (workspace 422 -> 425 passed / 0 failed / 3 ignored): the
+  accessor precedence (the built-in all-None rows pinned), the
+  materialize stamp (the absent shape + a stated custom entry verbatim),
+  and the fold contract (the factor-0 identity exact-equal for None AND
+  Some, the lifted factor-1.0 arithmetic — the gray default's channel
+  lift, the stated white's saturation, the per-channel max that cannot
+  darken — and the render-path witness: a stated color keeps every
+  pixel at the floor).
   The **sky-light color is STATE — the last light attribute's fold
   (v0.3.98 — INTEGER arithmetic, and the moonlight pairs)**: the
   sky_light_color consumer, the third of the four decoded light

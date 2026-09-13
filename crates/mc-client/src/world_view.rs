@@ -863,35 +863,23 @@ mod tests {
         );
         // a synced custom entry is the server's truth: it lands on the
         // view raw, the shader's stated base for the day the factor lifts
-        m.registry = RegistryData {
-            dimension_types: vec![mc_protocol::DimensionTypeEntry {
-                name: "minecraft:overworld".into(),
-                min_y: -64,
-                height: 384,
-                default_clock: Some("minecraft:overworld".into()),
-                timelines: Some("#minecraft:in_overworld".into()),
-                ambient_light_color: None,
-                skybox: None,
-                fog_start_distance: None,
-                fog_end_distance: None,
-                cloud_fog_end_distance: None,
-                block_light_tint: None,
-                sky_light_color: None,
-                sky_light_factor: None,
-                night_vision_color: Some([0x18, 0x10, 0x28]),
-            }],
-            biomes: Vec::new(),
-            biome_tags: Vec::new(),
-            world_clocks: Vec::new(),
-            timelines: Vec::new(),
-            timeline_tags: Vec::new(),
-        };
-        m.apply(PlayEvent::Chunk(ChunkColumn {
-            x: 0,
-            z: 0,
-            sections: vec![stone_dirt_section()],
-            light: ChunkLight::default(),
-        }));
+        m.registry.dimension_types.push(mc_protocol::DimensionTypeEntry {
+            name: "minecraft:custom".into(),
+            min_y: -64,
+            height: 384,
+            default_clock: None,
+            timelines: None,
+            ambient_light_color: None,
+            skybox: None,
+            fog_start_distance: None,
+            fog_end_distance: None,
+            cloud_fog_end_distance: None,
+            block_light_tint: None,
+            sky_light_color: None,
+            sky_light_factor: None,
+            night_vision_color: Some([0x18, 0x10, 0x28]),
+        });
+        m.current_dimension = Some("minecraft:custom".to_string());
         let world = materialize(&m, (0, 0), 1, 0, example_mapper);
         assert_eq!(
             world.night_vision_color,
