@@ -616,6 +616,34 @@ hand-drawn:
   cutout rule. Also repairs a pre-existing doctest break (an unannotated
   pseudo-code fence in the item_bake docs compiled as Rust and failed
   `cargo test --workspace` on the clean tree).
+  The **palette consumer lands (v0.3.78 — the world's flat colors come
+  from the real chain)**: the mesher's flat-color path now reads
+  `colors::palette_color` FIRST — the blockstate → model → texture
+  chain of v0.3.77 — and demotes the runtime-texture LUT to the first
+  fallback (the hand-written `default_color` guesses fall to last). The
+  chain walk is far too heavy for the mesh hot path, so the consumer
+  computes the table ONCE (a `OnceLock` over the world's NAME_OF kinds
+  × 6 faces, the procedural world's canonical states: grass_block
+  snowy=false, the logs axis=y, leaf_litter facing=north +
+  segment_amount=1) and then indexes it per quad; the mesher's face
+  order [east, west, top, bottom, south, north] maps onto the palette's
+  Cull slots [East, West, Up, Down, South, North]. **The goldens did
+  NOT move — by data, not by luck**: the generated atlas covers 25 of
+  the 26 world kinds on every face (only air is TILE_NONE, and air is
+  never rendered), so every golden pixel rides the TEXTURED path and
+  the flat-color path this round rewires executes on NO golden scene —
+  the full matrix re-verified 12/12 at rms 0.000, NONE regenerated.
+  The rewire's real effect is the chain of custody: any face that
+  loses its atlas tile (a future kind, a non-atlas view) now gets its
+  color from the same evidence chain every other consumer uses, not
+  from a hand-typed guess. The leaf-litter special path keeps its
+  LUT/defaults (its four variant models need a variant→model mapping —
+  banked with the biome-tint work). Tests +2 (workspace 365 → 367
+  passed / 0 failed / 3 ignored): the flat colors ARE the chain's
+  numbers (stone (126,126,126) on all six faces, grass top
+  (147,147,147), the grass sides the (141,131,111) two-quad compose,
+  grass bottom dirt), and the precedence (the palette beats the old
+  hand-written grass side; water/air stay None for the old chain).
   The **blockstate-driven palette lands (v0.3.77 — the world palette's
   data half)**: `crates/mc-registry/src/palette.rs` turns a block state
   into the per-face average color of its REAL model's REAL textures —
