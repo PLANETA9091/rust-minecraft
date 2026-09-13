@@ -475,6 +475,27 @@ mod tests {
         varint::write_varint,
     };
 
+    #[test]
+    fn skybox_for_dimension_answers_the_built_in_table() {
+        use mc_registry::generated::worldgen::Skybox;
+        // the known vanilla ids answer from the generated table (the same
+        // values the raw dimension JSONs state)
+        assert_eq!(
+            skybox_for_dimension("minecraft:overworld"),
+            Skybox::Overworld
+        );
+        assert_eq!(
+            skybox_for_dimension("minecraft:overworld_caves"),
+            Skybox::Overworld
+        );
+        assert_eq!(skybox_for_dimension("minecraft:the_nether"), Skybox::None);
+        assert_eq!(skybox_for_dimension("minecraft:the_end"), Skybox::End);
+        // an unknown (custom-server) dimension rides the Overworld sky
+        // path — the documented interim until the synced-skybox wire
+        // decode lands, keeping today's rendering, never a claimed truth
+        assert_eq!(skybox_for_dimension("mock:test"), Skybox::Overworld);
+    }
+
     /// One synced biome element under the mock tables (the real
     /// NETWORK_CODEC shape, plains' climate — the name is what the
     /// assertions resolve).

@@ -1819,6 +1819,7 @@ mod tests {
                 camera: None,
                 spawn_biome: Some("minecraft:plains".into()),
                 slim_arm: false,
+                skybox: Skybox::Overworld,
             }),
         );
         assert_eq!(app.screen, ScreenKind::World, "the join lands in the network world");
@@ -2128,6 +2129,10 @@ mod tests {
             mc_protocol::WorldOutcome::Loaded(snap) => {
                 let (entity_id, view_distance, chunks) =
                     (snap.info.entity_id, snap.info.view_distance, snap.chunks.len());
+                // the worker's exact resolution order: the dimension reads
+                // off the snapshot BEFORE it adopts into the live model
+                let skybox =
+                    crate::world_view::skybox_for_dimension(&snap.info.current_dimension);
                 let first = crate::world_view::LiveView::from_snapshot(snap, WORLD_CHUNKS)
                     .refresh(|id| match id {
                         1 => crate::world::STONE,
@@ -2143,6 +2148,7 @@ mod tests {
                     camera: first.camera,
                     spawn_biome: first.biome,
                     slim_arm: false,
+                    skybox,
                 }
             }
             mc_protocol::WorldOutcome::Disconnected { reason } => {
@@ -2227,7 +2233,7 @@ mod tests {
             variants: None, // test scenes carry no state variants
             ambient_light: None, // no dimension opinion — the black bytecode default
         });
-        app.enter_network_world(None);
+        app.enter_network_world(None, Skybox::Overworld);
         assert_eq!(app.screen, ScreenKind::World);
         assert!(app.world_is_network);
         assert_eq!(app.world_size, 32);
@@ -2282,7 +2288,7 @@ mod tests {
             variants: None, // test scenes carry no state variants
             ambient_light: None, // no dimension opinion — the black bytecode default
         });
-        app.enter_network_world(None);
+        app.enter_network_world(None, Skybox::Overworld);
         let flight = app.world_camera();
         let n = app.world_size as f32;
         assert_eq!(
@@ -2342,6 +2348,7 @@ mod tests {
                 camera: None,
                 spawn_biome: None,
                 slim_arm: false,
+                skybox: Skybox::Overworld,
             }),
         );
         assert_eq!(
@@ -2376,7 +2383,7 @@ mod tests {
         app.open(ScreenKind::Connect);
         // the join landed (an all-air window: the state machine must not care)
         app.net_world = Some(air_net_world(2, 0));
-        app.enter_network_world(None);
+        app.enter_network_world(None, Skybox::Overworld);
         assert!(app.world_is_network);
         assert!(app.world_quads.as_ref().unwrap().is_empty(), "air meshes to nothing");
         // no biome known: the vanilla in-game default situation
@@ -2437,7 +2444,7 @@ mod tests {
         let mut app = App::new(3);
         app.open(ScreenKind::Connect);
         app.net_world = Some(air_net_world(2, 0));
-        app.enter_network_world(Some("minecraft:swamp".into()));
+        app.enter_network_world(Some("minecraft:swamp".into()), Skybox::Overworld);
         assert_eq!(app.net_biome.as_deref(), Some("minecraft:swamp"));
         // Save and Quit unloads the level AND closes the live session
         let run = std::sync::Arc::new(std::sync::atomic::AtomicBool::new(true));
@@ -2484,7 +2491,7 @@ mod tests {
         let mut app = App::new(3);
         app.open(ScreenKind::Connect);
         app.net_world = Some(air_net_world(2, 0));
-        app.enter_network_world(Some("minecraft:swamp".into()));
+        app.enter_network_world(Some("minecraft:swamp".into()), Skybox::Overworld);
         let run = std::sync::Arc::new(std::sync::atomic::AtomicBool::new(true));
         app.attach_live_run(1, run);
         app.live_session_lost("Server closed".to_string());
@@ -2499,6 +2506,40 @@ mod tests {
         assert!(app.world_quads.is_none(), "the mesh dropped with the level");
         assert!(app.net_camera.is_none(), "the pose dropped with the level");
         assert!(app.net_biome.is_none(), "the biome situation dropped with the level");
+    }
+
+    #[test]
+    fn the_world_skybox_pins_at_level_entry_and_rides_the_dimension() {
+        // the vanilla SkyRenderState.skybox discipline: the extract pins
+        // the dimension's skybox at level entry, the sky pipeline gates
+        // on it, and re-entering the PROCEDURAL world re-pins Overworld
+        let mut app = App::new(3);
+        assert_eq!(app.world_skybox, Skybox::Overworld, "the App default");
+        // a nether join ships Skybox::None: the sky pipeline renders no
+        // sky state at all there (the extract returns before any exists)
+        app.open(ScreenKind::Connect);
+        app.net_world = Some(air_net_world(2, 0));
+        app.enter_network_world(None, Skybox::None);
+        assert!(app.world_is_network);
+        assert_eq!(app.world_skybox, Skybox::None, "the nether pin");
+        // a procedural re-entry re-pins the overworld sky (the extract
+        // re-runs on every level entry — a network nether never haunts
+        // the singleplayer world's sky)
+        app.enter_world();
+        assert!(!app.world_is_network);
+        assert_eq!(app.world_skybox, Skybox::Overworld, "the procedural re-pin");
+        // the resolution helper answers the built-in table for the synced
+        // dimension ids (the same values the raw JSONs state)
+        assert_eq!(
+            crate::world_view::skybox_for_dimension("minecraft:the_end"),
+            Skybox::End,
+            "the end joins ship the end skybox"
+        );
+        assert_eq!(
+            crate::world_view::skybox_for_dimension("minecraft:the_nether"),
+            Skybox::None,
+            "the nether joins ship no sky at all"
+        );
     }
 
     #[test]
@@ -2525,6 +2566,7 @@ mod tests {
                 camera: None,
                 spawn_biome: None,
                 slim_arm: true,
+                skybox: Skybox::Overworld,
             }),
         );
         assert!(app.world_is_network, "A adopted");
@@ -2571,6 +2613,7 @@ mod tests {
                 camera: None,
                 spawn_biome: None,
                 slim_arm: false,
+                skybox: Skybox::Overworld,
             }),
         );
         assert!(

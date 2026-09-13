@@ -1032,13 +1032,13 @@ mod tests {
         let midnight = 18_000i64;
         let render = |skybox: Skybox| {
             let mut fb = crate::raster::Framebuf::new(32, 32);
-            fb.clear([1, 2, 3], [0, 0, 0]);
+            fb.clear([0.004, 0.008, 0.012], [0.0; 3]);
             render_celestials(&mut fb, &ctx, &cam, midnight, skybox);
             fb.color
         };
         let cleared = {
             let mut fb = crate::raster::Framebuf::new(32, 32);
-            fb.clear([1, 2, 3], [0, 0, 0]);
+            fb.clear([0.004, 0.008, 0.012], [0.0; 3]);
             fb.color
         };
         assert_eq!(render(Skybox::None), cleared, "NONE must render nothing");
