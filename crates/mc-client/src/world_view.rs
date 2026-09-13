@@ -1015,6 +1015,11 @@ mod tests {
         // 48..63, right under the teleport's feet y 64 (a real vanilla
         // join burst is exactly this: surface terrain under the spawn)
         let mut snap = join_snapshot();
+        // a REAL overworld join: the vanilla dimension name rides with the
+        // synced vanilla layout (the base fixture's mock name would not
+        // resolve through this table)
+        snap.info.dimensions = vec!["minecraft:overworld".to_string()];
+        snap.info.current_dimension = "minecraft:overworld".to_string();
         snap.registry = RegistryData {
             dimension_types: vec![mc_protocol::DimensionTypeEntry {
                 name: "minecraft:overworld".to_string(),
@@ -1145,6 +1150,11 @@ mod tests {
     /// shows the surface, not deepslate).
     fn surface_snapshot() -> WorldSnapshot {
         let mut snap = join_snapshot();
+        // a REAL overworld join: the vanilla dimension name rides with the
+        // synced vanilla layout (the base fixture's mock name would not
+        // resolve through this table)
+        snap.info.dimensions = vec!["minecraft:overworld".to_string()];
+        snap.info.current_dimension = "minecraft:overworld".to_string();
         snap.registry = RegistryData {
             dimension_types: vec![mc_protocol::DimensionTypeEntry {
                 name: "minecraft:overworld".to_string(),

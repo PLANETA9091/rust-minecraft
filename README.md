@@ -308,6 +308,31 @@ hand-drawn:
   Zero render-path pixels: the tint CONSUMERS come next; the ten
   goldens are bit-identical by construction (the wire fixture carries
   no registry knowledge).
+  The **built-in dimension table is the skip-sync fallback (v0.3.52 —
+  the first CONSUMER of the v0.3.51 tables)**: a server that never
+  sends Registry Data (a bare mock, a trimmed proxy — or, once the
+  pack-version claim lands, a vanilla server that skipped the sync
+  BECAUSE the client claimed its known packs) no longer leaves the
+  world layout unknown. `WorldModel::dimension_min_y` now falls back
+  to the generated built-in `minecraft:dimension_type` table — the
+  SAME jar data a matching server would sync — when the synced
+  dimension table is EMPTY, and the honest scoping is pinned by test:
+  a bare server naming `minecraft:overworld` gets the real floor
+  (-64: the login pin and the nether Respawn re-pin resolve through
+  the fallback), an ARRIVED sync is the only truth (its entry wins
+  even when it disagrees with the jar, and a key it omits gets NO
+  built-in rescue — the server runs its own dimension set), and the
+  vanilla names the jar does not build stay unknown. The bare-mock
+  test fixtures were renamed accordingly (`mock:test`): a mock layout
+  that is NOT vanilla-shaped must not claim the vanilla name without
+  a sync, or the fallback would (correctly) shift its window under
+  the terrain. Zero render-path pixels: the golden scenes carry a
+  synced registry (sync-first) or none at all and never consult the
+  fallback — the ten goldens are bit-identical by construction,
+  verified on the release build. Tests +1 (workspace 247 → 248
+  passed / 0 failed / 3 ignored): the skip-sync fallback pin (all
+  four built-in layouts through a bare model, the login/Respawn flow,
+  sync-precedence, and the no-rescue-on-partial-sync rule).
   The **built-in registry tables ship from the jar (v0.3.51 — the
   pack-version claim's prerequisite)**: the generator now emits the
   data/minecraft/{dimension_type,timeline,tags/timeline} side of the
