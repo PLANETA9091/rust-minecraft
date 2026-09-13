@@ -21,7 +21,7 @@ use crate::world::*;
 /// texture mapping. When `tile` is a real atlas index the vertex colors carry
 /// the shade×AO multiplier and the rasterizer samples the official texture;
 /// when `tile == TILE_NONE` the vertex colors carry the full flat base color.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Quad {
     pub pts: [[f32; 3]; 4],
     pub colors: [[f32; 3]; 4],
@@ -662,6 +662,150 @@ mod tests {
             .find(|q| q.uvs[0] == [0.0, 1.0])
             .expect("the down quad");
         assert_eq!(down.colors[0], [0.5; 3], "down: direction shade 0.5");
+    }
+
+    /// The cell index of (8, 9, 8) — the litter cell the flat-path tests use.
+    fn litter_cell_idx() -> usize {
+        8 + 8 * CHUNK_X + 9 * CHUNK_X * CHUNK_Z
+    }
+
+    #[test]
+    fn leaf_litter_segment_one_meshes_the_northwest_quarter() {
+        // THE 14TH AUDIT, end to end: the REAL state id (30339, north x
+        // segment_amount 1) decodes to variant 1 and the mesher emits the
+        // template element's exact geometry — one quarter rect, up + down
+        let mut w = empty_world();
+        put(&mut w, 8, 8, 8, DIRT);
+        put(&mut w, 8, 9, 8, LEAF_LITTER);
+        let mut variants = vec![vec![0u8; CHUNK_X * CHUNK_Y * CHUNK_Z]];
+        variants[0][litter_cell_idx()] = crate::world_view::leaf_litter_variant(30339);
+        w.variants = Some(variants);
+        let quads = mesh_chunk(&w, 0, 0, None);
+        let litter: Vec<_> = quads
+            .iter()
+            .filter(|q| q.pts[0][1] == 9.0 + FLAT_Y)
+            .collect();
+        assert_eq!(litter.len(), 2, "one rect: up + down");
+        for q in &litter {
+            let xs: Vec<f32> = q.pts.iter().map(|p| p[0]).collect();
+            let zs: Vec<f32> = q.pts.iter().map(|p| p[2]).collect();
+            assert!(xs.contains(&8.0) && xs.contains(&8.5), "x half {xs:?}");
+            assert!(zs.contains(&8.0) && zs.contains(&8.5), "z half {zs:?}");
+            assert!(!xs.contains(&9.0) && !zs.contains(&9.0), "a quarter, not full");
+            assert_eq!(q.colors[0], q.colors[1], "no AO: uniform corners");
+        }
+        // the up quad's uv spans the texture's quarter too (u = x, v = z)
+        let up = litter
+            .iter()
+            .find(|q| q.uvs[0] == [0.0, 0.0])
+            .expect("the up quad");
+        assert_eq!(up.uvs[2], [0.5, 0.5], "uv spans the quarter");
+        assert_eq!(up.colors[0], [1.0; 3], "up: shade 1.0, legacy light 1.0");
+        // the down quad mirrors v WITHIN the rect: v = (z0 + z1)/16 - z
+        let down = litter
+            .iter()
+            .find(|q| q.uvs[0] == [0.0, 0.5])
+            .expect("the down quad");
+        assert_eq!(down.uvs[2], [0.5, 0.0], "v mirrored inside the rect");
+        assert_eq!(down.colors[0], [0.5; 3], "down: direction shade 0.5");
+    }
+
+    #[test]
+    fn leaf_litter_segments_two_and_three_stack_the_template_rects() {
+        // the multipart's exact model sets: segment 2 -> {m2} (the west
+        // strip), segment 3 -> {m2, m3} (strip + SE quarter, TWO rects)
+        let mut w = empty_world();
+        put(&mut w, 8, 9, 8, LEAF_LITTER);
+        let mut variants = vec![vec![0u8; CHUNK_X * CHUNK_Y * CHUNK_Z]];
+        variants[0][litter_cell_idx()] = crate::world_view::leaf_litter_variant(30340); // north, 2
+        w.variants = Some(variants);
+        let quads = mesh_chunk(&w, 0, 0, None);
+        let litter: Vec<_> = quads
+            .iter()
+            .filter(|q| q.pts[0][1] == 9.0 + FLAT_Y)
+            .collect();
+        assert_eq!(litter.len(), 2, "the west strip: up + down");
+        for q in &litter {
+            let xs: Vec<f32> = q.pts.iter().map(|p| p[0]).collect();
+            let zs: Vec<f32> = q.pts.iter().map(|p| p[2]).collect();
+            assert!(xs.contains(&8.0) && xs.contains(&8.5), "west half {xs:?}");
+            assert!(zs.contains(&8.0) && zs.contains(&9.0), "full depth {zs:?}");
+        }
+
+        let mut variants = vec![vec![0u8; CHUNK_X * CHUNK_Y * CHUNK_Z]];
+        variants[0][litter_cell_idx()] = crate::world_view::leaf_litter_variant(30341); // north, 3
+        w.variants = Some(variants);
+        let quads = mesh_chunk(&w, 0, 0, None);
+        let litter: Vec<_> = quads
+            .iter()
+            .filter(|q| q.pts[0][1] == 9.0 + FLAT_Y)
+            .collect();
+        assert_eq!(litter.len(), 4, "strip + SE quarter: two rects, up + down");
+        // the SE quarter rect exists: x [8.5, 9] x z [8.5, 9]
+        assert!(litter.iter().any(|q| {
+            let xs: Vec<f32> = q.pts.iter().map(|p| p[0]).collect();
+            let zs: Vec<f32> = q.pts.iter().map(|p| p[2]).collect();
+            xs.contains(&8.5) && xs.contains(&9.0) && zs.contains(&8.5) && zs.contains(&9.0)
+        }));
+        // and the west strip rides beside it
+        assert!(litter.iter().any(|q| {
+            let xs: Vec<f32> = q.pts.iter().map(|p| p[0]).collect();
+            let zs: Vec<f32> = q.pts.iter().map(|p| p[2]).collect();
+            xs.contains(&8.0) && xs.contains(&8.5) && zs.contains(&8.0) && zs.contains(&9.0)
+        }));
+    }
+
+    #[test]
+    fn leaf_litter_facing_east_rotates_the_footprint_with_glued_uv() {
+        // facing east = the blockstate's y=90: the NW-quarter rect turns
+        // about the cell center into the NE quarter; the uv stays GLUED
+        // to the corners (the texture turns with the element — vanilla)
+        let mut w = empty_world();
+        put(&mut w, 8, 9, 8, LEAF_LITTER);
+        let mut variants = vec![vec![0u8; CHUNK_X * CHUNK_Y * CHUNK_Z]];
+        variants[0][litter_cell_idx()] = crate::world_view::leaf_litter_variant(30351); // east, 1
+        w.variants = Some(variants);
+        let quads = mesh_chunk(&w, 0, 0, None);
+        let litter: Vec<_> = quads
+            .iter()
+            .filter(|q| q.pts[0][1] == 9.0 + FLAT_Y)
+            .collect();
+        assert_eq!(litter.len(), 2);
+        for q in &litter {
+            let xs: Vec<f32> = q.pts.iter().map(|p| p[0]).collect();
+            let zs: Vec<f32> = q.pts.iter().map(|p| p[2]).collect();
+            assert!(xs.contains(&8.5) && xs.contains(&9.0), "east half {xs:?}");
+            assert!(zs.contains(&8.0) && zs.contains(&8.5), "north half {zs:?}");
+            assert!(!xs.contains(&8.0), "the west edge vacated");
+        }
+        // the uv corners are the UNROTATED texture quarter, glued
+        let up = litter
+            .iter()
+            .find(|q| q.uvs[0] == [0.0, 0.0])
+            .expect("the up quad");
+        assert_eq!(up.uvs[2], [0.5, 0.5]);
+        // the first corner sits at the rotated position (x -> east edge)
+        assert_eq!(up.pts[0][0], 9.0, "the (0,0) corner rotated to east");
+        assert_eq!(up.pts[0][2], 8.0);
+    }
+
+    #[test]
+    fn leaf_litter_segment_four_is_bit_identical_to_the_legacy_look() {
+        // variant 0 (no opinion — the procedural scenes) and variant 13
+        // (north, segment 4 = the full rect, y-rot 0) must emit THE SAME
+        // bytes: the template uv arithmetic collapses to the old face_uv
+        // exactly at the full rect
+        let mut base = empty_world();
+        put(&mut base, 8, 8, 8, DIRT);
+        put(&mut base, 8, 9, 8, LEAF_LITTER);
+        let legacy = mesh_chunk(&base, 0, 0, None);
+
+        let mut w = base.clone();
+        let mut variants = vec![vec![0u8; CHUNK_X * CHUNK_Y * CHUNK_Z]];
+        variants[0][litter_cell_idx()] = crate::world_view::leaf_litter_variant(30342); // north, 4
+        w.variants = Some(variants);
+        let shaped = mesh_chunk(&w, 0, 0, None);
+        assert_eq!(legacy, shaped, "segment 4 = full rect = the old emission");
     }
 
     #[test]

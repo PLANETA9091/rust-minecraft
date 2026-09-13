@@ -474,6 +474,23 @@ mod tests {
         }
     }
 
+    /// One section whose block states ride the DIRECT palette (15 bits:
+    /// the entries ARE the global state ids — vanilla's own encoding for
+    /// big palettes). leaf_litter north, segment_amount 1 — the real
+    /// state 30339, the 14th audit's decode input — at (2,3,4).
+    fn leaf_litter_section() -> mc_protocol::ChunkSection {
+        let idx = |x: usize, y: usize, z: usize| (y << 8) | (z << 4) | x;
+        let mut entries = vec![0u32; 4096];
+        entries[idx(2, 3, 4)] = 30339;
+        let mut s = Vec::new();
+        s.extend_from_slice(&1i16.to_be_bytes());
+        s.push(15); // direct: global ids, no palette
+        s.extend_from_slice(&mc_protocol::pack_entries(&entries, 15));
+        s.push(0); // biomes: single valued
+        write_varint(&mut s, 1);
+        parse_one_section(s)
+    }
+
     /// Decode a section buffer through the REAL parser (the same wire
     /// shape the world_model tests use): stone at (0,0,0), dirt at (3,1,2).
     fn stone_dirt_section() -> mc_protocol::ChunkSection {
@@ -767,6 +784,48 @@ mod tests {
         // world.rs NAME_OF and the generated atlas KIND_NAMES describe the
         // same ids in the same order — the compile-time mirror
         assert_eq!(NAME_OF, mc_registry::generated::atlas::KIND_NAMES);
+    }
+
+    #[test]
+    fn leaf_litter_variant_decodes_the_real_state_ids() {
+        // the generated table's real ids: facing OUTER (north, south,
+        // west, east — the registry order) x segment_amount INNER; the
+        // packing is 1 + facing + (segment - 1) * 4 with the blockstate's
+        // y-rotation order north/east/south/west = 0..=3
+        assert_eq!(leaf_litter_variant(30339), 1, "north, segment 1");
+        assert_eq!(leaf_litter_variant(30340), 5, "north, segment 2");
+        assert_eq!(leaf_litter_variant(30341), 9, "north, segment 3");
+        assert_eq!(leaf_litter_variant(30342), 13, "north, segment 4");
+        assert_eq!(leaf_litter_variant(30343), 3, "south, segment 1");
+        assert_eq!(leaf_litter_variant(30346), 15, "south, segment 4");
+        assert_eq!(leaf_litter_variant(30347), 4, "west, segment 1");
+        assert_eq!(leaf_litter_variant(30350), 16, "west, segment 4");
+        assert_eq!(leaf_litter_variant(30351), 2, "east, segment 1");
+        assert_eq!(leaf_litter_variant(30354), 14, "east, segment 4");
+        // outside the block: the no-opinion byte
+        assert_eq!(leaf_litter_variant(1), 0, "stone");
+        assert_eq!(leaf_litter_variant(0), 0, "air");
+    }
+
+    #[test]
+    fn materialize_decodes_the_leaf_litter_variant_into_the_grid() {
+        let mut m = WorldModel::new();
+        m.apply(PlayEvent::Chunk(ChunkColumn {
+            x: 0,
+            z: 0,
+            sections: vec![leaf_litter_section()],
+            light: ChunkLight::default(),
+        }));
+        let world = materialize(&m, (0, 0), 1, 0, runtime_mapper);
+        assert_eq!(world.get(2, 3, 4), LEAF_LITTER, "the kind through the mapper");
+        let idx = 2 + 4 * CHUNK_X + 3 * CHUNK_X * CHUNK_Z;
+        assert_eq!(
+            world.variants.as_ref().expect("materialize always builds it")[0][idx],
+            1,
+            "north, segment_amount 1 -> the variant byte 1"
+        );
+        // every other cell: the no-opinion byte
+        assert_eq!(world.variants.as_ref().unwrap()[0][0], 0, "air carries none");
     }
 
     #[test]
