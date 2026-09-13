@@ -581,6 +581,47 @@ hand-drawn:
   timeline (−1 → 0..5/6 → rest at exactly 6 ticks), the re-trigger
   guard, the wrap-guard lerp, the mid-swing geometry delta, and the
   bit-identical rest pose.
+  The **texture namespace lands (v0.3.70 — the atlas-mapping round's
+  data half: texture id → pixels)**: `mc2rs-gen textures` walks every
+  model file the 26.2 jar ships (3928, strict block/|item/ prefixes),
+  collects every concrete texture id the textures maps reference
+  (including the 26.2 inline sprite dicts' "sprite" fields), and decodes
+  each one to RAW RGBA8 into `mc-registry/src/generated/textures.rs`
+  (7.1 MB): 2113 ids — 1252 block/ + 796 item/ + 64 trims/ + the literal
+  `missingno` (item/air.json and block/air.json reference it) — of which
+  2048 exist (2,241,536 texels: 2001 square 16×16 + 47 whole 32×32
+  sprites: hanging signs, signs, shelves, dried_ghast tentacles, the
+  seven spears in hand) and 65 are MISSING (the trims/items armor-trim
+  family + missingno — width=height=0, an empty texel span; the consumer
+  renders the vanilla checkerboard). The animation gate is MCMETA-FAITHFUL:
+  a texture is cropped to its first w×w frame ONLY when a sibling
+  .png.mcmeta carries "animation" (the census pins all 52 h>w domain
+  textures as mcmeta animations — so the crop is ALSO unconditional-crop
+  faithful on real data; zero w>h exist; a tall texture without mcmeta
+  stays whole, the vanilla rule). Pixels are RAW — NO tint is baked
+  (tintindex rides the quads; the consumer multiplies at draw time; the
+  WORLD atlas bakes because its render path has no per-face tint pass
+  yet — the tint-boundary pair is pinned: stone is byte-identical across
+  the two tables, grass_block_top differs by exactly the 0x91BD59 bake).
+  The census ran first (scripts/atlas_domain_census.py +
+  atlas_domain_census2.py) and the Rust walk reproduces every number
+  (2113/2048/65/52 crops/texels); reference pixels are pinned against an
+  independent PIL decode (stone's corners/center, iron_sword's
+  transparency, water_still's alpha 180). The domain is the models'
+  domain: the 57 trims/color_palettes PNGs exist but are unreferenced and
+  stay OUT. Test builds carry no debuginfo now ([profile.test] debug = 0
+  in the root Cargo.toml — rustc's debuginfo over 2.24M array literals
+  OOMs 4 GB runners mid-link; release never carried it). Zero
+  render-path contact (mc-client carries zero references to the new
+  table; the 5 crate-internal `textures::` hits are the pre-existing
+  TextureLut module); all 10 goldens verified at the exact CI flags,
+  every one rms 0.000, none regenerated. Tests +10 (workspace 316 → 326
+  passed / 0 failed / 3 ignored; mc-registry 34 → 40, mc2rs-gen +4): the
+  sorted binary-searchable namespace (a hit is NOT existence — missingno
+  hits and is missing), the per-tile span invariants (2048 = 2001×16² +
+  47×32², offsets tile 2,241,536 texels exactly), the cross-table stone
+  pin, the tint-boundary pair, the mcmeta crop gate, the sprite-dict
+  refusal, and the missing census.
   The **texture-slots resolution lands (v0.3.69 — the quad's texture ref
   becomes a concrete id)**: `crates/mc-registry/src/texture_slots.rs`
   resolves every model's texture slots through the parent chain over the
