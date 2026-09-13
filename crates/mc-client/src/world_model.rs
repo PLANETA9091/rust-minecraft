@@ -368,7 +368,7 @@ impl WorldModel {
                     mc_registry::generated::registry_order::WORLD_CLOCK_ORDER
                         .iter()
                         .position(|n| *n == clock_name)
-                        .map(|p| p as u32)
+                        .map(|p| p as i32)
                 } else {
                     None
                 }
@@ -868,13 +868,14 @@ mod tests {
         assert!(m.apply(PlayEvent::Time(ts2)));
         assert_eq!(m.day_tick(), Some(15_999), "the end's own clock through wire-order id 1");
         // the nether: the built-in dimension names NO clock — the
-        // documented first-clock fallback shape (the first state serves)
+        // documented first-clock fallback shape (the only state, the
+        // end's, serves — the arrival-order guess)
         m.current_dimension = Some("minecraft:the_nether".into());
-        assert_eq!(m.day_tick(), Some(6_000), "no clock named: the arrival-order fallback");
+        assert_eq!(m.day_tick(), Some(15_999), "no clock named: the arrival-order fallback");
         // a mock dimension name: unknown in both tables — the same
         // documented fallback (the bare-mock contract, unchanged)
         m.current_dimension = Some("mock:test".into());
-        assert_eq!(m.day_tick(), Some(6_000));
+        assert_eq!(m.day_tick(), Some(15_999));
         // a sync that DID arrive gets NO built-in rescue: a partial
         // dimension sync without the overworld key keeps the
         // first-clock fallback, the pre-fallback contract

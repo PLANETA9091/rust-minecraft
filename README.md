@@ -387,6 +387,37 @@ hand-drawn:
   verdict equivalence (plains + the dark_forest blend) and the verbatim
   overrides, and the model's wire-order fallback (names, quads,
   sync-precedence, no-rescue).
+  The **world_clock has its data-side twin (v0.3.56 — the day-tick
+  path's last hand-carried surface)**: the worldgen emitter now parses the
+  jar's `data/minecraft/world_clock/*.json` — and the honest finding is
+  that the 26.2 entries are EMPTY objects (`overworld.json`,
+  `the_end.json`, two bytes each): the clock behavior lives code-side and
+  the NAMES are the data. The emitted `WORLD_CLOCKS` table (appended
+  last — the previous generated file verified as a byte-exact prefix)
+  completes the consistency matrix: every registry the runtime dumper
+  ordered (dimension_type, biome, timeline, world_clock) now has a
+  built-in data-table twin pinned to the same member set. A stated field
+  in a future world_clock json is a REFUSAL, not a silent walk-past —
+  dropped data would be a lie. THE SKIP-SYNC DAY-TICK (the first
+  consumer): a claim-accepted server streams no Set Time registry
+  context, so `WorldModel::day_tick` falls back to the built-in evidence
+  under ONE gate — no dimension sync arrived at all: the clock NAME
+  through the built-in dimension table (overworld/overworld_caves name
+  `minecraft:overworld`, the_end names `minecraft:the_end`, the nether
+  names nothing), the clock ID through the wire-order table the twin
+  pins (the vanilla registration order IS the wire id). A sync that DID
+  arrive keeps every existing contract — its element names the clock (or
+  doesn't: the documented first-clock shape), its world_clock table maps
+  the id, and a key it omits gets no built-in rescue. Zero render-path
+  pixels by construction: the golden scenes carry a synced registry or
+  no Set Time knowledge and never consult the fallback — verified TWICE
+  on the release builds with the EXACT CI flags, all ten rms 0.000. Tests
+  +2 (workspace 259 → 261 passed / 0 failed / 3 ignored): the generator's
+  world_clock parse/emission + the payload refusal, mc-registry's twin
+  pin (the order table joins its data twin), and the model's skip-sync
+  day-tick (overworld through wire-order id 0, the end through id 1
+  never the overworld's ticks, the nether and a mock name on the
+  documented first-clock shape, a partial sync unrescued).
   The **registry-order evidence is dumped from the real runtime (v0.3.53 —
   the pack-version claim's LAST prerequisite)**: the generator grew its
   third runtime dumper — the checked-in clean-room `DumpRegistries.java` —
