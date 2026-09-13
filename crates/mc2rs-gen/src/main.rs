@@ -555,7 +555,7 @@ fn atlas_cmd(agent: &ureq::Agent, cache: &util::Cache, version: &str, out: &Path
     Ok(())
 }
 
-/// Resolve + write crates/mc-registry/src/generated/atlas.rs.
+/// Resolve + write crates/mc-registry/src/generated/{atlas,colormap}.rs.
 fn write_atlas(workspace_root: &Path, version: &str, client_sha1: &str, jar_bytes: &[u8]) -> Result<()> {
     let reg_dir = workspace_root.join("crates/mc-registry/src/generated");
     std::fs::create_dir_all(&reg_dir)?;
@@ -565,6 +565,16 @@ fn write_atlas(workspace_root: &Path, version: &str, client_sha1: &str, jar_byte
     std::fs::write(&path, &src)?;
     let tiles = src.matches("static TILE_").count();
     println!("      atlas: {} tiles -> {}", tiles, path.display());
+    let cmap = atlas::build_colormap(jar_bytes, version, client_sha1)
+        .with_context(|| format!("colormap build for {version}"))?;
+    let cmap_path = reg_dir.join("colormap.rs");
+    std::fs::write(&cmap_path, &cmap)?;
+    println!(
+        "      colormap: {}x{} grass/foliage grids -> {}",
+        atlas::COLORMAP_SIDE,
+        atlas::COLORMAP_SIDE,
+        cmap_path.display()
+    );
     Ok(())
 }
 

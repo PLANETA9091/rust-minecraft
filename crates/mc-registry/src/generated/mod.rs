@@ -1,6 +1,7 @@
 pub mod atlas;
 pub mod block_ids;
 pub mod blocks;
+pub mod colormap;
 pub mod font;
 pub mod gui;
 pub mod items;
