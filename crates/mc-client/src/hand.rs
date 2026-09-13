@@ -68,12 +68,90 @@ pub fn load(root: &Path) -> Option<ArmModel> {
 }
 
 impl ArmModel {
-    /// The hand pass: clear depth (vanilla clears depth between the level
-    /// and the hand) and draw the arm in view space under the world's
-    /// projection (same fov — vanilla's hand fov follows the world's).
-    pub fn draw(&self, fb: &mut crate::raster::Framebuf, proj: Mat4) {
+    /// The hand pass at an attack-animation progress (0 = rest; the
+    /// deterministic scenes never swing, so the goldens always see 0).
+    /// Clears depth (vanilla clears depth between the level and the hand)
+    /// and draws the arm in view space under the world's projection (same
+    /// fov — vanilla's hand fov follows the world's).
+    pub fn draw(&self, fb: &mut crate::raster::Framebuf, proj: Mat4, swing: f32) {
         fb.clear_depth();
-        fb.draw_hand_quads(proj, &self.quads, &self.rgba, skin::SKIN_SIDE as usize);
+        let quads = build_quads_at(swing, 0.0);
+        fb.draw_hand_quads(proj, &quads, &self.rgba, skin::SKIN_SIDE as usize);
+    }
+}
+
+/// The vanilla swing machinery, verbatim from LivingEntity's bytecode
+/// (`swing`, `updateSwingTime`, `getAttackAnim`, `getCurrentSwingDuration`
+/// + `SwingAnimation.DEFAULT = (WHACK, 6)` — the fist swing is 6 ticks).
+/// Our client advances one game tick per frame, so `tick()` rides the
+/// frame loop; the renderer samples `get_attack_anim(0.5)` (the canonical
+/// mid-tick partial the game's camera renders with).
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct SwingState {
+    pub swinging: bool,
+    /// `swingTime` — LivingEntity.swing() resets it to **-1** (the next
+    /// tick's +1 lands on 0 with attackAnim = 0).
+    pub swing_time: i32,
+    /// `oAttackAnim` (previous tick's progress — the lerp's from).
+    pub o_attack_anim: f32,
+    /// `attackAnim` = swingTime / duration (assigned every tick).
+    pub attack_anim: f32,
+}
+
+impl Default for SwingState {
+    fn default() -> Self {
+        Self {
+            swinging: false,
+            swing_time: 0,
+            o_attack_anim: 0.0,
+            attack_anim: 0.0,
+        }
+    }
+}
+
+impl SwingState {
+    /// The fist swing's tick duration: `SwingAnimation.DEFAULT` is
+    /// `(SwingAnimationType.WHACK, 6)` — bipush 6 in the static init.
+    pub const DEFAULT_DURATION: i32 = 6;
+
+    /// `LivingEntity.swing(hand)`'s trigger logic: a re-trigger is IGNORED
+    /// while a swing is still in its first half (swingTime in [0, dur/2));
+    /// otherwise (or fresh) swingTime = -1 and swinging = true.
+    pub fn start(&mut self) {
+        if !(self.swinging && self.swing_time < Self::DEFAULT_DURATION / 2 && self.swing_time >= 0)
+        {
+            self.swing_time = -1;
+            self.swinging = true;
+        }
+    }
+
+    /// `LivingEntity.updateSwingTime()` (one game tick): advance swingTime
+    /// while swinging (reset to rest at the duration), pin it to 0 at
+    /// rest, then attackAnim = swingTime / duration. oAttackAnim takes the
+    /// previous tick's value first (the tick's lerp bookkeeping).
+    pub fn tick(&mut self) {
+        let duration = Self::DEFAULT_DURATION;
+        self.o_attack_anim = self.attack_anim;
+        if self.swinging {
+            self.swing_time += 1;
+            if self.swing_time >= duration {
+                self.swing_time = 0;
+                self.swinging = false;
+            }
+        } else {
+            self.swing_time = 0;
+        }
+        self.attack_anim = self.swing_time as f32 / duration as f32;
+    }
+
+    /// `LivingEntity.getAttackAnim(partialTick)` verbatim: the o/attack
+    /// lerp with the wrap guard for the 1 -> 0 progress jump.
+    pub fn get_attack_anim(&self, partial_tick: f32) -> f32 {
+        let mut f = self.attack_anim - self.o_attack_anim;
+        if f < 0.0 {
+            f += 1.0;
+        }
+        self.o_attack_anim + f * partial_tick
     }
 }
 
@@ -314,3 +392,98 @@ mod tests {
     }
 }
 
+
+#[cfg(test)]
+mod swing_tests {
+    use super::*;
+
+    /// The vanilla swing timeline over 7 ticks after start(): swingTime
+    /// walks -1 -> 0 -> 1 -> ... -> 6 (reset to rest at the 6-tick
+    /// duration), attackAnim = swingTime/6 exactly.
+    #[test]
+    fn the_swing_state_walks_the_vanilla_timeline() {
+        let mut s = SwingState::default();
+        assert!(!s.swinging);
+        assert_eq!(s.get_attack_anim(0.5), 0.0, "rest: no swing");
+        s.start();
+        assert!(s.swinging);
+        assert_eq!(s.swing_time, -1, "LivingEntity.swing pins swingTime to -1");
+        let expected: [f32; 7] = [0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 0.0]
+            .map(|k| k / 6.0); // the bytecode's swingTime/duration fdiv
+        for e in expected {
+            s.tick();
+            assert_eq!(s.attack_anim, e, "attackAnim = swingTime/6");
+        }
+        assert!(!s.swinging, "the swing ended at the 6-tick duration");
+        assert_eq!(s.swing_time, 0);
+    }
+
+    /// LivingEntity.swing's guard: an early re-trigger (swingTime in
+    /// [0, dur/2)) is IGNORED; past the half-point it restarts.
+    #[test]
+    fn the_swing_guard_ignores_early_retrigger() {
+        let mut s = SwingState::default();
+        s.start();
+        s.tick(); // swingTime 0
+        s.tick(); // swingTime 1
+        s.start(); // 1 < 6/2 -> ignored
+        assert_eq!(s.swing_time, 1, "early re-trigger must be ignored");
+        s.tick();
+        s.tick(); // swingTime 3
+        s.start(); // 3 >= 6/2 -> restarts
+        assert_eq!(s.swing_time, -1, "past the half-point the swing restarts");
+        s.tick();
+        assert_eq!(s.swing_time, 0);
+    }
+
+    /// The rest pose is EXACTLY the zero-swing pose: every swing term is
+    /// zero at 0 and the two added rotations are the exact identity — the
+    /// goldens (always rendered at rest) cannot drift.
+    #[test]
+    fn the_zero_swing_pose_is_bit_identical_to_rest() {
+        let rest = build_quads();
+        let at_zero = build_quads_at(0.0, 0.0);
+        assert_eq!(rest.len(), at_zero.len());
+        for (r, z) in rest.iter().zip(&at_zero) {
+            assert_eq!(r.pts, z.pts, "corner positions must be bit-identical");
+            assert_eq!(r.uv, z.uv);
+        }
+    }
+
+    /// The swing terms move the arm (same UV unwrap, different geometry).
+    #[test]
+    fn the_swing_transform_moves_the_arm() {
+        let rest = build_quads();
+        let mid = build_quads_at(0.5, 0.0);
+        let mut moved = 0;
+        for (r, m) in rest.iter().zip(&mid) {
+            assert_eq!(r.uv, m.uv, "the UV unwrap never changes");
+            if r.pts != m.pts {
+                moved += 1;
+            }
+        }
+        assert!(moved > 0, "the mid-swing pose must differ from rest");
+    }
+
+    /// getAttackAnim's lerp + the wrap guard (progress 5/6 -> 0 must wrap
+    /// to +1/6, not lerp backwards across the seam).
+    #[test]
+    fn the_attack_anim_lerps_with_the_wrap_guard() {
+        let mut s = SwingState::default();
+        s.tick();
+        s.start();
+        s.tick(); // swingTime 0, attackAnim 0, o = 0
+        s.tick(); // swingTime 1, attackAnim 1/6, o = 0
+        let a = s.get_attack_anim(0.5);
+        assert!((a - (1.0f32 / 6.0) * 0.5).abs() < 1e-6, "mid-tick lerp");
+        // walk to the seam: the reset tick itself sets o = 5/6, attackAnim = 0
+        while s.swinging {
+            s.tick();
+        }
+        let wrapped = s.get_attack_anim(0.5);
+        assert!(
+            (wrapped - (5.0 / 6.0 + (1.0 / 6.0) * 0.5)).abs() < 1e-6,
+            "the 1->0 jump must wrap forward, not lerp backwards: {wrapped}"
+        );
+    }
+}

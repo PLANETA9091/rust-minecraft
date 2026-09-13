@@ -244,6 +244,7 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize) -> anyhow::Result<()>
         (u64, Result<crate::screens::PingInfo, String>),
     >();
     let mut net_seen = 0usize; // cursor into the append-only request log
+    let mut was_left_down = false; // the attack edge detector (vanilla left-click = swing)
     // offline-mode joins ride the same architecture: the "join" button
     // records the request, a detached worker runs the live join (login +
     // configuration + the play state pumped to the world-load milestone,
@@ -273,9 +274,16 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize) -> anyhow::Result<()>
         let (mx, my) = window.get_mouse_pos(minifb::MouseMode::Discard).unwrap_or((0.0, 0.0));
         let gmx = (mx as usize / 2) as i32;
         let gmy = (my as usize / 2) as i32;
-        if window.get_mouse_down(minifb::MouseButton::Left) {
+        let left_down = window.get_mouse_down(minifb::MouseButton::Left);
+        if left_down {
             app.on_click(gmx, gmy);
         }
+        // the vanilla attack: the LEFT press's rising edge swings the arm
+        // (minifb has no edge API — the previous frame's state is tracked here)
+        if left_down && !was_left_down {
+            app.on_attack();
+        }
+        was_left_down = left_down;
         app.update();
         // dispatch newly requested server-list pings to worker threads
         for req in &app.net_requests[net_seen..] {

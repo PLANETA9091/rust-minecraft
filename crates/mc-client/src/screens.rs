@@ -253,6 +253,10 @@ pub struct App {
     /// world frame; `None` = the skin asset is absent or failed its sha1
     /// verification and the hand is not drawn.
     pub arm: Option<crate::hand::ArmModel>,
+    /// The attack-swing animation state (LivingEntity's swing fields,
+    /// verbatim); the deterministic headless scenes never swing, so the
+    /// pixel goldens always see the rest pose.
+    pub swing: crate::hand::SwingState,
     /// The last biome the network world's music situation resolved to
     /// (the synced registry name at the player's feet). `None` until a
     /// join resolves one; cleared with the level (Save and Quit, a kick).
@@ -348,6 +352,7 @@ impl App {
             net_biome: None,
             live_runs: Vec::new(),
             arm: None,
+            swing: crate::hand::SwingState::default(),
         }
     }
 
@@ -368,6 +373,18 @@ impl App {
             // music on screens, music.game in-world (on_world_enter /
             // on_menu_open performed the vanilla-style switch)
             _ => self.music.update(),
+        }
+        // the swing clock ticks every game tick like the player entity's
+        // (at rest it pins swingTime to 0 and attackAnim to 0 — no-op)
+        self.swing.tick();
+    }
+
+    /// The vanilla attack input (left mouse press in-world): starts the
+    /// empty-hand swing. No-op outside the world or while paused (the
+    /// pause menu freezes the game — vanilla has no attack there).
+    pub fn on_attack(&mut self) {
+        if self.screen == ScreenKind::World && !self.paused {
+            self.swing.start();
         }
     }
 
@@ -833,7 +850,7 @@ impl App {
             self.arm = crate::hand::load(std::path::Path::new("assets-cache/jar"));
         }
         if let Some(arm) = &self.arm {
-            arm.draw(fb, ctx.proj);
+            arm.draw(fb, ctx.proj, self.swing.get_attack_anim(0.5));
         }
     }
 
