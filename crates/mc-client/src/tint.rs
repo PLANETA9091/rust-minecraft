@@ -33,21 +33,22 @@
 //! fixture's registry-less plains) stays bit-identical BY CONSTRUCTION.
 //!
 //! Documented deviations (deliberate, no silent guesses):
-//! - `grass_color_modifier` (swamp / dark_forest) is not consumed:
-//!   swamp's exact color rides the biome noise (unreachable noise-free),
-//!   dark_forest's is a documented blend — both when the modifier
-//!   consumer lands. (Vanilla applies it AFTER this resolution.)
 //! - `dry_foliage_color` is decoded in the table but the runtime palette
 //!   has no dry-foliage texture to tint yet — carried, unconsumed.
 //! - `temperature_modifier` does not feed the lookup — the audited
 //!   vanilla colormap path reads the RAW climate field.
+//! - `grass_color_modifier` IS consumed since v0.3.47 — but only the
+//!   position-free DARK_FOREST blend; SWAMP's exact color rides
+//!   `Biome.BIOME_INFO_NOISE` at (x·0.0225, z·0.0225) (two fixed
+//!   verdicts, position-dependent) — unreachable without per-position
+//!   noise, the base passes through (documented).
 //! - A no-jar fallback build (`REAL_GRIDS = false`, zeroed grids) keeps
 //!   the pre-colormap verdicts: an override-less biome then reports no
 //!   opinion and stays on the baked plains look.
 
 use crate::colormap;
 use crate::world::{GRASS, LEAVES, WATER};
-use mc_protocol::BiomeEntry;
+use mc_protocol::{BiomeEntry, GrassColorModifier};
 
 /// Slot order of the per-biome tint triple: the grass_block_top color
 /// (`None` = no opinion — only on a no-jar fallback build; the real
@@ -65,15 +66,20 @@ pub const WATER_SLOT: usize = 2;
 /// without one the climate samples the REAL jar colormap grids (the
 /// caller-side clamp inside `grass_from_climate`/`foliage_from_climate`,
 /// the raw temperature/downfall fields — `temperature_modifier` is not
-/// in the audited path). The water color is the codec's required field
-/// (the decoder refuses an entry without it, so `Some` is unconditional).
+/// in the audited path). The grass verdict then runs through the
+/// `grass_color_modifier` (vanilla wraps the BASE in
+/// `modifyColor(x, z, base)` — after this resolution). The water color
+/// is the codec's required field (the decoder refuses an entry without
+/// it, so `Some` is unconditional).
 pub fn entry_tints(entry: &BiomeEntry) -> [Option<u32>; 3] {
     let (temp, downfall) = (entry.temperature, entry.downfall);
+    let grass = entry
+        .effects
+        .grass_color
+        .or_else(|| colormap::grass_from_climate(temp, downfall))
+        .map(|base| apply_grass_modifier(entry.effects.grass_color_modifier, base));
     [
-        entry
-            .effects
-            .grass_color
-            .or_else(|| colormap::grass_from_climate(temp, downfall)),
+        grass,
         entry
             .effects
             .foliage_color
@@ -81,6 +87,37 @@ pub fn entry_tints(entry: &BiomeEntry) -> [Option<u32>; 3] {
         Some(entry.effects.water_color),
     ]
 }
+
+/// The vanilla `grass_color_modifier` over the RESOLVED base color —
+/// `BiomeSpecialEffects.GrassColorModifier.modifyColor(x, z, base)` (the
+/// eleventh javap audit, 26.2; the enum's declaration order is NONE,
+/// DARK_FOREST, SWAMP — the numbered subclasses map accordingly).
+///
+/// DARK_FOREST is pure arithmetic on the whole int (the carry between
+/// channels is part of the vanilla result, reproduced verbatim):
+///
+/// ```java
+/// ARGB.opaque(((grassColor & 0xFEFEFE) + 0x28340A) >> 1)
+/// ```
+///
+/// `ARGB.opaque(i) = i | 0xFF000000` — the alpha OR is outside our
+/// 0xRRGGBB tint representation, so the stored verdict is the blend
+/// itself. SWAMP is NOT portable to this per-entry triple: it samples
+/// `Biome.BIOME_INFO_NOISE` (a static PerlinSimplexNoise) at
+/// (x·0.0225, z·0.0225) and returns one of TWO FIXED colors
+/// (`< -0.1` -> the packed 0xFF4C763C, else the packed 0xFF6A7039) —
+/// genuinely position-dependent, so the base passes through and the
+/// deviation stays documented. NONE is the identity (the bytecode
+/// returns the input unchanged).
+pub fn apply_grass_modifier(modifier: GrassColorModifier, base: u32) -> u32 {
+    match modifier {
+        GrassColorModifier::DarkForest => ((base & 0xFEFEFE) + DARK_FOREST_BLEND) >> 1,
+        GrassColorModifier::Swamp | GrassColorModifier::None => base,
+    }
+}
+
+/// The dark_forest blend's vanilla constant (`ldc 2634762`).
+const DARK_FOREST_BLEND: u32 = 0x28340A;
 
 /// The tint slot a (kind, face) consumes — `None` for every untinted
 /// texture (the atlas' tintindex flags: grass BLOCK TOP only, leaves on
@@ -168,6 +205,53 @@ mod tests {
             entry_tints(&jungle),
             [Some(0x59C93C), Some(0x30BB0B), Some(0x3F76E4)]
         );
+    }
+
+    #[test]
+    fn dark_forest_blends_the_resolved_base() {
+        // The audited blend over the plains sample: (0x91BD59 & 0xFEFEFE)
+        // + 0x28340A >> 1 = 0x5C7831.
+        let mut dark = entry(0x3F76E4, None, None);
+        dark.effects.grass_color_modifier = GrassColorModifier::DarkForest;
+        assert_eq!(entry_tints(&dark)[0], Some(0x5C7831));
+        // the whole-int arithmetic is verbatim — a high-red base CARRIES
+        // into bit 24 and the shift folds it back (0xFE0000 + 0x28340A =
+        // 0x126340A >> 1 = 0x931A05, not a per-channel average)
+        assert_eq!(apply_grass_modifier(GrassColorModifier::DarkForest, 0xFE0000), 0x931A05);
+        // the override is the BASE too — the blend runs over whatever
+        // the resolution produced (vanilla wraps modifyColor around it)
+        let mut overridden = entry(0x3F76E4, Some(0x91BD59), Some(0x9E814D));
+        overridden.effects.grass_color_modifier = GrassColorModifier::DarkForest;
+        assert_eq!(entry_tints(&overridden)[0], Some(0x5C7831));
+        // foliage and water ride untouched — the modifier is grass-only
+        assert_eq!(entry_tints(&dark)[1], Some(0x77AB2F));
+        assert_eq!(entry_tints(&dark)[2], Some(0x3F76E4));
+    }
+
+    #[test]
+    fn dark_forest_climate_lands_the_canonical_color() {
+        // The END-TO-END vanilla verdict: the real grid sample at the
+        // dark forest climate (0.7, 0.8) is 0x79C05A; the blend turns it
+        // into 0x507A32 — the canonical dark forest grass color (probe-
+        // verified against the jar before any client code existed).
+        let mut dark = entry(0x3F76E4, None, None);
+        dark.temperature = 0.7;
+        dark.downfall = 0.8;
+        dark.effects.grass_color_modifier = GrassColorModifier::DarkForest;
+        assert_eq!(entry_tints(&dark)[0], Some(0x507A32));
+    }
+
+    #[test]
+    fn swamp_modifier_passes_the_base_through() {
+        // The documented deviation: swamp's verdict is BIOME_INFO_NOISE
+        // at the block's (x, z) — a per-position noise this per-entry
+        // triple cannot express; the base passes through (the climate
+        // sample here, the same verdict as v0.3.46).
+        let mut swamp = entry(0x617B64, None, None);
+        swamp.temperature = 0.8;
+        swamp.downfall = 0.9;
+        swamp.effects.grass_color_modifier = GrassColorModifier::Swamp;
+        assert_eq!(entry_tints(&swamp)[0], Some(0x6AC44E));
     }
 
     #[test]
