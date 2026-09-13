@@ -188,6 +188,19 @@ mod tests {
     use crate::world::STONE;
     use mc_protocol::{BiomeEffects, GrassColorModifier};
 
+    #[test]
+    fn leaf_litter_carries_the_dry_fold() {
+        // the 13th audit: the flat model's ONLY faces are up (2) and down
+        // (3), both tintindex 0 -> the registered dryFoliage() source; the
+        // side faces don't exist in the model, so they carry no source
+        assert_eq!(slot_for(LEAF_LITTER, 2), Some(DRY_SLOT), "up face");
+        assert_eq!(slot_for(LEAF_LITTER, 3), Some(DRY_SLOT), "down face");
+        assert_eq!(slot_for(LEAF_LITTER, 0), None, "no side face in the model");
+        assert_eq!(slot_for(LEAF_LITTER, 1), None, "no side face in the model");
+        assert_eq!(slot_for(LEAF_LITTER, 4), None, "no side face in the model");
+        assert_eq!(slot_for(LEAF_LITTER, 5), None, "no side face in the model");
+    }
+
     /// One decoded element with the given effects surface (the real
     /// NETWORK_CODEC shape).
     fn entry(water: u32, grass: Option<u32>, foliage: Option<u32>) -> BiomeEntry {

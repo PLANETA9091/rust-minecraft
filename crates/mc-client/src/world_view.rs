@@ -640,6 +640,13 @@ mod tests {
         // and carries NO tint slot (the audited BlockColors verdict)
         assert_eq!(runtime_mapper(448), PALE_LEAVES, "pale_oak_leaves distance=0 persistent=true");
         assert_eq!(runtime_mapper(475), PALE_LEAVES, "any state collapses");
+        // the thirteenth-audit kind: ALL 16 leaf_litter states (facing x
+        // segment_amount, the half-open 30339..30355 range in the generated
+        // table) ride ONE kind — the flat ground cover
+        assert_eq!(runtime_mapper(30_339), LEAF_LITTER, "leaf_litter first state");
+        assert_eq!(runtime_mapper(30_354), LEAF_LITTER, "leaf_litter last state");
+        assert_eq!(runtime_mapper(30_347), LEAF_LITTER, "any state collapses");
+        assert_eq!(runtime_mapper(30_355), AIR, "the range is half-open: moss_block");
         // deepslate carries an axis property — any state collapses (the
         // same policy as oak_log); redstone_ore has the lit state
         assert_eq!(runtime_mapper(30_416), DEEPSLATE, "deepslate axis=x");

@@ -565,6 +565,133 @@ mod tests {
     }
 
     #[test]
+    fn leaf_litter_meshes_flat_ground_quads() {
+        // the 13th-audit kind — the FIRST non-cube mesh path: exactly TWO
+        // quads (up + down), both on the model's y=0.25/16 plane, full
+        // footprint, `ambientocclusion: false` (all corners share the
+        // face's single shade × light multiplier)
+        let mut w = empty_world();
+        put(&mut w, 8, 8, 8, DIRT);
+        put(&mut w, 8, 9, 8, LEAF_LITTER);
+        let quads = mesh_chunk(&w, 0, 0, None);
+        let litter: Vec<_> = quads
+            .iter()
+            .filter(|q| q.pts[0][1] == 9.0 + FLAT_Y)
+            .collect();
+        assert_eq!(litter.len(), 2, "up + down only, no cube faces exist");
+        for q in &litter {
+            assert_eq!(
+                q.tile,
+                atlas::FACE_TILES[LEAF_LITTER as usize][2],
+                "the litter tile"
+            );
+            assert!(!q.translucent, "cutout, never translucent");
+            for p in q.pts {
+                assert!((p[1] - (9.0 + FLAT_Y)).abs() < 1e-6, "the flat plane");
+            }
+            let xs: Vec<f32> = q.pts.iter().map(|p| p[0]).collect();
+            let zs: Vec<f32> = q.pts.iter().map(|p| p[2]).collect();
+            assert!(xs.contains(&8.0) && xs.contains(&9.0), "x extent {xs:?}");
+            assert!(zs.contains(&8.0) && zs.contains(&9.0), "z extent {zs:?}");
+            assert_eq!(q.colors[0], q.colors[1], "no AO: uniform corners");
+            assert_eq!(q.colors[1], q.colors[2], "no AO: uniform corners");
+            assert_eq!(q.colors[2], q.colors[3], "no AO: uniform corners");
+        }
+        // up quad (uv [0,0] on the first corner): shade 1.0, no light layer
+        // -> legacy 1.0; down quad: the vanilla direction shade 0.5
+        let up = litter
+            .iter()
+            .find(|q| q.uvs[0] == [0.0, 0.0])
+            .expect("the up quad");
+        assert_eq!(up.colors[0], [1.0; 3], "up: shade 1.0, legacy light 1.0");
+        // the down quad's first corner uv: face_uv(3, [0,0,0]) = [0, 1-0]
+        let down = litter
+            .iter()
+            .find(|q| q.uvs[0] == [0.0, 1.0])
+            .expect("the down quad");
+        assert_eq!(down.colors[0], [0.5; 3], "down: direction shade 0.5");
+    }
+
+    #[test]
+    fn leaf_litter_never_occludes_or_casts_ao() {
+        // the ground cover doesn't hide the dirt top face under it (the
+        // is_transparent policy) and casts NO corner AO: the stone face
+        // whose front plane touches the litter cell keeps full-open
+        // corners — the shade-only 0.6 multiplier on every corner
+        let mut w = empty_world();
+        put(&mut w, 8, 8, 8, DIRT);
+        put(&mut w, 8, 9, 8, LEAF_LITTER);
+        put(&mut w, 7, 10, 8, STONE);
+        let quads = mesh_chunk(&w, 0, 0, None);
+        assert!(
+            quads.iter().any(|q| {
+                q.pts.iter().all(|p| {
+                    (p[1] - 9.0).abs() < f32::EPSILON
+                        && p[0] >= 8.0
+                        && p[0] <= 9.0
+                        && p[2] >= 8.0
+                        && p[2] <= 9.0
+                })
+            }),
+            "the dirt face under leaf litter renders (non-occluding)"
+        );
+        let face = quads
+            .iter()
+            .find(|q| {
+                q.pts.iter().all(|p| {
+                    (p[0] - 8.0).abs() < f32::EPSILON
+                        && p[1] >= 10.0
+                        && p[1] <= 11.0
+                        && p[2] >= 8.0
+                        && p[2] <= 9.0
+                })
+            })
+            .expect("the stone +X face whose front plane holds the litter");
+        for m in vertex_multiplier(face) {
+            assert!(
+                (m - 0.6).abs() < 1e-6,
+                "litter casts no AO (full-open corners, shade 0.6): {m}"
+            );
+        }
+    }
+
+    #[test]
+    fn leaf_litter_folds_the_dry_slot() {
+        // the dry fold, end to end: the litter faces consume the DRY_SLOT —
+        // a synced dry-foliage override rides the vertex carrier (the
+        // override / baked-plains multiplier), and the baked plains sample
+        // itself is a no-op (the atlas pixels already carry it)
+        let mut w = empty_world();
+        put(&mut w, 8, 8, 8, DIRT);
+        put(&mut w, 8, 9, 8, LEAF_LITTER);
+        w.biomes = Some(BiomeLayer {
+            ids: vec![vec![0; CHUNK_X * CHUNK_Y * CHUNK_Z]],
+            // ONLY the dry slot speaks: the pale-garden override from the
+            // 12th-audit probe; grass/foliage/water stay silent
+            tints: vec![[None, None, None, Some(0xA0A69C)]],
+        });
+        let quads = mesh_chunk(&w, 0, 0, None);
+        let up = quads
+            .iter()
+            .find(|q| q.pts[0][1] == 9.0 + FLAT_Y && q.uvs[0] == [0.0, 0.0])
+            .expect("the litter up quad");
+        let want = tint::unpack(0xA0A69C);
+        for c in up.colors {
+            assert_eq!(c, want, "the dry override rides the carrier");
+        }
+        // the baked plains sample (TINTS carries it) folds to the no-op
+        let baked = atlas::TINTS[LEAF_LITTER as usize][2];
+        assert_eq!(baked, 0xA37546, "the generator's TINT_DRY constant");
+        w.biomes.as_mut().unwrap().tints[0][3] = Some(baked);
+        let quads = mesh_chunk(&w, 0, 0, None);
+        let up = quads
+            .iter()
+            .find(|q| q.pts[0][1] == 9.0 + FLAT_Y && q.uvs[0] == [0.0, 0.0])
+            .expect("the litter up quad");
+        assert_eq!(up.colors[0], [1.0; 3], "the baked sample is a no-op");
+    }
+
+    #[test]
     fn biome_tint_folds_into_the_textured_carrier_only_when_it_differs() {
         let mut w = empty_world();
         put(&mut w, 8, 8, 8, WATER);
