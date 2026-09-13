@@ -468,6 +468,28 @@ hand-drawn:
   villager_schedule first via #universal, then day/moon/early_game;
   in_end/in_nether single-member; unknown tag empty; the visited-set
   guard).
+  The **biome tags have their data-side twin (v0.3.59 — the tag
+  matrix completes)**: the worldgen emitter now parses the jar's
+  `data/minecraft/tags/worldgen/biome/*.json` and emits `BIOME_TAGS`
+  beside the timeline tags — the SAME raw form (concrete
+  `minecraft:` members and nested `#`-references side by side;
+  `has_structure/*` subdirectory stems carry their slash). The real
+  26.2 surface: 68 tags, 390 members, and NOT ONE `replace` key
+  anywhere — verified before a line of emitter code was written. The
+  emission is appended LAST and the previous 31304-byte generated
+  file verified as a BYTE-EXACT PREFIX of the new 44910-byte one
+  (the prefix discipline survived a 68-entry table addition). The
+  mc-registry join-pin: every concrete member names a biome the
+  table carries, every nested ref names a tag the table carries —
+  the join NEVER dangles (proven, not assumed: 390/390 resolved).
+  This is the data half, the autopush-53 precedent: the runtime
+  consumer (a skip-sync fallback for the retained-but-unread Update
+  Tags biome tags) follows when a tag-driven lookup exists to serve;
+  no golden scene can change — no render path touches a tag table.
+  Tests +2 (workspace 264 → 266 passed / 0 failed / 3 ignored): the
+  generator's parse/emission fixture (concrete + nested members, the
+  strict prefix classification — a biome json is not a tag) and the
+  registry's jar-values + never-dangling join.
   The **registry-order evidence is dumped from the real runtime (v0.3.53 —
   the pack-version claim's LAST prerequisite)**: the generator grew its
   third runtime dumper — the checked-in clean-room `DumpRegistries.java` —
