@@ -17,6 +17,7 @@ mod skygen;
 mod skingen;
 mod soundgen;
 mod splashgen;
+mod texturesgen;
 mod uigen;
 mod util;
 mod version;
@@ -208,6 +209,19 @@ enum Cmd {
         #[arg(long, default_value = ".")]
         out: String,
     },
+    /// The texture namespace (every concrete id the models table references,
+    /// decoded to raw RGBA8) -> textures.rs: the atlas-mapping round's data
+    /// half — the id -> pixels link the element quads sample.
+    Textures {
+        #[arg(long)]
+        version: String,
+        /// Path to the official client jar (e.g. .mc2rs/classpath/client.jar).
+        #[arg(long)]
+        jar: String,
+        /// Workspace root (contains crates/).
+        #[arg(long, default_value = ".")]
+        out: String,
+    },
     /// Re-emit mc-registry/src/generated/worldgen.rs (biomes + the built-in
     /// dimension_type/timeline/timeline-tag registry tables) from a LOCAL
     /// client jar — the offline half of the worldgen arc: no network, no java.
@@ -350,6 +364,12 @@ fn main() -> Result<()> {
             let root = std::path::PathBuf::from(&out);
             let path = write_blockstates(&root, &bytes)?;
             println!("blockstates ({version}): {}", path.display());
+        }
+        Cmd::Textures { version, jar, out } => {
+            let bytes = std::fs::read(&jar).with_context(|| format!("read jar {jar}"))?;
+            let root = std::path::PathBuf::from(&out);
+            let path = write_textures(&root, &bytes, &version)?;
+            println!("textures ({version}): {}", path.display());
         }
         Cmd::ItemModels { version, jar, out } => {
             let bytes = std::fs::read(&jar).with_context(|| format!("read jar {jar}"))?;
@@ -574,6 +594,8 @@ fn generate(agent: &ureq::Agent, cache: &util::Cache, version: &str, out: &Path)
     println!("      models table: {}", models_path.display());
     let blockstates_path = write_blockstates(&workspace_root, &jar_bytes)?;
     println!("      blockstates table: {}", blockstates_path.display());
+    let textures_path = write_textures(&workspace_root, &jar_bytes, version)?;
+    println!("      textures table: {}", textures_path.display());
 
     let extracted = codegen::extract_runtime_assets(&mut zip, &workspace_root, &gen.ui, &gen.font)?;
     println!("[7/7] done in {:.1}s ({} runtime asset files -> assets-cache/jar)", t0.elapsed().as_secs_f32(), extracted);
@@ -871,6 +893,30 @@ fn write_blockstates(workspace_root: &Path, jar_bytes: &[u8]) -> Result<std::pat
         data.multipart_files,
         data.applies,
         data.model_refs,
+        path.display()
+    );
+    Ok(path)
+}
+
+/// Resolve + write crates/mc-registry/src/generated/textures.rs (the texture
+/// namespace: every concrete id the models table references, raw RGBA8, the
+/// atlas-mapping round's data half) from a local jar.
+fn write_textures(workspace_root: &Path, jar_bytes: &[u8], version: &str) -> Result<std::path::PathBuf> {
+    let mut zip =
+        zip::ZipArchive::new(std::io::Cursor::new(jar_bytes)).context("open client jar as zip")?;
+    let data = texturesgen::generate(&mut zip)?;
+    let reg_dir = workspace_root.join("crates/mc-registry/src/generated");
+    std::fs::create_dir_all(&reg_dir)?;
+    let path = reg_dir.join("textures.rs");
+    std::fs::write(&path, texturesgen::emit(&data, version, &util::sha1_hex(jar_bytes))?)?;
+    println!(
+        "      textures: {} model files -> {} ids ({} present / {} missing), {} first-frame crops, {} texels -> {}",
+        data.n_model_files,
+        data.ids.len(),
+        data.n_present,
+        data.n_missing,
+        data.n_first_frame,
+        data.texels.len(),
         path.display()
     );
     Ok(path)
