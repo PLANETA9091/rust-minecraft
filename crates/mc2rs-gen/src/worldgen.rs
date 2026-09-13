@@ -39,6 +39,17 @@ pub struct BiomeDef {
     pub foliage_color: Option<u32>,
 }
 
+/// The `DimensionType$Skybox` string-representable — the vanilla enum
+/// ("none" | "overworld" | "end") the client's sky pipeline gates on
+/// (SkyRenderer.extractRenderState: NONE returns before ANY sky state is
+/// extracted; END extracts only the end-flash triple).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Skybox {
+    None,
+    Overworld,
+    End,
+}
+
 /// One built-in `minecraft:dimension_type` entry: the jar's
 /// `data/minecraft/dimension_type/*.json` — the world layout (min_y/height)
 /// and environment (skylight, fixed time, ambient light) a server's synced
@@ -64,6 +75,15 @@ pub struct DimensionTypeEntry {
     /// 0xFF000000): black. The real jar states it per dimension
     /// (overworld #0a0a0a, nether #302821, end #3f473f).
     pub ambient_light_color: [u8; 3],
+    /// the `skybox` field — the vanilla codec is
+    /// `optionalFieldOf("skybox", OVERWORLD)` (the DimensionType
+    /// bytecode): an ABSENT key is the Overworld default (the real jar:
+    /// the overworld pair states nothing, the end states "end", the
+    /// nether states "none"). An unknown string would have the vanilla
+    /// codec reject the entry outright (StringRepresentable.fromEnum),
+    /// so no vanilla built-in can carry one — the parse falls back to
+    /// the codec default.
+    pub skybox: Skybox,
 }
 
 /// The per-biome tint extras the jar states beyond the classic color
@@ -300,6 +320,15 @@ pub fn generate<R: std::io::Read + std::io::Seek>(archive: &mut zip::ZipArchive<
                                 .and_then(hex_color)
                                 .map(|c| [(c >> 16) as u8, (c >> 8) as u8, c as u8])
                                 .unwrap_or([0, 0, 0]),
+                            // the ABSENT key is the codec default OVERWORLD
+                            // (optionalFieldOf — the DimensionType bytecode);
+                            // an unknown string the vanilla codec would
+                            // reject outright, so none can ride real data
+                            skybox: match v.get("skybox").and_then(Value::as_str) {
+                                Some("none") => Skybox::None,
+                                Some("end") => Skybox::End,
+                                _ => Skybox::Overworld,
+                            },
                             // string tag references only — the inline list
                             // form does not occur in the real jar
                             timelines: v
@@ -492,9 +521,16 @@ pub fn emit(data: &WorldgenData) -> Result<String> {
     // jar: the registry entries a vanilla server syncs and a matching client
     // could claim as known packs. Appended here so the biome tables above
     // stay byte-stable across the arc.
+    out.push_str("/// The `DimensionType$Skybox` enum — the vanilla string-representable\n");
+    out.push_str("/// (\"none\" | \"overworld\" | \"end\") the client's sky pipeline gates on\n");
+    out.push_str("/// (SkyRenderer.extractRenderState: NONE returns before ANY sky state,\n");
+    out.push_str("/// END extracts only the end-flash triple and returns). The ABSENT\n");
+    out.push_str("/// JSON key is the codec default OVERWORLD (optionalFieldOf — the\n");
+    out.push_str("/// DimensionType bytecode).\n");
+    out.push_str("#[derive(Debug, Clone, Copy, PartialEq, Eq)]\npub enum Skybox {\n    None,\n    Overworld,\n    End,\n}\n\n");
     out.push_str("/// One built-in `minecraft:dimension_type` registry entry (the jar's\n");
     out.push_str("/// `data/minecraft/dimension_type/*.json`): world layout + environment.\n");
-    out.push_str("#[derive(Debug, Clone, Copy, PartialEq)]\npub struct DimensionTypeDef {\n    pub name: &'static str,\n    pub min_y: i32,\n    pub height: u32,\n    pub logical_height: u32,\n    pub has_skylight: bool,\n    pub has_fixed_time: bool,\n    pub ambient_light: f32,\n    pub coordinate_scale: f64,\n    pub timelines: Option<&'static str>,\n    pub default_clock: Option<&'static str>,\n    /// The lightmap's AmbientColor base (visual/ambient_light_color;\n    /// the bytecode default black when the JSON states none).\n    pub ambient_light_color: [u8; 3],\n}\n\n");
+    out.push_str("#[derive(Debug, Clone, Copy, PartialEq)]\npub struct DimensionTypeDef {\n    pub name: &'static str,\n    pub min_y: i32,\n    pub height: u32,\n    pub logical_height: u32,\n    pub has_skylight: bool,\n    pub has_fixed_time: bool,\n    pub ambient_light: f32,\n    pub coordinate_scale: f64,\n    pub timelines: Option<&'static str>,\n    pub default_clock: Option<&'static str>,\n    /// The lightmap's AmbientColor base (visual/ambient_light_color;\n    /// the bytecode default black when the JSON states none).\n    pub ambient_light_color: [u8; 3],\n    /// The sky-pipeline gate (SkyRenderer.extractRenderState's skybox).\n    pub skybox: Skybox,\n}\n\n");
     out.push_str("pub static DIMENSION_TYPES: [DimensionTypeDef; ");
     out.push_str(&data.dimension_types.len().to_string());
     out.push_str("] = [\n");
@@ -504,7 +540,7 @@ pub fn emit(data: &WorldgenData) -> Result<String> {
             None => "None".to_string(),
         };
         out.push_str(&format!(
-            "    DimensionTypeDef {{ name: \"{}\", min_y: {}, height: {}, logical_height: {}, has_skylight: {}, has_fixed_time: {}, ambient_light: {:?}, coordinate_scale: {:?}, timelines: {}, default_clock: {}, ambient_light_color: {:?} }},\n",
+            "    DimensionTypeDef {{ name: \"{}\", min_y: {}, height: {}, logical_height: {}, has_skylight: {}, has_fixed_time: {}, ambient_light: {:?}, coordinate_scale: {:?}, timelines: {}, default_clock: {}, ambient_light_color: {:?}, skybox: Skybox::{:?} }},\n",
             rust_str(&d.name),
             d.min_y,
             d.height,
@@ -516,6 +552,7 @@ pub fn emit(data: &WorldgenData) -> Result<String> {
             opt(&d.timelines),
             opt(&d.default_clock),
             d.ambient_light_color,
+            d.skybox,
         ));
     }
     out.push_str("];\n\n");
@@ -867,13 +904,20 @@ mod tests {
         // overworld carries default_clock while the nether does not, the day
         // timeline's sky_light_factor rides numeric keyframes next to
         // string-valued visual tracks, and tags nest "#"-references
-        let nether = br##"{"ambient_light":0.1,"cardinal_light":"nether","coordinate_scale":8.0,"has_ceiling":true,"has_fixed_time":true,"has_skylight":false,"height":256,"logical_height":128,"min_y":0,"timelines":"#minecraft:in_nether"}"##;
+        let nether = br##"{"ambient_light":0.1,"cardinal_light":"nether","coordinate_scale":8.0,"has_ceiling":true,"has_fixed_time":true,"has_skylight":false,"height":256,"logical_height":128,"min_y":0,"skybox":"none","timelines":"#minecraft:in_nether"}"##;
         let overworld = br##"{"ambient_light":0.0,"coordinate_scale":1.0,"default_clock":"minecraft:overworld","has_skylight":true,"height":384,"logical_height":384,"min_y":-64,"timelines":"#minecraft:in_overworld","attributes":{"minecraft:visual/ambient_light_color":"#0a0a0a"}}"##;
+        // the stated "end" shape and the unknown-string shape (the
+        // vanilla codec would reject the latter outright — the parse
+        // falls back to the codec default, never a guess)
+        let the_end = br##"{"ambient_light":0.25,"coordinate_scale":1.0,"has_fixed_time":true,"has_skylight":true,"height":256,"logical_height":256,"min_y":0,"skybox":"end","timelines":"#minecraft:in_end"}"##;
+        let custom = br##"{"ambient_light":0.0,"coordinate_scale":1.0,"has_skylight":true,"height":384,"logical_height":384,"min_y":-64,"skybox":"weird","timelines":"#minecraft:in_overworld"}"##;
         let day = br##"{"clock":"minecraft:overworld","period_ticks":24000,"tracks":{"minecraft:gameplay/monsters_burn":{"keyframes":[{"ticks":12542,"value":true},{"ticks":23460,"value":false}],"modifier":"or"},"minecraft:visual/sky_color":{"keyframes":[{"ticks":133,"value":"#ffffff"},{"ticks":11867,"value":"#000000"}],"modifier":"multiply"},"minecraft:visual/sky_light_factor":{"keyframes":[{"ticks":22860,"value":0.24},{"ticks":730,"value":1.0},{"ticks":11270,"value":1.0},{"ticks":13140,"value":0.24}],"modifier":"multiply"}}}"##;
         let early_game = br##"{"clock":"minecraft:overworld","tracks":{"minecraft:gameplay/can_sleep":{"keyframes":[{"ticks":0,"value":true}]}}}"##;
         let mut zip = zip_of(&[
             ("data/minecraft/dimension_type/the_nether.json", nether.to_vec()),
             ("data/minecraft/dimension_type/overworld.json", overworld.to_vec()),
+            ("data/minecraft/dimension_type/the_end.json", the_end.to_vec()),
+            ("data/minecraft/dimension_type/custom.json", custom.to_vec()),
             ("data/minecraft/timeline/day.json", day.to_vec()),
             ("data/minecraft/timeline/early_game.json", early_game.to_vec()),
             ("data/minecraft/tags/timeline/universal.json", br##"{"values":["minecraft:villager_schedule"]}"##.to_vec()),
@@ -896,6 +940,13 @@ mod tests {
         // default (black) fills, the absent-attribute shape
         assert_eq!(o.ambient_light_color, [0x0a, 0x0a, 0x0a]);
         assert_eq!(n.ambient_light_color, [0, 0, 0]);
+        // the skybox parse: the stated "none"/"end" map to the enum, the
+        // ABSENT key is the codec default OVERWORLD, the unknown string
+        // falls back to the codec default (the vanilla rejection shape)
+        assert_eq!(n.skybox, Skybox::None);
+        assert_eq!(data.dimension_types["the_end"].skybox, Skybox::End);
+        assert_eq!(o.skybox, Skybox::Overworld);
+        assert_eq!(data.dimension_types["custom"].skybox, Skybox::Overworld);
 
         let d = &data.timelines["day"];
         assert_eq!(d.clock, "minecraft:overworld");
@@ -915,11 +966,15 @@ mod tests {
         );
 
         let emitted = emit(&data).unwrap();
-        assert!(emitted.contains("pub static DIMENSION_TYPES: [DimensionTypeDef; 2]"));
+        assert!(emitted.contains("pub static DIMENSION_TYPES: [DimensionTypeDef; 4]"));
         assert!(emitted.contains("min_y: -64, height: 384, logical_height: 384"));
         assert!(emitted.contains("ambient_light: 0.1, coordinate_scale: 8.0"));
         assert!(emitted.contains("ambient_light_color: [10, 10, 10]"));
         assert!(emitted.contains("ambient_light_color: [0, 0, 0]"));
+        assert!(emitted.contains("pub enum Skybox {"));
+        assert!(emitted.contains("skybox: Skybox::None"));
+        assert!(emitted.contains("skybox: Skybox::End"));
+        assert!(emitted.contains("skybox: Skybox::Overworld"));
         assert!(emitted.contains("pub static TL_DAY_SKY_LIGHT_FACTOR: [(i64, f32); 4] = [(730, 1.0), (11270, 1.0), (13140, 0.24), (22860, 0.24)];"));
         assert!(emitted.contains("pub static TIMELINES: [TimelineDef; 2]"));
         assert!(emitted.contains("period_ticks: Some(24000), tracks: 3"));
