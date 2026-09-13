@@ -581,6 +581,39 @@ hand-drawn:
   timeline (−1 → 0..5/6 → rest at exactly 6 ticks), the re-trigger
   guard, the wrap-guard lerp, the mid-swing geometry delta, and the
   bit-identical rest pose.
+  The **item model definitions land (v0.3.63 — the held-item arc's data
+  half, the biome-tags data-first precedent)**: the generator grew its
+  eleventh table — `assets/minecraft/items/` of the official jar parsed
+  into `generated/item_models.rs` (the 1.21.4+ definition format). The
+  census ran BEFORE any emitter code and the generator must agree with
+  it byte-for-byte (two independent implementations, the skingen
+  dual-decoder shape): **1537** definitions split into **1390 plain
+  `minecraft:model` roots** resolved to (model path, tints,
+  swap_animation_scale) — **731 pointing at `block/`, 659 at `item/`,
+  586 at `block/<own id>`** — plus **147 selector/special trees**
+  retained in `COMPLEX_ITEM_MODELS`, never silently dropped (select 71,
+  special 51, composite 16, condition 7, range_dispatch 2). Tints ride
+  as canonical compact JSON, value-faithful: grass_block's
+  `{"downfall":1.0,"temperature":0.5,"type":"minecraft:grass"}`,
+  filled_map's TWO (constant −1 + map_color 4603950). The key-set census
+  caught a field the format ships beyond `{model}`: `swap_animation_scale`
+  — the 26.2 **spears** all carry **1.95**, every one beside a `select`
+  tree (gui/ground vs in_hand contexts), so ZERO plain def carries it
+  and the column is all-None by evidence, not by omission (the parser
+  ACCEPTS the key — refusing would break the real jar; dropping it
+  silently would lose stated data). The extend-parser-first refusals
+  are pinned: an unknown root key or model-node key refuses, an
+  unnamespaced model path refuses, and a `models/item/` json is NOT an
+  item definition (the strict prefix discipline). Offline arc = the
+  worldgen/skin shape: `mc2rs-gen item-models --version 26.2 --jar
+  <client.jar>` + `write_item_models()` in the regen pipeline. Tests +4
+  (workspace 277 → 281 passed / 0 failed / 3 ignored): three generator
+  fixture tests (resolve + tints + census, unknown-key refusal,
+  unnamespaced refusal) and the registry pin (counts, the verbatim spot
+  rows, the spear facts, the 731/659 split, and the joins — every def
+  and every skipped item names an item `ITEMS` carries). Zero render
+  path touches the table yet, so all 10 goldens verified at the exact
+  CI flags, every one rms 0.000, none regenerated.
   The **registry-order evidence is dumped from the real runtime (v0.3.53 —
   the pack-version claim's LAST prerequisite)**: the generator grew its
   third runtime dumper — the checked-in clean-room `DumpRegistries.java` —
