@@ -616,6 +616,38 @@ hand-drawn:
   cutout rule. Also repairs a pre-existing doctest break (an unannotated
   pseudo-code fence in the item_bake docs compiled as Rust and failed
   `cargo test --workspace` on the clean tree).
+  The **swing-arc sweep lands (v0.3.81 — the swing chain's pixel anchors
+  stretch from one progress to the whole curve)**: the carried-since-
+  v0.3.76 candidate finally banked. Both first-person term curves are
+  extracted into named functions (`hand::swing_terms` — the bare arm's
+  f10..f14 of `renderPlayerArm`; `hand::item_swing_terms` — the held
+  item's f5s/f6s/f7s/f5/f6 of swingArm + applyItemArmAttackTransform),
+  an op-for-op refactor the existing bit-identity tests plus the full
+  golden matrix prove byte-safe (12/12 pass, every one rms 0.000, on
+  the REBUILT release binaries that embed the refactor). The sweep then
+  pins BOTH curves BIT-EXACTLY at seven progresses (0, 0.1, 0.25, 0.5,
+  0.75, 0.9, 1.0) against an independently computed oracle
+  (`scripts/swing_terms_oracle.py`, a numpy f32 emulation of the
+  f64-sin/sqrt-narrowed-to-f32 chain): 70 bit assertions, matched on
+  the FIRST run. Three facts the tables lock: (1) rest carries EXACT
+  zeros — including the two NEGATIVE zeros of the multiplied terms,
+  which an IEEE == cannot distinguish but from_bits can; (2) progress 1
+  is NOT rest at the term level — sin(pi_f32) is -8.742278e-8, the
+  f64-narrowing fingerprint a f32-sin rewrite would flip; (3) the
+  mid-arc shape (the rotY amount EXACT 1.0 at p=0.25, the Z pull EXACT
+  -0.4/-0.2 at p=0.5). The pixel level closes the arc: a binary probe
+  (--swing-progress over the full held scene) and the in-test renders
+  agree that p=0.25 (6240 px) and p=0.75 (5583 px) really move pixels
+  with the bulk right of center, and **p=1.0 renders BIT-IDENTICAL to
+  rest** — every vanilla swing term is a sin multiple vanishing at both
+  ends, and the ~1e-8 pi_f32 residue flips NO rasterized pixel (sha1-
+  identical PNGs; the coverage flips are background-independent: the
+  left-half counts 337/0 match the binary and in-test probes to the
+  pixel). Tests +3 (workspace 373 → 376 passed / 0 failed / 3 ignored;
+  mc-client hand 17 → 20): the term sweep tables, the p=1 epsilon pose
+  (terms move the corner bits while the UV unwrap stays and the pixels
+  do not), and the pixel-arc sweep with the exact in-test counts pinned
+  probe-first. No golden regenerated, no render semantics touched.
   The **biome-tag resolution semantic lands (v0.3.80 — the generated
   tag table's first consumer surface)**: `mc-registry::flatten_biome_tag`
   turns a tag id into the flattened member set the vanilla datapack
