@@ -253,10 +253,18 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                 // the dry fold (DRY_SLOT), with `ambientocclusion: false`
                 // (no corner AO — the model verdict) and no cullface (both
                 // faces draw unconditionally; the raster backface-culls
-                // each to its own side). The full-footprint template
-                // (segment 4) is the shape here — per-segment coverage
-                // (quarter/half-strip quads) needs state-property
-                // extraction, a documented follow-up.
+                // each to its own side).
+                // THE 14TH AUDIT: the state's properties ride the variants
+                // grid — `segment_amount` picks the coverage rect(s) (the
+                // template elements' exact geometry; the multipart's model
+                // sets are 1->{m1}, 2->{m2}, 3->{m2,m3}, 4->{m4}) and
+                // `facing` the y-rotation (north=0 / east=90 / south=180 /
+                // west=270, the blockstate's own table). No opinion
+                // (variant 0 — the procedural scenes, the pre-variants
+                // look) = the full footprint at y-rot 0, BIT FOR BIT the
+                // 13th-audit emission: segment 4 IS the full rect and the
+                // template uv arithmetic collapses to the old `face_uv`
+                // exactly at that rect.
                 if id == LEAF_LITTER {
                     let tile = if (id as usize) < atlas::N_KINDS {
                         atlas::FACE_TILES[id as usize][2]
@@ -268,6 +276,30 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                         .map(crate::timeline::sky_light_factor)
                         .unwrap_or(1.0);
                     let fy = wy as f32 + FLAT_Y;
+                    let variant = world
+                        .variants
+                        .as_ref()
+                        .and_then(|g| g.get(cx + cz * world.chunks_per_side))
+                        .map(|g| g[lx + lz * CHUNK_X + ly * CHUNK_X * CHUNK_Z])
+                        .unwrap_or(0);
+                    let (rot_idx, segment) = if variant == 0 {
+                        (0usize, 4u8)
+                    } else {
+                        let v = variant - 1;
+                        ((v & 3) as usize, (v >> 2) + 1)
+                    };
+                    // (x0, z0, x1, z1) in TEXTURE PIXELS — the audited
+                    // template elements: model_1 the NW quarter, model_2
+                    // the west strip, model_3 the SE quarter, model_4 the
+                    // full cover.
+                    let rects: &[(f32, f32, f32, f32)] = match segment {
+                        1 => &[(0.0, 0.0, 8.0, 8.0)],
+                        2 => &[(0.0, 0.0, 8.0, 16.0)],
+                        3 => &[(0.0, 0.0, 8.0, 16.0), (8.0, 8.0, 16.0, 16.0)],
+                        _ => &[(0.0, 0.0, 16.0, 16.0)],
+                    };
+                    let theta = rot_idx as f32 * std::f32::consts::FRAC_PI_2;
+                    let (sn, cs) = theta.sin_cos();
                     for face in [2usize, 3] {
                         let base = if tile == atlas::TILE_NONE {
                             lut
@@ -288,38 +320,57 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                         // client-wide convention); `None` keeps legacy look
                         let clight =
                             light.map(|l| corner_light(l, world.chunks_per_side, wx, wy, wz, face));
-                        let mut pts = [[0f32; 3]; 4];
-                        let mut colors = [[0f32; 3]; 4];
-                        let mut uvs = [[0f32; 2]; 4];
-                        for (i, c) in FACE_CORNERS[face].iter().enumerate() {
-                            pts[i] = [wx as f32 + c[0], fy, wz as f32 + c[2]];
-                            // The vanilla lightmap combine, VERBATIM (the
-                            // same arithmetic as the cube path above).
-                            let lm = match clight.as_ref() {
-                                Some((sky, block)) => {
-                                    let sky_b = sky[i].map(|v| light_brightness(v) * sky_factor);
-                                    let block_b = block[i].map(light_brightness);
-                                    match (sky_b, block_b) {
-                                        (Some(s), Some(b)) => (s + b).min(1.0),
-                                        (Some(s), None) | (None, Some(s)) => s,
-                                        (None, None) => 1.0,
+                        for &(px0, pz0, px1, pz1) in rects {
+                            let mut pts = [[0f32; 3]; 4];
+                            let mut colors = [[0f32; 3]; 4];
+                            let mut uvs = [[0f32; 2]; 4];
+                            for (i, c) in FACE_CORNERS[face].iter().enumerate() {
+                                // The corner's UNROTATED position inside the
+                                // rect (block units), uv GLUED to it — the
+                                // template's per-face uv arithmetic (up:
+                                // u = x, v = z; down mirrors v WITHIN the
+                                // rect, v = (z0 + z1 - z)/16 — exactly the
+                                // old `face_uv` 1 - z at the full rect).
+                                let ux = (px0 + c[0] * (px1 - px0)) / 16.0;
+                                let uz = (pz0 + c[2] * (pz1 - pz0)) / 16.0;
+                                uvs[i] = if face == 2 {
+                                    [ux, uz]
+                                } else {
+                                    [ux, (pz0 + pz1) / 16.0 - uz]
+                                };
+                                // The blockstate's y-rotation about the cell
+                                // center; the uv stays glued (the element
+                                // turns, the texture turns with it).
+                                let rx = 0.5 + (ux - 0.5) * cs - (uz - 0.5) * sn;
+                                let rz = 0.5 + (ux - 0.5) * sn + (uz - 0.5) * cs;
+                                pts[i] = [wx as f32 + rx, fy, wz as f32 + rz];
+                                // The vanilla lightmap combine, VERBATIM (the
+                                // same arithmetic as the cube path above).
+                                let lm = match clight.as_ref() {
+                                    Some((sky, block)) => {
+                                        let sky_b = sky[i].map(|v| light_brightness(v) * sky_factor);
+                                        let block_b = block[i].map(light_brightness);
+                                        match (sky_b, block_b) {
+                                            (Some(s), Some(b)) => (s + b).min(1.0),
+                                            (Some(s), None) | (None, Some(s)) => s,
+                                            (None, None) => 1.0,
+                                        }
                                     }
-                                }
-                                None => 1.0, // no light layer — legacy look
-                            };
-                            // `ambientocclusion: false` — shade and light
-                            // only, NO AO_CURVE term.
-                            let m = shade * lm;
-                            colors[i] = [base[0] * m, base[1] * m, base[2] * m];
-                            uvs[i] = face_uv(face, *c);
+                                    None => 1.0, // no light layer — legacy look
+                                };
+                                // `ambientocclusion: false` — shade and light
+                                // only, NO AO_CURVE term.
+                                let m = shade * lm;
+                                colors[i] = [base[0] * m, base[1] * m, base[2] * m];
+                            }
+                            out.push(Quad {
+                                pts,
+                                colors,
+                                uvs,
+                                tile,
+                                translucent: false,
+                            });
                         }
-                        out.push(Quad {
-                            pts,
-                            colors,
-                            uvs,
-                            tile,
-                            translucent: false,
-                        });
                     }
                     continue;
                 }
@@ -469,6 +520,7 @@ mod tests {
             light: None,
             day_tick: None,
             biomes: None,
+            variants: None,
         }
     }
 

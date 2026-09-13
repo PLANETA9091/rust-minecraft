@@ -235,7 +235,7 @@ pub fn emit_block_ids(workspace_root: &Path, version: &str, client_sha1: &str, d
         src.push_str(&format!("    ({lo}, {hi}, \"{p}\"),\n"));
     }
     src.push_str(
-        "]\n\n\
+        "];\n\n\
          /// The raw `k=v,k=v` property string of a global state id (binary\n\
          /// search over the generated runs); `None` past the table,\n\
          /// `Some(\"\")` when the block has no properties.\n\

@@ -33296,7 +33296,7 @@ pub const STATE_PROPS: &[(u32, u32, &str)] = &[
     (32359, 32360, "tip=true"),
     (32360, 32361, "tip=false"),
     (32361, 32366, ""),
-]
+];
 
 /// The raw `k=v,k=v` property string of a global state id (binary
 /// search over the generated runs); `None` past the table,

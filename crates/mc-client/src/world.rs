@@ -94,6 +94,17 @@ pub struct World {
     /// ride along). `None` for the procedural scene: the mesher keeps
     /// the baked look bit for bit.
     pub biomes: Option<BiomeLayer>,
+    /// The network world's per-cell STATE-VARIANT byte — the property
+    /// shape the palette kind alone cannot carry (`materialize` decodes
+    /// it from the global state id through the generated per-state
+    /// property table, the 14th audit). `0` = no opinion: the flat
+    /// ground cover renders the full footprint (the 13th-audit look,
+    /// every procedural scene). `1..=16` = leaf_litter's facing x
+    /// segment_amount: `1 + facing_idx + (segment_amount - 1) * 4` with
+    /// facing north/east/south/west = 0..=3 (the blockstate's y-rotation
+    /// order). `None` for the procedural scene: bit for bit the previous
+    /// mesh.
+    pub variants: Option<Vec<Vec<u8>>>,
 }
 
 /// A biome cell with no opinion — the server never answered for the
@@ -196,6 +207,7 @@ impl World {
             light: None, // the procedural scene carries no light layer
             day_tick: None, // no clock yet: full day
             biomes: None, // the procedural scene carries no biome layer
+            variants: None, // the procedural scene carries no state variants
         };
         w.generate();
         w

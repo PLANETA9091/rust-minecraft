@@ -95,6 +95,11 @@ pub fn materialize(
         day_tick: model.day_tick(),
         // filled after the walk (the ids copy needs the mutable local)
         biomes: None,
+        // the per-cell STATE-VARIANT grid rides the SAME window (the 14th
+        // audit): decoded from the raw global state id through the
+        // generated per-state property table; zeros where the block
+        // carries no variant (the mesher's no-opinion look)
+        variants: Some(vec![vec![0u8; CHUNK_X * CHUNK_Y * CHUNK_Z]; side * side]),
     };
     let side_i = side as i32;
     for gz in 0..side_i {
@@ -104,6 +109,7 @@ pub fn materialize(
                 continue; // unsent column -> the grid's fresh air + unknown light
             };
             let grid = &mut world.chunks[(gx + gz * side_i) as usize];
+            let variants = world.variants.as_mut().expect("just built");
             // the caller anchors the copy; the model answers column-local
             // y when min_y is unknown and world-y when it is — querying
             // through block() keeps ONE source of truth for the index
@@ -121,6 +127,15 @@ pub fn materialize(
                         if mapped != AIR {
                             grid[lx as usize + lz as usize * CHUNK_X + gy as usize * CHUNK_X * CHUNK_Z] =
                                 mapped;
+                        }
+                        // the variant rides the SAME walk (the 14th audit):
+                        // the state's properties, decoded once here — the
+                        // mesher reads the byte, never the wire id
+                        let variant = leaf_litter_variant(id);
+                        if variant != 0 {
+                            variants[(gx + gz * side_i) as usize]
+                                [lx as usize + lz as usize * CHUNK_X + gy as usize * CHUNK_X * CHUNK_Z] =
+                                variant;
                         }
                     }
                 }
@@ -331,6 +346,53 @@ impl LiveView {
             biome,
         }
     }
+}
+
+/// The per-cell VARIANT byte the palette kind alone cannot carry: the
+/// STATE's properties, decoded through the generated per-state table
+/// (`props_of`, the 14th audit — `mc2rs-gen block-ids` / the
+/// `dump-block-states` arc). Currently leaf_litter only: `facing`
+/// (north=0, east=1, south=2, west=3 — the blockstate's y-rotation
+/// order) x `segment_amount` (1..=4) packs into
+/// `1 + facing + (segment_amount - 1) * 4` (1..=16). Every other block —
+/// and any props string that fails to parse — yields 0: the mesher's
+/// no-opinion full-footprint look.
+pub fn leaf_litter_variant(id: u32) -> u8 {
+    if mc_registry::generated::block_ids::block_name_of(id) != Some("minecraft:leaf_litter") {
+        return 0;
+    }
+    let Some(props) = mc_registry::generated::block_ids::props_of(id) else {
+        return 0;
+    };
+    let mut facing = 0u8;
+    let mut segment = 1u8;
+    for pair in props.split(',') {
+        let Some((k, v)) = pair.split_once('=') else {
+            continue;
+        };
+        match k {
+            "facing" => {
+                facing = match v {
+                    "north" => 0,
+                    "east" => 1,
+                    "south" => 2,
+                    "west" => 3,
+                    _ => return 0,
+                };
+            }
+            "segment_amount" => {
+                segment = match v {
+                    "1" => 1,
+                    "2" => 2,
+                    "3" => 3,
+                    "4" => 4,
+                    _ => return 0,
+                };
+            }
+            _ => {}
+        }
+    }
+    1 + facing + (segment - 1) * 4
 }
 
 /// The REAL id mapper, GENERATED from the official jar's bootstrapped
