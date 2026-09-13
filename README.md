@@ -616,6 +616,35 @@ hand-drawn:
   cutout rule. Also repairs a pre-existing doctest break (an unannotated
   pseudo-code fence in the item_bake docs compiled as Rust and failed
   `cargo test --workspace` on the clean tree).
+  The **biome-tag resolution semantic lands (v0.3.80 — the generated
+  tag table's first consumer surface)**: `mc-registry::flatten_biome_tag`
+  turns a tag id into the flattened member set the vanilla datapack
+  loader builds from `data/minecraft/tags/worldgen/biome/*.json` (the
+  raw 68-tag / 390-member table the generator emits verbatim): entries
+  walked in FILE ORDER, a `#`-nested reference expanded DEPTH-FIRST at
+  its position (the referenced tag's own file order), the built set
+  deduplicating on FIRST occurrence (the tag is a set — a biome
+  reachable through two paths resolves once), and three load failures
+  refused to `None` exactly as vanilla refuses the datapack: unknown
+  tag, unknown nested reference, and a REFERENCE CYCLE (the expansion
+  stack fails closed instead of looping). The flattened members are
+  additionally validated against the biome table (a registry-bound tag
+  loads only when every reference resolves). The real table cannot
+  cycle (the census join proves every ref resolves), so the dedup and
+  cycle rules pin on a SYNTHETIC table through a generic core the
+  public wrapper delegates to. GOLDENS: untouched — BY DATA, NOT BY
+  LUCK: grep proves mc-client/mc2rs-pixel carry ZERO references to the
+  new functions (pure registry-side data work, no render path), and the
+  full matrix was re-verified through verify_goldens.sh ON THE REBUILT
+  release binaries (the script's own rebuild embeds the new code), 12/12
+  pass, every one rms 0.000. Tests +4 (workspace 369 → 373 passed / 0
+  failed / 3 ignored; mc-registry 72 → 76): flat tags build to their
+  own file order (is_forest verbatim; is_overworld the largest flat
+  set, disjoint from is_nether/is_end), the nested reference expands
+  depth-first in place (is_ocean's four deep oceans at the HEAD, the
+  two-level recursion ruined_portal_ocean == is_ocean's flatten), the
+  synthetics pin dedup/cycle/self-ref/unknown-ref, and the end-to-end
+  sweep builds all 68 tags with every flattened member registered.
   The **leaf-litter variant→model palette mapping lands (v0.3.79 — the
   banked v0.3.78 item, and the palette's chain of custody is now
   complete for the ground cover)**: the mesher's leaf-litter flat
