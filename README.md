@@ -616,6 +616,31 @@ hand-drawn:
   cutout rule. Also repairs a pre-existing doctest break (an unannotated
   pseudo-code fence in the item_bake docs compiled as Rust and failed
   `cargo test --workspace` on the clean tree).
+  The **held item joins the golden matrix (v0.3.75 — persistent pixel
+  coverage for the display arc's render path)**:
+  `goldens/gui_world_held_320x180.png` is the ELEVENTH golden — the world
+  scene with the iron sword in hand (`--screen world --ui-frame 30 --seed
+  20260214 --held-item item/iron_sword`, 320x180), gating at max-rms 0
+  like its six GUI siblings: the whole first-person stack (the posed
+  item-model bake → display pose → hand anchor → `draw_sampled_quads`
+  with the alpha<128 cutout) is now pinned pixel-for-pixel, so the arc's
+  render path can no longer drift silently. Proven deterministic the
+  project way before pinning: two independent renders SHA-IDENTICAL
+  (`5274d725…`), then diffed against the plain world golden — rms 30.338,
+  9.45% of pixels changed (the sword's screen region), i.e. the scene
+  really exercises the new path and is not a copy of `gui_world`. The
+  second half of the round closes a documentation gap the README itself
+  exposed: `verify_goldens.sh` has been referenced since v0.3.43 but the
+  file never landed — it now exists at the repo root and IS the golden
+  gate: all eleven scenes re-rendered at their exact recorded flags
+  (the same flags every worklog round verified with), each diffed
+  through mc2rs-pixel, CPU/NET gated at max-rms 8 and the seven GUI
+  screens at max-rms 0, one command, strict exit code, no automatic
+  regeneration (a golden update stays a deliberate, documented act).
+  GOLDENS: one ADDED (`gui_world_held_320x180`), none regenerated — the
+  full matrix re-verified through the new script, 11/11 pass, every one
+  rms 0.000. Tests +0 (the render path itself is unchanged — this round
+  pins it; workspace 359 passed / 0 failed / 3 ignored).
   The **item-model bake lands (v0.3.73 — the held-item geometry link)**:
   `crates/mc-registry/src/item_bake.rs` derives the generated item
   models' quads — the sprite extrusion of 26.2's
@@ -1574,8 +1599,12 @@ cargo run -p mc2rs-gen -- assets --version 26.2
 cargo run -p mc-client --release            # windowed fly-camera
 cargo run -p mc-client --release -- --headless --width 640 --height 360 --out shot.png
 
-# pixel diff
+# pixel diff (one scene)
 cargo run -p mc2rs-pixel -- --a render.png --b goldens/cpu_320x180.png --out diff.png
+
+# the FULL golden matrix — all scenes re-rendered at their exact recorded
+# flags and diffed against goldens/ (CPU/NET max-rms 8, GUI max-rms 0)
+./verify_goldens.sh
 ```
 
 ## Performance architecture (the 240 FPS plan)
