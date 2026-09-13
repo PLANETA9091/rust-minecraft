@@ -3611,10 +3611,12 @@ mod tests {
         // the villager record: THREE VarInts (type, profession, level)
         entries.extend(test_support::entity_data_entry(20, s::VILLAGER_DATA,
             &[test_support::entity_data_varint(2), test_support::entity_data_varint(14), test_support::entity_data_varint(3)].concat()));
-        // the item stack: count, item registry id, patch — added damage
-        // (VarInt) + unbreakable (the ZERO-BYTE unit), removed rarity
+        // the item stack: count, item registry id, ADDED count, REMOVED
+        // count, then the added entries (damage VarInt + unbreakable the
+        // ZERO-BYTE unit), then the removed entries (rarity) — the $3
+        // layout is both counts FIRST, not count-entries-count-entries
         let mut stack_value = Vec::new();
-        for v in [3i32, 745, 2, 1, 35, 4, 1, 12] {
+        for v in [3i32, 745, 2, 1, 3, 35, 4, 12] {
             stack_value.extend_from_slice(&test_support::entity_data_varint(v));
         }
         entries.extend(test_support::entity_data_entry(21, s::ITEM_STACK, &stack_value));
@@ -3651,20 +3653,6 @@ mod tests {
         );
     }
 
-
-    #[test]
-    fn probe_stack_bytes() {
-        use entity_data_serializers as s;
-        let mut stack_value = Vec::new();
-        for v in [3i32, 745, 2, 1, 35, 4, 1, 12] {
-            stack_value.extend_from_slice(&test_support::entity_data_varint(v));
-        }
-        eprintln!("stack_value bytes: {stack_value:02X?}");
-        let p = test_support::set_entity_data_packet(77, &test_support::entity_data_entry(21, s::ITEM_STACK, &stack_value));
-        let d = parse_set_entity_data(&p);
-        eprintln!("stack-only parse: {d:?}");
-        panic!("probe done");
-    }
 
     /// Set Entity Data: the 0xFF index is the EOF marker — an empty
     /// list is legal, and ANY bytes after the marker are drift (the

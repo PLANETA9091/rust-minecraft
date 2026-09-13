@@ -919,6 +919,45 @@ hand-drawn:
   (VILLAGER_DATA at 18 doubles as the order proof), the generated-id
   pin, and the model's merge semantics (replace-one-leave-others, the
   null-lookup drop, the re-spawn reset).
+  The **the items carry their state — ITEM_STACK decodes (v0.3.106)**:
+  serializer 7 leaves the object-graph refusal list. The audit walked
+  three bytecode hops: `ItemStack.OPTIONAL_STREAM_CODEC` = the
+  anonymous `ItemStack$1` over `DataComponentPatch.STREAM_CODEC` —
+  a VarInt COUNT whose `ifgt` makes count <= 0 the EMPTY stack with
+  NOTHING else on the wire, a VarInt item registry id (`Item.STREAM_CODEC`
+  = `holderRegistry(ITEM)`, the $29 byIdOrThrow), then the patch:
+  `DataComponentPatch$3.decode` = VarInt ADDED count, VarInt REMOVED
+  count (both zero = the EMPTY patch early return), added entries as
+  {component type id, the type's OWN value}, removed entries as {type
+  id} — the absence IS the payload. The component type itself rides
+  `DataComponentType.STREAM_CODEC` = `StreamCodec.recursive(..)` =
+  `ByteBufCodecs.registry(DATA_COMPONENT_TYPE)` — the same numeric
+  byIdOrThrow VarInt, and its ids are `DataComponents.<clinit>`'s
+  REGISTRATION order (the third registry this project has pinned by
+  clinit order against the wiki-era instinct). The patch wire is
+  UNFRAMED — no length prefix — so the decode carries the SIXTEEN
+  primitive value codecs (four VarInt durability lanes, the two
+  ZERO-BYTE unit lanes where the type's presence IS the payload, the
+  bare component tags for custom_name/item_name, the compound-only
+  custom_data — `COMPOUND_TAG`'s decode map is the DecoderException on
+  any other shape, the BE f32, the three UTF identifier strings, the
+  256-capped lore tag list, the idMapper rarity ordinal, the bool) and
+  REFUSES the other ninety-five: an unknown id exactly where vanilla's
+  byIdOrThrow throws, a known-but-unimplemented one because a value's
+  byte length is only knowable through a codec the port does not
+  carry — there is no honest skip. mc-client untouched BY
+  CONSTRUCTION (the metadata BTreeMap is variant-agnostic). GOLDENS
+  UNTOUCHED BY CONSTRUCTION: 12/12 at rms 0.000 (no golden flow
+  carries metadata packets; the mesher untouched). Tests +2 (workspace
+  451 -> 453 passed / 0 failed / 3 ignored): the item stack's three
+  layers (both empty-stack sentinels incl. the negative count, the
+  drift-behind-empty refusal, the empty patch header, the removal-only
+  patch, and the FULL sixteen-type added patch in one entry — every
+  codec shape decoded), the patch's refusal map (the unknown 999, the
+  negative id, the known-but-unimplemented enchantments at 13, the
+  negative added count, the lore list over its 256 cap, and the
+  non-compound custom_data), and the ITEM_STACK entry absorbed into
+  the twenty-two-serializer round-trip packet.
   The **the villagers carry their data — VILLAGER_DATA decodes
   (v0.3.105)**: serializer 18 leaves the object-graph refusal list.
   The javap walk pinned the composite from the 26.2 bytecode:
