@@ -490,6 +490,31 @@ hand-drawn:
   generator's parse/emission fixture (concrete + nested members, the
   strict prefix classification — a biome json is not a tag) and the
   registry's jar-values + never-dangling join.
+  The **player skin joins the generated registry (v0.3.60 — the
+  first-person hand's data half)**: a new generator arc reads the jar's
+  `assets/minecraft/textures/entity/player/wide/steve.png` (the classic
+  64×64 layout, 848 bytes, sha1-pinned) and emits
+  `mc-registry/src/generated/skin.rs` — the integrity sha1s at BOTH
+  layers (the verbatim source PNG and the generator's RGBA8 decode of
+  it, independently cross-checked against a second decoder over all
+  16 384 bytes) plus the vanilla `PlayerModel` arm-box geometry:
+  texOffs (40, 16), box 4×12×4, the six faces unfolded exactly like
+  vanilla `ModelPart`'s cube unwrap (top, bottom, then the side strip
+  right → front → left → back), every rect pinned in-bounds. The
+  PIXELS follow the font-texture pattern: the full regen pipeline now
+  extracts the skin into the runtime asset root
+  (`entity/player/wide/steve.png`) for the client to stream and
+  sha1-verify at render time. The offline arc is a standalone
+  subcommand (`mc2rs-gen skin --version 26.2 --jar <client.jar>`), the
+  worldgen/pack-claim shape. This is the data half, the autopush-53
+  precedent: the view-space arm pass (the first-person hand itself)
+  consumes it next and is the round that regenerates goldens with its
+  explanation; until then no render path touches the skin table and no
+  golden scene can change. Tests +3 (workspace 266 → 269 passed / 0
+  failed / 3 ignored): the generator's parse/emission fixture (painted
+  arm faces, sha1 pins, in-bounds rects, the non-square refusal) and
+  the registry's vanilla-unwrap pin (both sha1 layers, the face math,
+  the bounds).
   The **registry-order evidence is dumped from the real runtime (v0.3.53 —
   the pack-version claim's LAST prerequisite)**: the generator grew its
   third runtime dumper — the checked-in clean-room `DumpRegistries.java` —

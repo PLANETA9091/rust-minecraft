@@ -191,5 +191,17 @@ pub fn extract_runtime_assets(
             n += 1;
         }
     }
+    // The player skin (wide Steve): the first-person hand's pixel source,
+    // streamed from the runtime root and sha1-verified by the client.
+    {
+        let dest = out_root.join(crate::skingen::RUNTIME_PATH);
+        if !dest.exists() {
+            if let Ok(bytes) = read_entry(archive, crate::skingen::WIDE_STEVE_JAR_PATH) {
+                fs::create_dir_all(dest.parent().unwrap())?;
+                fs::write(dest, bytes)?;
+                n += 1;
+            }
+        }
+    }
     Ok(n)
 }

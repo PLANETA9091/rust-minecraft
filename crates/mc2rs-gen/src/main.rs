@@ -507,6 +507,8 @@ fn generate(agent: &ureq::Agent, cache: &util::Cache, version: &str, out: &Path)
 
     println!("[6/7] extracting REAL texture atlas (blockstates -> models -> PNGs)...");
     write_atlas(&workspace_root, version, &client_sha1, &jar_bytes)?;
+    let skin_path = write_skin(&workspace_root, &jar_bytes)?;
+    println!("      skin table: {}", skin_path.display());
 
     let extracted = codegen::extract_runtime_assets(&mut zip, &workspace_root, &gen.ui, &gen.font)?;
     println!("[7/7] done in {:.1}s ({} runtime asset files -> assets-cache/jar)", t0.elapsed().as_secs_f32(), extracted);

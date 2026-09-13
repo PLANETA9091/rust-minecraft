@@ -8,6 +8,7 @@ pub mod items;
 pub mod lang;
 pub mod sounds;
 pub mod sky;
+pub mod skin;
 pub mod splashes;
 pub mod registry_order;
 pub mod worldgen;

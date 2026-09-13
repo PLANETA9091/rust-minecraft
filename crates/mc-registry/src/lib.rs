@@ -135,6 +135,54 @@ mod tests {
     }
 
     #[test]
+    fn the_player_skin_arm_geometry_is_the_vanilla_unwrap() {
+        use generated::skin::{
+            ARM_BOX_PX, ARM_FACES, ARM_TEX_OFFS, SKIN_SIDE, STEVE_WIDE_PNG_SHA1,
+            STEVE_WIDE_RGBA_SHA1,
+        };
+        // the classic skin layout
+        assert_eq!(SKIN_SIDE, 64);
+        // vanilla PlayerModel (wide model): texOffs (40, 16), box 4x12x4
+        assert_eq!(ARM_TEX_OFFS, (40, 16));
+        assert_eq!(ARM_BOX_PX, [4, 12, 4]);
+        // the six faces unfold exactly like vanilla ModelPart's cube unwrap:
+        // top, bottom, then the side strip right -> front -> left -> back
+        let (u, v) = ARM_TEX_OFFS;
+        let [w, h, d] = ARM_BOX_PX;
+        let expected = [
+            (u + d, v, w, d),
+            (u + d + w, v, w, d),
+            (u, v + d, d, h),
+            (u + d, v + d, w, h),
+            (u + d + w, v + d, d, h),
+            (u + d + w + d, v + d, w, h),
+        ];
+        for (f, e) in ARM_FACES.iter().zip(expected) {
+            assert_eq!((f.u, f.v, f.w, f.h), e, "arm unwrap must be the vanilla one");
+        }
+        // every face stays inside the 64x64 texture
+        for f in ARM_FACES.iter() {
+            assert!(
+                u32::from(f.u) + u32::from(f.w) <= SKIN_SIDE
+                    && u32::from(f.v) + u32::from(f.h) <= SKIN_SIDE,
+                "face {:?} escapes the skin texture",
+                f
+            );
+        }
+        // the source is the REAL 26.2 jar entry, pinned at BOTH layers: the
+        // verbatim PNG bytes and the generator's decode of them (independently
+        // cross-checked against a second decoder over all 64*64*4 bytes).
+        assert_eq!(
+            STEVE_WIDE_PNG_SHA1,
+            "a030e0de66508e6b21e44ede14cbf71b68edf68c"
+        );
+        assert_eq!(
+            STEVE_WIDE_RGBA_SHA1,
+            "e2683b8b87d3a671d54c49377f8bcee89eeb34bf"
+        );
+    }
+
+    #[test]
     fn the_wire_order_tables_match_the_built_in_tables() {
         use generated::registry_order::{BIOME_ORDER, DIMENSION_TYPE_ORDER, TIMELINE_ORDER};
         use generated::worldgen::{BIOMES, DIMENSION_TYPES, TIMELINES};
