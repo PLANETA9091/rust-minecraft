@@ -103,12 +103,14 @@ const FACE_ROTATION_QUANTUM: u16 = 90;
 /// *_cross_emissive templates).
 const MAX_LIGHT_EMISSION: u64 = 15;
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Axis {
     X,
     Y,
     Z,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub enum ElementRotation {
     /// The classic single-axis form.
     Axis {
@@ -121,6 +123,7 @@ pub enum ElementRotation {
     Euler { x: f32, y: f32, z: f32, origin: [f32; 3] },
 }
 
+#[derive(Debug, Clone, PartialEq)]
 pub struct ElementFace {
     /// None = the vanilla default UV (the bounds projection the consumer
     /// expands); 531 faces ship without one.
@@ -134,6 +137,7 @@ pub struct ElementFace {
     pub rotation: Option<u16>,
 }
 
+#[derive(Debug, Clone, PartialEq)]
 pub struct Element {
     pub from: [f32; 3],
     pub to: [f32; 3],
@@ -857,7 +861,7 @@ pub fn emit_elements(data: &ModelsData) -> Result<String> {
                 face_strs.push(match slot {
                     Some(fc) => {
                         let uv = match fc.uv {
-                            Some([a, b, c2, d]) => format!("Some([{}, {}, {}, {}])", f(*a), f(*b), f(*c2), f(*d)),
+                            Some([a, b, c2, d]) => format!("Some([{}, {}, {}, {}])", f(a), f(b), f(c2), f(d)),
                             None => "None".to_string(),
                         };
                         let cull = match fc.cullface {

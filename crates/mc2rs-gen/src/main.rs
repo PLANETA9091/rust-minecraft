@@ -812,6 +812,9 @@ fn write_models(workspace_root: &Path, jar_bytes: &[u8]) -> Result<std::path::Pa
     std::fs::create_dir_all(&reg_dir)?;
     let path = reg_dir.join("models.rs");
     std::fs::write(&path, modelgen::emit(&data)?)?;
+    let elements_path = reg_dir.join("elements.rs");
+    std::fs::write(&elements_path, modelgen::emit_elements(&data)?)?;
+    let element_total: usize = data.elements.values().map(|v| v.len()).sum();
     println!(
         "      models: {} files ({} block / {} item), {} carry elements -> {}",
         data.models.len(),
@@ -819,6 +822,11 @@ fn write_models(workspace_root: &Path, jar_bytes: &[u8]) -> Result<std::path::Pa
         data.items,
         data.element_models.len(),
         path.display()
+    );
+    println!(
+        "      elements: {} elements typed -> {}",
+        element_total,
+        elements_path.display()
     );
     Ok(path)
 }

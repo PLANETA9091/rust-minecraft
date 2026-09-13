@@ -2,6 +2,7 @@ pub mod atlas;
 pub mod block_ids;
 pub mod blocks;
 pub mod colormap;
+pub mod elements;
 pub mod font;
 pub mod gui;
 pub mod item_models;
