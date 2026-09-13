@@ -166,6 +166,9 @@ fn run_join(
             // the BUILT-IN table when the sync carried no dimension
             // table at all
             let skybox = view.model.skybox();
+            // the fog pair rides with it: the dimension's STATED distances
+            // (the nether's 10/96) or None — the window treatment's domain
+            let fog = view.model.fog_distances();
             let first = view.refresh(crate::world_view::runtime_mapper);
             let spawn_biome = first.biome.clone();
             let shipped = tx.send((
@@ -180,6 +183,7 @@ fn run_join(
                     spawn_biome,
                     slim_arm,
                     skybox,
+                    fog,
                 }),
             ));
             if shipped.is_err() {

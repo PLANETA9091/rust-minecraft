@@ -732,6 +732,41 @@ hand-drawn:
   both partials, and the render witness (an active flash paints the
   END sky, NONE still returns before any state, OVERWORLD is
   byte-identical with and without a flash riding along).
+  The **nether's fogged walls render (v0.3.93 — the stated fog
+  distances)**: the environment-attribute chain consumes its next pair.
+  The audit ran first-hand on the 26.2 jar: `EnvironmentAttributes.<clinit>`
+  pins `visual/fog_start_distance` default 0.0 and
+  `visual/fog_end_distance` default 1024.0 (both FLOAT, both
+  `.syncable()` — both RIDE the registry sync), and of the four
+  dimension JSONs ONLY the nether states the pair — 10.0 / 96.0, the
+  fogged walls (the overworld pair, the caves and the end state no fog
+  keys at all). The generator parses both into the built-in table
+  (`DimensionTypeDef.fog_start_distance`/`fog_end_distance`, None = the
+  bytecode defaults' shape — the regenerated table's diff is exactly
+  the 4 rows + the struct docs). mc-protocol's `DimensionTypeEntry`
+  grows the same two fields decoded from the flat attributes compound
+  under the PAIR-OR-NOTHING rule: a one-sided statement is not a real
+  vanilla shape and reads as the honest absence, never a half guess;
+  the mock registry's nether element now states the real 10/96 and the
+  overworld states none (the packet-level assertions pin both). The
+  model grows `WorldModel::fog_distances()` — the ambient discipline's
+  three-branch precedence: the SYNCED entry's stated pair wins, the
+  built-in table serves the skip-sync case, and `None` (no pair
+  anywhere) is the defaults' verdict. The consumer: the App pins the
+  pair at level entry like the skybox (both join sites resolve through
+  the model; the procedural entry drops it) and the world view's fog
+  becomes `world_fog.unwrap_or((n * 0.55, n * 1.7))` — the STATED
+  distances render verbatim when a dimension states them, and the
+  WINDOW TREATMENT covers the unstated shape: the bytecode defaults
+  (0/1024) are far beyond this client's 5x5-chunk window, where a
+  nearly-invisible vanilla fog would show raw window edges — the
+  documented, deliberate rendering of the far defaults, and the reason
+  every golden world (overworld, unstated) is byte-stable. Goldens:
+  12/12 pass untouched. Tests +1 (workspace 408 -> 409 passed / 0
+  failed / 3 ignored): the fog accessor's precedence (the built-in
+  nether pair on skip-sync, the synced truth winning, the silent sync
+  and the one-sided statement reading None) and the App pin discipline
+  (the nether join pins 10/96, the procedural re-entry drops it).
   The **synced ambient rides the wire (v0.3.89 — the server's truth)**:
   the ambient arc's wire half closes. The audit ran first-hand on the
   26.2 jar: `DimensionType.NETWORK_CODEC` builds on

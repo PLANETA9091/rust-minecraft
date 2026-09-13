@@ -168,6 +168,17 @@ pub struct DimensionTypeEntry {
     /// rides a working sync; the decode reads `None` (the codec default),
     /// never a guess.
     pub skybox: Option<Skybox>,
+    /// The dimension's STATED fog distances (blocks) — the element's
+    /// `attributes` compound's `minecraft:visual/fog_start_distance` and
+    /// `minecraft:visual/fog_end_distance` FLOAT entries (javap
+    /// EnvironmentAttributes: both builder chains `.syncable()`, so both
+    /// RIDE the registry sync; the bytecode defaults are start 0.0 / end
+    /// 1024.0 — only the nether states the pair in the real jar, 10.0 /
+    /// 96.0, the fogged walls). `None` = the element states nothing — the
+    /// pair-or-nothing rule: a one-sided statement is not a real vanilla
+    /// shape and reads as the honest absence, never a half guess.
+    pub fog_start_distance: Option<f32>,
+    pub fog_end_distance: Option<f32>,
 }
 
 /// The skybox kinds one synced dimension type may state (javap
@@ -808,6 +819,21 @@ pub fn parse_registry_data(payload: &[u8]) -> Result<RegistryData> {
             .get("skybox")
             .and_then(Nbt::as_str)
             .and_then(Skybox::from_wire);
+        // the STATED fog distances (blocks): the flat attributes compound's
+        // FLOAT entries, both syncable (javap) — the pair-or-nothing rule
+        // (a one-sided statement is not a real vanilla shape)
+        let fog_start_distance = element
+            .get("attributes")
+            .and_then(|a| a.get("minecraft:visual/fog_start_distance"))
+            .and_then(Nbt::as_f32);
+        let fog_end_distance = element
+            .get("attributes")
+            .and_then(|a| a.get("minecraft:visual/fog_end_distance"))
+            .and_then(Nbt::as_f32);
+        let fog = match (fog_start_distance, fog_end_distance) {
+            (Some(s), Some(e)) => (Some(s), Some(e)),
+            _ => (None, None),
+        };
         out.dimension_types.push(DimensionTypeEntry {
             name: entry_id,
             min_y,
@@ -816,6 +842,8 @@ pub fn parse_registry_data(payload: &[u8]) -> Result<RegistryData> {
             timelines,
             ambient_light_color,
             skybox,
+            fog_start_distance: fog.0,
+            fog_end_distance: fog.1,
         });
     }
     anyhow::ensure!(
@@ -1205,6 +1233,16 @@ pub mod test_support {
                 // JSON: the nether is the one dimension that does) —
                 // the wire decode reads Some(none), NOT the default
                 ("skybox".into(), Nbt::String("none".into())),
+                // the REAL nether fog: the only dimension that states the
+                // distances (10/96 — the fogged walls), the flat
+                // attributes compound's FLOAT entries
+                (
+                    "attributes".into(),
+                    Nbt::Compound(vec![
+                        ("minecraft:visual/fog_start_distance".into(), Nbt::Float(10.0)),
+                        ("minecraft:visual/fog_end_distance".into(), Nbt::Float(96.0)),
+                    ]),
+                ),
             ]);
             crate::nbt::write_network_nbt(&nether, &mut p).expect("nether element writes");
         } else {
@@ -1665,6 +1703,16 @@ mod tests {
             nether.skybox,
             Some(Skybox::None),
             "the real nether element STATES none — the wire decode, not the built-in table"
+        );
+        assert_eq!(
+            (nether.fog_start_distance, nether.fog_end_distance),
+            (Some(10.0), Some(96.0)),
+            "the real nether fog: the stated 10/96 pair rides the sync"
+        );
+        assert_eq!(
+            (ow.fog_start_distance, ow.fog_end_distance),
+            (None, None),
+            "the real overworld states NO fog keys — the bytecode defaults' shape"
         );
         assert!(data.dimension("minecraft:the_end").is_none());
         // the biome registry: the element DECODED (the NETWORK_CODEC

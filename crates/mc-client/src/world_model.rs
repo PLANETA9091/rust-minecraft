@@ -311,6 +311,39 @@ impl WorldModel {
         Skybox::Overworld
     }
 
+    /// The current dimension's STATED fog distances (blocks) — the
+    /// `(start, end)` pair the element's attributes carry (the nether's
+    /// real 10/96, the fogged walls). THE SYNCED REGISTRY IS THE
+    /// SERVER'S TRUTH: a synced entry answers with its own stated pair
+    /// (the wire decode — the pair-or-nothing rule: a one-sided
+    /// statement is not a real vanilla shape and reads as the honest
+    /// absence). When the sync carried NO dimension table at all (the
+    /// skip-sync case), the BUILT-IN table the generator emitted from
+    /// the same jar serves. `None` = no dimension pinned yet, an entry
+    /// the sync never named, or no pair stated ANYWHERE — which is the
+    /// bytecode defaults' shape (start 0.0 / end 1024.0, javap
+    /// EnvironmentAttributes): far beyond this client's 5x5-chunk
+    /// window, where the documented window treatment renders instead of
+    /// a nearly-invisible vanilla fog.
+    pub fn fog_distances(&self) -> Option<(f32, f32)> {
+        let dim = self.current_dimension.as_deref()?;
+        if let Some(d) = self.registry.dimension(dim) {
+            return match (d.fog_start_distance, d.fog_end_distance) {
+                (Some(s), Some(e)) => Some((s, e)),
+                _ => None,
+            };
+        }
+        if self.registry.dimension_types.is_empty() {
+            if let Some(d) = mc_registry::generated::worldgen::dimension_type(dim) {
+                return match (d.fog_start_distance, d.fog_end_distance) {
+                    (Some(s), Some(e)) => Some((s, e)),
+                    _ => None,
+                };
+            }
+        }
+        None
+    }
+
     /// Global block state id at (x, y, z) — world coordinates for x/z
     /// (arithmetic shift, so negative chunks index correctly), and world-y
     /// when `min_y` is known else column-local y. `None` outside loaded
@@ -853,6 +886,8 @@ mod tests {
                 timelines: None,
             ambient_light_color: None,
             skybox: None,
+            fog_start_distance: None,
+            fog_end_distance: None,
             }],
             // the synced biome table: ids 0/1/2, arrival order
             biomes: vec![
@@ -1038,6 +1073,8 @@ mod tests {
             timelines: None,
         ambient_light_color: None,
         skybox: None,
+        fog_start_distance: None,
+        fog_end_distance: None,
         }];
         let p3 =
             mc_protocol::play::test_support::set_time_packet(3, &[(0, 1_002_006_000, 0.0, 1.0)]);
@@ -1223,6 +1260,8 @@ mod tests {
                     timelines: None,
                 ambient_light_color: None,
                 skybox: None,
+                fog_start_distance: None,
+                fog_end_distance: None,
                 },
                 DimensionTypeEntry {
                     name: "minecraft:the_nether".into(),
@@ -1232,6 +1271,8 @@ mod tests {
                     timelines: None,
                 ambient_light_color: None,
                 skybox: None,
+                fog_start_distance: None,
+                fog_end_distance: None,
                 },
             ],
             biomes: Vec::new(),
@@ -1290,6 +1331,8 @@ mod tests {
                 timelines: Some("#minecraft:in_overworld".into()),
                 ambient_light_color: None,
                 skybox: None,
+                fog_start_distance: None,
+                fog_end_distance: None,
             }],
             biomes: Vec::new(),
             biome_tags: Vec::new(),
@@ -1432,6 +1475,8 @@ mod tests {
             timelines: None,
         ambient_light_color: None,
         skybox: None,
+        fog_start_distance: None,
+        fog_end_distance: None,
         }];
         let p5 = mc_protocol::play::test_support::set_time_packet(5, &[(0, 18_000, 0.0, 1.0)]);
         let ts5 = mc_protocol::play::parse_set_time(&p5).unwrap();
@@ -1547,6 +1592,8 @@ mod tests {
                     timelines: None,
                 ambient_light_color: None,
                 skybox: None,
+                fog_start_distance: None,
+                fog_end_distance: None,
                 }],
                 biomes: Vec::new(),
                 biome_tags: Vec::new(),
@@ -1625,6 +1672,8 @@ mod tests {
                         timelines: None,
                     ambient_light_color: None,
                     skybox: None,
+                    fog_start_distance: None,
+                    fog_end_distance: None,
                     })
                     .collect(),
                 biomes: Vec::new(),
@@ -1720,6 +1769,8 @@ mod tests {
                         timelines: None,
                     ambient_light_color: None,
                     skybox: None,
+                    fog_start_distance: None,
+                    fog_end_distance: None,
                     })
                     .collect(),
                 biomes: Vec::new(),
@@ -1748,8 +1799,8 @@ mod tests {
         let mut m = WorldModel::new();
         m.registry = RegistryData {
             dimension_types: vec![
-                DimensionTypeEntry { name: "minecraft:overworld".into(), min_y: -64, height: 384, default_clock: Some("minecraft:overworld".into()) , timelines: None, ambient_light_color: None, skybox: None },
-                DimensionTypeEntry { name: "minecraft:the_nether".into(), min_y: 0, height: 256, default_clock: None , timelines: None, ambient_light_color: None, skybox: None },
+                DimensionTypeEntry { name: "minecraft:overworld".into(), min_y: -64, height: 384, default_clock: Some("minecraft:overworld".into()) , timelines: None, ambient_light_color: None, skybox: None, fog_start_distance: None, fog_end_distance: None },
+                DimensionTypeEntry { name: "minecraft:the_nether".into(), min_y: 0, height: 256, default_clock: None , timelines: None, ambient_light_color: None, skybox: None, fog_start_distance: None, fog_end_distance: None },
             ],
             biomes: Vec::new(),
             biome_tags: Vec::new(),
@@ -1891,6 +1942,8 @@ mod tests {
                 timelines: None,
                 ambient_light_color: Some([0x11, 0x22, 0x33]),
                 skybox: None,
+                fog_start_distance: None,
+                fog_end_distance: None,
             }],
             biomes: Vec::new(),
             biome_tags: Vec::new(),
@@ -2005,6 +2058,8 @@ mod tests {
                 timelines: None,
                 ambient_light_color: None,
                 skybox: Some(mc_protocol::Skybox::None),
+                fog_start_distance: None,
+                fog_end_distance: None,
             }],
             biomes: Vec::new(),
             biome_tags: Vec::new(),
@@ -2034,6 +2089,80 @@ mod tests {
             m.skybox(),
             Skybox::Overworld,
             "a live sync without the key: no built-in fallback"
+        );
+    }
+
+    #[test]
+    fn the_fog_distances_read_the_stated_pair() {
+        // the nether's real 10/96 (the fogged walls) through the model:
+        // the built-in table answers on the skip-sync path, the SYNCED
+        // entry wins when it states the pair, the silence and the
+        // defaults' shape read None (the window treatment's verdict —
+        // the bytecode defaults 0/1024 are far beyond the window), and
+        // a one-sided statement is the honest absence (the
+        // pair-or-nothing rule).
+        let mut m = WorldModel::new();
+        assert_eq!(m.fog_distances(), None, "no dimension: no opinion");
+        m.apply(PlayEvent::Respawn(SpawnInfo {
+            dimension_type_id: 0,
+            dimension: "minecraft:overworld".to_string(),
+            portal_cooldown: 0,
+        }));
+        assert_eq!(
+            m.fog_distances(),
+            None,
+            "the overworld states no pair — the defaults' shape, the window treatment"
+        );
+        m.apply(PlayEvent::Respawn(SpawnInfo {
+            dimension_type_id: 1,
+            dimension: "minecraft:the_nether".to_string(),
+            portal_cooldown: 0,
+        }));
+        assert_eq!(
+            m.fog_distances(),
+            Some((10.0, 96.0)),
+            "the built-in table's nether pair (the skip-sync fallback)"
+        );
+        // the synced truth wins: a custom server's own stated pair
+        m.registry = RegistryData {
+            dimension_types: vec![DimensionTypeEntry {
+                name: "minecraft:the_nether".into(),
+                min_y: 0,
+                height: 256,
+                default_clock: None,
+                timelines: None,
+                ambient_light_color: None,
+                skybox: Some(mc_protocol::Skybox::None),
+                fog_start_distance: Some(5.0),
+                fog_end_distance: Some(48.0),
+            }],
+            biomes: Vec::new(),
+            biome_tags: Vec::new(),
+            world_clocks: Vec::new(),
+            timelines: Vec::new(),
+            timeline_tags: Vec::new(),
+        };
+        assert_eq!(
+            m.fog_distances(),
+            Some((5.0, 48.0)),
+            "the synced value is the server's truth, not the built-in"
+        );
+        // the sync arrives and is silent: None — the defaults' shape, the
+        // window treatment, NOT the built-in's nether pair
+        m.registry.dimension_types[0].fog_start_distance = None;
+        m.registry.dimension_types[0].fog_end_distance = None;
+        assert_eq!(
+            m.fog_distances(),
+            None,
+            "the sync arrived and is silent: no pair, never the built-in's"
+        );
+        // a one-sided statement: the pair-or-nothing rule — the honest
+        // absence, never a half guess
+        m.registry.dimension_types[0].fog_end_distance = Some(64.0);
+        assert_eq!(
+            m.fog_distances(),
+            None,
+            "start without end is not a real vanilla shape"
         );
     }
 }
