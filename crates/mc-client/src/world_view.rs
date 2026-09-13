@@ -209,6 +209,21 @@ pub fn snapshot_y_base(player: &PlayerPosition, min_y: Option<i32>) -> i32 {
     (player.y.floor() as i32 - PLAYER_GRID_Y).max(min_y)
 }
 
+/// The current dimension's skybox — the `DimensionType$Skybox` the sky
+/// pipeline gates the celestials on (SkyRenderer.extractRenderState: NONE
+/// returns before ANY sky state, END extracts only the end-flash). The
+/// BUILT-IN table answers for the known vanilla ids — the same skip-sync
+/// fallback slice the dimension layout rides. An UNKNOWN (custom-server)
+/// dimension rides the Overworld sky path for now: the SYNCED registry's
+/// own skybox decode (the wire half, the ambient arc's shape) is the
+/// documented next step, and until it lands the fallback keeps today's
+/// rendering — a deliberate interim, never a claimed truth.
+pub fn skybox_for_dimension(dimension: &str) -> mc_registry::generated::worldgen::Skybox {
+    mc_registry::generated::worldgen::dimension_type(dimension)
+        .map(|d| d.skybox)
+        .unwrap_or(mc_registry::generated::worldgen::Skybox::Overworld)
+}
+
 /// The materialized join view: the renderer grid AND the camera pose
 /// computed from the SAME window decisions (origin, y_base, layout
 /// knowledge) — the world screen renders the grid from the pose and the

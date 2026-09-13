@@ -179,6 +179,19 @@ pub const DENSITY_FUNCTIONS: usize = 35;
 pub const NOISES: usize = 63;
 pub const CONFIGURED_FEATURES: usize = 226;
 pub const PLACED_FEATURES: usize = 262;
+/// The `DimensionType$Skybox` enum — the vanilla string-representable
+/// ("none" | "overworld" | "end") the client's sky pipeline gates on
+/// (SkyRenderer.extractRenderState: NONE returns before ANY sky state,
+/// END extracts only the end-flash triple and returns). The ABSENT
+/// JSON key is the codec default OVERWORLD (optionalFieldOf — the
+/// DimensionType bytecode).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Skybox {
+    None,
+    Overworld,
+    End,
+}
+
 /// One built-in `minecraft:dimension_type` registry entry (the jar's
 /// `data/minecraft/dimension_type/*.json`): world layout + environment.
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -196,13 +209,15 @@ pub struct DimensionTypeDef {
     /// The lightmap's AmbientColor base (visual/ambient_light_color;
     /// the bytecode default black when the JSON states none).
     pub ambient_light_color: [u8; 3],
+    /// The sky-pipeline gate (SkyRenderer.extractRenderState's skybox).
+    pub skybox: Skybox,
 }
 
 pub static DIMENSION_TYPES: [DimensionTypeDef; 4] = [
-    DimensionTypeDef { name: "minecraft:overworld", min_y: -64, height: 384, logical_height: 384, has_skylight: true, has_fixed_time: false, ambient_light: 0.0, coordinate_scale: 1.0, timelines: Some("#minecraft:in_overworld"), default_clock: Some("minecraft:overworld"), ambient_light_color: [10, 10, 10] },
-    DimensionTypeDef { name: "minecraft:overworld_caves", min_y: -64, height: 384, logical_height: 384, has_skylight: true, has_fixed_time: false, ambient_light: 0.0, coordinate_scale: 1.0, timelines: Some("#minecraft:in_overworld"), default_clock: Some("minecraft:overworld"), ambient_light_color: [10, 10, 10] },
-    DimensionTypeDef { name: "minecraft:the_end", min_y: 0, height: 256, logical_height: 256, has_skylight: true, has_fixed_time: true, ambient_light: 0.25, coordinate_scale: 1.0, timelines: Some("#minecraft:in_end"), default_clock: Some("minecraft:the_end"), ambient_light_color: [63, 71, 63] },
-    DimensionTypeDef { name: "minecraft:the_nether", min_y: 0, height: 256, logical_height: 128, has_skylight: false, has_fixed_time: true, ambient_light: 0.1, coordinate_scale: 8.0, timelines: Some("#minecraft:in_nether"), default_clock: None, ambient_light_color: [48, 40, 33] },
+    DimensionTypeDef { name: "minecraft:overworld", min_y: -64, height: 384, logical_height: 384, has_skylight: true, has_fixed_time: false, ambient_light: 0.0, coordinate_scale: 1.0, timelines: Some("#minecraft:in_overworld"), default_clock: Some("minecraft:overworld"), ambient_light_color: [10, 10, 10], skybox: Skybox::Overworld },
+    DimensionTypeDef { name: "minecraft:overworld_caves", min_y: -64, height: 384, logical_height: 384, has_skylight: true, has_fixed_time: false, ambient_light: 0.0, coordinate_scale: 1.0, timelines: Some("#minecraft:in_overworld"), default_clock: Some("minecraft:overworld"), ambient_light_color: [10, 10, 10], skybox: Skybox::Overworld },
+    DimensionTypeDef { name: "minecraft:the_end", min_y: 0, height: 256, logical_height: 256, has_skylight: true, has_fixed_time: true, ambient_light: 0.25, coordinate_scale: 1.0, timelines: Some("#minecraft:in_end"), default_clock: Some("minecraft:the_end"), ambient_light_color: [63, 71, 63], skybox: Skybox::End },
+    DimensionTypeDef { name: "minecraft:the_nether", min_y: 0, height: 256, logical_height: 128, has_skylight: false, has_fixed_time: true, ambient_light: 0.1, coordinate_scale: 8.0, timelines: Some("#minecraft:in_nether"), default_clock: None, ambient_light_color: [48, 40, 33], skybox: Skybox::None },
 ];
 
 /// Dimension type by registry id ("minecraft:overworld"), sorted for binary search.

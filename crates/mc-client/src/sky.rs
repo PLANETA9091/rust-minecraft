@@ -19,6 +19,7 @@
 //!   java.util.Random(10842L) on OpenJDK 21 (see tests).
 
 use mc_registry::generated::sky as S;
+use mc_registry::generated::worldgen::Skybox;
 
 use crate::camera::Camera;
 use crate::math::{Mat4, Vec3};
@@ -422,8 +423,24 @@ pub fn render_sunrise_disc(
 /// Render the sunrise disc, sun, moon (current phase) and stars for world
 /// tick `day_time`. Must be called after the sky-color clear and BEFORE
 /// terrain quads (official order: sky disc -> sunrise glow -> celestials ->
-/// terrain).
-pub fn render_celestials(fb: &mut crate::raster::Framebuf, ctx: &RenderCtx, cam: &Camera, day_time: i64) {
+/// terrain). `skybox` is the current dimension's `DimensionType$Skybox`:
+/// the vanilla extract (`SkyRenderer.extractRenderState`, javap of the 26.2
+/// jar) stores `dimensionType.skybox()` and returns BEFORE any sky state is
+/// extracted when it is NONE (the nether renders no sky at all), and for
+/// END it extracts only the end-flash triple and returns — the disc / sun /
+/// moon / stars path is the OVERWORLD skybox's alone (the codec's ABSENT
+/// key defaults there). The end-flash itself is the documented next
+/// consumer; until it lands END renders no celestials either.
+pub fn render_celestials(
+    fb: &mut crate::raster::Framebuf,
+    ctx: &RenderCtx,
+    cam: &Camera,
+    day_time: i64,
+    skybox: Skybox,
+) {
+    if !matches!(skybox, Skybox::Overworld) {
+        return;
+    }
     let st = sample(day_time);
     let mut quads: Vec<FlatQuad> = Vec::with_capacity(stars().len() + 18);
 
@@ -994,5 +1011,40 @@ mod tests {
         // except via the multiply shortcut), so the layer still renders.
         let night = sample(18000);
         assert!(night.cloud_color[3] > 0.5, "night alpha {:?}", night.cloud_color);
+    }
+
+    #[test]
+    fn the_skybox_gate_mutes_the_celestials_off_dimension() {
+        // vanilla SkyRenderer.extractRenderState (javap): the NONE skybox
+        // returns before ANY sky state is extracted, END extracts only the
+        // end-flash triple — the disc/sun/moon/stars path is OVERWORLD's
+        // alone. Witness: at midnight the stars tile the whole sphere, so
+        // the OVERWORLD pass provably paints; NONE and END must leave the
+        // cleared framebuffer untouched.
+        let cam = Camera { pos: Vec3::new(0.0, 80.0, 0.0), yaw: 0.0, pitch: 0.0 };
+        let ctx = RenderCtx {
+            view: cam.view(),
+            proj: Mat4::perspective(70.0f32.to_radians(), 320.0 / 180.0, 0.1, 512.0),
+            fog_color: [0.0; 3],
+            fog_near: 1.0,
+            fog_far: 2.0,
+        };
+        let midnight = 18_000i64;
+        let render = |skybox: Skybox| {
+            let mut fb = crate::raster::Framebuf::new(32, 32);
+            fb.clear([1, 2, 3], [0, 0, 0]);
+            render_celestials(&mut fb, &ctx, &cam, midnight, skybox);
+            fb.color
+        };
+        let cleared = {
+            let mut fb = crate::raster::Framebuf::new(32, 32);
+            fb.clear([1, 2, 3], [0, 0, 0]);
+            fb.color
+        };
+        assert_eq!(render(Skybox::None), cleared, "NONE must render nothing");
+        assert_eq!(render(Skybox::End), cleared, "END must render no celestials");
+        let overworld = render(Skybox::Overworld);
+        assert_ne!(overworld, cleared, "OVERWORLD must paint the stars");
+        assert!(sample(midnight).star_brightness > 0.0, "the witness needs a night sky");
     }
 }

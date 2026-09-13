@@ -9,6 +9,7 @@ use crate::raster::RenderCtx;
 
 use mc_registry::generated::lang::tr;
 use mc_registry::generated::splashes::SPLASHES;
+use mc_registry::generated::worldgen::Skybox;
 
 pub const WHITE: [f32; 3] = [1.0, 1.0, 1.0];
 pub const YELLOW: [f32; 3] = [1.0, 1.0, 0.333];
@@ -142,6 +143,14 @@ pub enum LoginResult {
         /// profile-metadata fact the first-person arm renders with; the
         /// offline/no-metadata shape is the classic wide default.
         slim_arm: bool,
+        /// The current dimension's `DimensionType$Skybox` — the render
+        /// state the sky pipeline gates the celestials on (the vanilla
+        /// extract pins `dimensionType.skybox()` on the SkyRenderState at
+        /// world entry). Resolved from the join snapshot's dimension
+        /// through the BUILT-IN table; an unknown (custom-server)
+        /// dimension rides the Overworld sky path until the synced-skybox
+        /// wire decode lands (the ambient arc's shape).
+        skybox: Skybox,
     },
     /// The server refused or kicked (login disconnect, config kick or a
     /// play-state disconnect), reason flattened from chat.
@@ -252,6 +261,12 @@ pub struct App {
     /// True while the World screen shows the NETWORK world (the quad mesh
     /// came from a join snapshot, not the procedural singleplayer world).
     pub world_is_network: bool,
+    /// The current dimension's skybox — the vanilla SkyRenderState.skybox
+    /// discipline: pinned at world entry from the dimension's
+    /// `DimensionType$Skybox`, the sky pipeline gates the celestials on
+    /// it (NONE renders no sky at all, END no celestials — the extract
+    /// returns before the disc/sun/moon/stars state exists).
+    pub world_skybox: Skybox,
     /// The first-person hand (the empty main-hand arm from the official
     /// player skin), loaded lazily from the runtime asset root on the first
     /// world frame; `None` = the skin asset is absent or failed its sha1
@@ -365,6 +380,7 @@ impl App {
             net_world: None,
             net_camera: None,
             world_is_network: false,
+            world_skybox: Skybox::Overworld,
             net_biome: None,
             live_runs: Vec::new(),
             arm: None,
@@ -426,6 +442,9 @@ impl App {
             self.spawn_y = top_solid_y(&world, self.world_size / 2, self.world_size / 2);
             self.world_quads = Some(crate::mesher::mesh_world(&world, None));
             self.world_is_network = false;
+            // the procedural world is an overworld world — the vanilla
+            // extract pins the dimension's skybox on entering the level
+            self.world_skybox = Skybox::Overworld;
         }
         self.paused = false;
         self.music.on_world_enter_biome(spawn_biome(self.seed));
@@ -446,7 +465,7 @@ impl App {
     /// section under the player not loaded) the unknown-key lookup falls
     /// back to the generic `music.game` situation — no seeded guess
     /// about a network world.
-    pub fn enter_network_world(&mut self, spawn_biome: Option<String>) {
+    pub fn enter_network_world(&mut self, spawn_biome: Option<String>, skybox: Skybox) {
         let (size, spawn_y, quads) = {
             let Some(world) = self.net_world.as_ref() else { return };
             let size = world.size_blocks();
@@ -461,6 +480,10 @@ impl App {
         self.spawn_y = spawn_y;
         self.world_quads = Some(quads);
         self.world_is_network = true;
+        // the vanilla extract's render state: the dimension's skybox pins
+        // at level entry (the join snapshot's dimension -> the built-in
+        // table; see [`crate::world_view::skybox_for_dimension`])
+        self.world_skybox = skybox;
         self.net_biome = spawn_biome.clone();
         self.paused = false;
         self.music
@@ -641,7 +664,7 @@ impl App {
             return;
         }
         match outcome {
-            Ok(LoginResult::Loaded { world, camera, spawn_biome, slim_arm, .. }) => {
+            Ok(LoginResult::Loaded { world, camera, spawn_biome, slim_arm, skybox, .. }) => {
                 if self.screen == ScreenKind::Connect {
                     // the profile's skin model rides the join: the first
                     // world frame's lazy arm load reads THIS flag (set
@@ -653,7 +676,7 @@ impl App {
                     // one — every other in-flight join's session closes
                     // now (superseded joins never haunt the server)
                     self.prune_live_runs(Some(id));
-                    self.enter_network_world(spawn_biome);
+                    self.enter_network_world(spawn_biome, skybox);
                 } else {
                     // a late success after Escape: the join is cancelled —
                     // close its session exactly like the vanilla client
@@ -863,7 +886,7 @@ impl App {
         // (vanilla renders the first-person arm after the level with a
         // cleared depth buffer, before any HUD).
         fb.clear(sky.sky_color, sky.fog_color);
-        crate::sky::render_celestials(fb, &ctx, &cam, day_time);
+        crate::sky::render_celestials(fb, &ctx, &cam, day_time, self.world_skybox);
         if let Some(quads) = &self.world_quads {
             fb.draw_quads(&ctx, quads);
         }

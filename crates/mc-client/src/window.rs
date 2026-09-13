@@ -160,6 +160,10 @@ fn run_join(
                 crate::world_view::LiveView::from_snapshot(snapshot, crate::screens::WORLD_CHUNKS);
             let first = view.refresh(crate::world_view::runtime_mapper);
             let spawn_biome = first.biome.clone();
+            // the sky pipeline's render state: the snapshot's dimension
+            // -> the built-in table (the vanilla extract's
+            // dimensionType.skybox() discipline)
+            let skybox = crate::world_view::skybox_for_dimension(&view.dimension());
             let shipped = tx.send((
                 id,
                 Ok(crate::screens::LoginResult::Loaded {
@@ -171,6 +175,7 @@ fn run_join(
                     camera: first.camera,
                     spawn_biome,
                     slim_arm,
+                    skybox,
                 }),
             ));
             if shipped.is_err() {

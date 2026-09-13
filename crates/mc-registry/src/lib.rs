@@ -232,13 +232,21 @@ mod tests {
 
     #[test]
     fn built_in_dimension_types_carry_the_jar_layout() {
-        use generated::worldgen::{dimension_type, DIMENSION_TYPES};
+        use generated::worldgen::{dimension_type, Skybox, DIMENSION_TYPES};
         assert_eq!(DIMENSION_TYPES.len(), 4);
         let ow = dimension_type("minecraft:overworld").expect("overworld");
         assert_eq!((ow.min_y, ow.height, ow.logical_height), (-64, 384, 384));
         assert!(ow.has_skylight && !ow.has_fixed_time);
         assert_eq!(ow.timelines, Some("#minecraft:in_overworld"));
         assert_eq!(ow.default_clock, Some("minecraft:overworld"));
+        // the skybox column: the overworld pair states NO key — the codec
+        // default OVERWORLD (optionalFieldOf bytecode); the end states
+        // "end", the nether states "none" (the raw JSONs read first-hand)
+        assert_eq!(ow.skybox, Skybox::Overworld);
+        let caves = dimension_type("minecraft:overworld_caves").expect("caves");
+        assert_eq!(caves.skybox, Skybox::Overworld);
+        let end = dimension_type("minecraft:the_end").expect("end");
+        assert_eq!(end.skybox, Skybox::End);
         let nether = dimension_type("minecraft:the_nether").expect("nether");
         // the values the protocol tests pin for the synced registry: floor 0,
         // 256 tall — and the ceiling keeps logical_height BELOW height
@@ -246,6 +254,7 @@ mod tests {
         assert!(nether.has_fixed_time && !nether.has_skylight);
         assert_eq!((nether.ambient_light, nether.coordinate_scale), (0.1, 8.0));
         assert_eq!(nether.default_clock, None, "the nether names no default clock");
+        assert_eq!(nether.skybox, Skybox::None);
     }
 
     #[test]
