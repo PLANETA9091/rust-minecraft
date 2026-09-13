@@ -132,6 +132,31 @@ pub fn select_parts<'a>(parts: &'a [Part<'a>], state: &[(&str, &str)]) -> Vec<&'
         .collect()
 }
 
+/// The by-value selection over an OWNED definition: the applies come OUT
+/// (no borrows of the parsed data survive). Semantics are EXACTLY the
+/// two functions above — first-match variants / when-matching multipart
+/// collect — sharing the same key_matches/when_matches, so there is one
+/// selection truth. The 26.2 apply fields are all 'static, so the
+/// returned applies are `Apply<'static>` and free to outlive the parse.
+pub fn select_applies(
+    def: Definition<'static>,
+    state: &[(&str, &str)],
+) -> Option<Vec<Apply<'static>>> {
+    match def {
+        Definition::Variants(variants) => variants
+            .into_iter()
+            .find(|(key, _)| key_matches(key, state))
+            .map(|(_, applies)| applies),
+        Definition::Multipart(parts) => Some(
+            parts
+                .into_iter()
+                .filter(|p| p.when.as_ref().map_or(true, |w| when_matches(w, state)))
+                .flat_map(|p| p.apply.into_iter())
+                .collect(),
+        ),
+    }
+}
+
 /// Does a when selector match the state? A Map pair matches iff the
 /// state carries the property with one of the pipe alternatives; an
 /// absent property fails the pair (fail-closed).

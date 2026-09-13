@@ -43,6 +43,13 @@ pub mod display;
 /// path. See the module docs for the javap evidence.
 pub mod item_bake;
 
+/// The blockstate-driven palette (the data half) — a block state -> the
+/// per-face average color of its REAL model's REAL textures, over the
+/// BLOCKSTATES -> blockstate_lookup -> element_quads -> texture_slots ->
+/// generated::textures chain. Pure data, no render path (the mesher
+/// consumes it next round). See the module docs for the semantics.
+pub mod palette;
+
 /// One block definition: identifier + sorted list of state property names.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Block {
