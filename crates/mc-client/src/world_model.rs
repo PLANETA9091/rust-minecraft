@@ -83,35 +83,6 @@ impl Default for WorldModel {
     }
 }
 
-/// Depth-first expansion of one built-in timeline tag's member list, in
-/// the jar's stored order. The built-in TIMELINE_TAGS table is the RAW
-/// jar form — members may themselves be `#` tag references
-/// (`in_overworld` -> `#universal` -> `villager_schedule`) — so the
-/// walk recurses through nested refs and collects the concrete
-/// timelines they name. The visited set stops reference cycles the
-/// same way vanilla's own tag loader does; a member naming no known
-/// timeline (or an unknown tag) contributes nothing — the
-/// no-blind-filter rule the curve resolution runs on.
-fn expand_built_in_timeline_tag(
-    tag: &str,
-    out: &mut Vec<&'static mc_registry::generated::worldgen::TimelineDef>,
-    seen: &mut Vec<String>,
-) {
-    if seen.iter().any(|s| s == tag) {
-        return;
-    }
-    seen.push(tag.to_string());
-    if let Some(members) = mc_registry::generated::worldgen::timeline_tag(tag) {
-        for m in members {
-            if let Some(nested) = m.strip_prefix('#') {
-                expand_built_in_timeline_tag(nested, out, seen);
-            } else if let Some(tl) = mc_registry::generated::worldgen::timeline(m) {
-                out.push(tl);
-            }
-        }
-    }
-}
-
 impl WorldModel {
     #![allow(dead_code)] // wired into the frame loop when the mesher input lands
 
@@ -507,16 +478,21 @@ impl WorldModel {
 
     /// The SKIP-SYNC timeline fallback: the SAME resolution chain the
     /// synced path runs, walked against the BUILT-IN jar tables (the
-    /// generated dimension_type / timeline / timeline_tag twins) instead
-    /// of the streamed registry. The jar's tag members are stored in the
-    /// RAW form — nested `#` references included (`in_overworld` ->
-    /// `#universal` -> `villager_schedule`) — because that is what the
-    /// jar states; the synced path needs none of this expansion (a
-    /// vanilla server streams tags PRE-RESOLVED as flat wire-id lists).
-    /// An unknown tag or a member naming no known timeline resolves
-    /// nothing (the same no-blind-filter rule as the synced path); a
-    /// sync that DID arrive never reaches here (the dispatcher's gate —
-    /// the partial-sync model gets no built-in rescue, mirroring the
+    /// generated dimension_type / timeline twins + the REGISTRY's tag
+    /// resolver) instead of the streamed registry. The tag branch reads
+    /// [`mc_registry::flatten_timeline_tag`] — the vanilla built-tag
+    /// verdict the registry has owned since the tag arc (file-order
+    /// walk, depth-first `#` expansion in place, first-occurrence dedup,
+    /// fail-closed on unknown tag / unknown member / cycle) — retiring
+    /// the hand-rolled walk that duplicated it client-side: ONE
+    /// expansion truth, the same consolidation the tint chain banks.
+    /// On the real 26.2 jar the two agree member-for-member (the
+    /// registry sweep proves every timeline-tag member resolves; the
+    /// client test pins the order), so the fail-closed verdict changes
+    /// nothing observable — and a drifted jar now refuses WHOLE, the
+    /// vanilla TagLoader shape, instead of partially resolving. A sync
+    /// that DID arrive never reaches here (the dispatcher's gate — the
+    /// partial-sync model gets no built-in rescue, mirroring the
     /// v0.3.56 day-tick scoping).
     fn built_in_timeline_curve(&self) -> Option<(&'static [(i64, f32)], i64)> {
         let dim = self.current_dimension.as_ref()?;
@@ -525,7 +501,17 @@ impl WorldModel {
             Vec::new();
         match entry.timelines {
             Some(t) if t.starts_with('#') => {
-                expand_built_in_timeline_tag(&t[1..], &mut candidates, &mut Vec::new());
+                if let Some(members) = mc_registry::flatten_timeline_tag(&t[1..]) {
+                    // the flatten already validated every member against
+                    // the timeline table (the registry-bound load rule);
+                    // filter_map keeps the client total on a hypothetical
+                    // registry drift — the sweep test pins the invariant
+                    candidates.extend(
+                        members
+                            .iter()
+                            .filter_map(|m| mc_registry::generated::worldgen::timeline(m)),
+                    );
+                }
             }
             Some(id) => {
                 if let Some(tl) = mc_registry::generated::worldgen::timeline(id) {
@@ -1374,13 +1360,25 @@ mod tests {
     }
 
     #[test]
-    fn the_built_in_tag_expansion_walks_the_jars_nested_members() {
-        // the resolver directly: the jar's RAW member lists are nested
-        // (`#` refs inside the member arrays) and ORDERED
-        use crate::world_model::expand_built_in_timeline_tag;
-        let mut out = Vec::new();
-        expand_built_in_timeline_tag("minecraft:in_overworld", &mut out, &mut Vec::new());
-        let names: Vec<&str> = out.iter().map(|t| t.name).collect();
+    fn the_built_in_tag_path_reads_the_registry_flatten() {
+        // the skip-sync tag branch reads the REGISTRY's flatten (the
+        // vanilla built-tag verdict — file order, depth-first `#`
+        // expansion, first-occurrence dedup, fail-closed refusals —
+        // pinned on synthetics in mc-registry), so the client keeps NO
+        // private walk: ONE expansion truth for every tag table. The
+        // member order the curve resolution feeds on is pinned here
+        // through the resolved TimelineDefs, and the chain resolves
+        // end-to-end: overworld's tag picks the DAY curve (the first
+        // carrier of visual/sky_light_factor among the four), the
+        // end's tag (villager_schedule only) carries NO track — the
+        // chain-miss the snapshot fallback serves.
+        use mc_registry::generated::worldgen::timeline;
+        let members = mc_registry::flatten_timeline_tag("minecraft:in_overworld")
+            .expect("the jar's overworld tag loads");
+        let names: Vec<&str> = members
+            .iter()
+            .map(|m| timeline(m).expect("the flatten validated every member").name)
+            .collect();
         assert_eq!(
             names,
             vec![
@@ -1391,28 +1389,39 @@ mod tests {
             ],
             "the nested #universal ref expands in the jar's stored order"
         );
-        // in_end: ONLY the nested universal member — one timeline
-        let mut out = Vec::new();
-        expand_built_in_timeline_tag("minecraft:in_end", &mut out, &mut Vec::new());
-        assert_eq!(out.len(), 1);
-        assert_eq!(out[0].name, "minecraft:villager_schedule");
-        // in_nether: the same single member
-        let mut out = Vec::new();
-        expand_built_in_timeline_tag("minecraft:in_nether", &mut out, &mut Vec::new());
-        assert_eq!(out.len(), 1);
-        assert_eq!(out[0].name, "minecraft:villager_schedule");
-        // an unknown tag resolves NOTHING (no blind candidates)
-        let mut out = Vec::new();
-        expand_built_in_timeline_tag("minecraft:mock_tag", &mut out, &mut Vec::new());
-        assert!(out.is_empty());
-        // the cycle guard: expanding the same tag twice through the
-        // shared seen-set contributes nothing the second time
-        let mut out = Vec::new();
-        let mut seen = Vec::new();
-        expand_built_in_timeline_tag("minecraft:in_overworld", &mut out, &mut seen);
-        let first = out.len();
-        expand_built_in_timeline_tag("minecraft:in_overworld", &mut out, &mut seen);
-        assert_eq!(out.len(), first, "the visited set stops the re-walk");
+        // in_end / in_nether: the single-ref form — only universal's
+        // member; and the unknown tag REFUSES whole (the vanilla
+        // TagLoader verdict the registry owns, no partial candidates)
+        for tag in ["minecraft:in_end", "minecraft:in_nether"] {
+            let flat = mc_registry::flatten_timeline_tag(tag).expect(tag);
+            assert_eq!(flat.len(), 1, "{tag}");
+            assert_eq!(
+                timeline(flat[0]).unwrap().name,
+                "minecraft:villager_schedule",
+                "{tag}"
+            );
+        }
+        assert_eq!(mc_registry::flatten_timeline_tag("minecraft:mock_tag"), None);
+        // the chain end-to-end on the model: the overworld curve IS the
+        // day curve (keys byte-equal the generated table's carrier, the
+        // period the tag arc pinned); the end has none
+        let mut m = WorldModel::new();
+        m.current_dimension = Some("minecraft:overworld".into());
+        let (keys, period) = m
+            .built_in_timeline_curve()
+            .expect("the overworld tag resolves a curve");
+        assert_eq!(
+            keys,
+            timeline("minecraft:day").expect("day").sky_light_factor,
+            "the first carrier of the track is the day timeline"
+        );
+        assert_eq!(period, 24_000);
+        let mut end = WorldModel::new();
+        end.current_dimension = Some("minecraft:the_end".into());
+        assert!(
+            end.built_in_timeline_curve().is_none(),
+            "no timeline in the end's tag carries the track"
+        );
     }
 
     #[test]
