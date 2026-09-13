@@ -523,4 +523,232 @@ mod tests {
             .count();
         assert_eq!(hits, 24, "defs pointing directly at element-carrying models");
     }
+
+    fn the_elements_geometry_is_the_jar_census_and_the_joins_hold() {
+        use generated::elements::{ELEMENTS, ElementRotation};
+        use generated::models::{ELEMENT_MODELS, MODELS};
+
+        // the census, verbatim: 344 element-carrying models, 1185 elements,
+        // 4238 faces — the python census, cross-checked by the Rust run
+        assert_eq!(ELEMENTS.len(), 344);
+        let total: usize = ELEMENTS.iter().map(|(_, e)| e.len()).sum();
+        assert_eq!(total, 1185);
+        let faces: usize = ELEMENTS
+            .iter()
+            .flat_map(|(_, e)| e.iter())
+            .map(|el| el.faces.iter().flatten().count())
+            .sum();
+        assert_eq!(faces, 4238);
+
+        // THE JOIN: the ELEMENTS rows match ELEMENT_MODELS id-for-id and the
+        // MODELS element-count column row-for-row; the mirror direction too
+        let ids: Vec<&str> = ELEMENTS.iter().map(|(id, _)| *id).collect();
+        let skip: Vec<&str> = ELEMENT_MODELS.iter().copied().collect();
+        assert_eq!(ids, skip);
+        for (id, els) in ELEMENTS.iter() {
+            let row = MODELS
+                .iter()
+                .find(|m| m.0 == *id)
+                .unwrap_or_else(|| panic!("{id} must be a model"));
+            assert_eq!(row.4 as usize, els.len(), "{id}: element-count join");
+        }
+        for m in MODELS.iter().filter(|m| m.4 > 0) {
+            assert!(
+                ELEMENTS.iter().any(|(id, _)| *id == m.0),
+                "{} carries elements in MODELS but has no ELEMENTS row",
+                m.0
+            );
+        }
+
+        // closed domains across the whole table: bounds inside the vanilla
+        // clamp [-16, 32], uvs inside [0, 16], face rotation a multiple of
+        // 90 (the census domain {0, 90, 180, 270})
+        for (id, els) in ELEMENTS.iter() {
+            for el in els.iter() {
+                for c in el.from.iter().chain(el.to.iter()) {
+                    assert!((-16.0..=32.0).contains(c), "{id}: bound {c}");
+                }
+                for f in el.faces.iter().flatten() {
+                    if let Some(uv) = f.uv {
+                        for v in uv {
+                            assert!((0.0..=16.0).contains(&v), "{id}: uv {v}");
+                        }
+                    }
+                    if let Some(r) = f.rotation {
+                        assert_eq!(r % 90, 0, "{id}: face rotation {r}");
+                    }
+                }
+            }
+        }
+
+        // block/cube — the six-face box, verbatim (uv: None = the vanilla
+        // bounds projection; cullface mirrors each slot's direction)
+        let cube = ELEMENTS
+            .iter()
+            .find(|(id, _)| *id == "block/cube")
+            .unwrap()
+            .1;
+        assert_eq!(cube.len(), 1);
+        let c0 = &cube[0];
+        assert_eq!(c0.from, [0.0, 0.0, 0.0]);
+        assert_eq!(c0.to, [16.0, 16.0, 16.0]);
+        assert!(c0.shade && c0.rotation.is_none() && c0.light_emission.is_none());
+        assert_eq!(c0.name, None);
+        let refs = ["#down", "#up", "#north", "#south", "#west", "#east"];
+        for (slot, face) in c0.faces.iter().enumerate() {
+            let f = face
+                .as_ref()
+                .unwrap_or_else(|| panic!("cube face {slot} missing"));
+            assert_eq!(f.uv, None, "the cube ships default uvs");
+            assert_eq!(f.texture, refs[slot]);
+            assert_eq!(f.cullface.map(|c| c as usize), Some(slot));
+            assert_eq!(f.tintindex, None);
+            assert_eq!(f.rotation, None);
+        }
+
+        // the 26.2 euler EXTENSION — template_hanging_sign_rot_3 ships two
+        // {x,y,z,origin} rotations verbatim among its axis rotations, and
+        // the mirrored uvs survive as written
+        let hs = ELEMENTS
+            .iter()
+            .find(|(id, _)| *id == "block/template_hanging_sign_rot_3")
+            .unwrap()
+            .1;
+        assert_eq!(hs.len(), 5);
+        let rotations: Vec<String> = hs
+            .iter()
+            .map(|el| match el.rotation {
+                Some(ElementRotation::Axis { angle, axis, origin, rescale }) => format!(
+                    "A({angle},{:?},{origin:?},{rescale})",
+                    axis
+                ),
+                Some(ElementRotation::Euler { x, y, z, origin }) => {
+                    format!("E({x},{y},{z},{origin:?})")
+                }
+                None => "none".to_string(),
+            })
+            .collect();
+        assert_eq!(
+            rotations,
+            vec![
+                "A(-67.5,Y,[8.0, 0.0, 8.0],false)",
+                "A(-22.5,Y,[8.0, 0.0, 8.0],false)",
+                "E(180,-67.5,-180,[8.0, 0.0, 8.0])",
+                "A(-22.5,Y,[8.0, 0.0, 8.0],false)",
+                "E(180,-67.5,-180,[8.0, 0.0, 8.0])",
+            ]
+        );
+        assert_eq!(hs[2].faces[2].unwrap().uv, Some([15.5, 4.0, 14.0, 6.0]));
+        assert_eq!(hs[2].faces[3].unwrap().uv, Some([14.0, 4.0, 15.5, 6.0]));
+
+        // heavy_core's BARE texture refs (no '#') — six faces, as written
+        let hc = ELEMENTS
+            .iter()
+            .find(|(id, _)| *id == "block/heavy_core")
+            .unwrap()
+            .1;
+        assert_eq!(hc.len(), 1);
+        for f in hc[0].faces.iter().flatten() {
+            assert_eq!(f.texture, "all", "heavy_core's bare ref");
+        }
+
+        // the angle domain is RELAXED in 26.2 — the old {-45,-22.5,0,22.5,45}
+        // five-value set is gone; the census counts of every shipped angle
+        let angle_count = |want: f32| {
+            ELEMENTS
+                .iter()
+                .flat_map(|(_, els)| els.iter())
+                .filter_map(|el| el.rotation)
+                .filter(|r| matches!(r, ElementRotation::Axis { angle, .. } if *angle == want))
+                .count()
+        };
+        assert_eq!(angle_count(45.0), 131);
+        assert_eq!(angle_count(-45.0), 70);
+        assert_eq!(angle_count(-22.5), 49);
+        assert_eq!(angle_count(22.5), 22);
+        assert_eq!(angle_count(0.0), 19);
+        assert_eq!(angle_count(-67.5), 7, "the relaxed domain");
+        assert_eq!(angle_count(-90.0), 2, "the relaxed domain");
+        assert_eq!(angle_count(0.0001), 1, "the relaxed domain");
+        assert_eq!(
+            ELEMENTS
+                .iter()
+                .flat_map(|(_, els)| els.iter())
+                .filter(|el| matches!(el.rotation, Some(ElementRotation::Euler { .. })))
+                .count(),
+            2,
+            "the euler rotations ride alongside"
+        );
+
+        // the face-level census: rotation {0x1, 90x151, 180x39, 270x55},
+        // tintindex {0x90, 1x32}, 531 default-uv faces, 1041 culled faces
+        let frot = |want: u16| {
+            ELEMENTS
+                .iter()
+                .flat_map(|(_, els)| els.iter())
+                .flat_map(|el| el.faces.iter().flatten())
+                .filter_map(|f| f.rotation)
+                .filter(|r| *r == want)
+                .count()
+        };
+        assert_eq!((frot(0), frot(90), frot(180), frot(270)), (1, 151, 39, 55));
+        let ftint = |want: u8| {
+            ELEMENTS
+                .iter()
+                .flat_map(|(_, els)| els.iter())
+                .flat_map(|el| el.faces.iter().flatten())
+                .filter_map(|f| f.tintindex)
+                .filter(|t| *t == want)
+                .count()
+        };
+        assert_eq!((ftint(0), ftint(1)), (90, 32));
+        let all_faces = ELEMENTS
+            .iter()
+            .flat_map(|(_, els)| els.iter())
+            .flat_map(|el| el.faces.iter().flatten());
+        assert_eq!(all_faces.clone().filter(|f| f.uv.is_none()).count(), 531);
+        assert_eq!(all_faces.filter(|f| f.cullface.is_some()).count(), 1041);
+
+        // light_emission: exactly the four emissive-cross elements, 15
+        let emissive: Vec<(&str, u8)> = ELEMENTS
+            .iter()
+            .flat_map(|(id, els)| {
+                els.iter()
+                    .filter_map(move |el| el.light_emission.map(|l| (*id, l)))
+            })
+            .collect();
+        assert_eq!(emissive.len(), 4);
+        assert!(
+            emissive
+                .iter()
+                .all(|(id, l)| *l == 15 && id.ends_with("cross_emissive"))
+        );
+
+        // the shade census: 333 explicit-false elements (852 default-or-true)
+        assert_eq!(
+            ELEMENTS
+                .iter()
+                .flat_map(|(_, els)| els.iter())
+                .filter(|el| !el.shade)
+                .count(),
+            333
+        );
+        // editor metadata retained: 94 names, 63 comments
+        assert_eq!(
+            ELEMENTS
+                .iter()
+                .flat_map(|(_, els)| els.iter())
+                .filter(|el| el.name.is_some())
+                .count(),
+            94
+        );
+        assert_eq!(
+            ELEMENTS
+                .iter()
+                .flat_map(|(_, els)| els.iter())
+                .filter(|el| el.comment.is_some())
+                .count(),
+            63
+        );
+    }
 }

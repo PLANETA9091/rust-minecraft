@@ -995,7 +995,8 @@ mod tests {
                     "texture_size": [16, 16],
                     "display": {"gui": {"rotation": [0, 0, 0], "scale": [0.5, 0.5, 0.5]}},
                     "textures": {"all": "block/heavy_core"},
-                    "elements": [{"from": [0, 0, 0], "to": [16, 16, 16]}]
+                    "elements": [{"from": [0, 0, 0], "to": [16, 16, 16],
+                                   "faces": {"north": {"texture": "all"}}}]
                 })),
             ),
             // the groups outlier (the Blockbench-metadata shape)
@@ -1003,7 +1004,8 @@ mod tests {
                 "assets/minecraft/models/block/custom_fence_side_east.json",
                 json_bytes(serde_json::json!({
                     "textures": {"texture": "block/oak_planks"},
-                    "elements": [{"from": [0, 0, 0], "to": [1, 1, 1]}],
+                    "elements": [{"from": [0, 0, 0], "to": [1, 1, 1],
+                                   "faces": {"up": {"texture": "#texture", "cullface": "up"}}}],
                     "groups": [{"name": "east", "origin": [0, 0, 0], "color": 0,
                                  "children": [0, 1]}]
                 })),
@@ -1022,8 +1024,10 @@ mod tests {
                 json_bytes(serde_json::json!({
                     "parent": "minecraft:item/generated",
                     "textures": {"layer0": "minecraft:item/stick"},
-                    "elements": [{"from": [0, 0, 0], "to": [1, 1, 1]},
-                                  {"from": [1, 1, 1], "to": [2, 2, 2]}]
+                    "elements": [{"from": [0, 0, 0], "to": [1, 1, 1],
+                                   "faces": {"up": {"texture": "#layer0"}}},
+                                  {"from": [1, 1, 1], "to": [2, 2, 2],
+                                   "faces": {"down": {"texture": "#layer0"}}}]
                 })),
             ),
         ]);
@@ -1172,5 +1176,217 @@ mod tests {
         let mut zip = zip;
         let err = generate(&mut zip).unwrap_err().to_string();
         assert!(err.contains("entity"), "{err}");
+    }
+
+    #[test]
+    fn parses_the_elements_geometry_with_the_outlier_shapes() {
+        // every census shape in one fixture: the axis rotation + rescale +
+        // tintindex + face rotation, the 26.2 EULER rotation extension, the
+        // BARE texture ref (heavy_core's shape), light_emission, editor
+        // metadata (name/__comment), explicit shade, and an absent uv (the
+        // vanilla default the consumer expands)
+        let zip = zip_of(&[
+            (
+                "assets/minecraft/models/block/block.json",
+                json_bytes(serde_json::json!({})),
+            ),
+            (
+                "assets/minecraft/models/block/fixture.json",
+                json_bytes(serde_json::json!({
+                    "parent": "block/block",
+                    "textures": {"all": "block/stone"},
+                    "elements": [
+                        {
+                            "from": [-8, 0, 0], "to": [24, 16, 16],
+                            "rotation": {"angle": -22.5, "axis": "y",
+                                          "origin": [8, 8, 8], "rescale": true},
+                            "shade": false,
+                            "light_emission": 15,
+                            "name": "the_name",
+                            "__comment": "the_comment",
+                            "faces": {
+                                "down": {"uv": [0, 0, 16, 16], "texture": "#all",
+                                          "cullface": "down", "tintindex": 1,
+                                          "rotation": 90},
+                                "up": {"texture": "all"}
+                            }
+                        },
+                        {
+                            "from": [2.96447, 11, 11.53553],
+                            "to": [5.96447, 15, 11.53553],
+                            "rotation": {"x": 180, "y": -67.5, "z": -180,
+                                          "origin": [8, 0, 8]},
+                            "faces": {"north": {"uv": [15.5, 4, 14, 6],
+                                                 "texture": "#all"}}
+                        }
+                    ]
+                })),
+            ),
+        ]);
+        let mut zip = zip;
+        let data = generate(&mut zip).unwrap();
+        assert_eq!(data.element_models, vec!["block/fixture".to_string()]);
+        let els = &data.elements["block/fixture"];
+        assert_eq!(els.len(), 2);
+        assert_eq!(data.models["block/fixture"].elements, 2, "count joins");
+
+        let e0 = &els[0];
+        assert_eq!(e0.from, [-8.0, 0.0, 0.0]);
+        assert_eq!(e0.to, [24.0, 16.0, 16.0]);
+        assert!(!e0.shade, "explicit false");
+        assert_eq!(e0.light_emission, Some(15));
+        assert_eq!(e0.name.as_deref(), Some("the_name"));
+        assert_eq!(e0.comment.as_deref(), Some("the_comment"));
+        match e0.rotation {
+            Some(ElementRotation::Axis { angle, axis: Axis::Y, origin, rescale }) => {
+                assert_eq!(angle, -22.5);
+                assert_eq!(origin, [8.0, 8.0, 8.0]);
+                assert!(rescale);
+            }
+            other => panic!("the axis rotation, got {other:?}"),
+        }
+        let down = e0.faces[0].as_ref().unwrap();
+        assert_eq!(down.uv, Some([0.0, 0.0, 16.0, 16.0]));
+        assert_eq!(down.texture, "#all");
+        assert_eq!(down.cullface, Some(0), "Cull::Down");
+        assert_eq!(down.tintindex, Some(1));
+        assert_eq!(down.rotation, Some(90));
+        let up = e0.faces[1].as_ref().unwrap();
+        assert_eq!(up.texture, "all", "the bare ref rides as written");
+        assert_eq!(up.uv, None, "absent uv = the vanilla default");
+        assert_eq!(up.cullface, None);
+        assert!(e0.faces[2..].iter().all(|f| f.is_none()), "absent slots");
+
+        let e1 = &els[1];
+        match e1.rotation {
+            Some(ElementRotation::Euler { x, y, z, origin }) => {
+                assert_eq!((x, y, z), (180.0, -67.5, -180.0));
+                assert_eq!(origin, [8.0, 0.0, 8.0]);
+            }
+            other => panic!("the euler rotation, got {other:?}"),
+        }
+        assert_eq!(e1.shade, true, "the vanilla default");
+        assert_eq!(e1.faces[2].as_ref().unwrap().uv, Some([15.5, 4.0, 14.0, 6.0]));
+
+        let emitted = emit_elements(&data).unwrap();
+        assert!(emitted.contains("ElementRotation::Euler { x: 180.0, y: -67.5, z: -180.0, origin: [8.0, 0.0, 8.0] }"), "{emitted}");
+        assert!(emitted.contains("texture: \"all\""), "the bare ref emitted");
+    }
+
+    #[test]
+    fn refuses_unknown_element_face_or_rotation_keys() {
+        for (name, el, want) in [
+            (
+                "element key",
+                serde_json::json!({
+                    "from": [0, 0, 0], "to": [16, 16, 16],
+                    "faces": {"down": {"texture": "#t"}}, "colour": 3
+                }),
+                "colour",
+            ),
+            (
+                "face key",
+                serde_json::json!({
+                    "from": [0, 0, 0], "to": [16, 16, 16],
+                    "faces": {"down": {"texture": "#t", "tint": 0}}
+                }),
+                "tint",
+            ),
+            (
+                "axis rotation key",
+                serde_json::json!({
+                    "from": [0, 0, 0], "to": [16, 16, 16],
+                    "rotation": {"angle": 45, "axis": "y", "origin": [8, 8, 8], "tilt": 1},
+                    "faces": {"down": {"texture": "#t"}}
+                }),
+                "tilt",
+            ),
+            (
+                "euler rotation key",
+                serde_json::json!({
+                    "from": [0, 0, 0], "to": [16, 16, 16],
+                    "rotation": {"x": 90, "y": 0, "z": 0, "origin": [8, 8, 8], "w": 1},
+                    "faces": {"down": {"texture": "#t"}}
+                }),
+                "w",
+            ),
+            (
+                "mixed rotation forms",
+                serde_json::json!({
+                    "from": [0, 0, 0], "to": [16, 16, 16],
+                    "rotation": {"angle": 45, "axis": "y", "origin": [8, 8, 8], "x": 90},
+                    "faces": {"down": {"texture": "#t"}}
+                }),
+                "single-axis",
+            ),
+        ] {
+            let zip = zip_of(&[(
+                "assets/minecraft/models/block/fixture.json",
+                json_bytes(serde_json::json!({
+                    "textures": {"t": "block/stone"}, "elements": [el]
+                })),
+            )]);
+            let mut zip = zip;
+            let err = format!("{:#}", generate(&mut zip).unwrap_err());
+            assert!(err.contains("extend the parser first"), "{name}: {err}");
+            assert!(err.contains(want), "{name}: expected {want} in {err}");
+        }
+    }
+
+    #[test]
+    fn refuses_bad_cullface_directions_bounds_or_domains() {
+        for (name, el, want) in [
+            (
+                "cullface",
+                serde_json::json!({
+                    "from": [0, 0, 0], "to": [16, 16, 16],
+                    "faces": {"down": {"texture": "#t", "cullface": "sideways"}}
+                }),
+                "not a vanilla face",
+            ),
+            (
+                "face direction",
+                serde_json::json!({
+                    "from": [0, 0, 0], "to": [16, 16, 16],
+                    "faces": {"top": {"texture": "#t"}}
+                }),
+                "not a vanilla direction",
+            ),
+            (
+                "bounds",
+                serde_json::json!({
+                    "from": [0, 0, 0], "to": [16, 16, 33],
+                    "faces": {"down": {"texture": "#t"}}
+                }),
+                "vanilla clamp domain",
+            ),
+            (
+                "light_emission",
+                serde_json::json!({
+                    "from": [0, 0, 0], "to": [16, 16, 16],
+                    "light_emission": 16,
+                    "faces": {"down": {"texture": "#t"}}
+                }),
+                "exceeds 15",
+            ),
+            (
+                "face rotation quantum",
+                serde_json::json!({
+                    "from": [0, 0, 0], "to": [16, 16, 16],
+                    "faces": {"down": {"texture": "#t", "rotation": 45}}
+                }),
+                "not a multiple of 90",
+            ),
+        ] {
+            let zip = zip_of(&[(
+                "assets/minecraft/models/block/fixture.json",
+                json_bytes(serde_json::json!({
+                    "textures": {"t": "block/stone"}, "elements": [el]
+                })),
+            )]);
+            let mut zip = zip;
+            let err = format!("{:#}", generate(&mut zip).unwrap_err());
+            assert!(err.contains(want), "{name}: expected {want} in {err}");
+        }
     }
 }
