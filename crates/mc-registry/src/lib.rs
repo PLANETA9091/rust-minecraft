@@ -30,6 +30,13 @@ pub mod texture_slots;
 /// render path. See the module docs for the javap evidence.
 pub mod sprite_uv;
 
+/// The vanilla display-transform link — the models table's `display`
+/// stanzas resolved per context through the parent chain into the
+/// view-space pose over the quads (ItemTransform/ItemTransforms +
+/// JOML 1.10.8 op-for-op, bit-pinned against the joml oracle). Pure
+/// data, no render path. See the module docs for the javap evidence.
+pub mod display;
+
 /// One block definition: identifier + sorted list of state property names.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Block {
