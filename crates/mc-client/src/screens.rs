@@ -1859,6 +1859,7 @@ mod tests {
                     biomes: None, // test scenes carry no biome layer
                     variants: None, // test scenes carry no state variants
             ambient_light: None, // no dimension opinion — the black bytecode default
+            block_light_tint: None, // no dimension opinion — the bytecode default tint
                 },
                 camera: None,
                 spawn_biome: Some("minecraft:plains".into()),
@@ -2284,6 +2285,7 @@ mod tests {
             biomes: None, // test scenes carry no biome layer
             variants: None, // test scenes carry no state variants
             ambient_light: None, // no dimension opinion — the black bytecode default
+            block_light_tint: None, // no dimension opinion — the bytecode default tint
         });
         app.enter_network_world(None, Skybox::Overworld, None, None);
         assert_eq!(app.screen, ScreenKind::World);
@@ -2339,6 +2341,7 @@ mod tests {
             biomes: None, // test scenes carry no biome layer
             variants: None, // test scenes carry no state variants
             ambient_light: None, // no dimension opinion — the black bytecode default
+            block_light_tint: None, // no dimension opinion — the bytecode default tint
         });
         app.enter_network_world(None, Skybox::Overworld, None, None);
         let flight = app.world_camera();
@@ -2396,6 +2399,7 @@ mod tests {
                     biomes: None, // test scenes carry no biome layer
                     variants: None, // test scenes carry no state variants
             ambient_light: None, // no dimension opinion — the black bytecode default
+            block_light_tint: None, // no dimension opinion — the bytecode default tint
                 },
                 camera: None,
                 spawn_biome: None,
@@ -2428,6 +2432,7 @@ mod tests {
             biomes: None, // test scenes carry no biome layer
             variants: None, // test scenes carry no state variants
             ambient_light: None, // no dimension opinion — the black bytecode default
+            block_light_tint: None, // no dimension opinion — the bytecode default tint
         }
     }
 

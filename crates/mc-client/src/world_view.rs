@@ -106,6 +106,12 @@ pub fn materialize(
         // visual/ambient_light_color table; None = no dimension pinned (or
         // an unknown custom one) — the bytecode-default black
         ambient_light: model.ambient_light_color(),
+        // the lightmap's BlockLightTint rides the SAME snapshot: the
+        // model's dimension resolves through the built-in
+        // visual/block_light_tint column; None = no dimension pinned (or
+        // an unknown custom one) — the mesher reads the bytecode default
+        // #FFD88C (the corrected blue 140)
+        block_light_tint: model.block_light_tint(),
     };
     let side_i = side as i32;
     for gz in 0..side_i {
@@ -670,6 +676,67 @@ mod tests {
             world.ambient_light,
             Some([0x0a, 0x0a, 0x0a]),
             "the view carries the dimension's ambient base for the mesher"
+        );
+    }
+
+    #[test]
+    fn materialize_carries_the_models_block_light_tint() {
+        // the lightmap's BlockLightTint rides the SAME snapshot (the
+        // ambient's sibling): the model's dimension resolves through the
+        // built-in visual/block_light_tint column; no dimension pinned
+        // (or an unknown custom one) keeps None — the mesher reads the
+        // bytecode default #FFD88C (the corrected blue 140). No vanilla
+        // dimension states the tint, so the stamped verdict is the
+        // absent shape end to end; a stated one rides the synced entry.
+        let mut m = WorldModel::new();
+        m.apply(PlayEvent::Chunk(ChunkColumn {
+            x: 0,
+            z: 0,
+            sections: vec![stone_dirt_section()],
+            light: ChunkLight::default(),
+        }));
+        let world = materialize(&m, (0, 0), 1, 0, example_mapper);
+        assert_eq!(world.block_light_tint, None, "no dimension: no opinion");
+        // the built-in nether lands the None shape (no vanilla statement)
+        m.apply(PlayEvent::Respawn(SpawnInfo {
+            dimension_type_id: 0,
+            dimension: "minecraft:the_nether".to_string(),
+            portal_cooldown: 0,
+        }));
+        m.apply(PlayEvent::Chunk(ChunkColumn {
+            x: 0,
+            z: 0,
+            sections: vec![stone_dirt_section()],
+            light: ChunkLight::default(),
+        }));
+        let world = materialize(&m, (0, 0), 1, 0, example_mapper);
+        assert_eq!(
+            world.block_light_tint, None,
+            "the built-in table states no tint — the default's shape"
+        );
+        // a custom server's stated tint lands on the view verbatim
+        m.registry.dimension_types.push(mc_protocol::DimensionTypeEntry {
+            name: "minecraft:custom".into(),
+            min_y: -64,
+            height: 384,
+            default_clock: None,
+            timelines: None,
+            ambient_light_color: None,
+            skybox: None,
+            fog_start_distance: None,
+            fog_end_distance: None,
+            cloud_fog_end_distance: None,
+            block_light_tint: Some([0x30, 0x28, 0x21]),
+            sky_light_color: None,
+            sky_light_factor: None,
+            night_vision_color: None,
+        });
+        m.current_dimension = Some("minecraft:custom".to_string());
+        let world = materialize(&m, (0, 0), 1, 0, example_mapper);
+        assert_eq!(
+            world.block_light_tint,
+            Some([0x30, 0x28, 0x21]),
+            "the view carries the stated tint for the mesher"
         );
     }
 

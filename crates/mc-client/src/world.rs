@@ -115,6 +115,16 @@ pub struct World {
     /// every procedural/golden scene and every unknown dimension keeps
     /// the pre-ambient arithmetic bit for bit.
     pub ambient_light: Option<[u8; 3]>,
+    /// The dimension's lightmap BlockLightTint (the shader's warm
+    /// block-light cast) as RAW 0..=255 channel bytes — the stated
+    /// `visual/block_light_tint` attribute (`materialize` stamps it
+    /// from the model's dimension). `None` = no opinion: the mesher
+    /// reads the BYTECODE default (`EnvironmentAttributes.<clinit>`
+    /// defaultValue -10100 = 0xFFFFD88C = #FFD88C — the corrected
+    /// blue 140; an earlier literal misread it 0xAC) — so every
+    /// procedural/golden scene and every unknown dimension keeps the
+    /// default-tint arithmetic (modulo the correction itself).
+    pub block_light_tint: Option<[u8; 3]>,
 }
 
 /// A biome cell with no opinion — the server never answered for the
@@ -219,6 +229,7 @@ impl World {
             biomes: None, // the procedural scene carries no biome layer
             variants: None, // the procedural scene carries no state variants
             ambient_light: None, // the procedural scene: the black bytecode default
+            block_light_tint: None, // the procedural scene: the bytecode default tint
         };
         w.generate();
         w

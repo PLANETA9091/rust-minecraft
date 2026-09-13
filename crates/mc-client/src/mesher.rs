@@ -138,12 +138,20 @@ pub fn light_brightness(level: f32) -> f32 {
 
 /// The vanilla lightmap's `BlockLightTint` — the `visual/block_light_tint`
 /// environment attribute's DEFAULT, pinned in the jar's bytecode
-/// (`EnvironmentAttributes.<clinit>`: `defaultValue(sipush -10100)` =
-/// 0xFFD8AC). No dimension JSON in the registry's data and no timeline
-/// track overrides it, so the default IS the whole value in every
-/// dimension the registry carries — the same "the default is the whole
-/// value" shape as `sky_light_color` before its day track.
-const BLOCK_LIGHT_TINT: [f32; 3] = [1.0, 216.0 / 255.0, 172.0 / 255.0];
+/// (`EnvironmentAttributes.<clinit>`: `defaultValue(sipush -10100)`; the
+/// attribute codec is `ExtraCodecs.STRING_RGB_COLOR` = `hexColor(6)`
+/// xmap'd with `ARGB.opaque`/`ARGB.transparent`, so the canonical int is
+/// the ARGB `0xFFFFD88C`, unpacked by `ARGB.vector3fFromRGB24` (`red =
+/// (i>>16)&255, green = (i>>8)&255, blue = i&255` — the alpha bits fall
+/// off the masks): R 255 / G 216 / B **140**. An earlier round shipped
+/// 172 for the blue — a one-hex-digit misread of 0x8C as 0xAC
+/// (`0xFFFFD8AC` would be -10068, not -10100); this round's audit
+/// re-derived the whole chain from the bytecode and corrected it. No
+/// dimension JSON in the registry's data and no timeline track overrides
+/// it, so the default IS the whole value in every dimension the
+/// registry carries — a STATED attribute (a custom server's) replaces
+/// it verbatim (the model's `block_light_tint()`).
+const DEFAULT_BLOCK_LIGHT_TINT: [f32; 3] = [1.0, 216.0 / 255.0, 140.0 / 255.0];
 
 /// The vanilla lightmap's `BlockFactor` — the extractor's bytecode
 /// (`LightmapRenderStateExtractor.extract`): `blockFactor =
@@ -172,14 +180,19 @@ fn parabolic_mix_factor(block_level: f32) -> f32 {
 /// `block_level = block / 15`, lightmap.fsh verbatim. The parabola
 /// rides the RAW level, NOT the brightness ramp: the warmth peaks at
 /// mid levels and the extremes whiten. The red channel is 1.0 for
-/// every level (the tint's red is already 1.0).
+/// every level (the tint's red is already 1.0). The tint is the
+/// dimension's STATED `visual/block_light_tint` when one rides the
+/// sync (the model's `block_light_tint()`, normalized to 0..1), the
+/// bytecode default otherwise — `None` is the default's verdict,
+/// never a guess.
 #[inline]
-fn block_light_color(block: f32) -> [f32; 3] {
+fn block_light_color(block: f32, tint: Option<[f32; 3]>) -> [f32; 3] {
+    let tint = tint.unwrap_or(DEFAULT_BLOCK_LIGHT_TINT);
     let mix = 0.9 * parabolic_mix_factor(block / 15.0);
     [
-        BLOCK_LIGHT_TINT[0] + mix * (1.0 - BLOCK_LIGHT_TINT[0]),
-        BLOCK_LIGHT_TINT[1] + mix * (1.0 - BLOCK_LIGHT_TINT[1]),
-        BLOCK_LIGHT_TINT[2] + mix * (1.0 - BLOCK_LIGHT_TINT[2]),
+        tint[0] + mix * (1.0 - tint[0]),
+        tint[1] + mix * (1.0 - tint[1]),
+        tint[2] + mix * (1.0 - tint[2]),
     ]
 }
 
@@ -199,7 +212,8 @@ fn block_light_color(block: f32) -> [f32; 3] {
 /// timeline's `visual/sky_light_color` track (`timeline::sky_light_color`:
 /// the white default by day, `#7a7aff` — the moonlight blue — through the
 /// night plateau). `BlockLightColor` is [`block_light_color`] — the
-/// `#ffd8ac` default tint mixed 0.9-parabola toward white on the raw
+/// stated tint (or the `#ffd88c` bytecode default, the corrected blue
+/// 140) mixed 0.9-parabola toward white on the raw
 /// level — scaled by `BlockFactor` 1.4, the flicker's expectation (the
 /// random walk itself is the documented non-goal). The remaining shader
 /// terms are the defaults' identities at this client's state:
@@ -214,11 +228,12 @@ fn lightmap_combine(
     sky_factor: f32,
     sky_tint: [f32; 3],
     ambient: [f32; 3],
+    block_tint: Option<[f32; 3]>,
 ) -> [f32; 3] {
     let sky_term = sky.map(|v| light_brightness(v) * sky_factor);
     let block_term = block.map(|v| {
         let b = light_brightness(v) * BLOCK_FACTOR;
-        let c = block_light_color(v);
+        let c = block_light_color(v, block_tint);
         [b * c[0], b * c[1], b * c[2]]
     });
     if sky_term.is_none() && block_term.is_none() {
@@ -390,6 +405,12 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                     let ambient = world.ambient_light.map_or([0.0f32; 3], |a| {
                         [a[0] as f32 / 255.0, a[1] as f32 / 255.0, a[2] as f32 / 255.0]
                     });
+                    // The shader's BlockLightTint: the dimension's STATED
+                    // attribute (raw bytes -> 0..1), None = the bytecode
+                    // default's verdict (#FFD88C, the corrected blue 140).
+                    let block_tint = world.block_light_tint.map(|a| {
+                        [a[0] as f32 / 255.0, a[1] as f32 / 255.0, a[2] as f32 / 255.0]
+                    });
                     let fy = wy as f32 + FLAT_Y;
                     let variant = world
                         .variants
@@ -477,6 +498,7 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                                         sky_factor,
                                         sky_tint,
                                         ambient,
+                                        block_tint,
                                     ),
                                     None => [1.0; 3], // no light layer — legacy look
                                 };
@@ -566,6 +588,12 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                     let ambient = world.ambient_light.map_or([0.0f32; 3], |a| {
                         [a[0] as f32 / 255.0, a[1] as f32 / 255.0, a[2] as f32 / 255.0]
                     });
+                    // The shader's BlockLightTint: the dimension's STATED
+                    // attribute (raw bytes -> 0..1), None = the bytecode
+                    // default's verdict (#FFD88C, the corrected blue 140).
+                    let block_tint = world.block_light_tint.map(|a| {
+                        [a[0] as f32 / 255.0, a[1] as f32 / 255.0, a[2] as f32 / 255.0]
+                    });
                     let order = flip_order(&ao);
                     let mut pts = [[0f32; 3]; 4];
                     let mut colors = [[0f32; 3]; 4];
@@ -585,7 +613,7 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                         // old max's verdict). No known cell -> legacy look.
                         let lm = match clight.as_ref() {
                             Some((sky, block)) => {
-                                lightmap_combine(sky[src], block[src], sky_factor, sky_tint, ambient)
+                                lightmap_combine(sky[src], block[src], sky_factor, sky_tint, ambient, block_tint)
                             }
                             None => [1.0; 3], // no light layer — legacy look
                         };
@@ -666,6 +694,7 @@ mod tests {
             // the pre-ambient arithmetic bit for bit (the ambient lift is
             // pinned in its own tests, explicitly staged)
             ambient_light: None,
+            block_light_tint: None,
         }
     }
 
@@ -1127,13 +1156,13 @@ mod tests {
         // block term under the clamp: BlockLightColor(14) ·
         // brightness(14) · BlockFactor — red and green saturate, blue
         // rides under (the warm verdict). v0.3.87: the term is no
-        // longer the white brightness(14) — the #ffd8ac mix landed.
+        // longer the white brightness(14) — the #ffd88c mix landed.
         let mut w = empty_world();
         put(&mut w, 8, 8, 8, STONE);
         w.light = Some(unknown_light());
         set_light(&mut w, None, Some(14), 8, 9, 8);
         let b = light_brightness(14.0) * BLOCK_FACTOR;
-        let c = block_light_color(14.0);
+        let c = block_light_color(14.0, None);
         let expect = [(b * c[0]).min(1.0), (b * c[1]).min(1.0), (b * c[2]).min(1.0)];
         assert!((expect[0] - 1.0).abs() < 1e-6, "red saturates the clamp");
         assert!(expect[2] < 1.0, "blue stays under the clamp");
@@ -1179,7 +1208,7 @@ mod tests {
         // verdict); the warm tint shows on UNclamped cells instead
         // (see the_block_term_is_tinted_and_factored_not_white)
         let block_r =
-            (light_brightness(14.0) * BLOCK_FACTOR * block_light_color(14.0)[0]).min(1.0);
+            (light_brightness(14.0) * BLOCK_FACTOR * block_light_color(14.0, None)[0]).min(1.0);
         let night_torch_r = (light_brightness(15.0) * 0.24 * tint_rg + block_r).min(1.0);
         assert!(
             (night_torch_r - 1.0).abs() < 1e-6,
@@ -1197,7 +1226,7 @@ mod tests {
         w3.light = Some(unknown_light());
         set_light(&mut w3, Some(12), Some(10), 8, 9, 8);
         let expect = light_brightness(12.0)
-            + light_brightness(10.0) * BLOCK_FACTOR * block_light_color(10.0)[0];
+            + light_brightness(10.0) * BLOCK_FACTOR * block_light_color(10.0, None)[0];
         assert!((expect - 29.0 / 30.0).abs() < 1e-6, "ramp sanity: {expect}");
         for m in vertex_multiplier(&top_face(&w3)) {
             assert!(
@@ -1216,7 +1245,7 @@ mod tests {
         w2.day_tick = Some(18_000);
         set_light(&mut w2, None, Some(10), 8, 9, 8);
         let b = light_brightness(10.0) * BLOCK_FACTOR;
-        let c = block_light_color(10.0);
+        let c = block_light_color(10.0, None);
         let expect = [b * c[0], b * c[1], b * c[2]];
         for corner in &top_face(&w2).colors {
             for (ch, e) in corner.iter().zip(expect.iter()) {
@@ -1273,7 +1302,7 @@ mod tests {
         );
         // blocks 7 and 8 straddle the parabola's dip symmetrically —
         // the SAME mix, the nearest the integer levels get to the pure
-        // #ffd8ac (the dip's neighborhood, not the dip itself)
+        // #ffd88c (the dip's neighborhood, not the dip itself)
         let m7 = 0.9 * parabolic_mix_factor(7.0 / 15.0);
         let m8 = 0.9 * parabolic_mix_factor(8.0 / 15.0);
         assert!((m7 - m8).abs() < 1e-6, "the dip is level-symmetric: {m7} vs {m8}");
@@ -1281,17 +1310,69 @@ mod tests {
         // red is 1.0 at EVERY level (the tint's red is saturated — the
         // warmth lives entirely in green/blue)
         for b in [0.0f32, 3.0, 7.0, 8.0, 12.0, 15.0] {
-            let c = block_light_color(b);
+            let c = block_light_color(b, None);
             assert!((c[0] - 1.0).abs() < 1e-9, "red constant at {b}: {}", c[0]);
         }
         // the extremes mix 0.9 of the way to white — derived from the
         // tint constant, both end levels share it (parabola 1.0 there)
         let expect_g = 216.0f32 / 255.0 + 0.9 * (1.0 - 216.0 / 255.0);
-        let expect_b = 172.0f32 / 255.0 + 0.9 * (1.0 - 172.0 / 255.0);
+        let expect_b = 140.0f32 / 255.0 + 0.9 * (1.0 - 140.0 / 255.0);
         for b in [0.0f32, 15.0] {
-            let c = block_light_color(b);
+            let c = block_light_color(b, None);
             assert!((c[1] - expect_g).abs() < 1e-6, "green at {b}: {} vs {expect_g}", c[1]);
             assert!((c[2] - expect_b).abs() < 1e-6, "blue at {b}: {} vs {expect_b}", c[2]);
+        }
+    }
+
+    #[test]
+    fn the_stated_block_light_tint_replaces_the_default_verbatim() {
+        // the wire's stated attribute is the WHOLE tint (javap
+        // LightmapRenderStateExtractor: the probe's value feeds
+        // ARGB.vector3fFromRGB24 straight into the uniform — no
+        // blending with the default). A stated cool tint (#302821,
+        // the nether ambient's hue) shifts the mix target per channel;
+        // the parabola itself is unchanged (still 0.9 on the raw
+        // level, red saturated at the ends — the stated red is 0x30,
+        // so red is NOT 1.0 here: the mix carries it toward white).
+        let stated = Some([0x30 as f32 / 255.0, 0x28 as f32 / 255.0, 0x21 as f32 / 255.0]);
+        let m15 = 0.9 * parabolic_mix_factor(15.0 / 15.0);
+        let c = block_light_color(15.0, stated);
+        let expect = [
+            0x30 as f32 / 255.0 + m15 * (1.0 - 0x30 as f32 / 255.0),
+            0x28 as f32 / 255.0 + m15 * (1.0 - 0x28 as f32 / 255.0),
+            0x21 as f32 / 255.0 + m15 * (1.0 - 0x21 as f32 / 255.0),
+        ];
+        for (ch, e) in c.iter().zip(expect.iter()) {
+            assert!((ch - e).abs() < 1e-6, "stated tint rides verbatim: {ch} vs {e}");
+        }
+        // the None call is the default's verdict (the corrected blue
+        // 140 — NOT the retired 172 literal) — the two differ, the
+        // stated path is a real consumer, not a shadowed argument
+        let dflt = block_light_color(15.0, None);
+        assert!(
+            (dflt[2] - c[2]).abs() > 0.01,
+            "stated vs default diverge: {} vs {}",
+            dflt[2],
+            c[2]
+        );
+        // the mesher witness: a stated tint on the world reaches the
+        // block term through lightmap_combine — the flat path's own
+        // plumbing (world.block_light_tint -> the combine's argument)
+        let mut w = empty_world();
+        put(&mut w, 8, 8, 8, STONE);
+        w.light = Some(unknown_light());
+        w.block_light_tint = Some([0x30, 0x28, 0x21]);
+        set_light(&mut w, None, Some(7), 8, 9, 8);
+        let b = light_brightness(7.0) * BLOCK_FACTOR;
+        let cs = block_light_color(7.0, stated);
+        let expect_w = [b * cs[0], b * cs[1], b * cs[2]];
+        for corner in &top_face(&w).colors {
+            for (ch, e) in corner.iter().zip(expect_w.iter()) {
+                assert!(
+                    (ch - e).abs() < 1e-6,
+                    "the stated tint reaches the block term: {ch} vs {e}"
+                );
+            }
         }
     }
 
@@ -1308,7 +1389,7 @@ mod tests {
         w.light = Some(unknown_light());
         set_light(&mut w, None, Some(7), 8, 9, 8);
         let b = light_brightness(7.0) * BLOCK_FACTOR;
-        let c = block_light_color(7.0);
+        let c = block_light_color(7.0, None);
         let expect = [b * c[0], b * c[1], b * c[2]];
         assert!(expect.iter().all(|e| *e < 1.0), "block 7 sits under the clamp");
         for corner in &top_face(&w).colors {
@@ -1316,12 +1397,12 @@ mod tests {
                 assert!((ch - e).abs() < 1e-6, "torch tint per channel: {ch} vs {e}");
             }
         }
-        // the clamp witness at block 14: red (1.0889) AND green (1.0352)
-        // saturate, blue stays under (0.8944 tint × 1.0889 = 0.9740) —
+        // the clamp witness at block 14: red (1.0889) AND green (1.0350)
+        // saturate, blue stays under (0.8540 tint × 1.0889 = 0.9300) —
         // the shader's single final clamp, the warm torch verdict
         set_light(&mut w, None, Some(14), 8, 9, 8);
         let b14 = light_brightness(14.0) * BLOCK_FACTOR;
-        let c14 = block_light_color(14.0);
+        let c14 = block_light_color(14.0, None);
         let expect14 = [
             (b14 * c14[0]).min(1.0),
             (b14 * c14[1]).min(1.0),
@@ -1352,7 +1433,7 @@ mod tests {
         set_light(&mut w, None, Some(7), 8, 9, 8);
         // the black default: the pre-ambient arithmetic
         let b = light_brightness(7.0) * BLOCK_FACTOR;
-        let c = block_light_color(7.0);
+        let c = block_light_color(7.0, None);
         let dark = [b * c[0], b * c[1], b * c[2]];
         // the overworld floor: the SAME sum, +10/255 per channel
         w.ambient_light = Some([0x0a, 0x0a, 0x0a]);

@@ -362,6 +362,27 @@ impl WorldModel {
         None
     }
 
+    /// The dimension's STATED block-light tint — `None` when no
+    /// dimension states one: the consumer's bytecode-default verdict
+    /// (`visual/block_light_tint` -10100 = #FFD88C, the warm torch
+    /// cast, javap) covers the absence, and the built-in table is None
+    /// for all four vanilla dimensions — only a custom server's
+    /// statement reads as data. The three-branch precedence: the
+    /// synced entry wins, the built-in table serves skip-sync, None
+    /// is the default's verdict.
+    pub fn block_light_tint(&self) -> Option<[u8; 3]> {
+        let dim = self.current_dimension.as_deref()?;
+        if let Some(d) = self.registry.dimension(dim) {
+            return d.block_light_tint;
+        }
+        if self.registry.dimension_types.is_empty() {
+            if let Some(d) = mc_registry::generated::worldgen::dimension_type(dim) {
+                return d.block_light_tint;
+            }
+        }
+        None
+    }
+
     /// Global block state id at (x, y, z) — world coordinates for x/z
     /// (arithmetic shift, so negative chunks index correctly), and world-y
     /// when `min_y` is known else column-local y. `None` outside loaded
@@ -2297,6 +2318,66 @@ mod tests {
         m.registry.dimension_types[0].cloud_fog_end_distance = None;
         assert_eq!(
             m.cloud_fog_end_distance(),
+            None,
+            "the sync arrived and is silent: no stated value, never a guess"
+        );
+    }
+
+    #[test]
+    fn the_block_light_tint_reads_the_stated_attribute() {
+        // the block-light tint is the lightmap's stated attribute: no
+        // vanilla dimension states it (the built-in table is None for
+        // all four — the consumer's #FFD88C bytecode default covers the
+        // absence), a CUSTOM server's stated rgb_color is the synced
+        // truth, and the sync's silence is the honest absence, never a
+        // guess. The three-branch precedence, the fog pair's shape.
+        let mut m = WorldModel::new();
+        assert_eq!(m.block_light_tint(), None, "no dimension: no opinion");
+        m.apply(PlayEvent::Respawn(SpawnInfo {
+            dimension_type_id: 0,
+            dimension: "minecraft:the_nether".to_string(),
+            portal_cooldown: 0,
+        }));
+        assert_eq!(
+            m.block_light_tint(),
+            None,
+            "the built-in nether states no tint — the default's shape"
+        );
+        // the synced truth wins: a custom server's own stated rgb_color
+        m.registry = RegistryData {
+            dimension_types: vec![DimensionTypeEntry {
+                name: "minecraft:the_nether".into(),
+                min_y: 0,
+                height: 256,
+                default_clock: None,
+                timelines: None,
+                ambient_light_color: None,
+                skybox: Some(mc_protocol::Skybox::None),
+                fog_start_distance: None,
+                fog_end_distance: None,
+                cloud_fog_end_distance: None,
+                block_light_tint: Some([0x30, 0x28, 0x21]),
+                sky_light_color: None,
+                sky_light_factor: None,
+                night_vision_color: None,
+            }],
+            biomes: Vec::new(),
+            biome_tags: Vec::new(),
+            world_clocks: Vec::new(),
+            timelines: Vec::new(),
+            timeline_tags: Vec::new(),
+        };
+        assert_eq!(
+            m.block_light_tint(),
+            Some([0x30, 0x28, 0x21]),
+            "the synced value is the server's truth"
+        );
+        // the sync arrives and is silent: None — the bytecode default's
+        // shape (#FFD88C, the corrected blue 140), the sync's own
+        // silence, never a guess
+        m.registry.dimension_types[0].block_light_tint = None;
+        assert_eq!(
+            m.block_light_tint(),
             None,
             "the sync arrived and is silent: no stated value, never a guess"
         );
