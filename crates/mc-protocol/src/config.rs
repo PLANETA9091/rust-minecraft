@@ -179,6 +179,14 @@ pub struct DimensionTypeEntry {
     /// shape and reads as the honest absence, never a half guess.
     pub fog_start_distance: Option<f32>,
     pub fog_end_distance: Option<f32>,
+    /// The dimension's STATED cloud-fog end (blocks) — the element's
+    /// `attributes` compound's `minecraft:visual/cloud_fog_end_distance`
+    /// FLOAT entry (javap EnvironmentAttributes: the builder chain
+    /// `.syncable()`, so it RIDES the registry sync; the bytecode default
+    /// is 2048.0 — NO vanilla dimension declares it, so the field rides
+    /// only a custom server's statement). `None` = the element states
+    /// nothing — the consumer reads the bytecode default, never a guess.
+    pub cloud_fog_end_distance: Option<f32>,
 }
 
 /// The skybox kinds one synced dimension type may state (javap
@@ -834,6 +842,13 @@ pub fn parse_registry_data(payload: &[u8]) -> Result<RegistryData> {
             (Some(s), Some(e)) => (Some(s), Some(e)),
             _ => (None, None),
         };
+        // the STATED cloud-fog end (blocks): a single syncable FLOAT —
+        // no pair rule (nothing to pair with); ABSENT reads None, the
+        // consumer's bytecode-default shape (2048.0)
+        let cloud_fog_end_distance = element
+            .get("attributes")
+            .and_then(|a| a.get("minecraft:visual/cloud_fog_end_distance"))
+            .and_then(Nbt::as_f32);
         out.dimension_types.push(DimensionTypeEntry {
             name: entry_id,
             min_y,
@@ -844,6 +859,7 @@ pub fn parse_registry_data(payload: &[u8]) -> Result<RegistryData> {
             skybox,
             fog_start_distance: fog.0,
             fog_end_distance: fog.1,
+            cloud_fog_end_distance,
         });
     }
     anyhow::ensure!(
@@ -1663,6 +1679,41 @@ mod tests {
     }
 
     #[test]
+    fn the_wire_cloud_fog_end_decodes_the_stated_float() {
+        // a CUSTOM server's dimension may state the syncable cloud-fog
+        // end (javap EnvironmentAttributes: the builder .syncable(); no
+        // vanilla dimension declares it — the four dimension JSONs carry
+        // no key): the element's flat attributes compound's FLOAT entry,
+        // the fog pair's decode shape minus the pairing rule
+        let mut p = Vec::new();
+        write_varint(&mut p, clientbound::REGISTRY_DATA);
+        crate::varint::write_string(&mut p, "minecraft:dimension_type");
+        write_varint(&mut p, 1);
+        crate::varint::write_string(&mut p, "minecraft:custom");
+        p.push(1); // tag present — the element rides
+        let element = Nbt::Compound(vec![
+            ("min_y".into(), Nbt::Int(-64)),
+            ("height".into(), Nbt::Int(384)),
+            ("has_skylight".into(), Nbt::Byte(1)),
+            (
+                "attributes".into(),
+                Nbt::Compound(vec![(
+                    "minecraft:visual/cloud_fog_end_distance".into(),
+                    Nbt::Float(512.0),
+                )]),
+            ),
+        ]);
+        crate::nbt::write_network_nbt(&element, &mut p).expect("element writes");
+        let data = parse_registry_data(&p).expect("the custom element parses");
+        let d = data.dimension("minecraft:custom").expect("custom");
+        assert_eq!(
+            d.cloud_fog_end_distance,
+            Some(512.0),
+            "the stated FLOAT rides the sync verbatim"
+        );
+    }
+
+    #[test]
     fn registry_data_decodes_dimensions_keeps_biomes_and_skips_other_registries() {
         // the decoded registry: both dimensions land with their layouts
         let data = parse_registry_data(&registry_packet(true)).expect("dimension_type parses");
@@ -1713,6 +1764,11 @@ mod tests {
             (ow.fog_start_distance, ow.fog_end_distance),
             (None, None),
             "the real overworld states NO fog keys — the bytecode defaults' shape"
+        );
+        assert_eq!(
+            (nether.cloud_fog_end_distance, ow.cloud_fog_end_distance),
+            (None, None),
+            "no vanilla dimension states the cloud-fog end — the absent shape"
         );
         assert!(data.dimension("minecraft:the_end").is_none());
         // the biome registry: the element DECODED (the NETWORK_CODEC

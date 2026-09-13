@@ -548,6 +548,12 @@ fn render_end_flash(
 const CLOUD_CELL: f64 = 12.0;
 /// Fancy cloud box height: the CloudInfo UBO carries CellSize (12, 4, 12).
 const CLOUD_CELL_H: f64 = 4.0;
+
+/// `visual/cloud_fog_end_distance` — the bytecode default (javap
+/// EnvironmentAttributes.<clinit>): the cloud fog's end when no
+/// dimension states one. NO vanilla dimension declares the attribute;
+/// a custom server's stated FLOAT replaces it verbatim.
+pub const DEFAULT_CLOUD_FOG_END: f32 = 2048.0;
 /// BLOCKS_PER_SECOND 0.6 / 20 ticks = the literal f32 0.030000001 the
 /// bytecode multiplies the drift offset by (blocks per tick, toward -X).
 const CLOUD_DRIFT_PER_TICK: f32 = 0.030_000_001;
@@ -619,6 +625,14 @@ pub fn is_cloud_cell(wx: f64, wz: f64, drift: f64) -> bool {
     S::CLOUDS[tx + tz * S::CLOUDS_SIZE as usize] != 0
 }
 
+/// FogCloudsEnd: `min(cloudRange * 16, the dimension's stated
+/// `visual/cloud_fog_end_distance`, else the 2048.0 default)` — the
+/// official CloudRenderer's own cap over the render distance; a stated
+/// smaller end wins verbatim, a stated larger one never lifts the cap.
+pub fn clouds_fog_end(cloud_range_chunks: i64, stated: Option<f32>) -> f32 {
+    ((cloud_range_chunks * 16) as f32).min(stated.unwrap_or(DEFAULT_CLOUD_FOG_END))
+}
+
 /// Build and render the cloud layer for world tick `day_time`.
 ///
 /// Replicates the official FANCY mesh (default CloudStatus): boxes of
@@ -632,6 +646,7 @@ pub fn render_clouds(
     cam: &Camera,
     day_time: i64,
     partial_ticks: f32,
+    stated_cloud_fog_end: Option<f32>,
 ) {
     let st = sample(day_time);
     // The extractor skips the layer entirely when the track alpha hits 0
@@ -656,8 +671,9 @@ pub fn render_clouds(
     };
     let cell = |i: i64, k: i64| -> bool { tex(i, k) };
     let color = st.cloud_color;
-    // FogCloudsEnd = min(cloudRange * 16, visual/cloud_fog_end_distance 2048).
-    let fog_end = ((CLOUD_RANGE_CHUNKS * 16) as f32).min(2048.0);
+    // FogCloudsEnd = min(cloudRange * 16, the dimension's stated
+    // visual/cloud_fog_end_distance, else the 2048.0 default).
+    let fog_end = clouds_fog_end(CLOUD_RANGE_CHUNKS, stated_cloud_fog_end);
     // Conservative per-cell cull (OUTPUT-IDENTICAL optimization: cells that
     // project fully outside the frustum, or sit entirely beyond the fog end,
     // can never produce a visible pixel — the rasterizer would skip them).
@@ -759,8 +775,9 @@ pub fn render_clouds(
             }
         }
     }
-    // FogCloudsEnd = min(cloudRange * 16, visual/cloud_fog_end_distance 2048).
-    let fog_end = ((CLOUD_RANGE_CHUNKS * 16) as f32).min(2048.0);
+    // FogCloudsEnd = min(cloudRange * 16, the dimension's stated
+    // visual/cloud_fog_end_distance, else the 2048.0 default).
+    let fog_end = clouds_fog_end(CLOUD_RANGE_CHUNKS, stated_cloud_fog_end);
     fb.draw_clouds(ctx, [cam.pos.x, cam.pos.y, cam.pos.z], fog_end, &quads);
 }
 
@@ -1043,6 +1060,18 @@ mod tests {
     }
 
     #[test]
+    fn clouds_fog_end_caps_at_the_stated_or_default() {
+        // the official cap: min(cloudRange * 16, the stated attribute)
+        // — no statement rides the 2048.0 bytecode default, a stated
+        // smaller value wins verbatim, a stated larger one never lifts
+        // the render-distance cap
+        assert_eq!(clouds_fog_end(128, None), 2048.0, "no statement: the default");
+        assert_eq!(clouds_fog_end(8, None), 128.0, "the render distance caps first");
+        assert_eq!(clouds_fog_end(128, Some(512.0)), 512.0, "a stated smaller end wins");
+        assert_eq!(clouds_fog_end(8, Some(2048.0)), 128.0, "a stated larger end never lifts the cap");
+    }
+
+    #[test]
     fn render_clouds_builds_official_geometry() {
         let cam = Camera { pos: Vec3::new(64.0, 80.0, 64.0), yaw: std::f32::consts::FRAC_PI_2, pitch: -0.08 };
         let ctx = RenderCtx {
@@ -1055,7 +1084,7 @@ mod tests {
         // Deterministic build: two runs produce identical quads.
         let collect = || {
             let mut fb = crate::raster::Framebuf::new(8, 8);
-            crate::sky::render_clouds(&mut fb, &ctx, &cam, 30, 0.0);
+            crate::sky::render_clouds(&mut fb, &ctx, &cam, 30, 0.0, None);
             ()
         };
         collect();

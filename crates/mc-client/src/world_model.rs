@@ -344,6 +344,24 @@ impl WorldModel {
         None
     }
 
+    /// The dimension's STATED cloud-fog end (blocks) — `None` when no
+    /// dimension states one: the consumer's bytecode-default verdict
+    /// (`visual/cloud_fog_end_distance` 2048.0, javap) covers the
+    /// absence, and the built-in table is None for all four vanilla
+    /// dimensions — only a custom server's statement reads as data.
+    pub fn cloud_fog_end_distance(&self) -> Option<f32> {
+        let dim = self.current_dimension.as_deref()?;
+        if let Some(d) = self.registry.dimension(dim) {
+            return d.cloud_fog_end_distance;
+        }
+        if self.registry.dimension_types.is_empty() {
+            if let Some(d) = mc_registry::generated::worldgen::dimension_type(dim) {
+                return d.cloud_fog_end_distance;
+            }
+        }
+        None
+    }
+
     /// Global block state id at (x, y, z) — world coordinates for x/z
     /// (arithmetic shift, so negative chunks index correctly), and world-y
     /// when `min_y` is known else column-local y. `None` outside loaded
@@ -2163,6 +2181,60 @@ mod tests {
             m.fog_distances(),
             None,
             "start without end is not a real vanilla shape"
+        );
+    }
+
+    #[test]
+    fn the_cloud_fog_end_reads_the_stated_float() {
+        // the cloud-fog end is the fog pair's single-attribute sibling:
+        // no vanilla dimension states it (the built-in table is None for
+        // all four — the consumer's 2048.0 bytecode default covers the
+        // absence), a CUSTOM server's stated FLOAT is the synced truth,
+        // and the sync's silence is the honest absence, never a guess.
+        let mut m = WorldModel::new();
+        assert_eq!(m.cloud_fog_end_distance(), None, "no dimension: no opinion");
+        m.apply(PlayEvent::Respawn(SpawnInfo {
+            dimension_type_id: 0,
+            dimension: "minecraft:the_nether".to_string(),
+            portal_cooldown: 0,
+        }));
+        assert_eq!(
+            m.cloud_fog_end_distance(),
+            None,
+            "the built-in nether states no cloud-fog end — the default's shape"
+        );
+        // the synced truth wins: a custom server's own stated FLOAT
+        m.registry = RegistryData {
+            dimension_types: vec![DimensionTypeEntry {
+                name: "minecraft:the_nether".into(),
+                min_y: 0,
+                height: 256,
+                default_clock: None,
+                timelines: None,
+                ambient_light_color: None,
+                skybox: Some(mc_protocol::Skybox::None),
+                fog_start_distance: None,
+                fog_end_distance: None,
+                cloud_fog_end_distance: Some(512.0),
+            }],
+            biomes: Vec::new(),
+            biome_tags: Vec::new(),
+            world_clocks: Vec::new(),
+            timelines: Vec::new(),
+            timeline_tags: Vec::new(),
+        };
+        assert_eq!(
+            m.cloud_fog_end_distance(),
+            Some(512.0),
+            "the synced value is the server's truth"
+        );
+        // the sync arrives and is silent: None — the bytecode default's
+        // shape, the sync's own silence, never a built-in fallback
+        m.registry.dimension_types[0].cloud_fog_end_distance = None;
+        assert_eq!(
+            m.cloud_fog_end_distance(),
+            None,
+            "the sync arrived and is silent: no stated value, never a guess"
         );
     }
 }
