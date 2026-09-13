@@ -17,6 +17,12 @@ pub mod blockstate_lookup;
 /// render path. See the module docs for the javap evidence.
 pub mod element_quads;
 
+/// The vanilla TextureSlots resolution over generated::models — the
+/// parent-chain merge (child overrides per key), the "#var" reference
+/// fixpoint, the 26.2 inline sprite dicts, and the strip-# lookup that
+/// makes bare refs behave identically. Pure data, no render path.
+pub mod texture_slots;
+
 /// One block definition: identifier + sorted list of state property names.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Block {
