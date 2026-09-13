@@ -1015,7 +1015,10 @@ mod tests {
         // max |translation| post-/16 = 1.40625 (0x3fb40000), max |scale| = 2.0
         assert_eq!(max_t_bits, 0x3fb40000);
         assert_eq!(max_s_bits, 0x40000000);
-        assert_eq!(rot_45, 483, "45-degree-multiple rotation entries");
+        // 483 explicit 45-multiples + 14 contexts that declare NO rotation
+        // key (the deserializer default [0,0,0] = three multiples each):
+        // 483 + 42 = 525 effective (scripts/display_census.py prints both).
+        assert_eq!(rot_45, 525, "45-degree-multiple rotation entries");
     }
 
     #[test]
@@ -1113,7 +1116,7 @@ mod tests {
         assert_eq!(out, apply_vertex(&build_pose(&t, false), v0));
         // and the same vertex against the ORACLE bits (filled from the
         // harness run below)
-        let bits: [u32; 3] = ORACLE_QUAD0_V0.map(|w| w.parse().unwrap());
+        let bits: [u32; 3] = ORACLE_QUAD0_V0.map(|w| u32::from_str_radix(w, 16).unwrap());
         assert_eq!(out.map(f32::to_bits), bits);
         // the first-person context falls back to block/block's [0,45,0]
         let posed_fpr = posed_quads("block/stairs", FIRSTPERSON_RIGHTHAND)
