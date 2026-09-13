@@ -217,12 +217,50 @@ pub fn emit_block_ids(workspace_root: &Path, version: &str, client_sha1: &str, d
          }\n",
     );
 
+    // The per-state property-assignment runs, APPENDED after the name
+    // table: everything above stays byte-identical to the pre-props
+    // generation (the determinism check diffs this prefix against HEAD).
+    src.push_str(
+        "\n\n\
+         /// (start_id, end_id_exclusive, props) — one range per DISTINCT\n\
+         /// property-assignment run, tiling [0, STATE_COUNT) exactly:\n\
+         /// adjacent states with identical properties collapse (no-property\n\
+         /// runs merge across blocks); an empty string = the block has no\n\
+         /// properties. The values are the jar dumper's own words\n\
+         /// (`k=v,k=v`, vanilla registration order).\n\
+         pub const STATE_PROPS: &[(u32, u32, &str)] = &[\n"
+    );
+    for (lo, hi, p) in &props {
+        src.push_str(&format!("    ({lo}, {hi}, \"{p}\"),\n"));
+    }
+    src.push_str(
+        "]\n\n\
+         /// The raw `k=v,k=v` property string of a global state id (binary\n\
+         /// search over the generated runs); `None` past the table,\n\
+         /// `Some("\"\"")` when the block has no properties.\n\
+         pub fn props_of(state_id: u32) -> Option<&'static str> {\n\
+         \x20   STATE_PROPS\n\
+         \x20       .binary_search_by(|(lo, hi, _)| {\n\
+         \x20           if state_id < *lo {\n\
+         \x20               std::cmp::Ordering::Greater\n\
+         \x20           } else if state_id >= *hi {\n\
+         \x20               std::cmp::Ordering::Less\n\
+         \x20           } else {\n\
+         \x20               std::cmp::Ordering::Equal\n\
+         \x20           }\n\
+         \x20       })\n\
+         \x20       .ok()\n\
+         \x20       .map(|i| STATE_PROPS[i].2)\n\
+         }\n",
+    );
+
     let reg_dir = workspace_root.join("crates/mc-registry/src/generated");
     std::fs::create_dir_all(&reg_dir)?;
     let path = reg_dir.join("block_ids.rs");
     std::fs::write(&path, src).context("write block_ids.rs")?;
     println!(
-        "block_ids.rs written: {state_count} states / {block_count} blocks -> {}",
+        "block_ids.rs written: {state_count} states / {block_count} blocks / {} props runs -> {}",
+        props.len(),
         path.display()
     );
     Ok(path)
