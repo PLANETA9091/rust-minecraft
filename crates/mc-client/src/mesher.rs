@@ -1386,6 +1386,7 @@ mod tests {
         // stated floor: the early return wins (the procedural scenes'
         // shape — their light layer is None, the floor rides nothing)
         let mut w2 = empty_world();
+        put(&mut w2, 8, 8, 8, STONE);
         w2.ambient_light = Some([0x0a, 0x0a, 0x0a]);
         assert_eq!(
             vertex_multiplier(&top_face(&w2)),
@@ -1412,10 +1413,11 @@ mod tests {
             "day sky-15 + ambient still clamps to the legacy full-bright"
         );
         // a dark night cell (sky-1, the 0.24 factor, the #7a7aff tint)
-        // over the end's #3f473f floor: blue rides the clamp's approach
-        // while red/green lift by the floor's own steps — per channel,
-        // derived from the None-arithmetic terms
+        // over the end's #3f473f floor: the floor dominates, the sky term
+        // adds its sliver per channel — derived from the None-arithmetic
+        // terms
         w.ambient_light = Some([0x3f, 0x47, 0x3f]);
+        set_light(&mut w, Some(1), Some(0), 8, 9, 8);
         w.day_tick = Some(18_000);
         let tint_rg = 122.0f32 / 255.0;
         let sky = light_brightness(1.0) * 0.24;

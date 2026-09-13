@@ -616,6 +616,41 @@ hand-drawn:
   cutout rule. Also repairs a pre-existing doctest break (an unannotated
   pseudo-code fence in the item_bake docs compiled as Rust and failed
   `cargo test --workspace` on the clean tree).
+  The **lightmap's AmbientColor base lands (v0.3.88 — the world has a
+  floor)**: the lightmap.fsh line's LAST term is consumed — the shader's
+  `color = max(AmbientColor, nightVisionColor)` starting color, the base
+  the sky/block terms are added ON TOP of (not a final floor). The audit
+  ran first-hand on the 26.2 jar: `EnvironmentAttributes.<clinit>` pins
+  the attribute DEFAULT (`visual/ambient_light_color`,
+  `defaultValue(-16777216)` = 0xFF000000 — black), the four built-in
+  `dimension_type` JSONs state it per dimension (`attributes` is a FLAT
+  compound — the keys are the full namespaced paths verbatim:
+  overworld `#0a0a0a`, overworld_caves `#0a0a0a`, nether `#302821`,
+  end `#3f473f`), and no timeline track overrides it (a sweep of the
+  jar's timeline/dimension data: ambient appears ONLY in the four
+  dimension JSONs). NightVisionFactor is 0 at this client's state, so
+  the max reads the ambient color itself. The generator parses the
+  attribute into `DimensionTypeDef.ambient_light_color` (absent =
+  the bytecode-default black — the honest no-op), the model exposes it
+  through the built-in table by `current_dimension` (the synced wire
+  decode is the documented next consumer, the sky_light_factor track's
+  precedent; an unknown custom key keeps `None` — the black default,
+  never a guess), `materialize` stamps it into the world snapshot, and
+  `lightmap_combine` starts its sum from the converted base. GOLDENS
+  untouched BY DATA AND BY DEFAULT: the procedural worlds carry no
+  light layer (the legacy early return wins before the base is ever
+  read) AND no ambient opinion (None = black = the pre-ambient
+  arithmetic bit for bit) — 12/12 pass at rms 0.000 on the rebuilt
+  release binaries. Tests +4 (workspace 392 → 396 passed / 0 failed /
+  3 ignored): the generator's parse (stated #0a0a0a vs the nether
+  fixture's absent-attribute black), the model accessor's table pins
+  (the three vanilla floors + the None verdicts), the materialize
+  stamp, and the mesher witnesses (the overworld lift is exactly
+  10/255 per channel over the derived black arithmetic, the nether
+  floor is per-CHANNEL, the legacy early return wins with a stated
+  floor riding nothing, day sky-15 still clamps to the legacy
+  full-bright over the floor, and the end's #3f473f night cell adds
+  the sky sliver per channel over its floor).
   The **lightmap's BlockLightColor lands (v0.3.87 — the torch is warm,
   not grey)**: the block term's white stand-in retires, completing the
   `lightmap.fsh` line the v0.3.86 round left open. The audit chain ran
