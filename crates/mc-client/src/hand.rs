@@ -108,13 +108,28 @@ fn decode_rgba(bytes: &[u8]) -> anyhow::Result<(u32, u32, Vec<u8>)> {
 
 /// The rest-pose transform (see the module docs for the bytecode source).
 /// `side` is +1 for the RIGHT main hand (the default offline player's).
-fn arm_transform() -> Mat4 {
+/// `swing` is the attack animation progress (`getAttackAnim`, 0 = rest),
+/// `equip` the equip animation progress (0 — no item switching exists).
+/// Both are the float params of `ItemInHandRenderer.renderPlayerArm` (the
+/// javap decode: slot 5 = swing, slot 4 = equip); at rest every swing term
+/// collapses to exactly zero, so this IS the rest pose bit-for-bit.
+fn arm_transform(swing: f32, equip: f32) -> Mat4 {
     let side = 1.0f32;
     let t = |x: f32, y: f32, z: f32| Mat4::translation(x, y, z);
     let deg = |d: f32| d.to_radians();
+    // the swing terms, exactly as the renderPlayerArm bytecode computes them
+    // (Mth.sin/Mth.sqrt are f64 sin/sqrt narrowed to f32 — Mth's own bodies)
+    let sq = mth_sqrt(swing);
+    let f10 = -0.3f32 * mth_sin(sq * std::f32::consts::PI); // X wobble
+    let f11 = 0.4f32 * mth_sin(sq * 6.2831855); // Y bob (6.2831855 = the bytecode's 2π f32)
+    let f12 = -0.4f32 * mth_sin(swing * std::f32::consts::PI); // Z pull
+    let f13 = mth_sin(swing * swing * std::f32::consts::PI); // rotZ amount
+    let f14 = mth_sin(sq * std::f32::consts::PI); // extra rotY amount
     Mat4::IDENT
-        .mul(&t(side * 0.640_000_05, -0.6, -0.719_999_97))
+        .mul(&t(side * (0.640_000_05 + f10), (f11 - 0.6) + equip * -0.6, f12 + -0.719_999_97))
         .mul(&Mat4::rot_y(deg(side * 45.0)))
+        .mul(&Mat4::rot_y(deg(side * f14 * 70.0)))
+        .mul(&Mat4::rot_z(deg(side * f13 * -20.0)))
         .mul(&t(-side, 3.6, 3.5))
         .mul(&Mat4::rot_z(deg(side * 120.0)))
         .mul(&Mat4::rot_x(deg(200.0)))
@@ -123,6 +138,17 @@ fn arm_transform() -> Mat4 {
         // the PlayerModel right_arm part: pivot (-5, 2, 0)/16, zRot 0.1 rad
         .mul(&t(-5.0 / 16.0, 2.0 / 16.0, 0.0))
         .mul(&Mat4::rot_z(0.1))
+}
+
+/// `Mth.sin(float)`: `Math.sin((double)x)` narrowed back to f32 (the Mth
+/// body — the game never sins in f32).
+fn mth_sin(x: f32) -> f32 {
+    (x as f64).sin() as f32
+}
+
+/// `Mth.sqrt(float)`: `Math.sqrt((double)x)` narrowed back to f32.
+fn mth_sqrt(x: f32) -> f32 {
+    (x as f64).sqrt() as f32
 }
 
 /// Build the six hand quads. The corner/uv pairs are the javap decode of
@@ -136,6 +162,14 @@ fn arm_transform() -> Mat4 {
 /// Polygon constructor's fixed rect corner: k=0 -> (u1,v0), 1 -> (u0,v0),
 /// 2 -> (u0,v1), 3 -> (u1,v1).
 fn build_quads() -> Vec<HandQuad> {
+    build_quads_at(0.0, 0.0)
+}
+
+/// The six hand quads at an arbitrary attack/equip animation progress —
+/// the same `ModelPart$Cube` face table, transformed by the full
+/// renderPlayerArm chain (the swing terms above). At (0, 0) this is the
+/// rest pose, bit-for-bit (every added rotation is the exact identity).
+fn build_quads_at(swing: f32, equip: f32) -> Vec<HandQuad> {
     let (u0, v0) = skin::ARM_TEX_OFFS;
     let [w, h, d] = skin::ARM_BOX_PX;
     let (u0, v0, w, h, d) = (u0 as f32, v0 as f32, w as f32, h as f32, d as f32);
@@ -143,7 +177,7 @@ fn build_quads() -> Vec<HandQuad> {
     let (x0, x1) = (-3.0f32, -3.0 + w);
     let (y0, y1) = (-2.0f32, -2.0 + h);
     let (z0, z1) = (-2.0f32, -2.0 + d);
-    let m = arm_transform();
+    let m = arm_transform(swing, equip);
     let px = |p: [f32; 3]| {
         let q = m.transform_point(crate::math::Vec3::new(p[0] / 16.0, p[1] / 16.0, p[2] / 16.0));
         [q[0], q[1], q[2]]
