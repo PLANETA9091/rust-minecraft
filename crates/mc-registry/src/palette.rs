@@ -167,7 +167,14 @@ fn quad_average(
     if n == 0 {
         return None;
     }
-    Some([(sr / n) as u8, (sg / n) as u8, (sb / n) as u8])
+    // The average rounds HALF-UP to the u8 grid (the same convention the
+    // independent python oracle uses — scripts/palette_oracle.py).
+    let nf = n as f64;
+    Some([
+        (sr as f64 / nf).round() as u8,
+        (sg as f64 / nf).round() as u8,
+        (sb as f64 / nf).round() as u8,
+    ])
 }
 
 /// The one-`minecraft:`-prefix strip (sprite_uv's namespace rule — the
@@ -224,9 +231,13 @@ mod tests {
     /// grass_block_top (a grayscale texture — the biome tint rides the
     /// quads, not the texels), down is dirt, the sides are
     /// grass_block_side. Each face must equal its own oracle average.
+    /// The state rides: the block's variants are ALL conditional
+    /// (snowy=false / snowy=true), so the empty state matches nothing —
+    /// a real block state always carries the full property set.
     #[test]
     fn grass_block_splits_top_bottom_and_sides() {
-        let colors = block_face_colors("grass_block", &[]).expect("grass_block parses");
+        let colors =
+            block_face_colors("grass_block", &[("snowy", "false")]).expect("grass_block parses");
         let get = |f: Cull| colors.iter().find(|fc| fc.face == f).map(|fc| fc.color);
         assert_eq!(get(Cull::Up), Some([147, 147, 147]), "the untinted top gray");
         assert_eq!(get(Cull::Down), Some([134, 96, 67]), "dirt");
@@ -242,9 +253,13 @@ mod tests {
     /// and multipart fences behave.
     #[test]
     fn the_state_selector_and_the_edges_hold() {
-        // snowy=true selects the snow variant
-        let colors = block_face_colors("grass_block", &[("snowy", "true")]).expect("snowy parses");
-        assert!(colors.iter().all(|fc| fc.color == [250, 250, 250]), "all snow");
+        // snowy=true selects the snow model (the oracle's snow average)
+        let colors =
+            block_face_colors("grass_block", &[("snowy", "true")]).expect("snowy parses");
+        assert_eq!(colors.len(), 6);
+        for fc in colors {
+            assert_eq!(fc.color, [249, 254, 254], "all snow: {fc:?}");
+        }
         // unknown block
         assert!(block_face_colors("definitely_not_a_block", &[]).is_none());
         // multipart: the oak_fence definition has no full-cube faces but
@@ -257,19 +272,42 @@ mod tests {
 
     /// The palette covers the procedural world's renderable blocks
     /// (the consumer's contract for the next round): every NAME_OF id
-    /// except air resolves to at least one face color. Water and the
-    /// leaves ride untinted here (the tint is the consumer's).
+    /// except air resolves to at least one face color — the propertyed
+    /// blocks carry a REAL state (a real block state always has the
+    /// full property set; the empty state matches nothing when every
+    /// variant key is conditional). Water and the leaves ride untinted
+    /// here (the tint is the consumer's).
     #[test]
     fn the_palette_covers_the_procedural_world_blocks() {
-        let world_blocks = [
-            "stone", "dirt", "grass_block", "oak_log", "oak_leaves", "water", "sand",
-            "granite", "diorite", "andesite", "deepslate", "cobbled_deepslate", "gravel",
-            "bedrock", "coal_ore", "copper_ore", "iron_ore", "gold_ore", "redstone_ore",
-            "lapis_ore", "diamond_ore", "emerald_ore", "netherrack", "pale_oak_leaves",
-            "leaf_litter",
+        let world_blocks: [(&str, &[(&str, &str)]); 25] = [
+            ("stone", &[]),
+            ("dirt", &[]),
+            ("grass_block", &[("snowy", "false")]),
+            ("oak_log", &[("axis", "y")]),
+            ("oak_leaves", &[]),
+            ("water", &[]),
+            ("sand", &[]),
+            ("granite", &[]),
+            ("diorite", &[]),
+            ("andesite", &[]),
+            ("deepslate", &[("axis", "y")]),
+            ("cobbled_deepslate", &[]),
+            ("gravel", &[]),
+            ("bedrock", &[]),
+            ("coal_ore", &[]),
+            ("copper_ore", &[]),
+            ("iron_ore", &[]),
+            ("gold_ore", &[]),
+            ("redstone_ore", &[]),
+            ("lapis_ore", &[]),
+            ("diamond_ore", &[]),
+            ("emerald_ore", &[]),
+            ("netherrack", &[]),
+            ("pale_oak_leaves", &[]),
+            ("leaf_litter", &[("facing", "north"), ("segment_amount", "1")]),
         ];
-        for name in world_blocks {
-            let colors = block_face_colors(name, &[])
+        for (name, state) in world_blocks {
+            let colors = block_face_colors(name, state)
                 .unwrap_or_else(|| panic!("{name} must resolve a palette"));
             assert!(!colors.is_empty(), "{name} must contribute faces");
             for fc in colors {
