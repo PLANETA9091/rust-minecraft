@@ -1338,6 +1338,100 @@ mod tests {
     }
 
     #[test]
+    fn the_ambient_base_lifts_the_combine_per_channel() {
+        // the lightmap's AmbientColor BASE (v0.3.88): the shader's
+        // `max(AmbientColor, nightVisionColor)` start — night vision 0,
+        // so the dimension's stated attribute itself — sits UNDER the
+        // sky/block sum. The overworld's #0a0a0a lifts a dark torch
+        // cell by exactly 10/255 per channel over the black default
+        // (derived from the None arithmetic the previous tests pin);
+        // the nether's #302821 floor is per-CHANNEL, not uniform.
+        let mut w = empty_world();
+        put(&mut w, 8, 8, 8, STONE);
+        w.light = Some(unknown_light());
+        set_light(&mut w, None, Some(7), 8, 9, 8);
+        // the black default: the pre-ambient arithmetic
+        let b = light_brightness(7.0) * BLOCK_FACTOR;
+        let c = block_light_color(7.0);
+        let dark = [b * c[0], b * c[1], b * c[2]];
+        // the overworld floor: the SAME sum, +10/255 per channel
+        w.ambient_light = Some([0x0a, 0x0a, 0x0a]);
+        let lift = 10.0f32 / 255.0;
+        let expect = [
+            (dark[0] + lift).min(1.0),
+            (dark[1] + lift).min(1.0),
+            (dark[2] + lift).min(1.0),
+        ];
+        for corner in &top_face(&w).colors {
+            for (ch, e) in corner.iter().zip(expect.iter()) {
+                assert!((ch - e).abs() < 1e-6, "ambient lifts per channel: {ch} vs {e}");
+            }
+        }
+        // the nether floor #302821: every channel a different step
+        w.ambient_light = Some([0x30, 0x28, 0x21]);
+        let expect = [
+            (dark[0] + 48.0 / 255.0).min(1.0),
+            (dark[1] + 40.0 / 255.0).min(1.0),
+            (dark[2] + 33.0 / 255.0).min(1.0),
+        ];
+        for corner in &top_face(&w).colors {
+            for (ch, e) in corner.iter().zip(expect.iter()) {
+                assert!(
+                    (ch - e).abs() < 1e-6,
+                    "the nether floor is per-channel: {ch} vs {e}"
+                );
+            }
+        }
+        // a world with NO light grid keeps the legacy look even with a
+        // stated floor: the early return wins (the procedural scenes'
+        // shape — their light layer is None, the floor rides nothing)
+        let mut w2 = empty_world();
+        w2.ambient_light = Some([0x0a, 0x0a, 0x0a]);
+        assert_eq!(
+            vertex_multiplier(&top_face(&w2)),
+            [1.0; 4],
+            "no light layer: the legacy look, ambient or not"
+        );
+    }
+
+    #[test]
+    fn the_ambient_base_never_moves_the_saturated_end() {
+        // day sky-15 over the overworld floor STILL clamps to 1.0 — the
+        // ambient sits under the sum, the final clamp's verdict is the
+        // shader's; and the byte-carrying world stays None-identical on
+        // the shapes the previous tests pin (the black default is the
+        // pre-ambient arithmetic, the regression is theirs)
+        let mut w = empty_world();
+        put(&mut w, 8, 8, 8, STONE);
+        w.light = Some(unknown_light());
+        set_light(&mut w, Some(15), Some(0), 8, 9, 8);
+        w.ambient_light = Some([0x0a, 0x0a, 0x0a]);
+        assert_eq!(
+            vertex_multiplier(&top_face(&w)),
+            [1.0; 4],
+            "day sky-15 + ambient still clamps to the legacy full-bright"
+        );
+        // a dark night cell (sky-1, the 0.24 factor, the #7a7aff tint)
+        // over the end's #3f473f floor: blue rides the clamp's approach
+        // while red/green lift by the floor's own steps — per channel,
+        // derived from the None-arithmetic terms
+        w.ambient_light = Some([0x3f, 0x47, 0x3f]);
+        w.day_tick = Some(18_000);
+        let tint_rg = 122.0f32 / 255.0;
+        let sky = light_brightness(1.0) * 0.24;
+        let expect = [
+            63.0f32 / 255.0 + sky * tint_rg,
+            71.0f32 / 255.0 + sky * tint_rg,
+            63.0f32 / 255.0 + sky,
+        ];
+        for corner in &top_face(&w).colors {
+            for (ch, e) in corner.iter().zip(expect.iter()) {
+                assert!((ch - e).abs() < 1e-6, "end floor at night: {ch} vs {e}");
+            }
+        }
+    }
+
+    #[test]
     fn corner_light_averages_the_four_face_plane_cells() {
         // face cell (8,9,8) full sky; ONE known dark diagonal (7,9,7) —
         // exactly corner 0 samples it (x=0,z=0 -> d1=-x, d2=-z)

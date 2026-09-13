@@ -1744,4 +1744,44 @@ mod tests {
         assert_eq!(m.min_y, Some(0), "stale-but-honest: unknown key, layout unchanged");
         assert_eq!(m.loaded_chunks(), 0, "the level drops on every dimension change");
     }
+
+    #[test]
+    fn the_ambient_light_color_reads_the_built_in_table() {
+        // the built-in visual/ambient_light_color table through the
+        // model's pinned dimension: the three vanilla worlds' stated
+        // floors (the generator emitted them from the jar's dimension
+        // JSONs — #0a0a0a / #302821 / #3f473f), and the honest None for
+        // no dimension pinned yet / an unknown custom key — the
+        // bytecode-default black, never a guess.
+        let mut m = WorldModel::new();
+        assert_eq!(m.ambient_light_color(), None, "no dimension: no opinion");
+        m.apply(PlayEvent::Respawn(SpawnInfo {
+            dimension_type_id: 0,
+            dimension: "minecraft:overworld".to_string(),
+            portal_cooldown: 0,
+        }));
+        assert_eq!(m.ambient_light_color(), Some([0x0a, 0x0a, 0x0a]));
+        m.apply(PlayEvent::Respawn(SpawnInfo {
+            dimension_type_id: 1,
+            dimension: "minecraft:the_nether".to_string(),
+            portal_cooldown: 0,
+        }));
+        assert_eq!(m.ambient_light_color(), Some([0x30, 0x28, 0x21]));
+        m.apply(PlayEvent::Respawn(SpawnInfo {
+            dimension_type_id: 2,
+            dimension: "minecraft:the_end".to_string(),
+            portal_cooldown: 0,
+        }));
+        assert_eq!(m.ambient_light_color(), Some([0x3f, 0x47, 0x3f]));
+        m.apply(PlayEvent::Respawn(SpawnInfo {
+            dimension_type_id: 9,
+            dimension: "minecraft:custom_dim".to_string(),
+            portal_cooldown: 0,
+        }));
+        assert_eq!(
+            m.ambient_light_color(),
+            None,
+            "unknown custom key: the black default, never a guess"
+        );
+    }
 }

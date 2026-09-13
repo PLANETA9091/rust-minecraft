@@ -638,6 +638,42 @@ mod tests {
     }
 
     #[test]
+    fn materialize_carries_the_models_ambient_light() {
+        // the lightmap's AmbientColor base rides the SAME snapshot: the
+        // model's dimension resolves through the built-in
+        // visual/ambient_light_color table; no dimension pinned (or an
+        // unknown custom one) keeps None — the mesher reads the
+        // bytecode-default black, the pre-ambient arithmetic.
+        let mut m = WorldModel::new();
+        m.apply(PlayEvent::Chunk(ChunkColumn {
+            x: 0,
+            z: 0,
+            sections: vec![stone_dirt_section()],
+            light: ChunkLight::default(),
+        }));
+        let world = materialize(&m, (0, 0), 1, 0, example_mapper);
+        assert_eq!(world.ambient_light, None, "no dimension: no opinion");
+        // the overworld's stated floor lands on the view
+        m.apply(PlayEvent::Respawn(SpawnInfo {
+            dimension_type_id: 0,
+            dimension: "minecraft:overworld".to_string(),
+            portal_cooldown: 0,
+        }));
+        m.apply(PlayEvent::Chunk(ChunkColumn {
+            x: 0,
+            z: 0,
+            sections: vec![stone_dirt_section()],
+            light: ChunkLight::default(),
+        }));
+        let world = materialize(&m, (0, 0), 1, 0, example_mapper);
+        assert_eq!(
+            world.ambient_light,
+            Some([0x0a, 0x0a, 0x0a]),
+            "the view carries the dimension's ambient base for the mesher"
+        );
+    }
+
+    #[test]
     fn materialize_carries_the_models_biome_layer() {
         let mut m = WorldModel::new();
         // the synced table: id 0 plains (the baked water default), id 1
