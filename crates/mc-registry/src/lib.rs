@@ -299,4 +299,102 @@ mod tests {
             }
         }
     }
+
+    #[test]
+    fn the_item_model_definitions_resolve_and_the_joins_hold() {
+        use generated::item_models::{COMPLEX_ITEM_MODELS, ITEM_MODEL_DEFS, ITEM_MODEL_ROOT_TYPES};
+        use generated::items::ITEMS;
+        // the jar's assets/minecraft/items/ file set, verbatim: 1537
+        // definitions split 1390 plain minecraft:model roots + 147
+        // selector/special trees retained in the skip list
+        assert_eq!(ITEM_MODEL_DEFS.len(), 1390);
+        assert_eq!(COMPLEX_ITEM_MODELS.len(), 147);
+        assert_eq!(ITEM_MODEL_DEFS.len() + COMPLEX_ITEM_MODELS.len(), 1537);
+        let census: u32 = ITEM_MODEL_ROOT_TYPES.iter().map(|t| t.1).sum();
+        assert_eq!(census, 1537, "the root-type census accounts for every item");
+        assert_eq!(
+            &ITEM_MODEL_ROOT_TYPES,
+            &[
+                ("minecraft:model", 1390),
+                ("minecraft:select", 71),
+                ("minecraft:special", 51),
+                ("minecraft:composite", 16),
+                ("minecraft:condition", 7),
+                ("minecraft:range_dispatch", 2),
+            ]
+        );
+
+        // verbatim spot rows — the jar's own stored strings
+        let def = |id: &str| {
+            ITEM_MODEL_DEFS
+                .iter()
+                .find(|d| d.0 == id)
+                .unwrap_or_else(|| panic!("{id} must be a plain def"))
+        };
+        let stone = def("stone");
+        assert_eq!(stone.1, "minecraft:block/stone");
+        assert!(stone.2.is_empty());
+        assert!(stone.3.is_none());
+        assert_eq!(def("dirt").1, "minecraft:block/dirt");
+        // the fence points at its INVENTORY model variant, verbatim
+        assert_eq!(def("acacia_fence").1, "minecraft:block/acacia_fence_inventory");
+        // grass_block: the one grass tint, canonical compact JSON, values verbatim
+        let grass = def("grass_block");
+        assert_eq!(grass.1, "minecraft:block/grass_block");
+        assert_eq!(
+            grass.2,
+            &["{\"downfall\":1.0,\"temperature\":0.5,\"type\":\"minecraft:grass\"}"]
+        );
+        // filled_map rides TWO tints (constant + map_color), in jar order
+        let map = def("filled_map");
+        assert_eq!(map.1, "minecraft:item/filled_map");
+        assert_eq!(
+            map.2,
+            &[
+                "{\"type\":\"minecraft:constant\",\"value\":-1}",
+                "{\"default\":4603950,\"type\":\"minecraft:map_color\"}",
+            ]
+        );
+        // the swap-animation scale ships ONLY beside the spears' select
+        // trees — zero plain def carries it (the column exists so the
+        // parser drops nothing the jar states)
+        assert!(ITEM_MODEL_DEFS.iter().all(|d| d.3.is_none()));
+        for spear in [
+            "wooden_spear",
+            "stone_spear",
+            "iron_spear",
+            "golden_spear",
+            "diamond_spear",
+            "netherite_spear",
+            "copper_spear",
+        ] {
+            assert!(ITEM_MODEL_DEFS.iter().all(|d| d.0 != spear));
+            assert!(COMPLEX_ITEM_MODELS.contains(&spear), "{spear} in the skip list");
+        }
+        assert!(COMPLEX_ITEM_MODELS.contains(&"bow"));
+        assert!(COMPLEX_ITEM_MODELS.contains(&"shield"));
+
+        // every model path is namespaced minecraft: under block/ or item/
+        let (mut block, mut item) = (0usize, 0usize);
+        for (id, path, _, _) in &ITEM_MODEL_DEFS {
+            let rest = path
+                .strip_prefix("minecraft:")
+                .unwrap_or_else(|| panic!("{id}: unnamespaced model path {path}"));
+            match rest.split('/').next().unwrap() {
+                "block" => block += 1,
+                "item" => item += 1,
+                other => panic!("{id}: model path under unexpected prefix {other}/"),
+            }
+        }
+        assert_eq!((block, item), (731, 659), "the target split the jar states");
+
+        // THE JOINS NEVER DANGLE: every plain def and every skipped item
+        // names an item the registry table carries
+        for (id, _, _, _) in &ITEM_MODEL_DEFS {
+            assert!(ITEMS.contains(id), "def {id} names no known item");
+        }
+        for id in COMPLEX_ITEM_MODELS.iter() {
+            assert!(ITEMS.contains(id), "complex {id} names no known item");
+        }
+    }
 }

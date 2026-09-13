@@ -273,10 +273,10 @@ mod tests {
         assert_eq!(tint["temperature"], 0.5);
         assert_eq!(tint["downfall"], 1.0);
         assert_eq!(grass.swap_animation_scale, Some(1.95));
-        // the census counts every root node exactly once
+        // the census counts every root node exactly once (count desc)
         assert_eq!(data.root_types, vec![
-            ("minecraft:select".to_string(), 1),
             ("minecraft:model".to_string(), 2),
+            ("minecraft:select".to_string(), 1),
         ]);
 
         let emitted = emit(&data).unwrap();
