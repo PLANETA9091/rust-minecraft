@@ -124,6 +124,13 @@ pub fn materialize(
         // jar's end (#ac60cd) / nether (#7a7aff) carry their moonlight
         // bases, the overworlds None (the mesher's white identity)
         sky_light_color: model.sky_light_color(),
+        // the stated night-vision color rides the SAME snapshot (the
+        // lightmap family's transport): the model's dimension resolves
+        // through the built-in visual/night_vision_color column — no
+        // vanilla dimension states it (all four rows None), the mesher
+        // reads the bytecode default #999999 gray UNDER the night-vision
+        // factor (the player's effect state, 0.0 at this client)
+        night_vision_color: model.night_vision_color(),
     };
     let side_i = side as i32;
     for gz in 0..side_i {

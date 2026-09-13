@@ -432,6 +432,32 @@ impl WorldModel {
         None
     }
 
+    /// The dimension's STATED night-vision color — `None` when no
+    /// dimension states one: the consumer's bytecode-default verdict
+    /// (`visual/night_vision_color` -6710887 = 0xFF999999 = #999999
+    /// gray, javap EnvironmentAttributes) covers the absence. NO
+    /// vanilla dimension states it (the end/nether state their sky
+    /// pairs, not this) — the built-in table's four rows are all None,
+    /// only a custom server's statement reads as data. The three-branch
+    /// precedence: the synced entry wins, the built-in table serves
+    /// skip-sync, None is the default's verdict. The shader consumes
+    /// the value under the night-vision FACTOR — the player's EFFECT
+    /// state, not a timeline (javap LightmapRenderStateExtractor:
+    /// the NIGHT_VISION effect's nightVisionScale, conduit power +
+    /// water vision, else 0.0).
+    pub fn night_vision_color(&self) -> Option<[u8; 3]> {
+        let dim = self.current_dimension.as_deref()?;
+        if let Some(d) = self.registry.dimension(dim) {
+            return d.night_vision_color;
+        }
+        if self.registry.dimension_types.is_empty() {
+            if let Some(d) = mc_registry::generated::worldgen::dimension_type(dim) {
+                return d.night_vision_color;
+            }
+        }
+        None
+    }
+
     /// Global block state id at (x, y, z) — world coordinates for x/z
     /// (arithmetic shift, so negative chunks index correctly), and world-y
     /// when `min_y` is known else column-local y. `None` outside loaded

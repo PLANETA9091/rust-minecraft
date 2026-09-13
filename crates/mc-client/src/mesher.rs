@@ -153,6 +153,31 @@ pub fn light_brightness(level: f32) -> f32 {
 /// it verbatim (the model's `block_light_tint()`).
 const DEFAULT_BLOCK_LIGHT_TINT: [f32; 3] = [1.0, 216.0 / 255.0, 140.0 / 255.0];
 
+/// The lightmap's BYTECODE-default `NightVisionColor` —
+/// `EnvironmentAttributes.<clinit>` defaultValue -6710887 =
+/// 0xFF999999 = #999999 gray (javap; the attribute is
+/// `spatiallyInterpolated().syncable()`, so a stated custom-server
+/// value replaces it through the wire). The shader consumes it as
+/// `NightVisionColor * NightVisionFactor` maxed against the ambient
+/// base.
+const DEFAULT_NIGHT_VISION_COLOR: [f32; 3] = [153.0 / 255.0; 3];
+
+/// The lightmap's `NightVisionFactor` — the extractor's bytecode
+/// (`LightmapRenderStateExtractor.extract`): the player's EFFECT
+/// state, not a timeline and not the attribute. `hasEffect(NIGHT_VISION)`
+/// -> `GameRenderer.nightVisionScale` (1.0, or `0.7 + sin((duration -
+/// partialTick) · π · 0.2) · 0.3` while the effect ends within 200
+/// ticks — the fade-out flicker); `waterVision > 0 &&
+/// hasEffect(CONDUIT_POWER)` -> `getWaterVision()`; else exactly 0.0.
+/// This client carries no effect system, so the factor is its
+/// bytecode-pinned floor 0.0 — the term
+/// `max(AmbientColor, NightVisionColor · 0.0)` is the ambient base
+/// bit for bit for ANY tint (a color is non-negative), and the
+/// attribute's stated value rides the fold for the day the factor
+/// lifts. The flicker is the documented non-goal (same verdict as the
+/// torch shimmer).
+const NIGHT_VISION_FACTOR: f32 = 0.0;
+
 /// The vanilla lightmap's `BlockFactor` — the extractor's bytecode
 /// (`LightmapRenderStateExtractor.extract`): `blockFactor =
 /// blockLightFlicker + 1.4`, where the flicker is a mean-zero random

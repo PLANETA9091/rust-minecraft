@@ -147,6 +147,19 @@ pub struct World {
     /// real jar's END (#ac60cd) and NETHER (#7a7aff) state their
     /// moonlight bases; a custom server's stated color rides the wire.
     pub sky_light_color: Option<[u8; 3]>,
+    /// The dimension's STATED night-vision color — the shader's
+    /// `max(AmbientColor, NightVisionColor * NightVisionFactor)` term's
+    /// stated base, as RAW 0..=255 channel bytes (`materialize` stamps
+    /// it from the model's dimension). `None` = no opinion: the mesher
+    /// reads the BYTECODE default (`EnvironmentAttributes.<clinit>`
+    /// defaultValue -6710887 = 0xFF999999 = #999999 gray) — and the
+    /// night-vision FACTOR is the player's EFFECT state (NIGHT_VISION
+    /// effect / conduit power + water vision, javap
+    /// LightmapRenderStateExtractor), 0.0 at this client's state, so
+    /// every procedural/golden scene keeps the pre-attribute arithmetic
+    /// bit for bit (max(A, C·0.0) = A exactly). No vanilla dimension
+    /// states it; a custom server's stated color rides the wire.
+    pub night_vision_color: Option<[u8; 3]>,
 }
 
 /// A biome cell with no opinion — the server never answered for the

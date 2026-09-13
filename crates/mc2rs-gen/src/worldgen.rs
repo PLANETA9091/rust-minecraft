@@ -119,6 +119,16 @@ pub struct DimensionTypeEntry {
     /// multiply track per channel, INTEGER arithmetic (javap
     /// ARGB.multiply: imul / idiv 255, the white -1 short-circuit).
     pub sky_light_color: Option<[u8; 3]>,
+    /// The STATED night-vision color (visual/night_vision_color) —
+    /// `None` when the JSON states none, the bytecode default's shape
+    /// (-6710887 = 0xFF999999 = #999999 gray, javap
+    /// EnvironmentAttributes): NO vanilla dimension declares it (the
+    /// end/nether state their sky pairs, not this), so the field rides
+    /// only a custom server's statement. The shader consumes it under
+    /// the night-vision FACTOR — the player's EFFECT state, not a
+    /// timeline (NIGHT_VISION effect / conduit power + water vision;
+    /// zero without — javap LightmapRenderStateExtractor).
+    pub night_vision_color: Option<[u8; 3]>,
 }
 
 /// The per-biome tint extras the jar states beyond the classic color
@@ -421,6 +431,17 @@ pub fn generate<R: std::io::Read + std::io::Seek>(archive: &mut zip::ZipArchive<
                                 .and_then(Value::as_str)
                                 .and_then(hex_color)
                                 .map(|c| [(c >> 16) as u8, (c >> 8) as u8, c as u8]),
+                            // the STATED night-vision color: a syncable
+                            // RGB_COLOR attribute (the "#rrggbb" string);
+                            // the bytecode default -6710887 = #999999
+                            // gray when the JSON states none — no vanilla
+                            // dimension states it
+                            night_vision_color: v
+                                .get("attributes")
+                                .and_then(|a| a.get("minecraft:visual/night_vision_color"))
+                                .and_then(Value::as_str)
+                                .and_then(hex_color)
+                                .map(|c| [(c >> 16) as u8, (c >> 8) as u8, c as u8]),
                             // string tag references only — the inline list
                             // form does not occur in the real jar
                             timelines: v
@@ -639,7 +660,7 @@ pub fn emit(data: &WorldgenData) -> Result<String> {
     out.push_str("#[derive(Debug, Clone, Copy, PartialEq, Eq)]\npub enum Skybox {\n    None,\n    Overworld,\n    End,\n}\n\n");
     out.push_str("/// One built-in `minecraft:dimension_type` registry entry (the jar's\n");
     out.push_str("/// `data/minecraft/dimension_type/*.json`): world layout + environment.\n");
-    out.push_str("#[derive(Debug, Clone, Copy, PartialEq)]\npub struct DimensionTypeDef {\n    pub name: &'static str,\n    pub min_y: i32,\n    pub height: u32,\n    pub logical_height: u32,\n    pub has_skylight: bool,\n    pub has_fixed_time: bool,\n    pub ambient_light: f32,\n    pub coordinate_scale: f64,\n    pub timelines: Option<&'static str>,\n    pub default_clock: Option<&'static str>,\n    /// The lightmap's AmbientColor base (visual/ambient_light_color;\n    /// the bytecode default black when the JSON states none).\n    pub ambient_light_color: [u8; 3],\n    /// The sky-pipeline gate (SkyRenderer.extractRenderState's skybox).\n    pub skybox: Skybox,\n    /// The STATED fog distances (blocks) — None when the JSON states\n    /// none (the bytecode defaults' shape: start 0.0 / end 1024.0).\n    pub fog_start_distance: Option<f32>,\n    pub fog_end_distance: Option<f32>,\n    /// The STATED cloud-fog end (blocks) — None when the JSON states\n    /// none (the bytecode default 2048.0; no vanilla dimension\n    /// declares it, the consumer's `visual/cloud_fog_end_distance`).\n    pub cloud_fog_end_distance: Option<f32>,\n    /// The STATED block-light tint — None when the JSON states\n    /// none (the bytecode default -10100 = 0xFFFFD88C = #FFD88C,\n    /// the warm torch cast; no vanilla dimension declares it, the\n    /// consumer's `visual/block_light_tint`).\n    pub block_light_tint: Option<[u8; 3]>,\n    /// The STATED sky-light factor — None when the JSON states\n    /// none (the bytecode default 1.0; no vanilla dimension\n    /// declares it; the consumer multiplies it under the\n    /// timeline's multiply track — the attribute-system fold).\n    pub sky_light_factor: Option<f32>,\n    /// The STATED sky-light color — None when the JSON states\n    /// none (the bytecode default -1 = #FFFFFF white, the ARGB\n    /// multiply identity); the real jar's end/nether state\n    /// #ac60cd / #7a7aff. The consumer multiplies the stated\n    /// base under the timeline's multiply track per channel,\n    /// INTEGER arithmetic (javap ARGB.multiply).\n    pub sky_light_color: Option<[u8; 3]>,\n}\n\n");
+    out.push_str("#[derive(Debug, Clone, Copy, PartialEq)]\npub struct DimensionTypeDef {\n    pub name: &'static str,\n    pub min_y: i32,\n    pub height: u32,\n    pub logical_height: u32,\n    pub has_skylight: bool,\n    pub has_fixed_time: bool,\n    pub ambient_light: f32,\n    pub coordinate_scale: f64,\n    pub timelines: Option<&'static str>,\n    pub default_clock: Option<&'static str>,\n    /// The lightmap's AmbientColor base (visual/ambient_light_color;\n    /// the bytecode default black when the JSON states none).\n    pub ambient_light_color: [u8; 3],\n    /// The sky-pipeline gate (SkyRenderer.extractRenderState's skybox).\n    pub skybox: Skybox,\n    /// The STATED fog distances (blocks) — None when the JSON states\n    /// none (the bytecode defaults' shape: start 0.0 / end 1024.0).\n    pub fog_start_distance: Option<f32>,\n    pub fog_end_distance: Option<f32>,\n    /// The STATED cloud-fog end (blocks) — None when the JSON states\n    /// none (the bytecode default 2048.0; no vanilla dimension\n    /// declares it, the consumer's `visual/cloud_fog_end_distance`).\n    pub cloud_fog_end_distance: Option<f32>,\n    /// The STATED block-light tint — None when the JSON states\n    /// none (the bytecode default -10100 = 0xFFFFD88C = #FFD88C,\n    /// the warm torch cast; no vanilla dimension declares it, the\n    /// consumer's `visual/block_light_tint`).\n    pub block_light_tint: Option<[u8; 3]>,\n    /// The STATED sky-light factor — None when the JSON states\n    /// none (the bytecode default 1.0; no vanilla dimension\n    /// declares it; the consumer multiplies it under the\n    /// timeline's multiply track — the attribute-system fold).\n    pub sky_light_factor: Option<f32>,\n    /// The STATED sky-light color — None when the JSON states\n    /// none (the bytecode default -1 = #FFFFFF white, the ARGB\n    /// multiply identity); the real jar's end/nether state\n    /// #ac60cd / #7a7aff. The consumer multiplies the stated\n    /// base under the timeline's multiply track per channel,\n    /// INTEGER arithmetic (javap ARGB.multiply).\n    pub sky_light_color: Option<[u8; 3]>,\n    /// The STATED night-vision color — None when the JSON states\n    /// none (the bytecode default -6710887 = #999999 gray; no\n    /// vanilla dimension declares it, the consumer's `visual/night_vision_color`). The shader consumes it under\n    /// the night-vision FACTOR — the player's EFFECT state, not a\n    /// timeline (zero without an effect; javap LightmapRenderStateExtractor).\n    pub night_vision_color: Option<[u8; 3]>,\n}\n\n");
     out.push_str("pub static DIMENSION_TYPES: [DimensionTypeDef; ");
     out.push_str(&data.dimension_types.len().to_string());
     out.push_str("] = [\n");
@@ -649,7 +670,7 @@ pub fn emit(data: &WorldgenData) -> Result<String> {
             None => "None".to_string(),
         };
         out.push_str(&format!(
-            "    DimensionTypeDef {{ name: \"{}\", min_y: {}, height: {}, logical_height: {}, has_skylight: {}, has_fixed_time: {}, ambient_light: {:?}, coordinate_scale: {:?}, timelines: {}, default_clock: {}, ambient_light_color: {:?}, skybox: Skybox::{:?}, fog_start_distance: {:?}, fog_end_distance: {:?}, cloud_fog_end_distance: {:?}, block_light_tint: {:?}, sky_light_factor: {:?}, sky_light_color: {:?} }},\n",
+            "    DimensionTypeDef {{ name: \"{}\", min_y: {}, height: {}, logical_height: {}, has_skylight: {}, has_fixed_time: {}, ambient_light: {:?}, coordinate_scale: {:?}, timelines: {}, default_clock: {}, ambient_light_color: {:?}, skybox: Skybox::{:?}, fog_start_distance: {:?}, fog_end_distance: {:?}, cloud_fog_end_distance: {:?}, block_light_tint: {:?}, sky_light_factor: {:?}, sky_light_color: {:?}, night_vision_color: {:?} }},\n",
             rust_str(&d.name),
             d.min_y,
             d.height,
@@ -668,6 +689,7 @@ pub fn emit(data: &WorldgenData) -> Result<String> {
             d.block_light_tint,
             d.sky_light_factor,
             d.sky_light_color,
+            d.night_vision_color,
         ));
     }
     out.push_str("];\n\n");
