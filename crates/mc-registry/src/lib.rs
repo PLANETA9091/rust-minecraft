@@ -489,6 +489,7 @@ mod tests {
         let by_id = |id: &str| MODELS.iter().find(|m| m.0 == id);
         let mut max_depth = 0u32;
         for row in MODELS.iter() {
+            let id = row.0;
             let mut cur = row.0;
             let mut seen = std::collections::BTreeSet::new();
             let mut depth = 0u32;

@@ -581,6 +581,52 @@ hand-drawn:
   timeline (−1 → 0..5/6 → rest at exactly 6 ticks), the re-trigger
   guard, the wrap-guard lerp, the mid-swing geometry delta, and the
   bit-identical rest pose.
+  The **model files land (v0.3.64 — the held-item arc's data half, round
+  2)**: the generator grew its twelfth table — `assets/minecraft/models/`
+  of the official jar parsed into `generated/models.rs`. The census ran
+  BEFORE any emitter code and the generator must agree with it
+  byte-for-byte (two independent implementations, the itemgen
+  dual-census shape): **3928 model files** split **2657 `block/` + 1271
+  `item/`**, every one a JSON object, zero parse failures. Each row
+  carries the **parent chain** (26.2 mixes bare and `minecraft:`-namespaced
+  parents — 167 vs 3460 — both normalized to the bare path; `builtin/*`
+  terminates the chain without a file), the **texture + display stanzas**
+  as canonical compact JSON, **gui_light** (12 carriers: block/block
+  `side`, the eleven `front`s) and **ambientocclusion** (157) typed, and
+  the **element count**. The generator VALIDATES the graph: every parent
+  resolves to a file or a builtin (a dangling parent refuses, a cycle
+  refuses), max depth **4** — the crafter family walks verbatim
+  crafter_crafting_triggered → crafter_crafting → crafter_triggered →
+  crafter → block/block. The display stanzas are the held-item
+  consumer's constants: `item/generated`'s **firstperson_righthand
+  rotation [0,−90,25] translation [1.13, 3.2, 1.13] scale 0.68**
+  (handheld's thirdperson [0,−90,55] scale 0.85 rides beside it), the
+  `block/block` root's gui [30,225,0] scale 0.625 — and 26.2's new
+  **`on_shelf`** context [0,180,0]. The census caught TWO shapes the
+  common case hides: **163 object-valued texture entries**
+  (`{"sprite":…,"force_translucent":true}` — redstone lines, glass
+  panes), retained value-faithfully by the canonical-JSON columns, and
+  **5 outlier files** the first real-jar run REFUSED (the
+  extend-parser-first discipline doing its job): the four
+  custom_fence_side models carry Blockbench `groups` editor metadata
+  (retained as JSON, never dropped) and heavy_core states
+  `texture_size [16,16]` (typed as the element-UV override). The
+  `elements` GEOMETRY is honestly skipped: **344 models** retained in
+  `ELEMENT_MODELS` (bamboo leaves → spyglass_in_hand), their counts in
+  the table — and **24 plain item defs point directly at element-carrying
+  models** (beacon, cactus, crafter…), the consumer round's bridge set.
+  Offline arc = the worldgen/skin/item-models shape: `mc2rs-gen models
+  --version 26.2 --jar <client.jar>` + `write_models()` in the regen
+  pipeline. Tests +6 (workspace 281 → 287 passed / 0 failed / 3
+  ignored): five generator fixture tests (parse + graph validation +
+  the three outlier shapes, unknown-key refusal, dangling/cycle/
+  foreign-namespace refusals, unknown display-context/transform/
+  texture-shape refusals, the strict prefix discipline) and the
+  registry pin (the 3928 census, verbatim spot rows incl. the
+  firstperson constants, the parent graph re-walked FROM the emitted
+  table, and the joins — all 1390 item defs resolve to model files).
+  Zero render path touches the table yet; goldens untouched by
+  construction.
   The **item model definitions land (v0.3.63 — the held-item arc's data
   half, the biome-tags data-first precedent)**: the generator grew its
   eleventh table — `assets/minecraft/items/` of the official jar parsed
