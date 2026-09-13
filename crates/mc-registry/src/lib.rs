@@ -23,6 +23,13 @@ pub mod element_quads;
 /// makes bare refs behave identically. Pure data, no render path.
 pub mod texture_slots;
 
+/// The vanilla sprite-uv consumer — the quads' 0..16 uv space mapped to
+/// texels over generated::textures (CuboidFace.getU /16, the
+/// TextureAtlasSprite span, NEAREST + CLAMP_TO_EDGE) with the vanilla
+/// missingno checkerboard for the missing materials. Pure data, no
+/// render path. See the module docs for the javap evidence.
+pub mod sprite_uv;
+
 /// One block definition: identifier + sorted list of state property names.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Block {
