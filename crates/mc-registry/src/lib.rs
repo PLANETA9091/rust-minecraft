@@ -79,6 +79,25 @@ pub fn flatten_biome_tag(name: &str) -> Option<Vec<&'static str>> {
     Some(out)
 }
 
+/// The vanilla timeline-tag RESOLUTION semantic — the same built-tag
+/// verdict as [`flatten_biome_tag`], over the jar's
+/// `data/minecraft/tags/timeline/*.json` table (file-order entries,
+/// `#`-nested references expanded depth-first in place,
+/// first-occurrence dedup, the same three load failures refused to
+/// `None`: unknown tag, unknown nested reference, cycle). The flattened
+/// members are validated against the TIMELINES table — every concrete
+/// member must resolve into the timeline registry. This is the
+/// resolution the dimension types imply: a dimension's `timelines`
+/// field names a TAG verbatim (`"#minecraft:in_overworld"`), and the
+/// timelines that apply to it are the tag's flattened members.
+pub fn flatten_timeline_tag(name: &str) -> Option<Vec<&'static str>> {
+    let out = flatten_tag_table(&generated::worldgen::TIMELINE_TAGS, name)?;
+    for member in &out {
+        generated::worldgen::timeline(member)?; // missing reference: refused
+    }
+    Some(out)
+}
+
 /// The resolver core, generic over the table so the dedup and cycle
 /// rules are testable without a jar that contains a cycle (the real
 /// 68-tag table cannot cycle: the census join proves every nested
@@ -250,6 +269,56 @@ mod tests {
         let tag = timeline_tag("minecraft:in_overworld").expect("in_overworld tag");
         assert!(tag.contains(&"minecraft:day"));
         assert!(tag.contains(&"#minecraft:universal"), "nested tag refs ride verbatim");
+    }
+
+    /// The timeline tags flatten through the SAME resolver the biome
+    /// tags use (one generic core, two validated tables): in_overworld's
+    /// FIRST member is the nested "#minecraft:universal", so universal's
+    /// expansion lands AT THE HEAD, then the tag's own concrete members
+    /// in file order; the end/nether tags are the single-ref form and
+    /// build to universal's flatten exactly.
+    #[test]
+    fn the_timeline_tags_flatten_through_the_universal_ref() {
+        assert_eq!(
+            flatten_timeline_tag("minecraft:in_overworld").expect("in_overworld"),
+            vec![
+                "minecraft:villager_schedule",
+                "minecraft:day",
+                "minecraft:moon",
+                "minecraft:early_game",
+            ]
+        );
+        let universal = flatten_timeline_tag("minecraft:universal").expect("universal");
+        assert_eq!(universal, vec!["minecraft:villager_schedule"]);
+        assert_eq!(
+            flatten_timeline_tag("minecraft:in_end").expect("in_end"),
+            universal
+        );
+        assert_eq!(
+            flatten_timeline_tag("minecraft:in_nether").expect("in_nether"),
+            universal
+        );
+        // the same refusals ride the timeline wrapper: an unknown tag and
+        // the raw "#"-carrying form (the table's keys never carry it)
+        assert_eq!(flatten_timeline_tag("minecraft:nope"), None);
+        assert_eq!(flatten_timeline_tag("#minecraft:universal"), None);
+    }
+
+    /// The end-to-end load property over the jar's real timeline table:
+    /// all four tags build, none empty, and every flattened member
+    /// resolves into the TIMELINES registry (the registry-bound load
+    /// validation the wrapper performs).
+    #[test]
+    fn every_timeline_tag_flattens_to_registered_timelines() {
+        use generated::worldgen::{timeline, TIMELINE_TAGS};
+        for (tag, _) in TIMELINE_TAGS {
+            let flat = flatten_timeline_tag(tag)
+                .unwrap_or_else(|| panic!("{tag} must build"));
+            assert!(!flat.is_empty(), "{tag} must not build empty");
+            for m in &flat {
+                assert!(timeline(m).is_some(), "{tag} built dangling member {m}");
+            }
+        }
     }
 
     #[test]
