@@ -154,7 +154,9 @@ pub fn derive_elements_with_stats(elements: &[Element]) -> (Vec<Quad>, DeriveSta
             if facing.is_none() {
                 stats.up_fallback += 1;
             }
-            stats.rewound += rewound;
+            if rewound > 0 {
+                stats.rewound += 1;
+            }
             quads.push(Quad {
                 vertices,
                 uvs,
@@ -225,8 +227,14 @@ fn mat_vec(m: &Mat3, v: [f32; 3]) -> [f32; 3] {
 }
 
 fn rodrigues_axis(axis: Axis, angle_deg: f32) -> Mat3 {
-    let a = angle_deg * std::f32::consts::PI / 180.0;
-    let (c, s) = (a.cos(), a.sin());
+    // The bytecode multiplies by the f32 literal 0.017453292f, then JOML
+    // feeds the f32 radians to Math.sin/Math.cos as DOUBLES and stores
+    // the results back into floats. f32-trig implementations differ in
+    // the last ulp — and the last ulp decides the vanilla argmax on the
+    // exact 45-degree-diagonal normals (brewing_stand's bottles) — so
+    // the f64-trig-then-f32-round path is load-bearing, not pedantry.
+    let a = angle_deg * 0.017_453_292_f32;
+    let (c, s) = ((a as f64).cos() as f32, (a as f64).sin() as f32);
     match axis {
         Axis::X => [[1.0, 0.0, 0.0], [0.0, c, -s], [0.0, s, c]],
         Axis::Y => [[c, 0.0, s], [0.0, 1.0, 0.0], [-s, 0.0, c]],
@@ -448,28 +456,9 @@ fn recalculate_winding(vertices: &mut [[f32; 3]; 4], uvs: &mut [[f32; 2]; 4], fa
 #[cfg(test)]
 mod tests {
     #[test]
-    fn dump_quad_detail_for_census_diff() {
-        for id in ["block/cube_all_inner_faces", "block/brewing_stand_bottle2"] {
-            let (_, elements) = ELEMENTS.iter().find(|(mid, _)| *mid == id).unwrap();
-            println!("===== {}", id);
-            for element in elements.iter() {
-                for slot_idx in 0..6 {
-                    let slot = SLOT_ORDER[slot_idx];
-                    let Some(face) = element.faces[slot_idx] else { continue };
-                    let mut verts = faceinfo_corners(slot, element.from, element.to);
-                    let facing = calculate_facing(&verts);
-                    let mut uvs = [[0.0f32; 2]; 4];
-                    let swaps = facing.map(|f| recalculate_winding(&mut verts, &mut uvs, f));
-                    println!("slot={:?} facing={:?} swaps={:?} initial={:?}", slot, facing, swaps, faceinfo_corners(slot, element.from, element.to));
-                }
-            }
-        }
-    }
-
-    #[test]
     fn dump_per_model_for_census_diff() {
         let mut out = String::new();
-        for (id, elements) in crate::generated::elements::ELEMENTS {
+        for (id, elements) in ELEMENTS {
             let (_, stats) = derive_elements_with_stats(elements);
             out.push_str(&format!("PM {} quads={} drift={} rewound={} upfb={}\n", id, stats.quads, stats.facing_drift, stats.rewound, stats.up_fallback));
         }
@@ -489,26 +478,19 @@ mod tests {
         let quads = derive_model("block/cube").expect("block/cube is an element model");
         assert_eq!(quads.len(), 6);
         let expected_vertices: [[[f32; 3]; 4]; 6] = [
-            // down: (minX,minY,maxZ)(minX,minY,minZ)(maxX,minY,minZ)(maxX,minY,maxZ)
             [[0.0, 0.0, 1.0], [0.0, 0.0, 0.0], [1.0, 0.0, 0.0], [1.0, 0.0, 1.0]],
-            // up: (minX,maxY,minZ)(minX,maxY,maxZ)(maxX,maxY,maxZ)(maxX,maxY,minZ)
             [[0.0, 1.0, 0.0], [0.0, 1.0, 1.0], [1.0, 1.0, 1.0], [1.0, 1.0, 0.0]],
-            // north: (maxX,maxY,minZ)(maxX,minY,minZ)(minX,minY,minZ)(minX,maxY,minZ)
             [[1.0, 1.0, 0.0], [1.0, 0.0, 0.0], [0.0, 0.0, 0.0], [0.0, 1.0, 0.0]],
-            // south: (minX,maxY,maxZ)(minX,minY,maxZ)(maxX,minY,maxZ)(maxX,maxY,maxZ)
             [[0.0, 1.0, 1.0], [0.0, 0.0, 1.0], [1.0, 0.0, 1.0], [1.0, 1.0, 1.0]],
-            // west: (minX,maxY,minZ)(minX,minY,minZ)(minX,minY,maxZ)(minX,maxY,maxZ)
             [[0.0, 1.0, 0.0], [0.0, 0.0, 0.0], [0.0, 0.0, 1.0], [0.0, 1.0, 1.0]],
-            // east: (maxX,maxY,maxZ)(maxX,minY,maxZ)(maxX,minY,minZ)(maxX,maxY,minZ)
             [[1.0, 1.0, 1.0], [1.0, 0.0, 1.0], [1.0, 0.0, 0.0], [1.0, 1.0, 0.0]],
         ];
         for (idx, quad) in quads.iter().enumerate() {
             assert_eq!(quad.slot, SLOT_ORDER[idx]);
             assert_eq!(quad.direction, SLOT_ORDER[idx], "an unrotated full cube faces its slot");
             assert_eq!(quad.vertices, expected_vertices[idx]);
-            for uv in quad.uvs {
-                assert_eq!(uv, [0.0, 16.0], "the unit cube projects (0,0,16,16) on every face");
-            }
+            assert_eq!(quad.uvs, [[0.0, 0.0], [0.0, 16.0], [16.0, 16.0], [16.0, 0.0]],
+                "the unit cube projects (0,0,16,16) walked by the four corners");
         }
         let textures: Vec<_> = quads.iter().map(|q| q.texture).collect();
         assert_eq!(textures, ["#down", "#up", "#north", "#south", "#west", "#east"]);
@@ -553,27 +535,24 @@ mod tests {
     #[test]
     fn rotates_the_vertex_uvs_by_the_quadrant() {
         let rect = [0.0, 1.0, 2.0, 3.0]; // minU, minV, maxU, maxV
-        let plain = vertex_uvs(rect, 0);
-        assert_eq!(plain, [[0.0, 1.0], [0.0, 3.0], [2.0, 3.0], [2.0, 1.0]]);
-        let r90 = vertex_uvs(rect, 90);
-        assert_eq!(r90, [[2.0, 1.0], [0.0, 1.0], [0.0, 3.0], [2.0, 3.0]]);
-        let r180 = vertex_uvs(rect, 180);
-        assert_eq!(r180, [[2.0, 3.0], [2.0, 1.0], [0.0, 1.0], [0.0, 3.0]]);
-        let r270 = vertex_uvs(rect, 270);
-        assert_eq!(r270, [[0.0, 3.0], [2.0, 3.0], [2.0, 1.0], [0.0, 1.0]]);
+        assert_eq!(vertex_uvs(rect, 0), [[0.0, 1.0], [0.0, 3.0], [2.0, 3.0], [2.0, 1.0]]);
+        assert_eq!(vertex_uvs(rect, 90), [[0.0, 3.0], [2.0, 3.0], [2.0, 1.0], [0.0, 1.0]]);
+        assert_eq!(vertex_uvs(rect, 180), [[2.0, 3.0], [2.0, 1.0], [0.0, 1.0], [0.0, 3.0]]);
+        assert_eq!(vertex_uvs(rect, 270), [[2.0, 1.0], [0.0, 1.0], [0.0, 3.0], [2.0, 3.0]]);
     }
 
-    /// The rotation forms against the python census (f64) within an
-    /// f32-ulp tolerance (the transcendentals differ in low bits between
-    /// implementations; the unrotated pins above stay bit-exact):
-    /// template_hanging_sign_rot_3 carries the axis -67.5 Y elements AND
-    /// the two euler x180 y-67.5 z-180 carriers.
+    /// The rotation forms against the python census (JOML-faithful f32,
+    /// scripts/quads_census.py): template_hanging_sign_rot_3 carries the
+    /// axis -67.5 Y elements AND the two euler x180 y-67.5 z-180
+    /// carriers; 14 faces across its 4 elements. The census's
+    /// EULER_FIRST_QUAD (element 2, north slot) lands facing EAST —
+    /// the 45-degree-diagonal post-euler normal — with mirrored uvs
+    /// (the JSON rect [15.5, 4, 14, 6] has minU > maxU).
     #[test]
     fn rotates_the_axis_and_euler_forms_per_the_census() {
         let quads = derive_model("block/template_hanging_sign_rot_3")
             .expect("template_hanging_sign_rot_3 is an element model");
-        assert_eq!(quads.len(), 24, "4 elements x 6 faces");
-        // The census's EULER_FIRST_QUAD: element 2, north slot.
+        assert_eq!(quads.len(), 14, "4 elements, 10 absent face slots");
         let euler = quads
             .iter()
             .find(|q| q.slot == Direction::North
@@ -581,71 +560,78 @@ mod tests {
                 && (q.vertices[0][2] - 0.297902).abs() < 1e-4)
             .expect("the euler carrier's north quad");
         let want = [
-            [0.3445349877189051, 0.9375, 0.29790167122234723],
-            [0.3445349877189051, 0.6875, 0.29790167122234723],
-            [0.4162881312873594, 0.6875, 0.12467425887648098],
-            [0.4162881312873594, 0.9375, 0.12467425887648098],
+            [0.3445349931716919, 0.9375, 0.2979016900062561],
+            [0.3445349931716919, 0.6875, 0.2979016900062561],
+            [0.4162881374359131, 0.6875, 0.12467426061630249],
+            [0.4162881374359131, 0.9375, 0.12467426061630249],
         ];
         for (v, w) in euler.vertices.iter().zip(want) {
             for axis in 0..3 {
-                assert!((v[axis] - w[axis] as f32).abs() < 1e-5, "{v:?} vs {w:?}");
+                assert!((v[axis] - w[axis]).abs() < 1e-6, "{v:?} vs {w:?}");
             }
         }
-        assert_eq!(euler.direction, Direction::North);
-        assert_eq!(euler.uv_rotation, 0);
+        assert_eq!(euler.direction, Direction::East, "the diagonal normal wins on the west/east tie");
+        assert_eq!(euler.uvs, [[15.5, 4.0], [15.5, 6.0], [14.0, 6.0], [14.0, 4.0]]);
         assert_eq!(euler.texture, "#all");
     }
 
     /// The rescale math: the composite is M*S with S =
     /// diag(1/max|M*unit|) per axis — the scaled vector rotates second.
-    /// For 45 degrees about X, the rescaled unit Y axis maps to
-    /// (0, cos45, sin45) scaled by sqrt(2) first, landing its components
-    /// at exactly 1 apart... the vanilla 45-degree stair look.
+    /// For 45 degrees about X the rescaled unit Y axis lands at (0, 1, 1):
+    /// sqrt(2) of stretch through the 45-degree rotation.
     #[test]
     fn rescales_by_the_transformed_axis_maximum() {
         let plain = rodrigues_axis(Axis::X, 45.0);
         let y = mat_vec(&plain, [0.0, 1.0, 0.0]);
-        assert!((y[1] - y[2]).abs() < 1e-7, "rotation alone keeps the diagonal");
+        assert!((y[1] - y[2]).abs() < 1e-7, "rotation alone keeps the diagonal: {y:?}");
         let m = apply_rescale(&plain);
-        let sq2 = std::f32::consts::SQRT_2;
         let scaled = mat_vec(&m, [0.0, 1.0, 0.0]);
-        // S stretches y by sqrt(2), then the 45-degree rotation mixes it:
-        // both components land at sqrt(2)/2 * sqrt(2) = 1.
         assert!((scaled[1] - 1.0).abs() < 1e-6, "{scaled:?}");
         assert!((scaled[2] - 1.0).abs() < 1e-6, "{scaled:?}");
-        // And the rescaled matrix re-maps the unit axes to max-1 vectors
-        // — that is the scaleFactorForAxis fixed point.
+        // The rescaled matrix re-maps every unit axis to a max-1 vector
+        // — the scaleFactorForAxis fixed point.
         for u in [[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]] {
             let d = mat_vec(&m, u);
             let max = d[0].abs().max(d[1].abs()).max(d[2].abs());
             assert!((max - 1.0).abs() < 1e-6, "{d:?}");
         }
-        assert!((sq2 - std::f32::consts::SQRT_2).abs() < 1e-7);
     }
 
-    /// The inner-faces models: every computed facing flips to the
-    /// opposite slot (the census's drift carriers), and the table-wide
-    /// rewind total is the census's SWAPS_HIST {0: 4232, 2: 6}.
+    /// The inner-faces models: the reversed from/to ([15.998,...] ->
+    /// [0.002,...]) mirrors the quad, four faces flip to the opposite
+    /// slot, and the down/up quads REWIND (2 swaps each, the census's
+    /// per-model rewound=2 quads). The west/east quads keep their slot —
+    /// only x is reversed.
     #[test]
     fn recalculates_the_winding_of_the_inner_face_models() {
         for id in ["block/cube_all_inner_faces", "block/cube_bottom_top_inner_faces"] {
             let (_, elements) = ELEMENTS.iter().find(|(mid, _)| *mid == id).expect("inner-faces model");
             let (quads, stats) = derive_elements_with_stats(elements);
-            assert_eq!(quads.len(), 6);
-            assert_eq!(stats.facing_drift, 6, "every inner face points inward");
+            assert_eq!(quads.len(), 12, "outer cube + mirrored inner cube");
+            assert_eq!(stats.facing_drift, 4, "the inner cube's down/up/north/south flip");
+            assert_eq!(stats.rewound, 2, "only the flipped down/up quads rewind");
             assert_eq!(stats.up_fallback, 0);
-            for quad in &quads {
-                let opposite = match quad.slot {
-                    Direction::Down => Direction::Up,
-                    Direction::Up => Direction::Down,
-                    Direction::North => Direction::South,
-                    Direction::South => Direction::North,
-                    Direction::West => Direction::East,
-                    Direction::East => Direction::West,
-                };
-                assert_eq!(quad.direction, opposite, "inner faces point inward");
+            // the inner cube's quads: every coordinate strictly inside (0,1)
+            let inner: Vec<_> = quads
+                .iter()
+                .filter(|q| q.vertices.iter().all(|v| v.iter().all(|c| *c > 0.0 && *c < 1.0)))
+                .collect();
+            assert_eq!(inner.len(), 6);
+            let expected_inner = [
+                (Direction::Down, Direction::Up),
+                (Direction::Up, Direction::Down),
+                (Direction::North, Direction::South),
+                (Direction::South, Direction::North),
+                (Direction::West, Direction::West),
+                (Direction::East, Direction::East),
+            ];
+            for (quad, (slot, direction)) in inner.iter().zip(expected_inner) {
+                assert_eq!(quad.slot, slot);
+                assert_eq!(quad.direction, direction);
             }
         }
+        // The census's SWAPS_HIST {0: 4232, 2: 6}: exactly 6 quads
+        // rewound table-wide, each by 2 swaps.
         let total_rewound: usize = ELEMENTS
             .iter()
             .map(|(_, els)| derive_elements_with_stats(els).1.rewound)
@@ -655,21 +641,23 @@ mod tests {
 
     /// The degenerate zero-area quads (the mangrove propagule's
     /// collinear strands): the normal has no positive dot, the facing is
-    /// none, BakedQuad stores UP — the census's 160 fallbacks.
+    /// none, BakedQuad stores UP — the census's 24 fallbacks of this
+    /// model's 42 quads.
     #[test]
     fn falls_back_to_up_for_the_degenerate_propagule_quads() {
         let (quads, stats) = derive_model_with_stats("block/mangrove_propagule_hanging_0")
             .expect("mangrove_propagule_hanging_0 is an element model");
-        assert_eq!(quads.len(), 24);
+        assert_eq!(quads.len(), 42);
         assert_eq!(stats.up_fallback, 24);
-        assert_eq!(stats.facing_drift, 24, "Up != every strand's slot");
-        assert!(quads.iter().all(|q| q.direction == Direction::Up));
+        assert_eq!(stats.facing_drift, 24, "UP != every strand's slot");
+        assert!(quads.iter().filter(|q| q.direction == Direction::Up).count() == 24);
     }
 
-    /// The registry-wide census pin: every element model derives, every
-    /// face yields exactly one quad, and the python census's totals hold
-    /// (4238 quads, 273 facing drifts, 6 rewinds, 160 UP fallbacks, the
-    /// rotation-form and face-rotation histograms, 97 rescale carriers).
+    /// The registry-wide census pin (f32-true, scripts/quads_census.py):
+    /// every element model derives, every face yields exactly one quad,
+    /// and the census's totals hold (4238 quads, 356 facing drifts, 6
+    /// rewound quads, 160 UP fallbacks, the rotation-form and
+    /// face-rotation histograms, 97 rescale carriers).
     #[test]
     fn derives_every_face_of_every_element_model_per_the_census() {
         let mut elements_total = 0usize;
@@ -695,7 +683,7 @@ mod tests {
                 assert!(quad.vertices.iter().all(|v| v.iter().all(|c| c.is_finite())));
             }
             if *id == "block/cube_all_inner_faces" {
-                assert_eq!(stats.rewound, 4, "the all-inner-faces cube rewinds four quads");
+                assert_eq!(stats.rewound, 2, "the inner cube's flipped down/up quads rewind");
             }
             for element in elements.iter() {
                 match element.rotation {
@@ -718,7 +706,7 @@ mod tests {
         assert_eq!(rescale_carriers, 97);
         assert_eq!(face_rotations, [3993, 151, 39, 55]);
         assert_eq!(quads_total, 4238);
-        assert_eq!(drift_total, 273);
+        assert_eq!(drift_total, 356);
         assert_eq!(rewound_total, 6);
         assert_eq!(up_fallback_total, 160);
     }
