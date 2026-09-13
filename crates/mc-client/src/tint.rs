@@ -89,24 +89,74 @@ pub const DRY_SLOT: usize = 3;
 /// without it, so `Some` is unconditional). The dry-foliage verdict
 /// mirrors `Biome.getDryFoliageColor()`'s `orElseGet` shape exactly.
 pub fn entry_tints(entry: &BiomeEntry) -> [Option<u32>; 4] {
-    let (temp, downfall) = (entry.temperature, entry.downfall);
-    let grass = entry
-        .effects
-        .grass_color
+    resolve_tints(
+        entry.temperature,
+        entry.downfall,
+        entry.effects.grass_color,
+        entry.effects.foliage_color,
+        entry.effects.water_color,
+        entry.effects.grass_color_modifier,
+        entry.effects.dry_foliage_color,
+    )
+}
+
+/// The ONE resolution chain both biome paths share — the synced
+/// `BiomeEntry` ([`entry_tints`]) and the built-in jar table
+/// ([`built_in_tints`], the skip-sync fallback). The arguments are the
+/// surface the chain consumes: the climate pair, the four effects
+/// colors (overrides `None` = the climate grid decides), the required
+/// water color, the modifier. One chain = the two paths can never
+/// disagree about a vanilla biome's verdict.
+fn resolve_tints(
+    temp: f32,
+    downfall: f32,
+    grass_override: Option<u32>,
+    foliage_override: Option<u32>,
+    water_color: u32,
+    modifier: GrassColorModifier,
+    dry_override: Option<u32>,
+) -> [Option<u32>; 4] {
+    let grass = grass_override
         .or_else(|| colormap::grass_from_climate(temp, downfall))
-        .map(|base| apply_grass_modifier(entry.effects.grass_color_modifier, base));
+        .map(|base| apply_grass_modifier(modifier, base));
     [
         grass,
-        entry
-            .effects
-            .foliage_color
-            .or_else(|| colormap::foliage_from_climate(temp, downfall)),
-        Some(entry.effects.water_color),
-        entry
-            .effects
-            .dry_foliage_color
-            .or_else(|| colormap::dry_foliage_from_climate(temp, downfall)),
+        foliage_override.or_else(|| colormap::foliage_from_climate(temp, downfall)),
+        Some(water_color),
+        dry_override.or_else(|| colormap::dry_foliage_from_climate(temp, downfall)),
     ]
+}
+
+/// The BUILT-IN biome's tint quad — the skip-sync fallback's resolution:
+/// the generator's jar table (`biome(name)`) joined with the sparse
+/// tint-extras table (`biome_tint_extra(name)`, the modifier + dry
+/// override the classic color surface does not carry), resolved through
+/// the SAME chain the synced path runs ([`resolve_tints`]). `None` for
+/// a name no built-in table carries — the honest unknown, never a
+/// guess (the caller leaves that quad all-`None`, which the no-op rule
+/// renders as the baked look).
+pub fn built_in_tints(name: &str) -> Option<[Option<u32>; 4]> {
+    use mc_registry::generated::worldgen::{biome, biome_tint_extra};
+    let b = biome(name)?;
+    let modifier = biome_tint_extra(name).and_then(|e| e.grass_color_modifier);
+    let modifier = match modifier {
+        None => GrassColorModifier::None,
+        Some("dark_forest") => GrassColorModifier::DarkForest,
+        Some("swamp") => GrassColorModifier::Swamp,
+        // the generator refuses anything the vanilla enum does not state
+        // (none/dark_forest/swamp) — this arm is unreachable by
+        // construction, and an honest None beats a wrong fold
+        Some(_) => GrassColorModifier::None,
+    };
+    Some(resolve_tints(
+        b.temperature,
+        b.downfall,
+        b.grass_color,
+        b.foliage_color,
+        b.water_color,
+        modifier,
+        biome_tint_extra(name).and_then(|e| e.dry_foliage_color),
+    ))
 }
 
 /// The vanilla `grass_color_modifier` over the RESOLVED base color —
@@ -357,5 +407,55 @@ mod tests {
             unpack(0x91BD59),
             [r as f32 / 255.0, g as f32 / 255.0, b as f32 / 255.0]
         );
+    }
+
+    /// The EQUIVALENCE contract the skip-sync fallback stands on: the
+    /// built-in table's quad for a vanilla biome IS the synced entry's
+    /// quad for the same biome — one resolution chain, two data sources.
+    /// Pinned on plains (the no-override climate path) and dark_forest
+    /// (the modifier blend path).
+    #[test]
+    fn built_in_tints_match_the_synced_path_verdict_for_verdict() {
+        // plains: the same climate + water the synced fixture carries,
+        // no overrides, no modifier -> the baked-constants verdict
+        let synced_plains = entry(4_159_204, None, None);
+        assert_eq!(
+            built_in_tints("minecraft:plains").unwrap(),
+            entry_tints(&synced_plains),
+            "the two paths agree on plains"
+        );
+        // dark_forest: the built-in climate (0.7, 0.8) samples the grid,
+        // the extras' modifier blends it — the canonical 0x507A32
+        let mut synced_dark = entry(4_159_204, None, None);
+        synced_dark.temperature = 0.7;
+        synced_dark.downfall = 0.8;
+        synced_dark.effects.grass_color_modifier = GrassColorModifier::DarkForest;
+        synced_dark.effects.dry_foliage_color = Some(0x7B5334);
+        assert_eq!(
+            built_in_tints("minecraft:dark_forest").unwrap(),
+            entry_tints(&synced_dark),
+            "the two paths agree on dark_forest"
+        );
+        assert_eq!(built_in_tints("minecraft:dark_forest").unwrap()[0], Some(0x507A32));
+    }
+
+    #[test]
+    fn built_in_tints_carry_the_jar_overrides_verbatim() {
+        // pale_garden: the real json's overrides — grass/foliage/water
+        // from the biome table, the dry override from the extras table
+        assert_eq!(
+            built_in_tints("minecraft:pale_garden").unwrap(),
+            [Some(0x778272), Some(0x878D76), Some(0x76889D), Some(0xA0A69C)]
+        );
+        // swamp: the modifier passes the climate base through (the
+        // documented BIOME_INFO_NOISE deviation), the foliage override and
+        // the dry override ride their jar values
+        assert_eq!(
+            built_in_tints("minecraft:swamp").unwrap(),
+            [Some(0x6AC44E), Some(0x6A7039), Some(0x617B64), Some(0x7B5334)]
+        );
+        // a name no built-in table carries: the honest unknown
+        assert_eq!(built_in_tints("mock:test"), None);
+        assert_eq!(built_in_tints("minecraft:missing"), None);
     }
 }

@@ -287,12 +287,44 @@ impl WorldModel {
 
     /// The biome's registry NAME at (x, y, z) — the chunk palette's
     /// resolved id walked through the configuration-phase biome table
-    /// (the arrival-order ids the server synced). `None` when the
-    /// position is outside the loaded world OR the id is one the server
-    /// never named — the honest "unknown biome", never a guess.
+    /// (the arrival-order ids the server synced). When the sync carried
+    /// NO biome table at all (the skip-sync case — a server that
+    /// accepted the client's known-packs claim), the wire id walks the
+    /// BUILT-IN wire-order table the runtime dumper emitted instead —
+    /// the vanilla registration order IS the id contract. A sync that
+    /// DID arrive but omits the id keeps `None`, and an id beyond the
+    /// built-in order too — the honest "unknown biome", never a guess.
     pub fn biome_name(&self, x: i32, y: i32, z: i32) -> Option<&str> {
         let id = self.biome(x, y, z)?;
-        self.registry.biome_name(id)
+        self.registry.biome_name(id).or_else(|| {
+            if self.registry.biomes.is_empty() {
+                mc_registry::generated::registry_order::BIOME_ORDER.get(id as usize).copied()
+            } else {
+                None
+            }
+        })
+    }
+
+    /// The tint quads the biome layer indexes — one per registry id, the
+    /// same order the chunk palettes reference. The SYNCED registry is
+    /// the server's truth (each synced element through the shared
+    /// resolution chain). When the sync carried NO biome table at all
+    /// (the skip-sync case), the BUILT-IN jar tables serve in WIRE
+    /// order: `BIOME_ORDER` names every id, [`crate::tint::built_in_tints`]
+    /// resolves each name through the same chain the synced path runs —
+    /// the biome-tint slice of the skip-sync fallback. An id the built-in
+    /// tables do not carry resolves to an all-`None` quad (the no-op
+    /// rule renders it as the baked look), never a guess.
+    pub fn biome_tints(&self) -> Vec<[Option<u32>; 4]> {
+        use mc_registry::generated::registry_order::BIOME_ORDER;
+        if self.registry.biomes.is_empty() {
+            BIOME_ORDER
+                .iter()
+                .map(|name| crate::tint::built_in_tints(name).unwrap_or([None; 4]))
+                .collect()
+        } else {
+            self.registry.biomes.iter().map(crate::tint::entry_tints).collect()
+        }
     }
 
     /// The current dimension's day tick — the synced clock's total
@@ -718,6 +750,67 @@ mod tests {
         }));
         assert_eq!(m.biome(112, -64, 112), Some(187), "the id is real");
         assert_eq!(m.biome_name(112, -64, 112), None, "the name is unknown");
+    }
+
+    #[test]
+    fn the_built_in_biome_table_is_the_skip_sync_fallback() {
+        // NO registry data at all (the claim-accepted skip-sync case):
+        // the wire-order table names the ids, the built-in jar tables
+        // resolve the tint quads — the same verdicts the synced path
+        // would produce for the same vanilla biome
+        let wire_dark = mc_registry::generated::registry_order::BIOME_ORDER
+            .iter()
+            .position(|n| *n == "minecraft:dark_forest")
+            .expect("the vanilla order names dark_forest") as u32;
+        let mut m = WorldModel::new();
+        m.apply(PlayEvent::Chunk(ChunkColumn {
+            x: 0,
+            z: 0,
+            sections: vec![parse_section_buffer(&biome_cells_section(
+                &[wire_dark],
+                &[0; 64],
+            ))],
+            light: ChunkLight::default(),
+        }));
+        // the name walks the built-in wire order (a bare model has no
+        // min_y — the query is column-local, section 0 is y 0..16)
+        assert_eq!(m.biome_name(0, 0, 0), Some("minecraft:dark_forest"));
+        // an id beyond the built-in order stays unknown — honest
+        m.apply(PlayEvent::Chunk(ChunkColumn {
+            x: 1,
+            z: 0,
+            sections: vec![parse_section_buffer(&air_section())],
+            light: ChunkLight::default(),
+        }));
+        assert_eq!(m.biome_name(16, 0, 0), None, "187 names nothing in the vanilla order");
+        // the quads: 66 built-in resolutions in wire order, and the
+        // dark_forest quad EQUALS the synced path's verdict for the same
+        // jar surface (climate 0.7/0.8, no color overrides, the
+        // dark_forest modifier blend, the dry override #7B5334)
+        let tints = m.biome_tints();
+        assert_eq!(tints.len(), 66, "one quad per vanilla wire id");
+        let mut synced_dark = biome_entry("minecraft:dark_forest");
+        synced_dark.temperature = 0.7;
+        synced_dark.downfall = 0.8;
+        synced_dark.effects.grass_color_modifier = GrassColorModifier::DarkForest;
+        synced_dark.effects.dry_foliage_color = Some(0x7B5334);
+        assert_eq!(tints[wire_dark as usize], crate::tint::entry_tints(&synced_dark));
+        assert_eq!(
+            tints[wire_dark as usize][0],
+            Some(0x507A32),
+            "the canonical dark forest grass through the fallback"
+        );
+        // the SYNCED table is the unchallenged truth: a sync of one LIE
+        // entry keeps the accessor at len 1 (no built-in top-up) and the
+        // name walk gets no rescue either
+        let mut synced = WorldModel::new();
+        synced.registry.biomes = vec![biome_entry("mock:lie")];
+        assert_eq!(synced.biome_tints().len(), 1, "the sync wins, even when it lies");
+        assert_eq!(
+            synced.biome_name(0, 0, 0),
+            None,
+            "an id the sync never named gets no built-in rescue"
+        );
     }
 
     #[test]

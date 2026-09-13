@@ -165,4 +165,32 @@ mod tests {
             assert_eq!(sorted.len(), order.len());
         }
     }
+
+    #[test]
+    fn the_tint_extras_join_the_biome_table_with_the_jar_values() {
+        use generated::worldgen::{biome, biome_tint_extra, BIOME_TINT_EXTRAS};
+        // the four real 26.2 carriers, verbatim from the biome JSONs
+        // (effects.grass_color_modifier + effects.dry_foliage_color)
+        assert_eq!(BIOME_TINT_EXTRAS.len(), 4);
+        let dark = biome_tint_extra("minecraft:dark_forest").expect("dark_forest extras");
+        assert_eq!(dark.grass_color_modifier, Some("dark_forest"));
+        assert_eq!(dark.dry_foliage_color, Some(0x7B5334));
+        let swamp = biome_tint_extra("minecraft:swamp").expect("swamp extras");
+        assert_eq!(swamp.grass_color_modifier, Some("swamp"));
+        assert_eq!(swamp.dry_foliage_color, Some(0x7B5334));
+        let mangrove = biome_tint_extra("minecraft:mangrove_swamp").expect("mangrove extras");
+        assert_eq!(mangrove.grass_color_modifier, Some("swamp"));
+        let pale = biome_tint_extra("minecraft:pale_garden").expect("pale garden extras");
+        assert_eq!(pale.grass_color_modifier, None);
+        assert_eq!(pale.dry_foliage_color, Some(0xA0A69C));
+        assert_eq!(biome_tint_extra("minecraft:plains"), None, "sparse: carriers only");
+        // the join must never dangle: every extras entry names a real biome
+        for e in &BIOME_TINT_EXTRAS {
+            assert!(
+                biome(e.biome).is_some(),
+                "extras entry {} has no biome-table twin",
+                e.biome
+            );
+        }
+    }
 }

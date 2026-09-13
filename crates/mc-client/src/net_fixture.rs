@@ -121,7 +121,13 @@ fn build_section(palette: &[u32], entries: &[u32; 4096]) -> Vec<u8> {
     }
     s.extend_from_slice(&pack_entries(entries, 5));
     s.push(0); // biomes: single valued
-    write_varint(&mut s, 1); // plains — the fixture never branches on biome
+    // 200 = an id the vanilla wire order (66 biomes) never names — the
+    // fixture never branches on biome, and a mock that sent NO registry
+    // must not carry a bare wire id the skip-sync fallback would
+    // (correctly, for a claim-accepting vanilla server) resolve through
+    // BIOME_ORDER; the same fixture honesty the "mock:test" dimension
+    // name rides (a non-vanilla layout never claims a vanilla key)
+    write_varint(&mut s, 200);
     s
 }
 

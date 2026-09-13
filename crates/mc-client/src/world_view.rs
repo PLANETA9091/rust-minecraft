@@ -42,7 +42,6 @@
 
 use crate::camera::Camera;
 use crate::math::Vec3;
-use crate::tint;
 use crate::world::{
     BiomeLayer, LightGrid, World, AIR, ANDESITE, BEDROCK, BIOME_UNKNOWN, CHUNK_X, CHUNK_Y, CHUNK_Z,
     COAL_ORE, COBBLED_DEEPSLATE, COPPER_ORE, DEEPSLATE, DIAMOND_ORE, DIORITE, DIRT, EMERALD_ORE,
@@ -66,7 +65,8 @@ use mc_protocol::{PlayEvent, PlayerPosition, WorldSnapshot};
 /// the mesher's per-corner smooth lighting consumes. The BIOME layer
 /// rides the same window: per-voxel registry ids through the model's
 /// proven biome queries (the honest [`BIOME_UNKNOWN`] where it never
-/// answers) plus the synced registry's tint quads — the raw material
+/// answers) plus the model's tint quads (the synced registry, or the
+/// built-in wire-order tables when no sync arrived) — the raw material
 /// the mesher's tint fold consumes.
 pub fn materialize(
     model: &WorldModel,
@@ -75,11 +75,12 @@ pub fn materialize(
     y_base: i32,
     mut mapper: impl FnMut(u32) -> u16,
 ) -> World {
-    // the biome layer rides the SAME window: the synced registry's tint
-    // quads resolve here (the registry's home) and the per-voxel ids
-    // copy during the walk below; the layer lands on the world after it
-    let tints: Vec<[Option<u32>; 4]> =
-        model.registry.biomes.iter().map(tint::entry_tints).collect();
+    // the biome layer rides the SAME window: the tint quads resolve
+    // through the model's accessor (the synced registry's elements, or
+    // the built-in wire-order tables when no sync arrived — the
+    // skip-sync fallback) and the per-voxel ids copy during the walk
+    // below; the layer lands on the world after it
+    let tints: Vec<[Option<u32>; 4]> = model.biome_tints();
     let mut biome_ids = vec![vec![BIOME_UNKNOWN; CHUNK_X * CHUNK_Y * CHUNK_Z]; side * side];
     let mut world = World {
         chunks_per_side: side,
