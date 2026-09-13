@@ -253,6 +253,11 @@ pub struct App {
     /// world frame; `None` = the skin asset is absent or failed its sha1
     /// verification and the hand is not drawn.
     pub arm: Option<crate::hand::ArmModel>,
+    /// Which player-skin variant the first-person arm uses — vanilla picks
+    /// it from the profile's texture metadata; this client has no profile,
+    /// so it is an explicit selection (`--slim-arm`), defaulting to the
+    /// wide classic the pixel goldens render.
+    pub slim_arm: bool,
     /// The attack-swing animation state (LivingEntity's swing fields,
     /// verbatim); the deterministic headless scenes never swing, so the
     /// pixel goldens always see the rest pose.
@@ -359,6 +364,7 @@ impl App {
             net_biome: None,
             live_runs: Vec::new(),
             arm: None,
+            slim_arm: false,
             swing: crate::hand::SwingState::default(),
             held_item: None,
         }
@@ -855,7 +861,12 @@ impl App {
         }
         crate::sky::render_clouds(fb, &ctx, &cam, day_time, 0.0);
         if self.arm.is_none() {
-            self.arm = crate::hand::load(std::path::Path::new("assets-cache/jar"));
+            let kind = if self.slim_arm {
+                crate::hand::ArmKind::Slim
+            } else {
+                crate::hand::ArmKind::Wide
+            };
+            self.arm = crate::hand::load_kind(std::path::Path::new("assets-cache/jar"), kind);
         }
         // vanilla submitArmWithItem: a non-empty main hand draws the ITEM
         // instead of the arm; the empty hand draws the arm. Exactly one of

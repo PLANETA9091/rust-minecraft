@@ -48,3 +48,21 @@ pub const FACE_BACK: usize = 5;
 /// The runtime asset file the client reads (under the runtime asset root),
 /// sha1-verified against STEVE_WIDE_PNG_SHA1.
 pub const RUNTIME_PATH: &str = "entity/player/wide/steve.png";
+
+/// The SLIM (Alex) skin, generated from the same jar:
+/// sha1s + the slim arm box (javap: `PlayerModel.createMesh` with
+/// `slim = true` — right_arm `texOffs(40, 16)` unchanged,
+/// `addBox(-2, -2, -2, 3, 12, 4)`, pivot `(-5, 2, 0)` unchanged).
+pub const SLIM_ALEX_PNG_SHA1: &str = "83fe1a79fe84b13b57dda8ef9647cb666d01768f";
+pub const SLIM_ALEX_RGBA_SHA1: &str = "ee4ef22741fc774da96013229cb3115a58bcde27";
+pub const SLIM_ARM_BOX_PX: [u16; 3] = [3, 12, 4];
+pub const SLIM_ARM_BOX_ORIGIN_PX: [i16; 3] = [-2, -2, -2];
+pub static SLIM_ARM_FACES: [FaceRect; 6] = [
+    FaceRect { u: 44, v: 16, w: 3, h: 4 }, // top
+    FaceRect { u: 47, v: 16, w: 3, h: 4 }, // bottom
+    FaceRect { u: 40, v: 20, w: 4, h: 12 }, // right (outer)
+    FaceRect { u: 44, v: 20, w: 3, h: 12 }, // front
+    FaceRect { u: 47, v: 20, w: 4, h: 12 }, // left (inner)
+    FaceRect { u: 51, v: 20, w: 3, h: 12 }, // back
+];
+pub const SLIM_RUNTIME_PATH: &str = "entity/player/slim/alex.png";

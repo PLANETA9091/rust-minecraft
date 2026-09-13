@@ -87,6 +87,11 @@ struct Cli {
     /// pre-existing goldens never see a nonzero value.
     #[arg(long)]
     swing_progress: Option<f32>,
+    /// Use the slim (Alex) player-skin variant for the empty-hand arm —
+    /// the deterministic stand-in for the profile's texture metadata.
+    /// The default (wide classic) is what the pixel goldens render.
+    #[arg(long)]
+    slim_arm: bool,
     #[arg(long, default_value = "render.png")]
     out: PathBuf,
     /// Path to official asset index json (enables real texture-average colors).
@@ -117,6 +122,7 @@ fn main() -> Result<()> {
             cli.height,
             cli.held_item.as_deref(),
             cli.swing_progress,
+            cli.slim_arm,
             &cli.out,
         )?;
         return Ok(());

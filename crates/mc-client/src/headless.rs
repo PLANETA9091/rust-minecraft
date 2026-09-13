@@ -95,6 +95,9 @@ pub fn render_frames(
 /// (`getAttackAnim`, 0 = rest) — the deterministic stand-in for the
 /// swing clock; the world screens render the mid-swing pose of the
 /// held item (or of the empty-hand arm), the other screens ignore it.
+/// `slim_arm` selects the slim (Alex) skin variant for the empty-hand
+/// arm — the deterministic stand-in for the profile's texture metadata
+/// (the goldens never set it: the default stays the wide classic).
 pub fn render_gui_screen(
     screen: &str,
     frame: u64,
@@ -103,6 +106,7 @@ pub fn render_gui_screen(
     height: usize,
     held_item: Option<&str>,
     swing_progress: Option<f32>,
+    slim_arm: bool,
     out_path: &Path,
 ) -> Result<()> {
     use crate::gui::GuiAssets;
@@ -115,6 +119,7 @@ pub fn render_gui_screen(
         );
     }
     let mut app = App::new(seed);
+    app.slim_arm = slim_arm;
     if let Some(id) = held_item {
         app.held_item = crate::hand::load_item(id);
     }

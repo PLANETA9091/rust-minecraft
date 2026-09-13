@@ -46,14 +46,60 @@ pub struct ArmModel {
     /// decoded RGBA8 (64*64*4), the runtime file's verbatim pixels
     rgba: Vec<u8>,
     quads: Vec<HandQuad>,
+    /// which skin variant this model carries (the quads were built for)
+    kind: ArmKind,
 }
 
-/// Load + sha1-verify the skin from the runtime asset root, then build
-/// the vanilla arm geometry. `None` = not drawn.
+/// The player-skin variant. Vanilla picks it from the profile's texture
+/// metadata (the `slim` flag on the skin's textures property); this
+/// client has no profile yet, so the variant is an EXPLICIT selection
+/// (`--slim-arm`, the same deterministic stand-in pattern as
+/// `--held-item`) — the default stays the wide classic the goldens see.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ArmKind {
+    /// The classic model: right_arm addBox(-3, -2, -2, 4, 12, 4) —
+    /// HumanoidModel.createMesh, the goldens' arm.
+    Wide,
+    /// The slim model: right_arm addBox(-2, -2, -2, 3, 12, 4) —
+    /// PlayerModel.createMesh(slim = true), javap (26.2): texOffs (40, 16)
+    /// UNCHANGED, pivot (-5, 2, 0) UNCHANGED — only the box shrinks.
+    Slim,
+}
+
+/// The model-space box (the addBox origin and the (w, h, d) extents) of
+/// one arm kind, in model units (/16 at transform time).
+fn arm_box(kind: ArmKind) -> ([f32; 3], [f32; 3]) {
+    match kind {
+        ArmKind::Wide => {
+            let [w, h, d] = skin::ARM_BOX_PX;
+            ([-3.0, -2.0, -2.0], [w as f32, h as f32, d as f32])
+        }
+        ArmKind::Slim => {
+            let [w, h, d] = skin::SLIM_ARM_BOX_PX;
+            let [x, y, z] = skin::SLIM_ARM_BOX_ORIGIN_PX;
+            ([x as f32, y as f32, z as f32], [w as f32, h as f32, d as f32])
+        }
+    }
+}
+
+/// Load + sha1-verify the WIDE skin from the runtime asset root, then
+/// build the vanilla arm geometry. `None` = not drawn.
 pub fn load(root: &Path) -> Option<ArmModel> {
-    let bytes = std::fs::read(root.join(skin::RUNTIME_PATH)).ok()?;
+    load_kind(root, ArmKind::Wide)
+}
+
+/// Load + sha1-verify the skin of ONE kind (wide Steve or slim Alex —
+/// each verifies against its own generated sha1) and build the matching
+/// vanilla geometry. `None` = not drawn (absent or mismatched file —
+/// the renderer must not lie about its data).
+pub fn load_kind(root: &Path, kind: ArmKind) -> Option<ArmModel> {
+    let (runtime_path, png_sha1) = match kind {
+        ArmKind::Wide => (skin::RUNTIME_PATH, skin::STEVE_WIDE_PNG_SHA1),
+        ArmKind::Slim => (skin::SLIM_RUNTIME_PATH, skin::SLIM_ALEX_PNG_SHA1),
+    };
+    let bytes = std::fs::read(root.join(runtime_path)).ok()?;
     let digest = sha1::Sha1::digest(&bytes);
-    if hex::encode(digest) != skin::STEVE_WIDE_PNG_SHA1 {
+    if hex::encode(digest) != png_sha1 {
         return None;
     }
     let (w, h, rgba) = decode_rgba(&bytes).ok()?;
@@ -65,7 +111,8 @@ pub fn load(root: &Path) -> Option<ArmModel> {
     }
     Some(ArmModel {
         rgba,
-        quads: build_quads(),
+        quads: build_quads_kind(kind),
+        kind,
     })
 }
 
@@ -77,7 +124,7 @@ impl ArmModel {
     /// fov — vanilla's hand fov follows the world's).
     pub fn draw(&self, fb: &mut crate::raster::Framebuf, proj: Mat4, swing: f32) {
         fb.clear_depth();
-        let quads = build_quads_at(swing, 0.0);
+        let quads = build_quads_kind_at(self.kind, swing, 0.0);
         fb.draw_hand_quads(proj, &quads, &self.rgba, skin::SKIN_SIDE as usize);
     }
 }
@@ -273,21 +320,27 @@ fn mth_sqrt(x: f32) -> f32 {
 /// Polygon constructor's fixed rect corner: k=0 -> (u1,v0), 1 -> (u0,v0),
 /// 2 -> (u0,v1), 3 -> (u1,v1).
 fn build_quads() -> Vec<HandQuad> {
-    build_quads_at(0.0, 0.0)
+    build_quads_kind(ArmKind::Wide)
 }
 
-/// The six hand quads at an arbitrary attack/equip animation progress —
-/// the same `ModelPart$Cube` face table, transformed by the full
-/// renderPlayerArm chain (the swing terms above). At (0, 0) this is the
-/// rest pose, bit-for-bit (every added rotation is the exact identity).
-fn build_quads_at(swing: f32, equip: f32) -> Vec<HandQuad> {
+fn build_quads_kind(kind: ArmKind) -> Vec<HandQuad> {
+    build_quads_kind_at(kind, 0.0, 0.0)
+}
+
+/// The six hand quads of ONE arm kind at an arbitrary attack/equip
+/// animation progress — the same `ModelPart$Cube` face table, transformed
+/// by the full renderPlayerArm chain (the swing terms above). At (0, 0)
+/// this is the rest pose, bit-for-bit (every added rotation is the exact
+/// identity). The kind changes ONLY the model-space box (origin +
+/// extents); texOffs, the unwrap layout and the transform chain are
+/// shared, so the wide path performs the same arithmetic it always did.
+fn build_quads_kind_at(kind: ArmKind, swing: f32, equip: f32) -> Vec<HandQuad> {
     let (u0, v0) = skin::ARM_TEX_OFFS;
-    let [w, h, d] = skin::ARM_BOX_PX;
-    let (u0, v0, w, h, d) = (u0 as f32, v0 as f32, w as f32, h as f32, d as f32);
-    // model-space box bounds (addBox), /16 at transform time
-    let (x0, x1) = (-3.0f32, -3.0 + w);
-    let (y0, y1) = (-2.0f32, -2.0 + h);
-    let (z0, z1) = (-2.0f32, -2.0 + d);
+    let (origin, box_px) = arm_box(kind);
+    let [x0, y0, z0] = origin;
+    let [w, h, d] = box_px;
+    let (u0, v0) = (u0 as f32, v0 as f32);
+    let (x1, y1, z1) = (x0 + w, y0 + h, z0 + d);
     let m = arm_transform(swing, equip);
     let px = |p: [f32; 3]| {
         let q = m.transform_point(crate::math::Vec3::new(p[0] / 16.0, p[1] / 16.0, p[2] / 16.0));
