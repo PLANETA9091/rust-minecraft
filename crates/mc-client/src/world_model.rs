@@ -212,11 +212,25 @@ impl WorldModel {
         }
     }
 
-    /// The decoded vertical layout of one dimension (by registry key),
-    /// from the configuration registry knowledge. `None` when the server
-    /// never sent that key (or no registry data at all).
+    /// The decoded vertical layout of one dimension (by registry key).
+    /// The SYNCED registry is the server's truth. When the sync carried
+    /// NO dimension table at all (a bare server, or one that skipped
+    /// Registry Data because the client claimed its known packs), the
+    /// BUILT-IN table the generator emitted from the same jar serves —
+    /// the dimension-layout slice of the skip-sync fallback. A sync
+    /// that DID arrive but omits the key keeps `None`: the server's
+    /// own truth is "not a vanilla built-in", never a guess.
     pub fn dimension_min_y(&self, name: &str) -> Option<i32> {
-        self.registry.dimension(name).map(|d| d.min_y)
+        self.registry
+            .dimension(name)
+            .map(|d| d.min_y)
+            .or_else(|| {
+                if self.registry.dimension_types.is_empty() {
+                    mc_registry::generated::worldgen::dimension_type(name).map(|d| d.min_y)
+                } else {
+                    None
+                }
+            })
     }
 
     /// How many chunk columns are currently loaded.
@@ -1102,7 +1116,15 @@ mod tests {
     #[test]
     fn registry_table_replaces_wholesale_with_each_adopted_snapshot() {
         let mut m = WorldModel::new();
-        assert_eq!(m.dimension_min_y("minecraft:overworld"), None, "empty before any join");
+        // no sync ever arrived: the BUILT-IN table (the same jar data a
+        // matching server would sync) answers the vanilla names — the
+        // skip-sync fallback. The wholesale rule below is about SYNCED
+        // tables: once one arrives it is the ONLY truth.
+        assert_eq!(
+            m.dimension_min_y("minecraft:overworld"),
+            Some(-64),
+            "the built-in table serves before any join"
+        );
         let snap = |names: &[(&str, i32, i32)]| WorldSnapshot {
             info: WorldInfo {
                 entity_id: 1,
@@ -1152,9 +1174,103 @@ mod tests {
         assert_eq!(m.dimension_min_y("minecraft:the_nether"), Some(0));
         // a re-join REPLACES the table wholesale — no stale entries linger
         m.adopt_snapshot(snap(&[("minecraft:flat", 0, 16)]));
-        assert_eq!(m.dimension_min_y("minecraft:overworld"), None);
+        assert_eq!(m.dimension_min_y("minecraft:overworld"), None, "the sync speaks, the built-in table stays silent");
         assert_eq!(m.dimension_min_y("minecraft:the_nether"), None);
         assert_eq!(m.dimension_min_y("minecraft:flat"), Some(0));
+    }
+
+    #[test]
+    fn the_built_in_dimension_table_is_the_skip_sync_fallback() {
+        // NO registry data at all: the generator's built-in table — the
+        // SAME jar data a matching server would sync — answers the
+        // vanilla dimension names with their real layouts
+        let mut m = WorldModel::new();
+        assert_eq!(m.dimension_min_y("minecraft:overworld"), Some(-64));
+        assert_eq!(m.dimension_min_y("minecraft:overworld_caves"), Some(-64));
+        assert_eq!(m.dimension_min_y("minecraft:the_nether"), Some(0));
+        assert_eq!(m.dimension_min_y("minecraft:the_end"), Some(0));
+        assert_eq!(
+            m.dimension_min_y("minecraft:flat"),
+            None,
+            "a name the vanilla jar does not build stays unknown"
+        );
+        // the REAL flow through the fallback: a bare server's Login pins
+        // min_y -64 and block() reads world-y with zero sync
+        let info = WorldInfo {
+            entity_id: 7,
+            hardcore: false,
+            dimensions: vec!["minecraft:overworld".to_string()],
+            view_distance: 8,
+            simulation_distance: 8,
+            portal_cooldown: 300,
+            current_dimension: "minecraft:overworld".to_string(),
+        };
+        assert!(m.apply(PlayEvent::WorldInfo(info)));
+        assert_eq!(m.min_y, Some(-64), "the login pin resolves through the built-in table");
+        // a Respawn re-pins through the fallback on the dimension change
+        let spawn = SpawnInfo {
+            dimension_type_id: 0,
+            dimension: "minecraft:the_nether".to_string(),
+            portal_cooldown: 0,
+        };
+        assert!(m.apply(PlayEvent::Respawn(spawn)));
+        assert_eq!(m.min_y, Some(0), "the nether re-pin: floor 0 from the built-in table");
+        // an ARRIVED sync is the only truth: a table without the key gets
+        // None (the server runs its own dimension set), and a key the sync
+        // DOES carry wins even when it disagrees with the jar
+        let snap = |names: &[(&str, i32, i32)]| WorldSnapshot {
+            info: WorldInfo {
+                entity_id: 7,
+                hardcore: false,
+                dimensions: vec!["minecraft:overworld".to_string()],
+                view_distance: 8,
+                simulation_distance: 8,
+                portal_cooldown: 300,
+                current_dimension: "minecraft:overworld".to_string(),
+            },
+            player: PlayerPosition {
+                teleport_id: 1,
+                x: 0.0,
+                y: 0.0,
+                z: 0.0,
+                dx: 0.0,
+                dy: 0.0,
+                dz: 0.0,
+                yaw: 0.0,
+                pitch: 0.0,
+                flags: 0,
+            },
+            chunks: vec![],
+            registry: RegistryData {
+                dimension_types: names
+                    .iter()
+                    .map(|(n, min_y, height)| DimensionTypeEntry {
+                        name: n.to_string(),
+                        min_y: *min_y,
+                        height: *height,
+                        default_clock: None,
+                        timelines: None,
+                    })
+                    .collect(),
+                biomes: Vec::new(),
+                biome_tags: Vec::new(),
+                world_clocks: Vec::new(),
+                timelines: Vec::new(),
+                timeline_tags: Vec::new(),
+            },
+        };
+        m.adopt_snapshot(snap(&[("minecraft:overworld", 0, 128)]));
+        assert_eq!(
+            m.dimension_min_y("minecraft:overworld"),
+            Some(0),
+            "the synced entry wins over the built-in -64"
+        );
+        m.adopt_snapshot(snap(&[("minecraft:custom", -32, 64)]));
+        assert_eq!(
+            m.dimension_min_y("minecraft:overworld"),
+            None,
+            "a sync that omits the key gets NO built-in rescue"
+        );
     }
 
     #[test]

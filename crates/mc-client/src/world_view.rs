@@ -1060,11 +1060,16 @@ mod tests {
             info: WorldInfo {
                 entity_id: 17,
                 hardcore: false,
-                dimensions: vec!["minecraft:overworld".to_string()],
+                // a MOCK layout (one bare section) — NOT vanilla-shaped, so
+                // it must not claim the vanilla name: the built-in
+                // dimension table now answers a bare "minecraft:overworld"
+                // with the real min_y -64 (the skip-sync fallback) and the
+                // window would shift under the terrain
+                dimensions: vec!["mock:test".to_string()],
                 view_distance: 8,
                 simulation_distance: 8,
                 portal_cooldown: 300,
-                current_dimension: "minecraft:overworld".to_string(),
+                current_dimension: "mock:test".to_string(),
             },
             player: PlayerPosition {
                 teleport_id: 42,
