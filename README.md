@@ -308,6 +308,44 @@ hand-drawn:
   Zero render-path pixels: the tint CONSUMERS come next; the ten
   goldens are bit-identical by construction (the wire fixture carries
   no registry knowledge).
+  The **built-in registry tables ship from the jar (v0.3.51 — the
+  pack-version claim's prerequisite)**: the generator now emits the
+  data/minecraft/{dimension_type,timeline,tags/timeline} side of the
+  jar beside the biome tables — the registry entries a vanilla server
+  syncs and a matching client could claim as known packs.
+  `worldgen::generate` widened its listing from the worldgen/ tree to
+  all of data/minecraft/ (every entry still classified by strict
+  prefix), parsing 4 dimension types (the nether: min_y 0 / height 256
+  / logical_height 128, has_fixed_time, ambient_light 0.1,
+  coordinate_scale 8.0, no default_clock — the overworld: -64/384/384
+  with the default clock), 4 timelines (clock, period_ticks, track
+  count, and the `minecraft:visual/sky_light_factor` numeric keyframes
+  — the render track the lightmap's SkyFactor multiplies; the other
+  real timelines carry none and emit empty, not invented), and 4
+  timeline tags verbatim (nested "#"-references intact —
+  #minecraft:in_overworld resolves through #minecraft:universal to
+  villager_schedule). The emitted tables are appended AFTER the biome
+  data so the old generated file verified as a byte-exact prefix of
+  the new one (the determinism discipline). A new offline subcommand
+  `mc2rs-gen worldgen --jar <path>` re-emits the file from a LOCAL
+  client jar — no network, no java, the `block-ids` precedent. The
+  day timeline's emitted keyframes are EXACTLY the constants
+  `mc-client/src/timeline.rs` pins as the compile-time snapshot
+  ((730,1.0),(11270,1.0),(13140,0.24),(22860,0.24), period 24000) —
+  now test-pinned from BOTH sides: mc-registry asserts the generated
+  table's shape, and mc-client asserts its constants still byte-match
+  the generated table, so the hand-kept render constants can only
+  drift by failing a test. The pack-version claim (a non-empty Select
+  Known Packs reply) stays unclaimed here — it needs this FULL table
+  work (done) plus the skip-sync fallback (future). Zero render-path
+  pixels: the generated tables feed no golden scene; the ten goldens
+  are bit-identical by construction, verified TWICE on the release
+  builds. Tests +4 (workspace 243 → 247 passed / 0 failed / 3
+  ignored): the generator parse/emission fixture (unsorted keyframes
+  arrive sorted, hex-string visual tracks are not the numeric render
+  track, absent has_fixed_time defaults false), the mc-registry
+  dimension-layout and day-keyframe pins, and the mc-client
+  constants-vs-table cross-pin.
   The **leaf litter renders per-state — state-property extraction (v0.3.50 —
   the fourteenth audit retires the documented follow-up)**: v0.3.49's
   closing note ("per-segment coverage and per-facing rotation need
