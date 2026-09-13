@@ -314,9 +314,9 @@ mod tests {
             q.uvs.map(|uv| uv.map(f32::to_bits)),
             [
                 [0x00000000, 0x00000000],
-                [0x41800000, 0x00000000],
-                [0x41800000, 0x41800000],
                 [0x00000000, 0x41800000],
+                [0x41800000, 0x41800000],
+                [0x41800000, 0x00000000],
             ]
         );
         // quad[1]: the NORTH face carries the MIRRORED UVs (16,0,0,16)
@@ -326,18 +326,19 @@ mod tests {
             q.uvs.map(|uv| uv.map(f32::to_bits)),
             [
                 [0x41800000, 0x00000000],
-                [0x00000000, 0x00000000],
-                [0x00000000, 0x41800000],
                 [0x41800000, 0x41800000],
+                [0x00000000, 0x41800000],
+                [0x00000000, 0x00000000],
             ]
         );
-        // quad[2]: the first exposed edge — a DOWN side at pixel (13, 0),
+        // quad[2]: the first exposed edge — the UP side of pixel (13, 0)
+        // (the sprite's top row; the neighbor above is out of bounds),
         // the V REVERSED (minV 0.9 > maxV 0.1), the 0.1f insets
         // (13.0f + 0.1f rounds to 0x4151999a — the f32 tie the oracle
         // pins; 7.0f + 0.1f rounds differently: 0x40e33333)
         let q = &quads[2];
-        assert_eq!(q.slot, Direction::Down);
-        assert_eq!(q.direction, Direction::Down);
+        assert_eq!(q.slot, Direction::Up);
+        assert_eq!(q.direction, Direction::Up);
         assert_eq!(
             q.uvs.map(|uv| uv.map(f32::to_bits)),
             [
@@ -347,17 +348,23 @@ mod tests {
                 [0x415e6666, 0x3f666666],
             ]
         );
-        // quad[3]: a RIGHT edge — the 26.2 enum carries WEST (LEFT->EAST,
-        // RIGHT->WEST, the ctor arguments verbatim)
+        // quad[3]: the LEFT edge of the same pixel — the 26.2 enum
+        // carries EAST for LEFT and WEST for RIGHT (the ctor arguments
+        // verbatim)
         let q = &quads[3];
-        assert_eq!(q.slot, Direction::West);
+        assert_eq!(q.slot, Direction::East);
+        // the LEFT slab's from.y (16) exceeds its to.y (15): the vanilla
+        // winding rewind shifts the uv cycle (the element_quads machinery
+        // the 26.2 census validated) — the RECT is still (13.1, 0.1,
+        // 13.9, 0.9), walked as (maxU, maxV), (maxU, minV), (minU, minV),
+        // (minU, maxV)
         assert_eq!(
             q.uvs.map(|uv| uv.map(f32::to_bits)),
             [
-                [0x4151999a, 0x3dcccccd],
-                [0x4151999a, 0x3f666666],
                 [0x415e6666, 0x3f666666],
                 [0x415e6666, 0x3dcccccd],
+                [0x4151999a, 0x3dcccccd],
+                [0x4151999a, 0x3f666666],
             ]
         );
         // every quad is axis-aligned: the computed facing equals the slot
@@ -403,9 +410,13 @@ mod tests {
         let empty = derive_item_model("item/spear_in_hand")
             .expect("in the bake domain");
         assert!(empty.is_empty());
-        let empty = derive_item_model("item/bundle/open_back")
+        let empty = derive_item_model("item/template_bundle_open_back")
             .expect("in the bake domain");
         assert!(empty.is_empty());
+        // the layerless anchors themselves: item/generated + item/handheld
+        assert!(derive_item_model("item/handheld")
+            .expect("in the bake domain")
+            .is_empty());
         // a block model whose chain never reaches item/generated -> None
         assert!(derive_item_model("block/stone").is_none());
         assert!(derive_item_model("block/stairs").is_none());
@@ -426,11 +437,14 @@ mod tests {
         assert_eq!(quads[65].texture, "item/chainmail_boots");
         assert_eq!(quads[66].texture, "missingno");
         assert_eq!(quads[66].tintindex, Some(1));
-        // the checkerboard is fully opaque -> the first edge is DOWN at
-        // pixel (0,0): from (0,15,7.5) to (1,15,8.5), uv (0.1, 0.9, 0.9, 0.1)
-        assert_eq!(quads[66].slot, Direction::Down);
+        // quads[66] is layer1's SOUTH face; the checkerboard is fully
+        // opaque -> the first SIDE edge (quads[68]) is the UP edge of
+        // pixel (0,0): from (0,16,7.5) to (1,16,8.5), uv (0.1, 0.9, 0.9, 0.1)
+        assert_eq!(quads[66].slot, Direction::South);
+        assert_eq!(quads[68].slot, Direction::Up);
+        assert_eq!(quads[68].direction, Direction::Up);
         assert_eq!(
-            quads[66].uvs.map(|uv| uv.map(f32::to_bits)),
+            quads[68].uvs.map(|uv| uv.map(f32::to_bits)),
             [
                 [0x3dcccccd, 0x3f666666],
                 [0x3dcccccd, 0x3dcccccd],
@@ -438,16 +452,16 @@ mod tests {
                 [0x3f666666, 0x3f666666],
             ]
         );
-        let vertices = quads[66].vertices;
+        let vertices = quads[68].vertices;
         assert_eq!(
             vertices.map(|v| v.map(f32::to_bits)),
             [
-                [0x3f000000, 0x3f800000, 0x3ef00000],
-                [0x3e800000, 0x3f800000, 0x3ef00000],
-                [0x3e800000, 0x3f800000, 0x3f088889],
-                [0x3f000000, 0x3f800000, 0x3f088889],
+                [0x00000000, 0x3f800000, 0x3ef00000],
+                [0x00000000, 0x3f800000, 0x3f080000],
+                [0x3d800000, 0x3f800000, 0x3f080000],
+                [0x3d800000, 0x3f800000, 0x3ef00000],
             ],
-            "the Down corner walk over from (0,15,7.5) to (1,15,8.5), block units"
+            "the Up corner walk over from (0,16,7.5) to (1,16,8.5), block units"
         );
     }
 
@@ -497,7 +511,7 @@ mod tests {
             "64 missing = the trims/items family"
         );
         assert_eq!(
-            quad_total, 80464,
+            quad_total, 102106,
             "the total baked quads over the domain (all layers)"
         );
     }
