@@ -22,7 +22,7 @@
 //! yet, and its tinted tiles are deliberately NOT byte-identical to this
 //! table for tinted textures; untinted textures like block/stone ARE).
 
-use std::collections::{BTreeMap, BTreeSet};
+use std::collections::BTreeSet;
 
 use anyhow::{bail, Context, Result};
 use serde_json::Value;

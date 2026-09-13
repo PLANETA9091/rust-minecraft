@@ -879,4 +879,195 @@ mod tests {
             );
         }
     }
+
+    #[test]
+    fn the_texture_namespace_is_sorted_and_binary_searchable() {
+        use generated::textures::{is_missing, texture_index, TEXTURE_IDS, N_TEXTURES};
+
+        // the census: 2113 distinct concrete ids over the 3928 model files
+        assert_eq!(N_TEXTURES, 2113);
+        assert_eq!(TEXTURE_IDS.len(), N_TEXTURES);
+        assert!(
+            TEXTURE_IDS.windows(2).all(|w| w[0] < w[1]),
+            "the namespace is strictly ascending (binary-search prerequisite)"
+        );
+
+        // hits: block/, item/, and a 32x32 sign sprite
+        for hit in ["block/stone", "item/iron_sword", "block/oak_sign"] {
+            assert!(texture_index(hit).is_some(), "{hit} must hit");
+        }
+        // a hit is NOT existence: the literal `missingno` (item/air.json and
+        // block/air.json reference `minecraft:missingno`) is a domain member
+        // pinned missing
+        let air = texture_index("missingno").expect("the air models' literal ref");
+        assert!(is_missing(air));
+        assert!(generated::textures::texture_rgba(air).is_empty());
+
+        // misses: the empty id, a bare stem, an unknown block, a texture
+        // that EXISTS in the jar but is NOT model-referenced (the skin rides
+        // the entity path — skingen's domain, not the models'), and a case
+        // mismatch
+        for miss in ["", "stone", "block/nonexistent", "entity/player/wide/steve", "Block/stone"] {
+            assert!(texture_index(miss).is_none(), "{miss:?} must miss");
+        }
+    }
+
+    #[test]
+    fn every_present_tile_spans_exactly_its_size() {
+        use generated::textures::{
+            is_missing, texture_size, HEIGHTS, OFFSETS, TEXELS, TEXTURE_IDS, WIDTHS, N_MISSING,
+            N_TEXTURES,
+        };
+
+        assert_eq!(N_MISSING, 65);
+        let mut present = 0usize;
+        let mut n16 = 0usize;
+        let mut n32 = 0usize;
+        for i in 0..N_TEXTURES {
+            let (w, h) = texture_size(i as u16);
+            let span = (OFFSETS[i + 1] - OFFSETS[i]) as usize;
+            if w == 0 {
+                // the missing invariant: all three encodings agree
+                assert_eq!(h, 0, "{} must be fully empty", TEXTURE_IDS[i]);
+                assert_eq!(span, 0);
+                assert!(is_missing(i as u16));
+                continue;
+            }
+            assert!(!is_missing(i as u16));
+            assert_eq!(span, w as usize * h as usize * 4, "{}", TEXTURE_IDS[i]);
+            match (w, h) {
+                (16, 16) => n16 += 1,
+                (32, 32) => n32 += 1,
+                other => panic!("unexpected dims {other:?} for {}", TEXTURE_IDS[i]),
+            }
+            present += 1;
+        }
+        // the census, verbatim: 2048 present (2001 square + 47 sign-size) + 65
+        // missing = 2113; the offsets tile the texels exactly
+        assert_eq!(present, 2048);
+        assert_eq!((n16, n32), (2001, 47));
+        assert_eq!(present + N_MISSING, N_TEXTURES);
+        assert_eq!(OFFSETS[N_TEXTURES] as usize, TEXELS.len());
+        assert_eq!(TEXELS.len(), 2_241_536, "the census texel total");
+        assert_eq!(WIDTHS.len(), N_TEXTURES);
+        assert_eq!(HEIGHTS.len(), N_TEXTURES);
+    }
+
+    #[test]
+    fn block_stone_pixels_are_the_world_atlas_tile_byte_for_byte() {
+        use generated::atlas::{TILE_NAMES, TILES};
+        use generated::textures::{texture_index, texture_rgba, texture_size};
+
+        // the CROSS-TABLE pin: stone is untinted, so the world atlas's baked
+        // tile and this table's raw tile must be byte-identical
+        let stone = texture_index("block/stone").expect("stone in the namespace");
+        let atlas_idx = TILE_NAMES
+            .iter()
+            .position(|n| *n == "stone")
+            .expect("the world atlas carries stone");
+        assert_eq!(texture_size(stone), (16, 16));
+        assert_eq!(texture_rgba(stone), TILES[atlas_idx]);
+
+        // the independent-decoder pins (PIL over the same jar): the corners
+        // and the center of the REAL stone.png
+        let px = texture_rgba(stone);
+        assert_eq!(&px[0..4], &[143, 143, 143, 255], "top-left");
+        assert_eq!(&px[15 * 4..16 * 4], &[127, 127, 127, 255], "top-right");
+        assert_eq!(&px[15 * 16 * 4..15 * 16 * 4 + 4], &[127, 127, 127, 255], "bottom-left");
+        assert_eq!(&px[16 * 16 * 4 - 4..], &[127, 127, 127, 255], "bottom-right");
+        assert_eq!(&px[(8 * 16 + 8) * 4..(8 * 16 + 8) * 4 + 4], &[143, 143, 143, 255], "center");
+    }
+
+    #[test]
+    fn the_raw_pixels_carry_no_baked_tint() {
+        use generated::atlas::{TILE_NAMES, TILES};
+        use generated::textures::{texture_index, texture_rgba};
+
+        // the TINT-BOUNDARY pair: stone (no tint) is byte-identical to the
+        // atlas; grass_block_top (the 0x91BD59 plains bake in the world
+        // atlas) must DIFFER — this table keeps the raw grayscale master the
+        // consumer tints at draw time (the quads' tintindex)
+        let grass = texture_index("block/grass_block_top").expect("grass top");
+        let px = texture_rgba(grass);
+        // the PIL pins: raw top-left and center
+        assert_eq!(&px[0..4], &[148, 148, 148, 255]);
+        assert_eq!(&px[(8 * 16 + 8) * 4..(8 * 16 + 8) * 4 + 4], &[179, 179, 179, 255]);
+        let atlas_idx = TILE_NAMES
+            .iter()
+            .position(|n| *n == "grass_block_top")
+            .expect("the world atlas bakes grass_block_top");
+        assert_ne!(
+            px, TILES[atlas_idx],
+            "the raw master must NOT equal the tint-baked atlas tile"
+        );
+        // the baked value the atlas carries for the same pixel: the vanilla
+        // multiply (148 * 0x91 + 127) / 255 — proving the DIFF is the tint
+        let baked = ((148u16 * 0x91 + 127) / 255) as u8;
+        assert_eq!(TILES[atlas_idx][0], baked);
+
+        // semi-transparency rides intact: water_still's raw alpha is 180
+        let water = texture_index("block/water_still").expect("water");
+        assert_eq!(&texture_rgba(water)[0..4], &[194, 194, 194, 180]);
+    }
+
+    #[test]
+    fn animated_strips_ride_their_first_frame_and_signs_ride_whole() {
+        use generated::textures::{texture_index, texture_rgba, texture_size};
+
+        // water_still.png is 16x512 with an animation mcmeta: the table's
+        // sprite is the first 16x16 frame (the world atlas's crop rule,
+        // now mcmeta-faithful and pinned on the namespace)
+        let water = texture_index("block/water_still").unwrap();
+        assert_eq!(texture_size(water), (16, 16));
+
+        // oak_sign.png is a WHOLE 32x32 sprite (no mcmeta): never cropped
+        let sign = texture_index("block/oak_sign").unwrap();
+        assert_eq!(texture_size(sign), (32, 32));
+        let px = texture_rgba(sign);
+        assert_eq!(px.len(), 32 * 32 * 4);
+        assert_eq!(&px[0..4], &[194, 157, 98, 255], "sign top-left (PIL)");
+        assert_eq!(&px[32 * 32 * 4 - 4..], &[0, 0, 0, 0], "sign bottom-right (transparent)");
+
+        // transparent pixels survive decode: the iron sword's top-left is
+        // fully transparent, its center the steel gray (PIL)
+        let sword = texture_index("item/iron_sword").unwrap();
+        assert_eq!(texture_size(sword), (16, 16));
+        let px = texture_rgba(sword);
+        assert_eq!(&px[0..4], &[0, 0, 0, 0]);
+        assert_eq!(&px[(8 * 16 + 8) * 4..(8 * 16 + 8) * 4 + 4], &[216, 216, 216, 255]);
+    }
+
+    #[test]
+    fn the_missing_materials_are_exactly_the_census() {
+        use generated::textures::{is_missing, texture_index, TEXTURE_IDS, N_MISSING};
+
+        // 65 missing: the 64 trims/items armor-trim refs (the client jar
+        // ships no PNG for them — vanilla renders the checkerboard) + the
+        // literal `missingno`; NOTHING from block/ or item/ is missing
+        let mut missing: Vec<&str> = Vec::new();
+        for (i, id) in TEXTURE_IDS.iter().enumerate() {
+            assert_eq!(
+                is_missing(i as u16),
+                *id == "missingno" || id.starts_with("trims/items/"),
+                "{id} missingness disagrees with the census"
+            );
+            if is_missing(i as u16) {
+                missing.push(id);
+            }
+        }
+        assert_eq!(missing.len(), N_MISSING);
+        assert_eq!(missing.len(), 65);
+        assert_eq!(
+            missing.iter().filter(|id| id.starts_with("trims/items/")).count(),
+            64
+        );
+        assert!(missing.contains(&"missingno"));
+
+        // the 57 unreferenced trims PNGs stay OUT of the namespace: the jar
+        // ships trims/color_palettes/* (the RUNTIME material lookup — zero
+        // overlap with the 64 missing trims/items/* refs), so only REFERENCED
+        // ids land in the table — the domain is the models' domain
+        assert!(texture_index("trims/color_palettes/iron").is_none());
+        assert!(!TEXTURE_IDS.iter().any(|id| id.starts_with("trims/color_palettes/")));
+    }
 }

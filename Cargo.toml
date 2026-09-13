@@ -10,7 +10,7 @@ members = [
 ]
 
 [workspace.package]
-version = "0.3.69"
+version = "0.3.70"
 edition = "2021"
 license = "MIT"
 repository = "https://github.com/PLANETA9091/rust-minecraft"
@@ -34,3 +34,10 @@ opt-level = 3
 lto = "thin"
 codegen-units = 1
 panic = "abort"
+
+# The test builds carry NO debuginfo: the generated tables passed ~7 MB of
+# source (v0.3.70's textures.rs — 2,241,536 texels), and rustc's debuginfo
+# over those array literals OOMs 4 GB test runners (SIGKILL mid-link). The
+# release profile never carried debuginfo — this aligns test builds with it.
+[profile.test]
+debug = 0
