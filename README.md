@@ -616,6 +616,38 @@ hand-drawn:
   cutout rule. Also repairs a pre-existing doctest break (an unannotated
   pseudo-code fence in the item_bake docs compiled as Rust and failed
   `cargo test --workspace` on the clean tree).
+  The **swing chain joins the golden matrix (v0.3.76 — the swing clock
+  gets its deterministic stand-in)**: the WHACK swing arc was fully
+  implemented since v0.3.73 (the `SwingState` timeline, the
+  `renderPlayerArm` / `swingArm` / `applyItemArmAttackTransform` terms
+  in the anchor chains) but the deterministic scenes could never EXERCISE
+  it — `--held-item` had a flag, the swing clock did not. The client
+  gains `--swing-progress <f>` (getAttackAnim's domain [0, 1]): the
+  deterministic stand-in for the swing clock (the same role
+  `--held-item` plays for inventory state — the headless client has no
+  gameplay input). `SwingState::frozen_at(progress)` carries the
+  progress in BOTH `o_attack_anim` and `attack_anim`, so
+  `get_attack_anim(partial)` returns it exactly at every partial tick —
+  the vanilla lerp is the identity on a no-change frame, a legal
+  timeline slice; the world screens render the mid-swing pose of the
+  held item (or the empty-hand arm), and the non-ticking headless loop
+  holds the state stable. `goldens/gui_world_held_swing_320x180.png` is
+  the TWELFTH golden — the world scene with the iron sword mid-swing at
+  progress 0.5 (`--screen world --ui-frame 30 --seed 20260214
+  --held-item item/iron_sword --swing-progress 0.5`, 320x180), gating at
+  max-rms 0: the WHACK translate terms and the rotY(45 + f5·−20)°
+  composite are now pinned AT a nonzero progress, not just at rest.
+  Proven the project way before pinning: two independent renders
+  SHA-IDENTICAL (`71140a74…`), then diffed against the rest-pose held
+  golden — rms 30.786, 8.11% of pixels changed (the swung sword's screen
+  region). GOLDENS: one ADDED (`gui_world_held_swing_320x180`), none
+  regenerated — the full matrix re-verified through `verify_goldens.sh`,
+  12/12 pass, every one rms 0.000. Tests +2 (workspace 359 → 361 passed
+  / 0 failed / 3 ignored): the frozen stand-in samples its exact
+  progress at every partial tick (and frozen 0 IS the rest sample), and
+  the swing scene's pixel-level delta against the rest scene (the bulk
+  right of center; a few pixels flip left — the blade tip already
+  crosses the midline at rest).
   The **held item joins the golden matrix (v0.3.75 — persistent pixel
   coverage for the display arc's render path)**:
   `goldens/gui_world_held_320x180.png` is the ELEVENTH golden — the world

@@ -6,9 +6,9 @@
 # diffed through mc2rs-pixel against the checked-in reference:
 #   - the two CPU orbit-camera scenes and the two NETWORK wire scenes
 #     gate at max-rms 8 (the shared-float-raster tolerance),
-#   - the seven GUI screens (six originals + the held-item scene) gate
-#     at max-rms 0 — the GUI path is bit-deterministic, so any pixel
-#     drift at all is a regression.
+#   - the eight GUI screens (six originals + the held-item scene + the
+#     held-swing scene) gate at max-rms 0 — the GUI path is
+#     bit-deterministic, so any pixel drift at all is a regression.
 #
 # A render that disagrees with its golden fails the script; NOTHING is
 # regenerated automatically (regenerating a golden is a deliberate,
@@ -83,6 +83,8 @@ check gui_worldnight_320x180 0 --screen worldnight --ui-frame 30 --seed 20260214
 check gui_pause_320x180 0 --screen pause --ui-frame 30 --seed 20260214 --width 320 --height 180
 # --- the held-item scene (the display arc's persistent pixel coverage) ---
 check gui_world_held_320x180 0 --screen world --ui-frame 30 --seed 20260214 --held-item item/iron_sword --width 320 --height 180
+# --- the held-swing scene (the swing chain pinned at a fixed progress) ---
+check gui_world_held_swing_320x180 0 --screen world --ui-frame 30 --seed 20260214 --held-item item/iron_sword --swing-progress 0.5 --width 320 --height 180
 
 echo "== ${pass} passed, ${fail} failed =="
 if [[ "$fail" -gt 0 ]]; then
