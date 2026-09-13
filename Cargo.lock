@@ -1092,6 +1092,7 @@ version = "0.3.60"
 dependencies = [
  "anyhow",
  "clap",
+ "hex",
  "mc-assets",
  "mc-protocol",
  "mc-registry",
@@ -1099,6 +1100,7 @@ dependencies = [
  "png",
  "rayon",
  "rodio",
+ "sha1",
  "symphonia",
 ]
 

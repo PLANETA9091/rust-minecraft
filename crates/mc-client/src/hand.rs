@@ -28,6 +28,7 @@ use std::path::Path;
 
 use anyhow::Context;
 use mc_registry::generated::skin;
+use sha1::Digest;
 
 use crate::math::Mat4;
 
@@ -156,9 +157,10 @@ fn build_quads() -> Vec<HandQuad> {
         (
             &[[x1, y1, z0], [x0, y1, z0], [x0, y1, z1], [x1, y1, z1]],
             (u0 + d + w, v0 + d),
-            (w, d),
+            (w, -d),
         ), // UP    (the arm's wrist end) — rect (u+d+w, v) V-FLIPPED
-           // (the Polygon call passes v0 = the strip's LOWER edge)
+           // (the Polygon call passes v0 = the strip's LOWER edge, v1 = the
+           // upper one — the rect's v runs 20 -> 16, hence the negative h)
         (
             &[[x0, y0, z0], [x0, y0, z1], [x0, y1, z1], [x0, y1, z0]],
             (u0, v0 + d),
@@ -195,4 +197,110 @@ fn build_quads() -> Vec<HandQuad> {
         });
     }
     quads
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// The six quads' UV corners, LITERALLY — the javap decode of
+    /// ModelPart$Cube for texOffs (40,16), box 4x12x4 (the UP face's rect
+    /// rides v-flipped in the Polygon call). If the unwrap drifts, this
+    /// pin names the face.
+    #[test]
+    fn the_arm_quads_carry_the_vanilla_unwrap() {
+        let quads = build_quads();
+        assert_eq!(quads.len(), 6);
+        let expected_uv: [[[f32; 2]; 4]; 6] = [
+            [[48.0, 16.0], [44.0, 16.0], [44.0, 20.0], [48.0, 20.0]], // DOWN
+            [[52.0, 20.0], [48.0, 20.0], [48.0, 16.0], [52.0, 16.0]], // UP (v-flipped)
+            [[44.0, 20.0], [40.0, 20.0], [40.0, 32.0], [44.0, 32.0]], // WEST
+            [[48.0, 20.0], [44.0, 20.0], [44.0, 32.0], [48.0, 32.0]], // NORTH
+            [[52.0, 20.0], [48.0, 20.0], [48.0, 32.0], [52.0, 32.0]], // EAST
+            [[56.0, 20.0], [52.0, 20.0], [52.0, 32.0], [56.0, 32.0]], // SOUTH
+        ];
+        for (q, e) in quads.iter().zip(expected_uv) {
+            for (c, ec) in q.uv.iter().zip(e) {
+                assert_eq!(*c, ec, "uv corner must be the vanilla one");
+            }
+        }
+        // geometry sanity: the whole arm sits in front of the camera, in
+        // the bottom-right half of view space (the vanilla rest pose)
+        for q in &quads {
+            let mut centroid = [0f32; 3];
+            for p in &q.pts {
+                assert!(p.iter().all(|v| v.is_finite()), "corner must be finite");
+                assert!(p[2] < -0.05, "the arm is in front of the camera");
+                centroid = [centroid[0] + p[0] / 4.0, centroid[1] + p[1] / 4.0, centroid[2] + p[2] / 4.0];
+            }
+            assert!(centroid[0] > 0.0, "right of center");
+            assert!(centroid[1] < 0.0, "below center");
+        }
+    }
+
+    /// A synthetic 64x64 RGBA png painted with one distinctive color.
+    fn skin_png(color: [u8; 4]) -> Vec<u8> {
+        let mut rgba = vec![0u8; 64 * 64 * 4];
+        for px in rgba.chunks_exact_mut(4) {
+            px.copy_from_slice(&color);
+        }
+        let mut out = Vec::new();
+        {
+            let mut enc = png::Encoder::new(&mut out, 64, 64);
+            enc.set_color(png::ColorType::Rgba);
+            enc.set_depth(png::BitDepth::Eight);
+            let mut wr = enc.write_header().unwrap();
+            wr.write_image_data(&rgba).unwrap();
+        }
+        out
+    }
+
+    #[test]
+    fn the_hand_refuses_an_unverified_skin() {
+        // a well-formed but WRONG skin: the sha1 gate must reject it so the
+        // renderer never draws pixels it cannot vouch for
+        let dir = std::env::temp_dir().join(format!("mc2rs-hand-{}", std::process::id()));
+        let dest = dir.join("entity/player/wide");
+        std::fs::create_dir_all(&dest).unwrap();
+        std::fs::write(dest.join("steve.png"), skin_png([250, 10, 10, 255])).unwrap();
+        assert!(load(&dir).is_none(), "unverified skin must not render");
+        std::fs::remove_dir_all(&dir).ok();
+    }
+
+    #[test]
+    fn the_hand_loads_the_real_verified_skin_when_present() {
+        // the runtime root produced by mc2rs-gen (present locally and in CI;
+        // the sha1 gate makes this exact, not best-effort)
+        let dir = std::path::Path::new("assets-cache/jar");
+        if !dir.join(skin::RUNTIME_PATH).exists() {
+            return; // hermetic environments skip: no asset, no assertion
+        }
+        let arm = load(dir).expect("the real jar skin verifies");
+        assert_eq!(arm.quads.len(), 6);
+    }
+}
+
+#[cfg(test)]
+mod debug_probe {
+    use super::*;
+    use crate::math::Vec3;
+    #[test]
+    fn debug_projected_positions() {
+        let quads = build_quads();
+        let proj = Mat4::perspective(70.0f32.to_radians(), 320.0 / 180.0, 0.1, 512.0);
+        for (i, q) in quads.iter().enumerate() {
+            let mut s = vec![];
+            for p in &q.pts {
+                let c = proj.transform_point(Vec3::new(p[0], p[1], p[2]));
+                let iw = 1.0 / c[3];
+                let sx = (c[0] * iw * 0.5 + 0.5) * 320.0;
+                let sy = (1.0 - (c[1] * iw * 0.5 + 0.5)) * 180.0;
+                s.push((sx, sy, c[3], p));
+            }
+            eprintln!("quad {i}:");
+            for (sx, sy, w, p) in &s {
+                eprintln!("  view {:?} -> screen ({sx:.1},{sy:.1}) w={w:.3}", p);
+            }
+        }
+    }
 }
