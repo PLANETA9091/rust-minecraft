@@ -294,6 +294,28 @@ pub fn profile_skin_model(properties: &[ProfileProperty]) -> Option<String> {
     }
 }
 
+/// Test-support base64 ENCODER (standard alphabet + padding) — the
+/// fixtures a profile-metadata mock needs (the production side only
+/// DECODES; the decoder is pinned by the RFC vectors in the tests).
+#[cfg(test)]
+pub(crate) fn test_base64_encode(bytes: &[u8]) -> String {
+    const T: &[u8; 64] = b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+    let mut out = String::new();
+    for chunk in bytes.chunks(3) {
+        let b = [
+            chunk[0],
+            chunk.get(1).copied().unwrap_or(0),
+            chunk.get(2).copied().unwrap_or(0),
+        ];
+        let n = ((b[0] as u32) << 16) | ((b[1] as u32) << 8) | b[2] as u32;
+        out.push(T[(n >> 18) as usize & 63] as char);
+        out.push(T[(n >> 12) as usize & 63] as char);
+        out.push(if chunk.len() > 1 { T[(n >> 6) as usize & 63] as char } else { '=' });
+        out.push(if chunk.len() > 2 { T[n as usize & 63] as char } else { '=' });
+    }
+    out
+}
+
 /// Login Disconnect (0x00): Reason (chat JSON string).
 pub fn encode_login_disconnect(reason_json: &str) -> Vec<u8> {
     let mut p = Vec::with_capacity(8 + reason_json.len());
@@ -477,6 +499,142 @@ mod tests {
             hex(b"abcdefghijklmnopqrstuvwxyz"),
             "c3fcd3d76192e4007dfb496cca67e13b"
         );
+    }
+
+    /// The base64 payload a real account's `textures` property carries
+    /// (the vanilla shape: signature/timestamp/value). The slim variant
+    /// is `SKIN.metadata.model = "slim"`.
+    fn textures_value(model: Option<&str>) -> String {
+        let metadata = match model {
+            Some(m) => format!(r#","metadata":{{"model":"{m}"}}"#),
+            None => String::new(),
+        };
+        let json = format!(r#"{{"SKIN":{{"url":"http://textures.example.net/skin.png"{metadata}}}}}"#);
+        // encode with the RFC vector to keep the encoder out of the code
+        // under test: a tiny local table-encoder (the decoder is the
+        // production side)
+        const T: &[u8; 64] = b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+        let bytes = json.as_bytes();
+        let mut out = String::new();
+        for chunk in bytes.chunks(3) {
+            let b = [
+                chunk[0],
+                chunk.get(1).copied().unwrap_or(0),
+                chunk.get(2).copied().unwrap_or(0),
+            ];
+            let n = ((b[0] as u32) << 16) | ((b[1] as u32) << 8) | b[2] as u32;
+            out.push(T[(n >> 18) as usize & 63] as char);
+            out.push(T[(n >> 12) as usize & 63] as char);
+            out.push(if chunk.len() > 1 { T[(n >> 6) as usize & 63] as char } else { '=' });
+            out.push(if chunk.len() > 2 { T[n as usize & 63] as char } else { '=' });
+        }
+        out
+    }
+
+    fn prop(name: &str, value: &str) -> ProfileProperty {
+        ProfileProperty { name: name.into(), value: value.into(), signature: None }
+    }
+
+    #[test]
+    fn base64_decode_matches_the_rfc_vectors() {
+        // RFC 4648 test vectors
+        assert_eq!(base64_decode("Zg=="), Some(b"f".to_vec()));
+        assert_eq!(base64_decode("Zm8="), Some(b"fo".to_vec()));
+        assert_eq!(base64_decode("Zm9v"), Some(b"foo".to_vec()));
+        assert_eq!(base64_decode("Zm9vYg=="), Some(b"foob".to_vec()));
+        assert_eq!(base64_decode("Zm9vYmE="), Some(b"fooba".to_vec()));
+        assert_eq!(base64_decode("Zm9vYmFy"), Some(b"foobar".to_vec()));
+        // malformed shapes refuse (untrusted profile data -> no opinion)
+        assert_eq!(base64_decode("A"), None, "length % 4 != 0");
+        assert_eq!(base64_decode("A==="), None, "over-padded");
+        assert_eq!(base64_decode("=AAA"), None, "leading pad");
+        assert_eq!(base64_decode("Zm9v!"), None, "non-alphabet byte");
+        // whitespace is tolerated (real payloads may wrap)
+        assert_eq!(base64_decode("Zm9v\nYmFy"), Some(b"foobar".to_vec()));
+    }
+
+    #[test]
+    fn the_profile_skin_model_reads_the_slim_metadata() {
+        // the slim shape: SKIN.metadata.model == "slim" (the only value
+        // the client acts on)
+        assert_eq!(
+            profile_skin_model(&[prop("textures", &textures_value(Some("slim")))]),
+            Some("slim".to_string())
+        );
+        // a skins property WITHOUT metadata (or with an unknown model
+        // value) is the classic wide default — no opinion, not a guess
+        assert_eq!(profile_skin_model(&[prop("textures", &textures_value(None))]), None);
+        assert_eq!(
+            profile_skin_model(&[prop("textures", &textures_value(Some("classic")))]),
+            None,
+            "an unknown model value is the wide default"
+        );
+        // no textures property at all (the offline server shape)
+        assert_eq!(profile_skin_model(&[]), None);
+        assert_eq!(
+            profile_skin_model(&[prop("cape", &textures_value(Some("slim")))]),
+            None,
+            "the wrong property name contributes nothing"
+        );
+        // MALFORMED input is "no opinion", never a panic: bad base64,
+        // bad JSON, the wrong JSON shape
+        assert_eq!(profile_skin_model(&[prop("textures", "!!!not-base64!!!")]), None);
+        assert_eq!(profile_skin_model(&[prop("textures", "bm90LWpzb24=")]), None, "valid base64, not JSON");
+        let no_skin = base64_of(br#"{"CAPE":{"metadata":{"model":"slim"}}}"#);
+        assert_eq!(
+            profile_skin_model(&[prop("textures", &no_skin)]),
+            None,
+            "no SKIN entry"
+        );
+    }
+
+    /// A local table-encoder for the test fixtures (the decoder is the
+    /// production side and is pinned by the RFC vectors above).
+    fn base64_of(bytes: &[u8]) -> String {
+        const T: &[u8; 64] = b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+        let mut out = String::new();
+        for chunk in bytes.chunks(3) {
+            let b = [
+                chunk[0],
+                chunk.get(1).copied().unwrap_or(0),
+                chunk.get(2).copied().unwrap_or(0),
+            ];
+            let n = ((b[0] as u32) << 16) | ((b[1] as u32) << 8) | b[2] as u32;
+            out.push(T[(n >> 18) as usize & 63] as char);
+            out.push(T[(n >> 12) as usize & 63] as char);
+            out.push(if chunk.len() > 1 { T[(n >> 6) as usize & 63] as char } else { '=' });
+            out.push(if chunk.len() > 2 { T[n as usize & 63] as char } else { '=' });
+        }
+        out
+    }
+
+    #[test]
+    fn the_login_success_encoder_roundtrips_properties() {
+        // the properties-capable encoder writes what parse_login_success
+        // reads back: name + value + the absent signature
+        let slim = textures_value(Some("slim"));
+        let p = encode_login_success_with_properties(
+            &[7u8; 16],
+            "mc2rs",
+            &[("textures", slim.as_str()), ("cape", "unused")],
+        );
+        let (uuid, username, properties, _session) =
+            parse_login_success(&p).expect("the shaped packet parses");
+        assert_eq!(uuid, [7u8; 16]);
+        assert_eq!(username, "mc2rs");
+        assert_eq!(properties.len(), 2);
+        assert_eq!(properties[0].name, "textures");
+        assert_eq!(properties[0].value, slim);
+        assert_eq!(properties[0].signature, None, "offline servers never sign");
+        assert_eq!(properties[1].name, "cape");
+        // and the profile read-through lands on the model
+        assert_eq!(profile_skin_model(&properties), Some("slim".to_string()));
+        // the 2-arg encoder stays the empty-property shape
+        let p2 = encode_login_success(&[7u8; 16], "mc2rs");
+        let (_, _, properties2, _) =
+            parse_login_success(&p2).expect("the minimal packet parses");
+        assert!(properties2.is_empty());
+        assert_eq!(profile_skin_model(&properties2), None);
     }
 
     #[test]

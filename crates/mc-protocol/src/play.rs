@@ -1315,7 +1315,7 @@ fn read_bool(r: &mut &[u8]) -> std::io::Result<bool> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::login::{encode_login_success, encode_set_compression};
+    use crate::login::{encode_login_success, encode_login_success_with_properties, encode_set_compression};
     use crate::varint::write_string;
     use std::net::TcpListener;
     use std::thread::JoinHandle;
@@ -1834,15 +1834,25 @@ mod tests {
     /// only a caller still pumping the retained session can serve (the
     /// live view's input stream).
     fn spawn_world_mock() -> (u16, JoinHandle<()>) {
-        spawn_world_mock_with_tail(false)
+        spawn_world_mock_with_tail(false, Vec::new())
     }
 
     /// The live-tail variant of the world mock (see `spawn_world_mock`).
     fn spawn_world_mock_live() -> (u16, JoinHandle<()>) {
-        spawn_world_mock_with_tail(true)
+        spawn_world_mock_with_tail(true, Vec::new())
     }
 
-    fn spawn_world_mock_with_tail(live_tail: bool) -> (u16, JoinHandle<()>) {
+    /// The world mock whose login success carries profile properties —
+    /// the profile-metadata surface (the `textures` entry a real account
+    /// carries; the slim/wide selection rides it).
+    fn spawn_world_mock_with_props(props: Vec<(String, String)>) -> (u16, JoinHandle<()>) {
+        spawn_world_mock_with_tail(false, props)
+    }
+
+    fn spawn_world_mock_with_tail(
+        live_tail: bool,
+        login_props: Vec<(String, String)>,
+    ) -> (u16, JoinHandle<()>) {
         let listener = TcpListener::bind("127.0.0.1:0").expect("bind");
         let port = listener.local_addr().unwrap().port();
         let handle = std::thread::spawn(move || {
@@ -1853,7 +1863,10 @@ mod tests {
             let _start = srv.read_packet().expect("login start");
             srv.send_packet(&encode_set_compression(256)).unwrap();
             srv.enable_compression(256);
-            srv.send_packet(&encode_login_success(&[7u8; 16], "mc2rs")).unwrap();
+            let props_ref: Vec<(&str, &str)> =
+                login_props.iter().map(|(n, v)| (n.as_str(), v.as_str())).collect();
+            srv.send_packet(&encode_login_success_with_properties(&[7u8; 16], "mc2rs", &props_ref))
+                .unwrap();
             for _ in 0..3 {
                 srv.read_packet().unwrap(); // ack, info, brand
             }
@@ -2152,6 +2165,57 @@ mod tests {
             srv.send_packet(&d2).unwrap();
         });
         (port, handle)
+    }
+
+    #[test]
+    fn the_login_skin_model_rides_the_session() {
+        // the profile-metadata consumer end-to-end: a server whose login
+        // success carries the `textures` property with SKIN.metadata.model
+        // = "slim" lands that fact ON THE SESSION (the first-person arm's
+        // slim/wide selection); the empty-property login (every offline
+        // server) lands the classic None. The world milestone itself is
+        // the plain mock's (its shapes are pinned by the sibling tests).
+        let textures = {
+            // the real property shape: base64 JSON, one SKIN entry with
+            // the slim metadata (the value a real account carries)
+            let json = r#"{"SKIN":{"url":"http://textures.example.net/skin.png","metadata":{"model":"slim"}}}"#;
+            crate::login::test_base64_encode(json.as_bytes())
+        };
+        let (port, srv) = spawn_world_mock_with_props(vec![("textures".to_string(), textures)]);
+        let joined =
+            connect_and_join_live("127.0.0.1", port, 776, "mc2rs").expect("live join");
+        match joined {
+            LiveJoin::Live { snapshot, session } => {
+                assert_eq!(snapshot.info.entity_id, 17, "the milestone is the mock's");
+                assert_eq!(
+                    session.skin_model.as_deref(),
+                    Some("slim"),
+                    "the profile metadata rides the session"
+                );
+            }
+            LiveJoin::Disconnected { reason } => {
+                panic!("expected a live join, got disconnected: {reason}")
+            }
+        }
+        srv.join().unwrap();
+
+        // the offline shape: NO properties -> the classic wide default
+        let (port2, srv2) = spawn_world_mock();
+        let joined2 =
+            connect_and_join_live("127.0.0.1", port2, 776, "mc2rs").expect("live join 2");
+        match joined2 {
+            LiveJoin::Live { snapshot, session } => {
+                assert_eq!(snapshot.info.entity_id, 17);
+                assert_eq!(
+                    session.skin_model, None,
+                    "no profile metadata = the classic wide default"
+                );
+            }
+            LiveJoin::Disconnected { reason } => {
+                panic!("expected a live join, got disconnected: {reason}")
+            }
+        }
+        srv2.join().unwrap();
     }
 
     #[test]

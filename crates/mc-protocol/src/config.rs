@@ -1816,7 +1816,7 @@ mod tests {
             .unwrap();
         let out = join_play(stream, "127.0.0.1", port, 776, "mc2rs").expect("join play");
         match out {
-            PlayOutcome::Joined { username, uuid, registry } => {
+            PlayOutcome::Joined { username, uuid, registry, .. } => {
                 assert_eq!(username, "mc2rs");
                 assert_eq!(uuid, crate::login::offline_uuid("mc2rs"));
                 // the registry knowledge survived the phase: both
