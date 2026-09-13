@@ -284,6 +284,10 @@ mod tests {
             .position(|n| *n == "grass_block_top")
             .expect("the world atlas bakes grass_block_top");
         let baked = ((148u16 * 0x91 + 127) / 255) as u8;
+        assert_eq!(
+            crate::generated::atlas::TILES[atlas_idx][0], baked,
+            "the atlas really carries the bake the consumer must NOT return"
+        );
         assert_ne!(
             sample_uv("block/grass_block_top", 0.0, 0.0),
             Sample::Pixel([baked, baked, baked, 255]),
@@ -301,7 +305,7 @@ mod tests {
         // the namespaced value form lands identically
         assert_eq!(
             sample_material("block/acacia_shelf", "all", 0.0, 0.0),
-            sample_uv("block/acacia_shelf", 0.0, 0.0),
+            Some(sample_uv("block/acacia_shelf", 0.0, 0.0)),
         );
         // a dangling template ref: vanilla's warn+drop -> no sprite
         assert_eq!(sample_material("block/button", "particle", 0.0, 0.0), None);
