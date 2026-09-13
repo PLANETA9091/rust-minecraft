@@ -4,6 +4,7 @@ mod atlas;
 mod codegen;
 mod extract;
 mod fontgen;
+mod itemgen;
 mod jar;
 mod langgen;
 mod manifest;
@@ -169,6 +170,17 @@ enum Cmd {
         #[arg(long, default_value = ".")]
         out: String,
     },
+    /// Item model definitions (assets/minecraft/items/) -> item_models.rs.
+    ItemModels {
+        #[arg(long)]
+        version: String,
+        /// Path to the official client jar (e.g. .mc2rs/classpath/client.jar).
+        #[arg(long)]
+        jar: String,
+        /// Workspace root (contains crates/).
+        #[arg(long, default_value = ".")]
+        out: String,
+    },
     /// Re-emit mc-registry/src/generated/worldgen.rs (biomes + the built-in
     /// dimension_type/timeline/timeline-tag registry tables) from a LOCAL
     /// client jar — the offline half of the worldgen arc: no network, no java.
@@ -299,6 +311,14 @@ fn main() -> Result<()> {
                 .with_context(|| format!("workspace root {out} not found"))?;
             let path = write_skin(&root, &bytes)?;
             println!("skin ({version}): {}", path.display());
+        }
+        Cmd::ItemModels { version, jar, out } => {
+            let bytes = std::fs::read(&jar).with_context(|| format!("read jar {jar}"))?;
+            let root = Path::new(&out)
+                .canonicalize()
+                .with_context(|| format!("workspace root {out} not found"))?;
+            let path = write_item_models(&root, &bytes)?;
+            println!("item-models ({version}): {}", path.display());
         }
         Cmd::Assets { version, dir, filter } => {
             let m = manifest::load(&agent)?;
@@ -509,6 +529,8 @@ fn generate(agent: &ureq::Agent, cache: &util::Cache, version: &str, out: &Path)
     write_atlas(&workspace_root, version, &client_sha1, &jar_bytes)?;
     let skin_path = write_skin(&workspace_root, &jar_bytes)?;
     println!("      skin table: {}", skin_path.display());
+    let item_models_path = write_item_models(&workspace_root, &jar_bytes)?;
+    println!("      item-models table: {}", item_models_path.display());
 
     let extracted = codegen::extract_runtime_assets(&mut zip, &workspace_root, &gen.ui, &gen.font)?;
     println!("[7/7] done in {:.1}s ({} runtime asset files -> assets-cache/jar)", t0.elapsed().as_secs_f32(), extracted);
@@ -754,6 +776,26 @@ fn write_skin(workspace_root: &Path, jar_bytes: &[u8]) -> Result<std::path::Path
         data.side,
         &data.png_sha1[..8],
         &data.rgba_sha1[..8],
+        path.display()
+    );
+    Ok(path)
+}
+
+/// Resolve + write crates/mc-registry/src/generated/item_models.rs (the
+/// 1.21.4+ item model definitions) from a local jar.
+fn write_item_models(workspace_root: &Path, jar_bytes: &[u8]) -> Result<std::path::PathBuf> {
+    let mut zip =
+        zip::ZipArchive::new(std::io::Cursor::new(jar_bytes)).context("open client jar as zip")?;
+    let data = itemgen::generate(&mut zip)?;
+    let reg_dir = workspace_root.join("crates/mc-registry/src/generated");
+    std::fs::create_dir_all(&reg_dir)?;
+    let path = reg_dir.join("item_models.rs");
+    std::fs::write(&path, itemgen::emit(&data)?)?;
+    println!(
+        "      item models: {} plain defs | {} complex trees | {:?} root types -> {}",
+        data.defs.len(),
+        data.complex.len(),
+        data.root_types,
         path.display()
     );
     Ok(path)

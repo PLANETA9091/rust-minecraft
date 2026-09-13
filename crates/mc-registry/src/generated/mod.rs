@@ -4,6 +4,7 @@ pub mod blocks;
 pub mod colormap;
 pub mod font;
 pub mod gui;
+pub mod item_models;
 pub mod items;
 pub mod lang;
 pub mod sounds;
