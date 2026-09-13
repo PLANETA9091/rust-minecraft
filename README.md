@@ -308,6 +308,44 @@ hand-drawn:
   Zero render-path pixels: the tint CONSUMERS come next; the ten
   goldens are bit-identical by construction (the wire fixture carries
   no registry knowledge).
+  The **pack-version claim replies with the real record (v0.3.54 — the
+  arc's final step)**: Select Known Packs no longer gets the honest
+  empty reply — the client now claims exactly what the vanilla client
+  claims, `("minecraft", "core", WorldVersion.id())`, javap-proven from
+  the real jar (`BuiltInPackSource.<clinit>` binds `CORE_PACK_INFO =
+  KnownPack.vanilla("core")`, and `KnownPack.vanilla(id)` passes
+  `SharedConstants.getCurrentVersion().id()` — so the version string is
+  the jar's version.json `id` field, NOT the pack-format number; 26.2's
+  version.json even grew the four-field
+  `pack_version` object `{resource_major, resource_minor, data_major,
+  data_minor}`, which is a separate surface and NOT the claim string).
+  The data half is generated: the new offline subcommand
+  `mc2rs-gen pack-claim --version --jar --out` reads the jar's root
+  `version.json` (no network, no java — the worldgen/block-ids shape)
+  and emits `mc-protocol/src/generated/pack_claim.rs` — `VERSION_ID`
+  (the claim string), `VERSION_NAME`, `WORLD_VERSION`, `PROTOCOL_VERSION`
+  and the four pack-format counters — refusing a jar without the
+  manifest, an empty id, or a pack_version that does not state the full
+  four-field schema (guessing a shape the jar does not state would put a
+  lie on the wire); the checked-in file re-generates byte-identically.
+  The hand half carries the proof: `vanilla_known_packs()` builds the
+  one-record reply from the generated constants, and `run_configuration`
+  sends it. The safety valve is the server's own comparison — a server
+  whose pack version differs does not recognize the claim and streams
+  its registries anyway (the pre-claim behavior, unchanged); a server
+  that DOES skip the sync agrees with this client by construction (the
+  v0.3.53 order tables ARE the vanilla wire ids, the v0.3.52 built-in
+  dimension layouts answer the world-height lookups). The e2e mock —
+  which has offered exactly `("minecraft", "core", "26.2")` since the
+  blocking-probe arc — now asserts the reply echoes that record instead
+  of the empty list. Zero render-path pixels: the config phase touches
+  no golden scene (the net fixture is programmatic, no join runs); the
+  ten goldens are bit-identical, verified TWICE on the release builds.
+  Tests +3 (workspace 250 → 253 passed / 0 failed / 3 ignored): the
+  generator's manifest parse/emission fixture (the real 26.2 surface,
+  the missing/empty/legacy-schema refusals) and the protocol claim-shape
+  pin (one record, minecraft/core, non-empty version = the generated
+  id, the exact offer-echo bytes).
   The **registry-order evidence is dumped from the real runtime (v0.3.53 —
   the pack-version claim's LAST prerequisite)**: the generator grew its
   third runtime dumper — the checked-in clean-room `DumpRegistries.java` —
