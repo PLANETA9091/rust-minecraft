@@ -74,6 +74,10 @@ pub struct SkyData {
     pub sun_rgba: (u32, u32, Vec<u8>),
     /// One RGBA texture per phase, same order as `moon_phase_names`.
     pub moon_rgba: Vec<(u32, u32, Vec<u8>)>,
+    /// `environment/celestial/end_flash.png` — the END skybox's flash
+    /// sprite (SkyRenderer.buildEndFlashQuad reads it from the celestials
+    /// atlas; 64x64 in 26.2 — NOT the 32x32 the sun/moon ride).
+    pub end_flash_rgba: (u32, u32, Vec<u8>),
 }
 
 /// Parse "#rrggbb" (opaque) / "#aarrggbb" / signed ARGB int into RGBA.
@@ -271,6 +275,12 @@ pub fn generate<R: std::io::Read + std::io::Seek>(
         .with_context(|| format!("celestial moon/{name}.png"))?;
         moon_rgba.push(decode_rgba(&bytes)?);
     }
+    let end_flash_bytes = read_entry(
+        archive,
+        "assets/minecraft/textures/environment/celestial/end_flash.png",
+    )
+    .context("celestial end_flash.png")?;
+    let end_flash_rgba = decode_rgba(&end_flash_bytes)?;
 
     Ok(SkyData {
         day_period,
@@ -293,6 +303,7 @@ pub fn generate<R: std::io::Read + std::io::Seek>(
         moon_phase_kf: phase_kf,
         sun_rgba,
         moon_rgba,
+        end_flash_rgba,
     })
 }
 
@@ -315,7 +326,8 @@ pub fn emit(data: &SkyData) -> Result<String> {
          //! maximum / multiply respectively (evaluated by mc-client/src/sky.rs).\n\n\
          pub const DAY_PERIOD_TICKS: i32 = {};\n\
          pub const MOON_PERIOD_TICKS: i32 = {};\n\
-         /// Celestial textures are square (32x32 in 26.2).\n\
+         /// The sun/moon celestial textures are square (32x32 in 26.2);\n\
+         /// the END flash sprite carries its own END_FLASH_SIZE (64x64).\n\
          pub const CELESTIAL_SIZE: u32 = {};\n\n\
          /// Overworld dimension base visual/sky_color and visual/fog_color (RGBA).\n\
          pub static DIM_SKY_COLOR: [u8; 4] = {:?};\n\
@@ -434,6 +446,22 @@ pub fn emit(data: &SkyData) -> Result<String> {
             out.push_str(&format!("{b}, "));
         }
         out.push_str("],\n");
+    }
+    out.push_str("];\n");
+
+    // The END skybox's flash sprite: SkyRenderer.buildEndFlashQuad reads
+    // `minecraft:end_flash` from the celestials atlas. Its own size — the
+    // flash is 64x64, NOT the 32x32 the sun/moon ride.
+    let (fw, fh, flash) = &data.end_flash_rgba;
+    out.push_str(&format!(
+        "/// environment/celestial/end_flash.png ({fw}x{fh} RGBA) — the END\n\
+         /// skybox's flash sprite (SkyRenderer.buildEndFlashQuad).\n\
+         pub const END_FLASH_SIZE: u32 = {fw};\n\
+         pub static END_FLASH_RGBA: [u8; {}] = [",
+        flash.len()
+    ));
+    for b in flash.iter() {
+        out.push_str(&format!("{b}, "));
     }
     out.push_str("];\n");
 
