@@ -581,6 +581,65 @@ hand-drawn:
   timeline (−1 → 0..5/6 → rest at exactly 6 ticks), the re-trigger
   guard, the wrap-guard lerp, the mid-swing geometry delta, and the
   bit-identical rest pose.
+  The **display-transform link lands (v0.3.72 — the held-item view-space
+  pose, the display arc's last pure-data link)**:
+  `crates/mc-registry/src/display.rs` resolves the models table's
+  `display` stanzas per context through the parent chain into the posed
+  vertices over the quads. Every rule is javap evidence from the 26.2
+  jar + the bundled joml-1.10.8: the ItemTransform deserializer divides
+  translation by 16 (mul 0.0625f) THEN clamps to ±5 (MAX_TRANSLATION),
+  clamps scale to ±4 (MAX_SCALE), refuses rotation/translation/scale
+  arrays that are not exactly 3 floats, and defaults (0,0,0)/(0,0,0)/
+  (1,1,1) — an explicit empty context {} is a REAL transform that blocks
+  the parent; ItemTransforms$Deserializer reads exactly the nine
+  ItemDisplayContext serial names (on_shelf included — the container's
+  ninth field is Mojang-named fixedFromBottom but receives ON_SHELF; NO
+  legacy thirdperson/firstperson keys) and replaces an absent left-hand
+  context with the right-hand transform AT PARSE TIME; 26.2's
+  ResolvedModel.findTopTransform resolves PER CONTEXT — walk the parent
+  chain, the nearest stanza declaring the context wins (1.20's wholesale
+  inheritance is GONE: block/stairs owns gui [30,135,0] but still
+  inherits block/block's firstperson [0,45,0]); ItemTransform.apply on a
+  fresh identity pose is translate(±tx, ty, tz) → ONE
+  Quaternionf.rotationXYZ(rx·DEG, ±ry·DEG, ±rz·DEG) → scale(sx, sy, sz)
+  with NO left-hand flip → translate(−0.5×3) — the 26.2 mirroring
+  negates ONLY translation.x, rotation.y and rotation.z (rotation.x and
+  scale are raw), the NO_TRANSFORM branch is the bare −0.5 centering,
+  and DEG = 0.017453292f is multiplied in f32 before rotationXYZ. The
+  JOML paths actually taken are mirrored op-for-op: translate-on-identity
+  builds T; rotateTranslation ASSIGNS the rotation matrix wholesale (the
+  f19..f27 forms verbatim); scaleGeneric scales the FULL columns 0..2
+  (0.0·(−4.0) = −0.0 propagates — the oracle pins those bits); the tail
+  translate and Vector3f.mulPosition are the NESTED PLAIN fma
+  (org.joml.Math.fma falls back to a·b+c because the vanilla client
+  never sets joml.useMathFMA — Runtime.HAS_Math_fma=false); rotationXYZ
+  is f64-trig-then-f32-store (org.joml.Math.sin = (float)
+  Math.sin((double) x) with the cosFromSin sqrt+wrap sign fix) — which
+  is why the 180° on_shelf rotation is EXACT ±1/0. The bit-exact oracle:
+  scripts/display_ref/DisplayRef.java runs the REAL joml-1.10.8
+  op-for-op and prints Float.floatToIntBits hex; the tests pin five
+  fixtures (iron_sword firstperson_righthand, block/block 45°-zone gui +
+  firstperson + on_shelf, a synthetic clamp exercise) × both hands, 16
+  matrix entries each, plus 42 vertex probes and the e2e (block/stairs'
+  quads through its gui pose vs the harness fed the same vertex) — every
+  bit equal. The 26.2 census (scripts/display_census.py): 3928 models,
+  66 with their own display stanza (zero legacy keys, zero clamp hits —
+  max |translation|/16 = 1.40625, max |scale| = 2.0), 483 explicit
+  45-multiple rotation entries + 14 no-rotation contexts (the [0,0,0]
+  default) = 525 effective; per-context chain resolution over all 3928
+  models: [2622, 2622, 2618, 2618, 1386, 1431, 2621, 2621, 1357]; the
+  left-hand wins split declared-vs-parse-fallback 141+2481
+  (thirdperson) and 1344+1274 (firstperson). posed_quads(model,
+  context) composes the whole arc: element_quads → the resolved pose →
+  block-unit vertices. Zero render-path contact (mc-client carries zero
+  references to the module); all 10 goldens verified at the exact CI
+  flags, every one rms 0.000, none regenerated. Tests +14 (workspace
+  334 → 348 passed / 0 failed / 3 ignored; mc-registry 48 → 62): the
+  deserializer semantics (handheld stanza verbatim, the clamp order,
+  the empty-context block, the fail-closed refusals), the oracle
+  matrices + vertices, NO_TRANSFORM, the per-context chain walk
+  (stairs/fence/sword discriminators), the left-hand slot map, and the
+  registry-wide census + chain-resolution + attribution pins.
   The **sprite-uv consumer lands (v0.3.71 — the held-item pixel link)**:
   `crates/mc-registry/src/sprite_uv.rs` maps the quads' 0..16 uv space
   to texels over the texture namespace, composing the display arc's
