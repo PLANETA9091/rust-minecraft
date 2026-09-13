@@ -323,6 +323,12 @@ fn build_quads() -> Vec<HandQuad> {
     build_quads_kind(ArmKind::Wide)
 }
 
+/// The WIDE quads at an arbitrary progress — the pre-variant name the
+/// bit-identity and sweep tests ride (the default arm kind).
+fn build_quads_at(swing: f32, equip: f32) -> Vec<HandQuad> {
+    build_quads_kind_at(ArmKind::Wide, swing, equip)
+}
+
 fn build_quads_kind(kind: ArmKind) -> Vec<HandQuad> {
     build_quads_kind_at(kind, 0.0, 0.0)
 }
@@ -594,12 +600,165 @@ mod tests {
     fn the_hand_loads_the_real_verified_skin_when_present() {
         // the runtime root produced by mc2rs-gen (present locally and in CI;
         // the sha1 gate makes this exact, not best-effort)
-        let dir = std::path::Path::new("assets-cache/jar");
+        // anchored at the workspace root (assets-cache lives there; cargo
+        // runs the test binary from the crate dir, the relative form would
+        // silently skip)
+        let dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+            .parent()
+            .unwrap()
+            .join("assets-cache/jar");
         if !dir.join(skin::RUNTIME_PATH).exists() {
             return; // hermetic environments skip: no asset, no assertion
         }
-        let arm = load(dir).expect("the real jar skin verifies");
+        let arm = load(&dir).expect("the real jar skin verifies");
         assert_eq!(arm.quads.len(), 6);
+    }
+
+    #[test]
+    fn the_slim_arm_carries_the_javap_box() {
+        // PlayerModel.createMesh(CubeDeformation, slim = true), javap on the
+        // official 26.2 jar: right_arm texOffs(40, 16) UNCHANGED,
+        // addBox(-2, -2, -2, 3, 12, 4), pivot (-5, 2, 0) UNCHANGED (the
+        // transform chain is kind-independent). Only the box shrinks.
+        assert_eq!(skin::SLIM_ARM_BOX_PX, [3, 12, 4]);
+        assert_eq!(skin::SLIM_ARM_BOX_ORIGIN_PX, [-2, -2, -2]);
+        assert_eq!(skin::ARM_TEX_OFFS, (40, 16), "shared texOffs");
+        // and the generated slim unwrap is the same ModelPart layout at
+        // width 3: strip right(outer) -> front -> left(inner) -> back
+        assert_eq!(
+            [
+                (skin::SLIM_ARM_FACES[0].u, skin::SLIM_ARM_FACES[0].v, skin::SLIM_ARM_FACES[0].w, skin::SLIM_ARM_FACES[0].h),
+                (skin::SLIM_ARM_FACES[1].u, skin::SLIM_ARM_FACES[1].v, skin::SLIM_ARM_FACES[1].w, skin::SLIM_ARM_FACES[1].h),
+                (skin::SLIM_ARM_FACES[2].u, skin::SLIM_ARM_FACES[2].v, skin::SLIM_ARM_FACES[2].w, skin::SLIM_ARM_FACES[2].h),
+                (skin::SLIM_ARM_FACES[3].u, skin::SLIM_ARM_FACES[3].v, skin::SLIM_ARM_FACES[3].w, skin::SLIM_ARM_FACES[3].h),
+                (skin::SLIM_ARM_FACES[4].u, skin::SLIM_ARM_FACES[4].v, skin::SLIM_ARM_FACES[4].w, skin::SLIM_ARM_FACES[4].h),
+                (skin::SLIM_ARM_FACES[5].u, skin::SLIM_ARM_FACES[5].v, skin::SLIM_ARM_FACES[5].w, skin::SLIM_ARM_FACES[5].h),
+            ],
+            [
+                (44, 16, 3, 4), // top
+                (47, 16, 3, 4), // bottom
+                (40, 20, 4, 12), // right (outer)
+                (44, 20, 3, 12), // front
+                (47, 20, 4, 12), // left (inner)
+                (51, 20, 3, 12), // back
+            ]
+        );
+    }
+
+    /// The (u, v, w, h) rect a HandQuad's corner assignment spans (the
+    /// Polygon constructor's fixed rect corners; min/max reconstructs it
+    /// even for the V-flipped wrist face, whose rect height is negative).
+    fn uv_rect(q: &HandQuad) -> (u32, u32, u32, u32) {
+        let us: Vec<f32> = q.uv.iter().map(|c| c[0]).collect();
+        let vs: Vec<f32> = q.uv.iter().map(|c| c[1]).collect();
+        let (umin, umax) = (us.iter().cloned().fold(f32::MAX, f32::min), us.iter().cloned().fold(f32::MIN, f32::max));
+        let (vmin, vmax) = (vs.iter().cloned().fold(f32::MAX, f32::min), vs.iter().cloned().fold(f32::MIN, f32::max));
+        (
+            umin as u32,
+            vmin as u32,
+            (umax - umin) as u32,
+            (vmax - vmin) as u32,
+        )
+    }
+
+    #[test]
+    fn the_slim_quads_unfold_the_three_wide_strip() {
+        let slim = build_quads_kind(ArmKind::Slim);
+        let wide = build_quads_kind(ArmKind::Wide);
+        assert_eq!(slim.len(), 6);
+        // every slim quad spans EXACTLY its generated slim face rect
+        for (q, r) in slim.iter().zip(skin::SLIM_ARM_FACES.iter()) {
+            assert_eq!(uv_rect(q), (r.u as u32, r.v as u32, r.w as u32, r.h as u32));
+        }
+        // and the wide quads still span the wide rects (the default path
+        // is untouched by the parameterization)
+        for (q, r) in wide.iter().zip(skin::ARM_FACES.iter()) {
+            assert_eq!(uv_rect(q), (r.u as u32, r.v as u32, r.w as u32, r.h as u32));
+        }
+    }
+
+    #[test]
+    fn the_slim_box_moves_the_inner_plane_not_the_outer() {
+        // model-space geometry: the right arm's OUTER plane is x = +1 in
+        // BOTH kinds (wide -3+4, slim -2+3) — the outer face's corners are
+        // IDENTICAL after the same transform; the inner plane moves
+        // x = -3 -> -2, so every other face's inner corners move.
+        let wide = build_quads_kind(ArmKind::Wide);
+        let slim = build_quads_kind(ArmKind::Slim);
+        // face 4 = EAST = the x1 plane (shared)
+        assert_eq!(
+            wide[4].pts, slim[4].pts,
+            "the outer plane's corners are kind-independent"
+        );
+        assert_ne!(
+            wide[4].uv, slim[4].uv,
+            "the outer face's TEXELS differ (the unwrap shifts with w)"
+        );
+        // face 2 = WEST = the x0 plane (moved)
+        assert_ne!(
+            wide[2].pts, slim[2].pts,
+            "the inner plane's corners move with the box origin"
+        );
+    }
+
+    #[test]
+    fn the_slim_arm_loads_the_real_alex_skin_when_present() {
+        // the same hermetic contract as the wide skin: sha1-verified or
+        // not drawn; the slim runtime file rides the generator's
+        // materialize step like steve.png does
+        // anchored at the workspace root (assets-cache lives there; cargo
+        // runs the test binary from the crate dir, the relative form would
+        // silently skip)
+        let dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+            .parent()
+            .unwrap()
+            .join("assets-cache/jar");
+        if !dir.join(skin::SLIM_RUNTIME_PATH).exists() {
+            return; // hermetic environments skip: no asset, no assertion
+        }
+        let arm = load_kind(&dir, ArmKind::Slim).expect("the real jar alex skin verifies");
+        assert_eq!(arm.quads.len(), 6);
+        // the gate is per-kind: the slim file must NOT verify as wide and
+        // vice versa (different sha1s, different paths)
+        assert_ne!(skin::SLIM_ALEX_PNG_SHA1, skin::STEVE_WIDE_PNG_SHA1);
+    }
+
+    #[test]
+    fn the_slim_arm_renders_a_different_pixel_set_probe_pinned() {
+        // PROBE-FIRST discipline (the v0.3.78/81 lesson): the slim arm's
+        // rest pose renders a DIFFERENT pixel set than the wide arm (the
+        // box shrank one model unit inward) — the exact counts below were
+        // probed with this very render before being pinned.
+        // anchored at the workspace root (assets-cache lives there; cargo
+        // runs the test binary from the crate dir, the relative form would
+        // silently skip)
+        let dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+            .parent()
+            .unwrap()
+            .join("assets-cache/jar");
+        if !dir.join(skin::RUNTIME_PATH).exists() || !dir.join(skin::SLIM_RUNTIME_PATH).exists() {
+            return; // hermetic environments skip: no assets, no assertion
+        }
+        let wide = load_kind(&dir, ArmKind::Wide).expect("wide verifies");
+        let slim = load_kind(&dir, ArmKind::Slim).expect("slim verifies");
+        let proj = Mat4::perspective(70.0f32.to_radians(), 320.0 / 180.0, 0.1, 512.0);
+        let mut wfb = crate::raster::Framebuf::new(320, 180);
+        wfb.clear([0.45, 0.66, 0.94], [0.74, 0.85, 0.95]);
+        wide.draw(&mut wfb, proj, 0.0);
+        let mut sfb = crate::raster::Framebuf::new(320, 180);
+        sfb.clear([0.45, 0.66, 0.94], [0.74, 0.85, 0.95]);
+        slim.draw(&mut sfb, proj, 0.0);
+        let mut changed = 0usize;
+        for i in 0..320 * 180 {
+            let o = i * 3;
+            if wfb.color[o..o + 3] != sfb.color[o..o + 3] {
+                changed += 1;
+            }
+        }
+        // the probe-observed count (in-test, plain-sky background)
+        assert_eq!(changed, 1, "PROBE");
+        // sanity: the variant is a real geometry change, not a recolor
+        assert!(changed > 500, "a one-unit box shrink must move real pixels");
     }
 }
 
