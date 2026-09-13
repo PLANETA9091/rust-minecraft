@@ -11,6 +11,7 @@ mod pack_claim;
 mod packet_dump;
 mod runtime_dump;
 mod skygen;
+mod skingen;
 mod soundgen;
 mod splashgen;
 mod uigen;
@@ -155,6 +156,19 @@ enum Cmd {
         #[arg(long, default_value = ".")]
         out: String,
     },
+    /// Re-emit mc-registry/src/generated/skin.rs (the player skin's integrity
+    /// sha1s + the vanilla arm-box geometry — the first-person hand's data
+    /// half) from a LOCAL client jar: no network, no java.
+    Skin {
+        #[arg(long)]
+        version: String,
+        /// Path to the official client jar (e.g. .mc2rs/classpath/client.jar).
+        #[arg(long)]
+        jar: String,
+        /// Workspace root (contains crates/).
+        #[arg(long, default_value = ".")]
+        out: String,
+    },
     /// Re-emit mc-registry/src/generated/worldgen.rs (biomes + the built-in
     /// dimension_type/timeline/timeline-tag registry tables) from a LOCAL
     /// client jar — the offline half of the worldgen arc: no network, no java.
@@ -277,6 +291,14 @@ fn main() -> Result<()> {
                 .with_context(|| format!("workspace root {out} not found"))?;
             let path = write_worldgen(&root, &bytes)?;
             println!("worldgen ({version}): {}", path.display());
+        }
+        Cmd::Skin { version, jar, out } => {
+            let bytes = std::fs::read(&jar).with_context(|| format!("read jar {jar}"))?;
+            let root = Path::new(&out)
+                .canonicalize()
+                .with_context(|| format!("workspace root {out} not found"))?;
+            let path = write_skin(&root, &bytes)?;
+            println!("skin ({version}): {}", path.display());
         }
         Cmd::Assets { version, dir, filter } => {
             let m = manifest::load(&agent)?;
@@ -710,6 +732,27 @@ fn write_worldgen(workspace_root: &Path, jar_bytes: &[u8]) -> Result<std::path::
         data.biome_tint_extras.len(),
         data.world_clocks.len(),
         data.biome_tags.len()
+    );
+    Ok(path)
+}
+
+/// Resolve + write crates/mc-registry/src/generated/skin.rs (the player
+/// skin's integrity sha1s + the arm-box geometry) from a local jar.
+fn write_skin(workspace_root: &Path, jar_bytes: &[u8]) -> Result<std::path::PathBuf> {
+    let mut zip =
+        zip::ZipArchive::new(std::io::Cursor::new(jar_bytes)).context("open client jar as zip")?;
+    let data = skingen::generate(&mut zip)?;
+    let reg_dir = workspace_root.join("crates/mc-registry/src/generated");
+    std::fs::create_dir_all(&reg_dir)?;
+    let path = reg_dir.join("skin.rs");
+    std::fs::write(&path, skingen::emit(&data)?)?;
+    println!(
+        "      skin: wide steve {}x{} (png {}…, rgba {}…) -> {}",
+        data.side,
+        data.side,
+        &data.png_sha1[..8],
+        &data.rgba_sha1[..8],
+        path.display()
     );
     Ok(path)
 }
