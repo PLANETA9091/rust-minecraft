@@ -102,6 +102,10 @@ pub struct WorldgenData {
     /// `data/minecraft/tags/timeline/*.json` verbatim (name -> values; the
     /// values may be nested "#tag" references)
     pub timeline_tags: BTreeMap<String, Vec<String>>,
+    /// `data/minecraft/tags/worldgen/biome/*.json` verbatim (name -> values;
+    /// the values mix concrete biome ids and nested "#tag" references —
+    /// the SAME raw form the timeline tags use)
+    pub biome_tags: BTreeMap<String, Vec<String>>,
     /// per-biome tint extras (grass_color_modifier / dry_foliage_color),
     /// sparse — only the biomes whose JSON states at least one
     pub biome_tint_extras: BTreeMap<String, BiomeTintExtraEntry>,
@@ -344,6 +348,23 @@ pub fn generate<R: std::io::Read + std::io::Seek>(archive: &mut zip::ZipArchive<
                         })
                         .unwrap_or_default();
                     data.timeline_tags
+                        .insert(rest.trim_end_matches(".json").to_string(), values);
+                }
+            }
+        } else if let Some(rest) = name.strip_prefix("data/minecraft/tags/worldgen/biome/") {
+            if rest.ends_with(".json") {
+                let bytes = read_entry(archive, &name)?;
+                if let Ok(v) = serde_json::from_slice::<Value>(&bytes) {
+                    let values: Vec<String> = v
+                        .get("values")
+                        .and_then(Value::as_array)
+                        .map(|a| {
+                            a.iter()
+                                .filter_map(|x| x.as_str().map(String::from))
+                                .collect()
+                        })
+                        .unwrap_or_default();
+                    data.biome_tags
                         .insert(rest.trim_end_matches(".json").to_string(), values);
                 }
             }
