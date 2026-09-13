@@ -549,6 +549,38 @@ hand-drawn:
   (workspace 269 → 272 passed / 0 failed / 3 ignored): the literal
   six-face UV unwrap pin (would have caught the v-flip), the
   refuse-unverified-skin gate, and the load-when-present probe.
+  The **arm swings (v0.3.62 — the renderPlayerArm swing terms,
+  decoded)**: the hand pass is no longer frozen at rest — the swing
+  and equip parameters of `ItemInHandRenderer.renderPlayerArm` are
+  now LIVE, from the same javap decode (slot 5 = swing, slot 4 =
+  equip): the X wobble `side·(0.64000005 − 0.3·sin(√s·π))`, the Y bob
+  `0.4·sin(√s·2π) − 0.6 + equip·−0.6`, the Z pull
+  `−0.4·sin(s·π) − 0.71999997`, and the two swing rotations
+  `rotY(side·sin(√s·π)·70°)`, `rotZ(side·sin(s²·π)·−20°)` slotted
+  exactly where the bytecode puts them — after the constant 45° yaw,
+  before the `translate(−side, 3.6, 3.5)` arm-flip. The TRIG function
+  fidelity matters and is pinned: `Mth.sin`/`Mth.sqrt` compute in f64
+  and narrow to f32 (their own bodies), so the client mirrors that
+  instead of sinning in f32. The CLOCK is LivingEntity's, verbatim:
+  `swing()` resets swingTime to **−1** with the no-retrigger guard
+  (a restart is ignored while swingTime sits in [0, dur/2)),
+  `updateSwingTime` advances one tick and resets to rest at the
+  duration, `attackAnim = swingTime / duration`, and `getAttackAnim`
+  is the o/attack lerp with the forward-wrap guard for the 1→0 jump —
+  the duration itself is `SwingAnimation.DEFAULT = (WHACK, 6)`, the
+  bipush 6 in its static init (the fist swing is 6 ticks). The
+  renderer samples mid-tick (`partial 0.5`, the game camera's
+  canonical partial); the left mouse press's rising edge in the world
+  screen triggers `swing()` (the vanilla attack key; no attack while
+  paused). The deterministic headless scenes never swing, so the
+  rest pose is what the goldens always see — and a test proves the
+  zero-swing pose is BIT-IDENTICAL to rest (every added rotation is
+  the exact identity), so no golden moved. All 10 goldens verified at
+  the exact CI flags, every one rms 0.000, none regenerated. Tests +5
+  (workspace 272 → 277 passed / 0 failed / 3 ignored): the swing
+  timeline (−1 → 0..5/6 → rest at exactly 6 ticks), the re-trigger
+  guard, the wrap-guard lerp, the mid-swing geometry delta, and the
+  bit-identical rest pose.
   The **registry-order evidence is dumped from the real runtime (v0.3.53 —
   the pack-version claim's LAST prerequisite)**: the generator grew its
   third runtime dumper — the checked-in clean-room `DumpRegistries.java` —
