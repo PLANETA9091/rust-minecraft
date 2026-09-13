@@ -228,6 +228,12 @@ pub struct App {
     /// Base world tick for the day-night cycle (0 = vanilla dawn; the frame
     /// counter advances time 1 tick per frame like the vanilla clock).
     pub day_time_base: u64,
+    /// The END sky's flash state (javap `ClientLevel.endFlashState`):
+    /// ticked every frame on the client's game-time clock — the same
+    /// `day_time` the celestials ride — and read by the END branch of
+    /// [`crate::sky::render_celestials`]. Deterministic in game time
+    /// (see [`crate::end_flash`]); an Overworld/Nether sky never reads it.
+    pub end_flash: crate::end_flash::EndFlashState,
     /// UI one-shot sound log ("ui.button.click @<frame>"), mirroring the
     /// vanilla rule that EVERY activated button plays the click; consumed by
     /// the audio backend (audio.rs) like the music event log.
@@ -370,6 +376,7 @@ impl App {
             options_return: ScreenKind::Title,
             selected_hotbar: 0,
             day_time_base: 0,
+            end_flash: crate::end_flash::EndFlashState::new(),
             ui_sounds: Vec::new(),
             net_requests: Vec::new(),
             next_ping_id: 0,

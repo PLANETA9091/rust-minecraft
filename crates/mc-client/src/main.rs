@@ -12,6 +12,7 @@ mod build_info;
 mod camera;
 mod colors;
 mod colormap;
+mod end_flash;
 mod gpu;
 mod gui;
 mod hand;

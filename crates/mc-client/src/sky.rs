@@ -280,6 +280,24 @@ impl JavaRandom {
         let lo = self.next(27) as i64;
         ((hi + lo) as f64) / ((1u64 << 53) as f64)
     }
+
+    /// `BitRandomSource.nextInt(bound)` — the java.util.Random algorithm
+    /// (javap): the power-of-two shift shortcut `(bound * next(31)) >> 31`,
+    /// else the rejection loop with the i32 overflow probe verbatim
+    /// (`bits - val + (bound - 1) < 0` retries, wrapping semantics).
+    pub fn next_int(&mut self, bound: i32) -> i32 {
+        debug_assert!(bound > 0, "Bound must be positive");
+        if bound & (bound - 1) == 0 {
+            return (((bound as i64) * self.next(31)) >> 31) as i32;
+        }
+        loop {
+            let bits = self.next(31) as i32;
+            let val = bits % bound;
+            if bits.wrapping_sub(val).wrapping_add(bound - 1) >= 0 {
+                return val;
+            }
+        }
+    }
 }
 
 /// One accepted star quad (celestial frame, radius 100).
@@ -427,59 +445,97 @@ pub fn render_sunrise_disc(
 /// the vanilla extract (`SkyRenderer.extractRenderState`, javap of the 26.2
 /// jar) stores `dimensionType.skybox()` and returns BEFORE any sky state is
 /// extracted when it is NONE (the nether renders no sky at all), and for
-/// END it extracts only the end-flash triple and returns — the disc / sun /
+/// END it extracts ONLY the end-flash triple and returns — the disc / sun /
 /// moon / stars path is the OVERWORLD skybox's alone (the codec's ABSENT
-/// key defaults there). The end-flash itself is the documented next
-/// consumer; until it lands END renders no celestials either.
+/// key defaults there). `flash` is the current dimension's end-flash state
+/// (deterministic in game time — see [`crate::end_flash`]); the END branch
+/// draws it through [`render_end_flash`], the extract's own discipline.
 pub fn render_celestials(
     fb: &mut crate::raster::Framebuf,
     ctx: &RenderCtx,
     cam: &Camera,
     day_time: i64,
     skybox: Skybox,
+    flash: &crate::end_flash::EndFlashState,
 ) {
-    if !matches!(skybox, Skybox::Overworld) {
-        return;
-    }
-    let st = sample(day_time);
-    let mut quads: Vec<FlatQuad> = Vec::with_capacity(stars().len() + 18);
-
-    // sunrise/sunset glow (drawn first, official render order)
-    render_sunrise_disc(&mut quads, cam, day_time);
-
-    // sun
-    let sun = celestial_quad(&celestial(st.sun_angle), cam, 30.0);
-    quads.push(FlatQuad {
-        pts: sun,
-        colors: [[1.0, 1.0, 1.0, 1.0]; 4],
-        rgba: Some((&S::SUN_RGBA, S::CELESTIAL_SIZE)),
-        blend: crate::raster::FlatBlend::Additive,
-    });
-    // moon (phase-selected texture, mirrored UVs like the official buffer)
-    let moon = celestial_quad(&celestial(st.moon_angle), cam, 20.0);
-    quads.push(FlatQuad {
-        pts: moon,
-        colors: [[1.0, 1.0, 1.0, 1.0]; 4],
-        rgba: Some((&S::MOON_RGBA[st.moon_phase as usize], S::CELESTIAL_SIZE)),
-        blend: crate::raster::FlatBlend::Additive,
-    });
-    // stars: brightness-tinted, additive (official STARS pipeline = OVERLAY).
-    let m = celestial(st.star_angle);
-    let b = st.star_brightness;
-    for star in stars() {
-        let mut pts = [[0f32; 3]; 4];
-        for (i, c) in star.corners.iter().enumerate() {
-            let w = m.transform_point(Vec3::new(c[0], c[1], c[2]));
-            pts[i] = [w[0] + cam.pos.x, w[1] + cam.pos.y, w[2] + cam.pos.z];
+    let mut quads: Vec<FlatQuad> = Vec::new();
+    match skybox {
+        Skybox::None => return, // the extract returns before ANY state exists
+        Skybox::End => {
+            // the extract pulls only the end-flash triple; the END sky
+            // renders the flash and nothing else
+            render_end_flash(&mut quads, cam, flash);
         }
-        quads.push(FlatQuad {
-            pts,
-            colors: [[b, b, b, b]; 4],
-            rgba: None,
-            blend: crate::raster::FlatBlend::Additive,
-        });
+        Skybox::Overworld => {
+            let st = sample(day_time);
+            quads.reserve(stars().len() + 18);
+
+            // sunrise/sunset glow (drawn first, official render order)
+            render_sunrise_disc(&mut quads, cam, day_time);
+
+            // sun
+            let sun = celestial_quad(&celestial(st.sun_angle), cam, 30.0);
+            quads.push(FlatQuad {
+                pts: sun,
+                colors: [[1.0, 1.0, 1.0, 1.0]; 4],
+                rgba: Some((&S::SUN_RGBA, S::CELESTIAL_SIZE)),
+                blend: crate::raster::FlatBlend::Additive,
+            });
+            // moon (phase-selected texture, mirrored UVs like the official buffer)
+            let moon = celestial_quad(&celestial(st.moon_angle), cam, 20.0);
+            quads.push(FlatQuad {
+                pts: moon,
+                colors: [[1.0, 1.0, 1.0, 1.0]; 4],
+                rgba: Some((&S::MOON_RGBA[st.moon_phase as usize], S::CELESTIAL_SIZE)),
+                blend: crate::raster::FlatBlend::Additive,
+            });
+            // stars: brightness-tinted, additive (official STARS pipeline = OVERLAY).
+            let m = celestial(st.star_angle);
+            let b = st.star_brightness;
+            for star in stars() {
+                let mut pts = [[0f32; 3]; 4];
+                for (i, c) in star.corners.iter().enumerate() {
+                    let w = m.transform_point(Vec3::new(c[0], c[1], c[2]));
+                    pts[i] = [w[0] + cam.pos.x, w[1] + cam.pos.y, w[2] + cam.pos.z];
+                }
+                quads.push(FlatQuad {
+                    pts,
+                    colors: [[b, b, b, b]; 4],
+                    rgba: None,
+                    blend: crate::raster::FlatBlend::Additive,
+                });
+            }
+        }
     }
     fb.draw_flat(ctx, &quads);
+}
+
+/// The END skybox's flash (vanilla `SkyRenderer.renderEndFlash`, javap):
+/// the flash sprite quad in the frame `rotY(180 - yAngle) * rotX(-90 -
+/// xAngle)`, base (±1, 0, ±1) scaled (60, 1, 60) and translated (0, 100, 0)
+/// INSIDE the rotated frame, tinted `(i, i, i, i)` — the intensity in all
+/// four channels — through the CELESTIAL pipeline whose BlendFunction.OVERLAY
+/// is exactly the raster's `Additive` (the same blend the sun/moon/stars
+/// ride). Early-out at intensity <= 0: an invisible quad is no pixels, the
+/// same verdict as the vanilla draw.
+fn render_end_flash(
+    quads: &mut Vec<FlatQuad>,
+    cam: &Camera,
+    flash: &crate::end_flash::EndFlashState,
+) {
+    let i = flash.current();
+    if i <= 0.0 {
+        return;
+    }
+    let m = Mat4::rot_y((180.0 - flash.y_angle()).to_radians())
+        .mul(&Mat4::rot_x((-90.0 - flash.x_angle()).to_radians()));
+    let pts = celestial_quad(&m, cam, 60.0);
+    quads.push(FlatQuad {
+        pts,
+        colors: [[i, i, i, i]; 4],
+        rgba: Some((&S::END_FLASH_RGBA, S::END_FLASH_SIZE)),
+        blend: crate::raster::FlatBlend::Additive,
+    });
 }
 
 // ---------------------------------------------------------------------------
@@ -1033,7 +1089,14 @@ mod tests {
         let render = |skybox: Skybox| {
             let mut fb = crate::raster::Framebuf::new(32, 32);
             fb.clear([0.004, 0.008, 0.012], [0.0; 3]);
-            render_celestials(&mut fb, &ctx, &cam, midnight, skybox);
+            render_celestials(
+                &mut fb,
+                &ctx,
+                &cam,
+                midnight,
+                skybox,
+                &crate::end_flash::EndFlashState::new(),
+            );
             fb.color
         };
         let cleared = {
@@ -1042,6 +1105,8 @@ mod tests {
             fb.color
         };
         assert_eq!(render(Skybox::None), cleared, "NONE must render nothing");
+        // END with an unticked (intensity 0) state: the flash early-outs —
+        // the same cleared verdict the pre-flash rounds asserted
         assert_eq!(render(Skybox::End), cleared, "END must render no celestials");
         let overworld = render(Skybox::Overworld);
         assert_ne!(overworld, cleared, "OVERWORLD must paint the stars");
