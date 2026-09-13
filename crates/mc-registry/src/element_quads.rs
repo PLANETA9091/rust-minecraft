@@ -456,6 +456,29 @@ fn recalculate_winding(vertices: &mut [[f32; 3]; 4], uvs: &mut [[f32; 2]; 4], fa
 #[cfg(test)]
 mod tests {
     #[test]
+    fn dump_bits_for_census_diff() {
+        let (_, elements) = ELEMENTS.iter().find(|(mid, _)| *mid == "block/brewing_stand_bottle2").unwrap();
+        let el = &elements[0];
+        let (m, rescale_flag) = match el.rotation {
+            Some(ElementRotation::Axis { angle, axis, origin, rescale }) => {
+                let m = axis_matrix(axis, angle);
+                (if rescale && !is_identity3(&m) { apply_rescale(&m) } else { m }, rescale)
+            }
+            _ => panic!("expected axis rotation"),
+        };
+        println!("rescale_flag={} m00={:08x} m02={:08x} m20={:08x} m22={:08x}",
+            rescale_flag, m[0][0].to_bits(), m[0][2].to_bits(), m[2][0].to_bits(), m[2][2].to_bits());
+        let org = match el.rotation { Some(ElementRotation::Axis { origin, .. }) => origin, _ => unreachable!() };
+        let origin_block = [org[0] / 16.0, org[1] / 16.0, org[2] / 16.0];
+        let pre = faceinfo_corners(Direction::North, el.from, el.to);
+        for (i, v) in pre.iter().enumerate() {
+            let r = rotate_vertex(*v, origin_block, &m);
+            println!("v{i} pre=({:08x},{:08x},{:08x}) post=({:08x},{:08x},{:08x})",
+                v[0].to_bits(), v[1].to_bits(), v[2].to_bits(), r[0].to_bits(), r[1].to_bits(), r[2].to_bits());
+        }
+    }
+
+    #[test]
     fn dump_per_model_for_census_diff() {
         let mut out = String::new();
         for (id, elements) in ELEMENTS {
