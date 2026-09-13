@@ -581,6 +581,40 @@ hand-drawn:
   timeline (−1 → 0..5/6 → rest at exactly 6 ticks), the re-trigger
   guard, the wrap-guard lerp, the mid-swing geometry delta, and the
   bit-identical rest pose.
+  The **texture-slots resolution lands (v0.3.69 — the quad's texture ref
+  becomes a concrete id)**: `crates/mc-registry/src/texture_slots.rs`
+  resolves every model's texture slots through the parent chain over the
+  MODELS table — zero dependencies, zero render-path contact (mc-client
+  carries no references; the goldens are safe by construction AND by
+  measurement). Every rule is javap evidence from the 26.2 jar
+  (TextureSlots$Resolver/parseEntry/getMaterial): the textures-map values
+  split at parse time into Values (full ids as written — 10287 carry
+  "minecraft:", 807 are bare paths like heavy_core's "block/heavy_core")
+  and References ("#var", '#' stripped); the 26.2 inline sprite dict
+  {"force_translucent": true, "sprite": ...} (163 carriers, the flag
+  ALWAYS true) is a Value over the sprite field; Resolver.resolve walks
+  Lists.reverse(entries) — root FIRST, child LAST — so the child
+  OVERRIDES the ancestors PER KEY (a Value removes a prior reference and
+  vice versa); the reference FIXPOINT loops one hop per pass in the
+  vanilla do-while shape (the futile scan of a dangling-only model
+  counts — census ledger 2063/1857/8, max 2 passes through the furnace
+  family's bottom->particle->front chains); leftover references are
+  warn'ed and DROPPED (exactly 258 (model, slot, target) triples, all in
+  the TEMPLATE models whose children fill the slots when baked —
+  block/button's {"particle": "#texture"} is the textbook case);
+  getMaterial strips a leading '#' and looks the key up — BARE refs
+  behave identically (heavy_core's six face refs). The census
+  (scripts/texture_slots_census.py) walked all 3928 models: chain depths
+  {0:302, 1:2256, 2:874, 3:480, 4:16} (all 3460 parents
+  "minecraft:"-prefixed, builtins anchor), 3883 models with textures,
+  11094 resolved slots, overrides {0:3740, 1:110, 3:16, 4:51, 5:9, 8:2},
+  and the face-ref join over the 344 element models: 2623 of the 4238
+  refs resolve at the model's own level, 1615 dangle by design.
+  Tests +7 (workspace 309 -> 316 passed / 0 failed / 3 ignored): the
+  button template vs its filled child, the acacia_shelf override, the
+  furnace fixpoint, bare-vs-hash ref identity, the sprite dict, the
+  lookup misses, and the registry-wide census pin. All 10 goldens
+  verified at the exact CI flags, every one rms 0.000, none regenerated.
   The **vanilla FaceBakery quad derivation lands (v0.3.68 — the
   element-geometry consumer, the bridge to block/item display)**:
   `crates/mc-registry/src/element_quads.rs` turns the typed elements

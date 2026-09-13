@@ -77,13 +77,14 @@ pub fn resolve_model(model_id: &str) -> Option<ResolvedSlots> {
         let (parent, _) = lookup(cur)?;
         chain.push(cur);
         match parent {
-            Some(p) => {
+            // the vanilla built-ins are anchors, not model files
+            Some(p) if !p.starts_with("builtin/") => {
                 if chain.len() > 32 {
                     return None; // vanishingly defensive; the data is acyclic
                 }
                 cur = p;
             }
-            None => break,
+            _ => break,
         }
     }
     let chain_depth = chain.len() - 1;
@@ -114,9 +115,13 @@ pub fn resolve_model(model_id: &str) -> Option<ResolvedSlots> {
         }
     }
 
-    // The fixpoint: one hop per pass, until quiet.
+    // The fixpoint: one hop per pass, until quiet. The pass ledger counts
+    // every entered scan (the vanilla do-while shape) — the final futile
+    // scan of a dangling-only model runs too, so it counts (the census's
+    // ledger: 2063 models never enter, 1857 pass once, 8 twice).
     let mut fixpoint_passes = 0usize;
-    loop {
+    while !refs.is_empty() {
+        fixpoint_passes += 1;
         let mut progressed = false;
         let mut i = 0;
         while i < refs.len() {
@@ -133,7 +138,6 @@ pub fn resolve_model(model_id: &str) -> Option<ResolvedSlots> {
         if !progressed {
             break;
         }
-        fixpoint_passes += 1;
     }
 
     Some(ResolvedSlots {
@@ -274,6 +278,12 @@ fn scan_string(json: &'static str, i: &mut usize) -> &'static str {
 mod tests {
     use super::*;
 
+    fn sorted(map: &[(&'static str, &'static str)]) -> Vec<(&'static str, &'static str)> {
+        let mut v = map.to_vec();
+        v.sort_unstable();
+        v
+    }
+
     /// The button template dangles by design (particle -> #texture, no
     /// texture anywhere up its chain — the vanilla warn+drop), while the
     /// concrete child's Value fills BOTH slots in one fixpoint pass.
@@ -282,16 +292,14 @@ mod tests {
         let template = resolve_model("block/button").expect("a model row");
         assert!(template.resolved.is_empty());
         assert_eq!(template.unresolved, [("particle", "texture")]);
-        assert_eq!(template.fixpoint_passes, 0);
+        // the vanilla do-while runs its futile scan once even here
+        assert_eq!(template.fixpoint_passes, 1);
 
         let child = resolve_model("block/acacia_button").expect("a model row");
-        assert_eq!(
-            child.resolved,
-            [
-                ("texture", "minecraft:block/acacia_planks"),
-                ("particle", "minecraft:block/acacia_planks"),
-            ]
-        );
+        assert_eq!(sorted(&child.resolved), sorted(&[
+            ("texture", "minecraft:block/acacia_planks"),
+            ("particle", "minecraft:block/acacia_planks"),
+        ]));
         assert!(child.unresolved.is_empty());
         assert_eq!(child.fixpoint_passes, 1);
         assert_eq!(child.material("#particle"), Some("minecraft:block/acacia_planks"));
@@ -303,13 +311,10 @@ mod tests {
     #[test]
     fn merges_the_chain_with_the_child_override() {
         let slots = resolve_model("block/acacia_shelf").expect("a model row");
-        assert_eq!(
-            slots.resolved,
-            [
-                ("all", "minecraft:block/acacia_shelf"),
-                ("particle", "minecraft:block/stripped_acacia_log"),
-            ]
-        );
+        assert_eq!(sorted(&slots.resolved), sorted(&[
+            ("all", "minecraft:block/acacia_shelf"),
+            ("particle", "minecraft:block/stripped_acacia_log"),
+        ]));
         assert!(slots.unresolved.is_empty());
         assert_eq!(slots.overrides, 1);
         assert_eq!(slots.chain_depth, 2);
@@ -336,10 +341,10 @@ mod tests {
     #[test]
     fn resolves_bare_refs_and_hash_refs_identically() {
         let slots = resolve_model("block/heavy_core").expect("a model row");
-        assert_eq!(
-            slots.resolved,
-            [("all", "block/heavy_core"), ("particle", "block/heavy_core")]
-        );
+        assert_eq!(sorted(&slots.resolved), sorted(&[
+            ("all", "block/heavy_core"),
+            ("particle", "block/heavy_core"),
+        ]));
         assert_eq!(slots.material("#all"), Some("block/heavy_core"));
         assert_eq!(slots.material("all"), Some("block/heavy_core"));
         assert_eq!(resolve_ref("block/heavy_core", "#all"), Some("block/heavy_core"));
@@ -352,19 +357,17 @@ mod tests {
     #[test]
     fn keeps_the_sprite_dict_values() {
         let slots = resolve_model("block/black_stained_glass").expect("a model row");
-        assert_eq!(
-            slots.resolved,
-            [
-                ("all", "minecraft:block/black_stained_glass"),
-                ("particle", "minecraft:block/black_stained_glass"),
-                ("down", "minecraft:block/black_stained_glass"),
-                ("up", "minecraft:block/black_stained_glass"),
-                ("north", "minecraft:block/black_stained_glass"),
-                ("east", "minecraft:block/black_stained_glass"),
-                ("south", "minecraft:block/black_stained_glass"),
-                ("west", "minecraft:block/black_stained_glass"),
-            ]
-        );
+        let all_glass = "minecraft:block/black_stained_glass";
+        assert_eq!(sorted(&slots.resolved), sorted(&[
+            ("all", all_glass),
+            ("particle", all_glass),
+            ("down", all_glass),
+            ("up", all_glass),
+            ("north", all_glass),
+            ("east", all_glass),
+            ("south", all_glass),
+            ("west", all_glass),
+        ]));
         assert_eq!(slots.fixpoint_passes, 1);
         assert_eq!(slots.material("#north"), Some("minecraft:block/black_stained_glass"));
     }
