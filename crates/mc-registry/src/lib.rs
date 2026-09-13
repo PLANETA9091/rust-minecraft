@@ -752,4 +752,116 @@ mod tests {
             63
         );
     }
+
+    #[test]
+    fn the_blockstate_table_is_the_jar_census_and_the_joins_hold() {
+        use generated::blockstates::BLOCKSTATES;
+        use generated::blocks::BLOCKS;
+        use generated::models::MODELS;
+
+        // the census, verbatim: 1198 files split EXACTLY variants (1096) or
+        // multipart (102) — never both, never neither
+        assert_eq!(BLOCKSTATES.len(), 1198);
+        let with_variants = BLOCKSTATES.iter().filter(|r| r.1.is_some()).count();
+        let with_multipart = BLOCKSTATES.iter().filter(|r| r.2.is_some()).count();
+        assert_eq!((with_variants, with_multipart), (1096, 102));
+        assert!(BLOCKSTATES.iter().all(|r| r.1.is_some() ^ r.2.is_some()));
+
+        // the total applies = the "model" key occurrences across all JSON
+        // columns; the distinct namespace-stripped refs join the models table
+        let mut total_applies = 0usize;
+        let mut refs: Vec<&str> = Vec::new();
+        for (_, variants, multipart) in BLOCKSTATES.iter() {
+            let json = variants.or(multipart).unwrap();
+            let needle = "\"model\":\"";
+            let mut rest = json;
+            while let Some(i) = rest.find(needle) {
+                rest = &rest[i + needle.len()..];
+                let end = rest.find('"').unwrap();
+                refs.push(&rest[..end]);
+                rest = &rest[end..];
+                total_applies += 1;
+            }
+        }
+        assert_eq!(total_applies, 8661);
+        refs.sort_unstable();
+        refs.dedup();
+        assert_eq!(refs.len(), 2380, "the distinct model refs");
+        for r in &refs {
+            let bare = r.strip_prefix("minecraft:").unwrap_or(r);
+            assert!(
+                MODELS.iter().any(|m| m.0 == bare),
+                "blockstate model ref {r} resolves to no model file"
+            );
+        }
+        // the 4 vanilla BARE refs (no namespace: item_frame x2,
+        // glow_item_frame x2) ride as written — the closing quote keeps the
+        // _map-suffixed models out of the count
+        for (id, want) in [("item_frame", 2usize), ("glow_item_frame", 2)] {
+            let row = BLOCKSTATES.iter().find(|r| r.0 == id).unwrap();
+            let json = row.1.as_ref().unwrap();
+            assert_eq!(
+                json.matches(&format!("\"model\":\"block/{id}\"")).count(),
+                want,
+                "{id}: the bare refs"
+            );
+        }
+
+        // spot rows — the serde-canonical JSON fragments, byte-verbatim
+        let grass = BLOCKSTATES
+            .iter()
+            .find(|r| r.0 == "grass_block")
+            .unwrap()
+            .1
+            .as_ref()
+            .unwrap();
+        assert!(grass.contains("\"snowy=false\":[{\"model\":\"minecraft:block/grass_block\"},"));
+        assert!(grass.contains("{\"model\":\"minecraft:block/grass_block\",\"y\":270}]"));
+        assert!(grass.contains("\"snowy=true\":{\"model\":\"minecraft:block/grass_block_snow\"}}"));
+        let leaf = BLOCKSTATES
+            .iter()
+            .find(|r| r.0 == "leaf_litter")
+            .unwrap()
+            .2
+            .as_ref()
+            .unwrap();
+        assert!(leaf.starts_with(
+            "[{\"apply\":{\"model\":\"minecraft:block/leaf_litter_1\"},\"when\":{\"facing\":\"north\",\"segment_amount\":\"1\"}}"
+        ));
+        let wire = BLOCKSTATES
+            .iter()
+            .find(|r| r.0 == "redstone_wire")
+            .unwrap()
+            .2
+            .as_ref()
+            .unwrap();
+        assert!(wire
+            .contains("\"OR\":[{\"east\":\"none\",\"north\":\"none\",\"south\":\"none\",\"west\":\"none\"}"));
+        let shelf = BLOCKSTATES
+            .iter()
+            .find(|r| r.0 == "acacia_shelf")
+            .unwrap()
+            .2
+            .as_ref()
+            .unwrap();
+        assert!(shelf.contains("\"AND\":[{\"facing\":\"north\"},{\"powered\":\"false\"}]"));
+        // the repeater carries the census max variant count (64 states)
+        let rep = BLOCKSTATES
+            .iter()
+            .find(|r| r.0 == "repeater")
+            .unwrap()
+            .1
+            .as_ref()
+            .unwrap();
+        assert_eq!(rep.matches("{\"model\":").count(), 64);
+
+        // THE JOIN: every blockstate id is a block in the registry (both
+        // tables derive from the same jar directory)
+        for (id, _, _) in BLOCKSTATES.iter() {
+            assert!(
+                BLOCKS.iter().any(|b| b.name == *id),
+                "blockstate {id} is not a block"
+            );
+        }
+    }
 }

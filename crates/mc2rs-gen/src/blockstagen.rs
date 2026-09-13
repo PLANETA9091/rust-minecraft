@@ -8,9 +8,13 @@
 //! rotations only 0/90/180/270 (0 never written); uvlock only ever true;
 //! weight on 2 applies (value 2); multipart parts carry {apply} (46
 //! unconditional) or {apply, when} (1086); when is a plain AND map or the
-//! {"OR": [...]} wrapper — never mixed; 4 vanilla refs ship WITHOUT a
+//! {"OR": [...]} / {"AND": [...]} wrappers — never mixed, never nested in
+//! 26.2; 4 vanilla refs ship WITHOUT a
 //! namespace (item_frame / glow_item_frame) beside 8657 `minecraft:` ones;
-//! all 2363 distinct refs resolve to model files (0 dangling).
+//! all 2380 distinct refs resolve to model files (0 dangling — the first
+//! census pass undercounted them 2363 via a python loop-variable leak; the
+//! independent re-derivation caught its own census, the third such
+//! self-catch in the project's history).
 
 use anyhow::{Context, Result};
 use serde_json::Value;
@@ -57,7 +61,7 @@ pub struct BlockstatesData {
     /// The total number of applies (variant entries + multipart parts'
     /// applies, list-flattened) — the census's 8661.
     pub applies: u32,
-    /// The distinct model refs (namespace-stripped) — the census's 2363.
+    /// The distinct model refs (namespace-stripped) — the census's 2380.
     pub model_refs: u32,
 }
 
@@ -125,42 +129,35 @@ fn validate_apply(file: &str, ctx: &str, v: &Value) -> Result<()> {
 }
 
 /// Validate a when-condition: either a plain AND map (string values, "|"
-/// or-lists ride inside the string) or the {"OR": [maps]} wrapper — never
-/// mixed (the census: 0 files mix them), no nested OR.
+/// or-lists ride inside the string) or the {"OR": [...]} / {"AND": [...]}
+/// wrappers — never mixed with plain keys (the census: 0 files mix them),
+/// never nested in 26.2 (but the validation recurses, so a future wrapper
+/// inside a wrapper parses rather than refuses). The census: AND x288,
+/// OR x5 (fire x4, redstone_wire x1).
 fn validate_when(file: &str, ctx: &str, v: &Value) -> Result<()> {
     let w = v
         .as_object()
         .with_context(|| format!("{file}: {ctx} must be an object"))?;
-    if let Some(or) = w.get("OR") {
-        anyhow::ensure!(
-            w.len() == 1,
-            "{file}: {ctx}: the OR wrapper is mixed with AND keys (extend the parser first)"
-        );
-        let list = or
-            .as_array()
-            .with_context(|| format!("{file}: {ctx}.OR must be an array"))?;
-        anyhow::ensure!(
-            !list.is_empty(),
-            "{file}: {ctx}.OR must not be empty"
-        );
-        for inner in list {
-            let m = inner
-                .as_object()
-                .with_context(|| format!("{file}: {ctx}.OR entries must be objects"))?;
-            for (k, val) in m {
+    for (k, val) in w {
+        match k.as_str() {
+            "OR" | "AND" => {
                 anyhow::ensure!(
-                    val.is_string(),
-                    "{file}: {ctx}.OR.{k} must be a string"
+                    w.len() == 1,
+                    "{file}: {ctx}: the {k} wrapper is mixed with other keys (extend the parser first)"
                 );
+                let list = val
+                    .as_array()
+                    .with_context(|| format!("{file}: {ctx}.{k} must be an array"))?;
+                anyhow::ensure!(!list.is_empty(), "{file}: {ctx}.{k} must not be empty");
+                for (i, inner) in list.iter().enumerate() {
+                    validate_when(file, &format!("{ctx}.{k}[{i}]"), inner)
+                        .with_context(|| format!("read {name_placeholder}", name_placeholder = file))?;
+                }
+            }
+            _ => {
+                anyhow::ensure!(val.is_string(), "{file}: {ctx}.{k} must be a string");
             }
         }
-        return Ok(());
-    }
-    for (k, val) in w {
-        anyhow::ensure!(
-            val.is_string(),
-            "{file}: {ctx}.{k} must be a string"
-        );
     }
     Ok(())
 }
@@ -395,8 +392,9 @@ mod tests {
                     }
                 })),
             ),
-            // a multipart file: the AND map, the when-absent part, the OR
-            // wrapper, and the apply LIST
+            // a multipart file: the AND map, the AND wrapper (the
+            // acacia_shelf shape), the when-absent part, the OR wrapper,
+            // and the apply LIST
             (
                 "assets/minecraft/blockstates/fixture_part.json",
                 json_bytes(serde_json::json!({
@@ -404,6 +402,8 @@ mod tests {
                         {"apply": {"model": "minecraft:block/fixture_a"}},
                         {"when": {"facing": "north", "segment_amount": "1"},
                          "apply": {"model": "minecraft:block/fixture_b", "y": 90}},
+                        {"when": {"AND": [{"facing": "north"}, {"powered": "false"}]},
+                         "apply": {"model": "minecraft:block/fixture_b"}},
                         {"when": {"OR": [{"east": "side|up", "north": "side|up"},
                                           {"east": "none", "north": "none"}]},
                          "apply": [{"model": "minecraft:block/fixture_a"},
@@ -416,8 +416,8 @@ mod tests {
         let data = generate(&mut zip).unwrap();
         assert_eq!(data.rows.len(), 2);
         assert_eq!((data.variant_files, data.multipart_files), (1, 1));
-        // 2 object/array applies + 1 + 2 (the apply list flattens)
-        assert_eq!(data.applies, 6);
+        // 2 object/array applies + 1 + 1 + 1 + 2 (the apply list flattens)
+        assert_eq!(data.applies, 8);
         // distinct refs: fixture_a (bare + minecraft: BOTH normalize bare) + fixture_b
         assert_eq!(data.model_refs, 2);
 
@@ -435,6 +435,7 @@ mod tests {
         // the when-absent part first (jar order — arrays keep order)
         assert!(m.contains("{\"apply\":{\"model\":\"minecraft:block/fixture_a\"}}"), "{m}");
         assert!(m.contains("\"when\":{\"facing\":\"north\",\"segment_amount\":\"1\"}"), "{m}");
+        assert!(m.contains("\"AND\":[{\"facing\":\"north\"},{\"powered\":\"false\"}]"), "{m}");
         assert!(m.contains("\"OR\":[{\"east\":\"side|up\",\"north\":\"side|up\"}"), "{m}");
         assert!(row.variants.is_none());
 
@@ -514,7 +515,7 @@ mod tests {
                 "OR mixed with AND",
                 serde_json::json!({"multipart": [{"when": {"OR": [{"east": "none"}], "north": "up"},
                                                    "apply": {"model": "minecraft:block/x"}}]}),
-                "mixed with AND keys",
+                "mixed with other keys",
             ),
             (
                 "non-string when value",
