@@ -11,6 +11,12 @@ pub mod generated;
 /// parts, "a|b" pipe values). See the module docs.
 pub mod blockstate_lookup;
 
+/// The vanilla FaceBakery quad derivation over generated::elements —
+/// corners, default uvs, uv rotation, axis/euler element rotations with
+/// rescale, computed facing, winding recalculation. Pure data, no
+/// render path. See the module docs for the javap evidence.
+pub mod element_quads;
+
 /// One block definition: identifier + sorted list of state property names.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Block {
