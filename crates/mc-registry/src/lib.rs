@@ -203,4 +203,52 @@ mod tests {
             );
         }
     }
+
+    #[test]
+    fn the_biome_tags_join_the_biome_table_and_never_dangle() {
+        use generated::worldgen::{biome, biome_tag, BIOME_TAGS};
+        // the jar's data/minecraft/tags/worldgen/biome/ file set, verbatim:
+        // 68 tags / 390 members, no "replace" key anywhere
+        assert_eq!(BIOME_TAGS.len(), 68);
+        let total: usize = BIOME_TAGS.iter().map(|t| t.1.len()).sum();
+        assert_eq!(total, 390, "every member the jar states is emitted");
+        // is_forest's members verbatim, in the jar's stored order
+        let forest = biome_tag("minecraft:is_forest").expect("is_forest");
+        assert_eq!(
+            forest,
+            &[
+                "minecraft:forest",
+                "minecraft:flower_forest",
+                "minecraft:birch_forest",
+                "minecraft:old_growth_birch_forest",
+                "minecraft:dark_forest",
+                "minecraft:pale_garden",
+                "minecraft:grove",
+            ]
+        );
+        // a nested reference rides verbatim and names a KNOWN tag (the
+        // structure tags live in a SUBDIRECTORY — the stem carries the
+        // slash: tags/worldgen/biome/has_structure/buried_treasure.json)
+        let buried = biome_tag("minecraft:has_structure/buried_treasure")
+            .expect("has_structure/buried_treasure");
+        assert_eq!(buried[0], "#minecraft:is_beach");
+        assert!(biome_tag("#minecraft:is_beach").is_none());
+        // THE JOIN NEVER DANGLES: every concrete member names a biome the
+        // table carries; every nested ref names a tag the table carries
+        for (tag, members) in &BIOME_TAGS {
+            for m in members.iter() {
+                if let Some(id) = m.strip_prefix('#') {
+                    assert!(
+                        biome_tag(id).is_some(),
+                        "tag {tag} references unknown tag {id}"
+                    );
+                } else {
+                    assert!(
+                        biome(m).is_some(),
+                        "tag {tag} references unknown biome {m}"
+                    );
+                }
+            }
+        }
+    }
 }

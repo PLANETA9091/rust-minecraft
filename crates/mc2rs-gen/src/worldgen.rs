@@ -621,6 +621,32 @@ pub fn emit(data: &WorldgenData) -> Result<String> {
         out.push_str(&format!("    \"{}\", // data/minecraft/world_clock/{id}.json\n", rust_str(name)));
     }
     out.push_str("];\n");
+
+    // ---- biome tags ----
+    // The jar's data/minecraft/tags/worldgen/biome/*.json verbatim — the
+    // SAME raw form the timeline tags carry (concrete minecraft: members
+    // and nested "#"-references side by side; the 26.2 jar states 68
+    // tags / 390 members and NOT ONE "replace" key). Appended LAST —
+    // the prefix rule: every table above stays byte-stable across the
+    // arc, so the previous generated file verifies as a byte-exact
+    // prefix of this one.
+    out.push_str("\n/// The jar's `data/minecraft/tags/worldgen/biome/*.json` verbatim — (tag id\n");
+    out.push_str("/// with the minecraft: prefix, values; \"#\"-prefixed values name other tags).\n");
+    out.push_str("pub static BIOME_TAGS: [(&str, &[&str]); ");
+    out.push_str(&data.biome_tags.len().to_string());
+    out.push_str("] = [\n");
+    for (id, values) in &data.biome_tags {
+        let vals: Vec<String> = values.iter().map(|v| format!("\"{}\"", rust_str(v))).collect();
+        out.push_str(&format!(
+            "    (\"minecraft:{}\", &[{}]),\n",
+            rust_str(id),
+            vals.join(", ")
+        ));
+    }
+    out.push_str("];\n\n");
+    out.push_str("/// Biome tag values by full tag id (\"minecraft:is_forest\").\n");
+    out.push_str("pub fn biome_tag(name: &str) -> Option<&'static [&'static str]> {\n");
+    out.push_str("    BIOME_TAGS.binary_search_by_key(&name, |t| t.0).ok().map(|i| BIOME_TAGS[i].1)\n}\n");
     Ok(out)
 }
 
@@ -640,6 +666,61 @@ mod tests {
             w.finish().unwrap();
         }
         zip::ZipArchive::new(buf).unwrap()
+    }
+
+    #[test]
+    fn parses_the_biome_tags_with_their_nested_members() {
+        // the REAL 26.2 shape: concrete minecraft: members and nested
+        // "#"-references side by side; the raw-string separator is ## —
+        // the JSONs contain '"#' sequences the single-# form would eat
+        let mut zip = zip_of(&[
+            (
+                "data/minecraft/tags/worldgen/biome/is_forest.json",
+                br##"{"values":["minecraft:forest","minecraft:dark_forest","minecraft:pale_garden"]}"##
+                    .to_vec(),
+            ),
+            (
+                "data/minecraft/tags/worldgen/biome/buried_treasure.json",
+                br##"{"values":["#minecraft:is_beach","minecraft:stony_shore"]}"##.to_vec(),
+            ),
+            (
+                "data/minecraft/tags/worldgen/biome/is_beach.json",
+                br##"{"values":["minecraft:beach"]}"##.to_vec(),
+            ),
+            // a biome json must NOT be picked up as a tag (the strict
+            // prefix classification: only tags/worldgen/biome/ parses here)
+            (
+                "data/minecraft/worldgen/biome/forest.json",
+                br##"{"temperature":0.7,"downfall":0.8}"##.to_vec(),
+            ),
+        ]);
+        let data = generate(&mut zip).unwrap();
+        assert_eq!(data.biome_tags.len(), 3);
+        assert_eq!(
+            data.biome_tags["is_forest"],
+            vec![
+                "minecraft:forest".to_string(),
+                "minecraft:dark_forest".to_string(),
+                "minecraft:pale_garden".to_string(),
+            ]
+        );
+        assert_eq!(
+            data.biome_tags["buried_treasure"],
+            vec![
+                "#minecraft:is_beach".to_string(),
+                "minecraft:stony_shore".to_string(),
+            ],
+            "the nested reference rides VERBATIM"
+        );
+        let emitted = emit(&data).unwrap();
+        assert!(emitted.contains("pub static BIOME_TAGS: [(&str, &[&str]); 3]"));
+        assert!(
+            emitted.contains(
+                "(\"minecraft:buried_treasure\", &[\"#minecraft:is_beach\", \"minecraft:stony_shore\"]),"
+            ),
+            "the members emit in the jar's stored order, full minecraft: tag id"
+        );
+        assert!(emitted.contains("pub fn biome_tag(name: &str)"));
     }
 
     #[test]
