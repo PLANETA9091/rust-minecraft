@@ -616,6 +616,49 @@ hand-drawn:
   cutout rule. Also repairs a pre-existing doctest break (an unannotated
   pseudo-code fence in the item_bake docs compiled as Rust and failed
   `cargo test --workspace` on the clean tree).
+  The **lightmap's BlockLightColor lands (v0.3.87 — the torch is warm,
+  not grey)**: the block term's white stand-in retires, completing the
+  `lightmap.fsh` line the v0.3.86 round left open. The audit chain ran
+  fresh and first-hand against the official 26.2 jar: the shader source
+  itself (`assets/minecraft/shaders/core/lightmap.fsh`) carries the
+  formula VERBATIM — `BlockLightColor = mix(BlockLightTint, vec3(1.0),
+  0.9 * parabolicMixFactor(block_level))`, `block_brightness =
+  get_brightness(block_level) * BlockFactor` — where the parabola
+  `(2·level−1)²` rides the RAW normalized level (pure `#ffd8ac` warmth
+  at mid levels, near-white at BOTH ends: the level-0 mix is
+  irrelevant since its brightness is 0, the level-15 torch is
+  white-hot). `LightmapRenderStateExtractor.extract` pins
+  `blockFactor = blockLightFlicker + 1.4` — the flicker is a mean-zero
+  random walk ((r1−r2)·r3·r4·0.1 decayed ×0.9/tick, the torch
+  shimmer), so the deterministic client pins the flicker's EXPECTATION
+  (0) and keeps the constant 1.4, the mean of the vanilla range (the
+  shimmer itself is the documented non-goal, the end-flash precedent).
+  `EnvironmentAttributes.<clinit>` pins the tint default first-hand:
+  `defaultValue(sipush -10100)` = 0xFFD8AC, and no dimension JSON or
+  timeline track overrides it — the default IS the whole value in
+  every dimension the registry carries. The mesher's
+  `lightmap_combine` grows `block_light_color` + `parabolic_mix_factor`
+  and collapses its three clamped branches into ONE shape — the
+  shader's single final `clamp(color, 0, 1)` — with the block term
+  `BlockLightColor · get_brightness(block) · 1.4` per channel; the
+  both-terms branch stays bit-identical (same ops, same order), the
+  sky-only branch gains a no-op clamp (every existing pin under 1.0),
+  the block-only branch reads the tinted factored term. The verdicts
+  move honestly: a block-14-only torch now saturates red AND green
+  (1.0889, 1.0352 → clamped) with blue riding under (0.9740) — the
+  warm torch look; a full-sky torch-lit face at night saturates the
+  clamp entirely (fully lit, the vanilla verdict); day sky-12 over
+  block-10 sums to 29/30, still "the additive sum, not the max".
+  The goldens are untouched — BY DATA: the procedural golden worlds
+  carry NO block-light opinion (the `lm = 1.0` legacy path), so the
+  tint lands on nothing they render; 12/12 pass, every one rms 0.000
+  through verify_goldens.sh on the rebuilt release binaries. Tests +2
+  (workspace 390 → 392 passed / 0 failed / 3 ignored): the parabola
+  pins (0 at the mid, 1 at both ends, the 7/8 symmetry, red constant,
+  the derived extreme mix) and the full-channel mesher witness (block
+  7 all-under-clamp per channel, block 14 the red/green saturation
+  verdict); the three block-term pins in the riding tests moved WITH
+  the formula they ride (the autopush-88 honesty precedent).
   The **lightmap's SkyLightColor lands (v0.3.86 — the moonlight is
   blue, not grey)**: the carried candidate's javap audit ran fresh
   against the official 26.2 jar and the architecture finding is the
