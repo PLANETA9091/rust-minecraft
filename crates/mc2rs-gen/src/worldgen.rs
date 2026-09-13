@@ -460,6 +460,7 @@ pub fn generate<R: std::io::Read + std::io::Seek>(archive: &mut zip::ZipArchive<
                                 .collect()
                         })
                         .unwrap_or_default();
+                    sky_light_factor.sort_by_key(|(t, _)| *t);
                     let mut sky_light_color: Vec<(i64, [u8; 3])> = v
                         .get("tracks")
                         .and_then(|t| t.get("minecraft:visual/sky_light_color"))
@@ -638,7 +639,7 @@ pub fn emit(data: &WorldgenData) -> Result<String> {
     out.push_str("#[derive(Debug, Clone, Copy, PartialEq, Eq)]\npub enum Skybox {\n    None,\n    Overworld,\n    End,\n}\n\n");
     out.push_str("/// One built-in `minecraft:dimension_type` registry entry (the jar's\n");
     out.push_str("/// `data/minecraft/dimension_type/*.json`): world layout + environment.\n");
-    out.push_str("#[derive(Debug, Clone, Copy, PartialEq)]\npub struct DimensionTypeDef {\n    pub name: &'static str,\n    pub min_y: i32,\n    pub height: u32,\n    pub logical_height: u32,\n    pub has_skylight: bool,\n    pub has_fixed_time: bool,\n    pub ambient_light: f32,\n    pub coordinate_scale: f64,\n    pub timelines: Option<&'static str>,\n    pub default_clock: Option<&'static str>,\n    /// The lightmap's AmbientColor base (visual/ambient_light_color;\n    /// the bytecode default black when the JSON states none).\n    pub ambient_light_color: [u8; 3],\n    /// The sky-pipeline gate (SkyRenderer.extractRenderState's skybox).\n    pub skybox: Skybox,\n    /// The STATED fog distances (blocks) — None when the JSON states\n    /// none (the bytecode defaults' shape: start 0.0 / end 1024.0).\n    pub fog_start_distance: Option<f32>,\n    pub fog_end_distance: Option<f32>,\n    /// The STATED cloud-fog end (blocks) — None when the JSON states\n    /// none (the bytecode default 2048.0; no vanilla dimension\n    /// declares it, the consumer's `visual/cloud_fog_end_distance`).\n    pub cloud_fog_end_distance: Option<f32>,\n    /// The STATED block-light tint — None when the JSON states\n    /// none (the bytecode default -10100 = 0xFFFFD88C = #FFD88C,\n    /// the warm torch cast; no vanilla dimension declares it, the\n    /// consumer's `visual/block_light_tint`).\n    pub block_light_tint: Option<[u8; 3]>,\n    /// The STATED sky-light factor — None when the JSON states\n    /// none (the bytecode default 1.0; no vanilla dimension\n    /// declares it; the consumer multiplies it under the\n    /// timeline's multiply track — the attribute-system fold).\n    pub sky_light_factor: Option<f32>,\n}\n\n");
+    out.push_str("#[derive(Debug, Clone, Copy, PartialEq)]\npub struct DimensionTypeDef {\n    pub name: &'static str,\n    pub min_y: i32,\n    pub height: u32,\n    pub logical_height: u32,\n    pub has_skylight: bool,\n    pub has_fixed_time: bool,\n    pub ambient_light: f32,\n    pub coordinate_scale: f64,\n    pub timelines: Option<&'static str>,\n    pub default_clock: Option<&'static str>,\n    /// The lightmap's AmbientColor base (visual/ambient_light_color;\n    /// the bytecode default black when the JSON states none).\n    pub ambient_light_color: [u8; 3],\n    /// The sky-pipeline gate (SkyRenderer.extractRenderState's skybox).\n    pub skybox: Skybox,\n    /// The STATED fog distances (blocks) — None when the JSON states\n    /// none (the bytecode defaults' shape: start 0.0 / end 1024.0).\n    pub fog_start_distance: Option<f32>,\n    pub fog_end_distance: Option<f32>,\n    /// The STATED cloud-fog end (blocks) — None when the JSON states\n    /// none (the bytecode default 2048.0; no vanilla dimension\n    /// declares it, the consumer's `visual/cloud_fog_end_distance`).\n    pub cloud_fog_end_distance: Option<f32>,\n    /// The STATED block-light tint — None when the JSON states\n    /// none (the bytecode default -10100 = 0xFFFFD88C = #FFD88C,\n    /// the warm torch cast; no vanilla dimension declares it, the\n    /// consumer's `visual/block_light_tint`).\n    pub block_light_tint: Option<[u8; 3]>,\n    /// The STATED sky-light factor — None when the JSON states\n    /// none (the bytecode default 1.0; no vanilla dimension\n    /// declares it; the consumer multiplies it under the\n    /// timeline's multiply track — the attribute-system fold).\n    pub sky_light_factor: Option<f32>,\n    /// The STATED sky-light color — None when the JSON states\n    /// none (the bytecode default -1 = #FFFFFF white, the ARGB\n    /// multiply identity); the real jar's end/nether state\n    /// #ac60cd / #7a7aff. The consumer multiplies the stated\n    /// base under the timeline's multiply track per channel,\n    /// INTEGER arithmetic (javap ARGB.multiply).\n    pub sky_light_color: Option<[u8; 3]>,\n}\n\n");
     out.push_str("pub static DIMENSION_TYPES: [DimensionTypeDef; ");
     out.push_str(&data.dimension_types.len().to_string());
     out.push_str("] = [\n");
@@ -648,7 +649,7 @@ pub fn emit(data: &WorldgenData) -> Result<String> {
             None => "None".to_string(),
         };
         out.push_str(&format!(
-            "    DimensionTypeDef {{ name: \"{}\", min_y: {}, height: {}, logical_height: {}, has_skylight: {}, has_fixed_time: {}, ambient_light: {:?}, coordinate_scale: {:?}, timelines: {}, default_clock: {}, ambient_light_color: {:?}, skybox: Skybox::{:?}, fog_start_distance: {:?}, fog_end_distance: {:?}, cloud_fog_end_distance: {:?}, block_light_tint: {:?}, sky_light_factor: {:?} }},\n",
+            "    DimensionTypeDef {{ name: \"{}\", min_y: {}, height: {}, logical_height: {}, has_skylight: {}, has_fixed_time: {}, ambient_light: {:?}, coordinate_scale: {:?}, timelines: {}, default_clock: {}, ambient_light_color: {:?}, skybox: Skybox::{:?}, fog_start_distance: {:?}, fog_end_distance: {:?}, cloud_fog_end_distance: {:?}, block_light_tint: {:?}, sky_light_factor: {:?}, sky_light_color: {:?} }},\n",
             rust_str(&d.name),
             d.min_y,
             d.height,
@@ -666,6 +667,7 @@ pub fn emit(data: &WorldgenData) -> Result<String> {
             d.cloud_fog_end_distance,
             d.block_light_tint,
             d.sky_light_factor,
+            d.sky_light_color,
         ));
     }
     out.push_str("];\n\n");
@@ -675,7 +677,7 @@ pub fn emit(data: &WorldgenData) -> Result<String> {
 
     out.push_str("/// One built-in `minecraft:timeline` registry entry (the jar's\n");
     out.push_str("/// `data/minecraft/timeline/*.json`): keyframe tracks over a world clock.\n");
-    out.push_str("#[derive(Debug, Clone, Copy, PartialEq)]\npub struct TimelineDef {\n    pub name: &'static str,\n    pub clock: &'static str,\n    pub period_ticks: Option<i64>,\n    pub tracks: usize,\n    /// `minecraft:visual/sky_light_factor` keyframes, sorted by tick — the\n    /// render track the lightmap's SkyFactor multiplies the sky term by\n    /// (empty when the timeline carries no such track)\n    pub sky_light_factor: &'static [(i64, f32)],\n}\n\n");
+    out.push_str("#[derive(Debug, Clone, Copy, PartialEq)]\npub struct TimelineDef {\n    pub name: &'static str,\n    pub clock: &'static str,\n    pub period_ticks: Option<i64>,\n    pub tracks: usize,\n    /// `minecraft:visual/sky_light_factor` keyframes, sorted by tick — the\n    /// render track the lightmap's SkyFactor multiplies the sky term by\n    /// (empty when the timeline carries no such track)\n    pub sky_light_factor: &'static [(i64, f32)],\n    /// `minecraft:visual/sky_light_color` keyframes, sorted by tick — the\n    /// render track the lightmap's SkyLightColor multiplies the stated\n    /// base by, per channel (empty when the timeline carries no such track)\n    pub sky_light_color: &'static [(i64, [u8; 3])],\n}\n\n");
     for (id, t) in &data.timelines {
         if t.sky_light_factor.is_empty() {
             continue;
@@ -693,6 +695,23 @@ pub fn emit(data: &WorldgenData) -> Result<String> {
         }
         out.push_str("];\n");
     }
+    for (id, t) in &data.timelines {
+        if t.sky_light_color.is_empty() {
+            continue;
+        }
+        let ident = format!(
+            "TL_{}_SKY_LIGHT_COLOR",
+            id.chars().map(|c| if c.is_ascii_alphanumeric() { c } else { '_' }).collect::<String>().to_uppercase()
+        );
+        out.push_str(&format!("pub static {ident}: [(i64, [u8; 3]); {}] = [", t.sky_light_color.len()));
+        for (i, (tick, c)) in t.sky_light_color.iter().enumerate() {
+            if i > 0 {
+                out.push_str(", ");
+            }
+            out.push_str(&format!("({tick}, {c:?})"));
+        }
+        out.push_str("];\n");
+    }
     out.push_str("pub static TIMELINES: [TimelineDef; ");
     out.push_str(&data.timelines.len().to_string());
     out.push_str("] = [\n");
@@ -706,8 +725,17 @@ pub fn emit(data: &WorldgenData) -> Result<String> {
             );
             format!("&{ident}")
         };
+        let skc = if t.sky_light_color.is_empty() {
+            "&[]".to_string()
+        } else {
+            let ident = format!(
+                "TL_{}_SKY_LIGHT_COLOR",
+                t.name.trim_start_matches("minecraft:").chars().map(|c| if c.is_ascii_alphanumeric() { c } else { '_' }).collect::<String>().to_uppercase()
+            );
+            format!("&{ident}")
+        };
         out.push_str(&format!(
-            "    TimelineDef {{ name: \"{}\", clock: \"{}\", period_ticks: {}, tracks: {}, sky_light_factor: {} }},\n",
+            "    TimelineDef {{ name: \"{}\", clock: \"{}\", period_ticks: {}, tracks: {}, sky_light_factor: {}, sky_light_color: {} }},\n",
             rust_str(&t.name),
             rust_str(&t.clock),
             match t.period_ticks {
@@ -716,6 +744,7 @@ pub fn emit(data: &WorldgenData) -> Result<String> {
             },
             t.tracks,
             skf,
+            skc,
         ));
     }
     out.push_str("];\n\n");
@@ -1017,14 +1046,14 @@ mod tests {
         // overworld carries default_clock while the nether does not, the day
         // timeline's sky_light_factor rides numeric keyframes next to
         // string-valued visual tracks, and tags nest "#"-references
-        let nether = br##"{"ambient_light":0.1,"cardinal_light":"nether","coordinate_scale":8.0,"has_ceiling":true,"has_fixed_time":true,"has_skylight":false,"height":256,"logical_height":128,"min_y":0,"skybox":"none","timelines":"#minecraft:in_nether"}"##;
+        let nether = br##"{"ambient_light":0.1,"cardinal_light":"nether","coordinate_scale":8.0,"has_ceiling":true,"has_fixed_time":true,"has_skylight":false,"height":256,"logical_height":128,"min_y":0,"skybox":"none","timelines":"#minecraft:in_nether","attributes":{"minecraft:visual/sky_light_color":"#7a7aff"}}"##;
         let overworld = br##"{"ambient_light":0.0,"coordinate_scale":1.0,"default_clock":"minecraft:overworld","has_skylight":true,"height":384,"logical_height":384,"min_y":-64,"timelines":"#minecraft:in_overworld","attributes":{"minecraft:visual/ambient_light_color":"#0a0a0a"}}"##;
         // the stated "end" shape and the unknown-string shape (the
         // vanilla codec would reject the latter outright — the parse
         // falls back to the codec default, never a guess)
-        let the_end = br##"{"ambient_light":0.25,"coordinate_scale":1.0,"has_fixed_time":true,"has_skylight":true,"height":256,"logical_height":256,"min_y":0,"skybox":"end","timelines":"#minecraft:in_end"}"##;
-        let custom = br##"{"ambient_light":0.0,"coordinate_scale":1.0,"has_skylight":true,"height":384,"logical_height":384,"min_y":-64,"skybox":"weird","timelines":"#minecraft:in_overworld","attributes":{"minecraft:visual/cloud_fog_end_distance":512.0,"minecraft:visual/block_light_tint":"#302821","minecraft:visual/sky_light_factor":0.5}}"##;
-        let day = br##"{"clock":"minecraft:overworld","period_ticks":24000,"tracks":{"minecraft:gameplay/monsters_burn":{"keyframes":[{"ticks":12542,"value":true},{"ticks":23460,"value":false}],"modifier":"or"},"minecraft:visual/sky_color":{"keyframes":[{"ticks":133,"value":"#ffffff"},{"ticks":11867,"value":"#000000"}],"modifier":"multiply"},"minecraft:visual/sky_light_factor":{"keyframes":[{"ticks":22860,"value":0.24},{"ticks":730,"value":1.0},{"ticks":11270,"value":1.0},{"ticks":13140,"value":0.24}],"modifier":"multiply"}}}"##;
+        let the_end = br##"{"ambient_light":0.25,"coordinate_scale":1.0,"has_fixed_time":true,"has_skylight":true,"height":256,"logical_height":256,"min_y":0,"skybox":"end","timelines":"#minecraft:in_end","attributes":{"minecraft:visual/sky_light_color":"#ac60cd"}}"##;
+        let custom = br##"{"ambient_light":0.0,"coordinate_scale":1.0,"has_skylight":true,"height":384,"logical_height":384,"min_y":-64,"skybox":"weird","timelines":"#minecraft:in_overworld","attributes":{"minecraft:visual/cloud_fog_end_distance":512.0,"minecraft:visual/block_light_tint":"#302821","minecraft:visual/sky_light_factor":0.5,"minecraft:visual/sky_light_color":"#302821"}}"##;
+        let day = br##"{"clock":"minecraft:overworld","period_ticks":24000,"tracks":{"minecraft:gameplay/monsters_burn":{"keyframes":[{"ticks":12542,"value":true},{"ticks":23460,"value":false}],"modifier":"or"},"minecraft:visual/sky_color":{"keyframes":[{"ticks":133,"value":"#ffffff"},{"ticks":11867,"value":"#000000"}],"modifier":"multiply"},"minecraft:visual/sky_light_factor":{"keyframes":[{"ticks":22860,"value":0.24},{"ticks":730,"value":1.0},{"ticks":11270,"value":1.0},{"ticks":13140,"value":0.24}],"modifier":"multiply"},"minecraft:visual/sky_light_color":{"keyframes":[{"ticks":13140,"value":"#7a7aff"},{"ticks":730,"value":"#ffffff"},{"ticks":11270,"value":"#ffffff"},{"ticks":22860,"value":"#7a7aff"}],"modifier":"multiply"}}}"##;
         let early_game = br##"{"clock":"minecraft:overworld","tracks":{"minecraft:gameplay/can_sleep":{"keyframes":[{"ticks":0,"value":true}]}}}"##;
         let mut zip = zip_of(&[
             ("data/minecraft/dimension_type/the_nether.json", nether.to_vec()),
@@ -1097,18 +1126,54 @@ mod tests {
             n.sky_light_factor, None,
             "no vanilla dimension declares it — the absent shape"
         );
+        // the sky-light color: the REAL jar shapes ride the parse
+        // fixtures (the end #ac60cd, the nether #7a7aff — the moonlight
+        // pairs), a custom statement parses per channel, and the
+        // overworld's absent key reads None — the bytecode default's
+        // (#FFFFFF) shape
+        assert_eq!(
+            data.dimension_types["the_end"].sky_light_color,
+            Some([0xac, 0x60, 0xcd]),
+            "the end's real stated color"
+        );
+        assert_eq!(
+            data.dimension_types["the_nether"].sky_light_color,
+            Some([0x7a, 0x7a, 0xff]),
+            "the nether's real stated color"
+        );
+        assert_eq!(
+            data.dimension_types["custom"].sky_light_color,
+            Some([0x30, 0x28, 0x21]),
+            "the stated attribute parses per channel"
+        );
+        assert_eq!(
+            o.sky_light_color, None,
+            "the overworld states none — the absent shape"
+        );
 
         let d = &data.timelines["day"];
         assert_eq!(d.clock, "minecraft:overworld");
         assert_eq!(d.period_ticks, Some(24_000));
-        assert_eq!(d.tracks, 3);
+        assert_eq!(d.tracks, 4);
         // unsorted keyframes arrive sorted; the hex-string visual track is
         // not the numeric render track
         assert_eq!(
             d.sky_light_factor,
             vec![(730, 1.0), (11_270, 1.0), (13_140, 0.24), (22_860, 0.24)]
         );
+        // the color track rides hex-string keyframes into raw triples,
+        // sorted the same way
+        assert_eq!(
+            d.sky_light_color,
+            vec![
+                (730, [255, 255, 255]),
+                (11_270, [255, 255, 255]),
+                (13_140, [122, 122, 255]),
+                (22_860, [122, 122, 255])
+            ]
+        );
         assert!(data.timelines["early_game"].sky_light_factor.is_empty());
+        assert!(data.timelines["early_game"].sky_light_color.is_empty());
         assert_eq!(data.timelines["early_game"].period_ticks, None);
         assert_eq!(
             data.timeline_tags["in_overworld"],
