@@ -101,6 +101,15 @@ pub struct DimensionTypeEntry {
     /// EnvironmentAttributes): NO vanilla dimension declares it, so the
     /// field rides only a custom server's statement.
     pub block_light_tint: Option<[u8; 3]>,
+    /// The STATED sky-light factor (visual/sky_light_factor) — `None`
+    /// when the JSON states none, the bytecode default's shape (1.0,
+    /// javap EnvironmentAttributes): NO vanilla dimension declares it,
+    /// so the field rides only a custom server's statement. The
+    /// consumer multiplies it UNDER the timeline's track (the
+    /// attribute-system fold: the dimension's constant layer
+    /// overrides the registered default, the timeline's multiply track
+    /// applies last).
+    pub sky_light_factor: Option<f32>,
 }
 
 /// The per-biome tint extras the jar states beyond the classic color
@@ -380,6 +389,15 @@ pub fn generate<R: std::io::Read + std::io::Seek>(archive: &mut zip::ZipArchive<
                                 .and_then(Value::as_str)
                                 .and_then(hex_color)
                                 .map(|c| [(c >> 16) as u8, (c >> 8) as u8, c as u8]),
+                            // the STATED sky-light factor: a syncable
+                            // FLOAT — the bytecode default 1.0 when the
+                            // JSON states none; the consumer multiplies
+                            // it under the timeline's multiply track
+                            sky_light_factor: v
+                                .get("attributes")
+                                .and_then(|a| a.get("minecraft:visual/sky_light_factor"))
+                                .and_then(Value::as_f64)
+                                .map(|f| f as f32),
                             // string tag references only — the inline list
                             // form does not occur in the real jar
                             timelines: v
