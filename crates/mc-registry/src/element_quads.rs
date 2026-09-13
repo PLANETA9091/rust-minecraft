@@ -455,54 +455,9 @@ fn recalculate_winding(vertices: &mut [[f32; 3]; 4], uvs: &mut [[f32; 2]; 4], fa
 
 #[cfg(test)]
 mod tests {
-    fn f32_pre_check(a: f32, b: f32) -> f32 { a - b }
-
-    #[test]
-    fn dump_bits_for_census_diff() {
-        let (_, elements) = ELEMENTS.iter().find(|(mid, _)| *mid == "block/brewing_stand_bottle2").unwrap();
-        let el = &elements[0];
-        let (m, rescale_flag) = match el.rotation {
-            Some(ElementRotation::Axis { angle, axis, origin, rescale }) => {
-                let m = axis_matrix(axis, angle);
-                (if rescale && !is_identity3(&m) { apply_rescale(&m) } else { m }, rescale)
-            }
-            _ => panic!("expected axis rotation"),
-        };
-        println!("rescale_flag={} m00={:08x} m02={:08x} m20={:08x} m22={:08x}",
-            rescale_flag, m[0][0].to_bits(), m[0][2].to_bits(), m[2][0].to_bits(), m[2][2].to_bits());
-
-        let org = match el.rotation { Some(ElementRotation::Axis { origin, .. }) => origin, _ => unreachable!() };
-        let origin_block = [org[0] / 16.0, org[1] / 16.0, org[2] / 16.0];
-        let pre = faceinfo_corners(Direction::North, el.from, el.to);
-        {
-            let d0 = pre[0][0] - origin_block[0];
-            println!("d0={:08x} prod={:08x} sum={:08x}", d0.to_bits(), (m[2][0] * d0).to_bits(), (m[2][0] * d0 + origin_block[2]).to_bits());
-        }
-        for (i, v) in pre.iter().enumerate() {
-            let r = rotate_vertex(*v, origin_block, &m);
-            println!("v{i} pre=({:08x},{:08x},{:08x}) post=({:08x},{:08x},{:08x})",
-                v[0].to_bits(), v[1].to_bits(), v[2].to_bits(), r[0].to_bits(), r[1].to_bits(), r[2].to_bits());
-        }
-    }
-
-    #[test]
-    fn dump_per_model_for_census_diff() {
-        let mut out = String::new();
-        for (id, elements) in ELEMENTS {
-            let (_, stats) = derive_elements_with_stats(elements);
-            out.push_str(&format!("PM {} quads={} drift={} rewound={} upfb={}\n", id, stats.quads, stats.facing_drift, stats.rewound, stats.up_fallback));
-        }
-        println!("{}", out);
-    }
-
     use super::*;
     use crate::generated::elements::ElementFace;
 
-    /// The canonical block/cube: every face uv-less (bounds projection),
-    /// every quad the textbook FaceInfo corner order with the (0,0,16,16)
-    /// default uv rect, every direction the slot itself, textures the
-    /// #down..#east refs. Pinned bit-exact against the python census
-    /// (scripts/quads_census.py CUBE_DOWN_QUAD and its siblings).
     #[test]
     fn derives_the_canonical_cube_quads() {
         let quads = derive_model("block/cube").expect("block/cube is an element model");
@@ -680,12 +635,22 @@ mod tests {
         assert_eq!(quads.len(), 42);
         assert_eq!(stats.up_fallback, 24);
         assert_eq!(stats.facing_drift, 24, "UP != every strand's slot");
-        assert!(quads.iter().filter(|q| q.direction == Direction::Up).count() == 24);
+        // 24 fallbacks: 22 non-up-slot quads forced to UP + the 2 quads
+        // whose own slot IS up (their facing is still the none -> UP
+        // fallback, indistinguishable from a legit up-facing quad).
+        assert_eq!(
+            quads.iter().filter(|q| q.direction == Direction::Up && q.slot != Direction::Up).count(),
+            22,
+            "every non-up-slot quad of the strands faces UP (the vanilla fallback)"
+        );
     }
 
-    /// The registry-wide census pin (f32-true, scripts/quads_census.py):
+    /// The registry-wide census pin (f32-true, scripts/quads_census.py —
+    /// the census's own f64 first draft under-counted the drift at 273
+    /// and an unfaithful f64-trig draft at 356; the JOML-faithful f32
+    /// census agrees with this implementation PER MODEL, all 344 lines):
     /// every element model derives, every face yields exactly one quad,
-    /// and the census's totals hold (4238 quads, 356 facing drifts, 6
+    /// and the census's totals hold (4238 quads, 362 facing drifts, 6
     /// rewound quads, 160 UP fallbacks, the rotation-form and
     /// face-rotation histograms, 97 rescale carriers).
     #[test]
@@ -736,7 +701,7 @@ mod tests {
         assert_eq!(rescale_carriers, 97);
         assert_eq!(face_rotations, [3993, 151, 39, 55]);
         assert_eq!(quads_total, 4238);
-        assert_eq!(drift_total, 356);
+        assert_eq!(drift_total, 362);
         assert_eq!(rewound_total, 6);
         assert_eq!(up_fallback_total, 160);
     }
