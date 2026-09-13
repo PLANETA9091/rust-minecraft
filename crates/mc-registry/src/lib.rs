@@ -5,6 +5,12 @@
 
 pub mod generated;
 
+/// The hand-written consumer layer over generated::blockstates: the
+/// strict JSON-subset parse of both canonical columns plus the vanilla
+/// selection semantics (first-match variants, all-matching multipart
+/// parts, "a|b" pipe values). See the module docs.
+pub mod blockstate_lookup;
+
 /// One block definition: identifier + sorted list of state property names.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Block {
