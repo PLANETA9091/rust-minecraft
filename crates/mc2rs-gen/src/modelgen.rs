@@ -20,10 +20,20 @@ pub const MODELS_DIR: &str = "assets/minecraft/models/";
 /// 1271 item); a file anywhere else under models/ refuses (strict prefix).
 pub const PREFIXES: [&str; 2] = ["block/", "item/"];
 
-/// The accepted top-level model keys — the closed 26.2 census set
-/// (no model carries `render_type` in 26.2).
-const MODEL_KEYS: [&str; 6] =
-    ["parent", "textures", "elements", "display", "gui_light", "ambientocclusion"];
+/// The accepted top-level model keys — the closed 26.2 census set. The two
+/// outliers the full census caught: `groups` (Blockbench editor metadata the
+/// engine ignores — retained value-faithfully, 4 custom_fence files) and
+/// `texture_size` (the element-UV size override — typed, heavy_core).
+const MODEL_KEYS: [&str; 8] = [
+    "parent",
+    "textures",
+    "elements",
+    "display",
+    "gui_light",
+    "ambientocclusion",
+    "texture_size",
+    "groups",
+];
 
 /// The display contexts. 26.2 adds `on_shelf` (the shelf block's display).
 const DISPLAY_CONTEXTS: [&str; 9] = [
@@ -54,6 +64,7 @@ const GUI_LIGHTS: [&str; 2] = ["front", "side"];
 const BUILTIN_PREFIX: &str = "builtin/";
 
 /// One parsed model file.
+#[derive(Debug)]
 pub struct ModelRow {
     /// The parent path with a `minecraft:` namespace stripped (26.2 mixes
     /// bare and namespaced parents — both normalize to the bare path);
@@ -70,9 +81,15 @@ pub struct ModelRow {
     pub gui_light: Option<String>,
     /// The ambient-occlusion override.
     pub ambientocclusion: Option<bool>,
+    /// The element-UV texture size override (the default is 16x16).
+    pub texture_size: Option<(u16, u16)>,
+    /// The Blockbench `groups` editor metadata, retained value-faithfully
+    /// as canonical compact JSON (the engine ignores it; we never drop).
+    pub groups: Option<String>,
 }
 
 /// The parsed table the generated file carries.
+#[derive(Debug)]
 pub struct ModelsData {
     /// All models, keyed by the bare path ("block/stone", "item/bow").
     pub models: BTreeMap<String, ModelRow>,
@@ -180,7 +197,7 @@ pub fn generate<R: std::io::Read + std::io::Seek>(
             "{name}: model directory \"{prefix}/\" is not one of {PREFIXES:?} (extend the parser first)"
         );
         anyhow::ensure!(!rel.is_empty(), "empty model id from {name}");
-        if prefix == "block/" { blocks += 1 } else { items += 1 }
+        if prefix == "block" { blocks += 1 } else { items += 1 }
 
         let bytes = crate::extract::read_entry(archive, name)
             .with_context(|| format!("read {name}"))?;
@@ -266,6 +283,38 @@ pub fn generate<R: std::io::Read + std::io::Seek>(
             None => None,
         };
 
+        let texture_size = match obj.get("texture_size") {
+            Some(v) => {
+                let a = v
+                    .as_array()
+                    .with_context(|| format!("{name}: texture_size must be an array"))?;
+                anyhow::ensure!(
+                    a.len() == 2,
+                    "{name}: texture_size must be exactly [width, height]"
+                );
+                let dim = |x: &Value| -> Result<u16> {
+                    let n = x
+                        .as_u64()
+                        .with_context(|| format!("{name}: texture_size must be u16s"))?;
+                    anyhow::ensure!(n > 0 && n <= u16::MAX as u64, "{name}: texture_size dim {n} out of range");
+                    Ok(n as u16)
+                };
+                Some((dim(&a[0])?, dim(&a[1])?))
+            }
+            None => None,
+        };
+
+        let groups = match obj.get("groups") {
+            Some(v) => {
+                anyhow::ensure!(
+                    v.is_array(),
+                    "{name}: groups must be an array (Blockbench metadata)"
+                );
+                Some(serde_json::to_string(v).with_context(|| format!("{name}: re-serialize groups"))?)
+            }
+            None => None,
+        };
+
         models.insert(rel.to_string(), ModelRow {
             parent,
             textures,
@@ -273,6 +322,8 @@ pub fn generate<R: std::io::Read + std::io::Seek>(
             elements,
             gui_light,
             ambientocclusion,
+            texture_size,
+            groups,
         });
     }
 
@@ -324,9 +375,10 @@ pub fn emit(data: &ModelsData) -> Result<String> {
     out.push_str("//! held-item consumer (display transforms -> hand pose) comes later.\n\n");
 
     out.push_str("/// (id, parent, textures JSON, display JSON, element count, gui_light,\n");
-    out.push_str("/// ambientocclusion) per model; parent/JSON columns are namespace-stripped\n");
-    out.push_str("/// bare paths; builtin/* parents are vanilla built-ins, not files.\n");
-    out.push_str("pub static MODELS: [(&str, Option<&str>, Option<&str>, Option<&str>, u16, Option<&str>, Option<bool>); ");
+    out.push_str("/// ambientocclusion, texture_size, groups JSON) per model; parent/JSON\n");
+    out.push_str("/// columns are namespace-stripped bare paths; builtin/* parents are\n");
+    out.push_str("/// vanilla built-ins, not files; groups is Blockbench editor metadata.\n");
+    out.push_str("pub static MODELS: [(&str, Option<&str>, Option<&str>, Option<&str>, u16, Option<&str>, Option<bool>, Option<(u16, u16)>, Option<&str>); ");
     out.push_str(&data.models.len().to_string());
     out.push_str("] = [\n");
     for (id, r) in &data.models {
@@ -335,7 +387,7 @@ pub fn emit(data: &ModelsData) -> Result<String> {
             None => "None".to_string(),
         };
         out.push_str(&format!(
-            "    ({id:?}, {}, {}, {}, {}u16, {}, {}),\n",
+            "    ({id:?}, {}, {}, {}, {}u16, {}, {}, {}, {}),\n",
             opt(&r.parent),
             opt(&r.textures),
             opt(&r.display),
@@ -346,6 +398,11 @@ pub fn emit(data: &ModelsData) -> Result<String> {
                 Some(false) => "Some(false)".to_string(),
                 None => "None".to_string(),
             },
+            match r.texture_size {
+                Some((w, h)) => format!("Some(({w}, {h}))"),
+                None => "None".to_string(),
+            },
+            opt(&r.groups),
         ));
     }
     out.push_str("];\n\n");
@@ -387,7 +444,7 @@ mod tests {
         let zip = zip_of(&[
             // the root transform carrier (26.2's block/block shape)
             (
-                "assets/minecraft/models/block/cube.json",
+                "assets/minecraft/models/block/block.json",
                 json_bytes(serde_json::json!({
                     "display": {
                         "gui": {"rotation": [30, 225, 0], "translation": [0, 0, 0],
@@ -396,6 +453,15 @@ mod tests {
                                       "scale": [1, 1, 1]}
                     },
                     "gui_light": "side"
+                })),
+            ),
+            // a second display carrier (a child root, the fixture's cube)
+            (
+                "assets/minecraft/models/block/cube.json",
+                json_bytes(serde_json::json!({
+                    "display": {
+                        "gui": {"rotation": [0, 0, 0], "scale": [1.0, 1.0, 1.0]}
+                    }
                 })),
             ),
             // bare parent + var-ref + plain texture
@@ -423,6 +489,26 @@ mod tests {
                                               "force_translucent": true}}
                 })),
             ),
+            // the texture_size outlier (the heavy_core shape)
+            (
+                "assets/minecraft/models/block/heavy_core.json",
+                json_bytes(serde_json::json!({
+                    "texture_size": [16, 16],
+                    "display": {"gui": {"rotation": [0, 0, 0], "scale": [0.5, 0.5, 0.5]}},
+                    "textures": {"all": "block/heavy_core"},
+                    "elements": [{"from": [0, 0, 0], "to": [16, 16, 16]}]
+                })),
+            ),
+            // the groups outlier (the Blockbench-metadata shape)
+            (
+                "assets/minecraft/models/block/custom_fence_side_east.json",
+                json_bytes(serde_json::json!({
+                    "textures": {"texture": "block/oak_planks"},
+                    "elements": [{"from": [0, 0, 0], "to": [1, 1, 1]}],
+                    "groups": [{"name": "east", "origin": [0, 0, 0], "color": 0,
+                                 "children": [0, 1]}]
+                })),
+            ),
             // builtin parent terminates the chain
             (
                 "assets/minecraft/models/item/generated.json",
@@ -444,8 +530,8 @@ mod tests {
         ]);
         let mut zip = zip;
         let data = generate(&mut zip).unwrap();
-        assert_eq!(data.models.len(), 6);
-        assert_eq!((data.blocks, data.items), (4, 2));
+        assert_eq!(data.models.len(), 9);
+        assert_eq!((data.blocks, data.items), (7, 2));
 
         let stone = &data.models["block/stone"];
         assert_eq!(stone.parent.as_deref(), Some("block/cube_all"), "namespace stripped");
@@ -453,12 +539,17 @@ mod tests {
         assert!(stone.display.is_none());
         assert_eq!(stone.elements, 0);
 
-        let cube = &data.models["block/cube"];
-        assert_eq!(cube.parent, None, "the root has no parent");
-        assert_eq!(cube.gui_light.as_deref(), Some("side"));
-        let disp = cube.display.as_deref().unwrap();
+        // the two fixture roots: block/block carries the gui_light + the
+        // display stanza verbatim; cube is a display-only child root
+        let root = &data.models["block/block"];
+        assert_eq!(root.parent, None);
+        assert_eq!(root.gui_light.as_deref(), Some("side"));
+        let disp = root.display.as_deref().unwrap();
         assert!(disp.contains("\"gui\":{\"rotation\":[30,225,0]"), "{disp}");
         assert!(disp.contains("\"on_shelf\":{\"rotation\":[0,180,0]"), "{disp}");
+        let cube = &data.models["block/cube"];
+        assert_eq!(cube.parent, None, "the cube fixture is a root too");
+        assert!(cube.gui_light.is_none());
 
         let all = &data.models["block/cube_all"];
         assert_eq!(all.parent.as_deref(), Some("block/cube"), "bare parent kept");
@@ -474,11 +565,19 @@ mod tests {
 
         let stick = &data.models["item/stick"];
         assert_eq!(stick.elements, 2);
-        assert_eq!(data.element_models, vec!["item/stick".to_string()]);
+        assert_eq!(data.element_models, vec!["block/custom_fence_side_east".to_string(), "block/heavy_core".to_string(), "item/stick".to_string()]);
+
+        let heavy = &data.models["block/heavy_core"];
+        assert_eq!(heavy.texture_size, Some((16, 16)), "the UV override is typed");
+        assert_eq!(heavy.elements, 1);
+        let fence = &data.models["block/custom_fence_side_east"];
+        let groups = fence.groups.as_deref().unwrap();
+        assert!(groups.contains("\"name\":\"east\""), "{groups}");
+        assert!(fence.texture_size.is_none());
 
         let emitted = emit(&data).unwrap();
         assert!(emitted.contains("(\"block/stone\", Some(\"block/cube_all\"), \
-            Some(\"{\\\"all\\\":\\\"minecraft:block/stone\\\"}\"), None, 0u16, None, None)"));
+            Some(\"{\\\"all\\\":\\\"minecraft:block/stone\\\"}\"), None, 0u16, None, None, None, None)"));
         assert!(emitted.contains("ELEMENT_MODELS: &[&str] = &["));
         assert!(emitted.contains("    \"item/stick\","));
     }
@@ -501,7 +600,7 @@ mod tests {
             json_bytes(serde_json::json!({"parent": "block/nope"})),
         )]);
         let mut z = zip;
-        let err = generate(&mut z).unwrap_err().to_string();
+        let err = format!("{:#}", generate(&mut z).unwrap_err());
         assert!(err.contains("dangling"), "{err}");
 
         // cycle: a -> b -> a
@@ -516,7 +615,7 @@ mod tests {
             ),
         ]);
         let mut z = zip;
-        let err = generate(&mut z).unwrap_err().to_string();
+        let err = format!("{:#}", generate(&mut z).unwrap_err());
         assert!(err.contains("cycle"), "{err}");
 
         // foreign namespace
@@ -525,7 +624,7 @@ mod tests {
             json_bytes(serde_json::json!({"parent": "neoforge:block/x"})),
         )]);
         let mut z = zip;
-        let err = generate(&mut z).unwrap_err().to_string();
+        let err = format!("{:#}", generate(&mut z).unwrap_err());
         assert!(err.contains("neoforge"), "{err}");
     }
 
@@ -539,7 +638,7 @@ mod tests {
             })),
         )]);
         let mut z = zip;
-        let err = generate(&mut z).unwrap_err().to_string();
+        let err = format!("{:#}", generate(&mut z).unwrap_err());
         assert!(err.contains("shelf_left"), "{err}");
 
         // unknown transform key
@@ -550,7 +649,7 @@ mod tests {
             })),
         )]);
         let mut z = zip;
-        let err = generate(&mut z).unwrap_err().to_string();
+        let err = format!("{:#}", generate(&mut z).unwrap_err());
         assert!(err.contains("pivot"), "{err}");
 
         // unknown object-texture key
@@ -561,7 +660,7 @@ mod tests {
             })),
         )]);
         let mut z = zip;
-        let err = generate(&mut z).unwrap_err().to_string();
+        let err = format!("{:#}", generate(&mut z).unwrap_err());
         assert!(err.contains("atlas"), "{err}");
     }
 

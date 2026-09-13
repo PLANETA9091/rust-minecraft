@@ -397,4 +397,129 @@ mod tests {
             assert!(ITEMS.contains(id), "complex {id} names no known item");
         }
     }
+
+    #[test]
+    fn the_model_table_is_the_jar_census_and_the_joins_hold() {
+        use generated::item_models::ITEM_MODEL_DEFS;
+        use generated::models::{ELEMENT_MODELS, MODELS};
+        // the jar's assets/minecraft/models/ file set, verbatim: 3928 files
+        // split 2657 block/ + 1271 item/ — cross-checked against an
+        // independent python census (the itemgen dual-census precedent)
+        assert_eq!(MODELS.len(), 3928);
+        let blocks = MODELS.iter().filter(|m| m.0.starts_with("block/")).count();
+        let items = MODELS.iter().filter(|m| m.0.starts_with("item/")).count();
+        assert_eq!((blocks, items), (2657, 1271));
+        // the element geometry is retained in the honest skip list
+        assert_eq!(ELEMENT_MODELS.len(), 344);
+        assert_eq!(ELEMENT_MODELS.first(), Some(&"block/bamboo1_age0"));
+        assert_eq!(ELEMENT_MODELS.last(), Some(&"item/spyglass_in_hand"));
+        // the closed census counts: gui_light carriers and the
+        // ambient-occlusion overrides
+        assert_eq!(MODELS.iter().filter(|r| r.5.is_some()).count(), 12);
+        assert_eq!(MODELS.iter().filter(|r| r.6.is_some()).count(), 157);
+
+        let model = |id: &str| {
+            MODELS
+                .iter()
+                .find(|m| m.0 == id)
+                .unwrap_or_else(|| panic!("{id} must be a model"))
+        };
+
+        // verbatim spot rows — the jar's own stored strings (canonical
+        // compact JSON, serde key order)
+        let stone = model("block/stone");
+        assert_eq!(stone.1, Some("block/cube_all"), "namespace stripped");
+        assert_eq!(stone.2, Some("{\"all\":\"minecraft:block/stone\"}"));
+        assert_eq!(stone.4, 0);
+        let apple = model("item/apple");
+        assert_eq!(apple.1, Some("item/generated"));
+        assert_eq!(apple.2, Some("{\"layer0\":\"minecraft:item/apple\"}"));
+        let stairs = model("block/oak_stairs");
+        assert_eq!(
+            stairs.2,
+            Some("{\"bottom\":\"minecraft:block/oak_planks\",\"side\":\"minecraft:block/oak_planks\",\"top\":\"minecraft:block/oak_planks\"}")
+        );
+
+        // the root display transforms — the held-item consumer's constants
+        let block_root = model("block/block");
+        assert_eq!(block_root.1, None, "block/block is a chain root");
+        assert_eq!(block_root.5, Some("side"));
+        let d = block_root.3.unwrap();
+        assert!(d.contains("\"gui\":{\"rotation\":[30,225,0],\"scale\":[0.625,0.625,0.625],\"translation\":[0,0,0]}"), "{d}");
+        // 26.2's shelf context rides the root
+        assert!(d.contains("\"on_shelf\":{\"rotation\":[0,180,0],\"scale\":[1,1,1],\"translation\":[0,0,0]}"), "{d}");
+        assert!(!d.contains("thirdperson_lefthand"), "the block root states only the right-hand context");
+        let generated = model("item/generated");
+        assert_eq!(generated.1, Some("builtin/generated"));
+        assert_eq!(generated.5, Some("front"));
+        let d = generated.3.unwrap();
+        assert!(d.contains("\"firstperson_righthand\":{\"rotation\":[0,-90,25],\"scale\":[0.68,0.68,0.68],\"translation\":[1.13,3.2,1.13]}"), "{d}");
+        let handheld = model("item/handheld");
+        let d = handheld.3.unwrap();
+        assert!(d.contains("\"thirdperson_righthand\":{\"rotation\":[0,-90,55],\"scale\":[0.85,0.85,0.85],\"translation\":[0,4.0,0.5]}"), "{d}");
+
+        // the two outliers the full census caught, verbatim
+        let heavy = model("block/heavy_core");
+        assert_eq!(heavy.1, None, "heavy_core is its own root");
+        assert_eq!(heavy.7, Some((16, 16)), "the element-UV size override");
+        let fence = model("block/custom_fence_side_east");
+        assert_eq!(
+            fence.8,
+            Some("[{\"children\":[0,1],\"color\":0,\"name\":\"east\",\"origin\":[0,0,0]}]"),
+            "the Blockbench groups metadata is retained, never dropped"
+        );
+        // the 26.2 object-valued texture entries (redstone/glass) ride through
+        let dust = model("block/redstone_dust_dot");
+        assert!(dust.2.unwrap().contains("\"force_translucent\":true"));
+
+        // the deepest chain, verbatim: the crafter family down to the root
+        let chain = [
+            "block/crafter_crafting_triggered",
+            "block/crafter_crafting",
+            "block/crafter_triggered",
+            "block/crafter",
+        ];
+        for (a, b) in chain.iter().zip(chain.iter().skip(1)) {
+            assert_eq!(model(a).1, Some(*b));
+        }
+        assert_eq!(model("block/crafter").1, Some("block/block"));
+
+        // the parent graph re-verified FROM the emitted table: every parent
+        // resolves to a file or a builtin/, acyclic, max depth 4
+        let by_id = |id: &str| MODELS.iter().find(|m| m.0 == id);
+        let mut max_depth = 0u32;
+        for row in MODELS.iter() {
+            let mut cur = row.0;
+            let mut seen = std::collections::BTreeSet::new();
+            let mut depth = 0u32;
+            loop {
+                let parent = by_id(cur).expect("every walked id exists").1;
+                let p = match parent {
+                    None => break,
+                    Some(p) if p.starts_with("builtin/") => break,
+                    Some(p) => p,
+                };
+                assert!(by_id(p).is_some(), "{id}: dangling parent {p}");
+                assert!(seen.insert(cur), "{id}: parent cycle at {cur}");
+                cur = p;
+                depth += 1;
+            }
+            max_depth = max_depth.max(depth);
+        }
+        assert_eq!(max_depth, 4, "the census depth (the crafter chain)");
+
+        // THE JOIN: every plain item def's model path resolves to a file
+        for (_, path, _, _) in ITEM_MODEL_DEFS.iter() {
+            let bare = path.strip_prefix("minecraft:").unwrap();
+            assert!(by_id(bare).is_some(), "def model {bare} resolves to no model file");
+        }
+        // 24 defs point directly at element-carrying models (beacon,
+        // cactus, crafter...) — the consumer round's bridge set
+        let elemental: std::collections::BTreeSet<&str> = ELEMENT_MODELS.iter().copied().collect();
+        let hits = ITEM_MODEL_DEFS
+            .iter()
+            .filter(|d| elemental.contains(d.1.strip_prefix("minecraft:").unwrap()))
+            .count();
+        assert_eq!(hits, 24, "defs pointing directly at element-carrying models");
+    }
 }
