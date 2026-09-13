@@ -101,6 +101,11 @@ pub fn materialize(
         // generated per-state property table; zeros where the block
         // carries no variant (the mesher's no-opinion look)
         variants: Some(vec![vec![0u8; CHUNK_X * CHUNK_Y * CHUNK_Z]; side * side]),
+        // the lightmap's AmbientColor base rides the SAME snapshot: the
+        // model's dimension resolves through the built-in
+        // visual/ambient_light_color table; None = no dimension pinned (or
+        // an unknown custom one) — the bytecode-default black
+        ambient_light: model.ambient_light_color(),
     };
     let side_i = side as i32;
     for gz in 0..side_i {

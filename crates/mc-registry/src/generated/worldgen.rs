@@ -199,10 +199,10 @@ pub struct DimensionTypeDef {
 }
 
 pub static DIMENSION_TYPES: [DimensionTypeDef; 4] = [
-    DimensionTypeDef { name: "minecraft:overworld", min_y: -64, height: 384, logical_height: 384, has_skylight: true, has_fixed_time: false, ambient_light: 0.0, coordinate_scale: 1.0, timelines: Some("#minecraft:in_overworld"), default_clock: Some("minecraft:overworld"), ambient_light_color: [0, 0, 0] },
-    DimensionTypeDef { name: "minecraft:overworld_caves", min_y: -64, height: 384, logical_height: 384, has_skylight: true, has_fixed_time: false, ambient_light: 0.0, coordinate_scale: 1.0, timelines: Some("#minecraft:in_overworld"), default_clock: Some("minecraft:overworld"), ambient_light_color: [0, 0, 0] },
-    DimensionTypeDef { name: "minecraft:the_end", min_y: 0, height: 256, logical_height: 256, has_skylight: true, has_fixed_time: true, ambient_light: 0.25, coordinate_scale: 1.0, timelines: Some("#minecraft:in_end"), default_clock: Some("minecraft:the_end"), ambient_light_color: [0, 0, 0] },
-    DimensionTypeDef { name: "minecraft:the_nether", min_y: 0, height: 256, logical_height: 128, has_skylight: false, has_fixed_time: true, ambient_light: 0.1, coordinate_scale: 8.0, timelines: Some("#minecraft:in_nether"), default_clock: None, ambient_light_color: [0, 0, 0] },
+    DimensionTypeDef { name: "minecraft:overworld", min_y: -64, height: 384, logical_height: 384, has_skylight: true, has_fixed_time: false, ambient_light: 0.0, coordinate_scale: 1.0, timelines: Some("#minecraft:in_overworld"), default_clock: Some("minecraft:overworld"), ambient_light_color: [10, 10, 10] },
+    DimensionTypeDef { name: "minecraft:overworld_caves", min_y: -64, height: 384, logical_height: 384, has_skylight: true, has_fixed_time: false, ambient_light: 0.0, coordinate_scale: 1.0, timelines: Some("#minecraft:in_overworld"), default_clock: Some("minecraft:overworld"), ambient_light_color: [10, 10, 10] },
+    DimensionTypeDef { name: "minecraft:the_end", min_y: 0, height: 256, logical_height: 256, has_skylight: true, has_fixed_time: true, ambient_light: 0.25, coordinate_scale: 1.0, timelines: Some("#minecraft:in_end"), default_clock: Some("minecraft:the_end"), ambient_light_color: [63, 71, 63] },
+    DimensionTypeDef { name: "minecraft:the_nether", min_y: 0, height: 256, logical_height: 128, has_skylight: false, has_fixed_time: true, ambient_light: 0.1, coordinate_scale: 8.0, timelines: Some("#minecraft:in_nether"), default_clock: None, ambient_light_color: [48, 40, 33] },
 ];
 
 /// Dimension type by registry id ("minecraft:overworld"), sorted for binary search.

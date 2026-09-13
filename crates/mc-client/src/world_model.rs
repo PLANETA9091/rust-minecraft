@@ -243,6 +243,22 @@ impl WorldModel {
         self.columns.get(&(cx, cz))
     }
 
+    /// The current dimension's lightmap AmbientColor base — the built-in
+    /// `visual/ambient_light_color` attribute as RAW 0..=255 channel
+    /// bytes (overworld #0a0a0a, nether #302821, end #3f473f), the
+    /// shader's `max(AmbientColor, nightVisionColor)` starting color.
+    /// Resolved through the BUILT-IN table the generator emitted from
+    /// the same jar (the synced `minecraft:dimension_type` wire decode
+    /// does not carry the attribute yet — the documented next consumer,
+    /// the sky_light_factor track's precedent); a dimension the table
+    /// does not know (a custom synced entry, or no dimension pinned
+    /// yet) keeps `None` — the mesher reads the BYTECODE default
+    /// (black), never a guess.
+    pub fn ambient_light_color(&self) -> Option<[u8; 3]> {
+        let dim = self.current_dimension.as_deref()?;
+        mc_registry::generated::worldgen::dimension_type(dim).map(|d| d.ambient_light_color)
+    }
+
     /// Global block state id at (x, y, z) — world coordinates for x/z
     /// (arithmetic shift, so negative chunks index correctly), and world-y
     /// when `min_y` is known else column-local y. `None` outside loaded

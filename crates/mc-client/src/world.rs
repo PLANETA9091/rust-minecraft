@@ -105,6 +105,16 @@ pub struct World {
     /// order). `None` for the procedural scene: bit for bit the previous
     /// mesh.
     pub variants: Option<Vec<Vec<u8>>>,
+    /// The dimension's lightmap AmbientColor base (the shader's
+    /// `max(AmbientColor, nightVisionColor)` starting color) as RAW
+    /// 0..=255 channel bytes — the built-in
+    /// `visual/ambient_light_color` attribute (`materialize` stamps it
+    /// from the model's dimension). `None` = no opinion: the mesher
+    /// reads the BYTECODE default (`EnvironmentAttributes.<clinit>`
+    /// defaultValue -16777216 = 0xFF000000) — black, a no-op base — so
+    /// every procedural/golden scene and every unknown dimension keeps
+    /// the pre-ambient arithmetic bit for bit.
+    pub ambient_light: Option<[u8; 3]>,
 }
 
 /// A biome cell with no opinion — the server never answered for the
@@ -208,6 +218,7 @@ impl World {
             day_tick: None, // no clock yet: full day
             biomes: None, // the procedural scene carries no biome layer
             variants: None, // the procedural scene carries no state variants
+            ambient_light: None, // the procedural scene: the black bytecode default
         };
         w.generate();
         w

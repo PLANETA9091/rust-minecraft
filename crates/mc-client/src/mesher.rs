@@ -184,29 +184,36 @@ fn block_light_color(block: f32) -> [f32; 3] {
 }
 
 /// The vanilla lightmap combine, PER CHANNEL — `lightmap.fsh`'s
-/// `SkyLightColor * get_brightness(sky) * SkyFactor + BlockLightColor *
-/// get_brightness(block) * BlockFactor`, under the shader's single
-/// final `clamp(color, 0, 1)` (the lightmap texture's range; the terms
-/// are non-negative so only the 1.0 side can bite). `SkyLightColor` is
-/// the timeline's `visual/sky_light_color` track
-/// (`timeline::sky_light_color`: the white default by day, `#7a7aff` —
-/// the moonlight blue — through the night plateau). `BlockLightColor`
-/// is [`block_light_color`] — the `#ffd8ac` default tint mixed
-/// 0.9-parabola toward white on the raw level — scaled by `BlockFactor`
-/// 1.4, the flicker's expectation (the random walk itself is the
-/// documented non-goal). The remaining shader terms are the defaults'
-/// identities at this client's state: AmbientColor is the documented
-/// NEXT consumer (`max(AmbientColor, nightVisionColor)` — the
-/// overworld default #0a0a0a), DarknessScale / NightVision /
-/// BossOverlay are all 0, and the brightness (gamma) mix is an
-/// identity at gamma 0. A layer the model never answered for is
-/// `None`, not zero; no layer at all is the legacy unshaded look.
+/// `color = max(AmbientColor, nightVisionColor); color += SkyLightColor *
+/// get_brightness(sky) * SkyFactor + BlockLightColor *
+/// get_brightness(block) * BlockFactor`, under the shader's single final
+/// `clamp(color, 0, 1)` (the lightmap texture's range; the terms are
+/// non-negative so only the 1.0 side can bite). `ambient` is the shader's
+/// AmbientColor BASE the sky/block terms are added ON TOP of — the
+/// dimension's `visual/ambient_light_color` attribute (overworld
+/// #0a0a0a, nether #302821, end #3f473f; the bytecode default black when
+/// no opinion — a no-op base, so `None` keeps the pre-ambient arithmetic
+/// bit for bit). NightVisionFactor is 0 at this client's state, so the
+/// max against `nightVisionColor` is `max(A, 0) = A` (a color is
+/// non-negative — the documented verdict). `SkyLightColor` is the
+/// timeline's `visual/sky_light_color` track (`timeline::sky_light_color`:
+/// the white default by day, `#7a7aff` — the moonlight blue — through the
+/// night plateau). `BlockLightColor` is [`block_light_color`] — the
+/// `#ffd8ac` default tint mixed 0.9-parabola toward white on the raw
+/// level — scaled by `BlockFactor` 1.4, the flicker's expectation (the
+/// random walk itself is the documented non-goal). The remaining shader
+/// terms are the defaults' identities at this client's state:
+/// DarknessScale / NightVision / BossOverlay are all 0, and the
+/// brightness (gamma) mix is an identity at gamma 0. A layer the model
+/// never answered for is `None`, not zero; no layer at all is the legacy
+/// unshaded look.
 #[inline]
 fn lightmap_combine(
     sky: Option<f32>,
     block: Option<f32>,
     sky_factor: f32,
     sky_tint: [f32; 3],
+    ambient: [f32; 3],
 ) -> [f32; 3] {
     let sky_term = sky.map(|v| light_brightness(v) * sky_factor);
     let block_term = block.map(|v| {
@@ -217,7 +224,9 @@ fn lightmap_combine(
     if sky_term.is_none() && block_term.is_none() {
         return [1.0; 3]; // no light layer — the legacy look
     }
-    let mut color = [0.0f32; 3];
+    // the shader's base: max(AmbientColor, nightVisionColor) with the
+    // night-vision factor at 0 — the dimension's ambient color itself
+    let mut color = ambient;
     if let Some(s) = sky_term {
         color[0] += s * sky_tint[0];
         color[1] += s * sky_tint[1];
@@ -376,6 +385,11 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                         .day_tick
                         .map(crate::timeline::sky_light_color)
                         .unwrap_or([1.0; 3]);
+                    // The shader's AmbientColor base (see the main path):
+                    // None = the bytecode-default black, a no-op base.
+                    let ambient = world.ambient_light.map_or([0.0f32; 3], |a| {
+                        [a[0] as f32 / 255.0, a[1] as f32 / 255.0, a[2] as f32 / 255.0]
+                    });
                     let fy = wy as f32 + FLAT_Y;
                     let variant = world
                         .variants
@@ -454,11 +468,16 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                                 pts[i] = [wx as f32 + rx, fy, wz as f32 + rz];
                                 // The vanilla lightmap combine, VERBATIM
                                 // (the shared per-channel core both paths
-                                // call — see `lightmap_combine`).
+                                // call — see `lightmap_combine`), riding the
+                                // dimension's ambient base.
                                 let lm = match clight.as_ref() {
-                                    Some((sky, block)) => {
-                                        lightmap_combine(sky[i], block[i], sky_factor, sky_tint)
-                                    }
+                                    Some((sky, block)) => lightmap_combine(
+                                        sky[i],
+                                        block[i],
+                                        sky_factor,
+                                        sky_tint,
+                                        ambient,
+                                    ),
                                     None => [1.0; 3], // no light layer — legacy look
                                 };
                                 // `ambientocclusion: false` — shade and light
@@ -540,6 +559,13 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                         .day_tick
                         .map(crate::timeline::sky_light_color)
                         .unwrap_or([1.0; 3]);
+                    // The shader's AmbientColor base: the dimension's
+                    // visual/ambient_light_color attribute as raw bytes
+                    // (overworld #0a0a0a); None = the bytecode-default
+                    // black — a no-op base, the pre-ambient arithmetic.
+                    let ambient = world.ambient_light.map_or([0.0f32; 3], |a| {
+                        [a[0] as f32 / 255.0, a[1] as f32 / 255.0, a[2] as f32 / 255.0]
+                    });
                     let order = flip_order(&ao);
                     let mut pts = [[0f32; 3]; 4];
                     let mut colors = [[0f32; 3]; 4];
@@ -559,7 +585,7 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                         // old max's verdict). No known cell -> legacy look.
                         let lm = match clight.as_ref() {
                             Some((sky, block)) => {
-                                lightmap_combine(sky[src], block[src], sky_factor, sky_tint)
+                                lightmap_combine(sky[src], block[src], sky_factor, sky_tint, ambient)
                             }
                             None => [1.0; 3], // no light layer — legacy look
                         };
@@ -636,6 +662,10 @@ mod tests {
             day_tick: None,
             biomes: None,
             variants: None,
+            // None = the bytecode-default black: every test scene keeps
+            // the pre-ambient arithmetic bit for bit (the ambient lift is
+            // pinned in its own tests, explicitly staged)
+            ambient_light: None,
         }
     }
 

@@ -1791,6 +1791,7 @@ mod tests {
                     day_tick: None, // test scenes stay day
                     biomes: None, // test scenes carry no biome layer
                     variants: None, // test scenes carry no state variants
+            ambient_light: None, // no dimension opinion — the black bytecode default
                 },
                 camera: None,
                 spawn_biome: Some("minecraft:plains".into()),
@@ -2201,6 +2202,7 @@ mod tests {
             day_tick: None, // test scenes stay day
             biomes: None, // test scenes carry no biome layer
             variants: None, // test scenes carry no state variants
+            ambient_light: None, // no dimension opinion — the black bytecode default
         });
         app.enter_network_world(None);
         assert_eq!(app.screen, ScreenKind::World);
@@ -2255,6 +2257,7 @@ mod tests {
             day_tick: None, // test scenes stay day
             biomes: None, // test scenes carry no biome layer
             variants: None, // test scenes carry no state variants
+            ambient_light: None, // no dimension opinion — the black bytecode default
         });
         app.enter_network_world(None);
         let flight = app.world_camera();
@@ -2311,6 +2314,7 @@ mod tests {
                     day_tick: None, // test scenes stay day
                     biomes: None, // test scenes carry no biome layer
                     variants: None, // test scenes carry no state variants
+            ambient_light: None, // no dimension opinion — the black bytecode default
                 },
                 camera: None,
                 spawn_biome: None,
@@ -2339,6 +2343,7 @@ mod tests {
             day_tick: None, // test scenes stay day
             biomes: None, // test scenes carry no biome layer
             variants: None, // test scenes carry no state variants
+            ambient_light: None, // no dimension opinion — the black bytecode default
         }
     }
 
