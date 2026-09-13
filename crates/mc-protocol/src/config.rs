@@ -1782,7 +1782,7 @@ mod tests {
         // — all four `.spatiallyInterpolated().syncable()`, so all four
         // RIDE the registry sync; no vanilla dimension states any of
         // them, so a CUSTOM server's element carries the statement
-n        let mut p = Vec::new();
+        let mut p = Vec::new();
         write_varint(&mut p, clientbound::REGISTRY_DATA);
         crate::varint::write_string(&mut p, "minecraft:dimension_type");
         write_varint(&mut p, 1);

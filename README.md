@@ -767,6 +767,32 @@ hand-drawn:
   nether pair on skip-sync, the synced truth winning, the silent sync
   and the one-sided statement reading None) and the App pin discipline
   (the nether join pins 10/96, the procedural re-entry drops it).
+  The **four light attributes ride the wire (v0.3.95 — the syncable
+  sweep's DATA round)**: the mc-protocol expansion. The audit re-ran
+  on the 26.2 jar (EnvironmentAttributes.<clinit>): four syncable
+  VISUAL attributes remained undecoded — `visual/block_light_tint`
+  (RGB_COLOR, default -10100 = #FFD88C, the warm block-light cast),
+  `visual/sky_light_color` (RGB_COLOR, default -1 = #FFFFFF),
+  `visual/sky_light_factor` (FLOAT/UNIT_FLOAT, default 1.0) and
+  `visual/night_vision_color` (RGB_COLOR, default -6710887 = #999999)
+  — all four `.spatiallyInterpolated().syncable()`, so all four RIDE
+  the registry sync, and NO vanilla dimension states any of them (the
+  four dimension JSONs carry none of the keys). The round is DECODE
+  ONLY, deliberately: `DimensionTypeEntry` grows the four fields (the
+  three rgb_color entries through the ambient-light `parse_rgb_hex`
+  shape, one FLOAT through `as_f32`; ABSENT reads None per field,
+  never a guess) with a custom-element wire test stating all four and
+  the real overworld/nether elements pinned to the absent shape — but
+  no model accessor and no consumer yet, because an accessor's
+  three-branch precedence exists to serve a consumer and an unread
+  column is speculation; when a consumer arrives (the lightmap's block
+  light is the obvious first), the round threads the built-in table
+  and the accessor the cloud_fog way. `sky_fog_end_distance` is
+  honestly deferred the same way: it has NO consumer in this client
+  (the 512.0 hits are projection far-planes), so it waits for its
+  consumer round rather than riding half-threaded. Goldens untouched
+  BY CONSTRUCTION (no render code moved). Tests +1 (workspace 412 ->
+  413 passed / 0 failed / 3 ignored).
   The **cloud fog rides the stated attribute (v0.3.94 — the
   cloud_fog_end_distance consumer)**: the remaining-syncable-attributes
   sweep's first consumer. The audit re-ran on the 26.2 jar
