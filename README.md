@@ -919,6 +919,26 @@ hand-drawn:
   (VILLAGER_DATA at 18 doubles as the order proof), the generated-id
   pin, and the model's merge semantics (replace-one-leave-others, the
   null-lookup drop, the re-spawn reset).
+  The **the villagers carry their data — VILLAGER_DATA decodes
+  (v0.3.105)**: serializer 18 leaves the object-graph refusal list.
+  The javap walk pinned the composite from the 26.2 bytecode:
+  `VillagerData.STREAM_CODEC` = `composite(holderRegistry(
+  VILLAGER_TYPE), holderRegistry(VILLAGER_PROFESSION), VAR_INT,
+  VillagerData::new)`, and `ByteBufCodecs$29.decode` is
+  `VarInt.read` -> `IdMap.byIdOrThrow` — THREE numeric registry ids
+  on the wire (not names), an id the registry does not know throws
+  and fails the packet read. The entry retains the ids verbatim (no
+  villager registry tables client-side; a consumer resolves them), a
+  NEGATIVE id is outside every IdMap and refuses (byIdOrThrow's own
+  direction), and the LEVEL is the record constructor's own
+  `Math.max(1, level)` — the javap shows `iconst_1` feeding the
+  `Math.max`, so composite decode (which calls `VillagerData::new`
+  directly) already clamps: wire 0 is a stored 1, no consumer-side
+  arithmetic. Tests +1 (workspace 450 -> 451 passed / 0 failed / 3
+  ignored): the three-VarInt round-trip (also absorbed into the
+  sixteen-serializer packet as entry 20), the constructor clamp
+  (wire 0 and wire -7 both store 1), the negative type/profession
+  refusals, and the truncated record refused.
   The **the metadata grows the name-tag lane — COMPONENT decodes
   (v0.3.104)**: serializers 5 and 6 leave the object-graph refusal
   list. The audit pinned the real wire shape through three bytecode

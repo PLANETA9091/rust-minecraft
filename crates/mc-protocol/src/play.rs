@@ -1420,7 +1420,13 @@ pub mod entity_data_serializers {
     /// The list operation over PARTICLE.
     pub const PARTICLES: i32 = 17;
     /// `VillagerData.STREAM_CODEC` — REGISTRATION id 18, NOT the
-    /// wiki-era 19 (the clinit order is the wire truth).
+    /// wiki-era 19 (the clinit order is the wire truth). The javap
+    /// walk pins the composite: `holderRegistry(VILLAGER_TYPE)` +
+    /// `holderRegistry(VILLAGER_PROFESSION)` + `ByteBufCodecs.VAR_INT`
+    /// — THREE VarInt registry ids, and `ByteBufCodecs$29.decode` is
+    /// `VarInt.read` -> `IdMap.byIdOrThrow` (a NUMERIC registry id,
+    /// not a name; an id the registry does not know throws, failing
+    /// the packet read).
     pub const VILLAGER_DATA: i32 = 18;
     /// The hand-rolled `OptionalInt` codec (the anonymous
     /// `EntityDataSerializers$3`): a VarInt where 0 = empty and a
@@ -1438,8 +1444,8 @@ pub mod entity_data_serializers {
 }
 
 /// One decoded metadata VALUE — the wire shapes of the serializers
-/// this client decodes (SIXTEEN of the registry's ids: 0-6, 8-12,
-/// 14-15, 19-20 as [`entity_data_serializers`] declares). The four i32
+/// this client decodes (SEVENTEEN of the registry's ids: 0-6, 8-12,
+/// 14-15, 18-20 as [`entity_data_serializers`] declares). The four i32
 /// flavors are DISTINCT variants because the serializer id is part of
 /// the state (vanilla's `assignValues` matches accessor and value on
 /// it), not a type system accident.
@@ -1485,6 +1491,20 @@ pub enum EntityDataEntry {
     OptionalUnsignedInt(Option<u32>),
     /// Serializer 20: the pose's registry id.
     Pose(i32),
+    /// Serializer 18: the villager record — two numeric registry ids
+    /// (the VILLAGER_TYPE and VILLAGER_PROFESSION registries' own id
+    /// spaces) and the trade level. The ids are retained verbatim
+    /// (this client carries no villager registry tables; a consumer
+    /// resolves them); the level is the record constructor's own
+    /// `Math.max(1, level)` — the javap shows `iconst_1` feeding the
+    /// `Math.max`, so the DECODE path already clamps (composite decode
+    /// calls `VillagerData::new` directly), and a wire 0 level is a
+    /// stored 1 without any consumer-side arithmetic.
+    VillagerData {
+        type_id: i32,
+        profession_id: i32,
+        level: i32,
+    },
 }
 
 /// ONE metadata entry as the wire carries it: the accessor's byte
@@ -1520,8 +1540,9 @@ pub struct EntityDataSet {
 
 /// Parse Set Entity Data. The supported serializers are the wire's
 /// primitive registry PLUS the chat component (the bare-NBT tag — the
-/// nbt reader the chunk path already trusts); the remaining
-/// object-graph shapes — item stacks, particles, villager data,
+/// nbt reader the chunk path already trusts) PLUS the villager record
+/// (three VarInt registry ids); the remaining
+/// object-graph shapes — item stacks, particles,
 /// entity references, profiles, the variant holders — refuse for now:
 /// a value's byte length is only knowable through its codec, so there
 /// is no honest skip, and the vanilla read side fails the packet
@@ -1609,6 +1630,29 @@ pub fn parse_set_entity_data(payload: &[u8]) -> Result<EntityDataSet> {
                 let p = read_varint(&mut c)?;
                 anyhow::ensure!(p >= 0, "negative pose id {p}");
                 EntityDataEntry::Pose(p)
+            }
+            entity_data_serializers::VILLAGER_DATA => {
+                // the composite's three VarInts: type, profession,
+                // level. A negative registry id is by definition
+                // outside every IdMap (byIdOrThrow throws on it —
+                // the same direction as the DIRECTION/POSE arms),
+                // while a non-negative unknown id stays honest to
+                // retain (no villager registry tables client-side;
+                // the consumer resolves or refuses). The level is
+                // the record constructor's clamp: max(1, wire).
+                let type_id = read_varint(&mut c)?;
+                anyhow::ensure!(type_id >= 0, "negative villager type id {type_id}");
+                let profession_id = read_varint(&mut c)?;
+                anyhow::ensure!(
+                    profession_id >= 0,
+                    "negative villager profession id {profession_id}"
+                );
+                let level = read_varint(&mut c)?;
+                EntityDataEntry::VillagerData {
+                    type_id,
+                    profession_id,
+                    level: level.max(1),
+                }
             }
             other => anyhow::bail!("unsupported entity data serializer {other}"),
         };
@@ -3304,6 +3348,9 @@ mod tests {
         entries.extend(test_support::entity_data_entry(17, s::OPTIONAL_UNSIGNED_INT, &test_support::entity_data_varint(0)));
         entries.extend(test_support::entity_data_entry(18, s::OPTIONAL_UNSIGNED_INT, &test_support::entity_data_varint(2)));
         entries.extend(test_support::entity_data_entry(19, s::POSE, &test_support::entity_data_varint(6)));
+        // the villager record: THREE VarInts (type, profession, level)
+        entries.extend(test_support::entity_data_entry(20, s::VILLAGER_DATA,
+            &[test_support::entity_data_varint(2), test_support::entity_data_varint(14), test_support::entity_data_varint(3)].concat()));
 
         let p = test_support::set_entity_data_packet(77, &entries);
         let d = parse_set_entity_data(&p).unwrap();
@@ -3331,6 +3378,7 @@ mod tests {
                 SetEntityDataEntry { index: 17, serializer: s::OPTIONAL_UNSIGNED_INT, value: EntityDataEntry::OptionalUnsignedInt(None) },
                 SetEntityDataEntry { index: 18, serializer: s::OPTIONAL_UNSIGNED_INT, value: EntityDataEntry::OptionalUnsignedInt(Some(1)) },
                 SetEntityDataEntry { index: 19, serializer: s::POSE, value: EntityDataEntry::Pose(6) },
+                SetEntityDataEntry { index: 20, serializer: s::VILLAGER_DATA, value: EntityDataEntry::VillagerData { type_id: 2, profession_id: 14, level: 3 } },
             ]
         );
     }
@@ -3362,14 +3410,15 @@ mod tests {
     /// here) and the ids the registry itself does not know ALL refuse
     /// the packet — the vanilla read side fails the packet exactly the
     /// same way (an unknown serializer id throws in `getSerializer`).
-    /// The VILLAGER_DATA pin doubles as the registration-order proof:
-    /// 18 is NOT the optional-global-pos lane the wiki-era table
-    /// claims. COMPONENT left this list the round the bare-NBT reader
-    /// landed.
+    /// The registration-order proof stays in the test body: 18 is NOT
+    /// the optional-global-pos lane the wiki-era table claims — it is
+    /// the villager record, which DECODES (it left this list the round
+    /// the composite's three VarInts landed). COMPONENT left the list
+    /// the round the bare-NBT reader landed.
     #[test]
     fn the_entity_data_object_graph_and_unknown_serializers_refuse() {
         use entity_data_serializers as s;
-        for serializer in [s::ITEM_STACK, s::VILLAGER_DATA, s::PARTICLE, 200] {
+        for serializer in [s::ITEM_STACK, s::PARTICLE, 200] {
             let entries = test_support::entity_data_entry(0, serializer, &[0x00]);
             let p = test_support::set_entity_data_packet(3, &entries);
             assert!(
@@ -3383,6 +3432,65 @@ mod tests {
         let p = test_support::set_entity_data_packet(3, &entries);
         let d = parse_set_entity_data(&p).unwrap();
         assert_eq!(d.entries[0].value, EntityDataEntry::OptionalUnsignedInt(Some(0)));
+    }
+
+    /// Set Entity Data: the villager record's wire is THREE VarInts —
+    /// the javap walk: `VillagerData.STREAM_CODEC` =
+    /// `composite(holderRegistry(VILLAGER_TYPE), holderRegistry(
+    /// VILLAGER_PROFESSION), VAR_INT, VillagerData::new)`, and
+    /// `ByteBufCodecs$29.decode` is `VarInt.read` ->
+    /// `IdMap.byIdOrThrow` (a NUMERIC registry id, not a name). The
+    /// ids are retained verbatim (no villager registry tables
+    /// client-side; a consumer resolves them), a NEGATIVE id is
+    /// outside every IdMap and refuses (byIdOrThrow's direction),
+    /// and the LEVEL is the record constructor's own `Math.max(1,
+    /// level)` — composite decode calls `VillagerData::new`
+    /// directly, so the clamp is part of the DECODE, not a consumer
+    /// concern: wire 0 is a stored 1.
+    #[test]
+    fn the_villager_record_is_three_registry_ids_and_the_constructor_clamps_the_level() {
+        use entity_data_serializers as s;
+        // the round-trip: two ids + a sane level survive verbatim
+        let entries = test_support::entity_data_entry(21, s::VILLAGER_DATA,
+            &[test_support::entity_data_varint(0), test_support::entity_data_varint(41), test_support::entity_data_varint(5)].concat());
+        let p = test_support::set_entity_data_packet(3, &entries);
+        let d = parse_set_entity_data(&p).unwrap();
+        assert_eq!(
+            d.entries[0].value,
+            EntityDataEntry::VillagerData { type_id: 0, profession_id: 41, level: 5 }
+        );
+        // the constructor clamp: wire level 0 (and negative) is a
+        // stored 1 — vanilla's own VillagerData(Holder, Holder, int)
+        // does `Math.max(1, level)` BEFORE any consumer runs
+        for wire_level in [0, -7] {
+            let entries = test_support::entity_data_entry(22, s::VILLAGER_DATA,
+                &[test_support::entity_data_varint(1), test_support::entity_data_varint(2), test_support::entity_data_varint(wire_level)].concat());
+            let p = test_support::set_entity_data_packet(3, &entries);
+            let d = parse_set_entity_data(&p).unwrap();
+            assert_eq!(
+                d.entries[0].value,
+                EntityDataEntry::VillagerData { type_id: 1, profession_id: 2, level: 1 },
+                "wire level {wire_level} must clamp to 1 (the record constructor's Math.max)"
+            );
+        }
+        // a negative registry id is outside every IdMap — byIdOrThrow
+        // throws, the packet read fails, the client refuses the same way
+        for bytes in [
+            vec![test_support::entity_data_varint(-1), test_support::entity_data_varint(2), test_support::entity_data_varint(1)], // negative TYPE
+            vec![test_support::entity_data_varint(1), test_support::entity_data_varint(-1), test_support::entity_data_varint(1)], // negative PROFESSION
+        ] {
+            let entries = test_support::entity_data_entry(23, s::VILLAGER_DATA, &bytes.concat());
+            let p = test_support::set_entity_data_packet(3, &entries);
+            assert!(
+                parse_set_entity_data(&p).is_err(),
+                "a negative villager registry id must refuse"
+            );
+        }
+        // a truncated record (ids without the level) is drift — refused
+        let entries = test_support::entity_data_entry(24, s::VILLAGER_DATA,
+            &[test_support::entity_data_varint(1), test_support::entity_data_varint(2)].concat());
+        let p = test_support::set_entity_data_packet(3, &entries);
+        assert!(parse_set_entity_data(&p).is_err());
     }
 
     /// Set Entity Data: the COMPONENT wire is a BARE NBT tag — the
