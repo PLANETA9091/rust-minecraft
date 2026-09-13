@@ -809,6 +809,31 @@ hand-drawn:
   The golden-policy lesson: an rms move inside the tolerance is not
   a pass to keep quiet about — the render changed, so the reference
   changed with it, and the diff explained the regen.
+  The **sky-light color is STATE — the last light attribute's fold
+  (v0.3.98 — INTEGER arithmetic, and the moonlight pairs)**: the
+  sky_light_color consumer, the third of the four decoded light
+  attributes. The audit pinned the modifier's exact semantics:
+  `ColorModifier.MULTIPLY_RGB` -> `ARGB.multiply(int, int)` — the -1
+  white default short-circuits to the other operand, else per-channel
+  `imul` / `idiv 255` — the probe's folded value IS an `Integer` the
+  extractor unpacks through `ARGB.vector3fFromRGB24`, and the color
+  track's keyframe lerp is `ARGB.srgbLerp` (the byte-space operand the
+  fold consumes). The generated table's honest rows: the END states
+  **#ac60cd** and the NETHER **#7a7aff** (the moonlight pairs), the
+  overworlds `None` — v0.3.97's discovery, now a column. Implementation
+  the cloud_fog way: the generator column + the `TL_DAY_SKY_LIGHT_COLOR`
+  track array, the model accessor (the three-branch precedence), the
+  materialize stamp beside its lightmap siblings, and the mesher's
+  fold at both render paths — `None` = the track verbatim (the exact
+  shipped expression), `Some(stated)` = per-channel integer multiply
+  against `timeline::sky_light_color_bytes` (the byte-space sampler).
+  GOLDENS UNTOUCHED BY CONSTRUCTION: 12/12 at rms 0.000 (every golden
+  world overworld/unstated — the -1 default's white identity). Tests
+  +4 (workspace 418 -> 422 passed / 0 failed / 3 ignored): the accessor
+  precedence (the built-in end/nether moonlight pairs pinned), the
+  materialize stamp, the fold contract (the integer floor 61 vs the
+  float 61.24 — the arithmetic is the bytecode's, not a float
+  approximation), and the byte sampler (the dusk midpoint 188.5 -> 189).
   The **sky-light factor folds under the timeline (v0.3.97 — the
   attribute-system fold, and the end/nether discovery)**: the
   sky_light_factor consumer. The audit started at the mesher's sky
