@@ -136,18 +136,71 @@ pub fn light_brightness(level: f32) -> f32 {
     f / (4.0 - 3.0 * f)
 }
 
+/// The vanilla lightmap's `BlockLightTint` — the `visual/block_light_tint`
+/// environment attribute's DEFAULT, pinned in the jar's bytecode
+/// (`EnvironmentAttributes.<clinit>`: `defaultValue(sipush -10100)` =
+/// 0xFFD8AC). No dimension JSON in the registry's data and no timeline
+/// track overrides it, so the default IS the whole value in every
+/// dimension the registry carries — the same "the default is the whole
+/// value" shape as `sky_light_color` before its day track.
+const BLOCK_LIGHT_TINT: [f32; 3] = [1.0, 216.0 / 255.0, 172.0 / 255.0];
+
+/// The vanilla lightmap's `BlockFactor` — the extractor's bytecode
+/// (`LightmapRenderStateExtractor.extract`): `blockFactor =
+/// blockLightFlicker + 1.4`, where the flicker is a mean-zero random
+/// walk ((r1−r2)·r3·r4·0.1 decayed ×0.9 per tick — the torch shimmer).
+/// A deterministic client cannot carry the random walk; it pins the
+/// flicker's EXPECTATION (0) and keeps the constant 1.4 — the mean of
+/// the vanilla range, the honest stand-in. The shimmer itself is the
+/// documented non-goal (same verdict as the random end-flash).
+const BLOCK_FACTOR: f32 = 1.4;
+
+/// The lightmap shader's `parabolicMixFactor`: `(2*level − 1)^2` on the
+/// RAW normalized block level — 1.0 at BOTH ends (level 0 and 15), a
+/// dip to 0.0 at mid levels. The mix toward white therefore weakens at
+/// mid-range (the pure `#ffd8ac` torch warmth) and strengthens at the
+/// extremes (full torch light is nearly white-hot; the level-0 mix is
+/// irrelevant in the sum since its brightness is 0).
+#[inline]
+fn parabolic_mix_factor(block_level: f32) -> f32 {
+    let t = 2.0 * block_level - 1.0;
+    t * t
+}
+
+/// The lightmap shader's `BlockLightColor` — `mix(BlockLightTint,
+/// vec3(1.0), 0.9 * parabolicMixFactor(block_level))` with
+/// `block_level = block / 15`, lightmap.fsh verbatim. The parabola
+/// rides the RAW level, NOT the brightness ramp: the warmth peaks at
+/// mid levels and the extremes whiten. The red channel is 1.0 for
+/// every level (the tint's red is already 1.0).
+#[inline]
+fn block_light_color(block: f32) -> [f32; 3] {
+    let mix = 0.9 * parabolic_mix_factor(block / 15.0);
+    [
+        BLOCK_LIGHT_TINT[0] + mix * (1.0 - BLOCK_LIGHT_TINT[0]),
+        BLOCK_LIGHT_TINT[1] + mix * (1.0 - BLOCK_LIGHT_TINT[1]),
+        BLOCK_LIGHT_TINT[2] + mix * (1.0 - BLOCK_LIGHT_TINT[2]),
+    ]
+}
+
 /// The vanilla lightmap combine, PER CHANNEL — `lightmap.fsh`'s
 /// `SkyLightColor * get_brightness(sky) * SkyFactor + BlockLightColor *
-/// get_brightness(block)`, clamped at 1.0 (the lightmap texture's range).
-/// `SkyLightColor` is the timeline's `visual/sky_light_color` track
+/// get_brightness(block) * BlockFactor`, under the shader's single
+/// final `clamp(color, 0, 1)` (the lightmap texture's range; the terms
+/// are non-negative so only the 1.0 side can bite). `SkyLightColor` is
+/// the timeline's `visual/sky_light_color` track
 /// (`timeline::sky_light_color`: the white default by day, `#7a7aff` —
-/// the moonlight blue — through the night plateau; the javap audit pins
-/// the attribute default to 0xFFFFFFFF and the overworld base to absent,
-/// so the track IS the whole value). The block term keeps the WHITE
-/// stand-in for `BlockLightColor` — the shader's `visual/block_light_tint`
-/// default `#ffd8ac` with the parabolic mix toward white is the
-/// documented NEXT consumer. With the white day tint every branch here
-/// is bit-identical to the scalar combine this helper replaced.
+/// the moonlight blue — through the night plateau). `BlockLightColor`
+/// is [`block_light_color`] — the `#ffd8ac` default tint mixed
+/// 0.9-parabola toward white on the raw level — scaled by `BlockFactor`
+/// 1.4, the flicker's expectation (the random walk itself is the
+/// documented non-goal). The remaining shader terms are the defaults'
+/// identities at this client's state: AmbientColor is the documented
+/// NEXT consumer (`max(AmbientColor, nightVisionColor)` — the
+/// overworld default #0a0a0a), DarknessScale / NightVision /
+/// BossOverlay are all 0, and the brightness (gamma) mix is an
+/// identity at gamma 0. A layer the model never answered for is
+/// `None`, not zero; no layer at all is the legacy unshaded look.
 #[inline]
 fn lightmap_combine(
     sky: Option<f32>,
@@ -155,18 +208,27 @@ fn lightmap_combine(
     sky_factor: f32,
     sky_tint: [f32; 3],
 ) -> [f32; 3] {
-    let sky_b = sky.map(|v| light_brightness(v) * sky_factor);
-    let block_b = block.map(light_brightness);
-    match (sky_b, block_b) {
-        (Some(s), Some(b)) => [
-            (s * sky_tint[0] + b).min(1.0),
-            (s * sky_tint[1] + b).min(1.0),
-            (s * sky_tint[2] + b).min(1.0),
-        ],
-        (Some(s), None) => [s * sky_tint[0], s * sky_tint[1], s * sky_tint[2]],
-        (None, Some(b)) => [b, b, b],
-        (None, None) => [1.0; 3],
+    let sky_term = sky.map(|v| light_brightness(v) * sky_factor);
+    let block_term = block.map(|v| {
+        let b = light_brightness(v) * BLOCK_FACTOR;
+        let c = block_light_color(v);
+        [b * c[0], b * c[1], b * c[2]]
+    });
+    if sky_term.is_none() && block_term.is_none() {
+        return [1.0; 3]; // no light layer — the legacy look
     }
+    let mut color = [0.0f32; 3];
+    if let Some(s) = sky_term {
+        color[0] += s * sky_tint[0];
+        color[1] += s * sky_tint[1];
+        color[2] += s * sky_tint[2];
+    }
+    if let Some(b) = block_term {
+        color[0] += b[0];
+        color[1] += b[1];
+        color[2] += b[2];
+    }
+    [color[0].min(1.0), color[1].min(1.0), color[2].min(1.0)]
 }
 
 /// The cell's two RAW light layers, as the engine reported them — sky
@@ -488,12 +550,13 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                         // The vanilla lightmap shader's combine, VERBATIM
                         // (the shared per-channel core both paths call):
                         // `SkyLightColor * get_brightness(sky) * SkyFactor
-                        // + BlockLightColor * get_brightness(block)` — the
-                        // additive SUM, clamped at 1.0 per channel. With
-                        // one term absent it is the other term exactly; at
-                        // day factor 1.0 a sky-15 corner is bit-identical
-                        // (1.0 + b clamps back to 1.0, the old max's
-                        // verdict). No known cell -> legacy look.
+                        // + BlockLightColor * get_brightness(block) *
+                        // BlockFactor` — the additive SUM, clamped at 1.0
+                        // per channel (the shader's single final clamp).
+                        // With one term absent it is the other term
+                        // exactly; at day factor 1.0 a sky-15 corner is
+                        // bit-identical (1.0 + b clamps back to 1.0, the
+                        // old max's verdict). No known cell -> legacy look.
                         let lm = match clight.as_ref() {
                             Some((sky, block)) => {
                                 lightmap_combine(sky[src], block[src], sky_factor, sky_tint)
