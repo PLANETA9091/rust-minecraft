@@ -648,6 +648,46 @@ hand-drawn:
   NONE and END leave the cleared framebuffer untouched), the built-in
   table pins, and the App pin discipline (a nether join pins None, a
   procedural re-entry re-pins Overworld).
+  The **synced skybox rides the wire (v0.3.91 — the custom-dimension
+  half closes)**: the skybox arc's wire half lands, the ambient
+  attribute's v0.3.89 precedent verbatim. The audit answered the
+  round's question from the codec itself: `DimensionType.NETWORK_CODEC`
+  is built by the SAME `createDirectCodec` the JSON-side DIRECT_CODEC
+  uses (`NETWORK_CODEC = createDirectCodec(EnvironmentAttributeMap.
+  NETWORK_CODEC)`, javap) — the skybox field RIDES the registry sync,
+  serialized as the StringRepresentable enum's lowercase name
+  (`none` / `overworld` / `end`), still bound
+  `optionalFieldOf("skybox", OVERWORLD)`: an ABSENT key is the
+  Overworld default while a STATED `none` is its own verdict — the two
+  are NOT the same, so unlike the grass modifier (whose absent/`none`
+  collapse) the wire field stays an Option. mc-protocol's
+  `DimensionTypeEntry` grows `skybox: Option<Skybox>` — the wire-local
+  three-constant enum, the GrassColorModifier shape; unknown names
+  never ride a working sync (vanilla's own codec refuses them) and
+  read `None`, the codec default, never a guess. The model grows
+  `WorldModel::skybox()` — the ambient discipline, skybox edition:
+  the SYNCED entry's stated skybox wins (a custom overworld stating
+  `none` renders no sky), its SILENCE reads the codec's own default
+  Overworld (NOT the built-in nether's None), the BUILT-IN table
+  serves ONLY the skip-sync case, and an unknown custom key rides the
+  Overworld path — the vanilla default, never a guess. Both join
+  sites (the live worker and the one-shot connect) resolve through
+  the model the snapshot adopts into, and the retired
+  `world_view::skybox_for_dimension` helper leaves no survivors (the
+  timeline-tag walk precedent — the deletion keeps one truth). The
+  mock registry's nether element now STATES `"skybox":"none"` (the
+  real vanilla shape — the nether is the one dimension that does), so
+  a wire nether join pins None through the DECODE, not the built-in
+  table. Goldens untouched BY CONSTRUCTION: no render-path change
+  (the only difference is WHICH table answers, and for real vanilla
+  data the answers are identical); 12/12 pass. Tests +2 net (workspace
+  401 → 403 passed / 0 failed / 3 ignored): the wire enum vectors (the
+  three names + the refusals) and the synced-truth precedence (stated
+  wins / silent reads the codec default / no key keeps the default,
+  never a built-in fallback), plus the packet-level assertions (the
+  overworld element states NO key, the nether STATES none); the
+  retired helper's built-in pins moved into the model accessor tests
+  one-for-one.
   The **synced ambient rides the wire (v0.3.89 — the server's truth)**:
   the ambient arc's wire half closes. The audit ran first-hand on the
   26.2 jar: `DimensionType.NETWORK_CODEC` builds on

@@ -25,7 +25,7 @@ pub mod varint;
 
 pub use config::{
     connect_and_join_play, join_play, join_play_conn, BiomeEffects, BiomeEntry, DimensionTypeEntry,
-    GrassColorModifier, PlayOutcome, RegistryData, TimelineEntry,
+    GrassColorModifier, PlayOutcome, RegistryData, Skybox, TimelineEntry,
 };
 pub use nbt::Nbt;
 pub use play::{

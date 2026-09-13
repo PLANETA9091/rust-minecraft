@@ -481,8 +481,9 @@ impl App {
         self.world_quads = Some(quads);
         self.world_is_network = true;
         // the vanilla extract's render state: the dimension's skybox pins
-        // at level entry (the join snapshot's dimension -> the built-in
-        // table; see [`crate::world_view::skybox_for_dimension`])
+        // at level entry — resolved through the live model (the synced
+        // registry's own skybox, the codec default, or the built-in table;
+        // see `WorldModel::skybox`)
         self.world_skybox = skybox;
         self.net_biome = spawn_biome.clone();
         self.paused = false;
@@ -2530,18 +2531,10 @@ mod tests {
         app.enter_world();
         assert!(!app.world_is_network);
         assert_eq!(app.world_skybox, Skybox::Overworld, "the procedural re-pin");
-        // the resolution helper answers the built-in table for the synced
-        // dimension ids (the same values the raw JSONs state)
-        assert_eq!(
-            crate::world_view::skybox_for_dimension("minecraft:the_end"),
-            Skybox::End,
-            "the end joins ship the end skybox"
-        );
-        assert_eq!(
-            crate::world_view::skybox_for_dimension("minecraft:the_nether"),
-            Skybox::None,
-            "the nether joins ship no sky at all"
-        );
+        // the resolution discipline itself lives in the model: the
+        // synced registry's own skybox, the codec default, or the
+        // built-in table (WorldModel::skybox — pinned by the
+        // world_model tests, the built-in verdicts included)
     }
 
     #[test]
