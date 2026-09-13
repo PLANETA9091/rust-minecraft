@@ -524,6 +524,7 @@ mod tests {
         assert_eq!(hits, 24, "defs pointing directly at element-carrying models");
     }
 
+    #[test]
     fn the_elements_geometry_is_the_jar_census_and_the_joins_hold() {
         use generated::elements::{ELEMENTS, ElementRotation};
         use generated::models::{ELEMENT_MODELS, MODELS};

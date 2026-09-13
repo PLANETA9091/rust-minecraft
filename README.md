@@ -581,6 +581,48 @@ hand-drawn:
   timeline (−1 → 0..5/6 → rest at exactly 6 ticks), the re-trigger
   guard, the wrap-guard lerp, the mid-swing geometry delta, and the
   bit-identical rest pose.
+  The **elements geometry lands (v0.3.65 — the model-geometry round, the
+  held-item arc's data half, round 3)**: the honest skip list is paid
+  off — the 344 element-carrying models' `elements` arrays are parsed
+  into `generated/elements.rs` as TYPED rows (1185 elements / 4238
+  faces), and the census ran first — twice: the second pass locked the
+  shapes the first surfaced, and it caught THREE format facts the
+  common case hides. **26.2 ships a euler rotation extension**: two
+  elements of block/template_hanging_sign_rot_3 carry `{x,y,z,origin}`
+  instead of the classic single-axis `{angle,axis,origin,rescale}` —
+  both forms parse into an enum now, mixing refuses. **The angle domain
+  is relaxed**: the old {−45,−22.5,0,22.5,45} five-value set is gone —
+  −90 (×2), −67.5 (×7) and 0.0001 (×1) ship, so the angle rides as an
+  f32 as written. **Bare texture refs exist**: heavy_core's six faces
+  reference `"all"` without the leading `#` — the face texture column
+  stores the ref AS WRITTEN (the runtime resolution is the consumer
+  round's bytecode homework). The closed key sets (element: 8 incl.
+  `light_emission` and the editor metadata `name`/`__comment`, both
+  retained — 94 names / 63 comments; face: 5 incl. the uv `rotation`,
+  246 carriers at {0×1, 90×151, 180×39, 270×55}) refuse anything else,
+  extend-parser-first. Each element row carries from/to f32 bounds
+  (verified inside the vanilla clamp domain [−16, 32]; the jar uses
+  [−8, 24]), shade (default true; 333 explicit false), light_emission
+  (exactly the four emissive-cross elements at 15), the rotation enum,
+  and the six face slots in vanilla Direction order — uv (None = the
+  vanilla bounds projection, 531 defaults), texture ref, cullface
+  (1041), tintindex ({0×90, 1×32}) and the uv rotation. The emit is a
+  join-checked triple: `ELEMENTS` rows ↔ `ELEMENT_MODELS` ids ↔ the
+  MODELS element-count column, id-for-id both directions. Offline arc:
+  `write_models()` now writes both files from one parse
+  (`mc2rs-gen models --version 26.2 --jar <client.jar>`). Tests +4
+  (workspace 287 → 291 passed / 0 failed / 3 ignored): three generator
+  fixture tests (every outlier shape in one parse — euler, bare ref,
+  light_emission, editor metadata, the axis-rotation + rescale +
+  tintindex + uv-rotation combo; unknown element/face/rotation-key
+  refusals incl. the mixed rotation forms; bad cullface/direction/
+  bounds/light-emission/rotation-quantum refusals) and the registry
+  census pin (the 344/1185/4238 counts, block/cube verbatim, the euler
+  rotations verbatim, every closed-domain scan, the angle histogram,
+  and the joins). The quad derivation — rotation math, shade normals,
+  default-UV expansion, texture-ref resolution — stays the consumer
+  round's work; zero render path touched, goldens checked at the CI
+  flags (rms 0.000), none regenerated.
   The **model files land (v0.3.64 — the held-item arc's data half, round
   2)**: the generator grew its twelfth table — `assets/minecraft/models/`
   of the official jar parsed into `generated/models.rs`. The census ran
