@@ -616,6 +616,46 @@ hand-drawn:
   cutout rule. Also repairs a pre-existing doctest break (an unannotated
   pseudo-code fence in the item_bake docs compiled as Rust and failed
   `cargo test --workspace` on the clean tree).
+  The **leaf-litter variant→model palette mapping lands (v0.3.79 — the
+  banked v0.3.78 item, and the palette's chain of custody is now
+  complete for the ground cover)**: the mesher's leaf-litter flat
+  fallback (the `TILE_NONE` branch of the 13th-audit path) now reads
+  `colors::palette_leaf_litter_color(segment, face)` FIRST — the same
+  palette → LUT → defaults precedence the cube path has had since
+  v0.3.78 — instead of jumping straight to the LUT. The mapping exists
+  because the blockstate is a MULTIPART whose `segment_amount` selects
+  the template model(s) (1→m1, 2→m2, 3→m2+m3 via the `2|3` OR-list
+  plus `3` — the multipart collect rule, 4→m4) and each template
+  samples a DIFFERENT uv rect of the same 16×16 grayscale cutout, so
+  the flat color must follow the variant (the cube table pins
+  leaf_litter at segment_amount=1 and could not have been reused: its
+  segment-1 entry (165,165,165) differs from segment 4's (171,171,171)
+  — the full cover the no-op variant 0 renders). `facing` is pinned to
+  north BY PROOF: the y-rotation turns the element and its glued uv
+  together and the quad rect is the rotation-invariant min/max, so the
+  average cannot change with the facing. This round also RESTORES
+  `scripts/palette_oracle.py` — the v0.3.77 oracle was referenced by
+  this README but silently missing from the tree (the v0.3.74 lesson
+  re-applied: grep the references) — a dependency-free hand-written
+  PNG reader (filters, palette/gray/truecolor depths, tRNS) that
+  re-pins stone (126,126,126) / grass_block_top (147,147,147)
+  bit-exactly and provides the new numbers: segment 1 = the NW-quarter
+  rect (165,165,165) [27/64 opaque], segment 2 = the west strip
+  (171,171,171) [55/128], segment 3 = the half-up compose of the strip
+  (171) + the SE quarter (170) → (171,171,171), segment 4 = the full
+  cover (171,171,171) [117/256 opaque] — three of four segments
+  coincide on THIS texture, the mapping is still required (segment 1
+  differs; a future texture is free to split them).
+  GOLDENS: NONE regenerated — BY DATA, NOT BY LUCK: the atlas covers
+  leaf_litter on every golden scene, so the rewired fallback executes
+  on NO golden pixel; the full matrix re-verified through
+  verify_goldens.sh, 12/12 pass, every one rms 0.000. Tests +2
+  (workspace 367 → 369 passed / 0 failed / 3 ignored): the variant
+  table IS the oracle's numbers (up/down share one color — the two
+  template faces sample the same rect; the four side slots None; the
+  segment 0/5 edges fail closed) and the variant table genuinely
+  diverges from the canonical cube-table entry (segment 1 matches it
+  bit-for-bit, segment 4 does not).
   The **palette consumer lands (v0.3.78 — the world's flat colors come
   from the real chain)**: the mesher's flat-color path now reads
   `colors::palette_color` FIRST — the blockstate → model → texture
