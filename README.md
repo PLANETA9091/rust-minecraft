@@ -809,6 +809,38 @@ hand-drawn:
   The golden-policy lesson: an rms move inside the tolerance is not
   a pass to keep quiet about — the render changed, so the reference
   changed with it, and the diff explained the regen.
+  The **the world changes while you play — Block Update and Section
+  Blocks Update land (v0.3.100)**: the block-mutation packets, the
+  wire's answer to a rendered world. The audit re-derived BOTH wire
+  formats from the 26.2 bytecode, not the wiki: Block Update (generated
+  id 8) is `BlockPos.STREAM_CODEC` — a packed position LONG whose
+  layout javap pins as `((x & 0x3FFFFFF) << 38) | (y & 0xFFF) |
+  ((z & 0x3FFFFFF) << 12)` with the getters' two-shift ARITHMETIC
+  sign-extension (`lshr`, not the logical shift; `PACKED_HORIZONTAL_LENGTH`
+  = 26 from `log2(smallestEncompassingPowerOfTwo(30000000)) + 1`) —
+  then a VarInt state id (`ByteBufCodecs.idMapper(BLOCK_STATE_REGISTRY)`,
+  the chunk decoder's own id space). Section Blocks Update (generated id
+  84) is `SectionPos.STREAM_CODEC` (`((sx & 0x3FFFFF) << 42) |
+  (sy & 0xFFFFF) | ((sz & 0x3FFFFF) << 20)`), a VarInt count, then
+  VarLong entries — `position = packed & 4095`, `state = packed >>> 12`
+  (LOGICAL `lushr`), the 12-bit local packing `(x << 8) | (z << 4) | y`
+  (javap `sectionRelativeX/Y/Z`). The model consumes BOTH the Light
+  event's way: the stored column mutates IN PLACE through the SAME
+  arithmetic `block()` reads through — the next materialize renders the
+  change, nothing else exists to invalidate — under the strict
+  all-or-nothing rule (an absent column, an out-of-range slot, or ONE
+  bad entry in a batch refuses the WHOLE update, never a half-applied
+  lie; the section index is the exact floor walk
+  `(sy * 16 - min_y) >> 4`). The parse side keeps the set-time
+  discipline: counts validated against the remaining bytes BEFORE any
+  allocation. GOLDENS UNTOUCHED BY CONSTRUCTION: 12/12 at rms 0.000 (no
+  golden flow carries block-update packets; the mesher untouched).
+  Tests +4 (workspace 425 -> 429 passed / 0 failed / 3 ignored): the
+  position round-trip (the negative half-plane, the 26/12-bit field
+  edges), the packed entries (the (15,15,15) corner, a 2-byte VarLong
+  state, the lying count refused), the single update's in-place
+  mutation + the refused shapes, and the batch's all-or-nothing rule
+  (the valid prefix must NOT land when a later entry fails).
   The **night-vision color is STATE — the fourth decoded light attribute,
   under the effect-state factor (v0.3.99)**: the `night_vision_color`
   consumer closes the four-attribute arc. The audit pinned BOTH ends of
