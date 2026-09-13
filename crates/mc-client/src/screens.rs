@@ -2496,10 +2496,14 @@ mod tests {
                 world: air_net_world(2, 0),
                 camera: None,
                 spawn_biome: None,
-                slim_arm: false,
+                slim_arm: true,
             }),
         );
         assert!(app.world_is_network, "A adopted");
+        // the profile-metadata consumer: the join's skin model IS the
+        // first-person arm's selection (the wide --slim-arm stand-in is
+        // overridden by a real login's textures metadata)
+        assert!(app.slim_arm, "the slim profile rides the join onto the app");
         assert!(
             run_a.load(std::sync::atomic::Ordering::Relaxed),
             "the adopted session keeps running"

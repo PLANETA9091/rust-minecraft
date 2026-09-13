@@ -616,6 +616,36 @@ hand-drawn:
   cutout rule. Also repairs a pre-existing doctest break (an unannotated
   pseudo-code fence in the item_bake docs compiled as Rust and failed
   `cargo test --workspace` on the clean tree).
+  The **profile-metadata consumer lands (v0.3.85 — the login's skin
+  model picks the arm)**: the slim arc completes its natural lifecycle —
+  the `--slim-arm` stand-in gets the REAL selection source. The login
+  success's profile properties (parsed since the login arc but consumed
+  by nothing) now yield the skin model: `mc_protocol::login::
+  profile_skin_model` reads the `textures` property's base64 JSON and
+  answers `Some("slim")` ONLY for `SKIN.metadata.model == "slim"` — no
+  property (every offline server), no SKIN entry, no metadata, an
+  unknown model value, or ANY malformed input (a hand-rolled RFC 4648
+  base64 decoder — the protocol layer stays dependency-free, like the
+  MD5 — refusing bad length/padding/alphabet; serde_json refusing bad
+  JSON) is `None`, the classic wide default: untrusted profile data
+  means "no opinion", never a panic and never a guess. The fact threads
+  the vanilla join chain — `PlayOutcome::Joined` → `PlaySession` → the
+  client join worker → `LoginResult::Loaded.slim_arm` → `App` — so a
+  real login's metadata IS the first-person arm's kind (an explicit
+  `--slim-arm` remains the no-profile stand-in, overridden by a
+  profiled login). The goldens never connect, so the default path is
+  untouched — BY DATA AND BY MATRIX: 12/12 pass, every one rms 0.000,
+  through verify_goldens.sh on the rebuilt release binaries. Tests +4
+  (workspace 384 → 388 passed / 0 failed / 3 ignored; mc-protocol 78 →
+  82): the base64 RFC-vector pin (plus the malformed-shape refusals),
+  the skin-model shapes (slim / no-metadata / unknown value / wrong
+  property / malformed base64 / non-JSON / no-SKIN — each its own
+  refusal), the properties-capable login-success encoder round-trip
+  (write → parse → the profile lands on the model), and the
+  END-TO-END mock-server ride (a real TCP join whose login success
+  carries the textures property lands `session.skin_model == Some
+  ("slim")`; the empty-property join lands None) plus the App-level
+  consumer assertion (a slim login sets `app.slim_arm`).
   The **slim arm variant lands (v0.3.84 — the Alex model, data-driven
   end-to-end)**: the first-person arm gains the SLIM (3×12×4) geometry —
   javap-evidenced from the official 26.2 jar's
