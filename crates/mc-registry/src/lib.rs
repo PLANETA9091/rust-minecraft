@@ -772,7 +772,7 @@ mod tests {
         let mut total_applies = 0usize;
         let mut refs: Vec<&str> = Vec::new();
         for (_, variants, multipart) in BLOCKSTATES.iter() {
-            let json = variants.or(multipart).unwrap();
+            let json = variants.or(*multipart).unwrap();
             let needle = "\"model\":\"";
             let mut rest = json;
             while let Some(i) = rest.find(needle) {
@@ -794,18 +794,15 @@ mod tests {
                 "blockstate model ref {r} resolves to no model file"
             );
         }
-        // the 4 vanilla BARE refs (no namespace: item_frame x2,
-        // glow_item_frame x2) ride as written — the closing quote keeps the
-        // _map-suffixed models out of the count
-        for (id, want) in [("item_frame", 2usize), ("glow_item_frame", 2)] {
-            let row = BLOCKSTATES.iter().find(|r| r.0 == id).unwrap();
-            let json = row.1.as_ref().unwrap();
-            assert_eq!(
-                json.matches(&format!("\"model\":\"block/{id}\"")).count(),
-                want,
-                "{id}: the bare refs"
-            );
-        }
+        // the 4 vanilla BARE refs (no namespace: item_frame x2 incl. the
+        // _map variant, glow_item_frame x2 likewise) ride as written — the
+        // needle's leading quote keeps the namespaced refs out
+        let bare_total = BLOCKSTATES
+            .iter()
+            .filter_map(|r| r.1.as_ref().or(r.2.as_ref()))
+            .map(|j| j.matches("\"model\":\"block/").count())
+            .sum::<usize>();
+        assert_eq!(bare_total, 4, "the vanilla bare refs");
 
         // spot rows — the serde-canonical JSON fragments, byte-verbatim
         let grass = BLOCKSTATES

@@ -581,6 +581,53 @@ hand-drawn:
   timeline (−1 → 0..5/6 → rest at exactly 6 ticks), the re-trigger
   guard, the wrap-guard lerp, the mid-swing geometry delta, and the
   bit-identical rest pose.
+  The **blockstates land (v0.3.66 — the world-render chain's data link,
+  the models round's sibling table)**: the generator grew its fifteenth
+  table — `assets/minecraft/blockstates/` of the official jar parsed
+  into `generated/blockstates.rs`, **1198 files** split EXACTLY
+  **1096 `variants` / 102 `multipart`** (never both, never neither),
+  each retained as **value-faithful canonical compact JSON** (the
+  models round's texture/display-stanza precedent). The census ran
+  first — twice — and the real-jar run REFUSED twice, the
+  extend-parser-first discipline catching the census's own blind
+  spots: **the empty state key is a real vanilla shape**
+  (`acacia_leaves` and all 549 one-variant property-less blocks ship
+  `{"": {…}}`), and **the when conditions have an AND wrapper too** —
+  `{"AND": [maps]}` ×288 (acacia_shelf…) beside `{"OR": […]}`
+  ×5 (fire ×4, redstone_wire ×1), never mixed with plain keys, never
+  nested. The closed sets: the apply 5-key set
+  {model, x, y, uvlock, weight} over **8661 applies**; rotations only
+  0/90/180/270 (0 never written — absent means 0); uvlock only ever
+  true; weight on 2 applies (value 2); parts carry {apply} (46
+  unconditional) or {apply, when} (1086); apply LISTS (19 multipart
+  parts + the 56 weighted/equal-random variant arrays — grass_block's
+  four y-rotations, turtle_egg's twelve) ride in jar order; max 64
+  variants (repeater) / 52 parts (chiseled_bookshelf). The model-ref
+  join is PERFECT: all **2380 distinct refs** resolve to model files,
+  0 dangling — and the census's own 2363 was WRONG (a python
+  loop-variable leak skipped every apply-list member but the last);
+  the independent re-derivation caught its own census, the third such
+  self-catch in the project's history. 4 vanilla refs ship WITHOUT a
+  namespace (item_frame ×2, glow_item_frame ×2 — the map/state
+  variants) and ride as written beside the 8657 `minecraft:` ones.
+  Offline arc: `mc2rs-gen blockstates --version 26.2 --jar
+  <client.jar>` + `write_blockstates()` in the regen pipeline after
+  write_models. Tests +4 (workspace 291 → 295 passed / 0 failed / 3
+  ignored): the generator's both-shapes parse fixture (weighted
+  arrays, uvlock, x/y, the bare ref, the AND/OR wrappers, the
+  when-absent part, the apply list), the unknown-key/doubled-shape
+  refusals, the bad-domain refusals (foreign namespace, y=45,
+  negative rotation, zero weight, OR mixed with plain keys,
+  non-string when values) and the registry census pin (the
+  1198/1096/102/8661/2380 counts, the bare refs, the
+  grass_block/leaf_litter/redstone_wire/acacia_shelf spot fragments,
+  the repeater 64, and the join both ways — every ref resolves into
+  MODELS, every id is a block in BLOCKS). Zero render path touches
+  the table yet; goldens checked at the CI flags (rms 0.000), none
+  regenerated. The consumer round (state-id → model + rotation, the
+  mesher's palette going data-driven) comes later — the 14th audit's
+  hand-coded leaf_litter coverage is the shape of what this table
+  will generalize.
   The **elements geometry lands (v0.3.65 — the model-geometry round, the
   held-item arc's data half, round 3)**: the honest skip list is paid
   off — the 344 element-carrying models' `elements` arrays are parsed
