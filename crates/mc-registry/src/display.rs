@@ -522,6 +522,44 @@ pub fn posed_quads(
         .collect()))
 }
 
+/// The e2e composition for GENERATED items (the ItemModelGenerator bake):
+/// the bake quads through the resolved display pose of `context`, with
+/// the bake's pixel units converted to the vanilla BakedQuad space on the
+/// way. Evidence for the /16 (javap, the 26.2 jar): FaceBakery.bakeVertex
+/// divides the FaceInfo-selected from/to corner by 16.0f IMMEDIATELY
+/// (Vector3f.div(F) at the select site) — the BakedQuad vertices are
+/// block units for element models AND baked items alike, while our
+/// item_bake keeps the bake's pre-div pixel units (the census pinned
+/// iron_sword's first slab at (13,16,7.5)..(14,16,8.5)). The div is an
+/// exact exponent shift, so applying it after our bake's
+/// facing/winding (both scale-invariant) is bit-identical to vanilla's
+/// divide-first order. Unknown model -> None; a broken stanza -> Err.
+pub fn posed_item_quads(
+    model_id: &str,
+    ctx: usize,
+) -> Option<Result<Vec<crate::element_quads::Quad>, String>> {
+    let quads = crate::item_bake::derive_item_model(model_id)?;
+    let transforms = match resolve_transforms(model_id) {
+        Ok(t) => t,
+        Err(e) => return Some(Err(e)),
+    };
+    let left_hand = context_is_left_hand(ctx);
+    Some(Ok(quads
+        .iter()
+        .map(|q| {
+            let mut posed = *q;
+            posed.vertices = q.vertices.map(|v| {
+                apply_transform(
+                    transforms[ctx].as_ref(),
+                    left_hand,
+                    [v[0] / 16.0, v[1] / 16.0, v[2] / 16.0],
+                )
+            });
+            posed
+        })
+        .collect()))
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
