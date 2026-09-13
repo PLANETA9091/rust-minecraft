@@ -1093,14 +1093,24 @@ mod tests {
         for m in vertex_multiplier(&top_face(&w)) {
             assert!(m.abs() < 1e-6, "known-dark cell is black: {m}");
         }
-        // torch-lit: no sky opinion, block 14 -> the whole face at brightness(14)
+        // torch-lit: no sky opinion, block 14 -> the TINTED, FACTORED
+        // block term under the clamp: BlockLightColor(14) ·
+        // brightness(14) · BlockFactor — red and green saturate, blue
+        // rides under (the warm verdict). v0.3.87: the term is no
+        // longer the white brightness(14) — the #ffd8ac mix landed.
         let mut w = empty_world();
         put(&mut w, 8, 8, 8, STONE);
         w.light = Some(unknown_light());
         set_light(&mut w, None, Some(14), 8, 9, 8);
-        let expect = light_brightness(14.0);
-        for m in vertex_multiplier(&top_face(&w)) {
-            assert!((m - expect).abs() < 1e-6, "block-only light: {m} vs {expect}");
+        let b = light_brightness(14.0) * BLOCK_FACTOR;
+        let c = block_light_color(14.0);
+        let expect = [(b * c[0]).min(1.0), (b * c[1]).min(1.0), (b * c[2]).min(1.0)];
+        assert!((expect[0] - 1.0).abs() < 1e-6, "red saturates the clamp");
+        assert!(expect[2] < 1.0, "blue stays under the clamp");
+        for corner in &top_face(&w).colors {
+            for (ch, e) in corner.iter().zip(expect.iter()) {
+                assert!((ch - e).abs() < 1e-6, "block-only light: {ch} vs {e}");
+            }
         }
     }
 
@@ -1131,28 +1141,34 @@ mod tests {
             );
         }
         // the same night sky over a TORCH-lit cell (block 14): the
-        // ADDITIVE combine sums the tinted sky term + the white block
-        // term per channel — red (0.24*tint_rg) + brightness(14) =
-        // 0.8926.. (under the clamp), blue 0.24 + brightness(14) =
-        // 1.0178 -> clamps at 1.0 — the torch surface reads WARM at
-        // night, the vanilla shader's arithmetic
+        // ADDITIVE combine sums the tinted sky term + the block term
         set_light(&mut w, Some(15), Some(14), 8, 9, 8);
-        let night_torch_r = light_brightness(15.0) * 0.24 * tint_rg + light_brightness(14.0);
+        // v0.3.87: the block term carries BlockFactor 1.4 — the red
+        // term alone is 1.0889, so the SUM saturates the clamp at 1.0
+        // (a full-sky torch-lit face is fully lit, the vanilla
+        // verdict); the warm tint shows on UNclamped cells instead
+        // (see the_block_term_is_tinted_and_factored_not_white)
+        let block_r =
+            (light_brightness(14.0) * BLOCK_FACTOR * block_light_color(14.0)[0]).min(1.0);
+        let night_torch_r = (light_brightness(15.0) * 0.24 * tint_rg + block_r).min(1.0);
+        assert!(
+            (night_torch_r - 1.0).abs() < 1e-6,
+            "the torch sum saturates the clamp: {night_torch_r}"
+        );
         for m in vertex_multiplier(&top_face(&w)) {
-            assert!(
-                (m - night_torch_r).abs() < 1e-6,
-                "night torch red channel sums tinted: {m} vs {night_torch_r}"
-            );
+            assert!((m - night_torch_r).abs() < 1e-6, "night torch red saturates: {m}");
         }
         // the sum WITHOUT the clamp: day, sky 12 (brightness 0.5) over
-        // block 10 (brightness 1/3) — max(0.5, 1/3) was 0.5, the true
-        // shader sum is 0.5 + 1/3 = 5/6
+        // block 10 (brightness 1/3 × BlockFactor 1.4 × tint-red 1.0) —
+        // max(0.5, 1/3) was 0.5, the true shader sum is 0.5 + 7/15 =
+        // 29/30 (the factor rides the block term since v0.3.87)
         let mut w3 = empty_world();
         put(&mut w3, 8, 8, 8, STONE);
         w3.light = Some(unknown_light());
         set_light(&mut w3, Some(12), Some(10), 8, 9, 8);
-        let expect = light_brightness(12.0) + light_brightness(10.0);
-        assert!((expect - 5.0 / 6.0).abs() < 1e-6, "ramp sanity: {expect}");
+        let expect = light_brightness(12.0)
+            + light_brightness(10.0) * BLOCK_FACTOR * block_light_color(10.0)[0];
+        assert!((expect - 29.0 / 30.0).abs() < 1e-6, "ramp sanity: {expect}");
         for m in vertex_multiplier(&top_face(&w3)) {
             assert!(
                 (m - expect).abs() < 1e-6,
@@ -1160,18 +1176,25 @@ mod tests {
             );
         }
         // an unknown sky layer is never scaled into an opinion: a corner
-        // with only block known keeps the plain block term (no factor,
-        // no tint — the tint rides the SKY term only)
+        // with only block known keeps the plain block term (no SKY
+        // factor, no SKY tint — even at the night tick; the block term
+        // carries its own factor 1.4 and its own tint since v0.3.87),
+        // block 10 keeps every channel under the clamp
         let mut w2 = empty_world();
         put(&mut w2, 8, 8, 8, STONE);
         w2.light = Some(unknown_light());
         w2.day_tick = Some(18_000);
-        set_light(&mut w2, None, Some(14), 8, 9, 8);
-        for m in vertex_multiplier(&top_face(&w2)) {
-            assert!(
-                (m - light_brightness(14.0)).abs() < 1e-6,
-                "unknown sky is not darkened, the block term is exact: {m}"
-            );
+        set_light(&mut w2, None, Some(10), 8, 9, 8);
+        let b = light_brightness(10.0) * BLOCK_FACTOR;
+        let c = block_light_color(10.0);
+        let expect = [b * c[0], b * c[1], b * c[2]];
+        for corner in &top_face(&w2).colors {
+            for (ch, e) in corner.iter().zip(expect.iter()) {
+                assert!(
+                    (ch - e).abs() < 1e-6,
+                    "unknown sky is not darkened, the block term is exact: {ch} vs {e}"
+                );
+            }
         }
     }
 
@@ -1197,6 +1220,89 @@ mod tests {
         for corner in &top_face(&w).colors {
             for (c, e) in corner.iter().zip(expect.iter()) {
                 assert!((c - e).abs() < 1e-6, "night tint per channel: {c} vs {e}");
+            }
+        }
+    }
+
+    #[test]
+    fn the_block_light_color_is_the_parabolic_tint_mix() {
+        // the shader's parabola on the RAW level: 1.0 at BOTH ends
+        // (level 0 and 15), exactly 0.0 at the mid — and the mix toward
+        // white is 0.9 OF the parabola (lightmap.fsh verbatim).
+        assert!(
+            (parabolic_mix_factor(0.5) - 0.0).abs() < 1e-9,
+            "mid level: the pure tint, no mix"
+        );
+        assert!(
+            (parabolic_mix_factor(0.0) - 1.0).abs() < 1e-9,
+            "level 0: the full mix (irrelevant there — brightness 0)"
+        );
+        assert!(
+            (parabolic_mix_factor(1.0) - 1.0).abs() < 1e-9,
+            "level 15: the full mix — white-hot torch"
+        );
+        // blocks 7 and 8 straddle the parabola's dip symmetrically —
+        // the SAME mix, the nearest the integer levels get to the pure
+        // #ffd8ac (the dip's neighborhood, not the dip itself)
+        let m7 = 0.9 * parabolic_mix_factor(7.0 / 15.0);
+        let m8 = 0.9 * parabolic_mix_factor(8.0 / 15.0);
+        assert!((m7 - m8).abs() < 1e-6, "the dip is level-symmetric: {m7} vs {m8}");
+        assert!(m7 < 0.01, "near the pure tint: {m7}");
+        // red is 1.0 at EVERY level (the tint's red is saturated — the
+        // warmth lives entirely in green/blue)
+        for b in [0.0f32, 3.0, 7.0, 8.0, 12.0, 15.0] {
+            let c = block_light_color(b);
+            assert!((c[0] - 1.0).abs() < 1e-9, "red constant at {b}: {}", c[0]);
+        }
+        // the extremes mix 0.9 of the way to white — derived from the
+        // tint constant, both end levels share it (parabola 1.0 there)
+        let expect_g = 216.0f32 / 255.0 + 0.9 * (1.0 - 216.0 / 255.0);
+        let expect_b = 172.0f32 / 255.0 + 0.9 * (1.0 - 172.0 / 255.0);
+        for b in [0.0f32, 15.0] {
+            let c = block_light_color(b);
+            assert!((c[1] - expect_g).abs() < 1e-6, "green at {b}: {} vs {expect_g}", c[1]);
+            assert!((c[2] - expect_b).abs() < 1e-6, "blue at {b}: {} vs {expect_b}", c[2]);
+        }
+    }
+
+    #[test]
+    fn the_block_term_is_tinted_and_factored_not_white() {
+        // the full-channel mesher witness: a torch-lit top face (block
+        // 7, no sky opinion) carries BlockLightColor(7) · brightness(7)
+        // · BlockFactor per channel — red 7/15·1.4·1.0, green and blue
+        // ride the near-pure-tint parabolic mix — ALL under the clamp.
+        // The old white term would read brightness(7) flat on every
+        // channel; the expectations derive from the audited constants.
+        let mut w = empty_world();
+        put(&mut w, 8, 8, 8, STONE);
+        w.light = Some(unknown_light());
+        set_light(&mut w, None, Some(7), 8, 9, 8);
+        let b = light_brightness(7.0) * BLOCK_FACTOR;
+        let c = block_light_color(7.0);
+        let expect = [b * c[0], b * c[1], b * c[2]];
+        assert!(expect.iter().all(|e| *e < 1.0), "block 7 sits under the clamp");
+        for corner in &top_face(&w).colors {
+            for (ch, e) in corner.iter().zip(expect.iter()) {
+                assert!((ch - e).abs() < 1e-6, "torch tint per channel: {ch} vs {e}");
+            }
+        }
+        // the clamp witness at block 14: red (1.0889) AND green (1.0352)
+        // saturate, blue stays under (0.8944 tint × 1.0889 = 0.9740) —
+        // the shader's single final clamp, the warm torch verdict
+        set_light(&mut w, None, Some(14), 8, 9, 8);
+        let b14 = light_brightness(14.0) * BLOCK_FACTOR;
+        let c14 = block_light_color(14.0);
+        let expect14 = [
+            (b14 * c14[0]).min(1.0),
+            (b14 * c14[1]).min(1.0),
+            (b14 * c14[2]).min(1.0),
+        ];
+        assert!((expect14[0] - 1.0).abs() < 1e-6, "red saturates");
+        assert!((expect14[1] - 1.0).abs() < 1e-6, "green saturates");
+        assert!(expect14[2] < 1.0, "blue under: {}", expect14[2]);
+        for corner in &top_face(&w).colors {
+            for (ch, e) in corner.iter().zip(expect14.iter()) {
+                assert!((ch - e).abs() < 1e-6, "torch-14 per channel: {ch} vs {e}");
             }
         }
     }
