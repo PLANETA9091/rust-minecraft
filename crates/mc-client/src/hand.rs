@@ -606,6 +606,8 @@ mod tests {
         let dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
             .parent()
             .unwrap()
+            .parent()
+            .unwrap()
             .join("assets-cache/jar");
         if !dir.join(skin::RUNTIME_PATH).exists() {
             return; // hermetic environments skip: no asset, no assertion
@@ -712,6 +714,8 @@ mod tests {
         let dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
             .parent()
             .unwrap()
+            .parent()
+            .unwrap()
             .join("assets-cache/jar");
         if !dir.join(skin::SLIM_RUNTIME_PATH).exists() {
             return; // hermetic environments skip: no asset, no assertion
@@ -735,6 +739,8 @@ mod tests {
         let dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
             .parent()
             .unwrap()
+            .parent()
+            .unwrap()
             .join("assets-cache/jar");
         if !dir.join(skin::RUNTIME_PATH).exists() || !dir.join(skin::SLIM_RUNTIME_PATH).exists() {
             return; // hermetic environments skip: no assets, no assertion
@@ -755,8 +761,9 @@ mod tests {
                 changed += 1;
             }
         }
-        // the probe-observed count (in-test, plain-sky background)
-        assert_eq!(changed, 1, "PROBE");
+        // the probe-observed count (in-test, plain-sky background): the
+        // moved inner plane + the shifted unwrap texels touch 2534 pixels
+        assert_eq!(changed, 2534, "the slim rest pose moves exact pixels");
         // sanity: the variant is a real geometry change, not a recolor
         assert!(changed > 500, "a one-unit box shrink must move real pixels");
     }
