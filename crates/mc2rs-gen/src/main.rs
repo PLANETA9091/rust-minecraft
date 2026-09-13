@@ -1,6 +1,7 @@
 //! mc2rs-gen — the version-agnostic Minecraft → Rust generator CLI.
 
 mod atlas;
+mod blockstagen;
 mod codegen;
 mod extract;
 mod fontgen;
@@ -194,6 +195,19 @@ enum Cmd {
         #[arg(long, default_value = ".")]
         out: String,
     },
+    /// Blockstate definitions (assets/minecraft/blockstates/) ->
+    /// blockstates.rs: the world-render chain's data link, value-faithful
+    /// canonical JSON after a strict census-first validation.
+    Blockstates {
+        #[arg(long)]
+        version: String,
+        /// Path to the official client jar (e.g. .mc2rs/classpath/client.jar).
+        #[arg(long)]
+        jar: String,
+        /// Workspace root (contains crates/).
+        #[arg(long, default_value = ".")]
+        out: String,
+    },
     /// Re-emit mc-registry/src/generated/worldgen.rs (biomes + the built-in
     /// dimension_type/timeline/timeline-tag registry tables) from a LOCAL
     /// client jar — the offline half of the worldgen arc: no network, no java.
@@ -330,6 +344,12 @@ fn main() -> Result<()> {
             let root = std::path::PathBuf::from(&out);
             let path = write_models(&root, &bytes)?;
             println!("models ({version}): {}", path.display());
+        }
+        Cmd::Blockstates { version, jar, out } => {
+            let bytes = std::fs::read(&jar).with_context(|| format!("read jar {jar}"))?;
+            let root = std::path::PathBuf::from(&out);
+            let path = write_blockstates(&root, &bytes)?;
+            println!("blockstates ({version}): {}", path.display());
         }
         Cmd::ItemModels { version, jar, out } => {
             let bytes = std::fs::read(&jar).with_context(|| format!("read jar {jar}"))?;
@@ -552,6 +572,8 @@ fn generate(agent: &ureq::Agent, cache: &util::Cache, version: &str, out: &Path)
     println!("      item-models table: {}", item_models_path.display());
     let models_path = write_models(&workspace_root, &jar_bytes)?;
     println!("      models table: {}", models_path.display());
+    let blockstates_path = write_blockstates(&workspace_root, &jar_bytes)?;
+    println!("      blockstates table: {}", blockstates_path.display());
 
     let extracted = codegen::extract_runtime_assets(&mut zip, &workspace_root, &gen.ui, &gen.font)?;
     println!("[7/7] done in {:.1}s ({} runtime asset files -> assets-cache/jar)", t0.elapsed().as_secs_f32(), extracted);
@@ -827,6 +849,29 @@ fn write_models(workspace_root: &Path, jar_bytes: &[u8]) -> Result<std::path::Pa
         "      elements: {} elements typed -> {}",
         element_total,
         elements_path.display()
+    );
+    Ok(path)
+}
+
+/// Resolve + write crates/mc-registry/src/generated/blockstates.rs (the
+/// blockstate definitions: variants / multipart, value-faithful canonical
+/// JSON) from a local jar.
+fn write_blockstates(workspace_root: &Path, jar_bytes: &[u8]) -> Result<std::path::PathBuf> {
+    let mut zip =
+        zip::ZipArchive::new(std::io::Cursor::new(jar_bytes)).context("open client jar as zip")?;
+    let data = blockstagen::generate(&mut zip)?;
+    let reg_dir = workspace_root.join("crates/mc-registry/src/generated");
+    std::fs::create_dir_all(&reg_dir)?;
+    let path = reg_dir.join("blockstates.rs");
+    std::fs::write(&path, blockstagen::emit(&data)?)?;
+    println!(
+        "      blockstates: {} files ({} variants / {} multipart), {} applies, {} model refs -> {}",
+        data.rows.len(),
+        data.variant_files,
+        data.multipart_files,
+        data.applies,
+        data.model_refs,
+        path.display()
     );
     Ok(path)
 }
