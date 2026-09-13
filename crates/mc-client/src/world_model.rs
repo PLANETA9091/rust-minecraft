@@ -340,10 +340,39 @@ impl WorldModel {
     /// another clock's ticks. Without any registry knowledge (a bare
     /// mock server) the first clock in the packet serves — documented
     /// fallback, the arrival-order guess the table replaces.
+    ///
+    /// THE SKIP-SYNC FALLBACK (the world-clock slice, v0.3.56): a
+    /// server that accepted the known-packs claim streams NO registry
+    /// data at all — that state (no dimension sync) is the gate for
+    /// BOTH rescues: the clock NAME through the built-in dimension
+    /// table, and the clock ID through the wire-order table whose
+    /// member set the built-in WORLD_CLOCKS twin pins. A sync that DID
+    /// arrive keeps every existing contract — its element names the
+    /// clock (or doesn't, the documented first-clock shape), its
+    /// world_clock table maps the id, and a key it omits gets no
+    /// built-in rescue.
     pub fn day_tick(&self) -> Option<i64> {
+        let skip_sync = self.registry.dimension_types.is_empty();
         let named = self.current_dimension.as_ref().and_then(|dim| {
-            let clock_name = self.registry.dimension(dim)?.default_clock.as_deref()?;
-            let id = self.registry.world_clock_id(clock_name)?;
+            let clock_name = match self.registry.dimension(dim) {
+                Some(d) => d.default_clock.clone(),
+                None if skip_sync => {
+                    mc_registry::generated::worldgen::dimension_type(dim)
+                        .and_then(|d| d.default_clock.map(String::from))
+                }
+                None => None,
+            };
+            let clock_name = clock_name.as_deref()?;
+            let id = self.registry.world_clock_id(clock_name).or_else(|| {
+                if skip_sync {
+                    mc_registry::generated::registry_order::WORLD_CLOCK_ORDER
+                        .iter()
+                        .position(|n| *n == clock_name)
+                        .map(|p| p as u32)
+                } else {
+                    None
+                }
+            })?;
             Some(self.clocks.iter().find(|c| c.id == id).map(|c| c.total_ticks))
         });
         match named {
@@ -810,6 +839,62 @@ mod tests {
             synced.biome_name(0, 0, 0),
             None,
             "an id the sync never named gets no built-in rescue"
+        );
+    }
+
+    #[test]
+    fn the_built_in_clock_tables_are_the_skip_sync_fallback() {
+        // NO registry data at all (the claim-accepted skip-sync state):
+        // the built-in dimension table names the overworld's clock, the
+        // wire-order table maps that name to the id the vanilla Set Time
+        // packet carries
+        let mut m = WorldModel::new();
+        m.current_dimension = Some("minecraft:overworld".into());
+        let p = mc_protocol::play::test_support::set_time_packet(1, &[(0, 1_002_006_000, 0.0, 1.0)]);
+        let ts = mc_protocol::play::parse_set_time(&p).expect("set time parses");
+        assert!(m.apply(PlayEvent::Time(ts)));
+        assert_eq!(
+            m.day_tick(),
+            Some(6_000),
+            "built-in default_clock -> wire-order id 0 -> the overworld clock's ticks"
+        );
+        // the end: the built-in dimension names ITS clock — the
+        // wire-order id 1, whose own state serves (never the
+        // overworld's ticks, whatever the arrival order)
+        m.current_dimension = Some("minecraft:the_end".into());
+        assert_eq!(m.day_tick(), None, "the end's clock state never arrived: no opinion");
+        let p2 = mc_protocol::play::test_support::set_time_packet(2, &[(1, 999_999, 0.0, 1.0)]);
+        let ts2 = mc_protocol::play::parse_set_time(&p2).unwrap();
+        assert!(m.apply(PlayEvent::Time(ts2)));
+        assert_eq!(m.day_tick(), Some(15_999), "the end's own clock through wire-order id 1");
+        // the nether: the built-in dimension names NO clock — the
+        // documented first-clock fallback shape (the first state serves)
+        m.current_dimension = Some("minecraft:the_nether".into());
+        assert_eq!(m.day_tick(), Some(6_000), "no clock named: the arrival-order fallback");
+        // a mock dimension name: unknown in both tables — the same
+        // documented fallback (the bare-mock contract, unchanged)
+        m.current_dimension = Some("mock:test".into());
+        assert_eq!(m.day_tick(), Some(6_000));
+        // a sync that DID arrive gets NO built-in rescue: a partial
+        // dimension sync without the overworld key keeps the
+        // first-clock fallback, the pre-fallback contract
+        let mut partial = WorldModel::new();
+        partial.current_dimension = Some("minecraft:overworld".into());
+        partial.registry.dimension_types = vec![DimensionTypeEntry {
+            name: "minecraft:the_nether".into(),
+            min_y: 0,
+            height: 256,
+            default_clock: None,
+            timelines: None,
+        }];
+        let p3 =
+            mc_protocol::play::test_support::set_time_packet(3, &[(0, 1_002_006_000, 0.0, 1.0)]);
+        let ts3 = mc_protocol::play::parse_set_time(&p3).unwrap();
+        assert!(partial.apply(PlayEvent::Time(ts3)));
+        assert_eq!(
+            partial.day_tick(),
+            Some(6_000),
+            "the arrived sync is the only truth — no key, no rescue, first clock serves"
         );
     }
 

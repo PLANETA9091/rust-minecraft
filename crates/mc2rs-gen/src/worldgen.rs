@@ -105,6 +105,9 @@ pub struct WorldgenData {
     /// per-biome tint extras (grass_color_modifier / dry_foliage_color),
     /// sparse — only the biomes whose JSON states at least one
     pub biome_tint_extras: BTreeMap<String, BiomeTintExtraEntry>,
+    /// the built-in `minecraft:world_clock` registry names (id -> full
+    /// name); the 26.2 JSONs are EMPTY objects — the names are the data
+    pub world_clocks: BTreeMap<String, String>,
     pub noise_settings: Vec<String>,
     pub density_functions: usize,
     pub noises: usize,
@@ -225,6 +228,26 @@ pub fn generate<R: std::io::Read + std::io::Seek>(archive: &mut zip::ZipArchive<
                             },
                         );
                     }
+                }
+            }
+        } else if let Some(rest) = name.strip_prefix("data/minecraft/world_clock/") {
+            if rest.ends_with(".json") {
+                let bytes = read_entry(archive, &name)?;
+                if let Ok(v) = serde_json::from_slice::<Value>(&bytes) {
+                    let id = rest.trim_end_matches(".json").to_string();
+                    // the 26.2 world_clock JSONs are EMPTY objects — the
+                    // clock behavior lives code-side, the names are the
+                    // data. A stated field would be DROPPED data, so a
+                    // non-empty payload is a refusal until the parser
+                    // grows the fields consciously.
+                    if !v.as_object().map_or(false, |o| o.is_empty()) {
+                        anyhow::bail!(
+                            "world_clock {id}: unexpected payload (the 26.2 jar \
+                             states empty objects — extend the parser first)"
+                        );
+                    }
+                    let name = format!("minecraft:{id}");
+                    data.world_clocks.insert(id, name);
                 }
             }
         } else if let Some(rest) = name.strip_prefix("data/minecraft/dimension_type/") {
@@ -559,6 +582,24 @@ pub fn emit(data: &WorldgenData) -> Result<String> {
     out.push_str("/// Tint extras by registry id (\"minecraft:dark_forest\"), sorted for binary search.\n");
     out.push_str("pub fn biome_tint_extra(name: &str) -> Option<&'static BiomeTintExtraDef> {\n");
     out.push_str("    BIOME_TINT_EXTRAS.binary_search_by_key(&name, |e| e.biome).ok().map(|i| &BIOME_TINT_EXTRAS[i])\n}\n");
+
+    // ---- built-in world_clock registry names ----
+    // The data/minecraft/world_clock/ side of the jar: the registry the
+    // synced world_clock table mirrors and the skip-sync day-tick path
+    // needs a data-side twin for. Appended LAST (byte-stable).
+    out.push_str("\n/// The built-in `minecraft:world_clock` registry names (the jar's\n");
+    out.push_str("/// `data/minecraft/world_clock/*.json` file set). The 26.2 entries are\n");
+    out.push_str("/// EMPTY objects — the clock behavior is code-side, the names are the\n");
+    out.push_str("/// data. The skip-sync day-tick path maps a dimension's default_clock\n");
+    out.push_str("/// name to its wire id through the order table; this table is the\n");
+    out.push_str("/// data-side twin that pins the order table's member set.\n");
+    out.push_str("pub static WORLD_CLOCKS: [&str; ");
+    out.push_str(&data.world_clocks.len().to_string());
+    out.push_str("] = [\n");
+    for (id, name) in &data.world_clocks {
+        out.push_str(&format!("    \"{}\", // data/minecraft/world_clock/{id}.json\n", rust_str(name)));
+    }
+    out.push_str("];\n");
     Ok(out)
 }
 
@@ -668,6 +709,33 @@ mod tests {
         let err = generate(&mut zip).unwrap_err().to_string();
         assert!(err.contains("unknown grass_color_modifier"), "{err}");
         assert!(err.contains("pixelated"), "{err}");
+    }
+
+    #[test]
+    fn parses_the_world_clock_names_and_refuses_a_payload() {
+        // the REAL 26.2 form: empty objects — the names are the data
+        let mut zip = zip_of(&[
+            (
+                "data/minecraft/world_clock/overworld.json",
+                b"{}".to_vec(),
+            ),
+            ("data/minecraft/world_clock/the_end.json", b"{}".to_vec()),
+        ]);
+        let data = generate(&mut zip).unwrap();
+        assert_eq!(data.world_clocks.len(), 2);
+        assert_eq!(data.world_clocks["overworld"], "minecraft:overworld");
+        assert_eq!(data.world_clocks["the_end"], "minecraft:the_end");
+        let emitted = emit(&data).unwrap();
+        assert!(emitted.contains("pub static WORLD_CLOCKS: [&str; 2]"));
+        assert!(emitted.contains("\"minecraft:overworld\", // data/minecraft/world_clock/overworld.json"));
+        // a stated field would be dropped data — a refusal, not a guess
+        let payload = br#"{"period_ticks":24000}"#;
+        let mut zip2 = zip_of(&[(
+            "data/minecraft/world_clock/overworld.json",
+            payload.to_vec(),
+        )]);
+        let err = generate(&mut zip2).unwrap_err().to_string();
+        assert!(err.contains("unexpected payload"), "{err}");
     }
 
     #[test]

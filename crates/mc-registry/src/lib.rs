@@ -152,8 +152,18 @@ mod tests {
         assert!(same_set(&DIMENSION_TYPE_ORDER, DIMENSION_TYPES.iter().map(|d| d.name).collect()));
         assert!(same_set(&TIMELINE_ORDER, TIMELINES.iter().map(|t| t.name).collect()));
         assert!(same_set(&BIOME_ORDER, BIOMES.iter().map(|b| b.name).collect()));
-        // the world_clock registry has no data-table twin yet — density only
-        assert_eq!(crate::generated::registry_order::WORLD_CLOCK_ORDER.len(), 2);
+        // the world_clock twin: the 26.2 data files are EMPTY objects, so
+        // the names ARE the data — and they must name the same member set
+        // the order table does (the skip-sync day-tick path maps a clock
+        // name to its wire id through that order)
+        assert!(same_set(
+            &crate::generated::registry_order::WORLD_CLOCK_ORDER,
+            generated::worldgen::WORLD_CLOCKS.to_vec()
+        ));
+        assert_eq!(
+            generated::worldgen::WORLD_CLOCKS,
+            ["minecraft:overworld", "minecraft:the_end"]
+        );
         // the evidence pins: the real boot's first wire ids
         assert_eq!(DIMENSION_TYPE_ORDER[0], "minecraft:overworld");
         assert_eq!(TIMELINE_ORDER[0], "minecraft:day");

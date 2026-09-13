@@ -271,3 +271,14 @@ pub static BIOME_TINT_EXTRAS: [BiomeTintExtraDef; 4] = [
 pub fn biome_tint_extra(name: &str) -> Option<&'static BiomeTintExtraDef> {
     BIOME_TINT_EXTRAS.binary_search_by_key(&name, |e| e.biome).ok().map(|i| &BIOME_TINT_EXTRAS[i])
 }
+
+/// The built-in `minecraft:world_clock` registry names (the jar's
+/// `data/minecraft/world_clock/*.json` file set). The 26.2 entries are
+/// EMPTY objects — the clock behavior is code-side, the names are the
+/// data. The skip-sync day-tick path maps a dimension's default_clock
+/// name to its wire id through the order table; this table is the
+/// data-side twin that pins the order table's member set.
+pub static WORLD_CLOCKS: [&str; 2] = [
+    "minecraft:overworld", // data/minecraft/world_clock/overworld.json
+    "minecraft:the_end", // data/minecraft/world_clock/the_end.json
+];

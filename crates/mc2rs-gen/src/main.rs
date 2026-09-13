@@ -702,12 +702,13 @@ fn write_worldgen(workspace_root: &Path, jar_bytes: &[u8]) -> Result<std::path::
     let path = reg_dir.join("worldgen.rs");
     std::fs::write(&path, worldgen::emit(&data)?)?;
     println!(
-        "      biomes: {} | dimension types: {} | timelines: {} | timeline tags: {} | tint extras: {}",
+        "      biomes: {} | dimension types: {} | timelines: {} | timeline tags: {} | tint extras: {} | world clocks: {}",
         data.biomes.len(),
         data.dimension_types.len(),
         data.timelines.len(),
         data.timeline_tags.len(),
-        data.biome_tint_extras.len()
+        data.biome_tint_extras.len(),
+        data.world_clocks.len()
     );
     Ok(path)
 }
