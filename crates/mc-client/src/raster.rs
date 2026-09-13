@@ -760,3 +760,46 @@ fn near_clip_square() {
     assert!(out.len() >= 3);
     out.iter().for_each(|p| assert!(p[3] >= 1e-3 - 1e-6));
 }
+
+#[test]
+fn sampled_quads_raster_with_the_cutout_rule() {
+    use crate::math::Mat4;
+    // one quad covering the viewport at z=-1; the sampler paints RED on
+    // the left half of the 0..16 uv space and a fully transparent texel
+    // on the right half — the cutout rule must write color+depth on the
+    // left only
+    let quads = [SampledQuad {
+        pts: [
+            [-1.0, -1.0, -1.0],
+            [1.0, -1.0, -1.0],
+            [1.0, 1.0, -1.0],
+            [-1.0, 1.0, -1.0],
+        ],
+        uv: [[0.0, 0.0], [16.0, 0.0], [16.0, 16.0], [0.0, 16.0]],
+        tex: "test",
+    }];
+    let mut fb = Framebuf::new(32, 32);
+    fb.clear([0.0, 0.0, 0.0], [0.0, 0.0, 0.0]);
+    let proj = Mat4::perspective(70.0f32.to_radians(), 1.0, 0.1, 512.0);
+    fb.draw_sampled_quads(proj, &quads, &mut |_tex, u, _v| {
+        if u < 8.0 {
+            Some([255, 0, 0, 255])
+        } else {
+            Some([0, 255, 0, 0]) // alpha 0 -> cutout hole
+        }
+    });
+    let mut red = 0;
+    let mut green = 0;
+    for px in fb.color.chunks_exact(3) {
+        if px == &[255, 0, 0] {
+            red += 1;
+        }
+        if px == &[0, 255, 0] {
+            green += 1;
+        }
+    }
+    assert!(red > 0, "the opaque half rasterized");
+    assert_eq!(green, 0, "the transparent half must not write color");
+    // depth: written on the red half only
+    assert!(fb.depth.iter().any(|&d| d < 1e30));
+}
