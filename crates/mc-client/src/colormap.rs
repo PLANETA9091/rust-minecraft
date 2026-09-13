@@ -22,10 +22,10 @@
 //! (override-or-texture) color; foliage has no modifier.
 //!
 //! THE GRIDS live in `mc-registry/src/generated/colormap.rs`: the jar's
-//! grass.png/foliage.png decoded row-major to opaque 0xRRGGBB. A no-jar
-//! fallback build emits `REAL_GRIDS = false` with zeroed grids — the
-//! climate lookup then reports no opinion and the resolution keeps the
-//! baked-plains look (the same degraded mode the TILE_NONE atlas
+//! grass.png/foliage.png/dry_foliage.png decoded row-major to opaque
+//! 0xRRGGBB. A no-jar fallback build emits `REAL_GRIDS = false` with zeroed
+//! grids — the climate lookup then reports no opinion and the resolution
+//! keeps the baked-plains look (the same degraded mode the TILE_NONE atlas
 //! fallback drives).
 //!
 //! THE PLAINS EQUIVALENCE (the chain's end-to-end proof, pinned as a
@@ -42,18 +42,33 @@
 //! - The i64 index math differs from Java's wrapping `(j << 8) | i` only
 //!   for inputs where vanilla crashes anyway (clamped inputs stay in
 //!   [0, 65535] where the forms are exact).
-//! - The `grass_color_modifier` and `dry_foliage_color` remain decoded-
-//!   but-unconsumed (tint.rs); `temperature_modifier` does NOT feed this
-//!   lookup — the audited vanilla path reads the RAW climate field (the
-//!   modifier steers freeze/snow logic elsewhere).
+//! - The `grass_color_modifier` remains decoded-but-position-bound in
+//!   tint.rs (swamp's per-position noise); `temperature_modifier` does
+//!   NOT feed this lookup — the audited vanilla path reads the RAW
+//!   climate field (the modifier steers freeze/snow logic elsewhere).
+//! - THE DRY FOLIAGE CHAIN IS CONSUMED (since v0.3.48, the twelfth
+//!   javap audit): `Biome.getDryFoliageColor()` is
+//!   `effects.dryFoliageColorOverride().orElseGet(climate lookup)`, the
+//!   climate lookup byte-identical to its foliage sibling (the raw
+//!   fields, the caller-side `Mth.clamp`, f2d widening), and
+//!   `DryFoliageColor.get` delegates the SAME `ColorMapColorUtil.get`
+//!   with the not-loaded default -10732494 (0xFF5C3C32). Vanilla's only
+//!   RENDER consumer is leaf_litter (a non-cube ground cover — its mesh
+//!   path is future work); pale_oak_leaves carries NO tint source at all
+//!   (the audited `BlockColors.createDefault()` — the model's tintindex
+//!   falls back to BLANK_LAYER and the pre-colored texture renders as
+//!   authored). The resolution surface is complete either way.
 
-use mc_registry::generated::colormap::{FOLIAGE, GRASS, REAL_GRIDS};
+use mc_registry::generated::colormap::{DRY_FOLIAGE, FOLIAGE, GRASS, REAL_GRIDS};
 
 /// The vanilla not-loaded defaults — unreachable for clamped inputs (the
 /// generated grids hold 65536 entries), carried verbatim from the
-/// bytecode (`ldc -65281` / `ldc -12012264`).
+/// bytecode (`ldc -65281` / `ldc -12012264` / the twelfth audit's
+/// `ldc -10732494`, the `FOLIAGE_DRY_DEFAULT` ConstantValue — the RGB
+/// part of the 0xFF5C3C32 argb word).
 pub const GRASS_DEFAULT: u32 = 0xFF00FF;
 pub const FOLIAGE_DEFAULT: u32 = 0xFF48B518;
+pub const DRY_FOLIAGE_DEFAULT: u32 = 0x5C3C32;
 
 /// `Mth.clamp(v, 0.0F, 1.0F)` widened to f64 — the audited caller-side
 /// clamp. The comparison chain passes NaN through (exactly vanilla); the
@@ -105,6 +120,24 @@ pub fn foliage_from_climate(temp: f32, downfall: f32) -> Option<u32> {
         clamp01(downfall),
         &FOLIAGE,
         FOLIAGE_DEFAULT,
+    ))
+}
+
+/// `Biome.getDryFoliageColorFromTexture` (the twelfth javap audit):
+/// byte-identical to the foliage sibling except the grid and the default
+/// — the RAW climate fields, the caller-side `Mth.clamp(0,1)` with f2d
+/// widening, the SAME `ColorMapColorUtil.get`. The override is resolved
+/// by the caller (`Biome.getDryFoliageColor`'s `orElseGet` — tint.rs
+/// carries that shape).
+pub fn dry_foliage_from_climate(temp: f32, downfall: f32) -> Option<u32> {
+    if !REAL_GRIDS {
+        return None;
+    }
+    Some(get(
+        clamp01(temp),
+        clamp01(downfall),
+        &DRY_FOLIAGE,
+        DRY_FOLIAGE_DEFAULT,
     ))
 }
 
@@ -208,5 +241,29 @@ mod tests {
         );
         assert_eq!(GRASS.len(), 65536);
         assert_eq!(FOLIAGE.len(), 65536);
+        assert_eq!(DRY_FOLIAGE.len(), 65536);
+    }
+
+    #[test]
+    fn dry_foliage_climates_sample_the_probed_constants() {
+        // Probe-verified against the real jar grid BEFORE any client code
+        // (scripts/probe_dry_foliage.py, the same
+        // ColorMapColorUtil.get arithmetic): the dry grid's palette is a
+        // narrow autumn band (all samples in the 0xA3xx4x range).
+        assert_eq!(dry_foliage_from_climate(0.8, 0.4), Some(0xA37546), "plains climate");
+        assert_eq!(
+            dry_foliage_from_climate(0.7, 0.8),
+            Some(0xA36D46),
+            "pale_garden climate (the override wins in-world; the grid sample is the no-override verdict)"
+        );
+        assert_eq!(dry_foliage_from_climate(1.0, 0.0), Some(0xA38046), "desert corner");
+        assert_eq!(dry_foliage_from_climate(0.95, 0.9), Some(0xA36346), "jungle");
+        // the util is the SAME audited arithmetic — a hand-indexed cell
+        // pins the ordering (rain *= temp) on the dry grid too:
+        // (0.5, 1.0): rain=0.5, i = (int)(0.5*255) = 127, j = 127 ->
+        assert_eq!(
+            get(0.5, 1.0, &DRY_FOLIAGE, DRY_FOLIAGE_DEFAULT),
+            DRY_FOLIAGE[127 * 256 + 127]
+        );
     }
 }

@@ -33,8 +33,18 @@
 //! fixture's registry-less plains) stays bit-identical BY CONSTRUCTION.
 //!
 //! Documented deviations (deliberate, no silent guesses):
-//! - `dry_foliage_color` is decoded in the table but the runtime palette
-//!   has no dry-foliage texture to tint yet — carried, unconsumed.
+//! - The dry-foliage RESOLUTION is consumed since v0.3.48 (the twelfth
+//!   javap audit: `Biome.getDryFoliageColor()` = override `orElseGet`
+//!   the climate lookup; `DryFoliageColor.get` = the SAME util, default
+//!   0x5C3C32). The remaining gap is the FOLD consumer: vanilla's only
+//!   registered block source is `BlockTintSources.dryFoliage()` ->
+//!   LEAF_LITTER — a non-cube ground cover whose mesh path doesn't exist
+//!   yet, so no runtime kind selects `DRY_SLOT` (carried, ready).
+//! - pale_oak_leaves carries NO tint slot by AUDITED VERDICT: vanilla's
+//!   `BlockColors.createDefault()` registers no source for it (the
+//!   model's tintindex falls back to BLANK_LAYER — constant white) and
+//!   the probe showed the texture is PRE-COLORED (zero pure-gray
+//!   pixels). It renders as authored, exactly vanilla.
 //! - `temperature_modifier` does not feed the lookup — the audited
 //!   vanilla colormap path reads the RAW climate field.
 //! - `grass_color_modifier` IS consumed since v0.3.47 — but only the
@@ -47,31 +57,38 @@
 //!   opinion and stays on the baked plains look.
 
 use crate::colormap;
-use crate::world::{GRASS, LEAVES, WATER};
+use crate::world::{GRASS, LEAVES, PALE_LEAVES, WATER};
 use mc_protocol::{BiomeEntry, GrassColorModifier};
 
-/// Slot order of the per-biome tint triple: the grass_block_top color
+/// Slot order of the per-biome tint quad: the grass_block_top color
 /// (`None` = no opinion — only on a no-jar fallback build; the real
 /// grids resolve every climate through the colormap, plains onto the
 /// baked constant exactly).
 pub const GRASS_SLOT: usize = 0;
-/// Slot order of the per-biome tint triple: the oak_leaves color.
+/// Slot order of the per-biome tint quad: the oak_leaves color.
 pub const FOLIAGE_SLOT: usize = 1;
-/// Slot order of the per-biome tint triple: the water color (REQUIRED by
+/// Slot order of the per-biome tint quad: the water color (REQUIRED by
 /// the network codec — always present on a decoded entry).
 pub const WATER_SLOT: usize = 2;
+/// Slot order of the per-biome tint quad: the dry-foliage color (the
+/// twelfth javap audit's resolution — override `orElseGet` the climate
+/// through the dry_foliage grid). No runtime kind selects it yet:
+/// vanilla's sole fold consumer is leaf_litter, a non-cube ground cover
+/// (the mesh path is future work) — the slot is carried, ready.
+pub const DRY_SLOT: usize = 3;
 
-/// Resolve one synced biome element into the renderer's tint triple.
+/// Resolve one synced biome element into the renderer's tint quad.
 /// Vanilla's chain, verbatim: the `BiomeSpecialEffects` override wins;
 /// without one the climate samples the REAL jar colormap grids (the
-/// caller-side clamp inside `grass_from_climate`/`foliage_from_climate`,
-/// the raw temperature/downfall fields — `temperature_modifier` is not
-/// in the audited path). The grass verdict then runs through the
-/// `grass_color_modifier` (vanilla wraps the BASE in
-/// `modifyColor(x, z, base)` — after this resolution). The water color
-/// is the codec's required field (the decoder refuses an entry without
-/// it, so `Some` is unconditional).
-pub fn entry_tints(entry: &BiomeEntry) -> [Option<u32>; 3] {
+/// caller-side clamp inside `grass_from_climate`/`foliage_from_climate`/
+/// `dry_foliage_from_climate`, the raw temperature/downfall fields —
+/// `temperature_modifier` is not in the audited path). The grass verdict
+/// then runs through the `grass_color_modifier` (vanilla wraps the BASE
+/// in `modifyColor(x, z, base)` — after this resolution). The water
+/// color is the codec's required field (the decoder refuses an entry
+/// without it, so `Some` is unconditional). The dry-foliage verdict
+/// mirrors `Biome.getDryFoliageColor()`'s `orElseGet` shape exactly.
+pub fn entry_tints(entry: &BiomeEntry) -> [Option<u32>; 4] {
     let (temp, downfall) = (entry.temperature, entry.downfall);
     let grass = entry
         .effects
@@ -85,6 +102,10 @@ pub fn entry_tints(entry: &BiomeEntry) -> [Option<u32>; 3] {
             .foliage_color
             .or_else(|| colormap::foliage_from_climate(temp, downfall)),
         Some(entry.effects.water_color),
+        entry
+            .effects
+            .dry_foliage_color
+            .or_else(|| colormap::dry_foliage_from_climate(temp, downfall)),
     ]
 }
 
@@ -123,6 +144,13 @@ const DARK_FOREST_BLEND: u32 = 0x28340A;
 /// texture (the atlas' tintindex flags: grass BLOCK TOP only, leaves on
 /// all faces, water on all faces; a grass SIDE keeps its untinted
 /// dirt-and-root look, exactly the blockstate models' verdict).
+///
+/// pale_oak_leaves is `None` BY AUDITED VERDICT (the twelfth javap
+/// audit): `BlockColors.createDefault()` registers no tint source for it
+/// — the model's tintindex falls back to BLANK_LAYER (constant white)
+/// and the PRE-COLORED texture renders as authored (probe-verified:
+/// zero pure-gray pixels). The dry-foliage consumer is leaf_litter, a
+/// non-cube ground cover outside the mesh vocabulary so far.
 pub fn slot_for(kind: u16, face: usize) -> Option<usize> {
     if kind == WATER {
         Some(WATER_SLOT)
@@ -131,6 +159,7 @@ pub fn slot_for(kind: u16, face: usize) -> Option<usize> {
     } else if kind == LEAVES {
         Some(FOLIAGE_SLOT)
     } else {
+        // PALE_LEAVES lands here deliberately — no tint, exactly vanilla
         None
     }
 }
@@ -172,18 +201,21 @@ mod tests {
     #[test]
     fn entry_tints_resolve_the_effects_surface() {
         // plains: no overrides — the climate samples the REAL grids and
-        // lands exactly on the baked constants (the plains equivalence).
+        // lands exactly on the baked constants (the plains equivalence);
+        // the dry slot samples its grid too (no plains involvement there
+        // — the honest climate verdict, probe-pinned 0xA37546).
         let plains = entry(4_159_204, None, None);
         assert_eq!(
             entry_tints(&plains),
-            [Some(0x91BD59), Some(0x77AB2F), Some(4_159_204)]
+            [Some(0x91BD59), Some(0x77AB2F), Some(4_159_204), Some(0xA37546)]
         );
         // the badlands family carries REAL overrides in vanilla data —
-        // the override wins over the climate sample
+        // the override wins over the climate sample (dry stays
+        // override-less -> the climate verdict)
         let mesa = entry(0x3F76E4, Some(0x90814D), Some(0x9E814D));
         assert_eq!(
             entry_tints(&mesa),
-            [Some(0x90814D), Some(0x9E814D), Some(0x3F76E4)]
+            [Some(0x90814D), Some(0x9E814D), Some(0x3F76E4), Some(0xA37546)]
         );
     }
 
@@ -196,15 +228,38 @@ mod tests {
         desert.downfall = 0.0;
         assert_eq!(
             entry_tints(&desert),
-            [Some(0xBFB755), Some(0xAEA42A), Some(0x3F76E4)]
+            [Some(0xBFB755), Some(0xAEA42A), Some(0x3F76E4), Some(0xA38046)]
         );
         let mut jungle = entry(0x3F76E4, None, None);
         jungle.temperature = 0.95;
         jungle.downfall = 0.9;
         assert_eq!(
             entry_tints(&jungle),
-            [Some(0x59C93C), Some(0x30BB0B), Some(0x3F76E4)]
+            [Some(0x59C93C), Some(0x30BB0B), Some(0x3F76E4), Some(0xA36346)]
         );
+    }
+
+    #[test]
+    fn dry_foliage_follows_the_audited_ors_get_chain() {
+        // The REAL pale_garden entry (the jar's biome json): the dry
+        // override #A0A69C wins — `Biome.getDryFoliageColor()`'s
+        // orElseGet never consults the climate. The same entry's
+        // grass/foliage overrides (also present in the json) ride their
+        // own slots; the modifier is NONE here (pale_garden declares no
+        // grass_color_modifier).
+        let mut pale = entry(0x76889D, Some(0x778272), Some(0x878D76));
+        pale.temperature = 0.7;
+        pale.downfall = 0.8;
+        pale.effects.dry_foliage_color = Some(0xA0A69C);
+        let tints = entry_tints(&pale);
+        assert_eq!(tints[0], Some(0x778272), "grass override");
+        assert_eq!(tints[1], Some(0x878D76), "foliage override");
+        assert_eq!(tints[2], Some(0x76889D), "required water");
+        assert_eq!(tints[3], Some(0xA0A69C), "dry override wins over the climate");
+        // override-less: the climate through the dry grid (the orElseGet
+        // leg — the plains verdict probe-pinned at 0xA37546)
+        let no_override = entry(0x3F76E4, None, None);
+        assert_eq!(entry_tints(&no_override)[3], Some(0xA37546));
     }
 
     #[test]
@@ -264,6 +319,12 @@ mod tests {
         assert_eq!(slot_for(LEAVES, 2), Some(FOLIAGE_SLOT));
         assert_eq!(slot_for(LEAVES, 4), Some(FOLIAGE_SLOT), "all leaf faces");
         assert_eq!(slot_for(STONE, 2), None, "untinted texture");
+        // the AUDITED verdict: pale oak leaves have NO tint source in
+        // vanilla's BlockColors — every face untinted, the pre-colored
+        // texture renders as authored (despite the model's tintindex)
+        assert_eq!(slot_for(PALE_LEAVES, 2), None, "pale oak: no source");
+        assert_eq!(slot_for(PALE_LEAVES, 0), None, "pale oak: no source");
+        assert_eq!(slot_for(PALE_LEAVES, 5), None, "pale oak: no source");
     }
 
     #[test]

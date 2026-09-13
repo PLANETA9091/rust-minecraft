@@ -5,7 +5,7 @@
 //! generated members extend it for network terrain.
 //!
 //! The network world also carries the optional BIOME layer (ids + the
-//! per-biome tint triples) — the raw material the mesher's tint fold
+//! per-biome tint quads) — the raw material the mesher's tint fold
 //! consumes; the procedural scene carries none and keeps the baked look.
 
 pub const CHUNK_X: usize = 16;
@@ -42,13 +42,18 @@ pub const LAPIS_ORE: u16 = 20;
 pub const DIAMOND_ORE: u16 = 21;
 pub const EMERALD_ORE: u16 = 22;
 pub const NETHERRACK: u16 = 23;
+/// The twelfth-audit kind: pale_oak_leaves rides the SAME leaves
+/// geometry chain (parent block/leaves) with NO tint — vanilla's
+/// BlockColors registers no source for it, the PRE-COLORED texture
+/// renders as authored (see `crate::tint::slot_for`'s verdict).
+pub const PALE_LEAVES: u16 = 24;
 
 /// Block -> texture-group mapping used by the real-colors LUT.
-pub const NAME_OF: [&str; 24] = [
+pub const NAME_OF: [&str; 25] = [
     "air", "stone", "dirt", "grass_block", "oak_log", "oak_leaves", "water", "sand",
     "granite", "diorite", "andesite", "deepslate", "cobbled_deepslate", "gravel",
     "bedrock", "coal_ore", "copper_ore", "iron_ore", "gold_ore", "redstone_ore",
-    "lapis_ore", "diamond_ore", "emerald_ore", "netherrack",
+    "lapis_ore", "diamond_ore", "emerald_ore", "netherrack", "pale_oak_leaves",
 ];
 
 /// A plain data grid — derives follow the data (the join result carries a
@@ -74,7 +79,7 @@ pub struct World {
     /// 0.24 night, the jar-extracted day.json keyframes).
     pub day_tick: Option<i64>,
     /// The network world's biome layer — `materialize` fills it from the
-    /// model's chunk biomes plus the synced registry (the tint triples
+    /// model's chunk biomes plus the synced registry (the tint quads
     /// ride along). `None` for the procedural scene: the mesher keeps
     /// the baked look bit for bit.
     pub biomes: Option<BiomeLayer>,
@@ -89,16 +94,17 @@ pub const BIOME_UNKNOWN: u32 = u32::MAX;
 /// The network world's biome layer: the per-voxel resolved registry ids
 /// (expanded from the wire's 4×4×4 cell grids through the model's proven
 /// queries — the SAME index conventions as [`World::chunks`]) plus the
-/// per-biome tint triple resolved from the synced registry table
-/// (slot order: grass top override / foliage override / water color —
-/// see [`crate::tint`]).
+/// per-biome tint quad resolved from the synced registry table
+/// (slot order: grass top override / foliage override / water color /
+/// dry-foliage color — see [`crate::tint`]).
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct BiomeLayer {
     /// per-chunk per-voxel registry biome ids; [`BIOME_UNKNOWN`] where unsent
     pub ids: Vec<Vec<u32>>,
     /// per registry id (the arrival order IS the network id): the tint
-    /// triple [grass override, foliage override, water color]
-    pub tints: Vec<[Option<u32>; 3]>,
+    /// quad [grass override, foliage override, water color, dry-foliage
+    /// color]
+    pub tints: Vec<[Option<u32>; 4]>,
 }
 
 /// A light cell with no opinion — the server never answered for it
@@ -327,7 +333,7 @@ mod tests {
 
     /// One biome layer over a single chunk: every voxel resolved id 0,
     /// the tint table given.
-    fn layer(tints: Vec<[Option<u32>; 3]>) -> BiomeLayer {
+    fn layer(tints: Vec<[Option<u32>; 4]>) -> BiomeLayer {
         BiomeLayer { ids: vec![vec![0; CHUNK_X * CHUNK_Y * CHUNK_Z]], tints }
     }
 
@@ -349,7 +355,7 @@ mod tests {
         assert_eq!(baked, 0x3F76E4, "the baked water default IS vanilla plains");
         let mut w = World::new(1, 42);
         // id 0 = plains (water == the baked constant), id 1 = swamp-ish
-        w.biomes = Some(layer(vec![[None, None, Some(baked)], [None, None, Some(0x617B64)]]));
+        w.biomes = Some(layer(vec![[None, None, Some(baked), None], [None, None, Some(0x617B64), None]]));
         assert_eq!(
             w.face_tint(WATER, 0, 8, 10, 8),
             None,
@@ -370,7 +376,7 @@ mod tests {
     fn face_tint_walks_overrides_and_unknowns() {
         let mut w = World::new(1, 42);
         // the badlands family: real overrides on both tint slots
-        w.biomes = Some(layer(vec![[Some(0x90814D), Some(0x9E814D), Some(0x3F76E4)]]));
+        w.biomes = Some(layer(vec![[Some(0x90814D), Some(0x9E814D), Some(0x3F76E4), None]]));
         assert_eq!(w.face_tint(GRASS, 2, 0, 0, 0), Some(0x90814D), "the grass override");
         assert_eq!(w.face_tint(LEAVES, 2, 0, 20, 0), Some(0x9E814D), "the foliage override");
         // above the world and outside the grid: no opinion

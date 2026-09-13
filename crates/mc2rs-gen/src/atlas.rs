@@ -19,12 +19,16 @@ use zip::ZipArchive;
 /// Runtime block ids of the reference client (must mirror
 /// `mc-client/src/world.rs`). air is never meshed but keeps the ids aligned.
 /// Members after the original survival-classic eight render network terrain
-/// that previously stayed air (stone variants, deepslate, ores, netherrack).
-pub const RUNTIME_PALETTE: [&str; 24] = [
+/// that previously stayed air (stone variants, deepslate, ores, netherrack);
+/// pale_oak_leaves rides the SAME leaves geometry chain (parent block/leaves)
+/// with NO tint — vanilla's BlockColors registers no source for it (the
+/// audited createDefault(): the model's tintindex falls back to BLANK_LAYER
+/// and the PRE-COLORED texture renders as authored).
+pub const RUNTIME_PALETTE: [&str; 25] = [
     "air", "stone", "dirt", "grass_block", "oak_log", "oak_leaves", "water", "sand",
     "granite", "diorite", "andesite", "deepslate", "cobbled_deepslate", "gravel",
     "bedrock", "coal_ore", "copper_ore", "iron_ore", "gold_ore", "redstone_ore",
-    "lapis_ore", "diamond_ore", "emerald_ore", "netherrack",
+    "lapis_ore", "diamond_ore", "emerald_ore", "netherrack", "pale_oak_leaves",
 ];
 
 /// Renderer face order: 0:+X 1:-X 2:+Y 3:-Y 4:+Z 5:-Z.
@@ -388,11 +392,14 @@ pub fn build(jar_bytes: &[u8], version: &str, client_sha1: &str) -> Result<Strin
     Ok(src)
 }
 
-/// The biome colormap grids the vanilla grass/foliage lookups sample:
-/// `assets/minecraft/textures/colormap/{grass,foliage}.png` from the jar.
-/// Sampled at runtime by `mc-client/src/colormap.rs` with the verbatim
-/// `ColorMapColorUtil.get` arithmetic (javap-audited, 26.2).
-pub const COLORMAP_STEMS: [&str; 2] = ["grass", "foliage"];
+/// The biome colormap grids the vanilla grass/foliage/dry-foliage lookups
+/// sample: `assets/minecraft/textures/colormap/{grass,foliage,dry_foliage}.png`
+/// from the jar. Sampled at runtime by `mc-client/src/colormap.rs` with the
+/// verbatim `ColorMapColorUtil.get` arithmetic (javap-audited, 26.2; the dry
+/// foliage audit: `DryFoliageColor.get` delegates the SAME util with default
+/// -10732494, and `Biome.getDryFoliageColorFromTexture` carries the same
+/// caller-side Mth.clamp as its foliage sibling).
+pub const COLORMAP_STEMS: [&str; 3] = ["grass", "foliage", "dry_foliage"];
 /// The vanilla colormap side (a 256x256 grid, one 0xRRGGBB per cell).
 pub const COLORMAP_SIDE: usize = 256;
 
@@ -553,6 +560,7 @@ mod tests {
         assert_eq!(RUNTIME_PALETTE[21], "diamond_ore");
         assert_eq!(RUNTIME_PALETTE[22], "emerald_ore");
         assert_eq!(RUNTIME_PALETTE[23], "netherrack");
+        assert_eq!(RUNTIME_PALETTE[24], "pale_oak_leaves");
         assert_eq!(FACE_KEYS, ["east", "west", "up", "down", "south", "north"]);
     }
 
@@ -562,6 +570,12 @@ mod tests {
         assert_eq!(tint_for_texture("oak_leaves"), TINT_FOLIAGE);
         assert_eq!(tint_for_texture("water_still"), TINT_WATER);
         assert_eq!(tint_for_texture("stone"), 0, "untinted texture");
+        // the AUDITED verdict (12th audit): pale oak leaves carry NO tint —
+        // vanilla's BlockColors.createDefault() registers no dryFoliage
+        // source for them (leaf_litter is the sole consumer), the model's
+        // tintindex falls back to BLANK_LAYER and the PRE-COLORED texture
+        // (probe-verified: zero pure-gray pixels) renders as authored.
+        assert_eq!(tint_for_texture("pale_oak_leaves"), 0, "pre-colored");
     }
 
     #[test]

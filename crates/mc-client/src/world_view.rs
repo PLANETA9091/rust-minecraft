@@ -66,7 +66,7 @@ use mc_protocol::{PlayEvent, PlayerPosition, WorldSnapshot};
 /// the mesher's per-corner smooth lighting consumes. The BIOME layer
 /// rides the same window: per-voxel registry ids through the model's
 /// proven biome queries (the honest [`BIOME_UNKNOWN`] where it never
-/// answers) plus the synced registry's tint triples — the raw material
+/// answers) plus the synced registry's tint quads — the raw material
 /// the mesher's tint fold consumes.
 pub fn materialize(
     model: &WorldModel,
@@ -76,9 +76,9 @@ pub fn materialize(
     mut mapper: impl FnMut(u32) -> u16,
 ) -> World {
     // the biome layer rides the SAME window: the synced registry's tint
-    // triples resolve here (the registry's home) and the per-voxel ids
+    // quads resolve here (the registry's home) and the per-voxel ids
     // copy during the walk below; the layer lands on the world after it
-    let tints: Vec<[Option<u32>; 3]> =
+    let tints: Vec<[Option<u32>; 4]> =
         model.registry.biomes.iter().map(tint::entry_tints).collect();
     let mut biome_ids = vec![vec![BIOME_UNKNOWN; CHUNK_X * CHUNK_Y * CHUNK_Z]; side * side];
     let mut world = World {
@@ -367,6 +367,7 @@ pub fn runtime_mapper(id: u32) -> u16 {
         Some("minecraft:diamond_ore") => DIAMOND_ORE,
         Some("minecraft:emerald_ore") => EMERALD_ORE,
         Some("minecraft:netherrack") => NETHERRACK,
+        Some("minecraft:pale_oak_leaves") => PALE_LEAVES,
         _ => AIR, // air and every block the palette doesn't render yet
     }
 }
@@ -564,16 +565,16 @@ mod tests {
         }));
         let world = materialize(&m, (0, 0), 1, 0, example_mapper);
         let layer = world.biomes.as_ref().expect("the biome layer rides the window");
-        assert_eq!(layer.tints.len(), 2, "one triple per synced element");
+        assert_eq!(layer.tints.len(), 2, "one quad per synced element");
         assert_eq!(
             layer.tints[0],
-            [Some(0x91BD59), Some(0x77AB2F), Some(4_159_204)],
-            "plains: the climate sample IS the baked constants (the equivalence)"
+            [Some(0x91BD59), Some(0x77AB2F), Some(4_159_204), Some(0xA37546)],
+            "plains: the climate sample IS the baked constants (the equivalence); dry rides the climate verdict"
         );
         assert_eq!(
             layer.tints[1],
-            [Some(0x6AC44E), Some(0x45B421), Some(0x617B64)],
-            "swamp climate (0.8, 0.9): the REAL grid samples (the modifier stays unconsumed)"
+            [Some(0x6AC44E), Some(0x45B421), Some(0x617B64), Some(0xA36D46)],
+            "swamp climate (0.8, 0.9): the REAL grid samples (the modifier stays unconsumed); dry rides its climate"
         );
         // the column's vertical extent (one section, y 0..15) resolved the
         // single-valued id everywhere; above it the honest UNKNOWN
