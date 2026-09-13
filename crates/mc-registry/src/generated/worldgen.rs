@@ -219,13 +219,18 @@ pub struct DimensionTypeDef {
     /// none (the bytecode default 2048.0; no vanilla dimension
     /// declares it, the consumer's `visual/cloud_fog_end_distance`).
     pub cloud_fog_end_distance: Option<f32>,
+    /// The STATED block-light tint — None when the JSON states
+    /// none (the bytecode default -10100 = 0xFFFFD88C = #FFD88C,
+    /// the warm torch cast; no vanilla dimension declares it, the
+    /// consumer's `visual/block_light_tint`).
+    pub block_light_tint: Option<[u8; 3]>,
 }
 
 pub static DIMENSION_TYPES: [DimensionTypeDef; 4] = [
-    DimensionTypeDef { name: "minecraft:overworld", min_y: -64, height: 384, logical_height: 384, has_skylight: true, has_fixed_time: false, ambient_light: 0.0, coordinate_scale: 1.0, timelines: Some("#minecraft:in_overworld"), default_clock: Some("minecraft:overworld"), ambient_light_color: [10, 10, 10], skybox: Skybox::Overworld, fog_start_distance: None, fog_end_distance: None, cloud_fog_end_distance: None },
-    DimensionTypeDef { name: "minecraft:overworld_caves", min_y: -64, height: 384, logical_height: 384, has_skylight: true, has_fixed_time: false, ambient_light: 0.0, coordinate_scale: 1.0, timelines: Some("#minecraft:in_overworld"), default_clock: Some("minecraft:overworld"), ambient_light_color: [10, 10, 10], skybox: Skybox::Overworld, fog_start_distance: None, fog_end_distance: None, cloud_fog_end_distance: None },
-    DimensionTypeDef { name: "minecraft:the_end", min_y: 0, height: 256, logical_height: 256, has_skylight: true, has_fixed_time: true, ambient_light: 0.25, coordinate_scale: 1.0, timelines: Some("#minecraft:in_end"), default_clock: Some("minecraft:the_end"), ambient_light_color: [63, 71, 63], skybox: Skybox::End, fog_start_distance: None, fog_end_distance: None, cloud_fog_end_distance: None },
-    DimensionTypeDef { name: "minecraft:the_nether", min_y: 0, height: 256, logical_height: 128, has_skylight: false, has_fixed_time: true, ambient_light: 0.1, coordinate_scale: 8.0, timelines: Some("#minecraft:in_nether"), default_clock: None, ambient_light_color: [48, 40, 33], skybox: Skybox::None, fog_start_distance: Some(10.0), fog_end_distance: Some(96.0), cloud_fog_end_distance: None },
+    DimensionTypeDef { name: "minecraft:overworld", min_y: -64, height: 384, logical_height: 384, has_skylight: true, has_fixed_time: false, ambient_light: 0.0, coordinate_scale: 1.0, timelines: Some("#minecraft:in_overworld"), default_clock: Some("minecraft:overworld"), ambient_light_color: [10, 10, 10], skybox: Skybox::Overworld, fog_start_distance: None, fog_end_distance: None, cloud_fog_end_distance: None, block_light_tint: None },
+    DimensionTypeDef { name: "minecraft:overworld_caves", min_y: -64, height: 384, logical_height: 384, has_skylight: true, has_fixed_time: false, ambient_light: 0.0, coordinate_scale: 1.0, timelines: Some("#minecraft:in_overworld"), default_clock: Some("minecraft:overworld"), ambient_light_color: [10, 10, 10], skybox: Skybox::Overworld, fog_start_distance: None, fog_end_distance: None, cloud_fog_end_distance: None, block_light_tint: None },
+    DimensionTypeDef { name: "minecraft:the_end", min_y: 0, height: 256, logical_height: 256, has_skylight: true, has_fixed_time: true, ambient_light: 0.25, coordinate_scale: 1.0, timelines: Some("#minecraft:in_end"), default_clock: Some("minecraft:the_end"), ambient_light_color: [63, 71, 63], skybox: Skybox::End, fog_start_distance: None, fog_end_distance: None, cloud_fog_end_distance: None, block_light_tint: None },
+    DimensionTypeDef { name: "minecraft:the_nether", min_y: 0, height: 256, logical_height: 128, has_skylight: false, has_fixed_time: true, ambient_light: 0.1, coordinate_scale: 8.0, timelines: Some("#minecraft:in_nether"), default_clock: None, ambient_light_color: [48, 40, 33], skybox: Skybox::None, fog_start_distance: Some(10.0), fog_end_distance: Some(96.0), cloud_fog_end_distance: None, block_light_tint: None },
 ];
 
 /// Dimension type by registry id ("minecraft:overworld"), sorted for binary search.

@@ -95,6 +95,12 @@ pub struct DimensionTypeEntry {
     /// (2048.0, javap EnvironmentAttributes): NO vanilla dimension
     /// declares it, so the field rides only a custom server's statement.
     pub cloud_fog_end_distance: Option<f32>,
+    /// The STATED block-light tint (visual/block_light_tint) — `None`
+    /// when the JSON states none, the bytecode default's shape
+    /// (-10100 = 0xFFFFD88C = #FFD88C, the warm torch cast, javap
+    /// EnvironmentAttributes): NO vanilla dimension declares it, so the
+    /// field rides only a custom server's statement.
+    pub block_light_tint: Option<[u8; 3]>,
 }
 
 /// The per-biome tint extras the jar states beyond the classic color
@@ -364,6 +370,16 @@ pub fn generate<R: std::io::Read + std::io::Seek>(archive: &mut zip::ZipArchive<
                                 .and_then(|a| a.get("minecraft:visual/cloud_fog_end_distance"))
                                 .and_then(Value::as_f64)
                                 .map(|f| f as f32),
+                            // the STATED block-light tint: a syncable
+                            // RGB_COLOR attribute (the "#rrggbb" string);
+                            // the bytecode default -10100 = #FFD88C when
+                            // the JSON states none
+                            block_light_tint: v
+                                .get("attributes")
+                                .and_then(|a| a.get("minecraft:visual/block_light_tint"))
+                                .and_then(Value::as_str)
+                                .and_then(hex_color)
+                                .map(|c| [(c >> 16) as u8, (c >> 8) as u8, c as u8]),
                             // string tag references only — the inline list
                             // form does not occur in the real jar
                             timelines: v
@@ -565,7 +581,7 @@ pub fn emit(data: &WorldgenData) -> Result<String> {
     out.push_str("#[derive(Debug, Clone, Copy, PartialEq, Eq)]\npub enum Skybox {\n    None,\n    Overworld,\n    End,\n}\n\n");
     out.push_str("/// One built-in `minecraft:dimension_type` registry entry (the jar's\n");
     out.push_str("/// `data/minecraft/dimension_type/*.json`): world layout + environment.\n");
-    out.push_str("#[derive(Debug, Clone, Copy, PartialEq)]\npub struct DimensionTypeDef {\n    pub name: &'static str,\n    pub min_y: i32,\n    pub height: u32,\n    pub logical_height: u32,\n    pub has_skylight: bool,\n    pub has_fixed_time: bool,\n    pub ambient_light: f32,\n    pub coordinate_scale: f64,\n    pub timelines: Option<&'static str>,\n    pub default_clock: Option<&'static str>,\n    /// The lightmap's AmbientColor base (visual/ambient_light_color;\n    /// the bytecode default black when the JSON states none).\n    pub ambient_light_color: [u8; 3],\n    /// The sky-pipeline gate (SkyRenderer.extractRenderState's skybox).\n    pub skybox: Skybox,\n    /// The STATED fog distances (blocks) — None when the JSON states\n    /// none (the bytecode defaults' shape: start 0.0 / end 1024.0).\n    pub fog_start_distance: Option<f32>,\n    pub fog_end_distance: Option<f32>,\n    /// The STATED cloud-fog end (blocks) — None when the JSON states\n    /// none (the bytecode default 2048.0; no vanilla dimension\n    /// declares it, the consumer's `visual/cloud_fog_end_distance`).\n    pub cloud_fog_end_distance: Option<f32>,\n}\n\n");
+    out.push_str("#[derive(Debug, Clone, Copy, PartialEq)]\npub struct DimensionTypeDef {\n    pub name: &'static str,\n    pub min_y: i32,\n    pub height: u32,\n    pub logical_height: u32,\n    pub has_skylight: bool,\n    pub has_fixed_time: bool,\n    pub ambient_light: f32,\n    pub coordinate_scale: f64,\n    pub timelines: Option<&'static str>,\n    pub default_clock: Option<&'static str>,\n    /// The lightmap's AmbientColor base (visual/ambient_light_color;\n    /// the bytecode default black when the JSON states none).\n    pub ambient_light_color: [u8; 3],\n    /// The sky-pipeline gate (SkyRenderer.extractRenderState's skybox).\n    pub skybox: Skybox,\n    /// The STATED fog distances (blocks) — None when the JSON states\n    /// none (the bytecode defaults' shape: start 0.0 / end 1024.0).\n    pub fog_start_distance: Option<f32>,\n    pub fog_end_distance: Option<f32>,\n    /// The STATED cloud-fog end (blocks) — None when the JSON states\n    /// none (the bytecode default 2048.0; no vanilla dimension\n    /// declares it, the consumer's `visual/cloud_fog_end_distance`).\n    pub cloud_fog_end_distance: Option<f32>,\n    /// The STATED block-light tint — None when the JSON states\n    /// none (the bytecode default -10100 = 0xFFFFD88C = #FFD88C,\n    /// the warm torch cast; no vanilla dimension declares it, the\n    /// consumer's `visual/block_light_tint`).\n    pub block_light_tint: Option<[u8; 3]>,\n}\n\n");
     out.push_str("pub static DIMENSION_TYPES: [DimensionTypeDef; ");
     out.push_str(&data.dimension_types.len().to_string());
     out.push_str("] = [\n");
@@ -575,7 +591,7 @@ pub fn emit(data: &WorldgenData) -> Result<String> {
             None => "None".to_string(),
         };
         out.push_str(&format!(
-            "    DimensionTypeDef {{ name: \"{}\", min_y: {}, height: {}, logical_height: {}, has_skylight: {}, has_fixed_time: {}, ambient_light: {:?}, coordinate_scale: {:?}, timelines: {}, default_clock: {}, ambient_light_color: {:?}, skybox: Skybox::{:?}, fog_start_distance: {:?}, fog_end_distance: {:?}, cloud_fog_end_distance: {:?} }},\n",
+            "    DimensionTypeDef {{ name: \"{}\", min_y: {}, height: {}, logical_height: {}, has_skylight: {}, has_fixed_time: {}, ambient_light: {:?}, coordinate_scale: {:?}, timelines: {}, default_clock: {}, ambient_light_color: {:?}, skybox: Skybox::{:?}, fog_start_distance: {:?}, fog_end_distance: {:?}, cloud_fog_end_distance: {:?}, block_light_tint: {:?} }},\n",
             rust_str(&d.name),
             d.min_y,
             d.height,
@@ -591,6 +607,7 @@ pub fn emit(data: &WorldgenData) -> Result<String> {
             d.fog_start_distance,
             d.fog_end_distance,
             d.cloud_fog_end_distance,
+            d.block_light_tint,
         ));
     }
     out.push_str("];\n\n");
@@ -948,7 +965,7 @@ mod tests {
         // vanilla codec would reject the latter outright — the parse
         // falls back to the codec default, never a guess)
         let the_end = br##"{"ambient_light":0.25,"coordinate_scale":1.0,"has_fixed_time":true,"has_skylight":true,"height":256,"logical_height":256,"min_y":0,"skybox":"end","timelines":"#minecraft:in_end"}"##;
-        let custom = br##"{"ambient_light":0.0,"coordinate_scale":1.0,"has_skylight":true,"height":384,"logical_height":384,"min_y":-64,"skybox":"weird","timelines":"#minecraft:in_overworld","attributes":{"minecraft:visual/cloud_fog_end_distance":512.0}}"##;
+        let custom = br##"{"ambient_light":0.0,"coordinate_scale":1.0,"has_skylight":true,"height":384,"logical_height":384,"min_y":-64,"skybox":"weird","timelines":"#minecraft:in_overworld","attributes":{"minecraft:visual/cloud_fog_end_distance":512.0,"minecraft:visual/block_light_tint":"#302821"}}"##;
         let day = br##"{"clock":"minecraft:overworld","period_ticks":24000,"tracks":{"minecraft:gameplay/monsters_burn":{"keyframes":[{"ticks":12542,"value":true},{"ticks":23460,"value":false}],"modifier":"or"},"minecraft:visual/sky_color":{"keyframes":[{"ticks":133,"value":"#ffffff"},{"ticks":11867,"value":"#000000"}],"modifier":"multiply"},"minecraft:visual/sky_light_factor":{"keyframes":[{"ticks":22860,"value":0.24},{"ticks":730,"value":1.0},{"ticks":11270,"value":1.0},{"ticks":13140,"value":0.24}],"modifier":"multiply"}}}"##;
         let early_game = br##"{"clock":"minecraft:overworld","tracks":{"minecraft:gameplay/can_sleep":{"keyframes":[{"ticks":0,"value":true}]}}}"##;
         let mut zip = zip_of(&[
@@ -995,6 +1012,19 @@ mod tests {
         );
         assert_eq!(
             n.cloud_fog_end_distance, None,
+            "no vanilla dimension declares it — the absent shape"
+        );
+        // the block-light tint: a stated rgb_color string parses per
+        // channel; the ABSENT key (every vanilla dimension) reads None
+        // — the bytecode default's shape (#FFD88C, the consumer's
+        // verdict, never baked here)
+        assert_eq!(
+            data.dimension_types["custom"].block_light_tint,
+            Some([0x30, 0x28, 0x21]),
+            "the stated attribute parses per channel"
+        );
+        assert_eq!(
+            n.block_light_tint, None,
             "no vanilla dimension declares it — the absent shape"
         );
 
