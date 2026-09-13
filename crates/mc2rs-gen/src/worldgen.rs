@@ -57,6 +57,13 @@ pub struct DimensionTypeEntry {
     /// real jar; inline list references are not emitted (none exist there)
     pub timelines: Option<String>,
     pub default_clock: Option<String>,
+    /// `attributes/minecraft:visual/ambient_light_color` — the lightmap's
+    /// AmbientColor base term (the shader's `max(AmbientColor,
+    /// nightVisionColor)` starting color). ABSENT = the bytecode default
+    /// (`EnvironmentAttributes.<clinit>`: `defaultValue(-16777216)` =
+    /// 0xFF000000): black. The real jar states it per dimension
+    /// (overworld #0a0a0a, nether #302821, end #3f473f).
+    pub ambient_light_color: [u8; 3],
 }
 
 /// The per-biome tint extras the jar states beyond the classic color
@@ -280,6 +287,19 @@ pub fn generate<R: std::io::Read + std::io::Seek>(archive: &mut zip::ZipArchive<
                                 .get("coordinate_scale")
                                 .and_then(Value::as_f64)
                                 .unwrap_or(1.0),
+                            // the lightmap's AmbientColor base: the dimension
+                            // JSON's stated attribute, else the bytecode
+                            // default (black — the absent-attribute shape).
+                            // The attributes compound is FLAT — the keys are
+                            // the full namespaced paths verbatim
+                            // ("minecraft:visual/ambient_light_color")
+                            ambient_light_color: v
+                                .get("attributes")
+                                .and_then(|a| a.get("minecraft:visual/ambient_light_color"))
+                                .and_then(Value::as_str)
+                                .and_then(hex_color)
+                                .map(|c| [(c >> 16) as u8, (c >> 8) as u8, c as u8])
+                                .unwrap_or([0, 0, 0]),
                             // string tag references only — the inline list
                             // form does not occur in the real jar
                             timelines: v
@@ -474,7 +494,7 @@ pub fn emit(data: &WorldgenData) -> Result<String> {
     // stay byte-stable across the arc.
     out.push_str("/// One built-in `minecraft:dimension_type` registry entry (the jar's\n");
     out.push_str("/// `data/minecraft/dimension_type/*.json`): world layout + environment.\n");
-    out.push_str("#[derive(Debug, Clone, Copy, PartialEq)]\npub struct DimensionTypeDef {\n    pub name: &'static str,\n    pub min_y: i32,\n    pub height: u32,\n    pub logical_height: u32,\n    pub has_skylight: bool,\n    pub has_fixed_time: bool,\n    pub ambient_light: f32,\n    pub coordinate_scale: f64,\n    pub timelines: Option<&'static str>,\n    pub default_clock: Option<&'static str>,\n}\n\n");
+    out.push_str("#[derive(Debug, Clone, Copy, PartialEq)]\npub struct DimensionTypeDef {\n    pub name: &'static str,\n    pub min_y: i32,\n    pub height: u32,\n    pub logical_height: u32,\n    pub has_skylight: bool,\n    pub has_fixed_time: bool,\n    pub ambient_light: f32,\n    pub coordinate_scale: f64,\n    pub timelines: Option<&'static str>,\n    pub default_clock: Option<&'static str>,\n    /// The lightmap's AmbientColor base (visual/ambient_light_color;\n    /// the bytecode default black when the JSON states none).\n    pub ambient_light_color: [u8; 3],\n}\n\n");
     out.push_str("pub static DIMENSION_TYPES: [DimensionTypeDef; ");
     out.push_str(&data.dimension_types.len().to_string());
     out.push_str("] = [\n");
@@ -484,7 +504,7 @@ pub fn emit(data: &WorldgenData) -> Result<String> {
             None => "None".to_string(),
         };
         out.push_str(&format!(
-            "    DimensionTypeDef {{ name: \"{}\", min_y: {}, height: {}, logical_height: {}, has_skylight: {}, has_fixed_time: {}, ambient_light: {:?}, coordinate_scale: {:?}, timelines: {}, default_clock: {} }},\n",
+            "    DimensionTypeDef {{ name: \"{}\", min_y: {}, height: {}, logical_height: {}, has_skylight: {}, has_fixed_time: {}, ambient_light: {:?}, coordinate_scale: {:?}, timelines: {}, default_clock: {}, ambient_light_color: {:?} }},\n",
             rust_str(&d.name),
             d.min_y,
             d.height,
@@ -495,6 +515,7 @@ pub fn emit(data: &WorldgenData) -> Result<String> {
             d.coordinate_scale,
             opt(&d.timelines),
             opt(&d.default_clock),
+            d.ambient_light_color,
         ));
     }
     out.push_str("];\n\n");
@@ -847,7 +868,7 @@ mod tests {
         // timeline's sky_light_factor rides numeric keyframes next to
         // string-valued visual tracks, and tags nest "#"-references
         let nether = br##"{"ambient_light":0.1,"cardinal_light":"nether","coordinate_scale":8.0,"has_ceiling":true,"has_fixed_time":true,"has_skylight":false,"height":256,"logical_height":128,"min_y":0,"timelines":"#minecraft:in_nether"}"##;
-        let overworld = br##"{"ambient_light":0.0,"coordinate_scale":1.0,"default_clock":"minecraft:overworld","has_skylight":true,"height":384,"logical_height":384,"min_y":-64,"timelines":"#minecraft:in_overworld"}"##;
+        let overworld = br##"{"ambient_light":0.0,"coordinate_scale":1.0,"default_clock":"minecraft:overworld","has_skylight":true,"height":384,"logical_height":384,"min_y":-64,"timelines":"#minecraft:in_overworld","attributes":{"minecraft:visual/ambient_light_color":"#0a0a0a"}}"##;
         let day = br##"{"clock":"minecraft:overworld","period_ticks":24000,"tracks":{"minecraft:gameplay/monsters_burn":{"keyframes":[{"ticks":12542,"value":true},{"ticks":23460,"value":false}],"modifier":"or"},"minecraft:visual/sky_color":{"keyframes":[{"ticks":133,"value":"#ffffff"},{"ticks":11867,"value":"#000000"}],"modifier":"multiply"},"minecraft:visual/sky_light_factor":{"keyframes":[{"ticks":22860,"value":0.24},{"ticks":730,"value":1.0},{"ticks":11270,"value":1.0},{"ticks":13140,"value":0.24}],"modifier":"multiply"}}}"##;
         let early_game = br##"{"clock":"minecraft:overworld","tracks":{"minecraft:gameplay/can_sleep":{"keyframes":[{"ticks":0,"value":true}]}}}"##;
         let mut zip = zip_of(&[
@@ -870,6 +891,11 @@ mod tests {
         assert_eq!((o.min_y, o.height), (-64, 384));
         assert!(!o.has_fixed_time, "absent has_fixed_time defaults false");
         assert_eq!(o.default_clock.as_deref(), Some("minecraft:overworld"));
+        // the stated ambient attribute parses per channel (overworld
+        // #0a0a0a); the nether fixture states none — the bytecode
+        // default (black) fills, the absent-attribute shape
+        assert_eq!(o.ambient_light_color, [0x0a, 0x0a, 0x0a]);
+        assert_eq!(n.ambient_light_color, [0, 0, 0]);
 
         let d = &data.timelines["day"];
         assert_eq!(d.clock, "minecraft:overworld");
@@ -892,6 +918,8 @@ mod tests {
         assert!(emitted.contains("pub static DIMENSION_TYPES: [DimensionTypeDef; 2]"));
         assert!(emitted.contains("min_y: -64, height: 384, logical_height: 384"));
         assert!(emitted.contains("ambient_light: 0.1, coordinate_scale: 8.0"));
+        assert!(emitted.contains("ambient_light_color: [10, 10, 10]"));
+        assert!(emitted.contains("ambient_light_color: [0, 0, 0]"));
         assert!(emitted.contains("pub static TL_DAY_SKY_LIGHT_FACTOR: [(i64, f32); 4] = [(730, 1.0), (11270, 1.0), (13140, 0.24), (22860, 0.24)];"));
         assert!(emitted.contains("pub static TIMELINES: [TimelineDef; 2]"));
         assert!(emitted.contains("period_ticks: Some(24000), tracks: 3"));
