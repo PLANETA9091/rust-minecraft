@@ -747,6 +747,46 @@ mod tests {
     }
 
     #[test]
+    fn materialize_carries_the_models_sky_light_factor() {
+        // the stated sky-light factor rides the SAME snapshot (the
+        // fold's multiply-base): the model's dimension resolves through
+        // the built-in visual/sky_light_factor column. THE VANILLA
+        // SHAPE this round discovered: the built-in NETHER states 0.0
+        // (its sky term pinned to zero), the overworlds state None —
+        // the mesher's exact f32 identity.
+        let mut m = WorldModel::new();
+        m.apply(PlayEvent::Chunk(ChunkColumn {
+            x: 0,
+            z: 0,
+            sections: vec![stone_dirt_section()],
+            light: ChunkLight::default(),
+        }));
+        let world = materialize(&m, (0, 0), 1, 0, example_mapper);
+        assert_eq!(
+            world.sky_light_factor, None,
+            "no dimension: the default 1.0's shape"
+        );
+        // the built-in nether lands the stated 0.0 — the jar's own verdict
+        m.apply(PlayEvent::Respawn(SpawnInfo {
+            dimension_type_id: 0,
+            dimension: "minecraft:the_nether".to_string(),
+            portal_cooldown: 0,
+        }));
+        m.apply(PlayEvent::Chunk(ChunkColumn {
+            x: 0,
+            z: 0,
+            sections: vec![stone_dirt_section()],
+            light: ChunkLight::default(),
+        }));
+        let world = materialize(&m, (0, 0), 1, 0, example_mapper);
+        assert_eq!(
+            world.sky_light_factor,
+            Some(0.0),
+            "the view carries the nether's stated 0.0 for the mesher's fold"
+        );
+    }
+
+    #[test]
     fn materialize_carries_the_models_biome_layer() {
         let mut m = WorldModel::new();
         // the synced table: id 0 plains (the baked water default), id 1

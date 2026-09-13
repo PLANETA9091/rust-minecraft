@@ -1547,15 +1547,28 @@ mod tests {
         // THE END: `in_end` expands to `#universal` -> villager_schedule
         // only — NO timeline carries the track, so the resolution comes
         // up empty and the snapshot serves (at the end's own ticks —
-        // the v0.3.56 day-tick fallback's wire-order id 1); the behavior
-        // is UNCHANGED from before this fallback existed, now through
-        // the honest chain-miss instead of a registry miss
+        // the v0.3.56 day-tick fallback's wire-order id 1). AND the
+        // fold's stated base multiplies UNDER the track: the end's
+        // built-in `visual/sky_light_factor` is **0.0** (this round's
+        // jar discovery — the raw dimension JSON), so the composed
+        // factor is ZERO whatever the track says: vanilla pins the
+        // end's sky term to zero.
         let mut end = WorldModel::new();
         end.current_dimension = Some("minecraft:the_end".into());
         let p4 = mc_protocol::play::test_support::set_time_packet(4, &[(1, 15_999, 0.0, 1.0)]);
         let ts4 = mc_protocol::play::parse_set_time(&p4).unwrap();
         assert!(end.apply(PlayEvent::Time(ts4)));
-        assert_eq!(end.sky_factor(), 0.24, "15999 is the night plateau");
+        assert_eq!(
+            end.sky_light_factor(),
+            Some(0.0),
+            "the end's stated factor — the jar's own verdict"
+        );
+        assert_eq!(
+            end.sky_factor(),
+            0.0,
+            "0.0 (the stated base) x 0.24 (the 15999 plateau) = 0.0 — no sky light \
+             reaches the end's lightmap"
+        );
         // a PARTIAL sync (dimension_types arrived, the current dimension
         // did not) gets NO built-in rescue — the v0.3.56 scoping
         // mirrored; for the real jar the snapshot answers the same
@@ -2414,5 +2427,92 @@ mod tests {
             None,
             "the sync arrived and is silent: no stated value, never a guess"
         );
+    }
+
+    #[test]
+    fn the_stated_sky_light_factor_folds_under_the_timeline_track() {
+        // the sky-light factor's consumer contract is the attribute-system
+        // FOLD (javap EnvironmentAttributeSystem: the dimension's constant
+        // layer overrides the registered default 1.0, the timeline's
+        // multiply track applies last) — and the raw jar JSON pins the
+        // discovery: the END and the NETHER state 0.0, their sky term
+        // ZERO. The built-in table carries that shape on skip-sync.
+        let mut m = WorldModel::new();
+        assert_eq!(m.sky_light_factor(), None, "no dimension: the default");
+        assert_eq!(m.sky_factor(), 1.0, "no clock, no statement: the default 1.0");
+        // the built-in nether: the stated 0.0 — the sky term pinned to
+        // zero with no clock and no track (the fold's override alone)
+        m.apply(PlayEvent::Respawn(SpawnInfo {
+            dimension_type_id: 0,
+            dimension: "minecraft:the_nether".to_string(),
+            portal_cooldown: 0,
+        }));
+        assert_eq!(
+            m.sky_light_factor(),
+            Some(0.0),
+            "the built-in nether STATES 0.0 — this round's jar discovery"
+        );
+        assert_eq!(
+            m.sky_factor(),
+            0.0,
+            "no clock: the stated 0.0 overrides the default, no track to multiply"
+        );
+        // back to the overworld: unstated, the identity returns
+        m.apply(PlayEvent::Respawn(SpawnInfo {
+            dimension_type_id: 0,
+            dimension: "minecraft:overworld".to_string(),
+            portal_cooldown: 0,
+        }));
+        assert_eq!(m.sky_light_factor(), None);
+        assert_eq!(m.sky_factor(), 1.0);
+        // a CUSTOM server's stated 0.5: the multiply-BASE under the day
+        // curve — noon 0.5 x 1.0, midnight 0.5 x 0.24 = 0.12
+        m.registry = RegistryData {
+            dimension_types: vec![DimensionTypeEntry {
+                name: "minecraft:overworld".into(),
+                min_y: -64,
+                height: 384,
+                default_clock: Some("minecraft:overworld".into()),
+                timelines: Some("#minecraft:in_overworld".into()),
+                ambient_light_color: None,
+                skybox: None,
+                fog_start_distance: None,
+                fog_end_distance: None,
+                cloud_fog_end_distance: None,
+                block_light_tint: None,
+                sky_light_color: None,
+                sky_light_factor: Some(0.5),
+                night_vision_color: None,
+            }],
+            biomes: Vec::new(),
+            biome_tags: Vec::new(),
+            world_clocks: vec!["minecraft:overworld".to_string()],
+            timelines: Vec::new(),
+            timeline_tags: Vec::new(),
+        };
+        // noon: the compile-time day snapshot (no synced timeline) gives
+        // 1.0, the stated base halves it
+        let p = mc_protocol::play::test_support::set_time_packet(1, &[(0, 1_002_006_000, 0.0, 1.0)]);
+        let ts = mc_protocol::play::parse_set_time(&p).expect("set time parses");
+        assert!(m.apply(PlayEvent::Time(ts)));
+        assert_eq!(
+            m.sky_factor(),
+            0.5,
+            "the stated base scales the day track: 0.5 x 1.0"
+        );
+        // midnight: 0.5 x 0.24
+        let p2 =
+            mc_protocol::play::test_support::set_time_packet(2, &[(0, 1_002_018_000, 0.0, 1.0)]);
+        let ts2 = mc_protocol::play::parse_set_time(&p2).expect("set time parses");
+        assert!(m.apply(PlayEvent::Time(ts2)));
+        let night = crate::timeline::sky_light_factor(18_000);
+        assert_eq!(
+            m.sky_factor(),
+            0.5 * night,
+            "the stated base scales the night plateau too"
+        );
+        // the sync's silence restores the default: the exact identity
+        m.registry.dimension_types[0].sky_light_factor = None;
+        assert_eq!(m.sky_factor(), night, "silent sync: the default 1.0 x track");
     }
 }

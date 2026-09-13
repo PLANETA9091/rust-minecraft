@@ -68,8 +68,9 @@ pub const NAME_OF: [&str; 26] = [
 ];
 
 /// A plain data grid — derives follow the data (the join result carries a
-/// World through the `Debug/Clone/PartialEq/Eq` LoginResult surface).
-#[derive(Debug, Clone, PartialEq, Eq)]
+/// World through the `Debug/Clone/PartialEq` LoginResult surface; the
+/// stated sky-light factor is an f32, so `Eq` departs with it).
+#[derive(Debug, Clone, PartialEq)]
 pub struct World {
     pub chunks_per_side: usize,
     pub seed: u64,
