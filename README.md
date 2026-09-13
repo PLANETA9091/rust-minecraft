@@ -581,6 +581,47 @@ hand-drawn:
   timeline (−1 → 0..5/6 → rest at exactly 6 ticks), the re-trigger
   guard, the wrap-guard lerp, the mid-swing geometry delta, and the
   bit-identical rest pose.
+  The **sprite-uv consumer lands (v0.3.71 — the held-item pixel link)**:
+  `crates/mc-registry/src/sprite_uv.rs` maps the quads' 0..16 uv space
+  to texels over the texture namespace, composing the display arc's
+  three data layers in one call (element_quads' quads → texture_slots'
+  materials → generated::textures' pixels). Every rule is javap
+  evidence from the 26.2 jar: CuboidFace.getU/getV divides the
+  quadrant-rotated 0..16 uv by 16.0f into the per-sprite [0,1] domain
+  (mirrored rects ride as the raw floats); FaceBakery.bakeVertex feeds
+  that normalized uv DIRECTLY to TextureAtlasSprite.getU — the
+  non-identity branch rotates the uv around (0.5, 0.5) by
+  ModelState.inverseFaceTransformation, the blockstate carrier that is
+  identity for standalone element models; TextureAtlasSprite.getU(u) =
+  u0 + (u1−u0)·u over the atlas-normalized span, and a standalone
+  per-id texture is the whole image so the mapping is the EXACT f32
+  identity (the /16 and ·16 are exponent shifts — no rounding either
+  way); UVPair.pack is Float.floatToIntBits — bit-exact, no
+  quantization; the atlas sampler is
+  SamplerCache.getClampToEdge(FilterMode.NEAREST) — NEAREST +
+  CLAMP_TO_EDGE, texel = clamp(floor(u·size), 0, size−1): u = 1.0 lands
+  on the LAST texel (no REPEAT wrap) and mirrored/negative uv clamps to
+  the edge; the missing material is the literal `missingno` sprite —
+  generateMissingImage() 16×16, magenta −524040 = 0xFFF800F8 → RGBA
+  (248, 0, 248, 255), black −16777216 → (0, 0, 0, 255), the pattern
+  (y < h/2) XOR (x < w/2) → magenta (the top-right and bottom-left
+  quadrants). The namespace join strips exactly one leading
+  `minecraft:` (the slots' 10287 namespaced vs 807 bare values land on
+  one lookup). `sample_material(model, ref, u, v)` returns None for the
+  dangling template refs — vanilla's warn+drop. The tint is NOT applied
+  (the tintindex multiply is the draw-time step; grass_block_top
+  returns the raw grayscale master, pinned ≠ the atlas bake). The e2e
+  pin derives block/heavy_core's up/down quads, resolves the bare "all"
+  ref, and samples PIL-pinned texels including the CLAMP boundary:
+  uv (16, 0) → texel (15, 0) = (49, 52, 54, 255). Zero render-path
+  contact (mc-client carries zero references to the module); all 10
+  goldens verified at the exact CI flags, every one rms 0.000, none
+  regenerated. Tests +8 (workspace 326 → 334 passed / 0 failed /
+  3 ignored; mc-registry 40 → 48): the bit-exact normalize/map pins,
+  the clamp table (u = 1.0 → size−1, NaN fail-safe, 1×1), the
+  checkerboard XOR, the heavy_core e2e, the missingno + trim sampling,
+  the namespace forms, the raw-master tint boundary, and the
+  sample_material composition (bare + namespaced + dangling + unknown).
   The **texture namespace lands (v0.3.70 — the atlas-mapping round's
   data half: texture id → pixels)**: `mc2rs-gen textures` walks every
   model file the 26.2 jar ships (3928, strict block/|item/ prefixes),
