@@ -393,8 +393,13 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                         atlas::TILE_NONE
                     };
                     let base = if tile == atlas::TILE_NONE {
-                        lut
-                            .and_then(|l| l.color(id, face))
+                        // The blockstate-driven palette FIRST (the real
+                        // model -> texture chain, v0.3.77's data half), then
+                        // the runtime-texture LUT, then the hand-written
+                        // defaults. The palette cannot color air/water —
+                        // exactly the kinds the LUT/defaults still serve.
+                        crate::colors::palette_color(id, face)
+                            .or_else(|| lut.and_then(|l| l.color(id, face)))
                             .unwrap_or_else(|| default_color(id, face))
                     } else {
                         // The multiplier carrier for the textured path, PLUS
