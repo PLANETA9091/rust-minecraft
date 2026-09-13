@@ -616,6 +616,53 @@ hand-drawn:
   cutout rule. Also repairs a pre-existing doctest break (an unannotated
   pseudo-code fence in the item_bake docs compiled as Rust and failed
   `cargo test --workspace` on the clean tree).
+  The **lightmap's SkyLightColor lands (v0.3.86 — the moonlight is
+  blue, not grey)**: the carried candidate's javap audit ran fresh
+  against the official 26.2 jar and the architecture finding is the
+  round's backbone — `ClientLevel.getSkyColor` NO LONGER EXISTS: the
+  whole old cos-darkening + sunrise-blend formula was retired into the
+  environment-attribute system, and `SkyRenderer.extractRenderState`
+  now reads the final sky color straight from
+  `EnvironmentAttributes.SKY_COLOR` (one probe per attribute: SUN_ANGLE,
+  MOON_ANGLE, STAR_ANGLE, STAR_BRIGHTNESS, SUNRISE_SUNSET_COLOR,
+  MOON_PHASE, SKY_COLOR — degrees × 0.017453292f, RGBA ints), exactly
+  the data-driven chain the client already implements. The dimension
+  bases were re-verified BIT-FOR-BIT from the real dimension_type JSONs
+  (`attributes.minecraft:visual/sky_color "#78a7ff"` = DIM_SKY_COLOR,
+  `visual/fog_color "#c0d8ff"` = DIM_FOG_COLOR, `visual/cloud_color
+  "#ccffffff"` = CLOUD_BASE_COLOR, `visual/cloud_height 192.33` — all
+  four equal), and the javap static-init pins the attribute DEFAULTS:
+  `visual/sky_light_color` = -1 (0xFFFFFFFF, WHITE) — the overworld
+  carries NO base, so the day timeline's `multiply` track IS the whole
+  value; `visual/block_light_tint` = -10100 (0xFFD8AC, the warm torch
+  tint — the documented NEXT consumer); `visual/sky_light_factor` = 1.0
+  (already consumed). THE IMPLEMENTATION: the day timeline's
+  `visual/sky_light_color` track (white by day → `#7a7aff` through the
+  night plateau — the moonlight blue) is extracted into
+  `timeline::sky_light_color` (the same cyclic-linear `evaluate` walk,
+  raw 0..=255 channel space, one final /255 — the sky.rs color-track
+  convention), and the mesher's scalar lightmap combine generalizes to
+  the SHARED per-channel core `lightmap_combine` (both the cube and the
+  leaf-litter paths call it — generalize the core, not the copy):
+  `SkyLightColor * get_brightness(sky) * SkyFactor + BlockLightColor *
+  get_brightness(block)`, clamped at 1.0 per channel; the block term
+  keeps the white stand-in (the `#ffd8ac` parabolic mix is next). At
+  the white day tint every branch is bit-identical to the scalar
+  arithmetic it replaced; at night the sky-lit surfaces tint BLUE — the
+  first time the night world reads moonlit instead of darkened-white.
+  The goldens are untouched — BY DATA: the procedural golden worlds
+  carry NO light layer (the `lm = 1.0` legacy path — the night look
+  comes from the sky.rs clear colors, which this round never touches),
+  so the tint lands on nothing they render; 12/12 pass, every one rms
+  0.000 through verify_goldens.sh. Tests +2 (workspace 388 → 390
+  passed / 0 failed / 3 ignored): the track pins (day white, the
+  #7a7aff plateau exact at BOTH the golden night tick 14010 and the
+  riding tests' 18000, the dusk midpoint per channel, the dawn wrap)
+  and the full-channel mesher witness (the night sky term is
+  blue-tinted per channel against the day-derived product; the riding
+  `sky_factor_scales_only_the_sky_term` updated honestly to the tinted
+  night arithmetic — red 0.8926 under the clamp, blue 1.0 clamped, the
+  block-only and day branches byte-equal to before).
   The **profile-metadata consumer lands (v0.3.85 — the login's skin
   model picks the arm)**: the slim arc completes its natural lifecycle —
   the `--slim-arm` stand-in gets the REAL selection source. The login
