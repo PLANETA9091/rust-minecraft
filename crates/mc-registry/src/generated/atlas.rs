@@ -7,8 +7,8 @@
 pub const ATLAS_VERSION: &str = "26.2";
 pub const TILE_SIZE: usize = 16;
 pub const TILE_NONE: u16 = u16::MAX;
-pub const N_KINDS: usize = 25;
-pub const KIND_NAMES: [&str; N_KINDS] = ["air", "stone", "dirt", "grass_block", "oak_log", "oak_leaves", "water", "sand", "granite", "diorite", "andesite", "deepslate", "cobbled_deepslate", "gravel", "bedrock", "coal_ore", "copper_ore", "iron_ore", "gold_ore", "redstone_ore", "lapis_ore", "diamond_ore", "emerald_ore", "netherrack", "pale_oak_leaves"];
+pub const N_KINDS: usize = 26;
+pub const KIND_NAMES: [&str; N_KINDS] = ["air", "stone", "dirt", "grass_block", "oak_log", "oak_leaves", "water", "sand", "granite", "diorite", "andesite", "deepslate", "cobbled_deepslate", "gravel", "bedrock", "coal_ore", "copper_ore", "iron_ore", "gold_ore", "redstone_ore", "lapis_ore", "diamond_ore", "emerald_ore", "netherrack", "pale_oak_leaves", "leaf_litter"];
 
 pub const FACE_TILES: [[u16; 6]; N_KINDS] = [
     [65535, 65535, 65535, 65535, 65535, 65535],
@@ -36,6 +36,7 @@ pub const FACE_TILES: [[u16; 6]; N_KINDS] = [
     [24, 24, 24, 24, 24, 24],
     [25, 25, 25, 25, 25, 25],
     [26, 26, 26, 26, 26, 26],
+    [27, 27, 27, 27, 27, 27],
 ];
 
 pub const TINTS: [[u32; 6]; N_KINDS] = [
@@ -64,6 +65,7 @@ pub const TINTS: [[u32; 6]; N_KINDS] = [
     [0x0, 0x0, 0x0, 0x0, 0x0, 0x0],
     [0x0, 0x0, 0x0, 0x0, 0x0, 0x0],
     [0x0, 0x0, 0x0, 0x0, 0x0, 0x0],
+    [0xa37546, 0xa37546, 0xa37546, 0xa37546, 0xa37546, 0xa37546],
 ];
 
 static TILE_0_RGBA: [u8; 1024] = [
@@ -1281,9 +1283,54 @@ static TILE_26_RGBA: [u8; 1024] = [
 0,0,0,0,160,166,156,255,160,166,156,255,160,166,156,255,88,93,87,255,0,0,0,0,
 0,0,0,0,105,110,103,255,131,136,128,255,131,136,128,255,
 ];
+static TILE_27_RGBA: [u8; 1024] = [
+0,0,0,0,98,71,42,255,107,77,46,255,123,89,53,255,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,107,77,46,255,
+98,71,42,255,107,77,46,255,123,89,53,255,0,0,0,0,0,0,0,0,0,0,0,0,
+107,77,46,255,107,77,46,255,0,0,0,0,0,0,0,0,0,0,0,0,138,99,59,255,
+138,99,59,255,0,0,0,0,0,0,0,0,0,0,0,0,107,77,46,255,107,77,46,255,
+123,89,53,255,0,0,0,0,0,0,0,0,0,0,0,0,80,57,34,255,107,77,46,255,
+0,0,0,0,88,63,38,255,0,0,0,0,125,89,54,255,112,80,48,255,138,99,59,255,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,98,71,42,255,0,0,0,0,88,63,38,255,
+88,63,38,255,109,78,47,255,0,0,0,0,0,0,0,0,134,96,58,255,134,96,58,255,
+0,0,0,0,0,0,0,0,98,71,42,255,98,71,42,255,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,109,78,47,255,88,63,38,255,109,78,47,255,
+119,85,51,255,0,0,0,0,102,73,44,255,134,96,58,255,0,0,0,0,0,0,0,0,
+98,71,42,255,80,57,34,255,98,71,42,255,0,0,0,0,123,89,53,255,123,89,53,255,
+123,89,53,255,109,78,47,255,109,78,47,255,88,63,38,255,119,85,51,255,0,0,0,0,
+0,0,0,0,125,89,54,255,0,0,0,0,0,0,0,0,107,77,46,255,98,71,42,255,
+80,57,34,255,98,71,42,255,0,0,0,0,98,71,42,255,107,77,46,255,0,0,0,0,
+109,78,47,255,119,85,51,255,119,85,51,255,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,107,77,46,255,80,57,34,255,80,57,34,255,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,107,77,46,255,107,77,46,255,107,77,46,255,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,125,89,54,255,
+0,0,0,0,0,0,0,0,0,0,0,0,107,77,46,255,107,77,46,255,0,0,0,0,
+0,0,0,0,107,77,46,255,80,57,34,255,98,71,42,255,107,77,46,255,0,0,0,0,
+0,0,0,0,0,0,0,0,134,96,58,255,102,73,44,255,0,0,0,0,0,0,0,0,
+0,0,0,0,98,71,42,255,80,57,34,255,98,71,42,255,0,0,0,0,107,77,46,255,
+98,71,42,255,80,57,34,255,98,71,42,255,0,0,0,0,0,0,0,0,0,0,0,0,
+134,96,58,255,134,96,58,255,0,0,0,0,98,71,42,255,80,57,34,255,0,0,0,0,
+98,71,42,255,80,57,34,255,0,0,0,0,0,0,0,0,98,71,42,255,80,57,34,255,
+80,57,34,255,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+107,77,46,255,80,57,34,255,80,57,34,255,0,0,0,0,0,0,0,0,80,57,34,255,
+150,107,64,255,150,107,64,255,0,0,0,0,0,0,0,0,80,57,34,255,0,0,0,0,
+107,77,46,255,0,0,0,0,0,0,0,0,107,77,46,255,80,57,34,255,98,71,42,255,
+98,71,42,255,0,0,0,0,0,0,0,0,0,0,0,0,134,96,58,255,134,96,58,255,
+150,107,64,255,0,0,0,0,0,0,0,0,0,0,0,0,98,71,42,255,123,89,53,255,
+0,0,0,0,107,77,46,255,107,77,46,255,98,71,42,255,0,0,0,0,150,107,64,255,
+150,107,64,255,0,0,0,0,0,0,0,0,134,96,58,255,134,96,58,255,150,107,64,255,
+0,0,0,0,0,0,0,0,123,89,53,255,123,89,53,255,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,150,107,64,255,125,89,54,255,134,96,58,255,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+125,89,54,255,134,96,58,255,0,0,0,0,0,0,0,0,
+];
 
 /// RGBA8 texel data, one entry per tile (16x16x4 bytes).
-pub static TILES: [&[u8]; 27] = [&TILE_0_RGBA,&TILE_1_RGBA,&TILE_2_RGBA,&TILE_3_RGBA,&TILE_4_RGBA,&TILE_5_RGBA,&TILE_6_RGBA,&TILE_7_RGBA,&TILE_8_RGBA,&TILE_9_RGBA,&TILE_10_RGBA,&TILE_11_RGBA,&TILE_12_RGBA,&TILE_13_RGBA,&TILE_14_RGBA,&TILE_15_RGBA,&TILE_16_RGBA,&TILE_17_RGBA,&TILE_18_RGBA,&TILE_19_RGBA,&TILE_20_RGBA,&TILE_21_RGBA,&TILE_22_RGBA,&TILE_23_RGBA,&TILE_24_RGBA,&TILE_25_RGBA,&TILE_26_RGBA,];
+pub static TILES: [&[u8]; 28] = [&TILE_0_RGBA,&TILE_1_RGBA,&TILE_2_RGBA,&TILE_3_RGBA,&TILE_4_RGBA,&TILE_5_RGBA,&TILE_6_RGBA,&TILE_7_RGBA,&TILE_8_RGBA,&TILE_9_RGBA,&TILE_10_RGBA,&TILE_11_RGBA,&TILE_12_RGBA,&TILE_13_RGBA,&TILE_14_RGBA,&TILE_15_RGBA,&TILE_16_RGBA,&TILE_17_RGBA,&TILE_18_RGBA,&TILE_19_RGBA,&TILE_20_RGBA,&TILE_21_RGBA,&TILE_22_RGBA,&TILE_23_RGBA,&TILE_24_RGBA,&TILE_25_RGBA,&TILE_26_RGBA,&TILE_27_RGBA,];
 
 pub fn has_tiles() -> bool { !TILES.is_empty() }
 
@@ -1295,4 +1342,4 @@ pub fn tile_name(idx: u16) -> &'static str {
     TILE_NAMES[idx as usize]
 }
 
-pub static TILE_NAMES: [&str; 27] = ["stone", "dirt", "grass_block_side", "grass_block_top", "oak_log", "oak_log_top", "oak_leaves", "water_still", "sand", "granite", "diorite", "andesite", "deepslate", "deepslate_top", "cobbled_deepslate", "gravel", "bedrock", "coal_ore", "copper_ore", "iron_ore", "gold_ore", "redstone_ore", "lapis_ore", "diamond_ore", "emerald_ore", "netherrack", "pale_oak_leaves"];
+pub static TILE_NAMES: [&str; 28] = ["stone", "dirt", "grass_block_side", "grass_block_top", "oak_log", "oak_log_top", "oak_leaves", "water_still", "sand", "granite", "diorite", "andesite", "deepslate", "deepslate_top", "cobbled_deepslate", "gravel", "bedrock", "coal_ore", "copper_ore", "iron_ore", "gold_ore", "redstone_ore", "lapis_ore", "diamond_ore", "emerald_ore", "netherrack", "pale_oak_leaves", "leaf_litter"];

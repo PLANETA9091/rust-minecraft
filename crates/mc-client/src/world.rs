@@ -47,13 +47,24 @@ pub const NETHERRACK: u16 = 23;
 /// BlockColors registers no source for it, the PRE-COLORED texture
 /// renders as authored (see `crate::tint::slot_for`'s verdict).
 pub const PALE_LEAVES: u16 = 24;
+/// The thirteenth-audit kind — the FIRST non-cube member: leaf_litter is
+/// a flat zero-thickness ground cover (template_leaf_litter_1..4: quads
+/// at y=0.25/16 with up+down faces, both tintindex 0, ambientocclusion
+/// false). The dry fold's sole consumer: its faces carry the DRY_SLOT
+/// source (`BlockTintSources.dryFoliage()`, the twelfth audit), and the
+/// texture is a GRAYSCALE master the game tints in-world (probe: every
+/// opaque pixel r==g==b, binary alpha 0/255). The mesher's flat path
+/// meshes the full footprint; per-segment coverage needs state-property
+/// extraction (documented follow-up).
+pub const LEAF_LITTER: u16 = 25;
 
 /// Block -> texture-group mapping used by the real-colors LUT.
-pub const NAME_OF: [&str; 25] = [
+pub const NAME_OF: [&str; 26] = [
     "air", "stone", "dirt", "grass_block", "oak_log", "oak_leaves", "water", "sand",
     "granite", "diorite", "andesite", "deepslate", "cobbled_deepslate", "gravel",
     "bedrock", "coal_ore", "copper_ore", "iron_ore", "gold_ore", "redstone_ore",
     "lapis_ore", "diamond_ore", "emerald_ore", "netherrack", "pale_oak_leaves",
+    "leaf_litter",
 ];
 
 /// A plain data grid — derives follow the data (the join result carries a

@@ -46,8 +46,8 @@ use crate::tint;
 use crate::world::{
     BiomeLayer, LightGrid, World, AIR, ANDESITE, BEDROCK, BIOME_UNKNOWN, CHUNK_X, CHUNK_Y, CHUNK_Z,
     COAL_ORE, COBBLED_DEEPSLATE, COPPER_ORE, DEEPSLATE, DIAMOND_ORE, DIORITE, DIRT, EMERALD_ORE,
-    GOLD_ORE, GRANITE, GRASS, GRAVEL, IRON_ORE, LAPIS_ORE, LEAVES, LIGHT_UNKNOWN, LOG, NETHERRACK,
-    PALE_LEAVES, REDSTONE_ORE, SAND, STONE, WATER,
+    GOLD_ORE, GRANITE, GRASS, GRAVEL, IRON_ORE, LAPIS_ORE, LEAF_LITTER, LEAVES, LIGHT_UNKNOWN, LOG,
+    NETHERRACK, PALE_LEAVES, REDSTONE_ORE, SAND, STONE, WATER,
 };
 use crate::world_model::WorldModel;
 use mc_protocol::{PlayEvent, PlayerPosition, WorldSnapshot};
@@ -368,6 +368,13 @@ pub fn runtime_mapper(id: u32) -> u16 {
         Some("minecraft:emerald_ore") => EMERALD_ORE,
         Some("minecraft:netherrack") => NETHERRACK,
         Some("minecraft:pale_oak_leaves") => PALE_LEAVES,
+        // the thirteenth-audit kind: ALL 16 leaf_litter states (facing x
+        // segment_amount, ids 30339..=30355 in the generated table) ride
+        // ONE kind — the full-footprint flat ground cover. Per-segment
+        // coverage (quarter/half-strip/full quads from the multipart
+        // blockstate) needs state-property extraction: documented
+        // follow-up.
+        Some("minecraft:leaf_litter") => LEAF_LITTER,
         _ => AIR, // air and every block the palette doesn't render yet
     }
 }

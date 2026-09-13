@@ -68,8 +68,10 @@ const FACE_CORNERS: [[[f32; 3]; 4]; 6] = [
 
 fn is_transparent(kind: u16) -> bool {
     // the leaves FAMILY: oak (foliage-tinted) and pale oak (the audited
-    // no-tint verdict — still cutout leaves, non-occluding, no AO)
-    kind == AIR || kind == WATER || kind == LEAVES || kind == PALE_LEAVES
+    // no-tint verdict — still cutout leaves, non-occluding, no AO);
+    // leaf_litter is the flat ground cover (the 13th audit — non-cube,
+    // non-occluding, casts no AO, exactly the blockstate models' verdict)
+    kind == AIR || kind == WATER || kind == LEAVES || kind == PALE_LEAVES || kind == LEAF_LITTER
 }
 
 /// Only opaque blocks cast ambient occlusion (air/water/leaves never darken
@@ -221,6 +223,11 @@ pub fn face_uv(face: usize, c: [f32; 3]) -> [f32; 2] {
     }
 }
 
+/// The flat ground-cover plane: leaf_litter's model elements sit at
+/// y = 0.25 model units (of 16) — a quarter pixel above the floor
+/// (the 13th audit: template_leaf_litter_1..4, all `from.y == to.y == 0.25`).
+const FLAT_Y: f32 = 0.25 / 16.0;
+
 /// Mesh one chunk: all faces where a solid block touches a transparent one.
 pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>) -> Vec<Quad> {
     let mut out = Vec::with_capacity(2048);
@@ -239,6 +246,83 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                 let wy = ly as i32;
                 let wz = bz0 + lz as i32;
                 let water_self = id == WATER;
+                // The 13th-audit FLAT path: leaf_litter is a zero-thickness
+                // ground cover, not a cube. Its blockstate is a multipart
+                // (leaf_litter_1..4 x facing rotations) and every element
+                // has EXACTLY up+down faces at y=0.25, both tintindex 0 ->
+                // the dry fold (DRY_SLOT), with `ambientocclusion: false`
+                // (no corner AO — the model verdict) and no cullface (both
+                // faces draw unconditionally; the raster backface-culls
+                // each to its own side). The full-footprint template
+                // (segment 4) is the shape here — per-segment coverage
+                // (quarter/half-strip quads) needs state-property
+                // extraction, a documented follow-up.
+                if id == LEAF_LITTER {
+                    let tile = if (id as usize) < atlas::N_KINDS {
+                        atlas::FACE_TILES[id as usize][2]
+                    } else {
+                        atlas::TILE_NONE
+                    };
+                    let sky_factor = world
+                        .day_tick
+                        .map(crate::timeline::sky_light_factor)
+                        .unwrap_or(1.0);
+                    let fy = wy as f32 + FLAT_Y;
+                    for face in [2usize, 3] {
+                        let base = if tile == atlas::TILE_NONE {
+                            lut
+                                .and_then(|l| l.color(id, face))
+                                .unwrap_or_else(|| default_color(id, face))
+                        } else {
+                            // The same tint carrier as the cube path: the
+                            // synced biome's dry-fold color when it differs
+                            // from the baked plains sample (the no-op rule),
+                            // multiplied into the vertex colors.
+                            world
+                                .face_tint(id, face, wx, wy, wz)
+                                .map(tint::unpack)
+                                .unwrap_or([1.0; 3])
+                        };
+                        let shade = FACE_SHADE[face];
+                        // per-corner light in front of the face plane (the
+                        // client-wide convention); `None` keeps legacy look
+                        let clight =
+                            light.map(|l| corner_light(l, world.chunks_per_side, wx, wy, wz, face));
+                        let mut pts = [[0f32; 3]; 4];
+                        let mut colors = [[0f32; 3]; 4];
+                        let mut uvs = [[0f32; 2]; 4];
+                        for (i, c) in FACE_CORNERS[face].iter().enumerate() {
+                            pts[i] = [wx as f32 + c[0], fy, wz as f32 + c[2]];
+                            // The vanilla lightmap combine, VERBATIM (the
+                            // same arithmetic as the cube path above).
+                            let lm = match clight.as_ref() {
+                                Some((sky, block)) => {
+                                    let sky_b = sky[i].map(|v| light_brightness(v) * sky_factor);
+                                    let block_b = block[i].map(light_brightness);
+                                    match (sky_b, block_b) {
+                                        (Some(s), Some(b)) => (s + b).min(1.0),
+                                        (Some(s), None) | (None, Some(s)) => s,
+                                        (None, None) => 1.0,
+                                    }
+                                }
+                                None => 1.0, // no light layer — legacy look
+                            };
+                            // `ambientocclusion: false` — shade and light
+                            // only, NO AO_CURVE term.
+                            let m = shade * lm;
+                            colors[i] = [base[0] * m, base[1] * m, base[2] * m];
+                            uvs[i] = face_uv(face, *c);
+                        }
+                        out.push(Quad {
+                            pts,
+                            colors,
+                            uvs,
+                            tile,
+                            translucent: false,
+                        });
+                    }
+                    continue;
+                }
                 for face in 0..6usize {
                     let (dx, dy, dz) = NEIGHBOR[face];
                     let n = world.get(wx + dx, wy + dy, wz + dz);

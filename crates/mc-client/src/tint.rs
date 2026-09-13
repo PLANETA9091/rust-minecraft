@@ -57,7 +57,7 @@
 //!   opinion and stays on the baked plains look.
 
 use crate::colormap;
-use crate::world::{GRASS, LEAVES, PALE_LEAVES, WATER};
+use crate::world::{GRASS, LEAF_LITTER, LEAVES, PALE_LEAVES, WATER};
 use mc_protocol::{BiomeEntry, GrassColorModifier};
 
 /// Slot order of the per-biome tint quad: the grass_block_top color
@@ -149,8 +149,14 @@ const DARK_FOREST_BLEND: u32 = 0x28340A;
 /// audit): `BlockColors.createDefault()` registers no tint source for it
 /// — the model's tintindex falls back to BLANK_LAYER (constant white)
 /// and the PRE-COLORED texture renders as authored (probe-verified:
-/// zero pure-gray pixels). The dry-foliage consumer is leaf_litter, a
-/// non-cube ground cover outside the mesh vocabulary so far.
+/// zero pure-gray pixels).
+///
+/// leaf_litter (the thirteenth audit) is the dry fold's sole consumer:
+/// its flat ground-quad models carry ONLY up+down faces, BOTH with
+/// `tintindex: 0` -> the registered `BlockTintSources.dryFoliage()`
+/// source (the DRY_SLOT). The side faces don't exist in the model — the
+/// mesher's flat path never queries them — so they stay `None` (a
+/// nonexistent face carries no source).
 pub fn slot_for(kind: u16, face: usize) -> Option<usize> {
     if kind == WATER {
         Some(WATER_SLOT)
@@ -158,6 +164,9 @@ pub fn slot_for(kind: u16, face: usize) -> Option<usize> {
         Some(GRASS_SLOT)
     } else if kind == LEAVES {
         Some(FOLIAGE_SLOT)
+    } else if kind == LEAF_LITTER && (face == 2 || face == 3) {
+        // the flat model's only faces, both tintindex 0 -> the dry fold
+        Some(DRY_SLOT)
     } else {
         // PALE_LEAVES lands here deliberately — no tint, exactly vanilla
         None
