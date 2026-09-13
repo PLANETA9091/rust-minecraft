@@ -447,6 +447,35 @@ fn recalculate_winding(vertices: &mut [[f32; 3]; 4], uvs: &mut [[f32; 2]; 4], fa
 
 #[cfg(test)]
 mod tests {
+    #[test]
+    fn dump_quad_detail_for_census_diff() {
+        for id in ["block/cube_all_inner_faces", "block/brewing_stand_bottle2"] {
+            let (_, elements) = ELEMENTS.iter().find(|(mid, _)| *mid == id).unwrap();
+            println!("===== {}", id);
+            for element in elements.iter() {
+                for slot_idx in 0..6 {
+                    let slot = SLOT_ORDER[slot_idx];
+                    let Some(face) = element.faces[slot_idx] else { continue };
+                    let mut verts = faceinfo_corners(slot, element.from, element.to);
+                    let facing = calculate_facing(&verts);
+                    let mut uvs = [[0.0f32; 2]; 4];
+                    let swaps = facing.map(|f| recalculate_winding(&mut verts, &mut uvs, f));
+                    println!("slot={:?} facing={:?} swaps={:?} initial={:?}", slot, facing, swaps, faceinfo_corners(slot, element.from, element.to));
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn dump_per_model_for_census_diff() {
+        let mut out = String::new();
+        for (id, elements) in crate::generated::elements::ELEMENTS {
+            let (_, stats) = derive_elements_with_stats(elements);
+            out.push_str(&format!("PM {} quads={} drift={} rewound={} upfb={}\n", id, stats.quads, stats.facing_drift, stats.rewound, stats.up_fallback));
+        }
+        println!("{}", out);
+    }
+
     use super::*;
     use crate::generated::elements::ElementFace;
 
