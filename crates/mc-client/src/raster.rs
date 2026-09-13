@@ -62,6 +62,14 @@ pub struct CloudQuad {
     pub color: [f32; 4],
 }
 
+/// One view-space textured quad of the first-person hand pass (the
+/// vanilla entity_translucent semantics: two-sided, depth-tested, no fog).
+pub struct HandQuad {
+    pub pts: [[f32; 3]; 4],
+    /// texel coords into the skin texture (u right, v down)
+    pub uv: [[f32; 2]; 4],
+}
+
 impl Framebuf {
     pub fn new(w: usize, h: usize) -> Self {
         Self { w, h, color: vec![0u8; w * h * 3], depth: vec![f32::MAX; w * h] }
@@ -83,6 +91,12 @@ impl Framebuf {
                 self.color[o + 2] = c[2] as u8;
             }
         }
+        self.depth.iter_mut().for_each(|d| *d = f32::MAX);
+    }
+
+    /// Depth-only clear — the vanilla hand pass runs after the level with a
+    /// cleared depth buffer (the hand never clips into world geometry).
+    pub fn clear_depth(&mut self) {
         self.depth.iter_mut().for_each(|d| *d = f32::MAX);
     }
 
@@ -489,6 +503,104 @@ impl Framebuf {
             .chunks_exact(3)
             .map(|c| 0xFF00_0000 | ((c[0] as u32) << 16) | ((c[1] as u32) << 8) | c[2] as u32)
             .collect()
+    }
+
+    /// The first-person hand pass: VIEW-SPACE quads (view matrix already
+    /// folded into the vertices) under the world's projection, sampled from
+    /// an explicit RGBA texture (the player skin, not the block atlas).
+    /// Official `entity_translucent` semantics, adapted to the reference
+    /// raster: two-sided (NO backface cull — entity render types don't
+    /// cull), depth test + write against a freshly cleared buffer, NO fog
+    /// (the hand sits at the player's fog distance, ~0), nearest texel
+    /// with the alpha cutout at 0.5, vertex color = white (the hand's
+    /// packed light is the player position's full skylight in the scenes
+    /// the reference renders).
+    pub fn draw_hand_quads(
+        &mut self,
+        proj: Mat4,
+        quads: &[super::hand::HandQuad],
+        rgba: &[u8],
+        side: usize,
+    ) {
+        let w_px = self.w as f32;
+        let h_px = self.h as f32;
+        for quad in quads {
+            let clip: Vec<[f32; 4]> = quad
+                .pts
+                .iter()
+                .map(|p| proj.transform_point(Vec3::new(p[0], p[1], p[2])))
+                .collect();
+            let clipped = clip_near(&clip);
+            if clipped.len() < 3 {
+                continue;
+            }
+            let mut sx = vec![0f32; clipped.len()];
+            let mut sy = vec![0f32; clipped.len()];
+            let mut ow = vec![0f32; clipped.len()];
+            let mut vz = vec![0f32; clipped.len()];
+            for i in 0..clipped.len() {
+                let c = clipped[i];
+                let iw = 1.0 / c[3];
+                sx[i] = (c[0] * iw * 0.5 + 0.5) * w_px;
+                sy[i] = (1.0 - (c[1] * iw * 0.5 + 0.5)) * h_px;
+                ow[i] = iw;
+                vz[i] = c[3]; // view distance proxy = clip w (draw_pass convention)
+            }
+            for tri in 1..clipped.len() - 1 {
+                let (ax, ay, a_ow, a_vz) = (sx[0], sy[0], ow[0], vz[0]);
+                let (bx, by, b_ow, b_vz) = (sx[tri], sy[tri], ow[tri], vz[tri]);
+                let (cx, cy, c_ow, c_vz) = (sx[tri + 1], sy[tri + 1], ow[tri + 1], vz[tri + 1]);
+                let (ua, va) = (quad.uv[0][0], quad.uv[0][1]);
+                let (ub, vb) = (quad.uv[tri.min(3)][0], quad.uv[tri.min(3)][1]);
+                let (uc, vc) = (
+                    quad.uv[(tri + 1).min(3)][0],
+                    quad.uv[(tri + 1).min(3)][1],
+                );
+                let area_ab = edge(ax, ay, bx, by, cx, cy);
+                if area_ab.abs() < 1e-9 {
+                    continue;
+                }
+                let inv_area = 1.0 / area_ab;
+                let minx = ax.min(bx).min(cx).floor().max(0.0) as isize;
+                let miny = ay.min(by).min(cy).floor().max(0.0) as isize;
+                let maxx = ax.max(bx).max(cx).ceil().min(w_px - 1.0) as isize;
+                let maxy = ay.max(by).max(cy).ceil().min(h_px - 1.0) as isize;
+                for py in miny..=maxy {
+                    for px_ in minx..=maxx {
+                        let fx = px_ as f32 + 0.5;
+                        let fy = py as f32 + 0.5;
+                        let w0 = edge(bx, by, cx, cy, fx, fy);
+                        let w1 = edge(cx, cy, ax, ay, fx, fy);
+                        let w2 = edge(ax, ay, bx, by, fx, fy);
+                        if w0 < 0.0 || w1 < 0.0 || w2 < 0.0 {
+                            continue;
+                        }
+                        let b0 = w0 * inv_area;
+                        let b1 = w1 * inv_area;
+                        let b2 = w2 * inv_area;
+                        let dist = 1.0 / (b0 * a_ow + b1 * b_ow + b2 * c_ow);
+                        let z = (b0 * a_vz * a_ow + b1 * b_vz * b_ow + b2 * c_vz * c_ow) * dist;
+                        let u = (b0 * ua * a_ow + b1 * ub * b_ow + b2 * uc * c_ow) * dist;
+                        let v = (b0 * va * a_ow + b1 * vb * b_ow + b2 * vc * c_ow) * dist;
+                        let idx = (py as usize) * self.w + px_ as usize;
+                        if z >= self.depth[idx] {
+                            continue;
+                        }
+                        let tx = ((u.floor() as isize).clamp(0, side as isize - 1)) as usize;
+                        let ty = ((v.floor() as isize).clamp(0, side as isize - 1)) as usize;
+                        let t = ((ty * side + tx) * 4) as usize;
+                        if t + 3 >= rgba.len() || rgba[t + 3] < 128 {
+                            continue; // cutout hole: no color, no depth
+                        }
+                        self.depth[idx] = z;
+                        let o = idx * 3;
+                        for (ch, texel) in (0..3).zip(&rgba[t..t + 3]) {
+                            self.color[o + ch] = *texel;
+                        }
+                    }
+                }
+            }
+        }
     }
 }
 

@@ -14,6 +14,7 @@ mod colors;
 mod colormap;
 mod gpu;
 mod gui;
+mod hand;
 mod headless;
 mod math;
 mod mesher;

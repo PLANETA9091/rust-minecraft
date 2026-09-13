@@ -18,6 +18,9 @@ anyhow.workspace = true
 png.workspace = true
 rayon.workspace = true
 clap.workspace = true
+# the first-person hand verifies the skin asset against the generated sha1
+sha1.workspace = true
+hex.workspace = true
 mc-assets = { path = "../mc-assets" }
 mc-registry = { path = "../mc-registry" }
 # real server-list ping + login for the multiplayer screen

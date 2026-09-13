@@ -248,6 +248,11 @@ pub struct App {
     /// True while the World screen shows the NETWORK world (the quad mesh
     /// came from a join snapshot, not the procedural singleplayer world).
     pub world_is_network: bool,
+    /// The first-person hand (the empty main-hand arm from the official
+    /// player skin), loaded lazily from the runtime asset root on the first
+    /// world frame; `None` = the skin asset is absent or failed its sha1
+    /// verification and the hand is not drawn.
+    pub arm: Option<crate::hand::ArmModel>,
     /// The last biome the network world's music situation resolved to
     /// (the synced registry name at the player's feet). `None` until a
     /// join resolves one; cleared with the level (Save and Quit, a kick).
@@ -342,6 +347,7 @@ impl App {
             world_is_network: false,
             net_biome: None,
             live_runs: Vec::new(),
+            arm: None,
         }
     }
 
@@ -814,13 +820,21 @@ impl App {
         };
         // Official render order: sky color -> sun/moon/stars -> terrain ->
         // clouds (depth-tested against terrain, the CLOUDS pass runs with
-        // the main depth buffer in the game's frame graph).
+        // the main depth buffer in the game's frame graph) -> the HAND
+        // (vanilla renders the first-person arm after the level with a
+        // cleared depth buffer, before any HUD).
         fb.clear(sky.sky_color, sky.fog_color);
         crate::sky::render_celestials(fb, &ctx, &cam, day_time);
         if let Some(quads) = &self.world_quads {
             fb.draw_quads(&ctx, quads);
         }
         crate::sky::render_clouds(fb, &ctx, &cam, day_time, 0.0);
+        if self.arm.is_none() {
+            self.arm = crate::hand::load(std::path::Path::new("assets-cache/jar"));
+        }
+        if let Some(arm) = &self.arm {
+            arm.draw(fb, ctx.proj);
+        }
     }
 
     fn ensure_world(&mut self) {

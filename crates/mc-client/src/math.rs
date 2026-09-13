@@ -62,6 +62,13 @@ impl Mat4 {
         1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0,
     ]);
 
+    /// Translation matrix (column-major; PoseStack.translate's twin).
+    pub fn translation(x: f32, y: f32, z: f32) -> Mat4 {
+        Mat4([
+            1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, x, y, z, 1.0,
+        ])
+    }
+
     pub fn mul(&self, o: &Mat4) -> Mat4 {
         let a = &self.0;
         let b = &o.0;
