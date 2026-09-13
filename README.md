@@ -346,6 +346,47 @@ hand-drawn:
   the missing/empty/legacy-schema refusals) and the protocol claim-shape
   pin (one record, minecraft/core, non-empty version = the generated
   id, the exact offer-echo bytes).
+  The **biome tints fall back to the built-in tables (v0.3.55 — the first
+  server-visible consequence of the claim)**: a vanilla server that accepts
+  the known-packs claim skips Registry Data, and the client now renders its
+  biomes anyway — the biome-tint slice of the skip-sync fallback, joining
+  the v0.3.53 wire-order evidence with the v0.3.51 jar tables. The data
+  side grew ONE appended table: the worldgen emitter now carries the
+  per-biome tint extras the classic color surface does not —
+  `effects.grass_color_modifier` (the vanilla enum names verbatim; "none"
+  states the absence and is dropped; an unknown name is a REFUSAL — the jar
+  does not state it, guessing would put a lie in the table) and
+  `effects.dry_foliage_color` (the `"#rrggbb"` string form the real jar
+  uses) — sparse, exactly the four 26.2 carriers (dark_forest,
+  mangrove_swamp, swamp, pale_garden), appended LAST so the previous
+  29318-byte generated file verifies as a byte-exact prefix. The hand side:
+  `tint::resolve_tints` is now the ONE resolution chain both paths share
+  (the synced `BiomeEntry` and the built-in `BiomeDef`+extras alike — the
+  two paths cannot disagree about a vanilla biome's verdict),
+  `tint::built_in_tints(name)` resolves a built-in biome through it, and
+  `WorldModel::biome_tints()` serves the quads in WIRE order when (and only
+  when) no biome sync arrived — a sync that DID arrive stays the
+  unchallenged truth (the quad list keeps the synced table's length, a
+  lying entry renders as it lies), mirroring the v0.3.52 dimension
+  fallback's scoping; `biome_name` grew the same fallback (a bare id walks
+  `BIOME_ORDER`). THE FIXTURE HONESTY (the fallout the contract demands):
+  the net fixture's single-valued biome id moved 1 → 200 — a mock that
+  sent NO registry must not carry a bare wire id the vanilla order names
+  (id 1 would resolve bamboo_jungle and fold its jungle tint into the
+  golden grass); the same honesty the "mock:test" dimension name rides,
+  and one world_view assertion updated for the same reason (a cleared sync
+  names the bare vanilla id 0 badlands now — that IS the skip-sync state).
+  Zero golden pixels: the golden scenes carry a synced registry or ids the
+  vanilla order never names and never consult the fallback — verified
+  TWICE on the release builds with the EXACT CI flags (cpu/net rms 0.000;
+  the gui screens at their per-screen CI frames — title/servers/loading/
+  world/worldnight/pause = 30/60/15/30/30/30 — rms 0.000). Tests +6
+  (workspace 253 → 259 passed / 0 failed / 3 ignored): the generator's
+  extras parse/emission fixture + the unknown-modifier refusal,
+  mc-registry's jar-value + join-consistency pin, tint's verdict-for-
+  verdict equivalence (plains + the dark_forest blend) and the verbatim
+  overrides, and the model's wire-order fallback (names, quads,
+  sync-precedence, no-rescue).
   The **registry-order evidence is dumped from the real runtime (v0.3.53 —
   the pack-version claim's LAST prerequisite)**: the generator grew its
   third runtime dumper — the checked-in clean-room `DumpRegistries.java` —
