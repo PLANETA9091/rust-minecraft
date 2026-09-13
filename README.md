@@ -308,6 +308,44 @@ hand-drawn:
   Zero render-path pixels: the tint CONSUMERS come next; the ten
   goldens are bit-identical by construction (the wire fixture carries
   no registry knowledge).
+  The **leaf litter renders — the first non-cube mesh path (v0.3.49 —
+  the thirteenth audit completes the dry fold)**: the DRY_SLOT carried
+  since v0.3.48 finally has its consumer. The THIRTEENTH audit (official
+  26.2 jar, asset side) pinned leaf_litter's real shape: the blockstate
+  is a MULTIPART (`leaf_litter_1..4` × facing y-rotations, segment 3
+  cumulatively applying model_2 AND model_3), and every
+  `template_leaf_litter_N` is a ZERO-THICKNESS horizontal element at
+  y=0.25 (a quarter pixel above the floor) with EXACTLY `up` + `down`
+  faces, BOTH carrying `tintindex: 0` (→ the registered
+  `BlockTintSources.dryFoliage()` source), `ambientocclusion: false`
+  (no corner AO) and no cullface — while the texture is a GRAYSCALE
+  master with BINARY alpha (probe: all 117 opaque pixels r==g==b,
+  alphas only 0/255 — genuinely tintable cutout, the exact opposite of
+  pre-colored pale oak). The generator grew its FIRST non-cube member
+  (RUNTIME_PALETTE 25 → 26; the full-cube resolution chain cannot
+  apply — multipart blockstate + a flat element — so the build loop
+  special-cases the flat stem like water) plus `TINT_DRY = 0xA37546`,
+  the dry analog of the plains constants: the REAL dry_foliage grid
+  sampled at the plains climate (probed in the twelfth run); the atlas
+  regenerated with the 28th tile appended and all 27 old tiles +
+  colormap.rs byte-identical. The client's mesher grew its FIRST
+  non-cube path: leaf_litter meshes as up + down quads on the
+  y=0.25/16 plane (full footprint), shade-only multipliers (vanilla
+  direction shade 1.0/0.5, NO AO term — the model verdict), the same
+  vanilla-verbatim lightmap combine and per-face corner light as the
+  cube path, cutout via the binary texel alpha; `is_transparent`
+  admits the kind (non-occluding, casts no AO), `slot_for` maps its
+  two model faces to DRY_SLOT, and the runtime mapper folds ALL 16
+  states (the half-open 30339..30355 range) onto one kind with the
+  synced dry override riding the same vertex carrier (the no-op rule
+  keeps the baked plains sample). Tests +4 (workspace 233 → 237
+  passed / 0 failed / 3 ignored). Ten goldens bit-identical by
+  construction (no golden scene places leaf litter; the cpu/net pairs
+  re-measured rms 0.000 explicitly), verified on the fresh v0.3.49
+  release build. Documented follow-up: per-segment coverage
+  (quarter/half-strip quads) and per-facing texture rotation need
+  state-property extraction — every state renders the full footprint
+  at the north orientation for now.
   The **dry foliage is consumed + pale oak leaves render (v0.3.48 — the
   twelfth audit and a verdict)**: the next documented deviation lands —
   and the audit CORRECTED the assumption that came with it. The TWELFTH
