@@ -75,6 +75,7 @@ use std::net::TcpStream;
 
 use crate::config::{join_play_conn, PlayOutcome, RegistryData};
 use crate::framing::PacketConn;
+use crate::nbt::{read_bare_nbt, Nbt};
 use crate::varint::{read_string, read_varint, read_varlong, write_varint};
 use crate::DEFAULT_TIMEOUT_SECS;
 
@@ -1380,11 +1381,15 @@ pub mod entity_data_serializers {
     /// `ByteBufCodecs.STRING_UTF8` — `stringUtf8(32767)`: a VarInt
     /// length + UTF-8, capped at 32767 (not the wiki-era 65536).
     pub const STRING: i32 = 4;
-    /// `ComponentSerialization.TRUSTED_STREAM_CODEC` — the object
-    /// graph this client refuses for now (no honest skip: a value's
-    /// byte length is only knowable through its codec).
+    /// `ComponentSerialization.TRUSTED_STREAM_CODEC` =
+    /// `fromCodecWithRegistriesTrusted` = `tagCodec` + the NBT-ops
+    /// adapter: ONE BARE network NBT tag on the wire (a TAG_String for
+    /// plain text, a TAG_Compound for the structured form) — decoded
+    /// with the bare-tag reader ("trusted" = the accounter is
+    /// unlimited, the server's own packet).
     pub const COMPONENT: i32 = 5;
-    /// The optional companion of COMPONENT.
+    /// The optional op over COMPONENT — a boolean flag, then the bare
+    /// tag only if present (the CustomName surface's own lane).
     pub const OPTIONAL_COMPONENT: i32 = 6;
     /// `ItemStack.OPTIONAL_STREAM_CODEC` — the object-graph lane.
     pub const ITEM_STACK: i32 = 7;
@@ -1433,8 +1438,8 @@ pub mod entity_data_serializers {
 }
 
 /// One decoded metadata VALUE — the wire shapes of the serializers
-/// this client decodes (the primitive registry: ids 0-4, 8-12, 14-15,
-/// 19-20 as [`entity_data_serializers`] declares). The four i32
+/// this client decodes (SIXTEEN of the registry's ids: 0-6, 8-12,
+/// 14-15, 19-20 as [`entity_data_serializers`] declares). The four i32
 /// flavors are DISTINCT variants because the serializer id is part of
 /// the state (vanilla's `assignValues` matches accessor and value on
 /// it), not a type system accident.
@@ -1450,6 +1455,13 @@ pub enum EntityDataEntry {
     Float(f32),
     /// Serializer 4: the VarInt-length UTF-8 string.
     String(String),
+    /// Serializer 5: one bare network NBT tag — the chat component's
+    /// wire shape (a TAG_String for plain text, a TAG_Compound for the
+    /// structured `{text:..}` form; the tag is retained verbatim, the
+    /// rich-text schema is a rendering-time concern).
+    Component(Nbt),
+    /// Serializer 6: the flag, then the bare tag only if present.
+    OptionalComponent(Option<Nbt>),
     /// Serializer 8: one byte, non-zero = true.
     Bool(bool),
     /// Serializer 9: three big-endian f32s (x, y, z).
@@ -1507,12 +1519,13 @@ pub struct EntityDataSet {
 }
 
 /// Parse Set Entity Data. The supported serializers are the wire's
-/// primitive registry (the ids [`entity_data_serializers`] documents);
-/// the object-graph shapes — components, item stacks, particles,
-/// villager data, entity references, profiles, the variant holders —
-/// refuse for now: a value's byte length is only knowable through its
-/// codec, so there is no honest skip, and the vanilla read side fails
-/// the packet exactly the same way on a serializer it cannot decode.
+/// primitive registry PLUS the chat component (the bare-NBT tag — the
+/// nbt reader the chunk path already trusts); the remaining
+/// object-graph shapes — item stacks, particles, villager data,
+/// entity references, profiles, the variant holders — refuse for now:
+/// a value's byte length is only knowable through its codec, so there
+/// is no honest skip, and the vanilla read side fails the packet
+/// exactly the same way on a serializer it cannot decode.
 pub fn parse_set_entity_data(payload: &[u8]) -> Result<EntityDataSet> {
     let mut c: &[u8] = payload;
     let id = read_varint(&mut c)?;
@@ -1534,6 +1547,12 @@ pub fn parse_set_entity_data(payload: &[u8]) -> Result<EntityDataSet> {
             entity_data_serializers::LONG => EntityDataEntry::Long(read_varlong(&mut c)?),
             entity_data_serializers::FLOAT => EntityDataEntry::Float(read_f32(&mut c)?),
             entity_data_serializers::STRING => EntityDataEntry::String(read_string(&mut c)?),
+            entity_data_serializers::COMPONENT => EntityDataEntry::Component(read_bare_nbt(&mut c)?),
+            entity_data_serializers::OPTIONAL_COMPONENT => {
+                let present = read_u8(&mut c)? != 0;
+                let tag = if present { Some(read_bare_nbt(&mut c)?) } else { None };
+                EntityDataEntry::OptionalComponent(tag)
+            }
             entity_data_serializers::BOOLEAN => EntityDataEntry::Bool(read_u8(&mut c)? != 0),
             entity_data_serializers::ROTATIONS => EntityDataEntry::Rotations([
                 read_f32(&mut c)?,
@@ -3227,7 +3246,7 @@ mod tests {
         assert!(parse_rotate_head(&p2).is_err());
     }
 
-    /// Set Entity Data: one packet, ALL FOURTEEN supported
+    /// Set Entity Data: one packet, ALL SIXTEEN supported
     /// serializers, distinctive values — the entry list round-trips
     /// bit-exact and the REGISTRATION-ORDER table is pinned (the
     /// wiki-era table would have decoded VILLAGER_DATA at 19 where the
@@ -3245,33 +3264,46 @@ mod tests {
         let mut string_value = Vec::new();
         write_string(&mut string_value, "hi");
         entries.extend(test_support::entity_data_entry(4, s::STRING, &string_value));
-        entries.extend(test_support::entity_data_entry(5, s::BOOLEAN, &[1]));
+        // the chat component: ONE bare NBT tag (a plain-text string)
+        let mut tag = Vec::new();
+        crate::nbt::write_bare_nbt(&Nbt::String("hi".into()), &mut tag).unwrap();
+        entries.extend(test_support::entity_data_entry(5, s::COMPONENT, &tag));
+        // the optional component, both shapes (flag false = one byte)
+        entries.extend(test_support::entity_data_entry(6, s::OPTIONAL_COMPONENT, &[0]));
+        let mut some_tag = vec![1u8];
+        crate::nbt::write_bare_nbt(
+            &Nbt::Compound(vec![("text".into(), Nbt::String("A".into()))]),
+            &mut some_tag,
+        )
+        .unwrap();
+        entries.extend(test_support::entity_data_entry(7, s::OPTIONAL_COMPONENT, &some_tag));
+        entries.extend(test_support::entity_data_entry(8, s::BOOLEAN, &[1]));
         let mut rots = Vec::new();
         for v in [1.0f32, 2.0, 3.5] {
             rots.extend_from_slice(&v.to_be_bytes());
         }
-        entries.extend(test_support::entity_data_entry(6, s::ROTATIONS, &rots));
+        entries.extend(test_support::entity_data_entry(9, s::ROTATIONS, &rots));
         entries.extend(test_support::entity_data_entry(
-            7,
+            10,
             s::BLOCK_POS,
             &test_support::encode_block_pos(16, -64, -16).to_be_bytes(),
         ));
         // the optional lane, both shapes
-        entries.extend(test_support::entity_data_entry(8, s::OPTIONAL_BLOCK_POS, &[0]));
+        entries.extend(test_support::entity_data_entry(11, s::OPTIONAL_BLOCK_POS, &[0]));
         let mut some_pos = vec![1u8];
         some_pos.extend_from_slice(&test_support::encode_block_pos(-1, 320, -2).to_be_bytes());
-        entries.extend(test_support::entity_data_entry(9, s::OPTIONAL_BLOCK_POS, &some_pos));
-        entries.extend(test_support::entity_data_entry(10, s::DIRECTION, &test_support::entity_data_varint(5)));
-        entries.extend(test_support::entity_data_entry(11, s::BLOCK_STATE, &test_support::entity_data_varint(12345)));
-        entries.extend(test_support::entity_data_entry(12, s::OPTIONAL_BLOCK_STATE, &[0]));
+        entries.extend(test_support::entity_data_entry(12, s::OPTIONAL_BLOCK_POS, &some_pos));
+        entries.extend(test_support::entity_data_entry(13, s::DIRECTION, &test_support::entity_data_varint(5)));
+        entries.extend(test_support::entity_data_entry(14, s::BLOCK_STATE, &test_support::entity_data_varint(12345)));
+        entries.extend(test_support::entity_data_entry(15, s::OPTIONAL_BLOCK_STATE, &[0]));
         let mut some_state = vec![1u8];
         some_state.extend(test_support::entity_data_varint(42));
-        entries.extend(test_support::entity_data_entry(13, s::OPTIONAL_BLOCK_STATE, &some_state));
+        entries.extend(test_support::entity_data_entry(16, s::OPTIONAL_BLOCK_STATE, &some_state));
         // the OptionalInt's BIAS-BY-ONE arithmetic: wire 0 = empty,
         // wire 2 = Some(1)
-        entries.extend(test_support::entity_data_entry(14, s::OPTIONAL_UNSIGNED_INT, &test_support::entity_data_varint(0)));
-        entries.extend(test_support::entity_data_entry(15, s::OPTIONAL_UNSIGNED_INT, &test_support::entity_data_varint(2)));
-        entries.extend(test_support::entity_data_entry(16, s::POSE, &test_support::entity_data_varint(6)));
+        entries.extend(test_support::entity_data_entry(17, s::OPTIONAL_UNSIGNED_INT, &test_support::entity_data_varint(0)));
+        entries.extend(test_support::entity_data_entry(18, s::OPTIONAL_UNSIGNED_INT, &test_support::entity_data_varint(2)));
+        entries.extend(test_support::entity_data_entry(19, s::POSE, &test_support::entity_data_varint(6)));
 
         let p = test_support::set_entity_data_packet(77, &entries);
         let d = parse_set_entity_data(&p).unwrap();
@@ -3284,18 +3316,21 @@ mod tests {
                 SetEntityDataEntry { index: 2, serializer: s::LONG, value: EntityDataEntry::Long(42) },
                 SetEntityDataEntry { index: 3, serializer: s::FLOAT, value: EntityDataEntry::Float(1.5) },
                 SetEntityDataEntry { index: 4, serializer: s::STRING, value: EntityDataEntry::String("hi".into()) },
-                SetEntityDataEntry { index: 5, serializer: s::BOOLEAN, value: EntityDataEntry::Bool(true) },
-                SetEntityDataEntry { index: 6, serializer: s::ROTATIONS, value: EntityDataEntry::Rotations([1.0, 2.0, 3.5]) },
-                SetEntityDataEntry { index: 7, serializer: s::BLOCK_POS, value: EntityDataEntry::BlockPos([16, -64, -16]) },
-                SetEntityDataEntry { index: 8, serializer: s::OPTIONAL_BLOCK_POS, value: EntityDataEntry::OptionalBlockPos(None) },
-                SetEntityDataEntry { index: 9, serializer: s::OPTIONAL_BLOCK_POS, value: EntityDataEntry::OptionalBlockPos(Some([-1, 320, -2])) },
-                SetEntityDataEntry { index: 10, serializer: s::DIRECTION, value: EntityDataEntry::Direction(5) },
-                SetEntityDataEntry { index: 11, serializer: s::BLOCK_STATE, value: EntityDataEntry::BlockState(12345) },
-                SetEntityDataEntry { index: 12, serializer: s::OPTIONAL_BLOCK_STATE, value: EntityDataEntry::OptionalBlockState(None) },
-                SetEntityDataEntry { index: 13, serializer: s::OPTIONAL_BLOCK_STATE, value: EntityDataEntry::OptionalBlockState(Some(42)) },
-                SetEntityDataEntry { index: 14, serializer: s::OPTIONAL_UNSIGNED_INT, value: EntityDataEntry::OptionalUnsignedInt(None) },
-                SetEntityDataEntry { index: 15, serializer: s::OPTIONAL_UNSIGNED_INT, value: EntityDataEntry::OptionalUnsignedInt(Some(1)) },
-                SetEntityDataEntry { index: 16, serializer: s::POSE, value: EntityDataEntry::Pose(6) },
+                SetEntityDataEntry { index: 5, serializer: s::COMPONENT, value: EntityDataEntry::Component(Nbt::String("hi".into())) },
+                SetEntityDataEntry { index: 6, serializer: s::OPTIONAL_COMPONENT, value: EntityDataEntry::OptionalComponent(None) },
+                SetEntityDataEntry { index: 7, serializer: s::OPTIONAL_COMPONENT, value: EntityDataEntry::OptionalComponent(Some(Nbt::Compound(vec![("text".into(), Nbt::String("A".into()))]))) },
+                SetEntityDataEntry { index: 8, serializer: s::BOOLEAN, value: EntityDataEntry::Bool(true) },
+                SetEntityDataEntry { index: 9, serializer: s::ROTATIONS, value: EntityDataEntry::Rotations([1.0, 2.0, 3.5]) },
+                SetEntityDataEntry { index: 10, serializer: s::BLOCK_POS, value: EntityDataEntry::BlockPos([16, -64, -16]) },
+                SetEntityDataEntry { index: 11, serializer: s::OPTIONAL_BLOCK_POS, value: EntityDataEntry::OptionalBlockPos(None) },
+                SetEntityDataEntry { index: 12, serializer: s::OPTIONAL_BLOCK_POS, value: EntityDataEntry::OptionalBlockPos(Some([-1, 320, -2])) },
+                SetEntityDataEntry { index: 13, serializer: s::DIRECTION, value: EntityDataEntry::Direction(5) },
+                SetEntityDataEntry { index: 14, serializer: s::BLOCK_STATE, value: EntityDataEntry::BlockState(12345) },
+                SetEntityDataEntry { index: 15, serializer: s::OPTIONAL_BLOCK_STATE, value: EntityDataEntry::OptionalBlockState(None) },
+                SetEntityDataEntry { index: 16, serializer: s::OPTIONAL_BLOCK_STATE, value: EntityDataEntry::OptionalBlockState(Some(42)) },
+                SetEntityDataEntry { index: 17, serializer: s::OPTIONAL_UNSIGNED_INT, value: EntityDataEntry::OptionalUnsignedInt(None) },
+                SetEntityDataEntry { index: 18, serializer: s::OPTIONAL_UNSIGNED_INT, value: EntityDataEntry::OptionalUnsignedInt(Some(1)) },
+                SetEntityDataEntry { index: 19, serializer: s::POSE, value: EntityDataEntry::Pose(6) },
             ]
         );
     }
@@ -3322,18 +3357,19 @@ mod tests {
         assert!(parse_set_entity_data(&truncated).is_err());
     }
 
-    /// Set Entity Data: the object-graph serializers (known to the
-    /// registry but outside this client's primitive decode set) and
-    /// the ids the registry itself does not know ALL refuse the
-    /// packet — the vanilla read side fails the packet exactly the
-    /// same way (an unknown serializer id throws in
-    /// `getSerializer`). The VILLAGER_DATA pin doubles as the
-    /// registration-order proof: 18 is NOT the optional-global-pos
-    /// lane the wiki-era table claims.
+    /// Set Entity Data: the object-graph serializers that REMAIN
+    /// outside the decode set (known to the registry but undecodable
+    /// here) and the ids the registry itself does not know ALL refuse
+    /// the packet — the vanilla read side fails the packet exactly the
+    /// same way (an unknown serializer id throws in `getSerializer`).
+    /// The VILLAGER_DATA pin doubles as the registration-order proof:
+    /// 18 is NOT the optional-global-pos lane the wiki-era table
+    /// claims. COMPONENT left this list the round the bare-NBT reader
+    /// landed.
     #[test]
     fn the_entity_data_object_graph_and_unknown_serializers_refuse() {
         use entity_data_serializers as s;
-        for serializer in [s::COMPONENT, s::ITEM_STACK, s::VILLAGER_DATA, s::PARTICLE, 200] {
+        for serializer in [s::ITEM_STACK, s::VILLAGER_DATA, s::PARTICLE, 200] {
             let entries = test_support::entity_data_entry(0, serializer, &[0x00]);
             let p = test_support::set_entity_data_packet(3, &entries);
             assert!(
@@ -3347,6 +3383,55 @@ mod tests {
         let p = test_support::set_entity_data_packet(3, &entries);
         let d = parse_set_entity_data(&p).unwrap();
         assert_eq!(d.entries[0].value, EntityDataEntry::OptionalUnsignedInt(Some(0)));
+    }
+
+    /// Set Entity Data: the COMPONENT wire is a BARE NBT tag — the
+    /// plain-text name arrives as a TAG_String, the styled name as a
+    /// TAG_Compound, and both decode verbatim into the entry (the
+    /// rich-text schema stays a rendering-time concern; the store is
+    /// the tag). The CustomName surface's own transport.
+    #[test]
+    fn the_component_wire_is_a_bare_nbt_tag() {
+        use entity_data_serializers as s;
+        // plain text: 0x08 + u16 len + bytes
+        let mut plain = Vec::new();
+        crate::nbt::write_bare_nbt(&Nbt::String("Duke".into()), &mut plain).unwrap();
+        let p = test_support::set_entity_data_packet(
+            5,
+            &test_support::entity_data_entry(2, s::COMPONENT, &plain),
+        );
+        let d = parse_set_entity_data(&p).unwrap();
+        assert_eq!(
+            d.entries[0].value,
+            EntityDataEntry::Component(Nbt::String("Duke".into()))
+        );
+        // the styled form: a compound with text/color/bold — read back
+        // positionally through the retained tree
+        let mut styled = Vec::new();
+        crate::nbt::write_bare_nbt(
+            &Nbt::Compound(vec![
+                ("text".into(), Nbt::String("A".into())),
+                ("color".into(), Nbt::String("red".into())),
+                ("bold".into(), Nbt::Byte(1)),
+            ]),
+            &mut styled,
+        )
+        .unwrap();
+        let mut styled_wire = vec![1u8];
+        styled_wire.extend_from_slice(&styled);
+        let p = test_support::set_entity_data_packet(
+            5,
+            &test_support::entity_data_entry(2, s::OPTIONAL_COMPONENT, &styled_wire),
+        );
+        let d = parse_set_entity_data(&p).unwrap();
+        match &d.entries[0].value {
+            EntityDataEntry::OptionalComponent(Some(Nbt::Compound(entries))) => {
+                assert_eq!(entries[0].0, "text");
+                assert_eq!(entries[0].1, Nbt::String("A".into()));
+                assert_eq!(entries[2].1, Nbt::Byte(1), "the bold flag survives");
+            }
+            other => panic!("expected the styled component, got {other:?}"),
+        }
     }
 
     /// Set Entity Data: the generated id and the re-exported constant

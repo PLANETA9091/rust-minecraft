@@ -59,6 +59,18 @@ pub fn read_network_nbt(r: &mut &[u8]) -> io::Result<Nbt> {
     read_compound_contents(r, 0)
 }
 
+/// Read one BARE network NBT tag — the id byte + payload, no root
+/// framing. The entity-metadata components' shape: a chat component
+/// (`ComponentSerialization.TRUSTED_STREAM_CODEC` =
+/// `fromCodecWithRegistriesTrusted` = `tagCodec` + the NBT-ops adapter)
+/// arrives as a bare TAG_String (plain text), TAG_Compound (the
+/// structured form), TAG_List (siblings) or a scalar literal — never
+/// as the anonymous-root compound the chunk packets frame.
+pub fn read_bare_nbt(r: &mut &[u8]) -> io::Result<Nbt> {
+    let tag = read_u8(r)?;
+    read_payload(r, tag, 0)
+}
+
 impl Nbt {
     /// Compound lookup by name (None for non-compounds and absent keys).
     pub fn get(&self, key: &str) -> Option<&Nbt> {
@@ -121,6 +133,14 @@ pub fn write_network_nbt(value: &Nbt, out: &mut Vec<u8>) -> io::Result<()> {
     // nested values — the root must not get a second one)
     out.push(0x0A);
     write_compound_contents(entries, out, 0)
+}
+
+/// Write one BARE network NBT tag (the bare reader's mirror — the
+/// entity-metadata test builders and future clientbound component
+/// surfaces emit through it). `write_payload` emits the id byte +
+/// payload itself.
+pub fn write_bare_nbt(value: &Nbt, out: &mut Vec<u8>) -> io::Result<()> {
+    write_payload(value, out, 0)
 }
 
 // ---------------------------------------------------------------------------
@@ -415,6 +435,38 @@ mod tests {
         let back = read_network_nbt(&mut cursor).expect("read");
         assert!(cursor.is_empty(), "the reader consumes exactly the value");
         assert_eq!(back, tree, "bit-faithful roundtrip (non-empty lists)");
+    }
+
+    /// The BARE-tag pair: a component's shapes — a TAG_String, a
+    /// TAG_Compound, a TAG_List root — round-trip through
+    /// `write_bare_nbt`/`read_bare_nbt` with no root framing. The
+    /// closing pin is the TRAP the two entry points encode: a bare
+    /// reader handed the root-compound shape does NOT error — 0x0A is
+    /// a legal compound tag id and the named contents read as garbage
+    /// entries — so the chunk path's named roots and the metadata's
+    /// bare components MUST go through their own readers.
+    #[test]
+    fn bare_tags_roundtrip_without_root_framing() {
+        for tree in [
+            Nbt::String("Duke".into()),
+            Nbt::Compound(vec![
+                ("text".into(), Nbt::String("A".into())),
+                ("bold".into(), Nbt::Byte(1)),
+            ]),
+            Nbt::List(vec![Nbt::String("a".into()), Nbt::String("b".into())]),
+            Nbt::Int(-42),
+        ] {
+            let mut buf = Vec::new();
+            write_bare_nbt(&tree, &mut buf).expect("write");
+            let mut cursor: &[u8] = &buf;
+            let back = read_bare_nbt(&mut cursor).expect("read");
+            assert!(cursor.is_empty(), "the bare reader consumes exactly the tag");
+            assert_eq!(back, tree);
+        }
+        // the trap, pinned: 0x0A through the bare reader is a legal
+        // (empty) compound — no refusal, just the WRONG entry point
+        let mut cursor: &[u8] = &[0x0A, 0x00];
+        assert_eq!(read_bare_nbt(&mut cursor).unwrap(), Nbt::Compound(vec![]));
     }
 
     #[test]
