@@ -308,6 +308,46 @@ hand-drawn:
   Zero render-path pixels: the tint CONSUMERS come next; the ten
   goldens are bit-identical by construction (the wire fixture carries
   no registry knowledge).
+  The **leaf litter renders per-state — state-property extraction (v0.3.50 —
+  the fourteenth audit retires the documented follow-up)**: v0.3.49's
+  closing note ("per-segment coverage and per-facing rotation need
+  state-property extraction") is done. The FOURTEENTH audit re-read the
+  real jar data directly (the saved dumper output `block_states.txt`,
+  plus the blockstate JSON and all four template models re-extracted
+  from the official client.jar) and pinned the exact shape: the
+  multipart's model sets are 1->{m1}, 2->{m2}, 3->{m2,m3}, 4->{m4}
+  (each `when` matches `segment_amount` literally — "2|3" applies
+  model_2, "3" adds model_3, "4" swaps in model_4, whose element is the
+  FULL cover), the y-rotation table is north=0 / east=90 / south=180 /
+  west=270, and the template down-face uvs (`[x0, z1, x1, z0]`) mirror
+  v WITHIN the rect — `v = (z0 + z1 - z)/16`, which collapses exactly
+  to the old `face_uv` `1 - z` at the full rect. The generator keeps
+  the props now: `parse_dump` carries the dumper's third field verbatim
+  and `emit_block_ids` APPENDS the per-state property-assignment table
+  (`STATE_PROPS`, 32062 runs tiling [0, 32366) — adjacent identical
+  props collapse, no-property runs merge across blocks) plus the
+  `props_of` binary-search accessor, with the generated name table
+  above it byte-identical (the v0.3.49 file verified as a byte-exact
+  prefix), and a new `mc2rs-gen block-ids` subcommand re-emits the
+  table OFFLINE from a saved dump (no java, no network). The client
+  grew the per-cell STATE-VARIANT byte: `World.variants` (`None` for
+  the procedural scenes — bit for bit the previous mesh),
+  `materialize` decodes leaf_litter's facing x segment_amount through
+  `props_of` during the SAME walk (packing
+  `1 + facing + (segment - 1) * 4`, the y-rotation order), and the
+  mesher's flat path generalizes: per-rect up+down quads with the
+  template uv arithmetic and the blockstate y-rotation about the cell
+  center, uv glued to the corners (the element turns, the texture
+  turns with it — vanilla). Segment 4 IS the full rect at y-rot 0: the
+  no-opinion look and the shaped look emit identical bytes
+  (test-proven). Tests +6 (workspace 237 → 243 passed / 0 failed /
+  3 ignored): the real-id decode table, the materialize variant fill
+  (through a REAL 15-bit direct-palette section — the wire encoding
+  for big palettes), the NW quarter, the segment 2/3 rect stacking,
+  the east rotation with glued uv, and the segment-4 bit-identity.
+  Ten goldens bit-identical by construction (no golden scene places
+  leaf litter and no procedural scene carries variants), verified
+  TWICE on the release builds.
   The **leaf litter renders — the first non-cube mesh path (v0.3.49 —
   the thirteenth audit completes the dry fold)**: the DRY_SLOT carried
   since v0.3.48 finally has its consumer. The THIRTEENTH audit (official
