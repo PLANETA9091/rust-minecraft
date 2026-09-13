@@ -691,6 +691,8 @@ fn write_pack_claim(workspace_root: &Path, jar_bytes: &[u8]) -> Result<std::path
     Ok(path)
 }
 
+/// Resolve + write crates/mc-registry/src/generated/worldgen.rs (biomes +
+/// the built-in dimension_type/timeline registry tables) from a local jar.
 fn write_worldgen(workspace_root: &Path, jar_bytes: &[u8]) -> Result<std::path::PathBuf> {
     let mut zip =
         zip::ZipArchive::new(std::io::Cursor::new(jar_bytes)).context("open client jar as zip")?;

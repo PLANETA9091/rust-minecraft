@@ -355,6 +355,31 @@ pub struct KnownPack {
     pub version: String,
 }
 
+/// The pack-version claim — the ONE record the vanilla client sends when
+/// the server offers Select Known Packs. The javap-proven 26.2 chain
+/// (`tools/client.jar`):
+/// - `BuiltInPackSource.<clinit>`: `CORE_PACK_INFO = KnownPack.vanilla("core")`
+/// - `KnownPack.vanilla(String id)`:
+///   `new KnownPack("minecraft", id, SharedConstants.getCurrentVersion().id())`
+/// — so the record is `("minecraft", "core", WorldVersion.id())` and the
+/// version string is the jar's own version.json `id` (generated:
+/// [`generated::pack_claim::VERSION_ID`]), NOT the pack-format number.
+///
+/// The safety valve is the server's own comparison: a server whose pack
+/// version differs from ours does not recognize the claim and streams its
+/// registries anyway (the pre-claim behavior); a server that DOES skip the
+/// sync agrees with us by construction — the built-in tables' wire ids are
+/// the runtime-dumped vanilla registration order (v0.3.53's evidence) and
+/// the built-in dimension layouts answer the world-height lookups
+/// (v0.3.52's skip-sync fallback).
+pub fn vanilla_known_packs() -> Vec<KnownPack> {
+    vec![KnownPack {
+        namespace: "minecraft".to_string(),
+        id: "core".to_string(),
+        version: crate::generated::pack_claim::VERSION_ID.to_string(),
+    }]
+}
+
 /// The brand the vanilla server reports through its player list and logs
 /// (the vanilla client sends "vanilla", modded clients their loader name).
 pub const BRAND: &str = "mc2rs";
@@ -480,10 +505,7 @@ pub fn encode_config_ack() -> Vec<u8> {
 
 /// Select Known Packs reply (serverbound config 0x07 — generated): the
 /// javap-proven 26.2 shape — VarInt count (`ByteBufCodecs.list(64)`, the
-/// vanilla server's own cap) + per pack THREE UTF strings. The honest
-/// client answer is `&[]`: we claim nothing, so the server streams its
-/// registries instead of assuming we have them (claiming an unverified
-/// pack version would make a real server skip traffic we never got).
+/// vanilla server's own cap) + per pack THREE UTF strings.
 pub fn encode_select_known_packs_reply(known: &[KnownPack]) -> Result<Vec<u8>> {
     anyhow::ensure!(
         known.len() <= 64,
@@ -869,10 +891,11 @@ pub fn parse_cookie_request(payload: &[u8]) -> Result<String> {
 /// Answer the server's configuration probes until Finish Configuration is
 /// acknowledged. Registry Data is decoded for the dimension-type vertical
 /// layout (everything else in it — other registries — is skipped); Select
-/// Known Packs gets the honest empty reply and Cookie Requests the
-/// no-cookie one (both BLOCK a real vanilla server otherwise);
-/// feature/resource-pack traffic is skipped wholesale; a config
-/// Disconnect surfaces as `PlayOutcome::Disconnected`.
+/// Known Packs gets the pack-version claim (the vanilla-shaped one-record
+/// reply — a server that recognizes it skips the registry sync, one that
+/// does not streams anyway) and Cookie Requests the no-cookie one (the
+/// server BLOCKS otherwise); feature/resource-pack traffic is skipped
+/// wholesale; a config Disconnect surfaces as `PlayOutcome::Disconnected`.
 fn run_configuration<S: Read + Write>(
     conn: &mut PacketConn<S>,
     uuid: [u8; 16],
@@ -902,11 +925,15 @@ fn run_configuration<S: Read + Write>(
                 registry.merge(parse_update_tags(&pkt)?);
             }
             clientbound::SELECT_KNOWN_PACKS => {
-                // validated, then answered with what we truly know:
-                // nothing beyond our own built-in (an empty list keeps
-                // the server streaming its registries — the safe path)
+                // validated, then answered with the pack-version claim:
+                // the vanilla-shaped one-record reply ("minecraft",
+                // "core", the jar's own version.json id — see
+                // vanilla_known_packs). A server that recognizes the
+                // claim skips the registry sync (our built-in tables
+                // carry the wire ids + layouts); one that does not
+                // streams its registries as before.
                 parse_select_known_packs(&pkt)?;
-                conn.send_packet(&encode_select_known_packs_reply(&[])?)?;
+                conn.send_packet(&encode_select_known_packs_reply(&vanilla_known_packs())?)?;
             }
             clientbound::COOKIE_REQUEST => {
                 let key = parse_cookie_request(&pkt)?;
@@ -1411,8 +1438,19 @@ mod tests {
             let resp = srv.read_packet().expect("select known packs reply");
             let mut c: &[u8] = &resp;
             assert_eq!(read_varint(&mut c).unwrap(), serverbound::SELECT_KNOWN_PACKS);
-            assert_eq!(read_varint(&mut c).unwrap(), 0, "the honest empty claim");
-            assert!(c.is_empty(), "nothing after the empty list");
+            // the pack-version claim: the client echoes the offered pack
+            // (the mock offers exactly what the vanilla client claims —
+            // minecraft:core at the jar's own version.json id), which on
+            // a real vanilla server is the skip-the-registry-sync trigger
+            assert_eq!(read_varint(&mut c).unwrap(), 1, "the one-record claim");
+            assert_eq!(read_string(&mut c).unwrap(), "minecraft", "the vanilla namespace");
+            assert_eq!(read_string(&mut c).unwrap(), "core", "the vanilla pack id");
+            assert_eq!(
+                read_string(&mut c).unwrap(),
+                "26.2",
+                "the claimed version is the jar's own WorldVersion id"
+            );
+            assert!(c.is_empty(), "nothing after the one record");
             let resp = srv.read_packet().expect("cookie response");
             let mut c: &[u8] = &resp;
             assert_eq!(read_varint(&mut c).unwrap(), serverbound::COOKIE_RESPONSE);
@@ -1913,7 +1951,9 @@ mod tests {
         let mut trailing = p.clone();
         trailing.push(0xFF);
         assert!(parse_select_known_packs(&trailing).is_err());
-        // the honest serverbound reply: EMPTY (claims nothing) — id 7 + 0
+        // the encoder primitive also encodes the empty list (id 7 + 0) —
+        // the shape a server whose pack version we do not match still gets
+        // nothing about (the claim is ONE record, not a blanket always)
         assert_eq!(encode_select_known_packs_reply(&[]).unwrap(), vec![0x07, 0x00]);
         // a non-empty reply is the same three-string shape
         let reply = encode_select_known_packs_reply(&packs).unwrap();
@@ -1962,6 +2002,62 @@ mod tests {
         let mut big = vec![0u8; 5121];
         big[5120] = 1;
         assert!(encode_cookie_response("minecraft:join_cookie", Some(&big)).is_err());
+    }
+
+    #[test]
+    fn the_pack_version_claim_is_the_vanilla_one_record_reply() {
+        // the javap-proven chain: BuiltInPackSource.<clinit> binds
+        // CORE_PACK_INFO = KnownPack.vanilla("core"), and vanilla(id) is
+        // new KnownPack("minecraft", id, WorldVersion.id()) — the version
+        // string is the jar's version.json id, generated into
+        // pack_claim.rs, NOT the pack-format number
+        let claim = vanilla_known_packs();
+        assert_eq!(claim.len(), 1, "the vanilla client claims exactly ONE pack");
+        let k = &claim[0];
+        assert_eq!(k.namespace, "minecraft", "the vanilla namespace");
+        assert_eq!(k.id, "core", "the vanilla core pack id");
+        assert!(
+            !k.version.is_empty(),
+            "a non-empty reply IS the claim — the empty list could never trigger the skip"
+        );
+        assert_eq!(
+            k.version,
+            crate::generated::pack_claim::VERSION_ID,
+            "the claimed version IS the generated WorldVersion id"
+        );
+        assert_eq!(
+            k.version,
+            crate::generated::pack_claim::VERSION_NAME,
+            "26.2's id and name coincide (the generated surface pins both)"
+        );
+        // the generated manifest surface itself: the values the real jar's
+        // version.json states (regenerating must reproduce these)
+        assert_eq!(crate::generated::pack_claim::WORLD_VERSION, 4903);
+        assert_eq!(crate::generated::pack_claim::PROTOCOL_VERSION, 776);
+        assert_eq!(
+            (
+                crate::generated::pack_claim::PACK_VERSION_RESOURCE_MAJOR,
+                crate::generated::pack_claim::PACK_VERSION_RESOURCE_MINOR,
+                crate::generated::pack_claim::PACK_VERSION_DATA_MAJOR,
+                crate::generated::pack_claim::PACK_VERSION_DATA_MINOR
+            ),
+            (88, 0, 107, 1),
+            "the four-field 26.2 pack_version schema — NOT the claim string"
+        );
+        // the claim encodes to the same wire shape the e2e mock asserts
+        let reply = encode_select_known_packs_reply(&claim).unwrap();
+        assert_eq!(reply[0], serverbound::SELECT_KNOWN_PACKS as u8);
+        assert_eq!(reply[1], 1, "one record");
+        let mut echo = Vec::new();
+        write_varint(&mut echo, serverbound::SELECT_KNOWN_PACKS);
+        write_varint(&mut echo, 1);
+        write_string(&mut echo, "minecraft");
+        write_string(&mut echo, "core");
+        write_string(&mut echo, "26.2");
+        assert_eq!(
+            reply, echo,
+            "the claim replies with EXACTLY the pack a real vanilla server offers"
+        );
     }
 
     #[test]
