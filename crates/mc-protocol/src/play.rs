@@ -97,7 +97,8 @@ pub mod clientbound {
         CB_PING as PING, CB_PLAYER_POSITION as SYNCHRONIZE_POSITION, CB_ROTATE_HEAD as ROTATE_HEAD,
         CB_REMOVE_ENTITIES as REMOVE_ENTITIES, CB_RESPAWN as RESPAWN,
         CB_SECTION_BLOCKS_UPDATE as SECTION_BLOCKS_UPDATE,
-        CB_SET_CHUNK_CACHE_CENTER as CENTER_CHUNK, CB_SET_TIME as SET_TIME,
+        CB_SET_CHUNK_CACHE_CENTER as CENTER_CHUNK, CB_SET_ENTITY_DATA as SET_ENTITY_DATA,
+        CB_SET_TIME as SET_TIME,
     };
 }
 
@@ -1349,6 +1350,263 @@ pub fn parse_rotate_head(payload: &[u8]) -> Result<EntityHeadRot> {
     Ok(EntityHeadRot {
         id: entity_id,
         y_head_rot,
+    })
+}
+
+// ---------------------------------------------------------------------------
+// entity metadata (Set Entity Data)
+// ---------------------------------------------------------------------------
+
+/// The Set Entity Data serializer table. The wire ids are the 26.2
+/// `EntityDataSerializers.<clinit>` REGISTRATION order — each
+/// `registerSerializer` call appends into a
+/// `CrudeIncrementalIntIdentityHashBiMap`, so the id IS the call
+/// sequence — and that sequence is NOT the class's field declaration
+/// order: VILLAGER_DATA (18) and OPTIONAL_GLOBAL_POS (33) trade places
+/// against the wiki-era table, and the animal variant/sound-variant
+/// Holders fill 21-32 in clinit sequence. The wiki-era guess would
+/// have shipped VILLAGER_DATA at 19 and OPTIONAL_GLOBAL_POS at 18 —
+/// both wrong (the tests pin the refusal at the real ids).
+pub mod entity_data_serializers {
+    /// `ByteBufCodecs.BYTE` — one signed byte.
+    pub const BYTE: i32 = 0;
+    /// `ByteBufCodecs.VAR_INT`.
+    pub const INT: i32 = 1;
+    /// `ByteBufCodecs.VAR_LONG`.
+    pub const LONG: i32 = 2;
+    /// `ByteBufCodecs.FLOAT` — a big-endian f32 (the sync floats' own
+    /// codec).
+    pub const FLOAT: i32 = 3;
+    /// `ByteBufCodecs.STRING_UTF8` — `stringUtf8(32767)`: a VarInt
+    /// length + UTF-8, capped at 32767 (not the wiki-era 65536).
+    pub const STRING: i32 = 4;
+    /// `ComponentSerialization.TRUSTED_STREAM_CODEC` — the object
+    /// graph this client refuses for now (no honest skip: a value's
+    /// byte length is only knowable through its codec).
+    pub const COMPONENT: i32 = 5;
+    /// The optional companion of COMPONENT.
+    pub const OPTIONAL_COMPONENT: i32 = 6;
+    /// `ItemStack.OPTIONAL_STREAM_CODEC` — the object-graph lane.
+    pub const ITEM_STACK: i32 = 7;
+    /// `ByteBufCodecs.BOOL` — one byte.
+    pub const BOOLEAN: i32 = 8;
+    /// `Rotations.STREAM_CODEC` — three big-endian f32s.
+    pub const ROTATIONS: i32 = 9;
+    /// `BlockPos.STREAM_CODEC` — the packed position long (the block
+    /// update's own 26/12/26-bit layout).
+    pub const BLOCK_POS: i32 = 10;
+    /// `BlockPos.STREAM_CODEC` through `ByteBufCodecs.optional` — a
+    /// boolean flag, then the long only if present.
+    pub const OPTIONAL_BLOCK_POS: i32 = 11;
+    /// `Direction.STREAM_CODEC` — `ByteBufCodecs.idMapper(BY_ID, ..)`:
+    /// a VarInt registry id (0 = down .. 5 = east).
+    pub const DIRECTION: i32 = 12;
+    /// `EntityReference.streamCodec()` optional — the object-graph
+    /// lane.
+    pub const OPTIONAL_LIVING_ENTITY_REFERENCE: i32 = 13;
+    /// `ByteBufCodecs.idMapper(BLOCK_STATE_REGISTRY)` — a VarInt in
+    /// the chunk decoder's own state-id space.
+    pub const BLOCK_STATE: i32 = 14;
+    /// The optional companion of BLOCK_STATE — a flag, then the
+    /// VarInt state id.
+    pub const OPTIONAL_BLOCK_STATE: i32 = 15;
+    /// `ParticleTypes.STREAM_CODEC` — the object-graph lane.
+    pub const PARTICLE: i32 = 16;
+    /// The list operation over PARTICLE.
+    pub const PARTICLES: i32 = 17;
+    /// `VillagerData.STREAM_CODEC` — REGISTRATION id 18, NOT the
+    /// wiki-era 19 (the clinit order is the wire truth).
+    pub const VILLAGER_DATA: i32 = 18;
+    /// The hand-rolled `OptionalInt` codec (the anonymous
+    /// `EntityDataSerializers$3`): a VarInt where 0 = empty and a
+    /// present value arrives BIAS-BY-ONE — wire n means n - 1 (the
+    /// decode is `OptionalInt.of(n - 1)`, the encode `value + 1`).
+    pub const OPTIONAL_UNSIGNED_INT: i32 = 19;
+    /// `Pose.STREAM_CODEC` — `idMapper` over the enum's own id field:
+    /// a VarInt.
+    pub const POSE: i32 = 20;
+    // 21-32: the variant Holders (CAT_VARIANT .. PIG_SOUND_VARIANT,
+    // ZOMBIE_NAUTILUS_VARIANT interleaved), 33: OPTIONAL_GLOBAL_POS
+    // (the wiki-era 18), 34: PAINTING_VARIANT, 35-38: the enum states
+    // (SNIFFER/ARMADILLO/COPPER_GOLEM/WEATHERING_COPPER), 39: VECTOR3,
+    // 40: QUATERNION, 41: RESOLVABLE_PROFILE, 42: HUMANOID_ARM.
+}
+
+/// One decoded metadata VALUE — the wire shapes of the serializers
+/// this client decodes (the primitive registry: ids 0-4, 8-12, 14-15,
+/// 19-20 as [`entity_data_serializers`] declares). The four i32
+/// flavors are DISTINCT variants because the serializer id is part of
+/// the state (vanilla's `assignValues` matches accessor and value on
+/// it), not a type system accident.
+#[derive(Debug, Clone, PartialEq)]
+pub enum EntityDataEntry {
+    /// Serializer 0: one signed byte.
+    Byte(i8),
+    /// Serializer 1: a VarInt.
+    Int(i32),
+    /// Serializer 2: a VarLong.
+    Long(i64),
+    /// Serializer 3: a big-endian f32.
+    Float(f32),
+    /// Serializer 4: the VarInt-length UTF-8 string.
+    String(String),
+    /// Serializer 8: one byte, non-zero = true.
+    Bool(bool),
+    /// Serializer 9: three big-endian f32s (x, y, z).
+    Rotations([f32; 3]),
+    /// Serializer 10: the packed position long, decoded to world
+    /// x/y/z (the two-shift arithmetic sign-extends the negative
+    /// half-plane).
+    BlockPos([i32; 3]),
+    /// Serializer 11: the boolean flag, then the packed long only if
+    /// present.
+    OptionalBlockPos(Option<[i32; 3]>),
+    /// Serializer 12: the direction's registry id (0 = down .. 5 =
+    /// east).
+    Direction(i32),
+    /// Serializer 14: the block state id (the chunk decoder's id
+    /// space).
+    BlockState(i32),
+    /// Serializer 15: the flag, then the state id only if present.
+    OptionalBlockState(Option<i32>),
+    /// Serializer 19: the OptionalInt — wire 0 = None, wire n = Some(n - 1).
+    OptionalUnsignedInt(Option<u32>),
+    /// Serializer 20: the pose's registry id.
+    Pose(i32),
+}
+
+/// ONE metadata entry as the wire carries it: the accessor's byte
+/// index (0..=254 — 255 is the EOF marker), the serializer id (the
+/// value's type tag — part of the state, not plumbing) and the
+/// decoded value.
+#[derive(Debug, Clone, PartialEq)]
+pub struct SetEntityDataEntry {
+    /// The accessor's byte index (`SynchedEntityData$DataValue.id`).
+    pub index: u8,
+    /// The serializer's registry id (`getSerializedId`).
+    pub serializer: i32,
+    /// The decoded value.
+    pub value: EntityDataEntry,
+}
+
+/// The unpacked Set Entity Data payload (clientbound play, generated
+/// id 99 — `minecraft:set_entity_data`). javap of the 26.2
+/// `ClientboundSetEntityDataPacket`: a VarInt entity id, then
+/// `unpack` — entries until the 0xFF index (the EOF marker; the
+/// `readUnsignedByte` comparison is against 255, so real accessors
+/// live in 0..=254). Each entry: the index byte, a VarInt serializer
+/// id (`EntityDataSerializers.getSerializer` — an id the registry
+/// does not know throws, failing the packet read) and the
+/// serializer's value codec.
+#[derive(Debug, Clone, PartialEq)]
+pub struct EntityDataSet {
+    /// The entity whose metadata changes.
+    pub id: i32,
+    /// The entries, in wire order.
+    pub entries: Vec<SetEntityDataEntry>,
+}
+
+/// Parse Set Entity Data. The supported serializers are the wire's
+/// primitive registry (the ids [`entity_data_serializers`] documents);
+/// the object-graph shapes — components, item stacks, particles,
+/// villager data, entity references, profiles, the variant holders —
+/// refuse for now: a value's byte length is only knowable through its
+/// codec, so there is no honest skip, and the vanilla read side fails
+/// the packet exactly the same way on a serializer it cannot decode.
+pub fn parse_set_entity_data(payload: &[u8]) -> Result<EntityDataSet> {
+    let mut c: &[u8] = payload;
+    let id = read_varint(&mut c)?;
+    anyhow::ensure!(
+        id == clientbound::SET_ENTITY_DATA,
+        "not a set entity data packet (0x{id:02X})"
+    );
+    let entity_id = read_varint(&mut c)?;
+    let mut entries = Vec::new();
+    loop {
+        let index = read_u8(&mut c)?;
+        if index == 255 {
+            break;
+        }
+        let serializer = read_varint(&mut c)?;
+        let value = match serializer {
+            entity_data_serializers::BYTE => EntityDataEntry::Byte(read_i8(&mut c)?),
+            entity_data_serializers::INT => EntityDataEntry::Int(read_varint(&mut c)?),
+            entity_data_serializers::LONG => EntityDataEntry::Long(read_varlong(&mut c)?),
+            entity_data_serializers::FLOAT => EntityDataEntry::Float(read_f32(&mut c)?),
+            entity_data_serializers::STRING => EntityDataEntry::String(read_string(&mut c)?),
+            entity_data_serializers::BOOLEAN => EntityDataEntry::Bool(read_u8(&mut c)? != 0),
+            entity_data_serializers::ROTATIONS => EntityDataEntry::Rotations([
+                read_f32(&mut c)?,
+                read_f32(&mut c)?,
+                read_f32(&mut c)?,
+            ]),
+            entity_data_serializers::BLOCK_POS => {
+                let (x, y, z) = decode_block_pos(read_i64(&mut c)?);
+                EntityDataEntry::BlockPos([x, y, z])
+            }
+            entity_data_serializers::OPTIONAL_BLOCK_POS => {
+                let present = read_u8(&mut c)? != 0;
+                let pos = if present {
+                    let (x, y, z) = decode_block_pos(read_i64(&mut c)?);
+                    Some([x, y, z])
+                } else {
+                    None
+                };
+                EntityDataEntry::OptionalBlockPos(pos)
+            }
+            entity_data_serializers::DIRECTION => {
+                let d = read_varint(&mut c)?;
+                anyhow::ensure!(d >= 0, "negative direction id {d}");
+                EntityDataEntry::Direction(d)
+            }
+            entity_data_serializers::BLOCK_STATE => {
+                let s = read_varint(&mut c)?;
+                anyhow::ensure!(s >= 0, "negative block state id {s}");
+                EntityDataEntry::BlockState(s)
+            }
+            entity_data_serializers::OPTIONAL_BLOCK_STATE => {
+                let present = read_u8(&mut c)? != 0;
+                let s = if present {
+                    let s = read_varint(&mut c)?;
+                    anyhow::ensure!(s >= 0, "negative block state id {s}");
+                    Some(s)
+                } else {
+                    None
+                };
+                EntityDataEntry::OptionalBlockState(s)
+            }
+            entity_data_serializers::OPTIONAL_UNSIGNED_INT => {
+                let n = read_varint(&mut c)?;
+                anyhow::ensure!(n >= 0, "negative optional unsigned int {n}");
+                // the anonymous codec's arithmetic verbatim: 0 is the
+                // EMPTY sentinel, a present value arrives BIAS-BY-ONE
+                EntityDataEntry::OptionalUnsignedInt(if n == 0 {
+                    None
+                } else {
+                    Some((n - 1) as u32)
+                })
+            }
+            entity_data_serializers::POSE => {
+                let p = read_varint(&mut c)?;
+                anyhow::ensure!(p >= 0, "negative pose id {p}");
+                EntityDataEntry::Pose(p)
+            }
+            other => anyhow::bail!("unsupported entity data serializer {other}"),
+        };
+        entries.push(SetEntityDataEntry {
+            index,
+            serializer,
+            value,
+        });
+    }
+    anyhow::ensure!(
+        c.is_empty(),
+        "{} trailing bytes after the set entity data packet",
+        c.len()
+    );
+    Ok(EntityDataSet {
+        id: entity_id,
+        entries,
     })
 }
 
