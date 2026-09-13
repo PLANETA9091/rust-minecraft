@@ -83,6 +83,35 @@ impl Default for WorldModel {
     }
 }
 
+/// Depth-first expansion of one built-in timeline tag's member list, in
+/// the jar's stored order. The built-in TIMELINE_TAGS table is the RAW
+/// jar form — members may themselves be `#` tag references
+/// (`in_overworld` -> `#universal` -> `villager_schedule`) — so the
+/// walk recurses through nested refs and collects the concrete
+/// timelines they name. The visited set stops reference cycles the
+/// same way vanilla's own tag loader does; a member naming no known
+/// timeline (or an unknown tag) contributes nothing — the
+/// no-blind-filter rule the curve resolution runs on.
+fn expand_built_in_timeline_tag(
+    tag: &str,
+    out: &mut Vec<&'static mc_registry::generated::worldgen::TimelineDef>,
+    seen: &mut Vec<String>,
+) {
+    if seen.iter().any(|s| s == tag) {
+        return;
+    }
+    seen.push(tag.to_string());
+    if let Some(members) = mc_registry::generated::worldgen::timeline_tag(tag) {
+        for m in members {
+            if let Some(nested) = m.strip_prefix('#') {
+                expand_built_in_timeline_tag(nested, out, seen);
+            } else if let Some(tl) = mc_registry::generated::worldgen::timeline(m) {
+                out.push(tl);
+            }
+        }
+    }
+}
+
 impl WorldModel {
     #![allow(dead_code)] // wired into the frame loop when the mesher input lands
 
@@ -417,26 +446,47 @@ impl WorldModel {
         }
     }
 
-    /// The dimension's `visual/sky_light_factor` curve from the synced
-    /// TIMELINE registry — `Some((keyframes, period))` when the
-    /// configuration knowledge names one. The chain (each narrowing,
-    /// the first hit wins): the current dimension's `timelines`
-    /// reference names the candidates — the TAG form
+    /// The dimension's `visual/sky_light_factor` curve — `Some((keyframes,
+    /// period))` when the configuration knowledge names one. TWO sources,
+    /// in strict precedence order: the SYNCED registry first (a sync that
+    /// arrived is the unchallenged truth — `synced_timeline_curve`), then,
+    /// ONLY in the skip-sync state (no registry data arrived at all — the
+    /// claim-accepted server, the same gate the v0.3.52/55/56 fallbacks
+    /// run under), the BUILT-IN jar tables (`built_in_timeline_curve`).
+    /// When neither names a curve the compile-time snapshot serves —
+    /// for the real 26.2 jar every path CONVERGES on the day curve (the
+    /// only `visual/sky_light_factor` carrier in the jar is
+    /// `minecraft:day`, byte-pinned to the snapshot since the timeline
+    /// arc), and a future jar that drifts from the snapshot fails the
+    /// pin instead of the pixels.
+    fn timeline_curve(&self) -> Option<(&[(i64, f32)], i64)> {
+        if let Some(curve) = self.synced_timeline_curve() {
+            return Some(curve);
+        }
+        if self.registry.dimension_types.is_empty() {
+            return self.built_in_timeline_curve();
+        }
+        None
+    }
+
+    /// The dimension's curve from the SYNCED TIMELINE registry. The chain
+    /// (each narrowing, the first hit wins): the current dimension's
+    /// `timelines` reference names the candidates — the TAG form
     /// `#minecraft:in_overworld` resolves through the Update Tags
     /// payload's member ids, a bare id names one timeline directly —
     /// and with NO reference the fallback candidates are every
     /// timeline whose `clock` matches the dimension's `default_clock`.
     /// An UNKNOWN tag (its Update Tags payload never arrived) resolves
-    /// NOTHING — the compile-time snapshot serves instead, never a
-    /// blind clock filter that could resurrect an off-tag carrier
-    /// (the exact thing the tag exists to prevent). Among the
-    /// candidates the first timeline CARRYING the track serves:
-    /// vanilla merges multiple timelines per attribute track, but in
-    /// real data exactly one overworld timeline (`minecraft:day`)
-    /// carries `visual/sky_light_factor` — the first-carrier rule is
-    /// the honest minimal contract, the multi-timeline merge (the
-    /// track's `modifier`) is future work.
-    fn timeline_curve(&self) -> Option<(&[(i64, f32)], i64)> {
+    /// NOTHING — the snapshot serves instead, never a blind clock
+    /// filter that could resurrect an off-tag carrier (the exact thing
+    /// the tag exists to prevent). Among the candidates the first
+    /// timeline CARRYING the track serves: vanilla merges multiple
+    /// timelines per attribute track, but in real data exactly one
+    /// overworld timeline (`minecraft:day`) carries
+    /// `visual/sky_light_factor` — the first-carrier rule is the honest
+    /// minimal contract, the multi-timeline merge (the track's
+    /// `modifier`) is future work.
+    fn synced_timeline_curve(&self) -> Option<(&[(i64, f32)], i64)> {
         let dim = self.current_dimension.as_ref()?;
         let entry = self.registry.dimension(dim)?;
         let clock_name = entry.default_clock.as_deref()?;
@@ -453,6 +503,49 @@ impl WorldModel {
         }
         let tl = candidates.into_iter().find(|e| e.sky_light_factor.is_some())?;
         Some((tl.sky_light_factor.as_deref()?, tl.period_ticks? as i64))
+    }
+
+    /// The SKIP-SYNC timeline fallback: the SAME resolution chain the
+    /// synced path runs, walked against the BUILT-IN jar tables (the
+    /// generated dimension_type / timeline / timeline_tag twins) instead
+    /// of the streamed registry. The jar's tag members are stored in the
+    /// RAW form — nested `#` references included (`in_overworld` ->
+    /// `#universal` -> `villager_schedule`) — because that is what the
+    /// jar states; the synced path needs none of this expansion (a
+    /// vanilla server streams tags PRE-RESOLVED as flat wire-id lists).
+    /// An unknown tag or a member naming no known timeline resolves
+    /// nothing (the same no-blind-filter rule as the synced path); a
+    /// sync that DID arrive never reaches here (the dispatcher's gate —
+    /// the partial-sync model gets no built-in rescue, mirroring the
+    /// v0.3.56 day-tick scoping).
+    fn built_in_timeline_curve(&self) -> Option<(&'static [(i64, f32)], i64)> {
+        let dim = self.current_dimension.as_ref()?;
+        let entry = mc_registry::generated::worldgen::dimension_type(dim)?;
+        let mut candidates: Vec<&'static mc_registry::generated::worldgen::TimelineDef> =
+            Vec::new();
+        match entry.timelines {
+            Some(t) if t.starts_with('#') => {
+                expand_built_in_timeline_tag(&t[1..], &mut candidates, &mut Vec::new());
+            }
+            Some(id) => {
+                if let Some(tl) = mc_registry::generated::worldgen::timeline(id) {
+                    candidates.push(tl);
+                }
+            }
+            None => {
+                if let Some(clock) = entry.default_clock {
+                    candidates.extend(
+                        mc_registry::generated::worldgen::TIMELINES
+                            .iter()
+                            .filter(|e| e.clock == clock),
+                    );
+                }
+            }
+        }
+        let tl = candidates
+            .into_iter()
+            .find(|e| !e.sky_light_factor.is_empty())?;
+        Some((tl.sky_light_factor, tl.period_ticks?))
     }
 
     /// Sky light (0..=15) at (x, y, z) — the same coordinate conventions
@@ -1217,6 +1310,109 @@ mod tests {
         let ts4 = mc_protocol::play::parse_set_time(&p4).unwrap();
         assert!(bare.apply(PlayEvent::Time(ts4)));
         assert_eq!(bare.sky_factor(), 0.24, "the snapshot IS the jar's day.json curve");
+    }
+
+    #[test]
+    fn the_built_in_timeline_tables_are_the_skip_sync_curve() {
+        // a claim-accepted vanilla server streams NO registry — the
+        // timeline slice of the skip-sync fallback (the last registry
+        // surface without one): the curve resolves through the BUILT-IN
+        // jar tables (dimension_type -> the `#minecraft:in_overworld`
+        // tag -> nested `#universal` expansion -> the first carrier
+        // `minecraft:day`), and for the real 26.2 jar the answer is the
+        // SAME values the compile-time snapshot serves — the snapshot
+        // has been byte-pinned to the generated TL_DAY_SKY_LIGHT_FACTOR
+        // since the timeline arc, so the two sources cannot disagree
+        let mut m = WorldModel::new();
+        m.current_dimension = Some("minecraft:overworld".into());
+        let p = mc_protocol::play::test_support::set_time_packet(1, &[(0, 18_000, 0.0, 1.0)]);
+        let ts = mc_protocol::play::parse_set_time(&p).expect("set time parses");
+        assert!(m.apply(PlayEvent::Time(ts)));
+        assert_eq!(m.sky_factor(), 0.24, "midnight through the built-in tag chain");
+        let p2 = mc_protocol::play::test_support::set_time_packet(2, &[(0, 6_000, 0.0, 1.0)]);
+        let ts2 = mc_protocol::play::parse_set_time(&p2).unwrap();
+        assert!(m.apply(PlayEvent::Time(ts2)));
+        assert_eq!(m.sky_factor(), 1.0, "noon through the built-in tag chain");
+        // overworld_caves names the SAME tag — the same curve
+        let mut caves = WorldModel::new();
+        caves.current_dimension = Some("minecraft:overworld_caves".into());
+        let p3 = mc_protocol::play::test_support::set_time_packet(3, &[(0, 18_000, 0.0, 1.0)]);
+        let ts3 = mc_protocol::play::parse_set_time(&p3).unwrap();
+        assert!(caves.apply(PlayEvent::Time(ts3)));
+        assert_eq!(caves.sky_factor(), 0.24);
+        // THE END: `in_end` expands to `#universal` -> villager_schedule
+        // only — NO timeline carries the track, so the resolution comes
+        // up empty and the snapshot serves (at the end's own ticks —
+        // the v0.3.56 day-tick fallback's wire-order id 1); the behavior
+        // is UNCHANGED from before this fallback existed, now through
+        // the honest chain-miss instead of a registry miss
+        let mut end = WorldModel::new();
+        end.current_dimension = Some("minecraft:the_end".into());
+        let p4 = mc_protocol::play::test_support::set_time_packet(4, &[(1, 15_999, 0.0, 1.0)]);
+        let ts4 = mc_protocol::play::parse_set_time(&p4).unwrap();
+        assert!(end.apply(PlayEvent::Time(ts4)));
+        assert_eq!(end.sky_factor(), 0.24, "15999 is the night plateau");
+        // a PARTIAL sync (dimension_types arrived, the current dimension
+        // did not) gets NO built-in rescue — the v0.3.56 scoping
+        // mirrored; for the real jar the snapshot answers the same
+        // number the chain would (convergence), and the assertion pins
+        // that the gate holds: a future jar whose tables drift from the
+        // snapshot must NOT leak into a partial-sync world
+        let mut partial = WorldModel::new();
+        partial.current_dimension = Some("minecraft:overworld".into());
+        partial.registry.dimension_types = vec![mc_protocol::DimensionTypeEntry {
+            name: "minecraft:mock_dim".into(),
+            min_y: 0,
+            height: 256,
+            default_clock: None,
+            timelines: None,
+        }];
+        let p5 = mc_protocol::play::test_support::set_time_packet(5, &[(0, 18_000, 0.0, 1.0)]);
+        let ts5 = mc_protocol::play::parse_set_time(&p5).unwrap();
+        assert!(partial.apply(PlayEvent::Time(ts5)));
+        assert_eq!(partial.sky_factor(), 0.24, "the snapshot, not a built-in rescue");
+    }
+
+    #[test]
+    fn the_built_in_tag_expansion_walks_the_jars_nested_members() {
+        // the resolver directly: the jar's RAW member lists are nested
+        // (`#` refs inside the member arrays) and ORDERED
+        use crate::world_model::expand_built_in_timeline_tag;
+        let mut out = Vec::new();
+        expand_built_in_timeline_tag("minecraft:in_overworld", &mut out, &mut Vec::new());
+        let names: Vec<&str> = out.iter().map(|t| t.name).collect();
+        assert_eq!(
+            names,
+            vec![
+                "minecraft:villager_schedule", // via #universal, expanded FIRST (list order)
+                "minecraft:day",
+                "minecraft:moon",
+                "minecraft:early_game",
+            ],
+            "the nested #universal ref expands in the jar's stored order"
+        );
+        // in_end: ONLY the nested universal member — one timeline
+        let mut out = Vec::new();
+        expand_built_in_timeline_tag("minecraft:in_end", &mut out, &mut Vec::new());
+        assert_eq!(out.len(), 1);
+        assert_eq!(out[0].name, "minecraft:villager_schedule");
+        // in_nether: the same single member
+        let mut out = Vec::new();
+        expand_built_in_timeline_tag("minecraft:in_nether", &mut out, &mut Vec::new());
+        assert_eq!(out.len(), 1);
+        assert_eq!(out[0].name, "minecraft:villager_schedule");
+        // an unknown tag resolves NOTHING (no blind candidates)
+        let mut out = Vec::new();
+        expand_built_in_timeline_tag("minecraft:mock_tag", &mut out, &mut Vec::new());
+        assert!(out.is_empty());
+        // the cycle guard: expanding the same tag twice through the
+        // shared seen-set contributes nothing the second time
+        let mut out = Vec::new();
+        let mut seen = Vec::new();
+        expand_built_in_timeline_tag("minecraft:in_overworld", &mut out, &mut seen);
+        let first = out.len();
+        expand_built_in_timeline_tag("minecraft:in_overworld", &mut out, &mut seen);
+        assert_eq!(out.len(), first, "the visited set stops the re-walk");
     }
 
     #[test]
