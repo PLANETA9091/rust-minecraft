@@ -767,6 +767,48 @@ hand-drawn:
   nether pair on skip-sync, the synced truth winning, the silent sync
   and the one-sided statement reading None) and the App pin discipline
   (the nether join pins 10/96, the procedural re-entry drops it).
+  The **block-light tint is STATE — and the literal was wrong (v0.3.96
+  — the lightmap's block_light_tint consumer + the blue-channel
+  correction)**: the first consumer of the four decoded attributes.
+  The audit re-derived the tint's whole chain from the 26.2 jar and
+  found the shipped `BLOCK_LIGHT_TINT` constant contradicting its own
+  citation: `EnvironmentAttributes.<clinit>` pins `defaultValue(sipush
+  -10100)`, and `-10100 = 0xFFFFD88C` = #FFD88C — blue **140**, not
+  the shipped 172 (#FFD8AC would be -10068; a one-hex-digit misread of
+  0x8C as 0xAC had ridden the codebase since the tint landed). The
+  correction is bytecode-pinned five links deep: the attribute codec
+  is `ExtraCodecs.STRING_RGB_COLOR` = `hexColor(6)` xmap'd with
+  `ARGB.opaque`/`ARGB.transparent` (the canonical int is the ARGB
+  0xFFRRGGBB), and `LightmapRenderStateExtractor.extract` feeds the
+  probe's value through `ARGB.vector3fFromRGB24` (`red = (i>>16)&255,
+  green = (i>>8)&255, blue = i&255` — the alpha bits fall off the
+  masks) straight into the `BlockLightTint` uniform the lightmap.fsh
+  `mix(BlockLightTint, vec3(1.0), 0.9 * parabolicMixFactor)` consumes.
+  The implementation threads the attribute the cloud_fog way: the
+  generator parses `minecraft:visual/block_light_tint` into the
+  built-in table (four None rows — the regenerated table's diff is
+  exactly the struct doc + the 4 rows, every other table byte-stable),
+  the model grows `WorldModel::block_light_tint()` (the three-branch
+  precedence), `materialize` stamps it onto the world snapshot beside
+  its sibling `ambient_light` (the lightmap family's own transport,
+  not the App-pin path), and the mesher's `block_light_color` grows
+  the tint parameter — `tint.unwrap_or(DEFAULT_BLOCK_LIGHT_TINT)`,
+  the corrected constant, a stated tint replacing the default
+  VERBATIM (the extractor's no-blend shape). GOLDENS REGENERATED —
+  the deliberate, documented act: the correction moves torch-lit
+  pixels (the two net scenes' rms drifted 0.386→0.393 / 0.398→0.406
+  against the old references), so `net_320x180.png` and
+  `net_480x270.png` were re-rendered at their exact recorded flags;
+  the regen also RESET the historical shared-float residue — all
+  twelve goldens now verify at rms 0.000, the matrix fully
+  bit-identical for the first time since the tolerance was
+  introduced. Tests +3 (workspace 413 -> 416 passed / 0 failed / 3
+  ignored): the stated-tint override (the verbatim replace + the
+  mesher witness), the accessor's three-branch precedence, and the
+  materialize stamp (the absent shape end to end + a stated entry).
+  The golden-policy lesson: an rms move inside the tolerance is not
+  a pass to keep quiet about — the render changed, so the reference
+  changed with it, and the diff explained the regen.
   The **four light attributes ride the wire (v0.3.95 — the syncable
   sweep's DATA round)**: the mc-protocol expansion. The audit re-ran
   on the 26.2 jar (EnvironmentAttributes.<clinit>): four syncable
