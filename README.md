@@ -616,6 +616,44 @@ hand-drawn:
   cutout rule. Also repairs a pre-existing doctest break (an unannotated
   pseudo-code fence in the item_bake docs compiled as Rust and failed
   `cargo test --workspace` on the clean tree).
+  The **blockstate-driven palette lands (v0.3.77 — the world palette's
+  data half)**: `crates/mc-registry/src/palette.rs` turns a block state
+  into the per-face average color of its REAL model's REAL textures —
+  the data-driven replacement for hand-written color guessing, assembled
+  from the existing census-validated chain: BLOCKSTATES (v0.3.62) →
+  `blockstate_lookup`'s vanilla selection semantics (a new by-value
+  `select_applies` reusing the same key/when matchers — first-match
+  variants, when-matching multipart collect) → the child's merged
+  `texture_slots` (v0.3.69) + the first parent-chain ancestor carrying
+  ELEMENTS (the vanilla element inheritance — `block/stone` has no
+  elements of its own, `block/cube_all` does) → `element_quads` (v0.3.68)
+  → the generated jar texels (v0.3.70). Semantics pinned: a quad's color
+  is the average of the OPAQUE pixels (alpha != 0, vanilla's rule) of
+  its uv RECT (rotation-invariant min/max, scaled to the texture's real
+  size); a face is the equal-weight average of its quads, keyed by the
+  model's OWN slot (the blockstate x/y rotations remap at the consumer);
+  tinted faces average their RAW texels (the biome tint multiplies at
+  the consumer); unresolvable refs and missingno materials contribute
+  nothing; unknown blocks fail closed to None. Averages round HALF-UP,
+  the same convention as the independent oracle. The oracle is a
+  hand-written python PNG reader over the real jar
+  (`scripts/palette_oracle.py`): it pins stone `(126,126,126)`,
+  dirt `(134,96,67)`, grass_block_top `(147,147,147)` — and it caught
+  TWO fidelity facts the hard way: the grass side is TWO quads (#side +
+  the #overlay fringe, whose 135-byte grayscale png carries a tRNS
+  chunk — transparent-gray gaps the oracle must honor or the average
+  reads (27,27,27) instead of (155,155,155) over the 45 opaque pixels;
+  composed side = (141,131,111)), and 26.2's snowy grass keeps
+  `grass_block_top` on top (the snow is a runtime tint, not texels) with
+  the snowy-side TEXTURE on the sides (170,151,133). WATER is honestly
+  absent — its blockstate points at a particle-only template (no
+  elements, no parent; the fluids are vanilla's special render path).
+  GOLDENS: untouched — zero render-path contact (the mesher consumes
+  this next round). Tests +4 (workspace 361 → 365 passed / 0 failed /
+  3 ignored): the stone oracle gray on all six faces, the grass
+  three-texture split, the snowy state selector + the fail-closed
+  edges, and the world-blocks census (24 of the 26 NAME_OF ids resolve;
+  air and water are the honest None cases).
   The **swing chain joins the golden matrix (v0.3.76 — the swing clock
   gets its deterministic stand-in)**: the WHACK swing arc was fully
   implemented since v0.3.73 (the `SwingState` timeline, the
