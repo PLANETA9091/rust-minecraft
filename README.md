@@ -581,6 +581,51 @@ hand-drawn:
   timeline (−1 → 0..5/6 → rest at exactly 6 ticks), the re-trigger
   guard, the wrap-guard lerp, the mid-swing geometry delta, and the
   bit-identical rest pose.
+  The **blockstate consumer's selection layer lands (v0.3.67 — the
+  when-condition homework, the state-id → model+rotation link)**:
+  `crates/mc-registry/src/blockstate_lookup.rs` is the hand-written
+  consumer half of the blockstates table — a strict zero-dependency
+  JSON-subset parser for both canonical columns plus the vanilla
+  selection semantics, the module the mesher's palette will call. A
+  fresh independent census of the real jar
+  (scripts/blockstate_when_census.py) ran BEFORE the evaluator code
+  and pinned the consumption shapes: variant keys are always the
+  block's FULL property set in BLOCKS order (**7296 keys** over 1096
+  files, **549 empty**, zero pipes, zero charset violations); when
+  values are strings only (1874 plain + **32 pipe-carriers** — exactly
+  4 distinct "a|b" sets, max 3: side|up, 2|3|4, 3|4, 2|3 across
+  leaf_litter/pink_petals/redstone_wire/wildflowers); the OR/AND
+  wrappers NEVER nest (13 OR / 768 AND map elements); weight rides
+  only on chorus_plant's six noside applies (always 2); no when map
+  is empty. The parser accepts the semantically-defined supersets the
+  census merely didn't refute (an empty when map = always-true,
+  recursive wrappers) and refuses everything MEANINGLESS: unknown
+  apply/part keys, non-string when values, string escapes, floats,
+  duplicate keys, empty apply lists, rotations off the 0/90/180/270
+  domain, a wrapper sharing its object with plain keys. Selection
+  semantics: variants pick the FIRST key in file order whose pairs
+  all match — on full-set keys this equals exact-key lookup, and BOTH
+  are pinned (the registry-wide test walks every one of the 7296 keys
+  and asserts it selects ITSELF); multipart collects EVERY part whose
+  when matches, in part order; a pipe value matches if the state's
+  value is any alternative; a property absent from the state fails
+  fail-closed; unmentioned state properties are wildcards. The spot
+  selections prove the fun facts from the table itself:
+  redstone_wire's east=up+north=side stacks dot+side0+side_alt1+up
+  (the OR wrapper's five maps working), leaf_litter segment 3 stacks
+  BOTH the "2|3" and the exact-"3" models (vanilla multipart
+  stacking), acacia_shelf's AND chains resolve the unpowered/left
+  variants. Tests +5 (workspace 295 → 300 passed / 0 failed / 3
+  ignored): the column split + lookups, the variants first-match
+  (rotations, arrays, wildcards, the empty-key any-state match), the
+  multipart OR/AND/pipe battery, the registry-wide census walk
+  (7296/549/1574/13/768/32/6 pinned in Rust against BLOCKS' property
+  sets), and the 25-shape refusal battery. Zero render path touches
+  the module (mc-client carries no reference — by construction) and
+  the goldens confirm by measurement: cpu 320, net 320 and gui world
+  all rms 0.000 at the exact CI flags, none regenerated. The mesher
+  wiring (state-id → BLOCKSTATES → model+rotation for the world
+  palette) consumes this layer next.
   The **blockstates land (v0.3.66 — the world-render chain's data link,
   the models round's sibling table)**: the generator grew its fifteenth
   table — `assets/minecraft/blockstates/` of the official jar parsed
