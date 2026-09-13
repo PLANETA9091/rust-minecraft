@@ -308,6 +308,30 @@ hand-drawn:
   Zero render-path pixels: the tint CONSUMERS come next; the ten
   goldens are bit-identical by construction (the wire fixture carries
   no registry knowledge).
+  The **grass modifier is consumed (v0.3.47 — the dark_forest blend)**:
+  the next documented deviation lands. The ELEVENTH javap audit pinned
+  `BiomeSpecialEffects.GrassColorModifier` (declaration order NONE,
+  DARK_FOREST, SWAMP): DARK_FOREST is pure whole-int arithmetic —
+  `ARGB.opaque(((base & 0xFEFEFE) + 0x28340A) >> 1)`, where the
+  channel-carry into bit 24 folds back through the shift exactly as
+  vanilla's int math does and `ARGB.opaque = i | 0xFF000000` stays
+  outside our 0xRRGGBB tints; the blend runs over the RESOLVED base
+  (override or the colormap sample — vanilla wraps `modifyColor` around
+  `getBaseGrassColor()`), so the end-to-end verdict for a real dark
+  forest is the climate sample 0x79C05A blended into the canonical
+  0x507A32, probe-verified against the jar grids before any client
+  code. NONE is the bytecode identity; SWAMP stays the documented
+  deviation — its verdict is `Biome.BIOME_INFO_NOISE` (a static
+  PerlinSimplexNoise) at (x·0.0225, z·0.0225) with two FIXED colors
+  (packed 0xFF4C763C below -0.1, else 0xFF6A7039), genuinely
+  position-dependent and unexpressable in the per-entry tint triple,
+  so the base passes through. Tests +3 (workspace 230 passed / 0
+  failed / 3 ignored): the blend over the plains sample (0x5C7831),
+  the verbatim whole-int carry case (0xFE0000 → 0x931A05), the
+  canonical dark-forest end-to-end verdict, the override-as-base path,
+  and the swamp pass-through. Ten goldens bit-identical by
+  construction (no golden scene carries a modifier-bearing biome),
+  verified on the v0.3.47 release build.
   The **colormap is consumed (v0.3.46 — the climate-driven tints)**:
   the top documented candidate lands — an override-less biome now
   samples the REAL jar colormap grids instead of keeping the baked
