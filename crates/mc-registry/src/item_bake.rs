@@ -139,15 +139,12 @@ fn pixel_alpha(texels: &[u8], w: u16, x: u32, y: u32) -> u8 {
 /// records (dir, x, y) in the scan order.
 fn exposed_edges(texels: &[u8], w: u16, h: u16) -> Vec<(u8, u32, u32)> {
     let (w32, h32) = (w as u32, h as u32);
-    // (stepX, stepY) per direction in texture space: UP = (0,-1),
-    // DOWN = (0,+1), LEFT/EAST-mapped = (-1,0) [EAST.stepX - 1],
-    // RIGHT/WEST = (+1,0) [WEST.stepX - (-1)]... spelled as the
-    // checkTransition neighbor: x - stepX with the Direction steps
-    // UP=(0,1,0)? No — the texture-space neighbors are (0,-1)/(0,1)/
-    // (-1,0)/(1,0) for UP/DOWN/LEFT/RIGHT (Direction.UP.stepY = +1
-    // subtracted gives y-1; EAST.stepX = +1 subtracted gives x-1 for
-    // LEFT; WEST.stepX = -1 subtracted gives x+1 for RIGHT).
-    let steps: [(i32, i32); 4] = [(0, -1), (0, 1), (-1, 0), (1, 0)];
+    // the Direction STEP vectors (Mojang's getStepX/getStepY):
+    // UP = (0,+1), DOWN = (0,-1), EAST = (+1,0), WEST = (-1,0) — the
+    // checkTransition neighbor is (x - stepX, y - stepY), so UP probes
+    // the pixel ABOVE (y-1), DOWN the one BELOW (y+1), LEFT (carrying
+    // EAST) probes x-1, and RIGHT (carrying WEST) probes x+1.
+    let steps: [(i32, i32); 4] = [(0, 1), (0, -1), (1, 0), (-1, 0)];
     let mut out = Vec::new();
     for y in 0..h32 {
         for x in 0..w32 {
@@ -291,4 +288,217 @@ pub fn derive_item_model(model_id: &str) -> Option<Vec<Quad>> {
         quads.extend(bake_layer(&texels, w, h, texture, layer));
     }
     Some(quads)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn derives_the_iron_sword_extrusion() {
+        // the oracle (scripts/item_bake_census.py, strict-f32): 82 quads.
+        let quads = derive_item_model("item/iron_sword")
+            .expect("in the bake domain");
+        assert_eq!(quads.len(), 82, "2 whole-sprite faces + 80 exposed edges");
+        // quad[0]: the SOUTH face over the whole sprite
+        let q = &quads[0];
+        assert_eq!(q.slot, Direction::South);
+        assert_eq!(q.direction, Direction::South);
+        assert_eq!(q.texture, "item/iron_sword");
+        assert_eq!(q.tintindex, Some(0));
+        assert!(q.shade);
+        assert_eq!(q.cullface, None);
+        assert_eq!(q.uv_rotation, 0);
+        assert_eq!(q.light_emission, None);
+        assert_eq!(
+            q.uvs.map(|uv| uv.map(f32::to_bits)),
+            [
+                [0x00000000, 0x00000000],
+                [0x41800000, 0x00000000],
+                [0x41800000, 0x41800000],
+                [0x00000000, 0x41800000],
+            ]
+        );
+        // quad[1]: the NORTH face carries the MIRRORED UVs (16,0,0,16)
+        let q = &quads[1];
+        assert_eq!(q.slot, Direction::North);
+        assert_eq!(
+            q.uvs.map(|uv| uv.map(f32::to_bits)),
+            [
+                [0x41800000, 0x00000000],
+                [0x00000000, 0x00000000],
+                [0x00000000, 0x41800000],
+                [0x41800000, 0x41800000],
+            ]
+        );
+        // quad[2]: the first exposed edge — a DOWN side at pixel (13, 0),
+        // the V REVERSED (minV 0.9 > maxV 0.1), the 0.1f insets
+        // (13.0f + 0.1f rounds to 0x4151999a — the f32 tie the oracle
+        // pins; 7.0f + 0.1f rounds differently: 0x40e33333)
+        let q = &quads[2];
+        assert_eq!(q.slot, Direction::Down);
+        assert_eq!(q.direction, Direction::Down);
+        assert_eq!(
+            q.uvs.map(|uv| uv.map(f32::to_bits)),
+            [
+                [0x4151999a, 0x3f666666],
+                [0x4151999a, 0x3dcccccd],
+                [0x415e6666, 0x3dcccccd],
+                [0x415e6666, 0x3f666666],
+            ]
+        );
+        // quad[3]: a RIGHT edge — the 26.2 enum carries WEST (LEFT->EAST,
+        // RIGHT->WEST, the ctor arguments verbatim)
+        let q = &quads[3];
+        assert_eq!(q.slot, Direction::West);
+        assert_eq!(
+            q.uvs.map(|uv| uv.map(f32::to_bits)),
+            [
+                [0x4151999a, 0x3dcccccd],
+                [0x4151999a, 0x3f666666],
+                [0x415e6666, 0x3f666666],
+                [0x415e6666, 0x3dcccccd],
+            ]
+        );
+        // every quad is axis-aligned: the computed facing equals the slot
+        let drift = quads.iter().filter(|q| q.direction != q.slot).count();
+        assert_eq!(drift, 0, "no facing drift on the axis-aligned slabs");
+        // the extrusion depth: z in [7.5/16, 8.5/16] everywhere
+        for q in &quads {
+            for v in &q.vertices {
+                assert!((0.0..=1.0).contains(&v[0]));
+                assert!((0.0..=1.0).contains(&v[1]));
+                assert!((MIN_Z / 16.0..=MAX_Z / 16.0).contains(&v[2]));
+            }
+        }
+    }
+
+    #[test]
+    fn derives_the_copper_torch_and_bow() {
+        // copper_torch: the MINIMUM fixture (26 quads); its 0.1f insets
+        // round to DIFFERENT bits than iron_sword's (7.0f + 0.1f)
+        let quads = derive_item_model("item/copper_torch")
+            .expect("in the bake domain");
+        assert_eq!(quads.len(), 26);
+        assert_eq!(quads[0].texture, "block/copper_torch");
+        assert_eq!(
+            quads[2].uvs.map(|uv| uv.map(f32::to_bits)),
+            [
+                [0x40e33333, 0x40dccccd],
+                [0x40e33333, 0x40c33333],
+                [0x40fccccd, 0x40c33333],
+                [0x40fccccd, 0x40dccccd],
+            ]
+        );
+        // bow: 98 quads
+        let quads = derive_item_model("item/bow")
+            .expect("in the bake domain");
+        assert_eq!(quads.len(), 98);
+    }
+
+    #[test]
+    fn empty_bakes_for_the_layerless_carriers() {
+        // the bake() bytecode BREAKS at the first null material; models
+        // with no layer keys at all bake EMPTY (still Some — the domain)
+        let empty = derive_item_model("item/spear_in_hand")
+            .expect("in the bake domain");
+        assert!(empty.is_empty());
+        let empty = derive_item_model("item/bundle/open_back")
+            .expect("in the bake domain");
+        assert!(empty.is_empty());
+        // a block model whose chain never reaches item/generated -> None
+        assert!(derive_item_model("block/stone").is_none());
+        assert!(derive_item_model("block/stairs").is_none());
+        assert!(derive_item_model("no/such/model").is_none());
+    }
+
+    #[test]
+    fn the_missing_layer_bakes_the_missingno_checkerboard() {
+        // item/chainmail_boots_amethyst_trim: layer0 = item/chainmail_boots
+        // (66 quads), layer1 = trims/items/boots_trim_amethyst — MISSING
+        // from the namespace -> the missingno checkerboard (16x16, fully
+        // opaque -> 64 border edges + 2 = 66), texture "missingno",
+        // tintindex = the layer index 1
+        let quads = derive_item_model("item/chainmail_boots_amethyst_trim")
+            .expect("in the bake domain");
+        assert_eq!(quads.len(), 132, "66 + 66");
+        assert_eq!(quads[0].texture, "item/chainmail_boots");
+        assert_eq!(quads[65].texture, "item/chainmail_boots");
+        assert_eq!(quads[66].texture, "missingno");
+        assert_eq!(quads[66].tintindex, Some(1));
+        // the checkerboard is fully opaque -> the first edge is DOWN at
+        // pixel (0,0): from (0,15,7.5) to (1,15,8.5), uv (0.1, 0.9, 0.9, 0.1)
+        assert_eq!(quads[66].slot, Direction::Down);
+        assert_eq!(
+            quads[66].uvs.map(|uv| uv.map(f32::to_bits)),
+            [
+                [0x3dcccccd, 0x3f666666],
+                [0x3dcccccd, 0x3dcccccd],
+                [0x3f666666, 0x3dcccccd],
+                [0x3f666666, 0x3f666666],
+            ]
+        );
+        let vertices = quads[66].vertices;
+        assert_eq!(
+            vertices.map(|v| v.map(f32::to_bits)),
+            [
+                [0x3f000000, 0x3f800000, 0x3ef00000],
+                [0x3e800000, 0x3f800000, 0x3ef00000],
+                [0x3e800000, 0x3f800000, 0x3f088889],
+                [0x3f000000, 0x3f800000, 0x3f088889],
+            ],
+            "the Down corner walk over from (0,15,7.5) to (1,15,8.5), block units"
+        );
+    }
+
+    #[test]
+    fn the_registry_wide_bake_census_holds() {
+        // scripts/item_bake_census.py over the real jar
+        let mut domain = 0usize;
+        let mut layer_models = [0usize; 5];
+        let mut missing_layer_textures = std::collections::BTreeSet::new();
+        let mut quad_total = 0usize;
+        for (id, ..) in MODELS.iter() {
+            // the domain test: the chain reaches item/generated
+            if !chain_has_generated(id) {
+                continue;
+            }
+            domain += 1;
+            let Some(quads) = derive_item_model(id) else {
+                panic!("{id}: the domain never fails");
+            };
+            quad_total += quads.len();
+            let slots = texture_slots::resolve_model(id).expect("a table row");
+            for (i, name) in LAYERS.iter().enumerate() {
+                let Some(t) = slots.material(name) else {
+                    break; // the contiguous-layers rule
+                };
+                layer_models[i] += 1;
+                let bare = t.strip_prefix("minecraft:").unwrap_or(t);
+                let missing = texture_index(bare)
+                    .map(|idx| crate::generated::textures::is_missing(idx))
+                    .unwrap_or(true);
+                if missing {
+                    missing_layer_textures.insert(bare);
+                }
+            }
+        }
+        assert_eq!(domain, 1231, "the bake domain (chains through item/generated)");
+        assert_eq!(layer_models, [1222, 332, 44, 0, 0], "contiguous layer presence");
+        assert_eq!(
+            missing_layer_textures.len(),
+            64,
+            "the trims family, all missing"
+        );
+        assert!(
+            missing_layer_textures
+                .iter()
+                .all(|t| t.starts_with("trims/items/")),
+            "64 missing = the trims/items family"
+        );
+        assert_eq!(
+            quad_total, 80464,
+            "the total baked quads over the domain (all layers)"
+        );
+    }
 }
