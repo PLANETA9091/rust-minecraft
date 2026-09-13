@@ -35,7 +35,7 @@
 //!   (out of bounds counts transparent). Each recorded edge emits ONE
 //!   unculled quad — 26.2 does NOT merge pixel runs (SideFace is a
 //!   Record(facing, x, y)):
-//!   ```
+//!   ```text
 //!   f14 = x + 0.1; f15 = x + 1 - 0.1              // UV_SHRINK = 0.1f
 //!   LEFT/RIGHT: f16 = y + 0.1;     f17 = y + 1 - 0.1
 //!   UP/DOWN:    f16 = y + 1 - 0.1; f17 = y + 0.1  // the V is REVERSED

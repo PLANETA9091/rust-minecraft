@@ -523,17 +523,15 @@ pub fn posed_quads(
 }
 
 /// The e2e composition for GENERATED items (the ItemModelGenerator bake):
-/// the bake quads through the resolved display pose of `context`, with
-/// the bake's pixel units converted to the vanilla BakedQuad space on the
-/// way. Evidence for the /16 (javap, the 26.2 jar): FaceBakery.bakeVertex
-/// divides the FaceInfo-selected from/to corner by 16.0f IMMEDIATELY
-/// (Vector3f.div(F) at the select site) — the BakedQuad vertices are
-/// block units for element models AND baked items alike, while our
-/// item_bake keeps the bake's pre-div pixel units (the census pinned
-/// iron_sword's first slab at (13,16,7.5)..(14,16,8.5)). The div is an
-/// exact exponent shift, so applying it after our bake's
-/// facing/winding (both scale-invariant) is bit-identical to vanilla's
-/// divide-first order. Unknown model -> None; a broken stanza -> Err.
+/// the bake quads through the resolved display pose of `context`. The
+/// bake's pixel units are ALREADY converted to the vanilla BakedQuad
+/// space inside the bake: element_quads::faceinfo_corners (which
+/// item_bake's emit shares) divides the FaceInfo-selected corner by 16.0f
+/// — the javap evidence (26.2 FaceBakery.bakeVertex: Vector3f.div(16.0f)
+/// immediately after VertexInfo.select) — so the Quad vertices are block
+/// units for element models AND baked items alike, and this composition
+/// consumes them as-is, exactly like posed_quads. Unknown model -> None;
+/// a broken stanza -> Err.
 pub fn posed_item_quads(
     model_id: &str,
     ctx: usize,
@@ -548,13 +546,9 @@ pub fn posed_item_quads(
         .iter()
         .map(|q| {
             let mut posed = *q;
-            posed.vertices = q.vertices.map(|v| {
-                apply_transform(
-                    transforms[ctx].as_ref(),
-                    left_hand,
-                    [v[0] / 16.0, v[1] / 16.0, v[2] / 16.0],
-                )
-            });
+            posed.vertices = q
+                .vertices
+                .map(|v| apply_transform(transforms[ctx].as_ref(), left_hand, v));
             posed
         })
         .collect()))
@@ -1167,5 +1161,65 @@ mod tests {
     /// ([30,135,0]/0.625), block/stairs quad[0] vertex 0 = (0,0,1):
     /// "STDIN 3ee24630 be8a9066 be1ffffd".
     const ORACLE_QUAD0_V0: [&str; 3] = ["3ee24630", "be8a9066", "be1ffffd"];
+
+    #[test]
+    fn posed_item_quads_compose_the_baked_item_link() {
+        // the whole-sprite front face is the bake's first emit; its first
+        // block-unit corner through the handheld firstperson_righthand
+        // pose, bit-pinned against the joml oracle fed the same vertex
+        // (scripts/display_ref DisplayRef stdin mode).
+        let posed = posed_item_quads("item/iron_sword", FIRSTPERSON_RIGHTHAND)
+            .expect("iron_sword is in the bake domain")
+            .expect("the handheld stanza resolves");
+        assert_eq!(posed.len(), 82, "the census quad count");
+        // the bake's pixel quads and the posed quads ride the same order,
+        // uv, texture and slot; ONLY the vertices move
+        let raw = crate::item_bake::derive_item_model("item/iron_sword").expect("bake domain");
+        assert_eq!(raw.len(), posed.len());
+        for (r, p) in raw.iter().zip(&posed) {
+            assert_eq!(r.uvs, p.uvs, "the 0..16 uv space is untouched by the pose");
+            assert_eq!(r.texture, p.texture, "the texture id rides");
+            assert_eq!(r.slot, p.slot);
+            assert_eq!(r.tintindex, p.tintindex);
+        }
+        // the chain pin: quad[0] vertex[0] (already block units — the
+        // bake's faceinfo_corners applied the bakeVertex /16), then the
+        // resolved fpr transform (item/handheld's stanza) — the exact
+        // composition the fn performs
+        let v0 = raw[0].vertices[0];
+        let t = resolve_transforms("item/iron_sword")
+            .expect("resolves")[FIRSTPERSON_RIGHTHAND]
+            .expect("handheld declares firstperson_righthand");
+        let expected = apply_transform(Some(&t), false, v0);
+        assert_eq!(posed[0].vertices[0], expected);
+        // the ORACLE bits for the same input vertex (filled from the
+        // harness run below)
+        let in_bits: [u32; 3] = v0.map(f32::to_bits);
+        let bits: [u32; 3] = ORACLE_ITEM0_V0.map(|w| u32::from_str_radix(w, 16).unwrap());
+        assert_eq!(
+            posed[0].vertices[0].map(f32::to_bits),
+            bits,
+            "oracle stdin rot 0 -90 25 tr 1.13 3.2 1.13 scl 0.68 in {in_bits:x?}"
+        );
+        // view-space geometry sanity: every corner stays finite through
+        // the whole chain (the anchored-region invariants live on the
+        // client side, where the hand anchor's -0.72 z applies)
+        for q in &posed {
+            for p in &q.vertices {
+                assert!(p.iter().all(|v| v.is_finite()), "finite corners");
+            }
+        }
+        // outside the bake domain -> None (a block model is not an item)
+        assert!(posed_item_quads("block/stone", FIRSTPERSON_RIGHTHAND).is_none());
+        // unknown -> None
+        assert!(posed_item_quads("item/definitely_not_a_thing", FIRSTPERSON_RIGHTHAND).is_none());
+    }
+
+    /// display_ref oracle, stdin mode, the handheld fpr transform
+    /// (rot [0,-90,25]/tr [1.13,3.2,1.13]/scl 0.68), item/iron_sword
+    /// bake quad[0] vertex 0 = (0, 1, 0.53125) (block units — the bake's
+    /// faceinfo_corners already applied the bakeVertex /16):
+    /// "STDIN 3d4a3d70 3eba99c6 bec32df1".
+    const ORACLE_ITEM0_V0: [&str; 3] = ["3d4a3d70", "3eba99c6", "bec32df1"];
 }
 
