@@ -1392,6 +1392,24 @@ pub mod entity_data_serializers {
     /// tag only if present (the CustomName surface's own lane).
     pub const OPTIONAL_COMPONENT: i32 = 6;
     /// `ItemStack.OPTIONAL_STREAM_CODEC` — the object-graph lane.
+    /// The javap walk (three hops): `ItemStack$1.decode` = a VarInt
+    /// COUNT (`ifgt` — count <= 0 is `ItemStack.EMPTY`, NOTHING else
+    /// on the wire), then `Item.STREAM_CODEC` =
+    /// `holderRegistry(Registries.ITEM)` (a VarInt registry id, the
+    /// `ByteBufCodecs$29` byIdOrThrow the villager round pinned), then
+    /// `DataComponentPatch.STREAM_CODEC` = `createStreamCodec($1)` =
+    /// `DataComponentPatch$3.decode` — a VarInt ADDED count, a VarInt
+    /// REMOVED count (both zero = the EMPTY patch, the early return at
+    /// 10-21), then `added` × {type id, the type's OWN value} and
+    /// `removed` × {type id}. The component type itself rides
+    /// `DataComponentType.STREAM_CODEC` = `StreamCodec.recursive(..)` =
+    /// `ByteBufCodecs.registry(DATA_COMPONENT_TYPE)` — the SAME $29
+    /// VarInt byIdOrThrow, and the value codec is the type's own
+    /// `streamCodec()`: UNFRAMED (no length prefix), so a value's byte
+    /// length is only knowable through the type's codec. The decodable
+    /// slice is [`data_component_types`]; every other type refuses —
+    /// an unknown id exactly where vanilla's byIdOrThrow throws, a
+    /// known-but-unimplemented one because there is no honest skip.
     pub const ITEM_STACK: i32 = 7;
     /// `ByteBufCodecs.BOOL` — one byte.
     pub const BOOLEAN: i32 = 8;
@@ -1443,9 +1461,119 @@ pub mod entity_data_serializers {
     // 40: QUATERNION, 41: RESOLVABLE_PROFILE, 42: HUMANOID_ARM.
 }
 
+/// The DATA_COMPONENT_TYPE registry slice whose value codecs this
+/// client decodes — the ids are `DataComponents.<clinit>`'s
+/// REGISTRATION order (`Registry.register` call sequence; the registry
+/// id IS the order, and the order is NOT semantically grouped: the
+/// four numeric durability lanes sit at 1-4, the unit types at 4 and
+/// 20, the component-tag lanes at 6/9, the identifier lanes scattered
+/// at 10/35/71). This is the THIRD registry this project has pinned
+/// by clinit order against the wiki-era instinct. The value codecs
+/// (each type's own `streamCodec()`, javap of the 26.2 builder
+/// lambdas): VarInt × 4, Unit (ZERO bytes) × 2, the bare component
+/// tag × 2, the compound-only bare tag, the BE f32, the UTF string ×
+/// 3, the capped tag list, the idMapper ordinal, and the bool. The
+/// other 95 types refuse — see [`EntityDataEntry::ItemStack`].
+pub mod data_component_types {
+    /// `CustomData.STREAM_CODEC` = `ByteBufCodecs.COMPOUND_TAG` =
+    /// `compoundTagCodec(..)` = the tagCodec bare tag + a decode-side
+    /// map that THROWS unless the tag is a TAG_Compound (the
+    /// DecoderException at lambda$compoundTagCodec$0).
+    pub const CUSTOM_DATA: i32 = 0;
+    /// `ByteBufCodecs.VAR_INT` (the persistent side is
+    /// `intRange(1, 99)` — a NBT-schema concern, not the wire's).
+    pub const MAX_STACK_SIZE: i32 = 1;
+    /// `ByteBufCodecs.VAR_INT` (`POSITIVE_INT` on the persistent side).
+    pub const MAX_DAMAGE: i32 = 2;
+    /// `ByteBufCodecs.VAR_INT` (`NON_NEGATIVE_INT` persistent;
+    /// `ignoreSwapAnimation` is a swap-render flag, wire-irrelevant).
+    pub const DAMAGE: i32 = 3;
+    /// `Unit.STREAM_CODEC` = `StreamCodec.unit(INSTANCE)` — encodes
+    /// NOTHING, decodes NOTHING: the value's wire presence is the
+    /// type id alone.
+    pub const UNBREAKABLE: i32 = 4;
+    /// `ComponentSerialization.STREAM_CODEC` — ONE bare network NBT
+    /// tag (the serializer-5 machinery).
+    pub const CUSTOM_NAME: i32 = 6;
+    /// `ByteBufCodecs.FLOAT` — a big-endian f32.
+    pub const MINIMUM_ATTACK_CHARGE: i32 = 7;
+    /// `ComponentSerialization.STREAM_CODEC` — ONE bare tag.
+    pub const ITEM_NAME: i32 = 9;
+    /// `Identifier.STREAM_CODEC` = `ByteBufCodecs.STRING_UTF8` mapped
+    /// — the VarInt-length UTF string (cap 32767).
+    pub const ITEM_MODEL: i32 = 10;
+    /// `ComponentSerialization.STREAM_CODEC` through
+    /// `ByteBufCodecs.list(256)` — a VarInt count (capped: a larger
+    /// list throws) of bare component tags.
+    pub const LORE: i32 = 11;
+    /// `Rarity.STREAM_CODEC` = `idMapper(BY_ID, ordinal)` — a VarInt
+    /// ordinal (the same DIRECTION/POSE idMapper shape, retained
+    /// verbatim; the consumer resolves it).
+    pub const RARITY: i32 = 12;
+    /// `ByteBufCodecs.VAR_INT` (`NON_NEGATIVE_INT` persistent).
+    pub const REPAIR_COST: i32 = 19;
+    /// `Unit.STREAM_CODEC` — the second zero-byte lane.
+    pub const CREATIVE_SLOT_LOCK: i32 = 20;
+    /// `ByteBufCodecs.BOOL` — one byte.
+    pub const ENCHANTMENT_GLINT_OVERRIDE: i32 = 21;
+    /// `Identifier.STREAM_CODEC` — the UTF string.
+    pub const TOOLTIP_STYLE: i32 = 35;
+    /// `Identifier.STREAM_CODEC` — the UTF string.
+    pub const NOTE_BLOCK_SOUND: i32 = 71;
+}
+
+/// One decoded component-patch VALUE — the codec-shape variants of
+/// [`data_component_types`]. The variants share by WIRE SHAPE, not by
+/// meaning: the component type id rides beside the value in
+/// [`ComponentPatch::added`], so `VarInt` honestly covers four
+/// durability lanes and `String` three identifier lanes without
+/// pretending the port knows what they mean. The meaning is a
+/// consumer's act, the same decode-only line the villager ids rode.
+#[derive(Debug, Clone, PartialEq)]
+pub enum ComponentValue {
+    /// The four VAR_INT lanes: max_stack_size (1), max_damage (2),
+    /// damage (3), repair_cost (19).
+    VarInt(i32),
+    /// The BE f32 lane: minimum_attack_charge (7).
+    Float(f32),
+    /// The zero-byte Unit lanes: unbreakable (4),
+    /// creative_slot_lock (20) — the value IS the type's presence.
+    Unit,
+    /// The bare component tag lane: custom_name (6), item_name (9) —
+    /// any tag shape, retained verbatim (the rich-text schema stays a
+    /// rendering-time concern, the COMPONENT serializer's line).
+    Component(Nbt),
+    /// The compound-only bare tag lane: custom_data (0) — a non-compound
+    /// tag refuses (vanilla's DecoderException).
+    CompoundTag(Nbt),
+    /// The UTF string lane: item_model (10), tooltip_style (35),
+    /// note_block_sound (71).
+    String(String),
+    /// The capped list lane: lore (11) — a VarInt count (<= 256) of
+    /// bare component tags.
+    Lore(Vec<Nbt>),
+    /// The idMapper ordinal lane: rarity (12), retained verbatim.
+    Rarity(i32),
+    /// The one-byte bool lane: enchantment_glint_override (21).
+    Bool(bool),
+}
+
+/// The item stack's component patch — the `DataComponentPatch$3`
+/// decode verbatim: an ADDED list of (component type id, value) and a
+/// REMOVED list of type ids (a removal carries NO value — the absence
+/// IS the payload). Both lists empty is the EMPTY patch (the early
+/// return when both wire counts are zero).
+#[derive(Debug, Clone, Default, PartialEq)]
+pub struct ComponentPatch {
+    /// The added (overridden) components, in wire order.
+    pub added: Vec<(i32, ComponentValue)>,
+    /// The removed components' type ids, in wire order.
+    pub removed: Vec<i32>,
+}
+
 /// One decoded metadata VALUE — the wire shapes of the serializers
-/// this client decodes (SEVENTEEN of the registry's ids: 0-6, 8-12,
-/// 14-15, 18-20 as [`entity_data_serializers`] declares). The four i32
+/// this client decodes (EIGHTEEN of the registry's ids: 0-12, 14-15,
+/// 18-20 as [`entity_data_serializers`] declares). The four i32
 /// flavors are DISTINCT variants because the serializer id is part of
 /// the state (vanilla's `assignValues` matches accessor and value on
 /// it), not a type system accident.
@@ -1505,6 +1633,22 @@ pub enum EntityDataEntry {
         profession_id: i32,
         level: i32,
     },
+    /// Serializer 7: the item stack — the object-graph lane's
+    /// three-layer decode (see
+    /// [`entity_data_serializers::ITEM_STACK`]): the count (the
+    /// emptiness SENTINEL — wire count <= 0 is the empty stack and
+    /// NOTHING else is on the wire, retained verbatim), the item's
+    /// numeric registry id (retained verbatim, the villager line; a
+    /// negative id refuses), and the component patch
+    /// ([`ComponentPatch`]). The patch's VALUES decode through the
+    /// [`data_component_types`] slice and refuse elsewhere — the wire
+    /// is unframed, so a value whose codec the port does not carry
+    /// cannot be skipped honestly.
+    ItemStack {
+        count: i32,
+        item_id: i32,
+        patch: ComponentPatch,
+    },
 }
 
 /// ONE metadata entry as the wire carries it: the accessor's byte
@@ -1538,11 +1682,101 @@ pub struct EntityDataSet {
     pub entries: Vec<SetEntityDataEntry>,
 }
 
+/// Read ONE component-patch VALUE through the type's own codec. The
+/// wire is UNFRAMED (no length prefix — `DataComponentPatch$3.decode`
+/// hands the buffer straight to the type's `streamCodec()`), so an id
+/// outside [`data_component_types`] cannot be skipped honestly: a
+/// NEGATIVE id refuses where vanilla's `byIdOrThrow` throws, and a
+/// non-negative unknown refuses because its byte length is only
+/// knowable through a codec the port does not carry — the packet read
+/// fails either way, vanilla's own direction.
+fn read_component_value(type_id: i32, c: &mut &[u8]) -> Result<ComponentValue> {
+    use data_component_types as t;
+    Ok(match type_id {
+        t::CUSTOM_DATA => {
+            let tag = read_bare_nbt(c)?;
+            // compoundTagCodec's decode map: anything but a
+            // TAG_Compound is the DecoderException
+            if !matches!(tag, Nbt::Compound(_)) {
+                anyhow::bail!("custom_data must be a compound tag, got another tag shape");
+            }
+            ComponentValue::CompoundTag(tag)
+        }
+        t::MAX_STACK_SIZE | t::MAX_DAMAGE | t::DAMAGE | t::REPAIR_COST => {
+            ComponentValue::VarInt(read_varint(c)?)
+        }
+        t::UNBREAKABLE | t::CREATIVE_SLOT_LOCK => {
+            // StreamCodec.unit: the value consumes ZERO bytes — the
+            // type's presence is the payload
+            ComponentValue::Unit
+        }
+        t::CUSTOM_NAME | t::ITEM_NAME => ComponentValue::Component(read_bare_nbt(c)?),
+        t::MINIMUM_ATTACK_CHARGE => ComponentValue::Float(read_f32(c)?),
+        t::ITEM_MODEL | t::TOOLTIP_STYLE | t::NOTE_BLOCK_SOUND => {
+            ComponentValue::String(read_string(c)?)
+        }
+        t::LORE => {
+            let n = read_varint(c)?;
+            anyhow::ensure!(n >= 0, "negative lore list length {n}");
+            anyhow::ensure!(
+                n <= 256,
+                "lore list over the codec's 256-entry cap ({n})"
+            );
+            let mut tags = Vec::with_capacity(n as usize);
+            for _ in 0..n {
+                tags.push(read_bare_nbt(c)?);
+            }
+            ComponentValue::Lore(tags)
+        }
+        t::RARITY => {
+            let r = read_varint(c)?;
+            anyhow::ensure!(r >= 0, "negative rarity ordinal {r}");
+            ComponentValue::Rarity(r)
+        }
+        t::ENCHANTMENT_GLINT_OVERRIDE => ComponentValue::Bool(read_u8(c)? != 0),
+        other => anyhow::bail!(
+            "no value codec for component type {other} (the patch wire is unframed; \
+             the value cannot be skipped honestly)"
+        ),
+    })
+}
+
+/// The `DataComponentPatch$3.decode` walk: VarInt added count, VarInt
+/// removed count (both zero is the EMPTY patch — the early return the
+/// empty-vector result honestly reproduces), then `added` × {type id,
+/// the type's value} and `removed` × {type id}. A negative count
+/// refuses (vanilla's loop would skip and the fastutil map
+/// constructor's negative capacity throws — the read fails there too).
+fn parse_component_patch(c: &mut &[u8]) -> Result<ComponentPatch> {
+    let added_count = read_varint(c)?;
+    let removed_count = read_varint(c)?;
+    anyhow::ensure!(added_count >= 0, "negative patch added count {added_count}");
+    anyhow::ensure!(
+        removed_count >= 0,
+        "negative patch removed count {removed_count}"
+    );
+    let mut added = Vec::with_capacity(added_count as usize);
+    for _ in 0..added_count {
+        let type_id = read_varint(c)?;
+        anyhow::ensure!(type_id >= 0, "negative component type id {type_id}");
+        let value = read_component_value(type_id, c)?;
+        added.push((type_id, value));
+    }
+    let mut removed = Vec::with_capacity(removed_count as usize);
+    for _ in 0..removed_count {
+        let type_id = read_varint(c)?;
+        anyhow::ensure!(type_id >= 0, "negative component type id {type_id}");
+        removed.push(type_id);
+    }
+    Ok(ComponentPatch { added, removed })
+}
+
 /// Parse Set Entity Data. The supported serializers are the wire's
 /// primitive registry PLUS the chat component (the bare-NBT tag — the
 /// nbt reader the chunk path already trusts) PLUS the villager record
-/// (three VarInt registry ids); the remaining
-/// object-graph shapes — item stacks, particles,
+/// (three VarInt registry ids) PLUS the item stack (the three-layer
+/// count/item/patch decode through the [`data_component_types`]
+/// slice); the remaining object-graph shapes — particles,
 /// entity references, profiles, the variant holders — refuse for now:
 /// a value's byte length is only knowable through its codec, so there
 /// is no honest skip, and the vanilla read side fails the packet
@@ -1652,6 +1886,32 @@ pub fn parse_set_entity_data(payload: &[u8]) -> Result<EntityDataSet> {
                     type_id,
                     profession_id,
                     level: level.max(1),
+                }
+            }
+            entity_data_serializers::ITEM_STACK => {
+                // ItemStack$1: the count IS the emptiness sentinel —
+                // `ifgt` on the raw VarInt, so count <= 0 is the
+                // EMPTY stack and NOTHING else rides the wire (the
+                // count is retained verbatim, not normalized). A
+                // positive stack reads the item registry id (a
+                // negative is outside every IdMap — byIdOrThrow) and
+                // the component patch (see parse_component_patch).
+                let count = read_varint(&mut c)?;
+                if count <= 0 {
+                    EntityDataEntry::ItemStack {
+                        count,
+                        item_id: 0,
+                        patch: ComponentPatch::default(),
+                    }
+                } else {
+                    let item_id = read_varint(&mut c)?;
+                    anyhow::ensure!(item_id >= 0, "negative item registry id {item_id}");
+                    let patch = parse_component_patch(&mut c)?;
+                    EntityDataEntry::ItemStack {
+                        count,
+                        item_id,
+                        patch,
+                    }
                 }
             }
             other => anyhow::bail!("unsupported entity data serializer {other}"),
@@ -3414,11 +3674,16 @@ mod tests {
     /// the optional-global-pos lane the wiki-era table claims — it is
     /// the villager record, which DECODES (it left this list the round
     /// the composite's three VarInts landed). COMPONENT left the list
-    /// the round the bare-NBT reader landed.
+    /// the round the bare-NBT reader landed. ITEM_STACK left it THIS
+    /// round — the three-layer count/item/patch decode landed — so its
+    /// old refusal byte (0x00) is now an honest EMPTY stack, and the
+    /// survivors (PARTICLE, the unknown ids) refuse for the same
+    /// reason they always did: a value's byte length is only knowable
+    /// through its codec, so there is no honest skip.
     #[test]
     fn the_entity_data_object_graph_and_unknown_serializers_refuse() {
         use entity_data_serializers as s;
-        for serializer in [s::ITEM_STACK, s::PARTICLE, 200] {
+        for serializer in [s::PARTICLE, 200] {
             let entries = test_support::entity_data_entry(0, serializer, &[0x00]);
             let p = test_support::set_entity_data_packet(3, &entries);
             assert!(
