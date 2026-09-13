@@ -24,11 +24,17 @@ use zip::ZipArchive;
 /// with NO tint — vanilla's BlockColors registers no source for it (the
 /// audited createDefault(): the model's tintindex falls back to BLANK_LAYER
 /// and the PRE-COLORED texture renders as authored).
-pub const RUNTIME_PALETTE: [&str; 25] = [
+/// leaf_litter is the FIRST non-cube member (the thirteenth audit): its
+/// blockstate is a multipart and its models are flat zero-thickness ground
+/// quads (template_leaf_litter_1..4), so the full-cube resolution chain
+/// doesn't apply — the build loop special-cases it to the flat stem, and
+/// the client's mesher meshes it as the dry-fold ground cover it is.
+pub const RUNTIME_PALETTE: [&str; 26] = [
     "air", "stone", "dirt", "grass_block", "oak_log", "oak_leaves", "water", "sand",
     "granite", "diorite", "andesite", "deepslate", "cobbled_deepslate", "gravel",
     "bedrock", "coal_ore", "copper_ore", "iron_ore", "gold_ore", "redstone_ore",
     "lapis_ore", "diamond_ore", "emerald_ore", "netherrack", "pale_oak_leaves",
+    "leaf_litter",
 ];
 
 /// Renderer face order: 0:+X 1:-X 2:+Y 3:-Y 4:+Z 5:-Z.
@@ -38,6 +44,13 @@ pub const FACE_KEYS: [&str; 6] = ["east", "west", "up", "down", "south", "north"
 pub const TINT_GRASS: u32 = 0x91BD59;
 pub const TINT_FOLIAGE: u32 = 0x77AB2F;
 pub const TINT_WATER: u32 = 0x3F76E4;
+/// The dry-foliage plains constant: the REAL dry_foliage.png grid sampled at
+/// the plains climate (0.8, 0.4) through the audited `DryFoliageColor.get`
+/// arithmetic (probed in the twelfth-audit run) — the dry analog of
+/// TINT_GRASS/TINT_FOLIAGE, which are the same kind of in-world plains
+/// grid samples (the plains equivalence). Baked into the grayscale
+/// leaf_litter master the same way the game tints it in-world.
+pub const TINT_DRY: u32 = 0xA37546;
 
 #[derive(Debug, Clone)]
 struct ResolvedFace {
@@ -51,6 +64,7 @@ fn tint_for_texture(stem: &str) -> u32 {
         "grass_block_top" => TINT_GRASS,
         "oak_leaves" => TINT_FOLIAGE,
         "water_still" => TINT_WATER,
+        "leaf_litter" => TINT_DRY,
         _ => 0,
     }
 }
@@ -280,6 +294,21 @@ pub fn build(jar_bytes: &[u8], version: &str, client_sha1: &str) -> Result<Strin
     for block in RUNTIME_PALETTE {
         if block == "air" {
             faces.push(resolve_flat_stem("__air__", false));
+            continue;
+        }
+        if block == "leaf_litter" {
+            // The thirteenth audit (official 26.2 jar): the blockstate is a
+            // MULTIPART (leaf_litter_1..4 x facing y-rotations; segment 3
+            // cumulatively applies model_2 AND model_3), and every
+            // template_leaf_litter_N is a zero-thickness horizontal element
+            // at y=0.25 with ONLY up+down faces — resolve_block's full-cube
+            // six-face requirement cannot apply. The full-footprint
+            // template (segment 4, the 16x16 quad) is the canonical
+            // texture lookup; BOTH faces carry tintindex 0 -> the
+            // dryFoliage() source (the DRY_SLOT), a GRAYSCALE master the
+            // game tints in-world (probe: every opaque pixel r==g==b,
+            // binary alpha 0/255 — cutout, unlike pre-colored pale oak).
+            faces.push(resolve_flat_stem("leaf_litter", true));
             continue;
         }
         faces.push(resolve_block(&mut archive, block)?);
@@ -561,6 +590,9 @@ mod tests {
         assert_eq!(RUNTIME_PALETTE[22], "emerald_ore");
         assert_eq!(RUNTIME_PALETTE[23], "netherrack");
         assert_eq!(RUNTIME_PALETTE[24], "pale_oak_leaves");
+        // the FIRST non-cube member (the 13th audit): the dry fold's sole
+        // consumer, meshed as flat ground quads by the client
+        assert_eq!(RUNTIME_PALETTE[25], "leaf_litter");
         assert_eq!(FACE_KEYS, ["east", "west", "up", "down", "south", "north"]);
     }
 
@@ -569,6 +601,9 @@ mod tests {
         assert_eq!(tint_for_texture("grass_block_top"), TINT_GRASS);
         assert_eq!(tint_for_texture("oak_leaves"), TINT_FOLIAGE);
         assert_eq!(tint_for_texture("water_still"), TINT_WATER);
+        // the dry analog (13th audit): the REAL dry_foliage grid at the
+        // plains climate (0.8, 0.4) — probed 0xA37546 in the 12th-audit run
+        assert_eq!(tint_for_texture("leaf_litter"), TINT_DRY);
         assert_eq!(tint_for_texture("stone"), 0, "untinted texture");
         // the AUDITED verdict (12th audit): pale oak leaves carry NO tint —
         // vanilla's BlockColors.createDefault() registers no dryFoliage
