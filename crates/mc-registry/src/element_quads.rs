@@ -333,7 +333,7 @@ fn faceinfo_corner(slot: Direction, corner: usize) -> [bool; 3] {
 }
 
 /// VertexInfo.select(from, to) / 16 — the corner in block units.
-fn faceinfo_corners(slot: Direction, from: [f32; 3], to: [f32; 3]) -> [[f32; 3]; 4] {
+pub(crate) fn faceinfo_corners(slot: Direction, from: [f32; 3], to: [f32; 3]) -> [[f32; 3]; 4] {
     let mut out = [[0.0f32; 3]; 4];
     for (corner, cell) in out.iter_mut().enumerate() {
         let pick = faceinfo_corner(slot, corner);
@@ -362,7 +362,7 @@ fn default_face_uv(from: [f32; 3], to: [f32; 3], slot: Direction) -> [f32; 4] {
 /// rotated = (vertex + rotation/90) % 4;
 /// U = minU when rotated is 0 or 1 else maxU;
 /// V = minV when rotated is 0 or 3 else maxV.
-fn vertex_uvs(rect: [f32; 4], rotation_deg: u16) -> [[f32; 2]; 4] {
+pub(crate) fn vertex_uvs(rect: [f32; 4], rotation_deg: u16) -> [[f32; 2]; 4] {
     let shift = match rotation_deg {
         90 => 1usize,
         180 => 2,
@@ -382,7 +382,7 @@ fn vertex_uvs(rect: [f32; 4], rotation_deg: u16) -> [[f32; 2]; 4] {
 /// normal (v1-v0) x (v2-v0); the first direction of the vanilla enum
 /// order holding the strictly largest positive dot; none when the
 /// normal is non-finite or nothing beats zero.
-fn calculate_facing(vertices: &[[f32; 3]; 4]) -> Option<Direction> {
+pub(crate) fn calculate_facing(vertices: &[[f32; 3]; 4]) -> Option<Direction> {
     let a = [
         vertices[1][0] - vertices[0][0],
         vertices[1][1] - vertices[0][1],
@@ -419,7 +419,7 @@ fn calculate_facing(vertices: &[[f32; 3]; 4]) -> Option<Direction> {
 /// expected corners from the quad's own bounding box (the 6-arg
 /// Extent.select), scanning findVertex from index i with exact float
 /// equality. Returns the number of swaps performed.
-fn recalculate_winding(vertices: &mut [[f32; 3]; 4], uvs: &mut [[f32; 2]; 4], facing: Direction) -> usize {
+pub(crate) fn recalculate_winding(vertices: &mut [[f32; 3]; 4], uvs: &mut [[f32; 2]; 4], facing: Direction) -> usize {
     let mut min = [f32::MAX; 3];
     let mut max = [f32::MIN; 3];
     for v in vertices.iter() {

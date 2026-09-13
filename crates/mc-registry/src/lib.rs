@@ -37,6 +37,12 @@ pub mod sprite_uv;
 /// data, no render path. See the module docs for the javap evidence.
 pub mod display;
 
+/// The vanilla item-model bake — the ItemModelGenerator sprite extrusion
+/// (the generated item models' quads baked from the layer sprites'
+/// opaque-pixel outline over generated::textures). Pure data, no render
+/// path. See the module docs for the javap evidence.
+pub mod item_bake;
+
 /// One block definition: identifier + sorted list of state property names.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Block {
