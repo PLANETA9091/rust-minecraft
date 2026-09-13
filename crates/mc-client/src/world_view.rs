@@ -1299,10 +1299,17 @@ mod tests {
             Some("minecraft:plains"),
             "a new teleport re-reads the biome at the new pose"
         );
-        // the synced names gone: the id is real, the name unknown —
-        // the honest None, never a guess
+        // the synced names gone: the model is in the SKIP-SYNC state —
+        // the bare vanilla id 0 now walks the BUILT-IN wire order and
+        // names badlands, the same fallback the tint quads ride. The
+        // honest None survives for ids the vanilla order never names and
+        // for syncs that DID arrive (world_model pins both).
         live.model.registry.biomes.clear();
-        assert_eq!(live.refresh(example_mapper).biome, None);
+        assert_eq!(
+            live.refresh(example_mapper).biome.as_deref(),
+            Some("minecraft:badlands"),
+            "the skip-sync fallback names the bare vanilla wire id"
+        );
     }
 
     #[test]
