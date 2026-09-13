@@ -515,6 +515,40 @@ hand-drawn:
   arm faces, sha1 pins, in-bounds rects, the non-square refusal) and
   the registry's vanilla-unwrap pin (both sha1 layers, the face math,
   the bounds).
+  The **first-person hand renders the real arm (v0.3.61 — the skin
+  table's consumer)**: `mc-client/src/hand.rs` turns the generated skin
+  table into the vanilla empty right-hand arm, and EVERY constant is
+  26.2 bytecode evidence (Temurin JDK 21 + javap against the
+  unobfuscated client jar, the sky/clouds recon's tooling):
+  `ItemInHandRenderer.renderPlayerArm` gives the rest pose chain —
+  translate(side·0.64000005, −0.6, −0.71999997) → rotY(side·45°) →
+  translate(−side, 3.6, 3.5) → rotZ(side·120°) → rotX(200°) →
+  rotY(side·−135°) → translate(side·5.6, 0, 0), the swing/equip terms
+  collapsing to zero at rest — `GameRenderer.renderItemInHand` proves
+  hand space IS view space (the camera rotation's inverse), 
+  `AvatarRenderer.renderHand` gives the part's `zRot = 0.1` rad and the
+  two-sided `entity_translucent` submit, `HumanoidModel.createMesh`
+  gives the arm box `addBox(−3,−2,−2,4,12,4)` with pivot (−5,2,0) at
+  texOffs (40,16), and `ModelPart$Cube`+`$Polygon` give the six faces'
+  corner orders and UV-rect corners (including the UP face's
+  v-flipped rect — caught by the literal UV pin before commit). The
+  pixels stream from the runtime asset root and are sha1-verified
+  against the generated table before a single texel is trusted; an
+  absent or mismatched skin renders NOTHING (a render may never lie
+  about its data). The pass runs after the level with a cleared depth
+  buffer (vanilla's hand never clips into walls), no fog (the hand
+  sits at the player's ~0 fog distance), vertex color = white (the
+  player-position light is full skylight in the reference scenes).
+  GOLDENS: 3 regenerated (gui_world, gui_worldnight, gui_pause — the
+  FIRST-PERSON views, which now show the arm at the bottom-right; the
+  vanilla-correct rule is that the hand renders ONLY from the player's
+  own eyes) and 7 untouched: the cpu/net goldens are the orbit
+  camera's detached world view — NOT first person — so no hand appears
+  there, and title/servers/loading have no world at all. All 10
+  verified at the exact CI flags, every one rms 0.000. Tests +3
+  (workspace 269 → 272 passed / 0 failed / 3 ignored): the literal
+  six-face UV unwrap pin (would have caught the v-flip), the
+  refuse-unverified-skin gate, and the load-when-present probe.
   The **registry-order evidence is dumped from the real runtime (v0.3.53 —
   the pack-version claim's LAST prerequisite)**: the generator grew its
   third runtime dumper — the checked-in clean-room `DumpRegistries.java` —

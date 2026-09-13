@@ -280,27 +280,3 @@ mod tests {
     }
 }
 
-#[cfg(test)]
-mod debug_probe {
-    use super::*;
-    use crate::math::Vec3;
-    #[test]
-    fn debug_projected_positions() {
-        let quads = build_quads();
-        let proj = Mat4::perspective(70.0f32.to_radians(), 320.0 / 180.0, 0.1, 512.0);
-        for (i, q) in quads.iter().enumerate() {
-            let mut s = vec![];
-            for p in &q.pts {
-                let c = proj.transform_point(Vec3::new(p[0], p[1], p[2]));
-                let iw = 1.0 / c[3];
-                let sx = (c[0] * iw * 0.5 + 0.5) * 320.0;
-                let sy = (1.0 - (c[1] * iw * 0.5 + 0.5)) * 180.0;
-                s.push((sx, sy, c[3], p));
-            }
-            eprintln!("quad {i}:");
-            for (sx, sy, w, p) in &s {
-                eprintln!("  view {:?} -> screen ({sx:.1},{sy:.1}) w={w:.3}", p);
-            }
-        }
-    }
-}
