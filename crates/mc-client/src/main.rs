@@ -11,6 +11,7 @@ mod audio;
 mod build_info;
 mod camera;
 mod colors;
+mod colormap;
 mod gpu;
 mod gui;
 mod headless;

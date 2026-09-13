@@ -548,8 +548,10 @@ mod tests {
     fn materialize_carries_the_models_biome_layer() {
         let mut m = WorldModel::new();
         // the synced table: id 0 plains (the baked water default), id 1
-        // a swamp-ish water color — the wire id IS the arrival order
+        // a swamp-named element with the REAL swamp climate (0.8, 0.9)
+        // and water color — the wire id IS the arrival order
         let mut swamp = biome_entry("minecraft:swamp");
+        swamp.downfall = 0.9;
         swamp.effects.water_color = 0x617B64;
         m.registry.biomes = vec![biome_entry("minecraft:plains"), swamp];
         // one column arrives (single-valued biome wire id 1 = the SECOND
@@ -565,10 +567,14 @@ mod tests {
         assert_eq!(layer.tints.len(), 2, "one triple per synced element");
         assert_eq!(
             layer.tints[0],
-            [None, None, Some(4_159_204)],
-            "plains: no overrides, the baked water default"
+            [Some(0x91BD59), Some(0x77AB2F), Some(4_159_204)],
+            "plains: the climate sample IS the baked constants (the equivalence)"
         );
-        assert_eq!(layer.tints[1], [None, None, Some(0x617B64)]);
+        assert_eq!(
+            layer.tints[1],
+            [Some(0x6AC44E), Some(0x45B421), Some(0x617B64)],
+            "swamp climate (0.8, 0.9): the REAL grid samples (the modifier stays unconsumed)"
+        );
         // the column's vertical extent (one section, y 0..15) resolved the
         // single-valued id everywhere; above it the honest UNKNOWN
         for y in 0..16usize {
