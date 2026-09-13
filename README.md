@@ -919,6 +919,32 @@ hand-drawn:
   (VILLAGER_DATA at 18 doubles as the order proof), the generated-id
   pin, and the model's merge semantics (replace-one-leave-others, the
   null-lookup drop, the re-spawn reset).
+  The **the metadata grows the name-tag lane — COMPONENT decodes
+  (v0.3.104)**: serializers 5 and 6 leave the object-graph refusal
+  list. The audit pinned the real wire shape through three bytecode
+  hops: `ComponentSerialization.TRUSTED_STREAM_CODEC` =
+  `fromCodecWithRegistriesTrusted` = `tagCodec(supplier)` + the
+  NBT-ops adapter — ONE BARE network NBT tag on the wire (a
+  TAG_String for plain text, a TAG_Compound for the structured
+  `{text:..}` form, a TAG_List for siblings), "trusted" meaning the
+  accounter is unlimited (the server's own packet); OPTIONAL_COMPONENT
+  is the shared `optional` op over it (a boolean flag, then the tag
+  only if present). nbt.rs grows the bare-tag PAIR —
+  `read_bare_nbt`/`write_bare_nbt` (id byte + payload, no root
+  framing) — beside the existing anonymous-root reader the chunk
+  packets frame; the two entry points are a pinned TRAP: 0x0A through
+  the bare reader is a legal EMPTY compound, not an error, so the
+  wrong reader fails silently — the test pins the trap so a future
+  refactor cannot merge them. The store is the TAG (the rich-text
+  schema stays a rendering-time concern). GOLDENS UNTOUCHED BY
+  CONSTRUCTION: 12/12 at rms 0.000. Tests +2 (workspace 448 -> 450
+  passed / 0 failed / 3 ignored, RE-RUN on the pushed final tree):
+  the bare round-trip across the component's four shapes (string,
+  compound, list, scalar) plus the 0x0A trap, the dedicated
+  component-wire test (the plain-text name, the styled name read back
+  positionally), and the sixteen-serializer round-trip absorbing the
+  component lanes (the refusal census drops COMPONENT —
+  ITEM_STACK/VILLAGER_DATA/PARTICLE/200 still refuse).
   The **entities walk the world — the MOVE-family deltas land
   (v0.3.102)**: Move Entity Pos (generated id 53), Move Entity Pos and
   Rotation (id 54), Move Entity Rot (id 56) and Rotate Head (id 83) —

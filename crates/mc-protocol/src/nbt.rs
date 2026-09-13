@@ -137,9 +137,11 @@ pub fn write_network_nbt(value: &Nbt, out: &mut Vec<u8>) -> io::Result<()> {
 
 /// Write one BARE network NBT tag (the bare reader's mirror — the
 /// entity-metadata test builders and future clientbound component
-/// surfaces emit through it). `write_payload` emits the id byte +
-/// payload itself.
+/// surfaces emit through it). The tag id byte + payload: exactly what
+/// a compound entry writer emits between the name and the next entry,
+/// standing alone.
 pub fn write_bare_nbt(value: &Nbt, out: &mut Vec<u8>) -> io::Result<()> {
+    out.push(tag_of(value));
     write_payload(value, out, 0)
 }
 
