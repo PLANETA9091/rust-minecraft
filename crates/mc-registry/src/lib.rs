@@ -133,4 +133,36 @@ mod tests {
         assert!(tag.contains(&"minecraft:day"));
         assert!(tag.contains(&"#minecraft:universal"), "nested tag refs ride verbatim");
     }
+
+    #[test]
+    fn the_wire_order_tables_match_the_built_in_tables() {
+        use generated::registry_order::{BIOME_ORDER, DIMENSION_TYPE_ORDER, TIMELINE_ORDER};
+        use generated::worldgen::{BIOMES, DIMENSION_TYPES, TIMELINES};
+        // the evidence layer (the bootstrapped vanilla runtime dump) and the
+        // data layer (the generated jar tables) must name the SAME members:
+        // a claim built on an order table whose set drifts from the data
+        // table would map wire ids onto wrong entries
+        let same_set = |order: &[&str], table: Vec<&str>| {
+            let mut a: Vec<&str> = order.to_vec();
+            a.sort();
+            let mut b = table;
+            b.sort();
+            a == b
+        };
+        assert!(same_set(&DIMENSION_TYPE_ORDER, DIMENSION_TYPES.iter().map(|d| d.name).collect()));
+        assert!(same_set(&TIMELINE_ORDER, TIMELINES.iter().map(|t| t.name).collect()));
+        assert!(same_set(&BIOME_ORDER, BIOMES.iter().map(|b| b.name).collect()));
+        // the world_clock registry has no data-table twin yet — density only
+        assert_eq!(crate::generated::registry_order::WORLD_CLOCK_ORDER.len(), 2);
+        // the evidence pins: the real boot's first wire ids
+        assert_eq!(DIMENSION_TYPE_ORDER[0], "minecraft:overworld");
+        assert_eq!(TIMELINE_ORDER[0], "minecraft:day");
+        // no duplicates inside an order table (dense, unique wire ids)
+        for order in [&DIMENSION_TYPE_ORDER[..], &TIMELINE_ORDER[..], &BIOME_ORDER[..]] {
+            let mut sorted = order.to_vec();
+            sorted.sort();
+            sorted.dedup();
+            assert_eq!(sorted.len(), order.len());
+        }
+    }
 }

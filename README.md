@@ -308,6 +308,42 @@ hand-drawn:
   Zero render-path pixels: the tint CONSUMERS come next; the ten
   goldens are bit-identical by construction (the wire fixture carries
   no registry knowledge).
+  The **registry-order evidence is dumped from the real runtime (v0.3.53 —
+  the pack-version claim's LAST prerequisite)**: the generator grew its
+  third runtime dumper — the checked-in clean-room `DumpRegistries.java` —
+  and its online/offline subcommand pair (`mc2rs-gen dump-registries` /
+  `mc2rs-gen registry-order --dump <saved>`), the block-ids arc's shape.
+  The dumper does NOT stop at the static `BuiltInRegistries` root (whose
+  member list carries no dimension_type/biome/timeline/world_clock — those
+  are DATA-driven registries): it boots the vanilla data side exactly as
+  the WorldLoader does — the jar's own vanilla data pack through
+  `VanillaPackResources` + `MultiPackResourceManager(SERVER_DATA)`, block
+  TAGS bound through `TagLoader.loadTagsForExistingRegistries` (the
+  `PendingTags.lookup()` wrappers — without them the overworld dimension
+  type refuses to parse: its infiniburn reference is a block tag), then
+  `RegistryDataLoader.load(..., SYNCHRONIZED_REGISTRIES, ...)` — the very
+  list a vanilla server streams during configuration. The result: the
+  bytecode-true WIRE order of every synchronized registry, `registry|id|
+  entry` per line, saved as `.mc2rs/classpath/registries.txt`. The
+  generated table (`registry_order.rs`) carries the four the client's
+  runtime consumes — `DIMENSION_TYPE_ORDER` (overworld, overworld_caves,
+  the_end, the_nether), `BIOME_ORDER` (66), `TIMELINE_ORDER` (day,
+  early_game, moon, villager_schedule), `WORLD_CLOCK_ORDER` (overworld,
+  the_end) — the array index IS the wire id, so a skip-sync server and
+  this client agree on ids by construction. The emitter REFUSES a dump
+  missing any ordered registry, refuses non-dense ids and duplicate
+  names, and a consistency test pins the evidence layer against the data
+  layer: each order table must name exactly the same member set as its
+  built-in table twin (a drift would map wire ids onto wrong entries).
+  For 26.2 the dumped orders happen to be name-sorted — now EVIDENCED,
+  not assumed. The claim itself (a non-empty Select Known Packs reply)
+  is the small step this unlocks next. Zero render-path pixels: nothing
+  consumes the order tables yet; the ten goldens are bit-identical by
+  construction, verified TWICE on the release builds. Tests +2 (workspace
+  248 → 250 passed / 0 failed / 3 ignored): the registry-dump
+  parse/emission fixture (dense-id and duplicate rejection, the
+  missing-registry refusal, the offline emission) and the
+  evidence-vs-data consistency pin.
   The **built-in dimension table is the skip-sync fallback (v0.3.52 —
   the first CONSUMER of the v0.3.51 tables)**: a server that never
   sends Registry Data (a bare mock, a trimmed proxy — or, once the
