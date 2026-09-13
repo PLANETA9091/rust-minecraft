@@ -616,6 +616,36 @@ hand-drawn:
   cutout rule. Also repairs a pre-existing doctest break (an unannotated
   pseudo-code fence in the item_bake docs compiled as Rust and failed
   `cargo test --workspace` on the clean tree).
+  The **timeline-tag single truth lands (v0.3.83 — the client's private
+  tag walk retires into the registry's resolver)**: the skip-sync
+  fallback (`WorldModel::built_in_timeline_curve`) now resolves the
+  dimension's `#minecraft:in_overworld` reference through
+  `mc_registry::flatten_timeline_tag` — the vanilla built-tag verdict
+  the registry has owned since v0.3.80/84 (file-order walk, depth-first
+  `#`-nested expansion in place, first-occurrence dedup, fail-closed on
+  unknown tag / unknown member / cycle, the one generic core behind BOTH
+  tag tables) — deleting the hand-rolled `expand_built_in_timeline_tag`
+  that had duplicated the semantic client-side since before the registry
+  existed. The consolidation is the tint chain's pattern (entry_tints /
+  built_in_tints share resolve_tints) applied to the tag chain: ONE
+  expansion truth, and the semantic drift it carries is documented — the
+  old walk silently SKIPPED unknown members (its own no-blind-filter
+  invention) while the registry verdict refuses WHOLE (the vanilla
+  TagLoader shape); on the real 26.2 jar the two agree member-for-member
+  (the registry sweep proves every timeline-tag member resolves), so the
+  observable curve resolution is unchanged, and a drifted jar now
+  refuses instead of partially resolving. GOLDENS: untouched — BY DATA:
+  the resolution output is pinned identical (member order
+  `[villager_schedule, day, moon, early_game]`, the day-curve first-
+  carrier pick), and the full matrix re-verified through
+  verify_goldens.sh on the rebuilt release binaries, 12/12 pass, every
+  one rms 0.000. Tests: the direct-walk test is REPLACED one-for-one by
+  `the_built_in_tag_path_reads_the_registry_flatten` (the member order
+  through the resolved TimelineDefs, the single-ref end/nether forms,
+  the unknown-tag refusal, and the end-to-end chain: overworld resolves
+  the DAY curve's keyframes byte-equal to the generated carrier with
+  period 24000, the end resolves NOTHING) — workspace stays 378 passed
+  / 0 failed / 3 ignored.
   The **timeline-tag resolution lands (v0.3.82 — one resolver semantic,
   two validated tables)**: `mc-registry::flatten_timeline_tag` applies
   the v0.3.80 built-tag verdict (file-order walk, depth-first `#`-nested
