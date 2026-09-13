@@ -1073,6 +1073,7 @@ mod tests {
             skybox: None,
             fog_start_distance: None,
             fog_end_distance: None,
+            cloud_fog_end_distance: None,
             }],
             biomes: Vec::new(),
             biome_tags: Vec::new(),
@@ -1212,6 +1213,7 @@ mod tests {
             skybox: None,
             fog_start_distance: None,
             fog_end_distance: None,
+            cloud_fog_end_distance: None,
             }],
             biomes: Vec::new(),
             biome_tags: Vec::new(),
@@ -1380,6 +1382,7 @@ mod tests {
         skybox: None,
         fog_start_distance: None,
         fog_end_distance: None,
+        cloud_fog_end_distance: None,
         });
         // the synced biome table BOTH dimensions share (a real vanilla
         // server streams the whole worldgen/biome registry): plains 0,

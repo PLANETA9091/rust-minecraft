@@ -767,6 +767,44 @@ hand-drawn:
   nether pair on skip-sync, the synced truth winning, the silent sync
   and the one-sided statement reading None) and the App pin discipline
   (the nether join pins 10/96, the procedural re-entry drops it).
+  The **cloud fog rides the stated attribute (v0.3.94 — the
+  cloud_fog_end_distance consumer)**: the remaining-syncable-attributes
+  sweep's first consumer. The audit re-ran on the 26.2 jar
+  (EnvironmentAttributes.<clinit> + the four dimension JSONs): the
+  visual/fog pair has two single-attribute siblings — sky_fog_end
+  (default 512.0) and cloud_fog_end_distance (default 2048.0), both
+  FLOAT and both `.syncable()` — and NO vanilla dimension declares
+  either (the fogged pair is the nether's alone), so the field rides
+  only a custom server's statement. The round picked the attribute the
+  client already consumed as a HIDDEN LITERAL: the cloud layer's
+  FogCloudsEnd was `min(cloudRange * 16, 2048.0)` hardcoded at the
+  render site — the sweep's whole point is that an official attribute
+  must live as STATE, not as a buried number. The implementation is
+  the fog-pair's shape minus the pairing rule: the generator parses
+  `minecraft:visual/cloud_fog_end_distance` into the built-in table
+  (four None rows — the bytecode default's shape; the regenerated
+  table's diff is exactly the 4 rows + the struct docs), mc-protocol's
+  `DimensionTypeEntry` grows the same field decoded from the flat
+  attributes compound (ABSENT reads None — the consumer's default; a
+  single FLOAT has nothing to pair with), the model grows
+  `WorldModel::cloud_fog_end_distance()` (the three-branch precedence:
+  the synced statement wins, the built-in table serves skip-sync, None
+  is the default's verdict), and the consumer caps the cloud fog
+  through `sky::clouds_fog_end(range, stated)` — `min(cloudRange * 16,
+  stated.unwrap_or(DEFAULT_CLOUD_FOG_END))`: a stated smaller end wins
+  verbatim, a stated larger one never lifts the render-distance cap.
+  The App pins the value at level entry like the fog pair (both join
+  sites resolve through the model; the procedural re-entry drops it).
+  Goldens untouched BY CONSTRUCTION: every golden world is
+  overworld/unstated — None rides the 2048.0 default, byte-identical
+  with the retired literal; 12/12 pass. Tests +3 (workspace 409 -> 412
+  passed / 0 failed / 3 ignored): the wire stated-FLOAT decode (a
+  custom element's attributes compound; the real overworld/nether
+  elements assert the absent shape), the model accessor's precedence
+  (the built-in table's four None rows, the synced truth winning, the
+  silent sync reading None), and the cap vectors (the default, the
+  render-distance cap firing first, the stated smaller end winning,
+  the stated larger end never lifting the cap).
   The **synced ambient rides the wire (v0.3.89 — the server's truth)**:
   the ambient arc's wire half closes. The audit ran first-hand on the
   26.2 jar: `DimensionType.NETWORK_CODEC` builds on

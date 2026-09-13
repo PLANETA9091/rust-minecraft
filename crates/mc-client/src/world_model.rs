@@ -906,6 +906,7 @@ mod tests {
             skybox: None,
             fog_start_distance: None,
             fog_end_distance: None,
+            cloud_fog_end_distance: None,
             }],
             // the synced biome table: ids 0/1/2, arrival order
             biomes: vec![
@@ -1093,6 +1094,7 @@ mod tests {
         skybox: None,
         fog_start_distance: None,
         fog_end_distance: None,
+        cloud_fog_end_distance: None,
         }];
         let p3 =
             mc_protocol::play::test_support::set_time_packet(3, &[(0, 1_002_006_000, 0.0, 1.0)]);
@@ -1280,6 +1282,7 @@ mod tests {
                 skybox: None,
                 fog_start_distance: None,
                 fog_end_distance: None,
+                cloud_fog_end_distance: None,
                 },
                 DimensionTypeEntry {
                     name: "minecraft:the_nether".into(),
@@ -1291,6 +1294,7 @@ mod tests {
                 skybox: None,
                 fog_start_distance: None,
                 fog_end_distance: None,
+                cloud_fog_end_distance: None,
                 },
             ],
             biomes: Vec::new(),
@@ -1351,6 +1355,7 @@ mod tests {
                 skybox: None,
                 fog_start_distance: None,
                 fog_end_distance: None,
+                cloud_fog_end_distance: None,
             }],
             biomes: Vec::new(),
             biome_tags: Vec::new(),
@@ -1495,6 +1500,7 @@ mod tests {
         skybox: None,
         fog_start_distance: None,
         fog_end_distance: None,
+        cloud_fog_end_distance: None,
         }];
         let p5 = mc_protocol::play::test_support::set_time_packet(5, &[(0, 18_000, 0.0, 1.0)]);
         let ts5 = mc_protocol::play::parse_set_time(&p5).unwrap();
@@ -1612,6 +1618,7 @@ mod tests {
                 skybox: None,
                 fog_start_distance: None,
                 fog_end_distance: None,
+                cloud_fog_end_distance: None,
                 }],
                 biomes: Vec::new(),
                 biome_tags: Vec::new(),
@@ -1692,6 +1699,7 @@ mod tests {
                     skybox: None,
                     fog_start_distance: None,
                     fog_end_distance: None,
+                    cloud_fog_end_distance: None,
                     })
                     .collect(),
                 biomes: Vec::new(),
@@ -1789,6 +1797,7 @@ mod tests {
                     skybox: None,
                     fog_start_distance: None,
                     fog_end_distance: None,
+                    cloud_fog_end_distance: None,
                     })
                     .collect(),
                 biomes: Vec::new(),
@@ -1817,8 +1826,8 @@ mod tests {
         let mut m = WorldModel::new();
         m.registry = RegistryData {
             dimension_types: vec![
-                DimensionTypeEntry { name: "minecraft:overworld".into(), min_y: -64, height: 384, default_clock: Some("minecraft:overworld".into()) , timelines: None, ambient_light_color: None, skybox: None, fog_start_distance: None, fog_end_distance: None },
-                DimensionTypeEntry { name: "minecraft:the_nether".into(), min_y: 0, height: 256, default_clock: None , timelines: None, ambient_light_color: None, skybox: None, fog_start_distance: None, fog_end_distance: None },
+                DimensionTypeEntry { name: "minecraft:overworld".into(), min_y: -64, height: 384, default_clock: Some("minecraft:overworld".into()) , timelines: None, ambient_light_color: None, skybox: None, fog_start_distance: None, fog_end_distance: None, cloud_fog_end_distance: None },
+                DimensionTypeEntry { name: "minecraft:the_nether".into(), min_y: 0, height: 256, default_clock: None , timelines: None, ambient_light_color: None, skybox: None, fog_start_distance: None, fog_end_distance: None, cloud_fog_end_distance: None },
             ],
             biomes: Vec::new(),
             biome_tags: Vec::new(),
@@ -1962,6 +1971,7 @@ mod tests {
                 skybox: None,
                 fog_start_distance: None,
                 fog_end_distance: None,
+                cloud_fog_end_distance: None,
             }],
             biomes: Vec::new(),
             biome_tags: Vec::new(),
@@ -2078,6 +2088,7 @@ mod tests {
                 skybox: Some(mc_protocol::Skybox::None),
                 fog_start_distance: None,
                 fog_end_distance: None,
+                cloud_fog_end_distance: None,
             }],
             biomes: Vec::new(),
             biome_tags: Vec::new(),
@@ -2153,6 +2164,7 @@ mod tests {
                 skybox: Some(mc_protocol::Skybox::None),
                 fog_start_distance: Some(5.0),
                 fog_end_distance: Some(48.0),
+                cloud_fog_end_distance: None,
             }],
             biomes: Vec::new(),
             biome_tags: Vec::new(),
