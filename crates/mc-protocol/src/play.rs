@@ -87,13 +87,15 @@ use crate::DEFAULT_TIMEOUT_SECS;
 /// Runtime facts: login = 49, respawn = 82, chunk data = 45.
 pub mod clientbound {
     pub use crate::generated::packet_ids::{
-        CB_BLOCK_UPDATE as BLOCK_UPDATE, CB_CHUNK_BATCH_START as BATCH_START,
-        CB_DISCONNECT as DISCONNECT, CB_FORGET_LEVEL_CHUNK as UNLOAD_CHUNK,
-        CB_KEEP_ALIVE as KEEP_ALIVE, CB_LEVEL_CHUNK_WITH_LIGHT as CHUNK_DATA,
-        CB_LIGHT_UPDATE as UPDATE_LIGHT, CB_LOGIN as LOGIN, CB_PING as PING,
-        CB_PLAYER_POSITION as SYNCHRONIZE_POSITION, CB_RESPAWN as RESPAWN,
-        CB_SECTION_BLOCKS_UPDATE as SECTION_BLOCKS_UPDATE, CB_SET_CHUNK_CACHE_CENTER as CENTER_CHUNK,
-        CB_SET_TIME as SET_TIME,
+        CB_ADD_ENTITY as ADD_ENTITY, CB_BLOCK_UPDATE as BLOCK_UPDATE,
+        CB_CHUNK_BATCH_START as BATCH_START, CB_DISCONNECT as DISCONNECT,
+        CB_ENTITY_POSITION_SYNC as ENTITY_POSITION_SYNC,
+        CB_FORGET_LEVEL_CHUNK as UNLOAD_CHUNK, CB_KEEP_ALIVE as KEEP_ALIVE,
+        CB_LEVEL_CHUNK_WITH_LIGHT as CHUNK_DATA, CB_LIGHT_UPDATE as UPDATE_LIGHT,
+        CB_LOGIN as LOGIN, CB_PING as PING, CB_PLAYER_POSITION as SYNCHRONIZE_POSITION,
+        CB_REMOVE_ENTITIES as REMOVE_ENTITIES, CB_RESPAWN as RESPAWN,
+        CB_SECTION_BLOCKS_UPDATE as SECTION_BLOCKS_UPDATE,
+        CB_SET_CHUNK_CACHE_CENTER as CENTER_CHUNK, CB_SET_TIME as SET_TIME,
     };
 }
 
@@ -950,6 +952,219 @@ pub fn parse_section_blocks(payload: &[u8]) -> Result<SectionBlocks> {
 }
 
 // ---------------------------------------------------------------------------
+// entities: the world's own population traffic
+// ---------------------------------------------------------------------------
+
+/// Decode the wire's low-precision Vec3 — javap of the real 26.2
+/// (`Vec3.LP_STREAM_CODEC` delegates to `net.minecraft.network.LpVec3`,
+/// NOT the wiki-era 3-shorts-times-8000 layout). The wire is 6 bytes
+/// packed as a 48-bit big-endian integer:
+/// * byte 0 carries the scale's low 2 bits (bits 0-1), the continuation
+///   flag (bit 2, `hasContinuationBit` = `(i & 4) == 4`) and the data's
+///   low 5 bits — a zero FIRST byte is the ZERO sentinel (nothing else
+///   is read),
+/// * the remaining 43 data bits split into three 15-bit lanes at
+///   shifts 3 / 18 / 33 (`read`: `packed >>> 3 / 18 / 33`),
+/// * each lane `unpack(v) = min(v & 32767, 32766) * 2 / 32766 - 1`
+///   (javap: the 15-bit value CLAMPS at 32766, scales to [-1, 1]),
+/// * the value is multiplied by the scale (a double): the low 2 bits
+///   ride byte 0; when the continuation flag is set the scale's high
+///   bits follow as one VarInt (`scale |= (varint & 0xFFFFFFFF) << 2`).
+fn decode_lp_vec3(r: &mut &[u8]) -> std::io::Result<[f64; 3]> {
+    let b0 = read_u8(r)?;
+    if b0 == 0 {
+        return Ok([0.0; 3]);
+    }
+    let b1 = read_u8(r)?;
+    let tail = read_u32(r)? as u64;
+    let packed = (tail << 16) | ((b1 as u64) << 8) | (b0 as u64);
+    let mut scale = (b0 & 3) as u64;
+    if b0 & 4 != 0 {
+        scale |= (read_varint(r)? as u32 as u64) << 2;
+    }
+    let unpack = |shift: u32| {
+        let v = ((packed >> shift) & 0x7FFF) as f64;
+        (v.min(32766.0) * 2.0 / 32766.0) - 1.0
+    };
+    Ok([
+        unpack(3) * scale as f64,
+        unpack(18) * scale as f64,
+        unpack(33) * scale as f64,
+    ])
+}
+
+/// The unpacked Add Entity payload (clientbound play, generated id 1 —
+/// `minecraft:add_entity`). javap of the 26.2 STREAM_CODEC reading
+/// constructor, in wire order: VarInt entity id, UUID (two BIG-ENDIAN
+/// longs: most then least significant), VarInt entity TYPE registry id
+/// (`ByteBufCodecs.registry(Registries.ENTITY_TYPE)` — the same registry
+/// the configuration phase syncs), three BIG-ENDIAN doubles (position),
+/// the low-precision movement vector ([`decode_lp_vec3`]), three angle
+/// BYTES (x/y/yHead — `Mth.unpackDegrees(b) = b * 360 / 256`, the
+/// sign-extended byte's [-180, 180) degrees), and the VarInt data
+/// (entity-type specific: the minecart's display block, the
+/// projectile's owner shard, ...). The world's population: the mob that
+/// walked in, the item that dropped, the arrow in flight.
+#[derive(Debug, Clone, PartialEq)]
+pub struct EntitySpawn {
+    /// The entity's numeric id (the key every later move/remove names).
+    pub id: i32,
+    /// The entity's UUID — the 128 wire bits packed most-long first.
+    pub uuid: u128,
+    /// The entity type's registry id (resolved by the synced registry).
+    pub type_id: i32,
+    /// World position (full-precision doubles).
+    pub x: f64,
+    pub y: f64,
+    pub z: f64,
+    /// The low-precision movement vector ([`decode_lp_vec3`]).
+    pub movement: [f64; 3],
+    /// Pitch in degrees (the byte unpacked the vanilla way).
+    pub x_rot: f32,
+    /// Yaw in degrees (the byte unpacked the vanilla way).
+    pub y_rot: f32,
+    /// Head yaw in degrees (the byte unpacked the vanilla way).
+    pub y_head_rot: f32,
+    /// The entity-type-specific data int (verbatim).
+    pub data: i32,
+}
+
+/// Parse Add Entity (clientbound play, generated id 1). The count
+/// checks are per-field (each read fails on exhaustion) and trailing
+/// bytes are drift.
+pub fn parse_add_entity(payload: &[u8]) -> Result<EntitySpawn> {
+    let mut c: &[u8] = payload;
+    let id = read_varint(&mut c)?;
+    anyhow::ensure!(id == clientbound::ADD_ENTITY, "not an add entity packet (0x{id:02X})");
+    let entity_id = read_varint(&mut c)?;
+    let msb = read_i64(&mut c)? as u64;
+    let lsb = read_i64(&mut c)? as u64;
+    let uuid = ((msb as u128) << 64) | (lsb as u128);
+    let type_id = read_varint(&mut c)?;
+    let x = read_f64(&mut c)?;
+    let y = read_f64(&mut c)?;
+    let z = read_f64(&mut c)?;
+    let movement = decode_lp_vec3(&mut c)?;
+    let unpack_degrees = |b: i8| (b as i32 * 360) as f32 / 256.0;
+    let x_rot = unpack_degrees(read_i8(&mut c)?);
+    let y_rot = unpack_degrees(read_i8(&mut c)?);
+    let y_head_rot = unpack_degrees(read_i8(&mut c)?);
+    let data = read_varint(&mut c)?;
+    anyhow::ensure!(
+        c.is_empty(),
+        "{} trailing bytes after the add entity packet",
+        c.len()
+    );
+    Ok(EntitySpawn {
+        id: entity_id,
+        uuid,
+        type_id,
+        x,
+        y,
+        z,
+        movement,
+        x_rot,
+        y_rot,
+        y_head_rot,
+        data,
+    })
+}
+
+/// Parse Remove Entities (clientbound play, generated id 77 —
+/// `minecraft:remove_entities`). javap of the 26.2 reading constructor:
+/// `FriendlyByteBuf.readIntIdList` — a VarInt count then that many
+/// VarInt entity ids. The count is validated against the remaining
+/// bytes BEFORE any allocation (each id is at least one wire byte — a
+/// lying count cannot reserve memory the packet cannot back).
+pub fn parse_remove_entities(payload: &[u8]) -> Result<Vec<i32>> {
+    let mut c: &[u8] = payload;
+    let id = read_varint(&mut c)?;
+    anyhow::ensure!(
+        id == clientbound::REMOVE_ENTITIES,
+        "not a remove entities packet (0x{id:02X})"
+    );
+    let count = read_varint(&mut c)?;
+    if count < 0 || count as usize > c.len() {
+        return Err(anyhow::anyhow!(
+            "absurd entity count {count} for {} remaining bytes",
+            c.len()
+        ));
+    }
+    let mut ids = Vec::with_capacity(count as usize);
+    for _ in 0..count {
+        ids.push(read_varint(&mut c)?);
+    }
+    anyhow::ensure!(
+        c.is_empty(),
+        "{} trailing bytes after the remove entities packet",
+        c.len()
+    );
+    Ok(ids)
+}
+
+/// The unpacked Entity Position Sync payload (clientbound play,
+/// generated id 35 — `minecraft:entity_position_sync`). javap of the
+/// 26.2 STREAM_CODEC: `StreamCodec.composite(VAR_INT, VAR_INT, ...)` of
+/// the entity id, `PositionMoveRotation.STREAM_CODEC`, and BOOL — the
+/// record is `(int id, PositionMoveRotation values, boolean onGround)`
+/// and the rotation record composes `Vec3.STREAM_CODEC` (position,
+/// FULL-precision doubles — not the movement lane), `Vec3.STREAM_CODEC`
+/// (deltaMovement), FLOAT yRot, FLOAT xRot.
+#[derive(Debug, Clone, PartialEq)]
+pub struct EntityPositionSync {
+    /// The entity's numeric id.
+    pub id: i32,
+    /// World position (full-precision doubles).
+    pub x: f64,
+    pub y: f64,
+    pub z: f64,
+    /// The entity's velocity (full-precision doubles).
+    pub delta: [f64; 3],
+    /// Yaw in degrees.
+    pub y_rot: f32,
+    /// Pitch in degrees.
+    pub x_rot: f32,
+    /// The entity's ground contact flag (verbatim).
+    pub on_ground: bool,
+}
+
+/// Parse Entity Position Sync — the server's authoritative "this entity
+/// is HERE now" teleport/position correction.
+pub fn parse_entity_position_sync(payload: &[u8]) -> Result<EntityPositionSync> {
+    let mut c: &[u8] = payload;
+    let id = read_varint(&mut c)?;
+    anyhow::ensure!(
+        id == clientbound::ENTITY_POSITION_SYNC,
+        "not an entity position sync packet (0x{id:02X})"
+    );
+    let entity_id = read_varint(&mut c)?;
+    let x = read_f64(&mut c)?;
+    let y = read_f64(&mut c)?;
+    let z = read_f64(&mut c)?;
+    let dx = read_f64(&mut c)?;
+    let dy = read_f64(&mut c)?;
+    let dz = read_f64(&mut c)?;
+    let y_rot = read_f32(&mut c)?;
+    let x_rot = read_f32(&mut c)?;
+    let on_ground = read_u8(&mut c)? != 0;
+    anyhow::ensure!(
+        c.is_empty(),
+        "{} trailing bytes after the entity position sync packet",
+        c.len()
+    );
+    Ok(EntityPositionSync {
+        id: entity_id,
+        x,
+        y,
+        z,
+        delta: [dx, dy, dz],
+        y_rot,
+        x_rot,
+        on_ground,
+    })
+}
+
+// ---------------------------------------------------------------------------
 // serverbound replies
 // ---------------------------------------------------------------------------
 
@@ -1063,6 +1278,14 @@ pub enum PlayEvent {
     /// Section Blocks Update: a batch of changes inside ONE section
     /// (the entries are section-relative + the global state id).
     SectionBlocks(SectionBlocks),
+    /// Add Entity: something new exists in the world (a mob, a dropped
+    /// item, a projectile) — the model's entity registry grows.
+    Spawn(EntitySpawn),
+    /// Remove Entities: a batch of entity ids ceased to exist.
+    EntitiesRemoved(Vec<i32>),
+    /// Entity Position Sync: the server's authoritative position
+    /// correction for ONE entity (the model moves it in place).
+    EntityMoved(EntityPositionSync),
     /// Any packet without a client surface yet (skipped silently).
     Skipped,
 }
@@ -1139,6 +1362,13 @@ impl<S: Read + Write> PlaySession<S> {
             }
             clientbound::SECTION_BLOCKS_UPDATE => {
                 Ok(PlayEvent::SectionBlocks(parse_section_blocks(&pkt)?))
+            }
+            clientbound::ADD_ENTITY => Ok(PlayEvent::Spawn(parse_add_entity(&pkt)?)),
+            clientbound::REMOVE_ENTITIES => {
+                Ok(PlayEvent::EntitiesRemoved(parse_remove_entities(&pkt)?))
+            }
+            clientbound::ENTITY_POSITION_SYNC => {
+                Ok(PlayEvent::EntityMoved(parse_entity_position_sync(&pkt)?))
             }
             _ => Ok(PlayEvent::Skipped),
         }
