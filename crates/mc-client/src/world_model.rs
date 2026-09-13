@@ -2645,4 +2645,84 @@ mod tests {
             "the sync arrived and is silent: no stated value, never a guess"
         );
     }
+
+    #[test]
+    fn the_night_vision_color_reads_the_stated_attribute() {
+        // the night-vision color is the lightmap's LAST stated
+        // attribute: no vanilla dimension states it (the built-in rows
+        // all None — the -6710887 = #999999 gray bytecode default
+        // covers the absence; the end/nether state their sky pairs,
+        // not this), and a custom server's stated rgb_color is the
+        // synced truth. The shader consumes it UNDER the night-vision
+        // FACTOR — the player's EFFECT state (NIGHT_VISION /
+        // conduit power + water vision), 0.0 without (javap
+        // LightmapRenderStateExtractor.extract: the probe reads the
+        // attribute unconditionally, the effect state gates the term).
+        // The three-branch precedence, the color's shape.
+        let mut m = WorldModel::new();
+        assert_eq!(m.night_vision_color(), None, "no dimension: no opinion");
+        // the built-in end: unstated — None (the honest all-None shape,
+        // the sky pairs ride OTHER columns)
+        m.apply(PlayEvent::Respawn(SpawnInfo {
+            dimension_type_id: 0,
+            dimension: "minecraft:the_end".to_string(),
+            portal_cooldown: 0,
+        }));
+        assert_eq!(
+            m.night_vision_color(),
+            None,
+            "the built-in end does NOT state it — the gray default's shape"
+        );
+        // the built-in nether: likewise unstated
+        m.apply(PlayEvent::Respawn(SpawnInfo {
+            dimension_type_id: 0,
+            dimension: "minecraft:the_nether".to_string(),
+            portal_cooldown: 0,
+        }));
+        assert_eq!(m.night_vision_color(), None);
+        // the overworld: unstated — the gray default's shape
+        m.apply(PlayEvent::Respawn(SpawnInfo {
+            dimension_type_id: 0,
+            dimension: "minecraft:overworld".to_string(),
+            portal_cooldown: 0,
+        }));
+        assert_eq!(m.night_vision_color(), None);
+        // the synced truth wins: a custom server's own stated rgb_color
+        m.registry = RegistryData {
+            dimension_types: vec![DimensionTypeEntry {
+                name: "minecraft:overworld".into(),
+                min_y: -64,
+                height: 384,
+                default_clock: Some("minecraft:overworld".into()),
+                timelines: Some("#minecraft:in_overworld".into()),
+                ambient_light_color: None,
+                skybox: None,
+                fog_start_distance: None,
+                fog_end_distance: None,
+                cloud_fog_end_distance: None,
+                block_light_tint: None,
+                sky_light_color: None,
+                sky_light_factor: None,
+                night_vision_color: Some([0x30, 0x28, 0x21]),
+            }],
+            biomes: Vec::new(),
+            biome_tags: Vec::new(),
+            world_clocks: Vec::new(),
+            timelines: Vec::new(),
+            timeline_tags: Vec::new(),
+        };
+        assert_eq!(
+            m.night_vision_color(),
+            Some([0x30, 0x28, 0x21]),
+            "the synced value is the server's truth"
+        );
+        // the sync arrives and is silent: None — the gray default's
+        // shape, the sync's own silence, never a guess
+        m.registry.dimension_types[0].night_vision_color = None;
+        assert_eq!(
+            m.night_vision_color(),
+            None,
+            "the sync arrived and is silent: no stated value, never a guess"
+        );
+    }
 }

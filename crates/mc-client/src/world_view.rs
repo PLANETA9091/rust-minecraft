@@ -841,6 +841,66 @@ mod tests {
     }
 
     #[test]
+    fn materialize_carries_the_models_night_vision_color() {
+        // the stated night-vision color rides the SAME snapshot (the
+        // lightmap family's transport): the model's dimension resolves
+        // through the built-in visual/night_vision_color column. NO
+        // vanilla dimension states it — the built-in rows are all None —
+        // so the view's absent shape is the bytecode default's verdict
+        // (#999999 gray, read by the mesher UNDER the factor 0.0), and
+        // a custom server's stated entry lands VERBATIM.
+        let mut m = WorldModel::new();
+        m.apply(PlayEvent::Chunk(ChunkColumn {
+            x: 0,
+            z: 0,
+            sections: vec![stone_dirt_section()],
+            light: ChunkLight::default(),
+        }));
+        let world = materialize(&m, (0, 0), 1, 0, example_mapper);
+        assert_eq!(
+            world.night_vision_color, None,
+            "no dimension: the #999999 default's shape"
+        );
+        // a synced custom entry is the server's truth: it lands on the
+        // view raw, the shader's stated base for the day the factor lifts
+        m.registry = RegistryData {
+            dimension_types: vec![mc_protocol::DimensionTypeEntry {
+                name: "minecraft:overworld".into(),
+                min_y: -64,
+                height: 384,
+                default_clock: Some("minecraft:overworld".into()),
+                timelines: Some("#minecraft:in_overworld".into()),
+                ambient_light_color: None,
+                skybox: None,
+                fog_start_distance: None,
+                fog_end_distance: None,
+                cloud_fog_end_distance: None,
+                block_light_tint: None,
+                sky_light_color: None,
+                sky_light_factor: None,
+                night_vision_color: Some([0x18, 0x10, 0x28]),
+            }],
+            biomes: Vec::new(),
+            biome_tags: Vec::new(),
+            world_clocks: Vec::new(),
+            timelines: Vec::new(),
+            timeline_tags: Vec::new(),
+        };
+        m.apply(PlayEvent::Chunk(ChunkColumn {
+            x: 0,
+            z: 0,
+            sections: vec![stone_dirt_section()],
+            light: ChunkLight::default(),
+        }));
+        let world = materialize(&m, (0, 0), 1, 0, example_mapper);
+        assert_eq!(
+            world.night_vision_color,
+            Some([0x18, 0x10, 0x28]),
+            "the view carries the stated custom night-vision color verbatim"
+        );
+    }
+
+    #[test]
     fn materialize_carries_the_models_biome_layer() {
         let mut m = WorldModel::new();
         // the synced table: id 0 plains (the baked water default), id 1

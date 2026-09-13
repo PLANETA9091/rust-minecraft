@@ -221,6 +221,28 @@ fn block_light_color(block: f32, tint: Option<[f32; 3]>) -> [f32; 3] {
     ]
 }
 
+/// The lightmap shader's `max(AmbientColor, nightVisionColor)` base
+/// — lightmap.fsh verbatim: `vec3 nightVisionColor =
+/// lightmapInfo.NightVisionColor * lightmapInfo.NightVisionFactor;
+/// vec3 color = max(lightmapInfo.AmbientColor, nightVisionColor);`.
+/// The tint is the dimension's STATED `visual/night_vision_color`
+/// when one rides the sync (the model's `night_vision_color()`,
+/// normalized to 0..1), the bytecode default otherwise — `None` is
+/// the default's verdict, never a guess. The factor rides as a
+/// parameter so the term's contract is pinnable at a lifted state
+/// (the effect system's arrival); at this client's floor 0.0 the
+/// product is exactly zero and the max returns the ambient base bit
+/// for bit for ANY tint.
+#[inline]
+fn night_vision_base(ambient: [f32; 3], tint: Option<[f32; 3]>, factor: f32) -> [f32; 3] {
+    let t = tint.unwrap_or(DEFAULT_NIGHT_VISION_COLOR);
+    [
+        ambient[0].max(t[0] * factor),
+        ambient[1].max(t[1] * factor),
+        ambient[2].max(t[2] * factor),
+    ]
+}
+
 /// The vanilla lightmap combine, PER CHANNEL — `lightmap.fsh`'s
 /// `color = max(AmbientColor, nightVisionColor); color += SkyLightColor *
 /// get_brightness(sky) * SkyFactor + BlockLightColor *
@@ -231,9 +253,13 @@ fn block_light_color(block: f32, tint: Option<[f32; 3]>) -> [f32; 3] {
 /// dimension's `visual/ambient_light_color` attribute (overworld
 /// #0a0a0a, nether #302821, end #3f473f; the bytecode default black when
 /// no opinion — a no-op base, so `None` keeps the pre-ambient arithmetic
-/// bit for bit). NightVisionFactor is 0 at this client's state, so the
-/// max against `nightVisionColor` is `max(A, 0) = A` (a color is
-/// non-negative — the documented verdict). `SkyLightColor` is the
+/// bit for bit). `NightVisionColor` is the dimension's STATED
+/// `visual/night_vision_color` (or the `#999999` bytecode default,
+/// gray) UNDER the night-vision factor — the player's EFFECT state,
+/// [`NIGHT_VISION_FACTOR`] 0.0 at this client's state, so the base is
+/// `max(A, C·0.0) = A` bit for bit (the term rides for the day the
+/// effect system lifts the factor — [`night_vision_base`]).
+/// `SkyLightColor` is the
 /// timeline's `visual/sky_light_color` track (`timeline::sky_light_color`:
 /// the white default by day, `#7a7aff` — the moonlight blue — through the
 /// night plateau). `BlockLightColor` is [`block_light_color`] — the
@@ -242,7 +268,7 @@ fn block_light_color(block: f32, tint: Option<[f32; 3]>) -> [f32; 3] {
 /// level — scaled by `BlockFactor` 1.4, the flicker's expectation (the
 /// random walk itself is the documented non-goal). The remaining shader
 /// terms are the defaults' identities at this client's state:
-/// DarknessScale / NightVision / BossOverlay are all 0, and the
+/// DarknessScale / BossOverlay are 0, and the
 /// brightness (gamma) mix is an identity at gamma 0. A layer the model
 /// never answered for is `None`, not zero; no layer at all is the legacy
 /// unshaded look.
@@ -254,6 +280,7 @@ fn lightmap_combine(
     sky_tint: [f32; 3],
     ambient: [f32; 3],
     block_tint: Option<[f32; 3]>,
+    night_vision: Option<[f32; 3]>,
 ) -> [f32; 3] {
     let sky_term = sky.map(|v| light_brightness(v) * sky_factor);
     let block_term = block.map(|v| {
@@ -264,9 +291,10 @@ fn lightmap_combine(
     if sky_term.is_none() && block_term.is_none() {
         return [1.0; 3]; // no light layer — the legacy look
     }
-    // the shader's base: max(AmbientColor, nightVisionColor) with the
-    // night-vision factor at 0 — the dimension's ambient color itself
-    let mut color = ambient;
+    // the shader's base: max(AmbientColor, NightVisionColor *
+    // NightVisionFactor) — the factor 0.0 at this client's state makes
+    // it the ambient color bit for bit
+    let mut color = night_vision_base(ambient, night_vision, NIGHT_VISION_FACTOR);
     if let Some(s) = sky_term {
         color[0] += s * sky_tint[0];
         color[1] += s * sky_tint[1];
@@ -467,6 +495,13 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                     let block_tint = world.block_light_tint.map(|a| {
                         [a[0] as f32 / 255.0, a[1] as f32 / 255.0, a[2] as f32 / 255.0]
                     });
+                    // The shader's NightVisionColor: the dimension's STATED
+                    // attribute (raw bytes -> 0..1), None = the bytecode
+                    // default's verdict (#999999 gray) — consumed UNDER the
+                    // night-vision factor (the effect state, 0.0 here).
+                    let night_vision = world.night_vision_color.map(|a| {
+                        [a[0] as f32 / 255.0, a[1] as f32 / 255.0, a[2] as f32 / 255.0]
+                    });
                     let fy = wy as f32 + FLAT_Y;
                     let variant = world
                         .variants
@@ -555,6 +590,7 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                                         sky_tint,
                                         ambient,
                                         block_tint,
+                                        night_vision,
                                     ),
                                     None => [1.0; 3], // no light layer — legacy look
                                 };
@@ -678,6 +714,13 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                     let block_tint = world.block_light_tint.map(|a| {
                         [a[0] as f32 / 255.0, a[1] as f32 / 255.0, a[2] as f32 / 255.0]
                     });
+                    // The shader's NightVisionColor: the dimension's STATED
+                    // attribute (raw bytes -> 0..1), None = the bytecode
+                    // default's verdict (#999999 gray) — consumed UNDER the
+                    // night-vision factor (the effect state, 0.0 here).
+                    let night_vision = world.night_vision_color.map(|a| {
+                        [a[0] as f32 / 255.0, a[1] as f32 / 255.0, a[2] as f32 / 255.0]
+                    });
                     let order = flip_order(&ao);
                     let mut pts = [[0f32; 3]; 4];
                     let mut colors = [[0f32; 3]; 4];
@@ -697,7 +740,7 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                         // old max's verdict). No known cell -> legacy look.
                         let lm = match clight.as_ref() {
                             Some((sky, block)) => {
-                                lightmap_combine(sky[src], block[src], sky_factor, sky_tint, ambient, block_tint)
+                                lightmap_combine(sky[src], block[src], sky_factor, sky_tint, ambient, block_tint, night_vision)
                             }
                             None => [1.0; 3], // no light layer — legacy look
                         };
@@ -783,6 +826,9 @@ mod tests {
             // None = the -1 default's white identity: the sky term's
             // tint stays the track verbatim, the pre-attribute shape
             sky_light_color: None,
+            // None = the #999999 default's verdict under the factor 0.0:
+            // the night-vision term stays the ambient base bit for bit
+            night_vision_color: None,
         }
     }
 
@@ -1573,6 +1619,80 @@ mod tests {
                 assert!((ch - e).abs() < 1e-6, "torch-14 per channel: {ch} vs {e}");
             }
         }
+    }
+
+    #[test]
+    fn the_stated_night_vision_color_rides_the_shader_max_term() {
+        // the lightmap's LAST stated attribute: the shader's
+        // `max(AmbientColor, NightVisionColor * NightVisionFactor)` base
+        // (lightmap.fsh verbatim). The FACTOR is the player's EFFECT
+        // state (NIGHT_VISION effect -> GameRenderer.nightVisionScale,
+        // conduit power + water vision, else exactly 0.0 — javap
+        // LightmapRenderStateExtractor.extract); this client carries no
+        // effect system, so the factor sits at its bytecode-pinned
+        // floor 0.0 and the term is the ambient base BIT FOR BIT for
+        // any tint — max(A, C·0.0) = A for non-negative A. The fold's
+        // arithmetic is pinned at the lifted factor too, the contract
+        // the effect system's arrival will consume.
+        let ambient = [0.1f32, 0.2, 0.3];
+        // the floor: factor 0.0 — the identity, exact equality (no
+        // tolerance: the goldens' untouched-by-construction witness)
+        assert_eq!(
+            night_vision_base(ambient, None, NIGHT_VISION_FACTOR),
+            ambient,
+            "factor 0.0: the default #999999 vanishes into the ambient base"
+        );
+        assert_eq!(
+            night_vision_base(ambient, Some([0.3, 0.2, 0.1]), NIGHT_VISION_FACTOR),
+            ambient,
+            "factor 0.0: a stated tint vanishes into the ambient base too"
+        );
+        // the lifted contract, factor 1.0 — the nightVisionScale
+        // plateau: None reads the BYTECODE default (#999999 gray =
+        // 153/255 per channel) and the max lifts the dark channels
+        let g = 153.0f32 / 255.0;
+        assert_eq!(
+            night_vision_base(ambient, None, 1.0),
+            [ambient[0].max(g), ambient[1].max(g), ambient[2].max(g)],
+            "factor 1.0: the gray default lifts the dark channels only"
+        );
+        // a stated color is the stated base: white maxes every channel
+        // to 1.0; a DIM stated color below the ambient floor moves
+        // NOTHING (the max is per-channel, never an average)
+        assert_eq!(
+            night_vision_base(ambient, Some([1.0; 3]), 1.0),
+            [1.0; 3],
+            "factor 1.0: the stated white maxes every channel"
+        );
+        assert_eq!(
+            night_vision_base(ambient, Some([0.05, 0.0, 0.15]), 1.0),
+            [ambient[0].max(0.05), ambient[1].max(0.0), ambient[2].max(0.15)],
+            "the max is per-channel: a dim stated color cannot darken"
+        );
+        // the render-path witness: a lit cell renders EXACTLY the same
+        // with a stated night-vision color as with None (the factor
+        // 0.0 identity through the world snapshot — the goldens' own
+        // shape), and a lifted factor WOULD lift the base (the same
+        // fold the mesher calls, at the effect system's future state)
+        let mut w = empty_world();
+        put(&mut w, 8, 8, 8, STONE);
+        w.light = Some(unknown_light());
+        set_light(&mut w, Some(4), Some(7), 8, 9, 8);
+        let baseline = vertex_multiplier(&top_face(&w));
+        w.night_vision_color = Some([0x18, 0x10, 0x28]);
+        assert_eq!(
+            vertex_multiplier(&top_face(&w)),
+            baseline,
+            "the stated attribute rides the snapshot; factor 0.0 keeps every pixel"
+        );
+        // the lifted base, derived through the SAME fold the paths call
+        let amb = 0.0f32; // the black default: this scene's ambient
+        let lifted = night_vision_base([amb; 3], Some([0x18 as f32 / 255.0, 0x10 as f32 / 255.0, 0x28 as f32 / 255.0]), 1.0);
+        assert_eq!(
+            lifted,
+            [24.0f32 / 255.0, 16.0 / 255.0, 40.0 / 255.0],
+            "the day the effect system lifts the factor, the stated color is the floor"
+        );
     }
 
     #[test]

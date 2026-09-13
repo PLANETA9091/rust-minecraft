@@ -267,6 +267,7 @@ impl World {
             block_light_tint: None, // the procedural scene: the bytecode default tint
             sky_light_factor: None, // the procedural scene: the bytecode default 1.0
             sky_light_color: None, // the procedural scene: the -1 default's white identity
+            night_vision_color: None, // the procedural scene: the #999999 default, factor 0.0
         };
         w.generate();
         w
