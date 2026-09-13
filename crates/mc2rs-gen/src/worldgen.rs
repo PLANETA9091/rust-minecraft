@@ -110,6 +110,15 @@ pub struct DimensionTypeEntry {
     /// overrides the registered default, the timeline's multiply track
     /// applies last).
     pub sky_light_factor: Option<f32>,
+    /// The STATED sky-light color (visual/sky_light_color) — `None`
+    /// when the JSON states none, the bytecode default's shape (-1 =
+    /// 0xFFFFFFFF = #FFFFFF white, javap EnvironmentAttributes: the
+    /// ARGB multiply identity). THE REAL JAR STATES IT: the_end pins
+    /// #ac60cd and the_nether #7a7aff (the moonlight blue) — the
+    /// consumer multiplies the stated base under the timeline's
+    /// multiply track per channel, INTEGER arithmetic (javap
+    /// ARGB.multiply: imul / idiv 255, the white -1 short-circuit).
+    pub sky_light_color: Option<[u8; 3]>,
 }
 
 /// The per-biome tint extras the jar states beyond the classic color
@@ -140,6 +149,9 @@ pub struct TimelineEntry {
     /// (tick, value) pairs of `minecraft:visual/sky_light_factor`, sorted by
     /// tick — empty when the timeline carries no such track
     pub sky_light_factor: Vec<(i64, f32)>,
+    /// (tick, raw channel triple) of `minecraft:visual/sky_light_color`,
+    /// sorted by tick — empty when the timeline carries no such track
+    pub sky_light_color: Vec<(i64, [u8; 3])>,
 }
 
 #[derive(Debug, Default)]
@@ -398,6 +410,17 @@ pub fn generate<R: std::io::Read + std::io::Seek>(archive: &mut zip::ZipArchive<
                                 .and_then(|a| a.get("minecraft:visual/sky_light_factor"))
                                 .and_then(Value::as_f64)
                                 .map(|f| f as f32),
+                            // the STATED sky-light color: a syncable
+                            // RGB_COLOR attribute (the "#rrggbb" string)
+                            // — the bytecode default -1 = #FFFFFF white
+                            // when the JSON states none; the real jar's
+                            // end/nether state their moonlight pairs
+                            sky_light_color: v
+                                .get("attributes")
+                                .and_then(|a| a.get("minecraft:visual/sky_light_color"))
+                                .and_then(Value::as_str)
+                                .and_then(hex_color)
+                                .map(|c| [(c >> 16) as u8, (c >> 8) as u8, c as u8]),
                             // string tag references only — the inline list
                             // form does not occur in the real jar
                             timelines: v
@@ -437,7 +460,22 @@ pub fn generate<R: std::io::Read + std::io::Seek>(archive: &mut zip::ZipArchive<
                                 .collect()
                         })
                         .unwrap_or_default();
-                    sky_light_factor.sort_by_key(|(t, _)| *t);
+                    let mut sky_light_color: Vec<(i64, [u8; 3])> = v
+                        .get("tracks")
+                        .and_then(|t| t.get("minecraft:visual/sky_light_color"))
+                        .and_then(|t| t.get("keyframes"))
+                        .and_then(Value::as_array)
+                        .map(|kfs| {
+                            kfs.iter()
+                                .filter_map(|kf| {
+                                    let t = kf.get("ticks")?.as_i64()?;
+                                    let c = kf.get("value")?.as_str().and_then(hex_color)?;
+                                    Some((t, [(c >> 16) as u8, (c >> 8) as u8, c as u8]))
+                                })
+                                .collect()
+                        })
+                        .unwrap_or_default();
+                    sky_light_color.sort_by_key(|(t, _)| *t);
                     let entry = TimelineEntry {
                         name: format!("minecraft:{id}"),
                         clock: v
@@ -448,6 +486,7 @@ pub fn generate<R: std::io::Read + std::io::Seek>(archive: &mut zip::ZipArchive<
                         period_ticks: v.get("period_ticks").and_then(Value::as_i64),
                         tracks,
                         sky_light_factor,
+                        sky_light_color,
                     };
                     data.timelines.insert(id, entry);
                 }
