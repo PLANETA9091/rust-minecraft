@@ -2182,6 +2182,13 @@ mod tests {
                     snap.registry.biome_name(1),
                     Some("minecraft:crimson_forest")
                 );
+                // the decoded ELEMENT content rides too — the tint-relevant
+                // color the client's mesher folds into the water quads
+                assert_eq!(
+                    snap.registry.biome(0).expect("plains").effects.water_color,
+                    4_159_204,
+                    "the vanilla plains water color, decoded through the wire codec"
+                );
                 assert_eq!(
                     snap.chunks[0].sections[0].biomes,
                     vec![0u32; 64],

@@ -434,6 +434,55 @@ mod tests {
         w.chunks[0][lx + lz * CHUNK_X + y as usize * CHUNK_X * CHUNK_Z] = id;
     }
 
+    /// The top-corner color of the water block at (8,8,8) — the textured
+    /// path's vertex carrier (all water neighbors are air so the top face
+    /// draws; the light layer is unknown/absent -> the legacy m = 1.0).
+    fn water_top_corner(w: &World) -> [f32; 3] {
+        mesh_chunk(w, 0, 0, None)
+            .iter()
+            .find(|quad| quad.pts[0][1] == 9.0 && quad.pts[1][1] == 9.0)
+            .expect("water top face quad")
+            .colors[0]
+    }
+
+    #[test]
+    fn biome_tint_folds_into_the_textured_carrier_only_when_it_differs() {
+        let mut w = empty_world();
+        put(&mut w, 8, 8, 8, WATER);
+        let reference = water_top_corner(&w);
+        assert!(
+            reference[0] > 0.0
+                && (reference[0] - reference[1]).abs() < 1e-6
+                && (reference[1] - reference[2]).abs() < 1e-6,
+            "the untinted carrier is shade×AO×light on every channel: {:?}",
+            reference
+        );
+        // plains: water == the baked default -> bit-identical to no layer
+        let baked = atlas::TINTS[WATER as usize][0];
+        let mut plains = empty_world();
+        put(&mut plains, 8, 8, 8, WATER);
+        plains.biomes = Some(BiomeLayer {
+            ids: vec![vec![0; CHUNK_X * CHUNK_Y * CHUNK_Z]],
+            tints: vec![[None, None, Some(baked)]],
+        });
+        assert_eq!(
+            water_top_corner(&plains),
+            reference,
+            "a tint matching the baked default is a no-op, bit for bit"
+        );
+        // a real red-water biome: the tint rides the SAME carrier
+        let mut red = empty_world();
+        put(&mut red, 8, 8, 8, WATER);
+        red.biomes = Some(BiomeLayer {
+            ids: vec![vec![0; CHUNK_X * CHUNK_Y * CHUNK_Z]],
+            tints: vec![[None, None, Some(0xFF0000)]],
+        });
+        let tinted = water_top_corner(&red);
+        assert_eq!(tinted[1], 0.0, "green killed by the tint");
+        assert_eq!(tinted[2], 0.0, "blue killed by the tint");
+        assert_eq!(tinted[0], reference[0], "red rides the SAME multiplier");
+    }
+
     #[test]
     fn vertex_ao_truth_table() {
         assert_eq!(vertex_ao(true, true, false), 0, "two sides fully occlude");

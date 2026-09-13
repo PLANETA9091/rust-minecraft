@@ -308,6 +308,32 @@ hand-drawn:
   Zero render-path pixels: the tint CONSUMERS come next; the ten
   goldens are bit-identical by construction (the wire fixture carries
   no registry knowledge).
+  The **biome tints are consumed (v0.3.45 — the tint foundation pays)**:
+  the first RENDER-FACING use of the decoded table. The client gained
+  `tint.rs` (the resolution: `entry_tints` — grass/foliage overrides
+  plus the REQUIRED water color per synced element; `slot_for` — the
+  atlas' tintindex flags: grass BLOCK TOP, leaves and water on all
+  faces) and `World::face_tint` (the voxel's registry id through the
+  per-voxel biome layer `materialize` now ships — ids expanded from the
+  wire's 4×4×4 cell grids through the model's proven queries, the
+  honest `BIOME_UNKNOWN` where the server never answered). The mesher
+  folds the resolved color into the VERTEX-COLOR carrier — the vanilla
+  `vertexColor * texelColor` multiply, one code path with shade×AO×light.
+  THE NO-OP RULE keeps every existing scene bit-identical: the generated
+  atlas BAKES the vanilla plains constants into the tile pixels
+  (`TINT_GRASS`/`TINT_FOLIAGE`/`TINT_WATER`), so a resolved tint EQUAL
+  to the baked default stays unfolded — the fold fires ONLY when the
+  synced table actually changes the color (a real server's swamp water,
+  the badlands' grass/foliage overrides). Documented deviations (the
+  next consumers): the COLORMAP lookup (temperature/downfall →
+  grass.png/foliage.png) is not consumed — a biome without an override
+  keeps the baked plains tint; `grass_color_modifier` (swamp needs the
+  biome noise, dark_forest a blend) is not consumed; `dry_foliage_color`
+  is carried with no texture to tint yet. Tests +8 (workspace 219 passed
+  / 0 failed / 3 ignored): the resolution surface, the no-op rule, the
+  fold into the carrier, the materialize ride-along, and the e2e
+  milestone's decoded water color. Ten goldens bit-identical, verified
+  on the release build.
   The **wire ids of every phase are generated**:
   `mc2rs-gen dump-packet-ids` binds the official jar's REAL protocols —
   play, login, configuration, status AND handshake — and dumps each
