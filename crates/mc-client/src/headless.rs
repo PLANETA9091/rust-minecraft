@@ -88,18 +88,25 @@ pub fn render_frames(
 
 /// Render one deterministic GUI screen (boot chain / menus) to PNG.
 /// `frame` drives boot progress, splash pulse and music scheduling.
+/// `held_item` (a model id, e.g. "item/iron_sword") holds that item in
+/// the first-person hand on the world screens — the deterministic
+/// stand-in for inventory state; `None` = the empty-hand arm (goldens).
 pub fn render_gui_screen(
     screen: &str,
     frame: u64,
     seed: u64,
     width: usize,
     height: usize,
+    held_item: Option<&str>,
     out_path: &Path,
 ) -> Result<()> {
     use crate::gui::GuiAssets;
     use crate::screens::{App, ScreenKind};
 
     let mut app = App::new(seed);
+    if let Some(id) = held_item {
+        app.held_item = crate::hand::load_item(id);
+    }
     match screen {
         "loading" => {
             app.screen = ScreenKind::Loading;

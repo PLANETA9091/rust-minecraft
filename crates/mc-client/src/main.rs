@@ -73,6 +73,13 @@ struct Cli {
     /// procedural scene — the golden path for the wire view.
     #[arg(long)]
     net_world: bool,
+    /// Hold an item in the first-person hand on the GUI world screens
+    /// (the model id, e.g. `item/iron_sword`) — the deterministic
+    /// stand-in for inventory state; the item is drawn INSTEAD of the
+    /// empty-hand arm (vanilla's submitArmWithItem branch). The default
+    /// scenes hold nothing, so the pixel goldens never see this.
+    #[arg(long)]
+    held_item: Option<String>,
     #[arg(long, default_value = "render.png")]
     out: PathBuf,
     /// Path to official asset index json (enables real texture-average colors).
@@ -95,7 +102,15 @@ fn main() -> Result<()> {
 
     // ---- headless GUI screenshots (boot chain / menus) ----
     if let Some(screen) = &cli.screen {
-        headless::render_gui_screen(screen, cli.ui_frame, cli.seed, cli.width, cli.height, &cli.out)?;
+        headless::render_gui_screen(
+            screen,
+            cli.ui_frame,
+            cli.seed,
+            cli.width,
+            cli.height,
+            cli.held_item.as_deref(),
+            &cli.out,
+        )?;
         return Ok(());
     }
 

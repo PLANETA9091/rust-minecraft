@@ -257,6 +257,13 @@ pub struct App {
     /// verbatim); the deterministic headless scenes never swing, so the
     /// pixel goldens always see the rest pose.
     pub swing: crate::hand::SwingState,
+    /// The held item (the first-person consumer of the display arc), set
+    /// explicitly via `--held-item <model_id>` — the deterministic
+    /// stand-in for inventory state (the client has no gameplay
+    /// inventory). `None` = the empty main hand (the default scenes),
+    /// which draws the arm; `Some` draws the item INSTEAD of the arm —
+    /// vanilla's submitArmWithItem branch, never both.
+    pub held_item: Option<crate::hand::HeldItem>,
     /// The last biome the network world's music situation resolved to
     /// (the synced registry name at the player's feet). `None` until a
     /// join resolves one; cleared with the level (Save and Quit, a kick).
@@ -353,6 +360,7 @@ impl App {
             live_runs: Vec::new(),
             arm: None,
             swing: crate::hand::SwingState::default(),
+            held_item: None,
         }
     }
 
@@ -849,7 +857,12 @@ impl App {
         if self.arm.is_none() {
             self.arm = crate::hand::load(std::path::Path::new("assets-cache/jar"));
         }
-        if let Some(arm) = &self.arm {
+        // vanilla submitArmWithItem: a non-empty main hand draws the ITEM
+        // instead of the arm; the empty hand draws the arm. Exactly one of
+        // the two per frame.
+        if let Some(item) = &self.held_item {
+            item.draw(fb, ctx.proj, self.swing.get_attack_anim(0.5));
+        } else if let Some(arm) = &self.arm {
             arm.draw(fb, ctx.proj, self.swing.get_attack_anim(0.5));
         }
     }

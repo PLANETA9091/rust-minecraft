@@ -27,7 +27,9 @@
 use std::path::Path;
 
 use anyhow::Context;
+use mc_registry::element_quads::Quad;
 use mc_registry::generated::skin;
+use mc_registry::sprite_uv::{self, Sample};
 use sha1::Digest;
 
 use crate::math::Mat4;
@@ -311,6 +313,114 @@ fn build_quads_at(swing: f32, equip: f32) -> Vec<HandQuad> {
     quads
 }
 
+/// The held item: the first-person consumer of the registry's display
+/// arc (item id -> model row -> bake quads -> display pose -> sampled
+/// texels). Vanilla's `submitArmWithItem` (javap) draws the ITEM instead
+/// of the arm whenever the main-hand stack is non-empty, so the client
+/// renders exactly one of the two per frame.
+///
+/// The item's own pose (`posed_item_quads` — the ItemTransform.apply of
+/// the model's display stanza, oracle-pinned bit-for-bit) lands the
+/// block-unit bake vertices around the origin; the HAND ANCHOR moves
+/// them into view space, verbatim from ItemInHandRenderer's bytecode:
+///
+/// - `applyItemArmTransform`: `translate(side*0.56, -0.52, equip*-0.6 +
+///   -0.72)` (equip = the mainHandHeight lerp — 0, no item switching
+///   exists).
+/// - `swingArm` (the SwingAnimation.DEFAULT = WHACK arc — called
+///   UNCONDITIONALLY for whack items, even at rest):
+///   `translate(side*-0.4*sin(sqrt(s)*PI), 0.2*sin(sqrt(s)*2PI),
+///   -0.2*sin(s*PI))` — exact zeros at rest.
+/// - `applyItemArmAttackTransform`: `f5 = sin(s*s*PI)`,
+///   `rotY(side*(45 + f5*-20)deg)`, `f6 = sin(sqrt(s)*PI)`,
+///   `rotZ(side*f6*-20deg)`, `rotX(f6*-80deg)`, `rotY(side*-45deg)`.
+///
+/// The texels stream from the GENERATED texture namespace (embedded in
+/// the registry, sha-pinned at generation time) through
+/// `sprite_uv::sample_uv` — no runtime file, nothing unverified.
+pub struct HeldItem {
+    /// the posed quads (block units, view-space pose of the context)
+    quads: Vec<Quad>,
+}
+
+/// Load the posed quads of one item model for the first-person right
+/// hand. `None` = unknown model or outside the bake domain — nothing to
+/// draw (the caller renders the empty-hand arm instead).
+pub fn load_item(model_id: &str) -> Option<HeldItem> {
+    match mc_registry::display::posed_item_quads(
+        model_id,
+        mc_registry::display::FIRSTPERSON_RIGHTHAND,
+    ) {
+        Some(Ok(quads)) => Some(HeldItem { quads }),
+        // a broken display stanza binds nothing (vanilla warns + drops)
+        Some(Err(_)) => None,
+        None => None,
+    }
+}
+
+/// The item-in-hand anchor chain, `side` = +1 (the RIGHT main hand, the
+/// default offline player's). At the rest pose (swing 0, equip 0) the
+/// only non-trivial terms are the attack transform's rotY(side*45deg) ..
+/// rotY(side*-45deg) pair — vanilla composes them every frame, so we do
+/// too (op-for-op; not collapsed to identity).
+fn item_hand_anchor(swing: f32, equip: f32) -> Mat4 {
+    let side = 1.0f32;
+    let t = |x: f32, y: f32, z: f32| Mat4::translation(x, y, z);
+    let deg = |d: f32| d.to_radians();
+    // applyItemArmTransform
+    let a = t(side * 0.56, -0.52, equip * -0.6 + -0.72);
+    // swingArm's translate terms (the WHACK arc; exact zeros at rest)
+    let f5s = -0.4f32 * mth_sin(mth_sqrt(swing) * std::f32::consts::PI);
+    let f6s = 0.2f32 * mth_sin(mth_sqrt(swing) * 6.2831855);
+    let f7s = -0.2f32 * mth_sin(swing * std::f32::consts::PI);
+    let b = t(side * f5s, f6s, f7s);
+    // applyItemArmAttackTransform
+    let f5 = mth_sin(swing * swing * std::f32::consts::PI);
+    let f6 = mth_sin(mth_sqrt(swing) * std::f32::consts::PI);
+    Mat4::IDENT
+        .mul(&a)
+        .mul(&b)
+        .mul(&Mat4::rot_y(deg(side * (45.0 + f5 * -20.0))))
+        .mul(&Mat4::rot_z(deg(side * f6 * -20.0)))
+        .mul(&Mat4::rot_x(deg(f6 * -80.0)))
+        .mul(&Mat4::rot_y(deg(side * -45.0)))
+}
+
+impl HeldItem {
+    /// The anchored, view-space quads at an attack animation progress
+    /// (0 = rest; the deterministic scenes never swing, so the goldens —
+    /// which hold no item — never see a nonzero one).
+    fn sampled(&self, swing: f32) -> Vec<crate::raster::SampledQuad<'_>> {
+        let m = item_hand_anchor(swing, 0.0);
+        self.quads
+            .iter()
+            .map(|q| crate::raster::SampledQuad {
+                pts: q.vertices.map(|v| {
+                    let p = m.transform_point(crate::math::Vec3::new(v[0], v[1], v[2]));
+                    [p[0], p[1], p[2]]
+                }),
+                uv: q.uvs,
+                tex: q.texture,
+            })
+            .collect()
+    }
+
+    /// The hand pass for a held item: clears depth (vanilla clears depth
+    /// between the level and the hand) and draws the item in view space
+    /// under the world's projection (the hand fov follows the world's).
+    /// Vanilla also equips/swings here — the swing terms ride
+    /// `item_hand_anchor` above; the equip progress is always 0.
+    pub fn draw(&self, fb: &mut crate::raster::Framebuf, proj: Mat4, swing: f32) {
+        fb.clear_depth();
+        let quads = self.sampled(swing);
+        fb.draw_sampled_quads(proj, &quads, &mut |tex, u, v| match sample_uv(tex, u, v) {
+            Sample::Pixel(c) => Some(c),
+            Sample::Missing(c) => Some(c),
+            Sample::Unknown => None,
+        });
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -485,5 +595,97 @@ mod swing_tests {
             (wrapped - (5.0 / 6.0 + (1.0 / 6.0) * 0.5)).abs() < 1e-6,
             "the 1->0 jump must wrap forward, not lerp backwards: {wrapped}"
         );
+    }
+}
+
+#[cfg(test)]
+mod held_tests {
+    use super::*;
+    use crate::raster::Framebuf;
+
+    #[test]
+    fn the_held_item_loads_the_vanilla_sword() {
+        // the display arc's end-to-end over the canonical fixture: the
+        // ItemModelGenerator bake (82 quads, the census pin) through the
+        // handheld firstperson_righthand pose
+        let item = load_item("item/iron_sword").expect("iron_sword is in the bake domain");
+        assert_eq!(item.quads.len(), 82);
+        // outside the bake domain / unknown -> nothing to draw
+        assert!(load_item("block/stone").is_none());
+        assert!(load_item("item/definitely_not_a_thing").is_none());
+    }
+
+    #[test]
+    fn the_anchored_item_rests_in_the_bottom_right() {
+        // the anchor chain (applyItemArmTransform + the at-rest swing
+        // terms) must land every corner in front of the camera, in the
+        // vanilla first-person rest region: right of center, below center
+        let item = load_item("item/iron_sword").expect("iron_sword loads");
+        let m = item_hand_anchor(0.0, 0.0);
+        for q in &item.quads {
+            let mut centroid = [0f32; 3];
+            for v in &q.vertices {
+                let p = m.transform_point(crate::math::Vec3::new(v[0], v[1], v[2]));
+                assert!(p.iter().all(|c| c.is_finite()), "finite corners");
+                assert!(p[2] < 0.0, "in front of the camera: {p:?}");
+                centroid = [
+                    centroid[0] + p[0] / 4.0,
+                    centroid[1] + p[1] / 4.0,
+                    centroid[2] + p[2] / 4.0,
+                ];
+            }
+            assert!(centroid[0] > 0.0, "right of center: {}", centroid[0]);
+            assert!(centroid[1] < 0.0, "below center: {}", centroid[1]);
+        }
+    }
+
+    #[test]
+    fn the_item_swing_moves_the_quads() {
+        let item = load_item("item/iron_sword").expect("iron_sword loads");
+        let rest = item.sampled(0.0);
+        let mid = item.sampled(0.5);
+        assert_eq!(rest.len(), mid.len());
+        let mut moved = 0;
+        for (r, m) in rest.iter().zip(&mid) {
+            assert_eq!(r.uv, m.uv, "the UV unwrap never changes");
+            assert_eq!(r.tex, m.tex);
+            if r.pts != m.pts {
+                moved += 1;
+            }
+        }
+        assert!(moved > 0, "the mid-swing pose must differ from rest");
+    }
+
+    #[test]
+    fn the_held_item_draws_pixels_in_its_view_region() {
+        let item = load_item("item/iron_sword").expect("iron_sword loads");
+        let proj = Mat4::perspective(
+            70.0f32.to_radians(),
+            320.0 / 180.0,
+            0.1,
+            512.0,
+        );
+        let mut base = Framebuf::new(320, 180);
+        base.clear([0.45, 0.66, 0.94], [0.74, 0.85, 0.95]);
+        let mut drawn = Framebuf::new(320, 180);
+        drawn.clear([0.45, 0.66, 0.94], [0.74, 0.85, 0.95]);
+        item.draw(&mut drawn, proj, 0.0);
+        // every changed pixel sits right of center (all view-space x > 0
+        // through a symmetric perspective), the item actually rasterized
+        let (mut left, mut right) = (0usize, 0usize);
+        for y in 0..180 {
+            for x in 0..320 {
+                let i = (y * 320 + x) * 3;
+                if base.color[i..i + 3] != drawn.color[i..i + 3] {
+                    if x < 160 {
+                        left += 1;
+                    } else {
+                        right += 1;
+                    }
+                }
+            }
+        }
+        assert!(right > 0, "the sword must rasterize on the right half");
+        assert_eq!(left, 0, "no pixels left of center");
     }
 }

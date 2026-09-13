@@ -604,6 +604,113 @@ impl Framebuf {
     }
 }
 
+/// One view-space textured quad whose texels come from the SAMPLED
+/// texture namespace (the held-item pass): every texel fetch goes through
+/// the caller's sampler with the quad's texture id and the
+/// perspective-correct 0..16 uv (the generated table is embedded and
+/// sha-pinned, so there is no runtime file to trust). `tex` is the bare
+/// texture id the sampler resolves (`sample_uv`'s namespace join).
+pub struct SampledQuad<'a> {
+    pub pts: [[f32; 3]; 4],
+    pub uv: [[f32; 2]; 4],
+    pub tex: &'a str,
+}
+
+impl Framebuf {
+    /// The textured-quad raster over a texel SAMPLER (the held-item
+    /// path). Same clip / perspective-correct interpolation / depth
+    /// conventions as `draw_hand_quads`; the alpha-cutout rule is also
+    /// the same (alpha < 128: no color, no depth write), applied to the
+    /// sampler's RGBA. A sampler `None` (an unknown texture id) leaves
+    /// the pixel untouched.
+    pub fn draw_sampled_quads(
+        &mut self,
+        proj: Mat4,
+        quads: &[SampledQuad],
+        sample: &mut dyn FnMut(&str, f32, f32) -> Option<[u8; 4]>,
+    ) {
+        let w_px = self.w as f32;
+        let h_px = self.h as f32;
+        for quad in quads {
+            let clip: Vec<[f32; 4]> = quad
+                .pts
+                .iter()
+                .map(|p| proj.transform_point(Vec3::new(p[0], p[1], p[2])))
+                .collect();
+            let clipped = clip_near(&clip);
+            if clipped.len() < 3 {
+                continue;
+            }
+            let mut sx = vec![0f32; clipped.len()];
+            let mut sy = vec![0f32; clipped.len()];
+            let mut ow = vec![0f32; clipped.len()];
+            let mut vz = vec![0f32; clipped.len()];
+            for i in 0..clipped.len() {
+                let c = clipped[i];
+                let iw = 1.0 / c[3];
+                sx[i] = (c[0] * iw * 0.5 + 0.5) * w_px;
+                sy[i] = (1.0 - (c[1] * iw * 0.5 + 0.5)) * h_px;
+                ow[i] = iw;
+                vz[i] = c[3]; // view distance proxy = clip w (draw_pass convention)
+            }
+            for tri in 1..clipped.len() - 1 {
+                let (ax, ay, a_ow, a_vz) = (sx[0], sy[0], ow[0], vz[0]);
+                let (bx, by, b_ow, b_vz) = (sx[tri], sy[tri], ow[tri], vz[tri]);
+                let (cx, cy, c_ow, c_vz) = (sx[tri + 1], sy[tri + 1], ow[tri + 1], vz[tri + 1]);
+                let (ua, va) = (quad.uv[0][0], quad.uv[0][1]);
+                let (ub, vb) = (quad.uv[tri.min(3)][0], quad.uv[tri.min(3)][1]);
+                let (uc, vc) = (
+                    quad.uv[(tri + 1).min(3)][0],
+                    quad.uv[(tri + 1).min(3)][1],
+                );
+                let area_ab = edge(ax, ay, bx, by, cx, cy);
+                if area_ab.abs() < 1e-9 {
+                    continue;
+                }
+                let inv_area = 1.0 / area_ab;
+                let minx = ax.min(bx).min(cx).floor().max(0.0) as isize;
+                let miny = ay.min(by).min(cy).floor().max(0.0) as isize;
+                let maxx = ax.max(bx).max(cx).ceil().min(w_px - 1.0) as isize;
+                let maxy = ay.max(by).max(cy).ceil().min(h_px - 1.0) as isize;
+                for py in miny..=maxy {
+                    for px_ in minx..=maxx {
+                        let fx = px_ as f32 + 0.5;
+                        let fy = py as f32 + 0.5;
+                        let w0 = edge(bx, by, cx, cy, fx, fy);
+                        let w1 = edge(cx, cy, ax, ay, fx, fy);
+                        let w2 = edge(ax, ay, bx, by, fx, fy);
+                        if w0 < 0.0 || w1 < 0.0 || w2 < 0.0 {
+                            continue;
+                        }
+                        let b0 = w0 * inv_area;
+                        let b1 = w1 * inv_area;
+                        let b2 = w2 * inv_area;
+                        let dist = 1.0 / (b0 * a_ow + b1 * b_ow + b2 * c_ow);
+                        let z = (b0 * a_vz * a_ow + b1 * b_vz * b_ow + b2 * c_vz * c_ow) * dist;
+                        let u = (b0 * ua * a_ow + b1 * ub * b_ow + b2 * uc * c_ow) * dist;
+                        let v = (b0 * va * a_ow + b1 * vb * b_ow + b2 * vc * c_ow) * dist;
+                        let idx = (py as usize) * self.w + px_ as usize;
+                        if z >= self.depth[idx] {
+                            continue;
+                        }
+                        let Some(texel) = sample(quad.tex, u, v) else {
+                            continue;
+                        };
+                        if texel[3] < 128 {
+                            continue; // cutout hole: no color, no depth
+                        }
+                        self.depth[idx] = z;
+                        let o = idx * 3;
+                        for (ch, texel) in (0..3).zip(&texel[..3]) {
+                            self.color[o + ch] = *texel;
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
 /// Clip a clip-space polygon against w >= eps.
 fn clip_near(poly: &[[f32; 4]]) -> Vec<[f32; 4]> {
     const EPS: f32 = 1e-3;
