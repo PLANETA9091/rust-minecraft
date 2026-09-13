@@ -92,4 +92,45 @@ mod tests {
     fn unknown_block_returns_none() {
         assert!(REGISTRY.find_block("not_a_real_block_xyz").is_none());
     }
+
+    #[test]
+    fn built_in_dimension_types_carry_the_jar_layout() {
+        use generated::worldgen::{dimension_type, DIMENSION_TYPES};
+        assert_eq!(DIMENSION_TYPES.len(), 4);
+        let ow = dimension_type("minecraft:overworld").expect("overworld");
+        assert_eq!((ow.min_y, ow.height, ow.logical_height), (-64, 384, 384));
+        assert!(ow.has_skylight && !ow.has_fixed_time);
+        assert_eq!(ow.timelines, Some("#minecraft:in_overworld"));
+        assert_eq!(ow.default_clock, Some("minecraft:overworld"));
+        let nether = dimension_type("minecraft:the_nether").expect("nether");
+        // the values the protocol tests pin for the synced registry: floor 0,
+        // 256 tall — and the ceiling keeps logical_height BELOW height
+        assert_eq!((nether.min_y, nether.height, nether.logical_height), (0, 256, 128));
+        assert!(nether.has_fixed_time && !nether.has_skylight);
+        assert_eq!((nether.ambient_light, nether.coordinate_scale), (0.1, 8.0));
+        assert_eq!(nether.default_clock, None, "the nether names no default clock");
+    }
+
+    #[test]
+    fn the_day_timeline_keyframes_come_from_the_jar() {
+        use generated::worldgen::{timeline, timeline_tag, TIMELINES, TIMELINE_TAGS};
+        assert_eq!(TIMELINES.len(), 4);
+        assert_eq!(TIMELINE_TAGS.len(), 4);
+        let day = timeline("minecraft:day").expect("day timeline");
+        assert_eq!(day.clock, "minecraft:overworld");
+        assert_eq!(day.period_ticks, Some(24_000));
+        assert_eq!(day.tracks, 18);
+        assert_eq!(
+            day.sky_light_factor,
+            [(730, 1.0), (11_270, 1.0), (13_140, 0.24), (22_860, 0.24)]
+        );
+        // the other real timelines carry no render track — empty, not invented
+        let moon = timeline("minecraft:moon").expect("moon timeline");
+        assert_eq!((moon.period_ticks, moon.tracks), (Some(192_000), 2));
+        assert!(moon.sky_light_factor.is_empty());
+        // the tag the overworld dimension type names resolves through the table
+        let tag = timeline_tag("minecraft:in_overworld").expect("in_overworld tag");
+        assert!(tag.contains(&"minecraft:day"));
+        assert!(tag.contains(&"#minecraft:universal"), "nested tag refs ride verbatim");
+    }
 }

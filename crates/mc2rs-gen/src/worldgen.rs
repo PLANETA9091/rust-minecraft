@@ -111,9 +111,12 @@ fn color_value(v: Option<&Value>) -> Option<u32> {
 
 pub fn generate<R: std::io::Read + std::io::Seek>(archive: &mut zip::ZipArchive<R>) -> Result<WorldgenData> {
     let mut data = WorldgenData::default();
+    // the whole data/minecraft/ tree: the worldgen/ side AND the built-in
+    // registry JSONs beside it (dimension_type/, timeline/, tags/timeline/) —
+    // every entry is classified by the strict-prefix branches below
     let names: Vec<String> = archive
         .file_names()
-        .filter(|n| n.starts_with("data/minecraft/worldgen/"))
+        .filter(|n| n.starts_with("data/minecraft/"))
         .map(String::from)
         .collect();
     for name in names {
@@ -243,20 +246,18 @@ pub fn generate<R: std::io::Read + std::io::Seek>(archive: &mut zip::ZipArchive<
                         })
                         .unwrap_or_default();
                     sky_light_factor.sort_by_key(|(t, _)| *t);
-                    data.timelines.insert(
-                        id,
-                        TimelineEntry {
-                            name: format!("minecraft:{}", id),
-                            clock: v
-                                .get("clock")
-                                .and_then(Value::as_str)
-                                .unwrap_or("")
-                                .to_string(),
-                            period_ticks: v.get("period_ticks").and_then(Value::as_i64),
-                            tracks,
-                            sky_light_factor,
-                        },
-                    );
+                    let entry = TimelineEntry {
+                        name: format!("minecraft:{id}"),
+                        clock: v
+                            .get("clock")
+                            .and_then(Value::as_str)
+                            .unwrap_or("")
+                            .to_string(),
+                        period_ticks: v.get("period_ticks").and_then(Value::as_i64),
+                        tracks,
+                        sky_light_factor,
+                    };
+                    data.timelines.insert(id, entry);
                 }
             }
         } else if let Some(rest) = name.strip_prefix("data/minecraft/tags/timeline/") {
@@ -546,17 +547,17 @@ mod tests {
         // overworld carries default_clock while the nether does not, the day
         // timeline's sky_light_factor rides numeric keyframes next to
         // string-valued visual tracks, and tags nest "#"-references
-        let nether = br#"{"ambient_light":0.1,"cardinal_light":"nether","coordinate_scale":8.0,"has_ceiling":true,"has_fixed_time":true,"has_skylight":false,"height":256,"logical_height":128,"min_y":0,"timelines":"#minecraft:in_nether"}"#;
-        let overworld = br#"{"ambient_light":0.0,"coordinate_scale":1.0,"default_clock":"minecraft:overworld","has_skylight":true,"height":384,"logical_height":384,"min_y":-64,"timelines":"#minecraft:in_overworld"}"#;
-        let day = br#"{"clock":"minecraft:overworld","period_ticks":24000,"tracks":{"minecraft:gameplay/monsters_burn":{"keyframes":[{"ticks":12542,"value":true},{"ticks":23460,"value":false}],"modifier":"or"},"minecraft:visual/sky_color":{"keyframes":[{"ticks":133,"value":"#ffffff"},{"ticks":11867,"value":"#000000"}],"modifier":"multiply"},"minecraft:visual/sky_light_factor":{"keyframes":[{"ticks":22860,"value":0.24},{"ticks":730,"value":1.0},{"ticks":11270,"value":1.0},{"ticks":13140,"value":0.24}],"modifier":"multiply"}}}"#;
-        let early_game = br#"{"clock":"minecraft:overworld","tracks":{"minecraft:gameplay/can_sleep":{"keyframes":[{"ticks":0,"value":true}]}}}"#;
+        let nether = br##"{"ambient_light":0.1,"cardinal_light":"nether","coordinate_scale":8.0,"has_ceiling":true,"has_fixed_time":true,"has_skylight":false,"height":256,"logical_height":128,"min_y":0,"timelines":"#minecraft:in_nether"}"##;
+        let overworld = br##"{"ambient_light":0.0,"coordinate_scale":1.0,"default_clock":"minecraft:overworld","has_skylight":true,"height":384,"logical_height":384,"min_y":-64,"timelines":"#minecraft:in_overworld"}"##;
+        let day = br##"{"clock":"minecraft:overworld","period_ticks":24000,"tracks":{"minecraft:gameplay/monsters_burn":{"keyframes":[{"ticks":12542,"value":true},{"ticks":23460,"value":false}],"modifier":"or"},"minecraft:visual/sky_color":{"keyframes":[{"ticks":133,"value":"#ffffff"},{"ticks":11867,"value":"#000000"}],"modifier":"multiply"},"minecraft:visual/sky_light_factor":{"keyframes":[{"ticks":22860,"value":0.24},{"ticks":730,"value":1.0},{"ticks":11270,"value":1.0},{"ticks":13140,"value":0.24}],"modifier":"multiply"}}}"##;
+        let early_game = br##"{"clock":"minecraft:overworld","tracks":{"minecraft:gameplay/can_sleep":{"keyframes":[{"ticks":0,"value":true}]}}}"##;
         let mut zip = zip_of(&[
             ("data/minecraft/dimension_type/the_nether.json", nether.to_vec()),
             ("data/minecraft/dimension_type/overworld.json", overworld.to_vec()),
             ("data/minecraft/timeline/day.json", day.to_vec()),
             ("data/minecraft/timeline/early_game.json", early_game.to_vec()),
-            ("data/minecraft/tags/timeline/universal.json", br#"{"values":["minecraft:villager_schedule"]}"#.to_vec()),
-            ("data/minecraft/tags/timeline/in_overworld.json", br#"{"values":["#minecraft:universal","minecraft:day","minecraft:early_game"]}"#.to_vec()),
+            ("data/minecraft/tags/timeline/universal.json", br##"{"values":["minecraft:villager_schedule"]}"##.to_vec()),
+            ("data/minecraft/tags/timeline/in_overworld.json", br##"{"values":["#minecraft:universal","minecraft:day","minecraft:early_game"]}"##.to_vec()),
         ]);
         let data = generate(&mut zip).unwrap();
 

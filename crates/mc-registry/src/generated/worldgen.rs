@@ -179,3 +179,71 @@ pub const DENSITY_FUNCTIONS: usize = 35;
 pub const NOISES: usize = 63;
 pub const CONFIGURED_FEATURES: usize = 226;
 pub const PLACED_FEATURES: usize = 262;
+/// One built-in `minecraft:dimension_type` registry entry (the jar's
+/// `data/minecraft/dimension_type/*.json`): world layout + environment.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct DimensionTypeDef {
+    pub name: &'static str,
+    pub min_y: i32,
+    pub height: u32,
+    pub logical_height: u32,
+    pub has_skylight: bool,
+    pub has_fixed_time: bool,
+    pub ambient_light: f32,
+    pub coordinate_scale: f64,
+    pub timelines: Option<&'static str>,
+    pub default_clock: Option<&'static str>,
+}
+
+pub static DIMENSION_TYPES: [DimensionTypeDef; 4] = [
+    DimensionTypeDef { name: "minecraft:overworld", min_y: -64, height: 384, logical_height: 384, has_skylight: true, has_fixed_time: false, ambient_light: 0.0, coordinate_scale: 1.0, timelines: Some("#minecraft:in_overworld"), default_clock: Some("minecraft:overworld") },
+    DimensionTypeDef { name: "minecraft:overworld_caves", min_y: -64, height: 384, logical_height: 384, has_skylight: true, has_fixed_time: false, ambient_light: 0.0, coordinate_scale: 1.0, timelines: Some("#minecraft:in_overworld"), default_clock: Some("minecraft:overworld") },
+    DimensionTypeDef { name: "minecraft:the_end", min_y: 0, height: 256, logical_height: 256, has_skylight: true, has_fixed_time: true, ambient_light: 0.25, coordinate_scale: 1.0, timelines: Some("#minecraft:in_end"), default_clock: Some("minecraft:the_end") },
+    DimensionTypeDef { name: "minecraft:the_nether", min_y: 0, height: 256, logical_height: 128, has_skylight: false, has_fixed_time: true, ambient_light: 0.1, coordinate_scale: 8.0, timelines: Some("#minecraft:in_nether"), default_clock: None },
+];
+
+/// Dimension type by registry id ("minecraft:overworld"), sorted for binary search.
+pub fn dimension_type(name: &str) -> Option<&'static DimensionTypeDef> {
+    DIMENSION_TYPES.binary_search_by_key(&name, |d| d.name).ok().map(|i| &DIMENSION_TYPES[i])
+}
+
+/// One built-in `minecraft:timeline` registry entry (the jar's
+/// `data/minecraft/timeline/*.json`): keyframe tracks over a world clock.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct TimelineDef {
+    pub name: &'static str,
+    pub clock: &'static str,
+    pub period_ticks: Option<i64>,
+    pub tracks: usize,
+    /// `minecraft:visual/sky_light_factor` keyframes, sorted by tick — the
+    /// render track the lightmap's SkyFactor multiplies the sky term by
+    /// (empty when the timeline carries no such track)
+    pub sky_light_factor: &'static [(i64, f32)],
+}
+
+pub static TL_DAY_SKY_LIGHT_FACTOR: [(i64, f32); 4] = [(730, 1.0), (11270, 1.0), (13140, 0.24), (22860, 0.24)];
+pub static TIMELINES: [TimelineDef; 4] = [
+    TimelineDef { name: "minecraft:day", clock: "minecraft:overworld", period_ticks: Some(24000), tracks: 18, sky_light_factor: &TL_DAY_SKY_LIGHT_FACTOR },
+    TimelineDef { name: "minecraft:early_game", clock: "minecraft:overworld", period_ticks: None, tracks: 1, sky_light_factor: &[] },
+    TimelineDef { name: "minecraft:moon", clock: "minecraft:overworld", period_ticks: Some(192000), tracks: 2, sky_light_factor: &[] },
+    TimelineDef { name: "minecraft:villager_schedule", clock: "minecraft:overworld", period_ticks: Some(24000), tracks: 2, sky_light_factor: &[] },
+];
+
+/// Timeline by registry id ("minecraft:day"), sorted for binary search.
+pub fn timeline(name: &str) -> Option<&'static TimelineDef> {
+    TIMELINES.binary_search_by_key(&name, |t| t.name).ok().map(|i| &TIMELINES[i])
+}
+
+/// The jar's `data/minecraft/tags/timeline/*.json` verbatim — (tag id
+/// with the minecraft: prefix, values; "#"-prefixed values name other tags).
+pub static TIMELINE_TAGS: [(&str, &[&str]); 4] = [
+    ("minecraft:in_end", &["#minecraft:universal"]),
+    ("minecraft:in_nether", &["#minecraft:universal"]),
+    ("minecraft:in_overworld", &["#minecraft:universal", "minecraft:day", "minecraft:moon", "minecraft:early_game"]),
+    ("minecraft:universal", &["minecraft:villager_schedule"]),
+];
+
+/// Timeline tag values by full tag id ("minecraft:in_overworld").
+pub fn timeline_tag(name: &str) -> Option<&'static [&'static str]> {
+    TIMELINE_TAGS.binary_search_by_key(&name, |t| t.0).ok().map(|i| TIMELINE_TAGS[i].1)
+}

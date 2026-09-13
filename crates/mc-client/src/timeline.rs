@@ -169,4 +169,16 @@ mod tests {
         // an empty curve carries no opinion: the day
         assert_eq!(evaluate(&[], Some(24_000), 18_000), 1.0);
     }
+
+    #[test]
+    fn the_pinned_snapshot_matches_the_generated_timeline_table() {
+        // the compile-time snapshot and the generator's built-in
+        // minecraft:timeline table are the SAME jar data — this pin fails
+        // the moment either side drifts (the hand-kept render constants
+        // are only honest while they byte-match the generated table)
+        let day = mc_registry::generated::worldgen::timeline("minecraft:day")
+            .expect("the generated table carries the day timeline");
+        assert_eq!(&SKY_LIGHT_FACTOR_KEYS[..], day.sky_light_factor);
+        assert_eq!(Some(DAY_PERIOD_TICKS), day.period_ticks);
+    }
 }
