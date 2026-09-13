@@ -39,7 +39,8 @@
 
 use crate::blockstate_lookup;
 use crate::element_quads;
-use crate::generated::elements::Cull;
+use crate::generated::elements::{Cull, ELEMENTS};
+use crate::generated::models::MODELS;
 use crate::generated::textures::{texture_index, texture_rgba, texture_size};
 use crate::texture_slots;
 
@@ -68,12 +69,19 @@ pub fn block_face_colors(block_name: &str, state: &[(&str, &str)]) -> Option<Vec
     let mut acc: Vec<(Cull, [u64; 3], u32)> = Vec::new();
     for apply in &applies {
         let model = bare(apply.model);
-        // resolve_model and derive_model walk the same MODELS table; a
-        // model that is not a model file (or has no slots) contributes
-        // nothing rather than failing the whole block.
-        let (Some(quads), Some(slots)) =
-            (element_quads::derive_model(model), texture_slots::resolve_model(model))
-        else {
+        // The vanilla composition: the CHILD's slots (the full parent
+        // chain merged) + the first ancestor that carries ELEMENTS (the
+        // element geometry inherits down the chain — block/stone has no
+        // elements of its own, block/cube_all does). Either half missing
+        // means the model contributes nothing (template models).)
+        let Some(slots) = texture_slots::resolve_model(model) else {
+            continue;
+        };
+        let Some(source) = elements_source(model) else {
+            continue;
+        };
+        let quads = element_quads::derive_model(source);
+        let Some(quads) = quads else {
             continue;
         };
         for q in &quads {
@@ -166,6 +174,29 @@ fn quad_average(
 /// slots' values ride as written, the tables index the bare paths).
 fn bare(id: &str) -> &str {
     id.strip_prefix("minecraft:").unwrap_or(id)
+}
+
+/// The first id on the model's parent chain (itself included) that
+/// carries ELEMENTS — the vanilla element inheritance (a child model's
+/// elements come from the nearest ancestor that declares them). The
+/// chain walk mirrors texture_slots::resolve_model's (the same MODELS
+/// table, the same 32-deep fail-closed guard, the builtin/ anchors).
+fn elements_source(model_id: &str) -> Option<&'static str> {
+    let mut cur = model_id;
+    for _ in 0..32 {
+        if let Some((id, _)) = ELEMENTS.iter().find(|(i, _)| *i == cur) {
+            return Some(id);
+        }
+        let parent = MODELS
+            .iter()
+            .find(|(i, ..)| *i == cur)
+            .and_then(|(_, p, ..)| *p)?;
+        if parent.starts_with("builtin/") {
+            return None;
+        }
+        cur = parent;
+    }
+    None
 }
 
 #[cfg(test)]
