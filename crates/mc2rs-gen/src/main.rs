@@ -7,6 +7,7 @@ mod fontgen;
 mod jar;
 mod langgen;
 mod manifest;
+mod pack_claim;
 mod packet_dump;
 mod runtime_dump;
 mod skygen;
@@ -141,6 +142,19 @@ enum Cmd {
         #[arg(long, default_value = ".")]
         out: String,
     },
+    /// Re-emit mc-protocol/src/generated/pack_claim.rs (the Select Known
+    /// Packs reply's version constants) from a LOCAL client jar — the
+    /// offline half of the pack-version claim arc: no network, no java.
+    PackClaim {
+        #[arg(long)]
+        version: String,
+        /// Path to the official client jar (e.g. tools/client.jar).
+        #[arg(long)]
+        jar: String,
+        /// Workspace root (contains crates/).
+        #[arg(long, default_value = ".")]
+        out: String,
+    },
     /// Re-emit mc-registry/src/generated/worldgen.rs (biomes + the built-in
     /// dimension_type/timeline/timeline-tag registry tables) from a LOCAL
     /// client jar — the offline half of the worldgen arc: no network, no java.
@@ -247,6 +261,14 @@ fn main() -> Result<()> {
                 .with_context(|| format!("workspace root {out} not found"))?;
             let path = runtime_dump::emit_block_ids(&root, &version, &client_sha1, &text)?;
             println!("block-ids: {}", path.display());
+        }
+        Cmd::PackClaim { version, jar, out } => {
+            let bytes = std::fs::read(&jar).with_context(|| format!("read jar {jar}"))?;
+            let root = Path::new(&out)
+                .canonicalize()
+                .with_context(|| format!("workspace root {out} not found"))?;
+            let path = write_pack_claim(&root, &bytes)?;
+            println!("pack-claim ({version}): {}", path.display());
         }
         Cmd::Worldgen { version, jar, out } => {
             let bytes = std::fs::read(&jar).with_context(|| format!("read jar {jar}"))?;
@@ -645,8 +667,30 @@ fn atlas_cmd(agent: &ureq::Agent, cache: &util::Cache, version: &str, out: &Path
     Ok(())
 }
 
-/// Resolve + write crates/mc-registry/src/generated/worldgen.rs (biomes +
-/// the built-in dimension_type/timeline registry tables) from a local jar.
+/// Read the jar's version.json and write
+/// crates/mc-protocol/src/generated/pack_claim.rs (the claim's version
+/// constants) from it.
+fn write_pack_claim(workspace_root: &Path, jar_bytes: &[u8]) -> Result<std::path::PathBuf> {
+    let mut zip =
+        zip::ZipArchive::new(std::io::Cursor::new(jar_bytes)).context("open client jar as zip")?;
+    let claim = pack_claim::generate(&mut zip)?;
+    let proto_dir = workspace_root.join("crates/mc-protocol/src/generated");
+    std::fs::create_dir_all(&proto_dir)?;
+    let path = proto_dir.join("pack_claim.rs");
+    std::fs::write(&path, pack_claim::emit(&claim)?)?;
+    println!(
+        "      claim: (minecraft, core, {}) | world {} | protocol {} | pack {}.{}.{}.{}",
+        claim.id,
+        claim.world_version,
+        claim.protocol_version,
+        claim.resource_major,
+        claim.resource_minor,
+        claim.data_major,
+        claim.data_minor
+    );
+    Ok(path)
+}
+
 fn write_worldgen(workspace_root: &Path, jar_bytes: &[u8]) -> Result<std::path::PathBuf> {
     let mut zip =
         zip::ZipArchive::new(std::io::Cursor::new(jar_bytes)).context("open client jar as zip")?;
