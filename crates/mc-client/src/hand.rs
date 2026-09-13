@@ -803,4 +803,145 @@ mod held_tests {
             "the change bulk stays right of center (the blade tip may cross): {changed_left} vs {changed_right}"
         );
     }
+
+    /// The swing-arc SWEEP: both first-person term curves (the bare
+    /// arm's f10..f14 and the held item's f5s/f6s/f7s/f5/f6) pinned
+    /// BIT-EXACTLY at seven progresses against an independently computed
+    /// oracle (a numpy f32 emulation of the f64-sin/sqrt-narrowed-to-f32
+    /// chain, scripts/swing_terms_oracle.py). Three facts the tables
+    /// lock: (1) rest carries EXACT zeros — including the two NEGATIVE
+    /// zeros of the -0.3/-0.4 multiplied terms, which an IEEE == cannot
+    /// distinguish but from_bits can; (2) progress 1 is NOT rest at the
+    /// term level — sin(pi_f32) is -8.742278e-8, the f64-narrowing
+    /// fingerprint a f32-sin rewrite would flip; (3) the mid-arc shape:
+    /// the rotY amount hits EXACT 1.0 at p=0.25 (sin(pi/2)) and the Z
+    /// pull EXACT -0.4/-0.2 at p=0.5 (sin(pi/2) again), the peak rotZ
+    /// 0.98078525 near p=0.75.
+    #[test]
+    fn the_swing_term_sweep_pins_both_curves_bit_exactly() {
+        // [f10, f11, f12, f13, f14] = swing_terms, as f32 bit patterns
+        const ARM: [(u32, [u32; 5]); 7] = [
+            (0.0f32.to_bits(), [0x80000000, 0x00000000, 0x80000000, 0x00000000, 0x00000000]),
+            (0.1f32.to_bits(), [0xbe80b44f, 0x3ebb52b7, 0xbdfd2590, 0x3d00a892, 0x3f5681d9]),
+            (0.25f32.to_bits(), [0xbe99999a, 0xb31630f2, 0xbe90d0c3, 0x3e47c5c2, 0x3f800000]),
+            (0.5f32.to_bits(), [0xbe746fdc, 0xbec56841, 0xbecccccd, 0x3f3504f3, 0x3f4bb28c]),
+            (0.75f32.to_bits(), [0xbdfb077c, 0xbe98bf39, 0xbe90d0c3, 0x3f7b14be, 0x3ed130e7]),
+            (0.9f32.to_bits(), [0xbd453ed3, 0xbe01cab3, 0xbdfd2592, 0x3f0fe4b4, 0x3e245f05]),
+            (1.0f32.to_bits(), [0x32e1496b, 0x339630f2, 0x331630f2, 0xb3bbbd2e, 0xb3bbbd2e]),
+        ];
+        // [f5s, f6s, f7s, f5, f6] = item_swing_terms
+        const ITEM: [(u32, [u32; 5]); 7] = [
+            (0.0f32.to_bits(), [0x80000000, 0x00000000, 0x80000000, 0x00000000, 0x00000000]),
+            (0.1f32.to_bits(), [0xbeab9b14, 0x3e3b52b7, 0xbd7d2590, 0x3d00a892, 0x3f5681d9]),
+            (0.25f32.to_bits(), [0xbecccccd, 0xb29630f2, 0xbe10d0c3, 0x3e47c5c2, 0x3f800000]),
+            (0.5f32.to_bits(), [0xbea2f53d, 0xbe456841, 0xbe4ccccd, 0x3f3504f3, 0x3f4bb28c]),
+            (0.75f32.to_bits(), [0xbe275a53, 0xbe18bf39, 0xbe10d0c3, 0x3f7b14be, 0x3ed130e7]),
+            (0.9f32.to_bits(), [0xbd837f37, 0xbd81cab3, 0xbd7d2592, 0x3f0fe4b4, 0x3e245f05]),
+            (1.0f32.to_bits(), [0x331630f2, 0x331630f2, 0x329630f2, 0xb3bbbd2e, 0xb3bbbd2e]),
+        ];
+        for (p_bits, want) in ARM {
+            let p = f32::from_bits(p_bits);
+            let got: [u32; 5] = swing_terms(p).map(|t| t.to_bits());
+            assert_eq!(got, want, "arm terms at p={p}");
+        }
+        for (p_bits, want) in ITEM {
+            let p = f32::from_bits(p_bits);
+            let got: [u32; 5] = item_swing_terms(p).map(|t| t.to_bits());
+            assert_eq!(got, want, "item terms at p={p}");
+        }
+    }
+
+    /// The progress-1 pose is NOT the rest pose at the geometry level —
+    /// every term carries the pi_f32 epsilon — yet the RENDERED frame is
+    /// bit-identical to rest (the sweep's next test pins that): the
+    /// rasterizer's sample grid absorbs a ~1e-7 vertex delta. The UV
+    /// unwrap never moves (the same invariant the 0.5 test asserts).
+    #[test]
+    fn the_one_pose_terms_are_not_the_rest_terms() {
+        let rest_terms = swing_terms(0.0);
+        let one_terms = swing_terms(1.0);
+        assert_ne!(
+            rest_terms.map(|t| t.to_bits()),
+            one_terms.map(|t| t.to_bits()),
+            "p=1 must carry the pi_f32 epsilon, not exact zeros"
+        );
+        let rest = build_quads();
+        let one = build_quads_at(1.0, 0.0);
+        assert_eq!(rest.len(), one.len());
+        let mut uv_equal = true;
+        let mut pts_differ = false;
+        for (r, o) in rest.iter().zip(&one) {
+            if r.uv != o.uv {
+                uv_equal = false;
+            }
+            if r.pts != o.pts {
+                pts_differ = true;
+            }
+        }
+        assert!(uv_equal, "the UV unwrap never changes");
+        assert!(pts_differ, "the epsilon terms must move the corner bits");
+    }
+
+    /// The pixel-arc sweep over the held-item scene: progress 0.25 and
+    /// 0.75 really move pixels (the bulk right of center — 0.75's arc
+    /// never crosses the midline at all, 0.25's blade tip does), and
+    /// progress 1.0 is BIT-IDENTICAL to rest at the pixel level — the
+    /// closed arc: every vanilla swing term is a sin multiple that
+    /// vanishes at both ends, and the ~1e-8 pi_f32 residue the floats
+    /// carry changes no rasterized pixel. The sweep's in-test counts are
+    /// pinned exactly (probe-observed then frozen); the binary probe over
+    /// the full world scene agrees structurally — 6240/5583/0 at
+    /// 0.25/0.75/1.0 — and its LEFT counts match these to the pixel
+    /// (337/0), the coverage flips being background-independent.
+    #[test]
+    fn the_swing_scene_sweep_pins_the_pixel_arc() {
+        let item = load_item("item/iron_sword").expect("iron_sword loads");
+        let proj = Mat4::perspective(
+            70.0f32.to_radians(),
+            320.0 / 180.0,
+            0.1,
+            512.0,
+        );
+        let mut rest = Framebuf::new(320, 180);
+        rest.clear([0.45, 0.66, 0.94], [0.74, 0.85, 0.95]);
+        item.draw(&mut rest, proj, 0.0);
+        for p in [0.25f32, 0.75, 1.0] {
+            let mut scene = Framebuf::new(320, 180);
+            scene.clear([0.45, 0.66, 0.94], [0.74, 0.85, 0.95]);
+            item.draw(&mut scene, proj, p);
+            let (mut changed_left, mut changed_right) = (0usize, 0usize);
+            for y in 0..180 {
+                for x in 0..320 {
+                    let i = (y * 320 + x) * 3;
+                    if rest.color[i..i + 3] != scene.color[i..i + 3] {
+                        if x < 160 {
+                            changed_left += 1;
+                        } else {
+                            changed_right += 1;
+                        }
+                    }
+                }
+            }
+            if p == 1.0 {
+                assert_eq!(
+                    (changed_left, changed_right),
+                    (0, 0),
+                    "the arc closes: p=1 must render bit-identical to rest"
+                );
+            } else {
+                // the frozen probe-observed counts (in-test, plain-sky
+                // background)
+                let want = if p == 0.25 { (337, 6146) } else { (0, 5684) };
+                assert_eq!(
+                    (changed_left, changed_right),
+                    want,
+                    "the pixel arc at p={p} is pinned exactly"
+                );
+                assert!(
+                    changed_left < changed_right,
+                    "the bulk stays right of center at p={p}"
+                );
+            }
+        }
+    }
 }
