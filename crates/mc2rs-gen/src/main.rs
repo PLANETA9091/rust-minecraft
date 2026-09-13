@@ -94,6 +94,22 @@ enum Cmd {
         #[arg(long)]
         java: Option<String>,
     },
+    /// Re-emit mc-registry/src/generated/block_ids.rs from a SAVED dump
+    /// (the `.mc2rs/classpath/block_states.txt` the dumper wrote) — the
+    /// offline half of the dump-block-states arc: no java, no network.
+    BlockIds {
+        #[arg(long)]
+        version: String,
+        /// The saved dump text (`id|name|props` per line).
+        #[arg(long)]
+        dump: String,
+        /// The client jar sha1 the dump came from (baked into the header).
+        #[arg(long)]
+        client_sha1: String,
+        /// Workspace root (contains crates/).
+        #[arg(long, default_value = ".")]
+        out: String,
+    },
     /// Download official game assets into a local cache (requires owning MC).
     Assets {
         #[arg(long)]
@@ -165,6 +181,15 @@ fn main() -> Result<()> {
         }
         Cmd::DumpPacketIds { version, out, java } => {
             packet_dump::dump_packet_ids(&agent, &cache, &version, Path::new(&out), java.as_deref())?;
+        }
+        Cmd::BlockIds { version, dump, client_sha1, out } => {
+            let text = std::fs::read_to_string(&dump)
+                .with_context(|| format!("read dump {dump}"))?;
+            let root = Path::new(&out)
+                .canonicalize()
+                .with_context(|| format!("workspace root {out} not found"))?;
+            let path = runtime_dump::emit_block_ids(&root, &version, &client_sha1, &text)?;
+            println!("block-ids: {}", path.display());
         }
         Cmd::Assets { version, dir, filter } => {
             let m = manifest::load(&agent)?;
