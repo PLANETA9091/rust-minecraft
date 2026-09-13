@@ -132,12 +132,16 @@ fn run_join(
 ) {
     // the REAL protocol number (login tolerates no 0-ping) and the
     // vanilla offline profile for the session name (screens::PLAYER_NAME).
+    // The number speaks the GENERATED pack_claim manifest — the only
+    // surface that refuses a jar which does not state it (build_info's
+    // stamp may legally be -1 "unknown"; the manifest cannot) — and the
+    // two generated surfaces are cross-pinned in screens::tests.
     // The live join retains the session past the world-load milestone —
     // the one-shot `connect_and_join_world` would close the stream there.
     match mc_protocol::connect_and_join_live(
         &host,
         port,
-        crate::build_info::PROTOCOL_VERSION,
+        mc_protocol::generated::pack_claim::PROTOCOL_VERSION,
         crate::screens::PLAYER_NAME,
     ) {
         Ok(mc_protocol::LiveJoin::Live { snapshot, mut session }) => {

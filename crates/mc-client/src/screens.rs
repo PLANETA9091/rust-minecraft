@@ -1559,6 +1559,30 @@ mod tests {
     }
 
     #[test]
+    fn the_login_handshake_speaks_the_generated_manifest() {
+        // the wire protocol number the window worker passes to the login
+        // is `mc_protocol::generated::pack_claim::PROTOCOL_VERSION` (the
+        // manifest emitter REFUSES a jar that does not state the number —
+        // it can never be the -1 "unknown" the build_info stamp may
+        // legally carry). build_info.rs is a SECOND generated surface for
+        // the same jar fact (the full `generate` flow's stamp, from the
+        // v0.2.0 era), so the two are CROSS-PINNED here: if either
+        // generator flow is ever re-run against a different jar or the
+        // emissions drift, this test fails loudly instead of the wire
+        // quietly speaking two truths (the timeline-snapshot pattern).
+        assert_eq!(
+            crate::build_info::PROTOCOL_VERSION,
+            mc_protocol::generated::pack_claim::PROTOCOL_VERSION,
+            "the two generated surfaces for the jar's protocol_version agree"
+        );
+        // the manifest's number is a REAL stated one, not a fallback
+        assert!(
+            mc_protocol::generated::pack_claim::PROTOCOL_VERSION > 0,
+            "the manifest emitter refuses unstated numbers — this is 26.2's 776"
+        );
+    }
+
+    #[test]
     fn server_list_refresh_runs_a_real_status_ping() {
         // in-process vanilla-shaped status server (same dogfooding as the
         // mc-protocol login tests): handshake + request -> canned JSON
@@ -2009,7 +2033,7 @@ mod tests {
         let res = mc_protocol::connect_and_join_world(
             &req.host,
             req.port,
-            crate::build_info::PROTOCOL_VERSION,
+            mc_protocol::generated::pack_claim::PROTOCOL_VERSION,
             crate::screens::PLAYER_NAME,
         )
         .map(|out| match out {

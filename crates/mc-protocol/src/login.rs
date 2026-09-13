@@ -285,9 +285,11 @@ pub fn parse_login_disconnect(payload: &[u8]) -> Result<String> {
 // ---------------------------------------------------------------------------
 
 /// Run the offline-mode login over an established stream. The handshake
-/// carries the REAL protocol version (the generated
-/// `mc_registry::build::PROTOCOL_VERSION`, 776 for 26.2) — status pings
-/// tolerate 0, login does not.
+/// carries the REAL protocol version — the generated
+/// `mc_protocol::generated::pack_claim::PROTOCOL_VERSION` (776 for 26.2;
+/// the manifest emitter REFUSES a jar that does not state the number, so
+/// it can never be the -1 "unknown" the build_info stamp may legally
+/// carry) — status pings tolerate 0, login does not.
 pub fn login<S: Read + Write>(
     stream: S,
     host: &str,

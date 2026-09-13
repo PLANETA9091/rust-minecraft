@@ -418,6 +418,25 @@ hand-drawn:
   day-tick (overworld through wire-order id 0, the end through id 1
   never the overworld's ticks, the nether and a mock name on the
   documented first-clock shape, a partial sync unrescued).
+  The **wire protocol number speaks the generated manifest (v0.3.57 —
+  one fact, one source)**: the login handshake's `776` used to flow from
+  `mc-client/src/build_info.rs` — a generated stamp from the v0.2.0 era
+  whose `unwrap_or(-1)` means it may LEGALLY carry "unknown" — while the
+  v0.3.54 `pack_claim.rs` manifest (the emitter REFUSES a jar that does
+  not state `protocol_version`) stated the same number with zero
+  consumers. The live join (`window.rs`) and its screens-side mirror now
+  pass `mc_protocol::generated::pack_claim::PROTOCOL_VERSION` — the only
+  surface that cannot lie by omission — and the two generated surfaces
+  are CROSS-PINNED (the timeline-snapshot pattern): if either generator
+  flow is ever re-run against a different jar or the emissions drift, a
+  test fails loudly instead of the wire quietly speaking two truths. The
+  stale `mc_registry::build::PROTOCOL_VERSION` reference in the login
+  doc comment (a file that has not existed for generations) now points
+  at the real source. Zero render-path pixels by construction (protocol
+  layer only); the goldens verified with the EXACT CI flags. Tests +1
+  (workspace 261 → 262 passed / 0 failed / 3 ignored): the cross-pin
+  (both surfaces agree; the manifest's number is a real stated one,
+  never a fallback).
   The **registry-order evidence is dumped from the real runtime (v0.3.53 —
   the pack-version claim's LAST prerequisite)**: the generator grew its
   third runtime dumper — the checked-in clean-room `DumpRegistries.java` —
