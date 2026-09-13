@@ -50,6 +50,79 @@ pub mod item_bake;
 /// consumes it next round). See the module docs for the semantics.
 pub mod palette;
 
+/// The vanilla biome-tag RESOLUTION semantic — the flattened member set a
+/// tag builds at datapack load (`TagLoader`'s built-tag verdict over
+/// `data/minecraft/tags/worldgen/biome/*.json`, the raw form `BIOME_TAGS`
+/// carries verbatim): a tag's entries are walked in FILE ORDER; a concrete
+/// `minecraft:*` member is emitted, a `#minecraft:*` entry expands the
+/// referenced tag DEPTH-FIRST at its position (the referenced tag's own
+/// file order), and the built set deduplicates on FIRST occurrence (the
+/// built tag is a set: a biome reachable through two paths resolves once,
+/// at the first path that reaches it). Three load failures are refused to
+/// `None` instead of guessed at — an unknown tag, an unknown nested
+/// reference, and a REFERENCE CYCLE (a tag that transitively contains
+/// itself cannot build; the resolver fails closed rather than looping).
+/// The flattened members are additionally validated against the biome
+/// table: a registry-bound tag loads only when every reference resolves
+/// into the registry.
+///
+/// The FIRST consumer surface for the generated tag table (68 tags / 390
+/// raw members; the census test pins the raw join never dangles) — the
+/// flattened set is what the placement, spawn-allowance, and category
+/// predicates actually check against, and what any future client-side
+/// tag consumer should read instead of re-deriving the expansion.
+pub fn flatten_biome_tag(name: &str) -> Option<Vec<&'static str>> {
+    let out = flatten_tag_table(&generated::worldgen::BIOME_TAGS, name)?;
+    for member in &out {
+        generated::worldgen::biome(member)?; // missing reference: refused
+    }
+    Some(out)
+}
+
+/// The resolver core, generic over the table so the dedup and cycle
+/// rules are testable without a jar that contains a cycle (the real
+/// 68-tag table cannot cycle: the census join proves every nested
+/// reference resolves, and a cyclic datapack would refuse to load in
+/// vanilla too). The expansion stack starts at the tag's own key so a
+/// direct self-reference is refused by the same rule as a deeper one.
+fn flatten_tag_table<'a>(
+    table: &[(&'a str, &'a [&'a str])],
+    name: &str,
+) -> Option<Vec<&'a str>> {
+    fn expand<'a>(
+        table: &[(&'a str, &'a [&'a str])],
+        members: &'a [&'a str],
+        stack: &mut Vec<&'a str>,
+        out: &mut Vec<&'a str>,
+    ) -> Option<()> {
+        for &entry in members {
+            if let Some(id) = entry.strip_prefix('#') {
+                // a nested reference expands depth-first in place; an id
+                // already on the expansion stack is a cycle -> refused
+                if stack.contains(&id) {
+                    return None;
+                }
+                let nested = table
+                    .binary_search_by_key(&id, |t| t.0)
+                    .ok()
+                    .map(|i| table[i].1)?;
+                stack.push(id);
+                expand(table, nested, stack, out)?;
+                stack.pop();
+            } else if !out.contains(&entry) {
+                out.push(entry); // first occurrence wins (the built set)
+            }
+        }
+        Some(())
+    }
+    let idx = table.binary_search_by_key(&name, |t| t.0).ok()?;
+    let (key, members) = table[idx];
+    let mut stack = vec![key];
+    let mut out = Vec::new();
+    expand(table, members, &mut stack, &mut out)?;
+    Some(out)
+}
+
 /// One block definition: identifier + sorted list of state property names.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Block {
@@ -343,6 +416,147 @@ mod tests {
                 }
             }
         }
+    }
+
+    #[test]
+    fn the_flat_tags_flatten_to_their_own_file_order() {
+        // a tag with only concrete members builds to ITS OWN slice,
+        // verbatim and in order — no expansion, no reorder
+        let forest = flatten_biome_tag("minecraft:is_forest").expect("is_forest");
+        assert_eq!(
+            forest,
+            vec![
+                "minecraft:forest",
+                "minecraft:flower_forest",
+                "minecraft:birch_forest",
+                "minecraft:old_growth_birch_forest",
+                "minecraft:dark_forest",
+                "minecraft:pale_garden",
+                "minecraft:grove",
+            ]
+        );
+        assert_eq!(
+            flatten_biome_tag("minecraft:is_beach").expect("is_beach"),
+            vec!["minecraft:beach", "minecraft:snowy_beach"]
+        );
+        // is_overworld: the largest flat tag — zero nested refs, every
+        // member concrete, the file order preserved end to end (the
+        // flattened set IS the raw slice for a flat tag, any size)
+        let overworld = flatten_biome_tag("minecraft:is_overworld").expect("is_overworld");
+        let raw = generated::worldgen::biome_tag("minecraft:is_overworld").expect("raw");
+        assert_eq!(overworld, raw.to_vec());
+        assert_eq!(overworld[0], "minecraft:mushroom_fields");
+        // the dimension categories stay disjoint: no nether or end biome
+        // leaks into the overworld set (a flat tag's flatten adds nothing)
+        for nether_member in generated::worldgen::biome_tag("minecraft:is_nether").unwrap() {
+            assert!(!overworld.contains(nether_member));
+        }
+        for end_member in generated::worldgen::biome_tag("minecraft:is_end").unwrap() {
+            assert!(!overworld.contains(end_member));
+        }
+    }
+
+    #[test]
+    fn the_nested_reference_expands_depth_first_in_place() {
+        // is_ocean's FIRST entry is the nested "#minecraft:is_deep_ocean":
+        // the four deep oceans expand AT THE HEAD, then the tag's own five
+        // concrete members follow — the built order is file order with
+        // refs expanded at their position
+        assert_eq!(
+            flatten_biome_tag("minecraft:is_ocean").expect("is_ocean"),
+            vec![
+                "minecraft:deep_frozen_ocean",
+                "minecraft:deep_cold_ocean",
+                "minecraft:deep_ocean",
+                "minecraft:deep_lukewarm_ocean",
+                "minecraft:frozen_ocean",
+                "minecraft:ocean",
+                "minecraft:cold_ocean",
+                "minecraft:lukewarm_ocean",
+                "minecraft:warm_ocean",
+            ]
+        );
+        // TWO-LEVEL recursion through one ref: a tag whose only member is
+        // "#minecraft:is_ocean" builds to exactly is_ocean's flatten —
+        // the grandparent sees the deep expansion transitively
+        let ocean = flatten_biome_tag("minecraft:is_ocean").expect("is_ocean again");
+        assert_eq!(
+            flatten_biome_tag("minecraft:has_structure/ruined_portal_ocean").expect("rpo"),
+            ocean
+        );
+        assert_eq!(
+            flatten_biome_tag("minecraft:has_structure/shipwreck").expect("shipwreck"),
+            ocean
+        );
+        // the single-concrete tag builds to its one member
+        assert_eq!(
+            flatten_biome_tag("minecraft:has_structure/nether_fossil").expect("nether_fossil"),
+            vec!["minecraft:soul_sand_valley"]
+        );
+    }
+
+    #[test]
+    fn the_synthetics_pin_the_dedup_and_the_cycle_rules() {
+        // the real 68-tag table has no cycle and no cross-path repeat, so
+        // the two refusal/dedup rules pin on a synthetic table through the
+        // generic core (the public wrapper additionally validates against
+        // the real biome table, which a synthetic member cannot pass)
+        let table: &[(&str, &[&str])] = &[
+            // "x" is reachable three ways: directly, through b, and again
+            // directly — it resolves ONCE, at the first path (the built
+            // set's first-occurrence order)
+            ("minecraft:a", &["minecraft:x", "#minecraft:b", "minecraft:x"]),
+            ("minecraft:b", &["minecraft:x", "minecraft:y"]),
+        ];
+        assert_eq!(
+            flatten_tag_table(table, "minecraft:a").expect("a"),
+            vec!["minecraft:x", "minecraft:y"]
+        );
+        // a two-tag cycle and a direct self-reference both refuse to
+        // build — vanilla refuses the datapack, the resolver fails closed
+        let cyclic: &[(&str, &[&str])] = &[
+            ("minecraft:c", &["#minecraft:d"]),
+            ("minecraft:d", &["#minecraft:c"]),
+        ];
+        assert_eq!(flatten_tag_table(cyclic, "minecraft:c"), None);
+        let selfref: &[(&str, &[&str])] = &[("minecraft:s", &["#minecraft:s"])];
+        assert_eq!(flatten_tag_table(selfref, "minecraft:s"), None);
+        // an unknown nested reference and an unknown tag refuse too
+        let dangling: &[(&str, &[&str])] = &[("minecraft:u", &["#minecraft:missing"])];
+        assert_eq!(flatten_tag_table(dangling, "minecraft:u"), None);
+        assert_eq!(flatten_tag_table(table, "minecraft:nope"), None);
+        // the same refusals ride the public wrapper on the REAL table
+        assert_eq!(flatten_biome_tag("minecraft:nope"), None);
+        assert_eq!(flatten_biome_tag("#minecraft:is_beach"), None);
+    }
+
+    #[test]
+    fn every_real_tag_flattens_to_registered_biomes() {
+        // the end-to-end load property over the jar's real table: all 68
+        // tags build, none empty, and every flattened member resolves
+        // into the biome registry (the registry-bound load validation the
+        // wrapper performs — here asserted member-by-member so a failure
+        // NAMES the dangling member instead of failing the whole sweep)
+        use generated::worldgen::{biome, BIOME_TAGS};
+        for (tag, _) in BIOME_TAGS {
+            let flat = flatten_biome_tag(tag)
+                .unwrap_or_else(|| panic!("{tag} must build"));
+            assert!(!flat.is_empty(), "{tag} must not build empty");
+            for m in &flat {
+                assert!(biome(m).is_some(), "{tag} built dangling member {m}");
+            }
+        }
+        // the two-level sum sanity: the flattened ocean family (9) rides
+        // under every is_ocean-referencing structure tag verbatim
+        assert_eq!(
+            flatten_biome_tag("minecraft:required_ocean_monument_surrounding")
+                .expect("monument"),
+            [&
+                flatten_biome_tag("minecraft:is_ocean").expect("ocean")[..],
+                &flatten_biome_tag("minecraft:is_river").expect("river")[..],
+            ]
+            .concat()
+        );
     }
 
     #[test]
