@@ -3238,7 +3238,9 @@ mod tests {
         let mut entries = Vec::new();
         entries.extend(test_support::entity_data_entry(0, s::BYTE, &[0xF7]));
         entries.extend(test_support::entity_data_entry(1, s::INT, &test_support::entity_data_varint(65536)));
-        entries.extend(test_support::entity_data_entry(2, s::LONG, &42i64.to_be_bytes()));
+        // the LONG serializer is ByteBufCodecs.VAR_LONG — a 7-bit-group
+        // VarLong, NOT a big-endian long (42 rides one byte)
+        entries.extend(test_support::entity_data_entry(2, s::LONG, &test_support::entity_data_varint(42)));
         entries.extend(test_support::entity_data_entry(3, s::FLOAT, &1.5f32.to_be_bytes()));
         let mut string_value = Vec::new();
         write_string(&mut string_value, "hi");

@@ -885,6 +885,40 @@ hand-drawn:
   empty batch), the sync record (both ground-flag bytes), and the
   model's lifecycle (spawn/move/despawn in place, the no-phantom-sync
   rule, the dimension swap).
+  The **entities carry metadata — Set Entity Data lands (v0.3.103)**:
+  the accessor-indexed key-value set (generated id 99) the syncs don't
+  carry — the on-fire/crouched/pose surfaces' wire transport. The audit
+  re-derived the format from the 26.2 bytecode: a VarInt entity id,
+  then entries (a BYTE index, a VarInt serializer id, the value)
+  until the 0xFF index — the EOF marker, real accessors 0..=254.
+  The round's discovery: the serializer ids are the
+  `EntityDataSerializers.<clinit>` REGISTRATION order and it is NOT
+  the field declaration order — VILLAGER_DATA is 18 and
+  OPTIONAL_GLOBAL_POS is 33 (the wiki-era table swaps them), the
+  animal variant/sound-variant Holders fill 21-32, and STRING is
+  capped at 32767 (`stringUtf8(32767)`, not the wiki-era 65536). The
+  client decodes the PRIMITIVE registry (BYTE, INT, LONG as a VarLong,
+  FLOAT, STRING, BOOLEAN, ROTATIONS, BLOCK_POS, OPTIONAL_BLOCK_POS,
+  DIRECTION, BLOCK_STATE, OPTIONAL_BLOCK_STATE, the
+  OptionalInt's BIAS-BY-ONE OPTIONAL_UNSIGNED_INT where wire n means
+  n-1, POSE) into a typed entry enum and refuses the object-graph
+  shapes (components, item stacks, particles, villager data, entity
+  references, profiles, the variant holders) — a value's byte length
+  is only knowable through its codec, so there is no honest skip, and
+  the vanilla read side fails the packet the same way. The consumer is
+  vanilla's own handle: `level.getEntity(id)` with a NULL lookup
+  DROPPING the packet (`ifnull -> return`) — metadata keeps current
+  entities current and never creates one; the entries are the
+  assignValues walk (each listed accessor replaced, the unmentioned
+  ones untouched) into the snapshot's new BTreeMap store. GOLDENS
+  UNTOUCHED BY CONSTRUCTION: 12/12 at rms 0.000. Tests +5 (workspace
+  443 -> 448 passed / 0 failed / 3 ignored): the full round-trip of
+  all fourteen serializers in one packet (the registration-order
+  table pinned), the EOF marker (the empty set, the post-marker
+  drift, the truncated entry), the object-graph + unknown refusal
+  (VILLAGER_DATA at 18 doubles as the order proof), the generated-id
+  pin, and the model's merge semantics (replace-one-leave-others, the
+  null-lookup drop, the re-spawn reset).
   The **entities walk the world — the MOVE-family deltas land
   (v0.3.102)**: Move Entity Pos (generated id 53), Move Entity Pos and
   Rotation (id 54), Move Entity Rot (id 56) and Rotate Head (id 83) —
