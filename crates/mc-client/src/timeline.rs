@@ -131,10 +131,13 @@ pub fn sky_light_factor(day_tick: i64) -> f32 {
 /// 26.2 jar, this run's javap/jar audit), sorted by tick, cyclic with
 /// [`DAY_PERIOD_TICKS`]. Modifier `multiply` over the attribute DEFAULT:
 /// the javap evidence (`EnvironmentAttributes.<init>`, jdk-25) pins the
-/// `visual/sky_light_color` default to `-1` = 0xFFFFFFFF = WHITE, and the
-/// overworld dimension type carries NO base — so the track IS the whole
-/// value. White across the day; `#7a7aff` (the moonlight blue) through
-/// the night plateau — the vanilla lightmap shader's `SkyLightColor`.
+/// `visual/sky_light_color` default to `-1` = 0xFFFFFFFF = WHITE. The
+/// overworld dimension type carries NO base — for it the track IS the
+/// whole value; the END and the NETHER state their own bases (#ac60cd /
+/// #7a7aff — the moonlight pairs, the generated table's honest rows),
+/// which the consumer's fold multiplies UNDER this track per channel.
+/// White across the day; `#7a7aff` (the moonlight blue) through the
+/// night plateau — the vanilla lightmap shader's `SkyLightColor`.
 const SKY_LIGHT_COLOR_R: [(i64, f32); 4] =
     [(730, 255.0), (11_270, 255.0), (13_140, 122.0), (22_860, 122.0)];
 const SKY_LIGHT_COLOR_G: [(i64, f32); 4] =
@@ -155,6 +158,25 @@ pub fn sky_light_color(day_tick: i64) -> [f32; 3] {
         evaluate(&SKY_LIGHT_COLOR_R, Some(DAY_PERIOD_TICKS), day_tick) / 255.0,
         evaluate(&SKY_LIGHT_COLOR_G, Some(DAY_PERIOD_TICKS), day_tick) / 255.0,
         evaluate(&SKY_LIGHT_COLOR_B, Some(DAY_PERIOD_TICKS), day_tick) / 255.0,
+    ]
+}
+
+/// The same track sample in BYTE space — the integer operand the
+/// attribute-system fold multiplies the STATED base against. Vanilla's
+/// track sample lands on an `Integer` before the fold (javap
+/// AttributeTrackSampler.applyTimeBased -> AttributeModifier.apply ->
+/// ARGB.multiply(int, int): the -1 white short-circuit, else per-channel
+/// `imul` / `idiv 255` — the probe's folded value IS an Integer the
+/// extractor unpacks through `ARGB.vector3fFromRGB24`), so the stated
+/// fold multiplies in this space, never in floats. Between keyframes the
+/// raw-space lerp rounds to the byte here (the same `evaluate` the float
+/// sampler reads; vanilla's keyframe lerp is `ARGB.srgbLerp`, the
+/// documented sampler-level approximation).
+pub fn sky_light_color_bytes(day_tick: i64) -> [u8; 3] {
+    [
+        evaluate(&SKY_LIGHT_COLOR_R, Some(DAY_PERIOD_TICKS), day_tick).round() as u8,
+        evaluate(&SKY_LIGHT_COLOR_G, Some(DAY_PERIOD_TICKS), day_tick).round() as u8,
+        evaluate(&SKY_LIGHT_COLOR_B, Some(DAY_PERIOD_TICKS), day_tick).round() as u8,
     ]
 }
 

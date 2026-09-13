@@ -1861,6 +1861,7 @@ mod tests {
             ambient_light: None, // no dimension opinion — the black bytecode default
             block_light_tint: None, // no dimension opinion — the bytecode default tint
             sky_light_factor: None, // no dimension opinion — the bytecode default 1.0
+            sky_light_color: None, // no dimension opinion — the -1 default's white identity
                 },
                 camera: None,
                 spawn_biome: Some("minecraft:plains".into()),
@@ -2288,6 +2289,7 @@ mod tests {
             ambient_light: None, // no dimension opinion — the black bytecode default
             block_light_tint: None, // no dimension opinion — the bytecode default tint
             sky_light_factor: None, // no dimension opinion — the bytecode default 1.0
+            sky_light_color: None, // no dimension opinion — the -1 default's white identity
         });
         app.enter_network_world(None, Skybox::Overworld, None, None);
         assert_eq!(app.screen, ScreenKind::World);
@@ -2345,6 +2347,7 @@ mod tests {
             ambient_light: None, // no dimension opinion — the black bytecode default
             block_light_tint: None, // no dimension opinion — the bytecode default tint
             sky_light_factor: None, // no dimension opinion — the bytecode default 1.0
+            sky_light_color: None, // no dimension opinion — the -1 default's white identity
         });
         app.enter_network_world(None, Skybox::Overworld, None, None);
         let flight = app.world_camera();
@@ -2404,6 +2407,7 @@ mod tests {
             ambient_light: None, // no dimension opinion — the black bytecode default
             block_light_tint: None, // no dimension opinion — the bytecode default tint
             sky_light_factor: None, // no dimension opinion — the bytecode default 1.0
+            sky_light_color: None, // no dimension opinion — the -1 default's white identity
                 },
                 camera: None,
                 spawn_biome: None,
@@ -2438,6 +2442,7 @@ mod tests {
             ambient_light: None, // no dimension opinion — the black bytecode default
             block_light_tint: None, // no dimension opinion — the bytecode default tint
             sky_light_factor: None, // no dimension opinion — the bytecode default 1.0
+            sky_light_color: None, // no dimension opinion — the -1 default's white identity
         }
     }
 

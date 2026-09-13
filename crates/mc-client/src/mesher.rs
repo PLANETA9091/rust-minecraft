@@ -404,10 +404,35 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                             .day_tick
                             .map(crate::timeline::sky_light_factor)
                             .unwrap_or(1.0);
-                    let sky_tint = world
-                        .day_tick
-                        .map(crate::timeline::sky_light_color)
-                        .unwrap_or([1.0; 3]);
+                    // The shader's SkyLightColor uniform: the
+                    // attribute-system fold for the COLOR attribute
+                    // (javap ColorModifier.MULTIPLY_RGB ->
+                    // ARGB.multiply(int, int): the -1 white default
+                    // short-circuits to the other operand, else
+                    // per-channel imul / idiv 255 — the probe's folded
+                    // value IS an Integer the extractor unpacks). None
+                    // = the -1 default's shape — the track verbatim,
+                    // the exact expression this path shipped before the
+                    // stated attribute; a stated base (the end #ac60cd,
+                    // the nether #7a7aff, a custom server's wire)
+                    // multiplies the byte-space track per channel.
+                    let sky_tint = match world.sky_light_color {
+                        None => world
+                            .day_tick
+                            .map(crate::timeline::sky_light_color)
+                            .unwrap_or([1.0; 3]),
+                        Some(stated) => {
+                            let track = world
+                                .day_tick
+                                .map(crate::timeline::sky_light_color_bytes)
+                                .unwrap_or([255; 3]);
+                            [
+                                ((stated[0] as u32 * track[0] as u32) / 255) as f32 / 255.0,
+                                ((stated[1] as u32 * track[1] as u32) / 255) as f32 / 255.0,
+                                ((stated[2] as u32 * track[2] as u32) / 255) as f32 / 255.0,
+                            ]
+                        }
+                    };
                     let ambient = world.ambient_light.map_or([0.0f32; 3], |a| {
                         [a[0] as f32 / 255.0, a[1] as f32 / 255.0, a[2] as f32 / 255.0]
                     });
@@ -586,10 +611,35 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                     // The shader's SkyLightColor uniform: the timeline's
                     // visual/sky_light_color track (white day, the #7a7aff
                     // moonlight blue at night); None = day = white.
-                    let sky_tint = world
-                        .day_tick
-                        .map(crate::timeline::sky_light_color)
-                        .unwrap_or([1.0; 3]);
+                    // The shader's SkyLightColor uniform: the
+                    // attribute-system fold for the COLOR attribute
+                    // (javap ColorModifier.MULTIPLY_RGB ->
+                    // ARGB.multiply(int, int): the -1 white default
+                    // short-circuits to the other operand, else
+                    // per-channel imul / idiv 255 — the probe's folded
+                    // value IS an Integer the extractor unpacks). None
+                    // = the -1 default's shape — the track verbatim,
+                    // the exact expression this path shipped before the
+                    // stated attribute; a stated base (the end #ac60cd,
+                    // the nether #7a7aff, a custom server's wire)
+                    // multiplies the byte-space track per channel.
+                    let sky_tint = match world.sky_light_color {
+                        None => world
+                            .day_tick
+                            .map(crate::timeline::sky_light_color)
+                            .unwrap_or([1.0; 3]),
+                        Some(stated) => {
+                            let track = world
+                                .day_tick
+                                .map(crate::timeline::sky_light_color_bytes)
+                                .unwrap_or([255; 3]);
+                            [
+                                ((stated[0] as u32 * track[0] as u32) / 255) as f32 / 255.0,
+                                ((stated[1] as u32 * track[1] as u32) / 255) as f32 / 255.0,
+                                ((stated[2] as u32 * track[2] as u32) / 255) as f32 / 255.0,
+                            ]
+                        }
+                    };
                     // The shader's AmbientColor base: the dimension's
                     // visual/ambient_light_color attribute as raw bytes
                     // (overworld #0a0a0a); None = the bytecode-default

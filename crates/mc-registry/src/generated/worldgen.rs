@@ -229,13 +229,20 @@ pub struct DimensionTypeDef {
     /// declares it; the consumer multiplies it under the
     /// timeline's multiply track — the attribute-system fold).
     pub sky_light_factor: Option<f32>,
+    /// The STATED sky-light color — None when the JSON states
+    /// none (the bytecode default -1 = #FFFFFF white, the ARGB
+    /// multiply identity); the real jar's end/nether state
+    /// #ac60cd / #7a7aff. The consumer multiplies the stated
+    /// base under the timeline's multiply track per channel,
+    /// INTEGER arithmetic (javap ARGB.multiply).
+    pub sky_light_color: Option<[u8; 3]>,
 }
 
 pub static DIMENSION_TYPES: [DimensionTypeDef; 4] = [
-    DimensionTypeDef { name: "minecraft:overworld", min_y: -64, height: 384, logical_height: 384, has_skylight: true, has_fixed_time: false, ambient_light: 0.0, coordinate_scale: 1.0, timelines: Some("#minecraft:in_overworld"), default_clock: Some("minecraft:overworld"), ambient_light_color: [10, 10, 10], skybox: Skybox::Overworld, fog_start_distance: None, fog_end_distance: None, cloud_fog_end_distance: None, block_light_tint: None, sky_light_factor: None },
-    DimensionTypeDef { name: "minecraft:overworld_caves", min_y: -64, height: 384, logical_height: 384, has_skylight: true, has_fixed_time: false, ambient_light: 0.0, coordinate_scale: 1.0, timelines: Some("#minecraft:in_overworld"), default_clock: Some("minecraft:overworld"), ambient_light_color: [10, 10, 10], skybox: Skybox::Overworld, fog_start_distance: None, fog_end_distance: None, cloud_fog_end_distance: None, block_light_tint: None, sky_light_factor: None },
-    DimensionTypeDef { name: "minecraft:the_end", min_y: 0, height: 256, logical_height: 256, has_skylight: true, has_fixed_time: true, ambient_light: 0.25, coordinate_scale: 1.0, timelines: Some("#minecraft:in_end"), default_clock: Some("minecraft:the_end"), ambient_light_color: [63, 71, 63], skybox: Skybox::End, fog_start_distance: None, fog_end_distance: None, cloud_fog_end_distance: None, block_light_tint: None, sky_light_factor: Some(0.0) },
-    DimensionTypeDef { name: "minecraft:the_nether", min_y: 0, height: 256, logical_height: 128, has_skylight: false, has_fixed_time: true, ambient_light: 0.1, coordinate_scale: 8.0, timelines: Some("#minecraft:in_nether"), default_clock: None, ambient_light_color: [48, 40, 33], skybox: Skybox::None, fog_start_distance: Some(10.0), fog_end_distance: Some(96.0), cloud_fog_end_distance: None, block_light_tint: None, sky_light_factor: Some(0.0) },
+    DimensionTypeDef { name: "minecraft:overworld", min_y: -64, height: 384, logical_height: 384, has_skylight: true, has_fixed_time: false, ambient_light: 0.0, coordinate_scale: 1.0, timelines: Some("#minecraft:in_overworld"), default_clock: Some("minecraft:overworld"), ambient_light_color: [10, 10, 10], skybox: Skybox::Overworld, fog_start_distance: None, fog_end_distance: None, cloud_fog_end_distance: None, block_light_tint: None, sky_light_factor: None, sky_light_color: None },
+    DimensionTypeDef { name: "minecraft:overworld_caves", min_y: -64, height: 384, logical_height: 384, has_skylight: true, has_fixed_time: false, ambient_light: 0.0, coordinate_scale: 1.0, timelines: Some("#minecraft:in_overworld"), default_clock: Some("minecraft:overworld"), ambient_light_color: [10, 10, 10], skybox: Skybox::Overworld, fog_start_distance: None, fog_end_distance: None, cloud_fog_end_distance: None, block_light_tint: None, sky_light_factor: None, sky_light_color: None },
+    DimensionTypeDef { name: "minecraft:the_end", min_y: 0, height: 256, logical_height: 256, has_skylight: true, has_fixed_time: true, ambient_light: 0.25, coordinate_scale: 1.0, timelines: Some("#minecraft:in_end"), default_clock: Some("minecraft:the_end"), ambient_light_color: [63, 71, 63], skybox: Skybox::End, fog_start_distance: None, fog_end_distance: None, cloud_fog_end_distance: None, block_light_tint: None, sky_light_factor: Some(0.0), sky_light_color: Some([172, 96, 205]) },
+    DimensionTypeDef { name: "minecraft:the_nether", min_y: 0, height: 256, logical_height: 128, has_skylight: false, has_fixed_time: true, ambient_light: 0.1, coordinate_scale: 8.0, timelines: Some("#minecraft:in_nether"), default_clock: None, ambient_light_color: [48, 40, 33], skybox: Skybox::None, fog_start_distance: Some(10.0), fog_end_distance: Some(96.0), cloud_fog_end_distance: None, block_light_tint: None, sky_light_factor: Some(0.0), sky_light_color: Some([122, 122, 255]) },
 ];
 
 /// Dimension type by registry id ("minecraft:overworld"), sorted for binary search.
@@ -255,14 +262,19 @@ pub struct TimelineDef {
     /// render track the lightmap's SkyFactor multiplies the sky term by
     /// (empty when the timeline carries no such track)
     pub sky_light_factor: &'static [(i64, f32)],
+    /// `minecraft:visual/sky_light_color` keyframes, sorted by tick — the
+    /// render track the lightmap's SkyLightColor multiplies the stated
+    /// base by, per channel (empty when the timeline carries no such track)
+    pub sky_light_color: &'static [(i64, [u8; 3])],
 }
 
 pub static TL_DAY_SKY_LIGHT_FACTOR: [(i64, f32); 4] = [(730, 1.0), (11270, 1.0), (13140, 0.24), (22860, 0.24)];
+pub static TL_DAY_SKY_LIGHT_COLOR: [(i64, [u8; 3]); 4] = [(730, [255, 255, 255]), (11270, [255, 255, 255]), (13140, [122, 122, 255]), (22860, [122, 122, 255])];
 pub static TIMELINES: [TimelineDef; 4] = [
-    TimelineDef { name: "minecraft:day", clock: "minecraft:overworld", period_ticks: Some(24000), tracks: 18, sky_light_factor: &TL_DAY_SKY_LIGHT_FACTOR },
-    TimelineDef { name: "minecraft:early_game", clock: "minecraft:overworld", period_ticks: None, tracks: 1, sky_light_factor: &[] },
-    TimelineDef { name: "minecraft:moon", clock: "minecraft:overworld", period_ticks: Some(192000), tracks: 2, sky_light_factor: &[] },
-    TimelineDef { name: "minecraft:villager_schedule", clock: "minecraft:overworld", period_ticks: Some(24000), tracks: 2, sky_light_factor: &[] },
+    TimelineDef { name: "minecraft:day", clock: "minecraft:overworld", period_ticks: Some(24000), tracks: 18, sky_light_factor: &TL_DAY_SKY_LIGHT_FACTOR, sky_light_color: &TL_DAY_SKY_LIGHT_COLOR },
+    TimelineDef { name: "minecraft:early_game", clock: "minecraft:overworld", period_ticks: None, tracks: 1, sky_light_factor: &[], sky_light_color: &[] },
+    TimelineDef { name: "minecraft:moon", clock: "minecraft:overworld", period_ticks: Some(192000), tracks: 2, sky_light_factor: &[], sky_light_color: &[] },
+    TimelineDef { name: "minecraft:villager_schedule", clock: "minecraft:overworld", period_ticks: Some(24000), tracks: 2, sky_light_factor: &[], sky_light_color: &[] },
 ];
 
 /// Timeline by registry id ("minecraft:day"), sorted for binary search.

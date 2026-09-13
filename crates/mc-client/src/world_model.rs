@@ -407,6 +407,31 @@ impl WorldModel {
         None
     }
 
+    /// The dimension's STATED sky-light color — `None` when no
+    /// dimension states one: the consumer's bytecode-default verdict
+    /// (`visual/sky_light_color` -1 = 0xFFFFFFFF = #FFFFFF white, the
+    /// ARGB multiply identity, javap) covers the absence. THE REAL
+    /// JAR'S SHAPE (the generated table's honest rows): the END states
+    /// **#ac60cd** and the NETHER **#7a7aff** (the moonlight pairs);
+    /// the overworlds state none. The three-branch precedence: the
+    /// synced entry wins, the built-in table serves skip-sync, None is
+    /// the default's verdict. The COMPOSED render value folds this
+    /// stated base UNDER the timeline's multiply track per channel,
+    /// INTEGER arithmetic (javap ARGB.multiply: imul / idiv 255, the
+    /// white short-circuit — the fold the mesher's sky term applies).
+    pub fn sky_light_color(&self) -> Option<[u8; 3]> {
+        let dim = self.current_dimension.as_deref()?;
+        if let Some(d) = self.registry.dimension(dim) {
+            return d.sky_light_color;
+        }
+        if self.registry.dimension_types.is_empty() {
+            if let Some(d) = mc_registry::generated::worldgen::dimension_type(dim) {
+                return d.sky_light_color;
+            }
+        }
+        None
+    }
+
     /// Global block state id at (x, y, z) — world coordinates for x/z
     /// (arithmetic shift, so negative chunks index correctly), and world-y
     /// when `min_y` is known else column-local y. `None` outside loaded

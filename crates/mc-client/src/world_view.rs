@@ -118,6 +118,12 @@ pub fn materialize(
         // the real jar's end/nether carry Some(0.0), the overworlds
         // None (the mesher's multiply identity)
         sky_light_factor: model.sky_light_factor(),
+        // the stated sky-light color rides the SAME snapshot (the
+        // lightmap family's transport): the model's dimension resolves
+        // through the built-in visual/sky_light_color column — the real
+        // jar's end (#ac60cd) / nether (#7a7aff) carry their moonlight
+        // bases, the overworlds None (the mesher's white identity)
+        sky_light_color: model.sky_light_color(),
     };
     let side_i = side as i32;
     for gz in 0..side_i {

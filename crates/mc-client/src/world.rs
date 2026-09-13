@@ -135,6 +135,18 @@ pub struct World {
     /// for bit. The real jar's END and NETHER state **0.0** — their
     /// sky term is pinned to zero (vanilla's own verdict).
     pub sky_light_factor: Option<f32>,
+    /// The dimension's STATED sky-light color — the multiply-BASE the
+    /// lightmap's sky term tints by, folded UNDER the timeline's
+    /// `visual/sky_light_color` track per channel in INTEGER space
+    /// (the attribute-system fold: javap ARGB.multiply — the -1 white
+    /// default short-circuits to the track, else per-channel
+    /// `imul` / `idiv 255`). `None` = no opinion: the -1 default's
+    /// shape — the track verbatim, the exact expression this mesher
+    /// shipped before the stated attribute arrived, so every
+    /// procedural/golden scene keeps its arithmetic bit for bit. The
+    /// real jar's END (#ac60cd) and NETHER (#7a7aff) state their
+    /// moonlight bases; a custom server's stated color rides the wire.
+    pub sky_light_color: Option<[u8; 3]>,
 }
 
 /// A biome cell with no opinion — the server never answered for the
@@ -241,6 +253,7 @@ impl World {
             ambient_light: None, // the procedural scene: the black bytecode default
             block_light_tint: None, // the procedural scene: the bytecode default tint
             sky_light_factor: None, // the procedural scene: the bytecode default 1.0
+            sky_light_color: None, // the procedural scene: the -1 default's white identity
         };
         w.generate();
         w

@@ -1191,8 +1191,9 @@ mod tests {
         assert!(emitted.contains("skybox: Skybox::End"));
         assert!(emitted.contains("skybox: Skybox::Overworld"));
         assert!(emitted.contains("pub static TL_DAY_SKY_LIGHT_FACTOR: [(i64, f32); 4] = [(730, 1.0), (11270, 1.0), (13140, 0.24), (22860, 0.24)];"));
+        assert!(emitted.contains("pub static TL_DAY_SKY_LIGHT_COLOR: [(i64, [u8; 3]); 4] = [(730, [255, 255, 255]), (11270, [255, 255, 255]), (13140, [122, 122, 255]), (22860, [122, 122, 255])];"));
         assert!(emitted.contains("pub static TIMELINES: [TimelineDef; 2]"));
-        assert!(emitted.contains("period_ticks: Some(24000), tracks: 3"));
+        assert!(emitted.contains("period_ticks: Some(24000), tracks: 4"));
         assert!(emitted.contains("pub fn dimension_type(name: &str)"));
         assert!(emitted.contains("pub fn timeline(name: &str)"));
         assert!(emitted.contains("(\"minecraft:in_overworld\", &[\"#minecraft:universal\", \"minecraft:day\", \"minecraft:early_game\"])"));
