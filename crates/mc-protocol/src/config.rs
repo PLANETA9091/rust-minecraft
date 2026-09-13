@@ -151,6 +151,46 @@ pub struct DimensionTypeEntry {
     /// the element states none — the bytecode-default black, never a
     /// guess.
     pub ambient_light_color: Option<[u8; 3]>,
+    /// The dimension's skybox — the `DimensionType$Skybox` the client's
+    /// sky pipeline gates the celestials on (javap: NONE returns before
+    /// ANY sky state is extracted, END extracts only the end-flash — the
+    /// disc/sun/moon/stars path is OVERWORLD's alone). The element field
+    /// is the StringRepresentable enum's lowercase name (`none`/
+    /// `overworld`/`end`) — javap `Skybox.CODEC` rides the same
+    /// `createDirectCodec` builder the JSON-side DIRECT_CODEC uses, so
+    /// the field RIDES the registry sync, and the codec binds it
+    /// `optionalFieldOf("skybox", OVERWORLD)`: an ABSENT key is the
+    /// Overworld default while a STATED `none` is its own verdict — the
+    /// two are NOT the same, so unlike the grass modifier this field
+    /// stays an Option (None = the element states nothing; the consumer
+    /// reads the codec default). An unknown name is the drift it is —
+    /// vanilla's own enum codec refuses it the same way, so it never
+    /// rides a working sync; the decode reads `None` (the codec default),
+    /// never a guess.
+    pub skybox: Option<Skybox>,
+}
+
+/// The skybox kinds one synced dimension type may state (javap
+/// `DimensionType$Skybox` — exactly THREE constants, serialized by
+/// their lowercase names `none`/`overworld`/`end`, pinned from the
+/// bytecode and the class constant pool; the vanilla enum is a
+/// `StringRepresentable` with its own `CODEC`).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Skybox {
+    None,
+    Overworld,
+    End,
+}
+
+impl Skybox {
+    fn from_wire(name: &str) -> Option<Self> {
+        match name {
+            "none" => Some(Self::None),
+            "overworld" => Some(Self::Overworld),
+            "end" => Some(Self::End),
+            _ => None,
+        }
+    }
 }
 
 /// One synced timeline: the 26.2 data-driven time system's element
@@ -760,6 +800,14 @@ pub fn parse_registry_data(payload: &[u8]) -> Result<RegistryData> {
             .and_then(|a| a.get("minecraft:visual/ambient_light_color"))
             .and_then(Nbt::as_str)
             .and_then(parse_rgb_hex);
+        // the skybox: the StringRepresentable enum's lowercase name;
+        // ABSENT and UNKNOWN both read None — the consumer's codec
+        // default (Overworld), the same fallback the vanilla
+        // optionalFieldOf binds
+        let skybox = element
+            .get("skybox")
+            .and_then(Nbt::as_str)
+            .and_then(Skybox::from_wire);
         out.dimension_types.push(DimensionTypeEntry {
             name: entry_id,
             min_y,
@@ -767,6 +815,7 @@ pub fn parse_registry_data(payload: &[u8]) -> Result<RegistryData> {
             default_clock,
             timelines,
             ambient_light_color,
+            skybox,
         });
     }
     anyhow::ensure!(
@@ -1152,6 +1201,10 @@ pub mod test_support {
                 ("min_y".into(), Nbt::Int(0)),
                 ("height".into(), Nbt::Int(256)),
                 ("fixed_time".into(), Nbt::Long(18_000)),
+                // the real vanilla element STATES the key (the raw jar
+                // JSON: the nether is the one dimension that does) —
+                // the wire decode reads Some(none), NOT the default
+                ("skybox".into(), Nbt::String("none".into())),
             ]);
             crate::nbt::write_network_nbt(&nether, &mut p).expect("nether element writes");
         } else {
@@ -1555,6 +1608,23 @@ mod tests {
     }
 
     #[test]
+    fn the_wire_skybox_decodes_the_string_enum() {
+        // the DimensionType$Skybox serializations: exactly the THREE
+        // lowercase names the StringRepresentable carries (javap: the
+        // constants' `name` field, the class constant pool) — and any
+        // other string is None (the consumer's codec default Overworld;
+        // vanilla's own enum codec would refuse it, so it never rides a
+        // working sync)
+        assert_eq!(Skybox::from_wire("none"), Some(Skybox::None));
+        assert_eq!(Skybox::from_wire("overworld"), Some(Skybox::Overworld));
+        assert_eq!(Skybox::from_wire("end"), Some(Skybox::End));
+        // the refusals: the drift it is
+        assert_eq!(Skybox::from_wire("None"), None, "the names are lowercase");
+        assert_eq!(Skybox::from_wire("flat"), None, "not a vanilla skybox kind");
+        assert_eq!(Skybox::from_wire(""), None, "empty string");
+    }
+
+    #[test]
     fn registry_data_decodes_dimensions_keeps_biomes_and_skips_other_registries() {
         // the decoded registry: both dimensions land with their layouts
         let data = parse_registry_data(&registry_packet(true)).expect("dimension_type parses");
@@ -1587,6 +1657,15 @@ mod tests {
             "the nether has no day cycle — no default_clock on the element"
         );
         assert_eq!(nether.timelines, None, "the nether references no timelines either");
+        assert_eq!(
+            ow.skybox, None,
+            "the real overworld element states NO skybox key — the codec default reads, never a stated value"
+        );
+        assert_eq!(
+            nether.skybox,
+            Some(Skybox::None),
+            "the real nether element STATES none — the wire decode, not the built-in table"
+        );
         assert!(data.dimension("minecraft:the_end").is_none());
         // the biome registry: the element DECODED (the NETWORK_CODEC
         // climate + effects — plains' real values), the arrival order

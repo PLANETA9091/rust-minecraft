@@ -270,6 +270,47 @@ impl WorldModel {
         None
     }
 
+    /// The current dimension's skybox — the `DimensionType$Skybox` the
+    /// sky pipeline gates the celestials on (the vanilla extract's
+    /// dimensionType.skybox() discipline: NONE returns before ANY sky
+    /// state is extracted, END extracts only the end-flash — the
+    /// disc/sun/moon/stars path is OVERWORLD's alone). THE SYNCED
+    /// REGISTRY IS THE SERVER'S TRUTH: a synced dimension entry answers
+    /// with its own decoded skybox (the wire decode — an element that
+    /// states nothing reads the codec's `optionalFieldOf` default,
+    /// Overworld, the vanilla binding; a STATED `none` is its own
+    /// verdict). When the sync carried NO dimension table at all (a
+    /// bare server, or one that skipped Registry Data because the
+    /// client claimed its known packs), the BUILT-IN table the
+    /// generator emitted from the same jar serves — the skip-sync
+    /// fallback, the same shape [`Self::ambient_light_color`] and
+    /// [`Self::dimension_min_y`] ride. No dimension pinned yet, an
+    /// entry the sync never named, or an unknown custom key: the
+    /// Overworld sky path — the vanilla default, the same fallback the
+    /// codec itself binds.
+    pub fn skybox(&self) -> mc_registry::generated::worldgen::Skybox {
+        use mc_registry::generated::worldgen::Skybox;
+        let Some(dim) = self.current_dimension.as_deref() else {
+            return Skybox::Overworld;
+        };
+        if let Some(d) = self.registry.dimension(dim) {
+            return d
+                .skybox
+                .map(|w| match w {
+                    mc_protocol::Skybox::None => Skybox::None,
+                    mc_protocol::Skybox::Overworld => Skybox::Overworld,
+                    mc_protocol::Skybox::End => Skybox::End,
+                })
+                .unwrap_or(Skybox::Overworld);
+        }
+        if self.registry.dimension_types.is_empty() {
+            if let Some(d) = mc_registry::generated::worldgen::dimension_type(dim) {
+                return d.skybox;
+            }
+        }
+        Skybox::Overworld
+    }
+
     /// Global block state id at (x, y, z) — world coordinates for x/z
     /// (arithmetic shift, so negative chunks index correctly), and world-y
     /// when `min_y` is known else column-local y. `None` outside loaded
@@ -811,6 +852,7 @@ mod tests {
                 default_clock: Some("minecraft:overworld".into()),
                 timelines: None,
             ambient_light_color: None,
+            skybox: None,
             }],
             // the synced biome table: ids 0/1/2, arrival order
             biomes: vec![
@@ -995,6 +1037,7 @@ mod tests {
             default_clock: None,
             timelines: None,
         ambient_light_color: None,
+        skybox: None,
         }];
         let p3 =
             mc_protocol::play::test_support::set_time_packet(3, &[(0, 1_002_006_000, 0.0, 1.0)]);
@@ -1179,6 +1222,7 @@ mod tests {
                     default_clock: Some("minecraft:overworld".into()),
                     timelines: None,
                 ambient_light_color: None,
+                skybox: None,
                 },
                 DimensionTypeEntry {
                     name: "minecraft:the_nether".into(),
@@ -1187,6 +1231,7 @@ mod tests {
                     default_clock: None, // no day cycle in the nether
                     timelines: None,
                 ambient_light_color: None,
+                skybox: None,
                 },
             ],
             biomes: Vec::new(),
@@ -1244,6 +1289,7 @@ mod tests {
                 default_clock: Some("minecraft:overworld".into()),
                 timelines: Some("#minecraft:in_overworld".into()),
                 ambient_light_color: None,
+                skybox: None,
             }],
             biomes: Vec::new(),
             biome_tags: Vec::new(),
@@ -1385,6 +1431,7 @@ mod tests {
             default_clock: None,
             timelines: None,
         ambient_light_color: None,
+        skybox: None,
         }];
         let p5 = mc_protocol::play::test_support::set_time_packet(5, &[(0, 18_000, 0.0, 1.0)]);
         let ts5 = mc_protocol::play::parse_set_time(&p5).unwrap();
@@ -1499,6 +1546,7 @@ mod tests {
                     default_clock: Some("minecraft:overworld".into()),
                     timelines: None,
                 ambient_light_color: None,
+                skybox: None,
                 }],
                 biomes: Vec::new(),
                 biome_tags: Vec::new(),
@@ -1576,6 +1624,7 @@ mod tests {
                         default_clock: None,
                         timelines: None,
                     ambient_light_color: None,
+                    skybox: None,
                     })
                     .collect(),
                 biomes: Vec::new(),
@@ -1670,6 +1719,7 @@ mod tests {
                         default_clock: None,
                         timelines: None,
                     ambient_light_color: None,
+                    skybox: None,
                     })
                     .collect(),
                 biomes: Vec::new(),
@@ -1698,8 +1748,8 @@ mod tests {
         let mut m = WorldModel::new();
         m.registry = RegistryData {
             dimension_types: vec![
-                DimensionTypeEntry { name: "minecraft:overworld".into(), min_y: -64, height: 384, default_clock: Some("minecraft:overworld".into()) , timelines: None, ambient_light_color: None },
-                DimensionTypeEntry { name: "minecraft:the_nether".into(), min_y: 0, height: 256, default_clock: None , timelines: None, ambient_light_color: None },
+                DimensionTypeEntry { name: "minecraft:overworld".into(), min_y: -64, height: 384, default_clock: Some("minecraft:overworld".into()) , timelines: None, ambient_light_color: None, skybox: None },
+                DimensionTypeEntry { name: "minecraft:the_nether".into(), min_y: 0, height: 256, default_clock: None , timelines: None, ambient_light_color: None, skybox: None },
             ],
             biomes: Vec::new(),
             biome_tags: Vec::new(),
@@ -1840,6 +1890,7 @@ mod tests {
                 default_clock: Some("minecraft:overworld".into()),
                 timelines: None,
                 ambient_light_color: Some([0x11, 0x22, 0x33]),
+                skybox: None,
             }],
             biomes: Vec::new(),
             biome_tags: Vec::new(),
@@ -1866,6 +1917,122 @@ mod tests {
         assert_eq!(
             m.ambient_light_color(),
             None,
+            "a live sync without the key: no built-in fallback"
+        );
+    }
+
+    #[test]
+    fn the_skybox_reads_the_built_in_table() {
+        // the built-in skybox column through the model's pinned
+        // dimension: the vanilla worlds' verdicts (the generator
+        // emitted them from the jar's dimension JSONs — overworld
+        // Overworld, the nether None, the end End), and the Overworld
+        // sky path for no dimension pinned yet / an unknown custom key
+        // — the codec's own default, never a claimed truth.
+        use mc_registry::generated::worldgen::Skybox;
+        let mut m = WorldModel::new();
+        assert_eq!(
+            m.skybox(),
+            Skybox::Overworld,
+            "no dimension: the default sky path"
+        );
+        m.apply(PlayEvent::Respawn(SpawnInfo {
+            dimension_type_id: 0,
+            dimension: "minecraft:overworld".to_string(),
+            portal_cooldown: 0,
+        }));
+        assert_eq!(m.skybox(), Skybox::Overworld);
+        m.apply(PlayEvent::Respawn(SpawnInfo {
+            dimension_type_id: 1,
+            dimension: "minecraft:the_nether".to_string(),
+            portal_cooldown: 0,
+        }));
+        assert_eq!(m.skybox(), Skybox::None, "the nether ships no sky at all");
+        m.apply(PlayEvent::Respawn(SpawnInfo {
+            dimension_type_id: 2,
+            dimension: "minecraft:the_end".to_string(),
+            portal_cooldown: 0,
+        }));
+        assert_eq!(m.skybox(), Skybox::End, "the end ships the end sky");
+        m.apply(PlayEvent::Respawn(SpawnInfo {
+            dimension_type_id: 9,
+            dimension: "minecraft:custom_dim".to_string(),
+            portal_cooldown: 0,
+        }));
+        assert_eq!(
+            m.skybox(),
+            Skybox::Overworld,
+            "unknown custom key: the vanilla default, never a guess"
+        );
+    }
+
+    #[test]
+    fn the_skybox_prefers_the_synced_truth() {
+        // the ambient discipline, skybox edition: the synced registry
+        // is the server's truth (its STATED skybox wins even over the
+        // built-in, its SILENCE reads the codec's optionalFieldOf
+        // default — Overworld, the vanilla binding); the built-in
+        // table serves ONLY when the sync carried no dimension table
+        // at all (the skip-sync fallback); a sync that arrived but
+        // omits the key keeps the codec default, never the built-in's
+        // opinion.
+        use mc_registry::generated::worldgen::Skybox;
+        let mut m = WorldModel::new();
+        m.apply(PlayEvent::WorldInfo(WorldInfo {
+            entity_id: 17,
+            hardcore: false,
+            dimensions: vec!["minecraft:overworld".to_string()],
+            view_distance: 8,
+            simulation_distance: 8,
+            portal_cooldown: 300,
+            current_dimension: "minecraft:overworld".to_string(),
+        }));
+        // no sync yet: the built-in table's overworld sky
+        assert_eq!(
+            m.skybox(),
+            Skybox::Overworld,
+            "skip-sync fallback: the built-in table serves"
+        );
+        // the sync arrives WITH the key: its value wins, even where it
+        // differs from the built-in (a custom overworld whose element
+        // states the nether's none)
+        m.registry = RegistryData {
+            dimension_types: vec![DimensionTypeEntry {
+                name: "minecraft:overworld".into(),
+                min_y: -64,
+                height: 384,
+                default_clock: Some("minecraft:overworld".into()),
+                timelines: None,
+                ambient_light_color: None,
+                skybox: Some(mc_protocol::Skybox::None),
+            }],
+            biomes: Vec::new(),
+            biome_tags: Vec::new(),
+            world_clocks: Vec::new(),
+            timelines: Vec::new(),
+            timeline_tags: Vec::new(),
+        };
+        assert_eq!(
+            m.skybox(),
+            Skybox::None,
+            "the synced value is the server's truth, not the built-in"
+        );
+        // a synced entry that states NOTHING: the codec default
+        // (Overworld) — NOT the built-in's opinion, and never the
+        // built-in nether's None
+        m.registry.dimension_types[0].skybox = None;
+        assert_eq!(
+            m.skybox(),
+            Skybox::Overworld,
+            "the sync arrived and is silent: the codec's own default"
+        );
+        // a sync that arrived but omits the KEY for the dimension
+        // entirely: the codec default — never a built-in fallback for
+        // a dimension the server named itself
+        m.registry.dimension_types[0].name = "minecraft:custom_dim".into();
+        assert_eq!(
+            m.skybox(),
+            Skybox::Overworld,
             "a live sync without the key: no built-in fallback"
         );
     }

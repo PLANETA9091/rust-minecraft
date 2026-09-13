@@ -156,14 +156,16 @@ fn run_join(
             // (same window decisions, same grid, same pose, same biome —
             // pinned by the world_view tests). Materializing happens here
             // off the frame thread; the frame thread only installs results.
-            // the sky pipeline's render state: the snapshot's dimension
-            // -> the built-in table (the vanilla extract's
-            // dimensionType.skybox() discipline), resolved before the
-            // snapshot adopts into the live model
-            let skybox =
-                crate::world_view::skybox_for_dimension(&snapshot.info.current_dimension);
             let mut view =
                 crate::world_view::LiveView::from_snapshot(snapshot, crate::screens::WORLD_CHUNKS);
+            // the sky pipeline's render state: the vanilla extract's
+            // dimensionType.skybox() discipline, resolved through the
+            // model the snapshot adopted into — the SYNCED registry's own
+            // skybox is the server's truth (the wire decode), the codec's
+            // optionalFieldOf default when the element states nothing,
+            // the BUILT-IN table when the sync carried no dimension
+            // table at all
+            let skybox = view.model.skybox();
             let first = view.refresh(crate::world_view::runtime_mapper);
             let spawn_biome = first.biome.clone();
             let shipped = tx.send((

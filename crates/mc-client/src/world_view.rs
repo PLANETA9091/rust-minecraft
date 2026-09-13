@@ -209,21 +209,6 @@ pub fn snapshot_y_base(player: &PlayerPosition, min_y: Option<i32>) -> i32 {
     (player.y.floor() as i32 - PLAYER_GRID_Y).max(min_y)
 }
 
-/// The current dimension's skybox — the `DimensionType$Skybox` the sky
-/// pipeline gates the celestials on (SkyRenderer.extractRenderState: NONE
-/// returns before ANY sky state, END extracts only the end-flash). The
-/// BUILT-IN table answers for the known vanilla ids — the same skip-sync
-/// fallback slice the dimension layout rides. An UNKNOWN (custom-server)
-/// dimension rides the Overworld sky path for now: the SYNCED registry's
-/// own skybox decode (the wire half, the ambient arc's shape) is the
-/// documented next step, and until it lands the fallback keeps today's
-/// rendering — a deliberate interim, never a claimed truth.
-pub fn skybox_for_dimension(dimension: &str) -> mc_registry::generated::worldgen::Skybox {
-    mc_registry::generated::worldgen::dimension_type(dimension)
-        .map(|d| d.skybox)
-        .unwrap_or(mc_registry::generated::worldgen::Skybox::Overworld)
-}
-
 /// The materialized join view: the renderer grid AND the camera pose
 /// computed from the SAME window decisions (origin, y_base, layout
 /// knowledge) — the world screen renders the grid from the pose and the
@@ -474,27 +459,6 @@ mod tests {
         RegistryData, SpawnInfo, WorldInfo,
         varint::write_varint,
     };
-
-    #[test]
-    fn skybox_for_dimension_answers_the_built_in_table() {
-        use mc_registry::generated::worldgen::Skybox;
-        // the known vanilla ids answer from the generated table (the same
-        // values the raw dimension JSONs state)
-        assert_eq!(
-            skybox_for_dimension("minecraft:overworld"),
-            Skybox::Overworld
-        );
-        assert_eq!(
-            skybox_for_dimension("minecraft:overworld_caves"),
-            Skybox::Overworld
-        );
-        assert_eq!(skybox_for_dimension("minecraft:the_nether"), Skybox::None);
-        assert_eq!(skybox_for_dimension("minecraft:the_end"), Skybox::End);
-        // an unknown (custom-server) dimension rides the Overworld sky
-        // path — the documented interim until the synced-skybox wire
-        // decode lands, keeping today's rendering, never a claimed truth
-        assert_eq!(skybox_for_dimension("mock:test"), Skybox::Overworld);
-    }
 
     /// One synced biome element under the mock tables (the real
     /// NETWORK_CODEC shape, plains' climate — the name is what the
@@ -1106,6 +1070,7 @@ mod tests {
                 default_clock: Some("minecraft:overworld".into()),
                 timelines: None,
             ambient_light_color: None,
+            skybox: None,
             }],
             biomes: Vec::new(),
             biome_tags: Vec::new(),
@@ -1242,6 +1207,7 @@ mod tests {
                 default_clock: Some("minecraft:overworld".into()),
                 timelines: None,
             ambient_light_color: None,
+            skybox: None,
             }],
             biomes: Vec::new(),
             biome_tags: Vec::new(),
@@ -1407,6 +1373,7 @@ mod tests {
             default_clock: None,
             timelines: None,
         ambient_light_color: None,
+        skybox: None,
         });
         // the synced biome table BOTH dimensions share (a real vanilla
         // server streams the whole worldgen/biome registry): plains 0,

@@ -2129,16 +2129,18 @@ mod tests {
             mc_protocol::WorldOutcome::Loaded(snap) => {
                 let (entity_id, view_distance, chunks) =
                     (snap.info.entity_id, snap.info.view_distance, snap.chunks.len());
-                // the worker's exact resolution order: the dimension reads
-                // off the snapshot BEFORE it adopts into the live model
-                let skybox =
-                    crate::world_view::skybox_for_dimension(&snap.info.current_dimension);
-                let first = crate::world_view::LiveView::from_snapshot(snap, WORLD_CHUNKS)
-                    .refresh(|id| match id {
-                        1 => crate::world::STONE,
-                        10 => crate::world::DIRT,
-                        _ => crate::world::AIR,
-                    });
+                // the worker's exact resolution order: the skybox resolves
+                // through the model the snapshot adopts into (the synced
+                // registry's own skybox is the server's truth — the wire
+                // decode; the codec default when the element states
+                // nothing; the built-in table on a skip-sync)
+                let view = crate::world_view::LiveView::from_snapshot(snap, WORLD_CHUNKS);
+                let skybox = view.model.skybox();
+                let first = view.refresh(|id| match id {
+                    1 => crate::world::STONE,
+                    10 => crate::world::DIRT,
+                    _ => crate::world::AIR,
+                });
                 LoginResult::Loaded {
                     username: crate::screens::PLAYER_NAME.to_string(),
                     entity_id,
