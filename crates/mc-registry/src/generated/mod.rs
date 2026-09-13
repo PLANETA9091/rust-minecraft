@@ -7,6 +7,7 @@ pub mod gui;
 pub mod item_models;
 pub mod items;
 pub mod lang;
+pub mod models;
 pub mod sounds;
 pub mod sky;
 pub mod skin;

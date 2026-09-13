@@ -8,6 +8,7 @@ mod itemgen;
 mod jar;
 mod langgen;
 mod manifest;
+mod modelgen;
 mod pack_claim;
 mod packet_dump;
 mod runtime_dump;
@@ -181,6 +182,18 @@ enum Cmd {
         #[arg(long, default_value = ".")]
         out: String,
     },
+    /// Block/item model files (assets/minecraft/models/) -> models.rs: the
+    /// parent chains, texture + display stanzas, the element skip list.
+    Models {
+        #[arg(long)]
+        version: String,
+        /// Path to the official client jar (e.g. .mc2rs/classpath/client.jar).
+        #[arg(long)]
+        jar: String,
+        /// Workspace root (contains crates/).
+        #[arg(long, default_value = ".")]
+        out: String,
+    },
     /// Re-emit mc-registry/src/generated/worldgen.rs (biomes + the built-in
     /// dimension_type/timeline/timeline-tag registry tables) from a LOCAL
     /// client jar — the offline half of the worldgen arc: no network, no java.
@@ -311,6 +324,12 @@ fn main() -> Result<()> {
                 .with_context(|| format!("workspace root {out} not found"))?;
             let path = write_skin(&root, &bytes)?;
             println!("skin ({version}): {}", path.display());
+        }
+        Cmd::Models { version, jar, out } => {
+            let bytes = std::fs::read(&jar).with_context(|| format!("read jar {jar}"))?;
+            let root = std::path::PathBuf::from(&out);
+            let path = write_models(&root, &bytes)?;
+            println!("models ({version}): {}", path.display());
         }
         Cmd::ItemModels { version, jar, out } => {
             let bytes = std::fs::read(&jar).with_context(|| format!("read jar {jar}"))?;
@@ -531,6 +550,8 @@ fn generate(agent: &ureq::Agent, cache: &util::Cache, version: &str, out: &Path)
     println!("      skin table: {}", skin_path.display());
     let item_models_path = write_item_models(&workspace_root, &jar_bytes)?;
     println!("      item-models table: {}", item_models_path.display());
+    let models_path = write_models(&workspace_root, &jar_bytes)?;
+    println!("      models table: {}", models_path.display());
 
     let extracted = codegen::extract_runtime_assets(&mut zip, &workspace_root, &gen.ui, &gen.font)?;
     println!("[7/7] done in {:.1}s ({} runtime asset files -> assets-cache/jar)", t0.elapsed().as_secs_f32(), extracted);
@@ -776,6 +797,27 @@ fn write_skin(workspace_root: &Path, jar_bytes: &[u8]) -> Result<std::path::Path
         data.side,
         &data.png_sha1[..8],
         &data.rgba_sha1[..8],
+        path.display()
+    );
+    Ok(path)
+}
+
+/// Resolve + write crates/mc-registry/src/generated/models.rs (the block/item
+/// model files: parent chains, texture + display stanzas) from a local jar.
+fn write_models(workspace_root: &Path, jar_bytes: &[u8]) -> Result<std::path::PathBuf> {
+    let mut zip =
+        zip::ZipArchive::new(std::io::Cursor::new(jar_bytes)).context("open client jar as zip")?;
+    let data = modelgen::generate(&mut zip)?;
+    let reg_dir = workspace_root.join("crates/mc-registry/src/generated");
+    std::fs::create_dir_all(&reg_dir)?;
+    let path = reg_dir.join("models.rs");
+    std::fs::write(&path, modelgen::emit(&data)?)?;
+    println!(
+        "      models: {} files ({} block / {} item), {} carry elements -> {}",
+        data.models.len(),
+        data.blocks,
+        data.items,
+        data.element_models.len(),
         path.display()
     );
     Ok(path)
