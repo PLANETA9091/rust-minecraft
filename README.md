@@ -809,6 +809,45 @@ hand-drawn:
   The golden-policy lesson: an rms move inside the tolerance is not
   a pass to keep quiet about — the render changed, so the reference
   changed with it, and the diff explained the regen.
+  The **sky-light factor folds under the timeline (v0.3.97 — the
+  attribute-system fold, and the end/nether discovery)**: the
+  sky_light_factor consumer. The audit started at the mesher's sky
+  term and climbed the vanilla stack: `EnvironmentAttributeProbe` ->
+  `EnvironmentAttributeSystem.getValue` -> the sampler's LINEAR FOLD —
+  `value = base; for layer in layers { value = layer.apply(value) }`,
+  layers in add order: the dimension's attributes as a CONSTANT layer
+  (the OverrideModifier — a stated value REPLACES the default), the
+  biome positional layers, the dimension's TIMELINES last (the
+  TimeBased layer, the track's modifier — the day track's is
+  `multiply`, the raw jar JSON). So the stated
+  `visual/sky_light_factor` is the multiply-BASE and the day cycle
+  scales it: `stated.unwrap_or(1.0) x track(tick)`. AND THE
+  DISCOVERY: the raw dimension JSONs state the attribute — the END
+  and the NETHER pin **0.0** (`the_end` also states
+  `sky_light_color #ac60cd`, the nether `#7a7aff`), so vanilla's own
+  verdict is that NO sky light reaches those lightmaps; the
+  v0.3.95 round's "no vanilla dimension states the four" held only
+  for the tint and night-vision, and the mock registry (which
+  carried no keys) diverged from the real jar — the autopush-95
+  lesson again. The implementation: the generator parses the
+  attribute into the built-in table (the honest shape now carries
+  `Some(0.0)` rows for the end/nether), the model grows
+  `WorldModel::sky_light_factor()` (the three-branch precedence) and
+  `sky_factor()` folds the stated base under the curve; the
+  snapshot stamps it beside its lightmap siblings and the mesher's
+  two paths multiply `stated.unwrap_or(1.0) * track` (the
+  materialize transport, the lightmap family's own — not the App
+  pin); the mock nether element grew the REAL stated pair
+  (`#7a7aff` + 0.0) and the v0.3.95 real-element assertions now pin
+  the nether's Some(0.0) and the overworld's absent shape. `World`
+  drops `Eq` (the stated f32 arrives — derives follow the data).
+  GOLDENS UNTOUCHED BY CONSTRUCTION: every golden world is
+  overworld/unstated, and `x * 1.0` is an exact f32 identity —
+  12/12 at rms 0.000, byte-identical. Tests +2 (workspace 416 ->
+  418 passed / 0 failed / 3 ignored): the fold contract (the built-in
+  nether's 0.0, the custom 0.5 halving the day curve, the silent
+  sync's identity) and the materialize stamp; the skip-sync end test
+  now pins the zero factor the jar itself states.
   The **four light attributes ride the wire (v0.3.95 — the syncable
   sweep's DATA round)**: the mc-protocol expansion. The audit re-ran
   on the 26.2 jar (EnvironmentAttributes.<clinit>): four syncable
