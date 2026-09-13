@@ -970,7 +970,7 @@ mod tests {
     use mc_protocol::DimensionTypeEntry;
     use mc_protocol::SpawnInfo;
     use mc_protocol::varint::write_varint;
-    use mc_protocol::{BiomeEffects, BiomeEntry, GrassColorModifier};
+    use mc_protocol::{BiomeEffects, BiomeEntry, EntityPositionSync, EntitySpawn, GrassColorModifier};
 
     /// One synced biome element under the mock tables — the real
     /// NETWORK_CODEC shape with plains' climate (the name is what the
@@ -2287,6 +2287,143 @@ mod tests {
         assert_eq!(m.current_dimension.as_deref(), Some("minecraft:custom_dim"));
         assert_eq!(m.min_y, Some(0), "stale-but-honest: unknown key, layout unchanged");
         assert_eq!(m.loaded_chunks(), 0, "the level drops on every dimension change");
+    }
+
+    #[test]
+    fn entities_spawn_move_and_despawn_in_place() {
+        let mut m = WorldModel::new();
+        // the spawn packet CREATES: the snapshot is the spawn's own
+        // facts — the registry-typed existence, the full-precision
+        // position, the byte angles unpacked the vanilla way
+        assert!(m.apply(PlayEvent::Spawn(EntitySpawn {
+            id: 7,
+            uuid: 0x0011_2233_4455_6677_8899_AABB_CCDD_EEFF,
+            type_id: 2101,
+            x: -12.5,
+            y: 64.0,
+            z: 3.25,
+            movement: [0.0; 3],
+            x_rot: -180.0, // the spawn byte -128 unpacked
+            y_rot: 178.59375, // the spawn byte 127 unpacked
+            y_head_rot: 0.0,
+            data: 7,
+        })));
+        let e = m.entity(7).expect("the spawn created the entity");
+        assert_eq!(
+            (e.type_id, e.x, e.y, e.z, e.y_rot, e.x_rot),
+            (2101, -12.5, 64.0, 3.25, 178.59375, -180.0)
+        );
+        // re-spawning the SAME id REPLACES (the vanilla lookup is keyed
+        // by id — the map does not grow a second entry)
+        assert!(m.apply(PlayEvent::Spawn(EntitySpawn {
+            id: 7,
+            uuid: 42,
+            type_id: 1,
+            x: 0.0,
+            y: 0.0,
+            z: 0.0,
+            movement: [0.0; 3],
+            x_rot: 0.0,
+            y_rot: 0.0,
+            y_head_rot: 0.0,
+            data: 0,
+        })));
+        assert_eq!(m.entity(7).unwrap().x, 0.0, "the newer spawn won");
+        // a second id keeps both alive
+        assert!(m.apply(PlayEvent::Spawn(EntitySpawn {
+            id: 8,
+            uuid: 43,
+            type_id: 2,
+            x: 1.0,
+            y: 2.0,
+            z: 3.0,
+            movement: [0.0; 3],
+            x_rot: 0.0,
+            y_rot: 0.0,
+            y_head_rot: 0.0,
+            data: 0,
+        })));
+        // the sync MOVES in place: the authoritative correction rewrites
+        // the position AND the exact float angles
+        assert!(m.apply(PlayEvent::EntityMoved(EntityPositionSync {
+            id: 7,
+            x: 100.5,
+            y: -64.25,
+            z: 300.75,
+            delta: [0.1, 0.2, 0.3],
+            y_rot: 45.0,
+            x_rot: -10.0,
+            on_ground: true,
+        })));
+        let e = m.entity(7).expect("the sync moved, not replaced");
+        assert_eq!(
+            (e.x, e.y, e.z, e.y_rot, e.x_rot),
+            (100.5, -64.25, 300.75, 45.0, -10.0)
+        );
+        assert_eq!(m.entity(8).unwrap().x, 1.0, "the neighbor is untouched");
+        // a sync for an UNKNOWN id is refused — the spawn packet stays
+        // the only creator (no phantom entities from a correction)
+        assert!(!m.apply(PlayEvent::EntityMoved(EntityPositionSync {
+            id: 999,
+            x: 0.0,
+            y: 0.0,
+            z: 0.0,
+            delta: [0.0; 3],
+            y_rot: 0.0,
+            x_rot: 0.0,
+            on_ground: false,
+        })));
+        assert!(m.entity(999).is_none(), "no phantom spawned");
+        // the batch removal: whatever existed is gone, unknowns are
+        // honest no-ops, and the report is whether ANYTHING changed
+        assert!(m.apply(PlayEvent::EntitiesRemoved(vec![7, 999])));
+        assert!(m.entity(7).is_none());
+        assert!(m.entity(8).is_some(), "the unlisted neighbor survives");
+        // nothing left in the batch existed — the no-op reports false
+        assert!(!m.apply(PlayEvent::EntitiesRemoved(vec![7, 999])));
+    }
+
+    #[test]
+    fn entities_follow_the_dimension_swap() {
+        let mut m = WorldModel::new();
+        m.apply(PlayEvent::Spawn(EntitySpawn {
+            id: 7,
+            uuid: 1,
+            type_id: 2101,
+            x: 0.0,
+            y: 64.0,
+            z: 0.0,
+            movement: [0.0; 3],
+            x_rot: 0.0,
+            y_rot: 0.0,
+            y_head_rot: 0.0,
+            data: 0,
+        }));
+        assert!(m.entity(7).is_some());
+        // the Respawn crossing clears the population with the columns —
+        // the vanilla client swaps the whole level; the old dimension's
+        // mobs do not follow the player through the portal
+        assert!(m.apply(PlayEvent::Respawn(SpawnInfo {
+            dimension_type_id: 1,
+            dimension: "minecraft:the_nether".to_string(),
+            portal_cooldown: 60,
+        })));
+        assert!(m.entity(7).is_none(), "no entity crosses the dimension swap");
+        // the new dimension's spawns land fresh in the cleared registry
+        assert!(m.apply(PlayEvent::Spawn(EntitySpawn {
+            id: 7,
+            uuid: 2,
+            type_id: 3,
+            x: 8.0,
+            y: 32.0,
+            z: 8.0,
+            movement: [0.0; 3],
+            x_rot: 0.0,
+            y_rot: 0.0,
+            y_head_rot: 0.0,
+            data: 0,
+        })));
+        assert_eq!(m.entity(7).unwrap().x, 8.0);
     }
 
     #[test]

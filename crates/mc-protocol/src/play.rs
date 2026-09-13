@@ -2412,6 +2412,177 @@ mod tests {
         assert!(parse_section_blocks(&p3).is_err());
     }
 
+    #[test]
+    fn add_entity_decodes_the_bytecode_layout() {
+        assert_eq!(clientbound::ADD_ENTITY, 1, "add entity (generated id)");
+        // the movement rides the 15-bit lane grid: at scale 1 the exact
+        // points 1.0 / 0.0 / -1.0 pack to lanes 32766 / 16383 / 0 and
+        // unpack BIT-EXACT (no tolerance — the arithmetic is exact at
+        // the grid points)
+        let movement = test_support::encode_lp_vec3(1.0, 0.0, -1.0, 1);
+        // the angle bytes ride Mth.unpackDegrees: -128 * 360 / 256 =
+        // exactly -180.0 (the byte field's floor), 127 * 360 / 256 =
+        // 178.59375
+        let p = test_support::add_entity_packet(
+            99,
+            0x0011_2233_4455_6677_8899_AABB_CCDD_EEFF,
+            2101, // a 2-byte VarInt type id
+            -1234.5,
+            64.0,
+            9876.25,
+            &movement,
+            -128,
+            127,
+            0,
+            7,
+        );
+        let e = parse_add_entity(&p).unwrap();
+        assert_eq!(e.id, 99);
+        assert_eq!(
+            e.uuid, 0x0011_2233_4455_6677_8899_AABB_CCDD_EEFF,
+            "the UUID's 128 bits, most-long first"
+        );
+        assert_eq!(e.type_id, 2101);
+        assert_eq!((e.x, e.y, e.z), (-1234.5, 64.0, 9876.25));
+        assert_eq!(e.movement, [1.0, 0.0, -1.0], "the 15-bit lanes, bit-exact at the grid");
+        assert_eq!(e.x_rot, -180.0, "-128 * 360 / 256");
+        assert_eq!(e.y_rot, 178.59375, "127 * 360 / 256");
+        assert_eq!(e.y_head_rot, 0.0);
+        assert_eq!(e.data, 7);
+        // trailing bytes are drift
+        let mut p2 = p.clone();
+        p2.push(0x00);
+        assert!(parse_add_entity(&p2).is_err());
+        // a wrong id is refused
+        let mut p3 = test_support::add_entity_packet(
+            1,
+            0,
+            0,
+            0.0,
+            0.0,
+            0.0,
+            &[0x00],
+            0,
+            0,
+            0,
+            0,
+        );
+        p3[0] = 0x7F; // 127 — not ADD_ENTITY
+        assert!(parse_add_entity(&p3).is_err());
+    }
+
+    #[test]
+    fn lp_vec3_decodes_the_lanes_scale_and_continuation() {
+        // the ZERO sentinel: a zero FIRST byte ends the read — nothing
+        // else is consumed (the 0xAA tail stays untouched)
+        let mut c: &[u8] = &[0x00, 0xAA];
+        assert_eq!(decode_lp_vec3(&mut c).unwrap(), [0.0; 3]);
+        assert_eq!(c.len(), 1, "the sentinel consumed exactly one byte");
+        // the continuation path: scale 100 exceeds the 2-bit field — the
+        // flag bit rides byte 0 and the scale's high bits follow as one
+        // VarInt (100 >> 2 = 25); the exact grid points unpack to
+        // (100, 0, -100) bit-exact
+        let p = test_support::encode_lp_vec3(100.0, 0.0, -100.0, 100);
+        let mut c2: &[u8] = &p;
+        let v = decode_lp_vec3(&mut c2).unwrap();
+        assert_eq!(v, [100.0, 0.0, -100.0], "the continuation VarInt reassembles the scale");
+        assert!(c2.is_empty(), "the whole encoding consumed");
+        // the wire byte count: 6 fixed bytes + one VarInt continuation
+        assert_eq!(p.len(), 7);
+        // the general value round-trips within the 15-bit quantization
+        // step (pack rounds to the nearest grid point; one step at
+        // scale 3 is 3 * 2 / 32766)
+        let p3 = test_support::encode_lp_vec3(1.5, -0.25, 2.25, 3);
+        let v3 = decode_lp_vec3(&mut p3.as_slice()).unwrap();
+        let step = 3.0 * 2.0 / 32766.0;
+        assert!((v3[0] - 1.5).abs() <= step / 2.0 + 1e-12, "{} vs 1.5", v3[0]);
+        assert!((v3[1] + 0.25).abs() <= step / 2.0 + 1e-12, "{} vs -0.25", v3[1]);
+        assert!((v3[2] - 2.25).abs() <= step / 2.0 + 1e-12, "{} vs 2.25", v3[2]);
+        // the 32767 lane value CLAMPS to 32766 (javap: Math.min) — a
+        // hand-rolled packed integer proves the clamp, which the encoder
+        // cannot produce (its lanes top out at 32766)
+        let packed: u64 = 1
+            | ((32767u64) << 3)   // x lane: the value the clamp exists for
+            | ((16383u64) << 18)  // y lane: 0.0
+            | ((16383u64) << 33); // z lane: 0.0
+        let mut bytes = Vec::new();
+        bytes.push((packed & 0xFF) as u8);
+        bytes.push(((packed >> 8) & 0xFF) as u8);
+        bytes.extend_from_slice(&(((packed >> 16) & 0xFFFF_FFFF) as u32).to_be_bytes());
+        let v4 = decode_lp_vec3(&mut bytes.as_slice()).unwrap();
+        assert_eq!(v4[0], 1.0, "32767 clamps to 32766 -> exactly 1.0");
+        assert_eq!((v4[1], v4[2]), (0.0, 0.0));
+    }
+
+    #[test]
+    fn remove_entities_parses_the_int_id_list() {
+        assert_eq!(clientbound::REMOVE_ENTITIES, 77, "remove entities (generated id)");
+        // readIntIdList: a VarInt count then that many VarInt ids —
+        // including a 3-byte VarInt (1_000_000)
+        let p = test_support::remove_entities_packet(&[7, 1_000_000, 42]);
+        assert_eq!(parse_remove_entities(&p).unwrap(), vec![7, 1_000_000, 42]);
+        // an empty batch is the honest zero
+        assert_eq!(
+            parse_remove_entities(&test_support::remove_entities_packet(&[])).unwrap(),
+            Vec::<i32>::new()
+        );
+        // a lying count is refused BEFORE allocation (each id is at
+        // least one wire byte — the mock builder cannot lie by
+        // construction, hand-rolled here)
+        let mut p2 = Vec::new();
+        write_varint(&mut p2, clientbound::REMOVE_ENTITIES);
+        write_varint(&mut p2, 5_000); // claims 5k ids...
+        // ...but zero id bytes follow
+        assert!(parse_remove_entities(&p2).is_err());
+        // trailing bytes are drift
+        let mut p3 = test_support::remove_entities_packet(&[1]);
+        p3.push(0x00);
+        assert!(parse_remove_entities(&p3).is_err());
+    }
+
+    #[test]
+    fn entity_position_sync_decodes_the_position_move_rotation() {
+        assert_eq!(
+            clientbound::ENTITY_POSITION_SYNC, 35,
+            "entity position sync (generated id)"
+        );
+        // the PositionMoveRotation record: TWO full-precision Vec3s
+        // (position then deltaMovement) then FLOAT yaw, FLOAT pitch —
+        // and the BOOL ground flag (one byte)
+        let p = test_support::entity_position_sync_packet(
+            99,
+            -12.5,
+            1000.25,
+            -3.75,
+            [0.1, -0.2, 0.3],
+            179.5,
+            -90.0,
+            true,
+        );
+        let s = parse_entity_position_sync(&p).unwrap();
+        assert_eq!(s.id, 99);
+        assert_eq!((s.x, s.y, s.z), (-12.5, 1000.25, -3.75));
+        assert_eq!(s.delta, [0.1, -0.2, 0.3]);
+        assert_eq!((s.y_rot, s.x_rot), (179.5, -90.0));
+        assert!(s.on_ground);
+        // the ground flag is a real wire byte, not an omission
+        let p2 = test_support::entity_position_sync_packet(
+            99,
+            -12.5,
+            1000.25,
+            -3.75,
+            [0.1, -0.2, 0.3],
+            179.5,
+            -90.0,
+            false,
+        );
+        assert!(!parse_entity_position_sync(&p2).unwrap().on_ground);
+        // trailing bytes are drift
+        let mut p3 = p.clone();
+        p3.push(0x00);
+        assert!(parse_entity_position_sync(&p3).is_err());
+    }
+
     /// Mock server: login -> configuration -> play (the FULL vanilla
     /// arc), then a real world burst: login, center chunk, chunk batch,
     /// chunk data, keep-alive, ping, junk, unload, position teleport.
