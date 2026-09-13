@@ -68,8 +68,7 @@ pub struct DimensionTypeEntry {
     /// real jar; inline list references are not emitted (none exist there)
     pub timelines: Option<String>,
     pub default_clock: Option<String>,
-    /// `attributes/minecraft:visual/ambient_light_color` — the lightmap's
-    /// AmbientColor base term (the shader's `max(AmbientColor,
+    /// `attributes/minecraft:visual/ambient_light_color` — the lightmap's    /// AmbientColor base term (the shader's `max(AmbientColor,
     /// nightVisionColor)` starting color). ABSENT = the bytecode default
     /// (`EnvironmentAttributes.<clinit>`: `defaultValue(-16777216)` =
     /// 0xFF000000): black. The real jar states it per dimension
@@ -84,6 +83,13 @@ pub struct DimensionTypeEntry {
     /// so no vanilla built-in can carry one — the parse falls back to
     /// the codec default.
     pub skybox: Skybox,
+    /// The STATED fog distances (visual/fog_start_distance /
+    /// visual/fog_end_distance, blocks) — `None` when the JSON states
+    /// none, which is the bytecode defaults' shape (start 0.0 / end
+    /// 1024.0, javap EnvironmentAttributes): only the nether states the
+    /// pair in the real jar (10.0 / 96.0 — the fogged walls).
+    pub fog_start_distance: Option<f32>,
+    pub fog_end_distance: Option<f32>,
 }
 
 /// The per-biome tint extras the jar states beyond the classic color
@@ -329,6 +335,21 @@ pub fn generate<R: std::io::Read + std::io::Seek>(archive: &mut zip::ZipArchive<
                                 Some("end") => Skybox::End,
                                 _ => Skybox::Overworld,
                             },
+                            // the STATED fog distances (blocks): only the
+                            // nether states the pair in the real jar; the
+                            // absent shape reads None (the bytecode defaults
+                            // start 0.0 / end 1024.0 — the consumer's
+                            // documented window treatment covers those)
+                            fog_start_distance: v
+                                .get("attributes")
+                                .and_then(|a| a.get("minecraft:visual/fog_start_distance"))
+                                .and_then(Value::as_f64)
+                                .map(|f| f as f32),
+                            fog_end_distance: v
+                                .get("attributes")
+                                .and_then(|a| a.get("minecraft:visual/fog_end_distance"))
+                                .and_then(Value::as_f64)
+                                .map(|f| f as f32),
                             // string tag references only — the inline list
                             // form does not occur in the real jar
                             timelines: v
@@ -530,7 +551,7 @@ pub fn emit(data: &WorldgenData) -> Result<String> {
     out.push_str("#[derive(Debug, Clone, Copy, PartialEq, Eq)]\npub enum Skybox {\n    None,\n    Overworld,\n    End,\n}\n\n");
     out.push_str("/// One built-in `minecraft:dimension_type` registry entry (the jar's\n");
     out.push_str("/// `data/minecraft/dimension_type/*.json`): world layout + environment.\n");
-    out.push_str("#[derive(Debug, Clone, Copy, PartialEq)]\npub struct DimensionTypeDef {\n    pub name: &'static str,\n    pub min_y: i32,\n    pub height: u32,\n    pub logical_height: u32,\n    pub has_skylight: bool,\n    pub has_fixed_time: bool,\n    pub ambient_light: f32,\n    pub coordinate_scale: f64,\n    pub timelines: Option<&'static str>,\n    pub default_clock: Option<&'static str>,\n    /// The lightmap's AmbientColor base (visual/ambient_light_color;\n    /// the bytecode default black when the JSON states none).\n    pub ambient_light_color: [u8; 3],\n    /// The sky-pipeline gate (SkyRenderer.extractRenderState's skybox).\n    pub skybox: Skybox,\n}\n\n");
+    out.push_str("#[derive(Debug, Clone, Copy, PartialEq)]\npub struct DimensionTypeDef {\n    pub name: &'static str,\n    pub min_y: i32,\n    pub height: u32,\n    pub logical_height: u32,\n    pub has_skylight: bool,\n    pub has_fixed_time: bool,\n    pub ambient_light: f32,\n    pub coordinate_scale: f64,\n    pub timelines: Option<&'static str>,\n    pub default_clock: Option<&'static str>,\n    /// The lightmap's AmbientColor base (visual/ambient_light_color;\n    /// the bytecode default black when the JSON states none).\n    pub ambient_light_color: [u8; 3],\n    /// The sky-pipeline gate (SkyRenderer.extractRenderState's skybox).\n    pub skybox: Skybox,\n    /// The STATED fog distances (blocks) — None when the JSON states\n    /// none (the bytecode defaults' shape: start 0.0 / end 1024.0).\n    pub fog_start_distance: Option<f32>,\n    pub fog_end_distance: Option<f32>,\n}\n\n");
     out.push_str("pub static DIMENSION_TYPES: [DimensionTypeDef; ");
     out.push_str(&data.dimension_types.len().to_string());
     out.push_str("] = [\n");
@@ -540,7 +561,7 @@ pub fn emit(data: &WorldgenData) -> Result<String> {
             None => "None".to_string(),
         };
         out.push_str(&format!(
-            "    DimensionTypeDef {{ name: \"{}\", min_y: {}, height: {}, logical_height: {}, has_skylight: {}, has_fixed_time: {}, ambient_light: {:?}, coordinate_scale: {:?}, timelines: {}, default_clock: {}, ambient_light_color: {:?}, skybox: Skybox::{:?} }},\n",
+            "    DimensionTypeDef {{ name: \"{}\", min_y: {}, height: {}, logical_height: {}, has_skylight: {}, has_fixed_time: {}, ambient_light: {:?}, coordinate_scale: {:?}, timelines: {}, default_clock: {}, ambient_light_color: {:?}, skybox: Skybox::{:?}, fog_start_distance: {:?}, fog_end_distance: {:?} }},\n",
             rust_str(&d.name),
             d.min_y,
             d.height,
@@ -553,6 +574,8 @@ pub fn emit(data: &WorldgenData) -> Result<String> {
             opt(&d.default_clock),
             d.ambient_light_color,
             d.skybox,
+            d.fog_start_distance,
+            d.fog_end_distance,
         ));
     }
     out.push_str("];\n\n");
