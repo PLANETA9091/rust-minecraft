@@ -136,10 +136,45 @@ pub fn light_brightness(level: f32) -> f32 {
     f / (4.0 - 3.0 * f)
 }
 
+/// The vanilla lightmap combine, PER CHANNEL — `lightmap.fsh`'s
+/// `SkyLightColor * get_brightness(sky) * SkyFactor + BlockLightColor *
+/// get_brightness(block)`, clamped at 1.0 (the lightmap texture's range).
+/// `SkyLightColor` is the timeline's `visual/sky_light_color` track
+/// (`timeline::sky_light_color`: the white default by day, `#7a7aff` —
+/// the moonlight blue — through the night plateau; the javap audit pins
+/// the attribute default to 0xFFFFFFFF and the overworld base to absent,
+/// so the track IS the whole value). The block term keeps the WHITE
+/// stand-in for `BlockLightColor` — the shader's `visual/block_light_tint`
+/// default `#ffd8ac` with the parabolic mix toward white is the
+/// documented NEXT consumer. With the white day tint every branch here
+/// is bit-identical to the scalar combine this helper replaced.
+#[inline]
+fn lightmap_combine(
+    sky: Option<f32>,
+    block: Option<f32>,
+    sky_factor: f32,
+    sky_tint: [f32; 3],
+) -> [f32; 3] {
+    let sky_b = sky.map(|v| light_brightness(v) * sky_factor);
+    let block_b = block.map(light_brightness);
+    match (sky_b, block_b) {
+        (Some(s), Some(b)) => [
+            (s * sky_tint[0] + b).min(1.0),
+            (s * sky_tint[1] + b).min(1.0),
+            (s * sky_tint[2] + b).min(1.0),
+        ],
+        (Some(s), None) => [s * sky_tint[0], s * sky_tint[1], s * sky_tint[2]],
+        (None, Some(b)) => [b, b, b],
+        (None, None) => [1.0; 3],
+    }
+}
+
 /// The cell's two RAW light layers, as the engine reported them — sky
 /// and block are kept apart through the whole smooth-lighting walk so
 /// the night sky factor can scale the sky term AFTER the brightness
-/// ramp, exactly where the vanilla lightmap shader applies SkyFactor
+/// ramp (and the timeline's moonlight tint can COLOR it — the
+/// `visual/sky_light_color` track), exactly where the vanilla lightmap
+/// shader applies SkyFactor and SkyLightColor
 /// (`get_brightness(sky) * SkyFactor`, additive with the block term;
 /// 26.2 jar: `assets/minecraft/shaders/core/lightmap.fsh` +
 /// `LightmapRenderState.skyFactor`). A layer the model never answered
@@ -275,6 +310,10 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                         .day_tick
                         .map(crate::timeline::sky_light_factor)
                         .unwrap_or(1.0);
+                    let sky_tint = world
+                        .day_tick
+                        .map(crate::timeline::sky_light_color)
+                        .unwrap_or([1.0; 3]);
                     let fy = wy as f32 + FLAT_Y;
                     let variant = world
                         .variants
@@ -351,24 +390,19 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                                 let rx = 0.5 + (ux - 0.5) * cs - (uz - 0.5) * sn;
                                 let rz = 0.5 + (ux - 0.5) * sn + (uz - 0.5) * cs;
                                 pts[i] = [wx as f32 + rx, fy, wz as f32 + rz];
-                                // The vanilla lightmap combine, VERBATIM (the
-                                // same arithmetic as the cube path above).
+                                // The vanilla lightmap combine, VERBATIM
+                                // (the shared per-channel core both paths
+                                // call — see `lightmap_combine`).
                                 let lm = match clight.as_ref() {
                                     Some((sky, block)) => {
-                                        let sky_b = sky[i].map(|v| light_brightness(v) * sky_factor);
-                                        let block_b = block[i].map(light_brightness);
-                                        match (sky_b, block_b) {
-                                            (Some(s), Some(b)) => (s + b).min(1.0),
-                                            (Some(s), None) | (None, Some(s)) => s,
-                                            (None, None) => 1.0,
-                                        }
+                                        lightmap_combine(sky[i], block[i], sky_factor, sky_tint)
                                     }
-                                    None => 1.0, // no light layer — legacy look
+                                    None => [1.0; 3], // no light layer — legacy look
                                 };
                                 // `ambientocclusion: false` — shade and light
                                 // only, NO AO_CURVE term.
-                                let m = shade * lm;
-                                colors[i] = [base[0] * m, base[1] * m, base[2] * m];
+                                let m = [shade * lm[0], shade * lm[1], shade * lm[2]];
+                                colors[i] = [base[0] * m[0], base[1] * m[1], base[2] * m[2]];
                             }
                             out.push(Quad {
                                 pts,
@@ -437,6 +471,13 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                         .day_tick
                         .map(crate::timeline::sky_light_factor)
                         .unwrap_or(1.0);
+                    // The shader's SkyLightColor uniform: the timeline's
+                    // visual/sky_light_color track (white day, the #7a7aff
+                    // moonlight blue at night); None = day = white.
+                    let sky_tint = world
+                        .day_tick
+                        .map(crate::timeline::sky_light_color)
+                        .unwrap_or([1.0; 3]);
                     let order = flip_order(&ao);
                     let mut pts = [[0f32; 3]; 4];
                     let mut colors = [[0f32; 3]; 4];
@@ -445,27 +486,26 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                         let c = FACE_CORNERS[face][src];
                         pts[i] = [wx as f32 + c[0], wy as f32 + c[1], wz as f32 + c[2]];
                         // The vanilla lightmap shader's combine, VERBATIM
-                        // now: `get_brightness(sky) * SkyFactor +
-                        // get_brightness(block)` — the true additive SUM,
-                        // clamped at 1.0 (the lightmap texture's range).
-                        // With one term absent it is the other term
-                        // exactly; at day factor 1.0 a sky-15 corner is
-                        // bit-identical (1.0 + b clamps back to 1.0, the
-                        // old max's verdict). No known cell -> legacy look.
+                        // (the shared per-channel core both paths call):
+                        // `SkyLightColor * get_brightness(sky) * SkyFactor
+                        // + BlockLightColor * get_brightness(block)` — the
+                        // additive SUM, clamped at 1.0 per channel. With
+                        // one term absent it is the other term exactly; at
+                        // day factor 1.0 a sky-15 corner is bit-identical
+                        // (1.0 + b clamps back to 1.0, the old max's
+                        // verdict). No known cell -> legacy look.
                         let lm = match clight.as_ref() {
                             Some((sky, block)) => {
-                                let sky_b = sky[src].map(|v| light_brightness(v) * sky_factor);
-                                let block_b = block[src].map(light_brightness);
-                                match (sky_b, block_b) {
-                                    (Some(s), Some(b)) => (s + b).min(1.0),
-                                    (Some(s), None) | (None, Some(s)) => s,
-                                    (None, None) => 1.0,
-                                }
+                                lightmap_combine(sky[src], block[src], sky_factor, sky_tint)
                             }
-                            None => 1.0, // no light layer — legacy look
+                            None => [1.0; 3], // no light layer — legacy look
                         };
-                        let m = shade * AO_CURVE[ao[src] as usize] * lm;
-                        colors[i] = [base[0] * m, base[1] * m, base[2] * m];
+                        let m = [
+                            shade * AO_CURVE[ao[src] as usize] * lm[0],
+                            shade * AO_CURVE[ao[src] as usize] * lm[1],
+                            shade * AO_CURVE[ao[src] as usize] * lm[2],
+                        ];
+                        colors[i] = [base[0] * m[0], base[1] * m[1], base[2] * m[2]];
                         uvs[i] = face_uv(face, c);
                     }
                     out.push(Quad {
@@ -1006,29 +1046,39 @@ mod tests {
         // the stone block's top face under full sky: day is the legacy
         // look; the night factor drags the SKY term down the ramp while
         // the BLOCK term is untouched — and the two SUM, clamped at 1.0.
+        // v0.3.86: the night sky term is additionally TINTED by the
+        // timeline's visual/sky_light_color track (#7a7aff — the
+        // moonlight blue), so the night pins are per-channel: the
+        // vertex_multiplier reads the RED channel (r = g tinted, b not).
+        let tint_rg = 122.0f32 / 255.0; // #7a7aff red/green, blue 1.0
         let mut w = empty_world();
         put(&mut w, 8, 8, 8, STONE);
         w.light = Some(unknown_light());
         set_light(&mut w, Some(15), Some(0), 8, 9, 8);
         // day: brightness(15) = 1.0 -> legacy
         assert_eq!(vertex_multiplier(&top_face(&w)), [1.0; 4], "day sky-15 is legacy");
-        // night (the day timeline's midnight tick -> the 0.24 plateau)
+        // night (the day timeline's midnight tick -> the 0.24 plateau +
+        // the #7a7aff tint on the sky term)
         w.day_tick = Some(18_000);
+        let night_sky = light_brightness(15.0) * 0.24;
         for m in vertex_multiplier(&top_face(&w)) {
             assert!(
-                (m - light_brightness(15.0) * 0.24).abs() < 1e-6,
-                "night sky-15 scales the sky term: {m}"
+                (m - night_sky * tint_rg).abs() < 1e-6,
+                "night sky-15 scales AND tints the sky term: {m}"
             );
         }
         // the same night sky over a TORCH-lit cell (block 14): the
-        // ADDITIVE combine sums 0.24 + brightness(14) = 1.0178 and the
-        // lightmap clamps at 1.0 — a torch under the night sky is fully
-        // bright, the vanilla shader's verdict
+        // ADDITIVE combine sums the tinted sky term + the white block
+        // term per channel — red (0.24*tint_rg) + brightness(14) =
+        // 0.8926.. (under the clamp), blue 0.24 + brightness(14) =
+        // 1.0178 -> clamps at 1.0 — the torch surface reads WARM at
+        // night, the vanilla shader's arithmetic
         set_light(&mut w, Some(15), Some(14), 8, 9, 8);
+        let night_torch_r = light_brightness(15.0) * 0.24 * tint_rg + light_brightness(14.0);
         for m in vertex_multiplier(&top_face(&w)) {
             assert!(
-                (m - 1.0).abs() < 1e-6,
-                "at night the additive torch+sky sum clamps to full: {m}"
+                (m - night_torch_r).abs() < 1e-6,
+                "night torch red channel sums tinted: {m} vs {night_torch_r}"
             );
         }
         // the sum WITHOUT the clamp: day, sky 12 (brightness 0.5) over
@@ -1047,7 +1097,8 @@ mod tests {
             );
         }
         // an unknown sky layer is never scaled into an opinion: a corner
-        // with only block known keeps the plain block term (no factor)
+        // with only block known keeps the plain block term (no factor,
+        // no tint — the tint rides the SKY term only)
         let mut w2 = empty_world();
         put(&mut w2, 8, 8, 8, STONE);
         w2.light = Some(unknown_light());
@@ -1058,6 +1109,32 @@ mod tests {
                 (m - light_brightness(14.0)).abs() < 1e-6,
                 "unknown sky is not darkened, the block term is exact: {m}"
             );
+        }
+    }
+
+    #[test]
+    fn the_night_sky_term_is_blue_not_grey() {
+        // the full-channel witness: at the night tick the sky-lit top
+        // face's multiplier is #7a7aff-tinted — red and green ride the
+        // 122/255 tint, blue stays the plain factored ramp — while the
+        // DAY tick of the same world is bit-identical to the scalar
+        // (white) arithmetic.
+        let mut w = empty_world();
+        put(&mut w, 8, 8, 8, STONE);
+        w.light = Some(unknown_light());
+        set_light(&mut w, Some(15), Some(0), 8, 9, 8);
+        // the day product (shade * AO * ramp 1.0) — the legacy 1.0 the
+        // previous test pins; derived here, not hard-coded
+        w.day_tick = Some(6_000);
+        let full = vertex_multiplier(&top_face(&w))[0];
+        assert!((full - 1.0).abs() < 1e-6, "day product sanity: {full}");
+        w.day_tick = Some(14_010); // the goldens' night tick
+        let sky = light_brightness(15.0) * 0.24; // factor 0.24 * ramp 1.0
+        let expect = [full * sky * (122.0f32 / 255.0), full * sky * (122.0 / 255.0), full * sky];
+        for corner in &top_face(&w).colors {
+            for (c, e) in corner.iter().zip(expect.iter()) {
+                assert!((c - e).abs() < 1e-6, "night tint per channel: {c} vs {e}");
+            }
         }
     }
 

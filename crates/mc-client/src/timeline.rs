@@ -126,6 +126,38 @@ pub fn sky_light_factor(day_tick: i64) -> f32 {
     evaluate(&SKY_LIGHT_FACTOR_KEYS, Some(DAY_PERIOD_TICKS), day_tick)
 }
 
+/// (tick, raw 0..=255 channel value) of `minecraft:visual/sky_light_color`
+/// in `data/minecraft/timeline/day.json` (extracted from the official
+/// 26.2 jar, this run's javap/jar audit), sorted by tick, cyclic with
+/// [`DAY_PERIOD_TICKS`]. Modifier `multiply` over the attribute DEFAULT:
+/// the javap evidence (`EnvironmentAttributes.<init>`, jdk-25) pins the
+/// `visual/sky_light_color` default to `-1` = 0xFFFFFFFF = WHITE, and the
+/// overworld dimension type carries NO base — so the track IS the whole
+/// value. White across the day; `#7a7aff` (the moonlight blue) through
+/// the night plateau — the vanilla lightmap shader's `SkyLightColor`.
+const SKY_LIGHT_COLOR_R: [(i64, f32); 4] =
+    [(730, 255.0), (11_270, 255.0), (13_140, 122.0), (22_860, 122.0)];
+const SKY_LIGHT_COLOR_G: [(i64, f32); 4] =
+    [(730, 255.0), (11_270, 255.0), (13_140, 122.0), (22_860, 122.0)];
+const SKY_LIGHT_COLOR_B: [(i64, f32); 4] =
+    [(730, 255.0), (11_270, 255.0), (13_140, 255.0), (22_860, 255.0)];
+
+/// The lightmap's SkyLightColor at a day tick, normalized 0..=1 per
+/// channel: white by day, `#7a7aff` (122, 122, 255) through the night
+/// plateau, linear ramps between — the same cyclic-linear walk
+/// [`evaluate`] gives the factor, in raw 0..=255 channel space with ONE
+/// final division (the exact convention the sky.rs color tracks pin:
+/// interpolate raw, normalize last). The blue moonlight lands ONLY on
+/// the lightmap's sky term — the sky dome's own color is a different
+/// track (`visual/sky_color`, sky.rs's chain).
+pub fn sky_light_color(day_tick: i64) -> [f32; 3] {
+    [
+        evaluate(&SKY_LIGHT_COLOR_R, Some(DAY_PERIOD_TICKS), day_tick) / 255.0,
+        evaluate(&SKY_LIGHT_COLOR_G, Some(DAY_PERIOD_TICKS), day_tick) / 255.0,
+        evaluate(&SKY_LIGHT_COLOR_B, Some(DAY_PERIOD_TICKS), day_tick) / 255.0,
+    ]
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -149,6 +181,36 @@ mod tests {
         assert!((wrap - (0.24 + f as f32 * 0.76)).abs() < 1e-6, "dawn wrap {wrap}");
         // and one full period is the same moment as tick 0
         assert!((sky_light_factor(24_000) - sky_light_factor(0)).abs() < 1e-9);
+    }
+
+    #[test]
+    fn sky_light_color_tracks_the_moonlight_tint() {
+        // day plateau: the white default — the track IS the whole value
+        assert_eq!(sky_light_color(6_000), [1.0; 3], "noon: white moonlight-none");
+        // the golden night tick (14010 + frame) and the riding tests'
+        // midnight: the #7a7aff plateau, exact channels
+        let blue = [122.0f32 / 255.0, 122.0 / 255.0, 1.0];
+        assert_eq!(sky_light_color(14_010), blue, "the golden night tick is #7a7aff");
+        assert_eq!(sky_light_color(18_000), blue, "midnight plateau is #7a7aff");
+        // the sunrise keyframe itself and the day plateau edges
+        assert_eq!(sky_light_color(730), [1.0; 3]);
+        assert_eq!(sky_light_color(11_270), [1.0; 3]);
+        // linear dusk ramp: the 11270->13140 midpoint per channel
+        // (raw-space lerp: (255 + 0.5*(122-255))/255, blue stays 255)
+        let mid = sky_light_color((11_270 + 13_140) / 2);
+        let half = (255.0f32 + 0.5 * (122.0 - 255.0)) / 255.0;
+        assert!((mid[0] - half).abs() < 1e-6, "dusk midpoint r {mid:?}");
+        assert!((mid[1] - half).abs() < 1e-6, "dusk midpoint g {mid:?}");
+        assert!((mid[2] - 1.0).abs() < 1e-6, "blue channel holds 255 {mid:?}");
+        // wrap-around dawn: tick 23_430 sits (23430-22860)/1870 of the
+        // way from #7a7aff back to white
+        let f = (23_430 - 22_860) as f64 / (24_730 - 22_860) as f64;
+        let wrap = sky_light_color(23_430);
+        let expect_r = (122.0f32 + f as f32 * 133.0) / 255.0;
+        assert!((wrap[0] - expect_r).abs() < 1e-6, "dawn wrap r {wrap:?}");
+        assert!((wrap[2] - 1.0).abs() < 1e-6, "blue wraps at 255 {wrap:?}");
+        // one full period is the same moment as tick 0
+        assert!((sky_light_color(24_000)[0] - sky_light_color(0)[0]).abs() < 1e-9);
     }
 
     #[test]
