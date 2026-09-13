@@ -219,14 +219,7 @@ fn arm_transform(swing: f32, equip: f32) -> Mat4 {
     let side = 1.0f32;
     let t = |x: f32, y: f32, z: f32| Mat4::translation(x, y, z);
     let deg = |d: f32| d.to_radians();
-    // the swing terms, exactly as the renderPlayerArm bytecode computes them
-    // (Mth.sin/Mth.sqrt are f64 sin/sqrt narrowed to f32 — Mth's own bodies)
-    let sq = mth_sqrt(swing);
-    let f10 = -0.3f32 * mth_sin(sq * std::f32::consts::PI); // X wobble
-    let f11 = 0.4f32 * mth_sin(sq * 6.2831855); // Y bob (6.2831855 = the bytecode's 2π f32)
-    let f12 = -0.4f32 * mth_sin(swing * std::f32::consts::PI); // Z pull
-    let f13 = mth_sin(swing * swing * std::f32::consts::PI); // rotZ amount
-    let f14 = mth_sin(sq * std::f32::consts::PI); // extra rotY amount
+    let [f10, f11, f12, f13, f14] = swing_terms(swing);
     Mat4::IDENT
         .mul(&t(side * (0.640_000_05 + f10), (f11 - 0.6) + equip * -0.6, f12 + -0.719_999_97))
         .mul(&Mat4::rot_y(deg(side * 45.0)))
@@ -240,6 +233,22 @@ fn arm_transform(swing: f32, equip: f32) -> Mat4 {
         // the PlayerModel right_arm part: pivot (-5, 2, 0)/16, zRot 0.1 rad
         .mul(&t(-5.0 / 16.0, 2.0 / 16.0, 0.0))
         .mul(&Mat4::rot_z(0.1))
+}
+
+/// The five swing terms of `renderPlayerArm` — f10..f14 exactly as the
+/// bytecode computes them (Mth.sin/Mth.sqrt are f64 sin/sqrt narrowed to
+/// f32 — Mth's own bodies), extracted so the sweep test can pin the
+/// whole curve bit-exactly against an independent oracle without
+/// rebuilding the matrix.
+fn swing_terms(swing: f32) -> [f32; 5] {
+    let sq = mth_sqrt(swing);
+    [
+        -0.3f32 * mth_sin(sq * std::f32::consts::PI), // f10: X wobble
+        0.4f32 * mth_sin(sq * 6.2831855), // f11: Y bob (6.2831855 = the bytecode's 2π f32)
+        -0.4f32 * mth_sin(swing * std::f32::consts::PI), // f12: Z pull
+        mth_sin(swing * swing * std::f32::consts::PI), // f13: rotZ amount
+        mth_sin(sq * std::f32::consts::PI), // f14: extra rotY amount
+    ]
 }
 
 /// `Mth.sin(float)`: `Math.sin((double)x)` narrowed back to f32 (the Mth
@@ -391,14 +400,11 @@ fn item_hand_anchor(swing: f32, equip: f32) -> Mat4 {
     let deg = |d: f32| d.to_radians();
     // applyItemArmTransform
     let a = t(side * 0.56, -0.52, equip * -0.6 + -0.72);
-    // swingArm's translate terms (the WHACK arc; exact zeros at rest)
-    let f5s = -0.4f32 * mth_sin(mth_sqrt(swing) * std::f32::consts::PI);
-    let f6s = 0.2f32 * mth_sin(mth_sqrt(swing) * 6.2831855);
-    let f7s = -0.2f32 * mth_sin(swing * std::f32::consts::PI);
+    // swingArm's translate terms (the WHACK arc; exact zeros at rest),
+    // then applyItemArmAttackTransform's two rotation amounts — the
+    // five-term item-side curve, extracted for the sweep test
+    let [f5s, f6s, f7s, f5, f6] = item_swing_terms(swing);
     let b = t(side * f5s, f6s, f7s);
-    // applyItemArmAttackTransform
-    let f5 = mth_sin(swing * swing * std::f32::consts::PI);
-    let f6 = mth_sin(mth_sqrt(swing) * std::f32::consts::PI);
     Mat4::IDENT
         .mul(&a)
         .mul(&b)
@@ -406,6 +412,24 @@ fn item_hand_anchor(swing: f32, equip: f32) -> Mat4 {
         .mul(&Mat4::rot_z(deg(side * f6 * -20.0)))
         .mul(&Mat4::rot_x(deg(f6 * -80.0)))
         .mul(&Mat4::rot_y(deg(side * -45.0)))
+}
+
+/// The five swing terms of the held-item path — swingArm's three
+/// translate terms (f5s/f6s/f7s, the WHACK arc) plus
+/// applyItemArmAttackTransform's two rotation amounts (f5/f6), exactly
+/// as the bytecode computes them (the same f64 sin/sqrt narrowed to
+/// f32). Extracted alongside [`swing_terms`] so the sweep pins BOTH
+/// first-person curves — the bare arm's and the held item's — from one
+/// oracle.
+fn item_swing_terms(swing: f32) -> [f32; 5] {
+    let sq = mth_sqrt(swing);
+    [
+        -0.4f32 * mth_sin(sq * std::f32::consts::PI), // f5s: X wobble
+        0.2f32 * mth_sin(sq * 6.2831855), // f6s: Y bob
+        -0.2f32 * mth_sin(swing * std::f32::consts::PI), // f7s: Z pull
+        mth_sin(swing * swing * std::f32::consts::PI), // f5: rotY amount
+        mth_sin(sq * std::f32::consts::PI), // f6: rotZ/rotX amount
+    ]
 }
 
 impl HeldItem {
