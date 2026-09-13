@@ -19,6 +19,7 @@
 //! NO Mojang code is read into the repository: only the emitted id/name
 //! structure, the same class of data as the blockstate JSONs.
 
+use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
@@ -276,6 +277,49 @@ pub fn dump_block_states(
     java_override: Option<&str>,
 ) -> Result<PathBuf> {
     let t0 = std::time::Instant::now();
+    let (java, cp, client_sha1) = vanilla_runtime(agent, cache, version, java_override)?;
+    let cp_dir = Path::new(".mc2rs").join("classpath");
+    let dump_src = workspace_root.join("crates/mc2rs-gen/dump/DumpBlockStates.java");
+    let out_txt = cp_dir.join("block_states.txt");
+    run_dumper(&java, &cp, &dump_src, &out_txt)?;
+    let dump_text = std::fs::read_to_string(&out_txt).context("read dumper output")?;
+    println!("[4/4] registry bootstrapped and dumped in {:.1}s", t0.elapsed().as_secs_f32());
+    emit_block_ids(workspace_root, version, &client_sha1, &dump_text)
+}
+
+/// The whole arc for the REGISTRY-ORDER dumper: version -> classpath files
+/// -> java -> dumper -> the saved `registries.txt` (the evidence file; the
+/// offline `registry-order` emitter turns it into the generated table).
+pub fn dump_registries(
+    agent: &ureq::Agent,
+    cache: &Cache,
+    version: &str,
+    workspace_root: &Path,
+    java_override: Option<&str>,
+) -> Result<PathBuf> {
+    let t0 = std::time::Instant::now();
+    let (java, cp, _) = vanilla_runtime(agent, cache, version, java_override)?;
+    let cp_dir = Path::new(".mc2rs").join("classpath");
+    let dump_src = workspace_root.join("crates/mc2rs-gen/dump/DumpRegistries.java");
+    let out_txt = cp_dir.join("registries.txt");
+    run_dumper(&java, &cp, &dump_src, &out_txt)?;
+    println!(
+        "[4/4] registries bootstrapped and dumped in {:.1}s -> {}",
+        t0.elapsed().as_secs_f32(),
+        out_txt.display()
+    );
+    Ok(out_txt)
+}
+
+/// The shared vanilla-boot plumbing: resolve the version json, materialize
+/// the client jar + every linux-relevant library as classpath FILES, and
+/// resolve the java binary. Returns (java, classpath, client sha1).
+fn vanilla_runtime(
+    agent: &ureq::Agent,
+    cache: &Cache,
+    version: &str,
+    java_override: Option<&str>,
+) -> Result<(PathBuf, std::ffi::OsString, String)> {
     let m = crate::manifest::load(agent)?;
     let entry = m
         .find(version)
@@ -314,14 +358,17 @@ pub fn dump_block_states(
     println!("[3/4] classpath: {} libraries under {}", libs.len(), cp_dir.display());
 
     let java = resolve_java(java_override, required_java)?;
-    let dump_src = workspace_root.join("crates/mc2rs-gen/dump/DumpBlockStates.java");
-    let out_txt = cp_dir.join("block_states.txt");
-    let status = Command::new(&java)
+    Ok((java, cp, client_sha1))
+}
+
+/// Run one single-file dumper through the java source launcher.
+fn run_dumper(java: &Path, cp: &std::ffi::OsStr, dump_src: &Path, out_txt: &Path) -> Result<()> {
+    let status = Command::new(java)
         .arg("-Xmx2G")
         .arg("-cp")
-        .arg(&cp)
-        .arg(&dump_src)
-        .arg(&out_txt)
+        .arg(cp)
+        .arg(dump_src)
+        .arg(out_txt)
         .output()
         .with_context(|| format!("run the dumper with {}", java.display()))?;
     if !status.status.success() {
@@ -330,10 +377,128 @@ pub fn dump_block_states(
         let tail = &tail[tail.len().saturating_sub(12)..];
         bail!("dumper failed:\n{}", tail.join("\n"));
     }
-    let dump_text = std::fs::read_to_string(&out_txt).context("read dumper output")?;
-    println!("[4/4] registry bootstrapped and dumped in {:.1}s", t0.elapsed().as_secs_f32());
+    Ok(())
+}
 
-    emit_block_ids(workspace_root, version, &client_sha1, &dump_text)
+/// The built-in registries whose WIRE ORDER the client's runtime tables
+/// must mirror once the pack-version claim stands: a vanilla server
+/// assigns synced-registry ids in this built-in registration order, so
+/// these are the orders the generated tables pin.
+pub const ORDERED_REGISTRIES: [&str; 4] = [
+    "minecraft:dimension_type",
+    "minecraft:worldgen/biome",
+    "minecraft:timeline",
+    "minecraft:world_clock",
+];
+
+/// Parse the DumpRegistries output (`registry|id|entry_name` lines) into
+/// per-registry ordered name lists. Ids must be dense per registry (the
+/// built-in registries are dense) and names unique within one.
+pub fn parse_registry_dump(text: &str) -> Result<BTreeMap<String, Vec<String>>> {
+    let mut out: BTreeMap<String, Vec<String>> = BTreeMap::new();
+    for (i, line) in text.lines().enumerate() {
+        if line.trim().is_empty() {
+            continue;
+        }
+        let mut it = line.splitn(3, '|');
+        let reg = it
+            .next()
+            .unwrap_or("")
+            .trim()
+            .to_string();
+        let id: u32 = it
+            .next()
+            .unwrap_or("")
+            .trim()
+            .parse()
+            .with_context(|| format!("registry dump line {}: bad id", i + 1))?;
+        let name = it
+            .next()
+            .unwrap_or("")
+            .trim()
+            .to_string();
+        if reg.is_empty() || name.is_empty() {
+            bail!("registry dump line {}: missing registry or entry name", i + 1);
+        }
+        let entries = out.entry(reg.clone()).or_default();
+        if id != entries.len() as u32 {
+            bail!(
+                "registry {reg}: ids not dense at index {} (id {id})",
+                entries.len()
+            );
+        }
+        if entries.contains(&name) {
+            bail!("registry {reg}: duplicate entry {name}");
+        }
+        entries.push(name);
+    }
+    Ok(out)
+}
+
+/// Generate crates/mc-registry/src/generated/registry_order.rs from the
+/// DumpRegistries output: per synced registry, the entry NAMES in vanilla
+/// registration (= wire) order — the array index IS the wire id a server
+/// that skipped the sync would use. Every ORDERED_REGISTRIES member must
+/// appear in the dump; other dumped registries ride the evidence file only.
+pub fn emit_registry_order(
+    workspace_root: &Path,
+    version: &str,
+    client_sha1: &str,
+    dump_text: &str,
+) -> Result<PathBuf> {
+    let dump = parse_registry_dump(dump_text)?;
+    let mut src = String::with_capacity(16 * 1024);
+    src.push_str(&format!(
+        "// @generated by `mc2rs-gen registry-order` for Minecraft {version} — DO NOT EDIT BY HAND.\n\
+         // Source of truth: the official client jar's REAL bootstrapped built-in registries\n\
+         // (client sha1 {client_sha1}), dumped in vanilla registration order by the checked-in\n\
+         // DumpRegistries.java. The array index IS the wire id: a vanilla server assigns\n\
+         // synced-registry ids in this same built-in order, so these tables are the pack-version\n\
+         // claim's evidence layer (a skip-sync server and this client agree on them by construction).\n\
+         // Regenerate: `cargo run -p mc2rs-gen -- dump-registries --version {version}` (online)\n\
+         // or `mc2rs-gen registry-order --dump <saved registries.txt> --client-sha1 <sha>` (offline).\n\n"
+    ));
+    for reg in ORDERED_REGISTRIES {
+        let Some(names) = dump.get(reg) else {
+            bail!("the dump carries no {reg} registry (the built-in boot must have it)");
+        };
+        let ident = match reg {
+            "minecraft:dimension_type" => "DIMENSION_TYPE_ORDER",
+            "minecraft:worldgen/biome" => "BIOME_ORDER",
+            "minecraft:timeline" => "TIMELINE_ORDER",
+            "minecraft:world_clock" => "WORLD_CLOCK_ORDER",
+            other => bail!("unmapped registry {other}"),
+        };
+        let doc = match ident {
+            "DIMENSION_TYPE_ORDER" => "The built-in `minecraft:dimension_type` registry in vanilla registration (= wire) order.",
+            "BIOME_ORDER" => "The built-in `minecraft:worldgen/biome` registry in vanilla registration (= wire) order.",
+            "TIMELINE_ORDER" => "The built-in `minecraft:timeline` registry in vanilla registration (= wire) order.",
+            _ => "The built-in `minecraft:world_clock` registry in vanilla registration (= wire) order.",
+        };
+        src.push_str(&format!("/// {doc}\n"));
+        src.push_str(&format!("pub static {ident}: [&str; {}] = [", names.len()));
+        for (i, name) in names.iter().enumerate() {
+            if i > 0 {
+                src.push_str(", ");
+            }
+            src.push_str(&format!("\"{name}\""));
+        }
+        src.push_str("];\n\n");
+    }
+    let reg_dir = workspace_root.join("crates/mc-registry/src/generated");
+    std::fs::create_dir_all(&reg_dir)?;
+    let path = reg_dir.join("registry_order.rs");
+    std::fs::write(&path, src).context("write registry_order.rs")?;
+    let total: usize = ORDERED_REGISTRIES
+        .iter()
+        .filter_map(|r| dump.get(*r).map(|v| v.len()))
+        .sum();
+    println!(
+        "registry_order.rs written: {} registries / {total} entries -> {}",
+        ORDERED_REGISTRIES.len(),
+        path.display()
+    );
+    Ok(path)
 }
 
 #[cfg(test)]
@@ -457,6 +622,44 @@ mod tests {
         assert!(src.contains("pub const STATE_PROPS"));
         assert!(src.contains("pub fn props_of"));
         assert!(src.contains("pub fn block_name_of"));
+        std::fs::remove_dir_all(&dir).ok();
+    }
+
+    #[test]
+    fn registry_dump_parses_dense_and_emits_the_order_tables() {
+        let dump = "minecraft:dimension_type|0|minecraft:overworld\n\
+                    minecraft:dimension_type|1|minecraft:the_nether\n\
+                    minecraft:worldgen/biome|0|minecraft:plains\n\
+                    minecraft:worldgen/biome|1|minecraft:desert\n\
+                    minecraft:world_clock|0|minecraft:overworld\n";
+        let parsed = parse_registry_dump(dump).expect("parses");
+        assert_eq!(
+            parsed["minecraft:dimension_type"],
+            vec!["minecraft:overworld", "minecraft:the_nether"]
+        );
+        // non-dense ids and duplicates are refused — the built-in
+        // registries are dense and unique
+        assert!(parse_registry_dump("minecraft:timeline|0|a\nminecraft:timeline|2|b\n").is_err());
+        assert!(parse_registry_dump("minecraft:timeline|0|a\nminecraft:timeline|1|a\n").is_err());
+        assert!(parse_registry_dump("minecraft:timeline|x|a\n").is_err());
+        assert!(parse_registry_dump("minecraft:timeline|0|\n").is_err());
+
+        let dir = std::env::temp_dir().join(format!("mc2rs-order-{}", std::process::id()));
+        std::fs::create_dir_all(&dir).unwrap();
+        let ws = dir.join("ws");
+        // the timeline registry is in ORDERED_REGISTRIES but missing from
+        // this fixture — the emitter must REFUSE (every ordered registry
+        // must be present in the evidence)
+        assert!(emit_registry_order(&ws, "26.2", "abc123", dump).is_err());
+        let full = format!("{dump}minecraft:timeline|0|minecraft:day\n");
+        let path = emit_registry_order(&ws, "26.2", "abc123", &full).expect("emits");
+        let src = std::fs::read_to_string(&path).unwrap();
+        assert!(src.contains("pub static DIMENSION_TYPE_ORDER: [&str; 2]"));
+        assert!(src.contains("\"minecraft:overworld\", \"minecraft:the_nether\""));
+        assert!(src.contains("pub static BIOME_ORDER: [&str; 2] = [\"minecraft:plains\", \"minecraft:desert\"]"));
+        assert!(src.contains("pub static TIMELINE_ORDER: [&str; 1] = [\"minecraft:day\"]"));
+        assert!(src.contains("pub static WORLD_CLOCK_ORDER: [&str; 1] = [\"minecraft:overworld\"]"));
+        assert!(src.contains("client sha1 abc123"));
         std::fs::remove_dir_all(&dir).ok();
     }
 }
