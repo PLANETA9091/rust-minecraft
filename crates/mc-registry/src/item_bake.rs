@@ -367,9 +367,13 @@ mod tests {
                 [0x4151999a, 0x3f666666],
             ]
         );
-        // every quad is axis-aligned: the computed facing equals the slot
+        // the facing drift is VANILLA-FAITHFUL: the slabs whose from/to
+        // invert an axis (the LEFT/RIGHT sides carry from.y = 16-y*fy >
+        // to.y) walk to the opposite winding, and bakeQuad's
+        // calculateFacing reports the flipped direction — the same
+        // phenomenon the element census counted (273 of 4238). 40 of 82.
         let drift = quads.iter().filter(|q| q.direction != q.slot).count();
-        assert_eq!(drift, 0, "no facing drift on the axis-aligned slabs");
+        assert_eq!(drift, 40, "the vanilla facing drift on the inverted slabs");
         // the extrusion depth: z in [7.5/16, 8.5/16] everywhere
         for q in &quads {
             for v in &q.vertices {

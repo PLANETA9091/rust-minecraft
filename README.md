@@ -581,6 +581,63 @@ hand-drawn:
   timeline (−1 → 0..5/6 → rest at exactly 6 ticks), the re-trigger
   guard, the wrap-guard lerp, the mid-swing geometry delta, and the
   bit-identical rest pose.
+  The **item-model bake lands (v0.3.73 — the held-item geometry link)**:
+  `crates/mc-registry/src/item_bake.rs` derives the generated item
+  models' quads — the sprite extrusion of 26.2's
+  net.minecraft.client.resources.model.cuboid.ItemModelGenerator — on
+  demand over the generated textures table (no new table; the same
+  lazy-derive pattern as element_quads). Every rule is javap evidence:
+  the bake domain is the models whose parent chain contains
+  item/generated (1231 of 3928; item/generated's own parent is the
+  builtin/generated GENERATED_ITEM_MODEL_ID); LAYERS = layer0..layer4
+  resolved through the texture_slots chain merge with the bake() BREAK
+  at the first null material (layers must be contiguous from layer0 —
+  9 domain models bake EMPTY: item/spear_in_hand, item/handheld,
+  item/generated, the template_bundle_open_* sides, item/handheld_mace,
+  item/handheld_rod, item/template_music_disc, item/amethyst_bud);
+  MaterialInfo.of pins tintIndex = the LAYER INDEX, shade = true,
+  lightEmission = 0; SpriteContents.isTransparent = ARGB.alpha == 0
+  (any nonzero alpha is opaque) with a MISSING texture baking from the
+  missingno checkerboard (16x16, fully opaque — 64 border edges); the
+  front/back are ONE unculled quad each over the whole sprite, from
+  (0,0,7.5) to (16,16,8.5) (MIN_Z/MAX_Z), SOUTH with UVs(0,0,16,16) and
+  NORTH with the mirrored UVs(16,0,0,16); the sides record
+  (SideDirection, x, y) per opaque pixel whose NEIGHBOR
+  (x - stepX, y - stepY; out of bounds counts transparent) is
+  transparent — the 26.2 enum carries UP/DOWN/LEFT->EAST/RIGHT->WEST —
+  and each recorded edge emits ONE quad (NO pixel-run merging:
+  SideFace is a Record(facing, x, y)) with UV_SHRINK = 0.1f insets
+  (f32 literals: 13.0f+0.1f and 7.0f+0.1f round to DIFFERENT bits —
+  0x4151999a vs 0x40e33333, both pinned), the V REVERSED for the
+  UP/DOWN sides (minV = y+1-0.1 > maxV = y+0.1), the from/to slabs
+  scaled by 16/w and 16/h (the whole sprites like the 32x32 spears),
+  the 16-y model flip, and per-side z from 7.5 to 8.5. The step vectors
+  were the round's bug-catch: Direction.UP.stepY = +1 makes the UP
+  neighbor (x, y-1) — an inverted reading mislabels every side quad
+  onto the opposite edge (same counts, wrong geometry) — the oracle
+  and the port were both corrected before pinning. The bit-exact
+  oracle: scripts/item_bake_census.py bakes the jar's real PNG pixels
+  (PIL, f32-strict via struct). The census: 1231-model domain, layer
+  presence [1222, 332, 44, 0, 0] (contiguous), 64 distinct missing
+  layer textures (all trims/items/), exactly ONE animated layer texture
+  (block/sculk_vein via item/sculk_vein — the frame-0 approximation is
+  documented; vanilla unions the exposed edges over all frames but the
+  textures table stores the first-frame crop), 102106 total baked quads
+  over the domain, fixtures iron_sword 82 / bow 98 / copper_torch 26
+  (the minimum). The vanilla facing drift is pinned too: 40 of
+  iron_sword's 82 quads report the flipped direction (the inverted
+  from/to slabs wind backwards — the same calculateFacing phenomenon
+  the element census counted 273 of). The tests reuse element_quads'
+  census-validated bakeQuad machinery (faceinfo_corners, vertex_uvs,
+  calculate_facing, recalculate_winding, now pub(crate)). Zero
+  render-path contact (mc-client carries zero references); all 10
+  goldens verified at the exact CI flags, every one rms 0.000, none
+  regenerated. Tests +5 (workspace 348 -> 353 passed / 0 failed /
+  3 ignored; mc-registry 62 -> 67): the iron_sword extrusion (the
+  whole-sprite faces' uv walk, the UP/LEFT first edges, the reversed V,
+  the drift), copper_torch + bow, the layerless empty bakes, the
+  missingno path (132 quads, the missingno tint layer), and the
+  registry-wide census.
   The **display-transform link lands (v0.3.72 — the held-item view-space
   pose, the display arc's last pure-data link)**:
   `crates/mc-registry/src/display.rs` resolves the models table's
