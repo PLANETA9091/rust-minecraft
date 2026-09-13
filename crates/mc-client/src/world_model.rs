@@ -182,6 +182,79 @@ impl WorldModel {
                 true
             }
             PlayEvent::UnloadChunk { x, z } => self.columns.remove(&(x, z)).is_some(),
+            PlayEvent::Block { x, y, z, state } => {
+                let Some(col) = self.columns.get_mut(&(x >> 4, z >> 4)) else {
+                    // no column — vanilla ignores a block change for a
+                    // chunk it has not loaded (the update crossed the
+                    // Respawn drop, or raced the chunk's arrival)
+                    return false;
+                };
+                // the SAME arithmetic block() reads through (world-y when
+                // min_y is known, column-local otherwise) — and the
+                // Light event's strict rule: an out-of-range slot
+                // refuses the WHOLE update, never a half-applied lie
+                let y = match self.min_y {
+                    Some(min_y) => y - min_y,
+                    None => y,
+                };
+                let (sy, ly) = (y >> 4, y & 15);
+                if sy < 0 {
+                    return false;
+                }
+                let Some(sec) = col.sections.get_mut(sy as usize) else {
+                    return false;
+                };
+                let idx = (ly as usize) * 256 + ((z & 15) as usize) * 16 + (x & 15) as usize;
+                let Some(slot) = sec.blocks.get_mut(idx) else {
+                    return false;
+                };
+                // the section's block_count is the wire's PARSE-TIME fact
+                // (nothing in this client consumes it) — the blocks
+                // array is the model's truth, and it is what changes
+                *slot = state;
+                true
+            }
+            PlayEvent::SectionBlocks(sb) => {
+                let Some(col) = self.columns.get_mut(&(sb.sx, sb.sz)) else {
+                    return false;
+                };
+                // the wire's sy is the WORLD section y; the column's
+                // sections are bottom-first from min_y — the same floor
+                // arithmetic block() walks (`(world_base_y - min_y) >> 4`,
+                // exact for any min_y), and column-local when min_y is
+                // unknown (block()'s own convention)
+                let sidx = match self.min_y {
+                    Some(min_y) => (sb.sy * 16 - min_y) >> 4,
+                    None => sb.sy,
+                };
+                if sidx < 0 {
+                    return false;
+                }
+                let Some(sec) = col.sections.get_mut(sidx as usize) else {
+                    return false;
+                };
+                // validate ALL entries before ANY mutation (the Light
+                // event's all-or-nothing rule — never a half-applied lie)
+                let indices: Option<Vec<usize>> = sb
+                    .blocks
+                    .iter()
+                    .map(|&(lx, ly, lz, _)| {
+                        let idx = ly as usize * 256 + lz as usize * 16 + lx as usize;
+                        if idx < sec.blocks.len() {
+                            Some(idx)
+                        } else {
+                            None
+                        }
+                    })
+                    .collect();
+                let Some(indices) = indices else {
+                    return false;
+                };
+                for (idx, &(_, _, _, state)) in indices.iter().zip(sb.blocks.iter()) {
+                    sec.blocks[*idx] = state;
+                }
+                true
+            }
             PlayEvent::CenterChunk { x, z } => {
                 if self.center != (x, z) {
                     self.center = (x, z);
@@ -978,6 +1051,97 @@ mod tests {
         assert_eq!(m.block(-1, -64, -1), Some(0), "world (-1,-64,-1) is local (15,0,15): air");
         assert_eq!(m.block(-16, -64, -16), Some(1), "world (-16,-64,-16) is local (0,0,0): stone");
         assert_eq!(m.block(-13, -63, -14), Some(10), "local (3,1,2) of chunk (-1,-1)");
+    }
+
+    #[test]
+    fn the_block_update_mutates_the_stored_column() {
+        // Block Update is the world's own traffic: one block changed,
+        // the stored column mutated IN PLACE through the SAME arithmetic
+        // block() reads through — the next materialize renders the
+        // change, nothing else exists to invalidate. Strict all-or-nothing
+        // (the Light event's rule): absent column or out-of-range slot
+        // refuses the update, never a half-applied lie.
+        let mut m = WorldModel::new();
+        let col = ChunkColumn {
+            x: 3,
+            z: -2,
+            sections: vec![
+                parse_section_buffer(&stone_dirt_section(2)),
+                parse_section_buffer(&air_section()),
+            ],
+            light: ChunkLight::default(),
+        };
+        m.apply(PlayEvent::Chunk(col));
+        // the column-local convention (min_y unknown): world (48, 0, -32)
+        assert_eq!(m.block(48, 0, -32), Some(1), "stone before the update");
+        assert!(m.apply(PlayEvent::Block { x: 48, y: 0, z: -32, state: 5 }));
+        assert_eq!(m.block(48, 0, -32), Some(5), "the update is the model's truth");
+        // a second section lands through the same arithmetic
+        assert!(m.apply(PlayEvent::Block { x: 51, y: 16, z: -30, state: 7 }));
+        assert_eq!(m.block(51, 16, -30), Some(7), "section 1 top, in-place");
+        // an update ABOVE the column is refused whole
+        assert!(!m.apply(PlayEvent::Block { x: 48, y: 32, z: -32, state: 5 }));
+        assert_eq!(m.block(48, 0, -32), Some(5), "the refused update changed nothing");
+        // an update for an UNLOADED column is refused (vanilla's own
+        // ignore: the update crossed the Respawn drop or raced the chunk)
+        assert!(!m.apply(PlayEvent::Block { x: 0, y: 0, z: 0, state: 5 }));
+    }
+
+    #[test]
+    fn the_section_blocks_mutate_the_one_section_strictly() {
+        // Section Blocks Update: a BATCH inside one section. The wire's
+        // sy is the WORLD section y — the column index is the floor walk
+        // `(sy * 16 - min_y) >> 4`, and the entries are section-relative.
+        // The all-or-nothing rule covers the BATCH: one bad entry means
+        // NOTHING lands, even entries that arrived before it.
+        let mut m = WorldModel::new();
+        m.min_y = Some(-64); // the overworld's floor: section -4 is the column's bottom
+        let col = ChunkColumn {
+            x: 0,
+            z: 0,
+            sections: vec![
+                parse_section_buffer(&stone_dirt_section(2)),
+                parse_section_buffer(&air_section()),
+            ],
+            light: ChunkLight::default(),
+        };
+        m.apply(PlayEvent::Chunk(col));
+        // world section -4 -> index 0; entries land at their relative
+        // slots (block() reads world-y -64 + ly)
+        let sb = mc_protocol::play::SectionBlocks {
+            sx: 0,
+            sy: -4,
+            sz: 0,
+            blocks: vec![(0, 0, 0, 7), (3, 1, 2, 9), (15, 15, 15, 11)],
+        };
+        assert!(m.apply(PlayEvent::SectionBlocks(sb)));
+        assert_eq!(m.block(0, -64, 0), Some(7));
+        assert_eq!(m.block(3, -63, 2), Some(9), "relative (3,1,2) is world-y -63");
+        assert_eq!(m.block(15, -49, 15), Some(11), "the section's top corner");
+        // the OTHER sections are untouched
+        assert_eq!(m.block(0, -48, 0), Some(0), "section -3 (index 1) keeps its air");
+        // a batch with ONE out-of-range entry lands NOTHING — the strict
+        // batch rule, the Light event's shape
+        let bad = mc_protocol::play::SectionBlocks {
+            sx: 0,
+            sy: -4,
+            sz: 0,
+            blocks: vec![(0, 0, 0, 99), (0, 16, 0, 98)],
+        };
+        assert!(!m.apply(PlayEvent::SectionBlocks(bad)));
+        assert_eq!(
+            m.block(0, -64, 0),
+            Some(7),
+            "the refused batch changed nothing, not even the valid prefix"
+        );
+        // a batch for an unloaded column is refused
+        let away = mc_protocol::play::SectionBlocks {
+            sx: 9,
+            sy: -4,
+            sz: 9,
+            blocks: vec![(0, 0, 0, 7)],
+        };
+        assert!(!m.apply(PlayEvent::SectionBlocks(away)));
     }
 
     /// One all-air section whose biomes ride a 2-bit indirect palette

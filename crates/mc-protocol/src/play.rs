@@ -87,12 +87,13 @@ use crate::DEFAULT_TIMEOUT_SECS;
 /// Runtime facts: login = 49, respawn = 82, chunk data = 45.
 pub mod clientbound {
     pub use crate::generated::packet_ids::{
-        CB_CHUNK_BATCH_START as BATCH_START, CB_DISCONNECT as DISCONNECT,
-        CB_FORGET_LEVEL_CHUNK as UNLOAD_CHUNK, CB_KEEP_ALIVE as KEEP_ALIVE,
-        CB_LEVEL_CHUNK_WITH_LIGHT as CHUNK_DATA, CB_LIGHT_UPDATE as UPDATE_LIGHT,
-        CB_LOGIN as LOGIN, CB_PING as PING,
+        CB_BLOCK_UPDATE as BLOCK_UPDATE, CB_CHUNK_BATCH_START as BATCH_START,
+        CB_DISCONNECT as DISCONNECT, CB_FORGET_LEVEL_CHUNK as UNLOAD_CHUNK,
+        CB_KEEP_ALIVE as KEEP_ALIVE, CB_LEVEL_CHUNK_WITH_LIGHT as CHUNK_DATA,
+        CB_LIGHT_UPDATE as UPDATE_LIGHT, CB_LOGIN as LOGIN, CB_PING as PING,
         CB_PLAYER_POSITION as SYNCHRONIZE_POSITION, CB_RESPAWN as RESPAWN,
-        CB_SET_CHUNK_CACHE_CENTER as CENTER_CHUNK, CB_SET_TIME as SET_TIME,
+        CB_SECTION_BLOCKS_UPDATE as SECTION_BLOCKS_UPDATE, CB_SET_CHUNK_CACHE_CENTER as CENTER_CHUNK,
+        CB_SET_TIME as SET_TIME,
     };
 }
 
@@ -829,6 +830,125 @@ pub fn parse_play_disconnect(payload: &[u8]) -> Result<String> {
     Ok(flat)
 }
 
+/// Decode the wire's packed block position long — javap of the real 26.2
+/// (`FriendlyByteBuf.readBlockPos` -> `BlockPos.of(long)`; the constants
+/// from `BlockPos.<clinit>`): `PACKED_HORIZONTAL_LENGTH` = 26 bits
+/// (`log2(smallestEncompassingPowerOfTwo(30000000)) + 1`),
+/// `PACKED_Y_LENGTH` = 12 (`64 - 2 * 26`), so the layout is
+/// `((x & 0x3FFFFFF) << 38) | (y & 0xFFF) | ((z & 0x3FFFFFF) << 12)` and
+/// the getters sign-extend with the two-shift ARITHMETIC walk
+/// (`getX = (packed << 0) >> 38`, `getY = (packed << 52) >> 52`,
+/// `getZ = (packed << 26) >> 38` — `lshr`, not the logical shift).
+fn decode_block_pos(packed: i64) -> (i32, i32, i32) {
+    let x = ((packed << 0) >> 38) as i32;
+    let y = ((packed << 52) >> 52) as i32;
+    let z = ((packed << 26) >> 38) as i32;
+    (x, y, z)
+}
+
+/// Decode the wire's packed section position long — javap of the real
+/// 26.2 (`SectionPos.STREAM_CODEC` = `ByteBufCodecs.LONG` mapped through
+/// `SectionPos.of(long)`; the layout from `SectionPos.asLong(III)`):
+/// `((x & 0x3FFFFF) << 42) | (y & 0xFFFFF) | ((z & 0x3FFFFF) << 20)` —
+/// the SECTION coordinates (a section is 16 blocks), sign-extended the
+/// same two-shift way (`x = packed >> 42`, `y = (packed << 44) >> 44`,
+/// `z = (packed << 22) >> 42`).
+fn decode_section_pos(packed: i64) -> (i32, i32, i32) {
+    let sx = ((packed << 0) >> 42) as i32;
+    let sy = ((packed << 44) >> 44) as i32;
+    let sz = ((packed << 22) >> 42) as i32;
+    (sx, sy, sz)
+}
+
+/// Parse Block Update (clientbound play, generated id 8 —
+/// `minecraft:block_update`). javap of the 26.2 STREAM_CODEC:
+/// `BlockPos.STREAM_CODEC` (a packed position LONG, [`decode_block_pos`])
+/// then `ByteBufCodecs.idMapper(BLOCK_STATE_REGISTRY)` — a VarInt global
+/// block state id, the SAME id space the chunk decoder resolves. One
+/// block changed: the world's own placement/breaking/fluid traffic.
+pub fn parse_block_update(payload: &[u8]) -> Result<(i32, i32, i32, u32)> {
+    let mut c: &[u8] = payload;
+    let id = read_varint(&mut c)?;
+    anyhow::ensure!(
+        id == clientbound::BLOCK_UPDATE,
+        "not a block update packet (0x{id:02X})"
+    );
+    let packed = read_i64(&mut c)?;
+    let state = read_varint(&mut c)?;
+    anyhow::ensure!(state >= 0, "negative block state id {state}");
+    anyhow::ensure!(
+        c.is_empty(),
+        "{} trailing bytes after the block update",
+        c.len()
+    );
+    let (x, y, z) = decode_block_pos(packed);
+    Ok((x, y, z, state as u32))
+}
+
+/// Section Blocks Update (clientbound play, generated id 84 —
+/// `minecraft:section_blocks_update`): a batch of block changes inside
+/// ONE 16³ section (the vanilla writer's multi-change shape — piston
+/// moves, explosions, fluid sweeps).
+#[derive(Debug, Clone, PartialEq)]
+pub struct SectionBlocks {
+    /// Section x (world x / 16, arithmetic shift — negative half-plane
+    /// honest).
+    pub sx: i32,
+    /// Section y — the WORLD section coordinate (the column's bottom
+    /// section is `min_y / 16`, which is NEGATIVE for the overworld's
+    /// -64 floor).
+    pub sy: i32,
+    /// Section z (world z / 16, arithmetic shift).
+    pub sz: i32,
+    /// The changed blocks: SECTION-RELATIVE x/y/z (0..=15 each) plus
+    /// the global block state id (the chunk decoder's id space).
+    pub blocks: Vec<(i32, i32, i32, u32)>,
+}
+
+/// Parse Section Blocks Update. javap of the 26.2 constructor:
+/// `SectionPos.STREAM_CODEC` (a packed section LONG, [`decode_section_pos`])
+/// then a VarInt count then that many VarLong entries —
+/// `position = packed & 4095` (the LOW 12 bits, javap `ldc2_w 4095l`),
+/// `state id = packed >>> 12` (LOGICAL shift, javap `lushr 12`), and the
+/// 12-bit local packs `(x << 8) | (z << 4) | y` (javap
+/// `sectionRelativeX/Y/Z`: x = short `>>> 8 & 15`, z = `>>> 4 & 15`,
+/// y = `& 15`). The count is validated against the remaining bytes
+/// BEFORE any allocation — each entry is at least one wire byte, so a
+/// lying count cannot reserve memory the packet cannot back.
+pub fn parse_section_blocks(payload: &[u8]) -> Result<SectionBlocks> {
+    let mut c: &[u8] = payload;
+    let id = read_varint(&mut c)?;
+    anyhow::ensure!(
+        id == clientbound::SECTION_BLOCKS_UPDATE,
+        "not a section blocks update packet (0x{id:02X})"
+    );
+    let packed = read_i64(&mut c)?;
+    let (sx, sy, sz) = decode_section_pos(packed);
+    let count = read_varint(&mut c)?;
+    if count < 0 || count as usize > c.len() {
+        return Err(anyhow::anyhow!(
+            "absurd block count {count} for {} remaining bytes",
+            c.len()
+        ));
+    }
+    let mut blocks = Vec::with_capacity(count as usize);
+    for _ in 0..count {
+        let entry = read_varlong(&mut c)?;
+        let local = (entry & 0xFFF) as u16;
+        let state = ((entry as u64) >> 12) as u32;
+        let lx = ((local >> 8) & 0xF) as i32;
+        let ly = (local & 0xF) as i32;
+        let lz = ((local >> 4) & 0xF) as i32;
+        blocks.push((lx, ly, lz, state));
+    }
+    anyhow::ensure!(
+        c.is_empty(),
+        "{} trailing bytes after the section blocks update",
+        c.len()
+    );
+    Ok(SectionBlocks { sx, sy, sz, blocks })
+}
+
 // ---------------------------------------------------------------------------
 // serverbound replies
 // ---------------------------------------------------------------------------
@@ -936,6 +1056,13 @@ pub enum PlayEvent {
     ChunkBatch,
     /// The server closed the play session (flattened reason).
     Disconnected { reason: String },
+    /// Block Update: ONE block changed — the world's own traffic (a
+    /// placement, a break, a fluid tick). The model mutates the stored
+    /// column in place; the next materialize renders the change.
+    Block { x: i32, y: i32, z: i32, state: u32 },
+    /// Section Blocks Update: a batch of changes inside ONE section
+    /// (the entries are section-relative + the global state id).
+    SectionBlocks(SectionBlocks),
     /// Any packet without a client surface yet (skipped silently).
     Skipped,
 }
@@ -1005,6 +1132,13 @@ impl<S: Read + Write> PlaySession<S> {
             }
             clientbound::DISCONNECT => {
                 Ok(PlayEvent::Disconnected { reason: parse_play_disconnect(&pkt)? })
+            }
+            clientbound::BLOCK_UPDATE => {
+                let (x, y, z, state) = parse_block_update(&pkt)?;
+                Ok(PlayEvent::Block { x, y, z, state })
+            }
+            clientbound::SECTION_BLOCKS_UPDATE => {
+                Ok(PlayEvent::SectionBlocks(parse_section_blocks(&pkt)?))
             }
             _ => Ok(PlayEvent::Skipped),
         }
@@ -1253,6 +1387,45 @@ pub mod test_support {
             crate::varint::write_varlong(&mut p, *total);
             p.extend_from_slice(&partial.to_be_bytes());
             p.extend_from_slice(&rate.to_be_bytes());
+        }
+        p
+    }
+
+    /// The packed block position long — the inverse of the javap-proven
+    /// decode (`((x & 0x3FFFFFF) << 38) | (y & 0xFFF) |
+    /// ((z & 0x3FFFFFF) << 12)`, `BlockPos.asLong(III)` verbatim).
+    pub fn encode_block_pos(x: i32, y: i32, z: i32) -> i64 {
+        (((x as i64) & 0x3FF_FFFF) << 38) | ((y as i64) & 0xFFF) | (((z as i64) & 0x3FF_FFFF) << 12)
+    }
+
+    /// The packed section position long — the inverse of the javap-proven
+    /// decode (`((x & 0x3FFFFF) << 42) | (y & 0xFFFFF) |
+    /// ((z & 0x3FFFFF) << 20)`, `SectionPos.asLong(III)` verbatim).
+    pub fn encode_section_pos(sx: i32, sy: i32, sz: i32) -> i64 {
+        (((sx as i64) & 0x3F_FFFF) << 42) | ((sy as i64) & 0xF_FFFF) | (((sz as i64) & 0x3F_FFFF) << 20)
+    }
+
+    /// One full Block Update packet (generated id 8): the packed
+    /// position long then the VarInt state id.
+    pub fn block_update_packet(x: i32, y: i32, z: i32, state: u32) -> Vec<u8> {
+        let mut p = Vec::new();
+        write_varint(&mut p, clientbound::BLOCK_UPDATE);
+        p.extend_from_slice(&encode_block_pos(x, y, z).to_be_bytes());
+        write_varint(&mut p, state as i32);
+        p
+    }
+
+    /// One full Section Blocks Update packet (generated id 84): the
+    /// packed section long, the VarInt count, then the VarLong entries —
+    /// each `local | (state << 12)` with local `(x << 8) | (z << 4) | y`.
+    pub fn section_blocks_packet(sx: i32, sy: i32, sz: i32, blocks: &[((i32, i32, i32), u32)]) -> Vec<u8> {
+        let mut p = Vec::new();
+        write_varint(&mut p, clientbound::SECTION_BLOCKS_UPDATE);
+        p.extend_from_slice(&encode_section_pos(sx, sy, sz).to_be_bytes());
+        write_varint(&mut p, blocks.len() as i32);
+        for &((lx, ly, lz), state) in blocks {
+            let local = (((lx & 0xF) << 8) | ((lz & 0xF) << 4) | (ly & 0xF)) as i64;
+            crate::varint::write_varlong(&mut p, local | ((state as i64) << 12));
         }
         p
     }
@@ -1822,6 +1995,78 @@ mod tests {
         write_varint(&mut p3, 100_000); // claims 100k entries...
         // ...but zero entry bytes follow
         assert!(parse_set_time(&p3).is_err());
+    }
+
+    #[test]
+    fn block_update_parses_the_packed_position_and_state() {
+        assert_eq!(clientbound::BLOCK_UPDATE, 8, "block update (generated id)");
+        // the positive-half plane and BOTH negative axes: the javap
+        // packing `((x & 0x3FFFFFF) << 38) | (y & 0xFFF) |
+        // ((z & 0x3FFFFFF) << 12)` sign-extends x/z from their 26-bit
+        // fields and y from its 12-bit field — the arithmetic-shift walk
+        let cases = [
+            (48, 64, -32, 7u32),      // the mock chunk's corner column
+            (-1, 70, -1, 1),          // the negative half-plane
+            (0, -64, 0, 0),           // the overworld's floor, AIR
+            (30_000_000 - 1, 319, 0, 9), // the 26-bit field's edge
+            (0, 2_047, 0, 3),         // the 12-bit y field's top
+        ];
+        for (x, y, z, state) in cases {
+            let p = test_support::block_update_packet(x, y, z, state);
+            let (dx, dy, dz, ds) = parse_block_update(&p).unwrap();
+            assert_eq!((dx, dy, dz, ds), (x, y, z, state), "round-trip at ({x},{y},{z})");
+        }
+        // trailing bytes are drift
+        let mut p2 = test_support::block_update_packet(0, 0, 0, 0);
+        p2.push(0x00);
+        assert!(parse_block_update(&p2).is_err());
+        // a negative VarInt state id is refused (a varint CAN carry a
+        // negative through the sign bits; the registry ids cannot)
+        let mut p3 = Vec::new();
+        write_varint(&mut p3, clientbound::BLOCK_UPDATE);
+        p3.extend_from_slice(&0i64.to_be_bytes());
+        write_varint(&mut p3, -1);
+        assert!(parse_block_update(&p3).is_err());
+    }
+
+    #[test]
+    fn section_blocks_parse_the_packed_entries() {
+        assert_eq!(clientbound::SECTION_BLOCKS_UPDATE, 84, "section blocks (generated id)");
+        // a NEGATIVE section y (the overworld's floor sits at sy -4)
+        // and entries across the 12-bit local packing — including the
+        // (15, 15, 15) corner and a state id that forces a 2-byte VarLong
+        let p = test_support::section_blocks_packet(
+            3,
+            -4,
+            -2,
+            &[
+                ((0, 0, 0), 1),
+                ((15, 15, 15), 0),
+                ((7, 3, 12), 1234),
+                ((1, 8, 2), 31),
+            ],
+        );
+        let sb = parse_section_blocks(&p).unwrap();
+        assert_eq!((sb.sx, sb.sy, sb.sz), (3, -4, -2), "the section long sign-extends");
+        assert_eq!(sb.blocks.len(), 4);
+        assert_eq!(sb.blocks[0], (0, 0, 0, 1));
+        assert_eq!(sb.blocks[1], (15, 15, 15, 0), "the all-ones local unpacks to the corner");
+        assert_eq!(sb.blocks[2], (7, 3, 12, 1234), "x@8, z@4, y@0; state = entry >>> 12");
+        assert_eq!(sb.blocks[3], (1, 8, 2, 31));
+        // a lying count is refused BEFORE allocation: each entry is at
+        // least one wire byte, so a count above the remaining length
+        // cannot be backed by the packet (the mock builder cannot lie
+        // by construction — hand-rolled here)
+        let mut p2 = Vec::new();
+        write_varint(&mut p2, clientbound::SECTION_BLOCKS_UPDATE);
+        p2.extend_from_slice(&0i64.to_be_bytes());
+        write_varint(&mut p2, 5_000); // claims 5k entries...
+        // ...but zero entry bytes follow
+        assert!(parse_section_blocks(&p2).is_err());
+        // trailing bytes are drift
+        let mut p3 = test_support::section_blocks_packet(0, 0, 0, &[((0, 0, 0), 0)]);
+        p3.push(0x00);
+        assert!(parse_section_blocks(&p3).is_err());
     }
 
     /// Mock server: login -> configuration -> play (the FULL vanilla
