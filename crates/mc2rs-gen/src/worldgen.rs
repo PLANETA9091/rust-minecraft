@@ -59,6 +59,20 @@ pub struct DimensionTypeEntry {
     pub default_clock: Option<String>,
 }
 
+/// The per-biome tint extras the jar states beyond the classic color
+/// surface: `effects.grass_color_modifier` and `effects.dry_foliage_color`
+/// (both OPTIONAL in the biome JSON — sparse, only biomes that state at
+/// least one get an entry). The modifier is the vanilla enum name verbatim
+/// ("dark_forest" | "swamp"; "none" states the absence and is dropped);
+/// the dry-foliage color is the override `Biome.getDryFoliageColor()`
+/// orElseGets before the climate grid.
+#[derive(Debug, Clone)]
+pub struct BiomeTintExtraEntry {
+    pub biome: String,
+    pub grass_color_modifier: Option<String>,
+    pub dry_foliage_color: Option<u32>,
+}
+
 /// One built-in `minecraft:timeline` entry: the jar's
 /// `data/minecraft/timeline/*.json` — a keyframe curve set over a world
 /// clock. The per-track data the CLIENT consumes today is the
@@ -88,6 +102,9 @@ pub struct WorldgenData {
     /// `data/minecraft/tags/timeline/*.json` verbatim (name -> values; the
     /// values may be nested "#tag" references)
     pub timeline_tags: BTreeMap<String, Vec<String>>,
+    /// per-biome tint extras (grass_color_modifier / dry_foliage_color),
+    /// sparse — only the biomes whose JSON states at least one
+    pub biome_tint_extras: BTreeMap<String, BiomeTintExtraEntry>,
     pub noise_settings: Vec<String>,
     pub density_functions: usize,
     pub noises: usize,
@@ -178,6 +195,36 @@ pub fn generate<R: std::io::Read + std::io::Seek>(archive: &mut zip::ZipArchive<
                             ),
                         },
                     );
+                    // the tint extras: the modifier enum name ("none" IS the
+                    // absence — dropped) and the dry-foliage override (the
+                    // "#rrggbb" string form the real jar uses). A modifier the
+                    // vanilla enum does not define is a REFUSAL — guessing a
+                    // shape the jar does not state would put a lie in the table.
+                    let modifier = v
+                        .get("effects")
+                        .and_then(|e| e.get("grass_color_modifier"))
+                        .and_then(Value::as_str);
+                    let modifier = match modifier {
+                        Some("none") | None => None,
+                        Some(m @ ("dark_forest" | "swamp")) => Some(m.to_string()),
+                        Some(other) => {
+                            anyhow::bail!(
+                                "biome {id}: unknown grass_color_modifier {other:?} \
+                                 (the vanilla enum states none/dark_forest/swamp)"
+                            );
+                        }
+                    };
+                    let dry = color_value(v.get("effects").and_then(|e| e.get("dry_foliage_color")));
+                    if modifier.is_some() || dry.is_some() {
+                        data.biome_tint_extras.insert(
+                            id.to_string(),
+                            BiomeTintExtraEntry {
+                                biome: format!("minecraft:{id}"),
+                                grass_color_modifier: modifier,
+                                dry_foliage_color: dry,
+                            },
+                        );
+                    }
                 }
             }
         } else if let Some(rest) = name.strip_prefix("data/minecraft/dimension_type/") {
@@ -478,6 +525,40 @@ pub fn emit(data: &WorldgenData) -> Result<String> {
     out.push_str("/// Timeline tag values by full tag id (\"minecraft:in_overworld\").\n");
     out.push_str("pub fn timeline_tag(name: &str) -> Option<&'static [&'static str]> {\n");
     out.push_str("    TIMELINE_TAGS.binary_search_by_key(&name, |t| t.0).ok().map(|i| TIMELINE_TAGS[i].1)\n}\n");
+
+    // ---- per-biome tint extras ----
+    // The biome JSON surface the classic color table does not carry: the
+    // grass_color_modifier enum name and the dry_foliage_color override.
+    // Appended LAST so every table above stays byte-stable across the arc.
+    out.push_str("\n/// The per-biome tint extras the jar states beyond the classic color\n");
+    out.push_str("/// surface (`effects.grass_color_modifier`, `effects.dry_foliage_color`)\n");
+    out.push_str("/// — sparse, only biomes that state at least one. The skip-sync tint\n");
+    out.push_str("/// path joins this with `biome(name)` to resolve the exact verdicts the\n");
+    out.push_str("/// synced `BiomeEntry` path would (the modifier blend, the dry override).\n");
+    out.push_str("#[derive(Debug, Clone, Copy, PartialEq)]\npub struct BiomeTintExtraDef {\n    pub biome: &'static str,\n    pub grass_color_modifier: Option<&'static str>,\n    pub dry_foliage_color: Option<u32>,\n}\n\n");
+    out.push_str("pub static BIOME_TINT_EXTRAS: [BiomeTintExtraDef; ");
+    out.push_str(&data.biome_tint_extras.len().to_string());
+    out.push_str("] = [\n");
+    for e in data.biome_tint_extras.values() {
+        let modifier = match &e.grass_color_modifier {
+            Some(m) => format!("Some(\"{}\")", rust_str(m)),
+            None => "None".to_string(),
+        };
+        let dry = match e.dry_foliage_color {
+            Some(c) => format!("Some({c})"),
+            None => "None".to_string(),
+        };
+        out.push_str(&format!(
+            "    BiomeTintExtraDef {{ biome: \"{}\", grass_color_modifier: {}, dry_foliage_color: {} }},\n",
+            rust_str(&e.biome),
+            modifier,
+            dry,
+        ));
+    }
+    out.push_str("];\n\n");
+    out.push_str("/// Tint extras by registry id (\"minecraft:dark_forest\"), sorted for binary search.\n");
+    out.push_str("pub fn biome_tint_extra(name: &str) -> Option<&'static BiomeTintExtraDef> {\n");
+    out.push_str("    BIOME_TINT_EXTRAS.binary_search_by_key(&name, |e| e.biome).ok().map(|i| &BIOME_TINT_EXTRAS[i])\n}\n");
     Ok(out)
 }
 
@@ -539,6 +620,54 @@ mod tests {
         assert!(emitted.contains("event: \"music.under_water\""));
         assert!(emitted.contains("pub fn biome_music(biome: &str, context: &str)"));
         assert!(emitted.contains("pub static BIOME_MUSIC: [BiomeMusicDef; 3]"));
+    }
+
+    #[test]
+    fn parses_the_tint_extras_the_real_jar_states() {
+        // the REAL jar forms: the modifier is the vanilla enum name, the
+        // dry-foliage override a "#rrggbb" string (dark_forest.json /
+        // swamp.json / mangrove_swamp.json / pale_garden.json, 26.2)
+        let dark = br##"{"temperature":0.7,"downfall":0.8,"has_precipitation":true,"effects":{"fog_color":12638463,"sky_color":7972607,"water_color":4159204,"water_fog_color":329011,"grass_color_modifier":"dark_forest","dry_foliage_color":"#7b5334"}}"##;
+        let pale = br##"{"temperature":0.7,"downfall":0.8,"has_precipitation":true,"effects":{"fog_color":8484720,"sky_color":12171705,"water_color":7768221,"water_fog_color":329011,"grass_color":7832178,"foliage_color":8883574,"dry_foliage_color":"#a0a69c"}}"##;
+        let swampy = br##"{"temperature":0.8,"downfall":0.9,"has_precipitation":true,"effects":{"fog_color":12638463,"sky_color":7907327,"water_color":6388580,"water_fog_color":329011,"foliage_color":6975545,"grass_color_modifier":"swamp","dry_foliage_color":"#7b5334"}}"##;
+        let none_form = br#"{"temperature":0.5,"downfall":0.5,"has_precipitation":true,"effects":{"fog_color":12638463,"sky_color":7946167,"water_color":4159204,"water_fog_color":329011,"grass_color_modifier":"none"}}"#;
+        let bare = br#"{"temperature":0.8,"downfall":0.4,"has_precipitation":true,"effects":{"fog_color":12638463,"sky_color":7946167,"water_color":4159204,"water_fog_color":329011}}"#;
+        let mut zip = zip_of(&[
+            ("data/minecraft/worldgen/biome/dark_forest.json", dark.to_vec()),
+            ("data/minecraft/worldgen/biome/pale_garden.json", pale.to_vec()),
+            ("data/minecraft/worldgen/biome/swamp.json", swampy.to_vec()),
+            ("data/minecraft/worldgen/biome/none_biome.json", none_form.to_vec()),
+            ("data/minecraft/worldgen/biome/plains.json", bare.to_vec()),
+        ]);
+        let data = generate(&mut zip).unwrap();
+        assert_eq!(data.biomes.len(), 5, "every biome parsed");
+        // sparse: "none" states the absence and a biome without either field
+        // gets no entry — only the three real carriers
+        assert_eq!(data.biome_tint_extras.len(), 3);
+        let d = &data.biome_tint_extras["dark_forest"];
+        assert_eq!(d.biome, "minecraft:dark_forest");
+        assert_eq!(d.grass_color_modifier.as_deref(), Some("dark_forest"));
+        assert_eq!(d.dry_foliage_color, Some(0x7B5334), "the #rrggbb form parses");
+        assert_eq!(data.biome_tint_extras["swamp"].grass_color_modifier.as_deref(), Some("swamp"));
+        let p = &data.biome_tint_extras["pale_garden"];
+        assert_eq!(p.grass_color_modifier, None, "no modifier stated");
+        assert_eq!(p.dry_foliage_color, Some(0xA0A69C), "the pale garden override");
+
+        let emitted = emit(&data).unwrap();
+        assert!(emitted.contains("pub static BIOME_TINT_EXTRAS: [BiomeTintExtraDef; 3]"));
+        assert!(emitted.contains(
+            "BiomeTintExtraDef { biome: \"minecraft:dark_forest\", grass_color_modifier: Some(\"dark_forest\"), dry_foliage_color: Some(8082228) }"
+        ));
+        assert!(emitted.contains("pub fn biome_tint_extra(name: &str)"));
+    }
+
+    #[test]
+    fn refuses_a_modifier_the_vanilla_enum_does_not_state() {
+        let odd = br#"{"temperature":0.5,"downfall":0.5,"has_precipitation":true,"effects":{"fog_color":1,"sky_color":2,"water_color":3,"water_fog_color":4,"grass_color_modifier":"pixelated"}}"#;
+        let mut zip = zip_of(&[("data/minecraft/worldgen/biome/odd.json", odd.to_vec())]);
+        let err = generate(&mut zip).unwrap_err().to_string();
+        assert!(err.contains("unknown grass_color_modifier"), "{err}");
+        assert!(err.contains("pixelated"), "{err}");
     }
 
     #[test]

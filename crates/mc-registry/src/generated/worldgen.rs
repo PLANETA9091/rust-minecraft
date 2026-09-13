@@ -247,3 +247,27 @@ pub static TIMELINE_TAGS: [(&str, &[&str]); 4] = [
 pub fn timeline_tag(name: &str) -> Option<&'static [&'static str]> {
     TIMELINE_TAGS.binary_search_by_key(&name, |t| t.0).ok().map(|i| TIMELINE_TAGS[i].1)
 }
+
+/// The per-biome tint extras the jar states beyond the classic color
+/// surface (`effects.grass_color_modifier`, `effects.dry_foliage_color`)
+/// — sparse, only biomes that state at least one. The skip-sync tint
+/// path joins this with `biome(name)` to resolve the exact verdicts the
+/// synced `BiomeEntry` path would (the modifier blend, the dry override).
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct BiomeTintExtraDef {
+    pub biome: &'static str,
+    pub grass_color_modifier: Option<&'static str>,
+    pub dry_foliage_color: Option<u32>,
+}
+
+pub static BIOME_TINT_EXTRAS: [BiomeTintExtraDef; 4] = [
+    BiomeTintExtraDef { biome: "minecraft:dark_forest", grass_color_modifier: Some("dark_forest"), dry_foliage_color: Some(8082228) },
+    BiomeTintExtraDef { biome: "minecraft:mangrove_swamp", grass_color_modifier: Some("swamp"), dry_foliage_color: Some(8082228) },
+    BiomeTintExtraDef { biome: "minecraft:pale_garden", grass_color_modifier: None, dry_foliage_color: Some(10528412) },
+    BiomeTintExtraDef { biome: "minecraft:swamp", grass_color_modifier: Some("swamp"), dry_foliage_color: Some(8082228) },
+];
+
+/// Tint extras by registry id ("minecraft:dark_forest"), sorted for binary search.
+pub fn biome_tint_extra(name: &str) -> Option<&'static BiomeTintExtraDef> {
+    BIOME_TINT_EXTRAS.binary_search_by_key(&name, |e| e.biome).ok().map(|i| &BIOME_TINT_EXTRAS[i])
+}
