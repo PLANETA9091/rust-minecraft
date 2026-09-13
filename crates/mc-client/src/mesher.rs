@@ -302,8 +302,15 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                     let (sn, cs) = theta.sin_cos();
                     for face in [2usize, 3] {
                         let base = if tile == atlas::TILE_NONE {
-                            lut
-                                .and_then(|l| l.color(id, face))
+                            // The blockstate-driven palette, VARIANT-AWARE
+                            // (v0.3.80): segment_amount selects the template
+                            // model(s) and each samples a different uv rect,
+                            // so the flat color follows the variant — the
+                            // same precedence as the cube path below (the
+                            // palette first, then the runtime-texture LUT,
+                            // then the hand-written defaults).
+                            crate::colors::palette_leaf_litter_color(segment, face)
+                                .or_else(|| lut.and_then(|l| l.color(id, face)))
                                 .unwrap_or_else(|| default_color(id, face))
                         } else {
                             // The same tint carrier as the cube path: the

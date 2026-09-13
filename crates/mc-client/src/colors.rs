@@ -84,6 +84,90 @@ pub fn palette_color(kind: u16, face: usize) -> Option<[f32; 3]> {
     }
 }
 
+/// The leaf-litter VARIANT->MODEL palette mapping (the item banked since
+/// v0.3.78): the mesher's leaf-litter flat fallback must follow the
+/// variant the way the textured path does. The blockstate is a multipart
+/// whose `segment_amount` selects the template model(s) (1->{m1},
+/// 2->{m2}, 3->{m2,m3} -- the OR-list `2|3` plus `3`, the multipart
+/// COLLECT rule -- and 4->{m4}), and each template samples a DIFFERENT
+/// uv rect of the same 16x16 `block/leaf_litter` texture, so the average
+/// color differs per segment.
+///
+/// `facing` is deliberately pinned to north everywhere: the blockstate's
+/// y-rotation turns the element AND its glued uv together, and the quad
+/// rect is the rotation-invariant min/max -- the average CANNOT change
+/// with the facing. Only segment_amount reaches the color.
+///
+/// The oracle numbers (scripts/palette_oracle.py over the real jar, the
+/// opaque-pixel rule: leaf_litter.png is a grayscale cutout, 117/256
+/// opaque): segment 1 = the NW quarter rect (165,165,165) [27/64
+/// opaque], segment 2 = the west strip (171,171,171) [55/128], segment 3
+/// = the equal-weight compose of m2's strip (171) + m3's SE quarter
+/// (170) -> half-up (171,171,171), segment 4 = the full cover (171,171,
+/// 171) [the full-texture average]. Three of the four segments coincide
+/// on THIS texture -- the mapping is still required: segment 1 differs,
+/// and a future texture is free to split them.
+///
+/// The templates carry exactly up+down faces sampling the SAME rect
+/// (`#texture`, tintindex 0 -- the palette averages RAW texels, the dry
+/// fold tint multiplies at the consumer on the textured path), so up and
+/// down share one color and the four side slots stay empty.
+fn leaf_litter_table() -> &'static [Option<[[f32; 3]; 6]>; 4] {
+    static TABLE: OnceLock<[Option<[[f32; 3]; 6]>; 4]> = OnceLock::new();
+    TABLE.get_or_init(|| {
+        (1u8..=4)
+            .map(|segment| {
+                let state = [
+                    ("facing", "north"),
+                    ("segment_amount", match segment {
+                        1 => "1",
+                        2 => "2",
+                        3 => "3",
+                        _ => "4",
+                    }),
+                ];
+                mc_registry::palette::block_face_colors("leaf_litter", &state).map(|faces| {
+                    let mut slots: [Option<[u8; 3]>; 6] = [None; 6];
+                    for fc in faces {
+                        slots[fc.face as usize] = Some(fc.color);
+                    }
+                    let mut out: [[f32; 3]; 6] = [[0.0, 0.0, 0.0]; 6];
+                    for (m, &c) in FACE_TO_CULL.iter().enumerate() {
+                        if let Some(rgb) = slots[c] {
+                            out[m] = [
+                                f32::from(rgb[0]) / 255.0,
+                                f32::from(rgb[1]) / 255.0,
+                                f32::from(rgb[2]) / 255.0,
+                            ];
+                        }
+                    }
+                    out
+                })
+            })
+            .collect::<Vec<_>>()
+            .try_into()
+            .expect("segments 1..=4")
+    })
+}
+
+/// The flat world color of one leaf-litter face for a given SEGMENT (the
+/// mesher's variant encoding: `segment = (variant >> 2) + 1`, and the
+/// no-op variant 0 renders as segment 4 -- the full cover). `None` =
+/// the chain cannot color this segment/face (a side face, an
+/// out-of-domain segment) -- the caller falls back to the LUT / the
+/// defaults, exactly the cube path's precedence.
+pub fn palette_leaf_litter_color(segment: u8, face: usize) -> Option<[f32; 3]> {
+    let row = leaf_litter_table()
+        .get(usize::from(segment).checked_sub(1)?)?
+        .as_ref()?;
+    let rgb = row.get(face)?; // the mesher's 0..6 face order
+    if *rgb == [0.0, 0.0, 0.0] {
+        None // the templates have no side faces
+    } else {
+        Some(*rgb)
+    }
+}
+
 /// Default palette (used when game textures are not available locally).
 pub fn default_color(kind: u16, face: usize) -> [f32; 3] {
     let top = [0.40, 0.66, 0.26];
@@ -233,5 +317,64 @@ mod palette_consumer_tests {
         // color, top(+Y) -> Cull::Up the top color
         assert_eq!(palette_color(GRASS, 0), palette_color(GRASS, 5), "the four sides share one color");
         assert_ne!(palette_color(GRASS, 0), palette_color(GRASS, 2), "sides differ from top");
+    }
+
+    /// The leaf-litter variant->model mapping is the CHAIN's numbers,
+    /// oracle-pinned (scripts/palette_oracle.py over the real jar):
+    /// segment 1 (the NW-quarter template) reads (165,165,165), segments
+    /// 2/3/4 read (171,171,171) on this texture (2 = the west strip,
+    /// 3 = the half-up compose of the strip 171 + the SE quarter 170,
+    /// 4 = the full cover). Up and down share one color (the templates'
+    /// two faces sample the SAME rect), the four side slots are None
+    /// (the templates have no side faces), and out-of-domain segments
+    /// fail closed.
+    #[test]
+    fn the_leaf_litter_palette_follows_the_variant() {
+        for (segment, gray) in [(1u8, 165.0f32), (2, 171.0), (3, 171.0), (4, 171.0)] {
+            let expect = [gray / 255.0; 3];
+            for face in [2usize, 3] {
+                assert_eq!(
+                    palette_leaf_litter_color(segment, face),
+                    Some(expect),
+                    "segment {segment} face {face}"
+                );
+            }
+            // down == up: both template faces sample the same rect
+            assert_eq!(
+                palette_leaf_litter_color(segment, 3),
+                palette_leaf_litter_color(segment, 2),
+                "segment {segment} up/down share the rect"
+            );
+            for face in [0usize, 1, 4, 5] {
+                assert_eq!(
+                    palette_leaf_litter_color(segment, face),
+                    None,
+                    "segment {segment} has no side faces, face {face}"
+                );
+            }
+        }
+        // the out-of-domain edges fail closed to the caller's fallback
+        assert_eq!(palette_leaf_litter_color(0, 2), None, "segment 0 is not a state");
+        assert_eq!(palette_leaf_litter_color(5, 2), None, "the blockstate caps at 4");
+    }
+
+    /// The variant table genuinely DIVERGES from the cube table's
+    /// canonical entry: the cube table pins leaf_litter at
+    /// segment_amount=1, so the mesher's leaf-litter fallback could not
+    /// have reused `palette_color` -- segment 4 (the full cover, what
+    /// the no-op variant 0 renders) is a different color. And segment 1
+    /// MUST match the canonical entry bit-for-bit (the same chain call).
+    #[test]
+    fn the_leaf_litter_variant_table_diverges_where_the_segment_differs() {
+        assert_eq!(
+            palette_leaf_litter_color(1, 2),
+            palette_color(LEAF_LITTER, 2),
+            "segment 1 IS the canonical state"
+        );
+        assert_ne!(
+            palette_leaf_litter_color(4, 2),
+            palette_color(LEAF_LITTER, 2),
+            "segment 4 (the full cover) differs from the segment-1 canonical entry"
+        );
     }
 }
