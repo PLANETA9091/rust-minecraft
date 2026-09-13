@@ -616,6 +616,28 @@ hand-drawn:
   cutout rule. Also repairs a pre-existing doctest break (an unannotated
   pseudo-code fence in the item_bake docs compiled as Rust and failed
   `cargo test --workspace` on the clean tree).
+  The **timeline-tag resolution lands (v0.3.82 — one resolver semantic,
+  two validated tables)**: `mc-registry::flatten_timeline_tag` applies
+  the v0.3.80 built-tag verdict (file-order walk, depth-first `#`-nested
+  expansion in place, first-occurrence dedup, fail-closed on unknown
+  tag/unknown ref/cycle) to the jar's `data/minecraft/tags/timeline/*.json`
+  table — the same generic core, now validated against the TIMELINES
+  registry (every concrete member must resolve). This is the resolution
+  the dimension types imply: a dimension's `timelines` field names a TAG
+  verbatim (`"#minecraft:in_overworld"` — the raw form the config
+  registry carries), and the timelines that apply to it are the tag's
+  flattened members. The real-data pins: in_overworld's FIRST member is
+  the nested `#minecraft:universal`, so universal's expansion
+  (`villager_schedule`) lands AT THE HEAD before the tag's own three
+  concrete members (day, moon, early_game — file order); in_end and
+  in_nether are the single-ref form and build to universal's flatten
+  exactly; the unknown-tag and raw-`#` forms refuse. GOLDENS: untouched
+  — BY DATA: grep proves zero render-path references; the full matrix
+  re-verified through verify_goldens.sh on the rebuilt release binaries,
+  12/12 pass, every one rms 0.000. Tests +2 (workspace 376 → 378 passed
+  / 0 failed / 3 ignored; mc-registry 76 → 78): the universal-ref
+  flatten pins and the all-four-tags sweep with member-by-member
+  registry validation.
   The **swing-arc sweep lands (v0.3.81 — the swing chain's pixel anchors
   stretch from one progress to the whole curve)**: the carried-since-
   v0.3.76 candidate finally banked. Both first-person term curves are
