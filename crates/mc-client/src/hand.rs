@@ -155,6 +155,28 @@ impl SwingState {
         }
         self.o_attack_anim + f * partial_tick
     }
+
+    /// The deterministic stand-in for the swing clock (the same role
+    /// `--held-item` plays for inventory state): the client has no
+    /// gameplay input wired to the swing in the headless scenes, so a
+    /// scene that must PIN a mid-swing pose freezes the timeline at a
+    /// fixed progress instead. `o_attack_anim` and `attack_anim` both
+    /// carry the progress, so `get_attack_anim(partial)` returns it
+    /// exactly at every partial tick — the vanilla lerp is the identity
+    /// on a frame with no tick-to-tick change (a legal timeline slice:
+    /// the state as the camera would sample it across a held frame).
+    ///
+    /// Only the non-ticking headless scenes hold this state stable; a
+    /// real `tick()` resumes the vanilla timeline from here. Progress 0
+    /// IS the rest pose (bit-identical to `default()`'s sample).
+    pub fn frozen_at(progress: f32) -> Self {
+        Self {
+            swinging: progress > 0.0,
+            swing_time: 0,
+            o_attack_anim: progress,
+            attack_anim: progress,
+        }
+    }
 }
 
 fn decode_rgba(bytes: &[u8]) -> anyhow::Result<(u32, u32, Vec<u8>)> {
@@ -598,6 +620,29 @@ mod swing_tests {
             "the 1->0 jump must wrap forward, not lerp backwards: {wrapped}"
         );
     }
+
+    /// The frozen stand-in samples EXACTLY its progress at every partial
+    /// tick (the o/attack lerp is the identity on a no-change frame), and
+    /// progress 0 samples exactly like the rest default.
+    #[test]
+    fn the_frozen_swing_state_samples_its_progress() {
+        for p in [0.0f32, 0.25, 0.5, 1.0] {
+            let s = SwingState::frozen_at(p);
+            for partial in [0.0f32, 0.5, 1.0] {
+                assert_eq!(
+                    s.get_attack_anim(partial),
+                    p,
+                    "frozen_at({p}) must sample {p} at partial {partial}"
+                );
+            }
+        }
+        let rest = SwingState::default();
+        assert_eq!(
+            SwingState::frozen_at(0.0).get_attack_anim(0.5),
+            rest.get_attack_anim(0.5),
+            "frozen 0 IS the rest pose"
+        );
+    }
 }
 
 #[cfg(test)]
@@ -692,5 +737,41 @@ mod held_tests {
         }
         assert!(right > 0, "the sword must rasterize on the right half");
         assert_eq!(left, 0, "no pixels left of center");
+    }
+
+    /// The swing golden's premise, proven at the pixel level BEFORE the
+    /// pin (the same proof the held golden made against plain world): the
+    /// mid-swing scene really changes pixels vs the rest scene, and every
+    /// changed pixel stays in the item's screen region (right of center).
+    #[test]
+    fn the_swing_scene_changes_pixels_against_the_rest_scene() {
+        let item = load_item("item/iron_sword").expect("iron_sword loads");
+        let proj = Mat4::perspective(
+            70.0f32.to_radians(),
+            320.0 / 180.0,
+            0.1,
+            512.0,
+        );
+        let mut rest = Framebuf::new(320, 180);
+        rest.clear([0.45, 0.66, 0.94], [0.74, 0.85, 0.95]);
+        item.draw(&mut rest, proj, 0.0);
+        let mut mid = Framebuf::new(320, 180);
+        mid.clear([0.45, 0.66, 0.94], [0.74, 0.85, 0.95]);
+        item.draw(&mut mid, proj, 0.5);
+        let (mut changed_left, mut changed_right) = (0usize, 0usize);
+        for y in 0..180 {
+            for x in 0..320 {
+                let i = (y * 320 + x) * 3;
+                if rest.color[i..i + 3] != mid.color[i..i + 3] {
+                    if x < 160 {
+                        changed_left += 1;
+                    } else {
+                        changed_right += 1;
+                    }
+                }
+            }
+        }
+        assert!(changed_right > 0, "the swing must move pixels on the right half");
+        assert_eq!(changed_left, 0, "no swung pixel left of center");
     }
 }

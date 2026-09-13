@@ -91,6 +91,10 @@ pub fn render_frames(
 /// `held_item` (a model id, e.g. "item/iron_sword") holds that item in
 /// the first-person hand on the world screens — the deterministic
 /// stand-in for inventory state; `None` = the empty-hand arm (goldens).
+/// `swing_progress` freezes the attack-swing clock at that progress
+/// (`getAttackAnim`, 0 = rest) — the deterministic stand-in for the
+/// swing clock; the world screens render the mid-swing pose of the
+/// held item (or of the empty-hand arm), the other screens ignore it.
 pub fn render_gui_screen(
     screen: &str,
     frame: u64,
@@ -98,14 +102,24 @@ pub fn render_gui_screen(
     width: usize,
     height: usize,
     held_item: Option<&str>,
+    swing_progress: Option<f32>,
     out_path: &Path,
 ) -> Result<()> {
     use crate::gui::GuiAssets;
     use crate::screens::{App, ScreenKind};
 
+    if let Some(p) = swing_progress {
+        anyhow::ensure!(
+            (0.0..=1.0).contains(&p),
+            "swing-progress must be in [0, 1] (getAttackAnim's domain), got {p}"
+        );
+    }
     let mut app = App::new(seed);
     if let Some(id) = held_item {
         app.held_item = crate::hand::load_item(id);
+    }
+    if let Some(p) = swing_progress {
+        app.swing = crate::hand::SwingState::frozen_at(p);
     }
     match screen {
         "loading" => {

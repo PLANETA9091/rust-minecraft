@@ -80,6 +80,13 @@ struct Cli {
     /// scenes hold nothing, so the pixel goldens never see this.
     #[arg(long)]
     held_item: Option<String>,
+    /// Freeze the attack-swing clock at this progress (getAttackAnim's
+    /// domain [0, 1], 0 = rest) on the world screens — the deterministic
+    /// stand-in for the swing clock (the client has no gameplay input in
+    /// the headless scenes). The default scenes never swing, so the
+    /// pre-existing goldens never see a nonzero value.
+    #[arg(long)]
+    swing_progress: Option<f32>,
     #[arg(long, default_value = "render.png")]
     out: PathBuf,
     /// Path to official asset index json (enables real texture-average colors).
@@ -109,6 +116,7 @@ fn main() -> Result<()> {
             cli.width,
             cli.height,
             cli.held_item.as_deref(),
+            cli.swing_progress,
             &cli.out,
         )?;
         return Ok(());
