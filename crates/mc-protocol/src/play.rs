@@ -2343,6 +2343,63 @@ pub enum EntityDataEntry {
         item_id: i32,
         patch: ComponentPatch,
     },
+    /// Serializer 21: the cat variant's registry id (the
+    /// holderRegistry lane — retained verbatim; a negative id
+    /// refuses).
+    CatVariant(i32),
+    /// Serializer 22: the cat sound variant's registry id.
+    CatSoundVariant(i32),
+    /// Serializer 23: the cow variant's registry id.
+    CowVariant(i32),
+    /// Serializer 24: the cow sound variant's registry id.
+    CowSoundVariant(i32),
+    /// Serializer 25: the wolf variant's registry id.
+    WolfVariant(i32),
+    /// Serializer 26: the wolf sound variant's registry id.
+    WolfSoundVariant(i32),
+    /// Serializer 27: the frog variant's registry id.
+    FrogVariant(i32),
+    /// Serializer 28: the pig variant's registry id.
+    PigVariant(i32),
+    /// Serializer 29: the pig sound variant's registry id.
+    PigSoundVariant(i32),
+    /// Serializer 30: the chicken variant's registry id.
+    ChickenVariant(i32),
+    /// Serializer 31: the chicken sound variant's registry id.
+    ChickenSoundVariant(i32),
+    /// Serializer 32: the zombie nautilus variant's registry id.
+    ZombieNautilusVariant(i32),
+    /// Serializer 33: the flag byte, then the dimension string +
+    /// packed position only if present (see [`GlobalPos`]).
+    OptionalGlobalPos(Option<GlobalPos>),
+    /// Serializer 34: the painting variant — the holder family's
+    /// only bias-by-one member (see [`PaintingVariant`]).
+    PaintingVariant(PaintingVariant),
+    /// Serializer 35: the sniffer state's ordinal, retained
+    /// verbatim (the ZERO strategy never refuses; seven states,
+    /// IDLING = 0 .. RISING = 6).
+    SnifferState(i32),
+    /// Serializer 36: the armadillo state's ordinal (ZERO; IDLE,
+    /// ROLLING, SCARED, UNROLLING).
+    ArmadilloState(i32),
+    /// Serializer 37: the copper golem state's ordinal (ZERO; IDLE,
+    /// GETTING_ITEM, GETTING_NO_ITEM, DROPPING_ITEM,
+    /// DROPPING_NO_ITEM).
+    CopperGolemState(i32),
+    /// Serializer 38: the weathering-copper state's ordinal
+    /// (retained verbatim — vanilla's CLAMP strategy maps
+    /// out-of-range keys into [0, 3] and the clamp is the
+    /// consumer's act; UNAFFECTED, EXPOSED, WEATHERED, OXIDIZED).
+    WeatheringCopperState(i32),
+    /// Serializer 39: three big-endian f32s (x, y, z) — the
+    /// readVector3f shape.
+    Vector3([f32; 3]),
+    /// Serializer 40: four big-endian f32s (x, y, z, w — the JOML
+    /// Quaternionf's own field order) — the readQuaternion shape.
+    Quaternion([f32; 4]),
+    /// Serializer 42: the main hand's ordinal (LEFT = 0, RIGHT = 1,
+    /// the declaration order's own truth; ZERO never refuses).
+    HumanoidArm(i32),
 }
 
 /// ONE metadata entry as the wire carries it: the accessor's byte
@@ -3366,6 +3423,19 @@ fn read_capped_string(r: &mut &[u8], cap: usize) -> Result<String> {
     Ok(s)
 }
 
+/// The holderRegistry lane's registry id (the twelve variant-holder
+/// serializers): a VarInt where `byIdOrThrow` throws on a negative
+/// AND an unknown id. The port refuses the negative half (the
+/// arithmetic-only check, the villager/block-state direction) and
+/// retains the non-negative unknown verbatim — no variant-registry
+/// tables ride this client, so the membership check is the
+/// consumer's act.
+fn read_holder_id(r: &mut &[u8], what: &str) -> Result<i32> {
+    let id = read_varint(r)?;
+    anyhow::ensure!(id >= 0, "negative {what} registry id {id}");
+    Ok(id)
+}
+
 /// The nullable string: the one-byte flag, then the capped string
 /// (FriendlyByteBuf.readNullable's shape).
 fn read_nullable_capped_string(r: &mut &[u8], cap: usize) -> Result<Option<String>> {
@@ -3452,12 +3522,19 @@ fn read_resolvable_profile(r: &mut &[u8]) -> Result<(ResolvableProfile, PlayerSk
 /// dispatched particle registry (the id + the type's own payload,
 /// all 125 types — 103 simple, 22 payload carriers) PLUS the
 /// resolvable profile (the either(full/partial) identity + the skin
-/// patch — the count-capped properties and the flag-optional lanes);
-/// the remaining object-graph shapes — the variant holders —
-/// refuse for now: a value's byte length is only knowable through
-/// its codec, so there is no honest skip, and the vanilla read side
-/// fails the packet exactly the same way on a serializer it cannot
-/// decode.
+/// patch — the count-capped properties and the flag-optional lanes)
+/// PLUS the variant holders (twelve bias-zero `holderRegistry` id
+/// lanes) PLUS the optional global pos (the flag byte + dimension
+/// STRING + packed position) PLUS the painting variant (the holder
+/// family's only bias-by-one member: n == 0 the inline record,
+/// n - 1 the registry id) PLUS the enum states (three ZERO strategies
+/// and the weathering-copper CLAMP, all never-refusing ordinals)
+/// PLUS the vector/quaternion float lanes and the main hand — the
+/// FULL registry of 43 serializers (ids 0-42). Only an id the
+/// registry itself does not know refuses now: a value's byte length
+/// is only knowable through its codec, so there is no honest skip,
+/// and the vanilla read side fails the packet exactly the same way
+/// (`getSerializer` throws on an unknown id).
 pub fn parse_set_entity_data(payload: &[u8]) -> Result<EntityDataSet> {
     let mut c: &[u8] = payload;
     let id = read_varint(&mut c)?;
@@ -3636,6 +3713,162 @@ pub fn parse_set_entity_data(payload: &[u8]) -> Result<EntityDataSet> {
                         patch,
                     }
                 }
+            }
+            entity_data_serializers::CAT_VARIANT => {
+                EntityDataEntry::CatVariant(read_holder_id(&mut c, "cat variant")?)
+            }
+            entity_data_serializers::CAT_SOUND_VARIANT => {
+                EntityDataEntry::CatSoundVariant(read_holder_id(
+                    &mut c,
+                    "cat sound variant",
+                )?)
+            }
+            entity_data_serializers::COW_VARIANT => {
+                EntityDataEntry::CowVariant(read_holder_id(&mut c, "cow variant")?)
+            }
+            entity_data_serializers::COW_SOUND_VARIANT => {
+                EntityDataEntry::CowSoundVariant(read_holder_id(
+                    &mut c,
+                    "cow sound variant",
+                )?)
+            }
+            entity_data_serializers::WOLF_VARIANT => {
+                EntityDataEntry::WolfVariant(read_holder_id(&mut c, "wolf variant")?)
+            }
+            entity_data_serializers::WOLF_SOUND_VARIANT => {
+                EntityDataEntry::WolfSoundVariant(read_holder_id(
+                    &mut c,
+                    "wolf sound variant",
+                )?)
+            }
+            entity_data_serializers::FROG_VARIANT => {
+                EntityDataEntry::FrogVariant(read_holder_id(&mut c, "frog variant")?)
+            }
+            entity_data_serializers::PIG_VARIANT => {
+                EntityDataEntry::PigVariant(read_holder_id(&mut c, "pig variant")?)
+            }
+            entity_data_serializers::PIG_SOUND_VARIANT => {
+                EntityDataEntry::PigSoundVariant(read_holder_id(
+                    &mut c,
+                    "pig sound variant",
+                )?)
+            }
+            entity_data_serializers::CHICKEN_VARIANT => {
+                EntityDataEntry::ChickenVariant(read_holder_id(&mut c, "chicken variant")?)
+            }
+            entity_data_serializers::CHICKEN_SOUND_VARIANT => {
+                EntityDataEntry::ChickenSoundVariant(read_holder_id(
+                    &mut c,
+                    "chicken sound variant",
+                )?)
+            }
+            entity_data_serializers::ZOMBIE_NAUTILUS_VARIANT => {
+                EntityDataEntry::ZombieNautilusVariant(read_holder_id(
+                    &mut c,
+                    "zombie nautilus variant",
+                )?)
+            }
+            entity_data_serializers::OPTIONAL_GLOBAL_POS => {
+                // the #149-bsm optional operation: the flag byte,
+                // then the GlobalPos composite only if present —
+                // the dimension's identifier STRING (the
+                // ResourceKey.streamCodec map, STRING_UTF8's 32767
+                // cap) and the packed position long
+                let present = read_u8(&mut c)? != 0;
+                let pos = if present {
+                    let dimension = read_capped_string(&mut c, 32767)?;
+                    let packed = read_i64(&mut c)?;
+                    let (x, y, z) = decode_block_pos(packed);
+                    Some(GlobalPos { dimension, pos: [x, y, z] })
+                } else {
+                    None
+                };
+                EntityDataEntry::OptionalGlobalPos(pos)
+            }
+            entity_data_serializers::PAINTING_VARIANT => {
+                // the $30 holder: the ONLY bias-by-one member of the
+                // family — n == 0 is the INLINE direct record, n >= 1
+                // is byIdOrThrow(n - 1), n < 0 throws (the port
+                // refuses at the same lane)
+                let n = read_varint(&mut c)?;
+                anyhow::ensure!(n >= 0, "negative painting variant tag {n}");
+                let v = if n == 0 {
+                    let width = read_varint(&mut c)?;
+                    let height = read_varint(&mut c)?;
+                    let asset_id = read_capped_string(&mut c, 32767)?;
+                    // title and author: TRUSTED_OPTIONAL_STREAM_CODEC
+                    // = the flag byte, then the bare NBT tag only if
+                    // present (the OPTIONAL_COMPONENT shape)
+                    let title = match read_u8(&mut c)? {
+                        0 => None,
+                        _ => Some(read_bare_nbt(&mut c)?),
+                    };
+                    let author = match read_u8(&mut c)? {
+                        0 => None,
+                        _ => Some(read_bare_nbt(&mut c)?),
+                    };
+                    PaintingVariant::Direct {
+                        width,
+                        height,
+                        asset_id,
+                        title,
+                        author,
+                    }
+                } else {
+                    PaintingVariant::Registry(n - 1)
+                };
+                EntityDataEntry::PaintingVariant(v)
+            }
+            entity_data_serializers::SNIFFER_STATE => {
+                // ByIdMap.continuous(.., ZERO): the map NEVER refuses
+                // (out-of-range keys fill to IDLING in the consumer's
+                // resolution); the wire ordinal is retained verbatim
+                let st = read_varint(&mut c)?;
+                EntityDataEntry::SnifferState(st)
+            }
+            entity_data_serializers::ARMADILLO_STATE => {
+                // the ZERO lane again (IDLE is values[0])
+                let st = read_varint(&mut c)?;
+                EntityDataEntry::ArmadilloState(st)
+            }
+            entity_data_serializers::COPPER_GOLEM_STATE => {
+                // the ZERO lane again (IDLE is values[0])
+                let st = read_varint(&mut c)?;
+                EntityDataEntry::CopperGolemState(st)
+            }
+            entity_data_serializers::WEATHERING_COPPER_STATE => {
+                // the family's CLAMP member: vanilla's decode map
+                // clamps out-of-range keys into [0, 3]; the port
+                // retains the wire ordinal verbatim and the clamp is
+                // the consumer's act (the DIRECTION/POSE line)
+                let st = read_varint(&mut c)?;
+                EntityDataEntry::WeatheringCopperState(st)
+            }
+            entity_data_serializers::VECTOR3 => {
+                // readVector3f: three big-endian f32s (x, y, z)
+                EntityDataEntry::Vector3([
+                    read_f32(&mut c)?,
+                    read_f32(&mut c)?,
+                    read_f32(&mut c)?,
+                ])
+            }
+            entity_data_serializers::QUATERNION => {
+                // readQuaternion: four big-endian f32s in the JOML
+                // Quaternionf(float, float, float, float) order x, y,
+                // z, w
+                EntityDataEntry::Quaternion([
+                    read_f32(&mut c)?,
+                    read_f32(&mut c)?,
+                    read_f32(&mut c)?,
+                    read_f32(&mut c)?,
+                ])
+            }
+            entity_data_serializers::HUMANOID_ARM => {
+                // the ZERO lane: LEFT = 0, RIGHT = 1 (the
+                // declaration order's own truth); out-of-range fills
+                // to LEFT in the consumer's resolution
+                let arm = read_varint(&mut c)?;
+                EntityDataEntry::HumanoidArm(arm)
             }
             other => anyhow::bail!("unsupported entity data serializer {other}"),
         };
@@ -5446,28 +5679,31 @@ mod tests {
         assert!(parse_set_entity_data(&truncated).is_err());
     }
 
-    /// Set Entity Data: the object-graph serializers that REMAIN
-    /// outside the decode set (known to the registry but undecodable
-    /// here) and the ids the registry itself does not know ALL refuse
-    /// the packet — the vanilla read side fails the packet exactly the
-    /// same way (an unknown serializer id throws in `getSerializer`).
-    /// The registration-order proof stays in the test body: 18 is NOT
-    /// the optional-global-pos lane the wiki-era table claims — it is
-    /// the villager record, which DECODES (it left this list the round
-    /// the composite's three VarInts landed). COMPONENT left the list
-    /// the round the bare-NBT reader landed. ITEM_STACK left it the
+    /// Set Entity Data: an id the registry itself does not know
+    /// refuses the packet — the vanilla read side fails the packet
+    /// exactly the same way (an unknown serializer id throws in
+    /// `getSerializer`). The refusal list's RETIREMENTS are the
+    /// decode walk's own history, each with its round: the villager
+    /// record left the round the composite's three VarInts landed
+    /// (the registration-order proof stays in the body: 18 is NOT
+    /// the optional-global-pos lane the wiki-era table claims — 33
+    /// is, and the loop's id order is the wire's). COMPONENT left
+    /// the round the bare-NBT reader landed. ITEM_STACK left the
     /// round the three-layer count/item/patch decode landed.
-    /// PARTICLE left it the round the dispatched particle-type
-    /// registry walked (its 0x00 byte was the probe; now id 0 is a
-    /// legal SIMPLE particle); the RESOLVABLE_PROFILE (41) left it
-    /// the round its either+patch walk landed. The survivors are the
-    /// variant holders and the unknown ids, refusing for the same
-    /// reason they always did: a value's byte length is only knowable
-    /// through its codec, so there is no honest skip.
+    /// PARTICLE left the round the dispatched particle-type registry
+    /// walked (its 0x00 byte was the probe; now id 0 is a legal
+    /// SIMPLE particle). RESOLVABLE_PROFILE left the round its
+    /// either+patch walk landed. The variant holders — the LAST
+    /// object-graph family — left the round the holderRegistry
+    /// census walked: id 21's 0x00 probe byte is now a legal
+    /// cat-variant registry id, so the survivor list is the unknown
+    /// ids alone, refusing for the reason they always did: a value's
+    /// byte length is only knowable through its codec, so there is
+    /// no honest skip.
     #[test]
     fn the_entity_data_object_graph_and_unknown_serializers_refuse() {
         use entity_data_serializers as s;
-        for serializer in [21, 200] {
+        for serializer in [200] {
             let entries = test_support::entity_data_entry(0, serializer, &[0x00]);
             let p = test_support::set_entity_data_packet(3, &entries);
             assert!(
@@ -5481,6 +5717,206 @@ mod tests {
         let p = test_support::set_entity_data_packet(3, &entries);
         let d = parse_set_entity_data(&p).unwrap();
         assert_eq!(d.entries[0].value, EntityDataEntry::OptionalUnsignedInt(Some(0)));
+    }
+
+    /// The variant-holder census — the walk's LAST refusals retired
+    /// and the registry walk COMPLETE (all 43 serializers, ids
+    /// 0-42): one packet riding every new lane. The twelve holders
+    /// (ids 21-32) are the bias-zero `holderRegistry` VarInts,
+    /// retained verbatim (the villager line — no variant-registry
+    /// tables client-side); the painting (34) is the family's ONLY
+    /// bias-by-one member (wire 0 the INLINE record, wire n the
+    /// registry id n - 1); the global pos (33) rides the #149-bsm
+    /// flag byte with the dimension as an identifier STRING and the
+    /// packed position long; the enum states (35-38, 42) are
+    /// never-refusing ordinals retained verbatim (three ZERO
+    /// strategies and the weathering-copper CLAMP — the clamp is the
+    /// consumer's act, so a wire 999 is a stored 999); VECTOR3 and
+    /// QUATERNION are the readVector3f/readQuaternion float layouts
+    /// (the quaternion in the JOML x, y, z, w order).
+    #[test]
+    fn the_variant_holder_lanes_complete_the_registry_walk() {
+        use entity_data_serializers as s;
+        let holders = [
+            s::CAT_VARIANT,
+            s::CAT_SOUND_VARIANT,
+            s::COW_VARIANT,
+            s::COW_SOUND_VARIANT,
+            s::WOLF_VARIANT,
+            s::WOLF_SOUND_VARIANT,
+            s::FROG_VARIANT,
+            s::PIG_VARIANT,
+            s::PIG_SOUND_VARIANT,
+            s::CHICKEN_VARIANT,
+            s::CHICKEN_SOUND_VARIANT,
+            s::ZOMBIE_NAUTILUS_VARIANT,
+        ];
+        let mut entries: Vec<u8> = Vec::new();
+        // the twelve holders, each lane keeping its own wire id
+        // (0..=11 — the serializer id is part of the state)
+        for (i, ser) in holders.iter().enumerate() {
+            entries.extend(test_support::entity_data_entry(
+                i as u8,
+                *ser,
+                &test_support::entity_data_varint(i as i32),
+            ));
+        }
+        // the global pos, PRESENT: the flag, the dimension string,
+        // the packed position (1, 64, -2) — 0x7FFFFFE040 packed the
+        // BlockPos way (x in bits 38+, z in 12..38, y in 0..12)
+        let mut gp = vec![1u8];
+        write_string(&mut gp, "minecraft:overworld");
+        gp.extend_from_slice(&0x7FFFFFE040i64.to_be_bytes());
+        entries.extend(test_support::entity_data_entry(
+            12,
+            s::OPTIONAL_GLOBAL_POS,
+            &gp,
+        ));
+        // ...and ABSENT: the flag byte alone
+        entries.extend(test_support::entity_data_entry(
+            13,
+            s::OPTIONAL_GLOBAL_POS,
+            &[0],
+        ));
+        // the painting's DIRECT record (wire 0): width, height, the
+        // asset string, the title present (a bare TAG_String), the
+        // author absent
+        let mut pv = test_support::entity_data_varint(0);
+        pv.extend(test_support::entity_data_varint(16)); // width
+        pv.extend(test_support::entity_data_varint(16)); // height
+        write_string(&mut pv, "minecraft:wanderer"); // assetId
+        pv.push(1); // title present
+        crate::nbt::write_bare_nbt(&Nbt::String("Musee".into()), &mut pv).unwrap();
+        pv.push(0); // author absent
+        entries.extend(test_support::entity_data_entry(
+            14,
+            s::PAINTING_VARIANT,
+            &pv,
+        ));
+        // the painting's REGISTRY reference (wire 5 -> id 4): the
+        // bias-by-one pin, the $30's `byIdOrThrow(n - 1)`
+        entries.extend(test_support::entity_data_entry(
+            15,
+            s::PAINTING_VARIANT,
+            &test_support::entity_data_varint(5),
+        ));
+        // the enum states: one named state per lane, the ordinals
+        // riding verbatim
+        entries.extend(test_support::entity_data_entry(
+            16,
+            s::SNIFFER_STATE,
+            &test_support::entity_data_varint(6), // RISING
+        ));
+        entries.extend(test_support::entity_data_entry(
+            17,
+            s::ARMADILLO_STATE,
+            &test_support::entity_data_varint(2), // SCARED
+        ));
+        entries.extend(test_support::entity_data_entry(
+            18,
+            s::COPPER_GOLEM_STATE,
+            &test_support::entity_data_varint(4), // DROPPING_NO_ITEM
+        ));
+        entries.extend(test_support::entity_data_entry(
+            19,
+            s::WEATHERING_COPPER_STATE,
+            &test_support::entity_data_varint(3), // OXIDIZED
+        ));
+        // the float lanes: VECTOR3 (12 bytes) and QUATERNION (16
+        // bytes, x y z w)
+        let mut v3 = Vec::new();
+        v3.extend_from_slice(&1.0f32.to_be_bytes());
+        v3.extend_from_slice(&(-2.5f32).to_be_bytes());
+        v3.extend_from_slice(&3.25f32.to_be_bytes());
+        entries.extend(test_support::entity_data_entry(20, s::VECTOR3, &v3));
+        let mut q = Vec::new();
+        for f in [0.5f32, -0.5, 0.5, 0.5] {
+            q.extend_from_slice(&f.to_be_bytes());
+        }
+        entries.extend(test_support::entity_data_entry(21, s::QUATERNION, &q));
+        // the main hand: RIGHT = 1 (the declaration order's truth)
+        entries.extend(test_support::entity_data_entry(
+            22,
+            s::HUMANOID_ARM,
+            &test_support::entity_data_varint(1),
+        ));
+        // the retention pins: the ZERO strategy never refuses (a
+        // wire 99 sniffer state is a stored 99) and the CLAMP
+        // strategy's map is the consumer's act (a wire 999
+        // weathering state is a stored 999, not a clamped 3)
+        entries.extend(test_support::entity_data_entry(
+            23,
+            s::SNIFFER_STATE,
+            &test_support::entity_data_varint(99),
+        ));
+        entries.extend(test_support::entity_data_entry(
+            24,
+            s::WEATHERING_COPPER_STATE,
+            &test_support::entity_data_varint(999),
+        ));
+
+        let p = test_support::set_entity_data_packet(88, &entries);
+        let d = parse_set_entity_data(&p).unwrap();
+        assert_eq!(d.id, 88);
+        assert_eq!(
+            d.entries,
+            vec![
+                SetEntityDataEntry { index: 0, serializer: s::CAT_VARIANT, value: EntityDataEntry::CatVariant(0) },
+                SetEntityDataEntry { index: 1, serializer: s::CAT_SOUND_VARIANT, value: EntityDataEntry::CatSoundVariant(1) },
+                SetEntityDataEntry { index: 2, serializer: s::COW_VARIANT, value: EntityDataEntry::CowVariant(2) },
+                SetEntityDataEntry { index: 3, serializer: s::COW_SOUND_VARIANT, value: EntityDataEntry::CowSoundVariant(3) },
+                SetEntityDataEntry { index: 4, serializer: s::WOLF_VARIANT, value: EntityDataEntry::WolfVariant(4) },
+                SetEntityDataEntry { index: 5, serializer: s::WOLF_SOUND_VARIANT, value: EntityDataEntry::WolfSoundVariant(5) },
+                SetEntityDataEntry { index: 6, serializer: s::FROG_VARIANT, value: EntityDataEntry::FrogVariant(6) },
+                SetEntityDataEntry { index: 7, serializer: s::PIG_VARIANT, value: EntityDataEntry::PigVariant(7) },
+                SetEntityDataEntry { index: 8, serializer: s::PIG_SOUND_VARIANT, value: EntityDataEntry::PigSoundVariant(8) },
+                SetEntityDataEntry { index: 9, serializer: s::CHICKEN_VARIANT, value: EntityDataEntry::ChickenVariant(9) },
+                SetEntityDataEntry { index: 10, serializer: s::CHICKEN_SOUND_VARIANT, value: EntityDataEntry::ChickenSoundVariant(10) },
+                SetEntityDataEntry { index: 11, serializer: s::ZOMBIE_NAUTILUS_VARIANT, value: EntityDataEntry::ZombieNautilusVariant(11) },
+                SetEntityDataEntry { index: 12, serializer: s::OPTIONAL_GLOBAL_POS, value: EntityDataEntry::OptionalGlobalPos(Some(GlobalPos { dimension: "minecraft:overworld".into(), pos: [1, 64, -2] })) },
+                SetEntityDataEntry { index: 13, serializer: s::OPTIONAL_GLOBAL_POS, value: EntityDataEntry::OptionalGlobalPos(None) },
+                SetEntityDataEntry { index: 14, serializer: s::PAINTING_VARIANT, value: EntityDataEntry::PaintingVariant(PaintingVariant::Direct { width: 16, height: 16, asset_id: "minecraft:wanderer".into(), title: Some(Nbt::String("Musee".into())), author: None }) },
+                SetEntityDataEntry { index: 15, serializer: s::PAINTING_VARIANT, value: EntityDataEntry::PaintingVariant(PaintingVariant::Registry(4)) },
+                SetEntityDataEntry { index: 16, serializer: s::SNIFFER_STATE, value: EntityDataEntry::SnifferState(6) },
+                SetEntityDataEntry { index: 17, serializer: s::ARMADILLO_STATE, value: EntityDataEntry::ArmadilloState(2) },
+                SetEntityDataEntry { index: 18, serializer: s::COPPER_GOLEM_STATE, value: EntityDataEntry::CopperGolemState(4) },
+                SetEntityDataEntry { index: 19, serializer: s::WEATHERING_COPPER_STATE, value: EntityDataEntry::WeatheringCopperState(3) },
+                SetEntityDataEntry { index: 20, serializer: s::VECTOR3, value: EntityDataEntry::Vector3([1.0, -2.5, 3.25]) },
+                SetEntityDataEntry { index: 21, serializer: s::QUATERNION, value: EntityDataEntry::Quaternion([0.5, -0.5, 0.5, 0.5]) },
+                SetEntityDataEntry { index: 22, serializer: s::HUMANOID_ARM, value: EntityDataEntry::HumanoidArm(1) },
+                SetEntityDataEntry { index: 23, serializer: s::SNIFFER_STATE, value: EntityDataEntry::SnifferState(99) },
+                SetEntityDataEntry { index: 24, serializer: s::WEATHERING_COPPER_STATE, value: EntityDataEntry::WeatheringCopperState(999) },
+            ]
+        );
+
+        // the negative half of the holder lanes refuses — the
+        // byIdOrThrow direction, the port's arithmetic-only check
+        for ser in [s::WOLF_VARIANT, s::ZOMBIE_NAUTILUS_VARIANT, s::PAINTING_VARIANT] {
+            let e = test_support::entity_data_entry(
+                0,
+                ser,
+                &test_support::entity_data_varint(-1),
+            );
+            let p = test_support::set_entity_data_packet(89, &e);
+            assert!(
+                parse_set_entity_data(&p).is_err(),
+                "a negative id on serializer {ser} must refuse"
+            );
+        }
+        // the truncated quaternion is the honest short-buffer failure
+        let e = test_support::entity_data_entry(0, s::QUATERNION, &[0u8; 10]);
+        let p = test_support::set_entity_data_packet(89, &e);
+        assert!(parse_set_entity_data(&p).is_err());
+        // the truncated direct painting: the title's flag byte with
+        // no tag behind it refuses the same way
+        let mut trunc = test_support::entity_data_varint(0);
+        trunc.extend(test_support::entity_data_varint(16));
+        trunc.extend(test_support::entity_data_varint(16));
+        write_string(&mut trunc, "minecraft:wanderer");
+        trunc.push(1); // title flag present, no tag follows
+        let e = test_support::entity_data_entry(0, s::PAINTING_VARIANT, &trunc);
+        let p = test_support::set_entity_data_packet(89, &e);
+        assert!(parse_set_entity_data(&p).is_err());
     }
 
     /// The OptionalInt lane's SIGNED truth (the $3 arithmetic): the
