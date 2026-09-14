@@ -1,11 +1,35 @@
 //! Item model definitions — the 1.21.4+ `assets/minecraft/items/` format —
-//! the data half of the held-item arc (the biome-tags data-first precedent:
-//! the table lands first, the consumer round comes later). A definition tree
-//! rooted at a plain `minecraft:model` node resolves to its model path plus
-//! optional tints (retained as canonical compact JSON, value-faithful) and
-//! the optional `swap_animation_scale`; every other root shape (select /
-//! special / composite / condition / range_dispatch) is RETAINED as an
-//! honest skip list, never silently dropped.
+//! the data half of the held-item arc. A definition tree rooted at a plain
+//! `minecraft:model` node resolves to its model path plus optional tints
+//! (retained as canonical compact JSON, value-faithful) and the optional
+//! `swap_animation_scale`. Every OTHER root shape is evaluated by the
+//! RESTING-HAND resolver (the first-person hand of a fresh, unused stack):
+//!
+//! - `minecraft:condition` -> the property's resting state is FALSE
+//!   (not using, not broken, not cast, no selected bundle item, the
+//!   audited components empty) -> the `on_false` branch;
+//! - `minecraft:select` -> the hand context matches no case (verified
+//!   against the whole jar: no case targets a hand context) -> the
+//!   `fallback` branch (absent -> refuse);
+//! - `minecraft:range_dispatch` -> the resting value is 0 -> the entry
+//!   with the greatest threshold <= 0 (the vanilla loop's own pick),
+//!   else the fallback;
+//! - `minecraft:composite` -> the children in order, each carrying its
+//!   optional decoded transformation (the `com.mojang.math.Transformation
+//!   .compose` bytecode order: translation x left_rotation x scale x
+//!   right_rotation);
+//! - `minecraft:special` -> the block-entity renderers (shield, trident,
+//!   chest, shulker box, banner, head, conduit, decorated pot, golem
+//!   statue) have NO model JSON (every base path in the jar is missing)
+//!   — refused, the renderer named;
+//! - anything else -> refused, the shape named.
+//!
+//! A node's own `transformation` is accepted and rides its whole subtree
+//! (the vanilla `LayerRenderState.applyTransform` bytecode: the display
+//! stanza FIRST, then `mulPose(localTransform)` — so the local transform
+//! acts on the raw bake vertices, the display pose on top). Nested
+//! transformations (a transformed node under a transformed node) never
+//! occur in the jar and are refused loudly until they do.
 
 use anyhow::{Context, Result};
 use serde_json::Value;
@@ -30,16 +54,105 @@ pub struct ItemModelDef {
     pub swap_animation_scale: Option<f32>,
 }
 
+/// One decoded node transformation — the four components verbatim from
+/// the JSON, identity defaults where absent (the vanilla codec's own
+/// defaults). The runtime composes T·L·S·R per the compose bytecode.
+#[derive(Debug, Clone, PartialEq)]
+pub struct TransformComponents {
+    pub translation: [f32; 3],
+    pub left_rotation: [f32; 4],
+    pub scale: [f32; 3],
+    pub right_rotation: [f32; 4],
+}
+
+impl TransformComponents {
+    fn identity() -> Self {
+        Self {
+            translation: [0.0; 3],
+            left_rotation: [0.0, 0.0, 0.0, 1.0],
+            scale: [1.0; 3],
+            right_rotation: [0.0, 0.0, 0.0, 1.0],
+        }
+    }
+
+    fn is_identity(&self) -> bool {
+        self.translation == [0.0; 3]
+            && self.left_rotation == [0.0, 0.0, 0.0, 1.0]
+            && self.scale == [1.0; 3]
+            && self.right_rotation == [0.0, 0.0, 0.0, 1.0]
+    }
+}
+
+/// One resolved layer of a complex definition: the model path, the
+/// tints (canonical compact JSON) and the optional decoded node
+/// transformation (None = identity — the overwhelmingly common case).
+#[derive(Debug, Clone, PartialEq)]
+pub struct ResolvedLayer {
+    pub model: String,
+    pub tints: Vec<String>,
+    pub transform: Option<TransformComponents>,
+}
+
+/// One resolved complex definition: the resting-hand layers in order
+/// plus the root-level `swap_animation_scale` (the spears' 1.95).
+#[derive(Debug, Clone)]
+pub struct ResolvedItem {
+    pub layers: Vec<ResolvedLayer>,
+    pub swap_animation_scale: Option<f32>,
+}
+
 /// The parsed table the generated file carries.
 pub struct ItemModelsData {
     /// Plain definitions, sorted by id.
     pub defs: BTreeMap<String, ItemModelDef>,
-    /// Items whose tree is not a plain model ref (selectors, specials,
-    /// composites) — sorted, retained so nothing is silently dropped.
-    pub complex: Vec<String>,
+    /// Complex trees RESOLVED to resting-hand layers, sorted by id.
+    pub resolved: BTreeMap<String, ResolvedItem>,
+    /// Items whose tree cannot resolve (the special-renderer shapes and
+    /// any refused node) — sorted, retained WITH the refusal reason so
+    /// nothing is silently dropped.
+    pub complex: Vec<(String, String)>,
     /// The root-node type census (count descending), the honest-skip record.
     pub root_types: Vec<(String, u32)>,
 }
+
+/// The condition properties whose RESTING state is false: a fresh stack
+/// in a resting first-person hand is not being used, not broken, not
+/// cast, carries no selected bundle item, and the audited components
+/// (`has_component` — lodestone_tracker and friends) sit empty.
+const RESTING_FALSE_CONDITIONS: [&str; 5] = [
+    "minecraft:using_item",
+    "minecraft:broken",
+    "minecraft:fishing_rod/cast",
+    "minecraft:bundle/has_selected_item",
+    "minecraft:has_component",
+];
+
+/// The range-dispatch properties of the USE animation (the bow's pull,
+/// the crossbow's) — they sit under `on_true` of `using_item` conditions,
+/// unreachable at rest; as conditions themselves they resolve through
+/// the same resting-false rule.
+const USE_ANIMATION_CONDITIONS: [&str; 3] = [
+    "minecraft:use_duration",
+    "minecraft:use_cycle",
+    "minecraft:crossbow/pull",
+];
+
+// the key lists name every key the jar's nodes carry. The property-
+// declaration keys (block_state_property / pattern / period / source /
+// target) say WHICH attribute a select or range_dispatch reads — the
+// resting-hand resolution (fallback / threshold-0) is unchanged by them;
+// `transformation` is the generic node transform every node may carry.
+const CONDITION_KEYS: [&str; 6] = ["type", "property", "on_true", "on_false", "component", "transformation"];
+const SELECT_KEYS: [&str; 7] = ["type", "property", "cases", "fallback", "block_state_property", "pattern", "transformation"];
+const RANGE_KEYS: [&str; 9] = ["type", "property", "entries", "scale", "fallback", "period", "source", "target", "transformation"];
+const COMPOSITE_KEYS: [&str; 3] = ["type", "models", "transformation"];
+const NODE_KEYS: [&str; 4] = ["type", "model", "tints", "transformation"];
+const TRANSFORM_KEYS: [&str; 4] =
+    ["translation", "left_rotation", "scale", "right_rotation"];
+
+/// The recursion ceiling — the jar's trees top out at depth 4; anything
+/// deeper is a malformed future shape and refuses loudly.
+const RESOLVE_MAX_DEPTH: usize = 16;
 
 /// One accepted root shape: `{"model": <node>, "swap_animation_scale"?: f64}`.
 const ROOT_KEYS: [&str; 2] = ["model", "swap_animation_scale"];
@@ -61,7 +174,8 @@ pub fn generate<R: std::io::Read + std::io::Seek>(
     );
 
     let mut defs = BTreeMap::new();
-    let mut complex: Vec<String> = Vec::new();
+    let mut resolved: BTreeMap<String, ResolvedItem> = BTreeMap::new();
+    let mut complex: Vec<(String, String)> = Vec::new();
     let mut types: BTreeMap<String, u32> = BTreeMap::new();
 
     for name in &names {
@@ -92,7 +206,20 @@ pub fn generate<R: std::io::Read + std::io::Seek>(
             .with_context(|| format!("{name}: \"model.type\" must be a string"))?;
         *types.entry(ty.to_string()).or_default() += 1;
         if ty != MODEL_TYPE {
-            complex.push(id);
+            match resolve_node(&Value::Object(node.clone()), &id, 0, &None) {
+                Ok(layers) => {
+                    let swap = match obj.get("swap_animation_scale") {
+                        Some(v) => Some(
+                            v.as_f64().with_context(|| format!(
+                                "{name}: swap_animation_scale must be a number"
+                            ))? as f32,
+                        ),
+                        None => None,
+                    };
+                    resolved.insert(id, ResolvedItem { layers, swap_animation_scale: swap });
+                }
+                Err(why) => complex.push((id, why)),
+            }
             continue;
         }
         for key in node.keys() {
@@ -137,26 +264,255 @@ pub fn generate<R: std::io::Read + std::io::Seek>(
     complex.sort();
     let mut root_types: Vec<(String, u32)> = types.into_iter().collect();
     root_types.sort_by(|a, b| b.1.cmp(&a.1).then(a.0.cmp(&b.0)));
-    let total = defs.len() + complex.len();
+    let total = defs.len() + resolved.len() + complex.len();
     anyhow::ensure!(
         total == names.len(),
         "accounting mismatch: {}/{} definitions classified",
         total,
         names.len()
     );
-    Ok(ItemModelsData { defs, complex, root_types })
+    Ok(ItemModelsData { defs, resolved, complex, root_types })
 }
 
-/// Emit `generated/item_models.rs`: the resolved table, the skip list and
-/// the root-type census.
+/// The resting-hand tree resolver. `outer` carries a parent node's
+/// transformation (a transformed node under a transformed node never
+/// occurs in the jar and refuses loudly — compose when the data asks).
+fn resolve_node(
+    node: &Value,
+    id: &str,
+    depth: usize,
+    outer: &Option<TransformComponents>,
+) -> Result<Vec<ResolvedLayer>, String> {
+    if depth > RESOLVE_MAX_DEPTH {
+        return Err(format!("{id}: the tree is deeper than {RESOLVE_MAX_DEPTH}"));
+    }
+    let obj = node
+        .as_object()
+        .ok_or_else(|| format!("{id}: the node must be an object"))?;
+    let ty = obj
+        .get("type")
+        .and_then(Value::as_str)
+        .ok_or_else(|| format!("{id}: the node \"type\" must be a string"))?;
+
+    // the node's own transformation rides its whole subtree (the vanilla
+    // applyTransform bytecode: the local transform on the raw vertices,
+    // the display stanza on top)
+    let my_transform = match obj.get("transformation") {
+        Some(t) => {
+            if outer.is_some() {
+                return Err(format!(
+                    "{id}: a transformed node under a transformed node — compose first"
+                ));
+            }
+            Some(decode_transform(t).map_err(|e| format!("{id}: {e}"))?)
+        }
+        None => None,
+    };
+    let active: Option<TransformComponents> =
+        my_transform.clone().or_else(|| outer.clone());
+
+    match ty {
+        "minecraft:model" => {
+            check_keys(obj, &NODE_KEYS, id, ty)?;
+            let model = obj
+                .get("model")
+                .and_then(Value::as_str)
+                .ok_or_else(|| format!("{id}: \"model.model\" must be a string"))?;
+            model.starts_with("minecraft:")
+                .then_some(())
+                .ok_or_else(|| format!("{id}: model path \"{model}\" must be namespaced minecraft:"))?;
+            let mut tints = Vec::new();
+            if let Some(list) = obj.get("tints") {
+                let list = list
+                    .as_array()
+                    .ok_or_else(|| format!("{id}: \"tints\" must be an array"))?;
+                for tint in list {
+                    let canon = serde_json::to_string(tint)
+                        .map_err(|e| format!("{id}: re-serialize a tint: {e}"))?;
+                    tints.push(canon);
+                }
+            }
+            let transform = my_transform.filter(|t| !t.is_identity());
+            Ok(vec![ResolvedLayer { model: model.to_string(), tints, transform }])
+        }
+        "minecraft:condition" => {
+            check_keys(obj, &CONDITION_KEYS, id, ty)?;
+            let prop = obj
+                .get("property")
+                .and_then(Value::as_str)
+                .ok_or_else(|| format!("{id}: condition \"property\" must be a string"))?;
+            if RESTING_FALSE_CONDITIONS.contains(&prop)
+                || USE_ANIMATION_CONDITIONS.contains(&prop)
+            {
+                let on_false = obj
+                    .get("on_false")
+                    .ok_or_else(|| format!("{id}: resting-false condition without on_false"))?;
+                resolve_node(on_false, id, depth + 1, &active)
+            } else {
+                Err(format!("{id}: condition property {prop} — no resting rule"))
+            }
+        }
+        "minecraft:select" => {
+            check_keys(obj, &SELECT_KEYS, id, ty)?;
+            // the hand context matches no case (the jar-wide sweep: no
+            // case targets a hand context) — vanilla's own fallthrough
+            match obj.get("fallback") {
+                Some(f) => resolve_node(f, id, depth + 1, &active),
+                None => Err(format!(
+                    "{id}: select without fallback — the hand context would render nothing"
+                )),
+            }
+        }
+        "minecraft:range_dispatch" => {
+            check_keys(obj, &RANGE_KEYS, id, ty)?;
+            // the resting value 0: the entry with the greatest threshold
+            // <= 0 (the vanilla loop keeps the LAST such entry), else the
+            // fallback
+            let best = obj
+                .get("entries")
+                .and_then(Value::as_array)
+                .ok_or_else(|| format!("{id}: range_dispatch \"entries\" must be an array"))?
+                .iter()
+                .filter_map(|e| {
+                    let e = e.as_object()?;
+                    let th = e.get("threshold")?.as_f64()?;
+                    let model = e.get("model")?;
+                    if th <= 0.0 { Some((th, model)) } else { None }
+                })
+                .max_by(|a, b| a.0.partial_cmp(&b.0).unwrap_or(std::cmp::Ordering::Equal));
+            match best {
+                Some((_, model)) => resolve_node(model, id, depth + 1, &active),
+                None => match obj.get("fallback") {
+                    Some(f) => resolve_node(f, id, depth + 1, &active),
+                    None => Err(format!(
+                        "{id}: range_dispatch with no threshold<=0 entry and no fallback"
+                    )),
+                },
+            }
+        }
+        "minecraft:composite" => {
+            check_keys(obj, &COMPOSITE_KEYS, id, ty)?;
+            let models = obj
+                .get("models")
+                .and_then(Value::as_array)
+                .ok_or_else(|| format!("{id}: composite \"models\" must be an array"))?;
+            let mut layers = Vec::new();
+            for child in models {
+                layers.extend(resolve_node(child, id, depth + 1, &active)?);
+            }
+            Ok(layers)
+        }
+        "minecraft:special" => {
+            // the block-entity renderers: every base model path in the
+            // jar is MISSING from models/ — the geometry is bytecode, not
+            // JSON. Refused with the renderer named.
+            let renderer = obj
+                .get("model")
+                .and_then(|m| m.get("type"))
+                .and_then(Value::as_str)
+                .unwrap_or("?");
+            Err(format!("special:{renderer} — the block-entity renderer"))
+        }
+        "minecraft:bundle/selected_item" => {
+            Err("bundle/selected_item — the GUI-only node".to_string())
+        }
+        other => Err(format!("{id}: unknown node type {other}")),
+    }
+}
+
+fn check_keys(
+    obj: &serde_json::Map<String, Value>,
+    allowed: &[&str],
+    id: &str,
+    ty: &str,
+) -> Result<(), String> {
+    for key in obj.keys() {
+        if !allowed.contains(&key.as_str()) {
+            return Err(format!(
+                "{id}: unexpected {ty} key \"{key}\" (extend the resolver first)"
+            ));
+        }
+    }
+    Ok(())
+}
+
+/// Decode the node transformation object — the four components verbatim
+/// (f64 JSON -> f32), the vanilla codec's identity defaults where absent.
+fn decode_transform(v: &Value) -> Result<TransformComponents, String> {
+    let obj = v
+        .as_object()
+        .ok_or_else(|| "the transformation must be an object".to_string())?;
+    for key in obj.keys() {
+        if !TRANSFORM_KEYS.contains(&key.as_str()) {
+            return Err(format!(
+                "unexpected transformation key \"{key}\" (extend the decoder first)"
+            ));
+        }
+    }
+    let vec3 = |key: &str, default: [f32; 3]| -> Result<[f32; 3], String> {
+        match obj.get(key) {
+            None => Ok(default),
+            Some(v) => {
+                let arr = v
+                    .as_array()
+                    .ok_or_else(|| format!("transformation {key} must be an array"))?;
+                if arr.len() != 3 {
+                    return Err(format!("transformation {key} must hold three numbers"));
+                }
+                let mut out = default;
+                for (i, x) in arr.iter().enumerate() {
+                    out[i] = x
+                        .as_f64()
+                        .ok_or_else(|| format!("transformation {key} must hold numbers"))?
+                        as f32;
+                }
+                Ok(out)
+            }
+        }
+    };
+    let quat = |key: &str, default: [f32; 4]| -> Result<[f32; 4], String> {
+        match obj.get(key) {
+            None => Ok(default),
+            Some(v) => {
+                let arr = v
+                    .as_array()
+                    .ok_or_else(|| format!("transformation {key} must be an array"))?;
+                if arr.len() != 4 {
+                    return Err(format!("transformation {key} must hold four numbers"));
+                }
+                let mut out = default;
+                for (i, x) in arr.iter().enumerate() {
+                    out[i] = x
+                        .as_f64()
+                        .ok_or_else(|| format!("transformation {key} must hold numbers"))?
+                        as f32;
+                }
+                Ok(out)
+            }
+        }
+    };
+    Ok(TransformComponents {
+        translation: vec3("translation", [0.0; 3])?,
+        left_rotation: quat("left_rotation", [0.0, 0.0, 0.0, 1.0])?,
+        scale: vec3("scale", [1.0; 3])?,
+        right_rotation: quat("right_rotation", [0.0, 0.0, 0.0, 1.0])?,
+    })
+}
+
+/// Emit `generated/item_models.rs`: the plain table, the resolved
+/// resting-hand layers, the reasoned skip list and the root-type census.
 pub fn emit(data: &ItemModelsData) -> Result<String> {
     let mut out = String::with_capacity(256 << 10);
     out.push_str("//! GENERATED by mc2rs-gen from assets/minecraft/items/ of the official jar.\n");
     out.push_str("//! The item model definitions (the 1.21.4+ format): plain minecraft:model\n");
     out.push_str("//! roots resolved to (model path, tints as canonical compact JSON, optional\n");
-    out.push_str("//! swap_animation_scale); the selector/special trees are retained in the\n");
-    out.push_str("//! skip list, never silently dropped. The held-item consumer comes later\n");
-    out.push_str("//! (the biome-tags data-first precedent).\n\n");
+    out.push_str("//! swap_animation_scale); the OTHER trees evaluated by the RESTING-HAND\n");
+    out.push_str("//! resolver — condition on_false, select fallback (no case targets a hand\n");
+    out.push_str("//! context in the whole jar), range_dispatch's threshold<=0 entry, the\n");
+    out.push_str("//! composite children with their decoded transformations — land in\n");
+    out.push_str("//! RESOLVED_ITEM_LAYERS; the special block-entity renderers (no model\n");
+    out.push_str("//! JSON exists — the geometry is bytecode) stay in the reasoned skip\n");
+    out.push_str("//! list, never silently dropped.\n\n");
 
     out.push_str("/// (item id, model path, tints, swap_animation_scale) per plain definition.\n");
     out.push_str("pub static ITEM_MODEL_DEFS: [(&str, &str, &[&str], Option<f32>); ");
@@ -182,11 +538,64 @@ pub fn emit(data: &ItemModelsData) -> Result<String> {
     }
     out.push_str("];\n\n");
 
-    out.push_str("/// Items whose definition tree is not a plain minecraft:model ref\n");
-    out.push_str("/// (select / special / composite / condition / range_dispatch roots).\n");
-    out.push_str("pub static COMPLEX_ITEM_MODELS: &[&str] = &[\n");
-    for id in &data.complex {
-        out.push_str(&format!("    \"{id}\",\n"));
+    out.push_str("/// One resting-hand layer of a resolved complex definition. The\n");
+    out.push_str("/// transformation is the decoded node transform — (translation,\n");
+    out.push_str("/// left_rotation quaternion [x,y,z,w], scale, right_rotation) — the\n");
+    out.push_str("/// com.mojang.math.Transformation compose order T*L*S*R; None = identity.\n");
+    out.push_str("pub struct ResolvedItemLayer {\n");
+    out.push_str("    pub model: &'static str,\n");
+    out.push_str("    pub tints: &'static [&'static str],\n");
+    out.push_str("    pub transform: Option<([f32; 3], [f32; 4], [f32; 3], [f32; 4])>,\n");
+    out.push_str("}\n\n");
+    out.push_str("/// (item id, swap_animation_scale, the resting-hand layers in order).\n");
+    out.push_str("pub static RESOLVED_ITEM_LAYERS: [(&str, Option<f32>, &[ResolvedItemLayer]); ");
+    out.push_str(&data.resolved.len().to_string());
+    out.push_str("] = [\n");
+    for (id, item) in &data.resolved {
+        let swap = match item.swap_animation_scale {
+            Some(v) => format!("Some({v:?})"),
+            None => "None".to_string(),
+        };
+        let layers: Vec<String> = item
+            .layers
+            .iter()
+            .map(|l| {
+                let tints = match l.tints.as_slice() {
+                    [] => "&[]".to_string(),
+                    [one] => format!("&[{one:?}]"),
+                    many => {
+                        let inner: Vec<String> = many.iter().map(|t| format!("{t:?}")).collect();
+                        format!("&[{}]", inner.join(", "))
+                    }
+                };
+                let tf = match &l.transform {
+                    None => "None".to_string(),
+                    Some(t) => format!(
+                        "Some(({:?}, {:?}, {:?}, {:?}))",
+                        t.translation, t.left_rotation, t.scale, t.right_rotation
+                    ),
+                };
+                format!(
+                    "ResolvedItemLayer {{ model: {:?}, tints: {}, transform: {} }}",
+                    l.model, tints, tf
+                )
+            })
+            .collect();
+        out.push_str(&format!(
+            "    (\"{}\", {}, &[{}]),\n",
+            id,
+            swap,
+            layers.join(", ")
+        ));
+    }
+    out.push_str("];\n\n");
+
+    out.push_str("/// Items whose definition tree cannot resolve to resting-hand layers —\n");
+    out.push_str("/// (item id, the refusal reason; the special block-entity renderers have\n");
+    out.push_str("/// no model JSON, the geometry is bytecode).\n");
+    out.push_str("pub static COMPLEX_ITEM_MODELS: &[(&str, &str)] = &[\n");
+    for (id, why) in &data.complex {
+        out.push_str(&format!("    (\"{id}\", {why:?}),\n"));
     }
     out.push_str("];\n\n");
 
@@ -242,12 +651,24 @@ mod tests {
                     "swap_animation_scale": 1.95
                 })),
             ),
-            // a selector tree -> complex
+            // a selector tree -> the fallback resolves (the hand context
+            // matches no case — the vanilla fallthrough)
             (
                 "assets/minecraft/items/bow.json",
                 json_bytes(serde_json::json!({
                     "model": {"type": "minecraft:select", "property": "minecraft:using_item",
                               "cases": [], "fallback": {"type": "minecraft:model", "model": "minecraft:item/bow"}}
+                })),
+            ),
+            // a special renderer -> refused with the renderer named
+            (
+                "assets/minecraft/items/shield.json",
+                json_bytes(serde_json::json!({
+                    "model": {"type": "minecraft:condition", "property": "minecraft:using_item",
+                              "on_true": {"type": "minecraft:special", "base": "minecraft:item/shield_blocking",
+                                          "model": {"type": "minecraft:shield"}},
+                              "on_false": {"type": "minecraft:special", "base": "minecraft:item/shield",
+                                           "model": {"type": "minecraft:shield"}}}
                 })),
             ),
             // a models/item/ json is NOT an item definition (strict prefix)
@@ -259,7 +680,15 @@ mod tests {
         let mut zip = zip;
         let data = generate(&mut zip).unwrap();
         assert_eq!(data.defs.len(), 2, "the two plain defs resolve");
-        assert_eq!(data.complex, vec!["bow".to_string()], "the selector root skips");
+        // the bow's select resolves through the fallback; the shield's
+        // special renderer refuses with the renderer named
+        assert_eq!(data.resolved["bow"].layers.len(), 1);
+        assert_eq!(data.resolved["bow"].layers[0].model, "minecraft:item/bow");
+        assert_eq!(
+            data.complex,
+            vec![("shield".to_string(), "special:minecraft:shield — the block-entity renderer".to_string())],
+            "the special renderer refuses, the renderer named"
+        );
         let stone = &data.defs["stone"];
         assert_eq!(stone.model, "minecraft:block/stone");
         assert!(stone.tints.is_empty());
@@ -273,17 +702,146 @@ mod tests {
         assert_eq!(tint["temperature"], 0.5);
         assert_eq!(tint["downfall"], 1.0);
         assert_eq!(grass.swap_animation_scale, Some(1.95));
-        // the census counts every root node exactly once (count desc)
+        // the census counts every root node exactly once (count desc;
+        // ties alphabetical — condition sorts before select)
         assert_eq!(data.root_types, vec![
             ("minecraft:model".to_string(), 2),
+            ("minecraft:condition".to_string(), 1),
             ("minecraft:select".to_string(), 1),
         ]);
 
         let emitted = emit(&data).unwrap();
         assert!(emitted.contains("(\"stone\", \"minecraft:block/stone\", &[], None)"));
         assert!(emitted.contains("Some(1.95)"));
-        assert!(emitted.contains("COMPLEX_ITEM_MODELS: &[&str] = &["));
-        assert!(emitted.contains("    \"bow\","));
+        assert!(emitted.contains("RESOLVED_ITEM_LAYERS: [(&str, Option<f32>, &[ResolvedItemLayer]); 1"));
+        assert!(emitted.contains("(\"bow\", None, &[ResolvedItemLayer { model: \"minecraft:item/bow\", tints: &[], transform: None }])"));
+        assert!(emitted.contains("COMPLEX_ITEM_MODELS: &[(&str, &str)] = &["));
+        assert!(emitted.contains("(\"shield\", \"special:minecraft:shield"));
+    }
+
+    #[test]
+    fn the_resting_hand_resolver_evaluates_every_branch_shape() {
+        // the bed composite: two layers, the foot's decoded translation
+        // (the only transform family in the resolved jar set)
+        let zip = zip_of(&[
+            (
+                "assets/minecraft/items/black_bed.json",
+                json_bytes(serde_json::json!({
+                    "model": {"type": "minecraft:composite", "models": [
+                        {"type": "minecraft:model", "model": "minecraft:block/black_bed_head"},
+                        {"type": "minecraft:model", "model": "minecraft:block/black_bed_foot",
+                         "transformation": {"left_rotation": [0.0,0.0,0.0,1.0], "right_rotation": [0.0,0.0,0.0,1.0],
+                                            "scale": [1.0,1.0,1.0], "translation": [0.0,0.0,1.0]}}
+                    ]}
+                })),
+            ),
+            // the spear shape: select display_context with a gui-case list
+            // and a fallback (the hand context falls through)
+            (
+                "assets/minecraft/items/iron_spear.json",
+                json_bytes(serde_json::json!({
+                    "model": {"type": "minecraft:select", "property": "minecraft:display_context",
+                              "cases": [{"model": {"type": "minecraft:model", "model": "minecraft:item/iron_spear"},
+                                         "when": ["gui", "ground", "fixed", "on_shelf"]}],
+                              "fallback": {"type": "minecraft:model", "model": "minecraft:item/iron_spear_in_hand"}},
+                    "swap_animation_scale": 1.95
+                })),
+            ),
+            // the bow shape: condition using_item -> on_false; the on_true
+            // carries a range_dispatch over use_duration (unreachable)
+            (
+                "assets/minecraft/items/bow.json",
+                json_bytes(serde_json::json!({
+                    "model": {"type": "minecraft:condition", "property": "minecraft:using_item",
+                              "on_false": {"type": "minecraft:model", "model": "minecraft:item/bow"},
+                              "on_true": {"type": "minecraft:range_dispatch", "property": "minecraft:use_duration",
+                                          "scale": 0.05, "entries": [],
+                                          "fallback": {"type": "minecraft:model", "model": "minecraft:item/bow_pulling_0"}}}
+                })),
+            ),
+            // the clock shape: range_dispatch whose threshold-0 entry wins
+            // at the resting value 0
+            (
+                "assets/minecraft/items/clock.json",
+                json_bytes(serde_json::json!({
+                    "model": {"type": "minecraft:range_dispatch", "property": "minecraft:time",
+                              "entries": [
+                                  {"model": {"type": "minecraft:model", "model": "minecraft:item/clock_00"}, "threshold": 0.0},
+                                  {"model": {"type": "minecraft:model", "model": "minecraft:item/clock_01"}, "threshold": 0.5}],
+                              "fallback": {"type": "minecraft:model", "model": "minecraft:item/clock_00"}}
+                })),
+            ),
+        ]);
+        let mut zip = zip;
+        let data = generate(&mut zip).unwrap();
+        assert_eq!(data.complex, vec![], "every shape resolves here");
+        let bed = &data.resolved["black_bed"];
+        assert_eq!(bed.layers.len(), 2, "head + foot");
+        assert_eq!(bed.layers[0].model, "minecraft:block/black_bed_head");
+        assert!(bed.layers[0].transform.is_none(), "identity decodes to None");
+        assert_eq!(bed.layers[1].model, "minecraft:block/black_bed_foot");
+        assert_eq!(
+            bed.layers[1].transform,
+            Some(super::TransformComponents {
+                translation: [0.0, 0.0, 1.0],
+                left_rotation: [0.0, 0.0, 0.0, 1.0],
+                scale: [1.0, 1.0, 1.0],
+                right_rotation: [0.0, 0.0, 0.0, 1.0],
+            })
+        );
+        let spear = &data.resolved["iron_spear"];
+        assert_eq!(spear.layers[0].model, "minecraft:item/iron_spear_in_hand");
+        assert_eq!(spear.swap_animation_scale, Some(1.95), "the root swap rides");
+        assert_eq!(data.resolved["bow"].layers[0].model, "minecraft:item/bow");
+        assert_eq!(data.resolved["clock"].layers[0].model, "minecraft:item/clock_00", "the threshold-0 frame");
+    }
+
+    #[test]
+    fn the_resolver_refuses_every_shape_the_data_does_not_justify() {
+        // unknown condition property
+        let zip = zip_of(&[
+            (
+                "assets/minecraft/items/weird.json",
+                json_bytes(serde_json::json!({
+                    "model": {"type": "minecraft:condition", "property": "minecraft:view_cone",
+                              "on_true": {"type": "minecraft:model", "model": "minecraft:item/a"},
+                              "on_false": {"type": "minecraft:model", "model": "minecraft:item/b"}}
+                })),
+            ),
+            (
+                "assets/minecraft/items/nofallback.json",
+                json_bytes(serde_json::json!({
+                    "model": {"type": "minecraft:select", "property": "minecraft:display_context",
+                              "cases": []}
+                })),
+            ),
+            (
+                "assets/minecraft/items/mystery_node.json",
+                json_bytes(serde_json::json!({
+                    "model": {"type": "minecraft:teleport", "target": "nowhere"}
+                })),
+            ),
+            (
+                "assets/minecraft/items/bad_transform.json",
+                json_bytes(serde_json::json!({
+                    "model": {"type": "minecraft:select", "property": "minecraft:display_context",
+                              "cases": [],
+                              "fallback": {"type": "minecraft:model", "model": "minecraft:item/x",
+                                           "transformation": {"warp": [1.0, 2.0, 3.0]}}}
+                })),
+            ),
+        ]);
+        let mut zip = zip;
+        let data = generate(&mut zip).unwrap();
+        assert_eq!(data.defs.len(), 0);
+        let reasons: Vec<&str> = data.complex.iter().map(|(id, why)| {
+            let _ = id;
+            why.as_str()
+        }).collect();
+        assert!(reasons.iter().any(|r| r.contains("condition property minecraft:view_cone")), "{reasons:?}");
+        assert!(reasons.iter().any(|r| r.contains("select without fallback")), "{reasons:?}");
+        assert!(reasons.iter().any(|r| r.contains("unknown node type minecraft:teleport")), "{reasons:?}");
+        assert!(reasons.iter().any(|r| r.contains("unexpected transformation key \"warp\"")), "{reasons:?}");
     }
 
     #[test]

@@ -433,12 +433,15 @@ pub struct HeldItem {
     quads: Vec<Quad>,
 }
 
-/// Load the posed quads of one item model for the first-person right
-/// hand. `None` = unknown model or outside the bake domain — nothing to
-/// draw (the caller renders the empty-hand arm instead).
+/// Load the posed quads of one model path for the first-person right
+/// hand — the single-path convenience (the offline `--held-item` golden
+/// lane's own vocabulary) over [`load_item_layers`]. `None` = unknown
+/// model or outside the bake domain — nothing to draw (the caller
+/// renders the empty-hand arm instead).
 pub fn load_item(model_id: &str) -> Option<HeldItem> {
-    match mc_registry::display::posed_item_quads(
+    match mc_registry::display::posed_item_layer_quads(
         model_id,
+        None,
         mc_registry::display::FIRSTPERSON_RIGHTHAND,
     ) {
         Some(Ok(quads)) => Some(HeldItem { quads }),
@@ -446,6 +449,33 @@ pub fn load_item(model_id: &str) -> Option<HeldItem> {
         Some(Err(_)) => None,
         None => None,
     }
+}
+
+/// Load the posed quads of one RESTING-HAND layer list — the vanilla
+/// `ItemStackRenderState` arc's own shape: every layer renders through
+/// its `LayerRenderState` (the local transform on the raw bake vertices,
+/// the display stanza on top, the hand anchor outside), the layers'
+/// quads concatenate in order. ANY unknown model or broken stanza binds
+/// NOTHING (the arm shows) — the honest unknown, never a half-rendered
+/// guess.
+pub fn load_item_layers(layers: &[mc_registry::ItemModelLayer]) -> Option<HeldItem> {
+    if layers.is_empty() {
+        return None;
+    }
+    let mut quads = Vec::new();
+    for layer in layers {
+        match mc_registry::display::posed_item_layer_quads(
+            layer.model,
+            layer.transform,
+            mc_registry::display::FIRSTPERSON_RIGHTHAND,
+        ) {
+            Some(Ok(mut q)) => quads.append(&mut q),
+            // a broken display stanza binds nothing (vanilla warns + drops)
+            Some(Err(_)) => return None,
+            None => return None,
+        }
+    }
+    Some(HeldItem { quads })
 }
 
 /// The item-in-hand anchor chain, `side` = +1 (the RIGHT main hand, the
@@ -900,9 +930,58 @@ mod held_tests {
         // handheld firstperson_righthand pose
         let item = load_item("item/iron_sword").expect("iron_sword is in the bake domain");
         assert_eq!(item.quads.len(), 82);
-        // outside the bake domain / unknown -> nothing to draw
-        assert!(load_item("block/stone").is_none());
+        // the element path bakes the block models too — stone rides the
+        // cube chain's one element (the full cube), its face refs resolved
+        let stone = load_item("block/stone").expect("the element bake covers the cube");
+        assert_eq!(stone.quads.len(), 6, "the full cube's six faces");
+        assert!(stone.quads.iter().all(|q| !q.texture.starts_with('#')));
+        // unknown -> nothing to draw
         assert!(load_item("item/definitely_not_a_thing").is_none());
+    }
+
+    #[test]
+    fn the_layers_load_the_complex_definitions_and_the_beds() {
+        // the bow (922): the condition's on_false branch — the resting
+        // frame, the single plain layer
+        let layers = mc_registry::item_model_layers(922).expect("the bow resolves now");
+        assert_eq!(layers.len(), 1);
+        assert_eq!(layers[0].model, "item/bow");
+        let item = load_item_layers(&layers).expect("the resting bow loads");
+        assert!(!item.quads.is_empty());
+
+        // the bed (1130): the composite's two layers ride ONE HeldItem —
+        // the head, then the foot shifted by the translation, both baked
+        // through the element path (the template inheritance)
+        let layers = mc_registry::item_model_layers(1130).expect("the bed resolves");
+        assert_eq!(layers.len(), 2);
+        assert_eq!(layers[0].model, "block/black_bed_head");
+        assert_eq!(layers[1].model, "block/black_bed_foot");
+        let bed = load_item_layers(&layers).expect("both layers bake");
+        let head = load_item_layers(&layers[..1]).expect("the head alone bakes");
+        assert_eq!(bed.quads.len(), head.quads.len() * 2, "head + foot");
+        // the foot's quads ARE the head's geometry displaced: same quad
+        // count, different vertices (the z=1 translation rode)
+        assert!(
+            bed.quads[head.quads.len()..]
+                .iter()
+                .zip(head.quads.iter())
+                .any(|(f, h)| f.vertices != h.vertices),
+            "the foot's vertices moved"
+        );
+        // the element path resolved the face refs to texture ids (the
+        // sampler's vocabulary)
+        for q in &bed.quads {
+            assert!(!q.texture.starts_with('#'), "resolved, not a ref: {}", q.texture);
+        }
+
+        // the spear (1329): the select's fallback — the in_hand model,
+        // the swap scale riding the resolved row
+        let layers = mc_registry::item_model_layers(1329).expect("the spear resolves");
+        assert_eq!(layers[0].model, "item/iron_spear_in_hand");
+
+        // the shield (1325): the special renderer's honest None
+        assert!(mc_registry::item_model_layers(1325).is_none());
+        assert!(load_item_layers(&[]).is_none(), "nothing to load");
     }
 
     #[test]

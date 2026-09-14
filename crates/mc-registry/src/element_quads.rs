@@ -93,6 +93,46 @@ pub fn derive_model(model_id: &str) -> Option<Vec<Quad>> {
         .map(|(_, elements)| derive_elements(elements))
 }
 
+/// The quads of one element model resolved through the parent chain —
+/// the nearest ancestor DECLARING elements bakes with the FULL chain's
+/// resolved texture slots (the vanilla template inheritance: the bed's
+/// head bakes template_bed_head's geometry under block/black_bed_head's
+/// slots). The face refs resolve to texture ids in place (the held-item
+/// sampler needs ids, not "#refs" — the same TextureSlots.getMaterial
+/// bare-ref rule texture_slots::material pins). None when the chain
+/// declares no elements anywhere (the honest not-our-domain).
+pub fn derive_model_inherited(model_id: &str) -> Option<Vec<Quad>> {
+    let mut cur = model_id;
+    let mut hops = 0usize;
+    let elements = loop {
+        if let Some((_, elements)) = ELEMENTS.iter().find(|(id, _)| *id == cur) {
+            break elements;
+        }
+        let (parent, _) = crate::generated::models::MODELS
+            .iter()
+            .find(|(id, ..)| *id == cur)
+            .map(|(_, parent, ..)| (*parent, ()))?;
+        match parent {
+            Some(p) if !p.starts_with("builtin/") => {
+                hops += 1;
+                if hops > 32 {
+                    return None; // vanishingly defensive; the data is acyclic
+                }
+                cur = p;
+            }
+            _ => return None, // the chain ended element-less
+        }
+    };
+    let slots = crate::texture_slots::resolve_model(model_id)?;
+    let mut quads = derive_elements(elements);
+    for q in &mut quads {
+        if let Some(tex) = crate::texture_slots::resolve_ref(model_id, q.texture) {
+            q.texture = tex;
+        }
+    }
+    Some(quads)
+}
+
 /// The quads plus the census counters, by model id.
 pub fn derive_model_with_stats(model_id: &str) -> Option<(Vec<Quad>, DeriveStats)> {
     ELEMENTS

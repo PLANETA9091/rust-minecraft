@@ -152,17 +152,66 @@ pub fn item_icon(id: i32) -> Option<(&'static [u8], u16, u16)> {
 /// item-model definition table's PLAIN `minecraft:model` roots (the
 /// 1.21.4+ items/ format), the namespace stripped to the bake's own
 /// vocabulary (`"item/diamond"`, the shape `posed_item_quads` walks).
-/// The complex-definition items (the select/special/composite/
-/// condition/range_dispatch trees — the generated skip list's 147)
-/// and the unresolvable ids are `None`: the honest unknown, the
-/// caller renders the bare arm (those trees are their own round's
-/// line, never silently guessed).
+/// The complex-definition trees resolve through [`item_model_layers`]
+/// (the resting-hand table); THIS accessor keeps the plain-only
+/// single-path semantics — the offline `--held-item` golden lane's own
+/// vocabulary — and the unresolvable ids are `None`: the honest
+/// unknown, never a guessed name.
 pub fn item_model_path(id: i32) -> Option<&'static str> {
     let name = item_name(id)?;
     generated::item_models::ITEM_MODEL_DEFS
         .iter()
         .find(|d| d.0 == name)
         .map(|d| d.1.strip_prefix("minecraft:").unwrap_or(d.1))
+}
+
+/// One resting-hand model layer: the (namespace-stripped) model path,
+/// the tints as canonical compact JSON, and the decoded node
+/// transformation — (translation, left_rotation quaternion [x,y,z,w],
+/// scale, right_rotation) — composed T·L·S·R per the
+/// `com.mojang.math.Transformation.compose` bytecode; `None` = identity.
+pub struct ItemModelLayer {
+    pub model: &'static str,
+    pub tints: &'static [&'static str],
+    pub transform: Option<([f32; 3], [f32; 4], [f32; 3], [f32; 4])>,
+}
+
+/// The ITEM registry id's RESTING-HAND model layers — the vanilla item
+/// model definition trees evaluated for the first-person hand of a
+/// fresh, unused stack. The plain `minecraft:model` roots ride as their
+/// single layer; the complex trees resolve through the generated
+/// resting-hand table (condition on_false, select fallback — no case in
+/// the jar targets a hand context, range_dispatch's threshold<=0 entry,
+/// the composite children with their transformations); the special
+/// block-entity renderers (shield, trident, chest, shulker box, banner,
+/// head, conduit, decorated pot, golem statue — no model JSON exists,
+/// the geometry is bytecode) and the unknown ids are `None`: the honest
+/// unknown, the caller renders the bare arm.
+pub fn item_model_layers(id: i32) -> Option<Vec<ItemModelLayer>> {
+    let name = item_name(id)?;
+    if let Some(def) = generated::item_models::ITEM_MODEL_DEFS
+        .iter()
+        .find(|d| d.0 == name)
+    {
+        return Some(vec![ItemModelLayer {
+            model: def.1.strip_prefix("minecraft:").unwrap_or(def.1),
+            tints: def.2,
+            transform: None,
+        }]);
+    }
+    generated::item_models::RESOLVED_ITEM_LAYERS
+        .iter()
+        .find(|d| d.0 == name)
+        .map(|(_, _, layers)| {
+            layers
+                .iter()
+                .map(|l| ItemModelLayer {
+                    model: l.model.strip_prefix("minecraft:").unwrap_or(l.model),
+                    tints: l.tints,
+                    transform: l.transform,
+                })
+                .collect()
+        })
 }
 
 /// The resolver core, generic over the table so the dedup and cycle
@@ -276,6 +325,8 @@ pub mod meta {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use generated::item_models::{COMPLEX_ITEM_MODELS, RESOLVED_ITEM_LAYERS};
+    use generated::models::MODELS;
 
     #[test]
     fn registry_is_sorted_and_searchable() {
@@ -792,14 +843,21 @@ mod tests {
 
     #[test]
     fn the_item_model_definitions_resolve_and_the_joins_hold() {
-        use generated::item_models::{COMPLEX_ITEM_MODELS, ITEM_MODEL_DEFS, ITEM_MODEL_ROOT_TYPES};
+        use generated::item_models::{
+            COMPLEX_ITEM_MODELS, ITEM_MODEL_DEFS, ITEM_MODEL_ROOT_TYPES, RESOLVED_ITEM_LAYERS,
+        };
         use generated::items::ITEMS;
         // the jar's assets/minecraft/items/ file set, verbatim: 1537
-        // definitions split 1390 plain minecraft:model roots + 147
-        // selector/special trees retained in the skip list
+        // definitions split 1390 plain minecraft:model roots + 84 complex
+        // trees RESOLVED to resting-hand layers + 63 special renderers
+        // refused with reasons
         assert_eq!(ITEM_MODEL_DEFS.len(), 1390);
-        assert_eq!(COMPLEX_ITEM_MODELS.len(), 147);
-        assert_eq!(ITEM_MODEL_DEFS.len() + COMPLEX_ITEM_MODELS.len(), 1537);
+        assert_eq!(RESOLVED_ITEM_LAYERS.len(), 84);
+        assert_eq!(COMPLEX_ITEM_MODELS.len(), 63);
+        assert_eq!(
+            ITEM_MODEL_DEFS.len() + RESOLVED_ITEM_LAYERS.len() + COMPLEX_ITEM_MODELS.len(),
+            1537
+        );
         let census: u32 = ITEM_MODEL_ROOT_TYPES.iter().map(|t| t.1).sum();
         assert_eq!(census, 1537, "the root-type census accounts for every item");
         assert_eq!(
@@ -859,10 +917,16 @@ mod tests {
             "copper_spear",
         ] {
             assert!(ITEM_MODEL_DEFS.iter().all(|d| d.0 != spear));
-            assert!(COMPLEX_ITEM_MODELS.contains(&spear), "{spear} in the skip list");
+            // the spears' select trees RESOLVE through the fallback (the
+            // hand model + the 1.95 swap) — they left the skip list
+            assert!(RESOLVED_ITEM_LAYERS.iter().any(|d| d.0 == spear), "{spear} resolved");
+            assert_eq!(RESOLVED_ITEM_LAYERS.iter().find(|d| d.0 == spear).unwrap().1, Some(1.95));
         }
-        assert!(COMPLEX_ITEM_MODELS.contains(&"bow"));
-        assert!(COMPLEX_ITEM_MODELS.contains(&"shield"));
+        // the shield stays refused — BOTH branches are the special renderer
+        let shield = COMPLEX_ITEM_MODELS.iter().find(|(id, _)| *id == "shield").unwrap();
+        assert!(shield.1.contains("special:minecraft:shield"), "{shield:?}");
+        // every refusal names a special block-entity renderer
+        assert!(COMPLEX_ITEM_MODELS.iter().all(|(_, why)| why.starts_with("special:")));
 
         // every model path is namespaced minecraft: under block/ or item/
         let (mut block, mut item) = (0usize, 0usize);
@@ -878,14 +942,78 @@ mod tests {
         }
         assert_eq!((block, item), (731, 659), "the target split the jar states");
 
-        // THE JOINS NEVER DANGLE: every plain def and every skipped item
-        // names an item the registry table carries
+        // THE JOINS NEVER DANGLE: every plain def, every resolved layer
+        // and every refused item names an item the registry table carries
         for (id, _, _, _) in &ITEM_MODEL_DEFS {
             assert!(ITEMS.contains(id), "def {id} names no known item");
         }
-        for id in COMPLEX_ITEM_MODELS.iter() {
+        for (id, _, layers) in RESOLVED_ITEM_LAYERS {
+            assert!(ITEMS.contains(&id), "resolved {id} names no known item");
+            // the namespace-stripped paths must resolve in the MODELS table
+            for layer in layers.iter() {
+                let rest = layer.model.strip_prefix("minecraft:").unwrap_or(layer.model);
+                assert!(
+                    MODELS.iter().any(|m| m.0 == rest),
+                    "{id}: layer model {} names no known model",
+                    layer.model
+                );
+            }
+        }
+        for (id, _) in COMPLEX_ITEM_MODELS {
             assert!(ITEMS.contains(id), "complex {id} names no known item");
         }
+    }
+
+    #[test]
+    fn the_layer_accessor_walks_the_resting_hand_tables() {
+        // a plain def: the single layer, no transform (the diamond hand)
+        let diamond_id = generated::item_order::ITEM_WIRE_ORDER
+            .iter()
+            .position(|n| *n == "diamond")
+            .unwrap() as i32;
+        let layers = item_model_layers(diamond_id).expect("diamond resolves");
+        assert_eq!(layers.len(), 1);
+        assert_eq!(layers[0].model, "item/diamond");
+        assert!(layers[0].transform.is_none());
+
+        // the bow: the condition's on_false branch through the resolved
+        // table — the plain bow model (the resting frame, not pulling)
+        let bow_id = generated::item_order::ITEM_WIRE_ORDER
+            .iter()
+            .position(|n| *n == "bow")
+            .unwrap() as i32;
+        let layers = item_model_layers(bow_id).expect("bow resolves now");
+        assert_eq!(layers.len(), 1);
+        assert_eq!(layers[0].model, "item/bow");
+
+        // the bed: the composite's two layers, the foot's decoded z=1
+        // translation (the compose bytecode's T·L·S·R, identity rotations)
+        let bed_id = generated::item_order::ITEM_WIRE_ORDER
+            .iter()
+            .position(|n| *n == "black_bed")
+            .unwrap() as i32;
+        let layers = item_model_layers(bed_id).expect("the bed resolves");
+        assert_eq!(layers.len(), 2);
+        assert_eq!(layers[0].model, "block/black_bed_head");
+        assert!(layers[0].transform.is_none());
+        assert_eq!(layers[1].model, "block/black_bed_foot");
+        let (t, l, s, r) = layers[1].transform.expect("the foot carries the translation");
+        assert_eq!(t, [0.0, 0.0, 1.0]);
+        assert_eq!(l, [0.0, 0.0, 0.0, 1.0]);
+        assert_eq!(s, [1.0, 1.0, 1.0]);
+        assert_eq!(r, [0.0, 0.0, 0.0, 1.0]);
+
+        // the shield: the special renderer's honest None (the bare arm)
+        let shield_id = generated::item_order::ITEM_WIRE_ORDER
+            .iter()
+            .position(|n| *n == "shield")
+            .unwrap() as i32;
+        assert!(item_model_layers(shield_id).is_none(), "no model JSON — no lie");
+
+        // item_model_path keeps its plain-only semantics (the golden
+        // offline lane's own vocabulary): the bow stays None there
+        assert!(item_model_path(bow_id).is_none());
+        assert_eq!(item_model_path(diamond_id), Some("item/diamond"));
     }
 
     #[test]

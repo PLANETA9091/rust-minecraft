@@ -919,6 +919,51 @@ hand-drawn:
   (VILLAGER_DATA at 18 doubles as the order proof), the generated-id
   pin, and the model's merge semantics (replace-one-leave-others, the
   null-lookup drop, the re-spawn reset).
+  The **the resting-hand tree resolver — every complex definition resolves or refuses (v0.3.140)**:
+  the skip list's 147 trees stop being a dead end — the generator now
+  evaluates each one for the RESTING FIRST-PERSON HAND of a fresh,
+  unused stack, evidence-backed at every branch: the `condition`
+  properties are false at rest (not using, not broken, not cast, no
+  selected bundle item, the audited components empty — the
+  `on_false` branch), the `select` cases match no hand context (the
+  whole-jar sweep proves NO case targets one — the vanilla
+  fallthrough lands the `fallback`), the `range_dispatch` reads the
+  resting value 0 (the greatest threshold <= 0 entry — the vanilla
+  loop's own pick), the `composite` children flatten in order with
+  their decoded transformations, and the `special` block-entity
+  renderers (shield, trident, chest, shulker box, banner, head,
+  conduit, decorated pot, golem statue) refuse WITH THE RENDERER
+  NAMED — every base model path in the jar is missing from models/,
+  the geometry is bytecode, not JSON. The outcome: 84 of 147 resolve
+  (68 single-layer + the 16 beds' two layers, the foot's z=1
+  translation the only transform family), 63 refuse honestly. THE
+  WIRE TO THE HAND: the registry's new `item_model_layers` walks the
+  plain defs as their single layer and the resolved table's layers
+  (model path, tints, the decoded T·L·S·R transform — the
+  `com.mojang.math.Transformation.compose` bytecode order), and the
+  consumer renders them through the vanilla `LayerRenderState
+  .applyTransform` shape javap'd from 26.2: the local transform acts
+  on the raw bake vertices, the display stanza on top, the hand
+  anchor outside. THE BAKE'S OWN TWO PATHS: the item/generated chains
+  keep the ItemModelGenerator bake, and the element models now bake
+  through the inherited element walk (the nearest declaring ancestor's
+  geometry under the full chain's resolved slots — the template
+  inheritance) — so the BEDS' template geometry AND every block-model
+  item (stone's full cube, the slabs' real shapes) render in the
+  first-person hand for the first time. The offline `--held-item`
+  keeps its plain-only vocabulary; the swap_animation_scale rides the
+  resolved rows (the spears' 1.95). GOLDENS UNTOUCHED BY
+  CONSTRUCTION: 13/13 at rms 0.000 (the golden scene holds
+  item/iron_sword — a single-layer def whose math is byte-identical).
+  Tests +8 (workspace 510 -> 516 passed / 0 failed / 3 ignored; the
+  registry's own joins account every one of the 1537 definitions):
+  the resolver's branch shapes (the bed composite's decoded
+  translation, the spear fallback + the swap scale, the bow's
+  on_false, the clock's threshold-0 frame), the refusal reasons (the
+  unknown property, the fallback-less select, the unknown node, the
+  bad transform), the compose-order pin (T·L·S·R, the translation
+  last), the layer posing under the display pose, and the live lane
+  loading the bow, the bed's two layers, and the shield's honest arm.
   The **the hotbar HUD's live items — the store's row over the sprite
   (v0.3.139)**: the hotbar stops being chrome-only in a live session —
   the store's WHOLE hotbar row (`USE_ROW_SLOT_START..USE_ROW_SLOT_END`,

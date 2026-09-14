@@ -536,11 +536,105 @@ pub fn posed_item_quads(
     model_id: &str,
     ctx: usize,
 ) -> Option<Result<Vec<crate::element_quads::Quad>, String>> {
-    let quads = crate::item_bake::derive_item_model(model_id)?;
+    posed_item_layer_quads(model_id, None, ctx)
+}
+
+/// The node transformation's composed pose — the
+/// `com.mojang.math.Transformation.compose` bytecode verbatim:
+/// `new Matrix4f().translation(t).rotate(left).scale(s).rotate(right)`,
+/// each post-multiplied on identity (T·L·S·R). The JOML fast paths the
+/// ItemTransform arc already pinned ride along: the first rotate() on a
+/// pure translation ASSIGNS the rotation (the full multiply below is
+/// bit-identical for a pure-translation left factor), the scale() scales
+/// the FULL columns 0..2 in place (row 3 included — 0.0·s stays 0.0),
+/// the second rotate() is the general affine multiply.
+pub fn build_local_pose(t: ([f32; 3], [f32; 4], [f32; 3], [f32; 4])) -> Pose {
+    // the JSON/tuple convention is [x, y, z, w]; the rotation_matrix
+    // helper reads [w, x, y, z] (its q[0] is w) — reorder both
+    let (translation, left_rotation, scale, right_rotation) = t;
+    let wxzy = |q: [f32; 4]| [q[3], q[0], q[1], q[2]];
+    let mut m = Pose {
+        cols: [
+            [1.0, 0.0, 0.0, 0.0],
+            [0.0, 1.0, 0.0, 0.0],
+            [0.0, 0.0, 1.0, 0.0],
+            [0.0, 0.0, 0.0, 1.0],
+        ],
+    };
+    // translation()
+    m.cols[3] = [translation[0], translation[1], translation[2], 1.0];
+    // rotate(left)
+    m = pose_mul(&m, &pose_from_rotation(rotation_matrix(wxzy(left_rotation))));
+    // scale()
+    for c in 0..3 {
+        for r in 0..4 {
+            m.cols[c][r] *= scale[c];
+        }
+    }
+    // rotate(right)
+    m = pose_mul(&m, &pose_from_rotation(rotation_matrix(wxzy(right_rotation))));
+    m
+}
+
+/// The rotation matrix's column-major pose (the same assignment
+/// build_pose makes after its own rotation_matrix call).
+fn pose_from_rotation(f: [f32; 9]) -> Pose {
+    Pose {
+        cols: [
+            [f[0], f[1], f[2], 0.0],
+            [f[3], f[4], f[5], 0.0],
+            [f[6], f[7], f[8], 0.0],
+            [0.0, 0.0, 0.0, 1.0],
+        ],
+    }
+}
+
+/// The 4x4 column-major multiply — `Matrix4f.mul`'s post-multiplication
+/// (`this = this · other`); for affine inputs the bottom row stays
+/// exactly [0, 0, 0, 1] (the zero products and the final 1·1 are exact).
+fn pose_mul(a: &Pose, b: &Pose) -> Pose {
+    let mut out = Pose { cols: [[0.0; 4]; 4] };
+    for c in 0..4 {
+        for r in 0..4 {
+            let mut acc = 0.0f32;
+            for k in 0..4 {
+                acc += a.cols[k][r] * b.cols[c][k];
+            }
+            out.cols[c][r] = acc;
+        }
+    }
+    out
+}
+
+/// The e2e composition for ONE resting-hand layer: the bake quads
+/// through the node transformation FIRST, then the resolved display
+/// pose of `context`. The order is the vanilla
+/// `ItemStackRenderState$LayerRenderState.applyTransform` bytecode:
+/// `itemTransform.apply(...)` THEN `pose.mulPose(localTransform)` — the
+/// vertices render as handPose · displayPose · localTransform · v, so
+/// the local transform acts on the raw bake vertices and the display
+/// stanza on top. `None` (identity) feeds the raw vertices straight
+/// through — byte-identical to [`posed_item_quads`]. Unknown model ->
+/// None; a broken stanza -> Err.
+pub fn posed_item_layer_quads(
+    model_id: &str,
+    transform: Option<([f32; 3], [f32; 4], [f32; 3], [f32; 4])>,
+    ctx: usize,
+) -> Option<Result<Vec<crate::element_quads::Quad>, String>> {
+    // the vanilla bake's own two paths: the ItemModelGenerator bake for
+    // the item/generated chains (the flat sprite extrusions), the
+    // FaceBakery element bake for the element models (the beds'
+    // template geometry, the block-model items) — the model's parent
+    // chain picks the path, exactly like vanilla's ModelManager
+    let quads = match crate::item_bake::derive_item_model(model_id) {
+        Some(q) => q,
+        None => crate::element_quads::derive_model_inherited(model_id)?,
+    };
     let transforms = match resolve_transforms(model_id) {
         Ok(t) => t,
         Err(e) => return Some(Err(e)),
     };
+    let local = transform.map(build_local_pose);
     let left_hand = context_is_left_hand(ctx);
     Some(Ok(quads
         .iter()
@@ -548,7 +642,13 @@ pub fn posed_item_quads(
             let mut posed = *q;
             posed.vertices = q
                 .vertices
-                .map(|v| apply_transform(transforms[ctx].as_ref(), left_hand, v));
+                .map(|v| {
+                    let raw = match &local {
+                        Some(m) => apply_vertex(m, v),
+                        None => v,
+                    };
+                    apply_transform(transforms[ctx].as_ref(), left_hand, raw)
+                });
             posed
         })
         .collect()))
@@ -1209,8 +1309,12 @@ mod tests {
                 assert!(p.iter().all(|v| v.is_finite()), "finite corners");
             }
         }
-        // outside the bake domain -> None (a block model is not an item)
-        assert!(posed_item_quads("block/stone", FIRSTPERSON_RIGHTHAND).is_none());
+        // the element bake covers the block models — stone rides the
+        // cube chain's element (the vanilla hand's own two bake paths)
+        let stone = posed_item_quads("block/stone", FIRSTPERSON_RIGHTHAND)
+            .expect("the element bake covers the cube")
+            .expect("no stanza error");
+        assert_eq!(stone.len(), 6, "the full cube's six faces");
         // unknown -> None
         assert!(posed_item_quads("item/definitely_not_a_thing", FIRSTPERSON_RIGHTHAND).is_none());
     }
@@ -1221,5 +1325,94 @@ mod tests {
     /// faceinfo_corners already applied the bakeVertex /16):
     /// "STDIN 3d4a3d70 3eba99c6 bec32df1".
     const ORACLE_ITEM0_V0: [&str; 3] = ["3d4a3d70", "3eba99c6", "bec32df1"];
+
+    #[test]
+    fn the_local_pose_rides_the_compose_bytecode_order() {
+        // identity components: the pure translation — bit-exact
+        let m = build_local_pose(([0.0, 0.0, 1.0], [0.0, 0.0, 0.0, 1.0], [1.0, 1.0, 1.0], [0.0, 0.0, 0.0, 1.0]));
+        let v = apply_vertex(&m, [0.25, -0.5, 0.125]);
+        assert_eq!(v.map(f32::to_bits), [0.25f32.to_bits(), (-0.5f32).to_bits(), 1.125f32.to_bits()]);
+
+        // the scale's full columns (row 3 included, the scaleGeneric pin)
+        let m = build_local_pose(([0.0; 3], [0.0, 0.0, 0.0, 1.0], [2.0, 1.0, 1.0], [0.0, 0.0, 0.0, 1.0]));
+        let v = apply_vertex(&m, [1.0, 3.0, 5.0]);
+        assert_eq!(v.map(f32::to_bits), [2.0f32.to_bits(), 3.0f32.to_bits(), 5.0f32.to_bits()]);
+
+        // the 90°-about-Z right rotation maps x -> y (the quaternion's
+        // [0,0,sin(45°),cos(45°)] — the JOML rotation() convention)
+        let s = 0.5f32.sqrt();
+        let qz = [0.0, 0.0, s, s];
+        let m = build_local_pose(([0.0; 3], [0.0, 0.0, 0.0, 1.0], [1.0, 1.0, 1.0], qz));
+        let v = apply_vertex(&m, [1.0, 0.0, 0.0]);
+        assert!((v[0] - 0.0).abs() < 1e-6, "{v:?}");
+        assert!((v[1] - 1.0).abs() < 1e-6, "{v:?}");
+        assert!((v[2] - 0.0).abs() < 1e-6, "{v:?}");
+
+        // THE ORDER PIN: translation LAST in the chain (T·L·S·R) — the
+        // right rotation acts on the vertex FIRST, the translation rides
+        // after: (1,0,0) -> R -> (0,1,0) -> T(+1,0,0) -> (1,1,0). The
+        // reversed order (R·T) would land (0,2,0).
+        let m = build_local_pose(([1.0, 0.0, 0.0], [0.0, 0.0, 0.0, 1.0], [1.0, 1.0, 1.0], qz));
+        let v = apply_vertex(&m, [1.0, 0.0, 0.0]);
+        assert!((v[0] - 1.0).abs() < 1e-6 && (v[1] - 1.0).abs() < 1e-6, "T·L·S·R order, got {v:?}");
+    }
+
+    #[test]
+    fn the_layer_posing_applies_the_local_transform_under_the_display_pose() {
+        // the identity transform is byte-identical to posed_item_quads
+        let plain = posed_item_quads("item/iron_sword", FIRSTPERSON_RIGHTHAND)
+            .expect("sword poses")
+            .expect("stanza ok");
+        let layered = posed_item_layer_quads(
+            "item/iron_sword",
+            None,
+            FIRSTPERSON_RIGHTHAND,
+        )
+        .expect("sword poses")
+        .expect("stanza ok");
+        assert_eq!(plain, layered, "None = the raw vertex feed");
+
+        // a real translation rides the vertices: the sword shifted +1 on
+        // z before the display pose — the delta goes through the display
+        // pose's LINEAR part, so the asserted shape is the posed-vs-posed
+        // difference (same linear map on every quad)
+        let shifted = posed_item_layer_quads(
+            "item/iron_sword",
+            Some(([0.0, 0.0, 1.0], [0.0, 0.0, 0.0, 1.0], [1.0, 1.0, 1.0], [0.0, 0.0, 0.0, 1.0])),
+            FIRSTPERSON_RIGHTHAND,
+        )
+        .expect("sword poses")
+        .expect("stanza ok");
+        assert_eq!(shifted.len(), plain.len());
+        for (a, b) in plain.iter().zip(shifted.iter()) {
+            let d0 = [
+                b.vertices[0][0] - a.vertices[0][0],
+                b.vertices[0][1] - a.vertices[0][1],
+                b.vertices[0][2] - a.vertices[0][2],
+            ];
+            // the display pose's linear part maps (0,0,1) identically for
+            // every vertex: quad[0]'s delta holds for all of them
+            for (a, b) in plain.iter().zip(shifted.iter()) {
+                for vi in 0..4 {
+                    let d = [
+                        b.vertices[vi][0] - a.vertices[vi][0],
+                        b.vertices[vi][1] - a.vertices[vi][1],
+                        b.vertices[vi][2] - a.vertices[vi][2],
+                    ];
+                    assert_eq!(d.map(f32::to_bits), d0.map(f32::to_bits));
+                }
+            }
+            // the delta is nonzero (the translation actually rode)
+            assert!(d0.iter().any(|d| *d != 0.0));
+        }
+
+        // unknown model -> None; the element bake covers the block
+        // models (stone rides the cube chain's element)
+        assert!(posed_item_layer_quads("item/definitely_not_a_thing", None, FIRSTPERSON_RIGHTHAND).is_none());
+        let stone = posed_item_layer_quads("block/stone", None, FIRSTPERSON_RIGHTHAND)
+            .expect("the element bake covers the cube")
+            .expect("no stanza error");
+        assert_eq!(stone.len(), 6, "the full cube's six faces");
+    }
 }
 

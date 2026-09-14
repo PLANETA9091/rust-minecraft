@@ -1256,17 +1256,19 @@ impl App {
 
     /// The networked held-item lane: the store's selected hotbar stack
     /// drives the first-person hand exactly like the vanilla
-    /// renderItemInHand's own projection — the id's model loads on
-    /// change (through the generated item-model definition table's
-    /// plain roots), and the emptiness (a count-0 slot, a slot the
-    /// store never spoke) or an id outside the bake domain (the
-    /// complex-definition trees: select/special/composite) drops back
-    /// to the bare arm. The count is not the hand's lane (vanilla
-    /// renders no count in first person); the reload fires only when
-    /// the id changes — the store's refresh cadence does not re-bake.
-    /// The OFFLINE headless `--held-item` keeps owning its own surface
-    /// (the goldens' lane — this method is the live session's only,
-    /// the headless scenes never call it).
+    /// renderItemInHand's own projection — the id's RESTING-HAND layers
+    /// load on change (the plain roots as their single layer, the
+    /// complex trees through the generated resolver — condition
+    /// on_false, select fallback, threshold-0 dispatch, the composite
+    /// children with their transformations), and the emptiness (a
+    /// count-0 slot, a slot the store never spoke) or an id outside the
+    /// bake domain (the special block-entity renderers — no model JSON
+    /// exists) drops back to the bare arm. The count is not the hand's
+    /// lane (vanilla renders no count in first person); the reload
+    /// fires only when the id changes — the store's refresh cadence
+    /// does not re-bake. The OFFLINE headless `--held-item` keeps
+    /// owning its own surface (the goldens' lane — this method is the
+    /// live session's only, the headless scenes never call it).
     pub fn live_held_updated(&mut self, held: Option<(i32, i32)>) {
         let id = held.filter(|&(_, count)| count > 0).map(|(id, _)| id);
         if self.live_held == id {
@@ -1274,8 +1276,8 @@ impl App {
         }
         self.live_held = id;
         self.held_item = id
-            .and_then(mc_registry::item_model_path)
-            .and_then(crate::hand::load_item);
+            .and_then(mc_registry::item_model_layers)
+            .and_then(|layers| crate::hand::load_item_layers(&layers));
     }
 
     /// The networked HUD lane: the store's WHOLE hotbar row lands
