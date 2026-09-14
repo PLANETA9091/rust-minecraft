@@ -919,6 +919,34 @@ hand-drawn:
   (VILLAGER_DATA at 18 doubles as the order proof), the generated-id
   pin, and the model's merge semantics (replace-one-leave-others, the
   null-lookup drop, the re-spawn reset).
+  The **the hashed stack's full shape — the prediction's vocabulary (v0.3.133)**:
+  the slot-click round's honest refusal ("a non-empty map is unpinned here and
+  therefore unwriteable"), CLOSED. The 26.2 `HashedStack` prediction lane's
+  NON-EMPTY component-patch shapes are now DUMPED and speakable: a new
+  checked-in dumper (`ReflectHashedStack.java`, the `ReflectContainerClick`
+  arc's own pattern) boots the real registries and serializes
+  `HashedPatchMap(addedComponents, removedComponents)` records through the
+  jar's own STREAM_CODEC. THE WIRE, byte for byte: the added entries ride the
+  component type's data_component_type REGISTRY id as a VarInt + the value's
+  hash as a FIXED BIG-ENDIAN int32 (the negative probe `ff ff ff 9d` = -99 and
+  the large probe `07 5b cd 15` = 123456789 refuse a VarInt reading — the
+  audit's own width traps), the removed entries the type ids as plain
+  VarInts; the keys are REAL component types (a synthetic int key was REFUSED
+  by the codec — "Can't find id for '19' in map
+  Registry[minecraft:data_component_type]" — this boot pins DAMAGE = 3,
+  CUSTOM_NAME = 6); the real hash generator stays the client's own lane (the
+  direct ItemStack factory probe NPEs in this boot — "Components not bound
+  yet" — the lazy binding the plain bootstrap does not reach). The Rust side:
+  `HashedPatchMap` (the added/removed lanes) joins the protocol,
+  `HashedStack::ActualItem` carries the patch, `HashedStack::item` is the
+  count-pair shortcut the (item_id, count) store projects honestly, and the
+  writer emits the fixed-width hash lane. THE PREDICTION ROUNDS'
+  PREREQUISITE: the cursor-stack + menu-logic lane now has its full
+  vocabulary. GOLDENS UNTOUCHED BY CONSTRUCTION: 13/13 at rms 0.000
+  (encode-only — zero render surface). Tests +1 (workspace 496 passed / 0
+  failed / 3 ignored): the five dumped fixtures byte-equal (the empty patch,
+  the added-only, the removed-only, the two-lane negative probe, the large
+  probe) + the patch riding INSIDE the full packet unchanged.
   The **the item wire order — the container's icons speak the registry (v0.3.132)**:
   the slot-click round's discovered defect, CLOSED. The v0.3.129 item lanes
   claimed "the BuiltInRegistries.ITEM order" but shipped the ASSETS table's

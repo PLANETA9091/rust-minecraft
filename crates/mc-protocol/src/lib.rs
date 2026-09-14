@@ -39,7 +39,7 @@ pub use play::{
     EntityDataSet, EntityDeltaPos, EntityDeltaPosRot, EntityDeltaRot, EntityEquipment,
     EntityHeadRot,
     EntityPositionSync, EntityReference, EntitySpawn, EquipmentEntry, EquipmentSlot, GlobalPos,
-    HashedStack, ItemStack, LightData, LiveJoin,
+    HashedPatchMap, HashedStack, ItemStack, LightData, LiveJoin,
     MobEffectRemove, MobEffectUpdate, OpenScreen, PaintingVariant, PartialPredicate,
     ParticleValue, PlayerSkinPatch, PlayEvent, PositionSource,
     ProfileProperty, ResolvableProfile, SkinAsset,

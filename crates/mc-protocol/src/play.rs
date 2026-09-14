@@ -4805,20 +4805,77 @@ impl ContainerInput {
     }
 }
 
+/// The hashed component patch — the 26.2 `HashedPatchMap` record
+/// (`Map addedComponents, Set removedComponents`, the dump's own record
+/// components). The wire shape is DUMPED (`ReflectHashedStack.java`):
+/// each ADDED entry rides the component type's data_component_type
+/// REGISTRY id as a VarInt followed by the value's hash as a FIXED
+/// BIG-ENDIAN int32 (the negative and the large probes refused a VarInt
+/// reading: `06 ff ff ff 9d` is -99, `03 07 5b cd 15` is 123456789); the
+/// REMOVED entries ride the type ids as plain VarInts. The keys are REAL
+/// component types — a synthetic int key was REFUSED by the codec ("Can't
+/// find id for '19' in map Registry[minecraft:data_component_type]") —
+/// this boot pins DAMAGE = 3, CUSTOM_NAME = 6.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct HashedPatchMap {
+    /// (the component type's registry id, the value's hash) pairs.
+    pub added: Vec<(i32, i32)>,
+    /// The removed component types' registry ids.
+    pub removed: Vec<i32>,
+}
+
+impl HashedPatchMap {
+    /// The empty patch — both lanes empty (the dump's `00 00`, the shape
+    /// every default-component stack rides).
+    pub const EMPTY: HashedPatchMap = HashedPatchMap {
+        added: Vec::new(),
+        removed: Vec::new(),
+    };
+
+    /// An added-only patch (the dump's synthetic shape: the component
+    /// type's registry id + the value's hash).
+    pub fn added(ty: i32, hash: i32) -> HashedPatchMap {
+        HashedPatchMap {
+            added: vec![(ty, hash)],
+            removed: Vec::new(),
+        }
+    }
+}
+
 /// The client's believed stack state — the 26.2 `HashedStack` prediction
 /// lane. The click packet's changed-slots and carried lanes carry HASHED
-/// stacks (the components ride as hashes, not bytes), and the honest
-/// minimal record this client speaks is the item's WIRE id + count with
-/// the EMPTY component-patch hash map. The non-empty hashed-patch lanes
-/// are the prediction rounds' own line — this dump pinned only the
-/// empty map's shape (`00 00`: zero added hashes, zero removed types).
+/// stacks (the components ride as hashes, not bytes): the item's WIRE id
+/// + count + the component PATCH map (`HashedPatchMap` — the dump's
+/// record `Map addedComponents, Set removedComponents`). The prediction-
+/// free client's honest record is the count pair with the EMPTY patch
+/// (`00 00`); the full patch shape is DUMPED and speakable
+/// (`ReflectHashedStack.java`), and the store's future component lanes
+/// fill it where the count pair alone is not the whole belief.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum HashedStack {
     /// The `00` byte — the optional lane's emptiness.
     Empty,
     /// The `01` byte + the item's wire registry id + the count + the
-    /// EMPTY hashed patch map.
-    ActualItem { item_id: i32, count: i32 },
+    /// hashed patch map (the EMPTY map for every default-component
+    /// stack; the dump pins the non-empty shapes byte for byte).
+    ActualItem {
+        item_id: i32,
+        count: i32,
+        patch: HashedPatchMap,
+    },
+}
+
+impl HashedStack {
+    /// The count pair with the EMPTY patch — the shape a (item_id,
+    /// count) store projects honestly (every default-component stack's
+    /// own lane).
+    pub fn item(item_id: i32, count: i32) -> HashedStack {
+        HashedStack::ActualItem {
+            item_id,
+            count,
+            patch: HashedPatchMap::EMPTY,
+        }
+    }
 }
 
 /// The container click the vanilla client speaks (the 26.2 record
@@ -4857,11 +4914,13 @@ pub struct ContainerClick {
 /// SIGNED BE SHORT slot, the BYTE button, the VarInt input ordinal, the
 /// count-prefixed changed-slot pairs (SHORT + HashedStack each) and the
 /// carried HashedStack last. The bytes are the official STREAM_CODEC's
-/// own output for the pinned fixtures (the dump's evidence, byte for
+/// own output for the pinned fixtures (the dumps' evidence, byte for
 /// byte):
 /// `container=2 state=7 slot=13 button=0 PICKUP empty/empty` =
 /// `02 07 000d 00 00 0000` (body — the packet id prefix is the
-/// dispatch's own lane, the house convention).
+/// dispatch's own lane, the house convention); the HashedStack's own
+/// shapes ride `ReflectHashedStack.java`'s fixtures (the empty patch
+/// `01 9e 07 40 00 00`, the non-empty patches — see `write_hashed_stack`).
 pub fn encode_container_click(click: &ContainerClick) -> Result<Vec<u8>> {
     let mut p = Vec::with_capacity(9);
     write_varint(&mut p, serverbound::CONTAINER_CLICK);
@@ -4880,19 +4939,40 @@ pub fn encode_container_click(click: &ContainerClick) -> Result<Vec<u8>> {
 }
 
 /// One HashedStack lane's write mirror: the presence byte, then the
-/// ActualItem's item id + count as VarInts and the EMPTY hashed patch
-/// map (`00 00` — the dump's own shape for a hash map with no added
-/// hashes and no removed types; a non-empty map is unpinned here and
-/// therefore unwriteable).
+/// ActualItem's item id + count as VarInts and the hashed patch map —
+/// the VarInt added-count, per entry the component type's registry id
+/// as a VarInt + the value's hash as a FIXED BIG-ENDIAN int32, then the
+/// VarInt removed-count with the type ids as VarInts. The bytes are the
+/// official STREAM_CODEC's own output for the dump's fixtures
+/// (`ReflectHashedStack.java`):
+/// `diamond x64, empty patch` = `01 9e 07 40 00 00`,
+/// `added{DAMAGE:12345}` = `01 9e 07 40 01 03 00 00 30 39 00`,
+/// `removed{CUSTOM_NAME}` = `01 9e 07 40 00 01 06`,
+/// `added{DAMAGE:12345,CUSTOM_NAME:-99} removed{CUSTOM_NAME}` =
+/// `01 9e 07 40 02 03 00 00 30 39 06 ff ff ff 9d 01 06`,
+/// `added{DAMAGE:123456789}` = `01 9e 07 40 01 03 07 5b cd 15 00`
+/// (DAMAGE = component-type id 3, CUSTOM_NAME = 6 — this boot's own
+/// registry order).
 fn write_hashed_stack(out: &mut Vec<u8>, stack: &HashedStack) -> Result<()> {
     match stack {
         HashedStack::Empty => out.push(0),
-        HashedStack::ActualItem { item_id, count } => {
+        HashedStack::ActualItem {
+            item_id,
+            count,
+            patch,
+        } => {
             out.push(1);
             write_varint(out, *item_id);
             write_varint(out, *count);
-            out.push(0);
-            out.push(0);
+            write_varint(out, patch.added.len() as i32);
+            for (ty, hash) in &patch.added {
+                write_varint(out, *ty);
+                out.extend_from_slice(&hash.to_be_bytes());
+            }
+            write_varint(out, patch.removed.len() as i32);
+            for ty in &patch.removed {
+                write_varint(out, *ty);
+            }
         }
     }
     Ok(())
@@ -6203,6 +6283,15 @@ mod tests {
     use crate::varint::write_string;
     use std::net::TcpListener;
     use std::thread::JoinHandle;
+
+    /// The isolated HashedStack lane's encoder (the write mirror's test
+    /// surface — the packet is the real unit, the lane's bytes are the
+    /// dump's own fixtures).
+    fn encode_hashed_stack(stack: &HashedStack) -> Result<Vec<u8>> {
+        let mut p = Vec::new();
+        write_hashed_stack(&mut p, stack)?;
+        Ok(p)
+    }
 
     #[test]
     fn play_ids_are_the_generated_runtime_facts() {
@@ -9882,8 +9971,8 @@ mod tests {
             slot: 13,
             button: 1,
             input: ContainerInput::Pickup,
-            changed_slots: vec![(7, HashedStack::ActualItem { item_id: 926, count: 3 })],
-            carried: HashedStack::ActualItem { item_id: 921, count: 1 },
+            changed_slots: vec![(7, HashedStack::item(926, 3))],
+            carried: HashedStack::item(921, 1),
         })
         .unwrap();
         assert_eq!(
@@ -9913,6 +10002,129 @@ mod tests {
         );
         // the close: the window id alone
         assert_eq!(encode_container_close(2), vec![0x13, 0x02]);
+    }
+
+    /// The HashedStack's FULL patch lane — the non-empty shapes the
+    /// container-click round's dump left unrepresentable. The checked-in
+    /// `ReflectHashedStack.java` built `HashedStack.ActualItem(Holder,
+    /// count, HashedPatchMap)` records over REAL DataComponentTypes (the
+    /// codec RESOLVES the keys through the data_component_type registry —
+    /// the synthetic int key was refused) and serialized them through the
+    /// jar's own STREAM_CODEC — the hex below is that dump, byte for
+    /// byte. The deliberate hash values double as WIDTH probes: a
+    /// negative hash and a large one refuse a VarInt reading — the hash
+    /// lane is a FIXED BIG-ENDIAN int32.
+    #[test]
+    fn the_hashed_patch_lane_speaks_the_dumped_wire() {
+        // the record shapes, straight from the running classes
+        // (`HashedStack.ActualItem record components: Holder item, int
+        // count, HashedPatchMap components` / `HashedPatchMap record
+        // components: Map addedComponents, Set removedComponents` — the
+        // dump's own lines; this boot pins DAMAGE = 3, CUSTOM_NAME = 6)
+        // the baseline: diamond x64 with the EMPTY patch — the same
+        // shape every default-component stack rides (`01 9e 07 40 00 00`)
+        let p = encode_hashed_stack(&HashedStack::item(926, 64)).unwrap();
+        assert_eq!(
+            p,
+            vec![0x01, 0x9e, 0x07, 0x40, 0x00, 0x00],
+            "the empty patch, byte-equal to the dump"
+        );
+        // added{DAMAGE:12345}: the type id as a VarInt + the hash as a
+        // FIXED BE int32 (`01 9e 07 40 01 03 00 00 30 39 00`)
+        let p = encode_hashed_stack(&HashedStack::ActualItem {
+            item_id: 926,
+            count: 64,
+            patch: HashedPatchMap::added(3, 12345),
+        })
+        .unwrap();
+        assert_eq!(
+            p,
+            vec![
+                0x01, 0x9e, 0x07, 0x40, 0x01, 0x03, 0x00, 0x00, 0x30, 0x39, 0x00
+            ],
+            "the added-only patch, byte-equal to the dump"
+        );
+        // removed{CUSTOM_NAME}: the type ids as plain VarInts
+        // (`01 9e 07 40 00 01 06`)
+        let p = encode_hashed_stack(&HashedStack::ActualItem {
+            item_id: 926,
+            count: 64,
+            patch: HashedPatchMap {
+                added: Vec::new(),
+                removed: vec![6],
+            },
+        })
+        .unwrap();
+        assert_eq!(
+            p,
+            vec![0x01, 0x9e, 0x07, 0x40, 0x00, 0x01, 0x06],
+            "the removed-only patch, byte-equal to the dump"
+        );
+        // added{DAMAGE:12345,CUSTOM_NAME:-99} removed{CUSTOM_NAME}: the
+        // negative probe — the hash rides `ff ff ff 9d`, the two's-
+        // complement BE int32, NOT a VarInt's sign extension
+        // (`01 9e 07 40 02 03 00 00 30 39 06 ff ff ff 9d 01 06`)
+        let p = encode_hashed_stack(&HashedStack::ActualItem {
+            item_id: 926,
+            count: 64,
+            patch: HashedPatchMap {
+                added: vec![(3, 12345), (6, -99)],
+                removed: vec![6],
+            },
+        })
+        .unwrap();
+        assert_eq!(
+            p,
+            vec![
+                0x01, 0x9e, 0x07, 0x40, 0x02, 0x03, 0x00, 0x00, 0x30, 0x39, 0x06, 0xff, 0xff,
+                0xff, 0x9d, 0x01, 0x06
+            ],
+            "the two-lane patch with the negative probe, byte-equal to the dump"
+        );
+        // added{DAMAGE:123456789}: the large probe — the hash rides
+        // `07 5b cd 15`, refusing the 1-2 byte VarInt reading
+        // (`01 9e 07 40 01 03 07 5b cd 15 00`)
+        let p = encode_hashed_stack(&HashedStack::ActualItem {
+            item_id: 926,
+            count: 64,
+            patch: HashedPatchMap::added(3, 123456789),
+        })
+        .unwrap();
+        assert_eq!(
+            p,
+            vec![
+                0x01, 0x9e, 0x07, 0x40, 0x01, 0x03, 0x07, 0x5b, 0xcd, 0x15, 0x00
+            ],
+            "the large-value probe, byte-equal to the dump"
+        );
+        // and the patch rides INSIDE the packet unchanged: one changed
+        // slot carrying the added-only stack, the carried lane empty
+        let p = encode_container_click(&ContainerClick {
+            container_id: 2,
+            state_id: 7,
+            slot: 13,
+            button: 0,
+            input: ContainerInput::Pickup,
+            changed_slots: vec![(9, HashedStack::ActualItem {
+                item_id: 926,
+                count: 64,
+                patch: HashedPatchMap::added(3, 12345),
+            })],
+            carried: HashedStack::Empty,
+        })
+        .unwrap();
+        assert_eq!(
+            p,
+            vec![
+                0x12, 0x02, 0x07, 0x00, 0x0d, // header + the BE short slot
+                0x00, 0x00, // the button + the PICKUP ordinal
+                0x01, // one delta
+                0x00, 0x09, // the delta's SHORT slot 9
+                0x01, 0x9e, 0x07, 0x40, 0x01, 0x03, 0x00, 0x00, 0x30, 0x39, 0x00, // the stack
+                0x00, // the carried lane's emptiness
+            ],
+            "the non-empty patch inside the full packet"
+        );
     }
 
     /// The hotbar's selection packet (generated id 105): the ONE-lane
