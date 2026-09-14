@@ -919,6 +919,75 @@ hand-drawn:
   (VILLAGER_DATA at 18 doubles as the order proof), the generated-id
   pin, and the model's merge semantics (replace-one-leave-others, the
   null-lookup drop, the re-spawn reset).
+  The **the first-person body — the look curve, the travel physics, the collision sweep, the movement wire (v0.3.146)**:
+  the movement round — the client's player now WALKS like the original
+  walks. The javap evidence pins every law from the cached jar's
+  Mojang-mapped classes: `MouseHandler.turnPlayer` + `Entity.turn` (the
+  look curve: `f = sensitivity * 0.6 + 0.2` cubed, `* 8.0`, `* 0.15`
+  degrees per pixel — the default slider's famous 0.15 deg/px; the
+  pitch clamped to ±90), `KeyboardInput.tick` (the ±1 impulses, the
+  move vector `Vec2(left, forward).normalized()`), `LivingEntity.
+  travelInAir` + `getFrictionInfluencedSpeed` (the ground impulse is
+  the attribute directly at friction 0.6 — the 0.216/f³ cube law only
+  past 0.6, the ice branch our vocabulary never speaks; the air
+  control is the flyingSpeed 0.02; the horizontal drag
+  `friction * 0.91` = 0.546 on the ground, the vertical `* 0.98` with
+  the gravity 0.08 subtracted before it — the drag scales the CARRIED
+  velocity while the move integrates the carried + impulse, the
+  equilibrium walk 0.2203 blocks/tick = the vanilla ~4.4 m/s),
+  `LivingEntity.jumpFromGround` + the aiStep gate (`dy = max(dy, 0.42)`
+  JUMP_STRENGTH, the sprint's look-direction 0.2 boost
+  `(-sin(yaw)*0.2, 0, cos(yaw)*0.2)`, the 10-tick noJumpDelay repeat),
+  `LivingEntity.setSprinting` (the modifier 0.3 ADD_MULTIPLIED_TOTAL:
+  walk 0.1 -> 0.13; the sneak's SNEAKING_SPEED 0.3 the same operation
+  -> 0.07; the using-item slowdown 0.2 — the bow pull walks at 20%),
+  `Avatar.POSES` verbatim (the crouch pose `scalable(0.6, 1.5)`, eye
+  1.27; the un-crouch refused while the standing box does not fit),
+  `Entity.collide` + `collideWithShapes` + `Direction.axisStepOrder` +
+  `Shapes.collide` (the axis order Y FIRST, then the dominant
+  horizontal — `|dx| >= |dz|` -> X else Z; the per-shape clip to the
+  contact face; the already-intersecting cell stops the movement; the
+  restitution zeroes the collided components — the non-bouncy
+  player's `restituteMovementAfterCollisions` verdict — so the wall
+  slides on the tangent axis and the resting vy rides the −0.0784
+  rhythm), `Entity.maybeBackOffFromEdge` (the sneak edge-guard: the
+  movement that would leave no floor within maxUpStep 0.6 zeroes in
+  0.05 steps — the X probe, the Z probe, the joint diagonal probe),
+  and `LocalPlayer.sendPosition` (the wire dispatch: the position
+  changed iff `Mth.lengthSquared > Mth.square(2.0E-4)` or the
+  position reminder hit 20; the rotation changed iff either angle
+  differs; both -> PosRot, pos -> Pos, rot -> Rot, else the ground/
+  collision change -> StatusOnly). The wire: the four
+  ServerboundMovePlayer packets (the generated ids 30..=33, the
+  status byte `packFlags` verbatim — bit 0 on ground, bit 1
+  horizontal collision — hex-pinned) + `PlaySession::move_player_*`
+  + the ContainerCommand::Move* commands riding the use arc's own
+  channel. The client: `body.rs` — the PlayerBody (f64 physics, the
+  vanilla angle conventions, the camera conversion the snapshot
+  inverse speaks); the windowed world screen hides the cursor (the
+  pointer-lock stand-in over minifb's raw Pass stream), feeds the
+  mouse deltas + the WASD/Space/Shift/Ctrl keys per frame, and the
+  body ticks in update()'s frame==tick model; the OFFLINE world
+  spawns its body on the first solid cell below the spawn height
+  (the vanilla getSpawnPos law — the fluid surface never spawns a
+  body); the NETWORKED body materializes from the join's teleport
+  pose and re-anchors ONLY when the shipped pose CHANGES (the server
+  never echoes plain moves — the prediction stands until the
+  correction lands); the pause freezes the body (the vanilla's own
+  law) and every headless scene never feeds one — the deterministic
+  camera discipline stays bit for bit. +18 tests (557 passed /
+  0 failed / 3 ignored): the look curve (0.15 deg/px at the default,
+  the pitch clamp, the sensitivity endpoints), the fall/land/ground
+  flag, the walk equilibrium (the carried 0.1203 + the move 0.2203),
+  the diagonal normalization, the wall stop at the face, the ceiling
+  stop, the jump arc + the delay gate, the sprint boost direction,
+  the attribute folds, the sneak edge-guard, the crouch-stand law,
+  the wire dispatch + the 20-tick reminder, the camera conversion
+  round trip, the four-lane wire hex, the App's spawn/look/walk/
+  freeze arc and the teleport re-anchor discipline. GOLDENS 13/13 —
+  ALL rms 0.000, every golden byte-identical: the body lane is
+  interaction-gated (the deterministic scenes never press keys, the
+  flight camera stands) — NO regen.
   The **the block-use lane — the crosshair clip + the placement prediction + the Use Item On wire (v0.3.145)**:
   the use arc's BLOCK half, end to end. The javap evidence pins every
   law: `FriendlyByteBuf.writeBlockHitResult` (the BlockPos as the BE

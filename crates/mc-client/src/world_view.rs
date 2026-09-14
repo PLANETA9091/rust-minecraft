@@ -391,6 +391,37 @@ pub enum ContainerCommand {
     /// The use RELEASE (the vanilla gameMode.releaseUsingItem's own
     /// echo — the RELEASE_USE_ITEM action at BlockPos.ZERO / DOWN).
     ReleaseUse,
+    /// The movement wire (the body's sendPosition dispatch): one of the
+    /// four ServerboundMovePlayer packets the tick named. The body's
+    /// own bookkeeping decides WHICH (the 2.0E-4 law, the 20-tick
+    /// reminder, the ground/collision StatusOnly); the worker speaks
+    /// the packet through the session's send path.
+    MovePosRot {
+        x: f64,
+        y: f64,
+        z: f64,
+        yaw: f32,
+        pitch: f32,
+        on_ground: bool,
+        horizontal_collision: bool,
+    },
+    MovePos {
+        x: f64,
+        y: f64,
+        z: f64,
+        on_ground: bool,
+        horizontal_collision: bool,
+    },
+    MoveRot {
+        yaw: f32,
+        pitch: f32,
+        on_ground: bool,
+        horizontal_collision: bool,
+    },
+    MoveStatus {
+        on_ground: bool,
+        horizontal_collision: bool,
+    },
 }
 
 /// The camera's pose in the VANILLA wire degrees — the inverse of

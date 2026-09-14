@@ -8,6 +8,7 @@
 //!   --screen S      headless GUI screenshot: loading|title|servers|options|world|worldnight|pause|chest
 
 mod audio;
+mod body;
 mod build_info;
 mod camera;
 mod colors;

@@ -361,6 +361,17 @@ pub struct App {
     /// computed fallback until a pose arrives). The placement lane's
     /// clip aims through it.
     pub offline_camera: Option<crate::camera::Camera>,
+    /// THE FIRST-PERSON BODY — the vanilla player's own look, input,
+    /// travel and collision lane (body.rs, the javap laws).
+    /// `None` = the deterministic camera discipline (the headless
+    /// scenes and the pixel goldens never feed a body — the flight
+    /// camera stands untouched). The WINDOWED app materializes it when
+    /// the world screen stands (the offline spawn pose, or the join
+    /// teleport's pose through live_view_updated's re-anchor), feeds
+    /// the mouse deltas + the movement keys per frame, and the tick
+    /// rides update()'s frame==tick model — the wire echoing through
+    /// the same command channel the use arc rides.
+    pub body: Option<crate::body::PlayerBody>,
     /// The chest screen's 27 container slots as (item_id, count) — the
     /// wire's own stack shape (count <= 0 is the empty stack), the FIXED
     /// deterministic loadout the pixel test pins. Filled by open_chest
@@ -541,6 +552,7 @@ impl App {
             offline_world: None,
             offline_held: None,
             offline_camera: None,
+            body: None,
             chest_slots: Vec::new(),
             chest_mirror: Vec::new(),
             chest_is_live: false,
@@ -598,6 +610,31 @@ impl App {
         }
         if let Some((id, idx)) = reload {
             self.load_held_payload(id, Some(idx));
+        }
+        // THE BODY TICK (the frame==tick model the swing/use clocks
+        // speak): the vanilla travel on the ACTIVE world's voxels, the
+        // wire echoing through the same command channel the use arc
+        // rides. The pause freezes the body (the vanilla pause's own
+        // law); the headless scenes never feed one (the goldens stay).
+        if self.screen == ScreenKind::World && !self.paused {
+            let using = self.using_item.is_some();
+            // the disjoint field borrows: the body mutates while the
+            // level reads (the borrow checker splits the fields)
+            if let Some(b) = self.body.as_mut() {
+                let world: Option<&crate::world::World> = if self.world_is_network {
+                    self.net_world.as_ref()
+                } else {
+                    self.offline_world.as_ref()
+                };
+                if let Some(w) = world {
+                    b.tick(w, using);
+                    if let Some(cmd) = b.take_move_wire().map(Self::move_wire_command) {
+                        if let Some(sink) = self.live_clicks.as_ref() {
+                            let _ = sink.send(cmd);
+                        }
+                    }
+                }
+            }
         }
     }
 
@@ -1197,6 +1234,9 @@ impl App {
                         self.world_is_network = false;
                         self.net_camera = None;
                         self.net_biome = None;
+                        // the body drops with the level (the next join's
+                        // teleport pose materializes a fresh one)
+                        self.body = None;
                         self.close_all_live_runs();
                     }
                     self.open(ScreenKind::Title);
@@ -1449,8 +1489,27 @@ impl App {
         if !self.world_is_network {
             return;
         }
-        self.net_world = Some(world);
+        // THE BODY RE-ANCHOR (the vanilla SynchronizePlayerPosition's
+        // own authority): the shipped pose is the server's teleport
+        // lane — when it CHANGES (or the body never stood) the body
+        // re-baselines at it; the body's own walking never rides this
+        // (the server does not echo plain moves — the prediction
+        // stands until the server corrects).
+        let teleport = self.net_camera.is_none() || self.net_camera != camera;
         self.net_camera = camera;
+        if let Some(cam) = camera {
+            if teleport || self.body.is_none() {
+                let (yaw, pitch) = crate::world_view::wire_angles(&cam);
+                self.body = Some(crate::body::PlayerBody::new(
+                    cam.pos.x as f64,
+                    (cam.pos.y - crate::world_view::PLAYER_EYE_HEIGHT) as f64,
+                    cam.pos.z as f64,
+                    yaw,
+                    pitch,
+                ));
+            }
+        }
+        self.net_world = Some(world);
         if let Some(b) = biome {
             if self.net_biome.as_deref() != Some(b.as_str()) {
                 self.net_biome = Some(b.clone());
@@ -1473,6 +1532,137 @@ impl App {
     /// aims through the same pose.
     pub fn offline_camera_updated(&mut self, cam: crate::camera::Camera) {
         self.offline_camera = Some(cam);
+    }
+
+    /// THE OFFLINE BODY SPAWN (the windowed loop's own call once the
+    /// world screen stands): the feet on the procedural surface at the
+    /// spawn column's center, the flight camera's east-facing angles —
+    /// the body then OWNS the windowed pose (the vanilla
+    /// singleplayer's own spawn discipline). No-op when a body already
+    /// stands or the screen shows the network world (its body lands
+    /// through live_view_updated's re-anchor). The headless scenes
+    /// never call this — the goldens' flight camera stays.
+    pub fn spawn_offline_body(&mut self) {
+        if self.body.is_some() || self.world_is_network || self.world_size <= 0 {
+            return;
+        }
+        let n = self.world_size as f64;
+        // THE SPAWN LAW (the vanilla getSpawnPos's own discipline): the
+        // feet stand on the first SOLID cell below the recorded spawn
+        // height — the fluid surface never spawns a body (it sinks).
+        // The scan walks the world-center column down from spawn_y.
+        let (cx, cz) = (self.world_size / 2, self.world_size / 2);
+        let mut feet_y = self.spawn_y;
+        if let Some(w) = self.offline_world.as_ref() {
+            let mut y = self.spawn_y - 1;
+            while y >= 0 {
+                let id = w.get(cx, y, cz);
+                if id != crate::world::AIR && id != crate::world::WATER {
+                    feet_y = y + 1;
+                    break;
+                }
+                y -= 1;
+            }
+        }
+        let (yaw, pitch) = crate::world_view::wire_angles(&self.world_camera());
+        self.body = Some(crate::body::PlayerBody::new(
+            n / 2.0,
+            feet_y as f64,
+            n / 2.0,
+            yaw,
+            pitch,
+        ));
+    }
+
+    /// The look deltas (the windowed loop's per-frame feed — the mouse
+    /// stream the vanilla MouseHandler speaks): the body turns through
+    /// the turnPlayer curve (the sensitivity 0.5 slider, the famous
+    /// 0.15 deg/px). No-op without a body (the headless scenes) or
+    /// while paused (the pause freezes the look — the vanilla's own
+    /// pause law).
+    pub fn on_look_delta(&mut self, dx: f64, dy: f64) {
+        if self.screen == ScreenKind::World && !self.paused {
+            if let Some(b) = self.body.as_mut() {
+                b.turn(dx, dy, crate::body::LOOK_SENSITIVITY_DEFAULT);
+            }
+        }
+    }
+
+    /// The movement keys (the windowed loop's per-frame feed): the
+    /// impulses (the KeyboardInput's own ±1 shape) and the state keys
+    /// the body's tick consumes. The SPRINT gate is the vanilla
+    /// canStartSprinting's own core: the forward impulse past 0.8, the
+    /// crouch refused.
+    pub fn on_movement_input(
+        &mut self,
+        forward: f32,
+        left: f32,
+        jump: bool,
+        crouch: bool,
+        sprint: bool,
+    ) {
+        if let Some(b) = self.body.as_mut() {
+            b.forward = forward;
+            b.left = left;
+            b.jumping = jump;
+            b.want_crouch = crouch;
+            b.sprinting = sprint && forward > 0.8 && !crouch;
+        }
+    }
+
+    /// The body's sendPosition dispatch -> the wire command (the
+    /// container channel's own ride).
+    fn move_wire_command(w: crate::body::MoveWire) -> crate::world_view::ContainerCommand {
+        match w {
+            crate::body::MoveWire::PosRot {
+                x,
+                y,
+                z,
+                yaw,
+                pitch,
+                on_ground,
+                horizontal_collision,
+            } => crate::world_view::ContainerCommand::MovePosRot {
+                x,
+                y,
+                z,
+                yaw,
+                pitch,
+                on_ground,
+                horizontal_collision,
+            },
+            crate::body::MoveWire::Pos {
+                x,
+                y,
+                z,
+                on_ground,
+                horizontal_collision,
+            } => crate::world_view::ContainerCommand::MovePos {
+                x,
+                y,
+                z,
+                on_ground,
+                horizontal_collision,
+            },
+            crate::body::MoveWire::Rot {
+                yaw,
+                pitch,
+                on_ground,
+                horizontal_collision,
+            } => crate::world_view::ContainerCommand::MoveRot {
+                yaw,
+                pitch,
+                on_ground,
+                horizontal_collision,
+            },
+            crate::body::MoveWire::StatusOnly {
+                on_ground,
+                horizontal_collision,
+            } => crate::world_view::ContainerCommand::MoveStatus {
+                on_ground,
+                horizontal_collision,
+            },
+        }
     }
 
     /// The OFFLINE held-item lane — the `--held-item` model id's own
@@ -1747,6 +1937,7 @@ impl App {
         self.world_is_network = false;
         self.net_camera = None;
         self.net_biome = None;
+        self.body = None; // the level's body drops with it
         self.close_all_live_runs();
         self.open(ScreenKind::Disconnect);
     }
@@ -1802,6 +1993,13 @@ impl App {
     /// official 26.x sun rises), the exact camera the headless pixel
     /// tests pin.
     fn world_camera(&self) -> crate::camera::Camera {
+        // THE BODY's own pose first — the first-person body the windowed
+        // app feeds is the camera's highest authority (the vanilla
+        // client's own position); the deterministic scenes never own a
+        // body and keep the disciplines below bit for bit
+        if let Some(body) = &self.body {
+            return body.camera();
+        }
         if self.world_is_network {
             if let Some(pose) = self.net_camera {
                 return pose;
@@ -5031,5 +5229,145 @@ mod tests {
             let mut assets = GuiAssets::open("assets-cache/jar");
             self.render(&mut fb, &mut assets);
         }
+    }
+
+    /// THE FIRST-PERSON BODY: the offline spawn, the look curve through
+    /// the App's own feed, the walk tick on the procedural voxels, and
+    /// the pause freeze (the vanilla pause's own law).
+    #[test]
+    fn the_body_spawns_walks_and_freezes_with_the_pause() {
+        let mut app = App::new(3);
+        app.enter_world();
+        assert!(app.body.is_none(), "the headless discipline: no body until fed");
+        app.spawn_offline_body();
+        let body = app.body.as_ref().expect("the offline body spawned");
+        // the feet ON the procedural surface at the spawn column's
+        // center, facing the flight camera's east
+        let n = app.world_size as f64;
+        assert_eq!(body.x, n / 2.0);
+        assert_eq!(body.z, n / 2.0);
+        assert!(
+            body.y <= app.spawn_y as f64,
+            "the feet at or below the recorded spawn height (the lake law)"
+        );
+        // THE LOOK: the App feed turns the body through the curve
+        let yaw_before = app.body.as_ref().unwrap().yaw;
+        app.on_look_delta(10.0, 0.0);
+        let turned = app.body.as_ref().unwrap().yaw - yaw_before;
+        assert!(
+            (turned - 1.5).abs() < 1e-4,
+            "10 px at the default sensitivity = 1.5 degrees, got {}",
+            turned
+        );
+        // THE WALK: the forward key feeds, the update ticks the travel,
+        // the camera moves south-ish (yaw east -> the forward is +X)
+        app.on_movement_input(1.0, 0.0, false, false, false);
+        let x_before = app.body.as_ref().unwrap().x;
+        for _ in 0..12 {
+            app.update();
+        }
+        let b = app.body.as_ref().unwrap();
+        assert!(b.x > x_before, "the east-facing walk moved +X ({x_before} -> {})", b.x);
+        assert!(b.on_ground, "the walk stayed on the terrain");
+        // THE PAUSE: the freeze (no tick, no move)
+        app.paused = true;
+        let (x, y, z) = (b.x, b.y, b.z);
+        app.on_movement_input(1.0, 0.0, true, false, false);
+        for _ in 0..10 {
+            app.update();
+        }
+        let b = app.body.as_ref().unwrap();
+        assert_eq!(b.x, x, "the paused body never moves (x)");
+        assert_eq!(b.y, y, "the paused body never moves (y)");
+        assert_eq!(b.z, z, "the paused body never moves (z)");
+    }
+
+    /// THE NETWORKED BODY: the join's teleport pose materializes the
+    /// body; the plain refreshes (the same pose re-shipped) never
+    /// re-anchor it; a CHANGED pose (the server's correction) does.
+    #[test]
+    fn the_body_reanchors_on_the_teleport_and_holds_the_prediction() {
+        let mut app = App::new(3);
+        app.net_world = Some(crate::world::World {
+            chunks_per_side: 2,
+            seed: 0,
+            chunks: vec![
+                vec![crate::world::AIR; crate::world::CHUNK_X * crate::world::CHUNK_Y * crate::world::CHUNK_Z];
+                4
+            ],
+            light: None,
+            day_tick: None,
+            biomes: None,
+            variants: None,
+            ambient_light: None,
+            block_light_tint: None,
+            sky_light_factor: None,
+            sky_light_color: None,
+            night_vision_color: None,
+            night_vision_factor: 0.0,
+        });
+        app.net_world.as_mut().unwrap().set(8, 0, 8, crate::world::STONE);
+        app.enter_network_world(None, Skybox::Overworld, None, None);
+        assert!(app.body.is_none(), "no body until the first pose ships");
+        let cam = crate::camera::Camera {
+            pos: Vec3::new(8.5, 1.0 + crate::world_view::PLAYER_EYE_HEIGHT, 8.5),
+            yaw: 0.0,
+            pitch: 0.0,
+        };
+        app.live_view_updated(
+            app.net_world.clone().unwrap(),
+            Some(cam),
+            None,
+            None,
+        );
+        let b = app.body.as_ref().expect("the teleport pose materialized the body");
+        assert_eq!(b.x, 8.5);
+        assert!(
+            (b.y - 1.0).abs() < 1e-4,
+            "the feet anchor below the 1.62 eye (the f32 camera cast)"
+        );
+        assert_eq!(b.z, 8.5);
+        // the prediction: walk forward (the camera yaw 0 = the vanilla
+        // -180 = facing -Z); the same-pose refresh holds it
+        app.on_movement_input(1.0, 0.0, false, false, false);
+        for _ in 0..10 {
+            app.update();
+        }
+        let walked_z = app.body.as_ref().unwrap().z;
+        assert!(
+            walked_z < 8.5,
+            "the body walked its own prediction (z {})",
+            walked_z
+        );
+        app.live_view_updated(
+            app.net_world.clone().unwrap(),
+            Some(cam),
+            None,
+            None,
+        );
+        assert_eq!(
+            app.body.as_ref().unwrap().z,
+            walked_z,
+            "the plain refresh never re-anchors (the server does not echo plain moves)"
+        );
+        // the CHANGED pose: the server's correction lands
+        let corrected = crate::camera::Camera {
+            pos: Vec3::new(20.5, 2.0 + crate::world_view::PLAYER_EYE_HEIGHT, 20.5),
+            yaw: 1.0,
+            pitch: 0.0,
+        };
+        app.live_view_updated(
+            app.net_world.clone().unwrap(),
+            Some(corrected),
+            None,
+            None,
+        );
+        let b = app.body.as_ref().unwrap();
+        assert_eq!(b.x, 20.5, "the correction re-baselines the body");
+        assert!(
+            (b.y - 2.0).abs() < 1e-4,
+            "the corrected feet anchor (the f32 cast): {}",
+            b.y
+        );
     }
 }

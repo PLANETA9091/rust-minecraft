@@ -333,6 +333,39 @@ fn run_join(
                             use_sequence += 1;
                             session.release_use_item(use_sequence)
                         }
+                        crate::world_view::ContainerCommand::MovePosRot {
+                            x,
+                            y,
+                            z,
+                            yaw,
+                            pitch,
+                            on_ground,
+                            horizontal_collision,
+                        } => {
+                            // THE MOVEMENT WIRE (the body's sendPosition
+                            // dispatch): the position AND the rotation
+                            // this tick named
+                            session.move_player_pos_rot(
+                                x, y, z, yaw, pitch, on_ground, horizontal_collision,
+                            )
+                        }
+                        crate::world_view::ContainerCommand::MovePos {
+                            x,
+                            y,
+                            z,
+                            on_ground,
+                            horizontal_collision,
+                        } => session.move_player_pos(x, y, z, on_ground, horizontal_collision),
+                        crate::world_view::ContainerCommand::MoveRot {
+                            yaw,
+                            pitch,
+                            on_ground,
+                            horizontal_collision,
+                        } => session.move_player_rot(yaw, pitch, on_ground, horizontal_collision),
+                        crate::world_view::ContainerCommand::MoveStatus {
+                            on_ground,
+                            horizontal_collision,
+                        } => session.move_player_status_only(on_ground, horizontal_collision),
                     };
                     if let Err(e) = sent {
                         // a send failure is a transport error: a framed
@@ -430,6 +463,12 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
     let mut net_seen = 0usize; // cursor into the append-only request log
     let mut was_left_down = false; // the attack edge detector (vanilla left-click = swing)
     let mut was_right_down = false; // the right press's edge detector (the split-stack lane)
+    // THE FIRST-PERSON BODY's per-frame state: the previous raw mouse
+    // position (the delta look's own stream — None = re-arm without a
+    // turn) and the world-screen edge detector (the cursor hides
+    // in-world like the vanilla pointer-lock, shows on every menu)
+    let mut prev_mouse: Option<(f32, f32)> = None;
+    let mut was_in_world = false;
     // offline-mode joins ride the same architecture: the "join" button
     // records the request, a detached worker runs the live join (login +
     // configuration + the play state pumped to the world-load milestone,
@@ -524,6 +563,44 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
             app.on_right_release();
         }
         was_right_down = right_down;
+        // THE FIRST-PERSON BODY (the vanilla in-world input discipline):
+        // the world screen hides the cursor (the pointer-lock stand-in —
+        // minifb has no grab, the raw Pass stream stands in), the mouse
+        // deltas turn the body through the turnPlayer curve, the WASD /
+        // Space / Shift / Ctrl keys speak the movement impulses, and the
+        // OFFLINE world spawns its body at the surface once the screen
+        // stands (the networked body rides the teleport re-anchor). The
+        // pause and every menu show the cursor and freeze the lanes —
+        // the vanilla's own pause law.
+        let in_world = app.screen == crate::screens::ScreenKind::World && !app.paused;
+        if in_world != was_in_world {
+            window.set_cursor_visibility(!in_world);
+            prev_mouse = None; // re-arm the delta stream (no jump on entry)
+            was_in_world = in_world;
+        }
+        if in_world && app.body.is_none() && !app.world_is_network {
+            app.spawn_offline_body();
+        }
+        if in_world {
+            if let Some((x, y)) = window.get_mouse_pos(minifb::MouseMode::Pass) {
+                if let Some((px, py)) = prev_mouse {
+                    app.on_look_delta((x - px) as f64, (y - py) as f64);
+                }
+                prev_mouse = Some((x, y));
+            } else {
+                prev_mouse = None;
+            }
+            let fwd = (window.is_key_down(Key::W) as i32 - window.is_key_down(Key::S) as i32) as f32;
+            let strafe =
+                (window.is_key_down(Key::A) as i32 - window.is_key_down(Key::D) as i32) as f32;
+            app.on_movement_input(
+                fwd,
+                strafe,
+                window.is_key_down(Key::Space),
+                window.is_key_down(Key::LeftShift),
+                window.is_key_down(Key::LeftCtrl),
+            );
+        }
         app.update();
         // dispatch newly requested server-list pings to worker threads
         for req in &app.net_requests[net_seen..] {

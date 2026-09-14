@@ -118,6 +118,8 @@ pub mod serverbound {
         SB_ACCEPT_TELEPORTATION as CONFIRM_TELEPORTATION,
         SB_CHUNK_BATCH_RECEIVED as CHUNK_BATCH_RECEIVED, SB_CONTAINER_CLICK as CONTAINER_CLICK,
         SB_CONTAINER_CLOSE as CONTAINER_CLOSE, SB_KEEP_ALIVE as KEEP_ALIVE, SB_PONG as PONG,
+        SB_MOVE_PLAYER_POS as MOVE_PLAYER_POS, SB_MOVE_PLAYER_POS_ROT as MOVE_PLAYER_POS_ROT,
+        SB_MOVE_PLAYER_ROT as MOVE_PLAYER_ROT, SB_MOVE_PLAYER_STATUS_ONLY as MOVE_PLAYER_STATUS_ONLY,
         SB_PLAYER_ACTION as PLAYER_ACTION, SB_SET_CARRIED_ITEM as SET_CARRIED_ITEM,
         SB_USE_ITEM as USE_ITEM, SB_USE_ITEM_ON as USE_ITEM_ON,
     };
@@ -5087,6 +5089,69 @@ pub fn encode_player_action_release(sequence: i32) -> Vec<u8> {
     p
 }
 
+/// The movement wire — the four ServerboundMovePlayer packets (generated
+/// ids 30..=33: `minecraft:move_player_pos` 30, `move_player_pos_rot` 31,
+/// `move_player_rot` 32, `move_player_status_only` 33). THE WIRE (javap
+/// of the real 26.2 class, the STREAM_CODEC reads): the three position
+/// doubles BE when the packet carries position (`hasPos`), the two
+/// rotation floats BE when it carries rotation (`hasRot`), then the
+/// STATUS BYTE — `packFlags(onGround, horizontalCollision)` verbatim:
+/// bit 0 = on ground, bit 1 = horizontal collision (the unpack
+/// `iand 1` / `iand 2` laws). The dispatch law rides
+/// `LocalPlayer.sendPosition` (the body's bookkeeping — the caller
+/// speaks WHICH packet this tick named through that law).
+pub fn encode_move_player_pos_rot(
+    x: f64,
+    y: f64,
+    z: f64,
+    yaw: f32,
+    pitch: f32,
+    on_ground: bool,
+    horizontal_collision: bool,
+) -> Vec<u8> {
+    let mut p = Vec::with_capacity(34);
+    write_varint(&mut p, serverbound::MOVE_PLAYER_POS_ROT);
+    p.extend_from_slice(&x.to_be_bytes());
+    p.extend_from_slice(&y.to_be_bytes());
+    p.extend_from_slice(&z.to_be_bytes());
+    p.extend_from_slice(&yaw.to_be_bytes());
+    p.extend_from_slice(&pitch.to_be_bytes());
+    p.push(move_flags(on_ground, horizontal_collision));
+    p
+}
+
+pub fn encode_move_player_pos(x: f64, y: f64, z: f64, on_ground: bool, horizontal_collision: bool) -> Vec<u8> {
+    let mut p = Vec::with_capacity(26);
+    write_varint(&mut p, serverbound::MOVE_PLAYER_POS);
+    p.extend_from_slice(&x.to_be_bytes());
+    p.extend_from_slice(&y.to_be_bytes());
+    p.extend_from_slice(&z.to_be_bytes());
+    p.push(move_flags(on_ground, horizontal_collision));
+    p
+}
+
+pub fn encode_move_player_rot(yaw: f32, pitch: f32, on_ground: bool, horizontal_collision: bool) -> Vec<u8> {
+    let mut p = Vec::with_capacity(10);
+    write_varint(&mut p, serverbound::MOVE_PLAYER_ROT);
+    p.extend_from_slice(&yaw.to_be_bytes());
+    p.extend_from_slice(&pitch.to_be_bytes());
+    p.push(move_flags(on_ground, horizontal_collision));
+    p
+}
+
+pub fn encode_move_player_status_only(on_ground: bool, horizontal_collision: bool) -> Vec<u8> {
+    let mut p = Vec::with_capacity(2);
+    write_varint(&mut p, serverbound::MOVE_PLAYER_STATUS_ONLY);
+    p.push(move_flags(on_ground, horizontal_collision));
+    p
+}
+
+/// The status byte — `ServerboundMovePlayerPacket.packFlags` verbatim:
+/// `(onGround ? 1 : 0) | (horizontalCollision ? 2 : 0)`.
+fn move_flags(on_ground: bool, horizontal_collision: bool) -> u8 {
+    (if on_ground { 1 } else { 0 }) | (if horizontal_collision { 2 } else { 0 })
+}
+
 // ---------------------------------------------------------------------------
 // the session pump
 // ---------------------------------------------------------------------------
@@ -5878,6 +5943,44 @@ impl<S: Read + Write> PlaySession<S> {
         self.conn
             .send_packet(&encode_player_action_release(sequence))
             .context("send release use item")
+    }
+
+    /// The movement wire — the body's sendPosition dispatch speaks one
+    /// of the four Move Player packets per tick (the law lives in the
+    /// body's bookkeeping; these ride the encode fns' javap shapes).
+    pub fn move_player_pos_rot(
+        &mut self,
+        x: f64,
+        y: f64,
+        z: f64,
+        yaw: f32,
+        pitch: f32,
+        on_ground: bool,
+        horizontal_collision: bool,
+    ) -> Result<()> {
+        self.conn
+            .send_packet(&encode_move_player_pos_rot(
+                x, y, z, yaw, pitch, on_ground, horizontal_collision,
+            ))
+            .context("send move player pos rot")
+    }
+
+    pub fn move_player_pos(&mut self, x: f64, y: f64, z: f64, on_ground: bool, horizontal_collision: bool) -> Result<()> {
+        self.conn
+            .send_packet(&encode_move_player_pos(x, y, z, on_ground, horizontal_collision))
+            .context("send move player pos")
+    }
+
+    pub fn move_player_rot(&mut self, yaw: f32, pitch: f32, on_ground: bool, horizontal_collision: bool) -> Result<()> {
+        self.conn
+            .send_packet(&encode_move_player_rot(yaw, pitch, on_ground, horizontal_collision))
+            .context("send move player rot")
+    }
+
+    pub fn move_player_status_only(&mut self, on_ground: bool, horizontal_collision: bool) -> Result<()> {
+        self.conn
+            .send_packet(&encode_move_player_status_only(on_ground, horizontal_collision))
+            .context("send move player status only")
     }
 }
 
@@ -10274,6 +10377,62 @@ mod tests {
         assert_eq!(hit[10], 0x01, "the UP ordinal");
         assert_eq!(&hit[23], &0x01, "inside = true (border rides false)");
         assert_eq!(&hit[hit.len() - 2..], &[0x80, 0x01], "the two-byte sequence VarInt");
+    }
+
+    /// The movement wire's hex — the four ServerboundMovePlayer packets
+    /// the body's sendPosition dispatch speaks. The shapes are the javap
+    /// STREAM_CODEC reads (the three BE doubles when hasPos, the two BE
+    /// floats when hasRot, the status byte's packFlags: bit 0 on ground,
+    /// bit 1 horizontal collision); the ids are the generated table's
+    /// 30..=33.
+    #[test]
+    fn the_move_player_lanes_speak_the_javap_wire() {
+        // PosRot: id 31 = 0x1F, pos (1, 2, 3) BE f64s, yaw 90 = 42 B4 00
+        // 00, pitch 0, flags 0x01 (on ground, no horizontal collision)
+        let mut want = vec![0x1F];
+        want.extend_from_slice(&1.0f64.to_be_bytes());
+        want.extend_from_slice(&2.0f64.to_be_bytes());
+        want.extend_from_slice(&3.0f64.to_be_bytes());
+        want.extend_from_slice(&90.0f32.to_be_bytes());
+        want.extend_from_slice(&0.0f32.to_be_bytes());
+        want.push(0x01);
+        assert_eq!(
+            encode_move_player_pos_rot(1.0, 2.0, 3.0, 90.0, 0.0, true, false),
+            want,
+            "the PosRot shape: 3 f64 + 2 f32 + the status byte"
+        );
+        // Pos: id 30 = 0x1E, the same pack minus the floats
+        let mut want = vec![0x1E];
+        want.extend_from_slice(&(-1.5f64).to_be_bytes());
+        want.extend_from_slice(&64.0f64.to_be_bytes());
+        want.extend_from_slice(&0.25f64.to_be_bytes());
+        want.push(0x03); // on ground + horizontal collision
+        assert_eq!(
+            encode_move_player_pos(-1.5, 64.0, 0.25, true, true),
+            want,
+            "the Pos shape; the flags pack both bits"
+        );
+        // Rot: id 32 = 0x20, the two floats, the ground bit alone
+        let mut want = vec![0x20];
+        want.extend_from_slice(&(-180.0f32).to_be_bytes());
+        want.extend_from_slice(&45.5f32.to_be_bytes());
+        want.push(0x02); // horizontal collision only (in the air)
+        assert_eq!(
+            encode_move_player_rot(-180.0, 45.5, false, true),
+            want,
+            "the Rot shape; the flag bits are the packFlags law"
+        );
+        // StatusOnly: id 33 = 0x21, the single status byte
+        assert_eq!(
+            encode_move_player_status_only(false, false),
+            vec![0x21, 0x00],
+            "the airborne no-collision status"
+        );
+        assert_eq!(
+            encode_move_player_status_only(true, false),
+            vec![0x21, 0x01],
+            "the landed status"
+        );
     }
 
     /// The HashedStack's FULL patch lane — the non-empty shapes the
