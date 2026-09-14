@@ -329,6 +329,14 @@ pub struct ContainerClick {
     pub button: i8,
     /// The click's input mode (Pickup for the left press).
     pub input: ContainerInput,
+    /// The client's believed per-slot deltas — the prediction's own
+    /// output, the menu's slot numbering with the post-click (item_id,
+    /// count) pairs (the (0, 0) sentinel rides the wire as the
+    /// HashedStack's own emptiness). Empty without a prediction.
+    pub changed: Vec<(i16, (i32, i32))>,
+    /// The client's believed cursor AFTER the click (the (0, 0)
+    /// emptiness sentinel).
+    pub carried: (i32, i32),
 }
 
 /// The player's container command as the screen emits it: a clicked
@@ -340,6 +348,61 @@ pub struct ContainerClick {
 pub enum ContainerCommand {
     Click(ContainerClick),
     Close { window_id: i32 },
+}
+
+/// The stack-size ceiling the prediction merges against — the
+/// (item_id, count) store carries no components, so the per-item true
+/// max (the tools' 1, the snowballs' 16) is unknown locally; the
+/// vanilla default 64 is the honest belief for the common cargo, and
+/// the server's authoritative correction repairs any overfill (the
+/// prediction is a BELIEF, never the truth — the container lane's own
+/// contract). The store's future component lanes carry the real maxes.
+pub const ITEM_MAX_STACK_DEFAULT: i32 = 64;
+
+/// The vanilla `AbstractContainerMenu.doClick` PICKUP prediction for
+/// the left press (button 0) — the client's own menu logic, run
+/// locally so the click's believed deltas and the held cursor ride the
+/// packet (the vocabulary `HashedStack::item` provides). Takes the
+/// believed (item_id, count) pair of the clicked slot and the believed
+/// cursor; returns the believed pair AFTER the click, slot first. The
+/// semantics (the vanilla pickup table): an empty slot + a held stack
+/// PLACES it; a filled slot + an empty cursor PICKS UP the whole
+/// stack; the SAME item MERGES into the slot up to the stack ceiling
+/// (the remainder stays carried; a full slot takes nothing); a
+/// DIFFERENT item SWAPS. The prediction is the client's belief only —
+/// the server's authoritative corrections ride the container lane
+/// back and replace it wholesale.
+pub fn predict_pickup(slot: (i32, i32), carried: (i32, i32)) -> ((i32, i32), (i32, i32)) {
+    let slot_empty = slot.1 <= 0;
+    let carried_empty = carried.1 <= 0;
+    match (slot_empty, carried_empty) {
+        // both empty — nothing to do
+        (true, true) => (slot, carried),
+        // a held stack over an empty slot — place it all
+        (true, false) => (carried, (0, 0)),
+        // an empty cursor over a filled slot — pick up the whole stack
+        (false, true) => ((0, 0), slot),
+        // both filled
+        (false, false) => {
+            if slot.0 == carried.0 {
+                // the same item: merge what fits, the remainder rides
+                let room = ITEM_MAX_STACK_DEFAULT - slot.1;
+                if room <= 0 {
+                    (slot, carried) // a full slot takes nothing
+                } else {
+                    let moved = room.min(carried.1);
+                    let rest = carried.1 - moved;
+                    (
+                        (slot.0, slot.1 + moved),
+                        if rest > 0 { (carried.0, rest) } else { (0, 0) },
+                    )
+                }
+            } else {
+                // different items: the vanilla swap
+                (carried, slot)
+            }
+        }
+    }
 }
 
 /// The model's open-container store projected for the UI — `None`
@@ -1868,5 +1931,32 @@ mod tests {
             .chunks
             .iter()
             .all(|c| c.iter().all(|&b| b == AIR)));
+    }
+
+    /// The pickup prediction's semantics table — the vanilla
+    /// `AbstractContainerMenu.doClick` PICKUP (button 0) over the
+    /// believed (item_id, count) pairs: place, pick up, merge-to-ceiling,
+    /// the full-slot refusal, the swap, and the both-empty no-op. These
+    /// are the LOCAL belief's laws (the server's corrections replace it
+    /// wholesale — the container lane's own contract).
+    #[test]
+    fn the_pickup_prediction_rides_the_vanilla_table() {
+        // both empty — nothing to do
+        assert_eq!(predict_pickup((0, 0), (0, 0)), ((0, 0), (0, 0)));
+        // an empty cursor picks up the whole stack
+        assert_eq!(predict_pickup((926, 12), (0, 0)), ((0, 0), (926, 12)));
+        // a held stack places whole into an empty slot
+        assert_eq!(predict_pickup((0, 0), (926, 12)), ((926, 12), (0, 0)));
+        // the same item merges up to the ceiling — the remainder rides
+        assert_eq!(predict_pickup((926, 60), (926, 12)), ((926, 64), (926, 8)));
+        // the merge that empties the cursor is the (0, 0) sentinel
+        assert_eq!(predict_pickup((926, 60), (926, 4)), ((926, 64), (0, 0)));
+        // a full slot takes nothing (the vanilla pickup's own refusal)
+        assert_eq!(predict_pickup((926, 64), (926, 5)), ((926, 64), (926, 5)));
+        // different items swap
+        assert_eq!(predict_pickup((926, 12), (921, 3)), ((921, 3), (926, 12)));
+        // the ceiling is the default 64 — the component-carried true
+        // maxes are the store's future lanes (the doc's own honesty)
+        assert_eq!(ITEM_MAX_STACK_DEFAULT, 64);
     }
 }

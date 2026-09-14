@@ -919,6 +919,38 @@ hand-drawn:
   (VILLAGER_DATA at 18 doubles as the order proof), the generated-id
   pin, and the model's merge semantics (replace-one-leave-others, the
   null-lookup drop, the re-spawn reset).
+  The **the cursor's local prediction — the held stack answers the click (v0.3.134)**:
+  the interactivity directive's fourth landing — the chest's clicks run the
+  vanilla menu logic LOCALLY, and the input loop's own gap closed with it.
+  THE GAP FIRST: the windowed loop's left-press rising edge called
+  `on_attack` alone — the chest slot-click seam (`on_press`, tested and
+  shipped in v0.3.131) was unreachable in the REAL client, every live press
+  died as a swing no-op. The rising edge now routes the press WITH its
+  position (`on_press`): the chest's click speaks, every other screen falls
+  through to the swing as before. THE PREDICTION: the vanilla
+  `AbstractContainerMenu.doClick` PICKUP table as a pure belief function
+  (`world_view::predict_pickup`) — an empty cursor picks up the whole stack,
+  a held stack places whole, the SAME item merges to the ceiling (the
+  remainder rides; the full slot takes nothing), a DIFFERENT item swaps. The
+  screen's slots and cursor mutate in place (the believed state), the
+  post-click belief rides the command (`changed` + `carried` — the
+  (item_id, count) vocabulary v0.3.133 made speakable), and the worker
+  translates it to the wire's `HashedStack::item` count pairs (the (0, 0)
+  sentinel as the emptiness byte; the EMPTY patch — the store's honest
+  projection). The HELD STACK renders following the cursor (the vanilla
+  carried pass, the same icon/count treatment the slots ride) — the
+  mouse-position stream arrives with it (`on_mouse_move`, Discard-honest:
+  the cursor leaving clears the follow). The authoritative correction is the
+  wholesale replacement: every container update overwrites the slots, the
+  cursor AND the window revision — the prediction is a belief, never the
+  truth; Escape and the store's drop reset the belief with the window. The
+  64-stack ceiling is the documented default (the component-carried true
+  maxes are the store's future lanes). GOLDENS UNTOUCHED BY CONSTRUCTION:
+  13/13 at rms 0.000 (the offline chest's `chest_is_live` gates the carried
+  pass off; the headless scenes track no mouse). Tests +2 (workspace 498
+  passed / 0 failed / 3 ignored): the pickup table's seven laws and the full
+  belief arc (merge, swap, the correction's replacement, the revision the
+  next click echoes, the Escape reset).
   The **the hashed stack's full shape — the prediction's vocabulary (v0.3.133)**:
   the slot-click round's honest refusal ("a non-empty map is unpinned here and
   therefore unwriteable"), CLOSED. The 26.2 `HashedStack` prediction lane's

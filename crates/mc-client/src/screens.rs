@@ -371,6 +371,18 @@ pub struct App {
     /// the layout, the press finds it). The 16x16 inner box only (the
     /// vanilla Slot's own hit shape, the inset sprite's inside).
     pub chest_slot_rects: Vec<(i32, i32, i16)>,
+    /// The client's BELIEVED cursor stack as (item_id, count) — the
+    /// local prediction's own lane. The authoritative carried (the
+    /// store's projection) lands it on every container update; the
+    /// player's clicks mutate it between corrections (the vanilla
+    /// pickup prediction — see [`crate::world_view::predict_pickup`]);
+    /// the close/drop resets it. The (0, 0) sentinel is the emptiness.
+    pub chest_carried: (i32, i32),
+    /// The mouse position in GUI units the LAST loop tick tracked —
+    /// the carried stack renders here (the vanilla cursor-follow).
+    /// `None` wherever no live mouse has moved (the headless scenes:
+    /// the pixel goldens never see the render).
+    pub mouse_pos: Option<(i32, i32)>,
 }
 
 /// World size for the in-game screen (chunks per side — same as the
@@ -463,6 +475,8 @@ impl App {
             live_clicks: None,
             chest_live_window: None,
             chest_slot_rects: Vec::new(),
+            chest_carried: (0, 0),
+            mouse_pos: None,
         }
     }
 
@@ -561,6 +575,10 @@ impl App {
             slots[i] = (id, count);
         }
         self.chest_slots = slots;
+        // the offline scene carries no cursor stack (the deterministic
+        // scene the golden pins — a live session's held stack never
+        // leaks into it)
+        self.chest_carried = (0, 0);
         self.open(ScreenKind::Chest);
     }
 
@@ -645,6 +663,22 @@ impl App {
                 g.text(a, sx + 17 - tw, sy + 9, &s, WHITE, true);
             }
         }
+        // THE HELD STACK follows the cursor (the vanilla carried render,
+        // AbstractContainerScreen's post-panel pass): the believed
+        // stack's icon centered under the hotspot, the same icon/count
+        // treatment the slots ride, above everything the panel drew.
+        // The headless scenes track no mouse (`mouse_pos` is None) —
+        // the pixel goldens never see this pass.
+        if self.chest_is_live && self.chest_carried.1 > 0 {
+            if let Some((mx, my)) = self.mouse_pos {
+                draw_item_icon(g, self.chest_carried.0, mx - 8, my - 8);
+                if self.chest_carried.1 > 1 {
+                    let s = self.chest_carried.1.to_string();
+                    let tw = g.text_width(&s);
+                    g.text(a, mx - 8 + 17 - tw, my - 8 + 9, &s, WHITE, true);
+                }
+            }
+        }
     }
 
     /// Enter the world screen with the NETWORK world — the vanilla
@@ -717,6 +751,10 @@ impl App {
             }
             self.chest_is_live = false;
             self.chest_live_window = None;
+            // the player's OWN close returns the held stack to the
+            // inventory server-side (vanilla containerClose): the local
+            // belief resets with the window
+            self.chest_carried = (0, 0);
             self.open(ScreenKind::World);
         } else if matches!(self.screen, ScreenKind::Connect | ScreenKind::Disconnect) {
             self.open(ScreenKind::Servers);
@@ -736,14 +774,29 @@ impl App {
         self.on_attack();
     }
 
+    /// The live mouse position (the windowed loop's per-frame feed, the
+    /// vanilla MouseHandler's own stream): the carried stack's
+    /// cursor-follow render reads it. `None`-clearing is the window's
+    /// own honesty — minifb's Discard mode reports no position when the
+    /// cursor leaves, and the carried render follows it out.
+    pub fn on_mouse_move(&mut self, mx: i32, my: i32) {
+        self.mouse_pos = Some((mx, my));
+    }
+
     /// The chest screen's slot click: the press finds the 16x16 hit box
     /// the last render laid out (the vanilla Slot's own hit shape), and
     /// the LIVE window's identity (id + revision) rides the command to
-    /// the session's send lane. The prediction-free client's click
-    /// carries an empty delta list and an empty cursor — the server's
-    /// authoritative corrections ride back through the container lane.
-    /// The OFFLINE stand-in has no window and no session: its presses
-    /// are the honest no-op (the golden's deterministic scene).
+    /// the session's send lane. THE LOCAL PREDICTION runs the vanilla
+    /// pickup table against the believed state (the screen's own slots
+    /// + the believed cursor — see
+    /// [`crate::world_view::predict_pickup`]), the screen's slot lists
+    /// and cursor mutate IN PLACE (the server's authoritative update
+    /// replaces them wholesale — the correction is the next projection),
+    /// and the post-click belief rides the command as the changed-slot
+    /// delta + the carried cursor (the wire lanes
+    /// `HashedStack::item` speaks). The OFFLINE stand-in has no window
+    /// and no session: its presses are the honest no-op (the golden's
+    /// deterministic scene).
     fn click_chest_slot(&mut self, mx: i32, my: i32) {
         if !self.chest_is_live {
             return; // the offline stand-in: no window, no click
@@ -761,6 +814,21 @@ impl App {
         else {
             return; // the press landed between the slots — no click
         };
+        // the believed slot value: the grid's 0..27, the mirror's
+        // 27..63 — the menu's own numbering both lanes index
+        let believed = if (slot as usize) < 27 {
+            self.chest_slots[slot as usize]
+        } else {
+            self.chest_mirror[slot as usize - 27]
+        };
+        let (new_slot, new_carried) =
+            crate::world_view::predict_pickup(believed, self.chest_carried);
+        if (slot as usize) < 27 {
+            self.chest_slots[slot as usize] = new_slot;
+        } else {
+            self.chest_mirror[slot as usize - 27] = new_slot;
+        }
+        self.chest_carried = new_carried;
         let _ = sink.send(crate::world_view::ContainerCommand::Click(
             crate::world_view::ContainerClick {
                 window_id,
@@ -768,6 +836,8 @@ impl App {
                 slot,
                 button: 0,
                 input: crate::world_view::ContainerInput::Pickup,
+                changed: vec![(slot, new_slot)],
+                carried: new_carried,
             },
         ));
     }
@@ -1112,6 +1182,11 @@ impl App {
                 // the window's identity rides in: the clicks echo
                 // against THIS id and revision (the stateId lane)
                 self.chest_live_window = Some((c.id, c.state_id));
+                // the AUTHORITATIVE carried lands too: the server's own
+                // cursor replaces whatever the prediction believed (the
+                // correction is the wholesale replacement — the local
+                // belief never outlives the store's projection)
+                self.chest_carried = c.carried;
                 if self.screen == ScreenKind::World {
                     self.open(ScreenKind::Chest);
                 }
@@ -1125,6 +1200,7 @@ impl App {
                     self.open(ScreenKind::World);
                 }
                 self.chest_live_window = None;
+                self.chest_carried = (0, 0); // no window, no held stack
             }
         }
     }
@@ -3122,6 +3198,10 @@ mod tests {
             .find(|&&(_, _, s)| s == 4)
             .expect("the container's slot 4 box");
         app.on_press(sx + 8, sy + 8);
+        // THE PREDICTION: the pickup ran locally — the slot emptied and
+        // the believed cursor holds the stack
+        assert_eq!(app.chest_slots[4], (0, 0), "the slot's belief emptied");
+        assert_eq!(app.chest_carried, (926, 12), "the cursor's belief holds the stack");
         match click_rx.try_recv().expect("the click rode the lane") {
             ContainerCommand::Click(c) => {
                 assert_eq!(c.window_id, 5, "the live window's id");
@@ -3129,20 +3209,33 @@ mod tests {
                 assert_eq!(c.slot, 4, "the MENU's own slot number");
                 assert_eq!(c.button, 0, "the left press");
                 assert_eq!(c.input, ContainerInput::Pickup);
+                assert_eq!(
+                    c.changed,
+                    vec![(4, (0, 0))],
+                    "the post-click delta rides the command"
+                );
+                assert_eq!(c.carried, (926, 12), "the believed cursor rides");
             }
             other => panic!("expected a click, got {other:?}"),
         }
 
         // the MIRROR's box speaks the menu's tail numbering (the main
-        // row's first slot is the menu's 27)
+        // row's first slot is the menu's 27) — the held stack PLACES
+        // into the empty mirror slot (the pickup table's own arc)
         let &(mx, my, _) = app
             .chest_slot_rects
             .iter()
             .find(|&&(_, _, s)| s == 27)
             .expect("the mirror's first box");
         app.on_press(mx + 8, my + 8);
+        assert_eq!(app.chest_mirror[0], (926, 12), "the held stack placed");
+        assert_eq!(app.chest_carried, (0, 0), "the cursor emptied");
         match click_rx.try_recv().expect("the mirror click rode the lane") {
-            ContainerCommand::Click(c) => assert_eq!(c.slot, 27, "the menu's tail numbering"),
+            ContainerCommand::Click(c) => {
+                assert_eq!(c.slot, 27, "the menu's tail numbering");
+                assert_eq!(c.changed, vec![(27, (926, 12))]);
+                assert_eq!(c.carried, (0, 0));
+            }
             other => panic!("expected a click, got {other:?}"),
         }
 
@@ -3206,6 +3299,112 @@ mod tests {
         app.on_escape();
         assert_eq!(app.screen, ScreenKind::World);
         assert!(click_rx.try_recv().is_err(), "the offline close never speaks");
+    }
+
+    /// The prediction's own arcs over the believed state: the same-item
+    /// MERGE (the remainder rides), the different-item SWAP, the
+    /// authoritative correction's wholesale replacement (the server's
+    /// projection overrules every local belief), and the Escape reset.
+    #[test]
+    fn the_prediction_believes_and_the_correction_overrules() {
+        use crate::world_view::{ContainerCommand, ContainerInput};
+        let mut app = App::new(3);
+        app.open(ScreenKind::Connect);
+        app.net_world = Some(air_net_world(2, 0));
+        app.enter_network_world(None, Skybox::Overworld, None, None);
+        let (click_tx, click_rx) = std::sync::mpsc::channel::<ContainerCommand>();
+        app.attach_live_clicks(click_tx);
+        let chest = crate::world_view::LiveContainer {
+            id: 9,
+            menu_type_id: crate::world_model::MENU_TYPE_CHEST,
+            slots: {
+                let mut s = vec![(0i32, 0i32); 63];
+                s[8] = (926, 60); // diamond x60 in the grid
+                s[9] = (926, 10); // diamond x10 beside it
+                s[10] = (921, 3); // apple x3
+                s
+            },
+            carried: (0, 0),
+            state_id: 11,
+        };
+        app.live_view_updated(air_net_world(2, 1), None, None, Some(chest));
+        assert_eq!(app.screen, ScreenKind::Chest);
+        app.render_title_buttons_for_test();
+        let box_of = |app: &App, want: i16| {
+            app.chest_slot_rects
+                .iter()
+                .find(|&&(_, _, s)| s == want)
+                .copied()
+                .expect("the box")
+        };
+
+        // MERGE: pick up the x60, drop it on the x10 — the slot takes
+        // what fits (to the ceiling), the remainder rides the cursor
+        let (bx, by, _) = box_of(&app, 8);
+        app.on_press(bx + 8, by + 8);
+        assert_eq!(app.chest_carried, (926, 60));
+        let (bx, by, _) = box_of(&app, 9);
+        app.on_press(bx + 8, by + 8);
+        assert_eq!(app.chest_slots[9], (926, 64), "the merge filled the slot");
+        assert_eq!(app.chest_carried, (926, 6), "the remainder rides");
+        let _ = click_rx.try_recv(); // the first click
+        match click_rx.try_recv().expect("the merge's click") {
+            ContainerCommand::Click(c) => {
+                assert_eq!(c.changed, vec![(9, (926, 64))]);
+                assert_eq!(c.carried, (926, 6));
+            }
+            other => panic!("expected a click, got {other:?}"),
+        }
+
+        // SWAP: the held diamonds over the apple — the stacks trade
+        let (bx, by, _) = box_of(&app, 10);
+        app.on_press(bx + 8, by + 8);
+        assert_eq!(app.chest_slots[10], (926, 6), "the swap landed");
+        assert_eq!(app.chest_carried, (921, 3), "the apple rides");
+        match click_rx.try_recv().expect("the swap's click") {
+            ContainerCommand::Click(c) => {
+                assert_eq!(c.changed, vec![(10, (926, 6))]);
+                assert_eq!(c.carried, (921, 3));
+            }
+            other => panic!("expected a click, got {other:?}"),
+        }
+
+        // THE CORRECTION: the server's authoritative projection replaces
+        // the whole belief — slots, cursor, window identity alike
+        let truth = crate::world_view::LiveContainer {
+            id: 9,
+            menu_type_id: crate::world_model::MENU_TYPE_CHEST,
+            slots: {
+                let mut s = vec![(0i32, 0i32); 63];
+                s[8] = (926, 60); // the server never processed the clicks
+                s
+            },
+            carried: (0, 0),
+            state_id: 12,
+        };
+        app.live_view_updated(air_net_world(2, 2), None, None, Some(truth));
+        assert_eq!(app.chest_slots[9], (0, 0), "the prediction's merge is gone");
+        assert_eq!(app.chest_slots[10], (0, 0), "the prediction's swap is gone");
+        assert_eq!(app.chest_carried, (0, 0), "the server's cursor is the truth");
+        assert_eq!(app.chest_live_window, Some((9, 12)), "the revision advanced");
+        // the next click echoes the NEW revision
+        let (bx, by, _) = box_of(&app, 8);
+        app.on_press(bx + 8, by + 8);
+        match click_rx.try_recv().expect("the post-correction click") {
+            ContainerCommand::Click(c) => {
+                assert_eq!(c.state_id, 12, "the correction's revision rides");
+                assert_eq!(c.input, ContainerInput::Pickup);
+            }
+            other => panic!("expected a click, got {other:?}"),
+        }
+
+        // ESCAPE resets the belief with the window (the held stack
+        // returns to the inventory server-side)
+        assert_eq!(app.chest_carried, (926, 60), "the held stack rides out");
+        app.on_escape();
+        assert_eq!(app.screen, ScreenKind::World);
+        assert_eq!(app.chest_carried, (0, 0), "no window, no held stack");
+        let _ = click_rx.try_recv(); // the close echo
     }
 
     #[test]

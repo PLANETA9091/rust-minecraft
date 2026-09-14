@@ -214,11 +214,14 @@ fn run_join(
                 for cmd in clicks.try_iter() {
                     let sent = match cmd {
                         crate::world_view::ContainerCommand::Click(c) => {
-                            // the prediction-free click: the empty delta
-                            // list and the empty cursor are the client's
-                            // honest BELIEF (no menu logic runs locally
-                            // yet) — the server's corrections ride the
-                            // container lane back to the screen
+                            // THE PREDICTION RIDE: the client's believed
+                            // post-click state — the changed slot's new
+                            // value and the held cursor — speaks the wire
+                            // as the HashedStack count pairs (the EMPTY
+                            // patch is the (item_id, count) store's own
+                            // honest projection; the (0, 0) sentinel is
+                            // the wire's own emptiness byte). The server's
+                            // corrections ride the container lane back.
                             let input = match c.input {
                                 crate::world_view::ContainerInput::Pickup => {
                                     mc_protocol::ContainerInput::Pickup
@@ -248,8 +251,25 @@ fn run_join(
                                 slot: c.slot,
                                 button: c.button,
                                 input,
-                                changed_slots: Vec::new(),
-                                carried: mc_protocol::HashedStack::Empty,
+                                changed_slots: c
+                                    .changed
+                                    .iter()
+                                    .map(|(s, (id, cnt))| {
+                                        (
+                                            *s,
+                                            if *cnt > 0 {
+                                                mc_protocol::HashedStack::item(*id, *cnt)
+                                            } else {
+                                                mc_protocol::HashedStack::Empty
+                                            },
+                                        )
+                                    })
+                                    .collect(),
+                                carried: if c.carried.1 > 0 {
+                                    mc_protocol::HashedStack::item(c.carried.0, c.carried.1)
+                                } else {
+                                    mc_protocol::HashedStack::Empty
+                                },
                             })
                         }
                         crate::world_view::ContainerCommand::Close { window_id } => {
@@ -368,14 +388,26 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize) -> anyhow::Result<()>
         let (mx, my) = window.get_mouse_pos(minifb::MouseMode::Discard).unwrap_or((0.0, 0.0));
         let gmx = (mx as usize / 2) as i32;
         let gmy = (my as usize / 2) as i32;
+        // the live mouse stream: the carried stack's cursor-follow
+        // render reads the last known GUI-space position (Discard mode
+        // reports None when the cursor leaves — the follow goes with it;
+        // the headless scenes never run this loop, the goldens never
+        // see the pass)
+        if let Some((px, py)) = window.get_mouse_pos(minifb::MouseMode::Discard) {
+            app.on_mouse_move((px as usize / 2) as i32, (py as usize / 2) as i32);
+        }
         let left_down = window.get_mouse_down(minifb::MouseButton::Left);
         if left_down {
             app.on_click(gmx, gmy);
         }
-        // the vanilla attack: the LEFT press's rising edge swings the arm
-        // (minifb has no edge API — the previous frame's state is tracked here)
+        // the LEFT press's rising edge routes the press WITH its
+        // position (the vanilla MouseHandler's own dispatch): the chest
+        // screen's press clicks the slot it landed on (the live
+        // prediction + the wire echo), every other screen falls through
+        // to the attack swing inside — minifb has no edge API, the
+        // previous frame's state is tracked here
         if left_down && !was_left_down {
-            app.on_attack();
+            app.on_press(gmx, gmy);
         }
         was_left_down = left_down;
         app.update();
