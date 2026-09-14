@@ -1421,8 +1421,12 @@ pub mod entity_data_serializers {
     /// `BlockPos.STREAM_CODEC` through `ByteBufCodecs.optional` — a
     /// boolean flag, then the long only if present.
     pub const OPTIONAL_BLOCK_POS: i32 = 11;
-    /// `Direction.STREAM_CODEC` — `ByteBufCodecs.idMapper(BY_ID, ..)`:
-    /// a VarInt registry id (0 = down .. 5 = east).
+    /// `Direction.STREAM_CODEC` = `ByteBufCodecs.idMapper(BY_ID,
+    /// Direction::ordinal)` where `BY_ID` = `ByIdMap.continuous(..,
+    /// OutOfBoundsStrategy.WRAP)`: a VarInt registry id (0 = down ..
+    /// 5 = east) that NEVER refuses — out-of-range keys floorMod
+    /// into [0, 6) (a negative -1 wraps to 5 = up). The wire ordinal
+    /// is retained verbatim; the wrap is the consumer's resolution.
     pub const DIRECTION: i32 = 12;
     /// `EntityReference.streamCodec()` optional — the object-graph
     /// lane.
@@ -1452,7 +1456,9 @@ pub mod entity_data_serializers {
     /// decode is `OptionalInt.of(n - 1)`, the encode `value + 1`).
     pub const OPTIONAL_UNSIGNED_INT: i32 = 19;
     /// `Pose.STREAM_CODEC` — `idMapper` over the enum's own id field:
-    /// a VarInt.
+    /// a VarInt. The map is `ByIdMap.continuous(..,
+    /// OutOfBoundsStrategy.ZERO)` — NEVER refuses (out-of-range keys
+    /// fill to values[0] = STANDING in the consumer's resolution).
     pub const POSE: i32 = 20;
     // 21-32: the variant Holders (CAT_VARIANT .. PIG_SOUND_VARIANT,
     // ZOMBIE_NAUTILUS_VARIANT interleaved), 33: OPTIONAL_GLOBAL_POS
@@ -1510,9 +1516,12 @@ pub mod data_component_types {
     /// `ByteBufCodecs.list(256)` — a VarInt count (capped: a larger
     /// list throws) of bare component tags.
     pub const LORE: i32 = 11;
-    /// `Rarity.STREAM_CODEC` = `idMapper(BY_ID, ordinal)` — a VarInt
-    /// ordinal (the same DIRECTION/POSE idMapper shape, retained
-    /// verbatim; the consumer resolves it).
+    /// `Rarity.STREAM_CODEC` = `ByteBufCodecs.idMapper(BY_ID,
+    /// Rarity::ordinal)` where `BY_ID` = `ByIdMap.continuous(..,
+    /// OutOfBoundsStrategy.ZERO)` — a VarInt ordinal, NEVER refused:
+    /// every key outside [0, 4) fills to values[0] = COMMON (the
+    /// DIRECTION/POSE idMapper family; the wire ordinal is retained
+    /// verbatim, the ZERO-fill is the consumer's resolution).
     pub const RARITY: i32 = 12;
     /// `ByteBufCodecs.VAR_INT` (`NON_NEGATIVE_INT` persistent).
     pub const REPAIR_COST: i32 = 19;
@@ -1741,7 +1750,9 @@ pub enum ComponentValue {
     /// The capped list lane: lore (11) — a VarInt count (<= 256) of
     /// bare component tags.
     Lore(Vec<Nbt>),
-    /// The idMapper ordinal lane: rarity (12), retained verbatim.
+    /// The idMapper ordinal lane: rarity (12), retained verbatim —
+    /// vanilla's continuous ZERO map never refuses (out-of-range
+    /// fills to COMMON in the consumer's resolution).
     Rarity(i32),
     /// The one-byte bool lane: enchantment_glint_override (21).
     Bool(bool),
@@ -1875,7 +1886,9 @@ pub enum EntityDataEntry {
     /// present.
     OptionalBlockPos(Option<[i32; 3]>),
     /// Serializer 12: the direction's registry id (0 = down .. 5 =
-    /// east).
+    /// east), retained verbatim — vanilla's continuous WRAP map never
+    /// refuses (out-of-range floorMod(k, 6) is the consumer's
+    /// resolution).
     Direction(i32),
     /// Serializer 14: the block state id (the chunk decoder's id
     /// space).
@@ -1884,7 +1897,9 @@ pub enum EntityDataEntry {
     OptionalBlockState(Option<i32>),
     /// Serializer 19: the OptionalInt — wire 0 = None, wire n = Some(n - 1).
     OptionalUnsignedInt(Option<u32>),
-    /// Serializer 20: the pose's registry id.
+    /// Serializer 20: the pose's registry id, retained verbatim —
+    /// vanilla's continuous ZERO map never refuses (out-of-range
+    /// fills to STANDING in the consumer's resolution).
     Pose(i32),
     /// Serializer 18: the villager record — two numeric registry ids
     /// (the VILLAGER_TYPE and VILLAGER_PROFESSION registries' own id
@@ -2007,8 +2022,15 @@ fn read_component_value(type_id: i32, c: &mut &[u8]) -> Result<ComponentValue> {
             ComponentValue::Lore(tags)
         }
         t::RARITY => {
+            // `Rarity.BY_ID` = `ByIdMap.continuous(Rarity::ordinal,
+            // values(), OutOfBoundsStrategy.ZERO)`: the map NEVER
+            // refuses — every key outside [0, 4), negative AND
+            // out-of-range, fills to values[0] = COMMON. The wire
+            // ordinal is retained verbatim; the ZERO-fill is the
+            // consumer's resolution (the operation/slot/animation
+            // line — the old negative refusal was STRICTER than
+            // vanilla).
             let r = read_varint(c)?;
-            anyhow::ensure!(r >= 0, "negative rarity ordinal {r}");
             ComponentValue::Rarity(r)
         }
         t::ENCHANTMENT_GLINT_OVERRIDE => ComponentValue::Bool(read_u8(c)? != 0),
@@ -2864,8 +2886,10 @@ pub fn parse_set_entity_data(payload: &[u8]) -> Result<EntityDataSet> {
                 EntityDataEntry::OptionalBlockPos(pos)
             }
             entity_data_serializers::DIRECTION => {
+                // ByIdMap.continuous(.., WRAP): the map NEVER refuses
+                // (out-of-range keys floorMod into [0, 6)); the wire
+                // ordinal is retained verbatim
                 let d = read_varint(&mut c)?;
-                anyhow::ensure!(d >= 0, "negative direction id {d}");
                 EntityDataEntry::Direction(d)
             }
             entity_data_serializers::BLOCK_STATE => {
@@ -2896,8 +2920,10 @@ pub fn parse_set_entity_data(payload: &[u8]) -> Result<EntityDataSet> {
                 })
             }
             entity_data_serializers::POSE => {
+                // ByIdMap.continuous(.., ZERO): the map NEVER refuses
+                // (out-of-range keys fill to values[0]); the wire
+                // ordinal is retained verbatim
                 let p = read_varint(&mut c)?;
-                anyhow::ensure!(p >= 0, "negative pose id {p}");
                 EntityDataEntry::Pose(p)
             }
             entity_data_serializers::VILLAGER_DATA => {
@@ -6126,6 +6152,67 @@ mod tests {
             PredicateTypeLane::ComponentType(t::DAMAGE)
         );
         assert_eq!(pred.matchers.partial[1].payload, Nbt::Compound(vec![]));
+    }
+
+    /// The idMapper ordinal lanes NEVER refuse: `Rarity.BY_ID` =
+    /// `ByIdMap.continuous(.., OutOfBoundsStrategy.ZERO)` (every key
+    /// outside [0, 4) fills to COMMON — the decode never throws),
+    /// `Pose.BY_ID` the same ZERO shape, `Direction.BY_ID` the WRAP
+    /// shape (out-of-range keys floorMod into [0, 6)). The port
+    /// retains every wire ordinal VERBATIM — negative AND
+    /// out-of-range — the fill/wrap being the consumer's resolution
+    /// (the operation/slot/animation line; the Rarity lane's old
+    /// negative refusal was STRICTER than vanilla's map, and the
+    /// strictness was the invention).
+    #[test]
+    fn the_id_mapper_ordinal_lanes_never_refuse() {
+        use data_component_types as t;
+        use entity_data_serializers as s;
+
+        // the entity-data lanes: a NEGATIVE and an out-of-range
+        // ordinal decode verbatim
+        for (serializer, id, expected) in [
+            (s::DIRECTION, -1, EntityDataEntry::Direction(-1)),
+            (s::DIRECTION, 42, EntityDataEntry::Direction(42)),
+            (s::POSE, -1, EntityDataEntry::Pose(-1)),
+            (s::POSE, 99, EntityDataEntry::Pose(99)),
+        ] {
+            let p = test_support::set_entity_data_packet(
+                7,
+                &test_support::entity_data_entry(
+                    3,
+                    serializer,
+                    &test_support::entity_data_varint(id),
+                ),
+            );
+            let d = parse_set_entity_data(&p).unwrap();
+            assert_eq!(d.entries[0].value, expected);
+        }
+
+        // the component lane: rarity over the patch walk — the
+        // negative and out-of-range ordinals the OLD lane refused now
+        // decode verbatim (vanilla's map would ZERO-fill both to
+        // COMMON in its own resolution)
+        for ordinal in [-2, 9] {
+            let mut value = Vec::new();
+            for v in [1i32, 1, 1, 0] {
+                value.extend_from_slice(&test_support::entity_data_varint(v));
+            }
+            value.extend_from_slice(&test_support::entity_data_varint(t::RARITY));
+            value.extend_from_slice(&test_support::entity_data_varint(ordinal));
+            let p = test_support::set_entity_data_packet(
+                5,
+                &test_support::entity_data_entry(8, s::ITEM_STACK, &value),
+            );
+            let d = parse_set_entity_data(&p).unwrap();
+            let EntityDataEntry::ItemStack { patch, .. } = &d.entries[0].value else {
+                panic!("expected the item stack");
+            };
+            assert_eq!(
+                patch.added,
+                vec![(t::RARITY, ComponentValue::Rarity(ordinal))]
+            );
+        }
     }
 
     /// Set Entity Data: the COMPONENT wire is a BARE NBT tag — the
