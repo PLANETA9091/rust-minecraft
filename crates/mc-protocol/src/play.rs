@@ -96,10 +96,10 @@ pub mod clientbound {
         CB_LOGIN as LOGIN, CB_MOVE_ENTITY_POS as MOVE_ENTITY_POS,
         CB_MOVE_ENTITY_POS_ROT as MOVE_ENTITY_POS_ROT, CB_MOVE_ENTITY_ROT as MOVE_ENTITY_ROT,
         CB_PING as PING, CB_PLAYER_POSITION as SYNCHRONIZE_POSITION, CB_ROTATE_HEAD as ROTATE_HEAD,
-        CB_REMOVE_ENTITIES as REMOVE_ENTITIES, CB_RESPAWN as RESPAWN,
-        CB_SECTION_BLOCKS_UPDATE as SECTION_BLOCKS_UPDATE,
+        CB_REMOVE_ENTITIES as REMOVE_ENTITIES, CB_REMOVE_MOB_EFFECT as REMOVE_MOB_EFFECT,
+        CB_RESPAWN as RESPAWN, CB_SECTION_BLOCKS_UPDATE as SECTION_BLOCKS_UPDATE,
         CB_SET_CHUNK_CACHE_CENTER as CENTER_CHUNK, CB_SET_ENTITY_DATA as SET_ENTITY_DATA,
-        CB_SET_TIME as SET_TIME,
+        CB_SET_TIME as SET_TIME, CB_UPDATE_MOB_EFFECT as UPDATE_MOB_EFFECT,
     };
 }
 
@@ -3963,6 +3963,86 @@ pub struct TimeSync {
     pub clocks: Vec<ClockUpdate>,
 }
 
+// ---------------------------------------------------------------------------
+// the mob-effect state's wire transport
+// ---------------------------------------------------------------------------
+
+/// Update Mob Effect: ONE entity's mob-effect state upsert — the effect
+/// state's wire transport, the player-state surface the lightmap's
+/// night-vision factor consumes. javap of the 26.2 private decode
+/// constructor (a flat five-field walk, NOT the item-component's
+/// Details composite): `readVarInt` entity id, `MobEffect.STREAM_CODEC`
+/// effect (the `ByteBufCodecs.holderRegistry(MOB_EFFECT)` family — the
+/// variant holders' `$29` byIdOrThrow: a negative id throws),
+/// `readVarInt` amplifier, `readVarInt` duration ticks, `readByte`
+/// flags. The constructor's flag-packing `ior` chain pins the bits:
+/// bit 0 AMBIENT, bit 1 VISIBLE, bit 2 SHOW_ICON, bit 3 BLEND.
+#[derive(Debug, Clone, PartialEq)]
+pub struct MobEffectUpdate {
+    /// The entity the state rides (the model filters its own id — the
+    /// lightmap consumes the LOCAL player's effects only).
+    pub entity_id: i32,
+    /// The mob-effect REGISTRY id (`BuiltInRegistries.MOB_EFFECT`
+    /// order — the runtime boot pins minecraft:night_vision = 15 and
+    /// minecraft:conduit_power = 28; the legacy 1-based wiki ids are
+    /// NOT the wire, the holderRegistry ids are the 0-based
+    /// registration order).
+    pub effect_id: i32,
+    /// The amplifier (the vanilla 0..=255 convention; the decode
+    /// validates nothing — retained verbatim).
+    pub amplifier: i32,
+    /// The STATED duration in ticks — the client ticks it down locally
+    /// and the fade-out flicker reads the remaining window; retained
+    /// verbatim (the -1 infinite sentinel included, the never-refuse
+    /// line: the consumer's act is separate). The flicker is the
+    /// documented non-goal (same verdict as the torch shimmer).
+    pub duration: i32,
+    /// Bit 0 ambient, bit 1 visible, bit 2 show icon, bit 3 blend —
+    /// the packet's own packing order, retained raw.
+    pub flags: u8,
+}
+
+/// Remove Mob Effect: ONE entity's effect ended (the record's two
+/// fields, javap: the same VAR_INT entity id + holderRegistry effect
+/// lane the update packet rides).
+#[derive(Debug, Clone, PartialEq)]
+pub struct MobEffectRemove {
+    pub entity_id: i32,
+    /// The mob-effect registry id (see [`MobEffectUpdate::effect_id`]).
+    pub effect_id: i32,
+}
+
+/// Update Mob Effect's wire walk (see [`MobEffectUpdate`] — the
+/// negative effect id refuses, the byIdOrThrow direction; every other
+/// field is retained verbatim, the decode validates nothing).
+pub fn parse_update_mob_effect(payload: &[u8]) -> Result<MobEffectUpdate> {
+    let mut c: &[u8] = payload;
+    let id = read_varint(&mut c)?;
+    anyhow::ensure!(
+        id == clientbound::UPDATE_MOB_EFFECT,
+        "not an update mob effect packet (0x{id:02X})"
+    );
+    let entity_id = read_varint(&mut c)?;
+    let effect_id = read_holder_id(&mut c, "mob-effect")?;
+    let amplifier = read_varint(&mut c)?;
+    let duration = read_varint(&mut c)?;
+    let flags = read_u8(&mut c)?;
+    Ok(MobEffectUpdate { entity_id, effect_id, amplifier, duration, flags })
+}
+
+/// Remove Mob Effect's wire walk (see [`MobEffectRemove`]).
+pub fn parse_remove_mob_effect(payload: &[u8]) -> Result<MobEffectRemove> {
+    let mut c: &[u8] = payload;
+    let id = read_varint(&mut c)?;
+    anyhow::ensure!(
+        id == clientbound::REMOVE_MOB_EFFECT,
+        "not a remove mob effect packet (0x{id:02X})"
+    );
+    let entity_id = read_varint(&mut c)?;
+    let effect_id = read_holder_id(&mut c, "mob-effect")?;
+    Ok(MobEffectRemove { entity_id, effect_id })
+}
+
 /// One clientbound play packet, handled.
 #[derive(Debug, Clone, PartialEq)]
 pub enum PlayEvent {
@@ -4026,6 +4106,13 @@ pub enum PlayEvent {
     /// carry (the on-fire/crouched/pose surfaces' wire transport) — the
     /// decoded entries the model merges into the entity's store.
     EntityData(EntityDataSet),
+    /// Update Mob Effect: ONE entity's mob-effect state upsert — the
+    /// effect state's wire transport; the model filters the LOCAL
+    /// player's own id and the lightmap's night-vision factor consumes
+    /// the store.
+    MobEffectApplied(MobEffectUpdate),
+    /// Remove Mob Effect: ONE entity's effect ended.
+    MobEffectRemoved(MobEffectRemove),
     /// Any packet without a client surface yet (skipped silently).
     Skipped,
 }
@@ -4121,6 +4208,12 @@ impl<S: Read + Write> PlaySession<S> {
             }
             clientbound::ROTATE_HEAD => Ok(PlayEvent::EntityHeadRot(parse_rotate_head(&pkt)?)),
             clientbound::SET_ENTITY_DATA => Ok(PlayEvent::EntityData(parse_set_entity_data(&pkt)?)),
+            clientbound::UPDATE_MOB_EFFECT => {
+                Ok(PlayEvent::MobEffectApplied(parse_update_mob_effect(&pkt)?))
+            }
+            clientbound::REMOVE_MOB_EFFECT => {
+                Ok(PlayEvent::MobEffectRemoved(parse_remove_mob_effect(&pkt)?))
+            }
             _ => Ok(PlayEvent::Skipped),
         }
     }
