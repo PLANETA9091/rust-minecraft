@@ -919,6 +919,28 @@ hand-drawn:
   (VILLAGER_DATA at 18 doubles as the order proof), the generated-id
   pin, and the model's merge semantics (replace-one-leave-others, the
   null-lookup drop, the re-spawn reset).
+  The **the mob-effect name lane — the effect state's debug surface
+  (v0.3.128)**: the effect rounds' queued NAME lane lands — the wire
+  carries the 0-based built-in registration id (the
+  `holderRegistry(Registries.MOB_EFFECT)` lane — the v0.3.127 audit's
+  menu-type line), and the client resolves its NAME locally through
+  the generated `MOB_EFFECT_ORDER` table (the boot-order table; its
+  header documents the NOT-synchronized caveat — the order is THIS
+  boot's). THE REFUSALS: negative ids (the decode's own lane refuses
+  them too) and ids PAST the table (a server registry newer than this
+  client jar's boot — vanilla's `IdMapper.byId` THROWS there) resolve
+  `None`: the honest unknown, never a guessed name. THE CONSUMER:
+  `WorldModel::active_effects_debug()` — the LOCAL player's active
+  effects as `(id, resolved name, state)` triples; an unresolvable id
+  names `None` while the STATE still rides (the listing keeps
+  walking). THE TESTS: the registry side pins the wire order's ends
+  (0 = speed, 39 = breath_of_the_nautilus) and one middle (15 =
+  night_vision, 28 = conduit_power), refuses -1/40/i32::MAX, and
+  proves the 40-slot lane a FUNCTION (every slot resolves, no two
+  names collide); the model side pins the own-entity listing (the
+  WorldInfo pin), a known id beside an id past the table, the foreign
+  entity's exclusion, and the removal drop. 485 tests green; the
+  golden matrix 12/12 (the GUI screens rms 0.000).
   The **the container GUI's window — open/close and the chest's store
   (v0.3.127)**: the container trilogy's consumer line continues — the
   OPEN-container lane the foreign-window traffic has been dropping
