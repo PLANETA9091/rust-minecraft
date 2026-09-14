@@ -389,6 +389,14 @@ pub struct App {
     /// per-frame by the windowed loop; the headless scenes never feed
     /// it (the goldens never see the lane).
     pub shift_down: bool,
+    /// The live held-item lane's currently-LOADED wire id (the reload
+    /// key): the store's selected hotbar stack projects the
+    /// first-person hand, and the model reloads only when the id
+    /// changes (the count is the GUI's business — the hand renders
+    /// the model alone, vanilla renders no count in first person).
+    /// `None` = the bare arm (the empty selection, or an id outside
+    /// the bake domain).
+    pub live_held: Option<i32>,
 }
 
 /// World size for the in-game screen (chunks per side — same as the
@@ -484,6 +492,7 @@ impl App {
             chest_carried: (0, 0),
             mouse_pos: None,
             shift_down: false,
+            live_held: None,
         }
     }
 
@@ -1212,6 +1221,30 @@ impl App {
             }
         }
         self.live_container_updated(container);
+    }
+
+    /// The networked held-item lane: the store's selected hotbar stack
+    /// drives the first-person hand exactly like the vanilla
+    /// renderItemInHand's own projection — the id's model loads on
+    /// change (through the generated item-model definition table's
+    /// plain roots), and the emptiness (a count-0 slot, a slot the
+    /// store never spoke) or an id outside the bake domain (the
+    /// complex-definition trees: select/special/composite) drops back
+    /// to the bare arm. The count is not the hand's lane (vanilla
+    /// renders no count in first person); the reload fires only when
+    /// the id changes — the store's refresh cadence does not re-bake.
+    /// The OFFLINE headless `--held-item` keeps owning its own surface
+    /// (the goldens' lane — this method is the live session's only,
+    /// the headless scenes never call it).
+    pub fn live_held_updated(&mut self, held: Option<(i32, i32)>) {
+        let id = held.filter(|&(_, count)| count > 0).map(|(id, _)| id);
+        if self.live_held == id {
+            return; // no change — the loaded model stands
+        }
+        self.live_held = id;
+        self.held_item = id
+            .and_then(mc_registry::item_model_path)
+            .and_then(crate::hand::load_item);
     }
 
     /// The networked container lane: the live store's projection drives
@@ -3671,6 +3704,39 @@ mod tests {
         app.on_shift_down(true);
         app.on_press(ox + 8, oy + 8);
         assert!(click_rx.try_recv().is_err(), "the offline shift press is silent");
+    }
+
+    /// The live held-item lane's laws: the store's selected stack
+    /// loads its first-person model on change, the count is not the
+    /// hand's business, the emptiness and the out-of-bake ids drop to
+    /// the bare arm, and the wire id is the reload key.
+    #[test]
+    fn the_live_held_lane_loads_the_selected_model() {
+        let mut app = App::new(3);
+        assert!(app.held_item.is_none(), "the bare arm boots");
+        assert_eq!(app.live_held, None);
+        // the diamond's stack rides: the model loads
+        app.live_held_updated(Some((926, 12)));
+        assert_eq!(app.live_held, Some(926));
+        assert!(app.held_item.is_some(), "the diamond's model loaded");
+        // the same id, another count: the loaded model stands (the
+        // count is the GUI's business, the hand renders the model)
+        app.live_held_updated(Some((926, 5)));
+        assert_eq!(app.live_held, Some(926));
+        assert!(app.held_item.is_some());
+        // the slot empties: the bare arm returns
+        app.live_held_updated(Some((926, 0)));
+        assert_eq!(app.live_held, None);
+        assert!(app.held_item.is_none(), "the emptiness drops to the arm");
+        // an id outside the bake domain (past the wire table): the
+        // honest arm — no model, no lie; the id stays the store's truth
+        app.live_held_updated(Some((5000, 3)));
+        assert_eq!(app.live_held, Some(5000));
+        assert!(app.held_item.is_none(), "no model, no lie");
+        // back to the diamond: the model reloads on the id's change
+        app.live_held_updated(Some((926, 1)));
+        assert_eq!(app.live_held, Some(926));
+        assert!(app.held_item.is_some(), "the model reloads");
     }
 
     #[test]

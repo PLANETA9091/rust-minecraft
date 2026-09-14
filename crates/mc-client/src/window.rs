@@ -125,6 +125,7 @@ fn run_join(
                 Option<crate::camera::Camera>,
                 Option<String>,
                 Option<crate::world_view::LiveContainer>,
+                Option<(i32, i32)>,
             ),
             String,
         >,
@@ -303,6 +304,11 @@ fn run_join(
                                     // refresh — the chest's slots stream to
                                     // the screen exactly like the terrain
                                     upd.container,
+                                    // the held stack rides too — the
+                                    // first-person hand follows the store's
+                                    // selected hotbar slot exactly like the
+                                    // chest follows the container
+                                    upd.held,
                                 )))
                                 .is_err()
                             {
@@ -377,6 +383,7 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize) -> anyhow::Result<()>
                 Option<crate::camera::Camera>,
                 Option<String>,
                 Option<crate::world_view::LiveContainer>,
+                Option<(i32, i32)>,
             ),
             String,
         >,
@@ -480,8 +487,12 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize) -> anyhow::Result<()>
         // Disconnect screen, exactly like the original's kick
         while let Ok(upd) = live_rx.try_recv() {
             match upd {
-                Ok((world, camera, biome, container)) => {
-                    app.live_view_updated(world, camera, biome, container)
+                Ok((world, camera, biome, container, held)) => {
+                    app.live_view_updated(world, camera, biome, container);
+                    // the hand's lane beside the world's: the selected
+                    // hotbar stack's model loads on change (the reload
+                    // key makes the refresh cadence cheap)
+                    app.live_held_updated(held);
                 }
                 Err(reason) => app.live_session_lost(reason),
             }

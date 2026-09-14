@@ -148,6 +148,23 @@ pub fn item_icon(id: i32) -> Option<(&'static [u8], u16, u16)> {
     ))
 }
 
+/// The ITEM registry id's first-person model path — the generated
+/// item-model definition table's PLAIN `minecraft:model` roots (the
+/// 1.21.4+ items/ format), the namespace stripped to the bake's own
+/// vocabulary (`"item/diamond"`, the shape `posed_item_quads` walks).
+/// The complex-definition items (the select/special/composite/
+/// condition/range_dispatch trees — the generated skip list's 147)
+/// and the unresolvable ids are `None`: the honest unknown, the
+/// caller renders the bare arm (those trees are their own round's
+/// line, never silently guessed).
+pub fn item_model_path(id: i32) -> Option<&'static str> {
+    let name = item_name(id)?;
+    generated::item_models::ITEM_MODEL_DEFS
+        .iter()
+        .find(|d| d.0 == name)
+        .map(|d| d.1.strip_prefix("minecraft:").unwrap_or(d.1))
+}
+
 /// The resolver core, generic over the table so the dedup and cycle
 /// rules are testable without a jar that contains a cycle (the real
 /// 68-tag table cannot cycle: the census join proves every nested
@@ -329,6 +346,28 @@ mod tests {
         names.sort_unstable();
         let dup_count = names.windows(2).filter(|w| w[0] == w[1]).count();
         assert_eq!(dup_count, 0, "the item name lane is injective");
+    }
+
+    #[test]
+    fn item_model_path_resolves_the_plain_defs() {
+        // the plain minecraft:model roots resolve to the bake's own
+        // vocabulary (the namespace stripped): the diamond's wire id
+        // 926 -> "item/diamond", the shape posed_item_quads walks
+        assert_eq!(item_model_path(926), Some("item/diamond"));
+        assert_eq!(item_model_path(921), Some("item/apple"));
+        // air's own plain def (the registry's first entry)
+        assert_eq!(item_model_path(0), Some("item/air"));
+        // the complex-definition trees are the honest None — the skip
+        // list's 147 (select/special/composite/condition/range_dispatch)
+        let bow = generated::item_order::ITEM_WIRE_ORDER
+            .iter()
+            .position(|&n| n == "bow")
+            .expect("the bow rides the wire table") as i32;
+        assert_eq!(item_model_path(bow), None, "the complex tree is the None");
+        // the boundaries refuse like item_name's own
+        assert_eq!(item_model_path(-1), None);
+        let n = generated::item_order::ITEM_WIRE_ORDER.len() as i32;
+        assert_eq!(item_model_path(n), None);
     }
 
     #[test]

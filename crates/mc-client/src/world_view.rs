@@ -48,7 +48,7 @@ use crate::world::{
     GOLD_ORE, GRANITE, GRASS, GRAVEL, IRON_ORE, LAPIS_ORE, LEAF_LITTER, LEAVES, LIGHT_UNKNOWN, LOG,
     NETHERRACK, PALE_LEAVES, REDSTONE_ORE, SAND, STONE, WATER,
 };
-use crate::world_model::WorldModel;
+use crate::world_model::{USE_ROW_SLOT_START, WorldModel};
 use mc_protocol::{PlayEvent, PlayerPosition, WorldSnapshot};
 
 /// Project the window of `side * side` chunks starting at chunk
@@ -260,6 +260,12 @@ pub struct SnapshotView {
     /// chest's live slots the networked screen renders (see
     /// [`LiveContainer`]). `None` while no foreign window is open.
     pub container: Option<LiveContainer>,
+    /// The store's SELECTED hotbar stack as `(item_id, count)` — the
+    /// first-person hand's own lane (the vanilla renderItemInHand's
+    /// projection: the selected slot's stack, the count the GUI's
+    /// business). The emptiness (a count-0 slot, or a slot the store
+    /// never spoke) is `None` — the bare arm renders.
+    pub held: Option<(i32, i32)>,
 }
 
 /// The OPEN container window as the UI consumes it — the
@@ -543,6 +549,20 @@ fn open_container_view(model: &WorldModel) -> Option<LiveContainer> {
     })
 }
 
+/// The store's SELECTED hotbar stack projected for the UI — the
+/// first-person hand's own lane. The hotbar slice is the inventory
+/// window's `USE_ROW_SLOT_START..USE_ROW_SLOT_END` (the audited
+/// layout), the selection the Set Held Slot packet's gate keeps;
+/// `(0, 0)`-emptiness and a slot the store never spoke are `None` —
+/// the bare arm, never a guessed stack.
+fn held_item_view(model: &WorldModel) -> Option<(i32, i32)> {
+    let inv = model.inventory();
+    inv.slots
+        .get(USE_ROW_SLOT_START + inv.selected)
+        .filter(|s| s.count > 0)
+        .map(|s| (s.item_id, s.count))
+}
+
 /// The grid-local first-person camera for the materialized window: the
 /// join teleport's EXACT pose — the vanilla standing eye height over the
 /// feet, the server-directed look direction converted from the vanilla
@@ -604,6 +624,9 @@ pub fn materialize_snapshot_view(
         // a fresh join opens no window — the container lane starts
         // closed (the Open Screen packet is the only opener)
         container: None,
+        // and the inventory rides until the store speaks — the bare
+        // arm, the join's own state (the helper reads the store)
+        held: held_item_view(&model),
     }
 }
 
@@ -662,6 +685,9 @@ impl LiveView {
                 // no player pose ≠ no container: the window can be
                 // open before any teleport arrived — read the store
                 container: open_container_view(&self.model),
+                // nor does it mean no inventory — the hand's lane
+                // reads the store the same way
+                held: held_item_view(&self.model),
             };
         };
         let origin = snapshot_window_origin(player, self.side);
@@ -675,6 +701,9 @@ impl LiveView {
             // the live window state rides EVERY refresh — the chest's
             // slots update in place exactly like the terrain does
             container: open_container_view(&self.model),
+            // the selected hotbar stack rides every refresh too — the
+            // hand follows the store exactly like the chest does
+            held: held_item_view(&self.model),
         }
     }
 }
@@ -1937,6 +1966,50 @@ mod tests {
             Some("minecraft:badlands"),
             "the skip-sync fallback names the bare vanilla wire id"
         );
+    }
+
+    /// The first-person hand's lane: the store's SELECTED hotbar stack
+    /// rides the view — the filled-but-not-selected slots do not, the
+    /// selection's move re-reads the slice, the empty slot is the bare
+    /// arm's None.
+    #[test]
+    fn the_selected_hotbar_rides_the_view_as_the_held_stack() {
+        use mc_protocol::play::{parse_set_container_slot, parse_set_held_slot};
+        let mut live = LiveView::from_snapshot(surface_snapshot(), 5);
+        // the store silent: the bare arm
+        assert_eq!(live.refresh(example_mapper).held, None);
+        // a diamond lands at the hotbar's slot 3 (the USE_ROW's window
+        // numbering 39) — but the selection still sits at slot 0
+        let mut p = Vec::new();
+        write_varint(&mut p, clientbound::CONTAINER_SET_SLOT);
+        write_varint(&mut p, 0); // window 0 — the player's inventory
+        write_varint(&mut p, 1); // state id
+        p.extend_from_slice(&(USE_ROW_SLOT_START as i16 + 3).to_be_bytes());
+        write_varint(&mut p, 12); // the count
+        write_varint(&mut p, 926); // the diamond's wire id
+        write_varint(&mut p, 0); // patch: none added
+        write_varint(&mut p, 0); // patch: none removed
+        let s = parse_set_container_slot(&p).unwrap();
+        assert!(live.apply(PlayEvent::ContainerSlotSet(s)));
+        assert_eq!(
+            live.refresh(example_mapper).held,
+            None,
+            "filled but not selected — the hand does not guess"
+        );
+        // the selection moves to slot 3: the diamond rides the view
+        let mut p = Vec::new();
+        write_varint(&mut p, clientbound::SET_HELD_SLOT);
+        write_varint(&mut p, 3);
+        let s = parse_set_held_slot(&p).unwrap();
+        assert!(live.apply(PlayEvent::HeldSlotSet(s)));
+        assert_eq!(live.refresh(example_mapper).held, Some((926, 12)));
+        // the selection moves to the EMPTY slot 4: the bare arm returns
+        let mut p = Vec::new();
+        write_varint(&mut p, clientbound::SET_HELD_SLOT);
+        write_varint(&mut p, 4);
+        let s = parse_set_held_slot(&p).unwrap();
+        assert!(live.apply(PlayEvent::HeldSlotSet(s)));
+        assert_eq!(live.refresh(example_mapper).held, None);
     }
 
     #[test]

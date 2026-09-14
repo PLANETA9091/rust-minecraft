@@ -919,6 +919,35 @@ hand-drawn:
   (VILLAGER_DATA at 18 doubles as the order proof), the generated-id
   pin, and the model's merge semantics (replace-one-leave-others, the
   null-lookup drop, the re-spawn reset).
+  The **the live held-item lane — the store's hand (v0.3.137)**:
+  the first-person hand leaves the offline stand-in — the live session's own
+  selected hotbar stack drives the held item, the store's projection the
+  interactivity directive's hand pass needed. THE PROJECTION: `SnapshotView`
+  gains `held` — the inventory store's SELECTED hotbar stack (the audited
+  `USE_ROW_SLOT_START + selected` slot, the Set Held Slot packet's gate the
+  selection rides), the `(0, 0)`-emptiness and the never-spoken slots as
+  `None` — and the view's every construction site (the one-shot join
+  milestone, the refresh's pose-less early return, the main path) reads the
+  store the same way the container lane does. THE WIRE: the live channel's
+  tuple carries it, and the frame thread feeds the new `live_held_updated` —
+  the id's model loads through the GENERATED item-model definition table
+  (the new `mc_registry::item_model_path`: the plain `minecraft:model` roots'
+  1390 entries, the namespace stripped to the bake's own `"item/diamond"`
+  vocabulary), the reload fires ONLY when the id changes (the count is the
+  GUI's business — vanilla renders no count in first person — so the store's
+  refresh cadence never re-bakes), and the honest drops land on the bare
+  arm: the empty selection, and the complex-definition trees (the skip
+  list's 147 — select/special/composite/condition/range_dispatch — their
+  own future round, never silently guessed). The OFFLINE `--held-item` keeps
+  owning its golden lane; the hand's draw path is byte-identical.
+  GOLDENS VERIFIED 13/13 at rms 0.000 (no render lane changed — the live
+  lane never feeds the headless scenes, the draw path untouched). Tests +3
+  (workspace 505 passed / 0 failed / 3 ignored): the model-path table's pins
+  (the plain roots, air's own def, the bow's complex-tree None, the
+  boundaries), the view's projection (the filled-but-not-selected slot does
+  not ride, the selection's move re-reads, the empty slot is the arm), and
+  the App lane's laws (the load, the count's irrelevance, the honest drops,
+  the id-keyed reload).
   The **the shift-click lane — the quick move between the sections (v0.3.136)**:
   the chest's third click table lands — the doClick QUICK_MOVE branch, the
   shift-click the container GUI lives by (the grid to the player mirror and
