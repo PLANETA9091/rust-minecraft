@@ -541,6 +541,14 @@ impl WorldModel {
                     false
                 }
             }
+            PlayEvent::EntityEquipped(_) => {
+                // the gear snapshot decodes and is RETAINED on the
+                // wire; the model's equipment store arrives with mob
+                // rendering (no surface exists yet — the no-surface
+                // skip, the consumer's act separate from the wire's
+                // truth)
+                false
+            }
             PlayEvent::CenterChunk { x, z } => {
                 if self.center != (x, z) {
                     self.center = (x, z);
