@@ -405,6 +405,61 @@ pub fn predict_pickup(slot: (i32, i32), carried: (i32, i32)) -> ((i32, i32), (i3
     }
 }
 
+/// The vanilla `AbstractContainerMenu.doClick` PICKUP prediction for the
+/// RIGHT press (button 1) — the same PICKUP input mode on the wire, the
+/// button byte separates the tables. The semantics (the doClick
+/// buttonnum != 0 branch): an empty cursor over a filled slot takes the
+/// CEILING HALF (5 -> 3 taken, 2 left; 1 -> the whole single); a held
+/// stack PLACES ONE (the cursor's last item empties it); the same item
+/// with room MOVES ONE; a different item (or a full slot, or both
+/// empty) does NOTHING — the right press never swaps. The belief laws
+/// are the local prediction's own (the server's corrections replace
+/// the belief wholesale — the container lane's contract).
+pub fn predict_pickup_right(slot: (i32, i32), carried: (i32, i32)) -> ((i32, i32), (i32, i32)) {
+    let slot_empty = slot.1 <= 0;
+    let carried_empty = carried.1 <= 0;
+    match (slot_empty, carried_empty) {
+        // both empty — nothing to do
+        (true, true) => (slot, carried),
+        // a held stack over an empty slot — place ONE
+        (true, false) => (
+            (carried.0, 1),
+            if carried.1 > 1 {
+                (carried.0, carried.1 - 1)
+            } else {
+                (0, 0)
+            },
+        ),
+        // an empty cursor over a filled slot — take the ceiling half
+        (false, true) => {
+            let take = (slot.1 + 1) / 2;
+            let leave = slot.1 - take;
+            (
+                if leave > 0 { (slot.0, leave) } else { (0, 0) },
+                (slot.0, take),
+            )
+        }
+        // both filled
+        (false, false) => {
+            if slot.0 == carried.0 && slot.1 < ITEM_MAX_STACK_DEFAULT {
+                // the same item with room — move ONE
+                (
+                    (slot.0, slot.1 + 1),
+                    if carried.1 > 1 {
+                        (carried.0, carried.1 - 1)
+                    } else {
+                        (0, 0)
+                    },
+                )
+            } else {
+                // a different item or a full slot — the right press
+                // never swaps, never overfills
+                (slot, carried)
+            }
+        }
+    }
+}
+
 /// The model's open-container store projected for the UI — `None`
 /// while no foreign window is open (the join's own state: no screen
 /// is up until the server opens one).
@@ -1958,5 +2013,32 @@ mod tests {
         // the ceiling is the default 64 — the component-carried true
         // maxes are the store's future lanes (the doc's own honesty)
         assert_eq!(ITEM_MAX_STACK_DEFAULT, 64);
+    }
+
+    /// The right-press prediction's semantics table — the doClick
+    /// PICKUP buttonnum != 0 branch over the believed pairs: the
+    /// CEILING-half take, the place-one, the move-one, and the
+    /// refusals (a different item never swaps on the right press).
+    #[test]
+    fn the_right_press_prediction_rides_the_vanilla_table() {
+        // both empty — nothing to do
+        assert_eq!(predict_pickup_right((0, 0), (0, 0)), ((0, 0), (0, 0)));
+        // an empty cursor takes the CEILING half: 12 -> 6 + 6
+        assert_eq!(predict_pickup_right((926, 12), (0, 0)), ((926, 6), (926, 6)));
+        // the odd count rounds UP: 5 -> 3 taken, 2 left
+        assert_eq!(predict_pickup_right((926, 5), (0, 0)), ((926, 2), (926, 3)));
+        // the single empties the slot
+        assert_eq!(predict_pickup_right((926, 1), (0, 0)), ((0, 0), (926, 1)));
+        // a held stack places ONE — the last item empties the cursor
+        assert_eq!(predict_pickup_right((0, 0), (926, 12)), ((926, 1), (926, 11)));
+        assert_eq!(predict_pickup_right((0, 0), (926, 1)), ((926, 1), (0, 0)));
+        // the same item with room moves ONE
+        assert_eq!(predict_pickup_right((926, 12), (926, 5)), ((926, 13), (926, 4)));
+        // the move that empties the cursor is the sentinel
+        assert_eq!(predict_pickup_right((926, 12), (926, 1)), ((926, 13), (0, 0)));
+        // a different item NEVER swaps on the right press
+        assert_eq!(predict_pickup_right((926, 12), (921, 3)), ((926, 12), (921, 3)));
+        // a full slot takes nothing
+        assert_eq!(predict_pickup_right((926, 64), (926, 5)), ((926, 64), (926, 5)));
     }
 }

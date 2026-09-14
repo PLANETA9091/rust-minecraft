@@ -358,6 +358,7 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize) -> anyhow::Result<()>
     >();
     let mut net_seen = 0usize; // cursor into the append-only request log
     let mut was_left_down = false; // the attack edge detector (vanilla left-click = swing)
+    let mut was_right_down = false; // the right press's edge detector (the split-stack lane)
     // offline-mode joins ride the same architecture: the "join" button
     // records the request, a detached worker runs the live join (login +
     // configuration + the play state pumped to the world-load milestone,
@@ -410,6 +411,15 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize) -> anyhow::Result<()>
             app.on_press(gmx, gmy);
         }
         was_left_down = left_down;
+        // the RIGHT press's rising edge: the container screen's own
+        // split-stack lane (button 1 — the pickup table's other branch);
+        // the world's right press is the use/place lane, its own future
+        // round (the honest no-op until then)
+        let right_down = window.get_mouse_down(minifb::MouseButton::Right);
+        if right_down && !was_right_down {
+            app.on_right_press(gmx, gmy);
+        }
+        was_right_down = right_down;
         app.update();
         // dispatch newly requested server-list pings to worker threads
         for req in &app.net_requests[net_seen..] {

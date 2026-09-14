@@ -763,15 +763,27 @@ impl App {
 
     /// The LEFT press's rising edge (the vanilla MouseHandler's own
     /// press routing): a container screen's press clicks the slot it
-    /// landed on; every other screen falls through to the attack swing
-    /// (the world's left press — the guard inside keeps the menus
-    /// silent).
+    /// landed on (button 0); every other screen falls through to the
+    /// attack swing (the world's left press — the guard inside keeps
+    /// the menus silent).
     pub fn on_press(&mut self, mx: i32, my: i32) {
         if self.screen == ScreenKind::Chest {
-            self.click_chest_slot(mx, my);
+            self.click_chest_slot(mx, my, 0);
             return;
         }
         self.on_attack();
+    }
+
+    /// The RIGHT press's rising edge (the vanilla MouseHandler's own
+    /// routing, the button byte's other lane): a container screen's
+    /// press clicks the slot with button 1 — the split-stack pickup /
+    /// place-one table (`predict_pickup_right`). The WORLD's right
+    /// press is the use/place-block lane — its own future round (the
+    /// honest no-op until then; never the swing).
+    pub fn on_right_press(&mut self, mx: i32, my: i32) {
+        if self.screen == ScreenKind::Chest {
+            self.click_chest_slot(mx, my, 1);
+        }
     }
 
     /// The live mouse position (the windowed loop's per-frame feed, the
@@ -783,21 +795,22 @@ impl App {
         self.mouse_pos = Some((mx, my));
     }
 
-    /// The chest screen's slot click: the press finds the 16x16 hit box
-    /// the last render laid out (the vanilla Slot's own hit shape), and
-    /// the LIVE window's identity (id + revision) rides the command to
-    /// the session's send lane. THE LOCAL PREDICTION runs the vanilla
-    /// pickup table against the believed state (the screen's own slots
-    /// + the believed cursor — see
-    /// [`crate::world_view::predict_pickup`]), the screen's slot lists
-    /// and cursor mutate IN PLACE (the server's authoritative update
-    /// replaces them wholesale — the correction is the next projection),
-    /// and the post-click belief rides the command as the changed-slot
-    /// delta + the carried cursor (the wire lanes
-    /// `HashedStack::item` speaks). The OFFLINE stand-in has no window
-    /// and no session: its presses are the honest no-op (the golden's
-    /// deterministic scene).
-    fn click_chest_slot(&mut self, mx: i32, my: i32) {
+    /// The chest screen's slot click (the button byte's own lane: 0 =
+    /// the left table, 1 = the right table): the press finds the 16x16
+    /// hit box the last render laid out (the vanilla Slot's own hit
+    /// shape), and the LIVE window's identity (id + revision) rides the
+    /// command to the session's send lane. THE LOCAL PREDICTION runs
+    /// the vanilla table against the believed state (the screen's own
+    /// slots + the believed cursor — [`crate::world_view::predict_pickup`]
+    /// for the left, [`crate::world_view::predict_pickup_right`] for
+    /// the right), the screen's slot lists and cursor mutate IN PLACE
+    /// (the server's authoritative update replaces them wholesale — the
+    /// correction is the next projection), and the post-click belief
+    /// rides the command as the changed-slot delta + the carried cursor
+    /// (the wire lanes `HashedStack::item` speaks). The OFFLINE
+    /// stand-in has no window and no session: its presses are the
+    /// honest no-op (the golden's deterministic scene).
+    fn click_chest_slot(&mut self, mx: i32, my: i32, button: i8) {
         if !self.chest_is_live {
             return; // the offline stand-in: no window, no click
         }
@@ -821,8 +834,11 @@ impl App {
         } else {
             self.chest_mirror[slot as usize - 27]
         };
-        let (new_slot, new_carried) =
-            crate::world_view::predict_pickup(believed, self.chest_carried);
+        let (new_slot, new_carried) = if button == 0 {
+            crate::world_view::predict_pickup(believed, self.chest_carried)
+        } else {
+            crate::world_view::predict_pickup_right(believed, self.chest_carried)
+        };
         if (slot as usize) < 27 {
             self.chest_slots[slot as usize] = new_slot;
         } else {
@@ -834,7 +850,7 @@ impl App {
                 window_id,
                 state_id,
                 slot,
-                button: 0,
+                button,
                 input: crate::world_view::ContainerInput::Pickup,
                 changed: vec![(slot, new_slot)],
                 carried: new_carried,
@@ -3405,6 +3421,88 @@ mod tests {
         assert_eq!(app.screen, ScreenKind::World);
         assert_eq!(app.chest_carried, (0, 0), "no window, no held stack");
         let _ = click_rx.try_recv(); // the close echo
+    }
+
+    /// The RIGHT press's own lane: the split-stack pickup (the ceiling
+    /// half), the place-one, and the button byte riding the command —
+    /// the same PICKUP input mode, the wire's other button value. The
+    /// offline stand-in stays silent under the right press too.
+    #[test]
+    fn the_right_press_splits_and_places_one() {
+        use crate::world_view::{ContainerCommand, ContainerInput};
+        let mut app = App::new(3);
+        app.open(ScreenKind::Connect);
+        app.net_world = Some(air_net_world(2, 0));
+        app.enter_network_world(None, Skybox::Overworld, None, None);
+        let (click_tx, click_rx) = std::sync::mpsc::channel::<ContainerCommand>();
+        app.attach_live_clicks(click_tx);
+        let chest = crate::world_view::LiveContainer {
+            id: 4,
+            menu_type_id: crate::world_model::MENU_TYPE_CHEST,
+            slots: {
+                let mut s = vec![(0i32, 0i32); 63];
+                s[6] = (926, 5); // diamond x5 — the odd split's own number
+                s
+            },
+            carried: (0, 0),
+            state_id: 8,
+        };
+        app.live_view_updated(air_net_world(2, 1), None, None, Some(chest));
+        assert_eq!(app.screen, ScreenKind::Chest);
+        app.render_title_buttons_for_test();
+        let (bx, by, _) = app
+            .chest_slot_rects
+            .iter()
+            .find(|&&(_, _, s)| s == 6)
+            .copied()
+            .expect("the box");
+
+        // the right press takes the CEILING half (5 -> 3 taken, 2 left)
+        app.on_right_press(bx + 8, by + 8);
+        assert_eq!(app.chest_slots[6], (926, 2), "the odd split left two");
+        assert_eq!(app.chest_carried, (926, 3), "the ceiling half rides");
+        match click_rx.try_recv().expect("the right press's click") {
+            ContainerCommand::Click(c) => {
+                assert_eq!(c.button, 1, "the right press's own button byte");
+                assert_eq!(c.input, ContainerInput::Pickup, "the same PICKUP mode");
+                assert_eq!(c.changed, vec![(6, (926, 2))]);
+                assert_eq!(c.carried, (926, 3));
+            }
+            other => panic!("expected a click, got {other:?}"),
+        }
+
+        // the held half places ONE back per right press
+        let (ex, ey, _) = app
+            .chest_slot_rects
+            .iter()
+            .find(|&&(_, _, s)| s == 7)
+            .copied()
+            .expect("the empty box");
+        app.on_right_press(ex + 8, ey + 8);
+        assert_eq!(app.chest_slots[7], (926, 1), "one placed");
+        assert_eq!(app.chest_carried, (926, 2), "the cursor paid one");
+        match click_rx.try_recv().expect("the place-one's click") {
+            ContainerCommand::Click(c) => {
+                assert_eq!(c.button, 1);
+                assert_eq!(c.changed, vec![(7, (926, 1))]);
+                assert_eq!(c.carried, (926, 2));
+            }
+            other => panic!("expected a click, got {other:?}"),
+        }
+
+        // the offline stand-in: the right press never speaks
+        app.on_escape();
+        let _ = click_rx.try_recv(); // the close echo
+        app.open_chest();
+        app.render_title_buttons_for_test();
+        let (ox, oy, _) = app
+            .chest_slot_rects
+            .iter()
+            .find(|&&(_, _, s)| s == 6)
+            .copied()
+            .expect("the offline box");
+        app.on_right_press(ox + 8, oy + 8);
+        assert!(click_rx.try_recv().is_err(), "the offline right press is silent");
     }
 
     #[test]

@@ -919,6 +919,27 @@ hand-drawn:
   (VILLAGER_DATA at 18 doubles as the order proof), the generated-id
   pin, and the model's merge semantics (replace-one-leave-others, the
   null-lookup drop, the re-spawn reset).
+  The **the right-press lane — the split stack and the single (v0.3.135)**:
+  the chest's second button speaks — the doClick PICKUP table's other
+  branch, the same PICKUP input mode on the wire with the button byte
+  separating them. THE INPUT: the windowed loop tracks the RIGHT press's
+  rising edge (the `was_right_down` detector beside the left's) and routes
+  it to the new `on_right_press` — the chest's press clicks the slot with
+  button 1; the WORLD's right press is the use/place-block lane, its own
+  future round (the honest no-op until then, never the swing). THE TABLE
+  (`world_view::predict_pickup_right`): an empty cursor takes the CEILING
+  half (5 -> 3 taken, 2 left; a single empties the slot), a held stack
+  PLACES ONE (the cursor's last item empties it), the same item with room
+  MOVES ONE, and a different item (or a full slot) does NOTHING — the
+  right press never swaps. The belief rides the same lanes as the left's
+  (the mutated slots + cursor, the command's changed/carried, the worker's
+  `HashedStack::item` count pairs, the authoritative correction's
+  wholesale replacement). GOLDENS UNTOUCHED BY CONSTRUCTION: 13/13 at rms
+  0.000 (no render lane changed — the carried pass is v0.3.134's, still
+  golden-invisible). Tests +2 (workspace 500 passed / 0 failed / 3
+  ignored): the right table's ten laws (the odd split's own number, the
+  single's emptying, the never-swap) and the right-press arc (the split,
+  the place-one, the button byte riding, the offline silence).
   The **the cursor's local prediction — the held stack answers the click (v0.3.134)**:
   the interactivity directive's fourth landing — the chest's clicks run the
   vanilla menu logic LOCALLY, and the input loop's own gap closed with it.
