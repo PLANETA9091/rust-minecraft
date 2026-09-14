@@ -919,6 +919,40 @@ hand-drawn:
   (VILLAGER_DATA at 18 doubles as the order proof), the generated-id
   pin, and the model's merge semantics (replace-one-leave-others, the
   null-lookup drop, the re-spawn reset).
+  The **set equipment — the gear snapshot's wire transport
+  (v0.3.119)**: the held-item state's packet, decoded. The audit (javap
+  on the 26.2 jar): Set Equipment (generated id 102) is a `readVarInt`
+  entity id followed by the PAIRED walk — a `readByte` whose LOW 7
+  bits index the eight-entry declaration-order `EquipmentSlot.VALUES`
+  list (MAINHAND, OFFHAND, FEET, LEGS, CHEST, HEAD, plus 26.2's
+  animal-armor BODY and SADDLE past the wiki-era six — the clinit's
+  `List.of(values())`, and the enum's separate `id`/BY_ID/STREAM_CODEC
+  lane is NOT this packet's), the HIGH bit the continue flag (the
+  write mirror packs `ordinal | (more ? 0x80 : 0)` — the last pair's
+  byte always rides bare), and each pair's stack through
+  `ItemStack.OPTIONAL_STREAM_CODEC`. THE CODEC LESSON: the optional
+  codec is the anonymous ItemStack$1 — the count IS the emptiness
+  sentinel (`ifgt`: count <= 0, zero AND negative, is the EMPTY stack,
+  nothing else rides the wire), a positive stack rides the item's
+  holderRegistry id (the `$29` byIdOrThrow, a negative refuses) and
+  the component patch — while the entity-data lane's ItemStack$2 is
+  the SAME walk plus the strict "Empty ItemStack not allowed" wrapper.
+  One codec, two call sites: `read_item_stack` extracted (the
+  read_uuid precedent), both lanes served by it. An EMPTY stack is a
+  LEGAL equipment entry (the cleared slot — the optional lane exists
+  precisely to carry what the strict lane refuses), the bounds
+  refusal fires BEFORE the pair's stack bytes (Java's `List.get`
+  order, the port refusing at the same point), and a packet ends only
+  on a byte with the high bit CLEAR (a continue-bit end refuses
+  honestly — the loop wants the next pair). The model's consumer
+  arrives with mob rendering (the no-surface skip, documented in the
+  apply arm). GOLDENS UNTOUCHED BY CONSTRUCTION: 12/12 at rms 0.000.
+  Tests +1 (workspace 471 -> 472 passed / 0 failed / 3 ignored): the
+  three-pair packet (the full stack with a one-component patch, the
+  cleared slot, the final bare-ordinal pair), the negative-count
+  sentinel retained verbatim, the slot-8 bounds refusal on the slot
+  byte ALONE, the continue-bit end and the mid-patch truncation
+  refusing honestly.
   The **effect-state wire transport + the night-vision consumer lift
   (v0.3.118)**: the player-state surface the mesher's documented debt
   awaited. The audit (javap on the 26.2 jar): Update Mob Effect
