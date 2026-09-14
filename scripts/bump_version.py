@@ -32,7 +32,7 @@ lock_path = "Cargo.lock"
 # --- Cargo.toml: the workspace crate's own version line (line-anchored
 # to the [package] section's version key) ---
 toml = open(toml_path).read().splitlines(keepends=True)
-toml_hits = [i for i, l in enumerate(toml) if l.rstrip("\n") == 'version = "0.3.120"']
+toml_hits = [i for i, l in enumerate(toml) if l.rstrip("\n") == 'version = "0.3.121"']
 if len(toml_hits) != 1:
     sys.exit(f"FATAL: expected exactly 1 workspace version line in Cargo.toml, found {len(toml_hits)}")
 toml[toml_hits[0]] = f'version = "{NEW}"\n'
@@ -56,9 +56,9 @@ for i, line in enumerate(lock):
 missing = [c for c in WORKSPACE_CRATES if c not in bumped]
 if missing:
     sys.exit(f"FATAL: workspace crates not found in Cargo.lock: {missing}")
-wrong = {c: old for c, (_, old) in bumped.items() if old != "0.3.120"}
+wrong = {c: old for c, (_, old) in bumped.items() if old != "0.3.121"}
 if wrong:
-    sys.exit(f"FATAL: expected old version 0.3.120, found {wrong}")
+    sys.exit(f"FATAL: expected old version 0.3.121, found {wrong}")
 if len(set(j for j, _ in bumped.values())) != len(bumped):
     sys.exit("FATAL: two workspace crates resolved to the same lock line")
 for (j, _old) in bumped.values():

@@ -919,6 +919,42 @@ hand-drawn:
   (VILLAGER_DATA at 18 doubles as the order proof), the generated-id
   pin, and the model's merge semantics (replace-one-leave-others, the
   null-lookup drop, the re-spawn reset).
+  The **entity-data WRITE side — every decode walk now has its encode
+  mirror (v0.3.122)**: the write side the audits named, landed whole.
+  Three javap'd encode lanes anchor the family's judgment calls:
+  `EntityDataSerializers$3.encode` is `optional.orElse(-1) + 1` — the
+  iadd is Java's WRAPPING int add, so None rides 0 and Some(MAX_VALUE)
+  rides MIN_VALUE (the VarInt 80 80 80 80 08, the decode's
+  wrapping_sub(1) the exact inverse on both ends); `ItemStack$1.encode`
+  collapses an empty store to the VarInt 0 and writes NOTHING else —
+  while the strict `ItemStack$2` lane throws an EncoderException on an
+  empty WRITE, and the port's store RETAINS a negative sentinel
+  verbatim, so the writer mirrors the WIRE (the retained -7
+  re-encodes as -7, five bytes, no item, no patch), not the object
+  graph's collapse nor the refusal vanilla's store could never reach;
+  and the entity reference's flag byte rides FIRST, the 16 UUID bytes
+  only then. The write side's exhaustiveness is compiler-enforced (the
+  44-arm dispatch over every EntityDataEntry variant), and it forced a
+  fidelity debt the decode-only line had banked unnoticed: the
+  particle parse COLLAPSED registry ids — `Simple` covered 103 ids,
+  `Block` five, `GeyserBase` two, `Spell` two, `Color` three — and a
+  parse that lost the id could not be written back, so the five
+  carriers now retain the dispatched id that was in the dispatch's
+  hand (zero extra wire bytes, the store again the wire's truth). The
+  component-value writer matches the (type id, value) pairing as a
+  TUPLE — a mismatched store refuses instead of fabricating bytes —
+  and the writers write the STORE: a display ordinal that filled or a
+  villager level that clamped re-encodes to its canonical form,
+  exactly the round-trip vanilla's own object graph performs.
+  `encode_set_entity_data` refuses an entry wearing the 0xFF EOF
+  marker as its index (the packet would truncate the walk the port
+  itself refuses to parse past). GOLDENS UNTOUCHED BY CONSTRUCTION:
+  12/12 at rms 0.000. Tests +1 (workspace 475 -> 476 passed / 0 failed
+  / 3 ignored): the whole-packet byte-equal round-trips riding the
+  audited fixture sets (both registration-order tables, the particle
+  dispatch), and the pinned-lanes test proving the wrapping +1, the
+  sentinel's verbatim five bytes, the flag-then-UUID ordering, and the
+  EOF-marker refusal.
   The **set container content — the inventory surfaces' second packet
   (v0.3.121)**: ONE container window's full snapshot, decoded. The
   audit (javap on the 26.2 jar): the clinit composes
