@@ -3926,11 +3926,7 @@ pub fn parse_set_entity_data(payload: &[u8]) -> Result<EntityDataSet> {
 /// 26/12/26-bit masks making the two's-complement truncation the
 /// getters' sign-extension inverse.
 fn pack_block_pos(x: i32, y: i32, z: i32) -> i64 {
-    (((x as i64) & 0x3FFF_FFFF) << 38) | (((z as i64) & 0x3FFF_FFFF) << 12) | ((y as i64) & 0xFFF)
-}
-
-fn write_u8(out: &mut Vec<u8>, v: u8) {
-    out.push(v);
+    (((x as i64) & 0x3FF_FFFF) << 38) | (((z as i64) & 0x3FF_FFFF) << 12) | ((y as i64) & 0xFFF)
 }
 
 fn write_bool(out: &mut Vec<u8>, v: bool) {
@@ -6707,6 +6703,15 @@ mod tests {
         let p = test_support::set_entity_data_packet(77, &entries);
         let d = parse_set_entity_data(&p).unwrap();
         assert_eq!(d.id, 77);
+        // THE WRITE MIRROR: every entry here re-encodes byte-for-byte —
+        // the writer family's first whole-packet proof, riding the
+        // fixture set the javap audits built (both item stacks ride
+        // the deep patch writers: the added/removed lanes and the
+        // adventure-mode predicates with their matchers)
+        assert_eq!(
+            encode_set_entity_data(d.id, &d.entries).unwrap(),
+            p
+        );
         assert_eq!(
             d.entries,
             vec![
@@ -6761,6 +6766,139 @@ mod tests {
         truncated.extend_from_slice(&test_support::entity_data_entry(3, 3, &[]));
         truncated.push(255);
         assert!(parse_set_entity_data(&truncated).is_err());
+    }
+
+    /// The write side's pinned lanes — the three mirrors the javap
+    /// audits named, each proven against the vanilla encode bytecode:
+    ///
+    /// 1. OPTIONAL_UNSIGNED_INT (EntityDataSerializers$3.encode):
+    ///    `optional.orElse(-1) + 1` — the iadd is Java's WRAPPING int
+    ///    add, so None rides the VarInt 0 and Some(MAX_VALUE) rides
+    ///    MIN_VALUE (the VarInt 80 80 80 80 08 on the wire); the
+    ///    decode's wrapping_sub(1) closes the loop on BOTH ends.
+    /// 2. ITEM_STACK (ItemStack$1.encode / the $2 strict wrapper): the
+    ///    count rides FIRST and a non-positive count is the WHOLE
+    ///    payload — the retained -7 sentinel re-encodes as -7 (five
+    ///    VarInt bytes, no item, no patch), where vanilla's object
+    ///    graph would have collapsed the stack to EMPTY and written 0;
+    ///    the port writes the WIRE's truth, not the collapse.
+    /// 3. OPTIONAL_LIVING_ENTITY_REFERENCE: the flag byte, then — only
+    ///    then — the 16 UUID bytes; an absent reference is the flag
+    ///    byte alone.
+    /// And the writer's own honest refusal: an entry wearing the 0xFF
+    /// EOF marker as its index is refused, not written (the packet
+    /// would truncate the walk the port itself refuses to parse past).
+    #[test]
+    fn the_write_side_pins_the_encode_lanes_the_audits_named() {
+        use entity_data_serializers as s;
+        // 1. the OptionalInt's wrapping +1
+        let mk = |v: EntityDataEntry, ser: i32| {
+            SetEntityDataEntry {
+                index: 4,
+                serializer: ser,
+                value: v,
+            }
+        };
+        let none = encode_set_entity_data(
+            7,
+            &[mk(EntityDataEntry::OptionalUnsignedInt(None), s::OPTIONAL_UNSIGNED_INT)],
+        )
+        .unwrap();
+        let d = parse_set_entity_data(&none).unwrap();
+        assert_eq!(d.entries[0].value, EntityDataEntry::OptionalUnsignedInt(None));
+        // the value byte IS the VarInt 0: the packet is id + [04 10 00 FF]
+        assert_eq!(none.last(), Some(&255));
+        assert_eq!(&none[none.len() - 4..none.len() - 1], &[4, s::OPTIONAL_UNSIGNED_INT as u8, 0]);
+        let wrapped = encode_set_entity_data(
+            7,
+            &[mk(
+                EntityDataEntry::OptionalUnsignedInt(Some(i32::MAX)),
+                s::OPTIONAL_UNSIGNED_INT,
+            )],
+        )
+        .unwrap();
+        // Some(MAX_VALUE) rides MIN_VALUE: the VarInt 80 80 80 80 08
+        // (MIN_VALUE's u32 bits, LEB128 — NOT the FF..0F of a -1)
+        assert_eq!(
+            &wrapped[wrapped.len() - 8..wrapped.len() - 1],
+            &[
+                4,
+                s::OPTIONAL_UNSIGNED_INT as u8,
+                0x80,
+                0x80,
+                0x80,
+                0x80,
+                0x08
+            ]
+        );
+        let d = parse_set_entity_data(&wrapped).unwrap();
+        assert_eq!(
+            d.entries[0].value,
+            EntityDataEntry::OptionalUnsignedInt(Some(i32::MAX))
+        );
+        // 2. the item stack's count sentinel: the retained -7 re-encodes
+        //    as -7 and NOTHING ELSE rides (no item id, no patch)
+        let sentinel = encode_set_entity_data(
+            7,
+            &[mk(
+                EntityDataEntry::ItemStack {
+                    count: -7,
+                    item_id: 0,
+                    patch: ComponentPatch::default(),
+                },
+                s::ITEM_STACK,
+            )],
+        )
+        .unwrap();
+        assert_eq!(
+            &sentinel[sentinel.len() - 8..sentinel.len() - 1],
+            &[4, s::ITEM_STACK as u8, 0xF9, 0xFF, 0xFF, 0xFF, 0x0F]
+        );
+        let d = parse_set_entity_data(&sentinel).unwrap();
+        assert_eq!(
+            d.entries[0].value,
+            EntityDataEntry::ItemStack {
+                count: -7,
+                item_id: 0,
+                patch: ComponentPatch::default()
+            }
+        );
+        // ...and a byte-equal round-trip: parse -> encode == the wire
+        assert_eq!(encode_set_entity_data(d.id, &d.entries).unwrap(), sentinel);
+        // 3. the entity reference's flag byte: absent = one byte,
+        //    present = the flag THEN the 16 UUID bytes
+        let absent = encode_set_entity_data(
+            7,
+            &[mk(EntityDataEntry::OptionalLivingEntityReference(None), s::OPTIONAL_LIVING_ENTITY_REFERENCE)],
+        )
+        .unwrap();
+        assert_eq!(absent[absent.len() - 2], 0); // the flag byte alone
+        let uuid: [u8; 16] = core::array::from_fn(|i| i as u8);
+        let present = encode_set_entity_data(
+            7,
+            &[mk(
+                EntityDataEntry::OptionalLivingEntityReference(Some(EntityReference { uuid })),
+                s::OPTIONAL_LIVING_ENTITY_REFERENCE,
+            )],
+        )
+        .unwrap();
+        assert_eq!(present[present.len() - 18], 1); // the flag rides FIRST
+        assert_eq!(&present[present.len() - 17..present.len() - 1], &uuid); // then the 16 bytes
+        let d = parse_set_entity_data(&present).unwrap();
+        assert_eq!(
+            d.entries[0].value,
+            EntityDataEntry::OptionalLivingEntityReference(Some(EntityReference { uuid }))
+        );
+        // the writer's own refusal: the EOF marker is not an accessor
+        assert!(encode_set_entity_data(
+            7,
+            &[SetEntityDataEntry {
+                index: 255,
+                serializer: s::BYTE,
+                value: EntityDataEntry::Byte(1),
+            }],
+        )
+        .is_err());
     }
 
     /// Set Entity Data: an id the registry itself does not know
@@ -6942,6 +7080,12 @@ mod tests {
         let p = test_support::set_entity_data_packet(88, &entries);
         let d = parse_set_entity_data(&p).unwrap();
         assert_eq!(d.id, 88);
+        // the write mirror holds here too: the holders, the painting's
+        // two bias lanes, the global pos, the states, the float lanes
+        assert_eq!(
+            encode_set_entity_data(d.id, &d.entries).unwrap(),
+            p
+        );
         assert_eq!(
             d.entries,
             vec![
@@ -7158,6 +7302,12 @@ mod tests {
         let p = test_support::set_entity_data_packet(88, &entries);
         let d = parse_set_entity_data(&p).unwrap();
         assert_eq!(d.id, 88);
+        // the write mirror on the dispatched carriers: every payload
+        // shape re-encodes byte-for-byte, the retained ids included
+        assert_eq!(
+            encode_set_entity_data(d.id, &d.entries).unwrap(),
+            p
+        );
         let v: Vec<&ParticleValue> = d
             .entries
             .iter()
@@ -7166,15 +7316,15 @@ mod tests {
                 other => panic!("expected a particle entry, got {other:?}"),
             })
             .collect();
-        assert_eq!(v[0], &ParticleValue::Simple);
-        assert_eq!(v[1], &ParticleValue::Block(12345));
+        assert_eq!(v[0], &ParticleValue::Simple(0));
+        assert_eq!(v[1], &ParticleValue::Block { particle_id: pt::BLOCK, state: 12345 });
         assert_eq!(v[2], &ParticleValue::Geyser { water_blocks: 2 });
-        assert_eq!(v[3], &ParticleValue::GeyserBase { water_blocks: 2, burst_impulse_base: 0.5 });
+        assert_eq!(v[3], &ParticleValue::GeyserBase { particle_id: pt::GEYSER_BASE, water_blocks: 2, burst_impulse_base: 0.5 });
         assert_eq!(v[4], &ParticleValue::Power(1.5));
         assert_eq!(v[5], &ParticleValue::Dust { color: 16711680, scale: 1.0 });
         assert_eq!(v[6], &ParticleValue::DustTransition { from_color: 16711680, to_color: 3790560, scale: 1.0 });
-        assert_eq!(v[7], &ParticleValue::Spell { color: 16777215, power: 1.0 });
-        assert_eq!(v[8], &ParticleValue::Color(65280));
+        assert_eq!(v[7], &ParticleValue::Spell { particle_id: pt::EFFECT, color: 16777215, power: 1.0 });
+        assert_eq!(v[8], &ParticleValue::Color { particle_id: pt::ENTITY_EFFECT, color: 65280 });
         assert_eq!(v[9], &ParticleValue::SculkCharge(0.25));
         assert_eq!(v[10], &ParticleValue::Item { item_id: 745, count: 3, patch: ComponentPatch { added: vec![(3, ComponentValue::VarInt(35))], removed: vec![] } });
         assert_eq!(v[11], &ParticleValue::Vibration { source: PositionSource::Block([-1, 64, 2]), arrival_in_ticks: 20 });
@@ -7204,7 +7354,7 @@ mod tests {
         let d = parse_set_entity_data(&p).unwrap();
         assert_eq!(
             d.entries[0].value,
-            EntityDataEntry::Particles(vec![ParticleValue::Simple, ParticleValue::Shriek(7)])
+            EntityDataEntry::Particles(vec![ParticleValue::Simple(3), ParticleValue::Shriek(7)])
         );
         // the refusal map: every probe lands ON its lane
         for (bytes, why) in [
