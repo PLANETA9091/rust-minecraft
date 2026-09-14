@@ -142,11 +142,13 @@ pub struct MobEffectState {
     pub flags: u8,
 }
 
-/// `minecraft:night_vision`'s mob-effect registry id — the runtime
-/// boot's registration order (the probe against the official jar:
-/// speed 0 .. night_vision 15 .. conduit_power 28 ..
-/// breath_of_the_nautilus 39). The legacy 1-based wiki ids are NOT the
-/// wire: the holderRegistry lane carries the 0-based registry id.
+/// `minecraft:night_vision`'s mob-effect registry id — the 0-based
+/// built-in registration (= wire) order, now GENERATED:
+/// `mc_registry::generated::mob_effects::MOB_EFFECT_ORDER` (the checked-in
+/// DumpMobEffects.java boots the official jar's real registries; the
+/// night_vision test below pins this const to the table's slot). The
+/// legacy 1-based wiki ids are NOT the wire: the holderRegistry lane
+/// carries the 0-based registry id.
 pub const MOB_EFFECT_NIGHT_VISION: i32 = 15;
 
 impl Default for WorldModel {
@@ -2876,6 +2878,28 @@ mod tests {
         // the re-spawn replaces the WHOLE snapshot — the store with it
         spawn_at(&mut m, 7, 1.0, 32.0, 1.0);
         assert!(m.entity(7).unwrap().data.is_empty(), "the re-spawn resets the store");
+    }
+
+    #[test]
+    fn the_night_vision_const_is_pinned_to_the_generated_registry_table() {
+        // the round-120 probe became round-122's GENERATED table: the
+        // checked-in DumpMobEffects.java boots the official jar's real
+        // registries and mc-registry carries the 40-entry wire order.
+        // The const must name the table's slot — a regeneration that
+        // moves night_vision (a future version's registration change)
+        // fails HERE, not on the wire.
+        use mc_registry::generated::mob_effects::MOB_EFFECT_ORDER;
+        assert_eq!(MOB_EFFECT_ORDER.len(), 40);
+        assert_eq!(
+            MOB_EFFECT_ORDER[MOB_EFFECT_NIGHT_VISION as usize],
+            "minecraft:night_vision",
+            "the const indexes the generated table's night_vision slot"
+        );
+        // the probe's other landmarks ride the same table (the round-120
+        // verdict, now generated code)
+        assert_eq!(MOB_EFFECT_ORDER[0], "minecraft:speed");
+        assert_eq!(MOB_EFFECT_ORDER[28], "minecraft:conduit_power");
+        assert_eq!(MOB_EFFECT_ORDER[39], "minecraft:breath_of_the_nautilus");
     }
 
     #[test]

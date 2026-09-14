@@ -115,6 +115,39 @@ enum Cmd {
         #[arg(long)]
         java: Option<String>,
     },
+    /// Dump the MOB_EFFECT built-in registry's entry order (the vanilla
+    /// registration = wire order) from the REAL bootstrapped registries:
+    /// boot the official jar + libraries (all sha1-verified) with the
+    /// checked-in dumper and save the `mob_effects.txt` evidence file.
+    /// NOT a synchronized registry — the client resolves it locally, so
+    /// this boot's 0-based order IS the wire the effect packets ride.
+    DumpMobEffects {
+        #[arg(long)]
+        version: String,
+        /// Workspace root (contains crates/).
+        #[arg(long, default_value = ".")]
+        out: String,
+        /// Explicit java binary (>= the version's java requirement from
+        /// the manifest). Default: `java` on PATH.
+        #[arg(long)]
+        java: Option<String>,
+    },
+    /// Re-emit mc-registry/src/generated/mob_effects.rs from a SAVED
+    /// dump (the `.mc2rs/classpath/mob_effects.txt` the dumper wrote) —
+    /// the offline half of the mob-effects arc: no java, no network.
+    MobEffects {
+        #[arg(long)]
+        version: String,
+        /// The saved dump text (`id|name` per line).
+        #[arg(long)]
+        dump: String,
+        /// The client jar sha1 the dump came from (baked into the header).
+        #[arg(long)]
+        client_sha1: String,
+        /// Workspace root (contains crates/).
+        #[arg(long, default_value = ".")]
+        out: String,
+    },
     /// Re-emit mc-registry/src/generated/registry_order.rs from a SAVED
     /// dump (the `.mc2rs/classpath/registries.txt` the dumper wrote) —
     /// the offline half of the registry-order arc: no java, no network.
@@ -310,6 +343,19 @@ fn main() -> Result<()> {
         Cmd::DumpRegistries { version, out, java } => {
             let path = runtime_dump::dump_registries(&agent, &cache, &version, Path::new(&out), java.as_deref())?;
             println!("registries dump: {}", path.display());
+        }
+        Cmd::DumpMobEffects { version, out, java } => {
+            let path = runtime_dump::dump_mob_effects(&agent, &cache, &version, Path::new(&out), java.as_deref())?;
+            println!("mob-effects dump: {}", path.display());
+        }
+        Cmd::MobEffects { version, dump, client_sha1, out } => {
+            let text = std::fs::read_to_string(&dump)
+                .with_context(|| format!("read dump {dump}"))?;
+            let root = Path::new(&out)
+                .canonicalize()
+                .with_context(|| format!("workspace root {out} not found"))?;
+            let path = runtime_dump::emit_mob_effects(&root, &version, &client_sha1, &text)?;
+            println!("mob-effects: {}", path.display());
         }
         Cmd::RegistryOrder { version, dump, client_sha1, out } => {
             let text = std::fs::read_to_string(&dump)

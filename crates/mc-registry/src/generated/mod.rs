@@ -10,6 +10,7 @@ pub mod item_models;
 pub mod items;
 pub mod lang;
 pub mod models;
+pub mod mob_effects;
 pub mod sounds;
 pub mod sky;
 pub mod skin;
