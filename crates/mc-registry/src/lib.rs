@@ -117,16 +117,20 @@ pub fn mob_effect_name(id: i32) -> Option<&'static str> {
 
 /// The ITEM registry id's NAME — the resolution lane the container
 /// screens' slot icons consume. The order is `BuiltInRegistries.ITEM`'s
-/// own (the same generated dump the holder-VarInt decodes ride).
-/// Negative ids (the decode's own refusal) and ids past the table (a
-/// server registry newer than this client jar's boot; the decode's
-/// `byIdOrThrow` THROWS there) resolve `None`: the honest unknown,
-/// never a guessed name.
+/// own — THE WIRE's built-in registration order (the checked-in
+/// DumpItemOrder.java's dump; the holderRegistry(Registries.ITEM)
+/// serializers ride it, so the container lanes' item ids resolve
+/// through THIS table, not the assets table's alphabetical order —
+/// that is the item model JSONs' TEXTURE vocabulary). Names ride the
+/// plain form (the prefix stripped). Negative ids (the decode's own
+/// refusal) and ids past the table (a server registry newer than this
+/// client jar's boot; the decode's `byIdOrThrow` THROWS there) resolve
+/// `None`: the honest unknown, never a guessed name.
 pub fn item_name(id: i32) -> Option<&'static str> {
     if id < 0 {
         return None;
     }
-    generated::items::ITEMS.get(id as usize).copied()
+    generated::item_order::ITEM_WIRE_ORDER.get(id as usize).copied()
 }
 
 /// The ITEM registry id's flat GUI icon — the generated texture table's
@@ -303,17 +307,19 @@ mod tests {
 
     #[test]
     fn item_name_resolves_the_registry_order() {
-        // the order's ends and the chest screen's own pins (the ids
-        // the deterministic loadout rides — one truth for both sides)
-        assert_eq!(item_name(0), Some("acacia_boat"));
-        assert_eq!(item_name(33), Some("apple"));
-        assert_eq!(item_name(645), Some("diamond"));
-        assert_eq!(item_name(1005), Some("iron_ingot"));
-        assert_eq!(item_name(1773), Some("stick"));
+        // the WIRE order's ends and the chest screen's own pins (the ids
+        // the deterministic loadout rides — one truth for both sides).
+        // The pins are the DumpItemOrder dump's own values (the built-in
+        // registration order — NOT the assets table's alphabetical one)
+        assert_eq!(item_name(0), Some("air"));
+        assert_eq!(item_name(921), Some("apple"));
+        assert_eq!(item_name(926), Some("diamond"));
+        assert_eq!(item_name(932), Some("iron_ingot"));
+        assert_eq!(item_name(974), Some("stick"));
         // the boundaries refuse: negative and past-the-table — None is
         // the honest unknown (the decode's byIdOrThrow THROWS there)
         assert_eq!(item_name(-1), None);
-        let n = generated::items::ITEMS.len() as i32;
+        let n = generated::item_order::ITEM_WIRE_ORDER.len() as i32;
         assert_eq!(item_name(n), None);
         assert_eq!(item_name(i32::MAX), None);
         // every entry resolves, and no two ids share a name — the
@@ -328,8 +334,8 @@ mod tests {
     #[test]
     fn item_icon_resolves_the_flat_gui_layer() {
         // the diamond's flat 16x16 icon: present, correctly sized, and
-        // NOT blank (the cyan rides)
-        let (rgba, w, h) = item_icon(645).expect("diamond has a flat icon");
+        // NOT blank (the cyan rides) — resolved through the WIRE id
+        let (rgba, w, h) = item_icon(926).expect("diamond has a flat icon");
         assert_eq!((w, h), (16, 16));
         assert_eq!(rgba.len(), 16 * 16 * 4);
         assert!(rgba.iter().any(|&b| b != 0), "the icon is not blank");

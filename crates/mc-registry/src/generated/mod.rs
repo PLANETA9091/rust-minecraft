@@ -7,6 +7,7 @@ pub mod elements;
 pub mod font;
 pub mod gui;
 pub mod item_models;
+pub mod item_order;
 pub mod items;
 pub mod lang;
 pub mod models;

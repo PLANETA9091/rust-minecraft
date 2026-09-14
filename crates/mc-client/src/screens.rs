@@ -547,14 +547,14 @@ impl App {
         self.chest_is_live = false;
         self.chest_mirror.clear();
         const LOADOUT: [(usize, i32, i32); 8] = [
-            (4, 645, 12),   // diamond
-            (13, 1005, 64), // iron_ingot
-            (22, 819, 7),   // gold_ingot
-            (9, 33, 5),     // apple
-            (17, 160, 3),   // bread
-            (0, 395, 27),   // cobblestone
-            (26, 1371, 16), // oak_planks
-            (10, 386, 41),  // coal
+            (4, 926, 12),  // diamond
+            (13, 932, 64), // iron_ingot
+            (22, 936, 7),  // gold_ingot
+            (9, 921, 5),   // apple
+            (17, 981, 3),  // bread
+            (0, 62, 27),   // cobblestone
+            (26, 63, 16),  // oak_planks
+            (10, 924, 41), // coal
         ];
         let mut slots = vec![(0i32, 0i32); 27];
         for (i, id, count) in LOADOUT {
@@ -1810,10 +1810,10 @@ mod tests {
         // the pins: the ids resolve through the registry's own order
         // and the counts ride the wire's shape (positive, the rest
         // empty via the count<=0 sentinel)
-        assert_eq!(app.chest_slots[4], (645, 12)); // diamond x12
-        assert_eq!(app.chest_slots[13], (1005, 64)); // iron_ingot x64
-        assert_eq!(mc_registry::item_name(645), Some("diamond"));
-        assert_eq!(mc_registry::item_name(1005), Some("iron_ingot"));
+        assert_eq!(app.chest_slots[4], (926, 12)); // diamond x12
+        assert_eq!(app.chest_slots[13], (932, 64)); // iron_ingot x64
+        assert_eq!(mc_registry::item_name(926), Some("diamond"));
+        assert_eq!(mc_registry::item_name(932), Some("iron_ingot"));
         let filled = app.chest_slots.iter().filter(|(_, c)| *c > 0).count();
         assert_eq!(filled, 8);
     }
@@ -3017,9 +3017,9 @@ mod tests {
             menu_type_id: crate::world_model::MENU_TYPE_CHEST,
             slots: {
                 let mut s = vec![(0i32, 0i32); 63];
-                s[4] = (645, 12); // the container's slot 4: diamond x12
-                s[27] = (33, 5); // the mirror's first main row slot: apple x5
-                s[54] = (1005, 64); // the mirror's hotbar head: iron_ingot x64
+                s[4] = (926, 12); // the container's slot 4: diamond x12
+                s[27] = (921, 5); // the mirror's first main row slot: apple x5
+                s[54] = (932, 64); // the mirror's hotbar head: iron_ingot x64
                 s
             },
             carried: (0, 0),
@@ -3029,27 +3029,27 @@ mod tests {
         assert_eq!(app.screen, ScreenKind::Chest, "the window shows over the world");
         assert!(app.chest_is_live, "the live lane owns the screen now");
         assert_eq!(app.chest_slots.len(), 27);
-        assert_eq!(app.chest_slots[4], (645, 12), "the container grid rode in");
+        assert_eq!(app.chest_slots[4], (926, 12), "the container grid rode in");
         assert_eq!(app.chest_mirror.len(), 36);
-        assert_eq!(app.chest_mirror[0], (33, 5), "the mirror's main row slot 0 = menu slot 27");
-        assert_eq!(app.chest_mirror[27], (1005, 64), "the mirror's hotbar head = menu slot 54");
+        assert_eq!(app.chest_mirror[0], (921, 5), "the mirror's main row slot 0 = menu slot 27");
+        assert_eq!(app.chest_mirror[27], (932, 64), "the mirror's hotbar head = menu slot 54");
 
         // a NEWER snapshot of the same window updates IN PLACE (the
         // Set Content packet's replacement — no re-open flicker)
         let mut chest2 = chest.clone();
         chest2.slots[4] = (0, 0); // the diamond was taken out
-        chest2.slots[9] = (160, 3);
+        chest2.slots[9] = (981, 3);
         app.live_view_updated(air_net_world(2, 2), None, None, Some(chest2));
         assert_eq!(app.screen, ScreenKind::Chest, "the update is in place");
         assert_eq!(app.chest_slots[4], (0, 0), "the taken stack emptied");
-        assert_eq!(app.chest_slots[9], (160, 3), "the new stack landed");
+        assert_eq!(app.chest_slots[9], (981, 3), "the new stack landed");
 
         // a NON-chest menu is the honest drop: the store keeps it, the
         // screen machinery does not move (its screen is its own round)
         let hopper = LiveContainer { id: 6, menu_type_id: 15, slots: vec![], carried: (0, 0), state_id: 0 };
         app.live_view_updated(air_net_world(2, 3), None, None, Some(hopper));
         assert_eq!(app.screen, ScreenKind::Chest, "the wired screen stays");
-        assert_eq!(app.chest_slots[9], (160, 3), "the hopper touched nothing");
+        assert_eq!(app.chest_slots[9], (981, 3), "the hopper touched nothing");
 
         // the store DROPPED (the server's Container Close): the live
         // chest returns to the world — the vanilla closeContainer's own
@@ -3079,8 +3079,8 @@ mod tests {
         app.live_view_updated(air_net_world(2, 9), None, None, Some(chest));
         assert_eq!(app.screen, ScreenKind::Chest);
         assert!(app.chest_is_live, "the live lane took the screen over");
-        assert_eq!(app.chest_slots[4], (645, 12), "the live slots replaced the loadout");
-        assert_eq!(app.chest_mirror[0], (33, 5), "the live mirror filled in");
+        assert_eq!(app.chest_slots[4], (926, 12), "the live slots replaced the loadout");
+        assert_eq!(app.chest_mirror[0], (921, 5), "the live mirror filled in");
     }
 
     /// The slot click's whole arc: the live chest's press rides the
@@ -3101,7 +3101,7 @@ mod tests {
             menu_type_id: crate::world_model::MENU_TYPE_CHEST,
             slots: {
                 let mut s = vec![(0i32, 0i32); 63];
-                s[4] = (645, 12); // the diamond x12 in the container's slot 4
+                s[4] = (926, 12); // the diamond x12 in the container's slot 4
                 s
             },
             carried: (0, 0),
@@ -3184,7 +3184,7 @@ mod tests {
         let chest = crate::world_view::LiveContainer {
             id: 2,
             menu_type_id: crate::world_model::MENU_TYPE_CHEST,
-            slots: vec![(645, 1)],
+            slots: vec![(926, 1)],
             carried: (0, 0),
             state_id: 3,
         };
@@ -3221,7 +3221,7 @@ mod tests {
         let chest = crate::world_view::LiveContainer {
             id: 2,
             menu_type_id: crate::world_model::MENU_TYPE_CHEST,
-            slots: vec![(645, 1)],
+            slots: vec![(926, 1)],
             carried: (0, 0),
             state_id: 3,
         };

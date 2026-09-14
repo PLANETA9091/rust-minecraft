@@ -919,6 +919,28 @@ hand-drawn:
   (VILLAGER_DATA at 18 doubles as the order proof), the generated-id
   pin, and the model's merge semantics (replace-one-leave-others, the
   null-lookup drop, the re-spawn reset).
+  The **the item wire order — the container's icons speak the registry (v0.3.132)**:
+  the slot-click round's discovered defect, CLOSED. The v0.3.129 item lanes
+  claimed "the BuiltInRegistries.ITEM order" but shipped the ASSETS table's
+  alphabetical order (the item model JSONs' filenames — a TEXTURE
+  vocabulary), so a real server's container slots (wire id 926 = diamond)
+  resolved their flat icons through the wrong entries. THE FIX, data-driven
+  end to end: a new checked-in dumper (`DumpItemOrder.java`, the
+  DumpMobEffects arc's own pattern) boots the real registries and prints the
+  ITEM built-in registry's true registration order (1537 entries, dense
+  0..1536 — diamond 926, apple 921, iron_ingot 932, exactly the click
+  round's audit predicted); a new generator lane (`mc2rs-gen item-order`,
+  the shared dense `id|name` grammar the mob-effect parser generalized
+  into) emits `ITEM_WIRE_ORDER` — and `item_name`/`item_icon` now resolve
+  through THE WIRE table while the alphabetical `ITEMS` keeps its real
+  consumers (the name-keyed registry, the model defs). THE OFFLINE
+  LOADOUT re-expressed in wire ids — the SAME item names, so the icons
+  render the same textures. GOLDENS BYTE-IDENTICAL BY CONSTRUCTION: 13/13
+  at rms 0.000 (the chest scene's pixels did not move — the resolution is
+  name-keyed). Tests same count (workspace 495 passed / 0 failed / 3
+  ignored; the pins re-anchored to the dump's own values: air 0, apple
+  921, diamond 926, iron_ingot 932, stick 974, the injectivity walk over
+  all 1537 entries).
   The **the slot-click lane — the container answers back (v0.3.131)**:
   the interactivity directive's third landing — the chest screen's presses
   SPEAK THE WIRE. The 26.2 serverbound Container Click packet's wire layout

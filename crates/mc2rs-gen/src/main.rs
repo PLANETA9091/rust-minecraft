@@ -148,6 +148,22 @@ enum Cmd {
         #[arg(long, default_value = ".")]
         out: String,
     },
+    /// Re-emit mc-registry/src/generated/item_order.rs from a SAVED
+    /// dump (the `.mc2rs/classpath/item_order.txt` the dumper wrote) —
+    /// the offline half of the item-order arc: no java, no network.
+    ItemOrder {
+        #[arg(long)]
+        version: String,
+        /// The saved dump text (`id|name` per line).
+        #[arg(long)]
+        dump: String,
+        /// The client jar sha1 the dump came from (baked into the header).
+        #[arg(long)]
+        client_sha1: String,
+        /// Workspace root (contains crates/).
+        #[arg(long, default_value = ".")]
+        out: String,
+    },
     /// Re-emit mc-registry/src/generated/registry_order.rs from a SAVED
     /// dump (the `.mc2rs/classpath/registries.txt` the dumper wrote) —
     /// the offline half of the registry-order arc: no java, no network.
@@ -356,6 +372,15 @@ fn main() -> Result<()> {
                 .with_context(|| format!("workspace root {out} not found"))?;
             let path = runtime_dump::emit_mob_effects(&root, &version, &client_sha1, &text)?;
             println!("mob-effects: {}", path.display());
+        }
+        Cmd::ItemOrder { version, dump, client_sha1, out } => {
+            let text = std::fs::read_to_string(&dump)
+                .with_context(|| format!("read dump {dump}"))?;
+            let root = Path::new(&out)
+                .canonicalize()
+                .with_context(|| format!("workspace root {out} not found"))?;
+            let path = runtime_dump::emit_item_order(&root, &version, &client_sha1, &text)?;
+            println!("item-order: {}", path.display());
         }
         Cmd::RegistryOrder { version, dump, client_sha1, out } => {
             let text = std::fs::read_to_string(&dump)
