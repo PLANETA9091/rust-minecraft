@@ -361,7 +361,7 @@ pub struct ContainerClick {
 /// Container Close lane mirrors). The command lane rides the live
 /// session's worker — the frame thread emits, the worker speaks the
 /// wire (the session's send path).
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum ContainerCommand {
     Click(ContainerClick),
     Close { window_id: i32 },
@@ -371,6 +371,23 @@ pub enum ContainerCommand {
     /// hand follows through the store's own projection) and echoes the
     /// serverbound Set Carried Item (the dump's short-shaped slot).
     SelectHotbar { selection: u8 },
+    /// The right-mouse USE (the vanilla gameMode.useItem's own lane):
+    /// the camera's angles converted to the vanilla wire degrees
+    /// ([`wire_angles`]), the MAIN_HAND ordinal the worker speaks.
+    UseItem { yaw: f32, pitch: f32 },
+    /// The use RELEASE (the vanilla gameMode.releaseUsingItem's own
+    /// echo — the RELEASE_USE_ITEM action at BlockPos.ZERO / DOWN).
+    ReleaseUse,
+}
+
+/// The camera's pose in the VANILLA wire degrees — the inverse of
+/// [`snapshot_camera`]'s own conversion (camera yaw = vanilla yaw rad +
+/// π; camera pitch = −vanilla pitch rad): the use-item packet's yRot
+/// and xRot the server's own math speaks.
+pub fn wire_angles(cam: &crate::camera::Camera) -> (f32, f32) {
+    let yaw = (cam.yaw - std::f32::consts::PI).to_degrees();
+    let pitch = (-cam.pitch).to_degrees();
+    (yaw, pitch)
 }
 
 /// The stack-size ceiling the prediction merges against — the

@@ -326,6 +326,13 @@ pub struct App {
     /// which draws the arm; `Some` draws the item INSTEAD of the arm —
     /// vanilla's submitArmWithItem branch, never both.
     pub held_item: Option<crate::hand::HeldItem>,
+    /// The live USE arc (the vanilla LocalPlayer.isUsingItem's own
+    /// shape): the item the use started with, the elapsed ticks (the
+    /// game-tick clock the swing lane already speaks) and the loaded
+    /// state index (the reload fires only when the charge's selected
+    /// state changes — the same no-op-reload law live_held_updated
+    /// speaks). `None` = not using (the resting payload renders).
+    pub using_item: Option<UseActive>,
     /// The chest screen's 27 container slots as (item_id, count) — the
     /// wire's own stack shape (count <= 0 is the empty stack), the FIXED
     /// deterministic loadout the pixel test pins. Filled by open_chest
@@ -404,6 +411,16 @@ pub struct App {
     /// `None` = the bare arm (the empty selection, or an id outside
     /// the bake domain).
     pub live_held: Option<i32>,
+}
+
+/// One active USE — the vanilla LocalPlayer's own using fields (the
+/// used item, the elapsed ticks). `state` is the client's reload key:
+/// the using branch's selected state index.
+#[derive(Debug, Clone, PartialEq)]
+pub struct UseActive {
+    pub item: i32,
+    pub ticks: u32,
+    pub state: usize,
 }
 
 /// World size for the in-game screen (chunks per side — same as the
@@ -491,6 +508,7 @@ impl App {
             slim_arm: false,
             swing: crate::hand::SwingState::default(),
             held_item: None,
+            using_item: None,
             chest_slots: Vec::new(),
             chest_mirror: Vec::new(),
             chest_is_live: false,
@@ -525,6 +543,30 @@ impl App {
         // the swing clock ticks every game tick like the player entity's
         // (at rest it pins swingTime to 0 and attackAnim to 0 — no-op)
         self.swing.tick();
+        // THE USE CLOCK: the elapsed ticks advance while using (the
+        // vanilla useDuration's own tick lane); the held item reloads
+        // only when the charge's selected state index changes (the
+        // bow's pulling_0 -> pulling_1 -> pulling_2 progression, the
+        // crossbow's own) — the same no-op-reload law the hand lane
+        // speaks. The charge math is the registry's (the javap-pinned
+        // property laws).
+        let mut reload: Option<(i32, usize)> = None;
+        if let Some(active) = self.using_item.as_mut() {
+            active.ticks += 1;
+            if let Some(def) = mc_registry::item_using_def(active.item) {
+                let idx = mc_registry::using_state_index(
+                    def,
+                    mc_registry::using_charge(def, active.ticks),
+                );
+                if idx != active.state {
+                    active.state = idx;
+                    reload = Some((active.item, idx));
+                }
+            }
+        }
+        if let Some((id, idx)) = reload {
+            self.load_held_payload(id, Some(idx));
+        }
     }
 
     /// The vanilla attack input (left mouse press in-world): starts the
@@ -802,12 +844,83 @@ impl App {
     /// routing, the button byte's other lane): a container screen's
     /// press clicks the slot with button 1 — the split-stack pickup /
     /// place-one table (`predict_pickup_right`). The WORLD's right
-    /// press is the use/place-block lane — its own future round (the
-    /// honest no-op until then; never the swing).
-    pub fn on_right_press(&mut self, mx: i32, my: i32) {
+    /// press is the USE lane (the vanilla rightClickStart's own shape):
+    /// only the items whose trees carry the `minecraft:using_item` gate
+    /// start a use (the registry's own census — the bow, the crossbow,
+    /// the goat horn, the shield, the trident), the hold renders the
+    /// using branch and the wire echo rides the live session's command
+    /// channel (the offline stand-in has no session — no echo). Returns
+    /// whether a use started (the tests' honest probe).
+    pub fn on_right_press(&mut self, mx: i32, my: i32) -> bool {
         if self.screen == ScreenKind::Chest {
             self.click_chest_slot(mx, my, 1);
+            return false;
         }
+        if self.screen == ScreenKind::World && !self.paused {
+            if let Some(id) = self.live_held {
+                if let Some(def) = mc_registry::item_using_def(id) {
+                    let state = mc_registry::using_state_index(def, 0.0);
+                    self.using_item = Some(UseActive { item: id, ticks: 0, state });
+                    self.load_held_payload(id, Some(state));
+                    // the wire echo: the camera's angles in the vanilla
+                    // degrees (the snapshot conversion's own inverse)
+                    let (yaw, pitch) = crate::world_view::wire_angles(&self.world_camera());
+                    if let Some(sink) = self.live_clicks.as_ref() {
+                        let _ = sink.send(crate::world_view::ContainerCommand::UseItem {
+                            yaw,
+                            pitch,
+                        });
+                    }
+                    return true;
+                }
+            }
+        }
+        false
+    }
+
+    /// The RIGHT press's falling edge (the vanilla rightClickStop's own
+    /// shape): the active use ends, the held item returns to the
+    /// resting payload, and the release's serverbound echo rides the
+    /// command channel (the RELEASE_USE_ITEM action). A no-op when no
+    /// use is active.
+    pub fn on_right_release(&mut self) {
+        let Some(active) = self.using_item.take() else {
+            return;
+        };
+        self.load_held_payload(active.item, None);
+        if let Some(sink) = self.live_clicks.as_ref() {
+            let _ = sink.send(crate::world_view::ContainerCommand::ReleaseUse);
+        }
+    }
+
+    /// The held-item payload loader — the USING arc's reload lane over
+    /// live_held_updated's resting law. `Some(index)` loads the using
+    /// branch's state at that index (the special payloads through the
+    /// dump-backed lane, the model layers through the layer tables);
+    /// `None` = the resting resolution (the specials first, then the
+    /// layer tables — the disjoint lanes' routing). A state that binds
+    /// nothing drops to the bare arm (the honest unknown — the same
+    /// law every other lane speaks).
+    fn load_held_payload(&mut self, id: i32, using_state: Option<usize>) {
+        self.held_item = match using_state {
+            Some(idx) => match mc_registry::item_using_state(id, idx) {
+                Some(mc_registry::UsingStateRender::Special(_)) => {
+                    crate::hand::load_special_using_item(id)
+                }
+                Some(mc_registry::UsingStateRender::Layers(layers)) => {
+                    crate::hand::load_item_layers(&layers)
+                }
+                None => None,
+            },
+            None => {
+                if mc_registry::special_item_renderer(id).is_some() {
+                    crate::hand::load_special_item(id)
+                } else {
+                    mc_registry::item_model_layers(id)
+                        .and_then(|layers| crate::hand::load_item_layers(&layers))
+                }
+            }
+        };
     }
 
     /// The live mouse position (the windowed loop's per-frame feed, the
@@ -1275,11 +1388,21 @@ impl App {
             return; // no change — the loaded model stands
         }
         self.live_held = id;
+        // the item changed: the use ends (the vanilla releaseUsingItem
+        // on the item switch — the hold cannot outlive its own stack)
+        self.using_item = None;
         // the resolution order: the 63 SPECIAL renderer payloads first
         // (the dump-backed geometry lane), then the resting-hand layer
         // tables (the plain defs + the resolved trees) — the lanes are
         // disjoint (the registry's own census tests), so the order is a
         // routing, never a shadowing
+        self.load_held_payload_from_id(id);
+    }
+
+    /// The resting payload by wire id (the routing live_held_updated
+    /// spoke before the using arc existed — the specials' disjoint
+    /// lanes first, then the layer tables).
+    fn load_held_payload_from_id(&mut self, id: Option<i32>) {
         self.held_item = id.and_then(|id| {
             if mc_registry::special_item_renderer(id).is_some() {
                 return crate::hand::load_special_item(id);
@@ -1287,6 +1410,12 @@ impl App {
             mc_registry::item_model_layers(id)
                 .and_then(|layers| crate::hand::load_item_layers(&layers))
         });
+    }
+
+    /// Whether a use is active (the vanilla isUsingItem's own query —
+    /// the tests' honest probe).
+    pub fn is_using(&self) -> bool {
+        self.using_item.is_some()
     }
 
     /// The networked HUD lane: the store's WHOLE hotbar row lands
@@ -4068,6 +4197,105 @@ mod tests {
         // the emptiness law holds on the special lane too
         app.live_held_updated(Some((banner, 0)));
         assert!(app.held_item.is_none(), "the arm returns");
+    }
+
+    /// THE USE ARC: the right press raises the shield into its blocking
+    /// pose (the using branch's own payload — the shield_blocking base
+    /// poses the geometry, the mirror transform moves the centroid), the
+    /// bow's hold pulls through the charge states (the javap-pinned
+    /// charge law: 13 ticks -> pulling_1, 18 -> pulling_2), the release
+    /// returns the resting payload, and the wire echo rides the command
+    /// channel (the offline stand-in without a sink stays cosmetic).
+    #[test]
+    fn the_use_arc_raises_the_shield_and_pulls_the_bow() {
+        use crate::world_view::ContainerCommand;
+        let wire = |name: &str| {
+            mc_registry::generated::item_order::ITEM_WIRE_ORDER
+                .iter()
+                .position(|&n| n == name)
+                .expect("the item rides the wire") as i32
+        };
+        let mut app = App::new(3);
+        app.open(ScreenKind::Connect);
+        app.net_world = Some(air_net_world(2, 0));
+        app.enter_network_world(None, Skybox::Overworld, None, None);
+        let (click_tx, click_rx) = std::sync::mpsc::channel::<ContainerCommand>();
+        app.attach_live_clicks(click_tx);
+
+        // THE SHIELD: the resting special loads first
+        app.live_held_updated(Some((wire("shield"), 1)));
+        let resting = app.held_item.as_ref().expect("the resting shield loads");
+        assert_eq!(resting.quad_len(), 12);
+        let resting_centroid = resting.centroid();
+        assert!(app.on_right_press(0, 0), "the shield starts a use");
+        assert!(app.is_using(), "the use is active");
+        let blocking = app.held_item.as_ref().expect("the blocking payload loads");
+        assert_eq!(blocking.quad_len(), 12, "the same geometry — the same 12 quads");
+        assert!(blocking.binds_texture("entity/shield/shield_base_nopattern"));
+        let blocking_centroid = blocking.centroid();
+        assert!(
+            (blocking_centroid[0] - resting_centroid[0]).abs() > 0.01
+                || (blocking_centroid[1] - resting_centroid[1]).abs() > 0.01,
+            "the blocking stanza MOVES the payload ({resting_centroid:?} -> {blocking_centroid:?})"
+        );
+        // the use echo rode the command channel: the camera's angles in
+        // the vanilla degrees (the flight camera faces east — yaw −90)
+        match click_rx.try_recv().expect("the use echo rode the lane") {
+            ContainerCommand::UseItem { yaw, pitch } => {
+                assert_eq!(yaw, -90.0, "the vanilla yRot");
+                assert!((pitch - 4.583).abs() < 0.01, "the vanilla xRot");
+            }
+            other => panic!("expected a UseItem echo, got {other:?}"),
+        }
+        // the shield has no charge lane: the ticks advance, the state
+        // holds (no reload churn)
+        for _ in 0..30 {
+            app.update();
+        }
+        assert_eq!(app.using_item.as_ref().unwrap().state, 0, "the pure gate holds");
+        // THE RELEASE: the falling edge returns the resting payload
+        app.on_right_release();
+        assert!(!app.is_using());
+        let back = app.held_item.as_ref().expect("the resting payload returns");
+        let back_centroid = back.centroid();
+        assert!(
+            (back_centroid[0] - resting_centroid[0]).abs() < 1e-4
+                && (back_centroid[1] - resting_centroid[1]).abs() < 1e-4,
+            "the rest pose is the one the arc started from"
+        );
+        assert!(matches!(click_rx.try_recv(), Ok(ContainerCommand::ReleaseUse)));
+
+        // THE BOW: the hold pulls through the charge states — 13 ticks
+        // cross 0.65, 18 cross 0.9 (the UseDuration x scale law)
+        app.live_held_updated(Some((wire("bow"), 1)));
+        assert!(!app.is_using(), "the item switch ended the old use");
+        assert!(app.on_right_press(0, 0), "the bow starts a use");
+        match click_rx.try_recv().expect("the bow's use echo rode the lane") {
+            ContainerCommand::UseItem { .. } => {}
+            other => panic!("expected a UseItem echo, got {other:?}"),
+        }
+        let pulling0 = app.held_item.as_ref().expect("pulling_0 loads");
+        assert!(pulling0.binds_texture("item/bow_pulling_0"), "the bottom lane");
+        for _ in 0..13 {
+            app.update();
+        }
+        let pulling1 = app.held_item.as_ref().expect("pulling_1 loads");
+        assert!(pulling1.binds_texture("item/bow_pulling_1"), "13 * 0.05 = 0.65");
+        for _ in 0..5 {
+            app.update();
+        }
+        let pulling2 = app.held_item.as_ref().expect("pulling_2 loads");
+        assert!(pulling2.binds_texture("item/bow_pulling_2"), "18 * 0.05 = 0.90");
+        app.on_right_release();
+        let resting_bow = app.held_item.as_ref().expect("the resting bow returns");
+        assert!(resting_bow.binds_texture("item/bow"), "the condition's on_false");
+        assert!(matches!(click_rx.try_recv(), Ok(ContainerCommand::ReleaseUse)));
+
+        // A PLAIN ITEM: no using lane — the press is the honest no-op
+        app.live_held_updated(Some((wire("diamond"), 1)));
+        assert!(!app.on_right_press(0, 0), "the diamond cannot start a use");
+        assert!(!app.is_using());
+        assert!(click_rx.try_recv().is_err(), "no echo either");
     }
 
     /// The number keys' whole arc: the HUD's selection moves with the

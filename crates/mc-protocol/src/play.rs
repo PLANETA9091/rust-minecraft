@@ -118,7 +118,8 @@ pub mod serverbound {
         SB_ACCEPT_TELEPORTATION as CONFIRM_TELEPORTATION,
         SB_CHUNK_BATCH_RECEIVED as CHUNK_BATCH_RECEIVED, SB_CONTAINER_CLICK as CONTAINER_CLICK,
         SB_CONTAINER_CLOSE as CONTAINER_CLOSE, SB_KEEP_ALIVE as KEEP_ALIVE, SB_PONG as PONG,
-        SB_SET_CARRIED_ITEM as SET_CARRIED_ITEM,
+        SB_PLAYER_ACTION as PLAYER_ACTION, SB_SET_CARRIED_ITEM as SET_CARRIED_ITEM,
+        SB_USE_ITEM as USE_ITEM,
     };
 }
 
@@ -5008,6 +5009,45 @@ pub fn encode_set_carried_item(slot: u8) -> Vec<u8> {
     p
 }
 
+/// The right-mouse USE (the vanilla `MultiPlayerGameMode.useItem`'s
+/// serverbound echo — ServerboundUseItemPacket, generated id 67,
+/// `minecraft:use_item`). THE WIRE (javap of the real 26.2 class, its
+/// private `write(FriendlyByteBuf)`): the hand as a VarInt (the
+/// InteractionHand enum's ordinal — MAIN_HAND = 0), the prediction
+/// sequence as a VarInt, then the player's yRot and xRot as BE f32s.
+/// The caller speaks the camera's own angles converted to the vanilla
+/// degrees (`world_view::wire_angles`) and a monotonically increasing
+/// sequence (the startPrediction counter's own shape).
+pub fn encode_use_item(hand: u8, sequence: i32, yaw: f32, pitch: f32) -> Vec<u8> {
+    let mut p = Vec::with_capacity(12);
+    write_varint(&mut p, serverbound::USE_ITEM);
+    write_varint(&mut p, hand as i32);
+    write_varint(&mut p, sequence);
+    write_f32(&mut p, yaw);
+    write_f32(&mut p, pitch);
+    p
+}
+
+/// The use RELEASE (the vanilla `MultiPlayerGameMode.releaseUsingItem`'s
+/// own echo — ServerboundPlayerActionPacket, generated id 41,
+/// `minecraft:player_action`, the RELEASE_USE_ITEM action). THE WIRE
+/// (javap of the real 26.2 class): the action as a VarInt (the enum's
+/// ordinal — RELEASE_USE_ITEM = 5, the static init's iconst_5), the
+/// BlockPos as a BE i64 (the release's BlockPos.ZERO = 0), the
+/// direction as a single byte (the release's Direction.DOWN, the
+/// 3D data value 0), the sequence as a VarInt (the 3-arg ctor's
+/// iconst_0; the caller passes its own counter — the same increasing
+/// number the use spoke).
+pub fn encode_player_action_release(sequence: i32) -> Vec<u8> {
+    let mut p = Vec::with_capacity(9);
+    write_varint(&mut p, serverbound::PLAYER_ACTION);
+    write_varint(&mut p, 5); // Action.RELEASE_USE_ITEM's ordinal
+    p.extend_from_slice(&0i64.to_be_bytes()); // BlockPos.ZERO
+    p.push(0); // Direction.DOWN's 3D data value
+    write_varint(&mut p, sequence);
+    p
+}
+
 // ---------------------------------------------------------------------------
 // the session pump
 // ---------------------------------------------------------------------------
@@ -5757,6 +5797,26 @@ impl<S: Read + Write> PlaySession<S> {
         self.conn
             .send_packet(&encode_set_carried_item(slot))
             .context("send set carried item")
+    }
+
+    /// The player's right-mouse USE (the vanilla gameMode.useItem's own
+    /// echo — the Use Item packet; `hand` is the InteractionHand ordinal,
+    /// MAIN_HAND = 0). The sequence is the caller's monotonic prediction
+    /// counter (the startPrediction shape — each use/release speaks the
+    /// next number).
+    pub fn use_item(&mut self, hand: u8, sequence: i32, yaw: f32, pitch: f32) -> Result<()> {
+        self.conn
+            .send_packet(&encode_use_item(hand, sequence, yaw, pitch))
+            .context("send use item")
+    }
+
+    /// The player's use RELEASE (the vanilla gameMode.releaseUsingItem's
+    /// own echo — the Player Action packet's RELEASE_USE_ITEM action at
+    /// BlockPos.ZERO / Direction.DOWN; the same counter the use spoke).
+    pub fn release_use_item(&mut self, sequence: i32) -> Result<()> {
+        self.conn
+            .send_packet(&encode_player_action_release(sequence))
+            .context("send release use item")
     }
 }
 
@@ -10061,6 +10121,50 @@ mod tests {
             encode_set_carried_item(8),
             vec![0x35, 0x00, 0x08],
             "slot 8: the selection domain's own end"
+        );
+    }
+
+    /// The use-item arc's serverbound echo — the two packets the
+    /// right-mouse hold speaks. The hex is the javap `write` methods'
+    /// own composition (the real 26.2 ServerboundUseItemPacket and
+    /// ServerboundPlayerActionPacket classes): Use Item = the hand
+    /// VarInt (the InteractionHand ordinal), the sequence VarInt, the
+    /// yRot/xRot BE f32s; Player Action = the action VarInt (the
+    /// static init's RELEASE_USE_ITEM = iconst_5), the BlockPos BE
+    /// i64 (the release's ZERO), the direction byte (the release's
+    /// DOWN = 0), the sequence VarInt.
+    #[test]
+    fn the_use_item_lane_speaks_the_javap_wire() {
+        // the ids: SB_USE_ITEM = 67 = 0x43, SB_PLAYER_ACTION = 41 = 0x29
+        // (the single-byte VarInts); MAIN_HAND = 0, sequence 7 = 0x07,
+        // yaw 90.0 = 42 B4 00 00, pitch 0.0 = 00 00 00 00
+        assert_eq!(
+            encode_use_item(0, 7, 90.0, 0.0),
+            vec![0x43, 0x00, 0x07, 0x42, 0xB4, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00],
+            "hand 0, seq 7, yaw 90, pitch 0 — the write order the bytecode speaks"
+        );
+        // the off-hand ordinal rides 1; the negative pitch is the BE
+        // f32's sign bit (−45.0 = C2 34 00 00)
+        assert_eq!(
+            encode_use_item(1, 128, 0.0, -45.0),
+            vec![
+                0x43, 0x01, // off hand
+                0x80, 0x01, // sequence 128 = the two-byte VarInt
+                0x00, 0x00, 0x00, 0x00, // yaw 0.0
+                0xC2, 0x34, 0x00, 0x00, // pitch −45.0
+            ],
+            "the off-hand lane, the VarInt growth, the negative f32"
+        );
+        // the release: action 5, pos 0 (the BE i64), direction 0, seq 8
+        assert_eq!(
+            encode_player_action_release(8),
+            vec![
+                0x29, 0x05, // RELEASE_USE_ITEM's ordinal
+                0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // BlockPos.ZERO
+                0x00, // Direction.DOWN
+                0x08, // the sequence
+            ],
+            "the release's own constants — the javap ctor's arguments"
         );
     }
 

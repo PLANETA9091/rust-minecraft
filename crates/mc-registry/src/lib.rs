@@ -235,10 +235,9 @@ pub struct SpecialItemRender {
     pub layers: Vec<SpecialItemLayer>,
 }
 
-fn special_item_render_by_name(name: &str) -> Option<SpecialItemRender> {
-    let (_, def) = generated::item_models::ITEM_SPECIAL_MODELS
-        .iter()
-        .find(|d| d.0 == name)?;
+pub(crate) fn special_render_from_def(
+    def: &'static generated::item_models::SpecialItemDef,
+) -> Option<SpecialItemRender> {
     let layers = def
         .layers
         .iter()
@@ -265,6 +264,13 @@ fn special_item_render_by_name(name: &str) -> Option<SpecialItemRender> {
     })
 }
 
+fn special_item_render_by_name(name: &str) -> Option<SpecialItemRender> {
+    let (_, def) = generated::item_models::ITEM_SPECIAL_MODELS
+        .iter()
+        .find(|d| d.0 == name)?;
+    special_render_from_def(def)
+}
+
 /// The ITEM registry id's SPECIAL-renderer payload — the 63 block-entity
 /// / entity-model items (shield, trident, the chests, the shulker boxes,
 /// the banners, the heads, the conduit, the decorated pot, the golem
@@ -275,6 +281,103 @@ fn special_item_render_by_name(name: &str) -> Option<SpecialItemRender> {
 /// whole registry, 0 refuses). Unknown ids are `None`.
 pub fn special_item_renderer(id: i32) -> Option<SpecialItemRender> {
     special_item_render_by_name(item_name(id)?)
+}
+
+/// The item's USING-branch definition — the 5 items whose definition
+/// trees carry the `minecraft:using_item` gate (bow, crossbow,
+/// goat_horn, shield, trident). `None` = the item has no using lane
+/// (the right-mouse hold renders nothing different — the honest gate
+/// the App's use arc speaks).
+pub fn item_using_def(
+    id: i32,
+) -> Option<&'static generated::item_models::ItemUsingDef> {
+    let name = item_name(id)?;
+    generated::item_models::ITEM_USING_STATES
+        .iter()
+        .find(|d| d.0 == name)
+        .map(|d| &d.1)
+}
+
+/// The charge the item's dispatch property reads at `elapsed` use
+/// ticks — the vanilla property classes' own math (javap-pinned):
+/// `minecraft:use_duration` = UseDuration.get (remaining=false) =
+/// `getUseDuration - remainingTicks` = the elapsed ticks, times the
+/// dispatch's scale; `minecraft:crossbow/pull` = CrossbowPull.get =
+/// `useDuration / getChargeDuration` with getChargeDuration =
+/// `Mth.floor(modifyCrossbowChargingTime(.., 1.25f) * 20f)` = 25 ticks
+/// at the enchantment-less base. An unknown property reads 0 (the
+/// bottom state renders — the generator only emits the two known ones).
+pub fn using_charge(def: &generated::item_models::ItemUsingDef, elapsed_ticks: u32) -> f32 {
+    match def.property {
+        "minecraft:use_duration" => elapsed_ticks as f32 * def.scale,
+        "minecraft:crossbow/pull" => elapsed_ticks as f32 / 25.0,
+        _ => 0.0,
+    }
+}
+
+/// The vanilla range_dispatch pick: the LAST state whose threshold
+/// <= charge wins (the fallback at 0.0 always matches — charge never
+/// goes negative).
+pub fn using_state_index(
+    def: &generated::item_models::ItemUsingDef,
+    charge: f32,
+) -> usize {
+    let mut picked = 0;
+    for (i, s) in def.states.iter().enumerate() {
+        if s.threshold <= charge {
+            picked = i;
+        }
+    }
+    picked
+}
+
+/// One using state's render payload: either the model-path layers
+/// (the bow's and the crossbow's pulling sprites, the goat horn's
+/// tooting model) or the special renderer payload (the shield's
+/// blocking base + the mirror transform, the trident's throwing pose).
+pub enum UsingStateRender {
+    Layers(Vec<ItemModelLayer>),
+    Special(SpecialItemRender),
+}
+
+/// The tests' honest probe — the model paths name the payload, the
+/// special arm keeps its shape (the dump geometry carries no Debug).
+impl std::fmt::Debug for UsingStateRender {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            UsingStateRender::Layers(layers) => {
+                let models: Vec<&str> = layers.iter().map(|l| l.model).collect();
+                write!(f, "Layers({models:?})")
+            }
+            UsingStateRender::Special(render) => write!(
+                f,
+                "Special(base: {}, layers: {})",
+                render.base,
+                render.layers.len()
+            ),
+        }
+    }
+}
+
+/// The state's render payload at the picked index — the same
+/// three-table join the resting special law speaks (the dump geometry,
+/// the texture namespace), through the state's own def.
+pub fn item_using_state(id: i32, index: usize) -> Option<UsingStateRender> {
+    let def = item_using_def(id)?;
+    let state = def.states.get(index)?;
+    if let Some(sp) = state.special {
+        return special_render_from_def(sp).map(UsingStateRender::Special);
+    }
+    let layers = state
+        .layers
+        .iter()
+        .map(|l| ItemModelLayer {
+            model: l.model.strip_prefix("minecraft:").unwrap_or(l.model),
+            tints: l.tints,
+            transform: l.transform,
+        })
+        .collect();
+    Some(UsingStateRender::Layers(layers))
 }
 
 /// The resolver core, generic over the table so the dedup and cycle
@@ -1100,6 +1203,91 @@ mod tests {
         // offline lane's own vocabulary): the bow stays None there
         assert!(item_model_path(bow_id).is_none());
         assert_eq!(item_model_path(diamond_id), Some("item/diamond"));
+    }
+
+    /// THE USING BRANCH: the five gated items resolve through the
+    /// generated table, the charge laws read the javap-pinned property
+    /// math, and the payloads carry the JSON's own bases and mirrors.
+    #[test]
+    fn the_using_branches_resolve_and_the_charge_laws_hold() {
+        let wire = |name: &str| {
+            generated::item_order::ITEM_WIRE_ORDER
+                .iter()
+                .position(|n| *n == name)
+                .unwrap() as i32
+        };
+
+        // the census: exactly the five gated items; everything else None
+        assert_eq!(generated::item_models::ITEM_USING_STATES.len(), 5);
+        for name in ["bow", "crossbow", "goat_horn", "shield", "trident"] {
+            assert!(item_using_def(wire(name)).is_some(), "{name} has a using lane");
+        }
+        assert!(item_using_def(wire("diamond")).is_none());
+        assert!(item_using_def(wire("stone")).is_none());
+
+        // THE BOW: charge = elapsed * 0.05 (javap UseDuration.get, the
+        // remaining=false branch — the elapsed ticks the dispatch scales)
+        let bow = item_using_def(wire("bow")).unwrap();
+        let at = |ticks: u32| using_state_index(bow, using_charge(bow, ticks));
+        assert_eq!(at(0), 0, "the rest frame: bow_pulling_0");
+        assert_eq!(at(12), 0, "12 * 0.05 = 0.60 < 0.65");
+        assert_eq!(at(13), 1, "13 * 0.05 = 0.65 — pulling_1 engages");
+        assert_eq!(at(17), 1);
+        assert_eq!(at(18), 2, "18 * 0.05 = 0.90 — pulling_2 engages");
+        // the payload at the picked index: the pulling sprites
+        match item_using_state(wire("bow"), 2) {
+            Some(UsingStateRender::Layers(layers)) => {
+                assert_eq!(layers.len(), 1);
+                assert_eq!(layers[0].model, "item/bow_pulling_2");
+                assert!(layers[0].transform.is_none());
+            }
+            other => panic!("the bow's states are model-path layers, got {other:?}"),
+        }
+
+        // THE CROSSBOW: charge = elapsed / 25 (javap CrossbowPull.get x
+        // getChargeDuration = Mth.floor(1.25f * 20f))
+        let xbow = item_using_def(wire("crossbow")).unwrap();
+        let at = |ticks: u32| using_state_index(xbow, using_charge(xbow, ticks));
+        assert_eq!(at(14), 0, "14/25 = 0.56 < 0.58");
+        assert_eq!(at(15), 1, "15/25 = 0.60 — pulling_1");
+        assert_eq!(at(25), 2, "25/25 = 1.0 — pulling_2 (the full charge)");
+        assert_eq!(using_charge(xbow, 0), 0.0);
+
+        // THE GOAT HORN: the pure gate, one state, the tooting model
+        let horn = item_using_def(wire("goat_horn")).unwrap();
+        assert_eq!(horn.property, "");
+        match item_using_state(wire("goat_horn"), 0) {
+            Some(UsingStateRender::Layers(layers)) => {
+                assert_eq!(layers[0].model, "item/tooting_goat_horn");
+            }
+            other => panic!("the horn's state is a model layer, got {other:?}"),
+        }
+
+        // THE SHIELD: the blocking special — the shield_blocking base
+        // poses the geometry, the mirror transform rides the local decode
+        match item_using_state(wire("shield"), 0) {
+            Some(UsingStateRender::Special(render)) => {
+                assert_eq!(render.base, "item/shield_blocking");
+                let (t, l, s, r) = render.transform.expect("the blocking mirror");
+                assert_eq!(t, [0.0, 0.0, 0.0]);
+                assert_eq!(l, [0.0, 0.0, 0.0, 1.0]);
+                assert_eq!(s, [1.0, -1.0, -1.0], "the JSON's own mirror");
+                assert_eq!(r, [0.0, 0.0, 0.0, 1.0]);
+                assert_eq!(render.layers.len(), 1);
+                assert_eq!(render.layers[0].texture, "entity/shield/shield_base_nopattern");
+            }
+            other => panic!("the shield's state is a special payload, got {other:?}"),
+        }
+
+        // THE TRIDENT: the throwing special, the same mirror
+        match item_using_state(wire("trident"), 0) {
+            Some(UsingStateRender::Special(render)) => {
+                assert_eq!(render.base, "item/trident_throwing");
+                let (_, _, s, _) = render.transform.expect("the throwing mirror");
+                assert_eq!(s, [1.0, -1.0, -1.0]);
+            }
+            other => panic!("the trident's state is a special payload, got {other:?}"),
+        }
     }
 
     #[test]

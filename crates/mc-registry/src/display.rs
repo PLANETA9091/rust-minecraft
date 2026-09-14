@@ -768,6 +768,35 @@ pub fn special_item_quads(
     ctx: usize,
 ) -> Option<Result<Vec<crate::element_quads::Quad>, String>> {
     let render = crate::special_item_renderer(id)?;
+    special_render_quads(&render, ctx)
+}
+
+/// The USING-branch special's posed first-person quads — the same
+/// dump-backed arc through the USING state's own payload (the
+/// shield_blocking / trident_throwing base poses the geometry, the
+/// mirror transform rides the local decode). Unknown id or a
+/// non-special using lane -> None; a broken base stanza -> Err.
+pub fn special_item_using_quads(
+    id: i32,
+    ctx: usize,
+) -> Option<Result<Vec<crate::element_quads::Quad>, String>> {
+    // the using specials are single-state defs: the state carrying the
+    // payload IS the branch (index 0 — the item_using_def census)
+    let def = crate::item_using_def(id)?;
+    let state = def.states.first()?;
+    let sp = state.special?;
+    let render = crate::special_render_from_def(sp)?;
+    special_render_quads(&render, ctx)
+}
+
+/// The shared posed-quad body over one resolved special payload — the
+/// dump-backed arc [`special_item_quads`] documents (the local transform
+/// first, the base model's display stanza on top, the hand anchor
+/// outside).
+fn special_render_quads(
+    render: &crate::SpecialItemRender,
+    ctx: usize,
+) -> Option<Result<Vec<crate::element_quads::Quad>, String>> {
     let transforms = match resolve_transforms(render.base) {
         Ok(t) => t,
         Err(e) => return Some(Err(e)),

@@ -919,6 +919,48 @@ hand-drawn:
   (VILLAGER_DATA at 18 doubles as the order proof), the generated-id
   pin, and the model's merge semantics (replace-one-leave-others, the
   null-lookup drop, the re-spawn reset).
+  The **the use-item arc — the right-mouse hold renders the using branch (v0.3.143)**:
+  the client's first LIVE interaction branch from the definition trees.
+  The five items whose `assets/minecraft/items/` trees carry the
+  `minecraft:using_item` gate (bow, crossbow, goat_horn, shield,
+  trident) now resolve their ON_TRUE branch: the itemgen grew the
+  using-context walk (the gate crosses to on_true, the selects fall
+  through — no case targets a hand context, the charge dispatches
+  EXPAND into charge-keyed states — the fallback at 0.0 then every
+  entry at its threshold, the vanilla loop's LAST-wins; a composite or
+  a foreign condition on the using path bails the generator loudly —
+  a render gap on a live interaction is never silent), emitting
+  ITEM_USING_STATES (5 defs: the bow's use_duration x 0.05 with
+  pulling_0/1/2 at 0.0/0.65/0.9, the crossbow's crossbow/pull with
+  pulling_0/1/2 at 0.0/0.58/1.0, the goat horn's tooting swap, the
+  shield's shield_blocking special, the trident's trident_throwing
+  special — both with the JSON's own scale [1,-1,-1] mirror riding the
+  CONDITION node). The registry reads the charge laws the javap
+  pinned: UseDuration.get = the elapsed ticks (getUseDuration −
+  remainingTicks, remaining=false) times the dispatch scale;
+  CrossbowPull.get = elapsed / getChargeDuration with
+  getChargeDuration = Mth.floor(1.25f × 20f) = 25 ticks. The client
+  grew the whole arc: the right press's rising edge starts the use
+  (only the gated items — the plain diamond is the honest no-op), the
+  held payload reloads to the using branch (the shield rises into the
+  blocking pose — the same 12 dump quads through the shield_blocking
+  stanza; the bow pulls through its sprites as the ticks advance), the
+  right press's FALLING edge releases (the rest pose returns), the
+  item switch ends any active use (the vanilla releaseUsingItem on the
+  stack change), and the charge's state index drives the reload (no-op
+  until it flips). THE WIRE TOO: the use echoes the serverbound Use
+  Item packet (javap write: the hand VarInt ordinal, the sequence
+  VarInt, the yRot/xRot BE f32s — the camera's angles through the
+  snapshot conversion's inverse) and the release echoes the Player
+  Action packet's RELEASE_USE_ITEM action (ordinal 5, BlockPos.ZERO,
+  Direction.DOWN — the javap ctor's own arguments), both riding the
+  live session's command channel with the monotonic prediction
+  sequence. Tests: workspace 532 passed / 0 failed / 3 ignored (+5:
+  the itemgen using resolution + the loud refuses, the registry
+  charge-law pins, the wire hex, the client's full arc). THE GOLDEN
+  MATRIX 13/13 — ALL rms 0.000,
+  every golden byte-identical (the use arc is interaction-gated: the
+  deterministic scenes never press keys, the resting lanes untouched).
   The **the GUI item icons — every slot renders like vanilla (v0.3.142)**:
   the inventory's second dead end closes. The GUI icon lane was the flat
   blit of `item/<name>` textures only — 24 items of 1537; every block

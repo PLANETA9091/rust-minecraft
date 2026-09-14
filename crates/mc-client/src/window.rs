@@ -201,6 +201,11 @@ fn run_join(
             // re-sent chunks replace their columns, teleports re-anchor
             // the window and the pose, probes are answered in place
             let mut last_ship = std::time::Instant::now();
+            // the use arc's prediction sequence counter (the vanilla
+            // startPrediction's own shape: each use/release speaks the
+            // next number — the server matches its block-change acks
+            // against it)
+            let mut use_sequence = 0i32;
             loop {
                 if !run.load(std::sync::atomic::Ordering::Relaxed) {
                     break; // the App closed the session (quit/cancel)
@@ -288,6 +293,23 @@ fn run_join(
                             // lands through its gate)
                             view.model.select_hotbar(selection as usize);
                             session.set_carried_item(selection)
+                        }
+                        crate::world_view::ContainerCommand::UseItem { yaw, pitch } => {
+                            // THE USE ARC's wire echo (the vanilla
+                            // gameMode.useItem's own shape): the MAIN_HAND
+                            // ordinal, the prediction sequence counter
+                            // (each prediction speaks the next number —
+                            // the startPrediction shape), the camera's
+                            // angles in the vanilla degrees
+                            use_sequence += 1;
+                            session.use_item(0, use_sequence, yaw, pitch)
+                        }
+                        crate::world_view::ContainerCommand::ReleaseUse => {
+                            // the release's own echo: the RELEASE_USE_ITEM
+                            // action at BlockPos.ZERO / Direction.DOWN —
+                            // the same counter the use spoke
+                            use_sequence += 1;
+                            session.release_use_item(use_sequence)
                         }
                     };
                     if let Err(e) = sent {
@@ -464,11 +486,16 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize) -> anyhow::Result<()>
         was_left_down = left_down;
         // the RIGHT press's rising edge: the container screen's own
         // split-stack lane (button 1 — the pickup table's other branch);
-        // the world's right press is the use/place lane, its own future
-        // round (the honest no-op until then)
+        // the world's right press is the USE lane (the using items'
+        // hold — the vanilla rightClickStart, the App's own guard keeps
+        // the rest honest). The FALLING edge releases the use (the
+        // vanilla rightClickStop — the shield lowers, the bow looses)
         let right_down = window.get_mouse_down(minifb::MouseButton::Right);
         if right_down && !was_right_down {
             app.on_right_press(gmx, gmy);
+        }
+        if !right_down && was_right_down {
+            app.on_right_release();
         }
         was_right_down = right_down;
         app.update();

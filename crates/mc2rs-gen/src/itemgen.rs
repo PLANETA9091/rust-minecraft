@@ -136,6 +136,39 @@ pub struct GuiIcon {
     pub special: bool,
 }
 
+/// One charge-keyed state of the USING branch: the charge value this
+/// state engages at (the vanilla range_dispatch's own compare — the
+/// LAST threshold <= value wins) and the resolved layers (a special
+/// payload lands as its own SpecialItemDef static instead).
+#[derive(Debug, Clone)]
+pub struct UsingState {
+    pub threshold: f32,
+    pub layers: Vec<ResolvedLayer>,
+}
+
+/// One item's USING-context resolution — the definition tree evaluated
+/// with the `minecraft:using_item` condition TRUE (the right-mouse
+/// hold): the gate walks to the on_true branch, the selects fall
+/// through (no case targets a hand context — the component/display
+/// cases are the other states' own), and a range_dispatch EXPANDS into
+/// the charge-keyed states (the fallback at 0.0, then every entry at
+/// its threshold). The jar's five using trees: bow, crossbow,
+/// goat_horn, shield, trident.
+pub struct UsingItem {
+    /// The range-select property the charge reads:
+    /// "minecraft:use_duration" (the elapsed ticks, times `scale` —
+    /// javap UseDuration.get: getUseDuration - remainingTicks), or
+    /// "minecraft:crossbow/pull" (elapsed / getChargeDuration — javap:
+    /// Mth.floor(1.25f * 20f) = 25 ticks). Empty = the pure using gate
+    /// (no charge lane — the shield's and the trident's swaps).
+    pub property: String,
+    /// The dispatch's own scale (the bow's 0.05; 1.0 when the property
+    /// law needs none).
+    pub scale: f32,
+    /// The states, thresholds ascending (the fallback first at 0.0).
+    pub states: Vec<UsingState>,
+}
+
 /// The parsed table the generated file carries.
 pub struct ItemModelsData {
     /// Plain definitions, sorted by id.
@@ -152,6 +185,9 @@ pub struct ItemModelsData {
     /// (the resolved trees + the special payloads), sorted by id. The
     /// plain defs need none: their gui icon IS their model path.
     pub gui_icons: Vec<(String, GuiIcon)>,
+    /// The USING-context resolutions (the trees carrying a
+    /// `minecraft:using_item` gate), sorted by id.
+    pub using: BTreeMap<String, UsingItem>,
 }
 
 /// The condition properties whose RESTING state is false: a fresh stack
@@ -231,6 +267,7 @@ pub fn generate<R: std::io::Read + std::io::Seek>(
     let mut defs = BTreeMap::new();
     let mut resolved: BTreeMap<String, ResolvedItem> = BTreeMap::new();
     let mut gui_icons: BTreeMap<String, GuiIcon> = BTreeMap::new();
+    let mut using: BTreeMap<String, UsingItem> = BTreeMap::new();
     let mut complex: Vec<(String, String)> = Vec::new();
     let mut types: BTreeMap<String, u32> = BTreeMap::new();
 
@@ -272,6 +309,24 @@ pub fn generate<R: std::io::Read + std::io::Seek>(
                 special: false,
             });
             gui_icons.insert(id.clone(), gui);
+            // THE USING STATE: the same tree evaluated with the
+            // using_item gate TRUE — only the trees that actually carry
+            // the gate (the property census) resolve one; everything
+            // else has no using lane. A refusal here is a RENDER GAP on
+            // a live interaction (the vanilla client renders the branch
+            // we cannot) — the loud bail, never a silent skip.
+            if tree_has_using_gate(&Value::Object(node.clone())) {
+                match resolve_using_root(&Value::Object(node.clone()), &id, 0, &None, false)
+                    .map_err(|e| anyhow::anyhow!("{e}"))?
+                {
+                    Some(u) => {
+                        using.insert(id.clone(), u);
+                    }
+                    None => anyhow::bail!(
+                        "{name}: carries a using gate but no using lane resolved from the walk"
+                    ),
+                }
+            }
             match resolve_node(&Value::Object(node.clone()), &id, 0, &None) {
                 Ok(layers) => {
                     let swap = match obj.get("swap_animation_scale") {
@@ -344,7 +399,7 @@ pub fn generate<R: std::io::Read + std::io::Seek>(
         total,
         names.len()
     );
-    Ok(ItemModelsData { defs, resolved, complex, root_types, gui_icons })
+    Ok(ItemModelsData { defs, resolved, complex, root_types, gui_icons, using })
 }
 
 /// The GUI-context resolution — the branch laws the gui display
@@ -443,6 +498,170 @@ fn resolve_gui(node: &Value, id: &str) -> Result<GuiIcon, String> {
             Ok(GuiIcon { models, special: false })
         }
         other => Err(format!("{id}: gui resolution of {other}")),
+    }
+}
+
+/// The USING-GATE census: whether the tree carries a
+/// `minecraft:using_item` condition anywhere (the pre-filter — only
+/// those trees attempt the using walk).
+fn tree_has_using_gate(node: &Value) -> bool {
+    const GATE: &str = "minecraft:using_item";
+    if let Some(obj) = node.as_object() {
+        if obj.get("property").and_then(Value::as_str) == Some(GATE) {
+            return true;
+        }
+        return obj.values().any(tree_has_using_gate);
+    }
+    node.as_array().is_some_and(|list| list.iter().any(tree_has_using_gate))
+}
+
+/// The USING-context tree walk — the definition tree evaluated with the
+/// `minecraft:using_item` condition TRUE (the right-mouse hold's own
+/// branch). `gated` tracks whether the gate has been crossed; `outer`
+/// carries the ancestor transformation chain (the shield's and the
+/// trident's mirror transforms ride the CONDITION node — a sibling key
+/// of property/on_true — so the gate itself decodes it).
+///
+/// `Ok(None)` = this path holds no using lane. `Err` = a shape the
+/// using lane reaches but the resolver cannot honor — the loud refuse
+/// (the caller bails the generator; the round extends first, never
+/// renders a guessed payload).
+fn resolve_using_root(
+    node: &Value,
+    id: &str,
+    depth: usize,
+    outer: &Option<TransformComponents>,
+    gated: bool,
+) -> Result<Option<UsingItem>, String> {
+    const GATE: &str = "minecraft:using_item";
+    if depth > RESOLVE_MAX_DEPTH {
+        return Err(format!("{id}: the tree is deeper than {RESOLVE_MAX_DEPTH}"));
+    }
+    let obj = node
+        .as_object()
+        .ok_or_else(|| format!("{id}: the node must be an object"))?;
+    let ty = obj
+        .get("type")
+        .and_then(Value::as_str)
+        .ok_or_else(|| format!("{id}: the node \"type\" must be a string"))?;
+
+    // the node's own transformation rides its whole subtree (the same
+    // applyTransform law the resting walk speaks)
+    let my_transform = match obj.get("transformation") {
+        Some(t) => {
+            if outer.is_some() {
+                return Err(format!(
+                    "{id}: a transformed node under a transformed node — compose first"
+                ));
+            }
+            Some(decode_transform(t).map_err(|e| format!("{id}: {e}"))?)
+        }
+        None => None,
+    };
+    let active: Option<TransformComponents> =
+        my_transform.clone().or_else(|| outer.clone());
+
+    match ty {
+        "minecraft:condition" => {
+            check_keys(obj, &CONDITION_KEYS, id, ty)?;
+            let prop = obj
+                .get("property")
+                .and_then(Value::as_str)
+                .ok_or_else(|| format!("{id}: condition \"property\" must be a string"))?;
+            if prop == GATE {
+                if gated {
+                    return Err(format!("{id}: a second using gate on the using path"));
+                }
+                // THE GATE: the using walk lives on the on_true branch
+                resolve_using_root(
+                    obj.get("on_true")
+                        .ok_or_else(|| format!("{id}: the using gate without on_true"))?,
+                    id,
+                    depth + 1,
+                    &active,
+                    true,
+                )
+            } else {
+                Err(format!(
+                    "{id}: condition {prop} on the using path — no using rule (extend first)"
+                ))
+            }
+        }
+        "minecraft:select" => {
+            check_keys(obj, &SELECT_KEYS, id, ty)?;
+            // no case targets a hand context (the jar-wide sweep — the
+            // component/display cases are the other states' own): the
+            // using walk falls through exactly like the resting walk
+            match obj.get("fallback") {
+                Some(f) => resolve_using_root(f, id, depth + 1, &active, gated),
+                None => Err(format!("{id}: select without fallback on the using path")),
+            }
+        }
+        "minecraft:range_dispatch" => {
+            check_keys(obj, &RANGE_KEYS, id, ty)?;
+            if !gated {
+                return Err(format!(
+                    "{id}: a dispatch before the using gate — no using rule"
+                ));
+            }
+            // THE CHARGE LANE: expand into the charge-keyed states —
+            // the fallback at 0.0 (the pull's bottom lane), then every
+            // entry at its threshold (the vanilla loop's LAST-wins)
+            let prop = obj
+                .get("property")
+                .and_then(Value::as_str)
+                .ok_or_else(|| format!("{id}: range_dispatch \"property\" must be a string"))?;
+            let scale = obj.get("scale").and_then(Value::as_f64).unwrap_or(1.0) as f32;
+            let mut states = Vec::new();
+            match obj.get("fallback") {
+                Some(f) => states.push(UsingState {
+                    threshold: 0.0,
+                    layers: resolve_node(f, id, depth + 1, &active)?,
+                }),
+                None => {
+                    return Err(format!(
+                        "{id}: the charge dispatch without a fallback — the bottom lane"
+                    ))
+                }
+            }
+            for e in obj
+                .get("entries")
+                .and_then(Value::as_array)
+                .ok_or_else(|| format!("{id}: range_dispatch \"entries\" must be an array"))?
+            {
+                let e = e
+                    .as_object()
+                    .ok_or_else(|| format!("{id}: the dispatch entry must be an object"))?;
+                let th = e
+                    .get("threshold")
+                    .and_then(Value::as_f64)
+                    .ok_or_else(|| format!("{id}: the dispatch entry \"threshold\" must be a number"))?
+                    as f32;
+                let model = e
+                    .get("model")
+                    .ok_or_else(|| format!("{id}: the dispatch entry without \"model\""))?;
+                states.push(UsingState {
+                    threshold: th,
+                    layers: resolve_node(model, id, depth + 1, &active)?,
+                });
+            }
+            Ok(Some(UsingItem { property: prop.to_string(), scale, states }))
+        }
+        "minecraft:model" | "minecraft:special" => {
+            // the gate's plain payload: the single-state swap (the goat
+            // horn's tooting model, the shield's blocking special) — the
+            // resting resolver resolves the subtree (the same node laws)
+            let layers = resolve_node(node, id, depth, outer)?;
+            Ok(Some(UsingItem {
+                property: String::new(),
+                scale: 1.0,
+                states: vec![UsingState { threshold: 0.0, layers }],
+            }))
+        }
+        "minecraft:composite" => Err(format!(
+            "{id}: a composite on the using path — extend the resolver first"
+        )),
+        other => Err(format!("{id}: unknown node type {other} on the using path")),
     }
 }
 
@@ -991,6 +1210,122 @@ pub fn emit(data: &ItemModelsData) -> Result<String> {
     }
     out.push_str("];\n\n");
 
+    out.push_str("/// One charge-keyed state of the using branch: the charge value\n");
+    out.push_str("/// this state engages at and the payload — either the model-path\n");
+    out.push_str("/// layers (empty for a special payload) or the special def (the\n");
+    out.push_str("/// shield_blocking / trident_throwing lane).\n");
+    out.push_str("pub struct UsingStateDef {\n    pub threshold: f32,\n    pub layers: &'static [ResolvedItemLayer],\n    pub special: Option<&'static SpecialItemDef>,\n}\n\n");
+    out.push_str("/// One item's USING-context definition — the tree evaluated with\n");
+    out.push_str("/// the minecraft:using_item gate TRUE. `property` names the\n");
+    out.push_str("/// charge's range-select property (empty = the pure gate), `scale`\n");
+    out.push_str("/// its dispatch scale, `states` the charge-keyed payloads\n");
+    out.push_str("/// (thresholds ascending, the fallback first at 0.0 — the LAST\n");
+    out.push_str("/// threshold <= charge wins, the vanilla loop's own law).\n");
+    out.push_str("pub struct ItemUsingDef {\n    pub property: &'static str,\n    pub scale: f32,\n    pub states: &'static [UsingStateDef],\n}\n\n");
+    out.push_str("/// The USING branches — the 5 items whose trees carry the\n");
+    out.push_str("/// using_item gate (bow, crossbow, goat_horn, shield, trident).\n");
+    out.push_str("/// Sorted by id.\n");
+    // the per-item statics FIRST (the layer arrays and the special
+    // defs), then the referencing table — the same shape the resting
+    // specials' emit speaks
+    for (id, u) in &data.using {
+        let slug = special_slug(id);
+        for (i, state) in u.states.iter().enumerate() {
+            let special = state.layers.iter().find_map(|l| l.special.as_ref());
+            if state.layers.iter().any(|l| l.special.is_some()) && state.layers.len() != 1 {
+                anyhow::bail!("item {id}: a mixed using state (special + layers)");
+            }
+            match special {
+                Some(sp) => {
+                    let tf = match &state.layers[0].transform {
+                        None => "None".to_string(),
+                        Some(t) => format!(
+                            "Some(({:?}, {:?}, {:?}, {:?}))",
+                            t.translation, t.left_rotation, t.scale, t.right_rotation
+                        ),
+                    };
+                    out.push_str(&format!("static USING_SPECIAL_{slug}: SpecialItemDef = SpecialItemDef {{\n"));
+                    out.push_str(&format!("    base: {:?},\n", sp.base));
+                    out.push_str("    layers: &[\n");
+                    for (layer, tex) in &sp.layers {
+                        let tint = match &sp.tint {
+                            Some(dye) if layer.ends_with("#flag") => format!("Some({dye:?})"),
+                            _ => "None".to_string(),
+                        };
+                        out.push_str(&format!(
+                            "        SpecialLayerRef {{ layer: {layer:?}, texture: {tex:?}, tint: {tint} }},\n"
+                        ));
+                    }
+                    out.push_str("    ],\n");
+                    out.push_str(&format!("    transform: {tf},\n}};\n"));
+                }
+                None => {
+                    let layers: Vec<String> = state
+                        .layers
+                        .iter()
+                        .map(|l| {
+                            let tints = match l.tints.as_slice() {
+                                [] => "&[]".to_string(),
+                                [one] => format!("&[{one:?}]"),
+                                many => {
+                                    let inner: Vec<String> =
+                                        many.iter().map(|t| format!("{t:?}")).collect();
+                                    format!("&[{}]", inner.join(", "))
+                                }
+                            };
+                            let tf = match &l.transform {
+                                None => "None".to_string(),
+                                Some(t) => format!(
+                                    "Some(({:?}, {:?}, {:?}, {:?}))",
+                                    t.translation, t.left_rotation, t.scale, t.right_rotation
+                                ),
+                            };
+                            format!(
+                                "ResolvedItemLayer {{ model: {:?}, tints: {}, transform: {} }}",
+                                l.model, tints, tf
+                            )
+                        })
+                        .collect();
+                    out.push_str(&format!(
+                        "static USING_LAYERS_{slug}_{i}: &[ResolvedItemLayer] = &[{}];\n",
+                        layers.join(", ")
+                    ));
+                }
+            }
+        }
+    }
+    out.push_str("pub static ITEM_USING_STATES: &[(&str, ItemUsingDef); ");
+    out.push_str(&data.using.len().to_string());
+    out.push_str("] = &[\n");
+    for (id, u) in &data.using {
+        let slug = special_slug(id);
+        let states: Vec<String> = u
+            .states
+            .iter()
+            .enumerate()
+            .map(|(i, state)| {
+                let special = state.layers.iter().find_map(|l| l.special.as_ref());
+                let body = match special {
+                    Some(_) => {
+                        format!("layers: &[], special: Some(&USING_SPECIAL_{slug})")
+                    }
+                    None => format!("layers: USING_LAYERS_{slug}_{i}, special: None"),
+                };
+                format!(
+                    "UsingStateDef {{ threshold: {:?}, {} }}",
+                    state.threshold, body
+                )
+            })
+            .collect();
+        let prop = format!("{:?}", u.property);
+        out.push_str(&format!(
+            "    (\"{id}\", ItemUsingDef {{ property: {prop}, scale: {:?}, states: &[{}] }}),\n",
+            u.scale,
+            states.join(", ")
+        ));
+    }
+    out.push_str("];\n\n");
+
     out.push_str("/// Items whose definition tree cannot resolve to resting-hand layers\n");
     out.push_str("/// or special renderers — (item id, the refusal reason): the\n");
     out.push_str("/// runtime-gated properties (local_time, compass, context_dimension,\n");
@@ -1342,5 +1677,194 @@ mod tests {
         )]);
         let mut zip = zip;
         assert!(generate(&mut zip).is_err(), "the model path must be namespaced");
+    }
+
+    /// THE USING BRANCH: the five using shapes the official jar carries
+    /// (the trees dumped verbatim: bow.json, crossbow.json,
+    /// goat_horn.json, shield.json, trident.json), resolved with the
+    /// using_item gate TRUE. The thresholds, the property names, the
+    /// scales, the bases and the mirror transforms are the JSON's own
+    /// values — the charge laws ride the registry (the javap evidence).
+    #[test]
+    fn the_using_branch_resolves_the_five_jar_trees() {
+        let zip = zip_of(&[
+            // bow.json verbatim
+            (
+                "assets/minecraft/items/bow.json",
+                json_bytes(serde_json::json!({
+                    "model": {"type": "minecraft:condition",
+                              "on_false": {"type": "minecraft:model", "model": "minecraft:item/bow"},
+                              "on_true": {"type": "minecraft:range_dispatch",
+                                          "entries": [
+                                              {"model": {"type": "minecraft:model", "model": "minecraft:item/bow_pulling_1"}, "threshold": 0.65},
+                                              {"model": {"type": "minecraft:model", "model": "minecraft:item/bow_pulling_2"}, "threshold": 0.9}],
+                                          "fallback": {"type": "minecraft:model", "model": "minecraft:item/bow_pulling_0"},
+                                          "property": "minecraft:use_duration", "scale": 0.05},
+                              "property": "minecraft:using_item"}
+                })),
+            ),
+            // crossbow.json verbatim (the charge_type select falls
+            // through — no case targets the hand)
+            (
+                "assets/minecraft/items/crossbow.json",
+                json_bytes(serde_json::json!({
+                    "model": {"type": "minecraft:select",
+                              "cases": [
+                                  {"model": {"type": "minecraft:model", "model": "minecraft:item/crossbow_arrow"}, "when": "arrow"},
+                                  {"model": {"type": "minecraft:model", "model": "minecraft:item/crossbow_firework"}, "when": "rocket"}],
+                              "fallback": {"type": "minecraft:condition",
+                                           "on_false": {"type": "minecraft:model", "model": "minecraft:item/crossbow"},
+                                           "on_true": {"type": "minecraft:range_dispatch",
+                                                       "entries": [
+                                                           {"model": {"type": "minecraft:model", "model": "minecraft:item/crossbow_pulling_1"}, "threshold": 0.58},
+                                                           {"model": {"type": "minecraft:model", "model": "minecraft:item/crossbow_pulling_2"}, "threshold": 1.0}],
+                                                       "fallback": {"type": "minecraft:model", "model": "minecraft:item/crossbow_pulling_0"},
+                                                       "property": "minecraft:crossbow/pull"},
+                                           "property": "minecraft:using_item"},
+                              "property": "minecraft:charge_type"}
+                })),
+            ),
+            // goat_horn.json verbatim
+            (
+                "assets/minecraft/items/goat_horn.json",
+                json_bytes(serde_json::json!({
+                    "model": {"type": "minecraft:condition",
+                              "on_false": {"type": "minecraft:model", "model": "minecraft:item/goat_horn"},
+                              "on_true": {"type": "minecraft:model", "model": "minecraft:item/tooting_goat_horn"},
+                              "property": "minecraft:using_item"}
+                })),
+            ),
+            // shield.json verbatim — the mirror transform rides the
+            // CONDITION node (a sibling key of property/on_true)
+            (
+                "assets/minecraft/items/shield.json",
+                json_bytes(serde_json::json!({
+                    "model": {"type": "minecraft:condition",
+                              "on_false": {"type": "minecraft:special", "base": "minecraft:item/shield", "model": {"type": "minecraft:shield"}},
+                              "on_true": {"type": "minecraft:special", "base": "minecraft:item/shield_blocking", "model": {"type": "minecraft:shield"}},
+                              "property": "minecraft:using_item",
+                              "transformation": {"left_rotation": [0.0, 0.0, 0.0, 1.0], "right_rotation": [0.0, 0.0, 0.0, 1.0],
+                                                 "scale": [1.0, -1.0, -1.0], "translation": [0.0, 0.0, 0.0]}}
+                })),
+            ),
+            // trident.json verbatim — the display_context select's
+            // fallback is the using gate
+            (
+                "assets/minecraft/items/trident.json",
+                json_bytes(serde_json::json!({
+                    "model": {"type": "minecraft:select",
+                              "cases": [{"model": {"type": "minecraft:model", "model": "minecraft:item/trident"},
+                                         "when": ["gui", "ground", "fixed", "on_shelf"]}],
+                              "fallback": {"type": "minecraft:condition",
+                                           "on_false": {"type": "minecraft:special", "base": "minecraft:item/trident_in_hand", "model": {"type": "minecraft:trident"}},
+                                           "on_true": {"type": "minecraft:special", "base": "minecraft:item/trident_throwing", "model": {"type": "minecraft:trident"}},
+                                           "property": "minecraft:using_item",
+                                           "transformation": {"left_rotation": [0.0, 0.0, 0.0, 1.0], "right_rotation": [0.0, 0.0, 0.0, 1.0],
+                                                              "scale": [1.0, -1.0, -1.0], "translation": [0.0, 0.0, 0.0]}},
+                              "property": "minecraft:display_context"}
+                })),
+            ),
+            // a NO-gate tree: the using map carries none of it
+            (
+                "assets/minecraft/items/compass.json",
+                json_bytes(serde_json::json!({
+                    "model": {"type": "minecraft:range_dispatch", "property": "minecraft:compass_angle",
+                              "entries": [], "fallback": {"type": "minecraft:model", "model": "minecraft:item/compass"}}
+                })),
+            ),
+        ]);
+        let mut zip = zip;
+        let data = generate(&mut zip).unwrap();
+        assert_eq!(data.using.len(), 5, "the five gated trees");
+        assert!(data.using.get("compass").is_none(), "no gate, no using lane");
+
+        // THE BOW: the charge-keyed pull states, the JSON's own numbers
+        let bow = &data.using["bow"];
+        assert_eq!(bow.property, "minecraft:use_duration");
+        assert_eq!(bow.scale, 0.05);
+        let th: Vec<f32> = bow.states.iter().map(|s| s.threshold).collect();
+        assert_eq!(th, [0.0, 0.65, 0.9], "the fallback first, then the entries");
+        assert_eq!(bow.states[0].layers[0].model, "minecraft:item/bow_pulling_0");
+        assert_eq!(bow.states[1].layers[0].model, "minecraft:item/bow_pulling_1");
+        assert_eq!(bow.states[2].layers[0].model, "minecraft:item/bow_pulling_2");
+
+        // THE CROSSBOW: the select fell through to the gate, the pull
+        // dispatch carries its own property, scale 1.0
+        let xbow = &data.using["crossbow"];
+        assert_eq!(xbow.property, "minecraft:crossbow/pull");
+        assert_eq!(xbow.scale, 1.0);
+        assert_eq!(xbow.states[1].layers[0].model, "minecraft:item/crossbow_pulling_1");
+
+        // THE GOAT HORN: the single-state swap
+        let horn = &data.using["goat_horn"];
+        assert_eq!(horn.property, "", "the pure gate — no charge lane");
+        assert_eq!(horn.states[0].layers[0].model, "minecraft:item/tooting_goat_horn");
+
+        // THE SHIELD: the blocking special, the mirror transform decoded
+        let shield = &data.using["shield"];
+        assert_eq!(shield.property, "");
+        let sp = shield.states[0].layers[0].special.as_ref().expect("the blocking payload");
+        assert_eq!(sp.base, "minecraft:item/shield_blocking");
+        assert_eq!(
+            sp.layers,
+            vec![("minecraft:shield#main".to_string(), "entity/shield/shield_base_nopattern".to_string())]
+        );
+        let tf = shield.states[0].layers[0].transform.as_ref().expect("the mirror");
+        assert_eq!(tf.scale, [1.0, -1.0, -1.0], "the JSON's own mirror");
+
+        // THE TRIDENT: the throwing special through the select's fallback
+        let trident = &data.using["trident"];
+        let tp = trident.states[0].layers[0].special.as_ref().expect("the throwing payload");
+        assert_eq!(tp.base, "minecraft:item/trident_throwing");
+        assert_eq!(
+            tp.layers,
+            vec![("minecraft:trident#main".to_string(), "entity/trident/trident".to_string())]
+        );
+        let ttf = trident.states[0].layers[0].transform.as_ref().expect("the mirror");
+        assert_eq!(ttf.scale, [1.0, -1.0, -1.0]);
+    }
+
+    /// The using walk's loud-refuse law: a shape the using lane reaches
+    /// but the resolver cannot honor bails the generator (a render gap
+    /// on a live interaction is worse than a skipped resting shape —
+    /// the round extends first, never renders a guessed payload).
+    #[test]
+    fn the_using_walk_refuses_unhonored_shapes_loudly() {
+        // a composite on the using path (no jar tree carries one)
+        let zip = zip_of(&[(
+            "assets/minecraft/items/future.json",
+            json_bytes(serde_json::json!({
+                "model": {"type": "minecraft:condition",
+                          "on_false": {"type": "minecraft:model", "model": "minecraft:item/a"},
+                          "on_true": {"type": "minecraft:composite",
+                                      "models": [{"type": "minecraft:model", "model": "minecraft:item/b"}]},
+                          "property": "minecraft:using_item"}
+            })),
+        )]);
+        let mut zip = zip;
+        let why = match generate(&mut zip) {
+            Err(e) => e.to_string(),
+            Ok(_) => panic!("a composite on the using path must refuse"),
+        };
+        assert!(why.contains("a composite on the using path"), "{why}");
+
+        // another condition inside the gate (the jar nests none)
+        let zip = zip_of(&[(
+            "assets/minecraft/items/nested.json",
+            json_bytes(serde_json::json!({
+                "model": {"type": "minecraft:condition",
+                          "on_false": {"type": "minecraft:model", "model": "minecraft:item/a"},
+                          "on_true": {"type": "minecraft:condition", "property": "minecraft:broken",
+                                      "on_false": {"type": "minecraft:model", "model": "minecraft:item/b"},
+                                      "on_true": {"type": "minecraft:model", "model": "minecraft:item/c"}},
+                          "property": "minecraft:using_item"}
+            })),
+        )]);
+        let mut zip = zip;
+        let why = match generate(&mut zip) {
+            Err(e) => e.to_string(),
+            Ok(_) => panic!("a nested condition on the using path must refuse"),
+        };
+        assert!(why.contains("condition minecraft:broken on the using path"), "{why}");
     }
 }

@@ -2208,6 +2208,60 @@ pub static ITEM_GUI_OVERRIDES: &[(&str, GuiIconDef); 147] = &[
     ("zombie_head", GuiIconDef { models: &[], special: true }),
 ];
 
+/// One charge-keyed state of the using branch: the charge value
+/// this state engages at and the payload — either the model-path
+/// layers (empty for a special payload) or the special def (the
+/// shield_blocking / trident_throwing lane).
+pub struct UsingStateDef {
+    pub threshold: f32,
+    pub layers: &'static [ResolvedItemLayer],
+    pub special: Option<&'static SpecialItemDef>,
+}
+
+/// One item's USING-context definition — the tree evaluated with
+/// the minecraft:using_item gate TRUE. `property` names the
+/// charge's range-select property (empty = the pure gate), `scale`
+/// its dispatch scale, `states` the charge-keyed payloads
+/// (thresholds ascending, the fallback first at 0.0 — the LAST
+/// threshold <= charge wins, the vanilla loop's own law).
+pub struct ItemUsingDef {
+    pub property: &'static str,
+    pub scale: f32,
+    pub states: &'static [UsingStateDef],
+}
+
+/// The USING branches — the 5 items whose trees carry the
+/// using_item gate (bow, crossbow, goat_horn, shield, trident).
+/// Sorted by id.
+static USING_LAYERS_BOW_0: &[ResolvedItemLayer] = &[ResolvedItemLayer { model: "minecraft:item/bow_pulling_0", tints: &[], transform: None }];
+static USING_LAYERS_BOW_1: &[ResolvedItemLayer] = &[ResolvedItemLayer { model: "minecraft:item/bow_pulling_1", tints: &[], transform: None }];
+static USING_LAYERS_BOW_2: &[ResolvedItemLayer] = &[ResolvedItemLayer { model: "minecraft:item/bow_pulling_2", tints: &[], transform: None }];
+static USING_LAYERS_CROSSBOW_0: &[ResolvedItemLayer] = &[ResolvedItemLayer { model: "minecraft:item/crossbow_pulling_0", tints: &[], transform: None }];
+static USING_LAYERS_CROSSBOW_1: &[ResolvedItemLayer] = &[ResolvedItemLayer { model: "minecraft:item/crossbow_pulling_1", tints: &[], transform: None }];
+static USING_LAYERS_CROSSBOW_2: &[ResolvedItemLayer] = &[ResolvedItemLayer { model: "minecraft:item/crossbow_pulling_2", tints: &[], transform: None }];
+static USING_LAYERS_GOAT_HORN_0: &[ResolvedItemLayer] = &[ResolvedItemLayer { model: "minecraft:item/tooting_goat_horn", tints: &[], transform: None }];
+static USING_SPECIAL_SHIELD: SpecialItemDef = SpecialItemDef {
+    base: "minecraft:item/shield_blocking",
+    layers: &[
+        SpecialLayerRef { layer: "minecraft:shield#main", texture: "entity/shield/shield_base_nopattern", tint: None },
+    ],
+    transform: Some(([0.0, 0.0, 0.0], [0.0, 0.0, 0.0, 1.0], [1.0, -1.0, -1.0], [0.0, 0.0, 0.0, 1.0])),
+};
+static USING_SPECIAL_TRIDENT: SpecialItemDef = SpecialItemDef {
+    base: "minecraft:item/trident_throwing",
+    layers: &[
+        SpecialLayerRef { layer: "minecraft:trident#main", texture: "entity/trident/trident", tint: None },
+    ],
+    transform: Some(([0.0, 0.0, 0.0], [0.0, 0.0, 0.0, 1.0], [1.0, -1.0, -1.0], [0.0, 0.0, 0.0, 1.0])),
+};
+pub static ITEM_USING_STATES: &[(&str, ItemUsingDef); 5] = &[
+    ("bow", ItemUsingDef { property: "minecraft:use_duration", scale: 0.05, states: &[UsingStateDef { threshold: 0.0, layers: USING_LAYERS_BOW_0, special: None }, UsingStateDef { threshold: 0.65, layers: USING_LAYERS_BOW_1, special: None }, UsingStateDef { threshold: 0.9, layers: USING_LAYERS_BOW_2, special: None }] }),
+    ("crossbow", ItemUsingDef { property: "minecraft:crossbow/pull", scale: 1.0, states: &[UsingStateDef { threshold: 0.0, layers: USING_LAYERS_CROSSBOW_0, special: None }, UsingStateDef { threshold: 0.58, layers: USING_LAYERS_CROSSBOW_1, special: None }, UsingStateDef { threshold: 1.0, layers: USING_LAYERS_CROSSBOW_2, special: None }] }),
+    ("goat_horn", ItemUsingDef { property: "", scale: 1.0, states: &[UsingStateDef { threshold: 0.0, layers: USING_LAYERS_GOAT_HORN_0, special: None }] }),
+    ("shield", ItemUsingDef { property: "", scale: 1.0, states: &[UsingStateDef { threshold: 0.0, layers: &[], special: Some(&USING_SPECIAL_SHIELD) }] }),
+    ("trident", ItemUsingDef { property: "", scale: 1.0, states: &[UsingStateDef { threshold: 0.0, layers: &[], special: Some(&USING_SPECIAL_TRIDENT) }] }),
+];
+
 /// Items whose definition tree cannot resolve to resting-hand layers
 /// or special renderers — (item id, the refusal reason): the
 /// runtime-gated properties (local_time, compass, context_dimension,

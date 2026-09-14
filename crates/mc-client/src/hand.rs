@@ -499,6 +499,23 @@ pub fn load_special_item(id: i32) -> Option<HeldItem> {
     }
 }
 
+/// Load the posed quads of one item's USING-branch SPECIAL payload by
+/// its WIRE id — the shield's blocking pose (the shield_blocking base
+/// poses the geometry, the tree's mirror transform rides the local
+/// decode) and the trident's throwing pose. The same honest law: an
+/// unknown id, a non-special using lane or a broken stanza binds
+/// NOTHING (the caller renders the bare arm) — never a half-render.
+pub fn load_special_using_item(id: i32) -> Option<HeldItem> {
+    match mc_registry::display::special_item_using_quads(
+        id,
+        mc_registry::display::FIRSTPERSON_RIGHTHAND,
+    ) {
+        Some(Ok(quads)) => Some(HeldItem { quads }),
+        Some(Err(_)) => None,
+        None => None,
+    }
+}
+
 /// The item-in-hand anchor chain, `side` = +1 (the RIGHT main hand, the
 /// default offline player's). At the rest pose (swing 0, equip 0) the
 /// only non-trivial terms are the attack transform's rotY(side*45deg) ..
@@ -553,6 +570,28 @@ impl HeldItem {
     /// texture-binding probe.
     pub fn binds_texture(&self, tex: &str) -> bool {
         self.quads.iter().any(|q| q.texture == tex)
+    }
+
+    /// The quads' vertex centroid — the tests' honest geometry probe
+    /// (the pose's own shape: the using branch's stanza moves the
+    /// payload, the probe reads WHERE it moved without exposing
+    /// internals).
+    pub fn centroid(&self) -> [f32; 3] {
+        let mut c = [0.0f64; 3];
+        let mut n = 0.0f64;
+        for q in &self.quads {
+            for v in &q.vertices {
+                c[0] += v[0] as f64;
+                c[1] += v[1] as f64;
+                c[2] += v[2] as f64;
+                n += 1.0;
+            }
+        }
+        if n > 0.0 {
+            [(c[0] / n) as f32, (c[1] / n) as f32, (c[2] / n) as f32]
+        } else {
+            [0.0; 3]
+        }
     }
 
     /// The anchored, view-space quads at an attack animation progress
