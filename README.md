@@ -919,6 +919,50 @@ hand-drawn:
   (VILLAGER_DATA at 18 doubles as the order proof), the generated-id
   pin, and the model's merge semantics (replace-one-leave-others, the
   null-lookup drop, the re-spawn reset).
+  The **the dispatched consume-effect registry's payload census —
+  the consumable deferral retired (v0.3.110)**: the effects list the
+  previous round pinned EMPTY now WALKS. The javap audit, one hop per
+  type: `ConsumeEffect.STREAM_CODEC` = `StreamCodec.dispatch(
+  ByteBufCodecs.registry(CONSUME_EFFECT_TYPE), ..)` — a `$29` VarInt
+  byIdOrThrow (an unknown AND negative id throw, the port refuses at
+  the same lane) then that type's own payload; the registry's clinit
+  order is apply_effects 0, remove_effects 1, clear_all_effects 2,
+  teleport_randomly 3, play_sound 4 — and the registry NAMES carry
+  no "status" infix (the wiki-era "apply_status_effects" is not the
+  wire's — the fourth name-vs-wire divergence this family has shown).
+  The payloads: apply_effects = `composite(MobEffectInstance.
+  STREAM_CODEC.list(), FLOAT probability)`; remove_effects =
+  `composite(ByteBufCodecs.holderSet(MOB_EFFECT))` (the wave-three
+  tagged union, decoded in BOTH directions); clear_all_effects =
+  `StreamCodec.unit(INSTANCE)` — ZERO bytes; teleport_randomly =
+  `composite(FLOAT diameter)` (the DEFAULT_DIAMETER constant is the
+  NBT-side default, not the wire's); play_sound = `composite(
+  SoundEvent.STREAM_CODEC)` — the SAME tagged holder union as the
+  consumable's sound lane (one codec, two call sites). The element
+  record: MobEffectInstance = `composite(holderRegistry(MOB_EFFECT),
+  Details.STREAM_CODEC)` where Details = `StreamCodec.recursive(
+  composite(VAR_INT amplifier, VAR_INT duration, BOOL ambient, BOOL
+  showParticles, BOOL showIcon, optional(recursive self)
+  hiddenEffect))` — the record's component order confirmed by its
+  bootstrap strings, the recursion mirrored walk-for-walk (the
+  boxed `Option<Box<EffectDetails>>`). THE ROUND'S OWN CATCH: the
+  negative holder-set tag probe PANICKED the decode (`with_capacity
+  (negative as usize)` capacity overflow) — vanilla's `$31` reads
+  `i = VarInt - 1` then `new ArrayList(Math.min(i, 65536))`, so a
+  negative tag dies at the constructor's IllegalCapacity, never a
+  panic; the same missing refusal sat in the delivered wave-three
+  block-set lane (its "can never be negative" comment was wrong —
+  the named lane only owns wire 0), and BOTH now refuse at the
+  lane's own line. mc-client untouched BY CONSTRUCTION. GOLDENS
+  12/12 at rms 0.000, untouched BY CONSTRUCTION. Tests +2 (workspace
+  459 -> 460 passed / 0 failed / 3 ignored): the consumable's
+  effects list walking all five dispatched types in one entry chain
+  (the recursive details two levels deep, the named AND direct
+  holder sets, the zero-byte unit lane, the registry sound), the
+  refusal map (unknown dispatch id 5, negative dispatch id, a wire
+  ending before the dispatch id, a negative effect id inside
+  apply_effects, a negative holder-set tag — the probe that caught
+  the overflow), and the empty-list zero walk.
   The **the held-item's stat surface decodes — the wave four
   (v0.3.109)**: attribute_modifiers (16), food (23) and consumable
   (24) leave the patch-value refusal list. The javap walk: 16 =
