@@ -39,9 +39,9 @@
 use std::collections::{BTreeMap, HashMap};
 
 use mc_protocol::{
-    ChunkColumn, ChunkLight, ClockUpdate, EntityDataEntry, EntityDataSet, LightData,
-    MobEffectRemove, MobEffectUpdate, PlayEvent, PlayerPosition, RegistryData, WorldInfo,
-    WorldSnapshot,
+    ChunkColumn, ChunkLight, ClockUpdate, ComponentPatch, EntityDataEntry, EntityDataSet,
+    ItemStack, LightData, MobEffectRemove, MobEffectUpdate, PlayEvent, PlayerPosition,
+    RegistryData, WorldInfo, WorldSnapshot,
 };
 
 /// The model's view of ONE entity — the facts the entity packets have
@@ -122,6 +122,10 @@ pub struct WorldModel {
     /// client keeps LocalPlayer effects across a level recreation),
     /// unlike the columns and the entity registry.
     effects: HashMap<i32, MobEffectState>,
+    /// The LOCAL player's inventory window (window 0) — the
+    /// `inventoryMenu` lane the audited consumer routes container
+    /// packets through. NOT cleared on Respawn (rides the player).
+    inventory: InventoryState,
 }
 
 /// The model's view of ONE active mob effect on the LOCAL player — the
@@ -150,6 +154,67 @@ pub struct MobEffectState {
 /// legacy 1-based wiki ids are NOT the wire: the holderRegistry lane
 /// carries the 0-based registry id.
 pub const MOB_EFFECT_NIGHT_VISION: i32 = 15;
+
+/// The LOCAL player's inventory window (window 0) — the facts the
+/// container packets have actually delivered. The consumer split is
+/// AUDITED (javap of the 26.2 `ClientPacketListener`):
+/// `handleContainerContent` and `handleContainerSetSlot` both route
+/// `containerId == 0` to **`player.inventoryMenu`** — the player's OWN
+/// inventory, live whether or not a container screen is open — while
+/// any other window id goes to `player.containerMenu` (the currently
+/// OPEN container) or is dropped on mismatch. The model's store is the
+/// inventoryMenu lane; the open-container lane waits for the container
+/// GUI rounds. NOT cleared on Respawn (the inventory rides the PLAYER,
+/// the effects precedent — vanilla's Inventory survives the level
+/// recreation).
+#[derive(Debug, Clone, PartialEq, Default)]
+pub struct InventoryState {
+    /// The window's slots in the wire's own numbering (slot 0 = the
+    /// result slot, 1..5 craft, 5..9 armor, 9..36 the main grid, 36..45
+    /// the hotbar — the USE_ROW — and 45 the offhand/shield slot; the
+    /// `InventoryMenu` constants' audited values, verbatim from the
+    /// jar). The full snapshot REPLACES the list; the single-slot delta
+    /// upserts in place (a slot past the current end GROWS the list
+    /// with empty stacks — the retention line; the wire never
+    /// legitimately addresses past the menu).
+    pub slots: Vec<ItemStack>,
+    /// The revision counter the server bumps per change — the state
+    /// echo's future input, retained verbatim from whichever packet
+    /// spoke last.
+    pub state_id: i32,
+    /// The GUI cursor stack (the Set Content packet's carriedItem —
+    /// the stack riding the mouse; the slot packet has no carried
+    /// lane and leaves it untouched).
+    pub carried: ItemStack,
+}
+
+/// The `InventoryMenu` window id the audited consumer routes to the
+/// player's own inventory (`handleContainerContent`'s `ifne` on the
+/// container id; the constant's jar value is 0).
+pub const INVENTORY_WINDOW_ID: i32 = 0;
+
+/// `InventoryMenu.USE_ROW_SLOT_START` — the hotbar's first window slot
+/// (the jar's own constant: 36).
+pub const USE_ROW_SLOT_START: usize = 36;
+/// `InventoryMenu.USE_ROW_SLOT_END` — one past the hotbar's last
+/// window slot (the jar's own constant: 45 — nine slots, the number
+/// keys' row).
+pub const USE_ROW_SLOT_END: usize = 45;
+/// `InventoryMenu.SHIELD_SLOT` — the offhand's window slot (the jar's
+/// own constant: 45).
+pub const SHIELD_SLOT: usize = 45;
+
+/// `InventoryMenu.isHotbarSlot`'s audited shape — NOTE THE QUIRK: the
+/// bytecode returns true for the half-open range 36..45 AND for slot
+/// 45 itself (the `slot == 45` fall-through at `if_icmpne 22`), so the
+/// helper treats the OFFHAND pickup like a hotbar pickup at its
+/// call site (the Set Slot packet's pop-time nicety). The hotbar
+/// SLICE is the layout's `USE_ROW_SLOT_START..USE_ROW_SLOT_END`; the
+/// HELPER is the helper — both facts kept separate, the wiki-era
+/// `36..45` claim describing only one of them.
+pub fn is_hotbar_slot(slot: i32) -> bool {
+    (36..45).contains(&slot) || slot == 45
+}
 
 impl Default for WorldModel {
     fn default() -> Self {
@@ -202,6 +267,7 @@ impl WorldModel {
             columns: HashMap::new(),
             entities: HashMap::new(),
             effects: HashMap::new(),
+            inventory: InventoryState::default(),
         }
     }
 
@@ -215,6 +281,21 @@ impl WorldModel {
     /// effect store is the LOCAL player's).
     pub fn own_entity_id(&self) -> Option<i32> {
         self.info.as_ref().map(|i| i.entity_id)
+    }
+
+    /// The LOCAL player's inventory window (window 0) — the store the
+    /// container packets' `inventoryMenu` lane feeds (the audited
+    /// consumer split; see [`InventoryState`]).
+    pub fn inventory(&self) -> &InventoryState {
+        &self.inventory
+    }
+
+    /// One slot of the LOCAL player's inventory window, by the window's
+    /// own index (the wire's slot numbering, verbatim — see
+    /// [`InventoryState::slots`] for the audited layout). The hotbar
+    /// row is `USE_ROW_SLOT_START..USE_ROW_SLOT_END`.
+    pub fn inventory_slot(&self, index: usize) -> Option<&ItemStack> {
+        self.inventory.slots.get(index)
     }
 
     /// The LOCAL player's active mob-effect state, by the effect's
@@ -551,19 +632,67 @@ impl WorldModel {
                 // truth)
                 false
             }
-            PlayEvent::ContainerFilled(_) => {
-                // the container snapshot decodes and is RETAINED on
-                // the wire; the model's inventory store arrives with
-                // the inventory surfaces (the hotbar/GUI rounds — no
-                // surface exists yet, the same no-surface skip)
-                false
+            PlayEvent::ContainerFilled(c) => {
+                // The audited consumer split (javap of the 26.2
+                // ClientPacketListener.handleContainerContent): window 0
+                // IS the player's own inventory — `player.inventoryMenu
+                // .initializeContents(stateId, items, carriedItem)` —
+                // live whether or not a container screen is open; any
+                // other window goes to the OPEN container's menu
+                // (containerMenu, matched by id) or is dropped. The
+                // model's store is the inventoryMenu lane: a full
+                // snapshot REPLACES it (the snapshot semantics); the
+                // open-container lane has no model surface yet (the
+                // container GUI rounds).
+                if c.container_id == INVENTORY_WINDOW_ID {
+                    self.inventory = InventoryState {
+                        state_id: c.state_id,
+                        slots: c.items,
+                        carried: c.carried_item,
+                    };
+                    true
+                } else {
+                    false
+                }
             }
-            PlayEvent::ContainerSlotSet(_) => {
-                // the single-slot sibling decodes and is RETAINED on
-                // the wire; the same no-surface skip (the inventory
-                // surfaces own the consumer's act, the equipment
-                // precedent)
-                false
+            PlayEvent::ContainerSlotSet(s) => {
+                // The sibling's audited consumer (handleContainerSetSlot):
+                // window 0 acts on `player.inventoryMenu.setItem(slot,
+                // stateId, item)` — the single-slot delta onto the
+                // player's own window; other windows ride the
+                // containerMenu lane (no model surface yet). The port's
+                // store policy: the revision counter advances FIRST
+                // (whichever packet spoke last is the echo's truth), the
+                // slot write applies where an index exists — a slot
+                // past the current end GROWS the store with empty stacks
+                // (the retention line; the wire never legitimately
+                // addresses past the menu), a NEGATIVE slot cannot index
+                // anything and is ignored (the wire retained it verbatim
+                // in the parse, the consumer's bounds check is the
+                // consumer's act). Vanilla's pop-time pickup flash and
+                // the creative-screen remote-slot side effects are the
+                // GUI's niceties, not store semantics — documented
+                // non-goals.
+                if s.container_id == INVENTORY_WINDOW_ID {
+                    self.inventory.state_id = s.state_id;
+                    if s.slot >= 0 {
+                        let idx = s.slot as usize;
+                        if idx >= self.inventory.slots.len() {
+                            self.inventory.slots.resize(
+                                idx + 1,
+                                ItemStack {
+                                    count: 0,
+                                    item_id: 0,
+                                    patch: ComponentPatch::default(),
+                                },
+                            );
+                        }
+                        self.inventory.slots[idx] = s.item;
+                    }
+                    true
+                } else {
+                    false
+                }
             }
             PlayEvent::CenterChunk { x, z } => {
                 if self.center != (x, z) {
