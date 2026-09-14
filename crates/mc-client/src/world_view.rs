@@ -131,6 +131,12 @@ pub fn materialize(
         // reads the bytecode default #999999 gray UNDER the night-vision
         // factor (the player's effect state, 0.0 at this client)
         night_vision_color: model.night_vision_color(),
+        // the night-vision FACTOR rides the SAME snapshot (the effect
+        // state's transport): the model's own-effect store — the
+        // Update/Remove Mob Effect packets' filtered truth — answers
+        // 0.0 with the effect absent (every golden scene) and the 1.0
+        // plateau with it riding
+        night_vision_factor: model.night_vision_factor(),
     };
     let side_i = side as i32;
     for gz in 0..side_i {

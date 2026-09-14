@@ -169,13 +169,16 @@ const DEFAULT_NIGHT_VISION_COLOR: [f32; 3] = [153.0 / 255.0; 3];
 /// partialTick) · π · 0.2) · 0.3` while the effect ends within 200
 /// ticks — the fade-out flicker); `waterVision > 0 &&
 /// hasEffect(CONDUIT_POWER)` -> `getWaterVision()`; else exactly 0.0.
-/// This client carries no effect system, so the factor is its
-/// bytecode-pinned floor 0.0 — the term
+/// THE FACTOR NOW RIDES THE SNAPSHOT (`World::night_vision_factor`,
+/// the model's own-effect store through the Update/Remove Mob Effect
+/// wire transport) — this const is the FLOOR the effect-absent state
+/// rides: every golden/procedural scene answers 0.0, so their
+/// arithmetic is this value's identity (the term
 /// `max(AmbientColor, NightVisionColor · 0.0)` is the ambient base
-/// bit for bit for ANY tint (a color is non-negative), and the
-/// attribute's stated value rides the fold for the day the factor
-/// lifts. The flicker is the documented non-goal (same verdict as the
-/// torch shimmer).
+/// bit for bit for ANY tint — a color is non-negative). The flicker
+/// is the documented non-goal (same verdict as the torch shimmer);
+/// the conduit-power branch needs the underwater state the model
+/// does not track and stays 0.0.
 const NIGHT_VISION_FACTOR: f32 = 0.0;
 
 /// The vanilla lightmap's `BlockFactor` — the extractor's bytecode
@@ -281,6 +284,7 @@ fn lightmap_combine(
     ambient: [f32; 3],
     block_tint: Option<[f32; 3]>,
     night_vision: Option<[f32; 3]>,
+    night_vision_factor: f32,
 ) -> [f32; 3] {
     let sky_term = sky.map(|v| light_brightness(v) * sky_factor);
     let block_term = block.map(|v| {
@@ -292,9 +296,10 @@ fn lightmap_combine(
         return [1.0; 3]; // no light layer — the legacy look
     }
     // the shader's base: max(AmbientColor, NightVisionColor *
-    // NightVisionFactor) — the factor 0.0 at this client's state makes
-    // it the ambient color bit for bit
-    let mut color = night_vision_base(ambient, night_vision, NIGHT_VISION_FACTOR);
+    // NightVisionFactor) — the factor rides the snapshot (the effect
+    // state's transport); at the effect-absent floor 0.0 it is the
+    // ambient color bit for bit
+    let mut color = night_vision_base(ambient, night_vision, night_vision_factor);
     if let Some(s) = sky_term {
         color[0] += s * sky_tint[0];
         color[1] += s * sky_tint[1];
@@ -591,6 +596,7 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                                         ambient,
                                         block_tint,
                                         night_vision,
+                                        world.night_vision_factor,
                                     ),
                                     None => [1.0; 3], // no light layer — legacy look
                                 };
@@ -740,7 +746,7 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                         // old max's verdict). No known cell -> legacy look.
                         let lm = match clight.as_ref() {
                             Some((sky, block)) => {
-                                lightmap_combine(sky[src], block[src], sky_factor, sky_tint, ambient, block_tint, night_vision)
+                                lightmap_combine(sky[src], block[src], sky_factor, sky_tint, ambient, block_tint, night_vision, world.night_vision_factor)
                             }
                             None => [1.0; 3], // no light layer — legacy look
                         };
@@ -829,6 +835,9 @@ mod tests {
             // None = the #999999 default's verdict under the factor 0.0:
             // the night-vision term stays the ambient base bit for bit
             night_vision_color: None,
+            // the effect-absent floor: no effect store rides the test
+            // scenes, the golden identity holds
+            night_vision_factor: 0.0,
         }
     }
 

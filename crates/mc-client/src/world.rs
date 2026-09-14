@@ -160,6 +160,15 @@ pub struct World {
     /// bit for bit (max(A, C·0.0) = A exactly). No vanilla dimension
     /// states it; a custom server's stated color rides the wire.
     pub night_vision_color: Option<[u8; 3]>,
+    /// The night-vision FACTOR itself — the player's EFFECT state (the
+    /// model's `night_vision_factor()`): `hasEffect(NIGHT_VISION)` ->
+    /// 1.0 (the `GameRenderer.nightVisionScale` plateau; the fade-out
+    /// flicker is the documented non-goal), else exactly 0.0 — the
+    /// value every procedural/golden scene rides, so their lightmap
+    /// arithmetic stays bit for bit (`max(A, C·0.0) = A` for any
+    /// tint). The effect state's wire transport is the Update/Remove
+    /// Mob Effect packets (the model's own-entity-filtered store).
+    pub night_vision_factor: f32,
 }
 
 /// A biome cell with no opinion — the server never answered for the
@@ -268,6 +277,7 @@ impl World {
             sky_light_factor: None, // the procedural scene: the bytecode default 1.0
             sky_light_color: None, // the procedural scene: the -1 default's white identity
             night_vision_color: None, // the procedural scene: the #999999 default, factor 0.0
+            night_vision_factor: 0.0, // the procedural scene: no effect store, the golden floor
         };
         w.generate();
         w

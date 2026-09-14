@@ -40,8 +40,8 @@ use std::collections::{BTreeMap, HashMap};
 
 use mc_protocol::{
     ChunkColumn, ChunkLight, ClockUpdate, EntityDataEntry, EntityDataSet, EntityDeltaPos,
-    EntityDeltaPosRot, EntityDeltaRot, EntityHeadRot, LightData, PlayEvent, PlayerPosition,
-    RegistryData, WorldInfo, WorldSnapshot,
+    EntityDeltaPosRot, EntityDeltaRot, EntityHeadRot, LightData, MobEffectRemove, MobEffectUpdate,
+    PlayEvent, PlayerPosition, RegistryData, WorldInfo, WorldSnapshot,
 };
 
 /// The model's view of ONE entity — the facts the entity packets have
@@ -112,7 +112,42 @@ pub struct WorldModel {
     /// Entity packet's numeric key). Cleared on Respawn — the entities
     /// of the crossed dimension's level do not follow the player.
     entities: HashMap<i32, EntitySnapshot>,
+    /// The LOCAL player's active mob effects, keyed by the mob-effect
+    /// registry id. Only the own-entity traffic lands here (vanilla's
+    /// LocalPlayer carries its own effects; the lightmap consumes the
+    /// LOCAL player's state — other entities' effect packets have no
+    /// client surface and are dropped). NOT cleared on Respawn: the
+    /// effect rides the PLAYER (the server-side MobEffectInstance
+    /// lives on the entity that crosses the dimension and vanilla's
+    /// client keeps LocalPlayer effects across a level recreation),
+    /// unlike the columns and the entity registry.
+    effects: HashMap<i32, MobEffectState>,
 }
+
+/// The model's view of ONE active mob effect on the LOCAL player — the
+/// facts the Update Mob Effect packet has actually delivered, retained
+/// verbatim (the amplifier/duration/flags the future HUD and the fade
+/// consumer act on; the duration's local tick-down and the fade-out
+/// flicker are the documented non-goals).
+#[derive(Debug, Clone, PartialEq)]
+pub struct MobEffectState {
+    /// The amplifier, retained verbatim.
+    pub amplifier: i32,
+    /// The STATED duration in ticks — never ticked down locally (the
+    /// wire's next Update/Remove is the truth; the -1 infinite
+    /// sentinel rides verbatim).
+    pub duration: i32,
+    /// Bit 0 ambient, bit 1 visible, bit 2 show icon, bit 3 blend —
+    /// the packet's packing order, retained raw.
+    pub flags: u8,
+}
+
+/// `minecraft:night_vision`'s mob-effect registry id — the runtime
+/// boot's registration order (the probe against the official jar:
+/// speed 0 .. night_vision 15 .. conduit_power 28 ..
+/// breath_of_the_nautilus 39). The legacy 1-based wiki ids are NOT the
+/// wire: the holderRegistry lane carries the 0-based registry id.
+pub const MOB_EFFECT_NIGHT_VISION: i32 = 15;
 
 impl Default for WorldModel {
     fn default() -> Self {
@@ -164,12 +199,44 @@ impl WorldModel {
             clocks: Vec::new(),
             columns: HashMap::new(),
             entities: HashMap::new(),
+            effects: HashMap::new(),
         }
     }
 
     /// One entity's current snapshot, by id.
     pub fn entity(&self, id: i32) -> Option<&EntitySnapshot> {
         self.entities.get(&id)
+    }
+
+    /// The session's own entity id (the play Login packet's playerId) —
+    /// the filter the effect-state traffic rides through (the model's
+    /// effect store is the LOCAL player's).
+    pub fn own_entity_id(&self) -> Option<i32> {
+        self.info.as_ref().map(|i| i.entity_id)
+    }
+
+    /// The LOCAL player's active mob-effect state, by the effect's
+    /// registry id.
+    pub fn mob_effect(&self, effect_id: i32) -> Option<&MobEffectState> {
+        self.effects.get(&effect_id)
+    }
+
+    /// The lightmap's night-vision factor — the consumer the mesher's
+    /// documented debt awaited (the `NightVisionFactor` extract's
+    /// bytecode: `hasEffect(NIGHT_VISION)` ->
+    /// `GameRenderer.nightVisionScale` — the 1.0 plateau; the fade-out
+    /// flicker `0.7 + sin(..) · 0.3` inside the last-200-tick window
+    /// is the documented non-goal, same verdict as the torch
+    /// shimmer; the conduit-power branch needs the underwater state
+    /// this model does not track, so it stays the 0.0 it always
+    /// was). With the effect absent the factor is EXACTLY 0.0 — the
+    /// golden scenes' bit-for-bit identity.
+    pub fn night_vision_factor(&self) -> f32 {
+        if self.effects.contains_key(&MOB_EFFECT_NIGHT_VISION) {
+            1.0
+        } else {
+            0.0
+        }
     }
 
     /// Pin the current dimension and resolve its vertical layout from the
@@ -449,6 +516,30 @@ impl WorldModel {
                     e.data.insert(entry.index, entry.value);
                 }
                 true
+            }
+            PlayEvent::MobEffectApplied(u) => {
+                // vanilla's handleUpdateMobEffect acts on the named
+                // entity; the model's effect store is the LOCAL
+                // player's (the lightmap's consumer) — other entities'
+                // effect traffic is dropped, the same no-surface skip
+                // the unknown-id lane takes. The upsert REPLACES the
+                // effect id's stored state (the vanilla upsert).
+                if self.own_entity_id() == Some(u.entity_id) {
+                    self.effects.insert(
+                        u.effect_id,
+                        MobEffectState { amplifier: u.amplifier, duration: u.duration, flags: u.flags },
+                    );
+                    true
+                } else {
+                    false
+                }
+            }
+            PlayEvent::MobEffectRemoved(r) => {
+                if self.own_entity_id() == Some(r.entity_id) {
+                    self.effects.remove(&r.effect_id).is_some()
+                } else {
+                    false
+                }
             }
             PlayEvent::CenterChunk { x, z } => {
                 if self.center != (x, z) {

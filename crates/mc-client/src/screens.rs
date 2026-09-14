@@ -1863,6 +1863,7 @@ mod tests {
             sky_light_factor: None, // no dimension opinion — the bytecode default 1.0
             sky_light_color: None, // no dimension opinion — the -1 default's white identity
             night_vision_color: None, // no dimension opinion — the #999999 default, factor 0.0
+            night_vision_factor: 0.0, // no effect store rides these scenes — the golden floor
                 },
                 camera: None,
                 spawn_biome: Some("minecraft:plains".into()),
@@ -2292,6 +2293,7 @@ mod tests {
             sky_light_factor: None, // no dimension opinion — the bytecode default 1.0
             sky_light_color: None, // no dimension opinion — the -1 default's white identity
             night_vision_color: None, // no dimension opinion — the #999999 default, factor 0.0
+            night_vision_factor: 0.0, // no effect store rides these scenes — the golden floor
         });
         app.enter_network_world(None, Skybox::Overworld, None, None);
         assert_eq!(app.screen, ScreenKind::World);
@@ -2351,6 +2353,7 @@ mod tests {
             sky_light_factor: None, // no dimension opinion — the bytecode default 1.0
             sky_light_color: None, // no dimension opinion — the -1 default's white identity
             night_vision_color: None, // no dimension opinion — the #999999 default, factor 0.0
+            night_vision_factor: 0.0, // no effect store rides these scenes — the golden floor
         });
         app.enter_network_world(None, Skybox::Overworld, None, None);
         let flight = app.world_camera();
@@ -2412,6 +2415,7 @@ mod tests {
             sky_light_factor: None, // no dimension opinion — the bytecode default 1.0
             sky_light_color: None, // no dimension opinion — the -1 default's white identity
             night_vision_color: None, // no dimension opinion — the #999999 default, factor 0.0
+            night_vision_factor: 0.0, // no effect store rides these scenes — the golden floor
                 },
                 camera: None,
                 spawn_biome: None,
@@ -2448,6 +2452,7 @@ mod tests {
             sky_light_factor: None, // no dimension opinion — the bytecode default 1.0
             sky_light_color: None, // no dimension opinion — the -1 default's white identity
             night_vision_color: None, // no dimension opinion — the #999999 default, factor 0.0
+            night_vision_factor: 0.0, // no effect store rides these scenes — the golden floor
         }
     }
 
