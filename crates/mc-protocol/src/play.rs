@@ -5883,7 +5883,7 @@ mod tests {
                             blocks: Some(BlockSet::Direct(vec![17, 999])),
                             properties: None,
                             nbt: None,
-                            matchers: DataComponentMatchers { exact: vec![] },
+                            matchers: DataComponentMatchers { exact: vec![], partial: vec![] },
                         }])
                     )],
                     removed: vec![]
@@ -5926,7 +5926,7 @@ mod tests {
                                 blocks: None,
                                 properties: None,
                                 nbt: None,
-                                matchers: DataComponentMatchers { exact: vec![] },
+                                matchers: DataComponentMatchers { exact: vec![], partial: vec![] },
                             }])
                         ),
                         (t::CAN_BREAK, ComponentValue::BlockPredicates(vec![])),

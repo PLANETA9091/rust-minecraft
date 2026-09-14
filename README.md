@@ -919,6 +919,49 @@ hand-drawn:
   (VILLAGER_DATA at 18 doubles as the order proof), the generated-id
   pin, and the model's merge semantics (replace-one-leave-others, the
   null-lookup drop, the re-spawn reset).
+  The **the dispatched predicate-type registry's payload census — the
+  wave-three partial-matcher deferral retired (v0.3.111)**: the
+  component-matchers' PARTIAL side — which the wave-three round
+  refused at any NON-EMPTY count — now WALKS. The javap audit, four
+  hops: `DataComponentMatchers.STREAM_CODEC`'s partial side =
+  `DataComponentPredicate.STREAM_CODEC` = `SINGLE_STREAM_CODEC
+  .list(64)` mapped to a Map (a 64-capped VarInt count, then count ×
+  entries); each `Single` entry is `StreamCodec.dispatch(
+  DataComponentPredicate$Type.STREAM_CODEC, type.singleStreamCodec)`;
+  the TYPE lane = `ByteBufCodecs.either(registry(
+  DATA_COMPONENT_PREDICATE_TYPE), registry(DATA_COMPONENT_TYPE))` —
+  a ONE-BYTE `$26` readBoolean (true = LEFT) then a `$29` byIdOrThrow
+  VarInt into the branch's registry (BOTH are real lookups, NOT the
+  idMapper-continuous family: unknown AND negative ids throw, the
+  port refuses at the same lane); and the PAYLOAD rides as ONE full
+  NBT tag — `TypeBase.singleStreamCodec` = `ByteBufCodecs
+  .fromCodecWithRegistries(record.CODEC)` = the `tagCodec` bridge
+  (`NbtIo.readAnyTag`: type byte + payload, no name framing) parsed
+  through the record's OWN NBT-side codec — the payload is
+  self-delimiting, so the walk continues and the wave-three
+  "unframed wire" objection retires by construction. The registry:
+  15 types pinned by clinit order (damage 0, enchantments 1,
+  stored_enchantments 2, potion_contents 3, custom_data 4, container
+  5, bundle_contents 6, firework_explosion 7, fireworks 8,
+  writable_book_content 9, written_book_content 10, attribute_modifiers
+  11, trim 12, jukebox_playable 13, villager/variant 14 — the FIFTH
+  registry pinned by clinit order; the names are the `ldc` strings
+  verbatim, and `villager/variant` carries its SLASH). The RIGHT
+  branch is the `AnyValueType` — a plain DATA_COMPONENT_TYPE id means
+  "the component is present, any value" (the synced table's 111-row
+  census is the byIdOrThrow bound); its payload needs no value codec.
+  The port retains every payload tag VERBATIM (the
+  ComponentSerialization line: the per-record parse is a consumer's
+  act), refusing the 0x00 root byte where vanilla's bridge throws
+  "Expected non-null compound tag". mc-client untouched BY
+  CONSTRUCTION. GOLDENS UNTOUCHED BY CONSTRUCTION: 12/12 at their
+  tolerances. Tests +1 (workspace 460 -> 461 passed / 0 failed / 3
+  ignored): the two-lane dispatched walk (LEFT `damage` with its
+  payload compound retained byte-identical, RIGHT the any-value shape
+  over DAMAGE with the empty compound), and the refusal map extended
+  IN PLACE — an unknown and a negative predicate-type id, an unknown
+  and a negative any-value component id (each probe landing ON its
+  lane, not dying of byte exhaustion), and the End-tag payload byte.
   The **the dispatched consume-effect registry's payload census —
   the consumable deferral retired (v0.3.110)**: the effects list the
   previous round pinned EMPTY now WALKS. The javap audit, one hop per
