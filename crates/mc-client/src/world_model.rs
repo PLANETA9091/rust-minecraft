@@ -429,6 +429,24 @@ impl WorldModel {
         self.effects.get(&effect_id)
     }
 
+    /// The effect state's DEBUG surface: the LOCAL player's active
+    /// effects as `(id, resolved name, state)` triples, the name lane
+    /// resolved through the generated mob-effect table
+    /// ([`mc_registry::mob_effect_name`] — the 0-based wire order,
+    /// the table's header documents the NOT-synchronized caveat). An
+    /// id the table cannot resolve — a server registry newer than
+    /// this client jar's boot — names `None` while the STATE still
+    /// rides: the honest unknown, never a guessed name (vanilla's
+    /// `IdMapper.byId` throws there; the listing keeps walking). The
+    /// listing's order is the store's (the map's); the future
+    /// HUD/debug-screen rounds own any sort.
+    pub fn active_effects_debug(&self) -> Vec<(i32, Option<&'static str>, &MobEffectState)> {
+        self.effects
+            .iter()
+            .map(|(id, st)| (*id, mc_registry::mob_effect_name(*id), st))
+            .collect()
+    }
+
     /// The lightmap's night-vision factor — the consumer the mesher's
     /// documented debt awaited (the `NightVisionFactor` extract's
     /// bytecode: `hasEffect(NIGHT_VISION)` ->
@@ -3341,6 +3359,75 @@ mod tests {
             entity_id: 17,
             effect_id: MOB_EFFECT_NIGHT_VISION,
         })));
+    }
+
+    /// The effect state's NAME lane — the debug surface riding the
+    /// generated mob-effect table into the model (the candidate the
+    /// effect rounds queued): the listing resolves each stored id
+    /// through `mc_registry::mob_effect_name`, the known ids name
+    /// themselves, an id PAST the table (a newer server's registry)
+    /// names None while the state still rides, the own-entity filter
+    /// keeps the listing LOCAL, and the removal drops the pair.
+    #[test]
+    fn the_effect_debug_surface_resolves_the_generated_names() {
+        let mut m = WorldModel::new();
+        assert!(m.active_effects_debug().is_empty(), "no effects, no listing");
+        // the login pins the own id — the own-entity traffic lands
+        assert!(m.apply(PlayEvent::WorldInfo(WorldInfo {
+            entity_id: 7,
+            hardcore: false,
+            dimensions: vec!["minecraft:overworld".to_string()],
+            view_distance: 8,
+            simulation_distance: 8,
+            portal_cooldown: 300,
+            current_dimension: "minecraft:overworld".to_string(),
+        })));
+        // two of ours: a known id and one PAST the 26.2 table (the
+        // wire's VarInt lane accepts any id — a newer server's
+        // registry can carry effects this jar's boot never had)
+        assert!(m.apply(PlayEvent::MobEffectApplied(MobEffectUpdate {
+            entity_id: 7,
+            effect_id: MOB_EFFECT_NIGHT_VISION,
+            amplifier: 0,
+            duration: 600,
+            flags: 0b0110,
+        })));
+        assert!(m.apply(PlayEvent::MobEffectApplied(MobEffectUpdate {
+            entity_id: 7,
+            effect_id: 40,
+            amplifier: 1,
+            duration: -1,
+            flags: 0,
+        })));
+        // a FOREIGN entity's effect never surfaces in the listing
+        assert!(!m.apply(PlayEvent::MobEffectApplied(MobEffectUpdate {
+            entity_id: 99,
+            effect_id: 1, // slowness — not ours
+            amplifier: 0,
+            duration: 200,
+            flags: 0,
+        })));
+        // the listing's order is the store's (the map's) — sort for
+        // the pin (the HUD/debug-screen rounds own any sort)
+        let mut listing = m.active_effects_debug();
+        listing.sort_by_key(|(id, _, _)| *id);
+        assert_eq!(listing.len(), 2, "the foreign packet's effect never surfaced");
+        assert_eq!(listing[0].0, MOB_EFFECT_NIGHT_VISION);
+        assert_eq!(listing[0].1, Some("minecraft:night_vision"), "the generated table's slot 15");
+        assert_eq!(listing[0].2.amplifier, 0, "the state rides the triple verbatim");
+        assert_eq!(listing[0].2.duration, 600);
+        assert_eq!(listing[1].0, 40);
+        assert_eq!(listing[1].1, None, "the honest unknown — never a guessed name");
+        assert_eq!(listing[1].2.amplifier, 1, "the unresolvable id's STATE still rides");
+        assert_eq!(listing[1].2.duration, -1);
+        // the removal drops the pair from the listing
+        assert!(m.apply(PlayEvent::MobEffectRemoved(MobEffectRemove {
+            entity_id: 7,
+            effect_id: 40,
+        })));
+        let listing = m.active_effects_debug();
+        assert_eq!(listing.len(), 1);
+        assert_eq!(listing[0].1, Some("minecraft:night_vision"));
     }
 
     /// The player-inventory surface — the first consumer the container

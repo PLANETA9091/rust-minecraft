@@ -98,6 +98,23 @@ pub fn flatten_timeline_tag(name: &str) -> Option<Vec<&'static str>> {
     Some(out)
 }
 
+/// The mob-effect registry id's NAME — the resolution lane the effect
+/// state's debug surface (and the future HUD icon/tooltip rounds)
+/// consumes. The wire carries the 0-based built-in registration id
+/// (the `holderRegistry(Registries.MOB_EFFECT)` lane); the client
+/// resolves the name LOCALLY through this jar's boot order — the
+/// generated table's own header: NOT a synchronized registry, the
+/// order is this boot's. Out-of-range ids — negative (the decode's
+/// own refusal) or past the table (a server registry NEWER than this
+/// client jar's boot; vanilla's `IdMapper.byId` THROWS there) —
+/// resolve to `None`: the honest unknown, never a guessed name.
+pub fn mob_effect_name(id: i32) -> Option<&'static str> {
+    if id < 0 {
+        return None;
+    }
+    generated::mob_effects::MOB_EFFECT_ORDER.get(id as usize).copied()
+}
+
 /// The resolver core, generic over the table so the dedup and cycle
 /// rules are testable without a jar that contains a cycle (the real
 /// 68-tag table cannot cycle: the census join proves every nested
@@ -228,6 +245,31 @@ mod tests {
     #[test]
     fn unknown_block_returns_none() {
         assert!(REGISTRY.find_block("not_a_real_block_xyz").is_none());
+    }
+
+    #[test]
+    fn mob_effect_name_resolves_the_wire_order() {
+        // the 0-based wire order's ends and one middle pin (the same
+        // slots the client's night-vision const test pins — one truth)
+        assert_eq!(mob_effect_name(0), Some("minecraft:speed"));
+        assert_eq!(mob_effect_name(15), Some("minecraft:night_vision"));
+        assert_eq!(mob_effect_name(28), Some("minecraft:conduit_power"));
+        assert_eq!(mob_effect_name(39), Some("minecraft:breath_of_the_nautilus"));
+        // the boundaries refuse: negative (the decode's own lane
+        // refuses it too) and past-the-table (a newer server's
+        // registry; vanilla's byId THROWS there — None is the honest
+        // unknown, never a guessed name)
+        assert_eq!(mob_effect_name(-1), None);
+        assert_eq!(mob_effect_name(40), None);
+        assert_eq!(mob_effect_name(i32::MAX), None);
+        // every table slot resolves, and no two slots share a name —
+        // the id->name lane is a FUNCTION (the resolution a debug
+        // surface prints can never collide)
+        let mut names: Vec<&str> = (0..40i32).filter_map(mob_effect_name).collect();
+        assert_eq!(names.len(), 40);
+        names.sort_unstable();
+        let dup_count = names.windows(2).filter(|w| w[0] == w[1]).count();
+        assert_eq!(dup_count, 0, "the name lane is injective");
     }
 
     #[test]
