@@ -919,6 +919,37 @@ hand-drawn:
   (VILLAGER_DATA at 18 doubles as the order proof), the generated-id
   pin, and the model's merge semantics (replace-one-leave-others, the
   null-lookup drop, the re-spawn reset).
+  The **set held slot — the hotbar's selection packet (v0.3.126)**:
+  the number-keys row's other half — the slot CONTENTS ride the
+  container packets' window-0 lane, the SELECTION rides here (generated
+  id 105, `minecraft:set_held_slot`). The audit (javap on the 26.2
+  jar): the record's clinit composes `StreamCodec.composite` of ONE
+  lane — `ByteBufCodecs.VAR_INT` for the slot (the wiki-era byte table
+  would misshape: slot 200 rides the two-byte VarInt C8 01, the byte
+  lane would read -56). THE CONSUMER'S GATE (javap of
+  `ClientPacketListener.handleSetHeldSlot`):
+  `Inventory.isHotbarSlot(slot)` — the SELECTION-relative 0..9
+  (`Inventory.SELECTION_SIZE` = 9, the inventory's OWN numbering) —
+  gates `Inventory.setSelectedSlot(slot)`; anything else (a window
+  slot like 36, a negative) is DROPPED before it reaches the
+  inventory. THE ROUND'S LESSON: the jar carries TWO isHotbarSlot
+  helpers — `InventoryMenu`'s window-numbering one with its audited
+  45-inclusive quirk, and `Inventory`'s strict selection-relative one
+  this packet rides — same name, different truths, and collapsing
+  them would have moved the selection to a window slot. The model:
+  `selected` joins the inventory store (vanilla's initial selection
+  0), the apply arm mirrors the gate (a repeat naming the held slot
+  is the no-op), and the window-0 snapshot does NOT reset it — the
+  initializeContents field list is javap-pinned to
+  slots/carried/stateId only. The window slot the selection names is
+  `USE_ROW_SLOT_START + selected`. The parse retains verbatim (the
+  gate is the consumer's act). GOLDENS UNTOUCHED BY CONSTRUCTION:
+  12/12 at rms 0.000. Tests +2 (workspace 479 -> 481 passed / 0 failed
+  / 3 ignored): the protocol side pinning the generated id 105, the
+  one-lane VarInt walk (the two-byte shape proof), the verbatim
+  retention of the gate-doomed values, and the truncation/wrong-id
+  refusals; the model side walking the gate (the move, the no-op
+  repeat, the 36/-2 drops) and the snapshot's selection survival.
   The **the player-inventory surface — the first inventory consumer
   (v0.3.125)**: the window-0 store the container trilogy's traffic has
   been waiting for, fed by an AUDITED consumer split (javap of the 26.2
