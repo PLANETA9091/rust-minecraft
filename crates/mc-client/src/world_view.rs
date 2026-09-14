@@ -256,6 +256,50 @@ pub struct SnapshotView {
     /// loaded columns / for an id the server never named — the honest
     /// unknown, never a guess.
     pub biome: Option<String>,
+    /// The OPEN foreign container window's UI-facing projection — the
+    /// chest's live slots the networked screen renders (see
+    /// [`LiveContainer`]). `None` while no foreign window is open.
+    pub container: Option<LiveContainer>,
+}
+
+/// The OPEN container window as the UI consumes it — the
+/// protocol-agnostic projection of the model's `OpenContainerState`
+/// (the screens stay out of the wire's types, the JoinOutcome slice's
+/// own convention). The slot list rides the MENU's own numbering
+/// verbatim: a chest window's slots 0..27 are the container grid, the
+/// tail is the player-inventory mirror — the screen's layout lanes
+/// index both out of this one list. The ids are the ITEM registry
+/// order's (the same table the flat icon textures resolve through).
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct LiveContainer {
+    /// The window id the server assigned (the match key the container
+    /// traffic rides; retained for the future clientbound echoes).
+    pub id: i32,
+    /// The MenuType registry id (generic_9x3 = 2, the chest — the
+    /// parse's doc table names vanilla's built-in order). The screen
+    /// side routes on it: the chest is the wired menu, other menus
+    /// stay honest drops until their own rounds.
+    pub menu_type_id: i32,
+    /// The menu's slots as `(item_id, count)` pairs, the menu's own
+    /// numbering, verbatim from the store (an empty stack is the
+    /// wire's own `(0, 0)` — the screen's emptiness sentinel).
+    pub slots: Vec<(i32, i32)>,
+    /// The GUI cursor stack as `(item_id, count)` (the Set Content
+    /// packet's carriedItem).
+    pub carried: (i32, i32),
+}
+
+/// The model's open-container store projected for the UI — `None`
+/// while no foreign window is open (the join's own state: no screen
+/// is up until the server opens one).
+fn open_container_view(model: &WorldModel) -> Option<LiveContainer> {
+    let oc = model.open_container()?;
+    Some(LiveContainer {
+        id: oc.id,
+        menu_type_id: oc.menu_type_id,
+        slots: oc.slots.iter().map(|s| (s.item_id, s.count)).collect(),
+        carried: (oc.carried.item_id, oc.carried.count),
+    })
 }
 
 /// The grid-local first-person camera for the materialized window: the
@@ -316,6 +360,9 @@ pub fn materialize_snapshot_view(
         world: materialize(&model, origin, side, y_base, mapper),
         camera,
         biome,
+        // a fresh join opens no window — the container lane starts
+        // closed (the Open Screen packet is the only opener)
+        container: None,
     }
 }
 
@@ -371,6 +418,9 @@ impl LiveView {
                 ),
                 camera: None,
                 biome: None,
+                // no player pose ≠ no container: the window can be
+                // open before any teleport arrived — read the store
+                container: open_container_view(&self.model),
             };
         };
         let origin = snapshot_window_origin(player, self.side);
@@ -381,6 +431,9 @@ impl LiveView {
             world: materialize(&self.model, origin, self.side, y_base, mapper),
             camera,
             biome,
+            // the live window state rides EVERY refresh — the chest's
+            // slots update in place exactly like the terrain does
+            container: open_container_view(&self.model),
         }
     }
 }
@@ -1475,6 +1528,59 @@ mod tests {
         let (a, b) = (first.camera.expect("pose"), one_shot.camera.expect("pose"));
         assert_eq!((a.pos.x, a.pos.y, a.pos.z), (b.pos.x, b.pos.y, b.pos.z));
         assert_eq!((a.yaw, a.pitch), (b.yaw, b.pitch));
+    }
+
+    #[test]
+    fn the_snapshot_view_carries_the_open_container() {
+        // the join's own state: no window is open — the container lane
+        // rides `None` (the one-shot and the live first refresh agree)
+        let snap = surface_snapshot();
+        let one_shot = materialize_snapshot_view(snap.clone(), 5, example_mapper);
+        assert!(one_shot.container.is_none(), "a fresh join opens no window");
+        let mut live = LiveView::from_snapshot(snap, 5);
+        assert!(live.refresh(example_mapper).container.is_none());
+
+        // the server opens the chest (window 5, generic_9x3) and fills
+        // it — the projection rides EVERY refresh from here on
+        live.apply(PlayEvent::ScreenOpened(mc_protocol::play::OpenScreen {
+            container_id: 5,
+            menu_type_id: crate::world_model::MENU_TYPE_CHEST, // generic_9x3, the chest
+            title_nbt: vec![0x0A, 0x00],
+        }));
+        live.apply(PlayEvent::ContainerFilled(mc_protocol::play::ContainerContent {
+            container_id: 5,
+            state_id: 11,
+            items: vec![
+                mc_protocol::play::ItemStack {
+                    count: 3,
+                    item_id: 745,
+                    patch: mc_protocol::play::ComponentPatch::default(),
+                },
+                mc_protocol::play::ItemStack {
+                    count: 0,
+                    item_id: 0,
+                    patch: mc_protocol::play::ComponentPatch::default(),
+                },
+            ],
+            carried_item: mc_protocol::play::ItemStack {
+                count: 9,
+                item_id: 33,
+                patch: mc_protocol::play::ComponentPatch::default(),
+            },
+        }));
+        let view = live.refresh(example_mapper);
+        let c = view.container.expect("the open window rides the view");
+        assert_eq!(c.id, 5);
+        assert_eq!(c.menu_type_id, 2, "the chest's menu id rides verbatim");
+        assert_eq!(c.slots, vec![(745, 3), (0, 0)], "the store's slots, verbatim pairs");
+        assert_eq!(c.carried, (33, 9), "the cursor stack rides the projection");
+
+        // the store DROPS (the Container Close): the lane closes — the
+        // next refresh reports no window, the screen side's cue
+        live.apply(PlayEvent::ContainerClosed(mc_protocol::play::ContainerClose {
+            container_id: 5,
+        }));
+        assert!(live.refresh(example_mapper).container.is_none(), "the close lands");
     }
 
     #[test]

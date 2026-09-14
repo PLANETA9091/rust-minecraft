@@ -124,6 +124,7 @@ fn run_join(
                 crate::world::World,
                 Option<crate::camera::Camera>,
                 Option<String>,
+                Option<crate::world_view::LiveContainer>,
             ),
             String,
         >,
@@ -212,7 +213,15 @@ fn run_join(
                         if view.apply(event) && last_ship.elapsed() >= VIEW_CADENCE {
                             let upd = view.refresh(crate::world_view::runtime_mapper);
                             if live_tx
-                                .send(Ok((upd.world, upd.camera, upd.biome)))
+                                .send(Ok((
+                                    upd.world,
+                                    upd.camera,
+                                    upd.biome,
+                                    // the live window rides every shipped
+                                    // refresh — the chest's slots stream to
+                                    // the screen exactly like the terrain
+                                    upd.container,
+                                )))
                                 .is_err()
                             {
                                 break; // receiver gone at shutdown
@@ -284,6 +293,7 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize) -> anyhow::Result<()>
                 crate::world::World,
                 Option<crate::camera::Camera>,
                 Option<String>,
+                Option<crate::world_view::LiveContainer>,
             ),
             String,
         >,
@@ -355,7 +365,9 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize) -> anyhow::Result<()>
         // Disconnect screen, exactly like the original's kick
         while let Ok(upd) = live_rx.try_recv() {
             match upd {
-                Ok((world, camera, biome)) => app.live_view_updated(world, camera, biome),
+                Ok((world, camera, biome, container)) => {
+                    app.live_view_updated(world, camera, biome, container)
+                }
                 Err(reason) => app.live_session_lost(reason),
             }
         }

@@ -321,8 +321,22 @@ pub struct App {
     pub held_item: Option<crate::hand::HeldItem>,
     /// The chest screen's 27 container slots as (item_id, count) — the
     /// wire's own stack shape (count <= 0 is the empty stack), the FIXED
-    /// deterministic loadout the pixel test pins. Filled by open_chest.
+    /// deterministic loadout the pixel test pins. Filled by open_chest
+    /// (the OFFLINE stand-in) and by the live container lane (the
+    /// networked store's projection, the menu's own numbering).
     pub chest_slots: Vec<(i32, i32)>,
+    /// The chest screen's player-inventory mirror (36 slots as
+    /// (item_id, count)) — the networked screen's rows 27..63 of the
+    /// menu's own numbering (27 main + 9 hotbar, the generic_54
+    /// canvas's layout). The OFFLINE stand-in keeps it EMPTY (the
+    /// chrome-only rows the golden pins); the live lane fills it from
+    /// the same store projection the grid rides.
+    pub chest_mirror: Vec<(i32, i32)>,
+    /// Whether the chest screen currently shows the NETWORKED store
+    /// (the live lane opened it) — the offline deterministic stand-in
+    /// (open_chest, the pixel test's own scene) is never closed by the
+    /// live lane's container-less updates, the two flows stay separate.
+    pub chest_is_live: bool,
     /// The last biome the network world's music situation resolved to
     /// (the synced registry name at the player's feet). `None` until a
     /// join resolves one; cleared with the level (Save and Quit, a kick).
@@ -426,6 +440,8 @@ impl App {
             swing: crate::hand::SwingState::default(),
             held_item: None,
             chest_slots: Vec::new(),
+            chest_mirror: Vec::new(),
+            chest_is_live: false,
         }
     }
 
@@ -504,6 +520,11 @@ impl App {
     /// screen's own flow).
     pub fn open_chest(&mut self) {
         self.enter_world();
+        // the OFFLINE stand-in: the live lane's flag stays down — a
+        // container-less network update never closes this screen, the
+        // two flows stay separate (the golden pins this scene's pixels)
+        self.chest_is_live = false;
+        self.chest_mirror.clear();
         const LOADOUT: [(usize, i32, i32); 8] = [
             (4, 645, 12),   // diamond
             (13, 1005, 64), // iron_ingot
@@ -529,9 +550,10 @@ impl App {
     /// vanilla count rendering (white, shadowed, right-aligned at the
     /// slot's bottom edge), and the lang title in the label color
     /// WITHOUT the shadow (the AbstractContainerScreen's own draw call).
-    /// The player mirror rows render their chrome only — the offline
-    /// screen holds no inventory state; the networked store wiring is
-    /// the next round's own line.
+    /// The player mirror rows render their chrome always and their
+    /// CONTENTS when the live lane filled them (the networked store's
+    /// rows 27..63 — the offline stand-in keeps the chrome-only shape
+    /// the golden pins).
     fn render_chest(&mut self, g: &mut Gui, a: &mut GuiAssets, w: i32, h: i32) {
         g.fill(0, 0, w, h, [0.0, 0.0, 0.0, 0.35]);
         let (px, py) = chest_panel_origin(w, h);
@@ -571,6 +593,21 @@ impl App {
         for i in 0..36 {
             let (sx, sy) = chest_mirror_slot((px, py), i);
             g.sprite(a, "container/slot", sx, sy);
+        }
+        // the live mirror's contents (the networked store's rows 27..63):
+        // the same icon/count treatment the grid rides over the mirror's
+        // own geometry — the offline stand-in leaves this list empty
+        for (i, (id, count)) in self.chest_mirror.iter().enumerate().take(36) {
+            if *count <= 0 {
+                continue; // the wire's own emptiness sentinel
+            }
+            let (sx, sy) = chest_mirror_slot((px, py), i);
+            draw_item_icon(g, *id, sx + 1, sy + 1);
+            if *count > 1 {
+                let s = count.to_string();
+                let tw = g.text_width(&s);
+                g.text(a, sx + 17 - tw, sy + 9, &s, WHITE, true);
+            }
         }
     }
 
@@ -627,6 +664,15 @@ impl App {
         if self.screen == ScreenKind::World {
             self.paused = !self.paused;
             self.buttons.clear();
+        } else if self.screen == ScreenKind::Chest {
+            // the container's own close (vanilla Escape/E on a container
+            // screen): back to the world. The serverbound Close Container
+            // echo rides the session's send lane — the click packets'
+            // round owns that wire; the server's OWN close (the
+            // clientbound packet) closes the live screen through the
+            // container lane regardless.
+            self.chest_is_live = false;
+            self.open(ScreenKind::World);
         } else if matches!(self.screen, ScreenKind::Connect | ScreenKind::Disconnect) {
             self.open(ScreenKind::Servers);
         }
@@ -881,11 +927,21 @@ impl App {
     /// biome (None: outside the loaded columns, an unnamed id) keeps
     /// what is playing. Updates for a world the UI no longer shows
     /// (Save and Quit, a cancelled join) drop honestly.
+    ///
+    /// The CONTAINER lane rides the same update: `Some(window)` opens
+    /// (or updates in place) the networked chest screen — the vanilla
+    /// `MenuScreens.create` show lands the server's window on the
+    /// player; `None` (the store dropped — the server's Container
+    /// Close or a fresh join) closes a LIVE chest screen back to the
+    /// world (the vanilla closeContainer's own return). The offline
+    /// deterministic chest (open_chest) is never touched: the live
+    /// flag gates the close, the flows stay separate.
     pub fn live_view_updated(
         &mut self,
         world: crate::world::World,
         camera: Option<crate::camera::Camera>,
         biome: Option<String>,
+        container: Option<crate::world_view::LiveContainer>,
     ) {
         if !self.world_is_network {
             return;
@@ -903,6 +959,57 @@ impl App {
             // the player's eyes exactly like the original's chunk updates
             if let Some(w) = self.net_world.as_ref() {
                 self.world_quads = Some(crate::mesher::mesh_world(w, None));
+            }
+        }
+        self.live_container_updated(container);
+    }
+
+    /// The networked container lane: the live store's projection drives
+    /// the chest screen exactly like the vanilla client's — the Open
+    /// Screen packet SHOWS the window over the world (from the World
+    /// screen; a window arriving under other screens — pause, chat —
+    /// waits honestly, no yank), the Set Content / Set Slot packets
+    /// update its slots IN PLACE while it shows, and the store's drop
+    /// (the Container Close packet) returns to the world. Menu types
+    /// other than the chest (generic_9x3 = 2) are honest drops for
+    /// now — their screens are their own rounds' lines; the store
+    /// itself keeps them (the model lane is menu-agnostic).
+    fn live_container_updated(
+        &mut self,
+        container: Option<crate::world_view::LiveContainer>,
+    ) {
+        match container {
+            Some(c) => {
+                if c.menu_type_id != crate::world_model::MENU_TYPE_CHEST {
+                    return; // not the wired menu — the honest drop
+                }
+                // the menu's own numbering: 0..27 the container grid,
+                // the tail the player mirror (27 main + 9 hotbar) —
+                // padded to the layout's full shape, the wire's own
+                // (0, 0) emptiness riding verbatim
+                let mut grid = vec![(0i32, 0i32); 27];
+                for (i, &(id, count)) in c.slots.iter().take(27).enumerate() {
+                    grid[i] = (id, count);
+                }
+                let mut mirror = vec![(0i32, 0i32); 36];
+                for (i, &(id, count)) in c.slots.iter().skip(27).take(36).enumerate() {
+                    mirror[i] = (id, count);
+                }
+                self.chest_slots = grid;
+                self.chest_mirror = mirror;
+                self.chest_is_live = true;
+                if self.screen == ScreenKind::World {
+                    self.open(ScreenKind::Chest);
+                }
+            }
+            None => {
+                // the store dropped: a LIVE chest closes back to the
+                // world (the vanilla closeContainer's return); the
+                // offline stand-in is not the live lane's to close
+                if self.screen == ScreenKind::Chest && self.chest_is_live {
+                    self.chest_is_live = false;
+                    self.open(ScreenKind::World);
+                }
             }
         }
     }
@@ -2692,7 +2799,7 @@ mod tests {
             yaw: 0.5,
             pitch: -0.1,
         };
-        app.live_view_updated(streamed, Some(pose), Some("minecraft:swamp".into()));
+        app.live_view_updated(streamed, Some(pose), Some("minecraft:swamp".into()), None);
         let w = app.net_world.as_ref().expect("the streamed world swapped in");
         assert_eq!(w.seed, 7, "the update REPLACED the join world (newest wins)");
         assert_eq!(w.get(0, 0, 0), crate::world::STONE, "the streamed block shows");
@@ -2713,16 +2820,16 @@ mod tests {
         // a SAME-biome refresh never restarts the situation (the vanilla
         // behavior — the scheduler is not touched, its event log frozen)
         let events_before = app.music.events.len();
-        app.live_view_updated(air_net_world(2, 8), Some(pose), Some("minecraft:swamp".into()));
+        app.live_view_updated(air_net_world(2, 8), Some(pose), Some("minecraft:swamp".into()), None);
         assert_eq!(app.net_biome.as_deref(), Some("minecraft:swamp"));
         assert_eq!(app.music.events.len(), events_before, "no situation restart");
         // an UNRESOLVABLE biome (None) keeps what is playing — no
         // knowledge is not a change
-        app.live_view_updated(air_net_world(2, 9), Some(pose), None);
+        app.live_view_updated(air_net_world(2, 9), Some(pose), None, None);
         assert_eq!(app.net_biome.as_deref(), Some("minecraft:swamp"));
         assert_eq!(app.music.events.len(), events_before);
         // and a real change re-fires once
-        app.live_view_updated(air_net_world(2, 10), Some(pose), Some("minecraft:desert".into()));
+        app.live_view_updated(air_net_world(2, 10), Some(pose), Some("minecraft:desert".into()), None);
         assert_eq!(app.net_biome.as_deref(), Some("minecraft:desert"));
         let desert_event = wm::biome_music("minecraft:desert", "default")
             .map(|m| m.event)
@@ -2761,6 +2868,7 @@ mod tests {
                 pitch: 0.0,
             }),
             Some("minecraft:plains".into()),
+            None,
         );
         assert_eq!(app.screen, ScreenKind::Title, "the late update never opens a screen");
         assert_eq!(
@@ -2774,6 +2882,121 @@ mod tests {
         // a late session death drops equally silently
         app.live_session_lost("late kick".to_string());
         assert_eq!(app.screen, ScreenKind::Title, "no world to lose — no disconnect screen");
+    }
+
+    #[test]
+    fn the_live_container_drives_the_chest_screen() {
+        use crate::world_view::LiveContainer;
+        let mut app = App::new(3);
+        app.open(ScreenKind::Connect);
+        app.net_world = Some(air_net_world(2, 0));
+        app.enter_network_world(None, Skybox::Overworld, None, None);
+        assert_eq!(app.screen, ScreenKind::World);
+
+        // the server opens a chest (Open Screen → the store, the Set
+        // Content fills it — here the store's PROJECTION arrives): the
+        // screen SHOWS over the world, the slots ride the menu's own
+        // numbering into the grid and the mirror
+        let chest = LiveContainer {
+            id: 5,
+            menu_type_id: crate::world_model::MENU_TYPE_CHEST,
+            slots: {
+                let mut s = vec![(0i32, 0i32); 63];
+                s[4] = (645, 12); // the container's slot 4: diamond x12
+                s[27] = (33, 5); // the mirror's first main row slot: apple x5
+                s[54] = (1005, 64); // the mirror's hotbar head: iron_ingot x64
+                s
+            },
+            carried: (0, 0),
+        };
+        app.live_view_updated(air_net_world(2, 1), None, None, Some(chest.clone()));
+        assert_eq!(app.screen, ScreenKind::Chest, "the window shows over the world");
+        assert!(app.chest_is_live, "the live lane owns the screen now");
+        assert_eq!(app.chest_slots.len(), 27);
+        assert_eq!(app.chest_slots[4], (645, 12), "the container grid rode in");
+        assert_eq!(app.chest_mirror.len(), 36);
+        assert_eq!(app.chest_mirror[0], (33, 5), "the mirror's main row slot 0 = menu slot 27");
+        assert_eq!(app.chest_mirror[27], (1005, 64), "the mirror's hotbar head = menu slot 54");
+
+        // a NEWER snapshot of the same window updates IN PLACE (the
+        // Set Content packet's replacement — no re-open flicker)
+        let mut chest2 = chest.clone();
+        chest2.slots[4] = (0, 0); // the diamond was taken out
+        chest2.slots[9] = (160, 3);
+        app.live_view_updated(air_net_world(2, 2), None, None, Some(chest2));
+        assert_eq!(app.screen, ScreenKind::Chest, "the update is in place");
+        assert_eq!(app.chest_slots[4], (0, 0), "the taken stack emptied");
+        assert_eq!(app.chest_slots[9], (160, 3), "the new stack landed");
+
+        // a NON-chest menu is the honest drop: the store keeps it, the
+        // screen machinery does not move (its screen is its own round)
+        let hopper = LiveContainer { id: 6, menu_type_id: 15, slots: vec![], carried: (0, 0) };
+        app.live_view_updated(air_net_world(2, 3), None, None, Some(hopper));
+        assert_eq!(app.screen, ScreenKind::Chest, "the wired screen stays");
+        assert_eq!(app.chest_slots[9], (160, 3), "the hopper touched nothing");
+
+        // the store DROPPED (the server's Container Close): the live
+        // chest returns to the world — the vanilla closeContainer's own
+        app.live_view_updated(air_net_world(2, 4), None, None, None);
+        assert_eq!(app.screen, ScreenKind::World, "the close returns to the world");
+        assert!(!app.chest_is_live, "the live flag dropped with the window");
+
+        // a container-less update with NO chest up: nothing happens
+        app.live_view_updated(air_net_world(2, 5), None, None, None);
+        assert_eq!(app.screen, ScreenKind::World);
+
+        // the OFFLINE stand-in is never the live lane's to close: the
+        // deterministic chest stays up (the app went PROCEDURAL with
+        // the offline scene — the world guard drops the live updates)
+        app.open_chest();
+        assert_eq!(app.screen, ScreenKind::Chest);
+        assert!(!app.chest_is_live);
+        assert!(app.chest_mirror.is_empty(), "the offline mirror is chrome-only");
+        app.live_view_updated(air_net_world(2, 6), None, None, None);
+        assert_eq!(app.screen, ScreenKind::Chest, "the offline chest survives");
+        // and the lane re-arms on a NEW join: the network world back,
+        // the live window opens over it (the fresh menu's slots — the
+        // vanilla open is a fresh screen)
+        app.net_world = Some(air_net_world(2, 8));
+        app.enter_network_world(None, Skybox::Overworld, None, None);
+        assert_eq!(app.screen, ScreenKind::World);
+        app.live_view_updated(air_net_world(2, 9), None, None, Some(chest));
+        assert_eq!(app.screen, ScreenKind::Chest);
+        assert!(app.chest_is_live, "the live lane took the screen over");
+        assert_eq!(app.chest_slots[4], (645, 12), "the live slots replaced the loadout");
+        assert_eq!(app.chest_mirror[0], (33, 5), "the live mirror filled in");
+    }
+
+    #[test]
+    fn escape_closes_the_chest_back_to_the_world() {
+        // the LIVE chest: Escape is the player's own close — back to the
+        // world (the serverbound echo rides the click round's send lane;
+        // the flag drops so the next container-less update is a no-op)
+        let mut app = App::new(3);
+        app.open(ScreenKind::Connect);
+        app.net_world = Some(air_net_world(2, 0));
+        app.enter_network_world(None, Skybox::Overworld, None, None);
+        let chest = crate::world_view::LiveContainer {
+            id: 2,
+            menu_type_id: crate::world_model::MENU_TYPE_CHEST,
+            slots: vec![(645, 1)],
+            carried: (0, 0),
+        };
+        app.live_view_updated(air_net_world(2, 1), None, None, Some(chest));
+        assert_eq!(app.screen, ScreenKind::Chest);
+        app.on_escape();
+        assert_eq!(app.screen, ScreenKind::World, "the container closed");
+        assert!(!app.chest_is_live);
+        // the following container-less update does not re-open anything
+        app.live_view_updated(air_net_world(2, 2), None, None, None);
+        assert_eq!(app.screen, ScreenKind::World);
+
+        // the OFFLINE chest closes the same way (the deterministic scene
+        // is a screen too — Escape is its close, the world is under it)
+        app.open_chest();
+        assert_eq!(app.screen, ScreenKind::Chest);
+        app.on_escape();
+        assert_eq!(app.screen, ScreenKind::World, "the offline chest closed too");
     }
 
     #[test]

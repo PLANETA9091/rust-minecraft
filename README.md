@@ -919,6 +919,38 @@ hand-drawn:
   (VILLAGER_DATA at 18 doubles as the order proof), the generated-id
   pin, and the model's merge semantics (replace-one-leave-others, the
   null-lookup drop, the re-spawn reset).
+  The **the container's live lane — the networked chest screen (v0.3.130)**:
+  the interactivity line's next step — the container GUI is WIRED TO THE
+  NETWORK, the offline stand-in's promised round. The model's
+  OpenContainerState (the Open Screen / Set Content / Set Slot / Container
+  Close consumer, already byte-audited) now DRIVES the screen: a new
+  protocol-agnostic projection — `world_view::LiveContainer` (the window
+  id, the menu type, the menu's own slot numbering as (item_id, count)
+  pairs, the cursor stack) — rides EVERY live refresh (SnapshotView gained
+  the `container` lane; no player pose is no obstacle — the store is read
+  regardless), the join worker ships it through the live channel's grown
+  4-tuple, and the App's new container lane opens the chest screen OVER
+  THE WORLD when the server opens a window (the vanilla MenuScreens.create
+  show), updates its slots IN PLACE on every newer snapshot (no re-open
+  flicker — the Set Content replacement), and returns to the world when
+  the store drops (the vanilla closeContainer's own return). The screen
+  renders the REAL network contents: the 9x3 grid from menu slots 0..27
+  AND the player-inventory mirror rows from the menu's 27..63 tail (27
+  main + 9 hotbar, the same icon/count treatment) — the offline screen's
+  chrome-only mirror is gone where it matters. ROUTING DISCIPLINE: only
+  generic_9x3 (menu id 2) drives the chest — other menus are honest drops
+  until their own rounds (the model lane stays menu-agnostic); the OFFLINE
+  deterministic chest (the golden's own scene) is flag-gated out of the
+  live lane's closes — the two flows stay separate; Escape closes the
+  chest back to the world (the vanilla container close; the serverbound
+  echo rides the click round's future send lane — documented in-code).
+  GOLDENS UNTOUCHED BY CONSTRUCTION: 13/13 at rms 0.000 (the offline
+  chest's pixels byte-identical — the live mirror's loop is empty there).
+  Tests +3 (workspace 489 -> 492 passed / 0 failed / 3 ignored): the view
+  projection's round-trip (open → filled → carried → closed), the App
+  lane's full arc (open over the world, in-place update, the non-chest
+  drop, the close return, the offline survival, the re-armed re-open),
+  and Escape's close for both flows.
   The **the chest screen — the container GUI's 9x3 grid (v0.3.129)**:
   the container trilogy's GUI round — the vanilla GenericContainerScreen
   (generic_9x3) renders: the 176x166 panel centered with its classic
