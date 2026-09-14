@@ -126,6 +126,12 @@ pub struct WorldModel {
     /// `inventoryMenu` lane the audited consumer routes container
     /// packets through. NOT cleared on Respawn (rides the player).
     inventory: InventoryState,
+    /// The OPEN container window — the `containerMenu` lane the
+    /// audited consumer routes foreign-window container packets
+    /// through (`None` while no screen is open; see
+    /// [`OpenContainerState`]). NOT cleared on Respawn (the wire's
+    /// own close/open moves it).
+    open_container: Option<OpenContainerState>,
 }
 
 /// The model's view of ONE active mob effect on the LOCAL player — the
@@ -229,6 +235,56 @@ pub const USE_ROW_SLOT_END: usize = 45;
 /// own constant: 45).
 pub const SHIELD_SLOT: usize = 45;
 
+/// `MenuType`'s generic_9x3 — the chest's registry id (javap of the
+/// 26.2 `MenuType` clinit's registration order: generic_9x1 0 ..,
+/// the 9x3 grid lands at 2; the wire resolves through the synced
+/// registry — vanilla-to-vanilla pins this number).
+pub const MENU_TYPE_CHEST: i32 = 2;
+
+/// An OPEN container window — the `containerMenu` lane the audited
+/// consumer routes foreign-window container packets through (javap of
+/// the 26.2 `ClientPacketListener`): the Open Screen packet BIRTHS the
+/// menu (`MenuScreens.create(type, minecraft, containerId, title)` —
+/// the screen constructs the menu FOR the window id via
+/// `menuType.create(containerId, player.getInventory())`), the Set
+/// Content / Set Slot packets feed it ONLY when their window id
+/// MATCHES `player.containerMenu.containerId` (the fresh javap: the
+/// `if_icmpne` falls through to return — the mismatched window is
+/// dropped), and the Container Close packet resets `containerMenu` to
+/// `inventoryMenu` — ONE assignment (`Player.closeContainer`), NO id
+/// check, the inventory store untouched. The store holds the menu's
+/// own slot numbering (a chest window's menu carries the container's
+/// slots AND the player-inventory mirror rows — whatever the wire
+/// delivered, verbatim). NOT cleared on Respawn (the wire's own
+/// close/open moves it; vanilla's death-flow GUI close is a
+/// screen-level nicety the model does not simulate).
+#[derive(Debug, Clone, PartialEq)]
+pub struct OpenContainerState {
+    /// The window id the server assigned — the match key the foreign
+    /// container traffic rides.
+    pub id: i32,
+    /// The MenuType registry id — the holder VarInt, retained
+    /// verbatim (the resolution is the synced registry's act; the
+    /// parse's doc table names vanilla's built-in order).
+    pub menu_type_id: i32,
+    /// The title's network-NBT bytes, retained verbatim (the
+    /// text-render round owns the decode; the wire's bytes are the
+    /// store's title).
+    pub title_nbt: Vec<u8>,
+    /// The menu's slots in the menu's own numbering — the snapshot
+    /// REPLACES the list; the single-slot delta upserts in place (a
+    /// slot past the current end GROWS with empty stacks — the
+    /// retention line; the wire never legitimately addresses past
+    /// the menu).
+    pub slots: Vec<ItemStack>,
+    /// The revision counter — whichever packet spoke last is the
+    /// echo's truth.
+    pub state_id: i32,
+    /// The GUI cursor stack (the Set Content packet's carriedItem;
+    /// the slot packet has no carried lane and leaves it untouched).
+    pub carried: ItemStack,
+}
+
 /// `InventoryMenu.isHotbarSlot`'s audited shape — NOTE THE QUIRK: the
 /// bytecode returns true for the half-open range 36..45 AND for slot
 /// 45 itself (the `slot == 45` fall-through at `if_icmpne 22`), so the
@@ -239,6 +295,32 @@ pub const SHIELD_SLOT: usize = 45;
 /// `36..45` claim describing only one of them.
 pub fn is_hotbar_slot(slot: i32) -> bool {
     (36..45).contains(&slot) || slot == 45
+}
+
+/// The container stores' slot-write policy, shared by the
+/// inventory-menu and open-container lanes: a NEGATIVE slot cannot
+/// index anything and is ignored (the parse retained it verbatim, the
+/// consumer's bounds check is the consumer's act); a slot past the
+/// current end GROWS the list with empty stacks (the retention line —
+/// vanilla's `AbstractContainerMenu.setItem` would throw on the same
+/// shape, the growth is the port's own convention banked with the
+/// inventory round, and the wire never legitimately addresses past
+/// the menu); a live slot is REPLACED.
+fn store_slot_write(slots: &mut Vec<ItemStack>, slot: i16, item: &ItemStack) {
+    if slot >= 0 {
+        let idx = slot as usize;
+        if idx >= slots.len() {
+            slots.resize(
+                idx + 1,
+                ItemStack {
+                    count: 0,
+                    item_id: 0,
+                    patch: ComponentPatch::default(),
+                },
+            );
+        }
+        slots[idx] = item.clone();
+    }
 }
 
 impl Default for WorldModel {
@@ -293,6 +375,7 @@ impl WorldModel {
             entities: HashMap::new(),
             effects: HashMap::new(),
             inventory: InventoryState::default(),
+            open_container: None,
         }
     }
 
@@ -321,6 +404,15 @@ impl WorldModel {
     /// row is `USE_ROW_SLOT_START..USE_ROW_SLOT_END`.
     pub fn inventory_slot(&self, index: usize) -> Option<&ItemStack> {
         self.inventory.slots.get(index)
+    }
+
+    /// The OPEN container window — the store the container packets'
+    /// `containerMenu` lane feeds (the audited consumer split: the
+    /// Open Screen births it, the matching-window traffic feeds it,
+    /// the Container Close resets it; see [`OpenContainerState`]).
+    /// `None` while no screen is open.
+    pub fn open_container(&self) -> Option<&OpenContainerState> {
+        self.open_container.as_ref()
     }
 
     /// The SELECTED hotbar slot — the selection-relative index
@@ -673,10 +765,11 @@ impl WorldModel {
                 // live whether or not a container screen is open; any
                 // other window goes to the OPEN container's menu
                 // (containerMenu, matched by id) or is dropped. The
-                // model's store is the inventoryMenu lane: a full
-                // snapshot REPLACES it (the snapshot semantics); the
-                // open-container lane has no model surface yet (the
-                // container GUI rounds).
+                // inventory-menu lane REPLACES the player store (the
+                // snapshot semantics); the open-container lane REPLACES
+                // the matching window's store (the same snapshot
+                // semantics), the mismatch DROPS (the fresh javap: the
+                // `if_icmpne` falls through to return).
                 if c.container_id == INVENTORY_WINDOW_ID {
                     // the snapshot REPLACES slots/carried/stateId and
                     // leaves the SELECTION alone (vanilla's
@@ -691,46 +784,68 @@ impl WorldModel {
                         selected,
                     };
                     true
+                } else if self
+                    .open_container
+                    .as_ref()
+                    .map_or(false, |o| o.id == c.container_id)
+                {
+                    // the audited foreign branch: containerId ==
+                    // player.containerMenu.containerId → the OPEN menu's
+                    // initializeContents — the same snapshot semantics
+                    // the window-0 lane rides (the slots, the carried
+                    // cursor, the counter; the store has no selection
+                    // and nothing else to preserve)
+                    let o = self.open_container.as_mut().unwrap();
+                    o.state_id = c.state_id;
+                    o.slots = c.items;
+                    o.carried = c.carried_item;
+                    true
                 } else {
+                    // the mismatched window is DROPPED (the audited
+                    // if_icmpne falls through to return) — the packet
+                    // rode the wire, the store never hears of it
                     false
                 }
             }
             PlayEvent::ContainerSlotSet(s) => {
-                // The sibling's audited consumer (handleContainerSetSlot):
-                // window 0 acts on `player.inventoryMenu.setItem(slot,
-                // stateId, item)` — the single-slot delta onto the
-                // player's own window; other windows ride the
-                // containerMenu lane (no model surface yet). The port's
-                // store policy: the revision counter advances FIRST
-                // (whichever packet spoke last is the echo's truth), the
-                // slot write applies where an index exists — a slot
-                // past the current end GROWS the store with empty stacks
-                // (the retention line; the wire never legitimately
-                // addresses past the menu), a NEGATIVE slot cannot index
-                // anything and is ignored (the wire retained it verbatim
-                // in the parse, the consumer's bounds check is the
-                // consumer's act). Vanilla's pop-time pickup flash and
-                // the creative-screen remote-slot side effects are the
-                // GUI's niceties, not store semantics — documented
-                // non-goals.
+                // The sibling's audited consumer (handleContainerSetSlot,
+                // fresh javap of the tail): window 0 acts on
+                // `player.inventoryMenu.setItem(slot, stateId, item)` —
+                // the single-slot delta onto the player's own window;
+                // the foreign lane compares the packet's container id
+                // against `player.containerMenu.containerId` and calls
+                // the OPEN menu's setItem on a match (the
+                // creative-screen remote-slot rider is the GUI's own
+                // act, a documented non-goal), else DROPS. The store
+                // policy rides the shared [`store_slot_write`]: the
+                // revision counter advances FIRST (whichever packet
+                // spoke last is the echo's truth), the slot write
+                // applies where an index exists — a slot past the
+                // current end GROWS the store with empty stacks (the
+                // retention line), a NEGATIVE slot cannot index
+                // anything and is ignored. Vanilla's pop-time pickup
+                // flash is the GUI's nicety, not store semantics — the
+                // documented non-goal.
                 if s.container_id == INVENTORY_WINDOW_ID {
                     self.inventory.state_id = s.state_id;
-                    if s.slot >= 0 {
-                        let idx = s.slot as usize;
-                        if idx >= self.inventory.slots.len() {
-                            self.inventory.slots.resize(
-                                idx + 1,
-                                ItemStack {
-                                    count: 0,
-                                    item_id: 0,
-                                    patch: ComponentPatch::default(),
-                                },
-                            );
-                        }
-                        self.inventory.slots[idx] = s.item;
-                    }
+                    store_slot_write(&mut self.inventory.slots, s.slot, &s.item);
+                    true
+                } else if self
+                    .open_container
+                    .as_ref()
+                    .map_or(false, |o| o.id == s.container_id)
+                {
+                    // the audited foreign branch: the OPEN menu's
+                    // setItem, the same store policy the window-0 lane
+                    // rides
+                    let o = self.open_container.as_mut().unwrap();
+                    o.state_id = s.state_id;
+                    store_slot_write(&mut o.slots, s.slot, &s.item);
                     true
                 } else {
+                    // the mismatched window is DROPPED (the audited
+                    // if_icmpne falls through to return) — the packet
+                    // rode the wire, the store never hears of it
                     false
                 }
             }
@@ -754,6 +869,46 @@ impl WorldModel {
                 } else {
                     false
                 }
+            }
+            PlayEvent::ScreenOpened(o) => {
+                // The audited consumer (javap of handleOpenScreen →
+                // MenuScreens.create): the concrete screen constructs
+                // the menu FOR the window id
+                // (`menuType.create(containerId, player.getInventory())`)
+                // and the screen's show lands it in
+                // `player.containerMenu`. The model mirrors the menu's
+                // birth: the store OPENS — or RE-OPENS (a fresh menu
+                // has FRESH slots; the store resets wholesale — with
+                // the id/type/title riding verbatim) — with an empty
+                // slot list; the contents ride the container packets'
+                // foreign lane.
+                self.open_container = Some(OpenContainerState {
+                    id: o.container_id,
+                    menu_type_id: o.menu_type_id,
+                    title_nbt: o.title_nbt,
+                    slots: Vec::new(),
+                    state_id: 0,
+                    carried: ItemStack {
+                        count: 0,
+                        item_id: 0,
+                        patch: ComponentPatch::default(),
+                    },
+                });
+                true
+            }
+            PlayEvent::ContainerClosed(_) => {
+                // The audited consumer (javap of handleContainerClose →
+                // LocalPlayer.clientSideCloseContainer →
+                // Player.closeContainer): `containerMenu =
+                // inventoryMenu` — ONE assignment, NO id check; the
+                // packet's id rides the wire as the record of WHICH
+                // window closed, not a gate (the parse retains it
+                // verbatim). The open container DROPS wholesale; the
+                // inventory store (window 0) is untouched. A close with
+                // nothing open is the no-op repeat (the CenterChunk
+                // convention — the assignment would write the same
+                // value).
+                self.open_container.take().is_some()
             }
             PlayEvent::CenterChunk { x, z } => {
                 if self.center != (x, z) {
@@ -3350,6 +3505,134 @@ mod tests {
         assert_eq!(m.inventory_slot(0).unwrap().item_id, 123);
         // the window slot the selection names rides the USE_ROW mapping
         assert_eq!(USE_ROW_SLOT_START + m.selected_slot(), 40);
+    }
+
+    /// The open-container store's life cycle (the container GUI's
+    /// consumer, the audited `containerMenu` lane): the Open Screen
+    /// packet births it, the MATCHING window's container traffic feeds
+    /// it (the snapshot REPLACES, the slot delta UPSERTS through the
+    /// shared [`store_slot_write`]), a MISMATCHED window is dropped
+    /// (the fresh javap: the `if_icmpne` falls through to return), a
+    /// re-open RESETS the store (the fresh menu), and the Container
+    /// Close drops it wholesale (the audited close is ONE assignment
+    /// with NO id check) leaving the window-0 inventory store
+    /// untouched.
+    #[test]
+    fn the_open_container_store_receives_the_chests_traffic() {
+        use mc_protocol::play::{clientbound, parse_container_close, parse_open_screen,
+            parse_set_container_content, parse_set_container_slot};
+        let mut m = WorldModel::new();
+        assert!(m.open_container().is_none(), "no screen, no store");
+
+        // Open Screen: window 5, the chest (generic_9x3 = 2), the
+        // title a minimal anonymous-root compound riding verbatim
+        let mut p = Vec::new();
+        write_varint(&mut p, clientbound::OPEN_SCREEN);
+        write_varint(&mut p, 5);
+        write_varint(&mut p, MENU_TYPE_CHEST);
+        p.extend_from_slice(&[0x0A, 0x00, 0x00]); // the minimal empty root
+        let o = parse_open_screen(&p).unwrap();
+        assert!(m.apply(PlayEvent::ScreenOpened(o)));
+        let oc = m.open_container().unwrap();
+        assert_eq!(oc.id, 5);
+        assert_eq!(oc.menu_type_id, MENU_TYPE_CHEST, "generic_9x3, the chest");
+        assert_eq!(oc.title_nbt, vec![0x0A, 0x00, 0x00], "the title rides verbatim");
+        assert!(oc.slots.is_empty(), "the contents ride the container packets");
+
+        // the matching window's snapshot REPLACES the store
+        let mut p = Vec::new();
+        write_varint(&mut p, clientbound::CONTAINER_SET_CONTENT);
+        write_varint(&mut p, 5); // the chest's window
+        write_varint(&mut p, 11); // state id
+        write_varint(&mut p, 2); // the collection count
+        write_varint(&mut p, 3);
+        write_varint(&mut p, 745);
+        write_varint(&mut p, 1);
+        write_varint(&mut p, 0);
+        write_varint(&mut p, 0);
+        write_varint(&mut p, 0);
+        write_varint(&mut p, 0); // the carried item: empty
+        let c = parse_set_container_content(&p).unwrap();
+        assert!(m.apply(PlayEvent::ContainerFilled(c)));
+        let oc = m.open_container().unwrap();
+        assert_eq!(oc.state_id, 11);
+        assert_eq!(oc.slots.len(), 2);
+        assert_eq!(oc.slots[0].item_id, 745);
+
+        // the matching window's slot delta UPSERTS through the shared
+        // policy — slot 4 grows the store past the snapshot's two
+        let mut p = Vec::new();
+        write_varint(&mut p, clientbound::CONTAINER_SET_SLOT);
+        write_varint(&mut p, 5);
+        write_varint(&mut p, 12);
+        p.extend_from_slice(&4i16.to_be_bytes());
+        write_varint(&mut p, 9);
+        write_varint(&mut p, 33);
+        write_varint(&mut p, 0);
+        write_varint(&mut p, 0);
+        let s = parse_set_container_slot(&p).unwrap();
+        assert!(m.apply(PlayEvent::ContainerSlotSet(s)));
+        let oc = m.open_container().unwrap();
+        assert_eq!(oc.state_id, 12);
+        assert_eq!(oc.slots.len(), 5, "grown to address slot 4");
+        assert_eq!(oc.slots[4].item_id, 33);
+
+        // a MISMATCHED window is dropped: window 6 while 5 is open —
+        // the packet rode the wire, the store never hears of it
+        let mut p = Vec::new();
+        write_varint(&mut p, clientbound::CONTAINER_SET_CONTENT);
+        write_varint(&mut p, 6); // another window
+        write_varint(&mut p, 99);
+        write_varint(&mut p, 0);
+        write_varint(&mut p, 0);
+        let c = parse_set_container_content(&p).unwrap();
+        assert!(!m.apply(PlayEvent::ContainerFilled(c)));
+        assert_eq!(m.open_container().unwrap().state_id, 12, "untouched");
+
+        // the inventory store (window 0) is a SEPARATE lane — it keeps
+        // feeding while the chest is open
+        let mut p = Vec::new();
+        write_varint(&mut p, clientbound::CONTAINER_SET_SLOT);
+        write_varint(&mut p, 0);
+        write_varint(&mut p, 20);
+        p.extend_from_slice(&40i16.to_be_bytes());
+        write_varint(&mut p, 2);
+        write_varint(&mut p, 777);
+        write_varint(&mut p, 0);
+        write_varint(&mut p, 0);
+        let s = parse_set_container_slot(&p).unwrap();
+        assert!(m.apply(PlayEvent::ContainerSlotSet(s)));
+        assert_eq!(m.inventory().state_id, 20);
+        assert_eq!(m.inventory_slot(40).unwrap().item_id, 777);
+
+        // a re-open RESETS the store (the fresh menu has fresh slots)
+        let mut p = Vec::new();
+        write_varint(&mut p, clientbound::OPEN_SCREEN);
+        write_varint(&mut p, 5);
+        write_varint(&mut p, MENU_TYPE_CHEST);
+        p.extend_from_slice(&[0x0A, 0x00, 0x00]);
+        let o = parse_open_screen(&p).unwrap();
+        assert!(m.apply(PlayEvent::ScreenOpened(o)));
+        let oc = m.open_container().unwrap();
+        assert!(oc.slots.is_empty(), "the fresh menu resets the store");
+        assert_eq!(oc.state_id, 0);
+
+        // the CLOSE drops the store wholesale (the audited ONE
+        // assignment, no id check — the closing id rides verbatim)
+        let mut p = Vec::new();
+        write_varint(&mut p, clientbound::CONTAINER_CLOSE);
+        write_varint(&mut p, 5);
+        let c = parse_container_close(&p).unwrap();
+        assert!(m.apply(PlayEvent::ContainerClosed(c)));
+        assert!(m.open_container().is_none(), "the close drops the store");
+        assert_eq!(m.inventory().state_id, 20, "the window-0 lane untouched");
+
+        // a close with nothing open is the no-op repeat
+        let mut p = Vec::new();
+        write_varint(&mut p, clientbound::CONTAINER_CLOSE);
+        write_varint(&mut p, 0);
+        let c = parse_container_close(&p).unwrap();
+        assert!(!m.apply(PlayEvent::ContainerClosed(c)));
     }
 
     /// Spawn ONE entity at the named position (the full-precision

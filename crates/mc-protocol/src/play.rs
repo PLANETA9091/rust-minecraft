@@ -103,6 +103,7 @@ pub mod clientbound {
         CB_SET_CHUNK_CACHE_CENTER as CENTER_CHUNK, CB_SET_ENTITY_DATA as SET_ENTITY_DATA,
         CB_SET_EQUIPMENT as SET_EQUIPMENT, CB_CONTAINER_SET_CONTENT as CONTAINER_SET_CONTENT,
         CB_CONTAINER_SET_SLOT as CONTAINER_SET_SLOT, CB_SET_HELD_SLOT as SET_HELD_SLOT,
+        CB_OPEN_SCREEN as OPEN_SCREEN, CB_CONTAINER_CLOSE as CONTAINER_CLOSE,
         CB_SET_TIME as SET_TIME,
         CB_UPDATE_MOB_EFFECT as UPDATE_MOB_EFFECT,
     };
@@ -5195,6 +5196,90 @@ pub fn parse_set_held_slot(payload: &[u8]) -> Result<SetHeldSlot> {
     Ok(SetHeldSlot { slot })
 }
 
+/// Open Screen: a container window OPENS — the container GUI's own
+/// packet (the generated-id 59 pin). Three lanes (javap of the 26.2
+/// `ClientboundOpenScreenPacket` clinit): the container id rides
+/// `ByteBufCodecs.CONTAINER_ID` — a BARE VARINT (the $22 class's
+/// decode is `FriendlyByteBuf.readContainerId`, which is
+/// `VarInt.read`, no range check, no byte lane); the menu type rides
+/// `ByteBufCodecs.registry(Registries.MENU)` — a VarInt holder id
+/// resolved through the synced registry, here retained verbatim (the
+/// mob-effect lane's own line: the wire's id is the truth, the
+/// resolution is the registry's act); the title rides
+/// `ComponentSerialization.TRUSTED_STREAM_CODEC` — ONE bare network
+/// NBT tag (the 1.20.5+ anonymous-root shape the skip walker owns),
+/// here WALKED for the wire's shape and retained VERBATIM as raw
+/// bytes (the text-render round owns the decode; the wire's bytes are
+/// the store's title).
+#[derive(Debug, Clone, PartialEq)]
+pub struct OpenScreen {
+    /// The window id the server assigned — the new menu's containerId
+    /// (vanilla never opens window 0; the value rides verbatim).
+    pub container_id: i32,
+    /// The MenuType registry id — the holder VarInt. Vanilla's
+    /// built-in registration order (javap of the 26.2 `MenuType`
+    /// clinit): generic_9x1 0, generic_9x2 1, generic_9x3 2 (the
+    /// chest), generic_9x4 3, generic_9x5 4, generic_9x6 5 (the
+    /// double chest), generic_3x3 6, crafter_3x3 7, anvil 8,
+    /// beacon 9, blast_furnace 10, brewing_stand 11, crafting 12,
+    /// furnace 13, grindstone 14, hopper 15, lectern 16, loom 17,
+    /// merchant 18, shulker_box 19, smithing 20, smoker 21,
+    /// cartography_table 22, stonecutter 23.
+    pub menu_type_id: i32,
+    /// The title's network-NBT bytes, retained verbatim (the
+    /// anonymous-root compound the TRUSTED_STREAM_CODEC walks).
+    pub title_nbt: Vec<u8>,
+}
+
+/// Open Screen's wire walk (see [`OpenScreen`] — the three-lane
+/// composite, the generated-id guard, the title's verbatim capture).
+pub fn parse_open_screen(payload: &[u8]) -> Result<OpenScreen> {
+    let mut c: &[u8] = payload;
+    let id = read_varint(&mut c)?;
+    anyhow::ensure!(
+        id == clientbound::OPEN_SCREEN,
+        "not an open screen packet (0x{id:02X})"
+    );
+    let container_id = read_varint(&mut c)?;
+    let menu_type_id = read_varint(&mut c)?;
+    // ONE bare network NBT tag — walked for the wire's shape, the
+    // consumed span retained verbatim (the title's bytes ARE the
+    // store's title; the decode is the text round's act).
+    let before = c;
+    skip_network_nbt(&mut c)?;
+    let taken = before.len() - c.len();
+    Ok(OpenScreen {
+        container_id,
+        menu_type_id,
+        title_nbt: before[..taken].to_vec(),
+    })
+}
+
+/// Container Close: the open container window CLOSES — the container
+/// GUI's own packet (the generated-id 17 pin). ONE lane (javap of the
+/// 26.2 decode body): `FriendlyByteBuf.readContainerId` — the same
+/// BARE VARINT the Open Screen's id rides.
+#[derive(Debug, Clone, PartialEq)]
+pub struct ContainerClose {
+    /// The closing window's id, retained verbatim (the audited
+    /// consumer does NOT gate on it — `Player.closeContainer` is one
+    /// assignment with no id check; the model arm mirrors that).
+    pub container_id: i32,
+}
+
+/// Container Close's wire walk (see [`ContainerClose`] — the
+/// one-lane VarInt record, the generated-id guard).
+pub fn parse_container_close(payload: &[u8]) -> Result<ContainerClose> {
+    let mut c: &[u8] = payload;
+    let id = read_varint(&mut c)?;
+    anyhow::ensure!(
+        id == clientbound::CONTAINER_CLOSE,
+        "not a container close packet (0x{id:02X})"
+    );
+    let container_id = read_varint(&mut c)?;
+    Ok(ContainerClose { container_id })
+}
+
 /// One clientbound play packet, handled.
 #[derive(Debug, Clone, PartialEq)]
 pub enum PlayEvent {
@@ -5285,6 +5370,15 @@ pub enum PlayEvent {
     /// (`Inventory.isHotbarSlot`, NOT the window numbering) lets
     /// through.
     HeldSlotSet(SetHeldSlot),
+    /// Open Screen: a container window OPENS — the window id, the
+    /// MenuType registry id, and the title's raw network-NBT bytes
+    /// (the container GUI's birth; the model consumes it in the
+    /// open-container arm).
+    ScreenOpened(OpenScreen),
+    /// Container Close: the open container window CLOSES — the
+    /// bare-VarInt window id (the model consumes it in the
+    /// open-container arm).
+    ContainerClosed(ContainerClose),
     /// Any packet without a client surface yet (skipped silently).
     Skipped,
 }
@@ -5397,6 +5491,12 @@ impl<S: Read + Write> PlaySession<S> {
             }
             clientbound::SET_HELD_SLOT => {
                 Ok(PlayEvent::HeldSlotSet(parse_set_held_slot(&pkt)?))
+            }
+            clientbound::OPEN_SCREEN => {
+                Ok(PlayEvent::ScreenOpened(parse_open_screen(&pkt)?))
+            }
+            clientbound::CONTAINER_CLOSE => {
+                Ok(PlayEvent::ContainerClosed(parse_container_close(&pkt)?))
             }
             _ => Ok(PlayEvent::Skipped),
         }
@@ -9626,6 +9726,86 @@ mod tests {
         let mut p = Vec::new();
         write_varint(&mut p, clientbound::CONTAINER_SET_SLOT);
         assert!(parse_set_held_slot(&p).is_err());
+    }
+
+    /// The Open Screen and Container Close packets' wire walks (the
+    /// container GUI's own pair — javap of the 26.2
+    /// `ClientboundOpenScreenPacket` clinit and the
+    /// `ClientboundContainerClosePacket` decode body): the container
+    /// id is a BARE VARINT both sides (`ByteBufCodecs.CONTAINER_ID` =
+    /// `FriendlyByteBuf.readContainerId` = `VarInt.read`), the menu
+    /// type rides the registry(MENU) VarInt, and the title is ONE bare
+    /// network NBT tag — walked, retained VERBATIM.
+    #[test]
+    fn the_open_screen_lanes_pin_the_window() {
+        assert_eq!(clientbound::OPEN_SCREEN, 59, "minecraft:open_screen");
+        assert_eq!(clientbound::CONTAINER_CLOSE, 17, "minecraft:container_close");
+        // the chest's walk: window 5, the menu type generic_9x3 (2),
+        // the title a hand-built anonymous-root compound with one
+        // string tag — the title's bytes ride back VERBATIM
+        let mut title = vec![0x0A];
+        title.extend_from_slice(&0u16.to_be_bytes()); // the anonymous root's empty name
+        title.push(0x08); // TAG_String
+        title.extend_from_slice(&4u16.to_be_bytes());
+        title.extend_from_slice(b"name");
+        title.extend_from_slice(&6u16.to_be_bytes());
+        title.extend_from_slice(b"Chest!");
+        title.push(0x00); // end of root
+        let mut p = Vec::new();
+        write_varint(&mut p, clientbound::OPEN_SCREEN);
+        write_varint(&mut p, 5);
+        write_varint(&mut p, 2);
+        p.extend_from_slice(&title);
+        let o = parse_open_screen(&p).unwrap();
+        assert_eq!(o.container_id, 5);
+        assert_eq!(o.menu_type_id, 2, "generic_9x3, the chest");
+        assert_eq!(o.title_nbt, title, "the title's bytes ride verbatim");
+        // the byte-era table would misshape: window 200 rides the
+        // two-byte VarInt C8 01 (the wiki-era signed byte reads -56)
+        let mut p = Vec::new();
+        write_varint(&mut p, clientbound::OPEN_SCREEN);
+        write_varint(&mut p, 200);
+        write_varint(&mut p, 0);
+        p.extend_from_slice(&[0x0A, 0x00, 0x00]); // the minimal empty root
+        let o = parse_open_screen(&p).unwrap();
+        assert_eq!(o.container_id, 200, "the bare VarInt shape");
+        assert_eq!(o.menu_type_id, 0, "generic_9x1");
+        assert_eq!(o.title_nbt, vec![0x0A, 0x00, 0x00]);
+        // the truncation map: the id alone, the menu type short, the
+        // title's root without its end
+        let mut p = Vec::new();
+        write_varint(&mut p, clientbound::OPEN_SCREEN);
+        write_varint(&mut p, 5);
+        assert!(parse_open_screen(&p).is_err());
+        let mut p = Vec::new();
+        write_varint(&mut p, clientbound::OPEN_SCREEN);
+        write_varint(&mut p, 5);
+        write_varint(&mut p, 2);
+        assert!(parse_open_screen(&p).is_err());
+        let mut p = Vec::new();
+        write_varint(&mut p, clientbound::OPEN_SCREEN);
+        write_varint(&mut p, 5);
+        write_varint(&mut p, 2);
+        p.extend_from_slice(&[0x0A, 0x00]); // a truncated root: no end tag
+        assert!(parse_open_screen(&p).is_err());
+        // a wrong packet id refuses (the generated-id guard)
+        let mut p = Vec::new();
+        write_varint(&mut p, clientbound::CONTAINER_CLOSE);
+        assert!(parse_open_screen(&p).is_err());
+        // the close: the same bare VarInt the open screen's id rides
+        let mut p = Vec::new();
+        write_varint(&mut p, clientbound::CONTAINER_CLOSE);
+        write_varint(&mut p, 200);
+        assert_eq!(&p[1..], &[0xC8, 0x01], "the two-byte VarInt shape");
+        let c = parse_container_close(&p).unwrap();
+        assert_eq!(c.container_id, 200);
+        // the close's truncation and wrong-id guards
+        let mut p = Vec::new();
+        write_varint(&mut p, clientbound::CONTAINER_CLOSE);
+        assert!(parse_container_close(&p).is_err());
+        let mut p = Vec::new();
+        write_varint(&mut p, clientbound::OPEN_SCREEN);
+        assert!(parse_container_close(&p).is_err());
     }
 
     /// Mock server: login -> configuration -> play (the FULL vanilla
