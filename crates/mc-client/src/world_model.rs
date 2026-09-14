@@ -39,9 +39,9 @@
 use std::collections::{BTreeMap, HashMap};
 
 use mc_protocol::{
-    ChunkColumn, ChunkLight, ClockUpdate, EntityDataEntry, EntityDataSet, EntityDeltaPos,
-    EntityDeltaPosRot, EntityDeltaRot, EntityHeadRot, LightData, MobEffectRemove, MobEffectUpdate,
-    PlayEvent, PlayerPosition, RegistryData, WorldInfo, WorldSnapshot,
+    ChunkColumn, ChunkLight, ClockUpdate, EntityDataEntry, EntityDataSet, LightData,
+    MobEffectRemove, MobEffectUpdate, PlayEvent, PlayerPosition, RegistryData, WorldInfo,
+    WorldSnapshot,
 };
 
 /// The model's view of ONE entity — the facts the entity packets have
