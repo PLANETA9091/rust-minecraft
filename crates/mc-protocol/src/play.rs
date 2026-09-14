@@ -1485,6 +1485,40 @@ pub mod entity_data_serializers {
     // 40: QUATERNION, 41: RESOLVABLE_PROFILE, 42: HUMANOID_ARM.
 }
 
+/// The PARTICLE_TYPE registry's wire constants — the clinit's 125
+/// `register` calls ARE the registry (angry_villager 0 ..
+/// sulfur_cube_goo 124, the registration order = the id). The 22
+/// payload carriers are named here (each pinned by its four-arg
+/// register's codecFactory bootstrap handle); every other id in
+/// [0, PARTICLE_TYPE_COUNT) is a zero-payload SimpleParticleType.
+pub mod particle_types {
+    /// The registry's size — byIdOrThrow refuses anything outside
+    /// [0, 125).
+    pub const PARTICLE_TYPE_COUNT: i32 = 125;
+    pub const BLOCK: i32 = 1;
+    pub const BLOCK_MARKER: i32 = 2;
+    pub const GEYSER: i32 = 7;
+    pub const GEYSER_BASE: i32 = 8;
+    pub const GEYSER_POOF: i32 = 9;
+    pub const GEYSER_PLUME: i32 = 10;
+    pub const DRAGON_BREATH: i32 = 15;
+    pub const DUST: i32 = 21;
+    pub const DUST_COLOR_TRANSITION: i32 = 22;
+    pub const EFFECT: i32 = 23;
+    pub const ENTITY_EFFECT: i32 = 28;
+    pub const FALLING_DUST: i32 = 36;
+    pub const TINTED_LEAVES: i32 = 43;
+    pub const SCULK_CHARGE: i32 = 45;
+    pub const FLASH: i32 = 49;
+    pub const INSTANT_EFFECT: i32 = 53;
+    pub const ITEM: i32 = 54;
+    pub const VIBRATION: i32 = 55;
+    pub const TRAIL: i32 = 56;
+    pub const SHRIEK: i32 = 112;
+    pub const DUST_PILLAR: i32 = 118;
+    pub const BLOCK_CRUMBLE: i32 = 122;
+}
+
 /// The DATA_COMPONENT_TYPE registry slice whose value codecs this
 /// client decodes — the ids are `DataComponents.<clinit>`'s
 /// REGISTRATION order (`Registry.register` call sequence; the registry
@@ -1867,6 +1901,80 @@ pub struct ComponentPatch {
     pub removed: Vec<i32>,
 }
 
+/// The vibration's dispatched position source — the
+/// POSITION_SOURCE_TYPE registry's two-type union (block 0, entity
+/// 1, the clinit order; `PositionSource.STREAM_CODEC` =
+/// `StreamCodec.dispatch(ByteBufCodecs.registry(POSITION_SOURCE_TYPE),
+/// ..)` — the $29 byIdOrThrow family, an unknown AND a negative id
+/// throw).
+#[derive(Debug, Clone, PartialEq)]
+pub enum PositionSource {
+    /// BlockPositionSource — `composite(BlockPos.STREAM_CODEC)`: the
+    /// packed block-pos i64, decoded the chunk path's way.
+    Block([i32; 3]),
+    /// EntityPositionSource — `composite(VAR_INT, FLOAT)`: the
+    /// entity id and the y-offset above its feet.
+    Entity { entity_id: i32, y_offset: f32 },
+}
+
+/// One decoded particle VALUE — `ParticleTypes.STREAM_CODEC`'s
+/// dispatched walk: the VarInt registry id (the $29 byIdOrThrow
+/// family), then the type's own payload codec. The 103 simple types
+/// ride ZERO payload bytes (`StreamCodec.unit` — the
+/// clear-all-effects lesson); the 22 carriers' shapes are the option
+/// classes' composites, each pinned by its javap'd `streamCodec`.
+#[derive(Debug, Clone, PartialEq)]
+pub enum ParticleValue {
+    /// SimpleParticleType — zero payload bytes (103 of the 125 ids).
+    Simple,
+    /// BlockParticleOption (`idMapper(BLOCK_STATE_REGISTRY)` — the
+    /// state-palette lookup, negative refuses): block,
+    /// block_marker, falling_dust, dust_pillar, block_crumble.
+    Block(i32),
+    /// GeyserParticleOptions — `composite(INT)`: geyser,
+    /// geyser_plume; the record's waterBlocks field.
+    Geyser { water_blocks: i32 },
+    /// GeyserBaseParticleOptions — `composite(INT, FLOAT)`: geyser_
+    /// base, geyser_poof; waterBlocks + burstImpulseBase.
+    GeyserBase { water_blocks: i32, burst_impulse_base: f32 },
+    /// PowerParticleOption — `composite(FLOAT)`: dragon_breath; the
+    /// power field.
+    Power(f32),
+    /// DustParticleOptions — `composite(INT, FLOAT)`: dust; the
+    /// color argb + the scale.
+    Dust { color: i32, scale: f32 },
+    /// DustColorTransitionOptions — `composite(INT, INT, FLOAT)`:
+    /// dust_color_transition; from-color + to-color + scale.
+    DustTransition { from_color: i32, to_color: i32, scale: f32 },
+    /// SpellParticleOption — `composite(INT, FLOAT)`: effect,
+    /// instant_effect; the color argb + the power.
+    Spell { color: i32, power: f32 },
+    /// ColorParticleOption — `composite(INT)`: entity_effect,
+    /// tinted_leaves, flash; the color argb.
+    Color(i32),
+    /// ItemParticleOption — `map(ItemStackTemplate.STREAM_CODEC)` =
+    /// `composite(Item.STREAM_CODEC, VAR_INT, DataComponentPatch
+    /// .STREAM_CODEC)`: the item id, the count (a RAW lane — no
+    /// count-is-emptiness sentinel here, the ItemStack$1 line does
+    /// not apply), and the patch (the same shape the metadata
+    /// item-stack lane decodes).
+    Item { item_id: i32, count: i32, patch: ComponentPatch },
+    /// VibrationParticleOption — `composite(PositionSource
+    /// .STREAM_CODEC, VAR_INT)`: the dispatched source + the
+    /// arrival-in-ticks.
+    Vibration { source: PositionSource, arrival_in_ticks: i32 },
+    /// TrailParticleOption — `composite(Vec3.STREAM_CODEC, INT,
+    /// VAR_INT)`: the 24-byte target (three big-endian f64), the
+    /// color argb, the duration.
+    Trail { target: [f64; 3], color: i32, duration: i32 },
+    /// ShriekParticleOption — `composite(VAR_INT)`: shriek; the
+    /// delay.
+    Shriek(i32),
+    /// SculkChargeParticleOptions — `composite(FLOAT)`: sculk_charge;
+    /// the roll.
+    SculkCharge(f32),
+}
+
 /// A retained living-entity reference: the UUID the wire carries
 /// (16 bytes, msb then lsb — [`entity_data_serializers`
 /// ::OPTIONAL_LIVING_ENTITY_REFERENCE]'s audited shape). Vanilla's
@@ -1883,8 +1991,8 @@ pub struct EntityReference {
 }
 
 /// One decoded metadata VALUE — the wire shapes of the serializers
-/// this client decodes (NINETEEN of the registry's ids: 0-15, 18-20
-/// as [`entity_data_serializers`] declares). The four i32
+/// this client decodes (TWENTY-ONE of the registry's ids: 0-20 as
+/// [`entity_data_serializers`] declares). The four i32
 /// flavors are DISTINCT variants because the serializer id is part of
 /// the state (vanilla's `assignValues` matches accessor and value on
 /// it), not a type system accident.
@@ -1933,6 +2041,12 @@ pub enum EntityDataEntry {
     BlockState(i32),
     /// Serializer 15: the flag, then the state id only if present.
     OptionalBlockState(Option<i32>),
+    /// Serializer 16: the dispatched particle — the registry id then
+    /// the type's own payload (see [`ParticleValue`]).
+    Particle(ParticleValue),
+    /// Serializer 17: the list operation over PARTICLE — the VarInt
+    /// count, then that many dispatched particle values.
+    Particles(Vec<ParticleValue>),
     /// Serializer 19: the OptionalInt — wire 0 = None, wire n =
     /// Some(n - 1), the SIGNED truth retained verbatim (a negative
     /// wire n stores n - 1; the decode never refuses — the serializer
@@ -2879,14 +2993,114 @@ fn read_entity_reference(r: &mut &[u8]) -> std::io::Result<EntityReference> {
     Ok(EntityReference { uuid })
 }
 
+/// The vibration's dispatched position source: the
+/// POSITION_SOURCE_TYPE registry's VarInt id (block 0, entity 1 —
+/// the clinit order; byIdOrThrow refuses anything else), then that
+/// type's own composite.
+fn read_position_source(r: &mut &[u8]) -> Result<PositionSource> {
+    let t = read_varint(r)?;
+    anyhow::ensure!(
+        (0..2).contains(&t),
+        "unknown position source type {t} (the registry's byIdOrThrow direction)"
+    );
+    Ok(match t {
+        0 => {
+            let (x, y, z) = decode_block_pos(read_i64(r)?);
+            PositionSource::Block([x, y, z])
+        }
+        _ => PositionSource::Entity {
+            entity_id: read_varint(r)?,
+            y_offset: read_f32(r)?,
+        },
+    })
+}
+
+/// The dispatched particle walk: the VarInt registry id
+/// (`ByteBufCodecs.registry(PARTICLE_TYPE)` = the $29 byIdOrThrow
+/// family — an unknown AND a negative id throw), then the type's
+/// own payload codec. The 103 simple types ride ZERO payload bytes;
+/// the 22 carriers' composites are each shape-pinned by javap.
+fn read_particle_value(r: &mut &[u8]) -> Result<ParticleValue> {
+    let id = read_varint(r)?;
+    anyhow::ensure!(
+        (0..particle_types::PARTICLE_TYPE_COUNT).contains(&id),
+        "unknown particle type id {id} (the registry's byIdOrThrow direction)"
+    );
+    Ok(match id {
+        particle_types::BLOCK
+        | particle_types::BLOCK_MARKER
+        | particle_types::FALLING_DUST
+        | particle_types::DUST_PILLAR
+        | particle_types::BLOCK_CRUMBLE => {
+            // BlockParticleOption = idMapper(BLOCK_STATE_REGISTRY):
+            // the state-palette lookup, negative refuses
+            let s = read_varint(r)?;
+            anyhow::ensure!(s >= 0, "negative block state id {s}");
+            ParticleValue::Block(s)
+        }
+        particle_types::GEYSER => ParticleValue::Geyser {
+            water_blocks: read_i32(r)?,
+        },
+        particle_types::GEYSER_BASE | particle_types::GEYSER_POOF => ParticleValue::GeyserBase {
+            water_blocks: read_i32(r)?,
+            burst_impulse_base: read_f32(r)?,
+        },
+        particle_types::DRAGON_BREATH => ParticleValue::Power(read_f32(r)?),
+        particle_types::DUST => ParticleValue::Dust {
+            color: read_i32(r)?,
+            scale: read_f32(r)?,
+        },
+        particle_types::DUST_COLOR_TRANSITION => ParticleValue::DustTransition {
+            from_color: read_i32(r)?,
+            to_color: read_i32(r)?,
+            scale: read_f32(r)?,
+        },
+        particle_types::EFFECT | particle_types::INSTANT_EFFECT => ParticleValue::Spell {
+            color: read_i32(r)?,
+            power: read_f32(r)?,
+        },
+        particle_types::ENTITY_EFFECT
+        | particle_types::TINTED_LEAVES
+        | particle_types::FLASH => ParticleValue::Color(read_i32(r)?),
+        particle_types::ITEM => {
+            // ItemStackTemplate: item (the $29 byIdOrThrow family —
+            // negative refuses, mirroring the metadata item-stack's
+            // item-id lane), the RAW count lane, the patch
+            let item_id = read_varint(r)?;
+            anyhow::ensure!(item_id >= 0, "negative item registry id {item_id}");
+            let count = read_varint(r)?;
+            let patch = parse_component_patch(r)?;
+            ParticleValue::Item {
+                item_id,
+                count,
+                patch,
+            }
+        }
+        particle_types::VIBRATION => ParticleValue::Vibration {
+            source: read_position_source(r)?,
+            arrival_in_ticks: read_varint(r)?,
+        },
+        particle_types::TRAIL => ParticleValue::Trail {
+            target: [read_f64(r)?, read_f64(r)?, read_f64(r)?],
+            color: read_i32(r)?,
+            duration: read_varint(r)?,
+        },
+        particle_types::SHRIEK => ParticleValue::Shriek(read_varint(r)?),
+        particle_types::SCULK_CHARGE => ParticleValue::SculkCharge(read_f32(r)?),
+        _ => ParticleValue::Simple,
+    })
+}
+
 /// Parse Set Entity Data. The supported serializers are the wire's
 /// primitive registry PLUS the chat component (the bare-NBT tag — the
 /// nbt reader the chunk path already trusts) PLUS the villager record
 /// (three VarInt registry ids) PLUS the item stack (the three-layer
 /// count/item/patch decode through the [`data_component_types`]
 /// slice) PLUS the living-entity reference (the 16-byte UUID the
-/// wire carries — the resolution is the client's act); the remaining
-/// object-graph shapes — particles, profiles, the variant holders —
+/// wire carries — the resolution is the client's act) PLUS the
+/// dispatched particle registry (the id + the type's own payload,
+/// all 125 types — 103 simple, 22 payload carriers); the remaining
+/// object-graph shapes — profiles, the variant holders —
 /// refuse for now: a value's byte length is only knowable through
 /// its codec, so there is no honest skip, and the vanilla read side
 /// fails the packet exactly the same way on a serializer it cannot
@@ -2960,6 +3174,24 @@ pub fn parse_set_entity_data(payload: &[u8]) -> Result<EntityDataSet> {
                     None
                 };
                 EntityDataEntry::OptionalLivingEntityReference(r)
+            }
+            entity_data_serializers::PARTICLE => {
+                // ParticleTypes.STREAM_CODEC: the dispatched registry
+                // walk — the id, then the type's own payload
+                EntityDataEntry::Particle(read_particle_value(&mut c)?)
+            }
+            entity_data_serializers::PARTICLES => {
+                // the list operation over the dispatch: the VarInt
+                // count, then that many dispatched values (a negative
+                // count is the readCount family's constructor death —
+                // the port refuses panic-free at the same lane)
+                let n = read_varint(&mut c)?;
+                anyhow::ensure!(n >= 0, "negative particle list count {n}");
+                let mut list = Vec::new();
+                for _ in 0..n {
+                    list.push(read_particle_value(&mut c)?);
+                }
+                EntityDataEntry::Particles(list)
             }
             entity_data_serializers::BLOCK_STATE => {
                 let s = read_varint(&mut c)?;
@@ -4865,16 +5097,19 @@ mod tests {
     /// the optional-global-pos lane the wiki-era table claims — it is
     /// the villager record, which DECODES (it left this list the round
     /// the composite's three VarInts landed). COMPONENT left the list
-    /// the round the bare-NBT reader landed. ITEM_STACK left it THIS
-    /// round — the three-layer count/item/patch decode landed — so its
-    /// old refusal byte (0x00) is now an honest EMPTY stack, and the
-    /// survivors (PARTICLE, the unknown ids) refuse for the same
-    /// reason they always did: a value's byte length is only knowable
-    /// through its codec, so there is no honest skip.
+    /// the round the bare-NBT reader landed. ITEM_STACK left it the
+    /// round the three-layer count/item/patch decode landed.
+    /// PARTICLE left it the round the dispatched particle-type
+    /// registry walked (its 0x00 byte was the probe; now id 0 is a
+    /// legal SIMPLE particle) — the survivors are the resolvable
+    /// profile (41), the variant holders, and the unknown ids, all
+    /// refusing for the same reason they always did: a value's byte
+    /// length is only knowable through its codec, so there is no
+    /// honest skip.
     #[test]
     fn the_entity_data_object_graph_and_unknown_serializers_refuse() {
         use entity_data_serializers as s;
-        for serializer in [s::PARTICLE, 200] {
+        for serializer in [41, 200] {
             let entries = test_support::entity_data_entry(0, serializer, &[0x00]);
             let p = test_support::set_entity_data_packet(3, &entries);
             assert!(
