@@ -1478,6 +1478,122 @@ pub mod entity_data_serializers {
     /// OutOfBoundsStrategy.ZERO)` — NEVER refuses (out-of-range keys
     /// fill to values[0] = STANDING in the consumer's resolution).
     pub const POSE: i32 = 20;
+    /// `CatVariant.STREAM_CODEC` = `ByteBufCodecs.holderRegistry
+    /// (Registries.CAT_VARIANT)` — the FIRST of the twelve variant
+    /// holders (ids 21-32), all the same lane: a VarInt registry id
+    /// (the anonymous `ByteBufCodecs$29` = `VarInt.read` ->
+    /// `IdMap.byIdOrThrow`, the villager-lane family). byIdOrThrow
+    /// throws on a negative AND an unknown id; the port refuses the
+    /// negative half (arithmetic-only) and retains the non-negative
+    /// unknown verbatim (no variant-registry tables client-side; the
+    /// consumer resolves or refuses). REGISTRATION ids 21-32 — the
+    /// loop's holder order DIVERGES from the field-init order (the
+    /// autopush-115 lesson, again): the loop runs CAT, CAT_SOUND,
+    /// COW, COW_SOUND, WOLF, WOLF_SOUND, FROG, PIG, PIG_SOUND,
+    /// CHICKEN, CHICKEN_SOUND, ZOMBIE_NAUTILUS, where the field-init
+    /// block had the CHICKEN pair third and the COW pair fifth —
+    /// only the registration loop is the wire.
+    pub const CAT_VARIANT: i32 = 21;
+    /// `CatSoundVariant.STREAM_CODEC` = `holderRegistry
+    /// (Registries.CAT_SOUND_VARIANT)` — the family lane.
+    pub const CAT_SOUND_VARIANT: i32 = 22;
+    /// `CowVariant.STREAM_CODEC` = `holderRegistry(Registries
+    /// .COW_VARIANT)` — wire 23, where a field-order pin would have
+    /// shipped CHICKEN_VARIANT (the loop-vs-init swap).
+    pub const COW_VARIANT: i32 = 23;
+    /// `CowSoundVariant.STREAM_CODEC` = `holderRegistry(Registries
+    /// .COW_SOUND_VARIANT)` — the family lane.
+    pub const COW_SOUND_VARIANT: i32 = 24;
+    /// `WolfVariant.STREAM_CODEC` = `holderRegistry(Registries
+    /// .WOLF_VARIANT)` — the family lane.
+    pub const WOLF_VARIANT: i32 = 25;
+    /// `WolfSoundVariant.STREAM_CODEC` = `holderRegistry(Registries
+    /// .WOLF_SOUND_VARIANT)` — the family lane.
+    pub const WOLF_SOUND_VARIANT: i32 = 26;
+    /// `FrogVariant.STREAM_CODEC` = `holderRegistry(Registries
+    /// .FROG_VARIANT)` — the family lane.
+    pub const FROG_VARIANT: i32 = 27;
+    /// `PigVariant.STREAM_CODEC` = `holderRegistry(Registries
+    /// .PIG_VARIANT)` — the family lane.
+    pub const PIG_VARIANT: i32 = 28;
+    /// `PigSoundVariant.STREAM_CODEC` = `holderRegistry(Registries
+    /// .PIG_SOUND_VARIANT)` — the family lane.
+    pub const PIG_SOUND_VARIANT: i32 = 29;
+    /// `ChickenVariant.STREAM_CODEC` = `holderRegistry(Registries
+    /// .CHICKEN_VARIANT)` — wire 30, TENTH of the holders where the
+    /// field-init block declared it third (the loop-vs-init swap).
+    pub const CHICKEN_VARIANT: i32 = 30;
+    /// `ChickenSoundVariant.STREAM_CODEC` = `holderRegistry
+    /// (Registries.CHICKEN_SOUND_VARIANT)` — the family lane.
+    pub const CHICKEN_SOUND_VARIANT: i32 = 31;
+    /// `ZombieNautilusVariant.STREAM_CODEC` = `holderRegistry
+    /// (Registries.ZOMBIE_NAUTILUS_VARIANT)` — the last holder, the
+    /// loop and the field-init agreeing here.
+    pub const ZOMBIE_NAUTILUS_VARIANT: i32 = 32;
+    /// `GlobalPos.STREAM_CODEC` under the ONE-FLAG-BYTE optional
+    /// operation (the same invokedynamic bsm #149 BlockPos.optional
+    /// and EntityReference.optional ride — the family's fourth
+    /// member). The composite is TWO fields: the dimension key rides
+    /// `ResourceKey.streamCodec(Registries.DIMENSION)` =
+    /// `Identifier.STREAM_CODEC.map(create, toString)` — the wire is
+    /// the plain identifier STRING ("minecraft:overworld",
+    /// STRING_UTF8's own 32767 cap), NOT a registry id — and the
+    /// position is `BlockPos.STREAM_CODEC` (the packed i64 the chunk
+    /// path already decodes). A name-shaped trap: the villager ids
+    /// ride VarInts a few serializers earlier while this dimension
+    /// rides a string.
+    pub const OPTIONAL_GLOBAL_POS: i32 = 33;
+    /// `PaintingVariant.STREAM_CODEC` = `ByteBufCodecs.holder
+    /// (Registries.PAINTING_VARIANT, DIRECT_STREAM_CODEC)` — the
+    /// anonymous `ByteBufCodecs$30`, the ONLY bias-by-one member of
+    /// the holder family: `n = VarInt.read`; `n == 0` -> the INLINE
+    /// record payload (the direct holder), `n >= 1` ->
+    /// `byIdOrThrow(n - 1)` (the registry reference, wire n means
+    /// registry id n - 1), `n < 0` -> byIdOrThrow throws (the port
+    /// refuses). The direct payload is the 5-field composite: width
+    /// (VarInt), height (VarInt), assetId (the identifier string),
+    /// title and author (each `ComponentSerialization
+    /// .TRUSTED_OPTIONAL_STREAM_CODEC` — the flag byte, then the bare
+    /// NBT tag only if present). Twelve sibling serializers ride the
+    /// bias-zero `holderRegistry`; the painting rides `holder` — the
+    /// family resemblance that would have flattened the 0-sentinel.
+    pub const PAINTING_VARIANT: i32 = 34;
+    /// `Sniffer$State.STREAM_CODEC` = `ByteBufCodecs.idMapper(BY_ID,
+    /// ordinal)` with `BY_ID = ByIdMap.continuous(.., ZERO)` — a
+    /// VarInt ordinal that NEVER refuses (out-of-range keys fill to
+    /// values[0] = IDLING in the consumer's resolution). Seven
+    /// states in declaration order: IDLING, FEELING_HAPPY, SCENTING,
+    /// SNIFFING, SEARCHING, DIGGING, RISING. Wire 35 — BEFORE the
+    /// armadillo, where the field-init order had the armadillo first
+    /// (the loop-vs-init swap, the third family of this round).
+    pub const SNIFFER_STATE: i32 = 35;
+    /// `Armadillo$ArmadilloState.STREAM_CODEC` — the idMapper ZERO
+    /// lane; four states: IDLE, ROLLING, SCARED, UNROLLING.
+    pub const ARMADILLO_STATE: i32 = 36;
+    /// `CopperGolemState.STREAM_CODEC` — the idMapper ZERO lane; a
+    /// TOP-LEVEL class (not an inner enum); five states: IDLE,
+    /// GETTING_ITEM, GETTING_NO_ITEM, DROPPING_ITEM,
+    /// DROPPING_NO_ITEM.
+    pub const COPPER_GOLEM_STATE: i32 = 37;
+    /// `WeatheringCopper$WeatherState.STREAM_CODEC` — the idMapper
+    /// lane with `OutOfBoundsStrategy.CLAMP`, the family's only
+    /// non-ZERO member: the decode map CLAMPS out-of-range keys into
+    /// [0, 3] (a wire 9 decodes to OXIDIZED in vanilla). The port
+    /// retains the wire ordinal verbatim and the clamp is the
+    /// consumer's act (the DIRECTION/POSE retention line); never
+    /// refuses. Four states: UNAFFECTED, EXPOSED, WEATHERED,
+    /// OXIDIZED.
+    pub const WEATHERING_COPPER_STATE: i32 = 38;
+    /// `ByteBufCodecs.VECTOR3F` — the anonymous `ByteBufCodecs$20`
+    /// = `FriendlyByteBuf.readVector3f` = THREE big-endian f32s (x,
+    /// y, z), 12 bytes — the same shape as ROTATIONS with the JOML
+    /// vector's own field order.
+    pub const VECTOR3: i32 = 39;
+    /// `ByteBufCodecs.QUATERNIONF` — the anonymous `ByteBufCodecs
+    /// $21` = `FriendlyByteBuf.readQuaternion` = FOUR big-endian
+    /// f32s, 16 bytes, the JOML `Quaternionf(float, float, float,
+    /// float)` order x, y, z, w.
+    pub const QUATERNION: i32 = 40;
     /// The resolvable profile's audited wire (the audit's six hops):
     /// `ResolvableProfile.STREAM_CODEC` = `composite(either(ByteBuf
     /// Codecs.GAME_PROFILE, ResolvableProfile$Partial.STREAM_CODEC),
@@ -1495,11 +1611,12 @@ pub mod entity_data_serializers {
     /// model: a BOOL — true = SLIM, false = WIDE, the enum's own
     /// lambda pair). PLAYER_NAME is `stringUtf8(16)`.
     pub const RESOLVABLE_PROFILE: i32 = 41;
-    // 21-32: the variant Holders (CAT_VARIANT .. PIG_SOUND_VARIANT,
-    // ZOMBIE_NAUTILUS_VARIANT interleaved), 33: OPTIONAL_GLOBAL_POS
-    // (the wiki-era 18), 34: PAINTING_VARIANT, 35-38: the enum states
-    // (SNIFFER/ARMADILLO/COPPER_GOLEM/WEATHERING_COPPER), 39: VECTOR3,
-    // 40: QUATERNION, 42: HUMANOID_ARM.
+    /// `HumanoidArm.STREAM_CODEC` — the idMapper ZERO lane; two
+    /// states in declaration order: LEFT = 0, RIGHT = 1 (the
+    /// ordinal's own truth; no explicit id field exists on the enum
+    /// — the declaration order IS the wire). NEVER refuses
+    /// (out-of-range fills to LEFT in the consumer's resolution).
+    pub const HUMANOID_ARM: i32 = 42;
 }
 
 /// The PARTICLE_TYPE registry's wire constants — the clinit's 125
@@ -2077,9 +2194,54 @@ pub struct EntityReference {
     pub uuid: [u8; 16],
 }
 
+/// A decoded global position ([`entity_data_serializers`
+/// ::OPTIONAL_GLOBAL_POS]'s audited composite): the dimension key's
+/// identifier STRING (retained verbatim — "minecraft:overworld";
+/// the wire is `Identifier.STREAM_CODEC` mapped through
+/// `ResourceKey.streamCodec`, NOT a registry id) and the packed
+/// block position (the chunk decoder's own arithmetic).
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct GlobalPos {
+    /// The dimension's identifier string, ≤32767 bytes
+    /// (STRING_UTF8's own cap).
+    pub dimension: String,
+    /// The world x/y/z the packed i64 decodes to.
+    pub pos: [i32; 3],
+}
+
+/// A decoded painting variant ([`entity_data_serializers`
+/// ::PAINTING_VARIANT]'s audited `$30 holder` shape — the holder
+/// family's ONLY bias-by-one member): either the registry
+/// REFERENCE (wire n >= 1, stored as the registry id n - 1,
+/// retained verbatim — the consumer resolves) or the INLINE DIRECT
+/// record (wire n == 0, the 5-field composite the record's own
+/// accessors name).
+#[derive(Debug, Clone, PartialEq)]
+pub enum PaintingVariant {
+    /// The registry reference: wire n stored as n - 1 (the
+    /// byIdOrThrow lane's id space, retained verbatim).
+    Registry(i32),
+    /// The direct holder's inline record.
+    Direct {
+        /// The painting's width (VarInt).
+        width: i32,
+        /// The painting's height (VarInt).
+        height: i32,
+        /// The asset's identifier string, ≤32767 bytes.
+        asset_id: String,
+        /// The title component (flag byte + bare NBT tag), absent
+        /// when the flag byte is 0.
+        title: Option<Nbt>,
+        /// The author component (the same optional lane).
+        author: Option<Nbt>,
+    },
+}
+
 /// One decoded metadata VALUE — the wire shapes of the serializers
-/// this client decodes (TWENTY-TWO of the registry's ids: 0-20, 41
-/// as [`entity_data_serializers`] declares). The four i32
+/// this client decodes (ALL FORTY-THREE of the registry's ids: 0-42,
+/// as [`entity_data_serializers`] declares — the walk completed the
+/// round the variant holders, the global pos, the painting holder,
+/// the enum states, and the vector/quaternion lanes landed). The i32
 /// flavors are DISTINCT variants because the serializer id is part of
 /// the state (vanilla's `assignValues` matches accessor and value on
 /// it), not a type system accident.
