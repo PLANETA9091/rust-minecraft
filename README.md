@@ -919,6 +919,38 @@ hand-drawn:
   (VILLAGER_DATA at 18 doubles as the order proof), the generated-id
   pin, and the model's merge semantics (replace-one-leave-others, the
   null-lookup drop, the re-spawn reset).
+  The **set container content — the inventory surfaces' second packet
+  (v0.3.121)**: ONE container window's full snapshot, decoded. The
+  audit (javap on the 26.2 jar): the clinit composes
+  `StreamCodec.composite` of FOUR lanes — `ByteBufCodecs.CONTAINER_ID`
+  (the anonymous $22 → `FriendlyByteBuf.readContainerId` →
+  `VarInt.read`: the container id rides a VARINT, not the wiki-era
+  unsigned byte — one anonymous class, one hop, the name-shaped trap
+  again), the raw `VAR_INT` state id, `ItemStack.OPTIONAL_LIST_STREAM_CODEC`
+  for the items, and the plain `ItemStack.OPTIONAL_STREAM_CODEC` for
+  the GUI cursor stack. The list codec is the OPTIONAL walk +
+  `ByteBufCodecs.collection`: `readCount(buf, MAX_VALUE)` (a VarInt
+  count; the `count > maxSize` DecoderException is unreachable at
+  MAX_VALUE — the VarInt's own 32-bit ceiling is the real bound), the
+  collection pre-allocated at `min(count, 65536)` (a DoS guard on the
+  ALLOCATION, not the entries — no wire-visible effect), then count ×
+  the OPTIONAL walk. THE REFUSAL-ORDER CATCH: a NEGATIVE count passes
+  readCount's comparison (a negative is never > maxSize) and dies at
+  the collection CONSTRUCTION — `new ArrayList<>(-n)`, "Illegal
+  Capacity" — BEFORE any entry bytes are consumed; the port refuses at
+  the same point, and the test proves the ordering with stray bytes
+  after the count (the refusal is not an EOF). The items lane is the
+  equipment lane's own codec: `read_item_stack` serves BOTH call sites
+  (the one-reader line), an EMPTY stack a LEGAL entry (the cleared
+  slot), the count retained verbatim. The model's consumer arrives
+  with the inventory surfaces (the no-surface skip, documented in the
+  apply arm). GOLDENS UNTOUCHED BY CONSTRUCTION: 12/12 at rms 0.000.
+  Tests +1 (workspace 474 -> 475 passed / 0 failed / 3 ignored): the
+  four-lane retention (the two-byte VarInt container id 200 — the
+  byte-era table would have died there — the one-component patch, the
+  cleared slot, the empty cursor), the negative-count refusal with the
+  ordering proof, the lying count, the mid-patch truncation, and the
+  carried item's truncation refusing.
   The **mob-effect registry as a GENERATED table (v0.3.120)**: the
   round-120 probe promoted into the dumper set — the generator-first
   philosophy applied to the effect lane's own evidence. The mob-effect
