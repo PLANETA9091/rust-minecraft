@@ -5214,6 +5214,144 @@ mod tests {
         assert!(parse_set_entity_data(&p).is_err());
     }
 
+    /// The PARTICLE serializer (16): `ParticleTypes.STREAM_CODEC`'s
+    /// dispatched registry walk — the VarInt id (the $29 byIdOrThrow
+    /// family), then the type's OWN payload codec. One packet, the
+    /// payload shapes' representatives: a SIMPLE type (zero payload —
+    /// the `StreamCodec.unit` lane), the block composite, both geyser
+    /// shapes, the power float, dust, the dust transition, the spell,
+    /// the color, the item template (item id + RAW count + patch —
+    /// no count-sentinel here, the ItemStack$1 line does not apply),
+    /// the vibration (its own nested dispatch: the block position
+    /// source), the trail (three big-endian f64 + color + duration),
+    /// shriek's delay, and the sculk charge's roll.
+    #[test]
+    fn the_particle_serializer_walks_the_dispatched_registry() {
+        use entity_data_serializers as s;
+        use particle_types as pt;
+        // the dispatch id + the payload bytes, one Vec
+        let pv = |id: i32, rest: &[u8]| -> Vec<u8> {
+            let mut b = test_support::entity_data_varint(id);
+            b.extend_from_slice(rest);
+            b
+        };
+        let mut entries = Vec::new();
+        // simple: angry_villager (0) rides ZERO payload bytes
+        entries.extend(test_support::entity_data_entry(0, s::PARTICLE, &test_support::entity_data_varint(0)));
+        // block (1): the block-state VarInt
+        entries.extend(test_support::entity_data_entry(1, s::PARTICLE, &pv(pt::BLOCK, &test_support::entity_data_varint(12345))));
+        // geyser (7): the waterBlocks INT
+        entries.extend(test_support::entity_data_entry(2, s::PARTICLE, &pv(pt::GEYSER, &2i32.to_be_bytes())));
+        // geyser_base (8): waterBlocks + burstImpulseBase
+        entries.extend(test_support::entity_data_entry(3, s::PARTICLE, &pv(pt::GEYSER_BASE, &[2i32.to_be_bytes().as_slice(), 0.5f32.to_be_bytes().as_slice()].concat())));
+        // dragon_breath (15): the power FLOAT
+        entries.extend(test_support::entity_data_entry(4, s::PARTICLE, &pv(pt::DRAGON_BREATH, &1.5f32.to_be_bytes())));
+        // dust (21): color argb + scale
+        entries.extend(test_support::entity_data_entry(5, s::PARTICLE, &pv(pt::DUST, &[16711680i32.to_be_bytes().as_slice(), 1.0f32.to_be_bytes().as_slice()].concat())));
+        // dust_color_transition (22): from + to + scale
+        entries.extend(test_support::entity_data_entry(6, s::PARTICLE, &pv(pt::DUST_COLOR_TRANSITION, &[16711680i32.to_be_bytes().as_slice(), 3790560i32.to_be_bytes().as_slice(), 1.0f32.to_be_bytes().as_slice()].concat())));
+        // effect (23): the spell's color + power
+        entries.extend(test_support::entity_data_entry(7, s::PARTICLE, &pv(pt::EFFECT, &[16777215i32.to_be_bytes().as_slice(), 1.0f32.to_be_bytes().as_slice()].concat())));
+        // entity_effect (28): the color INT
+        entries.extend(test_support::entity_data_entry(8, s::PARTICLE, &pv(pt::ENTITY_EFFECT, &65280i32.to_be_bytes())));
+        // sculk_charge (45): the roll FLOAT
+        entries.extend(test_support::entity_data_entry(9, s::PARTICLE, &pv(pt::SCULK_CHARGE, &0.25f32.to_be_bytes())));
+        // item (54): the template's item id + RAW count + patch
+        // (one added VarInt(35) at component type 3, nothing removed)
+        entries.extend(test_support::entity_data_entry(10, s::PARTICLE, &pv(pt::ITEM, &[
+            test_support::entity_data_varint(745), test_support::entity_data_varint(3),
+            test_support::entity_data_varint(1), test_support::entity_data_varint(0),
+            test_support::entity_data_varint(3), test_support::entity_data_varint(35),
+        ].concat())));
+        // vibration (55): the nested dispatch — a BLOCK position
+        // source (0) carrying the packed pos, then the arrival ticks
+        entries.extend(test_support::entity_data_entry(11, s::PARTICLE, &pv(pt::VIBRATION, &[
+            test_support::entity_data_varint(0), test_support::encode_block_pos(-1, 64, 2).to_be_bytes().to_vec(),
+            test_support::entity_data_varint(20),
+        ].concat())));
+        // trail (56): three big-endian f64, the color INT, the duration
+        entries.extend(test_support::entity_data_entry(12, s::PARTICLE, &pv(pt::TRAIL, &[
+            1.0f64.to_be_bytes().to_vec(), 2.0f64.to_be_bytes().to_vec(),
+            3.0f64.to_be_bytes().to_vec(), 7i32.to_be_bytes().to_vec(),
+            test_support::entity_data_varint(9),
+        ].concat())));
+        // shriek (112): the delay VarInt
+        entries.extend(test_support::entity_data_entry(13, s::PARTICLE, &pv(pt::SHRIEK, &test_support::entity_data_varint(5))));
+        let p = test_support::set_entity_data_packet(88, &entries);
+        let d = parse_set_entity_data(&p).unwrap();
+        assert_eq!(d.id, 88);
+        let v: Vec<&ParticleValue> = d
+            .entries
+            .iter()
+            .map(|e| match &e.value {
+                EntityDataEntry::Particle(v) => v,
+                other => panic!("expected a particle entry, got {other:?}"),
+            })
+            .collect();
+        assert_eq!(v[0], &ParticleValue::Simple);
+        assert_eq!(v[1], &ParticleValue::Block(12345));
+        assert_eq!(v[2], &ParticleValue::Geyser { water_blocks: 2 });
+        assert_eq!(v[3], &ParticleValue::GeyserBase { water_blocks: 2, burst_impulse_base: 0.5 });
+        assert_eq!(v[4], &ParticleValue::Power(1.5));
+        assert_eq!(v[5], &ParticleValue::Dust { color: 16711680, scale: 1.0 });
+        assert_eq!(v[6], &ParticleValue::DustTransition { from_color: 16711680, to_color: 3790560, scale: 1.0 });
+        assert_eq!(v[7], &ParticleValue::Spell { color: 16777215, power: 1.0 });
+        assert_eq!(v[8], &ParticleValue::Color(65280));
+        assert_eq!(v[9], &ParticleValue::SculkCharge(0.25));
+        assert_eq!(v[10], &ParticleValue::Item { item_id: 745, count: 3, patch: ComponentPatch { added: vec![(3, ComponentValue::VarInt(35))], removed: vec![] } });
+        assert_eq!(v[11], &ParticleValue::Vibration { source: PositionSource::Block([-1, 64, 2]), arrival_in_ticks: 20 });
+        assert_eq!(v[12], &ParticleValue::Trail { target: [1.0, 2.0, 3.0], color: 7, duration: 9 });
+        assert_eq!(v[13], &ParticleValue::Shriek(5));
+    }
+
+    /// The PARTICLES serializer (17) — the list operation over the
+    /// dispatch — and the refusal map: the registry id's bounds (an
+    /// unknown 125 AND a negative, each the $29 byIdOrThrow direction,
+    /// each probe landing ON the lane before any payload), a negative
+    /// block-state payload inside the block composite, an unknown
+    /// position-source type inside the vibration's nested dispatch,
+    /// and the negative list count (the readCount family's
+    /// constructor death, refused panic-free at the same lane).
+    #[test]
+    fn the_particle_list_walks_and_the_refusal_map_holds() {
+        use entity_data_serializers as s;
+        // the list: two dispatched values — a simple bubble (3) and a
+        // shriek carrying its delay
+        let mut v = test_support::entity_data_varint(2);
+        v.extend(test_support::entity_data_varint(3));
+        v.extend(test_support::entity_data_varint(112));
+        v.extend(test_support::entity_data_varint(7));
+        let entries = test_support::entity_data_entry(0, s::PARTICLES, &v);
+        let p = test_support::set_entity_data_packet(9, &entries);
+        let d = parse_set_entity_data(&p).unwrap();
+        assert_eq!(
+            d.entries[0].value,
+            EntityDataEntry::Particles(vec![ParticleValue::Simple, ParticleValue::Shriek(7)])
+        );
+        // the refusal map: every probe lands ON its lane
+        for (bytes, why) in [
+            (test_support::entity_data_varint(125), "unknown particle id"),
+            (test_support::entity_data_varint(-1), "negative particle id"),
+            (
+                [test_support::entity_data_varint(1), test_support::entity_data_varint(-3)].concat(),
+                "negative block-state payload",
+            ),
+            (
+                [test_support::entity_data_varint(55), test_support::entity_data_varint(2)].concat(),
+                "unknown position-source type",
+            ),
+        ] {
+            let entries = test_support::entity_data_entry(0, s::PARTICLE, &bytes);
+            let p = test_support::set_entity_data_packet(9, &entries);
+            assert!(parse_set_entity_data(&p).is_err(), "{why} must refuse");
+        }
+        // the negative LIST count refuses the same way
+        let entries =
+            test_support::entity_data_entry(0, s::PARTICLES, &test_support::entity_data_varint(-1));
+        let p = test_support::set_entity_data_packet(9, &entries);
+        assert!(parse_set_entity_data(&p).is_err());
+    }
+
     /// Set Entity Data: the villager record's wire is THREE VarInts —
     /// the javap walk: `VillagerData.STREAM_CODEC` =
     /// `composite(holderRegistry(VILLAGER_TYPE), holderRegistry(

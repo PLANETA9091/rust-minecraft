@@ -919,6 +919,60 @@ hand-drawn:
   (VILLAGER_DATA at 18 doubles as the order proof), the generated-id
   pin, and the model's merge semantics (replace-one-leave-others, the
   null-lookup drop, the re-spawn reset).
+  The **the dispatched particle-type registry — the PARTICLE and
+  PARTICLES lanes walk all 125 types (v0.3.115)**: the last two
+  serializer refusals in the low-id range retire. The javap audit:
+  `ParticleTypes.STREAM_CODEC` = `StreamCodec.dispatch(ByteBufCodecs
+  .registry(PARTICLE_TYPE), typeToCodec, codecToType)` — the $29
+  byIdOrThrow family (an unknown AND a negative id throw), then the
+  type's OWN payload codec. The clinit's 125 `register` calls ARE
+  the registry (angry_villager 0 .. sulfur_cube_goo 124): 103
+  SimpleParticleType carriers ride ZERO payload bytes (the
+  `StreamCodec.unit` lane), and the 22 payload carriers map to 13
+  composite shapes, each pinned by its four-arg register's
+  codecFactory bootstrap handle: BlockParticleOption (block,
+  block_marker, falling_dust, dust_pillar, block_crumble) =
+  `idMapper(BLOCK_STATE_REGISTRY)`; GeyserParticleOptions (geyser,
+  geyser_plume) = `composite(INT)` (waterBlocks);
+  GeyserBaseParticleOptions (geyser_base, geyser_poof) =
+  `composite(INT, FLOAT)` (waterBlocks + burstImpulseBase);
+  PowerParticleOption (dragon_breath) = `composite(FLOAT)`;
+  DustParticleOptions (dust) = `composite(INT, FLOAT)`; DustColor
+  TransitionOptions (dust_color_transition) = `composite(INT, INT,
+  FLOAT)`; SpellParticleOption (effect, instant_effect) =
+  `composite(INT, FLOAT)`; ColorParticleOption (entity_effect,
+  tinted_leaves, flash) = `composite(INT)`; ItemParticleOption
+  (item) = `map(ItemStackTemplate.STREAM_CODEC)` = `composite(
+  Item.STREAM_CODEC, VAR_INT, DataComponentPatch.STREAM_CODEC)` —
+  the item id, a RAW count lane (NO count-is-emptiness sentinel,
+  the ItemStack$1 line does not apply), and the same patch shape
+  the metadata lane decodes; VibrationParticleOption (vibration) =
+  `composite(PositionSource.STREAM_CODEC, VAR_INT)` where the
+  source is ANOTHER dispatched registry (POSITION_SOURCE_TYPE:
+  block 0 = the packed-pos i64, entity 1 = `composite(VAR_INT,
+  FLOAT)`); TrailParticleOption (trail) = `composite(Vec3.STREAM_
+  CODEC, INT, VAR_INT)` — three big-endian f64 (Vec3$1's
+  readDouble trio), the color, the duration;
+  ShriekParticleOption (shriek) = `composite(VAR_INT)`;
+  SculkChargeParticleOptions (sculk_charge) = `composite(FLOAT)`.
+  The implementation: the `particle_types` module (COUNT = 125 +
+  the 22 carrier ids), the `ParticleValue` enum (14 variants), the
+  `PositionSource` enum, the dispatch walk + nested-source reader,
+  the PARTICLE and PARTICLES entity-data arms (the list being the
+  VarInt count + entries, a negative count the readCount family's
+  panic-free refusal), and the lib.rs exports. The decode census:
+  TWENTY-ONE of the registry's 43 serializers (0-20). mc-client
+  untouched BY CONSTRUCTION. GOLDENS UNTOUCHED BY CONSTRUCTION:
+  12/12 PASS. Tests +2 (workspace 464 -> 466 passed / 0 failed /
+  3 ignored): the dispatched walk pins fourteen payload-shape
+  representatives in ONE packet (simple, block, both geysers,
+  power, dust, transition, spell, color, item template with its
+  patch, the nested block-source vibration, the f64 trail, shriek,
+  sculk), and the refusal map holds (unknown id 125, negative id,
+  a negative block-state payload, an unknown position-source type,
+  the negative list count — each probe landing ON its lane). The
+  object-graph refusal set is now the profile (41) and the variant
+  holders only.
   The **the living-entity reference lane — serializer 13 retired
   from the object-graph refusal set (v0.3.114)**: the OPTIONAL_
   LIVING_ENTITY_REFERENCE lane decodes. The javap audit, three hops:
