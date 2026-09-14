@@ -356,6 +356,12 @@ pub struct ContainerClick {
 pub enum ContainerCommand {
     Click(ContainerClick),
     Close { window_id: i32 },
+    /// The player's OWN hotbar selection (the vanilla keyPress's lane):
+    /// the SELECTION-relative 0..8 slot the number keys speak. The
+    /// worker moves the store's selection (the local prediction — the
+    /// hand follows through the store's own projection) and echoes the
+    /// serverbound Set Carried Item (the dump's short-shaped slot).
+    SelectHotbar { selection: u8 },
 }
 
 /// The stack-size ceiling the prediction merges against — the

@@ -118,6 +118,7 @@ pub mod serverbound {
         SB_ACCEPT_TELEPORTATION as CONFIRM_TELEPORTATION,
         SB_CHUNK_BATCH_RECEIVED as CHUNK_BATCH_RECEIVED, SB_CONTAINER_CLICK as CONTAINER_CLICK,
         SB_CONTAINER_CLOSE as CONTAINER_CLOSE, SB_KEEP_ALIVE as KEEP_ALIVE, SB_PONG as PONG,
+        SB_SET_CARRIED_ITEM as SET_CARRIED_ITEM,
     };
 }
 
@@ -4988,6 +4989,25 @@ pub fn encode_container_close(container_id: i32) -> Vec<u8> {
     p
 }
 
+/// The player's own hotbar selection — the serverbound Set Carried
+/// Item packet (the generated id table's SB_SET_CARRIED_ITEM = 53,
+/// `minecraft:set_carried_item`). THE WIRE (the checked-in
+/// `ReflectSetCarriedItem.java`'s dump): the ctor takes the
+/// SELECTION-relative slot (the number keys' own 0..8,
+/// `Inventory.selected`) and the official STREAM_CODEC writes it as a
+/// FIXED BIG-ENDIAN SHORT — the two-byte shapes `0000` / `0003` /
+/// `0008` refuse a VarInt reading (slot 3's VarInt would be the
+/// single `03`); the wiki-era VarInt memory is wrong, the dump is the
+/// truth. The caller speaks the 0..8 domain (the vanilla selection's
+/// own range — the packet itself would ride a wider short, the model's
+/// gate is where the domain lives).
+pub fn encode_set_carried_item(slot: u8) -> Vec<u8> {
+    let mut p = Vec::with_capacity(3);
+    write_varint(&mut p, serverbound::SET_CARRIED_ITEM);
+    p.extend_from_slice(&(slot as i16).to_be_bytes());
+    p
+}
+
 // ---------------------------------------------------------------------------
 // the session pump
 // ---------------------------------------------------------------------------
@@ -5728,6 +5748,15 @@ impl<S: Read + Write> PlaySession<S> {
         self.conn
             .send_packet(&encode_container_close(container_id))
             .context("send container close")
+    }
+
+    /// The player's OWN hotbar selection (the vanilla keyPress's
+    /// serverbound echo — the number keys' lane, the Set Carried Item
+    /// packet).
+    pub fn set_carried_item(&mut self, slot: u8) -> Result<()> {
+        self.conn
+            .send_packet(&encode_set_carried_item(slot))
+            .context("send set carried item")
     }
 }
 
@@ -10002,6 +10031,37 @@ mod tests {
         );
         // the close: the window id alone
         assert_eq!(encode_container_close(2), vec![0x13, 0x02]);
+    }
+
+    /// The serverbound Set Carried Item lane — the number keys'
+    /// serverbound echo. The checked-in `ReflectSetCarriedItem.java`
+    /// built the REAL packet records over the selection domain's ends
+    /// and middle (`ctor: (int)`) and serialized them through the jar's
+    /// own STREAM_CODEC — the hex below is that dump, byte for byte.
+    /// THE AUDIT'S OWN CATCH: the payload is a FIXED BIG-ENDIAN SHORT —
+    /// the two-byte shapes `0000` / `0003` / `0008` refuse a VarInt
+    /// reading (slot 3's VarInt would be the single `03`); the
+    /// wiki-era VarInt memory is wrong.
+    #[test]
+    fn the_set_carried_item_lane_speaks_the_dumped_wire() {
+        // the id prefix rides the house convention (the generated
+        // SB_SET_CARRIED_ITEM = 53 = 0x35, the single-byte VarInt), the
+        // payload the dump's own bytes
+        assert_eq!(
+            encode_set_carried_item(0),
+            vec![0x35, 0x00, 0x00],
+            "slot 0: 00 00 — the BE short"
+        );
+        assert_eq!(
+            encode_set_carried_item(3),
+            vec![0x35, 0x00, 0x03],
+            "slot 3: 00 03 — a VarInt would be the single 03"
+        );
+        assert_eq!(
+            encode_set_carried_item(8),
+            vec![0x35, 0x00, 0x08],
+            "slot 8: the selection domain's own end"
+        );
     }
 
     /// The HashedStack's FULL patch lane — the non-empty shapes the

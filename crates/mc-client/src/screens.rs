@@ -820,6 +820,29 @@ impl App {
         self.shift_down = down;
     }
 
+    /// The number keys' hotbar selection (the vanilla keyPress's own
+    /// lane): the HUD's selection box moves with the key, and the LIVE
+    /// session's belief rides the command channel — the worker moves
+    /// the store's selection (the local prediction: the hand follows
+    /// the keys through the store's own projection, v0.3.137's lane)
+    /// and speaks the serverbound Set Carried Item (the dump's
+    /// short-shaped slot). The OFFLINE stand-in keeps the move
+    /// cosmetic (no session, no wire — the deterministic scenes stay
+    /// silent). The SELECTION-relative 0..8 gate drops the
+    /// out-of-domain and the no-op repeat (the vanilla
+    /// `Inventory.selected`'s own range).
+    pub fn on_number_key(&mut self, selection: usize) {
+        if selection > 8 || selection == self.selected_hotbar {
+            return; // the gate: out-of-domain or the repeat
+        }
+        self.selected_hotbar = selection;
+        if let Some(sink) = self.live_clicks.as_ref() {
+            let _ = sink.send(crate::world_view::ContainerCommand::SelectHotbar {
+                selection: selection as u8,
+            });
+        }
+    }
+
     /// The chest screen's slot click (the button byte's own lane: 0 =
     /// the left table, 1 = the right table; the SHIFT state overrides
     /// either table with the QUICK_MOVE lane — the vanilla
@@ -3737,6 +3760,65 @@ mod tests {
         app.live_held_updated(Some((926, 1)));
         assert_eq!(app.live_held, Some(926));
         assert!(app.held_item.is_some(), "the model reloads");
+    }
+
+    /// The number keys' whole arc: the HUD's selection moves with the
+    /// key, the LIVE session's belief rides the command channel (the
+    /// SelectHotbar command the worker translates to the wire AND the
+    /// store's own move), the out-of-domain and the repeat drop, and
+    /// the offline stand-in keeps the move cosmetic.
+    #[test]
+    fn the_number_key_moves_the_selection_and_echoes() {
+        use crate::world_view::ContainerCommand;
+        let mut app = App::new(3);
+        app.open(ScreenKind::Connect);
+        app.net_world = Some(air_net_world(2, 0));
+        app.enter_network_world(None, Skybox::Overworld, None, None);
+        let (click_tx, click_rx) = std::sync::mpsc::channel::<ContainerCommand>();
+        app.attach_live_clicks(click_tx);
+
+        // the key moves the HUD's selection and rides the command
+        app.on_number_key(4);
+        assert_eq!(app.selected_hotbar, 4, "the HUD's own belief moved");
+        match click_rx.try_recv().expect("the selection rode the lane") {
+            ContainerCommand::SelectHotbar { selection } => {
+                assert_eq!(selection, 4, "the SELECTION-relative slot");
+            }
+            other => panic!("expected a selection, got {other:?}"),
+        }
+
+        // the repeat naming the held slot is the honest silence
+        app.on_number_key(4);
+        assert!(click_rx.try_recv().is_err(), "the repeat sends nothing");
+
+        // the out-of-domain drop (the gate: 0..8, the vanilla
+        // Inventory.selected's own range)
+        app.on_number_key(9);
+        assert_eq!(app.selected_hotbar, 4, "the gate held");
+        assert!(click_rx.try_recv().is_err(), "no command either");
+
+        // the chest closes back to the world (the container-less
+        // update) — the session LIVES: the key still echoes (the
+        // vanilla client's selection is the session's own, not the
+        // chest screen's)
+        app.live_view_updated(air_net_world(2, 1), None, None, None);
+        assert_eq!(app.screen, ScreenKind::World, "the live chest closed");
+        app.on_number_key(2);
+        assert_eq!(app.selected_hotbar, 2, "the world-screen key moved too");
+        match click_rx.try_recv().expect("the world-screen key echoes") {
+            ContainerCommand::SelectHotbar { selection } => assert_eq!(selection, 2),
+            other => panic!("expected a selection, got {other:?}"),
+        }
+
+        // the OFFLINE stand-in: a fresh app in the procedural world —
+        // no session, no lane: the selection still moves (the HUD's own
+        // lane), the wire stays silent (the live channel above never
+        // hears from it)
+        let mut offline = App::new(3);
+        offline.enter_world();
+        offline.on_number_key(2);
+        assert_eq!(offline.selected_hotbar, 2, "the offline HUD moves");
+        assert!(click_rx.try_recv().is_err(), "the offline wire is silent");
     }
 
     #[test]

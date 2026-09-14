@@ -919,6 +919,36 @@ hand-drawn:
   (VILLAGER_DATA at 18 doubles as the order proof), the generated-id
   pin, and the model's merge semantics (replace-one-leave-others, the
   null-lookup drop, the re-spawn reset).
+  The **the number-key lane — the hotbar answers the keys (v0.3.138)**:
+  the player's own hotbar selection lands — the number keys 1-9 move the
+  selection, the HUD's selector box follows, and the live session echoes
+  the wire. THE AUDIT FIRST: the serverbound Set Carried Item packet's
+  shape came from the checked-in `ReflectSetCarriedItem.java` (the
+  ReflectContainerClick arc's own pattern, one lane) — the ctor takes the
+  SELECTION-relative slot and the official STREAM_CODEC writes a FIXED
+  BIG-ENDIAN SHORT: the two-byte shapes `0000` / `0003` / `0008` refuse a
+  VarInt reading (slot 3's VarInt would be the single `03`), the wiki-era
+  VarInt memory is wrong, the dump is the truth (the audit's own catch —
+  again). THE ARC: the windowed loop reads Key1..Key9's rising presses and
+  routes `on_number_key` — the 0..8 gate drops the out-of-domain and the
+  no-op repeat (the vanilla `Inventory.selected`'s own range), the HUD's
+  belief moves, and the LIVE session's command rides the container-command
+  channel's new `SelectHotbar` variant: the worker moves the STORE's
+  selection (`world_model::select_hotbar` — the vanilla client updates its
+  own Inventory immediately, the local prediction) and speaks the
+  serverbound echo — so the first-person hand (v0.3.137's projection)
+  follows the keys through the store's own lane, the selection's move is
+  the client's belief and the authoritative Set Held Slot still lands
+  through its gate. The OFFLINE stand-in keeps the move cosmetic (no
+  session, no wire); the chest screen closed back to the world does NOT
+  detach the lane — the session's selection is the session's own, not the
+  chest's. GOLDENS VERIFIED 13/13 at rms 0.000 (no render lane changed —
+  the static scenes never press keys). Tests +3 (workspace 508 passed / 0
+  failed / 3 ignored): the dumped-wire pins (the three fixtures byte-equal
+  through the id prefix), the store gate's laws (the move, the repeat, the
+  36-vs-9 refusals, the projection slot), and the key arc (the command's
+  ride, the repeat silence, the gate, the session-lives echo, the offline
+  silence).
   The **the live held-item lane — the store's hand (v0.3.137)**:
   the first-person hand leaves the offline stand-in — the live session's own
   selected hotbar stack drives the held item, the store's projection the

@@ -276,6 +276,18 @@ fn run_join(
                         crate::world_view::ContainerCommand::Close { window_id } => {
                             session.close_container(window_id)
                         }
+                        crate::world_view::ContainerCommand::SelectHotbar { selection } => {
+                            // THE LOCAL SELECTION PREDICTION: the vanilla
+                            // keyPress moves its own Inventory.selected
+                            // immediately — the store's selection moves
+                            // HERE (the hand follows through the store's
+                            // own projection) and the serverbound echo
+                            // tells the server (the dump's short-shaped
+                            // slot; the authoritative Set Held Slot still
+                            // lands through its gate)
+                            view.model.select_hotbar(selection as usize);
+                            session.set_carried_item(selection)
+                        }
                     };
                     if let Err(e) = sent {
                         // a send failure is a transport error: a framed
@@ -392,6 +404,28 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize) -> anyhow::Result<()>
     while window.is_open() {
         if window.is_key_pressed(Key::Escape, minifb::KeyRepeat::No) {
             app.on_escape();
+        }
+        // the number keys' hotbar selection (the vanilla keyPress's own
+        // lane): 1..9 move the selection, the live session's belief
+        // rides the command channel (the worker echoes the wire AND
+        // moves the store — the hand follows the keys)
+        for (i, key) in [
+            Key::Key1,
+            Key::Key2,
+            Key::Key3,
+            Key::Key4,
+            Key::Key5,
+            Key::Key6,
+            Key::Key7,
+            Key::Key8,
+            Key::Key9,
+        ]
+        .iter()
+        .enumerate()
+        {
+            if window.is_key_pressed(*key, minifb::KeyRepeat::No) {
+                app.on_number_key(i);
+            }
         }
         let (mx, my) = window.get_mouse_pos(minifb::MouseMode::Discard).unwrap_or((0.0, 0.0));
         let gmx = (mx as usize / 2) as i32;

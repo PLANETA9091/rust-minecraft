@@ -423,6 +423,23 @@ impl WorldModel {
         self.inventory.selected
     }
 
+    /// The player's OWN hotbar selection (the vanilla keyPress's local
+    /// move — the number keys' lane): the SELECTION-relative 0..8 gate
+    /// mirrors the Set Held Slot packet's, the repeat naming the held
+    /// slot is the no-op, and the move is the CLIENT's own belief — the
+    /// vanilla client updates `Inventory.selected` immediately and the
+    /// serverbound Set Carried Item echo tells the server (the
+    /// authoritative clientbound Set Held Slot still lands here through
+    /// its gate). The hand's projection reads this slot.
+    pub fn select_hotbar(&mut self, selection: usize) -> bool {
+        if selection < 9 && selection != self.inventory.selected {
+            self.inventory.selected = selection;
+            true
+        } else {
+            false
+        }
+    }
+
     /// The LOCAL player's active mob-effect state, by the effect's
     /// registry id.
     pub fn mob_effect(&self, effect_id: i32) -> Option<&MobEffectState> {
@@ -3592,6 +3609,32 @@ mod tests {
         assert_eq!(m.inventory_slot(0).unwrap().item_id, 123);
         // the window slot the selection names rides the USE_ROW mapping
         assert_eq!(USE_ROW_SLOT_START + m.selected_slot(), 40);
+    }
+
+    /// The player's OWN hotbar selection (the number keys' local
+    /// prediction): the SELECTION-relative 0..8 gate mirrors the Set
+    /// Held Slot packet's, the repeat naming the held slot is the
+    /// no-op, and the move is the client's own belief — the hand's
+    /// projection reads the moved slot (`USE_ROW_SLOT_START +
+    /// selected`).
+    #[test]
+    fn the_local_selection_moves_through_its_gate() {
+        let mut m = WorldModel::new();
+        assert_eq!(m.selected_slot(), 0, "vanilla's initial selection");
+        // the move is the client's own belief
+        assert!(m.select_hotbar(7));
+        assert_eq!(m.selected_slot(), 7);
+        // the repeat naming the held slot is the no-op
+        assert!(!m.select_hotbar(7));
+        assert_eq!(m.selected_slot(), 7);
+        // the gate drops the out-of-domain (the window numbering's 36
+        // is NOT a selection-relative slot — the same truth the Set
+        // Held Slot gate pins)
+        assert!(!m.select_hotbar(36));
+        assert!(!m.select_hotbar(9));
+        assert_eq!(m.selected_slot(), 7, "the gate dropped them all");
+        // and the move lands on the hand's projection slot
+        assert_eq!(USE_ROW_SLOT_START + m.selected_slot(), 43);
     }
 
     /// The open-container store's life cycle (the container GUI's
