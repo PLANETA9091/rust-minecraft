@@ -919,6 +919,35 @@ hand-drawn:
   (VILLAGER_DATA at 18 doubles as the order proof), the generated-id
   pin, and the model's merge semantics (replace-one-leave-others, the
   null-lookup drop, the re-spawn reset).
+  The **the shift-click lane — the quick move between the sections (v0.3.136)**:
+  the chest's third click table lands — the doClick QUICK_MOVE branch, the
+  shift-click the container GUI lives by (the grid to the player mirror and
+  back, the whole stack at once). THE INPUT: the keyboard lane's shift
+  state arrives with the loop (`on_shift_down`, the per-frame feed of
+  minifb's LeftShift — the vanilla `Screen.hasShiftDown()` query's own
+  shape), and the press's rising edge routes it: the shift state overrides
+  the click type for the LEFT AND the right press (the vanilla's own
+  routing; the button byte keeps its press's own value). THE TABLE
+  (`world_view::predict_quick_move`): the FULL believed menu feeds the
+  pure function — the chest grid (0..27) feeds the player mirror
+  (27..63) from its END backwards (the vanilla `fillFromEnd`, the hotbar
+  first), the mirror feeds the grid slot 0 forward; TWO PASSES in the
+  vanilla's own order: the SAME-item stacks with room take what fits up
+  to the ceiling first, then the EMPTY slots take the remainder; the
+  source empties (or keeps the unmovable remainder), and the cursor is
+  NOT the quick-move's lane — a held stack rides out untouched. THE WIRE:
+  the multi-slot belief rides the command's changed lanes (the emptied
+  source + every destination the merge and the empty-fill touched — the
+  Vec was already the type) as the `HashedStack` count pairs with the
+  QUICK_MOVE input mode (the dump's ordinal 1), and the server's
+  authoritative correction replaces the belief wholesale as before.
+  GOLDENS VERIFIED 13/13 at rms 0.000 (no render lane changed — the
+  static scenes never click, never feed shift). Tests +2 (workspace 502
+  passed / 0 failed / 3 ignored): the quick-move table's laws (the
+  fillFromEnd order's own numbers, the merge-then-remainder, the
+  different-item refusal, the no-room silence, the ceiling's cap) and
+  the shift arc (the merge to the mirror, the shift+right return lane,
+  the release restoring the pickup table, the offline silence).
   The **the right-press lane — the split stack and the single (v0.3.135)**:
   the chest's second button speaks — the doClick PICKUP table's other
   branch, the same PICKUP input mode on the wire with the button byte

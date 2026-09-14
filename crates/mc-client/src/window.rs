@@ -397,6 +397,10 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize) -> anyhow::Result<()>
         if let Some((px, py)) = window.get_mouse_pos(minifb::MouseMode::Discard) {
             app.on_mouse_move((px as usize / 2) as i32, (py as usize / 2) as i32);
         }
+        // the keyboard lane's shift state (the vanilla hasShiftDown()
+        // query's own shape): the press's rising edge routes the
+        // shift-click's QUICK_MOVE lane through it
+        app.on_shift_down(window.is_key_down(Key::LeftShift));
         let left_down = window.get_mouse_down(minifb::MouseButton::Left);
         if left_down {
             app.on_click(gmx, gmy);

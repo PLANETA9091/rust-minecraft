@@ -327,7 +327,9 @@ pub struct ContainerClick {
     /// The button (the left press's 0; the right press is the
     /// split-stack round's own lane).
     pub button: i8,
-    /// The click's input mode (Pickup for the left press).
+    /// The click's input mode (Pickup for the plain left press,
+    /// QuickMove for the shift-click — the vanilla hasShiftDown query
+    /// overrides the click type for either button).
     pub input: ContainerInput,
     /// The client's believed per-slot deltas — the prediction's own
     /// output, the menu's slot numbering with the post-click (item_id,
@@ -458,6 +460,73 @@ pub fn predict_pickup_right(slot: (i32, i32), carried: (i32, i32)) -> ((i32, i32
             }
         }
     }
+}
+
+/// The vanilla `AbstractContainerMenu.doClick` QUICK_MOVE prediction —
+/// the SHIFT-click (the `hasShiftDown()` query overrides the click type
+/// for the left AND the right press; the button byte keeps its press's
+/// own value). The whole clicked stack moves to the OTHER section (the
+/// ChestMenu's own `quickMoveStack` → `moveItemStackTo`): the chest grid
+/// (0..27) feeds the player mirror (27..63) from its END backwards (the
+/// vanilla `fillFromEnd` — the hotbar first, the menu's 62 down to 27),
+/// the mirror feeds the grid slot 0 forward. TWO PASSES, the vanilla's
+/// own order: the SAME-item stacks with room take what fits up to the
+/// ceiling first, then the EMPTY slots take the remainder. The cursor is
+/// NOT the quick-move's lane — the held stack rides out untouched. Takes
+/// the FULL believed menu (the screen's grid + mirror, the menu's own
+/// numbering) and the clicked slot; returns the changed `(index, pair)`
+/// entries — the source first (emptied, or the unmovable remainder),
+/// then the destinations in application order. NO entries means the
+/// belief did not move (the empty source, or no room anywhere) — the
+/// click still rides the wire and the server's correction decides. The
+/// belief laws are the local prediction's own (the ceiling is the
+/// documented ITEM_MAX_STACK_DEFAULT 64 — the server repairs any
+/// overfill; the corrections replace the belief wholesale).
+pub fn predict_quick_move(slots: &[(i32, i32)], src: usize) -> Vec<(usize, (i32, i32))> {
+    let src_item = slots[src];
+    if src_item.1 <= 0 {
+        return Vec::new(); // nothing to move
+    }
+    let order: Vec<usize> = if src < 27 {
+        (27..63).rev().collect() // the grid -> the mirror, the hotbar first
+    } else {
+        (0..27).collect() // the mirror -> the grid, slot 0 forward
+    };
+    let mut slots = slots.to_vec();
+    let mut remaining = src_item.1;
+    let mut changed: Vec<(usize, (i32, i32))> = Vec::new();
+    // pass 1: the same-item merge into the stacks with room
+    for &i in &order {
+        if remaining == 0 {
+            break;
+        }
+        let d = slots[i];
+        if d.1 > 0 && d.0 == src_item.0 && d.1 < ITEM_MAX_STACK_DEFAULT {
+            let take = (ITEM_MAX_STACK_DEFAULT - d.1).min(remaining);
+            slots[i] = (d.0, d.1 + take);
+            remaining -= take;
+            changed.push((i, slots[i]));
+        }
+    }
+    // pass 2: the empty slots take the remainder
+    if remaining > 0 {
+        for &i in &order {
+            if remaining == 0 {
+                break;
+            }
+            if slots[i].1 <= 0 {
+                let take = remaining.min(ITEM_MAX_STACK_DEFAULT);
+                slots[i] = (src_item.0, take);
+                remaining -= take;
+                changed.push((i, slots[i]));
+            }
+        }
+    }
+    let src_new = if remaining > 0 { (src_item.0, remaining) } else { (0, 0) };
+    if src_new != src_item || !changed.is_empty() {
+        changed.insert(0, (src, src_new));
+    }
+    changed
 }
 
 /// The model's open-container store projected for the UI — `None`
@@ -2040,5 +2109,86 @@ mod tests {
         assert_eq!(predict_pickup_right((926, 12), (921, 3)), ((926, 12), (921, 3)));
         // a full slot takes nothing
         assert_eq!(predict_pickup_right((926, 64), (926, 5)), ((926, 64), (926, 5)));
+    }
+
+    /// The QUICK_MOVE (shift-click) prediction's semantics table — the
+    /// doClick third branch over the FULL believed menu: the
+    /// grid-to-mirror lane fills from the END (the hotbar first), the
+    /// mirror-to-grid lane fills slot 0 forward, the same-item merge
+    /// precedes the empty-slot fill, and the cursor never moves.
+    #[test]
+    fn the_quick_move_prediction_rides_the_vanilla_table() {
+        // the empty source: nothing to move, no belief entries
+        let m = vec![(0, 0); 63];
+        assert!(predict_quick_move(&m, 2).is_empty());
+        // the grid -> the mirror, the hotbar first: the empty mirror's
+        // first tried slot is the menu's 62 (the fillFromEnd order)
+        let mut m = vec![(0, 0); 63];
+        m[2] = (926, 30);
+        assert_eq!(
+            predict_quick_move(&m, 2),
+            vec![(2, (0, 0)), (62, (926, 30))],
+            "the whole stack rides, the source emptied"
+        );
+        // the merge pass precedes the empty fill: the same-item stack
+        // takes what fits up to the ceiling
+        let mut m = vec![(0, 0); 63];
+        m[2] = (926, 24);
+        m[50] = (926, 40);
+        assert_eq!(
+            predict_quick_move(&m, 2),
+            vec![(2, (0, 0)), (50, (926, 64))],
+            "the merge filled the ceiling, no empty slot touched"
+        );
+        // the merge then the remainder: what the ceiling refused rides
+        // the hotbar's last slot (the pass order's own number)
+        let mut m = vec![(0, 0); 63];
+        m[2] = (926, 50);
+        m[50] = (926, 40);
+        assert_eq!(
+            predict_quick_move(&m, 2),
+            vec![(2, (0, 0)), (50, (926, 64)), (62, (926, 26))],
+            "the merge, then the remainder's empty fill"
+        );
+        // a different item is refused by the merge pass — the empty
+        // fill takes the whole stack
+        let mut m = vec![(0, 0); 63];
+        m[2] = (926, 30);
+        m[55] = (921, 3);
+        assert_eq!(
+            predict_quick_move(&m, 2),
+            vec![(2, (0, 0)), (62, (926, 30))],
+            "the apple's slot untouched"
+        );
+        // the mirror -> the grid, slot 0 forward: the vanilla's own
+        // fillFromEnd=false order
+        let mut m = vec![(0, 0); 63];
+        m[30] = (921, 12);
+        assert_eq!(predict_quick_move(&m, 30), vec![(30, (0, 0)), (0, (921, 12))]);
+        // the mirror's merge fills the grid's low slots first
+        let mut m = vec![(0, 0); 63];
+        m[30] = (921, 12);
+        m[5] = (921, 60);
+        assert_eq!(
+            predict_quick_move(&m, 30),
+            vec![(30, (0, 0)), (5, (921, 64)), (0, (921, 8))],
+            "the merge into the grid's slot 5, the remainder at slot 0"
+        );
+        // no room anywhere (every destination slot is a different full
+        // item): the stack stays, the belief did not move
+        let mut m = vec![(921, 64); 63];
+        m[2] = (926, 64);
+        assert!(predict_quick_move(&m, 2).is_empty());
+        // the overfill cap: the empty slot takes at most the ceiling —
+        // the remainder STAYS in the source (the server repairs the
+        // store's future component maxes)
+        let mut m = vec![(0, 0); 63];
+        m[2] = (926, 64);
+        m[50] = (926, 60);
+        assert_eq!(
+            predict_quick_move(&m, 2),
+            vec![(2, (0, 0)), (50, (926, 64)), (62, (926, 60))],
+            "the merge took 4, the empty fill took the 60"
+        );
     }
 }

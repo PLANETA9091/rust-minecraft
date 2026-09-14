@@ -383,6 +383,12 @@ pub struct App {
     /// `None` wherever no live mouse has moved (the headless scenes:
     /// the pixel goldens never see the render).
     pub mouse_pos: Option<(i32, i32)>,
+    /// The keyboard lane's shift state the LAST loop tick tracked —
+    /// the vanilla `Screen.hasShiftDown()` query: the press's rising
+    /// edge reads it to route the shift-click's QUICK_MOVE lane. Fed
+    /// per-frame by the windowed loop; the headless scenes never feed
+    /// it (the goldens never see the lane).
+    pub shift_down: bool,
 }
 
 /// World size for the in-game screen (chunks per side — same as the
@@ -477,6 +483,7 @@ impl App {
             chest_slot_rects: Vec::new(),
             chest_carried: (0, 0),
             mouse_pos: None,
+            shift_down: false,
         }
     }
 
@@ -795,8 +802,19 @@ impl App {
         self.mouse_pos = Some((mx, my));
     }
 
+    /// The keyboard lane's shift state (the windowed loop's per-frame
+    /// feed, the vanilla `hasShiftDown()` query's own shape): the next
+    /// press's rising edge routes the shift-click through it. The
+    /// headless scenes never feed it — the QUICK_MOVE lane stays off
+    /// (the goldens' deterministic scenes).
+    pub fn on_shift_down(&mut self, down: bool) {
+        self.shift_down = down;
+    }
+
     /// The chest screen's slot click (the button byte's own lane: 0 =
-    /// the left table, 1 = the right table): the press finds the 16x16
+    /// the left table, 1 = the right table; the SHIFT state overrides
+    /// either table with the QUICK_MOVE lane — the vanilla
+    /// `hasShiftDown()`'s own routing): the press finds the 16x16
     /// hit box the last render laid out (the vanilla Slot's own hit
     /// shape), and the LIVE window's identity (id + revision) rides the
     /// command to the session's send lane. THE LOCAL PREDICTION runs
@@ -834,6 +852,41 @@ impl App {
         } else {
             self.chest_mirror[slot as usize - 27]
         };
+        // THE QUICK_MOVE LANE (the shift-click): the whole stack moves
+        // to the OTHER section — the vanilla doClick's third branch
+        // (`hasShiftDown()` overrides the click type for the left AND
+        // the right press; the button byte keeps its press's own
+        // value). The full believed menu feeds the prediction, the
+        // multi-slot deltas mutate the screen in place and ride the
+        // command; the cursor is NOT the quick-move's lane.
+        if self.shift_down {
+            let snapshot: Vec<(i32, i32)> = self
+                .chest_slots
+                .iter()
+                .chain(self.chest_mirror.iter())
+                .copied()
+                .collect();
+            let changed = crate::world_view::predict_quick_move(&snapshot, slot as usize);
+            for (i, pair) in &changed {
+                if *i < 27 {
+                    self.chest_slots[*i] = *pair;
+                } else {
+                    self.chest_mirror[*i - 27] = *pair;
+                }
+            }
+            let _ = sink.send(crate::world_view::ContainerCommand::Click(
+                crate::world_view::ContainerClick {
+                    window_id,
+                    state_id,
+                    slot,
+                    button,
+                    input: crate::world_view::ContainerInput::QuickMove,
+                    changed: changed.iter().map(|(i, p)| (*i as i16, *p)).collect(),
+                    carried: self.chest_carried,
+                },
+            ));
+            return;
+        }
         let (new_slot, new_carried) = if button == 0 {
             crate::world_view::predict_pickup(believed, self.chest_carried)
         } else {
@@ -3503,6 +3556,121 @@ mod tests {
             .expect("the offline box");
         app.on_right_press(ox + 8, oy + 8);
         assert!(click_rx.try_recv().is_err(), "the offline right press is silent");
+    }
+
+    /// The shift-click's whole arc: the keyboard lane's shift state
+    /// routes the press through the QUICK_MOVE table — the whole stack
+    /// moves to the OTHER section (the merge, the remainder's hotbar
+    /// fill), the multi-slot belief rides the command, the cursor is
+    /// NOT the lane, and the offline stand-in stays silent.
+    #[test]
+    fn the_shift_click_moves_the_whole_stack() {
+        use crate::world_view::{ContainerCommand, ContainerInput};
+        let mut app = App::new(3);
+        app.open(ScreenKind::Connect);
+        app.net_world = Some(air_net_world(2, 0));
+        app.enter_network_world(None, Skybox::Overworld, None, None);
+        let (click_tx, click_rx) = std::sync::mpsc::channel::<ContainerCommand>();
+        app.attach_live_clicks(click_tx);
+        let chest = crate::world_view::LiveContainer {
+            id: 5,
+            menu_type_id: crate::world_model::MENU_TYPE_CHEST,
+            slots: {
+                let mut s = vec![(0i32, 0i32); 63];
+                s[4] = (926, 30); // the chest grid's diamond stack
+                s[50] = (926, 40); // the mirror's same-item merge target
+                s
+            },
+            carried: (921, 3), // a held stack: QUICK_MOVE never touches it
+            state_id: 7,
+        };
+        app.live_view_updated(air_net_world(2, 1), None, None, Some(chest));
+        assert_eq!(app.screen, ScreenKind::Chest);
+        app.render_title_buttons_for_test();
+        let &(sx, sy, slot) = app
+            .chest_slot_rects
+            .iter()
+            .find(|&&(_, _, s)| s == 4)
+            .expect("the container's slot 4 box");
+
+        // the SHIFT+left press: the merge fills the mirror's stack to
+        // the ceiling, the remainder rides the hotbar's last slot
+        app.on_shift_down(true);
+        app.on_press(sx + 8, sy + 8);
+        assert_eq!(app.chest_slots[4], (0, 0), "the source emptied");
+        assert_eq!(app.chest_mirror[23], (926, 64), "the merge filled (menu 50)");
+        assert_eq!(app.chest_mirror[35], (926, 6), "the remainder rides (menu 62)");
+        assert_eq!(app.chest_carried, (921, 3), "the cursor is not the QUICK_MOVE's lane");
+        match click_rx.try_recv().expect("the shift click rode the lane") {
+            ContainerCommand::Click(c) => {
+                assert_eq!(c.window_id, 5);
+                assert_eq!(c.state_id, 7);
+                assert_eq!(c.slot, 4);
+                assert_eq!(c.button, 0, "the left press's own button byte");
+                assert_eq!(c.input, ContainerInput::QuickMove);
+                assert_eq!(
+                    c.changed,
+                    vec![(4, (0, 0)), (50, (926, 64)), (62, (926, 6))],
+                    "the multi-slot belief rides the command"
+                );
+                assert_eq!(c.carried, (921, 3), "the carried lane untouched");
+            }
+            other => panic!("expected a click, got {other:?}"),
+        }
+
+        // the SHIFT+right press on the MIRROR moves the full stack back
+        // to the grid (slot 0 forward) — the vanilla hasShiftDown
+        // overrides the right button too
+        let &(mx, my, mslot) = app
+            .chest_slot_rects
+            .iter()
+            .find(|&&(_, _, s)| s == 50)
+            .expect("the mirror's menu-50 box");
+        assert_eq!(mslot, 50);
+        app.on_right_press(mx + 8, my + 8);
+        assert_eq!(app.chest_mirror[23], (0, 0), "the mirror's stack moved out");
+        assert_eq!(app.chest_slots[0], (926, 64), "the grid's slot 0 took it");
+        match click_rx.try_recv().expect("the mirror's shift click rode") {
+            ContainerCommand::Click(c) => {
+                assert_eq!(c.slot, 50);
+                assert_eq!(c.button, 1, "the right press's own button byte");
+                assert_eq!(c.input, ContainerInput::QuickMove);
+                assert_eq!(c.changed, vec![(50, (0, 0)), (0, (926, 64))]);
+            }
+            other => panic!("expected a click, got {other:?}"),
+        }
+
+        // the shift RELEASE restores the pickup table: the same spot's
+        // plain left press now PLACES the held stack into the empty
+        // slot (the pickup table's own place law — the shift's
+        // whole-move routing is gone)
+        app.on_shift_down(false);
+        app.on_press(sx + 8, sy + 8);
+        assert_eq!(app.chest_slots[4], (921, 3), "the held stack placed");
+        assert_eq!(app.chest_carried, (0, 0), "the cursor emptied");
+        match click_rx.try_recv().expect("the plain click rode") {
+            ContainerCommand::Click(c) => {
+                assert_eq!(c.input, ContainerInput::Pickup, "the plain press");
+                assert_eq!(c.changed, vec![(4, (921, 3))]);
+                assert_eq!(c.carried, (0, 0));
+            }
+            other => panic!("expected a click, got {other:?}"),
+        }
+
+        // the offline stand-in: the shift press never speaks
+        app.on_escape();
+        let _ = click_rx.try_recv(); // the close echo
+        app.open_chest();
+        app.render_title_buttons_for_test();
+        let (ox, oy, _) = app
+            .chest_slot_rects
+            .iter()
+            .find(|&&(_, _, s)| s == 6)
+            .copied()
+            .expect("the offline box");
+        app.on_shift_down(true);
+        app.on_press(ox + 8, oy + 8);
+        assert!(click_rx.try_recv().is_err(), "the offline shift press is silent");
     }
 
     #[test]
