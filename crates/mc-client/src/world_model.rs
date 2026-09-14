@@ -3286,6 +3286,72 @@ mod tests {
         assert!(!is_hotbar_slot(35) && !is_hotbar_slot(46));
     }
 
+    /// The hotbar's selection — the Set Held Slot packet's audited
+    /// gate: the SELECTION-relative 0..9 moves the store's selected
+    /// slot (the window slot it names is `USE_ROW_SLOT_START +
+    /// selected`), a repeat naming the held slot is the no-op, the
+    /// gate DROPS the window numbering (36 — a USE_ROW slot in the
+    /// InventoryMenu numbering but not a selection index) and the
+    /// negatives before they reach the inventory, and the container
+    /// snapshot does NOT reset the selection (vanilla's
+    /// initializeContents sets slots/carried/stateId only).
+    #[test]
+    fn the_held_slot_moves_the_selection_through_the_gate() {
+        use mc_protocol::play::{clientbound, parse_set_container_content, parse_set_held_slot};
+        let mut m = WorldModel::new();
+        assert_eq!(m.selected_slot(), 0, "vanilla's initial selection");
+        // the selection moves
+        let mut p = Vec::new();
+        write_varint(&mut p, clientbound::SET_HELD_SLOT);
+        write_varint(&mut p, 4);
+        let s = parse_set_held_slot(&p).unwrap();
+        assert!(m.apply(PlayEvent::HeldSlotSet(s)));
+        assert_eq!(m.selected_slot(), 4);
+        // a repeat naming the held slot is the no-op
+        let mut p = Vec::new();
+        write_varint(&mut p, clientbound::SET_HELD_SLOT);
+        write_varint(&mut p, 4);
+        let s = parse_set_held_slot(&p).unwrap();
+        assert!(!m.apply(PlayEvent::HeldSlotSet(s)));
+        // the GATE drops the window numbering: 36 is a USE_ROW slot in
+        // the InventoryMenu numbering but NOT a selection-relative
+        // hotbar slot — the two isHotbarSlot helpers are different
+        // truths
+        let mut p = Vec::new();
+        write_varint(&mut p, clientbound::SET_HELD_SLOT);
+        write_varint(&mut p, 36);
+        let s = parse_set_held_slot(&p).unwrap();
+        assert!(!m.apply(PlayEvent::HeldSlotSet(s)));
+        assert_eq!(m.selected_slot(), 4, "the gate dropped 36");
+        // and the negative
+        let mut p = Vec::new();
+        write_varint(&mut p, clientbound::SET_HELD_SLOT);
+        write_varint(&mut p, -2);
+        let s = parse_set_held_slot(&p).unwrap();
+        assert!(!m.apply(PlayEvent::HeldSlotSet(s)));
+        assert_eq!(m.selected_slot(), 4);
+        // the window-0 snapshot REPLACES slots/carried/stateId and
+        // leaves the selection alone (the initializeContents field
+        // list, javap-pinned)
+        let mut p = Vec::new();
+        write_varint(&mut p, clientbound::CONTAINER_SET_CONTENT);
+        write_varint(&mut p, 0); // window 0
+        write_varint(&mut p, 3); // state id
+        write_varint(&mut p, 1); // one slot
+        write_varint(&mut p, 7); // stack count
+        write_varint(&mut p, 123); // item registry id
+        write_varint(&mut p, 0); // patch: none added
+        write_varint(&mut p, 0); // patch: none removed
+        write_varint(&mut p, 0); // the carried item: empty
+        let c = parse_set_container_content(&p).unwrap();
+        assert!(m.apply(PlayEvent::ContainerFilled(c)));
+        assert_eq!(m.selected_slot(), 4, "the snapshot left the selection");
+        assert_eq!(m.inventory().slots.len(), 1);
+        assert_eq!(m.inventory_slot(0).unwrap().item_id, 123);
+        // the window slot the selection names rides the USE_ROW mapping
+        assert_eq!(USE_ROW_SLOT_START + m.selected_slot(), 40);
+    }
+
     /// Spawn ONE entity at the named position (the full-precision
     /// doubles are exact — the walk tests rely on that).
     fn spawn_at(m: &mut WorldModel, id: i32, x: f64, y: f64, z: f64) {
