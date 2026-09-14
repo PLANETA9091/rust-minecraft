@@ -919,6 +919,37 @@ hand-drawn:
   (VILLAGER_DATA at 18 doubles as the order proof), the generated-id
   pin, and the model's merge semantics (replace-one-leave-others, the
   null-lookup drop, the re-spawn reset).
+  The **the idMapper ordinal lanes' never-refuse contract — the
+  Rarity fidelity-fix round (v0.3.112)**: the delivered RARITY lane
+  refused a NEGATIVE ordinal while retaining out-of-range positives —
+  an asymmetry the bytecode does not have. The javap audit, fresh:
+  `Rarity.STREAM_CODEC` = `ByteBufCodecs.idMapper(BY_ID,
+  Rarity::ordinal)` where `BY_ID` = `ByIdMap.continuous(..,
+  OutOfBoundsStrategy.ZERO)` — the map NEVER refuses, every key
+  outside [0, 4) (negative AND out-of-range) filling to values[0] =
+  COMMON; and the audit's sweep caught the SAME defect family in two
+  more delivered lanes: `Pose.STREAM_CODEC`'s map is the same
+  continuous ZERO shape (out-of-range fills to STANDING), and
+  `Direction.STREAM_CODEC`'s `BY_ID` is the WRAP strategy
+  (`ByIdMap.continuous(.., OutOfBoundsStrategy.WRAP)` — out-of-range
+  keys floorMod into [0, 6), a negative -1 wrapping to 5 = up; also
+  never refuses). The fix: all three lanes drop their negative
+  refusals and retain every wire ordinal VERBATIM — negative and
+  out-of-range — the fill/wrap being the consumer's resolution (the
+  operation/slot/animation line from the wave-four round: retaining
+  the DATA ordinal is the family norm, and the strictness was the
+  invention). The audit also found the OptionalInt serializer ($3)
+  accepts a negative n as `OptionalInt.of(n - 1)` where the port
+  refuses — the same stricter-than-vanilla class but a DIFFERENT
+  family (an arithmetic codec, not an idMapper, and the honest fix
+  changes the store's Option<u32> to a signed shape) — DEFERRED with
+  evidence, a candidate of its own. mc-client untouched BY
+  CONSTRUCTION. GOLDENS UNTOUCHED BY CONSTRUCTION: 12/12 PASS. Tests
+  +1 (workspace 461 -> 462 passed / 0 failed / 3 ignored): the
+  never-refuse contract pinned end-to-end — Direction -1 and 42,
+  Pose -1 and 99 through the entity-data transport, Rarity -2 and 9
+  through the patch walk (the ordinals the old lane refused, now
+  retained verbatim).
   The **the dispatched predicate-type registry's payload census — the
   wave-three partial-matcher deferral retired (v0.3.111)**: the
   component-matchers' PARTIAL side — which the wave-three round
