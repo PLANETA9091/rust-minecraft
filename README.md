@@ -919,6 +919,47 @@ hand-drawn:
   (VILLAGER_DATA at 18 doubles as the order proof), the generated-id
   pin, and the model's merge semantics (replace-one-leave-others, the
   null-lookup drop, the re-spawn reset).
+  The **the adventure-mode pair rides the patch — the wave three
+  (v0.3.108)**: can_place_on (14) and can_break (15) leave the
+  patch-value refusal list, and the javap walk (four hops) shows they
+  are the SAME record — `net.minecraft.world.item.AdventureModePredicate`,
+  registered under two component ids, so one decode serves both. The
+  record = `composite(BlockPredicate.STREAM_CODEC.list(), ..)` — a
+  VarInt count over the NO-ARG `ByteBufCodecs.list()` (ceiling
+  `Integer.MAX_VALUE`; readCount's ceiling check is the only guard, a
+  negative count still dies at the constructor), then count × a
+  FOUR-lane BlockPredicate: `optional(holderSet(BLOCK))` (the $31
+  VarInt TAG — wire 0 is a NAMED set carried as its UTF identifier,
+  wire tag >= 1 is a DIRECT set of `tag - 1` numeric holder ids, so
+  the EMPTY direct set is wire tag 1 and a negative count cannot
+  arrive), `optional(StatePropertiesPredicate)` (a
+  `PropertyMatcher.list()` whose value lane is
+  `ByteBufCodecs.either(exact, ranged)` — a ONE-BYTE readBoolean
+  discriminator ($26), the exact matcher a bare UTF string, the
+  ranged matcher BOTH bounds riding as optional UTF STRINGS ("10"),
+  not doubles — the numeric NBT schema is not the wire's shape),
+  `optional(NbtPredicate)` (a bare COMPOUND_TAG whose non-compound
+  shape refuses — the custom_data DecoderException line), and
+  `DataComponentMatchers` — the EXACT side decodes fully through the
+  patch's added-entry walk (`TypedDataComponent.STREAM_CODEC.list()`),
+  while the PARTIAL side (a dispatched predicate-type registry,
+  `list(64)`) enforces its 64-entry cap and refuses any NON-EMPTY
+  list: each dispatched type carries its own payload codec (damage,
+  enchantments, potion contents — a census wave of their own) and the
+  unframed wire cannot be skipped honestly. The named-set identifier
+  is retained verbatim — vanilla resolves it `orElseThrow` against
+  the synced block tags; this client carries no tag tables, so the
+  strictness is a consumer's act (the VILLAGER_DATA line). The decode
+  census: TWENTY-ONE of the registry's 111 component types carry
+  value codecs; the other 90 refuse. Tests +2 (workspace 455 -> 457
+  passed / 0 failed / 3 ignored): the four-lane decode bit-exact
+  (named + direct sets, exact + ranged properties, the compound nbt,
+  the exact matcher entry), the ALL-ABSENT predicate and the EMPTY
+  list shapes, and the shape-refusal map (a negative predicate
+  count, a negative block id, a non-compound nbt, an unknown exact
+  id, a non-empty and an over-cap partial list); the patch refusal
+  probe moved 14 -> 16 (attribute_modifiers). GOLDENS UNTOUCHED BY
+  CONSTRUCTION: 12/12 at rms 0.000.
   The **the patch values grow their record codecs — the wave two
   (v0.3.107)**: three more component types leave the patch-value
   refusal list, each audited one hop from its own builder lambda.

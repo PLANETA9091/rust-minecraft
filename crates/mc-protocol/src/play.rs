@@ -1887,6 +1887,12 @@ fn read_component_value(type_id: i32, c: &mut &[u8]) -> Result<ComponentValue> {
             }
             ComponentValue::TooltipDisplay { hide_tooltip, hidden }
         }
+        t::CAN_PLACE_ON | t::CAN_BREAK => {
+            // AdventureModePredicate.STREAM_CODEC: the same record
+            // registered under BOTH component ids — one codec, two
+            // registry slots
+            ComponentValue::BlockPredicates(read_adventure_mode_predicate(c)?)
+        }
         other => anyhow::bail!(
             "no value codec for component type {other} (the patch wire is unframed; \
              the value cannot be skipped honestly)"
@@ -2011,6 +2017,127 @@ pub struct BlockPredicate {
     pub nbt: Option<Nbt>,
     /// The component-matcher lane.
     pub matchers: DataComponentMatchers,
+}
+
+/// `ByteBufCodecs.optional` (`$23`) verbatim: a one-byte boolean
+/// prefix, then the value only if present. Used by the ranged
+/// property matcher's two bounds (and the same shape as the
+/// predicate's own optional lanes).
+fn read_optional_string(c: &mut &[u8]) -> Result<Option<String>> {
+    if read_u8(c)? != 0 {
+        Ok(Some(read_string(c)?))
+    } else {
+        Ok(None)
+    }
+}
+
+/// `AdventureModePredicate.STREAM_CODEC` verbatim: `composite(
+/// BlockPredicate.STREAM_CODEC.list(), ..)` — a VarInt count over the
+/// NO-ARG `ByteBufCodecs.list()` (ceiling `Integer.MAX_VALUE`; the
+/// readCount check is the only guard, a negative count still dies at
+/// the constructor), then count × [`BlockPredicate`].
+fn read_adventure_mode_predicate(c: &mut &[u8]) -> Result<Vec<BlockPredicate>> {
+    let n = read_component_count(c, "block predicate list")?;
+    let mut predicates = Vec::with_capacity(n as usize);
+    for _ in 0..n {
+        predicates.push(read_block_predicate(c)?);
+    }
+    Ok(predicates)
+}
+
+/// ONE [`BlockPredicate`] — the four-lane composite in wire order.
+/// See the type's doc for the full audit provenance.
+fn read_block_predicate(c: &mut &[u8]) -> Result<BlockPredicate> {
+    // lane 1: optional(holderSet(BLOCK)) — the $31 VarInt TAG:
+    // wire 0 = the named set (an identifier), wire tag >= 1 = a
+    // DIRECT set of (tag - 1) byIdOrThrow ids
+    let blocks = if read_u8(c)? != 0 {
+        let tag = read_varint(c)?;
+        if tag == 0 {
+            // NAMED: the tag identifier, retained verbatim —
+            // vanilla resolves it orElseThrow against the synced
+            // block tags; this client has no tag tables, so the
+            // strictness is a consumer's act (the VILLAGER_DATA line)
+            Some(BlockSet::Named(read_string(c)?))
+        } else {
+            let count = tag - 1; // can never be negative: tag 0 was the named lane
+            let mut ids = Vec::with_capacity(count as usize);
+            for _ in 0..count {
+                let id = read_varint(c)?;
+                anyhow::ensure!(id >= 0, "negative block registry id {id}");
+                ids.push(id);
+            }
+            Some(BlockSet::Direct(ids))
+        }
+    } else {
+        None
+    };
+
+    // lane 2: optional(StatePropertiesPredicate) — the
+    // PropertyMatcher.list() walk: VarInt count, then count x
+    // {UTF name, either(exact UTF, ranged {optional UTF, optional UTF})}
+    let properties = if read_u8(c)? != 0 {
+        let n = read_component_count(c, "state property list")?;
+        let mut props = Vec::with_capacity(n as usize);
+        for _ in 0..n {
+            let name = read_string(c)?;
+            // ByteBufCodecs.either ($26): a bare readBoolean —
+            // true = LEFT (the exact matcher), false = RIGHT (ranged)
+            let value = if read_u8(c)? != 0 {
+                PropertyValue::Exact(read_string(c)?)
+            } else {
+                PropertyValue::Ranged {
+                    min: read_optional_string(c)?,
+                    max: read_optional_string(c)?,
+                }
+            };
+            props.push(PropertyMatcher { name, value });
+        }
+        Some(props)
+    } else {
+        None
+    };
+
+    // lane 3: optional(NbtPredicate) — COMPOUND_TAG.map(..): a bare
+    // tag whose non-compound shape refuses (the custom_data
+    // DecoderException line)
+    let nbt = if read_u8(c)? != 0 {
+        let tag = read_bare_nbt(c)?;
+        if !matches!(tag, Nbt::Compound(_)) {
+            anyhow::bail!("nbt predicate must be a compound tag, got another tag shape");
+        }
+        Some(tag)
+    } else {
+        None
+    };
+
+    // lane 4: DataComponentMatchers — the exact list decodes (the
+    // patch's added-entry walk), the partial list refuses non-empty
+    let exact_n = read_component_count(c, "exact matcher list")?;
+    let mut exact = Vec::with_capacity(exact_n as usize);
+    for _ in 0..exact_n {
+        let type_id = read_varint(c)?;
+        anyhow::ensure!(type_id >= 0, "negative component type id {type_id}");
+        let value = read_component_value(type_id, c)?;
+        exact.push((type_id, value));
+    }
+    let partial_n = read_component_count(c, "predicate matcher list")?;
+    anyhow::ensure!(
+        partial_n <= 64,
+        "predicate matcher list over the codec's 64-entry cap ({partial_n})"
+    );
+    anyhow::ensure!(
+        partial_n == 0,
+        "no payload codecs for the {partial_n} dispatched predicate types (the wire is \
+         unframed; a payload cannot be skipped honestly)"
+    );
+
+    Ok(BlockPredicate {
+        blocks,
+        properties,
+        nbt,
+        matchers: DataComponentMatchers { exact },
+    })
 }
 
 /// The `DataComponentPatch$3.decode` walk: VarInt added count, VarInt
@@ -3822,7 +3949,7 @@ mod tests {
         assert!(parse_rotate_head(&p2).is_err());
     }
 
-    /// Set Entity Data: one packet, ALL SIXTEEN supported
+    /// Set Entity Data: one packet, ALL EIGHTEEN supported
     /// serializers, distinctive values — the entry list round-trips
     /// bit-exact and the REGISTRATION-ORDER table is pinned (the
     /// wiki-era table would have decoded VILLAGER_DATA at 19 where the
@@ -3892,6 +4019,49 @@ mod tests {
             stack_value.extend_from_slice(&test_support::entity_data_varint(v));
         }
         entries.extend(test_support::entity_data_entry(21, s::ITEM_STACK, &stack_value));
+        // the second stack: the ADVENTURE-MODE pair rides the patch —
+        // one added entry, can_place_on (14), TWO block predicates:
+        // the first a NAMED set ("minecraft:logs") with one exact
+        // property, the second a DIRECT set (wire tag 3 = two ids)
+        // with a compound nbt lane — the four-lane walk in full
+        let mut adv_value = Vec::new();
+        for v in [1i32, 2, 1, 0] {
+            adv_value.extend_from_slice(&test_support::entity_data_varint(v));
+        }
+        adv_value.extend_from_slice(&test_support::entity_data_varint(data_component_types::CAN_PLACE_ON));
+        adv_value.extend_from_slice(&test_support::entity_data_varint(2)); // predicate count
+        // predicate 1: blocks present, tag 0 = named; properties
+        // present, one {facing, exact "north"}; nbt absent; matchers
+        // {exact [damage = 35], partial []}
+        adv_value.push(1);
+        adv_value.extend_from_slice(&test_support::entity_data_varint(0));
+        write_string(&mut adv_value, "minecraft:logs");
+        adv_value.push(1);
+        adv_value.extend_from_slice(&test_support::entity_data_varint(1));
+        write_string(&mut adv_value, "facing");
+        adv_value.push(1); // either: LEFT = exact
+        write_string(&mut adv_value, "north");
+        adv_value.push(0); // nbt absent
+        adv_value.extend_from_slice(&test_support::entity_data_varint(1)); // exact count
+        adv_value.extend_from_slice(&test_support::entity_data_varint(3)); // damage
+        adv_value.extend_from_slice(&test_support::entity_data_varint(35));
+        adv_value.extend_from_slice(&test_support::entity_data_varint(0)); // partial empty
+        // predicate 2: blocks present, tag 3 = direct {17, 999};
+        // properties absent; nbt present (compound); matchers empty
+        adv_value.push(1);
+        adv_value.extend_from_slice(&test_support::entity_data_varint(3));
+        adv_value.extend_from_slice(&test_support::entity_data_varint(17));
+        adv_value.extend_from_slice(&test_support::entity_data_varint(999));
+        adv_value.push(0); // properties absent
+        adv_value.push(1); // nbt present
+        crate::nbt::write_bare_nbt(
+            &Nbt::Compound(vec![("tag".into(), Nbt::Byte(1))]),
+            &mut adv_value,
+        )
+        .unwrap();
+        adv_value.extend_from_slice(&test_support::entity_data_varint(0)); // exact empty
+        adv_value.extend_from_slice(&test_support::entity_data_varint(0)); // partial empty
+        entries.extend(test_support::entity_data_entry(22, s::ITEM_STACK, &adv_value));
 
         let p = test_support::set_entity_data_packet(77, &entries);
         let d = parse_set_entity_data(&p).unwrap();
@@ -3921,6 +4091,10 @@ mod tests {
                 SetEntityDataEntry { index: 19, serializer: s::POSE, value: EntityDataEntry::Pose(6) },
                 SetEntityDataEntry { index: 20, serializer: s::VILLAGER_DATA, value: EntityDataEntry::VillagerData { type_id: 2, profession_id: 14, level: 3 } },
                 SetEntityDataEntry { index: 21, serializer: s::ITEM_STACK, value: EntityDataEntry::ItemStack { count: 3, item_id: 745, patch: ComponentPatch { added: vec![(3, ComponentValue::VarInt(35)), (4, ComponentValue::Unit)], removed: vec![12] } } },
+                SetEntityDataEntry { index: 22, serializer: s::ITEM_STACK, value: EntityDataEntry::ItemStack { count: 1, item_id: 2, patch: ComponentPatch { added: vec![(data_component_types::CAN_PLACE_ON, ComponentValue::BlockPredicates(vec![
+                    BlockPredicate { blocks: Some(BlockSet::Named("minecraft:logs".into())), properties: Some(vec![PropertyMatcher { name: "facing".into(), value: PropertyValue::Exact("north".into()) }]), nbt: None, matchers: DataComponentMatchers { exact: vec![(3, ComponentValue::VarInt(35))] } },
+                    BlockPredicate { blocks: Some(BlockSet::Direct(vec![17, 999])), properties: None, nbt: Some(Nbt::Compound(vec![("tag".into(), Nbt::Byte(1))])), matchers: DataComponentMatchers { exact: vec![] } },
+                ]))], removed: vec![] } } },
             ]
         );
     }
@@ -4279,10 +4453,11 @@ mod tests {
                 "component type {tid} must refuse"
             );
         }
-        // known to the registry but unimplemented here (14
-        // can_place_on — 13 enchantments left the refusal list the
-        // round the wave-two record codecs landed)
-        assert!(parse_set_entity_data(&one_stack(&test_support::entity_data_varint(14))).is_err());
+        // known to the registry but unimplemented here (16
+        // attribute_modifiers — 13 and the adventure-mode pair 14/15
+        // left the refusal list as the wave-two record codecs and the
+        // wave-three predicates landed)
+        assert!(parse_set_entity_data(&one_stack(&test_support::entity_data_varint(16))).is_err());
         // the negative ADDED count
         let mut neg = Vec::new();
         neg.extend_from_slice(&test_support::entity_data_varint(1));
@@ -4523,6 +4698,271 @@ mod tests {
         tail.push(0);
         tail.extend_from_slice(&test_support::entity_data_varint(1));
         tail.extend_from_slice(&test_support::entity_data_varint(-5));
+        assert!(parse_set_entity_data(&stack_with(&with_base(&tail))).is_err());
+    }
+
+    /// The patch value codecs' THIRD WAVE: the adventure-mode pair —
+    /// can_place_on (14) and can_break (15), the SAME
+    /// `AdventureModePredicate` record under two registry slots. The
+    /// audit (javap, four hops): the record = `composite(
+    /// BlockPredicate.STREAM_CODEC.list(), ..)`; one predicate =
+    /// FOUR lanes in order — `optional(holderSet(BLOCK))` (the $31
+    /// VarInt TAG: 0 = a named set's UTF identifier, >= 1 = a direct
+    /// set of tag-minus-one byIdOrThrow ids), `optional(
+    /// StatePropertiesPredicate)` (a `PropertyMatcher.list()` whose
+    /// value lane is `ByteBufCodecs.either(exact UTF, ranged
+    /// {optional UTF, optional UTF})` — a bare readBoolean
+    /// discriminator, both bounds riding as STRINGS), `optional(
+    /// NbtPredicate)` (a bare COMPOUND_TAG, non-compound refuses),
+    /// and `DataComponentMatchers` (the exact list decodes through
+    /// the patch's added-entry walk; the partial list's count is
+    /// 64-capped and any NON-EMPTY list refuses — the dispatched
+    /// predicate-type payloads are a census wave of their own, the
+    /// unframed wire cannot be skipped honestly).
+    #[test]
+    fn the_adventure_mode_predicates_decode_their_four_lanes() {
+        use data_component_types as t;
+        use entity_data_serializers as s;
+
+        // the FULL four-lane predicate, both set shapes at once:
+        // blocks = named "minecraft:stone"; properties = two matchers
+        // (exact + ranged); nbt = one compound; matchers = one exact
+        // entry (damage = 5) and an empty partial list
+        let mut value = Vec::new();
+        for v in [1i32, 1, 1, 0] {
+            value.extend_from_slice(&test_support::entity_data_varint(v));
+        }
+        value.extend_from_slice(&test_support::entity_data_varint(t::CAN_PLACE_ON));
+        value.extend_from_slice(&test_support::entity_data_varint(1)); // one predicate
+        value.push(1); // blocks present
+        value.extend_from_slice(&test_support::entity_data_varint(0)); // tag 0 = NAMED
+        write_string(&mut value, "minecraft:stone");
+        value.push(1); // properties present
+        value.extend_from_slice(&test_support::entity_data_varint(2)); // two matchers
+        write_string(&mut value, "facing");
+        value.push(1); // either LEFT = exact
+        write_string(&mut value, "north");
+        write_string(&mut value, "powered");
+        value.push(0); // either RIGHT = ranged
+        value.push(1); // min present
+        write_string(&mut value, "10");
+        value.push(0); // max absent
+        value.push(1); // nbt present
+        crate::nbt::write_bare_nbt(
+            &Nbt::Compound(vec![("Items".into(), Nbt::List(vec![]))]),
+            &mut value,
+        )
+        .unwrap();
+        value.extend_from_slice(&test_support::entity_data_varint(1)); // exact count
+        value.extend_from_slice(&test_support::entity_data_varint(3)); // damage
+        value.extend_from_slice(&test_support::entity_data_varint(5));
+        value.extend_from_slice(&test_support::entity_data_varint(0)); // partial empty
+        let p = test_support::set_entity_data_packet(
+            5,
+            &test_support::entity_data_entry(8, s::ITEM_STACK, &value),
+        );
+        let d = parse_set_entity_data(&p).unwrap();
+        assert_eq!(
+            d.entries[0].value,
+            EntityDataEntry::ItemStack {
+                count: 1,
+                item_id: 1,
+                patch: ComponentPatch {
+                    added: vec![(
+                        t::CAN_PLACE_ON,
+                        ComponentValue::BlockPredicates(vec![BlockPredicate {
+                            blocks: Some(BlockSet::Named("minecraft:stone".into())),
+                            properties: Some(vec![
+                                PropertyMatcher {
+                                    name: "facing".into(),
+                                    value: PropertyValue::Exact("north".into())
+                                },
+                                PropertyMatcher {
+                                    name: "powered".into(),
+                                    value: PropertyValue::Ranged {
+                                        min: Some("10".into()),
+                                        max: None
+                                    }
+                                },
+                            ]),
+                            nbt: Some(Nbt::Compound(vec![("Items".into(), Nbt::List(vec![]))])),
+                            matchers: DataComponentMatchers {
+                                exact: vec![(3, ComponentValue::VarInt(5))]
+                            },
+                        }])
+                    )],
+                    removed: vec![]
+                }
+            }
+        );
+
+        // the DIRECT set lane: wire tag 3 = TWO ids (the tag-minus-one
+        // arithmetic, the EMPTY direct set is wire tag 1) — and the
+        // can_break id decodes through the SAME walk
+        let mut value = Vec::new();
+        for v in [1i32, 1, 1, 0] {
+            value.extend_from_slice(&test_support::entity_data_varint(v));
+        }
+        value.extend_from_slice(&test_support::entity_data_varint(t::CAN_BREAK));
+        value.extend_from_slice(&test_support::entity_data_varint(1));
+        value.push(1); // blocks present
+        value.extend_from_slice(&test_support::entity_data_varint(3)); // tag 3 = direct, 2 ids
+        value.extend_from_slice(&test_support::entity_data_varint(17));
+        value.extend_from_slice(&test_support::entity_data_varint(999));
+        value.push(0); // properties absent
+        value.push(0); // nbt absent
+        value.extend_from_slice(&test_support::entity_data_varint(0)); // exact empty
+        value.extend_from_slice(&test_support::entity_data_varint(0)); // partial empty
+        let p = test_support::set_entity_data_packet(
+            5,
+            &test_support::entity_data_entry(8, s::ITEM_STACK, &value),
+        );
+        let d = parse_set_entity_data(&p).unwrap();
+        assert_eq!(
+            d.entries[0].value,
+            EntityDataEntry::ItemStack {
+                count: 1,
+                item_id: 1,
+                patch: ComponentPatch {
+                    added: vec![(
+                        t::CAN_BREAK,
+                        ComponentValue::BlockPredicates(vec![BlockPredicate {
+                            blocks: Some(BlockSet::Direct(vec![17, 999])),
+                            properties: None,
+                            nbt: None,
+                            matchers: DataComponentMatchers { exact: vec![] },
+                        }])
+                    )],
+                    removed: vec![]
+                }
+            }
+        );
+
+        // the ALL-ABSENT predicate (the ANY-blocks shape): all three
+        // optional lanes false, both matcher lists empty — four lane
+        // bytes total; and the EMPTY predicate list (count 0) — the
+        // record with nothing to match
+        let mut value = Vec::new();
+        for v in [1i32, 1, 2, 0] {
+            value.extend_from_slice(&test_support::entity_data_varint(v));
+        }
+        value.extend_from_slice(&test_support::entity_data_varint(t::CAN_PLACE_ON));
+        value.extend_from_slice(&test_support::entity_data_varint(1)); // one predicate
+        value.push(0); // blocks absent
+        value.push(0); // properties absent
+        value.push(0); // nbt absent
+        value.extend_from_slice(&test_support::entity_data_varint(0)); // exact empty
+        value.extend_from_slice(&test_support::entity_data_varint(0)); // partial empty
+        value.extend_from_slice(&test_support::entity_data_varint(t::CAN_BREAK));
+        value.extend_from_slice(&test_support::entity_data_varint(0)); // EMPTY predicate list
+        let p = test_support::set_entity_data_packet(
+            5,
+            &test_support::entity_data_entry(8, s::ITEM_STACK, &value),
+        );
+        let d = parse_set_entity_data(&p).unwrap();
+        assert_eq!(
+            d.entries[0].value,
+            EntityDataEntry::ItemStack {
+                count: 1,
+                item_id: 1,
+                patch: ComponentPatch {
+                    added: vec![
+                        (
+                            t::CAN_PLACE_ON,
+                            ComponentValue::BlockPredicates(vec![BlockPredicate {
+                                blocks: None,
+                                properties: None,
+                                nbt: None,
+                                matchers: DataComponentMatchers { exact: vec![] },
+                            }])
+                        ),
+                        (t::CAN_BREAK, ComponentValue::BlockPredicates(vec![])),
+                    ],
+                    removed: vec![]
+                }
+            }
+        );
+    }
+
+    /// The adventure-mode pair's SHAPE refusals: a negative predicate
+    /// count, a negative block id inside a direct set (the
+    /// byIdOrThrow direction), a non-compound nbt lane (the
+    /// COMPOUND_TAG DecoderException), an unknown component id inside
+    /// the exact matcher list (the unframed-wire sizing line), a
+    /// non-empty partial matcher list (no payload codecs yet — the
+    /// census's next wave), and a partial list over its 64-entry cap.
+    #[test]
+    fn the_adventure_mode_predicates_refuse_their_shape_drift() {
+        use data_component_types as t;
+        use entity_data_serializers as s;
+
+        let stack_with = |value: &[u8]| -> Vec<u8> {
+            test_support::set_entity_data_packet(
+                5,
+                &test_support::entity_data_entry(8, s::ITEM_STACK, &value),
+            )
+        };
+        let with_base = |tail: &[u8]| -> Vec<u8> {
+            let mut v = Vec::new();
+            for b in [1i32, 1, 1, 0] {
+                v.extend_from_slice(&test_support::entity_data_varint(b));
+            }
+            v.extend_from_slice(tail);
+            v
+        };
+        // a negative predicate list count
+        let mut tail = Vec::new();
+        tail.extend_from_slice(&test_support::entity_data_varint(t::CAN_PLACE_ON));
+        tail.extend_from_slice(&test_support::entity_data_varint(-1));
+        assert!(parse_set_entity_data(&stack_with(&with_base(&tail))).is_err());
+        // a negative block id inside a direct set
+        let mut tail = Vec::new();
+        tail.extend_from_slice(&test_support::entity_data_varint(t::CAN_PLACE_ON));
+        tail.extend_from_slice(&test_support::entity_data_varint(1));
+        tail.push(1); // blocks present
+        tail.extend_from_slice(&test_support::entity_data_varint(2)); // direct, 1 id
+        tail.extend_from_slice(&test_support::entity_data_varint(-7));
+        assert!(parse_set_entity_data(&stack_with(&with_base(&tail))).is_err());
+        // a non-compound nbt lane
+        let mut tail = Vec::new();
+        tail.extend_from_slice(&test_support::entity_data_varint(t::CAN_BREAK));
+        tail.extend_from_slice(&test_support::entity_data_varint(1));
+        tail.push(0); // blocks absent
+        tail.push(0); // properties absent
+        tail.push(1); // nbt present
+        crate::nbt::write_bare_nbt(&Nbt::String("not a compound".into()), &mut tail).unwrap();
+        assert!(parse_set_entity_data(&stack_with(&with_base(&tail))).is_err());
+        // an unknown component id inside the exact matcher list
+        let mut tail = Vec::new();
+        tail.extend_from_slice(&test_support::entity_data_varint(t::CAN_BREAK));
+        tail.extend_from_slice(&test_support::entity_data_varint(1));
+        tail.push(0);
+        tail.push(0);
+        tail.push(0);
+        tail.extend_from_slice(&test_support::entity_data_varint(1)); // exact count
+        tail.extend_from_slice(&test_support::entity_data_varint(999));
+        assert!(parse_set_entity_data(&stack_with(&with_base(&tail))).is_err());
+        // a NON-EMPTY partial matcher list (no dispatched payload
+        // codecs — the honest refusal)
+        let mut tail = Vec::new();
+        tail.extend_from_slice(&test_support::entity_data_varint(t::CAN_PLACE_ON));
+        tail.extend_from_slice(&test_support::entity_data_varint(1));
+        tail.push(0);
+        tail.push(0);
+        tail.push(0);
+        tail.extend_from_slice(&test_support::entity_data_varint(0)); // exact empty
+        tail.extend_from_slice(&test_support::entity_data_varint(1)); // partial count 1
+        assert!(parse_set_entity_data(&stack_with(&with_base(&tail))).is_err());
+        // a partial list over its 64-entry cap (the count itself is
+        // the DecoderException, before any payload)
+        let mut tail = Vec::new();
+        tail.extend_from_slice(&test_support::entity_data_varint(t::CAN_BREAK));
+        tail.extend_from_slice(&test_support::entity_data_varint(1));
+        tail.push(0);
+        tail.push(0);
+        tail.push(0);
+        tail.extend_from_slice(&test_support::entity_data_varint(0));
+        tail.extend_from_slice(&test_support::entity_data_varint(65));
         assert!(parse_set_entity_data(&stack_with(&with_base(&tail))).is_err());
     }
 
