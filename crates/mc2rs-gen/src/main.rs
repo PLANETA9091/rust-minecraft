@@ -16,6 +16,7 @@ mod runtime_dump;
 mod skygen;
 mod skingen;
 mod soundgen;
+mod specialgen;
 mod splashgen;
 mod texturesgen;
 mod uigen;
