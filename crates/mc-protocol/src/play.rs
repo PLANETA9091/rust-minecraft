@@ -102,7 +102,7 @@ pub mod clientbound {
         CB_RESPAWN as RESPAWN, CB_SECTION_BLOCKS_UPDATE as SECTION_BLOCKS_UPDATE,
         CB_SET_CHUNK_CACHE_CENTER as CENTER_CHUNK, CB_SET_ENTITY_DATA as SET_ENTITY_DATA,
         CB_SET_EQUIPMENT as SET_EQUIPMENT, CB_CONTAINER_SET_CONTENT as CONTAINER_SET_CONTENT,
-        CB_CONTAINER_SET_SLOT as CONTAINER_SET_SLOT,
+        CB_CONTAINER_SET_SLOT as CONTAINER_SET_SLOT, CB_SET_HELD_SLOT as SET_HELD_SLOT,
         CB_SET_TIME as SET_TIME,
         CB_UPDATE_MOB_EFFECT as UPDATE_MOB_EFFECT,
     };
@@ -5157,6 +5157,44 @@ pub fn parse_set_container_slot(payload: &[u8]) -> Result<ContainerSetSlot> {
     Ok(ContainerSetSlot { container_id, state_id, slot, item })
 }
 
+/// Set Held Slot (clientbound play, generated id 105 —
+/// `minecraft:set_held_slot`): the hotbar's SELECTED slot — the
+/// number-keys row's other half (the slot CONTENTS ride the container
+/// packets' window-0 lane; the selection rides here). javap of the
+/// record's clinit: `StreamCodec.composite(ByteBufCodecs.VAR_INT, ...)`
+/// — ONE lane, the raw VAR_INT slot (the wiki-era byte table would
+/// misshape here; the name-shaped trap class again). THE CONSUMER'S
+/// GATE (javap of `ClientPacketListener.handleSetHeldSlot`):
+/// `Inventory.isHotbarSlot(slot)` — the SELECTION-relative 0..9
+/// (`Inventory.SELECTION_SIZE` = 9, the inventory's OWN hotbar
+/// indices, NOT the InventoryMenu window numbering whose quirk-y
+/// helper this is NOT; the two isHotbarSlot helpers coexist in the
+/// jar and this packet rides the strict one) — gates
+/// `Inventory.setSelectedSlot(slot)`; anything else (a window slot
+/// like 36, a negative) is DROPPED, the packet never reaching the
+/// inventory. The parse retains verbatim; the gate is the consumer's
+/// act.
+#[derive(Debug, Clone, PartialEq)]
+pub struct SetHeldSlot {
+    /// The selected hotbar slot, selection-relative (the gate's
+    /// 0..SELECTION_SIZE window is the consumer's call; the wire's
+    /// value rides verbatim).
+    pub slot: i32,
+}
+
+/// Set Held Slot's wire walk (see [`SetHeldSlot`] — the one-lane
+/// VarInt record, the generated-id guard).
+pub fn parse_set_held_slot(payload: &[u8]) -> Result<SetHeldSlot> {
+    let mut c: &[u8] = payload;
+    let id = read_varint(&mut c)?;
+    anyhow::ensure!(
+        id == clientbound::SET_HELD_SLOT,
+        "not a set held slot packet (0x{id:02X})"
+    );
+    let slot = read_varint(&mut c)?;
+    Ok(SetHeldSlot { slot })
+}
+
 /// One clientbound play packet, handled.
 #[derive(Debug, Clone, PartialEq)]
 pub enum PlayEvent {
@@ -5242,6 +5280,11 @@ pub enum PlayEvent {
     /// a SIGNED BE SHORT, not a VarInt). The model consumes it when
     /// the inventory surfaces arrive.
     ContainerSlotSet(ContainerSetSlot),
+    /// Set Held Slot: the hotbar's SELECTED slot moved — the
+    /// selection-relative index (0..8) the consumer's gate
+    /// (`Inventory.isHotbarSlot`, NOT the window numbering) lets
+    /// through.
+    HeldSlotSet(SetHeldSlot),
     /// Any packet without a client surface yet (skipped silently).
     Skipped,
 }
@@ -5351,6 +5394,9 @@ impl<S: Read + Write> PlaySession<S> {
             }
             clientbound::CONTAINER_SET_SLOT => {
                 Ok(PlayEvent::ContainerSlotSet(parse_set_container_slot(&pkt)?))
+            }
+            clientbound::SET_HELD_SLOT => {
+                Ok(PlayEvent::HeldSlotSet(parse_set_held_slot(&pkt)?))
             }
             _ => Ok(PlayEvent::Skipped),
         }
@@ -9537,6 +9583,49 @@ mod tests {
             p,
             "the negative slot re-encodes verbatim"
         );
+    }
+
+    /// The hotbar's selection packet (generated id 105): the ONE-lane
+    /// raw VarInt record (the wiki-era byte table would misshape —
+    /// slot 200 rides TWO bytes, the byte lane would read a negative),
+    /// the generated-id pin, the verbatim retention of the values the
+    /// consumer's gate will drop (the parse is not the gate), and the
+    /// truncation refusing honestly.
+    #[test]
+    fn the_held_slot_lanes_pin_the_selection() {
+        assert_eq!(clientbound::SET_HELD_SLOT, 105, "minecraft:set_held_slot");
+        // the selection-relative walk: slot 3 rides ONE byte, slot 8
+        // rides ONE byte — the whole legal selection range fits the
+        // single-byte VarInt shape
+        let mut p = Vec::new();
+        write_varint(&mut p, clientbound::SET_HELD_SLOT);
+        write_varint(&mut p, 3);
+        let s = parse_set_held_slot(&p).unwrap();
+        assert_eq!(s.slot, 3);
+        // the name-shaped trap's own proof: slot 200 (a WINDOW slot the
+        // consumer's gate will drop) rides the two-byte VarInt C8 01 —
+        // the wiki-era signed byte would read -56 — and the parse
+        // RETAINS it verbatim: the gate is the consumer's act, the
+        // wire's truth is separate
+        let mut p = Vec::new();
+        write_varint(&mut p, clientbound::SET_HELD_SLOT);
+        write_varint(&mut p, 200);
+        assert_eq!(&p[1..], &[0xC8, 0x01], "the two-byte VarInt shape");
+        let s = parse_set_held_slot(&p).unwrap();
+        assert_eq!(s.slot, 200, "retained verbatim, the gate drops later");
+        let mut p = Vec::new();
+        write_varint(&mut p, clientbound::SET_HELD_SLOT);
+        write_varint(&mut p, -2);
+        let s = parse_set_held_slot(&p).unwrap();
+        assert_eq!(s.slot, -2, "the negative rides the VarInt verbatim");
+        // the truncation map: the id alone, the slot short
+        let mut p = Vec::new();
+        write_varint(&mut p, clientbound::SET_HELD_SLOT);
+        assert!(parse_set_held_slot(&p).is_err());
+        // a wrong packet id refuses (the generated-id guard)
+        let mut p = Vec::new();
+        write_varint(&mut p, clientbound::CONTAINER_SET_SLOT);
+        assert!(parse_set_held_slot(&p).is_err());
     }
 
     /// Mock server: login -> configuration -> play (the FULL vanilla

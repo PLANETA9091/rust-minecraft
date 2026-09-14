@@ -43,7 +43,7 @@ pub use play::{
     PlayerSkinPatch, PlayEvent, PositionSource,
     ProfileProperty, ResolvableProfile, SkinAsset,
     PlaySession, PlayStart, PlayerPosition, PredicateTypeLane, PropertyMatcher, PropertyValue,
-    SetEntityDataEntry, SpawnInfo, TimeSync, WorldInfo, WorldOutcome, WorldSnapshot,
+    SetEntityDataEntry, SetHeldSlot, SpawnInfo, TimeSync, WorldInfo, WorldOutcome, WorldSnapshot,
     DESIRED_CHUNKS_PER_TICK, pack_entries,
 };
 pub use login::{connect_and_login, login, LoginOutcome};

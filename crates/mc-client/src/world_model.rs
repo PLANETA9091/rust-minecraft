@@ -186,6 +186,13 @@ pub struct InventoryState {
     /// the stack riding the mouse; the slot packet has no carried
     /// lane and leaves it untouched).
     pub carried: ItemStack,
+    /// The SELECTED hotbar slot — SELECTION-relative 0..8 (the
+    /// number keys' own numbering, `Inventory.SELECTION_SIZE` = 9;
+    /// NOT the window's slot numbering whose hotbar row lives at
+    /// 36..45). Rides the Set Held Slot packet's audited gate; the
+    /// container snapshots do NOT touch it (vanilla's
+    /// initializeContents sets slots/carried/stateId only).
+    pub selected: usize,
 }
 
 /// The store's own empty: an EMPTY stack is the wire's count-sentinel
@@ -201,6 +208,7 @@ impl Default for InventoryState {
                 item_id: 0,
                 patch: ComponentPatch::default(),
             },
+            selected: 0,
         }
     }
 }
@@ -313,6 +321,14 @@ impl WorldModel {
     /// row is `USE_ROW_SLOT_START..USE_ROW_SLOT_END`.
     pub fn inventory_slot(&self, index: usize) -> Option<&ItemStack> {
         self.inventory.slots.get(index)
+    }
+
+    /// The SELECTED hotbar slot — the selection-relative index
+    /// (`Inventory.SELECTION_SIZE` numbering, 0..8) the Set Held Slot
+    /// packet's audited gate moves; the window slot it names is
+    /// `USE_ROW_SLOT_START + selected`.
+    pub fn selected_slot(&self) -> usize {
+        self.inventory.selected
     }
 
     /// The LOCAL player's active mob-effect state, by the effect's
@@ -662,10 +678,17 @@ impl WorldModel {
                 // open-container lane has no model surface yet (the
                 // container GUI rounds).
                 if c.container_id == INVENTORY_WINDOW_ID {
+                    // the snapshot REPLACES slots/carried/stateId and
+                    // leaves the SELECTION alone (vanilla's
+                    // initializeContents sets those three only — the
+                    // javap-pinned field list; the selected hotbar slot
+                    // survives the snapshot)
+                    let selected = self.inventory.selected;
                     self.inventory = InventoryState {
                         state_id: c.state_id,
                         slots: c.items,
                         carried: c.carried_item,
+                        selected,
                     };
                     true
                 } else {
@@ -706,6 +729,27 @@ impl WorldModel {
                         }
                         self.inventory.slots[idx] = s.item;
                     }
+                    true
+                } else {
+                    false
+                }
+            }
+            PlayEvent::HeldSlotSet(s) => {
+                // The audited gate (javap of
+                // ClientPacketListener.handleSetHeldSlot):
+                // `Inventory.isHotbarSlot(slot)` — the SELECTION-relative
+                // 0..SELECTION_SIZE (9), the inventory's OWN numbering,
+                // NOT the InventoryMenu window helper — gates
+                // `Inventory.setSelectedSlot(slot)`; anything else (a
+                // window slot like 36, a negative) is DROPPED before it
+                // reaches the inventory. The mirror: the selection moves
+                // only for a hotbar slot, and a repeat naming the slot
+                // already held is the no-op (the CenterChunk
+                // convention).
+                if (0..9).contains(&s.slot)
+                    && self.inventory.selected != s.slot as usize
+                {
+                    self.inventory.selected = s.slot as usize;
                     true
                 } else {
                     false
