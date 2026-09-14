@@ -64,6 +64,7 @@ pub struct CloudQuad {
 
 /// One view-space textured quad of the first-person hand pass (the
 /// vanilla entity_translucent semantics: two-sided, depth-tested, no fog).
+#[allow(dead_code)] // the hand pass's carrier — rides the held-item render round
 pub struct HandQuad {
     pub pts: [[f32; 3]; 4],
     /// texel coords into the skin texture (u right, v down)

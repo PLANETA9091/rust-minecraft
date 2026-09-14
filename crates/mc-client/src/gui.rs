@@ -426,6 +426,7 @@ impl<'a> Gui<'a> {
     }
 
     /// Vanilla mouse cursor (crosshair-style arrow fallback: simple arrow).
+    #[allow(dead_code)] // wired in when the screens take pointer input
     pub fn cursor(&mut self, x: i32, y: i32) {
         let c = [1.0, 1.0, 1.0, 0.9];
         for i in 0..8 {

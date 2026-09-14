@@ -42,7 +42,7 @@ pub fn run_windowed(world: &World, lut: Option<&TextureLut>, width: usize, heigh
     let mut buf: Vec<u32> = vec![0; width * height];
     let mut last_title = Instant::now();
     let mut frames = 0u64;
-    let mut fps = 0.0f64;
+    let mut fps: f64; // read only after the title-tick's first compute
     let mut t_prev = Instant::now();
 
     while window.is_open() && !window.is_key_down(Key::Escape) {

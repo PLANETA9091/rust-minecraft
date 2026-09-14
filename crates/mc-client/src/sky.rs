@@ -944,7 +944,7 @@ mod tests {
     #[test]
     fn sunrise_disc_places_glow_at_rise_and_set_horizons() {
         let cam = Camera { pos: Vec3::ZERO, yaw: 0.0, pitch: 0.0 };
-        let mut collect = |t: i64| {
+        let collect = |t: i64| {
             let mut q = Vec::new();
             render_sunrise_disc(&mut q, &cam, t);
             q

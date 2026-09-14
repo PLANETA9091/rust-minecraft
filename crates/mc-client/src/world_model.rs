@@ -167,7 +167,7 @@ pub const MOB_EFFECT_NIGHT_VISION: i32 = 15;
 /// GUI rounds. NOT cleared on Respawn (the inventory rides the PLAYER,
 /// the effects precedent — vanilla's Inventory survives the level
 /// recreation).
-#[derive(Debug, Clone, PartialEq, Default)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct InventoryState {
     /// The window's slots in the wire's own numbering (slot 0 = the
     /// result slot, 1..5 craft, 5..9 armor, 9..36 the main grid, 36..45
@@ -186,6 +186,23 @@ pub struct InventoryState {
     /// the stack riding the mouse; the slot packet has no carried
     /// lane and leaves it untouched).
     pub carried: ItemStack,
+}
+
+/// The store's own empty: an EMPTY stack is the wire's count-sentinel
+/// shape (`ItemStack` carries no `Default` — the sentinel is the
+/// protocol's explicit construction, and the store mirrors it).
+impl Default for InventoryState {
+    fn default() -> Self {
+        InventoryState {
+            slots: Vec::new(),
+            state_id: 0,
+            carried: ItemStack {
+                count: 0,
+                item_id: 0,
+                patch: ComponentPatch::default(),
+            },
+        }
+    }
 }
 
 /// The `InventoryMenu` window id the audited consumer routes to the
@@ -3125,6 +3142,104 @@ mod tests {
             entity_id: 17,
             effect_id: MOB_EFFECT_NIGHT_VISION,
         })));
+    }
+
+    /// The player-inventory surface — the first consumer the container
+    /// trilogy's window-0 traffic has been waiting for. The audited
+    /// consumer split drives the store: window 0 IS the player's own
+    /// `inventoryMenu` (the full snapshot REPLACES, the single-slot
+    /// delta upserts in place, the counter advances with whichever
+    /// packet spoke last), other windows ride the open-container lane
+    /// and have no model surface yet. The growth policy (a slot past
+    /// the current end pads with empties) and the negative-slot ignore
+    /// are the retention line; the hotbar helpers carry the audit's
+    /// quirk (the helper answers true for the shield slot 45).
+    #[test]
+    fn the_player_inventory_store_feeds_from_window_zero() {
+        use mc_protocol::play::data_component_types as t;
+        use mc_protocol::play::{clientbound, parse_set_container_content, parse_set_container_slot};
+        let mut m = WorldModel::new();
+        assert_eq!(m.inventory().slots.len(), 0, "empty until the wire speaks");
+        // the full window-0 snapshot: the patched stack, the CLEARED
+        // slot, the patch-less stack, and the cursor stack
+        let mut p = Vec::new();
+        write_varint(&mut p, clientbound::CONTAINER_SET_CONTENT);
+        write_varint(&mut p, 0); // window 0: the player's own inventory
+        write_varint(&mut p, 7); // state id
+        write_varint(&mut p, 3); // the collection count
+        write_varint(&mut p, 12);
+        write_varint(&mut p, 745);
+        write_varint(&mut p, 1);
+        write_varint(&mut p, 0);
+        write_varint(&mut p, t::MAX_STACK_SIZE);
+        write_varint(&mut p, 35);
+        write_varint(&mut p, 0); // slot 1: the EMPTY stack
+        write_varint(&mut p, 1);
+        write_varint(&mut p, 33);
+        write_varint(&mut p, 0);
+        write_varint(&mut p, 0);
+        write_varint(&mut p, 2); // the cursor: a small stack
+        write_varint(&mut p, 10);
+        write_varint(&mut p, 0);
+        write_varint(&mut p, 0);
+        let c = parse_set_container_content(&p).unwrap();
+        assert!(m.apply(PlayEvent::ContainerFilled(c)));
+        assert_eq!(m.inventory().state_id, 7);
+        assert_eq!(m.inventory().slots.len(), 3);
+        assert_eq!(m.inventory().carried.count, 2, "the cursor stack rides");
+        assert_eq!(m.inventory_slot(0).unwrap().count, 12);
+        assert!(m.inventory_slot(1).unwrap().count <= 0, "the cleared slot");
+        assert_eq!(m.inventory_slot(2).unwrap().item_id, 33);
+        // the single-slot delta upserts in place and advances the
+        // counter; slot 44 (a USE_ROW slot) grows the store past the
+        // snapshot's three slots — the retention line
+        let mut p = Vec::new();
+        write_varint(&mut p, clientbound::CONTAINER_SET_SLOT);
+        write_varint(&mut p, 0);
+        write_varint(&mut p, 8);
+        p.extend_from_slice(&44i16.to_be_bytes()); // a hotbar slot
+        write_varint(&mut p, 5);
+        write_varint(&mut p, 900);
+        write_varint(&mut p, 0);
+        write_varint(&mut p, 0);
+        let s = parse_set_container_slot(&p).unwrap();
+        assert!(m.apply(PlayEvent::ContainerSlotSet(s)));
+        assert_eq!(m.inventory().state_id, 8);
+        assert_eq!(m.inventory().slots.len(), 45, "grown to address slot 44");
+        assert_eq!(m.inventory_slot(44).unwrap().item_id, 900);
+        assert!(m.inventory_slot(36).unwrap().count <= 0, "the growth padding");
+        // a negative slot cannot index anything: the counter advances,
+        // the slots do not move
+        let mut p = Vec::new();
+        write_varint(&mut p, clientbound::CONTAINER_SET_SLOT);
+        write_varint(&mut p, 0);
+        write_varint(&mut p, 9);
+        p.extend_from_slice(&(-2i16).to_be_bytes());
+        write_varint(&mut p, 0);
+        let s = parse_set_container_slot(&p).unwrap();
+        assert!(m.apply(PlayEvent::ContainerSlotSet(s)));
+        assert_eq!(m.inventory().state_id, 9);
+        assert_eq!(m.inventory().slots.len(), 45);
+        assert_eq!(m.inventory_slot(0).unwrap().count, 12, "untouched");
+        // the other windows ride the OPEN-container lane (matched by id
+        // against containerMenu): no model surface yet — the honest skip
+        let mut p = Vec::new();
+        write_varint(&mut p, clientbound::CONTAINER_SET_CONTENT);
+        write_varint(&mut p, 200); // a chest's window
+        write_varint(&mut p, 1);
+        write_varint(&mut p, 0);
+        write_varint(&mut p, 0); // the carried item: empty
+        let c = parse_set_container_content(&p).unwrap();
+        assert!(!m.apply(PlayEvent::ContainerFilled(c)));
+        assert_eq!(m.inventory().state_id, 9, "the chest's window wrote nothing");
+        // the audited hotbar facts: the SLICE is the nine USE_ROW slots,
+        // the SHIELD slot rides right past it, and the HELPER answers
+        // true for 45 too (the javap quirk — both facts kept separate)
+        assert_eq!(USE_ROW_SLOT_END - USE_ROW_SLOT_START, 9);
+        assert_eq!(SHIELD_SLOT, USE_ROW_SLOT_END);
+        assert!(is_hotbar_slot(36) && is_hotbar_slot(44));
+        assert!(is_hotbar_slot(45), "the helper's audited quirk");
+        assert!(!is_hotbar_slot(35) && !is_hotbar_slot(46));
     }
 
     /// Spawn ONE entity at the named position (the full-precision
