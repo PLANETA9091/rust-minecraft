@@ -1428,8 +1428,19 @@ pub mod entity_data_serializers {
     /// into [0, 6) (a negative -1 wraps to 5 = up). The wire ordinal
     /// is retained verbatim; the wrap is the consumer's resolution.
     pub const DIRECTION: i32 = 12;
-    /// `EntityReference.streamCodec()` optional — the object-graph
-    /// lane.
+    /// `EntityReference.streamCodec()` optional — the javap walk
+    /// pins it THREE hops deep: `STREAM_CODEC` = `UUIDUtil
+    /// .STREAM_CODEC.map(wrap-left, unpack-uuid)` — the wire carries
+    /// ONLY the referenced entity's UUID (the Either's RIGHT, a
+    /// resolved entity, is never serialized; the decode wraps the
+    /// UUID in Either.left and the encode unpacks via getUUID);
+    /// `UUIDUtil$1` = `FriendlyByteBuf.readUUID` = `new UUID(
+    /// readLong(), readLong())` — 16 bytes, msb long then lsb long,
+    /// both big-endian; and the serializer wraps the whole codec in
+    /// the ONE-FLAG-BYTE optional operation (the same invokedynamic
+    /// bsm BlockPos.optional and GlobalPos.optional ride). The
+    /// resolution (which living entity the UUID points at) is the
+    /// client's act — the port retains the UUID verbatim.
     pub const OPTIONAL_LIVING_ENTITY_REFERENCE: i32 = 13;
     /// `ByteBufCodecs.idMapper(BLOCK_STATE_REGISTRY)` — a VarInt in
     /// the chunk decoder's own state-id space.
@@ -1856,9 +1867,24 @@ pub struct ComponentPatch {
     pub removed: Vec<i32>,
 }
 
+/// A retained living-entity reference: the UUID the wire carries
+/// (16 bytes, msb then lsb — [`entity_data_serializers`
+/// ::OPTIONAL_LIVING_ENTITY_REFERENCE]'s audited shape). Vanilla's
+/// `EntityReference` wraps it in `Either<UUID, StoredEntityType>`;
+/// the wire never serializes the resolved right side, so the port
+/// retains the UUID and the resolution is the consumer's act (the
+/// retained-tag-is-a-store line).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct EntityReference {
+    /// The referenced entity's UUID, msb long in bytes 0..8, lsb
+    /// long in bytes 8..16 (FriendlyByteBuf.readUUID's two
+    /// readLongs, both big-endian) — retained verbatim.
+    pub uuid: [u8; 16],
+}
+
 /// One decoded metadata VALUE — the wire shapes of the serializers
-/// this client decodes (EIGHTEEN of the registry's ids: 0-12, 14-15,
-/// 18-20 as [`entity_data_serializers`] declares). The four i32
+/// this client decodes (NINETEEN of the registry's ids: 0-15, 18-20
+/// as [`entity_data_serializers`] declares). The four i32
 /// flavors are DISTINCT variants because the serializer id is part of
 /// the state (vanilla's `assignValues` matches accessor and value on
 /// it), not a type system accident.
@@ -1897,6 +1923,11 @@ pub enum EntityDataEntry {
     /// refuses (out-of-range floorMod(k, 6) is the consumer's
     /// resolution).
     Direction(i32),
+    /// Serializer 13: the flag byte, then the referenced entity's
+    /// UUID (16 bytes: msb then lsb, both big-endian) — the
+    /// reference retained as its UUID; resolving it to a living
+    /// entity is the client's act.
+    OptionalLivingEntityReference(Option<EntityReference>),
     /// Serializer 14: the block state id (the chunk decoder's id
     /// space).
     BlockState(i32),
@@ -2839,16 +2870,27 @@ fn parse_component_patch(c: &mut &[u8]) -> Result<ComponentPatch> {
     Ok(ComponentPatch { added, removed })
 }
 
+/// The living-entity reference's 16 UUID bytes: msb long then lsb
+/// long, both big-endian (`FriendlyByteBuf.readUUID` = `new UUID(
+/// readLong(), readLong())` — the audit's third hop).
+fn read_entity_reference(r: &mut &[u8]) -> std::io::Result<EntityReference> {
+    let mut uuid = [0u8; 16];
+    r.read_exact(&mut uuid)?;
+    Ok(EntityReference { uuid })
+}
+
 /// Parse Set Entity Data. The supported serializers are the wire's
 /// primitive registry PLUS the chat component (the bare-NBT tag — the
 /// nbt reader the chunk path already trusts) PLUS the villager record
 /// (three VarInt registry ids) PLUS the item stack (the three-layer
 /// count/item/patch decode through the [`data_component_types`]
-/// slice); the remaining object-graph shapes — particles,
-/// entity references, profiles, the variant holders — refuse for now:
-/// a value's byte length is only knowable through its codec, so there
-/// is no honest skip, and the vanilla read side fails the packet
-/// exactly the same way on a serializer it cannot decode.
+/// slice) PLUS the living-entity reference (the 16-byte UUID the
+/// wire carries — the resolution is the client's act); the remaining
+/// object-graph shapes — particles, profiles, the variant holders —
+/// refuse for now: a value's byte length is only knowable through
+/// its codec, so there is no honest skip, and the vanilla read side
+/// fails the packet exactly the same way on a serializer it cannot
+/// decode.
 pub fn parse_set_entity_data(payload: &[u8]) -> Result<EntityDataSet> {
     let mut c: &[u8] = payload;
     let id = read_varint(&mut c)?;
@@ -2902,6 +2944,22 @@ pub fn parse_set_entity_data(payload: &[u8]) -> Result<EntityDataSet> {
                 // ordinal is retained verbatim
                 let d = read_varint(&mut c)?;
                 EntityDataEntry::Direction(d)
+            }
+            entity_data_serializers::OPTIONAL_LIVING_ENTITY_REFERENCE => {
+                // EntityReference.STREAM_CODEC = UUIDUtil.STREAM_CODEC
+                // .map(wrap-left, unpack-uuid): the wire carries ONLY
+                // the UUID — 16 bytes, msb then lsb — and the optional
+                // operation's flag byte rides first (the same
+                // invokedynamic bsm BlockPos.optional rides). The
+                // resolution is the client's act; the port retains
+                // the UUID verbatim.
+                let present = read_u8(&mut c)? != 0;
+                let r = if present {
+                    Some(read_entity_reference(&mut c)?)
+                } else {
+                    None
+                };
+                EntityDataEntry::OptionalLivingEntityReference(r)
             }
             entity_data_serializers::BLOCK_STATE => {
                 let s = read_varint(&mut c)?;
@@ -4871,6 +4929,54 @@ mod tests {
             d.entries[0].value,
             EntityDataEntry::OptionalUnsignedInt(Some(i32::MAX))
         );
+    }
+
+    /// The living-entity reference lane (serializer 13), retired
+    /// from the object-graph refusal set: the wire is the optional
+    /// operation's flag byte, then — if present — the referenced
+    /// entity's UUID as 16 raw bytes (msb long then lsb long, both
+    /// big-endian, `FriendlyByteBuf.readUUID`'s two readLongs). The
+    /// resolution (which living entity the UUID names) is never on
+    /// the wire — vanilla's `Either<UUID, StoredEntityType>` rides
+    /// the LEFT side only — so the port retains the UUID verbatim
+    /// and the consumer resolves. A truncated UUID (fewer than 16
+    /// bytes after the flag) refuses: the byte length is knowable
+    /// through the codec, and the vanilla read side fails the packet
+    /// the same way on a short buffer.
+    #[test]
+    fn the_living_entity_reference_lane_retains_the_uuid() {
+        use entity_data_serializers as s;
+        // the empty lane: the flag byte alone
+        let entries = test_support::entity_data_entry(0, s::OPTIONAL_LIVING_ENTITY_REFERENCE, &[0]);
+        let p = test_support::set_entity_data_packet(6, &entries);
+        let d = parse_set_entity_data(&p).unwrap();
+        assert_eq!(
+            d.entries[0].value,
+            EntityDataEntry::OptionalLivingEntityReference(None)
+        );
+        // the present lane: 16 distinctive bytes ride verbatim
+        let mut v = vec![1u8];
+        v.extend_from_slice(&[
+            0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd,
+            0xee, 0xff,
+        ]);
+        let entries = test_support::entity_data_entry(0, s::OPTIONAL_LIVING_ENTITY_REFERENCE, &v);
+        let p = test_support::set_entity_data_packet(6, &entries);
+        let d = parse_set_entity_data(&p).unwrap();
+        assert_eq!(
+            d.entries[0].value,
+            EntityDataEntry::OptionalLivingEntityReference(Some(EntityReference {
+                uuid: [
+                    0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99, 0xaa, 0xbb, 0xcc,
+                    0xdd, 0xee, 0xff
+                ]
+            }))
+        );
+        // a truncated UUID refuses — the honest short-buffer failure
+        let entries =
+            test_support::entity_data_entry(0, s::OPTIONAL_LIVING_ENTITY_REFERENCE, &[1, 0x00, 0x11]);
+        let p = test_support::set_entity_data_packet(6, &entries);
+        assert!(parse_set_entity_data(&p).is_err());
     }
 
     /// Set Entity Data: the villager record's wire is THREE VarInts —

@@ -34,7 +34,7 @@ pub use play::{
     ChunkSection, ClockUpdate, ComponentPatch, ComponentValue, ConsumeEffect, ConsumableSound,
     DataComponentMatchers, EffectDetails, EffectHolderSet, EffectInstance, EntityDataEntry,
     EntityDataSet, EntityDeltaPos, EntityDeltaPosRot, EntityDeltaRot, EntityHeadRot,
-    EntityPositionSync, EntitySpawn, LightData, LiveJoin, PartialPredicate, PlayEvent,
+    EntityPositionSync, EntityReference, EntitySpawn, LightData, LiveJoin, PartialPredicate, PlayEvent,
     PlaySession, PlayStart, PlayerPosition, PredicateTypeLane, PropertyMatcher, PropertyValue,
     SetEntityDataEntry, SpawnInfo, TimeSync, WorldInfo, WorldOutcome, WorldSnapshot,
     DESIRED_CHUNKS_PER_TICK, pack_entries,
