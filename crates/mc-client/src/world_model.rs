@@ -551,6 +551,13 @@ impl WorldModel {
                 // truth)
                 false
             }
+            PlayEvent::ContainerFilled(_) => {
+                // the container snapshot decodes and is RETAINED on
+                // the wire; the model's inventory store arrives with
+                // the inventory surfaces (the hotbar/GUI rounds — no
+                // surface exists yet, the same no-surface skip)
+                false
+            }
             PlayEvent::CenterChunk { x, z } => {
                 if self.center != (x, z) {
                     self.center = (x, z);

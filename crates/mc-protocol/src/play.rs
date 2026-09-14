@@ -99,7 +99,8 @@ pub mod clientbound {
         CB_REMOVE_ENTITIES as REMOVE_ENTITIES, CB_REMOVE_MOB_EFFECT as REMOVE_MOB_EFFECT,
         CB_RESPAWN as RESPAWN, CB_SECTION_BLOCKS_UPDATE as SECTION_BLOCKS_UPDATE,
         CB_SET_CHUNK_CACHE_CENTER as CENTER_CHUNK, CB_SET_ENTITY_DATA as SET_ENTITY_DATA,
-        CB_SET_EQUIPMENT as SET_EQUIPMENT, CB_SET_TIME as SET_TIME,
+        CB_SET_EQUIPMENT as SET_EQUIPMENT, CB_CONTAINER_SET_CONTENT as CONTAINER_SET_CONTENT,
+        CB_SET_TIME as SET_TIME,
         CB_UPDATE_MOB_EFFECT as UPDATE_MOB_EFFECT,
     };
 }
@@ -4168,6 +4169,67 @@ pub fn parse_set_equipment(payload: &[u8]) -> Result<EntityEquipment> {
     Ok(EntityEquipment { entity_id, slots })
 }
 
+/// Set Container Content (clientbound play, generated id 18): ONE
+/// container window's full snapshot — the record's own fields
+/// (`containerId`, `stateId`, `items`, `carriedItem`), javap of the
+/// clinit's four-part `StreamCodec.composite`. THE AUDIT'S CATCH: the
+/// container id rides `ByteBufCodecs.CONTAINER_ID` →
+/// `FriendlyByteBuf.readContainerId` → `VarInt.read` — a VARINT, not
+/// the wiki-era unsigned byte (one anonymous class, one hop, the
+/// name-shaped trap again). The state id rides the raw VAR_INT,
+/// retained verbatim. The items ride
+/// `ItemStack.OPTIONAL_LIST_STREAM_CODEC` = the OPTIONAL walk +
+/// `ByteBufCodecs.collection`: `readCount(buf, MAX_VALUE)` (a VarInt
+/// count; `count > maxSize` throws — unreachable at MAX_VALUE, the
+/// VarInt's own 32-bit ceiling is the real bound), the collection
+/// pre-allocated at `min(count, 65536)` (a DoS guard on the
+/// ALLOCATION, not the entries), then count × the OPTIONAL walk. A
+/// NEGATIVE count passes readCount's comparison (never > maxSize) and
+/// refuses at the collection CONSTRUCTION — `new ArrayList<>(-n)`,
+/// "Illegal Capacity" — BEFORE any entry bytes are consumed; the port
+/// refuses at the same point. The carried item (the GUI cursor stack)
+/// rides the plain OPTIONAL walk, empty-legal like the equipment lane.
+#[derive(Debug, Clone, PartialEq)]
+pub struct ContainerContent {
+    /// The window id (0 = the player inventory) — a VarInt, the
+    /// CONTAINER_ID lane's own shape.
+    pub container_id: i32,
+    /// The revision counter the server bumps per change (the
+    /// client's state-echo uses it); retained verbatim.
+    pub state_id: i32,
+    /// Every slot's stack, in window order — an EMPTY stack is a
+    /// LEGAL entry (the cleared slot, the optional lane's own cargo).
+    pub items: Vec<ItemStack>,
+    /// The cursor stack riding the GUI mouse; the same optional lane.
+    pub carried_item: ItemStack,
+}
+
+/// Set Container Content's wire walk (see [`ContainerContent`] — the
+/// four-part composite, the VarInt container id, the readCount
+/// validation, the Illegal-Capacity refusal ordering).
+pub fn parse_set_container_content(payload: &[u8]) -> Result<ContainerContent> {
+    let mut c: &[u8] = payload;
+    let id = read_varint(&mut c)?;
+    anyhow::ensure!(
+        id == clientbound::CONTAINER_SET_CONTENT,
+        "not a container set content packet (0x{id:02X})"
+    );
+    let container_id = read_varint(&mut c)?;
+    let state_id = read_varint(&mut c)?;
+    let count = read_varint(&mut c)?;
+    anyhow::ensure!(
+        count >= 0,
+        "collection count {count} is negative — the vanilla collection \
+         constructor refuses (Illegal Capacity) before any entry is read"
+    );
+    let mut items = Vec::new();
+    for _ in 0..count {
+        items.push(read_item_stack(&mut c)?);
+    }
+    let carried_item = read_item_stack(&mut c)?;
+    Ok(ContainerContent { container_id, state_id, items, carried_item })
+}
+
 /// One clientbound play packet, handled.
 #[derive(Debug, Clone, PartialEq)]
 pub enum PlayEvent {
@@ -4243,6 +4305,11 @@ pub enum PlayEvent {
     /// stack is a legal entry — the cleared slot). The model consumes
     /// it when mob rendering arrives.
     EntityEquipped(EntityEquipment),
+    /// Set Container Content: ONE container window's full snapshot —
+    /// the inventory surfaces' second packet (the slots + the GUI
+    /// cursor stack; the container id rides a VarInt, not a byte).
+    /// The model consumes it when the inventory surfaces arrive.
+    ContainerFilled(ContainerContent),
     /// Any packet without a client surface yet (skipped silently).
     Skipped,
 }
@@ -4346,6 +4413,9 @@ impl<S: Read + Write> PlaySession<S> {
             }
             clientbound::SET_EQUIPMENT => {
                 Ok(PlayEvent::EntityEquipped(parse_set_equipment(&pkt)?))
+            }
+            clientbound::CONTAINER_SET_CONTENT => {
+                Ok(PlayEvent::ContainerFilled(parse_set_container_content(&pkt)?))
             }
             _ => Ok(PlayEvent::Skipped),
         }
@@ -8082,6 +8152,102 @@ mod tests {
         write_varint(&mut p, 1);
         write_varint(&mut p, 2);
         assert!(parse_set_equipment(&p).is_err());
+    }
+
+    /// The Set Container Content lanes retain the window: the four-part
+    /// composite (the VarInt container id — the CONTAINER_ID lane's own
+    /// shape, NOT the wiki-era byte —, the raw state id, the
+    /// collection-count walk, the carried item), an EMPTY stack legal
+    /// on the items lane, the negative count refusing at the collection
+    /// CONSTRUCTION (Java's Illegal Capacity, BEFORE any entry bytes —
+    /// the readCount comparison passes), and the lying/truncated counts
+    /// refusing honestly.
+    #[test]
+    fn the_container_content_lanes_retain_the_window() {
+        use data_component_types as t;
+        assert_eq!(
+            clientbound::CONTAINER_SET_CONTENT, 18,
+            "minecraft:container_set_content"
+        );
+        // three slots + the carried stack: container 200 (a two-byte
+        // VarInt — the byte-era table would have died here), state 7,
+        // slot 0 a full stack with a one-component patch, slot 1 the
+        // CLEARED slot, slot 2 a patch-less stack, the cursor empty
+        let mut p = Vec::new();
+        write_varint(&mut p, clientbound::CONTAINER_SET_CONTENT);
+        write_varint(&mut p, 200);
+        write_varint(&mut p, 7);
+        write_varint(&mut p, 3); // the collection count
+        write_varint(&mut p, 12); // slot 0 count
+        write_varint(&mut p, 745); // item registry id
+        write_varint(&mut p, 1); // patch: one added
+        write_varint(&mut p, 0); // patch: none removed
+        write_varint(&mut p, t::MAX_STACK_SIZE);
+        write_varint(&mut p, 35); // the VarInt value
+        write_varint(&mut p, 0); // slot 1: the EMPTY stack, nothing rides
+        write_varint(&mut p, 1); // slot 2 count
+        write_varint(&mut p, 33); // item registry id
+        write_varint(&mut p, 0); // patch: none added
+        write_varint(&mut p, 0); // patch: none removed
+        write_varint(&mut p, 0); // the carried item: the cursor, empty
+        let c = parse_set_container_content(&p).unwrap();
+        assert_eq!(c.container_id, 200, "the VarInt container id, not a byte");
+        assert_eq!(c.state_id, 7);
+        assert_eq!(c.items.len(), 3);
+        assert_eq!(c.items[0].count, 12);
+        assert_eq!(c.items[0].item_id, 745);
+        assert_eq!(
+            c.items[0].patch,
+            ComponentPatch { added: vec![(t::MAX_STACK_SIZE, ComponentValue::VarInt(35))], removed: vec![] }
+        );
+        assert_eq!(
+            c.items[1],
+            ItemStack { count: 0, item_id: 0, patch: ComponentPatch::default() },
+            "the cleared slot rides the optional lane as a LEGAL empty stack"
+        );
+        assert_eq!(c.items[2].count, 1);
+        assert_eq!(c.items[2].item_id, 33);
+        assert_eq!(c.items[2].patch, ComponentPatch::default());
+        assert_eq!(c.carried_item.count, 0, "the empty cursor");
+        // the negative count refuses at the collection CONSTRUCTION:
+        // readCount's comparison passes (a negative is never >
+        // MAX_VALUE), so Java dies at `new ArrayList<>(-n)` — Illegal
+        // Capacity, BEFORE any entry bytes are consumed. The stray
+        // bytes after the count prove the ordering: the refusal is not
+        // an EOF, it is the capacity check.
+        let mut p = Vec::new();
+        write_varint(&mut p, clientbound::CONTAINER_SET_CONTENT);
+        write_varint(&mut p, 0);
+        write_varint(&mut p, 7);
+        write_varint(&mut p, -5);
+        p.push(1); // entry bytes present, never reached
+        assert!(parse_set_container_content(&p).is_err());
+        // a lying count refuses honestly: five slots declared, the
+        // buffer carries one — the entry loop wants the next slot
+        let mut p = Vec::new();
+        write_varint(&mut p, clientbound::CONTAINER_SET_CONTENT);
+        write_varint(&mut p, 0);
+        write_varint(&mut p, 7);
+        write_varint(&mut p, 5);
+        write_varint(&mut p, 0); // slot 0: empty
+        assert!(parse_set_container_content(&p).is_err());
+        // a stack truncated mid-patch refuses (the patch counts short)
+        let mut p = Vec::new();
+        write_varint(&mut p, clientbound::CONTAINER_SET_CONTENT);
+        write_varint(&mut p, 0);
+        write_varint(&mut p, 7);
+        write_varint(&mut p, 1);
+        write_varint(&mut p, 1);
+        write_varint(&mut p, 2);
+        assert!(parse_set_container_content(&p).is_err());
+        // the carried item truncated refuses (the window ends short)
+        let mut p = Vec::new();
+        write_varint(&mut p, clientbound::CONTAINER_SET_CONTENT);
+        write_varint(&mut p, 0);
+        write_varint(&mut p, 7);
+        write_varint(&mut p, 1);
+        write_varint(&mut p, 0); // the one slot
+        assert!(parse_set_container_content(&p).is_err());
     }
 
     /// Mock server: login -> configuration -> play (the FULL vanilla
