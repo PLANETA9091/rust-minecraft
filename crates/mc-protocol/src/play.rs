@@ -99,7 +99,8 @@ pub mod clientbound {
         CB_REMOVE_ENTITIES as REMOVE_ENTITIES, CB_REMOVE_MOB_EFFECT as REMOVE_MOB_EFFECT,
         CB_RESPAWN as RESPAWN, CB_SECTION_BLOCKS_UPDATE as SECTION_BLOCKS_UPDATE,
         CB_SET_CHUNK_CACHE_CENTER as CENTER_CHUNK, CB_SET_ENTITY_DATA as SET_ENTITY_DATA,
-        CB_SET_TIME as SET_TIME, CB_UPDATE_MOB_EFFECT as UPDATE_MOB_EFFECT,
+        CB_SET_EQUIPMENT as SET_EQUIPMENT, CB_SET_TIME as SET_TIME,
+        CB_UPDATE_MOB_EFFECT as UPDATE_MOB_EFFECT,
     };
 }
 
@@ -3689,29 +3690,17 @@ pub fn parse_set_entity_data(payload: &[u8]) -> Result<EntityDataSet> {
                 }
             }
             entity_data_serializers::ITEM_STACK => {
-                // ItemStack$1: the count IS the emptiness sentinel —
-                // `ifgt` on the raw VarInt, so count <= 0 is the
-                // EMPTY stack and NOTHING else rides the wire (the
-                // count is retained verbatim, not normalized). A
-                // positive stack reads the item registry id (a
-                // negative is outside every IdMap — byIdOrThrow) and
-                // the component patch (see parse_component_patch).
-                let count = read_varint(&mut c)?;
-                if count <= 0 {
-                    EntityDataEntry::ItemStack {
-                        count,
-                        item_id: 0,
-                        patch: ComponentPatch::default(),
-                    }
-                } else {
-                    let item_id = read_varint(&mut c)?;
-                    anyhow::ensure!(item_id >= 0, "negative item registry id {item_id}");
-                    let patch = parse_component_patch(&mut c)?;
-                    EntityDataEntry::ItemStack {
-                        count,
-                        item_id,
-                        patch,
-                    }
+                // ItemStack$2: the OPTIONAL walk (read_item_stack) plus
+                // the strict "Empty ItemStack not allowed" wrapper — the
+                // SAME wire shape, only the empty case's verdict
+                // differs (the entity-data lane refuses what the
+                // equipment lane carries). The count is retained
+                // verbatim, not normalized.
+                let stack = read_item_stack(&mut c)?;
+                EntityDataEntry::ItemStack {
+                    count: stack.count,
+                    item_id: stack.item_id,
+                    patch: stack.patch,
                 }
             }
             entity_data_serializers::CAT_VARIANT => {
@@ -4043,6 +4032,142 @@ pub fn parse_remove_mob_effect(payload: &[u8]) -> Result<MobEffectRemove> {
     Ok(MobEffectRemove { entity_id, effect_id })
 }
 
+// ---------------------------------------------------------------------------
+// the equipment state's wire transport
+// ---------------------------------------------------------------------------
+
+/// The ItemStack$1 wire shape (the codec behind BOTH
+/// `ItemStack.OPTIONAL_STREAM_CODEC` and the entity-data lane's
+/// strict wrapper): the count IS the emptiness sentinel — `ifgt` on
+/// the raw VarInt, so count <= 0 is the EMPTY stack and NOTHING else
+/// rides the wire (the count is retained verbatim, not normalized; a
+/// negative count is as empty as zero). A positive stack carries the
+/// item registry id (the `ByteBufCodecs.holderRegistry(ITEM)` family —
+/// the variant holders' `$29` byIdOrThrow, a negative refuses) and the
+/// component patch (see parse_component_patch). The particle round's
+/// ItemStackTemplate is the Sibling shape WITHOUT the sentinel — the
+/// count lane is raw there.
+#[derive(Debug, Clone, PartialEq)]
+pub struct ItemStack {
+    /// The stack size (the emptiness sentinel itself — retained
+    /// verbatim, the never-refuse line).
+    pub count: i32,
+    /// The item REGISTRY id (`BuiltInRegistries.ITEM` order; the
+    /// decode validates nothing beyond the byIdOrThrow direction).
+    pub item_id: i32,
+    /// The component patch riding the stack.
+    pub patch: ComponentPatch,
+}
+
+/// The ItemStack$1 walk shared by the entity-data ITEM_STACK lane and
+/// the Set Equipment packet's slots (the one-codec-two-call-sites
+/// line — read_uuid's precedent: one codec, one reader). The
+/// entity-data lane's own codec (ItemStack$2) is THIS walk plus the
+/// strict empty rejection — javap-proven, not a name guess.
+fn read_item_stack(c: &mut &[u8]) -> Result<ItemStack> {
+    let count = read_varint(c)?;
+    if count <= 0 {
+        return Ok(ItemStack { count, item_id: 0, patch: ComponentPatch::default() });
+    }
+    let item_id = read_varint(c)?;
+    anyhow::ensure!(item_id >= 0, "negative item registry id {item_id}");
+    let patch = parse_component_patch(c)?;
+    Ok(ItemStack { count, item_id, patch })
+}
+
+/// The eight EquipmentSlot constants in DECLARATION order — the wire's
+/// index table (javap clinit: `VALUES = List.of(values())`; the packet
+/// decodes with `VALUES.get(b & 127)` and encodes with `ordinal()`).
+/// 26.2 grew the animal-armor BODY and SADDLE slots past the wiki-era
+/// six — the declaration order IS the wire, and the enum's separate
+/// `id`/BY_ID/STREAM_CODEC lane (an idMapper used elsewhere, e.g. the
+/// EquipmentSlotGroup) is NOT this packet's lane.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum EquipmentSlot {
+    Mainhand,
+    Offhand,
+    Feet,
+    Legs,
+    Chest,
+    Head,
+    Body,
+    Saddle,
+}
+
+/// The slot byte's walk: the low 7 bits index the eight-entry VALUES
+/// list (`b & 127` — the mask pins which bits are the slot); an index
+/// past the list's end throws in Java (the List.get bounds check —
+/// the honest refusal, and it fires BEFORE the pair's stack bytes are
+/// consumed, so the port refuses at the same point); `b & 127` can
+/// never go negative (unlike the holder lanes' byIdOrThrow direction).
+fn read_equipment_slot(byte: u8) -> Result<EquipmentSlot> {
+    let idx = (byte & 0x7F) as usize;
+    match idx {
+        0 => Ok(EquipmentSlot::Mainhand),
+        1 => Ok(EquipmentSlot::Offhand),
+        2 => Ok(EquipmentSlot::Feet),
+        3 => Ok(EquipmentSlot::Legs),
+        4 => Ok(EquipmentSlot::Chest),
+        5 => Ok(EquipmentSlot::Head),
+        6 => Ok(EquipmentSlot::Body),
+        7 => Ok(EquipmentSlot::Saddle),
+        _ => anyhow::bail!("equipment slot index {idx} is outside the eight-entry VALUES list"),
+    }
+}
+
+/// ONE equipped slot's entry: the slot (the byte's low 7 bits) and the
+/// stack riding it. An EMPTY stack is a LEGAL entry here — the packet
+/// rides ItemStack.OPTIONAL_STREAM_CODEC directly, and the optional
+/// lane exists precisely to carry the cleared slot (the entity-data
+/// lane's strict ItemStack$2 wrapper rejects what this lane carries).
+#[derive(Debug, Clone, PartialEq)]
+pub struct EquipmentEntry {
+    pub slot: EquipmentSlot,
+    pub stack: ItemStack,
+}
+
+/// Set Equipment (clientbound play, generated id 102): ONE entity's
+/// equipment snapshot — javap of the private decode constructor: a
+/// `readVarInt` entity id, then the PAIRED walk — `readByte` (the low
+/// 7 bits index the eight-entry VALUES list, the HIGH bit is the
+/// continue flag), each pair's stack rides
+/// `ItemStack.OPTIONAL_STREAM_CODEC`. The write mirror packs
+/// `ordinal | (more ? 0x80 : 0)` — the last pair's byte always has the
+/// high bit CLEAR (the loop's exit is `b & -128 == 0`), and a packet
+/// with zero pairs is impossible (the walk reads the first byte
+/// unconditionally).
+#[derive(Debug, Clone, PartialEq)]
+pub struct EntityEquipment {
+    /// The entity whose gear changed (the model filters by id when it
+    /// renders mobs; the decode retains every entry).
+    pub entity_id: i32,
+    /// The slot/stack pairs, in wire order.
+    pub slots: Vec<EquipmentEntry>,
+}
+
+/// Set Equipment's wire walk (see [`EntityEquipment`] — the paired
+/// loop, the continue bit, the bounds refusal before the stack bytes).
+pub fn parse_set_equipment(payload: &[u8]) -> Result<EntityEquipment> {
+    let mut c: &[u8] = payload;
+    let id = read_varint(&mut c)?;
+    anyhow::ensure!(
+        id == clientbound::SET_EQUIPMENT,
+        "not a set equipment packet (0x{id:02X})"
+    );
+    let entity_id = read_varint(&mut c)?;
+    let mut slots = Vec::new();
+    loop {
+        let byte = read_u8(&mut c)?;
+        let slot = read_equipment_slot(byte)?;
+        let stack = read_item_stack(&mut c)?;
+        slots.push(EquipmentEntry { slot, stack });
+        if byte & 0x80 == 0 {
+            break;
+        }
+    }
+    Ok(EntityEquipment { entity_id, slots })
+}
+
 /// One clientbound play packet, handled.
 #[derive(Debug, Clone, PartialEq)]
 pub enum PlayEvent {
@@ -4113,6 +4238,11 @@ pub enum PlayEvent {
     MobEffectApplied(MobEffectUpdate),
     /// Remove Mob Effect: ONE entity's effect ended.
     MobEffectRemoved(MobEffectRemove),
+    /// Set Equipment: ONE entity's gear snapshot — the equipment
+    /// state's wire transport (the paired slot/stack walk; an empty
+    /// stack is a legal entry — the cleared slot). The model consumes
+    /// it when mob rendering arrives.
+    EntityEquipped(EntityEquipment),
     /// Any packet without a client surface yet (skipped silently).
     Skipped,
 }
@@ -4213,6 +4343,9 @@ impl<S: Read + Write> PlaySession<S> {
             }
             clientbound::REMOVE_MOB_EFFECT => {
                 Ok(PlayEvent::MobEffectRemoved(parse_remove_mob_effect(&pkt)?))
+            }
+            clientbound::SET_EQUIPMENT => {
+                Ok(PlayEvent::EntityEquipped(parse_set_equipment(&pkt)?))
             }
             _ => Ok(PlayEvent::Skipped),
         }
@@ -7858,6 +7991,97 @@ mod tests {
         write_varint(&mut p, 2);
         write_varint(&mut p, 600);
         assert!(parse_update_mob_effect(&p).is_err());
+    }
+
+    /// The Set Equipment lanes retain the entity's gear: the paired
+    /// walk (the slot byte's low 7 bits index the eight-entry
+    /// declaration-order VALUES list, the HIGH bit is the continue
+    /// flag), the stack riding ItemStack.OPTIONAL_STREAM_CODEC (the
+    /// ItemStack$1 walk — an EMPTY stack is a legal entry here, the
+    /// cleared slot), the bounds refusal firing BEFORE the stack bytes
+    /// (Java's List.get order), and the continue-bit end refusing
+    /// honestly (the loop wants the next pair).
+    #[test]
+    fn the_set_equipment_lanes_retain_the_entitys_gear() {
+        use data_component_types as t;
+        assert_eq!(clientbound::SET_EQUIPMENT, 102, "minecraft:set_equipment");
+        // three pairs: mainhand (continue bit) with a full stack and a
+        // one-component patch, body (continue bit) with the CLEARED
+        // slot — an empty stack, legal on the optional lane — and the
+        // final offhand pair whose byte has the high bit CLEAR
+        let mut p = Vec::new();
+        write_varint(&mut p, clientbound::SET_EQUIPMENT);
+        write_varint(&mut p, 42);
+        p.push(0x80); // slot 0 mainhand | continue
+        write_varint(&mut p, 3); // count
+        write_varint(&mut p, 745); // item registry id
+        write_varint(&mut p, 1); // patch: one added
+        write_varint(&mut p, 0); // patch: none removed
+        write_varint(&mut p, t::MAX_STACK_SIZE);
+        write_varint(&mut p, 35); // the VarInt value
+        p.push(0x86); // slot 6 body | continue
+        write_varint(&mut p, 0); // the EMPTY stack: the count IS the sentinel
+        p.push(0x01); // slot 1 offhand, the FINAL pair — high bit clear
+        write_varint(&mut p, 1);
+        write_varint(&mut p, 2);
+        write_varint(&mut p, 0); // patch: none added
+        write_varint(&mut p, 0); // patch: none removed
+        let e = parse_set_equipment(&p).unwrap();
+        assert_eq!(e.entity_id, 42);
+        assert_eq!(e.slots.len(), 3);
+        assert_eq!(e.slots[0].slot, EquipmentSlot::Mainhand);
+        assert_eq!(e.slots[0].stack.count, 3);
+        assert_eq!(e.slots[0].stack.item_id, 745);
+        assert_eq!(
+            e.slots[0].stack.patch,
+            ComponentPatch { added: vec![(t::MAX_STACK_SIZE, ComponentValue::VarInt(35))], removed: vec![] }
+        );
+        assert_eq!(e.slots[1].slot, EquipmentSlot::Body);
+        assert_eq!(
+            e.slots[1].stack,
+            ItemStack { count: 0, item_id: 0, patch: ComponentPatch::default() },
+            "the cleared slot rides the optional lane as a LEGAL empty stack"
+        );
+        assert_eq!(e.slots[2].slot, EquipmentSlot::Offhand);
+        assert_eq!(e.slots[2].stack.count, 1);
+        assert_eq!(e.slots[2].stack.item_id, 2);
+        assert_eq!(e.slots[2].stack.patch, ComponentPatch::default());
+        // the empty sentinel's negative shape rides verbatim too (the
+        // count is retained, never normalized to zero)
+        let mut p = Vec::new();
+        write_varint(&mut p, clientbound::SET_EQUIPMENT);
+        write_varint(&mut p, 1);
+        p.push(0x04); // slot 4 chest, final
+        write_varint(&mut p, -7);
+        let e = parse_set_equipment(&p).unwrap();
+        assert_eq!(e.slots[0].stack.count, -7, "the raw sentinel retained");
+        assert_eq!(e.slots[0].stack.item_id, 0);
+        // the bounds refusal: slot index 8 is outside the eight-entry
+        // VALUES list, and Java's List.get fires BEFORE the stack
+        // bytes — the port refuses on the slot byte ALONE
+        let mut p = Vec::new();
+        write_varint(&mut p, clientbound::SET_EQUIPMENT);
+        write_varint(&mut p, 42);
+        p.push(0x88); // slot 8 | continue
+        assert!(parse_set_equipment(&p).is_err());
+        // the continue-bit end refuses honestly: the last byte keeps
+        // the high bit SET, so the loop wants the next pair and the
+        // buffer is short
+        let mut p = Vec::new();
+        write_varint(&mut p, clientbound::SET_EQUIPMENT);
+        write_varint(&mut p, 42);
+        p.push(0x80); // mainhand, continue
+        write_varint(&mut p, 0); // the empty stack
+        assert!(parse_set_equipment(&p).is_err());
+        // a final pair's stack truncated mid-patch refuses (the patch
+        // counts are short)
+        let mut p = Vec::new();
+        write_varint(&mut p, clientbound::SET_EQUIPMENT);
+        write_varint(&mut p, 42);
+        p.push(0x00); // mainhand, final
+        write_varint(&mut p, 1);
+        write_varint(&mut p, 2);
+        assert!(parse_set_equipment(&p).is_err());
     }
 
     /// Mock server: login -> configuration -> play (the FULL vanilla
