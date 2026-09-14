@@ -9742,9 +9742,11 @@ mod tests {
         assert_eq!(clientbound::CONTAINER_CLOSE, 17, "minecraft:container_close");
         // the chest's walk: window 5, the menu type generic_9x3 (2),
         // the title a hand-built anonymous-root compound with one
-        // string tag — the title's bytes ride back VERBATIM
+        // string tag — the title's bytes ride back VERBATIM. NOTE the
+        // anonymous root's shape: the 1.20.5+ network format has NO
+        // root name — the root byte is followed DIRECTLY by the first
+        // tag (the walker's own contract)
         let mut title = vec![0x0A];
-        title.extend_from_slice(&0u16.to_be_bytes()); // the anonymous root's empty name
         title.push(0x08); // TAG_String
         title.extend_from_slice(&4u16.to_be_bytes());
         title.extend_from_slice(b"name");
@@ -9766,11 +9768,11 @@ mod tests {
         write_varint(&mut p, clientbound::OPEN_SCREEN);
         write_varint(&mut p, 200);
         write_varint(&mut p, 0);
-        p.extend_from_slice(&[0x0A, 0x00, 0x00]); // the minimal empty root
+        p.extend_from_slice(&[0x0A, 0x00]); // the minimal empty root: no end-tag name — the root is anonymous
         let o = parse_open_screen(&p).unwrap();
         assert_eq!(o.container_id, 200, "the bare VarInt shape");
         assert_eq!(o.menu_type_id, 0, "generic_9x1");
-        assert_eq!(o.title_nbt, vec![0x0A, 0x00, 0x00]);
+        assert_eq!(o.title_nbt, vec![0x0A, 0x00]);
         // the truncation map: the id alone, the menu type short, the
         // title's root without its end
         let mut p = Vec::new();
@@ -9786,7 +9788,7 @@ mod tests {
         write_varint(&mut p, clientbound::OPEN_SCREEN);
         write_varint(&mut p, 5);
         write_varint(&mut p, 2);
-        p.extend_from_slice(&[0x0A, 0x00]); // a truncated root: no end tag
+        p.extend_from_slice(&[0x0A]); // a truncated root: no end tag
         assert!(parse_open_screen(&p).is_err());
         // a wrong packet id refuses (the generated-id guard)
         let mut p = Vec::new();

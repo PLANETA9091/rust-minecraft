@@ -3525,18 +3525,19 @@ mod tests {
         assert!(m.open_container().is_none(), "no screen, no store");
 
         // Open Screen: window 5, the chest (generic_9x3 = 2), the
-        // title a minimal anonymous-root compound riding verbatim
+        // title a minimal anonymous-root compound riding verbatim (the
+        // 1.20.5+ root has NO name — the root byte then the end tag)
         let mut p = Vec::new();
         write_varint(&mut p, clientbound::OPEN_SCREEN);
         write_varint(&mut p, 5);
         write_varint(&mut p, MENU_TYPE_CHEST);
-        p.extend_from_slice(&[0x0A, 0x00, 0x00]); // the minimal empty root
+        p.extend_from_slice(&[0x0A, 0x00]); // the minimal empty root
         let o = parse_open_screen(&p).unwrap();
         assert!(m.apply(PlayEvent::ScreenOpened(o)));
         let oc = m.open_container().unwrap();
         assert_eq!(oc.id, 5);
         assert_eq!(oc.menu_type_id, MENU_TYPE_CHEST, "generic_9x3, the chest");
-        assert_eq!(oc.title_nbt, vec![0x0A, 0x00, 0x00], "the title rides verbatim");
+        assert_eq!(oc.title_nbt, vec![0x0A, 0x00], "the title rides verbatim");
         assert!(oc.slots.is_empty(), "the contents ride the container packets");
 
         // the matching window's snapshot REPLACES the store
@@ -3547,10 +3548,9 @@ mod tests {
         write_varint(&mut p, 2); // the collection count
         write_varint(&mut p, 3);
         write_varint(&mut p, 745);
-        write_varint(&mut p, 1);
-        write_varint(&mut p, 0);
-        write_varint(&mut p, 0);
-        write_varint(&mut p, 0);
+        write_varint(&mut p, 0); // patch: none added
+        write_varint(&mut p, 0); // patch: none removed
+        write_varint(&mut p, 0); // slot 1: the EMPTY stack
         write_varint(&mut p, 0); // the carried item: empty
         let c = parse_set_container_content(&p).unwrap();
         assert!(m.apply(PlayEvent::ContainerFilled(c)));
@@ -3610,7 +3610,7 @@ mod tests {
         write_varint(&mut p, clientbound::OPEN_SCREEN);
         write_varint(&mut p, 5);
         write_varint(&mut p, MENU_TYPE_CHEST);
-        p.extend_from_slice(&[0x0A, 0x00, 0x00]);
+        p.extend_from_slice(&[0x0A, 0x00]);
         let o = parse_open_screen(&p).unwrap();
         assert!(m.apply(PlayEvent::ScreenOpened(o)));
         let oc = m.open_container().unwrap();
