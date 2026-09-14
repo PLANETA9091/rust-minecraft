@@ -919,6 +919,53 @@ hand-drawn:
   (VILLAGER_DATA at 18 doubles as the order proof), the generated-id
   pin, and the model's merge semantics (replace-one-leave-others, the
   null-lookup drop, the re-spawn reset).
+  The **the container GUI's window — open/close and the chest's store
+  (v0.3.127)**: the container trilogy's consumer line continues — the
+  OPEN-container lane the foreign-window traffic has been dropping
+  into now has a store. TWO packets ride the round (the generated-id
+  pins: Open Screen 59, Container Close 17). THE AUDIT (fresh javap on
+  the 26.2 jar): the Open Screen record's clinit composes THREE lanes
+  — the container id rides `ByteBufCodecs.CONTAINER_ID` (a BARE VARINT
+  — the $22 class's decode is `FriendlyByteBuf.readContainerId`, which
+  is `VarInt.read`, no range check), the menu type rides
+  `ByteBufCodecs.registry(Registries.MENU)` (a VarInt holder id,
+  retained verbatim — the mob-effect lane's own line), the title rides
+  `ComponentSerialization.TRUSTED_STREAM_CODEC` (ONE bare network NBT
+  tag — walked for the wire's shape, retained VERBATIM as raw bytes;
+  the text-render round owns the decode). THE CONSUMER (javap):
+  `handleOpenScreen` → `MenuScreens.create(type, minecraft,
+  containerId, title)` — the screen constructs the menu FOR the window
+  id (`menuType.create(containerId, player.getInventory())`) and lands
+  it in `player.containerMenu`; the foreign container traffic only
+  lands when `containerId == player.containerMenu.containerId` (the
+  fresh javap of BOTH handleContainerContent and
+  handleContainerSetSlot: the `if_icmpne` falls through to return —
+  the mismatched window is DROPPED); the close resets `containerMenu`
+  to `inventoryMenu` — ONE assignment (`Player.closeContainer`), NO id
+  check. THE ROUND'S LESSON: the 1.20.5+ network NBT root is
+  ANONYMOUS — no name field, the root byte is followed DIRECTLY by
+  the first tag; a test root built with the classic name-prefix shape
+  caught it in the first suite run (the walker's own contract, now
+  stated in the parse's doc). The model: `OpenContainerState` joins
+  the store family (the id, the MenuType registry id, the title's raw
+  NBT bytes, the menu's own slot numbering, the state counter, the
+  cursor stack), the ScreenOpened arm births/re-opens it (a fresh menu
+  has FRESH slots — the store resets wholesale), the ContainerFilled/
+  ContainerSlotSet foreign lanes feed the MATCHING window (the same
+  snapshot/slot policies the window-0 lane rides, through the shared
+  `store_slot_write` helper — the slot-write policy's one extraction,
+  compounding the project's line), and the ContainerClosed arm drops
+  it leaving the window-0 inventory store untouched (a close with
+  nothing open is the no-op repeat). NOT cleared on Respawn (the
+  wire's own close/open is the truth). GOLDENS UNTOUCHED BY
+  CONSTRUCTION: 12/12 at rms 0.000. Tests +2 (workspace 481 -> 483
+  passed / 0 failed / 3 ignored): the protocol side pinning the
+  generated ids, the three-lane walk (the two-byte VarInt shape
+  proof, the title's verbatim capture, the truncation/wrong-id
+  refusals); the model side walking the chest's full life cycle (the
+  birth, the snapshot replace, the slot-delta growth, the mismatch
+  drop, the inventory lane's parallel feed, the re-open reset, the
+  close).
   The **set held slot — the hotbar's selection packet (v0.3.126)**:
   the number-keys row's other half — the slot CONTENTS ride the
   container packets' window-0 lane, the SELECTION rides here (generated
