@@ -1453,7 +1453,14 @@ pub mod entity_data_serializers {
     /// The hand-rolled `OptionalInt` codec (the anonymous
     /// `EntityDataSerializers$3`): a VarInt where 0 = empty and a
     /// present value arrives BIAS-BY-ONE — wire n means n - 1 (the
-    /// decode is `OptionalInt.of(n - 1)`, the encode `value + 1`).
+    /// decode is `OptionalInt.of(n - 1)`, the encode
+    /// `optional.orElse(-1) + 1`). The ARITHMETIC never refuses: a
+    /// negative wire n is `OptionalInt.of(n - 1)` — a NEGATIVE
+    /// stored value — and the i32 wrap (wire MIN_VALUE stores
+    /// MAX_VALUE) is the isub/iadd's own two's-complement truth.
+    /// The field NAME says unsigned; the codec's TYPE is the signed
+    /// `OptionalInt` — the name-vs-type divergence the port's store
+    /// follows (the i32 truth, not the wiki name).
     pub const OPTIONAL_UNSIGNED_INT: i32 = 19;
     /// `Pose.STREAM_CODEC` — `idMapper` over the enum's own id field:
     /// a VarInt. The map is `ByIdMap.continuous(..,
@@ -1895,8 +1902,12 @@ pub enum EntityDataEntry {
     BlockState(i32),
     /// Serializer 15: the flag, then the state id only if present.
     OptionalBlockState(Option<i32>),
-    /// Serializer 19: the OptionalInt — wire 0 = None, wire n = Some(n - 1).
-    OptionalUnsignedInt(Option<u32>),
+    /// Serializer 19: the OptionalInt — wire 0 = None, wire n =
+    /// Some(n - 1), the SIGNED truth retained verbatim (a negative
+    /// wire n stores n - 1; the decode never refuses — the serializer
+    /// field NAME says unsigned, the codec's type is the signed
+    /// `OptionalInt`).
+    OptionalUnsignedInt(Option<i32>),
     /// Serializer 20: the pose's registry id, retained verbatim —
     /// vanilla's continuous ZERO map never refuses (out-of-range
     /// fills to STANDING in the consumer's resolution).
@@ -2909,14 +2920,17 @@ pub fn parse_set_entity_data(payload: &[u8]) -> Result<EntityDataSet> {
                 EntityDataEntry::OptionalBlockState(s)
             }
             entity_data_serializers::OPTIONAL_UNSIGNED_INT => {
-                let n = read_varint(&mut c)?;
-                anyhow::ensure!(n >= 0, "negative optional unsigned int {n}");
                 // the anonymous codec's arithmetic verbatim: 0 is the
                 // EMPTY sentinel, a present value arrives BIAS-BY-ONE
+                // — and the arithmetic NEVER refuses (a negative wire
+                // n is OptionalInt.of(n - 1), a NEGATIVE stored
+                // value); wrapping_sub mirrors the isub's two's-
+                // complement wrap (wire MIN_VALUE stores MAX_VALUE)
+                let n = read_varint(&mut c)?;
                 EntityDataEntry::OptionalUnsignedInt(if n == 0 {
                     None
                 } else {
-                    Some((n - 1) as u32)
+                    Some(n.wrapping_sub(1))
                 })
             }
             entity_data_serializers::POSE => {
@@ -4816,6 +4830,47 @@ mod tests {
         let p = test_support::set_entity_data_packet(3, &entries);
         let d = parse_set_entity_data(&p).unwrap();
         assert_eq!(d.entries[0].value, EntityDataEntry::OptionalUnsignedInt(Some(0)));
+    }
+
+    /// The OptionalInt lane's SIGNED truth (the $3 arithmetic): the
+    /// decode `OptionalInt.of(n - 1)` never refuses — a negative
+    /// wire n stores a NEGATIVE value (wire -5 is Some(-6)), and the
+    /// i32 wrap is the isub's two's-complement truth (wire MIN_VALUE
+    /// stores MAX_VALUE; Rust's plain subtraction would panic in
+    /// debug — wrapping_sub is the honest mirror). The encode mirror
+    /// is `optional.orElse(-1) + 1` (empty rides 0, present
+    /// MAX_VALUE rides MIN_VALUE). The delivered lane refused the
+    /// negative half for twelve versions — a strictness the
+    /// bytecode does not have, unpinned by any test and therefore
+    /// invisible (the autopush-114 deferral's arithmetic-codec
+    /// member, now retired).
+    #[test]
+    fn the_optional_int_lane_retains_the_signed_truth() {
+        use entity_data_serializers as s;
+        // wire -5 -> Some(-6): the negative half the old lane refused
+        let entries = test_support::entity_data_entry(
+            0,
+            s::OPTIONAL_UNSIGNED_INT,
+            &test_support::entity_data_varint(-5),
+        );
+        let p = test_support::set_entity_data_packet(4, &entries);
+        let d = parse_set_entity_data(&p).unwrap();
+        assert_eq!(
+            d.entries[0].value,
+            EntityDataEntry::OptionalUnsignedInt(Some(-6))
+        );
+        // the wrap edge: wire i32::MIN isub 1 is i32::MAX
+        let entries = test_support::entity_data_entry(
+            0,
+            s::OPTIONAL_UNSIGNED_INT,
+            &test_support::entity_data_varint(i32::MIN),
+        );
+        let p = test_support::set_entity_data_packet(4, &entries);
+        let d = parse_set_entity_data(&p).unwrap();
+        assert_eq!(
+            d.entries[0].value,
+            EntityDataEntry::OptionalUnsignedInt(Some(i32::MAX))
+        );
     }
 
     /// Set Entity Data: the villager record's wire is THREE VarInts —

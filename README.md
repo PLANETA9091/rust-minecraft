@@ -919,6 +919,37 @@ hand-drawn:
   (VILLAGER_DATA at 18 doubles as the order proof), the generated-id
   pin, and the model's merge semantics (replace-one-leave-others, the
   null-lookup drop, the re-spawn reset).
+  The **the OptionalInt lane's signed truth — the arithmetic-codec
+  deferral retired (v0.3.113)**: the autopush-114 round deferred the
+  OptionalInt serializer with evidence, and this round retires it.
+  The javap audit, fresh: `EntityDataSerializers$3` (the
+  OPTIONAL_UNSIGNED_INT field's anonymous codec) decodes `i =
+  VarInt.read`; `i == 0` is `OptionalInt.empty()`, ELSE `OptionalInt
+  .of(i - 1)` — the arithmetic NEVER refuses, a negative wire n
+  storing a NEGATIVE value (the `isub`'s two's-complement wrap:
+  wire MIN_VALUE stores MAX_VALUE), and the encode mirror is
+  `writeVarInt(optional.orElse(-1) + 1)` (empty rides 0, present
+  MAX_VALUE rides MIN_VALUE). The delivered lane's `ensure!(n >= 0)`
+  refused the negative half — a strictness the bytecode does not
+  have — and the `Option<u32>` store FORGED the rest (the `as u32`
+  cast wrapped a negative n - 1 into a huge positive where vanilla
+  stores the negative). The fix: the store is the SIGNED truth
+  (`Option<i32>`, the variant name keeping the wire's field name
+  OPTIONAL_UNSIGNED_INT while the docs carry the name-vs-type
+  divergence — the field NAME says unsigned, the codec's type is
+  the signed `OptionalInt`), the read lane retains any i32 verbatim
+  via `wrapping_sub` (the honest mirror of the Java `isub`; a plain
+  subtraction would panic in debug on the MIN edge), and the family
+  sweep confirms the lane is the delivered serializer set's ONLY
+  bias-by-one arithmetic codec (BLOCK_POS's packed-long arithmetic
+  is signed shifts, INT/LONG are raw VarInt/VarLong — no other
+  member). mc-client untouched BY CONSTRUCTION. GOLDENS UNTOUCHED BY
+  CONSTRUCTION: 12/12 PASS. Tests +1 (workspace 462 -> 463 passed /
+  0 failed / 3 ignored): the signed truth pinned end-to-end — wire
+  -5 is Some(-6) (the negative half the old lane refused), and wire
+  i32::MIN is Some(i32::MAX) (the wrap edge, probe landing ON the
+  lane). No existing probe needed inversion: the strictness shipped
+  unpinned twelve versions ago.
   The **the idMapper ordinal lanes' never-refuse contract — the
   Rarity fidelity-fix round (v0.3.112)**: the delivered RARITY lane
   refused a NEGATIVE ordinal while retaining out-of-range positives —
