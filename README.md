@@ -919,6 +919,65 @@ hand-drawn:
   (VILLAGER_DATA at 18 doubles as the order proof), the generated-id
   pin, and the model's merge semantics (replace-one-leave-others, the
   null-lookup drop, the re-spawn reset).
+  The **the variant-holder census — ALL 43 entity-data serializers
+  decode; the object-graph refusal set retired to the unknown ids
+  alone (v0.3.117)**: the LAST refusals in the registry walk retire —
+  ids 21-40 and 42 (RESOLVABLE_PROFILE at 41 landed the round
+  before). The javap audit, seventeen classes in one sweep: the
+  clinit's registration loop confirms the port's id table AND pins
+  the holders' wire order, which DIVERGES from the field-init order
+  — the loop runs CAT, CAT_SOUND, COW, COW_SOUND, WOLF, WOLF_SOUND,
+  FROG, PIG, PIG_SOUND, CHICKEN, CHICKEN_SOUND, ZOMBIE_NAUTILUS
+  (ids 21-32) where the field-init block had the CHICKEN pair third
+  and the COW pair fifth; the same swap puts SNIFFER_STATE (35)
+  before ARMADILLO_STATE (36) — only the loop is the wire (the
+  autopush-115 lesson's third family this round). The lanes: the
+  twelve holders = `ByteBufCodecs.holderRegistry(REGISTRY)` (the
+  anonymous $29 = `VarInt.read` -> `byIdOrThrow` — the villager
+  lane's family; the port refuses the negative half, the
+  arithmetic-only check, and retains the non-negative unknown
+  verbatim — no variant-registry tables ride this client);
+  OPTIONAL_GLOBAL_POS (33) = `GlobalPos.STREAM_CODEC` under the
+  #149-bsm ONE-FLAG-BYTE optional — the composite is the dimension
+  key via `ResourceKey.streamCodec` = `Identifier.STREAM_CODEC
+  .map(..)` (the dimension rides a plain STRING like
+  "minecraft:overworld", NOT a registry id — the name-shaped trap
+  sitting beside the villager VarInts) + `BlockPos.STREAM_CODEC`
+  (the packed i64 the chunk path decodes); PAINTING_VARIANT (34) =
+  `ByteBufCodecs.holder(PAINTING_VARIANT, DIRECT_STREAM_CODEC)` —
+  the anonymous $30, the holder family's ONLY bias-by-one member:
+  wire 0 = the INLINE record (width, height, assetId string,
+  title/author each the TRUSTED_OPTIONAL flag+tag lane), wire n >=
+  1 = registry id n - 1, wire n < 0 throws; the enum states =
+  `ByteBufCodecs.idMapper(BY_ID, ordinal)` over
+  `ByIdMap.continuous(..)` — SNIFFER (7 states, ZERO), ARMADILLO
+  (4, ZERO), COPPER_GOLEM (5, ZERO), WEATHERING_COPPER (4, the
+  family's only CLAMP — vanilla's decode map clamps out-of-range
+  keys, and the port retains the wire ordinal verbatim, the clamp
+  the consumer's act), HUMANOID_ARM (LEFT = 0, RIGHT = 1 — the
+  declaration order's own truth, no explicit id field exists so no
+  convention trap); VECTOR3 (39) = `ByteBufCodecs.VECTOR3F` =
+  `readVector3f` = three big-endian f32s; QUATERNION (40) =
+  `QUATERNIONF` = `readQuaternion` = four big-endian f32s in the
+  JOML x, y, z, w order. The implementation: the 21 consts (the
+  census docs carrying each lane's audit), the `GlobalPos` struct
+  and the `PaintingVariant` enum (Registry/Direct), 21
+  `EntityDataEntry` variants, the shared `read_holder_id` reader,
+  the decode arms, the enum census now claiming ALL FORTY-THREE
+  ids (0-42), and the lib.rs exports. mc-client untouched BY
+  CONSTRUCTION. GOLDENS UNTOUCHED BY CONSTRUCTION: 12/12 PASS.
+  Tests +1 (workspace 467 -> 468 passed / 0 failed / 3 ignored):
+  one 25-entry packet riding every new lane (twelve holders each
+  keeping its own wire id, the global pos present AND absent, the
+  painting BOTH shapes — the direct record and the bias-by-one
+  reference — one named state per enum lane, the float layouts,
+  RIGHT, and the retention pins: a wire 99 sniffer state and a
+  wire 999 weathering state stored verbatim), the negative holder
+  ids refusing (byIdOrThrow's direction), the truncated quaternion
+  and the truncated direct painting refusing (the honest
+  short-buffer failure). The object-graph refusal test's survivor
+  list is the unknown ids alone — id 21's 0x00 probe byte became a
+  legal cat-variant id this round.
   The **the resolvable profile — serializer 41, the last low-id
   object-graph refusal, retired (v0.3.116)**: the RESOLVABLE_
   PROFILE lane decodes. The javap audit, six hops: `Resolvable
