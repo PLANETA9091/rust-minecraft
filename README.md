@@ -919,6 +919,37 @@ hand-drawn:
   (VILLAGER_DATA at 18 doubles as the order proof), the generated-id
   pin, and the model's merge semantics (replace-one-leave-others, the
   null-lookup drop, the re-spawn reset).
+  The **mob-effect registry as a GENERATED table (v0.3.120)**: the
+  round-120 probe promoted into the dumper set — the generator-first
+  philosophy applied to the effect lane's own evidence. The mob-effect
+  registry is NOT a synchronized registry (DumpRegistries covers the
+  configuration-synced set the server streams): the client resolves it
+  LOCALLY — the `holderRegistry(Registries.MOB_EFFECT)` serializers
+  ride the built-in registration order, so the wire ids the effect
+  packets carry are THIS boot's 0-based ids, and the legacy 1-based
+  wiki ids are not the wire. The checked-in DumpMobEffects.java
+  (clean-room, one file) boots the official jar's real registries and
+  prints `id|name` per entry; `mc2rs-gen dump-mob-effects` runs it
+  through the sha1-verified classpath (the dump_registries plumbing,
+  reused whole) and saves the `mob_effects.txt` evidence file; the
+  offline `mob-effects` emitter parses it (dense-from-0, unique names
+  — the same honesty checks the registry-order parser runs) into
+  `mc-registry/src/generated/mob_effects.rs` —
+  `MOB_EFFECT_ORDER: [&str; 40]`, speed 0 .. night_vision 15 ..
+  conduit_power 28 .. breath_of_the_nautilus 39, the array index IS
+  the wire id, the header carrying the client sha1 and the NOT-synced
+  distinction. The consumer: mc-client's `MOB_EFFECT_NIGHT_VISION`
+  const now pins against the generated table (the
+  `the_night_vision_const_is_pinned_to_the_generated_registry_table`
+  test — a regeneration that moves night_vision fails at the slot,
+  not on the wire), the doc citing the table instead of the probe.
+  GOLDENS UNTOUCHED BY CONSTRUCTION: 12/12 at rms 0.000 (the table is
+  new mc-registry code, the mc-client change is test-only + doc).
+  Tests +2 (workspace 472 -> 474 passed / 0 failed / 3 ignored): the
+  parser's refusals (the non-dense gap, the duplicate, the empty
+  name, the empty dump) and the emitted table's shape, plus the
+  const's slot pin (40 entries, the round-120 landmarks riding the
+  same table).
   The **set equipment — the gear snapshot's wire transport
   (v0.3.119)**: the held-item state's packet, decoded. The audit (javap
   on the 26.2 jar): Set Equipment (generated id 102) is a `readVarInt`
