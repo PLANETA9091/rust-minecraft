@@ -1597,9 +1597,13 @@ pub mod data_component_types {
     /// direct `{UTF id, f32 range}` lane, wire tag >= 1 = the
     /// `(tag - 1)` registry id, a negative tag refuses), BOOL
     /// has_consume_particles, then `ConsumeEffect.STREAM_CODEC.list()`
-    /// — a count of DISPATCHED registry entries (each type carries
-    /// its own payload codec; the port carries none of the six, so
-    /// any NON-EMPTY list refuses — the partial-matcher line).
+    /// — a count of DISPATCHED registry entries: the registry id (a
+    /// `$29` byIdOrThrow VarInt — an unknown id refuses) then that
+    /// type's own payload ([`ConsumeEffect`]; the five known types
+    /// are apply_effects 0, remove_effects 1, clear_all_effects 2,
+    /// teleport_randomly 3, play_sound 4 — the registry's clinit
+    /// names carry no "status" infix; the wiki-era naming is not
+    /// the wire's).
     pub const CONSUMABLE: i32 = 24;
 }
 
@@ -1694,11 +1698,11 @@ pub enum ComponentValue {
     },
     /// The consumption lane: consumable (24) — the FIVE-lane
     /// composite (consume seconds, the animation ordinal, the tagged
-    /// sound, the particle flag) with the effects list pinned EMPTY:
-    /// `ConsumeEffect.STREAM_CODEC` is a DISPATCHED registry whose
-    /// payloads the port does not carry, and the unframed wire
-    /// cannot be skipped honestly (the wave-three partial-matcher
-    /// line).
+    /// sound, the particle flag) with the effects list now WALKED:
+    /// `ConsumeEffect.STREAM_CODEC` = `ByteBufCodecs.registry(
+    /// CONSUME_EFFECT_TYPE)` dispatched (see [`ConsumeEffect`] — the
+    /// autopush-111 pinned-EMPTY deferral retired; each of the five
+    /// known types carries its own audited payload).
     Consumable {
         /// The consume time — a BE f32.
         consume_seconds: f32,
@@ -1710,6 +1714,10 @@ pub enum ComponentValue {
         sound: ConsumableSound,
         /// The consume-particles flag — one byte.
         has_consume_particles: bool,
+        /// The consume effects — the DISPATCHED registry list, in
+        /// wire order (an entry's type id selects its payload walk;
+        /// an unknown id refuses — byIdOrThrow).
+        effects: Vec<ConsumeEffect>,
     },
 }
 
@@ -1984,24 +1992,25 @@ fn read_component_value(type_id: i32, c: &mut &[u8]) -> Result<ComponentValue> {
         }
         t::CONSUMABLE => {
             // Consumable.STREAM_CODEC — the FIVE-lane composite; the
-            // effects list's count is read and pinned EMPTY (the
-            // dispatched registry's payloads cannot be skipped
-            // honestly — the wave-three partial-matcher line)
+            // effects list is a DISPATCHED registry walk now (each
+            // entry = a byIdOrThrow type id + that type's audited
+            // payload — the autopush-111 pinned-EMPTY deferral
+            // retired)
             let consume_seconds = read_f32(c)?;
             let animation = read_varint(c)?;
             let sound = read_consumable_sound(c)?;
             let has_consume_particles = read_u8(c)? != 0;
             let effects = read_component_count(c, "consume-effect list")?;
-            anyhow::ensure!(
-                effects == 0,
-                "no payload codecs for the {effects} dispatched consume-effect \
-                 types (the wire is unframed; a payload cannot be skipped honestly)"
-            );
+            let mut consumed = Vec::with_capacity(effects as usize);
+            for _ in 0..effects {
+                consumed.push(read_consume_effect(c)?);
+            }
             ComponentValue::Consumable {
                 consume_seconds,
                 animation,
                 sound,
                 has_consume_particles,
+                effects: consumed,
             }
         }
         other => anyhow::bail!(
@@ -2208,11 +2217,13 @@ pub enum AttributeDisplay {
     Override(Nbt),
 }
 
-/// The sound lane of [`ComponentValue::Consumable`] —
+/// The sound lane of [`ComponentValue::Consumable`] and the
+/// `play_sound` consume-effect's payload — the SAME
 /// `SoundEvent.STREAM_CODEC` = `ByteBufCodecs.holder(SOUND_EVENT,
-/// DIRECT_STREAM_CODEC)`: a TAGGED union (the wave-three holderSet's
-/// shape family) where wire 0 is the DIRECT lane and wire tag >= 1
-/// the registry lane.
+/// DIRECT_STREAM_CODEC)` (one codec, two call sites — the registry
+/// slot is per-component, the codec is per-RECORD): a TAGGED union
+/// (the wave-three holderSet's shape family) where wire 0 is the
+/// DIRECT lane and wire tag >= 1 the registry lane.
 #[derive(Debug, Clone, PartialEq)]
 pub enum ConsumableSound {
     /// Wire 0: `SoundEvent.DIRECT_STREAM_CODEC` =
@@ -2229,6 +2240,115 @@ pub enum ConsumableSound {
     /// line). A NEGATIVE wire tag refuses: vanilla's registry lookup
     /// throws on it (the tag-1 arithmetic would go below the table).
     Registry(i32),
+}
+
+/// One entry of the consumable's effects list — the
+/// `ConsumeEffect.STREAM_CODEC` DISPATCH decoded verbatim:
+/// `StreamCodec.dispatch(ByteBufCodecs.registry(CONSUME_EFFECT_TYPE),
+/// ..)` — a VarInt registry id (`$29` = `IdMap.byIdOrThrow`: an
+/// unknown or negative id throws, the port refuses at the same lane)
+/// followed by that type's own payload. The five known types ride
+/// the registry's clinit registration order; their registry NAMES
+/// (apply_effects, remove_effects, clear_all_effects,
+/// teleport_randomly, play_sound) carry no "status" infix — the
+/// wiki-era names are not the wire's (the fourth name-vs-wire
+/// divergence this registry family has shown).
+#[derive(Debug, Clone, PartialEq)]
+pub enum ConsumeEffect {
+    /// Wire id 0 — `ApplyStatusEffectsConsumeEffect.STREAM_CODEC` =
+    /// `composite(MobEffectInstance.STREAM_CODEC.list(), FLOAT)` —
+    /// the no-arg list (an `Integer.MAX_VALUE` ceiling; a negative
+    /// count dies at the constructor, the shared readCount shape)
+    /// then the application probability as a plain BE f32.
+    ApplyEffects {
+        /// The effects to apply, in wire order (see
+        /// [`EffectInstance`]).
+        effects: Vec<EffectInstance>,
+        /// The application probability — a BE f32, retained verbatim
+        /// (the roll is a consumer's act).
+        probability: f32,
+    },
+    /// Wire id 1 — `RemoveStatusEffectsConsumeEffect.STREAM_CODEC` =
+    /// `composite(ByteBufCodecs.holderSet(MOB_EFFECT))` — the
+    /// wave-three holderSet tagged union (see [`EffectHolderSet`]).
+    RemoveEffects(EffectHolderSet),
+    /// Wire id 2 — `ClearAllStatusEffectsConsumeEffect.STREAM_CODEC`
+    /// = `StreamCodec.unit(INSTANCE)`: ZERO payload bytes (the
+    /// cheapest dispatched lane on the wire).
+    ClearAllEffects,
+    /// Wire id 3 — `TeleportRandomlyConsumeEffect.STREAM_CODEC` =
+    /// `composite(FLOAT)`: the teleport diameter as a plain BE f32
+    /// (the DEFAULT_DIAMETER constant is the NBT-side default, not
+    /// the wire's — the wire always carries the float).
+    TeleportRandomly {
+        /// The teleport diameter — a BE f32.
+        diameter: f32,
+    },
+    /// Wire id 4 — `PlaySoundConsumeEffect.STREAM_CODEC` =
+    /// `composite(SoundEvent.STREAM_CODEC)` — the SAME tagged holder
+    /// union as the consumable's sound lane ([`ConsumableSound`];
+    /// one codec, two call sites).
+    PlaySound(ConsumableSound),
+}
+
+/// The effect holder set — `ByteBufCodecs.holderSet(MOB_EFFECT)`,
+/// the wave-three `ByteBufCodecs$31` shape exactly: a VarInt TAG
+/// where wire 0 is the NAMED set (an UTF identifier, retained
+/// verbatim — vanilla resolves it orElseThrow against the synced
+/// effect tags, the VILLAGER_DATA line) and wire tag >= 1 a DIRECT
+/// set of `(tag - 1)` byIdOrThrow effect ids (a negative id
+/// refuses; a negative TAG cannot reach the arithmetic — the named
+/// lane owned wire 0, the port refuses it explicitly).
+#[derive(Debug, Clone, PartialEq)]
+pub enum EffectHolderSet {
+    /// Wire tag 0: the set is an effect TAG, carried as its UTF
+    /// identifier (`minecraft:harmful`).
+    Named(String),
+    /// Wire tag >= 1: `(tag - 1)` numeric effect registry ids.
+    Direct(Vec<i32>),
+}
+
+/// One applied effect — `MobEffectInstance.STREAM_CODEC` =
+/// `composite(MobEffect.STREAM_CODEC, Details.STREAM_CODEC)` — a
+/// TWO-lane composite: the effect's registry id and the recursive
+/// details record.
+#[derive(Debug, Clone, PartialEq)]
+pub struct EffectInstance {
+    /// `MobEffect.STREAM_CODEC` = `ByteBufCodecs.holderRegistry(
+    /// MOB_EFFECT)` — the `$29` byIdOrThrow VarInt (a negative id
+    /// refuses exactly where vanilla's lookup throws; the id is
+    /// retained verbatim, the decode-only line).
+    pub effect_id: i32,
+    /// The recursive `Details` composite (see [`EffectDetails`]).
+    pub details: EffectDetails,
+}
+
+/// The recursive `MobEffectInstance$Details.STREAM_CODEC` —
+/// `StreamCodec.recursive(composite(VAR_INT amplifier, VAR_INT
+/// duration, BOOL ambient, BOOL showParticles, BOOL showIcon,
+/// optional(recursive self) hiddenEffect))`: six lanes in the
+/// record's component order (the bootstrap strings confirm), the
+/// sixth a ONE-BYTE readBoolean prefix (`ByteBufCodecs.optional`,
+/// the `$23` shape) then, if present, the SAME composite again —
+/// vanilla's recursion mirrored walk-for-walk (an unbounded wire
+/// recursion stack-overflows vanilla's own recursive codec too).
+#[derive(Debug, Clone, PartialEq)]
+pub struct EffectDetails {
+    /// The amplifier — a plain VarInt, retained verbatim (the
+    /// MIN/MAX_AMPLIFIER constants are apply()-side, not decode-side).
+    pub amplifier: i32,
+    /// The duration in ticks — a plain VarInt (`-1` is the wire's
+    /// own INFINITE_DURATION marker, not a refusal).
+    pub duration: i32,
+    /// The ambient flag — one byte.
+    pub ambient: bool,
+    /// The show-particles flag — one byte.
+    pub show_particles: bool,
+    /// The show-icon flag — one byte.
+    pub show_icon: bool,
+    /// The hidden (upgraded) effect — one-byte prefix then the
+    /// recursive composite, boxed because the record is recursive.
+    pub hidden_effect: Option<Box<EffectDetails>>,
 }
 
 /// `ByteBufCodecs.optional` (`$23`) verbatim: a one-byte boolean
