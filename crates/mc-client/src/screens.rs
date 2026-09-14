@@ -1966,7 +1966,134 @@ fn chest_mirror_slot(panel: (i32, i32), index: usize) -> (i32, i32) {
 /// Unresolvable ids and the pinned missing materials draw nothing —
 /// the honest unknown. The texels land one alpha-blended GUI pixel at
 /// a time (the public fill primitive at unit size).
+/// The per-quad direction -> the FACE_SHADE index (the mesher's own
+/// order: [east, west, top, bottom, south, north]).
+fn shade_for_direction(q: &mc_registry::element_quads::Quad) -> f32 {
+    use mc_registry::generated::elements::Cull;
+    let idx = match q.direction {
+        Cull::East => 0,
+        Cull::West => 1,
+        Cull::Up => 2,
+        Cull::Down => 3,
+        Cull::South => 4,
+        Cull::North => 5,
+    };
+    crate::colors::FACE_SHADE[idx]
+}
+
+/// The ItemColors law for the GUI icons: the first tint json of the
+/// layer, the constant value verbatim (0xRRGGBB int or [r,g,b] floats),
+/// the grass/foliage tints at the vanilla's own no-level climate
+/// (0.5, 1.0) through the audited colormap. Untinted layers = white.
+fn icon_tint(tints: &[&str]) -> [f32; 3] {
+    for t in tints {
+        let Ok(v) = serde_json::from_str::<serde_json::Value>(t) else {
+            continue;
+        };
+        match v.get("type").and_then(|t| t.as_str()) {
+            Some("minecraft:constant") => {
+                let rgb = match v.get("value") {
+                    Some(serde_json::Value::Number(n)) => n.as_u64().unwrap_or(0xFFFFFF) as u32,
+                    Some(serde_json::Value::Array(a)) => {
+                        let f = |i: usize| {
+                            a.get(i).and_then(|x| x.as_f64()).unwrap_or(1.0) as f32
+                        };
+                        let (r, g, b) = (f(0), f(1), f(2));
+                        ((r * 255.0).round() as u32) << 16
+                            | ((g * 255.0).round() as u32) << 8
+                            | (b * 255.0).round() as u32
+                    }
+                    _ => 0xFFFFFF,
+                };
+                return crate::tint::unpack(rgb & 0xFFFFFF);
+            }
+            Some("minecraft:grass") => {
+                let c = crate::colormap::grass_from_climate(0.5, 1.0).unwrap_or(0x8EB971);
+                return crate::tint::unpack(c);
+            }
+            Some("minecraft:foliage") => {
+                let c = crate::colormap::foliage_from_climate(0.5, 1.0).unwrap_or(0x48B518);
+                return crate::tint::unpack(c);
+            }
+            _ => {}
+        }
+    }
+    [1.0, 1.0, 1.0]
+}
+
+/// The 3D icon renderer — the GuiItemAtlas drawToSlot law over ONE slot:
+/// the pose = translate(slot center px, 0) . scale(s, -s, s) with
+/// s = 16 GUI px (the slot's own pixel size; the atlas slots render at
+/// the gui resolution and ours rasterizes straight into the framebuffer,
+/// single-pass — no atlas, no reuse), the ortho depth carried by the
+/// projection's w row (nearer = smaller, the raster's own convention),
+/// the per-slot depth clear (the atlas clears each slot's depth too).
+/// The quads ride the registry's gui chain with the per-quad tint x
+/// shade folded into the SampledQuad multiplier. Returns false when the
+/// item has no gui quads (the caller falls back to the flat blit).
+fn draw_item_icon_3d(g: &mut Gui, item_id: i32, x: i32, y: i32) -> bool {
+    let Some(Ok(layers)) = mc_registry::display::item_gui_quads(item_id) else {
+        return false;
+    };
+    if layers.is_empty() {
+        return false;
+    }
+    let scale = g.scale as f32;
+    let (w_fb, h_fb) = (g.fb.w as f32, g.fb.h as f32);
+    let cx = (x as f32 + 8.0) * scale;
+    let cy = (y as f32 + 8.0) * scale;
+    let s = 16.0 * scale;
+    // translate(slot center) . scale(s, -s, s) as the NDC projection:
+    // x_ndc = 2(x_px)/w - 1 with x_px = cx + bx*s; y_px = cy - by*s (the
+    // atlas's own y-flip) -> y_ndc = 1 - 2 y_px/h; the w row carries the
+    // depth (nearer = smaller): w = 1.5 - bz
+    let mut proj = crate::math::Mat4::IDENT;
+    proj.0[0] = 2.0 * s / w_fb;
+    proj.0[5] = 2.0 * s / h_fb;
+    proj.0[11] = -1.0;
+    proj.0[12] = 2.0 * cx / w_fb - 1.0;
+    proj.0[13] = 1.0 - 2.0 * cy / h_fb;
+    proj.0[15] = 1.5;
+    g.fb.clear_depth();
+    let sampled: Vec<crate::raster::SampledQuad> = layers
+        .iter()
+        .map(|(q, shaded, tints)| {
+            let tint = if *shaded {
+                let sh = shade_for_direction(q);
+                let t = icon_tint(tints);
+                [t[0] * sh, t[1] * sh, t[2] * sh]
+            } else {
+                icon_tint(tints)
+            };
+            crate::raster::SampledQuad {
+                pts: q.vertices,
+                uv: q.uvs,
+                tex: q.texture,
+                tint,
+            }
+        })
+        .collect();
+    g.fb.draw_sampled_quads(proj, &sampled, &mut |tex, u, v| {
+        match mc_registry::sprite_uv::sample_uv(tex, u, v) {
+            mc_registry::sprite_uv::Sample::Pixel(c) => Some(c),
+            mc_registry::sprite_uv::Sample::Missing(c) => Some(c),
+            mc_registry::sprite_uv::Sample::Unknown => None,
+        }
+    });
+    true
+}
+
 fn draw_item_icon(g: &mut Gui, item_id: i32, x: i32, y: i32) {
+    // THE 3D ICON PATH: every item's GUI icon is the vanilla atlas arc's
+    // own render — the gui-context quads (the block models' isometric
+    // geometry, the flat sprites' centered extrusion, the 63 specials'
+    // dump polygons) projected into the 16x16 slot by the GuiItemAtlas
+    // drawToSlot law (the slot-center translate, the scale(s, -s, s)
+    // y-flip, the ortho depth). The flat blit below stays as the
+    // defensive fallback for ids the quad path refuses.
+    if draw_item_icon_3d(g, item_id, x, y) {
+        return;
+    }
     let Some((rgba, w, h)) = mc_registry::item_icon(item_id) else {
         return;
     };
@@ -3844,6 +3971,71 @@ mod tests {
         app.live_held_updated(Some((926, 1)));
         assert_eq!(app.live_held, Some(926));
         assert!(app.held_item.is_some(), "the model reloads");
+    }
+
+    /// The GUI icons' 3D law: the block items render their isometric
+    /// geometry (non-blank, the tint law rides), the flat sprites fill
+    /// the slot exactly, the specials' payloads land — the fallback
+    /// blit covers only what the quad path refuses.
+    #[test]
+    fn the_item_icons_render_the_gui_quads() {
+        let lit_in_slot = |g: &Gui| -> usize {
+            let mut lit = 0;
+            for py in 16..48 {
+                for px in 16..48 {
+                    let o = (py * 64 + px) * 3;
+                    if g.fb.color[o] != 0 || g.fb.color[o + 1] != 0 || g.fb.color[o + 2] != 0 {
+                        lit += 1;
+                    }
+                }
+            }
+            lit
+        };
+        let wire = |name: &str| -> i32 {
+            mc_registry::generated::item_order::ITEM_WIRE_ORDER
+                .iter()
+                .position(|&n| n == name)
+                .expect(name) as i32
+        };
+        // the cobblestone icon: the element cube's isometric render —
+        // the slot area carries pixels now (it was blank before this
+        // round), the shaded faces riding the FACE_SHADE multipliers
+        let mut fb = crate::raster::Framebuf::new(64, 64);
+        let mut g = Gui::new(&mut fb, 2);
+        draw_item_icon(&mut g, wire("cobblestone"), 8, 8);
+        let lit = lit_in_slot(&g);
+        assert!(lit > 100, "the cobblestone icon renders ({lit} px)");
+        // the diamond: the flat sprite item — non-blank, centered
+        let mut fb = crate::raster::Framebuf::new(64, 64);
+        let mut g = Gui::new(&mut fb, 2);
+        draw_item_icon(&mut g, wire("diamond"), 8, 8);
+        let lit = lit_in_slot(&g);
+        assert!(lit > 100, "the diamond icon renders ({lit} px)");
+        // the grass block: the tint law rides — the icon's pixels lean
+        // GREEN (the vanilla no-level climate's grass tint through the
+        // audited colormap)
+        let mut fb = crate::raster::Framebuf::new(64, 64);
+        let mut g = Gui::new(&mut fb, 2);
+        draw_item_icon(&mut g, wire("grass_block"), 8, 8);
+        let mut green_lean = 0;
+        for py in 16..48 {
+            for px in 16..48 {
+                let o = (py * 64 + px) * 3;
+                let (r, gr, b) = (g.fb.color[o], g.fb.color[o + 1], g.fb.color[o + 2]);
+                let painted = r != 0 || gr != 0 || b != 0;
+                if painted && gr > r && gr >= b {
+                    green_lean += 1;
+                }
+            }
+        }
+        assert!(green_lean > 20, "the grass icon tints green ({green_lean} px)");
+        // the shield: the SPECIAL payload in the slot (the dump's
+        // geometry, the base model's gui stanza)
+        let mut fb = crate::raster::Framebuf::new(64, 64);
+        let mut g = Gui::new(&mut fb, 2);
+        draw_item_icon(&mut g, wire("shield"), 8, 8);
+        let lit = lit_in_slot(&g);
+        assert!(lit > 50, "the shield icon renders ({lit} px)");
     }
 
     /// The live held lane's SPECIAL payloads: the 63 block-entity /

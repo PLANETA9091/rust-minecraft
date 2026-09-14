@@ -121,6 +121,21 @@ pub struct ResolvedItem {
     pub swap_animation_scale: Option<f32>,
 }
 
+/// One item's GUI-context icon resolution — the definition tree
+/// evaluated for `ItemDisplayContext.GUI` (the GuiGraphicsExtractor
+/// item()'s own updateForTopItem(GUI)): the display_context select
+/// cases naming "gui" win (the spears' and the trident's 2D sprites),
+/// the resting-false conditions branch on_false (a fresh stack in an
+/// inventory), the range_dispatch keeps its threshold<=0 entry, the
+/// composites concatenate, the special nodes mark the payload.
+pub struct GuiIcon {
+    /// The gui-context model paths (empty for the special payloads).
+    pub models: Vec<String>,
+    /// true = the ITEM_SPECIAL_MODELS payload renders (the geometry
+    /// the dump carries); false = `models` render as cuboid bakes.
+    pub special: bool,
+}
+
 /// The parsed table the generated file carries.
 pub struct ItemModelsData {
     /// Plain definitions, sorted by id.
@@ -133,6 +148,10 @@ pub struct ItemModelsData {
     pub complex: Vec<(String, String)>,
     /// The root-node type census (count descending), the honest-skip record.
     pub root_types: Vec<(String, u32)>,
+    /// The GUI-context icon overrides for every NON-plain definition
+    /// (the resolved trees + the special payloads), sorted by id. The
+    /// plain defs need none: their gui icon IS their model path.
+    pub gui_icons: Vec<(String, GuiIcon)>,
 }
 
 /// The condition properties whose RESTING state is false: a fresh stack
@@ -211,6 +230,7 @@ pub fn generate<R: std::io::Read + std::io::Seek>(
 
     let mut defs = BTreeMap::new();
     let mut resolved: BTreeMap<String, ResolvedItem> = BTreeMap::new();
+    let mut gui_icons: BTreeMap<String, GuiIcon> = BTreeMap::new();
     let mut complex: Vec<(String, String)> = Vec::new();
     let mut types: BTreeMap<String, u32> = BTreeMap::new();
 
@@ -242,6 +262,16 @@ pub fn generate<R: std::io::Read + std::io::Seek>(
             .with_context(|| format!("{name}: \"model.type\" must be a string"))?;
         *types.entry(ty.to_string()).or_default() += 1;
         if ty != MODEL_TYPE {
+            // THE GUI ICON: the same tree, evaluated for the gui
+            // display context (the resolver's own branch laws, the
+            // display_context select's gui cases included). An
+            // unresolvable branch = the empty icon — the honest
+            // nothing-drawn, never a guessed model.
+            let gui = resolve_gui(&Value::Object(node.clone()), &id).unwrap_or(GuiIcon {
+                models: Vec::new(),
+                special: false,
+            });
+            gui_icons.insert(id.clone(), gui);
             match resolve_node(&Value::Object(node.clone()), &id, 0, &None) {
                 Ok(layers) => {
                     let swap = match obj.get("swap_animation_scale") {
@@ -256,6 +286,11 @@ pub fn generate<R: std::io::Read + std::io::Seek>(
                 }
                 Err(why) => complex.push((id, why)),
             }
+            // THE GUI ICON: the same tree, evaluated for the gui
+            // display context (the resolver's own branch laws, the
+            // display_context select's gui cases included). An
+            // unresolvable branch = the empty icon — the honest
+            // nothing-drawn, never a guessed model.
             continue;
         }
         for key in node.keys() {
@@ -298,6 +333,8 @@ pub fn generate<R: std::io::Read + std::io::Seek>(
     }
 
     complex.sort();
+    let mut gui_icons: Vec<(String, GuiIcon)> = gui_icons.into_iter().collect();
+    gui_icons.sort_by(|a, b| a.0.cmp(&b.0));
     let mut root_types: Vec<(String, u32)> = types.into_iter().collect();
     root_types.sort_by(|a, b| b.1.cmp(&a.1).then(a.0.cmp(&b.0)));
     let total = defs.len() + resolved.len() + complex.len();
@@ -307,7 +344,106 @@ pub fn generate<R: std::io::Read + std::io::Seek>(
         total,
         names.len()
     );
-    Ok(ItemModelsData { defs, resolved, complex, root_types })
+    Ok(ItemModelsData { defs, resolved, complex, root_types, gui_icons })
+}
+
+/// The GUI-context resolution — the branch laws the gui display
+/// context speaks. `Ok` always (the unresolvable branch = the empty
+/// icon); the empty `models` + `special: false` = nothing drawn.
+fn resolve_gui(node: &Value, id: &str) -> Result<GuiIcon, String> {
+    let obj = node
+        .as_object()
+        .ok_or_else(|| format!("{id}: the node must be an object"))?;
+    let ty = obj
+        .get("type")
+        .and_then(Value::as_str)
+        .ok_or_else(|| format!("{id}: the node \"type\" must be a string"))?;
+    match ty {
+        "minecraft:model" => {
+            let model = obj
+                .get("model")
+                .and_then(Value::as_str)
+                .ok_or_else(|| format!("{id}: \"model.model\" must be a string"))?;
+            Ok(GuiIcon { models: vec![model.to_string()], special: false })
+        }
+        "minecraft:special" => Ok(GuiIcon { models: Vec::new(), special: true }),
+        "minecraft:select" => {
+            // the case matches the gui context iff the select's property
+            // is display_context AND the case's "when" names "gui"
+            let prop = obj.get("property").and_then(Value::as_str).unwrap_or("");
+            if prop == "minecraft:display_context" {
+                if let Some(cases) = obj.get("cases").and_then(Value::as_array) {
+                    for case in cases {
+                        let Some(c) = case.as_object() else { continue };
+                        let matched = match c.get("when") {
+                            Some(Value::String(s)) => s == "gui",
+                            Some(Value::Array(a)) => {
+                                a.iter().any(|v| v.as_str() == Some("gui"))
+                            }
+                            _ => false,
+                        };
+                        if matched {
+                            if let Some(m) = c.get("model") {
+                                return resolve_gui(m, id);
+                            }
+                        }
+                    }
+                }
+            }
+            match obj.get("fallback") {
+                Some(f) => resolve_gui(f, id),
+                None => Ok(GuiIcon { models: Vec::new(), special: false }),
+            }
+        }
+        "minecraft:condition" => {
+            // the resting-false conditions are false for a fresh stack
+            // in an inventory — the on_false branch (the same five
+            // properties the hand resolver speaks)
+            match obj.get("on_false") {
+                Some(f) => resolve_gui(f, id),
+                None => Ok(GuiIcon { models: Vec::new(), special: false }),
+            }
+        }
+        "minecraft:range_dispatch" => {
+            // the resting value 0: the greatest threshold <= 0 entry
+            // (the vanilla loop's LAST-wins), else the fallback
+            let best = obj
+                .get("entries")
+                .and_then(Value::as_array)
+                .ok_or_else(|| format!("{id}: \"entries\" must be an array"))?
+                .iter()
+                .filter_map(|e| {
+                    let e = e.as_object()?;
+                    let th = e.get("threshold")?.as_f64()?;
+                    let model = e.get("model")?;
+                    if th <= 0.0 { Some((th, model)) } else { None }
+                })
+                .max_by(|a, b| a.0.partial_cmp(&b.0).unwrap_or(std::cmp::Ordering::Equal));
+            match best {
+                Some((_, model)) => resolve_gui(model, id),
+                None => match obj.get("fallback") {
+                    Some(f) => resolve_gui(f, id),
+                    None => Ok(GuiIcon { models: Vec::new(), special: false }),
+                },
+            }
+        }
+        "minecraft:composite" => {
+            let models_list = obj
+                .get("models")
+                .and_then(Value::as_array)
+                .ok_or_else(|| format!("{id}: \"models\" must be an array"))?;
+            let mut models = Vec::new();
+            for m in models_list {
+                let g = resolve_gui(m, id)?;
+                if g.special {
+                    return Ok(GuiIcon { models: Vec::new(), special: true });
+                }
+                models.extend(g.models);
+            }
+            Ok(GuiIcon { models, special: false })
+        }
+        other => Err(format!("{id}: gui resolution of {other}")),
+    }
 }
 
 /// The resting-hand tree resolver. `outer` carries a parent node's
@@ -829,6 +965,32 @@ pub fn emit(data: &ItemModelsData) -> Result<String> {
     }
     out.push_str("];\n\n");
 
+    out.push_str("/// One item's GUI-context icon: the gui branch's model paths or\n");
+    out.push_str("/// the special payload marker (the GuiGraphicsExtractor item()'s\n");
+    out.push_str("/// updateForTopItem(GUI) resolution, the branch laws the gui speaks).\n");
+    out.push_str("pub struct GuiIconDef {\n    pub models: &'static [&'static str],\n    pub special: bool,\n}\n\n");
+    out.push_str("/// The GUI icon OVERRIDES for the non-plain definitions — the plain\n");
+    out.push_str("/// defs need none (their gui icon IS their model path, the tint\n");
+    out.push_str("/// jsons riding ITEM_MODEL_DEFS). Sorted by id.\n");
+    out.push_str("pub static ITEM_GUI_OVERRIDES: &[(&str, GuiIconDef); ");
+    out.push_str(&data.gui_icons.len().to_string());
+    out.push_str("] = &[\n");
+    for (id, icon) in &data.gui_icons {
+        let models = match icon.models.as_slice() {
+            [] => "&[]".to_string(),
+            [one] => format!("&[{one:?}]"),
+            many => {
+                let inner: Vec<String> = many.iter().map(|m| format!("{m:?}")).collect();
+                format!("&[{}]", inner.join(", "))
+            }
+        };
+        out.push_str(&format!(
+            "    (\"{id}\", GuiIconDef {{ models: {}, special: {} }}),\n",
+            models, icon.special
+        ));
+    }
+    out.push_str("];\n\n");
+
     out.push_str("/// Items whose definition tree cannot resolve to resting-hand layers\n");
     out.push_str("/// or special renderers — (item id, the refusal reason): the\n");
     out.push_str("/// runtime-gated properties (local_time, compass, context_dimension,\n");
@@ -984,6 +1146,50 @@ mod tests {
         assert!(emitted.contains("(\"shield\", &SPECIAL_SHIELD)"));
         assert!(emitted.contains("base: \"minecraft:item/shield\""));
         assert!(emitted.contains("\"entity/shield/shield_base_nopattern\""));
+    }
+
+    /// The GUI-context resolution: the display_context select's gui
+    /// cases win (the spears' and the trident's 2D sprites), the
+    /// resting-false conditions branch on_false, the special trees
+    /// mark the payload — the overrides table carries every non-plain
+    /// definition and the emit speaks it.
+    #[test]
+    fn the_gui_resolution_evaluates_the_gui_branch() {
+        let zip = zip_of(&[
+            // the display_context select: the gui case is the 2D sprite
+            (
+                "assets/minecraft/items/trident.json",
+                json_bytes(serde_json::json!({
+                    "model": {"type": "minecraft:select", "property": "minecraft:display_context",
+                              "cases": [{"when": ["gui", "ground"], "model": {"type": "minecraft:model", "model": "minecraft:item/trident"}}],
+                              "fallback": {"type": "minecraft:special", "base": "minecraft:item/trident_in_hand",
+                                           "model": {"type": "minecraft:trident"}}}
+                })),
+            ),
+            // the condition tree: the resting-false on_false branch
+            (
+                "assets/minecraft/items/bow.json",
+                json_bytes(serde_json::json!({
+                    "model": {"type": "minecraft:condition", "property": "minecraft:using_item",
+                              "on_true": {"type": "minecraft:model", "model": "minecraft:item/bow_pulling_0"},
+                              "on_false": {"type": "minecraft:model", "model": "minecraft:item/bow"}}
+                })),
+            ),
+        ]);
+        let mut zip = zip;
+        let data = generate(&mut zip).unwrap();
+        // the trident: gui = the flat sprite, hand = the special payload
+        let trident = &data.gui_icons.iter().find(|(id, _)| id == "trident").unwrap().1;
+        assert_eq!(trident.models, vec!["minecraft:item/trident"]);
+        assert!(!trident.special);
+        assert!(data.resolved["trident"].layers[0].special.is_some());
+        // the bow: gui = the resting sprite
+        let bow = &data.gui_icons.iter().find(|(id, _)| id == "bow").unwrap().1;
+        assert_eq!(bow.models, vec!["minecraft:item/bow"]);
+        // the emit speaks the overrides verbatim
+        let emitted = emit(&data).unwrap();
+        assert!(emitted.contains("(\"trident\", GuiIconDef { models: &[\"minecraft:item/trident\"], special: false })"));
+        assert!(emitted.contains("ITEM_GUI_OVERRIDES: &[(&str, GuiIconDef); 2]"));
     }
 
     #[test]

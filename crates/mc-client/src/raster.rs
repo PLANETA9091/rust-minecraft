@@ -615,6 +615,9 @@ pub struct SampledQuad<'a> {
     pub pts: [[f32; 3]; 4],
     pub uv: [[f32; 2]; 4],
     pub tex: &'a str,
+    /// The per-quad color multiplier (the GUI icons' ItemColors tint x
+    /// the directional shade law) — [1, 1, 1] for the untinted lanes.
+    pub tint: [f32; 3],
 }
 
 impl Framebuf {
@@ -700,6 +703,12 @@ impl Framebuf {
                         if texel[3] < 128 {
                             continue; // cutout hole: no color, no depth
                         }
+                        let texel = [
+                            (texel[0] as f32 / 255.0 * quad.tint[0] * 255.0).round() as u8,
+                            (texel[1] as f32 / 255.0 * quad.tint[1] * 255.0).round() as u8,
+                            (texel[2] as f32 / 255.0 * quad.tint[2] * 255.0).round() as u8,
+                            texel[3],
+                        ];
                         self.depth[idx] = z;
                         let o = idx * 3;
                         for (ch, texel) in (0..3).zip(&texel[..3]) {
@@ -778,6 +787,7 @@ fn sampled_quads_raster_with_the_cutout_rule() {
         ],
         uv: [[0.0, 0.0], [16.0, 0.0], [16.0, 16.0], [0.0, 16.0]],
         tex: "test",
+        tint: [1.0, 1.0, 1.0],
     }];
     let mut fb = Framebuf::new(32, 32);
     fb.clear([0.0, 0.0, 0.0], [0.0, 0.0, 0.0]);

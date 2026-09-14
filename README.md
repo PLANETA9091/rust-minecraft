@@ -919,6 +919,37 @@ hand-drawn:
   (VILLAGER_DATA at 18 doubles as the order proof), the generated-id
   pin, and the model's merge semantics (replace-one-leave-others, the
   null-lookup drop, the re-spawn reset).
+  The **the GUI item icons — every slot renders like vanilla (v0.3.142)**:
+  the inventory's second dead end closes. The GUI icon lane was the flat
+  blit of `item/<name>` textures only — 24 items of 1537; every block
+  item, every bed, and the whole special family rendered BLANK slots.
+  Now the icons ride the vanilla atlas arc itself: the itemgen resolver
+  grew the GUI-context evaluation (the display_context select's gui
+  cases — the trident's and the spears' 2D sprites — the resting-false
+  conditions, the threshold<=0 entries, the composites; 147 overrides
+  emitted, the plain defs needing none), and the registry's
+  item_gui_quads bakes each gui model (the element chains shaded, the
+  generated extrusions flat — the ITEMS_3D/ITEMS_FLAT discriminator)
+  under the model's OWN parent-chain gui stanza (block/block's
+  [30,225,0] x0.625; the apply tail's -0.5 centering — the
+  FaceBakery cornerToCenter law already folded in build_pose — with
+  the double-centering compile-time catch teaching the author). The 63
+  specials' payloads render through their dump geometry at the gui
+  stanza. The client projects them by the GuiItemAtlas drawToSlot law
+  (javap: the slot-center translate, the scale(s, -s, s) y-flip, the
+  ortho depth riding the projection's w row, the per-slot depth clear),
+  the tint law riding per layer (the constants verbatim, the
+  grass/foliage at the vanilla no-level climate (0.5, 1.0) through the
+  audited colormap), the per-quad tint x shade multiplier carried on
+  the SampledQuad (the raster multiplies after the sample; the untinted
+  lanes ride [1,1,1] — the hand pixels untouched). EVERY hotbar/chest
+  slot renders its vanilla icon: the isometric cobblestone, the tinted
+  grass block, the 3D chests and banners and skulls, the flat diamonds.
+  Tests 524 -> 528. THE GOLDEN MATRIX 13/13 — ALL rms 0.000; the
+  gui_chest golden REGENERATED deliberately: the LOADOUT's cobblestone
+  and oak_planks icons render their 3D geometry where they were blank —
+  the change this round IS the icon lane coming alive; every other
+  golden byte-identical.
   The **the special renderer payloads — the 63 block-entity items render in the hand (v0.3.141)**:
   the item arc's last dead end closes. The previous round's resolver
   already named every special renderer (the 63: shield, trident, the

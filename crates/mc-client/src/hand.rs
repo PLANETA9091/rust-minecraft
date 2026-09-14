@@ -569,6 +569,7 @@ impl HeldItem {
                 }),
                 uv: q.uvs,
                 tex: q.texture,
+                tint: [1.0, 1.0, 1.0],
             })
             .collect()
     }

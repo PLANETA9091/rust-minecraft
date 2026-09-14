@@ -792,6 +792,96 @@ pub fn special_item_quads(
     Some(Ok(out))
 }
 
+/// The GUI icon's posed quads — one (quad, SHADED, tint jsons) per
+/// face. The law is the vanilla atlas arc: the display transform
+/// resolves PER MODEL through its parent chain at the GUI context
+/// (block/block's [30,225,0] x0.625 for the blocks, identity for the
+/// flat sprites) and its own ItemTransform.apply tail carries the
+/// -0.5 centering (the FaceBakery cornerToCenter law, already folded
+/// in build_pose's step 4 — the same bake domain the hand lane pins);
+/// the special payloads render through their dump geometry (the
+/// entity models are authored centered — the dump IS the truth) and
+/// shade like the ITEM_3D rig's first order. The element-derived
+/// quads carry the directional shade law, the sprite extrusions ride
+/// flat (ITEMS_FLAT), the tint jsons ride per layer for the client's
+/// ItemColors law.
+pub fn item_gui_quads(
+    id: i32,
+) -> Option<Result<Vec<(crate::element_quads::Quad, bool, &'static [&'static str])>, String>> {
+    let name = crate::item_name(id)?;
+    let layers: Vec<(&str, &'static [&'static str])> =
+        if let Some((_, icon)) = crate::generated::item_models::ITEM_GUI_OVERRIDES
+            .iter()
+            .find(|d| d.0 == name)
+        {
+            if icon.special {
+                // the payload through the GUI context: the dump's
+                // geometry, the base model's gui stanza, the payload's
+                // own local transform — the special_item_quads law
+                let quads = match special_item_quads(id, GUI) {
+                    Some(Ok(q)) => q,
+                    Some(Err(e)) => return Some(Err(e)),
+                    None => return None,
+                };
+                return Some(Ok(quads
+                    .into_iter()
+                    .map(|q| (q, true, &[] as &'static [&'static str]))
+                    .collect()));
+            }
+            icon.models
+                .iter()
+                .map(|m| {
+                    (
+                        m.strip_prefix("minecraft:").unwrap_or(m),
+                        &[] as &'static [&'static str],
+                    )
+                })
+                .collect()
+        } else {
+            // the plain definition: its model path + its tint jsons
+            let def = crate::generated::item_models::ITEM_MODEL_DEFS
+                .iter()
+                .find(|d| d.0 == name)?;
+            vec![(
+                def.1.strip_prefix("minecraft:").unwrap_or(def.1),
+                def.2,
+            )]
+        };
+
+    // the bake per model: the element chain first (the 3D block
+    // geometry), the generated extrusion second (the flat sprites).
+    // The centering needs NO fold here: the display transform's own
+    // ItemTransform.apply sequence ENDS with translate(-0.5, -0.5,
+    // -0.5) (build_pose's step 4 — the vanilla apply bytecode's own
+    // tail; apply_transform(None) is the bare centering), so the
+    // uncentered [0..1] bake enters the same law the hand lane rides.
+    // The GUI display transform resolves per model's own parent chain.
+    let mut out = Vec::new();
+    for (model, tints) in layers {
+        let transforms = match resolve_transforms(model) {
+            Ok(t) => t,
+            Err(e) => return Some(Err(e)),
+        };
+        let gui_t = transforms[GUI].as_ref();
+        if let Some(quads) = crate::element_quads::derive_model_inherited(model) {
+            for mut q in quads {
+                q.vertices = q.vertices.map(|v| apply_transform(gui_t, false, v));
+                out.push((q, true, tints));
+            }
+            continue;
+        }
+        if let Some(quads) = crate::item_bake::derive_item_model(model) {
+            for mut q in quads {
+                q.vertices = q.vertices.map(|v| apply_transform(gui_t, false, v));
+                out.push((q, false, tints));
+            }
+            continue;
+        }
+        return Some(Err(format!("{model}: neither an element chain nor a generated bake")));
+    }
+    Some(Ok(out))
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -1609,5 +1699,55 @@ mod tests {
         // gui branch) — and the unknown id is the honest None
         assert!(special_item_quads(shield_id, 5).is_some());
         assert!(special_item_quads(-1, FIRSTPERSON_RIGHTHAND).is_none());
+    }
+
+    #[test]
+    fn the_gui_icon_chain_bakes_centered_and_shaded() {
+        // the block item: the element bake, the cornerToCenter fold, the
+        // block/block gui stanza — every vertex lands INSIDE the
+        // [-0.6, 0.6] block box (the centered cube + the 0.625 scale),
+        // the quads carry the directional shade law
+        let cobble = crate::generated::item_order::ITEM_WIRE_ORDER
+            .iter()
+            .position(|&n| n == "cobblestone")
+            .expect("cobblestone rides the wire") as i32;
+        let quads = item_gui_quads(cobble).expect("the gui lane").expect("the bake");
+        assert_eq!(quads.len(), 6, "the full cube's six faces");
+        for (q, shaded, tints) in &quads {
+            assert!(*shaded, "element-derived quads shade");
+            assert!(tints.is_empty(), "cobblestone carries no tint");
+            for v in q.vertices.iter() {
+                assert!(v[0] >= -0.6 && v[0] <= 0.6, "x {} off the slot", v[0]);
+                assert!(v[1] >= -0.6 && v[1] <= 0.6, "y {} off the slot", v[1]);
+            }
+        }
+        // the flat sprite item: the generated extrusion, UNshaded
+        let diamond = crate::generated::item_order::ITEM_WIRE_ORDER
+            .iter()
+            .position(|&n| n == "diamond")
+            .expect("diamond rides the wire") as i32;
+        let quads = item_gui_quads(diamond).expect("the gui lane").expect("the bake");
+        assert!(quads.iter().all(|(_, shaded, _)| !shaded), "flat = ITEMS_FLAT");
+        assert!(quads.iter().all(|(q, _, _)| {
+            q.vertices.iter().all(|v| v[0] >= -0.5 && v[0] <= 0.5)
+        }), "the centered sprite spans the slot exactly");
+        // the trident: the gui override selects the 2D sprite model
+        let trident = crate::generated::item_order::ITEM_WIRE_ORDER
+            .iter()
+            .position(|&n| n == "trident")
+            .expect("trident rides the wire") as i32;
+        let quads = item_gui_quads(trident).expect("the gui lane").expect("the bake");
+        assert!(quads.iter().all(|(_, shaded, _)| !shaded));
+        assert!(quads.iter().all(|(q, _, _)| q.texture == "item/trident"));
+        // the shield: the SPECIAL payload through the gui context
+        let shield = crate::generated::item_order::ITEM_WIRE_ORDER
+            .iter()
+            .position(|&n| n == "shield")
+            .expect("shield rides the wire") as i32;
+        let quads = item_gui_quads(shield).expect("the gui lane").expect("the bake");
+        assert_eq!(quads.len(), 12);
+        assert!(quads.iter().all(|(q, _, _)| q.texture == "entity/shield/shield_base_nopattern"));
+        // the unknown id is the honest None
+        assert!(item_gui_quads(-1).is_none());
     }
 }
