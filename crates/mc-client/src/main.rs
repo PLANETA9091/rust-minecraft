@@ -160,7 +160,7 @@ fn main() -> Result<()> {
     if cli.gui && !cli.headless {
         #[cfg(not(target_arch = "wasm32"))]
         {
-            match window::run_gui_app(cli.seed, cli.width, cli.height) {
+            match window::run_gui_app(cli.seed, cli.width, cli.height, cli.held_item.as_deref()) {
                 Ok(()) => return Ok(()),
                 Err(e) => eprintln!("gui mode unavailable ({e}); falling back to headless"),
             }

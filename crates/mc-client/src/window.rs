@@ -304,6 +304,28 @@ fn run_join(
                             use_sequence += 1;
                             session.use_item(0, use_sequence, yaw, pitch)
                         }
+                        crate::world_view::ContainerCommand::UseItemOn {
+                            pos,
+                            face,
+                            cursor,
+                            inside,
+                        } => {
+                            // THE BLOCK HALF's wire echo (the vanilla
+                            // gameMode.useItemOn's own shape): the MAIN_HAND
+                            // ordinal, the clip's hit through the
+                            // writeBlockHitResult law, the same monotonic
+                            // prediction counter the use/release spoke
+                            use_sequence += 1;
+                            session.use_item_on(
+                                0,
+                                pos,
+                                face,
+                                cursor,
+                                inside,
+                                false,
+                                use_sequence,
+                            )
+                        }
                         crate::world_view::ContainerCommand::ReleaseUse => {
                             // the release's own echo: the RELEASE_USE_ITEM
                             // action at BlockPos.ZERO / Direction.DOWN —
@@ -376,7 +398,10 @@ fn run_join(
 
 /// Windowed GUI application: boot chain -> title -> menus, all driven by
 /// generated data (official fonts, sprites, language, splashes).
-pub fn run_gui_app(seed: u64, width: usize, height: usize) -> anyhow::Result<()> {
+/// `held_item` seeds the OFFLINE held stack (the `--held-item` model id's
+/// own route into the interaction domain — the hand renders the stack and
+/// the press lanes speak it; the offline singleplayer's own behavior).
+pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&str>) -> anyhow::Result<()> {
     use crate::gui::GuiAssets;
     use crate::screens::App;
 
@@ -387,6 +412,7 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize) -> anyhow::Result<()>
         WindowOptions { resize: true, ..WindowOptions::default() },
     )?;
     let mut app = App::new(seed);
+    app.offline_held_updated(held_item);
     // menu music: decode the real official .ogg tracks (fetched by mc2rs-gen
     // through the asset index), feed the scheduler real lengths and play the
     // schedule through the best output backend (rodio when built with

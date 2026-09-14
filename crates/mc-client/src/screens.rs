@@ -343,6 +343,24 @@ pub struct App {
     /// resting def. Cleared when the held item changes (the component
     /// belongs to the STACK, never the slot).
     pub held_charge: Option<mc_registry::ChargeKind>,
+    /// The OFFLINE procedural world the world screen owns — the
+    /// singleplayer lane's own terrain (the App used to keep only its
+    /// mesh; the block-use lane's placement prediction needs the VOXELS
+    /// to edit). `None` = the networked world owns the screen (its
+    /// placement is the server's own chunk refresh — the wire echo's
+    /// authority), or no world is entered at all.
+    pub offline_world: Option<crate::world::World>,
+    /// The OFFLINE held stack's wire id — the `--held-item` model id's
+    /// own route into the interaction domain (the press lanes read the
+    /// unified held id; the OFFLINE stand-in for the store's selected
+    /// hotbar stack). `None` = the empty selection.
+    pub offline_held: Option<i32>,
+    /// The OFFLINE world screen's own camera pose — the look-control
+    /// lane's seam (the net side rides the teleport's net_camera; the
+    /// offline side's pose lands HERE, the flight camera stays the
+    /// computed fallback until a pose arrives). The placement lane's
+    /// clip aims through it.
+    pub offline_camera: Option<crate::camera::Camera>,
     /// The chest screen's 27 container slots as (item_id, count) — the
     /// wire's own stack shape (count <= 0 is the empty stack), the FIXED
     /// deterministic loadout the pixel test pins. Filled by open_chest
@@ -520,6 +538,9 @@ impl App {
             held_item: None,
             using_item: None,
             held_charge: None,
+            offline_world: None,
+            offline_held: None,
+            offline_camera: None,
             chest_slots: Vec::new(),
             chest_mirror: Vec::new(),
             chest_is_live: false,
@@ -604,11 +625,14 @@ impl App {
         // stale procedural mesh is also rebuilt — the guard keeps each
         // terrain source out of the other's screen)
         if self.world_is_network || self.world_quads.is_none() {
-            let world = crate::world::World::new(WORLD_CHUNKS, self.seed);
+            let mut world = crate::world::World::new(WORLD_CHUNKS, self.seed);
             self.world_size = world.size_blocks();
             self.spawn_y = top_solid_y(&world, self.world_size / 2, self.world_size / 2);
             self.world_quads = Some(crate::mesher::mesh_world(&world, None));
             self.world_is_network = false;
+            // the App OWNS the procedural voxels now (the block-use
+            // lane's placement prediction edits them in place)
+            self.offline_world = Some(world);
             // the procedural world is an overworld world — the vanilla
             // extract pins the dimension's skybox on entering the level
             self.world_skybox = Skybox::Overworld;
@@ -787,6 +811,10 @@ impl App {
         self.spawn_y = spawn_y;
         self.world_quads = Some(quads);
         self.world_is_network = true;
+        // the networked world owns the terrain from here — the offline
+        // voxels drop (the placement prediction is the server's own
+        // chunk refresh on this lane)
+        self.offline_world = None;
         // the vanilla extract's render state: the dimension's skybox pins
         // at level entry — resolved through the live model (the synced
         // registry's own skybox, the codec default, or the built-in table;
@@ -855,24 +883,38 @@ impl App {
     /// routing, the button byte's other lane): a container screen's
     /// press clicks the slot with button 1 — the split-stack pickup /
     /// place-one table (`predict_pickup_right`). The WORLD's right
-    /// press is the USE lane (the vanilla rightClickStart's own shape):
-    /// the CHARGED crossbow fires INSTANTLY (javap CrossbowItem.use:
-    /// the CHARGED_PROJECTILES component non-empty -> performShooting +
-    /// CONSUME — no pull), the charge is consumed (the shot's own
-    /// component clear, the same prediction the swing lane speaks) and
-    /// the UseItem echo rides the live session's command channel; the
-    /// OTHER items whose trees carry the `minecraft:using_item` gate
-    /// start a use (the registry's own census — the bow, the crossbow,
-    /// the goat horn, the shield, the trident), the hold renders the
-    /// using branch. Returns whether a use started (the tests' honest
-    /// probe).
+    /// press is the USE lane (the vanilla rightClickStart's own shape)
+    /// with the BLOCK branch FIRST (the vanilla startUseItem's own
+    /// order): the crosshair clip speaks the useItemOn echo and the
+    /// block item's placement CONSUMES; the PASS results fall through
+    /// to the item lanes — the CHARGED crossbow fires INSTANTLY (javap
+    /// CrossbowItem.use: the CHARGED_PROJECTILES component non-empty ->
+    /// performShooting + CONSUME — no pull), the charge is consumed
+    /// (the shot's own component clear, the same prediction the swing
+    /// lane speaks) and the UseItem echo rides the live session's
+    /// command channel; the OTHER items whose trees carry the
+    /// `minecraft:using_item` gate start a use (the registry's own
+    /// census — the bow, the crossbow, the goat horn, the shield, the
+    /// trident), the hold renders the using branch. Returns whether a
+    /// use started (the tests' honest probe).
     pub fn on_right_press(&mut self, mx: i32, my: i32) -> bool {
         if self.screen == ScreenKind::Chest {
             self.click_chest_slot(mx, my, 1);
             return false;
         }
         if self.screen == ScreenKind::World && !self.paused {
-            if let Some(id) = self.live_held {
+            // THE BLOCK LANE FIRST (the vanilla startUseItem's own
+            // order): the crosshair clip + the useItemOn echo + the
+            // block item's placement CONSUME; the PASS results fall
+            // through to the item's use lane below
+            if self.on_right_press_block_lane() {
+                return true;
+            }
+            // the item lane reads the UNIFIED held id (the networked
+            // store's selection, the offline `--held-item` stand-in —
+            // the offline client's use animations are the vanilla's own
+            // singleplayer behavior)
+            if let Some(id) = self.held_id() {
                 // THE LOADED CROSSBOW: the instant shot — the use
                 // consumes the charge (vanilla's CONSUME branch), the
                 // resting render returns to the plain crossbow, and
@@ -1425,6 +1467,141 @@ impl App {
         self.live_container_updated(container);
     }
 
+    /// The OFFLINE world screen's camera pose — the look-control lane's
+    /// own set (the vanilla teleport/pose shape the net side speaks: the
+    /// pose lands, the world renders from it). The placement lane's clip
+    /// aims through the same pose.
+    pub fn offline_camera_updated(&mut self, cam: crate::camera::Camera) {
+        self.offline_camera = Some(cam);
+    }
+
+    /// The OFFLINE held-item lane — the `--held-item` model id's own
+    /// route into the interaction domain: the wire id resolves through
+    /// the registry's reverse lookup (the namespace strip routes the
+    /// model id's `item/<name>` vocabulary), the payload loads through
+    /// the SAME routing the networked store lane speaks. `None` = the
+    /// empty selection (the bare arm). The windowed interactive client's
+    /// own lane — the headless scenes never press keys.
+    pub fn offline_held_updated(&mut self, model: Option<&str>) {
+        let id = model
+            .and_then(|m| m.strip_prefix("item/").or(Some(m)))
+            .and_then(mc_registry::item_id_by_name);
+        self.offline_held = id;
+        self.load_held_payload_from_id(id);
+    }
+
+    /// The unified held id — the networked store's selection first, the
+    /// offline `--held-item` stand-in second (the lanes are exclusive:
+    /// a live session clears the offline stand-in's authority by owning
+    /// the screen). The press lanes' own key.
+    fn held_id(&self) -> Option<i32> {
+        self.live_held.or(self.offline_held)
+    }
+
+    /// The block-use lane's world — the screen's OWN terrain: the
+    /// networked world first (the wire echo's authority), the offline
+    /// procedural voxels second (the placement prediction's own lane).
+    fn active_world(&self) -> Option<&crate::world::World> {
+        if self.world_is_network {
+            self.net_world.as_ref()
+        } else {
+            self.offline_world.as_ref()
+        }
+    }
+
+    /// THE BLOCK-USE LANE — the vanilla startUseItem's block branch:
+    /// the crosshair clip (the eye along the view direction, the
+    /// BLOCK_INTERACTION_RANGE's 4.5), the useItemOn echo riding EVERY
+    /// block right-click (the offline stand-in has no session — no
+    /// echo), then the placement: the block item's own CONSUME branch
+    /// (the held stack's block lands in the hit face's adjacent cell —
+    /// the vanilla canPlace's own laws: the cell replaceable (the air
+    /// and the fluid), the placed shape not intersecting the player's
+    /// own bounding box). The OFFLINE world predicts the voxel in place
+    /// (the mesh re-speaks); the NETWORKED world's placement is the
+    /// server's own chunk refresh. Returns whether the placement
+    /// consumed the press (the item's use lane falls through on the
+    /// PASS — the vanilla's own order).
+    fn on_right_press_block_lane(&mut self) -> bool {
+        let Some(hit) = self.active_world().and_then(|w| {
+            let cam = self.world_camera();
+            let f = cam.forward();
+            w.clip(
+                (cam.pos.x as f64, cam.pos.y as f64, cam.pos.z as f64),
+                (f.x as f64, f.y as f64, f.z as f64),
+                crate::world::BLOCK_INTERACTION_RANGE,
+            )
+        }) else {
+            return false;
+        };
+        // THE ECHO: the useItemOn packet rides every block right-click
+        // (the cursor = the hit location minus the block origin, the
+        // double math the wire's writeBlockHitResult speaks)
+        let cursor = (
+            (hit.location.0 - hit.pos.0 as f64) as f32,
+            (hit.location.1 - hit.pos.1 as f64) as f32,
+            (hit.location.2 - hit.pos.2 as f64) as f32,
+        );
+        if let Some(sink) = self.live_clicks.as_ref() {
+            let _ = sink.send(crate::world_view::ContainerCommand::UseItemOn {
+                pos: hit.pos,
+                face: hit.face,
+                cursor,
+                inside: hit.inside,
+            });
+        }
+        // THE PLACEMENT: the block item's CONSUME branch (the eye-inside
+        // hit never places — the vanilla's own guard)
+        if hit.inside {
+            return false;
+        }
+        let Some(id) = self.held_id() else {
+            return false;
+        };
+        let Some(block) = mc_registry::item_name(id)
+            .and_then(crate::world::World::placeable_block)
+        else {
+            return false; // the PASS result — the item's use lane follows
+        };
+        let normal = crate::world::World::DIRECTION_NORMAL[hit.face as usize];
+        let cell = (
+            hit.pos.0 + normal.0,
+            hit.pos.1 + normal.1,
+            hit.pos.2 + normal.2,
+        );
+        // the replaceable-cell law: the air and the fluid give way (the
+        // vanilla state.canBeReplaced's own set for our vocabulary)
+        let replaceable = matches!(
+            self.active_world().map(|w| w.get(cell.0, cell.1, cell.2)),
+            Some(crate::world::AIR) | Some(crate::world::WATER)
+        );
+        if !replaceable {
+            return false;
+        }
+        // the entity law: the placed shape must not intersect the
+        // player's own bounding box (the feet ±0.3, the height 1.8 —
+        // the vanilla noCollision's own check, the strict edges)
+        let eye = self.world_camera().pos;
+        let feet = (eye.x as f64, (eye.y - 1.62) as f64, eye.z as f64);
+        let intersect = |pmin: f64, pmax: f64, clo: i32| {
+            (clo as f64) < pmax && ((clo + 1) as f64) > pmin
+        };
+        let hits_player = intersect(feet.0 - 0.3, feet.0 + 0.3, cell.0)
+            && intersect(feet.1, feet.1 + 1.8, cell.1)
+            && intersect(feet.2 - 0.3, feet.2 + 0.3, cell.2);
+        if hits_player {
+            return false; // the vanilla refuses the placement into itself
+        }
+        // THE OFFLINE PREDICTION: the voxel lands in the App's own
+        // terrain and the mesh re-speaks (the networked world's
+        // placement rides the server's chunk refresh — no local edit)
+        if let (Some(world), false) = (self.offline_world.as_mut(), self.world_is_network) {
+            world.set(cell.0, cell.1, cell.2, block);
+            self.world_quads = Some(crate::mesher::mesh_world(world, None));
+        }
+        true
+    }
+
     /// The networked held-item lane: the store's selected hotbar stack
     /// drives the first-person hand exactly like the vanilla
     /// renderItemInHand's own projection — the id's RESTING-HAND layers
@@ -1629,6 +1806,10 @@ impl App {
             if let Some(pose) = self.net_camera {
                 return pose;
             }
+        } else if let Some(pose) = self.offline_camera {
+            // the offline look-control pose (the seam the placement
+            // lane's clip aims through)
+            return pose;
         }
         let n = self.world_size as f32;
         // Creative-flight camera: 12 blocks above the spawn surface clears
@@ -4454,6 +4635,143 @@ mod tests {
         // the slot — the item switch drops it
         app.live_held_updated(Some((wire("diamond"), 1)));
         assert!(app.held_charge.is_none(), "the switch dropped the charge");
+    }
+
+    /// THE BLOCK-USE LANE's OFFLINE ARC — the App owns the procedural
+    /// voxels, the `--held-item` stand-in holds dirt, the look seam aims
+    /// the camera straight down at the spawn column, and the placement
+    /// lands in the hit face's adjacent cell (the mesh re-speaks). The
+    /// reach ends the lane honestly (the sky miss consumes nothing) and
+    /// the vanilla refuses the placement into the player's own box.
+    #[test]
+    fn the_block_use_lane_places_the_held_block_offline() {
+        let mut app = App::new(3);
+        app.enter_world();
+        app.offline_held_updated(Some("item/dirt"));
+        let wire = |name: &str| {
+            mc_registry::generated::item_order::ITEM_WIRE_ORDER
+                .iter()
+                .position(|&n| n == name)
+                .expect("the item rides the wire") as i32
+        };
+        assert_eq!(app.offline_held, Some(wire("dirt")), "the reverse lookup route");
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        // top_solid_y speaks the STANDING cell (the surface's top solid
+        // Y + 1) — the placement cell the straight-down ray fills
+        let top = app.spawn_y;
+        // THE AIM: the eye 3.0 above the standing cell's floor, straight
+        // down — the hit voxel is the surface block (top-1), the face
+        // UP, the adjacent cell = top itself
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, top as f32 + 4.0, c as f32 + 0.5),
+            yaw: 0.0,
+            pitch: -std::f32::consts::FRAC_PI_2,
+        });
+        assert_eq!(
+            app.offline_world.as_ref().unwrap().get(c, top, c),
+            crate::world::AIR,
+            "the placement cell starts empty"
+        );
+        let quads_before = app.world_quads.as_ref().unwrap().len();
+        assert!(app.on_right_press(0, 0), "the placement consumed the press");
+        assert_eq!(
+            app.offline_world.as_ref().unwrap().get(c, top, c),
+            crate::world::DIRT,
+            "the held dirt landed in the adjacent cell"
+        );
+        assert_ne!(
+            app.world_quads.as_ref().unwrap().len(),
+            quads_before,
+            "the mesh re-spoke with the placed voxel"
+        );
+        // THE REACH MISS: 40 above the surface — the clip ends in the air,
+        // the press consumes nothing (the vanilla's own no-hit use)
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, top as f32 + 40.0, c as f32 + 0.5),
+            yaw: 0.0,
+            pitch: -std::f32::consts::FRAC_PI_2,
+        });
+        assert!(!app.on_right_press(0, 0), "the miss does not consume");
+        assert_eq!(
+            app.offline_world.as_ref().unwrap().get(c, top + 2, c),
+            crate::world::AIR,
+            "no voxel landed on the miss"
+        );
+        // THE PLAYER'S OWN BOX: the feet standing ON the placed dirt (the
+        // eye 1.62 above the feet cell's floor) — the next placement cell
+        // is the feet's own cell and the vanilla refuses it
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, top as f32 + 2.0 + 0.62, c as f32 + 0.5),
+            yaw: 0.0,
+            pitch: -std::f32::consts::FRAC_PI_2,
+        });
+        assert!(!app.on_right_press(0, 0), "the vanilla refuses the self-intersecting placement");
+        assert_eq!(
+            app.offline_world.as_ref().unwrap().get(c, top + 2, c),
+            crate::world::AIR,
+            "the refused cell stays air"
+        );
+    }
+
+    /// THE BLOCK-USE LANE's NETWORKED ARC — the clip runs over the net
+    /// world, the UseItemOn echo rides the command channel (the
+    /// worker's serverbound packet), and the LOCAL voxels stay
+    /// untouched (the server's own chunk refresh is the authority on
+    /// this lane).
+    #[test]
+    fn the_block_use_lane_echoes_the_networked_world() {
+        use crate::world_view::ContainerCommand;
+        let wire = |name: &str| {
+            mc_registry::generated::item_order::ITEM_WIRE_ORDER
+                .iter()
+                .position(|&n| n == name)
+                .expect("the item rides the wire") as i32
+        };
+        let mut app = App::new(3);
+        app.open(ScreenKind::Connect);
+        // the net world with a stone floor under the spawn column
+        let mut net = air_net_world(2, 0);
+        let c = net.size_blocks() / 2;
+        let floor_y = net.size_blocks() / 4;
+        for x in 0..net.size_blocks() {
+            for z in 0..net.size_blocks() {
+                net.set(x, floor_y, z, crate::world::STONE);
+            }
+        }
+        app.net_world = Some(net);
+        app.enter_network_world(None, Skybox::Overworld, None, None);
+        let (click_tx, click_rx) = std::sync::mpsc::channel::<ContainerCommand>();
+        app.attach_live_clicks(click_tx);
+        app.live_held_updated(Some((wire("dirt"), 1)));
+        // the camera: the eye 3.0 above the floor plane, straight down
+        app.net_camera = Some(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, floor_y as f32 + 4.0, c as f32 + 0.5),
+            yaw: 0.0,
+            pitch: -std::f32::consts::FRAC_PI_2,
+        });
+        assert!(app.on_right_press(0, 0), "the block lane answers the press");
+        match click_rx.try_recv().expect("the useItemOn echo rode the lane") {
+            ContainerCommand::UseItemOn { pos, face, cursor, inside } => {
+                assert_eq!(pos, (c, floor_y, c), "the hit voxel");
+                assert_eq!(face, 1, "UP — the floor's entry face");
+                // the cursor rides the float cast's own tail (the
+                // vanilla's double math + f32 wire cast speaks the same
+                // epsilon) — the near-exact face-centered offsets
+                assert!((cursor.0 - 0.5).abs() < 1e-3, "cursor x {cursor:?}");
+                assert!((cursor.1 - 1.0).abs() < 1e-3, "cursor y {cursor:?}");
+                assert!((cursor.2 - 0.5).abs() < 1e-3, "cursor z {cursor:?}");
+                assert!(!inside);
+            }
+            other => panic!("expected a UseItemOn echo, got {other:?}"),
+        }
+        // the local voxels are untouched — the server's refresh owns the
+        // networked terrain
+        assert_eq!(
+            app.net_world.as_ref().unwrap().get(c, floor_y + 1, c),
+            crate::world::AIR,
+            "no local prediction on the networked lane"
+        );
     }
 
     /// The number keys' whole arc: the HUD's selection moves with the

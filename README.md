@@ -919,6 +919,48 @@ hand-drawn:
   (VILLAGER_DATA at 18 doubles as the order proof), the generated-id
   pin, and the model's merge semantics (replace-one-leave-others, the
   null-lookup drop, the re-spawn reset).
+  The **the block-use lane — the crosshair clip + the placement prediction + the Use Item On wire (v0.3.145)**:
+  the use arc's BLOCK half, end to end. The javap evidence pins every
+  law: `FriendlyByteBuf.writeBlockHitResult` (the BlockPos as the BE
+  i64 — `asLong`'s static init derives X_OFFSET 38 / Z_OFFSET 12 /
+  Y_OFFSET 0 over the 26/12/26-bit spans, the direction as the
+  writeEnum's ordinal VarInt, the CURSOR as the hit location minus the
+  block origin computed in double and cast to float, the isInside +
+  isWorldBorderHit booleans), `ServerboundUseItemOnPacket.write` (the
+  hand VarInt, the hit result, the prediction sequence),
+  `Attributes.BLOCK_INTERACTION_RANGE` = 4.5 (the reach). The client's
+  first RAYCAST: `World.clip` — the vanilla Level.clip's COLLIDER law
+  over full cubes, the Amanatides-Woo DDA traversal, the entry face the
+  stepped axis's negative direction (a +x step enters through WEST),
+  the location exactly on the crossed boundary, the fluid passing (the
+  ClipContext.Fluid.NONE law), the reach ending the traversal (the
+  miss), the eye-inside cell the isInside hit. The placement: the
+  vanilla startUseItem's block branch FIRST (the item's use falls
+  through on the PASS — the charged crossbow aimed at a block fires AND
+  echoes the useItemOn), the held block item lands in the hit face's
+  adjacent cell through the BlockItem name pairing (the NAME_OF
+  reverse, air/water refused), the replaceable-cell law (the air and
+  the fluid give way) and the entity law (the placed shape must not
+  intersect the player's own box — the strict-edge AABB check) both
+  refuse the illegal placements. The OFFLINE world predicts the voxel
+  in place (the App now OWNS the procedural voxels — `offline_world` —
+  and the mesh re-speaks); the NETWORKED world's placement is the
+  server's own chunk refresh (the wire echo is the only lane — the
+  local voxels untouched, the honest authority). `--held-item` now
+  routes into the interaction domain (`offline_held` through the
+  registry's reverse lookup — the windowed client's press lanes speak
+  the unified held id), and the look-control seam (`offline_camera`)
+  stands ready for the movement round. The wire: `encode_use_item_on`
+  (the javap composition, hex-pinned) + `PlaySession::use_item_on` +
+  the ContainerCommand::UseItemOn command riding the worker's SAME
+  monotonic prediction counter. +5 tests (539 passed / 0 failed /
+  3 ignored): the clip's face/boundary/fluid/miss/inside laws, the
+  placeable table, the offline placement arc (the aim → the land → the
+  mesh re-speak; the reach miss; the self-intersection refusal), the
+  networked echo arc (the hit through the channel, no local edit), the
+  wire hex. The golden matrix 13/13 — ALL rms 0.000, every golden
+  byte-identical: the block lane is interaction-gated (the
+  deterministic scenes never press keys) — NO regen.
   The **the charge-type component — the loaded crossbow renders its bolt (v0.3.144)**:
   the CHARGED_PROJECTILES component's own lane, the definition trees'
   second select property consumed. The jar sweep names exactly one

@@ -119,7 +119,7 @@ pub mod serverbound {
         SB_CHUNK_BATCH_RECEIVED as CHUNK_BATCH_RECEIVED, SB_CONTAINER_CLICK as CONTAINER_CLICK,
         SB_CONTAINER_CLOSE as CONTAINER_CLOSE, SB_KEEP_ALIVE as KEEP_ALIVE, SB_PONG as PONG,
         SB_PLAYER_ACTION as PLAYER_ACTION, SB_SET_CARRIED_ITEM as SET_CARRIED_ITEM,
-        SB_USE_ITEM as USE_ITEM,
+        SB_USE_ITEM as USE_ITEM, SB_USE_ITEM_ON as USE_ITEM_ON,
     };
 }
 
@@ -5028,6 +5028,45 @@ pub fn encode_use_item(hand: u8, sequence: i32, yaw: f32, pitch: f32) -> Vec<u8>
     p
 }
 
+/// The use ON A BLOCK (the vanilla `MultiPlayerGameMode.useItemOn`'s own
+/// echo — ServerboundUseItemOnPacket, generated id 66,
+/// `minecraft:use_item_on`). THE WIRE (javap of the real 26.2 class's
+/// `write(FriendlyByteBuf)`): the hand as a VarInt (the writeEnum's
+/// ordinal), the BlockHitResult through FriendlyByteBuf's
+/// `writeBlockHitResult` (javap verbatim: the BlockPos as a BE i64 —
+/// `asLong`'s 38/12/0 pack, the direction as a VarInt (the writeEnum's
+/// ordinal — DOWN=0, UP=1, NORTH=2, SOUTH=3, WEST=4, EAST=5), the CURSOR
+/// as the hit LOCATION minus the block position's origin, each computed
+/// in double and cast to float, three BE f32s, the `isInside` boolean,
+/// the `isWorldBorderHit` boolean), then the prediction sequence as a
+/// VarInt. The caller speaks the raycast's own hit (the client clip's
+/// face ordinal and exact location) and a monotonically increasing
+/// sequence (the same startPrediction counter the use/release echo).
+pub fn encode_use_item_on(
+    hand: u8,
+    x: i32,
+    y: i32,
+    z: i32,
+    face: u8,
+    cursor: (f32, f32, f32),
+    inside: bool,
+    world_border: bool,
+    sequence: i32,
+) -> Vec<u8> {
+    let mut p = Vec::with_capacity(22);
+    write_varint(&mut p, serverbound::USE_ITEM_ON);
+    write_varint(&mut p, hand as i32);
+    p.extend_from_slice(&pack_block_pos(x, y, z).to_be_bytes());
+    write_varint(&mut p, face as i32);
+    write_f32(&mut p, cursor.0);
+    write_f32(&mut p, cursor.1);
+    write_f32(&mut p, cursor.2);
+    p.push(if inside { 1 } else { 0 });
+    p.push(if world_border { 1 } else { 0 });
+    write_varint(&mut p, sequence);
+    p
+}
+
 /// The use RELEASE (the vanilla `MultiPlayerGameMode.releaseUsingItem`'s
 /// own echo — ServerboundPlayerActionPacket, generated id 41,
 /// `minecraft:player_action`, the RELEASE_USE_ITEM action). THE WIRE
@@ -5808,6 +5847,28 @@ impl<S: Read + Write> PlaySession<S> {
         self.conn
             .send_packet(&encode_use_item(hand, sequence, yaw, pitch))
             .context("send use item")
+    }
+
+    /// The player's use ON A BLOCK (the vanilla gameMode.useItemOn's own
+    /// echo — the Use Item On packet: the hand, the hit block's wire
+    /// position, the hit face, the cursor, the two hit flags and the
+    /// prediction sequence; the same counter the use/release spoke).
+    #[allow(clippy::too_many_arguments)]
+    pub fn use_item_on(
+        &mut self,
+        hand: u8,
+        pos: (i32, i32, i32),
+        face: u8,
+        cursor: (f32, f32, f32),
+        inside: bool,
+        world_border: bool,
+        sequence: i32,
+    ) -> Result<()> {
+        self.conn
+            .send_packet(&encode_use_item_on(
+                hand, pos.0, pos.1, pos.2, face, cursor, inside, world_border, sequence,
+            ))
+            .context("send use item on")
     }
 
     /// The player's use RELEASE (the vanilla gameMode.releaseUsingItem's
@@ -10166,6 +10227,53 @@ mod tests {
             ],
             "the release's own constants — the javap ctor's arguments"
         );
+    }
+
+    /// The use-item-ON lane's serverbound echo — the block half of the
+    /// use arc. The hex is the javap `write` composition of the real
+    /// 26.2 ServerboundUseItemOnPacket + FriendlyByteBuf.
+    /// writeBlockHitResult: the BlockPos BE i64 (asLong's 38/12/0 pack),
+    /// the direction VarInt (the writeEnum ordinal), the cursor as the
+    /// hit location minus the block origin (double math, float cast),
+    /// the inside + world-border booleans; then the sequence VarInt.
+    #[test]
+    fn the_use_item_on_lane_speaks_the_javap_wire() {
+        // THE PACK: asLong's own spans — 26/12/26 bits, the offsets
+        // 38/12/0; a negative coordinate's two's-complement low bits
+        // ride the mask (the vanilla law for in-range coords)
+        assert_eq!(pack_block_pos(0, 0, 0), 0, "the ZERO block");
+        assert_eq!(pack_block_pos(1, 2, 3), (1i64 << 38) | (3i64 << 12) | 2);
+        assert_eq!(pack_block_pos(-1, 0, -1), (0x3FF_FFFFi64 << 38) | (0x3FF_FFFFi64 << 12));
+        // the wire: SB_USE_ITEM_ON = 66 = 0x42 (the single-byte VarInt),
+        // hand 0, the block (1, 2, 3) packed as (1<<38)|(3<<12)|2, the
+        // face WEST=4, the cursor (0.5, 1.0, 0.25), the flags, seq 9
+        let packed = (1i64 << 38) | (3i64 << 12) | 2;
+        let be = packed.to_be_bytes();
+        assert_eq!(
+            encode_use_item_on(0, 1, 2, 3, 4, (0.5, 1.0, 0.25), false, false, 9),
+            vec![
+                0x42, 0x00, // the packet id, MAIN_HAND
+                be[0], be[1], be[2], be[3], be[4], be[5], be[6], be[7], // the packed pos
+                0x04, // the face ordinal (WEST)
+                0x3F, 0x00, 0x00, 0x00, // cursor x 0.5
+                0x3F, 0x80, 0x00, 0x00, // cursor y 1.0
+                0x3E, 0x80, 0x00, 0x00, // cursor z 0.25
+                0x00, // inside = false
+                0x00, // world border = false
+                0x09, // the sequence
+            ],
+            "the writeBlockHitResult order — the javap body verbatim"
+        );
+        // the inside flag rides true (the eye-inside law) and the
+        // sequence 128 speaks the two-byte VarInt (0x80 0x01)
+        let hit = encode_use_item_on(1, 0, 64, 0, 1, (0.0, 0.0, 0.0), true, false, 128);
+        assert_eq!(hit[0], 0x42);
+        assert_eq!(hit[1], 0x01, "the off hand");
+        // the packed pos for (0, 64, 0): y=64 rides the low 12 bits
+        assert_eq!(&hit[2..10], &64i64.to_be_bytes(), "y 64 = the zero x/z pack");
+        assert_eq!(hit[10], 0x01, "the UP ordinal");
+        assert_eq!(&hit[23], &0x01, "inside = true (border rides false)");
+        assert_eq!(&hit[hit.len() - 2..], &[0x80, 0x01], "the two-byte sequence VarInt");
     }
 
     /// The HashedStack's FULL patch lane — the non-empty shapes the

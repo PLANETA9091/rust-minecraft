@@ -375,6 +375,19 @@ pub enum ContainerCommand {
     /// the camera's angles converted to the vanilla wire degrees
     /// ([`wire_angles`]), the MAIN_HAND ordinal the worker speaks.
     UseItem { yaw: f32, pitch: f32 },
+    /// The use ON A BLOCK (the vanilla gameMode.useItemOn's own lane —
+    /// the block half of the use arc): the client clip's hit (the hit
+    /// voxel, the entry face's Direction ordinal, the cursor floats the
+    /// wire's writeBlockHitResult speaks — the hit location minus the
+    /// block origin — and the eye-inside flag). The worker speaks the
+    /// MAIN_HAND ordinal and the same monotonic prediction sequence the
+    /// use/release echo (the serverbound Use Item On packet).
+    UseItemOn {
+        pos: (i32, i32, i32),
+        face: u8,
+        cursor: (f32, f32, f32),
+        inside: bool,
+    },
     /// The use RELEASE (the vanilla gameMode.releaseUsingItem's own
     /// echo — the RELEASE_USE_ITEM action at BlockPos.ZERO / DOWN).
     ReleaseUse,

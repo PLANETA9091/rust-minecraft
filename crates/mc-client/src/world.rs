@@ -67,6 +67,31 @@ pub const NAME_OF: [&str; 26] = [
     "leaf_litter",
 ];
 
+/// The block interaction reach — the `Attributes.BLOCK_INTERACTION_RANGE`
+/// attribute's own default (javap of the real 26.2 class: `4.5d` for
+/// `attribute.name.block_interaction_range`, the entity range's 3.0
+/// sibling). The block clip's own reach.
+pub const BLOCK_INTERACTION_RANGE: f64 = 4.5;
+
+/// One block-ray hit — the vanilla `BlockHitResult`'s own shape: the hit
+/// voxel, the entry face's Direction ordinal, the exact hit location the
+/// wire's cursor floats subtract from (double math, float cast), and the
+/// eye-inside flag.
+#[derive(Debug, Clone, PartialEq)]
+pub struct ClipHit {
+    /// The hit voxel's grid coordinates.
+    pub pos: (i32, i32, i32),
+    /// The entry face's Direction ordinal (DOWN=0, UP=1, NORTH=2,
+    /// SOUTH=3, WEST=4, EAST=5 — the enum's own order, the wire's own
+    /// numbers).
+    pub face: u8,
+    /// The exact hit point on the face plane (the wire cursor's own
+    /// source).
+    pub location: (f64, f64, f64),
+    /// The ray started inside a solid cell (the vanilla isInside).
+    pub inside: bool,
+}
+
 /// A plain data grid — derives follow the data (the join result carries a
 /// World through the `Debug/Clone/PartialEq` LoginResult surface; the
 /// stated sky-light factor is an f32, so `Eq` departs with it).
@@ -298,7 +323,7 @@ impl World {
         Some((cx + cz * s) as usize)
     }
 
-    fn set(&mut self, wx: i32, wy: i32, wz: i32, id: u16) {
+    pub fn set(&mut self, wx: i32, wy: i32, wz: i32, id: u16) {
         if wy < 0 || wy >= CHUNK_Y as i32 {
             return;
         }
@@ -358,6 +383,145 @@ impl World {
             self.chunks[ci][lx + lz * CHUNK_X + wy as usize * CHUNK_X * CHUNK_Z]
         } else {
             AIR
+        }
+    }
+
+    /// The entry face's own normal offsets, indexed by the Direction
+    /// ordinal the wire speaks (DOWN=0, UP=1, NORTH=2, SOUTH=3, WEST=4,
+    /// EAST=5 — the enum's own order). The placement cell is the hit
+    /// voxel offset by the hit face's normal (the vanilla
+    /// `BlockHitResult.getLocation`-relative placement law).
+    pub const DIRECTION_NORMAL: [(i32, i32, i32); 6] = [
+        (0, -1, 0), // DOWN
+        (0, 1, 0),  // UP
+        (0, 0, -1), // NORTH
+        (0, 0, 1),  // SOUTH
+        (-1, 0, 0), // WEST
+        (1, 0, 0),  // EAST
+    ];
+
+    /// The item name's placeable block id — the vanilla `BlockItem`'s
+    /// own pairing (the item's registry name IS its block's for the
+    /// simple cubes): the reverse of [`NAME_OF`], `air` refused (the
+    /// empty id is the void, never a stack's payload) and `water`
+    /// refused (no vanilla item carries the fluid as its block).
+    /// `None` = the item places nothing this client's world vocabulary
+    /// can render — the honest no-place, never a guessed voxel.
+    pub fn placeable_block(item_name: &str) -> Option<u16> {
+        let id = NAME_OF.iter().position(|n| *n == item_name)? as u16;
+        if id == AIR || id == WATER {
+            return None;
+        }
+        Some(id)
+    }
+
+    /// The block clip — the vanilla `Level.clip` COLLIDER law over full
+    /// cubes: the voxel traversal (Amanatides & Woo's own DDA, the
+    /// `BlockGetter.clip` shape) from the eye along the view direction
+    /// up to the interaction reach (the BLOCK_INTERACTION_RANGE
+    /// attribute's 4.5, javap), skipping the non-colliding cells (the
+    /// air and the fluid — the ClipContext.Fluid.NONE law: the water
+    /// passes). The hit face is the ENTRY face (a +x step enters through
+    /// the WEST face — the stepped axis's negative direction); the
+    /// location sits exactly on the crossed boundary (the face plane's
+    /// own coordinate — the cursor floats then name the face 0.0/1.0
+    /// the vanilla's shape clip lands too). The start inside a solid
+    /// cell IS the hit with `inside` = true (the vanilla's own
+    /// eye-inside branch). `None` = the reach ended in open air (the
+    /// miss — the honest no-hit).
+    pub fn clip(
+        &self,
+        origin: (f64, f64, f64),
+        dir: (f64, f64, f64),
+        reach: f64,
+    ) -> Option<ClipHit> {
+        let len = (dir.0 * dir.0 + dir.1 * dir.1 + dir.2 * dir.2).sqrt();
+        if len < 1e-9 {
+            return None;
+        }
+        let dx = dir.0 / len;
+        let dy = dir.1 / len;
+        let dz = dir.2 / len;
+        let solid = |id: u16| id != AIR && id != WATER;
+        let mut x = origin.0.floor() as i32;
+        let mut y = origin.1.floor() as i32;
+        let mut z = origin.2.floor() as i32;
+        if solid(self.get(x, y, z)) {
+            return Some(ClipHit {
+                pos: (x, y, z),
+                face: 1, // UP — the eye-inside edge's own stand-in
+                location: origin,
+                inside: true,
+            });
+        }
+        let step_x = if dx > 0.0 { 1i32 } else { -1i32 };
+        let step_y = if dy > 0.0 { 1i32 } else { -1i32 };
+        let step_z = if dz > 0.0 { 1i32 } else { -1i32 };
+        let t_delta = |d: f64| if d != 0.0 { (1.0 / d).abs() } else { f64::INFINITY };
+        let (t_dx, t_dy, t_dz) = (t_delta(dx), t_delta(dy), t_delta(dz));
+        let next_t = |o: f64, d: f64, i: i32, step: i32| {
+            if d == 0.0 {
+                f64::INFINITY
+            } else {
+                let bound = if step > 0 { (i + 1) as f64 } else { i as f64 };
+                (bound - o) / d
+            }
+        };
+        let mut t_max_x = next_t(origin.0, dx, x, step_x);
+        let mut t_max_y = next_t(origin.1, dy, y, step_y);
+        let mut t_max_z = next_t(origin.2, dz, z, step_z);
+        loop {
+            // the nearest boundary decides the next cell; a crossing
+            // beyond the reach is the miss (the traversal's own end)
+            if t_max_x <= t_max_y && t_max_x <= t_max_z {
+                if t_max_x > reach {
+                    return None;
+                }
+                x += step_x;
+                let t = t_max_x;
+                t_max_x += t_dx;
+                if solid(self.get(x, y, z)) {
+                    let bx = if step_x > 0 { x as f64 } else { (x + 1) as f64 };
+                    return Some(ClipHit {
+                        pos: (x, y, z),
+                        face: if step_x > 0 { 4 } else { 5 }, // WEST : EAST
+                        location: (bx, origin.1 + dy * t, origin.2 + dz * t),
+                        inside: false,
+                    });
+                }
+            } else if t_max_y <= t_max_z {
+                if t_max_y > reach {
+                    return None;
+                }
+                y += step_y;
+                let t = t_max_y;
+                t_max_y += t_dy;
+                if solid(self.get(x, y, z)) {
+                    let by = if step_y > 0 { y as f64 } else { (y + 1) as f64 };
+                    return Some(ClipHit {
+                        pos: (x, y, z),
+                        face: if step_y > 0 { 0 } else { 1 }, // DOWN : UP
+                        location: (origin.0 + dx * t, by, origin.2 + dz * t),
+                        inside: false,
+                    });
+                }
+            } else {
+                if t_max_z > reach {
+                    return None;
+                }
+                z += step_z;
+                let t = t_max_z;
+                t_max_z += t_dz;
+                if solid(self.get(x, y, z)) {
+                    let bz = if step_z > 0 { z as f64 } else { (z + 1) as f64 };
+                    return Some(ClipHit {
+                        pos: (x, y, z),
+                        face: if step_z > 0 { 2 } else { 3 }, // NORTH : SOUTH
+                        location: (origin.0 + dx * t, origin.1 + dy * t, bz),
+                        inside: false,
+                    });
+                }
+            }
         }
     }
 
@@ -439,6 +603,111 @@ mod tests {
             None,
             "no layer -> the baked look, bit for bit"
         );
+    }
+
+    /// A controlled flat world: one chunk, a stone slab at y=8, the
+    /// air above (the generated terrain cleared out of the ray's way).
+    fn slab_world() -> World {
+        let mut w = World::new(1, 42);
+        for x in 0..16 {
+            for z in 0..16 {
+                for y in 5..24 {
+                    w.set(x, y, z, AIR);
+                }
+                w.set(x, 8, z, STONE);
+            }
+        }
+        w
+    }
+
+    /// THE CLIP LAW — the vanilla Level.clip's COLLIDER shape over full
+    /// cubes: the entry face is the stepped axis's negative direction,
+    /// the location sits exactly on the crossed boundary, the fluid
+    /// passes (the ClipContext.Fluid.NONE law), the reach ends the
+    /// traversal (the miss), the eye inside a solid cell is the hit
+    /// with isInside.
+    #[test]
+    fn the_clip_law_names_the_entry_face_and_the_exact_boundary() {
+        let w = slab_world();
+        // the straight-down ray from (8.5, 12.0, 8.5): 3.0 to the
+        // surface, inside the 4.5 reach
+        let hit = w
+            .clip((8.5, 12.0, 8.5), (0.0, -1.0, 0.0), BLOCK_INTERACTION_RANGE)
+            .expect("the floor is under the eye");
+        assert_eq!(hit.pos, (8, 8, 8));
+        assert_eq!(hit.face, 1, "UP — the ray entered through the slab's top");
+        assert_eq!(hit.location, (8.5, 9.0, 8.5), "the face plane's own y");
+        assert!(!hit.inside);
+        // the cursor the wire speaks: the location minus the origin
+        assert_eq!(
+            (hit.location.0 - 8.0, hit.location.1 - 8.0, hit.location.2 - 8.0),
+            (0.5, 1.0, 0.5)
+        );
+        // the reach ends the traversal: 5.0 to the surface from y=14
+        assert!(
+            w.clip((8.5, 14.0, 8.5), (0.0, -1.0, 0.0), 3.0).is_none(),
+            "5 > 3 — the honest miss"
+        );
+        // THE FLUID PASSES: a water cell above the slab does not clip
+        let mut w2 = slab_world();
+        w2.set(8, 10, 8, WATER);
+        let hit2 = w2
+            .clip((8.5, 12.0, 8.5), (0.0, -1.0, 0.0), BLOCK_INTERACTION_RANGE)
+            .expect("the water is skipped, the slab clips");
+        assert_eq!(hit2.pos, (8, 8, 8), "the fluid never decided the hit");
+        // THE SIDE FACE: the horizontal ray enters through the WEST face
+        // of the wall column it steps into (+x)
+        let mut w3 = slab_world();
+        for y in 8..12 {
+            w3.set(12, y, 8, STONE);
+        }
+        let hit3 = w3
+            .clip((9.5, 9.5, 8.5), (1.0, 0.0, 0.0), BLOCK_INTERACTION_RANGE)
+            .expect("the wall is within the reach");
+        assert_eq!(hit3.pos, (12, 9, 8));
+        assert_eq!(hit3.face, 4, "WEST — the +x step's entry face");
+        assert_eq!(hit3.location.0, 12.0, "the boundary plane exactly");
+        // THE EYE-INSIDE: the eye in a solid cell is the hit itself
+        let mut w4 = slab_world();
+        w4.set(4, 10, 4, STONE);
+        let hit4 = w4
+            .clip((4.5, 10.5, 4.5), (0.0, -1.0, 0.0), BLOCK_INTERACTION_RANGE)
+            .expect("the eye's own cell");
+        assert!(hit4.inside);
+        assert_eq!(hit4.pos, (4, 10, 4));
+        // THE DIAGONAL: the (-1,-1,-1) ray crosses the x/z boundaries
+        // BEFORE the y one — the face names the LAST-stepped axis's
+        // entry (UP, the slab's top)
+        let hit5 = w5_diag(&w);
+        assert_eq!(hit5.pos, (7, 8, 7));
+        assert_eq!(hit5.face, 1, "the -y boundary is the one the ray crossed last");
+        assert_eq!(hit5.location, (7.5, 9.0, 7.5));
+    }
+
+    /// The diagonal's helper — the ray from (9.5, 11.0, 9.5) along
+    /// (-1, -1, -1)/sqrt(3): the x/z boundaries cross at t≈0.87/1.73/2.6,
+    /// the y plane at t≈3.46 (2√3, inside the reach) — the landing sits
+    /// on the slab's top plane at (7.5, 9.0, 7.5).
+    fn w5_diag(w: &World) -> ClipHit {
+        w.clip((9.5, 11.0, 9.5), (-1.0, -1.0, -1.0), BLOCK_INTERACTION_RANGE)
+            .expect("the slab is within the diagonal's reach")
+    }
+
+    /// THE PLACEABLE TABLE — the vanilla BlockItem's own pairing: the
+    /// item's registry name IS its block's for the simple cubes; the
+    /// void and the non-block items refuse.
+    #[test]
+    fn the_placeable_table_is_the_vocabularys_reverse() {
+        assert_eq!(World::placeable_block("stone"), Some(STONE));
+        assert_eq!(World::placeable_block("dirt"), Some(DIRT));
+        assert_eq!(World::placeable_block("grass_block"), Some(GRASS));
+        assert_eq!(World::placeable_block("oak_log"), Some(LOG));
+        assert_eq!(World::placeable_block("oak_leaves"), Some(LEAVES));
+        assert_eq!(World::placeable_block("sand"), Some(SAND));
+        assert_eq!(World::placeable_block("deepslate"), Some(DEEPSLATE));
+        assert_eq!(World::placeable_block("air"), None, "the void is never a stack");
+        assert_eq!(World::placeable_block("diamond"), None, "an item is not a block");
+        assert_eq!(World::placeable_block("water"), None, "no water item places");
     }
 
     #[test]
