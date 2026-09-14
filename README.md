@@ -919,6 +919,32 @@ hand-drawn:
   (VILLAGER_DATA at 18 doubles as the order proof), the generated-id
   pin, and the model's merge semantics (replace-one-leave-others, the
   null-lookup drop, the re-spawn reset).
+  The **the living-entity reference lane — serializer 13 retired
+  from the object-graph refusal set (v0.3.114)**: the OPTIONAL_
+  LIVING_ENTITY_REFERENCE lane decodes. The javap audit, three hops:
+  `EntityReference.STREAM_CODEC` = `UUIDUtil.STREAM_CODEC.map(
+  wrap-left, unpack-uuid)` — the wire carries ONLY the referenced
+  entity's UUID (vanilla's `Either<UUID, StoredEntityType>` rides
+  the LEFT side on the wire; the decode wraps the UUID in Either
+  .left and the encode unpacks via getUUID — a resolved entity is
+  never serialized); `UUIDUtil.STREAM_CODEC` is the anonymous
+  `UUIDUtil$1` = `FriendlyByteBuf.readUUID` = `new UUID(readLong(),
+  readLong())` — 16 bytes, msb long then lsb long, both big-endian;
+  and the serializer wraps the whole codec in the ONE-FLAG-BYTE
+  optional operation (the same invokedynamic bsm BlockPos.optional
+  and GlobalPos.optional ride — the port's OPTIONAL_BLOCK_POS shape
+  mirrored). The implementation: the `EntityReference` struct
+  (uuid: [u8; 16], retained verbatim — the resolution is the
+  consumer's act, the retained-tag-is-a-store line), the flag-then-
+  16-bytes decode arm, the new `OptionalLivingEntityReference`
+  variant, and the lib.rs export. mc-client untouched BY
+  CONSTRUCTION. GOLDENS UNTOUCHED BY CONSTRUCTION: 12/12 PASS.
+  Tests +1 (workspace 463 -> 464 passed / 0 failed / 3 ignored):
+  the empty lane (the flag byte alone), the present lane (16
+  distinctive bytes riding verbatim), and the truncated UUID (15
+  bytes after the flag) refusing — the honest short-buffer failure.
+  No existing probe inverted; the object-graph refusal set keeps
+  PARTICLE, PARTICLES, profiles and the variant holders.
   The **the OptionalInt lane's signed truth — the arithmetic-codec
   deferral retired (v0.3.113)**: the autopush-114 round deferred the
   OptionalInt serializer with evidence, and this round retires it.
