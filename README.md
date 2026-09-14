@@ -919,6 +919,61 @@ hand-drawn:
   (VILLAGER_DATA at 18 doubles as the order proof), the generated-id
   pin, and the model's merge semantics (replace-one-leave-others, the
   null-lookup drop, the re-spawn reset).
+  The **the held-item's stat surface decodes — the wave four
+  (v0.3.109)**: attribute_modifiers (16), food (23) and consumable
+  (24) leave the patch-value refusal list. The javap walk: 16 =
+  `composite(Entry.STREAM_CODEC.list(), ..)` — a VarInt count then
+  count × FOUR-lane entries: `holderRegistry(ATTRIBUTE)` (the $29
+  byIdOrThrow VarInt — negative refuses, unknown retained verbatim,
+  the ENCHANTMENTS line), `AttributeModifier.STREAM_CODEC`
+  (composite of an Identifier UTF id, `ByteBufCodecs.DOUBLE` = a
+  BIG-ENDIAN f64 amount — the DOUBLE/INT/LONG trap family again, the
+  construction site is the shape — and the Operation idMapper
+  ordinal), `EquipmentSlotGroup.STREAM_CODEC` (the same idMapper
+  shape, ANY=0 .. SADDLE=10), and the 26.2-NEW
+  `ItemAttributeModifiers$Display.STREAM_CODEC` — a DISPATCH: the
+  Type ordinal (DEFAULT=0, HIDDEN=1, OVERRIDE=2) then the variant's
+  payload (default/hidden are `StreamCodec.unit` = ZERO bytes, the
+  override one bare component tag). The round's fidelity find: the
+  idMapper tables are `ByIdMap.continuous(.., OutOfBoundsStrategy.ZERO)`
+  whose `lambda$continuous$0` maps EVERY key outside `[0, len)` —
+  negative AND out-of-range — to values[0]; they NEVER refuse, so
+  the port retains the data ordinals verbatim (refusing would
+  invent a data flow vanilla does not have) and the DISPLAY ordinal,
+  being FRAMING (it selects the payload walk), fills to Default
+  in-decode exactly as vanilla's map does — pinned by a test. (The
+  banked corollary: the delivered Rarity lane's negative-ordinal
+  refusal is STRICTER than vanilla's continuous map — a candidate
+  fidelity-fix round, not silently extended.) food 23 =
+  `composite(VAR_INT, FLOAT, BOOL)` — nutrition is a VAR_INT in 26.2
+  (the record holds `int nutrition`; the wiki-era float instinct is
+  not the wire's shape) with no clamp anywhere. consumable 24 = a
+  FIVE-lane composite (f32 consume_seconds, the ItemUseAnimation
+  ordinal NONE=0 .. BRUSH=9, `SoundEvent.STREAM_CODEC` =
+  `ByteBufCodecs.holder(..)` — a TAGGED union where wire 0 is the
+  DIRECT `{UTF id, f32 range}` lane and wire tag >= 1 the `(tag - 1)`
+  registry id, a negative tag refusing where vanilla's lookup
+  throws — one particle byte) with the effects list pinned EMPTY:
+  `ConsumeEffect.STREAM_CODEC` = `ByteBufCodecs.registry(
+  CONSUME_EFFECT_TYPE)` is a DISPATCHED registry (each entry = a
+  type id + that type's own payload; the six known types —
+  apply_status_effects, clear_all_status_effects, play_sound,
+  remove_status_effects, teleport_randomly — are a census wave of
+  their own) and the unframed wire cannot be skipped honestly (the
+  wave-three partial-matcher line). The decode census: TWENTY-FOUR
+  of the registry's 111 component types carry value codecs; the
+  other 87 refuse. Tests +2 (workspace 457 -> 459 passed / 0 failed
+  / 3 ignored): the FOUR-lane stat composite bit-exact (three
+  entries covering the default/hidden/override displays, the
+  negative operation -3 and slot 42 RETAINED verbatim, the negative
+  food nutrition RETAINED — the record constructor clamps nothing),
+  the out-of-range Display ordinal 9 filling to Default (the framing
+  fill), and the consumable's five lanes with the sound union in
+  BOTH directions plus its refusal map (a non-empty effects list, a
+  negative sound holder tag); the patch refusal probe moved 16 -> 5
+  (the dense-registry slot between unbreakable 4 and custom_name 6
+  that no wave has claimed). GOLDENS UNTOUCHED BY CONSTRUCTION:
+  12/12 at rms 0.000.
   The **the adventure-mode pair rides the patch — the wave three
   (v0.3.108)**: can_place_on (14) and can_break (15) leave the
   patch-value refusal list, and the javap walk (four hops) shows they

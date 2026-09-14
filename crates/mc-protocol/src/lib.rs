@@ -29,8 +29,9 @@ pub use config::{
 };
 pub use nbt::Nbt;
 pub use play::{
-    begin_play, connect_and_join_live, connect_and_join_world, join_world, BlockPredicate,
-    BlockSet, ChunkColumn, ChunkLight, ChunkSection, ClockUpdate, ComponentPatch, ComponentValue,
+    begin_play, connect_and_join_live, connect_and_join_world, join_world, AttributeDisplay,
+    AttributeModifier, AttributeModifierEntry, BlockPredicate, BlockSet, ChunkColumn, ChunkLight,
+    ChunkSection, ClockUpdate, ComponentPatch, ComponentValue, ConsumableSound,
     DataComponentMatchers, EntityDataEntry, EntityDataSet, EntityDeltaPos, EntityDeltaPosRot,
     EntityDeltaRot, EntityHeadRot, EntityPositionSync, EntitySpawn, LightData, LiveJoin,
     PlayEvent, PlaySession, PlayStart, PlayerPosition, PropertyMatcher, PropertyValue,

@@ -4725,11 +4725,12 @@ mod tests {
                 "component type {tid} must refuse"
             );
         }
-        // known to the registry but unimplemented here (16
-        // attribute_modifiers — 13 and the adventure-mode pair 14/15
-        // left the refusal list as the wave-two record codecs and the
-        // wave-three predicates landed)
-        assert!(parse_set_entity_data(&one_stack(&test_support::entity_data_varint(16))).is_err());
+        // known to the registry but unimplemented here (5 — the
+        // dense-registry slot between 4 unbreakable and 6 custom_name
+        // that no wave has claimed; 13, the adventure-mode pair 14/15
+        // and attribute_modifiers 16 all left the refusal list as the
+        // wave-two, wave-three and wave-four rounds landed)
+        assert!(parse_set_entity_data(&one_stack(&test_support::entity_data_varint(5))).is_err());
         // the negative ADDED count
         let mut neg = Vec::new();
         neg.extend_from_slice(&test_support::entity_data_varint(1));
@@ -4768,6 +4769,270 @@ mod tests {
             &test_support::entity_data_entry(8, s::ITEM_STACK, &str_tag),
         );
         assert!(parse_set_entity_data(&p).is_err());
+    }
+
+    /// The patch value codecs' FOURTH WAVE: the held-item's stat
+    /// surface and its food. The audit (javap): attribute_modifiers
+    /// 16 = `composite(Entry.STREAM_CODEC.list(), ..)` — a VarInt
+    /// count then count × FOUR-lane entries (the $29 attribute id, an
+    /// Identifier-UTF modifier id, a BIG-ENDIAN f64 amount, the
+    /// Operation ordinal, the EquipmentSlotGroup ordinal, and the
+    /// 26.2-NEW Display DISPATCH: the Type ordinal then the variant
+    /// payload — default/hidden ZERO bytes, override one bare tag).
+    /// The continuous-ZERO idMapper maps NEVER refuse (any i32
+    /// decodes; out-of-range AND negative fill to values[0]) — the
+    /// ordinals are retained verbatim and the DISPLAY ordinal, being
+    /// FRAMING, fills to Default in-decode (pinned below). food 23 =
+    /// `composite(VAR_INT, FLOAT, BOOL)` — nutrition is a VAR_INT in
+    /// 26.2 (the record holds `int nutrition`; no clamp anywhere).
+    #[test]
+    fn the_fourth_wave_stat_and_food_decode() {
+        use data_component_types as t;
+        use entity_data_serializers as s;
+
+        // one stack, TWO added components: 16 attribute_modifiers,
+        // 23 food
+        let mut value = Vec::new();
+        for v in [1i32, 1, 2, 0] {
+            value.extend_from_slice(&test_support::entity_data_varint(v));
+        }
+        // 16: THREE entries — the default display, the negative
+        // operation + out-of-range slot retained verbatim, and the
+        // override display carrying a bare tag
+        value.extend_from_slice(&test_support::entity_data_varint(t::ATTRIBUTE_MODIFIERS));
+        value.extend_from_slice(&test_support::entity_data_varint(3));
+        // entry 1: attribute 5, "minecraft:test", 0.5, op 2,
+        // slot 1 MAINHAND, display 0 (Default — zero bytes)
+        value.extend_from_slice(&test_support::entity_data_varint(5));
+        write_string(&mut value, "minecraft:test");
+        value.extend_from_slice(&0.5f64.to_be_bytes());
+        value.extend_from_slice(&test_support::entity_data_varint(2));
+        value.extend_from_slice(&test_support::entity_data_varint(1));
+        value.extend_from_slice(&test_support::entity_data_varint(0));
+        // entry 2: attribute 7, "minecraft:other", -1.25, op -3
+        // (RETAINED — the ZERO-fill is a consumer's act), slot 42
+        // (RETAINED), display 1 (Hidden — zero bytes)
+        value.extend_from_slice(&test_support::entity_data_varint(7));
+        write_string(&mut value, "minecraft:other");
+        value.extend_from_slice(&(-1.25f64).to_be_bytes());
+        value.extend_from_slice(&test_support::entity_data_varint(-3));
+        value.extend_from_slice(&test_support::entity_data_varint(42));
+        value.extend_from_slice(&test_support::entity_data_varint(1));
+        // entry 3: attribute 0, "minecraft:third", 2.0, op 0,
+        // slot 9 SADDLE, display 2 (Override — one bare tag)
+        value.extend_from_slice(&test_support::entity_data_varint(0));
+        write_string(&mut value, "minecraft:third");
+        value.extend_from_slice(&2.0f64.to_be_bytes());
+        value.extend_from_slice(&test_support::entity_data_varint(0));
+        value.extend_from_slice(&test_support::entity_data_varint(9));
+        value.extend_from_slice(&test_support::entity_data_varint(2));
+        crate::nbt::write_bare_nbt(
+            &Nbt::Compound(vec![("key".into(), Nbt::String("text".into()))]),
+            &mut value,
+        )
+        .unwrap();
+        // 23 food: nutrition -3 (RETAINED — the record constructor
+        // clamps nothing), saturation 0.6, can_always_eat true
+        value.extend_from_slice(&test_support::entity_data_varint(t::FOOD));
+        value.extend_from_slice(&test_support::entity_data_varint(-3));
+        value.extend_from_slice(&0.6f32.to_be_bytes());
+        value.push(1);
+
+        let p = test_support::set_entity_data_packet(
+            5,
+            &test_support::entity_data_entry(8, s::ITEM_STACK, &value),
+        );
+        let d = parse_set_entity_data(&p).unwrap();
+        assert_eq!(
+            d.entries[0].value,
+            EntityDataEntry::ItemStack {
+                count: 1,
+                item_id: 1,
+                patch: ComponentPatch {
+                    added: vec![
+                        (
+                            t::ATTRIBUTE_MODIFIERS,
+                            ComponentValue::AttributeModifiers(vec![
+                                AttributeModifierEntry {
+                                    attribute_id: 5,
+                                    modifier: AttributeModifier {
+                                        id: "minecraft:test".into(),
+                                        amount: 0.5,
+                                        operation: 2
+                                    },
+                                    slot: 1,
+                                    display: AttributeDisplay::Default
+                                },
+                                AttributeModifierEntry {
+                                    attribute_id: 7,
+                                    modifier: AttributeModifier {
+                                        id: "minecraft:other".into(),
+                                        amount: -1.25,
+                                        operation: -3
+                                    },
+                                    slot: 42,
+                                    display: AttributeDisplay::Hidden
+                                },
+                                AttributeModifierEntry {
+                                    attribute_id: 0,
+                                    modifier: AttributeModifier {
+                                        id: "minecraft:third".into(),
+                                        amount: 2.0,
+                                        operation: 0
+                                    },
+                                    slot: 9,
+                                    display: AttributeDisplay::Override(Nbt::Compound(vec![
+                                        ("key".into(), Nbt::String("text".into()))
+                                    ]))
+                                },
+                            ])
+                        ),
+                        (
+                            t::FOOD,
+                            ComponentValue::Food {
+                                nutrition: -3,
+                                saturation: 0.6,
+                                can_always_eat: true
+                            }
+                        ),
+                    ],
+                    removed: vec![]
+                }
+            }
+        );
+
+        // the Display FRAMING fill: an out-of-range Type ordinal (9)
+        // fills to Default — the zero-byte walk consumes nothing else
+        // (lambda$continuous$0: any key outside [0, len) maps to
+        // values[0]; the walk MUST mirror that or the wire desyncs)
+        let mut value = Vec::new();
+        for v in [1i32, 1, 1, 0] {
+            value.extend_from_slice(&test_support::entity_data_varint(v));
+        }
+        value.extend_from_slice(&test_support::entity_data_varint(t::ATTRIBUTE_MODIFIERS));
+        value.extend_from_slice(&test_support::entity_data_varint(1));
+        value.extend_from_slice(&test_support::entity_data_varint(1));
+        write_string(&mut value, "minecraft:fill");
+        value.extend_from_slice(&0.0f64.to_be_bytes());
+        value.extend_from_slice(&test_support::entity_data_varint(1));
+        value.extend_from_slice(&test_support::entity_data_varint(0));
+        value.extend_from_slice(&test_support::entity_data_varint(9));
+        let p = test_support::set_entity_data_packet(
+            5,
+            &test_support::entity_data_entry(8, s::ITEM_STACK, &value),
+        );
+        let d = parse_set_entity_data(&p).unwrap();
+        match &d.entries[0].value {
+            EntityDataEntry::ItemStack { patch, .. } => match &patch.added[0].1 {
+                ComponentValue::AttributeModifiers(entries) => {
+                    assert_eq!(entries[0].display, AttributeDisplay::Default);
+                }
+                other => panic!("expected attribute modifiers, got {other:?}"),
+            },
+            other => panic!("expected an item stack, got {other:?}"),
+        }
+    }
+
+    /// The consumable's FIVE lanes decode (with the sound tagged
+    /// union in BOTH directions) and the effects list refuses
+    /// non-empty: `ConsumeEffect.STREAM_CODEC` =
+    /// `ByteBufCodecs.registry(CONSUME_EFFECT_TYPE)` — a DISPATCHED
+    /// registry (each entry = a type id + that type's own payload;
+    /// the six known types are apply_status_effects,
+    /// clear_all_status_effects, play_sound, remove_status_effects
+    /// and teleport_randomly) whose payloads the port does not
+    /// carry, and the unframed wire cannot be skipped honestly (the
+    /// wave-three partial-matcher line). A negative sound holder tag
+    /// refuses — vanilla's registry lookup throws on it.
+    #[test]
+    fn the_consumable_five_lanes_decode_and_refuse() {
+        use data_component_types as t;
+        use entity_data_serializers as s;
+
+        let stack_with = |consumable_bytes: &[u8]| -> Vec<u8> {
+            let mut v = Vec::new();
+            for prefix in [1i32, 1, 1, 0] {
+                v.extend_from_slice(&test_support::entity_data_varint(prefix));
+            }
+            v.extend_from_slice(consumable_bytes);
+            v
+        };
+        let one_stack = |consumable_bytes: &[u8]| -> Vec<u8> {
+            test_support::set_entity_data_packet(
+                5,
+                &test_support::entity_data_entry(8, s::ITEM_STACK, &stack_with(consumable_bytes)),
+            )
+        };
+
+        // the DIRECT sound (wire 0): 1.6s, DRINK (ordinal 2),
+        // "minecraft:item.generic.eat" at range 1.0, particles on,
+        // no effects
+        let mut direct = Vec::new();
+        direct.extend_from_slice(&test_support::entity_data_varint(t::CONSUMABLE));
+        direct.extend_from_slice(&1.6f32.to_be_bytes());
+        direct.extend_from_slice(&test_support::entity_data_varint(2));
+        direct.extend_from_slice(&test_support::entity_data_varint(0));
+        write_string(&mut direct, "minecraft:item.generic.eat");
+        direct.extend_from_slice(&1.0f32.to_be_bytes());
+        direct.push(1);
+        direct.extend_from_slice(&test_support::entity_data_varint(0));
+        let d = parse_set_entity_data(&one_stack(&direct)).unwrap();
+        match &d.entries[0].value {
+            EntityDataEntry::ItemStack { patch, .. } => assert_eq!(
+                patch.added[0].1,
+                ComponentValue::Consumable {
+                    consume_seconds: 1.6,
+                    animation: 2,
+                    sound: ConsumableSound::Direct {
+                        id: "minecraft:item.generic.eat".into(),
+                        range: 1.0
+                    },
+                    has_consume_particles: true
+                }
+            ),
+            other => panic!("expected an item stack, got {other:?}"),
+        }
+
+        // the REGISTRY sound (wire tag 5 = registry id 4, retained
+        // verbatim — the VILLAGER_DATA line), particles off, no
+        // effects
+        let mut registry = Vec::new();
+        registry.extend_from_slice(&test_support::entity_data_varint(t::CONSUMABLE));
+        registry.extend_from_slice(&0.8f32.to_be_bytes());
+        registry.extend_from_slice(&test_support::entity_data_varint(0));
+        registry.extend_from_slice(&test_support::entity_data_varint(5));
+        registry.push(0);
+        registry.extend_from_slice(&test_support::entity_data_varint(0));
+        let d = parse_set_entity_data(&one_stack(&registry)).unwrap();
+        match &d.entries[0].value {
+            EntityDataEntry::ItemStack { patch, .. } => match &patch.added[0].1 {
+                ComponentValue::Consumable { sound, .. } => {
+                    assert_eq!(sound, &ConsumableSound::Registry(4));
+                }
+                other => panic!("expected a consumable, got {other:?}"),
+            },
+            other => panic!("expected an item stack, got {other:?}"),
+        }
+
+        // a NON-EMPTY effects list refuses — the dispatched payloads
+        // cannot be skipped honestly
+        let mut effects = direct.clone();
+        let n = effects.len();
+        effects[n - 1] = 1; // the trailing effects count 0 -> 1
+        assert!(parse_set_entity_data(&one_stack(&effects)).is_err());
+
+        // a NEGATIVE sound holder tag refuses (vanilla's registry
+        // lookup throws on it) — the truncated buffer keeps the type
+        // varint, the f32 and the animation varint, so the negative
+        // tag lands EXACTLY on the sound lane
+        let mut neg_tag = direct.clone();
+        neg_tag.truncate(
+            test_support::entity_data_varint(t::CONSUMABLE).len()
+                + 4
+                + test_support::entity_data_varint(2).len(),
+        );
+        neg_tag.extend_from_slice(&test_support::entity_data_varint(-2));
+        assert!(parse_set_entity_data(&one_stack(&neg_tag)).is_err());
     }
 
     /// The patch value codecs' SECOND WAVE: the three record codecs
