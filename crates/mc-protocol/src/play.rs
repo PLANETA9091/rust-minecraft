@@ -3938,6 +3938,10 @@ fn write_i8(out: &mut Vec<u8>, v: i8) {
     out.push(v as u8);
 }
 
+fn write_i16(out: &mut Vec<u8>, v: i16) {
+    out.extend_from_slice(&v.to_be_bytes());
+}
+
 fn write_f32(out: &mut Vec<u8>, v: f32) {
     out.extend_from_slice(&v.to_be_bytes());
 }
@@ -4664,6 +4668,78 @@ pub fn encode_set_entity_data(entity_id: i32, entries: &[SetEntityDataEntry]) ->
     Ok(p)
 }
 
+/// Set Equipment's write mirror (see [`EntityEquipment`]): the paired
+/// walk written back — the slot byte packs `ordinal | (more ? 0x80 : 0)`
+/// (the `more` is the ITERATOR's hasNext, so the LAST pair's byte always
+/// has the high bit CLEAR — the decode loop's own exit condition,
+/// `b & -128 == 0`), each stack riding the OPTIONAL walk's write
+/// mirror. A zero-pair packet is impossible (the decode reads the first
+/// slot byte unconditionally), so an empty list refuses. The writers
+/// write the STORE: a retained negative sentinel re-encodes verbatim,
+/// a cleared slot rides the optional lane's count-only shape.
+pub fn encode_set_equipment(entity_id: i32, slots: &[EquipmentEntry]) -> Result<Vec<u8>> {
+    anyhow::ensure!(
+        !slots.is_empty(),
+        "a set equipment packet with zero pairs cannot exist — the decode \
+         reads the first slot byte unconditionally"
+    );
+    let mut p = Vec::new();
+    write_varint(&mut p, clientbound::SET_EQUIPMENT);
+    write_varint(&mut p, entity_id);
+    let last = slots.len() - 1;
+    for (i, e) in slots.iter().enumerate() {
+        let more: u8 = if i < last { 0x80 } else { 0 };
+        p.push(equipment_slot_ordinal(e.slot) | more);
+        write_item_stack(&mut p, e.stack.count, e.stack.item_id, &e.stack.patch)?;
+    }
+    Ok(p)
+}
+
+/// Set Container Content's write mirror (see [`ContainerContent`]): the
+/// four-lane composite written back — the VarInt container id (the
+/// CONTAINER_ID lane), the raw state id, the collection count riding
+/// the store's OWN length (the encode side cannot fabricate the
+/// negative count the decode refuses — a Vec's len is never negative),
+/// count × the OPTIONAL walk, the carried item last.
+pub fn encode_set_container_content(
+    container_id: i32,
+    state_id: i32,
+    items: &[ItemStack],
+    carried_item: &ItemStack,
+) -> Result<Vec<u8>> {
+    let mut p = Vec::new();
+    write_varint(&mut p, clientbound::CONTAINER_SET_CONTENT);
+    write_varint(&mut p, container_id);
+    write_varint(&mut p, state_id);
+    write_varint(&mut p, items.len() as i32);
+    for it in items {
+        write_item_stack(&mut p, it.count, it.item_id, &it.patch)?;
+    }
+    write_item_stack(&mut p, carried_item.count, carried_item.item_id, &carried_item.patch)?;
+    Ok(p)
+}
+
+/// Set Container Slot's write mirror (see [`ContainerSetSlot`]): the
+/// record's four fields written back — the VarInt container id, the raw
+/// state id, the SIGNED BE SHORT slot (the readShort lane's own
+/// mirror; a negative slot re-encodes verbatim — the store is the wire
+/// again), and the plain OPTIONAL stack (an EMPTY stack is the legal
+/// cleared slot).
+pub fn encode_set_container_slot(
+    container_id: i32,
+    state_id: i32,
+    slot: i16,
+    item: &ItemStack,
+) -> Result<Vec<u8>> {
+    let mut p = Vec::new();
+    write_varint(&mut p, clientbound::CONTAINER_SET_SLOT);
+    write_varint(&mut p, container_id);
+    write_varint(&mut p, state_id);
+    write_i16(&mut p, slot);
+    write_item_stack(&mut p, item.count, item.item_id, &item.patch)?;
+    Ok(p)
+}
+
 // ---------------------------------------------------------------------------
 // serverbound replies
 // ---------------------------------------------------------------------------
@@ -4898,6 +4974,23 @@ fn read_equipment_slot(byte: u8) -> Result<EquipmentSlot> {
         6 => Ok(EquipmentSlot::Body),
         7 => Ok(EquipmentSlot::Saddle),
         _ => anyhow::bail!("equipment slot index {idx} is outside the eight-entry VALUES list"),
+    }
+}
+
+/// The slot byte's WRITE mirror: the enum's declaration-order ordinal
+/// IS the low 7 bits (javap clinit: the packet encodes with
+/// `ordinal()`), and the continue bit is the CALLER's — Java's `more`
+/// is the iterator's hasNext, not the entry's property.
+fn equipment_slot_ordinal(slot: EquipmentSlot) -> u8 {
+    match slot {
+        EquipmentSlot::Mainhand => 0,
+        EquipmentSlot::Offhand => 1,
+        EquipmentSlot::Feet => 2,
+        EquipmentSlot::Legs => 3,
+        EquipmentSlot::Chest => 4,
+        EquipmentSlot::Head => 5,
+        EquipmentSlot::Body => 6,
+        EquipmentSlot::Saddle => 7,
     }
 }
 
@@ -9324,6 +9417,126 @@ mod tests {
         let mut p = Vec::new();
         write_varint(&mut p, clientbound::CONTAINER_SET_CONTENT);
         assert!(parse_set_container_slot(&p).is_err());
+    }
+
+    /// The inventory trilogy's write side: the three packets' writers
+    /// ride the round-124 mirror line — every fixture the audits built
+    /// now proves BOTH directions, byte-equal. The zero-pair refusal
+    /// (the decode reads the first slot byte unconditionally), the
+    /// continue-bit placement (the LAST pair's byte always has the
+    /// high bit CLEAR — Java's `more` is the iterator's hasNext, not
+    /// the entry's property), the sentinel's verbatim five bytes
+    /// re-encoded, and the BE SHORT slot's own width mirror.
+    #[test]
+    fn the_inventory_trilogys_writers_round_trip_the_fixture_sets() {
+        use data_component_types as t;
+        // -- Set Equipment: the three-pair fixture (the mainhand with a
+        //    one-component patch, the CLEARED body slot riding the
+        //    optional lane, the final offhand pair) round-trips
+        //    BYTE-EQUAL — the continue bits on the first two slot
+        //    bytes, the final byte bare.
+        let mut p = Vec::new();
+        write_varint(&mut p, clientbound::SET_EQUIPMENT);
+        write_varint(&mut p, 42);
+        p.push(0x80); // slot 0 mainhand | continue
+        write_varint(&mut p, 3);
+        write_varint(&mut p, 745);
+        write_varint(&mut p, 1);
+        write_varint(&mut p, 0);
+        write_varint(&mut p, t::MAX_STACK_SIZE);
+        write_varint(&mut p, 35);
+        p.push(0x86); // slot 6 body | continue
+        write_varint(&mut p, 0); // the EMPTY stack
+        p.push(0x01); // slot 1 offhand, the FINAL pair
+        write_varint(&mut p, 1);
+        write_varint(&mut p, 2);
+        write_varint(&mut p, 0);
+        write_varint(&mut p, 0);
+        let e = parse_set_equipment(&p).unwrap();
+        assert_eq!(
+            encode_set_equipment(e.entity_id, &e.slots).unwrap(),
+            p,
+            "the three-pair equipment walk re-encodes byte-equal"
+        );
+        // the negative sentinel re-encodes VERBATIM (five bytes, no
+        // item, no patch — the writer writes the STORE, not the
+        // collapse vanilla's strict lane refuses)
+        let mut p = Vec::new();
+        write_varint(&mut p, clientbound::SET_EQUIPMENT);
+        write_varint(&mut p, 1);
+        p.push(0x04); // slot 4 chest, final
+        write_varint(&mut p, -7);
+        let e = parse_set_equipment(&p).unwrap();
+        assert_eq!(encode_set_equipment(e.entity_id, &e.slots).unwrap(), p);
+        // the zero-pair refusal: the decode reads the first slot byte
+        // unconditionally, so a packet with no pairs cannot exist
+        assert!(encode_set_equipment(42, &[]).is_err());
+        // -- Set Container Content: the window fixture (container 200,
+        //    the two-byte VarInt the byte-era table would have died
+        //    on, three slots, the empty cursor) round-trips byte-equal
+        //    — the count lane riding the store's OWN length.
+        let mut p = Vec::new();
+        write_varint(&mut p, clientbound::CONTAINER_SET_CONTENT);
+        write_varint(&mut p, 200);
+        write_varint(&mut p, 7);
+        write_varint(&mut p, 3);
+        write_varint(&mut p, 12);
+        write_varint(&mut p, 745);
+        write_varint(&mut p, 1);
+        write_varint(&mut p, 0);
+        write_varint(&mut p, t::MAX_STACK_SIZE);
+        write_varint(&mut p, 35);
+        write_varint(&mut p, 0); // slot 1: the EMPTY stack
+        write_varint(&mut p, 1);
+        write_varint(&mut p, 33);
+        write_varint(&mut p, 0);
+        write_varint(&mut p, 0);
+        write_varint(&mut p, 0); // the carried item: the cursor, empty
+        let c = parse_set_container_content(&p).unwrap();
+        assert_eq!(
+            encode_set_container_content(
+                c.container_id,
+                c.state_id,
+                &c.items,
+                &c.carried_item
+            )
+            .unwrap(),
+            p,
+            "the window snapshot re-encodes byte-equal"
+        );
+        // -- Set Container Slot: the single-slot fixture (the BE SHORT
+        //    slot 200 — 0x00C8, past a VarInt's single-byte range) and
+        //    the negative-slot cleared slot both round-trip byte-equal
+        //    — the short lane's own mirror proving the WIDTH.
+        let mut p = Vec::new();
+        write_varint(&mut p, clientbound::CONTAINER_SET_SLOT);
+        write_varint(&mut p, 200);
+        write_varint(&mut p, 9);
+        p.extend_from_slice(&200i16.to_be_bytes());
+        write_varint(&mut p, 12);
+        write_varint(&mut p, 745);
+        write_varint(&mut p, 1);
+        write_varint(&mut p, 0);
+        write_varint(&mut p, t::MAX_STACK_SIZE);
+        write_varint(&mut p, 35);
+        let s = parse_set_container_slot(&p).unwrap();
+        assert_eq!(
+            encode_set_container_slot(s.container_id, s.state_id, s.slot, &s.item).unwrap(),
+            p,
+            "the single-slot record re-encodes byte-equal"
+        );
+        let mut p = Vec::new();
+        write_varint(&mut p, clientbound::CONTAINER_SET_SLOT);
+        write_varint(&mut p, 0);
+        write_varint(&mut p, 1);
+        p.extend_from_slice(&(-2i16).to_be_bytes());
+        write_varint(&mut p, 0); // the EMPTY stack: the cleared slot
+        let s = parse_set_container_slot(&p).unwrap();
+        assert_eq!(
+            encode_set_container_slot(s.container_id, s.state_id, s.slot, &s.item).unwrap(),
+            p,
+            "the negative slot re-encodes verbatim"
+        );
     }
 
     /// Mock server: login -> configuration -> play (the FULL vanilla
