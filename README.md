@@ -919,6 +919,38 @@ hand-drawn:
   (VILLAGER_DATA at 18 doubles as the order proof), the generated-id
   pin, and the model's merge semantics (replace-one-leave-others, the
   null-lookup drop, the re-spawn reset).
+  The **effect-state wire transport + the night-vision consumer lift
+  (v0.3.118)**: the player-state surface the mesher's documented debt
+  awaited. The audit (javap on the 26.2 jar): Update Mob Effect
+  (generated id 132) is a flat five-field walk — VarInt entity id,
+  `MobEffect.STREAM_CODEC` effect (the `holderRegistry(MOB_EFFECT)`
+  family, the variant holders' `$29` byIdOrThrow: a negative id
+  throws), VarInt amplifier, VarInt duration ticks, a flags byte
+  whose constructor `ior` chain pins bit 0 AMBIENT / 1 VISIBLE / 2
+  SHOW_ICON / 3 BLEND; Remove Mob Effect (generated id 78) is the
+  record's two fields. THE REGISTRY-ID LESSON: the runtime boot (the
+  probe against the official jar) pins minecraft:night_vision = 15
+  and conduit_power = 28 — the legacy 1-based wiki ids are NOT the
+  wire, the holderRegistry ids are the 0-based registration order.
+  The consumer walk: the model carries the LOCAL player's effect
+  store (the own-entity filter — foreign traffic dropped; the upsert
+  replaces; Respawn does NOT clear it, the effects ride the player
+  across the level recreation) and `night_vision_factor()` answers
+  the `NightVisionFactor` extract's bytecode — `hasEffect(NIGHT_VISION)`
+  -> the 1.0 `nightVisionScale` plateau (the fade-out flicker stays
+  the documented non-goal; the conduit-power branch needs the
+  underwater state the model does not track), else exactly 0.0. The
+  factor rides the World snapshot (`World::night_vision_factor`)
+  into `lightmap_combine`'s `max(AmbientColor, NightVisionColor ·
+  factor)` term. GOLDENS UNTOUCHED BY CONSTRUCTION: 12/12 at rms
+  0.000 (no golden flow carries effect packets — the floor 0.0 is
+  the bit-for-bit identity). Tests +3 (workspace 468 -> 471 passed /
+  0 failed / 3 ignored): the update lane's full field retention (the
+  -1 infinite sentinel and the blend bit included), the negative
+  effect id refusing, the remove lane, the truncated refusal, the
+  model's own-entity filter / upsert / Respawn-persistence /
+  remove semantics, and the rendered lift (the plateau 1.0 lifts
+  the lightmap base exactly per the shader's max, per channel).
   The **the variant-holder census — ALL 43 entity-data serializers
   decode; the object-graph refusal set retired to the unknown ids
   alone (v0.3.117)**: the LAST refusals in the registry walk retire —
