@@ -1501,73 +1501,557 @@ pub static RESOLVED_ITEM_LAYERS: [(&str, Option<f32>, &[ResolvedItemLayer]); 84]
     ("yellow_bundle", None, &[ResolvedItemLayer { model: "minecraft:item/yellow_bundle", tints: &[], transform: None }]),
 ];
 
-/// Items whose definition tree cannot resolve to resting-hand layers —
-/// (item id, the refusal reason; the special block-entity renderers have
-/// no model JSON, the geometry is bytecode).
+/// One special-renderer layer: the LayerDefinitions geometry id and
+/// the atlas sprite texture it samples; the banner flag's tint is
+/// the dye name (DyeColor.textureDiffuseColor, the dump's lane 4).
+pub struct SpecialLayerRef {
+    pub layer: &'static str,
+    pub texture: &'static str,
+    pub tint: Option<&'static str>,
+}
+
+/// One special-renderer item: the wrapper's base model path (whose
+/// display stanza poses the geometry) and the layers in render order.
+pub struct SpecialItemDef {
+    pub base: &'static str,
+    pub layers: &'static [SpecialLayerRef],
+    pub transform: Option<([f32; 3], [f32; 4], [f32; 3], [f32; 4])>,
+}
+
+/// (item id, the special definition) — the resting branch's block-entity
+/// renderer, RESOLVED from the tree (the wrapper's base + the renderer
+/// kind's LayerDefinitions ids and Sheet sprite constants).
+static SPECIAL_BLACK_BANNER: SpecialItemDef = SpecialItemDef {
+    base: "minecraft:item/template_banner",
+    layers: &[
+        SpecialLayerRef { layer: "minecraft:standing_banner#main", texture: "entity/banner/base", tint: None },
+        SpecialLayerRef { layer: "minecraft:standing_banner#flag", texture: "entity/banner/banner_base", tint: Some("black") },
+    ],
+    transform: Some(([0.5, 0.0, 0.5], [0.0, -0.0, 0.0, 1.0], [0.6666667, -0.6666667, -0.6666667], [0.0, 0.0, 0.0, 1.0])),
+};
+static SPECIAL_BLACK_SHULKER_BOX: SpecialItemDef = SpecialItemDef {
+    base: "minecraft:item/black_shulker_box",
+    layers: &[
+        SpecialLayerRef { layer: "minecraft:shulker_box#main", texture: "entity/shulker/shulker_black", tint: None },
+    ],
+    transform: Some(([0.5, 1.4995, 0.5], [1.0, 0.0, 0.0, 0.0], [0.9995, 0.9995, 0.9995], [-0.0, -0.0, -0.0, 1.0])),
+};
+static SPECIAL_BLUE_BANNER: SpecialItemDef = SpecialItemDef {
+    base: "minecraft:item/template_banner",
+    layers: &[
+        SpecialLayerRef { layer: "minecraft:standing_banner#main", texture: "entity/banner/base", tint: None },
+        SpecialLayerRef { layer: "minecraft:standing_banner#flag", texture: "entity/banner/banner_base", tint: Some("blue") },
+    ],
+    transform: Some(([0.5, 0.0, 0.5], [0.0, -0.0, 0.0, 1.0], [0.6666667, -0.6666667, -0.6666667], [0.0, 0.0, 0.0, 1.0])),
+};
+static SPECIAL_BLUE_SHULKER_BOX: SpecialItemDef = SpecialItemDef {
+    base: "minecraft:item/blue_shulker_box",
+    layers: &[
+        SpecialLayerRef { layer: "minecraft:shulker_box#main", texture: "entity/shulker/shulker_blue", tint: None },
+    ],
+    transform: Some(([0.5, 1.4995, 0.5], [1.0, 0.0, 0.0, 0.0], [0.9995, 0.9995, 0.9995], [-0.0, -0.0, -0.0, 1.0])),
+};
+static SPECIAL_BROWN_BANNER: SpecialItemDef = SpecialItemDef {
+    base: "minecraft:item/template_banner",
+    layers: &[
+        SpecialLayerRef { layer: "minecraft:standing_banner#main", texture: "entity/banner/base", tint: None },
+        SpecialLayerRef { layer: "minecraft:standing_banner#flag", texture: "entity/banner/banner_base", tint: Some("brown") },
+    ],
+    transform: Some(([0.5, 0.0, 0.5], [0.0, -0.0, 0.0, 1.0], [0.6666667, -0.6666667, -0.6666667], [0.0, 0.0, 0.0, 1.0])),
+};
+static SPECIAL_BROWN_SHULKER_BOX: SpecialItemDef = SpecialItemDef {
+    base: "minecraft:item/brown_shulker_box",
+    layers: &[
+        SpecialLayerRef { layer: "minecraft:shulker_box#main", texture: "entity/shulker/shulker_brown", tint: None },
+    ],
+    transform: Some(([0.5, 1.4995, 0.5], [1.0, 0.0, 0.0, 0.0], [0.9995, 0.9995, 0.9995], [-0.0, -0.0, -0.0, 1.0])),
+};
+static SPECIAL_CHEST: SpecialItemDef = SpecialItemDef {
+    base: "minecraft:item/chest",
+    layers: &[
+        SpecialLayerRef { layer: "minecraft:chest#main", texture: "entity/chest/normal", tint: None },
+    ],
+    transform: None,
+};
+static SPECIAL_CONDUIT: SpecialItemDef = SpecialItemDef {
+    base: "minecraft:item/conduit",
+    layers: &[
+        SpecialLayerRef { layer: "minecraft:conduit#shell", texture: "entity/conduit/base", tint: None },
+        SpecialLayerRef { layer: "minecraft:conduit#cage", texture: "entity/conduit/cage", tint: None },
+        SpecialLayerRef { layer: "minecraft:conduit#eye", texture: "entity/conduit/closed_eye", tint: None },
+    ],
+    transform: Some(([0.5, 0.5, 0.5], [0.0, 0.0, 0.0, 1.0], [1.0, 1.0, 1.0], [0.0, 0.0, 0.0, 1.0])),
+};
+static SPECIAL_COPPER_CHEST: SpecialItemDef = SpecialItemDef {
+    base: "minecraft:item/copper_chest",
+    layers: &[
+        SpecialLayerRef { layer: "minecraft:chest#main", texture: "entity/chest/copper", tint: None },
+    ],
+    transform: None,
+};
+static SPECIAL_COPPER_GOLEM_STATUE: SpecialItemDef = SpecialItemDef {
+    base: "minecraft:item/template_copper_golem_statue",
+    layers: &[
+        SpecialLayerRef { layer: "minecraft:copper_golem#main", texture: "entity/copper_golem/copper_golem", tint: None },
+    ],
+    transform: Some(([0.5, 1.5, 0.5], [0.0, 0.0, 0.0, 1.0], [1.0, -1.0, -1.0], [0.0, 0.0, 0.0, 1.0])),
+};
+static SPECIAL_CREEPER_HEAD: SpecialItemDef = SpecialItemDef {
+    base: "minecraft:item/template_skull",
+    layers: &[
+        SpecialLayerRef { layer: "minecraft:creeper_head#main", texture: "entity/creeper/creeper", tint: None },
+    ],
+    transform: Some(([0.5, 0.0, 0.5], [1.0, 0.0, 0.0, -0.0], [1.0, 1.0, 1.0], [0.0, 0.0, 0.0, 1.0])),
+};
+static SPECIAL_CYAN_BANNER: SpecialItemDef = SpecialItemDef {
+    base: "minecraft:item/template_banner",
+    layers: &[
+        SpecialLayerRef { layer: "minecraft:standing_banner#main", texture: "entity/banner/base", tint: None },
+        SpecialLayerRef { layer: "minecraft:standing_banner#flag", texture: "entity/banner/banner_base", tint: Some("cyan") },
+    ],
+    transform: Some(([0.5, 0.0, 0.5], [0.0, -0.0, 0.0, 1.0], [0.6666667, -0.6666667, -0.6666667], [0.0, 0.0, 0.0, 1.0])),
+};
+static SPECIAL_CYAN_SHULKER_BOX: SpecialItemDef = SpecialItemDef {
+    base: "minecraft:item/cyan_shulker_box",
+    layers: &[
+        SpecialLayerRef { layer: "minecraft:shulker_box#main", texture: "entity/shulker/shulker_cyan", tint: None },
+    ],
+    transform: Some(([0.5, 1.4995, 0.5], [1.0, 0.0, 0.0, 0.0], [0.9995, 0.9995, 0.9995], [-0.0, -0.0, -0.0, 1.0])),
+};
+static SPECIAL_DECORATED_POT: SpecialItemDef = SpecialItemDef {
+    base: "minecraft:item/decorated_pot",
+    layers: &[
+        SpecialLayerRef { layer: "minecraft:decorated_pot_base#main", texture: "entity/decorated_pot/decorated_pot_base", tint: None },
+        SpecialLayerRef { layer: "minecraft:decorated_pot_sides#main", texture: "entity/decorated_pot/decorated_pot_side", tint: None },
+    ],
+    transform: None,
+};
+static SPECIAL_DRAGON_HEAD: SpecialItemDef = SpecialItemDef {
+    base: "minecraft:item/dragon_head",
+    layers: &[
+        SpecialLayerRef { layer: "minecraft:dragon_skull#main", texture: "entity/enderdragon/dragon", tint: None },
+    ],
+    transform: Some(([0.5, 0.0, 0.5], [1.0, 0.0, 0.0, -0.0], [1.0, 1.0, 1.0], [0.0, 0.0, 0.0, 1.0])),
+};
+static SPECIAL_ENDER_CHEST: SpecialItemDef = SpecialItemDef {
+    base: "minecraft:item/ender_chest",
+    layers: &[
+        SpecialLayerRef { layer: "minecraft:chest#main", texture: "entity/chest/ender", tint: None },
+    ],
+    transform: None,
+};
+static SPECIAL_EXPOSED_COPPER_CHEST: SpecialItemDef = SpecialItemDef {
+    base: "minecraft:item/exposed_copper_chest",
+    layers: &[
+        SpecialLayerRef { layer: "minecraft:chest#main", texture: "entity/chest/copper_exposed", tint: None },
+    ],
+    transform: None,
+};
+static SPECIAL_EXPOSED_COPPER_GOLEM_STATUE: SpecialItemDef = SpecialItemDef {
+    base: "minecraft:item/template_copper_golem_statue",
+    layers: &[
+        SpecialLayerRef { layer: "minecraft:copper_golem#main", texture: "entity/copper_golem/copper_golem_exposed", tint: None },
+    ],
+    transform: Some(([0.5, 1.5, 0.5], [0.0, 0.0, 0.0, 1.0], [1.0, -1.0, -1.0], [0.0, 0.0, 0.0, 1.0])),
+};
+static SPECIAL_GRAY_BANNER: SpecialItemDef = SpecialItemDef {
+    base: "minecraft:item/template_banner",
+    layers: &[
+        SpecialLayerRef { layer: "minecraft:standing_banner#main", texture: "entity/banner/base", tint: None },
+        SpecialLayerRef { layer: "minecraft:standing_banner#flag", texture: "entity/banner/banner_base", tint: Some("gray") },
+    ],
+    transform: Some(([0.5, 0.0, 0.5], [0.0, -0.0, 0.0, 1.0], [0.6666667, -0.6666667, -0.6666667], [0.0, 0.0, 0.0, 1.0])),
+};
+static SPECIAL_GRAY_SHULKER_BOX: SpecialItemDef = SpecialItemDef {
+    base: "minecraft:item/gray_shulker_box",
+    layers: &[
+        SpecialLayerRef { layer: "minecraft:shulker_box#main", texture: "entity/shulker/shulker_gray", tint: None },
+    ],
+    transform: Some(([0.5, 1.4995, 0.5], [1.0, 0.0, 0.0, 0.0], [0.9995, 0.9995, 0.9995], [-0.0, -0.0, -0.0, 1.0])),
+};
+static SPECIAL_GREEN_BANNER: SpecialItemDef = SpecialItemDef {
+    base: "minecraft:item/template_banner",
+    layers: &[
+        SpecialLayerRef { layer: "minecraft:standing_banner#main", texture: "entity/banner/base", tint: None },
+        SpecialLayerRef { layer: "minecraft:standing_banner#flag", texture: "entity/banner/banner_base", tint: Some("green") },
+    ],
+    transform: Some(([0.5, 0.0, 0.5], [0.0, -0.0, 0.0, 1.0], [0.6666667, -0.6666667, -0.6666667], [0.0, 0.0, 0.0, 1.0])),
+};
+static SPECIAL_GREEN_SHULKER_BOX: SpecialItemDef = SpecialItemDef {
+    base: "minecraft:item/green_shulker_box",
+    layers: &[
+        SpecialLayerRef { layer: "minecraft:shulker_box#main", texture: "entity/shulker/shulker_green", tint: None },
+    ],
+    transform: Some(([0.5, 1.4995, 0.5], [1.0, 0.0, 0.0, 0.0], [0.9995, 0.9995, 0.9995], [-0.0, -0.0, -0.0, 1.0])),
+};
+static SPECIAL_LIGHT_BLUE_BANNER: SpecialItemDef = SpecialItemDef {
+    base: "minecraft:item/template_banner",
+    layers: &[
+        SpecialLayerRef { layer: "minecraft:standing_banner#main", texture: "entity/banner/base", tint: None },
+        SpecialLayerRef { layer: "minecraft:standing_banner#flag", texture: "entity/banner/banner_base", tint: Some("light_blue") },
+    ],
+    transform: Some(([0.5, 0.0, 0.5], [0.0, -0.0, 0.0, 1.0], [0.6666667, -0.6666667, -0.6666667], [0.0, 0.0, 0.0, 1.0])),
+};
+static SPECIAL_LIGHT_BLUE_SHULKER_BOX: SpecialItemDef = SpecialItemDef {
+    base: "minecraft:item/light_blue_shulker_box",
+    layers: &[
+        SpecialLayerRef { layer: "minecraft:shulker_box#main", texture: "entity/shulker/shulker_light_blue", tint: None },
+    ],
+    transform: Some(([0.5, 1.4995, 0.5], [1.0, 0.0, 0.0, 0.0], [0.9995, 0.9995, 0.9995], [-0.0, -0.0, -0.0, 1.0])),
+};
+static SPECIAL_LIGHT_GRAY_BANNER: SpecialItemDef = SpecialItemDef {
+    base: "minecraft:item/template_banner",
+    layers: &[
+        SpecialLayerRef { layer: "minecraft:standing_banner#main", texture: "entity/banner/base", tint: None },
+        SpecialLayerRef { layer: "minecraft:standing_banner#flag", texture: "entity/banner/banner_base", tint: Some("light_gray") },
+    ],
+    transform: Some(([0.5, 0.0, 0.5], [0.0, -0.0, 0.0, 1.0], [0.6666667, -0.6666667, -0.6666667], [0.0, 0.0, 0.0, 1.0])),
+};
+static SPECIAL_LIGHT_GRAY_SHULKER_BOX: SpecialItemDef = SpecialItemDef {
+    base: "minecraft:item/light_gray_shulker_box",
+    layers: &[
+        SpecialLayerRef { layer: "minecraft:shulker_box#main", texture: "entity/shulker/shulker_light_gray", tint: None },
+    ],
+    transform: Some(([0.5, 1.4995, 0.5], [1.0, 0.0, 0.0, 0.0], [0.9995, 0.9995, 0.9995], [-0.0, -0.0, -0.0, 1.0])),
+};
+static SPECIAL_LIME_BANNER: SpecialItemDef = SpecialItemDef {
+    base: "minecraft:item/template_banner",
+    layers: &[
+        SpecialLayerRef { layer: "minecraft:standing_banner#main", texture: "entity/banner/base", tint: None },
+        SpecialLayerRef { layer: "minecraft:standing_banner#flag", texture: "entity/banner/banner_base", tint: Some("lime") },
+    ],
+    transform: Some(([0.5, 0.0, 0.5], [0.0, -0.0, 0.0, 1.0], [0.6666667, -0.6666667, -0.6666667], [0.0, 0.0, 0.0, 1.0])),
+};
+static SPECIAL_LIME_SHULKER_BOX: SpecialItemDef = SpecialItemDef {
+    base: "minecraft:item/lime_shulker_box",
+    layers: &[
+        SpecialLayerRef { layer: "minecraft:shulker_box#main", texture: "entity/shulker/shulker_lime", tint: None },
+    ],
+    transform: Some(([0.5, 1.4995, 0.5], [1.0, 0.0, 0.0, 0.0], [0.9995, 0.9995, 0.9995], [-0.0, -0.0, -0.0, 1.0])),
+};
+static SPECIAL_MAGENTA_BANNER: SpecialItemDef = SpecialItemDef {
+    base: "minecraft:item/template_banner",
+    layers: &[
+        SpecialLayerRef { layer: "minecraft:standing_banner#main", texture: "entity/banner/base", tint: None },
+        SpecialLayerRef { layer: "minecraft:standing_banner#flag", texture: "entity/banner/banner_base", tint: Some("magenta") },
+    ],
+    transform: Some(([0.5, 0.0, 0.5], [0.0, -0.0, 0.0, 1.0], [0.6666667, -0.6666667, -0.6666667], [0.0, 0.0, 0.0, 1.0])),
+};
+static SPECIAL_MAGENTA_SHULKER_BOX: SpecialItemDef = SpecialItemDef {
+    base: "minecraft:item/magenta_shulker_box",
+    layers: &[
+        SpecialLayerRef { layer: "minecraft:shulker_box#main", texture: "entity/shulker/shulker_magenta", tint: None },
+    ],
+    transform: Some(([0.5, 1.4995, 0.5], [1.0, 0.0, 0.0, 0.0], [0.9995, 0.9995, 0.9995], [-0.0, -0.0, -0.0, 1.0])),
+};
+static SPECIAL_ORANGE_BANNER: SpecialItemDef = SpecialItemDef {
+    base: "minecraft:item/template_banner",
+    layers: &[
+        SpecialLayerRef { layer: "minecraft:standing_banner#main", texture: "entity/banner/base", tint: None },
+        SpecialLayerRef { layer: "minecraft:standing_banner#flag", texture: "entity/banner/banner_base", tint: Some("orange") },
+    ],
+    transform: Some(([0.5, 0.0, 0.5], [0.0, -0.0, 0.0, 1.0], [0.6666667, -0.6666667, -0.6666667], [0.0, 0.0, 0.0, 1.0])),
+};
+static SPECIAL_ORANGE_SHULKER_BOX: SpecialItemDef = SpecialItemDef {
+    base: "minecraft:item/orange_shulker_box",
+    layers: &[
+        SpecialLayerRef { layer: "minecraft:shulker_box#main", texture: "entity/shulker/shulker_orange", tint: None },
+    ],
+    transform: Some(([0.5, 1.4995, 0.5], [1.0, 0.0, 0.0, 0.0], [0.9995, 0.9995, 0.9995], [-0.0, -0.0, -0.0, 1.0])),
+};
+static SPECIAL_OXIDIZED_COPPER_CHEST: SpecialItemDef = SpecialItemDef {
+    base: "minecraft:item/oxidized_copper_chest",
+    layers: &[
+        SpecialLayerRef { layer: "minecraft:chest#main", texture: "entity/chest/copper_oxidized", tint: None },
+    ],
+    transform: None,
+};
+static SPECIAL_OXIDIZED_COPPER_GOLEM_STATUE: SpecialItemDef = SpecialItemDef {
+    base: "minecraft:item/template_copper_golem_statue",
+    layers: &[
+        SpecialLayerRef { layer: "minecraft:copper_golem#main", texture: "entity/copper_golem/copper_golem_oxidized", tint: None },
+    ],
+    transform: Some(([0.5, 1.5, 0.5], [0.0, 0.0, 0.0, 1.0], [1.0, -1.0, -1.0], [0.0, 0.0, 0.0, 1.0])),
+};
+static SPECIAL_PIGLIN_HEAD: SpecialItemDef = SpecialItemDef {
+    base: "minecraft:item/template_skull",
+    layers: &[
+        SpecialLayerRef { layer: "minecraft:piglin_head#main", texture: "entity/piglin/piglin", tint: None },
+    ],
+    transform: Some(([0.5, 0.0, 0.5], [1.0, 0.0, 0.0, -0.0], [1.0, 1.0, 1.0], [0.0, 0.0, 0.0, 1.0])),
+};
+static SPECIAL_PINK_BANNER: SpecialItemDef = SpecialItemDef {
+    base: "minecraft:item/template_banner",
+    layers: &[
+        SpecialLayerRef { layer: "minecraft:standing_banner#main", texture: "entity/banner/base", tint: None },
+        SpecialLayerRef { layer: "minecraft:standing_banner#flag", texture: "entity/banner/banner_base", tint: Some("pink") },
+    ],
+    transform: Some(([0.5, 0.0, 0.5], [0.0, -0.0, 0.0, 1.0], [0.6666667, -0.6666667, -0.6666667], [0.0, 0.0, 0.0, 1.0])),
+};
+static SPECIAL_PINK_SHULKER_BOX: SpecialItemDef = SpecialItemDef {
+    base: "minecraft:item/pink_shulker_box",
+    layers: &[
+        SpecialLayerRef { layer: "minecraft:shulker_box#main", texture: "entity/shulker/shulker_pink", tint: None },
+    ],
+    transform: Some(([0.5, 1.4995, 0.5], [1.0, 0.0, 0.0, 0.0], [0.9995, 0.9995, 0.9995], [-0.0, -0.0, -0.0, 1.0])),
+};
+static SPECIAL_PLAYER_HEAD: SpecialItemDef = SpecialItemDef {
+    base: "minecraft:item/template_skull",
+    layers: &[
+        SpecialLayerRef { layer: "minecraft:player_head#main", texture: "entity/player/slim/steve", tint: None },
+    ],
+    transform: Some(([0.5, 0.0, 0.5], [1.0, 0.0, 0.0, -0.0], [1.0, 1.0, 1.0], [0.0, 0.0, 0.0, 1.0])),
+};
+static SPECIAL_PURPLE_BANNER: SpecialItemDef = SpecialItemDef {
+    base: "minecraft:item/template_banner",
+    layers: &[
+        SpecialLayerRef { layer: "minecraft:standing_banner#main", texture: "entity/banner/base", tint: None },
+        SpecialLayerRef { layer: "minecraft:standing_banner#flag", texture: "entity/banner/banner_base", tint: Some("purple") },
+    ],
+    transform: Some(([0.5, 0.0, 0.5], [0.0, -0.0, 0.0, 1.0], [0.6666667, -0.6666667, -0.6666667], [0.0, 0.0, 0.0, 1.0])),
+};
+static SPECIAL_PURPLE_SHULKER_BOX: SpecialItemDef = SpecialItemDef {
+    base: "minecraft:item/purple_shulker_box",
+    layers: &[
+        SpecialLayerRef { layer: "minecraft:shulker_box#main", texture: "entity/shulker/shulker_purple", tint: None },
+    ],
+    transform: Some(([0.5, 1.4995, 0.5], [1.0, 0.0, 0.0, 0.0], [0.9995, 0.9995, 0.9995], [-0.0, -0.0, -0.0, 1.0])),
+};
+static SPECIAL_RED_BANNER: SpecialItemDef = SpecialItemDef {
+    base: "minecraft:item/template_banner",
+    layers: &[
+        SpecialLayerRef { layer: "minecraft:standing_banner#main", texture: "entity/banner/base", tint: None },
+        SpecialLayerRef { layer: "minecraft:standing_banner#flag", texture: "entity/banner/banner_base", tint: Some("red") },
+    ],
+    transform: Some(([0.5, 0.0, 0.5], [0.0, -0.0, 0.0, 1.0], [0.6666667, -0.6666667, -0.6666667], [0.0, 0.0, 0.0, 1.0])),
+};
+static SPECIAL_RED_SHULKER_BOX: SpecialItemDef = SpecialItemDef {
+    base: "minecraft:item/red_shulker_box",
+    layers: &[
+        SpecialLayerRef { layer: "minecraft:shulker_box#main", texture: "entity/shulker/shulker_red", tint: None },
+    ],
+    transform: Some(([0.5, 1.4995, 0.5], [1.0, 0.0, 0.0, 0.0], [0.9995, 0.9995, 0.9995], [-0.0, -0.0, -0.0, 1.0])),
+};
+static SPECIAL_SHIELD: SpecialItemDef = SpecialItemDef {
+    base: "minecraft:item/shield",
+    layers: &[
+        SpecialLayerRef { layer: "minecraft:shield#main", texture: "entity/shield/shield_base_nopattern", tint: None },
+    ],
+    transform: Some(([0.0, 0.0, 0.0], [0.0, 0.0, 0.0, 1.0], [1.0, -1.0, -1.0], [0.0, 0.0, 0.0, 1.0])),
+};
+static SPECIAL_SHULKER_BOX: SpecialItemDef = SpecialItemDef {
+    base: "minecraft:item/shulker_box",
+    layers: &[
+        SpecialLayerRef { layer: "minecraft:shulker_box#main", texture: "entity/shulker/shulker", tint: None },
+    ],
+    transform: Some(([0.5, 1.4995, 0.5], [1.0, 0.0, 0.0, 0.0], [0.9995, 0.9995, 0.9995], [-0.0, -0.0, -0.0, 1.0])),
+};
+static SPECIAL_SKELETON_SKULL: SpecialItemDef = SpecialItemDef {
+    base: "minecraft:item/template_skull",
+    layers: &[
+        SpecialLayerRef { layer: "minecraft:skeleton_skull#main", texture: "entity/skeleton/skeleton", tint: None },
+    ],
+    transform: Some(([0.5, 0.0, 0.5], [1.0, 0.0, 0.0, -0.0], [1.0, 1.0, 1.0], [0.0, 0.0, 0.0, 1.0])),
+};
+static SPECIAL_TRAPPED_CHEST: SpecialItemDef = SpecialItemDef {
+    base: "minecraft:item/trapped_chest",
+    layers: &[
+        SpecialLayerRef { layer: "minecraft:chest#main", texture: "entity/chest/trapped", tint: None },
+    ],
+    transform: None,
+};
+static SPECIAL_TRIDENT: SpecialItemDef = SpecialItemDef {
+    base: "minecraft:item/trident_in_hand",
+    layers: &[
+        SpecialLayerRef { layer: "minecraft:trident#main", texture: "entity/trident/trident", tint: None },
+    ],
+    transform: Some(([0.0, 0.0, 0.0], [0.0, 0.0, 0.0, 1.0], [1.0, -1.0, -1.0], [0.0, 0.0, 0.0, 1.0])),
+};
+static SPECIAL_WAXED_COPPER_CHEST: SpecialItemDef = SpecialItemDef {
+    base: "minecraft:item/copper_chest",
+    layers: &[
+        SpecialLayerRef { layer: "minecraft:chest#main", texture: "entity/chest/copper", tint: None },
+    ],
+    transform: None,
+};
+static SPECIAL_WAXED_COPPER_GOLEM_STATUE: SpecialItemDef = SpecialItemDef {
+    base: "minecraft:item/template_copper_golem_statue",
+    layers: &[
+        SpecialLayerRef { layer: "minecraft:copper_golem#main", texture: "entity/copper_golem/copper_golem", tint: None },
+    ],
+    transform: Some(([0.5, 1.5, 0.5], [0.0, 0.0, 0.0, 1.0], [1.0, -1.0, -1.0], [0.0, 0.0, 0.0, 1.0])),
+};
+static SPECIAL_WAXED_EXPOSED_COPPER_CHEST: SpecialItemDef = SpecialItemDef {
+    base: "minecraft:item/exposed_copper_chest",
+    layers: &[
+        SpecialLayerRef { layer: "minecraft:chest#main", texture: "entity/chest/copper_exposed", tint: None },
+    ],
+    transform: None,
+};
+static SPECIAL_WAXED_EXPOSED_COPPER_GOLEM_STATUE: SpecialItemDef = SpecialItemDef {
+    base: "minecraft:item/template_copper_golem_statue",
+    layers: &[
+        SpecialLayerRef { layer: "minecraft:copper_golem#main", texture: "entity/copper_golem/copper_golem_exposed", tint: None },
+    ],
+    transform: Some(([0.5, 1.5, 0.5], [0.0, 0.0, 0.0, 1.0], [1.0, -1.0, -1.0], [0.0, 0.0, 0.0, 1.0])),
+};
+static SPECIAL_WAXED_OXIDIZED_COPPER_CHEST: SpecialItemDef = SpecialItemDef {
+    base: "minecraft:item/oxidized_copper_chest",
+    layers: &[
+        SpecialLayerRef { layer: "minecraft:chest#main", texture: "entity/chest/copper_oxidized", tint: None },
+    ],
+    transform: None,
+};
+static SPECIAL_WAXED_OXIDIZED_COPPER_GOLEM_STATUE: SpecialItemDef = SpecialItemDef {
+    base: "minecraft:item/template_copper_golem_statue",
+    layers: &[
+        SpecialLayerRef { layer: "minecraft:copper_golem#main", texture: "entity/copper_golem/copper_golem_oxidized", tint: None },
+    ],
+    transform: Some(([0.5, 1.5, 0.5], [0.0, 0.0, 0.0, 1.0], [1.0, -1.0, -1.0], [0.0, 0.0, 0.0, 1.0])),
+};
+static SPECIAL_WAXED_WEATHERED_COPPER_CHEST: SpecialItemDef = SpecialItemDef {
+    base: "minecraft:item/weathered_copper_chest",
+    layers: &[
+        SpecialLayerRef { layer: "minecraft:chest#main", texture: "entity/chest/copper_weathered", tint: None },
+    ],
+    transform: None,
+};
+static SPECIAL_WAXED_WEATHERED_COPPER_GOLEM_STATUE: SpecialItemDef = SpecialItemDef {
+    base: "minecraft:item/template_copper_golem_statue",
+    layers: &[
+        SpecialLayerRef { layer: "minecraft:copper_golem#main", texture: "entity/copper_golem/copper_golem_weathered", tint: None },
+    ],
+    transform: Some(([0.5, 1.5, 0.5], [0.0, 0.0, 0.0, 1.0], [1.0, -1.0, -1.0], [0.0, 0.0, 0.0, 1.0])),
+};
+static SPECIAL_WEATHERED_COPPER_CHEST: SpecialItemDef = SpecialItemDef {
+    base: "minecraft:item/weathered_copper_chest",
+    layers: &[
+        SpecialLayerRef { layer: "minecraft:chest#main", texture: "entity/chest/copper_weathered", tint: None },
+    ],
+    transform: None,
+};
+static SPECIAL_WEATHERED_COPPER_GOLEM_STATUE: SpecialItemDef = SpecialItemDef {
+    base: "minecraft:item/template_copper_golem_statue",
+    layers: &[
+        SpecialLayerRef { layer: "minecraft:copper_golem#main", texture: "entity/copper_golem/copper_golem_weathered", tint: None },
+    ],
+    transform: Some(([0.5, 1.5, 0.5], [0.0, 0.0, 0.0, 1.0], [1.0, -1.0, -1.0], [0.0, 0.0, 0.0, 1.0])),
+};
+static SPECIAL_WHITE_BANNER: SpecialItemDef = SpecialItemDef {
+    base: "minecraft:item/template_banner",
+    layers: &[
+        SpecialLayerRef { layer: "minecraft:standing_banner#main", texture: "entity/banner/base", tint: None },
+        SpecialLayerRef { layer: "minecraft:standing_banner#flag", texture: "entity/banner/banner_base", tint: Some("white") },
+    ],
+    transform: Some(([0.5, 0.0, 0.5], [0.0, -0.0, 0.0, 1.0], [0.6666667, -0.6666667, -0.6666667], [0.0, 0.0, 0.0, 1.0])),
+};
+static SPECIAL_WHITE_SHULKER_BOX: SpecialItemDef = SpecialItemDef {
+    base: "minecraft:item/white_shulker_box",
+    layers: &[
+        SpecialLayerRef { layer: "minecraft:shulker_box#main", texture: "entity/shulker/shulker_white", tint: None },
+    ],
+    transform: Some(([0.5, 1.4995, 0.5], [1.0, 0.0, 0.0, 0.0], [0.9995, 0.9995, 0.9995], [-0.0, -0.0, -0.0, 1.0])),
+};
+static SPECIAL_WITHER_SKELETON_SKULL: SpecialItemDef = SpecialItemDef {
+    base: "minecraft:item/template_skull",
+    layers: &[
+        SpecialLayerRef { layer: "minecraft:wither_skeleton_skull#main", texture: "entity/skeleton/wither_skeleton", tint: None },
+    ],
+    transform: Some(([0.5, 0.0, 0.5], [1.0, 0.0, 0.0, -0.0], [1.0, 1.0, 1.0], [0.0, 0.0, 0.0, 1.0])),
+};
+static SPECIAL_YELLOW_BANNER: SpecialItemDef = SpecialItemDef {
+    base: "minecraft:item/template_banner",
+    layers: &[
+        SpecialLayerRef { layer: "minecraft:standing_banner#main", texture: "entity/banner/base", tint: None },
+        SpecialLayerRef { layer: "minecraft:standing_banner#flag", texture: "entity/banner/banner_base", tint: Some("yellow") },
+    ],
+    transform: Some(([0.5, 0.0, 0.5], [0.0, -0.0, 0.0, 1.0], [0.6666667, -0.6666667, -0.6666667], [0.0, 0.0, 0.0, 1.0])),
+};
+static SPECIAL_YELLOW_SHULKER_BOX: SpecialItemDef = SpecialItemDef {
+    base: "minecraft:item/yellow_shulker_box",
+    layers: &[
+        SpecialLayerRef { layer: "minecraft:shulker_box#main", texture: "entity/shulker/shulker_yellow", tint: None },
+    ],
+    transform: Some(([0.5, 1.4995, 0.5], [1.0, 0.0, 0.0, 0.0], [0.9995, 0.9995, 0.9995], [-0.0, -0.0, -0.0, 1.0])),
+};
+static SPECIAL_ZOMBIE_HEAD: SpecialItemDef = SpecialItemDef {
+    base: "minecraft:item/template_skull",
+    layers: &[
+        SpecialLayerRef { layer: "minecraft:zombie_head#main", texture: "entity/zombie/zombie", tint: None },
+    ],
+    transform: Some(([0.5, 0.0, 0.5], [1.0, 0.0, 0.0, -0.0], [1.0, 1.0, 1.0], [0.0, 0.0, 0.0, 1.0])),
+};
+pub static ITEM_SPECIAL_MODELS: &[(&str, &SpecialItemDef); 63] = &[
+    ("black_banner", &SPECIAL_BLACK_BANNER),
+    ("black_shulker_box", &SPECIAL_BLACK_SHULKER_BOX),
+    ("blue_banner", &SPECIAL_BLUE_BANNER),
+    ("blue_shulker_box", &SPECIAL_BLUE_SHULKER_BOX),
+    ("brown_banner", &SPECIAL_BROWN_BANNER),
+    ("brown_shulker_box", &SPECIAL_BROWN_SHULKER_BOX),
+    ("chest", &SPECIAL_CHEST),
+    ("conduit", &SPECIAL_CONDUIT),
+    ("copper_chest", &SPECIAL_COPPER_CHEST),
+    ("copper_golem_statue", &SPECIAL_COPPER_GOLEM_STATUE),
+    ("creeper_head", &SPECIAL_CREEPER_HEAD),
+    ("cyan_banner", &SPECIAL_CYAN_BANNER),
+    ("cyan_shulker_box", &SPECIAL_CYAN_SHULKER_BOX),
+    ("decorated_pot", &SPECIAL_DECORATED_POT),
+    ("dragon_head", &SPECIAL_DRAGON_HEAD),
+    ("ender_chest", &SPECIAL_ENDER_CHEST),
+    ("exposed_copper_chest", &SPECIAL_EXPOSED_COPPER_CHEST),
+    ("exposed_copper_golem_statue", &SPECIAL_EXPOSED_COPPER_GOLEM_STATUE),
+    ("gray_banner", &SPECIAL_GRAY_BANNER),
+    ("gray_shulker_box", &SPECIAL_GRAY_SHULKER_BOX),
+    ("green_banner", &SPECIAL_GREEN_BANNER),
+    ("green_shulker_box", &SPECIAL_GREEN_SHULKER_BOX),
+    ("light_blue_banner", &SPECIAL_LIGHT_BLUE_BANNER),
+    ("light_blue_shulker_box", &SPECIAL_LIGHT_BLUE_SHULKER_BOX),
+    ("light_gray_banner", &SPECIAL_LIGHT_GRAY_BANNER),
+    ("light_gray_shulker_box", &SPECIAL_LIGHT_GRAY_SHULKER_BOX),
+    ("lime_banner", &SPECIAL_LIME_BANNER),
+    ("lime_shulker_box", &SPECIAL_LIME_SHULKER_BOX),
+    ("magenta_banner", &SPECIAL_MAGENTA_BANNER),
+    ("magenta_shulker_box", &SPECIAL_MAGENTA_SHULKER_BOX),
+    ("orange_banner", &SPECIAL_ORANGE_BANNER),
+    ("orange_shulker_box", &SPECIAL_ORANGE_SHULKER_BOX),
+    ("oxidized_copper_chest", &SPECIAL_OXIDIZED_COPPER_CHEST),
+    ("oxidized_copper_golem_statue", &SPECIAL_OXIDIZED_COPPER_GOLEM_STATUE),
+    ("piglin_head", &SPECIAL_PIGLIN_HEAD),
+    ("pink_banner", &SPECIAL_PINK_BANNER),
+    ("pink_shulker_box", &SPECIAL_PINK_SHULKER_BOX),
+    ("player_head", &SPECIAL_PLAYER_HEAD),
+    ("purple_banner", &SPECIAL_PURPLE_BANNER),
+    ("purple_shulker_box", &SPECIAL_PURPLE_SHULKER_BOX),
+    ("red_banner", &SPECIAL_RED_BANNER),
+    ("red_shulker_box", &SPECIAL_RED_SHULKER_BOX),
+    ("shield", &SPECIAL_SHIELD),
+    ("shulker_box", &SPECIAL_SHULKER_BOX),
+    ("skeleton_skull", &SPECIAL_SKELETON_SKULL),
+    ("trapped_chest", &SPECIAL_TRAPPED_CHEST),
+    ("trident", &SPECIAL_TRIDENT),
+    ("waxed_copper_chest", &SPECIAL_WAXED_COPPER_CHEST),
+    ("waxed_copper_golem_statue", &SPECIAL_WAXED_COPPER_GOLEM_STATUE),
+    ("waxed_exposed_copper_chest", &SPECIAL_WAXED_EXPOSED_COPPER_CHEST),
+    ("waxed_exposed_copper_golem_statue", &SPECIAL_WAXED_EXPOSED_COPPER_GOLEM_STATUE),
+    ("waxed_oxidized_copper_chest", &SPECIAL_WAXED_OXIDIZED_COPPER_CHEST),
+    ("waxed_oxidized_copper_golem_statue", &SPECIAL_WAXED_OXIDIZED_COPPER_GOLEM_STATUE),
+    ("waxed_weathered_copper_chest", &SPECIAL_WAXED_WEATHERED_COPPER_CHEST),
+    ("waxed_weathered_copper_golem_statue", &SPECIAL_WAXED_WEATHERED_COPPER_GOLEM_STATUE),
+    ("weathered_copper_chest", &SPECIAL_WEATHERED_COPPER_CHEST),
+    ("weathered_copper_golem_statue", &SPECIAL_WEATHERED_COPPER_GOLEM_STATUE),
+    ("white_banner", &SPECIAL_WHITE_BANNER),
+    ("white_shulker_box", &SPECIAL_WHITE_SHULKER_BOX),
+    ("wither_skeleton_skull", &SPECIAL_WITHER_SKELETON_SKULL),
+    ("yellow_banner", &SPECIAL_YELLOW_BANNER),
+    ("yellow_shulker_box", &SPECIAL_YELLOW_SHULKER_BOX),
+    ("zombie_head", &SPECIAL_ZOMBIE_HEAD),
+];
+
+/// Items whose definition tree cannot resolve to resting-hand layers
+/// or special renderers — (item id, the refusal reason): the
+/// runtime-gated properties (local_time, compass, context_dimension,
+/// use_cycle) stay honestly unresolved.
 pub static COMPLEX_ITEM_MODELS: &[(&str, &str)] = &[
-    ("black_banner", "special:minecraft:banner — the block-entity renderer"),
-    ("black_shulker_box", "special:minecraft:shulker_box — the block-entity renderer"),
-    ("blue_banner", "special:minecraft:banner — the block-entity renderer"),
-    ("blue_shulker_box", "special:minecraft:shulker_box — the block-entity renderer"),
-    ("brown_banner", "special:minecraft:banner — the block-entity renderer"),
-    ("brown_shulker_box", "special:minecraft:shulker_box — the block-entity renderer"),
-    ("chest", "special:minecraft:chest — the block-entity renderer"),
-    ("conduit", "special:minecraft:conduit — the block-entity renderer"),
-    ("copper_chest", "special:minecraft:chest — the block-entity renderer"),
-    ("copper_golem_statue", "special:minecraft:copper_golem_statue — the block-entity renderer"),
-    ("creeper_head", "special:minecraft:head — the block-entity renderer"),
-    ("cyan_banner", "special:minecraft:banner — the block-entity renderer"),
-    ("cyan_shulker_box", "special:minecraft:shulker_box — the block-entity renderer"),
-    ("decorated_pot", "special:minecraft:decorated_pot — the block-entity renderer"),
-    ("dragon_head", "special:minecraft:head — the block-entity renderer"),
-    ("ender_chest", "special:minecraft:chest — the block-entity renderer"),
-    ("exposed_copper_chest", "special:minecraft:chest — the block-entity renderer"),
-    ("exposed_copper_golem_statue", "special:minecraft:copper_golem_statue — the block-entity renderer"),
-    ("gray_banner", "special:minecraft:banner — the block-entity renderer"),
-    ("gray_shulker_box", "special:minecraft:shulker_box — the block-entity renderer"),
-    ("green_banner", "special:minecraft:banner — the block-entity renderer"),
-    ("green_shulker_box", "special:minecraft:shulker_box — the block-entity renderer"),
-    ("light_blue_banner", "special:minecraft:banner — the block-entity renderer"),
-    ("light_blue_shulker_box", "special:minecraft:shulker_box — the block-entity renderer"),
-    ("light_gray_banner", "special:minecraft:banner — the block-entity renderer"),
-    ("light_gray_shulker_box", "special:minecraft:shulker_box — the block-entity renderer"),
-    ("lime_banner", "special:minecraft:banner — the block-entity renderer"),
-    ("lime_shulker_box", "special:minecraft:shulker_box — the block-entity renderer"),
-    ("magenta_banner", "special:minecraft:banner — the block-entity renderer"),
-    ("magenta_shulker_box", "special:minecraft:shulker_box — the block-entity renderer"),
-    ("orange_banner", "special:minecraft:banner — the block-entity renderer"),
-    ("orange_shulker_box", "special:minecraft:shulker_box — the block-entity renderer"),
-    ("oxidized_copper_chest", "special:minecraft:chest — the block-entity renderer"),
-    ("oxidized_copper_golem_statue", "special:minecraft:copper_golem_statue — the block-entity renderer"),
-    ("piglin_head", "special:minecraft:head — the block-entity renderer"),
-    ("pink_banner", "special:minecraft:banner — the block-entity renderer"),
-    ("pink_shulker_box", "special:minecraft:shulker_box — the block-entity renderer"),
-    ("player_head", "special:minecraft:player_head — the block-entity renderer"),
-    ("purple_banner", "special:minecraft:banner — the block-entity renderer"),
-    ("purple_shulker_box", "special:minecraft:shulker_box — the block-entity renderer"),
-    ("red_banner", "special:minecraft:banner — the block-entity renderer"),
-    ("red_shulker_box", "special:minecraft:shulker_box — the block-entity renderer"),
-    ("shield", "special:minecraft:shield — the block-entity renderer"),
-    ("shulker_box", "special:minecraft:shulker_box — the block-entity renderer"),
-    ("skeleton_skull", "special:minecraft:head — the block-entity renderer"),
-    ("trapped_chest", "special:minecraft:chest — the block-entity renderer"),
-    ("trident", "special:minecraft:trident — the block-entity renderer"),
-    ("waxed_copper_chest", "special:minecraft:chest — the block-entity renderer"),
-    ("waxed_copper_golem_statue", "special:minecraft:copper_golem_statue — the block-entity renderer"),
-    ("waxed_exposed_copper_chest", "special:minecraft:chest — the block-entity renderer"),
-    ("waxed_exposed_copper_golem_statue", "special:minecraft:copper_golem_statue — the block-entity renderer"),
-    ("waxed_oxidized_copper_chest", "special:minecraft:chest — the block-entity renderer"),
-    ("waxed_oxidized_copper_golem_statue", "special:minecraft:copper_golem_statue — the block-entity renderer"),
-    ("waxed_weathered_copper_chest", "special:minecraft:chest — the block-entity renderer"),
-    ("waxed_weathered_copper_golem_statue", "special:minecraft:copper_golem_statue — the block-entity renderer"),
-    ("weathered_copper_chest", "special:minecraft:chest — the block-entity renderer"),
-    ("weathered_copper_golem_statue", "special:minecraft:copper_golem_statue — the block-entity renderer"),
-    ("white_banner", "special:minecraft:banner — the block-entity renderer"),
-    ("white_shulker_box", "special:minecraft:shulker_box — the block-entity renderer"),
-    ("wither_skeleton_skull", "special:minecraft:head — the block-entity renderer"),
-    ("yellow_banner", "special:minecraft:banner — the block-entity renderer"),
-    ("yellow_shulker_box", "special:minecraft:shulker_box — the block-entity renderer"),
-    ("zombie_head", "special:minecraft:head — the block-entity renderer"),
 ];
 
 /// The root-node type census (count descending) — the honest-skip record.

@@ -919,6 +919,43 @@ hand-drawn:
   (VILLAGER_DATA at 18 doubles as the order proof), the generated-id
   pin, and the model's merge semantics (replace-one-leave-others, the
   null-lookup drop, the re-spawn reset).
+  The **the special renderer payloads — the 63 block-entity items render in the hand (v0.3.141)**:
+  the item arc's last dead end closes. The previous round's resolver
+  already named every special renderer (the 63: shield, trident, the
+  eleven chests, the seventeen shulker boxes, the sixteen banners, the
+  seven heads, the conduit, the decorated pot, the eight golem
+  statues) — this round gave the names GEOMETRY and PIXELS. The
+  geometry is the running client's OWN LayerDefinitions, dumped by
+  reflection (DumpSpecialModels.java, checked in with its full
+  output): every part's pose/rotation/scale, every cube's RESOLVED
+  polygons with per-vertex normalized UVs, float-hex bit-exact —
+  emitted as the generated special_models.rs (23 layers, no decode law
+  ported, the client's own bake IS the data). The pixels are the 59
+  entity textures the renderer laws bind (43 raw + the banner flag's
+  16 PER-COLOR pre-tinted variants — the DyeColor
+  textureDiffuseColor multiply computed at generation with the
+  vanilla /255 law, since the special lane's raster carries no
+  vertex-color channel). The registry joins the three tables (the
+  itemgen payload law x the dump geometry x the texture namespace)
+  with the disjointness pinned: 1390 plain + 84 resolved + 63 special
+  = 1537 definitions, 0 refuses — the COMPLEX_ITEM_MODELS skip list
+  is EMPTY for the first time. The client routes the live held lane
+  through the payloads (special first, the lanes disjoint so the
+  order is routing, never shadowing): a real server's held shield
+  renders the plate + handle at the item/shield stanza, the trident
+  its pole and three spikes, the chests their lid-and-base at the
+  vanilla transforms, the banners their rod and tinted flag (16
+  colors, one texture), the skulls their skins, the conduit its
+  shell + cage + closed eye (the wind column is the powered state's,
+  never the item's), the golem statues their standing pose. The
+  emit's statics are fully inline (no const-index slicing — the
+  generated file compiles in one pass). Tests 516 -> 524: the
+  texture-supply census, the dye law against the dump's DYECOLOR
+  section, the payload joins never dangling, the disjoint lanes, the
+  dump-polygon bake pins (the plate's top face at the exact f32 UV
+  shift), the live-lane routing arc. THE GOLDEN MATRIX 13/13 — ALL
+  rms 0.000 (the static scenes never press keys, the held golden
+  rides the untouched plain lane).
   The **the resting-hand tree resolver — every complex definition resolves or refuses (v0.3.140)**:
   the skip list's 147 trees stop being a dead end — the generator now
   evaluates each one for the RESTING FIRST-PERSON HAND of a fresh,

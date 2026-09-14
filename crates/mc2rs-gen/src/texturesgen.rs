@@ -33,6 +33,7 @@ pub const MODELS_DIR: &str = "assets/minecraft/models/";
 /// The only two model directories the 26.2 jar ships (modelgen's census:
 /// 2657 block / 1271 item).
 pub const MODEL_PREFIXES: [&str; 2] = ["block/", "item/"];
+
 /// The jar directory the textures live at.
 pub const TEXTURES_DIR: &str = "assets/minecraft/textures/";
 
@@ -194,6 +195,46 @@ pub fn generate(archive: &mut ZipArchive<std::io::Cursor<&[u8]>>) -> Result<Text
         n_present += 1;
     }
 
+    // THE SPECIAL RENDERERS' entity textures — the dump-backed law's own
+    // additions over the models' domain (the specialgen census: the 63
+    // special items' renderer textures; the banner base rides ONCE as the
+    // tint source and 16 times as the pre-tinted DyeColor variants — the
+    // generation-time form of the vanilla vertex-color multiply, since
+    // the special lane's raster carries no vertex-color channel).
+    let mut specials: Vec<(String, Tile)> = Vec::new();
+    for (id, png_rel, tint) in crate::specialgen::special_texture_variants() {
+        if domain.contains(&id) {
+            bail!("special texture {id} collides with the models' domain");
+        }
+        let raw = read_entry_opt(archive, &format!("{TEXTURES_DIR}{png_rel}.png"))?
+            .with_context(|| format!("special texture {id}: textures/{png_rel}.png absent from the jar"))?;
+        let (w, h, mut rgba) = crate::atlas::decode_rgba(&raw)
+            .with_context(|| format!("special texture {id}: decode"))?;
+        if let Some(t) = tint {
+            apply_dye_tint(&mut rgba, t);
+        }
+        if w > u32::from(u16::MAX) {
+            bail!("texture {id}: width {w} overflows u16");
+        }
+        specials.push((id, Tile { width: w as u16, height: h as u16, rgba }));
+    }
+
+    // THE MERGE: one sorted id space (the generated TEXTURE_IDS doc +
+    // texture_index's binary_search both demand it) — the specials
+    // interleave into the models' domain, the texels rebuilt in the
+    // SAME order (the emitted offsets are positional).
+    let mut merged: Vec<(String, Tile)> = ids.into_iter().zip(tiles).collect();
+    merged.extend(specials);
+    merged.sort_by(|a, b| a.0.cmp(&b.0));
+    let mut texels = Vec::with_capacity(texels.len() + (1 << 18));
+    let mut ids = Vec::with_capacity(merged.len());
+    let mut tiles = Vec::with_capacity(merged.len());
+    for (id, t) in merged {
+        texels.extend_from_slice(&t.rgba);
+        ids.push(id);
+        tiles.push(t);
+    }
+
     Ok(TextureData {
         ids,
         tiles,
@@ -205,6 +246,24 @@ pub fn generate(archive: &mut ZipArchive<std::io::Cursor<&[u8]>>) -> Result<Text
         n_first_frame,
         n_mcmeta,
     })
+}
+
+/// The vanilla vertex-color multiply, generation-time: the texel's
+/// 0..1 channel times the DyeColor textureDiffuseColor's 0..1 channel
+/// (the 0xRRGGBB unpack — the same /255 law the client's tint.rs
+/// speaks), back to u8 with round-to-nearest (the f32 shader path's
+/// own store). Alpha untouched.
+fn apply_dye_tint(rgba: &mut [u8], tint: u32) {
+    let channels = [
+        ((tint >> 16) & 0xFF) as f32 / 255.0,
+        ((tint >> 8) & 0xFF) as f32 / 255.0,
+        (tint & 0xFF) as f32 / 255.0,
+    ];
+    for px in rgba.chunks_exact_mut(4) {
+        for c in 0..3 {
+            px[c] = ((px[c] as f32 / 255.0) * channels[c] * 255.0).round() as u8;
+        }
+    }
 }
 
 fn read_entry_opt(
@@ -241,7 +300,11 @@ pub fn emit(data: &TextureData, version: &str, client_sha1: &str) -> Result<Stri
          // The texture namespace the models table references: every concrete id in any\n\
          // model's textures map (incl. the 26.2 inline sprite dicts' \"sprite\" fields)\n\
          // decoded to RAW RGBA8 — NO tint baked (tintindex rides the quads; the\n\
-         // consumer multiplies at draw time). Animated strips (sibling .png.mcmeta\n\
+         // consumer multiplies at draw time) — PLUS the special renderers' entity\n\
+         // textures (the 63 specials' law: shield/trident/chest/shulker/banner/head/\n\
+         // conduit/pot/golem skins; the banner entries PRE-TINTED per DyeColor, the\n\
+         // multiply the special lane's raster has no vertex-color channel for).\n\
+         // Animated strips (sibling .png.mcmeta\n\
          // with \"animation\") are cropped to the first w x w frame. MISSING materials\n\
          // ({}, the trims/items armor-trim family + the literal \"missingno\" the air\n\
          // models reference) carry width=height=0 and an empty texel span — the\n\

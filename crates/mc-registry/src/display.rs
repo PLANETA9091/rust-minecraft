@@ -654,6 +654,144 @@ pub fn posed_item_layer_quads(
         .collect()))
 }
 
+/// The ModelPart node transform — `translateAndRotate`'s own order:
+/// translate(pose / 16), rotX, rotY, rotZ, scale. The pose units are the
+/// model's own 1/16-block units (the bytecode divides by 16 before the
+/// translate); the rotations are radians (xRot, yRot, zRot, each the
+/// mulPose(axis·angle) call); the scale is the direct factor.
+fn part_pose(pose: [f32; 3], rot: [f32; 3], scale: [f32; 3]) -> Pose {
+    let ident = Pose {
+        cols: [
+            [1.0, 0.0, 0.0, 0.0],
+            [0.0, 1.0, 0.0, 0.0],
+            [0.0, 0.0, 1.0, 0.0],
+            [0.0, 0.0, 0.0, 1.0],
+        ],
+    };
+    let mut m = ident;
+    m.cols[3] = [pose[0] / 16.0, pose[1] / 16.0, pose[2] / 16.0, 1.0];
+    let axis_rot = |axis: usize, a: f32| -> Pose {
+        let (s, c) = a.sin_cos();
+        let f: [f32; 9] = match axis {
+            0 => [1.0, 0.0, 0.0, 0.0, c, s, 0.0, -s, c],
+            1 => [c, 0.0, -s, 0.0, 1.0, 0.0, s, 0.0, c],
+            _ => [c, s, 0.0, -s, c, 0.0, 0.0, 0.0, 1.0],
+        };
+        pose_from_rotation(f)
+    };
+    for axis in 0..3 {
+        if rot[axis] != 0.0 {
+            m = pose_mul(&m, &axis_rot(axis, rot[axis]));
+        }
+    }
+    if scale != [1.0, 1.0, 1.0] {
+        for c in 0..3 {
+            for r in 0..4 {
+                m.cols[c][r] *= scale[c];
+            }
+        }
+    }
+    m
+}
+
+/// One special layer's model-space quads — the part tree's resolved
+/// polygons with the accumulated parent transforms composed outward-in
+/// (v' = P_root · ... · P_part · v, each P the part_pose above) and the
+/// dump's normalized uv scaled into the consumer's 0..16 sample domain
+/// (the exact f32 exponent shift — x16 then /16 round-trips). The face
+/// order IS the vanilla cube order (down, up, west, north, east, south —
+/// the dump's polygon array order), so the quad's slot/direction ride
+/// the face index. `shade` = true (the entity render's diffuse), the
+/// tints are generation-time (the banner's pre-tinted variants), no
+/// cullface (the entities render double-sided-aware, never culled by
+/// the block's neighbors).
+fn special_layer_quads(layer: &crate::generated::special_models::SpecialLayer, texture: &'static str) -> Vec<crate::element_quads::Quad> {
+    use crate::generated::elements::Cull;
+    let faces: [Cull; 6] = [
+        Cull::Down,
+        Cull::Up,
+        Cull::West,
+        Cull::North,
+        Cull::East,
+        Cull::South,
+    ];
+    let mut mats: Vec<Pose> = Vec::with_capacity(layer.parts.len());
+    let mut quads = Vec::new();
+    for (i, part) in layer.parts.iter().enumerate() {
+        let own = part_pose(part.pose, part.rot, part.scale);
+        let m = if part.parent < 0 || part.parent >= i as i32 {
+            own
+        } else {
+            pose_mul(&mats[part.parent as usize], &own)
+        };
+        mats.push(m);
+        if !part.visible {
+            continue;
+        }
+        for cube in part.cubes {
+            for (fi, face) in cube.faces.iter().enumerate() {
+                let mut q = crate::element_quads::Quad {
+                    vertices: [[0.0; 3]; 4],
+                    uvs: [[0.0; 2]; 4],
+                    slot: faces[fi],
+                    direction: faces[fi],
+                    texture,
+                    cullface: None,
+                    tintindex: None,
+                    uv_rotation: 0,
+                    shade: true,
+                    light_emission: None,
+                };
+                for (vi, v) in face.verts.iter().enumerate() {
+                    q.vertices[vi] = apply_vertex(&m, [v[0], v[1], v[2]]);
+                    q.uvs[vi] = [v[3] * 16.0, v[4] * 16.0];
+                }
+                quads.push(q);
+            }
+        }
+    }
+    quads
+}
+
+/// The SPECIAL item's posed first-person quads — the dump-backed arc:
+/// the item's special renderer layers (the running client's OWN
+/// LayerDefinitions polygons through their part-tree transforms) carry
+/// the tree-resolution's LOCAL transform (the renderer's own pose —
+/// the `build_local_pose` decode, the raw-vertices-first law), then
+/// the BASE model's display stanza on top (the applyTransform order —
+/// exactly [`posed_item_layer_quads`]'s composition, the hand anchor
+/// outside). Unknown id -> None; a broken base stanza -> Err; the
+/// layers concatenate in the law's order (the conduit's shell -> cage
+/// -> eye, the banner's rod -> tinted flag).
+pub fn special_item_quads(
+    id: i32,
+    ctx: usize,
+) -> Option<Result<Vec<crate::element_quads::Quad>, String>> {
+    let render = crate::special_item_renderer(id)?;
+    let transforms = match resolve_transforms(render.base) {
+        Ok(t) => t,
+        Err(e) => return Some(Err(e)),
+    };
+    let local = render.transform.map(build_local_pose);
+    let left_hand = context_is_left_hand(ctx);
+    let mut out = Vec::new();
+    for layer in &render.layers {
+        for mut q in special_layer_quads(layer.layer, layer.texture) {
+            q.vertices = q
+                .vertices
+                .map(|v| {
+                    let v = match &local {
+                        Some(m) => apply_vertex(m, v),
+                        None => v,
+                    };
+                    apply_transform(transforms[ctx].as_ref(), left_hand, v)
+                });
+            out.push(q);
+        }
+    }
+    Some(Ok(out))
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -1414,5 +1552,62 @@ mod tests {
             .expect("no stanza error");
         assert_eq!(stone.len(), 6, "the full cube's six faces");
     }
-}
 
+    #[test]
+    fn the_special_layer_bake_is_the_dump_polygon_times_sixteen() {
+        // the shield's geometry, RAW model space: 2 parts x 1 cube x 6
+        // faces = 12 quads; the plate's TOP face first vertex is the
+        // dump's own xyz (the part pose is identity), and the uv rides
+        // the dump's normalized value scaled into the 0..16 sample
+        // domain (13/64 -> 13/4 = 3.25, an exact f32 shift)
+        let layer = crate::special_item_render_by_name("shield")
+            .expect("shield")
+            .layers
+            .remove(0);
+        let quads = special_layer_quads(layer.layer, layer.texture);
+        assert_eq!(quads.len(), 12);
+        let plate = layer.layer.parts.iter().find(|p| p.name == "plate").unwrap();
+        let up = &plate.cubes[0].faces[1]; // the vanilla face order: down, up, ...
+        let v0 = quads[6].vertices[0]; // part 0 = root (6 faces), part 1 = plate -> quad 6 = its first face (down), quad 6+? -- pin via the raw polygon instead
+        let _ = v0;
+        // find the plate's UP-face quad by its first vertex matching the
+        // dump's raw xyz (identity pose -> bit-exact)
+        let q = quads
+            .iter()
+            .find(|q| q.vertices[0] == [6.0, -11.0, -1.0])
+            .expect("the plate's top face, raw");
+        assert_eq!(q.texture, "entity/shield/shield_base_nopattern");
+        assert_eq!(q.uvs[0], [13.0 / 64.0 * 16.0, 0.0]);
+        assert_eq!(q.uvs[1], [1.0 / 64.0 * 16.0, 0.0]);
+        // the parts: the root + the plate + the handle (the dump's tree)
+        assert_eq!(layer.layer.parts.len(), 3);
+    }
+
+    #[test]
+    fn the_special_item_quads_carry_the_display_stanza() {
+        // the shield's first-person pose: the base model item/shield's
+        // display stanza applies ON TOP of the raw bake (the
+        // applyTransform law) — every vertex MOVES (the stanza's
+        // translation is nonzero), the texture ids ride through
+        let shield_id = crate::generated::item_order::ITEM_WIRE_ORDER
+            .iter()
+            .position(|&n| n == "shield")
+            .expect("shield rides the wire") as i32;
+        let quads = special_item_quads(shield_id, FIRSTPERSON_RIGHTHAND)
+            .expect("the shield lane")
+            .expect("the stanza parses");
+        assert_eq!(quads.len(), 12);
+        assert!(quads
+            .iter()
+            .all(|q| q.texture == "entity/shield/shield_base_nopattern"));
+        // the raw bake's plate top v0 was [6, -11, -1]; the posed vertex
+        // differs (the stanza's 0.68 scale + the translation) — the
+        // display arc actually RAN
+        let raw = [6.0f32, -11.0, -1.0];
+        assert!(quads.iter().all(|q| q.vertices.iter().all(|v| *v != raw)));
+        // the GUI context resolves too (the same geometry, the stanza's
+        // gui branch) — and the unknown id is the honest None
+        assert!(special_item_quads(shield_id, 5).is_some());
+        assert!(special_item_quads(-1, FIRSTPERSON_RIGHTHAND).is_none());
+    }
+}

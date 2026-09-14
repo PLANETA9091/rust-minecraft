@@ -1275,9 +1275,18 @@ impl App {
             return; // no change — the loaded model stands
         }
         self.live_held = id;
-        self.held_item = id
-            .and_then(mc_registry::item_model_layers)
-            .and_then(|layers| crate::hand::load_item_layers(&layers));
+        // the resolution order: the 63 SPECIAL renderer payloads first
+        // (the dump-backed geometry lane), then the resting-hand layer
+        // tables (the plain defs + the resolved trees) — the lanes are
+        // disjoint (the registry's own census tests), so the order is a
+        // routing, never a shadowing
+        self.held_item = id.and_then(|id| {
+            if mc_registry::special_item_renderer(id).is_some() {
+                return crate::hand::load_special_item(id);
+            }
+            mc_registry::item_model_layers(id)
+                .and_then(|layers| crate::hand::load_item_layers(&layers))
+        });
     }
 
     /// The networked HUD lane: the store's WHOLE hotbar row lands
@@ -3835,6 +3844,38 @@ mod tests {
         app.live_held_updated(Some((926, 1)));
         assert_eq!(app.live_held, Some(926));
         assert!(app.held_item.is_some(), "the model reloads");
+    }
+
+    /// The live held lane's SPECIAL payloads: the 63 block-entity /
+    /// entity-model items route through the dump-backed geometry lane —
+    /// the shield's 12 quads (2 parts x 1 cube x 6 faces) with the
+    /// nopattern base texture, the white banner's tinted flag variant —
+    /// and the emptiness law is the same honest arm as the model lane.
+    #[test]
+    fn the_live_held_lane_routes_the_special_payloads() {
+        let mut app = App::new(3);
+        let shield = mc_registry::generated::item_order::ITEM_WIRE_ORDER
+            .iter()
+            .position(|&n| n == "shield")
+            .expect("shield rides the wire") as i32;
+        let banner = mc_registry::generated::item_order::ITEM_WIRE_ORDER
+            .iter()
+            .position(|&n| n == "white_banner")
+            .expect("white_banner rides the wire") as i32;
+        // the shield's stack rides: the SPECIAL geometry loads
+        app.live_held_updated(Some((shield, 1)));
+        assert_eq!(app.live_held, Some(shield));
+        let held = app.held_item.as_ref().expect("the shield loads");
+        assert_eq!(held.quad_len(), 12);
+        assert!(held.binds_texture("entity/shield/shield_base_nopattern"));
+        // the banner: two layers (the rod + the tinted flag), the
+        // flag's pixels riding the PER-COLOR pre-tinted variant
+        app.live_held_updated(Some((banner, 1)));
+        let held = app.held_item.as_ref().expect("the banner loads");
+        assert!(held.binds_texture("entity/banner/banner_base_white"));
+        // the emptiness law holds on the special lane too
+        app.live_held_updated(Some((banner, 0)));
+        assert!(app.held_item.is_none(), "the arm returns");
     }
 
     /// The number keys' whole arc: the HUD's selection moves with the

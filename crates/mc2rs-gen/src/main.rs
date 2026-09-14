@@ -149,6 +149,17 @@ enum Cmd {
         #[arg(long, default_value = ".")]
         out: String,
     },
+    /// Emit mc-registry/src/generated/special_models.rs from a SAVED
+    /// special-models dump (DumpSpecialModels.java's checked-in output) —
+    /// the special item renderers' geometry, offline at re-emit time.
+    SpecialModels {
+        /// The saved dump text.
+        #[arg(long)]
+        dump: String,
+        /// Workspace root (contains crates/).
+        #[arg(long, default_value = ".")]
+        out: String,
+    },
     /// Re-emit mc-registry/src/generated/item_order.rs from a SAVED
     /// dump (the `.mc2rs/classpath/item_order.txt` the dumper wrote) —
     /// the offline half of the item-order arc: no java, no network.
@@ -373,6 +384,17 @@ fn main() -> Result<()> {
                 .with_context(|| format!("workspace root {out} not found"))?;
             let path = runtime_dump::emit_mob_effects(&root, &version, &client_sha1, &text)?;
             println!("mob-effects: {}", path.display());
+        }
+        Cmd::SpecialModels { dump, out } => {
+            let root = Path::new(&out)
+                .canonicalize()
+                .with_context(|| format!("workspace root {out} not found"))?;
+            let text = specialgen::generate(Path::new(&dump))?;
+            let reg_dir = root.join("crates/mc-registry/src/generated");
+            std::fs::create_dir_all(&reg_dir)?;
+            let dest = reg_dir.join("special_models.rs");
+            std::fs::write(&dest, &text)?;
+            println!("special models: {}", dest.display());
         }
         Cmd::ItemOrder { version, dump, client_sha1, out } => {
             let text = std::fs::read_to_string(&dump)

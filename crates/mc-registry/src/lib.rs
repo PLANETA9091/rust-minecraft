@@ -214,6 +214,69 @@ pub fn item_model_layers(id: i32) -> Option<Vec<ItemModelLayer>> {
         })
 }
 
+/// One resolved special layer: the geometry (the dump's polygons) and
+/// the texture id the pixels ride. The tinted banner flag binds its
+/// PER-COLOR pre-tinted variant ("entity/banner/banner_base_<dye>" —
+/// the DyeColor textureDiffuseColor multiply, generation-time); every
+/// other layer binds its raw entity texture.
+pub struct SpecialItemLayer {
+    pub layer: &'static generated::special_models::SpecialLayer,
+    pub texture: &'static str,
+}
+
+/// One special item's full resting-hand payload: the base model (whose
+/// display stanza poses the geometry), the item-level LOCAL transform
+/// (the renderer's own pose, the tree resolution's decode; None =
+/// identity), and the layers in render order (the string ids of the
+/// generated law joined against the dump's geometry tables).
+pub struct SpecialItemRender {
+    pub base: &'static str,
+    pub transform: Option<([f32; 3], [f32; 4], [f32; 3], [f32; 4])>,
+    pub layers: Vec<SpecialItemLayer>,
+}
+
+fn special_item_render_by_name(name: &str) -> Option<SpecialItemRender> {
+    let (_, def) = generated::item_models::ITEM_SPECIAL_MODELS
+        .iter()
+        .find(|d| d.0 == name)?;
+    let layers = def
+        .layers
+        .iter()
+        .map(|l| {
+            let geometry = generated::special_models::SPECIAL_LAYERS
+                .iter()
+                .find(|(id, _)| *id == l.layer)
+                .map(|(_, g)| *g)?;
+            let texture = match l.tint {
+                Some(dye) => {
+                    let want = format!("{}_{}", l.texture, dye);
+                    let idx = generated::textures::texture_index(&want)?;
+                    generated::textures::TEXTURE_IDS[idx as usize]
+                }
+                None => l.texture,
+            };
+            Some(SpecialItemLayer { layer: geometry, texture })
+        })
+        .collect::<Option<Vec<_>>>()?;
+    Some(SpecialItemRender {
+        base: def.base.strip_prefix("minecraft:").unwrap_or(def.base),
+        transform: def.transform,
+        layers,
+    })
+}
+
+/// The ITEM registry id's SPECIAL-renderer payload — the 63 block-entity
+/// / entity-model items (shield, trident, the chests, the shulker boxes,
+/// the banners, the heads, the conduit, the decorated pot, the golem
+/// statues) whose geometry the running client's OWN LayerDefinitions
+/// dumped (the resting-hand polygons, bit-exact). The plain and complex
+/// trees go through [`item_model_layers`]; the two lanes are disjoint
+/// (the generator's census: 1390 plain + 84 resolved + 63 special = the
+/// whole registry, 0 refuses). Unknown ids are `None`.
+pub fn special_item_renderer(id: i32) -> Option<SpecialItemRender> {
+    special_item_render_by_name(item_name(id)?)
+}
+
 /// The resolver core, generic over the table so the dedup and cycle
 /// rules are testable without a jar that contains a cycle (the real
 /// 68-tag table cannot cycle: the census join proves every nested
@@ -408,8 +471,8 @@ mod tests {
         assert_eq!(item_model_path(921), Some("item/apple"));
         // air's own plain def (the registry's first entry)
         assert_eq!(item_model_path(0), Some("item/air"));
-        // the complex-definition trees are the honest None — the skip
-        // list's 147 (select/special/composite/condition/range_dispatch)
+        // the complex-definition trees are the honest None on the PLAIN
+        // accessor (the 84 resolved + 63 special live on their own lanes)
         let bow = generated::item_order::ITEM_WIRE_ORDER
             .iter()
             .position(|&n| n == "bow")
@@ -844,20 +907,32 @@ mod tests {
     #[test]
     fn the_item_model_definitions_resolve_and_the_joins_hold() {
         use generated::item_models::{
-            COMPLEX_ITEM_MODELS, ITEM_MODEL_DEFS, ITEM_MODEL_ROOT_TYPES, RESOLVED_ITEM_LAYERS,
+            COMPLEX_ITEM_MODELS, ITEM_MODEL_DEFS, ITEM_MODEL_ROOT_TYPES, ITEM_SPECIAL_MODELS,
+            RESOLVED_ITEM_LAYERS,
         };
         use generated::items::ITEMS;
         // the jar's assets/minecraft/items/ file set, verbatim: 1537
         // definitions split 1390 plain minecraft:model roots + 84 complex
         // trees RESOLVED to resting-hand layers + 63 special renderers
-        // refused with reasons
+        // RESOLVED to the LayerDefinitions dump's payloads — the refuse
+        // list is EMPTY (the v0.3.141 arc: every tree resolves or names
+        // its renderer, none refuse)
         assert_eq!(ITEM_MODEL_DEFS.len(), 1390);
         assert_eq!(RESOLVED_ITEM_LAYERS.len(), 84);
-        assert_eq!(COMPLEX_ITEM_MODELS.len(), 63);
+        assert_eq!(ITEM_SPECIAL_MODELS.len(), 63);
+        assert_eq!(COMPLEX_ITEM_MODELS.len(), 0);
         assert_eq!(
-            ITEM_MODEL_DEFS.len() + RESOLVED_ITEM_LAYERS.len() + COMPLEX_ITEM_MODELS.len(),
+            ITEM_MODEL_DEFS.len() + RESOLVED_ITEM_LAYERS.len() + ITEM_SPECIAL_MODELS.len(),
             1537
         );
+        // the lanes are disjoint: no id in two tables
+        for (id, _) in ITEM_SPECIAL_MODELS {
+            assert!(
+                ITEM_MODEL_DEFS.iter().all(|d| d.0 != *id)
+                    && RESOLVED_ITEM_LAYERS.iter().all(|d| d.0 != *id),
+                "{id} rides two tables"
+            );
+        }
         let census: u32 = ITEM_MODEL_ROOT_TYPES.iter().map(|t| t.1).sum();
         assert_eq!(census, 1537, "the root-type census accounts for every item");
         assert_eq!(
@@ -922,11 +997,22 @@ mod tests {
             assert!(RESOLVED_ITEM_LAYERS.iter().any(|d| d.0 == spear), "{spear} resolved");
             assert_eq!(RESOLVED_ITEM_LAYERS.iter().find(|d| d.0 == spear).unwrap().1, Some(1.95));
         }
-        // the shield stays refused — BOTH branches are the special renderer
-        let shield = COMPLEX_ITEM_MODELS.iter().find(|(id, _)| *id == "shield").unwrap();
-        assert!(shield.1.contains("special:minecraft:shield"), "{shield:?}");
-        // every refusal names a special block-entity renderer
-        assert!(COMPLEX_ITEM_MODELS.iter().all(|(_, why)| why.starts_with("special:")));
+        // the shield RESOLVES to the special renderer — the using_item
+        // condition's resting (on_false) branch (the blocking branch's
+        // mirror-flip transform rode the same payload's transform)
+        let shield = ITEM_SPECIAL_MODELS.iter().find(|(id, _)| *id == "shield").unwrap().1;
+        assert_eq!(shield.base, "minecraft:item/shield");
+        assert_eq!(shield.layers[0].layer, "minecraft:shield#main");
+        // every special payload's layer ids are dump layer ids (the join
+        // against generated::special_models never dangles)
+        for (id, def) in ITEM_SPECIAL_MODELS {
+            for l in def.layers {
+                assert!(
+                    generated::special_models::SPECIAL_LAYERS.iter().any(|(lid, _)| *lid == l.layer),
+                    "{id}: layer {} absent from the dump", l.layer
+                );
+            }
+        }
 
         // every model path is namespaced minecraft: under block/ or item/
         let (mut block, mut item) = (0usize, 0usize);
@@ -1484,8 +1570,10 @@ mod tests {
     fn the_texture_namespace_is_sorted_and_binary_searchable() {
         use generated::textures::{is_missing, texture_index, TEXTURE_IDS, N_TEXTURES};
 
-        // the census: 2113 distinct concrete ids over the 3928 model files
-        assert_eq!(N_TEXTURES, 2113);
+        // the census: 2172 distinct ids over the 3928 model files + the
+        // special renderers' 59 entity textures (43 raw + the banner
+        // flag's 16 pre-tinted DyeColor variants)
+        assert_eq!(N_TEXTURES, 2172);
         assert_eq!(TEXTURE_IDS.len(), N_TEXTURES);
         assert!(
             TEXTURE_IDS.windows(2).all(|w| w[0] < w[1]),
@@ -1523,6 +1611,9 @@ mod tests {
         let mut present = 0usize;
         let mut n16 = 0usize;
         let mut n32 = 0usize;
+        let mut n64 = 0usize;
+        let mut n_skin = 0usize;
+        let mut n_dragon = 0usize;
         for i in 0..N_TEXTURES {
             let (w, h) = texture_size(i as u16);
             let span = (OFFSETS[i + 1] - OFFSETS[i]) as usize;
@@ -1538,17 +1629,29 @@ mod tests {
             match (w, h) {
                 (16, 16) => n16 += 1,
                 (32, 32) => n32 += 1,
+                // the special renderers' entity textures: the skins'
+                // wide canvases, the conduit's base strip, the dragon's
+                // 256 sheet (the census join below pins their counts)
+                (32, 16) => n_skin += 1,
+                (64, 32) => n_skin += 1,
+                (64, 64) => n64 += 1,
+                (256, 256) => n_dragon += 1,
                 other => panic!("unexpected dims {other:?} for {}", TEXTURE_IDS[i]),
             }
             present += 1;
         }
-        // the census, verbatim: 2048 present (2001 square + 47 sign-size) + 65
-        // missing = 2113; the offsets tile the texels exactly
-        assert_eq!(present, 2048);
-        assert_eq!((n16, n32), (2001, 47));
+        // the census, verbatim: 2107 present (2003 square-16 + 49
+        // square-32 + 49 64-wide skins/canvases + 5 skin strips + 1
+        // dragon sheet) + 65 missing = 2172; the offsets tile the
+        // texels exactly
+        assert_eq!(present, 2107);
+        assert_eq!((n16, n32), (2003, 49));
+        assert_eq!(n64, 49);
+        assert_eq!(n_skin, 5, "the 32x16/64x32 strips: conduit base x2 + creeper/skeleton-family skins");
+        assert_eq!(n_dragon, 1);
         assert_eq!(present + N_MISSING, N_TEXTURES);
         assert_eq!(OFFSETS[N_TEXTURES] as usize, TEXELS.len());
-        assert_eq!(TEXELS.len(), 2_241_536, "the census texel total");
+        assert_eq!(TEXELS.len(), 3_345_408, "the census texel total");
         assert_eq!(WIDTHS.len(), N_TEXTURES);
         assert_eq!(HEIGHTS.len(), N_TEXTURES);
     }
@@ -1669,5 +1772,94 @@ mod tests {
         // ids land in the table — the domain is the models' domain
         assert!(texture_index("trims/color_palettes/iron").is_none());
         assert!(!TEXTURE_IDS.iter().any(|id| id.starts_with("trims/color_palettes/")));
+    }
+
+    #[test]
+    fn the_special_payloads_join_the_dump_and_the_texture_namespace() {
+        use generated::item_models::ITEM_SPECIAL_MODELS;
+        use generated::textures::texture_index;
+
+        // THE BIJECTION: 63 payloads, every one resolving through the
+        // join — the dump geometry, the base model path, and (for the
+        // tinted layers) the pre-tinted texture variant all in place
+        assert_eq!(ITEM_SPECIAL_MODELS.len(), 63);
+        for (id, _) in ITEM_SPECIAL_MODELS {
+            let render = special_item_render_by_name(id)
+                .unwrap_or_else(|| panic!("{id}: the special join dangles"));
+            assert!(!render.layers.is_empty(), "{id}: no layers");
+            for layer in &render.layers {
+                let idx = texture_index(layer.texture)
+                    .unwrap_or_else(|| panic!("{id}: texture {} absent", layer.texture));
+                let (w, h) = generated::textures::texture_size(idx);
+                assert!(w > 0, "{id}: texture {} missing", layer.texture);
+            }
+        }
+
+        // the shield: the nopattern base (the plain shield's own law),
+        // the plate's dump bounds — and the plate's TOP face's first
+        // vertex bit-exact at the raw model space (identity part pose)
+        let shield = special_item_render_by_name("shield").unwrap();
+        assert_eq!(shield.base, "item/shield");
+        assert_eq!(shield.layers[0].texture, "entity/shield/shield_base_nopattern");
+        let plate = shield.layers[0]
+            .layer
+            .parts
+            .iter()
+            .find(|p| p.name == "plate")
+            .expect("the plate");
+        assert_eq!(plate.cubes[0].min, [-6.0, -11.0, -2.0]);
+        assert_eq!(plate.cubes[0].max, [6.0, 11.0, -1.0]);
+
+        // the white banner: the ROD rides the untinted canvas, the FLAG
+        // rides the pre-tinted white variant (the DyeColor multiply,
+        // generation-time)
+        let banner = special_item_render_by_name("white_banner").unwrap();
+        assert_eq!(banner.layers.len(), 2);
+        assert_eq!(banner.layers[0].texture, "entity/banner/base");
+        assert_eq!(
+            banner.layers[1].texture,
+            "entity/banner/banner_base_white"
+        );
+
+        // the conduit: THREE resting layers (shell, cage, eye) — the
+        // wind column is the powered state's, never the item's
+        let conduit = special_item_render_by_name("conduit").unwrap();
+        assert_eq!(conduit.layers.len(), 3);
+        for tex in [
+            "entity/conduit/base",
+            "entity/conduit/cage",
+            "entity/conduit/closed_eye",
+        ] {
+            assert!(conduit.layers.iter().any(|l| l.texture == tex), "{tex}");
+        }
+
+        // the golem statue: the STANDING fallback, the plain golem skin
+        let statue = special_item_render_by_name("copper_golem_statue").unwrap();
+        assert_eq!(statue.layers[0].texture, "entity/copper_golem/copper_golem");
+
+        // the unknown is honest
+        assert!(special_item_render_by_name("not_an_item").is_none());
+    }
+
+    #[test]
+    fn the_special_ids_disjoint_the_layer_lanes_exactly() {
+        // the special ids take the special lane and NOTHING else: no
+        // plain def, no resolved layers — the client's resolution order
+        // (special first) can never shadow the other lanes
+        use generated::item_models::{
+            ITEM_MODEL_DEFS, ITEM_SPECIAL_MODELS, RESOLVED_ITEM_LAYERS,
+        };
+        for (id, _) in ITEM_SPECIAL_MODELS {
+            assert!(ITEM_MODEL_DEFS.iter().all(|d| d.0 != *id));
+            assert!(RESOLVED_ITEM_LAYERS.iter().all(|d| d.0 != *id));
+            // and the id resolves on the WIRE registry too (a live
+            // server's held slot lands by number)
+            let wire = generated::item_order::ITEM_WIRE_ORDER
+                .iter()
+                .position(|&n| n == *id)
+                .unwrap_or_else(|| panic!("{id}: no wire id"))
+                as i32;
+            assert!(special_item_renderer(wire).is_some(), "{id}({wire})");
+        }
     }
 }

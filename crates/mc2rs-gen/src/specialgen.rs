@@ -71,11 +71,9 @@ pub fn parse_dump(text: &str) -> Result<SpecialData> {
 
     macro_rules! flush_cube {
         () => {
-            if let Some(c) = cur_cube.take() {
+            if let (Some(c), Some(l)) = (cur_cube.take(), cur_layer.as_mut()) {
                 if let Some(&pi) = stack.last() {
-                    cur_layer.as_mut().with_context(|| "layer")?.parts[pi]
-                        .cubes
-                        .push(c);
+                    l.parts[pi].cubes.push(c);
                 }
             }
         };
@@ -100,10 +98,8 @@ pub fn parse_dump(text: &str) -> Result<SpecialData> {
             });
             continue;
         }
-        let Some(l) = cur_layer.as_mut() else {
-            continue; // pre-layer lines: boot ok, DYECOLOR, TEXCLASS, done
-        };
         if let Some(rest) = line.strip_prefix("TEX ") {
+            let Some(l) = cur_layer.as_mut() else { continue };
             let mut it = rest.split_whitespace();
             l.tex_w = it.next().with_context(ctx)?.parse()?;
             l.tex_h = it.next().with_context(ctx)?.parse()?;
@@ -116,7 +112,8 @@ pub fn parse_dump(text: &str) -> Result<SpecialData> {
             let depth = ind / 2 - 1;
             stack.truncate(depth);
             let parent = stack.last().copied().unwrap_or(usize::MAX);
-            let idx = l.parts.len();
+            let idx = cur_layer.as_ref().with_context(ctx)?.parts.len();
+            let l = cur_layer.as_mut().with_context(ctx)?;
             l.parts.push(SpecialPart {
                 name: rest.trim().to_string(),
                 parent,
@@ -130,9 +127,15 @@ pub fn parse_dump(text: &str) -> Result<SpecialData> {
             continue;
         }
         if let Some(rest) = line.strip_prefix("POSE") {
+            let l = cur_layer.as_mut().with_context(ctx)?;
             let &pi = stack.last().with_context(ctx)?;
             for tok in rest.split_whitespace() {
                 let Some((k, v)) = tok.split_once('=') else { continue };
+                if !matches!(k, "x" | "y" | "z" | "xRot" | "yRot" | "zRot"
+                    | "xScale" | "yScale" | "zScale")
+                {
+                    continue; // visible=true and friends are not floats
+                }
                 let f = parse_float(v)?;
                 match k {
                     "x" => l.parts[pi].pose[0] = f,
@@ -151,7 +154,8 @@ pub fn parse_dump(text: &str) -> Result<SpecialData> {
         }
         if let Some(rest) = line.strip_prefix("CUBE ") {
             flush_cube!();
-            let &pi = stack.last().with_context(ctx)?;
+            let _l = cur_layer.as_ref().with_context(ctx)?;
+            let &_pi = stack.last().with_context(ctx)?;
             let mut min = [0f32; 3];
             let mut max = [0f32; 3];
             for tok in rest.split_whitespace() {
@@ -188,7 +192,7 @@ pub fn parse_dump(text: &str) -> Result<SpecialData> {
                 }
                 verts.push(f);
             }
-            anyhow::ensure!(verts.len() == 4, "{ctx}: a face needs 4 verts");
+            anyhow::ensure!(verts.len() == 4, "{}: a face needs 4 verts", ctx());
             c.faces.push(SpecialFace {
                 verts: [verts[0], verts[1], verts[2], verts[3]],
             });
@@ -209,9 +213,11 @@ pub fn parse_dump(text: &str) -> Result<SpecialData> {
             continue;
         }
     }
-    if cur_layer.is_some() {
-        flush_cube!();
-        layers.push(cur_layer.take().with_context(|| "layer")?);
+    if let Some(mut l) = cur_layer.take() {
+        if let (Some(c), Some(&pi)) = (cur_cube.take(), stack.last()) {
+            l.parts[pi].cubes.push(c);
+        }
+        layers.push(l);
     }
     anyhow::ensure!(!layers.is_empty(), "the dump carried no layers");
     anyhow::ensure!(!dyes.is_empty(), "the dump carried no dye colors");
@@ -238,58 +244,38 @@ pub fn emit(data: &SpecialData) -> Result<String> {
 
     for l in &data.layers {
         let slug = layer_slug(&l.id);
-        // a flat face array per layer; cubes slice into it in order
-        let mut face_count = 0usize;
-        for p in &l.parts {
-            for c in &p.cubes {
-                face_count += c.faces.len();
-            }
-        }
-        out.push_str(&format!("static {slug}_FACES: [SpecialFace; {face_count}] = [\n"));
-        for p in &l.parts {
-            for c in &p.cubes {
-                for f in &c.faces {
-                    out.push_str("    SpecialFace { verts: [\n");
-                    for v in &f.verts {
-                        out.push_str(&format!(
-                            "        [{}, {}, {}, {}, {}],\n",
-                            v[0], v[1], v[2], v[3], v[4]
-                        ));
-                    }
-                    out.push_str("    ] },\n");
-                }
-            }
-        }
-        out.push_str("];\n");
-        out.push_str(&format!("static {slug}_CUBES: [SpecialCube; {}] = [\n", l.parts.iter().map(|p| p.cubes.len()).sum::<usize>()));
-        let mut base = 0usize;
-        for p in &l.parts {
-            for c in &p.cubes {
-                out.push_str(&format!(
-                    "    SpecialCube {{ min: [{}, {}, {}], max: [{}, {}, {}], faces: &{}_FACES[{}..{}] }},\n",
-                    c.min[0], c.min[1], c.min[2], c.max[0], c.max[1], c.max[2],
-                    slug, base, base + c.faces.len(),
-                ));
-                base += c.faces.len();
-            }
-        }
-        out.push_str("];\n");
         out.push_str(&format!(
             "pub static {slug}: SpecialLayer = SpecialLayer {{\n    tex_w: {}, tex_h: {},\n    parts: &[\n",
             l.tex_w, l.tex_h
         ));
-        let mut cbase = 0usize;
-        for (i, p) in l.parts.iter().enumerate() {
+        for p in &l.parts {
             let parent: i32 = if p.parent == usize::MAX { -1 } else { p.parent as i32 };
             out.push_str(&format!(
-                "        SpecialPart {{ name: {:?}, parent: {}, pose: [{}, {}, {}], rot: [{}, {}, {}], scale: [{}, {}, {}], visible: {}, cubes: &{}_CUBES[{}..{}] }},\n",
+                "        SpecialPart {{ name: {:?}, parent: {}, pose: [{:?}, {:?}, {:?}], rot: [{:?}, {:?}, {:?}], scale: [{:?}, {:?}, {:?}], visible: {}, cubes: &[\n",
                 p.name, parent,
                 p.pose[0], p.pose[1], p.pose[2],
                 p.rot[0], p.rot[1], p.rot[2],
                 p.scale[0], p.scale[1], p.scale[2],
-                p.visible, slug, cbase, cbase + p.cubes.len(),
+                p.visible,
             ));
-            cbase += p.cubes.len();
+            for c in &p.cubes {
+                out.push_str(&format!(
+                    "            SpecialCube {{ min: [{:?}, {:?}, {:?}], max: [{:?}, {:?}, {:?}], faces: &[\n",
+                    c.min[0], c.min[1], c.min[2], c.max[0], c.max[1], c.max[2],
+                ));
+                for f in &c.faces {
+                    out.push_str("                SpecialFace { verts: [\n");
+                    for v in &f.verts {
+                        out.push_str(&format!(
+                            "                    [{:?}, {:?}, {:?}, {:?}, {:?}],\n",
+                            v[0], v[1], v[2], v[3], v[4]
+                        ));
+                    }
+                    out.push_str("                ] },\n");
+                }
+                out.push_str("            ] },\n");
+            }
+            out.push_str("        ] },\n");
         }
         out.push_str("    ],\n};\n\n");
     }
@@ -309,8 +295,99 @@ pub fn emit(data: &SpecialData) -> Result<String> {
         out.push_str(&format!("    (\"{n}\", {c}),\n"));
     }
     out.push_str("];\n");
+
     Ok(out)
 }
+
+/// The texture namespace additions the special renderers need — the
+/// EXACT texture ids itemgen's renderer law binds (the same census, the
+/// drift guarded by the registry's suite: every SpecialLayerRef texture
+/// must resolve in TEXTURE_IDS). The banner FLAG layer binds the
+/// PER-COLOR pre-tinted variant ("..._white" etc. — the DyeColor
+/// textureDiffuseColor multiply, generation-time: the special lane's
+/// raster carries no vertex-color channel); the ROD rides the raw
+/// pattern-canvas sprite untinted. Sources: (namespace id, png path
+/// under textures/, per-channel tint RGB).
+pub fn special_texture_variants() -> Vec<(String, String, Option<u32>)> {
+    // the raw, untinted ids the renderer laws bind
+    const RAW: &[&str] = &[
+        "entity/trident/trident",
+        "entity/shield/shield_base_nopattern",
+        "entity/chest/normal",
+        "entity/chest/trapped",
+        "entity/chest/ender",
+        "entity/chest/copper",
+        "entity/chest/copper_exposed",
+        "entity/chest/copper_weathered",
+        "entity/chest/copper_oxidized",
+        "entity/shulker/shulker",
+        "entity/shulker/shulker_white",
+        "entity/shulker/shulker_orange",
+        "entity/shulker/shulker_magenta",
+        "entity/shulker/shulker_light_blue",
+        "entity/shulker/shulker_yellow",
+        "entity/shulker/shulker_lime",
+        "entity/shulker/shulker_pink",
+        "entity/shulker/shulker_gray",
+        "entity/shulker/shulker_light_gray",
+        "entity/shulker/shulker_cyan",
+        "entity/shulker/shulker_purple",
+        "entity/shulker/shulker_blue",
+        "entity/shulker/shulker_brown",
+        "entity/shulker/shulker_green",
+        "entity/shulker/shulker_red",
+        "entity/shulker/shulker_black",
+        "entity/banner/base",
+        "entity/conduit/base",
+        "entity/conduit/cage",
+        "entity/conduit/closed_eye",
+        "entity/decorated_pot/decorated_pot_base",
+        "entity/decorated_pot/decorated_pot_side",
+        "entity/creeper/creeper",
+        "entity/skeleton/skeleton",
+        "entity/skeleton/wither_skeleton",
+        "entity/zombie/zombie",
+        "entity/piglin/piglin",
+        "entity/enderdragon/dragon",
+        "entity/player/slim/steve",
+        "entity/copper_golem/copper_golem",
+        "entity/copper_golem/copper_golem_exposed",
+        "entity/copper_golem/copper_golem_oxidized",
+        "entity/copper_golem/copper_golem_weathered",
+    ];
+    let mut out: Vec<(String, String, Option<u32>)> =
+        RAW.iter().map(|id| (id.to_string(), id.to_string(), None)).collect();
+    // the banner flag's 16 pre-tinted variants over the ONE base png
+    for (name, rgb) in DYE_TEXTURE_DIFFUSE_RGB {
+        out.push((
+            format!("entity/banner/banner_base_{name}"),
+            "entity/banner/banner_base".to_string(),
+            Some(*rgb),
+        ));
+    }
+    out
+}
+
+/// The 16 DyeColor textureDiffuseColors as 0xRRGGBB (the dump's i32s
+/// masked — the top byte is the alpha the vertex color never carries).
+pub const DYE_TEXTURE_DIFFUSE_RGB: &[(&str, u32)] = &[
+    ("white", 0xf9fffe),
+    ("orange", 0xf9801d),
+    ("magenta", 0xc74ebd),
+    ("light_blue", 0x3ab3da),
+    ("yellow", 0xfed83d),
+    ("lime", 0x80c71f),
+    ("pink", 0xf38baa),
+    ("gray", 0x474f52),
+    ("light_gray", 0x9d9d97),
+    ("cyan", 0x169c9c),
+    ("purple", 0x8932b8),
+    ("blue", 0x3c44aa),
+    ("brown", 0x835432),
+    ("green", 0x5e7c16),
+    ("red", 0xb02e26),
+    ("black", 0x1d1d21),
+];
 
 fn layer_slug(id: &str) -> String {
     let mut s = String::from("L");
@@ -396,6 +473,62 @@ mod tests {
                     assert!(p.parent < i, "{} part {} after its parent", l.id, p.name);
                 }
             }
+        }
+    }
+
+    /// The texture-supply law's own census: 59 additions (43 raw + the
+    /// banner flag's 16 pre-tinted variants over the ONE base png), the
+    /// DyeColor law checked dye-for-dye against the dump's DYECOLOR
+    /// section, and every tinted variant's source the raw base.
+    #[test]
+    fn the_texture_variants_census_and_the_dye_law_hold() {
+        let data = parse_dump(
+            std::fs::read_to_string(concat!(
+                env!("CARGO_MANIFEST_DIR"),
+                "/dump/special_models_dump.txt"
+            ))
+            .unwrap()
+            .as_str(),
+        )
+        .unwrap();
+        let variants = special_texture_variants();
+        assert_eq!(variants.len(), 59);
+        let banner_variants = variants
+            .iter()
+            .filter(|(id, _, _)| id.starts_with("entity/banner/banner_base_"))
+            .count();
+        assert_eq!(banner_variants, 16);
+        assert!(variants
+            .iter()
+            .all(|(_, src, _)| !src.starts_with("textures/")));
+        // every tinted variant's source IS the raw banner base, and its
+        // tint matches the dye the id names
+        for (id, src, tint) in &variants {
+            match tint {
+                Some(rgb) => {
+                    let color = id
+                        .strip_prefix("entity/banner/banner_base_")
+                        .unwrap_or_else(|| panic!("tinted {id} not a banner variant"));
+                    let law = DYE_TEXTURE_DIFFUSE_RGB
+                        .iter()
+                        .find(|(n, _)| **n == *color)
+                        .unwrap_or_else(|| panic!("dye {color}"))
+                        .1;
+                    assert_eq!(*rgb, law, "variant {id}");
+                    assert_eq!(src, "entity/banner/banner_base");
+                }
+                None => assert_eq!(id, src, "raw {id}"),
+            }
+        }
+        // the dye law: the dump's textureDiffuseColor i32s, masked
+        for (name, rgb) in DYE_TEXTURE_DIFFUSE_RGB {
+            let (dump_name, dump_i32) = data
+                .dyes
+                .iter()
+                .find(|(n, _)| n == name)
+                .unwrap_or_else(|| panic!("dye {name}"));
+            assert_eq!(dump_name, name);
+            assert_eq!(*dump_i32 as u32 & 0xffffff, *rgb, "dye {name}");
         }
     }
 }

@@ -341,7 +341,7 @@ pub fn build(jar_bytes: &[u8], version: &str, client_sha1: &str) -> Result<Strin
                         &format!("assets/minecraft/textures/block/{stem}.png"),
                     )
                     .with_context(|| format!("texture block/{stem}.png"))?;
-                    let (w, h, mut rgba) = decode_rgba(&raw)?;
+                    let (w, h, rgba) = decode_rgba(&raw)?;
                     let (w, h, rgba) = first_frame(w, h, &rgba);
                     if w != 16 || h != 16 {
                         bail!("texture {stem}: expected 16x16 (first frame), got {w}x{h}");

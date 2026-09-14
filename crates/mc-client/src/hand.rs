@@ -478,6 +478,27 @@ pub fn load_item_layers(layers: &[mc_registry::ItemModelLayer]) -> Option<HeldIt
     Some(HeldItem { quads })
 }
 
+/// Load the posed quads of one SPECIAL renderer item by its WIRE id —
+/// the 63 block-entity / entity-model items (shield, trident, the
+/// chests, the shulker boxes, the banners, the heads, the conduit, the
+/// decorated pot, the golem statues). The geometry is the running
+/// client's OWN LayerDefinitions polygons (the dump's bit-exact bake),
+/// the display stanza comes from the payload's base model, and the
+/// pixels ride the generated namespace's entity textures (the banner
+/// flag's dye multiply rode generation). `None` = unknown id or a
+/// broken base stanza — the bare arm, never a half-render.
+pub fn load_special_item(id: i32) -> Option<HeldItem> {
+    match mc_registry::display::special_item_quads(
+        id,
+        mc_registry::display::FIRSTPERSON_RIGHTHAND,
+    ) {
+        Some(Ok(quads)) => Some(HeldItem { quads }),
+        // a broken display stanza binds nothing (vanilla warns + drops)
+        Some(Err(_)) => None,
+        None => None,
+    }
+}
+
 /// The item-in-hand anchor chain, `side` = +1 (the RIGHT main hand, the
 /// default offline player's). At the rest pose (swing 0, equip 0) the
 /// only non-trivial terms are the attack transform's rotY(side*45deg) ..
@@ -522,6 +543,18 @@ fn item_swing_terms(swing: f32) -> [f32; 5] {
 }
 
 impl HeldItem {
+    /// The loaded quad count — the tests' honest size probe (the
+    /// geometry's own shape, no internals exposed).
+    pub fn quad_len(&self) -> usize {
+        self.quads.len()
+    }
+
+    /// Whether ANY quad binds the named texture — the tests' honest
+    /// texture-binding probe.
+    pub fn binds_texture(&self, tex: &str) -> bool {
+        self.quads.iter().any(|q| q.texture == tex)
+    }
+
     /// The anchored, view-space quads at an attack animation progress
     /// (0 = rest; the deterministic scenes never swing, so the goldens —
     /// which hold no item — never see a nonzero one).

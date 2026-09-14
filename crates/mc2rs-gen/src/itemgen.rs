@@ -86,11 +86,31 @@ impl TransformComponents {
 /// One resolved layer of a complex definition: the model path, the
 /// tints (canonical compact JSON) and the optional decoded node
 /// transformation (None = identity — the overwhelmingly common case).
+/// A resolved layer is EITHER a plain model layer OR the special
+/// renderer payload — never both (the emit enforces the invariant).
 #[derive(Debug, Clone, PartialEq)]
 pub struct ResolvedLayer {
     pub model: String,
     pub tints: Vec<String>,
     pub transform: Option<TransformComponents>,
+    /// The block-entity renderer payload when the resting branch hits a
+    /// `minecraft:special` node — the geometry lives in the
+    /// LayerDefinitions dump (generated/special_models.rs), the texture
+    /// per layer rides the atlas sprite vocabulary.
+    pub special: Option<SpecialPayload>,
+}
+
+/// The special renderer payload: the renderer kind, the wrapper's base
+/// model path (whose display stanza poses the geometry), the per-layer
+/// (LayerDefinitions id, atlas sprite texture) pairs and the banner's
+/// dye name (the DyeColor.textureDiffuseColor tint — resolved by the
+/// consumer from the dump's DyeColor lane).
+#[derive(Debug, Clone, PartialEq)]
+pub struct SpecialPayload {
+    pub renderer: String,
+    pub base: String,
+    pub layers: Vec<(String, String)>,
+    pub tint: Option<String>,
 }
 
 /// One resolved complex definition: the resting-hand layers in order
@@ -147,6 +167,22 @@ const SELECT_KEYS: [&str; 7] = ["type", "property", "cases", "fallback", "block_
 const RANGE_KEYS: [&str; 9] = ["type", "property", "entries", "scale", "fallback", "period", "source", "target", "transformation"];
 const COMPOSITE_KEYS: [&str; 3] = ["type", "models", "transformation"];
 const NODE_KEYS: [&str; 4] = ["type", "model", "tints", "transformation"];
+/// The `minecraft:special` wrapper node: the base model path (whose
+/// display stanza poses the renderer's geometry), the renderer node and
+/// the optional node transformation.
+const SPECIAL_KEYS: [&str; 4] = ["type", "base", "model", "transformation"];
+/// The renderer nodes' own key sets, by renderer kind (the jar's
+/// declaration keys — the census of all ten kinds).
+const BANNER_RENDERER_KEYS: [&str; 2] = ["type", "color"];
+const SHULKER_RENDERER_KEYS: [&str; 2] = ["type", "texture"];
+const CHEST_RENDERER_KEYS: [&str; 2] = ["type", "texture"];
+const HEAD_RENDERER_KEYS: [&str; 2] = ["type", "kind"];
+const PLAYER_HEAD_RENDERER_KEYS: [&str; 1] = ["type"];
+const CONDUIT_RENDERER_KEYS: [&str; 1] = ["type"];
+const POT_RENDERER_KEYS: [&str; 1] = ["type"];
+const STATUE_RENDERER_KEYS: [&str; 3] = ["type", "pose", "texture"];
+const SHIELD_RENDERER_KEYS: [&str; 1] = ["type"];
+const TRIDENT_RENDERER_KEYS: [&str; 1] = ["type"];
 const TRANSFORM_KEYS: [&str; 4] =
     ["translation", "left_rotation", "scale", "right_rotation"];
 
@@ -333,7 +369,7 @@ fn resolve_node(
                 }
             }
             let transform = my_transform.filter(|t| !t.is_identity());
-            Ok(vec![ResolvedLayer { model: model.to_string(), tints, transform }])
+            Ok(vec![ResolvedLayer { model: model.to_string(), tints, transform, special: None }])
         }
         "minecraft:condition" => {
             check_keys(obj, &CONDITION_KEYS, id, ty)?;
@@ -400,18 +436,159 @@ fn resolve_node(
             for child in models {
                 layers.extend(resolve_node(child, id, depth + 1, &active)?);
             }
+            // a block-entity renderer inside a composite has no jar case
+            // — refuse loudly rather than half-render
+            if layers.iter().any(|l| l.special.is_some()) {
+                return Err(format!("{id}: a special renderer inside a composite"));
+            }
             Ok(layers)
         }
         "minecraft:special" => {
-            // the block-entity renderers: every base model path in the
-            // jar is MISSING from models/ — the geometry is bytecode, not
-            // JSON. Refused with the renderer named.
-            let renderer = obj
-                .get("model")
-                .and_then(|m| m.get("type"))
+            // the block-entity renderers — RESOLVED this round: the
+            // geometry is the LayerDefinitions dump's (generated/
+            // special_models.rs), the textures ride the Sheets/SMIN map
+            // constants the renderers hold (the javap + reflection
+            // evidence in DumpSpecialModels.java's lane 3).
+            check_keys(obj, &SPECIAL_KEYS, id, ty)?;
+            if my_transform.is_some() && outer.is_some() {
+                return Err(format!(
+                    "{id}: a transformed special under a transformed node — compose first"
+                ));
+            }
+            let base = obj
+                .get("base")
                 .and_then(Value::as_str)
-                .unwrap_or("?");
-            Err(format!("special:{renderer} — the block-entity renderer"))
+                .ok_or_else(|| format!("{id}: special \"base\" must be a string"))?
+                .to_string();
+            let renderer_node = obj
+                .get("model")
+                .and_then(Value::as_object)
+                .ok_or_else(|| format!("{id}: special \"model\" must be an object"))?;
+            let renderer = renderer_node
+                .get("type")
+                .and_then(Value::as_str)
+                .ok_or_else(|| format!("{id}: special renderer \"type\" must be a string"))?
+                .strip_prefix("minecraft:")
+                .unwrap_or(renderer_node
+                    .get("type")
+                    .and_then(Value::as_str)
+                    .unwrap_or("?")
+                    )
+                .to_string();
+            let param = |key: &str| -> Option<String> {
+                renderer_node.get(key).and_then(Value::as_str).map(str::to_string)
+            };
+            let layers: Vec<(String, String)> = match renderer.as_str() {
+                "shield" => {
+                    check_keys(renderer_node, &SHIELD_RENDERER_KEYS, id, &renderer)?;
+                    vec![("minecraft:shield#main".into(), "entity/shield/shield_base_nopattern".into())]
+                }
+                "trident" => {
+                    check_keys(renderer_node, &TRIDENT_RENDERER_KEYS, id, &renderer)?;
+                    vec![("minecraft:trident#main".into(), "entity/trident/trident".into())]
+                }
+                "chest" => {
+                    check_keys(renderer_node, &CHEST_RENDERER_KEYS, id, &renderer)?;
+                    let t = param("texture").unwrap_or_else(|| "normal".into());
+                    let t = t.strip_prefix("minecraft:").unwrap_or(&t).to_string();
+                    vec![("minecraft:chest#main".into(), format!("entity/chest/{t}"))]
+                }
+                "shulker_box" => {
+                    check_keys(renderer_node, &SHULKER_RENDERER_KEYS, id, &renderer)?;
+                    let t = param("texture").unwrap_or_else(|| "shulker".into());
+                    let t = t.strip_prefix("minecraft:").unwrap_or(&t).to_string();
+                    vec![("minecraft:shulker_box#main".into(), format!("entity/shulker/{t}"))]
+                }
+                "banner" => {
+                    check_keys(renderer_node, &BANNER_RENDERER_KEYS, id, &renderer)?;
+                    // the pole rides the pattern-canvas sprite (untinted);
+                    // the flag rides the base cloth, tinted by the dye
+                    vec![
+                        ("minecraft:standing_banner#main".into(), "entity/banner/base".into()),
+                        ("minecraft:standing_banner#flag".into(), "entity/banner/banner_base".into()),
+                    ]
+                }
+                "head" => {
+                    check_keys(renderer_node, &HEAD_RENDERER_KEYS, id, &renderer)?;
+                    let kind = param("kind")
+                        .ok_or_else(|| format!("{id}: head renderer without kind"))?;
+                    let (layer, tex) = match kind.as_str() {
+                        "creeper" => ("minecraft:creeper_head#main", "entity/creeper/creeper"),
+                        "skeleton" => ("minecraft:skeleton_skull#main", "entity/skeleton/skeleton"),
+                        "wither_skeleton" => {
+                            ("minecraft:wither_skeleton_skull#main", "entity/skeleton/wither_skeleton")
+                        }
+                        "zombie" => ("minecraft:zombie_head#main", "entity/zombie/zombie"),
+                        "piglin" => ("minecraft:piglin_head#main", "entity/piglin/piglin"),
+                        "dragon" => ("minecraft:dragon_skull#main", "entity/enderdragon/dragon"),
+                        other => return Err(format!("{id}: head kind {other} — no layer mapping")),
+                    };
+                    vec![(layer.into(), tex.into())]
+                }
+                "player_head" => {
+                    check_keys(renderer_node, &PLAYER_HEAD_RENDERER_KEYS, id, &renderer)?;
+                    // SkullBlockRenderer.SKIN_BY_TYPE's PLAYER entry
+                    vec![("minecraft:player_head#main".into(), "entity/player/slim/steve".into())]
+                }
+                "conduit" => {
+                    check_keys(renderer_node, &CONDUIT_RENDERER_KEYS, id, &renderer)?;
+                    // the resting conduit: the shell, the cage ring and
+                    // the closed eye (the wind columns are the active
+                    // state's) — ConduitRenderer's own sprite constants
+                    vec![
+                        ("minecraft:conduit#shell".into(), "entity/conduit/base".into()),
+                        ("minecraft:conduit#cage".into(), "entity/conduit/cage".into()),
+                        ("minecraft:conduit#eye".into(), "entity/conduit/closed_eye".into()),
+                    ]
+                }
+                "decorated_pot" => {
+                    check_keys(renderer_node, &POT_RENDERER_KEYS, id, &renderer)?;
+                    vec![
+                        ("minecraft:decorated_pot_base#main".into(), "entity/decorated_pot/decorated_pot_base".into()),
+                        ("minecraft:decorated_pot_sides#main".into(), "entity/decorated_pot/decorated_pot_side".into()),
+                    ]
+                }
+                "copper_golem_statue" => {
+                    check_keys(renderer_node, &STATUE_RENDERER_KEYS, id, &renderer)?;
+                    let pose = param("pose")
+                        .ok_or_else(|| format!("{id}: statue renderer without pose"))?;
+                    let layer = match pose.as_str() {
+                        "standing" => "minecraft:copper_golem#main",
+                        "sitting" => "minecraft:copper_golem_sitting#main",
+                        "running" => "minecraft:copper_golem_running#main",
+                        "star" => "minecraft:copper_golem_star#main",
+                        other => return Err(format!("{id}: statue pose {other} — no layer mapping")),
+                    };
+                    let t = param("texture")
+                        .ok_or_else(|| format!("{id}: statue renderer without texture"))?;
+                    let t = t
+                        .strip_prefix("minecraft:textures/")
+                        .and_then(|s| s.strip_suffix(".png"))
+                        .ok_or_else(|| format!("{id}: statue texture {t} is not a jar png path"))?
+                        .to_string();
+                    vec![(layer.into(), t)]
+                }
+                other => return Err(format!("special:{other} — no renderer mapping")),
+            };
+            let tint = if renderer == "banner" {
+                let color = renderer_node
+                    .get("color")
+                    .and_then(Value::as_str)
+                    .ok_or_else(|| format!("{id}: banner renderer without color"))?;
+                Some(color.to_string())
+            } else {
+                None
+            };
+            // the active chain: the wrapper's own transform OR the
+            // inherited ancestor's (the shield's scale rides its
+            // condition; the golem statue's rides its select)
+            let transform = active.filter(|t| !t.is_identity());
+            Ok(vec![ResolvedLayer {
+                model: String::new(),
+                tints: Vec::new(),
+                transform,
+                special: Some(SpecialPayload { renderer, base, layers, tint }),
+            }])
         }
         "minecraft:bundle/selected_item" => {
             Err("bundle/selected_item — the GUI-only node".to_string())
@@ -548,10 +725,26 @@ pub fn emit(data: &ItemModelsData) -> Result<String> {
     out.push_str("    pub transform: Option<([f32; 3], [f32; 4], [f32; 3], [f32; 4])>,\n");
     out.push_str("}\n\n");
     out.push_str("/// (item id, swap_animation_scale, the resting-hand layers in order).\n");
-    out.push_str("pub static RESOLVED_ITEM_LAYERS: [(&str, Option<f32>, &[ResolvedItemLayer]); ");
-    out.push_str(&data.resolved.len().to_string());
-    out.push_str("] = [\n");
+    // the split: a resolved item is EITHER plain model layers (the
+    // RESOLVED_ITEM_LAYERS table) OR one special-renderer payload (the
+    // ITEM_SPECIAL_MODELS table) — never both
+    let mut specials: Vec<(&String, &ResolvedItem)> = Vec::new();
+    let mut layer_items: Vec<(&String, &ResolvedItem)> = Vec::new();
     for (id, item) in &data.resolved {
+        let sp = item.layers.iter().filter(|l| l.special.is_some()).count();
+        if sp == 0 {
+            layer_items.push((id, item));
+        } else if sp == 1 && item.layers.len() == 1 {
+            specials.push((id, item));
+        } else {
+            anyhow::bail!("item {id}: a mixed or multi-special resolution");
+        }
+    }
+
+    out.push_str("pub static RESOLVED_ITEM_LAYERS: [(&str, Option<f32>, &[ResolvedItemLayer]); ");
+    out.push_str(&layer_items.len().to_string());
+    out.push_str("] = [\n");
+    for (id, item) in &layer_items {
         let swap = match item.swap_animation_scale {
             Some(v) => format!("Some({v:?})"),
             None => "None".to_string(),
@@ -590,10 +783,58 @@ pub fn emit(data: &ItemModelsData) -> Result<String> {
     }
     out.push_str("];\n\n");
 
-    out.push_str("/// Items whose definition tree cannot resolve to resting-hand layers —\n");
-    out.push_str("/// (item id, the refusal reason; the special block-entity renderers have\n");
-    out.push_str("/// no model JSON, the geometry is bytecode).\n");
-    out.push_str("pub static COMPLEX_ITEM_MODELS: &[(&str, &str)] = &[\n");
+    out.push_str("/// One special-renderer layer: the LayerDefinitions geometry id and\n");
+    out.push_str("/// the atlas sprite texture it samples; the banner flag's tint is\n");
+    out.push_str("/// the dye name (DyeColor.textureDiffuseColor, the dump's lane 4).\n");
+    out.push_str("pub struct SpecialLayerRef {\n    pub layer: &'static str,\n    pub texture: &'static str,\n    pub tint: Option<&'static str>,\n}\n\n");
+    out.push_str("/// One special-renderer item: the wrapper's base model path (whose\n");
+    out.push_str("/// display stanza poses the geometry) and the layers in render order.\n");
+    out.push_str("pub struct SpecialItemDef {\n    pub base: &'static str,\n    pub layers: &'static [SpecialLayerRef],\n    pub transform: Option<([f32; 3], [f32; 4], [f32; 3], [f32; 4])>,\n}\n\n");
+    out.push_str("/// (item id, the special definition) — the resting branch's block-entity\n");
+    out.push_str("/// renderer, RESOLVED from the tree (the wrapper's base + the renderer\n");
+    out.push_str("/// kind's LayerDefinitions ids and Sheet sprite constants).\n");
+    // the per-item statics first, then the referencing table
+    for (id, item) in &specials {
+        let l = &item.layers[0];
+        let sp = l.special.as_ref().expect("the special payload");
+        let tf = match &l.transform {
+            None => "None".to_string(),
+            Some(t) => format!(
+                "Some(({:?}, {:?}, {:?}, {:?}))",
+                t.translation, t.left_rotation, t.scale, t.right_rotation
+            ),
+        };
+        let slug = special_slug(id);
+        out.push_str(&format!("static SPECIAL_{slug}: SpecialItemDef = SpecialItemDef {{\n"));
+        out.push_str(&format!("    base: {:?},\n", sp.base));
+        out.push_str("    layers: &[\n");
+        for (layer, tex) in &sp.layers {
+            let tint = match &sp.tint {
+                Some(dye) if layer.ends_with("#flag") => format!("Some({dye:?})"),
+                _ => "None".to_string(),
+            };
+            out.push_str(&format!(
+                "        SpecialLayerRef {{ layer: {layer:?}, texture: {tex:?}, tint: {tint} }},\n"
+            ));
+        }
+        out.push_str("    ],\n");
+        out.push_str(&format!("    transform: {tf},\n}};\n"));
+    }
+    out.push_str("pub static ITEM_SPECIAL_MODELS: &[(&str, &SpecialItemDef); ");
+    out.push_str(&specials.len().to_string());
+    out.push_str("] = &[\n");
+    for (id, _) in &specials {
+        let slug = special_slug(id);
+        out.push_str(&format!("    (\"{id}\", &SPECIAL_{slug}),\n"));
+    }
+    out.push_str("];\n\n");
+
+    out.push_str("/// Items whose definition tree cannot resolve to resting-hand layers\n");
+    out.push_str("/// or special renderers — (item id, the refusal reason): the\n");
+    out.push_str("/// runtime-gated properties (local_time, compass, context_dimension,\n");
+    out.push_str("/// use_cycle) stay honestly unresolved.\n");
+    out.push_str("pub static COMPLEX_ITEM_MODELS: &[(&str, &str)] = &[
+");
     for (id, why) in &data.complex {
         out.push_str(&format!("    (\"{id}\", {why:?}),\n"));
     }
@@ -608,6 +849,19 @@ pub fn emit(data: &ItemModelsData) -> Result<String> {
     }
     out.push_str("];\n");
     Ok(out)
+}
+
+/// The Rust identifier slug for a special item's static (SPECIAL_<SLUG>).
+fn special_slug(id: &str) -> String {
+    let mut s = String::new();
+    for ch in id.chars() {
+        if ch.is_ascii_alphanumeric() {
+            s.push(ch.to_ascii_uppercase());
+        } else {
+            s.push('_');
+        }
+    }
+    s
 }
 
 #[cfg(test)]
@@ -681,13 +935,22 @@ mod tests {
         let data = generate(&mut zip).unwrap();
         assert_eq!(data.defs.len(), 2, "the two plain defs resolve");
         // the bow's select resolves through the fallback; the shield's
-        // special renderer refuses with the renderer named
+        // special renderer RESOLVES to its payload (the dump-backed
+        // lane: the base + the layer/texture law) — nothing refuses
         assert_eq!(data.resolved["bow"].layers.len(), 1);
         assert_eq!(data.resolved["bow"].layers[0].model, "minecraft:item/bow");
+        assert!(data.complex.is_empty(), "every tree resolves now");
+        let sp = data.resolved["shield"].layers[0]
+            .special
+            .as_ref()
+            .expect("the shield's special payload");
+        assert_eq!(sp.base, "minecraft:item/shield");
         assert_eq!(
-            data.complex,
-            vec![("shield".to_string(), "special:minecraft:shield — the block-entity renderer".to_string())],
-            "the special renderer refuses, the renderer named"
+            sp.layers,
+            vec![(
+                "minecraft:shield#main".to_string(),
+                "entity/shield/shield_base_nopattern".to_string()
+            )]
         );
         let stone = &data.defs["stone"];
         assert_eq!(stone.model, "minecraft:block/stone");
@@ -715,8 +978,12 @@ mod tests {
         assert!(emitted.contains("Some(1.95)"));
         assert!(emitted.contains("RESOLVED_ITEM_LAYERS: [(&str, Option<f32>, &[ResolvedItemLayer]); 1"));
         assert!(emitted.contains("(\"bow\", None, &[ResolvedItemLayer { model: \"minecraft:item/bow\", tints: &[], transform: None }])"));
-        assert!(emitted.contains("COMPLEX_ITEM_MODELS: &[(&str, &str)] = &["));
-        assert!(emitted.contains("(\"shield\", \"special:minecraft:shield"));
+        assert!(emitted.contains("COMPLEX_ITEM_MODELS: &[(&str, &str)] = &[\n];"));
+        // the shield rides the SPECIAL payload table (the geometry join
+        // happens in the registry against the dump's layers)
+        assert!(emitted.contains("(\"shield\", &SPECIAL_SHIELD)"));
+        assert!(emitted.contains("base: \"minecraft:item/shield\""));
+        assert!(emitted.contains("\"entity/shield/shield_base_nopattern\""));
     }
 
     #[test]

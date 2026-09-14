@@ -17,5 +17,6 @@ pub mod sky;
 pub mod skin;
 pub mod splashes;
 pub mod registry_order;
+pub mod special_models;
 pub mod textures;
 pub mod worldgen;
