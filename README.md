@@ -919,6 +919,32 @@ hand-drawn:
   (VILLAGER_DATA at 18 doubles as the order proof), the generated-id
   pin, and the model's merge semantics (replace-one-leave-others, the
   null-lookup drop, the re-spawn reset).
+  The **the inventory trilogy's write side — every fixture proves BOTH
+  directions (v0.3.124)**: the three packets' writers riding the
+  entity-data write side's mirror line (v0.3.122) —
+  `encode_set_equipment` (the paired walk written back: the slot byte
+  packs `ordinal | (more ? 0x80 : 0)` where the `more` is the
+  ITERATOR's hasNext, so the LAST pair's byte always rides bare; a
+  zero-pair packet is impossible — the decode reads the first slot
+  byte unconditionally — so an empty list refuses),
+  `encode_set_container_content` (the four-lane composite, the count
+  lane riding the store's OWN length — the encode side cannot
+  fabricate the negative count the decode refuses), and
+  `encode_set_container_slot` (the record's four fields, the SIGNED BE
+  SHORT slot's own mirror — a negative slot re-encodes verbatim, the
+  store is the wire again). The writers write the STORE: a retained
+  negative sentinel re-encodes verbatim (five bytes, no item, no
+  patch), a cleared slot rides the optional lane's count-only shape.
+  mc-client untouched (the writers wait for their consumers — a future
+  server-side or the protocol-test harness); a dead-import rider
+  purged four unused names from world_model.rs (no behavior, no
+  goldens). GOLDENS UNTOUCHED BY CONSTRUCTION: 12/12 at rms 0.000.
+  Tests +1 (workspace 477 -> 478 passed / 0 failed / 3 ignored): the
+  byte-equal whole-packet round-trips riding the audited fixture sets
+  (the three-pair equipment walk, the negative sentinel, the window
+  snapshot, the single-slot record, the negative slot) plus the
+  zero-pair refusal — every trilogy fixture now proves both
+  directions.
   The **set container slot — the inventory surfaces' third packet
   (v0.3.123)**: ONE slot's new stack, the single-slot sibling of the
   content round. javap of the private decode constructor: the record's
