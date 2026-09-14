@@ -283,6 +283,14 @@ pub fn special_item_renderer(id: i32) -> Option<SpecialItemRender> {
     special_item_render_by_name(item_name(id)?)
 }
 
+/// The crossbow's charge duration at the enchantment-less base —
+/// javap CrossbowItem.getChargeDuration: `Mth.floor(
+/// modifyCrossbowChargingTime(.., 1.25f) * 20f)` = 25 ticks. The
+/// pull property divides by it (the dispatch's own law) and the
+/// release law loads the projectile when the power reaches 1.0 —
+/// the same constant both lanes speak.
+pub const CROSSBOW_CHARGE_TICKS: u32 = 25;
+
 /// The item's USING-branch definition — the 5 items whose definition
 /// trees carry the `minecraft:using_item` gate (bow, crossbow,
 /// goat_horn, shield, trident). `None` = the item has no using lane
@@ -310,7 +318,7 @@ pub fn item_using_def(
 pub fn using_charge(def: &generated::item_models::ItemUsingDef, elapsed_ticks: u32) -> f32 {
     match def.property {
         "minecraft:use_duration" => elapsed_ticks as f32 * def.scale,
-        "minecraft:crossbow/pull" => elapsed_ticks as f32 / 25.0,
+        "minecraft:crossbow/pull" => elapsed_ticks as f32 / CROSSBOW_CHARGE_TICKS as f32,
         _ => 0.0,
     }
 }
@@ -378,6 +386,65 @@ pub fn item_using_state(id: i32, index: usize) -> Option<UsingStateRender> {
         })
         .collect();
     Some(UsingStateRender::Layers(layers))
+}
+
+/// Which loaded projectile the crossbow's CHARGED_PROJECTILES
+/// component carries — the CrossbowItem$ChargeType enum's own shape
+/// (javap Charge.get: contains FIREWORK_ROCKET -> ROCKET, any other
+/// projectile -> ARROW; the empty component never reaches a charge
+/// lane — the fallback renders instead).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ChargeKind {
+    Arrow,
+    Rocket,
+}
+
+/// The item's CHARGE-branch definition — the item whose tree carries
+/// the `minecraft:charge_type` select (the census: exactly the
+/// crossbow). `None` = the item renders one resting shape regardless
+/// of its component state (the honest no-lane).
+pub fn item_charge_def(
+    id: i32,
+) -> Option<&'static generated::item_models::ItemChargeDef> {
+    let name = item_name(id)?;
+    generated::item_models::ITEM_CHARGE_STATES
+        .iter()
+        .find(|d| d.0 == name)
+        .map(|d| &d.1)
+}
+
+/// The charged state's render layers — the select case's model
+/// resolution (the crossbow's loaded bolt rides the crossbow_arrow /
+/// crossbow_firework models, the same three-table join the plain
+/// lane speaks). `None` = no charge lane; the prefix strip follows
+/// the registry's own vocabulary.
+pub fn item_charge_layers(id: i32, kind: ChargeKind) -> Option<Vec<ItemModelLayer>> {
+    let def = item_charge_def(id)?;
+    let layers = match kind {
+        ChargeKind::Arrow => def.arrow,
+        ChargeKind::Rocket => def.rocket,
+    };
+    Some(
+        layers
+            .iter()
+            .map(|l| ItemModelLayer {
+                model: l.model.strip_prefix("minecraft:").unwrap_or(l.model),
+                tints: l.tints,
+                transform: l.transform,
+            })
+            .collect(),
+    )
+}
+
+/// The registry's reverse lookup — the WIRE id whose ITEM_WIRE_ORDER
+/// name is `name` (the offline `--held-item` model id's own route to
+/// the wire domain the charge and using lanes speak). `None` = not a
+/// registry item.
+pub fn item_id_by_name(name: &str) -> Option<i32> {
+    generated::item_order::ITEM_WIRE_ORDER
+        .iter()
+        .position(|n| *n == name)
+        .map(|p| p as i32)
 }
 
 /// The resolver core, generic over the table so the dedup and cycle
@@ -1288,6 +1355,46 @@ mod tests {
             }
             other => panic!("the trident's state is a special payload, got {other:?}"),
         }
+    }
+
+    #[test]
+    fn the_charge_lane_is_the_crossbows_component_select() {
+        use generated::item_models::ITEM_CHARGE_STATES;
+        // THE CENSUS: the jar sweep names exactly one charge_type tree
+        // (crossbow.json — javap Charge.get reads the CHARGED_PROJECTILES
+        // component, the CrossbowItem$ChargeType enum's own property)
+        assert_eq!(ITEM_CHARGE_STATES.len(), 1);
+        let wire = |name: &str| {
+            generated::item_order::ITEM_WIRE_ORDER
+                .iter()
+                .position(|n| *n == name)
+                .map(|p| p as i32)
+                .unwrap()
+        };
+        assert!(item_charge_def(wire("crossbow")).is_some(), "crossbow has a charge lane");
+        assert!(item_charge_def(wire("diamond")).is_none(), "no lane, no charge");
+        assert!(item_charge_def(wire("stone")).is_none());
+        assert!(item_charge_def(wire("bow")).is_none(), "the bow's pull is a using lane, not a charge");
+
+        // THE SELECT CASES: the loaded bolt rides the JSON's own case
+        // models (the arrow -> crossbow_arrow, the firework rocket ->
+        // crossbow_firework), one layer each, no transforms
+        let arrow = item_charge_layers(wire("crossbow"), ChargeKind::Arrow).unwrap();
+        assert_eq!(arrow.len(), 1);
+        assert_eq!(arrow[0].model, "item/crossbow_arrow");
+        assert!(arrow[0].transform.is_none());
+        let rocket = item_charge_layers(wire("crossbow"), ChargeKind::Rocket).unwrap();
+        assert_eq!(rocket.len(), 1);
+        assert_eq!(rocket[0].model, "item/crossbow_firework");
+
+        // THE REVERSE LOOKUP: the wire domain's own round trip
+        assert_eq!(item_id_by_name("crossbow"), Some(wire("crossbow")));
+        assert_eq!(item_id_by_name("diamond"), Some(wire("diamond")));
+        assert_eq!(item_id_by_name("not_an_item"), None);
+
+        // THE CHARGE DURATION: the release law's own constant (javap
+        // getChargeDuration = Mth.floor(1.25f * 20f) = 25)
+        assert_eq!(CROSSBOW_CHARGE_TICKS, 25);
     }
 
     #[test]

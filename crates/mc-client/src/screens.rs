@@ -333,6 +333,16 @@ pub struct App {
     /// state changes — the same no-op-reload law live_held_updated
     /// speaks). `None` = not using (the resting payload renders).
     pub using_item: Option<UseActive>,
+    /// The held stack's CHARGED_PROJECTILES component — the vanilla
+    /// ItemStack's own component state, predicted locally (the client
+    /// has no server component stream for the offline lane; the same
+    /// deterministic stand-in `--held-item` speaks for inventory
+    /// state). `Some(kind)` = the crossbow carries a loaded projectile
+    /// (the resting render rides the charge_type select's case — the
+    /// crossbow_arrow / crossbow_firework bolt); `None` = the plain
+    /// resting def. Cleared when the held item changes (the component
+    /// belongs to the STACK, never the slot).
+    pub held_charge: Option<mc_registry::ChargeKind>,
     /// The chest screen's 27 container slots as (item_id, count) — the
     /// wire's own stack shape (count <= 0 is the empty stack), the FIXED
     /// deterministic loadout the pixel test pins. Filled by open_chest
@@ -509,6 +519,7 @@ impl App {
             swing: crate::hand::SwingState::default(),
             held_item: None,
             using_item: None,
+            held_charge: None,
             chest_slots: Vec::new(),
             chest_mirror: Vec::new(),
             chest_is_live: false,
@@ -845,12 +856,16 @@ impl App {
     /// press clicks the slot with button 1 — the split-stack pickup /
     /// place-one table (`predict_pickup_right`). The WORLD's right
     /// press is the USE lane (the vanilla rightClickStart's own shape):
-    /// only the items whose trees carry the `minecraft:using_item` gate
+    /// the CHARGED crossbow fires INSTANTLY (javap CrossbowItem.use:
+    /// the CHARGED_PROJECTILES component non-empty -> performShooting +
+    /// CONSUME — no pull), the charge is consumed (the shot's own
+    /// component clear, the same prediction the swing lane speaks) and
+    /// the UseItem echo rides the live session's command channel; the
+    /// OTHER items whose trees carry the `minecraft:using_item` gate
     /// start a use (the registry's own census — the bow, the crossbow,
     /// the goat horn, the shield, the trident), the hold renders the
-    /// using branch and the wire echo rides the live session's command
-    /// channel (the offline stand-in has no session — no echo). Returns
-    /// whether a use started (the tests' honest probe).
+    /// using branch. Returns whether a use started (the tests' honest
+    /// probe).
     pub fn on_right_press(&mut self, mx: i32, my: i32) -> bool {
         if self.screen == ScreenKind::Chest {
             self.click_chest_slot(mx, my, 1);
@@ -858,6 +873,22 @@ impl App {
         }
         if self.screen == ScreenKind::World && !self.paused {
             if let Some(id) = self.live_held {
+                // THE LOADED CROSSBOW: the instant shot — the use
+                // consumes the charge (vanilla's CONSUME branch), the
+                // resting render returns to the plain crossbow, and
+                // the wire echo rides (the shot is a use-item click)
+                if self.held_charge.is_some() && mc_registry::item_charge_def(id).is_some() {
+                    self.held_charge = None;
+                    self.load_held_payload(id, None);
+                    let (yaw, pitch) = crate::world_view::wire_angles(&self.world_camera());
+                    if let Some(sink) = self.live_clicks.as_ref() {
+                        let _ = sink.send(crate::world_view::ContainerCommand::UseItem {
+                            yaw,
+                            pitch,
+                        });
+                    }
+                    return true;
+                }
                 if let Some(def) = mc_registry::item_using_def(id) {
                     let state = mc_registry::using_state_index(def, 0.0);
                     self.using_item = Some(UseActive { item: id, ticks: 0, state });
@@ -881,12 +912,27 @@ impl App {
     /// The RIGHT press's falling edge (the vanilla rightClickStop's own
     /// shape): the active use ends, the held item returns to the
     /// resting payload, and the release's serverbound echo rides the
-    /// command channel (the RELEASE_USE_ITEM action). A no-op when no
-    /// use is active.
+    /// command channel (the RELEASE_USE_ITEM action). The CROSSBOW's
+    /// load law rides the same edge (javap CrossbowItem.releaseUsing:
+    /// the power for the elapsed ticks >= 1.0 && !isCharged ->
+    /// tryLoadProjectiles sets the CHARGED_PROJECTILES component — the
+    /// pull LOADED the weapon, it did not fire): a full-charge release
+    /// sets the local component (the arrow — the inventory's first
+    /// projectile, the deterministic stand-in the offline lane speaks)
+    /// and the resting render switches to the charged bolt. A no-op
+    /// when no use is active.
     pub fn on_right_release(&mut self) {
         let Some(active) = self.using_item.take() else {
             return;
         };
+        // THE LOAD LAW: the full charge loads the projectile (the
+        // crossbow's own gate — the charge def names the component
+        // select's carrier; the bow has no charge lane)
+        if active.ticks >= mc_registry::CROSSBOW_CHARGE_TICKS
+            && mc_registry::item_charge_def(active.item).is_some()
+        {
+            self.held_charge = Some(mc_registry::ChargeKind::Arrow);
+        }
         self.load_held_payload(active.item, None);
         if let Some(sink) = self.live_clicks.as_ref() {
             let _ = sink.send(crate::world_view::ContainerCommand::ReleaseUse);
@@ -913,6 +959,18 @@ impl App {
                 None => None,
             },
             None => {
+                // THE CHARGE LANE first: the loaded crossbow's resting
+                // render rides the charge_type select's case (the
+                // CHARGED_PROJECTILES component's own branch) — the
+                // uncharged stack falls through to the plain routing
+                if let Some(kind) = self.held_charge {
+                    if mc_registry::item_charge_def(id).is_some() {
+                        if let Some(held) = crate::hand::load_charge_item(id, kind) {
+                            self.held_item = Some(held);
+                            return;
+                        }
+                    }
+                }
                 if mc_registry::special_item_renderer(id).is_some() {
                     crate::hand::load_special_item(id)
                 } else {
@@ -1390,7 +1448,12 @@ impl App {
         self.live_held = id;
         // the item changed: the use ends (the vanilla releaseUsingItem
         // on the item switch — the hold cannot outlive its own stack)
+        // and the charge goes with the STACK it belonged to (the
+        // component is the loaded crossbow's own, never the slot's)
         self.using_item = None;
+        // the charge clears with the old stack (the early return above
+        // guarded the equal case — here the id always changed)
+        self.held_charge = None;
         // the resolution order: the 63 SPECIAL renderer payloads first
         // (the dump-backed geometry lane), then the resting-hand layer
         // tables (the plain defs + the resolved trees) — the lanes are
@@ -4296,6 +4359,101 @@ mod tests {
         assert!(!app.on_right_press(0, 0), "the diamond cannot start a use");
         assert!(!app.is_using());
         assert!(click_rx.try_recv().is_err(), "no echo either");
+    }
+
+    /// THE CROSSBOW'S COMPONENT ARC — the charge_type select's consumer:
+    /// the full-charge release LOADS the projectile (javap
+    /// releaseUsing: power >= 1.0 -> tryLoadProjectiles sets the
+    /// CHARGED_PROJECTILES component — the pull loaded, it did not
+    /// fire), the resting render switches to the charged bolt (the
+    /// select's arrow case), the next right press fires INSTANTLY
+    /// (javap use: the component non-empty -> performShooting + CONSUME
+    /// — no pull), and the component belongs to the STACK (the item
+    /// switch drops it).
+    #[test]
+    fn the_crossbow_loads_on_the_full_charge_and_fires_instantly() {
+        use crate::world_view::ContainerCommand;
+        let wire = |name: &str| {
+            mc_registry::generated::item_order::ITEM_WIRE_ORDER
+                .iter()
+                .position(|&n| n == name)
+                .expect("the item rides the wire") as i32
+        };
+        let mut app = App::new(3);
+        app.open(ScreenKind::Connect);
+        app.net_world = Some(air_net_world(2, 0));
+        app.enter_network_world(None, Skybox::Overworld, None, None);
+        let (click_tx, click_rx) = std::sync::mpsc::channel::<ContainerCommand>();
+        app.attach_live_clicks(click_tx);
+
+        // THE UNCHARGED PULL: the fresh stack carries no component, the
+        // press starts the pull like the bow's
+        app.live_held_updated(Some((wire("crossbow"), 1)));
+        assert!(app.held_charge.is_none(), "the fresh stack carries no component");
+        assert!(app.on_right_press(0, 0), "the uncharged crossbow starts the pull");
+        match click_rx.try_recv().expect("the pull's use echo rode the lane") {
+            ContainerCommand::UseItem { .. } => {}
+            other => panic!("expected a UseItem echo, got {other:?}"),
+        }
+        let pulling = app.held_item.as_ref().expect("pulling_0 loads");
+        assert!(pulling.binds_texture("item/crossbow_pulling_0"));
+        // 24 ticks then the release: under the charge duration — the
+        // power < 1.0 loads nothing (the javap releaseUsing gate)
+        for _ in 0..24 {
+            app.update();
+        }
+        app.on_right_release();
+        assert!(app.held_charge.is_none(), "24 < 25 ticks — no load");
+        let resting = app.held_item.as_ref().expect("the resting crossbow returns");
+        assert!(resting.binds_texture("item/crossbow_standby"), "the model's own layer0");
+        assert!(matches!(click_rx.try_recv(), Ok(ContainerCommand::ReleaseUse)));
+
+        // THE FULL CHARGE: 25 ticks then the release — the LOAD law and
+        // the resting render's switch to the loaded bolt (the select's
+        // arrow case rides the crossbow_arrow texture)
+        assert!(app.on_right_press(0, 0), "the pull starts again");
+        match click_rx.try_recv().expect("the second pull's echo rode the lane") {
+            ContainerCommand::UseItem { .. } => {}
+            other => panic!("expected a UseItem echo, got {other:?}"),
+        }
+        for _ in 0..25 {
+            app.update();
+        }
+        app.on_right_release();
+        assert_eq!(
+            app.held_charge,
+            Some(mc_registry::ChargeKind::Arrow),
+            "the full charge LOADED the arrow (the component set)"
+        );
+        let loaded = app.held_item.as_ref().expect("the charged payload loads");
+        assert!(loaded.binds_texture("item/crossbow_arrow"), "the charge_type select's arrow case");
+        assert!(matches!(click_rx.try_recv(), Ok(ContainerCommand::ReleaseUse)));
+
+        // THE INSTANT SHOT: the right press on the charged crossbow
+        // consumes the charge — no pull starts (the vanilla CONSUME
+        // branch), the plain crossbow renders again, and the shot's
+        // UseItem echo rides the wire lane
+        assert!(app.on_right_press(0, 0), "the charged crossbow answers the press");
+        assert!(app.held_charge.is_none(), "the shot consumed the charge");
+        assert!(!app.is_using(), "the shot is instant — no pull started");
+        let plain = app.held_item.as_ref().expect("the plain crossbow returns");
+        assert!(plain.binds_texture("item/crossbow_standby"), "the standby texture returns");
+        match click_rx.try_recv().expect("the shot's use echo rode the lane") {
+            ContainerCommand::UseItem { .. } => {}
+            other => panic!("expected a UseItem echo, got {other:?}"),
+        }
+
+        // THE ROCKET SEED: the component lane's other case (the CLI
+        // seed's own domain) renders the firework bolt
+        app.held_charge = Some(mc_registry::ChargeKind::Rocket);
+        app.load_held_payload(wire("crossbow"), None);
+        let rocket = app.held_item.as_ref().expect("the rocket payload loads");
+        assert!(rocket.binds_texture("item/crossbow_firework"));
+
+        // THE STACK SWITCH: the component belongs to the stack, never
+        // the slot — the item switch drops it
+        app.live_held_updated(Some((wire("diamond"), 1)));
+        assert!(app.held_charge.is_none(), "the switch dropped the charge");
     }
 
     /// The number keys' whole arc: the HUD's selection moves with the

@@ -2262,6 +2262,26 @@ pub static ITEM_USING_STATES: &[(&str, ItemUsingDef); 5] = &[
     ("trident", ItemUsingDef { property: "", scale: 1.0, states: &[UsingStateDef { threshold: 0.0, layers: &[], special: Some(&USING_SPECIAL_TRIDENT) }] }),
 ];
 
+/// One item's CHARGE-context definition — the root select on
+/// minecraft:charge_type, resolved per the javap-pinned Charge.get
+/// law (the CHARGED_PROJECTILES component: empty -> the plain
+/// resting def — the plain table's row, not re-emitted here; a
+/// firework rocket -> rocket; any other projectile -> arrow). A
+/// case the tree does not name renders the FALLBACK (the select's
+/// own law).
+pub struct ItemChargeDef {
+    pub arrow: &'static [ResolvedItemLayer],
+    pub rocket: &'static [ResolvedItemLayer],
+}
+
+static CHARGE_LAYERS_CROSSBOW_ARROW: &[ResolvedItemLayer] = &[ResolvedItemLayer { model: "minecraft:item/crossbow_arrow", tints: &[], transform: None }];
+static CHARGE_LAYERS_CROSSBOW_ROCKET: &[ResolvedItemLayer] = &[ResolvedItemLayer { model: "minecraft:item/crossbow_firework", tints: &[], transform: None }];
+/// The CHARGE branches — the items whose trees carry the
+/// charge_type select (the loaded crossbow's own lanes). Sorted by id.
+pub static ITEM_CHARGE_STATES: &[(&str, ItemChargeDef); 1] = &[
+    ("crossbow", ItemChargeDef { arrow: CHARGE_LAYERS_CROSSBOW_ARROW, rocket: CHARGE_LAYERS_CROSSBOW_ROCKET }),
+];
+
 /// Items whose definition tree cannot resolve to resting-hand layers
 /// or special renderers — (item id, the refusal reason): the
 /// runtime-gated properties (local_time, compass, context_dimension,

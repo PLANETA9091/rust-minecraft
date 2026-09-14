@@ -81,6 +81,14 @@ struct Cli {
     /// scenes hold nothing, so the pixel goldens never see this.
     #[arg(long)]
     held_item: Option<String>,
+    /// The held stack's CHARGED_PROJECTILES component state (the
+    /// deterministic stand-in for the loaded crossbow's own component):
+    /// `arrow` or `rocket`. Requires `--held-item item/crossbow` — the
+    /// resting render rides the charge_type select's case (the loaded
+    /// bolt). The default scenes carry no charge, so the pixel goldens
+    /// never see this.
+    #[arg(long)]
+    held_charge: Option<String>,
     /// Freeze the attack-swing clock at this progress (getAttackAnim's
     /// domain [0, 1], 0 = rest) on the world screens — the deterministic
     /// stand-in for the swing clock (the client has no gameplay input in
@@ -122,6 +130,7 @@ fn main() -> Result<()> {
             cli.width,
             cli.height,
             cli.held_item.as_deref(),
+            cli.held_charge.as_deref(),
             cli.swing_progress,
             cli.slim_arm,
             &cli.out,

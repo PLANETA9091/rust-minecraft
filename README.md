@@ -919,6 +919,35 @@ hand-drawn:
   (VILLAGER_DATA at 18 doubles as the order proof), the generated-id
   pin, and the model's merge semantics (replace-one-leave-others, the
   null-lookup drop, the re-spawn reset).
+  The **the charge-type component — the loaded crossbow renders its bolt (v0.3.144)**:
+  the CHARGED_PROJECTILES component's own lane, the definition trees'
+  second select property consumed. The jar sweep names exactly one
+  `minecraft:charge_type` tree (crossbow.json); the javap evidence pins
+  the whole arc — `Charge.get` (the component empty -> the fallback,
+  contains FIREWORK_ROCKET -> rocket, else -> arrow), `CrossbowItem.use`
+  (the component non-empty -> performShooting + CONSUME — the instant
+  shot, no pull), `releaseUsing` (the power >= 1.0 ->
+  tryLoadProjectiles SETS the component — the pull loaded the weapon,
+  it did not fire), `getChargeDuration` = 25 ticks (the registry's
+  CROSSBOW_CHARGE_TICKS). The generator grew the charge-context walk
+  (the root select's cases resolve through the node laws, the fallback
+  through the resting laws; a foreign case/shape refuses loudly) and
+  emits ITEM_CHARGE_STATES (1 def: the crossbow's arrow ->
+  crossbow_arrow, rocket -> crossbow_firework). The registry grew
+  ChargeKind + item_charge_def/item_charge_layers (the three-table
+  join's own strip) + item_id_by_name (the wire-domain reverse lookup).
+  The client's App carries the local component prediction
+  (`held_charge`): the full-charge release LOADS the arrow, the resting
+  render switches to the loaded bolt, the next right press fires
+  INSTANTLY (the UseItem echo rides the wire), the stack switch drops
+  the component; `--held-charge arrow|rocket` seeds the offline lane
+  (the rocket case's own route). +2 tests (534 passed / 0 failed /
+  3 ignored): the itemgen's charge resolution, the registry's census +
+  select cases, the client's whole arc (24 ticks -> no load; 25 ->
+  loaded; the press -> the instant shot; the switch -> the drop). The
+  golden matrix 13/13 — ALL rms 0.000, every golden byte-identical:
+  the component lane is interaction-gated (the deterministic scenes
+  never press keys) — NO regen.
   The **the use-item arc — the right-mouse hold renders the using branch (v0.3.143)**:
   the client's first LIVE interaction branch from the definition trees.
   The five items whose `assets/minecraft/items/` trees carry the

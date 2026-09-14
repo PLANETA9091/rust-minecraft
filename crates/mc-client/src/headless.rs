@@ -91,6 +91,9 @@ pub fn render_frames(
 /// `held_item` (a model id, e.g. "item/iron_sword") holds that item in
 /// the first-person hand on the world screens — the deterministic
 /// stand-in for inventory state; `None` = the empty-hand arm (goldens).
+/// `held_charge` seeds the held stack's CHARGED_PROJECTILES component
+/// ("arrow" | "rocket") — the loaded crossbow's own resting lane, the
+/// charge_type select's case render; requires the crossbow in hand.
 /// `swing_progress` freezes the attack-swing clock at that progress
 /// (`getAttackAnim`, 0 = rest) — the deterministic stand-in for the
 /// swing clock; the world screens render the mid-swing pose of the
@@ -105,6 +108,7 @@ pub fn render_gui_screen(
     width: usize,
     height: usize,
     held_item: Option<&str>,
+    held_charge: Option<&str>,
     swing_progress: Option<f32>,
     slim_arm: bool,
     out_path: &Path,
@@ -122,6 +126,32 @@ pub fn render_gui_screen(
     app.slim_arm = slim_arm;
     if let Some(id) = held_item {
         app.held_item = crate::hand::load_item(id);
+    }
+    if let Some(kind) = held_charge {
+        // THE CHARGE SEED: the held stack's own component state (the
+        // loaded crossbow's resting lane). The kind names are the
+        // CrossbowItem$ChargeType enum's own lowercase codec names —
+        // anything else refuses loudly (a guessed state would render a
+        // guessed payload)
+        let kind = match kind {
+            "arrow" => mc_registry::ChargeKind::Arrow,
+            "rocket" => mc_registry::ChargeKind::Rocket,
+            other => anyhow::bail!(
+                "held-charge must be \"arrow\" or \"rocket\" (the CrossbowItem$ChargeType codec names), got {other:?}"
+            ),
+        };
+        let wire = held_item
+            // the CLI names a MODEL id ("item/crossbow") — the registry
+            // names the ITEM ("crossbow"); the namespace strip routes it
+            .and_then(|m| m.strip_prefix("item/").or(Some(m)))
+            .and_then(mc_registry::item_id_by_name)
+            .ok_or_else(|| anyhow::anyhow!("held-charge requires --held-item item/crossbow"))?;
+        anyhow::ensure!(
+            mc_registry::item_charge_def(wire).is_some(),
+            "held-charge requires a charge-lane item in hand (the crossbow)"
+        );
+        app.held_charge = Some(kind);
+        app.held_item = crate::hand::load_charge_item(wire, kind);
     }
     if let Some(p) = swing_progress {
         app.swing = crate::hand::SwingState::frozen_at(p);

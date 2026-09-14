@@ -169,6 +169,23 @@ pub struct UsingItem {
     pub states: Vec<UsingState>,
 }
 
+/// One item's CHARGE-type resolution — the definition tree evaluated
+/// for the `minecraft:charge_type` select (the CrossbowItem$ChargeType
+/// component law, javap-pinned from Charge.get): the stack's
+/// CHARGED_PROJECTILES component picks the branch — a firework rocket
+/// inside -> "rocket", any other projectile -> "arrow", empty/absent
+/// -> the fallback's own resolution (the uncharged state, the plain
+/// resting def the registry already carries). Each charged state's
+/// layers are the select case's model resolution; a case the tree
+/// does not name renders the FALLBACK (the select's own law — the
+/// vanilla SelectItemModel's fallback arm).
+pub struct ChargeStates {
+    /// The arrow-charged state's layers (the crossbow's loaded bolt).
+    pub arrow: Vec<ResolvedLayer>,
+    /// The rocket-charged state's layers (the firework star bolt).
+    pub rocket: Vec<ResolvedLayer>,
+}
+
 /// The parsed table the generated file carries.
 pub struct ItemModelsData {
     /// Plain definitions, sorted by id.
@@ -188,6 +205,9 @@ pub struct ItemModelsData {
     /// The USING-context resolutions (the trees carrying a
     /// `minecraft:using_item` gate), sorted by id.
     pub using: BTreeMap<String, UsingItem>,
+    /// The CHARGE-context resolutions (the trees carrying a
+    /// `minecraft:charge_type` select at the root), sorted by id.
+    pub charge: BTreeMap<String, ChargeStates>,
 }
 
 /// The condition properties whose RESTING state is false: a fresh stack
@@ -268,6 +288,7 @@ pub fn generate<R: std::io::Read + std::io::Seek>(
     let mut resolved: BTreeMap<String, ResolvedItem> = BTreeMap::new();
     let mut gui_icons: BTreeMap<String, GuiIcon> = BTreeMap::new();
     let mut using: BTreeMap<String, UsingItem> = BTreeMap::new();
+    let mut charge: BTreeMap<String, ChargeStates> = BTreeMap::new();
     let mut complex: Vec<(String, String)> = Vec::new();
     let mut types: BTreeMap<String, u32> = BTreeMap::new();
 
@@ -326,6 +347,17 @@ pub fn generate<R: std::io::Read + std::io::Seek>(
                         "{name}: carries a using gate but no using lane resolved from the walk"
                     ),
                 }
+            }
+            // THE CHARGE STATE: the same tree evaluated for the
+            // charge_type component select (the loaded crossbow's own
+            // resting lane). Only the trees that actually carry the
+            // select resolve one (the property census — the jar sweep
+            // names exactly one: crossbow). A refusal here is a render
+            // gap on a LOADED weapon — the loud bail, never a skip.
+            if tree_has_charge_select(&Value::Object(node.clone())) {
+                let c = resolve_charge_root(&Value::Object(node.clone()), &id, 0, &None)
+                    .map_err(|e| anyhow::anyhow!("{e}"))?;
+                charge.insert(id.clone(), c);
             }
             match resolve_node(&Value::Object(node.clone()), &id, 0, &None) {
                 Ok(layers) => {
@@ -399,7 +431,7 @@ pub fn generate<R: std::io::Read + std::io::Seek>(
         total,
         names.len()
     );
-    Ok(ItemModelsData { defs, resolved, complex, root_types, gui_icons, using })
+    Ok(ItemModelsData { defs, resolved, complex, root_types, gui_icons, using, charge })
 }
 
 /// The GUI-context resolution — the branch laws the gui display
@@ -662,6 +694,127 @@ fn resolve_using_root(
             "{id}: a composite on the using path — extend the resolver first"
         )),
         other => Err(format!("{id}: unknown node type {other} on the using path")),
+    }
+}
+
+/// Whether the tree carries a `minecraft:charge_type` select anywhere
+/// (the charge lane's gate — the census property sweep): a recursive
+/// descent over the JSON's object/array spine.
+fn tree_has_charge_select(node: &Value) -> bool {
+    let Some(obj) = node.as_object() else {
+        return false;
+    };
+    let is_gate = obj.get("type").and_then(Value::as_str) == Some("minecraft:select")
+        && obj.get("property").and_then(Value::as_str) == Some("minecraft:charge_type");
+    is_gate
+        || obj.values().any(|v| match v {
+            Value::Object(_) | Value::Array(_) => tree_has_charge_select(v),
+            _ => false,
+        })
+}
+
+/// The CHARGE-context tree resolver — the walk from the ROOT select on
+/// `minecraft:charge_type` (the javap-pinned Charge.get law: the
+/// CHARGED_PROJECTILES component empty -> the fallback, contains
+/// FIREWORK_ROCKET -> "rocket", else -> "arrow"). The charged cases
+/// resolve through the same node laws; the fallback is the UNCHARGED
+/// subtree the resting resolver already owns — it still resolves here
+/// (a fallback that cannot render would strand the uncharged state and
+/// any case-less charged state, the select's own fallback law).
+fn resolve_charge_root(
+    node: &Value,
+    id: &str,
+    depth: usize,
+    outer: &Option<TransformComponents>,
+) -> Result<ChargeStates, String> {
+    const GATE: &str = "minecraft:charge_type";
+    if depth > RESOLVE_MAX_DEPTH {
+        return Err(format!("{id}: the tree is deeper than {RESOLVE_MAX_DEPTH}"));
+    }
+    let obj = node
+        .as_object()
+        .ok_or_else(|| format!("{id}: the node must be an object"))?;
+    let ty = obj
+        .get("type")
+        .and_then(Value::as_str)
+        .ok_or_else(|| format!("{id}: the node \"type\" must be a string"))?;
+
+    // the node's own transformation rides its whole subtree (the same
+    // applyTransform law the resting walk speaks)
+    let my_transform = match obj.get("transformation") {
+        Some(t) => {
+            if outer.is_some() {
+                return Err(format!(
+                    "{id}: a transformed node under a transformed node — compose first"
+                ));
+            }
+            Some(decode_transform(t).map_err(|e| format!("{id}: {e}"))?)
+        }
+        None => None,
+    };
+    let active: Option<TransformComponents> =
+        my_transform.clone().or_else(|| outer.clone());
+
+    match ty {
+        "minecraft:select" => {
+            check_keys(obj, &SELECT_KEYS, id, ty)?;
+            let prop = obj
+                .get("property")
+                .and_then(Value::as_str)
+                .ok_or_else(|| format!("{id}: select \"property\" must be a string"))?;
+            if prop != GATE {
+                return Err(format!(
+                    "{id}: select {prop} on the charge path — no charge rule (extend first)"
+                ));
+            }
+            // the charged cases: `when` names the CrossbowItem$ChargeType
+            // enum's own lowercase names (the jar's codec — the sweep
+            // holds "arrow" and "rocket" only); a foreign case is the
+            // loud refusal, never a guessed model
+            let mut arrow: Option<Vec<ResolvedLayer>> = None;
+            let mut rocket: Option<Vec<ResolvedLayer>> = None;
+            for case in obj
+                .get("cases")
+                .and_then(Value::as_array)
+                .ok_or_else(|| format!("{id}: select \"cases\" must be an array"))?
+            {
+                let case = case
+                    .as_object()
+                    .ok_or_else(|| format!("{id}: the select case must be an object"))?;
+                let when = case
+                    .get("when")
+                    .and_then(Value::as_str)
+                    .ok_or_else(|| format!("{id}: the charge case \"when\" must be a string"))?;
+                let model = case
+                    .get("model")
+                    .ok_or_else(|| format!("{id}: the charge case without \"model\""))?;
+                let layers = resolve_node(model, id, depth + 1, &active)?;
+                match (when, &arrow, &rocket) {
+                    ("arrow", None, _) => arrow = Some(layers),
+                    ("rocket", _, None) => rocket = Some(layers),
+                    (other, _, _) => {
+                        return Err(format!(
+                            "{id}: charge case {other:?} — extend the charge walker first"
+                        ))
+                    }
+                }
+            }
+            // the fallback IS the uncharged state (and any case the
+            // tree does not name — the select's own law): resolve it
+            // through the resting laws (the using gate's on_false lives
+            // here; the plain table carries the same resolution)
+            let fallback = obj
+                .get("fallback")
+                .ok_or_else(|| format!("{id}: select without fallback on the charge path"))?;
+            let resting = resolve_node(fallback, id, depth + 1, &active)?;
+            Ok(ChargeStates {
+                arrow: arrow.unwrap_or(resting.clone()),
+                rocket: rocket.unwrap_or(resting),
+            })
+        }
+        other => Err(format!(
+            "{id}: unknown node type {other} on the charge path"
+        )),
     }
 }
 
@@ -1260,32 +1413,7 @@ pub fn emit(data: &ItemModelsData) -> Result<String> {
                     out.push_str(&format!("    transform: {tf},\n}};\n"));
                 }
                 None => {
-                    let layers: Vec<String> = state
-                        .layers
-                        .iter()
-                        .map(|l| {
-                            let tints = match l.tints.as_slice() {
-                                [] => "&[]".to_string(),
-                                [one] => format!("&[{one:?}]"),
-                                many => {
-                                    let inner: Vec<String> =
-                                        many.iter().map(|t| format!("{t:?}")).collect();
-                                    format!("&[{}]", inner.join(", "))
-                                }
-                            };
-                            let tf = match &l.transform {
-                                None => "None".to_string(),
-                                Some(t) => format!(
-                                    "Some(({:?}, {:?}, {:?}, {:?}))",
-                                    t.translation, t.left_rotation, t.scale, t.right_rotation
-                                ),
-                            };
-                            format!(
-                                "ResolvedItemLayer {{ model: {:?}, tints: {}, transform: {} }}",
-                                l.model, tints, tf
-                            )
-                        })
-                        .collect();
+                    let layers: Vec<String> = state.layers.iter().map(layer_literal).collect();
                     out.push_str(&format!(
                         "static USING_LAYERS_{slug}_{i}: &[ResolvedItemLayer] = &[{}];\n",
                         layers.join(", ")
@@ -1326,6 +1454,44 @@ pub fn emit(data: &ItemModelsData) -> Result<String> {
     }
     out.push_str("];\n\n");
 
+    out.push_str("/// One item's CHARGE-context definition — the root select on\n");
+    out.push_str("/// minecraft:charge_type, resolved per the javap-pinned Charge.get\n");
+    out.push_str("/// law (the CHARGED_PROJECTILES component: empty -> the plain\n");
+    out.push_str("/// resting def — the plain table's row, not re-emitted here; a\n");
+    out.push_str("/// firework rocket -> rocket; any other projectile -> arrow). A\n");
+    out.push_str("/// case the tree does not name renders the FALLBACK (the select's\n");
+    out.push_str("/// own law).\n");
+    out.push_str("pub struct ItemChargeDef {\n    pub arrow: &'static [ResolvedItemLayer],\n    pub rocket: &'static [ResolvedItemLayer],\n}\n\n");
+    // the per-item layer statics first, then the referencing table —
+    // the same shape the using emit speaks
+    for (id, c) in &data.charge {
+        if c.arrow.iter().any(|l| l.special.is_some())
+            || c.rocket.iter().any(|l| l.special.is_some())
+        {
+            anyhow::bail!("item {id}: a special payload on the charge path (extend the emit first)");
+        }
+        let slug = special_slug(id);
+        for (suffix, layers) in [("ARROW", &c.arrow), ("ROCKET", &c.rocket)] {
+            let parts: Vec<String> = layers.iter().map(layer_literal).collect();
+            out.push_str(&format!(
+                "static CHARGE_LAYERS_{slug}_{suffix}: &[ResolvedItemLayer] = &[{}];\n",
+                parts.join(", ")
+            ));
+        }
+    }
+    out.push_str("/// The CHARGE branches — the items whose trees carry the\n");
+    out.push_str("/// charge_type select (the loaded crossbow's own lanes). Sorted by id.\n");
+    out.push_str("pub static ITEM_CHARGE_STATES: &[(&str, ItemChargeDef); ");
+    out.push_str(&data.charge.len().to_string());
+    out.push_str("] = &[\n");
+    for (id, _) in &data.charge {
+        let slug = special_slug(id);
+        out.push_str(&format!(
+            "    (\"{id}\", ItemChargeDef {{ arrow: CHARGE_LAYERS_{slug}_ARROW, rocket: CHARGE_LAYERS_{slug}_ROCKET }}),\n"
+        ));
+    }
+    out.push_str("];\n\n");
+
     out.push_str("/// Items whose definition tree cannot resolve to resting-hand layers\n");
     out.push_str("/// or special renderers — (item id, the refusal reason): the\n");
     out.push_str("/// runtime-gated properties (local_time, compass, context_dimension,\n");
@@ -1348,8 +1514,33 @@ pub fn emit(data: &ItemModelsData) -> Result<String> {
     Ok(out)
 }
 
-/// The Rust identifier slug for a special item's static (SPECIAL_<SLUG>).
+/// One ResolvedItemLayer's generated literal — the model path, the
+/// tint jsons and the decoded transform (the emit's shared body: the
+/// using states and the charge states speak the same shape).
+fn layer_literal(l: &ResolvedLayer) -> String {
+    let tints = match l.tints.as_slice() {
+        [] => "&[]".to_string(),
+        [one] => format!("&[{one:?}]"),
+        many => {
+            let inner: Vec<String> = many.iter().map(|t| format!("{t:?}")).collect();
+            format!("&[{}]", inner.join(", "))
+        }
+    };
+    let tf = match &l.transform {
+        None => "None".to_string(),
+        Some(t) => format!(
+            "Some(({:?}, {:?}, {:?}, {:?}))",
+            t.translation, t.left_rotation, t.scale, t.right_rotation
+        ),
+    };
+    format!(
+        "ResolvedItemLayer {{ model: {:?}, tints: {}, transform: {} }}",
+        l.model, tints, tf
+    )
+}
+
 fn special_slug(id: &str) -> String {
+    // The Rust identifier slug for a special item's static (SPECIAL_<SLUG>).
     let mut s = String::new();
     for ch in id.chars() {
         if ch.is_ascii_alphanumeric() {
@@ -1794,6 +1985,20 @@ mod tests {
         assert_eq!(xbow.property, "minecraft:crossbow/pull");
         assert_eq!(xbow.scale, 1.0);
         assert_eq!(xbow.states[1].layers[0].model, "minecraft:item/crossbow_pulling_1");
+
+        // THE CHARGE CONTEXT: the same crossbow tree's charge_type
+        // select (the only one the jar carries — the census) resolves
+        // the two loaded states, the JSON's own case models; the
+        // fallback's on_false arm (the uncharged crossbow) stays the
+        // plain table's row, not re-emitted here
+        assert_eq!(data.charge.len(), 1, "the one charge-gated tree");
+        assert!(data.using.get("compass").is_none());
+        let charge = &data.charge["crossbow"];
+        assert_eq!(charge.arrow.len(), 1);
+        assert_eq!(charge.arrow[0].model, "minecraft:item/crossbow_arrow");
+        assert_eq!(charge.rocket.len(), 1);
+        assert_eq!(charge.rocket[0].model, "minecraft:item/crossbow_firework");
+        assert!(charge.arrow[0].special.is_none(), "the loaded bolt is a plain bake");
 
         // THE GOAT HORN: the single-state swap
         let horn = &data.using["goat_horn"];

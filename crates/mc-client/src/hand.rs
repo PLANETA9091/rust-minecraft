@@ -516,6 +516,19 @@ pub fn load_special_using_item(id: i32) -> Option<HeldItem> {
     }
 }
 
+/// Load the posed quads of one item's CHARGE-branch state by its WIRE
+/// id — the loaded crossbow's resting render (the CHARGED_PROJECTILES
+/// component's own lane, javap Charge.get): the crossbow_arrow bolt
+/// stands on the pulled limbs, the crossbow_firework rides the firework
+/// star. The layers go through the same posed-arc as the resting lane
+/// (the parent-chain bake, the display stanza, the hand anchor
+/// outside). `None` = no charge lane, a broken stanza or an unknown
+/// model — the caller renders the bare arm, never a half-render.
+pub fn load_charge_item(id: i32, kind: mc_registry::ChargeKind) -> Option<HeldItem> {
+    let layers = mc_registry::item_charge_layers(id, kind)?;
+    load_item_layers(&layers)
+}
+
 /// The item-in-hand anchor chain, `side` = +1 (the RIGHT main hand, the
 /// default offline player's). At the rest pose (swing 0, equip 0) the
 /// only non-trivial terms are the attack transform's rotY(side*45deg) ..
