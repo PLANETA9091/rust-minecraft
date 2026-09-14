@@ -101,6 +101,23 @@ enum Cmd {
         #[arg(long)]
         java: Option<String>,
     },
+    /// Generate the sound lane's block data table (the interaction arc's
+    /// own numbers): boot the REAL vanilla registries from the official
+    /// jar + libraries (all sha1-verified) with the checked-in runtime
+    /// dumper and emit mc-registry/src/generated/block_sounds.rs — the
+    /// default state's SoundType per block (volume, pitch and the
+    /// break/step/place/hit/fall sound-event ids).
+    DumpBlockSounds {
+        #[arg(long)]
+        version: String,
+        /// Workspace root (contains crates/).
+        #[arg(long, default_value = ".")]
+        out: String,
+        /// Explicit java binary (>= the version's java requirement from
+        /// the manifest). Default: `java` on PATH.
+        #[arg(long)]
+        java: Option<String>,
+    },
     /// Generate the bytecode-true packet id tables for EVERY phase: bind
     /// the REAL vanilla play, login, configuration, status and handshake
     /// protocols from the official jar (all sha1-verified) with the
@@ -383,6 +400,9 @@ fn main() -> Result<()> {
         }
         Cmd::DumpBlockDig { version, out, java } => {
             runtime_dump::dump_block_dig(&agent, &cache, &version, Path::new(&out), java.as_deref())?;
+        }
+        Cmd::DumpBlockSounds { version, out, java } => {
+            runtime_dump::dump_block_sounds(&agent, &cache, &version, Path::new(&out), java.as_deref())?;
         }
         Cmd::DumpPacketIds { version, out, java } => {
             packet_dump::dump_packet_ids(&agent, &cache, &version, Path::new(&out), java.as_deref())?;
@@ -811,8 +831,12 @@ fn fetch_sound_events(
 ) -> Result<(usize, usize, usize, usize)> {
     // 26.2 ships one `music.menu` event with many weighted files (older
     // versions had per-track `music.menu.menu1` children) — match both.
+    // The BLOCK family rides along (the interaction arc's own voices: the
+    // dig beat's hit, the break, the place, the footsteps — every
+    // `block.*` event the generated table resolves).
     let wanted = |id: &str| {
         id.starts_with("music.menu")
+            || id.starts_with("block.")
             || EXTRA_SOUND_EVENTS.contains(&id)
             || biome_events.binary_search(&id.to_string()).is_ok()
     };

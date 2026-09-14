@@ -289,6 +289,74 @@ pub fn discover_event_files(root: &Path, event_id: &str) -> Vec<(String, PathBuf
     out
 }
 
+/// Resolve the runtime path of ONE file of ONE sound event through the
+/// GENERATED sounds.json table (the block-sound lane's on-demand form —
+/// the block events are hundreds, the engine's log names only what
+/// plays). `file_idx` rides the engine log's `#<file>` field. Missing
+/// files (or out-of-range indexes) resolve to `None` silently — audio
+/// must never break the client.
+pub fn block_sound_file(root: &Path, event_id: &str, file_idx: usize) -> Option<PathBuf> {
+    use mc_registry::generated::sounds as snd;
+    let ev = snd::event(event_id)?;
+    let files = snd::files(ev);
+    let file = files.get(file_idx)?;
+    let rel = if file.name.ends_with(".ogg") {
+        file.name.to_string()
+    } else {
+        format!("{}.ogg", file.name)
+    };
+    let path = root.join("assets/minecraft/sounds").join(&rel);
+    if path.is_file() {
+        Some(path)
+    } else {
+        None
+    }
+}
+
+/// The vanilla channel's own fold on the decoded samples: the volume is
+/// the gain (the SoundEngine's channel attenuation — the samples scale,
+/// the length stands), the pitch is the playback rate (the SoundEngine's
+/// AL_PITCH — a linear resample, the duration divides by the pitch).
+/// Deterministic, pure, and exactly the arithmetic the real mixer speaks.
+pub fn apply_gain_and_pitch(track: &Track, volume: f32, pitch: f32) -> Track {
+    if volume == 1.0 && pitch == 1.0 {
+        return track.clone();
+    }
+    let gain = volume.max(0.0);
+    let ch = track.channels.max(1);
+    if pitch > 0.0 && (pitch - 1.0).abs() > 1e-6 {
+        // linear-interpolation resample: the output frame i reads the
+        // source at i * pitch (a pitch of 0.5 plays twice as long, 2.0
+        // half — the vanilla rate change's own law)
+        let src_frames = (track.samples.len() / ch) as f64;
+        let out_frames = ((src_frames / pitch as f64).floor() as usize).max(1);
+        let mut samples = Vec::with_capacity(out_frames * ch);
+        for i in 0..out_frames {
+            let pos = i as f64 * pitch as f64;
+            let i0 = pos.floor() as usize;
+            let i1 = (i0 + 1).min(src_frames as usize - 1);
+            let frac = (pos - i0 as f64) as f32;
+            for c in 0..ch {
+                let a = track.samples[i0 * ch + c];
+                let b = track.samples[i1 * ch + c];
+                samples.push((a + (b - a) * frac) * gain);
+            }
+        }
+        Track {
+            sample_rate: track.sample_rate,
+            channels: track.channels,
+            frames: out_frames as u64,
+            samples,
+        }
+    } else {
+        let mut out = track.clone();
+        for s in &mut out.samples {
+            *s *= gain;
+        }
+        out
+    }
+}
+
 /// Menu audio player: owns the output backend + the discovered file paths,
 /// mirrors the deterministic `MusicScheduler` event log onto real music and
 /// the App UI-sound log onto real one-shots (ui.button.click). Lives for the
@@ -300,6 +368,9 @@ pub struct MenuMusic {
     /// ui.button.click files, keyed file_key() ("ui.button.click#0")
     ui_files: HashMap<String, PathBuf>,
     ui_seen: usize,
+    /// the block-sound lane's own consume cursor (the engine log grows
+    /// append-only; the mirror reads only the new entries)
+    block_seen: usize,
 }
 
 impl MenuMusic {
@@ -339,6 +410,7 @@ impl MenuMusic {
             seen: 0,
             ui_files,
             ui_seen: 0,
+            block_seen: 0,
         }
     }
 
@@ -393,6 +465,46 @@ impl MenuMusic {
             self.play_file(&key, &path, true);
         }
         self.ui_seen = events.len();
+    }
+
+    /// Mirror new block-sound events ("{event} @{tick} #{file} v{vol}
+    /// p{pitch}" — the block-sound lane's own log) onto the one-shot
+    /// channel, the vanilla channel's gain + rate fold applied to the
+    /// decoded official .ogg. The path resolves on demand through the
+    /// generated table (hundreds of events, the log names only what
+    /// plays); unreadable files are skipped — audio never breaks the
+    /// client.
+    pub fn sync_block_sounds(&mut self, events: &[String]) {
+        let seen = self.block_seen.min(events.len());
+        for ev in &events[seen..] {
+            let Some((event, rest)) = ev.split_once(" @") else { continue };
+            let Some((file_txt, params)) = rest.split_once(" v") else { continue };
+            let Some(file_idx) = file_txt
+                .strip_prefix('#')
+                .and_then(|s| s.parse::<usize>().ok())
+            else {
+                continue;
+            };
+            let mut nums = params.split(" p");
+            let volume: f32 = nums.next().and_then(|s| s.parse().ok()).unwrap_or(1.0);
+            let pitch: f32 = nums.next().and_then(|s| s.parse().ok()).unwrap_or(1.0);
+            let Some(path) = block_sound_file(Path::new("assets-cache/jar"), event, file_idx)
+            else {
+                continue;
+            };
+            match std::fs::read(&path).ok().as_deref().map(decode_audio) {
+                Some(Ok(t)) => {
+                    let t = apply_gain_and_pitch(&t, volume, pitch);
+                    self.output.play_ui(t);
+                }
+                other => {
+                    if let Some(Err(e)) = other {
+                        eprintln!("      audio: {event}#{file_idx} undecodable ({e})");
+                    }
+                }
+            }
+        }
+        self.block_seen = events.len();
     }
 }
 

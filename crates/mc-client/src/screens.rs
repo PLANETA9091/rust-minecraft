@@ -260,6 +260,13 @@ pub struct App {
     /// vanilla rule that EVERY activated button plays the click; consumed by
     /// the audio backend (audio.rs) like the music event log.
     pub ui_sounds: Vec<String>,
+    /// THE BLOCK-SOUND LANE (sound.rs): the deterministic one-shot engine
+    /// the interaction lanes speak — the dig beat's hit, the completion's
+    /// break, the placement, the footsteps — the vanilla folds (the
+    /// javap-quoted volume/pitch constants) over the generated SoundType
+    /// table, the weighted official file pick, the event log the audio
+    /// backend mirrors ("block.stone.hit @<tick> #<file> v<vol> p<pitch>").
+    pub sounds: crate::sound::BlockSounds,
     /// Server-list ping requests (append-only log, same protocol as
     /// ui_sounds/music events): the headless logic records WHAT to ping,
     /// the window backend performs the blocking network call off the
@@ -541,6 +548,7 @@ impl App {
             seed,
             frame: 0,
             music: crate::music::MusicScheduler::new(seed),
+            sounds: crate::sound::BlockSounds::new(seed),
             paused: false,
             world_quads: None,
             world_size: 0,
@@ -654,6 +662,18 @@ impl App {
                 };
                 if let Some(w) = world {
                     b.tick(w, using);
+                    // THE FOOTSTEP: the body's own cadence law fired on a
+                    // solid block under the feet — the block's step voice
+                    // at the SoundType's *0.15 fold (Entity.playStepSound)
+                    if b.step_due {
+                        let name = crate::world::NAME_OF[w.get(
+                            b.x.floor() as i32,
+                            (b.y - 0.2).floor() as i32,
+                            b.z.floor() as i32,
+                        ) as usize];
+                        self.sounds.play(self.frame, name, crate::sound::Lane::Step);
+                        b.step_due = false;
+                    }
                     if let Some(cmd) = b.take_move_wire().map(Self::move_wire_command) {
                         if let Some(sink) = self.live_clicks.as_ref() {
                             let _ = sink.send(cmd);
@@ -682,6 +702,20 @@ impl App {
                 let mut sends: Vec<crate::dig::DigSend> = Vec::new();
                 let mut beat = false;
                 let mut broke = false;
+                let mut broke_kind: u16 = 0;
+                let mut hit_kind: Option<u16> = None;
+                // THE HIT BEAT (sound.rs's law): the vanilla checks
+                // destroyTicks % 4.0F == 0.0F BEFORE the machine's tick
+                // increments — captured here on the SAME-DESTROYING-TARGET
+                // state (a fresh arm plays nothing — startDestroyBlock is
+                // silent, the first hit rides the first continue tick),
+                // folded after the call (the vanished-cell path never
+                // speaks; the retarget path is excluded by the target
+                // moving — the tail-called start resets nothing here)
+                let target_before = self.dig.pos;
+                let hit_beat = self.dig.is_destroying
+                    && self.dig.delay == 0
+                    && crate::sound::beat_due(self.dig.ticks);
                 match pick {
                     Some((pos, face)) => {
                         let kind = self
@@ -710,6 +744,10 @@ impl App {
                                 broke = b
                                     && was_solid
                                     && world.get(pos.0, pos.1, pos.2) == crate::world::AIR;
+                                if broke {
+                                    broke_kind = kind;
+                                }
+                                hit_kind = Some(kind);
                             }
                         } else {
                             // the aimed cell vanished (a neighbor's dig):
@@ -726,8 +764,12 @@ impl App {
                 self.enqueue_dig(&sends);
                 if broke {
                     // the completion's local break: the mesh re-speaks
-                    // (the placement's own rhythm)
+                    // (the placement's own rhythm); the 2001 event's own
+                    // voice — the broken block's break sound at the
+                    // (v+1)/2, p*0.8 fold (LevelEventHandler case 2001)
                     self.remesh_offline();
+                    let name = crate::world::NAME_OF[broke_kind as usize];
+                    self.sounds.play(self.frame, name, crate::sound::Lane::Break);
                 }
                 if beat {
                     // the mining beat's own swing (the vanilla's
@@ -737,6 +779,19 @@ impl App {
                     self.swing.start();
                     if let Some(sink) = self.live_clicks.as_ref() {
                         let _ = sink.send(crate::world_view::ContainerCommand::Swing);
+                    }
+                    // THE DIG BEAT's hit voice: the same-target mining
+                    // tick whose %4 beat is due — the block's hit sound
+                    // at the (v+1)/8, p*0.5 fold (the pre-tick block kind
+                    // names the voice — the completion tick folds too
+                    // when the beat lands there, the vanilla bytecode's
+                    // own order: sound, then the completion; the retarget
+                    // and vanished paths never reach here)
+                    if hit_beat && self.dig.pos == target_before {
+                        if let Some(kind) = hit_kind {
+                            let name = crate::world::NAME_OF[kind as usize];
+                            self.sounds.play(self.frame, name, crate::sound::Lane::Hit);
+                        }
                     }
                 }
             }
@@ -2070,6 +2125,12 @@ impl App {
             world.set(cell.0, cell.1, cell.2, block);
             self.world_quads = Some(crate::mesher::mesh_world(world, None));
         }
+        // THE PLACE SOUND: BlockItem.place's own fold — the placed block's
+        // SoundType through (v+1)/2, p*0.8. The networked prediction
+        // speaks too (the client hears its own placement, the server's
+        // echo never doubles it — the vanilla's own singleplayer shape).
+        let name = crate::world::NAME_OF[block as usize];
+        self.sounds.play(self.frame, name, crate::sound::Lane::Place);
         true
     }
 
@@ -5314,6 +5375,40 @@ mod tests {
             mesh_before,
             "the mesh re-spoke with the broken cell (the quad COUNT may tie on a sloped cell — the faces move)"
         );
+        // THE SOUND ARC (sound.rs): the hit beats rode the %4 law (the dig
+        // ticks 0, 4, 8, ...), the completion spoke the 2001 break — the
+        // folds' own numbers ride the entries
+        use mc_registry::generated::block_sounds as bs;
+        let name = crate::world::NAME_OF[kind_before as usize];
+        let idx = bs::sound_index(name).expect("the surface block in the sound table");
+        let (hit_ev, break_ev) = (bs::SOUND_HIT[idx], bs::SOUND_BREAK[idx]);
+        let hits = app
+            .sounds
+            .events
+            .iter()
+            .filter(|e| e.starts_with(&format!("{hit_ev} @")))
+            .count();
+        assert_eq!(hits, (ticks + 3) / 4, "the beat count for {ticks} dig ticks");
+        let hit_entry = app
+            .sounds
+            .events
+            .iter()
+            .find(|e| e.starts_with(&format!("{hit_ev} @")))
+            .expect("the first beat rode the FIRST continue tick (dig tick 0)");
+        assert!(
+            hit_entry.contains(" v0.250000 p0.500000"),
+            "the hit fold (v+1)/8, p*0.5: {hit_entry}"
+        );
+        let break_entry = app
+            .sounds
+            .events
+            .iter()
+            .find(|e| e.starts_with(&format!("{break_ev} @")))
+            .expect("the completion's break voice");
+        assert!(
+            break_entry.contains(" v1.000000 p0.800000"),
+            "the break fold (v+1)/2, p*0.8: {break_entry}"
+        );
         // THE COOLDOWN + THE COLUMN CONTINUATION (the vanilla dig-down
         // rhythm): the eye drops to reach the column's next cell — the
         // hold ticks the delay away (each cooldown tick still beats the
@@ -5356,6 +5451,101 @@ mod tests {
         app.on_press(0, 0);
         assert!(!app.dig.is_destroying, "the air press never armed");
         assert_eq!(app.miss_time, 10, "the anti-spam window armed");
+    }
+
+    /// THE BLOCK-SOUND ARC's PLACE VOICE: the right-press placement
+    /// speaks the placed block's place sound at BlockItem.place's own
+    /// fold — (v+1)/2 volume, p*0.8 pitch — one entry per press, the
+    /// dirt's GRAVEL SoundType row naming the event.
+    #[test]
+    fn the_block_placement_speaks_the_place_voice() {
+        let mut app = App::new(3);
+        app.enter_world();
+        app.offline_held_updated(Some("item/dirt"));
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let top = app.spawn_y;
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, top as f32 + 4.0, c as f32 + 0.5),
+            yaw: 0.0,
+            pitch: -std::f32::consts::FRAC_PI_2,
+        });
+        assert_eq!(
+            app.offline_world.as_ref().unwrap().get(c, top, c),
+            crate::world::AIR,
+            "the placement cell starts empty"
+        );
+        let before = app.sounds.events.len();
+        assert!(app.on_right_press(0, 0), "the placement consumed the press");
+        assert_eq!(app.sounds.events.len(), before + 1, "exactly one voice");
+        let entry = &app.sounds.events[before];
+        assert!(
+            entry.starts_with("block.gravel.place @")
+                && entry.contains(" v1.000000 p0.800000"),
+            "the place fold on the dirt's GRAVEL row: {entry}"
+        );
+        // THE MISS PLACES NOTHING: the sky press consumes nothing and
+        // adds no voice
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, top as f32 + 4.0, c as f32 + 0.5),
+            yaw: 0.0,
+            pitch: std::f32::consts::FRAC_PI_2,
+        });
+        let before = app.sounds.events.len();
+        assert!(!app.on_right_press(0, 0), "the sky miss never places");
+        assert_eq!(app.sounds.events.len(), before, "the miss is silent");
+    }
+
+    /// THE BLOCK-SOUND ARC'S FOOTSTEPS: the walking body's steps ride
+    /// Entity.move's own cadence — moveDist grows by the horizontal
+    /// movement × 0.6, a step fires per whole moveDist unit over a solid
+    /// block under the feet — and the step voice speaks the block under
+    /// at Entity.playStepSound's own fold (v*0.15, the pitch untouched).
+    #[test]
+    fn the_walking_body_speaks_the_footstep_cadence() {
+        let mut app = App::new(3);
+        app.enter_world();
+        app.spawn_offline_body();
+        app.on_movement_input(1.0, 0.0, false, false, false);
+        for _ in 0..40 {
+            app.update();
+        }
+        let b = app.body.as_ref().unwrap();
+        assert!(
+            b.move_dist > 2.0,
+            "the walk accumulated the vanilla law ({})",
+            b.move_dist
+        );
+        let steps: Vec<&String> = app
+            .sounds
+            .events
+            .iter()
+            .filter(|e| e.contains(".step @"))
+            .collect();
+        // the walk crosses the lakebed's own slope (the honest seed-3
+        // terrain): the airborne crossings stay silent — the vanilla
+        // isAir gate — so the count never EXCEEDS the whole units
+        assert!(
+            !steps.is_empty() && steps.len() <= b.move_dist as i32 as usize,
+            "the steps rode the cadence ({} steps for moveDist {})",
+            steps.len(),
+            b.move_dist
+        );
+        for s in &steps {
+            assert!(
+                s.contains(" v0.150000 p1.000000"),
+                "the step fold on every entry: {s}"
+            );
+        }
+        // the events the steps named are real generated sound events
+        use mc_registry::generated::sounds as snd;
+        for s in &steps {
+            let ev = s.split(" @").next().unwrap();
+            assert!(snd::event(ev).is_some(), "the step event exists: {ev}");
+        }
+        // the body rested on solid ground the whole walk (the lakebed
+        // spawn's own honest floor) — no floating step possible
+        assert!(b.on_ground, "the walk stayed on the terrain");
     }
 
     /// THE DIG LANE's NETWORKED ARC — the destroy state arms and mines

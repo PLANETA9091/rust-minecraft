@@ -27,6 +27,7 @@ mod png_io;
 mod raster;
 mod screens;
 mod sky;
+mod sound;
 mod textures;
 mod timeline;
 mod tint;

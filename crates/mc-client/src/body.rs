@@ -311,6 +311,17 @@ pub struct PlayerBody {
     pub left: f32,
     pub jumping: bool,
     no_jump_delay: i32,
+    /// THE FOOTSTEP ACCUMULATION (Entity.move's own fields): the walk
+    /// distance grows by the horizontal movement × 0.6, the step fires
+    /// when it crosses `next_step` (nextStep() = (int)moveDist + 1.0F —
+    /// the vanilla's one-footstep-per-~1.667-blocks cadence). The App
+    /// drains `step_due` after the tick and speaks the block under the
+    /// feet's own voice.
+    pub move_dist: f32,
+    pub next_step: f32,
+    /// the tick's step fired (the block under was solid) — the App
+    /// clears it after the sound folds
+    pub step_due: bool,
     // sendPosition's bookkeeping
     position_reminder: i32,
     x_last: f64,
@@ -343,6 +354,9 @@ impl PlayerBody {
             left: 0.0,
             jumping: false,
             no_jump_delay: 0,
+            move_dist: 0.0,
+            next_step: 1.0,
+            step_due: false,
             position_reminder: 0,
             x_last: x,
             y_last: y,
@@ -554,6 +568,27 @@ impl PlayerBody {
         self.z += col.dz;
         self.horizontal_collision = col.horizontal_collision;
         self.on_ground = col.vertical_collision_below;
+        // THE FOOTSTEP ACCUMULATION (Entity.move's own law over the
+        // ACTUAL moved delta): moveDist += horizontalDistance × 0.6 (the
+        // climbable branch's full-length lane aside — our vocabulary
+        // climbs nothing yet); the step fires when moveDist > nextStep
+        // AND the block under the feet (getOnPos: floor(x), floor(y -
+        // 0.2), floor(z)) is not air — the vanilla's own isAir gate —
+        // and the counter resets to (int)moveDist + 1.0F.
+        self.step_due = false;
+        let horizontal = ((col.dx * col.dx + col.dz * col.dz).sqrt()) as f32;
+        self.move_dist += horizontal * 0.6;
+        if self.move_dist > self.next_step {
+            let under = world.get(
+                self.x.floor() as i32,
+                (self.y - 0.2).floor() as i32,
+                self.z.floor() as i32,
+            );
+            if under != AIR {
+                self.next_step = (self.move_dist as i32) as f32 + 1.0;
+                self.step_due = true;
+            }
+        }
         // THE RESTITUTION (restituteMovementAfterCollisions with the
         // player's own bounciness 0): the collided components of the
         // carried velocity zero — the resting rhythm stays the vanilla
@@ -688,6 +723,57 @@ mod tests {
         for _ in 0..4 {
             b.tick(w, false);
         }
+    }
+
+    /// THE FOOTSTEP CADENCE (Entity.move's own law): the walk distance
+    /// grows by the horizontal movement × 0.6, a step fires per whole
+    /// moveDist unit over solid ground (the isAir gate never trips on
+    /// the flat stone), the counter resets to (int)moveDist + 1.0F.
+    #[test]
+    fn the_footstep_cadence_is_entity_move_law() {
+        // a WIDE flat floor: the walk travels ~8 blocks — the 16x16
+        // helper would drop the body off its edge into the void (the
+        // void's own isAir silence is a different test's story)
+        let mut w = World::new(4, 42);
+        for x in 0..64 {
+            for z in 0..64 {
+                for y in 0..crate::world::CHUNK_Y {
+                    w.set(x, y as i32, z, if y == 0 { crate::world::STONE } else { crate::world::AIR });
+                }
+            }
+        }
+        let mut b = PlayerBody::new(8.0, 1.0, 8.0, 0.0, 0.0);
+        settle(&mut b, &w);
+        b.forward = 1.0;
+        let mut steps = 0;
+        for _ in 0..40 {
+            b.tick(&w, false);
+            if b.step_due {
+                steps += 1;
+                assert_eq!(
+                    b.next_step,
+                    (b.move_dist as i32) as f32 + 1.0,
+                    "the reset rides nextStep()'s law ({})",
+                    b.next_step
+                );
+                assert!(
+                    b.move_dist > b.next_step - 1.0,
+                    "the step fired at the crossing (moveDist {})",
+                    b.move_dist
+                );
+                // the block under the feet on the flat world is stone —
+                // the App folds the step voice through the STONE row
+                // (the sound lane's own tests); the body only names the
+                // cadence
+            }
+        }
+        assert!(b.move_dist > 3.0, "the walk accumulated ({})", b.move_dist);
+        assert_eq!(
+            steps,
+            b.move_dist as i32 as usize,
+            "one step per whole moveDist unit over solid ground ({})",
+            b.move_dist
+        );
     }
 
     #[test]

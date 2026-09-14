@@ -692,6 +692,10 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
         music.sync(&app.music);
         // UI one-shots (ui.button.click) ride the independent UI channel
         music.sync_ui(&app.ui_sounds);
+        // the block-sound lane's own one-shots (the dig beat's hit, the
+        // break, the place, the footsteps) ride the same channel with the
+        // vanilla gain + rate fold applied
+        music.sync_block_sounds(&app.sounds.events);
         fb.clear(crate::headless::SKY_TOP, crate::headless::SKY_BOTTOM);
         app.render(&mut fb, &mut assets);
         buf.iter_mut().zip(fb.to_argb()).for_each(|(o, c)| *o = c);

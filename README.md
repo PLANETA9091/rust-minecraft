@@ -919,6 +919,42 @@ hand-drawn:
   (VILLAGER_DATA at 18 doubles as the order proof), the generated-id
   pin, and the model's merge semantics (replace-one-leave-others, the
   null-lookup drop, the re-spawn reset).
+  The **the sound of blocks — the SoundType table, the dig beat's hit, the break, the place, the footsteps (v0.3.148)**:
+  the block-sound arc — every interaction lane now SPEAKS like the
+  original speaks. The data: a new runtime dumper
+  (`crates/mc2rs-gen/dump/DumpBlockSounds.java`, the dig dumper's own
+  boot arc) reads the default state's real `SoundType` through its own
+  getters — the base volume, the base pitch and the five sound-event
+  ids (break/step/place/hit/fall, the SOUND_EVENT registry keys) — one
+  line per block in the true registration order into
+  `mc-registry/src/generated/block_sounds.rs` (1196 blocks; the vanilla
+  pairings verified: dirt speaks GRAVEL, the leaves speak GRASS, the
+  logs speak WOOD). The generator's asset lane now fetches the whole
+  `block.*` family through the asset index — 1807 official .ogg files,
+  every one sha1-verified into `assets-cache/jar`. The laws (javap of
+  the real 26.2 classes): `MultiPlayerGameMode.continueDestroyBlock`
+  plays the HIT sound when `destroyTicks % 4.0F == 0.0F` — checked
+  BEFORE the tick increments — at `(getVolume()+1.0F)/8.0F` volume and
+  `getPitch()*0.5F` pitch; the completion's break rides
+  `BlockBehaviour.playerWillDestroy` -> `levelEvent 2001` ->
+  `LevelEventHandler`: `getBreakSound()` at `(getVolume()+1.0F)/2.0F`
+  and `getPitch()*0.8F`; `BlockItem.place` folds the place sound
+  through the SAME shape; `Entity.playStepSound` plays the step at
+  `getVolume()*0.15F` with the pitch untouched, and `Entity.move`'s own
+  cadence drives it — `moveDist += horizontalDistance * 0.6`, the step
+  when `moveDist > nextStep`, `nextStep()` resetting to
+  `(int)moveDist + 1.0F` (one footstep per ~1.667 blocks of travel, the
+  airborne crossings silent through the isAir gate). The engine:
+  `mc-client/src/sound.rs` — the deterministic `BlockSounds` (the music
+  scheduler's own LCG, the vanilla sound engine's weighted file pick
+  over the official `weight` fields) logging
+  `"{event} @{tick} #{file} v{vol} p{pitch}"` entries the audio backend
+  mirrors onto the one-shot channel (the gain scales the decoded
+  samples, the pitch is a linear resample — the mixer's own arithmetic).
+  The headless discipline held: the deterministic scenes never press a
+  key, the goldens never hear a sound — and the golden matrix's exact
+  render args are now scripted (`scripts/golden_matrix.sh`): **13/13,
+  every golden rms 0.000 byte-identical — NO regen**.
   The **the dig lane — the block-break arc, the destroy stages, the hit outline, the Player Action wire (v0.3.147)**:
   the block-BREAK half — the left mouse now MINES like the original
   mines. The javap evidence pins every law from the cached jar's
