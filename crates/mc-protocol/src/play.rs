@@ -1474,7 +1474,9 @@ pub mod entity_data_serializers {
 /// tag × 2, the compound-only bare tag, the BE f32, the UTF string ×
 /// 3, the capped tag list, the idMapper ordinal, and the bool — plus
 /// the second wave's three composites (the enchantment map, the
-/// four-list model data, the tooltip display). The other 92 types
+/// four-list model data, the tooltip display) and the third wave's
+/// adventure-mode pair (can_place_on / can_break — the SAME
+/// AdventureModePredicate record). The other 90 types
 /// refuse — see [`EntityDataEntry::ItemStack`].
 pub mod data_component_types {
     /// `CustomData.STREAM_CODEC` = `ByteBufCodecs.COMPOUND_TAG` =
@@ -1549,6 +1551,23 @@ pub mod data_component_types {
     /// attached — so any non-negative id is retained verbatim, the
     /// DIRECTION/RARITY line; the consumer resolves or refuses).
     pub const TOOLTIP_DISPLAY: i32 = 18;
+    // ---- the third wave: the adventure-mode pair ----
+    /// `AdventureModePredicate.STREAM_CODEC` =
+    /// `composite(BlockPredicate.STREAM_CODEC.list(), ..)` — a VarInt
+    /// count (the NO-ARG `ByteBufCodecs.list()`, whose ceiling is
+    /// `Integer.MAX_VALUE` — readCount's ceiling check is the only
+    /// guard, a negative count still dies at the constructor) then
+    /// count × [`BlockPredicate`]. Both this and
+    /// [`data_component_types::CAN_BREAK`] carry the SAME record — the
+    /// two ids are one codec, registered twice (clinit order 14 and
+    /// 15, BETWEEN enchantments 13 and attribute_modifiers 16).
+    pub const CAN_PLACE_ON: i32 = 14;
+    /// The second half of the adventure-mode pair — the same
+    /// `AdventureModePredicate` record as
+    /// [`data_component_types::CAN_PLACE_ON`] (one codec, two
+    /// component ids: "blocks this item CAN place on" and "blocks it
+    /// CAN break" share the predicate list shape).
+    pub const CAN_BREAK: i32 = 15;
 }
 
 /// One decoded component-patch VALUE — the codec-shape variants of
@@ -1615,6 +1634,12 @@ pub enum ComponentValue {
         /// The hidden components' type registry ids, in wire order.
         hidden: Vec<i32>,
     },
+    /// The adventure-mode lane: can_place_on (14) and can_break (15)
+    /// — the SAME `AdventureModePredicate` record registered under
+    /// two component ids, so one variant serves both. A predicate is
+    /// the four-lane [`BlockPredicate`] composite; see it for the
+    /// decode's honest refusals.
+    BlockPredicates(Vec<BlockPredicate>),
 }
 
 /// The item stack's component patch — the `DataComponentPatch$3`
@@ -1867,6 +1892,125 @@ fn read_component_value(type_id: i32, c: &mut &[u8]) -> Result<ComponentValue> {
              the value cannot be skipped honestly)"
         ),
     })
+}
+
+/// The block-set lane of a [`BlockPredicate`] — the
+/// `ByteBufCodecs$31` (holderSet) decode verbatim: a VarInt TAG where
+/// wire 0 is the NAMED set and wire tag >= 1 is a DIRECT set of
+/// `tag - 1` holder ids (so wire tag 1 is the EMPTY direct set —
+/// nothing else on the wire). A negative effective count cannot
+/// arrive: wire 0 was the named lane, every larger tag yields a
+/// non-negative direct count.
+#[derive(Debug, Clone, PartialEq)]
+pub enum BlockSet {
+    /// Wire tag 0: the set is a block TAG, carried as its UTF
+    /// identifier (`minecraft:logs`). Vanilla resolves it against the
+    /// synced block-tag registry with `orElseThrow` — an unknown tag
+    /// name fails the read THERE; this client carries no block-tag
+    /// tables, so the identifier is retained verbatim (the
+    /// VILLAGER_DATA line: the resolution is a consumer's act) and
+    /// the strictness is documented, not enacted at decode.
+    Named(String),
+    /// Wire tag >= 1: `(tag - 1)` NUMERIC block registry ids (the
+    /// `$29` byIdOrThrow VarInt — a negative id refuses exactly where
+    /// vanilla's byIdOrThrow throws; the ids themselves are retained
+    /// verbatim, the decode-only line).
+    Direct(Vec<i32>),
+}
+
+/// The value lane of a [`PropertyMatcher`] — the
+/// `ByteBufCodecs.either(ExactMatcher, RangedMatcher)` decode: a
+/// ONE-BYTE boolean discriminator (true = LEFT, the exact match;
+/// false = RIGHT, the ranged match — $26 reads a bare
+/// `readBoolean`).
+#[derive(Debug, Clone, PartialEq)]
+pub enum PropertyValue {
+    /// The left lane: `ExactMatcher.STREAM_CODEC` = a bare UTF string
+    /// ("true"/"false" for boolean properties, the literal value
+    /// otherwise).
+    Exact(String),
+    /// The right lane: `RangedMatcher.STREAM_CODEC` =
+    /// `composite(optional(STRING_UTF8), optional(STRING_UTF8))` —
+    /// BOTH bounds ride as UTF STRINGS ("10"), not doubles: the
+    /// numeric NBT schema is not the wire's shape (the enchantment
+    /// level lesson again, in the opposite direction). Either bound
+    /// may be absent (the boolean-flag-then-value prefix).
+    Ranged {
+        /// The inclusive minimum, or None.
+        min: Option<String>,
+        /// The inclusive maximum, or None.
+        max: Option<String>,
+    },
+}
+
+/// One block-state property constraint of a [`BlockPredicate`] —
+/// `PropertyMatcher.STREAM_CODEC` = `composite(STRING_UTF8 name,
+/// ValueMatcher.STREAM_CODEC)`, and the predicate itself is
+/// `PropertyMatcher.list()` — a VarInt count, then count × this.
+#[derive(Debug, Clone, PartialEq)]
+pub struct PropertyMatcher {
+    /// The block-state property's name ("facing", "half", ...).
+    pub name: String,
+    /// The constraint on its value.
+    pub value: PropertyValue,
+}
+
+/// The component-matcher lane of a [`BlockPredicate`] —
+/// `DataComponentMatchers.STREAM_CODEC` = `composite(
+/// DataComponentExactPredicate.STREAM_CODEC,
+/// DataComponentPredicate.STREAM_CODEC, ..)`.
+///
+/// The EXACT side decodes fully:
+/// `DataComponentExactPredicate.STREAM_CODEC` =
+/// `TypedDataComponent.STREAM_CODEC.list()` — a VarInt count, then
+/// count × {the component type id, the type's OWN value}, the SAME
+/// walk as the patch's added entries (an unknown id refuses — the
+/// unframed wire cannot be skipped honestly).
+///
+/// The PARTIAL side refuses: `DataComponentPredicate.STREAM_CODEC` =
+/// `list(64)` of a DISPATCHED registry (each predicate type carries
+/// its own payload codec — damage, enchantments, potion contents, a
+/// census wave of its own). The count is read and the 64-cap is
+/// enforced (a larger count is vanilla's own DecoderException), but
+/// any NON-EMPTY list refuses because there is no honest skip for a
+/// payload the port does not carry — the patch's known-but-
+/// unimplemented line. The EMPTY partial list (the common ANY
+/// matchers) decodes to an empty footprint.
+#[derive(Debug, Clone, PartialEq)]
+pub struct DataComponentMatchers {
+    /// The exact-match entries: {component type id, the value to
+    /// match}, in wire order, decoded through the same walk as the
+    /// patch's added entries.
+    pub exact: Vec<(i32, ComponentValue)>,
+}
+
+/// ONE adventure-mode block predicate — the `BlockPredicate.STREAM_CODEC`
+/// composite verbatim, FOUR lanes in wire order (the first three
+/// through `ByteBufCodecs.optional` — a one-byte boolean prefix, then
+/// the value only if present; `$23` reads a bare `readBoolean`):
+///
+/// 1. `optional(holderSet(BLOCK))` — [`BlockSet`];
+/// 2. `optional(StatePropertiesPredicate.STREAM_CODEC)` — the
+///    `PropertyMatcher.list()` → [`Vec<PropertyMatcher>`];
+/// 3. `optional(NbtPredicate.STREAM_CODEC)` — `COMPOUND_TAG.map(..)`,
+///    a bare tag whose non-compound shape refuses (the custom_data
+///    DecoderException line);
+/// 4. `DataComponentMatchers.STREAM_CODEC` — [`DataComponentMatchers`].
+///
+/// An all-absent predicate (all three optionals false, both matcher
+/// lists empty) is the decodable ANY-blocks shape — nothing after
+/// the four lane bytes.
+#[derive(Debug, Clone, PartialEq)]
+pub struct BlockPredicate {
+    /// The block-set lane: which blocks (a tag, explicit ids, or
+    /// absent = any).
+    pub blocks: Option<BlockSet>,
+    /// The block-state property constraints, or absent.
+    pub properties: Option<Vec<PropertyMatcher>>,
+    /// The block-entity NBT constraint, or absent.
+    pub nbt: Option<Nbt>,
+    /// The component-matcher lane.
+    pub matchers: DataComponentMatchers,
 }
 
 /// The `DataComponentPatch$3.decode` walk: VarInt added count, VarInt
