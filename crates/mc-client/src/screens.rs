@@ -353,6 +353,24 @@ pub struct App {
     /// arrives (vanilla servers always stream keep-alives, so a quit
     /// closes within seconds).
     pub live_runs: Vec<(u64, std::sync::Arc<std::sync::atomic::AtomicBool>)>,
+    /// The container command lane into the LIVE session's worker: the
+    /// frame thread's slot clicks and the player's own close echo ride
+    /// this channel (the worker drains it each loop and speaks the
+    /// wire). Attached per dispatched join, replaced by the next one,
+    /// cleared with the session (Save and Quit, a kick) — a command
+    /// with no lane dies honestly on the frame thread.
+    pub live_clicks: Option<std::sync::mpsc::Sender<crate::world_view::ContainerCommand>>,
+    /// The LIVE window's identity the clicks echo against: (window id,
+    /// the revision the client last saw). `Some` while a chest menu
+    /// from the store is up, `None` with the offline stand-in and the
+    /// closed lanes — a click without a window is the honest no-op.
+    pub chest_live_window: Option<(i32, i32)>,
+    /// The chest slot hit boxes the LAST render laid out: (x, y, the
+    /// MENU's own slot number) — the render-time geometry the clicks
+    /// hit-test against (the buttons' own pattern: the frame renders
+    /// the layout, the press finds it). The 16x16 inner box only (the
+    /// vanilla Slot's own hit shape, the inset sprite's inside).
+    pub chest_slot_rects: Vec<(i32, i32, i16)>,
 }
 
 /// World size for the in-game screen (chunks per side — same as the
@@ -442,6 +460,9 @@ impl App {
             chest_slots: Vec::new(),
             chest_mirror: Vec::new(),
             chest_is_live: false,
+            live_clicks: None,
+            chest_live_window: None,
+            chest_slot_rects: Vec::new(),
         }
     }
 
@@ -553,10 +574,25 @@ impl App {
     /// The player mirror rows render their chrome always and their
     /// CONTENTS when the live lane filled them (the networked store's
     /// rows 27..63 — the offline stand-in keeps the chrome-only shape
-    /// the golden pins).
+    /// the golden pins). The render also lays out the slot HIT BOXES
+    /// (the 16x16 inner cells with their menu slot numbers) for the
+    /// press lane — the buttons' own render-then-hit pattern, zero
+    /// pixel surface of its own.
     fn render_chest(&mut self, g: &mut Gui, a: &mut GuiAssets, w: i32, h: i32) {
         g.fill(0, 0, w, h, [0.0, 0.0, 0.0, 0.35]);
         let (px, py) = chest_panel_origin(w, h);
+        // the hit boxes: the container grid's 0..27 then the mirror's
+        // 27..63 — the MENU's own numbering, the click's slot lane
+        self.chest_slot_rects = (0..27)
+            .map(|i| {
+                let (sx, sy) = chest_container_slot((px, py), i);
+                (sx + 1, sy + 1, i as i16)
+            })
+            .chain((0..36).map(|i| {
+                let (sx, sy) = chest_mirror_slot((px, py), i);
+                (sx + 1, sy + 1, (27 + i) as i16)
+            }))
+            .collect();
         let face = [0.776, 0.776, 0.776, 1.0]; // 0xC6C6C6
         let light = [1.0, 1.0, 1.0, 1.0];
         let dark = [0.333, 0.333, 0.333, 1.0]; // 0x555555
@@ -666,16 +702,74 @@ impl App {
             self.buttons.clear();
         } else if self.screen == ScreenKind::Chest {
             // the container's own close (vanilla Escape/E on a container
-            // screen): back to the world. The serverbound Close Container
-            // echo rides the session's send lane — the click packets'
-            // round owns that wire; the server's OWN close (the
-            // clientbound packet) closes the live screen through the
-            // container lane regardless.
+            // screen): back to the world. The player's OWN close echoes
+            // the serverbound Container Close packet through the live
+            // session's send lane (the offline stand-in has no window
+            // and no session — its close stays a local act); the
+            // server's OWN close (the clientbound packet) closes the
+            // live screen through the container lane regardless.
+            if self.chest_is_live {
+                if let (Some((window_id, _)), Some(sink)) =
+                    (self.chest_live_window, self.live_clicks.as_ref())
+                {
+                    let _ = sink.send(crate::world_view::ContainerCommand::Close { window_id });
+                }
+            }
             self.chest_is_live = false;
+            self.chest_live_window = None;
             self.open(ScreenKind::World);
         } else if matches!(self.screen, ScreenKind::Connect | ScreenKind::Disconnect) {
             self.open(ScreenKind::Servers);
         }
+    }
+
+    /// The LEFT press's rising edge (the vanilla MouseHandler's own
+    /// press routing): a container screen's press clicks the slot it
+    /// landed on; every other screen falls through to the attack swing
+    /// (the world's left press — the guard inside keeps the menus
+    /// silent).
+    pub fn on_press(&mut self, mx: i32, my: i32) {
+        if self.screen == ScreenKind::Chest {
+            self.click_chest_slot(mx, my);
+            return;
+        }
+        self.on_attack();
+    }
+
+    /// The chest screen's slot click: the press finds the 16x16 hit box
+    /// the last render laid out (the vanilla Slot's own hit shape), and
+    /// the LIVE window's identity (id + revision) rides the command to
+    /// the session's send lane. The prediction-free client's click
+    /// carries an empty delta list and an empty cursor — the server's
+    /// authoritative corrections ride back through the container lane.
+    /// The OFFLINE stand-in has no window and no session: its presses
+    /// are the honest no-op (the golden's deterministic scene).
+    fn click_chest_slot(&mut self, mx: i32, my: i32) {
+        if !self.chest_is_live {
+            return; // the offline stand-in: no window, no click
+        }
+        let Some((window_id, state_id)) = self.chest_live_window else {
+            return; // no window identity — nothing to echo against
+        };
+        let Some(sink) = self.live_clicks.as_ref() else {
+            return; // no live session — the command dies on the frame thread
+        };
+        let Some(&(_, _, slot)) = self
+            .chest_slot_rects
+            .iter()
+            .find(|&&(x, y, _)| mx >= x && mx < x + 16 && my >= y && my < y + 16)
+        else {
+            return; // the press landed between the slots — no click
+        };
+        let _ = sink.send(crate::world_view::ContainerCommand::Click(
+            crate::world_view::ContainerClick {
+                window_id,
+                state_id,
+                slot,
+                button: 0,
+                input: crate::world_view::ContainerInput::Pickup,
+            },
+        ));
     }
 
     pub fn on_click(&mut self, mx: i32, my: i32) {
@@ -910,11 +1004,28 @@ impl App {
 
     /// Close EVERY live session (Save and Quit unloads the network
     /// world; a live kick ends it): all workers stop between packets,
-    /// the sockets go down like the original's.
+    /// the sockets go down like the original's. The container command
+    /// lane dies with the session — a stored sender without a worker
+    /// would be a ghost lane (a click would silently vanish instead of
+    /// dying on the frame thread).
     fn close_all_live_runs(&mut self) {
         for (_, run) in self.live_runs.drain(..) {
             run.store(false, std::sync::atomic::Ordering::Relaxed);
         }
+        self.live_clicks = None;
+        self.chest_live_window = None;
+    }
+
+    /// Attach the container command lane of the freshly dispatched
+    /// join's worker (the frame thread's clicks and the player's own
+    /// close echo ride it into the session's send path). Replaces any
+    /// previous lane — a superseded join's sender drops with its
+    /// worker's stop flag.
+    pub fn attach_live_clicks(
+        &mut self,
+        clicks: std::sync::mpsc::Sender<crate::world_view::ContainerCommand>,
+    ) {
+        self.live_clicks = Some(clicks);
     }
 
     /// The live view refreshed: the play session's stream landed in the
@@ -998,6 +1109,9 @@ impl App {
                 self.chest_slots = grid;
                 self.chest_mirror = mirror;
                 self.chest_is_live = true;
+                // the window's identity rides in: the clicks echo
+                // against THIS id and revision (the stateId lane)
+                self.chest_live_window = Some((c.id, c.state_id));
                 if self.screen == ScreenKind::World {
                     self.open(ScreenKind::Chest);
                 }
@@ -1010,6 +1124,7 @@ impl App {
                     self.chest_is_live = false;
                     self.open(ScreenKind::World);
                 }
+                self.chest_live_window = None;
             }
         }
     }
@@ -2908,6 +3023,7 @@ mod tests {
                 s
             },
             carried: (0, 0),
+            state_id: 7,
         };
         app.live_view_updated(air_net_world(2, 1), None, None, Some(chest.clone()));
         assert_eq!(app.screen, ScreenKind::Chest, "the window shows over the world");
@@ -2930,7 +3046,7 @@ mod tests {
 
         // a NON-chest menu is the honest drop: the store keeps it, the
         // screen machinery does not move (its screen is its own round)
-        let hopper = LiveContainer { id: 6, menu_type_id: 15, slots: vec![], carried: (0, 0) };
+        let hopper = LiveContainer { id: 6, menu_type_id: 15, slots: vec![], carried: (0, 0), state_id: 0 };
         app.live_view_updated(air_net_world(2, 3), None, None, Some(hopper));
         assert_eq!(app.screen, ScreenKind::Chest, "the wired screen stays");
         assert_eq!(app.chest_slots[9], (160, 3), "the hopper touched nothing");
@@ -2967,11 +3083,137 @@ mod tests {
         assert_eq!(app.chest_mirror[0], (33, 5), "the live mirror filled in");
     }
 
+    /// The slot click's whole arc: the live chest's press rides the
+    /// send lane with the window's own identity (id + revision), the
+    /// between-slots press is the honest no-op, and the offline
+    /// stand-in never speaks (no window, no session).
+    #[test]
+    fn the_slot_click_rides_the_send_lane() {
+        use crate::world_view::{ContainerCommand, ContainerInput};
+        let mut app = App::new(3);
+        app.open(ScreenKind::Connect);
+        app.net_world = Some(air_net_world(2, 0));
+        app.enter_network_world(None, Skybox::Overworld, None, None);
+        let (click_tx, click_rx) = std::sync::mpsc::channel::<ContainerCommand>();
+        app.attach_live_clicks(click_tx);
+        let chest = crate::world_view::LiveContainer {
+            id: 5,
+            menu_type_id: crate::world_model::MENU_TYPE_CHEST,
+            slots: {
+                let mut s = vec![(0i32, 0i32); 63];
+                s[4] = (645, 12); // the diamond x12 in the container's slot 4
+                s
+            },
+            carried: (0, 0),
+            state_id: 7,
+        };
+        app.live_view_updated(air_net_world(2, 1), None, None, Some(chest));
+        assert_eq!(app.screen, ScreenKind::Chest);
+        assert!(app.chest_is_live);
+        assert_eq!(app.chest_live_window, Some((5, 7)), "the window's identity rode in");
+
+        // the render lays out the hit boxes (the buttons' own pattern);
+        // the press at the box's center clicks the MENU's slot number
+        app.render_title_buttons_for_test();
+        assert_eq!(app.chest_slot_rects.len(), 63, "27 grid + 36 mirror boxes");
+        let &(sx, sy, slot) = app
+            .chest_slot_rects
+            .iter()
+            .find(|&&(_, _, s)| s == 4)
+            .expect("the container's slot 4 box");
+        app.on_press(sx + 8, sy + 8);
+        match click_rx.try_recv().expect("the click rode the lane") {
+            ContainerCommand::Click(c) => {
+                assert_eq!(c.window_id, 5, "the live window's id");
+                assert_eq!(c.state_id, 7, "the revision the client last saw");
+                assert_eq!(c.slot, 4, "the MENU's own slot number");
+                assert_eq!(c.button, 0, "the left press");
+                assert_eq!(c.input, ContainerInput::Pickup);
+            }
+            other => panic!("expected a click, got {other:?}"),
+        }
+
+        // the MIRROR's box speaks the menu's tail numbering (the main
+        // row's first slot is the menu's 27)
+        let &(mx, my, _) = app
+            .chest_slot_rects
+            .iter()
+            .find(|&&(_, _, s)| s == 27)
+            .expect("the mirror's first box");
+        app.on_press(mx + 8, my + 8);
+        match click_rx.try_recv().expect("the mirror click rode the lane") {
+            ContainerCommand::Click(c) => assert_eq!(c.slot, 27, "the menu's tail numbering"),
+            other => panic!("expected a click, got {other:?}"),
+        }
+
+        // a press BETWEEN the boxes dies on the frame thread (no click
+        // rides the lane)
+        app.on_press(0, 0);
+        assert!(click_rx.try_recv().is_err(), "no slot, no click");
+
+        // the OFFLINE stand-in: the same screen, no window, no session
+        // — its presses are the honest no-op (the golden's scene)
+        app.live_view_updated(air_net_world(2, 2), None, None, None);
+        assert_eq!(app.screen, ScreenKind::World, "the live chest closed");
+        app.open_chest();
+        assert_eq!(app.screen, ScreenKind::Chest);
+        assert!(!app.chest_is_live, "the offline flag stays down");
+        assert_eq!(app.chest_live_window, None, "no window identity");
+        app.render_title_buttons_for_test();
+        let &(ox, oy, _) = app
+            .chest_slot_rects
+            .iter()
+            .find(|&&(_, _, s)| s == 4)
+            .expect("the offline grid's own slot 4 box");
+        app.on_press(ox + 8, oy + 8);
+        assert!(click_rx.try_recv().is_err(), "the offline chest never speaks");
+    }
+
+    /// The player's OWN close echoes the serverbound Container Close
+    /// packet through the send lane (the live chest only — the offline
+    /// stand-in's close stays a local act).
+    #[test]
+    fn escape_echoes_the_close_packet() {
+        use crate::world_view::ContainerCommand;
+        let mut app = App::new(3);
+        app.open(ScreenKind::Connect);
+        app.net_world = Some(air_net_world(2, 0));
+        app.enter_network_world(None, Skybox::Overworld, None, None);
+        let (click_tx, click_rx) = std::sync::mpsc::channel::<ContainerCommand>();
+        app.attach_live_clicks(click_tx);
+        let chest = crate::world_view::LiveContainer {
+            id: 2,
+            menu_type_id: crate::world_model::MENU_TYPE_CHEST,
+            slots: vec![(645, 1)],
+            carried: (0, 0),
+            state_id: 3,
+        };
+        app.live_view_updated(air_net_world(2, 1), None, None, Some(chest));
+        assert_eq!(app.screen, ScreenKind::Chest);
+        app.on_escape();
+        assert_eq!(app.screen, ScreenKind::World, "the container closed");
+        assert!(!app.chest_is_live);
+        assert_eq!(app.chest_live_window, None, "the window's identity dropped");
+        match click_rx.try_recv().expect("the close echo rode the lane") {
+            ContainerCommand::Close { window_id } => assert_eq!(window_id, 2),
+            other => panic!("expected a close, got {other:?}"),
+        }
+
+        // the OFFLINE chest's Escape: the same close, no echo (no
+        // window to close on the wire)
+        app.open_chest();
+        assert_eq!(app.screen, ScreenKind::Chest);
+        app.on_escape();
+        assert_eq!(app.screen, ScreenKind::World);
+        assert!(click_rx.try_recv().is_err(), "the offline close never speaks");
+    }
+
     #[test]
     fn escape_closes_the_chest_back_to_the_world() {
         // the LIVE chest: Escape is the player's own close — back to the
-        // world (the serverbound echo rides the click round's send lane;
-        // the flag drops so the next container-less update is a no-op)
+        // world (the serverbound echo rides the send lane, pinned by the
+        // escape test above; the flag drops so the next container-less
+        // update is a no-op)
         let mut app = App::new(3);
         app.open(ScreenKind::Connect);
         app.net_world = Some(air_net_world(2, 0));
@@ -2981,6 +3223,7 @@ mod tests {
             menu_type_id: crate::world_model::MENU_TYPE_CHEST,
             slots: vec![(645, 1)],
             carried: (0, 0),
+            state_id: 3,
         };
         app.live_view_updated(air_net_world(2, 1), None, None, Some(chest));
         assert_eq!(app.screen, ScreenKind::Chest);

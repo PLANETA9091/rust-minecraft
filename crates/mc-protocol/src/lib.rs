@@ -32,19 +32,20 @@ pub use play::{
     begin_play, connect_and_join_live, connect_and_join_world, join_world, AttributeDisplay,
     AttributeModifier, AttributeModifierEntry, BlockPredicate, BlockSet, ChunkColumn, ChunkLight,
     ChunkSection, ClockUpdate, ComponentPatch, ComponentValue, ConsumeEffect, ConsumableSound,
-    ContainerClose, ContainerContent, ContainerSetSlot, DataComponentMatchers, EffectDetails,
+    ContainerClick, ContainerClose, ContainerContent, ContainerInput, ContainerSetSlot,
+    DataComponentMatchers, EffectDetails,
     EffectHolderSet, EffectInstance,
     EntityDataEntry,
     EntityDataSet, EntityDeltaPos, EntityDeltaPosRot, EntityDeltaRot, EntityEquipment,
     EntityHeadRot,
     EntityPositionSync, EntityReference, EntitySpawn, EquipmentEntry, EquipmentSlot, GlobalPos,
-    ItemStack, LightData, LiveJoin,
+    HashedStack, ItemStack, LightData, LiveJoin,
     MobEffectRemove, MobEffectUpdate, OpenScreen, PaintingVariant, PartialPredicate,
     ParticleValue, PlayerSkinPatch, PlayEvent, PositionSource,
     ProfileProperty, ResolvableProfile, SkinAsset,
     PlaySession, PlayStart, PlayerPosition, PredicateTypeLane, PropertyMatcher, PropertyValue,
     SetEntityDataEntry, SetHeldSlot, SpawnInfo, TimeSync, WorldInfo, WorldOutcome, WorldSnapshot,
-    DESIRED_CHUNKS_PER_TICK, pack_entries,
+    DESIRED_CHUNKS_PER_TICK, encode_container_click, encode_container_close, pack_entries,
 };
 pub use login::{connect_and_login, login, LoginOutcome};
 pub use status::{ping, PingResponse};

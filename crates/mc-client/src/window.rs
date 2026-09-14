@@ -129,6 +129,7 @@ fn run_join(
             String,
         >,
     >,
+    clicks: std::sync::mpsc::Receiver<crate::world_view::ContainerCommand>,
     run: std::sync::Arc<std::sync::atomic::AtomicBool>,
 ) {
     // the REAL protocol number (login tolerates no 0-ping) and the
@@ -201,6 +202,67 @@ fn run_join(
             loop {
                 if !run.load(std::sync::atomic::Ordering::Relaxed) {
                     break; // the App closed the session (quit/cancel)
+                }
+                // THE CONTAINER COMMANDS: the frame thread's slot clicks
+                // and the player's own close echo drain FIRST, so a
+                // queued command rides the wire before the next read
+                // blocks. The read itself is blocking (a framed stream
+                // cannot resync) — a command emitted during a quiet
+                // patch waits for the server's next packet, the same
+                // honest cadence the view refreshes already ride
+                // (vanilla servers always have one in flight).
+                for cmd in clicks.try_iter() {
+                    let sent = match cmd {
+                        crate::world_view::ContainerCommand::Click(c) => {
+                            // the prediction-free click: the empty delta
+                            // list and the empty cursor are the client's
+                            // honest BELIEF (no menu logic runs locally
+                            // yet) — the server's corrections ride the
+                            // container lane back to the screen
+                            let input = match c.input {
+                                crate::world_view::ContainerInput::Pickup => {
+                                    mc_protocol::ContainerInput::Pickup
+                                }
+                                crate::world_view::ContainerInput::QuickMove => {
+                                    mc_protocol::ContainerInput::QuickMove
+                                }
+                                crate::world_view::ContainerInput::Swap => {
+                                    mc_protocol::ContainerInput::Swap
+                                }
+                                crate::world_view::ContainerInput::Clone => {
+                                    mc_protocol::ContainerInput::Clone
+                                }
+                                crate::world_view::ContainerInput::Throw => {
+                                    mc_protocol::ContainerInput::Throw
+                                }
+                                crate::world_view::ContainerInput::QuickCraft => {
+                                    mc_protocol::ContainerInput::QuickCraft
+                                }
+                                crate::world_view::ContainerInput::PickupAll => {
+                                    mc_protocol::ContainerInput::PickupAll
+                                }
+                            };
+                            session.click_container(&mc_protocol::ContainerClick {
+                                container_id: c.window_id,
+                                state_id: c.state_id,
+                                slot: c.slot,
+                                button: c.button,
+                                input,
+                                changed_slots: Vec::new(),
+                                carried: mc_protocol::HashedStack::Empty,
+                            })
+                        }
+                        crate::world_view::ContainerCommand::Close { window_id } => {
+                            session.close_container(window_id)
+                        }
+                    };
+                    if let Err(e) = sent {
+                        // a send failure is a transport error: a framed
+                        // stream cannot resync — report and end (the
+                        // pump's own error path)
+                        let _ = live_tx.send(Err(format!("container send: {e:#}")));
+                        return;
+                    }
                 }
                 match session.pump() {
                     Ok(mc_protocol::PlayEvent::Disconnected { reason }) => {
@@ -351,7 +413,14 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize) -> anyhow::Result<()>
             // client's disconnect; no ghost client lingers on the server)
             let run = std::sync::Arc::new(std::sync::atomic::AtomicBool::new(true));
             app.attach_live_run(id, std::sync::Arc::clone(&run));
-            std::thread::spawn(move || run_join(id, host, port, tx, live_tx, run));
+            // the container command lane: the frame thread's slot clicks
+            // and the player's own close echo ride into the worker's
+            // drain (the session's send path — see run_join)
+            let (click_tx, click_rx) = std::sync::mpsc::channel::<
+                crate::world_view::ContainerCommand,
+            >();
+            app.attach_live_clicks(click_tx);
+            std::thread::spawn(move || run_join(id, host, port, tx, live_tx, click_rx, run));
         }
         while let Ok((id, res)) = net_rx.try_recv() {
             app.ping_finished(id, res);

@@ -287,6 +287,59 @@ pub struct LiveContainer {
     /// The GUI cursor stack as `(item_id, count)` (the Set Content
     /// packet's carriedItem).
     pub carried: (i32, i32),
+    /// The menu's revision counter (the store's `state_id` — whichever
+    /// packet spoke last): the value the player's own clicks echo back
+    /// (the click packet's stateId lane; the server uses it to spot a
+    /// stale client and correct it).
+    pub state_id: i32,
+}
+
+/// The click's input modes, the UI-facing mirror of the wire's own
+/// `ContainerInput` enum (the 26.2 registration order — the official
+/// codec's `getEnumConstants()` order, dumped by the checked-in
+/// `ReflectContainerClick.java`). The player's left press speaks
+/// Pickup; the rest are the menu-interaction rounds' own lines.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ContainerInput {
+    Pickup,
+    QuickMove,
+    Swap,
+    Clone,
+    Throw,
+    QuickCraft,
+    PickupAll,
+}
+
+/// One clicked slot, as the screen emits it (the protocol-agnostic
+/// record the window's translation lane turns into the wire's own
+/// click). The window id and the revision ride the LIVE store's
+/// last-known values — the projection's own fields, not the screen's
+/// guesses.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ContainerClick {
+    /// The live window's id (the store's open container).
+    pub window_id: i32,
+    /// The menu's revision the client last saw.
+    pub state_id: i32,
+    /// The clicked slot, the MENU's own numbering (the chest grid
+    /// 0..27, the player mirror 27..63).
+    pub slot: i16,
+    /// The button (the left press's 0; the right press is the
+    /// split-stack round's own lane).
+    pub button: i8,
+    /// The click's input mode (Pickup for the left press).
+    pub input: ContainerInput,
+}
+
+/// The player's container command as the screen emits it: a clicked
+/// slot, or the player's OWN close (the Escape/E echo the clientbound
+/// Container Close lane mirrors). The command lane rides the live
+/// session's worker — the frame thread emits, the worker speaks the
+/// wire (the session's send path).
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum ContainerCommand {
+    Click(ContainerClick),
+    Close { window_id: i32 },
 }
 
 /// The model's open-container store projected for the UI — `None`
@@ -299,6 +352,7 @@ fn open_container_view(model: &WorldModel) -> Option<LiveContainer> {
         menu_type_id: oc.menu_type_id,
         slots: oc.slots.iter().map(|s| (s.item_id, s.count)).collect(),
         carried: (oc.carried.item_id, oc.carried.count),
+        state_id: oc.state_id,
     })
 }
 

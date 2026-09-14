@@ -116,8 +116,8 @@ pub mod clientbound {
 pub mod serverbound {
     pub use crate::generated::packet_ids::{
         SB_ACCEPT_TELEPORTATION as CONFIRM_TELEPORTATION,
-        SB_CHUNK_BATCH_RECEIVED as CHUNK_BATCH_RECEIVED, SB_KEEP_ALIVE as KEEP_ALIVE,
-        SB_PONG as PONG,
+        SB_CHUNK_BATCH_RECEIVED as CHUNK_BATCH_RECEIVED, SB_CONTAINER_CLICK as CONTAINER_CLICK,
+        SB_CONTAINER_CLOSE as CONTAINER_CLOSE, SB_KEEP_ALIVE as KEEP_ALIVE, SB_PONG as PONG,
     };
 }
 
@@ -4778,6 +4778,137 @@ pub fn encode_play_pong(id: i32) -> Vec<u8> {
 }
 
 // ---------------------------------------------------------------------------
+// the container's serverbound voice
+// ---------------------------------------------------------------------------
+
+/// The click's input mode — the 26.2 `ContainerInput` enum's registration
+/// order, DUMPED from the official jar's own enum (the checked-in
+/// `ReflectContainerClick.java` lists the constants in
+/// `getEnumConstants()` order): PICKUP, QUICK_MOVE, SWAP, CLONE, THROW,
+/// QUICK_CRAFT, PICKUP_ALL. The wire rides the ordinal as a VarInt (the
+/// enum's codec is the ByIdMap id-mapper — ordinal in, ordinal out).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ContainerInput {
+    Pickup,
+    QuickMove,
+    Swap,
+    Clone,
+    Throw,
+    QuickCraft,
+    PickupAll,
+}
+
+impl ContainerInput {
+    /// The wire's own VarInt value (the registration-order ordinal).
+    pub fn wire_ordinal(self) -> i32 {
+        self as i32
+    }
+}
+
+/// The client's believed stack state — the 26.2 `HashedStack` prediction
+/// lane. The click packet's changed-slots and carried lanes carry HASHED
+/// stacks (the components ride as hashes, not bytes), and the honest
+/// minimal record this client speaks is the item's WIRE id + count with
+/// the EMPTY component-patch hash map. The non-empty hashed-patch lanes
+/// are the prediction rounds' own line — this dump pinned only the
+/// empty map's shape (`00 00`: zero added hashes, zero removed types).
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum HashedStack {
+    /// The `00` byte — the optional lane's emptiness.
+    Empty,
+    /// The `01` byte + the item's wire registry id + the count + the
+    /// EMPTY hashed patch map.
+    ActualItem { item_id: i32, count: i32 },
+}
+
+/// The container click the vanilla client speaks (the 26.2 record
+/// `ServerboundContainerClickPacket`: containerId, stateId, slotNum,
+/// buttonNum, containerInput, changedSlots, carriedItem — the wire
+/// layout DUMPED from the official STREAM_CODEC by the checked-in
+/// `ReflectContainerClick.java`; see the encoder for the bytes).
+/// `state_id` is the revision the client last SAW (the Set
+/// Content/Slot packets' counter — the store's own `state_id`), the
+/// slot rides the MENU's own numbering, and the changed-slots/carried
+/// lanes are the client's BELIEF (a prediction-free client sends an
+/// empty delta list with an empty cursor — the server's authoritative
+/// corrections ride back through the container lane).
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ContainerClick {
+    /// The window id the server assigned (the Open Screen packet's).
+    pub container_id: i32,
+    /// The revision the client last saw (the store's `state_id`).
+    pub state_id: i32,
+    /// The clicked slot, the menu's own numbering (a chest: 0..27 the
+    /// grid, 27..63 the player mirror).
+    pub slot: i16,
+    /// The button (0 = the left press).
+    pub button: i8,
+    /// The click's input mode (the wire's own enum).
+    pub input: ContainerInput,
+    /// The client's believed per-slot deltas (the prediction rounds
+    /// fill this; the prediction-free lane rides empty).
+    pub changed_slots: Vec<(i16, HashedStack)>,
+    /// The client's believed cursor stack (empty without prediction).
+    pub carried: HashedStack,
+}
+
+/// Container Click (serverbound play 0x12): the record's seven lanes
+/// written back — the VarInt container id, the VarInt state id, the
+/// SIGNED BE SHORT slot, the BYTE button, the VarInt input ordinal, the
+/// count-prefixed changed-slot pairs (SHORT + HashedStack each) and the
+/// carried HashedStack last. The bytes are the official STREAM_CODEC's
+/// own output for the pinned fixtures (the dump's evidence, byte for
+/// byte):
+/// `container=2 state=7 slot=13 button=0 PICKUP empty/empty` =
+/// `02 07 000d 00 00 0000` (body — the packet id prefix is the
+/// dispatch's own lane, the house convention).
+pub fn encode_container_click(click: &ContainerClick) -> Result<Vec<u8>> {
+    let mut p = Vec::with_capacity(9);
+    write_varint(&mut p, serverbound::CONTAINER_CLICK);
+    write_varint(&mut p, click.container_id);
+    write_varint(&mut p, click.state_id);
+    write_i16(&mut p, click.slot);
+    p.push(click.button as u8);
+    write_varint(&mut p, click.input.wire_ordinal());
+    write_varint(&mut p, click.changed_slots.len() as i32);
+    for (slot, stack) in &click.changed_slots {
+        write_i16(&mut p, *slot);
+        write_hashed_stack(&mut p, stack)?;
+    }
+    write_hashed_stack(&mut p, &click.carried)?;
+    Ok(p)
+}
+
+/// One HashedStack lane's write mirror: the presence byte, then the
+/// ActualItem's item id + count as VarInts and the EMPTY hashed patch
+/// map (`00 00` — the dump's own shape for a hash map with no added
+/// hashes and no removed types; a non-empty map is unpinned here and
+/// therefore unwriteable).
+fn write_hashed_stack(out: &mut Vec<u8>, stack: &HashedStack) -> Result<()> {
+    match stack {
+        HashedStack::Empty => out.push(0),
+        HashedStack::ActualItem { item_id, count } => {
+            out.push(1);
+            write_varint(out, *item_id);
+            write_varint(out, *count);
+            out.push(0);
+            out.push(0);
+        }
+    }
+    Ok(())
+}
+
+/// Container Close (serverbound play 0x13): the window id — the
+/// player's OWN close (Escape/E on a container screen), the echo the
+/// clientbound Container Close lane mirrors.
+pub fn encode_container_close(container_id: i32) -> Vec<u8> {
+    let mut p = Vec::with_capacity(3);
+    write_varint(&mut p, serverbound::CONTAINER_CLOSE);
+    write_varint(&mut p, container_id);
+    p
+}
+
+// ---------------------------------------------------------------------------
 // the session pump
 // ---------------------------------------------------------------------------
 
@@ -5500,6 +5631,23 @@ impl<S: Read + Write> PlaySession<S> {
             }
             _ => Ok(PlayEvent::Skipped),
         }
+    }
+
+    /// The player's container click (the vanilla handleContainerInput's
+    /// own serverbound echo): the record encoded and sent in place.
+    pub fn click_container(&mut self, click: &ContainerClick) -> Result<()> {
+        let pkt = encode_container_click(click)?;
+        self.conn
+            .send_packet(&pkt)
+            .context("send container click")
+    }
+
+    /// The player's OWN container close (the vanilla closeContainer's
+    /// echo — Escape/E on a container screen).
+    pub fn close_container(&mut self, container_id: i32) -> Result<()> {
+        self.conn
+            .send_packet(&encode_container_close(container_id))
+            .context("send container close")
     }
 }
 
@@ -9683,6 +9831,88 @@ mod tests {
             p,
             "the negative slot re-encodes verbatim"
         );
+    }
+
+    /// The container click's serverbound lane: the bytes are the
+    /// official 26.2 STREAM_CODEC's own output for three real packet
+    /// instances (the checked-in `ReflectContainerClick.java` built the
+    /// packets and serialized them through the jar's own codec — the
+    /// hex below is that dump, byte for byte). The id-prefix byte rides
+    /// the house convention (the generated table's 0x12).
+    #[test]
+    fn the_container_click_lane_speaks_the_dumped_wire() {
+        assert_eq!(serverbound::CONTAINER_CLICK, 18, "minecraft:container_click");
+        assert_eq!(serverbound::CONTAINER_CLOSE, 19, "minecraft:container_close");
+        // the input modes' registration order — the dump's own
+        // getEnumConstants() order, the wire's VarInt values
+        assert_eq!(ContainerInput::Pickup.wire_ordinal(), 0);
+        assert_eq!(ContainerInput::QuickMove.wire_ordinal(), 1);
+        assert_eq!(ContainerInput::Swap.wire_ordinal(), 2);
+        assert_eq!(ContainerInput::Clone.wire_ordinal(), 3);
+        assert_eq!(ContainerInput::Throw.wire_ordinal(), 4);
+        assert_eq!(ContainerInput::QuickCraft.wire_ordinal(), 5);
+        assert_eq!(ContainerInput::PickupAll.wire_ordinal(), 6);
+        // the prediction-free click: window 2, revision 7, the menu's
+        // slot 13, the left button, PICKUP, an empty delta list and an
+        // empty cursor — the exact bytes the official codec wrote for
+        // the same record (`02 07 000d 00 00 0000` + the id prefix)
+        let p = encode_container_click(&ContainerClick {
+            container_id: 2,
+            state_id: 7,
+            slot: 13,
+            button: 0,
+            input: ContainerInput::Pickup,
+            changed_slots: Vec::new(),
+            carried: HashedStack::Empty,
+        })
+        .unwrap();
+        assert_eq!(
+            p,
+            vec![0x12, 0x02, 0x07, 0x00, 0x0d, 0x00, 0x00, 0x00, 0x00],
+            "the minimal click, byte-equal to the dump"
+        );
+        // the prediction-laden click: a changed slot 7 (diamond x3 — the
+        // wire's registry id 926 the dump resolved) and a carried apple
+        // x1 (921): the deltas' SHORT + HashedStack pair shape, the
+        // ActualItem's presence byte + VarInt id + VarInt count + the
+        // EMPTY hashed patch map (`00 00`)
+        let p = encode_container_click(&ContainerClick {
+            container_id: 2,
+            state_id: 7,
+            slot: 13,
+            button: 1,
+            input: ContainerInput::Pickup,
+            changed_slots: vec![(7, HashedStack::ActualItem { item_id: 926, count: 3 })],
+            carried: HashedStack::ActualItem { item_id: 921, count: 1 },
+        })
+        .unwrap();
+        assert_eq!(
+            p,
+            vec![
+                0x12, 0x02, 0x07, 0x00, 0x0d, 0x01, 0x00, // the header + PICKUP
+                0x01, 0x00, 0x07, 0x01, 0x9e, 0x07, 0x03, 0x00, 0x00, // {7: diamond x3}
+                0x01, 0x99, 0x07, 0x01, 0x00, 0x00, // the carried apple x1
+            ],
+            "the prediction-laden click, byte-equal to the dump"
+        );
+        // the QUICK_MOVE ordinal rides its registration-order value
+        let p = encode_container_click(&ContainerClick {
+            container_id: 2,
+            state_id: 7,
+            slot: 5,
+            button: 0,
+            input: ContainerInput::QuickMove,
+            changed_slots: Vec::new(),
+            carried: HashedStack::Empty,
+        })
+        .unwrap();
+        assert_eq!(
+            p,
+            vec![0x12, 0x02, 0x07, 0x00, 0x05, 0x00, 0x01, 0x00, 0x00],
+            "the QUICK_MOVE ordinal, byte-equal to the dump"
+        );
+        // the close: the window id alone
+        assert_eq!(encode_container_close(2), vec![0x13, 0x02]);
     }
 
     /// The hotbar's selection packet (generated id 105): the ONE-lane

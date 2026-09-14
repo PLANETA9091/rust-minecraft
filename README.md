@@ -919,6 +919,39 @@ hand-drawn:
   (VILLAGER_DATA at 18 doubles as the order proof), the generated-id
   pin, and the model's merge semantics (replace-one-leave-others, the
   null-lookup drop, the re-spawn reset).
+  The **the slot-click lane — the container answers back (v0.3.131)**:
+  the interactivity directive's third landing — the chest screen's presses
+  SPEAK THE WIRE. The 26.2 serverbound Container Click packet's wire layout
+  was DUMPED, not remembered: the checked-in `ReflectContainerClick.java`
+  (the DumpPacketIds arc's own pattern — boot the real registries, build
+  REAL packet records, serialize through the official jar's own
+  STREAM_CODEC) pinned every lane byte for byte, and the run exposed two
+  format facts the wiki-era knowledge could not: the click mode is the
+  ContainerInput enum (PICKUP..PICKUP_ALL, the ordinal as a VarInt) and the
+  changed-slots/carried lanes ride HASHED stacks (HashedStack: the presence
+  byte, the item's wire id + count, the hashed patch map — the empty map's
+  `00 00` shape pinned, the non-empty lanes the prediction rounds' own
+  line). The protocol crate now SPEAKS the packet: `encode_container_click`
+  (its tests byte-equal to the dump's own output for three real records)
+  + `encode_container_close` + the PlaySession send path (`click_container`
+  / `close_container` — the session's first client-initiated sends beyond
+  the probe answers). The CLIENT lane: LiveContainer carries the menu's
+  revision (`state_id`), the App retains the live window's identity, the
+  render lays out the 63 slot hit boxes (the 16x16 inner cells with the
+  MENU's own numbers — the buttons' render-then-hit pattern, zero pixel
+  surface), and the LEFT press's rising edge (a new `on_press` seam — the
+  vanilla MouseHandler's routing) clicks the slot it landed on: the
+  protocol-agnostic command rides a fresh per-join channel into the
+  worker's drain, the worker speaks the wire with the prediction-free
+  client's honest belief (empty deltas, empty cursor — the server's
+  corrections ride the container lane back). Escape on a LIVE chest now
+  echoes the serverbound Container Close (the offline stand-in's close
+  stays a local act). GOLDENS UNTOUCHED BY CONSTRUCTION: 13/13 at rms
+  0.000. Tests +3 (workspace 492 -> 495 passed / 0 failed / 3 ignored):
+  the click lane's dumped-wire pins (three records + close + the enum
+  order), the slot click's whole arc (the identity rides, the mirror's
+  tail numbering, the between-slots no-op, the offline silence), and the
+  Escape echo (the live window's id, the offline silence).
   The **the container's live lane — the networked chest screen (v0.3.130)**:
   the interactivity line's next step — the container GUI is WIRED TO THE
   NETWORK, the offline stand-in's promised round. The model's
