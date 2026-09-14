@@ -919,6 +919,31 @@ hand-drawn:
   (VILLAGER_DATA at 18 doubles as the order proof), the generated-id
   pin, and the model's merge semantics (replace-one-leave-others, the
   null-lookup drop, the re-spawn reset).
+  The **the hotbar HUD's live items — the store's row over the sprite
+  (v0.3.139)**: the hotbar stops being chrome-only in a live session —
+  the store's WHOLE hotbar row (`USE_ROW_SLOT_START..USE_ROW_SLOT_END`,
+  the same audited slice the hand's lane reads) projects through the
+  view's new `hotbar` field and rides the live channel's sixth element
+  to the HUD: each slot's flat icon at the vanilla origin (the 3px
+  inset, the 20px pitch — `renderHotbar`'s own geometry) and the count
+  white and shadowed at the slot's bottom-right, hidden while a single
+  item rides (the chest screen's own decoration treatment, the vanilla
+  `renderItemDecorations` convention). THE ORDER IS THE STORE'S: the
+  row rides the inventory window's own numbering verbatim — the
+  selection re-orders NOTHING (the highlight is the selection's own
+  business; the hand re-reads the selected seat, the HUD draws the
+  row where the store named it), the never-spoken tail stays `(0, 0)`
+  (the wire's own emptiness the draw skips), and a clearing Set Slot
+  empties its seat in place. The replacement is wholesale — the store's
+  every refresh re-speaks the row, a stale icon never outlives its
+  store, exactly like the chest's slots. The OFFLINE world carries no
+  store: the row stays empty and the hotbar renders its chrome only —
+  GOLDENS UNTOUCHED (13/13 at rms 0.000, the live lane never feeds the
+  headless scenes). Tests +2 (workspace 508 -> 510 passed / 0 failed /
+  3 ignored): the row's projection through the REAL packets (the
+  verbatim order, the selection's independence, the in-place clear)
+  and the HUD lane's consumption (the all-empty default, the wholesale
+  replacement, the registry resolution).
   The **the number-key lane — the hotbar answers the keys (v0.3.138)**:
   the player's own hotbar selection lands — the number keys 1-9 move the
   selection, the HUD's selector box follows, and the live session echoes

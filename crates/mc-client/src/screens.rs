@@ -240,6 +240,13 @@ pub struct App {
     pub options_return: ScreenKind,
     /// Active hotbar slot (vanilla HUD selection).
     pub selected_hotbar: usize,
+    /// The LIVE store's hotbar row — the HUD's icons and counts are
+    /// the store's projection (the vanilla renderHotbar's own lane,
+    /// `USE_ROW_SLOT_START..USE_ROW_SLOT_END` verbatim, the `(0, 0)`
+    /// slots the emptiness the wire itself named). The OFFLINE world
+    /// carries no store — the row stays empty and the hotbar renders
+    /// its chrome only (the honest shape the goldens pin).
+    pub hotbar_slots: [(i32, i32); 9],
     /// Base world tick for the day-night cycle (0 = vanilla dawn; the frame
     /// counter advances time 1 tick per frame like the vanilla clock).
     pub day_time_base: u64,
@@ -462,6 +469,7 @@ impl App {
             spawn_y: 0,
             options_return: ScreenKind::Title,
             selected_hotbar: 0,
+            hotbar_slots: [(0, 0); 9],
             day_time_base: 0,
             end_flash: crate::end_flash::EndFlashState::new(),
             ui_sounds: Vec::new(),
@@ -1270,6 +1278,19 @@ impl App {
             .and_then(crate::hand::load_item);
     }
 
+    /// The networked HUD lane: the store's WHOLE hotbar row lands
+    /// verbatim (the vanilla renderHotbar's projection — the icons and
+    /// the counts are the store's business, the emptiness `(0, 0)` the
+    /// wire itself named, never a guessed stack). The replacement is
+    /// wholesale: the store's every refresh re-speaks the row, so the
+    /// HUD's belief never outlives it — exactly like the chest's slots.
+    /// The OFFLINE world carries no store (the row stays empty, the
+    /// hotbar renders chrome only — the headless scenes never feed
+    /// this lane, the goldens' pixels stand).
+    pub fn live_hotbar_updated(&mut self, hotbar: [(i32, i32); 9]) {
+        self.hotbar_slots = hotbar;
+    }
+
     /// The networked container lane: the live store's projection drives
     /// the chest screen exactly like the vanilla client's — the Open
     /// Screen packet SHOWS the window over the world (from the World
@@ -1495,6 +1516,24 @@ impl App {
         g.sprite(a, "hud/hotbar", hx, hy);
         let sel_x = hx - 1 + self.selected_hotbar as i32 * (HEART_SPACING + 12);
         g.sprite(a, "hud/hotbar_selection", sel_x, hy - 1);
+        // the LIVE store's row over the sprite (the vanilla
+        // renderHotbarAndDecorations): each slot's icon at the vanilla
+        // origin — 3px inset, the 20px pitch — and the count white and
+        // shadowed at the slot's bottom-right, hidden while a single
+        // item rides (the chest screen's own treatment). The offline
+        // world's row is empty — the chrome-only shape the goldens pin.
+        for (i, &(id, count)) in self.hotbar_slots.iter().enumerate() {
+            if count <= 0 {
+                continue; // the wire's own emptiness sentinel
+            }
+            let (ix, iy) = (hx + 3 + i as i32 * 20, hy + 3);
+            draw_item_icon(g, id, ix, iy);
+            if count > 1 {
+                let s = count.to_string();
+                let tw = g.text_width(&s);
+                g.text(a, ix + 17 - tw, iy + 9, &s, WHITE, true);
+            }
+        }
         // health: 10 full hearts above the hotbar's left half (health 20)
         let (hbx, hby) = hearts_origin(w, h);
         for i in 0..HEALTH / 2 {
@@ -2017,6 +2056,40 @@ mod tests {
         assert_eq!(mc_registry::item_name(932), Some("iron_ingot"));
         let filled = app.chest_slots.iter().filter(|(_, c)| *c > 0).count();
         assert_eq!(filled, 8);
+    }
+
+    #[test]
+    fn the_hud_row_lands_verbatim_from_the_store() {
+        // the offline world carries no store: the row is the all-empty
+        // default, the hotbar renders its chrome only (the honest shape
+        // the goldens pin)
+        let mut app = App::new(3);
+        assert_eq!(app.hotbar_slots, [(0, 0); 9]);
+        // the live row lands WHOLESALE: every slot verbatim, the (0, 0)
+        // slots the wire's own emptiness riding untouched — the HUD
+        // skips them at draw time (the count<=0 sentinel)
+        let row = [
+            (0, 0),
+            (921, 5),   // apple x5
+            (0, 0),
+            (926, 1),   // diamond x1 — the count's own hiding rule
+            (62, 27),   // cobblestone x27
+            (0, 0),
+            (0, 0),
+            (932, 64),  // iron_ingot x64
+            (0, 0),
+        ];
+        app.live_hotbar_updated(row);
+        assert_eq!(app.hotbar_slots, row);
+        // the replacement is wholesale: a fresh row replaces the old
+        // belief entirely (the store's refresh re-speaks every slot —
+        // a stale icon never outlives its store)
+        app.live_hotbar_updated([(0, 0); 9]);
+        assert_eq!(app.hotbar_slots, [(0, 0); 9]);
+        // the ids resolve through the registry's own order (the same
+        // table the flat icon textures walk)
+        assert_eq!(mc_registry::item_name(921), Some("apple"));
+        assert_eq!(mc_registry::item_name(926), Some("diamond"));
     }
 
     #[test]

@@ -48,7 +48,7 @@ use crate::world::{
     GOLD_ORE, GRANITE, GRASS, GRAVEL, IRON_ORE, LAPIS_ORE, LEAF_LITTER, LEAVES, LIGHT_UNKNOWN, LOG,
     NETHERRACK, PALE_LEAVES, REDSTONE_ORE, SAND, STONE, WATER,
 };
-use crate::world_model::{USE_ROW_SLOT_START, WorldModel};
+use crate::world_model::{USE_ROW_SLOT_END, USE_ROW_SLOT_START, WorldModel};
 use mc_protocol::{PlayEvent, PlayerPosition, WorldSnapshot};
 
 /// Project the window of `side * side` chunks starting at chunk
@@ -266,6 +266,15 @@ pub struct SnapshotView {
     /// business). The emptiness (a count-0 slot, or a slot the store
     /// never spoke) is `None` — the bare arm renders.
     pub held: Option<(i32, i32)>,
+    /// The store's WHOLE hotbar row as `(item_id, count)` pairs — the
+    /// HUD's own lane (the vanilla renderHotbar's projection: the nine
+    /// slots the hotbar sprite carries, the icons and the counts drawn
+    /// over it). The row is `USE_ROW_SLOT_START..USE_ROW_SLOT_END`
+    /// verbatim (the inventory window's own numbering, NOT re-ordered
+    /// by the selection — the selection is the highlight's business),
+    /// and a slot the store never spoke stays `(0, 0)` — the wire's
+    /// own emptiness the HUD skips, never a guessed stack.
+    pub hotbar: [(i32, i32); 9],
 }
 
 /// The OPEN container window as the UI consumes it — the
@@ -569,6 +578,26 @@ fn held_item_view(model: &WorldModel) -> Option<(i32, i32)> {
         .map(|s| (s.item_id, s.count))
 }
 
+/// The store's hotbar ROW projected for the HUD — the same audited
+/// slice the hand's lane reads (`USE_ROW_SLOT_START..USE_ROW_SLOT_END`),
+/// but the whole row verbatim: the nine pairs ride the inventory
+/// window's own order, the never-spoken tail stays `(0, 0)` — the
+/// emptiness sentinel the HUD skips, exactly like the chest grid's.
+fn hotbar_row_view(model: &WorldModel) -> [(i32, i32); 9] {
+    let inv = model.inventory();
+    let mut row = [(0i32, 0i32); 9];
+    for (i, slot) in inv
+        .slots
+        .iter()
+        .skip(USE_ROW_SLOT_START)
+        .take(USE_ROW_SLOT_END - USE_ROW_SLOT_START)
+        .enumerate()
+    {
+        row[i] = (slot.item_id, slot.count);
+    }
+    row
+}
+
 /// The grid-local first-person camera for the materialized window: the
 /// join teleport's EXACT pose — the vanilla standing eye height over the
 /// feet, the server-directed look direction converted from the vanilla
@@ -633,6 +662,7 @@ pub fn materialize_snapshot_view(
         // and the inventory rides until the store speaks — the bare
         // arm, the join's own state (the helper reads the store)
         held: held_item_view(&model),
+        hotbar: hotbar_row_view(&model),
     }
 }
 
@@ -692,8 +722,9 @@ impl LiveView {
                 // open before any teleport arrived — read the store
                 container: open_container_view(&self.model),
                 // nor does it mean no inventory — the hand's lane
-                // reads the store the same way
+                // reads the store the same way (and the HUD's row)
                 held: held_item_view(&self.model),
+                hotbar: hotbar_row_view(&self.model),
             };
         };
         let origin = snapshot_window_origin(player, self.side);
@@ -708,8 +739,10 @@ impl LiveView {
             // slots update in place exactly like the terrain does
             container: open_container_view(&self.model),
             // the selected hotbar stack rides every refresh too — the
-            // hand follows the store exactly like the chest does
+            // hand follows the store exactly like the chest does (and
+            // the HUD's whole row rides with it)
             held: held_item_view(&self.model),
+            hotbar: hotbar_row_view(&self.model),
         }
     }
 }
@@ -2016,6 +2049,67 @@ mod tests {
         let s = parse_set_held_slot(&p).unwrap();
         assert!(live.apply(PlayEvent::HeldSlotSet(s)));
         assert_eq!(live.refresh(example_mapper).held, None);
+    }
+
+    /// The HUD's lane: the store's WHOLE hotbar row rides the view —
+    /// verbatim in the inventory window's own order (never re-ordered
+    /// by the selection: the highlight is the highlight's business),
+    /// the never-spoken tail the `(0, 0)` emptiness, and a clearing
+    /// Set Slot updates the row in place.
+    #[test]
+    fn the_hotbar_row_rides_the_view_for_the_hud() {
+        use mc_protocol::play::{parse_set_container_slot, parse_set_held_slot};
+        let mut live = LiveView::from_snapshot(surface_snapshot(), 5);
+        // the store silent: the all-empty row (the chrome-only HUD)
+        assert_eq!(live.refresh(example_mapper).hotbar, [(0, 0); 9]);
+        // the wire speaks: an apple lands at hotbar slot 0 (the USE_ROW's
+        // window numbering 36), a diamond at slot 3 (39) — the row reads
+        // them at their OWN indexes while the selection still sits at 0
+        for (window_slot, wire_id, count) in
+            [(USE_ROW_SLOT_START, 921i32, 5i32), (USE_ROW_SLOT_START + 3, 926, 12)]
+        {
+            let mut p = Vec::new();
+            write_varint(&mut p, clientbound::CONTAINER_SET_SLOT);
+            write_varint(&mut p, 0); // window 0 — the player's inventory
+            write_varint(&mut p, 1); // state id
+            p.extend_from_slice(&(window_slot as i16).to_be_bytes());
+            write_varint(&mut p, count);
+            write_varint(&mut p, wire_id);
+            write_varint(&mut p, 0); // patch: none added
+            write_varint(&mut p, 0); // patch: none removed
+            let s = parse_set_container_slot(&p).unwrap();
+            assert!(live.apply(PlayEvent::ContainerSlotSet(s)));
+        }
+        let row = live.refresh(example_mapper).hotbar;
+        assert_eq!(row[0], (921, 5), "the apple at its own index");
+        assert_eq!(row[3], (926, 12), "the diamond at its own index");
+        assert_eq!(row[8], (0, 0), "the never-spoken tail stays empty");
+        // the selection moves to slot 3: the ROW DOES NOT MOVE — the
+        // highlight is the selection's own business (the held lane's
+        // test pins the hand's re-read; the HUD's order is the store's)
+        let mut p = Vec::new();
+        write_varint(&mut p, clientbound::SET_HELD_SLOT);
+        write_varint(&mut p, 3);
+        let s = parse_set_held_slot(&p).unwrap();
+        assert!(live.apply(PlayEvent::HeldSlotSet(s)));
+        let row = live.refresh(example_mapper).hotbar;
+        assert_eq!(row[0], (921, 5));
+        assert_eq!(row[3], (926, 12));
+        // a clearing Set Slot empties the diamond's seat in place
+        let mut p = Vec::new();
+        write_varint(&mut p, clientbound::CONTAINER_SET_SLOT);
+        write_varint(&mut p, 0); // window 0
+        write_varint(&mut p, 2); // state id
+        p.extend_from_slice(&((USE_ROW_SLOT_START + 3) as i16).to_be_bytes());
+        write_varint(&mut p, 0); // the wire's own emptiness
+        write_varint(&mut p, 0);
+        write_varint(&mut p, 0);
+        write_varint(&mut p, 0);
+        let s = parse_set_container_slot(&p).unwrap();
+        assert!(live.apply(PlayEvent::ContainerSlotSet(s)));
+        let row = live.refresh(example_mapper).hotbar;
+        assert_eq!(row[3], (0, 0), "the cleared slot empties in place");
+        assert_eq!(row[0], (921, 5), "the rest of the row stands");
     }
 
     #[test]

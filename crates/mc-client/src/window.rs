@@ -126,6 +126,7 @@ fn run_join(
                 Option<String>,
                 Option<crate::world_view::LiveContainer>,
                 Option<(i32, i32)>,
+                [(i32, i32); 9],
             ),
             String,
         >,
@@ -321,6 +322,10 @@ fn run_join(
                                     // selected hotbar slot exactly like the
                                     // chest follows the container
                                     upd.held,
+                                    // the HUD's whole row rides with it —
+                                    // the hotbar's icons and counts are the
+                                    // store's projection, not the screen's
+                                    upd.hotbar,
                                 )))
                                 .is_err()
                             {
@@ -396,6 +401,7 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize) -> anyhow::Result<()>
                 Option<String>,
                 Option<crate::world_view::LiveContainer>,
                 Option<(i32, i32)>,
+                [(i32, i32); 9],
             ),
             String,
         >,
@@ -521,12 +527,16 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize) -> anyhow::Result<()>
         // Disconnect screen, exactly like the original's kick
         while let Ok(upd) = live_rx.try_recv() {
             match upd {
-                Ok((world, camera, biome, container, held)) => {
+                Ok((world, camera, biome, container, held, hotbar)) => {
                     app.live_view_updated(world, camera, biome, container);
                     // the hand's lane beside the world's: the selected
                     // hotbar stack's model loads on change (the reload
                     // key makes the refresh cadence cheap)
                     app.live_held_updated(held);
+                    // the HUD's lane beside the hand's: the whole row
+                    // lands verbatim (the icons and the counts render
+                    // over the hotbar sprite, the emptiness skipped)
+                    app.live_hotbar_updated(hotbar);
                 }
                 Err(reason) => app.live_session_lost(reason),
             }
