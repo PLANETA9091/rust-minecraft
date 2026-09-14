@@ -157,8 +157,12 @@ pub fn render_gui_screen(
             app.paused = true;
             app.frame = frame;
         }
+        "chest" => {
+            app.open_chest();
+            app.frame = frame;
+        }
         other => anyhow::bail!(
-            "unknown screen {other} (loading|title|servers|options|world|worldnight|pause)"
+            "unknown screen {other} (loading|title|servers|options|world|worldnight|pause|chest)"
         ),
     }
 

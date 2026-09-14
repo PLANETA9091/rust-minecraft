@@ -115,6 +115,35 @@ pub fn mob_effect_name(id: i32) -> Option<&'static str> {
     generated::mob_effects::MOB_EFFECT_ORDER.get(id as usize).copied()
 }
 
+/// The ITEM registry id's NAME — the resolution lane the container
+/// screens' slot icons consume. The order is `BuiltInRegistries.ITEM`'s
+/// own (the same generated dump the holder-VarInt decodes ride).
+/// Negative ids (the decode's own refusal) and ids past the table (a
+/// server registry newer than this client jar's boot; the decode's
+/// `byIdOrThrow` THROWS there) resolve `None`: the honest unknown,
+/// never a guessed name.
+pub fn item_name(id: i32) -> Option<&'static str> {
+    if id < 0 {
+        return None;
+    }
+    generated::items::ITEMS.get(id as usize).copied()
+}
+
+/// The ITEM registry id's flat GUI icon — the generated texture table's
+/// `item/<name>` RGBA texels with the (w, h) the sprite rides (16x16
+/// for the plain items the chest screen pins; the 3D block-model items
+/// are the model round's own line). Unresolvable ids and the pinned
+/// missing materials are `None` — the honest unknown draws nothing.
+pub fn item_icon(id: i32) -> Option<(&'static [u8], u16, u16)> {
+    let name = item_name(id)?;
+    let idx = generated::textures::texture_index(&format!("item/{name}"))?;
+    Some((
+        generated::textures::texture_rgba(idx),
+        generated::textures::WIDTHS[idx as usize],
+        generated::textures::HEIGHTS[idx as usize],
+    ))
+}
+
 /// The resolver core, generic over the table so the dedup and cycle
 /// rules are testable without a jar that contains a cycle (the real
 /// 68-tag table cannot cycle: the census join proves every nested
@@ -270,6 +299,43 @@ mod tests {
         names.sort_unstable();
         let dup_count = names.windows(2).filter(|w| w[0] == w[1]).count();
         assert_eq!(dup_count, 0, "the name lane is injective");
+    }
+
+    #[test]
+    fn item_name_resolves_the_registry_order() {
+        // the order's ends and the chest screen's own pins (the ids
+        // the deterministic loadout rides — one truth for both sides)
+        assert_eq!(item_name(0), Some("acacia_boat"));
+        assert_eq!(item_name(33), Some("apple"));
+        assert_eq!(item_name(645), Some("diamond"));
+        assert_eq!(item_name(1005), Some("iron_ingot"));
+        assert_eq!(item_name(1773), Some("stick"));
+        // the boundaries refuse: negative and past-the-table — None is
+        // the honest unknown (the decode's byIdOrThrow THROWS there)
+        assert_eq!(item_name(-1), None);
+        let n = generated::items::ITEMS.len() as i32;
+        assert_eq!(item_name(n), None);
+        assert_eq!(item_name(i32::MAX), None);
+        // every entry resolves, and no two ids share a name — the
+        // id->name lane is a FUNCTION (the registry's own dedup)
+        let mut names: Vec<&str> = (0..n).filter_map(item_name).collect();
+        assert_eq!(names.len(), n as usize);
+        names.sort_unstable();
+        let dup_count = names.windows(2).filter(|w| w[0] == w[1]).count();
+        assert_eq!(dup_count, 0, "the item name lane is injective");
+    }
+
+    #[test]
+    fn item_icon_resolves_the_flat_gui_layer() {
+        // the diamond's flat 16x16 icon: present, correctly sized, and
+        // NOT blank (the cyan rides)
+        let (rgba, w, h) = item_icon(645).expect("diamond has a flat icon");
+        assert_eq!((w, h), (16, 16));
+        assert_eq!(rgba.len(), 16 * 16 * 4);
+        assert!(rgba.iter().any(|&b| b != 0), "the icon is not blank");
+        // the unresolvable refuses: the honest unknown draws nothing
+        assert!(item_icon(-1).is_none());
+        assert!(item_icon(i32::MAX).is_none());
     }
 
     #[test]

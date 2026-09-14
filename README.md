@@ -919,6 +919,31 @@ hand-drawn:
   (VILLAGER_DATA at 18 doubles as the order proof), the generated-id
   pin, and the model's merge semantics (replace-one-leave-others, the
   null-lookup drop, the re-spawn reset).
+  The **the chest screen — the container GUI's 9x3 grid (v0.3.129)**:
+  the container trilogy's GUI round — the vanilla GenericContainerScreen
+  (generic_9x3) renders: the 176x166 panel centered with its classic
+  bevels (white top/left, 0x555555 bottom/right over the 0xC6C6C6
+  face), the 9x3 container grid at panel-relative (8, 18) with the
+  18-pitch, the player mirror rows at 84/102/120 and the hotbar row at
+  142 — the generic_54 canvas's own numbers — and the lang title
+  ("container.chest") in the 0x404040 label color WITHOUT the shadow
+  (the AbstractContainerScreen's own draw call). THE ICONS: a new
+  registry lane — `item_name` (the BuiltInRegistries.ITEM order's
+  name, the same table the wire's holder-VarInt decodes ride) and
+  `item_icon` (the flat `item/<name>` texture's RGBA texels) — drawn
+  over the real `container/slot` insets, with the vanilla count
+  rendering (white, shadowed, right-aligned at the slot's bottom
+  edge). THE CONTENTS: a FIXED representative loadout (no RNG — the
+  constant pins the pixel test hardest), the counts riding the wire's
+  own stack shape (count <= 0 is the empty stack). The player mirror
+  renders chrome only — the offline screen holds no inventory state;
+  the networked store wiring (OpenContainerState -> this screen) is
+  the next round's own line. THE PINS: the geometry test (the
+  generic_54 numbers, row-major, the mirror gap), the loadout test
+  (constant across seeds, the registry ids resolving), the registry
+  tests (the item name lane's ends/boundaries/injectivity, the icon's
+  shape). 489 tests green; the golden matrix 13/13 — the new
+  gui_chest_320x180 golden gates at rms 0.000.
   The **the mob-effect name lane — the effect state's debug surface
   (v0.3.128)**: the effect rounds' queued NAME lane lands — the wire
   carries the 0-based built-in registration id (the

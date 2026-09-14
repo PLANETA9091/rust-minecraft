@@ -210,6 +210,12 @@ pub enum ScreenKind {
     /// Vanilla DisconnectedScreen: the join outcome (server-side login
     /// disconnect reason, transport error, or the offline profile line).
     Disconnect,
+    /// The container GUI's SCREEN round: the vanilla GenericContainerScreen
+    /// (generic_9x3) over the frozen world — the 9x3 grid mapping, the real
+    /// `container/slot` insets, the flat item icons, the vanilla counts.
+    /// The OFFLINE deterministic stand-in; the networked store wiring is
+    /// the next round's own line.
+    Chest,
 }
 
 pub struct App {
@@ -313,6 +319,10 @@ pub struct App {
     /// which draws the arm; `Some` draws the item INSTEAD of the arm —
     /// vanilla's submitArmWithItem branch, never both.
     pub held_item: Option<crate::hand::HeldItem>,
+    /// The chest screen's 27 container slots as (item_id, count) — the
+    /// wire's own stack shape (count <= 0 is the empty stack), the FIXED
+    /// deterministic loadout the pixel test pins. Filled by open_chest.
+    pub chest_slots: Vec<(i32, i32)>,
     /// The last biome the network world's music situation resolved to
     /// (the synced registry name at the player's feet). `None` until a
     /// join resolves one; cleared with the level (Save and Quit, a kick).
@@ -415,6 +425,7 @@ impl App {
             slim_arm: false,
             swing: crate::hand::SwingState::default(),
             held_item: None,
+            chest_slots: Vec::new(),
         }
     }
 
@@ -479,6 +490,88 @@ impl App {
         self.paused = false;
         self.music.on_world_enter_biome(spawn_biome(self.seed));
         self.open(ScreenKind::World);
+    }
+
+    /// Opens the deterministic chest screen — the container GUI's SCREEN
+    /// round. The vanilla GenericContainerScreen (generic_9x3) geometry:
+    /// the 176x166 panel centered, the 9x3 container grid at (8, 18)
+    /// with the 18-pitch, the player mirror at (8, 84) and the hotbar
+    /// row at (8, 142) — the generic_54 canvas's own numbers. The
+    /// loadout is a FIXED representative table (no RNG: a constant pins
+    /// the pixel test hardest), the ids the ITEM registry order's own —
+    /// the same table the wire's holder-VarInt decodes ride. The world
+    /// underneath is the deterministic procedural one (the pause
+    /// screen's own flow).
+    pub fn open_chest(&mut self) {
+        self.enter_world();
+        const LOADOUT: [(usize, i32, i32); 8] = [
+            (4, 645, 12),   // diamond
+            (13, 1005, 64), // iron_ingot
+            (22, 819, 7),   // gold_ingot
+            (9, 33, 5),     // apple
+            (17, 160, 3),   // bread
+            (0, 395, 27),   // cobblestone
+            (26, 1371, 16), // oak_planks
+            (10, 386, 41),  // coal
+        ];
+        let mut slots = vec![(0i32, 0i32); 27];
+        for (i, id, count) in LOADOUT {
+            slots[i] = (id, count);
+        }
+        self.chest_slots = slots;
+        self.open(ScreenKind::Chest);
+    }
+
+    /// The chest screen render: the frozen world dimmed underneath (the
+    /// container background's own treatment), the classic gray panel
+    /// with its white/0x555555 bevels, the real `container/slot` insets,
+    /// the flat item icons through the generated texture table, the
+    /// vanilla count rendering (white, shadowed, right-aligned at the
+    /// slot's bottom edge), and the lang title in the label color
+    /// WITHOUT the shadow (the AbstractContainerScreen's own draw call).
+    /// The player mirror rows render their chrome only — the offline
+    /// screen holds no inventory state; the networked store wiring is
+    /// the next round's own line.
+    fn render_chest(&mut self, g: &mut Gui, a: &mut GuiAssets, w: i32, h: i32) {
+        g.fill(0, 0, w, h, [0.0, 0.0, 0.0, 0.35]);
+        let (px, py) = chest_panel_origin(w, h);
+        let face = [0.776, 0.776, 0.776, 1.0]; // 0xC6C6C6
+        let light = [1.0, 1.0, 1.0, 1.0];
+        let dark = [0.333, 0.333, 0.333, 1.0]; // 0x555555
+        g.fill(px + 1, py + 1, 174, 164, face);
+        g.fill(px, py, 176, 1, light); // top bevel
+        g.fill(px, py, 1, 166, light); // left bevel
+        g.fill(px, py + 165, 176, 1, dark); // bottom bevel
+        g.fill(px + 175, py, 1, 166, dark); // right bevel
+        let label = [0.251, 0.251, 0.251]; // 0x404040
+        g.text(
+            a,
+            px + 8,
+            py + 6,
+            tr("container.chest").unwrap_or("Chest"),
+            label,
+            false,
+        );
+        for i in 0..27 {
+            let (sx, sy) = chest_container_slot((px, py), i);
+            g.sprite(a, "container/slot", sx, sy);
+        }
+        for (i, (id, count)) in self.chest_slots.iter().enumerate() {
+            if *count <= 0 {
+                continue; // the wire's own emptiness sentinel
+            }
+            let (sx, sy) = chest_container_slot((px, py), i);
+            draw_item_icon(g, *id, sx + 1, sy + 1);
+            if *count > 1 {
+                let s = count.to_string();
+                let tw = g.text_width(&s);
+                g.text(a, sx + 17 - tw, sy + 9, &s, WHITE, true);
+            }
+        }
+        for i in 0..36 {
+            let (sx, sy) = chest_mirror_slot((px, py), i);
+            g.sprite(a, "container/slot", sx, sy);
+        }
     }
 
     /// Enter the world screen with the NETWORK world — the vanilla
@@ -860,6 +953,15 @@ impl App {
                     let (gw, gh) = (g.w(), g.h());
                     self.render_pause(&mut g, a, gw, gh);
                 }
+            }
+            ScreenKind::Chest => {
+                // the container screen covers the HUD (the panel draws
+                // over the hotbar's ground): world underneath, dimmed,
+                // then the generic_9x3 chrome — the pause flow's shape.
+                self.render_world_3d(fb);
+                let mut g = Gui::new(fb, Gui::auto_scale(fb.w, fb.h));
+                let (gw, gh) = (g.w(), g.h());
+                self.render_chest(&mut g, a, gw, gh);
             }
         }
     }
@@ -1357,6 +1459,67 @@ fn hotbar_rect(gui_w: i32, gui_h: i32) -> (i32, i32) {
     (gui_w / 2 - HOTBAR_W / 2, gui_h - HOTBAR_H - 1)
 }
 
+/// The chest panel's GUI-space origin — the vanilla generic_54 canvas
+/// (176x166) centered in the GUI workspace.
+fn chest_panel_origin(gui_w: i32, gui_h: i32) -> (i32, i32) {
+    ((gui_w - 176) / 2, (gui_h - 166) / 2)
+}
+
+/// The 9x3 container grid's slot origin (the sprite's top-left): the
+/// generic_54 layout starts the container rows at panel-relative
+/// (8, 18), the slot pitch is 18 (the row-major indexing the wire's
+/// menu numbering mirrors for the generic_9x3 menu).
+fn chest_container_slot(panel: (i32, i32), index: usize) -> (i32, i32) {
+    (
+        panel.0 + 8 + (index % 9) as i32 * 18,
+        panel.1 + 18 + (index / 9) as i32 * 18,
+    )
+}
+
+/// The player-inventory mirror's slot origin: the three rows at
+/// panel-relative y 84, 102, 120 and the hotbar row at 142 — the
+/// generic_54 canvas's own numbers, the gap between the grids kept.
+fn chest_mirror_slot(panel: (i32, i32), index: usize) -> (i32, i32) {
+    let y = if index < 27 {
+        84 + (index / 9) as i32 * 18
+    } else {
+        142
+    };
+    (panel.0 + 8 + (index % 9) as i32 * 18, panel.1 + y)
+}
+
+/// One flat item icon, 16x16 GUI pixels, through the generated texture
+/// table (`mc_registry::item_icon` — the `item/<name>` GUI layer).
+/// Unresolvable ids and the pinned missing materials draw nothing —
+/// the honest unknown. The texels land one alpha-blended GUI pixel at
+/// a time (the public fill primitive at unit size).
+fn draw_item_icon(g: &mut Gui, item_id: i32, x: i32, y: i32) {
+    let Some((rgba, w, h)) = mc_registry::item_icon(item_id) else {
+        return;
+    };
+    for yy in 0..h as i32 {
+        for xx in 0..w as i32 {
+            let o = ((yy * w as i32 + xx) * 4) as usize;
+            let alpha = rgba[o + 3] as f32 / 255.0;
+            if alpha <= 0.0 {
+                continue;
+            }
+            g.fill(
+                x + xx,
+                y + yy,
+                1,
+                1,
+                [
+                    rgba[o] as f32 / 255.0,
+                    rgba[o + 1] as f32 / 255.0,
+                    rgba[o + 2] as f32 / 255.0,
+                    alpha,
+                ],
+            );
+        }
+    }
+}
+
 /// Health row origin: first (leftmost) heart, one px above the hotbar.
 fn hearts_origin(gui_w: i32, gui_h: i32) -> (i32, i32) {
     let (hx, hy) = hotbar_rect(gui_w, gui_h);
@@ -1383,6 +1546,55 @@ fn top_solid_y(world: &crate::world::World, x: i32, z: i32) -> i32 {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn chest_geometry_carries_the_generic_54_layout() {
+        // the 176x166 canvas centers in the 320x180 GUI workspace
+        assert_eq!(chest_panel_origin(320, 180), (72, 7));
+        // the 9x3 container grid: row-major from (8, 18), the 18 pitch,
+        // the row starts at the panel-relative x 8 and y 18 / 36 / 54
+        let p = (0, 0);
+        assert_eq!(chest_container_slot(p, 0), (8, 18));
+        assert_eq!(chest_container_slot(p, 8), (8 + 8 * 18, 18));
+        assert_eq!(chest_container_slot(p, 9), (8, 36));
+        assert_eq!(chest_container_slot(p, 26), (8 + 8 * 18, 54));
+        // the player mirror: three rows at 84 / 102 / 120, the hotbar
+        // row at 142 — the gap between the grids kept (the vanilla
+        // canvas's own numbers)
+        assert_eq!(chest_mirror_slot(p, 0), (8, 84));
+        assert_eq!(chest_mirror_slot(p, 8), (8 + 8 * 18, 84));
+        assert_eq!(chest_mirror_slot(p, 26), (8 + 8 * 18, 120));
+        assert_eq!(chest_mirror_slot(p, 27), (8, 142));
+        assert_eq!(chest_mirror_slot(p, 35), (8 + 8 * 18, 142));
+        // the panel bottom keeps the mirror's last row inside: 142 + 18
+        // slot height + the bevel lands exactly on the 166 canvas
+        assert_eq!(chest_mirror_slot(p, 27).1 + 18 + 6, 166);
+    }
+
+    #[test]
+    fn the_chest_loadout_is_fixed_and_uses_registry_ids() {
+        let mut app = App::new(20260214);
+        app.open_chest();
+        // the screen rode open; the world underneath came with it
+        assert_eq!(app.screen, ScreenKind::Chest);
+        assert_eq!(app.chest_slots.len(), 27);
+        // the loadout is a CONSTANT (no RNG): two opens, one loadout
+        let again = {
+            let mut a2 = App::new(7); // a DIFFERENT seed — the loadout holds
+            a2.open_chest();
+            a2.chest_slots.clone()
+        };
+        assert_eq!(app.chest_slots, again);
+        // the pins: the ids resolve through the registry's own order
+        // and the counts ride the wire's shape (positive, the rest
+        // empty via the count<=0 sentinel)
+        assert_eq!(app.chest_slots[4], (645, 12)); // diamond x12
+        assert_eq!(app.chest_slots[13], (1005, 64)); // iron_ingot x64
+        assert_eq!(mc_registry::item_name(645), Some("diamond"));
+        assert_eq!(mc_registry::item_name(1005), Some("iron_ingot"));
+        let filled = app.chest_slots.iter().filter(|(_, c)| *c > 0).count();
+        assert_eq!(filled, 8);
+    }
 
     #[test]
     fn splash_selection_is_deterministic_and_in_range() {
