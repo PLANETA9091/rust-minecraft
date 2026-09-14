@@ -1705,6 +1705,42 @@ mod tests {
     }
 
     #[test]
+    fn the_night_vision_factor_lifts_the_lightmap_from_the_effect_state() {
+        // the debt retired: the factor RIDES the snapshot — the
+        // effect-absent floor 0.0 is the golden identity (every pixel
+        // exactly the pre-round arithmetic), the effect's plateau 1.0
+        // lifts the base through the SAME combine the paths call (the
+        // nightVisionScale contract the const's doc carried).
+        let mut w = empty_world();
+        put(&mut w, 8, 8, 8, STONE);
+        w.light = Some(unknown_light());
+        set_light(&mut w, None, Some(5), 8, 9, 8);
+        let baseline = vertex_multiplier(&top_face(&w));
+        // a stated night-vision color under the floor 0.0: the
+        // identity, bit for bit (max(A, C·0.0) = A) — the goldens' own
+        // shape, untouched by construction
+        w.night_vision_color = Some([0x18, 0x10, 0x28]);
+        assert_eq!(vertex_multiplier(&top_face(&w)), baseline);
+        // the plateau 1.0 through the rendered path: the lifted base is
+        // EXACTLY the shader's max(AmbientColor, NightVisionColor·1.0)
+        // with the unchanged block term on top (lightmap.fsh verbatim)
+        w.night_vision_factor = 1.0;
+        let c = [0x18 as f32 / 255.0, 0x10 as f32 / 255.0, 0x28 as f32 / 255.0];
+        let b = light_brightness(5.0) * BLOCK_FACTOR;
+        let tint = block_light_color(5.0, None);
+        let expect = [
+            (c[0] + b * tint[0]).min(1.0),
+            (c[1] + b * tint[1]).min(1.0),
+            (c[2] + b * tint[2]).min(1.0),
+        ];
+        for corner in &top_face(&w).colors {
+            for (ch, e) in corner.iter().zip(expect.iter()) {
+                assert!((ch - e).abs() < 1e-6, "the lifted base per channel: {ch} vs {e}");
+            }
+        }
+    }
+
+    #[test]
     fn the_ambient_base_lifts_the_combine_per_channel() {
         // the lightmap's AmbientColor BASE (v0.3.88): the shader's
         // `max(AmbientColor, nightVisionColor)` start — night vision 0,

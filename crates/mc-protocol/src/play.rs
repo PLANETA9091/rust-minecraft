@@ -7800,6 +7800,66 @@ mod tests {
         assert_eq!(parse_set_entity_data(&p).unwrap().id, 4);
     }
 
+    /// The mob-effect lanes: the generated ids and the re-exported
+    /// constants agree; the update's flat five-field walk retains every
+    /// field verbatim (the -1 infinite sentinel included — the decode
+    /// validates nothing); the negative effect id refuses (the
+    /// holderRegistry byIdOrThrow direction); the remove rides the
+    /// record's two fields; a truncated update refuses honestly.
+    #[test]
+    fn the_mob_effect_lanes_retain_the_player_state() {
+        assert_eq!(clientbound::UPDATE_MOB_EFFECT, 132, "minecraft:update_mob_effect");
+        assert_eq!(clientbound::REMOVE_MOB_EFFECT, 78, "minecraft:remove_mob_effect");
+        // the full update: entity 17, the night_vision registry id 15,
+        // amplifier 2, duration 600 ticks, the visible|show-icon flags
+        let mut p = Vec::new();
+        write_varint(&mut p, clientbound::UPDATE_MOB_EFFECT);
+        write_varint(&mut p, 17);
+        write_varint(&mut p, 15);
+        write_varint(&mut p, 2);
+        write_varint(&mut p, 600);
+        p.push(0b0110);
+        let u = parse_update_mob_effect(&p).unwrap();
+        assert_eq!(u.entity_id, 17);
+        assert_eq!(u.effect_id, 15, "the registry id, not the legacy wiki 16");
+        assert_eq!(u.amplifier, 2);
+        assert_eq!(u.duration, 600);
+        assert_eq!(u.flags, 0b0110);
+        // the infinite sentinel and the blend bit ride verbatim
+        let mut p = Vec::new();
+        write_varint(&mut p, clientbound::UPDATE_MOB_EFFECT);
+        write_varint(&mut p, 1);
+        write_varint(&mut p, 28);
+        write_varint(&mut p, 0);
+        write_varint(&mut p, -1);
+        p.push(0b1000);
+        let u = parse_update_mob_effect(&p).unwrap();
+        assert_eq!(u.duration, -1, "the wire's infinite sentinel");
+        assert_eq!(u.flags, 0b1000, "the blend bit");
+        // the negative effect id refuses (the byIdOrThrow direction)
+        let mut p = Vec::new();
+        write_varint(&mut p, clientbound::UPDATE_MOB_EFFECT);
+        write_varint(&mut p, 1);
+        write_varint(&mut p, -3);
+        assert!(parse_update_mob_effect(&p).is_err());
+        // the remove: the record's two fields
+        let mut p = Vec::new();
+        write_varint(&mut p, clientbound::REMOVE_MOB_EFFECT);
+        write_varint(&mut p, 17);
+        write_varint(&mut p, 15);
+        let r = parse_remove_mob_effect(&p).unwrap();
+        assert_eq!(r.entity_id, 17);
+        assert_eq!(r.effect_id, 15);
+        // a truncated update refuses honestly (the flags byte short)
+        let mut p = Vec::new();
+        write_varint(&mut p, clientbound::UPDATE_MOB_EFFECT);
+        write_varint(&mut p, 17);
+        write_varint(&mut p, 15);
+        write_varint(&mut p, 2);
+        write_varint(&mut p, 600);
+        assert!(parse_update_mob_effect(&p).is_err());
+    }
+
     /// Mock server: login -> configuration -> play (the FULL vanilla
     /// arc), then a real world burst: login, center chunk, chunk batch,
     /// chunk data, keep-alive, ping, junk, unload, position teleport.

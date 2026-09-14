@@ -2870,6 +2870,88 @@ mod tests {
         assert!(m.entity(7).unwrap().data.is_empty(), "the re-spawn resets the store");
     }
 
+    #[test]
+    fn the_local_player_effects_drive_the_night_vision_factor() {
+        // the effect state's CONSUMER walk: the model's own-entity
+        // filter keeps the LOCAL player's effects (the lightmap's
+        // night-vision transport), the foreign traffic is dropped, the
+        // upsert replaces, and Respawn does NOT clear the store (the
+        // effects ride the player across the level recreation — the
+        // vanilla client keeps LocalPlayer effects through a dimension
+        // change, unlike the columns and the entity registry).
+        let mut m = WorldModel::new();
+        // no info pinned yet: the own-entity filter cannot match, the
+        // effect traffic is honestly dropped (no phantom player)
+        assert!(!m.apply(PlayEvent::MobEffectApplied(MobEffectUpdate {
+            entity_id: 17,
+            effect_id: MOB_EFFECT_NIGHT_VISION,
+            amplifier: 0,
+            duration: 600,
+            flags: 0b0110,
+        })));
+        assert_eq!(m.night_vision_factor(), 0.0, "no info, no effect: the floor");
+        // the login pins the own id — the own-entity traffic lands and
+        // the factor lifts to the nightVisionScale plateau
+        assert!(m.apply(PlayEvent::WorldInfo(WorldInfo {
+            entity_id: 17,
+            hardcore: false,
+            dimensions: vec!["minecraft:overworld".to_string()],
+            view_distance: 8,
+            simulation_distance: 8,
+            portal_cooldown: 300,
+            current_dimension: "minecraft:overworld".to_string(),
+        })));
+        assert!(m.apply(PlayEvent::MobEffectApplied(MobEffectUpdate {
+            entity_id: 17,
+            effect_id: MOB_EFFECT_NIGHT_VISION,
+            amplifier: 2,
+            duration: -1,
+            flags: 0b0110,
+        })));
+        assert_eq!(m.night_vision_factor(), 1.0, "the nightVisionScale plateau");
+        let st = m.mob_effect(MOB_EFFECT_NIGHT_VISION).unwrap();
+        assert_eq!(st.amplifier, 2, "the state retained verbatim");
+        assert_eq!(st.duration, -1, "the infinite sentinel rides verbatim");
+        assert_eq!(st.flags, 0b0110, "the visible|show-icon bits");
+        // a FOREIGN entity's effect traffic never touches the store
+        assert!(!m.apply(PlayEvent::MobEffectApplied(MobEffectUpdate {
+            entity_id: 99,
+            effect_id: 28, // conduit_power — not ours
+            amplifier: 0,
+            duration: 200,
+            flags: 0,
+        })));
+        assert!(m.mob_effect(28).is_none(), "the foreign packet stored nothing");
+        assert_eq!(m.night_vision_factor(), 1.0, "and changed nothing");
+        // the upsert REPLACES the stored state
+        assert!(m.apply(PlayEvent::MobEffectApplied(MobEffectUpdate {
+            entity_id: 17,
+            effect_id: MOB_EFFECT_NIGHT_VISION,
+            amplifier: 0,
+            duration: 100,
+            flags: 0,
+        })));
+        assert_eq!(m.mob_effect(MOB_EFFECT_NIGHT_VISION).unwrap().amplifier, 0, "replaced");
+        // Respawn keeps the effects (the player carries them across)
+        assert!(m.apply(PlayEvent::Respawn(SpawnInfo {
+            dimension_type_id: 0,
+            dimension: "minecraft:the_nether".to_string(),
+            portal_cooldown: 0,
+        })));
+        assert_eq!(m.night_vision_factor(), 1.0, "effects survive the dimension change");
+        // the removal drops the entry (the floor returns); a second
+        // removal is an honest no-op
+        assert!(m.apply(PlayEvent::MobEffectRemoved(MobEffectRemove {
+            entity_id: 17,
+            effect_id: MOB_EFFECT_NIGHT_VISION,
+        })));
+        assert_eq!(m.night_vision_factor(), 0.0, "the floor returns");
+        assert!(!m.apply(PlayEvent::MobEffectRemoved(MobEffectRemove {
+            entity_id: 17,
+            effect_id: MOB_EFFECT_NIGHT_VISION,
+        })));
+    }
+
     /// Spawn ONE entity at the named position (the full-precision
     /// doubles are exact — the walk tests rely on that).
     fn spawn_at(m: &mut WorldModel, id: i32, x: f64, y: f64, z: f64) {
