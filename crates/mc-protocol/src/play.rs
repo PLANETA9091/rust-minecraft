@@ -2392,7 +2392,12 @@ fn read_block_predicate(c: &mut &[u8]) -> Result<BlockPredicate> {
             // strictness is a consumer's act (the VILLAGER_DATA line)
             Some(BlockSet::Named(read_string(c)?))
         } else {
-            let count = tag - 1; // can never be negative: tag 0 was the named lane
+            let count = tag - 1; // can never be negative: wire 0 was
+            // the named lane and everything below it REFUSES (vanilla's
+            // ArrayList(min(i, 65536)) throws on the negative capacity;
+            // the consume-effect round's probe caught this lane's
+            // missing refusal — a panic was never vanilla's behavior)
+            anyhow::ensure!(tag >= 1, "negative holder-set tag {tag}");
             let mut ids = Vec::with_capacity(count as usize);
             for _ in 0..count {
                 let id = read_varint(c)?;
@@ -2560,10 +2565,14 @@ fn read_consume_effect(c: &mut &[u8]) -> Result<ConsumeEffect> {
                     read_string(c)?,
                 )))
             } else {
-                let count =
-                    tag.checked_sub(1).ok_or_else(|| {
-                        anyhow::anyhow!("negative effect holder-set tag {tag}")
-                    })?;
+                // vanilla: i = tag - 1, then ArrayList(min(i, 65536)) —
+                // a NEGATIVE tag yields a negative capacity and the
+                // constructor throws (IllegalArgumentException), so
+                // the port refuses at the same lane (the panic-free
+                // form of the same refusal; the negative-tag probe
+                // caught the with_capacity overflow this round)
+                anyhow::ensure!(tag >= 1, "negative effect holder-set tag {tag}");
+                let count = tag - 1;
                 let mut ids = Vec::with_capacity(count as usize);
                 for _ in 0..count {
                     let id = read_varint(c)?;
