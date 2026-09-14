@@ -2532,6 +2532,92 @@ fn read_consumable_sound(c: &mut &[u8]) -> Result<ConsumableSound> {
     }
 }
 
+/// ONE dispatched consume-effect entry — the registry id (`$29`
+/// byIdOrThrow: unknown AND negative refuse) then the type's own
+/// payload walk. The five lanes mirror the five `ConsumeEffect$Type`
+/// clinit registrations in registry order.
+fn read_consume_effect(c: &mut &[u8]) -> Result<ConsumeEffect> {
+    let type_id = read_varint(c)?;
+    match type_id {
+        0 => {
+            // apply_effects: composite(list(MobEffectInstance), FLOAT)
+            let n = read_component_count(c, "apply-effects list")?;
+            let mut effects = Vec::with_capacity(n as usize);
+            for _ in 0..n {
+                effects.push(read_effect_instance(c)?);
+            }
+            Ok(ConsumeEffect::ApplyEffects {
+                effects,
+                probability: read_f32(c)?,
+            })
+        }
+        1 => {
+            // remove_effects: composite(holderSet(MOB_EFFECT)) — the
+            // wave-three tagged union: wire 0 named, wire >= 1 direct
+            let tag = read_varint(c)?;
+            if tag == 0 {
+                Ok(ConsumeEffect::RemoveEffects(EffectHolderSet::Named(
+                    read_string(c)?,
+                )))
+            } else {
+                let count =
+                    tag.checked_sub(1).ok_or_else(|| {
+                        anyhow::anyhow!("negative effect holder-set tag {tag}")
+                    })?;
+                let mut ids = Vec::with_capacity(count as usize);
+                for _ in 0..count {
+                    let id = read_varint(c)?;
+                    anyhow::ensure!(id >= 0, "negative effect registry id {id}");
+                    ids.push(id);
+                }
+                Ok(ConsumeEffect::RemoveEffects(EffectHolderSet::Direct(ids)))
+            }
+        }
+        2 => Ok(ConsumeEffect::ClearAllEffects), // StreamCodec.unit: ZERO bytes
+        3 => Ok(ConsumeEffect::TeleportRandomly {
+            diameter: read_f32(c)?,
+        }),
+        4 => Ok(ConsumeEffect::PlaySound(read_consumable_sound(c)?)),
+        other => anyhow::bail!("unknown consume-effect registry id {other} (byIdOrThrow)"),
+    }
+}
+
+/// ONE `MobEffectInstance` — the effect's byIdOrThrow registry id
+/// then the recursive details composite.
+fn read_effect_instance(c: &mut &[u8]) -> Result<EffectInstance> {
+    let effect_id = read_varint(c)?;
+    anyhow::ensure!(effect_id >= 0, "negative effect registry id {effect_id}");
+    Ok(EffectInstance {
+        effect_id,
+        details: read_effect_details(c)?,
+    })
+}
+
+/// The recursive `Details` composite — six lanes in the record's
+/// component order, the sixth `optional(recursive self)` (a one-byte
+/// prefix then, if present, THIS walk again). The recursion mirrors
+/// vanilla's `StreamCodec.recursive` walk-for-walk.
+fn read_effect_details(c: &mut &[u8]) -> Result<EffectDetails> {
+    let amplifier = read_varint(c)?;
+    let duration = read_varint(c)?;
+    let ambient = read_u8(c)? != 0;
+    let show_particles = read_u8(c)? != 0;
+    let show_icon = read_u8(c)? != 0;
+    let hidden_effect = if read_u8(c)? != 0 {
+        Some(Box::new(read_effect_details(c)?))
+    } else {
+        None
+    };
+    Ok(EffectDetails {
+        amplifier,
+        duration,
+        ambient,
+        show_particles,
+        show_icon,
+        hidden_effect,
+    })
+}
+
 /// The `DataComponentPatch$3.decode` walk: VarInt added count, VarInt
 /// removed count (both zero is the EMPTY patch — the early return the
 /// empty-vector result honestly reproduces), then `added` × {type id,
@@ -5054,16 +5140,16 @@ mod tests {
     }
 
     /// The consumable's FIVE lanes decode (with the sound tagged
-    /// union in BOTH directions) and the effects list refuses
-    /// non-empty: `ConsumeEffect.STREAM_CODEC` =
-    /// `ByteBufCodecs.registry(CONSUME_EFFECT_TYPE)` — a DISPATCHED
-    /// registry (each entry = a type id + that type's own payload;
-    /// the six known types are apply_status_effects,
-    /// clear_all_status_effects, play_sound, remove_status_effects
-    /// and teleport_randomly) whose payloads the port does not
-    /// carry, and the unframed wire cannot be skipped honestly (the
-    /// wave-three partial-matcher line). A negative sound holder tag
-    /// refuses — vanilla's registry lookup throws on it.
+    /// union in BOTH directions) and the effects list WALKS: each
+    /// entry = a dispatched registry id (`$29` byIdOrThrow) + that
+    /// type's own payload. The five known types ride the registry's
+    /// clinit order (apply_effects 0, remove_effects 1,
+    /// clear_all_effects 2, teleport_randomly 3, play_sound 4 — the
+    /// registry names carry no "status" infix; the wiki-era naming
+    /// is not the wire's). Refusals: an unknown dispatch id, a
+    /// NEGATIVE dispatch id, a negative effect registry id, a
+    /// negative holder-set tag, and a wire that ends before the
+    /// dispatch id (the unframed nature).
     #[test]
     fn the_consumable_five_lanes_decode_and_refuse() {
         use data_component_types as t;
@@ -5086,7 +5172,7 @@ mod tests {
 
         // the DIRECT sound (wire 0): 1.6s, DRINK (ordinal 2),
         // "minecraft:item.generic.eat" at range 1.0, particles on,
-        // no effects
+        // ONE consume effect — the zero-byte clear_all_effects entry
         let mut direct = Vec::new();
         direct.extend_from_slice(&test_support::entity_data_varint(t::CONSUMABLE));
         direct.extend_from_slice(&1.6f32.to_be_bytes());
@@ -5095,7 +5181,8 @@ mod tests {
         write_string(&mut direct, "minecraft:item.generic.eat");
         direct.extend_from_slice(&1.0f32.to_be_bytes());
         direct.push(1);
-        direct.extend_from_slice(&test_support::entity_data_varint(0));
+        direct.extend_from_slice(&test_support::entity_data_varint(1));
+        direct.extend_from_slice(&test_support::entity_data_varint(2));
         let d = parse_set_entity_data(&one_stack(&direct)).unwrap();
         match &d.entries[0].value {
             EntityDataEntry::ItemStack { patch, .. } => assert_eq!(
@@ -5107,15 +5194,16 @@ mod tests {
                         id: "minecraft:item.generic.eat".into(),
                         range: 1.0
                     },
-                    has_consume_particles: true
+                    has_consume_particles: true,
+                    effects: vec![ConsumeEffect::ClearAllEffects]
                 }
             ),
             other => panic!("expected an item stack, got {other:?}"),
         }
 
         // the REGISTRY sound (wire tag 5 = registry id 4, retained
-        // verbatim — the VILLAGER_DATA line), particles off, no
-        // effects
+        // verbatim — the VILLAGER_DATA line), particles off, NO
+        // effects (the count walks nothing)
         let mut registry = Vec::new();
         registry.extend_from_slice(&test_support::entity_data_varint(t::CONSUMABLE));
         registry.extend_from_slice(&0.8f32.to_be_bytes());
@@ -5126,33 +5214,183 @@ mod tests {
         let d = parse_set_entity_data(&one_stack(&registry)).unwrap();
         match &d.entries[0].value {
             EntityDataEntry::ItemStack { patch, .. } => match &patch.added[0].1 {
-                ComponentValue::Consumable { sound, .. } => {
+                ComponentValue::Consumable { sound, effects, .. } => {
                     assert_eq!(sound, &ConsumableSound::Registry(4));
+                    assert!(effects.is_empty());
                 }
                 other => panic!("expected a consumable, got {other:?}"),
             },
             other => panic!("expected an item stack, got {other:?}"),
         }
 
-        // a NON-EMPTY effects list refuses — the dispatched payloads
-        // cannot be skipped honestly
-        let mut effects = direct.clone();
-        let n = effects.len();
-        effects[n - 1] = 1; // the trailing effects count 0 -> 1
-        assert!(parse_set_entity_data(&one_stack(&effects)).is_err());
+        // the refusals, each riding the DIRECT base with its
+        // trailing effects list replaced (the lanes BEFORE the list
+        // are intact, so the failure is the list's own lane):
+        let base = {
+            let mut v = direct.clone();
+            let n = v.len();
+            v.truncate(n - 2); // drop the effects count + the dispatch id
+            v
+        };
+        let probe = |tail: &[u8]| {
+            let mut v = base.clone();
+            v.extend_from_slice(tail);
+            parse_set_entity_data(&one_stack(&v)).is_err()
+        };
 
-        // a NEGATIVE sound holder tag refuses (vanilla's registry
-        // lookup throws on it) — the truncated buffer keeps the type
-        // varint, the f32 and the animation varint, so the negative
-        // tag lands EXACTLY on the sound lane
-        let mut neg_tag = direct.clone();
-        neg_tag.truncate(
-            test_support::entity_data_varint(t::CONSUMABLE).len()
-                + 4
-                + test_support::entity_data_varint(2).len(),
-        );
+        // an UNKNOWN dispatch id refuses (byIdOrThrow) — wire id 5
+        // is past the registry's five entries
+        assert!(probe(&test_support::entity_data_varint(1)
+            .iter()
+            .chain(test_support::entity_data_varint(5).iter())
+            .copied()
+            .collect::<Vec<u8>>()));
+        // a NEGATIVE dispatch id refuses (the same lookup throws)
+        assert!(probe(&test_support::entity_data_varint(1)
+            .iter()
+            .chain(test_support::entity_data_varint(-1).iter())
+            .copied()
+            .collect::<Vec<u8>>()));
+        // the wire ENDING before the dispatch id refuses (the list
+        // is unframed — the count is the only framing there is)
+        assert!(probe(&test_support::entity_data_varint(1)));
+
+        // a negative effect registry id inside apply_effects refuses
+        // (the instance's byIdOrThrow lane): count 1, dispatch id 0,
+        // apply list count 1, effect id -3
+        let mut neg_effect = base.clone();
+        neg_effect.extend_from_slice(&test_support::entity_data_varint(1));
+        neg_effect.extend_from_slice(&test_support::entity_data_varint(0));
+        neg_effect.extend_from_slice(&test_support::entity_data_varint(1));
+        neg_effect.extend_from_slice(&test_support::entity_data_varint(-3));
+        assert!(parse_set_entity_data(&one_stack(&neg_effect)).is_err());
+
+        // a negative holder-set tag inside remove_effects refuses:
+        // count 1, dispatch id 1, tag -2
+        let mut neg_tag = base.clone();
+        neg_tag.extend_from_slice(&test_support::entity_data_varint(1));
+        neg_tag.extend_from_slice(&test_support::entity_data_varint(1));
         neg_tag.extend_from_slice(&test_support::entity_data_varint(-2));
         assert!(parse_set_entity_data(&one_stack(&neg_tag)).is_err());
+    }
+
+    /// The consume-effect dispatch decodes ALL FIVE types, the
+    /// apply_effects entry walking the RECURSIVE details composite
+    /// (the hidden-effect chain two levels deep — `StreamCodec.
+    /// recursive` mirrored walk-for-walk). The audit (javap, one hop
+    /// per type): apply_effects = `composite(MobEffectInstance.
+    /// STREAM_CODEC.list(), FLOAT)`; remove_effects =
+    /// `composite(ByteBufCodecs.holderSet(MOB_EFFECT))` (the
+    /// wave-three tagged union, decoded in BOTH directions);
+    /// clear_all_effects = `StreamCodec.unit(INSTANCE)` (ZERO bytes);
+    /// teleport_randomly = `composite(FLOAT)`; play_sound =
+    /// `composite(SoundEvent.STREAM_CODEC)` (the SAME tagged holder
+    /// union as the consumable's sound lane — one codec, two call
+    /// sites). MobEffectInstance = `composite(holderRegistry(
+    /// MOB_EFFECT), Details)` where Details =
+    /// `StreamCodec.recursive(composite(VAR_INT, VAR_INT, BOOL,
+    /// BOOL, BOOL, optional(self)))` — the record's component order
+    /// confirmed by its bootstrap strings.
+    #[test]
+    fn the_consume_effect_dispatch_decodes_all_five_types() {
+        use data_component_types as t;
+        use entity_data_serializers as s;
+
+        let stack_with = |consumable_bytes: &[u8]| -> Vec<u8> {
+            let mut v = Vec::new();
+            for prefix in [1i32, 1, 1, 0] {
+                v.extend_from_slice(&test_support::entity_data_varint(prefix));
+            }
+            v.extend_from_slice(consumable_bytes);
+            v
+        };
+        let one_stack = |consumable_bytes: &[u8]| -> Vec<u8> {
+            test_support::set_entity_data_packet(
+                5,
+                &test_support::entity_data_entry(8, s::ITEM_STACK, &stack_with(consumable_bytes)),
+            )
+        };
+
+        let mut w = Vec::new();
+        w.extend_from_slice(&test_support::entity_data_varint(t::CONSUMABLE));
+        w.extend_from_slice(&1.0f32.to_be_bytes()); // consume_seconds
+        w.extend_from_slice(&test_support::entity_data_varint(1)); // EAT
+        w.extend_from_slice(&test_support::entity_data_varint(0)); // DIRECT sound
+        write_string(&mut w, "minecraft:entity.generic.eat");
+        w.extend_from_slice(&1.0f32.to_be_bytes());
+        w.push(1); // particles
+        // the FIVE dispatched entries, one of each type
+        w.extend_from_slice(&test_support::entity_data_varint(5));
+        // [0] apply_effects: ONE instance whose details carry a
+        // hidden effect (recursion depth 1), probability 0.5
+        w.extend_from_slice(&test_support::entity_data_varint(0));
+        w.extend_from_slice(&test_support::entity_data_varint(1)); // the list count
+        w.extend_from_slice(&test_support::entity_data_varint(9)); // effect id 9
+        w.extend_from_slice(&test_support::entity_data_varint(2)); // amplifier
+        w.extend_from_slice(&test_support::entity_data_varint(-1)); // INFINITE_DURATION
+        w.push(0); // ambient
+        w.push(1); // show_particles
+        w.push(1); // show_icon
+        w.push(1); // hidden_effect PRESENT
+        w.extend_from_slice(&test_support::entity_data_varint(3)); // nested amplifier
+        w.extend_from_slice(&test_support::entity_data_varint(100)); // nested duration
+        w.push(1); // nested ambient
+        w.push(0); // nested show_particles
+        w.push(1); // nested show_icon
+        w.push(0); // nested hidden_effect ABSENT — the recursion ends
+        w.extend_from_slice(&0.5f32.to_be_bytes()); // probability
+        // [1] remove_effects — the NAMED set ("minecraft:harmful")
+        w.extend_from_slice(&test_support::entity_data_varint(1));
+        w.extend_from_slice(&test_support::entity_data_varint(0));
+        write_string(&mut w, "minecraft:harmful");
+        // [2] clear_all_effects — ZERO payload bytes
+        w.extend_from_slice(&test_support::entity_data_varint(2));
+        // [3] teleport_randomly — diameter 8.0
+        w.extend_from_slice(&test_support::entity_data_varint(3));
+        w.extend_from_slice(&8.0f32.to_be_bytes());
+        // [4] play_sound — the REGISTRY sound (tag 5 = id 4)
+        w.extend_from_slice(&test_support::entity_data_varint(4));
+        w.extend_from_slice(&test_support::entity_data_varint(5));
+
+        let d = parse_set_entity_data(&one_stack(&w)).unwrap();
+        match &d.entries[0].value {
+            EntityDataEntry::ItemStack { patch, .. } => match &patch.added[0].1 {
+                ComponentValue::Consumable { effects, .. } => assert_eq!(
+                    effects,
+                    &vec![
+                        ConsumeEffect::ApplyEffects {
+                            effects: vec![EffectInstance {
+                                effect_id: 9,
+                                details: EffectDetails {
+                                    amplifier: 2,
+                                    duration: -1,
+                                    ambient: false,
+                                    show_particles: true,
+                                    show_icon: true,
+                                    hidden_effect: Some(Box::new(EffectDetails {
+                                        amplifier: 3,
+                                        duration: 100,
+                                        ambient: true,
+                                        show_particles: false,
+                                        show_icon: true,
+                                        hidden_effect: None,
+                                    })),
+                                },
+                            }],
+                            probability: 0.5,
+                        },
+                        ConsumeEffect::RemoveEffects(EffectHolderSet::Named(
+                            "minecraft:harmful".into(),
+                        )),
+                        ConsumeEffect::ClearAllEffects,
+                        ConsumeEffect::TeleportRandomly { diameter: 8.0 },
+                        ConsumeEffect::PlaySound(ConsumableSound::Registry(4)),
+                    ]
+                ),
+                other => panic!("expected a consumable, got {other:?}"),
+            },
+            other => panic!("expected an item stack, got {other:?}"),
+        }
     }
 
     /// The patch value codecs' SECOND WAVE: the three record codecs

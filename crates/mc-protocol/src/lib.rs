@@ -31,9 +31,10 @@ pub use nbt::Nbt;
 pub use play::{
     begin_play, connect_and_join_live, connect_and_join_world, join_world, AttributeDisplay,
     AttributeModifier, AttributeModifierEntry, BlockPredicate, BlockSet, ChunkColumn, ChunkLight,
-    ChunkSection, ClockUpdate, ComponentPatch, ComponentValue, ConsumableSound,
-    DataComponentMatchers, EntityDataEntry, EntityDataSet, EntityDeltaPos, EntityDeltaPosRot,
-    EntityDeltaRot, EntityHeadRot, EntityPositionSync, EntitySpawn, LightData, LiveJoin,
+    ChunkSection, ClockUpdate, ComponentPatch, ComponentValue, ConsumeEffect, ConsumableSound,
+    DataComponentMatchers, EffectDetails, EffectHolderSet, EffectInstance, EntityDataEntry,
+    EntityDataSet, EntityDeltaPos, EntityDeltaPosRot, EntityDeltaRot, EntityHeadRot,
+    EntityPositionSync, EntitySpawn, LightData, LiveJoin,
     PlayEvent, PlaySession, PlayStart, PlayerPosition, PropertyMatcher, PropertyValue,
     SetEntityDataEntry, SpawnInfo, TimeSync, WorldInfo, WorldOutcome, WorldSnapshot,
     DESIRED_CHUNKS_PER_TICK, pack_entries,
