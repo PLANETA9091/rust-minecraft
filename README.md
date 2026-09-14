@@ -919,6 +919,29 @@ hand-drawn:
   (VILLAGER_DATA at 18 doubles as the order proof), the generated-id
   pin, and the model's merge semantics (replace-one-leave-others, the
   null-lookup drop, the re-spawn reset).
+  The **set container slot — the inventory surfaces' third packet
+  (v0.3.123)**: ONE slot's new stack, the single-slot sibling of the
+  content round. javap of the private decode constructor: the record's
+  own FOUR fields in wire order — `containerId` rides `readContainerId`
+  (the VARINT lane the content round pinned), `stateId` the raw
+  VAR_INT, `slot` rides `readShort` — A SIGNED BIG-ENDIAN SHORT, not a
+  VarInt (the round's shape trap: the sibling packet has no slot lane
+  at all, and a VarInt guess would misread the width for every slot
+  and die on the high ones; the slot is retained verbatim — a negative
+  slot stores a negative slot, the consumer's bounds check is the
+  consumer's act), and `itemStack` the plain
+  `ItemStack.OPTIONAL_STREAM_CODEC` — the one-reader line's FOURTH
+  call site (the entity-data lane, the equipment slots, the window
+  list, now the single slot), an EMPTY stack a LEGAL entry (the
+  cleared slot). The pump grows `ContainerSlotSet`, the model's apply
+  arm the same no-surface skip (the inventory surfaces own the
+  consumer's act). GOLDENS UNTOUCHED BY CONSTRUCTION: 12/12 at rms
+  0.000. Tests +1 (workspace 476 -> 477 passed / 0 failed / 3
+  ignored): the generated-id 20 pin, the four-lane retention (the
+  two-byte VarInt container id 200, the slot riding 0x00C8 as a BE
+  short — a VarInt walk would have died there — the one-component
+  patch, the negative slot −2 retained verbatim, the cleared slot),
+  the three truncations refusing, and the wrong-id guard.
   The **entity-data WRITE side — every decode walk now has its encode
   mirror (v0.3.122)**: the write side the audits named, landed whole.
   Three javap'd encode lanes anchor the family's judgment calls:

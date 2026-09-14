@@ -102,6 +102,7 @@ pub mod clientbound {
         CB_RESPAWN as RESPAWN, CB_SECTION_BLOCKS_UPDATE as SECTION_BLOCKS_UPDATE,
         CB_SET_CHUNK_CACHE_CENTER as CENTER_CHUNK, CB_SET_ENTITY_DATA as SET_ENTITY_DATA,
         CB_SET_EQUIPMENT as SET_EQUIPMENT, CB_CONTAINER_SET_CONTENT as CONTAINER_SET_CONTENT,
+        CB_CONTAINER_SET_SLOT as CONTAINER_SET_SLOT,
         CB_SET_TIME as SET_TIME,
         CB_UPDATE_MOB_EFFECT as UPDATE_MOB_EFFECT,
     };
@@ -5014,6 +5015,55 @@ pub fn parse_set_container_content(payload: &[u8]) -> Result<ContainerContent> {
     Ok(ContainerContent { container_id, state_id, items, carried_item })
 }
 
+/// Set Container Slot (clientbound play, generated id 20 —
+/// `minecraft:container_set_slot`): ONE slot's new stack — the
+/// inventory surfaces' third packet, the single-slot sibling of
+/// [`ContainerContent`]. javap of the private decode constructor: the
+/// record's own four fields in wire order — `containerId` rides
+/// `readContainerId` (the VARINT lane the content round pinned; the
+/// wiki-era byte would die past 127), `stateId` the raw VAR_INT
+/// retained verbatim, `slot` rides `readShort` — A SIGNED
+/// BIG-ENDIAN SHORT, not a VarInt (the round's shape trap: the
+/// sibling packet has no slot lane at all, and a VarInt guess would
+/// misread the width for every slot and die on the high ones; the
+/// slot is retained verbatim — a negative slot stores a negative
+/// slot, the consumer's bounds check is the consumer's act), and
+/// `itemStack` the plain `ItemStack.OPTIONAL_STREAM_CODEC` — the
+/// one-reader line's FOURTH call site, an EMPTY stack a LEGAL entry
+/// (the cleared slot, the optional lane's own cargo). The
+/// constructor's `ItemStack.copy()` is object-graph hygiene, not wire.
+#[derive(Debug, Clone, PartialEq)]
+pub struct ContainerSetSlot {
+    /// The window id (0 = the player inventory) — the VarInt
+    /// CONTAINER_ID lane's own shape.
+    pub container_id: i32,
+    /// The revision counter the server bumps per change; retained
+    /// verbatim.
+    pub state_id: i32,
+    /// The slot's index — a SIGNED BE SHORT (readShort), retained
+    /// verbatim.
+    pub slot: i16,
+    /// The slot's new stack — an EMPTY stack clears the slot (the
+    /// optional lane's own cargo).
+    pub item: ItemStack,
+}
+
+/// Set Container Slot's wire walk (see [`ContainerSetSlot`] — the
+/// four-lane walk, the readShort slot trap, the optional stack).
+pub fn parse_set_container_slot(payload: &[u8]) -> Result<ContainerSetSlot> {
+    let mut c: &[u8] = payload;
+    let id = read_varint(&mut c)?;
+    anyhow::ensure!(
+        id == clientbound::CONTAINER_SET_SLOT,
+        "not a container set slot packet (0x{id:02X})"
+    );
+    let container_id = read_varint(&mut c)?;
+    let state_id = read_varint(&mut c)?;
+    let slot = read_i16(&mut c)?;
+    let item = read_item_stack(&mut c)?;
+    Ok(ContainerSetSlot { container_id, state_id, slot, item })
+}
+
 /// One clientbound play packet, handled.
 #[derive(Debug, Clone, PartialEq)]
 pub enum PlayEvent {
@@ -5094,6 +5144,11 @@ pub enum PlayEvent {
     /// cursor stack; the container id rides a VarInt, not a byte).
     /// The model consumes it when the inventory surfaces arrive.
     ContainerFilled(ContainerContent),
+    /// Set Container Slot: ONE slot's new stack — the inventory
+    /// surfaces' third packet (the single-slot sibling; the slot rides
+    /// a SIGNED BE SHORT, not a VarInt). The model consumes it when
+    /// the inventory surfaces arrive.
+    ContainerSlotSet(ContainerSetSlot),
     /// Any packet without a client surface yet (skipped silently).
     Skipped,
 }
@@ -5200,6 +5255,9 @@ impl<S: Read + Write> PlaySession<S> {
             }
             clientbound::CONTAINER_SET_CONTENT => {
                 Ok(PlayEvent::ContainerFilled(parse_set_container_content(&pkt)?))
+            }
+            clientbound::CONTAINER_SET_SLOT => {
+                Ok(PlayEvent::ContainerSlotSet(parse_set_container_slot(&pkt)?))
             }
             _ => Ok(PlayEvent::Skipped),
         }
@@ -9186,6 +9244,86 @@ mod tests {
         write_varint(&mut p, 1);
         write_varint(&mut p, 0); // the one slot
         assert!(parse_set_container_content(&p).is_err());
+    }
+
+    /// The single-slot sibling (generated id 20): the record's four
+    /// fields in wire order — the VarInt container id, the raw state
+    /// id, the SIGNED BE SHORT slot (the round's shape trap: a VarInt
+    /// walk would misread the width and die on the high slots), and
+    /// the plain OPTIONAL stack (the one-reader line's FOURTH call
+    /// site, an EMPTY stack a LEGAL cleared slot). The truncation map:
+    /// each lane short refuses honestly.
+    #[test]
+    fn the_container_slot_lanes_retain_the_single_slot() {
+        use data_component_types as t;
+        assert_eq!(
+            clientbound::CONTAINER_SET_SLOT, 20,
+            "minecraft:container_set_slot"
+        );
+        // window 200 (the two-byte VarInt — the byte-era table dies),
+        // state 9, slot 200 (0x00C8 — past a VarInt's single-byte
+        // range: the short lane's own proof), the stack a full one
+        // with a one-component patch
+        let mut p = Vec::new();
+        write_varint(&mut p, clientbound::CONTAINER_SET_SLOT);
+        write_varint(&mut p, 200);
+        write_varint(&mut p, 9);
+        p.extend_from_slice(&200i16.to_be_bytes()); // the readShort lane
+        write_varint(&mut p, 12); // count
+        write_varint(&mut p, 745); // item registry id
+        write_varint(&mut p, 1); // patch: one added
+        write_varint(&mut p, 0); // patch: none removed
+        write_varint(&mut p, t::MAX_STACK_SIZE);
+        write_varint(&mut p, 35); // the VarInt value
+        let s = parse_set_container_slot(&p).unwrap();
+        assert_eq!(s.container_id, 200, "the VarInt container id, not a byte");
+        assert_eq!(s.state_id, 9);
+        assert_eq!(s.slot, 200, "the slot rode a SIGNED BE SHORT, not a VarInt");
+        assert_eq!(s.item.count, 12);
+        assert_eq!(s.item.item_id, 745);
+        assert_eq!(
+            s.item.patch,
+            ComponentPatch { added: vec![(t::MAX_STACK_SIZE, ComponentValue::VarInt(35))], removed: vec![] }
+        );
+        // the negative slot retained verbatim (the consumer's bounds
+        // check is the consumer's act) and the CLEARED slot legal
+        let mut p = Vec::new();
+        write_varint(&mut p, clientbound::CONTAINER_SET_SLOT);
+        write_varint(&mut p, 0);
+        write_varint(&mut p, 1);
+        p.extend_from_slice(&(-2i16).to_be_bytes());
+        write_varint(&mut p, 0); // the EMPTY stack: the cleared slot
+        let s = parse_set_container_slot(&p).unwrap();
+        assert_eq!(s.slot, -2);
+        assert_eq!(s.item, ItemStack { count: 0, item_id: 0, patch: ComponentPatch::default() });
+        // the truncation map: the slot short short, the stack short,
+        // the patch short — each lane refuses honestly
+        let mut p = Vec::new();
+        write_varint(&mut p, clientbound::CONTAINER_SET_SLOT);
+        write_varint(&mut p, 0);
+        write_varint(&mut p, 1);
+        p.push(0); // one byte of the slot's two
+        assert!(parse_set_container_slot(&p).is_err());
+        let mut p = Vec::new();
+        write_varint(&mut p, clientbound::CONTAINER_SET_SLOT);
+        write_varint(&mut p, 0);
+        write_varint(&mut p, 1);
+        p.extend_from_slice(&0i16.to_be_bytes());
+        // the stack: a count with no item behind it
+        write_varint(&mut p, 1);
+        assert!(parse_set_container_slot(&p).is_err());
+        let mut p = Vec::new();
+        write_varint(&mut p, clientbound::CONTAINER_SET_SLOT);
+        write_varint(&mut p, 0);
+        write_varint(&mut p, 1);
+        p.extend_from_slice(&0i16.to_be_bytes());
+        write_varint(&mut p, 1); // count
+        write_varint(&mut p, 2); // item id, the patch counts missing
+        assert!(parse_set_container_slot(&p).is_err());
+        // a wrong packet id refuses (the generated-id guard)
+        let mut p = Vec::new();
+        write_varint(&mut p, clientbound::CONTAINER_SET_CONTENT);
+        assert!(parse_set_container_slot(&p).is_err());
     }
 
     /// Mock server: login -> configuration -> play (the FULL vanilla
