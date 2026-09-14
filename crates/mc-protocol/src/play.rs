@@ -1568,6 +1568,39 @@ pub mod data_component_types {
     /// component ids: "blocks this item CAN place on" and "blocks it
     /// CAN break" share the predicate list shape).
     pub const CAN_BREAK: i32 = 15;
+    // ---- the fourth wave: the stat + sustenance trio ----
+    /// `ItemAttributeModifiers.STREAM_CODEC` =
+    /// `composite(Entry.STREAM_CODEC.list(), ..)` — a VarInt count
+    /// (the NO-ARG `ByteBufCodecs.list()`, ceiling
+    /// `Integer.MAX_VALUE`) then count × FOUR-lane entries:
+    /// `holderRegistry(ATTRIBUTE)` (the `$29` byIdOrThrow VarInt),
+    /// `AttributeModifier.STREAM_CODEC` (composite of an Identifier
+    /// UTF id, `ByteBufCodecs.DOUBLE` = a BIG-ENDIAN f64, and the
+    /// Operation idMapper ordinal), `EquipmentSlotGroup.STREAM_CODEC`
+    /// (the same idMapper shape — ANY=0 .. SADDLE=10) and the
+    /// 26.2-NEW `Display.STREAM_CODEC` — a DISPATCH: the Type
+    /// ordinal (DEFAULT=0, HIDDEN=1, OVERRIDE=2) then the variant's
+    /// payload (default/hidden `StreamCodec.unit` = ZERO bytes,
+    /// override one bare component tag). See
+    /// [`crate::play::AttributeModifierEntry`].
+    pub const ATTRIBUTE_MODIFIERS: i32 = 16;
+    /// `FoodProperties.DIRECT_STREAM_CODEC` = `composite(VAR_INT,
+    /// FLOAT, BOOL)` — nutrition is a VAR_INT in 26.2 (the record
+    /// holds `int nutrition`; the wiki-era float instinct is not the
+    /// wire's shape — the construction site decides), saturation a
+    /// BE f32, can_always_eat one byte.
+    pub const FOOD: i32 = 23;
+    /// `Consumable.STREAM_CODEC` — a FIVE-lane composite: FLOAT
+    /// consume_seconds, `ItemUseAnimation.STREAM_CODEC` (an idMapper
+    /// ordinal — NONE=0 .. BRUSH=9), `SoundEvent.STREAM_CODEC` =
+    /// `ByteBufCodecs.holder(..)` (a TAGGED union: wire 0 = the
+    /// direct `{UTF id, f32 range}` lane, wire tag >= 1 = the
+    /// `(tag - 1)` registry id, a negative tag refuses), BOOL
+    /// has_consume_particles, then `ConsumeEffect.STREAM_CODEC.list()`
+    /// — a count of DISPATCHED registry entries (each type carries
+    /// its own payload codec; the port carries none of the six, so
+    /// any NON-EMPTY list refuses — the partial-matcher line).
+    pub const CONSUMABLE: i32 = 24;
 }
 
 /// One decoded component-patch VALUE — the codec-shape variants of
@@ -1640,6 +1673,44 @@ pub enum ComponentValue {
     /// the four-lane [`BlockPredicate`] composite; see it for the
     /// decode's honest refusals.
     BlockPredicates(Vec<BlockPredicate>),
+    /// The stat lane: attribute_modifiers (16) — the held-item's
+    /// attribute surface, the FOUR-lane entry composite (see
+    /// [`AttributeModifierEntry`]). The registry and ordinal lanes
+    /// are retained verbatim; the Display ordinal is FRAMING and
+    /// resolves in-decode.
+    AttributeModifiers(Vec<AttributeModifierEntry>),
+    /// The sustenance lane: food (23) — `composite(VAR_INT nutrition,
+    /// FLOAT saturation, BOOL can_always_eat)`. A negative nutrition
+    /// is retained verbatim: the record constructor does not clamp
+    /// (the villager round's lesson — a clamp's direction is a
+    /// per-codec fact, and the javap shows none here).
+    Food {
+        /// The nutrition — a plain VarInt on the wire.
+        nutrition: i32,
+        /// The saturation modifier — a BE f32.
+        saturation: f32,
+        /// The always-edible flag — one byte.
+        can_always_eat: bool,
+    },
+    /// The consumption lane: consumable (24) — the FIVE-lane
+    /// composite (consume seconds, the animation ordinal, the tagged
+    /// sound, the particle flag) with the effects list pinned EMPTY:
+    /// `ConsumeEffect.STREAM_CODEC` is a DISPATCHED registry whose
+    /// payloads the port does not carry, and the unframed wire
+    /// cannot be skipped honestly (the wave-three partial-matcher
+    /// line).
+    Consumable {
+        /// The consume time — a BE f32.
+        consume_seconds: f32,
+        /// The use animation's idMapper ordinal (NONE=0 .. BRUSH=9),
+        /// retained verbatim (the ZERO-fill is a consumer's act).
+        animation: i32,
+        /// The consume sound — the `ByteBufCodecs.holder` tagged
+        /// union ([`ConsumableSound`]).
+        sound: ConsumableSound,
+        /// The consume-particles flag — one byte.
+        has_consume_particles: bool,
+    },
 }
 
 /// The item stack's component patch — the `DataComponentPatch$3`
@@ -1893,6 +1964,46 @@ fn read_component_value(type_id: i32, c: &mut &[u8]) -> Result<ComponentValue> {
             // registry slots
             ComponentValue::BlockPredicates(read_adventure_mode_predicate(c)?)
         }
+        t::ATTRIBUTE_MODIFIERS => {
+            // ItemAttributeModifiers.STREAM_CODEC: the no-arg list
+            // count, then count x the FOUR-lane entry composite
+            ComponentValue::AttributeModifiers(read_attribute_modifiers(c)?)
+        }
+        t::FOOD => {
+            // FoodProperties.DIRECT_STREAM_CODEC = composite(VAR_INT,
+            // FLOAT, BOOL) — nutrition is a VAR_INT in 26.2, retained
+            // verbatim (the record constructor clamps nothing)
+            let nutrition = read_varint(c)?;
+            let saturation = read_f32(c)?;
+            let can_always_eat = read_u8(c)? != 0;
+            ComponentValue::Food {
+                nutrition,
+                saturation,
+                can_always_eat,
+            }
+        }
+        t::CONSUMABLE => {
+            // Consumable.STREAM_CODEC — the FIVE-lane composite; the
+            // effects list's count is read and pinned EMPTY (the
+            // dispatched registry's payloads cannot be skipped
+            // honestly — the wave-three partial-matcher line)
+            let consume_seconds = read_f32(c)?;
+            let animation = read_varint(c)?;
+            let sound = read_consumable_sound(c)?;
+            let has_consume_particles = read_u8(c)? != 0;
+            let effects = read_component_count(c, "consume-effect list")?;
+            anyhow::ensure!(
+                effects == 0,
+                "no payload codecs for the {effects} dispatched consume-effect \
+                 types (the wire is unframed; a payload cannot be skipped honestly)"
+            );
+            ComponentValue::Consumable {
+                consume_seconds,
+                animation,
+                sound,
+                has_consume_particles,
+            }
+        }
         other => anyhow::bail!(
             "no value codec for component type {other} (the patch wire is unframed; \
              the value cannot be skipped honestly)"
@@ -2019,6 +2130,107 @@ pub struct BlockPredicate {
     pub matchers: DataComponentMatchers,
 }
 
+/// ONE attribute-modifier entry of the held-item's stat surface —
+/// `ItemAttributeModifiers$Entry.STREAM_CODEC` = a FOUR-lane
+/// composite, wire order:
+///
+/// 1. `attribute` — `ByteBufCodecs.holderRegistry(ATTRIBUTE)` = the
+///    `$29` byIdOrThrow VarInt: a negative id refuses exactly where
+///    vanilla throws, a non-negative unknown is retained verbatim
+///    (this client carries no attribute registry — the ENCHANTMENTS
+///    line);
+/// 2. `modifier` — `AttributeModifier.STREAM_CODEC` =
+///    `composite(Identifier UTF id, ByteBufCodecs.DOUBLE amount,
+///    Operation.STREAM_CODEC)`: the amount rides a BIG-ENDIAN f64
+///    (the DOUBLE/INT/LONG trap family — the construction site is
+///    the shape, the field's name is not), the operation an idMapper
+///    ordinal retained verbatim (0 = add, 1 = add_multiplied_base,
+///    2 = add_multiplied_total; vanilla's
+///    `ByIdMap.continuous(.., OutOfBoundsStrategy.ZERO)` NEVER
+///    refuses — `lambda$continuous$0` maps every key outside
+///    `[0, len)` to values[0], so a refusal would invent a data flow
+///    vanilla does not have; the resolution is a consumer's act);
+/// 3. `slot` — `EquipmentSlotGroup.STREAM_CODEC` = the SAME idMapper
+///    shape (ANY=0, MAINHAND=1, OFFHAND=2, HAND=3, FEET=4, LEGS=5,
+///    CHEST=6, HEAD=7, ARMOR=8, BODY=9, SADDLE=10), retained
+///    verbatim for the same ZERO-fill reason;
+/// 4. `display` — the 26.2-NEW `ItemAttributeModifiers$Display`
+///    DISPATCH (`StreamCodec.dispatch(typeGetter,
+///    Type.STREAM_CODEC.cast())`): the Type ordinal (DEFAULT=0,
+///    HIDDEN=1, OVERRIDE=2) then the variant's payload. The ordinal
+///    is FRAMING — it selects the payload walk — so an out-of-range
+///    or negative ordinal fills to DEFAULT (the continuous map's
+///    own behavior) and the decode walks the zero-byte unit lane;
+///    the fill is pinned by a test.
+#[derive(Debug, Clone, PartialEq)]
+pub struct AttributeModifierEntry {
+    /// The attribute's registry id (the `$29` VarInt).
+    pub attribute_id: i32,
+    /// The modifier record (id, amount, operation).
+    pub modifier: AttributeModifier,
+    /// The slot group's idMapper ordinal, retained verbatim.
+    pub slot: i32,
+    /// The 26.2 display dispatch, decoded to its variant.
+    pub display: AttributeDisplay,
+}
+
+/// The modifier record of an [`AttributeModifierEntry`] —
+/// `AttributeModifier.STREAM_CODEC`'s three lanes.
+#[derive(Debug, Clone, PartialEq)]
+pub struct AttributeModifier {
+    /// The modifier's identifier (the UUID wire form is long gone —
+    /// 26.2 rides an Identifier UTF string).
+    pub id: String,
+    /// The amount — a BIG-ENDIAN f64 (`ByteBufCodecs.DOUBLE`).
+    pub amount: f64,
+    /// The operation's idMapper ordinal, retained verbatim (the
+    /// ZERO-fill is a consumer's act).
+    pub operation: i32,
+}
+
+/// The 26.2-NEW display lane of an [`AttributeModifierEntry`] — the
+/// `ItemAttributeModifiers$Display` dispatch decoded to its variant
+/// (vanilla's own decode state IS the Display instance, so the store
+/// mirrors the instance, not the raw ordinal).
+#[derive(Debug, Clone, PartialEq)]
+pub enum AttributeDisplay {
+    /// Wire 0 — `Display$Default.STREAM_CODEC` = `StreamCodec.unit`:
+    /// ZERO payload bytes. Also the ZERO-fill lane: an out-of-range
+    /// or negative Type ordinal decodes HERE (the continuous map
+    /// never refuses), pinned by a test.
+    Default,
+    /// Wire 1 — `Display$Hidden.STREAM_CODEC` = `StreamCodec.unit`:
+    /// ZERO payload bytes.
+    Hidden,
+    /// Wire 2 — `Display$OverrideText.STREAM_CODEC` =
+    /// `composite(ComponentSerialization.STREAM_CODEC)`: ONE bare
+    /// component tag.
+    Override(Nbt),
+}
+
+/// The sound lane of [`ComponentValue::Consumable`] —
+/// `SoundEvent.STREAM_CODEC` = `ByteBufCodecs.holder(SOUND_EVENT,
+/// DIRECT_STREAM_CODEC)`: a TAGGED union (the wave-three holderSet's
+/// shape family) where wire 0 is the DIRECT lane and wire tag >= 1
+/// the registry lane.
+#[derive(Debug, Clone, PartialEq)]
+pub enum ConsumableSound {
+    /// Wire 0: `SoundEvent.DIRECT_STREAM_CODEC` =
+    /// `composite(Identifier, FLOAT)` — the sound's location and its
+    /// range, decoded verbatim.
+    Direct {
+        /// The sound's identifier ("minecraft:item.generic.eat").
+        id: String,
+        /// The sound's range — a BE f32.
+        range: f32,
+    },
+    /// Wire tag >= 1: the `(tag - 1)` registry id, retained verbatim
+    /// (this client carries no sound registry — the VILLAGER_DATA
+    /// line). A NEGATIVE wire tag refuses: vanilla's registry lookup
+    /// throws on it (the tag-1 arithmetic would go below the table).
+    Registry(i32),
+}
+
 /// `ByteBufCodecs.optional` (`$23`) verbatim: a one-byte boolean
 /// prefix, then the value only if present. Used by the ranged
 /// property matcher's two bounds (and the same shape as the
@@ -2138,6 +2350,66 @@ fn read_block_predicate(c: &mut &[u8]) -> Result<BlockPredicate> {
         nbt,
         matchers: DataComponentMatchers { exact },
     })
+}
+
+/// The attribute-modifiers walk — the outer NO-ARG list count, then
+/// count × the FOUR-lane entry composite (see
+/// [`AttributeModifierEntry`] for the full lane provenance).
+fn read_attribute_modifiers(c: &mut &[u8]) -> Result<Vec<AttributeModifierEntry>> {
+    let n = read_component_count(c, "attribute-modifier list")?;
+    let mut entries = Vec::with_capacity(n as usize);
+    for _ in 0..n {
+        // lane 1: holderRegistry(ATTRIBUTE) — the $29 VarInt
+        let attribute_id = read_varint(c)?;
+        anyhow::ensure!(
+            attribute_id >= 0,
+            "negative attribute registry id {attribute_id}"
+        );
+        // lane 2: composite(Identifier UTF, DOUBLE = BE f64, ordinal)
+        let id = read_string(c)?;
+        let amount = read_f64(c)?;
+        let operation = read_varint(c)?;
+        // lane 3: the slot group's idMapper ordinal (retained
+        // verbatim — the ZERO-fill is a consumer's act)
+        let slot = read_varint(c)?;
+        // lane 4: the Display dispatch — the Type ordinal selects the
+        // payload walk; out-of-range fills to DEFAULT (the continuous
+        // map's own behavior) and walks the zero-byte unit lane
+        let display = match read_varint(c)? {
+            1 => AttributeDisplay::Hidden,
+            2 => AttributeDisplay::Override(read_bare_nbt(c)?),
+            _ => AttributeDisplay::Default,
+        };
+        entries.push(AttributeModifierEntry {
+            attribute_id,
+            modifier: AttributeModifier {
+                id,
+                amount,
+                operation,
+            },
+            slot,
+            display,
+        });
+    }
+    Ok(entries)
+}
+
+/// The consumable sound lane — `ByteBufCodecs.holder(..)`: a TAGGED
+/// union where wire 0 is the DIRECT `{UTF id, f32 range}` lane and
+/// wire tag >= 1 the `(tag - 1)` registry id (a negative tag refuses
+/// — vanilla's registry lookup throws on it).
+fn read_consumable_sound(c: &mut &[u8]) -> Result<ConsumableSound> {
+    let tag = read_varint(c)?;
+    if tag == 0 {
+        Ok(ConsumableSound::Direct {
+            id: read_string(c)?,
+            range: read_f32(c)?,
+        })
+    } else if tag > 0 {
+        Ok(ConsumableSound::Registry(tag - 1))
+    } else {
+        anyhow::bail!("negative sound holder tag {tag}");
+    }
 }
 
 /// The `DataComponentPatch$3.decode` walk: VarInt added count, VarInt
