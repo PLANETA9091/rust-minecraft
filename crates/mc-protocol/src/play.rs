@@ -75,8 +75,10 @@ use std::net::TcpStream;
 
 use crate::config::{join_play_conn, PlayOutcome, RegistryData};
 use crate::framing::PacketConn;
-use crate::nbt::{read_bare_nbt, Nbt};
-use crate::varint::{read_string, read_varint, read_varlong, write_varint};
+use crate::nbt::{read_bare_nbt, write_bare_nbt, Nbt};
+use crate::varint::{
+    read_string, read_varint, read_varlong, write_string, write_varint, write_varlong,
+};
 use crate::DEFAULT_TIMEOUT_SECS;
 
 /// Clientbound play packet ids, GENERATED from the official jar's REAL
@@ -2062,32 +2064,48 @@ pub enum PositionSource {
 #[derive(Debug, Clone, PartialEq)]
 pub enum ParticleValue {
     /// SimpleParticleType — zero payload bytes (103 of the 125 ids).
-    Simple,
+    /// The dispatched registry id is RETAINED verbatim (the write
+    /// side's demand: five of the carriers cover more than one
+    /// registry id, and a parse that collapsed the id could not be
+    /// written back — the id was in the dispatch's hand, the store
+    /// keeps it).
+    Simple(i32),
     /// BlockParticleOption (`idMapper(BLOCK_STATE_REGISTRY)` — the
     /// state-palette lookup, negative refuses): block,
-    /// block_marker, falling_dust, dust_pillar, block_crumble.
-    Block(i32),
-    /// GeyserParticleOptions — `composite(INT)`: geyser,
-    /// geyser_plume; the record's waterBlocks field.
+    /// block_marker, falling_dust, dust_pillar, block_crumble — FIVE
+    /// registry ids on one shape, so the id rides the store.
+    Block { particle_id: i32, state: i32 },
+    /// GeyserParticleOptions — `composite(INT)`: geyser (a 1:1 lane —
+    /// the writer names the constant); the record's waterBlocks.
     Geyser { water_blocks: i32 },
     /// GeyserBaseParticleOptions — `composite(INT, FLOAT)`: geyser_
-    /// base, geyser_poof; waterBlocks + burstImpulseBase.
-    GeyserBase { water_blocks: i32, burst_impulse_base: f32 },
-    /// PowerParticleOption — `composite(FLOAT)`: dragon_breath; the
-    /// power field.
+    /// base, geyser_poof — TWO ids on one shape, the id retained.
+    GeyserBase {
+        particle_id: i32,
+        water_blocks: i32,
+        burst_impulse_base: f32,
+    },
+    /// PowerParticleOption — `composite(FLOAT)`: dragon_breath (1:1);
+    /// the power field.
     Power(f32),
-    /// DustParticleOptions — `composite(INT, FLOAT)`: dust; the
+    /// DustParticleOptions — `composite(INT, FLOAT)`: dust (1:1); the
     /// color argb + the scale.
     Dust { color: i32, scale: f32 },
     /// DustColorTransitionOptions — `composite(INT, INT, FLOAT)`:
-    /// dust_color_transition; from-color + to-color + scale.
+    /// dust_color_transition (1:1); from-color + to-color + scale.
     DustTransition { from_color: i32, to_color: i32, scale: f32 },
     /// SpellParticleOption — `composite(INT, FLOAT)`: effect,
-    /// instant_effect; the color argb + the power.
-    Spell { color: i32, power: f32 },
+    /// instant_effect — TWO ids on one shape, the id retained; the
+    /// color argb + the power.
+    Spell {
+        particle_id: i32,
+        color: i32,
+        power: f32,
+    },
     /// ColorParticleOption — `composite(INT)`: entity_effect,
-    /// tinted_leaves, flash; the color argb.
-    Color(i32),
+    /// tinted_leaves, flash — THREE ids on one shape, the id
+    /// retained; the color argb.
+    Color { particle_id: i32, color: i32 },
     /// ItemParticleOption — `map(ItemStackTemplate.STREAM_CODEC)` =
     /// `composite(Item.STREAM_CODEC, VAR_INT, DataComponentPatch
     /// .STREAM_CODEC)`: the item id, the count (a RAW lane — no
@@ -3357,12 +3375,13 @@ fn read_particle_value(r: &mut &[u8]) -> Result<ParticleValue> {
             // the state-palette lookup, negative refuses
             let s = read_varint(r)?;
             anyhow::ensure!(s >= 0, "negative block state id {s}");
-            ParticleValue::Block(s)
+            ParticleValue::Block { particle_id: id, state: s }
         }
         particle_types::GEYSER => ParticleValue::Geyser {
             water_blocks: read_i32(r)?,
         },
         particle_types::GEYSER_BASE | particle_types::GEYSER_POOF => ParticleValue::GeyserBase {
+            particle_id: id,
             water_blocks: read_i32(r)?,
             burst_impulse_base: read_f32(r)?,
         },
@@ -3377,12 +3396,16 @@ fn read_particle_value(r: &mut &[u8]) -> Result<ParticleValue> {
             scale: read_f32(r)?,
         },
         particle_types::EFFECT | particle_types::INSTANT_EFFECT => ParticleValue::Spell {
+            particle_id: id,
             color: read_i32(r)?,
             power: read_f32(r)?,
         },
         particle_types::ENTITY_EFFECT
         | particle_types::TINTED_LEAVES
-        | particle_types::FLASH => ParticleValue::Color(read_i32(r)?),
+        | particle_types::FLASH => {
+            let color = read_i32(r)?;
+            ParticleValue::Color { particle_id: id, color }
+        }
         particle_types::ITEM => {
             // ItemStackTemplate: item (the $29 byIdOrThrow family —
             // negative refuses, mirroring the metadata item-stack's
@@ -3408,7 +3431,7 @@ fn read_particle_value(r: &mut &[u8]) -> Result<ParticleValue> {
         },
         particle_types::SHRIEK => ParticleValue::Shriek(read_varint(r)?),
         particle_types::SCULK_CHARGE => ParticleValue::SculkCharge(read_f32(r)?),
-        _ => ParticleValue::Simple,
+        _ => ParticleValue::Simple(id),
     })
 }
 
@@ -3877,6 +3900,771 @@ pub fn parse_set_entity_data(payload: &[u8]) -> Result<EntityDataSet> {
         id: entity_id,
         entries,
     })
+}
+
+// ---------------------------------------------------------------------------
+// the write side — the encode mirrors of the audited decode walks
+// ---------------------------------------------------------------------------
+//
+// Every writer below is the mirror of a decode walk the javap audits
+// already pinned: `StreamCodec.composite` is symmetric by construction,
+// so the mirror's only JUDGMENT calls are the lanes where vanilla's own
+// encode is NOT the decode's inverse — the OptionalInt's wrapping +1
+// (EntityDataSerializers$3.encode is `optional.orElse(-1) + 1`, the
+// iadd's two's-complement wrap), the item stack's count sentinel
+// (ItemStack$1.encode collapses an empty store to the VarInt 0 and
+// writes NOTHING else — while the port's store RETAINS a negative
+// sentinel verbatim, the wire's truth beating the object graph's
+// collapse), and the painting/holder-set/sound tags' bias arithmetic.
+// The writer writes the STORE; a store shape vanilla could not hold
+// (a display ordinal that filled, a level that clamped) re-encodes to
+// its canonical form — exactly the round-trip vanilla's own object
+// graph performs.
+
+/// The block position's pack — [`decode_block_pos`]'s exact inverse
+/// (`BlockPos.asLong`): x in bits 38+, z in 12..38, y in 0..12, the
+/// 26/12/26-bit masks making the two's-complement truncation the
+/// getters' sign-extension inverse.
+fn pack_block_pos(x: i32, y: i32, z: i32) -> i64 {
+    (((x as i64) & 0x3FFF_FFFF) << 38) | (((z as i64) & 0x3FFF_FFFF) << 12) | ((y as i64) & 0xFFF)
+}
+
+fn write_u8(out: &mut Vec<u8>, v: u8) {
+    out.push(v);
+}
+
+fn write_bool(out: &mut Vec<u8>, v: bool) {
+    out.push(v as u8);
+}
+
+fn write_i8(out: &mut Vec<u8>, v: i8) {
+    out.push(v as u8);
+}
+
+fn write_f32(out: &mut Vec<u8>, v: f32) {
+    out.extend_from_slice(&v.to_be_bytes());
+}
+
+fn write_f64(out: &mut Vec<u8>, v: f64) {
+    out.extend_from_slice(&v.to_be_bytes());
+}
+
+fn write_i32(out: &mut Vec<u8>, v: i32) {
+    out.extend_from_slice(&v.to_be_bytes());
+}
+
+fn write_i64(out: &mut Vec<u8>, v: i64) {
+    out.extend_from_slice(&v.to_be_bytes());
+}
+
+/// The UUID's 16 bytes: msb long then lsb long, both big-endian — the
+/// reference lane and the profile lane share the ONE codec.
+fn write_uuid(out: &mut Vec<u8>, uuid: &[u8; 16]) {
+    out.extend_from_slice(uuid);
+}
+
+fn write_entity_reference(out: &mut Vec<u8>, r: &EntityReference) {
+    write_uuid(out, &r.uuid);
+}
+
+fn write_position_source(out: &mut Vec<u8>, s: &PositionSource) {
+    match s {
+        PositionSource::Block(p) => {
+            write_varint(out, 0);
+            write_i64(out, pack_block_pos(p[0], p[1], p[2]));
+        }
+        PositionSource::Entity {
+            entity_id,
+            y_offset,
+        } => {
+            write_varint(out, 1);
+            write_varint(out, *entity_id);
+            write_f32(out, *y_offset);
+        }
+    }
+}
+
+fn write_particle_value(out: &mut Vec<u8>, v: &ParticleValue) -> Result<()> {
+    match v {
+        ParticleValue::Simple(id) => write_varint(out, *id),
+        ParticleValue::Block {
+            particle_id,
+            state,
+        } => {
+            write_varint(out, *particle_id);
+            write_varint(out, *state);
+        }
+        ParticleValue::Geyser { water_blocks } => {
+            write_varint(out, particle_types::GEYSER);
+            write_i32(out, *water_blocks);
+        }
+        ParticleValue::GeyserBase {
+            particle_id,
+            water_blocks,
+            burst_impulse_base,
+        } => {
+            write_varint(out, *particle_id);
+            write_i32(out, *water_blocks);
+            write_f32(out, *burst_impulse_base);
+        }
+        ParticleValue::Power(power) => {
+            write_varint(out, particle_types::DRAGON_BREATH);
+            write_f32(out, *power);
+        }
+        ParticleValue::Dust { color, scale } => {
+            write_varint(out, particle_types::DUST);
+            write_i32(out, *color);
+            write_f32(out, *scale);
+        }
+        ParticleValue::DustTransition {
+            from_color,
+            to_color,
+            scale,
+        } => {
+            write_varint(out, particle_types::DUST_COLOR_TRANSITION);
+            write_i32(out, *from_color);
+            write_i32(out, *to_color);
+            write_f32(out, *scale);
+        }
+        ParticleValue::Spell {
+            particle_id,
+            color,
+            power,
+        } => {
+            write_varint(out, *particle_id);
+            write_i32(out, *color);
+            write_f32(out, *power);
+        }
+        ParticleValue::Color { particle_id, color } => {
+            write_varint(out, *particle_id);
+            write_i32(out, *color);
+        }
+        ParticleValue::Item {
+            item_id,
+            count,
+            patch,
+        } => {
+            write_varint(out, particle_types::ITEM);
+            write_varint(out, *item_id);
+            write_varint(out, *count);
+            write_component_patch(out, patch)?;
+        }
+        ParticleValue::Vibration {
+            source,
+            arrival_in_ticks,
+        } => {
+            write_varint(out, particle_types::VIBRATION);
+            write_position_source(out, source);
+            write_varint(out, *arrival_in_ticks);
+        }
+        ParticleValue::Trail {
+            target,
+            color,
+            duration,
+        } => {
+            write_varint(out, particle_types::TRAIL);
+            write_f64(out, target[0]);
+            write_f64(out, target[1]);
+            write_f64(out, target[2]);
+            write_i32(out, *color);
+            write_varint(out, *duration);
+        }
+        ParticleValue::Shriek(delay) => {
+            write_varint(out, particle_types::SHRIEK);
+            write_varint(out, *delay);
+        }
+        ParticleValue::SculkCharge(roll) => {
+            write_varint(out, particle_types::SCULK_CHARGE);
+            write_f32(out, *roll);
+        }
+    }
+    Ok(())
+}
+
+fn write_nullable_capped_string(out: &mut Vec<u8>, s: &Option<String>) {
+    match s {
+        None => write_bool(out, false),
+        Some(v) => {
+            write_bool(out, true);
+            write_string(out, v);
+        }
+    }
+}
+
+fn write_profile_properties(out: &mut Vec<u8>, props: &[ProfileProperty]) {
+    write_varint(out, props.len() as i32);
+    for p in props {
+        write_string(out, &p.name);
+        write_string(out, &p.value);
+        write_nullable_capped_string(out, &p.signature);
+    }
+}
+
+fn write_optional_skin_asset(out: &mut Vec<u8>, a: &Option<SkinAsset>) {
+    match a {
+        None => write_bool(out, false),
+        Some(s) => {
+            write_bool(out, true);
+            write_string(out, &s.id);
+            write_string(out, &s.texture_path);
+        }
+    }
+}
+
+fn write_resolvable_profile(
+    out: &mut Vec<u8>,
+    profile: &ResolvableProfile,
+    patch: &PlayerSkinPatch,
+) {
+    match profile {
+        ResolvableProfile::Full {
+            uuid,
+            name,
+            properties,
+        } => {
+            write_bool(out, true);
+            write_uuid(out, uuid);
+            write_string(out, name);
+            write_profile_properties(out, properties);
+        }
+        ResolvableProfile::Partial {
+            name,
+            id,
+            properties,
+        } => {
+            write_bool(out, false);
+            write_nullable_capped_string(out, name);
+            match id {
+                None => write_bool(out, false),
+                Some(u) => {
+                    write_bool(out, true);
+                    write_uuid(out, u);
+                }
+            }
+            write_profile_properties(out, properties);
+        }
+    }
+    write_optional_skin_asset(out, &patch.body);
+    write_optional_skin_asset(out, &patch.cape);
+    write_optional_skin_asset(out, &patch.elytra);
+    match patch.model_slim {
+        None => write_bool(out, false),
+        Some(slim) => {
+            write_bool(out, true);
+            write_bool(out, slim);
+        }
+    }
+}
+
+/// The ItemStack$1 encode verbatim: the count rides FIRST and a
+/// non-positive count is the WHOLE payload (an empty store carries no
+/// item and no patch). The judgment call the javap pinned: vanilla's
+/// `isEmpty()` branch writes the VarInt 0 — an object-graph collapse —
+/// while this store RETAINS a negative sentinel verbatim (the wire's
+/// -7 is a stored -7), so the mirror writes the retained count and
+/// the round-trip keeps the wire's truth. The strict entity-data lane
+/// (ItemStack$2) throws an EncoderException on an empty WRITE; this
+/// port's decode retained the sentinel instead of refusing, so the
+/// writer mirrors the WIRE, not the refusal vanilla's object graph
+/// could never reach.
+fn write_item_stack(out: &mut Vec<u8>, count: i32, item_id: i32, patch: &ComponentPatch) -> Result<()> {
+    write_varint(out, count);
+    if count > 0 {
+        write_varint(out, item_id);
+        write_component_patch(out, patch)?;
+    }
+    Ok(())
+}
+
+fn write_component_patch(out: &mut Vec<u8>, p: &ComponentPatch) -> Result<()> {
+    write_varint(out, p.added.len() as i32);
+    write_varint(out, p.removed.len() as i32);
+    for (type_id, value) in &p.added {
+        write_varint(out, *type_id);
+        write_component_value(out, *type_id, value)?;
+    }
+    for type_id in &p.removed {
+        write_varint(out, *type_id);
+    }
+    Ok(())
+}
+
+/// The component value's writer — the read dispatch's mirror, the
+/// pairing (type id, value) matched as a TUPLE so a store that pairs a
+/// type with the wrong value shape refuses instead of fabricating
+/// bytes (the wire is unframed; the pairing is the store's invariant,
+/// vanilla's TypedDataComponent holds it by construction).
+fn write_component_value(out: &mut Vec<u8>, type_id: i32, v: &ComponentValue) -> Result<()> {
+    use data_component_types as t;
+    match (type_id, v) {
+        (t::CUSTOM_DATA, ComponentValue::CompoundTag(tag)) => write_bare_nbt(tag, out)?,
+        (t::MAX_STACK_SIZE | t::MAX_DAMAGE | t::DAMAGE | t::REPAIR_COST, ComponentValue::VarInt(n)) => {
+            write_varint(out, *n)
+        }
+        // StreamCodec.unit: the value consumes ZERO bytes — the type's
+        // presence is the payload
+        (t::UNBREAKABLE | t::CREATIVE_SLOT_LOCK, ComponentValue::Unit) => {}
+        (t::CUSTOM_NAME | t::ITEM_NAME, ComponentValue::Component(tag)) => write_bare_nbt(tag, out)?,
+        (t::MINIMUM_ATTACK_CHARGE, ComponentValue::Float(f)) => write_f32(out, *f),
+        (t::ITEM_MODEL | t::TOOLTIP_STYLE | t::NOTE_BLOCK_SOUND, ComponentValue::String(s)) => {
+            write_string(out, s)
+        }
+        (t::LORE, ComponentValue::Lore(tags)) => {
+            write_varint(out, tags.len() as i32);
+            for tag in tags {
+                write_bare_nbt(tag, out)?;
+            }
+        }
+        (t::RARITY, ComponentValue::Rarity(r)) => write_varint(out, *r),
+        (t::ENCHANTMENT_GLINT_OVERRIDE, ComponentValue::Bool(b)) => write_bool(out, *b),
+        (t::ENCHANTMENTS, ComponentValue::Enchantments(entries)) => {
+            write_varint(out, entries.len() as i32);
+            for (id, level) in entries {
+                write_varint(out, *id);
+                write_varint(out, *level);
+            }
+        }
+        (t::CUSTOM_MODEL_DATA, ComponentValue::CustomModelData { floats, flags, strings, colors }) => {
+            write_varint(out, floats.len() as i32);
+            for f in floats {
+                write_f32(out, *f);
+            }
+            write_varint(out, flags.len() as i32);
+            for b in flags {
+                write_bool(out, *b);
+            }
+            write_varint(out, strings.len() as i32);
+            for s in strings {
+                write_string(out, s);
+            }
+            // the colors ride BIG-ENDIAN i32s (ByteBufCodecs.INT), not
+            // VarInts
+            write_varint(out, colors.len() as i32);
+            for c in colors {
+                write_i32(out, *c);
+            }
+        }
+        (t::TOOLTIP_DISPLAY, ComponentValue::TooltipDisplay { hide_tooltip, hidden }) => {
+            write_bool(out, *hide_tooltip);
+            write_varint(out, hidden.len() as i32);
+            for id in hidden {
+                write_varint(out, *id);
+            }
+        }
+        (t::CAN_PLACE_ON | t::CAN_BREAK, ComponentValue::BlockPredicates(list)) => {
+            write_varint(out, list.len() as i32);
+            for p in list {
+                write_block_predicate(out, p)?;
+            }
+        }
+        (t::ATTRIBUTE_MODIFIERS, ComponentValue::AttributeModifiers(entries)) => {
+            write_attribute_modifiers(out, entries)?;
+        }
+        (t::FOOD, ComponentValue::Food { nutrition, saturation, can_always_eat }) => {
+            write_varint(out, *nutrition);
+            write_f32(out, *saturation);
+            write_bool(out, *can_always_eat);
+        }
+        (t::CONSUMABLE, ComponentValue::Consumable { consume_seconds, animation, sound, has_consume_particles, effects }) => {
+            write_f32(out, *consume_seconds);
+            write_varint(out, *animation);
+            write_consumable_sound(out, sound);
+            write_bool(out, *has_consume_particles);
+            write_varint(out, effects.len() as i32);
+            for e in effects {
+                write_consume_effect(out, e)?;
+            }
+        }
+        _ => anyhow::bail!(
+            "no value writer pairs component type {type_id} with {v:?} (the patch wire \
+             is unframed — the pairing is the store's invariant)"
+        ),
+    }
+    Ok(())
+}
+
+fn write_block_set(out: &mut Vec<u8>, s: &BlockSet) {
+    match s {
+        BlockSet::Named(tag) => {
+            write_varint(out, 0);
+            write_string(out, tag);
+        }
+        BlockSet::Direct(ids) => {
+            write_varint(out, ids.len() as i32 + 1);
+            for id in ids {
+                write_varint(out, *id);
+            }
+        }
+    }
+}
+
+fn write_optional_string(out: &mut Vec<u8>, s: &Option<String>) {
+    match s {
+        None => write_bool(out, false),
+        Some(v) => {
+            write_bool(out, true);
+            write_string(out, v);
+        }
+    }
+}
+
+fn write_property_matcher(out: &mut Vec<u8>, m: &PropertyMatcher) {
+    write_string(out, &m.name);
+    match &m.value {
+        PropertyValue::Exact(v) => {
+            // the either's ONE-BYTE discriminator: true = LEFT
+            write_bool(out, true);
+            write_string(out, v);
+        }
+        PropertyValue::Ranged { min, max } => {
+            write_bool(out, false);
+            write_optional_string(out, min);
+            write_optional_string(out, max);
+        }
+    }
+}
+
+fn write_predicate_type_lane(out: &mut Vec<u8>, lane: &PredicateTypeLane) {
+    match lane {
+        PredicateTypeLane::PredicateType(id) => {
+            write_bool(out, true);
+            write_varint(out, *id);
+        }
+        PredicateTypeLane::ComponentType(id) => {
+            write_bool(out, false);
+            write_varint(out, *id);
+        }
+    }
+}
+
+fn write_block_predicate(out: &mut Vec<u8>, p: &BlockPredicate) -> Result<()> {
+    // lane 1: optional(holderSet(BLOCK))
+    match &p.blocks {
+        None => write_bool(out, false),
+        Some(s) => {
+            write_bool(out, true);
+            write_block_set(out, s);
+        }
+    }
+    // lane 2: optional(StatePropertiesPredicate)
+    match &p.properties {
+        None => write_bool(out, false),
+        Some(props) => {
+            write_bool(out, true);
+            write_varint(out, props.len() as i32);
+            for m in props {
+                write_property_matcher(out, m);
+            }
+        }
+    }
+    // lane 3: optional(NbtPredicate)
+    match &p.nbt {
+        None => write_bool(out, false),
+        Some(tag) => {
+            write_bool(out, true);
+            write_bare_nbt(tag, out)?;
+        }
+    }
+    // lane 4: DataComponentMatchers — the exact list rides the patch's
+    // added-entry walk, the partial list rides the dispatched type lane
+    // plus the ONE self-delimiting NBT tag
+    write_varint(out, p.matchers.exact.len() as i32);
+    for (type_id, value) in &p.matchers.exact {
+        write_varint(out, *type_id);
+        write_component_value(out, *type_id, value)?;
+    }
+    write_varint(out, p.matchers.partial.len() as i32);
+    for e in &p.matchers.partial {
+        write_predicate_type_lane(out, &e.predicate_type);
+        write_bare_nbt(&e.payload, out)?;
+    }
+    Ok(())
+}
+
+fn write_attribute_modifiers(out: &mut Vec<u8>, entries: &[AttributeModifierEntry]) -> Result<()> {
+    write_varint(out, entries.len() as i32);
+    for e in entries {
+        write_varint(out, e.attribute_id);
+        write_string(out, &e.modifier.id);
+        // the amount rides a BIG-ENDIAN f64 (ByteBufCodecs.DOUBLE —
+        // the construction site is the shape)
+        write_f64(out, e.modifier.amount);
+        write_varint(out, e.modifier.operation);
+        write_varint(out, e.slot);
+        match &e.display {
+            // the store IS the canonical form vanilla's object graph
+            // holds — a wire ordinal that filled to Default re-encodes
+            // as 0, the same collapse a vanilla round-trip performs
+            AttributeDisplay::Default => write_varint(out, 0),
+            AttributeDisplay::Hidden => write_varint(out, 1),
+            AttributeDisplay::Override(tag) => {
+                write_varint(out, 2);
+                write_bare_nbt(tag, out)?;
+            }
+        }
+    }
+    Ok(())
+}
+
+fn write_consumable_sound(out: &mut Vec<u8>, s: &ConsumableSound) {
+    match s {
+        ConsumableSound::Direct { id, range } => {
+            write_varint(out, 0);
+            write_string(out, id);
+            write_f32(out, *range);
+        }
+        ConsumableSound::Registry(n) => write_varint(out, n + 1),
+    }
+}
+
+fn write_effect_holder_set(out: &mut Vec<u8>, h: &EffectHolderSet) {
+    match h {
+        EffectHolderSet::Named(tag) => {
+            write_varint(out, 0);
+            write_string(out, tag);
+        }
+        EffectHolderSet::Direct(ids) => {
+            write_varint(out, ids.len() as i32 + 1);
+            for id in ids {
+                write_varint(out, *id);
+            }
+        }
+    }
+}
+
+fn write_effect_details(out: &mut Vec<u8>, d: &EffectDetails) -> Result<()> {
+    write_varint(out, d.amplifier);
+    write_varint(out, d.duration);
+    write_bool(out, d.ambient);
+    write_bool(out, d.show_particles);
+    write_bool(out, d.show_icon);
+    match &d.hidden_effect {
+        None => write_bool(out, false),
+        Some(hidden) => {
+            write_bool(out, true);
+            write_effect_details(out, hidden)?;
+        }
+    }
+    Ok(())
+}
+
+fn write_effect_instance(out: &mut Vec<u8>, e: &EffectInstance) -> Result<()> {
+    write_varint(out, e.effect_id);
+    write_effect_details(out, &e.details)
+}
+
+fn write_consume_effect(out: &mut Vec<u8>, e: &ConsumeEffect) -> Result<()> {
+    match e {
+        ConsumeEffect::ApplyEffects {
+            effects,
+            probability,
+        } => {
+            write_varint(out, 0);
+            write_varint(out, effects.len() as i32);
+            for eff in effects {
+                write_effect_instance(out, eff)?;
+            }
+            write_f32(out, *probability);
+        }
+        ConsumeEffect::RemoveEffects(hs) => {
+            write_varint(out, 1);
+            write_effect_holder_set(out, hs);
+        }
+        // StreamCodec.unit: ZERO payload bytes
+        ConsumeEffect::ClearAllEffects => write_varint(out, 2),
+        ConsumeEffect::TeleportRandomly { diameter } => {
+            write_varint(out, 3);
+            write_f32(out, *diameter);
+        }
+        ConsumeEffect::PlaySound(s) => {
+            write_varint(out, 4);
+            write_consumable_sound(out, s);
+        }
+    }
+    Ok(())
+}
+
+/// One metadata VALUE's write mirror — the read dispatch's arm-for-arm
+/// inverse (the serializer id is NOT the value's business: it rides
+/// the entry, and the pairing is the store's invariant).
+fn write_entity_data_value(out: &mut Vec<u8>, value: &EntityDataEntry) -> Result<()> {
+    match value {
+        EntityDataEntry::Byte(v) => write_i8(out, *v),
+        EntityDataEntry::Int(v) => write_varint(out, *v),
+        EntityDataEntry::Long(v) => write_varlong(out, *v),
+        EntityDataEntry::Float(v) => write_f32(out, *v),
+        EntityDataEntry::String(s) => write_string(out, s),
+        EntityDataEntry::Component(tag) => write_bare_nbt(tag, out)?,
+        EntityDataEntry::OptionalComponent(tag) => match tag {
+            None => write_bool(out, false),
+            Some(t) => {
+                write_bool(out, true);
+                write_bare_nbt(t, out)?;
+            }
+        },
+        EntityDataEntry::Bool(v) => write_bool(out, *v),
+        EntityDataEntry::Rotations(r) => {
+            write_f32(out, r[0]);
+            write_f32(out, r[1]);
+            write_f32(out, r[2]);
+        }
+        EntityDataEntry::BlockPos(p) => write_i64(out, pack_block_pos(p[0], p[1], p[2])),
+        EntityDataEntry::OptionalBlockPos(p) => match p {
+            None => write_bool(out, false),
+            Some(p) => {
+                write_bool(out, true);
+                write_i64(out, pack_block_pos(p[0], p[1], p[2]));
+            }
+        },
+        EntityDataEntry::Direction(d) => write_varint(out, *d),
+        EntityDataEntry::OptionalLivingEntityReference(r) => match r {
+            None => write_bool(out, false),
+            Some(r) => {
+                write_bool(out, true);
+                write_entity_reference(out, r);
+            }
+        },
+        EntityDataEntry::BlockState(s) => write_varint(out, *s),
+        EntityDataEntry::OptionalBlockState(s) => match s {
+            None => write_bool(out, false),
+            Some(s) => {
+                write_bool(out, true);
+                write_varint(out, *s);
+            }
+        },
+        EntityDataEntry::Particle(v) => write_particle_value(out, v)?,
+        EntityDataEntry::Particles(list) => {
+            write_varint(out, list.len() as i32);
+            for v in list {
+                write_particle_value(out, v)?;
+            }
+        }
+        EntityDataEntry::ResolvableProfile { profile, patch } => {
+            write_resolvable_profile(out, profile, patch)
+        }
+        // THE AUDIT'S ARITHMETIC: EntityDataSerializers$3.encode is
+        // `optional.orElse(-1) + 1` — the iadd is Java's WRAPPING int
+        // add, so None rides 0 and Some(MAX_VALUE) rides MIN_VALUE;
+        // the decode's wrapping_sub(1) is the exact inverse on both
+        // ends.
+        EntityDataEntry::OptionalUnsignedInt(v) => {
+            write_varint(out, v.unwrap_or(-1).wrapping_add(1))
+        }
+        EntityDataEntry::Pose(p) => write_varint(out, *p),
+        EntityDataEntry::VillagerData {
+            type_id,
+            profession_id,
+            level,
+        } => {
+            write_varint(out, *type_id);
+            write_varint(out, *profession_id);
+            // the store's level is the record constructor's clamp
+            // already applied — the writer writes the STORE (a wire 0
+            // clamped to 1 re-encodes as 1, vanilla's own round-trip)
+            write_varint(out, *level);
+        }
+        EntityDataEntry::ItemStack {
+            count,
+            item_id,
+            patch,
+        } => write_item_stack(out, *count, *item_id, patch)?,
+        EntityDataEntry::CatVariant(v)
+        | EntityDataEntry::CatSoundVariant(v)
+        | EntityDataEntry::CowVariant(v)
+        | EntityDataEntry::CowSoundVariant(v)
+        | EntityDataEntry::WolfVariant(v)
+        | EntityDataEntry::WolfSoundVariant(v)
+        | EntityDataEntry::FrogVariant(v)
+        | EntityDataEntry::PigVariant(v)
+        | EntityDataEntry::PigSoundVariant(v)
+        | EntityDataEntry::ChickenVariant(v)
+        | EntityDataEntry::ChickenSoundVariant(v)
+        | EntityDataEntry::ZombieNautilusVariant(v) => write_varint(out, *v),
+        EntityDataEntry::OptionalGlobalPos(pos) => match pos {
+            None => write_bool(out, false),
+            Some(g) => {
+                write_bool(out, true);
+                write_string(out, &g.dimension);
+                write_i64(out, pack_block_pos(g.pos[0], g.pos[1], g.pos[2]));
+            }
+        },
+        EntityDataEntry::PaintingVariant(v) => match v {
+            // the family's ONLY bias-by-one member: the store's n is
+            // the registry id (wire n + 1), the direct record rides
+            // wire 0
+            PaintingVariant::Registry(n) => write_varint(out, n + 1),
+            PaintingVariant::Direct {
+                width,
+                height,
+                asset_id,
+                title,
+                author,
+            } => {
+                write_varint(out, 0);
+                write_varint(out, *width);
+                write_varint(out, *height);
+                write_string(out, asset_id);
+                match title {
+                    None => write_bool(out, false),
+                    Some(t) => {
+                        write_bool(out, true);
+                        write_bare_nbt(t, out)?;
+                    }
+                }
+                match author {
+                    None => write_bool(out, false),
+                    Some(t) => {
+                        write_bool(out, true);
+                        write_bare_nbt(t, out)?;
+                    }
+                }
+            }
+        },
+        EntityDataEntry::SnifferState(st) => write_varint(out, *st),
+        EntityDataEntry::ArmadilloState(st) => write_varint(out, *st),
+        EntityDataEntry::CopperGolemState(st) => write_varint(out, *st),
+        EntityDataEntry::WeatheringCopperState(st) => write_varint(out, *st),
+        EntityDataEntry::Vector3(v) => {
+            write_f32(out, v[0]);
+            write_f32(out, v[1]);
+            write_f32(out, v[2]);
+        }
+        EntityDataEntry::Quaternion(q) => {
+            // the JOML x, y, z, w order
+            write_f32(out, q[0]);
+            write_f32(out, q[1]);
+            write_f32(out, q[2]);
+            write_f32(out, q[3]);
+        }
+        EntityDataEntry::HumanoidArm(a) => write_varint(out, *a),
+    }
+    Ok(())
+}
+
+/// The Set Entity Data packet's write mirror — the `unpack` walk's
+/// pack: the VarInt packet id, the VarInt entity id, then each
+/// entry's index byte + VarInt serializer id + the value's bytes, and
+/// the 0xFF EOF marker. The serializer id rides the ENTRY (the
+/// value/serializer pairing is the store's invariant — vanilla's
+/// DataValue holds it the same way), and an index of 255 refuses: the
+/// byte IS the EOF marker, a packet wearing it would truncate the
+/// walk the port itself refuses to parse past.
+pub fn encode_set_entity_data(entity_id: i32, entries: &[SetEntityDataEntry]) -> Result<Vec<u8>> {
+    let mut p = Vec::new();
+    write_varint(&mut p, clientbound::SET_ENTITY_DATA);
+    write_varint(&mut p, entity_id);
+    for e in entries {
+        anyhow::ensure!(
+            e.index != 255,
+            "entity data entry index 255 is the EOF marker, not an accessor"
+        );
+        p.push(e.index);
+        write_varint(&mut p, e.serializer);
+        write_entity_data_value(&mut p, &e.value)
+            .map_err(|err| anyhow::anyhow!("entity data entry {}: {err}", e.index))?;
+    }
+    p.push(255);
+    Ok(p)
 }
 
 // ---------------------------------------------------------------------------
