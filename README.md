@@ -919,6 +919,40 @@ hand-drawn:
   (VILLAGER_DATA at 18 doubles as the order proof), the generated-id
   pin, and the model's merge semantics (replace-one-leave-others, the
   null-lookup drop, the re-spawn reset).
+  The **the player-inventory surface — the first inventory consumer
+  (v0.3.125)**: the window-0 store the container trilogy's traffic has
+  been waiting for, fed by an AUDITED consumer split (javap of the 26.2
+  `ClientPacketListener`): `handleContainerContent` and
+  `handleContainerSetSlot` both route `containerId == 0` to
+  **`player.inventoryMenu`** — the player's OWN inventory, live
+  whether or not a container screen is open — while any other window
+  goes to the currently OPEN `containerMenu` (matched by id) or is
+  dropped; the model's store is the inventoryMenu lane, the
+  open-container lane waits for the container GUI rounds. The
+  `InventoryMenu` layout pinned from the jar's own constants: slot 0
+  the result, 1..5 craft, 5..9 armor, 9..36 the main grid, **36..45
+  the USE_ROW (the hotbar's nine)**, 45 the SHIELD (offhand) slot —
+  and the `isHotbarSlot` HELPER's audited quirk (the bytecode returns
+  true for 45 too, the `slot == 45` fall-through) kept separate from
+  the slice, the wiki-era `36..45` claim describing only one of them.
+  The store: the full snapshot REPLACES, the single-slot delta
+  upserts in place (a slot past the current end GROWS with empty
+  stacks — the retention line; a NEGATIVE slot cannot index anything
+  and is ignored), the state-id counter advances with whichever
+  packet spoke last (the state echo's future input), the cursor
+  stack rides the snapshot's carried lane, and Respawn clears
+  NOTHING (the inventory rides the player, the effects precedent).
+  Vanilla's pop-time pickup flash and the creative-screen
+  remote-slot side effects are the GUI's niceties — documented
+  non-goals. A warning rider purged four PRE-EXISTING bin-target
+  findings (the fps initializer, a test-only closure mut, two
+  dead-code surfaces allow-listed with their future consumers named);
+  the mc2rs-gen bin's eleven remain documented, the generator's own
+  surface. GOLDENS UNTOUCHED BY CONSTRUCTION: 12/12 at rms 0.000.
+  Tests +1 (workspace 478 -> 479 passed / 0 failed / 3 ignored): the
+  snapshot-replace/ delta-upsert/ growth/ negative-slot/ foreign-
+  window walks riding the parsed packets, plus the hotbar facts
+  pinned.
   The **the inventory trilogy's write side — every fixture proves BOTH
   directions (v0.3.124)**: the three packets' writers riding the
   entity-data write side's mirror line (v0.3.122) —
