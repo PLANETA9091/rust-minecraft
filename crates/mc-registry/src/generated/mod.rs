@@ -1,4 +1,5 @@
 pub mod atlas;
+pub mod block_dig;
 pub mod block_ids;
 pub mod blockstates;
 pub mod blocks;

@@ -366,6 +366,18 @@ fn run_join(
                             on_ground,
                             horizontal_collision,
                         } => session.move_player_status_only(on_ground, horizontal_collision),
+                        crate::world_view::ContainerCommand::DigAction {
+                            action,
+                            pos,
+                            face,
+                        } => {
+                            // THE DIG ARC's wire echo (the vanilla gameMode's
+                            // destroy half): the same monotonic prediction
+                            // counter the use arc speaks
+                            use_sequence += 1;
+                            session.player_action(action, pos, face, use_sequence)
+                        }
+                        crate::world_view::ContainerCommand::Swing => session.swing(0),
                     };
                     if let Err(e) = sent {
                         // a send failure is a transport error: a framed
@@ -547,6 +559,12 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
         // previous frame's state is tracked here
         if left_down && !was_left_down {
             app.on_press(gmx, gmy);
+        }
+        // the LEFT press's falling edge (the vanilla's own release lane):
+        // the dig's hold flag drops and the destroy state ABORTs (the
+        // continueAttack(false) tail — the crack overlay clears)
+        if !left_down && was_left_down {
+            app.on_left_release();
         }
         was_left_down = left_down;
         // the RIGHT press's rising edge: the container screen's own

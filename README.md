@@ -919,6 +919,74 @@ hand-drawn:
   (VILLAGER_DATA at 18 doubles as the order proof), the generated-id
   pin, and the model's merge semantics (replace-one-leave-others, the
   null-lookup drop, the re-spawn reset).
+  The **the dig lane — the block-break arc, the destroy stages, the hit outline, the Player Action wire (v0.3.147)**:
+  the block-BREAK half — the left mouse now MINES like the original
+  mines. The javap evidence pins every law from the cached jar's
+  Mojang-mapped classes: `MultiPlayerGameMode.startDestroyBlock` (the
+  survival lane: the same-target re-press is a no-op, the retarget
+  aborts the old cell with the NEW hit's direction, the dig state arms
+  with the fresh counters, the INSTA-BREAK completes on the press when
+  `getDestroyProgress >= 1.0` — leaf_litter's hardness 0 divides to
+  +inf), `continueDestroyBlock` (the 5-tick `destroyDelay` cooldown
+  after a completion, the per-tick progress accumulation, the
+  `destroyTicks % 4` hit-sound beat's own hook, the completion =
+  destroyBlock + the STOP send + the delay, the vanished target
+  disarming without a beat, the retarget tail-calling through the
+  start lane), `stopDestroyBlock` (the ABORT with `Direction.DOWN`,
+  the progress reset that clears the crack), `sameDestroyTarget` (the
+  same cell AND the same held item — a hotbar switch restarts the
+  dig), `BlockBehaviour.getDestroyProgress` (the per-tick fraction =
+  `playerDigSpeed / destroySpeed / (correctTool ? 30 : 100)`, the -1.0
+  hardness pinning zero — bedrock — the 0.0 hardness dividing to
+  infinity), `Player.getDestroySpeed` (the item speed, the
+  MINING_EFFICIENCY fold, the haste/fatigue branches, the
+  BLOCK_BREAK_SPEED multiply, the SUBGERGED_MINING_SPEED 0.2 in a
+  water eye, the off-ground /5 — the survival defaults the client
+  speaks: the bare-hand rates, dirt 0.75s, stone 7.55s on the f32
+  accumulation the original shares), `Minecraft.startAttack` +
+  `continueAttack` (the press arms through the missTime gate and the
+  busy-hands gate, the swing rides EVERY branch that reached the
+  switch's tail, the hold re-picks per tick and swings on every TRUE
+  beat, the miss arms the survival missTime 10, the aim leaving the
+  blocks speaks the stop tail, `startUseItem` refuses the right press
+  while `isDestroying`), and `getDestroyStage` (`progress > 0 ?
+  (int)(progress * 10) : -1` — the crack frame the level renders).
+  The data: a NEW runtime dumper (`dump/DumpBlockDig.java`) boots the
+  real vanilla registries and reads the default state's own
+  `getDestroySpeed` + `requiresCorrectToolForDrops` per block —
+  `block_dig.rs` (1196 blocks, the sorted-index lookup riding the
+  registration-order evidence), the honest numbers the rates everyone
+  knows speak (stone 1.5/demands-tool, dirt 0.5, bedrock -1,
+  leaf_litter 0); the atlas grew the ten `destroy_stage_0..9` crack
+  tiles (APPENDED — the block palette's indices stay byte-identical,
+  the goldens keep their pixels). The wire: `encode_player_action`
+  (the START/ABORT/STOP ordinals through the javap read order — the
+  action VarInt, the BlockPos BE i64, the direction as a SINGLE BYTE
+  the `readUnsignedByte -> from3DDataValue` speaks, the sequence
+  VarInt — the same monotonic prediction counter the use arc carries)
+  + `encode_swing` (the packet id + the hand, nothing else) + the
+  session methods + the ContainerCommand::DigAction/Swing commands.
+  The client: `dig.rs` — the DigState machine (the survival fields
+  verbatim, the apply_locally prediction flag the world's authority
+  speaks); the App's attack lane (the press arms, the hold mines
+  through update()'s frame==tick model, the release aborts, the
+  right-press refuses while mining); the render pair after the clouds
+  and before the hand — the hit outline (the black 0.4-alpha wireframe
+  on the crosshair's block, the 12 edges of the box inflated 0.002,
+  Bresenham over the projected edges, depth-tested) and the breaking
+  overlay (the crack texture alpha-blended over the targeted block's
+  six faces, the 0.0015 polygon-offset stand-in, depth-tested but
+  never depth-written). +16 tests (572 passed / 0 failed / 3
+  ignored): the progress law (the hand rates, the /5 air penalty, the
+  0.2 water eye), the bedrock pin + the leaf_litter insta-break, the
+  stage law, the arm/retarget/abort/completion arcs, the 150-beat
+  stone and the 15-beat dirt (the f32 drift the vanilla shares), the
+  item-switch restart, the vanished-target disarm, the wire hex (the
+  START/ABORT/STOP compositions + the direction byte + the swing),
+  and the App's offline mine + the networked echo arcs. GOLDENS 13/13
+  — ALL rms 0.000, every golden byte-identical: the dig lane is
+  interaction-gated (the deterministic scenes never press keys) and
+  the atlas append keeps every existing tile index — NO regen.
   The **the first-person body — the look curve, the travel physics, the collision sweep, the movement wire (v0.3.146)**:
   the movement round — the client's player now WALKS like the original
   walks. The javap evidence pins every law from the cached jar's

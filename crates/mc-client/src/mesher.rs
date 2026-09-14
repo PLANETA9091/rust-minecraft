@@ -402,6 +402,38 @@ pub fn face_uv(face: usize, c: [f32; 3]) -> [f32; 2] {
     }
 }
 
+/// THE DIG LANE's breaking overlay quads — the six faces of the targeted
+/// cell sampling the destroy_stage crack tile the progress law names
+/// (the vanilla `DestroyStage.getDestructor` index). The faces inflate
+/// by the 0.0015 epsilon (the vanilla crumbling render type's polygon
+/// offset stand-in — the crack renders in front of the block's own
+/// surface, never z-fighting it), the UVs ride the exact `face_uv`
+/// orientation the terrain speaks, the vertex colors stay 1.0 (the
+/// crack's own grays blend over the block's lit surface — the vanilla
+/// crumbling pass's own shape).
+pub fn destroy_overlay_quads(pos: (i32, i32, i32), tile: u16) -> Vec<Quad> {
+    let (px, py, pz) = (pos.0 as f32, pos.1 as f32, pos.2 as f32);
+    const EPS: f32 = 0.0015;
+    let infl = |v: f32| if v <= 0.0 { -EPS } else { 1.0 + EPS };
+    let mut out = Vec::with_capacity(6);
+    for face in 0..6usize {
+        let mut pts = [[0f32; 3]; 4];
+        let mut uvs = [[0f32; 2]; 4];
+        for (i, c) in FACE_CORNERS[face].iter().enumerate() {
+            pts[i] = [px + infl(c[0]), py + infl(c[1]), pz + infl(c[2])];
+            uvs[i] = face_uv(face, *c);
+        }
+        out.push(Quad {
+            pts,
+            colors: [[1.0; 3]; 4],
+            uvs,
+            tile,
+            translucent: false,
+        });
+    }
+    out
+}
+
 /// The flat ground-cover plane: leaf_litter's model elements sit at
 /// y = 0.25 model units (of 16) — a quarter pixel above the floor
 /// (the 13th audit: template_leaf_litter_1..4, all `from.y == to.y == 0.25`).

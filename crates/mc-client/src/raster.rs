@@ -104,11 +104,127 @@ impl Framebuf {
     /// Rasterize a batch of world-space quads. Opaque quads first, then
     /// translucent (water) — the translucent pass blends over the framebuffer.
     pub fn draw_quads(&mut self, ctx: &RenderCtx, quads: &[super::mesher::Quad]) {
-        self.draw_pass(ctx, quads, false);
-        self.draw_pass(ctx, quads, true);
+        self.draw_pass(ctx, quads, false, false);
+        self.draw_pass(ctx, quads, true, false);
     }
 
-    fn draw_pass(&mut self, ctx: &RenderCtx, quads: &[super::mesher::Quad], translucent: bool) {
+    /// THE DIG LANE's breaking overlay — the destroy_stage crack quads
+    /// alpha-blend over the terrain (the vanilla crumbling render type's
+    /// own pass: depth-TESTED against the block it covers, never depth-
+    /// written, the crack's transparent texels let the block through).
+    pub fn draw_destroy_overlay(&mut self, ctx: &RenderCtx, quads: &[super::mesher::Quad]) {
+        self.draw_pass(ctx, quads, false, true);
+    }
+
+    /// THE DIG LANE's hit outline — the vanilla
+    /// `LevelRenderer.renderHitOutline`'s black wireframe around the
+    /// crosshair's block: the 12 edges of the cell's box inflated 0.002
+    /// (the vanilla's own epsilon), alpha 0.4 black, depth-tested against
+    /// the terrain (the inflation keeps the lines in front of the
+    /// surface), ~2px wide (the vanilla GL line's own look at the
+    /// reference window). Edges straddling the near plane skip — the
+    /// vanilla clips them properly; the 4.5-block reach keeps the
+    /// targeted box in front of the camera for every honest aim.
+    pub fn draw_hit_outline(&mut self, ctx: &RenderCtx, pos: (i32, i32, i32)) {
+        let vp = ctx.proj.mul(&ctx.view);
+        let w_px = self.w as f32;
+        let h_px = self.h as f32;
+        const EPS: f32 = 0.002;
+        const ALPHA: f32 = 0.4;
+        let (x, y, z) = (pos.0 as f32 - EPS, pos.1 as f32 - EPS, pos.2 as f32 - EPS);
+        let s = 1.0 + 2.0 * EPS;
+        let corners = [
+            [x, y, z],
+            [x + s, y, z],
+            [x + s, y, z + s],
+            [x, y, z + s],
+            [x, y + s, z],
+            [x + s, y + s, z],
+            [x + s, y + s, z + s],
+            [x, y + s, z + s],
+        ];
+        const EDGES: [(usize, usize); 12] = [
+            (0, 1),
+            (1, 2),
+            (2, 3),
+            (3, 0), // the bottom ring
+            (4, 5),
+            (5, 6),
+            (6, 7),
+            (7, 4), // the top ring
+            (0, 4),
+            (1, 5),
+            (2, 6),
+            (3, 7), // the verticals
+        ];
+        for (a, b) in EDGES {
+            let pa = vp.transform_point(Vec3::new(corners[a][0], corners[a][1], corners[a][2]));
+            let pb = vp.transform_point(Vec3::new(corners[b][0], corners[b][1], corners[b][2]));
+            // the near-plane guard: both endpoints must sit in front
+            if pa[3] < 0.1 || pb[3] < 0.1 {
+                continue;
+            }
+            let ax = (pa[0] / pa[3] * 0.5 + 0.5) * w_px;
+            let ay = (1.0 - (pa[1] / pa[3] * 0.5 + 0.5)) * h_px;
+            let bx = (pb[0] / pb[3] * 0.5 + 0.5) * w_px;
+            let by = (1.0 - (pb[1] / pb[3] * 0.5 + 0.5)) * h_px;
+            let az = pa[3]; // the view-distance proxy the depth test speaks
+            let bz = pb[3];
+            // Bresenham over the projected edge, the depth interpolated
+            // linearly (the span is a few pixels — the proxy is honest)
+            let (x0, y0) = (ax.round() as i64, ay.round() as i64);
+            let (x1, y1) = (bx.round() as i64, by.round() as i64);
+            let dx = (x1 - x0).abs();
+            let dy = -(y1 - y0).abs();
+            let sx = if x0 < x1 { 1 } else { -1 };
+            let sy = if y0 < y1 { 1 } else { -1 };
+            let mut err = dx + dy;
+            let steps = dx.max(dy).max(1) as f32;
+            let mut step: f32 = 0.0;
+            let (mut cx, mut cy) = (x0, y0);
+            loop {
+                let t = step / steps;
+                let z = az + (bz - az) * t;
+                // the 2x2 plot: the vanilla's ~2.5px GL line width
+                for (ox, oy) in [(0, 0i64), (1, 0), (0, 1)] {
+                    let px = cx + ox;
+                    let py = cy + oy;
+                    if px < 0 || py < 0 || px >= self.w as i64 || py >= self.h as i64 {
+                        continue;
+                    }
+                    let idx = py as usize * self.w + px as usize;
+                    if z < self.depth[idx] {
+                        let o = idx * 3;
+                        for ch in 0..3 {
+                            let bg = self.color[o + ch] as f32 / 255.0;
+                            self.color[o + ch] = (bg * (1.0 - ALPHA) * 255.0 + 0.5) as u8;
+                        }
+                    }
+                }
+                step += 1.0;
+                if cx == x1 && cy == y1 {
+                    break;
+                }
+                let e2 = 2 * err;
+                if e2 >= dy {
+                    err += dy;
+                    cx += sx;
+                }
+                if e2 <= dx {
+                    err += dx;
+                    cy += sy;
+                }
+            }
+        }
+    }
+
+    fn draw_pass(
+        &mut self,
+        ctx: &RenderCtx,
+        quads: &[super::mesher::Quad],
+        translucent: bool,
+        overlay: bool,
+    ) {
         let vp = ctx.proj.mul(&ctx.view);
         let w_px = self.w as f32;
         let h_px = self.h as f32;
@@ -160,7 +276,7 @@ impl Framebuf {
             }
             // ---- fan rasterization with perspective-correct depth + UV and
             // per-vertex color (smooth lighting) ----
-            let textured = quad.tile != atlas::TILE_NONE && atlas::has_tiles();
+            let textured = overlay || (quad.tile != atlas::TILE_NONE && atlas::has_tiles());
             for tri in 1..clipped.len() - 1 {
                 let (ax, ay, a_ow, a_vz) = (sx[0], sy[0], ow[0], vz[0]);
                 let (bx, by, b_ow, b_vz) = (sx[tri], sy[tri], ow[tri], vz[tri]);
@@ -212,27 +328,55 @@ impl Framebuf {
                             for ch in 0..3 {
                                 c0[ch] = b0 * ca[ch] + b1 * cb[ch] + b2 * cc[ch];
                             }
-                            if textured {
-                                // perspective-correct texture coordinates, nearest texel
-                                let u = (b0 * ua * a_ow + b1 * ub * b_ow + b2 * uc * c_ow) * dist;
-                                let v = (b0 * va * a_ow + b1 * vb * b_ow + b2 * vc * c_ow) * dist;
+                            if overlay {
+                                // THE BREAKING OVERLAY's own blend: the
+                                // crack texel's REAL alpha composites over
+                                // the block the pass covers (the vanilla
+                                // crumbling shader's own translucent body —
+                                // no cutout threshold, the depth test keeps
+                                // the pass honest), the depth never writes
+                                // (the overlay occludes nothing)
+                                let u =
+                                    (b0 * ua * a_ow + b1 * ub * b_ow + b2 * uc * c_ow) * dist;
+                                let v =
+                                    (b0 * va * a_ow + b1 * vb * b_ow + b2 * vc * c_ow) * dist;
                                 let texel = textures::sample_tile(quad.tile, u, v);
-                                if texel[3] < 0.5 {
-                                    continue; // cutout hole (leaves): no color, no depth
+                                let a = texel[3];
+                                if a <= 0.0 {
+                                    continue;
                                 }
                                 for ch in 0..3 {
-                                    c0[ch] *= texel[ch];
-                                }
-                            }
-                            if translucent {
-                                // vanilla-style water translucency over background
-                                let a = WATER_OPACITY;
-                                for ch in 0..3 {
+                                    let fg = c0[ch] * texel[ch];
                                     let bg = self.color[o + ch] as f32 / 255.0;
-                                    c0[ch] = bg * (1.0 - a) + c0[ch] * a;
+                                    c0[ch] = bg * (1.0 - a) + fg * a;
+                                }
+                            } else {
+                                if textured {
+                                    // perspective-correct texture coordinates, nearest texel
+                                    let u = (b0 * ua * a_ow + b1 * ub * b_ow + b2 * uc * c_ow)
+                                        * dist;
+                                    let v = (b0 * va * a_ow + b1 * vb * b_ow + b2 * vc * c_ow)
+                                        * dist;
+                                    let texel = textures::sample_tile(quad.tile, u, v);
+                                    if texel[3] < 0.5 {
+                                        continue; // cutout hole (leaves): no color, no depth
+                                    }
+                                    for ch in 0..3 {
+                                        c0[ch] *= texel[ch];
+                                    }
+                                }
+                                if translucent {
+                                    // vanilla-style water translucency over background
+                                    let a = WATER_OPACITY;
+                                    for ch in 0..3 {
+                                        let bg = self.color[o + ch] as f32 / 255.0;
+                                        c0[ch] = bg * (1.0 - a) + c0[ch] * a;
+                                    }
                                 }
                             }
-                            self.depth[idx] = z;
+                            if !overlay {
+                                self.depth[idx] = z;
+                            }
                             for ch in 0..3 {
                                 let c = c0[ch] + (ctx.fog_color[ch] - c0[ch]) * fog;
                                 self.color[o + ch] = (c.clamp(0.0, 1.0) * 255.0 + 0.5) as u8;

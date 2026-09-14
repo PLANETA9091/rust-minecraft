@@ -422,6 +422,18 @@ pub enum ContainerCommand {
         on_ground: bool,
         horizontal_collision: bool,
     },
+    /// THE DIG ARC's wire send (the vanilla gameMode's destroy half —
+    /// the Player Action packet's START/ABORT/STOP actions the dig state
+    /// machine produced). The worker speaks the packet through the SAME
+    /// monotonic prediction sequence the use arc carries.
+    DigAction {
+        action: u8,
+        pos: (i32, i32, i32),
+        face: u8,
+    },
+    /// The arm SWING (the vanilla LocalPlayer.swing's echo — the attack
+    /// press's own beat and every mining beat the hold speaks).
+    Swing,
 }
 
 /// The camera's pose in the VANILLA wire degrees — the inverse of

@@ -360,6 +360,33 @@ pub fn build(jar_bytes: &[u8], version: &str, client_sha1: &str) -> Result<Strin
         face_tints.push(tt);
     }
 
+    // THE DIG LANE's destroy stages: the crack textures the vanilla
+    // breaking overlay speaks (`assets/minecraft/textures/block/
+    // destroy_stage_0..9.png`, the DestroyStage destructor's own 10
+    // frames). APPENDED after the block tiles — the block palette's tile
+    // indices stay byte-identical (the deterministic scenes keep their
+    // exact pixels), the overlay lane indexes through DESTROY_TILES.
+    let mut destroy_tiles: Vec<u16> = Vec::with_capacity(10);
+    for stage in 0..10u16 {
+        let stem = format!("destroy_stage_{stage}");
+        let raw = read_jar(
+            &mut archive,
+            &format!("assets/minecraft/textures/block/{stem}.png"),
+        )
+        .with_context(|| format!("texture block/{stem}.png"))?;
+        let (w, h, rgba) = decode_rgba(&raw)?;
+        let (w, h, rgba) = first_frame(w, h, &rgba);
+        if w != 16 || h != 16 {
+            bail!("texture {stem}: expected 16x16 (first frame), got {w}x{h}");
+        }
+        let mut bytes = rgba;
+        bake_tint(&mut bytes, 0);
+        let idx = tile_names.len() as u16;
+        tile_names.push(stem);
+        tile_bytes.push(bytes);
+        destroy_tiles.push(idx);
+    }
+
     // ---- emit Rust ----
     let mut src = String::with_capacity(tile_bytes.len() * 1100 + 4096);
     src.push_str(&format!(
@@ -417,6 +444,13 @@ pub fn build(jar_bytes: &[u8], version: &str, client_sha1: &str) -> Result<Strin
         "\npub static TILE_NAMES: [&str; {}] = {:?};\n",
         tile_names.len(),
         tile_names
+    ));
+    src.push_str(&format!(
+        "\n/// The destroy_stage_0..9 tile indices (the breaking overlay's own\n\
+         \x20    /// crack frames; the vanilla `DestroyStage.getDestructor` law maps\n\
+         \x20    /// the progress to the index). Appended after the block tiles.\n\
+         \x20    pub const DESTROY_TILES: [u16; 10] = {:?};\n",
+        destroy_tiles
     ));
     Ok(src)
 }

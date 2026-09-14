@@ -121,7 +121,7 @@ pub mod serverbound {
         SB_MOVE_PLAYER_POS as MOVE_PLAYER_POS, SB_MOVE_PLAYER_POS_ROT as MOVE_PLAYER_POS_ROT,
         SB_MOVE_PLAYER_ROT as MOVE_PLAYER_ROT, SB_MOVE_PLAYER_STATUS_ONLY as MOVE_PLAYER_STATUS_ONLY,
         SB_PLAYER_ACTION as PLAYER_ACTION, SB_SET_CARRIED_ITEM as SET_CARRIED_ITEM,
-        SB_USE_ITEM as USE_ITEM, SB_USE_ITEM_ON as USE_ITEM_ON,
+        SB_SWING as SWING, SB_USE_ITEM as USE_ITEM, SB_USE_ITEM_ON as USE_ITEM_ON,
     };
 }
 
@@ -3928,9 +3928,13 @@ pub fn parse_set_entity_data(payload: &[u8]) -> Result<EntityDataSet> {
 // graph performs.
 
 /// The block position's pack — [`decode_block_pos`]'s exact inverse
-/// (`BlockPos.asLong`): x in bits 38+, z in 12..38, y in 0..12, the
-/// 26/12/26-bit masks making the two's-complement truncation the
-/// getters' sign-extension inverse.
+/// (`BlockPos.asLong`): x in bits 38+, z in 12..38, y in 0..12 — the
+/// 26-bit HORIZONTAL spans (both x and z, the
+/// PACKED_HORIZONTAL_LENGTH's own 26) with the 12-bit y between the
+/// sign-extension truncations the getters invert. The dig lane's hex
+/// test re-proved the 26-bit z: the negative coordinates' sign bits
+/// ride z's own field, never bleeding into x (the spans tile the i64
+/// exactly: 26+26+12 = 64).
 fn pack_block_pos(x: i32, y: i32, z: i32) -> i64 {
     (((x as i64) & 0x3FF_FFFF) << 38) | (((z as i64) & 0x3FF_FFFF) << 12) | ((y as i64) & 0xFFF)
 }
@@ -5089,6 +5093,52 @@ pub fn encode_player_action_release(sequence: i32) -> Vec<u8> {
     p
 }
 
+/// The DIG wire — the destroy arc's own actions through the SAME
+/// ServerboundPlayerActionPacket (generated id 41, `minecraft:player_action`).
+/// THE ACTIONS (javap of the real 26.2 enum's static init, the ordinal
+/// order): START_DESTROY_BLOCK = 0, ABORT_DESTROY_BLOCK = 1,
+/// STOP_DESTROY_BLOCK = 2 (RELEASE_USE_ITEM = 5 — the release lane's
+/// own constant above). THE WIRE (the read side's exact order, the
+/// STREAM_CODEC's FriendlyByteBuf reads): the action as a VarInt (the
+/// writeEnum's ordinal), the BlockPos as a BE i64 (`asLong`'s 38/12/0
+/// pack — the pack reuses the existing block-pos pack), the direction
+/// as a SINGLE BYTE (`readUnsignedByte` -> `from3DDataValue` — the 3D
+/// data value, NOT a VarInt: DOWN=0, UP=1, NORTH=2, SOUTH=3, WEST=4,
+/// EAST=5), the sequence as a VarInt. Every dig send rides
+/// `MultiPlayerGameMode.startPrediction` — the same monotonic
+/// prediction counter the use/use-on/release speaks (the caller passes
+/// its own increasing number).
+pub fn encode_player_action(
+    action: u8,
+    x: i32,
+    y: i32,
+    z: i32,
+    face: u8,
+    sequence: i32,
+) -> Vec<u8> {
+    let mut p = Vec::with_capacity(9);
+    write_varint(&mut p, serverbound::PLAYER_ACTION);
+    write_varint(&mut p, action as i32);
+    p.extend_from_slice(&pack_block_pos(x, y, z).to_be_bytes());
+    p.push(face); // the direction's 3D data value, one raw byte
+    write_varint(&mut p, sequence);
+    p
+}
+
+/// The arm SWING (the vanilla `LocalPlayer.swing`'s own echo —
+/// ServerboundSwingPacket, generated id 63, `minecraft:swing`). THE
+/// WIRE (javap of the real 26.2 class's `write(FriendlyByteBuf)`):
+/// exactly one field — the hand as a VarInt (the writeEnum's ordinal,
+/// MAIN_HAND = 0, OFF_HAND = 1). The dig arc swings on every attack
+/// press and on every mining tick's `continueAttack` beat (the
+/// vanilla's own cadence).
+pub fn encode_swing(hand: u8) -> Vec<u8> {
+    let mut p = Vec::with_capacity(2);
+    write_varint(&mut p, serverbound::SWING);
+    write_varint(&mut p, hand as i32);
+    p
+}
+
 /// The movement wire — the four ServerboundMovePlayer packets (generated
 /// ids 30..=33: `minecraft:move_player_pos` 30, `move_player_pos_rot` 31,
 /// `move_player_rot` 32, `move_player_status_only` 33). THE WIRE (javap
@@ -5945,6 +5995,30 @@ impl<S: Read + Write> PlaySession<S> {
             .context("send release use item")
     }
 
+    /// The DIG wire (the vanilla gameMode's destroy half — the Player
+    /// Action packet's START/ABORT/STOP actions through the same
+    /// startPrediction counter the use arc speaks; the direction byte is
+    /// the clip's face ordinal verbatim — the wire's 3D data value).
+    pub fn player_action(
+        &mut self,
+        action: u8,
+        pos: (i32, i32, i32),
+        face: u8,
+        sequence: i32,
+    ) -> Result<()> {
+        self.conn
+            .send_packet(&encode_player_action(action, pos.0, pos.1, pos.2, face, sequence))
+            .context("send player action")
+    }
+
+    /// The arm SWING (the vanilla LocalPlayer.swing's echo — the attack
+    /// press's own beat and the mining hold's per-tick beat ride this).
+    pub fn swing(&mut self, hand: u8) -> Result<()> {
+        self.conn
+            .send_packet(&encode_swing(hand))
+            .context("send swing")
+    }
+
     /// The movement wire — the body's sendPosition dispatch speaks one
     /// of the four Move Player packets per tick (the law lives in the
     /// body's bookkeeping; these ride the encode fns' javap shapes).
@@ -6232,7 +6306,9 @@ pub mod test_support {
 
     /// The packed block position long — the inverse of the javap-proven
     /// decode (`((x & 0x3FFFFFF) << 38) | (y & 0xFFF) |
-    /// ((z & 0x3FFFFFF) << 12)`, `BlockPos.asLong(III)` verbatim).
+    /// ((z & 0x3FFFFFF) << 12)`, `BlockPos.asLong(III)` verbatim — the
+    /// 26-bit horizontal spans for BOTH x and z, the 12-bit y at the
+    /// low end).
     pub fn encode_block_pos(x: i32, y: i32, z: i32) -> i64 {
         (((x as i64) & 0x3FF_FFFF) << 38) | ((y as i64) & 0xFFF) | (((z as i64) & 0x3FF_FFFF) << 12)
     }
@@ -10332,6 +10408,61 @@ mod tests {
         );
     }
 
+    /// THE DIG LANE's wire — the destroy arc's own Player Action
+    /// actions (START/ABORT/STOP) and the swing. The hex is the javap
+    /// read order of the real 26.2 ServerboundPlayerActionPacket: the
+    /// action VarInt, the BlockPos BE i64 (the 38/12/0 pack), the
+    /// direction as a SINGLE BYTE (readUnsignedByte -> from3DDataValue,
+    /// NOT a VarInt), the sequence VarInt; the swing rides
+    /// ServerboundSwingPacket's single writeEnum hand VarInt
+    /// (SB_SWING = 63 = 0x3F).
+    #[test]
+    fn the_dig_lane_speaks_the_javap_wire() {
+        // START at (1, 64, -2) on the UP face (the 3D value 1), seq 9:
+        // the pos pack's own spans — x<<38 | z<<12 | y (the vanilla
+        // BlockPos.asLong's X_OFFSET 38 / Z_OFFSET 12 / Y_OFFSET 0, the
+        // HORIZONTAL spans 26 bits wide — Y rides LOW, z's 26 bits
+        // carry the negative coordinate's own sign)
+        let pos = (1i64 << 38) | (((-2i64) & 0x3FF_FFFF) << 12) | (64i64 & 0xFFF);
+        let mut expect = vec![0x29, 0x00]; // START_DESTROY_BLOCK
+        expect.extend_from_slice(&pos.to_be_bytes());
+        expect.push(0x01); // Direction.UP's 3D data value, one raw byte
+        expect.push(0x09); // the sequence
+        assert_eq!(
+            encode_player_action(0, 1, 64, -2, 1, 9),
+            expect,
+            "the START's own composition — the direction rides ONE byte"
+        );
+        // ABORT the old cell on the retarget (the ordinal 1), the
+        // NEW face rides (the vanilla quirk the state machine speaks)
+        let pos = (5i64 << 38) | ((3i64 & 0x3FF_FFFF) << 12) | (70i64 & 0xFFF);
+        let mut expect = vec![0x29, 0x01]; // ABORT_DESTROY_BLOCK
+        expect.extend_from_slice(&pos.to_be_bytes());
+        expect.push(0x04); // WEST's 3D data value
+        expect.push(0x0A); // the sequence
+        assert_eq!(encode_player_action(1, 5, 70, 3, 4, 10), expect);
+        // STOP on the completion (the ordinal 2), DOWN's 0, the
+        // two-byte sequence VarInt (129 = 0x81 0x01)
+        let pos = (-3i64 & 0x3FF_FFFF) << 38; // x = -3, y = z = 0
+        let mut expect = vec![0x29, 0x02]; // STOP_DESTROY_BLOCK
+        expect.extend_from_slice(&pos.to_be_bytes());
+        expect.push(0x00); // Direction.DOWN
+        expect.extend_from_slice(&[0x81, 0x01]); // 129
+        assert_eq!(
+            encode_player_action(2, -3, 0, 0, 0, 129),
+            expect,
+            "the completion's STOP, the grown VarInt"
+        );
+        // THE SWING: the packet id + the hand, nothing else (the javap
+        // write's single field)
+        assert_eq!(
+            encode_swing(0),
+            vec![0x3F, 0x00],
+            "MAIN_HAND's own beat"
+        );
+        assert_eq!(encode_swing(1), vec![0x3F, 0x01], "the off-hand ordinal");
+    }
+
     /// The use-item-ON lane's serverbound echo — the block half of the
     /// use arc. The hex is the javap `write` composition of the real
     /// 26.2 ServerboundUseItemOnPacket + FriendlyByteBuf.
@@ -10341,9 +10472,10 @@ mod tests {
     /// the inside + world-border booleans; then the sequence VarInt.
     #[test]
     fn the_use_item_on_lane_speaks_the_javap_wire() {
-        // THE PACK: asLong's own spans — 26/12/26 bits, the offsets
-        // 38/12/0; a negative coordinate's two's-complement low bits
-        // ride the mask (the vanilla law for in-range coords)
+        // THE PACK: asLong's own spans — the 26-bit HORIZONTAL fields
+        // (x and z, the PACKED_HORIZONTAL_LENGTH's 26) with the 12-bit
+        // y at the low end; a negative coordinate's two's-complement
+        // low bits ride the mask (the vanilla law for in-range coords)
         assert_eq!(pack_block_pos(0, 0, 0), 0, "the ZERO block");
         assert_eq!(pack_block_pos(1, 2, 3), (1i64 << 38) | (3i64 << 12) | 2);
         assert_eq!(pack_block_pos(-1, 0, -1), (0x3FF_FFFFi64 << 38) | (0x3FF_FFFFi64 << 12));

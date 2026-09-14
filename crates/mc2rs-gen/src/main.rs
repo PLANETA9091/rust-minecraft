@@ -85,6 +85,22 @@ enum Cmd {
         #[arg(long)]
         java: Option<String>,
     },
+    /// Generate the dig lane's block data table (the destroy arc's own
+    /// numbers): boot the REAL vanilla registries from the official jar +
+    /// libraries (all sha1-verified) with the checked-in runtime dumper
+    /// and emit mc-registry/src/generated/block_dig.rs — the default
+    /// state's destroySpeed + requiresCorrectToolForDrops per block.
+    DumpBlockDig {
+        #[arg(long)]
+        version: String,
+        /// Workspace root (contains crates/).
+        #[arg(long, default_value = ".")]
+        out: String,
+        /// Explicit java binary (>= the version's java requirement from
+        /// the manifest). Default: `java` on PATH.
+        #[arg(long)]
+        java: Option<String>,
+    },
     /// Generate the bytecode-true packet id tables for EVERY phase: bind
     /// the REAL vanilla play, login, configuration, status and handshake
     /// protocols from the official jar (all sha1-verified) with the
@@ -364,6 +380,9 @@ fn main() -> Result<()> {
         }
         Cmd::DumpBlockStates { version, out, java } => {
             runtime_dump::dump_block_states(&agent, &cache, &version, Path::new(&out), java.as_deref())?;
+        }
+        Cmd::DumpBlockDig { version, out, java } => {
+            runtime_dump::dump_block_dig(&agent, &cache, &version, Path::new(&out), java.as_deref())?;
         }
         Cmd::DumpPacketIds { version, out, java } => {
             packet_dump::dump_packet_ids(&agent, &cache, &version, Path::new(&out), java.as_deref())?;

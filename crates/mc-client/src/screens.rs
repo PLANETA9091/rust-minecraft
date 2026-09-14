@@ -372,6 +372,28 @@ pub struct App {
     /// rides update()'s frame==tick model — the wire echoing through
     /// the same command channel the use arc rides.
     pub body: Option<crate::body::PlayerBody>,
+    /// THE DIG ARC's state machine — the vanilla `MultiPlayerGameMode`'s
+    /// destroy half (the survival lane: the destroy fields, the progress
+    /// law, the START/ABORT/STOP sends). The left mouse speaks it: the
+    /// press arms (startDestroyBlock), the hold mines
+    /// (continueDestroyBlock per tick), the release aborts
+    /// (stopDestroyBlock) — the crack overlay and the wire ride along.
+    pub dig: crate::dig::DigState,
+    /// The left mouse button's HOLD state (the vanilla
+    /// `options.keyAttack.isDown()`): the rising edge set by on_press,
+    /// the falling edge cleared by on_left_release — the dig tick reads
+    /// it (continueAttack(true) runs while held).
+    pub dig_held: bool,
+    /// The vanilla `missTime` — the 10-tick anti-spam window an AIR
+    /// swing arms (survival's hasMissTime): both the press and the hold
+    /// return while it counts (startAttack/continueAttack's own gates).
+    pub miss_time: i32,
+    /// The frame's crosshair pick — the vanilla `hitResult` (the
+    /// GameRenderer.pick every frame speaks). The dig tick re-clips it
+    /// per tick (the frame==tick model), the attack press reads it, and
+    /// the world render draws the hit outline from it. `None` = the
+    /// pick spoke MISS (nothing solid within the 4.5-block reach).
+    pub frame_pick: Option<crate::world::ClipHit>,
     /// The chest screen's 27 container slots as (item_id, count) — the
     /// wire's own stack shape (count <= 0 is the empty stack), the FIXED
     /// deterministic loadout the pixel test pins. Filled by open_chest
@@ -553,6 +575,10 @@ impl App {
             offline_held: None,
             offline_camera: None,
             body: None,
+            dig: crate::dig::DigState::new(),
+            dig_held: false,
+            miss_time: 0,
+            frame_pick: None,
             chest_slots: Vec::new(),
             chest_mirror: Vec::new(),
             chest_is_live: false,
@@ -635,16 +661,181 @@ impl App {
                     }
                 }
             }
+            // THE DIG TICK (the vanilla Minecraft.tick's own frame):
+            // missTime counts down, the crosshair re-picks (the
+            // GameRenderer.pick every frame), and the HOLD mines —
+            // continueAttack(true)'s own gates and beat: the using hands
+            // return early, the BLOCK hit feeds continueDestroyBlock (a
+            // TRUE beat swings the arm), the MISS/air tail speaks the
+            // stop (the armed dig aborts when the aim wanders off).
+            if self.miss_time > 0 {
+                self.miss_time -= 1;
+            }
+            self.frame_pick = self.clip_crosshair();
+            if self.dig_held && !using {
+                // the pick's own tuple copied out (the borrow ends before
+                // the machine's borrows and the sends begin)
+                let pick = self
+                    .frame_pick
+                    .as_ref()
+                    .map(|h| (h.pos, h.face));
+                let mut sends: Vec<crate::dig::DigSend> = Vec::new();
+                let mut beat = false;
+                let mut broke = false;
+                match pick {
+                    Some((pos, face)) => {
+                        let kind = self
+                            .active_world()
+                            .map(|w| w.get(pos.0, pos.1, pos.2))
+                            .unwrap_or(crate::world::AIR);
+                        if kind != crate::world::AIR {
+                            let held = self.held_id();
+                            let (on_ground, eye_water) = self.body_state();
+                            // the direct field split (the method's own
+                            // &mut self borrow would live too long)
+                            let world_opt = if self.world_is_network {
+                                self.net_world.as_mut()
+                            } else {
+                                self.offline_world.as_mut()
+                            };
+                            let dig = &mut self.dig;
+                            if let Some(world) = world_opt {
+                                let was_solid =
+                                    world.get(pos.0, pos.1, pos.2) != crate::world::AIR;
+                                let (s, b) = dig.continue_destroy_block(
+                                    pos, face, held, world, on_ground, eye_water,
+                                );
+                                sends = s;
+                                beat = b;
+                                broke = b
+                                    && was_solid
+                                    && world.get(pos.0, pos.1, pos.2) == crate::world::AIR;
+                            }
+                        } else {
+                            // the aimed cell vanished (a neighbor's dig):
+                            // the state disarms, no beat, no swing
+                            self.dig.is_destroying = false;
+                        }
+                    }
+                    None => {
+                        // the aim left the blocks: the stop tail (the
+                        // vanilla's own stopDestroyBlock call)
+                        sends = self.dig.stop_destroy_block();
+                    }
+                }
+                self.enqueue_dig(&sends);
+                if broke {
+                    // the completion's local break: the mesh re-speaks
+                    // (the placement's own rhythm)
+                    self.remesh_offline();
+                }
+                if beat {
+                    // the mining beat's own swing (the vanilla's
+                    // continueAttack tail — every TRUE beat swings; the
+                    // SwingState's re-trigger law keeps the arc honest
+                    // and LocalPlayer.swing echoes the wire)
+                    self.swing.start();
+                    if let Some(sink) = self.live_clicks.as_ref() {
+                        let _ = sink.send(crate::world_view::ContainerCommand::Swing);
+                    }
+                }
+            }
         }
     }
 
-    /// The vanilla attack input (left mouse press in-world): starts the
-    /// empty-hand swing. No-op outside the world or while paused (the
-    /// pause menu freezes the game — vanilla has no attack there).
+    /// The left press's attack lane — the vanilla `Minecraft.startAttack`'s
+    /// own law, verbatim: the missTime gate (the anti-spam window an air
+    /// swing armed), the busy-hands gate (the using item's own), the
+    /// BLOCK hit that arms the dig (startDestroyBlock — the state machine
+    /// speaks its own ABORT/START), the MISS that arms the 10-tick
+    /// missTime (survival's hasMissTime), and the UNCONDITIONAL swing
+    /// (the vanilla swings on every branch that got past the early
+    /// returns — the arm moves whether or not a block stood there).
     pub fn on_attack(&mut self) {
-        if self.screen == ScreenKind::World && !self.paused {
-            self.swing.start();
+        // the button state rides the edge (the OS's own isDown — the
+        // hold continues even while the gates refuse the swing)
+        self.dig_held = true;
+        if self.screen != ScreenKind::World || self.paused {
+            return;
         }
+        if self.miss_time > 0 {
+            return;
+        }
+        if self.using_item.is_some() {
+            return; // the vanilla isHandsBusy gate
+        }
+        // the BLOCK case: the dig arms through the state machine (the
+        // held id, the body's ground state and the eye's water state all
+        // ride — the vanilla computes the insta-break from the LIVE
+        // player). The clip re-runs HERE (the press may land between the
+        // ticks; the vanilla's hitResult is the last pick's own — the
+        // fresh clip is the same information, one frame fresher).
+        let hit = self.clip_crosshair();
+        let kind = hit
+            .as_ref()
+            .and_then(|h| self.active_world())
+            .map(|w| {
+                let h = hit.as_ref().unwrap();
+                w.get(h.pos.0, h.pos.1, h.pos.2)
+            })
+            .unwrap_or(crate::world::AIR);
+        let mut dug = false;
+        let mut sends: Vec<crate::dig::DigSend> = Vec::new();
+        if let Some(h) = &hit {
+            if kind != crate::world::AIR {
+                let held = self.held_id();
+                let (on_ground, eye_water) = self.body_state();
+                // the disjoint field split: the world option and the dig
+                // state borrow separately (the checker's own verdict)
+                let world_opt = if self.world_is_network {
+                    self.net_world.as_mut()
+                } else {
+                    self.offline_world.as_mut()
+                };
+                let dig = &mut self.dig;
+                if let Some(world) = world_opt {
+                    let was_solid = world.get(h.pos.0, h.pos.1, h.pos.2) != crate::world::AIR;
+                    sends = dig.start_destroy_block(
+                        h.pos, h.face, held, world, on_ground, eye_water,
+                    );
+                    dug = was_solid
+                        && world.get(h.pos.0, h.pos.1, h.pos.2) == crate::world::AIR;
+                }
+            } else {
+                self.miss_time = 10; // the vanilla hasMissTime branch
+            }
+        } else {
+            self.miss_time = 10; // the pick spoke MISS
+        }
+        self.enqueue_dig(&sends);
+        if dug {
+            self.remesh_offline();
+        }
+        // THE UNCONDITIONAL SWING (the vanilla startAttack's own tail:
+        // the BLOCK case, the MISS case — every branch that reached the
+        // switch's end swings; LocalPlayer.swing echoes the wire)
+        self.swing.start();
+        if let Some(sink) = self.live_clicks.as_ref() {
+            let _ = sink.send(crate::world_view::ContainerCommand::Swing);
+        }
+    }
+
+    /// The left press's falling edge — the vanilla `continueAttack(false)`
+    /// tail: the missTime clears, and the armed dig ABORTs (the crack
+    /// overlay clears, the wire speaks the Player Action packet). The
+    /// using-item gate returns BEFORE the abort (the vanilla's own
+    /// order — a bow release does not speak a dig abort).
+    pub fn on_left_release(&mut self) {
+        self.dig_held = false;
+        if self.screen != ScreenKind::World || self.paused {
+            return;
+        }
+        self.miss_time = 0;
+        if self.using_item.is_some() {
+            return;
+        }
+        let sends = self.dig.stop_destroy_block();
+        self.enqueue_dig(&sends);
     }
 
     pub fn open(&mut self, kind: ScreenKind) {
@@ -670,6 +861,10 @@ impl App {
             // the App OWNS the procedural voxels now (the block-use
             // lane's placement prediction edits them in place)
             self.offline_world = Some(world);
+            // the dig lane predicts locally on the offline terrain (the
+            // singleplayer behavior — the machine's own default re-armed)
+            self.dig.apply_locally = true;
+            self.dig_held = false;
             // the procedural world is an overworld world — the vanilla
             // extract pins the dimension's skybox on entering the level
             self.world_skybox = Skybox::Overworld;
@@ -852,6 +1047,11 @@ impl App {
         // voxels drop (the placement prediction is the server's own
         // chunk refresh on this lane)
         self.offline_world = None;
+        // the dig lane's prediction flag follows the world's authority
+        // (the networked terrain is the server's own — the placement
+        // lane's verdict the dig speaks too)
+        self.dig.apply_locally = false;
+        self.dig_held = false;
         // the vanilla extract's render state: the dimension's skybox pins
         // at level entry — resolved through the live model (the synced
         // registry's own skybox, the codec default, or the built-in table;
@@ -940,6 +1140,12 @@ impl App {
             return false;
         }
         if self.screen == ScreenKind::World && !self.paused {
+            // THE DESTROY GATE (the vanilla startUseItem's own first
+            // check: `if gameMode.isDestroying() return` — the right
+            // press refuses while the left hand mines)
+            if self.dig.is_destroying {
+                return false;
+            }
             // THE BLOCK LANE FIRST (the vanilla startUseItem's own
             // order): the crosshair clip + the useItemOn echo + the
             // block item's placement CONSUME; the PASS results fall
@@ -1699,6 +1905,81 @@ impl App {
         }
     }
 
+    /// The dig lane's mutable world accessor (the ACTIVE world's own
+    /// voxels — the machine reads them either way; the writes ride the
+    /// apply_locally flag the entry lanes set).
+    fn active_world_mut(&mut self) -> Option<&mut crate::world::World> {
+        if self.world_is_network {
+            self.net_world.as_mut()
+        } else {
+            self.offline_world.as_mut()
+        }
+    }
+
+    /// The crosshair pick — the vanilla GameRenderer.pick's own shape:
+    /// the active camera's eye along the view direction through the
+    /// BLOCK_INTERACTION_RANGE reach (the dig and the placement speak
+    /// the same clip).
+    fn clip_crosshair(&self) -> Option<crate::world::ClipHit> {
+        self.active_world().and_then(|w| {
+            let cam = self.world_camera();
+            let f = cam.forward();
+            w.clip(
+                (cam.pos.x as f64, cam.pos.y as f64, cam.pos.z as f64),
+                (f.x as f64, f.y as f64, f.z as f64),
+                crate::world::BLOCK_INTERACTION_RANGE,
+            )
+        })
+    }
+
+    /// The body state the dig speed law speaks: (on ground, the eye in
+    /// water). The body-less scenes speak the honest defaults (grounded,
+    /// dry) — the flight camera's own belief; the eye samples the cell
+    /// the camera stands in (the vanilla isEyeInFluid's own query).
+    fn body_state(&self) -> (bool, bool) {
+        let cam = self.world_camera();
+        let on_ground = self.body.as_ref().map(|b| b.on_ground).unwrap_or(true);
+        let eye_water = self
+            .active_world()
+            .map(|w| {
+                w.get(
+                    cam.pos.x.floor() as i32,
+                    cam.pos.y.floor() as i32,
+                    cam.pos.z.floor() as i32,
+                ) == crate::world::WATER
+            })
+            .unwrap_or(false);
+        (on_ground, eye_water)
+    }
+
+    /// The dig sends ride the live session's own command channel (the
+    /// offline lane has no session — the sends die honestly on the
+    /// frame thread, exactly like the placement's echo).
+    fn enqueue_dig(&mut self, sends: &[crate::dig::DigSend]) {
+        if sends.is_empty() {
+            return;
+        }
+        if let Some(sink) = self.live_clicks.as_ref() {
+            for s in sends {
+                let _ = sink.send(crate::world_view::ContainerCommand::DigAction {
+                    action: s.action,
+                    pos: s.pos,
+                    face: s.face,
+                });
+            }
+        }
+    }
+
+    /// The offline mesh re-speaks the edited voxels (the placement's own
+    /// rhythm — the networked world's mesh is the server's refresh).
+    fn remesh_offline(&mut self) {
+        if !self.world_is_network {
+            if let Some(world) = self.offline_world.as_ref() {
+                self.world_quads = Some(crate::mesher::mesh_world(world, None));
+            }
+        }
+    }
+
     /// THE BLOCK-USE LANE — the vanilla startUseItem's block branch:
     /// the crosshair clip (the eye along the view direction, the
     /// BLOCK_INTERACTION_RANGE's 4.5), the useItemOn echo riding EVERY
@@ -2063,6 +2344,22 @@ impl App {
             fb.draw_quads(&ctx, quads);
         }
         crate::sky::render_clouds(fb, &ctx, &cam, day_time, 0.0, self.world_cloud_fog_end);
+        // THE DIG LANE's frame render (the vanilla LevelRenderer's own
+        // pair, both after the terrain and before the hand): the hit
+        // outline (the black wireframe on the crosshair's block — every
+        // BLOCK pick speaks it, mining or not) and the breaking overlay
+        // (the destroy_stage crack on the armed dig's cell, the progress
+        // law's own stage index — the vanilla's destroyBlockProgress
+        // state the level renderer draws)
+        if let Some(hit) = &self.frame_pick {
+            fb.draw_hit_outline(&ctx, hit.pos);
+        }
+        let stage = self.dig.destroy_stage();
+        if (0..10).contains(&stage) {
+            let tile = mc_registry::generated::atlas::DESTROY_TILES[stage as usize];
+            let quads = crate::mesher::destroy_overlay_quads(self.dig.pos, tile);
+            fb.draw_destroy_overlay(&ctx, &quads);
+        }
         if self.arm.is_none() {
             let kind = if self.slim_arm {
                 crate::hand::ArmKind::Slim
@@ -4970,6 +5267,172 @@ mod tests {
             crate::world::AIR,
             "no local prediction on the networked lane"
         );
+    }
+
+
+    /// THE DIG LANE's OFFLINE ARC — the left press arms the destroy
+    /// (startDestroyBlock), the hold mines on the frame==tick model
+    /// (continueDestroyBlock's own beat), the completion breaks the cell
+    /// and the mesh re-speaks (the placement's own rhythm), the release
+    /// mid-dig aborts, and the air press arms the missTime anti-spam
+    /// window the vanilla's survival speaks.
+    #[test]
+    fn the_dig_lane_mines_the_offline_world() {
+        let mut app = App::new(3);
+        app.enter_world();
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let surface = app.spawn_y - 1; // the top SOLID cell the ray hits
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, app.spawn_y as f32 + 4.0, c as f32 + 0.5),
+            yaw: 0.0,
+            pitch: -std::f32::consts::FRAC_PI_2,
+        });
+        let kind_before = app.offline_world.as_ref().unwrap().get(c, surface, c);
+        assert_ne!(kind_before, crate::world::AIR, "the surface cell is solid");
+        let mesh_before = app.world_quads.as_ref().unwrap().clone();
+        // THE PRESS: the dig arms, the swing beats (the vanilla
+        // startAttack's own tail)
+        app.on_press(0, 0);
+        assert!(app.dig.is_destroying, "the press armed the destroy");
+        assert_eq!(app.dig.pos, (c, surface, c), "the armed cell");
+        assert!(app.dig_held, "the hold flag rides the edge");
+        assert!(app.swing.swinging, "the press swung the arm");
+        // THE HOLD: the ticks mine (the frame==tick model), the crack
+        // stage climbs, the completion breaks the cell
+        let mut ticks = 0;
+        while app.offline_world.as_ref().unwrap().get(c, surface, c) != crate::world::AIR {
+            app.update();
+            ticks += 1;
+            assert!(ticks < 400, "the dig completed in time");
+        }
+        assert!(ticks > 1, "the dig took real beats ({ticks})");
+        assert!(!app.dig.is_destroying, "the completion disarmed");
+        assert_eq!(app.dig.delay, 5, "the completion's cooldown armed");
+        assert_ne!(
+            *app.world_quads.as_ref().unwrap(),
+            mesh_before,
+            "the mesh re-spoke with the broken cell (the quad COUNT may tie on a sloped cell — the faces move)"
+        );
+        // THE COOLDOWN + THE COLUMN CONTINUATION (the vanilla dig-down
+        // rhythm): the eye drops to reach the column's next cell — the
+        // hold ticks the delay away (each cooldown tick still beats the
+        // swing), then the retarget arms the next cell through
+        // startDestroyBlock (continueDestroyBlock's own tail call)
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, app.spawn_y as f32 + 2.5, c as f32 + 0.5),
+            yaw: 0.0,
+            pitch: -std::f32::consts::FRAC_PI_2,
+        });
+        for _ in 0..5 {
+            app.update();
+        }
+        assert_eq!(app.dig.delay, 0, "the cooldown ticked away on the hold");
+        assert!(!app.dig.is_destroying, "the dig stays disarmed through the cooldown");
+        app.update();
+        assert!(
+            app.dig.is_destroying && app.dig.pos == (c, surface - 1, c),
+            "the column's next cell armed through the retarget"
+        );
+        // THE RELEASE MID-DIG: two beats into the new cell, the falling
+        // edge aborts (the crack clears, the cell survives)
+        app.update();
+        app.update();
+        app.on_left_release();
+        assert!(!app.dig.is_destroying, "the release aborted");
+        assert_eq!(app.dig.progress, 0.0, "the crack progress cleared");
+        assert_eq!(
+            app.offline_world.as_ref().unwrap().get(c, surface - 1, c),
+            crate::world::DIRT,
+            "the aborted cell survives the abort"
+        );
+        // THE AIR MISS: aimed at the sky, the press arms the missTime
+        // window (survival's hasMissTime) and the dig never arms
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, app.spawn_y as f32 + 4.0, c as f32 + 0.5),
+            yaw: 0.0,
+            pitch: std::f32::consts::FRAC_PI_2,
+        });
+        app.on_press(0, 0);
+        assert!(!app.dig.is_destroying, "the air press never armed");
+        assert_eq!(app.miss_time, 10, "the anti-spam window armed");
+    }
+
+    /// THE DIG LANE's NETWORKED ARC — the destroy state arms and mines
+    /// over the net world, the START/ABORT echoes ride the command
+    /// channel (the worker's serverbound Player Action packets), the
+    /// SWING rides its own command, and the LOCAL voxels stay untouched
+    /// (the server's own chunk refresh is the authority on this lane).
+    #[test]
+    fn the_dig_lane_echoes_the_networked_world() {
+        use crate::world_view::ContainerCommand;
+        let mut app = App::new(3);
+        app.open(ScreenKind::Connect);
+        // the net world with a stone floor under the spawn column
+        let mut net = air_net_world(2, 0);
+        let c = net.size_blocks() / 2;
+        let floor_y = net.size_blocks() / 4;
+        for x in 0..net.size_blocks() {
+            for z in 0..net.size_blocks() {
+                net.set(x, floor_y, z, crate::world::STONE);
+            }
+        }
+        app.net_world = Some(net);
+        app.enter_network_world(None, Skybox::Overworld, None, None);
+        let (click_tx, click_rx) = std::sync::mpsc::channel::<ContainerCommand>();
+        app.attach_live_clicks(click_tx);
+        app.net_camera = Some(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, floor_y as f32 + 4.0, c as f32 + 0.5),
+            yaw: 0.0,
+            pitch: -std::f32::consts::FRAC_PI_2,
+        });
+        // THE PRESS: the START + the swing ride the lane
+        app.on_press(0, 0);
+        assert!(app.dig.is_destroying, "the net lane armed the destroy");
+        match click_rx.try_recv().expect("the START rode the lane") {
+            ContainerCommand::DigAction { action, pos, face } => {
+                assert_eq!(action, crate::dig::ACTION_START, "the START ordinal");
+                assert_eq!(pos, (c, floor_y, c), "the hit voxel");
+                assert_eq!(face, 1, "UP — the floor's entry face");
+            }
+            other => panic!("expected a DigAction START, got {other:?}"),
+        }
+        match click_rx.try_recv().expect("the swing rode the lane") {
+            ContainerCommand::Swing => {}
+            other => panic!("expected a Swing, got {other:?}"),
+        }
+        // THE HOLD: the progress ticks (the hand-on-stone 100 divisor),
+        // the local voxels stay the server's own
+        for _ in 0..3 {
+            app.update();
+        }
+        assert!(app.dig.progress > 0.0, "the net lane's progress ticks");
+        // the mining beats' swings queued on the lane; drain them (the
+        // vanilla's own per-beat echo)
+        let mut beats = 0;
+        while let Ok(cmd) = click_rx.try_recv() {
+            match cmd {
+                ContainerCommand::Swing => beats += 1,
+                other => panic!("unexpected lane traffic mid-dig: {other:?}"),
+            }
+        }
+        assert!(beats >= 1, "the mining beats swung");
+        assert_eq!(
+            app.net_world.as_ref().unwrap().get(c, floor_y, c),
+            crate::world::STONE,
+            "no local prediction on the networked lane"
+        );
+        // THE RELEASE: the ABORT rides DOWN (the vanilla's own constant)
+        app.on_left_release();
+        match click_rx.try_recv().expect("the ABORT rode the lane") {
+            ContainerCommand::DigAction { action, pos, face } => {
+                assert_eq!(action, crate::dig::ACTION_ABORT, "the ABORT ordinal");
+                assert_eq!(pos, (c, floor_y, c), "the held cell");
+                assert_eq!(face, 0, "DOWN — the release's own direction");
+            }
+            other => panic!("expected a DigAction ABORT, got {other:?}"),
+        }
+        assert!(!app.dig.is_destroying);
     }
 
     /// The number keys' whole arc: the HUD's selection moves with the
