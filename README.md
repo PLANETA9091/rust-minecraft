@@ -919,6 +919,47 @@ hand-drawn:
   (VILLAGER_DATA at 18 doubles as the order proof), the generated-id
   pin, and the model's merge semantics (replace-one-leave-others, the
   null-lookup drop, the re-spawn reset).
+  The **the resolvable profile — serializer 41, the last low-id
+  object-graph refusal, retired (v0.3.116)**: the RESOLVABLE_
+  PROFILE lane decodes. The javap audit, six hops: `Resolvable
+  Profile.STREAM_CODEC` = `composite(either(ByteBufCodecs.GAME_
+  PROFILE, ResolvableProfile$Partial.STREAM_CODEC), PlayerSkin$
+  Patch.STREAM_CODEC)` — the either is the ONE-BYTE flag (true =
+  LEFT = the FULL GameProfile, false = RIGHT = the Partial);
+  `GAME_PROFILE` = `composite(UUIDUtil.STREAM_CODEC [16 bytes],
+  PLAYER_NAME [stringUtf8(16)], GAME_PROFILE_PROPERTIES)`; the
+  properties map is the anonymous `ByteBufCodecs$32`:
+  `readCount(buf, 16)` — ONLY the upper bound throws, and a
+  NEGATIVE count passes and the builder loop iterates zero times:
+  an EMPTY map (the never-refuse family, discovered by the
+  bytecode and pinned by a probe) — then count × {name ≤64, value
+  ≤32767, nullable signature ≤1024 (FriendlyByteBuf.readNullable's
+  one-byte flag)}; the Partial = `composite(optional(PLAYER_NAME),
+  optional(UUIDUtil.STREAM_CODEC), GAME_PROFILE_PROPERTIES)`;
+  `PlayerSkin$Patch` = FOUR one-byte-flag optionals — body, cape,
+  elytra (each a `ClientAsset$ResourceTexture` = `composite(
+  Identifier.STREAM_CODEC, Identifier.STREAM_CODEC)`, two
+  ≤32767-byte strings — STRING_UTF8's own cap; the Identifier wire
+  is the plain string mapped) and model (`PlayerModelType.STREAM_
+  CODEC` = `ByteBufCodecs.BOOL.map(..)` — the enum's own lambda
+  pair: TRUE = SLIM, FALSE = WIDE, pinned by lambda$static$1/2's
+  bytecode). The implementation: the `ProfileProperty`,
+  `SkinAsset`, `PlayerSkinPatch` types, the `ResolvableProfile`
+  enum (Full/Partial), the shared `read_uuid` extraction (the
+  reference lane and the profile lane share the ONE codec), the
+  capped-string reader family (the VarInt length IS the byte
+  length, so the post-read cap check is exact), the decode arm,
+  the EntityDataEntry variant, and the lib.rs exports. The decode
+  census: TWENTY-TWO of the registry's 43 serializers (0-20, 41).
+  mc-client untouched BY CONSTRUCTION. GOLDENS UNTOUCHED BY
+  CONSTRUCTION: 12/12 PASS. Tests +1 (workspace 466 -> 467 passed
+  / 0 failed / 3 ignored): the FULL side (uuid + name + one
+  property + the body-asset patch with model SLIM), the PARTIAL
+  side (the optional name rides, the optional id absent, the
+  NEGATIVE property count decoding to an EMPTY map, the patch
+  all-absent), the 17-property count refusing (readCount's upper
+  bound), and the truncated identity refusing. The object-graph
+  refusal set is now the variant holders only.
   The **the dispatched particle-type registry — the PARTICLE and
   PARTICLES lanes walk all 125 types (v0.3.115)**: the last two
   serializer refusals in the low-id range retire. The javap audit:

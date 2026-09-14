@@ -1478,11 +1478,28 @@ pub mod entity_data_serializers {
     /// OutOfBoundsStrategy.ZERO)` — NEVER refuses (out-of-range keys
     /// fill to values[0] = STANDING in the consumer's resolution).
     pub const POSE: i32 = 20;
+    /// The resolvable profile's audited wire (the audit's six hops):
+    /// `ResolvableProfile.STREAM_CODEC` = `composite(either(ByteBuf
+    /// Codecs.GAME_PROFILE, ResolvableProfile$Partial.STREAM_CODEC),
+    /// PlayerSkin$Patch.STREAM_CODEC)` — the either is the ONE-BYTE
+    /// flag (true = LEFT = the FULL GameProfile: uuid + name +
+    /// properties; false = RIGHT = the Partial: optional name +
+    /// optional uuid + properties); the properties map (the anonymous
+    /// ByteBufCodecs$32) is `readCount(buf, 16)` — ONLY the upper
+    /// bound throws (a NEGATIVE count passes and the builder loop
+    /// iterates zero times: an EMPTY map, the never-refuse family) —
+    /// then count × {name ≤64, value ≤32767, nullable(signature
+    /// ≤1024)}; the patch is FOUR one-byte-flag optionals (body,
+    /// cape, elytra: each a ClientAsset$ResourceTexture = two
+    /// ≤32767-byte identifier strings — STRING_UTF8's own cap;
+    /// model: a BOOL — true = SLIM, false = WIDE, the enum's own
+    /// lambda pair). PLAYER_NAME is `stringUtf8(16)`.
+    pub const RESOLVABLE_PROFILE: i32 = 41;
     // 21-32: the variant Holders (CAT_VARIANT .. PIG_SOUND_VARIANT,
     // ZOMBIE_NAUTILUS_VARIANT interleaved), 33: OPTIONAL_GLOBAL_POS
     // (the wiki-era 18), 34: PAINTING_VARIANT, 35-38: the enum states
     // (SNIFFER/ARMADILLO/COPPER_GOLEM/WEATHERING_COPPER), 39: VECTOR3,
-    // 40: QUATERNION, 41: RESOLVABLE_PROFILE, 42: HUMANOID_ARM.
+    // 40: QUATERNION, 42: HUMANOID_ARM.
 }
 
 /// The PARTICLE_TYPE registry's wire constants — the clinit's 125
@@ -1975,6 +1992,76 @@ pub enum ParticleValue {
     SculkCharge(f32),
 }
 
+/// One profile property — the PropertyMap's element: the name/value
+/// pair and the optional signature.
+#[derive(Debug, Clone, PartialEq)]
+pub struct ProfileProperty {
+    /// The property name (≤64 bytes on the wire).
+    pub name: String,
+    /// The property value (≤32767 bytes on the wire).
+    pub value: String,
+    /// The optional signature (≤1024 bytes; the one-byte nullable
+    /// flag rides first).
+    pub signature: Option<String>,
+}
+
+/// A ClientAsset$ResourceTexture — the skin patch's asset: two
+/// plain-string identifiers (each ≤32767 bytes — STRING_UTF8's own
+/// cap; the Identifier wire is the string mapped).
+#[derive(Debug, Clone, PartialEq)]
+pub struct SkinAsset {
+    /// The asset's identifier string.
+    pub id: String,
+    /// The texture path's identifier string.
+    pub texture_path: String,
+}
+
+/// The skin patch — the profile composite's second lane: FOUR
+/// one-byte-flag optional lanes. The model's bool maps true = SLIM,
+/// false = WIDE (the enum's own lambda pair) — the wire datum is
+/// the bool, retained verbatim.
+#[derive(Debug, Clone, PartialEq)]
+pub struct PlayerSkinPatch {
+    /// The body texture asset, if present.
+    pub body: Option<SkinAsset>,
+    /// The cape texture asset, if present.
+    pub cape: Option<SkinAsset>,
+    /// The elytra texture asset, if present.
+    pub elytra: Option<SkinAsset>,
+    /// Some(true) = SLIM, Some(false) = WIDE (vanilla's BOOL map),
+    /// None = the flag said absent.
+    pub model_slim: Option<bool>,
+}
+
+/// The profile's identity side — `either(GAME_PROFILE,
+/// ResolvableProfile$Partial.STREAM_CODEC)`: the FULL GameProfile
+/// or the Partial. The properties map's count is readCount(buf, 16)
+/// — only the UPPER bound throws; a negative count is an EMPTY map
+/// (the never-refuse family).
+#[derive(Debug, Clone, PartialEq)]
+pub enum ResolvableProfile {
+    /// The LEFT branch: the full GameProfile.
+    Full {
+        /// The profile's UUID (16 bytes, msb then lsb).
+        uuid: [u8; 16],
+        /// The profile name (≤16 bytes — PLAYER_NAME's stringUtf8
+        /// cap).
+        name: String,
+        /// The properties.
+        properties: Vec<ProfileProperty>,
+    },
+    /// The RIGHT branch: the Partial — name and id are each
+    /// optional (each behind its own one-byte flag).
+    Partial {
+        /// The optional name.
+        name: Option<String>,
+        /// The optional UUID.
+        id: Option<[u8; 16]>,
+        /// The properties.
+        properties: Vec<ProfileProperty>,
+    },
+}
+
 /// A retained living-entity reference: the UUID the wire carries
 /// (16 bytes, msb then lsb — [`entity_data_serializers`
 /// ::OPTIONAL_LIVING_ENTITY_REFERENCE]'s audited shape). Vanilla's
@@ -1991,8 +2078,8 @@ pub struct EntityReference {
 }
 
 /// One decoded metadata VALUE — the wire shapes of the serializers
-/// this client decodes (TWENTY-ONE of the registry's ids: 0-20 as
-/// [`entity_data_serializers`] declares). The four i32
+/// this client decodes (TWENTY-TWO of the registry's ids: 0-20, 41
+/// as [`entity_data_serializers`] declares). The four i32
 /// flavors are DISTINCT variants because the serializer id is part of
 /// the state (vanilla's `assignValues` matches accessor and value on
 /// it), not a type system accident.
@@ -2047,6 +2134,13 @@ pub enum EntityDataEntry {
     /// Serializer 17: the list operation over PARTICLE — the VarInt
     /// count, then that many dispatched particle values.
     Particles(Vec<ParticleValue>),
+    /// Serializer 41: the resolvable profile — the either(full/
+    /// partial) identity + the skin patch (see [`ResolvableProfile`],
+    /// [`PlayerSkinPatch`]).
+    ResolvableProfile {
+        profile: ResolvableProfile,
+        patch: PlayerSkinPatch,
+    },
     /// Serializer 19: the OptionalInt — wire 0 = None, wire n =
     /// Some(n - 1), the SIGNED truth retained verbatim (a negative
     /// wire n stores n - 1; the decode never refuses — the serializer
@@ -2984,13 +3078,19 @@ fn parse_component_patch(c: &mut &[u8]) -> Result<ComponentPatch> {
     Ok(ComponentPatch { added, removed })
 }
 
-/// The living-entity reference's 16 UUID bytes: msb long then lsb
-/// long, both big-endian (`FriendlyByteBuf.readUUID` = `new UUID(
-/// readLong(), readLong())` — the audit's third hop).
-fn read_entity_reference(r: &mut &[u8]) -> std::io::Result<EntityReference> {
+/// The UUID's 16 bytes: msb long then lsb long, both big-endian
+/// (`FriendlyByteBuf.readUUID` = `new UUID(readLong(), readLong())`
+/// — the reference lane and the profile lane share the ONE codec).
+fn read_uuid(r: &mut &[u8]) -> std::io::Result<[u8; 16]> {
     let mut uuid = [0u8; 16];
     r.read_exact(&mut uuid)?;
-    Ok(EntityReference { uuid })
+    Ok(uuid)
+}
+
+fn read_entity_reference(r: &mut &[u8]) -> std::io::Result<EntityReference> {
+    Ok(EntityReference {
+        uuid: read_uuid(r)?,
+    })
 }
 
 /// The vibration's dispatched position source: the
@@ -3091,6 +3191,95 @@ fn read_particle_value(r: &mut &[u8]) -> Result<ParticleValue> {
     })
 }
 
+/// The capped string read: the wire's `Utf8String.read(buf, max)` —
+/// the VarInt length IS the byte length, so the post-read check is
+/// exact; an over-long string throws in vanilla.
+fn read_capped_string(r: &mut &[u8], cap: usize) -> Result<String> {
+    let s = read_string(r)?;
+    anyhow::ensure!(
+        s.len() <= cap,
+        "string of {} bytes exceeds the {cap} cap (Utf8String's bound)",
+        s.len()
+    );
+    Ok(s)
+}
+
+/// The nullable string: the one-byte flag, then the capped string
+/// (FriendlyByteBuf.readNullable's shape).
+fn read_nullable_capped_string(r: &mut &[u8], cap: usize) -> Result<Option<String>> {
+    Ok(match read_u8(r)? {
+        0 => None,
+        _ => Some(read_capped_string(r, cap)?),
+    })
+}
+
+/// The PropertyMap (the anonymous ByteBufCodecs$32): readCount(buf,
+/// 16) — ONLY the upper bound throws; a NEGATIVE count passes and
+/// the builder loop iterates zero times (an EMPTY map, the
+/// never-refuse family), then count × {name ≤64, value ≤32767,
+/// nullable signature ≤1024}.
+fn read_profile_properties(r: &mut &[u8]) -> Result<Vec<ProfileProperty>> {
+    let n = read_varint(r)?;
+    anyhow::ensure!(
+        n <= 16,
+        "profile property count {n} exceeds the 16 cap (readCount's bound)"
+    );
+    let mut props = Vec::new();
+    for _ in 0..n {
+        props.push(ProfileProperty {
+            name: read_capped_string(r, 64)?,
+            value: read_capped_string(r, 32767)?,
+            signature: read_nullable_capped_string(r, 1024)?,
+        });
+    }
+    Ok(props)
+}
+
+/// The optional skin asset: the one-byte flag, then the two
+/// identifier strings (each riding STRING_UTF8's 32767 cap).
+fn read_optional_skin_asset(r: &mut &[u8]) -> Result<Option<SkinAsset>> {
+    Ok(match read_u8(r)? {
+        0 => None,
+        _ => Some(SkinAsset {
+            id: read_capped_string(r, 32767)?,
+            texture_path: read_capped_string(r, 32767)?,
+        }),
+    })
+}
+
+/// The resolvable profile walk: the either's flag (true = LEFT = the
+/// full GameProfile), the identity side's own lanes, then the skin
+/// patch's four one-byte-flag optionals (the model's bool: true =
+/// SLIM, false = WIDE — the enum's own lambda map).
+fn read_resolvable_profile(r: &mut &[u8]) -> Result<(ResolvableProfile, PlayerSkinPatch)> {
+    let profile = if read_u8(r)? != 0 {
+        ResolvableProfile::Full {
+            uuid: read_uuid(r)?,
+            name: read_capped_string(r, 16)?,
+            properties: read_profile_properties(r)?,
+        }
+    } else {
+        ResolvableProfile::Partial {
+            name: read_nullable_capped_string(r, 16)?,
+            id: match read_u8(r)? {
+                0 => None,
+                _ => Some(read_uuid(r)?),
+            },
+            properties: read_profile_properties(r)?,
+        }
+    };
+    let patch = PlayerSkinPatch {
+        body: read_optional_skin_asset(r)?,
+        cape: read_optional_skin_asset(r)?,
+        elytra: read_optional_skin_asset(r)?,
+        model_slim: match read_u8(r)? {
+            0 => None,
+            _ => Some(read_u8(r)? != 0),
+        },
+    };
+    Ok((profile, patch))
+}
+
 /// Parse Set Entity Data. The supported serializers are the wire's
 /// primitive registry PLUS the chat component (the bare-NBT tag — the
 /// nbt reader the chunk path already trusts) PLUS the villager record
@@ -3099,8 +3288,10 @@ fn read_particle_value(r: &mut &[u8]) -> Result<ParticleValue> {
 /// slice) PLUS the living-entity reference (the 16-byte UUID the
 /// wire carries — the resolution is the client's act) PLUS the
 /// dispatched particle registry (the id + the type's own payload,
-/// all 125 types — 103 simple, 22 payload carriers); the remaining
-/// object-graph shapes — profiles, the variant holders —
+/// all 125 types — 103 simple, 22 payload carriers) PLUS the
+/// resolvable profile (the either(full/partial) identity + the skin
+/// patch — the count-capped properties and the flag-optional lanes);
+/// the remaining object-graph shapes — the variant holders —
 /// refuse for now: a value's byte length is only knowable through
 /// its codec, so there is no honest skip, and the vanilla read side
 /// fails the packet exactly the same way on a serializer it cannot
@@ -3192,6 +3383,11 @@ pub fn parse_set_entity_data(payload: &[u8]) -> Result<EntityDataSet> {
                     list.push(read_particle_value(&mut c)?);
                 }
                 EntityDataEntry::Particles(list)
+            }
+            entity_data_serializers::RESOLVABLE_PROFILE => {
+                // the either's flag, the identity side, the patch
+                let (profile, patch) = read_resolvable_profile(&mut c)?;
+                EntityDataEntry::ResolvableProfile { profile, patch }
             }
             entity_data_serializers::BLOCK_STATE => {
                 let s = read_varint(&mut c)?;
@@ -5101,15 +5297,15 @@ mod tests {
     /// round the three-layer count/item/patch decode landed.
     /// PARTICLE left it the round the dispatched particle-type
     /// registry walked (its 0x00 byte was the probe; now id 0 is a
-    /// legal SIMPLE particle) — the survivors are the resolvable
-    /// profile (41), the variant holders, and the unknown ids, all
-    /// refusing for the same reason they always did: a value's byte
-    /// length is only knowable through its codec, so there is no
-    /// honest skip.
+    /// legal SIMPLE particle); the RESOLVABLE_PROFILE (41) left it
+    /// the round its either+patch walk landed. The survivors are the
+    /// variant holders and the unknown ids, refusing for the same
+    /// reason they always did: a value's byte length is only knowable
+    /// through its codec, so there is no honest skip.
     #[test]
     fn the_entity_data_object_graph_and_unknown_serializers_refuse() {
         use entity_data_serializers as s;
-        for serializer in [41, 200] {
+        for serializer in [21, 200] {
             let entries = test_support::entity_data_entry(0, serializer, &[0x00]);
             let p = test_support::set_entity_data_packet(3, &entries);
             assert!(
@@ -5349,6 +5545,109 @@ mod tests {
         let entries =
             test_support::entity_data_entry(0, s::PARTICLES, &test_support::entity_data_varint(-1));
         let p = test_support::set_entity_data_packet(9, &entries);
+        assert!(parse_set_entity_data(&p).is_err());
+    }
+
+    /// The RESOLVABLE_PROFILE serializer (41): `composite(either(
+    /// GAME_PROFILE, Partial.STREAM_CODEC), PlayerSkin$Patch
+    /// .STREAM_CODEC)` — the either's ONE-BYTE flag (true = the FULL
+    /// GameProfile, false = the Partial), the identity side's own
+    /// lanes, and the patch's four flag-optional lanes. The
+    /// properties map is readCount(buf, 16) — the UPPER bound
+    /// refuses, and a NEGATIVE count is an EMPTY map (the
+    /// never-refuse family, pinned on the Partial probe). The
+    /// model bool maps true = SLIM (the enum's own lambda pair).
+    #[test]
+    fn the_resolvable_profile_lane_decodes_both_sides_and_the_patch() {
+        use entity_data_serializers as s;
+        let mut uuid = [0u8; 16];
+        for (i, b) in uuid.iter_mut().enumerate() {
+            *b = (i as u8) * 17;
+        }
+        // the LEFT side: the full GameProfile + a one-asset patch
+        let mut v = vec![1u8];
+        v.extend_from_slice(&uuid);
+        write_string(&mut v, "mc2rs");
+        v.extend_from_slice(&test_support::entity_data_varint(1)); // one property
+        write_string(&mut v, "textures");
+        write_string(&mut v, "ewogICJ0aW1lc3RhbXAiIDogMTAwLAp9");
+        v.push(0); // the signature's nullable flag: absent
+        v.push(1); // the patch's body: present
+        write_string(&mut v, "minecraft:slim");
+        write_string(&mut v, "textures/entity/steve.png");
+        v.push(0); // cape: absent
+        v.push(0); // elytra: absent
+        v.push(1); // model: present
+        v.push(1); // the bool: true = SLIM
+        let entries = test_support::entity_data_entry(0, s::RESOLVABLE_PROFILE, &v);
+        let p = test_support::set_entity_data_packet(7, &entries);
+        let d = parse_set_entity_data(&p).unwrap();
+        assert_eq!(
+            d.entries[0].value,
+            EntityDataEntry::ResolvableProfile {
+                profile: ResolvableProfile::Full {
+                    uuid,
+                    name: "mc2rs".into(),
+                    properties: vec![ProfileProperty {
+                        name: "textures".into(),
+                        value: "ewogICJ0aW1lc3RhbXAiIDogMTAwLAp9".into(),
+                        signature: None,
+                    }],
+                },
+                patch: PlayerSkinPatch {
+                    body: Some(SkinAsset {
+                        id: "minecraft:slim".into(),
+                        texture_path: "textures/entity/steve.png".into(),
+                    }),
+                    cape: None,
+                    elytra: None,
+                    model_slim: Some(true),
+                },
+            }
+        );
+        // the RIGHT side: the Partial — the optional name rides, the
+        // optional id is absent, and the NEGATIVE property count is
+        // an EMPTY map (readCount never refuses it — the never-refuse
+        // family's pinned member), and the patch rides all-absent
+        let mut v = vec![0u8];
+        v.push(1); // the name: present
+        write_string(&mut v, "xavier");
+        v.push(0); // the id: absent
+        v.extend_from_slice(&test_support::entity_data_varint(-1)); // the count
+        v.push(0); // body absent
+        v.push(0); // cape absent
+        v.push(0); // elytra absent
+        v.push(0); // model absent
+        let entries = test_support::entity_data_entry(0, s::RESOLVABLE_PROFILE, &v);
+        let p = test_support::set_entity_data_packet(7, &entries);
+        let d = parse_set_entity_data(&p).unwrap();
+        assert_eq!(
+            d.entries[0].value,
+            EntityDataEntry::ResolvableProfile {
+                profile: ResolvableProfile::Partial {
+                    name: Some("xavier".into()),
+                    id: None,
+                    properties: vec![],
+                },
+                patch: PlayerSkinPatch {
+                    body: None,
+                    cape: None,
+                    elytra: None,
+                    model_slim: None,
+                },
+            }
+        );
+        // the UPPER bound: 17 properties refuse (readCount's throw)
+        let mut v = vec![1u8];
+        v.extend_from_slice(&[0u8; 16]);
+        write_string(&mut v, "mc2rs");
+        v.extend_from_slice(&test_support::entity_data_varint(17));
+        let entries = test_support::entity_data_entry(0, s::RESOLVABLE_PROFILE, &v);
+        let p = test_support::set_entity_data_packet(7, &entries);
+        assert!(parse_set_entity_data(&p).is_err());
+        // a truncated identity refuses (the honest short-buffer failure)
+        let entries = test_support::entity_data_entry(0, s::RESOLVABLE_PROFILE, &[1, 0x00, 0x11]);
+        let p = test_support::set_entity_data_packet(7, &entries);
         assert!(parse_set_entity_data(&p).is_err());
     }
 
