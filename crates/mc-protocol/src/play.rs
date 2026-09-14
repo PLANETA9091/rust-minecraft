@@ -1605,6 +1605,110 @@ pub mod data_component_types {
     /// names carry no "status" infix; the wiki-era naming is not
     /// the wire's).
     pub const CONSUMABLE: i32 = 24;
+    /// The client-side DATA_COMPONENT_TYPE registry's SIZE — vanilla's
+    /// clinit census (111 registered types; TWENTY-FOUR carry value
+    /// codecs, the other 87 refuse). The `byIdOrThrow` bound of every
+    /// bare component-type id lane (the any-value predicate lane).
+    pub const REGISTRY_SIZE: i32 = 111;
+}
+
+/// The `DataComponentPredicates` registry — the DISPATCHED
+/// predicate-type table behind the component-matcher lane's PARTIAL
+/// side. The ids are the clinit `register` order (`Registry.register`
+/// call sequence = the registry id; the FIFTH registry this project
+/// has pinned by clinit order). The NAMES are the bytecode's `ldc`
+/// strings verbatim (the registry names are the wire's names — the
+/// wiki-era naming is not, the consume-effect lesson again).
+///
+/// The payload's transport: `DataComponentPredicate$TypeBase`
+/// builds every type's stream side as `ByteBufCodecs
+/// .fromCodecWithRegistries(record.CODEC).map(wrap, unwrap)` — the
+/// `tagCodec` bridge — so each dispatched entry's payload rides as
+/// ONE full NBT tag (`NbtIo.readAnyTag`: the type byte + payload, no
+/// name framing), parsed through the record's OWN NBT-side codec
+/// with NbtOps. The port retains that tag verbatim (the
+/// ComponentSerialization line): the per-record parse is a
+/// consumer's act, and a shape the record codec would refuse arrives
+/// as the retained tag, not a read-time refusal. A 0x00 root byte
+/// refuses: `readNbt` maps the End tag to null and the bridge throws
+/// "Expected non-null compound tag" (the port's bare-tag reader
+/// errors on the same byte, the same lane, panic-free).
+pub mod data_component_predicate_types {
+    /// `DamagePredicate.CODEC` — the damage/durable-range record.
+    pub const DAMAGE: i32 = 0;
+    /// `EnchantmentsPredicate$Enchantments.CODEC`.
+    pub const ENCHANTMENTS: i32 = 1;
+    /// `EnchantmentsPredicate$StoredEnchantments.CODEC`.
+    pub const STORED_ENCHANTMENTS: i32 = 2;
+    /// `PotionsPredicate.CODEC` — the registry name is
+    /// `potion_contents` (the `ldc` string verbatim).
+    pub const POTION_CONTENTS: i32 = 3;
+    /// `CustomDataPredicate.CODEC`.
+    pub const CUSTOM_DATA: i32 = 4;
+    /// `ContainerPredicate.CODEC`.
+    pub const CONTAINER: i32 = 5;
+    /// `BundlePredicate.CODEC` — the registry name is
+    /// `bundle_contents`.
+    pub const BUNDLE_CONTENTS: i32 = 6;
+    /// `FireworkExplosionPredicate.CODEC`.
+    pub const FIREWORK_EXPLOSION: i32 = 7;
+    /// `FireworksPredicate.CODEC`.
+    pub const FIREWORKS: i32 = 8;
+    /// `WritableBookPredicate.CODEC` — the registry name is
+    /// `writable_book_content`.
+    pub const WRITABLE_BOOK_CONTENT: i32 = 9;
+    /// `WrittenBookPredicate.CODEC` — the registry name is
+    /// `written_book_content`.
+    pub const WRITTEN_BOOK_CONTENT: i32 = 10;
+    /// `AttributeModifiersPredicate.CODEC`.
+    pub const ATTRIBUTE_MODIFIERS: i32 = 11;
+    /// `TrimPredicate.CODEC` — the registry name is `trim`.
+    pub const ARMOR_TRIM: i32 = 12;
+    /// `JukeboxPlayablePredicate.CODEC`.
+    pub const JUKEBOX_PLAYABLE: i32 = 13;
+    /// `VillagerTypePredicate.CODEC` — the registry name carries a
+    /// SLASH (`villager/variant`, the `ldc` string verbatim).
+    pub const VILLAGER_VARIANT: i32 = 14;
+    /// The built-in registry's SIZE — the `byIdOrThrow` bound of the
+    /// dispatched type id (an unknown AND negative id throw; the
+    /// consume-effect dispatch line).
+    pub const REGISTRY_SIZE: i32 = 15;
+}
+
+/// One partial matcher's dispatched TYPE lane —
+/// `DataComponentPredicate$Type.STREAM_CODEC` =
+/// `ByteBufCodecs.either(registry(DATA_COMPONENT_PREDICATE_TYPE),
+/// registry(DATA_COMPONENT_TYPE))` mapped to the Type. The either is
+/// `$26` — a ONE-BYTE readBoolean, true = LEFT — then a `$29`
+/// byIdOrThrow VarInt into the chosen branch's registry. BOTH
+/// registries are real lookups (NOT the idMapper-continuous family):
+/// a negative AND an out-of-range id throw, the port refuses at the
+/// same lane.
+#[derive(Debug, Clone, PartialEq)]
+pub enum PredicateTypeLane {
+    /// LEFT (bool 1): a `DataComponentPredicates` registry id — the
+    /// built-in 15-row table (see
+    /// [`data_component_predicate_types`]).
+    PredicateType(i32),
+    /// RIGHT (bool 0): a DATA_COMPONENT_TYPE registry id — the
+    /// `AnyValueType` shape ("the component is present, any value");
+    /// its payload needs no value codec, the tag is retained
+    /// verbatim.
+    ComponentType(i32),
+}
+
+/// ONE partial matcher entry — the `DataComponentPredicate$Single`
+/// record as the wire carries it: the dispatched type lane
+/// ([`PredicateTypeLane`]) plus the ONE full NBT tag its record
+/// codec bridges (`fromCodecWithRegistries` = `tagCodec` + the
+/// record's own parse). The tag is retained verbatim.
+#[derive(Debug, Clone, PartialEq)]
+pub struct PartialPredicate {
+    /// The dispatched type lane (the either branch + registry id).
+    pub predicate_type: PredicateTypeLane,
+    /// The payload tag (the record codec's NBT-side schema is a
+    /// consumer's act).
+    pub payload: Nbt,
 }
 
 /// One decoded component-patch VALUE — the codec-shape variants of
@@ -2093,21 +2197,26 @@ pub struct PropertyMatcher {
 /// walk as the patch's added entries (an unknown id refuses — the
 /// unframed wire cannot be skipped honestly).
 ///
-/// The PARTIAL side refuses: `DataComponentPredicate.STREAM_CODEC` =
-/// `list(64)` of a DISPATCHED registry (each predicate type carries
-/// its own payload codec — damage, enchantments, potion contents, a
-/// census wave of its own). The count is read and the 64-cap is
-/// enforced (a larger count is vanilla's own DecoderException), but
-/// any NON-EMPTY list refuses because there is no honest skip for a
-/// payload the port does not carry — the patch's known-but-
-/// unimplemented line. The EMPTY partial list (the common ANY
-/// matchers) decodes to an empty footprint.
+/// The PARTIAL side WALKS (the wave-three deferral retired):
+/// `DataComponentPredicate.STREAM_CODEC` = `SINGLE_STREAM_CODEC
+/// .list(64)` mapped to a Map — a VarInt count (64-capped, a larger
+/// count is vanilla's own DecoderException), then count ×
+/// `DataComponentPredicate$Single` entries. Each entry =
+/// `StreamCodec.dispatch(Type.STREAM_CODEC, type.singleStreamCodec)`
+/// — the type lane ([`PredicateTypeLane`]: a ONE-BYTE either
+/// boolean, then a byIdOrThrow VarInt into the branch's registry)
+/// followed by the ONE full NBT tag the record codec bridges
+/// ([`PartialPredicate`]; the payload is self-delimiting, so the
+/// walk continues — the unframed-wire objection is retired by
+/// construction).
 #[derive(Debug, Clone, PartialEq)]
 pub struct DataComponentMatchers {
     /// The exact-match entries: {component type id, the value to
     /// match}, in wire order, decoded through the same walk as the
     /// patch's added entries.
     pub exact: Vec<(i32, ComponentValue)>,
+    /// The partial (sub-predicate) entries, in wire order.
+    pub partial: Vec<PartialPredicate>,
 }
 
 /// ONE adventure-mode block predicate — the `BlockPredicate.STREAM_CODEC`
@@ -2449,7 +2558,8 @@ fn read_block_predicate(c: &mut &[u8]) -> Result<BlockPredicate> {
     };
 
     // lane 4: DataComponentMatchers — the exact list decodes (the
-    // patch's added-entry walk), the partial list refuses non-empty
+    // patch's added-entry walk), the partial list WALKS the
+    // dispatched entries (the wave-three deferral retired)
     let exact_n = read_component_count(c, "exact matcher list")?;
     let mut exact = Vec::with_capacity(exact_n as usize);
     for _ in 0..exact_n {
@@ -2463,18 +2573,57 @@ fn read_block_predicate(c: &mut &[u8]) -> Result<BlockPredicate> {
         partial_n <= 64,
         "predicate matcher list over the codec's 64-entry cap ({partial_n})"
     );
-    anyhow::ensure!(
-        partial_n == 0,
-        "no payload codecs for the {partial_n} dispatched predicate types (the wire is \
-         unframed; a payload cannot be skipped honestly)"
-    );
+    let mut partial = Vec::with_capacity(partial_n as usize);
+    for _ in 0..partial_n {
+        let predicate_type = read_predicate_type_lane(c)?;
+        let payload = read_bare_nbt(c)?;
+        partial.push(PartialPredicate {
+            predicate_type,
+            payload,
+        });
+    }
 
     Ok(BlockPredicate {
         blocks,
         properties,
         nbt,
-        matchers: DataComponentMatchers { exact },
+        matchers: DataComponentMatchers { exact, partial },
     })
+}
+
+/// The partial matcher's dispatched TYPE lane —
+/// `DataComponentPredicate$Type.STREAM_CODEC` =
+/// `ByteBufCodecs.either(registry(DATA_COMPONENT_PREDICATE_TYPE),
+/// registry(DATA_COMPONENT_TYPE))` mapped to the Type: a ONE-BYTE
+/// readBoolean ($26 — true = LEFT), then a `$29` byIdOrThrow VarInt
+/// into the chosen branch's registry. Both registries are real
+/// lookups (NOT the idMapper-continuous family): a negative AND an
+/// out-of-range id throw — the port refuses at the same lane. LEFT
+/// is the built-in 15-row `DataComponentPredicates` table; RIGHT is
+/// the synced 111-row DATA_COMPONENT_TYPE table — the `AnyValueType`
+/// ("the component is present, any value").
+fn read_predicate_type_lane(c: &mut &[u8]) -> Result<PredicateTypeLane> {
+    let left = read_u8(c)? != 0;
+    let id = read_varint(c)?;
+    if left {
+        anyhow::ensure!(
+            (0..data_component_predicate_types::REGISTRY_SIZE).contains(&id),
+            "unknown dispatched predicate type id {id} (the byIdOrThrow lane: \
+             vanilla throws for anything outside [0, {}) — the built-in \
+             DataComponentPredicates table)",
+            data_component_predicate_types::REGISTRY_SIZE
+        );
+        Ok(PredicateTypeLane::PredicateType(id))
+    } else {
+        anyhow::ensure!(
+            (0..data_component_types::REGISTRY_SIZE).contains(&id),
+            "unknown component type id {id} in the any-value predicate lane \
+             (the byIdOrThrow lane: vanilla throws for anything outside \
+             [0, {}) — the synced DATA_COMPONENT_TYPE table)",
+            data_component_types::REGISTRY_SIZE
+        );
+        Ok(PredicateTypeLane::ComponentType(id))
+    }
 }
 
 /// The attribute-modifiers walk — the outer NO-ARG list count, then
@@ -4579,8 +4728,8 @@ mod tests {
                 SetEntityDataEntry { index: 20, serializer: s::VILLAGER_DATA, value: EntityDataEntry::VillagerData { type_id: 2, profession_id: 14, level: 3 } },
                 SetEntityDataEntry { index: 21, serializer: s::ITEM_STACK, value: EntityDataEntry::ItemStack { count: 3, item_id: 745, patch: ComponentPatch { added: vec![(3, ComponentValue::VarInt(35)), (4, ComponentValue::Unit)], removed: vec![12] } } },
                 SetEntityDataEntry { index: 22, serializer: s::ITEM_STACK, value: EntityDataEntry::ItemStack { count: 1, item_id: 2, patch: ComponentPatch { added: vec![(data_component_types::CAN_PLACE_ON, ComponentValue::BlockPredicates(vec![
-                    BlockPredicate { blocks: Some(BlockSet::Named("minecraft:logs".into())), properties: Some(vec![PropertyMatcher { name: "facing".into(), value: PropertyValue::Exact("north".into()) }]), nbt: None, matchers: DataComponentMatchers { exact: vec![(3, ComponentValue::VarInt(35))] } },
-                    BlockPredicate { blocks: Some(BlockSet::Direct(vec![17, 999])), properties: None, nbt: Some(Nbt::Compound(vec![("tag".into(), Nbt::Byte(1))])), matchers: DataComponentMatchers { exact: vec![] } },
+                    BlockPredicate { blocks: Some(BlockSet::Named("minecraft:logs".into())), properties: Some(vec![PropertyMatcher { name: "facing".into(), value: PropertyValue::Exact("north".into()) }]), nbt: None, matchers: DataComponentMatchers { exact: vec![(3, ComponentValue::VarInt(35))], partial: vec![] } },
+                    BlockPredicate { blocks: Some(BlockSet::Direct(vec![17, 999])), properties: None, nbt: Some(Nbt::Compound(vec![("tag".into(), Nbt::Byte(1))])), matchers: DataComponentMatchers { exact: vec![], partial: vec![] } },
                 ]))], removed: vec![] } } },
             ]
         );
@@ -5619,10 +5768,9 @@ mod tests {
     /// discriminator, both bounds riding as STRINGS), `optional(
     /// NbtPredicate)` (a bare COMPOUND_TAG, non-compound refuses),
     /// and `DataComponentMatchers` (the exact list decodes through
-    /// the patch's added-entry walk; the partial list's count is
-    /// 64-capped and any NON-EMPTY list refuses — the dispatched
-    /// predicate-type payloads are a census wave of their own, the
-    /// unframed wire cannot be skipped honestly).
+    /// the patch's added-entry walk; the partial list is 64-capped
+    /// and WALKS the dispatched entries — each a ONE-BYTE either
+    /// boolean + a byIdOrThrow VarInt + ONE full NBT payload tag).
     #[test]
     fn the_adventure_mode_predicates_decode_their_four_lanes() {
         use data_component_types as t;
@@ -5691,7 +5839,8 @@ mod tests {
                             ]),
                             nbt: Some(Nbt::Compound(vec![("Items".into(), Nbt::List(vec![]))])),
                             matchers: DataComponentMatchers {
-                                exact: vec![(3, ComponentValue::VarInt(5))]
+                                exact: vec![(3, ComponentValue::VarInt(5))],
+                                partial: vec![],
                             },
                         }])
                     )],
@@ -5792,9 +5941,13 @@ mod tests {
     /// count, a negative block id inside a direct set (the
     /// byIdOrThrow direction), a non-compound nbt lane (the
     /// COMPOUND_TAG DecoderException), an unknown component id inside
-    /// the exact matcher list (the unframed-wire sizing line), a
-    /// non-empty partial matcher list (no payload codecs yet — the
-    /// census's next wave), and a partial list over its 64-entry cap.
+    /// the exact matcher list (the unframed-wire sizing line), the
+    /// dispatched partial lane's OWN refusal map (an unknown
+    /// predicate-type id, a NEGATIVE one, an unknown and a negative
+    /// any-value component id — the `$29` byIdOrThrow lookups — and
+    /// the End-tag payload byte, the bridge's "Expected non-null
+    /// compound tag" DecoderException), and a partial list over its
+    /// 64-entry cap.
     #[test]
     fn the_adventure_mode_predicates_refuse_their_shape_drift() {
         use data_component_types as t;
@@ -5846,16 +5999,37 @@ mod tests {
         tail.extend_from_slice(&test_support::entity_data_varint(1)); // exact count
         tail.extend_from_slice(&test_support::entity_data_varint(999));
         assert!(parse_set_entity_data(&stack_with(&with_base(&tail))).is_err());
-        // a NON-EMPTY partial matcher list (no dispatched payload
-        // codecs — the honest refusal)
-        let mut tail = Vec::new();
-        tail.extend_from_slice(&test_support::entity_data_varint(t::CAN_PLACE_ON));
-        tail.extend_from_slice(&test_support::entity_data_varint(1));
-        tail.push(0);
-        tail.push(0);
-        tail.push(0);
-        tail.extend_from_slice(&test_support::entity_data_varint(0)); // exact empty
-        tail.extend_from_slice(&test_support::entity_data_varint(1)); // partial count 1
+        // the dispatched partial lane's own refusal map: the $29
+        // byIdOrThrow lookups refuse BEFORE the payload is read, so
+        // these tails stop at the type id (a refusal probe must land
+        // ON the lane, not die of byte exhaustion)
+        let partial_tail = |bool_byte: u8, id: i32| -> Vec<u8> {
+            let mut t = Vec::new();
+            t.extend_from_slice(&test_support::entity_data_varint(t::CAN_PLACE_ON));
+            t.extend_from_slice(&test_support::entity_data_varint(1));
+            t.push(0);
+            t.push(0);
+            t.push(0);
+            t.extend_from_slice(&test_support::entity_data_varint(0)); // exact empty
+            t.extend_from_slice(&test_support::entity_data_varint(1)); // partial count 1
+            t.push(bool_byte);
+            t.extend_from_slice(&test_support::entity_data_varint(id));
+            t
+        };
+        // an unknown PREDICATE-type id (the built-in table has 15 rows)
+        assert!(parse_set_entity_data(&stack_with(&with_base(&partial_tail(1, 15)))).is_err());
+        // a NEGATIVE predicate-type id
+        assert!(parse_set_entity_data(&stack_with(&with_base(&partial_tail(1, -1)))).is_err());
+        // an unknown ANY-VALUE component id (the synced table has 111 rows)
+        assert!(parse_set_entity_data(&stack_with(&with_base(&partial_tail(0, 111)))).is_err());
+        // a negative any-value component id
+        assert!(parse_set_entity_data(&stack_with(&with_base(&partial_tail(0, -3)))).is_err());
+        // the End-tag payload byte: a KNOWN type id (left, damage) then
+        // 0x00 — readNbt maps the End tag to null and the bridge throws
+        // "Expected non-null compound tag" (the port's bare-tag reader
+        // refuses the same byte at the same lane)
+        let mut tail = partial_tail(1, 0);
+        tail.push(0x00);
         assert!(parse_set_entity_data(&stack_with(&with_base(&tail))).is_err());
         // a partial list over its 64-entry cap (the count itself is
         // the DecoderException, before any payload)
@@ -5868,6 +6042,90 @@ mod tests {
         tail.extend_from_slice(&test_support::entity_data_varint(0));
         tail.extend_from_slice(&test_support::entity_data_varint(65));
         assert!(parse_set_entity_data(&stack_with(&with_base(&tail))).is_err());
+    }
+
+    /// The dispatched predicate-type census WALKS: a partial matcher
+    /// list of TWO entries — LEFT (the `damage` predicate type, id 0,
+    /// its payload compound retained verbatim) and RIGHT (the
+    /// AnyValue lane over the DAMAGE component type, "the component
+    /// is present, any value", its empty-compound payload retained) —
+    /// and the walk's framing: the payload tag is self-delimiting, so
+    /// the decode consumes exactly each entry and continues (the
+    /// wave-three "unframed wire" objection retired by construction).
+    #[test]
+    fn the_dispatched_predicate_entries_walk_their_payload_tags() {
+        use data_component_predicate_types as pt;
+        use data_component_types as t;
+        use entity_data_serializers as s;
+
+        let mut value = Vec::new();
+        for v in [1i32, 1, 1, 0] {
+            value.extend_from_slice(&test_support::entity_data_varint(v));
+        }
+        value.extend_from_slice(&test_support::entity_data_varint(t::CAN_PLACE_ON));
+        value.extend_from_slice(&test_support::entity_data_varint(1)); // one predicate
+        value.push(0); // blocks absent
+        value.push(0); // properties absent
+        value.push(0); // nbt absent
+        value.extend_from_slice(&test_support::entity_data_varint(0)); // exact empty
+        value.extend_from_slice(&test_support::entity_data_varint(2)); // partial: two entries
+        // entry 1: LEFT (bool 1) = the `damage` predicate type, the
+        // payload the record codec's NBT-schema shape (retained
+        // verbatim — the parse is a consumer's act)
+        value.push(1);
+        value.extend_from_slice(&test_support::entity_data_varint(pt::DAMAGE));
+        crate::nbt::write_bare_nbt(
+            &Nbt::Compound(vec![
+                ("durable".into(), Nbt::Int(20)),
+                ("damage".into(), Nbt::Int(3)),
+            ]),
+            &mut value,
+        )
+        .unwrap();
+        // entry 2: RIGHT (bool 0) = the AnyValue lane over the DAMAGE
+        // component type, the payload the empty compound
+        value.push(0);
+        value.extend_from_slice(&test_support::entity_data_varint(t::DAMAGE));
+        crate::nbt::write_bare_nbt(&Nbt::Compound(vec![]), &mut value).unwrap();
+
+        let p = test_support::set_entity_data_packet(
+            5,
+            &test_support::entity_data_entry(8, s::ITEM_STACK, &value),
+        );
+        let d = parse_set_entity_data(&p).unwrap();
+        let EntityDataEntry::ItemStack { patch, .. } = &d.entries[0].value else {
+            panic!("expected the item stack");
+        };
+        assert!(patch.removed.is_empty());
+        let [(ty, ComponentValue::BlockPredicates(preds))] = &patch.added[..] else {
+            panic!("expected the can_place_on block predicates");
+        };
+        assert_eq!(*ty, t::CAN_PLACE_ON);
+        let [pred] = &preds[..] else {
+            panic!("expected one predicate");
+        };
+        assert!(pred.blocks.is_none() && pred.properties.is_none() && pred.nbt.is_none());
+        assert!(pred.matchers.exact.is_empty());
+        // entry 1: the LEFT lane — the built-in table's `damage` row,
+        // the payload compound byte-identical to the wire's
+        assert_eq!(
+            pred.matchers.partial[0].predicate_type,
+            PredicateTypeLane::PredicateType(pt::DAMAGE)
+        );
+        assert_eq!(
+            pred.matchers.partial[0].payload,
+            Nbt::Compound(vec![
+                ("durable".into(), Nbt::Int(20)),
+                ("damage".into(), Nbt::Int(3)),
+            ])
+        );
+        // entry 2: the RIGHT lane — the AnyValue shape over the DAMAGE
+        // component type (the registry id, not a value codec)
+        assert_eq!(
+            pred.matchers.partial[1].predicate_type,
+            PredicateTypeLane::ComponentType(t::DAMAGE)
+        );
+        assert_eq!(pred.matchers.partial[1].payload, Nbt::Compound(vec![]));
     }
 
     /// Set Entity Data: the COMPONENT wire is a BARE NBT tag — the
