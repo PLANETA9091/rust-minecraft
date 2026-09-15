@@ -29,12 +29,12 @@ use zip::ZipArchive;
 /// quads (template_leaf_litter_1..4), so the full-cube resolution chain
 /// doesn't apply — the build loop special-cases it to the flat stem, and
 /// the client's mesher meshes it as the dry-fold ground cover it is.
-pub const RUNTIME_PALETTE: [&str; 26] = [
+pub const RUNTIME_PALETTE: [&str; 27] = [
     "air", "stone", "dirt", "grass_block", "oak_log", "oak_leaves", "water", "sand",
     "granite", "diorite", "andesite", "deepslate", "cobbled_deepslate", "gravel",
     "bedrock", "coal_ore", "copper_ore", "iron_ore", "gold_ore", "redstone_ore",
     "lapis_ore", "diamond_ore", "emerald_ore", "netherrack", "pale_oak_leaves",
-    "leaf_litter",
+    "leaf_litter", "lava",
 ];
 
 /// Renderer face order: 0:+X 1:-X 2:+Y 3:-Y 4:+Z 5:-Z.
@@ -79,6 +79,14 @@ fn resolve_block(
         // blockstate model); the still texture with water tint is the
         // canonical lookup used by the item/fluid renderer.
         return Ok(resolve_flat_stem("water_still", true));
+    }
+    if block == "lava" {
+        // The SECOND fluid special case (the lava lane's own lookup —
+        // the same no-blockstate shape the water arm speaks): the still
+        // texture with NO tint — lava_still.png is the pre-colored
+        // 16x512 strip the game itself never biome-tints (the animated
+        // crop machinery the water arm rides handles the strip).
+        return Ok(resolve_flat_stem("lava_still", false));
     }
 
     let bs_bytes = read_jar(archive, &format!("assets/minecraft/blockstates/{block}.json"))?;
@@ -627,6 +635,9 @@ mod tests {
         // the FIRST non-cube member (the 13th audit): the dry fold's sole
         // consumer, meshed as flat ground quads by the client
         assert_eq!(RUNTIME_PALETTE[25], "leaf_litter");
+        // the SECOND fluid member (the lava lane): the still-texture
+        // special case the water arm speaks, tint-free
+        assert_eq!(RUNTIME_PALETTE[26], "lava");
         assert_eq!(FACE_KEYS, ["east", "west", "up", "down", "south", "north"]);
     }
 

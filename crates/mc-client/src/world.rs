@@ -57,14 +57,19 @@ pub const PALE_LEAVES: u16 = 24;
 /// meshes the full footprint; per-segment coverage needs state-property
 /// extraction (documented follow-up).
 pub const LEAF_LITTER: u16 = 25;
+/// The SECOND fluid member (the lava lane): the body's fire laws read
+/// it (the box-overlap scan the touches_lava law speaks), the mesher
+/// meshes it as the non-occluding fluid (the water shape, the opaque
+/// lava_still pixels), the collision never stands on it.
+pub const LAVA: u16 = 26;
 
 /// Block -> texture-group mapping used by the real-colors LUT.
-pub const NAME_OF: [&str; 26] = [
+pub const NAME_OF: [&str; 27] = [
     "air", "stone", "dirt", "grass_block", "oak_log", "oak_leaves", "water", "sand",
     "granite", "diorite", "andesite", "deepslate", "cobbled_deepslate", "gravel",
     "bedrock", "coal_ore", "copper_ore", "iron_ore", "gold_ore", "redstone_ore",
     "lapis_ore", "diamond_ore", "emerald_ore", "netherrack", "pale_oak_leaves",
-    "leaf_litter",
+    "leaf_litter", "lava",
 ];
 
 /// The block interaction reach — the `Attributes.BLOCK_INTERACTION_RANGE`
@@ -442,7 +447,10 @@ impl World {
         let dx = dir.0 / len;
         let dy = dir.1 / len;
         let dz = dir.2 / len;
-        let solid = |id: u16| id != AIR && id != WATER;
+        // THE FLUID-NONE LAW (the ClipContext.Fluid.NONE the block clip
+        // speaks): neither fluid ever decides the hit — the water AND
+        // the lava stay transparent to the pick ray
+        let solid = |id: u16| id != AIR && id != WATER && id != LAVA;
         let mut x = origin.0.floor() as i32;
         let mut y = origin.1.floor() as i32;
         let mut z = origin.2.floor() as i32;

@@ -97,6 +97,27 @@ pub const FALL_DAMAGE_MULTIPLIER: f64 = 1.0;
 /// law compares: `> -0.5` while `fallDistance > 1.0` folds it to 1.0).
 pub const FALL_ACCUM_VY_GATE: f64 = -0.5;
 
+// THE FIRE ARC's constants (javap, the same jar — the lava lane):
+/// `Entity.lavaIgnite`'s own `igniteForSeconds(15.0F)` — the lava's
+/// brand. javap: fireImmune aside (the bare player never is), the
+/// float 15.0f rides igniteForSeconds.
+pub const LAVA_IGNITE_SECONDS: f32 = 15.0;
+/// `igniteForSeconds(15.0F)`'s own fold — `igniteForTicks(Mth.floor(
+/// 15.0F * 20.0F))` = 300 ticks (the precomputed floor the constant
+/// documents; the law computes it live through the two folds).
+pub const LAVA_FIRE_TICKS: i32 = 300;
+/// `Entity.lavaHurt`'s own dose — `hurtServer(level, lava(), 4.0F)`
+/// (the ldc_w 4.0f the bytecode speaks).
+pub const LAVA_DAMAGE: f32 = 4.0;
+/// `Entity.baseTick`'s fire clock's own dose — `hurtServer(level,
+/// onFire(), 1.0F)` (the fconst_1 the bytecode speaks), gated
+/// `remainingFireTicks % 20 == 0 && !isInLava()`.
+pub const ON_FIRE_DAMAGE: f32 = 1.0;
+/// The fire clock's own cadence — the `bipush 20; irem` the baseTick
+/// bytecode speaks (the same 20 the mob lane's FIRE_DAMAGE_INTERVAL
+/// names; the body keeps its own — the laws speak per-owner).
+pub const FIRE_DAMAGE_INTERVAL: i32 = 20;
+
 /// The landed block's fall-damage multiplier — javap
 /// `BlockBehaviour.getFallDamageMultiplier`'s default 1.0 (the
 /// overrides: slime block 0.0, hay/bed/honey 0.2 — none in this
@@ -154,10 +175,11 @@ fn box_at(x: f64, y: f64, z: f64, height: f64) -> (f64, f64, f64, f64, f64, f64)
 
 /// The solid predicate — the clip lane's own (the fluids never decide
 /// the hit, the air is the air). The drop lane's un-stuck and the
-/// item physics speak the same law.
+/// item physics speak the same law. LAVA joins the fluids (the lava
+/// lane: the body wades INTO it, the fire laws answer).
 pub fn solid(world: &World, x: i32, y: i32, z: i32) -> bool {
     let id = world.get(x, y, z);
-    id != AIR && id != WATER
+    id != AIR && id != WATER && id != crate::world::LAVA
 }
 
 /// The per-axis clip (the classic AABB clipXCollide law the VoxelShape
@@ -548,6 +570,39 @@ pub struct PlayerBody {
     /// velocity — the baseTick read, last move's post-collision
     /// result, the entry speed the body fell in with.
     pub splash_volume: f32,
+    /// THE FIRE CLOCK (Entity.remainingFireTicks's own field): the
+    /// brand the lavaIgnite speaks (the lava contact's
+    /// igniteForSeconds(15) fold — only when the clock is UNDER the
+    /// brand's value), the decrement the baseTick's fire clock speaks
+    /// every tick while positive, the water douse's clearFire kills.
+    /// The on-fire render flag rides `> 0` (the setSharedFlagOnFire
+    /// write the bytecode speaks).
+    pub remaining_fire_ticks: i32,
+    /// THE TICK'S LAVA VERDICT (isInLava's own shape): any cell the
+    /// body box overlaps is lava — the tick-head scan the fire
+    /// clock's !isInLava gate and the baseTick fallDistance fold
+    /// read.
+    pub in_lava: bool,
+    /// THE LAVA HURT (LavaFluid.entityInside's runAfter tail — the
+    /// lavaHurt the contact fires every tick it overlaps): the App
+    /// answers with the 4.0 hurt through the pipeline's cooldown and
+    /// speaks the GENERIC_BURN on the hurt's success (the playSound's
+    /// own ifeq gate). The body never clears it, the reader does.
+    pub lava_hurt_due: bool,
+    /// THE FIRE CLOCK'S HURT (baseTick's own onFire verdict:
+    /// remainingFireTicks % 20 == 0 && !isInLava -> hurtServer(
+    /// onFire(), 1.0F)): the burn's own dose once the body LEFT the
+    /// lava (the in-lava ticks the lava's own 4.0 speaks instead).
+    /// The App answers through the same pipeline, the BURNING voice
+    /// the DamageEffects speaks.
+    pub on_fire_hurt_due: bool,
+    /// THE WATER DOUSE (InsideBlockEffectType.EXTINGUISH =
+    /// Entity::clearFire, the water block's own inside-effect): the
+    /// burning body touching water dies to min(0, remaining) and the
+    /// transition plays the fizz (playEntityOnFireExtinguishedSound,
+    /// the volume 0.7 / pitch 1.6 + (r - r) * 0.4 fold). Set ONLY on
+    /// the douse tick (a wet body carries no clock to kill).
+    pub fire_doused_due: bool,
     /// THE WALK ANIMATION STORE (WalkAnimationState, javap): the
     /// speed/position pair the third-person avatar's limb cosines
     /// speak. Updated every tick from the 3D move distance (the
@@ -616,6 +671,11 @@ impl PlayerBody {
             splash_due: false,
             splash_high_speed: false,
             splash_volume: 0.0,
+            remaining_fire_ticks: 0,
+            in_lava: false,
+            lava_hurt_due: false,
+            on_fire_hurt_due: false,
+            fire_doused_due: false,
             walk: WalkAnimationState {
                 speed_old: 0.0,
                 speed: 0.0,
@@ -741,8 +801,13 @@ impl PlayerBody {
         // the per-tick event flags clear at the head (the App drains
         // what THIS tick spoke): the splash's own clear rides here —
         // the fluid update fires it AFTER this line, the step block's
-        // own clears never see it
+        // own clears never see it. THE FIRE ARC's three ride the same
+        // head (the same lesson the splash's zero-forever bug spoke:
+        // the tick-head clear, never a later block's)
         self.splash_due = false;
+        self.lava_hurt_due = false;
+        self.on_fire_hurt_due = false;
+        self.fire_doused_due = false;
         // the pre-tick position — the walk distance law's own source
         // (calculateEntityAnimation's getX() - xo fold)
         let (x0, y0, z0) = (self.x, self.y, self.z);
@@ -761,10 +826,16 @@ impl PlayerBody {
         // water landing never hurts — AND the ENTRY SPLASH's own gate:
         // inWater && !wasTouchingWater && !firstTick ->
         // doWaterSplashEffect, the tail write wasTouchingWater =
-        // inWater)
+        // inWater). THE SECOND FLUID rides the same scan (the lava
+        // lane): the verdict the fire clock's !isInLava gate and the
+        // fallDistance fold read.
         let in_water = self.touches_water(world);
-        if in_water {
+        let in_lava = self.touches_lava(world);
+        self.in_lava = in_lava;
+        if in_water || in_lava {
             self.fall_distance = 0.0;
+        }
+        if in_water {
             if !self.was_touching_water && !self.first_tick {
                 // THE ENTRY SPLASH (doWaterSplashEffect's own law): the
                 // self volume base 0.2F (the passenger's 0.9F aside —
@@ -789,6 +860,28 @@ impl PlayerBody {
             }
         }
         self.was_touching_water = in_water;
+        // THE FIRE CLOCK (javap `Entity.baseTick`'s ServerLevel branch —
+        // the vanilla's own position right after the fluid update): a
+        // positive clock folds the onFire hurt when the cadence gate
+        // speaks — `remainingFireTicks % 20 == 0 && !isInLava()` (the
+        // in-lava ticks the lava's own 4.0 speaks instead) — then
+        // decrements one. The fireImmune arm never speaks here (the
+        // bare player never is); the client-side clearFire arm (the
+        // level NOT a ServerLevel) never speaks — this body is the
+        // stand-in server's own.
+        if self.remaining_fire_ticks > 0 {
+            if self.remaining_fire_ticks % FIRE_DAMAGE_INTERVAL == 0 && !in_lava {
+                self.on_fire_hurt_due = true;
+            }
+            self.remaining_fire_ticks -= 1;
+        }
+        // THE BELT-AND-SUSPENDERS FOLD (javap baseTick, the fire
+        // clock's own tail): `isInLava() -> fallDistance *= 0.5` —
+        // after the fluid scan's reset it rides a zero (the vanilla's
+        // own dead math, kept for the shape's honesty).
+        if in_lava {
+            self.fall_distance *= 0.5;
+        }
         if self.no_jump_delay > 0 {
             self.no_jump_delay -= 1;
         }
@@ -980,6 +1073,39 @@ impl PlayerBody {
                 self.swim_volume = swim_vol;
             }
         }
+        // THE LAVA CONTACT (javap `LavaFluid.entityInside`'s own beat —
+        // the aiStep tail's applyEffectsFromBlocks the tick's move
+        // speaks AFTER, the InsideBlockEffectApplier's order kept:
+        // CLEAR_FREEZE (no vocabulary — no freeze lane), then
+        // LAVA_IGNITE, then the runAfter tail): the box overlaps a
+        // lava cell THIS tick -> lavaIgnite (fireImmune aside, the
+        // bare player never is — igniteForSeconds(15) ->
+        // igniteForTicks(floor(15 * 20) = 300): ONLY when the clock is
+        // under the brand's value) and lavaHurt (the 4.0 the App's
+        // hurt pipeline answers through its own cooldown, the
+        // GENERIC_BURN riding the hurt's success — the playSound's
+        // own ifeq gate).
+        if self.touches_lava(world) {
+            if self.remaining_fire_ticks < LAVA_FIRE_TICKS {
+                self.remaining_fire_ticks = LAVA_FIRE_TICKS;
+            }
+            self.lava_hurt_due = true;
+        }
+        // THE WATER'S EXTINGUISH (javap `WaterFluid.entityInside`'s own
+        // InsideBlockEffectType.EXTINGUISH = `Entity::clearFire` — the
+        // same contact beat the lava's brand rides, the inside-effect
+        // order the applier queue speaks): the burning body touching
+        // water dies to min(0, remaining) — for a positive clock the
+        // fold speaks zero — and the transition plays the fizz (the
+        // volume 0.7 / pitch 1.6 + (r - r) * 0.4 fold the drain
+        // speaks). A wet body carries no clock to kill — the gate
+        // stays silent. The DOUSE WINS over the brand (the water-after-
+        // lava order — the jump-into-the-pond exit the game itself
+        // speaks).
+        if self.remaining_fire_ticks > 0 && self.touches_water(world) {
+            self.remaining_fire_ticks = 0;
+            self.fire_doused_due = true;
+        }
         // THE RESTITUTION (restituteMovementAfterCollisions with the
         // player's own bounciness 0): the collided components of the
         // carried velocity zero — the resting rhythm stays the vanilla
@@ -1066,6 +1192,24 @@ impl PlayerBody {
             for cx in x0.floor() as i32..=((x1 - 1e-9).floor()) as i32 {
                 for cz in z0.floor() as i32..=((z1 - 1e-9).floor()) as i32 {
                     if world.get(cx, cy, cz) == WATER {
+                        return true;
+                    }
+                }
+            }
+        }
+        false
+    }
+
+    /// The lava lane's own gate (the vanilla `isInLava`'s box shape —
+    /// the same box-overlap walk the water law speaks): TRUE when any
+    /// cell the body box overlaps is lava — the SECOND fluid kind the
+    /// palette carries.
+    fn touches_lava(&self, world: &World) -> bool {
+        let (x0, y0, z0, x1, y1, z1) = box_at(self.x, self.y, self.z, self.height());
+        for cy in y0.floor() as i32..=((y1 - 1e-9).floor()) as i32 {
+            for cx in x0.floor() as i32..=((x1 - 1e-9).floor()) as i32 {
+                for cz in z0.floor() as i32..=((z1 - 1e-9).floor()) as i32 {
+                    if world.get(cx, cy, cz) == crate::world::LAVA {
                         return true;
                     }
                 }
@@ -2137,5 +2281,172 @@ mod tests {
             }
         }
         assert!(reentry_splash, "the re-entry spoke its splash");
+    }
+
+    /// THE ENTRY'S BRAND (LavaFluid.entityInside's own beat — the
+    /// box overlaps a lava cell): the clock rises to the
+    /// igniteForSeconds(15) fold's 300 only when UNDER it, the
+    /// lava_hurt_due fires, and the NEXT tick's head sees in_lava —
+    /// the onFire hurt never speaks while the body stands in the
+    /// pool (the !isInLava gate), the clock holds at the brand's
+    /// value (the contact re-ignites what the clock drained).
+    #[test]
+    fn the_lava_entry_ignites_and_holds_the_brand() {
+        // a 3x3 lava shelf in a stone floor: lava at y=1, the body
+        // walks in off the surrounding ground (the spawn side)
+        let mut w = World::new(1, 42);
+        for x in 0..16 {
+            for z in 0..16 {
+                w.set(x, 0, z, crate::world::STONE);
+                for y in 1..crate::world::CHUNK_Y {
+                    w.set(x, y as i32, z, AIR);
+                }
+            }
+        }
+        for x in 7..=9 {
+            for z in 7..=9 {
+                w.set(x, 1, z, crate::world::LAVA);
+            }
+        }
+        let mut b = PlayerBody::new(6.0, 1.0, 8.0, -90.0, 0.0); // east, toward the pool
+        settle(&mut b, &w);
+        assert!(!b.touches_lava(&w), "the body starts off the shelf");
+        b.forward = 1.0;
+        let mut entry_hurt = false;
+        // 12 ticks: the walk carries the body INTO the 3-wide shelf and
+        // stops mid-pool (the ~0.216/tick stride the walk law speaks —
+        // the entry lands at tick ~3, the far lip sits 3.3 blocks out)
+        for _ in 0..12 {
+            b.tick(&w, false);
+            if b.lava_hurt_due {
+                entry_hurt = true;
+                assert_eq!(
+                    b.remaining_fire_ticks, LAVA_FIRE_TICKS,
+                    "the brand rides the igniteForSeconds(15) fold's 300"
+                );
+            }
+            if b.in_lava {
+                assert!(
+                    !b.on_fire_hurt_due,
+                    "the in-lava ticks never speak the onFire hurt (the !isInLava gate)"
+                );
+            }
+        }
+        assert!(entry_hurt, "the entry spoke its lavaHurt");
+        assert!(b.in_lava, "the body stands in the pool");
+        assert_eq!(
+            b.remaining_fire_ticks, LAVA_FIRE_TICKS,
+            "the clock holds at the brand's value (the contact re-ignites)"
+        );
+        assert!(b.fall_distance == 0.0, "the fluid scan's reset holds");
+    }
+
+    /// THE EXIT'S OWN CLOCK (baseTick's fire law once the body LEFT
+    /// the lava): the onFire hurt speaks at the % 20 cadence's own
+    /// beats (300, 280, 260 — the remainingFireTicks the clock walks
+    /// down), the in-between ticks stay silent, and the brand drains
+    /// to zero at the 300-tick end.
+    #[test]
+    fn the_exit_burns_on_the_twenty_tick_cadence() {
+        let mut w = World::new(1, 42);
+        for x in 0..16 {
+            for z in 0..16 {
+                w.set(x, 0, z, crate::world::STONE);
+                for y in 1..crate::world::CHUNK_Y {
+                    w.set(x, y as i32, z, AIR);
+                }
+            }
+        }
+        // NO lava anywhere — the body carries the brand alone (the
+        // freshly-exited wader the laws speak)
+        let mut b = PlayerBody::new(8.0, 1.0, 8.0, 0.0, 0.0);
+        settle(&mut b, &w);
+        b.remaining_fire_ticks = LAVA_FIRE_TICKS;
+        let mut hurt_ticks = Vec::new();
+        for t in 0..300i64 {
+            b.tick(&w, false);
+            if b.on_fire_hurt_due {
+                hurt_ticks.push(t);
+                // the hurt fires at the clock's % 20 beat — the tick
+                // the countdown STARTED the 300 from (the head's read
+                // speaks the pre-decrement value)
+                assert_eq!(
+                    (b.remaining_fire_ticks + 1) % FIRE_DAMAGE_INTERVAL,
+                    0,
+                    "the beat rides the pre-decrement clock (tick {t}, now {})",
+                    b.remaining_fire_ticks
+                );
+            }
+            assert!(b.remaining_fire_ticks >= 0, "the clock never goes under");
+        }
+        assert_eq!(b.remaining_fire_ticks, 0, "the 300-tick brand drains out");
+        assert_eq!(hurt_ticks.len(), 15, "the onFire hurt spoke every 20th tick");
+    }
+
+    /// THE WATER'S EXTINGUISH (WaterFluid.entityInside's own
+    /// EXTINGUISH = Entity::clearFire): the burning body touching
+    /// water dies to zero and fires fire_doused_due — the fizz the
+    /// drain speaks — and a wet body with no clock stays silent.
+    #[test]
+    fn the_water_douse_kills_the_brand() {
+        let mut w = World::new(1, 42);
+        for x in 0..16 {
+            for z in 0..16 {
+                w.set(x, 0, z, crate::world::STONE);
+                w.set(x, 1, z, WATER);
+                for y in 2..crate::world::CHUNK_Y {
+                    w.set(x, y as i32, z, AIR);
+                }
+            }
+        }
+        // the burning wader: the brand rides in, the pool's own
+        // inside-effect kills it the same tick the water touches
+        let mut b = PlayerBody::new(8.0, 1.0, 8.0, 0.0, 0.0);
+        settle(&mut b, &w);
+        assert!(b.touches_water(&w));
+        b.remaining_fire_ticks = LAVA_FIRE_TICKS;
+        b.tick(&w, false);
+        assert!(b.fire_doused_due, "the douse spoke its flag");
+        assert_eq!(b.remaining_fire_ticks, 0, "the clearFire fold's zero");
+        // the second wet tick: no clock to kill — the flag stays dark
+        b.tick(&w, false);
+        assert!(!b.fire_doused_due, "a wet body carries no clock to kill");
+        // the pre-doused body: the flag never speaks
+        let mut c = PlayerBody::new(8.0, 1.0, 8.0, 0.0, 0.0);
+        settle(&mut c, &w);
+        c.tick(&w, false);
+        assert!(!c.fire_doused_due, "the unburnt wader never fizzes");
+    }
+
+    /// THE LAVA LANDING'S OWN GRACE (the fluid scan's reset the
+    /// water lane shares): a body falling INTO the lava pool never
+    /// banks the descent — the fall_event never speaks, the lava's
+    /// own 4.0 is the welcome the pool gives.
+    #[test]
+    fn the_lava_landing_never_hurts_the_fall() {
+        let mut w = World::new(1, 42);
+        for x in 0..16 {
+            for z in 0..16 {
+                w.set(x, 0, z, crate::world::STONE);
+                w.set(x, 1, z, crate::world::LAVA);
+                for y in 2..crate::world::CHUNK_Y {
+                    w.set(x, y as i32, z, AIR);
+                }
+            }
+        }
+        let mut b = PlayerBody::new(8.0, 6.0, 8.0, 0.0, 0.0); // dropped INTO the pool
+        let mut lava_hurt = false;
+        for _ in 0..40 {
+            b.tick(&w, false);
+            if b.lava_hurt_due {
+                lava_hurt = true;
+            }
+            assert!(
+                b.fall_event.is_none(),
+                "the fluid landing never folds the fall damage"
+            );
+        }
+        assert!(lava_hurt, "the pool's own welcome spoke");
+        assert!(b.on_ground, "the body settled on the pool floor");
     }
 }

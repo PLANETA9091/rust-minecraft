@@ -149,6 +149,17 @@ pub struct SceneOpts {
     /// Ignite every placed zombie for this many seconds (the
     /// igniteForSeconds' own remainingFireTicks law — 8.0 speaks 160).
     pub ignite_secs: f32,
+    /// The body's remainingFireTicks (the render clock the flame
+    /// feature reads — the deterministic stand-in for the live fire
+    /// the lava's brand would speak; the burn lane's hurt laws ride
+    /// the ticks too).
+    pub body_fire: Option<i32>,
+    /// Carve a shallow lava pool ahead of the body (the seed's own
+    /// 3x3 shelf at four cells out along the facing, the top ground
+    /// cells become lava): the walk ticks carry the body INTO it and
+    /// the REAL laws speak — the ignite, the 4.0, the burn — no
+    /// scripted fire.
+    pub lava_pool: bool,
 }
 
 impl SceneOpts {
@@ -169,6 +180,8 @@ impl SceneOpts {
             || self.zombie_hurt.is_some()
             || self.mobs > 0
             || self.ignite_secs > 0.0
+            || self.body_fire.is_some()
+            || self.lava_pool
             || self.walk_ticks > 0
             || self.settle_ticks > 0
     }
@@ -291,6 +304,58 @@ pub fn seed_scene(app: &mut crate::screens::App, opts: &SceneOpts) -> Result<()>
         z.walk.speed = 0.7;
         z.walk.position = 2.5;
         app.mobs.push(z);
+    }
+    if let Some(fire) = opts.body_fire {
+        if let Some(b) = app.body.as_mut() {
+            // THE BRAND'S SEED (the render clock the flame feature
+            // reads — the deterministic stand-in for the live fire the
+            // lava's brand speaks; the burn laws ride the ticks too)
+            b.remaining_fire_ticks = fire.max(0);
+        }
+    }
+    if opts.lava_pool {
+        // THE POOL'S CARVE (the deterministic shelf AT the body): 3x3
+        // centered on the body's own column (the spawn column's own
+        // when no body) — the top ground cells become LAVA. The
+        // vanilla shallow-pool physics speak: the body sinks to the
+        // pool floor (the cell below stays solid), the box overlaps
+        // the lava cell, the REAL laws answer (the ignite, the 4.0,
+        // the burn) — no scripted fire. The carve rebuilds the mesh
+        // (the pool's pixels ride the same FACE_TILES tile the
+        // terrain speaks). AT the body (not ahead of it): the spawn
+        // valleys' walls sit 2-3 cells out — a farther shelf lands on
+        // the hillside the walls carry, the sunk scene the gallery
+        // wants never forms.
+        let n = app.world_size as i32;
+        let (bx, bz) = (n / 2, n / 2);
+        let (px, pz) = (bx, bz);
+        if let Some(w) = app.offline_world.as_mut() {
+            for ox in -1..=1i32 {
+                for oz in -1..=1i32 {
+                    let x = px + ox;
+                    let z = pz + oz;
+                    let sy = crate::screens::top_solid_y(w, x, z);
+                    w.set(x, sy, z, crate::world::LAVA);
+                    // THE DRY BASIN (the pond-spawn lesson: a pool
+                    // carved under the pond's water speaks the douse,
+                    // the brand dies the same tick — the headroom
+                    // clears FOUR cells above, AND the water table
+                    // UNDER the surface cell (the saturated beach
+                    // layer the worldgen fills) becomes lava too —
+                    // the pool's own body, no surviving water cell
+                    // the sunk body's box could touch)
+                    for hy in 1..=4 {
+                        w.set(x, sy + hy, z, crate::world::AIR);
+                    }
+                    let mut dy = sy - 1;
+                    while dy >= 0 && w.get(x, dy, z) == crate::world::WATER {
+                        w.set(x, dy, z, crate::world::LAVA);
+                        dy -= 1;
+                    }
+                }
+            }
+            app.remesh_offline();
+        }
     }
     if opts.mobs > 0 {
         spawn_showcase_mobs(app, opts.mobs)?;

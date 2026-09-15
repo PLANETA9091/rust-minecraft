@@ -2,7 +2,7 @@
 
 Every lane that ships pixels owes the folder a frame. The gallery is the
 proof the features exist as rendered images, not as test names alone.
-84 frames and counting — grouped below by the lane that spoke them.
+88 frames and counting — grouped below by the lane that spoke them.
 
 ## The F5 lane (the third-person avatar) — v0.3.154+
 
@@ -26,6 +26,30 @@ cargo run -p mc-client --release -- --headless --screen world --seed 42 \
   --perspective third-back --body --body-walk 0.9,5.0 --out shots/f5_wade.png
 # --perspective first|third-back|third-front, --body-yaw/--body-pitch,
 # --body-crouch, --body-walk "speed,position" (the WalkAnimationState pair)
+```
+
+## The lava lane (the player's fire arc) — v0.3.162
+
+The pool carve (--lava-pool: the 3x3 dry basin at the spawn column, the
+saturated layer turned to lava), the REAL contact laws (the ignite, the
+4.0 through the cooldown, the flame rings the fire clock drives), the
+lava_still pixels the atlas lane landed (tile 28, the first-frame crop).
+
+| frame | the scene |
+|---|---|
+| `lava_wade.png` | THE MONEY SHOT: the wader chest-deep in the pool, the flame rings climbing, the health the 4.0s took — every law the contact fired is real (no scripted fire) |
+| `lava_wade_back.png` | the back view — the flames over the shoulders, the wall backdrop |
+| `lava_zombie.png` | the alternate angle (pitch -10) — the pool's face fills the foreground |
+
+Regenerate the family:
+
+```sh
+cargo run -p mc-client --release -- --headless --screen world --seed 42 \
+  --perspective third-front --body --body-pitch=-15 --lava-pool --walk-ticks 2 \
+  --out shots/lava_wade.png
+# --lava-pool (the dry basin carve), --body-fire N (the seeded brand —
+# the flame feature's own render clock), --walk-ticks (the sink + the
+# contact)
 ```
 
 ## The zombie lane (the first live mob) — v0.3.155+

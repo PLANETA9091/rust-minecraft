@@ -195,6 +195,10 @@ pub fn default_color(kind: u16, face: usize) -> [f32; 3] {
     let diamond_ore = [0.58, 0.66, 0.66];
     let emerald_ore = [0.52, 0.62, 0.48];
     let netherrack = [0.42, 0.20, 0.20];
+    // The lava's own orange (the lava_still first frame's average — the
+    // flat fallback when the atlas is absent; the real pixels ride the
+    // textured path's tile)
+    let lava = [0.77, 0.36, 0.08];
     match kind {
         GRASS => match face {
             2 => top,
@@ -226,6 +230,7 @@ pub fn default_color(kind: u16, face: usize) -> [f32; 3] {
         DIAMOND_ORE => diamond_ore,
         EMERALD_ORE => emerald_ore,
         NETHERRACK => netherrack,
+        LAVA => lava,
         _ => [1.0, 0.0, 1.0], // magenta = missing block (debug-friendly)
     }
 }
@@ -267,6 +272,9 @@ pub fn texture_stem(kind: u16, face: usize) -> Option<&'static str> {
         DIAMOND_ORE => Some("diamond_ore"),
         EMERALD_ORE => Some("emerald_ore"),
         NETHERRACK => Some("netherrack"),
+        // the SECOND fluid member: the still strip the atlas crops to
+        // its first frame (the water_still arm's own shape, tint-free)
+        LAVA => Some("lava_still"),
         _ => None,
     }
 }

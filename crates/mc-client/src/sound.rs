@@ -302,6 +302,67 @@ impl BlockSounds {
         ));
     }
 
+    /// THE BURN VOICE (javap `Entity.lavaHurt`'s own tail — the
+    /// playSound inside the `hurtServer(lava(), 4.0F)` SUCCESS branch):
+    /// `playSound(GENERIC_BURN, 0.4F, 2.0F + nextFloat() * 0.4F)` —
+    /// the fixed 0.4 volume, the pitch 2.0 + r * 0.4 in [2.0, 2.4],
+    /// ONE random (the single nextFloat the bytecode speaks — not the
+    /// (r - r) pair the hurt voice folds). The draw order: the pitch
+    /// random first, then the file pick — the engine's own two draws.
+    pub fn play_burn(&mut self, tick: u64) {
+        let r = self.next_rand_f32();
+        let pitch = 2.0 + r * 0.4;
+        let Some(file) = self.pick_file("entity.generic.burn") else {
+            return;
+        };
+        self.events.push(format!(
+            "entity.generic.burn @{tick} #{file} v{:.6} p{:.6}",
+            0.4, pitch
+        ));
+    }
+
+    /// THE EXTINGUISH FIZZ (javap
+    /// `playEntityOnFireExtinguishedSound` — the water douse's own
+    /// transition): `playSound(ENTITY_GENERIC_EXTINGUISH_FIRE,
+    /// 0.7F, 1.6F + (r - r) * 0.4F)` — the volume 0.7, the pitch
+    /// 1.6 + (r - r) * 0.4 in [1.2, 2.0], the two randoms riding THIS
+    /// engine's LCG (the same constants the mob lane's
+    /// EXTINGUISH_* names — one law, the javap's own numbers).
+    pub fn play_extinguish(&mut self, tick: u64) {
+        let r1 = self.next_rand_f32();
+        let r2 = self.next_rand_f32();
+        let pitch =
+            crate::mob::EXTINGUISH_PITCH_BASE + (r1 - r2) * crate::mob::EXTINGUISH_PITCH_SPREAD;
+        let Some(file) = self.pick_file("entity.generic.extinguish_fire") else {
+            return;
+        };
+        self.events.push(format!(
+            "entity.generic.extinguish_fire @{tick} #{file} v{:.6} p{:.6}",
+            crate::mob::EXTINGUISH_VOLUME, pitch
+        ));
+    }
+
+    /// THE BURNING HURT VOICE (javap the 26.2 `Player.getHurtSound`
+    /// override's own shape — `source.type().effects().sound()`:
+    /// the DamageEffects.BURNING constant carries PLAYER_HURT_ON_FIRE,
+    /// the voice BOTH the lava and the onFire damage types speak):
+    /// `playSound(getHurtSound(), getSoundVolume(), (r - r) * 0.2F +
+    /// 1.0F)` — volume 1.0, the pitch (r - r) * 0.2 + 1.0 in
+    /// [0.8, 1.2], the same LCG and draw order the plain hurt voice
+    /// speaks, the on-fire event the burning sources name.
+    pub fn play_hurt_on_fire_voice(&mut self, tick: u64) {
+        let r1 = self.next_rand_f32();
+        let r2 = self.next_rand_f32();
+        let pitch = (r1 - r2) * 0.2 + 1.0;
+        let Some(file) = self.pick_file("entity.player.hurt_on_fire") else {
+            return;
+        };
+        self.events.push(format!(
+            "entity.player.hurt_on_fire @{tick} #{file} v{:.6} p{:.6}",
+            1.0, pitch
+        ));
+    }
+
     /// The FIXED-VOICE lane (the fall voice's generalized shape — the
     /// eat arc's completion speaks it): the caller's volume/pitch fold
     /// (the entity random's own verdict, the bytecode's draw order
@@ -499,6 +560,72 @@ mod tests {
         let mut c = BlockSounds::new(5);
         c.play_splash(3, 0.32, true);
         assert_eq!(b.events, c.events);
+    }
+
+    /// THE BURN VOICE's law: the fixed 0.4 volume, the pitch
+    /// 2.0 + r * 0.4 in [2.0, 2.4] (the SINGLE random the lavaHurt
+    /// tail speaks), the log format the backend mirrors.
+    #[test]
+    fn the_burn_voice_speaks_the_single_random_law() {
+        let mut a = BlockSounds::new(17);
+        a.play_burn(8);
+        assert_eq!(a.events.len(), 1);
+        assert!(
+            a.events[0].starts_with("entity.generic.burn @8 #"),
+            "the entry: {}",
+            a.events[0]
+        );
+        assert!(a.events[0].contains(" v0.400000 p"), "the volume: {}", a.events[0]);
+        let pitch: f32 = a.events[0].split(" p").nth(1).unwrap().parse().unwrap();
+        assert!((2.0..=2.4).contains(&pitch), "the pitch range: {pitch}");
+        // determinism: the same seed speaks the same burn
+        let mut b = BlockSounds::new(17);
+        b.play_burn(8);
+        assert_eq!(a.events, b.events);
+    }
+
+    /// THE EXTINGUISH FIZZ's law: the volume 0.7, the pitch
+    /// 1.6 + (r - r) * 0.4 in [1.2, 2.0] (the mob lane's own constants
+    /// the fold re-speaks), the same LCG and draw order.
+    #[test]
+    fn the_extinguish_fizz_speaks_the_douse_law() {
+        let mut a = BlockSounds::new(23);
+        a.play_extinguish(4);
+        assert_eq!(a.events.len(), 1);
+        assert!(
+            a.events[0].starts_with("entity.generic.extinguish_fire @4 #"),
+            "the entry: {}",
+            a.events[0]
+        );
+        assert!(a.events[0].contains(" v0.700000 p"), "the volume: {}", a.events[0]);
+        let pitch: f32 = a.events[0].split(" p").nth(1).unwrap().parse().unwrap();
+        assert!((1.2..=2.0).contains(&pitch), "the pitch range: {pitch}");
+        // determinism: the same seed speaks the same fizz
+        let mut b = BlockSounds::new(23);
+        b.play_extinguish(4);
+        assert_eq!(a.events, b.events);
+    }
+
+    /// THE BURNING HURT VOICE's law: the on-fire event (the
+    /// DamageEffects.BURNING sound both fire sources speak), the plain
+    /// hurt voice's own pitch law (r - r) * 0.2 + 1.0 in [0.8, 1.2].
+    #[test]
+    fn the_burning_hurt_voice_speaks_the_on_fire_event() {
+        let mut a = BlockSounds::new(29);
+        a.play_hurt_on_fire_voice(6);
+        assert_eq!(a.events.len(), 1);
+        assert!(
+            a.events[0].starts_with("entity.player.hurt_on_fire @6 #"),
+            "the entry: {}",
+            a.events[0]
+        );
+        assert!(a.events[0].contains(" v1.000000 p"), "the volume: {}", a.events[0]);
+        let pitch: f32 = a.events[0].split(" p").nth(1).unwrap().parse().unwrap();
+        assert!((0.8..=1.2).contains(&pitch), "the pitch range: {pitch}");
+        // determinism: the same seed speaks the same voice
+        let mut b = BlockSounds::new(29);
+        b.play_hurt_on_fire_voice(6);
+        assert_eq!(a.events, b.events);
     }
 
     #[test]

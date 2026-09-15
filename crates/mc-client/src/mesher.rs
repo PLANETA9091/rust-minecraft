@@ -70,8 +70,11 @@ fn is_transparent(kind: u16) -> bool {
     // the leaves FAMILY: oak (foliage-tinted) and pale oak (the audited
     // no-tint verdict — still cutout leaves, non-occluding, no AO);
     // leaf_litter is the flat ground cover (the 13th audit — non-cube,
-    // non-occluding, casts no AO, exactly the blockstate models' verdict)
+    // non-occluding, casts no AO, exactly the blockstate models' verdict);
+    // LAVA is the SECOND fluid member (the lava lane) — non-occluding
+    // like the water it mirrors (the pool walls' faces draw against it)
     kind == AIR || kind == WATER || kind == LEAVES || kind == PALE_LEAVES || kind == LEAF_LITTER
+        || kind == LAVA
 }
 
 /// Only opaque blocks cast ambient occlusion (air/water/leaves never darken
@@ -457,6 +460,12 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                 let wy = ly as i32;
                 let wz = bz0 + lz as i32;
                 let water_self = id == WATER;
+                // THE SECOND FLUID (the lava lane): the same fluid shape
+                // the water lane speaks — the surface faces draw only
+                // against air, the body's own neighbors stay silent —
+                // but OPAQUE (the lava_still pixels never ride the
+                // translucent pass the water speaks)
+                let lava_self = id == LAVA;
                 // The 13th-audit FLAT path: leaf_litter is a zero-thickness
                 // ground cover, not a cube. Its blockstate is a multipart
                 // (leaf_litter_1..4 x facing rotations) and every element
@@ -651,8 +660,8 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                 for face in 0..6usize {
                     let (dx, dy, dz) = NEIGHBOR[face];
                     let n = world.get(wx + dx, wy + dy, wz + dz);
-                    let draw = if water_self {
-                        n == AIR // water draws only against air (surface)
+                    let draw = if water_self || lava_self {
+                        n == AIR // the fluids draw only against air (surface)
                     } else {
                         is_transparent(n)
                     };
@@ -795,7 +804,7 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                         colors,
                         uvs,
                         tile,
-                        translucent: water_self,
+                        translucent: water_self, // the lava stays opaque
                     });
                 }
             }

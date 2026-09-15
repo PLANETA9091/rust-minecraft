@@ -864,6 +864,20 @@ const PLAYER_SPLASH_EVENTS: [&str; 2] = [
     "entity.player.splash.high_speed",
 ];
 
+/// The player's FIRE LANE's events (the lava arc the water lane borders):
+/// the lavaHurt tail's GENERIC_BURN (the 0.4F / 2.0F + r * 0.4F fold —
+/// one file, sounds/fire/fire.ogg), the fire clock's BURNING hurt voice
+/// (the DamageEffects.BURNING sound the getHurtSound override speaks —
+/// entity.player.hurt_on_fire, three weighted files), and the water
+/// douse's GENERIC_EXTINGUISH_FIRE (the fizz the playEntityOnFire-
+/// ExtinguishedSound fold speaks — one file). Every file rides the same
+/// sha1-verified asset-index fetch the swim voice speaks.
+const PLAYER_FIRE_EVENTS: [&str; 3] = [
+    "entity.generic.burn",
+    "entity.generic.extinguish_fire",
+    "entity.player.hurt_on_fire",
+];
+
 /// Fetch the real menu music + in-game music + UI sound + biome music +
 /// mob voice + player voice .ogg files through the asset index. sounds.json names are
 /// relative to `assets/minecraft/sounds/` (extension optional — the vanilla
@@ -893,6 +907,7 @@ fn fetch_sound_events(
             || MOB_VOICE_EVENTS.contains(&id)
             || PLAYER_SWIM_EVENTS.contains(&id)
             || PLAYER_SPLASH_EVENTS.contains(&id)
+            || PLAYER_FIRE_EVENTS.contains(&id)
             || biome_events.binary_search(&id.to_string()).is_ok()
     };
     let mut menu = 0usize;
@@ -944,10 +959,11 @@ fn fetch_sound_events(
             mob += have;
         } else if PLAYER_SWIM_EVENTS.contains(&ev.id.as_str())
             || PLAYER_SPLASH_EVENTS.contains(&ev.id.as_str())
+            || PLAYER_FIRE_EVENTS.contains(&ev.id.as_str())
         {
             // the player's own voices (the swim + the two splash
-            // variants) — the disjoint file sets ride the biome lane's
-            // own += shape
+            // variants + the fire lane's three) — the disjoint file
+            // sets ride the biome lane's own += shape
             player += have;
         } else if biome_events.binary_search(&ev.id).is_ok() {
             biome += have;

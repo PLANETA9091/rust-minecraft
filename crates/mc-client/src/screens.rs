@@ -849,6 +849,12 @@ impl App {
             // the exhaustion sources' own drain slot (the body's borrow
             // fills it — the FoodData fold runs after the pipeline)
             let mut exhaustion_cost = 0.0f32;
+            // THE FIRE ARC's own drain slots (the body's borrow fills
+            // them — the hurt pipeline runs after it ends): the lava's
+            // 4.0, the fire clock's 1.0, the water douse's fizz
+            let mut lava_hurt = false;
+            let mut on_fire_hurt = false;
+            let mut fire_doused = false;
             // THE HURT CLOCKS (LivingEntity.tick's own decrements: the
             // hurtTime flash and the invulnerableTime cooldown walk
             // down one per tick)
@@ -934,6 +940,12 @@ impl App {
                     // lane it sits beside; the hurt pipeline runs after
                     // the body's borrow ends)
                     fall_event = b.fall_event.take();
+                    // THE FIRE ARC'S OWN DRAIN (the same-tick read the
+                    // per-tick flags' law speaks — the body keeps them
+                    // true until the NEXT tick's head clears)
+                    lava_hurt = std::mem::take(&mut b.lava_hurt_due);
+                    on_fire_hurt = std::mem::take(&mut b.on_fire_hurt_due);
+                    fire_doused = std::mem::take(&mut b.fire_doused_due);
                     // THE EXHAUSTION SOURCES' own drain (the jump's
                     // 0.05/0.2 and the movement's cm law the body's
                     // tick banked — the networked lane's exhaustion is
@@ -944,6 +956,27 @@ impl App {
             }
             if let Some(dmg) = fall_event {
                 self.apply_fall_damage(dmg);
+            }
+            // THE LAVA HURT (lavaHurt's own call, answered through the
+            // hurt pipeline's cooldown): the GENERIC_BURN speaks ONLY
+            // when the hurt LANDED (the playSound's own ifeq gate —
+            // the in-window repeats the cooldown blocks never speak
+            // it)
+            if lava_hurt {
+                if self.hurt_burning(crate::body::LAVA_DAMAGE) {
+                    self.sounds.play_burn(self.frame);
+                }
+            }
+            // THE FIRE CLOCK'S HURT (baseTick's own onFire dose — the
+            // BURNING voice the DamageEffects speaks, no burn sound —
+            // the baseTick hurt never carried one)
+            if on_fire_hurt {
+                self.hurt_burning(crate::body::ON_FIRE_DAMAGE);
+            }
+            // THE DOUSE FIZZ (playEntityOnFireExtinguishedSound — the
+            // water kill's own transition)
+            if fire_doused {
+                self.sounds.play_extinguish(self.frame);
             }
             // THE FOOD TICK (the stand-in server's own FoodData.tick at
             // the ServerPlayer.tick's head position — BEFORE the
@@ -2830,7 +2863,7 @@ impl App {
 
     /// The offline mesh re-speaks the edited voxels (the placement's own
     /// rhythm — the networked world's mesh is the server's refresh).
-    fn remesh_offline(&mut self) {
+    pub fn remesh_offline(&mut self) {
         if !self.world_is_network {
             if let Some(world) = self.offline_world.as_ref() {
                 self.world_quads = Some(crate::mesher::mesh_world(world, None));
@@ -3331,8 +3364,23 @@ impl App {
     /// lands for the difference only; a fresh hurt re-arms the window,
     /// the 10-tick flash (`hurtTime = hurtDuration`), and the health
     /// drops through actuallyHurt (the armor/absorption lanes' honest
-    /// absence — the bare player's own path).
+    /// absence — the bare player's own path). The VOICE rides the
+    /// damage type's own effects (the 26.2 getHurtSound override:
+    /// `source.type().effects().sound()` — the plain sources the
+    /// DamageEffects.HURT voice, the BURNING sources (lava, onFire)
+    /// PLAYER_HURT_ON_FIRE).
     pub fn hurt(&mut self, amount: f32) -> bool {
+        self.hurt_inner(amount, false)
+    }
+
+    /// THE BURNING SOURCES' OWN GATE (the same pipeline, the
+    /// DamageEffects.BURNING voice the lava and the onFire damage
+    /// types speak).
+    pub fn hurt_burning(&mut self, amount: f32) -> bool {
+        self.hurt_inner(amount, true)
+    }
+
+    fn hurt_inner(&mut self, amount: f32, burning: bool) -> bool {
         if amount <= 0.0 || self.dead {
             return false;
         }
@@ -3350,8 +3398,14 @@ impl App {
             self.hurt_time = self.hurt_duration;
             self.actually_hurt(amount);
             // the hurt voice (handleDamageEvent's own call — the
-            // client's own law speaks the (r - r) * 0.2 + 1.0 pitch)
-            self.sounds.play_hurt_voice(self.frame);
+            // client's own law speaks the (r - r) * 0.2 + 1.0 pitch;
+            // the BURNING sources name the on-fire event the damage
+            // type's effects carry)
+            if burning {
+                self.sounds.play_hurt_on_fire_voice(self.frame);
+            } else {
+                self.sounds.play_hurt_voice(self.frame);
+            }
             true
         }
     }
@@ -3791,6 +3845,53 @@ impl App {
             let [r, g, b, a] = model.pixel(u, v);
             Some([r, g, b, a])
         });
+        // THE FLAME FEATURE (the burning avatar's own overlay — the
+        // vanilla draws the flame feature AFTER the body, the same
+        // billboard ring stack the zombie's lane speaks; the player
+        // bbox the registration itself names: 0.6 wide, 1.8 tall): the
+        // body's fire clock drives it (the setSharedFlagOnFire write
+        // the bytecode speaks rides remainingFireTicks > 0), the
+        // strips lazily loaded the same sha1-verified stream the
+        // skins speak.
+        if body.remaining_fire_ticks > 0 {
+            if self.fire_strips.is_none() {
+                self.fire_strips =
+                    crate::avatar::FireStrips::load(std::path::Path::new("assets-cache/jar"));
+            }
+            if let Some(strips) = &self.fire_strips {
+                let day_time = (self.day_time_base + self.frame) as i64;
+                let flames = crate::avatar::flame_quads(
+                    feet,
+                    crate::body::WIDTH as f32,
+                    crate::body::STANDING_HEIGHT as f32,
+                    cam.yaw,
+                    day_time,
+                );
+                // the white tint (no entity diffuse, no hurt mix — the
+                // fire's own light speaks), the strip tag rides the
+                // ring parity (fire_0 even / fire_1 odd), the sampler's
+                // binary-alpha cutout keeps the holes
+                let flame_quads: Vec<crate::raster::SampledQuad> = flames
+                    .iter()
+                    .enumerate()
+                    .map(|(ri, q)| crate::raster::SampledQuad {
+                        pts: q.pts,
+                        uv: q.uv,
+                        tex: if ri % 2 == 0 { "fire0" } else { "fire1" },
+                        tint: [1.0, 1.0, 1.0],
+                    })
+                    .collect();
+                fb.draw_sampled_quads(
+                    ctx.proj.mul(&ctx.view),
+                    &flame_quads,
+                    &mut |tex, u, v| {
+                        let strip = if tex == "fire1" { 1 } else { 0 };
+                        let [r, g, b, a] = strips.pixel(strip, u, v);
+                        Some([r, g, b, a])
+                    },
+                );
+            }
+        }
     }
 
     /// THE MOB LANE's render (javap `LivingEntityRenderer.render` over

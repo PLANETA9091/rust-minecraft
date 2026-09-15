@@ -173,6 +173,16 @@ struct Cli {
     /// igniteForSeconds law).
     #[arg(long, default_value_t = 0.0)]
     ignite: f32,
+    /// The player body's remainingFireTicks (the flame feature's own
+    /// render clock — the deterministic stand-in for the live fire).
+    #[arg(long)]
+    body_fire: Option<i32>,
+    /// Carve a shallow lava pool ahead of the body (the 3x3 shelf at
+    /// four cells out along the facing) — the walk ticks carry the
+    /// body INTO it and the REAL fire laws speak (the ignite, the
+    /// 4.0, the burn).
+    #[arg(long)]
+    lava_pool: bool,
     #[arg(long, default_value = "render.png")]
     out: PathBuf,
     /// Path to official asset index json (enables real texture-average colors).
@@ -226,6 +236,8 @@ fn main() -> Result<()> {
             settle_ticks: cli.settle_ticks,
             mobs: cli.mobs,
             ignite_secs: cli.ignite,
+            body_fire: cli.body_fire,
+            lava_pool: cli.lava_pool,
         };
         headless::render_gui_screen_opts(
             screen,
