@@ -379,6 +379,22 @@ pub struct App {
     /// rides update()'s frame==tick model — the wire echoing through
     /// the same command channel the use arc rides.
     pub body: Option<crate::body::PlayerBody>,
+    /// THE F5 PERSPECTIVE (the vanilla `options.cameraType`): the F5
+    /// key cycles it (`Minecraft.handleKeybinds`'s own
+    /// `keyTogglePerspective.consumeClick()` lane) and the camera +
+    /// render gates speak it — the first-person hand and the
+    /// crosshair sleep in the third-person views, the AVATAR (the
+    /// body's own model) draws instead (the LevelRenderer's detached
+    /// camera entity law). The default is the vanilla default
+    /// FIRST_PERSON — the deterministic scenes and the pixel goldens
+    /// never press F5, so every first-person frame stays bit-for-bit.
+    pub perspective: crate::camera::CameraType,
+    /// THE THIRD-PERSON AVATAR (the body's own render — avatar.rs, the
+    /// vanilla HumanoidModel/PlayerModel laws), loaded lazily from the
+    /// runtime asset root on the first third-person frame; `None` =
+    /// the skin asset is absent or failed its sha1 verification and
+    /// the third-person body draws nothing.
+    pub avatar: Option<crate::avatar::AvatarModel>,
     /// THE DIG ARC's state machine — the vanilla `MultiPlayerGameMode`'s
     /// destroy half (the survival lane: the destroy fields, the progress
     /// law, the START/ABORT/STOP sends). The left mouse speaks it: the
@@ -673,6 +689,8 @@ impl App {
             offline_held: None,
             offline_camera: None,
             body: None,
+            perspective: crate::camera::CameraType::FirstPerson,
+            avatar: None,
             dig: crate::dig::DigState::new(),
             dig_held: false,
             miss_time: 0,
@@ -1463,6 +1481,14 @@ impl App {
         } else if matches!(self.screen, ScreenKind::Connect | ScreenKind::Disconnect) {
             self.open(ScreenKind::Servers);
         }
+    }
+
+    /// THE F5 LANE (vanilla `Minecraft.handleKeybinds`):
+    /// `keyTogglePerspective.consumeClick()` →
+    /// `options.setCameraType(getCameraType().cycle())` — the three-view
+    /// cycle the CameraType bytecode speaks.
+    pub fn on_perspective_key(&mut self) {
+        self.perspective = self.perspective.cycle();
     }
 
     /// The LEFT press's rising edge (the vanilla MouseHandler's own
@@ -2958,6 +2984,12 @@ impl App {
     /// and never reaches the combat/death tail (the `amount == 0`
     /// return).
     fn actually_hurt(&mut self, amount: f32) {
+        // THE HURT FLINCH (LivingEntity.handleDamageEvent's own opening
+        // move): the walk speed kicks to 1.5 — the third-person
+        // avatar's limbs flail through the hurt tick
+        if let Some(b) = &mut self.body {
+            b.walk.set_speed(crate::body::HURT_WALK_SPEED);
+        }
         let total = amount;
         let health_share = (total - self.effects.absorption()).max(0.0);
         self.effects
@@ -3007,6 +3039,10 @@ impl App {
             b.vz = 0.0;
             b.fall_distance = 0.0;
             b.fall_event = None;
+            // THE WALK STORE'S OWN RESET (the vanilla respawn
+            // re-creates the entity — the fresh WalkAnimationState the
+            // constructor speaks)
+            b.walk.stop();
         }
         if let Some(sink) = self.live_clicks.as_ref() {
             let _ = sink.send(crate::world_view::ContainerCommand::Respawn);
@@ -3158,7 +3194,26 @@ impl App {
         // client's own position); the deterministic scenes never own a
         // body and keep the disciplines below bit for bit
         if let Some(body) = &self.body {
-            return body.camera();
+            let base = body.camera();
+            // THE DETACHED CAMERA (Camera.setup's third-person branch):
+            // a non-first-person perspective backs the camera off along
+            // its own view (the mirrored type flips first), clipped by
+            // the same `getMaxZoom` raycasts the vanilla speaks — over
+            // the screen's own world (the offline procedural terrain,
+            // or the networked world's voxels)
+            if !self.perspective.is_first_person() {
+                let world = if self.world_is_network {
+                    self.net_world.as_ref()
+                } else {
+                    self.offline_world.as_ref()
+                };
+                return crate::camera::detached(
+                    base,
+                    self.perspective.is_mirrored(),
+                    &mut |from, to| world.and_then(|w| crate::body::clip_ray(w, from, to)),
+                );
+            }
+            return base;
         }
         if self.world_is_network {
             if let Some(pose) = self.net_camera {
@@ -3228,6 +3283,10 @@ impl App {
         if !self.drops.is_empty() {
             self.render_drops(fb, &ctx);
         }
+        // THE THIRD-PERSON AVATAR (the entity pass's own camera-entity
+        // render: the body the detached camera watches — nothing in
+        // first person)
+        self.render_avatar(fb, &ctx, &cam);
         // THE EAT ARC's pieces (the BreakingItemParticle pass — the
         // vanilla's own particle layer rides the entity pass): the
         // mouth's debris as camera-facing quads
@@ -3272,11 +3331,70 @@ impl App {
                 1.0, // the main hand's side (the right-handed view)
             )
         });
-        if let Some(item) = &self.held_item {
-            item.draw_with_pose(fb, ctx.proj, self.swing.get_attack_anim(0.5), eat_pose);
-        } else if let Some(arm) = &self.arm {
-            arm.draw(fb, ctx.proj, self.swing.get_attack_anim(0.5));
+        if self.perspective.is_first_person() {
+            if let Some(item) = &self.held_item {
+                item.draw_with_pose(fb, ctx.proj, self.swing.get_attack_anim(0.5), eat_pose);
+            } else if let Some(arm) = &self.arm {
+                arm.draw(fb, ctx.proj, self.swing.get_attack_anim(0.5));
+            }
         }
+    }
+
+    /// THE THIRD-PERSON AVATAR's frame render — the vanilla
+    /// LevelRenderer's detached-camera entity pass: the camera entity's
+    /// OWN model draws (after the terrain's depth, before the clouds),
+    /// posed by the walk/hurt/crouch/swing state the body already
+    /// speaks. First person draws nothing (the hand overlays take the
+    /// lane — the same vanilla gate that hides this pass there).
+    fn render_avatar(
+        &mut self,
+        fb: &mut crate::raster::Framebuf,
+        ctx: &RenderCtx,
+        cam: &crate::camera::Camera,
+    ) {
+        if self.perspective.is_first_person() {
+            return; // the vanilla first-person law: no own-body render
+        }
+        let Some(body) = &self.body else {
+            return; // the deterministic scenes own no body — nothing to watch
+        };
+        if self.avatar.is_none() {
+            self.avatar =
+                crate::avatar::AvatarModel::load(std::path::Path::new("assets-cache/jar"));
+        }
+        let Some(model) = &self.avatar else {
+            return; // the skin asset failed its sha1 — the renderer stays honest
+        };
+        // THE RENDER STATE (LivingEntityRenderer.extractRenderState's own
+        // sampling, the 0.5 partial the camera lane speaks)
+        let state = crate::avatar::AvatarState {
+            yaw_deg: body.yaw,
+            pitch_deg: body.pitch,
+            walk_pos: body.walk.position_at(crate::avatar::RENDER_PARTIAL),
+            walk_speed: body.walk.speed_at(crate::avatar::RENDER_PARTIAL),
+            crouching: body.crouching,
+            attack_time: self.swing.get_attack_anim(0.5),
+            attack_right: true, // the client's own right main hand
+            age_ticks: self.frame as f32 + 0.5,
+        };
+        let feet = Vec3::new(body.x as f32, body.y as f32, body.z as f32);
+        let quads = model.quads(&state, feet, cam.yaw, cam.pitch);
+        let sampled: Vec<crate::raster::SampledQuad> = quads
+            .iter()
+            .map(|q| crate::raster::SampledQuad {
+                pts: q.pts,
+                uv: q.uv,
+                tex: "",
+                tint: [q.shade, q.shade, q.shade],
+            })
+            .collect();
+        // the depth-tested entity draw — the skin sampler walks the
+        // model's own verified pixels (the alpha-cutout law rides the
+        // raster: the hat's empty region shows the world)
+        fb.draw_sampled_quads(ctx.proj.mul(&ctx.view), &sampled, &mut |_tex, u, v| {
+            let [r, g, b, a] = model.pixel(u, v);
+            Some([r, g, b, a])
+        });
     }
 
     /// THE DROP LANE's render — the vanilla `ItemEntityRenderer`'s own
@@ -3444,8 +3562,12 @@ impl App {
     /// official `hud/*` sprites at vanilla positions and sizes.
     fn render_hud(&mut self, g: &mut Gui, a: &mut GuiAssets) {
         let (w, h) = (g.w(), g.h());
-        // crosshair: centered 15x15
-        g.sprite(a, "hud/crosshair", w / 2 - 7, h / 2 - 7);
+        // crosshair: centered 15x15 — ONLY in first person (the vanilla
+        // renderCrosshair's own cameraType gate: a detached camera has no
+        // crosshair)
+        if self.perspective.is_first_person() {
+            g.sprite(a, "hud/crosshair", w / 2 - 7, h / 2 - 7);
+        }
         // hotbar: 182x22 centered at the bottom, selector around slot 0
         let (hx, hy) = hotbar_rect(w, h);
         g.sprite(a, "hud/hotbar", hx, hy);

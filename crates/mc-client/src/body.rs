@@ -42,6 +42,7 @@
 //!   eye 1.27 (the standing 1.8 / 1.62 the placement lane already
 //!   speaks).
 
+use crate::math::Vec3;
 use crate::world::{World, AIR, WATER};
 
 // THE CONSTANTS (the bytecode's own numbers).
@@ -322,6 +323,150 @@ pub enum MoveWire {
     },
 }
 
+/// THE WALK ANIMATION STORE (javap `WalkAnimationState`, the field
+/// values verbatim): the speed blends toward the tick's move distance
+/// (`speed += (target - speed) * 0.4`), the position accumulates the
+/// blended speed, and the renderer samples both at the frame's partial
+/// tick. `position_scale` rides the isBaby ? 3.0 : 1.0 fold (the
+/// player is never a baby — 1.0 stands).
+#[derive(Debug, Clone, Copy, PartialEq, Default)]
+pub struct WalkAnimationState {
+    pub speed_old: f32,
+    pub speed: f32,
+    pub position: f32,
+    pub position_scale: f32,
+}
+
+impl WalkAnimationState {
+    /// `setSpeed(f)` — the hurt lane's own kick
+    /// (`LivingEntity.handleDamageEvent`: `walkAnimation.setSpeed(1.5)`).
+    pub fn set_speed(&mut self, f: f32) {
+        self.speed = f;
+    }
+
+    /// `update(f, partial, scale)`: speedOld = speed, the 0.4 blend
+    /// toward `f`, `position += speed`, the scale stored.
+    pub fn update(&mut self, f: f32, partial: f32, scale: f32) {
+        self.speed_old = self.speed;
+        self.speed += (f - self.speed) * partial;
+        self.position += self.speed;
+        self.position_scale = scale;
+    }
+
+    /// `stop()`: all three zero.
+    pub fn stop(&mut self) {
+        self.speed_old = 0.0;
+        self.speed = 0.0;
+        self.position = 0.0;
+    }
+
+    /// `speed(partial)`: `Math.min(Math.abs(speedOld + (speed -
+    /// speedOld) * partial), 1.0)` — the render state's
+    /// walkAnimationSpeed.
+    pub fn speed_at(&self, partial: f32) -> f32 {
+        let blend = self.speed_old + (self.speed - self.speed_old) * partial;
+        blend.abs().min(1.0)
+    }
+
+    /// `position(partial)`: `(position - speed * (1 - partial)) *
+    /// positionScale` — the backward-extrapolated walk phase the
+    /// setupAnim cosines speak.
+    pub fn position_at(&self, partial: f32) -> f32 {
+        (self.position - self.speed * (1.0 - partial)) * self.position_scale
+    }
+}
+
+/// The walk-distance law's own constants (`LivingEntity
+/// .calculateEntityAnimation` / `.updateWalkAnimation`, javap): the
+/// tick's 3D move distance feeds `min(distance * 4.0, 1.0)` into the
+/// store's 0.4 blend.
+pub const WALK_DISTANCE_SCALE: f32 = 4.0;
+pub const WALK_BLEND: f32 = 0.4;
+/// `LivingEntity.handleDamageEvent`'s own flinch: the hurt kick lands
+/// the walk speed at 1.5 (the limbs flail through the hurt tick).
+pub const HURT_WALK_SPEED: f32 = 1.5;
+
+/// The `Level.clip` stand-in the detached camera's `getMaxZoom` speaks
+/// (the `ClipContext.Block.VISUAL` / `Fluid.NONE` lane over this
+/// client's full-cube `solid()` vocabulary): the ray's first solid-cell
+/// ENTRY point, the Amanatides-Woo voxel walk `BlockGetter.clip`
+/// performs. `None` = the ray misses every solid cell (the full zoom
+/// stands). A ray STARTING inside a solid cell hits at its own start
+/// (the shape's interior clip verdict).
+pub fn clip_ray(world: &World, from: Vec3, to: Vec3) -> Option<Vec3> {
+    let dx = (to.x - from.x) as f64;
+    let dy = (to.y - from.y) as f64;
+    let dz = (to.z - from.z) as f64;
+    let len = (dx * dx + dy * dy + dz * dz).sqrt();
+    if len < 1e-9 {
+        let (cx, cy, cz) = (from.x.floor() as i32, from.y.floor() as i32, from.z.floor() as i32);
+        return if solid(world, cx, cy, cz) { Some(from) } else { None };
+    }
+    let (fx, fy, fz) = (from.x as f64, from.y as f64, from.z as f64);
+    let (mut cx, mut cy, mut cz) = (fx.floor() as i32, fy.floor() as i32, fz.floor() as i32);
+    let step_x = if dx > 0.0 { 1 } else { -1 };
+    let step_y = if dy > 0.0 { 1 } else { -1 };
+    let step_z = if dz > 0.0 { 1 } else { -1 };
+    // t to the next x/y/z boundary, and the t span per whole cell
+    let mut t_max_x = if dx != 0.0 {
+        ((if dx > 0.0 { cx as f64 + 1.0 - fx } else { fx - cx as f64 }) / dx.abs())
+    } else {
+        f64::INFINITY
+    };
+    let mut t_max_y = if dy != 0.0 {
+        ((if dy > 0.0 { cy as f64 + 1.0 - fy } else { fy - cy as f64 }) / dy.abs())
+    } else {
+        f64::INFINITY
+    };
+    let mut t_max_z = if dz != 0.0 {
+        ((if dz > 0.0 { cz as f64 + 1.0 - fz } else { fz - cz as f64 }) / dz.abs())
+    } else {
+        f64::INFINITY
+    };
+    let t_delta_x = if dx != 0.0 { 1.0 / dx.abs() } else { f64::INFINITY };
+    let t_delta_y = if dy != 0.0 { 1.0 / dy.abs() } else { f64::INFINITY };
+    let t_delta_z = if dz != 0.0 { 1.0 / dz.abs() } else { f64::INFINITY };
+    let unit = Vec3::new((dx / len) as f32, (dy / len) as f32, (dz / len) as f32);
+    // the start cell speaks first (the interior clip verdict)
+    if solid(world, cx, cy, cz) {
+        return Some(from);
+    }
+    loop {
+        // step to the next cell boundary
+        let (t_next, axis) = if t_max_x < t_max_y && t_max_x < t_max_z {
+            (t_max_x, 0)
+        } else if t_max_y < t_max_z {
+            (t_max_y, 1)
+        } else {
+            (t_max_z, 2)
+        };
+        if t_next > len || !t_next.is_finite() {
+            return None; // the ray ended inside the last open cell
+        }
+        match axis {
+            0 => {
+                cx += step_x;
+                t_max_x += t_delta_x;
+            }
+            1 => {
+                cy += step_y;
+                t_max_y += t_delta_y;
+            }
+            _ => {
+                cz += step_z;
+                t_max_z += t_delta_z;
+            }
+        }
+        if solid(world, cx, cy, cz) {
+            // the t parameter spans the UNNORMALIZED ray vector (t=1 is
+            // the full from->to span) — the hit point scales by t*len
+            // over the unit direction
+            let hit_t = t_next * len;
+            return Some(from.add(unit.scale(hit_t as f32)));
+        }
+    }
+}
+
 /// The vanilla player body.
 #[derive(Debug, Clone)]
 pub struct PlayerBody {
@@ -361,6 +506,11 @@ pub struct PlayerBody {
     /// the tick's step fired (the block under was solid) — the App
     /// clears it after the sound folds
     pub step_due: bool,
+    /// THE WALK ANIMATION STORE (WalkAnimationState, javap): the
+    /// speed/position pair the third-person avatar's limb cosines
+    /// speak. Updated every tick from the 3D move distance (the
+    /// calculateEntityAnimation law), kicked to 1.5 by the hurt lane.
+    pub walk: WalkAnimationState,
     /// THE FALL DISTANCE (Entity.fallDistance's own double): the
     /// descent accumulates `-(dy as f32)` per tick (the f32 round-trip
     /// the bytecode's d2f/f2d speaks), the water lane never
@@ -416,6 +566,12 @@ impl PlayerBody {
             move_dist: 0.0,
             next_step: 1.0,
             step_due: false,
+            walk: WalkAnimationState {
+                speed_old: 0.0,
+                speed: 0.0,
+                position: 0.0,
+                position_scale: 1.0,
+            },
             fall_distance: 0.0,
             fall_event: None,
             exhaustion_event: 0.0,
@@ -532,6 +688,9 @@ impl PlayerBody {
     /// impulse, the collide, the gravity and the drags. `using_item`
     /// speaks the use arc's own slowdown.
     pub fn tick(&mut self, world: &World, using_item: bool) {
+        // the pre-tick position — the walk distance law's own source
+        // (calculateEntityAnimation's getX() - xo fold)
+        let (x0, y0, z0) = (self.x, self.y, self.z);
         // THE RISING BODY'S ACCUMULATION CLAMP (javap
         // LivingEntity.updateFallFlying's own first call —
         // checkFallDistanceAccumulation: `vy > -0.5 && fallDistance >
@@ -721,6 +880,18 @@ impl PlayerBody {
         let drag = (friction * GROUND_DRAG) as f64;
         self.vx *= drag;
         self.vz *= drag;
+        // THE WALK ANIMATION (LivingEntity.calculateEntityAnimation(true)
+        // + updateWalkAnimation, javap): the tick's 3D move distance,
+        // `min(distance * 4.0, 1.0)` into the store's 0.4 blend.
+        let dist = ((self.x - x0) * (self.x - x0)
+            + (self.y - y0) * (self.y - y0)
+            + (self.z - z0) * (self.z - z0))
+            .sqrt() as f32;
+        if dist.is_finite() {
+            self.walk.update((dist * WALK_DISTANCE_SCALE).min(1.0), WALK_BLEND, 1.0);
+        } else {
+            self.walk.stop();
+        }
     }
 
     /// THE FALL DISTANCE LAW (javap `Entity.checkFallDamage` over the

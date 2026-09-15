@@ -7,6 +7,7 @@
 //!   --gui           windowed GUI app (boot -> title -> menus), generated data
 //!   --screen S      headless GUI screenshot: loading|title|servers|options|world|worldnight|pause|chest
 
+mod avatar;
 mod audio;
 mod body;
 mod build_info;

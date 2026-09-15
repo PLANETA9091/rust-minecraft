@@ -4205,6 +4205,38 @@ hand-drawn:
   release cancels the hold silently (no completion, no penalty), the
   pause freezes the clock, and the networked lane folds nothing (the
   server's Set Health speaks its truth) while the visuals still play.
+- **The third-person/F5 lane** (v0.3.154) — the camera the original
+  speaks: F5 now cycles the three views (first person -> third-person
+  back -> third-person front, the CameraType.cycle bytecode's own
+  VALUES walk) and the detached camera carries `Camera.setup`'s
+  third-person branch verbatim — the mirrored type flips the rotation
+  (yaw + 180, pitch negated) before the move, the move walks the
+  camera BACKWARD along its own view by `getMaxZoom(4.0)`, and that
+  zoom shrinks through the eight corner-offset raycasts (the ±0.1
+  cube starts, each hit folded by its distance from the EYE) over the
+  real voxel clip (the ClipContext VISUAL lane's Amanatides-Woo walk
+  the body collision vocabulary now shares). The body the camera
+  watches is the AVATAR: the full HumanoidModel/PlayerModel — head,
+  hat, body, jacket, both arms and sleeves, both legs and pants (the
+  overlays are children riding their base part's swing, inflated
+  +0.25, the hat +0.5) — sha1-verified wide-Steve skin, the
+  translateAndRotate pivot law, the entity chain `R_y(180-bodyRot) ·
+  S(-1,-1,1) · T(0,-1.501,0)` per vertex, and the 26.2 setupAnim: the
+  walk cosines (0.6662 phase, the arm 2·0.5 / leg 1.4 folds over the
+  WalkAnimationState the body ticks from its 3D move distance — the
+  0.4 blend, the min(dist·4, 1) clamp, the backward-extrapolated
+  position, the hurt kick's setSpeed(1.5)), the idle arm bob
+  (bobModelPart's ±(cos(age·0.09)·0.05 + 0.05) roll), the crouch
+  branch (the 0.5 body tilt, the 0.4 arm fold, the 4.2/3.2/4.0 pivot
+  nudges, the renderer's own -2/16 drop), and the WHACK swing
+  (setupAttackAnimation's sqrt arc + the body's 0.2·sin fold). The
+  entity light speaks the shader's own two-direction diffuse
+  (clamp(0.5 + dot(L0,n) + dot(L1,n)) over the world normals, L0/L1
+  the ShaderInstance's normalized constants, view-space folded per
+  camera). The vanilla gates hold: the first-person hand and the
+  crosshair sleep in third person, the avatar sleeps in first — the
+  deterministic scenes and the pixel goldens never press F5, so every
+  first-person frame stays bit-for-bit.
 - **The status-effect lane** (v0.3.153) — the survival loop's chemistry:
   the LOCAL player's active mob effects now live in one store that speaks
   the original's own laws (javap net.minecraft.world.effect + the

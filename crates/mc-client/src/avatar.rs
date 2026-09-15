@@ -1,0 +1,821 @@
+//! THE THIRD-PERSON AVATAR: the player's own body render — the vanilla
+//! `HumanoidModel`/`PlayerModel` geometry and `setupAnim` pose laws,
+//! byte-for-byte the bytecode's arithmetic (javap,
+//! tools/jdk-25.0.4.1+1, the cached jar's Mojang-mapped classes). The
+//! F5 lane's own payload: when the camera detaches, the body the
+//! camera watches is THIS model, posed by the walk/hurt/crouch state
+//! the first-person lanes already speak.
+//!
+//! Pinned sources (the class -> the law):
+//! - `HumanoidModel.createMesh` / `PlayerModel.createMesh` (javap):
+//!   the parts' texOffs, boxes and pivots (below, verbatim). The wide
+//!   branch's arms keep the HumanoidModel's own 4-wide boxes; the
+//!   overlay layers (hat/jacket/sleeves/pants) are CHILDREN of their
+//!   base parts (the swing rotations propagate) and inflate +0.25,
+//!   the hat +0.5.
+//! - `ModelPart.translateAndRotate` (javap): `translate(pivot/16)`
+//!   then `rotationZYX(zRot, yRot, xRot)` — the cube vertices are
+//!   pivot-relative, so a rotation is ABOUT THE PIVOT (rotate then add
+//!   the pivot). Units: model texels / 16 = blocks. The vector sees
+//!   Rx first, then Ry, then Rz (the quaternion's own order).
+//! - `LivingEntityRenderer.render` (javap): the entity chain is
+//!   `T(entityPos) · R_y(180 - bodyRot) · S(-1, -1, 1) · T(0, -1.501, 0)`
+//!   — the model's y grows DOWNWARD from 24 texels (1.501 blocks)
+//!   above the feet, the x is mirrored (the model's right arm lands on
+//!   the world's right), and the net yaw rotation is `(180 - bodyRot)`
+//!   degrees about +Y (the joml YP fold: `x' = x cos a + z sin a; z' =
+//!   -x sin a + z cos a`).
+//! - `HumanoidModel.setupAnim` (javap, 26.2): the head speaks
+//!   `xRot = state.xRot * (π/180)`, `yRot = state.yRot * (π/180)`
+//!   (the head yaw is the RELATIVE head-body yaw — the local player's
+//!   head rides its own body, so 0); the walk law:
+//!   `rightArm.xRot = cos(pos*0.6662 + π) * 2 * speed * 0.5 /
+//!   speedValue`, `leftArm.xRot = cos(pos*0.6662) * 2 * speed * 0.5 /
+//!   speedValue`, `rightLeg.xRot = cos(pos*0.6662) * 1.4 * speed /
+//!   speedValue`, `leftLeg.xRot = cos(pos*0.6662 + π) * 1.4 * speed /
+//!   speedValue` — speedValue defaults 1.0 (the HumanoidRenderState
+//!   constructor's own). The legs' yRot/zRot stand at ±0.005. The idle
+//!   bob (`AnimationUtils.bobModelPart`, always unless SPYGlass):
+//!   `zRot += s * (cos(age*0.09) * 0.05 + 0.05)`, `xRot += s *
+//!   sin(age*0.067) * 0.05`, s = 1 the right arm, s = -1 the left.
+//! - `HumanoidModel.setupAnim`'s crouch branch (javap): `body.xRot =
+//!   0.5`, both arms `xRot += 0.4`, both leg pivots `z += 4.0`, the
+//!   head pivot `y += 4.2`, the body and both arm pivots `y += 3.2`.
+//!   The renderer's own offset (`AvatarRenderer.getRenderOffset`):
+//!   the crouched avatar draws `scale * -2 / 16` lower.
+//! - `HumanoidModel.setupAttackAnimation` (javap): the swing law —
+//!   `body.yRot = 0.2 * sin(sqrt(attackTime) * 2π)` (negated when the
+//!   attacking arm is the left), the attacking arm:
+//!   `xRot -= sin(sqrt(attackTime) * π) * 1.2 + 0.75 * sin(attackTime
+//!   * π) * (0.7 - head.xRot)`, `yRot += body.yRot * 2`, `zRot +=
+//!   sin(attackTime * π) * -0.4`.
+//! - `LivingEntityRenderer.extractRenderState` (javap): the walk
+//!   sampling — `walkAnimationPos = walk.position(partial)`,
+//!   `walkAnimationSpeed = walk.speed(partial)` (the min(abs, 1)
+//!   blend).
+//! - The entity light (`rendertype_entity` shader + `ShaderInstance`,
+//!   the shader source): the diffuse is the two-direction mix —
+//!   `clamp(0.5 + max(0, dot(L0, n)) + max(0, dot(L1, n)), 0, 1)`
+//!   with L0 = normalize(0.2, 1.0, -0.7), L1 = normalize(-0.2, 1.0,
+//!   0.7) in WORLD space (the GameRenderer rotates them by the camera
+//!   rotation into view space each frame), n the face's world-space
+//!   normal (the model normal through the entity chain — the
+//!   S(-1,-1,1) fold flips x and y).
+//! - `WalkAnimationState` (body.rs, javap): the store the body owns —
+//!   `speed(partial) = min(abs(speedOld + (speed - speedOld) *
+//!   partial), 1)`, `position(partial) = (position - speed * (1 -
+//!   partial)) * positionScale`.
+//!
+//! The skin pixels stream from the runtime asset root and are
+//! sha1-verified against the generated `skin` table before a single
+//! texel is trusted; an absent or mismatched file renders NOTHING
+//! (the reference renderer must not lie about its data).
+
+use std::path::Path;
+
+use anyhow::Context;
+use mc_registry::generated::skin;
+use sha1::Digest;
+
+use crate::math::{Mat4, Vec3};
+
+/// The renderer samples the game's canonical mid-tick partial (the
+/// partial the eat pose and the swing lane already speak).
+pub const RENDER_PARTIAL: f32 = 0.5;
+
+/// `Mth.cos(float)` — the f64 cos narrowed back to f32 (the Mth body).
+fn mth_cos(x: f32) -> f32 {
+    (x as f64).cos() as f32
+}
+
+/// `Mth.sin(float)` — the f64 sin narrowed back to f32.
+fn mth_sin(x: f32) -> f32 {
+    (x as f64).sin() as f32
+}
+
+/// `Mth.sqrt(float)` — the f64 sqrt narrowed back to f32.
+fn mth_sqrt(x: f32) -> f32 {
+    (x as f64).sqrt() as f32
+}
+
+/// The vanilla two-direction entity light (ShaderInstance's
+/// LIGHT0/LIGHT1_DIRECTION constants, normalized — the world-space
+/// law the view-space shader uniform folds).
+fn light_dirs() -> ([f32; 3], [f32; 3]) {
+    let norm = |v: [f32; 3]| {
+        let l = (v[0] * v[0] + v[1] * v[1] + v[2] * v[2]).sqrt();
+        [v[0] / l, v[1] / l, v[2] / l]
+    };
+    (norm([0.2, 1.0, -0.7]), norm([-0.2, 1.0, 0.7]))
+}
+
+/// The entity diffuse law: `clamp(0.5 + max(0, dot(L0, n)) +
+/// max(0, dot(L1, n)), 0, 1)` (the minecraft_mix_light fold) over the
+/// world normal taken into view space (`d_view = Rx(-pitch) ·
+/// Ry(yaw) · d` — the inverse of the camera's own rotation).
+pub fn entity_diffuse(n_world: [f32; 3], cam_yaw: f32, cam_pitch: f32) -> f32 {
+    let (l0, l1) = light_dirs();
+    let (sy, cy) = cam_yaw.sin_cos();
+    let (sp, cp) = cam_pitch.sin_cos();
+    // Ry(yaw) first ...
+    let nx = n_world[0] * cy + n_world[2] * sy;
+    let ny = n_world[1];
+    let nz = -n_world[0] * sy + n_world[2] * cy;
+    // ... then Rx(-pitch)
+    let vy = ny * cp - nz * sp;
+    let vz = ny * (-sp) + nz * cp;
+    let nv = [nx, vy, vz];
+    let d0 = (l0[0] * nv[0] + l0[1] * nv[1] + l0[2] * nv[2]).max(0.0);
+    let d1 = (l1[0] * nv[0] + l1[1] * nv[1] + l1[2] * nv[2]).max(0.0);
+    (0.5 + d0 + d1).clamp(0.0, 1.0)
+}
+
+/// One textured world-space quad of the avatar (the SampledQuad feed;
+/// `uv` in skin texels, the sampler walks the model's own pixels).
+pub struct AvatarQuad {
+    pub pts: [[f32; 3]; 4],
+    pub uv: [[f32; 2]; 4],
+    /// the entity diffuse multiplier (the mix_light fold)
+    pub shade: f32,
+}
+
+/// The pose inputs — the vanilla render state's own fields, gathered
+/// from the body the camera watches.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct AvatarState {
+    /// vanilla yaw degrees (the body's own)
+    pub yaw_deg: f32,
+    /// vanilla pitch degrees, positive = DOWN (the head's xRot)
+    pub pitch_deg: f32,
+    /// walkAnimationPos (the backward-extrapolated walk phase)
+    pub walk_pos: f32,
+    /// walkAnimationSpeed (the min(abs, 1) blend)
+    pub walk_speed: f32,
+    pub crouching: bool,
+    /// the attack-swing progress (getAttackAnim, 0 = rest)
+    pub attack_time: f32,
+    /// the swing rides the main hand (the right — the client's own)
+    pub attack_right: bool,
+    /// ageInTicks (the idle bob's clock)
+    pub age_ticks: f32,
+}
+
+impl AvatarState {
+    /// The rest state at a pose — the deterministic scenes' own (the
+    /// walk store empty, no swing, standing).
+    pub fn rest(yaw_deg: f32, pitch_deg: f32, age_ticks: f32) -> Self {
+        AvatarState {
+            yaw_deg,
+            pitch_deg,
+            walk_pos: 0.0,
+            walk_speed: 0.0,
+            crouching: false,
+            attack_time: 0.0,
+            attack_right: true,
+            age_ticks,
+        }
+    }
+}
+
+/// One pivot-relative cube: texOffs, the box (texels) and the
+/// `CubeDeformation` inflation (the overlay layers' extend).
+struct Cube {
+    tex: (f32, f32),
+    origin: [f32; 3],
+    size: [f32; 3],
+    inflate: f32,
+}
+
+/// One model part: the pivot (texels), the setupAnim rotation
+/// (radians), the cubes and the overlay children (the children ride
+/// the parent's rotation — PartPose.ZERO relative to it).
+struct Part {
+    pivot: [f32; 3],
+    x_rot: f32,
+    y_rot: f32,
+    z_rot: f32,
+    cubes: Vec<Cube>,
+    children: Vec<Part>,
+}
+
+impl Part {
+    /// The part's matrix — `parent · T(pivot/16) · Rz · Ry · Rx` (the
+    /// translateAndRotate bytecode's own order: the vector sees Rx
+    /// first, then Ry, then Rz, then the pivot translate).
+    fn matrix(&self, parent: &Mat4) -> Mat4 {
+        let m = Mat4::translation(self.pivot[0] / 16.0, self.pivot[1] / 16.0, self.pivot[2] / 16.0)
+            .mul(&Mat4::rot_z(self.z_rot))
+            .mul(&Mat4::rot_y(self.y_rot))
+            .mul(&Mat4::rot_x(self.x_rot));
+        parent.mul(&m)
+    }
+}
+
+/// The full player model (wide Steve), the parts' pivots/boxes the
+/// createMesh bytecode speaks.
+pub struct AvatarModel {
+    rgba: Vec<u8>,
+}
+
+impl AvatarModel {
+    /// Load + sha1-verify the wide Steve skin (the same runtime file
+    /// and generated sha1 the first-person arm speaks) — `None` = not
+    /// drawn (the renderer must not lie about its data).
+    pub fn load(root: &Path) -> Option<AvatarModel> {
+        let bytes = std::fs::read(root.join(skin::RUNTIME_PATH)).ok()?;
+        let digest = sha1::Sha1::digest(&bytes);
+        if hex::encode(digest) != skin::STEVE_WIDE_PNG_SHA1 {
+            return None;
+        }
+        let (w, h, rgba) = decode_rgba(&bytes).ok()?;
+        if w != skin::SKIN_SIDE
+            || h != skin::SKIN_SIDE
+            || rgba.len() != (skin::SKIN_SIDE as usize) * (skin::SKIN_SIDE as usize) * 4
+        {
+            return None;
+        }
+        Some(AvatarModel { rgba })
+    }
+
+    /// The skin pixel at (u, v) — the RGBA row-major words, v down.
+    pub fn pixel(&self, u: f32, v: f32) -> [u8; 4] {
+        let side = skin::SKIN_SIDE as f32;
+        let (uu, vv) = (u.clamp(0.0, side - 1e-4), v.clamp(0.0, side - 1e-4));
+        let x = uu as usize;
+        let y = vv as usize;
+        let o = (y * skin::SKIN_SIDE as usize + x) * 4;
+        [self.rgba[o], self.rgba[o + 1], self.rgba[o + 2], self.rgba[o + 3]]
+    }
+
+    /// THE POSED RENDER: the world-space textured quads of the whole
+    /// model at `state` — the entity chain folded per vertex (see the
+    /// module docs for the exact matrix order). `feet` = the body's
+    /// feet position; `cam_yaw/cam_pitch` speak the view rotation the
+    /// entity diffuse folds.
+    pub fn quads(
+        &self,
+        state: &AvatarState,
+        feet: Vec3,
+        cam_yaw: f32,
+        cam_pitch: f32,
+    ) -> Vec<AvatarQuad> {
+        let parts = build_posed_parts(state);
+        // THE ENTITY CHAIN (LivingEntityRenderer.render), folded per
+        // resolved model point: T(0, -1.501, 0) first, then S(-1,-1,1),
+        // then R_y(180 - bodyRot), then the feet translation (+ the
+        // crouch render offset's -2/16).
+        let a = (180.0f32 - state.yaw_deg).to_radians();
+        let (sa, ca) = a.sin_cos();
+        let crouch_drop = if state.crouching { -2.0 / 16.0 } else { 0.0 };
+        let fold_point = |p: [f32; 3]| -> [f32; 3] {
+            let mx = -p[0]; // the S(-1,-1,1) x flip (blocks)
+            let my = -p[1]; // the y flip over the -1.501 line
+            let mz = p[2];
+            let px = mx * ca + mz * sa; // the joml YP yaw fold
+            let pz = -mx * sa + mz * ca;
+            [
+                feet.x + px,
+                feet.y as f32 + (my + 1.501) + crouch_drop,
+                feet.z + pz,
+            ]
+        };
+        let fold_normal = |n: [f32; 3]| -> [f32; 3] {
+            let nx = -n[0];
+            let ny = -n[1];
+            let nz = n[2];
+            [nx * ca + nz * sa, ny, -nx * sa + nz * ca]
+        };
+        let mut out: Vec<AvatarQuad> = Vec::with_capacity(12 * 6);
+        let ident = Mat4::IDENT;
+        for part in &parts {
+            collect_part(part, &ident, &fold_point, &fold_normal, cam_yaw, cam_pitch, &mut out);
+        }
+        out
+    }
+}
+
+/// The six base parts with their overlay children, posed by `state`
+/// (the setupAnim + setupAttackAnimation + crouch laws, verbatim).
+fn build_posed_parts(state: &AvatarState) -> Vec<Part> {
+    let pos = state.walk_pos;
+    let speed = state.walk_speed;
+    // speedValue's default 1.0 divides the classic terms (kept
+    // explicit — the render state's own default)
+    let speed_value = 1.0f32;
+    let arm_r_x = mth_cos(pos * 0.6662 + std::f32::consts::PI) * 2.0 * speed * 0.5 / speed_value;
+    let arm_l_x = mth_cos(pos * 0.6662) * 2.0 * speed * 0.5 / speed_value;
+    let leg_r_x = mth_cos(pos * 0.6662) * 1.4 * speed / speed_value;
+    let leg_l_x = mth_cos(pos * 0.6662 + std::f32::consts::PI) * 1.4 * speed / speed_value;
+    // the idle bob (bobModelPart, always unless SPYGlass): the right
+    // arm rides +1, the left -1
+    let age = state.age_ticks;
+    let bob = |s: f32| {
+        (
+            s * (mth_cos(age * 0.09) * 0.05 + 0.05),
+            s * mth_sin(age * 0.067) * 0.05,
+        )
+    };
+    let (bob_r_z, bob_r_x) = bob(1.0);
+    let (bob_l_z, bob_l_x) = bob(-1.0);
+    let mut arm_r_x = arm_r_x + bob_r_x;
+    let mut arm_r_y = 0.0f32;
+    let mut arm_r_z = 0.1 + bob_r_z;
+    let mut arm_l_x = arm_l_x + bob_l_x;
+    let mut arm_l_y = 0.0f32;
+    let mut arm_l_z = -0.1 + bob_l_z;
+    let mut body_y = 0.0f32;
+    let mut body_x = 0.0f32;
+    let head_x = state.pitch_deg.to_radians();
+    let head_y = 0.0f32;
+    let mut leg_r_y = 0.005f32;
+    let leg_r_z = 0.005f32;
+    let mut leg_l_y = -0.005f32;
+    let leg_l_z = -0.005f32;
+    // the pivot nudges the crouch speaks (model texels)
+    let mut arm_r_pivot = [-5.0f32, 2.0, 0.0];
+    let mut arm_l_pivot = [5.0f32, 2.0, 0.0];
+    let mut body_pivot = [0.0f32, 0.0, 0.0];
+    let mut head_pivot = [0.0f32, 0.0, 0.0];
+    let mut leg_r_pivot = [-1.9f32, 12.0, 0.0];
+    let mut leg_l_pivot = [1.9f32, 12.0, 0.0];
+    if state.crouching {
+        body_x = 0.5;
+        arm_r_x += 0.4;
+        arm_l_x += 0.4;
+        leg_r_pivot[2] += 4.0;
+        leg_l_pivot[2] += 4.0;
+        head_pivot[1] += 4.2;
+        body_pivot[1] += 3.2;
+        arm_l_pivot[1] += 3.2;
+        arm_r_pivot[1] += 3.2;
+    }
+    // THE SWING (setupAttackAnimation): the body's yRot fold and the
+    // attacking arm's WHACK arc
+    let at = state.attack_time;
+    if at > 0.0 {
+        let f = mth_sin(mth_sqrt(at) * std::f32::consts::PI);
+        let mut body_rot = 0.2 * mth_sin(mth_sqrt(at) * 6.2831855);
+        if !state.attack_right {
+            body_rot = -body_rot;
+        }
+        body_y = body_rot;
+        let head_adjust = 0.75 * mth_sin(at * std::f32::consts::PI) * (0.7 - head_x);
+        if state.attack_right {
+            arm_r_x -= f * 1.2 + head_adjust;
+            arm_r_y += body_y * 2.0;
+            arm_r_z += mth_sin(at * std::f32::consts::PI) * -0.4;
+        } else {
+            arm_l_x -= f * 1.2 + head_adjust;
+            arm_l_y += body_y * 2.0;
+            arm_l_z += mth_sin(at * std::f32::consts::PI) * -0.4;
+        }
+    }
+    // THE PARTS (createMesh, verbatim). The overlays are CHILDREN
+    // (PartPose.ZERO — the parent's pivot space) with the SAME box
+    // inflated by the extend.
+    vec![
+        // head (+ hat child)
+        Part {
+            pivot: head_pivot,
+            x_rot: head_x,
+            y_rot: head_y,
+            z_rot: 0.0,
+            cubes: vec![Cube {
+                tex: (0.0, 0.0),
+                origin: [-4.0, -8.0, -4.0],
+                size: [8.0, 8.0, 8.0],
+                inflate: 0.0,
+            }],
+            children: vec![Part {
+                pivot: [0.0, 0.0, 0.0],
+                x_rot: 0.0,
+                y_rot: 0.0,
+                z_rot: 0.0,
+                cubes: vec![Cube {
+                    tex: (40.0, 0.0),
+                    origin: [-4.0, -8.0, -4.0],
+                    size: [8.0, 8.0, 8.0],
+                    inflate: 0.5,
+                }],
+                children: vec![],
+            }],
+        },
+        // body (+ jacket child)
+        Part {
+            pivot: body_pivot,
+            x_rot: body_x,
+            y_rot: body_y,
+            z_rot: 0.0,
+            cubes: vec![Cube {
+                tex: (16.0, 16.0),
+                origin: [-4.0, 0.0, -2.0],
+                size: [8.0, 12.0, 4.0],
+                inflate: 0.0,
+            }],
+            children: vec![Part {
+                pivot: [0.0, 0.0, 0.0],
+                x_rot: 0.0,
+                y_rot: 0.0,
+                z_rot: 0.0,
+                cubes: vec![Cube {
+                    tex: (16.0, 32.0),
+                    origin: [-4.0, 0.0, -2.0],
+                    size: [8.0, 12.0, 4.0],
+                    inflate: 0.25,
+                }],
+                children: vec![],
+            }],
+        },
+        // right arm (+ right sleeve child)
+        Part {
+            pivot: arm_r_pivot,
+            x_rot: arm_r_x,
+            y_rot: arm_r_y,
+            z_rot: arm_r_z,
+            cubes: vec![Cube {
+                tex: (40.0, 16.0),
+                origin: [-3.0, -2.0, -2.0],
+                size: [4.0, 12.0, 4.0],
+                inflate: 0.0,
+            }],
+            children: vec![Part {
+                pivot: [0.0, 0.0, 0.0],
+                x_rot: 0.0,
+                y_rot: 0.0,
+                z_rot: 0.0,
+                cubes: vec![Cube {
+                    tex: (40.0, 32.0),
+                    origin: [-3.0, -2.0, -2.0],
+                    size: [4.0, 12.0, 4.0],
+                    inflate: 0.25,
+                }],
+                children: vec![],
+            }],
+        },
+        // left arm (+ left sleeve child)
+        Part {
+            pivot: arm_l_pivot,
+            x_rot: arm_l_x,
+            y_rot: arm_l_y,
+            z_rot: arm_l_z,
+            cubes: vec![Cube {
+                tex: (32.0, 48.0),
+                origin: [-1.0, -2.0, -2.0],
+                size: [4.0, 12.0, 4.0],
+                inflate: 0.0,
+            }],
+            children: vec![Part {
+                pivot: [0.0, 0.0, 0.0],
+                x_rot: 0.0,
+                y_rot: 0.0,
+                z_rot: 0.0,
+                cubes: vec![Cube {
+                    tex: (48.0, 48.0),
+                    origin: [-1.0, -2.0, -2.0],
+                    size: [4.0, 12.0, 4.0],
+                    inflate: 0.25,
+                }],
+                children: vec![],
+            }],
+        },
+        // right leg (+ right pants child)
+        Part {
+            pivot: leg_r_pivot,
+            x_rot: leg_r_x,
+            y_rot: leg_r_y,
+            z_rot: leg_r_z,
+            cubes: vec![Cube {
+                tex: (0.0, 16.0),
+                origin: [-2.0, 0.0, -2.0],
+                size: [4.0, 12.0, 4.0],
+                inflate: 0.0,
+            }],
+            children: vec![Part {
+                pivot: [0.0, 0.0, 0.0],
+                x_rot: 0.0,
+                y_rot: 0.0,
+                z_rot: 0.0,
+                cubes: vec![Cube {
+                    tex: (0.0, 32.0),
+                    origin: [-2.0, 0.0, -2.0],
+                    size: [4.0, 12.0, 4.0],
+                    inflate: 0.25,
+                }],
+                children: vec![],
+            }],
+        },
+        // left leg (+ left pants child)
+        Part {
+            pivot: leg_l_pivot,
+            x_rot: leg_l_x,
+            y_rot: leg_l_y,
+            z_rot: leg_l_z,
+            cubes: vec![Cube {
+                tex: (16.0, 48.0),
+                origin: [-2.0, 0.0, -2.0],
+                size: [4.0, 12.0, 4.0],
+                inflate: 0.0,
+            }],
+            children: vec![Part {
+                pivot: [0.0, 0.0, 0.0],
+                x_rot: 0.0,
+                y_rot: 0.0,
+                z_rot: 0.0,
+                cubes: vec![Cube {
+                    tex: (0.0, 48.0),
+                    origin: [-2.0, 0.0, -2.0],
+                    size: [4.0, 12.0, 4.0],
+                    inflate: 0.25,
+                }],
+                children: vec![],
+            }],
+        },
+    ]
+}
+
+/// Walk one part tree node: the part's matrix, then every cube's six
+/// faces through the entity-chain fold, then the children (the
+/// overlays ride the base part's swing).
+fn collect_part(
+    part: &Part,
+    parent: &Mat4,
+    fold_point: &dyn Fn([f32; 3]) -> [f32; 3],
+    fold_normal: &dyn Fn([f32; 3]) -> [f32; 3],
+    cam_yaw: f32,
+    cam_pitch: f32,
+    out: &mut Vec<AvatarQuad>,
+) {
+    let m = part.matrix(parent);
+    for cube in &part.cubes {
+        emit_cube(cube, &m, fold_point, fold_normal, cam_yaw, cam_pitch, out);
+    }
+    for child in &part.children {
+        collect_part(child, &m, fold_point, fold_normal, cam_yaw, cam_pitch, out);
+    }
+}
+
+/// One cube's six faces — the `ModelPart$Cube` corner/uv table the
+/// first-person arm already speaks (hand.rs's own decode), inflated by
+/// the `CubeDeformation` extend, folded into world space.
+fn emit_cube(
+    cube: &Cube,
+    m: &Mat4,
+    fold_point: &dyn Fn([f32; 3]) -> [f32; 3],
+    fold_normal: &dyn Fn([f32; 3]) -> [f32; 3],
+    cam_yaw: f32,
+    cam_pitch: f32,
+    out: &mut Vec<AvatarQuad>,
+) {
+    let (u0, v0) = cube.tex;
+    let [ix, iy, iz] = cube.origin;
+    let [w, h, d] = cube.size;
+    let inf = cube.inflate;
+    let (x0, y0, z0) = (ix - inf, iy - inf, iz - inf);
+    let (x1, y1, z1) = (ix + w + inf, iy + h + inf, iz + d + inf);
+    let px = |p: [f32; 3]| -> [f32; 3] {
+        let q = m.transform_point(Vec3::new(p[0] / 16.0, p[1] / 16.0, p[2] / 16.0));
+        [q[0], q[1], q[2]]
+    };
+    // the face table: (corners, rect origin, rect size, model normal)
+    let faces: [(&[[f32; 3]; 4], (f32, f32), (f32, f32), [f32; 3]); 6] = [
+        (
+            &[[x1, y0, z1], [x0, y0, z1], [x0, y0, z0], [x1, y0, z0]],
+            (u0 + d, v0),
+            (w, d),
+            [0.0, -1.0, 0.0], // DOWN
+        ),
+        (
+            &[[x1, y1, z0], [x0, y1, z0], [x0, y1, z1], [x1, y1, z1]],
+            (u0 + d + w, v0 + d),
+            (w, -d),
+            [0.0, 1.0, 0.0], // UP (the rect's v runs lower->upper: V-FLIPPED)
+        ),
+        (
+            &[[x0, y0, z0], [x0, y0, z1], [x0, y1, z1], [x0, y1, z0]],
+            (u0, v0 + d),
+            (d, h),
+            [-1.0, 0.0, 0.0], // WEST
+        ),
+        (
+            &[[x1, y0, z0], [x0, y0, z0], [x0, y1, z0], [x1, y1, z0]],
+            (u0 + d, v0 + d),
+            (w, h),
+            [0.0, 0.0, -1.0], // NORTH (the skin's face side)
+        ),
+        (
+            &[[x1, y0, z1], [x1, y0, z0], [x1, y1, z0], [x1, y1, z1]],
+            (u0 + d + w, v0 + d),
+            (d, h),
+            [1.0, 0.0, 0.0], // EAST
+        ),
+        (
+            &[[x0, y0, z1], [x1, y0, z1], [x1, y1, z1], [x0, y1, z1]],
+            (u0 + d + w + d, v0 + d),
+            (w, h),
+            [0.0, 0.0, 1.0], // SOUTH
+        ),
+    ];
+    for (corners, (ru, rv), (rw, rh), normal) in faces {
+        let (ru1, rv1) = (ru + rw, rv + rh);
+        // the Polygon constructor's fixed rect corners: k=0 -> (u1,v0),
+        // 1 -> (u0,v0), 2 -> (u0,v1), 3 -> (u1,v1)
+        let uv = [[ru1, rv], [ru, rv], [ru, rv1], [ru1, rv1]];
+        let pts = [
+            fold_point(px(corners[0])),
+            fold_point(px(corners[1])),
+            fold_point(px(corners[2])),
+            fold_point(px(corners[3])),
+        ];
+        let shade = entity_diffuse(fold_normal(normal), cam_yaw, cam_pitch);
+        out.push(AvatarQuad { pts, uv, shade });
+    }
+}
+
+/// The skin PNG's RGBA decode (the hand.rs twin: EXPAND + STRIP_16,
+/// any missing alpha channel widened to 255).
+fn decode_rgba(bytes: &[u8]) -> anyhow::Result<(u32, u32, Vec<u8>)> {
+    let mut decoder = png::Decoder::new(std::io::Cursor::new(bytes));
+    decoder.set_transformations(png::Transformations::EXPAND | png::Transformations::STRIP_16);
+    let mut reader = decoder.read_info().context("skin png read_info")?;
+    let mut buf = vec![0u8; reader.output_buffer_size()];
+    let info = reader.next_frame(&mut buf).context("skin png decode")?;
+    let (w, h) = (info.width, info.height);
+    let samples = info.color_type.samples();
+    let mut rgba = vec![255u8; (w * h * 4) as usize];
+    for p in 0..(w * h) as usize {
+        let s = &buf[p * samples..p * samples + samples];
+        let o = p * 4;
+        match samples {
+            4 => rgba[o..o + 4].copy_from_slice(s),
+            3 => {
+                rgba[o] = s[0];
+                rgba[o + 1] = s[1];
+                rgba[o + 2] = s[2];
+            }
+            _ => {
+                rgba[o] = s[0];
+                rgba[o + 1] = s[0];
+                rgba[o + 2] = s[0];
+            }
+        }
+    }
+    Ok((w, h, rgba))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// A yaw-0 body (facing +Z south): the model's right arm lands on
+    /// the world's -X (the cross product's own verdict for a +Z
+    /// facing), the head top at 2.001 (the 24-texel line + the head's
+    /// 8 texels), the feet line at 0.001.
+    #[test]
+    fn the_rest_pose_lands_where_the_entity_chain_speaks() {
+        let model = AvatarModel {
+            rgba: vec![255; 64 * 64 * 4],
+        };
+        let feet = Vec3::new(10.0, 0.0, 20.0);
+        let quads = model.quads(&AvatarState::rest(0.0, 0.0, 0.0), feet, 0.0, 0.0);
+        assert_eq!(quads.len(), 12 * 6, "the whole model: 12 cubes, 6 faces each");
+        // the world-space y span: the head's own top face at 2.001, the
+        // hat's inflated top at 2.03125 above it; the feet line at
+        // 0.001 with the legs' ±0.005 zRot dipping the inflated pants
+        // corner a hair below (the vanilla pose's own numbers)
+        let ys: Vec<f32> = quads
+            .iter()
+            .flat_map(|q| q.pts.iter().map(|p| p[1]))
+            .collect();
+        let ymin = ys.iter().copied().fold(f32::INFINITY, f32::min);
+        let ymax = ys.iter().copied().fold(f32::NEG_INFINITY, f32::max);
+        assert!(ymin > -0.02 && ymin < 0.001, "feet line {ymin}");
+        assert!((ymax - 2.03225).abs() < 1e-4, "hat top {ymax}");
+        // the head's own top cube face at 2.001, x span -0.25..0.25
+        // (the 8-texel head under the hat)
+        let head_top: Vec<&AvatarQuad> = quads
+            .iter()
+            .filter(|q| q.pts.iter().all(|p| (p[1] - 2.001).abs() < 1e-3))
+            .collect();
+        assert!(!head_top.is_empty(), "the head's top face sits at 2.001");
+        let xs: Vec<f32> = head_top
+            .iter()
+            .flat_map(|q| q.pts.iter().map(|p| p[0] - 10.0))
+            .collect();
+        let xmin = xs.iter().copied().fold(f32::INFINITY, f32::min);
+        let xmax = xs.iter().copied().fold(f32::NEG_INFINITY, f32::max);
+        assert!(
+            (xmin - -0.25).abs() < 1e-4 && (xmax - 0.25).abs() < 1e-4,
+            "head x {xmin}..{xmax}"
+        );
+    }
+
+    /// The face side: a yaw-0 body's NORTH cube face (the skin's face
+    /// texels at rect (8,8)) lands as the world +Z face — the side the
+    /// camera sees from the front view.
+    #[test]
+    fn the_models_north_face_becomes_the_worlds_facing_side() {
+        let model = AvatarModel {
+            rgba: vec![255; 64 * 64 * 4],
+        };
+        let feet = Vec3::new(0.0, 0.0, 0.0);
+        let quads = model.quads(&AvatarState::rest(0.0, 0.0, 0.0), feet, 0.0, 0.0);
+        // the head's face quad: z == +0.25 (the 4-texel half-depth),
+        // u spans the face rect (8..16 in texels)
+        let face = quads
+            .iter()
+            .find(|q| {
+                q.pts.iter().all(|p| (p[2] - 0.25).abs() < 1e-4)
+                    && q.pts.iter().all(|p| p[1] > 1.4 && p[1] < 2.1)
+                    && q.uv.iter().all(|uv| uv[0] >= 8.0 && uv[0] <= 16.0)
+            })
+            .expect("the head's face quad at the world's +Z");
+        let us: Vec<f32> = face.uv.iter().map(|uv| uv[0]).collect();
+        assert!(
+            us.iter().copied().fold(f32::INFINITY, f32::min) - 8.0 < 1e-4
+                && us.iter().copied().fold(f32::NEG_INFINITY, f32::max) - 16.0 < 1e-4,
+            "the face rect's own u span"
+        );
+    }
+
+    /// The walk law: a mid-stride walk phase swings the legs — the
+    /// left leg's xRot is the cos(pos*0.6662 + π) branch, and the
+    /// world-space parts leave the standing pose.
+    #[test]
+    fn the_walk_cosines_swing_the_legs() {
+        let model = AvatarModel {
+            rgba: vec![255; 64 * 64 * 4],
+        };
+        let feet = Vec3::new(0.0, 0.0, 0.0);
+        let mut state = AvatarState::rest(0.0, 0.0, 0.0);
+        state.walk_pos = 0.6662_f32.acos() / 0.6662; // cos(pos*0.6662) = 0
+        state.walk_speed = 1.0;
+        let walking = model.quads(&state, feet, 0.0, 0.0);
+        let standing = model.quads(&AvatarState::rest(0.0, 0.0, 0.0), feet, 0.0, 0.0);
+        let diff = walking
+            .iter()
+            .zip(standing.iter())
+            .any(|(a, b)| (a.pts[0][0] - b.pts[0][0]).abs() > 1e-4);
+        assert!(diff, "the walk pose moves the parts");
+    }
+
+    /// The crouch law: the pivots' nudges + the renderer's own -2/16
+    /// drop lower the whole model, and the body's 0.5 xRot tilts it.
+    #[test]
+    fn the_crouch_drops_and_tilts_the_model() {
+        let model = AvatarModel {
+            rgba: vec![255; 64 * 64 * 4],
+        };
+        let feet = Vec3::new(0.0, 0.0, 0.0);
+        let mut state = AvatarState::rest(0.0, 0.0, 0.0);
+        state.crouching = true;
+        let crouched = model.quads(&state, feet, 0.0, 0.0);
+        let standing = model.quads(&AvatarState::rest(0.0, 0.0, 0.0), feet, 0.0, 0.0);
+        let ymax = |qs: &[AvatarQuad]| {
+            qs.iter()
+                .flat_map(|q| q.pts.iter().map(|p| p[1]))
+                .fold(f32::NEG_INFINITY, f32::max)
+        };
+        assert!(
+            ymax(&crouched) < ymax(&standing),
+            "the crouched model stands lower ({} < {})",
+            ymax(&crouched),
+            ymax(&standing)
+        );
+    }
+
+    /// The entity diffuse: the mix_light law's own numbers — a face
+    /// normal aligned with both lights saturates at 1.0, one facing
+    /// away sits at the 0.5 base, and the fold speaks the camera.
+    #[test]
+    fn the_entity_diffuse_speaks_the_mix_light_law() {
+        // straight up: dot(L0, up) = L0.y, dot(L1, up) = L1.y — both
+        // positive, the sum saturates at 1.0
+        assert!((entity_diffuse([0.0, 1.0, 0.0], 0.0, 0.0) - 1.0).abs() < 1e-4);
+        // straight down: both dots negative -> the 0.5 base
+        assert!((entity_diffuse([0.0, -1.0, 0.0], 0.0, 0.0) - 0.5).abs() < 1e-4);
+        // the camera-relative fold: the same normal from the opposite
+        // yaw rotates the view-space dot products
+        let a = entity_diffuse([1.0, 0.0, 0.0], 0.0, 0.0);
+        let b = entity_diffuse([1.0, 0.0, 0.0], std::f32::consts::PI, 0.0);
+        assert!(a != b, "the view-space fold speaks the camera");
+    }
+
+    /// The swing law: attackTime 0.5 bends the attacking arm past the
+    /// standing pose (the WHACK arc's own numbers).
+    #[test]
+    fn the_swing_bends_the_attacking_arm() {
+        let model = AvatarModel {
+            rgba: vec![255; 64 * 64 * 4],
+        };
+        let feet = Vec3::new(0.0, 0.0, 0.0);
+        let mut state = AvatarState::rest(0.0, 0.0, 0.0);
+        state.attack_time = 0.5;
+        let swung = model.quads(&state, feet, 0.0, 0.0);
+        let standing = model.quads(&AvatarState::rest(0.0, 0.0, 0.0), feet, 0.0, 0.0);
+        let moved = swung
+            .iter()
+            .zip(standing.iter())
+            .any(|(a, b)| (a.pts[0][1] - b.pts[0][1]).abs() > 1e-4);
+        assert!(moved, "the swing moved the arm");
+    }
+}

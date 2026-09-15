@@ -629,6 +629,13 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
                 window.is_key_down(Key::LeftShift),
                 window.is_key_down(Key::LeftCtrl),
             );
+            // THE F5 PERSPECTIVE (vanilla handleKeybinds's
+            // keyTogglePerspective lane): the rising edge cycles the
+            // three views — first person, third-person back, third-person
+            // front (minifb has no edge API, the press is read per frame)
+            if window.is_key_pressed(Key::F5, minifb::KeyRepeat::No) {
+                app.on_perspective_key();
+            }
         }
         app.update();
         // dispatch newly requested server-list pings to worker threads
