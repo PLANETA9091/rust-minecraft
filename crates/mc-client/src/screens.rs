@@ -917,6 +917,13 @@ impl App {
                         self.sounds.play_swim(self.frame, b.swim_volume);
                         b.swim_due = false;
                     }
+                    // THE ENTRY SPLASH (updateFluidInteraction's own gate):
+                    // the water's big welcome, the speed picks the variant
+                    if b.splash_due {
+                        self.sounds
+                            .play_splash(self.frame, b.splash_volume, b.splash_high_speed);
+                        b.splash_due = false;
+                    }
                     if let Some(cmd) = b.take_move_wire().map(Self::move_wire_command) {
                         if let Some(sink) = self.live_clicks.as_ref() {
                             let _ = sink.send(cmd);

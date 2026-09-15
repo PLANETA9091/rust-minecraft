@@ -852,6 +852,18 @@ const MOB_VOICE_EVENTS: [&str; 4] = [
 /// asset-index fetch the mob voices speak.
 const PLAYER_SWIM_EVENTS: [&str; 1] = ["entity.player.swim"];
 
+/// The player's ENTRY SPLASH lane's events (Entity.doWaterSplashEffect —
+/// updateFluidInteraction's gate speaks it on the dry->water
+/// transition): the plain PLAYER_SPLASH (the slow wade-in's two
+/// weighted liquid/splash files) and the fall's PLAYER_SPLASH_HIGH_SPEED
+/// (one file — the getSwimSplashSound/getSwimHighSpeedSplashSound
+/// overrides the Player speaks). Every file rides the same
+/// sha1-verified asset-index fetch the swim voice speaks.
+const PLAYER_SPLASH_EVENTS: [&str; 2] = [
+    "entity.player.splash",
+    "entity.player.splash.high_speed",
+];
+
 /// Fetch the real menu music + in-game music + UI sound + biome music +
 /// mob voice + player voice .ogg files through the asset index. sounds.json names are
 /// relative to `assets/minecraft/sounds/` (extension optional — the vanilla
@@ -880,6 +892,7 @@ fn fetch_sound_events(
             || EXTRA_SOUND_EVENTS.contains(&id)
             || MOB_VOICE_EVENTS.contains(&id)
             || PLAYER_SWIM_EVENTS.contains(&id)
+            || PLAYER_SPLASH_EVENTS.contains(&id)
             || biome_events.binary_search(&id.to_string()).is_ok()
     };
     let mut menu = 0usize;
@@ -929,8 +942,13 @@ fn fetch_sound_events(
             // the four mob events speak DISJOINT file sets (say / hurt /
             // death / step) — the biome lane's own += shape
             mob += have;
-        } else if PLAYER_SWIM_EVENTS.contains(&ev.id.as_str()) {
-            player = have;
+        } else if PLAYER_SWIM_EVENTS.contains(&ev.id.as_str())
+            || PLAYER_SPLASH_EVENTS.contains(&ev.id.as_str())
+        {
+            // the player's own voices (the swim + the two splash
+            // variants) — the disjoint file sets ride the biome lane's
+            // own += shape
+            player += have;
         } else if biome_events.binary_search(&ev.id).is_ok() {
             biome += have;
         } else {

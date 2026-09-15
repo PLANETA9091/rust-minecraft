@@ -526,6 +526,28 @@ pub struct PlayerBody {
     /// water firing (the wading step and the drift speak the same
     /// law), read by the drain's play_swim call.
     pub swim_volume: f32,
+    /// THE TOUCHING-WATER STATE (Entity.wasTouchingWater's own field,
+    /// updateFluidInteraction's tail write): the body's fluid verdict
+    /// last tick carried — the ENTRY SPLASH's own gate reads it.
+    pub was_touching_water: bool,
+    /// THE FIRST-TICK GATE (Entity.firstTick's own field): a body
+    /// born in the water never splashes — the spawn-in-a-lake rhythm
+    /// stays silent the vanilla's own way. Cleared at the tick's end.
+    pub first_tick: bool,
+    /// THE ENTRY SPLASH (doWaterSplashEffect's own verdict, fired
+    /// through updateFluidInteraction's gate inWater &&
+    /// !wasTouchingWater && !firstTick): the water's big welcome. The
+    /// App clears it after the sound fold.
+    pub splash_due: bool,
+    /// THE SPEED VARIANT (the < 0.25 gate): false speaks the plain
+    /// PLAYER_SPLASH, true the HIGH_SPEED one — the fast fall's own
+    /// louder welcome.
+    pub splash_high_speed: bool,
+    /// THE SPLASH VOLUME (doWaterSplashEffect's fold): min(1.0,
+    /// d2f(sqrt(dx²·0.2 + dy² + dz²·0.2)) * 0.2F) over the CARRIED
+    /// velocity — the baseTick read, last move's post-collision
+    /// result, the entry speed the body fell in with.
+    pub splash_volume: f32,
     /// THE WALK ANIMATION STORE (WalkAnimationState, javap): the
     /// speed/position pair the third-person avatar's limb cosines
     /// speak. Updated every tick from the 3D move distance (the
@@ -589,6 +611,11 @@ impl PlayerBody {
             step_in_water: false,
             swim_due: false,
             swim_volume: 0.0,
+            was_touching_water: false,
+            first_tick: true,
+            splash_due: false,
+            splash_high_speed: false,
+            splash_volume: 0.0,
             walk: WalkAnimationState {
                 speed_old: 0.0,
                 speed: 0.0,
@@ -711,6 +738,11 @@ impl PlayerBody {
     /// impulse, the collide, the gravity and the drags. `using_item`
     /// speaks the use arc's own slowdown.
     pub fn tick(&mut self, world: &World, using_item: bool) {
+        // the per-tick event flags clear at the head (the App drains
+        // what THIS tick spoke): the splash's own clear rides here —
+        // the fluid update fires it AFTER this line, the step block's
+        // own clears never see it
+        self.splash_due = false;
         // the pre-tick position — the walk distance law's own source
         // (calculateEntityAnimation's getX() - xo fold)
         let (x0, y0, z0) = (self.x, self.y, self.z);
@@ -722,14 +754,41 @@ impl PlayerBody {
         if self.vy > FALL_ACCUM_VY_GATE && self.fall_distance > 1.0 {
             self.fall_distance = 1.0;
         }
-        // THE FLUID LANE'S OWN RESET (javap
-        // Entity.updateFluidInteraction: `isInFluid(WATER) ||
-        // isInFluid(LAVA)` -> resetFallDistance — every tick in a
-        // fluid the banked descent folds to zero, the water landing
-        // never hurts)
-        if self.touches_water(world) {
+        // THE FLUID LANE'S OWN UPDATE (javap
+        // Entity.updateFluidInteraction: the per-tick fluid scan ->
+        // `isInFluid(WATER) || isInFluid(LAVA)` -> resetFallDistance —
+        // every tick in a fluid the banked descent folds to zero, the
+        // water landing never hurts — AND the ENTRY SPLASH's own gate:
+        // inWater && !wasTouchingWater && !firstTick ->
+        // doWaterSplashEffect, the tail write wasTouchingWater =
+        // inWater)
+        let in_water = self.touches_water(world);
+        if in_water {
             self.fall_distance = 0.0;
+            if !self.was_touching_water && !self.first_tick {
+                // THE ENTRY SPLASH (doWaterSplashEffect's own law): the
+                // self volume base 0.2F (the passenger's 0.9F aside —
+                // the client player carries no rider), v = min(1.0,
+                // d2f(sqrt(dx²·0.2 + dy² + dz²·0.2)) * 0.2F) over the
+                // CARRIED velocity (the baseTick read — last move's
+                // post-collision result, the entry speed the body fell
+                // in with); the < 0.25 gate picks the plain PLAYER_SPLASH,
+                // the >= 0.25 the high-speed variant, the pitch 1.0 +
+                // (r - r) * 0.4F both ways. The splash PARTICLES' spread
+                // loop (the dimensions' width * 20 walk) has no
+                // vocabulary here — no particle lane.
+                let v = ((((self.vx * self.vx * 0.2
+                    + self.vy * self.vy
+                    + self.vz * self.vz * 0.2)
+                    .sqrt()) as f32)
+                    * 0.2)
+                    .min(1.0);
+                self.splash_due = true;
+                self.splash_volume = v;
+                self.splash_high_speed = v >= 0.25;
+            }
         }
+        self.was_touching_water = in_water;
         if self.no_jump_delay > 0 {
             self.no_jump_delay -= 1;
         }
@@ -954,6 +1013,10 @@ impl PlayerBody {
         } else {
             self.walk.stop();
         }
+        // THE FIRST-TICK GATE (Entity.firstTick's own clearing): the
+        // body's first 50ms beat spoke its lanes splash-free — the
+        // gate opens
+        self.first_tick = false;
     }
 
     /// THE FALL DISTANCE LAW (javap `Entity.checkFallDamage` over the
@@ -1904,5 +1967,175 @@ mod tests {
             );
         }
         assert!(steps >= 2, "the dry walk crossed its steps ({})", steps);
+    }
+
+    /// THE ENTRY SPLASH (updateFluidInteraction's own gate over
+    /// doWaterSplashEffect's law): the tall fall into the pool speaks
+    /// ONE splash at the entry tick — the carried velocity's own fold
+    /// (min(1, d2f(sqrt(dx²·0.2 + dy² + dz²·0.2)) * 0.2F)), the tall
+    /// fall's speed picks the HIGH_SPEED variant (>= 0.25), and the
+    /// in-water ticks after never speak it again.
+    #[test]
+    fn the_tall_entry_splashes_once_high_speed() {
+        let mut w = World::new(1, 42);
+        for x in 0..16 {
+            for z in 0..16 {
+                w.set(x, 0, z, crate::world::STONE);
+                for y in 1..4 {
+                    w.set(x, y as i32, z, WATER);
+                }
+                for y in 4..crate::world::CHUNK_Y {
+                    w.set(x, y as i32, z, AIR);
+                }
+            }
+        }
+        let mut b = PlayerBody::new(8.0, 20.0, 8.0, 0.0, 0.0);
+        let mut splashes = 0;
+        let mut tick = 0;
+        while tick < 400 {
+            let (prev_vx, prev_vy, prev_vz) = (b.vx, b.vy, b.vz);
+            b.tick(&w, false);
+            tick += 1;
+            if b.splash_due {
+                splashes += 1;
+                assert!(
+                    splashes == 1,
+                    "the entry speaks once ({splashes} splashes)"
+                );
+                // THE VOLUME LAW over the carried velocity — the
+                // straight drop's vx/vz ride zero, the fold reduces to
+                // |vy| * 0.2
+                let expected = ((prev_vx * prev_vx * 0.2
+                    + prev_vy * prev_vy
+                    + prev_vz * prev_vz * 0.2)
+                    .sqrt() as f32
+                    * 0.2)
+                    .min(1.0);
+                assert!(
+                    (b.splash_volume - expected).abs() < 1e-5,
+                    "the volume {} tracks the fold's {} (vy {})",
+                    b.splash_volume,
+                    expected,
+                    prev_vy
+                );
+                // THE TALL FALL's own speed: the entry vy past the
+                // 0.25 gate (volume 0.05 = vy 0.25), the HIGH_SPEED
+                // variant speaks
+                assert!(
+                    prev_vy < -1.0,
+                    "the tall fall carried speed in ({})",
+                    prev_vy
+                );
+                assert!(
+                    b.splash_high_speed,
+                    "the tall fall's splash rides the high-speed variant (v {})",
+                    b.splash_volume
+                );
+            }
+            if b.on_ground && splashes == 1 {
+                break;
+            }
+        }
+        assert_eq!(splashes, 1, "the entry spoke exactly once");
+        assert!(b.on_ground, "the body landed on the pool floor");
+        assert_eq!(b.fall_event, None, "the water landing never hurts");
+    }
+
+    /// THE BORN-WET BODY STAYS SILENT (the firstTick gate + the
+    /// wasTouchingWater carry): a body spawned inside the water never
+    /// splashes — not on the first tick, not after.
+    #[test]
+    fn the_born_wet_body_never_splashes() {
+        let mut w = World::new(1, 42);
+        for x in 0..16 {
+            for z in 0..16 {
+                w.set(x, 0, z, crate::world::STONE);
+                for y in 1..3 {
+                    w.set(x, y as i32, z, WATER);
+                }
+                for y in 3..crate::world::CHUNK_Y {
+                    w.set(x, y as i32, z, AIR);
+                }
+            }
+        }
+        let mut b = PlayerBody::new(8.0, 2.5, 8.0, 0.0, 0.0);
+        assert!(b.touches_water(&w), "the spawn sits in the fluid");
+        for _ in 0..30 {
+            b.tick(&w, false);
+            assert!(!b.splash_due, "the born-wet body stays silent");
+        }
+        assert!(!b.first_tick, "the gate opened after tick one");
+        assert!(b.was_touching_water, "the fluid state carried");
+    }
+
+    /// THE EXIT AND THE RE-ENTRY (the wasTouchingWater carry's own
+    /// shape): walking out of the water never splashes, walking back
+    /// in speaks the splash again — the slow wade-in rides the PLAIN
+    /// variant (the entry speed under the 0.25 gate).
+    #[test]
+    fn the_reentry_splashes_the_plain_variant() {
+        // the west half is a shallow pool, the east half dry stone
+        let mut w = World::new(1, 42);
+        for x in 0..16 {
+            for z in 0..16 {
+                w.set(x, 0, z, crate::world::STONE);
+                if x < 4 {
+                    w.set(x, 1, z, WATER);
+                } else {
+                    // the procedural terrain's own y=1 never cleared
+                    // itself — the dry side's floor line must speak air
+                    w.set(x, 1, z, AIR);
+                }
+                for y in 2..crate::world::CHUNK_Y {
+                    w.set(x, y as i32, z, AIR);
+                }
+            }
+        }
+        let mut b = PlayerBody::new(3.0, 1.0, 8.0, -90.0, 0.0); // facing east (+x)
+        settle(&mut b, &w);
+        assert!(b.touches_water(&w), "the wader starts in the pool");
+        // walk east — the exit crosses (the water's own drag makes the
+        // wade a slow one — the box must clear x=4's column entirely)
+        b.forward = 1.0;
+        let mut splashes = 0;
+        let mut exited = false;
+        for _ in 0..400 {
+            b.tick(&w, false);
+            if b.splash_due {
+                splashes += 1;
+            }
+            if !b.touches_water(&w) && !exited {
+                exited = true;
+                assert!(!b.splash_due, "the exit never splashes");
+            }
+            // the dry walk is fast — stop the eastward run before the
+            // body walks off into the world's own void
+            if exited && b.x > 8.0 {
+                break;
+            }
+        }
+        assert!(b.x > 3.0, "the walk moved east ({})", b.x);
+        assert!(exited, "the walk left the pool (x {})", b.x);
+        assert_eq!(splashes, 0, "the exit stays silent");
+        // turn west, walk back — the re-entry speaks the PLAIN variant
+        b.yaw = 90.0; // facing west (-x)
+        let mut reentry_splash = false;
+        for _ in 0..400 {
+            b.tick(&w, false);
+            if b.splash_due {
+                reentry_splash = true;
+                assert!(
+                    !b.splash_high_speed,
+                    "the slow wade-in speaks the plain variant (v {})",
+                    b.splash_volume
+                );
+                assert!(
+                    b.splash_volume < 0.25,
+                    "the volume sits under the gate ({})",
+                    b.splash_volume
+                );
+            }
+        }
+        assert!(reentry_splash, "the re-entry spoke its splash");
     }
 }

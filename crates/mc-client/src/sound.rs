@@ -272,6 +272,36 @@ impl BlockSounds {
         ));
     }
 
+    /// THE ENTRY SPLASH (javap `Entity.doWaterSplashEffect` — fired
+    /// through updateFluidInteraction's gate inWater &&
+    /// !wasTouchingWater && !firstTick): the water's big welcome, the
+    /// speed picks the variant — volume < 0.25 speaks the plain
+    /// `entity.player.splash` (getSwimSplashSound's own PLAYER_SPLASH
+    /// override), volume >= 0.25 the high-speed one
+    /// (getSwimHighSpeedSplashSound's PLAYER_SPLASH_HIGH_SPEED). The
+    /// pitch 1.0 + (r - r) * 0.4F in [0.6, 1.4] both ways, the two
+    /// randoms riding THIS engine's LCG (the draw order: the pitch
+    /// randoms first, then the file pick — the hurt voice's own
+    /// order). The VOLUME is the caller's speed fold (the self base
+    /// 0.2F the bytecode speaks).
+    pub fn play_splash(&mut self, tick: u64, volume: f32, high_speed: bool) {
+        let r1 = self.next_rand_f32();
+        let r2 = self.next_rand_f32();
+        let pitch = (r1 - r2) * 0.4 + 1.0;
+        let event = if high_speed {
+            "entity.player.splash.high_speed"
+        } else {
+            "entity.player.splash"
+        };
+        let Some(file) = self.pick_file(event) else {
+            return;
+        };
+        self.events.push(format!(
+            "{event} @{tick} #{file} v{:.6} p{:.6}",
+            volume, pitch
+        ));
+    }
+
     /// The FIXED-VOICE lane (the fall voice's generalized shape — the
     /// eat arc's completion speaks it): the caller's volume/pitch fold
     /// (the entity random's own verdict, the bytecode's draw order
@@ -438,6 +468,37 @@ mod tests {
         // the muffle speaks the SAME event the plain step does
         let idx = bs::sound_index("stone").expect("stone in the table");
         assert_eq!(Lane::StepMuffled.event_of(idx), Lane::Step.event_of(idx));
+    }
+
+    /// THE ENTRY SPLASH's variant law: the 0.25 gate picks the plain
+    /// splash under it, the high-speed one at and past it (javap
+    /// doWaterSplashEffect: fcmpg 0.25F, ifge — the >= branch names
+    /// the high-speed event).
+    #[test]
+    fn the_splash_variant_rides_the_speed_gate() {
+        // the slow wade-in: the plain PLAYER_SPLASH
+        let mut a = BlockSounds::new(5);
+        a.play_splash(3, 0.02, false);
+        assert!(
+            a.events[0].starts_with("entity.player.splash @3 #"),
+            "the plain event: {}",
+            a.events[0]
+        );
+        // the tall fall's entry: the HIGH_SPEED variant
+        let mut b = BlockSounds::new(5);
+        b.play_splash(3, 0.32, true);
+        assert!(
+            b.events[0].starts_with("entity.player.splash.high_speed @3 #"),
+            "the high-speed event: {}",
+            b.events[0]
+        );
+        assert!(b.events[0].contains(" v0.320000 p"), "the volume: {}", b.events[0]);
+        let pitch: f32 = b.events[0].split(" p").nth(1).unwrap().parse().unwrap();
+        assert!((0.6..=1.4).contains(&pitch), "the pitch range: {pitch}");
+        // determinism: the same seed speaks the same splash
+        let mut c = BlockSounds::new(5);
+        c.play_splash(3, 0.32, true);
+        assert_eq!(b.events, c.events);
     }
 
     #[test]

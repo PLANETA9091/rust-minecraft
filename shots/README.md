@@ -39,6 +39,7 @@ burn (the flame rings), the loot, the footsteps, the voices.
 | `zombie_burn.png` | THE FLAME RINGS on the terrace — the sun's brand burning while the body watches |
 | `zombie_night.png` | the stars, the moonlit approach at the terrace lip |
 | `zombie_death.png` | the death flip mid-clock |
+| `zombie_fire_hurt.png` | THE HURT-FLASH TINT on the burning zombie (v0.3.161): the 0.7 mix darkens the skin while the flame rings wrap it, the wader watching from the pond |
 | `s_zombie_burning_day.png`, `s_zombie_night_chase.png` | the twin agent's frames (the burning day, the night chase) |
 
 Regenerate the family:
