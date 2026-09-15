@@ -155,6 +155,32 @@ impl BlockSounds {
             volume, pitch
         ));
     }
+
+    /// The pickup voice (javap ClientPacketListener.handleTakeItemEntity's
+    /// ITEM_PICKUP branch): the `entity.item.pickup` event at the
+    /// PLAYERS source, volume 0.2, pitch `(r - r) * 1.4 + 2.0` — the two
+    /// randoms ride THIS engine's LCG (the same generator the weighted
+    /// pick speaks; the draw order: pitch randoms first, then the file
+    /// pick). The log rides the same format the block voices speak (the
+    /// audio backend mirrors it untouched).
+    pub fn play_pickup(&mut self, tick: u64) {
+        let r1 = self.next_rand_f32();
+        let r2 = self.next_rand_f32();
+        let pitch = crate::drops::pickup_pitch(r1, r2);
+        let Some(file) = self.pick_file("entity.item.pickup") else {
+            return;
+        };
+        self.events.push(format!(
+            "entity.item.pickup @{tick} #{file} v{:.6} p{:.6}",
+            crate::drops::PICKUP_VOLUME, pitch
+        ));
+    }
+
+    /// A [0,1) float from the engine's own LCG (the pickup pitch's two
+    /// draws speak it — the same 24-bit shape the file pick rolls).
+    fn next_rand_f32(&mut self) -> f32 {
+        (self.next_rand() % (1u64 << 24)) as f32 / (1u64 << 24) as f32
+    }
 }
 
 #[cfg(test)]
@@ -194,6 +220,24 @@ mod tests {
         assert_eq!(next_step(0.132), 1.0);
         assert_eq!(next_step(1.0), 2.0);
         assert_eq!(next_step(2.66), 3.0);
+    }
+
+    #[test]
+    fn the_pickup_voice_speaks_the_take_law() {
+        // the ITEM_PICKUP fold: volume 0.2, the pitch in (r-r)*1.4+2.0's
+        // own range [0.6, 3.4], the log format the backend mirrors
+        let mut a = BlockSounds::new(31);
+        a.play_pickup(9);
+        assert_eq!(a.events.len(), 1);
+        let e = &a.events[0];
+        assert!(e.starts_with("entity.item.pickup @9 #"), "the entry: {e}");
+        assert!(e.contains(" v0.200000 p"), "the volume: {e}");
+        let pitch: f32 = e.split(" p").nth(1).unwrap().parse().unwrap();
+        assert!((0.6..=3.4).contains(&pitch), "the pitch range: {pitch}");
+        // determinism: the same seed speaks the same voice
+        let mut b = BlockSounds::new(31);
+        b.play_pickup(9);
+        assert_eq!(a.events, b.events);
     }
 
     #[test]

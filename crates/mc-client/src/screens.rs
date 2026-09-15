@@ -479,6 +479,24 @@ pub struct App {
     /// `None` = the bare arm (the empty selection, or an id outside
     /// the bake domain).
     pub live_held: Option<i32>,
+    /// THE DROP LANE — the survival break's item entities (the vanilla
+    /// `ItemEntity` arc, drops.rs): the popResource spawn, the physics
+    /// tick, the neighbour merge, the 6000-tick despawn, the pickup
+    /// scan. The OFFLINE lane's own authority (the networked world's
+    /// entities stay the server's — the voxel prediction's own split).
+    pub drops: Vec<crate::drops::ItemDrop>,
+    /// The OFFLINE gameplay inventory (the vanilla `Inventory`'s own 36
+    /// slots — the hotbar 0..8, the main 9..35; the (id, count) stack
+    /// shape the HUD's projection speaks). The pickups land here; the
+    /// placement consumes the selected stack; the networked world keeps
+    /// the store's own projection (this lane sleeps).
+    pub inventory: crate::drops::Inventory,
+    /// The drop lane's own deterministic generator (the spawn spreads,
+    /// the loot rolls — drops.rs's LCG, the audio lane's own
+    /// architecture).
+    pub drop_rng: crate::drops::Lcg,
+    /// The offline entity id counter (the settle law's phase partner).
+    pub next_drop_id: i32,
 }
 
 /// One active USE — the vanilla LocalPlayer's own using fields (the
@@ -597,6 +615,10 @@ impl App {
             mouse_pos: None,
             shift_down: false,
             live_held: None,
+            drops: Vec::new(),
+            inventory: crate::drops::Inventory::default(),
+            drop_rng: crate::drops::Lcg::new(seed),
+            next_drop_id: 1,
         }
     }
 
@@ -703,6 +725,7 @@ impl App {
                 let mut beat = false;
                 let mut broke = false;
                 let mut broke_kind: u16 = 0;
+                let mut broke_pos: Option<(i32, i32, i32)> = None;
                 let mut hit_kind: Option<u16> = None;
                 // THE HIT BEAT (sound.rs's law): the vanilla checks
                 // destroyTicks % 4.0F == 0.0F BEFORE the machine's tick
@@ -746,6 +769,7 @@ impl App {
                                     && world.get(pos.0, pos.1, pos.2) == crate::world::AIR;
                                 if broke {
                                     broke_kind = kind;
+                                    broke_pos = Some(pos);
                                 }
                                 hit_kind = Some(kind);
                             }
@@ -770,6 +794,12 @@ impl App {
                     self.remesh_offline();
                     let name = crate::world::NAME_OF[broke_kind as usize];
                     self.sounds.play(self.frame, name, crate::sound::Lane::Break);
+                    // THE REWARD HALF (the vanilla destroyBlock's own
+                    // dropResources): the loot roll, the item entities
+                    // spawning by the popResource law
+                    if let Some(pos) = broke_pos {
+                        self.spawn_drops_for(broke_kind, pos);
+                    }
                 }
                 if beat {
                     // the mining beat's own swing (the vanilla's
@@ -794,6 +824,47 @@ impl App {
                         }
                     }
                 }
+            }
+            // THE DROP TICK (the vanilla Minecraft.tick's entity lane, the
+            // OFFLINE world's own authority): the item entities live their
+            // ItemEntity tick (the physics, the clocks), the neighbour
+            // merge rides each entity's own %40 cadence (inside
+            // merge_pass), and the player's aiStep scan speaks the pickup
+            // — the inventory add, the take voice, the stack's honest
+            // discard. The NETWORKED world's entities stay the server's
+            // (the voxel prediction's own split).
+            if !self.world_is_network && !self.drops.is_empty() {
+                {
+                    let world = self.offline_world.as_mut();
+                    if let Some(world) = world {
+                        for d in self.drops.iter_mut() {
+                            d.tick(world);
+                        }
+                    }
+                }
+                crate::drops::merge_pass(&mut self.drops);
+                if let Some(b) = self.body.as_ref() {
+                    let selected = self.selected_hotbar;
+                    let mut picked = false;
+                    for d in self.drops.iter_mut() {
+                        if crate::drops::pickup_scan(b, d) {
+                            if let crate::drops::Touch::Picked { .. } =
+                                crate::drops::player_touch(d, &mut self.inventory, selected)
+                            {
+                                picked = true;
+                            }
+                        }
+                    }
+                    if picked {
+                        // the take voice (handleTakeItemEntity's own law —
+                        // the packet's sound beat the offline lane speaks
+                        // directly)
+                        self.sounds.play_pickup(self.frame);
+                        // the hotbar's projection refreshes with the take
+                        self.hotbar_slots = self.inventory.hotbar();
+                    }
+                }
+                self.drops.retain(|d| d.count > 0);
             }
         }
     }
@@ -835,6 +906,7 @@ impl App {
             })
             .unwrap_or(crate::world::AIR);
         let mut dug = false;
+        let mut dug_pos: Option<(i32, i32, i32)> = None;
         let mut sends: Vec<crate::dig::DigSend> = Vec::new();
         if let Some(h) = &hit {
             if kind != crate::world::AIR {
@@ -855,6 +927,9 @@ impl App {
                     );
                     dug = was_solid
                         && world.get(h.pos.0, h.pos.1, h.pos.2) == crate::world::AIR;
+                    if dug {
+                        dug_pos = Some(h.pos);
+                    }
                 }
             } else {
                 self.miss_time = 10; // the vanilla hasMissTime branch
@@ -865,6 +940,11 @@ impl App {
         self.enqueue_dig(&sends);
         if dug {
             self.remesh_offline();
+            // THE INSTA-BREAK's own completion (the vanilla startDestroyBlock
+            // lambda's destroyBlock): the drop roll speaks here too
+            if let Some(pos) = dug_pos {
+                self.spawn_drops_for(kind, pos);
+            }
         }
         // THE UNCONDITIONAL SWING (the vanilla startAttack's own tail:
         // the BLOCK case, the MISS case — every branch that reached the
@@ -1355,6 +1435,11 @@ impl App {
             return; // the gate: out-of-domain or the repeat
         }
         self.selected_hotbar = selection;
+        // the held model follows the selection (the offline inventory's
+        // own lane — the empty selection falls through to the stand-in,
+        // the goldens' scenes never press keys)
+        let id = self.held_id();
+        self.load_held_payload_from_id(id);
         if let Some(sink) = self.live_clicks.as_ref() {
             let _ = sink.send(crate::world_view::ContainerCommand::SelectHotbar {
                 selection: selection as u8,
@@ -1946,7 +2031,20 @@ impl App {
     /// a live session clears the offline stand-in's authority by owning
     /// the screen). The press lanes' own key.
     fn held_id(&self) -> Option<i32> {
-        self.live_held.or(self.offline_held)
+        // the live lane's store selection speaks first (the networked
+        // world's own)
+        if let Some(id) = self.live_held {
+            return Some(id);
+        }
+        // the offline gameplay arc: the inventory's selected stack (the
+        // pickups' own lane) speaks before the `--held-item` stand-in —
+        // the golden scenes' empty inventory falls through, the stand-in
+        // lane stays the goldens' own
+        let sel = self.inventory.items[self.selected_hotbar];
+        if sel.1 > 0 {
+            return Some(sel.0);
+        }
+        self.offline_held
     }
 
     /// The block-use lane's world — the screen's OWN terrain: the
@@ -2032,6 +2130,27 @@ impl App {
             if let Some(world) = self.offline_world.as_ref() {
                 self.world_quads = Some(crate::mesher::mesh_world(world, None));
             }
+        }
+    }
+
+    /// THE REWARD HALF — `Block.dropResources`'s own call the completion
+    /// speaks: the loot roll (the generated hand-lane table, the TOOL
+    /// GATE riding block_dig's own requiresCorrectToolForDrops flag —
+    /// the bare hand's stone refuses everything), then one item entity
+    /// per drop by the popResource law (the ±0.25 spread, the 0.125
+    /// lift, the 10-tick pickup delay, the render seed). The OFFLINE
+    /// lane's own authority: the networked world's entities are the
+    /// server's own stream.
+    fn spawn_drops_for(&mut self, kind: u16, pos: (i32, i32, i32)) {
+        if self.world_is_network {
+            return;
+        }
+        for (item, count) in crate::drops::roll_drops(kind, &mut self.drop_rng) {
+            let id = self.next_drop_id;
+            self.next_drop_id += 1;
+            self.drops.push(crate::drops::ItemDrop::spawn(
+                id, item, count, pos.0, pos.1, pos.2, &mut self.drop_rng,
+            ));
         }
     }
 
@@ -2124,6 +2243,20 @@ impl App {
         if let (Some(world), false) = (self.offline_world.as_mut(), self.world_is_network) {
             world.set(cell.0, cell.1, cell.2, block);
             self.world_quads = Some(crate::mesher::mesh_world(world, None));
+            // THE SURVIVAL CONSUME (BlockItem.place's own shrink): the
+            // held stack came from the inventory's selection — the count
+            // rides down, the empty slot clears. The `--held-item`
+            // stand-in (the golden scenes' lane) speaks no stack: the
+            // consume is the honest no-op it always was.
+            let sel = self.selected_hotbar;
+            let stack = self.inventory.items[sel];
+            if stack.1 > 0 && stack.0 == id {
+                self.inventory.items[sel].1 -= 1;
+                if self.inventory.items[sel].1 <= 0 {
+                    self.inventory.items[sel] = (0, 0);
+                }
+                self.hotbar_slots = self.inventory.hotbar();
+            }
         }
         // THE PLACE SOUND: BlockItem.place's own fold — the placed block's
         // SoundType through (v+1)/2, p*0.8. The networked prediction
@@ -2404,6 +2537,12 @@ impl App {
         if let Some(quads) = &self.world_quads {
             fb.draw_quads(&ctx, quads);
         }
+        // THE DROP LANE's entities (the vanilla LevelRenderer's entity
+        // pass: after the terrain, before the clouds) — the item
+        // entities bob and spin at their world positions
+        if !self.drops.is_empty() {
+            self.render_drops(fb, &ctx);
+        }
         crate::sky::render_clouds(fb, &ctx, &cam, day_time, 0.0, self.world_cloud_fog_end);
         // THE DIG LANE's frame render (the vanilla LevelRenderer's own
         // pair, both after the terrain and before the hand): the hit
@@ -2437,6 +2576,97 @@ impl App {
         } else if let Some(arm) = &self.arm {
             arm.draw(fb, ctx.proj, self.swing.get_attack_anim(0.5));
         }
+    }
+
+    /// THE DROP LANE's render — the vanilla `ItemEntityRenderer`'s own
+    /// pose chain (javap submit): the entity origin carries
+    /// `translate(0, bob + lift, 0)` and the `rotY(spin)` about it, the
+    /// GROUND display transform speaks inside (the registry's posed
+    /// chain — scale 0.5, the [0,3,0]/16 translation), and the model's
+    /// own base lift rides `-minY + 1/16` over the posed quads' actual
+    /// minimum. The face shade folds per quad (`Level.getShade`'s own
+    /// table — the offline world carries no light grid, the same
+    /// full-bright lane the procedural scenes mesh in). The count
+    /// cluster rides the single-model lane (the HUD's count number
+    /// speaks the stack size; the cluster's random spread polys are the
+    /// count>1 render's future own).
+    fn render_drops(&mut self, fb: &mut crate::raster::Framebuf, ctx: &RenderCtx) {
+        use mc_registry::element_quads::Direction;
+        // the face shade law (colors.rs's own table, the Cull enum order)
+        let ground_shade = |d: Direction| match d {
+            Direction::Up => 1.0f32,
+            Direction::Down => 0.5,
+            Direction::North | Direction::South => 0.8,
+            Direction::West | Direction::East => 0.6,
+        };
+        let mut sampled: Vec<crate::raster::SampledQuad> = Vec::new();
+        for d in &self.drops {
+            let Some(layers) = mc_registry::item_model_layers(d.item) else {
+                continue;
+            };
+            // the posed quads with their layer's tint jsons (the layer
+            // boundary the tint resolution rides)
+            let mut parts: Vec<(mc_registry::element_quads::Quad, &'static [&'static str])> =
+                Vec::new();
+            let mut ok = true;
+            for layer in &layers {
+                match mc_registry::display::posed_item_layer_quads(
+                    layer.model,
+                    layer.transform,
+                    mc_registry::display::GROUND,
+                ) {
+                    Some(Ok(quads)) => {
+                        for q in quads {
+                            parts.push((q, layer.tints));
+                        }
+                    }
+                    _ => {
+                        ok = false;
+                        break;
+                    }
+                }
+            }
+            if !ok || parts.is_empty() {
+                continue; // the honest unknown renders nothing
+            }
+            // the model's own base lift over the posed quads' minimum
+            let min_y = parts
+                .iter()
+                .flat_map(|(q, _)| q.vertices.iter().map(|v| v[1]))
+                .fold(f32::INFINITY, f32::min);
+            let age = d.age as f32;
+            let m = Mat4::translation(d.x as f32, d.y as f32, d.z as f32)
+                .mul(&Mat4::rot_y(crate::drops::spin(age, d.bob_offs)))
+                .mul(&Mat4::translation(
+                    0.0,
+                    crate::drops::bob(age, d.bob_offs) + crate::drops::base_lift(min_y),
+                    0.0,
+                ));
+            for (q, tints) in &parts {
+                let base = icon_tint(tints);
+                let sh = if q.shade { ground_shade(q.direction) } else { 1.0 };
+                sampled.push(crate::raster::SampledQuad {
+                    pts: q.vertices.map(|v| {
+                        let p = m.transform_point(Vec3::new(v[0], v[1], v[2]));
+                        [p[0], p[1], p[2]]
+                    }),
+                    uv: q.uvs,
+                    tex: q.texture,
+                    tint: [base[0] * sh, base[1] * sh, base[2] * sh],
+                });
+            }
+        }
+        if sampled.is_empty() {
+            return;
+        }
+        let vp = ctx.proj.mul(&ctx.view);
+        fb.draw_sampled_quads(vp, &sampled, &mut |tex, u, v| {
+            match mc_registry::sprite_uv::sample_uv(tex, u, v) {
+                mc_registry::sprite_uv::Sample::Pixel(c) => Some(c),
+                mc_registry::sprite_uv::Sample::Missing(c) => Some(c),
+                mc_registry::sprite_uv::Sample::Unknown => None,
+            }
+        });
     }
 
     fn ensure_world(&mut self) {
@@ -5494,6 +5724,145 @@ mod tests {
         let before = app.sounds.events.len();
         assert!(!app.on_right_press(0, 0), "the sky miss never places");
         assert_eq!(app.sounds.events.len(), before, "the miss is silent");
+    }
+
+    /// THE DROP LANE'S REWARD ARC: the dirt break spawns its item entity
+    /// by the popResource law (the spread, the 10-tick delay), the body
+    /// standing in the hole picks it up through the aiStep scan — the
+    /// inventory add, the take voice, the hotbar's projection, the
+    /// entity's honest discard.
+    #[test]
+    fn the_drop_lane_rewards_the_dig() {
+        let mut app = App::new(3);
+        app.enter_world();
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let surface = app.spawn_y - 1;
+        let kind_before = app.offline_world.as_ref().unwrap().get(c, surface, c);
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, app.spawn_y as f32 + 4.0, c as f32 + 0.5),
+            yaw: 0.0,
+            pitch: -std::f32::consts::FRAC_PI_2,
+        });
+        assert!(app.drops.is_empty(), "the lane starts empty");
+        // THE DIG: the hold mines the surface cell to air
+        app.on_press(0, 0);
+        let mut ticks = 0;
+        while app.offline_world.as_ref().unwrap().get(c, surface, c) != crate::world::AIR {
+            app.update();
+            ticks += 1;
+            assert!(ticks < 400, "the dig completed in time");
+        }
+        // THE DROP: exactly one item entity (the hand-lane row's own
+        // single entry), the popResource laws on the fields
+        assert_eq!(app.drops.len(), 1, "the break spawned its drop");
+        let drop_item = app.drops[0].item;
+        // the item id resolves through the generated table's own row
+        let name = crate::world::NAME_OF[kind_before as usize];
+        let pools = mc_registry::generated::block_drops::drops(name)
+            .expect("the broken block's loot row exists");
+        let expected = mc_registry::item_id_by_name(pools[0].entries[0].item).unwrap();
+        assert_eq!(drop_item, expected, "the drop rides the table's own row");
+        assert_eq!(app.drops[0].count, 1);
+        // the spawn update's own drop tick already drained one (the dig
+        // completion and the entity tick share that update)
+        assert_eq!(app.drops[0].pickup_delay, 9, "the popResource delay, one tick spoken");
+        assert_eq!(app.drops[0].id, 1, "the offline id counter");
+        assert!(
+            (app.drops[0].x - (c as f64 + 0.5)).abs() <= 0.25
+                && (app.drops[0].z - (c as f64 + 0.5)).abs() <= 0.25,
+            "the ±0.25 spread around the block center"
+        );
+        // THE HOLD ENDS: the release clears the dig (no re-arm while the
+        // test's body materializes in the hole)
+        app.on_left_release();
+        // THE BODY in the hole: the feet on the broken cell's floor — the
+        // scan's inflate reaches the resting item
+        app.body = Some(crate::body::PlayerBody::new(
+            c as f64 + 0.5,
+            surface as f64,
+            c as f64 + 0.5,
+            0.0,
+            0.0,
+        ));
+        // THE TICKS: the item's delay drains, the scan speaks the pickup
+        for _ in 0..20 {
+            app.update();
+        }
+        assert!(app.drops.is_empty(), "the entity discarded after the take");
+        assert_eq!(
+            app.inventory.items[0],
+            (drop_item, 1),
+            "the hotbar's first slot holds the take"
+        );
+        assert_eq!(app.hotbar_slots[0], (drop_item, 1), "the HUD's projection");
+        let pickup_entry = app
+            .sounds
+            .events
+            .iter()
+            .find(|e| e.starts_with("entity.item.pickup @"))
+            .expect("the take voice spoke");
+        assert!(
+            pickup_entry.contains(" v0.200000 p"),
+            "the pickup fold's own volume: {pickup_entry}"
+        );
+    }
+
+    /// THE SURVIVAL CONSUME: the placement rides the selected stack's
+    /// count down (BlockItem.place's own shrink), the HUD's projection
+    /// follows, and the empty slot clears (the held lane falls back).
+    #[test]
+    fn the_place_lane_consumes_the_selected_stack() {
+        let mut app = App::new(3);
+        app.enter_world();
+        let dirt_id = mc_registry::item_id_by_name("dirt").unwrap();
+        // the selected slot carries 3 dirt — the pickups' own lane
+        app.inventory.items[0] = (dirt_id, 3);
+        app.hotbar_slots = app.inventory.hotbar();
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let top = app.spawn_y;
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, top as f32 + 4.0, c as f32 + 0.5),
+            yaw: 0.0,
+            pitch: -std::f32::consts::FRAC_PI_2,
+        });
+        assert_eq!(
+            app.offline_world.as_ref().unwrap().get(c, top, c),
+            crate::world::AIR,
+            "the placement cell starts empty"
+        );
+        assert!(app.on_right_press(0, 0), "the placement consumed the press");
+        assert_eq!(
+            app.offline_world.as_ref().unwrap().get(c, top, c),
+            crate::world::DIRT,
+            "the voxel landed"
+        );
+        assert_eq!(
+            app.inventory.items[0],
+            (dirt_id, 2),
+            "the count rode down one"
+        );
+        assert_eq!(app.hotbar_slots[0], (dirt_id, 2), "the projection followed");
+        // THE SECOND PLACE: the crosshair now rides the placed dirt's own
+        // UP face — the next cell lands on top, the count rides to 1
+        assert!(app.on_right_press(0, 0), "the second place spoke");
+        assert_eq!(app.inventory.items[0], (dirt_id, 1), "the count rode to 1");
+        // THE REFUSAL: the next cell (the column's third) intersects the
+        // camera's own standing box — the vanilla's own guard, the count
+        // keeps its 1
+        assert!(!app.on_right_press(0, 0), "the placement into the player refuses");
+        assert_eq!(app.inventory.items[0], (dirt_id, 1), "the refused place consumes nothing");
+        // THE CAMERA LIFTS: the same column's next cell no longer
+        // intersects — the last stack places, the slot clears
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, top as f32 + 6.0, c as f32 + 0.5),
+            yaw: 0.0,
+            pitch: -std::f32::consts::FRAC_PI_2,
+        });
+        assert!(app.on_right_press(0, 0), "the third place spoke");
+        assert_eq!(app.inventory.items[0], (0, 0), "the empty slot cleared");
+        assert!(!app.on_right_press(0, 0), "the empty selection never places");
     }
 
     /// THE BLOCK-SOUND ARC'S FOOTSTEPS: the walking body's steps ride

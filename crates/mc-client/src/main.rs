@@ -14,6 +14,7 @@ mod camera;
 mod colors;
 mod colormap;
 mod dig;
+mod drops;
 mod end_flash;
 mod gpu;
 mod gui;

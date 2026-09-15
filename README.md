@@ -919,6 +919,56 @@ hand-drawn:
   (VILLAGER_DATA at 18 doubles as the order proof), the generated-id
   pin, and the model's merge semantics (replace-one-leave-others, the
   null-lookup drop, the re-spawn reset).
+  The **the drop lane — the item entities, the loot rolls, the pickup, the survival inventory (v0.3.149)**:
+  the dig's REWARD half — the broken block's items fly, bounce and land
+  in the player's hands, exactly the original's own laws. The data:
+  `scripts/gen_block_drops.py` parses the official jar's
+  `data/minecraft/loot_table/blocks/*.json` (1113 tables) into
+  `mc-registry/src/generated/block_drops.rs` under the client's HAND
+  LANE — no shears, no silk touch, no fortune, no explosion — the pools
+  independent (a leaves break can yield the sapling AND a stick AND an
+  apple), the alternatives resolved as the case chain the vanilla's
+  eval order speaks (the gravel's flint@0.10 then the gravel fallback),
+  the counts riding the INCLUSIVE int law (javap `Mth.nextInt`: `min +
+  nextInt(max - min + 1)` — the raw copper's 2..5, the redstone's 4..5,
+  the lapis's 4..9), and the TOOL GATE riding `block_dig`'s own
+  `requiresCorrectToolForDrops` flag: the bare hand's stone, granite,
+  deepslate and every ore drop NOTHING — the vanilla's own honesty.
+  The entity (`mc-client/src/drops.rs`, the javap of the real 26.2
+  classes): `Block.popResource`'s spawn — the block center ±0.25 per
+  axis, the 0.125 height lift, `setPickUpDelay(10)`, the render seed
+  `nextFloat() * PI * 2`; `ItemEntity.tick` — the gravity 0.04 (the
+  probe-verified 0.25x0.25 dimensions via ProbeItemDims), the water
+  buoyancy lane, the Y-first collision sweep (body.rs's own law), the
+  ground drag 0.98*0.6 vs the air 0.98, the landing bounce
+  (`multiply(1, -0.5, 1)`), the settle skip (`(tickCount + id) % 4`),
+  the neighbour merge every 40th tick (the closest same-item absorber,
+  the 64 cap), the 6000-tick despawn. The pickup: `Player.aiStep`'s
+  scan box `inflate(1.0, 0.5, 1.0)`, `playerTouch`'s delay gate, the
+  partial count's honest shrink (70 dirt into a near-full inventory
+  takes 4 and keeps 66 on the entity), and `Inventory.add`'s own merge
+  order — the SELECTED hotbar slot first, then the scan, then the first
+  free slot (javap `getSlotWithRemainingSpace`/`getFreeSlot`). The
+  voice: `handleTakeItemEntity`'s modern law — `entity.item.pickup` at
+  volume 0.2, pitch `(r - r) * 1.4 + 2.0` (`random/pop.ogg` fetched and
+  sha1-verified). The render: `ItemEntityRenderer.submit`'s pose chain —
+  `sin(age/10 + bobOffs) * 0.1 + 0.1` bob, the `age/20 + bobOffs` spin,
+  the GROUND display context's posed quads (scale 0.5, the [0,3,0]/16
+  translation), the model's own base lift `-minY + 1/16`, the
+  `Level.getShade` face shade per quad. The SURVIVAL PAIRING: the
+  placement consumes the selected stack one-by-one (BlockItem.place's
+  own shrink), the empty slot clears, the held lane falls back, and the
+  number keys reload the first-person model from the inventory's own
+  selection. The offline arc's `--held-item` stand-in keeps the golden
+  scenes' lane (the empty inventory falls through — GOLDENS UNTOUCHED:
+  13/13 at rms 0.000). Tests +27 (workspace 579 -> 606 passed / 0
+  failed / 3 ignored): the LCG laws, the popResource spawn law, the
+  gravity/drag/bounce/settle chain, the water buoyancy, the merge's
+  fit-refusal, the inventory's merge/free-slot/64-cap walks, the pickup
+  delay/partial/scan laws, the tool gate's refusals, the gravel chain
+  and the leaves' three independent pools, the pickup voice's fold, and
+  the App's full reward arc (dig -> drop -> fall -> pickup -> hotbar)
+  plus the survival consume (place -> shrink -> clear -> refuse).
   The **the sound of blocks — the SoundType table, the dig beat's hit, the break, the place, the footsteps (v0.3.148)**:
   the block-sound arc — every interaction lane now SPEAKS like the
   original speaks. The data: a new runtime dumper

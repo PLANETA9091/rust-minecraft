@@ -114,8 +114,9 @@ fn box_at(x: f64, y: f64, z: f64, height: f64) -> (f64, f64, f64, f64, f64, f64)
 }
 
 /// The solid predicate — the clip lane's own (the fluids never decide
-/// the hit, the air is the air).
-fn solid(world: &World, x: i32, y: i32, z: i32) -> bool {
+/// the hit, the air is the air). The drop lane's un-stuck and the
+/// item physics speak the same law.
+pub fn solid(world: &World, x: i32, y: i32, z: i32) -> bool {
     let id = world.get(x, y, z);
     id != AIR && id != WATER
 }
