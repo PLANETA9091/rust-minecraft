@@ -3784,6 +3784,115 @@ impl App {
                 arm.draw(fb, ctx.proj, self.swing.get_attack_anim(0.5));
             }
         }
+        // THE FIRE SCREEN OVERLAY (the vanilla ScreenEffectRenderer
+        // submit's own tail — the pass the GameRenderer speaks AFTER
+        // renderItemInHand, BEFORE the HUD): the burning player's
+        // first-person flame sheets, the FIRE_1 sprite's two camera
+        // quads the buildQuad bytecode speaks.
+        self.render_fire_overlay(fb, &ctx, day_time);
+    }
+
+    /// THE FIRE SCREEN OVERLAY (javap `ScreenEffectRenderer.submit`'s
+    /// own chain, the 26.2 jar): the GameRenderer's call gate speaks
+    /// `cameraType.isFirstPerson()` as the FIRST argument — the whole
+    /// camera-overlay block (the head-in-block, the water, the fire)
+    /// sleeps in the detached views, the avatar's own flame rings take
+    /// the third-person lane — then `player.isOnFire()` arms the fire
+    /// half: `sprites.get(ModelBakery.FIRE_1)` -> `submitFire`. The
+    /// geometry is lambda$submitFire$0's own matrix pair: TWO quads,
+    /// each on a fresh camera-pose copy folded
+    /// `translate(±0.24, -0.3, 0)` then `rotateY(∓0.17453292)` (the
+    /// ±10° inward tilt), carrying the [-0.5, 0.5]² plane at z = -0.5;
+    /// `buildFireQuad` -> `buildSpriteQuad` feeds the FIRE_1 sprite's
+    /// full frame through buildQuad's own uv walk — (x0,y0)->(u1,v1),
+    /// (x1,y0)->(u0,v1), (x1,y1)->(u0,v0), (x0,y1)->(u1,v0): the LEFT
+    /// edge rides u1 (the horizontal mirror the bytecode speaks), the
+    /// bottom edge rides v1 (upright). The vertex color is the int
+    /// -436207617 = 0xE5FFFFFF — the white tint (a no-op multiply) at
+    /// the alpha 229/255 the translucent blend speaks. The strip's
+    /// pixels ride the same sha1-verified FireStrips the mob lane's
+    /// flame rings speak; the frame is fire1's own `% 32` rotation at
+    /// the world tick.
+    fn render_fire_overlay(
+        &mut self,
+        fb: &mut crate::raster::Framebuf,
+        ctx: &RenderCtx,
+        day_time: i64,
+    ) {
+        // THE GATE PAIR (the submit bytecode's own two ifne's): the
+        // first-person camera only, the burning body only
+        if !self.perspective.is_first_person() {
+            return;
+        }
+        let Some(body) = &self.body else {
+            return; // the deterministic scenes own no body — nothing burns
+        };
+        if body.remaining_fire_ticks <= 0 {
+            return;
+        }
+        if self.fire_strips.is_none() {
+            self.fire_strips =
+                crate::avatar::FireStrips::load(std::path::Path::new("assets-cache/jar"));
+        }
+        let Some(strips) = &self.fire_strips else {
+            return; // the strip asset failed its sha1 — the overlay stays honest
+        };
+        // THE FRAME (fire1_frame's own plain `% 32` rotation)
+        let frame = crate::avatar::fire1_frame(day_time) as f32;
+        let (v0, v1) = (frame * 16.0, (frame + 1.0) * 16.0);
+        // THE MATRIX PAIR (lambda$submitFire$0's own two folds, the
+        // joml rotateY convention the avatar billboard already speaks:
+        // x' = x cos a + z sin a; z' = -x sin a + z cos a)
+        let tilt = 0.17453292f32;
+        let build = |tx: f32, ry: f32| -> [[f32; 3]; 4] {
+            let (sa, ca) = ry.sin_cos();
+            // the corner fold: Ry then T — the vertex (x, y, -0.5) the
+            // buildFireQuad constants speak, translated after the turn
+            let fold = |x: f32, y: f32| {
+                let z = -0.5f32;
+                let rx = x * ca + z * sa;
+                let rz = -x * sa + z * ca;
+                [rx + tx, y - 0.3, rz]
+            };
+            // buildQuad's own vertex walk with the buildQuad uv law
+            // (the left edge rides u1 = 16, the bottom edge v1): the
+            // sprite renders mirrored horizontally, upright
+            [
+                fold(-0.5, -0.5), // v0 -> (u1, v1)
+                fold(0.5, -0.5),  // v1 -> (u0, v1)
+                fold(0.5, 0.5),   // v2 -> (u0, v0)
+                fold(-0.5, 0.5),  // v3 -> (u1, v0)
+            ]
+        };
+        let quads: Vec<crate::raster::SampledQuad> = [
+            (0.24, -tilt), // the right sheet, yawed -10°
+            (-0.24, tilt), // the left sheet, yawed +10°
+        ]
+        .into_iter()
+        .map(|(tx, ry)| crate::raster::SampledQuad {
+            pts: build(tx, ry),
+            uv: [
+                [16.0, v1],
+                [0.0, v1],
+                [0.0, v0],
+                [16.0, v0],
+            ],
+            tex: "fire_screen",
+            tint: [1.0, 1.0, 1.0], // the vertex color's white multiply
+        })
+        .collect();
+        // THE DRAW (the translucent blend at the vertex alpha the
+        // 0xE5FFFFFF color speaks — 229/255; the depth TEST survives,
+        // nothing writes — the two sheets both blend their overlap)
+        fb.draw_translucent_sampled_quads(
+            ctx.proj,
+            &quads,
+            229.0 / 255.0,
+            &mut |_tex, u, v| {
+                let [r, g, b, a] = strips.pixel(1, u, v);
+                Some([r, g, b, a])
+            },
+        );
     }
 
     /// THE THIRD-PERSON AVATAR's frame render — the vanilla

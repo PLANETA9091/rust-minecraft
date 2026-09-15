@@ -2,7 +2,7 @@
 
 Every lane that ships pixels owes the folder a frame. The gallery is the
 proof the features exist as rendered images, not as test names alone.
-88 frames and counting — grouped below by the lane that spoke them.
+89 frames and counting — grouped below by the lane that spoke them.
 
 ## The F5 lane (the third-person avatar) — v0.3.154+
 
@@ -50,6 +50,28 @@ cargo run -p mc-client --release -- --headless --screen world --seed 42 \
 # --lava-pool (the dry basin carve), --body-fire N (the seeded brand —
 # the flame feature's own render clock), --walk-ticks (the sink + the
 # contact)
+```
+
+## The fire-screen lane (the first-person burn) — v0.3.163
+
+The ScreenEffectRenderer overlay (javap the 26.2 jar): the
+GameRenderer's `cameraType.isFirstPerson()` gate, the `isOnFire` arm,
+the TWO camera quads `translate(±0.24, -0.3, 0)·rotateY(∓10°)` at
+z=-0.5, the FIRE_1 sprite's full frame through buildQuad's own uv walk
+(the left edge rides u1 — the horizontal mirror), the vertex alpha
+0xE5FFFFFF (229/255) the translucent blend speaks, the depth test
+without the write.
+
+| frame | the scene |
+|---|---|
+| `fire_screen.png` | THE BURNING SCREEN: the two flame sheets tilted over the lower view, the lava pool glowing beneath, the hand and the HUD riding over — the first-person burn the vanilla screen speaks |
+
+Regenerate:
+
+```sh
+cargo run -p mc-client --release -- --headless --screen world --seed 42 \
+  --body --lava-pool --body-fire 250 --perspective first \
+  --out shots/fire_screen.png
 ```
 
 ## The zombie lane (the first live mob) — v0.3.155+

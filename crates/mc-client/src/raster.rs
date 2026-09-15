@@ -863,6 +863,108 @@ impl Framebuf {
             }
         }
     }
+
+    /// THE SCREEN-EFFECT BLEND (the sampled walk's translucent sibling
+    /// — the fire screen overlay's own draw): the same clip /
+    /// perspective-correct interpolation / depth TEST as
+    /// `draw_sampled_quads`, but NO depth write (the translucent pass's
+    /// own convention — the two overlapping camera quads both blend)
+    /// and the texel's own alpha scales the pass's vertex alpha
+    /// (`a = texel_a * alpha_scale`), the result blended over the
+    /// framebuffer: `out = src * a + dst * (1 - a)` — the vanilla
+    /// translucent blend the fire's RenderType speaks. The vertex
+    /// alpha is the 0xE5FFFFFF vertex color the buildQuad bytecode
+    /// speaks (229/255), the per-quad tint rides before the blend.
+    pub fn draw_translucent_sampled_quads(
+        &mut self,
+        proj: Mat4,
+        quads: &[SampledQuad],
+        alpha_scale: f32,
+        sample: &mut dyn FnMut(&str, f32, f32) -> Option<[u8; 4]>,
+    ) {
+        let w_px = self.w as f32;
+        let h_px = self.h as f32;
+        for quad in quads {
+            let clip: Vec<[f32; 4]> = quad
+                .pts
+                .iter()
+                .map(|p| proj.transform_point(Vec3::new(p[0], p[1], p[2])))
+                .collect();
+            let clipped = clip_near(&clip);
+            if clipped.len() < 3 {
+                continue;
+            }
+            let mut sx = vec![0f32; clipped.len()];
+            let mut sy = vec![0f32; clipped.len()];
+            let mut ow = vec![0f32; clipped.len()];
+            let mut vz = vec![0f32; clipped.len()];
+            for i in 0..clipped.len() {
+                let c = clipped[i];
+                let iw = 1.0 / c[3];
+                sx[i] = (c[0] * iw * 0.5 + 0.5) * w_px;
+                sy[i] = (1.0 - (c[1] * iw * 0.5 + 0.5)) * h_px;
+                ow[i] = iw;
+                vz[i] = c[3];
+            }
+            for tri in 1..clipped.len() - 1 {
+                let (ax, ay, a_ow, a_vz) = (sx[0], sy[0], ow[0], vz[0]);
+                let (bx, by, b_ow, b_vz) = (sx[tri], sy[tri], ow[tri], vz[tri]);
+                let (cx, cy, c_ow, c_vz) = (sx[tri + 1], sy[tri + 1], ow[tri + 1], vz[tri + 1]);
+                let (ua, va) = (quad.uv[0][0], quad.uv[0][1]);
+                let (ub, vb) = (quad.uv[tri.min(3)][0], quad.uv[tri.min(3)][1]);
+                let (uc, vc) = (
+                    quad.uv[(tri + 1).min(3)][0],
+                    quad.uv[(tri + 1).min(3)][1],
+                );
+                let area_ab = edge(ax, ay, bx, by, cx, cy);
+                if area_ab.abs() < 1e-9 {
+                    continue;
+                }
+                let inv_area = 1.0 / area_ab;
+                let minx = ax.min(bx).min(cx).floor().max(0.0) as isize;
+                let miny = ay.min(by).min(cy).floor().max(0.0) as isize;
+                let maxx = ax.max(bx).max(cx).ceil().min(w_px - 1.0) as isize;
+                let maxy = ay.max(by).max(cy).ceil().min(h_px - 1.0) as isize;
+                for py in miny..=maxy {
+                    for px_ in minx..=maxx {
+                        let fx = px_ as f32 + 0.5;
+                        let fy = py as f32 + 0.5;
+                        let w0 = edge(bx, by, cx, cy, fx, fy);
+                        let w1 = edge(cx, cy, ax, ay, fx, fy);
+                        let w2 = edge(ax, ay, bx, by, fx, fy);
+                        if w0 < 0.0 || w1 < 0.0 || w2 < 0.0 {
+                            continue;
+                        }
+                        let b0 = w0 * inv_area;
+                        let b1 = w1 * inv_area;
+                        let b2 = w2 * inv_area;
+                        let dist = 1.0 / (b0 * a_ow + b1 * b_ow + b2 * c_ow);
+                        let z = (b0 * a_vz * a_ow + b1 * b_vz * b_ow + b2 * c_vz * c_ow) * dist;
+                        let u = (b0 * ua * a_ow + b1 * ub * b_ow + b2 * uc * c_ow) * dist;
+                        let v = (b0 * va * a_ow + b1 * vb * b_ow + b2 * vc * c_ow) * dist;
+                        let idx = (py as usize) * self.w + px_ as usize;
+                        if z >= self.depth[idx] {
+                            continue; // the depth TEST survives; nothing writes
+                        }
+                        let Some(texel) = sample(quad.tex, u, v) else {
+                            continue;
+                        };
+                        let a = (texel[3] as f32 / 255.0) * alpha_scale;
+                        if a <= 0.0 {
+                            continue; // the fully transparent texel blends nothing
+                        }
+                        let o = idx * 3;
+                        for ch in 0..3 {
+                            let src = texel[ch] as f32 / 255.0 * quad.tint[ch];
+                            let dst = self.color[o + ch] as f32 / 255.0;
+                            let out = src * a + dst * (1.0 - a);
+                            self.color[o + ch] = (out.clamp(0.0, 1.0) * 255.0).round() as u8;
+                        }
+                    }
+                }
+            }
+        }
+    }
 }
 
 /// Clip a clip-space polygon against w >= eps.
@@ -957,4 +1059,59 @@ fn sampled_quads_raster_with_the_cutout_rule() {
     assert_eq!(green, 0, "the transparent half must not write color");
     // depth: written on the red half only
     assert!(fb.depth.iter().any(|&d| d < 1e30));
+}
+
+#[test]
+fn translucent_sampled_quads_blend_and_skip_depth() {
+    use crate::math::Mat4;
+    // THE FIRE OVERLAY'S OWN DRAW LAW: one full-viewport quad at z=-1,
+    // the sampler paints half-opaque RED everywhere (alpha 128) — at
+    // the alpha scale 0.5 the blend folds src*0.5*a + dst*(1 - src_a):
+    // the framebuffer's black dst rides the red at half strength, the
+    // DEPTH buffer stays untouched (the translucent pass writes
+    // nothing), and a fully transparent texel blends nothing.
+    let quads = [SampledQuad {
+        pts: [
+            [-1.0, -1.0, -1.0],
+            [1.0, -1.0, -1.0],
+            [1.0, 1.0, -1.0],
+            [-1.0, 1.0, -1.0],
+        ],
+        uv: [[0.0, 0.0], [16.0, 0.0], [16.0, 16.0], [0.0, 16.0]],
+        tex: "test",
+        tint: [1.0, 1.0, 1.0],
+    }];
+    let mut fb = Framebuf::new(32, 32);
+    fb.clear([0.0, 0.0, 0.0], [0.0, 0.0, 0.0]);
+    let depth_before = fb.depth.clone();
+    let proj = Mat4::perspective(70.0f32.to_radians(), 1.0, 0.1, 512.0);
+    fb.draw_translucent_sampled_quads(proj, &quads, 0.5, &mut |_tex, _u, _v| {
+        Some([255, 0, 0, 128]) // half-covered texel, everywhere
+    });
+    // THE BLEND: 255 * (128/255 * 0.5) = ~63.5 -> the red rides at
+    // ~63, the green/blue stay zero (the black dst's own share)
+    let mut red_mid = 0;
+    let mut untouched = 0;
+    for px in fb.color.chunks_exact(3) {
+        if px[0] > 40 && px[0] < 90 && px[1] == 0 && px[2] == 0 {
+            red_mid += 1;
+        }
+        if px[0] == 0 && px[1] == 0 && px[2] == 0 {
+            untouched += 1;
+        }
+    }
+    assert!(red_mid > 0, "the half-alpha red blended over the black");
+    assert_eq!(
+        untouched, 0,
+        "the full-quad sampler must leave no pixel unblended"
+    );
+    // THE NO-DEPTH-WRITE LAW (the translucent pass's own convention):
+    // the depth buffer never moved
+    assert_eq!(fb.depth, depth_before, "the blend must not write depth");
+    // THE ZERO-ALPHA TEXEL: a second draw with alpha 0 changes nothing
+    let fb2_color = fb.color.clone();
+    fb.draw_translucent_sampled_quads(proj, &quads, 0.5, &mut |_tex, _u, _v| {
+        Some([0, 255, 0, 0])
+    });
+    assert_eq!(fb.color, fb2_color, "the transparent texel blends nothing");
 }
