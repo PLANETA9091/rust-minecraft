@@ -182,6 +182,20 @@ enum Cmd {
         #[arg(long, default_value = ".")]
         out: String,
     },
+    /// Re-emit mc-registry/src/generated/gui.rs from the OFFICIAL jar —
+    /// the offline UI lane: the atlas json's own directory sources stitch
+    /// the sprite table (gui/sprites + the mob_effect icons the GUI atlas
+    /// declares), then the missing sprite pixels extract into
+    /// assets-cache/jar/. No manifest, no network, no java.
+    Ui {
+        /// The official client jar (the cache's sha1-named file or the
+        /// classpath's client.jar copy).
+        #[arg(long)]
+        jar: String,
+        /// Workspace root (contains crates/).
+        #[arg(long, default_value = ".")]
+        out: String,
+    },
     /// Emit mc-registry/src/generated/special_models.rs from a SAVED
     /// special-models dump (DumpSpecialModels.java's checked-in output) —
     /// the special item renderers' geometry, offline at re-emit time.
@@ -423,6 +437,9 @@ fn main() -> Result<()> {
                 .with_context(|| format!("workspace root {out} not found"))?;
             let path = runtime_dump::emit_mob_effects(&root, &version, &client_sha1, &text)?;
             println!("mob-effects: {}", path.display());
+        }
+        Cmd::Ui { jar, out } => {
+            ui_cmd(Path::new(&jar), Path::new(&out))?;
         }
         Cmd::SpecialModels { dump, out } => {
             let root = Path::new(&out)
@@ -888,6 +905,58 @@ fn fetch_sound_events(
         }
     }
     Ok((menu, game, ui, biome))
+}
+
+/// The offline UI lane: re-emit `crates/mc-registry/src/generated/gui.rs`
+/// from the official jar (the atlas json's own directory sources stitch the
+/// sprite table — the gui/sprites walk PLUS the `mob_effect/` icons the GUI
+/// atlas declares), then extract the sprite pixels the cache is missing
+/// into `assets-cache/jar/` (the standing extract's only-if-absent law).
+/// No manifest, no network, no java.
+fn ui_cmd(jar: &Path, out: &Path) -> Result<()> {
+    let bytes = std::fs::read(jar).with_context(|| format!("read jar {}", jar.display()))?;
+    let mut zip = zip::ZipArchive::new(std::io::Cursor::new(bytes.as_slice()))
+        .with_context(|| format!("open {} as zip", jar.display()))?;
+    let mut ui = uigen::generate(&mut zip)?;
+    // the panorama's disk merge (the generate pipeline's own law): the
+    // jar's placeholders are 1x1, the real pixels live in the cache —
+    // overwrite=true, the same call the full pipeline speaks
+    let pano_root = out.join("assets-cache/jar");
+    let pano_names: Vec<(String, String)> = (0..6)
+        .map(|i| {
+            (
+                format!("title/background/panorama_{i}"),
+                format!("gui/title/background/panorama_{i}.png"),
+            )
+        })
+        .collect();
+    uigen::merge_from_disk(&mut ui, &pano_root, &pano_names, true)?;
+    let src = uigen::emit(&ui)?;
+    let reg_dir = out.join("crates/mc-registry/src/generated");
+    std::fs::create_dir_all(&reg_dir)?;
+    let path = reg_dir.join("gui.rs");
+    std::fs::write(&path, src).context("write gui.rs")?;
+    let out_root = out.join("assets-cache/jar");
+    let mut n = 0usize;
+    for s in ui.sprites.values() {
+        let dest = out_root.join(&s.file);
+        if dest.exists() {
+            continue; // the standing extract's only-if-absent law
+        }
+        let jar_path = format!("assets/minecraft/textures/{}", s.file);
+        if let Ok(b) = crate::extract::read_entry(&mut zip, &jar_path) {
+            std::fs::create_dir_all(dest.parent().unwrap())?;
+            std::fs::write(dest, b)?;
+            n += 1;
+        }
+    }
+    println!(
+        "ui: {} sprites ({} extracted), gui.rs -> {}",
+        ui.sprites.len(),
+        n,
+        path.display()
+    );
+    Ok(())
 }
 
 /// Fetch the jar (cache-first), resolve the atlas, write generated/atlas.rs.

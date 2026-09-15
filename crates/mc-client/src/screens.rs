@@ -532,6 +532,15 @@ pub struct App {
     pub hurt_duration: i32,
     pub invulnerable_time: i32,
     pub last_hurt: f32,
+    /// THE STATUS-EFFECT STORE (the effects.rs module's own laws — the
+    /// add/update/compare chain the wire and the eat arc ride, the
+    /// absorption value the white hearts row speaks): the OFFLINE lane's
+    /// stand-in server applies the eat's payloads and ticks the
+    /// server-side arc (the regen beat, the tick-down, the expiry's
+    /// removal); the NETWORKED lane mirrors the model's own-effect
+    /// store (the wire's Update/Remove Mob Effect packets' filtered
+    /// truth) and ticks the client copy's durations the blink law reads.
+    pub effects: crate::effects::EffectsStore,
     /// The Hurt Animation packet's tilt yaw (the flash-and-lean's own
     /// channel; the camera roll is the future's consumer).
     pub hurt_yaw: f32,
@@ -693,6 +702,7 @@ impl App {
             last_hurt: 0.0,
             hurt_yaw: 0.0,
             health_blink_time: 0,
+            effects: crate::effects::EffectsStore::new(),
             last_health: 20,
             display_health: 20,
             last_health_time: 0,
@@ -887,6 +897,27 @@ impl App {
                 // causeFoodExhaustion's own !isClientSide gate — the
                 // offline lane is the server here)
                 self.food_data.add_exhaustion(exhaustion_cost);
+                // THE STATUS-EFFECTS' OFFLINE TICK (the stand-in
+                // server's MobEffectInstance.tickServer arc at the
+                // LivingEntity.tick position — the effects' beat AFTER
+                // the FoodData's, the aiStep order the bytecode
+                // speaks): the regeneration's heal through the
+                // Entity.heal clamp (only a living body heals), the
+                // durations' tick-down, the expiry's same-tick removal
+                // (the absorption value rides past the expiry — the
+                // 26.2's own no-removal-hook law)
+                if self.health > 0.0 {
+                    let heals = self.effects.tick_offline();
+                    for h in heals.heals {
+                        self.health = (self.health + h).min(MAX_HEALTH);
+                    }
+                }
+            } else if self.health > 0.0 {
+                // THE NETWORKED LANE'S CLIENT COPY (the LocalPlayer's
+                // own tickClient — the durations tick down so the HUD's
+                // blink alpha walks the vanilla law; the wire's next
+                // Update/Remove is the truth, the mirror lands it)
+                self.effects.tick_client();
             }
             // THE DIG TICK (the vanilla Minecraft.tick's own frame):
             // missTime counts down, the crosshair re-picks (the
@@ -2621,6 +2652,16 @@ impl App {
         self.hurt_yaw = health.hurt_yaw;
         self.death_message = health.death_message.clone();
         self.dead = self.death_message.is_some() || (self.dead && self.health <= 0.0);
+        // THE EFFECTS' MIRROR (the model's own-effect store's snapshot —
+        // the wire's Update/Remove Mob Effect packets' filtered truth;
+        // the store's add/update laws ride the same code the offline
+        // lane speaks, the absorption's lift rides the application)
+        self.effects
+            .sync_from_wire(&health.effects.iter().map(|e| (e.effect_id, crate::world_model::MobEffectState {
+                amplifier: e.amplifier,
+                duration: e.duration,
+                flags: e.flags,
+            })).collect::<Vec<_>>());
     }
 
     /// THE FALL DAMAGE PIPELINE (javap `LivingEntity.causeFallDamage`'s
@@ -2753,6 +2794,52 @@ impl App {
                 burp_pitch,
             );
         }
+        // 3c. THE STATUS-EFFECTS' PAYLOAD ARC (javap
+        // `ApplyStatusEffectsConsumeEffect.apply`: ONE roll gates
+        // the whole payload — `nextFloat() < probability` — then
+        // every row rides `addEffect` verbatim, the copy
+        // constructor's own lane; the random is the entity's own
+        // `getRandom()`, the stand-in the drop lane's Lcg. The
+        // listener stream drew FIRST (the gulp's two, the burp's
+        // one), the effect list applies SECOND — the onConsume
+        // chain's own order. The networked lane folds nothing (the
+        // server applies, the wire's Update Mob Effect speaks).
+        if !self.world_is_network {
+            let def = mc_registry::item_name(eat.item)
+                .and_then(mc_registry::generated::foods::food_def_by_name);
+            if let Some(def) = def {
+                for ce in def.effects {
+                    match ce.kind {
+                        mc_registry::generated::foods::EffectKind::ApplyStatusEffects => {
+                            let roll = self.drop_rng.next_f32();
+                            if roll < ce.probability {
+                                for row in ce.rows {
+                                    if let Some(eid) =
+                                        crate::effects::effect_id_by_name(row.effect)
+                                    {
+                                        self.effects.add_effect(
+                                            eid,
+                                            row.amplifier,
+                                            row.duration,
+                                            crate::effects::DEFAULT_EFFECT_FLAGS,
+                                        );
+                                    }
+                                }
+                            }
+                        }
+                        mc_registry::generated::foods::EffectKind::ClearAllStatusEffects => {
+                            self.effects.remove_all();
+                        }
+                        // the other kinds' client surfaces — the
+                        // chorus fruit's teleport (the world's own
+                        // lane), the play-sound's one-shot — stay
+                        // their documented absences (no wire, no
+                        // world surface in the offline arc yet)
+                        _ => {}
+                    }
+                }
+            }
+        }
         // 5. THE SURVIVAL CONSUME (javap ItemStack.consume(1, entity):
         // the infinite-materials gate off — the client's survival
         // lane) + the USE_REMAINDER's return (the milk's bucket, the
@@ -2857,14 +2944,30 @@ impl App {
         }
     }
 
-    /// THE ACTUAL HURT (javap `actuallyHurt`'s bare-player path: no
-    /// armor, no absorption — the clamp `setHealth(max(0, health -
-    /// amount))` the entity data speaks) and the death's own tail: the
-    /// health at zero arms the death screen (the Gui.tick's auto-open)
-    /// and speaks the death voice (the hurtServer tail's
-    /// `makeSound(getDeathSound())`).
+    /// THE ACTUAL HURT (javap `actuallyHurt`'s bare-player path — no
+    /// armor, the full amount rides the ABSORPTION LANE first — and the
+    /// death's own tail: the health at zero arms the death screen (the
+    /// Gui.tick's auto-open) and speaks the death voice (the hurtServer
+    /// tail's `makeSound(getDeathSound())`).
+    /// THE ABSORPTION'S TWO DRAINS (the 26.2 bytecode's own verdict): the
+    /// health-lane share clamps at zero (`max(0, amount - absorption)`),
+    /// the absorption absorbs the remainder (drain one), and the health's
+    /// own damage drains the absorption AGAIN (drain two — the second
+    /// `setAbsorptionAmount(getAbsorptionAmount() - amount)` the
+    /// bytecode speaks). A fully-absorbed hit never touches the health
+    /// and never reaches the combat/death tail (the `amount == 0`
+    /// return).
     fn actually_hurt(&mut self, amount: f32) {
-        self.health = (self.health - amount).clamp(0.0, MAX_HEALTH);
+        let total = amount;
+        let health_share = (total - self.effects.absorption()).max(0.0);
+        self.effects
+            .set_absorption(self.effects.absorption() - (total - health_share));
+        if health_share <= 0.0 {
+            return;
+        }
+        self.health = (self.health - health_share).clamp(0.0, MAX_HEALTH);
+        self.effects
+            .set_absorption(self.effects.absorption() - health_share);
         if self.health <= 0.0 && !self.dead {
             self.dead = true;
             self.sounds.play_death_voice(self.frame);
@@ -2884,6 +2987,11 @@ impl App {
         // the player's stats — the fresh FoodData the constructor
         // speaks: the full bar, the 5.0 saturation, the zero bank)
         self.food_data = crate::food::FoodData::new();
+        // THE STATUS-EFFECTS' OWN RESET (the death's removal — the
+        // vanilla death clears the active effects, the fresh respawn's
+        // body carries none, the absorption value rides the dead
+        // body's history)
+        self.effects = crate::effects::EffectsStore::new();
         self.hurt_time = 0;
         self.hurt_duration = 0;
         self.invulnerable_time = 0;
@@ -3361,19 +3469,25 @@ impl App {
                 g.text(a, ix + 17 - tw, iy + 9, &s, WHITE, true);
             }
         }
-        // THE HEALTH ROW (javap Hud.extractPlayerHealth +
-        // extractHearts — the REAL law, the static 10-full render it
-        // replaces): the Hud's own state machine (the blink arm, the
-        // display lerp) runs per frame, then the RIGHT-TO-LEFT heart
-        // walk renders the CONTAINER under every slot first, then the
-        // highlight fill (the _blinking sprites, the real health's
-        // own), then the normal fill (the display health's own, the
-        // half boundary `n + 1 == display`). The low-health jitter
-        // rides the Java-Random law the `tickCount * 312871` seed
-        // speaks; the regen bounce and the absorption lane stay their
-        // honest absences (no effects, no absorption in this client).
+        // THE HEALTH ROW (javap Hud.extractPlayerHealth + extractHearts
+        // — the REAL law, the static 10-full render it replaces): the
+        // Hud's own state machine (the blink arm, the display lerp)
+        // runs per frame, then the RIGHT-TO-LEFT heart walk renders the
+        // CONTAINER under every slot first, then the fill above the
+        // health's own — the ABSORBING hearts (the white
+        // `hud/heart/absorbing_*` sprites, the ceil(absorption/2)
+        // slots the walk extends to) — then the highlight fill (the
+        // _blinking sprites, the real health's own), then the normal
+        // fill (the display health's own, the half boundary
+        // `n + 1 == display`). The low-health jitter rides the
+        // Java-Random law the `tickCount * 312871` seed speaks and its
+        // gate counts the absorption (`health + absorption <= 4`); the
+        // REGENERATION's lift (the `-2y` bounce on the
+        // `tickCount % ceil(maxScale + 5)` heart) rides the effects
+        // store's truth.
         let (hbx, hby) = hearts_origin(w, h);
         let health_i = self.health.ceil() as i32;
+        let absorption_i = self.effects.absorption().ceil() as i32;
         // the blink flag (the Hud's own: the 20-tick window's /3 %2
         // rhythm)
         let blink = self.health_blink_time > self.frame
@@ -3395,7 +3509,8 @@ impl App {
         self.last_health = health_i;
         let display = self.display_health;
         let max_display = MAX_HEALTH.max(display as f32).max(health_i as f32);
-        let containers = (max_display / 2.0).ceil() as i32;
+        let health_hearts = (max_display / 2.0).ceil() as i32;
+        let absorption_hearts = ((absorption_i as f32) / 2.0).ceil() as i32;
         // THE BLINK RANDOM (vanilla `random.setSeed(tickCount *
         // 312871)` + `nextInt(2)` per jittered heart — the Java
         // Random law verbatim: the 0x5DEECE66D scramble, the 48-bit
@@ -3409,18 +3524,34 @@ impl App {
             ((2u64.wrapping_mul(next31 as u64)) >> 31) as i32
         };
         // the row height (the Hud's own: max(10 - (rows - 2), 3) — the
-        // multi-row compression; one row's worth rides unchanged)
-        let rows = ((max_display / 2.0 / 10.0).ceil()) as i32;
+        // multi-row compression; the rows COUNT the absorption
+        // (`ceil((maxScale + absorption) / 2 / 10)`), the law the
+        // extractPlayerHealth call speaks)
+        let rows = ((max_display + absorption_i as f32) / 2.0 / 10.0).ceil() as i32;
         let row_height = (10 - (rows - 2)).max(3);
-        for m in (0..containers).rev() {
+        // the REGEN LIFT (the Hud's own: the heart index
+        // `tickCount % ceil(maxScale + 5.0)` bounces -2y while the
+        // REGENERATION effect rides — the store's truth, the
+        // maxScale's own sum)
+        let regen_lift = if self.effects.has_effect(crate::effects::MOB_EFFECT_REGENERATION) {
+            (self.frame as i64 % (max_display as i64 + 5)) as i32
+        } else {
+            -1
+        };
+        for m in (0..health_hearts + absorption_hearts).rev() {
             let row = m / 10;
             let col = m % 10;
             let x = hbx + col * HEART_SPACING;
             let mut y = hby - row * row_height;
             // the LOW-HEALTH JITTER (the Hud's own: health + absorption
-            // <= 4 shakes every heart — the absorption lane's 0 here)
-            if health_i + 0 <= 4 {
+            // <= 4 shakes every heart — the absorption's own count)
+            if health_i + absorption_i <= 4 {
                 y += next_jitter(&mut rng);
+            }
+            // the REGEN BOUNCE (the extractHearts' own: only a health
+            // slot, only the lifted index — `i17 < i14 && i17 == i6`)
+            if m < health_hearts && m == regen_lift {
+                y -= 2;
             }
             // the CONTAINER under every slot (blinking during the flash)
             g.sprite(
@@ -3434,6 +3565,27 @@ impl App {
                 y,
             );
             let n = m * 2;
+            // THE ABSORBING FILL (the slot above the health's own — the
+            // walk's `i17 >= i14` territory, the half-heart index
+            // `n - healthHearts*2` against the absorption value, the
+            // white `absorbing_*` sprites; the blink arg rides false —
+            // the bytecode's own constants, the WITHERED swap the
+            // honest absence the wither's lane never speaks here)
+            if m >= health_hearts {
+                let a_idx = n - health_hearts * 2;
+                if a_idx < absorption_i {
+                    g.sprite(
+                        a,
+                        if a_idx + 1 == absorption_i {
+                            "hud/heart/absorbing_half"
+                        } else {
+                            "hud/heart/absorbing_full"
+                        },
+                        x,
+                        y,
+                    );
+                }
+            }
             // the HIGHLIGHT fill (the _blinking sprites over the LERPED
             // display — the white flash marks the lost hearts the
             // display still holds, half at `n + 1 == display`)
@@ -3488,6 +3640,61 @@ impl App {
                 g.sprite(a, "hud/food_full", x, y);
             } else if i * 2 + 1 == food {
                 g.sprite(a, "hud/food_half", x, y);
+            }
+        }
+        // THE EFFECT ICONS (javap Hud.extractEffects — the 26.2 row
+        // law, verbatim): the icons render whenever the store carries
+        // effects — the base Screen's `showsActiveEffects` is a flat
+        // false and the client has no inventory screen of its own yet
+        // (the chest's AbstractContainerScreen never overrides it: the
+        // icons ride OVER the container GUI, the vanilla's own
+        // treatment); the SORT is the reverse natural order
+        // (the MobEffectInstance.compareTo's reversal); the beneficial
+        // icons ride the top line at y=1 and the harmful ones the
+        // second line 26px below, each row growing leftward from the
+        // right edge at the 25px stride (`guiWidth - 25 * count`); the
+        // 24x24 background (the _ambient variant for the ambient
+        // effect), then the 18x18 icon at (+3, +3) — the
+        // `getMobEffectSprite` path the GUI atlas's own directory
+        // source stitches — under the expiring effect's blink alpha
+        // (the `endsWithin(200)` cos fold the effects.rs law carries).
+        if !self.effects.is_empty() {
+            let beneficial_first = self.effects.sorted_for_hud();
+            let (mut top_count, mut harm_count) = (0i32, 0i32);
+            for (id, inst) in beneficial_first {
+                if !inst.show_icon() {
+                    continue;
+                }
+                let (beneficial, _) = mc_registry::generated::mob_effects::MOB_EFFECT_META
+                    .get(id as usize)
+                    .copied()
+                    .unwrap_or((true, 0));
+                let (count, y) = if beneficial {
+                    top_count += 1;
+                    (top_count, 1)
+                } else {
+                    harm_count += 1;
+                    (harm_count, 27)
+                };
+                let x = w - 25 * count;
+                g.sprite(
+                    a,
+                    if inst.is_ambient() {
+                        "hud/effect_background_ambient"
+                    } else {
+                        "hud/effect_background"
+                    },
+                    x,
+                    y,
+                );
+                let alpha = if inst.ends_within(200) {
+                    crate::effects::icon_alpha(inst.duration)
+                } else {
+                    1.0
+                };
+                if let Some(icon) = crate::effects::effect_icon_sprite(id) {
+                    g.sprite_at_tinted(a, icon, x + 3, y + 3, 18, 18, [1.0, 1.0, 1.0, alpha]);
+                }
             }
         }
     }
@@ -6934,6 +7141,7 @@ mod tests {
             hurt_time: 10,
             hurt_yaw: -45.5,
             death_message: None,
+            effects: Vec::new(),
         });
         assert_eq!(app.health, 6.5, "the half heart's own float");
         assert_eq!(app.food_data.food_level(), 18);
@@ -6949,6 +7157,7 @@ mod tests {
             hurt_time: 0,
             hurt_yaw: 0.0,
             death_message: Some("Player fell from a high place".to_string()),
+            effects: Vec::new(),
         });
         assert!(app.dead, "the message armed the death gate");
         assert_eq!(
@@ -7760,6 +7969,226 @@ mod tests {
         assert_eq!(eat.total, 32);
         app.on_right_release();
         assert!(app.eating.is_none(), "the release cancelled");
+    }
+
+    /// THE GOLDEN APPLE'S STATUS EFFECTS LAND (javap
+    /// `ApplyStatusEffectsConsumeEffect.apply` through the eat arc's
+    /// payload lane): the completion applies the Regeneration II
+    /// (100t) + the Absorption (2400t) — the rows verbatim — and the
+    /// absorption's `onEffectStarted` lifts the value to 8.0.
+    #[test]
+    fn the_golden_apple_lands_its_effects() {
+        let mut app = App::new(3);
+        app.enter_world();
+        let gapple_id = mc_registry::item_id_by_name("golden_apple").unwrap();
+        app.inventory.items[app.selected_hotbar] = (gapple_id, 1);
+        app.hotbar_slots = app.inventory.hotbar();
+        app.food_data.set_food_level(20); // the canAlwaysEat lane
+        assert!(app.on_right_press(0, 0), "the golden apple always eats");
+        for _ in 0..32 {
+            app.update();
+        }
+        assert!(app.eating.is_none(), "the hold completed");
+        // the store speaks both effects at the payload's own numbers —
+        // the durations already walked their FIRST tick (the eat's
+        // completion lands mid-update, the body tick's tick_offline
+        // runs the same update: the beat fired at duration 100, the
+        // tick-down followed)
+        let regen = app.effects.get(crate::effects::MOB_EFFECT_REGENERATION).expect("the regen rides");
+        assert_eq!(regen.amplifier, 1, "Regeneration II");
+        assert_eq!(regen.duration, 99);
+        let absorption = app.effects.get(crate::effects::MOB_EFFECT_ABSORPTION).expect("the absorption rides");
+        assert_eq!(absorption.amplifier, 0);
+        assert_eq!(absorption.duration, 2399);
+        // the onEffectStarted's lift: 4 * (1 + 0) = 4.0 — two white
+        // hearts the vanilla golden apple speaks
+        assert!((app.effects.absorption() - 4.0).abs() < 1e-5);
+    }
+
+    /// THE ABSORPTION'S TWO DRAINS (javap `actuallyHurt`'s 26.2
+    /// verdict): a hit inside the absorption never reaches the health
+    /// (the fully-absorbed return); a hit beyond it takes the
+    /// remainder off the health AND drains the absorption AGAIN — the
+    /// second `setAbsorptionAmount` the bytecode speaks.
+    #[test]
+    fn the_absorption_drains_and_the_health_lives() {
+        let mut app = App::new(3);
+        app.enter_world();
+        app.effects.add_effect(
+            crate::effects::MOB_EFFECT_ABSORPTION,
+            1,
+            2400,
+            crate::effects::DEFAULT_EFFECT_FLAGS,
+        );
+        assert!((app.effects.absorption() - 8.0).abs() < 1e-5);
+        // the small hit: fully absorbed, the health untouched
+        app.hurt(4.0);
+        assert_eq!(app.health, MAX_HEALTH, "the white hearts took it");
+        assert!((app.effects.absorption() - 4.0).abs() < 1e-5);
+        // the cooldown's own law rides (the 10-tick window would only
+        // land the difference — the test resets the pipeline for the
+        // clean second hit)
+        app.invulnerable_time = 0;
+        app.last_hurt = 0.0;
+        // the big hit: 10 total against 4 absorption — the health share
+        // is 6, the drain one takes the 4, the drain two takes the 6
+        // again (the absorption floors at the clamp's own zero)
+        app.hurt(10.0);
+        assert!((app.health - (MAX_HEALTH - 6.0)).abs() < 1e-5, "the remainder hit the health");
+        assert_eq!(app.effects.absorption(), 0.0, "the double drain's floor");
+    }
+
+    /// THE REGENERATION'S BEAT HEALS (the offline stand-in server's
+    /// `tickServer` arc): the golden apple's 100t Regeneration II
+    /// heals 1.0 at the 25-tick period's four beats — the FoodData's
+    /// own lanes silent (the bar under the regen gates).
+    #[test]
+    fn the_regen_beat_heals_through_the_world_tick() {
+        let mut app = App::new(3);
+        app.enter_world();
+        let gapple_id = mc_registry::item_id_by_name("golden_apple").unwrap();
+        app.inventory.items[app.selected_hotbar] = (gapple_id, 1);
+        app.hotbar_slots = app.inventory.hotbar();
+        // the damaged body, the bar under the food regen's gates
+        app.food_data.set_food_level(14);
+        app.food_data.set_saturation(0.0);
+        app.health = 14.0;
+        assert!(app.on_right_press(0, 0));
+        for _ in 0..32 {
+            app.update();
+        }
+        // the eat landed: the FIRST regen beat fired inside the
+        // completion tick itself (the store's duration 100 beat, then
+        // the tick-down) — the body climbed to 15.0
+        let after_eat = app.health;
+        assert_eq!(after_eat, 15.0, "the first beat healed in the walk");
+        // the regen's remaining three beats over the 100-tick span
+        for _ in 0..100 {
+            app.update();
+        }
+        // the beats at durations 75/50/25 healed +3.0 (the food's slow
+        // lane may add its own 80-tick beat — the ceiling the clamp
+        // holds); the claim: the regen's beats RAN
+        assert!(
+            app.health >= after_eat + 3.0,
+            "the regen's beats healed: {after_eat} -> {}",
+            app.health
+        );
+        assert!(
+            app.health <= MAX_HEALTH,
+            "the Entity.heal clamp held"
+        );
+    }
+
+    /// THE WIRE'S EFFECTS MIRROR (the networked lane): the Update Mob
+    /// Effect packets' filtered truth lands through the vitals view —
+    /// the store's add/update laws ride, the absorption's lift rides,
+    /// the icons' data speaks.
+    #[test]
+    fn the_wire_effects_mirror_lands() {
+        let mut app = App::new(3);
+        app.enter_world();
+        app.live_health_updated(crate::world_view::HealthView {
+            health: 20.0,
+            food: 20,
+            saturation: 5.0,
+            hurt_time: 0,
+            hurt_yaw: 0.0,
+            death_message: None,
+            effects: vec![
+                crate::world_model::MobEffectWireState {
+                    effect_id: crate::effects::MOB_EFFECT_ABSORPTION,
+                    amplifier: 0,
+                    duration: 2400,
+                    flags: crate::effects::DEFAULT_EFFECT_FLAGS,
+                },
+            ],
+        });
+        assert!(app.effects.has_effect(crate::effects::MOB_EFFECT_ABSORPTION));
+        assert!((app.effects.absorption() - 4.0).abs() < 1e-5);
+        // the update re-speaks: the amplifier's upgrade rides
+        app.live_health_updated(crate::world_view::HealthView {
+            health: 20.0,
+            food: 20,
+            saturation: 5.0,
+            hurt_time: 0,
+            hurt_yaw: 0.0,
+            death_message: None,
+            effects: vec![
+                crate::world_model::MobEffectWireState {
+                    effect_id: crate::effects::MOB_EFFECT_ABSORPTION,
+                    amplifier: 2,
+                    duration: 2400,
+                    flags: crate::effects::DEFAULT_EFFECT_FLAGS,
+                },
+            ],
+        });
+        assert_eq!(
+            app.effects.get(crate::effects::MOB_EFFECT_ABSORPTION).unwrap().amplifier,
+            2,
+            "the wire's upgrade landed"
+        );
+        assert!((app.effects.absorption() - 12.0).abs() < 1e-5);
+        // the silence removes (the Remove packet's own verdict)
+        app.live_health_updated(crate::world_view::HealthView {
+            health: 20.0,
+            food: 20,
+            saturation: 5.0,
+            hurt_time: 0,
+            hurt_yaw: 0.0,
+            death_message: None,
+            effects: Vec::new(),
+        });
+        assert!(app.effects.is_empty());
+    }
+
+    /// THE RESPAWN CLEARS THE STORE (the death's removal — the fresh
+    /// body carries no effects, the absorption rides the dead body's
+    /// history).
+    #[test]
+    fn the_respawn_clears_the_effects() {
+        let mut app = App::new(3);
+        app.enter_world();
+        app.effects.add_effect(
+            crate::effects::MOB_EFFECT_REGENERATION,
+            0,
+            100,
+            crate::effects::DEFAULT_EFFECT_FLAGS,
+        );
+        app.effects.set_absorption(8.0);
+        app.dead = true;
+        app.respawn();
+        assert!(app.effects.is_empty(), "the death's removal");
+        assert_eq!(app.effects.absorption(), 0.0);
+    }
+
+    /// THE MILK CLEARS THE STATUS EFFECTS (the ClearAllStatusEffects
+    /// payload's own lane — the FOOD-LESS consumable's arc: no roll,
+    /// no listener, the store empties and the bucket returns).
+    #[test]
+    fn the_milk_clears_the_status_effects() {
+        let mut app = App::new(3);
+        app.enter_world();
+        let milk_id = mc_registry::item_id_by_name("milk_bucket").unwrap();
+        app.effects.add_effect(
+            crate::effects::MOB_EFFECT_REGENERATION,
+            1,
+            100,
+            crate::effects::DEFAULT_EFFECT_FLAGS,
+        );
+        app.effects.set_absorption(8.0);
+        app.inventory.items[app.selected_hotbar] = (milk_id, 1);
+        app.hotbar_slots = app.inventory.hotbar();
+        assert!(app.on_right_press(0, 0), "the milk drinks");
+        for _ in 0..32 {
+            app.update();
+        }
+        assert!(app.eating.is_none(), "the drink completed");
+        assert!(app.effects.is_empty(), "the ClearAll's own verdict");
+        // the 26.2's own honesty: the removal hook's absence — the
+        // absorption VALUE persists until damage drains it (the
+        // AbsorptionMobEffect carries no removeAttributeModifiers)
+        assert_eq!(app.effects.absorption(), 8.0, "the value persists");
     }
 
     /// THE MILK DRINK: no FOOD component (the potion's own split) —

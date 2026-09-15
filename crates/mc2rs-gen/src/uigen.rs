@@ -61,6 +61,65 @@ pub fn generate<R: std::io::Read + std::io::Seek>(archive: &mut zip::ZipArchive<
             },
         );
     }
+    // THE ATLAS'S OWN DIRECTORY SOURCES (the jar's atlases/gui.json —
+    // the data the game itself stitches the GUI atlas from): every
+    // `minecraft:directory` source walks `textures/{source}/**.png` and
+    // registers each sprite under `{prefix}{rel}`. The GUI atlas's own
+    // declaration stitches the effect icons in:
+    //   {"type": "minecraft:directory", "prefix": "mob_effect/", "source": "mob_effect"}
+    // — the icons the HUD's effect row blits at 18x18 (`getMobEffectSprite`
+    // = the holder key with the "mob_effect/" prefix). The gui/sprites
+    // source above is the SAME law declared for the base walk, so the
+    // atlas-driven pass only adds what the hardcoded walk hasn't already
+    // spoken (or_insert keeps the first registration's metadata).
+    let atlas_src = "assets/minecraft/atlases/gui.json";
+    #[derive(serde::Deserialize)]
+    struct AtlasSources {
+        #[serde(default)]
+        sources: Vec<AtlasSource>,
+    }
+    #[derive(serde::Deserialize)]
+    struct AtlasSource {
+        #[serde(rename = "type")]
+        kind: String,
+        #[serde(default)]
+        prefix: String,
+        source: String,
+    }
+    if let Ok(bytes) = read_entry(archive, atlas_src) {
+        let decl: AtlasSources =
+            serde_json::from_slice(&bytes).map_err(|e| anyhow::anyhow!("bad {atlas_src}: {e}"))?;
+        for s in &decl.sources {
+            if s.kind != "minecraft:directory" || s.source == "gui/sprites" {
+                continue; // the base walk above already spoke gui/sprites
+            }
+            let root = format!("assets/minecraft/textures/{}/", s.source);
+            let names: Vec<String> = archive
+                .file_names()
+                .filter(|n| n.starts_with(&root) && n.ends_with(".png"))
+                .map(String::from)
+                .collect();
+            for path in names {
+                let bytes = read_entry(archive, &path)?;
+                let (w, h) = png_size(&bytes)?;
+                let rel = &path[root.len()..path.len() - ".png".len()];
+                let mcmeta_path = format!("{path}.mcmeta");
+                let nine_slice = match read_entry(archive, &mcmeta_path) {
+                    Ok(mb) => parse_sprite_mcmeta(&mb)?.nine_slice,
+                    Err(_) => None,
+                };
+                data.sprites
+                    .entry(format!("{}{}", s.prefix, rel))
+                    .or_insert_with(|| Sprite {
+                        name: format!("{}{}", s.prefix, rel),
+                        file: format!("{}/{rel}.png", s.source),
+                        w,
+                        h,
+                        nine_slice,
+                    });
+            }
+        }
+    }
     // Title textures: registry names like "title/minecraft",
     // "title/background/panorama_0"; files "gui/title/....png".
     let title_names: Vec<String> = archive

@@ -16,6 +16,7 @@ mod colormap;
 mod dig;
 mod drops;
 mod eat;
+mod effects;
 mod end_flash;
 mod food;
 mod gpu;

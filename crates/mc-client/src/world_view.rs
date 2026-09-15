@@ -698,6 +698,11 @@ pub struct HealthView {
     pub hurt_yaw: f32,
     /// The death screen's message, `None` while alive.
     pub death_message: Option<String>,
+    /// The LOCAL player's active mob effects (the model's own-effect
+    /// store's snapshot — the Update/Remove Mob Effect packets'
+    /// filtered truth): the (registry id, amplifier, duration, flags)
+    /// quads the HUD's effect lane speaks. Empty in every golden scene.
+    pub effects: Vec<crate::world_model::MobEffectWireState>,
 }
 
 impl HealthView {
@@ -709,6 +714,7 @@ impl HealthView {
             hurt_time: 0,
             hurt_yaw: 0.0,
             death_message: None,
+            effects: Vec::new(),
         }
     }
 }
@@ -727,6 +733,17 @@ fn health_view(model: &WorldModel) -> HealthView {
     if let Some(m) = &model.death_message {
         v.death_message = Some(m.clone());
     }
+    // THE EFFECTS' OWN SNAPSHOT (the model's store verbatim — the
+    // activeEffectsMap's walk; the BTreeMap-ordered copy keeps the
+    // lane deterministic)
+    v.effects = model.active_effects_debug().into_iter()
+        .map(|(id, _, state)| crate::world_model::MobEffectWireState {
+            effect_id: id,
+            amplifier: state.amplifier,
+            duration: state.duration,
+            flags: state.flags,
+        })
+        .collect();
     v
 }
 

@@ -123,6 +123,40 @@ impl GuiAssets {
         self.sprites.get(name)
     }
 
+    /// THE ATLAS'S DIRECTORY-SOURCE FALLBACK (the jar's own
+    /// `atlases/gui.json` speaks it:
+    /// `{"type": "minecraft:directory", "prefix": "mob_effect/",
+    /// "source": "mob_effect"}` — the sprite id IS the file path under
+    /// `textures/`). The generated table's `mob_effect/*` entries ride
+    /// the same law; this dynamic-name lane resolves the runtime-built
+    /// icon names the statics can't carry (`&'static str` vs the
+    /// computed `mob_effect/<path>`): the file is the name + `.png`,
+    /// the pixel size the PNG's own IHDR speaks.
+    pub fn sprite_any(&mut self, name: &str) -> Option<&Sprite> {
+        if let Some(key) = self.static_key(name) {
+            return self.sprite(key);
+        }
+        if !name.starts_with("mob_effect/") || name.contains("..") {
+            return None; // the atlas's own source list: mob_effect only
+        }
+        if !self.sprites.contains_key(name) {
+            let path = self.root.join(format!("{name}.png"));
+            let bytes = std::fs::read(path).ok()?;
+            let s = Sprite::decode(&bytes).ok()?;
+            // the leak is bounded: the 40 registry names, resolved once
+            let key: &'static str = Box::leak(name.to_string().into_boxed_str());
+            self.sprites.insert(key, s);
+        }
+        self.sprites.get(name)
+    }
+
+    /// The static table's hit rewrites the dynamic name to the
+    /// generated entry's `&'static str` (the same cache slot both
+    /// lanes share).
+    fn static_key(&self, name: &str) -> Option<&'static str> {
+        gui::sprite(name).map(|d| d.name)
+    }
+
     fn font_texture(&mut self, idx: u16) -> Option<&Sprite> {
         if self.font_textures.len() <= idx as usize {
             self.font_textures.resize(idx as usize + 1, None);
@@ -258,6 +292,47 @@ impl<'a> Gui<'a> {
                     continue;
                 }
                 self.px(x + dx, y + dy, c);
+            }
+        }
+    }
+
+    /// Blit a sprite stretched to an arbitrary destination size with an
+    /// ARGB tint (javap `GuiGraphicsExtractor.blitSprite`'s color arg —
+    /// the multiply the `ARGB.white(alpha)` pass speaks): every sampled
+    /// channel rides the tint, the alpha included (the effect icons'
+    /// blink law's own vehicle).
+    pub fn sprite_at_tinted(
+        &mut self,
+        a: &mut GuiAssets,
+        name: &str,
+        x: i32,
+        y: i32,
+        dw: i32,
+        dh: i32,
+        tint: [f32; 4],
+    ) {
+        let Some(s) = a.sprite_any(name).cloned() else { return };
+        if dw <= 0 || dh <= 0 || s.w == 0 || s.h == 0 {
+            return;
+        }
+        for dy in 0..dh {
+            let sy = (dy as u32 * s.h / dh as u32).min(s.h - 1);
+            for dx in 0..dw {
+                let sx = (dx as u32 * s.w / dw as u32).min(s.w - 1);
+                let c = s.sample(sx, sy);
+                if c[3] <= 0.0 {
+                    continue;
+                }
+                self.px(
+                    x + dx,
+                    y + dy,
+                    [
+                        c[0] * tint[0],
+                        c[1] * tint[1],
+                        c[2] * tint[2],
+                        c[3] * tint[3],
+                    ],
+                );
             }
         }
     }

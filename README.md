@@ -4205,6 +4205,59 @@ hand-drawn:
   release cancels the hold silently (no completion, no penalty), the
   pause freezes the clock, and the networked lane folds nothing (the
   server's Set Health speaks its truth) while the visuals still play.
+- **The status-effect lane** (v0.3.153) — the survival loop's chemistry:
+  the LOCAL player's active mob effects now live in one store that speaks
+  the original's own laws (javap net.minecraft.world.effect + the
+  LivingEntity/AbsorptionMobEffect/RegenerationMobEffect verdicts). The
+  eat arc's payload lands: the golden apple's completion rolls ONE
+  `nextFloat() < probability` for the whole payload, then every row rides
+  `addEffect` verbatim (the Regeneration II 100t, the Absorption 2400t);
+  the milk's `ClearAllStatusEffects` empties the store. `addEffect` walks
+  `MobEffectInstance.update`'s upgrade law (a greater amplifier
+  replaces, an equal amplifier's longer duration refreshes, everything
+  else keeps) and fires the absorption's `onEffectStarted` on EVERY
+  application — the value lifts to `max(current, 4 * (1 + amplifier))`
+  clamped to the attribute's 20.0. The offline stand-in server ticks
+  `MobEffectInstance.tickServer`: the regeneration's
+  `shouldApplyEffectTickThisTick` beat (`50 >> amplifier` period against
+  the pre-tick-down duration — Regeneration II heals every 25 ticks),
+  the duration's tick-down, the same-tick expiry's removal; the
+  networked lane mirrors the model's own-effect store (the Update/Remove
+  Mob Effect packets' filtered truth) and ticks the client copy's
+  durations the blink law reads. The hurt pipeline speaks
+  `actuallyHurt`'s 26.2 TWO-DRAIN verdict: the health-lane share clamps
+  at zero, the absorption absorbs the remainder, and the health's own
+  damage drains the absorption AGAIN (a fully-absorbed hit never
+  touches the health). Removal never resets the absorption value (the
+  no-removal-hook law — the white hearts persist until drained). The
+  HUD's hearts row now walks the absorption territory: the
+  `ceil(absorption/2)` white `hud/heart/absorbing_*` slots above the
+  health's own (the half boundary `a_idx + 1 == absorption`), the rows
+  count the absorption (`ceil((maxScale + absorption)/2/10)`), the
+  low-health jitter gate counts it too (`health + absorption <= 4`), and
+  the REGENERATION lift bounces its heart `-2y` on the
+  `tickCount % ceil(maxScale + 5)` beat. The NEW effect-icons row speaks
+  `Hud.extractEffects` verbatim: the icons sorted in the REVERSE natural
+  order (the `MobEffectInstance.compareTo`'s branch structure — both-
+  infinite-or-both-ambient compares ambient+color, otherwise
+  non-ambient/finite/shorter/color first — reversed), the beneficial
+  icons on the top line at y=1, the harmful ones 26px below, each row
+  growing leftward from the right edge at the 25px stride, the 24x24
+  `hud/effect_background(_ambient)` under the 18x18 icon at (+3, +3)
+  drawn through the new ARGB-tinted blit (the expiring effect's
+  `endsWithin(200)` cos-fold alpha: `clamp(d*0.01, 0, 0.5) +
+  cos(d*PI/5)*clamp((10 - d/20)*0.025, 0, 0.25)` clamped 0..1). The
+  icons' sprite names ride `getMobEffectSprite`'s law — the holder key
+  with the `mob_effect/` prefix — and the GUI atlas's own
+  `atlases/gui.json` directory source (`prefix "mob_effect/", source
+  "mob_effect"`) now DRIVES the generator's sprite walk: the 40 effect
+  icons landed in the generated gui table byte-exact (18x18), the
+  `mc2rs-gen ui` offline lane re-emits the table + extracts the missing
+  pixels from the cached jar, and the mob-effects dump grew the
+  `beneficial|color` columns (the HUD's row split + the sort's
+  tie-break, `MOB_EFFECT_META` index-aligned with `MOB_EFFECT_ORDER`).
+  681 tests green (+18), the golden matrix 13/13 rms 0.000 (the lane is
+  interaction-gated — the deterministic scenes carry no effects).
 - **Singleplayer world** — clicking `Singleplayer` enters a live 3D world
   view rendered by the same deterministic CPU raster path as the pixel
   tests: real block textures from the generated atlas, the **official

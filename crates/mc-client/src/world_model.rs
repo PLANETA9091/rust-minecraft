@@ -165,6 +165,17 @@ pub struct MobEffectState {
     pub flags: u8,
 }
 
+/// The view's wire-shaped effect quad (the model store's own snapshot —
+/// the fields the HUD's effect lane reads, copied out of the model's
+/// map; the `Clone`-owned shape the HealthView's transport carries).
+#[derive(Debug, Clone, PartialEq)]
+pub struct MobEffectWireState {
+    pub effect_id: i32,
+    pub amplifier: i32,
+    pub duration: i32,
+    pub flags: u8,
+}
+
 /// `minecraft:night_vision`'s mob-effect registry id — the 0-based
 /// built-in registration (= wire) order, now GENERATED:
 /// `mc_registry::generated::mob_effects::MOB_EFFECT_ORDER` (the checked-in

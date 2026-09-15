@@ -13,7 +13,16 @@ import java.io.PrintWriter;
  * real vanilla registries in-process and prints the MOB_EFFECT built-in
  * registry in true registration order, ONE line per entry:
  *
- *   id|name
+ *   id|name|beneficial|color
+ *
+ * The extra columns carry the HUD's own laws: `beneficial` is
+ * MobEffect.isBeneficial() (the category's != HARMFUL verdict — the HUD's
+ * effect-icons row split: the beneficial icons ride the top line at y=1,
+ * the harmful ones the second line 26px below), `color` is
+ * MobEffect.getColor() (the int tint the MobEffectInstance.compareTo's
+ * natural order uses as its final tie-break — the HUD sorts the icons in
+ * REVERSE natural order, so the color is what separates same-length
+ * same-ambient effects).
  *
  * The mob-effect registry is NOT a synchronized registry (DumpRegistries
  * covers the configuration-synced set): the client resolves it LOCALLY —
@@ -33,9 +42,10 @@ public class DumpMobEffects {
             : new PrintWriter(System.out, true);
         var reg = BuiltInRegistries.MOB_EFFECT;
         int entries = 0;
-        for (var holder : reg) {
-            int id = reg.getId(holder);
-            out.println(id + "|" + reg.getKey(holder));
+        for (var effect : reg) {
+            int id = reg.getId(effect);
+            out.println(id + "|" + reg.getKey(effect) + "|" + effect.isBeneficial() + "|"
+                + effect.getColor());
             entries++;
         }
         out.close();
