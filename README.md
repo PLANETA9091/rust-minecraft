@@ -4107,6 +4107,34 @@ hand-drawn:
   CommonPlayerSpawnInfo, Respawn, Chunk Data, keep-alive/ping, center
   chunk, unload chunk, chunk batch, Accept Teleportation) is
   javap-proven UNCHANGED off the same classes.
+- **The hurt/health arc** (v0.3.150) — the player now BLEEDS by the
+  original's own arithmetic: the fall distance banks through
+  `Entity.checkFallDamage`'s swept-delta law (the f32 round-trip the
+  bytecode speaks), folds through `calculateFallDamage`'s modern
+  floor law (`floor((distance + 1e-6 - SAFE_FALL_DISTANCE 3.0) *
+  blockMultiplier * FALL_DAMAGE_MULTIPLIER)`) on the landing, and the
+  rising clamp (`checkFallDistanceAccumulation`) keeps a launch's slow
+  apex from banking more than one block; the water resets the bank
+  every tick (`updateFluidInteraction`). The hurt pipeline rides the
+  vanilla `hurtServer` cooldown chain verbatim (the 20-tick window,
+  the bigger-hurt-pays-the-difference law, the smaller-hurt refusal),
+  speaks the fall voice (`entity.player.small_fall`/`big_fall` at the
+  FIXED 1.0/1.0 literals), the hurt voice (`entity.player.hurt` at the
+  `(r - r) * 0.2 + 1.0` pitch) and the death voice, and the health
+  drops through the bare-player `actuallyHurt` clamp. The HUD hearts
+  row speaks the REAL `Hud.extractPlayerHealth`/`extractHearts` law:
+  the container sprite under every slot (the vanilla dark ring), the
+  right-to-left walk, the half-heart boundary, the 20-tick blink
+  rhythm (`/3 % 2`), the display lerp (the 1000ms snap folded to 20
+  ticks), the low-health jitter (`tickCount * 312871`-seeded Java
+  Random), and the vanilla `height - 39` line. Killing damage arms the
+  **DeathScreen**: the red gradient (`0x60500000 → 0xA0703030`), the
+  2x "You Died!" title, the Respawn/Title Screen buttons at the
+  vanilla `h/4 + 72`/`h/4 + 96` bounds, the input gates, and the
+  Respawn that resets the vitals, re-anchors the body to the spawn
+  pose and echoes the Client Command's PERFORM_RESPAWN on the wire —
+  with the Set Health, Hurt Animation (the 26.x float-yaw widening)
+  and Player Combat Kill packets parsed into the live store.
 - **Singleplayer world** — clicking `Singleplayer` enters a live 3D world
   view rendered by the same deterministic CPU raster path as the pixel
   tests: real block textures from the generated atlas, the **official

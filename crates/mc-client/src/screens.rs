@@ -497,6 +497,45 @@ pub struct App {
     pub drop_rng: crate::drops::Lcg,
     /// The offline entity id counter (the settle law's phase partner).
     pub next_drop_id: i32,
+    /// THE HURT/HEALTH ARC — the vanilla player's own vitals (the
+    /// javap laws, the hurt round): the health float the hearts speak
+    /// (the entity data's clamp 0..=max), the food/saturation the
+    /// Set Health packet carries, and the LivingEntity hurt fields
+    /// verbatim (`hurtTime`/`hurtDuration` the flash drives,
+    /// `invulnerableTime` the 20-tick cooldown folds, `lastHurt` the
+    /// cooldown's own comparison — the vanilla hurtServer's own
+    /// pipeline, the LOCAL prediction's voice).
+    pub health: f32,
+    pub food: i32,
+    pub saturation: f32,
+    pub hurt_time: i32,
+    pub hurt_duration: i32,
+    pub invulnerable_time: i32,
+    pub last_hurt: f32,
+    /// The Hurt Animation packet's tilt yaw (the flash-and-lean's own
+    /// channel; the camera roll is the future's consumer).
+    pub hurt_yaw: f32,
+    /// The HUD's health-row state (the Hud's own fields, the tick
+    /// clock the frame==tick model speaks): `healthBlinkTime` the
+    /// 20-tick flash window arms, `lastHealth`/`displayHealth` the
+    /// lerp pair (the display snaps after the 1000ms idle, folded to
+    /// 20 ticks), `lastHealthTime` the idle clock.
+    pub health_blink_time: u64,
+    pub last_health: i32,
+    pub display_health: i32,
+    pub last_health_time: u64,
+    /// The death screen's state: the vanilla shows the DeathScreen
+    /// when the health reaches zero (the Gui.tick's own auto-open) —
+    /// `dead` gates the HUD off and the gradient + the Respawn
+    /// buttons on; the message the Combat Kill wire named (the local
+    /// lane's fall death rides the client's own title).
+    pub dead: bool,
+    pub death_message: Option<String>,
+    /// The spawn pose the body materialized at (the offline spawn law's
+    /// own feet/angles, the network teleport's pose) — the respawn's
+    /// own re-anchor (the vanilla respawn teleports the player to the
+    /// spawn point and the body re-baselines there).
+    pub spawn_pose: Option<(f64, f64, f64, f32, f32)>,
 }
 
 /// One active USE — the vanilla LocalPlayer's own using fields (the
@@ -518,6 +557,10 @@ const HOTBAR_H: i32 = 22;
 const HEART: i32 = 9;
 const HEART_SPACING: i32 = 8;
 pub const HEALTH: i32 = 20;
+/// `Attributes.MAX_HEALTH`'s default — the setHealth clamp's own
+/// ceiling (javap LivingEntity.setHealth: `Mth.clamp(health, 0,
+/// maxHealth)`).
+pub const MAX_HEALTH: f32 = 20.0;
 
 const BOOT_STAGES: [&str; 5] = [
     "mc2rs.boot.registry",
@@ -619,6 +662,21 @@ impl App {
             inventory: crate::drops::Inventory::default(),
             drop_rng: crate::drops::Lcg::new(seed),
             next_drop_id: 1,
+            health: 20.0,
+            food: 20,
+            saturation: 0.0,
+            hurt_time: 0,
+            hurt_duration: 0,
+            invulnerable_time: 0,
+            last_hurt: 0.0,
+            hurt_yaw: 0.0,
+            health_blink_time: 0,
+            last_health: 20,
+            display_health: 20,
+            last_health_time: 0,
+            dead: false,
+            death_message: None,
+            spawn_pose: None,
         }
     }
 
@@ -673,6 +731,31 @@ impl App {
         // rides. The pause freezes the body (the vanilla pause's own
         // law); the headless scenes never feed one (the goldens stay).
         if self.screen == ScreenKind::World && !self.paused {
+            // the drain slot the body's borrow fills (the hurt pipeline
+            // runs after it ends — the disjoint-borrow split)
+            let mut fall_event: Option<i32> = None;
+            // THE HURT CLOCKS (LivingEntity.tick's own decrements: the
+            // hurtTime flash and the invulnerableTime cooldown walk
+            // down one per tick)
+            if self.hurt_time > 0 {
+                self.hurt_time -= 1;
+            }
+            if self.invulnerable_time > 0 {
+                self.invulnerable_time -= 1;
+            }
+            // THE DEATH GATE (the DeathScreen's own input law): a dead
+            // player's impulses stay zero and the dig sleeps — the
+            // body's tick keeps its physics (the corpse settles) but
+            // the input lanes carry nothing.
+            if self.dead {
+                if let Some(b) = self.body.as_mut() {
+                    b.forward = 0.0;
+                    b.left = 0.0;
+                    b.jumping = false;
+                    b.sprinting = false;
+                }
+                self.dig_held = false;
+            }
             let using = self.using_item.is_some();
             // the disjoint field borrows: the body mutates while the
             // level reads (the borrow checker splits the fields)
@@ -701,7 +784,15 @@ impl App {
                             let _ = sink.send(cmd);
                         }
                     }
+                    // THE FALL EVENT (the landing's damage the body's
+                    // law folded this tick — drained like the step_due
+                    // lane it sits beside; the hurt pipeline runs after
+                    // the body's borrow ends)
+                    fall_event = b.fall_event.take();
                 }
+            }
+            if let Some(dmg) = fall_event {
+                self.apply_fall_damage(dmg);
             }
             // THE DIG TICK (the vanilla Minecraft.tick's own frame):
             // missTime counts down, the crosshair re-picks (the
@@ -882,6 +973,11 @@ impl App {
         // hold continues even while the gates refuse the swing)
         self.dig_held = true;
         if self.screen != ScreenKind::World || self.paused {
+            return;
+        }
+        // THE DEATH GATE: a dead player's hands sleep (the DeathScreen
+        // owns the input — the same law the update loop's gate speaks)
+        if self.dead {
             return;
         }
         if self.miss_time > 0 {
@@ -1209,6 +1305,12 @@ impl App {
     /// dropped with the cancelled screen, a late disconnect still reports).
     pub fn on_escape(&mut self) {
         if self.screen == ScreenKind::World {
+            // THE DEATH GATE (the vanilla death screen's own modal law):
+            // Escape never pauses while dead — the DeathScreen owns the
+            // input, the Respawn/Title buttons are the only exits
+            if self.dead {
+                return;
+            }
             self.paused = !self.paused;
             self.buttons.clear();
         } else if self.screen == ScreenKind::Chest {
@@ -1567,6 +1669,19 @@ impl App {
                     self.paused = false;
                     self.buttons.clear();
                 }
+                // the DeathScreen's own pair: Respawn resets the vitals,
+                // re-anchors the body to the spawn and echoes the Client
+                // Command's PERFORM_RESPAWN; the Title Screen button is
+                // the vanilla's exit lane (the client's own title menu)
+                "respawn" => {
+                    self.respawn();
+                    self.buttons.clear();
+                }
+                "deathtitle" => {
+                    self.dead = false;
+                    self.open(ScreenKind::Title);
+                    self.buttons.clear();
+                }
                 "saveandquit" => {
                     self.paused = false;
                     if self.world_is_network {
@@ -1853,6 +1968,15 @@ impl App {
                     yaw,
                     pitch,
                 ));
+                // the teleport's pose IS the spawn (the server's respawn
+                // stream re-teleports through the same lane)
+                self.spawn_pose = Some((
+                    cam.pos.x as f64,
+                    (cam.pos.y - crate::world_view::PLAYER_EYE_HEIGHT) as f64,
+                    cam.pos.z as f64,
+                    yaw,
+                    pitch,
+                ));
             }
         }
         self.net_world = Some(world);
@@ -1879,7 +2003,6 @@ impl App {
     pub fn offline_camera_updated(&mut self, cam: crate::camera::Camera) {
         self.offline_camera = Some(cam);
     }
-
     /// THE OFFLINE BODY SPAWN (the windowed loop's own call once the
     /// world screen stands): the feet on the procedural surface at the
     /// spawn column's center, the flight camera's east-facing angles —
@@ -1918,6 +2041,10 @@ impl App {
             yaw,
             pitch,
         ));
+        // THE SPAWN POSE (the respawn's own re-anchor: the vanilla
+        // respawn teleports the player to the spawn point — the pose
+        // the body materialized at is the pose the respawn restores)
+        self.spawn_pose = Some((n / 2.0, feet_y as f64, n / 2.0, yaw, pitch));
     }
 
     /// The look deltas (the windowed loop's per-frame feed — the mouse
@@ -2336,6 +2463,104 @@ impl App {
         self.hotbar_slots = hotbar;
     }
 
+    /// The vitals' lane (the Set Health / Hurt Animation / Combat Kill
+    /// wire's projection — the HealthView the refresh ships): the
+    /// store's truth lands verbatim, the death gate follows the
+    /// message's arrival (the vanilla handlePlayerCombatKill's own
+    /// setScreen(new DeathScreen)).
+    pub fn live_health_updated(&mut self, health: crate::world_view::HealthView) {
+        self.health = health.health;
+        self.food = health.food;
+        self.saturation = health.saturation;
+        self.hurt_time = health.hurt_time;
+        self.hurt_yaw = health.hurt_yaw;
+        self.death_message = health.death_message.clone();
+        self.dead = self.death_message.is_some() || (self.dead && self.health <= 0.0);
+    }
+
+    /// THE FALL DAMAGE PIPELINE (javap `LivingEntity.causeFallDamage`'s
+    /// own order): the fall voice first — the FIXED 1.0/1.0
+    /// `getFallDamageSound(damage)` (the small/big boundary at damage
+    /// 5), then the hurt through the amount `calculateFallDamage`
+    /// spoke.
+    fn apply_fall_damage(&mut self, damage: i32) {
+        self.sounds.play_fall_voice(self.frame, damage);
+        self.hurt(damage as f32);
+    }
+
+    /// THE HURT LAW (javap `hurtServer`'s own pipeline, the LOCAL
+    /// prediction's voice): the 20-tick cooldown's own comparison — a
+    /// hurt inside the 10-tick window must EXCEED the last hurt and
+    /// lands for the difference only; a fresh hurt re-arms the window,
+    /// the 10-tick flash (`hurtTime = hurtDuration`), and the health
+    /// drops through actuallyHurt (the armor/absorption lanes' honest
+    /// absence — the bare player's own path).
+    pub fn hurt(&mut self, amount: f32) {
+        if amount <= 0.0 || self.dead {
+            return;
+        }
+        if (self.invulnerable_time as f32) > 10.0 {
+            if amount <= self.last_hurt {
+                return;
+            }
+            self.actually_hurt(amount - self.last_hurt);
+            self.last_hurt = amount;
+        } else {
+            self.last_hurt = amount;
+            self.invulnerable_time = 20;
+            self.hurt_duration = 10;
+            self.hurt_time = self.hurt_duration;
+            self.actually_hurt(amount);
+            // the hurt voice (handleDamageEvent's own call — the
+            // client's own law speaks the (r - r) * 0.2 + 1.0 pitch)
+            self.sounds.play_hurt_voice(self.frame);
+        }
+    }
+
+    /// THE ACTUAL HURT (javap `actuallyHurt`'s bare-player path: no
+    /// armor, no absorption — the clamp `setHealth(max(0, health -
+    /// amount))` the entity data speaks) and the death's own tail: the
+    /// health at zero arms the death screen (the Gui.tick's auto-open)
+    /// and speaks the death voice (the hurtServer tail's
+    /// `makeSound(getDeathSound())`).
+    fn actually_hurt(&mut self, amount: f32) {
+        self.health = (self.health - amount).clamp(0.0, MAX_HEALTH);
+        if self.health <= 0.0 && !self.dead {
+            self.dead = true;
+            self.sounds.play_death_voice(self.frame);
+        }
+    }
+
+    /// THE RESPAWN (the DeathScreen's Respawn button's own action): the
+    /// vitals reset (the health back to max, the hurt fields zero), the
+    /// body re-anchors to the spawn pose (the vanilla respawn's own
+    /// teleport), and the live session echoes the Client Command's
+    /// PERFORM_RESPAWN (the server re-streams position and vitals).
+    pub fn respawn(&mut self) {
+        self.dead = false;
+        self.death_message = None;
+        self.health = MAX_HEALTH;
+        self.hurt_time = 0;
+        self.hurt_duration = 0;
+        self.invulnerable_time = 0;
+        self.last_hurt = 0.0;
+        if let (Some(b), Some((x, y, z, yaw, pitch))) = (self.body.as_mut(), self.spawn_pose) {
+            b.x = x;
+            b.y = y;
+            b.z = z;
+            b.yaw = yaw;
+            b.pitch = pitch;
+            b.vx = 0.0;
+            b.vy = 0.0;
+            b.vz = 0.0;
+            b.fall_distance = 0.0;
+            b.fall_event = None;
+        }
+        if let Some(sink) = self.live_clicks.as_ref() {
+            let _ = sink.send(crate::world_view::ContainerCommand::Respawn);
+        }
+    }
+
     /// The networked container lane: the live store's projection drives
     /// the chest screen exactly like the vanilla client's — the Open
     /// Screen packet SHOWS the window over the world (from the World
@@ -2435,13 +2660,21 @@ impl App {
             ScreenKind::Disconnect => self.render_disconnect(&mut g, a, w, h),
             ScreenKind::World => {
                 // 3D world first (full framebuffer resolution), then the
-                // HUD and pause overlay on top in GUI space.
+                // HUD and pause overlay on top in GUI space. THE DEATH
+                // GATE (the vanilla death screen's own shape): a dead
+                // player's HUD sleeps and the DeathScreen renders
+                // instead — the world stays beneath the red gradient.
                 self.render_world_3d(fb);
                 let mut g = Gui::new(fb, Gui::auto_scale(fb.w, fb.h));
-                self.render_hud(&mut g, a);
-                if self.paused {
+                if self.dead {
                     let (gw, gh) = (g.w(), g.h());
-                    self.render_pause(&mut g, a, gw, gh);
+                    self.render_death(&mut g, a, gw, gh);
+                } else {
+                    self.render_hud(&mut g, a);
+                    if self.paused {
+                        let (gw, gh) = (g.w(), g.h());
+                        self.render_pause(&mut g, a, gw, gh);
+                    }
                 }
             }
             ScreenKind::Chest => {
@@ -2704,16 +2937,194 @@ impl App {
                 g.text(a, ix + 17 - tw, iy + 9, &s, WHITE, true);
             }
         }
-        // health: 10 full hearts above the hotbar's left half (health 20)
+        // THE HEALTH ROW (javap Hud.extractPlayerHealth +
+        // extractHearts — the REAL law, the static 10-full render it
+        // replaces): the Hud's own state machine (the blink arm, the
+        // display lerp) runs per frame, then the RIGHT-TO-LEFT heart
+        // walk renders the CONTAINER under every slot first, then the
+        // highlight fill (the _blinking sprites, the real health's
+        // own), then the normal fill (the display health's own, the
+        // half boundary `n + 1 == display`). The low-health jitter
+        // rides the Java-Random law the `tickCount * 312871` seed
+        // speaks; the regen bounce and the absorption lane stay their
+        // honest absences (no effects, no absorption in this client).
         let (hbx, hby) = hearts_origin(w, h);
-        for i in 0..HEALTH / 2 {
-            g.sprite(a, "hud/heart/full", hbx + i * HEART_SPACING, hby);
+        let health_i = self.health.ceil() as i32;
+        // the blink flag (the Hud's own: the 20-tick window's /3 %2
+        // rhythm)
+        let blink = self.health_blink_time > self.frame
+            && (self.health_blink_time - self.frame) / 3 % 2 == 1;
+        // the lerp state (the Hud's own: the health moving while
+        // invulnerable arms the flash; the 1000ms idle snaps the
+        // display — folded to 20 ticks, the frame==tick model)
+        if health_i < self.last_health && self.invulnerable_time > 0 {
+            self.last_health_time = self.frame;
+            self.health_blink_time = self.frame + 20;
+        } else if health_i > self.last_health && self.invulnerable_time > 0 {
+            self.last_health_time = self.frame;
+            self.health_blink_time = self.frame + 20;
+        }
+        if self.frame.saturating_sub(self.last_health_time) > 20 {
+            self.display_health = health_i;
+            self.last_health_time = self.frame;
+        }
+        self.last_health = health_i;
+        let display = self.display_health;
+        let max_display = MAX_HEALTH.max(display as f32).max(health_i as f32);
+        let containers = (max_display / 2.0).ceil() as i32;
+        // THE BLINK RANDOM (vanilla `random.setSeed(tickCount *
+        // 312871)` + `nextInt(2)` per jittered heart — the Java
+        // Random law verbatim: the 0x5DEECE66D scramble, the 48-bit
+        // mask, the 31-bit draw, the power-of-two bound's own
+        // arithmetic)
+        let mut rng = ((self.frame as i64).wrapping_mul(312871) ^ 0x5DEECE66D)
+            & ((1i64 << 48) - 1);
+        let mut next_jitter = |rng: &mut i64| -> i32 {
+            *rng = rng.wrapping_mul(0x5DEECE66D).wrapping_add(0xB) & ((1i64 << 48) - 1);
+            let next31 = (*rng >> 17) as u32;
+            ((2u64.wrapping_mul(next31 as u64)) >> 31) as i32
+        };
+        // the row height (the Hud's own: max(10 - (rows - 2), 3) — the
+        // multi-row compression; one row's worth rides unchanged)
+        let rows = ((max_display / 2.0 / 10.0).ceil()) as i32;
+        let row_height = (10 - (rows - 2)).max(3);
+        for m in (0..containers).rev() {
+            let row = m / 10;
+            let col = m % 10;
+            let x = hbx + col * HEART_SPACING;
+            let mut y = hby - row * row_height;
+            // the LOW-HEALTH JITTER (the Hud's own: health + absorption
+            // <= 4 shakes every heart — the absorption lane's 0 here)
+            if health_i + 0 <= 4 {
+                y += next_jitter(&mut rng);
+            }
+            // the CONTAINER under every slot (blinking during the flash)
+            g.sprite(
+                a,
+                if blink {
+                    "hud/heart/container_blinking"
+                } else {
+                    "hud/heart/container"
+                },
+                x,
+                y,
+            );
+            let n = m * 2;
+            // the HIGHLIGHT fill (the _blinking sprites over the LERPED
+            // display — the white flash marks the lost hearts the
+            // display still holds, half at `n + 1 == display`)
+            if blink && n < display {
+                g.sprite(
+                    a,
+                    if n + 1 == display {
+                        "hud/heart/half_blinking"
+                    } else {
+                        "hud/heart/full_blinking"
+                    },
+                    x,
+                    y,
+                );
+            }
+            // the NORMAL fill (the REAL health's own — the red drop is
+            // instant, half at `n + 1 == health`)
+            if n < health_i {
+                g.sprite(
+                    a,
+                    if n + 1 == health_i {
+                        "hud/heart/half"
+                    } else {
+                        "hud/heart/full"
+                    },
+                    x,
+                    y,
+                );
+            }
         }
         // hunger: 10 full drumsticks above the hotbar's right half,
         // right-aligned like vanilla
         let (fx, fy) = food_origin(w, h);
         for i in 0..HEALTH / 2 {
             g.sprite(a, "hud/food_full", fx - i * HEART_SPACING, fy);
+        }
+    }
+
+    /// THE DEATH SCREEN (javap DeathScreen, the vanilla's own layout):
+    /// the red gradient over the whole screen (`fillGradient(0, 0, w,
+    /// h, 0x60500000, 0xA0703030)` — the dark-red top, the deep
+    /// blood-red bottom, the constants the bytecode's ldc_w pair
+    /// speaks), the "You Died!" title at scale 2 (the visitText law's
+    /// y 30 in the scaled space), the cause of death line at y 85 when
+    /// the wire named one, and the two buttons — Respawn at
+    /// (w/2 - 100, h/4 + 72, 200x20), Title Screen at (w/2 - 100,
+    /// h/4 + 96, 200x20) — the init() bounds verbatim.
+    fn render_death(&mut self, g: &mut Gui, a: &mut GuiAssets, w: i32, h: i32) {
+        // the gradient: fillGradient's linear top->bottom alpha walk
+        // (the two ARGB constants decoded per row)
+        let (top, bottom) = (0x60500000u32, 0xA0703030u32);
+        let (tr_, tg, tb, ta) = (
+            ((top >> 16) & 0xFF) as f32,
+            ((top >> 8) & 0xFF) as f32,
+            (top & 0xFF) as f32,
+            ((top >> 24) & 0xFF) as f32,
+        );
+        let (br_, bg, bb, ba) = (
+            ((bottom >> 16) & 0xFF) as f32,
+            ((bottom >> 8) & 0xFF) as f32,
+            (bottom & 0xFF) as f32,
+            ((bottom >> 24) & 0xFF) as f32,
+        );
+        let hh = (h - 1).max(1) as f32;
+        for y in 0..h {
+            let t = y as f32 / hh;
+            let c = [
+                (tr_ + (br_ - tr_) * t) / 255.0,
+                (tg + (bg - tg) * t) / 255.0,
+                (tb + (bb - tb) * t) / 255.0,
+                (ta + (ba - ta) * t) / 255.0,
+            ];
+            g.fill(0, y, w, 1, c);
+        }
+        // the title: scale 2, the visitText law's CENTER accept at
+        // (width/4, 30) in the scaled space — the screen center, the
+        // y 60 unscaled, the glyphs doubled
+        let title = tr("deathScreen.title").unwrap_or("You Died!");
+        let tw = g.text_width(title) * 2;
+        g.text_scaled(
+            a,
+            w / 2 - tw / 2,
+            60,
+            title,
+            WHITE,
+            true,
+            2,
+        );
+        // the cause of death (the Combat Kill wire's message — the
+        // local fall's own lane rides the client's title only)
+        if let Some(msg) = self.death_message.as_deref() {
+            if !msg.is_empty() {
+                g.text_centered(a, w / 2, 85, msg, WHITE, true);
+            }
+        }
+        // the buttons: the init() bounds verbatim (h/4 + 72 and
+        // h/4 + 96, both 200x20 centered)
+        self.buttons.push(Button::new(
+            "respawn",
+            tr("deathScreen.respawn").unwrap_or("Respawn").to_string(),
+            w / 2,
+            h / 4 + 72,
+            200,
+        ));
+        self.buttons.push(Button::new(
+            "deathtitle",
+            tr("deathScreen.titleScreen")
+                .unwrap_or("Title screen")
+                .to_string(),
+            w / 2,
+            h / 4 + 96,
+            200,
+        ));
+        for b in &self.buttons.clone() {
+            b.render(g, a, -1, -1);
         }
     }
 
@@ -3279,17 +3690,22 @@ fn draw_item_icon(g: &mut Gui, item_id: i32, x: i32, y: i32) {
     }
 }
 
-/// Health row origin: first (leftmost) heart, one px above the hotbar.
+/// Health row origin: the vanilla layout law (javap
+/// Hud.extractPlayerHealth).
 fn hearts_origin(gui_w: i32, gui_h: i32) -> (i32, i32) {
-    let (hx, hy) = hotbar_rect(gui_w, gui_h);
-    (hx, hy - HEART - 1)
+    // THE VANILLA LAYOUT (javap Hud.extractPlayerHealth): the row's
+    // left edge at width/2 - 91, the row's top at height - 39 — the
+    // y leaves the experience bar's own slot between the hearts and
+    // the hotbar, exactly like the original's HUD.
+    (gui_w / 2 - 91, gui_h - 39)
 }
 
 /// Hunger row origin: first (rightmost) drumstick, aligned with the hearts,
 /// right edge flush with the hotbar's right edge.
 fn food_origin(gui_w: i32, gui_h: i32) -> (i32, i32) {
-    let (hx, hy) = hotbar_rect(gui_w, gui_h);
-    (hx + HOTBAR_W - HEART, hy - HEART - 1)
+    // the same vanilla line the hearts speak (the food row shares the
+    // hearts' y), the right edge at width/2 + 91 (the row's own edge)
+    (gui_w / 2 + 91 - HEART, gui_h - 39)
 }
 
 /// Top solid block y at (x, z) — the spawn column scan (CHUNK_Y when open).
@@ -3517,12 +3933,13 @@ mod tests {
     #[test]
     fn hud_layout_matches_vanilla_geometry() {
         // vanilla: hotbar 182x22 centered, bottom edge 1px above screen;
-        // hearts above left half, hunger above right half
+        // hearts above left half at height - 39 (the Hud's own law, the
+        // XP bar's slot between the hearts and the hotbar), hunger on
+        // the same line, right edge flush with the hotbar's
         let (w, h) = (320, 180);
         assert_eq!(hotbar_rect(w, h), (320 / 2 - 91, 180 - 23));
-        assert_eq!(hearts_origin(w, h), (320 / 2 - 91, 180 - 23 - 10));
-        let (fx, _) = food_origin(w, h);
-        assert_eq!(fx + HEART, 320 / 2 + 91, "hunger right edge flush with hotbar");
+        assert_eq!(hearts_origin(w, h), (320 / 2 - 91, 180 - 39));
+        assert_eq!(food_origin(w, h), (320 / 2 + 91 - HEART, 180 - 39));
     }
 
     #[test]
@@ -5863,6 +6280,218 @@ mod tests {
         assert!(app.on_right_press(0, 0), "the third place spoke");
         assert_eq!(app.inventory.items[0], (0, 0), "the empty slot cleared");
         assert!(!app.on_right_press(0, 0), "the empty selection never places");
+    }
+
+    /// THE FALL DAMAGE ARC (the hurt round's own headline): the body
+    /// spawned ten blocks above the surface falls, the landing folds
+    /// damage 7 through calculateFallDamage, the pipeline speaks the
+    /// fall voice (the FIXED 1.0/1.0 lane), the hurt voice (the
+    /// (r-r)*0.2+1.0 fold), the health drops 20 -> 13, the flash arms
+    /// (hurtTime 10) and the cooldown re-arms (invulnerableTime 20).
+    #[test]
+    fn the_fall_damage_hurts_the_player() {
+        let mut app = App::new(3);
+        app.enter_world();
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        // the body ten blocks above the spawn surface (the feet on the
+        // top solid cell's surface, ten up)
+        let spawn_feet = app.spawn_y;
+        app.body = Some(crate::body::PlayerBody::new(
+            c as f64 + 0.5,
+            (spawn_feet + 10) as f64,
+            c as f64 + 0.5,
+            0.0,
+            0.0,
+        ));
+        assert_eq!(app.health, 20.0, "the untouched player starts full");
+        // the ticks until the landing speaks
+        let mut landed = false;
+        for _ in 0..60 {
+            app.update();
+            if app.health != 20.0 {
+                landed = true;
+                break;
+            }
+        }
+        assert!(landed, "the landing spoke inside the ticks");
+        // THE CLAMP'S OWN ARITHMETIC: the 10-block descent banks
+        // 10.0 minus the rising clamp's 0.1435 (the
+        // checkFallDistanceAccumulation law) — the landing folds 6
+        // (floor(9.8565 + 1e-6 - 3.0)), the health rides to 14
+        assert_eq!(app.health, 14.0, "the clamp-loss verdict, the bytecode's own");
+        assert_eq!(app.hurt_time, 10, "the flash armed at its full window");
+        assert_eq!(app.hurt_duration, 10);
+        assert_eq!(app.invulnerable_time, 20, "the cooldown re-armed");
+        assert!(!app.dead, "six damage never kills");
+        // THE VOICES: the fall's own fixed lane, then the hurt's pitched
+        // one (causeFallDamage's own order)
+        let fall = app
+            .sounds
+            .events
+            .iter()
+            .position(|e| e.contains("_fall @"))
+            .expect("the fall voice spoke");
+        assert!(
+            app.sounds.events[fall].contains(" v1.000000 p1.000000"),
+            "the fall's fixed fold: {}",
+            app.sounds.events[fall]
+        );
+        let hurt = app
+            .sounds
+            .events
+            .iter()
+            .position(|e| e.starts_with("entity.player.hurt @"))
+            .expect("the hurt voice spoke");
+        assert!(hurt > fall, "the hurt voice follows the fall's own");
+        // THE COOLDOWN'S ECHO: a second landing inside the window refuses
+        // the smaller repeat (the lastHurt comparison) — the health stays
+        app.hurt(5.0);
+        assert_eq!(
+            app.health, 14.0,
+            "the 5-damage repeat inside the window refuses (5 <= lastHurt 6)"
+        );
+    }
+
+    /// THE HURT COOLDOWN LAW (javap hurtServer's own comparison chain):
+    /// the fresh hurt re-arms the 20-tick window; a bigger hurt inside
+    /// the 10-tick sub-window lands for the DIFFERENCE only; a smaller
+    /// one refuses; a hurt after the window re-lands whole.
+    #[test]
+    fn the_hurt_cooldown_walks_the_javap_chain() {
+        let mut app = App::new(3);
+        app.enter_world();
+        // the fresh hurt: the whole amount lands
+        app.hurt(2.0);
+        assert_eq!(app.health, 18.0);
+        assert_eq!(app.invulnerable_time, 20);
+        assert_eq!(app.hurt_time, 10);
+        assert_eq!(app.last_hurt, 2.0);
+        // five ticks: the window still holds (15 > 10)
+        for _ in 0..5 {
+            app.update();
+        }
+        assert_eq!(app.invulnerable_time, 15);
+        // the BIGGER hurt lands the difference
+        app.hurt(3.0);
+        assert_eq!(app.health, 17.0, "3 - lastHurt 2 = 1 damage");
+        assert_eq!(app.invulnerable_time, 15, "the window never re-arms");
+        assert_eq!(app.hurt_time, 5, "the flash never re-arms either");
+        // the SMALLER hurt refuses outright
+        app.hurt(2.0);
+        assert_eq!(app.health, 17.0, "2 <= lastHurt 3 refused");
+        // the window drains: the fresh hurt re-lands whole
+        for _ in 0..20 {
+            app.update();
+        }
+        assert_eq!(app.invulnerable_time, 0);
+        app.hurt(2.0);
+        assert_eq!(app.health, 15.0, "the fresh hurt lands whole");
+        assert_eq!(app.invulnerable_time, 20, "re-armed");
+        assert_eq!(app.hurt_time, 10, "the flash re-armed");
+    }
+
+    /// THE DEATH ARC AND THE RESPAWN (the vanilla's own beat pair): the
+    /// killing hurt speaks the death voice, arms the death screen (the
+    /// HUD sleeps, the gradient owns the world), zeroes the input; the
+    /// Respawn resets the vitals and re-anchors the body to the spawn
+    /// pose with the fall state cleared.
+    #[test]
+    fn the_death_arc_respawns_at_the_spawn() {
+        let mut app = App::new(3);
+        app.enter_world();
+        app.spawn_offline_body();
+        let spawn = app.spawn_pose.expect("the spawn pose recorded");
+        // THE KILLING HURT
+        app.hurt(20.0);
+        assert_eq!(app.health, 0.0, "the health clamped at zero");
+        assert!(app.dead, "the death screen armed");
+        app.sounds
+            .events
+            .iter()
+            .find(|e| e.starts_with("entity.player.death @"))
+            .expect("the death voice spoke");
+        // further hurts refuse (the isDeadOrDying gate)
+        app.hurt(5.0);
+        assert_eq!(app.health, 0.0);
+        // THE INPUT GATE: the dead body's impulses zero through update
+        if let Some(b) = app.body.as_mut() {
+            b.forward = 1.0;
+            b.jumping = true;
+        }
+        app.update();
+        if let Some(b) = app.body.as_ref() {
+            assert_eq!(b.forward, 0.0, "the corpse's impulses zero");
+            assert!(!b.jumping, "the corpse never jumps");
+        }
+        // THE ATTACK GATE: the press never arms a dig while dead
+        app.on_attack();
+        assert!(!app.dig.is_destroying, "the dead hand never mines");
+        // THE RESPAWN: the vitals reset, the body re-anchors to the spawn
+        // pose (the vanilla respawn's own teleport), the fall clears
+        if let Some(b) = app.body.as_mut() {
+            b.x += 3.0;
+            b.fall_distance = 4.0;
+        }
+        app.respawn();
+        assert!(!app.dead, "the death screen closed");
+        assert_eq!(app.health, 20.0, "the vitals back to max");
+        assert_eq!(app.invulnerable_time, 0);
+        let b = app.body.as_ref().expect("the body stands");
+        assert_eq!(b.x, spawn.0, "the feet re-anchored to the spawn pose");
+        assert_eq!(b.y, spawn.1);
+        assert_eq!(b.z, spawn.2);
+        assert_eq!(b.fall_distance, 0.0, "the fall state cleared");
+    }
+
+    /// THE WIRE'S VITALS LANE (the Set Health / Hurt Animation / Combat
+    /// Kill projections through live_health_updated): the store's truth
+    /// lands verbatim, the death message arms the death gate, the
+    /// respawn wire rides the command channel.
+    #[test]
+    fn the_wire_vitals_land_and_the_respawn_echoes() {
+        let mut app = App::new(3);
+        app.enter_world();
+        // the vitals snapshot lands verbatim
+        app.live_health_updated(crate::world_view::HealthView {
+            health: 6.5,
+            food: 18,
+            saturation: 5.0,
+            hurt_time: 10,
+            hurt_yaw: -45.5,
+            death_message: None,
+        });
+        assert_eq!(app.health, 6.5, "the half heart's own float");
+        assert_eq!(app.food, 18);
+        assert_eq!(app.saturation, 5.0);
+        assert_eq!(app.hurt_time, 10, "the flash window rides");
+        assert_eq!(app.hurt_yaw, -45.5, "the tilt yaw rides");
+        assert!(!app.dead);
+        // the death message arms the gate (the wire's own death)
+        app.live_health_updated(crate::world_view::HealthView {
+            health: 0.0,
+            food: 0,
+            saturation: 0.0,
+            hurt_time: 0,
+            hurt_yaw: 0.0,
+            death_message: Some("Player fell from a high place".to_string()),
+        });
+        assert!(app.dead, "the message armed the death gate");
+        assert_eq!(
+            app.death_message.as_deref(),
+            Some("Player fell from a high place"),
+            "the cause line's own text"
+        );
+        // the respawn echo rides the command channel when a session
+        // exists (the offline lane's channel is none — the no-op)
+        let (tx, rx) = std::sync::mpsc::channel();
+        app.live_clicks = Some(tx);
+        app.respawn();
+        match rx.try_recv().expect("the respawn echoed") {
+            crate::world_view::ContainerCommand::Respawn => {}
+            other => panic!("the wrong command rode the lane: {other:?}"),
+        }
+        assert!(!app.dead);
     }
 
     /// THE BLOCK-SOUND ARC'S FOOTSTEPS: the walking body's steps ride

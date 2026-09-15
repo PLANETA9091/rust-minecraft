@@ -425,6 +425,90 @@ impl<'a> Gui<'a> {
         self.text(a, cx - w / 2, y, s, color, shadow)
     }
 
+    /// Scaled text (the vanilla Screen.drawCenteredString under a
+    /// pose().scale(k) — the DeathScreen's 2x title): every glyph
+    /// pixel blits as a k×k block, the advances and the shadow offset
+    /// scale with it. Returns the end x in GUI units.
+    pub fn text_scaled(
+        &mut self,
+        a: &mut GuiAssets,
+        x: i32,
+        y: i32,
+        s: &str,
+        color: [f32; 3],
+        shadow: bool,
+        k: i32,
+    ) -> i32 {
+        let dark = [color[0] * 0.25, color[1] * 0.25, color[2] * 0.25];
+        if shadow {
+            self.draw_text_scaled_raw(a, x + k, y + k, s, dark, k);
+        }
+        self.draw_text_scaled_raw(a, x, y, s, color, k)
+    }
+
+    fn draw_text_scaled_raw(
+        &mut self,
+        a: &mut GuiAssets,
+        x: i32,
+        y: i32,
+        s: &str,
+        mut color: [f32; 3],
+        k: i32,
+    ) -> i32 {
+        let mut cx = x;
+        let mut in_code = false;
+        for ch in s.chars() {
+            if in_code {
+                if let Some(i) = code_index(ch) {
+                    color = COLOR_CODES[i];
+                }
+                in_code = false;
+                continue;
+            }
+            if ch == '§' {
+                in_code = true;
+                continue;
+            }
+            let Some(g) = font::glyph(ch) else {
+                cx += 4 * k;
+                continue;
+            };
+            if g.space_advance != 0 {
+                cx += g.space_advance as i32 * k;
+                continue;
+            }
+            if g.gw > 0 {
+                if let Some(tex) = a.font_texture(g.tex).cloned() {
+                    // baseline: glyph cell top = y + ascent*k - cell height*k
+                    let top = y + g.ascent as i32 * k - g.gh as i32 * k;
+                    for gy in 0..g.gh {
+                        for gx in 0..g.gw {
+                            let c = tex.sample(
+                                g.u as u32 + gx as u32,
+                                g.v as u32 + gy as u32,
+                            );
+                            if c[3] <= 0.1 {
+                                continue;
+                            }
+                            let al = c[3];
+                            for sy in 0..k {
+                                for sx in 0..k {
+                                    self.px(
+                                        cx + gx as i32 * k + sx,
+                                        top + gy as i32 * k + sy,
+                                        [color[0], color[1], color[2], al],
+                                    );
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            cx += (g.gw as i32 + 1) * k;
+        }
+        cx
+    }
+
     /// Vanilla mouse cursor (crosshair-style arrow fallback: simple arrow).
     #[allow(dead_code)] // wired in when the screens take pointer input
     pub fn cursor(&mut self, x: i32, y: i32) {

@@ -181,6 +181,63 @@ impl BlockSounds {
     fn next_rand_f32(&mut self) -> f32 {
         (self.next_rand() % (1u64 << 24)) as f32 / (1u64 << 24) as f32
     }
+
+    /// The FALL VOICE (javap `LivingEntity.causeFallDamage`'s own
+    /// call): `playSound(getFallDamageSound(damage), 1.0F, 1.0F)` —
+    /// the FIXED volume and pitch lane (no randoms, the fall's own
+    /// deadpan thud), the small fall under five damage, the big one
+    /// at and past it (`getFallDamageSound(i): i > 4 ? big : small`,
+    /// the Player's fallsounds `PLAYER_SMALL_FALL` / `PLAYER_BIG_FALL`).
+    pub fn play_fall_voice(&mut self, tick: u64, damage: i32) {
+        let event = if damage > 4 {
+            "entity.player.big_fall"
+        } else {
+            "entity.player.small_fall"
+        };
+        let Some(file) = self.pick_file(event) else {
+            return;
+        };
+        self.events.push(format!(
+            "{event} @{tick} #{file} v{:.6} p{:.6}",
+            1.0, 1.0
+        ));
+    }
+
+    /// The HURT VOICE (javap `LivingEntity.handleDamageEvent`'s own
+    /// call — the client's own damage law): `playSound(getHurtSound(),
+    /// getSoundVolume(), (r - r) * 0.2F + 1.0F)` — volume 1.0, the
+    /// pitch `(r - r) * 0.2 + 1.0` in [0.8, 1.2], the two randoms
+    /// riding THIS engine's LCG (the draw order: the pitch randoms
+    /// first, then the file pick — the pickup voice's own order).
+    pub fn play_hurt_voice(&mut self, tick: u64) {
+        let r1 = self.next_rand_f32();
+        let r2 = self.next_rand_f32();
+        let pitch = (r1 - r2) * 0.2 + 1.0;
+        let Some(file) = self.pick_file("entity.player.hurt") else {
+            return;
+        };
+        self.events.push(format!(
+            "entity.player.hurt @{tick} #{file} v{:.6} p{:.6}",
+            1.0, pitch
+        ));
+    }
+
+    /// The DEATH VOICE (javap the hurtServer tail's `makeSound(
+    /// getDeathSound())` — the Player's own `entity.player.death`):
+    /// the volume 1.0, the pitch the voice's (r - r) * 0.2 + 1.0 law,
+    /// the same LCG and draw order the hurt voice speaks.
+    pub fn play_death_voice(&mut self, tick: u64) {
+        let r1 = self.next_rand_f32();
+        let r2 = self.next_rand_f32();
+        let pitch = (r1 - r2) * 0.2 + 1.0;
+        let Some(file) = self.pick_file("entity.player.death") else {
+            return;
+        };
+        self.events.push(format!(
+            "entity.player.death @{tick} #{file} v{:.6} p{:.6}",
+            1.0, pitch
+        ));
+    }
 }
 
 #[cfg(test)]
@@ -237,6 +294,62 @@ mod tests {
         // determinism: the same seed speaks the same voice
         let mut b = BlockSounds::new(31);
         b.play_pickup(9);
+        assert_eq!(a.events, b.events);
+    }
+
+    /// THE FALL VOICE's deadpan: the FIXED 1.0/1.0 fold (javap
+    /// causeFallDamage's own literals), the small/big boundary rides
+    /// the damage 5 (getFallDamageSound: `i > 4 ? big : small`).
+    #[test]
+    fn the_fall_voice_speaks_the_fixed_lane() {
+        let mut a = BlockSounds::new(3);
+        a.play_fall_voice(11, 3);
+        assert!(
+            a.events[0].starts_with("entity.player.small_fall @11 #"),
+            "the entry: {}",
+            a.events[0]
+        );
+        assert!(
+            a.events[0].contains(" v1.000000 p1.000000"),
+            "the fixed fold: {}",
+            a.events[0]
+        );
+        // the boundary: four stays small, five goes big
+        let mut b = BlockSounds::new(3);
+        b.play_fall_voice(0, 4);
+        assert!(b.events[0].starts_with("entity.player.small_fall"));
+        let mut c = BlockSounds::new(3);
+        c.play_fall_voice(0, 5);
+        assert!(c.events[0].starts_with("entity.player.big_fall"));
+    }
+
+    /// THE HURT AND DEATH VOICES' pitch law: `(r - r) * 0.2 + 1.0`
+    /// (javap handleDamageEvent + the hurtServer tail's own fold) —
+    /// in [0.8, 1.2], the same LCG the pickup speaks, the log format
+    /// the backend mirrors.
+    #[test]
+    fn the_hurt_and_death_voices_speak_the_pitch_law() {
+        let mut a = BlockSounds::new(13);
+        a.play_hurt_voice(5);
+        assert_eq!(a.events.len(), 1);
+        assert!(
+            a.events[0].starts_with("entity.player.hurt @5 #"),
+            "the entry: {}",
+            a.events[0]
+        );
+        assert!(a.events[0].contains(" v1.000000 p"), "the volume: {}", a.events[0]);
+        let pitch: f32 = a.events[0].split(" p").nth(1).unwrap().parse().unwrap();
+        assert!((0.8..=1.2).contains(&pitch), "the pitch range: {pitch}");
+        a.play_death_voice(6);
+        assert!(
+            a.events[1].starts_with("entity.player.death @6 #"),
+            "the death's own event: {}",
+            a.events[1]
+        );
+        // determinism: the same seed speaks the same two voices
+        let mut b = BlockSounds::new(13);
+        b.play_hurt_voice(5);
+        b.play_death_voice(6);
         assert_eq!(a.events, b.events);
     }
 

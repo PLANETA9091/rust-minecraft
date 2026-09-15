@@ -106,6 +106,8 @@ pub mod clientbound {
         CB_OPEN_SCREEN as OPEN_SCREEN, CB_CONTAINER_CLOSE as CONTAINER_CLOSE,
         CB_SET_TIME as SET_TIME,
         CB_UPDATE_MOB_EFFECT as UPDATE_MOB_EFFECT,
+        CB_SET_HEALTH as SET_HEALTH, CB_HURT_ANIMATION as HURT_ANIMATION,
+        CB_PLAYER_COMBAT_KILL as PLAYER_COMBAT_KILL,
     };
 }
 
@@ -122,6 +124,7 @@ pub mod serverbound {
         SB_MOVE_PLAYER_ROT as MOVE_PLAYER_ROT, SB_MOVE_PLAYER_STATUS_ONLY as MOVE_PLAYER_STATUS_ONLY,
         SB_PLAYER_ACTION as PLAYER_ACTION, SB_SET_CARRIED_ITEM as SET_CARRIED_ITEM,
         SB_SWING as SWING, SB_USE_ITEM as USE_ITEM, SB_USE_ITEM_ON as USE_ITEM_ON,
+        SB_CLIENT_COMMAND as CLIENT_COMMAND,
     };
 }
 
@@ -5139,6 +5142,19 @@ pub fn encode_swing(hand: u8) -> Vec<u8> {
     p
 }
 
+/// Client Command's wire shape (generated id 12 —
+/// `minecraft:client_command`). javap of the real 26.2
+/// `ServerboundClientCommandPacket`'s STREAM_CODEC write: the action's
+/// VarInt enum ordinal — `PERFORM_RESPAWN` 0, `REQUEST_STATS` 1,
+/// `REQUEST_GAMERULE_VALUES` 2 (the `$Action` clinit's own
+/// registration order).
+pub fn encode_client_command(action: i32) -> Vec<u8> {
+    let mut p = Vec::with_capacity(2);
+    write_varint(&mut p, serverbound::CLIENT_COMMAND);
+    write_varint(&mut p, action);
+    p
+}
+
 /// The movement wire — the four ServerboundMovePlayer packets (generated
 /// ids 30..=33: `minecraft:move_player_pos` 30, `move_player_pos_rot` 31,
 /// `move_player_rot` 32, `move_player_status_only` 33). THE WIRE (javap
@@ -5621,6 +5637,97 @@ pub fn parse_set_held_slot(payload: &[u8]) -> Result<SetHeldSlot> {
     Ok(SetHeldSlot { slot })
 }
 
+/// Set Health (clientbound play, generated id 104 —
+/// `minecraft:set_health`). javap of the real 26.2
+/// `ClientboundSetHealthPacket`'s STREAM_CODEC read: a BE float, a
+/// VarInt, a BE float — `health`, `food`, `saturation` in that order.
+/// The player's own vitals lane (the vanilla handleSetHealth's
+/// consumers: the entity-data health the HUD's hearts speak, the food
+/// the hunger row speaks, the saturation the food system folds).
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct SetHealth {
+    /// The health the server speaks — the entity data's float.
+    pub health: f32,
+    /// The food level (the hunger's 0..=20 int).
+    pub food: i32,
+    /// The hidden saturation float.
+    pub saturation: f32,
+}
+
+/// Set Health's wire walk (see [`SetHealth`] — the float/VarInt/float
+/// triple, the generated-id guard).
+pub fn parse_set_health(payload: &[u8]) -> Result<SetHealth> {
+    let mut c: &[u8] = payload;
+    let id = read_varint(&mut c)?;
+    anyhow::ensure!(id == clientbound::SET_HEALTH, "not a set health packet (0x{id:02X})");
+    let health = read_f32(&mut c)?;
+    let food = read_varint(&mut c)?;
+    let saturation = read_f32(&mut c)?;
+    Ok(SetHealth { health, food, saturation })
+}
+
+/// Hurt Animation (clientbound play, generated id 42 —
+/// `minecraft:hurt_animation`). javap of the real 26.2
+/// `ClientboundHurtAnimationPacket`'s STREAM_CODEC read: a VarInt
+/// entity id, a BE float — the tilt yaw this 26.x WIDENED from the
+/// old byte (the `readVarInt, readFloat` pair feeding the
+/// `(int, float)` constructor). The hurt tilt's own channel (the
+/// vanilla handleHurtAnimation calls `animateHurt(yaw)` on the named
+/// entity — the flash-and-lean the damage speaks).
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct HurtAnimation {
+    /// The hurt entity's id (the level's entity registry key).
+    pub entity_id: i32,
+    /// The tilt yaw in vanilla wire degrees.
+    pub yaw: f32,
+}
+
+/// Hurt Animation's wire walk (see [`HurtAnimation`] — the VarInt id +
+/// the BE float yaw, the generated-id guard).
+pub fn parse_hurt_animation(payload: &[u8]) -> Result<HurtAnimation> {
+    let mut c: &[u8] = payload;
+    let id = read_varint(&mut c)?;
+    anyhow::ensure!(
+        id == clientbound::HURT_ANIMATION,
+        "not a hurt animation packet (0x{id:02X})"
+    );
+    let entity_id = read_varint(&mut c)?;
+    let yaw = read_f32(&mut c)?;
+    Ok(HurtAnimation { entity_id, yaw })
+}
+
+/// Player Combat Kill (clientbound play, generated id 68 —
+/// `minecraft:player_combat_kill`). javap of the real 26.2 record's
+/// STREAM_CODEC read: a VarInt player id, then the death message
+/// Component — the TEXT VARIANT (an `IdMapper`-resolved holder id or
+/// the bare network NBT; the disconnect lane's own string-or-NBT
+/// ambiguity — here read as the component TEXT the JSON flatten
+/// speaks, the disconnect's own law). The death screen's message.
+#[derive(Debug, Clone, PartialEq)]
+pub struct PlayerCombatKill {
+    /// The dead player's entity id.
+    pub player_id: i32,
+    /// The flattened death message (the component's own text).
+    pub message: String,
+}
+
+/// Player Combat Kill's wire walk (see [`PlayerCombatKill`] — the
+/// VarInt id, the component read the disconnect flattens).
+pub fn parse_player_combat_kill(payload: &[u8]) -> Result<PlayerCombatKill> {
+    let mut c: &[u8] = payload;
+    let id = read_varint(&mut c)?;
+    anyhow::ensure!(
+        id == clientbound::PLAYER_COMBAT_KILL,
+        "not a player combat kill packet (0x{id:02X})"
+    );
+    let player_id = read_varint(&mut c)?;
+    let raw = read_string(&mut c)?;
+    let flat = serde_json::from_str::<serde_json::Value>(&raw)
+        .map(|v| crate::status::extract_text(&v))
+        .unwrap_or(raw);
+    Ok(PlayerCombatKill { player_id, message: flat })
+}
+
 /// Open Screen: a container window OPENS — the container GUI's own
 /// packet (the generated-id 59 pin). Three lanes (javap of the 26.2
 /// `ClientboundOpenScreenPacket` clinit): the container id rides
@@ -5804,6 +5911,17 @@ pub enum PlayEvent {
     /// bare-VarInt window id (the model consumes it in the
     /// open-container arm).
     ContainerClosed(ContainerClose),
+    /// Set Health: the LOCAL player's vitals snapshot — the health
+    /// float, the food int, the saturation float (the HUD's hearts and
+    /// the hunger row's own wire transport).
+    Health(SetHealth),
+    /// Hurt Animation: ONE entity's hurt flash-and-lean — the VarInt id
+    /// + the tilt yaw float (the damage feedback's own channel; the
+    /// model filters the LOCAL player's own id).
+    Hurt(HurtAnimation),
+    /// Player Combat Kill: the LOCAL player died — the VarInt player id
+    /// + the death message component (the death screen's own wire).
+    CombatKill(PlayerCombatKill),
     /// Any packet without a client surface yet (skipped silently).
     Skipped,
 }
@@ -5923,6 +6041,11 @@ impl<S: Read + Write> PlaySession<S> {
             clientbound::CONTAINER_CLOSE => {
                 Ok(PlayEvent::ContainerClosed(parse_container_close(&pkt)?))
             }
+            clientbound::SET_HEALTH => Ok(PlayEvent::Health(parse_set_health(&pkt)?)),
+            clientbound::HURT_ANIMATION => Ok(PlayEvent::Hurt(parse_hurt_animation(&pkt)?)),
+            clientbound::PLAYER_COMBAT_KILL => {
+                Ok(PlayEvent::CombatKill(parse_player_combat_kill(&pkt)?))
+            }
             _ => Ok(PlayEvent::Skipped),
         }
     }
@@ -6017,6 +6140,17 @@ impl<S: Read + Write> PlaySession<S> {
         self.conn
             .send_packet(&encode_swing(hand))
             .context("send swing")
+    }
+
+    /// The client command (the vanilla `LocalPlayer`'s own
+    /// serverbound echo): the action's VarInt ordinal rides the
+    /// generated-id-12 packet — action 0 = PERFORM_RESPAWN (the
+    /// death screen's Respawn button's own wire: the server respawns
+    /// the player and the position/health streams re-sync).
+    pub fn client_command(&mut self, action: i32) -> Result<()> {
+        self.conn
+            .send_packet(&encode_client_command(action))
+            .context("send client command")
     }
 
     /// The movement wire — the body's sendPosition dispatch speaks one
@@ -10731,6 +10865,80 @@ mod tests {
         let mut p = Vec::new();
         write_varint(&mut p, clientbound::CONTAINER_SET_SLOT);
         assert!(parse_set_held_slot(&p).is_err());
+    }
+
+    /// The vitals lane's three packets (the hurt/health arc's own wire —
+    /// javap of the real 26.2 `ClientboundSetHealthPacket`,
+    /// `ClientboundHurtAnimationPacket` and the
+    /// `ClientboundPlayerCombatKillPacket` record, plus the
+    /// `ServerboundClientCommandPacket` write): the Set Health
+    /// float/VarInt/float triple, the Hurt Animation's VarInt id + BE
+    /// float yaw (the 26.x WIDENING from the old byte), the Combat
+    /// Kill's component flatten, and the Client Command's VarInt
+    /// action (PERFORM_RESPAWN = 0).
+    #[test]
+    fn health_hurt_combat_kill_speak_the_javap_layouts() {
+        // SET HEALTH: 20.0 health, 20 food, 5.0 saturation
+        let mut p = Vec::new();
+        write_varint(&mut p, clientbound::SET_HEALTH);
+        p.extend_from_slice(&20.0f32.to_be_bytes());
+        write_varint(&mut p, 20);
+        p.extend_from_slice(&5.0f32.to_be_bytes());
+        let h = parse_set_health(&p).unwrap();
+        assert_eq!(h.health, 20.0);
+        assert_eq!(h.food, 20);
+        assert_eq!(h.saturation, 5.0);
+        // a half heart's own number rides exact: 0.5
+        let mut p = Vec::new();
+        write_varint(&mut p, clientbound::SET_HEALTH);
+        p.extend_from_slice(&0.5f32.to_be_bytes());
+        write_varint(&mut p, 0);
+        p.extend_from_slice(&0.0f32.to_be_bytes());
+        let h = parse_set_health(&p).unwrap();
+        assert_eq!(h.health, 0.5, "the half heart's own float");
+        // the truncation map: the body short refuses
+        let mut p = Vec::new();
+        write_varint(&mut p, clientbound::SET_HEALTH);
+        p.extend_from_slice(&20.0f32.to_be_bytes());
+        assert!(parse_set_health(&p).is_err(), "food and saturation missing");
+
+        // HURT ANIMATION: the VarInt id + the BE float yaw (the widened
+        // 26.x lane — the old byte's -1 yaw rides 4294967295.0's own
+        // float bytes, not a signed byte)
+        let mut p = Vec::new();
+        write_varint(&mut p, clientbound::HURT_ANIMATION);
+        write_varint(&mut p, 137);
+        p.extend_from_slice(&(-45.5f32).to_be_bytes());
+        let a = parse_hurt_animation(&p).unwrap();
+        assert_eq!(a.entity_id, 137);
+        assert_eq!(a.yaw, -45.5);
+        // the truncation map: the id alone refuses
+        let mut p = Vec::new();
+        write_varint(&mut p, clientbound::HURT_ANIMATION);
+        write_varint(&mut p, 1);
+        assert!(parse_hurt_animation(&p).is_err());
+
+        // PLAYER COMBAT KILL: the VarInt id + the JSON component the
+        // disconnect's own flatten law reads
+        let mut p = Vec::new();
+        write_varint(&mut p, clientbound::PLAYER_COMBAT_KILL);
+        write_varint(&mut p, 42);
+        write_string(&mut p, r#"{"text":"Player fell from a high place"}"#);
+        let k = parse_player_combat_kill(&p).unwrap();
+        assert_eq!(k.player_id, 42);
+        assert_eq!(k.message, "Player fell from a high place");
+        // a plain string rides verbatim (the JSON parse's unwrap-or law)
+        let mut p = Vec::new();
+        write_varint(&mut p, clientbound::PLAYER_COMBAT_KILL);
+        write_varint(&mut p, 42);
+        write_string(&mut p, "You died!");
+        assert_eq!(parse_player_combat_kill(&p).unwrap().message, "You died!");
+
+        // CLIENT COMMAND encode: the generated id 12 + the action
+        // VarInt — PERFORM_RESPAWN 0's exact two bytes
+        let p = encode_client_command(0);
+        assert_eq!(p, vec![0x0C, 0x00], "the respawn wire's own bytes");
+        assert_eq!(encode_client_command(1), vec![0x0C, 0x01], "REQUEST_STATS");
     }
 
     /// The Open Screen and Container Close packets' wire walks (the

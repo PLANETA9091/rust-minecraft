@@ -44,8 +44,9 @@ pub use play::{
     ParticleValue, PlayerSkinPatch, PlayEvent, PositionSource,
     ProfileProperty, ResolvableProfile, SkinAsset,
     PlaySession, PlayStart, PlayerPosition, PredicateTypeLane, PropertyMatcher, PropertyValue,
-    SetEntityDataEntry, SetHeldSlot, SpawnInfo, TimeSync, WorldInfo, WorldOutcome, WorldSnapshot,
-    DESIRED_CHUNKS_PER_TICK, encode_container_click, encode_container_close, pack_entries,
+    SetEntityDataEntry, SetHeldSlot, SetHealth, SpawnInfo, TimeSync, WorldInfo, WorldOutcome, WorldSnapshot,
+    DESIRED_CHUNKS_PER_TICK, encode_client_command, encode_container_click, encode_container_close, pack_entries,
+    HurtAnimation, PlayerCombatKill,
 };
 pub use login::{connect_and_login, login, LoginOutcome};
 pub use status::{ping, PingResponse};

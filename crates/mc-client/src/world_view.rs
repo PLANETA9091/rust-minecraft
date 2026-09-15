@@ -275,6 +275,9 @@ pub struct SnapshotView {
     /// and a slot the store never spoke stays `(0, 0)` — the wire's
     /// own emptiness the HUD skips, never a guessed stack.
     pub hotbar: [(i32, i32); 9],
+    /// The LOCAL player's vitals — the health row's own projection
+    /// (see [`HealthView`]).
+    pub health: HealthView,
 }
 
 /// The OPEN container window as the UI consumes it — the
@@ -434,6 +437,11 @@ pub enum ContainerCommand {
     /// The arm SWING (the vanilla LocalPlayer.swing's echo — the attack
     /// press's own beat and every mining beat the hold speaks).
     Swing,
+    /// The death screen's RESPAWN (the vanilla DeathScreen's own
+    /// serverbound echo: the Client Command packet's PERFORM_RESPAWN
+    /// action — the server respawns the player and re-streams the
+    /// position and the vitals).
+    Respawn,
 }
 
 /// The camera's pose in the VANILLA wire degrees — the inverse of
@@ -671,6 +679,57 @@ fn hotbar_row_view(model: &WorldModel) -> [(i32, i32); 9] {
     row
 }
 
+/// The LOCAL player's vitals projection — the HUD's health row's own
+/// lane (the vanilla Gui.renderHearts reads the LocalPlayer's health,
+/// food and hurt state; this is the wire's store the same way the
+/// hotbar row is the inventory's). The DEFAULTS speak the vanilla
+/// first-join shape: 20 health / 20 food / no saturation (the player
+/// the server never named), the flash unhurt, the death unwritten —
+/// the honest defaults, never a guessed hurt.
+#[derive(Debug, Clone, PartialEq)]
+pub struct HealthView {
+    pub health: f32,
+    pub food: i32,
+    pub saturation: f32,
+    /// The hurt flash's remaining window (the animateHurt 10-tick arm
+    /// the Hurt Animation packet spoke), 0 when unhurt.
+    pub hurt_time: i32,
+    /// The tilt yaw the packet carried (the future camera roll's fact).
+    pub hurt_yaw: f32,
+    /// The death screen's message, `None` while alive.
+    pub death_message: Option<String>,
+}
+
+impl HealthView {
+    pub fn default_view() -> Self {
+        HealthView {
+            health: 20.0,
+            food: 20,
+            saturation: 0.0,
+            hurt_time: 0,
+            hurt_yaw: 0.0,
+            death_message: None,
+        }
+    }
+}
+
+fn health_view(model: &WorldModel) -> HealthView {
+    let mut v = HealthView::default_view();
+    if let Some(h) = &model.health {
+        v.health = h.health;
+        v.food = h.food;
+        v.saturation = h.saturation;
+    }
+    if let Some((t, yaw)) = model.hurt {
+        v.hurt_time = t;
+        v.hurt_yaw = yaw;
+    }
+    if let Some(m) = &model.death_message {
+        v.death_message = Some(m.clone());
+    }
+    v
+}
+
 /// The grid-local first-person camera for the materialized window: the
 /// join teleport's EXACT pose — the vanilla standing eye height over the
 /// feet, the server-directed look direction converted from the vanilla
@@ -736,6 +795,7 @@ pub fn materialize_snapshot_view(
         // arm, the join's own state (the helper reads the store)
         held: held_item_view(&model),
         hotbar: hotbar_row_view(&model),
+        health: health_view(&model),
     }
 }
 
@@ -798,6 +858,7 @@ impl LiveView {
                 // reads the store the same way (and the HUD's row)
                 held: held_item_view(&self.model),
                 hotbar: hotbar_row_view(&self.model),
+                health: health_view(&self.model),
             };
         };
         let origin = snapshot_window_origin(player, self.side);
@@ -816,6 +877,9 @@ impl LiveView {
             // the HUD's whole row rides with it)
             held: held_item_view(&self.model),
             hotbar: hotbar_row_view(&self.model),
+            // the vitals ride every refresh too — the hearts follow the
+            // store exactly like the hotbar row does
+            health: health_view(&self.model),
         }
     }
 }

@@ -41,7 +41,7 @@ use std::collections::{BTreeMap, HashMap};
 use mc_protocol::{
     ChunkColumn, ChunkLight, ClockUpdate, ComponentPatch, EntityDataEntry, EntityDataSet,
     ItemStack, LightData, MobEffectRemove, MobEffectUpdate, PlayEvent, PlayerPosition,
-    RegistryData, WorldInfo, WorldSnapshot,
+    RegistryData, SetHealth, WorldInfo, WorldSnapshot,
 };
 
 /// The model's view of ONE entity — the facts the entity packets have
@@ -132,6 +132,19 @@ pub struct WorldModel {
     /// [`OpenContainerState`]). NOT cleared on Respawn (the wire's
     /// own close/open moves it).
     open_container: Option<OpenContainerState>,
+    /// The LOCAL player's vitals (the Set Health packet's own store:
+    /// the health float, the food, the saturation) — `None` until the
+    /// server speaks one (the vanilla's own default rides the login's
+    /// entity data, our lane's honest absence until the packet lands).
+    pub health: Option<SetHealth>,
+    /// The LOCAL player's hurt flash (the Hurt Animation packet's own
+    /// store: the 10-tick window the animateHurt law arms + the tilt
+    /// yaw float the packet carries) — `None` while unhurt.
+    pub hurt: Option<(i32, f32)>,
+    /// The LOCAL player's death message (the Player Combat Kill
+    /// packet's own store — the death screen's flattened component);
+    /// cleared on the next Respawn's world adoption.
+    pub death_message: Option<String>,
 }
 
 /// The model's view of ONE active mob effect on the LOCAL player — the
@@ -376,6 +389,9 @@ impl WorldModel {
             effects: HashMap::new(),
             inventory: InventoryState::default(),
             open_container: None,
+            health: None,
+            hurt: None,
+            death_message: None,
         }
     }
 
@@ -519,6 +535,11 @@ impl WorldModel {
                 // swap's population does not cross (the vanilla client
                 // swaps the whole ClientLevel — entities included)
                 self.entities.clear();
+                // the death screen's message dies with the level (the
+                // respawn's own world recreation — the vanilla client
+                // closes the DeathScreen when the new level lands)
+                self.death_message = None;
+                self.hurt = None;
                 self.pin_dimension(&spawn.dimension);
                 true
             }
@@ -948,6 +969,39 @@ impl WorldModel {
             PlayEvent::CenterChunk { x, z } => {
                 if self.center != (x, z) {
                     self.center = (x, z);
+                    true
+                } else {
+                    false
+                }
+            }
+            PlayEvent::Health(h) => {
+                // the vitals snapshot REPLACES the store (the vanilla
+                // handleSetHealth's own assignment); the first packet
+                // arms the HUD, the repeat that writes the same triple
+                // stays the no-op repeat (the CenterChunk convention)
+                if self.health != Some(h) {
+                    self.health = Some(h);
+                    true
+                } else {
+                    false
+                }
+            }
+            PlayEvent::Hurt(a) => {
+                // the flash-and-lean acts on the named entity; the
+                // model's hurt store is the LOCAL player's (the HUD's
+                // flash consumer) — other entities' hurt traffic drops
+                if self.own_entity_id() == Some(a.entity_id) {
+                    // the animateHurt law: the 10-tick window arms,
+                    // the tilt yaw rides verbatim
+                    self.hurt = Some((10, a.yaw));
+                    true
+                } else {
+                    false
+                }
+            }
+            PlayEvent::CombatKill(k) => {
+                if self.own_entity_id() == Some(k.player_id) {
+                    self.death_message = Some(k.message);
                     true
                 } else {
                     false
@@ -3294,6 +3348,59 @@ mod tests {
         assert_eq!(MOB_EFFECT_ORDER[0], "minecraft:speed");
         assert_eq!(MOB_EFFECT_ORDER[28], "minecraft:conduit_power");
         assert_eq!(MOB_EFFECT_ORDER[39], "minecraft:breath_of_the_nautilus");
+    }
+
+    #[test]
+    fn the_vitals_lanes_store_the_wires_truth() {
+        // the hurt/health arc's own model walk: the Set Health snapshot
+        // replaces the store, the Hurt Animation's own-entity filter
+        // keeps the LOCAL player's flash (the animateHurt 10-tick arm
+        // + the yaw), the Combat Kill lands the death message, and the
+        // Respawn's world recreation clears the death (the vanilla
+        // client closes the DeathScreen when the new level lands).
+        use mc_protocol::HurtAnimation;
+        let mut m = WorldModel::new();
+        // no info pinned: the own-entity filter drops the flash
+        assert!(!m.apply(PlayEvent::Hurt(HurtAnimation { entity_id: 17, yaw: -45.5 })));
+        // the login pins the own id
+        assert!(m.apply(PlayEvent::WorldInfo(WorldInfo {
+            entity_id: 17,
+            hardcore: false,
+            dimensions: vec!["minecraft:overworld".to_string()],
+            view_distance: 8,
+            simulation_distance: 8,
+            portal_cooldown: 300,
+            current_dimension: "minecraft:overworld".to_string(),
+        })));
+        // SET HEALTH: the vitals snapshot lands verbatim; the repeat
+        // that carries the same triple is the no-op (the CenterChunk
+        // convention)
+        let vitals = SetHealth { health: 6.5, food: 18, saturation: 5.0 };
+        assert!(m.apply(PlayEvent::Health(vitals)));
+        assert_eq!(m.health, Some(vitals));
+        assert!(!m.apply(PlayEvent::Health(vitals)), "the repeat is a no-op");
+        // HURT ANIMATION: the own id lands, the foreign id drops
+        assert!(m.apply(PlayEvent::Hurt(HurtAnimation { entity_id: 17, yaw: -45.5 })));
+        assert_eq!(m.hurt, Some((10, -45.5)), "the animateHurt arm");
+        assert!(!m.apply(PlayEvent::Hurt(HurtAnimation { entity_id: 99, yaw: 0.0 })));
+        // COMBAT KILL: the message lands on the own id
+        assert!(m.apply(PlayEvent::CombatKill(mc_protocol::PlayerCombatKill {
+            player_id: 17,
+            message: "Player fell from a high place".to_string(),
+        })));
+        assert_eq!(m.death_message.as_deref(), Some("Player fell from a high place"));
+        // the RESPAWN recreates the level: the death screen's message
+        // dies with it
+        assert!(m.apply(PlayEvent::Respawn(SpawnInfo {
+            dimension_type_id: 0,
+            dimension: "minecraft:the_nether".to_string(),
+            portal_cooldown: 0,
+        })));
+        assert!(m.death_message.is_none(), "the respawn closed the death");
+        assert!(m.hurt.is_none(), "the flash dies with the level");
+        // the vitals ride the player (NOT cleared — the health the
+        // server speaks crosses the dimension like the effects do)
+        assert_eq!(m.health, Some(vitals), "the vitals ride the player");
     }
 
     #[test]

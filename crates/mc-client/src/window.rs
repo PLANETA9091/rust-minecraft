@@ -127,6 +127,7 @@ fn run_join(
                 Option<crate::world_view::LiveContainer>,
                 Option<(i32, i32)>,
                 [(i32, i32); 9],
+                crate::world_view::HealthView,
             ),
             String,
         >,
@@ -378,6 +379,11 @@ fn run_join(
                             session.player_action(action, pos, face, use_sequence)
                         }
                         crate::world_view::ContainerCommand::Swing => session.swing(0),
+                        crate::world_view::ContainerCommand::Respawn => {
+                            // the death screen's own wire: the Client
+                            // Command's PERFORM_RESPAWN action 0
+                            session.client_command(0)
+                        }
                     };
                     if let Err(e) = sent {
                         // a send failure is a transport error: a framed
@@ -415,6 +421,10 @@ fn run_join(
                                     // the hotbar's icons and counts are the
                                     // store's projection, not the screen's
                                     upd.hotbar,
+                                    // the vitals ride with the row — the
+                                    // hearts follow the store exactly like
+                                    // the hotbar's icons do
+                                    upd.health,
                                 )))
                                 .is_err()
                             {
@@ -501,6 +511,7 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
                 Option<crate::world_view::LiveContainer>,
                 Option<(i32, i32)>,
                 [(i32, i32); 9],
+                crate::world_view::HealthView,
             ),
             String,
         >,
@@ -675,7 +686,7 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
         // Disconnect screen, exactly like the original's kick
         while let Ok(upd) = live_rx.try_recv() {
             match upd {
-                Ok((world, camera, biome, container, held, hotbar)) => {
+                Ok((world, camera, biome, container, held, hotbar, health)) => {
                     app.live_view_updated(world, camera, biome, container);
                     // the hand's lane beside the world's: the selected
                     // hotbar stack's model loads on change (the reload
@@ -685,6 +696,10 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
                     // lands verbatim (the icons and the counts render
                     // over the hotbar sprite, the emptiness skipped)
                     app.live_hotbar_updated(hotbar);
+                    // the hearts' lane beside the row's: the vitals
+                    // land verbatim (the flash, the death message and
+                    // all — the health row speaks the store)
+                    app.live_health_updated(health);
                 }
                 Err(reason) => app.live_session_lost(reason),
             }

@@ -79,6 +79,44 @@ pub const COLLISION_EPSILON: f64 = 1e-7;
 /// poses.
 pub const COLLISION_SKIN: f64 = 1e-6;
 
+// THE FALL-DAMAGE ARC's constants (javap, the same jar):
+/// `Attributes.SAFE_FALL_DISTANCE`'s default — the fall's own grace.
+/// javap `LivingEntity.calculateFallPower`: `(distance + 1.0E-6) -
+/// getAttributeValue(SAFE_FALL_DISTANCE)`.
+pub const SAFE_FALL_DISTANCE: f64 = 3.0;
+/// `calculateFallPower`'s own epsilon (the ldc2_w 1.0E-6d) — the
+/// exactly-three-block fall stays safe through the floor.
+pub const FALL_POWER_EPSILON: f64 = 1.0e-6;
+/// `Attributes.FALL_DAMAGE_MULTIPLIER`'s default — the attribute the
+/// damage law multiplies through (the MobEffects slow-falling's -1.0
+/// rides it; our vocabulary carries no effects yet).
+pub const FALL_DAMAGE_MULTIPLIER: f64 = 1.0;
+/// `Entity.checkFallDistanceAccumulation`'s own gate — the rising
+/// body's accumulation clamp threshold (the deltaMovement.y() the
+/// law compares: `> -0.5` while `fallDistance > 1.0` folds it to 1.0).
+pub const FALL_ACCUM_VY_GATE: f64 = -0.5;
+
+/// The landed block's fall-damage multiplier — javap
+/// `BlockBehaviour.getFallDamageMultiplier`'s default 1.0 (the
+/// overrides: slime block 0.0, hay/bed/honey 0.2 — none in this
+/// client's palette, the honest absence the table's single row
+/// speaks: every palette block multiplies by 1.0, the water never
+/// accumulates at all).
+pub fn fall_damage_multiplier(_block: u16) -> f64 {
+    1.0
+}
+
+/// THE FALL DAMAGE LAW (javap `LivingEntity.calculateFallDamage`):
+/// `Mth.floor(fallPower * blockMultiplier * FALL_DAMAGE_MULTIPLIER)`
+/// where `fallPower = (distance + 1.0E-6) - SAFE_FALL_DISTANCE`
+/// (the attribute defaults 3.0 / 1.0). The EXACTLY-3-block fall
+/// stays safe (the epsilon pushes power to 1e-6, the floor floors
+/// it to 0); every full block past 3.0 speaks one damage.
+pub fn calculate_fall_damage(distance: f64, block_multiplier: f64) -> i32 {
+    let power = (distance + FALL_POWER_EPSILON) - SAFE_FALL_DISTANCE;
+    (power * block_multiplier * FALL_DAMAGE_MULTIPLIER).floor() as i32
+}
+
 /// The sensitivity f: the vanilla OptionInstance's 0..1 slider. The
 /// default 0.5 gives the famous 0.15 deg/px.
 fn look_gain(sensitivity: f64) -> f64 {
@@ -323,6 +361,18 @@ pub struct PlayerBody {
     /// the tick's step fired (the block under was solid) — the App
     /// clears it after the sound folds
     pub step_due: bool,
+    /// THE FALL DISTANCE (Entity.fallDistance's own double): the
+    /// descent accumulates `-(dy as f32)` per tick (the f32 round-trip
+    /// the bytecode's d2f/f2d speaks), the water lane never
+    /// accumulates, the landing folds the damage through
+    /// calculateFallDamage and resets (checkFallDamage's own law).
+    pub fall_distance: f64,
+    /// The landing's damage the fall law spoke this tick (javap
+    /// causeFallDamage's `calculateFallDamage > 0` beat) — the App
+    /// drains it into the hurt pipeline (the voices, the cooldown, the
+    /// health) exactly like the step_due lane it sits beside. `None` =
+    /// no hurt this tick; the body never clears it, the reader does.
+    pub fall_event: Option<i32>,
     // sendPosition's bookkeeping
     position_reminder: i32,
     x_last: f64,
@@ -358,6 +408,8 @@ impl PlayerBody {
             move_dist: 0.0,
             next_step: 1.0,
             step_due: false,
+            fall_distance: 0.0,
+            fall_event: None,
             position_reminder: 0,
             x_last: x,
             y_last: y,
@@ -471,6 +523,22 @@ impl PlayerBody {
     /// impulse, the collide, the gravity and the drags. `using_item`
     /// speaks the use arc's own slowdown.
     pub fn tick(&mut self, world: &World, using_item: bool) {
+        // THE RISING BODY'S ACCUMULATION CLAMP (javap
+        // LivingEntity.updateFallFlying's own first call —
+        // checkFallDistanceAccumulation: `vy > -0.5 && fallDistance >
+        // 1.0` folds the banked descent to 1.0 — the launch arc's slow
+        // apex can never bank more than one block of fall)
+        if self.vy > FALL_ACCUM_VY_GATE && self.fall_distance > 1.0 {
+            self.fall_distance = 1.0;
+        }
+        // THE FLUID LANE'S OWN RESET (javap
+        // Entity.updateFluidInteraction: `isInFluid(WATER) ||
+        // isInFluid(LAVA)` -> resetFallDistance — every tick in a
+        // fluid the banked descent folds to zero, the water landing
+        // never hurts)
+        if self.touches_water(world) {
+            self.fall_distance = 0.0;
+        }
         if self.no_jump_delay > 0 {
             self.no_jump_delay -= 1;
         }
@@ -569,6 +637,10 @@ impl PlayerBody {
         self.z += col.dz;
         self.horizontal_collision = col.horizontal_collision;
         self.on_ground = col.vertical_collision_below;
+        // THE FALL DISTANCE (doCheckFallDamage's own law over the SWEPT
+        // delta — the accumulation, the water's honest gate, the
+        // landing's fold-and-reset)
+        self.check_fall_damage(world, col.dy);
         // THE FOOTSTEP ACCUMULATION (Entity.move's own law over the
         // ACTUAL moved delta): moveDist += horizontalDistance × 0.6 (the
         // climbable branch's full-length lane aside — our vocabulary
@@ -611,6 +683,61 @@ impl PlayerBody {
         let drag = (friction * GROUND_DRAG) as f64;
         self.vx *= drag;
         self.vz *= drag;
+    }
+
+    /// THE FALL DISTANCE LAW (javap `Entity.checkFallDamage` over the
+    /// swept delta, the `doCheckFallDamage` final wrapper's own shape):
+    /// the water lane never accumulates; a descent accumulates
+    /// `fallDistance -= (float)dy` (the d2f/f2d round-trip the
+    /// bytecode speaks); the landing folds the banked descent through
+    /// `fallOn` -> `calculateFallDamage` (the damage lands in
+    /// `fall_event` for the App's hurt pipeline), plays the
+    /// hit-ground game event's beat, and resets. The landed block
+    /// names through `mainSupportingBlockPos`'s honest stand-in — the
+    /// exact-boundary feet read the cell BELOW (the collision sweep's
+    /// own verdict).
+    fn check_fall_damage(&mut self, world: &World, dy: f64) {
+        let in_water = self.touches_water(world);
+        if !in_water && dy < 0.0 {
+            self.fall_distance -= (dy as f32) as f64;
+        }
+        if self.on_ground {
+            if self.fall_distance > 0.0 {
+                // the landed block (the feet's exact boundary reads the
+                // cell below — the support position the sweep named)
+                let land_y = if self.y == self.y.floor() {
+                    self.y as i32 - 1
+                } else {
+                    self.y.floor() as i32
+                };
+                let block = world.get(self.x.floor() as i32, land_y, self.z.floor() as i32);
+                let dmg = calculate_fall_damage(
+                    self.fall_distance,
+                    fall_damage_multiplier(block),
+                );
+                if dmg > 0 {
+                    self.fall_event = Some(dmg);
+                }
+            }
+            self.fall_distance = 0.0;
+        }
+    }
+
+    /// The water lane's own gate (the vanilla `isInWater`'s box shape):
+    /// TRUE when any cell the body box overlaps is water — the
+    /// palette's own fluid kind.
+    fn touches_water(&self, world: &World) -> bool {
+        let (x0, y0, z0, x1, y1, z1) = box_at(self.x, self.y, self.z, self.height());
+        for cy in y0.floor() as i32..=((y1 - 1e-9).floor()) as i32 {
+            for cx in x0.floor() as i32..=((x1 - 1e-9).floor()) as i32 {
+                for cz in z0.floor() as i32..=((z1 - 1e-9).floor()) as i32 {
+                    if world.get(cx, cy, cz) == WATER {
+                        return true;
+                    }
+                }
+            }
+        }
+        false
     }
 
     /// THE WIRE (sendPosition): computes what this tick speaks and
@@ -818,6 +945,125 @@ mod tests {
         assert!(b.on_ground, "the landed body is on the ground");
         // resting: the velocity holds near the terminal -0.0784 rhythm
         assert!(b.vy.abs() < 0.1);
+        // THE FALL LAW's own verdict: the exactly-3-block descent (the
+        // feet at 4.0, the floor at 1.0) lands SAFE — the epsilon keeps
+        // the floor() at zero, the vanilla's own grace
+        assert_eq!(b.fall_distance, 0.0, "the landing reset the banked descent");
+        assert_eq!(b.fall_event, None, "the 3-block fall never hurts");
+    }
+
+    /// THE FALL DAMAGE TABLE (javap calculateFallDamage +
+    /// calculateFallPower's own arithmetic):
+    /// `floor((distance + 1e-6 - 3.0) * 1.0 * 1.0)` — the safe
+    /// exactly-3, the full blocks past 3.0, the half block's floor.
+    #[test]
+    fn the_fall_damage_table_speaks_the_floor_law() {
+        let m = fall_damage_multiplier(crate::world::STONE);
+        assert_eq!(m, 1.0, "the palette's stone multiplies by the default");
+        // the grace: exactly three blocks and everything below
+        assert_eq!(calculate_fall_damage(3.0, m), 0);
+        // the LAW's own negatives (the floor of a negative power — the
+        // caller's `i > 0` gate refuses them, the hurt never speaks)
+        assert_eq!(calculate_fall_damage(1.0, m), -2);
+        assert_eq!(calculate_fall_damage(0.0, m), -3);
+        // the half block floors away: 3.5 falls safe
+        assert_eq!(calculate_fall_damage(3.5, m), 0);
+        // every whole block past 3.0 speaks one
+        assert_eq!(calculate_fall_damage(4.0, m), 1);
+        assert_eq!(calculate_fall_damage(8.0, m), 5);
+        assert_eq!(calculate_fall_damage(23.0, m), 20, "the pure law's own kill count");
+        // the epsilon's own beat: 2.999999 falls safe, the 4.0 boundary
+        // speaks one (the floor's own arithmetic)
+        assert_eq!(calculate_fall_damage(2.999999, m), 0);
+        assert_eq!(calculate_fall_damage(3.9999999, m), 1);
+        assert_eq!(calculate_fall_damage(4.000001, m), 1);
+    }
+
+    /// THE LONG FALL SPEAKS (the 10-block descent banks 10.0 through
+    /// the swept deltas MINUS the rising clamp's own 0.1435 — the
+    /// checkFallDistanceAccumulation law the tick head speaks — so the
+    /// landing folds damage 6: floor(9.8565 + 1e-6 - 3.0) = 6, the
+    /// bytecode's own arithmetic over the whole arc).
+    #[test]
+    fn the_ten_block_fall_hurts_seven() {
+        let w = flat_world();
+        // the feet at 11.0, the floor at 1.0: a 10-block descent
+        let mut b = PlayerBody::new(8.0, 11.0, 8.0, 0.0, 0.0);
+        let mut banked_mid = 0.0f64;
+        for i in 0..60 {
+            b.tick(&w, false);
+            if i == 12 {
+                banked_mid = b.fall_distance;
+            }
+            if b.fall_event.is_some() {
+                break;
+            }
+        }
+        assert_eq!(b.fall_event, Some(6), "floor(banked 9.8565 + 1e-6 - 3.0) = 6");
+        assert_eq!(b.fall_distance, 0.0, "the landing reset");
+        // the bank grew through the descent (the mid-flight body had a
+        // positive bank — the accumulation the law speaks)
+        assert!(banked_mid > 0.0, "the descent banks the fall distance");
+        // a second landing (the resting body) never speaks again — the
+        // event the reader must drain stays the one the landing spoke
+        for _ in 0..10 {
+            b.tick(&w, false);
+        }
+        assert_eq!(b.fall_event, Some(6), "the rest is silent");
+        assert_eq!(b.fall_distance, 0.0);
+    }
+
+    /// THE WATER LANE NEVER HURTS (javap updateFluidInteraction's
+    /// per-tick reset + the accumulation gate): the banked descent
+    /// folds to zero the moment the body box enters the fluid, the
+    /// pool-bottom landing lands safe.
+    #[test]
+    fn the_water_pool_lands_safe() {
+        let mut w = flat_world();
+        // a 2-deep pool (y 1..=2) over the stone floor
+        for x in 6..10 {
+            for z in 6..10 {
+                for y in 1..3 {
+                    w.set(x, y, z, WATER);
+                }
+            }
+        }
+        // the feet at 12.0 above the pool at (8, 8)
+        let mut b = PlayerBody::new(8.0, 12.0, 8.0, 0.0, 0.0);
+        for _ in 0..200 {
+            b.tick(&w, false);
+            assert_ne!(
+                b.fall_event, Some(1),
+                "the water landing never speaks a hurt"
+            );
+            if b.on_ground {
+                break;
+            }
+        }
+        assert!(b.on_ground, "the body settled to the pool floor");
+        assert_eq!(b.fall_event, None, "no hurt event ever spoke");
+        assert_eq!(b.fall_distance, 0.0, "the fluid's own reset");
+    }
+
+    /// THE RISING BODY'S CLAMP (javap checkFallDistanceAccumulation):
+    /// `vy > -0.5 && fallDistance > 1.0` folds the bank to 1.0 — the
+    /// launch apex can never bank more than one block.
+    #[test]
+    fn the_rising_clamp_folds_the_bank() {
+        let w = flat_world();
+        let mut b = PlayerBody::new(8.0, 2.0, 8.0, 0.0, 0.0);
+        b.tick(&w, false); // the landing reset folds to 0 first
+        b.fall_distance = 5.0; // a banked descent the launch carried
+        b.vy = 0.3; // a rising body (vy > -0.5)
+        b.tick(&w, false);
+        assert_eq!(b.fall_distance, 1.0, "the clamp folded the bank");
+        // a FAST faller (vy <= -0.5) never clamps
+        let mut c = PlayerBody::new(8.0, 2.0, 8.0, 0.0, 0.0);
+        c.tick(&w, false);
+        c.fall_distance = 5.0;
+        c.vy = -0.8;
+        c.tick(&w, false);
+        assert!(c.fall_distance > 1.0, "the fast descent banks past 1.0");
     }
 
     #[test]
