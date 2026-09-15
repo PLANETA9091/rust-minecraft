@@ -158,6 +158,20 @@ pub struct AvatarState {
     pub attack_right: bool,
     /// ageInTicks (the idle bob's clock)
     pub age_ticks: f32,
+    /// THE FIRST MOB's pose branch: the zombie arms overwrite the
+    /// humanoid arms (javap `AbstractZombieModel.setupAnim`'s own
+    /// call chain — HumanoidModel.setupAnim, then animateZombieArms).
+    pub zombie: bool,
+    /// `ZombieRenderState.isAggressive` (the render state's own field —
+    /// the attack goal's raiseArmTicks law drives it).
+    pub zombie_aggressive: bool,
+    /// The head's yaw offset from the body (the netHeadYaw the
+    /// LivingEntityRenderer extraction clamps to +-75°; the player
+    /// avatar's body rides the look yaw so the offset stays 0).
+    pub head_yaw_off_deg: f32,
+    /// `LivingEntityRenderState.deathTime` (the entity's deathTime +
+    /// partialTick when dying, 0 alive) — the flip law's clock.
+    pub death_time: f32,
 }
 
 impl AvatarState {
@@ -173,6 +187,10 @@ impl AvatarState {
             attack_time: 0.0,
             attack_right: true,
             age_ticks,
+            zombie: false,
+            zombie_aggressive: false,
+            head_yaw_off_deg: 0.0,
+            death_time: 0.0,
         }
     }
 }
@@ -237,6 +255,26 @@ impl AvatarModel {
         Some(AvatarModel { rgba })
     }
 
+    /// Load + sha1-verify the ZOMBIE skin (the first mob's own runtime
+    /// file — javap `AbstractZombieRenderer`'s ZOMBIE_LOCATION, the same
+    /// 64x64 wide humanoid layout the geometry unwraps). `None` = the
+    /// mob never renders (the same honesty the player path speaks).
+    pub fn load_zombie(root: &Path) -> Option<AvatarModel> {
+        let bytes = std::fs::read(root.join(skin::ZOMBIE_RUNTIME_PATH)).ok()?;
+        let digest = sha1::Sha1::digest(&bytes);
+        if hex::encode(digest) != skin::ZOMBIE_PNG_SHA1 {
+            return None;
+        }
+        let (w, h, rgba) = decode_rgba(&bytes).ok()?;
+        if w != skin::SKIN_SIDE
+            || h != skin::SKIN_SIDE
+            || rgba.len() != (skin::SKIN_SIDE as usize) * (skin::SKIN_SIDE as usize) * 4
+        {
+            return None;
+        }
+        Some(AvatarModel { rgba })
+    }
+
     /// The skin pixel at (u, v) — the RGBA row-major words, v down.
     pub fn pixel(&self, u: f32, v: f32) -> [u8; 4] {
         let side = skin::SKIN_SIDE as f32;
@@ -262,20 +300,34 @@ impl AvatarModel {
         let parts = build_posed_parts(state);
         // THE ENTITY CHAIN (LivingEntityRenderer.render), folded per
         // resolved model point: T(0, -1.501, 0) first, then S(-1,-1,1),
-        // then R_y(180 - bodyRot), then the feet translation (+ the
-        // crouch render offset's -2/16).
+        // then the DEATH FLIP (javap: the deathTime branch's ZP rotation
+        // — sqrt(min(1, (deathTime-1)/20 * 1.6)) * 90°, riding BETWEEN
+        // the S and the R_y), then R_y(180 - bodyRot), then the feet
+        // translation (+ the crouch render offset's -2/16).
         let a = (180.0f32 - state.yaw_deg).to_radians();
         let (sa, ca) = a.sin_cos();
+        // THE DEATH FLIP (the same javap branch): the state clock rides
+        // the entity's deathTime + partialTick (0 = alive — the flip 0)
+        let flip_rad = if state.death_time > 0.0 {
+            let f5 = ((state.death_time - 1.0) / 20.0 * 1.6).max(0.0);
+            mth_sqrt(f5).min(1.0) * std::f32::consts::FRAC_PI_2
+        } else {
+            0.0
+        };
+        let (sf, cf) = flip_rad.sin_cos();
         let crouch_drop = if state.crouching { -2.0 / 16.0 } else { 0.0 };
         let fold_point = |p: [f32; 3]| -> [f32; 3] {
             let mx = -p[0]; // the S(-1,-1,1) x flip (blocks)
             let my = -p[1]; // the y flip over the -1.501 line
             let mz = p[2];
-            let px = mx * ca + mz * sa; // the joml YP yaw fold
-            let pz = -mx * sa + mz * ca;
+            // the ZP death flip (between the S and the R_y)
+            let fx = mx * cf - my * sf;
+            let fy = mx * sf + my * cf;
+            let px = fx * ca + mz * sa; // the joml YP yaw fold
+            let pz = -fx * sa + mz * ca;
             [
                 feet.x + px,
-                feet.y as f32 + (my + 1.501) + crouch_drop,
+                feet.y as f32 + (fy + 1.501) + crouch_drop,
                 feet.z + pz,
             ]
         };
@@ -283,7 +335,9 @@ impl AvatarModel {
             let nx = -n[0];
             let ny = -n[1];
             let nz = n[2];
-            [nx * ca + nz * sa, ny, -nx * sa + nz * ca]
+            let fx = nx * cf - ny * sf;
+            let fy = nx * sf + ny * cf;
+            [fx * ca + nz * sa, fy, -fx * sa + nz * ca]
         };
         let mut out: Vec<AvatarQuad> = Vec::with_capacity(12 * 6);
         let ident = Mat4::IDENT;
@@ -326,7 +380,7 @@ fn build_posed_parts(state: &AvatarState) -> Vec<Part> {
     let mut body_y = 0.0f32;
     let mut body_x = 0.0f32;
     let head_x = state.pitch_deg.to_radians();
-    let head_y = 0.0f32;
+    let head_y = state.head_yaw_off_deg.to_radians();
     let mut leg_r_y = 0.005f32;
     let leg_r_z = 0.005f32;
     let mut leg_l_y = -0.005f32;
@@ -369,6 +423,32 @@ fn build_posed_parts(state: &AvatarState) -> Vec<Part> {
             arm_l_y += body_y * 2.0;
             arm_l_z += mth_sin(at * std::f32::consts::PI) * -0.4;
         }
+    }
+    // THE ZOMBIE ARMS (javap `AnimationUtils.animateZombieArms` +
+    // `animateAttackArms` on the official 26.2 jar): the attack-arms
+    // branch ASSIGNS both arms' rotations — the humanoid walk swing
+    // and the first bob ride gets wiped, the arms hold the vanilla
+    // outstretched pose (base -PI/(aggressive ? 1.5 : 2.25)) with the
+    // attackTime bump, then bobArms runs a SECOND pass INVERTED (the
+    // animateZombieArms call orders (left, right) — the left rides
+    // +1, the right -1, opposite the setupAnim pass). The body's
+    // swing fold and the crouch pivots survive untouched.
+    if state.zombie {
+        let f5 = mth_sin(at * std::f32::consts::PI);
+        let f6 = mth_sin((at - at * at) * std::f32::consts::PI);
+        let base = -std::f32::consts::PI
+            / if state.zombie_aggressive { 1.5 } else { 2.25 };
+        let x_rot = base + f5 * 1.2 - f6 * 0.4;
+        let f8 = 0.1 - f5 * 0.6;
+        // the inverted second bob (the right rides -1, the left +1)
+        let (zb_r, xb_r) = bob(-1.0);
+        let (zb_l, xb_l) = bob(1.0);
+        arm_r_x = x_rot + xb_r;
+        arm_r_y = -f8;
+        arm_r_z = zb_r;
+        arm_l_x = x_rot + xb_l;
+        arm_l_y = f8;
+        arm_l_z = zb_l;
     }
     // THE PARTS (createMesh, verbatim). The overlays are CHILDREN
     // (PartPose.ZERO — the parent's pivot space) with the SAME box
@@ -817,5 +897,69 @@ mod tests {
             .zip(standing.iter())
             .any(|(a, b)| (a.pts[0][1] - b.pts[0][1]).abs() > 1e-4);
         assert!(moved, "the swing moved the arm");
+    }
+
+    /// THE DEATH FLIP (javap: the deathTime branch's ZP rotation riding
+    /// between the S and the R_y — `sqrt(min(1, (deathTime-1)/20*1.6))
+    /// * 90°`): at the 20-tick mark the model lies flat, the y span
+    /// collapses from the standing ~2.03 to the body's own thickness.
+    #[test]
+    fn the_death_flip_lays_the_model_flat() {
+        let model = AvatarModel {
+            rgba: vec![255; 64 * 64 * 4],
+        };
+        let feet = Vec3::new(0.0, 0.0, 0.0);
+        let mut state = AvatarState::rest(0.0, 0.0, 0.0);
+        state.death_time = 20.0;
+        let flipped = model.quads(&state, feet, 0.0, 0.0);
+        let standing = model.quads(&AvatarState::rest(0.0, 0.0, 0.0), feet, 0.0, 0.0);
+        let span = |qs: &[AvatarQuad]| {
+            let ys: Vec<f32> = qs.iter().flat_map(|q| q.pts.iter().map(|p| p[1])).collect();
+            ys.iter().copied().fold(f32::NEG_INFINITY, f32::max)
+                - ys.iter().copied().fold(f32::INFINITY, f32::min)
+        };
+        let (flipped_span, standing_span) = (span(&flipped), span(&standing));
+        assert!(
+            flipped_span < standing_span * 0.65 && standing_span > 2.0,
+            "the flip collapses the y span ({flipped_span} vs standing {standing_span})"
+        );
+        // the alive state never flips (the deathTime 0 gate)
+        let alive = model.quads(&AvatarState::rest(0.0, 0.0, 0.0), feet, 0.0, 0.0);
+        assert!((span(&alive) - standing_span).abs() < 1e-5);
+    }
+
+    /// THE ZOMBIE ARMS (javap `AnimationUtils.animateZombieArms` +
+    /// `animateAttackArms`): the outstretched pose overwrites the
+    /// humanoid swing — the arms reach forward, the model's z span
+    /// grows well past the resting body's own depth, and the
+    /// aggressive (-PI/1.5) pose reaches FARTHER than the calm
+    /// (-PI/2.25) one.
+    #[test]
+    fn the_zombie_arms_hold_the_outstretched_pose() {
+        let model = AvatarModel {
+            rgba: vec![255; 64 * 64 * 4],
+        };
+        let feet = Vec3::new(0.0, 0.0, 0.0);
+        let rest = model.quads(&AvatarState::rest(0.0, 0.0, 0.0), feet, 0.0, 0.0);
+        let mut calm = AvatarState::rest(0.0, 0.0, 0.0);
+        calm.zombie = true;
+        let mut mad = calm.clone();
+        mad.zombie_aggressive = true;
+        let calm_quads = model.quads(&calm, feet, 0.0, 0.0);
+        let mad_quads = model.quads(&mad, feet, 0.0, 0.0);
+        let zspan = |qs: &[AvatarQuad]| {
+            let zs: Vec<f32> = qs.iter().flat_map(|q| q.pts.iter().map(|p| p[2])).collect();
+            zs.iter().copied().fold(f32::NEG_INFINITY, f32::max)
+                - zs.iter().copied().fold(f32::INFINITY, f32::min)
+        };
+        let (rest_span, calm_span, mad_span) = (zspan(&rest), zspan(&calm_quads), zspan(&mad_quads));
+        assert!(
+            calm_span > rest_span + 0.2,
+            "the arms reach forward ({calm_span} > rest {rest_span})"
+        );
+        assert!(
+            mad_span < calm_span,
+            "the aggressive arms LIFT (-120°) shortening the forward reach ({mad_span} < {calm_span})"
+        );
     }
 }

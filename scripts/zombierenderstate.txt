@@ -1,0 +1,12 @@
+Compiled from "ZombieRenderState.java"
+public class net.minecraft.client.renderer.entity.state.ZombieRenderState extends net.minecraft.client.renderer.entity.state.UndeadRenderState {
+  public boolean isAggressive;
+
+  public boolean isConverting;
+
+  public net.minecraft.client.renderer.entity.state.ZombieRenderState();
+    Code:
+         0: aload_0
+         1: invokespecial #1                  // Method net/minecraft/client/renderer/entity/state/UndeadRenderState."<init>":()V
+         4: return
+}

@@ -1,0 +1,243 @@
+Compiled from "Monster.java"
+public abstract class net.minecraft.world.entity.monster.Monster extends net.minecraft.world.entity.PathfinderMob implements net.minecraft.world.entity.monster.Enemy {
+  protected net.minecraft.world.entity.monster.Monster(net.minecraft.world.entity.EntityType<? extends net.minecraft.world.entity.monster.Monster>, net.minecraft.world.level.Level);
+    Code:
+         0: aload_0
+         1: aload_1
+         2: aload_2
+         3: invokespecial #1                  // Method net/minecraft/world/entity/PathfinderMob."<init>":(Lnet/minecraft/world/entity/EntityType;Lnet/minecraft/world/level/Level;)V
+         6: aload_0
+         7: iconst_5
+         8: putfield      #9                  // Field xpReward:I
+        11: return
+
+  public net.minecraft.sounds.SoundSource getSoundSource();
+    Code:
+         0: getstatic     #15                 // Field net/minecraft/sounds/SoundSource.HOSTILE:Lnet/minecraft/sounds/SoundSource;
+         3: areturn
+
+  public void aiStep();
+    Code:
+         0: aload_0
+         1: invokevirtual #21                 // Method updateSwingTime:()V
+         4: aload_0
+         5: invokevirtual #25                 // Method updateNoActionTime:()V
+         8: aload_0
+         9: invokespecial #28                 // Method net/minecraft/world/entity/PathfinderMob.aiStep:()V
+        12: return
+
+  protected void updateNoActionTime();
+    Code:
+         0: aload_0
+         1: invokevirtual #31                 // Method getLightLevelDependentMagicValue:()F
+         4: fstore_1
+         5: fload_1
+         6: ldc           #35                 // float 0.5f
+         8: fcmpl
+         9: ifle          22
+        12: aload_0
+        13: dup
+        14: getfield      #36                 // Field noActionTime:I
+        17: iconst_2
+        18: iadd
+        19: putfield      #36                 // Field noActionTime:I
+        22: return
+
+  protected net.minecraft.sounds.SoundEvent getSwimSound();
+    Code:
+         0: getstatic     #39                 // Field net/minecraft/sounds/SoundEvents.HOSTILE_SWIM:Lnet/minecraft/sounds/SoundEvent;
+         3: areturn
+
+  protected net.minecraft.sounds.SoundEvent getSwimSplashSound();
+    Code:
+         0: getstatic     #45                 // Field net/minecraft/sounds/SoundEvents.HOSTILE_SPLASH:Lnet/minecraft/sounds/SoundEvent;
+         3: areturn
+
+  protected net.minecraft.sounds.SoundEvent getHurtSound(net.minecraft.world.damagesource.DamageSource);
+    Code:
+         0: getstatic     #48                 // Field net/minecraft/sounds/SoundEvents.HOSTILE_HURT:Lnet/minecraft/sounds/SoundEvent;
+         3: areturn
+
+  protected net.minecraft.sounds.SoundEvent getDeathSound();
+    Code:
+         0: getstatic     #51                 // Field net/minecraft/sounds/SoundEvents.HOSTILE_DEATH:Lnet/minecraft/sounds/SoundEvent;
+         3: areturn
+
+  public net.minecraft.world.entity.LivingEntity$Fallsounds getFallSounds();
+    Code:
+         0: new           #54                 // class net/minecraft/world/entity/LivingEntity$Fallsounds
+         3: dup
+         4: getstatic     #56                 // Field net/minecraft/sounds/SoundEvents.HOSTILE_SMALL_FALL:Lnet/minecraft/sounds/SoundEvent;
+         7: getstatic     #59                 // Field net/minecraft/sounds/SoundEvents.HOSTILE_BIG_FALL:Lnet/minecraft/sounds/SoundEvent;
+        10: invokespecial #62                 // Method net/minecraft/world/entity/LivingEntity$Fallsounds."<init>":(Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundEvent;)V
+        13: areturn
+
+  public float getWalkTargetValue(net.minecraft.core.BlockPos, net.minecraft.world.level.LevelReader);
+    Code:
+         0: aload_2
+         1: aload_1
+         2: invokeinterface #65,  2           // InterfaceMethod net/minecraft/world/level/LevelReader.getPathfindingCostFromLightLevels:(Lnet/minecraft/core/BlockPos;)F
+         7: fneg
+         8: freturn
+
+  public static boolean isDarkEnoughToSpawn(net.minecraft.world.level.ServerLevelAccessor, net.minecraft.core.BlockPos, net.minecraft.util.RandomSource);
+    Code:
+         0: aload_0
+         1: getstatic     #71                 // Field net/minecraft/world/level/LightLayer.SKY:Lnet/minecraft/world/level/LightLayer;
+         4: aload_1
+         5: invokeinterface #77,  3           // InterfaceMethod net/minecraft/world/level/ServerLevelAccessor.getBrightness:(Lnet/minecraft/world/level/LightLayer;Lnet/minecraft/core/BlockPos;)I
+        10: aload_2
+        11: bipush        32
+        13: invokeinterface #83,  2           // InterfaceMethod net/minecraft/util/RandomSource.nextInt:(I)I
+        18: if_icmple     23
+        21: iconst_0
+        22: ireturn
+        23: aload_0
+        24: invokeinterface #89,  1           // InterfaceMethod net/minecraft/world/level/ServerLevelAccessor.dimensionType:()Lnet/minecraft/world/level/dimension/DimensionType;
+        29: astore_3
+        30: aload_3
+        31: invokevirtual #93                 // Method net/minecraft/world/level/dimension/DimensionType.monsterSpawnBlockLightLimit:()I
+        34: istore        4
+        36: iload         4
+        38: bipush        15
+        40: if_icmpge     60
+        43: aload_0
+        44: getstatic     #101                // Field net/minecraft/world/level/LightLayer.BLOCK:Lnet/minecraft/world/level/LightLayer;
+        47: aload_1
+        48: invokeinterface #77,  3           // InterfaceMethod net/minecraft/world/level/ServerLevelAccessor.getBrightness:(Lnet/minecraft/world/level/LightLayer;Lnet/minecraft/core/BlockPos;)I
+        53: iload         4
+        55: if_icmple     60
+        58: iconst_0
+        59: ireturn
+        60: aload_0
+        61: invokeinterface #104,  1          // InterfaceMethod net/minecraft/world/level/ServerLevelAccessor.getLevel:()Lnet/minecraft/server/level/ServerLevel;
+        66: invokevirtual #108                // Method net/minecraft/server/level/ServerLevel.isThundering:()Z
+        69: ifeq          84
+        72: aload_0
+        73: aload_1
+        74: bipush        10
+        76: invokeinterface #114,  3          // InterfaceMethod net/minecraft/world/level/ServerLevelAccessor.getMaxLocalRawBrightness:(Lnet/minecraft/core/BlockPos;I)I
+        81: goto          91
+        84: aload_0
+        85: aload_1
+        86: invokeinterface #118,  2          // InterfaceMethod net/minecraft/world/level/ServerLevelAccessor.getMaxLocalRawBrightness:(Lnet/minecraft/core/BlockPos;)I
+        91: istore        5
+        93: iload         5
+        95: aload_3
+        96: invokevirtual #121                // Method net/minecraft/world/level/dimension/DimensionType.monsterSpawnLightTest:()Lnet/minecraft/util/valueproviders/IntProvider;
+        99: aload_2
+       100: invokeinterface #125,  2          // InterfaceMethod net/minecraft/util/valueproviders/IntProvider.sample:(Lnet/minecraft/util/RandomSource;)I
+       105: if_icmpgt     112
+       108: iconst_1
+       109: goto          113
+       112: iconst_0
+       113: ireturn
+
+  public static boolean checkMonsterSpawnRules(net.minecraft.world.entity.EntityType<? extends net.minecraft.world.entity.Mob>, net.minecraft.world.level.ServerLevelAccessor, net.minecraft.world.entity.EntitySpawnReason, net.minecraft.core.BlockPos, net.minecraft.util.RandomSource);
+    Code:
+         0: aload_2
+         1: invokestatic  #131                // Method net/minecraft/world/entity/EntitySpawnReason.ignoresLightRequirements:(Lnet/minecraft/world/entity/EntitySpawnReason;)Z
+         4: ifne          17
+         7: aload_1
+         8: aload_3
+         9: aload         4
+        11: invokestatic  #137                // Method isDarkEnoughToSpawn:(Lnet/minecraft/world/level/ServerLevelAccessor;Lnet/minecraft/core/BlockPos;Lnet/minecraft/util/RandomSource;)Z
+        14: ifeq          33
+        17: aload_0
+        18: aload_1
+        19: aload_2
+        20: aload_3
+        21: aload         4
+        23: invokestatic  #141                // Method checkMobSpawnRules:(Lnet/minecraft/world/entity/EntityType;Lnet/minecraft/world/level/LevelAccessor;Lnet/minecraft/world/entity/EntitySpawnReason;Lnet/minecraft/core/BlockPos;Lnet/minecraft/util/RandomSource;)Z
+        26: ifeq          33
+        29: iconst_1
+        30: goto          34
+        33: iconst_0
+        34: ireturn
+
+  public static boolean checkAnyLightMonsterSpawnRules(net.minecraft.world.entity.EntityType<? extends net.minecraft.world.entity.monster.Monster>, net.minecraft.world.level.LevelAccessor, net.minecraft.world.entity.EntitySpawnReason, net.minecraft.core.BlockPos, net.minecraft.util.RandomSource);
+    Code:
+         0: aload_0
+         1: aload_1
+         2: aload_2
+         3: aload_3
+         4: aload         4
+         6: invokestatic  #141                // Method checkMobSpawnRules:(Lnet/minecraft/world/entity/EntityType;Lnet/minecraft/world/level/LevelAccessor;Lnet/minecraft/world/entity/EntitySpawnReason;Lnet/minecraft/core/BlockPos;Lnet/minecraft/util/RandomSource;)Z
+         9: ireturn
+
+  public static boolean checkSurfaceMonstersSpawnRules(net.minecraft.world.entity.EntityType<? extends net.minecraft.world.entity.Mob>, net.minecraft.world.level.ServerLevelAccessor, net.minecraft.world.entity.EntitySpawnReason, net.minecraft.core.BlockPos, net.minecraft.util.RandomSource);
+    Code:
+         0: aload_0
+         1: aload_1
+         2: aload_2
+         3: aload_3
+         4: aload         4
+         6: invokestatic  #145                // Method checkMonsterSpawnRules:(Lnet/minecraft/world/entity/EntityType;Lnet/minecraft/world/level/ServerLevelAccessor;Lnet/minecraft/world/entity/EntitySpawnReason;Lnet/minecraft/core/BlockPos;Lnet/minecraft/util/RandomSource;)Z
+         9: ifeq          33
+        12: aload_2
+        13: invokestatic  #149                // Method net/minecraft/world/entity/EntitySpawnReason.isSpawner:(Lnet/minecraft/world/entity/EntitySpawnReason;)Z
+        16: ifne          29
+        19: aload_1
+        20: aload_3
+        21: invokeinterface #152,  2          // InterfaceMethod net/minecraft/world/level/ServerLevelAccessor.canSeeSky:(Lnet/minecraft/core/BlockPos;)Z
+        26: ifeq          33
+        29: iconst_1
+        30: goto          34
+        33: iconst_0
+        34: ireturn
+
+  public static net.minecraft.world.entity.ai.attributes.AttributeSupplier$Builder createMonsterAttributes();
+    Code:
+         0: invokestatic  #156                // Method net/minecraft/world/entity/Mob.createMobAttributes:()Lnet/minecraft/world/entity/ai/attributes/AttributeSupplier$Builder;
+         3: getstatic     #162                // Field net/minecraft/world/entity/ai/attributes/Attributes.ATTACK_DAMAGE:Lnet/minecraft/core/Holder;
+         6: invokevirtual #168                // Method net/minecraft/world/entity/ai/attributes/AttributeSupplier$Builder.add:(Lnet/minecraft/core/Holder;)Lnet/minecraft/world/entity/ai/attributes/AttributeSupplier$Builder;
+         9: areturn
+
+  public boolean shouldDropExperience();
+    Code:
+         0: iconst_1
+         1: ireturn
+
+  protected boolean shouldDropLoot(net.minecraft.server.level.ServerLevel);
+    Code:
+         0: aload_1
+         1: invokevirtual #174                // Method net/minecraft/server/level/ServerLevel.getGameRules:()Lnet/minecraft/world/level/gamerules/GameRules;
+         4: getstatic     #178                // Field net/minecraft/world/level/gamerules/GameRules.MOB_DROPS:Lnet/minecraft/world/level/gamerules/GameRule;
+         7: invokevirtual #184                // Method net/minecraft/world/level/gamerules/GameRules.get:(Lnet/minecraft/world/level/gamerules/GameRule;)Ljava/lang/Object;
+        10: checkcast     #188                // class java/lang/Boolean
+        13: invokevirtual #190                // Method java/lang/Boolean.booleanValue:()Z
+        16: ireturn
+
+  public boolean isPreventingPlayerRest(net.minecraft.server.level.ServerLevel, net.minecraft.world.entity.player.Player);
+    Code:
+         0: iconst_1
+         1: ireturn
+
+  public net.minecraft.world.item.ItemStack getProjectile(net.minecraft.world.item.ItemStack);
+    Code:
+         0: aload_1
+         1: invokevirtual #193                // Method net/minecraft/world/item/ItemStack.getItem:()Lnet/minecraft/world/item/Item;
+         4: instanceof    #199                // class net/minecraft/world/item/ProjectileWeaponItem
+         7: ifeq          49
+        10: aload_1
+        11: invokevirtual #193                // Method net/minecraft/world/item/ItemStack.getItem:()Lnet/minecraft/world/item/Item;
+        14: checkcast     #199                // class net/minecraft/world/item/ProjectileWeaponItem
+        17: invokevirtual #201                // Method net/minecraft/world/item/ProjectileWeaponItem.getSupportedHeldProjectiles:()Ljava/util/function/Predicate;
+        20: astore_2
+        21: aload_0
+        22: aload_2
+        23: invokestatic  #205                // Method net/minecraft/world/item/ProjectileWeaponItem.getHeldProjectile:(Lnet/minecraft/world/entity/LivingEntity;Ljava/util/function/Predicate;)Lnet/minecraft/world/item/ItemStack;
+        26: astore_3
+        27: aload_3
+        28: invokevirtual #209                // Method net/minecraft/world/item/ItemStack.isEmpty:()Z
+        31: ifeq          47
+        34: new           #194                // class net/minecraft/world/item/ItemStack
+        37: dup
+        38: getstatic     #212                // Field net/minecraft/world/item/Items.ARROW:Lnet/minecraft/world/item/Item;
+        41: invokespecial #218                // Method net/minecraft/world/item/ItemStack."<init>":(Lnet/minecraft/world/level/ItemLike;)V
+        44: goto          48
+        47: aload_3
+        48: areturn
+        49: getstatic     #221                // Field net/minecraft/world/item/ItemStack.EMPTY:Lnet/minecraft/world/item/ItemStack;
+        52: areturn
+}

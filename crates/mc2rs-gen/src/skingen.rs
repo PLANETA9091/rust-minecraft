@@ -13,9 +13,14 @@ use crate::extract::{decode_rgba, read_entry};
 pub const WIDE_STEVE_JAR_PATH: &str = "assets/minecraft/textures/entity/player/wide/steve.png";
 /// The jar entry the slim (Alex) skin lives at.
 pub const SLIM_ALEX_JAR_PATH: &str = "assets/minecraft/textures/entity/player/slim/alex.png";
+/// The jar entry the zombie's skin lives at (javap: `AbstractZombieRenderer`
+/// static init — `textures/entity/zombie/zombie.png`, the same 64x64 wide
+/// humanoid layout the PlayerModel geometry unwraps).
+pub const ZOMBIE_JAR_PATH: &str = "assets/minecraft/textures/entity/zombie/zombie.png";
 /// Where the client reads the skin at runtime (under the runtime asset root).
 pub const RUNTIME_PATH: &str = "entity/player/wide/steve.png";
 pub const SLIM_RUNTIME_PATH: &str = "entity/player/slim/alex.png";
+pub const ZOMBIE_RUNTIME_PATH: &str = "entity/zombie/zombie.png";
 
 /// The vanilla `PlayerModel` arm box for the wide model: texOffs (40, 16),
 /// box 4x12x4 texels (w, h, d).
@@ -42,6 +47,9 @@ pub struct SkinData {
     pub slim_png_sha1: String,
     /// sha1 of the decoded slim RGBA8 pixels.
     pub slim_rgba_sha1: String,
+    /// sha1 of the zombie's source PNG bytes (jar-verbatim integrity) —
+    /// the first mob's texture the avatar renderer sha1-verifies.
+    pub zombie_png_sha1: String,
 }
 
 /// One UV rect in the skin texture, in texels: (u, v, w, h).
@@ -89,12 +97,26 @@ pub fn generate<R: std::io::Read + std::io::Seek>(archive: &mut zip::ZipArchive<
         slim_side,
         slim_side
     );
+    let zombie_bytes = read_entry(archive, ZOMBIE_JAR_PATH).context("read the zombie skin")?;
+    let zombie_png_sha1 = crate::util::sha1_hex(&zombie_bytes);
+    let (zw, zh, zombie_rgba) = decode_rgba(&zombie_bytes).context("decode the zombie skin")?;
+    let zombie_side = skin_side(zw, zh)?;
+    anyhow::ensure!(
+        zombie_side == side,
+        "the zombie skin must share the classic layout ({}x{}), got {}x{}",
+        side,
+        side,
+        zombie_side,
+        zombie_side
+    );
+    std::mem::drop(zombie_rgba);
     Ok(SkinData {
         png_sha1,
         rgba_sha1: crate::util::sha1_hex(&rgba),
         side,
         slim_png_sha1,
         slim_rgba_sha1: crate::util::sha1_hex(&slim_rgba),
+        zombie_png_sha1,
     })
 }
 
@@ -168,6 +190,14 @@ pub fn emit(data: &SkinData) -> Result<String> {
     out.push_str(&format!(
         "pub const SLIM_RUNTIME_PATH: &str = \"{SLIM_RUNTIME_PATH}\";\n"
     ));
+    out.push_str("\n/// The ZOMBIE skin (the first mob's own), generated from the same jar:\n/// the source sha1 the avatar renderer verifies before drawing\n/// (javap: `AbstractZombieRenderer`'s ZOMBIE_LOCATION — the same\n/// 64x64 wide humanoid layout the AvatarModel geometry unwraps).\n");
+    out.push_str(&format!(
+        "pub const ZOMBIE_PNG_SHA1: &str = \"{}\";\n",
+        data.zombie_png_sha1
+    ));
+    out.push_str(&format!(
+        "pub const ZOMBIE_RUNTIME_PATH: &str = \"{ZOMBIE_RUNTIME_PATH}\";\n"
+    ));
     Ok(out)
 }
 
@@ -227,7 +257,8 @@ mod tests {
 
         let mut zip = zip_of(&[
             (WIDE_STEVE_JAR_PATH, png.clone()),
-            (SLIM_ALEX_JAR_PATH, png),
+            (SLIM_ALEX_JAR_PATH, png.clone()),
+            (ZOMBIE_JAR_PATH, png),
         ]);
         let data = generate(&mut zip).unwrap();
         assert_eq!(data.side, 64);
@@ -291,6 +322,7 @@ mod tests {
         let mut zip = zip_of(&[
             (WIDE_STEVE_JAR_PATH, out),
             (SLIM_ALEX_JAR_PATH, skin_png()),
+            (ZOMBIE_JAR_PATH, skin_png()),
         ]);
         assert!(generate(&mut zip).is_err(), "non-square skin must be refused");
     }
@@ -299,7 +331,21 @@ mod tests {
     fn refuses_a_zip_without_the_slim_skin() {
         // the slim table must not be invented: a jar missing alex.png fails
         // the generation (the data-driven rule — no fabricated defaults)
-        let mut zip = zip_of(&[(WIDE_STEVE_JAR_PATH, skin_png())]);
+        let mut zip = zip_of(&[(
+            WIDE_STEVE_JAR_PATH,
+            skin_png(),
+        ), (ZOMBIE_JAR_PATH, skin_png())]);
         assert!(generate(&mut zip).is_err(), "missing slim skin must be refused");
+    }
+
+    #[test]
+    fn refuses_a_zip_without_the_zombie_skin() {
+        // the zombie table must not be invented either: a jar missing
+        // zombie.png fails the generation (the same data-driven rule)
+        let mut zip = zip_of(&[(
+            WIDE_STEVE_JAR_PATH,
+            skin_png(),
+        ), (SLIM_ALEX_JAR_PATH, skin_png())]);
+        assert!(generate(&mut zip).is_err(), "missing zombie skin must be refused");
     }
 }

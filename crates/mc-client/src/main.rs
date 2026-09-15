@@ -19,6 +19,7 @@ mod drops;
 mod eat;
 mod effects;
 mod end_flash;
+mod mob;
 mod food;
 mod gpu;
 mod gui;

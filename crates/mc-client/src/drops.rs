@@ -82,7 +82,9 @@ impl Lcg {
         }
     }
 
-    fn next(&mut self) -> u64 {
+    /// The raw 48-bit draw (the mob lane's goal clocks draw the same
+    /// stream the loot rolls speak).
+    pub fn next(&mut self) -> u64 {
         self.state = self
             .state
             .wrapping_mul(0x5851_F42D_4C95_7F2D)

@@ -215,5 +215,18 @@ pub fn extract_runtime_assets(
             }
         }
     }
+    // The ZOMBIE skin: the first mob's pixel source, the same
+    // sha1-verified stream pattern (javap: `AbstractZombieRenderer`'s
+    // ZOMBIE_LOCATION — `textures/entity/zombie/zombie.png`).
+    {
+        let dest = out_root.join(crate::skingen::ZOMBIE_RUNTIME_PATH);
+        if !dest.exists() {
+            if let Ok(bytes) = read_entry(archive, crate::skingen::ZOMBIE_JAR_PATH) {
+                fs::create_dir_all(dest.parent().unwrap())?;
+                fs::write(dest, bytes)?;
+                n += 1;
+            }
+        }
+    }
     Ok(n)
 }

@@ -66,3 +66,10 @@ pub static SLIM_ARM_FACES: [FaceRect; 6] = [
     FaceRect { u: 51, v: 20, w: 3, h: 12 }, // back
 ];
 pub const SLIM_RUNTIME_PATH: &str = "entity/player/slim/alex.png";
+
+/// The ZOMBIE skin (the first mob's own), generated from the same jar:
+/// the source sha1 the avatar renderer verifies before drawing
+/// (javap: `AbstractZombieRenderer`'s ZOMBIE_LOCATION — the same
+/// 64x64 wide humanoid layout the AvatarModel geometry unwraps).
+pub const ZOMBIE_PNG_SHA1: &str = "3d28d27b5388a7c2a296586649e98d068a795c2d";
+pub const ZOMBIE_RUNTIME_PATH: &str = "entity/zombie/zombie.png";

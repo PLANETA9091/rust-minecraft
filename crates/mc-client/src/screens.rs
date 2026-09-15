@@ -395,6 +395,25 @@ pub struct App {
     /// the skin asset is absent or failed its sha1 verification and
     /// the third-person body draws nothing.
     pub avatar: Option<crate::avatar::AvatarModel>,
+    /// THE FIRST MOB's own skin (the zombie's 64x64 wide texture, the
+    /// sha1 the generator pinned) — loaded lazily beside the player's,
+    /// `None` = the mobs stay unseen (the honest-missing-data law).
+    pub zombie_avatar: Option<crate::avatar::AvatarModel>,
+    /// THE MOB LIST — the zombies the offline world carries (the
+    /// networked lane's entity stream is the wire's future own). The
+    /// deterministic headless scenes never spawn one: the pixel
+    /// goldens stay.
+    pub mobs: Vec<crate::mob::Zombie>,
+    /// The spawner's clock (the client's own cadence the mob lane
+    /// speaks) and the id counter (the entity ids the drops ride).
+    pub spawn_clock: i64,
+    pub next_mob_id: i32,
+    /// The mob lane's own RNG (the goal clocks + the spawn draws).
+    pub mob_rng: crate::drops::Lcg,
+    /// `Player.attackStrengthTicker` — the charge clock the fist's
+    /// damage law speaks (the delay = (1/ATTACK_SPEED 4.0)·20 = 5.0,
+    /// the reset the onAttack call performs).
+    pub attack_ticker: u32,
     /// THE DIG ARC's state machine — the vanilla `MultiPlayerGameMode`'s
     /// destroy half (the survival lane: the destroy fields, the progress
     /// law, the START/ABORT/STOP sends). The left mouse speaks it: the
@@ -691,6 +710,12 @@ impl App {
             body: None,
             perspective: crate::camera::CameraType::FirstPerson,
             avatar: None,
+            zombie_avatar: None,
+            mobs: Vec::new(),
+            spawn_clock: 0,
+            next_mob_id: 1,
+            mob_rng: crate::drops::Lcg::new(0x5EED_10CA),
+            attack_ticker: 0,
             dig: crate::dig::DigState::new(),
             dig_held: false,
             miss_time: 0,
@@ -829,6 +854,10 @@ impl App {
             if self.invulnerable_time > 0 {
                 self.invulnerable_time -= 1;
             }
+            // THE ATTACK CHARGE (the Player.tick's own unconditional
+            // ++attackStrengthTicker — the full charge the fist's
+            // damage law speaks rides this clock)
+            self.attack_ticker = self.attack_ticker.saturating_add(1);
             // THE DEATH GATE (the DeathScreen's own input law): a dead
             // player's impulses stay zero and the dig sleeps — the
             // body's tick keeps its physics (the corpse settles) but
@@ -1100,6 +1129,105 @@ impl App {
                 }
                 self.drops.retain(|d| d.count > 0);
             }
+            // THE MOB LANE (the offline world's own authority — the
+            // NETWORKED world's entities stay the server's, the same
+            // split the drop lane speaks): the spawner's 40-tick beat
+            // (the MONSTER category's night + surface law), the
+            // zombies' AI tick, the attacks the player's hurt pipeline
+            // answers, the ambient groans the baseTick gate speaks,
+            // the death clock's own removal.
+            if !self.world_is_network {
+                // THE SPAWNER'S BEAT (the vanilla spawn cycle's
+                // stand-in): one attempt per SPAWN_CYCLE_TICKS, the
+                // night gate rides the sky lane's own celestial track
+                // (the sun below the horizon plane = sin(angle) < 0).
+                self.spawn_clock += 1;
+                if self.spawn_clock % crate::mob::SPAWN_CYCLE_TICKS == 0 {
+                    let day_time = (self.day_time_base + self.frame) as i64;
+                    let sun = crate::sky::sample(day_time).sun_angle;
+                    if sun.sin() < 0.0 {
+                        if let (Some(world), Some(b)) =
+                            (self.offline_world.as_ref(), self.body.as_ref())
+                        {
+                            let (px, pz) = (b.x, b.z);
+                            // the disjoint field borrows (the checker's
+                            // own verdict — the mobs, the id counter
+                            // and the RNG split cleanly)
+                            let mobs = &mut self.mobs;
+                            let rng = &mut self.mob_rng;
+                            let next_id = &mut self.next_mob_id;
+                            crate::mob::try_spawn(
+                                mobs,
+                                next_id,
+                                px,
+                                pz,
+                                world,
+                                rng,
+                                true,
+                            );
+                        }
+                    }
+                }
+                // THE MOB TICKS (the vanilla Minecraft.tick's entity
+                // lane): each zombie thinks on the active world's
+                // voxels, the player slice feeds the goals, the attack
+                // out-edges ride the hurt pipeline (the knockback the
+                // dealDefaultKnockback law speaks), the ambient groans
+                // draw their pitch from the entity's own stream.
+                let mut hit_events: Vec<(f64, f64, f64)> = Vec::new();
+                let mut groans: Vec<f32> = Vec::new();
+                {
+                    let world = self.offline_world.as_ref();
+                    if let Some(world) = world {
+                        let player = self.body.as_ref().map(|b| crate::mob::PlayerView {
+                            x: b.x,
+                            y: b.y,
+                            z: b.z,
+                            eye_y: b.y + b.eye_height(),
+                            dead: self.dead,
+                            width: crate::body::WIDTH,
+                        });
+                        for mob in self.mobs.iter_mut() {
+                            let ev = mob.tick(world, player.as_ref());
+                            if let Some(atk) = ev.attack {
+                                hit_events.push((atk.damage, atk.dir_x, atk.dir_z));
+                            }
+                            if ev.ambient {
+                                groans.push(mob.voice_pitch());
+                            }
+                        }
+                    }
+                }
+                for (dmg, dir_x, dir_z) in hit_events {
+                    if self.hurt(dmg as f32) {
+                        // THE KNOCKBACK (dealDefaultKnockback's own law
+                        // over the victim): the impulse rides the minus
+                        // of the attacker-minus-victim direction —
+                        // MobAttack carries the victim-minus-attacker
+                        // form, so the normalized push adds straight
+                        // in; the grounded bump min(0.4, vy/2 + 0.4).
+                        let len = (dir_x * dir_x + dir_z * dir_z).sqrt().max(1e-9);
+                        let (nx, nz) = (dir_x / len, dir_z / len);
+                        if let Some(b) = &mut self.body {
+                            b.vx = b.vx / 2.0 + nx * crate::mob::KNOCKBACK_STRENGTH;
+                            b.vz = b.vz / 2.0 + nz * crate::mob::KNOCKBACK_STRENGTH;
+                            if b.on_ground {
+                                b.vy = (b.vy / 2.0 + crate::mob::KNOCKBACK_STRENGTH).min(0.4);
+                            }
+                        }
+                    }
+                }
+                for pitch in groans {
+                    // the ambient groan (makeSound's own call — the
+                    // volume rides the base 1.0, the pitch the law)
+                    self.sounds
+                        .play_voice(self.frame, "entity.zombie.ambient", 1.0, pitch);
+                }
+                // THE DEATH CLOCK'S REMOVAL (the tickDeath tail: the
+                // broadcast-60 tick discards the corpse)
+                self.mobs
+                    .retain(|m| m.death_time < crate::mob::DEATH_DURATION_TICKS);
+            }
         }
     }
 
@@ -1128,6 +1256,22 @@ impl App {
         }
         if self.using_item.is_some() {
             return; // the vanilla isHandsBusy gate
+        }
+        // THE ENTITY PICK (the vanilla raycastHitResult's own law —
+        // the BLOCK clip first at the 4.5 range, the ENTITY ray within
+        // the max(4.5, 3.0) search sphere, and the entity wins only
+        // when it sits CLOSER than the block's own hit: the
+        // `entityHit.distanceToSqr(eye) < hitDist` compare the
+        // LocalPlayer.pick tail speaks). A picked mob EXECUTES the
+        // attack (MultiPlayerGameMode.attack's own branch — the swing
+        // rides it too) and returns before the block lane.
+        if let Some(i) = self.pick_mob() {
+            self.attack_mob(i);
+            self.swing.start();
+            if let Some(sink) = self.live_clicks.as_ref() {
+                let _ = sink.send(crate::world_view::ContainerCommand::Swing);
+            }
+            return;
         }
         // the BLOCK case: the dig arms through the state machine (the
         // held id, the body's ground state and the eye's water state all
@@ -1191,6 +1335,117 @@ impl App {
         self.swing.start();
         if let Some(sink) = self.live_clicks.as_ref() {
             let _ = sink.send(crate::world_view::ContainerCommand::Swing);
+        }
+    }
+
+    /// THE CROSSHAIR'S MOB VERDICT (javap `LocalPlayer.pick`'s own
+    /// compare): the entity pick at the max(4.5, 3.0) search range,
+    /// kept only when the entity's hit sits closer than the BLOCK
+    /// clip's own location (the `d2 < hitDist` strict compare — a
+    /// block in front of the mob eats the hit, the vanilla's own
+    /// verdict). The corpse-free search rides the camera ray (the
+    /// same camera-pick stand-in the crosshair clip speaks).
+    fn pick_mob(&self) -> Option<usize> {
+        if self.mobs.is_empty() {
+            return None;
+        }
+        let cam = self.world_camera();
+        let f = cam.forward();
+        let eye = (cam.pos.x as f64, cam.pos.y as f64, cam.pos.z as f64);
+        let view = (f.x as f64, f.y as f64, f.z as f64);
+        let search_range = crate::world::BLOCK_INTERACTION_RANGE.max(3.0);
+        let (i, mob_d2) = crate::mob::pick_entity(&self.mobs, eye, view, search_range)?;
+        // the block clip's own distance term (the same law the pick's
+        // tail speaks — the blockHit at the search range)
+        let block_d2 = self
+            .active_world()
+            .and_then(|w| w.clip(eye, view, search_range))
+            .map(|hit| {
+                let (lx, ly, lz) = hit.location;
+                let (dx, dy, dz) = (lx - eye.0, ly - eye.1, lz - eye.2);
+                dx * dx + dy * dy + dz * dz
+            })
+            .unwrap_or(f64::INFINITY);
+        if mob_d2 < block_d2 {
+            Some(i)
+        } else {
+            None
+        }
+    }
+
+    /// THE ATTACK EXECUTION (javap `Player.attack` over the zombie:
+    /// the charge clock (`getAttackStrengthScale(0.5)` = the ticker
+    /// + 0.5 over the `(1/ATTACK_SPEED 4.0)·20 = 5.0` delay, clamped),
+    /// the base damage the ATTACK_DAMAGE 2.0 attribute speaks scaled
+    /// by `baseDamageScaleFactor`'s `0.2 + 0.8·charge²` law, the CRIT
+    /// the full-charge (f5 > 0.9) + falling + not-sprinting law speaks
+    /// (the 1.5x — canCriticalAttack's own gates), the hurt + the
+    /// 0.4 knockback (the dealDefaultKnockback form over the victim
+    /// mob), the onAttack reset, the attack voice the
+    /// attackVisualEffects branch picks (crit → CRIT, full charge →
+    /// STRONG, else WEAK) and the zombie's own hurt/death voice.
+    fn attack_mob(&mut self, i: usize) {
+        // the ATTACKER'S FACTS first (the body's own read — the borrow
+        // ends before the mob's mutates)
+        let charge = ((self.attack_ticker as f32 + 0.5) / 5.0).clamp(0.0, 1.0);
+        let mut dmg = 2.0 * (0.2 + 0.8 * charge * charge);
+        let full = charge > 0.9;
+        let (on_ground, eye_water) = self.body_state();
+        let (falling, sprinting, bx, bz) = self
+            .body
+            .as_ref()
+            .map(|b| (b.fall_distance > 0.0, b.sprinting, b.x, b.z))
+            .unwrap_or((false, false, 0.0, 0.0));
+        // canCriticalAttack's own gates (the client's own vocabulary:
+        // the fall distance, the ground, the water, the sprint)
+        let crit = full && falling && !on_ground && !eye_water && !sprinting;
+        if crit {
+            dmg *= 1.5;
+        }
+        // onAttack's own reset (the vanilla speaks it BEFORE the
+        // damage gate — every executed attack re-arms the clock)
+        self.attack_ticker = 0;
+        if dmg <= 0.0 {
+            return;
+        }
+        let Some(mob) = self.mobs.get_mut(i) else {
+            return;
+        };
+        mob.hurt(dmg as f64);
+        // THE KNOCKBACK (the hurt pipeline's own dealDefaultKnockback:
+        // the caller's (x, z) runs attacker-minus-victim — the
+        // knockback's minus law pushes the mob away)
+        mob.knockback(
+            crate::mob::KNOCKBACK_STRENGTH,
+            bx - mob.x,
+            bz - mob.z,
+        );
+        // THE ZOMBIE'S OWN VOICE (hurtServer's makeSound — the hurt
+        // sound while alive, the death sound the die() tail speaks)
+        let pitch = mob.voice_pitch();
+        let died = mob.health <= 0.0;
+        if died {
+            self.sounds
+                .play_voice(self.frame, "entity.zombie.death", 1.0, pitch);
+        } else {
+            self.sounds
+                .play_voice(self.frame, "entity.zombie.hurt", 1.0, pitch);
+        }
+        // THE ATTACK VOICE (attackVisualEffects's own branch — the
+        // pitch rides the getVoicePitch law over the client's stream)
+        let event = if crit {
+            "entity.player.attack.crit"
+        } else if full {
+            "entity.player.attack.strong"
+        } else {
+            "entity.player.attack.weak"
+        };
+        let vp = (self.mob_rng.next_f32() - self.mob_rng.next_f32()) * 0.2 + 1.0;
+        self.sounds.play_voice(self.frame, event, 1.0, vp);
+        // THE ATTACK EXHAUSTION (the attack tail's causeFoodExhaustion
+        // 0.1 — the offline lane banks it straight into the FoodData)
+        if !self.world_is_network {
+            self.food_data.add_exhaustion(0.1);
         }
     }
 
@@ -2948,16 +3203,17 @@ impl App {
     /// the 10-tick flash (`hurtTime = hurtDuration`), and the health
     /// drops through actuallyHurt (the armor/absorption lanes' honest
     /// absence — the bare player's own path).
-    pub fn hurt(&mut self, amount: f32) {
+    pub fn hurt(&mut self, amount: f32) -> bool {
         if amount <= 0.0 || self.dead {
-            return;
+            return false;
         }
         if (self.invulnerable_time as f32) > 10.0 {
             if amount <= self.last_hurt {
-                return;
+                return false;
             }
             self.actually_hurt(amount - self.last_hurt);
             self.last_hurt = amount;
+            true
         } else {
             self.last_hurt = amount;
             self.invulnerable_time = 20;
@@ -2967,6 +3223,7 @@ impl App {
             // the hurt voice (handleDamageEvent's own call — the
             // client's own law speaks the (r - r) * 0.2 + 1.0 pitch)
             self.sounds.play_hurt_voice(self.frame);
+            true
         }
     }
 
@@ -3287,6 +3544,10 @@ impl App {
         // render: the body the detached camera watches — nothing in
         // first person)
         self.render_avatar(fb, &ctx, &cam);
+        // THE MOB LANE's draw (the vanilla LevelRenderer's entity
+        // submit — the zombies render in EVERY perspective, the
+        // first-person's own-body gate never touches them)
+        self.render_mobs(fb, &ctx, &cam);
         // THE EAT ARC's pieces (the BreakingItemParticle pass — the
         // vanilla's own particle layer rides the entity pass): the
         // mouth's debris as camera-facing quads
@@ -3376,6 +3637,10 @@ impl App {
             attack_time: self.swing.get_attack_anim(0.5),
             attack_right: true, // the client's own right main hand
             age_ticks: self.frame as f32 + 0.5,
+            zombie: false,
+            zombie_aggressive: false,
+            head_yaw_off_deg: 0.0,
+            death_time: 0.0,
         };
         let feet = Vec3::new(body.x as f32, body.y as f32, body.z as f32);
         let quads = model.quads(&state, feet, cam.yaw, cam.pitch);
@@ -3395,6 +3660,72 @@ impl App {
             let [r, g, b, a] = model.pixel(u, v);
             Some([r, g, b, a])
         });
+    }
+
+    /// THE MOB LANE's render (javap `LivingEntityRenderer.render` over
+    /// the zombie — the same entity chain the player's avatar speaks,
+    /// the ZOMBIE skin the generator sha1-verified, the pose branch
+    /// the AbstractZombieModel speaks: the humanoid setupAnim then the
+    /// animateZombieArms overwrite, the aggressive arms the
+    /// ZombieRenderState's own flag drives, the head's netHeadYaw
+    /// clamp, the death flip the deathTime branch speaks). The hurt
+    /// flash rides the OverlayTexture's own law: the red row's
+    /// texel pixel packs (0, 0, 0, 0.7) and the entity shader's
+    /// `mix(overlay.rgb, color.rgb, overlay.a)` folds the model to
+    /// 70% brightness while hurtTime > 0.
+    fn render_mobs(
+        &mut self,
+        fb: &mut crate::raster::Framebuf,
+        ctx: &RenderCtx,
+        cam: &crate::camera::Camera,
+    ) {
+        if self.mobs.is_empty() {
+            return; // the deterministic scenes carry no mobs — the goldens stay
+        }
+        if self.zombie_avatar.is_none() {
+            self.zombie_avatar = crate::avatar::AvatarModel::load_zombie(std::path::Path::new(
+                "assets-cache/jar",
+            ));
+        }
+        let Some(model) = &self.zombie_avatar else {
+            return; // the zombie skin failed its sha1 — the mobs stay unseen
+        };
+        for mob in &self.mobs {
+            // THE RENDER STATE (extractRenderState's own sampling — the
+            // head rides the netHeadYaw the AI's clamp speaks, the
+            // death clock rides the deathTime + partial read)
+            let state = crate::avatar::AvatarState {
+                yaw_deg: mob.yaw,
+                pitch_deg: mob.head_pitch,
+                walk_pos: mob.walk.position_at(crate::avatar::RENDER_PARTIAL),
+                walk_speed: mob.walk.speed_at(crate::avatar::RENDER_PARTIAL),
+                crouching: false,
+                attack_time: mob.swing.get_attack_anim(0.5),
+                attack_right: true,
+                age_ticks: mob.age_ticks as f32 + 0.5,
+                zombie: true,
+                zombie_aggressive: mob.aggressive,
+                head_yaw_off_deg: mob.head_yaw_off,
+                death_time: mob.death_time_at(crate::avatar::RENDER_PARTIAL),
+            };
+            let feet = Vec3::new(mob.x as f32, mob.y as f32, mob.z as f32);
+            let quads = model.quads(&state, feet, cam.yaw, cam.pitch);
+            // the hurt overlay's own shade term (the mix law's 0.7)
+            let shade = if mob.hurt_time > 0 { 0.7 } else { 1.0 };
+            let sampled: Vec<crate::raster::SampledQuad> = quads
+                .iter()
+                .map(|q| crate::raster::SampledQuad {
+                    pts: q.pts,
+                    uv: q.uv,
+                    tex: "",
+                    tint: [q.shade * shade, q.shade * shade, q.shade * shade],
+                })
+                .collect();
+            fb.draw_sampled_quads(ctx.proj.mul(&ctx.view), &sampled, &mut |_tex, u, v| {
+                let [r, g, b, a] = model.pixel(u, v);
+                Some([r, g, b, a])
+            });
+        }
     }
 
     /// THE DROP LANE's render — the vanilla `ItemEntityRenderer`'s own
@@ -8411,5 +8742,114 @@ mod tests {
             app.update();
         }
         assert!(app.eating.is_none(), "the hold resumed and completed");
+    }
+
+    /// THE MOB LANE'S WIRING (the offline tick's own authority): the
+    /// spawner's 40-tick beat under a forced night lands a zombie in
+    /// the ring, the crosshair's pick + the fist's charge law land
+    /// through the attack lane, and the death clock's 20-tick walk
+    /// discards the corpse through the same update loop.
+    #[test]
+    fn the_mob_lane_spawns_attacks_and_removes_through_the_offline_tick() {
+        let mut app = App::new(4);
+        app.enter_world();
+        app.spawn_offline_body();
+        assert!(app.body.is_some(), "the offline body stands");
+        // THE NIGHT GATE: the base lands deep night (the sky lane's own
+        // celestial track — the sun below the horizon plane)
+        app.day_time_base = 18000u64.saturating_sub(app.frame);
+        let mut spawned_at = None;
+        for t in 0..1200u64 {
+            app.update();
+            if !app.mobs.is_empty() {
+                spawned_at = Some(t);
+                break;
+            }
+        }
+        assert!(
+            spawned_at.is_some(),
+            "the night spawner never landed a zombie"
+        );
+        assert!(
+            app.mobs
+                .iter()
+                .all(|m| m.health == crate::mob::ZOMBIE_MAX_HEALTH),
+            "the spawned zombie spawns healthy"
+        );
+        // the combat phase's clean stage: the wandering crowd leaves
+        app.mobs.clear();
+        assert!(app.health > 0.0, "the player survived the night");
+
+        // THE COMBAT PICK: a controlled zombie 2.5 blocks east, on the
+        // surface (the same law the spawner's own scan speaks)
+        let (bx, bz) = {
+            let b = app.body.as_ref().unwrap();
+            (b.x, b.z)
+        };
+        let mut z = crate::mob::Zombie::new(999, 0.0, 0.0, 0.0, 11);
+        let world = app.offline_world.as_ref().unwrap().size_blocks();
+        let (sx, sz) = ((bx + 2.5).floor() as i32, bz.floor() as i32);
+        let mut sy = 0;
+        let wref = app.offline_world.as_ref().unwrap();
+        for y in (0..world).rev() {
+            if crate::body::solid(wref, sx, y, sz) {
+                sy = y + 1;
+                break;
+            }
+        }
+        z.x = bx + 2.5;
+        z.y = sy as f64;
+        z.z = bz as f64;
+        app.mobs.push(z);
+        let idx = app.mobs.len() - 1;
+        // aim the camera at the mob's center (the pick law's own ray —
+        // the camera yaw/pitch the body.camera fold speaks)
+        {
+            let (mx, my, mz) = {
+                let m = &app.mobs[idx];
+                (m.x, m.y + 1.0, m.z)
+            };
+            let b = app.body.as_mut().unwrap();
+            let (dx, dy, dz) = (mx - b.x, my - (b.y + b.eye_height()), mz - b.z);
+            let horiz = (dx * dx + dz * dz).sqrt().max(1e-9);
+            let len3 = (dx * dx + dy * dy + dz * dz).sqrt().max(1e-9);
+            let cam_yaw = (dx / horiz).atan2(-dz / horiz);
+            let cam_pitch = (dy / len3).asin();
+            b.yaw = (cam_yaw - std::f64::consts::PI).to_degrees() as f32;
+            b.pitch = -cam_pitch.to_degrees() as f32;
+        }
+        app.on_attack();
+        assert!(
+            app.mobs[idx].health < crate::mob::ZOMBIE_MAX_HEALTH,
+            "the fist landed through the pick (health {})",
+            app.mobs[idx].health
+        );
+        assert_eq!(
+            app.mobs[idx].hurt_time,
+            crate::mob::HURT_DURATION_TICKS,
+            "the 10-tick flash rides"
+        );
+        // THE CHARGE LAW (baseDamageScaleFactor's 0.2 + 0.8c^2): the
+        // ticker reset to 0 — an immediate second hit speaks the weak
+        // charge (the 0.1 charge's own 0.416 damage)
+        let health_after_full = app.mobs[idx].health;
+        app.on_attack();
+        let weak_drop = health_after_full - app.mobs[idx].health;
+        assert!(
+            weak_drop > 0.0 && weak_drop < 0.6,
+            "the uncharged fist barely hurts ({weak_drop})"
+        );
+
+        // THE REMOVAL: the death clock's 20-tick walk discards the
+        // corpse through the same update loop (the retain law)
+        app.mobs[idx].hurt(1000.0);
+        assert!(app.mobs[idx].health <= 0.0, "the finishing hit kills");
+        for _ in 0..25 {
+            app.update();
+        }
+        assert!(
+            !app.mobs.iter().any(|m| m.id == 999),
+            "the corpse left the world"
+        );
     }
 }
