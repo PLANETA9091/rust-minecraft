@@ -195,6 +195,14 @@ impl FoodData {
         self.add(nutrition, saturation_by_modifier(nutrition, modifier));
     }
 
+    /// `eat(FoodProperties)` (javap: `add(props.nutrition(),
+    /// props.saturation())` — the COMPONENT lane's own fold: the 26.2
+    /// record carries the ABSOLUTE saturation, the legacy
+    /// (int, float) overload's modifier*2 law is the old API's own).
+    pub fn eat_props(&mut self, nutrition: i32, saturation: f32) {
+        self.add(nutrition, saturation);
+    }
+
     /// `addExhaustion` (javap: `min(exhaustionLevel + f, 40.0f)`).
     pub fn add_exhaustion(&mut self, amount: f32) {
         self.exhaustion = (self.exhaustion + amount).min(MAX_EXHAUSTION);
@@ -350,6 +358,28 @@ mod tests {
         f.eat(8, FOOD_SATURATION_GOOD);
         assert_eq!(f.food_level(), 20, "the bar's own clamp");
         assert!((f.saturation() - 18.8).abs() < 1e-3, "the sum under the bar: {}", f.saturation());
+    }
+
+    /// THE COMPONENT EAT LAW (javap `eat(FoodProperties)`:
+    /// `add(nutrition, saturation)` — the ABSOLUTE saturation the 26.2
+    /// record carries; the apple's 4 @ 2.4 lands 2.4, NOT the legacy
+    /// overload's 4 * 2.4 * 2 fold).
+    #[test]
+    fn the_component_eat_folds_the_absolute_saturation() {
+        let mut f = FoodData::new();
+        f.set_food_level(10);
+        f.set_saturation(0.0);
+        f.eat_props(4, 2.4);
+        assert_eq!(f.food_level(), 14);
+        assert!((f.saturation() - 2.4).abs() < 1e-4, "the absolute value lands");
+        // the legacy overload would have spoken 19.2 clamped to the
+        // BAR (14) — the split's own verdict the probe's rows pinned
+        let mut g = FoodData::new();
+        g.set_food_level(10);
+        g.set_saturation(0.0);
+        g.eat(4, 2.4);
+        assert_eq!(g.food_level(), 14);
+        assert!((g.saturation() - 14.0).abs() < 1e-4, "the legacy fold rides to the bar's cap");
     }
 
     /// THE EXHAUSTION BANK: `min(banked + f, 40.0)` — the ceiling the

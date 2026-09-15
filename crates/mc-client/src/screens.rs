@@ -516,6 +516,18 @@ pub struct App {
     /// client's deterministic Lcg the audio/drop lanes' own
     /// architecture).
     pub food_rng: crate::drops::Lcg,
+    /// THE EAT LANE (the consumable's own hold — the vanilla's
+    /// `useItem`/`useItemRemaining` narrowed to the food): opened by
+    /// the right press's canConsume gate, ticked by the use clock (the
+    /// chew bursts at the cadence's own stride), completed at zero or
+    /// cancelled by the release. Mutually exclusive with the pull lane
+    /// — the vanilla's one `isUsingItem` at a time.
+    pub eating: Option<crate::eat::EatActive>,
+    /// THE ITEM PIECES (the eat arc's BreakingItemParticles — the
+    /// mouth's own debris, the spawnItemParticles' law the eat lane
+    /// speaks; the pieces tick with the world, the lifetime's removal
+    /// prunes).
+    pub pieces: Vec<crate::eat::ItemPiece>,
     pub hurt_time: i32,
     pub hurt_duration: i32,
     pub invulnerable_time: i32,
@@ -670,6 +682,8 @@ impl App {
             inventory: crate::drops::Inventory::default(),
             drop_rng: crate::drops::Lcg::new(seed),
             food_rng: crate::drops::Lcg::new(seed),
+            eating: None,
+            pieces: Vec::new(),
             next_drop_id: 1,
             health: 20.0,
             food_data: crate::food::FoodData::new(),
@@ -733,6 +747,39 @@ impl App {
         if let Some((id, idx)) = reload {
             self.load_held_payload(id, Some(idx));
         }
+        // THE EAT CLOCK (the consumable's own hold — the vanilla
+        // updateUsingItem's own order: the burst check at the
+        // remaining, the decrement, the completion at zero): the chew
+        // bursts spawn the 5-piece shower + the voice, the completion
+        // fires the 16-piece finisher + the gulp + the FoodData fold +
+        // THE BURP + the survival consume. The drain slots carry the
+        // events past the field borrow (the body's own pattern). The
+        // pause freezes the hold (the vanilla pause's own law — the
+        // singleplayer tick sleeps).
+        let mut burst: Option<crate::eat::EatActive> = None;
+        let mut completed: Option<crate::eat::EatActive> = None;
+        if !self.paused {
+            if let Some(eat) = self.eating.as_mut() {
+                if eat.burst_due() {
+                    burst = Some(eat.clone());
+                }
+                eat.ticks += 1;
+                if eat.complete_due() {
+                    completed = self.eating.take();
+                }
+            }
+        }
+        if let Some(eat) = burst {
+            let (volume, pitch) = self.spawn_chew_burst(&eat);
+            let event = eat.sound.trim_start_matches("minecraft:");
+            self.sounds.play_voice(self.frame, event, volume, pitch);
+        }
+        if let Some(eat) = completed {
+            self.complete_eat(&eat);
+        }
+        // THE PIECE TICK (the BreakingItemParticle's own law: the age,
+        // the lifetime's removal, the move, the 0.98 friction)
+        self.pieces.retain_mut(crate::eat::ItemPiece::tick);
         // THE BODY TICK (the frame==tick model the swing/use clocks
         // speak): the vanilla travel on the ACTIVE world's voxels, the
         // wire echoing through the same command channel the use arc
@@ -1442,6 +1489,35 @@ impl App {
             // the offline client's use animations are the vanilla's own
             // singleplayer behavior)
             if let Some(id) = self.held_id() {
+                // THE EAT LANE FIRST (the vanilla startUseItem's own
+                // order — the item's use() speaks: the CONSUMABLE's
+                // startConsuming opens the hold; the pull lanes ride
+                // after): the canConsume gate — a FOOD-less consumable
+                // (the potion) consumes unconditionally, the FOOD's
+                // own lane speaks `canEat(canAlwaysEat)`.
+                if let Some(def) = self.food_def_of(id) {
+                    let consumes = !def.has_food()
+                        || crate::eat::can_eat(
+                            def.can_always_eat,
+                            false,
+                            self.food_data.needs_food(),
+                        );
+                    if !consumes {
+                        return false; // the canConsume's own FAIL
+                    }
+                    self.using_item = None; // one use at a time
+                    self.eating = crate::eat::EatActive::start(id, def);
+                    // the wire echo: the eat's use-item click (the
+                    // networked lane's own command the pull lane rides)
+                    let (yaw, pitch) = crate::world_view::wire_angles(&self.world_camera());
+                    if let Some(sink) = self.live_clicks.as_ref() {
+                        let _ = sink.send(crate::world_view::ContainerCommand::UseItem {
+                            yaw,
+                            pitch,
+                        });
+                    }
+                    return true;
+                }
                 // THE LOADED CROSSBOW: the instant shot — the use
                 // consumes the charge (vanilla's CONSUME branch), the
                 // resting render returns to the plain crossbow, and
@@ -1491,6 +1567,15 @@ impl App {
     /// and the resting render switches to the charged bolt. A no-op
     /// when no use is active.
     pub fn on_right_release(&mut self) {
+        // THE EAT'S CANCEL (javap releaseUsing's own shape for the
+        // consumable: the hold ends silently — no completion, no
+        // sound, no penalty; the pieces already spawned keep their
+        // flight). The eat checked first — the one-use-at-a-time law
+        // keeps the lanes exclusive.
+        if let Some(eat) = self.eating.take() {
+            self.load_held_payload(eat.item, None);
+            return;
+        }
         let Some(active) = self.using_item.take() else {
             return;
         };
@@ -2543,6 +2628,195 @@ impl App {
     /// `getFallDamageSound(damage)` (the small/big boundary at damage
     /// 5), then the hurt through the amount `calculateFallDamage`
     /// spoke.
+    /// The held item's FOOD/CONSUMABLE row — the registry's item name
+    /// through the generated foods table (the probe's 47-row verdict).
+    fn food_def_of(&self, id: i32) -> Option<&'static mc_registry::generated::foods::FoodDef> {
+        let name = mc_registry::item_name(id)?;
+        mc_registry::generated::foods::food_def_by_name(name)
+    }
+
+    /// THE CHEW BURST (javap emitParticlesAndSounds + spawnItemParticles
+    /// verbatim): the voice's four draws FIRST (the boolean, the two
+    /// triangle floats, the randomBetween float — the entity random's
+    /// own order), then the 5 pieces' draws (the offset/velocity pair
+    /// per piece, the parent's jitter fold, the lifetime, the
+    /// texture-slice pair). Returns the (volume, pitch) the voice logs
+    /// with — the engine's file pick rides the caller.
+    fn spawn_chew_burst(&mut self, eat: &crate::eat::EatActive) -> (f32, f32) {
+        let r_bool = self.drop_rng.next_f32() >= 0.5;
+        let r1 = self.drop_rng.next_f32();
+        let r2 = self.drop_rng.next_f32();
+        let r3 = self.drop_rng.next_f32();
+        let (volume, pitch) = crate::eat::chew_voice(eat.animation, r_bool, r1, r2, r3);
+        if eat.has_consume_particles {
+            self.spawn_pieces(eat.item, crate::eat::CHEW_BURST_COUNT);
+        }
+        (volume, pitch)
+    }
+
+    /// THE PIECE SPAWNER (javap spawnItemParticles): `count` pieces at
+    /// the eye + the rotated offset, riding the rotated mouthward
+    /// velocity through the Particle + BreakingItemParticle folds.
+    fn spawn_pieces(&mut self, item: i32, count: u32) {
+        let cam = self.world_camera();
+        let (yaw, pitch) = (cam.yaw, cam.pitch);
+        let eye = [cam.pos.x as f64, cam.pos.y as f64, cam.pos.z as f64];
+        for _ in 0..count {
+            // the offset's two draws, the velocity's two
+            let r_ox = self.drop_rng.next_f32();
+            let r_oy = self.drop_rng.next_f32();
+            let r_vx = self.drop_rng.next_f32();
+            let r_vy = self.drop_rng.next_f32();
+            let (off, vel) =
+                crate::eat::piece_offset_and_velocity(r_ox, r_oy, r_vx, r_vy, yaw, pitch);
+            // the parent's jitter fold (six draws) + the normalize's
+            // d0 (two draws)
+            let jx = self.drop_rng.next_f32();
+            let jy = self.drop_rng.next_f32();
+            let jz = self.drop_rng.next_f32();
+            let r1 = self.drop_rng.next_f32();
+            let r2 = self.drop_rng.next_f32();
+            let parent = crate::eat::parent_velocity(
+                vel[0] as f32,
+                vel[1] as f32,
+                vel[2] as f32,
+                jx,
+                jy,
+                jz,
+                r1,
+                r2,
+            );
+            let final_v = crate::eat::breaking_item_velocity(parent, vel[0] as f32, vel[1] as f32, vel[2] as f32);
+            // the lifetime's draw, the texture slice's two
+            let life = crate::eat::particle_lifetime(self.drop_rng.next_f32());
+            let uo = self.drop_rng.next_f32() * 3.0;
+            let vo = self.drop_rng.next_f32() * 3.0;
+            self.pieces.push(crate::eat::ItemPiece {
+                x: eye[0] + off[0],
+                y: eye[1] + off[1],
+                z: eye[2] + off[2],
+                vx: final_v[0],
+                vy: final_v[1],
+                vz: final_v[2],
+                age: 0,
+                lifetime: life,
+                item,
+                uo,
+                vo,
+            });
+        }
+    }
+
+    /// THE COMPLETION (javap Consumable.onConsume then
+    /// FoodProperties.onConsume verbatim): the FINAL 16-piece burst
+    /// with the chew's own voice law, the gulp at the fixed 1.0 /
+    /// triangle(1.0, 0.4), the OFFLINE lane's FoodData.eat (the
+    /// networked lane's food is the server's own — the Set Health
+    /// packet speaks it, the client folds nothing), THE BURP at 0.5 /
+    /// randomBetween(0.9, 1.0), and the survival's consume(1) with the
+    /// USE_REMAINDER's return lane. The game event and the
+    /// server-side effect list ride the honest absences (no
+    /// GameEvent channel, no effect store — the effects' rows already
+    /// speak in the table).
+    fn complete_eat(&mut self, eat: &crate::eat::EatActive) {
+        // 1. the finisher: 16 pieces + the chew voice's fold
+        let (volume, pitch) = self.spawn_chew_burst(eat);
+        let event = eat.sound.trim_start_matches("minecraft:");
+        self.sounds.play_voice(self.frame, event, volume, pitch);
+        // 2. THE FOOD LISTENER's lane (only FOOD rows carry it — the
+        // potion's completion never speaks here)
+        if eat.has_food() {
+            // the gulp: the fixed volume, the ±0.4 triangle (two draws)
+            let g1 = self.drop_rng.next_f32();
+            let g2 = self.drop_rng.next_f32();
+            let gulp_pitch = crate::eat::triangle(g1, g2, 1.0, crate::eat::FINISH_GULP_DEVIATION);
+            self.sounds.play_voice(self.frame, event, crate::eat::FINISH_GULP_VOLUME, gulp_pitch);
+            // 3. THE OFFLINE FOLD: FoodData.eat(props) — the ABSOLUTE
+            // saturation straight into the add (the 26.2 record's own
+            // verdict). The networked lane folds nothing (the
+            // server's Set Health speaks its truth).
+            if !self.world_is_network {
+                self.food_data.eat_props(eat.nutrition, eat.saturation);
+            }
+            // 4. THE BURP (javap FoodProperties.onConsume's tail):
+            // volume 0.5, pitch randomBetween(0.9, 1.0) — one draw
+            let b = self.drop_rng.next_f32();
+            let burp_pitch = crate::eat::random_between(
+                b,
+                crate::eat::BURP_PITCH_MIN,
+                crate::eat::BURP_PITCH_MAX,
+            );
+            self.sounds.play_voice(
+                self.frame,
+                "entity.player.burp",
+                crate::eat::BURP_VOLUME,
+                burp_pitch,
+            );
+        }
+        // 5. THE SURVIVAL CONSUME (javap ItemStack.consume(1, entity):
+        // the infinite-materials gate off — the client's survival
+        // lane) + the USE_REMAINDER's return (the milk's bucket, the
+        // bottles): a single stack BECOMES the remainder, a larger
+        // stack shrinks and the remainder rides the inventory's own
+        // add. The `--held-item` stand-in (no stack) stays the honest
+        // no-op.
+        if !self.world_is_network {
+            let sel = self.selected_hotbar;
+            let stack = self.inventory.items[sel];
+            if stack.1 > 0 && stack.0 == eat.item {
+                match eat.use_remainder {
+                    Some(rem_name) => {
+                        let rem_id = mc_registry::item_id_by_name(
+                            rem_name.trim_start_matches("minecraft:"),
+                        )
+                        .unwrap_or(0);
+                        if stack.1 == 1 {
+                            self.inventory.items[sel] = (rem_id, 1);
+                        } else {
+                            self.inventory.items[sel].1 -= 1;
+                            let leftover = self.inventory.add(sel, rem_id, 1);
+                            if leftover > 0 {
+                                // the full inventory's honesty: the
+                                // remainder drops at the body (the
+                                // handleExtraItemsCreatedOnUse's own
+                                // lane) — the spawn the drops module
+                                // already speaks
+                                self.spawn_remainder_drop(rem_id);
+                            }
+                        }
+                    }
+                    None => {
+                        self.inventory.items[sel].1 -= 1;
+                        if self.inventory.items[sel].1 <= 0 {
+                            self.inventory.items[sel] = (0, 0);
+                        }
+                    }
+                }
+                self.hotbar_slots = self.inventory.hotbar();
+            }
+        }
+        self.eating = None;
+    }
+
+    /// The full-inventory remainder's drop (the
+    /// handleExtraItemsCreatedOnUse's own lane — the entity spawns at
+    /// the body with the pickup delay the ItemEntity law speaks).
+    fn spawn_remainder_drop(&mut self, item: i32) {
+        if let Some(b) = self.body.as_ref() {
+            let id = self.next_drop_id;
+            self.next_drop_id += 1;
+            self.drops.push(crate::drops::ItemDrop::spawn(
+                id,
+                item,
+                1,
+                b.x.floor() as i32,
+                b.y.floor() as i32,
+                b.z.floor() as i32,
+                &mut self.drop_rng,
+            ));
+        }
+    }
+
     fn apply_fall_damage(&mut self, damage: i32) {
         self.sounds.play_fall_voice(self.frame, damage);
         // THE DAMAGE SOURCE'S OWN FOOD COST (javap Player.hurt's tail:
@@ -2846,6 +3120,12 @@ impl App {
         if !self.drops.is_empty() {
             self.render_drops(fb, &ctx);
         }
+        // THE EAT ARC's pieces (the BreakingItemParticle pass — the
+        // vanilla's own particle layer rides the entity pass): the
+        // mouth's debris as camera-facing quads
+        if !self.pieces.is_empty() {
+            self.render_pieces(fb, &ctx, &cam);
+        }
         crate::sky::render_clouds(fb, &ctx, &cam, day_time, 0.0, self.world_cloud_fog_end);
         // THE DIG LANE's frame render (the vanilla LevelRenderer's own
         // pair, both after the terrain and before the hand): the hit
@@ -2873,9 +3153,19 @@ impl App {
         }
         // vanilla submitArmWithItem: a non-empty main hand draws the ITEM
         // instead of the arm; the empty hand draws the arm. Exactly one of
-        // the two per frame.
+        // the two per frame. The EAT POSE rides the item's draw (the
+        // consumable's hold: the pull-in + the bite bob + the rotations —
+        // the remaining the pose reads at the frame's own 0.5 partial).
+        let eat_pose = self.eating.as_ref().map(|eat| {
+            crate::eat::apply_eat_transform(
+                eat.remaining(),
+                0.5,
+                eat.total,
+                1.0, // the main hand's side (the right-handed view)
+            )
+        });
         if let Some(item) = &self.held_item {
-            item.draw(fb, ctx.proj, self.swing.get_attack_anim(0.5));
+            item.draw_with_pose(fb, ctx.proj, self.swing.get_attack_anim(0.5), eat_pose);
         } else if let Some(arm) = &self.arm {
             arm.draw(fb, ctx.proj, self.swing.get_attack_anim(0.5));
         }
@@ -2958,6 +3248,70 @@ impl App {
                     tint: [base[0] * sh, base[1] * sh, base[2] * sh],
                 });
             }
+        }
+        if sampled.is_empty() {
+            return;
+        }
+        let vp = ctx.proj.mul(&ctx.view);
+        fb.draw_sampled_quads(vp, &sampled, &mut |tex, u, v| {
+            match mc_registry::sprite_uv::sample_uv(tex, u, v) {
+                mc_registry::sprite_uv::Sample::Pixel(c) => Some(c),
+                mc_registry::sprite_uv::Sample::Missing(c) => Some(c),
+                mc_registry::sprite_uv::Sample::Unknown => None,
+            }
+        });
+    }
+
+    /// THE EAT ARC's piece render — the vanilla SingleQuadParticle's
+    /// own camera-facing quad (the roll stays 0, the corners ±1 scaled
+    /// by the quad size 0.1), the BreakingItemParticle's 4x4-pixel
+    /// texture slice riding the uo/vo law over the item's first sprite.
+    /// The slice resolves per frame (the pieces are few, the layer
+    /// fetch is the drops' own cost) — the unresolvable item renders
+    /// nothing (the honest unknown).
+    fn render_pieces(
+        &mut self,
+        fb: &mut crate::raster::Framebuf,
+        ctx: &RenderCtx,
+        cam: &crate::camera::Camera,
+    ) {
+        // the camera basis (the billboard's own axes — the vanilla folds
+        // the camera rotation quaternion; the roll-0 default speaks it)
+        let sy = cam.yaw.sin();
+        let cy = cam.yaw.cos();
+        let sp = cam.pitch.sin();
+        let cp = cam.pitch.cos();
+        let right = [cy, 0.0, sy];
+        let up = [-sy * sp, cp, cy * sp];
+        let mut sampled: Vec<crate::raster::SampledQuad> = Vec::new();
+        for p in &self.pieces {
+            let Some((tex, rect)) = piece_sprite(p.item) else {
+                continue;
+            };
+            // the 4x4-pixel slice over the sprite's 16-px law: the
+            // vanilla getU((uo + u) * 4 / 16) over the sprite's own
+            // coords — the rect carries the quad's uv span (the block
+            // models' 0..16 or the named sprite's own)
+            let lerp = |lo: f32, hi: f32, f: f32| lo + (hi - lo) * f;
+            let u0 = lerp(rect[0], rect[1], p.uo * 4.0 / 16.0);
+            let u1 = lerp(rect[0], rect[1], (p.uo + 1.0) * 4.0 / 16.0);
+            let v0 = lerp(rect[2], rect[3], p.vo * 4.0 / 16.0);
+            let v1 = lerp(rect[2], rect[3], (p.vo + 1.0) * 4.0 / 16.0);
+            let half = 0.1f32;
+            let corner = |sx: f32, syp: f32| {
+                [
+                    p.x as f32 + (right[0] * sx + up[0] * syp) * half,
+                    p.y as f32 + (right[1] * sx + up[1] * syp) * half,
+                    p.z as f32 + (right[2] * sx + up[2] * syp) * half,
+                ]
+            };
+            // the vanilla avector3f order: (-1,-1), (-1,1), (1,1), (1,-1)
+            sampled.push(crate::raster::SampledQuad {
+                pts: [corner(-1.0, -1.0), corner(-1.0, 1.0), corner(1.0, 1.0), corner(1.0, -1.0)],
+                uv: [[u0, v1], [u0, v0], [u1, v0], [u1, v1]],
+                tex,
+                tint: [1.0, 1.0, 1.0],
+            });
         }
         if sampled.is_empty() {
             return;
@@ -3639,6 +3993,32 @@ fn shade_for_direction(q: &mc_registry::element_quads::Quad) -> f32 {
         Cull::North => 5,
     };
     crate::colors::FACE_SHADE[idx]
+}
+
+/// The eat piece's sprite probe — the item's FIRST model layer's
+/// first quad: the texture name the sampler resolves and the quad's
+/// uv span (the 4x4-pixel slice rides inside it). The unresolvable
+/// item (no layers, no quads) is None — the honest unknown renders
+/// nothing.
+fn piece_sprite(item: i32) -> Option<(&'static str, [f32; 4])> {
+    let layers = mc_registry::item_model_layers(item)?;
+    let layer = layers.first()?;
+    let quads = mc_registry::display::posed_item_layer_quads(
+        layer.model,
+        layer.transform,
+        mc_registry::display::GROUND,
+    )?
+    .ok()?;
+    let q = quads.first()?;
+    let (mut u_lo, mut u_hi, mut v_lo, mut v_hi) =
+        (f32::INFINITY, f32::NEG_INFINITY, f32::INFINITY, f32::NEG_INFINITY);
+    for uv in q.uvs {
+        u_lo = u_lo.min(uv[0]);
+        u_hi = u_hi.max(uv[0]);
+        v_lo = v_lo.min(uv[1]);
+        v_hi = v_hi.max(uv[1]);
+    }
+    Some((q.texture, [u_lo, u_hi, v_lo, v_hi]))
 }
 
 /// The ItemColors law for the GUI icons: the first tint json of the
@@ -7298,5 +7678,187 @@ mod tests {
         assert_eq!(app.food_data.saturation(), 5.0);
         assert_eq!(app.food_data.exhaustion(), 0.0);
         assert!(app.food_data.has_enough_food(), "the fresh bar sprints");
+    }
+
+    /// THE EAT ARC — the full 32-tick hold over an apple: the six chew
+    /// bursts (5 pieces + a voice each), the completion's 16-piece
+    /// finisher, the gulp, the FoodData.eat fold (the ABSOLUTE 2.4
+    /// saturation), THE BURP, and the survival's consume. The item
+    /// pieces spawned and ticked (the BreakingItemParticle lane).
+    #[test]
+    fn the_eat_arc_feeds_the_hungry_body() {
+        let mut app = App::new(3);
+        app.enter_world();
+        let apple_id = mc_registry::item_id_by_name("apple").unwrap();
+        app.inventory.items[app.selected_hotbar] = (apple_id, 3);
+        app.hotbar_slots = app.inventory.hotbar();
+        // the hungry body: the bar under 20 (the canEat's own gate)
+        app.food_data.set_food_level(10);
+        app.food_data.set_saturation(0.0);
+        let pieces_before = app.pieces.len();
+        // the press opens the hold
+        assert!(app.on_right_press(0, 0), "the hungry body starts the eat");
+        let eat = app.eating.as_ref().expect("the hold opened");
+        assert_eq!(eat.total, 32, "the apple's 1.6s");
+        assert_eq!(eat.item, apple_id);
+        // walk the 32 ticks: the bursts at the cadence's own stride,
+        // the completion at the 32nd
+        for _ in 0..32 {
+            app.update();
+        }
+        assert!(app.eating.is_none(), "the hold completed");
+        // THE FOOD DATA ATE: the bar 10 + 4, the saturation 0 + 2.4
+        // (the 26.2 record's ABSOLUTE field)
+        assert_eq!(app.food_data.food_level(), 14);
+        assert!((app.food_data.saturation() - 2.4).abs() < 1e-4);
+        // THE SURVIVAL CONSUME: the stack 3 -> 2
+        assert_eq!(app.inventory.items[app.selected_hotbar], (apple_id, 2));
+        // THE VOICES: six chews + the finisher + the gulp (all
+        // entity.generic.eat) + the burp
+        let eat_events = app
+            .sounds
+            .events
+            .iter()
+            .filter(|e| e.starts_with("entity.generic.eat "))
+            .count();
+        assert_eq!(eat_events, 8, "6 chews + the finisher + the gulp: {}", app.sounds.events.iter().filter(|e| e.contains("eat")).count());
+        let burp_events = app
+            .sounds
+            .events
+            .iter()
+            .filter(|e| e.starts_with("entity.player.burp "))
+            .count();
+        assert_eq!(burp_events, 1, "the burp's own voice");
+        // THE PIECES SPAWNED: 6 chews x 5 + the finisher's 16 = 46 over
+        // the arc; some already expired (the lifetime's own law) — the
+        // spawner's own floor: the earliest pieces at least RAN
+        assert!(
+            app.pieces.len() + pieces_before <= 46,
+            "the spawner spoke its 46"
+        );
+    }
+
+    /// THE FULL BAR'S REFUSAL: the canEat gate — the plain apple on a
+    /// full bar refuses (the press returns false, the lane stays
+    /// shut); the golden apple's canAlwaysEat speaks anyway.
+    #[test]
+    fn the_can_eat_gate_refuses_the_full_bar() {
+        let mut app = App::new(3);
+        app.enter_world();
+        let apple_id = mc_registry::item_id_by_name("apple").unwrap();
+        let gapple_id = mc_registry::item_id_by_name("golden_apple").unwrap();
+        // the FULL bar: the plain apple refused
+        app.inventory.items[app.selected_hotbar] = (apple_id, 1);
+        app.hotbar_slots = app.inventory.hotbar();
+        assert!(!app.on_right_press(0, 0), "the full bar refuses the apple");
+        assert!(app.eating.is_none(), "the lane stayed shut");
+        // the golden apple's canAlwaysEat: the full bar eats it
+        app.inventory.items[app.selected_hotbar] = (gapple_id, 1);
+        app.hotbar_slots = app.inventory.hotbar();
+        assert!(app.on_right_press(0, 0), "the golden apple always");
+        let eat = app.eating.as_ref().expect("the hold opened");
+        assert_eq!(eat.total, 32);
+        app.on_right_release();
+        assert!(app.eating.is_none(), "the release cancelled");
+    }
+
+    /// THE MILK DRINK: no FOOD component (the potion's own split) —
+    /// the full bar consumes unconditionally, the completion folds NO
+    /// FoodData (no listener, no burp), and the USE_REMAINDER returns
+    /// the bucket.
+    #[test]
+    fn the_milk_drink_returns_the_bucket() {
+        let mut app = App::new(3);
+        app.enter_world();
+        let milk_id = mc_registry::item_id_by_name("milk_bucket").unwrap();
+        let bucket_id = mc_registry::item_id_by_name("bucket").unwrap();
+        app.inventory.items[app.selected_hotbar] = (milk_id, 2);
+        app.hotbar_slots = app.inventory.hotbar();
+        app.food_data.set_food_level(20); // the FULL bar — milk doesn't care
+        assert!(app.on_right_press(0, 0), "the consumable without food consumes");
+        for _ in 0..32 {
+            app.update();
+        }
+        assert!(app.eating.is_none(), "the drink completed");
+        // the FoodData untouched (no FOOD listener)
+        assert_eq!(app.food_data.food_level(), 20);
+        // the stack 2 -> 1 and the BUCKET returned to the slot's place
+        // (the add lane's first-empty walks the selected first — the
+        // 2-stack left the slot occupied, the bucket rides the next
+        // free slot)
+        assert_eq!(app.inventory.items[app.selected_hotbar].0, milk_id);
+        assert_eq!(app.inventory.items[app.selected_hotbar].1, 1);
+        let bucket_slots = app
+            .inventory
+            .items
+            .iter()
+            .filter(|s| s.0 == bucket_id && s.1 >= 1)
+            .count();
+        assert_eq!(bucket_slots, 1, "the remainder's own return");
+        // no burp without the FOOD listener
+        let burp_events = app
+            .sounds
+            .events
+            .iter()
+            .filter(|e| e.starts_with("entity.player.burp "))
+            .count();
+        assert_eq!(burp_events, 0, "the potion's split: no listener, no burp");
+    }
+
+    /// THE CANCELLED HOLD: the release mid-hold ends the eat silently
+    /// — no completion, no voices, no consume, the stack untouched.
+    #[test]
+    fn the_release_cancels_the_hold_silently() {
+        let mut app = App::new(3);
+        app.enter_world();
+        let apple_id = mc_registry::item_id_by_name("apple").unwrap();
+        app.inventory.items[app.selected_hotbar] = (apple_id, 2);
+        app.hotbar_slots = app.inventory.hotbar();
+        app.food_data.set_food_level(10);
+        assert!(app.on_right_press(0, 0));
+        for _ in 0..10 {
+            app.update();
+        }
+        let pieces_mid = app.pieces.len();
+        assert!(pieces_mid > 0, "the chews already spoke their pieces");
+        app.on_right_release();
+        assert!(app.eating.is_none(), "the release cancelled");
+        // the walk continues: no completion fires (the lane's gone)
+        for _ in 0..32 {
+            app.update();
+        }
+        assert_eq!(app.food_data.food_level(), 10, "the FoodData never ate");
+        assert_eq!(app.inventory.items[app.selected_hotbar], (apple_id, 2), "the stack untouched");
+        let eat_events = app
+            .sounds
+            .events
+            .iter()
+            .filter(|e| e.starts_with("entity.generic.eat "))
+            .count();
+        assert!(eat_events <= 2, "the cancelled hold's chews only: {eat_events}");
+    }
+
+    /// THE PAUSE FREEZES THE HOLD: the vanilla pause's own law — the
+    /// eat clock sleeps, no burst, no completion while paused.
+    #[test]
+    fn the_pause_freezes_the_eat_clock() {
+        let mut app = App::new(3);
+        app.enter_world();
+        let apple_id = mc_registry::item_id_by_name("apple").unwrap();
+        app.inventory.items[app.selected_hotbar] = (apple_id, 1);
+        app.hotbar_slots = app.inventory.hotbar();
+        app.food_data.set_food_level(10);
+        assert!(app.on_right_press(0, 0));
+        app.paused = true;
+        for _ in 0..40 {
+            app.update();
+        }
+        assert!(app.eating.is_some(), "the hold survived the pause");
+        assert_eq!(app.eating.as_ref().unwrap().ticks, 0, "the clock slept");
+        app.paused = false;
+        for _ in 0..32 {
+            app.update();
+        }
+        assert!(app.eating.is_none(), "the hold resumed and completed");
     }
 }

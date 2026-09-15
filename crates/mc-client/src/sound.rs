@@ -115,7 +115,7 @@ impl BlockSounds {
     /// Weighted-random file pick, exactly like the vanilla sound engine
     /// (and music.rs's own pick): roll over the sum of the official
     /// `weight` fields, walk the list. Returns the file index.
-    fn pick_file(&mut self, event: &'static str) -> Option<usize> {
+    fn pick_file(&mut self, event: &str) -> Option<usize> {
         let ev = snd::event(event)?;
         let files = snd::files(ev);
         if files.is_empty() {
@@ -236,6 +236,21 @@ impl BlockSounds {
         self.events.push(format!(
             "entity.player.death @{tick} #{file} v{:.6} p{:.6}",
             1.0, pitch
+        ));
+    }
+
+    /// The FIXED-VOICE lane (the fall voice's generalized shape — the
+    /// eat arc's completion speaks it): the caller's volume/pitch fold
+    /// (the entity random's own verdict, the bytecode's draw order
+    /// kept upstream) rides the log with THIS engine's file pick — the
+    /// engine's only honest draw is the weighted file roll.
+    pub fn play_voice(&mut self, tick: u64, event: &str, volume: f32, pitch: f32) {
+        let Some(file) = self.pick_file(event) else {
+            return;
+        };
+        self.events.push(format!(
+            "{event} @{tick} #{file} v{:.6} p{:.6}",
+            volume, pitch
         ));
     }
 }

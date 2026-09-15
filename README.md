@@ -4164,6 +4164,47 @@ hand-drawn:
   FoodData at the `ServerPlayer.tick` head position (the sources of
   this tick bank for the next fold); the networked lane's truth rides
   the wire's Set Health into the same store.
+- **The eat arc** (v0.3.152) — the survival loop's reward half: the food
+  items' use lane now consumes on the original's own `Consumable`
+  component law (javap net.minecraft.world.item.component + the
+  runtime probe's REAL-registry dump of every FOOD/CONSUMABLE/
+  USE_REMAINDER verdict — 47 rows, generated into the foods table).
+  The right press with a consumable opens the hold
+  (`consumeTicks() = (int)(consumeSeconds * 20)` — the apple's 1.6s
+  speaks 32, the honey bottle's 2.0s speaks 40): the chew bursts ride
+  `shouldEmitParticlesAndSounds(remaining)`'s own window
+  (`remaining % 4 == 0 && elapsed > (int)(ticks * 0.21875)`) — six
+  chews of 5 pieces + a voice for the apple, the first quarter silent
+  (the hold's head), the last quarter silent (the swallow). Each
+  burst's voice folds `emitParticlesAndSounds`'s draw order: the
+  volume `nextBoolean() ? 0.5 : 1.0`, the EAT pitch
+  `triangle(1.0, 0.2)`, the DRINK pitch `randomBetween(0.9, 1.0)` (all
+  four draws unconditional, the bytecode's own order). The pieces fly
+  INTO the mouth by `spawnItemParticles`'s own geometry (the rotated
+  offset + the `-r*0.6-0.3` velocity arc) through the
+  Particle + `BreakingItemParticle` folds (the jitter + the
+  normalize + the 0.1 fold + the raw add, the 0.98 friction, the
+  `(int)(4/(r*0.9+0.1))` lifetime) rendered as the camera-facing quads
+  sampling a random 4x4-pixel slice of the item sprite. The completion
+  speaks `Consumable.onConsume` then `FoodProperties.onConsume`
+  verbatim: the 16-piece finisher, the gulp at the fixed 1.0 /
+  `triangle(1.0, 0.4)`, the FoodData fold — the COMPONENT lane's
+  `eat(FoodProperties) = add(nutrition, saturation)` with the
+  ABSOLUTE saturation the 26.2 record carries (the apple's 2.4, NOT
+  the legacy overload's modifier*2) — and THE BURP at 0.5 /
+  `randomBetween(0.9, 1.0)`. The survival's `consume(1, entity)`
+  decrements the stack and the USE_REMAINDER returns the vessel (the
+  milk's bucket, the bottles); the first-person pose rides
+  `applyEatTransform`'s own law (the pull-in `1 - pow(f1, 27)`, the
+  bite bob `|cos(f/4*PI)|*0.1` while `f1 < 0.8`, the
+  YP/XP/ZP rotation folds, the left hand mirrored). The canEat gate
+  speaks `Player.canEat(canAlwaysEat)` — the full bar refuses the
+  plain apple, the golden apple's canAlwaysEat speaks, the potion's
+  FOOD-less consumable consumes unconditionally (and never folds
+  FoodData or burps — the listener split the probe pinned). The
+  release cancels the hold silently (no completion, no penalty), the
+  pause freezes the clock, and the networked lane folds nothing (the
+  server's Set Health speaks its truth) while the visuals still play.
 - **Singleplayer world** — clicking `Singleplayer` enters a live 3D world
   view rendered by the same deterministic CPU raster path as the pixel
   tests: real block textures from the generated atlas, the **official

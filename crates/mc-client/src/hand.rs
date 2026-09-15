@@ -609,9 +609,30 @@ impl HeldItem {
 
     /// The anchored, view-space quads at an attack animation progress
     /// (0 = rest; the deterministic scenes never swing, so the goldens —
-    /// which hold no item — never see a nonzero one).
+    /// which hold no item — never see a nonzero one). The eat pose rides
+    /// AFTER the anchor (the vanilla renderArmWithItem's own order: the
+    /// applyEatTransform folds over the item-arm transform chain).
     fn sampled(&self, swing: f32) -> Vec<crate::raster::SampledQuad<'_>> {
-        let m = item_hand_anchor(swing, 0.0);
+        self.sampled_with_pose(swing, None)
+    }
+
+    /// The sampled variant with the eat pose (the consumable's own
+    /// first-person law — the pull-in + the bite bob + the three
+    /// rotations, the eat module's verbatim fold).
+    fn sampled_with_pose(
+        &self,
+        swing: f32,
+        eat: Option<crate::eat::EatPose>,
+    ) -> Vec<crate::raster::SampledQuad<'_>> {
+        let anchor = item_hand_anchor(swing, 0.0);
+        let m = match eat {
+            None => anchor,
+            Some(p) => anchor
+                .mul(&crate::math::Mat4::translation(p.dx, p.dy, p.dz))
+                .mul(&crate::math::Mat4::rot_y(p.rot_y_deg.to_radians()))
+                .mul(&crate::math::Mat4::rot_x(p.rot_x_deg.to_radians()))
+                .mul(&crate::math::Mat4::rot_z(p.rot_z_deg.to_radians())),
+        };
         self.quads
             .iter()
             .map(|q| crate::raster::SampledQuad {
@@ -632,8 +653,21 @@ impl HeldItem {
     /// Vanilla also equips/swings here — the swing terms ride
     /// `item_hand_anchor` above; the equip progress is always 0.
     pub fn draw(&self, fb: &mut crate::raster::Framebuf, proj: Mat4, swing: f32) {
+        self.draw_with_pose(fb, proj, swing, None);
+    }
+
+    /// The draw with the eat pose (the consumable's hold: the item
+    /// lifts to the mouth and wobbles — the applyEatTransform's own
+    /// law; `None` keeps the rest pose).
+    pub fn draw_with_pose(
+        &self,
+        fb: &mut crate::raster::Framebuf,
+        proj: Mat4,
+        swing: f32,
+        eat: Option<crate::eat::EatPose>,
+    ) {
         fb.clear_depth();
-        let quads = self.sampled(swing);
+        let quads = self.sampled_with_pose(swing, eat);
         fb.draw_sampled_quads(proj, &quads, &mut |tex, u, v| {
             match sprite_uv::sample_uv(tex, u, v) {
                 Sample::Pixel(c) => Some(c),
