@@ -159,6 +159,10 @@ pub const BURN_MAGIC_DIVISOR_GAIN: f32 = 3.0;
 pub const EXTINGUISH_VOLUME: f32 = 0.7;
 pub const EXTINGUISH_PITCH_BASE: f32 = 1.6;
 pub const EXTINGUISH_PITCH_SPREAD: f32 = 0.4;
+/// `Zombie.playStepSound`'s own flat fold (javap: `playSound(
+/// getStepSound(), 0.15F, 1.0F)` — the ZOMBIE_STEP voice, no randoms).
+pub const ZOMBIE_STEP_VOLUME: f32 = 0.15;
+pub const ZOMBIE_STEP_PITCH: f32 = 1.0;
 
 /// The wire id the plain item name rides (the ITEM_WIRE_ORDER's own
 /// reverse lookup — `None` when the name misses the table: the honest
@@ -203,6 +207,10 @@ pub struct MobEvents {
     /// under the water effect this tick — the caller plays
     /// entity.generic.extinguish_fire at 0.7 / the pitch)
     pub extinguished: Option<f32>,
+    /// the footstep's own beat (the Entity.move cadence crossed
+    /// nextStep over solid ground this tick — the caller plays
+    /// entity.zombie.step at 0.15F / 1.0F flat)
+    pub step: bool,
 }
 
 /// The zombie's attack out-edge (the doHurtTarget the melee goal
@@ -283,6 +291,12 @@ pub struct Zombie {
     /// set 160 by `igniteForSeconds(8)`, decremented per tick, the
     /// onFire hurt rides the %20 gate, the water effect clears it
     pub fire_ticks: i32,
+    /// THE FOOTSTEP ACCUMULATION (Entity.move's own fields — the same
+    /// pair the player's body speaks): moveDist grows by the collided
+    /// horizontal × 0.6, the step fires past nextStep (the ctor's own
+    /// 1.0F store) over the solid block under the feet.
+    pub move_dist: f32,
+    pub next_step: f32,
 }
 
 impl Zombie {
@@ -314,6 +328,8 @@ impl Zombie {
             ambient_time: -AMBIENT_INTERVAL_TICKS,
             rng: Lcg::new(seed),
             fire_ticks: 0,
+            move_dist: 0.0,
+            next_step: 1.0,
         }
     }
 
@@ -599,6 +615,32 @@ impl Zombie {
         self.z += col.dz;
         let was_on_ground = self.on_ground;
         self.on_ground = col.vertical_collision_below;
+        // THE FOOTSTEP CADENCE (Entity.move -> applyMovementEmissionAnd
+        // PlaySound verbatim): moveDist grows by the collided movement's
+        // own horizontal × 0.6 (the multiply rides the double like the
+        // bytecode's dmul before the d2f; the climbable branch's
+        // full-length lane aside — this walker climbs nothing), the step
+        // fires when moveDist crosses nextStep (the ctor's own 1.0F
+        // store) with the block under the feet (getOnPos: floor(x),
+        // floor(y - 0.2), floor(z)) not air AND the ground gate passed
+        // (vibrationAndSoundEffectsFromBlock's own verdict — onGround;
+        // the climbable/rails/crouch branches don't speak for this
+        // walker, and the swim branch never fires: the zombie never
+        // isSwimming). The reset rides nextStep() = (int)moveDist + 1.0F
+        // — one footstep per ~1.667 blocks, the first one spoken the
+        // moment the walk crosses the ctor's 1.0F.
+        self.move_dist += ((col.dx * col.dx + col.dz * col.dz).sqrt() * 0.6) as f32;
+        if self.move_dist > self.next_step {
+            let under = world.get(
+                self.x.floor() as i32,
+                (self.y - 0.2).floor() as i32,
+                self.z.floor() as i32,
+            );
+            if under != crate::world::AIR && self.on_ground {
+                self.next_step = (self.move_dist as i32) as f32 + 1.0;
+                events.step = true;
+            }
+        }
         // THE AUTO-JUMP (LivingEntity.aiStep's own: the horizontal
         // collision + the ground -> jumpFromGround — the zombie hops
         // the one-block wall the navigation can't path around)
@@ -1131,6 +1173,87 @@ mod tests {
             }
         }
         assert!(raised, "the arms raise on the wind-up");
+    }
+
+    /// THE FOOTSTEP CADENCE (Entity.move's own law over the walking
+    /// zombie): the chase walk accumulates moveDist at the collided
+    /// horizontal × 0.6, the step fires past nextStep (the ctor's own
+    /// 1.0F) over solid ground, the count stays inside the whole-unit
+    /// bound and the first step never speaks before the ctor's 1.0F.
+    #[test]
+    fn the_walking_zombie_speaks_the_footstep_cadence() {
+        let world = flat_world();
+        let mut z = Zombie::new(1, 8.0, 5.0, 8.0, 7);
+        z.on_ground = true;
+        let player = player_at(2.0, 5.0, 8.0); // 6 blocks west, on the pad — the walk crosses the ctor's 1.0F
+        let mut steps = 0;
+        let mut first_step_move_dist = None;
+        for _ in 0..400 {
+            let ev = z.tick(&world, Some(&player), NIGHT);
+            if ev.step {
+                steps += 1;
+                if first_step_move_dist.is_none() {
+                    first_step_move_dist = Some(z.move_dist);
+                }
+            }
+            if ev.attack.is_some() {
+                break;
+            }
+        }
+        let md = z.move_dist;
+        assert!(md > 1.0, "the walk accumulated the vanilla law ({md})");
+        let first = first_step_move_dist.expect("the walk spoke at least one step");
+        assert!(
+            first > 1.0,
+            "the ctor's own 1.0F gates the first step ({first})"
+        );
+        assert!(
+            steps <= md as i32 as usize,
+            "the cadence bound: {steps} steps for moveDist {md}"
+        );
+        // the reset rode nextStep(): the last threshold sits one whole
+        // unit past the walked distance
+        assert!(
+            z.next_step > md - 1.0 && z.next_step <= md + 1.0,
+            "the reset law: nextStep {} for moveDist {}",
+            z.next_step,
+            md
+        );
+    }
+
+    /// THE AIRBORNE GATE (vibrationAndSoundEffectsFromBlock's own
+    /// verdict): the hovered zombie's walk accumulates moveDist but the
+    /// steps stay silent — the feet left the ground — and the landing
+    /// speaks the whole accumulated crossing at once (the reset rides
+    /// nextStep()).
+    #[test]
+    fn the_airborne_zombie_never_steps_until_the_landing() {
+        let world = flat_world();
+        let mut z = Zombie::new(1, 8.0, 5.0, 8.0, 7);
+        z.on_ground = true;
+        let player = player_at(2.0, 5.0, 8.0);
+        let mut steps = 0;
+        for _ in 0..25 {
+            // the hover-leg: the jump impulse re-applied every tick —
+            // the chase still drives the horizontal walk
+            z.vy = crate::body::JUMP_POWER as f64;
+            if z.tick(&world, Some(&player), NIGHT).step {
+                steps += 1;
+            }
+        }
+        assert!(
+            z.move_dist > 1.0,
+            "the air walk accumulated the law ({})",
+            z.move_dist
+        );
+        assert_eq!(steps, 0, "the airborne gate holds the steps");
+        // the landing: the feet touch, the whole crossing speaks
+        for _ in 0..120 {
+            if z.tick(&world, Some(&player), NIGHT).step {
+                steps += 1;
+            }
+        }
+        assert!(steps >= 1, "the landing fired the accumulated step");
     }
 
     /// THE PICK's own slab test (javap `AABB.clip`): the ray through

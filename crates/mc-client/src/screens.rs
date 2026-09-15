@@ -1183,6 +1183,10 @@ impl App {
                 let mut fire_hurts: Vec<f32> = Vec::new();
                 let mut fire_deaths: Vec<(f64, f64, f64, f32, Vec<(i32, i32)>)> = Vec::new();
                 let mut fizzes: Vec<f32> = Vec::new();
+                // the footsteps' own count (the cadence's flat voice —
+                // no per-event pitch law, so a counter rides where the
+                // pitches ride vectors)
+                let mut mob_steps: usize = 0;
                 // the day tick the burn lane's tracks read (the same
                 // clock the sky samples)
                 let day_time = (self.day_time_base + self.frame) as i64;
@@ -1220,6 +1224,9 @@ impl App {
                             }
                             if let Some(pitch) = ev.extinguished {
                                 fizzes.push(pitch);
+                            }
+                            if ev.step {
+                                mob_steps += 1;
                             }
                         }
                     }
@@ -1286,6 +1293,17 @@ impl App {
                             &mut self.mob_rng,
                         ));
                     }
+                }
+                for _ in 0..mob_steps {
+                    // the footstep (Zombie.playStepSound's own flat
+                    // fold — the ZOMBIE_STEP event at 0.15F / 1.0F, no
+                    // randoms ride the voice)
+                    self.sounds.play_voice(
+                        self.frame,
+                        "entity.zombie.step",
+                        crate::mob::ZOMBIE_STEP_VOLUME,
+                        crate::mob::ZOMBIE_STEP_PITCH,
+                    );
                 }
                 // THE DEATH CLOCK'S REMOVAL (the tickDeath tail: the
                 // broadcast-60 tick discards the corpse)

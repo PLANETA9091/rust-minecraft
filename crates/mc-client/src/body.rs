@@ -854,7 +854,13 @@ impl PlayerBody {
                 (self.y - 0.2).floor() as i32,
                 self.z.floor() as i32,
             );
-            if under != AIR {
+            // THE GROUND GATE (vibrationAndSoundEffectsFromBlock's own
+            // verdict: onGround, the climbable/rails branches aside —
+            // the crouch-hover branch (crouching && dy == 0.0) speaks
+            // for the sneaker; the airborne walk NEVER steps, the
+            // accumulated crossing waits for the landing). The reset
+            // rides nextStep() = (int)moveDist + 1.0F.
+            if under != AIR && (self.on_ground || (self.crouching && col.dy == 0.0)) {
                 self.next_step = (self.move_dist as i32) as f32 + 1.0;
                 self.step_due = true;
             }

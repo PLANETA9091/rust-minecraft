@@ -711,6 +711,50 @@ mod tests {
         println!("  {key} <- {} ({frames} frames, {secs:.3}s, {rate} Hz)", path.display());
     }
 
+    /// Real-data check (NOT run on CI): the zombie's four voice events —
+    /// the ambient groan, the hurt, the death, and the playStepSound
+    /// footstep — resolve to the official file counts and every file
+    /// decodes (the mob-voice fetch the generator speaks).
+    #[test]
+    #[ignore = "needs runtime assets (assets-cache/jar) from mc2rs-gen generate"]
+    fn real_zombie_voice_oggs_decode() {
+        let candidates = [
+            PathBuf::from("assets-cache/jar"),
+            Path::new(env!("CARGO_MANIFEST_DIR")).join("../../assets-cache/jar"),
+        ];
+        let Some(root) = candidates.into_iter().find(|p| p.is_dir()) else {
+            eprintln!("skipping: assets-cache/jar not present (run mc2rs-gen generate)");
+            return;
+        };
+        const EVENTS: [(&str, usize); 4] = [
+            ("entity.zombie.ambient", 3),
+            ("entity.zombie.hurt", 2),
+            ("entity.zombie.death", 1),
+            ("entity.zombie.step", 5),
+        ];
+        for (id, want) in EVENTS {
+            let files = discover_event_files(&root, id);
+            assert_eq!(
+                files.len(),
+                want,
+                "{id} must resolve to {want} real files: {files:?}"
+            );
+            for (key, path) in &files {
+                let bytes = std::fs::read(path).expect("read");
+                let (rate, frames) = probe_frames(&bytes)
+                    .unwrap_or_else(|e| panic!("{key}: probe failed: {e}"));
+                let t = decode_audio(&bytes)
+                    .unwrap_or_else(|e| panic!("{key}: decode failed: {e}"));
+                assert_eq!(t.frames, frames, "{key}: probe and decode must agree");
+                // a voice or a footstep is short (the longest zombie
+                // groan stays under three seconds)
+                let secs = frames as f64 / rate as f64;
+                assert!(secs > 0.0 && secs < 3.0, "{key}: got {secs:.3}s");
+                println!("  {key} <- {} ({frames} frames, {secs:.3}s)", path.display());
+            }
+        }
+    }
+
     #[test]
     fn sync_plays_and_stops_game_music() {
         // temp runtime root holding a sound file at EVERY official path the
