@@ -14,6 +14,13 @@ use mc_registry::generated::worldgen::Skybox;
 pub const WHITE: [f32; 3] = [1.0, 1.0, 1.0];
 pub const YELLOW: [f32; 3] = [1.0, 1.0, 0.333];
 pub const GRAY: [f32; 3] = [0.667, 0.667, 0.667];
+/// THE LEVEL NUMBER'S GREEN (javap `ContextualBar.extractExperienceLevel`
+/// — the int -8323296 the final text call carries = 0xFF80FF20, the
+/// classic experience green the level digits speak).
+pub const EXP_LEVEL_GREEN: [f32; 3] = [0x80 as f32 / 255.0, 0xFF as f32 / 255.0, 0x20 as f32 / 255.0];
+/// THE OUTLINE BLACK (the same method's -16777216 = 0xFF000000 — the
+/// four neighbor draws the dropShadow-less text walks).
+pub const TEXT_OUTLINE_BLACK: [f32; 3] = [0.0, 0.0, 0.0];
 /// Mojang Studios loading screen background (vanilla constant).
 pub const MOJANG_RED: [f32; 3] = [239.0 / 255.0, 50.0 / 255.0, 61.0 / 255.0];
 
@@ -672,6 +679,17 @@ pub struct App {
     pub last_health: i32,
     pub display_health: i32,
     pub last_health_time: u64,
+    /// THE EXPERIENCE STAT (the xp.rs module's own laws — the Player
+    /// quartet's level/progress/total the giveExperiencePoints bytecode
+    /// folds): the OFFLINE lane's stand-in server grants the ores' own
+    /// rolls (the DropExperienceBlock law), the HUD's contextual bar
+    /// reads the fraction the fill clips. The NETWORKED lane's truth is
+    /// the wire's Set Experience (the future's own parse).
+    pub xp: crate::xp::ExperienceStat,
+    /// The level-up voice's own dedup clock (`lastLevelUpTime` — the
+    /// 100-tick gate the %5 fold reads, the tickCount the frame==tick
+    /// model speaks).
+    pub last_level_up_time: i32,
     /// THE POP VOICE'S OWN DEDUP (javap Hud.lastBubblePopSoundPlayed —
     /// the bursting sprite's voice speaks once per popped bubble
     /// index, the `!=` guard the bytecode speaks; the dry reset the
@@ -843,6 +861,8 @@ impl App {
             last_health: 20,
             display_health: 20,
             last_health_time: 0,
+            xp: crate::xp::ExperienceStat::new(),
+            last_level_up_time: 0,
             dead: false,
             death_message: None,
             spawn_pose: None,
@@ -1706,6 +1726,17 @@ impl App {
                     &mut self.mob_rng,
                 ));
             }
+            // THE KILL'S OWN XP (javap LivingEntity.dropExperience — the
+            // `lastHurtByPlayerMemoryTime > 0` gate the fist's hit arms,
+            // the wasExperienceConsumed/isAlwaysExperienceDropper gates
+            // the bare mob never speaks): the bare zombie's flat
+            // `xpReward` 5 (Mob.getBaseExperienceReward walks the
+            // equipment slots — the bare body wears none, the 5 rides
+            // clean), the orb folded into the grant (the offline
+            // stand-in's own voice). The FIRE kill's site speaks the
+            // CLOSED gate — no player memory behind an onFire dose, no
+            // reward there either.
+            self.xp.give_points(crate::mob::ZOMBIE_XP_REWARD);
         }
         // THE ATTACK VOICE (attackVisualEffects's own branch — the
         // pitch rides the getVoicePitch law over the client's stream)
@@ -3086,6 +3117,36 @@ impl App {
             self.drops.push(crate::drops::ItemDrop::spawn(
                 id, item, count, pos.0, pos.1, pos.2, &mut self.drop_rng,
             ));
+        }
+        // THE ORE'S OWN XP (javap DropExperienceBlock.spawnAfterBreak →
+        // tryDropExperience's UniformInt roll → the orb → the pickup's
+        // giveExperiencePoints; the OFFLINE stand-in folds the pickup
+        // into the grant — the orb's physical travel is the future's
+        // own lane). The HARVEST gate rides the drops' own law — the
+        // wrong-tool break never harvests, never grants (the vanilla's
+        // silk/canHarvest pair the tryDropExperience's own gate speaks);
+        // the silent ores (copper/iron/gold) burn no roll — the
+        // non-XpBlock gate never samples. The %5 level-up voice answers
+        // only a LEVEL-UP pass (the n > 0 arm), the 100-tick dedup the
+        // lastLevelUpTime gate speaks, the volume the level>30 fold
+        // speaks at pitch 1.0.
+        if crate::dig::DigState::correct_tool(kind) {
+            let amount = crate::xp::ore_xp(kind, &mut self.drop_rng);
+            if amount > 0 {
+                let before = self.xp.level;
+                self.xp.give_points(amount);
+                let gained = self.xp.level - before;
+                if gained > 0 && self.xp.level % 5 == 0 && self.last_level_up_time < self.frame as i32 - 100 {
+                    let volume = if self.xp.level > 30 {
+                        1.0
+                    } else {
+                        self.xp.level as f32 / 30.0
+                    } * 0.75;
+                    self.sounds
+                        .play_voice(self.frame, "entity.player.levelup", volume, 1.0);
+                    self.last_level_up_time = self.frame as i32;
+                }
+            }
         }
     }
 
@@ -4751,6 +4812,41 @@ impl App {
     /// official `hud/*` sprites at vanilla positions and sizes.
     fn render_hud(&mut self, g: &mut Gui, a: &mut GuiAssets) {
         let (w, h) = (g.w(), g.h());
+        // THE EXPERIENCE BAR (javap `Hud`'s contextual-bar extract: the
+        // `gameMode.hasExperience()` gate the survival client speaks —
+        // this App IS the survival lane — then `ExperienceBar.
+        // extractBackground`'s own law): the `xpNeededForNextLevel > 0`
+        // arm lifts the whole row (level 0's needed is 7 — the dark
+        // background shows from the first frame, the vanilla survival
+        // look); the background 182x5 at `left(top(Window))` = the
+        // defaults `(w-182)/2` and `h-24-5` the ContextualBar interface
+        // speaks; the fill `(int)(progress * 183.0f)` rides the TEN-INT
+        // region blit — the leftmost `fill` columns of the progress
+        // sprite at 1:1, the CROP the never-a-squish law carries; the
+        // level number renders only past level 0 (the `experienceLevel
+        // > 0` gate the Hud extract speaks): the "%s" translation the
+        // en_us lang names renders as the bare digits, centered
+        // `(w - textWidth)/2` at `h-24-9-2`, the FOUR black neighbor
+        // draws + the green center (the dropShadow-less outline the
+        // -16777216/-8323296 pair speaks).
+        let needed = crate::xp::xp_needed_for_next_level(self.xp.level);
+        if needed > 0 {
+            let (ex, ey) = (w / 2 - 91, h - 29);
+            g.sprite(a, "hud/experience_bar_background", ex, ey);
+            let fill = (self.xp.progress * 183.0) as i32;
+            if fill > 0 {
+                g.sprite_region(a, "hud/experience_bar_progress", 0, 0, fill, 5, ex, ey);
+            }
+            if self.xp.level > 0 {
+                let s = self.xp.level.to_string();
+                let tx = (w - g.text_width(&s)) / 2;
+                let ty = h - 35;
+                for (dx, dy) in [(1i32, 0), (-1, 0), (0, 1), (0, -1)] {
+                    g.text(a, tx + dx, ty + dy, &s, TEXT_OUTLINE_BLACK, false);
+                }
+                g.text(a, tx, ty, &s, EXP_LEVEL_GREEN, false);
+            }
+        }
         // crosshair: centered 15x15 — ONLY in first person (the vanilla
         // renderCrosshair's own cameraType gate: a detached camera has no
         // crosshair)
@@ -6046,6 +6142,31 @@ mod tests {
         // speaks (the getAirBubbleYLine's -1 rowOffset folds +10 back
         // onto the height - 59 the caller arms)
         assert_eq!(bubbles_origin(w, h), 180 - 49);
+        // THE EXPERIENCE BAR'S OWN SLOT (the ContextualBar defaults the
+        // bytecode speaks): `left = (w-182)/2`, `top = h-24-5` — the
+        // row exactly fills the gap the hearts' law leaves; the level
+        // digits ride `h-24-9-2`, the centered walk
+        assert_eq!((w / 2 - 91, h - 29), (69, 151));
+        assert_eq!((w - w) / 2, 0, "the centered level digits' x walk");
+        assert_eq!(h - 24 - 9 - 2, 145, "the level digits' own y");
+    }
+
+    #[test]
+    fn the_xp_fill_walks_the_region_law() {
+        // javap ExperienceBar.extractBackground: the fill is the
+        // TEN-INT region blit — `(int)(progress * 183.0f)` the f2i
+        // TRUNCATION speaks, the region [0,fill) x [0,5) the crop
+        // carries, the zero fill never draws (the `ifle 101` gate)
+        let f = |progress: f32| (progress * 183.0) as i32;
+        assert_eq!(f(0.0), 0, "the empty bar's fill never draws");
+        assert_eq!(f(0.5), 91, "the half bar clips at 91");
+        assert_eq!(f(0.9999999), 182, "the f2i truncation the bytecode speaks");
+        assert_eq!(f(1.0), 183, "the full walk rides one past the sprite's 182 — the vanilla's own overflow the region read clamps");
+        // the stat's own grant feeds the fraction the fill reads
+        let mut xp = crate::xp::ExperienceStat::new();
+        xp.give_points(5); // 5/7 at level 0
+        let fill = (xp.progress * 183.0) as i32;
+        assert!(fill > 0 && fill < 183, "the partial grant's fill walks between the gates: {fill}");
     }
 
     #[test]
@@ -9984,6 +10105,16 @@ mod tests {
         // the pools speak at most the flesh + the rare (the table's
         // own two-lane shape)
         assert!(loot.len() <= 2, "the pools speak at most two drops");
+        // THE KILL'S OWN XP (javap LivingEntity.dropExperience): the
+        // fist kill's flat 5 folded through the giveExperiencePoints
+        // law — the level curve's first rung (7) unclimbed, the
+        // fraction the fill reads
+        assert_eq!(
+            app.xp.total, crate::mob::ZOMBIE_XP_REWARD,
+            "the fist kill's own reward"
+        );
+        assert_eq!(app.xp.level, 0);
+        assert!(app.xp.progress > 0.0, "the fill's fraction rides");
 
         // THE REMOVAL: the death clock's 20-tick walk discards the
         // corpse through the same update loop (the retain law)

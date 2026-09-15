@@ -40,6 +40,7 @@ mod tint;
 mod world;
 mod world_model;
 mod world_view;
+mod xp;
 
 #[cfg(not(target_arch = "wasm32"))]
 mod window;
@@ -213,6 +214,12 @@ struct Cli {
     /// the 0xFF191919 tint carries).
     #[arg(long)]
     bury: bool,
+    /// Seed the experience stat "level,progress" (javap `Player`, the
+    /// 26.2 jar) — the deterministic stand-in for the mining grants.
+    /// The HUD's contextual bar reads the seeded store (the extract
+    /// law's own gate).
+    #[arg(long)]
+    xp: Option<String>,
     #[arg(long, default_value = "render.png")]
     out: PathBuf,
     /// Path to official asset index json (enables real texture-average colors).
@@ -250,6 +257,15 @@ fn main() -> Result<()> {
                     .ok_or_else(|| anyhow::anyhow!("--body-walk must be \"speed,position\" (the WalkAnimationState pair), got {s:?}"))
             })
             .transpose()?;
+        let xp = cli
+            .xp
+            .as_deref()
+            .map(|s| {
+                crate::headless::parse_xp_seed(s).ok_or_else(|| {
+                    anyhow::anyhow!("--xp must be \"level,progress\" (level 0..=24791, progress 0.0..=1.0), got {s:?}")
+                })
+            })
+            .transpose()?;
         let opts = crate::headless::SceneOpts {
             perspective,
             body: cli.body,
@@ -273,6 +289,7 @@ fn main() -> Result<()> {
             air_supply: cli.air_supply,
             lava_dive: cli.lava_dive,
             bury: cli.bury,
+            xp,
         };
         headless::render_gui_screen_opts(
             screen,

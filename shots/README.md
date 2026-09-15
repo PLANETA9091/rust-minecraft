@@ -198,6 +198,46 @@ cargo run -p mc-client --release -- --headless --screen world --seed 42 \
 # block sprite — the --screen lane owns no ticks
 ```
 
+## The experience-bar lane (the contextual bar) — v0.3.169
+
+The HUD's own empty slot filled (javap the 26.2 jar — the bar MOVED
+out of `Hud` into `net.minecraft.client.gui.contextualbar.ExperienceBar`):
+the `gameMode.hasExperience()` gate the survival client speaks, then
+`extractBackground`'s own law — the `xpNeededForNextLevel > 0` arm
+lifts the row (level 0's needed is 7 under the 26.2 curve `7 +
+level*2`, the drift the old `2 + level*7` shape never spoke — the
+dark background shows from the first frame), the background 182x5 at
+the ContextualBar defaults `left = (w-182)/2`, `top = h-24-5`, the
+fill `(int)(progress * 183.0f)` riding the TEN-INT region blit — the
+leftmost `fill` columns at 1:1, the CROP the never-a-squish law
+carries. The level digits render past level 0 only: the bare digits
+(the "%s" translation the en_us lang speaks) centered `(w -
+textWidth)/2` at `h-24-9-2`, the FOUR black neighbor draws (the
+-16777216) + the green center (the -8323296 = 0xFF80FF20), the
+dropShadow-less outline `extractExperienceLevel` speaks. The grant
+lanes: the bare zombie's flat `xpReward` 5 through
+`dropExperience`'s `lastHurtByPlayerMemoryTime` gate (the fist kill's
+own reward — the equipment walk adds nothing to the bare body), the
+ores' `UniformInt` rolls through the harvest gate (coal 0-2, redstone
+1-5, lapis 2-5, diamond/emerald 3-7; copper/iron/gold silent — the
+smelting lane's own reward), both folded into `giveExperiencePoints`'s
+three loops (the f32 divide, the borrow, the spend on the old/new
+curve pair).
+
+| frame | the scene |
+|---|---|
+| `xp_bar.png` | THE SEEDED STAT: level 27 at 85% — the green fill walks 155 columns of the progress sprite, the dark background rides past it, the "27" in the experience green between the hearts and the food row |
+
+Regenerate the family:
+
+```sh
+cargo run -p mc-client --release -- --screen world --seed 20260214 \
+  --ui-frame 30 --xp 27,0.85 --out shots/xp_bar.png
+# --xp seeds "level,progress" (the --zombie-fire discipline: the
+# deterministic stand-in for the mining/killing grants the live lane
+# ticks) — the bar reads the seeded store through the SAME gates
+```
+
 ## The lava-fog lane (the ember murk) — v0.3.167
 
 The fog type's sibling arm (javap the 26.2 jar): the camera-in-lava

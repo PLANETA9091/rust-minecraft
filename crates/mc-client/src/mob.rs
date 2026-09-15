@@ -106,6 +106,12 @@ pub const ZOMBIE_ATTACK_DAMAGE: f64 = 3.0;
 pub const ZOMBIE_ARMOR: f64 = 2.0;
 /// `Zombie.createAttributes` — FOLLOW_RANGE 35.0 (the target scan).
 pub const ZOMBIE_FOLLOW_RANGE: f64 = 35.0;
+/// THE KILL'S OWN REWARD (javap `LivingEntity.dropExperience` →
+/// `Mob.getBaseExperienceReward`): the bare zombie's flat `xpReward` 5 —
+/// the equipment-slot walk adds nothing (the bare body wears none), the
+/// player-kill gate the fist's `lastHurtByPlayerMemoryTime` arms speaks
+/// the whole law.
+pub const ZOMBIE_XP_REWARD: i32 = 5;
 /// `MeleeAttackGoal`'s ctor bipush 20 — the attack cadence.
 pub const ATTACK_INTERVAL_TICKS: i32 = 20;
 /// `MeleeAttackGoal.canUse`'s own 20-tick re-check gate.

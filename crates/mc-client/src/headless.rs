@@ -193,6 +193,12 @@ pub struct SceneOpts {
     /// the head-in-block screen arm speaks its honest frame (the
     /// particle sprite the 0xFF191919 tint carries).
     pub bury: bool,
+    /// THE XP SEED "level,progress" — the deterministic stand-in for
+    /// the stat the mining grants tick by tick (the level the green
+    /// digits speak, the progress fraction the fill clips). The
+    /// contextual bar reads the seeded store (the extract law's own
+    /// gate).
+    pub xp: Option<(i32, f32)>,
 }
 
 impl SceneOpts {
@@ -220,6 +226,7 @@ impl SceneOpts {
             || self.air_supply.is_some()
             || self.lava_dive
             || self.bury
+            || self.xp.is_some()
             || self.walk_ticks > 0
             || self.settle_ticks > 0
     }
@@ -232,6 +239,21 @@ pub fn parse_walk_seed(s: &str) -> Option<(f32, f32)> {
     let speed = speed.trim().parse::<f32>().ok()?;
     let position = position.trim().parse::<f32>().ok()?;
     Some((speed, position))
+}
+
+/// Parse the CLI's xp seed "level,progress" — anything else refuses
+/// loudly (a guessed stat would render a guessed bar). The progress
+/// clamps [0.0, 1.0] (the fraction the fill clips); the level's [0,
+/// 24791] bound is the CLI's own paranoia (the vanilla law itself is
+/// the saturated add plus the under-zero bankruptcy — no ceiling).
+pub fn parse_xp_seed(s: &str) -> Option<(i32, f32)> {
+    let (level, progress) = s.split_once(',')?;
+    let level = level.trim().parse::<i32>().ok()?;
+    let progress = progress.trim().parse::<f32>().ok()?.clamp(0.0, 1.0);
+    if !(0..=24791).contains(&level) {
+        return None;
+    }
+    Some((level, progress))
 }
 
 /// The CLI name -> the CameraType (the F5 cycle's own three states —
@@ -441,6 +463,16 @@ pub fn seed_scene(app: &mut crate::screens::App, opts: &SceneOpts) -> Result<()>
                 app.remesh_offline();
             }
         }
+    }
+    if let Some((level, progress)) = opts.xp {
+        // THE XP SEED (the --zombie-fire discipline: the deterministic
+        // stand-in for the stat the mining grants tick by tick). The
+        // seeded store reads through the SAME gates the live grant
+        // feeds — the contextual bar's extract law, the level digits'
+        // gate. No ticks ride the stage (the --screen lane owns none):
+        // the frame is the seeded stat's own truth.
+        app.xp.level = level;
+        app.xp.progress = progress;
     }
     if opts.water_vision != 0 {
         // THE SOAK CLOCK'S SEED (the --zombie-fire discipline): the

@@ -273,13 +273,13 @@ impl<'a> Gui<'a> {
     pub fn sprite_at(
         &mut self,
         a: &mut GuiAssets,
-        name: &'static str,
+        name: &str,
         x: i32,
         y: i32,
         dw: i32,
         dh: i32,
     ) {
-        let Some(s) = a.sprite(name).cloned() else { return };
+        let Some(s) = a.sprite_any(name).cloned() else { return };
         if dw <= 0 || dh <= 0 || s.w == 0 || s.h == 0 {
             return;
         }
@@ -287,6 +287,44 @@ impl<'a> Gui<'a> {
             let sy = (dy as u32 * s.h / dh as u32).min(s.h - 1);
             for dx in 0..dw {
                 let sx = (dx as u32 * s.w / dw as u32).min(s.w - 1);
+                let c = s.sample(sx, sy);
+                if c[3] <= 0.0 {
+                    continue;
+                }
+                self.px(x + dx, y + dy, c);
+            }
+        }
+    }
+
+    /// THE CROP BLIT (javap `GuiGraphicsExtractor.blitSprite`'s ten-int
+    /// region form — `(sprite, texW, texH, u, v, x, y, w, h)`): the
+    /// sprite's own texel region `[u, u+w) × [v, v+h)` rides at 1:1 into
+    /// the gui space — the CROP the region's smaller width speaks, the
+    /// no-stretch the exp fill's growth law carries (the progress bar's
+    /// leftmost `fill` columns, never a squish). Region reads past the
+    /// sprite's own edge sample clamped and alpha-zero cells skip.
+    pub fn sprite_region(
+        &mut self,
+        a: &mut GuiAssets,
+        name: &str,
+        u: u32,
+        v: u32,
+        rw: i32,
+        rh: i32,
+        x: i32,
+        y: i32,
+    ) {
+        let Some(s) = a.sprite_any(name).cloned() else { return };
+        if rw <= 0 || rh <= 0 {
+            return;
+        }
+        for dy in 0..rh {
+            for dx in 0..rw {
+                let sx = u + dx as u32;
+                let sy = v + dy as u32;
+                if sx >= s.w || sy >= s.h {
+                    continue; // the region's past-edge reads never speak
+                }
                 let c = s.sample(sx, sy);
                 if c[3] <= 0.0 {
                     continue;
