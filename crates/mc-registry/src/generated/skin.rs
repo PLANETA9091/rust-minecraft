@@ -91,3 +91,12 @@ pub const FIRE_1_RUNTIME_PATH: &str = "block/fire_1.png";
 /// the eye-under-water pass tiles across the screen).
 pub const UNDERWATER_PNG_SHA1: &str = "568d987c2d88da1ad53abf2f2d31cdef0580475e";
 pub const UNDERWATER_RUNTIME_PATH: &str = "misc/underwater.png";
+
+/// The XP ORB's sprite sheet (the award orbs' pixel source), generated
+/// from the same jar: the source sha1 the orb lane verifies before it
+/// draws (javap: `ExperienceOrbRenderer`'s EXPERIENCE_ORB_LOCATION —
+/// `textures/entity/experience/experience_orb.png`, the 64x64 sheet the
+/// 4x4 grid of 16x16 icons tiles, the icon variant the getIcon band law
+/// speaks).
+pub const EXPERIENCE_ORB_PNG_SHA1: &str = "763f7173c56685564185bcea633d0f733b13b2b8";
+pub const EXPERIENCE_ORB_RUNTIME_PATH: &str = "entity/experience/experience_orb.png";

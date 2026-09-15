@@ -160,6 +160,11 @@ pub struct SceneOpts {
     /// the REAL laws speak — the ignite, the 4.0, the burn — no
     /// scripted fire.
     pub lava_pool: bool,
+    /// Spawn the XP orbs ahead of the body (the award lane's own
+    /// physical truth — the [3, 1, 1] walk the zombie's flat 5 speaks,
+    /// floating at chest height two blocks out along the facing so the
+    /// shot stages the flight the follow law owns).
+    pub orbs: bool,
     /// THE DIVE SEED: carve a 3x3 pool AT the body's own column — three
     /// cells of water down (the old surface cell becomes the water
     /// surface), a forced-solid basin floor, the headroom cleared — and
@@ -364,6 +369,39 @@ pub fn seed_scene(app: &mut crate::screens::App, opts: &SceneOpts) -> Result<()>
         z.walk.speed = 0.7;
         z.walk.position = 2.5;
         app.mobs.push(z);
+    }
+    if opts.orbs {
+        // THE ORB SEED (the --zombie-fire discipline: the deterministic
+        // stand-in for the orbs the kill's award spawns): the flat 5's
+        // own [3, 1, 1] walk, placed 2 blocks ahead of the body's
+        // facing at chest height (the flight the follow law owns — the
+        // shot stages the orbs mid-air, the pull's own truth). The
+        // ages stagger so the pulse's phase spread shows (the
+        // ageInTicks/2 sin bands the render law speaks).
+        let yaw = opts.body_yaw.unwrap_or(-90.0);
+        let (fx, fz) = (
+            (-yaw.to_radians().sin()) as f64,
+            yaw.to_radians().cos() as f64,
+        );
+        let (bx, by, bz) = match app.body.as_ref() {
+            Some(b) => (b.x, b.y, b.z),
+            None => (n as f64 / 2.0 + 0.5, app.spawn_y as f64, n as f64 / 2.0 + 0.5),
+        };
+        for (i, v) in [3, 1, 1].into_iter().enumerate() {
+            let spread = (i as f64 - 1.0) * 0.35;
+            let rx = -fz;
+            let rz = fx;
+            let mut o = crate::xp::ExperienceOrb::spawn(
+                app.next_orb_id,
+                bx + fx * 2.0 + rx * spread,
+                by + 1.2 + (i as f64 - 1.0) * 0.12,
+                bz + fz * 2.0 + rz * spread,
+                v,
+            );
+            o.age = i as i32 * 7;
+            app.next_orb_id += 1;
+            app.orbs.push(o);
+        }
     }
     if let Some(fire) = opts.body_fire {
         if let Some(b) = app.body.as_mut() {

@@ -238,6 +238,53 @@ cargo run -p mc-client --release -- --screen world --seed 20260214 \
 # ticks) — the bar reads the seeded store through the SAME gates
 ```
 
+## The xp-orb lane (the award's physical truth) — v0.3.170
+
+The XP lane's own body (javap `ExperienceOrb` over the 26.2 jar —
+`net.minecraft.world.entity.ExperienceOrb`): the award's own split —
+`awardWithDirection`'s while loop steps `getExperienceValue`'s
+descending bands (2477, 1237, 617, 307, 149, 73, 37, 17, 7, 3, else 1
+— the zombie's flat 5 fragments into the [3, 1, 1] walk the vanilla's
+own no-2-band verdict speaks), each step ONE orb entity at the
+position, the delta the `Vec3.ZERO` the award path passes. The orb's
+own physics: the `getDefaultGravity` 0.03, the `followNearbyPlayer`
+scan (the 8.0 radius the `getNearestPlayer` call speaks, the keep gate
+the 64.0d squared fold holds) — the accel `scale(e * e * 0.1)` over
+`e = 1.0 - sqrt(lenSqr) / 8.0` toward the `getY() + getEyeHeight() /
+2.0` midpoint, the water's buoyant lift, the drag the ground-friction
+fold speaks, the 6000-tick LIFETIME the age discards. The touch:
+`playerTouch`'s plain bbox intersect, the `takeXpDelay = 2` throttle
+one orb per window, the grant riding `giveExperiencePoints` (the
+pickup's own site the level-up chime's %5 gate now owns). The render
+(javap `ExperienceOrbRenderer.submit`): the camera-facing quad at
+`translate(0, 0.1, 0)` then the camera basis then the 0.3 scale over
+the [-0.5, 0.5] x [-0.25, 0.75] plane, the uv walk the icon's 16x16
+window rides over the 64x64 `textures/entity/experience/experience_orb.png`
+sheet (`(icon % 4) * 16 / 64` the left, `(icon / 4) * 16 / 64` the
+top — the `getIcon` band law's variant index 0..10), the vertex color
+the pulse law speaks — `r = (sin(age/2) + 1) * 0.5 * 255`, `g = 255`,
+`b = (sin(age/2 + 4.1887903) + 1) * 0.1 * 255` (the 4.1887903 the
+4π/3 phase shift), alpha 128 the translucent blend the
+`entityTranslucentCullItemTarget` render type carries, the block
+light +7 the clamp 0..15 speaks. The pickup voice:
+`handleTakeItemEntity`'s orb branch — `entity.experience_orb.pickup`
+at volume 0.1, pitch `0.9 + (r - r) * 0.35` (the `random/orb.ogg` the
+asset index sha1-verifies).
+
+| frame | the scene |
+|---|---|
+| `xp_orbs.png` | THE AWARD'S OWN FLIGHT: the zombie kill's [3, 1, 1] orbs floating at chest height two blocks ahead — the camera-facing quads ride the pulse (the age-staggered phase spread reads: bright green, mid green, the olive lean the 4π/3-shifted blue band speaks), the sand path and the tree the backdrop |
+
+Regenerate the family:
+
+```sh
+cargo run -p mc-client --release -- --screen world --seed 20260214 \
+  --body --orbs --body-pitch 15 --ui-frame 3 --out shots/xp_orbs.png
+# --orbs seeds the flat 5's own split ahead of the body (the
+# --zombie-fire discipline: the deterministic stand-in for the orbs
+# the kill's award spawns live — the real lane rides the touch)
+```
+
 ## The lava-fog lane (the ember murk) — v0.3.167
 
 The fog type's sibling arm (javap the 26.2 jar): the camera-in-lava

@@ -28,11 +28,19 @@ pub const FIRE_1_JAR_PATH: &str = "assets/minecraft/textures/block/fire_1.png";
 /// the 16x16 blue the eye-under-water pass stretches over the screen
 /// through `RenderTypes.blockScreenEffect`).
 pub const UNDERWATER_JAR_PATH: &str = "assets/minecraft/textures/misc/underwater.png";
+/// The XP orb's sprite sheet (javap `ExperienceOrbRenderer`'s
+/// EXPERIENCE_ORB_LOCATION static init —
+/// `textures/entity/experience/experience_orb.png`, the 64x64 sheet the
+/// 4x4 grid of 16x16 icons tiles — the award orbs' pixel source the
+/// getIcon band law samples).
+pub const EXPERIENCE_ORB_JAR_PATH: &str =
+    "assets/minecraft/textures/entity/experience/experience_orb.png";
 /// The runtime-cache paths the client's loader reads (the same
 /// textures/ prefix strip the other lanes speak).
 pub const FIRE_0_RUNTIME_PATH: &str = "block/fire_0.png";
 pub const FIRE_1_RUNTIME_PATH: &str = "block/fire_1.png";
 pub const UNDERWATER_RUNTIME_PATH: &str = "misc/underwater.png";
+pub const EXPERIENCE_ORB_RUNTIME_PATH: &str = "entity/experience/experience_orb.png";
 /// Where the client reads the skin at runtime (under the runtime asset root).
 pub const RUNTIME_PATH: &str = "entity/player/wide/steve.png";
 pub const SLIM_RUNTIME_PATH: &str = "entity/player/slim/alex.png";
@@ -74,6 +82,9 @@ pub struct SkinData {
     /// sha1 of the water screen's texture (jar-verbatim integrity) —
     /// the underwater overlay's pixel source (the 16x16 blue).
     pub underwater_png_sha1: String,
+    /// sha1 of the XP orb's sprite sheet (jar-verbatim integrity) —
+    /// the award orbs' pixel source (the 64x64, 4x4 icon grid).
+    pub experience_orb_png_sha1: String,
 }
 
 /// One UV rect in the skin texture, in texels: (u, v, w, h).
@@ -171,6 +182,20 @@ pub fn generate<R: std::io::Read + std::io::Seek>(archive: &mut zip::ZipArchive<
         uw,
         uh
     );
+    // THE XP ORB: the award orbs' pixel source (javap
+    // `ExperienceOrbRenderer`'s EXPERIENCE_ORB_LOCATION static) — the
+    // 64x64 sheet the 4x4 grid of 16x16 icons tiles. The integrity sha1
+    // the orb lane verifies before it draws.
+    let orb_bytes = read_entry(archive, EXPERIENCE_ORB_JAR_PATH)
+        .context("read experience_orb")?;
+    let experience_orb_png_sha1 = crate::util::sha1_hex(&orb_bytes);
+    let (ow, oh, _orb_rgba) = decode_rgba(&orb_bytes).context("decode experience_orb")?;
+    anyhow::ensure!(
+        (ow, oh) == (64, 64),
+        "experience_orb must be the 64x64 sheet, got {}x{}",
+        ow,
+        oh
+    );
     Ok(SkinData {
         png_sha1,
         rgba_sha1: crate::util::sha1_hex(&rgba),
@@ -181,6 +206,7 @@ pub fn generate<R: std::io::Read + std::io::Seek>(archive: &mut zip::ZipArchive<
         fire_0_png_sha1,
         fire_1_png_sha1,
         underwater_png_sha1,
+        experience_orb_png_sha1,
     })
 }
 
@@ -285,6 +311,14 @@ pub fn emit(data: &SkinData) -> Result<String> {
     out.push_str(&format!(
         "pub const UNDERWATER_RUNTIME_PATH: &str = \"{UNDERWATER_RUNTIME_PATH}\";\n"
     ));
+    out.push_str("\n/// The XP ORB's sprite sheet (the award orbs' pixel source), generated\n/// from the same jar: the source sha1 the orb lane verifies before it\n/// draws (javap: `ExperienceOrbRenderer`'s EXPERIENCE_ORB_LOCATION —\n/// `textures/entity/experience/experience_orb.png`, the 64x64 sheet the\n/// 4x4 grid of 16x16 icons tiles, the icon variant the getIcon band law\n/// speaks).\n");
+    out.push_str(&format!(
+        "pub const EXPERIENCE_ORB_PNG_SHA1: &str = \"{}\";\n",
+        data.experience_orb_png_sha1
+    ));
+    out.push_str(&format!(
+        "pub const EXPERIENCE_ORB_RUNTIME_PATH: &str = \"{EXPERIENCE_ORB_RUNTIME_PATH}\";\n"
+    ));
     Ok(out)
 }
 
@@ -382,14 +416,17 @@ mod tests {
         let expected_fire0_sha1 = crate::util::sha1_hex(&strip);
         let underwater = underwater_png();
         let expected_underwater_sha1 = crate::util::sha1_hex(&underwater);
+        let orb = skin_png();
+        let expected_orb_sha1 = crate::util::sha1_hex(&orb);
 
         let mut zip = zip_of(&[
             (WIDE_STEVE_JAR_PATH, png.clone()),
             (SLIM_ALEX_JAR_PATH, png.clone()),
-            (ZOMBIE_JAR_PATH, png),
+            (ZOMBIE_JAR_PATH, png.clone()),
             (FIRE_0_JAR_PATH, strip.clone()),
             (FIRE_1_JAR_PATH, strip),
             (UNDERWATER_JAR_PATH, underwater),
+            (EXPERIENCE_ORB_JAR_PATH, orb),
         ]);
         let data = generate(&mut zip).unwrap();
         assert_eq!(data.side, 64);
@@ -400,6 +437,10 @@ mod tests {
         assert_eq!(
             data.underwater_png_sha1, expected_underwater_sha1,
             "the water screen's own sha1"
+        );
+        assert_eq!(
+            data.experience_orb_png_sha1, expected_orb_sha1,
+            "the orb sheet's own sha1"
         );
 
         let emitted = emit(&data).unwrap();
@@ -415,6 +456,9 @@ mod tests {
         // the water screen: the sha1 and the runtime path land verbatim
         assert!(emitted.contains(&format!("pub const UNDERWATER_PNG_SHA1: &str = \"{expected_underwater_sha1}\";")));
         assert!(emitted.contains("pub const UNDERWATER_RUNTIME_PATH: &str = \"misc/underwater.png\";"));
+        // the xp orb: the sha1 and the runtime path land verbatim
+        assert!(emitted.contains(&format!("pub const EXPERIENCE_ORB_PNG_SHA1: &str = \"{expected_orb_sha1}\";")));
+        assert!(emitted.contains("pub const EXPERIENCE_ORB_RUNTIME_PATH: &str = \"entity/experience/experience_orb.png\";"));
         assert!(emitted.contains("pub const SLIM_ARM_BOX_PX: [u16; 3] = [3, 12, 4];"));
         assert!(emitted.contains("pub const SLIM_ARM_BOX_ORIGIN_PX: [i16; 3] = [-2, -2, -2];"));
         // the six faces unfold from texOffs (40,16) with the box 4x12x4

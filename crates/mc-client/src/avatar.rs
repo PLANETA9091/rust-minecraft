@@ -841,6 +841,54 @@ impl FireStrips {
     }
 }
 
+/// THE XP ORB's decoded sprite sheet — the award orbs' pixel source,
+/// loaded and sha1-verified the same stream the skins and the flame
+/// strips speak (javap `ExperienceOrbRenderer`'s EXPERIENCE_ORB_LOCATION
+/// static init: `textures/entity/experience/experience_orb.png`, the
+/// 64x64 sheet the 4x4 grid of 16x16 icons tiles — the icon variant
+/// index the `getIcon` band law speaks, the uv walk `(icon % 4) * 16 /
+/// 64` and `(icon / 4) * 16 / 64` the submit's own f6..f9 fold). The
+/// render lane stays honest the same way: a missing or tampered file
+/// keeps the orbs invisible.
+pub struct OrbSheet {
+    pub rgba: Vec<u8>,
+}
+
+/// The sheet's own layout (javap the submit's `/ 64.0F` folds — the
+/// 4x4 grid of 16x16 icons over the 64x64 sheet).
+pub const ORB_SHEET_SIDE: u32 = 64;
+pub const ORB_ICON_SIDE: u32 = 16;
+
+impl OrbSheet {
+    /// Load from the runtime cache root (the generator's
+    /// `assets-cache/jar/`), verify the generated sha1, decode, and
+    /// shape-check the 64x64 layout.
+    pub fn load(root: &std::path::Path) -> Option<OrbSheet> {
+        let bytes =
+            std::fs::read(root.join(skin::EXPERIENCE_ORB_RUNTIME_PATH)).ok()?;
+        if hex::encode(sha1::Sha1::digest(&bytes)) != skin::EXPERIENCE_ORB_PNG_SHA1 {
+            return None;
+        }
+        let (w, h, rgba) = decode_rgba(&bytes).ok()?;
+        if w != ORB_SHEET_SIDE || h != ORB_SHEET_SIDE {
+            return None;
+        }
+        Some(OrbSheet { rgba })
+    }
+
+    /// The sheet pixel at (u, v) in the 0..16 SPRITE SPACE the client's
+    /// sampled lanes speak (the sheet's own 64px spans the 16-unit
+    /// space — one icon's 16px rides the 4-unit window), nearest texel
+    /// over the clamp-to-edge law.
+    pub fn pixel(&self, u: f32, v: f32) -> [u8; 4] {
+        let scale = ORB_SHEET_SIDE as f32 / 16.0;
+        let x = ((u * scale).floor().clamp(0.0, ORB_SHEET_SIDE as f32 - 1.0)) as usize;
+        let y = ((v * scale).floor().clamp(0.0, ORB_SHEET_SIDE as f32 - 1.0)) as usize;
+        let o = (y * ORB_SHEET_SIDE as usize + x) * 4;
+        [self.rgba[o], self.rgba[o + 1], self.rgba[o + 2], self.rgba[o + 3]]
+    }
+}
+
 /// The WATER SCREEN's decoded pixels — the underwater overlay's pixel
 /// source, loaded and sha1-verified the same stream the skins and the
 /// flame strips speak (javap `ScreenEffectRenderer.submitWater`'s
@@ -963,6 +1011,27 @@ pub fn flame_quads(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn the_orb_sheet_pixel_rides_the_16_unit_space() {
+        // the sheet's own sampler: the 0..16 sprite space maps over the
+        // 64px sheet (the 4x scale the /16 law speaks), the icon
+        // windows' edges speak their own texels
+        let mut rgba = vec![0u8; 64 * 64 * 4];
+        // the (17, 17) texel speaks a known green — uv (4.25, 4.25)
+        rgba[(17 * 64 + 17) * 4] = 0x80;
+        rgba[(17 * 64 + 17) * 4 + 1] = 0xFF;
+        let sheet = OrbSheet { rgba };
+        let px = sheet.pixel(4.25, 4.25);
+        assert_eq!((px[0], px[1]), (0x80, 0xFF));
+        // the icon 0's window spans uv 0..4 — the (15, 15) texel is the
+        // window's far edge (uv (3.75, 3.75) lands there)
+        let mut rgba = vec![0u8; 64 * 64 * 4];
+        rgba[(15 * 64 + 15) * 4 + 2] = 0x20;
+        let sheet = OrbSheet { rgba };
+        let px = sheet.pixel(3.75, 3.75);
+        assert_eq!(px[2], 0x20);
+    }
 
     /// A yaw-0 body (facing +Z south): the model's right arm lands on
     /// the world's -X (the cross product's own verdict for a +Z

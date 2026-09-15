@@ -184,6 +184,11 @@ struct Cli {
     /// 4.0, the burn).
     #[arg(long)]
     lava_pool: bool,
+    /// Spawn the XP orbs ahead of the body — the zombie kill's own
+    /// [3, 1, 1] award walk at chest height, the flight the follow
+    /// law owns (the camera-facing quads, the pulse, the icon bands).
+    #[arg(long)]
+    orbs: bool,
     /// Carve a 3x3 pool AT the body and sink it to the basin floor —
     /// the eye sits under the water surface and the REAL water-screen
     /// gate speaks (the underwater overlay, no scripted blue).
@@ -284,6 +289,7 @@ fn main() -> Result<()> {
             ignite_secs: cli.ignite,
             body_fire: cli.body_fire,
             lava_pool: cli.lava_pool,
+            orbs: cli.orbs,
             water_pool: cli.water_pool,
             water_vision: cli.water_vision,
             air_supply: cli.air_supply,

@@ -264,9 +264,12 @@ pub fn extract_runtime_assets(
 /// `assets/minecraft/textures/block/` — the runtime pixel sources the
 /// client sha1-verifies before it draws a burning mob. The water
 /// screen's texture rides beside them (the underwater overlay's pixel
-/// source, `textures/misc/underwater.png`).
-const RUNTIME_TEXTURE_JAR_PATHS: [&str; 3] = [
+/// source, `textures/misc/underwater.png`), and the XP orb's sprite
+/// sheet beside those (`textures/entity/experience/experience_orb.png`
+/// — the award orbs' 64x64 icon grid).
+const RUNTIME_TEXTURE_JAR_PATHS: [&str; 4] = [
     "assets/minecraft/textures/block/fire_0.png",
     "assets/minecraft/textures/block/fire_1.png",
     "assets/minecraft/textures/misc/underwater.png",
+    "assets/minecraft/textures/entity/experience/experience_orb.png",
 ];

@@ -887,6 +887,13 @@ const PLAYER_FIRE_EVENTS: [&str; 3] = [
 /// sha1-verified asset-index fetch the swim voice speaks.
 const PLAYER_AIR_EVENTS: [&str; 2] = ["entity.player.hurt_drown", "ui.hud.bubble_pop"];
 
+/// The player's XP ORB lane's event (the award pickup arc the take
+/// packet's orb branch owns — javap ClientPacketListener's
+/// handleTakeItemEntity EXPERIENCE_ORB_PICKUP arm, the `random/orb`
+/// file the 0.1 / `0.9 + (r - r) * 0.35` fold speaks). Every file rides
+/// the same sha1-verified asset-index fetch the swim voice speaks.
+const PLAYER_XP_EVENTS: [&str; 1] = ["entity.experience_orb.pickup"];
+
 /// Fetch the real menu music + in-game music + UI sound + biome music +
 /// mob voice + player voice .ogg files through the asset index. sounds.json names are
 /// relative to `assets/minecraft/sounds/` (extension optional — the vanilla
@@ -918,6 +925,7 @@ fn fetch_sound_events(
             || PLAYER_SPLASH_EVENTS.contains(&id)
             || PLAYER_FIRE_EVENTS.contains(&id)
             || PLAYER_AIR_EVENTS.contains(&id)
+            || PLAYER_XP_EVENTS.contains(&id)
             || biome_events.binary_search(&id.to_string()).is_ok()
     };
     let mut menu = 0usize;

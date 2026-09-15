@@ -487,6 +487,10 @@ pub struct App {
     /// The flame feature's two strips (the burn lane's pixel source —
     /// lazy-loaded and sha1-verified the zombie skin's way).
     pub fire_strips: Option<crate::avatar::FireStrips>,
+    /// THE XP ORB's sprite sheet (the lazy runtime load the fire strips
+    /// speak — the sha1-verified OrbSheet, a missing file keeps the orbs
+    /// invisible).
+    pub orb_sheet: Option<crate::avatar::OrbSheet>,
     /// The water screen's texture (the underwater overlay's pixel
     /// source — lazy-loaded and sha1-verified the flame strips' way).
     pub underwater_screen: Option<crate::avatar::UnderwaterScreen>,
@@ -623,6 +627,20 @@ pub struct App {
     pub drop_rng: crate::drops::Lcg,
     /// The offline entity id counter (the settle law's phase partner).
     pub next_drop_id: i32,
+    /// THE XP ORBS (javap `ExperienceOrb` — the award split's own
+    /// physical truth): the kill's flat 5 and the ore's own roll spawn
+    /// the split orbs (the `awardWithDirection` while loop), the orbs
+    /// fly to the player (the follow law), the touch grants (the
+    /// `playerTouch` law the takeXpDelay gate arms). The NETWORKED
+    /// world's orbs stay the server's (the same split the drop lane
+    /// speaks).
+    pub orbs: Vec<crate::xp::ExperienceOrb>,
+    /// The orb entity id counter (the client's own — the wire ids stay
+    /// the server's).
+    pub next_orb_id: i32,
+    /// The orb pickup's own throttle (`Player.takeXpDelay` — the touch
+    /// sets 2, the aiStep tail ticks it down; one orb per window).
+    pub take_xp_delay: i32,
     /// THE HURT/HEALTH ARC — the vanilla player's own vitals (the
     /// javap laws, the hurt round): the health float the hearts speak
     /// (the entity data's clamp 0..=max), the food/saturation the
@@ -821,6 +839,7 @@ impl App {
             avatar: None,
             zombie_avatar: None,
             fire_strips: None,
+            orb_sheet: None,
             underwater_screen: None,
             mobs: Vec::new(),
             spawn_clock: 0,
@@ -848,6 +867,9 @@ impl App {
             eating: None,
             pieces: Vec::new(),
             next_drop_id: 1,
+            orbs: Vec::new(),
+            next_orb_id: 1,
+            take_xp_delay: 0,
             health: 20.0,
             food_data: crate::food::FoodData::new(),
             hurt_time: 0,
@@ -1326,6 +1348,73 @@ impl App {
                 }
                 self.drops.retain(|d| d.count > 0);
             }
+            // THE XP ORB LANE (javap ExperienceOrb — the award split's
+            // own physical truth): the physics + follow tick, then the
+            // touch's grant (the playerTouch law the takeXpDelay gate
+            // arms — one orb per 2-tick window, the grant the
+            // giveExperiencePoints fold speaks, the orb pickup voice the
+            // handleTakeItemEntity's orb branch plays, the level-up
+            // chime the giveExperienceLevels' %5 gate owns). The
+            // NETWORKED world's orbs stay the server's (the same split
+            // the drop lane speaks).
+            if !self.world_is_network && !self.orbs.is_empty() {
+                {
+                    let world = self.offline_world.as_mut();
+                    if let Some(world) = world {
+                        let player = self.body.as_ref().map(|b| crate::mob::PlayerView {
+                            x: b.x,
+                            y: b.y,
+                            z: b.z,
+                            eye_y: b.y + b.eye_height(),
+                            dead: self.dead,
+                            width: crate::body::WIDTH,
+                        });
+                        for o in self.orbs.iter_mut() {
+                            o.tick(world, player.as_ref());
+                        }
+                    }
+                }
+                self.orbs
+                    .retain(|o| o.age < crate::xp::ORB_LIFETIME && o.value > 0);
+                if self.take_xp_delay > 0 {
+                    // the aiStep tail's own tick-down
+                    self.take_xp_delay -= 1;
+                } else if let Some(body) = self.body.as_ref() {
+                    // the touch pass: the plain bbox intersect, the
+                    // takeXpDelay gate one orb per window (the vanilla's
+                    // own 2-tick throttle the pickup cadence speaks)
+                    let touched = self
+                        .orbs
+                        .iter()
+                        .position(|o| o.touches_body(body));
+                    if let Some(i) = touched {
+                        let orb = self.orbs[i].clone();
+                        self.orbs.remove(i);
+                        self.take_xp_delay = 2;
+                        let before = self.xp.level;
+                        self.xp.give_points(orb.value);
+                        self.sounds.play_orb_pickup(self.frame);
+                        // THE LEVEL-UP CHIME (giveExperienceLevels' own
+                        // %5 gate: the n > 0 arm, the 100-tick dedup the
+                        // lastLevelUpTime speaks, the volume the
+                        // level>30 fold at pitch 1.0)
+                        let gained = self.xp.level - before;
+                        if gained > 0
+                            && self.xp.level % 5 == 0
+                            && self.last_level_up_time < self.frame as i32 - 100
+                        {
+                            let volume = if self.xp.level > 30 {
+                                1.0
+                            } else {
+                                self.xp.level as f32 / 30.0
+                            } * 0.75;
+                            self.sounds
+                                .play_voice(self.frame, "entity.player.levelup", volume, 1.0);
+                            self.last_level_up_time = self.frame as i32;
+                        }
+                    }
+                }
+            }
             // THE MOB LANE (the offline world's own authority — the
             // NETWORKED world's entities stay the server's, the same
             // split the drop lane speaks): the spawner's 40-tick beat
@@ -1732,11 +1821,14 @@ impl App {
             // the bare mob never speaks): the bare zombie's flat
             // `xpReward` 5 (Mob.getBaseExperienceReward walks the
             // equipment slots — the bare body wears none, the 5 rides
-            // clean), the orb folded into the grant (the offline
-            // stand-in's own voice). The FIRE kill's site speaks the
-            // CLOSED gate — no player memory behind an onFire dose, no
-            // reward there either.
-            self.xp.give_points(crate::mob::ZOMBIE_XP_REWARD);
+            // clean), the award now spawns the PHYSICAL orbs (the
+            // `awardWithDirection` while loop — the split the
+            // getExperienceValue bands speak, the [3, 1, 1] walk the
+            // flat 5 fragments into) and the pickup's grant rides the
+            // touch.
+            // The FIRE kill's site speaks the CLOSED gate — no player
+            // memory behind an onFire dose, no reward there either.
+            self.spawn_xp_orbs(mx, my + 0.5, mz, crate::mob::ZOMBIE_XP_REWARD);
         }
         // THE ATTACK VOICE (attackVisualEffects's own branch — the
         // pitch rides the getVoicePitch law over the client's stream)
@@ -3120,33 +3212,40 @@ impl App {
         }
         // THE ORE'S OWN XP (javap DropExperienceBlock.spawnAfterBreak →
         // tryDropExperience's UniformInt roll → the orb → the pickup's
-        // giveExperiencePoints; the OFFLINE stand-in folds the pickup
-        // into the grant — the orb's physical travel is the future's
-        // own lane). The HARVEST gate rides the drops' own law — the
-        // wrong-tool break never harvests, never grants (the vanilla's
-        // silk/canHarvest pair the tryDropExperience's own gate speaks);
-        // the silent ores (copper/iron/gold) burn no roll — the
-        // non-XpBlock gate never samples. The %5 level-up voice answers
-        // only a LEVEL-UP pass (the n > 0 arm), the 100-tick dedup the
-        // lastLevelUpTime gate speaks, the volume the level>30 fold
-        // speaks at pitch 1.0.
+        // giveExperiencePoints): the award now spawns the PHYSICAL orbs
+        // (the `awardWithDirection` while loop — the split the bands
+        // speak) at the mined cell, the pickup's grant rides the touch
+        // (the level-up voice the pickup pass owns). The HARVEST gate
+        // rides the drops' own law — the wrong-tool break never
+        // harvests, never grants (the vanilla's silk/canHarvest pair
+        // the tryDropExperience's own gate speaks); the silent ores
+        // (copper/iron/gold) burn no roll — the non-XpBlock gate never
+        // samples.
         if crate::dig::DigState::correct_tool(kind) {
             let amount = crate::xp::ore_xp(kind, &mut self.drop_rng);
             if amount > 0 {
-                let before = self.xp.level;
-                self.xp.give_points(amount);
-                let gained = self.xp.level - before;
-                if gained > 0 && self.xp.level % 5 == 0 && self.last_level_up_time < self.frame as i32 - 100 {
-                    let volume = if self.xp.level > 30 {
-                        1.0
-                    } else {
-                        self.xp.level as f32 / 30.0
-                    } * 0.75;
-                    self.sounds
-                        .play_voice(self.frame, "entity.player.levelup", volume, 1.0);
-                    self.last_level_up_time = self.frame as i32;
-                }
+                let (bx, by, bz) = (pos.0 as f64 + 0.5, pos.1 as f64 + 0.5, pos.2 as f64 + 0.5);
+                self.spawn_xp_orbs(bx, by, bz, amount);
             }
+        }
+    }
+
+    /// THE AWARD'S OWN SPLIT (javap `ExperienceOrb.awardWithDirection`'s
+    /// while loop — `getExperienceValue(amount)` steps the largest band,
+    /// the remainder loops, each step one orb entity at the position;
+    /// the delta starts ZERO the award path passes, the
+    /// tryMergeToExisting shortcut the offline lane never needs — the
+    /// orbs spawn one value each). The ids ride the client's own
+    /// counter (the wire ids stay the server's).
+    fn spawn_xp_orbs(&mut self, x: f64, y: f64, z: f64, amount: i32) {
+        let mut rest = amount;
+        while rest > 0 {
+            let v = crate::xp::get_experience_value(rest);
+            rest -= v;
+            let id = self.next_orb_id;
+            self.next_orb_id += 1;
+            self.orbs
+                .push(crate::xp::ExperienceOrb::spawn(id, x, y, z, v));
         }
     }
 
@@ -4019,6 +4118,12 @@ impl App {
         if !self.drops.is_empty() {
             self.render_drops(fb, &ctx);
         }
+        // THE XP ORB LANE's draw (the entity pass's own arm — the award
+        // orbs' camera-facing quads ride the entityTranslucentCullItem-
+        // Target blend the submit's own render type speaks)
+        if !self.orbs.is_empty() {
+            self.render_orbs(fb, &ctx, &cam);
+        }
         // THE THIRD-PERSON AVATAR (the entity pass's own camera-entity
         // render: the body the detached camera watches — nothing in
         // first person)
@@ -4738,13 +4843,95 @@ impl App {
         });
     }
 
+    /// THE XP ORB's render (javap `ExperienceOrbRenderer.submit` — the
+    /// camera-facing quad the `mulPose(camera.orientation)` fold
+    /// speaks): the `translate(0, 0.1, 0)` then the camera basis then
+    /// the 0.3 scale over the [-0.5, 0.5] x [-0.25, 0.75] plane at
+    /// local z=0, the uv walk the icon's 16x16 window rides —
+    /// `(icon % 4) * 16 / 64` the left edge, `(icon / 4) * 16 / 64` the
+    /// top (the corner law the lambda's own four vertex calls speak:
+    /// (-0.5,-0.25)->(u0,v0), (0.5,-0.25)->(u1,v0), (0.5,0.75)->(u1,v1),
+    /// (-0.5,0.75)->(u0,v1) — the sheet-space uv the 16-unit law speaks,
+    /// one icon = the 4-unit window) — and the vertex color the pulse
+    /// law speaks: `r = (sin(age/2) + 1) * 0.5 * 255`, `g = 255`,
+    /// `b = (sin(age/2 + 4.1887903) + 1) * 0.1 * 255`, alpha 128 — the
+    /// translucent blend the alpha_scale fold carries. The sheet pixels
+    /// ride the same sha1-verified OrbSheet the other runtime lanes
+    /// speak; a missing file keeps the orbs invisible (the honesty).
+    fn render_orbs(
+        &mut self,
+        fb: &mut crate::raster::Framebuf,
+        ctx: &RenderCtx,
+        cam: &crate::camera::Camera,
+    ) {
+        if self.orb_sheet.is_none() {
+            self.orb_sheet =
+                crate::avatar::OrbSheet::load(std::path::Path::new("assets-cache/jar"));
+        }
+        let Some(sheet) = &self.orb_sheet else {
+            return;
+        };
+        // the camera basis (the mulPose(camera.orientation) fold — the
+        // roll-0 camera the render_pieces lane speaks)
+        let sy = cam.yaw.sin();
+        let cy = cam.yaw.cos();
+        let sp = cam.pitch.sin();
+        let cp = cam.pitch.cos();
+        let right = [cy, 0.0, sy];
+        let up = [-sy * sp, cp, cy * sp];
+        let mut sampled: Vec<crate::raster::SampledQuad> = Vec::new();
+        for o in &self.orbs {
+            let icon = crate::xp::orb_icon(o.value);
+            // the icon window in the sheet's 16-unit space (the 4-unit
+            // law: one icon's 16px over the 64px sheet)
+            let u0 = (icon % 4 * 4) as f32;
+            let u1 = (icon % 4 * 4 + 4) as f32;
+            let v0 = (icon / 4 * 4) as f32;
+            let v1 = (icon / 4 * 4 + 4) as f32;
+            // the pulse (javap the submit's f15/f17 folds: the two sin
+            // bands the f2i store speaks — t rides the ageInTicks/2)
+            let t = o.age as f32 / 2.0;
+            let r = ((t).sin() + 1.0) * 0.5 * 255.0;
+            let b = ((t + 4.1887903).sin() + 1.0) * 0.1 * 255.0;
+            let tint = [r / 255.0, 1.0, b / 255.0];
+            // the pose: the translate(0, 0.1, 0) rides the WORLD y (the
+            // entity-space arm the pre-rotation fold speaks), the
+            // camera basis carries the scaled local plane
+            let cx = o.x as f32;
+            let cy0 = o.y as f32 + 0.1;
+            let cz = o.z as f32;
+            let corner = |lx: f32, ly: f32| {
+                [
+                    cx + (right[0] * lx + up[0] * ly) * 0.3,
+                    cy0 + (right[1] * lx + up[1] * ly) * 0.3,
+                    cz + (right[2] * lx + up[2] * ly) * 0.3,
+                ]
+            };
+            sampled.push(crate::raster::SampledQuad {
+                pts: [
+                    corner(-0.5, -0.25),
+                    corner(0.5, -0.25),
+                    corner(0.5, 0.75),
+                    corner(-0.5, 0.75),
+                ],
+                uv: [[u0, v0], [u1, v0], [u1, v1], [u0, v1]],
+                tex: "entity/experience/experience_orb",
+                tint,
+            });
+        }
+        if sampled.is_empty() {
+            return;
+        }
+        let vp = ctx.proj.mul(&ctx.view);
+        fb.draw_translucent_sampled_quads(vp, &sampled, 128.0 / 255.0, &mut |_tex, u, v| {
+            Some(sheet.pixel(u, v))
+        });
+    }
+
     /// THE EAT ARC's piece render — the vanilla SingleQuadParticle's
     /// own camera-facing quad (the roll stays 0, the corners ±1 scaled
     /// by the quad size 0.1), the BreakingItemParticle's 4x4-pixel
     /// texture slice riding the uo/vo law over the item's first sprite.
-    /// The slice resolves per frame (the pieces are few, the layer
-    /// fetch is the drops' own cost) — the unresolvable item renders
-    /// nothing (the honest unknown).
     fn render_pieces(
         &mut self,
         fb: &mut crate::raster::Framebuf,
@@ -10105,10 +10292,46 @@ mod tests {
         // the pools speak at most the flesh + the rare (the table's
         // own two-lane shape)
         assert!(loot.len() <= 2, "the pools speak at most two drops");
-        // THE KILL'S OWN XP (javap LivingEntity.dropExperience): the
-        // fist kill's flat 5 folded through the giveExperiencePoints
-        // law — the level curve's first rung (7) unclimbed, the
-        // fraction the fill reads
+        // THE KILL'S OWN XP (javap LivingEntity.dropExperience → the
+        // award's own split): the fist kill's flat 5 spawns the
+        // PHYSICAL orbs — the [3, 1, 1] walk the getExperienceValue
+        // bands speak — at the mob's feet, the grant rides the touch
+        // (the orbs fly the follow law's pull, the takeXpDelay gate
+        // one orb per window)
+        assert_eq!(
+            app.orbs.iter().map(|o| o.value).collect::<Vec<_>>(),
+            vec![3, 1, 1],
+            "the fist kill's own award split"
+        );
+        assert_eq!(app.xp.total, 0, "the grant rides the touch, not the kill");
+        // the orbs' flight: the ticks pull them in and the touch grants
+        // one per 2-tick window. The award's own spawn cell may sit on
+        // a ledge the pull cannot cross (the vanilla's own stuck-orb
+        // truth) — the test repositions the orbs beside the body (the
+        // same cell the touch's plain bbox speaks), the flight law's
+        // own unit tests carry the pull's numbers
+        {
+            let (bx, by, bz) = {
+                let b = app.body.as_ref().unwrap();
+                (b.x, b.y, b.z)
+            };
+            for (i, o) in app.orbs.iter_mut().enumerate() {
+                o.x = bx + 0.1 + i as f64 * 0.05;
+                o.y = by + 0.3;
+                o.z = bz + 0.1;
+                o.vx = 0.0;
+                o.vy = 0.0;
+                o.vz = 0.0;
+            }
+        }
+        for _ in 0..90 {
+            app.update();
+        }
+        assert!(
+            app.orbs.is_empty(),
+            "the orbs spoke the touch: {} left",
+            app.orbs.len()
+        );
         assert_eq!(
             app.xp.total, crate::mob::ZOMBIE_XP_REWARD,
             "the fist kill's own reward"
