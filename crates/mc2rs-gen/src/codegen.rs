@@ -233,10 +233,13 @@ pub fn extract_runtime_assets(
     // `block/fire_1` off the blocks atlas (javap: ModelBakery.FIRE_0 /
     // FIRE_1 sprite ids); the 16x512 strips ride the animated frame
     // tiles the burn lane samples (fire_0's mcmeta playlist
-    // [16..31, 0..15], fire_1 sequential). The same sha1-verified
-    // stream pattern the skins speak.
+    // [16..31, 0..15], fire_1 sequential). The WATER screen's texture
+    // rides beside them (javap `ScreenEffectRenderer.submitWater`'s
+    // UNDERWATER_LOCATION — `textures/misc/underwater.png`, the 16x16
+    // blue the eye-under-water pass tiles across the screen). The same
+    // sha1-verified stream pattern the skins speak.
     {
-        for jar_rel in FIRE_STRIP_JAR_PATHS {
+        for jar_rel in RUNTIME_TEXTURE_JAR_PATHS {
             // the runtime path mirrors the jar path minus the textures
             // prefix (`assets/minecraft/textures/` — the same strip the
             // other texture lanes keep)
@@ -259,8 +262,11 @@ pub fn extract_runtime_assets(
 
 /// The flame feature's two animated strips, straight from the jar's
 /// `assets/minecraft/textures/block/` — the runtime pixel sources the
-/// client sha1-verifies before it draws a burning mob.
-const FIRE_STRIP_JAR_PATHS: [&str; 2] = [
+/// client sha1-verifies before it draws a burning mob. The water
+/// screen's texture rides beside them (the underwater overlay's pixel
+/// source, `textures/misc/underwater.png`).
+const RUNTIME_TEXTURE_JAR_PATHS: [&str; 3] = [
     "assets/minecraft/textures/block/fire_0.png",
     "assets/minecraft/textures/block/fire_1.png",
+    "assets/minecraft/textures/misc/underwater.png",
 ];

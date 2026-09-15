@@ -183,6 +183,11 @@ struct Cli {
     /// 4.0, the burn).
     #[arg(long)]
     lava_pool: bool,
+    /// Carve a 3x3 pool AT the body and sink it to the basin floor —
+    /// the eye sits under the water surface and the REAL water-screen
+    /// gate speaks (the underwater overlay, no scripted blue).
+    #[arg(long)]
+    water_pool: bool,
     #[arg(long, default_value = "render.png")]
     out: PathBuf,
     /// Path to official asset index json (enables real texture-average colors).
@@ -238,6 +243,7 @@ fn main() -> Result<()> {
             ignite_secs: cli.ignite,
             body_fire: cli.body_fire,
             lava_pool: cli.lava_pool,
+            water_pool: cli.water_pool,
         };
         headless::render_gui_screen_opts(
             screen,

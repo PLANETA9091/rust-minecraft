@@ -841,6 +841,56 @@ impl FireStrips {
     }
 }
 
+/// The WATER SCREEN's decoded pixels — the underwater overlay's pixel
+/// source, loaded and sha1-verified the same stream the skins and the
+/// flame strips speak (javap `ScreenEffectRenderer.submitWater`'s
+/// UNDERWATER_LOCATION: `textures/misc/underwater.png`, the 16x16 blue
+/// the eye-under-water pass tiles across the screen). The burn lane
+/// stays honest the same way: a missing or tampered file keeps the
+/// overlay silent.
+pub struct UnderwaterScreen {
+    pub rgba: Vec<u8>,
+}
+
+impl UnderwaterScreen {
+    /// Load from the runtime cache root (the generator's
+    /// `assets-cache/jar/`), verify the generated sha1, decode, and
+    /// shape-check the 16x16 layout.
+    pub fn load(root: &std::path::Path) -> Option<UnderwaterScreen> {
+        let bytes =
+            std::fs::read(root.join(skin::UNDERWATER_RUNTIME_PATH)).ok()?;
+        if hex::encode(sha1::Sha1::digest(&bytes)) != skin::UNDERWATER_PNG_SHA1 {
+            return None;
+        }
+        let (w, h, rgba) = decode_rgba(&bytes).ok()?;
+        if w != UNDERWATER_SIDE || h != UNDERWATER_SIDE {
+            return None;
+        }
+        Some(UnderwaterScreen { rgba })
+    }
+
+    /// The texture pixel at (u, v) in TEXTURE UNITS — the vanilla
+    /// sampler's REPEAT wrap (the screen quad's uv ride the yaw/pitch
+    /// scroll and span 4 full wraps; the shader repeats the 16x16
+    /// tile), nearest texel: `floor` then `rem_euclid` (the uv run
+    /// negative when the yaw/pitch offsets do).
+    pub fn pixel(&self, u: f32, v: f32) -> [u8; 4] {
+        let x = (u.floor() as i32).rem_euclid(UNDERWATER_SIDE as i32) as usize;
+        let y = (v.floor() as i32).rem_euclid(UNDERWATER_SIDE as i32) as usize;
+        let o = (y * UNDERWATER_SIDE as usize + x) * 4;
+        [
+            self.rgba[o],
+            self.rgba[o + 1],
+            self.rgba[o + 2],
+            self.rgba[o + 3],
+        ]
+    }
+}
+
+/// The underwater screen texture's side (javap verbatim 16x16 — three
+/// translucent blues, the alpha 135/146).
+pub const UNDERWATER_SIDE: u32 = 16;
+
 /// The flame quad stack around one burning entity — the `prepare`
 /// bytecode's own loop, the ring law verbatim.
 pub fn flame_quads(
@@ -1241,5 +1291,47 @@ mod tests {
         assert!(px[0] > px[2], "the orange reads red-over-blue");
         let hole = strips.pixel(1, 0.0, 0.0);
         assert_eq!(hole, [0, 0, 0, 0], "the cutout hole decodes transparent");
+    }
+
+    /// THE WATER SCREEN's REPEAT wrap — the sampler's own law: the uv
+    /// ride the yaw/pitch scroll (negative when the offsets do) and
+    /// span 4 full wraps, every fetch folds to the 16x16 tile's
+    /// nearest texel.
+    #[test]
+    fn the_underwater_screen_wraps_the_tile() {
+        let mut rgba = vec![0u8; 16 * 16 * 4];
+        let put = |rgba: &mut [u8], x: usize, y: usize, c: [u8; 4]| {
+            let o = (y * 16 + x) * 4;
+            rgba[o..o + 4].copy_from_slice(&c);
+        };
+        put(&mut rgba, 0, 0, [1, 2, 3, 4]);
+        put(&mut rgba, 15, 15, [5, 6, 7, 8]);
+        put(&mut rgba, 3, 9, [9, 10, 11, 12]);
+        let screen = UnderwaterScreen { rgba };
+        assert_eq!(screen.pixel(0.0, 0.0), [1, 2, 3, 4], "the origin texel");
+        assert_eq!(screen.pixel(16.0, 32.0), [1, 2, 3, 4], "the full wraps land home");
+        assert_eq!(screen.pixel(-0.5, -0.5), [5, 6, 7, 8], "the negative uv wrap to the far corner");
+        assert_eq!(screen.pixel(3.9, 9.2), [9, 10, 11, 12], "the nearest floor picks the texel");
+        assert_eq!(screen.pixel(19.2, 25.2), [9, 10, 11, 12], "the wraps ride the same fold");
+    }
+
+    /// THE WATER SCREEN LOADS — the real runtime cache (the generator's
+    /// extraction) decodes the 16x16 blue and the pixels land
+    /// blue-over-red (the underwater tile's own verdict).
+    #[test]
+    #[ignore = "needs runtime assets (assets-cache/jar) from mc2rs-gen generate"]
+    fn the_underwater_screen_loads_sha1_verified() {
+        let mut dir = std::env::current_dir().unwrap();
+        let root = loop {
+            let cand = dir.join("assets-cache/jar");
+            if cand.exists() {
+                break cand;
+            }
+            dir = dir.parent().expect("the runtime root above").to_path_buf();
+        };
+        let screen = UnderwaterScreen::load(&root).expect("the screen loads from the runtime cache");
+        let px = screen.pixel(8.0, 8.0);
+        assert!(px[2] > px[0], "the blue reads blue-over-red: {px:?}");
+        assert!(px[3] > 0 && px[3] < 255, "the texel is translucent: {px:?}");
     }
 }

@@ -83,3 +83,11 @@ pub const FIRE_0_PNG_SHA1: &str = "2044833ca7afd43ef8d8786a458eed7b5bf28f30";
 pub const FIRE_0_RUNTIME_PATH: &str = "block/fire_0.png";
 pub const FIRE_1_PNG_SHA1: &str = "a977dc9e9a016eedc4f1bfed4d9a0f9985b5e865";
 pub const FIRE_1_RUNTIME_PATH: &str = "block/fire_1.png";
+
+/// The WATER SCREEN texture (the underwater overlay's pixel source),
+/// generated from the same jar: the source sha1 the screen lane
+/// verifies before it blends (javap: `ScreenEffectRenderer.submitWater`'s
+/// UNDERWATER_LOCATION — `textures/misc/underwater.png`, the 16x16 blue
+/// the eye-under-water pass tiles across the screen).
+pub const UNDERWATER_PNG_SHA1: &str = "568d987c2d88da1ad53abf2f2d31cdef0580475e";
+pub const UNDERWATER_RUNTIME_PATH: &str = "misc/underwater.png";

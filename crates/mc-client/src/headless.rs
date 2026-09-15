@@ -160,6 +160,14 @@ pub struct SceneOpts {
     /// the REAL laws speak — the ignite, the 4.0, the burn — no
     /// scripted fire.
     pub lava_pool: bool,
+    /// THE DIVE SEED: carve a 3x3 pool AT the body's own column — three
+    /// cells of water down (the old surface cell becomes the water
+    /// surface), a forced-solid basin floor, the headroom cleared — and
+    /// SINK the body onto the floor so the EYE sits under the surface
+    /// (the vanilla isEyeInFluid's own geometry, feet + 1.62). The water
+    /// screen overlay reads the honest gate off the seeded scene — no
+    /// scripted blue.
+    pub water_pool: bool,
 }
 
 impl SceneOpts {
@@ -182,6 +190,7 @@ impl SceneOpts {
             || self.ignite_secs > 0.0
             || self.body_fire.is_some()
             || self.lava_pool
+            || self.water_pool
             || self.walk_ticks > 0
             || self.settle_ticks > 0
     }
@@ -355,6 +364,52 @@ pub fn seed_scene(app: &mut crate::screens::App, opts: &SceneOpts) -> Result<()>
                 }
             }
             app.remesh_offline();
+        }
+    }
+    if opts.water_pool {
+        // THE DIVE'S CARVE (the deterministic pool AT the body): 3x3
+        // centered on the body's own column (the spawn column's own
+        // when no body) — the pool level anchors to the CENTER column's
+        // own surface (a taller neighbor — a tree, a slope — never
+        // lifts the basin), the top THREE cells become WATER, the
+        // basin floor under them is forced solid (a pool with a
+        // missing bottom renders a guessed scene), the headroom above
+        // is cleared four cells like the lava shelf speaks. The body
+        // SINKS onto the floor (feet at the floor's top): the eye rides
+        // feet + 1.62 one cell under the surface — the vanilla
+        // isEyeInFluid's own geometry, the water-screen gate reads it
+        // honestly.
+        let n = app.world_size as i32;
+        let (px, pz) = (n / 2, n / 2);
+        if let Some(w) = app.offline_world.as_mut() {
+            let level = crate::screens::top_solid_y(w, px, pz);
+            for ox in -1..=1i32 {
+                for oz in -1..=1i32 {
+                    let x = px + ox;
+                    let z = pz + oz;
+                    w.set(x, level, z, crate::world::WATER);
+                    w.set(x, level - 1, z, crate::world::WATER);
+                    w.set(x, level - 2, z, crate::world::WATER);
+                    // THE BASIN FLOOR: the saturated beach layer under
+                    // the carve speaks WATER in the pond columns — a
+                    // water floor lets the pool drain into a guessed
+                    // pit, the solid dirt keeps the scene honest
+                    if !crate::body::solid(w, x, level - 3, z) {
+                        w.set(x, level - 3, z, crate::world::DIRT);
+                    }
+                    for hy in 1..=4 {
+                        w.set(x, level + hy, z, crate::world::AIR);
+                    }
+                }
+            }
+            app.remesh_offline();
+            // THE SINK (the pool's own column): the feet land on the
+            // basin floor's top (level - 2), the eye one cell under
+            // the surface
+            if let Some(b) = app.body.as_mut() {
+                b.y = (level - 2) as f64;
+                b.on_ground = true;
+            }
         }
     }
     if opts.mobs > 0 {
@@ -949,6 +1004,72 @@ mod tests {
             app.swing.get_attack_anim(0.5),
             0.5,
             "the freeze re-pinned after the ticks"
+        );
+    }
+
+    /// THE DIVE SEED: the pool's 3x3 water column stands at the body,
+    /// the feet on the forced-solid basin floor, the EYE one cell under
+    /// the surface (the vanilla isEyeInFluid's own geometry: feet +
+    /// 1.62) — the water-screen gate's honest scene.
+    #[test]
+    fn the_water_pool_sinks_the_eye_under_the_surface() {
+        let mut app = crate::screens::App::new(262);
+        app.enter_world();
+        seed_scene(
+            &mut app,
+            &SceneOpts {
+                body: true,
+                water_pool: true,
+                perspective: Some(crate::camera::CameraType::FirstPerson),
+                ..SceneOpts::default()
+            },
+        )
+        .unwrap();
+        let body = app.body.as_ref().expect("the body seed must land");
+        let world = app.offline_world.as_ref().unwrap();
+        let (bx, by, bz) = (body.x.floor() as i32, body.y as i32, body.z.floor() as i32);
+        assert_eq!(
+            world.get(bx, by, bz),
+            crate::world::WATER,
+            "the feet's cell is water"
+        );
+        assert_eq!(
+            world.get(bx, by + 1, bz),
+            crate::world::WATER,
+            "the eye's cell is water"
+        );
+        assert!(
+            crate::body::solid(world, bx, by - 1, bz),
+            "the basin floor is solid under the feet"
+        );
+        // the eye geometry: floor(by + 1.62) == by + 1, one cell under
+        // the surface (the surface rides the cell above the eye's)
+        let eye = body.y + body.eye_height();
+        assert_eq!(eye.floor() as i32, by + 1, "the eye sits in the eye cell");
+        // the first-person camera rides the eye INTO the water cell —
+        // the gate reads it (the body_state's own query)
+        let cam = app.world_camera();
+        assert_eq!(
+            world.get(
+                cam.pos.x.floor() as i32,
+                cam.pos.y.floor() as i32,
+                cam.pos.z.floor() as i32
+            ),
+            crate::world::WATER,
+            "the camera's own cell is water"
+        );
+        // the surface: the cell above the eye's carries the pool's top
+        // water, the headroom above it cleared — no canopy roofs the pool
+        let surface = by + 2;
+        assert_eq!(
+            world.get(bx, surface, bz),
+            crate::world::WATER,
+            "the surface cell is the pool's top water"
+        );
+        assert_eq!(
+            world.get(bx, surface + 1, bz),
+            crate::world::AIR,
+            "the headroom above the surface is cleared"
         );
     }
 }

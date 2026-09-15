@@ -2,7 +2,7 @@
 
 Every lane that ships pixels owes the folder a frame. The gallery is the
 proof the features exist as rendered images, not as test names alone.
-89 frames and counting — grouped below by the lane that spoke them.
+91 frames and counting — grouped below by the lane that spoke them.
 
 ## The F5 lane (the third-person avatar) — v0.3.154+
 
@@ -72,6 +72,35 @@ Regenerate:
 cargo run -p mc-client --release -- --headless --screen world --seed 42 \
   --body --lava-pool --body-fire 250 --perspective first \
   --out shots/fire_screen.png
+```
+
+## The water-screen lane (the first-person dive) — v0.3.164
+
+The ScreenEffectRenderer's water arm (javap the 26.2 jar): the
+`isEyeInFluid(WATER)` gate behind the spectator check, ONE camera quad
+on the [-1,1]² plane at z=-0.5 (no translate, no rotate — the quad
+overflows any frustum), the uv corners (yawOff ± 4, pitchOff ± 4) with
+`yawOff = -getYRot()/64`, `pitchOff = getXRot()/64` — the 16x16
+underwater.png tiles REPEAT, 4 wraps span the screen and the pattern
+scrolls as the look turns. The vertex color `colorFromFloat(0.1, br,
+br, br)` — the eye block's own brightness through the Lightmap ramp
+`f/(4-3f)`, the alpha 25/255 the translucent blend scales the texel's
+own 135/146 by. The water fog (the FogRenderer's own lane) sleeps —
+this pass is the submit's water arm verbatim.
+
+| frame | the scene |
+|---|---|
+| `underwater_dive.png` | THE BLUE WASH: the eye one cell under the surface, the 16x16 tile's blue over every pixel (the mean Δb +10 the diff control spoke), the basin walls and the sandy floor through it |
+| `underwater_dive_back.png` | the detached view — the avatar in the basin, NO wash (the submit's first-person gate sleeps the whole block) |
+
+Regenerate the family:
+
+```sh
+cargo run -p mc-client --release -- --headless --screen world --seed 42 \
+  --body --water-pool --perspective first --out shots/underwater_dive.png
+# --water-pool (the 3x3 basin carve AT the body, the body sunk to the
+# floor — the eye under the surface, the REAL isEyeInFluid geometry),
+# --perspective third-back shows the gate's sleep
 ```
 
 ## The zombie lane (the first live mob) — v0.3.155+

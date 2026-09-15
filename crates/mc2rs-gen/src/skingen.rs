@@ -23,10 +23,16 @@ pub const ZOMBIE_JAR_PATH: &str = "assets/minecraft/textures/entity/zombie/zombi
 /// their frames off the blocks atlas path the runtime cache mirrors.
 pub const FIRE_0_JAR_PATH: &str = "assets/minecraft/textures/block/fire_0.png";
 pub const FIRE_1_JAR_PATH: &str = "assets/minecraft/textures/block/fire_1.png";
+/// The water screen's texture (javap `ScreenEffectRenderer.submitWater`:
+/// the `UNDERWATER_LOCATION` static init — `textures/misc/underwater.png`,
+/// the 16x16 blue the eye-under-water pass stretches over the screen
+/// through `RenderTypes.blockScreenEffect`).
+pub const UNDERWATER_JAR_PATH: &str = "assets/minecraft/textures/misc/underwater.png";
 /// The runtime-cache paths the client's loader reads (the same
 /// textures/ prefix strip the other lanes speak).
 pub const FIRE_0_RUNTIME_PATH: &str = "block/fire_0.png";
 pub const FIRE_1_RUNTIME_PATH: &str = "block/fire_1.png";
+pub const UNDERWATER_RUNTIME_PATH: &str = "misc/underwater.png";
 /// Where the client reads the skin at runtime (under the runtime asset root).
 pub const RUNTIME_PATH: &str = "entity/player/wide/steve.png";
 pub const SLIM_RUNTIME_PATH: &str = "entity/player/slim/alex.png";
@@ -65,6 +71,9 @@ pub struct SkinData {
     pub fire_0_png_sha1: String,
     /// sha1 of the flame feature's fire_1 strip (jar-verbatim integrity).
     pub fire_1_png_sha1: String,
+    /// sha1 of the water screen's texture (jar-verbatim integrity) —
+    /// the underwater overlay's pixel source (the 16x16 blue).
+    pub underwater_png_sha1: String,
 }
 
 /// One UV rect in the skin texture, in texels: (u, v, w, h).
@@ -148,6 +157,20 @@ pub fn generate<R: std::io::Read + std::io::Seek>(archive: &mut zip::ZipArchive<
         fw1,
         fh1
     );
+    // THE WATER SCREEN: the underwater overlay's pixel source (javap
+    // `ScreenEffectRenderer.submitWater`'s UNDERWATER_LOCATION static) —
+    // the 16x16 blue the eye-under-water pass tiles 4 wraps across the
+    // screen. The integrity sha1 the screen lane verifies before it
+    // blends.
+    let underwater_bytes = read_entry(archive, UNDERWATER_JAR_PATH).context("read underwater")?;
+    let underwater_png_sha1 = crate::util::sha1_hex(&underwater_bytes);
+    let (uw, uh, _underwater_rgba) = decode_rgba(&underwater_bytes).context("decode underwater")?;
+    anyhow::ensure!(
+        (uw, uh) == (16, 16),
+        "underwater must be the 16x16 screen texture, got {}x{}",
+        uw,
+        uh
+    );
     Ok(SkinData {
         png_sha1,
         rgba_sha1: crate::util::sha1_hex(&rgba),
@@ -157,6 +180,7 @@ pub fn generate<R: std::io::Read + std::io::Seek>(archive: &mut zip::ZipArchive<
         zombie_png_sha1,
         fire_0_png_sha1,
         fire_1_png_sha1,
+        underwater_png_sha1,
     })
 }
 
@@ -253,6 +277,14 @@ pub fn emit(data: &SkinData) -> Result<String> {
     out.push_str(&format!(
         "pub const FIRE_1_RUNTIME_PATH: &str = \"{FIRE_1_RUNTIME_PATH}\";\n"
     ));
+    out.push_str("\n/// The WATER SCREEN texture (the underwater overlay's pixel source),\n/// generated from the same jar: the source sha1 the screen lane\n/// verifies before it blends (javap: `ScreenEffectRenderer.submitWater`'s\n/// UNDERWATER_LOCATION — `textures/misc/underwater.png`, the 16x16 blue\n/// the eye-under-water pass tiles across the screen).\n");
+    out.push_str(&format!(
+        "pub const UNDERWATER_PNG_SHA1: &str = \"{}\";\n",
+        data.underwater_png_sha1
+    ));
+    out.push_str(&format!(
+        "pub const UNDERWATER_RUNTIME_PATH: &str = \"{UNDERWATER_RUNTIME_PATH}\";\n"
+    ));
     Ok(out)
 }
 
@@ -321,6 +353,24 @@ mod tests {
         out
     }
 
+    /// A 16x16 RGBA png — the water screen's shape, one translucent blue
+    /// texel so the decode is non-trivial.
+    fn underwater_png() -> Vec<u8> {
+        let (w, h) = (16u32, 16u32);
+        let mut rgba = vec![0u8; (w * h * 4) as usize];
+        let o = ((3 * w + 5) * 4) as usize;
+        rgba[o..o + 4].copy_from_slice(&[31, 85, 255, 135]);
+        let mut out = Vec::new();
+        {
+            let mut enc = png::Encoder::new(&mut out, w, h);
+            enc.set_color(png::ColorType::Rgba);
+            enc.set_depth(png::BitDepth::Eight);
+            let mut wr = enc.write_header().unwrap();
+            wr.write_image_data(&rgba).unwrap();
+        }
+        out
+    }
+
     #[test]
     fn parses_the_skins_and_emits_the_arm_geometry() {
         let png = skin_png();
@@ -330,6 +380,8 @@ mod tests {
 
         let strip = strip_png();
         let expected_fire0_sha1 = crate::util::sha1_hex(&strip);
+        let underwater = underwater_png();
+        let expected_underwater_sha1 = crate::util::sha1_hex(&underwater);
 
         let mut zip = zip_of(&[
             (WIDE_STEVE_JAR_PATH, png.clone()),
@@ -337,6 +389,7 @@ mod tests {
             (ZOMBIE_JAR_PATH, png),
             (FIRE_0_JAR_PATH, strip.clone()),
             (FIRE_1_JAR_PATH, strip),
+            (UNDERWATER_JAR_PATH, underwater),
         ]);
         let data = generate(&mut zip).unwrap();
         assert_eq!(data.side, 64);
@@ -344,6 +397,10 @@ mod tests {
         assert_eq!(data.rgba_sha1, expected_rgba_sha1, "decode pinned");
         assert_eq!(data.slim_png_sha1, expected_png_sha1, "the fixture doubles as the slim skin");
         assert_eq!(data.fire_0_png_sha1, expected_fire0_sha1, "the strip's own sha1");
+        assert_eq!(
+            data.underwater_png_sha1, expected_underwater_sha1,
+            "the water screen's own sha1"
+        );
 
         let emitted = emit(&data).unwrap();
         assert!(emitted.contains(&format!("pub const SKIN_SIDE: u32 = 64;")));
@@ -355,6 +412,9 @@ mod tests {
         assert!(emitted.contains(&format!("pub const FIRE_0_PNG_SHA1: &str = \"{expected_fire0_sha1}\";")));
         assert!(emitted.contains("pub const FIRE_0_RUNTIME_PATH: &str = \"block/fire_0.png\";"));
         assert!(emitted.contains("pub const FIRE_1_RUNTIME_PATH: &str = \"block/fire_1.png\";"));
+        // the water screen: the sha1 and the runtime path land verbatim
+        assert!(emitted.contains(&format!("pub const UNDERWATER_PNG_SHA1: &str = \"{expected_underwater_sha1}\";")));
+        assert!(emitted.contains("pub const UNDERWATER_RUNTIME_PATH: &str = \"misc/underwater.png\";"));
         assert!(emitted.contains("pub const SLIM_ARM_BOX_PX: [u16; 3] = [3, 12, 4];"));
         assert!(emitted.contains("pub const SLIM_ARM_BOX_ORIGIN_PX: [i16; 3] = [-2, -2, -2];"));
         // the six faces unfold from texOffs (40,16) with the box 4x12x4
@@ -430,5 +490,20 @@ mod tests {
             skin_png(),
         ), (SLIM_ALEX_JAR_PATH, skin_png())]);
         assert!(generate(&mut zip).is_err(), "missing zombie skin must be refused");
+    }
+
+    #[test]
+    fn refuses_a_zip_without_the_underwater_screen() {
+        // the water screen's table must not be invented either: a jar
+        // missing underwater.png fails the generation (the same
+        // data-driven rule)
+        let mut zip = zip_of(&[
+            (WIDE_STEVE_JAR_PATH, skin_png()),
+            (SLIM_ALEX_JAR_PATH, skin_png()),
+            (ZOMBIE_JAR_PATH, skin_png()),
+            (FIRE_0_JAR_PATH, strip_png()),
+            (FIRE_1_JAR_PATH, strip_png()),
+        ]);
+        assert!(generate(&mut zip).is_err(), "missing underwater.png must be refused");
     }
 }

@@ -402,6 +402,9 @@ pub struct App {
     /// The flame feature's two strips (the burn lane's pixel source —
     /// lazy-loaded and sha1-verified the zombie skin's way).
     pub fire_strips: Option<crate::avatar::FireStrips>,
+    /// The water screen's texture (the underwater overlay's pixel
+    /// source — lazy-loaded and sha1-verified the flame strips' way).
+    pub underwater_screen: Option<crate::avatar::UnderwaterScreen>,
     /// THE MOB LIST — the zombies the offline world carries (the
     /// networked lane's entity stream is the wire's future own). The
     /// deterministic headless scenes never spawn one: the pixel
@@ -715,6 +718,7 @@ impl App {
             avatar: None,
             zombie_avatar: None,
             fire_strips: None,
+            underwater_screen: None,
             mobs: Vec::new(),
             spawn_clock: 0,
             next_mob_id: 1,
@@ -3628,7 +3632,7 @@ impl App {
     /// camera above the spawn surface facing east (+X — the direction the
     /// official 26.x sun rises), the exact camera the headless pixel
     /// tests pin.
-    fn world_camera(&self) -> crate::camera::Camera {
+    pub(crate) fn world_camera(&self) -> crate::camera::Camera {
         // THE BODY's own pose first — the first-person body the windowed
         // app feeds is the camera's highest authority (the vanilla
         // client's own position); the deterministic scenes never own a
@@ -3784,12 +3788,130 @@ impl App {
                 arm.draw(fb, ctx.proj, self.swing.get_attack_anim(0.5));
             }
         }
-        // THE FIRE SCREEN OVERLAY (the vanilla ScreenEffectRenderer
-        // submit's own tail — the pass the GameRenderer speaks AFTER
-        // renderItemInHand, BEFORE the HUD): the burning player's
-        // first-person flame sheets, the FIRE_1 sprite's two camera
-        // quads the buildQuad bytecode speaks.
+        // THE SCREEN EFFECT OVERLAYS (the vanilla ScreenEffectRenderer
+        // submit's own chain — the pass the GameRenderer speaks AFTER
+        // renderItemInHand, BEFORE the HUD): the water arm first, the
+        // fire arm second (the submit bytecode's own order — the
+        // isEyeInFluid check at offset 93, the isOnFire check at 120),
+        // the head-in-block arm sleeps until a scene places the eye in
+        // a solid (the honest unseen).
+        self.render_water_overlay(fb, &ctx);
         self.render_fire_overlay(fb, &ctx, day_time);
+    }
+
+    /// THE WATER SCREEN OVERLAY (javap `ScreenEffectRenderer.submitWater`,
+    /// the 26.2 jar): the submit chain's own water arm — the
+    /// `player.isEyeInFluid(FluidTags.WATER)` gate the spectator check
+    /// guards, the eye block's own brightness the Lightmap ramp folds,
+    /// ONE camera quad the `lambda$submitWater$0` buildQuad call speaks:
+    /// the [-1, 1]² plane at z = -0.5 (a fresh PoseStack — no translate,
+    /// no rotate — the quad overflows any frustum, the full screen is
+    /// always covered), the uv corners (yawOff ± 4, pitchOff ± 4) with
+    /// `yawOff = -getYRot() / 64`, `pitchOff = getXRot() / 64` — the
+    /// texture wraps REPEAT, 4 full tiles span the screen and the
+    /// pattern scrolls as the look turns. The walk is buildQuad's own:
+    /// (x0,y0)->(f7,f8), (x1,y0)->(f9,f8), (x1,y1)->(f9,f10),
+    /// (x0,y1)->(f7,f10) with f7 = yawOff + 4, f8 = pitchOff + 4,
+    /// f9 = yawOff, f10 = pitchOff. The vertex color is
+    /// `ARGB.colorFromFloat(0.1, br, br, br)` — the eye brightness the
+    /// grayscale multiplier speaks, the alpha `as8BitChannel(0.1) = 25`
+    /// the translucent blend scales the texel's own alpha (135/146) by.
+    /// The brightness is the submitWater bytecode's own chain:
+    /// `getMaxLocalRawBrightness(eyePos)` = `max(block, sky - darken)`
+    /// (the clear-weather darken 0), then `Lightmap.getBrightness`'s
+    /// ramp `f = light/15; f / (4 - 3f)` (the overworld's ambientLight
+    /// 0.0 lerp is the identity) — the same ramp the mesher's
+    /// `light_brightness` speaks. No light grid (the offline scenes) or
+    /// no known cell keeps the legacy full-bright the terrain's own
+    /// `None => [1.0; 3]` convention speaks. The draw order rides the
+    /// submit chain: BEFORE the fire arm, AFTER the hand.
+    fn render_water_overlay(&mut self, fb: &mut crate::raster::Framebuf, ctx: &RenderCtx) {
+        // THE GATE PAIR (the submit bytecode's own two ifne's): the
+        // first-person camera only, the eye's own fluid only — the
+        // body-less scenes carry no player, the overlay stays silent
+        if !self.perspective.is_first_person() {
+            return;
+        }
+        if self.body.is_none() {
+            return; // the deterministic scenes own no player — nothing swims
+        }
+        let cam = self.world_camera();
+        let eye_water = self
+            .active_world()
+            .map(|w| {
+                w.get(
+                    cam.pos.x.floor() as i32,
+                    cam.pos.y.floor() as i32,
+                    cam.pos.z.floor() as i32,
+                ) == crate::world::WATER
+            })
+            .unwrap_or(false);
+        if !eye_water {
+            return;
+        }
+        if self.underwater_screen.is_none() {
+            self.underwater_screen =
+                crate::avatar::UnderwaterScreen::load(std::path::Path::new("assets-cache/jar"));
+        }
+        let Some(screen) = &self.underwater_screen else {
+            return; // the texture failed its sha1 — the overlay stays honest
+        };
+        // THE BRIGHTNESS (the submitWater bytecode's own light chain at
+        // the eye block): max(block, sky - darken) with the clear
+        // weather's darken 0, then the Lightmap ramp; the unknown grid
+        // keeps the terrain's legacy full-bright
+        let (ex, ey, ez) = (
+            cam.pos.x.floor() as i32,
+            cam.pos.y.floor() as i32,
+            cam.pos.z.floor() as i32,
+        );
+        let brightness = self
+            .active_world()
+            .and_then(|w| {
+                w.light
+                    .as_ref()
+                    .map(|g| g.cell(w.chunks_per_side, ex, ey, ez))
+            })
+            .map(|(sky, block)| match (sky, block) {
+                // max(block, sky - darken) — the clear weather's darken
+                // 0 keeps the sky level as the ramp reads it
+                (Some(s), Some(b)) => crate::mesher::light_brightness(b.max(s) as f32),
+                (Some(s), None) => crate::mesher::light_brightness(s as f32),
+                (None, Some(b)) => crate::mesher::light_brightness(b as f32),
+                _ => 1.0,
+            })
+            .unwrap_or(1.0);
+        // THE UV OFFSETS (the lambda's own pair): the player's yaw/pitch
+        // degrees — the camera's own angles negated into the vanilla
+        // conventions (getYRot = the body's yaw degrees, getXRot = the
+        // pitch with DOWN positive — the camera's pitch rides the
+        // opposite sign)
+        let yaw_off = -(cam.yaw - std::f32::consts::PI).to_degrees() / 64.0;
+        let pitch_off = -cam.pitch.to_degrees() / 64.0;
+        let (u0, v0, u1, v1) = (yaw_off + 4.0, pitch_off + 4.0, yaw_off, pitch_off);
+        // THE QUAD (buildQuad's own vertex walk — the corners (x0,y0)
+        // -> (f7,f8), (x1,y0) -> (f9,f8), (x1,y1) -> (f9,f10),
+        // (x0,y1) -> (f7,f10) at the z = -0.5 plane)
+        let quad = crate::raster::SampledQuad {
+            pts: [
+                [-1.0, -1.0, -0.5],
+                [1.0, -1.0, -0.5],
+                [1.0, 1.0, -0.5],
+                [-1.0, 1.0, -0.5],
+            ],
+            uv: [[u0, v0], [u1, v0], [u1, v1], [u0, v1]],
+            tex: "underwater_screen",
+            tint: [brightness, brightness, brightness], // the ARGB grayscale
+        };
+        // THE DRAW (the translucent blend at the vertex alpha the
+        // colorFromFloat(0.1, ...) speaks — as8BitChannel(0.1) = 25/255;
+        // the texel's own alpha 135/146 scales it further)
+        fb.draw_translucent_sampled_quads(
+            ctx.proj,
+            &[quad],
+            25.0 / 255.0,
+            &mut |_tex, u, v| Some(screen.pixel(u, v)),
+        );
     }
 
     /// THE FIRE SCREEN OVERLAY (javap `ScreenEffectRenderer.submit`'s
@@ -9290,6 +9412,135 @@ mod tests {
         assert!(
             !app.mobs.iter().any(|m| m.id == 999),
             "the corpse left the world"
+        );
+    }
+
+    /// THE WATER SCREEN's GATE LAWS (javap `ScreenEffectRenderer.
+    /// submitWater`'s own pair): the dive scene blends the 16x16 blue
+    /// over EVERY pixel (the [-1,1]² quad at z=-0.5 covers any
+    /// frustum), the dry eye, the detached camera and the body-less
+    /// scene all keep the framebuffer bit-for-bit.
+    #[test]
+    fn the_water_overlay_gates_and_blends() {
+        // the tile rides synthetic texels (the loader's file lane is
+        // the ignored test's own) — the blue the vanilla texture speaks
+        let blue_tile = || {
+            let mut rgba = vec![0u8; 16 * 16 * 4];
+            for p in rgba.chunks_exact_mut(4) {
+                p.copy_from_slice(&[31, 85, 255, 135]);
+            }
+            crate::avatar::UnderwaterScreen { rgba }
+        };
+        let ctx_of = |cam: &crate::camera::Camera| RenderCtx {
+            view: cam.view(),
+            proj: crate::math::Mat4::perspective(70.0f32.to_radians(), 1.0, 0.05, 512.0),
+            fog_color: [0.0, 0.0, 0.0],
+            fog_near: 100.0,
+            fog_far: 200.0,
+        };
+
+        // THE DIVE: the seeded pool + the first-person eye under the
+        // surface — the overlay answers through the real gate
+        let mut app = App::new(3);
+        app.enter_world();
+        crate::headless::seed_scene(
+            &mut app,
+            &crate::headless::SceneOpts {
+                body: true,
+                water_pool: true,
+                perspective: Some(crate::camera::CameraType::FirstPerson),
+                ..crate::headless::SceneOpts::default()
+            },
+        )
+        .unwrap();
+        app.underwater_screen = Some(blue_tile());
+        let cam = app.world_camera();
+        let mut fb = crate::raster::Framebuf::new(64, 64);
+        fb.color.fill(255);
+        app.render_water_overlay(&mut fb, &ctx_of(&cam));
+        // EVERY pixel blended: the white falls toward the texel by the
+        // texel alpha x the vertex alpha (135/255 x 25/255 ≈ 0.052) —
+        // the red drops the most, the blue the least (the blue tile)
+        let mut blue_wins = 0usize;
+        for px in fb.color.chunks_exact(3) {
+            assert_ne!(px[0], 255, "every pixel blended, none untouched");
+            if px[2] > px[0] {
+                blue_wins += 1;
+            }
+        }
+        assert!(
+            blue_wins > fb.color.len() / 3 / 2,
+            "the blue dominates the blended screen: {blue_wins}"
+        );
+
+        // THE DRY EYE: the same scene without the pool keeps the
+        // framebuffer untouched
+        let mut dry = App::new(3);
+        dry.enter_world();
+        crate::headless::seed_scene(
+            &mut dry,
+            &crate::headless::SceneOpts {
+                body: true,
+                perspective: Some(crate::camera::CameraType::FirstPerson),
+                ..crate::headless::SceneOpts::default()
+            },
+        )
+        .unwrap();
+        dry.underwater_screen = Some(blue_tile());
+        let cam = dry.world_camera();
+        let mut fb = crate::raster::Framebuf::new(64, 64);
+        fb.color.fill(255);
+        dry.render_water_overlay(&mut fb, &ctx_of(&cam));
+        assert!(
+            fb.color.chunks(3).all(|px| px == [255, 255, 255]),
+            "the dry eye draws nothing"
+        );
+
+        // THE DETACHED CAMERA: the water eye behind the third person —
+        // the submit's first-person gate sleeps the whole block
+        let mut detached = App::new(3);
+        detached.enter_world();
+        crate::headless::seed_scene(
+            &mut detached,
+            &crate::headless::SceneOpts {
+                body: true,
+                water_pool: true,
+                perspective: Some(crate::camera::CameraType::ThirdPersonBack),
+                ..crate::headless::SceneOpts::default()
+            },
+        )
+        .unwrap();
+        detached.underwater_screen = Some(blue_tile());
+        let cam = detached.world_camera();
+        let mut fb = crate::raster::Framebuf::new(64, 64);
+        fb.color.fill(255);
+        detached.render_water_overlay(&mut fb, &ctx_of(&cam));
+        assert!(
+            fb.color.chunks(3).all(|px| px == [255, 255, 255]),
+            "the detached view draws no screen effect"
+        );
+
+        // THE BODY-LESS SCENE: no player, no overlay (the submit's own
+        // player field dies before the gates)
+        let mut nobody = App::new(3);
+        nobody.enter_world();
+        crate::headless::seed_scene(
+            &mut nobody,
+            &crate::headless::SceneOpts {
+                water_pool: true,
+                perspective: Some(crate::camera::CameraType::FirstPerson),
+                ..crate::headless::SceneOpts::default()
+            },
+        )
+        .unwrap();
+        nobody.underwater_screen = Some(blue_tile());
+        let cam = nobody.world_camera();
+        let mut fb = crate::raster::Framebuf::new(64, 64);
+        fb.color.fill(255);
+        nobody.render_water_overlay(&mut fb, &ctx_of(&cam));
+        assert!(
+            fb.color.chunks(3).all(|px| px == [255, 255, 255]),
+            "the player-less scene draws no overlay"
         );
     }
 }
