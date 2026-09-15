@@ -228,5 +228,39 @@ pub fn extract_runtime_assets(
             }
         }
     }
+    // The FIRE strips: the flame feature's pixel sources —
+    // `FlameFeatureRenderer.buildGroup` pulls `block/fire_0` and
+    // `block/fire_1` off the blocks atlas (javap: ModelBakery.FIRE_0 /
+    // FIRE_1 sprite ids); the 16x512 strips ride the animated frame
+    // tiles the burn lane samples (fire_0's mcmeta playlist
+    // [16..31, 0..15], fire_1 sequential). The same sha1-verified
+    // stream pattern the skins speak.
+    {
+        for jar_rel in FIRE_STRIP_JAR_PATHS {
+            // the runtime path mirrors the jar path minus the textures
+            // prefix (`assets/minecraft/textures/` — the same strip the
+            // other texture lanes keep)
+            let rel = jar_rel
+                .strip_prefix("assets/minecraft/textures/")
+                .unwrap_or(jar_rel);
+            let dest = out_root.join(rel);
+            if dest.exists() {
+                continue;
+            }
+            if let Ok(bytes) = read_entry(archive, jar_rel) {
+                fs::create_dir_all(dest.parent().unwrap())?;
+                fs::write(dest, bytes)?;
+                n += 1;
+            }
+        }
+    }
     Ok(n)
 }
+
+/// The flame feature's two animated strips, straight from the jar's
+/// `assets/minecraft/textures/block/` — the runtime pixel sources the
+/// client sha1-verifies before it draws a burning mob.
+const FIRE_STRIP_JAR_PATHS: [&str; 2] = [
+    "assets/minecraft/textures/block/fire_0.png",
+    "assets/minecraft/textures/block/fire_1.png",
+];

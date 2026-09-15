@@ -272,15 +272,25 @@ pub struct TimelineDef {
     /// render track the lightmap's SkyLightColor multiplies the stated
     /// base by, per channel (empty when the timeline carries no such track)
     pub sky_light_color: &'static [(i64, [u8; 3])],
+    /// `minecraft:gameplay/sky_light_level` keyframes, sorted by tick —
+    /// the sky-light multiplier the gameplay side reads (empty when the
+    /// timeline carries no such track)
+    pub sky_light_level: &'static [(i64, f32)],
+    /// `minecraft:gameplay/monsters_burn` keyframes, sorted by tick — the
+    /// boolean hold track the sun-burn predicate gates on (empty when the
+    /// timeline carries no such track)
+    pub monsters_burn: &'static [(i64, bool)],
 }
 
 pub static TL_DAY_SKY_LIGHT_FACTOR: [(i64, f32); 4] = [(730, 1.0), (11270, 1.0), (13140, 0.24), (22860, 0.24)];
 pub static TL_DAY_SKY_LIGHT_COLOR: [(i64, [u8; 3]); 4] = [(730, [255, 255, 255]), (11270, [255, 255, 255]), (13140, [122, 122, 255]), (22860, [122, 122, 255])];
+pub static TL_DAY_SKY_LIGHT_LEVEL: [(i64, f32); 4] = [(133, 1.0), (11867, 1.0), (13670, 0.26666668), (22330, 0.26666668)];
+pub static TL_DAY_MONSTERS_BURN: [(i64, bool); 2] = [(12542, false), (23460, true)];
 pub static TIMELINES: [TimelineDef; 4] = [
-    TimelineDef { name: "minecraft:day", clock: "minecraft:overworld", period_ticks: Some(24000), tracks: 18, sky_light_factor: &TL_DAY_SKY_LIGHT_FACTOR, sky_light_color: &TL_DAY_SKY_LIGHT_COLOR },
-    TimelineDef { name: "minecraft:early_game", clock: "minecraft:overworld", period_ticks: None, tracks: 1, sky_light_factor: &[], sky_light_color: &[] },
-    TimelineDef { name: "minecraft:moon", clock: "minecraft:overworld", period_ticks: Some(192000), tracks: 2, sky_light_factor: &[], sky_light_color: &[] },
-    TimelineDef { name: "minecraft:villager_schedule", clock: "minecraft:overworld", period_ticks: Some(24000), tracks: 2, sky_light_factor: &[], sky_light_color: &[] },
+    TimelineDef { name: "minecraft:day", clock: "minecraft:overworld", period_ticks: Some(24000), tracks: 18, sky_light_factor: &TL_DAY_SKY_LIGHT_FACTOR, sky_light_color: &TL_DAY_SKY_LIGHT_COLOR, sky_light_level: &TL_DAY_SKY_LIGHT_LEVEL, monsters_burn: &TL_DAY_MONSTERS_BURN },
+    TimelineDef { name: "minecraft:early_game", clock: "minecraft:overworld", period_ticks: None, tracks: 1, sky_light_factor: &[], sky_light_color: &[], sky_light_level: &[], monsters_burn: &[] },
+    TimelineDef { name: "minecraft:moon", clock: "minecraft:overworld", period_ticks: Some(192000), tracks: 2, sky_light_factor: &[], sky_light_color: &[], sky_light_level: &[], monsters_burn: &[] },
+    TimelineDef { name: "minecraft:villager_schedule", clock: "minecraft:overworld", period_ticks: Some(24000), tracks: 2, sky_light_factor: &[], sky_light_color: &[], sky_light_level: &[], monsters_burn: &[] },
 ];
 
 /// Timeline by registry id ("minecraft:day"), sorted for binary search.

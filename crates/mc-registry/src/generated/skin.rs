@@ -73,3 +73,13 @@ pub const SLIM_RUNTIME_PATH: &str = "entity/player/slim/alex.png";
 /// 64x64 wide humanoid layout the AvatarModel geometry unwraps).
 pub const ZOMBIE_PNG_SHA1: &str = "3d28d27b5388a7c2a296586649e98d068a795c2d";
 pub const ZOMBIE_RUNTIME_PATH: &str = "entity/zombie/zombie.png";
+
+/// The FLAME strips (the burn lane's pixel sources), generated from
+/// the same jar: the source sha1s the burning mob's renderer verifies
+/// before it draws (javap: `FlameFeatureRenderer.buildGroup`'s
+/// ModelBakery.FIRE_0 / FIRE_1 — the 16x512, 32-frame strips; fire_0's
+/// mcmeta playlist [16..31, 0..15], fire_1 sequential).
+pub const FIRE_0_PNG_SHA1: &str = "2044833ca7afd43ef8d8786a458eed7b5bf28f30";
+pub const FIRE_0_RUNTIME_PATH: &str = "block/fire_0.png";
+pub const FIRE_1_PNG_SHA1: &str = "a977dc9e9a016eedc4f1bfed4d9a0f9985b5e865";
+pub const FIRE_1_RUNTIME_PATH: &str = "block/fire_1.png";

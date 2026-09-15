@@ -126,6 +126,71 @@ pub fn sky_light_factor(day_tick: i64) -> f32 {
     evaluate(&SKY_LIGHT_FACTOR_KEYS, Some(DAY_PERIOD_TICKS), day_tick)
 }
 
+/// (tick, value) keyframes of `minecraft:gameplay/sky_light_level` in
+/// `data/minecraft/timeline/day.json` (extracted from the official 26.2
+/// jar, this run), sorted by tick, cyclic with [`DAY_PERIOD_TICKS`].
+/// Modifier `multiply` over the attribute DEFAULT 1.0 — the track IS
+/// the whole value for the overworld. Full 1.0 through the day
+/// (133..11867), fading to the night value 0.26666668 (the JSON's own
+/// literal — 15 x 0.26666668 = level 4, the same floor the old
+/// cos-formula's darken 11 landed on) by 13670, holding to 22330,
+/// ramping back through the wrap segment (22330 -> 133+24000).
+const SKY_LIGHT_LEVEL_KEYS: [(i64, f32); 4] =
+    [(133, 1.0), (11_867, 1.0), (13_670, 0.26666668), (22_330, 0.26666668)];
+
+/// The gameplay sky-light track at a day tick: the multiplier the
+/// overworld applies to the sky-light channel (1.0 day / 0.26666668
+/// night, linear ramps between — the same cyclic-linear walk
+/// [`evaluate`] gives the visual factor).
+pub fn sky_light_level(day_tick: i64) -> f32 {
+    evaluate(&SKY_LIGHT_LEVEL_KEYS, Some(DAY_PERIOD_TICKS), day_tick)
+}
+
+/// `Level.updateSkyBrightness()`'s own law (javap, jdk-25, 26.2):
+/// `this.skyDarken = (int)(15.0F - SKY_LIGHT_LEVEL)` — the f2i
+/// truncation toward zero, the attribute sampled at the dimension
+/// level. THE ATTRIBUTE IS THE FOLD: the registered default 15.0
+/// (javap EnvironmentAttributes' builder — `ldc_w 15.0f`, the range
+/// 0..15) multiplied by the timeline track's `multiply` modifier —
+/// so the day lands (int)(15-15) = 0 and the night plateau (int)(15 -
+/// 15x0.26666668) = 11 (the f32 product rounds to exactly 4.0 — the
+/// classic night darken speaks again). The raw-brightness engine
+/// subtracts this from the sky-light channel (`LevelLightEngine
+/// .getRawBrightness`: sky - darken, max with block) and
+/// `Mob.isSunBurnTick` gates on the result through the magic ramp.
+pub fn sky_darken(day_tick: i64) -> i32 {
+    (15.0_f32 - 15.0_f32 * sky_light_level(day_tick)) as i32
+}
+
+/// (tick, value) keyframes of `minecraft:gameplay/monsters_burn` in
+/// `data/minecraft/timeline/day.json`, cyclic with
+/// [`DAY_PERIOD_TICKS`]. A BOOLEAN track — the value HOLDS from each
+/// keyframe until the next (no interpolation: the KeyframeTrack's
+/// boolean sampler snaps; the modifier `or` folds nothing extra for
+/// the overworld whose timeline carries the only layer). TRUE from
+/// 23460 (the pre-dawn edge — 540 ticks before the day marker at
+/// 24000/0) through the wrap to 12542 (mid sky-fade after the 12000
+/// sunset); FALSE 12542..23460 — the zombies burn the whole day and
+/// stop the moment the dusk deepens.
+const MONSTERS_BURN_KEYS: [(i64, bool); 2] = [(12_542, false), (23_460, true)];
+
+/// The gameplay monsters_burn gate at a day tick — the exact predicate
+/// `Mob.isSunBurnTick` reads through the environment-attribute system
+/// (`EnvironmentAttributes.MONSTERS_BURN`, sampled at the entity's own
+/// position; for the overworld the track is time-only, so the position
+/// drops out).
+pub fn monsters_burn(day_tick: i64) -> bool {
+    let mt = day_tick.rem_euclid(DAY_PERIOD_TICKS);
+    // the hold-until-next walk over the sorted keys, wrapping
+    let mut value = MONSTERS_BURN_KEYS[MONSTERS_BURN_KEYS.len() - 1].1;
+    for &(t, v) in &MONSTERS_BURN_KEYS {
+        if mt >= t {
+            value = v;
+        }
+    }
+    value
+}
+
 /// (tick, raw 0..=255 channel value) of `minecraft:visual/sky_light_color`
 /// in `data/minecraft/timeline/day.json` (extracted from the official
 /// 26.2 jar, this run's javap/jar audit), sorted by tick, cyclic with
@@ -285,5 +350,58 @@ mod tests {
             .expect("the generated table carries the day timeline");
         assert_eq!(&SKY_LIGHT_FACTOR_KEYS[..], day.sky_light_factor);
         assert_eq!(Some(DAY_PERIOD_TICKS), day.period_ticks);
+    }
+
+    #[test]
+    fn the_gameplay_tracks_match_the_generated_timeline_table() {
+        // the burn lane's two gameplay tracks against the generated
+        // table (the same day.json rows the worldgen emitter extracts)
+        let day = mc_registry::generated::worldgen::timeline("minecraft:day")
+            .expect("the generated table carries the day timeline");
+        assert_eq!(
+            &SKY_LIGHT_LEVEL_KEYS[..],
+            day.sky_light_level,
+            "the sky-light level track byte-matches"
+        );
+        assert_eq!(
+            &MONSTERS_BURN_KEYS[..],
+            day.monsters_burn,
+            "the monsters_burn track byte-matches"
+        );
+    }
+
+    #[test]
+    fn the_sky_darken_law_truncates_the_track() {
+        // Level.updateSkyBrightness's (int)(15 - 15*track): the fold
+        // the attribute system speaks — full day keeps 0, the night
+        // plateau lands the CLASSIC 11 (15x0.26666668 rounds to 4.0),
+        // the dusk ramp walks the integers between with the f2i steps
+        assert_eq!(sky_darken(6_000), 0, "noon: no darkening");
+        assert_eq!(sky_darken(11_866), 0, "the last full-brightness tick");
+        assert_eq!(sky_darken(12_000), 0, "the early fade stays 0");
+        assert_eq!(sky_darken(18_000), 11, "midnight: the classic 11");
+        assert_eq!(sky_darken(13_670), 11, "the fade's end keyframe");
+        // the wrap: tick 24000 == tick 0
+        assert_eq!(sky_darken(24_000), sky_darken(0));
+    }
+
+    #[test]
+    fn the_monsters_burn_window_speaks_day_json() {
+        // the boolean hold track: true from 23460 through the wrap to
+        // 12542, false 12542..23460 — the exact edges day.json states
+        assert!(monsters_burn(0), "dawn: burning");
+        assert!(monsters_burn(6_000), "noon: burning");
+        assert!(monsters_burn(12_541), "the last burning dusk tick");
+        assert!(!monsters_burn(12_542), "the flip tick: out");
+        assert!(!monsters_burn(18_000), "midnight: safe");
+        assert!(!monsters_burn(23_459), "the last safe tick");
+        assert!(monsters_burn(23_460), "the flip tick: burning");
+        assert!(monsters_burn(23_999), "the pre-dawn edge");
+        // a negative tick wraps like the clock's own rem_euclid
+        assert!(monsters_burn(-1), "the wrap lands on the burning edge");
+        // the full-period walk: burning 13082 ticks (12542 + the 540
+        // pre-dawn), safe 10918
+        let burning = (0..24_000).filter(|t| monsters_burn(*t)).count();
+        assert_eq!(burning, 24_000 - (23_460 - 12_542), "the window width");
     }
 }

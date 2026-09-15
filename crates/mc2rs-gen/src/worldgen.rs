@@ -162,6 +162,15 @@ pub struct TimelineEntry {
     /// (tick, raw channel triple) of `minecraft:visual/sky_light_color`,
     /// sorted by tick — empty when the timeline carries no such track
     pub sky_light_color: Vec<(i64, [u8; 3])>,
+    /// (tick, value) pairs of `minecraft:gameplay/sky_light_level`, sorted
+    /// by tick — the sky-light multiplier the burn lane and the raw
+    /// brightness engine read (empty when the timeline carries no such
+    /// track)
+    pub sky_light_level: Vec<(i64, f32)>,
+    /// (tick, value) pairs of `minecraft:gameplay/monsters_burn`, sorted
+    /// by tick — the boolean hold track `Mob.isSunBurnTick` gates on
+    /// (empty when the timeline carries no such track)
+    pub monsters_burn: Vec<(i64, bool)>,
 }
 
 #[derive(Debug, Default)]
@@ -498,6 +507,38 @@ pub fn generate<R: std::io::Read + std::io::Seek>(archive: &mut zip::ZipArchive<
                         })
                         .unwrap_or_default();
                     sky_light_color.sort_by_key(|(t, _)| *t);
+                    let mut sky_light_level: Vec<(i64, f32)> = v
+                        .get("tracks")
+                        .and_then(|t| t.get("minecraft:gameplay/sky_light_level"))
+                        .and_then(|t| t.get("keyframes"))
+                        .and_then(Value::as_array)
+                        .map(|kfs| {
+                            kfs.iter()
+                                .filter_map(|kf| {
+                                    let t = kf.get("ticks")?.as_i64()?;
+                                    let val = kf.get("value")?.as_f64()?;
+                                    Some((t, val as f32))
+                                })
+                                .collect()
+                        })
+                        .unwrap_or_default();
+                    sky_light_level.sort_by_key(|(t, _)| *t);
+                    let mut monsters_burn: Vec<(i64, bool)> = v
+                        .get("tracks")
+                        .and_then(|t| t.get("minecraft:gameplay/monsters_burn"))
+                        .and_then(|t| t.get("keyframes"))
+                        .and_then(Value::as_array)
+                        .map(|kfs| {
+                            kfs.iter()
+                                .filter_map(|kf| {
+                                    let t = kf.get("ticks")?.as_i64()?;
+                                    let val = kf.get("value")?.as_bool()?;
+                                    Some((t, val))
+                                })
+                                .collect()
+                        })
+                        .unwrap_or_default();
+                    monsters_burn.sort_by_key(|(t, _)| *t);
                     let entry = TimelineEntry {
                         name: format!("minecraft:{id}"),
                         clock: v
@@ -509,6 +550,8 @@ pub fn generate<R: std::io::Read + std::io::Seek>(archive: &mut zip::ZipArchive<
                         tracks,
                         sky_light_factor,
                         sky_light_color,
+                        sky_light_level,
+                        monsters_burn,
                     };
                     data.timelines.insert(id, entry);
                 }
@@ -699,7 +742,7 @@ pub fn emit(data: &WorldgenData) -> Result<String> {
 
     out.push_str("/// One built-in `minecraft:timeline` registry entry (the jar's\n");
     out.push_str("/// `data/minecraft/timeline/*.json`): keyframe tracks over a world clock.\n");
-    out.push_str("#[derive(Debug, Clone, Copy, PartialEq)]\npub struct TimelineDef {\n    pub name: &'static str,\n    pub clock: &'static str,\n    pub period_ticks: Option<i64>,\n    pub tracks: usize,\n    /// `minecraft:visual/sky_light_factor` keyframes, sorted by tick — the\n    /// render track the lightmap's SkyFactor multiplies the sky term by\n    /// (empty when the timeline carries no such track)\n    pub sky_light_factor: &'static [(i64, f32)],\n    /// `minecraft:visual/sky_light_color` keyframes, sorted by tick — the\n    /// render track the lightmap's SkyLightColor multiplies the stated\n    /// base by, per channel (empty when the timeline carries no such track)\n    pub sky_light_color: &'static [(i64, [u8; 3])],\n}\n\n");
+    out.push_str("#[derive(Debug, Clone, Copy, PartialEq)]\npub struct TimelineDef {\n    pub name: &'static str,\n    pub clock: &'static str,\n    pub period_ticks: Option<i64>,\n    pub tracks: usize,\n    /// `minecraft:visual/sky_light_factor` keyframes, sorted by tick — the\n    /// render track the lightmap's SkyFactor multiplies the sky term by\n    /// (empty when the timeline carries no such track)\n    pub sky_light_factor: &'static [(i64, f32)],\n    /// `minecraft:visual/sky_light_color` keyframes, sorted by tick — the\n    /// render track the lightmap's SkyLightColor multiplies the stated\n    /// base by, per channel (empty when the timeline carries no such track)\n    pub sky_light_color: &'static [(i64, [u8; 3])],\n    /// `minecraft:gameplay/sky_light_level` keyframes, sorted by tick —\n    /// the sky-light multiplier the gameplay side reads (empty when the\n    /// timeline carries no such track)\n    pub sky_light_level: &'static [(i64, f32)],\n    /// `minecraft:gameplay/monsters_burn` keyframes, sorted by tick — the\n    /// boolean hold track the sun-burn predicate gates on (empty when the\n    /// timeline carries no such track)\n    pub monsters_burn: &'static [(i64, bool)],\n}\n\n");
     for (id, t) in &data.timelines {
         if t.sky_light_factor.is_empty() {
             continue;
@@ -734,6 +777,40 @@ pub fn emit(data: &WorldgenData) -> Result<String> {
         }
         out.push_str("];\n");
     }
+    for (id, t) in &data.timelines {
+        if t.sky_light_level.is_empty() {
+            continue;
+        }
+        let ident = format!(
+            "TL_{}_SKY_LIGHT_LEVEL",
+            id.chars().map(|c| if c.is_ascii_alphanumeric() { c } else { '_' }).collect::<String>().to_uppercase()
+        );
+        out.push_str(&format!("pub static {ident}: [(i64, f32); {}] = [", t.sky_light_level.len()));
+        for (i, (tick, val)) in t.sky_light_level.iter().enumerate() {
+            if i > 0 {
+                out.push_str(", ");
+            }
+            out.push_str(&format!("({tick}, {val:?})"));
+        }
+        out.push_str("];\n");
+    }
+    for (id, t) in &data.timelines {
+        if t.monsters_burn.is_empty() {
+            continue;
+        }
+        let ident = format!(
+            "TL_{}_MONSTERS_BURN",
+            id.chars().map(|c| if c.is_ascii_alphanumeric() { c } else { '_' }).collect::<String>().to_uppercase()
+        );
+        out.push_str(&format!("pub static {ident}: [(i64, bool); {}] = [", t.monsters_burn.len()));
+        for (i, (tick, val)) in t.monsters_burn.iter().enumerate() {
+            if i > 0 {
+                out.push_str(", ");
+            }
+            out.push_str(&format!("({tick}, {val})"));
+        }
+        out.push_str("];\n");
+    }
     out.push_str("pub static TIMELINES: [TimelineDef; ");
     out.push_str(&data.timelines.len().to_string());
     out.push_str("] = [\n");
@@ -756,8 +833,26 @@ pub fn emit(data: &WorldgenData) -> Result<String> {
             );
             format!("&{ident}")
         };
+        let sll = if t.sky_light_level.is_empty() {
+            "&[]".to_string()
+        } else {
+            let ident = format!(
+                "TL_{}_SKY_LIGHT_LEVEL",
+                t.name.trim_start_matches("minecraft:").chars().map(|c| if c.is_ascii_alphanumeric() { c } else { '_' }).collect::<String>().to_uppercase()
+            );
+            format!("&{ident}")
+        };
+        let mb = if t.monsters_burn.is_empty() {
+            "&[]".to_string()
+        } else {
+            let ident = format!(
+                "TL_{}_MONSTERS_BURN",
+                t.name.trim_start_matches("minecraft:").chars().map(|c| if c.is_ascii_alphanumeric() { c } else { '_' }).collect::<String>().to_uppercase()
+            );
+            format!("&{ident}")
+        };
         out.push_str(&format!(
-            "    TimelineDef {{ name: \"{}\", clock: \"{}\", period_ticks: {}, tracks: {}, sky_light_factor: {}, sky_light_color: {} }},\n",
+            "    TimelineDef {{ name: \"{}\", clock: \"{}\", period_ticks: {}, tracks: {}, sky_light_factor: {}, sky_light_color: {}, sky_light_level: {}, monsters_burn: {} }},\n",
             rust_str(&t.name),
             rust_str(&t.clock),
             match t.period_ticks {
@@ -767,6 +862,8 @@ pub fn emit(data: &WorldgenData) -> Result<String> {
             t.tracks,
             skf,
             skc,
+            sll,
+            mb,
         ));
     }
     out.push_str("];\n\n");

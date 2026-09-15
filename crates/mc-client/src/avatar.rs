@@ -742,6 +742,174 @@ fn decode_rgba(bytes: &[u8]) -> anyhow::Result<(u32, u32, Vec<u8>)> {
     Ok((w, h, rgba))
 }
 
+/// THE FLAME FEATURE — the burn lane's render half (`FlameFeatureRenderer`,
+/// javap verbatim): a burning entity stacks 1.4-tall billboard quads
+/// around its bounding box while `h = bbHeight / (bbWidth * 1.4) > 0`,
+/// alternating the FIRE_0 / FIRE_1 strips per ring, the U mirrored on
+/// every second PAIR of rings (`(i/2) % 2 == 0` keeps the straight
+/// orientation), the width x = 0.5 * 0.9^i narrowing upward, the base
+/// y rising 0.45 per ring, the z leaning -0.03 per ring, the whole
+/// pose scaled by `bbWidth * 1.4`, pre-translated `(0, 0, 0.3 -
+/// (int)h * 0.02)` and rotated by the CAMERA-YAW-ONLY billboard
+/// (`EntityRenderDispatcher.submit`: `Mth.rotationAroundAxis(Y_AXIS,
+/// camera.orientation)` = `normalize((0, q.y, 0, q.w))` — the pitch
+/// drops out of the quaternion, the flame stays vertical while it
+/// faces the viewer). The color is white (no entity diffuse — the
+/// fire's own light) and the block-light half of the light coords is
+/// forced 15: the brand glows through the night.
+///
+/// The client's billboard angle: the camera's forward is
+/// `(sin y, 0, -cos y)` (cam.yaw 0 = -Z), so the quad's +Z face turns
+/// toward the viewer at `a = -cam.yaw` through the joml YP fold the
+/// entity chain speaks (`x' = x cos a + z sin a; z' = -x sin a + z
+/// cos a`).
+///
+/// The frame law: 32 stacked 16x16 tiles per 16x512 strip; fire_0
+/// rides its mcmeta playlist `[16..31, 0..15]`, fire_1 the sequential
+/// 0..31, one frame per world tick.
+pub const FIRE_STRIP_SIDE: u32 = 16;
+pub const FIRE_STRIP_FRAMES: u32 = 32;
+
+/// fire_0's current frame tile at a world tick (the playlist's
+/// rotation: the strip plays 16, 17, ... 31, 0, 1, ... 15).
+pub fn fire0_frame(day_time: i64) -> i64 {
+    (day_time.rem_euclid(FIRE_STRIP_FRAMES as i64) + 16) % FIRE_STRIP_FRAMES as i64
+}
+
+/// fire_1's current frame tile at a world tick (the plain `% 32`).
+pub fn fire1_frame(day_time: i64) -> i64 {
+    day_time.rem_euclid(FIRE_STRIP_FRAMES as i64)
+}
+
+/// One posed flame quad — the world-space corners and the strip-space
+/// pixel UVs (u in 0..16, v over the full 512 strip).
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct FlameQuad {
+    pub pts: [[f32; 3]; 4],
+    pub uv: [[f32; 2]; 4],
+}
+
+/// The two strips' decoded pixels, loaded and sha1-verified the same
+/// stream the skins speak (the burn lane stays silent when either
+/// misses — the honest unseen).
+pub struct FireStrips {
+    pub fire0: Vec<u8>,
+    pub fire1: Vec<u8>,
+}
+
+impl FireStrips {
+    /// Load both strips from the runtime cache root (the generator's
+    /// `assets-cache/jar/`), verify the generated sha1s, decode, and
+    /// shape-check the 16x512 layout.
+    pub fn load(root: &std::path::Path) -> Option<FireStrips> {
+        let fire0_bytes = std::fs::read(root.join(mc_registry::generated::skin::FIRE_0_RUNTIME_PATH))
+            .ok()?;
+        if hex::encode(sha1::Sha1::digest(&fire0_bytes))
+            != mc_registry::generated::skin::FIRE_0_PNG_SHA1
+        {
+            return None;
+        }
+        let (w0, h0, fire0) = decode_rgba(&fire0_bytes).ok()?;
+        if w0 != FIRE_STRIP_SIDE || h0 != FIRE_STRIP_SIDE * FIRE_STRIP_FRAMES {
+            return None;
+        }
+        let fire1_bytes = std::fs::read(root.join(mc_registry::generated::skin::FIRE_1_RUNTIME_PATH))
+            .ok()?;
+        if hex::encode(sha1::Sha1::digest(&fire1_bytes))
+            != mc_registry::generated::skin::FIRE_1_PNG_SHA1
+        {
+            return None;
+        }
+        let (w1, h1, fire1) = decode_rgba(&fire1_bytes).ok()?;
+        if w1 != FIRE_STRIP_SIDE || h1 != FIRE_STRIP_SIDE * FIRE_STRIP_FRAMES {
+            return None;
+        }
+        Some(FireStrips { fire0, fire1 })
+    }
+
+    /// The strip pixel at (u, v) in pixel space — v over the full
+    /// 512-tall strip; `None` outside (the caller's cutout).
+    pub fn pixel(&self, strip: usize, u: f32, v: f32) -> [u8; 4] {
+        let rgba = if strip == 0 { &self.fire0 } else { &self.fire1 };
+        let w = FIRE_STRIP_SIDE as f32;
+        let h = (FIRE_STRIP_SIDE * FIRE_STRIP_FRAMES) as f32;
+        let (uu, vv) = (u.clamp(0.0, w - 1e-4), v.clamp(0.0, h - 1e-4));
+        let x = uu as usize;
+        let y = vv as usize;
+        let o = (y * FIRE_STRIP_SIDE as usize + x) * 4;
+        [rgba[o], rgba[o + 1], rgba[o + 2], rgba[o + 3]]
+    }
+}
+
+/// The flame quad stack around one burning entity — the `prepare`
+/// bytecode's own loop, the ring law verbatim.
+pub fn flame_quads(
+    feet: Vec3,
+    bb_width: f32,
+    bb_height: f32,
+    cam_yaw: f32,
+    day_time: i64,
+) -> Vec<FlameQuad> {
+    let w = bb_width * 1.4;
+    let h = bb_height / w;
+    // the pre-translate: 0.3 - (int)h * 0.02 (the f2i truncation)
+    let tz = 0.3f32 - (h as i32) as f32 * 0.02;
+    // the billboard: the camera's yaw alone, negated into the client's
+    // -Z-forward convention
+    let a = -cam_yaw;
+    let (sa, ca) = a.sin_cos();
+    // the fold: feet + w * R_y(a) * (v + (0, 0, tz)) — the scale
+    // commutes with the rotation (uniform), the bytecode's M = T·S·R·Tt
+    let fold = |p: [f32; 3]| -> [f32; 3] {
+        let x = p[0];
+        let y = p[1];
+        let z = p[2] + tz;
+        let px = x * ca + z * sa;
+        let pz = -x * sa + z * ca;
+        [feet.x + w * px, feet.y as f32 + w * y, feet.z + w * pz]
+    };
+    let mut out = Vec::new();
+    let mut ring_h = h;
+    let mut x = 0.5f32;
+    let mut base = 0.0f32;
+    let mut depth = 0.0f32;
+    let mut i = 0u32;
+    while ring_h > 0.0 {
+        // the strip tile: fire_0 on the even rings, fire_1 on the odd;
+        // the (i/2)%2 pairs mirror the U (the straight orientation on
+        // the even pairs)
+        let frame = if i % 2 == 0 {
+            fire0_frame(day_time)
+        } else {
+            fire1_frame(day_time)
+        } as f32;
+        let (v0, v1) = (frame * 16.0, (frame + 1.0) * 16.0);
+        let (ua, ub) = if (i / 2) % 2 == 0 { (0.0f32, 16.0f32) } else { (16.0f32, 0.0f32) };
+        // the four corners: p1(-x, bottom, ua), p2(+x, bottom, ub),
+        // p3(+x, top, ub), p4(-x, top, ua) — the bottom y = -base
+        // (base runs 0, -0.45, ...), the top y = 1.4 - base
+        let pts = [
+            fold([-x, -base, depth]),
+            fold([x, -base, depth]),
+            fold([x, 1.4 - base, depth]),
+            fold([-x, 1.4 - base, depth]),
+        ];
+        let uv = [
+            [ua, v1],
+            [ub, v1],
+            [ub, v0],
+            [ua, v0],
+        ];
+        out.push(FlameQuad { pts, uv });
+        ring_h -= 0.45;
+        base -= 0.45;
+        x *= 0.9;
+        depth -= 0.03;
+        i += 1;
+    }
+    out
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -961,5 +1129,117 @@ mod tests {
             mad_span < calm_span,
             "the aggressive arms LIFT (-120°) shortening the forward reach ({mad_span} < {calm_span})"
         );
+    }
+
+    /// THE FRAME LAW — fire_0 rides the mcmeta playlist [16..31, 0..15]
+    /// (the strip plays tile 16 at tick 0), fire_1 the sequential % 32;
+    /// both wrap with the day tick.
+    #[test]
+    fn the_fire_frames_speak_the_mcmeta_playlist() {
+        assert_eq!(fire0_frame(0), 16, "tick 0 plays tile 16");
+        assert_eq!(fire0_frame(15), 31, "the playlist's first half climbs");
+        assert_eq!(fire0_frame(16), 0, "the wrap to tile 0");
+        assert_eq!(fire0_frame(48), 0, "the 32-tick period wraps");
+        assert_eq!(fire0_frame(-1), 15, "the negative tick lands on 15");
+        assert_eq!(fire1_frame(0), 0, "fire_1 is sequential");
+        assert_eq!(fire1_frame(17), 17);
+        assert_eq!(fire1_frame(32), 0, "the same 32-tick period");
+    }
+
+    /// THE RING LAW — the zombie's bbox (0.6 x 1.95) scales the pose by
+    /// 0.84, spawns 6 rings (h = 1.95/0.84 = 2.32 ticks down 0.45 per
+    /// ring), the first spans x +-0.42, rises 0.378 per ring, narrows
+    /// 0.9x per ring, leans back 0.0252 per ring; the strips alternate
+    /// fire_0/fire_1 and the U mirrors on the second ring PAIR.
+    #[test]
+    fn the_flame_rings_speak_the_prepare_bytecode() {
+        let feet = Vec3::new(10.0, 5.0, 20.0);
+        let quads = flame_quads(feet, 0.6, 1.95, 0.0, 0);
+        // h = 2.3214..., the ring heights 2.3214, 1.8714, ... 0.0714,
+        // 0.0714 - 0.45 < 0 stops -> 6 rings
+        assert_eq!(quads.len(), 6, "the zombie's ring count");
+        let w = 0.6 * 1.4;
+        let tz = 0.3 - 2.0 * 0.02; // (int)2.3214 = 2
+        // ring 0, camera yaw 0: the straight orientation, x = +-0.5*0.84
+        let q0 = &quads[0];
+        let xs: Vec<f32> = q0.pts.iter().map(|p| p[0]).collect();
+        assert!(
+            xs.iter().all(|x| (*x - (10.0 - 0.5 * w)).abs() < 1e-4
+                || (*x - (10.0 + 0.5 * w)).abs() < 1e-4),
+            "the ring's corners span the narrowed width: {xs:?}"
+        );
+        // the base y = 5.0 (the -base fold at base 0) and the top at
+        // 5.0 + 1.4*0.84 — the z at feet + (0 + tz) * w
+        assert!((q0.pts[0][1] - 5.0).abs() < 1e-4, "the ring's base sits at the feet");
+        assert!((q0.pts[2][1] - (5.0 + 1.4 * w)).abs() < 1e-4, "the 1.4-tall quad");
+        assert!((q0.pts[0][2] - (20.0 + tz * w)).abs() < 1e-4, "the pre-translate");
+        // the uv: fire_0's frame 16 tile -> v 256..272, u 0..16 straight
+        assert_eq!(q0.uv[0], [0.0, 272.0], "the bottom-left straight uv");
+        assert_eq!(q0.uv[2], [16.0, 256.0], "the top-right straight uv");
+        // ring 2 (the odd pair): the U mirrored — ua/ub swapped
+        let q2 = &quads[2];
+        assert_eq!(q2.uv[0][0], 16.0, "the mirrored pair's left texel");
+        assert_eq!(q2.uv[1][0], 0.0);
+        // the rise: ring 1's base sits 0.45*0.84 above the feet line
+        let q1 = &quads[1];
+        assert!((q1.pts[0][1] - (5.0 + 0.45 * w)).abs() < 1e-4, "the 0.45 rise");
+        // the narrowing: ring 1's half width = 0.5*0.9*0.84
+        let half = 0.5 * 0.9 * w;
+        assert!(
+            q1.pts.iter().all(|p| (p[0] - (10.0 - half)).abs() < 1e-4
+                || (p[0] - (10.0 + half)).abs() < 1e-4),
+            "the 0.9x narrowing"
+        );
+    }
+
+    /// THE BILLBOARD — the camera yaw turns the ring stack: at yaw
+    /// +90° (facing +X in the client's -Z-forward convention) the
+    /// quad's face normal (+Z native) swings to -X, the corners spread
+    /// along Z instead of X.
+    #[test]
+    fn the_flame_billboard_turns_with_the_camera() {
+        let feet = Vec3::new(10.0, 5.0, 20.0);
+        let yaw90 = std::f32::consts::FRAC_PI_2;
+        let quads = flame_quads(feet, 0.6, 1.95, yaw90, 0);
+        let q0 = &quads[0];
+        let w = 0.6 * 1.4;
+        let tz = 0.3 - 2.0 * 0.02; // (int)2.3214 = 2
+        // the ring 0 corners: the +-0.5 native x maps to world +-z (the
+        // a = -yaw fold), the native z lands on the world x
+        let zs: Vec<f32> = q0.pts.iter().map(|p| p[2]).collect();
+        assert!(
+            zs.iter().all(|z| (*z - (20.0 - 0.5 * w)).abs() < 1e-4
+                || (*z - (20.0 + 0.5 * w)).abs() < 1e-4),
+            "the ring spreads along Z under the +90° yaw: {zs:?}"
+        );
+        assert!(
+            q0.pts.iter().all(|p| (p[0] - (10.0 - w * tz)).abs() < 1e-4),
+            "the x folds to the depth line (the native z lands on it)"
+        );
+    }
+
+    /// THE STRIPS LOAD — the real runtime cache (the generator's
+    /// extraction) decodes both 16x512 strips and the first fire_0
+    /// frame's pixels land orange-flame colors on a transparent
+    /// background.
+    #[test]
+    #[ignore = "needs runtime assets (assets-cache/jar) from mc2rs-gen generate"]
+    fn the_fire_strips_load_sha1_verified() {
+        // the test cwd sits in the crate dir — walk up to the runtime
+        // root the generator populated
+        let mut dir = std::env::current_dir().unwrap();
+        let root = loop {
+            let cand = dir.join("assets-cache/jar");
+            if cand.exists() {
+                break cand;
+            }
+            dir = dir.parent().expect("the runtime root above").to_path_buf();
+        };
+        let strips = FireStrips::load(&root).expect("the strips load from the runtime cache");
+        let px = strips.pixel(0, 8.0, 8.0);
+        assert_eq!(px[3], 255, "the fire's core pixel is opaque");
+        assert!(px[0] > px[2], "the orange reads red-over-blue");
+        let hole = strips.pixel(1, 0.0, 0.0);
+        assert_eq!(hole, [0, 0, 0, 0], "the cutout hole decodes transparent");
     }
 }

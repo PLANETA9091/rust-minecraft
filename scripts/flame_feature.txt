@@ -1,0 +1,243 @@
+Compiled from "FlameFeatureRenderer.java"
+public class net.minecraft.client.renderer.feature.FlameFeatureRenderer extends net.minecraft.client.renderer.feature.RenderTypeFeatureRenderer<net.minecraft.client.renderer.feature.FlameFeatureRenderer$Submit> {
+  public static final net.minecraft.client.renderer.feature.FeatureRendererType<net.minecraft.client.renderer.feature.FlameFeatureRenderer$Submit> TYPE;
+
+  public net.minecraft.client.renderer.feature.FlameFeatureRenderer();
+    Code:
+         0: aload_0
+         1: invokespecial #1                  // Method net/minecraft/client/renderer/feature/RenderTypeFeatureRenderer."<init>":()V
+         4: return
+
+  protected void buildGroup(net.minecraft.client.renderer.feature.FeatureFrameContext, java.util.List<net.minecraft.client.renderer.feature.FlameFeatureRenderer$Submit>);
+    Code:
+         0: aload_0
+         1: getstatic     #7                  // Field net/minecraft/client/renderer/texture/TextureAtlas.LOCATION_BLOCKS:Lnet/minecraft/resources/Identifier;
+         4: invokestatic  #13                 // Method net/minecraft/client/renderer/rendertype/RenderTypes.entityCutoutCull:(Lnet/minecraft/resources/Identifier;)Lnet/minecraft/client/renderer/rendertype/RenderType;
+         7: invokevirtual #19                 // Method getVertexBuilder:(Lnet/minecraft/client/renderer/rendertype/RenderType;)Lcom/mojang/blaze3d/vertex/VertexConsumer;
+        10: astore_3
+        11: aload_1
+        12: invokevirtual #25                 // Method net/minecraft/client/renderer/feature/FeatureFrameContext.atlasManager:()Lnet/minecraft/client/resources/model/sprite/AtlasManager;
+        15: getstatic     #31                 // Field net/minecraft/client/resources/model/ModelBakery.FIRE_0:Lnet/minecraft/client/resources/model/sprite/SpriteId;
+        18: invokevirtual #37                 // Method net/minecraft/client/resources/model/sprite/AtlasManager.get:(Lnet/minecraft/client/resources/model/sprite/SpriteId;)Lnet/minecraft/client/renderer/texture/TextureAtlasSprite;
+        21: astore        4
+        23: aload_1
+        24: invokevirtual #25                 // Method net/minecraft/client/renderer/feature/FeatureFrameContext.atlasManager:()Lnet/minecraft/client/resources/model/sprite/AtlasManager;
+        27: getstatic     #43                 // Field net/minecraft/client/resources/model/ModelBakery.FIRE_1:Lnet/minecraft/client/resources/model/sprite/SpriteId;
+        30: invokevirtual #37                 // Method net/minecraft/client/resources/model/sprite/AtlasManager.get:(Lnet/minecraft/client/resources/model/sprite/SpriteId;)Lnet/minecraft/client/renderer/texture/TextureAtlasSprite;
+        33: astore        5
+        35: aload_2
+        36: invokeinterface #46,  1           // InterfaceMethod java/util/List.iterator:()Ljava/util/Iterator;
+        41: astore        6
+        43: aload         6
+        45: invokeinterface #52,  1           // InterfaceMethod java/util/Iterator.hasNext:()Z
+        50: ifeq          79
+        53: aload         6
+        55: invokeinterface #58,  1           // InterfaceMethod java/util/Iterator.next:()Ljava/lang/Object;
+        60: checkcast     #62                 // class net/minecraft/client/renderer/feature/FlameFeatureRenderer$Submit
+        63: astore        7
+        65: aload_0
+        66: aload         7
+        68: aload_3
+        69: aload         4
+        71: aload         5
+        73: invokevirtual #64                 // Method prepare:(Lnet/minecraft/client/renderer/feature/FlameFeatureRenderer$Submit;Lcom/mojang/blaze3d/vertex/VertexConsumer;Lnet/minecraft/client/renderer/texture/TextureAtlasSprite;Lnet/minecraft/client/renderer/texture/TextureAtlasSprite;)V
+        76: goto          43
+        79: return
+
+  private void prepare(net.minecraft.client.renderer.feature.FlameFeatureRenderer$Submit, com.mojang.blaze3d.vertex.VertexConsumer, net.minecraft.client.renderer.texture.TextureAtlasSprite, net.minecraft.client.renderer.texture.TextureAtlasSprite);
+    Code:
+         0: aload_1
+         1: invokevirtual #68                 // Method net/minecraft/client/renderer/feature/FlameFeatureRenderer$Submit.pose:()Lcom/mojang/blaze3d/vertex/PoseStack$Pose;
+         4: astore        5
+         6: aload_1
+         7: invokevirtual #72                 // Method net/minecraft/client/renderer/feature/FlameFeatureRenderer$Submit.entityRenderState:()Lnet/minecraft/client/renderer/entity/state/EntityRenderState;
+        10: astore        6
+        12: aload         6
+        14: getfield      #76                 // Field net/minecraft/client/renderer/entity/state/EntityRenderState.boundingBoxWidth:F
+        17: ldc           #82                 // float 1.4f
+        19: fmul
+        20: fstore        7
+        22: aload         5
+        24: fload         7
+        26: fload         7
+        28: fload         7
+        30: invokevirtual #83                 // Method com/mojang/blaze3d/vertex/PoseStack$Pose.scale:(FFF)V
+        33: ldc           #89                 // float 0.5f
+        35: fstore        8
+        37: fconst_0
+        38: fstore        9
+        40: aload         6
+        42: getfield      #90                 // Field net/minecraft/client/renderer/entity/state/EntityRenderState.boundingBoxHeight:F
+        45: fload         7
+        47: fdiv
+        48: fstore        10
+        50: fconst_0
+        51: fstore        11
+        53: aload         5
+        55: aload_1
+        56: invokevirtual #93                 // Method net/minecraft/client/renderer/feature/FlameFeatureRenderer$Submit.rotation:()Lorg/joml/Quaternionf;
+        59: invokevirtual #97                 // Method com/mojang/blaze3d/vertex/PoseStack$Pose.rotate:(Lorg/joml/Quaternionfc;)V
+        62: aload         5
+        64: fconst_0
+        65: fconst_0
+        66: ldc           #101                // float 0.3f
+        68: fload         10
+        70: f2i
+        71: i2f
+        72: ldc           #102                // float 0.02f
+        74: fmul
+        75: fsub
+        76: invokevirtual #103                // Method com/mojang/blaze3d/vertex/PoseStack$Pose.translate:(FFF)Lorg/joml/Matrix4f;
+        79: pop
+        80: fconst_0
+        81: fstore        12
+        83: iconst_0
+        84: istore        13
+        86: aload         6
+        88: getfield      #107                // Field net/minecraft/client/renderer/entity/state/EntityRenderState.lightCoords:I
+        91: bipush        15
+        93: invokestatic  #113                // Method net/minecraft/util/LightCoordsUtil.withBlock:(II)I
+        96: istore        14
+        98: fload         10
+       100: fconst_0
+       101: fcmpl
+       102: ifle          295
+       105: iload         13
+       107: iconst_2
+       108: irem
+       109: ifne          116
+       112: aload_3
+       113: goto          118
+       116: aload         4
+       118: astore        15
+       120: aload         15
+       122: invokevirtual #119                // Method net/minecraft/client/renderer/texture/TextureAtlasSprite.getU0:()F
+       125: fstore        16
+       127: aload         15
+       129: invokevirtual #125                // Method net/minecraft/client/renderer/texture/TextureAtlasSprite.getV0:()F
+       132: fstore        17
+       134: aload         15
+       136: invokevirtual #128                // Method net/minecraft/client/renderer/texture/TextureAtlasSprite.getU1:()F
+       139: fstore        18
+       141: aload         15
+       143: invokevirtual #131                // Method net/minecraft/client/renderer/texture/TextureAtlasSprite.getV1:()F
+       146: fstore        19
+       148: iload         13
+       150: iconst_2
+       151: idiv
+       152: iconst_2
+       153: irem
+       154: ifne          169
+       157: fload         18
+       159: fstore        20
+       161: fload         16
+       163: fstore        18
+       165: fload         20
+       167: fstore        16
+       169: aload         5
+       171: aload_2
+       172: fload         8
+       174: fneg
+       175: fconst_0
+       176: fsub
+       177: fconst_0
+       178: fload         11
+       180: fsub
+       181: fload         12
+       183: fload         18
+       185: fload         19
+       187: iload         14
+       189: invokestatic  #134                // Method fireVertex:(Lcom/mojang/blaze3d/vertex/PoseStack$Pose;Lcom/mojang/blaze3d/vertex/VertexConsumer;FFFFFI)V
+       192: aload         5
+       194: aload_2
+       195: fload         8
+       197: fconst_0
+       198: fsub
+       199: fconst_0
+       200: fload         11
+       202: fsub
+       203: fload         12
+       205: fload         16
+       207: fload         19
+       209: iload         14
+       211: invokestatic  #134                // Method fireVertex:(Lcom/mojang/blaze3d/vertex/PoseStack$Pose;Lcom/mojang/blaze3d/vertex/VertexConsumer;FFFFFI)V
+       214: aload         5
+       216: aload_2
+       217: fload         8
+       219: fconst_0
+       220: fsub
+       221: ldc           #82                 // float 1.4f
+       223: fload         11
+       225: fsub
+       226: fload         12
+       228: fload         16
+       230: fload         17
+       232: iload         14
+       234: invokestatic  #134                // Method fireVertex:(Lcom/mojang/blaze3d/vertex/PoseStack$Pose;Lcom/mojang/blaze3d/vertex/VertexConsumer;FFFFFI)V
+       237: aload         5
+       239: aload_2
+       240: fload         8
+       242: fneg
+       243: fconst_0
+       244: fsub
+       245: ldc           #82                 // float 1.4f
+       247: fload         11
+       249: fsub
+       250: fload         12
+       252: fload         18
+       254: fload         17
+       256: iload         14
+       258: invokestatic  #134                // Method fireVertex:(Lcom/mojang/blaze3d/vertex/PoseStack$Pose;Lcom/mojang/blaze3d/vertex/VertexConsumer;FFFFFI)V
+       261: fload         10
+       263: ldc           #138                // float 0.45f
+       265: fsub
+       266: fstore        10
+       268: fload         11
+       270: ldc           #138                // float 0.45f
+       272: fsub
+       273: fstore        11
+       275: fload         8
+       277: ldc           #139                // float 0.9f
+       279: fmul
+       280: fstore        8
+       282: fload         12
+       284: ldc           #140                // float 0.03f
+       286: fsub
+       287: fstore        12
+       289: iinc          13, 1
+       292: goto          98
+       295: return
+
+  private static void fireVertex(com.mojang.blaze3d.vertex.PoseStack$Pose, com.mojang.blaze3d.vertex.VertexConsumer, float, float, float, float, float, int);
+    Code:
+         0: aload_1
+         1: aload_0
+         2: fload_2
+         3: fload_3
+         4: fload         4
+         6: invokeinterface #141,  5          // InterfaceMethod com/mojang/blaze3d/vertex/VertexConsumer.addVertex:(Lcom/mojang/blaze3d/vertex/PoseStack$Pose;FFF)Lcom/mojang/blaze3d/vertex/VertexConsumer;
+        11: iconst_m1
+        12: invokeinterface #149,  2          // InterfaceMethod com/mojang/blaze3d/vertex/VertexConsumer.setColor:(I)Lcom/mojang/blaze3d/vertex/VertexConsumer;
+        17: fload         5
+        19: fload         6
+        21: invokeinterface #153,  3          // InterfaceMethod com/mojang/blaze3d/vertex/VertexConsumer.setUv:(FF)Lcom/mojang/blaze3d/vertex/VertexConsumer;
+        26: iconst_0
+        27: bipush        10
+        29: invokeinterface #159,  3          // InterfaceMethod com/mojang/blaze3d/vertex/VertexConsumer.setUv1:(II)Lcom/mojang/blaze3d/vertex/VertexConsumer;
+        34: iload         7
+        36: invokeinterface #163,  2          // InterfaceMethod com/mojang/blaze3d/vertex/VertexConsumer.setLight:(I)Lcom/mojang/blaze3d/vertex/VertexConsumer;
+        41: aload_0
+        42: fconst_0
+        43: fconst_1
+        44: fconst_0
+        45: invokeinterface #166,  5          // InterfaceMethod com/mojang/blaze3d/vertex/VertexConsumer.setNormal:(Lcom/mojang/blaze3d/vertex/PoseStack$Pose;FFF)Lcom/mojang/blaze3d/vertex/VertexConsumer;
+        50: pop
+        51: return
+
+  static {};
+    Code:
+         0: ldc           #169                // String Flame
+         2: invokestatic  #171                // Method net/minecraft/client/renderer/feature/FeatureRendererType.create:(Ljava/lang/String;)Lnet/minecraft/client/renderer/feature/FeatureRendererType;
+         5: putstatic     #177                // Field TYPE:Lnet/minecraft/client/renderer/feature/FeatureRendererType;
+         8: return
+}

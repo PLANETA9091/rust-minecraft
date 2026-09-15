@@ -17,6 +17,16 @@ pub const SLIM_ALEX_JAR_PATH: &str = "assets/minecraft/textures/entity/player/sl
 /// static init — `textures/entity/zombie/zombie.png`, the same 64x64 wide
 /// humanoid layout the PlayerModel geometry unwraps).
 pub const ZOMBIE_JAR_PATH: &str = "assets/minecraft/textures/entity/zombie/zombie.png";
+
+/// The flame feature's two animated strips (`FlameFeatureRenderer`'s
+/// ModelBakery.FIRE_0 / FIRE_1 sprite sources) — the burn lane reads
+/// their frames off the blocks atlas path the runtime cache mirrors.
+pub const FIRE_0_JAR_PATH: &str = "assets/minecraft/textures/block/fire_0.png";
+pub const FIRE_1_JAR_PATH: &str = "assets/minecraft/textures/block/fire_1.png";
+/// The runtime-cache paths the client's loader reads (the same
+/// textures/ prefix strip the other lanes speak).
+pub const FIRE_0_RUNTIME_PATH: &str = "block/fire_0.png";
+pub const FIRE_1_RUNTIME_PATH: &str = "block/fire_1.png";
 /// Where the client reads the skin at runtime (under the runtime asset root).
 pub const RUNTIME_PATH: &str = "entity/player/wide/steve.png";
 pub const SLIM_RUNTIME_PATH: &str = "entity/player/slim/alex.png";
@@ -50,6 +60,11 @@ pub struct SkinData {
     /// sha1 of the zombie's source PNG bytes (jar-verbatim integrity) —
     /// the first mob's texture the avatar renderer sha1-verifies.
     pub zombie_png_sha1: String,
+    /// sha1 of the flame feature's fire_0 strip (jar-verbatim integrity)
+    /// — the burn lane's pixel source (the 16x512, 32-frame strip).
+    pub fire_0_png_sha1: String,
+    /// sha1 of the flame feature's fire_1 strip (jar-verbatim integrity).
+    pub fire_1_png_sha1: String,
 }
 
 /// One UV rect in the skin texture, in texels: (u, v, w, h).
@@ -110,6 +125,29 @@ pub fn generate<R: std::io::Read + std::io::Seek>(archive: &mut zip::ZipArchive<
         zombie_side
     );
     std::mem::drop(zombie_rgba);
+    // THE FIRE STRIPS: the flame feature's two animated pixel sources
+    // (javap `FlameFeatureRenderer.buildGroup`: ModelBakery.FIRE_0 /
+    // FIRE_1) — 16x512 = 32 stacked 16x16 frames each, the mcmeta
+    // playlist [16..31, 0..15] on fire_0, sequential on fire_1. The
+    // integrity sha1 the burn lane verifies before it draws.
+    let fire_0_bytes = read_entry(archive, FIRE_0_JAR_PATH).context("read fire_0")?;
+    let fire_0_png_sha1 = crate::util::sha1_hex(&fire_0_bytes);
+    let (fw, fh, _fire_0_rgba) = decode_rgba(&fire_0_bytes).context("decode fire_0")?;
+    anyhow::ensure!(
+        (fw, fh) == (16, 512),
+        "fire_0 must be the 16x512 strip, got {}x{}",
+        fw,
+        fh
+    );
+    let fire_1_bytes = read_entry(archive, FIRE_1_JAR_PATH).context("read fire_1")?;
+    let fire_1_png_sha1 = crate::util::sha1_hex(&fire_1_bytes);
+    let (fw1, fh1, _fire_1_rgba) = decode_rgba(&fire_1_bytes).context("decode fire_1")?;
+    anyhow::ensure!(
+        (fw1, fh1) == (16, 512),
+        "fire_1 must be the 16x512 strip, got {}x{}",
+        fw1,
+        fh1
+    );
     Ok(SkinData {
         png_sha1,
         rgba_sha1: crate::util::sha1_hex(&rgba),
@@ -117,6 +155,8 @@ pub fn generate<R: std::io::Read + std::io::Seek>(archive: &mut zip::ZipArchive<
         slim_png_sha1,
         slim_rgba_sha1: crate::util::sha1_hex(&slim_rgba),
         zombie_png_sha1,
+        fire_0_png_sha1,
+        fire_1_png_sha1,
     })
 }
 
@@ -198,6 +238,21 @@ pub fn emit(data: &SkinData) -> Result<String> {
     out.push_str(&format!(
         "pub const ZOMBIE_RUNTIME_PATH: &str = \"{ZOMBIE_RUNTIME_PATH}\";\n"
     ));
+    out.push_str("\n/// The FLAME strips (the burn lane's pixel sources), generated from\n/// the same jar: the source sha1s the burning mob's renderer verifies\n/// before it draws (javap: `FlameFeatureRenderer.buildGroup`'s\n/// ModelBakery.FIRE_0 / FIRE_1 — the 16x512, 32-frame strips; fire_0's\n/// mcmeta playlist [16..31, 0..15], fire_1 sequential).\n");
+    out.push_str(&format!(
+        "pub const FIRE_0_PNG_SHA1: &str = \"{}\";\n",
+        data.fire_0_png_sha1
+    ));
+    out.push_str(&format!(
+        "pub const FIRE_0_RUNTIME_PATH: &str = \"{FIRE_0_RUNTIME_PATH}\";\n"
+    ));
+    out.push_str(&format!(
+        "pub const FIRE_1_PNG_SHA1: &str = \"{}\";\n",
+        data.fire_1_png_sha1
+    ));
+    out.push_str(&format!(
+        "pub const FIRE_1_RUNTIME_PATH: &str = \"{FIRE_1_RUNTIME_PATH}\";\n"
+    ));
     Ok(out)
 }
 
@@ -248,6 +303,24 @@ mod tests {
         out
     }
 
+    /// A 16x512 RGBA png — the fire strips' shape (32 stacked 16x16
+    /// frames), one opaque orange texel so the decode is non-trivial.
+    fn strip_png() -> Vec<u8> {
+        let (w, h) = (16u32, 512u32);
+        let mut rgba = vec![0u8; (w * h * 4) as usize];
+        let o = ((8 * w + 8) * 4) as usize;
+        rgba[o..o + 4].copy_from_slice(&[218, 149, 17, 255]);
+        let mut out = Vec::new();
+        {
+            let mut enc = png::Encoder::new(&mut out, w, h);
+            enc.set_color(png::ColorType::Rgba);
+            enc.set_depth(png::BitDepth::Eight);
+            let mut wr = enc.write_header().unwrap();
+            wr.write_image_data(&rgba).unwrap();
+        }
+        out
+    }
+
     #[test]
     fn parses_the_skins_and_emits_the_arm_geometry() {
         let png = skin_png();
@@ -255,16 +328,22 @@ mod tests {
         let (_, _, decoded) = crate::extract::decode_rgba(&png).unwrap();
         let expected_rgba_sha1 = crate::util::sha1_hex(&decoded);
 
+        let strip = strip_png();
+        let expected_fire0_sha1 = crate::util::sha1_hex(&strip);
+
         let mut zip = zip_of(&[
             (WIDE_STEVE_JAR_PATH, png.clone()),
             (SLIM_ALEX_JAR_PATH, png.clone()),
             (ZOMBIE_JAR_PATH, png),
+            (FIRE_0_JAR_PATH, strip.clone()),
+            (FIRE_1_JAR_PATH, strip),
         ]);
         let data = generate(&mut zip).unwrap();
         assert_eq!(data.side, 64);
         assert_eq!(data.png_sha1, expected_png_sha1, "source bytes verbatim");
         assert_eq!(data.rgba_sha1, expected_rgba_sha1, "decode pinned");
         assert_eq!(data.slim_png_sha1, expected_png_sha1, "the fixture doubles as the slim skin");
+        assert_eq!(data.fire_0_png_sha1, expected_fire0_sha1, "the strip's own sha1");
 
         let emitted = emit(&data).unwrap();
         assert!(emitted.contains(&format!("pub const SKIN_SIDE: u32 = 64;")));
@@ -272,6 +351,10 @@ mod tests {
         assert!(emitted.contains(&format!("pub const SLIM_ALEX_PNG_SHA1: &str = \"{expected_png_sha1}\";")));
         assert!(emitted.contains("entity/player/wide/steve.png"));
         assert!(emitted.contains("entity/player/slim/alex.png"));
+        // the fire strips: the sha1s and the runtime paths land verbatim
+        assert!(emitted.contains(&format!("pub const FIRE_0_PNG_SHA1: &str = \"{expected_fire0_sha1}\";")));
+        assert!(emitted.contains("pub const FIRE_0_RUNTIME_PATH: &str = \"block/fire_0.png\";"));
+        assert!(emitted.contains("pub const FIRE_1_RUNTIME_PATH: &str = \"block/fire_1.png\";"));
         assert!(emitted.contains("pub const SLIM_ARM_BOX_PX: [u16; 3] = [3, 12, 4];"));
         assert!(emitted.contains("pub const SLIM_ARM_BOX_ORIGIN_PX: [i16; 3] = [-2, -2, -2];"));
         // the six faces unfold from texOffs (40,16) with the box 4x12x4

@@ -399,6 +399,9 @@ pub struct App {
     /// sha1 the generator pinned) — loaded lazily beside the player's,
     /// `None` = the mobs stay unseen (the honest-missing-data law).
     pub zombie_avatar: Option<crate::avatar::AvatarModel>,
+    /// The flame feature's two strips (the burn lane's pixel source —
+    /// lazy-loaded and sha1-verified the zombie skin's way).
+    pub fire_strips: Option<crate::avatar::FireStrips>,
     /// THE MOB LIST — the zombies the offline world carries (the
     /// networked lane's entity stream is the wire's future own). The
     /// deterministic headless scenes never spawn one: the pixel
@@ -711,6 +714,7 @@ impl App {
             perspective: crate::camera::CameraType::FirstPerson,
             avatar: None,
             zombie_avatar: None,
+            fire_strips: None,
             mobs: Vec::new(),
             spawn_clock: 0,
             next_mob_id: 1,
@@ -1176,6 +1180,12 @@ impl App {
                 // draw their pitch from the entity's own stream.
                 let mut hit_events: Vec<(f64, f64, f64)> = Vec::new();
                 let mut groans: Vec<f32> = Vec::new();
+                let mut fire_hurts: Vec<f32> = Vec::new();
+                let mut fire_deaths: Vec<(f64, f64, f64, f32, Vec<(i32, i32)>)> = Vec::new();
+                let mut fizzes: Vec<f32> = Vec::new();
+                // the day tick the burn lane's tracks read (the same
+                // clock the sky samples)
+                let day_time = (self.day_time_base + self.frame) as i64;
                 {
                     let world = self.offline_world.as_ref();
                     if let Some(world) = world {
@@ -1188,12 +1198,28 @@ impl App {
                             width: crate::body::WIDTH,
                         });
                         for mob in self.mobs.iter_mut() {
-                            let ev = mob.tick(world, player.as_ref());
+                            let ev = mob.tick(world, player.as_ref(), day_time);
                             if let Some(atk) = ev.attack {
                                 hit_events.push((atk.damage, atk.dir_x, atk.dir_z));
                             }
                             if ev.ambient {
                                 groans.push(mob.voice_pitch());
+                            }
+                            if ev.fire_hurt {
+                                fire_hurts.push(mob.voice_pitch());
+                            }
+                            if ev.fire_death {
+                                // the fire's own kill: the death voice
+                                // and the loot rolled HERE (the entity's
+                                // own stream) with the player-kill gate
+                                // CLOSED — no lastHurtByPlayer memory
+                                // behind an onFire dose
+                                let loot = mob.death_loot(false);
+                                let pitch = mob.voice_pitch();
+                                fire_deaths.push((mob.x, mob.y, mob.z, pitch, loot));
+                            }
+                            if let Some(pitch) = ev.extinguished {
+                                fizzes.push(pitch);
                             }
                         }
                     }
@@ -1222,6 +1248,44 @@ impl App {
                     // volume rides the base 1.0, the pitch the law)
                     self.sounds
                         .play_voice(self.frame, "entity.zombie.ambient", 1.0, pitch);
+                }
+                for pitch in fire_hurts {
+                    // the onFire hurt's own voice (the hurt pipeline's
+                    // makeSound — the same law the fist's hit speaks)
+                    self.sounds
+                        .play_voice(self.frame, "entity.zombie.hurt", 1.0, pitch);
+                }
+                for pitch in fizzes {
+                    // the extinguish transition (javap
+                    // playEntityOnFireExtinguishedSound — 0.7 volume,
+                    // the 1.6 +- 0.4 pitch fold)
+                    self.sounds.play_voice(
+                        self.frame,
+                        "entity.generic.extinguish_fire",
+                        crate::mob::EXTINGUISH_VOLUME,
+                        pitch,
+                    );
+                }
+                for (mx, my, mz, pitch, loot) in fire_deaths {
+                    // the death voice (the die() tail's makeSound — the
+                    // pitch the entity's own law speaks)
+                    self.sounds
+                        .play_voice(self.frame, "entity.zombie.death", 1.0, pitch);
+                    // the loot pops at the feet (spawnAtLocation's law,
+                    // the pickup delay the default 10)
+                    for (item, count) in loot {
+                        let id = self.next_drop_id;
+                        self.next_drop_id += 1;
+                        self.drops.push(crate::drops::ItemDrop::spawn_entity_loot(
+                            id,
+                            item,
+                            count,
+                            mx,
+                            my,
+                            mz,
+                            &mut self.mob_rng,
+                        ));
+                    }
                 }
                 // THE DEATH CLOCK'S REMOVAL (the tickDeath tail: the
                 // broadcast-60 tick discards the corpse)
@@ -3567,8 +3631,10 @@ impl App {
         self.render_avatar(fb, &ctx, &cam);
         // THE MOB LANE's draw (the vanilla LevelRenderer's entity
         // submit — the zombies render in EVERY perspective, the
-        // first-person's own-body gate never touches them)
-        self.render_mobs(fb, &ctx, &cam);
+        // first-person's own-body gate never touches them; the day
+        // tick feeds the flame feature's frame law)
+        let render_day_time = (self.day_time_base + self.frame) as i64;
+        self.render_mobs(fb, &ctx, &cam, render_day_time);
         // THE EAT ARC's pieces (the BreakingItemParticle pass — the
         // vanilla's own particle layer rides the entity pass): the
         // mouth's debris as camera-facing quads
@@ -3699,6 +3765,7 @@ impl App {
         fb: &mut crate::raster::Framebuf,
         ctx: &RenderCtx,
         cam: &crate::camera::Camera,
+        day_time: i64,
     ) {
         if self.mobs.is_empty() {
             return; // the deterministic scenes carry no mobs — the goldens stay
@@ -3746,6 +3813,48 @@ impl App {
                 let [r, g, b, a] = model.pixel(u, v);
                 Some([r, g, b, a])
             });
+            // THE FLAME FEATURE (the burning mob's own overlay — the
+            // vanilla draws the flame feature AFTER the body): the
+            // billboard ring stack around the bbox, the strips lazily
+            // loaded the same sha1-verified stream the skins speak.
+            if mob.fire_ticks > 0 {
+                if self.fire_strips.is_none() {
+                    self.fire_strips =
+                        crate::avatar::FireStrips::load(std::path::Path::new("assets-cache/jar"));
+                }
+                if let Some(strips) = &self.fire_strips {
+                    let flames = crate::avatar::flame_quads(
+                        feet,
+                        crate::mob::ZOMBIE_WIDTH as f32,
+                        crate::mob::ZOMBIE_HEIGHT as f32,
+                        cam.yaw,
+                        day_time,
+                    );
+                    // the white tint (no entity diffuse, no hurt mix —
+                    // the fire's own light speaks), the strip tag rides
+                    // the ring parity (fire_0 even / fire_1 odd), the
+                    // sampler's binary-alpha cutout keeps the holes
+                    let flame_quads: Vec<crate::raster::SampledQuad> = flames
+                        .iter()
+                        .enumerate()
+                        .map(|(ri, q)| crate::raster::SampledQuad {
+                            pts: q.pts,
+                            uv: q.uv,
+                            tex: if ri % 2 == 0 { "fire0" } else { "fire1" },
+                            tint: [1.0, 1.0, 1.0],
+                        })
+                        .collect();
+                    fb.draw_sampled_quads(
+                        ctx.proj.mul(&ctx.view),
+                        &flame_quads,
+                        &mut |tex, u, v| {
+                            let strip = if tex == "fire1" { 1 } else { 0 };
+                            let [r, g, b, a] = strips.pixel(strip, u, v);
+                            Some([r, g, b, a])
+                        },
+                    );
+                }
+            }
         }
     }
 

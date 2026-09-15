@@ -37,6 +37,53 @@
 //! - `ZombieRenderer` — `textures/entity/zombie/zombie.png` (the
 //!   static init's ldc), the model rides HumanoidModel + the zombie
 //!   arm branch the avatar module implements.
+//! - THE BURN LAW (the daylight lane, this run's javap audit): 26.2
+//!   moved the sun-burn into `Mob.aiStep` — `if is(BURN_IN_DAYLIGHT)
+//!   burnUndead()` (the zombie rides the tag) — whose gate
+//!   `isSunBurnTick` reads the TIMELINE attribute
+//!   `EnvironmentAttributes.MONSTERS_BURN` (the `gameplay/monsters_burn`
+//!   boolean hold track of `data/minecraft/timeline/day.json`:
+//!   true 23460..12542 wrapping, false through the night), then
+//!   `getLightLevelDependentMagicValue(eye) > 0.5` (the raw
+//!   brightness through the lightmap's own `f/(4-3f)` ramp), then the
+//!   draw `random.nextFloat() * 30 < (magic - 0.4) * 2`, then the
+//!   water/powder gate (`isInWaterOrRain` blocks), then
+//!   `level.canSeeSky(eye)` (the SKY channel == 15 at the eye).
+//!   The hit: the HEAD slot's helmet branch (this lane's zombie never
+//!   wears one — the branch rides the empty-stack return) falls
+//!   through to `igniteForSeconds(8.0)` = `igniteForTicks(floor(160))`:
+//!   `remainingFireTicks = max(remaining, 160)`.
+//! - THE FIRE CLOCK (`Entity.baseTick`): `remainingFireTicks > 0 &&
+//!   !fireImmune` — every tick `remainingFireTicks % 20 == 0 &&
+//!   !isInLava` deals the `onFire` hurt 1.0 (the armor law absorbs —
+//!   the zombie's 2.0 armor takes it to 0.94), then the counter
+//!   decrements; the on-fire flag rides `remainingFireTicks > 0`. The
+//!   corpse keeps its clock (LivingEntity.tick runs baseTick before
+//!   tickDeath) but the dying refuse the hurt.
+//! - THE EXTINGUISH: the water block's own inside-block effect
+//!   (javap `InsideBlockEffectType.EXTINGUISH` = `Entity::clearFire`,
+//!   remainingFireTicks = 0) — and the transition plays
+//!   `GENERIC_EXTINGUISH_FIRE` ("entity.generic.extinguish_fire",
+//!   random/fizz.ogg) at volume 0.7, pitch `1.6 + (nextFloat() -
+//!   nextFloat()) * 0.4` (javap playEntityOnFireExtinguishedSound).
+//!   `isInWaterOrRain` also blocks the burn roll outright.
+//! - THE SKY DARKEN (`Level.updateSkyBrightness`): `skyDarken =
+//!   (int)(15 - gameplay/sky_light_level)` (the track timeline.rs
+//!   pins); the raw brightness = max(block, sky - darken)
+//!   (LevelLightEngine.getRawBrightness).
+//! - THE FLAME RENDER: `FlameFeatureRenderer.prepare` — the pose
+//!   scales by `bbWidth * 1.4`, rotates by the billboard quaternion
+//!   (`EntityRenderDispatcher.submit`: `Mth.rotationAroundAxis(Y_AXIS,
+//!   camera.orientation)` = normalize((0, q.y, 0, q.w)) = the camera
+//!   YAW alone — the pitch drops out), translates `(0, 0, 0.3 -
+//!   (int)h * 0.02)` with `h = bbHeight / (bbWidth * 1.4)`, then
+//!   stacks rings of 1.4-tall quads while `h > 0`: per ring the width
+//!   x = 0.5 * 0.9^i, the base y rises 0.45, the z leans -0.03, the
+//!   texture alternates FIRE_0 (even rings) / FIRE_1 (odd) off the
+//!   blocks atlas, the (i/2)%2 pairs mirror the U, the color is
+//!   white and the light's block half is forced 15 (the fire glows
+//!   at night) — the frames ride the day tick (fire_0's mcmeta
+//!   playlist [16..31, 0..15], fire_1 sequential).
 
 use crate::body::{collide, WalkAnimationState, AIR_FRICTION, BLOCK_FRICTION, CUBE_SPEED_NUMERATOR, GRAVITY, GROUND_DRAG, JUMP_POWER, VERTICAL_DRAG, WALK_BLEND, WALK_DISTANCE_SCALE};
 use crate::drops::Lcg;
@@ -92,6 +139,26 @@ pub const RARE_DROP_CHANCE: f32 = 0.025;
 /// The rare pool's THREE unweighted entries (the table's own order —
 /// the pick rides the nextInt(3) law the unweighted weights speak).
 pub const RARE_DROP_ITEMS: [&str; 3] = ["iron_ingot", "carrot", "potato"];
+/// `Mob.burnUndead`'s own `igniteForSeconds(8.0F)` — the sun's brand.
+pub const BURN_IGNITE_SECONDS: f32 = 8.0;
+/// `Entity.baseTick`'s on-fire hurt cadence (`remainingFireTicks % 20 == 0`).
+pub const FIRE_DAMAGE_INTERVAL: i32 = 20;
+/// `Entity.baseTick`'s `hurtServer(onFire, 1.0F)` — the burn's own dose.
+pub const FIRE_DAMAGE: f64 = 1.0;
+/// `isSunBurnTick`'s light gate (`f > 0.5F` — the magic value).
+pub const BURN_LIGHT_GATE: f32 = 0.5;
+/// `isSunBurnTick`'s roll: `nextFloat() * 30 < (magic - 0.4) * 2`.
+pub const BURN_ROLL_SCALE: f32 = 30.0;
+pub const BURN_ROLL_BIAS: f32 = 0.4;
+pub const BURN_ROLL_GAIN: f32 = 2.0;
+/// The magic value's ramp base — the lightmap's own `f/(4-3f)` curve
+/// (LevelReader.getLightLevelDependentMagicValue over ambient light 0.0).
+pub const BURN_MAGIC_DIVISOR_BASE: f32 = 4.0;
+pub const BURN_MAGIC_DIVISOR_GAIN: f32 = 3.0;
+/// The extinguish fizz's own fold (javap playEntityOnFireExtinguishedSound).
+pub const EXTINGUISH_VOLUME: f32 = 0.7;
+pub const EXTINGUISH_PITCH_BASE: f32 = 1.6;
+pub const EXTINGUISH_PITCH_SPREAD: f32 = 0.4;
 
 /// The wire id the plain item name rides (the ITEM_WIRE_ORDER's own
 /// reverse lookup — `None` when the name misses the table: the honest
@@ -125,6 +192,17 @@ pub struct MobEvents {
     pub attack: Option<MobAttack>,
     /// the ambient groan's own beat (the baseTick gate fired this tick)
     pub ambient: bool,
+    /// the fire clock's own onFire hurt LANDED this tick (the armor
+    /// law took its share) — the caller speaks the hurt voice
+    pub fire_hurt: bool,
+    /// the fire death the fire clock caused this tick (health <= 0
+    /// under the fire_hurt event — the caller speaks the death voice
+    /// and rolls the loot, the player-kill gate closed)
+    pub fire_death: bool,
+    /// the extinguish fizz's own pitch (Some when the fire cleared
+    /// under the water effect this tick — the caller plays
+    /// entity.generic.extinguish_fire at 0.7 / the pitch)
+    pub extinguished: Option<f32>,
 }
 
 /// The zombie's attack out-edge (the doHurtTarget the melee goal
@@ -201,6 +279,10 @@ pub struct Zombie {
     /// the entity's own RNG (the vanilla RandomSource's stand-in the
     /// loot lane speaks — the same LCG constants)
     rng: Lcg,
+    /// `Entity.remainingFireTicks` — the sun-burn brand's own clock:
+    /// set 160 by `igniteForSeconds(8)`, decremented per tick, the
+    /// onFire hurt rides the %20 gate, the water effect clears it
+    pub fire_ticks: i32,
 }
 
 impl Zombie {
@@ -231,6 +313,7 @@ impl Zombie {
             age_ticks: 0,
             ambient_time: -AMBIENT_INTERVAL_TICKS,
             rng: Lcg::new(seed),
+            fire_ticks: 0,
         }
     }
 
@@ -304,20 +387,48 @@ impl Zombie {
     /// priority order — the attack goal owns the mob, the stroll fills
     /// the rest, the look fills the head. The AMBIENT VOICE rides the
     /// Mob.baseTick's own gate (`nextInt(1000) < ambientSoundTime++`,
-    /// reset to -80) BEFORE the goals.
-    pub fn tick(&mut self, world: &World, player: Option<&PlayerView>) -> MobEvents {
+    /// reset to -80) BEFORE the goals. `day_time` feeds the burn lane
+    /// (the MONSTERS_BURN track + the sky darken the light law rides).
+    pub fn tick(&mut self, world: &World, player: Option<&PlayerView>, day_time: i64) -> MobEvents {
+        let mut events = MobEvents::default();
+        // THE FIRE CLOCK (Entity.baseTick's own block, run BEFORE the
+        // death gate — the corpse keeps its clock but the dying refuse
+        // the hurt): remainingFireTicks > 0 && !fireImmune -> the %20
+        // onFire hurt (not in lava — no lava in this lane), then the
+        // decrement.
+        if self.fire_ticks > 0 {
+            let alive = self.death_time == 0 && self.health > 0.0;
+            if self.fire_ticks % FIRE_DAMAGE_INTERVAL == 0 && alive {
+                self.hurt(FIRE_DAMAGE);
+                events.fire_hurt = true;
+                events.fire_death = self.health <= 0.0;
+            }
+            self.fire_ticks -= 1;
+        }
+        // THE EXTINGUISH (the water block's inside-block effect:
+        // InsideBlockEffectType.EXTINGUISH = Entity::clearFire) — the
+        // body in water clears the brand, the transition speaks the
+        // fizz at its own fold.
+        if self.in_water(world) {
+            if self.fire_ticks > 0 {
+                self.fire_ticks = 0;
+                events.extinguished = Some(
+                    EXTINGUISH_PITCH_BASE
+                        + (self.rng.next_f32() - self.rng.next_f32()) * EXTINGUISH_PITCH_SPREAD,
+                );
+            }
+        }
         // THE DEATH CLOCK (LivingEntity.tickDeath): the isDeadOrDying
         // body's own gate (health <= 0), deathTime++ per tick, removal
         // at 20 (the broadcast 60 event rides the caller).
         if self.health <= 0.0 {
             self.death_time += 1;
             self.swing.tick();
-            return MobEvents::default();
+            return events;
         }
         // THE AMBIENT VOICE (Mob.baseTick's own law: alive -> the
         // nextInt(1000) draw under the climbing clock, the play + the
         // -80 reset; the draw rides the entity's own LCG)
-        let mut events = MobEvents::default();
         self.ambient_time += 1;
         if self.rng.next() % AMBIENT_DRAW_BOUND < self.ambient_time.max(0) as u64 {
             self.ambient_time = -AMBIENT_INTERVAL_TICKS;
@@ -446,6 +557,24 @@ impl Zombie {
             }
         }
 
+        // THE BURN ROLL (Mob.aiStep's BURN_IN_DAYLIGHT branch ->
+        // burnUndead -> isSunBurnTick, the short-circuit order the
+        // bytecode speaks: the track gate, the water gate, the light
+        // gate, THE DRAW, the sky gate — the helmet branch never fires
+        // on this lane's bare-headed zombie, so the hit ignites):
+        // igniteForSeconds(8.0) = remainingFireTicks = max(remaining,
+        // 160).
+        if crate::timeline::monsters_burn(day_time)
+            && !self.in_water(world)
+            && self.burn_light_gate(world, day_time)
+            && self.rng.next_f32() * BURN_ROLL_SCALE
+                < (self.burn_magic(world, day_time) - BURN_ROLL_BIAS) * BURN_ROLL_GAIN
+            && self.can_see_sky(world)
+        {
+            let ticks = (BURN_IGNITE_SECONDS * 20.0) as i32;
+            self.fire_ticks = self.fire_ticks.max(ticks);
+        }
+
         // THE MOVE IMPULSE (the travel law's own getInputVector — the
         // zombie's ground control rides its own attribute, the friction
         // correction the player's law speaks verbatim)
@@ -505,6 +634,90 @@ impl Zombie {
             self.walk.stop();
         }
         events
+    }
+
+    /// THE WATER GATE — `Entity.isInWater`'s stand-in: any block the
+    /// bbox spans is WATER (the vanilla's fluid-height-over-box law
+    /// degrades honestly on this grid: the feet column wades, the body
+    /// block swims).
+    fn in_water(&self, world: &World) -> bool {
+        let (x0, y0, z0, x1, y1, z1) = self.box_at();
+        for wx in (x0.floor() as i32)..=(x1.floor() as i32) {
+            for wy in (y0.floor() as i32)..=(y1.floor() as i32) {
+                for wz in (z0.floor() as i32)..=(z1.floor() as i32) {
+                    if world.get(wx, wy, wz) == crate::world::WATER {
+                        return true;
+                    }
+                }
+            }
+        }
+        false
+    }
+
+    /// The eye cell's (sky, block) levels — `BlockPos.containing(x,
+    /// getEyeY(), z)` over the light engine's two channels. The
+    /// networked world answers from its own grid (the server's engine
+    /// said it); the procedural scene falls back to the DIRECT sky
+    /// column (15 down the open air, -1 per attenuating water/leaves
+    /// block, 0 under anything opaque) with block light 0 — the
+    /// offline terrain states no light-emitting block, and the honest
+    /// unknown beats an invented grid.
+    fn eye_light(&self, world: &World) -> (u8, u8) {
+        let ex = self.x.floor() as i32;
+        let ey = (self.y + ZOMBIE_EYE_HEIGHT).floor() as i32;
+        let ez = self.z.floor() as i32;
+        if let Some(grid) = &world.light {
+            let (s, b) = grid.cell(world.chunks_per_side, ex, ey, ez);
+            let fallback = self.sky_column(world, ex, ey, ez);
+            return (s.unwrap_or(fallback), b.unwrap_or(0));
+        }
+        (self.sky_column(world, ex, ey, ez), 0)
+    }
+
+    /// The direct sky-light column above the eye — 15 through the open
+    /// air, one level lost per attenuating block (water/leaves speak
+    /// opacity 1), zero under anything opaque.
+    fn sky_column(&self, world: &World, ex: i32, ey: i32, ez: i32) -> u8 {
+        let mut light = 15u8;
+        let mut wy = ey + 1;
+        while wy < crate::world::CHUNK_Y as i32 {
+            let id = world.get(ex, wy, ez);
+            if id != crate::world::AIR {
+                if id == crate::world::WATER || id == crate::world::LEAVES {
+                    light = light.saturating_sub(1);
+                } else {
+                    return 0;
+                }
+            }
+            wy += 1;
+        }
+        light
+    }
+
+    /// `LevelReader.getLightLevelDependentMagicValue(eye)` — the raw
+    /// brightness max(block, sky - darken) through the lightmap's own
+    /// `f/(4-3f)` ramp (the mesher's `light_brightness` is the SAME
+    /// curve — LevelReader's ambient-light lerp lands on 0.0 for the
+    /// overworld, so the identity is exact).
+    fn burn_magic(&self, world: &World, day_time: i64) -> f32 {
+        let (sky, block) = self.eye_light(world);
+        let darken = crate::timeline::sky_darken(day_time);
+        let raw = (block as i32).max(sky as i32 - darken).clamp(0, 15) as f32;
+        let f = raw / 15.0;
+        f / (BURN_MAGIC_DIVISOR_BASE - BURN_MAGIC_DIVISOR_GAIN * f)
+    }
+
+    /// The light gate half of `isSunBurnTick` — `magic > 0.5F`
+    /// (raw 13..15 pass, raw 12 sits exactly ON the gate and fails).
+    fn burn_light_gate(&self, world: &World, day_time: i64) -> bool {
+        self.burn_magic(world, day_time) > BURN_LIGHT_GATE
+    }
+
+    /// `BlockAndLightGetter.canSeeSky(eye)` — the SKY channel at 15
+    /// (the direct column unbroken).
+    fn can_see_sky(&self, world: &World) -> bool {
+        let (sky, _) = self.eye_light(world);
+        sky >= 15
     }
 
     /// The head's look law: the yaw offset rides the +-75° clamp the
@@ -730,6 +943,13 @@ pub fn pick_entity(
 mod tests {
     use super::*;
 
+    /// The tests' night tick — the MONSTERS_BURN track says false, so
+    /// the legacy behaviors (the ambient draw cadence, the goal draws)
+    /// run bit-for-bit as they did before the burn lane landed.
+    const NIGHT: i64 = 18_000;
+    /// The tests' noon tick — the burn window's heart.
+    const NOON: i64 = 6_000;
+
     fn player_at(x: f64, y: f64, z: f64) -> PlayerView {
         PlayerView {
             x,
@@ -743,6 +963,25 @@ mod tests {
 
     fn ground_world() -> World {
         let world = World::new(1, 42);
+        world
+    }
+
+    /// A 4x4-chunk stone floor with open sky — wide enough that the
+    /// stroll goal's +-10 ring can never walk the zombie off the edge
+    /// (the void's below-world STONE reads sky 0 and would silently
+    /// mask the burn gates).
+    fn wide_flat_world() -> World {
+        let mut world = World::new(4, 42);
+        for x in 0..world.size_blocks() {
+            for z in 0..world.size_blocks() {
+                for y in 5..crate::world::CHUNK_Y as i32 {
+                    world.set(x, y, z, crate::world::AIR);
+                }
+                for y in 0..5 {
+                    world.set(x, y, z, crate::world::STONE);
+                }
+            }
+        }
         world
     }
 
@@ -809,11 +1048,11 @@ mod tests {
         z.hurt(5.0);
         assert_eq!(z.health, health_after);
         // the clock walks 1, 2, ... and the corpse never attacks
-        let ev = z.tick(&world, Some(&player_at(1.0, 0.0, 0.0)));
+        let ev = z.tick(&world, Some(&player_at(1.0, 0.0, 0.0)), NIGHT);
         assert_eq!(z.death_time, 1);
         assert!(ev.attack.is_none() && !ev.ambient);
         for _ in 0..30 {
-            z.tick(&world, None);
+            z.tick(&world, None, NIGHT);
         }
         assert_eq!(z.death_time, 31, "the caller removes at 20 (retain <20)");
     }
@@ -827,7 +1066,7 @@ mod tests {
         let world = ground_world();
         let mut fires = 0;
         for _ in 0..6000 {
-            if z.tick(&world, None).ambient {
+            if z.tick(&world, None, NIGHT).ambient {
                 fires += 1;
             }
         }
@@ -864,7 +1103,7 @@ mod tests {
         let player = player_at(5.0, 5.0, 8.0); // 3 blocks west, on the pad
         let mut landed = None;
         for _ in 0..400 {
-            let ev = z.tick(&world, Some(&player));
+            let ev = z.tick(&world, Some(&player), NIGHT);
             if let Some(atk) = ev.attack {
                 assert!((atk.damage - 3.0).abs() < 1e-9, "damage {}", atk.damage);
                 landed = Some(atk);
@@ -882,7 +1121,7 @@ mod tests {
         assert!(!z.aggressive, "the fresh cooldown lowers the arms");
         let mut raised = false;
         for _ in 0..30 {
-            if z.tick(&world, Some(&player)).attack.is_some() {
+            if z.tick(&world, Some(&player), NIGHT).attack.is_some() {
                 raised = z.aggressive || raised;
                 break;
             }
@@ -1047,5 +1286,198 @@ mod tests {
         // the living body never rolls (the caller's contract)
         let mut z = Zombie::new(1, 0.0, 0.0, 0.0, 7);
         assert!(z.death_loot(true).is_empty());
+    }
+
+    /// THE SUN'S BRAND (Mob.aiStep's BURN_IN_DAYLIGHT ->
+    /// burnUndead -> isSunBurnTick -> igniteForSeconds(8)): a
+    /// bare-headed zombie on the open surface at noon ignites within
+    /// a few seconds' draws, the brand rides the max(160) law, and
+    /// the fire clock deals the armor-folded 0.94 a second.
+    #[test]
+    fn the_sun_brands_the_bare_head() {
+        let world = wide_flat_world();
+        let mut z = Zombie::new(1, 32.0, 5.0, 32.0, 7);
+        let mut ignited_at = None;
+        for t in 0..300 {
+            z.tick(&world, None, NOON);
+            if z.fire_ticks > 0 {
+                ignited_at = Some(t);
+                break;
+            }
+        }
+        let ignited_at = ignited_at.expect("the noon surface ignites the zombie");
+        assert!(ignited_at < 300, "the brand lands inside the window");
+        assert_eq!(z.fire_ticks, 160, "igniteForSeconds(8) = 160 exactly");
+        // the re-ignite rides max(): the 4%-per-tick roll tops the
+        // brand up faster than the 1-per-tick drain — the fire stays
+        // lit across its own 160-tick span (P(silent span) ~ 0.002
+        // for this seed)
+        let mut ever_died_out = false;
+        for _ in 0..160 {
+            z.tick(&world, None, NOON);
+            if z.fire_ticks == 0 {
+                ever_died_out = true;
+            }
+        }
+        assert!(!ever_died_out, "the noon surface keeps the brand lit");
+        // the fire clock: the health walked off 20.0 by the onFire
+        // hurts (0.94 per landed dose through the 2.0 armor)
+        assert!(z.health < ZOMBIE_MAX_HEALTH, "the fire hurts");
+        let burn = ZOMBIE_MAX_HEALTH - z.health;
+        let doses = (burn / 0.94).round();
+        assert!((doses * 0.94 - burn).abs() < 0.01, "the armor fold {burn}");
+    }
+
+    /// THE NIGHT HIDES THEM — the MONSTERS_BURN track false, the same
+    /// noon-shaped surface, three hundred ticks: no brand, no fire
+    /// hurt, and the roll's draw never fires (the short-circuit keeps
+    /// the RNG stream exactly the pre-burn shape).
+    #[test]
+    fn the_night_hides_the_zombie_from_the_sun() {
+        let world = wide_flat_world();
+        let mut z = Zombie::new(1, 32.0, 5.0, 32.0, 7);
+        for _ in 0..300 {
+            let ev = z.tick(&world, None, NIGHT);
+            assert!(!ev.fire_hurt && z.fire_ticks == 0);
+        }
+        assert_eq!(z.health, ZOMBIE_MAX_HEALTH);
+    }
+
+    /// THE DUSK LIGHT EDGE — the two gates interact: the MONSTERS_BURN
+    /// track holds true past 12000, but the sky-light ramp drains the
+    /// raw brightness (sky - darken) below the magic gate mid-fade.
+    /// Tick 12000 brands (raw 15, the 4%-per-tick roll); tick 12600
+    /// never does — the darken has walked to 4 (raw 11), whose magic
+    /// f32s to 0.4074 < 0.5 (the raw-12 step right below still passes
+    /// at 0.50000006 — the f32 identity both the client and the
+    /// bytecode share). The window's true dusk edge is the LIGHT law's,
+    /// not the track's.
+    #[test]
+    fn the_dusk_light_edge_frees_the_zombie() {
+        let world = wide_flat_world();
+        // 12000: the track says burn AND the light still passes — the
+        // brand lands inside 400 draws (the 4%-per-tick roll)
+        let mut z = Zombie::new(1, 32.0, 5.0, 32.0, 7);
+        let mut ignited = false;
+        for _ in 0..400 {
+            z.tick(&world, None, 12_000);
+            if z.fire_ticks > 0 {
+                ignited = true;
+                break;
+            }
+        }
+        assert!(ignited, "12000 still brands");
+        // 12600: the track still true (12542 is its own edge) but raw
+        // 11 -> magic 0.4074 -> the strict gate refuses, zero draws
+        // reach a pass
+        let mut z2 = Zombie::new(2, 32.0, 5.0, 32.0, 11);
+        for _ in 0..400 {
+            z2.tick(&world, None, 12_600);
+            assert_eq!(z2.fire_ticks, 0, "the raw-11 dusk never brands");
+        }
+        assert_eq!(z2.health, ZOMBIE_MAX_HEALTH);
+    }
+
+    /// THE CANOPY SHIELD — a single leaves block above the eye dims
+    /// the sky channel to 14: canSeeSky fails (the track's == 15 law)
+    /// and the zombie never ignites, however long the noon lasts.
+    #[test]
+    fn the_canopy_shields_the_zombie() {
+        let mut world = wide_flat_world();
+        // a leaves ROOF two over the eye column, across the whole
+        // reach (the eye cell sits at y 6; the leaf layer at 8 dims
+        // the direct column to 14 wherever the stroll wanders)
+        let size = world.size_blocks();
+        for x in 0..size {
+            for z in 0..size {
+                world.set(x, 8, z, crate::world::LEAVES);
+            }
+        }
+        let mut z = Zombie::new(1, 32.0, 5.0, 32.0, 7);
+        for _ in 0..400 {
+            z.tick(&world, None, NOON);
+            assert_eq!(z.fire_ticks, 0, "the dimmed sky never brands");
+        }
+        assert_eq!(z.health, ZOMBIE_MAX_HEALTH);
+    }
+
+    /// THE WATER DROWNS THE BRAND — the inside-block effect clears
+    /// the fire (clearFire = remaining 0) and the transition speaks
+    /// the fizz at 0.7 volume / the 1.6 +- 0.4 pitch fold; the wet
+    /// body never re-ignites while it stands in the pool.
+    #[test]
+    fn the_water_drowns_the_brand() {
+        let mut world = wide_flat_world();
+        // a walled pool cage: the interior cell (32, 5..6, 32) water,
+        // the ring walls 4 tall so the stroll can never walk the zombie
+        // out — the water effect clears the brand and keeps it cleared
+        for wy in 5..9 {
+            for wx in 31..34 {
+                for wz in 31..34 {
+                    if wx == 32 && wz == 32 && wy <= 6 {
+                        world.set(wx, wy, wz, crate::world::WATER);
+                    } else if wx != 32 || wz != 32 {
+                        world.set(wx, wy, wz, crate::world::STONE);
+                    }
+                }
+            }
+        }
+        let mut z = Zombie::new(1, 32.5, 5.0, 32.5, 7);
+        z.fire_ticks = 160;
+        let ev = z.tick(&world, None, NOON);
+        assert_eq!(z.fire_ticks, 0, "the water effect cleared the fire");
+        let pitch = ev.extinguished.expect("the fizz spoke");
+        assert!(
+            (1.6 - 0.4..=1.6 + 0.4).contains(&pitch),
+            "the pitch fold {pitch}"
+        );
+        // the wet body never re-ignites
+        for _ in 0..200 {
+            z.tick(&world, None, NOON);
+            assert_eq!(z.fire_ticks, 0, "the pool keeps it out");
+        }
+    }
+
+    /// THE CORPSE KEEPS ITS CLOCK — the fire clock runs before the
+    /// death gate (baseTick precedes tickDeath), the dying refuse the
+    /// onFire hurt, and the brand drains out over the corpse.
+    #[test]
+    fn the_corpse_keeps_its_fire_clock() {
+        let world = flat_world();
+        let mut z = Zombie::new(1, 8.0, 5.0, 8.0, 7);
+        z.health = 0.0;
+        z.fire_ticks = 41;
+        for _ in 0..41 {
+            let ev = z.tick(&world, None, NOON);
+            assert!(!ev.fire_hurt, "the dying refuse the hurt");
+            assert_eq!(ev.extinguished, None);
+        }
+        assert_eq!(z.fire_ticks, 0, "the clock drained to zero");
+        assert_eq!(z.death_time, 41, "the death clock walked on");
+    }
+
+    /// THE FIRE DEATH SPEAKS ITS EVENT — the last onFire dose flips
+    /// the fire_death flag (the caller rolls the loot with the
+    /// player-kill gate closed) and the flesh table answers.
+    #[test]
+    fn the_fire_death_flips_its_event() {
+        let world = wide_flat_world();
+        let mut z = Zombie::new(1, 32.0, 5.0, 32.0, 7);
+        z.fire_ticks = 160;
+        z.health = 0.5;
+        let mut died = false;
+        for _ in 0..25 {
+            let ev = z.tick(&world, None, NOON);
+            if ev.fire_death {
+                died = true;
+                break;
+            }
+        }
+        assert!(died, "the fire kills inside its first second");
+        assert!(z.health <= 0.0);
+        // the fire death's loot: killed_by_player false — the rare
+        // pool never fires (the death_loot contract the loot lane pins)
+        let flesh = wire_id("rotten_flesh").expect("the rotten flesh rides the wire");
+        assert!(z.death_loot(false).iter().all(|(item, _)| *item == flesh));
     }
 }
