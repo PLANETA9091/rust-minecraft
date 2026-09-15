@@ -188,6 +188,11 @@ pub struct SceneOpts {
     /// REAL contact laws ride the ticks (the ignite, the 4.0) — the
     /// burning overlay the vanilla frame layers over the murk.
     pub lava_dive: bool,
+    /// THE BURY: fill the eye's own cell with DIRT — the
+    /// getViewBlockingState walk's eight samples all read the solid,
+    /// the head-in-block screen arm speaks its honest frame (the
+    /// particle sprite the 0xFF191919 tint carries).
+    pub bury: bool,
 }
 
 impl SceneOpts {
@@ -214,6 +219,7 @@ impl SceneOpts {
             || self.water_vision != 0
             || self.air_supply.is_some()
             || self.lava_dive
+            || self.bury
             || self.walk_ticks > 0
             || self.settle_ticks > 0
     }
@@ -417,6 +423,23 @@ pub fn seed_scene(app: &mut crate::screens::App, opts: &SceneOpts) -> Result<()>
         dive_carve(app, crate::world::LAVA);
         if let Some(b) = app.body.as_mut() {
             b.remaining_fire_ticks = b.remaining_fire_ticks.max(crate::body::LAVA_FIRE_TICKS);
+        }
+    }
+    if opts.bury {
+        // THE BURY (getViewBlockingState's own gate the eye's cell
+        // speaks): the DIRT block lands in the cell the EYE occupies
+        // (feet + 1.62, the vanilla eye geometry) — the eight samples
+        // all read the solid, the head-in-block arm submits the block
+        // sprite (the suffocation view the vanilla screen speaks). No
+        // ticks ride the stage (the --screen lane owns none): the
+        // frame is the buried view's own truth.
+        if let Some(w) = app.offline_world.as_mut() {
+            if let Some(b) = app.body.as_ref() {
+                let (px, pz) = (n / 2, n / 2);
+                let eye_cell_y = (b.y + 1.62).floor() as i32;
+                w.set(px, eye_cell_y, pz, crate::world::DIRT);
+                app.remesh_offline();
+            }
         }
     }
     if opts.water_vision != 0 {

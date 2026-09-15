@@ -164,6 +164,40 @@ cargo run -p mc-client --release -- --screen world --seed 42 --body \
 # walks the body out), clamped [-20, 300]
 ```
 
+## The block-screen lane (the suffocation view) — v0.3.168
+
+The submit chain's own FIRST arm (javap `ScreenEffectRenderer.submit`
++ `getViewBlockingState`, the 26.2 jar): the eight sample points
+around the player's box (x ± 0.4*bbWidth, the eye ± 0.05) read
+`getRenderShape() != INVISIBLE && isViewBlocking(...)` — the
+registration default `isViewBlocking = isSuffocating` =
+`blocksMotion() && isCollisionShapeFullBlock()` (BootstrapMethods
+#5/#6), the full-cube solids (stone, dirt, sand, the ores, the log)
+block, the fluids and the leaf kinds never do. The first hit submits
+`getParticleMaterial(state).sprite()` — the block model's own
+PARTICLE entry (grass_block's is dirt, the log's its side) — through
+`lambda$submitBlockSprite$0`: the [-1, 1]² plane at z = -0.5 (the
+water arm's own plane), the (getU1, getV1, getU0, getV0) uv walk (the
+left edge rides u1 — the mirrored-upright law the fire arm speaks),
+the vertex color -15132391 = 0xFF191919 (the rgb 25/255 dark
+multiply, the alpha 0xFF keeps the quad OPAQUE — the world fully
+hidden). The draw rides the submit order: BEFORE the water arm's 93
+and the fire arm's 120.
+
+| frame | the scene |
+|---|---|
+| `block_screen.png` | THE BURY: the eye's own cell holds dirt — the eight samples all read the solid, the full frame speaks the dark dirt sprite (the 0xFF191919 tint the bytecode speaks), the HUD rows floating over the suffocation view |
+
+Regenerate the family:
+
+```sh
+cargo run -p mc-client --release -- --headless --screen world --seed 42 \
+  --body --bury --out shots/block_screen.png
+# --bury fills the eye's own cell with DIRT (feet + 1.62, the vanilla
+# eye geometry); the eight-sample walk reads it, the arm submits the
+# block sprite — the --screen lane owns no ticks
+```
+
 ## The lava-fog lane (the ember murk) — v0.3.167
 
 The fog type's sibling arm (javap the 26.2 jar): the camera-in-lava

@@ -17,6 +17,64 @@ pub const GRAY: [f32; 3] = [0.667, 0.667, 0.667];
 /// Mojang Studios loading screen background (vanilla constant).
 pub const MOJANG_RED: [f32; 3] = [239.0 / 255.0, 50.0 / 255.0, 61.0 / 255.0];
 
+/// THE BLOCK SCREEN TINT (javap `ScreenEffectRenderer.submit`'s own
+/// `ldc -15132391` = 0xFF191919): the rgb 25/255 the head-in-block
+/// quad's dark multiply speaks, the alpha 0xFF the opaque cover rides.
+pub const BLOCK_SCREEN_TINT: f32 = 25.0 / 255.0;
+
+/// THE VIEW-BLOCKING LAW (javap `BlockBehaviour$Properties` <init> +
+/// BootstrapMethods #5/#6, the 26.2 jar): the registration default
+/// `isViewBlocking = isSuffocating` = `blocksMotion() &&
+/// isCollisionShapeFullBlock()` — the full-cube solids suffocate, the
+/// fluids and the leaf kinds never do (the leaves' no-suffocation
+/// law; leaf_litter's flat zero-thickness shape; the fluids' own
+/// fog/screen arms already speak them). The palette's own mapping.
+pub fn is_view_blocking(kind: u16) -> bool {
+    !matches!(
+        kind,
+        crate::world::AIR
+            | crate::world::WATER
+            | crate::world::LAVA
+            | crate::world::LEAVES
+            | crate::world::PALE_LEAVES
+            | crate::world::LEAF_LITTER
+    )
+}
+
+/// THE PARTICLE SPRITE (javap `getParticleMaterial(state).sprite()`):
+/// the block model's own PARTICLE entry per kind — grass_block's
+/// particle is dirt, the log's is its side, the rest are their own
+/// body texture. The values are atlas TILE indices (the generated
+/// TILE_NAMES' own numbering, the test pins the names); the
+/// non-blocking kinds never ask (TILE_NONE keeps the table total).
+pub fn particle_tile(kind: u16) -> u16 {
+    use mc_registry::generated::atlas;
+    match kind {
+        crate::world::STONE => 0,      // "stone"
+        crate::world::DIRT => 1,       // "dirt"
+        crate::world::GRASS => 1,      // the model's particle: dirt
+        crate::world::LOG => 4,        // "oak_log" (the side)
+        crate::world::SAND => 8,       // "sand"
+        crate::world::GRANITE => 9,    // "granite"
+        crate::world::DIORITE => 10,   // "diorite"
+        crate::world::ANDESITE => 11,  // "andesite"
+        crate::world::DEEPSLATE => 12, // "deepslate" (the side)
+        crate::world::COBBLED_DEEPSLATE => 14, // "cobbled_deepslate"
+        crate::world::GRAVEL => 15,    // "gravel"
+        crate::world::BEDROCK => 16,   // "bedrock"
+        crate::world::COAL_ORE => 17,  // "coal_ore"
+        crate::world::COPPER_ORE => 18, // "copper_ore"
+        crate::world::IRON_ORE => 19,  // "iron_ore"
+        crate::world::GOLD_ORE => 20,  // "gold_ore"
+        crate::world::REDSTONE_ORE => 21, // "redstone_ore"
+        crate::world::LAPIS_ORE => 22, // "lapis_ore"
+        crate::world::DIAMOND_ORE => 23, // "diamond_ore"
+        crate::world::EMERALD_ORE => 24, // "emerald_ore"
+        crate::world::NETHERRACK => 25, // "netherrack"
+        _ => atlas::TILE_NONE,
+    }
+}
+
 /// One interactive button (vanilla 200x20 nine-slice widget).
 #[derive(Debug, Clone)]
 pub struct Button {
@@ -3963,11 +4021,12 @@ impl App {
         }
         // THE SCREEN EFFECT OVERLAYS (the vanilla ScreenEffectRenderer
         // submit's own chain — the pass the GameRenderer speaks AFTER
-        // renderItemInHand, BEFORE the HUD): the water arm first, the
-        // fire arm second (the submit bytecode's own order — the
-        // isEyeInFluid check at offset 93, the isOnFire check at 120),
-        // the head-in-block arm sleeps until a scene places the eye in
-        // a solid (the honest unseen).
+        // renderItemInHand, BEFORE the HUD): the head-in-block arm
+        // first, the water arm second, the fire arm third (the submit
+        // bytecode's own order — the getViewBlockingState check at
+        // offset 28, the isEyeInFluid check at 93, the isOnFire check
+        // at 120)
+        self.render_block_screen_overlay(fb, &ctx);
         self.render_water_overlay(fb, &ctx);
         self.render_fire_overlay(fb, &ctx, day_time);
     }
@@ -4188,6 +4247,126 @@ impl App {
                 Some([r, g, b, a])
             },
         );
+    }
+
+    /// THE BLOCK SCREEN OVERLAY (javap `ScreenEffectRenderer.submit`'s
+    /// HEAD-IN-BLOCK arm, the 26.2 jar): the submit chain's FIRST arm —
+    /// `getViewBlockingState(player)` runs at offset 28, BEFORE the
+    /// water arm's 93 and the fire arm's 120 — the walk samples EIGHT
+    /// points around the player (`i` = 0..8, the (i>>0)%2, (i>>1)%2,
+    /// (i>>2)%2 bits the three cube axes speak): x ± `(bit - 0.5) *
+    /// getBbWidth() * 0.8`, the eye y ± `(bit - 0.5) * 0.1 *
+    /// getScale()`, the first cell whose state passes
+    /// `getRenderShape() != INVISIBLE && isViewBlocking(level, pos)`
+    /// wins. `isViewBlocking` rides the registration default the
+    /// `Properties` `<init>` speaks (`isViewBlocking = isSuffocating`,
+    /// BootstrapMethods #6): `blocksMotion() &&
+    /// isCollisionShapeFullBlock()` — the full-cube solids (stone,
+    /// dirt, sand, the ores, the log...) block, the fluids and the
+    /// leaf kinds never do (the leaves' no-suffocation law the
+    /// palette's non-cube members ride). The sprite is
+    /// `getParticleMaterial(state).sprite()` — the block model's own
+    /// PARTICLE entry (grass_block's particle is dirt, the log's is
+    /// its side), the particle table the vanilla models speak. The
+    /// geometry is `lambda$submitBlockSprite$0`'s own call:
+    /// `buildSpriteQuad(consumer, pose, sprite, -1.0, -1.0, 1.0, 1.0,
+    /// -0.5, color)` — the [-1, 1]² plane at z = -0.5 (the water arm's
+    /// own plane, the full screen always covered), `buildSpriteQuad`
+    /// feeding `(getU1, getV1, getU0, getV0)` into `buildQuad` — the
+    /// LEFT edge rides u1, the bottom edge rides v1 (the same
+    /// mirrored-upright walk the fire arm's uv law speaks). The vertex
+    /// color is the int -15132391 = 0xFF191919 — the rgb 25/255 ≈ 0.098
+    /// the dark multiply speaks (the texels ride their own alpha 255,
+    /// the vertex alpha 1.0 keeps the quad OPAQUE — the world is fully
+    /// hidden the vanilla suffocation view speaks). `RenderTypes.
+    /// blockScreenEffect` draws through the translucent blend, the
+    /// noPhysics gate inside `getViewBlockingState` sleeps (this
+    /// client has no spectator lane).
+    fn render_block_screen_overlay(&mut self, fb: &mut crate::raster::Framebuf, ctx: &RenderCtx) {
+        // THE GATE PAIR (the submit bytecode's own two ifne's): the
+        // first-person camera only, the body's own walk only — the
+        // body-less scenes carry no player, nothing buries
+        if !self.perspective.is_first_person() {
+            return;
+        }
+        if self.body.is_none() {
+            return; // the deterministic scenes own no player — nothing buries
+        }
+        let Some(kind) = self.block_screen() else {
+            return; // the dry eye — the submit arm sleeps
+        };
+        let tile = particle_tile(kind);
+        if tile == mc_registry::generated::atlas::TILE_NONE {
+            return; // the non-cube members own no particle screen
+        }
+        let tile_rgba = mc_registry::generated::atlas::tile_rgba(tile);
+        // THE QUAD (lambda$submitBlockSprite$0's own vertex walk — the
+        // corners (x0,y0)->(u1,v1), (x1,y0)->(u0,v1), (x1,y1)->(u0,v0),
+        // (x0,y1)->(u1,v0) at the z = -0.5 plane; the sprite's own
+        // 16-unit frame the per-texture pixel space speaks)
+        let quad = crate::raster::SampledQuad {
+            pts: [
+                [-1.0, -1.0, -0.5],
+                [1.0, -1.0, -0.5],
+                [1.0, 1.0, -0.5],
+                [-1.0, 1.0, -0.5],
+            ],
+            uv: [
+                [16.0, 16.0],
+                [0.0, 16.0],
+                [0.0, 0.0],
+                [16.0, 0.0],
+            ],
+            tex: "block_screen",
+            tint: [BLOCK_SCREEN_TINT; 3], // the 0xFF191919 rgb multiply
+        };
+        // THE DRAW (the vertex alpha 1.0 the 0xFF speaks — the texel's
+        // own alpha 255 rides it, the quad fully covers the world; the
+        // depth TEST survives, nothing writes — the water/fire arms'
+        // own convention)
+        fb.draw_translucent_sampled_quads(
+            ctx.proj,
+            &[quad],
+            1.0,
+            &mut |_tex, u, v| {
+                let x = (u.floor() as i32).rem_euclid(16) as usize;
+                let y = (v.floor() as i32).rem_euclid(16) as usize;
+                let o = (y * 16 + x) * 4;
+                let t = tile_rgba;
+                Some([t[o], t[o + 1], t[o + 2], t[o + 3]])
+            },
+        );
+    }
+
+    /// THE HEAD-IN-BLOCK WALK (javap `getViewBlockingState`, the 26.2
+    /// jar): the eight sample points around the player's own box —
+    /// the horizontal spread `± 0.4 * bbWidth` (the `(bit - 0.5) *
+    /// bbWidth * 0.8` fold), the vertical spread `± 0.05` (the
+    /// `0.1 * scale` half-step), the first sample whose cell holds a
+    /// view-blocking kind wins. The player's bbWidth 0.6 and scale
+    /// 1.0 are the vanilla defaults the body speaks; the camera pos is
+    /// the eye (the first-person law), the feet ride the same x/z.
+    fn block_screen(&self) -> Option<u16> {
+        let cam = self.world_camera();
+        let world = self.active_world()?;
+        let (px, py, pz) = (cam.pos.x, cam.pos.y, cam.pos.z);
+        for i in 0..8i32 {
+            let ox = ((i >> 0) % 2) as f32 - 0.5;
+            let oy = ((i >> 1) % 2) as f32 - 0.5;
+            let oz = ((i >> 2) % 2) as f32 - 0.5;
+            let sx = px + ox * 0.6 * 0.8;
+            let sy = py + oy * 0.1; // the 0.1 * scale half-step
+            let sz = pz + oz * 0.6 * 0.8;
+            let kind = world.get(
+                (sx.floor()) as i32,
+                (sy.floor()) as i32,
+                (sz.floor()) as i32,
+            );
+            if is_view_blocking(kind) {
+                return Some(kind);
+            }
+        }
+        None
     }
 
     /// THE THIRD-PERSON AVATAR's frame render — the vanilla
@@ -10051,6 +10230,129 @@ mod tests {
         )
         .unwrap();
         assert!(dry.lava_fog().is_none(), "the dry camera keeps the sky");
+    }
+
+    // THE HEAD-IN-BLOCK WALK (javap getViewBlockingState + the submit
+    // chain's own first arm): the bury scene's eight samples all read
+    // the solid, the walk returns the kind; the dry scene's samples
+    // read air; the fluids and the leaves never block (the
+    // isSuffocating default the registration speaks); the particle
+    // table pins the models' own entries to the generated tile names.
+    #[test]
+    fn the_block_screen_walk_reads_the_eye_cell() {
+        let mut app = App::new(3);
+        app.enter_world();
+        crate::headless::seed_scene(
+            &mut app,
+            &crate::headless::SceneOpts {
+                body: true,
+                bury: true,
+                perspective: Some(crate::camera::CameraType::FirstPerson),
+                ..crate::headless::SceneOpts::default()
+            },
+        )
+        .unwrap();
+        let kind = app.block_screen().expect("the buried eye reads the solid");
+        assert_eq!(kind, crate::world::DIRT, "the bury stages the eye cell's dirt");
+        assert!(
+            is_view_blocking(kind),
+            "the dirt passes the isSuffocating default"
+        );
+        assert_eq!(
+            particle_tile(kind),
+            1,
+            "the dirt particle is the dirt tile"
+        );
+        assert_eq!(
+            mc_registry::generated::atlas::tile_name(1),
+            "dirt",
+            "the tile index rides the generated names"
+        );
+
+        // THE DRY CAMERA: no burial — the walk reads air, the arm
+        // sleeps (the honest unseen the old comment spoke)
+        let mut dry = App::new(3);
+        dry.enter_world();
+        crate::headless::seed_scene(
+            &mut dry,
+            &crate::headless::SceneOpts {
+                body: true,
+                perspective: Some(crate::camera::CameraType::FirstPerson),
+                ..crate::headless::SceneOpts::default()
+            },
+        )
+        .unwrap();
+        assert!(
+            dry.block_screen().is_none(),
+            "the dry eye keeps the world visible"
+        );
+    }
+
+    // THE VIEW-BLOCKING + PARTICLE TABLES (the registration default's
+    // own palette mapping): the full-cube solids block, the fluids and
+    // the leaf kinds never do; the particle entries the vanilla models
+    // speak — grass_block's particle is dirt, the log's is its side,
+    // the deepslate's is its side.
+    #[test]
+    fn the_view_blocking_law_maps_the_palette() {
+        // THE SOLIDS: the suffocation default's own set
+        for kind in [
+            crate::world::STONE,
+            crate::world::DIRT,
+            crate::world::GRASS,
+            crate::world::LOG,
+            crate::world::SAND,
+            crate::world::BEDROCK,
+            crate::world::NETHERRACK,
+        ] {
+            assert!(is_view_blocking(kind), "the solid kind {kind} blocks");
+        }
+        // THE NON-BLOCKERS: the fluids, the leaves, the flat cover
+        for kind in [
+            crate::world::AIR,
+            crate::world::WATER,
+            crate::world::LAVA,
+            crate::world::LEAVES,
+            crate::world::PALE_LEAVES,
+            crate::world::LEAF_LITTER,
+        ] {
+            assert!(!is_view_blocking(kind), "the kind {kind} never blocks");
+        }
+        // THE PARTICLE ENTRIES: the models' own choice
+        assert_eq!(
+            mc_registry::generated::atlas::tile_name(particle_tile(crate::world::GRASS)),
+            "dirt",
+            "grass_block's particle is dirt"
+        );
+        assert_eq!(
+            mc_registry::generated::atlas::tile_name(particle_tile(crate::world::LOG)),
+            "oak_log",
+            "the log's particle is its side"
+        );
+        assert_eq!(
+            mc_registry::generated::atlas::tile_name(particle_tile(crate::world::DEEPSLATE)),
+            "deepslate",
+            "the deepslate's particle is its side"
+        );
+        assert_eq!(
+            mc_registry::generated::atlas::tile_name(particle_tile(crate::world::NETHERRACK)),
+            "netherrack",
+            "the netherrack's particle is its body"
+        );
+        // THE NON-BLOCKERS never ask: TILE_NONE keeps the table total
+        for kind in [
+            crate::world::WATER,
+            crate::world::LAVA,
+            crate::world::LEAVES,
+            crate::world::PALE_LEAVES,
+            crate::world::LEAF_LITTER,
+        ] {
+            assert_eq!(
+                particle_tile(kind),
+                mc_registry::generated::atlas::TILE_NONE,
+                "the kind {kind} owns no particle screen"
+            );
+        }
     }
 
     // THE WATER FOG PAIR (javap WaterFogEnvironment.setupFog +

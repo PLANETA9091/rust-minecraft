@@ -207,6 +207,12 @@ struct Cli {
     /// speak (the lava murk, the ignite, the 4.0).
     #[arg(long)]
     lava_dive: bool,
+    /// BURY THE EYE: fill the eye's own cell with DIRT — the
+    /// getViewBlockingState walk's eight samples all read the solid,
+    /// the head-in-block screen arm speaks (the block particle sprite
+    /// the 0xFF191919 tint carries).
+    #[arg(long)]
+    bury: bool,
     #[arg(long, default_value = "render.png")]
     out: PathBuf,
     /// Path to official asset index json (enables real texture-average colors).
@@ -266,6 +272,7 @@ fn main() -> Result<()> {
             water_vision: cli.water_vision,
             air_supply: cli.air_supply,
             lava_dive: cli.lava_dive,
+            bury: cli.bury,
         };
         headless::render_gui_screen_opts(
             screen,
