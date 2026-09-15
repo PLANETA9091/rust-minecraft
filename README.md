@@ -4135,6 +4135,35 @@ hand-drawn:
   pose and echoes the Client Command's PERFORM_RESPAWN on the wire —
   with the Set Health, Hurt Animation (the 26.x float-yaw widening)
   and Player Combat Kill packets parsed into the live store.
+- **The food/exhaustion arc** (v0.3.151) — the survival loop's hunger
+  half now speaks the original's own `FoodData` arithmetic (javap
+  net.minecraft.world.food, the cached jar's Mojang-mapped classes):
+  the exhaustion bank folds over 4.0 into the saturation first and the
+  bar second (the peaceful level refuses), the **double-lane
+  regeneration** heals a living hurt body — the saturated fast lane
+  every 10 ticks off a FULL bar (heal `min(sat, 6) / 6`, pay
+  `min(sat, 6)` exhaustion — the modern 18/20 split the wiki's old
+  18-everything never knew) and the classic slow lane every 80 ticks
+  (1.0 heart, 6.0 exhaustion) — and the starving bar bites 1.0 every
+  80 ticks through the difficulty's own gates (HARD always, NORMAL
+  down to the last heart). The exhaustion SOURCES ride the server-side
+  `causeFoodExhaustion`'s `!isClientSide` gate: the jump's 0.05 / the
+  sprint jump's 0.2 (`ServerPlayer.jumpFromGround`), the sprint move's
+  0.1 per block over the stats' cm law (`checkMovementStatistics`:
+  `0.1 * round(distance * 100) * 0.01`), the mine's 0.005
+  (`Block.playerDestroy`'s tail), the attack's 0.1, the swim's 0.01,
+  and the walk/crouch lanes' modern 0.0; the damage sources speak the
+  data-driven `damage_type/fall.json` exhaustion field (the modern
+  verdict 0.0). The sprint gate refuses a bar at or under 6
+  (`hasEnoughFoodToDoExhaustiveManoeuvres`). The HUD hunger row speaks
+  the REAL `Hud.extractFood` law: the empty drumstick under every
+  slot, the full at `i * 2 + 1 < food`, the half at the boundary, the
+  right-to-left walk from `width/2 + 91`, and the saturation-driven
+  shimmy (`tickCount % (food * 3 + 1)` beat, each drumstick its own
+  `nextInt(3) - 1` draw). The offline lane's stand-in server ticks the
+  FoodData at the `ServerPlayer.tick` head position (the sources of
+  this tick bank for the next fold); the networked lane's truth rides
+  the wire's Set Health into the same store.
 - **Singleplayer world** — clicking `Singleplayer` enters a live 3D world
   view rendered by the same deterministic CPU raster path as the pixel
   tests: real block textures from the generated atlas, the **official

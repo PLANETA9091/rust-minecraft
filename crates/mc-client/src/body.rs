@@ -373,6 +373,14 @@ pub struct PlayerBody {
     /// health) exactly like the step_due lane it sits beside. `None` =
     /// no hurt this tick; the body never clears it, the reader does.
     pub fall_event: Option<i32>,
+    /// The EXHAUSTION SOURCES' own bank this tick (javap
+    /// ServerPlayer.jumpFromGround's 0.05/0.2 and
+    /// checkMovementStatistics's cm law) — the App drains it into the
+    /// stand-in server's FoodData (the offline lane's own authority;
+    /// the networked lane's exhaustion is the server's observation,
+    /// the client folds nothing). The body never clears it, the reader
+    /// does.
+    pub exhaustion_event: f32,
     // sendPosition's bookkeeping
     position_reminder: i32,
     x_last: f64,
@@ -410,6 +418,7 @@ impl PlayerBody {
             step_due: false,
             fall_distance: 0.0,
             fall_event: None,
+            exhaustion_event: 0.0,
             position_reminder: 0,
             x_last: x,
             y_last: y,
@@ -555,6 +564,15 @@ impl PlayerBody {
                 self.vx += -(rad.sin()) * SPRINT_JUMP_BOOST as f64;
                 self.vz += rad.cos() * SPRINT_JUMP_BOOST as f64;
             }
+            // THE JUMP'S OWN COST (javap ServerPlayer.jumpFromGround: the
+            // super's arc, then the isSprinting split — the sprint
+            // jump's 0.2, the plain jump's 0.05, FoodConstants' own
+            // inlined constants the bytecode speaks)
+            self.exhaustion_event += if self.sprinting {
+                crate::food::EXHAUSTION_SPRINT_JUMP
+            } else {
+                crate::food::EXHAUSTION_JUMP
+            };
             self.no_jump_delay = JUMP_REPEAT_TICKS;
         }
         // THE MOVE IMPULSE (getInputVector's law): the input vector
@@ -650,6 +668,26 @@ impl PlayerBody {
         // and the counter resets to (int)moveDist + 1.0F.
         self.step_due = false;
         let horizontal = ((col.dx * col.dx + col.dz * col.dz).sqrt()) as f32;
+        // THE MOVEMENT'S OWN COST (javap ServerPlayer.checkMovementStatistics
+        // over the stats' cm law: cm = Math.round(distance * 100), the
+        // exhaustion rate * cm * 0.01 — the in-water lane's 0.01 per
+        // block over the horizontal sweep, the on-ground sprint lane's
+        // 0.1 per block, the walk/crouch lanes' honest 0.0 constants;
+        // the lanes' own order: the water beats the ground, the water
+        // gate rides the BODY's fluid state the tick already knows)
+        let cm = (horizontal * 100.0).round() as i32;
+        if cm > 0 {
+            if self.touches_water(world) {
+                self.exhaustion_event +=
+                    crate::food::EXHAUSTION_SWIM * cm as f32 * 0.01;
+            } else if self.on_ground && self.sprinting {
+                self.exhaustion_event +=
+                    crate::food::EXHAUSTION_SPRINT * cm as f32 * 0.01;
+            }
+            // the WALK and CROUCH lanes' EXHAUSTION_WALK /
+            // EXHAUSTION_CROUCH — the modern law's own 0.0, the
+            // constants the walk speaks and the arithmetic drops
+        }
         self.move_dist += horizontal * 0.6;
         if self.move_dist > self.next_step {
             let under = world.get(
@@ -1394,5 +1432,81 @@ mod tests {
         b.crouching = true;
         assert_eq!(b.height(), CROUCH_HEIGHT);
         assert_eq!(b.eye_height(), CROUCH_EYE, "the Avatar POSES crouch eye");
+    }
+
+    /// THE JUMP'S OWN COST (javap ServerPlayer.jumpFromGround): the
+    /// sprint jump banks 0.2, the plain jump 0.05 — the FoodConstants
+    /// constants the isSprinting split speaks, banked on the SAME tick
+    /// the jump arc fired.
+    #[test]
+    fn the_jump_banks_the_exhaustion_split_by_the_sprint() {
+        let w = flat_world();
+        // the plain jump: the body settles on the floor first (the
+        // jump gate needs the ground state), the walk costs nothing
+        let mut b = PlayerBody::new(8.0, 1.0, 8.0, 0.0, 0.0);
+        for _ in 0..5 {
+            b.tick(&w, false);
+        }
+        b.jumping = true;
+        b.tick(&w, false);
+        assert_eq!(b.exhaustion_event, crate::food::EXHAUSTION_JUMP);
+        // the sprint jump: the sprint's own 0.2 (the airborne sweep
+        // costs nothing — the movement lanes need the ground)
+        let mut b = PlayerBody::new(8.0, 1.0, 8.0, 0.0, 0.0);
+        for _ in 0..5 {
+            b.tick(&w, false);
+        }
+        b.jumping = true;
+        b.sprinting = true;
+        b.tick(&w, false);
+        assert_eq!(b.exhaustion_event, crate::food::EXHAUSTION_SPRINT_JUMP);
+    }
+
+    /// THE SPRINT MOVE'S OWN COST (javap ServerPlayer.checkMovementStatistics
+    /// over the stats' cm law): the on-ground sprint lane pays
+    /// 0.1 * cm * 0.01 per tick's swept distance — one block's sweep
+    /// banks exactly 0.1, the walk lane banks the honest 0.0.
+    #[test]
+    fn the_sprint_move_costs_a_tenth_per_block_the_walk_is_free() {
+        let w = flat_world();
+        // the resting body walks nothing — the cm > 0 gate
+        let mut b = PlayerBody::new(8.0, 1.0, 8.0, 0.0, 0.0);
+        for _ in 0..10 {
+            b.tick(&w, false);
+        }
+        assert_eq!(b.exhaustion_event, 0.0, "the resting body banks nothing");
+        // the sprint body's swept delta speaks the cm law — the
+        // per-tick sweep s (blocks) costs 0.1 * round(s * 100) * 0.01;
+        // drive a real sprint and fold the bank over the run
+        let mut b = PlayerBody::new(8.0, 1.0, 8.0, 0.0, 0.0);
+        b.sprinting = true;
+        b.forward = 1.0;
+        let mut swept = 0.0f64;
+        for _ in 0..20 {
+            let before = (b.x, b.z);
+            b.tick(&w, false);
+            let dx = b.x - before.0;
+            let dz = b.z - before.1;
+            swept += (dx * dx + dz * dz).sqrt();
+        }
+        assert!(b.exhaustion_event > 0.0, "the sprint's own cost speaks");
+        // the per-block law's own shape: the bank ≈ 0.1 per swept
+        // block (the cm rounding's own error under half a block's
+        // worth over the 20-tick run)
+        let expected = swept as f32 * 0.1;
+        assert!(
+            (b.exhaustion_event - expected).abs() < 0.05,
+            "the bank {} tracks 0.1/block over {} swept (expected {})",
+            b.exhaustion_event,
+            swept,
+            expected
+        );
+        // the WALK lane's honest 0.0: the same run without the sprint
+        let mut b = PlayerBody::new(8.0, 1.0, 8.0, 0.0, 0.0);
+        b.forward = 1.0;
+        for _ in 0..20 {
+            b.tick(&w, false);
+        }
+        assert_eq!(b.exhaustion_event, 0.0, "the walk is free (the modern law)");
     }
 }

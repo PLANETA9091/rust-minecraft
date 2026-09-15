@@ -506,8 +506,16 @@ pub struct App {
     /// cooldown's own comparison — the vanilla hurtServer's own
     /// pipeline, the LOCAL prediction's voice).
     pub health: f32,
-    pub food: i32,
-    pub saturation: f32,
+    /// THE FOOD LANE (javap FoodData, the food.rs module's own laws):
+    /// the bar/saturation/exhaustion/timer quartet — the wire's Set
+    /// Health lands the server's truth, the OFFLINE lane's stand-in
+    /// server ticks it (the fold, the double-lane regen, the starve).
+    pub food_data: crate::food::FoodData,
+    /// The Hud.random's stand-in (the food row's saturation shimmy
+    /// draws — the free-running RandomSource the vanilla speaks, the
+    /// client's deterministic Lcg the audio/drop lanes' own
+    /// architecture).
+    pub food_rng: crate::drops::Lcg,
     pub hurt_time: i32,
     pub hurt_duration: i32,
     pub invulnerable_time: i32,
@@ -661,10 +669,10 @@ impl App {
             drops: Vec::new(),
             inventory: crate::drops::Inventory::default(),
             drop_rng: crate::drops::Lcg::new(seed),
+            food_rng: crate::drops::Lcg::new(seed),
             next_drop_id: 1,
             health: 20.0,
-            food: 20,
-            saturation: 0.0,
+            food_data: crate::food::FoodData::new(),
             hurt_time: 0,
             hurt_duration: 0,
             invulnerable_time: 0,
@@ -734,6 +742,9 @@ impl App {
             // the drain slot the body's borrow fills (the hurt pipeline
             // runs after it ends — the disjoint-borrow split)
             let mut fall_event: Option<i32> = None;
+            // the exhaustion sources' own drain slot (the body's borrow
+            // fills it — the FoodData fold runs after the pipeline)
+            let mut exhaustion_cost = 0.0f32;
             // THE HURT CLOCKS (LivingEntity.tick's own decrements: the
             // hurtTime flash and the invulnerableTime cooldown walk
             // down one per tick)
@@ -789,10 +800,46 @@ impl App {
                     // lane it sits beside; the hurt pipeline runs after
                     // the body's borrow ends)
                     fall_event = b.fall_event.take();
+                    // THE EXHAUSTION SOURCES' own drain (the jump's
+                    // 0.05/0.2 and the movement's cm law the body's
+                    // tick banked — the networked lane's exhaustion is
+                    // the server's own observation, the client folds
+                    // nothing there)
+                    exhaustion_cost = std::mem::take(&mut b.exhaustion_event);
                 }
             }
             if let Some(dmg) = fall_event {
                 self.apply_fall_damage(dmg);
+            }
+            // THE FOOD TICK (the stand-in server's own FoodData.tick at
+            // the ServerPlayer.tick's head position — BEFORE the
+            // movement's aiStep the bytecode's own order speaks, so the
+            // sources of THIS tick bank for the NEXT fold): the
+            // exhaustion fold, the double-lane regen (the heal the
+            // Entity.heal law folds — only a living body heals, the
+            // setHealth clamp rides), the starve lane's bite through
+            // the hurt pipeline (the hurtServer(starve, 1.0) the
+            // cooldown chain speaks). The NETWORKED lane's FoodData is
+            // the server's own — the wire's Set Health speaks its
+            // truth, the client folds nothing.
+            if !self.world_is_network {
+                let ctx = crate::food::TickContext {
+                    health: self.health,
+                    max_health: MAX_HEALTH,
+                    difficulty: crate::food::Difficulty::Normal,
+                    natural_regen: true,
+                };
+                let events = self.food_data.tick(&ctx);
+                if events.heal > 0.0 && self.health > 0.0 {
+                    self.health = (self.health + events.heal).min(MAX_HEALTH);
+                }
+                if events.starve {
+                    self.hurt(crate::food::STARVE_DAMAGE);
+                }
+                // THIS tick's sources bank for the next fold (the
+                // causeFoodExhaustion's own !isClientSide gate — the
+                // offline lane is the server here)
+                self.food_data.add_exhaustion(exhaustion_cost);
             }
             // THE DIG TICK (the vanilla Minecraft.tick's own frame):
             // missTime counts down, the crosshair re-picks (the
@@ -2065,7 +2112,9 @@ impl App {
     /// impulses (the KeyboardInput's own ±1 shape) and the state keys
     /// the body's tick consumes. The SPRINT gate is the vanilla
     /// canStartSprinting's own core: the forward impulse past 0.8, the
-    /// crouch refused.
+    /// crouch refused, and the FOOD GATE the
+    /// hasEnoughFoodToDoExhaustiveManoeuvres speaks (the bar over
+    /// SPRINT_LEVEL 6 — a starving body walks).
     pub fn on_movement_input(
         &mut self,
         forward: f32,
@@ -2079,7 +2128,10 @@ impl App {
             b.left = left;
             b.jumping = jump;
             b.want_crouch = crouch;
-            b.sprinting = sprint && forward > 0.8 && !crouch;
+            b.sprinting = sprint
+                && forward > 0.8
+                && !crouch
+                && self.food_data.has_enough_food();
         }
     }
 
@@ -2272,6 +2324,11 @@ impl App {
         if self.world_is_network {
             return;
         }
+        // THE MINE'S OWN COST (javap Block.playerDestroy: the
+        // awardStat(BLOCK_MINED) tail's inlined 0.005 — the
+        // causeFoodExhaustion the destroyBlock's own reward lane
+        // speaks; the offline gate rides the drops' own)
+        self.food_data.add_exhaustion(crate::food::EXHAUSTION_MINE);
         for (item, count) in crate::drops::roll_drops(kind, &mut self.drop_rng) {
             let id = self.next_drop_id;
             self.next_drop_id += 1;
@@ -2470,8 +2527,11 @@ impl App {
     /// setScreen(new DeathScreen)).
     pub fn live_health_updated(&mut self, health: crate::world_view::HealthView) {
         self.health = health.health;
-        self.food = health.food;
-        self.saturation = health.saturation;
+        // THE FOOD LANE'S LANDING (handleSetHealth's own assignments:
+        // foodData.setFoodLevel(food); foodData.setSaturation(sat) —
+        // the packet carries no exhaustion, the bank keeps its own)
+        self.food_data.set_food_level(health.food);
+        self.food_data.set_saturation(health.saturation);
         self.hurt_time = health.hurt_time;
         self.hurt_yaw = health.hurt_yaw;
         self.death_message = health.death_message.clone();
@@ -2485,6 +2545,12 @@ impl App {
     /// spoke.
     fn apply_fall_damage(&mut self, damage: i32) {
         self.sounds.play_fall_voice(self.frame, damage);
+        // THE DAMAGE SOURCE'S OWN FOOD COST (javap Player.hurt's tail:
+        // `causeFoodExhaustion(source.getFoodExhaustion())` — the
+        // damage type's data-driven field; the fall type's own JSON
+        // verdict 0.0, the lane's visibility the law keeps)
+        self.food_data
+            .add_exhaustion(crate::food::FALL_DAMAGE_EXHAUSTION);
         self.hurt(damage as f32);
     }
 
@@ -2540,6 +2606,10 @@ impl App {
         self.dead = false;
         self.death_message = None;
         self.health = MAX_HEALTH;
+        // THE FOOD LANE'S OWN RESET (the server's respawn re-creates
+        // the player's stats — the fresh FoodData the constructor
+        // speaks: the full bar, the 5.0 saturation, the zero bank)
+        self.food_data = crate::food::FoodData::new();
         self.hurt_time = 0;
         self.hurt_duration = 0;
         self.invulnerable_time = 0;
@@ -3040,11 +3110,31 @@ impl App {
                 );
             }
         }
-        // hunger: 10 full drumsticks above the hotbar's right half,
-        // right-aligned like vanilla
+        // THE HUNGER ROW (javap Hud.extractFood, the vanilla's own
+        // law): the 10 drumsticks RIGHT-TO-LEFT from width/2 + 91 (the
+        // -9 sprite offset the food_origin folds), the EMPTY under
+        // every slot, the FULL at `i * 2 + 1 < food`, the HALF at
+        // `i * 2 + 1 == food`, and the SATURATION-DRIVEN SHIMMY — the
+        // saturation at zero shakes the row on the
+        // `tickCount % (food * 3 + 1)` beat, each drumstick its own
+        // `nextInt(3) - 1` draw (the Hud.random's stand-in: the
+        // client's own Lcg, the deterministic draw the goldens speak)
         let (fx, fy) = food_origin(w, h);
-        for i in 0..HEALTH / 2 {
-            g.sprite(a, "hud/food_full", fx - i * HEART_SPACING, fy);
+        let food = self.food_data.food_level();
+        let shake = self.food_data.saturation() <= 0.0
+            && (self.frame as i64) % (food as i64 * 3 + 1) == 0;
+        for i in 0..10 {
+            let mut y = fy;
+            if shake {
+                y += self.food_rng.next_int_inclusive(-1, 1);
+            }
+            let x = fx - i * HEART_SPACING;
+            g.sprite(a, "hud/food_empty", x, y);
+            if i * 2 + 1 < food {
+                g.sprite(a, "hud/food_full", x, y);
+            } else if i * 2 + 1 == food {
+                g.sprite(a, "hud/food_half", x, y);
+            }
         }
     }
 
@@ -6361,6 +6451,10 @@ mod tests {
     fn the_hurt_cooldown_walks_the_javap_chain() {
         let mut app = App::new(3);
         app.enter_world();
+        // the regen lane silenced for the walk's own arithmetic (the
+        // saturation empty — the slow lane's 80-tick beat never fires
+        // inside the 25-tick walk)
+        app.food_data.set_saturation(0.0);
         // the fresh hurt: the whole amount lands
         app.hurt(2.0);
         assert_eq!(app.health, 18.0);
@@ -6462,8 +6556,8 @@ mod tests {
             death_message: None,
         });
         assert_eq!(app.health, 6.5, "the half heart's own float");
-        assert_eq!(app.food, 18);
-        assert_eq!(app.saturation, 5.0);
+        assert_eq!(app.food_data.food_level(), 18);
+        assert_eq!(app.food_data.saturation(), 5.0);
         assert_eq!(app.hurt_time, 10, "the flash window rides");
         assert_eq!(app.hurt_yaw, -45.5, "the tilt yaw rides");
         assert!(!app.dead);
@@ -7020,5 +7114,189 @@ mod tests {
             "the corrected feet anchor (the f32 cast): {}",
             b.y
         );
+    }
+
+    /// THE FOOD TICK'S REGEN ARC (the stand-in server's own FoodData):
+    /// a hurt body on a FULL bar + saturation heals through the fast
+    /// lane's 10-tick beat, pays the exhaustion, and the fed body's
+    /// hurt-clock lane (the else tail) resets the timer.
+    #[test]
+    fn the_food_tick_heals_the_hurt_body_off_the_saturation() {
+        let mut app = App::new(3);
+        app.enter_world();
+        // the hurt body on the full bar: the fast lane's own setup
+        app.health = 14.0;
+        app.food_data.set_saturation(6.0);
+        for _ in 0..9 {
+            app.update();
+            assert_eq!(
+                app.health, 14.0,
+                "the beat walks before the 10th tick speaks"
+            );
+        }
+        app.update();
+        assert_eq!(app.health, 15.0, "min(6, 6) / 6 healed the body");
+        assert_eq!(
+            app.food_data.exhaustion(),
+            6.0,
+            "the heal's own 6.0 exhaustion cost"
+        );
+        // the exhaustion over the fold's threshold: the fold drains the
+        // saturation 1.0 at the next tick's head (the banked 6.0 > 4.0)
+        app.update();
+        assert_eq!(app.food_data.saturation(), 5.0, "the fold's own drain");
+        assert_eq!(app.food_data.exhaustion(), 2.0, "the 4.0 banked");
+        // the second beat (ticks 12..20): the SHARED timer continues —
+        // the heal rides the DRAINED saturation (min(5, 6) / 6)
+        for _ in 0..8 {
+            app.update();
+        }
+        app.update();
+        assert!(
+            (app.health - (15.0 + 5.0 / 6.0)).abs() < 1e-4,
+            "the second beat's 5/6 heal: {}",
+            app.health
+        );
+        assert_eq!(app.food_data.exhaustion(), 7.0, "the 2.0 bank + the 5.0 cost");
+    }
+
+    /// THE FOOD TICK'S STARVE ARC: an EMPTY bar's 80-tick beat bites
+    /// 1.0 through the hurt pipeline (the cooldown chain, the flash,
+    /// the voice), the NORMAL difficulty stops at the last heart.
+    #[test]
+    fn the_food_tick_starves_the_empty_bar_on_its_own_beat() {
+        let mut app = App::new(3);
+        app.enter_world();
+        // the starving setup: the empty bar, the empty saturation
+        app.health = 20.0;
+        app.food_data.set_food_level(0);
+        app.food_data.set_saturation(0.0);
+        // the exhaustion fold can't drop the bar further; the starve
+        // lane's timer walks 80 ticks
+        for _ in 0..79 {
+            app.update();
+            assert!(!app.dead);
+        }
+        app.update();
+        assert_eq!(app.health, 19.0, "the starve bite's own 1.0");
+        // the clocks armed THIS tick (the decrement rides the next
+        // update's head — the food tick runs after the clock lane)
+        assert_eq!(app.hurt_time, 10, "the flash armed");
+        assert_eq!(app.invulnerable_time, 20, "the cooldown armed");
+        let hurt_entry = app
+            .sounds
+            .events
+            .iter()
+            .filter(|e| e.contains("hurt"))
+            .count();
+        assert!(hurt_entry >= 1, "the hurt voice spoke");
+        // the cooldown window: the next bite 80 ticks later lands only
+        // when the window's own 20 folded — the beats' honest cadence
+        for _ in 0..80 {
+            app.update();
+        }
+        assert_eq!(app.health, 18.0, "the second bite");
+    }
+
+    /// THE MINE'S OWN COST: every break's reward lane banks the 0.005
+    /// the Block.playerDestroy tail speaks — the dig's completion folds
+    /// into the exhaustion bank.
+    #[test]
+    fn the_dig_banks_the_mine_exhaustion() {
+        let mut app = App::new(3);
+        app.enter_world();
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let surface = app.spawn_y - 1;
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, app.spawn_y as f32 + 4.0, c as f32 + 0.5),
+            yaw: 0.0,
+            pitch: -std::f32::consts::FRAC_PI_2,
+        });
+        let banked_before = app.food_data.exhaustion();
+        app.on_press(0, 0);
+        let mut ticks = 0;
+        while app.offline_world.as_ref().unwrap().get(c, surface, c) != crate::world::AIR {
+            app.update();
+            ticks += 1;
+            assert!(ticks < 400, "the dig completed in time");
+        }
+        app.on_left_release();
+        assert!(
+            app.food_data.exhaustion() > banked_before,
+            "the break banked the mine's own 0.005"
+        );
+    }
+
+    /// THE SPRINT'S FOOD GATE (the hasEnoughFoodToDoExhaustiveManoeuvres
+    /// law): the bar over 6 sprints, the starving bar walks.
+    #[test]
+    fn the_sprint_gate_refuses_the_starving_body() {
+        let mut app = App::new(3);
+        app.enter_world();
+        app.spawn_offline_body();
+        app.on_movement_input(1.0, 0.0, false, false, true);
+        assert!(
+            app.body.as_ref().unwrap().sprinting,
+            "the fed body sprints"
+        );
+        // the bar drops under the gate (food 6 — `> 6` refuses)
+        app.food_data.set_food_level(6);
+        app.on_movement_input(1.0, 0.0, false, false, true);
+        assert!(
+            !app.body.as_ref().unwrap().sprinting,
+            "the starving body walks"
+        );
+    }
+
+    /// THE FOOD ROW'S SHIMMY GATE (javap Hud.extractFood): the
+    /// saturation at zero shakes on the `tickCount % (food * 3 + 1)`
+    /// beat — the saturation fed keeps the row still. The sprites'
+    /// own half/full law rides the row's walk.
+    #[test]
+    fn the_food_row_gate_speaks_the_shimmy_beat() {
+        let mut app = App::new(3);
+        app.enter_world();
+        // the beat's own arithmetic: the full bar shakes at the 61st
+        // (and every 61st), the 7-bar at the 22nd, the empty bar at
+        // every tick (the modulus 1)
+        for (food, frame, fires) in [
+            (20u32, 61u64, true),
+            (20, 100, false),
+            (7, 22, true),
+            (0, 1, true),
+        ] {
+            let beat = food as u64 * 3 + 1;
+            assert_eq!(frame % beat == 0, fires);
+        }
+        // the default vitals (saturation 5.0) keep the goldens' row
+        // still — the shake's own gate never fires
+        assert!(
+            app.food_data.saturation() > 0.0,
+            "the spawn saturation shakes nothing"
+        );
+        // the drained saturation arms the gate
+        app.food_data.set_saturation(0.0);
+        app.food_data.set_food_level(20);
+        app.frame = 61;
+        let fires = app.frame % (app.food_data.food_level() as u64 * 3 + 1) == 0;
+        assert!(fires, "the 61st tick shakes the full bar's row");
+    }
+
+    /// THE RESPAWN'S FOOD RESET: the fresh FoodData the constructor
+    /// speaks — the full bar, the 5.0 saturation, the zero bank, the
+    /// zero timer.
+    #[test]
+    fn the_respawn_resets_the_food_lane() {
+        let mut app = App::new(3);
+        app.enter_world();
+        app.food_data.set_food_level(4);
+        app.food_data.set_saturation(0.0);
+        app.food_data.add_exhaustion(10.0);
+        app.respawn();
+        assert_eq!(app.food_data.food_level(), 20);
+        assert_eq!(app.food_data.saturation(), 5.0);
+        assert_eq!(app.food_data.exhaustion(), 0.0);
+        assert!(app.food_data.has_enough_food(), "the fresh bar sprints");
     }
 }
