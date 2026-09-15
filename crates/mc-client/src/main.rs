@@ -196,6 +196,12 @@ struct Cli {
     /// 96.0) — the getWaterVision ramp's own stations.
     #[arg(long, default_value_t = 0)]
     water_vision: i32,
+    /// Seed the body's air supply (javap `Entity.getAirSupply`, the 26.2
+    /// jar) — the deterministic stand-in for the mid-drain frames the
+    /// live dive can't hold. The HUD's bubble row reads the seeded
+    /// store (the extract law's own gate). Clamped [-20, 300].
+    #[arg(long)]
+    air_supply: Option<i32>,
     #[arg(long, default_value = "render.png")]
     out: PathBuf,
     /// Path to official asset index json (enables real texture-average colors).
@@ -253,6 +259,7 @@ fn main() -> Result<()> {
             lava_pool: cli.lava_pool,
             water_pool: cli.water_pool,
             water_vision: cli.water_vision,
+            air_supply: cli.air_supply,
         };
         headless::render_gui_screen_opts(
             screen,

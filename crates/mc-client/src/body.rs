@@ -118,6 +118,24 @@ pub const ON_FIRE_DAMAGE: f32 = 1.0;
 /// names; the body keeps its own — the laws speak per-owner).
 pub const FIRE_DAMAGE_INTERVAL: i32 = 20;
 
+// THE AIR ARC's constants (javap, the same jar — the drowning lane):
+/// `Entity.getMaxAirSupply`'s own value — the `sipush 300; ireturn`
+/// the bytecode speaks (the store the DATA_AIR_SUPPLY_ID define folds).
+pub const TOTAL_AIR_SUPPLY: i32 = 300;
+/// `LivingEntity.increaseAirSupply`'s own fold — `Math.min(air + 4,
+/// max)`: the dry refill's own step (the `iadd 4` the bytecode
+/// speaks), the surfaced body's air climbs four a tick.
+pub const AIR_REFILL_PER_TICK: i32 = 4;
+/// `LivingEntity.shouldTakeDrowningDamage`'s own floor —
+/// `getAirSupply() <= -20` (the `bipush -20` the bytecode speaks):
+/// the twenty ticks below zero the dose's rhythm speaks.
+pub const DROWN_HURT_FLOOR: i32 = -20;
+/// `LivingEntity.baseTick`'s drown dose — `hurtServer(level, drown(),
+/// 2.0F)` (the `fconst_2` the bytecode speaks), the broadcast event
+/// 67's own frame (the drowning particles the client-only lane never
+/// renders).
+pub const DROWN_DAMAGE: f32 = 2.0;
+
 /// The landed block's fall-damage multiplier — javap
 /// `BlockBehaviour.getFallDamageMultiplier`'s default 1.0 (the
 /// overrides: slime block 0.0, hay/bed/honey 0.2 — none in this
@@ -603,6 +621,30 @@ pub struct PlayerBody {
     /// the volume 0.7 / pitch 1.6 + (r - r) * 0.4 fold). Set ONLY on
     /// the douse tick (a wet body carries no clock to kill).
     pub fire_doused_due: bool,
+    /// THE AIR CLOCK (Entity's own airSupply store — the 300 the
+    /// getMaxAirSupply sipush speaks): the EYE's water drains it one
+    /// per tick (decreaseAirSupply's `air - 1` — the OXYGEN_BONUS
+    /// random the bytecode speaks sleeps on the attribute's honest
+    /// absence), the -20 floor folds the dose (the clock resets to 0,
+    /// the drown_hurt_due flag rides), the dry else-arm refills four a
+    /// tick (increaseAirSupply's `Math.min(air + 4, max)`). Vanilla
+    /// shape (LivingEntity.baseTick, the 26.2 jar): the eye-in-water
+    /// arm drains, the else arm refills; the bubble-column and
+    /// water-breathing gates the vanilla arm carries ride vocabulary
+    /// this body never speaks (no bubble blocks in the palette, no
+    /// effects store here) — the bare player's own path.
+    pub air_supply: i32,
+    /// THE EYE'S WATER VERDICT (isEyeInFluid(WATER)'s own query — the
+    /// eye POINT's cell, not the feet box the touches_water walk
+    /// scans): the air clock's gate reads it, the HUD's bubble row
+    /// reads it. Set every tick at the clock's own station.
+    pub eye_in_water: bool,
+    /// THE DROWN DOSE (shouldTakeDrowningDamage's own verdict —
+    /// `air <= -20` folds `setAirSupply(0)` + the broadcast event 67
+    /// + `hurtServer(drown(), 2.0F)`): the App answers through the
+    /// hurt pipeline's cooldown, the DROWNING voice the damage type's
+    /// effects speak. The body never clears it, the reader does.
+    pub drown_hurt_due: bool,
     /// THE WALK ANIMATION STORE (WalkAnimationState, javap): the
     /// speed/position pair the third-person avatar's limb cosines
     /// speak. Updated every tick from the 3D move distance (the
@@ -676,6 +718,9 @@ impl PlayerBody {
             lava_hurt_due: false,
             on_fire_hurt_due: false,
             fire_doused_due: false,
+            air_supply: TOTAL_AIR_SUPPLY,
+            eye_in_water: false,
+            drown_hurt_due: false,
             walk: WalkAnimationState {
                 speed_old: 0.0,
                 speed: 0.0,
@@ -808,6 +853,7 @@ impl PlayerBody {
         self.lava_hurt_due = false;
         self.on_fire_hurt_due = false;
         self.fire_doused_due = false;
+        self.drown_hurt_due = false;
         // the pre-tick position — the walk distance law's own source
         // (calculateEntityAnimation's getX() - xo fold)
         let (x0, y0, z0) = (self.x, self.y, self.z);
@@ -881,6 +927,34 @@ impl PlayerBody {
         // own dead math, kept for the shape's honesty).
         if in_lava {
             self.fall_distance *= 0.5;
+        }
+        // THE AIR CLOCK (javap `LivingEntity.baseTick`'s own branch —
+        // the vanilla's position right after the fire clock the
+        // super.baseTick chain speaks): the EYE's point cell the gate
+        // reads (isEyeInFluid's own query — the eye height the pose
+        // speaks, not the feet box the fluid scan walks), the
+        // eye-in-water arm drains one per tick (decreaseAirSupply's
+        // `air - 1` — the clock goes UNDER zero, the -20 floor the
+        // dose's rhythm needs), the floor fold resets the store and
+        // rides the dose flag; the else arm refills four a tick
+        // (increaseAirSupply's `Math.min(air + 4, max)`). The
+        // bubble-column and water-breathing gates the vanilla arm
+        // carries ride vocabulary this body never speaks — the bare
+        // player's own path.
+        let eye_water = world.get(
+            self.x.floor() as i32,
+            (self.y + self.eye_height()).floor() as i32,
+            self.z.floor() as i32,
+        ) == WATER;
+        self.eye_in_water = eye_water;
+        if eye_water {
+            self.air_supply -= 1;
+            if self.air_supply <= DROWN_HURT_FLOOR {
+                self.air_supply = 0;
+                self.drown_hurt_due = true;
+            }
+        } else if self.air_supply < TOTAL_AIR_SUPPLY {
+            self.air_supply = (self.air_supply + AIR_REFILL_PER_TICK).min(TOTAL_AIR_SUPPLY);
         }
         if self.no_jump_delay > 0 {
             self.no_jump_delay -= 1;
@@ -2448,5 +2522,110 @@ mod tests {
         }
         assert!(lava_hurt, "the pool's own welcome spoke");
         assert!(b.on_ground, "the body settled on the pool floor");
+    }
+
+    /// THE DIVER'S OWN POOL: a 3-deep water column over stone — the
+    /// body sunk to the floor rides its eye (feet + 1.62) TWO cells
+    /// under the surface (the isEyeInFluid query the air clock gates).
+    fn diver_pool() -> World {
+        let mut w = World::new(1, 42);
+        for x in 0..16 {
+            for z in 0..16 {
+                w.set(x, 0, z, crate::world::STONE);
+                for y in 1..4 {
+                    w.set(x, y as i32, z, WATER);
+                }
+                for y in 4..crate::world::CHUNK_Y {
+                    w.set(x, y as i32, z, AIR);
+                }
+            }
+        }
+        w
+    }
+
+    /// THE EYE'S DRAIN (javap `LivingEntity.baseTick`'s own air
+    /// branch): the eye under the surface speaks eye_in_water and the
+    /// clock walks DOWN one per tick — below zero the -20 floor the
+    /// dose's rhythm needs (the store goes UNDER the zero the drain
+    /// never clamps at); the dry body's verdict stays honest.
+    #[test]
+    fn the_eye_under_water_drains_the_air_clock() {
+        let w = diver_pool();
+        let mut b = PlayerBody::new(8.0, 1.0, 8.0, 0.0, 0.0);
+        b.vy = 0.0;
+        b.on_ground = true;
+        b.tick(&w, false);
+        assert!(b.eye_in_water, "the diver's own eye reads water");
+        assert_eq!(b.air_supply, TOTAL_AIR_SUPPLY - 1, "the drain's first tick");
+        for _ in 0..40 {
+            b.tick(&w, false);
+        }
+        assert_eq!(
+            b.air_supply,
+            TOTAL_AIR_SUPPLY - 41,
+            "the one-per-tick walk ({})",
+            b.air_supply
+        );
+        assert!(
+            !b.drown_hurt_due,
+            "the drain alone never speaks the dose (the -20 floor unmet)"
+        );
+        // the dry body: the verdict off, the clock untouched
+        let d = flat_world();
+        let mut c = PlayerBody::new(8.0, 1.0, 8.0, 0.0, 0.0);
+        settle(&mut c, &d);
+        c.tick(&d, false);
+        assert!(!c.eye_in_water, "the dry body's own eye reads air");
+        assert_eq!(c.air_supply, TOTAL_AIR_SUPPLY, "the full store stays full");
+    }
+
+    /// THE DRY REFILL (javap `increaseAirSupply`'s own fold —
+    /// `Math.min(air + 4, max)`): the surfaced body's clock climbs
+    /// four a tick and caps at the 300 the getMaxAirSupply sipush
+    /// speaks — the +4 walk never overshoots.
+    #[test]
+    fn the_dry_body_refills_four_a_tick() {
+        let w = flat_world();
+        let mut b = PlayerBody::new(8.0, 1.0, 8.0, 0.0, 0.0);
+        settle(&mut b, &w);
+        b.air_supply = 100;
+        b.tick(&w, false);
+        assert_eq!(b.air_supply, 104, "the +4 fold's own step");
+        for _ in 0..60 {
+            b.tick(&w, false);
+        }
+        assert_eq!(
+            b.air_supply, TOTAL_AIR_SUPPLY,
+            "the cap rides the 300 the sipush names"
+        );
+    }
+
+    /// THE DOSE'S OWN RHYTHM (javap shouldTakeDrowningDamage's -20
+    /// floor + the fold's setAirSupply(0)): from the seeded 1 the
+    /// drain walks 21 ticks to the floor — the dose flag rides, the
+    /// store resets to zero — and the NEXT dose waits its own 20 (the
+    /// 2.0F beats the rhythm speaks, the flag cleared at the head
+    /// each tick).
+    #[test]
+    fn the_drowned_floor_folds_the_twenty_tick_dose() {
+        let w = diver_pool();
+        let mut b = PlayerBody::new(8.0, 1.0, 8.0, 0.0, 0.0);
+        b.vy = 0.0;
+        b.on_ground = true;
+        b.tick(&w, false); // 299
+        b.air_supply = 1;
+        let mut doses = Vec::new();
+        for t in 0..45 {
+            b.tick(&w, false);
+            if b.drown_hurt_due {
+                doses.push(t);
+                assert_eq!(b.air_supply, 0, "the floor's own reset (tick {t})");
+            }
+        }
+        assert_eq!(
+            doses,
+            vec![20, 40],
+            "the -20 floor folds the dose every 20 ticks after the reset"
+        );
     }
 }

@@ -2,7 +2,7 @@
 
 Every lane that ships pixels owes the folder a frame. The gallery is the
 proof the features exist as rendered images, not as test names alone.
-91 frames and counting — grouped below by the lane that spoke them.
+93 frames and counting — grouped below by the lane that spoke them.
 
 ## The F5 lane (the third-person avatar) — v0.3.154+
 
@@ -133,6 +133,35 @@ cargo run -p mc-client --release -- --screen world --body --water-pool \
 # discipline: the deterministic stand-in for the soak time the live
 # drift can't hold — the water's own push walks the body out of a
 # staged pool), --perspective third-back shows the camera-cell gate
+```
+
+## The air-bubbles lane (the drowning arc's HUD) — v0.3.166
+
+The air clock's own row (javap the 26.2 jar): the body's airSupply the
+LivingEntity.baseTick branch drains under the eye (one a tick, the -20
+floor folding the 2.0 drown through the DROWNING voice) and refills dry
+(+4/tick to the 300 the getMaxAirSupply sipush names); the HUD's
+extractAirBubbles walk rides the eye-in-water verdict — the gate
+`!underwater && air >= max` sleeps the row, the ceil walk
+`ceil((air + offset) * 10 / max)` speaks the full / bursting / empty
+sprites right-aligned above the hunger (the x = right edge - (i-1)*8 - 9
+the 1-based loop folds), the air_empty's 1px jitter rides the drained-dry
+frame's even ticks, the bursting's pop voice rides the
+lastBubblePopSoundPlayed dedup.
+
+| frame | the scene |
+|---|---|
+| `air_bubbles.png` | THE MID-DRAIN FRAME: `--air-supply 121` — four full bubbles, the bursting ring at the boundary (the changed window's own sprite), five empty outlines behind |
+| `air_bubbles_drained.png` | THE DRAINED-DRY DIVER: `--air-supply 0` — the whole row speaks the empty outlines (popping 10, the jitter arm's own frame) |
+
+Regenerate the family:
+
+```sh
+cargo run -p mc-client --release -- --screen world --seed 42 --body \
+  --water-pool --perspective first --air-supply 121 --out shots/air_bubbles.png
+# --air-supply N rides the air clock's seed (the --water-vision
+# discipline: the mid-drain frames the live dive can't hold — the pool
+# walks the body out), clamped [-20, 300]
 ```
 
 ## The zombie lane (the first live mob) — v0.3.155+

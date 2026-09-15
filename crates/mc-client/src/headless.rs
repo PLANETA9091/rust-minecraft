@@ -173,6 +173,13 @@ pub struct SceneOpts {
     /// can't hold in a staged pool; 0 = the fresh dive, 600 = the fully
     /// soaked eye (the getWaterVision ramp's own ends 24.0 / 96.0).
     pub water_vision: i32,
+    /// THE AIR CLOCK'S SEED (the --water-vision discipline): the body's
+    /// own airSupply — the deterministic stand-in for the mid-drain
+    /// frames the live dive can't hold (the pool walks the body out);
+    /// the HUD's bubble row reads the seeded store (the extract
+    /// gate's own law). Clamped [-20, 300] — the dose floor the
+    /// -20 fold speaks to the 300 the getMaxAirSupply sipush names.
+    pub air_supply: Option<i32>,
 }
 
 impl SceneOpts {
@@ -197,6 +204,7 @@ impl SceneOpts {
             || self.lava_pool
             || self.water_pool
             || self.water_vision != 0
+            || self.air_supply.is_some()
             || self.walk_ticks > 0
             || self.settle_ticks > 0
     }
@@ -425,6 +433,15 @@ pub fn seed_scene(app: &mut crate::screens::App, opts: &SceneOpts) -> Result<()>
         // own push never walks out of. The getWaterVision ramp reads
         // the seeded clock (the water fog's end distance law).
         app.water_vision_time = opts.water_vision.clamp(0, 600);
+    }
+    if let Some(air) = opts.air_supply {
+        // THE AIR CLOCK'S SEED (the same discipline): the body's own
+        // airSupply — the mid-drain frames the live dive can't hold,
+        // the bubble row's extract reads the seeded store. The
+        // [-20, 300] clamp: the dose floor to the sipush's own 300.
+        if let Some(b) = app.body.as_mut() {
+            b.air_supply = air.clamp(crate::body::DROWN_HURT_FLOOR, crate::body::TOTAL_AIR_SUPPLY);
+        }
     }
     if opts.mobs > 0 {
         spawn_showcase_mobs(app, opts.mobs)?;

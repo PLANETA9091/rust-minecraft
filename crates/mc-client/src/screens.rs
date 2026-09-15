@@ -218,6 +218,19 @@ pub enum ScreenKind {
     Chest,
 }
 
+/// THE HURT VOICE THE DAMAGE TYPE'S EFFECTS NAME (javap the 26.2
+/// getHurtSound override — `source.type().effects().sound()`): the
+/// plain sources speak DamageEffects.HURT (entity.player.hurt), the
+/// BURNING sources (lava, onFire) the on-fire voice
+/// (entity.player.hurt_on_fire), the DROWNING source the water's own
+/// voice (entity.player.hurt_drown).
+#[derive(Debug, Clone, Copy, PartialEq)]
+enum HurtVoice {
+    Plain,
+    Burning,
+    Drowning,
+}
+
 pub struct App {
     pub screen: ScreenKind,
     pub boot_progress: f32,
@@ -601,6 +614,12 @@ pub struct App {
     pub last_health: i32,
     pub display_health: i32,
     pub last_health_time: u64,
+    /// THE POP VOICE'S OWN DEDUP (javap Hud.lastBubblePopSoundPlayed —
+    /// the bursting sprite's voice speaks once per popped bubble
+    /// index, the `!=` guard the bytecode speaks; the dry reset the
+    /// extract's head folds rides the render's own `!underwater`
+    /// arm).
+    pub last_bubble_pop_sound_played: i32,
     /// The death screen's state: the vanilla shows the DeathScreen
     /// when the health reaches zero (the Gui.tick's own auto-open) —
     /// `dead` gates the HUD off and the gradient + the Respawn
@@ -761,6 +780,7 @@ impl App {
             last_hurt: 0.0,
             hurt_yaw: 0.0,
             health_blink_time: 0,
+            last_bubble_pop_sound_played: 0,
             effects: crate::effects::EffectsStore::new(),
             last_health: 20,
             display_health: 20,
@@ -878,6 +898,7 @@ impl App {
             let mut lava_hurt = false;
             let mut on_fire_hurt = false;
             let mut fire_doused = false;
+            let mut drown_hurt = false;
             // THE HURT CLOCKS (LivingEntity.tick's own decrements: the
             // hurtTime flash and the invulnerableTime cooldown walk
             // down one per tick)
@@ -969,6 +990,11 @@ impl App {
                     lava_hurt = std::mem::take(&mut b.lava_hurt_due);
                     on_fire_hurt = std::mem::take(&mut b.on_fire_hurt_due);
                     fire_doused = std::mem::take(&mut b.fire_doused_due);
+                    // THE AIR ARC'S OWN DRAIN (the same per-tick flag
+                    // law the fire arc's three speak — the -20 fold's
+                    // own read, the body keeps it true until the NEXT
+                    // tick's head clears)
+                    drown_hurt = std::mem::take(&mut b.drown_hurt_due);
                     // THE EXHAUSTION SOURCES' own drain (the jump's
                     // 0.05/0.2 and the movement's cm law the body's
                     // tick banked — the networked lane's exhaustion is
@@ -995,6 +1021,13 @@ impl App {
             // the baseTick hurt never carried one)
             if on_fire_hurt {
                 self.hurt_burning(crate::body::ON_FIRE_DAMAGE);
+            }
+            // THE DROWN HURT (the air branch's own dose — the DROWNING
+            // voice the damage type speaks: hurtServer(drown(), 2.0F)
+            // answered through the same pipeline's cooldown, the clock
+            // already reset to 0 the body's own fold speaks)
+            if drown_hurt {
+                self.hurt_drowning(crate::body::DROWN_DAMAGE);
             }
             // THE DOUSE FIZZ (playEntityOnFireExtinguishedSound — the
             // water kill's own transition)
@@ -3428,17 +3461,26 @@ impl App {
     /// DamageEffects.HURT voice, the BURNING sources (lava, onFire)
     /// PLAYER_HURT_ON_FIRE).
     pub fn hurt(&mut self, amount: f32) -> bool {
-        self.hurt_inner(amount, false)
+        self.hurt_inner(amount, HurtVoice::Plain)
     }
-
     /// THE BURNING SOURCES' OWN GATE (the same pipeline, the
     /// DamageEffects.BURNING voice the lava and the onFire damage
     /// types speak).
     pub fn hurt_burning(&mut self, amount: f32) -> bool {
-        self.hurt_inner(amount, true)
+        self.hurt_inner(amount, HurtVoice::Burning)
     }
 
-    fn hurt_inner(&mut self, amount: f32, burning: bool) -> bool {
+    /// THE DROWNING SOURCE'S OWN GATE (the same pipeline, the
+    /// DamageEffects.DROWNING voice the drown damage type speaks —
+    /// the air clock's -20 fold the body banks).
+    pub fn hurt_drowning(&mut self, amount: f32) -> bool {
+        self.hurt_inner(amount, HurtVoice::Drowning)
+    }
+
+    /// THE VOICE THE DAMAGE TYPE'S EFFECTS NAME (the getHurtSound
+    /// override's three arms the pipeline speaks: the plain HURT, the
+    /// BURNING (lava, onFire), the DROWNING).
+    fn hurt_inner(&mut self, amount: f32, voice: HurtVoice) -> bool {
         if amount <= 0.0 || self.dead {
             return false;
         }
@@ -3457,12 +3499,13 @@ impl App {
             self.actually_hurt(amount);
             // the hurt voice (handleDamageEvent's own call — the
             // client's own law speaks the (r - r) * 0.2 + 1.0 pitch;
-            // the BURNING sources name the on-fire event the damage
-            // type's effects carry)
-            if burning {
-                self.sounds.play_hurt_on_fire_voice(self.frame);
-            } else {
-                self.sounds.play_hurt_voice(self.frame);
+            // the damage type's effects name the event — the plain
+            // sources HURT, the BURNING sources on-fire, the DROWNING
+            // source hurt_drown)
+            match voice {
+                HurtVoice::Plain => self.sounds.play_hurt_voice(self.frame),
+                HurtVoice::Burning => self.sounds.play_hurt_on_fire_voice(self.frame),
+                HurtVoice::Drowning => self.sounds.play_hurt_drown_voice(self.frame),
             }
             true
         }
@@ -4681,6 +4724,69 @@ impl App {
                 g.sprite(a, "hud/food_half", x, y);
             }
         }
+        // THE AIR BUBBLES (javap Hud.extractAirBubbles — the 26.2 row
+        // law, verbatim): the GATE first — `!underwater && air >= max`
+        // the row never speaks (the dry full body carries no bubbles);
+        // the walk rides the eye-in-water verdict the BODY's own clock
+        // banked (the isEyeInFluid query the entity speaks — not the
+        // camera cell the fog lane reads), the pure fold
+        // air_bubble_row's three-index ceil walk renders the FULL /
+        // BURSTING / EMPTY sprites right-aligned (the x = right edge -
+        // (i-1)*8 - 9 the bytecode speaks, the 1-based loop the -9
+        // flush folds), the air_empty's 1px x-jitter rides only the
+        // drained-dry surfaced frame (popping == 10 — the
+        // `tickCount % 2 == 0` nextInt(2) the Hud's own random draws —
+        // the same LCG stream the heart jitter seeds, the continuation
+        // the vanilla frame's one-Random law speaks), the BURSTING's
+        // pop voice rides the dedup the lastBubblePopSoundPlayed law
+        // carries (one voice per popped index, the dry reset the
+        // extract's head folds). No vehicle in the lane — the hearts
+        // rows the Y-line lift reads stay zero, the row keeps the
+        // armor line the layout law speaks.
+        let body_air = self.body.as_ref().map(|b| {
+            (
+                b.air_supply.clamp(0, crate::body::TOTAL_AIR_SUPPLY),
+                b.eye_in_water,
+            )
+        });
+        if let Some((air, underwater)) = body_air {
+            if underwater || air < crate::body::TOTAL_AIR_SUPPLY {
+                let (row, popping) = air_bubble_row(air, crate::body::TOTAL_AIR_SUPPLY, underwater);
+                if !underwater {
+                    self.last_bubble_pop_sound_played = 0;
+                }
+                let y = bubbles_origin(w, h);
+                for (slot, i) in row.iter().zip(1..=10) {
+                    let Some(sprite) = *slot else { continue };
+                    let mut x = w / 2 + 91 - (i - 1) * 8 - 9;
+                    if *slot == Some("hud/air_empty")
+                        && popping == 10
+                        && self.frame % 2 == 0
+                    {
+                        // THE EMPTY'S OWN JITTER (the nextInt(2) the
+                        // Hud's random speaks — the heart lane's seeded
+                        // stream, the continuation the frame's one
+                        // draw folds)
+                        x += next_jitter(&mut rng);
+                    }
+                    g.sprite(a, sprite, x, y);
+                    if *slot == Some("hud/air_bursting")
+                        && self.last_bubble_pop_sound_played != i
+                    {
+                        // THE POP VOICE (playAirBubblePoppedSound's own
+                        // fixed fold — volume 0.5 + 0.1*max(0, empty-2),
+                        // pitch 1.0 + 0.1*max(0, empty-4), no randoms)
+                        self.sounds.play_bubble_pop(self.frame, popping);
+                        self.last_bubble_pop_sound_played = i;
+                    }
+                }
+            } else {
+                // THE DRY FULL BODY'S OWN RESET (the extract head's
+                // `!underwater` fold — the gate skipped the row, the
+                // dedup index still forgets)
+                self.last_bubble_pop_sound_played = 0;
+            }
+        }
         // THE EFFECT ICONS (javap Hud.extractEffects — the 26.2 row
         // law, verbatim): the icons render whenever the store carries
         // effects — the base Screen's `showsActiveEffects` is a flat
@@ -5424,6 +5530,55 @@ fn food_origin(gui_w: i32, gui_h: i32) -> (i32, i32) {
     (gui_w / 2 + 91 - HEART, gui_h - 39)
 }
 
+/// The bubbles row's own line: the vanilla layout law (javap
+/// Hud.getAirBubbleYLine with the vehicle-less call the status extract
+/// speaks — `getVisibleVehicleHeartRows(0)` folds 0, the rowOffset -1,
+/// the yLineAir `height - 39 - 10` the caller arms lifts +10 back).
+fn bubbles_origin(gui_w: i32, gui_h: i32) -> i32 {
+    gui_h - 49
+}
+
+/// THE AIR BUBBLES' OWN WALK (javap `Hud.extractAirBubbles`' loop, the
+/// pure fold the render speaks — slot 0 the loop's i=1, the RIGHTMOST
+/// bubble): the ceil walk `Mth.ceil((air + offset) * 10.0F / max)`
+/// speaks three indices — the pre-scan's `air - 2` (the bubbles that
+/// survive even two more drained ticks), the plain `air` (the
+/// boundary), the `air + delay` (the one-tick delay the underwater
+/// body's non-zero air carries — getEmptyBubbleDelayDuration's own
+/// gate) — and the 10-slot walk renders the FULL bubble under the
+/// pre-scan, the BURSTING at the boundary when the pre-scan moved (the
+/// changed window the 2-tick scan speaks), the EMPTY outline past
+/// `10 - popping` (the gone slots' own outlines — the air_empty sprite
+/// the 26.2 jar speaks; at popping == 10 — the drained-dry surfaced
+/// frame — the whole row speaks empty), and NOTHING on the one-tick
+/// boundary blink the delay's own shift leaves. The pop count rides
+/// the return (the pop voice's empty-count fold and the jitter's arm
+/// the caller answers — the jitter rides ONLY popping == 10, the even
+/// ticks the tickCount % 2 gate speaks). The voice rides the App's
+/// own pass.
+fn air_bubble_row(air: i32, max: i32, underwater: bool) -> ([Option<&'static str>; 10], i32) {
+    let f = air as f32;
+    let m = max as f32;
+    let pre = ((f - 2.0) * 10.0 / m).ceil() as i32;
+    let full = (f * 10.0 / m).ceil() as i32;
+    let delay = if air != 0 && underwater { 1 } else { 0 };
+    let popping = 10 - ((f + delay as f32) * 10.0 / m).ceil() as i32;
+    let changed = pre != full;
+    let mut row: [Option<&'static str>; 10] = [None; 10];
+    for (slot, i) in row.iter_mut().zip(1..=10) {
+        *slot = if i <= pre {
+            Some("hud/air")
+        } else if changed && i == full && underwater {
+            Some("hud/air_bursting")
+        } else if i > 10 - popping {
+            Some("hud/air_empty")
+        } else {
+            None
+        };
+    }
+    (row, popping)
+}
+
 /// Top solid block y at (x, z) — the spawn column scan (CHUNK_Y when
 /// open). The headless scene seeding rides the same scan (the zombie
 /// lane's spawn column).
@@ -5658,6 +5813,125 @@ mod tests {
         assert_eq!(hotbar_rect(w, h), (320 / 2 - 91, 180 - 23));
         assert_eq!(hearts_origin(w, h), (320 / 2 - 91, 180 - 39));
         assert_eq!(food_origin(w, h), (320 / 2 + 91 - HEART, 180 - 39));
+        // the bubbles' own line: the armor row the vehicle-less lift
+        // speaks (the getAirBubbleYLine's -1 rowOffset folds +10 back
+        // onto the height - 59 the caller arms)
+        assert_eq!(bubbles_origin(w, h), 180 - 49);
+    }
+
+    #[test]
+    fn the_air_bubble_fold_speaks_the_extract_law() {
+        use crate::body::TOTAL_AIR_SUPPLY as MAX;
+        const AIR: &str = "hud/air";
+        const BURST: &str = "hud/air_bursting";
+        const EMPTY: &str = "hud/air_empty";
+        let n = |r: &[Option<&'static str>; 10], s: &str| {
+            r.iter().filter(|x| **x == Some(s)).count()
+        };
+        // the FULL store underwater: all ten speak the full bubble (the
+        // gate alone would stay silent dry — the row's own law)
+        let (row, popping) = air_bubble_row(MAX, MAX, true);
+        assert_eq!(n(&row, AIR), 10);
+        assert_eq!(popping, -1, "the delay's own +1 pushes past the row");
+        // the HALF store underwater (150): five full, the one-tick
+        // boundary blink (slot 5 = i=6 draws nothing), four empty
+        let (row, popping) = air_bubble_row(150, MAX, true);
+        assert_eq!(n(&row, AIR), 5);
+        assert_eq!(n(&row, EMPTY), 4);
+        assert_eq!(row[5], None, "the boundary blink the delay speaks");
+        assert_eq!(popping, 4);
+        // the BOUNDARY CROSSING underwater (121 — the changed window):
+        // four full, the bursting at the boundary (i == full == 5),
+        // five empty
+        let (row, popping) = air_bubble_row(121, MAX, true);
+        assert_eq!(n(&row, AIR), 4);
+        assert_eq!(n(&row, BURST), 1, "the changed window's own sprite");
+        assert_eq!(row[4], Some(BURST));
+        assert_eq!(n(&row, EMPTY), 5);
+        assert_eq!(popping, 5);
+        // the DRAINED-DRY diver (0 underwater): the delay's own gate
+        // needs air != 0 — the store's zero rides delay 0, the whole
+        // row speaks empty (popping 10, the jitter arm's own frame)
+        let (row, popping) = air_bubble_row(0, MAX, true);
+        assert_eq!(n(&row, EMPTY), 10);
+        assert_eq!(popping, 10, "the zero store's own delay-0 fold");
+        // the LAST BUBBLE'S CROSSING (1 underwater): the zero boundary's
+        // changed window speaks the bursting at slot 0, nine empties
+        let (row, popping) = air_bubble_row(1, MAX, true);
+        assert_eq!(n(&row, BURST), 1);
+        assert_eq!(row[0], Some(BURST));
+        assert_eq!(n(&row, EMPTY), 9);
+        assert_eq!(popping, 9);
+        // the DRAINED-DRY SURFACED body (0 dry): the same whole-empty
+        // row (popping == 10, the jitter's own gate)
+        let (row, popping) = air_bubble_row(0, MAX, false);
+        assert_eq!(n(&row, EMPTY), 10);
+        assert_eq!(popping, 10, "the jitter's own gate");
+    }
+
+    /// THE DROWN LANE'S OWN ROUND (the App update's own chain): the
+    /// submerged body's clock drains, the -20 floor folds the DROWNING
+    /// voice through the hurt pipeline (the cooldown's own window), the
+    /// 2.0 dose rides the health, and the store carries the reset the
+    /// fold speaks.
+    #[test]
+    fn the_drown_lane_hurts_the_submerged_body() {
+        let mut app = App::new(3);
+        app.enter_world();
+        let size = app.world_size;
+        let c = size / 2;
+        let surface = app.spawn_y;
+        // the 3-deep water column AT the body's own cells (the feet sit
+        // on the solid below, the eye one cell under the surface)
+        {
+            let w = app.offline_world.as_mut().unwrap();
+            for y in surface..surface + 3 {
+                w.set(c, y as i32, c, crate::world::WATER);
+            }
+        }
+        app.body = Some(crate::body::PlayerBody::new(
+            c as f64 + 0.5,
+            surface as f64,
+            c as f64 + 0.5,
+            0.0,
+            0.0,
+        ));
+        {
+            let b = app.body.as_mut().unwrap();
+            b.vy = 0.0;
+            b.on_ground = true;
+            b.air_supply = 1; // the seed the -20 fold's rhythm needs
+        }
+        let before = app.health;
+        let mut voice = None;
+        for _ in 0..25 {
+            app.update();
+            if voice.is_none() {
+                voice = app
+                    .sounds
+                    .events
+                    .iter()
+                    .find(|e| e.starts_with("entity.player.hurt_drown @"))
+                    .cloned();
+            }
+        }
+        assert!(
+            voice.is_some(),
+            "the -20 fold's dose spoke its DROWNING voice: {:?}",
+            voice
+        );
+        let entry = voice.unwrap();
+        assert!(entry.contains(" v1.000000 p"), "the voice fold: {entry}");
+        assert!(
+            (app.health - (before - crate::body::DROWN_DAMAGE)).abs() < 1e-4,
+            "the 2.0 dose rode the health ({} -> {})",
+            before,
+            app.health
+        );
+        assert!(
+            app.body.as_ref().unwrap().air_supply < 0,
+            "the clock walks under zero again (the reset the fold spoke, then the drain)"
+        );
     }
 
     #[test]

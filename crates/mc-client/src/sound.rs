@@ -363,6 +363,47 @@ impl BlockSounds {
         ));
     }
 
+    /// THE DROWNING VOICE (javap the baseTick air branch's own tail —
+    /// the `hurtServer(level, drown(), 2.0F)` the getHurtSound
+    /// override answers through the damage type's effects:
+    /// DamageEffects.DROWNING names the entity.player.hurt_drown
+    /// event): the volume 1.0, the pitch (r - r) * 0.2 + 1.0 in
+    /// [0.8, 1.2], the same LCG and draw order the plain hurt voice
+    /// speaks, the drowning event the water's own dose names.
+    pub fn play_hurt_drown_voice(&mut self, tick: u64) {
+        let r1 = self.next_rand_f32();
+        let r2 = self.next_rand_f32();
+        let pitch = (r1 - r2) * 0.2 + 1.0;
+        let Some(file) = self.pick_file("entity.player.hurt_drown") else {
+            return;
+        };
+        self.events.push(format!(
+            "entity.player.hurt_drown @{tick} #{file} v{:.6} p{:.6}",
+            1.0, pitch
+        ));
+    }
+
+    /// THE BUBBLE POP (javap `Hud.playAirBubblePoppedSound` — the
+    /// bursting sprite's own companion): `playSound(BUBBLE_POP,
+    /// 0.5F + 0.1F * max(0, empty - 2), 1.0F + 0.1F * max(0, empty -
+    /// 4))` — the constants NUM_AIR_BUBBLE_POPPED_BEFORE_SOUND_-
+    /// VOLUME_INCREASE 3 / _PITCH_INCREASE 5 the -3+1/-5+1 folds
+    /// speak, no randoms (the fixed fold playSound's own shape), the
+    /// ui.hud.bubble_pop event the BUBBLE_POP constant names. The
+    /// caller's dedup (the lastBubblePopSoundPlayed law) rides
+    /// upstream — one voice per popped bubble index.
+    pub fn play_bubble_pop(&mut self, tick: u64, empty_air_bubbles: i32) {
+        let volume = 0.5 + 0.1 * (empty_air_bubbles - 2).max(0) as f32;
+        let pitch = 1.0 + 0.1 * (empty_air_bubbles - 4).max(0) as f32;
+        let Some(file) = self.pick_file("ui.hud.bubble_pop") else {
+            return;
+        };
+        self.events.push(format!(
+            "ui.hud.bubble_pop @{tick} #{file} v{:.6} p{:.6}",
+            volume, pitch
+        ));
+    }
+
     /// The FIXED-VOICE lane (the fall voice's generalized shape — the
     /// eat arc's completion speaks it): the caller's volume/pitch fold
     /// (the entity random's own verdict, the bytecode's draw order
@@ -626,6 +667,59 @@ mod tests {
         let mut b = BlockSounds::new(29);
         b.play_hurt_on_fire_voice(6);
         assert_eq!(a.events, b.events);
+    }
+
+    /// THE DROWNING VOICE's law: the hurt_drown event (the
+    /// DamageEffects.DROWNING sound the -20 fold's dose speaks), the
+    /// plain hurt voice's own pitch law (r - r) * 0.2 + 1.0 in
+    /// [0.8, 1.2], the same LCG and draw order.
+    #[test]
+    fn the_drowning_hurt_voice_speaks_the_drown_event() {
+        let mut a = BlockSounds::new(31);
+        a.play_hurt_drown_voice(6);
+        assert_eq!(a.events.len(), 1);
+        assert!(
+            a.events[0].starts_with("entity.player.hurt_drown @6 #"),
+            "the entry: {}",
+            a.events[0]
+        );
+        assert!(a.events[0].contains(" v1.000000 p"), "the volume: {}", a.events[0]);
+        let pitch: f32 = a.events[0].split(" p").nth(1).unwrap().parse().unwrap();
+        assert!((0.8..=1.2).contains(&pitch), "the pitch range: {pitch}");
+        // determinism: the same seed speaks the same voice
+        let mut b = BlockSounds::new(31);
+        b.play_hurt_drown_voice(6);
+        assert_eq!(a.events, b.events);
+    }
+
+    /// THE BUBBLE POP's law (playAirBubblePoppedSound's own fold):
+    /// volume 0.5 + 0.1*max(0, empty - 2), pitch 1.0 + 0.1*max(0,
+    /// empty - 4) — no randoms, the fixed fold playSound's shape —
+    /// the ui.hud.bubble_pop event the BUBBLE_POP constant names.
+    #[test]
+    fn the_bubble_pop_speaks_the_fixed_fold() {
+        let mut a = BlockSounds::new(37);
+        a.play_bubble_pop(9, 4);
+        assert_eq!(a.events.len(), 1);
+        assert!(
+            a.events[0].starts_with("ui.hud.bubble_pop @9 #"),
+            "the entry: {}",
+            a.events[0]
+        );
+        // empty=4: volume 0.5 + 0.1*max(0,2) = 0.7, pitch 1.0 + 0.1*0 = 1.0
+        assert!(a.events[0].contains(" v0.700000 p1.000000"), "the fold: {}", a.events[0]);
+        // the increments' own station: empty=8 folds 1.1 / 1.4
+        a.events.clear();
+        a.play_bubble_pop(9, 8);
+        assert!(
+            a.events[0].contains(" v1.100000 p1.400000"),
+            "the empty=8 fold: {}",
+            a.events[0]
+        );
+        // the floor's own silence: empty=2 speaks the bare base
+        a.events.clear();
+        a.play_bubble_pop(9, 2);
+        assert!(a.events[0].contains(" v0.500000 p1.000000"), "the base: {}", a.events[0]);
     }
 
     #[test]

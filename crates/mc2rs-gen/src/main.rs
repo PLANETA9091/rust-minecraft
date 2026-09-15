@@ -878,6 +878,15 @@ const PLAYER_FIRE_EVENTS: [&str; 3] = [
     "entity.player.hurt_on_fire",
 ];
 
+/// The player's AIR LANE's events (the drowning arc the water lane
+/// owns the other half of): the -20 fold's DROWNING hurt voice (the
+/// DamageEffects.DROWNING sound the getHurtSound override speaks —
+/// entity.player.hurt_drown, four weighted files) and the HUD's
+/// bubble pop (playAirBubblePoppedSound's own BUBBLE_POP —
+/// ui.hud.bubble_pop, one file). Every file rides the same
+/// sha1-verified asset-index fetch the swim voice speaks.
+const PLAYER_AIR_EVENTS: [&str; 2] = ["entity.player.hurt_drown", "ui.hud.bubble_pop"];
+
 /// Fetch the real menu music + in-game music + UI sound + biome music +
 /// mob voice + player voice .ogg files through the asset index. sounds.json names are
 /// relative to `assets/minecraft/sounds/` (extension optional — the vanilla
@@ -908,6 +917,7 @@ fn fetch_sound_events(
             || PLAYER_SWIM_EVENTS.contains(&id)
             || PLAYER_SPLASH_EVENTS.contains(&id)
             || PLAYER_FIRE_EVENTS.contains(&id)
+            || PLAYER_AIR_EVENTS.contains(&id)
             || biome_events.binary_search(&id.to_string()).is_ok()
     };
     let mut menu = 0usize;
