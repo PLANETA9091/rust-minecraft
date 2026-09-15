@@ -2,7 +2,7 @@
 
 Every lane that ships pixels owes the folder a frame. The gallery is the
 proof the features exist as rendered images, not as test names alone.
-103 frames and counting — grouped below by the lane that spoke them.
+104 frames and counting — grouped below by the lane that spoke them.
 
 ## The F5 lane (the third-person avatar) — v0.3.154+
 
@@ -285,7 +285,16 @@ cargo run -p mc-client --release -- --screen world --seed 20260214 \
 # the kill's award spawns live — the real lane rides the touch)
 ```
 
-## The particle lane (the world's own dust) — v0.3.171
+## The particle lane (the world's own dust) — v0.3.172
+
+THE VANISHING-PARTICLE FIX (v0.3.172): every camera-facing particle
+quad rode a corner walk whose screen winding the raster's edge test
+REJECTS — the burst, the dust, the death cloud and the crit stars drew
+nothing (the shots below showed a stray birch trunk, not the lane).
+The walk now rides the corner order the orb lane speaks (bottom-left,
+bottom-right, top-right, top-left — the CCW-in-screen cycle the edge
+test accepts), the uv remapped to the corners' own order. The three
+shots the lane owns are re-rendered honest.
 
 The PARTICLE LANE (javap the 26.2 jar — the base `Particle` physics and
 the three emitters this client speaks): the base tick every particle
@@ -338,6 +347,7 @@ gravity lane `yd -= 0.04 * gravity`, the move, the friction `xd *=
 | `block_break_burst.png` | THE 2001 EVENT'S OWN BURST: the sand cell two blocks ahead broken, the 64 debris mid-flight around the pit — each riding the block's own particle tile (the quarter-region slice the mirrored-U law speaks), the outward fraction velocity the lambda's grid walks |
 | `zombie_death_poof.png` | THE DEATH CLOUD: the 20-particle poof at the facing point, the grey puffs riding the −0.1 gravity's rise and the 8-frame generic walk — the broadcast-60 arm the corpse removal speaks |
 | `crit_stars.png` | THE CRIT'S OWN STARS: the staged zombie at the facing point, the emitter's white stars mid-flight around the body (the unit-ball rejects the lane's 16-sample walk spoke, the bloom the 32× law drives) |
+| `underwater_bubbles.png` | THE DROWN BUBBLES (v0.3.172): the broadcast-67 moment — the pool the dive carve speaks, the air clock SPENT (the HUD's bubble row reads the zero), the 8 bubbles riding the triangle offsets around the body's feet, the body's own delta movement thinned to a fifth + the ±0.02 jitter, the buoyancy `yd += 0.002` lifting them, the ring sprite the jar's `textures/particle/bubble.png` |
 
 Regenerate the family:
 
@@ -350,10 +360,14 @@ cargo run -p mc-client --release -- --screen world --seed 20260214 \
 cargo run -p mc-client --release -- --screen world --seed 20260214 \
   --body --particles crit --body-pitch=-4 --ui-frame 3 \
   --out shots/crit_stars.png
-# --particles burst|poof|crit stages the lane's three scenes (the
+cargo run -p mc-client --release -- --screen world --seed 42 \
+  --body --water-pool --particles bubble --perspective first --ui-frame 30 \
+  --body-yaw 0 --body-pitch 62 --out shots/underwater_bubbles.png
+# --particles burst|poof|crit|bubble stages the lane's four scenes (the
 # --zombie-fire discipline: the deterministic stand-in for the debris
 # the dig's break speaks, the cloud the removal speaks, the stars the
-# crit attack arms — the real lanes ride the live ticks)
+# crit attack arms, the bubbles the broadcast-67 dose arms — the real
+# lanes ride the live ticks)
 ```
 
 ## The lava-fog lane (the ember murk) — v0.3.167

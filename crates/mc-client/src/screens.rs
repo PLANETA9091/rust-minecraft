@@ -685,6 +685,9 @@ pub struct App {
     pub crit_sprite: Option<crate::avatar::CritSprite>,
     /// The poof cloud's 8 frames (the same lazy load).
     pub poof_frames: Option<crate::avatar::PoofFrames>,
+    /// The drown bubble's sprite (the same lazy load — the bubble
+    /// quad's pixel source).
+    pub bubble_sprite: Option<crate::avatar::BubbleSprite>,
     pub hurt_time: i32,
     pub hurt_duration: i32,
     pub invulnerable_time: i32,
@@ -883,6 +886,7 @@ impl App {
             crit_emitters: Vec::new(),
             crit_sprite: None,
             poof_frames: None,
+            bubble_sprite: None,
             next_drop_id: 1,
             orbs: Vec::new(),
             next_orb_id: 1,
@@ -999,9 +1003,32 @@ impl App {
         self.pieces.retain_mut(crate::eat::ItemPiece::tick);
         // THE PARTICLE TICK (the base Particle's own law: the age, the
         // gravity lane, the move, the friction; the removal at the
-        // lifetime) + THE EMITTER TICK (the TrackingEmitters the crit
-        // attacks arm — the 16-sample walk per tick, the 3-tick life)
-        self.particles.retain_mut(crate::particles::Particle::tick);
+        // lifetime) + THE BUBBLE'S OWN WALK (the BubbleParticle.tick
+        // the base law never touches — the countdown lifetime, the
+        // buoyancy before the move, the friction after, the dry death
+        // answered by the ACTIVE world's own fluid read) + THE
+        // EMITTER TICK (the TrackingEmitters the crit attacks arm —
+        // the 16-sample walk per tick, the 3-tick life)
+        let bubble_world: Option<&crate::world::World> = if self.world_is_network {
+            self.net_world.as_ref()
+        } else {
+            self.offline_world.as_ref()
+        };
+        self.particles.retain_mut(|p| match p.kind {
+            crate::particles::ParticleKind::Bubble => {
+                let wet = bubble_world
+                    .map(|w| {
+                        w.get(
+                            p.x.floor() as i32,
+                            p.y.floor() as i32,
+                            p.z.floor() as i32,
+                        ) == crate::world::WATER
+                    })
+                    .unwrap_or(false);
+                p.tick_bubble(wet)
+            }
+            _ => p.tick(),
+        });
         for i in (0..self.crit_emitters.len()).rev() {
             let target = self
                 .mobs
@@ -1034,6 +1061,10 @@ impl App {
             let mut on_fire_hurt = false;
             let mut fire_doused = false;
             let mut drown_hurt = false;
+            // THE BROADCAST-67 POSE (the makeDrownParticles law's own
+            // read — the body's feet position and delta movement the
+            // bubbles' spawn speaks, captured the drain's own tick)
+            let mut drown_pose: Option<(f64, f64, f64, f64, f64, f64)> = None;
             // THE HURT CLOCKS (LivingEntity.tick's own decrements: the
             // hurtTime flash and the invulnerableTime cooldown walk
             // down one per tick)
@@ -1128,8 +1159,14 @@ impl App {
                     // THE AIR ARC'S OWN DRAIN (the same per-tick flag
                     // law the fire arc's three speak — the -20 fold's
                     // own read, the body keeps it true until the NEXT
-                    // tick's head clears)
+                    // tick's head clears) + THE BROADCAST-67 POSE (the
+                    // makeDrownParticles law reads the body's own
+                    // position and delta movement — captured at the
+                    // same drain the flags' law speaks)
                     drown_hurt = std::mem::take(&mut b.drown_hurt_due);
+                    if drown_hurt {
+                        drown_pose = Some((b.x, b.y, b.z, b.vx, b.vy, b.vz));
+                    }
                     // THE EXHAUSTION SOURCES' own drain (the jump's
                     // 0.05/0.2 and the movement's cm law the body's
                     // tick banked — the networked lane's exhaustion is
@@ -1160,9 +1197,18 @@ impl App {
             // THE DROWN HURT (the air branch's own dose — the DROWNING
             // voice the damage type speaks: hurtServer(drown(), 2.0F)
             // answered through the same pipeline's cooldown, the clock
-            // already reset to 0 the body's own fold speaks)
+            // already reset to 0 the body's own fold speaks) + THE
+            // BROADCAST-67 ARM (makeDrownParticles verbatim — the 8
+            // bubbles the client lane's visual speaks, three triangle
+            // offsets each, the body's own delta movement)
             if drown_hurt {
                 self.hurt_drowning(crate::body::DROWN_DAMAGE);
+                if let Some((px, py, pz, pvx, pvy, pvz)) = drown_pose {
+                    let bubbles = crate::particles::drown_bubbles(
+                        px, py, pz, pvx, pvy, pvz, &mut self.mob_rng,
+                    );
+                    self.particles.extend(bubbles);
+                }
             }
             // THE DOUSE FIZZ (playEntityOnFireExtinguishedSound — the
             // water kill's own transition)
@@ -5067,10 +5113,15 @@ impl App {
                     p.z as f32 + (right[2] * sx + up[2] * syp) * half,
                 ]
             };
-            // the vanilla avector3f order: (-1,-1), (-1,1), (1,1), (1,-1)
+            // the corner walk the orb lane speaks (the CCW-in-screen
+            // order the raster's edge test accepts): bottom-left,
+            // bottom-right, top-right, top-left — the mirrored
+            // avector3f walk rejected every camera-facing quad at the
+            // edge test (the vanishing-particle lesson the bubbles
+            // round dug up)
             sampled.push(crate::raster::SampledQuad {
-                pts: [corner(-1.0, -1.0), corner(-1.0, 1.0), corner(1.0, 1.0), corner(1.0, -1.0)],
-                uv: [[u0, v1], [u0, v0], [u1, v0], [u1, v1]],
+                pts: [corner(-1.0, -1.0), corner(1.0, -1.0), corner(1.0, 1.0), corner(-1.0, 1.0)],
+                uv: [[u0, v1], [u1, v1], [u1, v0], [u0, v0]],
                 tex,
                 tint: [1.0, 1.0, 1.0],
             });
@@ -5115,6 +5166,10 @@ impl App {
             self.poof_frames =
                 crate::avatar::PoofFrames::load(std::path::Path::new("assets-cache/jar"));
         }
+        if self.bubble_sprite.is_none() {
+            self.bubble_sprite =
+                crate::avatar::BubbleSprite::load(std::path::Path::new("assets-cache/jar"));
+        }
         let sy = cam.yaw.sin();
         let cy = cam.yaw.cos();
         let sp = cam.pitch.sin();
@@ -5126,6 +5181,7 @@ impl App {
         let mut terrain_groups: Vec<(u16, Vec<crate::raster::SampledQuad>)> = Vec::new();
         let mut poof_groups: Vec<(usize, Vec<crate::raster::SampledQuad>)> = Vec::new();
         let mut crit_quads: Vec<crate::raster::SampledQuad> = Vec::new();
+        let mut bubble_quads: Vec<crate::raster::SampledQuad> = Vec::new();
         for p in &self.particles {
             let half = p.half();
             let corner = |sx: f32, syp: f32| {
@@ -5135,23 +5191,29 @@ impl App {
                     p.z as f32 + (right[2] * sx + up[2] * syp) * half,
                 ]
             };
+            // THE CORNER WALK the orb lane speaks (the CCW-in-screen
+            // order the raster's edge test accepts): bottom-left,
+            // bottom-right, top-right, top-left — the mirrored walk
+            // rejected every camera-facing quad at the edge test (the
+            // vanishing-particle lesson the bubbles round dug up)
             let pts = [
                 corner(-1.0, -1.0),
-                corner(-1.0, 1.0),
-                corner(1.0, 1.0),
                 corner(1.0, -1.0),
+                corner(1.0, 1.0),
+                corner(-1.0, 1.0),
             ];
             match p.kind {
                 crate::particles::ParticleKind::Terrain { tile } => {
                     // the quarter law over the tile's 0..1 (the U edge
-                    // mirrors — getU0 rides the LEFT corners)
+                    // mirrors — getU0 rides the LEFT corners); the uv
+                    // walks the corners' own order (BL, BR, TR, TL)
                     let ul = (p.uo + 1.0) / 4.0;
                     let ur = p.uo / 4.0;
                     let vt = p.vo / 4.0;
                     let vb = (p.vo + 1.0) / 4.0;
                     let quad = crate::raster::SampledQuad {
                         pts,
-                        uv: [[ul, vb], [ul, vt], [ur, vt], [ur, vb]],
+                        uv: [[ul, vb], [ur, vb], [ur, vt], [ul, vt]],
                         tex: "particle_terrain",
                         tint: p.col,
                     };
@@ -5164,7 +5226,7 @@ impl App {
                     let frame = crate::particles::poof_frame(p.age, p.lifetime);
                     let quad = crate::raster::SampledQuad {
                         pts,
-                        uv: [[0.0, 8.0], [0.0, 0.0], [8.0, 0.0], [8.0, 8.0]],
+                        uv: [[0.0, 8.0], [8.0, 8.0], [8.0, 0.0], [0.0, 0.0]],
                         tex: "particle_poof",
                         tint: p.col,
                     };
@@ -5176,8 +5238,19 @@ impl App {
                 crate::particles::ParticleKind::Crit => {
                     crit_quads.push(crate::raster::SampledQuad {
                         pts,
-                        uv: [[0.0, 8.0], [0.0, 0.0], [8.0, 0.0], [8.0, 8.0]],
+                        uv: [[0.0, 8.0], [8.0, 8.0], [8.0, 0.0], [0.0, 0.0]],
                         tex: "particle_crit",
+                        tint: p.col,
+                    });
+                }
+                crate::particles::ParticleKind::Bubble => {
+                    // the full sprite's own quad (the bubble texture's
+                    // 8x8, no quarter walk, the white tint the ctor's
+                    // defaults speak)
+                    bubble_quads.push(crate::raster::SampledQuad {
+                        pts,
+                        uv: [[0.0, 8.0], [8.0, 8.0], [8.0, 0.0], [0.0, 0.0]],
+                        tex: "particle_bubble",
                         tint: p.col,
                     });
                 }
@@ -5208,6 +5281,12 @@ impl App {
         if let Some(crit) = &self.crit_sprite {
             fb.draw_sampled_quads(vp, &crit_quads, &mut |_tex, u, v| {
                 Some(crit.pixel(u, v))
+            });
+        }
+        // the bubble group (the drown sprite's own pixels)
+        if let Some(bubble) = &self.bubble_sprite {
+            fb.draw_sampled_quads(vp, &bubble_quads, &mut |_tex, u, v| {
+                Some(bubble.pixel(u, v))
             });
         }
     }

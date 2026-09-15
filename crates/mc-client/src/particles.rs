@@ -68,6 +68,28 @@
 //!   beyond the bounds), the velocity (0,0,0) through
 //!   `setPower(0.2F)` (the power multiplies the velocity — the zero
 //!   fold rides), `.scale(0.6F)` (the quad shrinks).
+//! - `BubbleParticle` (the drown bubble, the `bubble` particle type's
+//!   own sprite — the jar's 8x8 `textures/particle/bubble.png`): the
+//!   ctor chain's draws ride the base laws first (the dead lifetime
+//!   float, the 0.1..0.2 quadSize — `setSize(0.02, 0.02)` only moves
+//!   the BOUNDING BOX, the quad's own size the chain keeps), then the
+//!   bubble's own folds: `quadSize *= nextFloat() * 0.6 + 0.2`,
+//!   each velocity axis `xa * 0.2 + (nextFloat() * 2 - 1) * 0.02`
+//!   (the caller's velocity thinned, the ±0.02 jitter added), the
+//!   lifetime `(int)(8.0 / (nextFloat() * 0.8 + 0.2))` (8..40). The
+//!   tick is the BUBBLE'S OWN (the base law never rides it): the
+//!   countdown lifetime (`original > 0` gates the body, no motion on
+//!   the removal tick), the buoyancy lane `yd += 0.002` BEFORE the
+//!   move (the bubble RISES — no gravity lane), the friction
+//!   `*= 0.85` AFTER the move, and the dry death — the fluid at the
+//!   containing cell leaving WATER removes the bubble the same tick.
+//! - `LivingEntity.makeDrownParticles` (the broadcast-67 arm — the
+//!   handleEntityEvent's own case, the client lane's visual): 8
+//!   bubbles, three `triangle(0.0, 1.0)` offsets per particle
+//!   (`min + max * (nextDouble() - nextDouble())` — the [-1, 1]
+//!   triangle the RandomSource default speaks), the spawn at
+//!   `(getX() + d3, getY() + d5, getZ() + d7)`, the velocity the
+//!   body's OWN delta movement (the vec3 the method opens with).
 
 /// The base ctor's own lifetime law: `(int)(4.0F / (r * 0.9F + 0.1F))`
 /// — 4..40 ticks.
@@ -108,6 +130,9 @@ pub enum ParticleKind {
     Poof,
     /// `CritParticle` — the crit star (the critical_hit texture).
     Crit,
+    /// `BubbleParticle` — the drown bubble (the bubble texture, the
+    /// full sprite the quad samples, the body's own rise).
+    Bubble,
 }
 
 /// One particle — the vanilla `Particle` + `SingleQuadParticle` fields
@@ -179,6 +204,33 @@ impl Particle {
             ParticleKind::Crit => base * crit_grow(self.age, self.lifetime, 0.0),
             _ => base,
         }
+    }
+
+    /// The `BubbleParticle.tick` verbatim — the bubble rides NONE of
+    /// the base law: the countdown lifetime (`original > 0` gates the
+    /// body — no motion on the removal tick, exactly the spawn count
+    /// of motions), the buoyancy `yd += 0.002` BEFORE the move (no
+    /// gravity lane — the bubble RISES), the move, the friction
+    /// `*= 0.85` AFTER the move, and the dry death (the fluid at the
+    /// containing cell leaving WATER removes — the caller answers the
+    /// gate with the active world's own read, the client's fluid
+    /// query the body's eye scan speaks).
+    pub fn tick_bubble(&mut self, in_water: bool) -> bool {
+        // the countdown's own gate: `original = lifetime; lifetime -=
+        // 1; if (original <= 0) remove` — the u32 walk stops at zero
+        // (the vanilla's int never counts below the removal)
+        if self.lifetime == 0 {
+            return false;
+        }
+        self.lifetime -= 1;
+        self.vy += 0.002;
+        self.x += self.vx;
+        self.y += self.vy;
+        self.z += self.vz;
+        self.vx *= 0.85;
+        self.vy *= 0.85;
+        self.vz *= 0.85;
+        in_water
     }
 }
 
@@ -295,6 +347,109 @@ pub fn crit(
         vo: 0.0,
         col: [1.0, 1.0, 1.0],
     }
+}
+
+/// The bubble particle's ctor (javap `BubbleParticle` verbatim). Draw
+/// order (the ctor chain's own): the BASE ctor's dead lifetime float
+/// first (the law gets overridden by the 8/(r*0.8+0.2) fold — the draw
+/// still counts), the SingleQuadParticle's 0.1..0.2 quadSize draw
+/// (`setSize(0.02, 0.02)` only moves the BOUNDING BOX — the quad's own
+/// size the chain keeps and the bubble's fold scales), then the
+/// bubble's own: the quadSize *= r*0.6+0.2 fold, the three velocity
+/// folds (`xa * 0.2 + (r * 2 - 1) * 0.02` — the caller's velocity
+/// thinned to a fifth, the ±0.02 jitter added), the lifetime
+/// `(int)(8.0 / (r * 0.8 + 0.2))` (8..40). The white color rides the
+/// SingleQuadParticle's defaults (the bubble sprite's own pixels).
+#[allow(clippy::too_many_arguments)]
+pub fn bubble(
+    x: f64,
+    y: f64,
+    z: f64,
+    vx: f64,
+    vy: f64,
+    vz: f64,
+    r_base_life: f32,
+    r_size0: f32,
+    r_scale: f32,
+    r_jx: f32,
+    r_jy: f32,
+    r_jz: f32,
+    r_life: f32,
+) -> Particle {
+    let _ = r_base_life; // the dead draw the chain's order keeps
+    let quad_size = base_quad_size(r_size0) * (r_scale * 0.6 + 0.2);
+    Particle {
+        kind: ParticleKind::Bubble,
+        x,
+        y,
+        z,
+        vx: vx * 0.2 + (r_jx * 2.0 - 1.0) as f64 * 0.02,
+        vy: vy * 0.2 + (r_jy * 2.0 - 1.0) as f64 * 0.02,
+        vz: vz * 0.2 + (r_jz * 2.0 - 1.0) as f64 * 0.02,
+        age: 0,
+        lifetime: (8.0f32 / (r_life * 0.8 + 0.2)) as u32,
+        gravity: 0.0,
+        friction: 0.85,
+        quad_size,
+        uo: 0.0,
+        vo: 0.0,
+        col: [1.0, 1.0, 1.0],
+    }
+}
+
+/// The drown cloud (`LivingEntity.makeDrownParticles` verbatim — the
+/// broadcast-67 arm the handleEntityEvent speaks): 8 bubbles around
+/// the body, three `triangle(0.0, 1.0)` offsets per particle (the
+/// `min + max * (d1 - d2)` triangle — the [-1, 1] spread the
+/// RandomSource default speaks), the spawn at `(x + d3, y + d5,
+/// z + d7)` (the FEET the getX/getY/getZ law opens), the velocity the
+/// body's OWN delta movement (the vec3 the method reads first). Draw
+/// order per particle: the six triangle doubles, then the ctor
+/// chain's seven draws (the dead lifetime float, the quadSize, the
+/// scale fold, the three jitters, the lifetime's).
+pub fn drown_bubbles(
+    x: f64,
+    y: f64,
+    z: f64,
+    vx: f64,
+    vy: f64,
+    vz: f64,
+    rng: &mut crate::drops::Lcg,
+) -> Vec<Particle> {
+    let mut out = Vec::with_capacity(8);
+    for _ in 0..8 {
+        // three triangle(0, 1) offsets — the default method's
+        // `min + max * (nextDouble() - nextDouble())`, one pair each
+        let d3 = rng.next_f64() - rng.next_f64();
+        let d5 = rng.next_f64() - rng.next_f64();
+        let d7 = rng.next_f64() - rng.next_f64();
+        // the ctor chain's seven draws (the base lifetime's dead float
+        // the order speaks, the quadSize, the scale, the three
+        // jitters, the lifetime's own)
+        let r_base_life = rng.next_f32();
+        let r_size0 = rng.next_f32();
+        let r_scale = rng.next_f32();
+        let r_jx = rng.next_f32();
+        let r_jy = rng.next_f32();
+        let r_jz = rng.next_f32();
+        let r_life = rng.next_f32();
+        out.push(bubble(
+            x + d3,
+            y + d5,
+            z + d7,
+            vx,
+            vy,
+            vz,
+            r_base_life,
+            r_size0,
+            r_scale,
+            r_jx,
+            r_jy,
+            r_jz,
+            r_life,
+        ));
+    }
+    out
 }
 
 /// The 2001 event's own burst (`ClientLevel.addDestroyBlockEffect`'s
@@ -717,5 +872,99 @@ mod tests {
         assert_eq!(crit_grow(0, 32, 0.0), 0.0);
         assert_eq!(crit_grow(1, 32, 0.0), 1.0);
         assert_eq!(crit_grow(0, 40, 0.5), (0.5f32 / 40.0 * 32.0).clamp(0.0, 1.0));
+    }
+
+    #[test]
+    fn the_bubble_ctor_speaks_the_bytecode_chain() {
+        // the draw order's own math: the dead lifetime float (kept for
+        // the order), the quadSize 0.1..0.2 riding the 0.2..0.8 scale,
+        // the velocity thinned to a fifth + the ±0.02 jitter, the
+        // lifetime 8/(r*0.8+0.2) — 8..40
+        let p = bubble(1.0, 2.0, 3.0, 0.5, -0.3, 0.1, 0.5, 0.0, 0.0, 0.5, 0.5, 0.5, 0.0);
+        assert_eq!(p.kind, ParticleKind::Bubble);
+        assert_eq!(p.lifetime, 40); // r=0 -> 8/0.2
+        assert!((p.quad_size - 0.1 * 0.2).abs() < 1e-6); // size0=0 -> 0.1, scale=0 -> *0.2
+        assert!((p.vx - (0.5 * 0.2 + 0.0 * 0.02)).abs() < 1e-9); // jx=0.5 -> jitter 0
+        assert!((p.vy - (-0.3 * 0.2)).abs() < 1e-9);
+        assert!((p.vz - (0.1 * 0.2 + 0.0 * 0.02)).abs() < 1e-9);
+        assert_eq!(p.col, [1.0, 1.0, 1.0]); // the white the defaults speak
+        let big = bubble(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 1.0);
+        assert_eq!(big.lifetime, 8); // r=1 -> 8/1.0
+        assert!((big.quad_size - 0.2 * 0.8).abs() < 1e-6);
+        assert!((big.vx - (-0.02)).abs() < 1e-9); // jx=0 -> -1 * 0.02
+    }
+
+    #[test]
+    fn the_bubble_tick_rides_its_own_law() {
+        // the countdown gate: exactly `lifetime` motion ticks, then
+        // the removal (no motion on the removal tick)
+        let mut p = bubble(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.5, 0.5, 0.5, 0.5, 0.5, 0.0);
+        let total = p.lifetime;
+        let y0 = p.y;
+        for _ in 0..total {
+            assert!(p.tick_bubble(true), "alive inside the countdown");
+        }
+        // the countdown spent: the next tick removes — the y never
+        // moves the dead tick speaks
+        let y_last = p.y;
+        assert!(!p.tick_bubble(true));
+        assert_eq!(p.y, y_last);
+        assert!(total >= 8 && total <= 40, "the vanilla band");
+        // the buoyancy BEFORE the move, the friction AFTER: the first
+        // tick's vy = 0*0.2 + jitter + 0.002, then *= 0.85
+        let mut q = bubble(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.5, 0.5, 0.5, 0.5, 0.5, 0.0);
+        let vy_seed = q.vy;
+        q.tick_bubble(true);
+        let expected = (vy_seed + 0.002) * 0.85;
+        assert!((q.vy - expected).abs() < 1e-12, "vy {} vs {}", q.vy, expected);
+        assert!(q.y > y0, "the bubble RISES");
+        // no gravity lane: the vy never falls — the friction's own
+        // walk rides the buoyancy's climb
+        let vy1 = q.vy;
+        q.tick_bubble(true);
+        assert!((q.vy - (vy1 + 0.002) * 0.85).abs() < 1e-12);
+    }
+
+    #[test]
+    fn the_bubble_dies_the_dry_cell_speaks() {
+        // the water gate: the fluid read leaving WATER removes the
+        // same tick (the caller's own answer)
+        let mut p = bubble(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.5, 0.5, 0.5, 0.5, 0.5, 0.0);
+        assert!(p.tick_bubble(true));
+        assert!(!p.tick_bubble(false));
+        // and the wet answer never kills the countdown's own death
+        let mut q = bubble(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.5, 0.5, 0.5, 0.5, 0.5, 0.0);
+        while q.lifetime > 0 {
+            assert!(q.tick_bubble(true));
+        }
+        assert!(!q.tick_bubble(true));
+    }
+
+    #[test]
+    fn the_drown_cloud_walks_eight_and_the_body_velocity() {
+        let mut r = rng();
+        let cloud = drown_bubbles(10.0, 20.0, 30.0, 0.4, 0.2, -0.1, &mut r);
+        assert_eq!(cloud.len(), 8);
+        for p in &cloud {
+            assert_eq!(p.kind, ParticleKind::Bubble);
+            // the triangle offsets spread ±1 around the feet
+            assert!(p.x > 9.0 && p.x < 11.0);
+            assert!(p.y > 19.0 && p.y < 21.0);
+            assert!(p.z > 29.0 && p.z < 31.0);
+            // the velocity thinned to a fifth + the ±0.02 jitter
+            assert!(p.vx > 0.4 * 0.2 - 0.02 && p.vx < 0.4 * 0.2 + 0.02);
+            assert!(p.vz > -0.1 * 0.2 - 0.02 && p.vz < -0.1 * 0.2 + 0.02);
+            assert!(p.lifetime >= 8 && p.lifetime <= 40);
+        }
+        // the seed-replayed fold: the same seed walks the same cloud
+        let mut a = rng();
+        let mut b = rng();
+        let ca = drown_bubbles(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, &mut a);
+        let cb = drown_bubbles(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, &mut b);
+        for (pa, pb) in ca.iter().zip(cb.iter()) {
+            assert_eq!(pa.x, pb.x);
+            assert_eq!(pa.lifetime, pb.lifetime);
+            assert_eq!(pa.quad_size, pb.quad_size);
+        }
     }
 }

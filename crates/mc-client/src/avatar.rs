@@ -971,6 +971,45 @@ impl PoofFrames {
     }
 }
 
+/// The PARTICLE LANE's drown bubble texture — the 8x8 the bubble quad
+/// samples (javap: the `bubble` particle type's own sprite, the jar's
+/// `textures/particle/bubble.png`, the `BubbleParticle` the broadcast
+/// 67's makeDrownParticles law speaks), loaded and sha1-verified the
+/// same stream the crit star speaks. A missing or tampered file keeps
+/// the bubbles invisible (the honest absence the other lanes speak).
+pub struct BubbleSprite {
+    pub rgba: Vec<u8>,
+}
+
+/// The bubble texture's own layout (the jar's 8x8 the IHDR speaks).
+pub const BUBBLE_SPRITE_SIDE: u32 = 8;
+
+impl BubbleSprite {
+    /// Load from the runtime cache root (the generator's
+    /// `assets-cache/jar/`), verify the generated sha1, decode, and
+    /// shape-check the 8x8 layout.
+    pub fn load(root: &std::path::Path) -> Option<BubbleSprite> {
+        let bytes = std::fs::read(root.join(skin::PARTICLE_BUBBLE_RUNTIME_PATH)).ok()?;
+        if hex::encode(sha1::Sha1::digest(&bytes)) != skin::PARTICLE_BUBBLE_PNG_SHA1 {
+            return None;
+        }
+        let (w, h, rgba) = decode_rgba(&bytes).ok()?;
+        if w != BUBBLE_SPRITE_SIDE || h != BUBBLE_SPRITE_SIDE {
+            return None;
+        }
+        Some(BubbleSprite { rgba })
+    }
+
+    /// The sprite pixel at (u, v) in TEXTURE UNITS (the 0..8 the
+    /// particle quad's uv walk speaks), nearest texel.
+    pub fn pixel(&self, u: f32, v: f32) -> [u8; 4] {
+        let x = (u.floor().clamp(0.0, BUBBLE_SPRITE_SIDE as f32 - 1.0)) as usize;
+        let y = (v.floor().clamp(0.0, BUBBLE_SPRITE_SIDE as f32 - 1.0)) as usize;
+        let o = (y * BUBBLE_SPRITE_SIDE as usize + x) * 4;
+        [self.rgba[o], self.rgba[o + 1], self.rgba[o + 2], self.rgba[o + 3]]
+    }
+}
+
 /// The WATER SCREEN's decoded pixels — the underwater overlay's pixel
 /// source, loaded and sha1-verified the same stream the skins and the
 /// flame strips speak (javap `ScreenEffectRenderer.submitWater`'s

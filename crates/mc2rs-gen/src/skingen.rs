@@ -40,6 +40,11 @@ pub const EXPERIENCE_ORB_JAR_PATH: &str =
 /// `CritParticle` speaks; the jar's `textures/particle/critical_hit.png`,
 /// the 8x8 the IHDR verifies).
 pub const PARTICLE_CRIT_JAR_PATH: &str = "assets/minecraft/textures/particle/critical_hit.png";
+/// The drown bubble's texture (javap: the `bubble` particle type's own
+/// sprite — the `BubbleParticle` the broadcast-67 makeDrownParticles
+/// law spawns; the jar's `textures/particle/bubble.png`, the 8x8 the
+/// IHDR verifies).
+pub const PARTICLE_BUBBLE_JAR_PATH: &str = "assets/minecraft/textures/particle/bubble.png";
 /// The poof cloud's 8 frames (javap: the `poof` particle type's sprite
 /// set — `ExplodeParticle`'s `setSpriteFromAge` walk over the 8
 /// `MutableSpriteSet` frames; the jar's
@@ -63,6 +68,7 @@ pub const EXPERIENCE_ORB_RUNTIME_PATH: &str = "entity/experience/experience_orb.
 /// The particle lane's runtime-cache paths (the same textures/ prefix
 /// strip the other lanes speak).
 pub const PARTICLE_CRIT_RUNTIME_PATH: &str = "particle/critical_hit.png";
+pub const PARTICLE_BUBBLE_RUNTIME_PATH: &str = "particle/bubble.png";
 pub const PARTICLE_POOF_RUNTIME_PATHS: [&str; 8] = [
     "particle/generic_0.png",
     "particle/generic_1.png",
@@ -120,6 +126,9 @@ pub struct SkinData {
     /// sha1 of the crit star's texture (jar-verbatim integrity) — the
     /// particle lane's crit quad's pixel source (the 8x8 sprite).
     pub particle_crit_png_sha1: String,
+    /// sha1 of the drown bubble's texture (jar-verbatim integrity) —
+    /// the bubble quad's pixel source (the 8x8 sprite).
+    pub particle_bubble_png_sha1: String,
     /// sha1s of the poof cloud's 8 frames (jar-verbatim integrity) —
     /// the death cloud's pixel sources (the 8x8 generic frames).
     pub particle_poof_png_sha1s: [String; 8],
@@ -247,6 +256,16 @@ pub fn generate<R: std::io::Read + std::io::Seek>(archive: &mut zip::ZipArchive<
         cw,
         ch
     );
+    // the drown bubble's 8x8 (the same shape check the crit speaks)
+    let bubble_bytes = read_entry(archive, PARTICLE_BUBBLE_JAR_PATH).context("read bubble")?;
+    let particle_bubble_png_sha1 = crate::util::sha1_hex(&bubble_bytes);
+    let (bw, bh, _bubble_rgba) = decode_rgba(&bubble_bytes).context("decode bubble")?;
+    anyhow::ensure!(
+        (bw, bh) == (8, 8),
+        "bubble must be the 8x8 sprite, got {}x{}",
+        bw,
+        bh
+    );
     let mut particle_poof_png_sha1s: [String; 8] = std::array::from_fn(|_| String::new());
     for (i, path) in PARTICLE_POOF_JAR_PATHS.iter().enumerate() {
         let bytes = read_entry(archive, path).context("read generic frame")?;
@@ -271,6 +290,7 @@ pub fn generate<R: std::io::Read + std::io::Seek>(archive: &mut zip::ZipArchive<
         underwater_png_sha1,
         experience_orb_png_sha1,
         particle_crit_png_sha1,
+        particle_bubble_png_sha1,
         particle_poof_png_sha1s,
     })
 }
@@ -384,13 +404,20 @@ pub fn emit(data: &SkinData) -> Result<String> {
     out.push_str(&format!(
         "pub const EXPERIENCE_ORB_RUNTIME_PATH: &str = \"{EXPERIENCE_ORB_RUNTIME_PATH}\";\n"
     ));
-    out.push_str("\n/// The PARTICLE LANE's textures (the crit star's 8x8 + the poof\n/// cloud's 8 8x8 frames), generated from the same jar: the integrity\n/// sha1s the particle lane verifies before it draws (javap: the `crit`\n/// + `poof` particle types' sprites — the TrackingEmitter's star, the\n/// death cloud's `MutableSpriteSet` frame walk).\n");
+    out.push_str("\n/// The PARTICLE LANE's textures (the crit star's 8x8, the drown\n/// bubble's 8x8, the poof cloud's 8 8x8 frames), generated from the\n/// same jar: the integrity sha1s the particle lane verifies before it\n/// draws (javap: the `crit` + `bubble` + `poof` particle types'\n/// sprites — the TrackingEmitter's star, the broadcast-67 arm's\n/// bubbles, the death cloud's `MutableSpriteSet` frame walk).\n");
     out.push_str(&format!(
         "pub const PARTICLE_CRIT_PNG_SHA1: &str = \"{}\";\n",
         data.particle_crit_png_sha1
     ));
     out.push_str(&format!(
         "pub const PARTICLE_CRIT_RUNTIME_PATH: &str = \"{PARTICLE_CRIT_RUNTIME_PATH}\";\n"
+    ));
+    out.push_str(&format!(
+        "pub const PARTICLE_BUBBLE_PNG_SHA1: &str = \"{}\";\n",
+        data.particle_bubble_png_sha1
+    ));
+    out.push_str(&format!(
+        "pub const PARTICLE_BUBBLE_RUNTIME_PATH: &str = \"{PARTICLE_BUBBLE_RUNTIME_PATH}\";\n"
     ));
     out.push_str(&format!(
         "pub const PARTICLE_POOF_PNG_SHA1S: [&str; 8] = [{}];\n",
@@ -528,6 +555,8 @@ mod tests {
         let expected_orb_sha1 = crate::util::sha1_hex(&orb);
         let crit = tiny_png();
         let expected_crit_sha1 = crate::util::sha1_hex(&crit);
+        let bubble = tiny_png();
+        let expected_bubble_sha1 = crate::util::sha1_hex(&bubble);
         let poofs = [tiny_png(), tiny_png(), tiny_png(), tiny_png(), tiny_png(), tiny_png(), tiny_png(), tiny_png()];
         let expected_poof_sha1s: Vec<String> = poofs.iter().map(|p| crate::util::sha1_hex(p)).collect();
 
@@ -540,6 +569,7 @@ mod tests {
             (UNDERWATER_JAR_PATH, underwater),
             (EXPERIENCE_ORB_JAR_PATH, orb),
             (PARTICLE_CRIT_JAR_PATH, crit),
+            (PARTICLE_BUBBLE_JAR_PATH, bubble),
             (PARTICLE_POOF_JAR_PATHS[0], poofs[0].clone()),
             (PARTICLE_POOF_JAR_PATHS[1], poofs[1].clone()),
             (PARTICLE_POOF_JAR_PATHS[2], poofs[2].clone()),
@@ -568,6 +598,10 @@ mod tests {
             "the crit star's own sha1"
         );
         assert_eq!(
+            data.particle_bubble_png_sha1, expected_bubble_sha1,
+            "the drown bubble's own sha1"
+        );
+        assert_eq!(
             data.particle_poof_png_sha1s,
             expected_poof_sha1s.as_slice(),
             "the poof frames' own sha1s"
@@ -593,6 +627,8 @@ mod tests {
         // and the runtime paths land verbatim
         assert!(emitted.contains(&format!("pub const PARTICLE_CRIT_PNG_SHA1: &str = \"{expected_crit_sha1}\";")));
         assert!(emitted.contains("pub const PARTICLE_CRIT_RUNTIME_PATH: &str = \"particle/critical_hit.png\";"));
+        assert!(emitted.contains(&format!("pub const PARTICLE_BUBBLE_PNG_SHA1: &str = \"{expected_bubble_sha1}\";")));
+        assert!(emitted.contains("pub const PARTICLE_BUBBLE_RUNTIME_PATH: &str = \"particle/bubble.png\";"));
         for (i, sha) in expected_poof_sha1s.iter().enumerate() {
             assert!(emitted.contains(&format!("\"{sha}\"")), "poof frame {i}'s sha1");
             assert!(emitted.contains(&format!("\"particle/generic_{i}.png\"")));

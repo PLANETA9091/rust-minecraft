@@ -668,9 +668,28 @@ pub fn seed_scene(app: &mut crate::screens::App, opts: &SceneOpts) -> Result<()>
                     app.crit_emitters.push(em);
                 }
             }
+            "bubble" => {
+                // THE DROWN MOMENT'S OWN STAGE (the broadcast-67 arm
+                // the live lane answers at the dose): the pool the
+                // dive carve speaks, the air clock SPENT (the dose's
+                // own reset the body fold speaks — the HUD's bubble
+                // row reads the zero), the 8 bubbles at the body's
+                // feet riding the body's own delta movement — the
+                // triangle spread the makeDrownParticles law speaks
+                dive_carve(app, crate::world::WATER);
+                if let Some(b) = app.body.as_mut() {
+                    b.air_supply = 0;
+                }
+                if let Some(b) = app.body.as_ref() {
+                    let cloud = crate::particles::drown_bubbles(
+                        b.x, b.y, b.z, b.vx, b.vy, b.vz, &mut app.mob_rng,
+                    );
+                    app.particles.extend(cloud);
+                }
+            }
             other => {
                 anyhow::bail!(
-                    "--particles: unknown scene '{other}' (the lane speaks burst | poof | crit)"
+                    "--particles: unknown scene '{other}' (the lane speaks burst | poof | crit | bubble)"
                 );
             }
         }
@@ -678,14 +697,32 @@ pub fn seed_scene(app: &mut crate::screens::App, opts: &SceneOpts) -> Result<()>
         // ones ride — the frame shows the flight's own truth: the
         // burst's two spread ticks, the poof's ten (the generic
         // frames' own wisp-to-cloud growth the fade-in speaks), the
-        // crit's two bloom ticks)
+        // crit's two bloom ticks, the bubble's ten rise ticks) — the
+        // bubble's own walk answers the water gate the pool's cells
+        // speak (the dry cell removes, the live lane's own read)
         let walk = match kind {
             "poof" => 20,
             "crit" => 6,
+            "bubble" => 10,
             _ => 2,
         };
+        let wet_world = app.offline_world.as_ref();
         for _ in 0..walk {
-            app.particles.retain_mut(crate::particles::Particle::tick);
+            app.particles.retain_mut(|p| match p.kind {
+                crate::particles::ParticleKind::Bubble => {
+                    let wet = wet_world
+                        .map(|w| {
+                            w.get(
+                                p.x.floor() as i32,
+                                p.y.floor() as i32,
+                                p.z.floor() as i32,
+                            ) == crate::world::WATER
+                        })
+                        .unwrap_or(false);
+                    p.tick_bubble(wet)
+                }
+                _ => p.tick(),
+            });
         }
     }
     Ok(())
