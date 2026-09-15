@@ -7,6 +7,12 @@ Verifies before writing: exactly the six workspace crates moved, and
 the ecosystem crates riding the same band (js-sys, web-sys) are
 checked BY NAME to still ride their own version.
 
+The anchor is VERSION-AGNOSTIC now (the 0.3.155-drift lesson applied):
+the Cargo.toml side anchors on the [workspace.package] section's own
+version key and reads the CURRENT version from it — no hardcoded
+release string to go stale; the lock side requires every workspace
+crate to still speak the same current version before it writes.
+
 Usage: python3 scripts/bump_version.py <new-version>
 """
 import re
@@ -29,17 +35,33 @@ ECOSYSTEM = {"js-sys": "0.3.105", "web-sys": "0.3.105"}
 toml_path = "Cargo.toml"
 lock_path = "Cargo.lock"
 
-# --- Cargo.toml: the workspace crate's own version line (line-anchored
-# to the [package] section's version key) ---
+# --- Cargo.toml: the workspace's own version line, anchored to the
+# [workspace.package] section (the version key's own line inside it) ---
 toml = open(toml_path).read().splitlines(keepends=True)
-toml_hits = [i for i, l in enumerate(toml) if l.rstrip("\n") == 'version = "0.3.153"']
+section = None
+toml_hits = []
+for i, l in enumerate(toml):
+    s = l.strip()
+    if s.startswith("[") and s.endswith("]"):
+        section = s
+        continue
+    if section == "[workspace.package]":
+        m = re.fullmatch(r'version = "(\d+\.\d+\.\d+)"', s)
+        if m:
+            toml_hits.append((i, m.group(1)))
 if len(toml_hits) != 1:
-    sys.exit(f"FATAL: expected exactly 1 workspace version line in Cargo.toml, found {len(toml_hits)}")
-toml[toml_hits[0]] = f'version = "{NEW}"\n'
+    sys.exit(
+        f"FATAL: expected exactly 1 workspace version line in "
+        f"[workspace.package], found {len(toml_hits)}"
+    )
+idx, current = toml_hits[0]
+if NEW == current:
+    sys.exit(f"FATAL: the workspace already speaks {current}")
+toml[idx] = f'version = "{NEW}"\n'
 
 # --- Cargo.lock: bump only the version line INSIDE each workspace
 # crate's block (name line precedes it); refuse if any crate is missing
-# or the ecosystem crates moved ---
+# or any crate rides a version other than the toml's current ---
 lock = open(lock_path).read().splitlines(keepends=True)
 name_re = re.compile(r'^name = "(.+)"$')
 ver_re = re.compile(r'^version = "(\d+\.\d+\.\d+)"$')
@@ -56,9 +78,9 @@ for i, line in enumerate(lock):
 missing = [c for c in WORKSPACE_CRATES if c not in bumped]
 if missing:
     sys.exit(f"FATAL: workspace crates not found in Cargo.lock: {missing}")
-wrong = {c: old for c, (_, old) in bumped.items() if old != "0.3.153"}
+wrong = {c: old for c, (_, old) in bumped.items() if old != current}
 if wrong:
-    sys.exit(f"FATAL: expected old version 0.3.153, found {wrong}")
+    sys.exit(f"FATAL: expected the lock to speak {current}, found {wrong}")
 if len(set(j for j, _ in bumped.values())) != len(bumped):
     sys.exit("FATAL: two workspace crates resolved to the same lock line")
 for (j, _old) in bumped.values():
@@ -79,5 +101,5 @@ if eco != ECOSYSTEM:
 
 open(toml_path, "w").write("".join(toml))
 open(lock_path, "w").write("".join(lock))
-print(f"bumped {len(bumped)} lock entries + Cargo.toml to {NEW}")
+print(f"bumped {len(bumped)} lock entries + Cargo.toml from {current} to {NEW}")
 print(f"ecosystem verified by name: {eco}")

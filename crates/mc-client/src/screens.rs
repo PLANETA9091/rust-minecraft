@@ -1431,6 +1431,27 @@ impl App {
             self.sounds
                 .play_voice(self.frame, "entity.zombie.hurt", 1.0, pitch);
         }
+        // THE DEATH LOOT (dropAllDeathLoot's own order: the roll rides
+        // the same hurt call the death speaks — killed_by_player rides
+        // the lastHurtByPlayerMemoryTime flag the fist's hit arms; the
+        // flesh + the rare spawn at the entity's feet through the
+        // spawnAtLocation law, the pickup delay the default 10)
+        if died {
+            let (mx, my, mz) = (mob.x, mob.y, mob.z);
+            for (item, count) in mob.death_loot(true) {
+                let id = self.next_drop_id;
+                self.next_drop_id += 1;
+                self.drops.push(crate::drops::ItemDrop::spawn_entity_loot(
+                    id,
+                    item,
+                    count,
+                    mx,
+                    my,
+                    mz,
+                    &mut self.mob_rng,
+                ));
+            }
+        }
         // THE ATTACK VOICE (attackVisualEffects's own branch — the
         // pitch rides the getVoicePitch law over the client's stream)
         let event = if crit {
@@ -8839,6 +8860,60 @@ mod tests {
             weak_drop > 0.0 && weak_drop < 0.6,
             "the uncharged fist barely hurts ({weak_drop})"
         );
+
+        // THE DEATH LOOT (dropAllDeathLoot's own wiring): the sliver
+        // zombie dies to ONE full-charge fist — the loot spawns at
+        // its feet (the spawnAtLocation law), the pickup delay the
+        // default 10, every drop speaking the table's own items
+        let (flesh, iron, carrot, potato) = (
+            crate::mob::wire_id("rotten_flesh").unwrap(),
+            crate::mob::wire_id("iron_ingot").unwrap(),
+            crate::mob::wire_id("carrot").unwrap(),
+            crate::mob::wire_id("potato").unwrap(),
+        );
+        let (mx, my, mz) = {
+            let m = &app.mobs[idx];
+            (m.x, m.y, m.z)
+        };
+        app.mobs[idx].health = 0.5;
+        // the full charge on the clock (the ticker the Player.tick
+        // speaks — the test pulls it straight to the delay's end)
+        app.attack_ticker = 20;
+        // re-aim (the zombie may have wandered off the crosshair)
+        {
+            let (tx, ty, tz) = {
+                let m = &app.mobs[idx];
+                (m.x, m.y + 1.0, m.z)
+            };
+            let b = app.body.as_mut().unwrap();
+            let (dx, dy, dz) = (tx - b.x, ty - (b.y + b.eye_height()), tz - b.z);
+            let horiz = (dx * dx + dz * dz).sqrt().max(1e-9);
+            let len3 = (dx * dx + dy * dy + dz * dz).sqrt().max(1e-9);
+            b.yaw = ((dx / horiz).atan2(-dz / horiz) - std::f64::consts::PI).to_degrees() as f32;
+            b.pitch = -(dy / len3).asin().to_degrees() as f32;
+        }
+        app.on_attack();
+        assert!(app.mobs[idx].health <= 0.0, "the killing blow landed");
+        let loot: Vec<&crate::drops::ItemDrop> = app
+            .drops
+            .iter()
+            .filter(|d| {
+                d.x == mx && d.y == my && d.z == mz && d.pickup_delay == 10
+            })
+            .collect();
+        for d in &loot {
+            assert!(
+                (d.item == flesh && (1..=2).contains(&d.count))
+                    || ((d.item == iron || d.item == carrot || d.item == potato)
+                        && d.count == 1),
+                "the drop speaks the table (item {}, count {})",
+                d.item,
+                d.count
+            );
+        }
+        // the pools speak at most the flesh + the rare (the table's
+        // own two-lane shape)
+        assert!(loot.len() <= 2, "the pools speak at most two drops");
 
         // THE REMOVAL: the death clock's 20-tick walk discards the
         // corpse through the same update loop (the retain law)

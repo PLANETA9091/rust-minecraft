@@ -85,6 +85,24 @@ pub const AMBIENT_INTERVAL_TICKS: i32 = 80;
 /// The ambient draw's bound (javap `Mob.baseTick` — the sipush 1000 the
 /// `random.nextInt(1000) < ambientSoundTime++` gate speaks).
 pub const AMBIENT_DRAW_BOUND: u64 = 1000;
+/// The player-kill rare's own chance (the zombie loot table's
+/// `random_chance_with_enchanted_bonus` unenchanted term — 0.025;
+/// the looting bonus the bare fist never speaks).
+pub const RARE_DROP_CHANCE: f32 = 0.025;
+/// The rare pool's THREE unweighted entries (the table's own order —
+/// the pick rides the nextInt(3) law the unweighted weights speak).
+pub const RARE_DROP_ITEMS: [&str; 3] = ["iron_ingot", "carrot", "potato"];
+
+/// The wire id the plain item name rides (the ITEM_WIRE_ORDER's own
+/// reverse lookup — `None` when the name misses the table: the honest
+/// drop vanishes rather than inventing an id).
+pub fn wire_id(name: &str) -> Option<i32> {
+    mc_registry::generated::item_order::ITEM_WIRE_ORDER
+        .iter()
+        .position(|&n| n == name)
+        .map(|p| p as i32)
+}
+
 /// The horizontal capture the stroll target walks to (the vanilla
 /// navigation's arrival slack).
 const STROLL_ARRIVAL: f64 = 0.5;
@@ -526,6 +544,47 @@ impl Zombie {
     pub fn voice_pitch(&mut self) -> f32 {
         (self.rng.next_f32() - self.rng.next_f32()) * 0.2 + 1.0
     }
+
+    /// THE DEATH LOOT (javap `dropAllDeathLoot` — the
+    /// `lastHurtByPlayerMemoryTime > 0` flag rides killed_by_player,
+    /// the table `data/minecraft/loot_table/entities/zombie.json`
+    /// speaks the pools verbatim): POOL 1 always rolls the
+    /// rotten_flesh (`set_count` uniform 0.0..2.0 —
+    /// `Mth.nextInt(random, 0, 2)` over the ConstantNumberProvider
+    /// getInts, the looting bonus absent from the bare fist); POOL 3
+    /// speaks the player-kill rare (`killed_by_player` +
+    /// `random_chance_with_enchanted_bonus`'s 0.025 unenchanced, one
+    /// of the THREE unweighted entries — iron_ingot / carrot /
+    /// potato); the zombie_horse and baby-chicken pools never fire in
+    /// this lane's vocabulary, and the potato's furnace_smelt branch
+    /// never does either (the zombie never burns here). The draws
+    /// ride the entity's own random stream, in the pools' own order.
+    /// Returns (wire item id, count) pairs — the caller spawns them
+    /// at the entity's feet through the spawnAtLocation law.
+    pub fn death_loot(&mut self, killed_by_player: bool) -> Vec<(i32, i32)> {
+        // the rolls ride the death itself (the caller only calls this
+        // at the health<=0 crossing — the belt for the honest path)
+        if self.health > 0.0 {
+            return Vec::new();
+        }
+        let mut out: Vec<(i32, i32)> = Vec::new();
+        // POOL 1: the flesh — the uniform count 0..2
+        if let Some(flesh) = wire_id("rotten_flesh") {
+            let count = self.rng.next_int_inclusive(0, 2);
+            if count > 0 {
+                out.push((flesh, count));
+            }
+        }
+        // POOL 3: the player-kill rare — the 0.025 chance, then one of
+        // the three unweighted entries (the pool's own rolls 1)
+        if killed_by_player && self.rng.next_f32() < RARE_DROP_CHANCE {
+            let pick = self.rng.next_int_inclusive(0, 2);
+            if let Some(item) = wire_id(RARE_DROP_ITEMS[pick as usize]) {
+                out.push((item, 1));
+            }
+        }
+        out
+    }
 }
 
 /// THE SPAWNER'S ATTEMPT — the MONSTER category's own surface law: a
@@ -929,5 +988,64 @@ mod tests {
             &mut mobs, &mut next_id, px, pz, &world, &mut rng, false
         ));
         assert!(mobs.is_empty());
+    }
+
+    /// THE DEATH LOOT's own distribution (the zombie table's pools:
+    /// the flesh's uniform 0..2, the player-kill rare's 0.025 chance
+    /// over the THREE unweighted entries, the no-player-kill gate).
+    #[test]
+    fn the_death_loot_speaks_the_table() {
+        let flesh = wire_id("rotten_flesh").expect("the flesh rides the wire");
+        let iron = wire_id("iron_ingot").expect("the ingot rides the wire");
+        let carrot = wire_id("carrot").expect("the carrot rides the wire");
+        let potato = wire_id("potato").expect("the potato rides the wire");
+        let rares = [iron, carrot, potato];
+        let n = 20000u32;
+        let (mut zeros, mut ones, mut twos, mut rares_n) = (0i32, 0i32, 0i32, 0i32);
+        for seed in 0..n {
+            let mut z = Zombie::new(1, 0.0, 0.0, 0.0, seed as u64);
+            z.health = 0.0; // the dead body (the caller's contract)
+            let loot = z.death_loot(true);
+            let flesh_found = loot.iter().find(|(item, _)| *item == flesh);
+            match flesh_found {
+                Some((_, 1)) => ones += 1,
+                Some((_, 2)) => twos += 1,
+                Some((_, c)) => panic!("the flesh count {c} escapes 0..2"),
+                None => zeros += 1,
+            }
+            for (item, count) in &loot {
+                if *item != flesh {
+                    assert!(
+                        rares.contains(item) && *count == 1,
+                        "the rare speaks one of the three, count 1"
+                    );
+                    rares_n += 1;
+                }
+            }
+        }
+        // the uniform law: the three counts split ~evenly (the wide
+        // band over the seed spread)
+        let third = (n / 3) as i32;
+        assert!(((third - 700)..=(third + 700)).contains(&zeros), "the zero band {zeros}");
+        assert!(((third - 700)..=(third + 700)).contains(&ones), "the one band {ones}");
+        assert!(((third - 700)..=(third + 700)).contains(&twos), "the two band {twos}");
+        // the rare: 0.025 of the player kills (the wide band)
+        let expect = n as f64 * RARE_DROP_CHANCE as f64;
+        assert!(((expect - 70.0)..=(expect + 70.0)).contains(&(rares_n as f64)), "the rare band {rares_n}");
+        // the no-player-kill gate: the rare never fires
+        let mut rare_without_player = 0;
+        for seed in 0..n {
+            let mut z = Zombie::new(1, 0.0, 0.0, 0.0, seed as u64);
+            z.health = 0.0;
+            for (item, _) in z.death_loot(false) {
+                if item != flesh {
+                    rare_without_player += 1;
+                }
+            }
+        }
+        assert_eq!(rare_without_player, 0, "the rare rides the player kill");
+        // the living body never rolls (the caller's contract)
+        let mut z = Zombie::new(1, 0.0, 0.0, 0.0, 7);
+        assert!(z.death_loot(true).is_empty());
     }
 }

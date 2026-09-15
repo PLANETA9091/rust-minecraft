@@ -174,6 +174,31 @@ impl ItemDrop {
         }
     }
 
+    /// THE ENTITY LOOT's spawn (javap `Entity.spawnAtLocation` over the
+    /// death-loot consumer: the ItemEntity rides the entity's OWN
+    /// position (getX, getY, getZ) with a ZERO offset, the delta
+    /// movement untouched (zero), `setDefaultPickUpDelay` (10), the
+    /// bob seed the ItemEntity constructor's own
+    /// `random.nextFloat() * PI * 2` draws).
+    pub fn spawn_entity_loot(id: i32, item: i32, count: i32, x: f64, y: f64, z: f64, rng: &mut Lcg) -> Self {
+        Self {
+            id,
+            item,
+            count,
+            x,
+            y,
+            z,
+            vx: 0.0,
+            vy: 0.0,
+            vz: 0.0,
+            age: 0,
+            ticks: 0,
+            pickup_delay: POP_PICKUP_DELAY,
+            bob_offs: rng.next_f32() * std::f32::consts::PI * 2.0,
+            on_ground: false,
+        }
+    }
+
     /// The entity's bounding box (the 0.25 cube at the feet-anchored
     /// pos) — body.rs's own box shape.
     pub fn box_(&self) -> (f64, f64, f64, f64, f64, f64) {
