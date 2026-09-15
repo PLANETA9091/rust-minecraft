@@ -688,6 +688,9 @@ pub struct App {
     /// The drown bubble's sprite (the same lazy load — the bubble
     /// quad's pixel source).
     pub bubble_sprite: Option<crate::avatar::BubbleSprite>,
+    /// The splash droplet's 4 frames (the same lazy load — the entry
+    /// splash's second ring's pixel source).
+    pub splash_frames: Option<crate::avatar::SplashFrames>,
     pub hurt_time: i32,
     pub hurt_duration: i32,
     pub invulnerable_time: i32,
@@ -887,6 +890,7 @@ impl App {
             crit_sprite: None,
             poof_frames: None,
             bubble_sprite: None,
+            splash_frames: None,
             next_drop_id: 1,
             orbs: Vec::new(),
             next_orb_id: 1,
@@ -1027,6 +1031,7 @@ impl App {
                     .unwrap_or(false);
                 p.tick_bubble(wet)
             }
+            crate::particles::ParticleKind::Splash { .. } => p.tick_splash(),
             _ => p.tick(),
         });
         for i in (0..self.crit_emitters.len()).rev() {
@@ -1138,6 +1143,18 @@ impl App {
                     if b.splash_due {
                         self.sounds
                             .play_splash(self.frame, b.splash_volume, b.splash_high_speed);
+                        // THE SPLASH RINGS (doWaterSplashEffect's own
+                        // loops — the pose the gate captured, the two
+                        // walks the width * 20 bound speaks: the
+                        // BUBBLE ring first, the SPLASH one after)
+                        if let Some((px, py, pz, pvx, pvy, pvz)) = b.take_splash_pose() {
+                            let rings = crate::particles::water_entry_rings(
+                                px, py, pz, pvx, pvy, pvz,
+                                crate::body::WIDTH,
+                                &mut self.mob_rng,
+                            );
+                            self.particles.extend(rings);
+                        }
                         b.splash_due = false;
                     }
                     if let Some(cmd) = b.take_move_wire().map(Self::move_wire_command) {
@@ -5170,6 +5187,10 @@ impl App {
             self.bubble_sprite =
                 crate::avatar::BubbleSprite::load(std::path::Path::new("assets-cache/jar"));
         }
+        if self.splash_frames.is_none() {
+            self.splash_frames =
+                crate::avatar::SplashFrames::load(std::path::Path::new("assets-cache/jar"));
+        }
         let sy = cam.yaw.sin();
         let cy = cam.yaw.cos();
         let sp = cam.pitch.sin();
@@ -5182,6 +5203,7 @@ impl App {
         let mut poof_groups: Vec<(usize, Vec<crate::raster::SampledQuad>)> = Vec::new();
         let mut crit_quads: Vec<crate::raster::SampledQuad> = Vec::new();
         let mut bubble_quads: Vec<crate::raster::SampledQuad> = Vec::new();
+        let mut splash_groups: Vec<(usize, Vec<crate::raster::SampledQuad>)> = Vec::new();
         for p in &self.particles {
             let half = p.half();
             let corner = |sx: f32, syp: f32| {
@@ -5254,6 +5276,22 @@ impl App {
                         tint: p.col,
                     });
                 }
+                crate::particles::ParticleKind::Splash { frame } => {
+                    // the droplet's own quad (the picked frame the
+                    // provider's SpriteSet.get speaks — static for the
+                    // particle's own life, the white tint the ctor's
+                    // defaults keep)
+                    let quad = crate::raster::SampledQuad {
+                        pts,
+                        uv: [[0.0, 8.0], [8.0, 8.0], [8.0, 0.0], [0.0, 0.0]],
+                        tex: "particle_splash",
+                        tint: p.col,
+                    };
+                    match splash_groups.iter_mut().find(|(f, _)| *f == frame) {
+                        Some((_, quads)) => quads.push(quad),
+                        None => splash_groups.push((frame, vec![quad])),
+                    }
+                }
             }
         }
         let vp = ctx.proj.mul(&ctx.view);
@@ -5288,6 +5326,14 @@ impl App {
             fb.draw_sampled_quads(vp, &bubble_quads, &mut |_tex, u, v| {
                 Some(bubble.pixel(u, v))
             });
+        }
+        // the splash groups (the picked frames' own pixels)
+        if let Some(splash) = &self.splash_frames {
+            for (frame, quads) in &splash_groups {
+                fb.draw_sampled_quads(vp, quads, &mut |_tex, u, v| {
+                    Some(splash.pixel(*frame, u, v))
+                });
+            }
         }
     }
 

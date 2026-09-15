@@ -687,9 +687,29 @@ pub fn seed_scene(app: &mut crate::screens::App, opts: &SceneOpts) -> Result<()>
                     app.particles.extend(cloud);
                 }
             }
+            "splash" => {
+                // THE ENTRY'S OWN STAGE (the doWaterSplashEffect loops
+                // the live lane answers at the gate): the pool the
+                // dive carve speaks, the two rings at the body's own
+                // pose — the surface Y the Mth.floor law folds
+                // (floor(feet) + 1.0 — the cell the sunk body's own
+                // depth speaks), the 13-per-ring walk the width * 20
+                // bound speaks, the BUBBLE ring first (the carried
+                // velocity's z thinned - r * 0.2), the SPLASH ring
+                // second (the ctor's own random pop)
+                dive_carve(app, crate::world::WATER);
+                if let Some(b) = app.body.as_ref() {
+                    let rings = crate::particles::water_entry_rings(
+                        b.x, b.y, b.z, b.vx, b.vy, b.vz,
+                        crate::body::WIDTH,
+                        &mut app.mob_rng,
+                    );
+                    app.particles.extend(rings);
+                }
+            }
             other => {
                 anyhow::bail!(
-                    "--particles: unknown scene '{other}' (the lane speaks burst | poof | crit | bubble)"
+                    "--particles: unknown scene '{other}' (the lane speaks burst | poof | crit | bubble | splash)"
                 );
             }
         }
@@ -704,6 +724,7 @@ pub fn seed_scene(app: &mut crate::screens::App, opts: &SceneOpts) -> Result<()>
             "poof" => 20,
             "crit" => 6,
             "bubble" => 10,
+            "splash" => 4,
             _ => 2,
         };
         let wet_world = app.offline_world.as_ref();
@@ -721,6 +742,7 @@ pub fn seed_scene(app: &mut crate::screens::App, opts: &SceneOpts) -> Result<()>
                         .unwrap_or(false);
                     p.tick_bubble(wet)
                 }
+                crate::particles::ParticleKind::Splash { .. } => p.tick_splash(),
                 _ => p.tick(),
             });
         }

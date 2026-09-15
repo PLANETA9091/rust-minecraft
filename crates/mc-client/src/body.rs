@@ -588,6 +588,12 @@ pub struct PlayerBody {
     /// velocity — the baseTick read, last move's post-collision
     /// result, the entry speed the body fell in with.
     pub splash_volume: f32,
+    /// THE SPLASH RINGS' OWN POSE (doWaterSplashEffect's loops read
+    /// the entity's live position + delta movement at the call —
+    /// captured the sound's own moment, the drain replays the two
+    /// walks the width * 20 bound speaks). The App takes it after the
+    /// sound fold; the tick-head clears what no drain spoke.
+    pub splash_pose: Option<(f64, f64, f64, f64, f64, f64)>,
     /// THE FIRE CLOCK (Entity.remainingFireTicks's own field): the
     /// brand the lavaIgnite speaks (the lava contact's
     /// igniteForSeconds(15) fold — only when the clock is UNDER the
@@ -713,6 +719,7 @@ impl PlayerBody {
             splash_due: false,
             splash_high_speed: false,
             splash_volume: 0.0,
+            splash_pose: None,
             remaining_fire_ticks: 0,
             in_lava: false,
             lava_hurt_due: false,
@@ -850,6 +857,7 @@ impl PlayerBody {
         // head (the same lesson the splash's zero-forever bug spoke:
         // the tick-head clear, never a later block's)
         self.splash_due = false;
+        self.splash_pose = None;
         self.lava_hurt_due = false;
         self.on_fire_hurt_due = false;
         self.fire_doused_due = false;
@@ -903,6 +911,11 @@ impl PlayerBody {
                 self.splash_due = true;
                 self.splash_volume = v;
                 self.splash_high_speed = v >= 0.25;
+                // THE SPLASH RINGS' OWN POSE (the loops' own read —
+                // the live position + the carried velocity at the
+                // call, the exact moment the volume's fold speaks)
+                self.splash_pose =
+                    Some((self.x, self.y, self.z, self.vx, self.vy, self.vz));
             }
         }
         self.was_touching_water = in_water;
@@ -1290,6 +1303,13 @@ impl PlayerBody {
             }
         }
         false
+    }
+
+    /// THE SPLASH RINGS' OWN DRAIN (doWaterSplashEffect's loops the
+    /// App replays after the sound fold): the pose the entry gate
+    /// captured, taken once.
+    pub fn take_splash_pose(&mut self) -> Option<(f64, f64, f64, f64, f64, f64)> {
+        self.splash_pose.take()
     }
 
     /// THE WIRE (sendPosition): computes what this tick speaks and
@@ -2249,6 +2269,23 @@ mod tests {
                     "the tall fall's splash rides the high-speed variant (v {})",
                     b.splash_volume
                 );
+                // THE RINGS' OWN POSE (the loops' own read — the live
+                // position + the carried velocity at the call, the
+                // same moment the volume's fold speaks)
+                let pose = b.take_splash_pose();
+                assert!(
+                    pose.is_some(),
+                    "the entry carries the rings' own pose"
+                );
+                let (px, py, pz, pvx, pvy, pvz) = pose.unwrap();
+                assert_eq!((px, pz), (8.0, 8.0), "the pose x/z");
+                assert_eq!((pvx, pvy, pvz), (prev_vx, prev_vy, prev_vz));
+                // the pose's y rode the capture moment (the fluid
+                // lane's own read — before the tick's move walked the
+                // body deeper)
+                assert!(py.is_finite(), "the pose y rode the capture");
+                // the drain takes once — the next tick never replays
+                assert_eq!(b.take_splash_pose(), None, "the drain takes once");
             }
             if b.on_ground && splashes == 1 {
                 break;

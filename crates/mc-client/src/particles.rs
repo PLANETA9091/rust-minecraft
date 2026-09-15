@@ -133,7 +133,16 @@ pub enum ParticleKind {
     /// `BubbleParticle` — the drown bubble (the bubble texture, the
     /// full sprite the quad samples, the body's own rise).
     Bubble,
+    /// `SplashParticle` — the entry splash's droplet (the splash
+    /// sprite set's random frame the Provider's `SpriteSet.get`
+    /// speaks, the drop's own countdown tick).
+    Splash { frame: usize },
 }
+
+/// The splash droplet's 4 frames (the `splash_0..3` textures the jar
+/// speaks — the sprite set the Provider's `SpriteSet.get(random)`
+/// picks one of, the frame static for the particle's own life).
+pub const SPLASH_FRAME_COUNT: usize = 4;
 
 /// One particle — the vanilla `Particle` + `SingleQuadParticle` fields
 /// the three kinds' laws speak (the fields the tick and the render
@@ -231,6 +240,31 @@ impl Particle {
         self.vy *= 0.85;
         self.vz *= 0.85;
         in_water
+    }
+
+    /// The `WaterDropParticle.tick` verbatim — the countdown lifetime
+    /// (`--lifetime; if (lifetime > 0) ... else remove` — the u32 walk
+    /// stops at zero, the removal tick keeps no motion), the drop's own
+    /// gravity fold (`yd -= gravity` — the plain field, no 0.04
+    /// factor), the move, the 0.98 friction AFTER it. The onGround tail
+    /// sleeps (the collision lane's honest absence — no particle
+    /// ground exists for the pieces, none for the drop).
+    pub fn tick_splash(&mut self) -> bool {
+        if self.lifetime == 0 {
+            return false;
+        }
+        self.lifetime -= 1;
+        if self.lifetime == 0 {
+            return false;
+        }
+        self.vy -= self.gravity;
+        self.x += self.vx;
+        self.y += self.vy;
+        self.z += self.vz;
+        self.vx *= 0.98;
+        self.vy *= 0.98;
+        self.vz *= 0.98;
+        true
     }
 }
 
@@ -448,6 +482,147 @@ pub fn drown_bubbles(
             r_jz,
             r_life,
         ));
+    }
+    out
+}
+
+/// The splash droplet's ctor (javap `SplashParticle` + its
+/// `WaterDropParticle` super verbatim). The super ctor the chain calls
+/// takes NO speeds — the base `Particle` got `(0, 0, 0)` — so the
+/// caller's carried velocity never rides the fields directly: the
+/// `xd *= 0.3` and `zd *= 0.3` folds ride zeros, the yd draw speaks
+/// `nextFloat() * 0.2F + 0.1F`, the `setSize(0.01F, 0.01F)` folds the
+/// quadSize 0.01, the super's gravity 0.06F the SplashParticle's own
+/// 0.04F overrides, the lifetime `(int)(8.0 / (r * 0.8 + 0.2))`
+/// (8..=40). The SplashParticle's own branch forwards the carried
+/// speed ONLY in the drip lane's shape (`yd == 0 && xd == 0 && zd !=
+/// 0`): the z speed rides, the yd pins 0.1, the x stays the zero. The
+/// sprite frame rides the PROVIDER's draw (`SpriteSet.get(random)` —
+/// `sprites.get(random.nextInt(4))`, the frame static for the
+/// particle's own life); the level.random the ctor draws and the
+/// engine random the frame pick draws are two streams the vanilla
+/// keeps apart — the Lcg stand-in merges them, the draw order the
+/// bytecode's own: the frame pick (the provider's createParticle
+/// evaluates the sprite before the ctor runs), then the ctor's yd
+/// float, then the lifetime float.
+pub fn splash(
+    x: f64,
+    y: f64,
+    z: f64,
+    vx: f64,
+    vy: f64,
+    vz: f64,
+    r_yd: f32,
+    r_life: f32,
+    r_frame: f32,
+) -> Particle {
+    let mut vx_out = 0.0f64;
+    let mut vy_out = (r_yd * 0.2 + 0.1) as f64;
+    let mut vz_out = 0.0f64;
+    if vy == 0.0 && vx == 0.0 && vz != 0.0 {
+        vx_out = vx;
+        vy_out = 0.1;
+        vz_out = vz;
+    }
+    Particle {
+        kind: ParticleKind::Splash {
+            frame: (r_frame * SPLASH_FRAME_COUNT as f32) as usize % SPLASH_FRAME_COUNT,
+        },
+        x,
+        y,
+        z,
+        vx: vx_out,
+        vy: vy_out,
+        vz: vz_out,
+        age: 0,
+        lifetime: (8.0f32 / (r_life * 0.8 + 0.2)) as u32,
+        gravity: 0.04,
+        friction: 0.98,
+        quad_size: 0.01,
+        uo: 0.0,
+        vo: 0.0,
+        col: [1.0, 1.0, 1.0],
+    }
+}
+
+/// THE ENTRY SPLASH'S OWN RINGS (javap `Entity.doWaterSplashEffect` —
+/// the two loops the sound's own tail speaks, the site the fluid
+/// update's entry gate fires): the surface Y `(float) Mth.floor(y) +
+/// 1.0F`, the spread walk `j < 1.0F + width * 20.0F` (the 0.6 player:
+/// 13 per ring, 26 drops), the offset `(r * 2.0 - 1.0) * width` per
+/// axis. Ring one speaks the BUBBLE particles — the carried velocity
+/// with the z thinned `- r * 0.2`, the ctor chain's seven floats (the
+/// dead lifetime float first, the draw order the drown lane speaks).
+/// Ring two the SPLASH ones — the carried velocity verbatim, the
+/// frame + yd + lifetime draws the ctor law lists. The rings run to
+/// completion one before the other (the bytecode's own first and
+/// second walks).
+pub fn water_entry_rings(
+    x: f64,
+    y: f64,
+    z: f64,
+    vx: f64,
+    vy: f64,
+    vz: f64,
+    width: f64,
+    rng: &mut crate::drops::Lcg,
+) -> Vec<Particle> {
+    let surface = (y.floor() as f32 + 1.0) as f64;
+    let mut out = Vec::new();
+    // RING ONE — the BUBBLE loop (the bytecode's own first walk)
+    let mut j = 0.0f32;
+    while j < 1.0f32 + width as f32 * 20.0f32 {
+        let dx = (rng.next_f64() * 2.0 - 1.0) * width;
+        let dz = (rng.next_f64() * 2.0 - 1.0) * width;
+        let vz_thin = vz - rng.next_f64() * 0.2;
+        // the ctor chain's seven floats (the base lifetime's dead
+        // float first, the quadSize, the scale, the three jitters,
+        // the lifetime's own)
+        let r_base_life = rng.next_f32();
+        let r_size0 = rng.next_f32();
+        let r_scale = rng.next_f32();
+        let r_jx = rng.next_f32();
+        let r_jy = rng.next_f32();
+        let r_jz = rng.next_f32();
+        let r_life = rng.next_f32();
+        out.push(bubble(
+            x + dx,
+            surface,
+            z + dz,
+            vx,
+            vy,
+            vz_thin,
+            r_base_life,
+            r_size0,
+            r_scale,
+            r_jx,
+            r_jy,
+            r_jz,
+            r_life,
+        ));
+        j += 1.0;
+    }
+    // RING TWO — the SPLASH loop (the bytecode's own second walk)
+    let mut j = 0.0f32;
+    while j < 1.0f32 + width as f32 * 20.0f32 {
+        let dx = (rng.next_f64() * 2.0 - 1.0) * width;
+        let dz = (rng.next_f64() * 2.0 - 1.0) * width;
+        // the engine's frame pick, then the ctor's yd + lifetime floats
+        let r_frame = rng.next_f32();
+        let r_yd = rng.next_f32();
+        let r_life = rng.next_f32();
+        out.push(splash(
+            x + dx,
+            surface,
+            z + dz,
+            vx,
+            vy,
+            vz,
+            r_yd,
+            r_life,
+            r_frame,
+        ));
+        j += 1.0;
     }
     out
 }
@@ -965,6 +1140,113 @@ mod tests {
             assert_eq!(pa.x, pb.x);
             assert_eq!(pa.lifetime, pb.lifetime);
             assert_eq!(pa.quad_size, pb.quad_size);
+        }
+    }
+
+    #[test]
+    fn the_splash_drop_walks_the_water_drop_law() {
+        // the ctor law: the zero base speed the super's folds ride,
+        // the yd draw band [0.1, 0.3), the lifetime band 8..=40, the
+        // size 0.01 the setSize(0.01, 0.01) folds, the gravity the
+        // SplashParticle's 0.04 overrides, the white tint
+        let p = splash(1.0, 2.0, 3.0, 0.4, -0.2, 0.3, 0.5, 0.5, 0.5);
+        assert_eq!(p.x, 1.0);
+        assert_eq!(p.y, 2.0);
+        assert_eq!(p.z, 3.0);
+        // the carried speeds never ride the fields directly (the
+        // super ctor got the zeros — the folds ride them)
+        assert_eq!(p.vx, 0.0);
+        assert_eq!(p.vz, 0.0);
+        assert!(p.vy >= 0.1 && p.vy < 0.3, "the yd draw band");
+        assert_eq!(p.quad_size, 0.01);
+        assert_eq!(p.gravity, 0.04);
+        assert!(p.lifetime >= 8 && p.lifetime <= 40, "the vanilla band");
+        assert_eq!(p.col, [1.0, 1.0, 1.0]);
+        // the frame pick rides the provider's draw (0..4)
+        assert!(
+            matches!(p.kind, ParticleKind::Splash { frame } if frame < SPLASH_FRAME_COUNT),
+            "the frame band"
+        );
+        // THE DRIP LANE'S BRANCH (the zero x/y speeds, the live z):
+        // the z rides, the yd pins 0.1, the x stays the zero
+        let drip = splash(0.0, 5.0, 0.0, 0.0, 0.0, 0.5, 0.9, 0.5, 0.0);
+        assert_eq!(drip.vx, 0.0);
+        assert_eq!(drip.vy, 0.1);
+        assert_eq!(drip.vz, 0.5);
+        // the branch never fires when the x speed speaks
+        let plain = splash(0.0, 5.0, 0.0, 0.1, 0.0, 0.5, 0.9, 0.5, 0.0);
+        assert_eq!(plain.vz, 0.0, "the carried z never rides");
+        assert!(plain.vy >= 0.1 && plain.vy < 0.3, "the yd draw rides");
+    }
+
+    #[test]
+    fn the_splash_tick_walks_the_drop_countdown() {
+        let mut p = splash(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
+        // the countdown's own removal: the drop lives exactly the
+        // ctor's lifetime ticks (the removal tick keeps no motion)
+        let born = p.lifetime;
+        let mut ticks = 0;
+        while p.tick_splash() {
+            ticks += 1;
+        }
+        assert_eq!(ticks, born - 1, "the countdown's own walk");
+        // the gravity fold speaks the plain field (no 0.04 factor),
+        // the friction rides AFTER the move
+        let mut q = splash(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.5, 0.0);
+        let vy0 = q.vy;
+        q.tick_splash();
+        let expected = (vy0 - q.gravity) * 0.98;
+        assert!((q.vy - expected).abs() < 1e-12, "vy {} vs {}", q.vy, expected);
+    }
+
+    #[test]
+    fn the_entry_rings_speak_two_walks() {
+        let mut r = rng();
+        let rings = water_entry_rings(10.0, 20.4, 30.0, 0.4, -0.3, -0.1, 0.6, &mut r);
+        // the 0.6 width: 1.0 + 0.6 * 20.0 = 13.0 -> 13 per ring, 26
+        assert_eq!(rings.len(), 26);
+        // ring one the BUBBLE walk, ring two the SPLASH walk
+        for p in &rings[..13] {
+            assert_eq!(p.kind, ParticleKind::Bubble);
+        }
+        for p in &rings[13..] {
+            assert!(
+                matches!(p.kind, ParticleKind::Splash { .. }),
+                "the second walk speaks the splash"
+            );
+        }
+        // the surface Y the Mth.floor law folds: floor(20.4) + 1.0
+        for p in &rings {
+            assert_eq!(p.y, 21.0, "the surface the entry fires at");
+            // the spread rides +-width around the body's own x/z
+            assert!(p.x > 10.0 - 0.6 && p.x < 10.0 + 0.6);
+            assert!(p.z > 30.0 - 0.6 && p.z < 30.0 + 0.6);
+        }
+        // the bubble ring's z thinned by the -r * 0.2 draw, then the
+        // ctor's own fifth-fold + the +-0.02 jitter the bubble law
+        // speaks; the splash ring's speeds never rode (the carried
+        // fall speaks non-zero x and y — the drip branch asleep)
+        for p in &rings[..13] {
+            assert!(
+                p.vz > (-0.1 - 0.2) * 0.2 - 0.02 && p.vz < (-0.1 - 0.0) * 0.2 + 0.02,
+                "the thin {}",
+                p.vz
+            );
+        }
+        for p in &rings[13..] {
+            assert_eq!(p.vx, 0.0);
+            assert_eq!(p.vz, 0.0);
+            assert!(p.vy >= 0.1 && p.vy < 0.3);
+        }
+        // the seed-replayed fold: the same seed walks the same rings
+        let mut a = rng();
+        let mut b = rng();
+        let ra = water_entry_rings(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.6, &mut a);
+        let rb = water_entry_rings(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.6, &mut b);
+        for (pa, pb) in ra.iter().zip(rb.iter()) {
+            assert_eq!(pa.x, pb.x);
+            assert_eq!(pa.z, pb.z);
+            assert_eq!(pa.lifetime, pb.lifetime);
         }
     }
 }

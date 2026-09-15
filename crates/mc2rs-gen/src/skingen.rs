@@ -59,6 +59,16 @@ pub const PARTICLE_POOF_JAR_PATHS: [&str; 8] = [
     "assets/minecraft/textures/particle/generic_6.png",
     "assets/minecraft/textures/particle/generic_7.png",
 ];
+/// The splash droplet's 4 frames (javap: the `splash` particle type's
+/// sprite set — the `SplashParticle$Provider`'s `SpriteSet.get(random)`
+/// pick, one frame static per particle's own life; the jar's
+/// `textures/particle/splash_0..3.png`, the 8x8s the IHDR verifies).
+pub const PARTICLE_SPLASH_JAR_PATHS: [&str; 4] = [
+    "assets/minecraft/textures/particle/splash_0.png",
+    "assets/minecraft/textures/particle/splash_1.png",
+    "assets/minecraft/textures/particle/splash_2.png",
+    "assets/minecraft/textures/particle/splash_3.png",
+];
 /// The runtime-cache paths the client's loader reads (the same
 /// textures/ prefix strip the other lanes speak).
 pub const FIRE_0_RUNTIME_PATH: &str = "block/fire_0.png";
@@ -78,6 +88,12 @@ pub const PARTICLE_POOF_RUNTIME_PATHS: [&str; 8] = [
     "particle/generic_5.png",
     "particle/generic_6.png",
     "particle/generic_7.png",
+];
+pub const PARTICLE_SPLASH_RUNTIME_PATHS: [&str; 4] = [
+    "particle/splash_0.png",
+    "particle/splash_1.png",
+    "particle/splash_2.png",
+    "particle/splash_3.png",
 ];
 /// Where the client reads the skin at runtime (under the runtime asset root).
 pub const RUNTIME_PATH: &str = "entity/player/wide/steve.png";
@@ -132,6 +148,10 @@ pub struct SkinData {
     /// sha1s of the poof cloud's 8 frames (jar-verbatim integrity) —
     /// the death cloud's pixel sources (the 8x8 generic frames).
     pub particle_poof_png_sha1s: [String; 8],
+    /// sha1s of the splash droplet's 4 frames (jar-verbatim integrity)
+    /// — the entry splash's second ring's pixel sources (the 8x8
+    /// splash frames).
+    pub particle_splash_png_sha1s: [String; 4],
 }
 
 /// One UV rect in the skin texture, in texels: (u, v, w, h).
@@ -278,6 +298,18 @@ pub fn generate<R: std::io::Read + std::io::Seek>(archive: &mut zip::ZipArchive<
         );
         particle_poof_png_sha1s[i] = crate::util::sha1_hex(&bytes);
     }
+    let mut particle_splash_png_sha1s: [String; 4] = std::array::from_fn(|_| String::new());
+    for (i, path) in PARTICLE_SPLASH_JAR_PATHS.iter().enumerate() {
+        let bytes = read_entry(archive, path).context("read splash frame")?;
+        let (sw, sh, _rgba) = decode_rgba(&bytes).context("decode splash frame")?;
+        anyhow::ensure!(
+            (sw, sh) == (8, 8),
+            "splash_{i} must be the 8x8 frame, got {}x{}",
+            sw,
+            sh
+        );
+        particle_splash_png_sha1s[i] = crate::util::sha1_hex(&bytes);
+    }
     Ok(SkinData {
         png_sha1,
         rgba_sha1: crate::util::sha1_hex(&rgba),
@@ -292,6 +324,7 @@ pub fn generate<R: std::io::Read + std::io::Seek>(archive: &mut zip::ZipArchive<
         particle_crit_png_sha1,
         particle_bubble_png_sha1,
         particle_poof_png_sha1s,
+        particle_splash_png_sha1s,
     })
 }
 
@@ -404,7 +437,7 @@ pub fn emit(data: &SkinData) -> Result<String> {
     out.push_str(&format!(
         "pub const EXPERIENCE_ORB_RUNTIME_PATH: &str = \"{EXPERIENCE_ORB_RUNTIME_PATH}\";\n"
     ));
-    out.push_str("\n/// The PARTICLE LANE's textures (the crit star's 8x8, the drown\n/// bubble's 8x8, the poof cloud's 8 8x8 frames), generated from the\n/// same jar: the integrity sha1s the particle lane verifies before it\n/// draws (javap: the `crit` + `bubble` + `poof` particle types'\n/// sprites — the TrackingEmitter's star, the broadcast-67 arm's\n/// bubbles, the death cloud's `MutableSpriteSet` frame walk).\n");
+    out.push_str("\n/// The PARTICLE LANE's textures (the crit star's 8x8, the drown\n/// bubble's 8x8, the poof cloud's 8 8x8 frames, the splash droplet's\n/// 4 8x8 frames), generated from the same jar: the integrity sha1s\n/// the particle lane verifies before it draws (javap: the `crit` +\n/// `bubble` + `poof` + `splash` particle types' sprites — the\n/// TrackingEmitter's star, the broadcast-67 arm's bubbles, the death\n/// cloud's `MutableSpriteSet` frame walk, the entry splash's\n/// `SpriteSet.get` pick).\n");
     out.push_str(&format!(
         "pub const PARTICLE_CRIT_PNG_SHA1: &str = \"{}\";\n",
         data.particle_crit_png_sha1
@@ -430,6 +463,22 @@ pub fn emit(data: &SkinData) -> Result<String> {
     out.push_str(&format!(
         "pub const PARTICLE_POOF_RUNTIME_PATHS: [&str; 8] = [{}];\n",
         PARTICLE_POOF_RUNTIME_PATHS
+            .iter()
+            .map(|s| format!("\"{s}\""))
+            .collect::<Vec<_>>()
+            .join(", ")
+    ));
+    out.push_str(&format!(
+        "pub const PARTICLE_SPLASH_PNG_SHA1S: [&str; 4] = [{}];\n",
+        data.particle_splash_png_sha1s
+            .iter()
+            .map(|s| format!("\"{s}\""))
+            .collect::<Vec<_>>()
+            .join(", ")
+    ));
+    out.push_str(&format!(
+        "pub const PARTICLE_SPLASH_RUNTIME_PATHS: [&str; 4] = [{}];\n",
+        PARTICLE_SPLASH_RUNTIME_PATHS
             .iter()
             .map(|s| format!("\"{s}\""))
             .collect::<Vec<_>>()
@@ -559,6 +608,9 @@ mod tests {
         let expected_bubble_sha1 = crate::util::sha1_hex(&bubble);
         let poofs = [tiny_png(), tiny_png(), tiny_png(), tiny_png(), tiny_png(), tiny_png(), tiny_png(), tiny_png()];
         let expected_poof_sha1s: Vec<String> = poofs.iter().map(|p| crate::util::sha1_hex(p)).collect();
+        let splashes = [tiny_png(), tiny_png(), tiny_png(), tiny_png()];
+        let expected_splash_sha1s: Vec<String> =
+            splashes.iter().map(|p| crate::util::sha1_hex(p)).collect();
 
         let mut zip = zip_of(&[
             (WIDE_STEVE_JAR_PATH, png.clone()),
@@ -578,6 +630,10 @@ mod tests {
             (PARTICLE_POOF_JAR_PATHS[5], poofs[5].clone()),
             (PARTICLE_POOF_JAR_PATHS[6], poofs[6].clone()),
             (PARTICLE_POOF_JAR_PATHS[7], poofs[7].clone()),
+            (PARTICLE_SPLASH_JAR_PATHS[0], splashes[0].clone()),
+            (PARTICLE_SPLASH_JAR_PATHS[1], splashes[1].clone()),
+            (PARTICLE_SPLASH_JAR_PATHS[2], splashes[2].clone()),
+            (PARTICLE_SPLASH_JAR_PATHS[3], splashes[3].clone()),
         ]);
         let data = generate(&mut zip).unwrap();
         assert_eq!(data.side, 64);
@@ -606,6 +662,11 @@ mod tests {
             expected_poof_sha1s.as_slice(),
             "the poof frames' own sha1s"
         );
+        assert_eq!(
+            data.particle_splash_png_sha1s,
+            expected_splash_sha1s.as_slice(),
+            "the splash frames' own sha1s"
+        );
 
         let emitted = emit(&data).unwrap();
         assert!(emitted.contains(&format!("pub const SKIN_SIDE: u32 = 64;")));
@@ -632,6 +693,13 @@ mod tests {
         for (i, sha) in expected_poof_sha1s.iter().enumerate() {
             assert!(emitted.contains(&format!("\"{sha}\"")), "poof frame {i}'s sha1");
             assert!(emitted.contains(&format!("\"particle/generic_{i}.png\"")));
+        }
+        for (i, sha) in expected_splash_sha1s.iter().enumerate() {
+            assert!(
+                emitted.contains(&format!("\"{sha}\"")),
+                "splash frame {i}'s sha1"
+            );
+            assert!(emitted.contains(&format!("\"particle/splash_{i}.png\"")));
         }
         assert!(emitted.contains("pub const SLIM_ARM_BOX_PX: [u16; 3] = [3, 12, 4];"));
         assert!(emitted.contains("pub const SLIM_ARM_BOX_ORIGIN_PX: [i16; 3] = [-2, -2, -2];"));

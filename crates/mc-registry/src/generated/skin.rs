@@ -102,14 +102,18 @@ pub const EXPERIENCE_ORB_PNG_SHA1: &str = "763f7173c56685564185bcea633d0f733b13b
 pub const EXPERIENCE_ORB_RUNTIME_PATH: &str = "entity/experience/experience_orb.png";
 
 /// The PARTICLE LANE's textures (the crit star's 8x8, the drown
-/// bubble's 8x8, the poof cloud's 8 8x8 frames), generated from the
-/// same jar: the integrity sha1s the particle lane verifies before it
-/// draws (javap: the `crit` + `bubble` + `poof` particle types'
-/// sprites — the TrackingEmitter's star, the broadcast-67 arm's
-/// bubbles, the death cloud's `MutableSpriteSet` frame walk).
+/// bubble's 8x8, the poof cloud's 8 8x8 frames, the splash droplet's
+/// 4 8x8 frames), generated from the same jar: the integrity sha1s
+/// the particle lane verifies before it draws (javap: the `crit` +
+/// `bubble` + `poof` + `splash` particle types' sprites — the
+/// TrackingEmitter's star, the broadcast-67 arm's bubbles, the death
+/// cloud's `MutableSpriteSet` frame walk, the entry splash's
+/// `SpriteSet.get` pick).
 pub const PARTICLE_CRIT_PNG_SHA1: &str = "b71adbdb66260b1d7ae2c979f0663e67f9ba2b9f";
 pub const PARTICLE_CRIT_RUNTIME_PATH: &str = "particle/critical_hit.png";
 pub const PARTICLE_BUBBLE_PNG_SHA1: &str = "97419565c257a20b76042f11d58275ffdb721c69";
 pub const PARTICLE_BUBBLE_RUNTIME_PATH: &str = "particle/bubble.png";
 pub const PARTICLE_POOF_PNG_SHA1S: [&str; 8] = ["678f7ffb52a4e91694185f99ec2552c4a7b7297b", "b5522798f8ace0688ed9d87f3603fa906d2de073", "b72dda3c975a68af9de366ab667c164583da0338", "d0cee84a1ed6c69fe1e25ee465f97b2b211cacae", "7155aae0091f344a22eab063ca6792eb62f22c1c", "39e076334358d5f1ac9e515428b85e12a6ac1333", "5f2a42dfbb7407c054063e2346e86451f0f0aebe", "1fb98614e97a78aa021e60690f5fe22b9116a566"];
 pub const PARTICLE_POOF_RUNTIME_PATHS: [&str; 8] = ["particle/generic_0.png", "particle/generic_1.png", "particle/generic_2.png", "particle/generic_3.png", "particle/generic_4.png", "particle/generic_5.png", "particle/generic_6.png", "particle/generic_7.png"];
+pub const PARTICLE_SPLASH_PNG_SHA1S: [&str; 4] = ["52032e5f3820cf65c12515bffd2e12a306ba38a8", "e728b2706c15f05d70732d89df4f7ad3784ba087", "a6101891413b64e969802a3f8c03e9bf8a945d83", "3b9dd35b536798a87ba59f81a43038a0e3494327"];
+pub const PARTICLE_SPLASH_RUNTIME_PATHS: [&str; 4] = ["particle/splash_0.png", "particle/splash_1.png", "particle/splash_2.png", "particle/splash_3.png"];

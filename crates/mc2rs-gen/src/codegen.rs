@@ -266,11 +266,12 @@ pub fn extract_runtime_assets(
 /// screen's texture rides beside them (the underwater overlay's pixel
 /// source, `textures/misc/underwater.png`), the XP orb's sprite
 /// sheet beside those (`textures/entity/experience/experience_orb.png`
-/// — the award orbs' 64x64 icon grid), and the PARTICLE LANE's ten
-/// sprites beside those (the crit star's 8x8, the drown bubble's 8x8
-/// + the poof cloud's 8 8x8 generic frames — the `crit`, `bubble`
-/// and `poof` particle types' own sources the dust lane sha1-verifies).
-const RUNTIME_TEXTURE_JAR_PATHS: [&str; 14] = [
+/// — the award orbs' 64x64 icon grid), and the PARTICLE LANE's
+/// fourteen sprites beside those (the crit star's 8x8, the drown
+/// bubble's 8x8 + the poof cloud's 8 8x8 generic frames + the splash
+/// droplet's 4 8x8 frames — the `crit`, `bubble`, `poof` and `splash`
+/// particle types' own sources the dust lane sha1-verifies).
+const RUNTIME_TEXTURE_JAR_PATHS: [&str; 18] = [
     "assets/minecraft/textures/block/fire_0.png",
     "assets/minecraft/textures/block/fire_1.png",
     "assets/minecraft/textures/misc/underwater.png",
@@ -285,4 +286,8 @@ const RUNTIME_TEXTURE_JAR_PATHS: [&str; 14] = [
     "assets/minecraft/textures/particle/generic_5.png",
     "assets/minecraft/textures/particle/generic_6.png",
     "assets/minecraft/textures/particle/generic_7.png",
+    "assets/minecraft/textures/particle/splash_0.png",
+    "assets/minecraft/textures/particle/splash_1.png",
+    "assets/minecraft/textures/particle/splash_2.png",
+    "assets/minecraft/textures/particle/splash_3.png",
 ];

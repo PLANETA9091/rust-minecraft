@@ -1010,6 +1010,52 @@ impl BubbleSprite {
     }
 }
 
+/// The PARTICLE LANE's splash droplet frames — the entry splash's
+/// second ring's 4-frame sprite set (javap: the `splash` particle
+/// type's own sprites, the jar's `textures/particle/splash_0..3.png`,
+/// the `SpriteSet.get(random)` pick the SplashParticle$Provider
+/// speaks, the frame static for the particle's own life), each file
+/// loaded and sha1-verified the same stream the poof frames speak. A
+/// missing or tampered frame keeps the ring silent.
+pub struct SplashFrames {
+    pub frames: Vec<Vec<u8>>,
+}
+
+impl SplashFrames {
+    /// Load the 4 frames from the runtime cache root, verify each
+    /// sha1, decode, shape-check the 8x8 layout.
+    pub fn load(root: &std::path::Path) -> Option<SplashFrames> {
+        let mut frames = Vec::with_capacity(crate::particles::SPLASH_FRAME_COUNT);
+        for i in 0..crate::particles::SPLASH_FRAME_COUNT {
+            let bytes =
+                std::fs::read(root.join(skin::PARTICLE_SPLASH_RUNTIME_PATHS[i])).ok()?;
+            if hex::encode(sha1::Sha1::digest(&bytes)) != skin::PARTICLE_SPLASH_PNG_SHA1S[i] {
+                return None;
+            }
+            let (w, h, rgba) = decode_rgba(&bytes).ok()?;
+            if w != CRIT_SPRITE_SIDE || h != CRIT_SPRITE_SIDE {
+                return None;
+            }
+            frames.push(rgba);
+        }
+        Some(SplashFrames { frames })
+    }
+
+    /// The frame pixel at (u, v) in TEXTURE UNITS (the 0..8), nearest
+    /// texel.
+    pub fn pixel(&self, frame: usize, u: f32, v: f32) -> [u8; 4] {
+        let empty = [0u8; 4];
+        let f = match self.frames.get(frame) {
+            Some(f) => f,
+            None => return empty,
+        };
+        let x = (u.floor().clamp(0.0, CRIT_SPRITE_SIDE as f32 - 1.0)) as usize;
+        let y = (v.floor().clamp(0.0, CRIT_SPRITE_SIDE as f32 - 1.0)) as usize;
+        let o = (y * CRIT_SPRITE_SIDE as usize + x) * 4;
+        [f[o], f[o + 1], f[o + 2], f[o + 3]]
+    }
+}
+
 /// The WATER SCREEN's decoded pixels — the underwater overlay's pixel
 /// source, loaded and sha1-verified the same stream the skins and the
 /// flame strips speak (javap `ScreenEffectRenderer.submitWater`'s

@@ -2,7 +2,7 @@
 
 Every lane that ships pixels owes the folder a frame. The gallery is the
 proof the features exist as rendered images, not as test names alone.
-104 frames and counting — grouped below by the lane that spoke them.
+105 frames and counting — grouped below by the lane that spoke them.
 
 ## The F5 lane (the third-person avatar) — v0.3.154+
 
@@ -348,6 +348,7 @@ gravity lane `yd -= 0.04 * gravity`, the move, the friction `xd *=
 | `zombie_death_poof.png` | THE DEATH CLOUD: the 20-particle poof at the facing point, the grey puffs riding the −0.1 gravity's rise and the 8-frame generic walk — the broadcast-60 arm the corpse removal speaks |
 | `crit_stars.png` | THE CRIT'S OWN STARS: the staged zombie at the facing point, the emitter's white stars mid-flight around the body (the unit-ball rejects the lane's 16-sample walk spoke, the bloom the 32× law drives) |
 | `underwater_bubbles.png` | THE DROWN BUBBLES (v0.3.172): the broadcast-67 moment — the pool the dive carve speaks, the air clock SPENT (the HUD's bubble row reads the zero), the 8 bubbles riding the triangle offsets around the body's feet, the body's own delta movement thinned to a fifth + the ±0.02 jitter, the buoyancy `yd += 0.002` lifting them, the ring sprite the jar's `textures/particle/bubble.png` |
+| `water_entry_splash.png` | THE ENTRY SPLASH (v0.3.173): the doWaterSplashEffect rings the entry gate arms — the pool the dive carve speaks, the BUBBLE ring (13 drops, the carried velocity's z thinned − r · 0.2, the ctor's own fifth-fold + the ±0.02 jitter) and the SPLASH ring (13 white droplets, the ctor's random `nextFloat() * 0.2F + 0.1F` pop, the 0.01 quad the `setSize(0.01F, 0.01F)` folds), both rings at the surface Y the Mth.floor law folds (floor(feet) + 1.0), the 13-per-ring walk the width · 20 bound speaks |
 
 Regenerate the family:
 
@@ -363,7 +364,10 @@ cargo run -p mc-client --release -- --screen world --seed 20260214 \
 cargo run -p mc-client --release -- --screen world --seed 42 \
   --body --water-pool --particles bubble --perspective first --ui-frame 30 \
   --body-yaw 0 --body-pitch 62 --out shots/underwater_bubbles.png
-# --particles burst|poof|crit|bubble stages the lane's four scenes (the
+cargo run -p mc-client --release -- --screen world --seed 42 \
+  --body --water-pool --particles splash --perspective first --ui-frame 30 \
+  --body-yaw 0 --body-pitch 62 --out shots/water_entry_splash.png
+# --particles burst|poof|crit|bubble|splash stages the lane's five scenes (the
 # --zombie-fire discipline: the deterministic stand-in for the debris
 # the dig's break speaks, the cloud the removal speaks, the stars the
 # crit attack arms, the bubbles the broadcast-67 dose arms — the real
