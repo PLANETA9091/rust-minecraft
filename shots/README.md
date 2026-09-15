@@ -2,7 +2,7 @@
 
 Every lane that ships pixels owes the folder a frame. The gallery is the
 proof the features exist as rendered images, not as test names alone.
-93 frames and counting — grouped below by the lane that spoke them.
+94 frames and counting — grouped below by the lane that spoke them.
 
 ## The F5 lane (the third-person avatar) — v0.3.154+
 
@@ -162,6 +162,34 @@ cargo run -p mc-client --release -- --screen world --seed 42 --body \
 # --air-supply N rides the air clock's seed (the --water-vision
 # discipline: the mid-drain frames the live dive can't hold — the pool
 # walks the body out), clamped [-20, 300]
+```
+
+## The lava-fog lane (the ember murk) — v0.3.167
+
+The fog type's sibling arm (javap the 26.2 jar): the camera-in-lava
+cell arms the `LavaFogEnvironment` — the bare arm's 0.25/1.0 pair (the
+fconst_0.25 / fconst_1 the bytecode speaks, one block of sight), the
+fire-resistance arm's 0.0/5.0 (the hasEffect(FIRE_RESISTANCE) branch
+the store's truth opens), the spectator's -8.0 / renderDistance*0.5
+(the honest absence — no spectator yet), and the color
+`getBaseColor`'s own fixed fold -6743808 = 0xFF991900 — the deep
+red-orange murk. The setupFog's own pair-copy (skyEnd = cloudEnd =
+environmentalEnd) folds the sky bands into the ember, sleeps the
+celestial pass, rides the clouds' fog end — the murk lane's own
+treatment, the lava's voice.
+
+| frame | the scene |
+|---|---|
+| `lava_fog.png` | THE LAVA DIVE: the eye IN the lava cell — the whole frame speaks the ember murk, the burning overlay (the same-tick ignite's staged brand) layers the flame sheets over it, the sky bands folded into the 0xFF991900 clear |
+
+Regenerate the family:
+
+```sh
+cargo run -p mc-client --release -- --screen world --seed 42 --body \
+  --lava-dive --perspective first --out shots/lava_fog.png
+# --lava-dive carves the 3x3 lava basin AT the body and sinks it (the
+# water dive's own sibling); the brand rides the stage (the same-tick
+# ignite the contact law speaks — the --screen lane owns no ticks)
 ```
 
 ## The zombie lane (the first live mob) — v0.3.155+

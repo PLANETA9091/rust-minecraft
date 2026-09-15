@@ -180,6 +180,14 @@ pub struct SceneOpts {
     /// gate's own law). Clamped [-20, 300] — the dose floor the
     /// -20 fold speaks to the 300 the getMaxAirSupply sipush names.
     pub air_supply: Option<i32>,
+    /// THE LAVA DIVE: carve a 3x3 pool AT the body's own column — three
+    /// cells of LAVA down, a forced-solid basin floor, the headroom
+    /// cleared — and SINK the body onto the floor so the EYE sits in
+    /// the lava (the FogType.LAVA gate the camera cell speaks). The
+    /// lava fog's murk reads the honest gate off the seeded scene; the
+    /// REAL contact laws ride the ticks (the ignite, the 4.0) — the
+    /// burning overlay the vanilla frame layers over the murk.
+    pub lava_dive: bool,
 }
 
 impl SceneOpts {
@@ -205,6 +213,7 @@ impl SceneOpts {
             || self.water_pool
             || self.water_vision != 0
             || self.air_supply.is_some()
+            || self.lava_dive
             || self.walk_ticks > 0
             || self.settle_ticks > 0
     }
@@ -393,37 +402,21 @@ pub fn seed_scene(app: &mut crate::screens::App, opts: &SceneOpts) -> Result<()>
         // feet + 1.62 one cell under the surface — the vanilla
         // isEyeInFluid's own geometry, the water-screen gate reads it
         // honestly.
-        let n = app.world_size as i32;
-        let (px, pz) = (n / 2, n / 2);
-        if let Some(w) = app.offline_world.as_mut() {
-            let level = crate::screens::top_solid_y(w, px, pz);
-            for ox in -1..=1i32 {
-                for oz in -1..=1i32 {
-                    let x = px + ox;
-                    let z = pz + oz;
-                    w.set(x, level, z, crate::world::WATER);
-                    w.set(x, level - 1, z, crate::world::WATER);
-                    w.set(x, level - 2, z, crate::world::WATER);
-                    // THE BASIN FLOOR: the saturated beach layer under
-                    // the carve speaks WATER in the pond columns — a
-                    // water floor lets the pool drain into a guessed
-                    // pit, the solid dirt keeps the scene honest
-                    if !crate::body::solid(w, x, level - 3, z) {
-                        w.set(x, level - 3, z, crate::world::DIRT);
-                    }
-                    for hy in 1..=4 {
-                        w.set(x, level + hy, z, crate::world::AIR);
-                    }
-                }
-            }
-            app.remesh_offline();
-            // THE SINK (the pool's own column): the feet land on the
-            // basin floor's top (level - 2), the eye one cell under
-            // the surface
-            if let Some(b) = app.body.as_mut() {
-                b.y = (level - 2) as f64;
-                b.on_ground = true;
-            }
+        dive_carve(app, crate::world::WATER);
+    }
+    if opts.lava_dive {
+        // THE LAVA DIVE'S CARVE (the water dive's own sibling — the
+        // SAME 3x3/3-deep shape, the LAVA the palette's second fluid
+        // speaks): the eye IN the lava cell — the FogType.LAVA gate the
+        // fog lane reads. THE BRAND rides the stage (the
+        // igniteForSeconds(15) fold's 300): the contact's same-tick
+        // ignite the live law speaks — the --screen lane owns no ticks
+        // (the frame counter only aligns the sky), the staged stand-in
+        // keeps the frame honest (a frame IN lava is always a burning
+        // frame).
+        dive_carve(app, crate::world::LAVA);
+        if let Some(b) = app.body.as_mut() {
+            b.remaining_fire_ticks = b.remaining_fire_ticks.max(crate::body::LAVA_FIRE_TICKS);
         }
     }
     if opts.water_vision != 0 {
@@ -463,6 +456,48 @@ pub fn seed_scene(app: &mut crate::screens::App, opts: &SceneOpts) -> Result<()>
         }
     }
     Ok(())
+}
+
+/// The dive carve's own shape (the water and the lava dive share it):
+/// a 3x3 pool centered on the spawn column — the top THREE cells become
+/// the caller's fluid, the basin floor under them is forced solid (a
+/// pool with a missing bottom renders a guessed scene), the headroom
+/// above is cleared four cells — and the body SINKS onto the floor
+/// (feet at the floor's top): the eye rides feet + 1.62 one cell under
+/// the surface, the vanilla isEyeInFluid's own geometry the fluid gates
+/// read honestly.
+fn dive_carve(app: &mut crate::screens::App, fluid: u16) {
+    let n = app.world_size as i32;
+    let (px, pz) = (n / 2, n / 2);
+    if let Some(w) = app.offline_world.as_mut() {
+        let level = crate::screens::top_solid_y(w, px, pz);
+        for ox in -1..=1i32 {
+            for oz in -1..=1i32 {
+                let x = px + ox;
+                let z = pz + oz;
+                w.set(x, level, z, fluid);
+                w.set(x, level - 1, z, fluid);
+                w.set(x, level - 2, z, fluid);
+                // THE BASIN FLOOR: the saturated beach layer under the
+                // carve speaks the fluid in the pond columns — a fluid
+                // floor lets the pool drain into a guessed pit, the
+                // solid dirt keeps the scene honest
+                if !crate::body::solid(w, x, level - 3, z) {
+                    w.set(x, level - 3, z, crate::world::DIRT);
+                }
+                for hy in 1..=4 {
+                    w.set(x, level + hy, z, crate::world::AIR);
+                }
+            }
+        }
+        app.remesh_offline();
+        // THE SINK (the pool's own column): the feet land on the basin
+        // floor's top (level - 2), the eye one cell under the surface
+        if let Some(b) = app.body.as_mut() {
+            b.y = (level - 2) as f64;
+            b.on_ground = true;
+        }
+    }
 }
 
 /// The showcase zombies' placement (the spawn law's own ground scan):

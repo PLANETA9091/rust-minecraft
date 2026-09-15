@@ -2934,6 +2934,49 @@ impl App {
         Some((-8.0, end, [5.0 / 255.0, 5.0 / 255.0, 51.0 / 255.0]))
     }
 
+    /// THE LAVA FOG (javap `LavaFogEnvironment.setupFog` +
+    /// `getBaseColor`, the 26.2 jar): the fog the camera-in-lava cell
+    /// arms — the FogType.LAVA gate the `getFluidInCamera` query speaks
+    /// (the same camera-position law the murk's lane shares):
+    ///   * the bare arm: start 0.25f, end 1.0f — the fconst_0.25 /
+    ///     fconst_1 the bytecode speaks (the dense murk, one block of
+    ///     sight);
+    ///   * the fire-resistance arm: start 0.0f, end 5.0f — the
+    ///     hasEffect(FIRE_RESISTANCE) branch the store's own truth
+    ///     speaks (the potion's five blocks of vision);
+    ///   * the spectator arm: start -8.0f, end renderDistance * 0.5f —
+    ///     the camera-entity gate the spectator lane would speak (this
+    ///     client carries no spectator yet — the honest absence);
+    ///   * the color: `getBaseColor`'s own fixed fold -6743808 =
+    ///     0xFF991900 — the deep red-orange murk (153, 25, 0);
+    ///   * the pair-copy: skyEnd = cloudEnd = environmentalEnd — the
+    ///     same sky-band swallow the murk's lane folds.
+    pub fn lava_fog(&self) -> Option<(f32, f32, [f32; 3])> {
+        let cam = self.world_camera();
+        let in_lava = self
+            .active_world()
+            .map(|w| {
+                w.get(
+                    cam.pos.x.floor() as i32,
+                    cam.pos.y.floor() as i32,
+                    cam.pos.z.floor() as i32,
+                ) == crate::world::LAVA
+            })
+            .unwrap_or(false);
+        if !in_lava {
+            return None;
+        }
+        let (start, end) = if self
+            .effects
+            .has_effect(crate::effects::MOB_EFFECT_FIRE_RESISTANCE)
+        {
+            (0.0, 5.0)
+        } else {
+            (0.25, 1.0)
+        };
+        Some((start, end, [153.0 / 255.0, 25.0 / 255.0, 0.0]))
+    }
+
     /// The dig sends ride the live session's own command channel (the
     /// offline lane has no session — the sends die honestly on the
     /// frame thread, exactly like the placement's echo).
@@ -3796,13 +3839,20 @@ impl App {
         // jar): the camera-in-water cell arms the murk — the pair the
         // environment's own attribute defaults speak (-8.0, 96.0 x the
         // vision ramp) and the 0x050533 the WATER_FOG_COLOR default
-        // speaks. The setupFog's own pair-copy (skyEnd = cloudEnd =
+        // speaks. THE LAVA FOG rides the same gate's sibling arm (the
+        // FogRenderer's own environment pick: the camera cell holds ONE
+        // fluid, the lava's FogType wins its own cell) — the 0.25/1.0
+        // pair and the 0xFF991900 the LavaFogEnvironment's bytecode
+        // speaks, the fire-resistance arm the store's truth opens. The
+        // setupFog's own pair-copy (skyEnd = cloudEnd =
         // environmentalEnd) folds the sky bands into the murk, sleeps
         // the celestial pass (the sky-shader fog swallows the sun, moon
         // and stars beyond the end — the murk clear paints the same
         // color they would fog to) and rides the clouds' fog end.
+        let lava_fog = self.lava_fog();
         let water_fog = self.water_fog();
-        let (fog_near, fog_far, fog_color) = match water_fog {
+        let fluid_fog = lava_fog.or(water_fog);
+        let (fog_near, fog_far, fog_color) = match fluid_fog {
             Some((start, end, murk)) => (start, end, murk),
             None => {
                 // the dimension's STATED pair (the nether's 10/96 — the
@@ -3813,7 +3863,7 @@ impl App {
                 (near, far, sky.fog_color)
             }
         };
-        let cloud_fog_end = match water_fog {
+        let cloud_fog_end = match fluid_fog {
             Some((_, end, _)) => Some(end),
             None => self.world_cloud_fog_end,
         };
@@ -3834,11 +3884,11 @@ impl App {
         // the main depth buffer in the game's frame graph) -> the HAND
         // (vanilla renders the first-person arm after the level with a
         // cleared depth buffer, before any HUD).
-        match water_fog {
+        match fluid_fog {
             Some((_, _, murk)) => fb.clear(murk, murk),
             None => fb.clear(sky.sky_color, sky.fog_color),
         }
-        if water_fog.is_none() {
+        if fluid_fog.is_none() {
             crate::sky::render_celestials(fb, &ctx, &cam, day_time, self.world_skybox, &self.end_flash);
         }
         if let Some(quads) = &self.world_quads {
@@ -9946,6 +9996,61 @@ mod tests {
         assert_eq!(dry.water_vision_time, 0, "the clamp floors the drain");
         dry.update();
         assert_eq!(dry.water_vision_time, 0, "the dead clock stays dead");
+    }
+
+    // THE LAVA FOG PAIR (javap LavaFogEnvironment.setupFog +
+    // getBaseColor): the bare arm's 0.25/1.0, the fire-resistance
+    // arm's 0.0/5.0 (the store's own truth), the fixed color
+    // getBaseColor speaks (-6743808 = 0xFF991900), and the dry
+    // camera's honest None.
+    #[test]
+    fn the_lava_fog_pair_rides_the_camera_cell() {
+        let mut app = App::new(3);
+        app.enter_world();
+        crate::headless::seed_scene(
+            &mut app,
+            &crate::headless::SceneOpts {
+                body: true,
+                lava_dive: true,
+                perspective: Some(crate::camera::CameraType::FirstPerson),
+                ..crate::headless::SceneOpts::default()
+            },
+        )
+        .unwrap();
+        let ember = [153.0 / 255.0, 25.0 / 255.0, 0.0];
+        let (start, end, color) = app.lava_fog().expect("the dive arms the lava murk");
+        assert_eq!(start, 0.25, "the bare arm's fconst_0.25 start");
+        assert_eq!(end, 1.0, "the bare arm's fconst_1 end");
+        assert_eq!(color, ember, "the murk is getBaseColor's 0xFF991900");
+        // THE FIRE-RESISTANCE ARM: the potion's five blocks of vision
+        assert!(
+            app.effects
+                .add_effect(
+                    crate::effects::MOB_EFFECT_FIRE_RESISTANCE,
+                    0,
+                    200,
+                    crate::effects::DEFAULT_EFFECT_FLAGS
+                ),
+            "the store takes the effect"
+        );
+        let (start, end, _) = app.lava_fog().unwrap();
+        assert_eq!(start, 0.0, "the resistance arm's start");
+        assert_eq!(end, 5.0, "the resistance arm's end");
+
+        // THE DRY CAMERA: no murk at all — the atmospheric treatment
+        // stays
+        let mut dry = App::new(3);
+        dry.enter_world();
+        crate::headless::seed_scene(
+            &mut dry,
+            &crate::headless::SceneOpts {
+                body: true,
+                perspective: Some(crate::camera::CameraType::FirstPerson),
+                ..crate::headless::SceneOpts::default()
+            },
+        )
+        .unwrap();
+        assert!(dry.lava_fog().is_none(), "the dry camera keeps the sky");
     }
 
     // THE WATER FOG PAIR (javap WaterFogEnvironment.setupFog +

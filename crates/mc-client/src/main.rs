@@ -202,6 +202,11 @@ struct Cli {
     /// store (the extract law's own gate). Clamped [-20, 300].
     #[arg(long)]
     air_supply: Option<i32>,
+    /// Carve a 3x3 LAVA pool AT the body and sink it to the basin
+    /// floor — the eye sits IN the lava and the REAL fog + contact laws
+    /// speak (the lava murk, the ignite, the 4.0).
+    #[arg(long)]
+    lava_dive: bool,
     #[arg(long, default_value = "render.png")]
     out: PathBuf,
     /// Path to official asset index json (enables real texture-average colors).
@@ -260,6 +265,7 @@ fn main() -> Result<()> {
             water_pool: cli.water_pool,
             water_vision: cli.water_vision,
             air_supply: cli.air_supply,
+            lava_dive: cli.lava_dive,
         };
         headless::render_gui_screen_opts(
             screen,

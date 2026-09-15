@@ -34,6 +34,9 @@ use crate::world_model::MobEffectState;
 /// order the generated `MOB_EFFECT_ORDER` table carries (the test pins
 /// the slot).
 pub const MOB_EFFECT_REGENERATION: i32 = 9;
+/// `minecraft:fire_resistance`'s mob-effect registry id (the 0-based
+/// order's own slot — the lava fog's vision arm reads it).
+pub const MOB_EFFECT_FIRE_RESISTANCE: i32 = 11;
 /// `minecraft:absorption`'s mob-effect registry id (the test pins it).
 pub const MOB_EFFECT_ABSORPTION: i32 = 21;
 
