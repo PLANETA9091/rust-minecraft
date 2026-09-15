@@ -895,8 +895,27 @@ impl App {
                             (b.y - 0.2).floor() as i32,
                             b.z.floor() as i32,
                         ) as usize];
-                        self.sounds.play(self.frame, name, crate::sound::Lane::Step);
+                        if b.step_in_water {
+                            // THE WADER'S OWN VOICE (Player.playStepSound's
+                            // isInWater branch, the bytecode's own order):
+                            // waterSwimSound() first (the speed law's volume
+                            // the body folded), then playMuffledStepSound —
+                            // the block's step at the *0.05/*0.8 muffle. The
+                            // plain block step never speaks in water.
+                            self.sounds.play_swim(self.frame, b.swim_volume);
+                            self.sounds
+                                .play(self.frame, name, crate::sound::Lane::StepMuffled);
+                        } else {
+                            self.sounds.play(self.frame, name, crate::sound::Lane::Step);
+                        }
                         b.step_due = false;
+                        b.step_in_water = false;
+                    }
+                    // THE DRIFT'S OWN CROSSING (move's else-if water branch):
+                    // the swim voice alone, the same speed law's volume
+                    if b.swim_due {
+                        self.sounds.play_swim(self.frame, b.swim_volume);
+                        b.swim_due = false;
                     }
                     if let Some(cmd) = b.take_move_wire().map(Self::move_wire_command) {
                         if let Some(sink) = self.live_clicks.as_ref() {

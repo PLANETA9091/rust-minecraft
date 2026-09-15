@@ -686,16 +686,16 @@ fn generate(agent: &ureq::Agent, cache: &util::Cache, version: &str, out: &Path)
         v.dedup();
         v
     };
-    let (music_files, game_files, ui_sound_files, biome_sound_files, mob_sound_files) =
+    let (music_files, game_files, ui_sound_files, biome_sound_files, mob_sound_files, player_sound_files) =
         match &index {
             Some(i) => {
                 fetch_sound_events(agent, cache, i, &sounds_json, &biome_events, &workspace_root)
                     .unwrap_or_else(|e| {
                         eprintln!("      warning: game audio fetch failed ({e}); client falls back to silence");
-                        (0, 0, 0, 0, 0)
+                        (0, 0, 0, 0, 0, 0)
                     })
             }
-            None => (0, 0, 0, 0, 0),
+            None => (0, 0, 0, 0, 0, 0),
         };
     let pano_root = workspace_root.join("assets-cache/jar");
     let pano_names: Vec<(String, String)> = (0..6)
@@ -708,7 +708,7 @@ fn generate(agent: &ureq::Agent, cache: &util::Cache, version: &str, out: &Path)
         .collect();
     uigen::merge_from_disk(&mut ui, &pano_root, &pano_names, true)?;
     println!(
-        "      glyphs: {} ({} textures) | lang: {} | splashes: {} | sprites: {} | sound events: {} | biomes: {} | panorama faces: {} | menu music: {} | game music: {} | ui sounds: {} | biome music: {} files / {} events | mob voices: {} files",
+        "      glyphs: {} ({} textures) | lang: {} | splashes: {} | sprites: {} | sound events: {} | biomes: {} | panorama faces: {} | menu music: {} | game music: {} | ui sounds: {} | biome music: {} files / {} events | mob voices: {} files | player voices: {} files",
         font.glyphs.len(),
         font.textures.len(),
         lang.map.len(),
@@ -722,7 +722,8 @@ fn generate(agent: &ureq::Agent, cache: &util::Cache, version: &str, out: &Path)
         ui_sound_files,
         biome_sound_files,
         biome_events.len(),
-        mob_sound_files
+        mob_sound_files,
+        player_sound_files
     );
     println!(
         "      sky: day period {} ticks, {} moon phases, celestial textures {}x{}",
@@ -844,13 +845,20 @@ const MOB_VOICE_EVENTS: [&str; 4] = [
     "entity.zombie.step",
 ];
 
+/// The player's own water-step lane's events (Player.playStepSound's
+/// isInWater branch — the waterSwimSound the wading step and the drift
+/// crossing speak; getSwimSound's own PLAYER_SWIM constant, 26.2's 14
+/// weighted liquid/swim files). Every file rides the same sha1-verified
+/// asset-index fetch the mob voices speak.
+const PLAYER_SWIM_EVENTS: [&str; 1] = ["entity.player.swim"];
+
 /// Fetch the real menu music + in-game music + UI sound + biome music +
-/// mob voice .ogg files through the asset index. sounds.json names are
+/// mob voice + player voice .ogg files through the asset index. sounds.json names are
 /// relative to `assets/minecraft/sounds/` (extension optional — the vanilla
 /// sound engine appends `.ogg`); the asset index keys include the
 /// `minecraft/` prefix. Every file is sha1-verified against the index
 /// object. Returns (menu music, game music, ui sound, biome music, mob
-/// voice) files fetched (duplicates across events deduped).
+/// voice, player voice) files fetched (duplicates across events deduped).
 fn fetch_sound_events(
     agent: &ureq::Agent,
     cache: &util::Cache,
@@ -858,18 +866,20 @@ fn fetch_sound_events(
     sounds: &soundgen::SoundData,
     biome_events: &[String],
     workspace_root: &Path,
-) -> Result<(usize, usize, usize, usize, usize)> {
+) -> Result<(usize, usize, usize, usize, usize, usize)> {
     // 26.2 ships one `music.menu` event with many weighted files (older
     // versions had per-track `music.menu.menu1` children) — match both.
     // The BLOCK family rides along (the interaction arc's own voices: the
     // dig beat's hit, the break, the place, the footsteps — every
     // `block.*` event the generated table resolves). The MOB voices ride
-    // beside them (the zombie's own four events).
+    // beside them (the zombie's own four events), the PLAYER's swim voice
+    // beside those (the water-step lane's own event).
     let wanted = |id: &str| {
         id.starts_with("music.menu")
             || id.starts_with("block.")
             || EXTRA_SOUND_EVENTS.contains(&id)
             || MOB_VOICE_EVENTS.contains(&id)
+            || PLAYER_SWIM_EVENTS.contains(&id)
             || biome_events.binary_search(&id.to_string()).is_ok()
     };
     let mut menu = 0usize;
@@ -877,6 +887,7 @@ fn fetch_sound_events(
     let mut ui = 0usize;
     let mut biome = 0usize;
     let mut mob = 0usize;
+    let mut player = 0usize;
     let mut seen = std::collections::BTreeSet::new();
     for ev in sounds.events.values().filter(|e| wanted(&e.id)) {
         let mut have = 0usize;
@@ -918,13 +929,15 @@ fn fetch_sound_events(
             // the four mob events speak DISJOINT file sets (say / hurt /
             // death / step) — the biome lane's own += shape
             mob += have;
+        } else if PLAYER_SWIM_EVENTS.contains(&ev.id.as_str()) {
+            player = have;
         } else if biome_events.binary_search(&ev.id).is_ok() {
             biome += have;
         } else {
             ui = have;
         }
     }
-    Ok((menu, game, ui, biome, mob))
+    Ok((menu, game, ui, biome, mob, player))
 }
 
 /// The offline UI lane: re-emit `crates/mc-registry/src/generated/gui.rs`

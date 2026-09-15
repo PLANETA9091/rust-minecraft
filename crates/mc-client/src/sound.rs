@@ -44,6 +44,12 @@ pub enum Lane {
     Place,
     /// the footsteps (`getStepSound()`)
     Step,
+    /// THE MUFFLED FOOTSTEP (playMuffledStepSound's own fold — the
+    /// wading step's block voice): the same getStepSound() event at
+    /// the *0.05/*0.8 fold, the water's own dampening the vanilla
+    /// speaks (javap Entity.playMuffledStepSound: getVolume() * 0.05F,
+    /// getPitch() * 0.8F).
+    StepMuffled,
 }
 
 impl Lane {
@@ -54,7 +60,7 @@ impl Lane {
             Lane::Hit => bs::SOUND_HIT[idx],
             Lane::Break => bs::SOUND_BREAK[idx],
             Lane::Place => bs::SOUND_PLACE[idx],
-            Lane::Step => bs::SOUND_STEP[idx],
+            Lane::Step | Lane::StepMuffled => bs::SOUND_STEP[idx],
         }
     }
 
@@ -65,6 +71,10 @@ impl Lane {
             Lane::Hit => ((volume + 1.0) / 8.0, pitch * 0.5),
             Lane::Break | Lane::Place => ((volume + 1.0) / 2.0, pitch * 0.8),
             Lane::Step => (volume * 0.15, pitch),
+            // THE WADER'S MUFFLE (javap Entity.playMuffledStepSound
+            // offsets 5-29: getVolume() * 0.05F, getPitch() * 0.8F —
+            // the same getStepSound() event, the water's own quiet)
+            Lane::StepMuffled => (volume * 0.05, pitch * 0.8),
         }
     }
 }
@@ -239,6 +249,29 @@ impl BlockSounds {
         ));
     }
 
+    /// THE SWIM VOICE (javap `Entity.playSwimSound(float)` — both the
+    /// wading step's override branch and the drift crossing speak it):
+    /// `playSound(getSwimSound(), volume, 1.0F + (r - r) * 0.4F)` — the
+    /// Player's own `entity.player.swim` event (the PLAYER_SWIM the
+    /// getSwimSound override names), the pitch (r - r) * 0.4 + 1.0 in
+    /// [0.6, 1.4], the two randoms riding THIS engine's LCG (the draw
+    /// order: the pitch randoms first, then the file pick — the hurt
+    /// voice's own order). The VOLUME is the caller's speed fold (the
+    /// waterSwimSound's own min(1.0, speed * 0.35) law the body's tick
+    /// speaks).
+    pub fn play_swim(&mut self, tick: u64, volume: f32) {
+        let r1 = self.next_rand_f32();
+        let r2 = self.next_rand_f32();
+        let pitch = (r1 - r2) * 0.4 + 1.0;
+        let Some(file) = self.pick_file("entity.player.swim") else {
+            return;
+        };
+        self.events.push(format!(
+            "entity.player.swim @{tick} #{file} v{:.6} p{:.6}",
+            volume, pitch
+        ));
+    }
+
     /// The FIXED-VOICE lane (the fall voice's generalized shape — the
     /// eat arc's completion speaks it): the caller's volume/pitch fold
     /// (the entity random's own verdict, the bytecode's draw order
@@ -366,6 +399,45 @@ mod tests {
         b.play_hurt_voice(5);
         b.play_death_voice(6);
         assert_eq!(a.events, b.events);
+    }
+
+    /// THE SWIM VOICE's law: `entity.player.swim` at the caller's
+    /// speed-folded volume, the pitch (r - r) * 0.4 + 1.0 in
+    /// [0.6, 1.4], the same LCG and draw order the hurt voice speaks,
+    /// the log format the backend mirrors.
+    #[test]
+    fn the_swim_voice_speaks_the_play_swim_law() {
+        let mut a = BlockSounds::new(21);
+        a.play_swim(9, 0.156_52);
+        assert_eq!(a.events.len(), 1);
+        assert!(
+            a.events[0].starts_with("entity.player.swim @9 #"),
+            "the entry: {}",
+            a.events[0]
+        );
+        assert!(a.events[0].contains(" v0.156520 p"), "the volume: {}", a.events[0]);
+        let pitch: f32 = a.events[0].split(" p").nth(1).unwrap().parse().unwrap();
+        assert!((0.6..=1.4).contains(&pitch), "the pitch range: {pitch}");
+        // determinism: the same seed speaks the same voice
+        let mut b = BlockSounds::new(21);
+        b.play_swim(9, 0.156_52);
+        assert_eq!(a.events, b.events);
+    }
+
+    /// THE MUFFLED FOLD's law (javap playMuffledStepSound): the same
+    /// getStepSound() event the plain step speaks, at the *0.05/*0.8
+    /// fold — the wading block voice the water dampens.
+    #[test]
+    fn the_muffled_fold_speaks_the_water_quiet() {
+        let (v, p) = Lane::StepMuffled.fold(1.0, 1.0);
+        assert_eq!((v, p), (0.05, 0.8));
+        // a non-trivial base rides the algebra (the halving rides the
+        // f32's own exact power-of-two scale — 0.5 * 0.05)
+        let (v, p) = Lane::StepMuffled.fold(0.5, 1.25);
+        assert_eq!((v, p), (0.025, 1.0));
+        // the muffle speaks the SAME event the plain step does
+        let idx = bs::sound_index("stone").expect("stone in the table");
+        assert_eq!(Lane::StepMuffled.event_of(idx), Lane::Step.event_of(idx));
     }
 
     #[test]

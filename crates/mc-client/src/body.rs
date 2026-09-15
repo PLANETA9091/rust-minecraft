@@ -506,6 +506,26 @@ pub struct PlayerBody {
     /// the tick's step fired (the block under was solid) — the App
     /// clears it after the sound folds
     pub step_due: bool,
+    /// THE WADER'S FLAVOR (Player.playStepSound's own isInWater
+    /// branch): true = the step_due fired while the body touches
+    /// water — the drain speaks the swim voice + the MUFFLED block
+    /// step instead of the plain one (the override's own pair, the
+    /// waterSwimSound then playMuffledStepSound order). Cleared with
+    /// step_due.
+    pub step_in_water: bool,
+    /// THE DRIFT'S OWN CROSSING (Entity.move's else-if water branch —
+    /// the ground verdict failed but the body is in water): the
+    /// crossing resets nextStep and speaks the swim voice alone (the
+    /// wading lane's step never spoke here — the airborne drift rides
+    /// this branch). The App clears it after the sound fold.
+    pub swim_due: bool,
+    /// THE SWIM VOICE'S OWN VOLUME (waterSwimSound's fold): min(1.0,
+    /// sqrt(dx²·0.2 + dy² + dz²·0.2) · 0.35) over the collided
+    /// movement — the getDeltaMovement read at the sound block is the
+    /// collided delta the moveDist law itself speaks. Set at each
+    /// water firing (the wading step and the drift speak the same
+    /// law), read by the drain's play_swim call.
+    pub swim_volume: f32,
     /// THE WALK ANIMATION STORE (WalkAnimationState, javap): the
     /// speed/position pair the third-person avatar's limb cosines
     /// speak. Updated every tick from the 3D move distance (the
@@ -566,6 +586,9 @@ impl PlayerBody {
             move_dist: 0.0,
             next_step: 1.0,
             step_due: false,
+            step_in_water: false,
+            swim_due: false,
+            swim_volume: 0.0,
             walk: WalkAnimationState {
                 speed_old: 0.0,
                 speed: 0.0,
@@ -826,6 +849,7 @@ impl PlayerBody {
         // 0.2), floor(z)) is not air — the vanilla's own isAir gate —
         // and the counter resets to (int)moveDist + 1.0F.
         self.step_due = false;
+        self.swim_due = false;
         let horizontal = ((col.dx * col.dx + col.dz * col.dz).sqrt()) as f32;
         // THE MOVEMENT'S OWN COST (javap ServerPlayer.checkMovementStatistics
         // over the stats' cm law: cm = Math.round(distance * 100), the
@@ -854,15 +878,47 @@ impl PlayerBody {
                 (self.y - 0.2).floor() as i32,
                 self.z.floor() as i32,
             );
+            // THE SWIM VOICE'S OWN VOLUME (waterSwimSound's own fold
+            // over getDeltaMovement — the read lands at the sound
+            // block, the collided movement the moveDist law itself
+            // speaks): min(1.0, d2f(sqrt(dx²·0.2 + dy² + dz²·0.2)) *
+            // 0.35F) — the bytecode's own d2f-then-fmul order, the y
+            // axis riding un-attenuated (the swim bob's own emphasis).
+            let swim_vol = (((col.dx * col.dx * 0.2
+                + col.dy * col.dy
+                + col.dz * col.dz * 0.2)
+                .sqrt()) as f32
+                * 0.35)
+                .min(1.0);
             // THE GROUND GATE (vibrationAndSoundEffectsFromBlock's own
             // verdict: onGround, the climbable/rails branches aside —
             // the crouch-hover branch (crouching && dy == 0.0) speaks
             // for the sneaker; the airborne walk NEVER steps, the
             // accumulated crossing waits for the landing). The reset
-            // rides nextStep() = (int)moveDist + 1.0F.
+            // rides nextStep() = (int)moveDist + 1.0F. The step itself
+            // fires THROUGH Player.playStepSound's override: in water
+            // the wader hears the swim voice + the MUFFLED block step
+            // (the drain folds the pair), the dry walk the plain one.
             if under != AIR && (self.on_ground || (self.crouching && col.dy == 0.0)) {
                 self.next_step = (self.move_dist as i32) as f32 + 1.0;
                 self.step_due = true;
+                // THE WADER'S FLAVOR (the override's own isInWater
+                // branch): the flag rides the body's fluid state at
+                // the firing moment — wasTouchingWater the bytecode
+                // reads
+                self.step_in_water = self.touches_water(world);
+                if self.step_in_water {
+                    self.swim_volume = swim_vol;
+                }
+            } else if self.touches_water(world) {
+                // THE WATER BRANCH (move's else-if: the verdict failed,
+                // the body drifts IN water): the crossing resets and
+                // speaks the swim voice alone (emitsSounds' own gate —
+                // the player's emission is ALL). The gameEvent(SWIM)
+                // lane has no vocabulary here (no sculk sensors).
+                self.next_step = (self.move_dist as i32) as f32 + 1.0;
+                self.swim_due = true;
+                self.swim_volume = swim_vol;
             }
         }
         // THE RESTITUTION (restituteMovementAfterCollisions with the
@@ -1685,5 +1741,168 @@ mod tests {
             b.tick(&w, false);
         }
         assert_eq!(b.exhaustion_event, 0.0, "the walk is free (the modern law)");
+    }
+
+    /// THE WADER'S OWN VOICE (Player.playStepSound's isInWater branch
+    /// over the vibration verdict's playStepSound call): the step on
+    /// solid ground while the body touches water fires step_due with
+    /// step_in_water — the drain speaks the swim voice + the muffled
+    /// block step instead of the plain one — and the swim volume rides
+    /// the waterSwimSound fold (min(1, d2f(sqrt(dx²·0.2 + dy² +
+    /// dz²·0.2)) * 0.35) over the collided movement). The drift branch
+    /// never speaks here (the verdict passed, move's else-if is dead).
+    #[test]
+    fn the_wading_step_speaks_the_water_override() {
+        // the whole flat world is a SHALLOW pool: water at y=1 over the
+        // stone floor — the wader walks the pond bottom, every step in
+        // the fluid, no edge to ever leave
+        let mut w = World::new(1, 42);
+        for x in 0..16 {
+            for z in 0..16 {
+                w.set(x, 0, z, crate::world::STONE);
+                w.set(x, 1, z, WATER);
+                for y in 2..crate::world::CHUNK_Y {
+                    w.set(x, y as i32, z, AIR);
+                }
+            }
+        }
+        let mut b = PlayerBody::new(8.0, 1.0, 8.0, 0.0, 0.0);
+        settle(&mut b, &w);
+        assert!(b.on_ground, "the wader stands on the pond bottom");
+        assert!(b.touches_water(&w), "the box touches the fluid");
+        b.forward = 1.0;
+        let mut steps = 0;
+        for _ in 0..40 {
+            let prev = b.move_dist;
+            b.tick(&w, false);
+            if b.step_due {
+                steps += 1;
+                assert!(
+                    b.step_in_water,
+                    "the wading step carries the water flavor (moveDist {})",
+                    b.move_dist
+                );
+                assert!(!b.swim_due, "the ground verdict passed, the drift branch is dead");
+                assert_eq!(
+                    b.next_step,
+                    (b.move_dist as i32) as f32 + 1.0,
+                    "the reset rides nextStep()'s law"
+                );
+                // THE VOLUME LAW over the collided movement: the flat
+                // walk's dy rides 0 (the grounded stride), so the fold
+                // reduces to h * sqrt(0.2) * 0.35 — the d2f-then-fmul
+                // order, the min(1.0) cap above it
+                let h = (b.move_dist - prev) / 0.6;
+                let expected = (h * 0.2f32.sqrt() * 0.35).min(1.0);
+                assert!(
+                    (b.swim_volume - expected).abs() < 1e-4,
+                    "the volume {} tracks the fold's {} (h {})",
+                    b.swim_volume,
+                    expected,
+                    h
+                );
+            }
+        }
+        assert!(steps >= 2, "the wading walk crossed its steps ({})", steps);
+    }
+
+    /// THE DRIFT'S OWN CROSSING (Entity.move's else-if water branch —
+    /// the ground verdict failed, the body is in water): the crossing
+    /// resets nextStep and flags swim_due — the swim voice alone, no
+    /// step, no reset to the plain lane. The airborne-over-land walk
+    /// never speaks it (the water gate refuses).
+    #[test]
+    fn the_drift_swim_speaks_the_water_branch() {
+        // a DEEP pool: water y=1..2 over the stone floor — the body
+        // dropped mid-pool with a forward push drifts through the
+        // fluid before the pond-bottom landing
+        let mut w = World::new(1, 42);
+        for x in 0..16 {
+            for z in 0..16 {
+                w.set(x, 0, z, crate::world::STONE);
+                w.set(x, 1, z, WATER);
+                w.set(x, 2, z, WATER);
+                for y in 3..crate::world::CHUNK_Y {
+                    w.set(x, y as i32, z, AIR);
+                }
+            }
+        }
+        let mut b = PlayerBody::new(8.0, 2.5, 8.0, 0.0, 0.0);
+        b.forward = 1.0;
+        // the pending crossing the harness carries in: a body that
+        // already walked 1.5 blocks before the drift speaks the branch
+        // on the first 0.1 of fluid travel (the water's own drag makes
+        // the ctor-fresh 1.0F a long wait this test doesn't need)
+        b.move_dist = 0.9;
+        let mut drift_swims = 0;
+        let mut drift_steps = 0;
+        let mut swept = 0.0f64;
+        for _ in 0..300 {
+            let before = (b.x, b.z);
+            b.tick(&w, false);
+            swept += ((b.x - before.0).powi(2) + (b.z - before.1).powi(2)).sqrt();
+            if !b.on_ground {
+                if b.swim_due {
+                    drift_swims += 1;
+                    assert_eq!(
+                        b.next_step,
+                        (b.move_dist as i32) as f32 + 1.0,
+                        "the drift's reset rides the same nextStep() law"
+                    );
+                    assert!(
+                        b.swim_volume > 0.0 && b.swim_volume <= 1.0,
+                        "the volume rides the speed fold ({})",
+                        b.swim_volume
+                    );
+                }
+                if b.step_due {
+                    drift_steps += 1;
+                }
+            }
+        }
+        assert!(
+            drift_swims >= 1,
+            "the drift crossed its swim voice ({} swims, swept {}, move_dist {})",
+            drift_swims,
+            swept,
+            b.move_dist
+        );
+        assert_eq!(
+            drift_steps, 0,
+            "the airborne drift never speaks the ground verdict"
+        );
+    }
+
+    /// THE DRY WALK KEEPS THE PLAIN LANE (the regression the water
+    /// lanes must never touch): the solid-ground steps stay dry, the
+    /// drift branch never speaks over land, the airborne crossing
+    /// stays pending for the landing.
+    #[test]
+    fn the_dry_walk_keeps_the_plain_lane() {
+        let mut w = World::new(4, 42);
+        for x in 0..64 {
+            for z in 0..64 {
+                w.set(x, 0, z, crate::world::STONE);
+                for y in 1..crate::world::CHUNK_Y {
+                    w.set(x, y as i32, z, AIR);
+                }
+            }
+        }
+        let mut b = PlayerBody::new(8.0, 1.0, 8.0, 0.0, 0.0);
+        settle(&mut b, &w);
+        b.forward = 1.0;
+        let mut steps = 0;
+        for _ in 0..40 {
+            b.tick(&w, false);
+            if b.step_due {
+                steps += 1;
+                assert!(!b.step_in_water, "the dry step never carries the water flavor");
+            }
+            assert!(
+                !b.swim_due,
+                "the drift branch never speaks over dry land"
+            );
+        }
+        assert!(steps >= 2, "the dry walk crossed its steps ({})", steps);
     }
 }
