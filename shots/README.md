@@ -2,7 +2,7 @@
 
 Every lane that ships pixels owes the folder a frame. The gallery is the
 proof the features exist as rendered images, not as test names alone.
-94 frames and counting — grouped below by the lane that spoke them.
+103 frames and counting — grouped below by the lane that spoke them.
 
 ## The F5 lane (the third-person avatar) — v0.3.154+
 
@@ -283,6 +283,77 @@ cargo run -p mc-client --release -- --screen world --seed 20260214 \
 # --orbs seeds the flat 5's own split ahead of the body (the
 # --zombie-fire discipline: the deterministic stand-in for the orbs
 # the kill's award spawns live — the real lane rides the touch)
+```
+
+## The particle lane (the world's own dust) — v0.3.171
+
+The PARTICLE LANE (javap the 26.2 jar — the base `Particle` physics and
+the three emitters this client speaks): the base tick every particle
+rides (`Particle.tick` — the age walk removed at the lifetime, the
+gravity lane `yd -= 0.04 * gravity`, the move, the friction `xd *=
+0.98`, the onGround's 0.7 fold), the base ctor's own lifetime law
+`(int)(4.0F / (r * 0.9F + 0.1F))` (4..40 ticks) and the size law
+`0.1F * (r * 0.5F + 0.5F) * 2.0F` (0.1..0.2). The three kinds:
+
+- THE TERRAIN DEBRIS (`TerrainParticle`): the block's own PARTICLE
+  sprite (the `getParticleMaterial(state).sprite()` — the
+  `particle_tile` table the block-screen lane already speaks),
+  `gravity = 1.0F`, the 0.6 grey multiply, the size halved, the
+  `uo/vo = nextFloat() * 3.0F` pair — the render's quarter-region law
+  (`getU0 = sprite.getU((uo + 1) / 4)`, `getU1 = sprite.getU(uo / 4)`
+  — the U edge MIRRORS — `getV0 = sprite.getV(vo / 4)`, `getV1 =
+  sprite.getV((vo + 1) / 4)`), a random 4x4-texel slice of the tile.
+  The 2001 event's own BURST (`ClientLevel.addDestroyBlockEffect`'s
+  lambda): per shape box `dx = min(1.0, max - min)`, the sections
+  `max(2, ceil(dx / 0.25))` — the full cube's 4x4x4 = 64 debris at the
+  cell fractions with the outward velocity `(fx - 0.5, fy - 0.5, fz -
+  0.5)`. The DIG DUST (`ClientLevel.addBreakingBlockEffect`, the
+  `Minecraft.continueAttack` arm — every dig tick): the random point
+  inset `r * (max - min - 0.2) + 0.1 + min`, the face arm moving the
+  axis ±0.1 beyond the bound, the (0,0,0) velocity through
+  `setPower(0.2F)`, `.scale(0.6F)`.
+- THE DEATH CLOUD (`ExplodeParticle`, the poof — the broadcast-60
+  event's own arm `LivingEntity.makePoofParticles`): 20 particles,
+  `d = nextGaussian() * 0.02` (the `MarsagliaPolarGaussian` polar
+  method the RandomSource speaks — the cached pair the Lcg now
+  carries), the spawn at `getRandomX(1.0) - d0 * 10.0` (the body's
+  random point walked BACK along the velocity), `gravity = -0.1F` (it
+  rises), `friction = 0.9F`, the grey `r * 0.3F + 0.7F`, the size
+  `0.1F * (r * r * 6.0F + 1.0F)`, the lifetime `16 / (r * 0.8 + 0.2) +
+  2`, the 8-frame walk `MutableSpriteSet.get(age, lifetime)` verbatim
+  (`age * (size - 1) / lifetime` over the jar's
+  `textures/particle/generic_0..7.png` — each sha1 the generator pins).
+- THE CRIT STARS (`CritParticle` + `TrackingEmitter` — the
+  `LocalPlayer.crit` the attack's crit arm calls): the emitter lives 3
+  ticks, per tick the 16-sample walk (`nextFloat() * 2.0 - 1.0` three
+  draws, the unit-ball reject `d0*d0 + d2*d2 + d4*d4 > 1.0`), the
+  spawn at the bbox fractions `entity.getX(d0 / 4)`,
+  `entity.getY(0.5 + d2 / 4)`, `entity.getZ(d4 / 4)`, the velocity
+  `(d0, d2 + 0.2, d4)`; the star blooms `clamp((age + a) / lifetime *
+  32.0F, 0.0F, 1.0F)` and cools `gCol *= 0.96F`, `bCol *= 0.9F` per
+  tick, the sprite the jar's `textures/particle/critical_hit.png`.
+
+| frame | the scene |
+|---|---|
+| `block_break_burst.png` | THE 2001 EVENT'S OWN BURST: the sand cell two blocks ahead broken, the 64 debris mid-flight around the pit — each riding the block's own particle tile (the quarter-region slice the mirrored-U law speaks), the outward fraction velocity the lambda's grid walks |
+| `zombie_death_poof.png` | THE DEATH CLOUD: the 20-particle poof at the facing point, the grey puffs riding the −0.1 gravity's rise and the 8-frame generic walk — the broadcast-60 arm the corpse removal speaks |
+| `crit_stars.png` | THE CRIT'S OWN STARS: the staged zombie at the facing point, the emitter's white stars mid-flight around the body (the unit-ball rejects the lane's 16-sample walk spoke, the bloom the 32× law drives) |
+
+Regenerate the family:
+
+```sh
+cargo run -p mc-client --release -- --screen world --seed 20260214 \
+  --body --particles burst --body-pitch=-15 --ui-frame 3 \
+  --out shots/block_break_burst.png
+cargo run -p mc-client --release -- --screen world --seed 20260214 \
+  --body --particles poof --ui-frame 3 --out shots/zombie_death_poof.png
+cargo run -p mc-client --release -- --screen world --seed 20260214 \
+  --body --particles crit --body-pitch=-4 --ui-frame 3 \
+  --out shots/crit_stars.png
+# --particles burst|poof|crit stages the lane's three scenes (the
+# --zombie-fire discipline: the deterministic stand-in for the debris
+# the dig's break speaks, the cloud the removal speaks, the stars the
+# crit attack arms — the real lanes ride the live ticks)
 ```
 
 ## The lava-fog lane (the ember murk) — v0.3.167

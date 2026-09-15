@@ -672,6 +672,19 @@ pub struct App {
     /// speaks; the pieces tick with the world, the lifetime's removal
     /// prunes).
     pub pieces: Vec<crate::eat::ItemPiece>,
+    /// THE PARTICLE LANE (the world's own dust — the terrain burst,
+    /// the dig dust, the death cloud, the crit stars; the
+    /// particles.rs laws the emitters speak; the tick prunes at the
+    /// lifetime the base Particle law rides).
+    pub particles: Vec<crate::particles::Particle>,
+    /// THE CRIT EMITTERS (the TrackingEmitters the crit attacks arm —
+    /// 3 ticks of life each, the 16-sample walk per tick).
+    pub crit_emitters: Vec<crate::particles::CritEmitter>,
+    /// The crit star's sprite (the lazy runtime load the orb sheet's
+    /// own pattern speaks).
+    pub crit_sprite: Option<crate::avatar::CritSprite>,
+    /// The poof cloud's 8 frames (the same lazy load).
+    pub poof_frames: Option<crate::avatar::PoofFrames>,
     pub hurt_time: i32,
     pub hurt_duration: i32,
     pub invulnerable_time: i32,
@@ -866,6 +879,10 @@ impl App {
             food_rng: crate::drops::Lcg::new(seed),
             eating: None,
             pieces: Vec::new(),
+            particles: Vec::new(),
+            crit_emitters: Vec::new(),
+            crit_sprite: None,
+            poof_frames: None,
             next_drop_id: 1,
             orbs: Vec::new(),
             next_orb_id: 1,
@@ -980,6 +997,24 @@ impl App {
         // THE PIECE TICK (the BreakingItemParticle's own law: the age,
         // the lifetime's removal, the move, the 0.98 friction)
         self.pieces.retain_mut(crate::eat::ItemPiece::tick);
+        // THE PARTICLE TICK (the base Particle's own law: the age, the
+        // gravity lane, the move, the friction; the removal at the
+        // lifetime) + THE EMITTER TICK (the TrackingEmitters the crit
+        // attacks arm — the 16-sample walk per tick, the 3-tick life)
+        self.particles.retain_mut(crate::particles::Particle::tick);
+        for i in (0..self.crit_emitters.len()).rev() {
+            let target = self
+                .mobs
+                .iter()
+                .find(|m| m.id == self.crit_emitters[i].target_id)
+                .map(|m| (m.x, m.y, m.z));
+            let (spawned, alive) =
+                self.crit_emitters[i].tick(target, &mut self.mob_rng);
+            self.particles.extend(spawned);
+            if !alive {
+                self.crit_emitters.remove(i);
+            }
+        }
         // THE BODY TICK (the frame==tick model the swing/use clocks
         // speak): the vanilla travel on the ACTIVE world's voxels, the
         // wire echoing through the same command channel the use arc
@@ -1209,6 +1244,9 @@ impl App {
                 let mut broke_kind: u16 = 0;
                 let mut broke_pos: Option<(i32, i32, i32)> = None;
                 let mut hit_kind: Option<u16> = None;
+                // the dust's own site (the vanilla continueAttack's arm —
+                // the face the dig rides, the borrow's tail speaks it)
+                let mut dust_site: Option<((i32, i32, i32), u8)> = None;
                 // THE HIT BEAT (sound.rs's law): the vanilla checks
                 // destroyTicks % 4.0F == 0.0F BEFORE the machine's tick
                 // increments — captured here on the SAME-DESTROYING-TARGET
@@ -1254,6 +1292,13 @@ impl App {
                                     broke_pos = Some(pos);
                                 }
                                 hit_kind = Some(kind);
+                                // the dust rides every CONTINUE tick (the
+                                // vanilla addBreakingBlockEffect arm) — the
+                                // break tick's cell is already air, the
+                                // render-shape gate never dusts there
+                                if !broke {
+                                    dust_site = Some((pos, face));
+                                }
                             }
                         } else {
                             // the aimed cell vanished (a neighbor's dig):
@@ -1268,6 +1313,19 @@ impl App {
                     }
                 }
                 self.enqueue_dig(&sends);
+                // THE DIG'S OWN DUST (javap `Minecraft.continueAttack`'s
+                // arm — `addBreakingBlockEffect(pos, direction)` every
+                // dig tick the continue speaks): the block's own
+                // particle tile, the face's ±0.1 spawn, the 0.6 scale
+                if let Some((pos, face)) = dust_site {
+                    let tile = particle_tile(hit_kind.unwrap_or(crate::world::AIR));
+                    if tile != mc_registry::generated::atlas::TILE_NONE {
+                        let dust = crate::particles::dig_dust(
+                            tile, pos.0, pos.1, pos.2, face, &mut self.mob_rng,
+                        );
+                        self.particles.push(dust);
+                    }
+                }
                 if broke {
                     // the completion's local break: the mesh re-speaks
                     // (the placement's own rhythm); the 2001 event's own
@@ -1276,6 +1334,21 @@ impl App {
                     self.remesh_offline();
                     let name = crate::world::NAME_OF[broke_kind as usize];
                     self.sounds.play(self.frame, name, crate::sound::Lane::Break);
+                    // THE 2001 EVENT'S OWN BURST (javap
+                    // `LevelEventHandler` case 2001: the sound rides
+                    // FIRST, then `addDestroyBlockEffect` — the 4x4x4
+                    // grid the full cube speaks, each debris riding the
+                    // block's own particle tile and the outward
+                    // velocity)
+                    let tile = particle_tile(broke_kind);
+                    if tile != mc_registry::generated::atlas::TILE_NONE {
+                        if let Some(pos) = broke_pos {
+                            let burst = crate::particles::terrain_burst(
+                                tile, pos.0, pos.1, pos.2, &mut self.mob_rng,
+                            );
+                            self.particles.extend(burst);
+                        }
+                    }
                     // THE REWARD HALF (the vanilla destroyBlock's own
                     // dropResources): the loot roll, the item entities
                     // spawning by the popResource law
@@ -1588,7 +1661,19 @@ impl App {
                     );
                 }
                 // THE DEATH CLOCK'S REMOVAL (the tickDeath tail: the
-                // broadcast-60 tick discards the corpse)
+                // broadcast-60 tick discards the corpse) — and the
+                // broadcast-60 event's own arm (javap
+                // `LivingEntity.makePoofParticles`: the 20-particle
+                // cloud the removal speaks, each riding the gaussian
+                // drift and the body's walked-back spawn point)
+                for mob in self
+                    .mobs
+                    .iter()
+                    .filter(|m| m.death_time >= crate::mob::DEATH_DURATION_TICKS)
+                {
+                    let cloud = crate::particles::poof_cloud(mob.box_at(), &mut self.mob_rng);
+                    self.particles.extend(cloud);
+                }
                 self.mobs
                     .retain(|m| m.death_time < crate::mob::DEATH_DURATION_TICKS);
             }
@@ -1775,6 +1860,14 @@ impl App {
         let Some(mob) = self.mobs.get_mut(i) else {
             return;
         };
+        // THE CRIT'S OWN EMITTER (javap Player.attack's crit arm: the
+        // `this.crit(target)` rides BEFORE the hurt — the LocalPlayer's
+        // own `crit` → `ParticleEngine.createTrackingEmitter` → the
+        // TrackingEmitter's 3 ticks of the 16-sample walk)
+        if crit {
+            self.crit_emitters
+                .push(crate::particles::CritEmitter::new(mob.id, mob.box_at()));
+        }
         mob.hurt(dmg as f64);
         // THE KNOCKBACK (the hurt pipeline's own dealDefaultKnockback:
         // the caller's (x, z) runs attacker-minus-victim — the
@@ -4140,6 +4233,12 @@ impl App {
         if !self.pieces.is_empty() {
             self.render_pieces(fb, &ctx, &cam);
         }
+        // THE PARTICLE LANE's draw (the vanilla's own particle pass —
+        // the terrain burst, the dig dust, the death cloud, the crit
+        // stars as camera-facing quads over their own sprites)
+        if !self.particles.is_empty() {
+            self.render_particles(fb, &ctx, &cam);
+        }
         crate::sky::render_clouds(fb, &ctx, &cam, day_time, 0.0, cloud_fog_end);
         // THE DIG LANE's frame render (the vanilla LevelRenderer's own
         // pair, both after the terrain and before the hand): the hit
@@ -4987,6 +5086,130 @@ impl App {
                 mc_registry::sprite_uv::Sample::Unknown => None,
             }
         });
+    }
+
+    /// THE PARTICLE LANE's render — the vanilla particle pass's own
+    /// camera-facing quads (the roll-0 basis the pieces/orbs lane
+    /// speaks), the three kinds over their own sources: the terrain
+    /// dust rides the block's particle tile (the quarter-region law
+    /// the `TerrainParticle.getU0/getU1/getV0/getV1` fold speaks — the
+    /// U edge MIRRORS, `(uo + 1) / 4` on the left, `uo / 4` on the
+    /// right, over the tile's own 16-px space), the poof cloud rides
+    /// the generic frame walk, the crit star the critical_hit sprite.
+    /// The OPAQUE layer the `getLayer` law speaks — the pieces' own
+    /// cutout draw. The draws group per source (the tiles and frames
+    /// the closure's capture needs).
+    fn render_particles(
+        &mut self,
+        fb: &mut crate::raster::Framebuf,
+        ctx: &RenderCtx,
+        cam: &crate::camera::Camera,
+    ) {
+        // the lazy runtime loads (the orb sheet's own pattern — the
+        // missing file keeps its kind invisible)
+        if self.crit_sprite.is_none() {
+            self.crit_sprite =
+                crate::avatar::CritSprite::load(std::path::Path::new("assets-cache/jar"));
+        }
+        if self.poof_frames.is_none() {
+            self.poof_frames =
+                crate::avatar::PoofFrames::load(std::path::Path::new("assets-cache/jar"));
+        }
+        let sy = cam.yaw.sin();
+        let cy = cam.yaw.cos();
+        let sp = cam.pitch.sin();
+        let cp = cam.pitch.cos();
+        let right = [cy, 0.0, sy];
+        let up = [-sy * sp, cp, cy * sp];
+        // THE GROUPS (terrain keyed by the particle tile, poof by the
+        // frame index, crit one group — the closure's own capture)
+        let mut terrain_groups: Vec<(u16, Vec<crate::raster::SampledQuad>)> = Vec::new();
+        let mut poof_groups: Vec<(usize, Vec<crate::raster::SampledQuad>)> = Vec::new();
+        let mut crit_quads: Vec<crate::raster::SampledQuad> = Vec::new();
+        for p in &self.particles {
+            let half = p.half();
+            let corner = |sx: f32, syp: f32| {
+                [
+                    p.x as f32 + (right[0] * sx + up[0] * syp) * half,
+                    p.y as f32 + (right[1] * sx + up[1] * syp) * half,
+                    p.z as f32 + (right[2] * sx + up[2] * syp) * half,
+                ]
+            };
+            let pts = [
+                corner(-1.0, -1.0),
+                corner(-1.0, 1.0),
+                corner(1.0, 1.0),
+                corner(1.0, -1.0),
+            ];
+            match p.kind {
+                crate::particles::ParticleKind::Terrain { tile } => {
+                    // the quarter law over the tile's 0..1 (the U edge
+                    // mirrors — getU0 rides the LEFT corners)
+                    let ul = (p.uo + 1.0) / 4.0;
+                    let ur = p.uo / 4.0;
+                    let vt = p.vo / 4.0;
+                    let vb = (p.vo + 1.0) / 4.0;
+                    let quad = crate::raster::SampledQuad {
+                        pts,
+                        uv: [[ul, vb], [ul, vt], [ur, vt], [ur, vb]],
+                        tex: "particle_terrain",
+                        tint: p.col,
+                    };
+                    match terrain_groups.iter_mut().find(|(t, _)| *t == tile) {
+                        Some((_, quads)) => quads.push(quad),
+                        None => terrain_groups.push((tile, vec![quad])),
+                    }
+                }
+                crate::particles::ParticleKind::Poof => {
+                    let frame = crate::particles::poof_frame(p.age, p.lifetime);
+                    let quad = crate::raster::SampledQuad {
+                        pts,
+                        uv: [[0.0, 8.0], [0.0, 0.0], [8.0, 0.0], [8.0, 8.0]],
+                        tex: "particle_poof",
+                        tint: p.col,
+                    };
+                    match poof_groups.iter_mut().find(|(f, _)| *f == frame) {
+                        Some((_, quads)) => quads.push(quad),
+                        None => poof_groups.push((frame, vec![quad])),
+                    }
+                }
+                crate::particles::ParticleKind::Crit => {
+                    crit_quads.push(crate::raster::SampledQuad {
+                        pts,
+                        uv: [[0.0, 8.0], [0.0, 0.0], [8.0, 0.0], [8.0, 8.0]],
+                        tex: "particle_crit",
+                        tint: p.col,
+                    });
+                }
+            }
+        }
+        let vp = ctx.proj.mul(&ctx.view);
+        // the terrain groups (the atlas tile's own sampling)
+        for (tile, quads) in &terrain_groups {
+            fb.draw_sampled_quads(vp, quads, &mut |_tex, u, v| {
+                let s = crate::textures::sample_tile(*tile, u, v);
+                Some([
+                    (s[0] * 255.0) as u8,
+                    (s[1] * 255.0) as u8,
+                    (s[2] * 255.0) as u8,
+                    (s[3] * 255.0) as u8,
+                ])
+            });
+        }
+        // the poof groups (the frame walk's own pixels)
+        if let Some(frames) = &self.poof_frames {
+            for (frame, quads) in &poof_groups {
+                fb.draw_sampled_quads(vp, quads, &mut |_tex, u, v| {
+                    Some(frames.pixel(*frame, u, v))
+                });
+            }
+        }
+        // the crit group (the star's own pixels)
+        if let Some(crit) = &self.crit_sprite {
+            fb.draw_sampled_quads(vp, &crit_quads, &mut |_tex, u, v| {
+                Some(crit.pixel(u, v))
+            });
+        }
     }
 
     fn ensure_world(&mut self) {

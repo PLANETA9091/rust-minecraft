@@ -35,12 +35,44 @@ pub const UNDERWATER_JAR_PATH: &str = "assets/minecraft/textures/misc/underwater
 /// getIcon band law samples).
 pub const EXPERIENCE_ORB_JAR_PATH: &str =
     "assets/minecraft/textures/entity/experience/experience_orb.png";
+/// The crit star's texture (javap: the `crit` particle type's own
+/// sprite — the `TrackingEmitter`'s spawn draws the star the
+/// `CritParticle` speaks; the jar's `textures/particle/critical_hit.png`,
+/// the 8x8 the IHDR verifies).
+pub const PARTICLE_CRIT_JAR_PATH: &str = "assets/minecraft/textures/particle/critical_hit.png";
+/// The poof cloud's 8 frames (javap: the `poof` particle type's sprite
+/// set — `ExplodeParticle`'s `setSpriteFromAge` walk over the 8
+/// `MutableSpriteSet` frames; the jar's
+/// `textures/particle/generic_0..7.png`, the 8x8s the IHDR verifies).
+pub const PARTICLE_POOF_JAR_PATHS: [&str; 8] = [
+    "assets/minecraft/textures/particle/generic_0.png",
+    "assets/minecraft/textures/particle/generic_1.png",
+    "assets/minecraft/textures/particle/generic_2.png",
+    "assets/minecraft/textures/particle/generic_3.png",
+    "assets/minecraft/textures/particle/generic_4.png",
+    "assets/minecraft/textures/particle/generic_5.png",
+    "assets/minecraft/textures/particle/generic_6.png",
+    "assets/minecraft/textures/particle/generic_7.png",
+];
 /// The runtime-cache paths the client's loader reads (the same
 /// textures/ prefix strip the other lanes speak).
 pub const FIRE_0_RUNTIME_PATH: &str = "block/fire_0.png";
 pub const FIRE_1_RUNTIME_PATH: &str = "block/fire_1.png";
 pub const UNDERWATER_RUNTIME_PATH: &str = "misc/underwater.png";
 pub const EXPERIENCE_ORB_RUNTIME_PATH: &str = "entity/experience/experience_orb.png";
+/// The particle lane's runtime-cache paths (the same textures/ prefix
+/// strip the other lanes speak).
+pub const PARTICLE_CRIT_RUNTIME_PATH: &str = "particle/critical_hit.png";
+pub const PARTICLE_POOF_RUNTIME_PATHS: [&str; 8] = [
+    "particle/generic_0.png",
+    "particle/generic_1.png",
+    "particle/generic_2.png",
+    "particle/generic_3.png",
+    "particle/generic_4.png",
+    "particle/generic_5.png",
+    "particle/generic_6.png",
+    "particle/generic_7.png",
+];
 /// Where the client reads the skin at runtime (under the runtime asset root).
 pub const RUNTIME_PATH: &str = "entity/player/wide/steve.png";
 pub const SLIM_RUNTIME_PATH: &str = "entity/player/slim/alex.png";
@@ -85,6 +117,12 @@ pub struct SkinData {
     /// sha1 of the XP orb's sprite sheet (jar-verbatim integrity) —
     /// the award orbs' pixel source (the 64x64, 4x4 icon grid).
     pub experience_orb_png_sha1: String,
+    /// sha1 of the crit star's texture (jar-verbatim integrity) — the
+    /// particle lane's crit quad's pixel source (the 8x8 sprite).
+    pub particle_crit_png_sha1: String,
+    /// sha1s of the poof cloud's 8 frames (jar-verbatim integrity) —
+    /// the death cloud's pixel sources (the 8x8 generic frames).
+    pub particle_poof_png_sha1s: [String; 8],
 }
 
 /// One UV rect in the skin texture, in texels: (u, v, w, h).
@@ -196,6 +234,31 @@ pub fn generate<R: std::io::Read + std::io::Seek>(archive: &mut zip::ZipArchive<
         ow,
         oh
     );
+    // THE PARTICLE LANE: the crit star's 8x8 and the poof cloud's 8
+    // 8x8 frames (javap: the `crit` + `poof` particle types' sprites —
+    // the TrackingEmitter's star and the death cloud's frame walk).
+    // The integrity sha1s the particle lane verifies before it draws.
+    let crit_bytes = read_entry(archive, PARTICLE_CRIT_JAR_PATH).context("read critical_hit")?;
+    let particle_crit_png_sha1 = crate::util::sha1_hex(&crit_bytes);
+    let (cw, ch, _crit_rgba) = decode_rgba(&crit_bytes).context("decode critical_hit")?;
+    anyhow::ensure!(
+        (cw, ch) == (8, 8),
+        "critical_hit must be the 8x8 sprite, got {}x{}",
+        cw,
+        ch
+    );
+    let mut particle_poof_png_sha1s: [String; 8] = std::array::from_fn(|_| String::new());
+    for (i, path) in PARTICLE_POOF_JAR_PATHS.iter().enumerate() {
+        let bytes = read_entry(archive, path).context("read generic frame")?;
+        let (gw, gh, _rgba) = decode_rgba(&bytes).context("decode generic frame")?;
+        anyhow::ensure!(
+            (gw, gh) == (8, 8),
+            "generic_{i} must be the 8x8 frame, got {}x{}",
+            gw,
+            gh
+        );
+        particle_poof_png_sha1s[i] = crate::util::sha1_hex(&bytes);
+    }
     Ok(SkinData {
         png_sha1,
         rgba_sha1: crate::util::sha1_hex(&rgba),
@@ -207,6 +270,8 @@ pub fn generate<R: std::io::Read + std::io::Seek>(archive: &mut zip::ZipArchive<
         fire_1_png_sha1,
         underwater_png_sha1,
         experience_orb_png_sha1,
+        particle_crit_png_sha1,
+        particle_poof_png_sha1s,
     })
 }
 
@@ -319,6 +384,30 @@ pub fn emit(data: &SkinData) -> Result<String> {
     out.push_str(&format!(
         "pub const EXPERIENCE_ORB_RUNTIME_PATH: &str = \"{EXPERIENCE_ORB_RUNTIME_PATH}\";\n"
     ));
+    out.push_str("\n/// The PARTICLE LANE's textures (the crit star's 8x8 + the poof\n/// cloud's 8 8x8 frames), generated from the same jar: the integrity\n/// sha1s the particle lane verifies before it draws (javap: the `crit`\n/// + `poof` particle types' sprites — the TrackingEmitter's star, the\n/// death cloud's `MutableSpriteSet` frame walk).\n");
+    out.push_str(&format!(
+        "pub const PARTICLE_CRIT_PNG_SHA1: &str = \"{}\";\n",
+        data.particle_crit_png_sha1
+    ));
+    out.push_str(&format!(
+        "pub const PARTICLE_CRIT_RUNTIME_PATH: &str = \"{PARTICLE_CRIT_RUNTIME_PATH}\";\n"
+    ));
+    out.push_str(&format!(
+        "pub const PARTICLE_POOF_PNG_SHA1S: [&str; 8] = [{}];\n",
+        data.particle_poof_png_sha1s
+            .iter()
+            .map(|s| format!("\"{s}\""))
+            .collect::<Vec<_>>()
+            .join(", ")
+    ));
+    out.push_str(&format!(
+        "pub const PARTICLE_POOF_RUNTIME_PATHS: [&str; 8] = [{}];\n",
+        PARTICLE_POOF_RUNTIME_PATHS
+            .iter()
+            .map(|s| format!("\"{s}\""))
+            .collect::<Vec<_>>()
+            .join(", ")
+    ));
     Ok(out)
 }
 
@@ -405,6 +494,25 @@ mod tests {
         out
     }
 
+    /// An 8x8 RGBA png — the particle lane's sprite shape (the crit
+    /// star's own, the poof frames' own), one lit texel so the decode
+    /// is non-trivial.
+    fn tiny_png() -> Vec<u8> {
+        let (w, h) = (8u32, 8u32);
+        let mut rgba = vec![0u8; (w * h * 4) as usize];
+        let o = ((2 * w + 3) * 4) as usize;
+        rgba[o..o + 4].copy_from_slice(&[255, 220, 90, 255]);
+        let mut out = Vec::new();
+        {
+            let mut enc = png::Encoder::new(&mut out, w, h);
+            enc.set_color(png::ColorType::Rgba);
+            enc.set_depth(png::BitDepth::Eight);
+            let mut wr = enc.write_header().unwrap();
+            wr.write_image_data(&rgba).unwrap();
+        }
+        out
+    }
+
     #[test]
     fn parses_the_skins_and_emits_the_arm_geometry() {
         let png = skin_png();
@@ -418,6 +526,10 @@ mod tests {
         let expected_underwater_sha1 = crate::util::sha1_hex(&underwater);
         let orb = skin_png();
         let expected_orb_sha1 = crate::util::sha1_hex(&orb);
+        let crit = tiny_png();
+        let expected_crit_sha1 = crate::util::sha1_hex(&crit);
+        let poofs = [tiny_png(), tiny_png(), tiny_png(), tiny_png(), tiny_png(), tiny_png(), tiny_png(), tiny_png()];
+        let expected_poof_sha1s: Vec<String> = poofs.iter().map(|p| crate::util::sha1_hex(p)).collect();
 
         let mut zip = zip_of(&[
             (WIDE_STEVE_JAR_PATH, png.clone()),
@@ -427,6 +539,15 @@ mod tests {
             (FIRE_1_JAR_PATH, strip),
             (UNDERWATER_JAR_PATH, underwater),
             (EXPERIENCE_ORB_JAR_PATH, orb),
+            (PARTICLE_CRIT_JAR_PATH, crit),
+            (PARTICLE_POOF_JAR_PATHS[0], poofs[0].clone()),
+            (PARTICLE_POOF_JAR_PATHS[1], poofs[1].clone()),
+            (PARTICLE_POOF_JAR_PATHS[2], poofs[2].clone()),
+            (PARTICLE_POOF_JAR_PATHS[3], poofs[3].clone()),
+            (PARTICLE_POOF_JAR_PATHS[4], poofs[4].clone()),
+            (PARTICLE_POOF_JAR_PATHS[5], poofs[5].clone()),
+            (PARTICLE_POOF_JAR_PATHS[6], poofs[6].clone()),
+            (PARTICLE_POOF_JAR_PATHS[7], poofs[7].clone()),
         ]);
         let data = generate(&mut zip).unwrap();
         assert_eq!(data.side, 64);
@@ -441,6 +562,15 @@ mod tests {
         assert_eq!(
             data.experience_orb_png_sha1, expected_orb_sha1,
             "the orb sheet's own sha1"
+        );
+        assert_eq!(
+            data.particle_crit_png_sha1, expected_crit_sha1,
+            "the crit star's own sha1"
+        );
+        assert_eq!(
+            data.particle_poof_png_sha1s,
+            expected_poof_sha1s.as_slice(),
+            "the poof frames' own sha1s"
         );
 
         let emitted = emit(&data).unwrap();
@@ -459,6 +589,14 @@ mod tests {
         // the xp orb: the sha1 and the runtime path land verbatim
         assert!(emitted.contains(&format!("pub const EXPERIENCE_ORB_PNG_SHA1: &str = \"{expected_orb_sha1}\";")));
         assert!(emitted.contains("pub const EXPERIENCE_ORB_RUNTIME_PATH: &str = \"entity/experience/experience_orb.png\";"));
+        // the particle lane: the crit star's + the poof frames' sha1s
+        // and the runtime paths land verbatim
+        assert!(emitted.contains(&format!("pub const PARTICLE_CRIT_PNG_SHA1: &str = \"{expected_crit_sha1}\";")));
+        assert!(emitted.contains("pub const PARTICLE_CRIT_RUNTIME_PATH: &str = \"particle/critical_hit.png\";"));
+        for (i, sha) in expected_poof_sha1s.iter().enumerate() {
+            assert!(emitted.contains(&format!("\"{sha}\"")), "poof frame {i}'s sha1");
+            assert!(emitted.contains(&format!("\"particle/generic_{i}.png\"")));
+        }
         assert!(emitted.contains("pub const SLIM_ARM_BOX_PX: [u16; 3] = [3, 12, 4];"));
         assert!(emitted.contains("pub const SLIM_ARM_BOX_ORIGIN_PX: [i16; 3] = [-2, -2, -2];"));
         // the six faces unfold from texOffs (40,16) with the box 4x12x4

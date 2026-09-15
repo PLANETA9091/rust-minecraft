@@ -204,6 +204,13 @@ pub struct SceneOpts {
     /// contextual bar reads the seeded store (the extract law's own
     /// gate).
     pub xp: Option<(i32, f32)>,
+    /// THE PARTICLE STAGE (the lane's three scenes the shots speak):
+    /// "burst" — the broken cell's 4x4x4 debris (the read-then-break
+    /// discipline: the cell's own kind names the tile), "poof" — the
+    /// death cloud at the body's facing point, "crit" — the emitter's
+    /// 16-sample stars around a staged zombie. Anything else refuses
+    /// loudly (the CLI's own paranoia).
+    pub particles: Option<String>,
 }
 
 impl SceneOpts {
@@ -232,6 +239,7 @@ impl SceneOpts {
             || self.lava_dive
             || self.bury
             || self.xp.is_some()
+            || self.particles.is_some()
             || self.walk_ticks > 0
             || self.settle_ticks > 0
     }
@@ -546,6 +554,138 @@ pub fn seed_scene(app: &mut crate::screens::App, opts: &SceneOpts) -> Result<()>
         // clock's value, the 20-tick removal never runs headless)
         for mob in app.mobs.iter_mut() {
             mob.death_time = mob.death_time.max(dt);
+        }
+    }
+    if let Some(kind) = opts.particles.as_deref() {
+        // THE PARTICLE STAGE (the --orbs discipline: the facing point
+        // two ahead, the body's own yaw naming it, the flight ticks
+        // walked so the frame shows the mid-air truth — the --screen
+        // lane owns no ticks, the stage walks the spawned ones its
+        // own law speaks).
+        let yaw = opts.body_yaw.unwrap_or(-90.0);
+        let (fx, fz) = (
+            (-yaw.to_radians().sin()) as f64,
+            yaw.to_radians().cos() as f64,
+        );
+        let (bx, by, bz) = match app.body.as_ref() {
+            Some(b) => (b.x, b.y, b.z),
+            None => (
+                n as f64 / 2.0 + 0.5,
+                app.spawn_y as f64,
+                n as f64 / 2.0 + 0.5,
+            ),
+        };
+        match kind {
+            "burst" => {
+                // THE READ-THEN-BREAK: the SURFACE cell of the column
+                // two ahead (top_solid_y — the classic mining look, the
+                // burst rides the ground's own level), the cell's own
+                // kind names the particle tile, the mesh re-speaks the
+                // break, the 64 debris fly the fraction law
+                let cx = (bx + fx * 1.5).floor() as i32;
+                let cz = (bz + fz * 1.5).floor() as i32;
+                // the LOCAL ground: the first solid at or below the
+                // feet level (the mining-the-block-in-front-of-you
+                // framing — the column's global top rides the ridge the
+                // valley walls carry, out of the frame's own view)
+                let cell_kind = app
+                    .offline_world
+                    .as_ref()
+                    .map(|w| {
+                        let mut y = by as i32;
+                        while y > 0 && w.get(cx, y, cz) == crate::world::AIR {
+                            y -= 1;
+                        }
+                        (w.get(cx, y, cz), y)
+                    })
+                    .unwrap_or((crate::world::AIR, by as i32));
+                let (kind, cy) = cell_kind;
+                let tile = crate::screens::particle_tile(kind);
+                if let Some(w) = app.offline_world.as_mut() {
+                    w.set(cx, cy, cz, crate::world::AIR);
+                    app.remesh_offline();
+                }
+                if tile != mc_registry::generated::atlas::TILE_NONE {
+                    let burst = crate::particles::terrain_burst(
+                        tile, cx, cy, cz, &mut app.mob_rng,
+                    );
+                    app.particles.extend(burst);
+                }
+            }
+            "poof" => {
+                // THE CLOUD AT THE FACING POINT (the zombie's own box —
+                // the ground the spawn's own surface speaks)
+                let px = bx + fx * 1.5;
+                let pz = bz + fz * 1.5;
+                let bbox = (
+                    px - 0.3,
+                    by,
+                    pz - 0.3,
+                    px + 0.3,
+                    by + crate::mob::ZOMBIE_HEIGHT,
+                    pz + 0.3,
+                );
+                let cloud = crate::particles::poof_cloud(bbox, &mut app.mob_rng);
+                app.particles.extend(cloud);
+            }
+            "crit" => {
+                // THE EMITTER'S STARS (the staged zombie ahead —
+                // the emitter arms at its box, two ticks of the
+                // 16-sample walk spawn the stars mid-flight)
+                let px = bx + fx * 2.5;
+                let pz = bz + fz * 2.5;
+                // the LOCAL ground (the first solid at or below the
+                // feet level — the column's global top rides the tree
+                // crown the facing column carries)
+                let y = app
+                    .offline_world
+                    .as_ref()
+                    .map(|w| {
+                        let mut gy = by as i32;
+                        while gy > 0
+                            && w.get(px.floor() as i32, gy, pz.floor() as i32)
+                                == crate::world::AIR
+                        {
+                            gy -= 1;
+                        }
+                        gy + 1
+                    })
+                    .unwrap_or(by as i32);
+                let z = crate::mob::Zombie::new(1, px, y as f64, pz, 262);
+                let bbox = z.box_at();
+                let id = z.id;
+                app.mobs.push(z);
+                let mut em = crate::particles::CritEmitter::new(id, bbox);
+                for _ in 0..3 {
+                    let (spawned, alive) =
+                        em.tick(Some((px, y as f64, pz)), &mut app.mob_rng);
+                    app.particles.extend(spawned);
+                    if !alive {
+                        break;
+                    }
+                }
+                if em.life < 3 {
+                    app.crit_emitters.push(em);
+                }
+            }
+            other => {
+                anyhow::bail!(
+                    "--particles: unknown scene '{other}' (the lane speaks burst | poof | crit)"
+                );
+            }
+        }
+        // the walk ticks per scene (the base Particle law the spawned
+        // ones ride — the frame shows the flight's own truth: the
+        // burst's two spread ticks, the poof's ten (the generic
+        // frames' own wisp-to-cloud growth the fade-in speaks), the
+        // crit's two bloom ticks)
+        let walk = match kind {
+            "poof" => 20,
+            "crit" => 6,
+            _ => 2,
+        };
+        for _ in 0..walk {
+            app.particles.retain_mut(crate::particles::Particle::tick);
         }
     }
     Ok(())

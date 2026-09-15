@@ -264,12 +264,24 @@ pub fn extract_runtime_assets(
 /// `assets/minecraft/textures/block/` — the runtime pixel sources the
 /// client sha1-verifies before it draws a burning mob. The water
 /// screen's texture rides beside them (the underwater overlay's pixel
-/// source, `textures/misc/underwater.png`), and the XP orb's sprite
+/// source, `textures/misc/underwater.png`), the XP orb's sprite
 /// sheet beside those (`textures/entity/experience/experience_orb.png`
-/// — the award orbs' 64x64 icon grid).
-const RUNTIME_TEXTURE_JAR_PATHS: [&str; 4] = [
+/// — the award orbs' 64x64 icon grid), and the PARTICLE LANE's nine
+/// sprites beside those (the crit star's 8x8 + the poof cloud's 8
+/// 8x8 generic frames — the `crit` and `poof` particle types' own
+/// sources the dust lane sha1-verifies).
+const RUNTIME_TEXTURE_JAR_PATHS: [&str; 13] = [
     "assets/minecraft/textures/block/fire_0.png",
     "assets/minecraft/textures/block/fire_1.png",
     "assets/minecraft/textures/misc/underwater.png",
     "assets/minecraft/textures/entity/experience/experience_orb.png",
+    "assets/minecraft/textures/particle/critical_hit.png",
+    "assets/minecraft/textures/particle/generic_0.png",
+    "assets/minecraft/textures/particle/generic_1.png",
+    "assets/minecraft/textures/particle/generic_2.png",
+    "assets/minecraft/textures/particle/generic_3.png",
+    "assets/minecraft/textures/particle/generic_4.png",
+    "assets/minecraft/textures/particle/generic_5.png",
+    "assets/minecraft/textures/particle/generic_6.png",
+    "assets/minecraft/textures/particle/generic_7.png",
 ];

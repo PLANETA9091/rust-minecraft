@@ -73,13 +73,24 @@ pub const LANDING_BOUNCE: f64 = -0.5;
 /// rolls and the pickup pitches draw from it in tick order.
 pub struct Lcg {
     state: u64,
+    /// The Marsaglia polar method's cached pair (javap
+    /// `MarsagliaPolarGaussian`: the `haveNextNextGaussian` flag + the
+    /// stored second draw — the death cloud's gaussian lane speaks
+    /// them). `None` = no cached draw.
+    next_gaussian_cache: Option<f64>,
 }
 
 impl Lcg {
     pub fn new(seed: u64) -> Self {
         Self {
             state: seed ^ 0x5EED_C0FF_EE12_3456,
+            next_gaussian_cache: None,
         }
+    }
+
+    /// The cached-pair second draw (the flag's own truth).
+    pub fn reset_gaussian(&mut self) {
+        self.next_gaussian_cache = None;
     }
 
     /// The raw 48-bit draw (the mob lane's goal clocks draw the same
@@ -100,6 +111,29 @@ impl Lcg {
     /// [0, 1) over 48 bits — the nextDouble shape.
     pub fn next_f64(&mut self) -> f64 {
         (self.next() % (1u64 << 48)) as f64 / (1u64 << 48) as f64
+    }
+
+    /// `MarsagliaPolarGaussian.nextGaussian` (javap verbatim): the
+    /// cached pair returns first; otherwise the polar walk — two
+    /// doubles mapped to [-1, 1), the `s >= 1 || s == 0` reject, the
+    /// `sqrt(-2 * ln(s) / s)` fold — v1's product returns, v2's stores
+    /// for the next call.
+    pub fn next_gaussian(&mut self) -> f64 {
+        if let Some(cached) = self.next_gaussian_cache.take() {
+            return cached;
+        }
+        let (mut v1, mut v2, mut s);
+        loop {
+            v1 = 2.0 * self.next_f64() - 1.0;
+            v2 = 2.0 * self.next_f64() - 1.0;
+            s = v1 * v1 + v2 * v2;
+            if s < 1.0 && s != 0.0 {
+                break;
+            }
+        }
+        let w = (-2.0 * s.ln() / s).sqrt();
+        self.next_gaussian_cache = Some(v2 * w);
+        v1 * w
     }
 
     /// `Mth.nextInt(random, min, max)` — the INCLUSIVE law (javap:

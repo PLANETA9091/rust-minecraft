@@ -20,6 +20,7 @@ mod eat;
 mod effects;
 mod end_flash;
 mod mob;
+mod particles;
 mod food;
 mod gpu;
 mod gui;
@@ -225,6 +226,11 @@ struct Cli {
     /// law's own gate).
     #[arg(long)]
     xp: Option<String>,
+    /// Stage a particle scene "burst|poof|crit" (the lane's own
+    /// shots — the broken cell's debris, the death cloud, the crit
+    /// emitter's stars). Anything else refuses loudly.
+    #[arg(long)]
+    particles: Option<String>,
     #[arg(long, default_value = "render.png")]
     out: PathBuf,
     /// Path to official asset index json (enables real texture-average colors).
@@ -296,6 +302,7 @@ fn main() -> Result<()> {
             lava_dive: cli.lava_dive,
             bury: cli.bury,
             xp,
+            particles: cli.particles,
         };
         headless::render_gui_screen_opts(
             screen,

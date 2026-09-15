@@ -889,6 +889,88 @@ impl OrbSheet {
     }
 }
 
+/// The PARTICLE LANE's crit star texture — the 8x8 the crit quad
+/// samples (javap: the `crit` particle type's own sprite, the jar's
+/// `textures/particle/critical_hit.png`), loaded and sha1-verified the
+/// same stream the orb sheet speaks. A missing or tampered file keeps
+/// the stars invisible (the honest absence the other lanes speak).
+pub struct CritSprite {
+    pub rgba: Vec<u8>,
+}
+
+/// The crit texture's own layout (the jar's 8x8 the IHDR speaks).
+pub const CRIT_SPRITE_SIDE: u32 = 8;
+
+impl CritSprite {
+    /// Load from the runtime cache root (the generator's
+    /// `assets-cache/jar/`), verify the generated sha1, decode, and
+    /// shape-check the 8x8 layout.
+    pub fn load(root: &std::path::Path) -> Option<CritSprite> {
+        let bytes = std::fs::read(root.join(skin::PARTICLE_CRIT_RUNTIME_PATH)).ok()?;
+        if hex::encode(sha1::Sha1::digest(&bytes)) != skin::PARTICLE_CRIT_PNG_SHA1 {
+            return None;
+        }
+        let (w, h, rgba) = decode_rgba(&bytes).ok()?;
+        if w != CRIT_SPRITE_SIDE || h != CRIT_SPRITE_SIDE {
+            return None;
+        }
+        Some(CritSprite { rgba })
+    }
+
+    /// The sprite pixel at (u, v) in TEXTURE UNITS (the 0..8 the
+    /// particle quad's uv walk speaks), nearest texel.
+    pub fn pixel(&self, u: f32, v: f32) -> [u8; 4] {
+        let x = (u.floor().clamp(0.0, CRIT_SPRITE_SIDE as f32 - 1.0)) as usize;
+        let y = (v.floor().clamp(0.0, CRIT_SPRITE_SIDE as f32 - 1.0)) as usize;
+        let o = (y * CRIT_SPRITE_SIDE as usize + x) * 4;
+        [self.rgba[o], self.rgba[o + 1], self.rgba[o + 2], self.rgba[o + 3]]
+    }
+}
+
+/// The PARTICLE LANE's poof frames — the death cloud's 8-frame walk
+/// (javap: the `poof` particle type's sprite set, the jar's
+/// `textures/particle/generic_0..7.png`, the `MutableSpriteSet.get`
+/// law `sprites.get(age * (size - 1) / lifetime)` the frame index
+/// speaks), each file loaded and sha1-verified the same stream. A
+/// missing or tampered frame keeps the cloud silent.
+pub struct PoofFrames {
+    pub frames: Vec<Vec<u8>>,
+}
+
+impl PoofFrames {
+    /// Load the 8 frames from the runtime cache root, verify each
+    /// sha1, decode, shape-check the 8x8 layout.
+    pub fn load(root: &std::path::Path) -> Option<PoofFrames> {
+        let mut frames = Vec::with_capacity(crate::particles::POOF_FRAME_COUNT);
+        for i in 0..crate::particles::POOF_FRAME_COUNT {
+            let bytes = std::fs::read(root.join(skin::PARTICLE_POOF_RUNTIME_PATHS[i])).ok()?;
+            if hex::encode(sha1::Sha1::digest(&bytes)) != skin::PARTICLE_POOF_PNG_SHA1S[i] {
+                return None;
+            }
+            let (w, h, rgba) = decode_rgba(&bytes).ok()?;
+            if w != CRIT_SPRITE_SIDE || h != CRIT_SPRITE_SIDE {
+                return None;
+            }
+            frames.push(rgba);
+        }
+        Some(PoofFrames { frames })
+    }
+
+    /// The frame pixel at (u, v) in TEXTURE UNITS (the 0..8), nearest
+    /// texel.
+    pub fn pixel(&self, frame: usize, u: f32, v: f32) -> [u8; 4] {
+        let empty = [0u8; 4];
+        let f = match self.frames.get(frame) {
+            Some(f) => f,
+            None => return empty,
+        };
+        let x = (u.floor().clamp(0.0, CRIT_SPRITE_SIDE as f32 - 1.0)) as usize;
+        let y = (v.floor().clamp(0.0, CRIT_SPRITE_SIDE as f32 - 1.0)) as usize;
+        let o = (y * CRIT_SPRITE_SIDE as usize + x) * 4;
+        [f[o], f[o + 1], f[o + 2], f[o + 3]]
+    }
+}
+
 /// The WATER SCREEN's decoded pixels — the underwater overlay's pixel
 /// source, loaded and sha1-verified the same stream the skins and the
 /// flame strips speak (javap `ScreenEffectRenderer.submitWater`'s
