@@ -312,6 +312,13 @@ pub struct App {
     /// entry like the fog pair; `None` = no dimension states one (the
     /// cloud fog rides the 2048.0 bytecode default, `sky::DEFAULT_CLOUD_FOG_END`).
     pub world_cloud_fog_end: Option<f32>,
+    /// THE WATER VISION CLOCK (javap `LocalPlayer.waterVisionTime`, the
+    /// 26.2 jar): the eye-in-water clock the water fog's end distance
+    /// rides — +1/tick under the surface (the spectator's +10 sleeps,
+    /// this client has no spectator lane), -10/tick out of it, the
+    /// clamp [0, 600] the bytecode's own Mth.clamp speaks. The
+    /// getWaterVision ramp reads this clock (the `water_fog` helper).
+    pub water_vision_time: i32,
     /// The first-person hand (the empty main-hand arm from the official
     /// player skin), loaded lazily from the runtime asset root on the first
     /// world frame; `None` = the skin asset is absent or failed its sha1
@@ -702,6 +709,7 @@ impl App {
             world_skybox: Skybox::Overworld,
             world_fog: None,
             world_cloud_fog_end: None,
+            water_vision_time: 0,
             net_biome: None,
             live_runs: Vec::new(),
             arm: None,
@@ -784,6 +792,17 @@ impl App {
         // the swing clock ticks every game tick like the player entity's
         // (at rest it pins swingTime to 0 and attackAnim to 0 — no-op)
         self.swing.tick();
+        // THE WATER VISION CLOCK (javap LocalPlayer.tick, the 26.2
+        // jar's offsets 737-812): the eye's water speaks +1/tick (the
+        // spectator's +10 sleeps — no spectator lane here), the air
+        // drains -10/tick while the clock lives, the clamp [0, 600]
+        // the bytecode's own Mth.clamp speaks. The water fog's end
+        // distance rides the getWaterVision ramp this clock feeds.
+        if self.body_state().1 {
+            self.water_vision_time = (self.water_vision_time + 1).clamp(0, 600);
+        } else if self.water_vision_time > 0 {
+            self.water_vision_time = (self.water_vision_time - 10).clamp(0, 600);
+        }
         // THE USE CLOCK: the elapsed ticks advance while using (the
         // vanilla useDuration's own tick lane); the held item reloads
         // only when the charge's selected state index changes (the
@@ -2847,6 +2866,41 @@ impl App {
         (on_ground, eye_water)
     }
 
+    /// THE WATER FOG (javap `WaterFogEnvironment.setupFog` +
+    /// `EnvironmentAttributes` <clinit>, the 26.2 jar): the fog the
+    /// camera-in-water cell arms — `Some((start, end, color))`:
+    ///   * the start: the `visual/water_fog_start_distance` attribute's
+    ///     own bytecode default -8.0 (behind the near plane, the murk
+    ///     covers from the camera's own cell out);
+    ///   * the end: `visual/water_fog_end_distance`'s 96.0 x
+    ///     max(0.25, getWaterVision()) — the LocalPlayer ramp's own
+    ///     two-segment law (h = clamp(wvt/100, 0, 1), k =
+    ///     clamp((wvt-100)/500, 0, 1) once the clock passes 100, the
+    ///     sum h*0.6 + k*0.4), so the fresh dive speaks 24.0 and the
+    ///     long soak opens toward 96.0;
+    ///   * the color: the `visual/water_fog_color` attribute default
+    ///     -16448205 = 0x050533 — the dark navy murk (the
+    ///     computeFogColor's void-darkness scale sleeps at surface
+    ///     heights, the overworld camera never dips into its range).
+    /// `None` = the dry camera keeps the atmospheric treatment (the
+    /// fog type rides `Camera.getFluidInCamera`'s own camera-position
+    /// query — the detached view's honest law too).
+    pub fn water_fog(&self) -> Option<(f32, f32, [f32; 3])> {
+        if !self.body_state().1 {
+            return None;
+        }
+        let wvt = self.water_vision_time;
+        let h = (wvt as f32 / 100.0).clamp(0.0, 1.0);
+        let k = if wvt < 100 {
+            0.0
+        } else {
+            ((wvt as f32 - 100.0) / 500.0).clamp(0.0, 1.0)
+        };
+        let vision = h * 0.6 + k * 0.4;
+        let end = 96.0 * vision.max(0.25);
+        Some((-8.0, end, [5.0 / 255.0, 5.0 / 255.0, 51.0 / 255.0]))
+    }
+
     /// The dig sends ride the live session's own command channel (the
     /// offline lane has no session — the sends die honestly on the
     /// frame thread, exactly like the placement's echo).
@@ -3695,10 +3749,31 @@ impl App {
         // the vanilla cadence under the frame == tick model
         self.end_flash.tick(day_time);
         let sky = crate::sky::sample(day_time);
-        // the fog: the dimension's STATED pair (the nether's 10/96 — the
-        // fogged walls) when one rides the level entry, else the window
-        // treatment (the bytecode defaults 0/1024 are beyond the window)
-        let (fog_near, fog_far) = self.world_fog.unwrap_or((n * 0.55, n * 1.7));
+        // THE WATER FOG (javap WaterFogEnvironment.setupFog, the 26.2
+        // jar): the camera-in-water cell arms the murk — the pair the
+        // environment's own attribute defaults speak (-8.0, 96.0 x the
+        // vision ramp) and the 0x050533 the WATER_FOG_COLOR default
+        // speaks. The setupFog's own pair-copy (skyEnd = cloudEnd =
+        // environmentalEnd) folds the sky bands into the murk, sleeps
+        // the celestial pass (the sky-shader fog swallows the sun, moon
+        // and stars beyond the end — the murk clear paints the same
+        // color they would fog to) and rides the clouds' fog end.
+        let water_fog = self.water_fog();
+        let (fog_near, fog_far, fog_color) = match water_fog {
+            Some((start, end, murk)) => (start, end, murk),
+            None => {
+                // the dimension's STATED pair (the nether's 10/96 — the
+                // fogged walls) when one rides the level entry, else the
+                // window treatment (the bytecode defaults 0/1024 are
+                // beyond the window)
+                let (near, far) = self.world_fog.unwrap_or((n * 0.55, n * 1.7));
+                (near, far, sky.fog_color)
+            }
+        };
+        let cloud_fog_end = match water_fog {
+            Some((_, end, _)) => Some(end),
+            None => self.world_cloud_fog_end,
+        };
         let ctx = RenderCtx {
             view: cam.view(),
             proj: Mat4::perspective(
@@ -3707,7 +3782,7 @@ impl App {
                 0.1,
                 512.0,
             ),
-            fog_color: sky.fog_color,
+            fog_color,
             fog_near,
             fog_far,
         };
@@ -3716,8 +3791,13 @@ impl App {
         // the main depth buffer in the game's frame graph) -> the HAND
         // (vanilla renders the first-person arm after the level with a
         // cleared depth buffer, before any HUD).
-        fb.clear(sky.sky_color, sky.fog_color);
-        crate::sky::render_celestials(fb, &ctx, &cam, day_time, self.world_skybox, &self.end_flash);
+        match water_fog {
+            Some((_, _, murk)) => fb.clear(murk, murk),
+            None => fb.clear(sky.sky_color, sky.fog_color),
+        }
+        if water_fog.is_none() {
+            crate::sky::render_celestials(fb, &ctx, &cam, day_time, self.world_skybox, &self.end_flash);
+        }
         if let Some(quads) = &self.world_quads {
             fb.draw_quads(&ctx, quads);
         }
@@ -3743,7 +3823,7 @@ impl App {
         if !self.pieces.is_empty() {
             self.render_pieces(fb, &ctx, &cam);
         }
-        crate::sky::render_clouds(fb, &ctx, &cam, day_time, 0.0, self.world_cloud_fog_end);
+        crate::sky::render_clouds(fb, &ctx, &cam, day_time, 0.0, cloud_fog_end);
         // THE DIG LANE's frame render (the vanilla LevelRenderer's own
         // pair, both after the terrain and before the hand): the hit
         // outline (the black wireframe on the crosshair's block — every
@@ -9541,6 +9621,165 @@ mod tests {
         assert!(
             fb.color.chunks(3).all(|px| px == [255, 255, 255]),
             "the player-less scene draws no overlay"
+        );
+    }
+
+    // THE WATER VISION CLOCK (javap LocalPlayer.tick, the 26.2 jar's
+    // offsets 737-812): the dive speaks +1/tick, the air drains
+    // -10/tick, the clamps [0, 600] the bytecode's own Mth.clamp
+    // speaks.
+    #[test]
+    fn the_water_vision_clock_rides_the_eye() {
+        // THE DIVE: the pool's eye climbs one tick per game tick
+        let mut app = App::new(3);
+        app.enter_world();
+        crate::headless::seed_scene(
+            &mut app,
+            &crate::headless::SceneOpts {
+                body: true,
+                water_pool: true,
+                perspective: Some(crate::camera::CameraType::FirstPerson),
+                ..crate::headless::SceneOpts::default()
+            },
+        )
+        .unwrap();
+        assert_eq!(app.water_vision_time, 0, "the fresh spawn's clock rests");
+        app.update();
+        assert_eq!(app.water_vision_time, 1, "the dive speaks +1/tick");
+        app.water_vision_time = 599;
+        app.update();
+        assert_eq!(app.water_vision_time, 600, "the clamp [0, 600] the Mth.clamp speaks");
+        app.update();
+        assert_eq!(app.water_vision_time, 600, "the clock pins at 600");
+
+        // THE SURFACE: the dry eye drains ten ticks a game tick
+        let mut dry = App::new(3);
+        dry.enter_world();
+        crate::headless::seed_scene(
+            &mut dry,
+            &crate::headless::SceneOpts {
+                body: true,
+                perspective: Some(crate::camera::CameraType::FirstPerson),
+                ..crate::headless::SceneOpts::default()
+            },
+        )
+        .unwrap();
+        dry.water_vision_time = 100;
+        dry.update();
+        assert_eq!(dry.water_vision_time, 90, "the air speaks -10/tick");
+        dry.water_vision_time = 3;
+        dry.update();
+        assert_eq!(dry.water_vision_time, 0, "the clamp floors the drain");
+        dry.update();
+        assert_eq!(dry.water_vision_time, 0, "the dead clock stays dead");
+    }
+
+    // THE WATER FOG PAIR (javap WaterFogEnvironment.setupFog +
+    // EnvironmentAttributes <clinit>): the start -8.0, the end 96.0 x
+    // max(0.25, getWaterVision()) — the ramp's own 24.0 / 57.6 / 76.8 /
+    // 96.0 stations — the color the WATER_FOG_COLOR default 0x050533.
+    #[test]
+    fn the_water_fog_pair_rides_the_vision_ramp() {
+        let mut app = App::new(3);
+        app.enter_world();
+        crate::headless::seed_scene(
+            &mut app,
+            &crate::headless::SceneOpts {
+                body: true,
+                water_pool: true,
+                perspective: Some(crate::camera::CameraType::FirstPerson),
+                ..crate::headless::SceneOpts::default()
+            },
+        )
+        .unwrap();
+        let murk = [5.0 / 255.0, 5.0 / 255.0, 51.0 / 255.0];
+        // the fresh dive: vision 0, the 0.25 floor speaks 24.0
+        app.water_vision_time = 0;
+        let (start, end, color) = app.water_fog().expect("the pool arms the murk");
+        assert_eq!(start, -8.0, "the start the bytecode default speaks");
+        assert!((end - 24.0).abs() < 1e-3, "the fresh dive's end is the 0.25 floor: {end}");
+        assert_eq!(color, murk, "the murk is the attribute's 0x050533");
+        // the ramp's first station: wvt 100 -> vision 0.6 -> 57.6
+        app.water_vision_time = 100;
+        let (_, end, _) = app.water_fog().unwrap();
+        assert!((end - 96.0 * 0.6).abs() < 1e-2, "the 100-tick station's end: {end}");
+        // the mid ramp: wvt 350 -> h 1.0 + k 0.5 -> vision 0.8 -> 76.8
+        app.water_vision_time = 350;
+        let (_, end, _) = app.water_fog().unwrap();
+        assert!((end - 96.0 * 0.8).abs() < 1e-2, "the mid ramp's end: {end}");
+        // the ramp's full open: wvt 600 -> vision 1.0 -> 96.0
+        app.water_vision_time = 600;
+        let (_, end, _) = app.water_fog().unwrap();
+        assert!((end - 96.0).abs() < 1e-2, "the soaked eye's end: {end}");
+
+        // THE DRY CAMERA: no murk at all — the atmospheric treatment
+        // stays (the fog type rides the camera-position query)
+        let mut dry = App::new(3);
+        dry.enter_world();
+        crate::headless::seed_scene(
+            &mut dry,
+            &crate::headless::SceneOpts {
+                body: true,
+                perspective: Some(crate::camera::CameraType::FirstPerson),
+                ..crate::headless::SceneOpts::default()
+            },
+        )
+        .unwrap();
+        dry.water_vision_time = 600;
+        assert!(dry.water_fog().is_none(), "the dry camera keeps the sky");
+    }
+
+    // THE MURK'S OWN FRAME (the render path): the dive's world frame
+    // clears to the murk exactly (the skyEnd law — the sky bands fold
+    // into the fog color, the celestials sleep inside it) and the
+    // soaked eye's open fog speaks a different frame than the fresh
+    // dive's — the ramp rides the render.
+    #[test]
+    fn the_water_fog_paints_the_murk_over_the_sky() {
+        let mut app = App::new(3);
+        app.enter_world();
+        crate::headless::seed_scene(
+            &mut app,
+            &crate::headless::SceneOpts {
+                body: true,
+                water_pool: true,
+                perspective: Some(crate::camera::CameraType::FirstPerson),
+                ..crate::headless::SceneOpts::default()
+            },
+        )
+        .unwrap();
+        let murk = [5u8, 5u8, 51u8];
+        // THE FRESH DIVE: the clear bands speak the murk exactly — the
+        // frame carries the attribute's own color where no quad covers
+        app.water_vision_time = 0;
+        let mut fb = crate::raster::Framebuf::new(64, 64);
+        fb.color.fill(0);
+        app.render_world_3d(&mut fb);
+        let murk_pixels = fb
+            .color
+            .chunks_exact(3)
+            .filter(|px| **px == murk)
+            .count();
+        assert!(
+            murk_pixels > 0,
+            "the murk clear survives somewhere in the dive's frame"
+        );
+        // THE RAMP RIDES THE RENDER: the soaked eye (wvt 600, end 96)
+        // sees a different frame than the fresh dive (end 24) — the
+        // fog pair's own law speaks through the pixels
+        app.water_vision_time = 600;
+        let mut open = crate::raster::Framebuf::new(64, 64);
+        open.color.fill(0);
+        app.render_world_3d(&mut open);
+        let moved = open
+            .color
+            .chunks_exact(3)
+            .zip(fb.color.chunks_exact(3))
+            .filter(|(a, b)| a != b)
+            .count();
+        assert!(
+            moved > 64 * 64 / 10,
+            "the fog end's open speaks through the frame: {moved} pixels moved"
         );
     }
 }

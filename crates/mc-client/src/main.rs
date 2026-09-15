@@ -188,6 +188,14 @@ struct Cli {
     /// gate speaks (the underwater overlay, no scripted blue).
     #[arg(long)]
     water_pool: bool,
+    /// Seed the water vision clock (javap `LocalPlayer.waterVisionTime`,
+    /// the 26.2 jar) — the deterministic stand-in for the soak time the
+    /// live drift can't hold (the water's own push walks the body out
+    /// of a staged pool). 0 = the fresh dive's densest murk (the 0.25
+    /// floor's end 24.0), 600 = the fully soaked eye's open fog (end
+    /// 96.0) — the getWaterVision ramp's own stations.
+    #[arg(long, default_value_t = 0)]
+    water_vision: i32,
     #[arg(long, default_value = "render.png")]
     out: PathBuf,
     /// Path to official asset index json (enables real texture-average colors).
@@ -244,6 +252,7 @@ fn main() -> Result<()> {
             body_fire: cli.body_fire,
             lava_pool: cli.lava_pool,
             water_pool: cli.water_pool,
+            water_vision: cli.water_vision,
         };
         headless::render_gui_screen_opts(
             screen,

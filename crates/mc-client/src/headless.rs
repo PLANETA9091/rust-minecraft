@@ -168,6 +168,11 @@ pub struct SceneOpts {
     /// screen overlay reads the honest gate off the seeded scene — no
     /// scripted blue.
     pub water_pool: bool,
+    /// The water vision clock's seed (javap `LocalPlayer.waterVisionTime`)
+    /// — the deterministic stand-in for the soak time the live drift
+    /// can't hold in a staged pool; 0 = the fresh dive, 600 = the fully
+    /// soaked eye (the getWaterVision ramp's own ends 24.0 / 96.0).
+    pub water_vision: i32,
 }
 
 impl SceneOpts {
@@ -191,6 +196,7 @@ impl SceneOpts {
             || self.body_fire.is_some()
             || self.lava_pool
             || self.water_pool
+            || self.water_vision != 0
             || self.walk_ticks > 0
             || self.settle_ticks > 0
     }
@@ -411,6 +417,14 @@ pub fn seed_scene(app: &mut crate::screens::App, opts: &SceneOpts) -> Result<()>
                 b.on_ground = true;
             }
         }
+    }
+    if opts.water_vision != 0 {
+        // THE SOAK CLOCK'S SEED (the --zombie-fire discipline): the
+        // deterministic stand-in for the soak time the live drift
+        // can't hold — the eye's +1/tick climb needs a pool the water's
+        // own push never walks out of. The getWaterVision ramp reads
+        // the seeded clock (the water fog's end distance law).
+        app.water_vision_time = opts.water_vision.clamp(0, 600);
     }
     if opts.mobs > 0 {
         spawn_showcase_mobs(app, opts.mobs)?;

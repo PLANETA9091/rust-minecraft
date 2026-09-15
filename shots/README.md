@@ -103,6 +103,38 @@ cargo run -p mc-client --release -- --headless --screen world --seed 42 \
 # --perspective third-back shows the gate's sleep
 ```
 
+## The water-fog lane (the murk that hides the distance) — v0.3.165
+
+The FogRenderer's own lane (javap the 26.2 jar): the fog type rides
+`Camera.getFluidInCamera`'s own camera-position query (the detached
+view's honest law too), the `WaterFogEnvironment.setupFog` pair — the
+start the `visual/water_fog_start_distance` default -8.0 speaks, the
+end `visual/water_fog_end_distance`'s 96.0 x max(0.25, getWaterVision())
+— and the color the `visual/water_fog_color` default -16448205
+(0x050533) speaks. The vision is `LocalPlayer.getWaterVision`'s own
+two-segment ramp over the `waterVisionTime` clock the tick feeds
+(+1/tick under, -10/tick out, the clamp [0, 600]): the fresh dive
+speaks 24.0, the 100-tick soak 57.6, the full 600-tick soak 96.0. The
+setupFog's own pair-copy (skyEnd = cloudEnd = environmentalEnd) folds
+the sky bands into the murk and sleeps the celestial pass inside it.
+
+| frame | the scene |
+|---|---|
+| `underwater_fog.png` | THE FRESH DIVE: the eye one cell under the surface, the clock at 0 — the end 24.0 murk pulls the basin walls toward the navy and the sky bands fold into the 0x050533 clear |
+| `underwater_fog_settled.png` | THE SOAKED EYE: `--water-vision 600` — the ramp's full open, the end 96.0 — the same basin reads bright, the far walls clear of the murk |
+| `underwater_fog_back.png` | the detached camera behind the avatar — NO murk (the fog type rides the camera cell, and the detached camera's cell is dry) |
+
+Regenerate the family:
+
+```sh
+cargo run -p mc-client --release -- --screen world --body --water-pool \
+  --perspective first --out shots/underwater_fog.png
+# --water-vision 600 rides the soak clock's seed (the --zombie-fire
+# discipline: the deterministic stand-in for the soak time the live
+# drift can't hold — the water's own push walks the body out of a
+# staged pool), --perspective third-back shows the camera-cell gate
+```
+
 ## The zombie lane (the first live mob) — v0.3.155+
 
 The night spawner, the chase, the charged fist, the knockback, the
