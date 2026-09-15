@@ -110,6 +110,69 @@ struct Cli {
     /// The default (wide classic) is what the pixel goldens render.
     #[arg(long)]
     slim_arm: bool,
+    // ---- THE SHOTS LANE (the shots/ gallery's own options — the
+    // deterministic scene seeds the world shots speak; every flag
+    // absent = the goldens' own shape, the pixel matrix untouched) ----
+    /// The F5 camera state for the world shots: `first`, `third-back`
+    /// or `third-front` (the CameraType cycle's own states).
+    #[arg(long)]
+    perspective: Option<String>,
+    /// Spawn the deterministic player body at the spawn column's
+    /// surface facing east (the third-person avatar's camera entity).
+    #[arg(long)]
+    body: bool,
+    /// The body's facing override (the vanilla yaw degrees, e.g. `90`
+    /// faces west) — the shots stage the encounter the facing names.
+    #[arg(long)]
+    body_yaw: Option<f32>,
+    /// The body's look pitch override (the vanilla degrees, positive
+    /// up, e.g. `-20` looks down) — the detached camera rides it.
+    #[arg(long)]
+    body_pitch: Option<f32>,
+    /// The body's mid-stride walk seed "speed,position" (e.g.
+    /// "0.9,5.0") — the WalkAnimationState's own pair the avatar's
+    /// limb cosines speak.
+    #[arg(long)]
+    body_walk: Option<String>,
+    /// The resolved crouch pose (rides the walk ticks when they run).
+    #[arg(long)]
+    body_crouch: bool,
+    /// Spawn one deterministic zombie approaching the body (the
+    /// walkable-approach scan's own cell, the mid-stride walk).
+    #[arg(long)]
+    zombie: bool,
+    /// The zombie's remainingFireTicks (the igniteForSeconds(8) law
+    /// speaks 160).
+    #[arg(long)]
+    zombie_fire: Option<i32>,
+    /// The zombie's deathTime (0..20 — the death-flip lane the render
+    /// state's deathTime+partial read speaks).
+    #[arg(long)]
+    zombie_death: Option<i32>,
+    /// The zombie's aggressive raised-arms pose
+    /// (ZombieRenderState.isAggressive).
+    #[arg(long)]
+    zombie_aggro: bool,
+    /// The zombie's hurtTime (the OverlayTexture's 0.7 mix).
+    #[arg(long)]
+    zombie_hurt: Option<i32>,
+    /// Game ticks with the forward impulse held (the walk state
+    /// evolves through the body's own update, the body travels its
+    /// facing).
+    #[arg(long, default_value_t = 0)]
+    walk_ticks: u32,
+    /// Input-less game ticks after the walk (the AI chase, the burn
+    /// roll, the idle bob live through these).
+    #[arg(long, default_value_t = 0)]
+    settle_ticks: u32,
+    /// Showcase zombies placed ahead of the body along its facing
+    /// (the spawn law's own ground scan; requires --body).
+    #[arg(long, default_value_t = 0)]
+    mobs: usize,
+    /// Ignite every placed zombie for this many seconds (the
+    /// igniteForSeconds law).
+    #[arg(long, default_value_t = 0.0)]
+    ignite: f32,
     #[arg(long, default_value = "render.png")]
     out: PathBuf,
     /// Path to official asset index json (enables real texture-average colors).
@@ -132,7 +195,39 @@ fn main() -> Result<()> {
 
     // ---- headless GUI screenshots (boot chain / menus) ----
     if let Some(screen) = &cli.screen {
-        headless::render_gui_screen(
+        // THE SHOTS LANE's parse (the loud refuse — a guessed name
+        // would render a guessed view/pose):
+        let perspective = cli
+            .perspective
+            .as_deref()
+            .map(crate::headless::parse_perspective)
+            .transpose()?;
+        let body_walk = cli
+            .body_walk
+            .as_deref()
+            .map(|s| {
+                crate::headless::parse_walk_seed(s)
+                    .ok_or_else(|| anyhow::anyhow!("--body-walk must be \"speed,position\" (the WalkAnimationState pair), got {s:?}"))
+            })
+            .transpose()?;
+        let opts = crate::headless::SceneOpts {
+            perspective,
+            body: cli.body,
+            body_yaw: cli.body_yaw,
+            body_pitch: cli.body_pitch,
+            body_walk,
+            body_crouch: cli.body_crouch,
+            zombie: cli.zombie,
+            zombie_fire: cli.zombie_fire,
+            zombie_death: cli.zombie_death,
+            zombie_aggro: cli.zombie_aggro,
+            zombie_hurt: cli.zombie_hurt,
+            walk_ticks: cli.walk_ticks,
+            settle_ticks: cli.settle_ticks,
+            mobs: cli.mobs,
+            ignite_secs: cli.ignite,
+        };
+        headless::render_gui_screen_opts(
             screen,
             cli.ui_frame,
             cli.seed,
@@ -142,6 +237,7 @@ fn main() -> Result<()> {
             cli.held_charge.as_deref(),
             cli.swing_progress,
             cli.slim_arm,
+            &opts,
             &cli.out,
         )?;
         return Ok(());

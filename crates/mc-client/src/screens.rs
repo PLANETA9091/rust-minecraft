@@ -4986,8 +4986,10 @@ fn food_origin(gui_w: i32, gui_h: i32) -> (i32, i32) {
     (gui_w / 2 + 91 - HEART, gui_h - 39)
 }
 
-/// Top solid block y at (x, z) — the spawn column scan (CHUNK_Y when open).
-fn top_solid_y(world: &crate::world::World, x: i32, z: i32) -> i32 {
+/// Top solid block y at (x, z) — the spawn column scan (CHUNK_Y when
+/// open). The headless scene seeding rides the same scan (the zombie
+/// lane's spawn column).
+pub fn top_solid_y(world: &crate::world::World, x: i32, z: i32) -> i32 {
     for y in (0..crate::world::CHUNK_Y as i32).rev() {
         if world.get(x, y, z) != crate::world::AIR {
             return y + 1;

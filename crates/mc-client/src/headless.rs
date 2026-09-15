@@ -86,6 +86,374 @@ pub fn render_frames(
     Ok(timings)
 }
 
+/// THE SHOTS LANE's seeds — the deterministic stand-ins for the state
+/// the live client carries (the F5 camera's cycle, the body the
+/// third-person avatar renders, the mob lane's zombie). Every field
+/// defaults absent, so the pixel-goldens' scenes stay untouched bit
+/// for bit: a default `SceneOpts` seeds nothing, renders nothing new,
+/// changes nothing the goldens pin.
+#[derive(Default)]
+pub struct SceneOpts {
+    /// The F5 camera (the vanilla `CameraType` CODEC names, parsed by
+    /// the CLI's `--perspective` before it lands here). `None` keeps
+    /// the first-person default.
+    pub perspective: Option<crate::camera::CameraType>,
+    /// Spawn the deterministic player body (the third-person avatar's
+    /// camera entity) at the spawn column's surface, facing east — the
+    /// vanilla yaw -90 (the same east the first-person camera faces).
+    pub body: bool,
+    /// The body's facing override (the vanilla yaw degrees — the seed's
+    /// own east -90 rides when absent; the shots stage the encounter
+    /// the facing names).
+    pub body_yaw: Option<f32>,
+    /// The body's look pitch override (the vanilla degrees, positive
+    /// up — the detached camera rides it; the shots stage the ground
+    /// the look opens).
+    pub body_pitch: Option<f32>,
+    /// The body's mid-stride walk seed "speed,position" — the
+    /// WalkAnimationState's own pair the avatar's limb cosines speak
+    /// (e.g. "0.9,5.0"). The rest pose (no seed) rides speed 0.
+    pub body_walk: Option<(f32, f32)>,
+    /// The resolved crouch pose (the POSES table's own 1.5-body fold
+    /// the avatar's setupAnim crouch branch speaks).
+    pub body_crouch: bool,
+    /// Spawn one deterministic zombie 4 blocks east of the body (or of
+    /// the spawn column when no body) at THAT column's surface, facing
+    /// west — toward the body the way the mob lane's AI approaches.
+    pub zombie: bool,
+    /// The zombie's remainingFireTicks (the sun-burn brand's own
+    /// clock; the igniteForSeconds(8) law speaks 160).
+    pub zombie_fire: Option<i32>,
+    /// The zombie's deathTime (0..20 — the death-flip lane the render
+    /// state's deathTime+partial read speaks).
+    pub zombie_death: Option<i32>,
+    /// The aggressive raised-arms pose (`ZombieRenderState.isAggressive`).
+    pub zombie_aggro: bool,
+    /// The hurt-flash clock (hurtTime — the OverlayTexture's 0.7 mix).
+    pub zombie_hurt: Option<i32>,
+    /// THE TICK LANE: game ticks with the FORWARD impulse held — the
+    /// body's own movement input through the App's update (the vanilla
+    /// tick the windowed loop speaks: the travel, the walk store's
+    /// evolution, the footsteps). The seeded pose is the state the
+    /// ticks START from. 0 = the static pose the seeds speak.
+    pub walk_ticks: u32,
+    /// Input-less game ticks (fed zero impulses) — the mob AI thinks,
+    /// the burn roll speaks, the idle bob lives: the vanilla laws
+    /// evolve the seeded scene the way the windowed loop would.
+    pub settle_ticks: u32,
+    /// Showcase zombies placed AHEAD of the body along its facing —
+    /// 2.5 + 1.6*i blocks out, each on the spawn law's own ground
+    /// scan (solid ground, free fluid-free head room), the initial
+    /// yaw facing the player. Stacks with `zombie`.
+    pub mobs: usize,
+    /// Ignite every placed zombie for this many seconds (the
+    /// igniteForSeconds' own remainingFireTicks law — 8.0 speaks 160).
+    pub ignite_secs: f32,
+}
+
+impl SceneOpts {
+    /// Whether ANY seed rides the opts (the CLI's loud-refuse gate:
+    /// a seeded menu screen would silently render a guessed gallery,
+    /// so the seeded entry demands a world screen).
+    pub fn is_seeded(&self) -> bool {
+        self.perspective.is_some()
+            || self.body
+            || self.body_yaw.is_some()
+            || self.body_pitch.is_some()
+            || self.body_walk.is_some()
+            || self.body_crouch
+            || self.zombie
+            || self.zombie_fire.is_some()
+            || self.zombie_death.is_some()
+            || self.zombie_aggro
+            || self.zombie_hurt.is_some()
+            || self.mobs > 0
+            || self.ignite_secs > 0.0
+            || self.walk_ticks > 0
+            || self.settle_ticks > 0
+    }
+}
+
+/// Parse the CLI's walk seed "speed,position" — anything else refuses
+/// loudly (a guessed pose would render a guessed body).
+pub fn parse_walk_seed(s: &str) -> Option<(f32, f32)> {
+    let (speed, position) = s.split_once(',')?;
+    let speed = speed.trim().parse::<f32>().ok()?;
+    let position = position.trim().parse::<f32>().ok()?;
+    Some((speed, position))
+}
+
+/// The CLI name -> the CameraType (the F5 cycle's own three states —
+/// an unknown name refuses loudly; a guessed state would render a
+/// guessed camera).
+pub fn parse_perspective(name: &str) -> anyhow::Result<crate::camera::CameraType> {
+    match name {
+        "first" => Ok(crate::camera::CameraType::FirstPerson),
+        "third-back" => Ok(crate::camera::CameraType::ThirdPersonBack),
+        "third-front" => Ok(crate::camera::CameraType::ThirdPersonFront),
+        other => anyhow::bail!(
+            "perspective must be \"first\", \"third-back\" or \"third-front\" (the CameraType cycle's own states), got {other:?}"
+        ),
+    }
+}
+
+/// Seed the deterministic scene states onto a world-screen App — the
+/// shots lane's own injection point (the world exists = enter_world
+/// already ran; the menu scenes carry no level and stay untouched).
+/// The mobs/ignite branches refuse loudly when the stage is missing
+/// (a silently shorter cast would render a guessed gallery).
+pub fn seed_scene(app: &mut crate::screens::App, opts: &SceneOpts) -> Result<()> {
+    if app.world_quads.is_none() {
+        return Ok(()); // the menus have no level — nothing to seed
+    }
+    if let Some(p) = opts.perspective {
+        app.perspective = p;
+    }
+    let n = app.world_size;
+    if opts.body {
+        // the spawn column's surface: the same scan enter_world spoke
+        // for spawn_y, the feet AT the surface (the AABB's bottom)
+        let y = app.spawn_y as f64;
+        let mut body = crate::body::PlayerBody::new(
+            n as f64 / 2.0 + 0.5,
+            y,
+            n as f64 / 2.0 + 0.5,
+            opts.body_yaw.unwrap_or(-90.0), // east — the sun-rise facing
+            opts.body_pitch.unwrap_or(0.0),
+        );
+        body.on_ground = true;
+        if opts.body_crouch {
+            body.crouching = true;
+            body.want_crouch = true;
+        }
+        if let Some((speed, position)) = opts.body_walk {
+            body.walk.speed_old = speed;
+            body.walk.speed = speed;
+            body.walk.position = position;
+        }
+        app.body = Some(body);
+    }
+    if opts.zombie {
+        // THE APPROACH CELL: the AI's own lane walks on GROUND — the
+        // deterministic stand-in scans the columns around the body for
+        // the first WALKABLE one (same surface level, the pathable
+        // approach the follow-goal settles into), radii 3..=8, the
+        // fixed east->west->north->south ring order. Every candidate
+        // refuses unless its surface equals the body's own — a zombie
+        // on a hilltop above the camera renders a guessed scene.
+        let bx = n / 2;
+        let bz = n / 2;
+        let spawn_y = app.spawn_y;
+        let mut cell = None;
+        'ring: for d in 3..=8i32 {
+            let candidates = [(bx + d, bz), (bx - d, bz), (bx, bz + d), (bx, bz - d)];
+            for (cx, cz) in candidates {
+                let y = app
+                    .offline_world
+                    .as_ref()
+                    .map(|w| crate::screens::top_solid_y(w, cx, cz))
+                    .unwrap_or(spawn_y);
+                if y == spawn_y {
+                    cell = Some((cx, cz, y));
+                    break 'ring;
+                }
+            }
+        }
+        let (cx, cz, y) = cell.unwrap_or((bx + 4, bz, spawn_y));
+        let mut z = crate::mob::Zombie::new(
+            1,
+            cx as f64 + 0.5,
+            y as f64,
+            cz as f64 + 0.5,
+            262, // the 26.2 jar's own number — as good a seed as any
+        );
+        // facing the body it walks to: the cardinal the scan landed on
+        // names the yaw (west if east of the body, east if west,
+        // south if north, north if south — the vanilla yaw degrees)
+        z.yaw = if cx > bx {
+            90.0
+        } else if cx < bx {
+            -90.0
+        } else if cz > bz {
+            180.0
+        } else {
+            0.0
+        };
+        z.on_ground = true;
+        z.age_ticks = 40; // two seconds in — the bob's stable mid value
+        z.aggressive = opts.zombie_aggro;
+        z.fire_ticks = opts.zombie_fire.unwrap_or(0);
+        z.death_time = opts.zombie_death.unwrap_or(0);
+        z.hurt_time = opts.zombie_hurt.unwrap_or(0);
+        // the approach's mid-stride (the walk store the limb cosines
+        // speak — the same pair the live AI's distance feed grows)
+        z.walk.speed_old = 0.7;
+        z.walk.speed = 0.7;
+        z.walk.position = 2.5;
+        app.mobs.push(z);
+    }
+    if opts.mobs > 0 {
+        spawn_showcase_mobs(app, opts.mobs)?;
+    }
+    if opts.ignite_secs > 0.0 {
+        // THE BRAND (igniteForSeconds' own law: remainingFireTicks =
+        // max(remaining, secs * 20) — the seeded clock only grows)
+        let ticks = (opts.ignite_secs * 20.0) as i32;
+        for mob in app.mobs.iter_mut() {
+            mob.fire_ticks = mob.fire_ticks.max(ticks);
+        }
+    }
+    if let Some(dt) = opts.zombie_death.filter(|d| *d > 0) {
+        // THE DEATH CLOCK's own seed (the same only-grows law the
+        // brand speaks) — the death-flip lane renders mid-flip at the
+        // clock's value, the 20-tick removal never runs headless)
+        for mob in app.mobs.iter_mut() {
+            mob.death_time = mob.death_time.max(dt);
+        }
+    }
+    Ok(())
+}
+
+/// The showcase zombies' placement (the spawn law's own ground scan):
+/// n zombies AHEAD of the body along its facing — the i-th one seeks
+/// outward from 2.5 + 1.6*i blocks, stepping the ray in 1.0-block
+/// increments up to 12 more, and lands at the CENTER of the first
+/// cell whose ground is solid and whose head room is air and
+/// fluid-free (the spawn law's own water gate — a pool column never
+/// hosts one, the ray walks past it), the initial yaw already facing
+/// the player. THE LATERAL SPREAD: every mob rides a perpendicular
+/// offset — +1.1 right for even i, -1.1-1.1*k left for odd — so the
+/// cast flanks the body instead of stacking into its silhouette (an
+/// on-axis zombie hides behind the very avatar it approaches). No RNG
+/// in the placement (a pinned shot needs a pinned stage); the
+/// per-entity seed rides the index so the AI stream stays
+/// deterministic.
+const SHOWCASE_SEEK_BASE: f64 = 2.5;
+const SHOWCASE_SEEK_STRIDE: f64 = 1.6;
+const SHOWCASE_SEEK_EXTRA: f64 = 12.0;
+
+/// One column's ground verdict (the spawn law's own scan): the
+/// topmost solid with a free, fluid-free head cell — the water
+/// surface never hosts one.
+fn showcase_ground_at(
+    w: &crate::world::World,
+    sx: i32,
+    sz: i32,
+    top: i32,
+) -> Option<i32> {
+    for y in (0..top).rev() {
+        if crate::body::solid(w, sx, y, sz)
+            && !crate::body::solid(w, sx, y + 1, sz)
+            && w.get(sx, y + 1, sz) != crate::world::WATER
+        {
+            return Some(y + 1);
+        }
+    }
+    None
+}
+
+fn spawn_showcase_mobs(app: &mut crate::screens::App, n: usize) -> Result<()> {
+    let (bx, bz, body_yaw) = {
+        let body = app.body.as_ref().ok_or_else(|| {
+            anyhow::anyhow!("--mobs requires --body (the placement rides the player's position)")
+        })?;
+        (body.x, body.z, body.yaw)
+    };
+    // THE FACING (wire_angles' own inverse: cam.yaw = body yaw + PI;
+    // the camera forward's xz pair = (sin, -cos))
+    let cam_yaw = body_yaw.to_radians() + std::f32::consts::PI;
+    let (fx, fz) = (cam_yaw.sin() as f64, -(cam_yaw.cos() as f64));
+    // THE PERPENDICULAR (the left-hand pair: rotate the facing 90°)
+    let (px, pz) = (-fz, fx);
+    // the placements resolve first (the world reads before the push)
+    let mut placed: Vec<(f64, f64, f64)> = Vec::with_capacity(n);
+    {
+        let w = app.offline_world.as_ref().ok_or_else(|| {
+            anyhow::anyhow!("--mobs requires the offline world (the world screen owns one)")
+        })?;
+        let size = w.size_blocks() as i32;
+        for i in 0..n {
+            let base = SHOWCASE_SEEK_BASE + SHOWCASE_SEEK_STRIDE * i as f64;
+            // THE LATERAL (the flank offset the silhouette law speaks:
+            // even i right, odd i left, each wider than the last)
+            let side = if i % 2 == 0 { 1.0 } else { -1.0 };
+            let lat = side * (1.1 + 1.1 * (i as f64 / 2.0).floor());
+            let (ox, oz) = (px * lat, pz * lat);
+            // THE SEEK (the ray walk past the water): the first valid
+            // column wins, the bound refuses loudly
+            let mut picked: Option<(i32, i32, i32)> = None;
+            let mut probe = base;
+            while probe <= base + SHOWCASE_SEEK_EXTRA {
+                let (mx, mz) = (bx + fx * probe + ox, bz + fz * probe + oz);
+                let (sx, sz) = (mx.floor() as i32, mz.floor() as i32);
+                if sx < 1 || sx >= size - 1 || sz < 1 || sz >= size - 1 {
+                    break; // the world's edge ends the seek
+                }
+                if let Some(fy) = showcase_ground_at(w, sx, sz, size) {
+                    picked = Some((sx, fy, sz));
+                    break;
+                }
+                probe += 1.0;
+            }
+            let (sx, fy, sz) = picked.ok_or_else(|| {
+                anyhow::anyhow!(
+                    "no solid ground along the facing ray for mob {i} (body at {bx},{bz})"
+                )
+            })?;
+            placed.push((sx as f64 + 0.5, fy as f64, sz as f64 + 0.5));
+        }
+    }
+    let first_id = app.next_mob_id;
+    app.next_mob_id += n as i32;
+    for (i, (mx, my, mz)) in placed.into_iter().enumerate() {
+        let mut z = crate::mob::Zombie::new(first_id + i as i32, mx, my, mz, 9000 + i as u64);
+        // the initial yaw faces the player (the AI's own atan2(-dx, dz)
+        // law over the mob->player direction; the chase refines it the
+        // first tick it thinks)
+        let (dx, dz) = (bx - mx, bz - mz);
+        z.yaw = (-dx).atan2(dz).to_degrees() as f32;
+        app.mobs.push(z);
+    }
+    Ok(())
+}
+
+/// THE TICK LANE (the seeded scene's evolution): the walk ticks feed
+/// the body's own movement input through the App's update (the vanilla
+/// tick the windowed loop speaks — the travel, the walk store's
+/// evolution, the footsteps, the mob lane's clocks), the settle ticks
+/// feed nothing (the AI chase, the burn roll, the idle bob live
+/// through them). The frozen swing (a seeded render slice) re-freezes
+/// AFTER the ticks — a real tick resumes the clock, the freeze re-pins
+/// the render's slice.
+pub fn tick_scene(
+    app: &mut crate::screens::App,
+    opts: &SceneOpts,
+    swing_progress: Option<f32>,
+) -> Result<()> {
+    if opts.walk_ticks == 0 && opts.settle_ticks == 0 {
+        return Ok(()); // the static lane — nothing to evolve
+    }
+    anyhow::ensure!(
+        app.screen == crate::screens::ScreenKind::World,
+        "the tick lane stages the world screens only (world | worldnight | pause)"
+    );
+    for _ in 0..opts.walk_ticks {
+        // the forward impulse (the crouch rides the body's own seed —
+        // the crouch-walk the POSES table's 1.5-body fold speaks)
+        let crouch = app.body.as_ref().map(|b| b.want_crouch).unwrap_or(false);
+        app.on_movement_input(1.0, 0.0, false, crouch, false);
+        app.update();
+    }
+    for _ in 0..opts.settle_ticks {
+        app.on_movement_input(0.0, 0.0, false, false, false);
+        app.update();
+    }
+    if let Some(p) = swing_progress {
+        app.swing = crate::hand::SwingState::frozen_at(p);
+    }
+    Ok(())
+}
+
 /// Render one deterministic GUI screen (boot chain / menus) to PNG.
 /// `frame` drives boot progress, splash pulse and music scheduling.
 /// `held_item` (a model id, e.g. "item/iron_sword") holds that item in
@@ -111,6 +479,42 @@ pub fn render_gui_screen(
     held_charge: Option<&str>,
     swing_progress: Option<f32>,
     slim_arm: bool,
+    out_path: &Path,
+) -> Result<()> {
+    // the goldens' own entry — the default opts seed NOTHING, so this
+    // call renders the exact pixels the pre-shots-lane scenes spoke
+    render_gui_screen_opts(
+        screen,
+        frame,
+        seed,
+        width,
+        height,
+        held_item,
+        held_charge,
+        swing_progress,
+        slim_arm,
+        &SceneOpts::default(),
+        out_path,
+    )
+}
+
+/// The seeded entry — the shots lane's flags land here (the
+/// `SceneOpts` above, plus the tick lane the walk/settle fields
+/// speak). Every goldens call rides the plain `render_gui_screen`
+/// delegate, so the default opts never touch those pixels; a SEEDED
+/// call demands a world screen (the menus refuse loudly — a silently
+/// seeded menu would render a guessed gallery).
+pub fn render_gui_screen_opts(
+    screen: &str,
+    frame: u64,
+    seed: u64,
+    width: usize,
+    height: usize,
+    held_item: Option<&str>,
+    held_charge: Option<&str>,
+    swing_progress: Option<f32>,
+    slim_arm: bool,
+    opts: &SceneOpts,
     out_path: &Path,
 ) -> Result<()> {
     use crate::gui::GuiAssets;
@@ -196,6 +600,18 @@ pub fn render_gui_screen(
         ),
     }
 
+    // THE SHOTS LANE's gate (the seeded calls stage the world screens
+    // only) and its injection points: the seeds land on the set screen
+    // state, then the tick lane evolves it through the vanilla laws.
+    if opts.is_seeded() {
+        anyhow::ensure!(
+            app.screen == ScreenKind::World,
+            "the scene seeds stage the world screens only (world | worldnight | pause), got {screen:?}"
+        );
+    }
+    seed_scene(&mut app, opts)?;
+    tick_scene(&mut app, opts, swing_progress)?;
+
     let mut fb = Framebuf::new(width, height);
     let mut assets = GuiAssets::open("assets-cache/jar");
     app.render(&mut fb, &mut assets);
@@ -205,4 +621,269 @@ pub fn render_gui_screen(
         out_path.display()
     );
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// The default opts seed NOTHING — the goldens' scenes stay the
+    /// exact states they rendered before the shots lane existed (the
+    /// no-body, no-mob, first-person determinism).
+    #[test]
+    fn the_default_opts_seed_nothing() {
+        let mut app = crate::screens::App::new(262);
+        app.enter_world();
+        seed_scene(&mut app, &SceneOpts::default()).unwrap();
+        tick_scene(&mut app, &SceneOpts::default(), None).unwrap();
+        assert!(app.body.is_none());
+        assert!(app.mobs.is_empty());
+        assert!(app.perspective.is_first_person());
+    }
+
+    /// The body seed stands on the spawn column's surface facing east,
+    /// the walk pair rides the store verbatim, the crouch flag folds
+    /// the resolved pose (the POSES table's own body).
+    #[test]
+    fn the_body_seed_stands_on_the_spawn_column() {
+        let mut app = crate::screens::App::new(262);
+        app.enter_world();
+        seed_scene(
+            &mut app,
+            &SceneOpts {
+                body: true,
+                body_walk: Some((0.9, 5.0)),
+                body_crouch: true,
+                perspective: Some(crate::camera::CameraType::ThirdPersonBack),
+                ..SceneOpts::default()
+            },
+        )
+        .unwrap();
+        let body = app.body.expect("the body seed must land");
+        assert!(body.on_ground);
+        assert_eq!(body.yaw, -90.0); // east
+        assert_eq!(body.y as f32, app.spawn_y as f32); // feet AT the surface
+        assert_eq!(body.walk.speed, 0.9);
+        assert_eq!(body.walk.position, 5.0);
+        assert!(body.crouching);
+        assert!(body.want_crouch);
+        assert_eq!(app.perspective, crate::camera::CameraType::ThirdPersonBack);
+    }
+
+    /// The zombie seed walks toward the body (facing west, the
+    /// approach's mid-stride), the pose/brand/clock flags ride the
+    /// render state's own fields verbatim.
+    #[test]
+    fn the_zombie_seed_walks_toward_the_body() {
+        let mut app = crate::screens::App::new(262);
+        app.enter_world();
+        seed_scene(
+            &mut app,
+            &SceneOpts {
+                body: true,
+                zombie: true,
+                zombie_aggro: true,
+                zombie_fire: Some(160),
+                zombie_death: Some(8),
+                zombie_hurt: Some(5),
+                ..SceneOpts::default()
+            },
+        )
+        .unwrap();
+        assert_eq!(app.mobs.len(), 1);
+        let z = &app.mobs[0];
+        // the approach cell's own yaw (the scan names the facing)
+        let facing = [90.0, -90.0, 180.0, 0.0];
+        assert!(facing.contains(&z.yaw), "the zombie faces the body, got {}", z.yaw);
+        assert!(z.on_ground);
+        assert_eq!(z.walk.speed, 0.7);
+        assert_eq!(z.walk.position, 2.5);
+        assert!(z.aggressive);
+        assert_eq!(z.fire_ticks, 160);
+        assert_eq!(z.death_time, 8);
+        assert_eq!(z.hurt_time, 5);
+        // the zombie's feet stand on ITS column's surface at the
+        // BODY's level (the walkable-approach scan's own law) — the
+        // hilltop columns refuse
+        assert_eq!(z.y as i32, app.spawn_y);
+    }
+
+    /// The walk seed's pair parser — the trims ride, the garbage
+    /// refuses (a guessed pose would render a guessed body).
+    #[test]
+    fn the_walk_seed_parses_the_pair() {
+        assert_eq!(parse_walk_seed("0.9,5.0"), Some((0.9, 5.0)));
+        assert_eq!(parse_walk_seed(" 0.9 , 5.0 "), Some((0.9, 5.0)));
+        assert_eq!(parse_walk_seed("0.9"), None);
+        assert_eq!(parse_walk_seed("a,b"), None);
+        assert_eq!(parse_walk_seed(""), None);
+        assert_eq!(parse_walk_seed("0.9,5.0,2"), None);
+    }
+
+    /// The perspective name parser — the F5 cycle's own three states,
+    /// the garbage refuses (a guessed state would render a guessed
+    /// camera).
+    #[test]
+    fn the_perspective_names_parse_to_the_f5_states() {
+        assert_eq!(
+            parse_perspective("first").unwrap(),
+            crate::camera::CameraType::FirstPerson
+        );
+        assert_eq!(
+            parse_perspective("third-back").unwrap(),
+            crate::camera::CameraType::ThirdPersonBack
+        );
+        assert_eq!(
+            parse_perspective("third-front").unwrap(),
+            crate::camera::CameraType::ThirdPersonFront
+        );
+        assert!(parse_perspective("back").is_err());
+        assert!(parse_perspective("THIRD-BACK").is_err());
+        assert!(parse_perspective("").is_err());
+    }
+
+    /// THE TICK LANE's walk: the seeded body travels its facing and
+    /// the walk store evolves through the body's own update (the
+    /// vanilla tick the windowed loop speaks), the frame clock riding
+    /// one per tick.
+    #[test]
+    fn the_walk_ticks_travel_and_fill_the_walk_state() {
+        let mut app = crate::screens::App::new(262);
+        app.enter_world();
+        seed_scene(
+            &mut app,
+            &SceneOpts {
+                body: true,
+                ..SceneOpts::default()
+            },
+        )
+        .unwrap();
+        let x0 = app.body.as_ref().unwrap().x;
+        tick_scene(
+            &mut app,
+            &SceneOpts {
+                walk_ticks: 12,
+                ..SceneOpts::default()
+            },
+            None,
+        )
+        .unwrap();
+        let body = app.body.as_ref().expect("the body survives the walk");
+        assert!(
+            body.x - x0 > 0.5,
+            "the body traveled east (its facing): {} -> {}",
+            x0,
+            body.x
+        );
+        assert!(body.walk.speed > 0.05, "the walk store filled: {}", body.walk.speed);
+        assert_eq!(app.frame, 12, "one frame per tick");
+    }
+
+    /// The tick lane refuses the menu screens (a silently ticked menu
+    /// would render a guessed gallery).
+    #[test]
+    fn the_ticks_refuse_on_the_menu_screens() {
+        let mut app = crate::screens::App::new(262);
+        app.enter_world();
+        app.open(crate::screens::ScreenKind::Title);
+        assert!(tick_scene(
+            &mut app,
+            &SceneOpts {
+                walk_ticks: 1,
+                ..SceneOpts::default()
+            },
+            None,
+        )
+        .is_err());
+        // the static lane stays silent-zero — no ticks requested, no
+        // refusal (the plain GUI screens ride it)
+        assert!(tick_scene(&mut app, &SceneOpts::default(), None).is_ok());
+    }
+
+    /// The mobs lane's placement law: n zombies ahead of the body on
+    /// SOLID, fluid-free ground (the spawn law's own scan), each
+    /// within the approach band, the ids the counter's own block; the
+    /// ignite fold speaks the max() law over every placed zombie.
+    #[test]
+    fn the_mobs_lane_places_ground_honest_zombies() {
+        let mut app = crate::screens::App::new(262);
+        app.enter_world();
+        seed_scene(
+            &mut app,
+            &SceneOpts {
+                body: true,
+                mobs: 3,
+                ignite_secs: 8.0,
+                ..SceneOpts::default()
+            },
+        )
+        .unwrap();
+        assert_eq!(app.mobs.len(), 3, "every placement landed");
+        let body = app.body.as_ref().unwrap();
+        let (bx, bz) = (body.x, body.z);
+        let world = app.offline_world.as_ref().unwrap();
+        for z in &app.mobs {
+            let (sx, sy, sz) = (z.x.floor() as i32, z.y as i32, z.z.floor() as i32);
+            assert!(
+                crate::body::solid(world, sx, sy - 1, sz),
+                "the ground under the feet is solid"
+            );
+            assert_eq!(
+                world.get(sx, sy, sz),
+                crate::world::AIR,
+                "the feet cell is air (the fluid gate held)"
+            );
+            let dist = ((z.x - bx) * (z.x - bx) + (z.z - bz) * (z.z - bz)).sqrt();
+            assert!(
+                (2.0..=(SHOWCASE_SEEK_BASE + SHOWCASE_SEEK_STRIDE * 3.0 + SHOWCASE_SEEK_EXTRA))
+                    .contains(&dist),
+                "the seek bound holds: {dist}"
+            );
+            assert_eq!(z.fire_ticks, 160, "the 8-second brand");
+        }
+        assert_eq!(app.next_mob_id, 4, "the id block consumed (the counter's own 1 + the 3 ids the block speaks)");
+        // the mobs lane without the body refuses loudly
+        let mut app2 = crate::screens::App::new(262);
+        app2.enter_world();
+        assert!(seed_scene(
+            &mut app2,
+            &SceneOpts {
+                mobs: 1,
+                ..SceneOpts::default()
+            },
+        )
+        .is_err());
+    }
+
+    /// The frozen swing re-freezes AFTER the ticks (a real tick
+    /// resumes the timeline — the freeze pins the render's slice).
+    #[test]
+    fn the_frozen_swing_survives_the_ticks() {
+        let mut app = crate::screens::App::new(262);
+        app.enter_world();
+        seed_scene(
+            &mut app,
+            &SceneOpts {
+                body: true,
+                walk_ticks: 4,
+                ..SceneOpts::default()
+            },
+        )
+        .unwrap();
+        tick_scene(
+            &mut app,
+            &SceneOpts {
+                walk_ticks: 4,
+                ..SceneOpts::default()
+            },
+            Some(0.5),
+        )
+        .unwrap();
+        assert_eq!(app.frame, 4, "the ticks ran");
+        assert_eq!(
+            app.swing.get_attack_anim(0.5),
+            0.5,
+            "the freeze re-pinned after the ticks"
+        );
+    }
 }
