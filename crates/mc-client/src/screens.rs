@@ -534,6 +534,12 @@ pub struct App {
     /// stay unseen while the other bodies keep drawing (each model's
     /// honesty is its own lane).
     pub sheep_model: Option<crate::avatar::SheepModel>,
+    /// THE FOURTH MOB's own WOOL (the SheepFurModel inflate-mesh over
+    /// the sheep_wool.png texture — the SheepWoolLayer's own overlay,
+    /// the dye tint the DyeColor table multiplies) — loaded lazily
+    /// beside the sheep's, `None` = the fur stays unseen while the
+    /// bodies keep drawing (the overlay's honesty its own lane).
+    pub sheep_wool_model: Option<crate::avatar::SheepWoolModel>,
     /// The flame feature's two strips (the burn lane's pixel source —
     /// lazy-loaded and sha1-verified the zombie skin's way).
     pub fire_strips: Option<crate::avatar::FireStrips>,
@@ -938,6 +944,7 @@ impl App {
             pig_model: None,
             cow_model: None,
             sheep_model: None,
+            sheep_wool_model: None,
             fire_strips: None,
             orb_sheet: None,
             underwater_screen: None,
@@ -3442,6 +3449,14 @@ impl App {
                 // server's word, the binary assign the state speaks —
                 // the silence is the honest stand
                 m.crouching = w.crouching;
+                // THE WOOL WORD (Sheep's DATA_WOOL_ID byte the
+                // projection carried raw — the isSheared/getColor laws
+                // the merge decodes: the bit 0x10 the sheared gate
+                // rides, the low nibble the dye id the tint table
+                // indexes). The ctor's byte 0 default = the vanilla
+                // client's own (unsheared, WHITE).
+                m.sheared = w.wool_byte & crate::mob::SHEEP_WOOL_SHEARED_BIT != 0;
+                m.wool_color = w.wool_byte & crate::mob::SHEEP_WOOL_COLOR_MASK;
                 m.on_ground = true;
                 m.age_ticks = 40; // two seconds in — the bob's stable mid
                 self.net_mobs.push(m);
@@ -3488,6 +3503,11 @@ impl App {
             // — no clock, no floor, the bend and the stand both ride
             // the same binary assign
             m.crouching = w.crouching;
+            // THE WOOL WORD rides with the pose (the same decode the
+            // fresh spawn speaks — state not countdown, the shear and
+            // the dye both ride the same binary assign)
+            m.sheared = w.wool_byte & crate::mob::SHEEP_WOOL_SHEARED_BIT != 0;
+            m.wool_color = w.wool_byte & crate::mob::SHEEP_WOOL_COLOR_MASK;
             self.net_mobs.push(m);
         }
         // the ids the wire no longer names never re-enter net_mobs —
@@ -5487,6 +5507,10 @@ impl App {
             self.sheep_model =
                 crate::avatar::SheepModel::load(std::path::Path::new("assets-cache/jar"));
         }
+        if self.sheep_wool_model.is_none() {
+            self.sheep_wool_model =
+                crate::avatar::SheepWoolModel::load(std::path::Path::new("assets-cache/jar"));
+        }
         // the pig's honesty is its OWN lane: a failed pig skin keeps
         // only the pigs unseen, the zombies keep drawing
         let pig_model = self.pig_model.as_ref();
@@ -5496,9 +5520,17 @@ impl App {
         // the sheep's honesty is ITS OWN lane: a failed sheep skin
         // keeps only the sheep unseen, the other bodies keep drawing
         let sheep_model = self.sheep_model.as_ref();
+        // the wool's honesty is ITS OWN lane: a failed wool skin keeps
+        // only the FUR unseen (the sheared sheep never drew it anyway)
+        let sheep_wool_model = self.sheep_wool_model.as_ref();
         // the two lanes' own union (the offline AI bodies + the wire's
         // remote bodies — the SAME lerp folds speak both, the model
         // kind the registry's name arms at the merge)
+        // THE WOOL LAYER's out-of-band carry (the SheepWoolLayer's own
+        // render order — the fur draws AFTER the body, BEFORE the
+        // flame feature): the Sheep arm sets it, the draw below rides
+        // it, the dye tint the DyeColor table speaks
+        let mut wool_overlay: Option<(Vec<crate::avatar::AvatarQuad>, [f32; 3])> = None;
         for mob in self.mobs.iter().chain(self.net_mobs.iter()) {
             // the head's own lerp (LivingEntityRenderer's
             // `Mth.lerp(partialTicks, yHeadRotO, yHeadRot)`): the AI's
@@ -5542,6 +5574,26 @@ impl App {
                         head_eat_angle: 0.0,
                         age_scale: 1.0,
                     };
+                    // THE WOOL LAYER's own gate (SheepWoolLayer.submit's
+                    // law: the sheared bit the fur's render SKIPS — the
+                    // sheared body shows its skin the shear spoke): the
+                    // fur rides the SAME state the body speaks, the dye
+                    // tint the DyeColor table multiplies (the white's
+                    // 0xFFFFFF the no-op the default sheep speaks)
+                    if !mob.sheared {
+                        if let Some(wool) = sheep_wool_model {
+                            let dye = crate::mob::DYE_TEXTURE_COLORS
+                                [mob.wool_color as usize & 0x0F];
+                            wool_overlay = Some((
+                                wool.quads(&state, feet, cam.yaw, cam.pitch),
+                                [
+                                    ((dye >> 16) & 0xFF) as f32 / 255.0,
+                                    ((dye >> 8) & 0xFF) as f32 / 255.0,
+                                    (dye & 0xFF) as f32 / 255.0,
+                                ],
+                            ));
+                        }
+                    }
                     let quads = sheep.quads(&state, feet, cam.yaw, cam.pitch);
                     (quads, Box::new(move |u, v| sheep.pixel(u, v)))
                 }
@@ -5639,6 +5691,29 @@ impl App {
                 let [r, g, b, a] = pixel(u, v);
                 Some([r, g, b, a])
             });
+            // THE WOOL LAYER's own draw (the vanilla layer order — the
+            // fur renders AFTER the body, the flame feature after it):
+            // the same hurt shade multiplies the dye tint (the flash
+            // covers the coat the body's own mix speaks)
+            if let Some((fur_quads, dye_tint)) = wool_overlay.take() {
+                let fur_sampled: Vec<crate::raster::SampledQuad> = fur_quads
+                    .iter()
+                    .map(|q| crate::raster::SampledQuad {
+                        pts: q.pts,
+                        uv: q.uv,
+                        tex: "",
+                        tint: [
+                            q.shade * shade * dye_tint[0],
+                            q.shade * shade * dye_tint[1],
+                            q.shade * shade * dye_tint[2],
+                        ],
+                    })
+                    .collect();
+                fb.draw_sampled_quads(ctx.proj.mul(&ctx.view), &fur_sampled, &mut |_tex, u, v| {
+                    let [r, g, b, a] = sheep_wool_model.unwrap().pixel(u, v);
+                    Some([r, g, b, a])
+                });
+            }
             // THE FLAME FEATURE (the burning mob's own overlay — the
             // vanilla draws the flame feature AFTER the body): the
             // billboard ring stack around the bbox, the strips lazily
@@ -9006,6 +9081,7 @@ mod tests {
             hurt_time: 0,
             on_fire: false,
             crouching: false,
+                            wool_byte: 0,
             type_name: "minecraft:zombie".to_string(),
         }
     }
@@ -9029,6 +9105,7 @@ mod tests {
             hurt_time: 0,
             on_fire: false,
             crouching: false,
+                            wool_byte: 0,
             type_name: type_name.to_string(),
         }
     }
@@ -9165,6 +9242,43 @@ mod tests {
         ]);
         assert_eq!(app.net_mobs.len(), 3, "the sheep despawned at the wire's word");
         assert!(app.net_mobs.iter().all(|m| m.id != 10));
+    }
+
+    #[test]
+    fn the_wire_sheep_sheds_and_dyes_at_the_servers_word() {
+        let mut app = App::new(3);
+        app.open(ScreenKind::Connect);
+        app.net_world = Some(air_net_world(2, 0));
+        app.enter_network_world(None, Skybox::Overworld, None, None);
+        // the sheep lands with the vanilla default (byte 0: unsheared,
+        // WHITE — the SynchedEntityData ctor's own define)
+        app.live_mobs_updated(vec![wire_mob_named(
+            10,
+            16.0,
+            64.0,
+            10.0,
+            "minecraft:sheep",
+        )]);
+        let sheep = app.net_mobs.iter().find(|m| m.id == 10).unwrap();
+        assert!(!sheep.sheared, "the default's own unshorn");
+        assert_eq!(sheep.wool_color, 0, "the default's own white");
+        // THE SHEARED + DYED WORD (byte 0x1E = the sheared bit + the
+        // RED nibble the isSheared/getColor decode speaks): the SECOND
+        // ship rides the matched branch's own binary assign
+        let mut w = wire_mob_named(10, 16.5, 64.0, 10.0, "minecraft:sheep");
+        w.wool_byte = 0x1E;
+        app.live_mobs_updated(vec![w]);
+        let sheep = app.net_mobs.iter().find(|m| m.id == 10).unwrap();
+        assert!(sheep.sheared, "the sheared bit's own word");
+        assert_eq!(sheep.wool_color, 14, "the red nibble the mask speaks");
+        // THE UNSHORN WORD (byte 14: the dye rides, the bit drops —
+        // state not countdown, the same assign carries both)
+        let mut w = wire_mob_named(10, 17.0, 64.0, 10.0, "minecraft:sheep");
+        w.wool_byte = 14;
+        app.live_mobs_updated(vec![w]);
+        let sheep = app.net_mobs.iter().find(|m| m.id == 10).unwrap();
+        assert!(!sheep.sheared, "the bit's drop the same assign speaks");
+        assert_eq!(sheep.wool_color, 14, "the dye stands");
     }
 
     #[test]

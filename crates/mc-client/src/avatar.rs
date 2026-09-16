@@ -203,6 +203,14 @@ struct Cube {
     mirror: bool,
 }
 
+impl Clone for Cube {
+    fn clone(&self) -> Self {
+        *self
+    }
+}
+
+impl Copy for Cube {}
+
 /// One model part: the pivot (texels), the setupAnim rotation
 /// (radians), the cubes and the overlay children (the children ride
 /// the parent's rotation — PartPose.ZERO relative to it).
@@ -943,6 +951,171 @@ fn build_sheep_parts(state: &SheepState) -> Vec<Part> {
             y_rot: 0.0,
             z_rot: 0.0,
             cubes: vec![leg_cube(false)],
+            children: vec![],
+        },
+    ]
+}
+
+/// The full SHEEP WOOL model — the 26.2 `SheepFurModel.createFurLayer`'s
+/// own numbers, bytecode-proven off the official jar (scripts/
+/// classfile_dump.py: the constant pool + the createFurLayer walk):
+/// the HEAD FUR 6x6x6 (uv 0,0, box -3,-4,-4 — SHORTER in z than the
+/// body head's 6x6x8, the inflate 0.6 the tan face's own hood gap
+/// speaks: the head's front z -6..-4.6 stays fur-less, the face pokes
+/// out), the BODY FUR 8x16x6 (uv 28,8, box -4,-10,-7) at the inflate
+/// 1.75 the wool barrel rides, the four LEG FURS 4x6x4 (uv 0,16, box
+/// -2,0,-2 — the pig-height the wool boots speak, the UPPER half of
+/// the 12-texel legs only) at the inflate 0.5, all four riding the ONE
+/// shared CubeListBuilder the dump's own astore speaks (NO mirror —
+/// the fur never unwraps), the same pivots the body speaks, `LayerDefinition.
+/// create(64, 32)` over the sheep_wool.png the dye color tints.
+pub struct SheepWoolModel {
+    rgba: Vec<u8>,
+}
+
+impl SheepWoolModel {
+    /// Load + sha1-verify the WOOL texture (the SheepWoolLayer's
+    /// SHEEP_WOOL_LOCATION). `None` = the wool never renders (the same
+    /// honesty every lane speaks — a failed overlay keeps only the
+    /// fur unseen, the sheared bodies keep drawing).
+    pub fn load(root: &Path) -> Option<SheepWoolModel> {
+        let bytes = std::fs::read(root.join(skin::SHEEP_WOOL_RUNTIME_PATH)).ok()?;
+        let digest = sha1::Sha1::digest(&bytes);
+        if hex::encode(digest) != skin::SHEEP_WOOL_PNG_SHA1 {
+            return None;
+        }
+        let (w, h, rgba) = decode_rgba(&bytes).ok()?;
+        if w != 64 || h != 32 || rgba.len() != 64 * 32 * 4 {
+            return None;
+        }
+        Some(SheepWoolModel { rgba })
+    }
+
+    /// The wool pixel at (u, v) — the RGBA row-major words, v down.
+    pub fn pixel(&self, u: f32, v: f32) -> [u8; 4] {
+        let (uu, vv) = (u.clamp(0.0, 63.999_9), v.clamp(0.0, 31.999_9));
+        let x = uu as usize;
+        let y = vv as usize;
+        let o = (y * 64 + x) * 4;
+        [self.rgba[o], self.rgba[o + 1], self.rgba[o + 2], self.rgba[o + 3]]
+    }
+
+    /// THE POSED OVERLAY: the world-space textured quads of the wool at
+    /// `state` — the SAME entity chain fold the body speaks, the fur's
+    /// own inflated cubes beneath. THE POSE (the fur model's own law):
+    /// SheepFurModel extends QuadrupedModel but its setupAnim re-speaks
+    /// the sheep's own eat fold verbatim (the dump's own two statements)
+    /// — the hood follows the body head's drop and pitch exactly, the
+    /// walk the shared diagonal fold swings.
+    pub fn quads(
+        &self,
+        state: &SheepState,
+        feet: Vec3,
+        cam_yaw: f32,
+        cam_pitch: f32,
+    ) -> Vec<AvatarQuad> {
+        let parts = build_sheep_fur_parts(state);
+        let (fold_point, fold_normal) = entity_folds(state.yaw_deg, state.death_time, 0.0, feet);
+        let mut out: Vec<AvatarQuad> = Vec::with_capacity(6 * 4);
+        let ident = Mat4::IDENT;
+        for part in &parts {
+            collect_part(part, &ident, &fold_point, &fold_normal, cam_yaw, cam_pitch, &mut out);
+        }
+        out
+    }
+}
+
+/// The ovine's fur parts, posed by `state` — the bytecode-proven mesh
+/// (the head fur's own z-shorter box, the body fur's 1.75 inflate, the
+/// leg furs' shared no-mirror builder), the SAME pose law the body
+/// speaks (the walk's diagonal pairs + the eat fold the setupAnim's
+/// own copy rides).
+fn build_sheep_fur_parts(state: &SheepState) -> Vec<Part> {
+    let pos = state.walk_pos;
+    let speed = state.walk_speed;
+    let leg_rh = mth_cos(pos * 0.6662) * 1.4 * speed;
+    let leg_lh = mth_cos(pos * 0.6662 + std::f32::consts::PI) * 1.4 * speed;
+    // THE EAT FOLD (SheepFurModel.setupAnim's own copy — the hood
+    // follows the body head the same two statements speak)
+    let head_pivot_y = 6.0 + state.head_eat_position * 9.0 * state.age_scale;
+    let head_x = state.head_eat_angle;
+    let head_y = state.head_yaw_off_deg.to_radians();
+    // the ONE shared builder the dump's astore speaks: one Cube spec,
+    // four pivots, no mirror
+    let fur_leg = Cube {
+        tex: (0.0, 16.0),
+        origin: [-2.0, 0.0, -2.0],
+        size: [4.0, 6.0, 4.0],
+        inflate: 0.5,
+        mirror: false,
+    };
+    vec![
+        // head fur (the z-shorter hood — the face gap the inflate math
+        // speaks: fur z -4.6..2.6 vs head z -6..2)
+        Part {
+            pivot: [0.0, head_pivot_y, -8.0],
+            x_rot: head_x,
+            y_rot: head_y,
+            z_rot: 0.0,
+            cubes: vec![Cube {
+                tex: (0.0, 0.0),
+                origin: [-3.0, -4.0, -4.0],
+                size: [6.0, 6.0, 6.0],
+                inflate: 0.6,
+                mirror: false,
+            }],
+            children: vec![],
+        },
+        // body fur (the wool barrel — the rotX PI/2 the body's own
+        // PartPose rides, the 1.75 inflate the coat's bulk speaks)
+        Part {
+            pivot: [0.0, 5.0, 2.0],
+            x_rot: std::f32::consts::FRAC_PI_2,
+            y_rot: 0.0,
+            z_rot: 0.0,
+            cubes: vec![Cube {
+                tex: (28.0, 8.0),
+                origin: [-4.0, -10.0, -7.0],
+                size: [8.0, 16.0, 6.0],
+                inflate: 1.75,
+                mirror: false,
+            }],
+            children: vec![],
+        },
+        // right hind fur (the shared builder — no mirror)
+        Part {
+            pivot: [-3.0, 12.0, 7.0],
+            x_rot: leg_rh,
+            y_rot: 0.0,
+            z_rot: 0.0,
+            cubes: vec![fur_leg],
+            children: vec![],
+        },
+        // left hind fur
+        Part {
+            pivot: [3.0, 12.0, 7.0],
+            x_rot: leg_lh,
+            y_rot: 0.0,
+            z_rot: 0.0,
+            cubes: vec![fur_leg],
+            children: vec![],
+        },
+        // right front fur
+        Part {
+            pivot: [-3.0, 12.0, -5.0],
+            x_rot: leg_lh,
+            y_rot: 0.0,
+            z_rot: 0.0,
+            cubes: vec![fur_leg],
+            children: vec![],
+        },
+        // left front fur
+        Part {
+            pivot: [3.0, 12.0, -5.0],
+            x_rot: leg_rh,
+            y_rot: 0.0,
+            z_rot: 0.0,
+            cubes: vec![fur_leg],
             children: vec![],
         },
     ]
@@ -2554,6 +2727,94 @@ mod tests {
         // blue, the opaque texel the palette carries
         let px = sheep.pixel(11.0, 11.0);
         assert!(px[0] > px[2], "the tan reads red-over-blue: {px:?}");
+        assert_eq!(px[3], 255, "the texel is opaque");
+    }
+
+    /// THE WOOL MESH (javap SheepFurModel.createFurLayer's own
+    /// numbers): 6 parts x 6 faces (the hood + the barrel + the four
+    /// wool boots), the 1.75-inflated barrel the
+    /// WIDEST word (+-5.75/16 the legs' +-5/16 stays inside), the fur
+    /// crown at model y 1.4 (the hood's inflate 0.6 rides ABOVE the
+    /// body head's own top 2), and the walk the shared diagonal fold
+    /// swings (the fur legs the body's own leg x_rots ride).
+    #[test]
+    fn the_sheep_wool_mesh_inflates_over_the_body() {
+        let wool = SheepWoolModel {
+            rgba: vec![255u8; 64 * 32 * 4],
+        };
+        let feet = Vec3::new(0.0, 64.0, 0.0);
+        let rest = SheepState {
+            yaw_deg: 0.0,
+            head_yaw_off_deg: 0.0,
+            walk_pos: 0.0,
+            walk_speed: 0.0,
+            age_ticks: 40.0,
+            death_time: 0.0,
+            head_eat_position: 0.0,
+            head_eat_angle: 0.0,
+            age_scale: 1.0,
+        };
+        let quads = wool.quads(&rest, feet, 0.0, 0.0);
+        assert_eq!(quads.len(), 36, "6 fur parts x 6 faces");
+        let mut max_y = f32::MIN;
+        let mut min_x = f32::MAX;
+        let mut max_x = f32::MIN;
+        for q in &quads {
+            for p in q.pts {
+                max_y = max_y.max(p[1]);
+                min_x = min_x.min(p[0]);
+                max_x = max_x.max(p[0]);
+            }
+        }
+        // the 1.75-inflated barrel: x -5.75..5.75 model -> +-5.75/16
+        assert!(
+            (min_x - (feet.x as f32 - 5.75 / 16.0)).abs() < 1e-4,
+            "the wool barrel's west face: {min_x}"
+        );
+        assert!(
+            (max_x - (feet.x as f32 + 5.75 / 16.0)).abs() < 1e-4,
+            "the wool barrel's east face: {max_x}"
+        );
+        // the hood's crown: pivot 6 - 4 - 0.6 = model y 1.4 -> 1.4135
+        assert!(
+            (max_y - (feet.y as f32 + 1.4135)).abs() < 1e-4,
+            "the fur crown rides above the body head: {max_y}"
+        );
+        // the walk the shared fold swings — some corner moves
+        let walked = SheepState {
+            walk_pos: 0.0,
+            walk_speed: 1.0,
+            ..rest
+        };
+        let moved = wool
+            .quads(&walked, feet, 0.0, 0.0)
+            .iter()
+            .zip(quads.iter())
+            .any(|(wq, rq)| wq.pts.iter().zip(rq.pts.iter()).any(|(wp, rp)| (wp[2] - rp[2]).abs() > 1e-4));
+        assert!(moved, "the fur rides the body's own diagonal walk");
+    }
+
+    /// THE WOOL LOADS — the real runtime cache decodes the 64x32 wool
+    /// the sha1 the generated table pins (the SheepWoolLayer's
+    /// SHEEP_WOOL_LOCATION), the greyscale the dye tint multiplies.
+    #[test]
+    #[ignore = "needs runtime assets (assets-cache/jar) from mc2rs-gen generate"]
+    fn the_sheep_wool_loads_sha1_verified() {
+        let mut dir = std::env::current_dir().unwrap();
+        let root = loop {
+            let cand = dir.join("assets-cache/jar");
+            if cand.exists() {
+                break cand;
+            }
+            dir = dir.parent().expect("the runtime root above").to_path_buf();
+        };
+        let wool = SheepWoolModel::load(&root).expect("the wool loads from the runtime cache");
+        // the head fur's front face (the unwrap rect (6,6)-(12,12) the
+        // 6x6x6 fur box speaks) reads GREYSCALE — the equal channels
+        // the dye tint multiplies, the opaque texel
+        let px = wool.pixel(9.0, 9.0);
+        assert_eq!(px[0], px[1], "the greyscale's own channels: {px:?}");
+        assert_eq!(px[1], px[2], "the greyscale's own channels: {px:?}");
         assert_eq!(px[3], 255, "the texel is opaque");
     }
 

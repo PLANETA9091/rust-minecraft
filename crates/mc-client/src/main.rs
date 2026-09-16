@@ -252,6 +252,12 @@ struct Cli {
     /// or beside --net-mobs/--net-pig/--net-cow.
     #[arg(long)]
     net_sheep: Option<u32>,
+    /// Stage the WOOL BYTE on the first wire sheep — the raw byte the
+    /// Set Entity Data store keeps (bit 0x10 sheared, low nibble the
+    /// dye id: 14 = RED, 30 = red AND sheared, 0 = the vanilla
+    /// default). Requires --net-sheep.
+    #[arg(long)]
+    net_wool: Option<u8>,
     /// Carve a 3x3 pool AT the body and sink it to the basin floor —
     /// the eye sits under the water surface and the REAL water-screen
     /// gate speaks (the underwater overlay, no scripted blue).
@@ -374,6 +380,7 @@ fn main() -> Result<()> {
             net_pig: cli.net_pig,
             net_cow: cli.net_cow,
             net_sheep: cli.net_sheep,
+            net_wool: cli.net_wool,
             water_pool: cli.water_pool,
             water_vision: cli.water_vision,
             air_supply: cli.air_supply,

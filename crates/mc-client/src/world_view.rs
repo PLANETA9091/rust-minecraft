@@ -323,9 +323,10 @@ pub struct WireMob {
     pub yaw: f32,
     pub pitch: f32,
     pub head_yaw: f32,
-    /// The metadata's own health word (LivingEntity's DATA_HEALTH_ID 8
-    /// — the FLOAT accessor the Set Entity Data store keeps): `None`
-    /// while the server never spoke the accessor — the honest
+    /// The metadata's own health word (LivingEntity's DATA_HEALTH_ID 9
+    /// — the FLOAT accessor the Set Entity Data store keeps, the
+    /// clinit defineId walk's own order FLAGS 8 then HEALTH 9):
+    /// `None` while the server never spoke the accessor — the honest
     /// no-opinion the death walk never mistakes for a kill.
     pub health: Option<f32>,
     /// The hurt flash's remaining window (the Hurt Animation packet's
@@ -346,6 +347,15 @@ pub struct WireMob {
     /// says the mob bends, false while the accessor never spoke (the
     /// honest stand — the silence never crouches).
     pub crouching: bool,
+    /// The metadata's own WOOL BYTE (Sheep's DATA_WOOL_ID 17 — the
+    /// accessor the class tree lands there, the raw byte verbatim):
+    /// the sheared bit + the dye nibble the merge decodes through the
+    /// Sheep.isSheared/getColor laws. 0 = the SynchedEntityData ctor's
+    /// own default (unsheared, WHITE) — the silence the vanilla
+    /// client's local default speaks, and the honest 0 the other
+    /// bodies' projections carry (the wool word never asks for their
+    /// index-17 traffic).
+    pub wool_byte: u8,
     /// The synced registry's own name (`minecraft:zombie` v1 renders;
     /// anything else is the honest not-yet-drawn type).
     pub type_name: String,
@@ -956,7 +966,13 @@ impl LiveView {
                     yaw: e.y_rot,
                     pitch: e.x_rot,
                     head_yaw: e.y_head_rot,
-                    health: match e.data.get(&8) {
+                    // THE HEALTH ACCESSOR'S OWN INDEX — LivingEntity's
+                    // clinit defineId walk speaks DATA_HEALTH_ID at 9
+                    // (FLAGS 8, HEALTH 9, PARTICLES 10, AMBIENCE 11,
+                    // ARROWS 12, STINGERS 13, SLEEPING 14 — the 8 the
+                    // lane once read is the FLAGS byte's own slot, the
+                    // Float match never spoke, the word never landed)
+                    health: match e.data.get(&9) {
                         Some(mc_protocol::play::EntityDataEntry::Float(h)) => Some(*h),
                         _ => None,
                     },
@@ -978,6 +994,26 @@ impl LiveView {
                         e.data.get(&0),
                         Some(mc_protocol::play::EntityDataEntry::Byte(b)) if b & 2 != 0
                     ),
+                    // THE WOOL BYTE (Sheep's own DATA_WOOL_ID 17 — the
+                    // accessor the class tree lands at 17): the RAW
+                    // word the merge decodes through the
+                    // isSheared/getColor laws. The read is the SHEEP's
+                    // OWN gate (the index belongs to the byte's own
+                    // class — other bodies' index-17 traffic is data
+                    // the wool word never asks for), the silence the
+                    // SynchedEntityData ctor's own default (byte 0:
+                    // unsheared, WHITE).
+                    wool_byte: if type_name == "minecraft:sheep" {
+                        match e.data.get(&crate::mob::SHEEP_DATA_WOOL_ID) {
+                            // the byte verbatim (the wire's own unsigned
+                            // word — the i8 the store carries re-reads
+                            // as the bit pattern the decode asks)
+                            Some(mc_protocol::play::EntityDataEntry::Byte(b)) => *b as u8,
+                            _ => 0,
+                        }
+                    } else {
+                        0
+                    },
                     type_name,
                 })
             })
@@ -1413,11 +1449,12 @@ mod tests {
         assert_eq!((s.x, s.y, s.z), (70.0, 64.0, 72.0));
         assert_eq!((s.yaw, s.head_yaw), (270.0, 270.0));
         // the metadata's own health word (LivingEntity's DATA_HEALTH_ID
-        // 8 — the FLOAT accessor the Set Entity Data store keeps)
+        // 9 — the FLOAT accessor the Set Entity Data store keeps; the
+        // clinit defineId walk's own order FLAGS 8 then HEALTH 9)
         view.model.apply(PlayEvent::EntityData(mc_protocol::play::EntityDataSet {
             id: 7,
             entries: vec![mc_protocol::play::SetEntityDataEntry {
-                index: 8,
+                index: 9,
                 serializer: 3,
                 value: mc_protocol::play::EntityDataEntry::Float(6.0),
             }],
@@ -1425,6 +1462,31 @@ mod tests {
         let upd = view.refresh(example_mapper);
         let z = upd.mobs.iter().find(|m| m.id == 7).unwrap();
         assert_eq!(z.health, Some(6.0), "the server's word rides");
+        // THE WOOL BYTE'S OWN RIDE (Sheep's DATA_WOOL_ID 17 — the raw
+        // byte the projection carries, the SHEEP's own gate the read
+        // speaks): the zombie's index-17 traffic is data the wool word
+        // never asks for, the sheep's own byte rides verbatim
+        view.model.apply(PlayEvent::EntityData(mc_protocol::play::EntityDataSet {
+            id: 7,
+            entries: vec![mc_protocol::play::SetEntityDataEntry {
+                index: 17,
+                serializer: 0,
+                value: mc_protocol::play::EntityDataEntry::Byte(0x7F),
+            }],
+        }));
+        view.model.apply(PlayEvent::EntityData(mc_protocol::play::EntityDataSet {
+            id: 10,
+            entries: vec![mc_protocol::play::SetEntityDataEntry {
+                index: 17,
+                serializer: 0,
+                value: mc_protocol::play::EntityDataEntry::Byte(0x1E),
+            }],
+        }));
+        let upd = view.refresh(example_mapper);
+        let z = upd.mobs.iter().find(|m| m.id == 7).unwrap();
+        assert_eq!(z.wool_byte, 0, "the zombie's index-17 traffic the wool never asks for");
+        let s = upd.mobs.iter().find(|m| m.id == 10).unwrap();
+        assert_eq!(s.wool_byte, 0x1E, "the sheep's own byte rides verbatim");
         // THE MOBS' OWN FLASH (the Hurt Animation's other arm — the
         // mailbox the foreign ids' packets arm): the zombie's id ships
         // the 10-tick window, the pig's silence stays the honest 0

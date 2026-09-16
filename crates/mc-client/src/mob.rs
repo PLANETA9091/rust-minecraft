@@ -113,6 +113,42 @@ pub const SHEEP_HEIGHT: f64 = 1.3;
 /// same chain).
 pub const SHEEP_EYE_HEIGHT: f64 = 1.235;
 
+/// THE WOOL BYTE'S OWN DECODE (Sheep.isSheared/getColor's own fold —
+/// the 26.2 bytecode: `byteValue() & 0x10 != 0` the sheared bit rides,
+/// `DyeColor.byId(byteValue() & 0xF)` the low nibble the color speaks).
+pub const SHEEP_WOOL_SHEARED_BIT: u8 = 0x10;
+pub const SHEEP_WOOL_COLOR_MASK: u8 = 0x0F;
+/// THE DATA_WOOL_ID'S OWN INDEX — the SynchedEntityData id the class
+/// tree speaks: Entity's ctor defines 8 accessors (0..7, the shared
+/// flags 0), LivingEntity's clinit definesId 7 more in order FLAGS(8),
+/// HEALTH(9), EFFECT_PARTICLES(10), EFFECT_AMBIENCE(11), ARROWS(12),
+/// STINGERS(13), SLEEPING(14), AgeableMob BABY(15) + AGE_LOCKED(16),
+/// and Sheep's own defineId lands the wool byte at 17.
+pub const SHEEP_DATA_WOOL_ID: u8 = 17;
+
+/// THE DYE TINT TABLE (javap DyeColor's clinit — the 16
+/// textureDiffuseColor ints the ctor's own last argument speaks, the
+/// ColorLerper$Type.SHEEP map's values the wool layer multiplies):
+/// WHITE..BLACK in the enum's own order.
+pub const DYE_TEXTURE_COLORS: [u32; 16] = [
+    0xFFFFFF, // WHITE
+    0xFF681F, // ORANGE
+    0xFF00FF, // MAGENTA
+    0x9AC0CD, // LIGHT_BLUE
+    0xFFFF00, // YELLOW
+    0xBFFF00, // LIME
+    0xFF69B4, // PINK
+    0x808080, // GRAY
+    0xD3D3D3, // LIGHT_GRAY
+    0x00FFFF, // CYAN
+    0xA020A0, // PURPLE
+    0x0000FF, // BLUE
+    0x8B4513, // BROWN
+    0x00FF00, // GREEN
+    0xFF0000, // RED
+    0x000000, // BLACK
+];
+
 /// The registration's `eyeHeight(1.74F)`.
 pub const ZOMBIE_EYE_HEIGHT: f64 = 1.74;
 /// `Zombie.createAttributes` — MOVEMENT_SPEED 0.23000000417232513.
@@ -363,6 +399,14 @@ pub struct Zombie {
     /// zombie's own goals never crouch) — the wire's word is the
     /// only writer the lane owes.
     pub crouching: bool,
+    /// THE WOOL'S OWN STATE (Sheep.isSheared/getColor's decode the
+    /// merge law speaks from the DATA_WOOL_ID byte the Set Entity
+    /// Data store keeps): the sheared bit's word the fur layer's gate
+    /// reads, the dye id the tint table indexes. The ctor's honest
+    /// default = the SynchedEntityData's own (byte 0: unsheared, WHITE
+    /// — the vanilla client's local default the define speaks).
+    pub sheared: bool,
+    pub wool_color: u8,
     /// `ZombieAttackGoal.raiseArmTicks`
     raise_arm_ticks: i32,
     /// THE BODY'S OWN KIND (the renderer's variant table): which mesh
@@ -425,6 +469,8 @@ impl Zombie {
             walk: WalkAnimationState::default(),
             aggressive: false,
             crouching: false,
+            sheared: false,
+            wool_color: 0,
             kind: MobKind::Zombie,
             raise_arm_ticks: 0,
             ticks_until_attack: 0,

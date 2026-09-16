@@ -311,6 +311,12 @@ def trace_code(cp, code):
                 else:
                     stack.append(('expr', f"{owner_short}.{nm}({argstr})"))
             elif recv is not None and nm == '<init>' and recv[0] == 'new':
+                # the `new X; dup; args; invokespecial <init>` idiom: the
+                # init consumed the DUP copy — the stale original 'new'
+                # beneath it is the SAME object post-init, drop it so
+                # the outer call's arg walk pops the expr, not the husk
+                if stack and stack[-1][0] == 'new' and stack[-1][1] == recv[1]:
+                    stack.pop()
                 stack.append(('expr', f"{recv[1]}({argstr})"))
             out.append(f"  {pc:4d} {label} {owner}.{nm}{desc}  ({argstr})")
         elif op == 0xba: r.u2(); r.u2()

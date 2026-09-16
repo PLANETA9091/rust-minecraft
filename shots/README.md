@@ -2,7 +2,7 @@
 
 Every lane that ships pixels owes the folder a frame. The gallery is the
 proof the features exist as rendered images, not as test names alone.
-123 frames and counting — grouped below by the lane that spoke them.
+124 frames and counting — grouped below by the lane that spoke them.
 
 ## The F5 lane (the third-person avatar) — v0.3.154+
 
@@ -417,6 +417,7 @@ lasts 20 real minutes again, the eat hold 1.6s, the swing 0.3s.
 | `wire_pig.png` | THE SERVER'S OWN PIG (v0.3.189): the SECOND drawn body — the wire pig the Add Entity type id names through the synced registry (the v1 lane kept the quadrupeds honest data, the pigs invisible) renders the javap-proven 26.2 PigModel mesh (the head 8x8x8 + the snout cube, the rotX barrel body, the four 4x6x4 legs, the diagonal-pair walk the QuadrupedModel fold speaks) over the temperate skin the variant table defaults to; the empty companion at the identical staging diffs rms 20.2 (the pig's own presence, eyes and snout honest) |
 | `wire_cow.png` | THE SERVER'S OWN COW (v0.3.190): the THIRD drawn body — the wire cow the Add Entity type id names through the synced registry renders the bytecode-proven 26.2 CowModel mesh (the head 8x8x6 + the muzzle cube + the two horn cubes, the rotX barrel body + the udder cube, the four 4x12x4 legs the LEFT pair's mirror rides — the astore/aload pairing the classfile walk proved) over the temperate skin the variant table defaults to; the empty companion at the identical staging diffs rms 29.5 (the bovine's own presence, horns and muzzle honest) |
 | `wire_sheep.png` | THE SERVER'S OWN SHEEP (v0.3.191): the FOURTH drawn body — the wire sheep the Add Entity type id names through the synced registry renders the bytecode-proven 26.2 SheepModel mesh (the head 6x6x8 the ovine's own replacement over the createBodyMesh default, the rotX 8x16x6 barrel, the four 4x12x4 legs the RIGHT pair's mirror rides — the createLegs(loc1=false, loc2=true) walk the pig/cow LEFT-pair convention INVERTED) over the single sheep.png the getTextureLocation speaks, the 64x32 HALF-HEIGHT layout the load verifies; the model's OWN setupAnim the eat fold rides (the head the *9.0*ageScale drop + the eat-angle xRot the replacement law speaks — the wire's pitch word the struct never carried); the empty companion at the identical staging diffs rms 28.2 (the ovine's own presence, face and wool honest) |
+| `wire_wool.png` | THE SERVER'S OWN WOOL (v0.3.192): the fur OVERLAY — the SheepWoolLayer's own gate (the sheared bit the fur's render skips) + the SheepFurModel inflate-mesh the 26.2 bytecode proves (the head hood 6x6x6+0.6 the z-SHORTER box the tan face's own gap speaks, the body coat 8x16x6+1.75, the wool boots 4x6x4+0.5 the ONE shared no-mirror builder rides) over the sheep_wool.png greyscale the dye color tints — the DyeColor table's 16 textureDiffuseColor ints the clinit's own ctor args speak, the DATA_WOOL_ID byte 17 the class-tree id walk lands (Sheep.isSheared/getColor's own decode: bit 0x10 sheared, low nibble the dye); the shot stages the RED byte (14) through the merge's own decode — the red coat the white-companion's default byte 0 keeps; the companion at the identical staging diffs rms 14.5 (the dye's own word) |
 
 Regenerate the family (the flag the CLI speaks today):
 
@@ -565,6 +566,19 @@ cargo run -p mc-client --release -- --headless --screen world \
 The server's own sheep (v0.3.191 — the fourth drawn body):
 
 ```sh
+
+The server's own wool (v0.3.192 — the fur overlay + the dye word):
+
+```sh
+cargo run -p mc-client --release -- --headless --screen world \
+  --seed 42 --body --walk-ticks 1 --body-yaw 0 --net-sheep 2 \
+  --net-wool 14 --perspective third-back --ui-frame 3 \
+  --out shots/wire_wool.png
+# --net-wool BYTE stages the raw DATA_WOOL_ID byte (bit 0x10 the
+# sheared gate, low nibble the dye id — 14 = RED) on the first wire
+# sheep through the merge's own isSheared/getColor decode; the white
+# companion (no --net-wool) diffs rms 14.5
+```
 cargo run -p mc-client --release -- --headless --screen world \
   --seed 42 --body --walk-ticks 1 --body-yaw 0 --net-sheep 2 \
   --ui-frame 3 --out shots/wire_sheep.png

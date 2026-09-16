@@ -208,6 +208,13 @@ pub struct SceneOpts {
     /// continue the ids through the same facing-point placement law,
     /// standalone or beside the zombie/pig/cow rings).
     pub net_sheep: Option<u32>,
+    /// THE WOOL BYTE's own stage (the --net-sheep mirror word: the RAW
+    /// byte the Set Entity Data store keeps — bit 0x10 the sheared
+    /// gate rides, the low nibble the dye id): lands on the FIRST wire
+    /// sheep through the merge's own isSheared/getColor decode. 0 =
+    /// the vanilla default (unsheared, WHITE); 14 = RED; 30 = red AND
+    /// sheared.
+    pub net_wool: Option<u8>,
     /// THE DIVE SEED: carve a 3x3 pool AT the body's own column — three
     /// cells of water down (the old surface cell becomes the water
     /// surface), a forced-solid basin floor, the headroom cleared — and
@@ -1385,6 +1392,7 @@ pub fn render_gui_screen_opts(
                             hurt_time: 0,
                             on_fire: false,
                             crouching: false,
+                            wool_byte: 0,
                             type_name: "minecraft:zombie".to_string(),
                         });
                     }
@@ -1425,6 +1433,7 @@ pub fn render_gui_screen_opts(
                             hurt_time: 0,
                             on_fire: false,
                             crouching: false,
+                            wool_byte: 0,
                             type_name: "minecraft:pig".to_string(),
                         });
                     }
@@ -1466,6 +1475,7 @@ pub fn render_gui_screen_opts(
                             hurt_time: 0,
                             on_fire: false,
                             crouching: false,
+                            wool_byte: 0,
                             type_name: "minecraft:cow".to_string(),
                         });
                     }
@@ -1521,8 +1531,22 @@ pub fn render_gui_screen_opts(
                             hurt_time: 0,
                             on_fire: false,
                             crouching: false,
+                            wool_byte: 0,
                             type_name: "minecraft:sheep".to_string(),
                         });
+                    }
+                    // THE WOOL WORD's own arm (the flag the wire byte's
+                    // raw word carries — the FIRST sheep the ring
+                    // staged lands it through the merge's own decode,
+                    // the render's fur gate + dye tint the word's own
+                    // consumers)
+                    if let Some(byte) = opts.net_wool {
+                        if let Some(w) = wire_mobs
+                            .iter_mut()
+                            .find(|w| w.type_name == "minecraft:sheep")
+                        {
+                            w.wool_byte = byte;
+                        }
                     }
                     app.live_mobs_updated(wire_mobs);
                     // the lerpTo walk's own first step: one tick of the

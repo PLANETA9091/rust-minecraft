@@ -96,6 +96,13 @@ pub const COW_TEMPERATE_RUNTIME_PATH: &str = "entity/cow/cow_temperate.png";
 pub const SHEEP_PNG_SHA1: &str = "e7c4f9b5279e356724fd48fbbf1cba93b8e6cf26";
 pub const SHEEP_RUNTIME_PATH: &str = "entity/sheep/sheep.png";
 
+/// The SHEEP WOOL (the fur overlay's own texture), generated from
+/// the same jar: the source sha1 the wool layer verifies before it
+/// tints (javap SheepFurModel: `LayerDefinition.create(64, 32)` — the
+/// inflate-cubes' own UV layout the dye color multiplies).
+pub const SHEEP_WOOL_PNG_SHA1: &str = "0dc8efe62ffb5a76ee51517566b4d3772f01b996";
+pub const SHEEP_WOOL_RUNTIME_PATH: &str = "entity/sheep/sheep_wool.png";
+
 /// The FLAME strips (the burn lane's pixel sources), generated from
 /// the same jar: the source sha1s the burning mob's renderer verifies
 /// before it draws (javap: `FlameFeatureRenderer.buildGroup`'s
