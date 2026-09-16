@@ -140,11 +140,13 @@ fn table() -> &'static SoundTable {
         // the synthetic fixture table the voice laws exercise everywhere.
         // The release boot the honest cache-or-empty law keeps — the
         // synthetic table never ships.
-        if cfg!(test) && t.events.is_empty() {
-            test_fixture_table()
-        } else {
-            t
+        #[cfg(test)]
+        {
+            if t.events.is_empty() {
+                return test_fixture_table();
+            }
         }
+        t
     })
 }
 

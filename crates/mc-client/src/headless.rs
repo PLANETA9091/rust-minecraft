@@ -139,6 +139,14 @@ pub struct SceneOpts {
     /// and walk N swing-clock ticks after. Requires --sheep +
     /// --held-item wheat.
     pub feed: Option<u32>,
+    /// THE BREEDING WALK'S OWN STAGE: seed TWO sheep on the camera's
+    /// facing ray (the same-surface cells 3 and 5 out — the canMate
+    /// pair the ring speaks), arm the love clock the feed verdict
+    /// leaves (600 both), then the settle ticks the caller passes run
+    /// the pairing — the child the spawn walk leaves, the hearts the
+    /// event 18 rides, the XP orb the MOB_DROPS roll owes. The staged
+    /// baby the 0.5 pose scale draws.
+    pub breed: Option<u32>,
     /// The zombie's remainingFireTicks (the sun-burn brand's own
     /// clock; the igniteForSeconds(8) law speaks 160).
     pub zombie_fire: Option<i32>,
@@ -1881,6 +1889,79 @@ pub fn render_gui_screen_opts(
         // ambient drip the in-love gate speaks; the frozen feed shot
         // passes none — the staging stays the state it froze)
         for _ in 0..opts.settle_ticks {
+            app.on_movement_input(0.0, 0.0, false, false, false);
+            app.update();
+        }
+    }
+    if let Some(settle) = opts.breed {
+        // THE BREEDING WALK'S OWN STAGE (the canMate pair the scan
+        // answers): TWO sheep on the camera's facing ray — the
+        // same-surface cells 3 and 5 out (the ring the 8.0 search
+        // speaks, both surfaces the body's own level — the hilltop
+        // candidates the surface law refuses), the love clock the feed
+        // verdict leaves (600 both). The settle ticks the caller
+        // passes run the tick lane — the pairing fires on the first,
+        // the child the spawn walk leaves, the hearts the event 18
+        // rides, the XP orb the MOB_DROPS roll owes; the frozen shot
+        // stages the family (the baby the 0.5 pose scale draws).
+        let yaw_cam = opts.body_yaw.unwrap_or(-90.0);
+        let n = app.world_size;
+        let (fx, fz) = (
+            (-yaw_cam.to_radians().sin()) as i32,
+            (yaw_cam.to_radians().cos()) as i32,
+        );
+        let bx = n / 2;
+        let bz = n / 2;
+        let spawn_y = app.spawn_y;
+        let mut cells = Vec::new();
+        for d in [3i32, 5] {
+            let (cx, cz) = (bx + fx * d, bz + fz * d);
+            let y = app
+                .offline_world
+                .as_ref()
+                .map(|w| crate::screens::top_solid_y(w, cx, cz))
+                .unwrap_or(spawn_y);
+            anyhow::ensure!(
+                y == spawn_y,
+                "--breed: cell {d} out on the facing ray sits off the body's surface ({y} vs {spawn_y}) — aim the body at flat ground"
+            );
+            cells.push((cx, cz, y));
+        }
+        for (idx, (cx, cz, y)) in cells.into_iter().enumerate() {
+            let mut sheep = crate::mob::Zombie::new(
+                1 + idx as i32,
+                cx as f64 + 0.5,
+                y as f64,
+                cz as f64 + 0.5,
+                262 + idx as u64, // the jar's own number — as good a seed as any
+            );
+            sheep.kind = crate::mob::MobKind::Sheep;
+            sheep.on_ground = true;
+            sheep.age_ticks = 40; // two seconds in — the bob's stable mid value
+            // THE LOVE CLOCK the feed verdict leaves (the setInLove
+            // walk's own 600 — the pair the scan needs)
+            sheep.in_love = 600;
+            // facing the camera (the cardinal the ray names — the
+            // vanilla yaw degrees)
+            sheep.yaw = if fx > 0 {
+                90.0
+            } else if fx < 0 {
+                -90.0
+            } else if fz > 0 {
+                180.0
+            } else {
+                0.0
+            };
+            app.mobs.push(sheep);
+        }
+        println!(
+            "the breed pair stages at the facing ray cells 3 and 5 (both in love), {settle} settle ticks follow"
+        );
+        // THE SETTLE TICKS the pairing runs through (the REAL updates
+        // the tick lane speaks — the scan fires on the first, the
+        // hearts' burst + the baby's join land, the later ticks let
+        // the particles bloom past the point-origin the clamp speaks)
+        for _ in 0..settle {
             app.on_movement_input(0.0, 0.0, false, false, false);
             app.update();
         }

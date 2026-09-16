@@ -113,6 +113,25 @@ pub const SHEEP_HEIGHT: f64 = 1.3;
 /// same chain).
 pub const SHEEP_EYE_HEIGHT: f64 = 1.235;
 
+/// `AgeableMob.getBabyStartAge` (javap: `return -24000` — the grow-up
+/// countdown the child's birth arms; the age walks UP toward 0 the
+/// aiStep's own walk speaks, the adult the zero crossing names).
+pub const BABY_START_AGE: i32 = -24000;
+/// `finalizeSpawnChildFromBreeding`'s own cooldown (javap: the
+/// `setAge(6000)` the walk folds on BOTH parents — the breed delay
+/// the aiStep's own decrement drains, the gate the feed arm reads).
+pub const BREED_COOLDOWN_TICKS: i32 = 6000;
+/// The BreedGoal's own 8.0 ring (the AABB inflate the goal's pairing
+/// search speaks — the class source's constant the chicken/pig
+/// registrations' `BreedGoal(animal, 1.0)` clinit entries name the
+/// goal for; the canMate law the animal dump carries is the round's
+/// own bytecode evidence, the ring the goal's own shape keeps).
+pub const BREED_SEARCH_RANGE: f64 = 8.0;
+/// `AgeableMob.getScale`'s own baby arm (the `isBaby() ? 0.5F : 1.0F`
+/// the render state's scale carries — the pose scale the
+/// LivingEntityRenderer folds around the feet anchor).
+pub const BABY_RENDER_SCALE: f32 = 0.5;
+
 /// THE WOOL BYTE'S OWN DECODE (Sheep.isSheared/getColor's own fold —
 /// the 26.2 bytecode: `byteValue() & 0x10 != 0` the sheared bit rides,
 /// `DyeColor.byId(byteValue() & 0xF)` the low nibble the color speaks).
@@ -540,6 +559,15 @@ pub struct Zombie {
     /// `canFallInLove()` gate reads it (`inLove <= 0`), the feed
     /// verdict's own arms key on it.
     pub in_love: i32,
+    /// THE AGE CLOCK (javap `AgeableMob.age` — the private int the ctor
+    /// zeroes, `getBabyStartAge()`'s -24000 the birth arms, the aiStep's
+    /// own walk: the baby's age climbs toward 0 (the grow-up), the
+    /// adult's cooldown drains toward 0 (the breed delay), the zero the
+    /// `canFallInLove`/`mobInteract` gates read. `isBaby()` the
+    /// `age < 0` word speaks — the vanilla's DATA_BABY_ID bit + age
+    /// split the wire channel keeps, the single field the same verdicts
+    /// the client's own store answers).
+    pub age: i32,
     /// the swing clock (the attack anim the render state's attackTime
     /// samples — the same LivingEntity law the player's hand speaks)
     pub swing: SwingState,
@@ -631,6 +659,7 @@ impl Zombie {
             hurt_time: 0,
             death_time: 0,
             in_love: 0,
+            age: 0,
             swing: SwingState::default(),
             walk: WalkAnimationState::default(),
             aggressive: false,
@@ -673,6 +702,15 @@ impl Zombie {
             MobKind::Cow => (COW_WIDTH, COW_HEIGHT),
             MobKind::Pig => (PIG_WIDTH, PIG_HEIGHT),
             MobKind::Zombie => (ZOMBIE_WIDTH, ZOMBIE_HEIGHT),
+        };
+        // THE BABY'S OWN DIMENSIONS (javap `Sheep.getDefaultDimensions`
+        // the isBaby arm the dump names — the half-sized box the baby
+        // body occupies, the same fold the render pose's 0.5 scale
+        // speaks)
+        let (w, h) = if self.is_baby() {
+            (w * 0.5, h * 0.5)
+        } else {
+            (w, h)
         };
         let h2 = w / 2.0;
         (self.x - h2, self.y, self.z - h2, self.x + h2, self.y + h, self.z + h2)
@@ -845,6 +883,22 @@ impl Zombie {
         // setInLove armed walks to 0, the gate reopens)
         if self.in_love > 0 {
             self.in_love -= 1;
+        }
+        // THE AGE'S OWN LOVE RESET (javap `Animal.customServerAiStep`: the
+        // `getAge() != 0` arm the reset speaks — the baby and the breed
+        // cooldown both never carry the love word, the tick the same
+        // walk the decrement's tail arms)
+        if self.age != 0 {
+            self.in_love = 0;
+        }
+        // THE AGEABLEMOB'S OWN WALK (javap `AgeableMob.aiStep`: the
+        // baby's age climbs toward 0 — the grow-up the zero crossing
+        // names — the adult's cooldown drains toward 0, the gate the
+        // feed arm reads)
+        if self.age < 0 {
+            self.age += 1;
+        } else if self.age > 0 {
+            self.age -= 1;
         }
         self.swing.tick();
         self.age_ticks = self.age_ticks.wrapping_add(1);
@@ -1272,25 +1326,39 @@ impl Zombie {
     /// particle lane the next round owes) — the state the verdict's
     /// own walk keeps.
     fn feed(&mut self) -> MobInteract {
-        if self.in_love <= 0 {
+        // THE AGE GATE (javap `Animal.mobInteract`'s own arm: `isFood`
+        // then `getAge() == 0` the adult arm speaks — the baby and the
+        // breed cooldown both refuse the love word, the CONSUME the
+        // non-zero age returns)
+        if self.age == 0 && self.in_love <= 0 {
             // the setInLove walk: inLove = 600 (the loveCause the
             // EntityReference ride and the event 18 burst the
             // offline walk's own verdict stands for)
             self.in_love = 600;
             MobInteract::Feed { love: true }
         } else {
-            // the already-in-love adult: the CONSUME the isClientSide
-            // arm returns, the press consumed the swing never starts
+            // the already-in-love adult (or the baby/cooldown the age
+            // gate refuses): the CONSUME the isClientSide arm returns,
+            // the press consumed the swing never starts
             MobInteract::Feed { love: false }
         }
     }
 
+    /// `AgeableMob.isBaby` — the gate's own word (the `age < 0` the
+    /// single field speaks: the birth's -24000 the baby names, the
+    /// grow-up the zero crossing closes; the vanilla's DATA_BABY_ID
+    /// bit + age split the wire channel keeps, the verdicts the same
+    /// law answers).
+    pub fn is_baby(&self) -> bool {
+        self.age < 0
+    }
+
     /// `Sheep.readyForShearing` — the gate's own walk (javap: `return
-    /// !isSheared() && !isBaby()`): the wool byte's sheared bit is
-    /// the repo's only word (the baby lane the repo never arms —
-    /// no growth vocabulary — isBaby the honest constant false).
+    /// !isSheared() && !isBaby()`): the wool byte's sheared bit the
+    /// first arm, the age's baby word the second (the growth vocabulary
+    /// the breed lane arms — the baby's coat the shear never takes).
     pub fn ready_for_shearing(&self) -> bool {
-        !self.sheared
+        !self.sheared && !self.is_baby()
     }
 
     /// THE SHEAR'S OWN WALK (javap `Sheep.shear(ServerLevel,
@@ -1410,6 +1478,102 @@ pub fn try_spawn(
         (*next_id as u64) << 16 ^ rng.next(),
     ));
     true
+}
+
+/// THE BREED'S OWN OUT-EDGE (the spawn walk the caller answers): the
+/// child the addFreshEntityWithPassengers arms, the HEART burst the
+/// event 18 broadcast spawns (the spawning parent's own box the
+/// broadcast names), the XP orb the MOB_DROPS gamerule's roll owes
+/// (`nextInt(7)` — the 0..6 band the zero roll honestly speaks — no
+/// orb, exactly the vanilla's own sometimes-silent breed).
+pub struct BreedSpawn {
+    pub child: Zombie,
+    /// the spawning parent's bbox snapshot (the event 18 broadcast's
+    /// own ask — the caller spawns the burst hearts over it)
+    pub heart_bbox: (f64, f64, f64, f64, f64, f64),
+    /// the orb the walk drops: (x, y, z, `nextInt(7)`) — the zero roll
+    /// the caller skips (no orb, the vanilla's own honest silence)
+    pub orb: (f64, f64, f64, i32),
+}
+
+/// THE BREEDING WALK (javap `Animal` the 26.2 dump keeps): the
+/// `canMate` law — same class, both `isInLove()` — the pair the scan
+/// answers, the `spawnChildFromBreeding` walk — `getBreedOffspring`
+/// the child creates, `setBaby(true)` the -24000 age speaks, the
+/// `snapTo` at THIS parent's own x/y/z — and the
+/// `finalizeSpawnChildFromBreeding` tail — `setAge(6000)` BOTH
+/// parents, `resetLove()` both, `broadcastEntityEvent(18)` the HEARTS,
+/// the MOB_DROPS-gated `ExperienceOrb` at the parent's own spot. The
+/// `bred` flags the double-pair the same pass refuses (an in-love
+/// parent breeds once per scan — the goal's own one-shot law). The
+/// child's RNG seed and the sheep's wool mix draw the shared stream
+/// (the getMixedColor fallback arm the mix-table absence keeps — the
+/// random-parent law the method's own shape speaks; the dye-pair table
+/// the future lane owes).
+pub fn try_breed(
+    mobs: &mut [Zombie],
+    next_id: &mut i32,
+    rng: &mut Lcg,
+) -> Vec<BreedSpawn> {
+    let mut out = Vec::new();
+    let mut bred = vec![false; mobs.len()];
+    let ring = BREED_SEARCH_RANGE * BREED_SEARCH_RANGE;
+    for i in 0..mobs.len() {
+        for j in (i + 1)..mobs.len() {
+            if bred[i] || bred[j] {
+                continue;
+            }
+            let (a, b) = (&mobs[i], &mobs[j]);
+            // THE CANMATE LAW (javap: `other != this`, the same class,
+            // both `isInLove()` — the kinds the same variant names)
+            if a.kind != b.kind || a.in_love <= 0 || b.in_love <= 0 {
+                continue;
+            }
+            let dx = a.x - b.x;
+            let dy = a.y - b.y;
+            let dz = a.z - b.z;
+            if dx * dx + dy * dy + dz * dz >= ring {
+                continue;
+            }
+            // THE PAIR COOLS (javap `finalizeSpawnChildFromBreeding`:
+            // `setAge(6000)` both, `resetLove()` both)
+            mobs[i].age = BREED_COOLDOWN_TICKS;
+            mobs[i].in_love = 0;
+            mobs[j].age = BREED_COOLDOWN_TICKS;
+            mobs[j].in_love = 0;
+            // THE CHILD (javap `spawnChildFromBreeding`: `setBaby(true)`,
+            // the `snapTo` at THIS parent's own x/y/z, the
+            // `getBabyStartAge` -24000 the birth arms)
+            let mut child = Zombie::new(*next_id, mobs[i].x, mobs[i].y, mobs[i].z, rng.next());
+            *next_id += 1;
+            child.kind = mobs[i].kind;
+            child.age = BABY_START_AGE;
+            child.on_ground = true;
+            // THE OFFSPRING'S OWN COLOR (javap `Sheep.getBreedOffspring`:
+            // `setColor(DyeColor.getMixedColor(level, a, b))` — the mix
+            // table the evidence set doesn't carry, the random-parent
+            // fallback arm the method's own shape keeps: one parent's
+            // dye the coin picks)
+            if child.kind == MobKind::Sheep {
+                child.wool_color = if rng.next() & 1 == 0 {
+                    mobs[i].wool_color
+                } else {
+                    mobs[j].wool_color
+                };
+            }
+            // THE ORB ROLL (javap: `random.nextInt(7)` — the 0..6 the
+            // MOB_DROPS gate keeps)
+            let xp_roll = (rng.next() % 7) as i32;
+            out.push(BreedSpawn {
+                child,
+                heart_bbox: mobs[i].box_for(),
+                orb: (mobs[i].x, mobs[i].y, mobs[i].z, xp_roll),
+            });
+            bred[i] = true;
+            bred[j] = true;
+        }
+    }
+    out
 }
 
 /// THE ENTITY PICK's own ray-box test (javap `AABB.clip` — the slab
@@ -2442,5 +2606,190 @@ mod tests {
             "the monster's chain the Animal super never reaches"
         );
         assert_eq!(zombie.in_love, 0, "the zombie no love clock arms");
+    }
+
+    #[test]
+    fn the_age_walks_the_grow_up_and_the_cooldown() {
+        // javap AgeableMob.aiStep: the baby's age climbs toward 0 (the
+        // grow-up the zero crossing names), the adult's cooldown drains
+        // toward 0 (the gate the feed arm reads)
+        let mut child = Zombie::new(7, 0.0, 64.0, 0.0, 262);
+        child.age = BABY_START_AGE;
+        assert!(child.is_baby(), "the negative age the baby names");
+        let world = World::new(1, 42);
+        for _ in 0..5 {
+            child.tick(&world, None, NIGHT);
+        }
+        assert_eq!(
+            child.age,
+            BABY_START_AGE + 5,
+            "the grow-up the aiStep's own walk speaks"
+        );
+        child.age = -1;
+        child.tick(&world, None, NIGHT);
+        assert_eq!(child.age, 0, "the zero crossing the adult names");
+        assert!(!child.is_baby(), "the baby word the zero closes");
+        child.age = BREED_COOLDOWN_TICKS;
+        child.tick(&world, None, NIGHT);
+        assert_eq!(
+            child.age,
+            BREED_COOLDOWN_TICKS - 1,
+            "the cooldown the aiStep drains"
+        );
+    }
+
+    #[test]
+    fn the_nonzero_age_resets_the_love_word() {
+        // javap Animal.customServerAiStep: `getAge() != 0 -> inLove = 0`
+        // — the in-love state the breed cooldown's first tick strips,
+        // the baby's the same walk keeps at zero
+        let mut sheep = Zombie::new(7, 0.0, 64.0, 0.0, 262);
+        sheep.kind = MobKind::Sheep;
+        sheep.age = BREED_COOLDOWN_TICKS;
+        sheep.in_love = 600;
+        let world = World::new(1, 42);
+        sheep.tick(&world, None, NIGHT);
+        assert_eq!(sheep.in_love, 0, "the cooldown the love word resets");
+        // the zero-age adult's own clock the plain decrement walks
+        sheep.age = 0;
+        sheep.in_love = 600;
+        sheep.tick(&world, None, NIGHT);
+        assert_eq!(sheep.in_love, 599, "the adult's clock the plain decrement walks");
+    }
+
+    #[test]
+    fn the_feed_and_shear_gates_refuse_the_baby() {
+        // javap Animal.mobInteract (the getAge() == 0 arm) +
+        // Sheep.readyForShearing (!isSheared() && !isBaby()): the baby
+        // the feed's love word never arms, the coat the shear never
+        // takes
+        let mut baby = Zombie::new(7, 0.0, 64.0, 0.0, 262);
+        baby.kind = MobKind::Sheep;
+        baby.age = -1;
+        assert_eq!(
+            baby.mob_interact("wheat", &mut Lcg::new(1)),
+            MobInteract::Feed { love: false },
+            "the baby the age gate refuses (the CONSUME arm)"
+        );
+        assert_eq!(baby.in_love, 0, "the baby no love clock arms");
+        assert!(
+            !baby.ready_for_shearing(),
+            "the baby's coat the shear never takes"
+        );
+    }
+
+    #[test]
+    fn the_breeding_walk_spawns_the_child_and_cools_the_pair() {
+        // javap Animal.canMate (same class, both isInLove) +
+        // spawnChildFromBreeding (the child at THIS parent's own spot,
+        // the -24000 the birth arms) + finalizeSpawnChildFromBreeding
+        // (the setAge(6000) both, the resetLove() both, the event-18
+        // hearts, the nextInt(7) orb roll)
+        let mut a = Zombie::new(1, 10.0, 64.0, 10.0, 262);
+        a.kind = MobKind::Sheep;
+        a.in_love = 600;
+        let mut b = Zombie::new(2, 12.0, 64.0, 10.0, 263);
+        b.kind = MobKind::Sheep;
+        b.in_love = 600;
+        let mut mobs = vec![a, b];
+        let mut next_id = 3;
+        let spawns = try_breed(&mut mobs, &mut next_id, &mut Lcg::new(42));
+        assert_eq!(spawns.len(), 1, "the pair the canMate law answers");
+        let spawn = &spawns[0];
+        assert_eq!(spawn.child.kind, MobKind::Sheep, "the child the same kind names");
+        assert_eq!(
+            spawn.child.age, BABY_START_AGE,
+            "getBabyStartAge the birth arms"
+        );
+        assert!(spawn.child.is_baby(), "the birth's baby word stands");
+        assert_eq!(
+            (spawn.child.x, spawn.child.y, spawn.child.z),
+            (10.0, 64.0, 10.0),
+            "the snapTo at THIS parent's own spot the walk speaks"
+        );
+        assert_eq!(spawn.child.id, 3, "the client's own counter the id rides");
+        assert_eq!(next_id, 4, "the counter advanced one");
+        assert!(
+            (0..=6).contains(&spawn.orb.3),
+            "the nextInt(7) band the orb roll keeps: {}",
+            spawn.orb.3
+        );
+        assert_eq!(
+            (spawn.orb.0, spawn.orb.1, spawn.orb.2),
+            (10.0, 64.0, 10.0),
+            "the orb at the parent's own spot the ctor rides"
+        );
+        // the parents the finalize walk cools (the in-place mutation
+        // the scan speaks)
+        assert_eq!(mobs[0].age, BREED_COOLDOWN_TICKS, "setAge(6000) the first parent");
+        assert_eq!(mobs[0].in_love, 0, "resetLove the first parent");
+        assert_eq!(mobs[1].age, BREED_COOLDOWN_TICKS, "setAge(6000) the second parent");
+        assert_eq!(mobs[1].in_love, 0, "resetLove the second parent");
+        // the hearts' bbox the spawning parent's own box names
+        let expected = mobs[0].box_for();
+        assert_eq!(spawn.heart_bbox, expected, "the event-18 ask the parent's own box");
+    }
+
+    #[test]
+    fn the_breed_scan_refuses_the_wrong_pairs() {
+        // canMate's own arms: the cross-kind pair the class law
+        // refuses, the lone in-love mob the partner-less scan refuses,
+        // the far pair the ring refuses, the third mob the one-shot
+        // law leaves un-bred
+        let mut sheep = Zombie::new(1, 10.0, 64.0, 10.0, 262);
+        sheep.kind = MobKind::Sheep;
+        sheep.in_love = 600;
+        let mut zombie = Zombie::new(2, 11.0, 64.0, 10.0, 263);
+        zombie.in_love = 600;
+        let mut next_id = 3;
+        let mut mobs = vec![sheep, zombie];
+        assert!(
+            try_breed(&mut mobs, &mut next_id, &mut Lcg::new(42)).is_empty(),
+            "the cross-kind pair the class law refuses"
+        );
+        assert!(
+            mobs[0].in_love == 600 && mobs[1].in_love == 600,
+            "the refusal no clocks touch"
+        );
+
+        let mut lone = Zombie::new(1, 10.0, 64.0, 10.0, 262);
+        lone.kind = MobKind::Sheep;
+        lone.in_love = 600;
+        let mut other = Zombie::new(2, 11.0, 64.0, 10.0, 263);
+        other.kind = MobKind::Sheep;
+        let mut mobs = vec![lone, other];
+        assert!(
+            try_breed(&mut mobs, &mut next_id, &mut Lcg::new(42)).is_empty(),
+            "the partner-less pair the love gate refuses"
+        );
+
+        let mut far_a = Zombie::new(1, 10.0, 64.0, 10.0, 262);
+        far_a.kind = MobKind::Sheep;
+        far_a.in_love = 600;
+        let mut far_b = Zombie::new(2, 30.0, 64.0, 10.0, 263);
+        far_b.kind = MobKind::Sheep;
+        far_b.in_love = 600;
+        let mut mobs = vec![far_a, far_b];
+        assert!(
+            try_breed(&mut mobs, &mut next_id, &mut Lcg::new(42)).is_empty(),
+            "the far pair the 8.0 ring refuses"
+        );
+
+        // the one-shot law: three in-love sheep — ONE pair breeds, the
+        // third's clocks the scan never touches
+        let mut trio: Vec<Zombie> = (0..3)
+            .map(|i| {
+                let mut m = Zombie::new(i as i32 + 1, 10.0 + i as f64, 64.0, 10.0, 262 + i as u64);
+                m.kind = MobKind::Sheep;
+                m.in_love = 600;
+                m
+            })
+            .collect();
+        let spawns = try_breed(&mut trio, &mut next_id, &mut Lcg::new(42));
+        assert_eq!(spawns.len(), 1, "the one-shot law the single pair speaks");
+        let bred_count = trio.iter().filter(|m| m.age == BREED_COOLDOWN_TICKS).count();
+        assert_eq!(bred_count, 2, "the bred pair the cooldown names");
+        let third = trio.iter().find(|m| m.age == 0).expect("the un-bred third");
+        assert_eq!(third.in_love, 600, "the third's love clock the scan never touches");
     }
 }

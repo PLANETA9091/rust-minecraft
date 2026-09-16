@@ -167,6 +167,12 @@ struct Cli {
     /// wheat.
     #[arg(long)]
     feed: Option<u32>,
+    /// Seed TWO in-love sheep on the camera's facing ray (the canMate
+    /// pair the breeding walk needs) and run N settle ticks — the
+    /// pairing fires, the child spawns, the hearts burst, the XP orb
+    /// rolls. Requires --body.
+    #[arg(long)]
+    breed: Option<u32>,
     /// The zombie's remainingFireTicks (the igniteForSeconds(8) law
     /// speaks 160).
     #[arg(long)]
@@ -408,6 +414,7 @@ fn main() -> Result<()> {
             sheep: cli.sheep,
             shear: cli.shear,
             feed: cli.feed,
+            breed: cli.breed,
             zombie_fire: cli.zombie_fire,
             zombie_death: cli.zombie_death,
             zombie_aggro: cli.zombie_aggro,

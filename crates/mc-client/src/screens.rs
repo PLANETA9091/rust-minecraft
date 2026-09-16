@@ -2028,6 +2028,28 @@ impl App {
                         }
                     }
                 }
+                // THE BREEDING WALK'S OWN PAIR (the canMate law the two
+                // in-love same-kind mobs answer — the child the
+                // spawnChildFromBreeding walk leaves, the parents the
+                // finalize walk cools, the HEARTS the event 18
+                // broadcasts, the XP orb the MOB_DROPS roll owes): the
+                // scan runs the ticks' AFTER (the goals' own moment —
+                // the aiStep's ambient hearts the pre-pair state queued
+                // still draw, the vanilla's own per-entity order)
+                let spawns =
+                    crate::mob::try_breed(&mut self.mobs, &mut self.next_mob_id, &mut self.mob_rng);
+                for spawn in spawns {
+                    for heart in crate::particles::heart_burst(spawn.heart_bbox, &mut self.mob_rng)
+                    {
+                        self.particles.push(heart);
+                    }
+                    let (ox, oy, oz, ov) = spawn.orb;
+                    if ov > 0 {
+                        // the zero roll the walk honestly keeps — no orb
+                        self.spawn_xp_orbs(ox, oy + 0.5, oz, ov);
+                    }
+                    self.mobs.push(spawn.child);
+                }
                 // THE LOVE WALK'S OWN SPAWNS (the boxes the aiStep gate
                 // collected — one ambient heart each, the draw order
                 // the mob iteration speaks)
@@ -6144,9 +6166,27 @@ impl App {
                     (quads, Box::new(move |u, v| model.pixel(u, v)))
                 }
             };
+            // THE BABY'S OWN POSE (javap `AgeableMob.getScale`'s own
+            // 0.5F the render state's scale carries — the pose scale
+            // the LivingEntityRenderer folds around the feet anchor,
+            // the same half the getDefaultDimensions isBaby arm the
+            // bbox ask speaks below). The adults the fold never
+            // touches — the golden scenes stage none.
+            let mut quads = quads;
+            if mob.is_baby() {
+                let s = crate::mob::BABY_RENDER_SCALE;
+                for q in quads.iter_mut() {
+                    for p in q.pts.iter_mut() {
+                        p[0] = feet.x + (p[0] - feet.x) * s;
+                        p[1] = feet.y + (p[1] - feet.y) * s;
+                        p[2] = feet.z + (p[2] - feet.z) * s;
+                    }
+                }
+            }
             // THE FLAME FEATURE's own bbox ask — the registration's
             // dims the kind's own EntityTypes speaks (the zombie
-            // 0.6x1.95, the pig 0.9x0.9)
+            // 0.6x1.95, the pig 0.9x0.9); the baby's own
+            // getDefaultDimensions arm the half-scale rides
             let (bbox_w, bbox_h) = match mob.kind {
                 crate::mob::MobKind::Sheep => (
                     crate::mob::SHEEP_WIDTH as f32,
@@ -6164,6 +6204,11 @@ impl App {
                     crate::mob::ZOMBIE_WIDTH as f32,
                     crate::mob::ZOMBIE_HEIGHT as f32,
                 ),
+            };
+            let (bbox_w, bbox_h) = if mob.is_baby() {
+                (bbox_w * crate::mob::BABY_RENDER_SCALE, bbox_h * crate::mob::BABY_RENDER_SCALE)
+            } else {
+                (bbox_w, bbox_h)
             };
             // the hurt overlay's own shade term (the mix law's 0.7)
             let shade = if mob.hurt_time > 0 { 0.7 } else { 1.0 };
@@ -11788,6 +11833,66 @@ mod tests {
             other => panic!("the wrong command rode the lane: {other:?}"),
         }
         assert!(!app.dead);
+    }
+
+    /// THE BREEDING WALK'S OWN TICK LANE (the canMate pair the scan
+    /// answers end to end): the two in-love sheep the feed verdicts
+    /// armed — the pairing fires on the app's own update, the child
+    /// the spawn walk leaves (the -24000 the baby's own word), the
+    /// parents the finalize walk cools (the 6000 the breed delay
+    /// speaks), the HEARTS the event 18 broadcasts ride the particle
+    /// store, the XP orb the MOB_DROPS roll owes (the zero roll the
+    /// honest absence keeps).
+    #[test]
+    fn the_breeding_pair_spawns_the_child_through_the_tick_lane() {
+        let mut app = App::new(5);
+        app.enter_world();
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let surface = app.spawn_y;
+        for (dx, id) in [(0i32, 1i32), (2, 2)] {
+            let mut sheep = crate::mob::Zombie::new(
+                id,
+                c as f64 + 0.5 + dx as f64,
+                surface as f64,
+                c as f64 + 0.5,
+                262 + id as u64,
+            );
+            sheep.kind = crate::mob::MobKind::Sheep;
+            sheep.on_ground = true;
+            sheep.in_love = 600; // the setInLove verdict's own word
+            app.mobs.push(sheep);
+        }
+        let mobs_before = app.mobs.len();
+        app.update();
+        assert_eq!(
+            app.mobs.len(),
+            mobs_before + 1,
+            "the child the pairing spawns"
+        );
+        let child = app
+            .mobs
+            .iter()
+            .find(|m| m.is_baby())
+            .expect("the baby the birth arms");
+        assert_eq!(
+            child.age, crate::mob::BABY_START_AGE,
+            "getBabyStartAge the child's own clock"
+        );
+        assert_eq!(child.kind, crate::mob::MobKind::Sheep);
+        // the parents the finalize walk cools (the 6000 both)
+        let parents: Vec<&crate::mob::Zombie> = app
+            .mobs
+            .iter()
+            .filter(|m| m.age == crate::mob::BREED_COOLDOWN_TICKS)
+            .collect();
+        assert_eq!(parents.len(), 2, "the cooled pair the walk speaks");
+        assert!(parents.iter().all(|m| m.in_love == 0), "resetLove both");
+        // the hearts the event 18 broadcast spawns ride the store
+        assert!(
+            app.particles.iter().any(|p| p.kind == crate::particles::ParticleKind::Heart),
+            "the burst the broadcast owes"
+        );
     }
 
     /// THE BLOCK-SOUND ARC'S FOOTSTEPS: the walking body's steps ride
