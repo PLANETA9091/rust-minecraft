@@ -361,6 +361,51 @@ impl MobKind {
             MobKind::Zombie
         }
     }
+
+    /// THE VOICE TABLE (the vanilla rows the four drawn kinds speak —
+    /// each the class's own `getAmbientSound` / `getHurtSound` /
+    /// `getDeathSound` return: the zombie's groan, the sheep's baa,
+    /// the cow's moo, the pig's oink). The registry names the audio
+    /// lane's clip table answers; the honest pairing: the voice only
+    /// where the body draws (`from_wire_name` admits these four — an
+    /// undrawn kind never reaches the table).
+    pub fn voice_event(self, slot: VoiceSlot) -> &'static str {
+        match (self, slot) {
+            (MobKind::Zombie, VoiceSlot::Ambient) => "entity.zombie.ambient",
+            (MobKind::Zombie, VoiceSlot::Hurt) => "entity.zombie.hurt",
+            (MobKind::Zombie, VoiceSlot::Death) => "entity.zombie.death",
+            (MobKind::Sheep, VoiceSlot::Ambient) => "entity.sheep.ambient",
+            (MobKind::Sheep, VoiceSlot::Hurt) => "entity.sheep.hurt",
+            (MobKind::Sheep, VoiceSlot::Death) => "entity.sheep.death",
+            (MobKind::Cow, VoiceSlot::Ambient) => "entity.cow.ambient",
+            (MobKind::Cow, VoiceSlot::Hurt) => "entity.cow.hurt",
+            (MobKind::Cow, VoiceSlot::Death) => "entity.cow.death",
+            (MobKind::Pig, VoiceSlot::Ambient) => "entity.pig.ambient",
+            (MobKind::Pig, VoiceSlot::Hurt) => "entity.pig.hurt",
+            (MobKind::Pig, VoiceSlot::Death) => "entity.pig.death",
+        }
+    }
+}
+
+/// The voice slots (LivingEntity's own trio — the three playSound
+/// moments the entity's voice answers: the ambient the Mob.baseTick
+/// gate speaks, the hurt the hurt pipeline's makeSound, the death the
+/// die() broadcast).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum VoiceSlot {
+    Ambient,
+    Hurt,
+    Death,
+}
+
+/// THE VOICE RNG'S OWN SEED (the wire spawn's stand-in for the vanilla
+/// independent per-entity random: `RandomSource.create()` seeds from
+/// the level's random — the wire spawn has none, so the mob's OWN id
+/// the Add Entity packet speaks is the honest per-entity word, mixed
+/// through the splitmix constant the client's own walks keep). Same
+/// id, same seed; different mobs never groan in unison.
+pub fn entity_voice_seed(id: i32) -> u64 {
+    0x5EED ^ (id as i64 as u64).wrapping_mul(0x9E37_79B9_7F4A_7C15)
 }
 
 /// The LivingEntity base MAX_HEALTH (the monster base adds none).
@@ -868,10 +913,9 @@ impl Zombie {
         }
         // THE AMBIENT VOICE (Mob.baseTick's own law: alive -> the
         // nextInt(1000) draw under the climbing clock, the play + the
-        // -80 reset; the draw rides the entity's own LCG)
-        self.ambient_time += 1;
-        if self.rng.next() % AMBIENT_DRAW_BOUND < self.ambient_time.max(0) as u64 {
-            self.ambient_time = -AMBIENT_INTERVAL_TICKS;
+        // -80 reset; the draw rides the entity's own LCG — the gate
+        // method the wire lane's own tick shares)
+        if self.ambient_voice() {
             events.ambient = true;
         }
         // THE HURT CLOCK (LivingEntity.tick's own decrement)
@@ -1236,6 +1280,24 @@ impl Zombie {
             self.death_time as f32 + partial
         } else {
             0.0
+        }
+    }
+
+    /// THE AMBIENT VOICE'S OWN GATE (Mob.baseTick's law the local tick
+    /// and the wire lane's tick share, verbatim): the clock climbs one
+    /// per tick, the `nextInt(1000)` draw under it — when the draw
+    /// lands BELOW the climbing clock the voice's own tick speaks and
+    /// the clock re-arms at the -80 the resetAmbientSoundTime bipush
+    /// keeps. The draw rides the entity's own LCG (one per tick, alive
+    /// ticks only — the caller's isAlive gate; the dying body's clock
+    /// freezes, the same silence the local tick's early return speaks).
+    pub fn ambient_voice(&mut self) -> bool {
+        self.ambient_time += 1;
+        if self.rng.next() % AMBIENT_DRAW_BOUND < self.ambient_time.max(0) as u64 {
+            self.ambient_time = -AMBIENT_INTERVAL_TICKS;
+            true
+        } else {
+            false
         }
     }
 
@@ -1796,6 +1858,88 @@ mod tests {
             }
         }
         assert!((30..=70).contains(&fires), "ambient fires {fires} in 6000");
+    }
+
+    /// THE VOICE TABLE (the vanilla `getAmbientSound` / `getHurtSound`
+    /// / `getDeathSound` rows the four drawn kinds speak): the twelve
+    /// registry names the audio lane's clip table answers, the
+    /// from_wire_name round trip the wire spawn rides, and the seed
+    /// law's own decorrelation — different ids never groan in unison.
+    #[test]
+    fn the_voice_table_speaks_the_vanilla_names() {
+        use crate::mob::{entity_voice_seed, MobKind, VoiceSlot};
+        assert_eq!(
+            MobKind::Zombie.voice_event(VoiceSlot::Ambient),
+            "entity.zombie.ambient"
+        );
+        assert_eq!(MobKind::Zombie.voice_event(VoiceSlot::Hurt), "entity.zombie.hurt");
+        assert_eq!(
+            MobKind::Zombie.voice_event(VoiceSlot::Death),
+            "entity.zombie.death"
+        );
+        assert_eq!(
+            MobKind::Sheep.voice_event(VoiceSlot::Ambient),
+            "entity.sheep.ambient"
+        );
+        assert_eq!(MobKind::Sheep.voice_event(VoiceSlot::Hurt), "entity.sheep.hurt");
+        assert_eq!(
+            MobKind::Sheep.voice_event(VoiceSlot::Death),
+            "entity.sheep.death"
+        );
+        assert_eq!(MobKind::Cow.voice_event(VoiceSlot::Ambient), "entity.cow.ambient");
+        assert_eq!(MobKind::Cow.voice_event(VoiceSlot::Hurt), "entity.cow.hurt");
+        assert_eq!(MobKind::Cow.voice_event(VoiceSlot::Death), "entity.cow.death");
+        assert_eq!(MobKind::Pig.voice_event(VoiceSlot::Ambient), "entity.pig.ambient");
+        assert_eq!(MobKind::Pig.voice_event(VoiceSlot::Hurt), "entity.pig.hurt");
+        assert_eq!(MobKind::Pig.voice_event(VoiceSlot::Death), "entity.pig.death");
+        // the round trip: the wire spawn's own walk (the registry name
+        // the Add Entity spoke -> the kind -> the voice)
+        for (name, kind) in [
+            ("minecraft:zombie", MobKind::Zombie),
+            ("minecraft:sheep", MobKind::Sheep),
+            ("minecraft:cow", MobKind::Cow),
+            ("minecraft:pig", MobKind::Pig),
+        ] {
+            assert_eq!(MobKind::from_wire_name(name), kind);
+            assert_eq!(
+                MobKind::from_wire_name(name).voice_event(VoiceSlot::Hurt),
+                kind.voice_event(VoiceSlot::Hurt),
+            );
+        }
+        // THE SEED LAW'S OWN DECORRELATION (the vanilla independent
+        // per-entity random the wire lane's stand-in answers): the same
+        // id replays the same stream, different ids never share one
+        assert_eq!(entity_voice_seed(7), entity_voice_seed(7));
+        assert_ne!(entity_voice_seed(7), entity_voice_seed(9));
+        assert_ne!(entity_voice_seed(0), entity_voice_seed(1));
+    }
+
+    /// THE AMBIENT GATE'S OWN METHOD (the shared form the wire lane's
+    /// tick rides): the law replayed by hand over the same seed — the
+    /// clock starts at -80, one draw per tick, the draw under the
+    /// climbing clock fires and re-arms at the -80 the reset speaks.
+    /// (The method's own stream, not the full tick's — the local tick
+    /// spends its own LCG on the goals' draws before the gate.)
+    #[test]
+    fn the_ambient_gate_method_speaks_the_base_tick_law() {
+        let seed = 11u64;
+        let mut z = Zombie::new(1, 0.0, 0.0, 0.0, seed);
+        let mut replay = crate::drops::Lcg::new(seed);
+        let mut clock: i32 = -AMBIENT_INTERVAL_TICKS;
+        let mut fires = 0;
+        for _ in 0..3000 {
+            clock += 1;
+            let draw = replay.next() % AMBIENT_DRAW_BOUND;
+            let expect_fire = draw < clock.max(0) as u64;
+            if expect_fire {
+                clock = -AMBIENT_INTERVAL_TICKS;
+            }
+            assert_eq!(z.ambient_voice(), expect_fire, "one law, one answer");
+            if expect_fire {
+                fires += 1;
+            }
+        }
+        assert!(fires > 0, "the gate fired within the walk");
     }
 
     /// A flat stone pad (the chase test's own arena — the terrain

@@ -2078,15 +2078,24 @@ impl App {
                 }
                 for pitch in groans {
                     // the ambient groan (makeSound's own call — the
-                    // volume rides the base 1.0, the pitch the law)
-                    self.sounds
-                        .play_voice(self.frame, "entity.zombie.ambient", 1.0, pitch);
+                    // volume rides the base 1.0, the pitch the law; the
+                    // voice table the kinds' own rows keep)
+                    self.sounds.play_voice(
+                        self.frame,
+                        crate::mob::MobKind::Zombie.voice_event(crate::mob::VoiceSlot::Ambient),
+                        1.0,
+                        pitch,
+                    );
                 }
                 for pitch in fire_hurts {
                     // the onFire hurt's own voice (the hurt pipeline's
                     // makeSound — the same law the fist's hit speaks)
-                    self.sounds
-                        .play_voice(self.frame, "entity.zombie.hurt", 1.0, pitch);
+                    self.sounds.play_voice(
+                        self.frame,
+                        crate::mob::MobKind::Zombie.voice_event(crate::mob::VoiceSlot::Hurt),
+                        1.0,
+                        pitch,
+                    );
                 }
                 for pitch in fizzes {
                     // the extinguish transition (javap
@@ -2102,8 +2111,12 @@ impl App {
                 for (mx, my, mz, pitch, loot) in fire_deaths {
                     // the death voice (the die() tail's makeSound — the
                     // pitch the entity's own law speaks)
-                    self.sounds
-                        .play_voice(self.frame, "entity.zombie.death", 1.0, pitch);
+                    self.sounds.play_voice(
+                        self.frame,
+                        crate::mob::MobKind::Zombie.voice_event(crate::mob::VoiceSlot::Death),
+                        1.0,
+                        pitch,
+                    );
                     // the loot pops at the feet (spawnAtLocation's law,
                     // the pickup delay the default 10)
                     for (item, count) in loot {
@@ -2487,11 +2500,19 @@ impl App {
         let (mx, my, mz) = (mob.x, mob.y, mob.z);
         let target_loot = if died { mob.death_loot(true) } else { Vec::new() };
         if died {
-            self.sounds
-                .play_voice(self.frame, "entity.zombie.death", 1.0, pitch);
+            self.sounds.play_voice(
+                self.frame,
+                crate::mob::MobKind::Zombie.voice_event(crate::mob::VoiceSlot::Death),
+                1.0,
+                pitch,
+            );
         } else {
-            self.sounds
-                .play_voice(self.frame, "entity.zombie.hurt", 1.0, pitch);
+            self.sounds.play_voice(
+                self.frame,
+                crate::mob::MobKind::Zombie.voice_event(crate::mob::VoiceSlot::Hurt),
+                1.0,
+                pitch,
+            );
         }
         // THE DEATH LOOT (dropAllDeathLoot's own order: the roll rides
         // the same hurt call the death speaks — killed_by_player rides
@@ -2598,8 +2619,12 @@ impl App {
             // speaks)
             for (j, nx, ny, nz, ndied, npitch) in outcomes {
                 if ndied {
-                    self.sounds
-                        .play_voice(self.frame, "entity.zombie.death", 1.0, npitch);
+                    self.sounds.play_voice(
+                        self.frame,
+                        crate::mob::MobKind::Zombie.voice_event(crate::mob::VoiceSlot::Death),
+                        1.0,
+                        npitch,
+                    );
                     for (item, count) in self.mobs[j].death_loot(true) {
                         let id = self.next_drop_id;
                         self.next_drop_id += 1;
@@ -2615,8 +2640,12 @@ impl App {
                     }
                     self.spawn_xp_orbs(nx, ny + 0.5, nz, crate::mob::ZOMBIE_XP_REWARD);
                 } else {
-                    self.sounds
-                        .play_voice(self.frame, "entity.zombie.hurt", 1.0, npitch);
+                    self.sounds.play_voice(
+                        self.frame,
+                        crate::mob::MobKind::Zombie.voice_event(crate::mob::VoiceSlot::Hurt),
+                        1.0,
+                        npitch,
+                    );
                 }
             }
             // THE ARC (the tail's sendParticles verbatim: count 0 — the
@@ -3886,8 +3915,12 @@ impl App {
             let Some(m) = old.remove(&w.id) else {
                 // THE FRESH SPAWN: the pose IS the server's word, the
                 // prev trio arms at it (the render walks from the spawn
-                // the tick's own first prev speaks)
-                let mut m = crate::mob::Zombie::new(w.id, w.x, w.y, w.z, 0x5EED);
+                // the tick's own first prev speaks). The voice rng's
+                // own seed rides the mob's OWN id (the vanilla
+                // independent per-entity random the seed law stands in
+                // for — different mobs never groan in unison)
+                let mut m =
+                    crate::mob::Zombie::new(w.id, w.x, w.y, w.z, crate::mob::entity_voice_seed(w.id));
                 // THE BODY'S OWN KIND (the registry's name the Add
                 // Entity spoke): the model the render lane draws —
                 // the zombie's humanoid, the pig's quadruped
@@ -4031,7 +4064,22 @@ impl App {
     /// (`x += (t - x) / steps` then the decrement — the exact landing
     /// the vanilla remote body speaks), the walk store fed the tick's
     /// own horizontal distance (the limbs swing the stride).
+    ///
+    /// THE VOICES (the offline server the wire lane stands in for —
+    /// the vanilla server's own playSound broadcasts the client would
+    /// answer): the ambient the Mob.baseTick gate speaks (the shared
+    /// `ambient_voice` method, alive ticks only), the hurt the arm
+    /// value's own moment (the 10 the Hurt Animation packet ships —
+    /// the tick sees it once per arm, the decayed window never
+    /// refires), the death the health word's own zero crossing (the
+    /// die() broadcast the handleEntityEvent 3 answers — once, the
+    /// subsequent death ticks keep the silence). The pitches ride the
+    /// getVoicePitch law over the mob's own voice rng; the events land
+    /// post-loop (the disjoint-borrow pattern the local lane speaks).
     pub fn tick_net_mobs(&mut self) {
+        let mut groans: Vec<(&'static str, f32)> = Vec::new();
+        let mut hurts: Vec<(&'static str, f32)> = Vec::new();
+        let mut deaths: Vec<(&'static str, f32)> = Vec::new();
         for m in &mut self.net_mobs {
             m.prev_x = m.x;
             m.prev_y = m.y;
@@ -4050,22 +4098,61 @@ impl App {
             }
             m.walk
                 .update((dist as f32 * crate::body::WALK_DISTANCE_SCALE).min(1.0), crate::body::WALK_BLEND, 1.0);
-            // THE HURT CLOCK (LivingEntity.tick's own decrement the
-            // local player's lane speaks): the flash window walks down
-            // one per tick, the 0.7 shade the render's mix reads at
-            // the frame
-            if m.hurt_time > 0 {
-                m.hurt_time -= 1;
-            }
             // THE DEATH CLOCK (LivingEntity.tickDeath's own law the AI
             // lane speaks): the server's health word <= 0 — deathTime++
             // per tick, the flip the render's deathTime+partial read
             // walks; the REMOVAL stays the wire's own (EntitiesRemoved
-            // drops the id, the refresh lane's despawn)
+            // drops the id, the refresh lane's despawn). THE DEATH
+            // VOICE rides the crossing itself (deathTime 0 -> 1 — the
+            // once-per-die broadcast, the later death ticks silent)
             if m.health <= 0.0 {
+                if m.death_time == 0 {
+                    deaths.push((
+                        m.kind.voice_event(crate::mob::VoiceSlot::Death),
+                        m.voice_pitch(),
+                    ));
+                }
                 m.death_time += 1;
             }
+            // THE AMBIENT VOICE (Mob.baseTick's own gate through the
+            // shared method — the alive body's clock climbs, the dying
+            // body's freezes; the draw rides the mob's own voice rng
+            // the id-seeded spawn law arms)
+            if m.health > 0.0 && m.ambient_voice() {
+                groans.push((
+                    m.kind.voice_event(crate::mob::VoiceSlot::Ambient),
+                    m.voice_pitch(),
+                ));
+            }
+            // THE HURT VOICE at the arm's own value (the 10 the Hurt
+            // Animation packet ships — HURT_DURATION_TICKS the law
+            // keeps): seen once per arm, the decayed window never
+            // speaks again until the wire re-arms. Then the HURT CLOCK
+            // (LivingEntity.tick's own decrement): the flash window
+            // walks down one per tick, the 0.7 shade the render's mix
+            // reads at the frame
+            if m.hurt_time == crate::mob::HURT_DURATION_TICKS {
+                hurts.push((
+                    m.kind.voice_event(crate::mob::VoiceSlot::Hurt),
+                    m.voice_pitch(),
+                ));
+            }
+            if m.hurt_time > 0 {
+                m.hurt_time -= 1;
+            }
             m.age_ticks = m.age_ticks.wrapping_add(1);
+        }
+        // THE VOICES LAND (the play order the local lane's own
+        // post-loop speaks — the groans, then the hurts, then the
+        // deaths; the volume the Mob.getSoundVolume default 1.0 keeps)
+        for (clip, pitch) in groans {
+            self.sounds.play_voice(self.frame, clip, 1.0, pitch);
+        }
+        for (clip, pitch) in hurts {
+            self.sounds.play_voice(self.frame, clip, 1.0, pitch);
+        }
+        for (clip, pitch) in deaths {
+            self.sounds.play_voice(self.frame, clip, 1.0, pitch);
         }
     }
 
@@ -9615,6 +9702,137 @@ mod tests {
         assert!(app.net_mobs[0].health > 0.0, "the ctor's full bar stands");
         app.tick_net_mobs();
         assert_eq!(app.net_mobs[0].death_time, 0, "the silence is not a kill");
+    }
+
+    /// THE WIRE MOBS' OWN VOICES (the offline server the wire lane
+    /// stands in for — the vanilla server's own playSound broadcasts
+    /// the client answers): the ambient the Mob.baseTick gate speaks
+    /// (the shared method, the id-seeded rng's own replay pins the
+    /// exact firing tick), the hurt the arm value's own moment (the
+    /// 10 the Hurt Animation packet ships — once per arm, the decayed
+    /// window never refires), the death the health word's own zero
+    /// crossing (once per die — the later death ticks silent, the
+    /// dying body's ambient clock frozen). The counts ride the ACTUAL
+    /// loaded table (the fixture answers the CI's cache-absent boot,
+    /// the real table the cache-present boot — both speak).
+    #[test]
+    fn the_wire_mobs_speak_the_vanilla_voices() {
+        let mut app = App::new(3);
+        app.open(ScreenKind::Connect);
+        app.net_world = Some(air_net_world(2, 0));
+        app.enter_network_world(None, Skybox::Overworld, None, None);
+        app.live_mobs_updated(vec![wire_zombie(7, 10.0, 64.0, 10.0)]);
+        let count = |app: &App, prefix: &str| {
+            app.sounds
+                .events
+                .iter()
+                .filter(|e| e.starts_with(prefix))
+                .count()
+        };
+        // THE AMBIENT GATE (Mob.baseTick's own law through the shared
+        // method): the replay walks the mob's own seed law — the clock
+        // starts at -80, one draw per tick, the draw under the climbing
+        // clock fires. The gate's first firing tick the replay names.
+        let mut replay =
+            crate::drops::Lcg::new(crate::mob::entity_voice_seed(7));
+        let fire_tick = (1..=2000)
+            .find(|t| {
+                replay.next() % crate::mob::AMBIENT_DRAW_BOUND
+                    < (*t as i32 - crate::mob::AMBIENT_INTERVAL_TICKS).max(0) as u64
+            })
+            .expect("the gate fires within the walk");
+        for t in 1..fire_tick {
+            app.tick_net_mobs();
+            assert_eq!(
+                count(&app, "entity.zombie.ambient "),
+                0,
+                "tick {t} stays silent"
+            );
+        }
+        app.tick_net_mobs();
+        assert_eq!(
+            count(&app, "entity.zombie.ambient "),
+            1,
+            "the groan at the law's own tick {fire_tick}"
+        );
+        // THE HURT ARM (the 10 the Hurt Animation packet ships): the
+        // voice at the arm's own tick, the decayed window silent, the
+        // fresh arm speaks again
+        app.net_mobs[0].hurt_time = crate::mob::HURT_DURATION_TICKS;
+        app.tick_net_mobs();
+        assert_eq!(count(&app, "entity.zombie.hurt "), 1, "the arm spoke");
+        for _ in 0..(crate::mob::HURT_DURATION_TICKS - 1) {
+            app.tick_net_mobs();
+        }
+        assert_eq!(
+            count(&app, "entity.zombie.hurt "),
+            1,
+            "the decay never refires"
+        );
+        app.net_mobs[0].hurt_time = crate::mob::HURT_DURATION_TICKS;
+        app.tick_net_mobs();
+        assert_eq!(count(&app, "entity.zombie.hurt "), 2, "the fresh arm speaks");
+        // THE DEATH CROSSING (the health word's own zero): one voice at
+        // the crossing, the later death ticks silent — and the dying
+        // body's ambient clock frozen (the gate's alive arm)
+        let groans_before = count(&app, "entity.zombie.ambient ");
+        app.net_mobs[0].health = 0.0;
+        app.tick_net_mobs();
+        assert_eq!(count(&app, "entity.zombie.death "), 1, "the crossing spoke");
+        for _ in 0..19 {
+            app.tick_net_mobs();
+        }
+        assert_eq!(
+            count(&app, "entity.zombie.death "),
+            1,
+            "the death spoke once"
+        );
+        assert_eq!(
+            count(&app, "entity.zombie.ambient "),
+            groans_before,
+            "the dying body never groans"
+        );
+    }
+
+    /// THE WIRE KINDS' OWN VOICES (the voice table through the wire's
+    /// own walk — the registry name the Add Entity spoke -> the kind ->
+    /// the class's own rows): the sheep's baa, the cow's moo, the
+    /// pig's oink answer the same arm/crossing moments the zombie's
+    /// groan does, each kind its own event, no cross-talk.
+    #[test]
+    fn the_wire_kinds_speak_their_own_voices() {
+        let mut app = App::new(3);
+        app.open(ScreenKind::Connect);
+        app.net_world = Some(air_net_world(2, 0));
+        app.enter_network_world(None, Skybox::Overworld, None, None);
+        app.live_mobs_updated(vec![
+            wire_mob_named(7, 10.0, 64.0, 10.0, "minecraft:sheep"),
+            wire_mob_named(8, 12.0, 64.0, 10.0, "minecraft:cow"),
+            wire_mob_named(9, 14.0, 64.0, 10.0, "minecraft:pig"),
+        ]);
+        let count = |app: &App, prefix: &str| {
+            app.sounds
+                .events
+                .iter()
+                .filter(|e| e.starts_with(prefix))
+                .count()
+        };
+        // the arm rides all three (the staging's own law — the 10 the
+        // Hurt Animation packet ships), each kind its own voice
+        for m in app.net_mobs.iter_mut() {
+            m.hurt_time = crate::mob::HURT_DURATION_TICKS;
+        }
+        app.tick_net_mobs();
+        assert_eq!(count(&app, "entity.sheep.hurt "), 1, "the baa");
+        assert_eq!(count(&app, "entity.cow.hurt "), 1, "the moo");
+        assert_eq!(count(&app, "entity.pig.hurt "), 1, "the oink");
+        assert_eq!(count(&app, "entity.zombie.hurt "), 0, "no cross-talk");
+        // the sheep's death crossing — its own voice, once
+        app.net_mobs[0].health = 0.0;
+        app.tick_net_mobs();
+        assert_eq!(count(&app, "entity.sheep.death "), 1, "the baa's last word");
+        assert_eq!(count(&app, "entity.cow.death "), 0, "the cow stands");
+        assert_eq!(count(&app, "entity.pig.death "), 0, "the pig stands");
     }
 
     /// THE WIRE MOBS' HURT FLASH (javap LivingEntity's own hurt
