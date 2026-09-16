@@ -1,0 +1,308 @@
+=== net/minecraft/network/LpVec3 (the 26.2 jar — the low-precision Vec3 the Interact record's location rides) ===
+class net/minecraft/network/LpVec3
+
+=== <init>()V ===
+     1 invokespecial java/lang/Object.<init>()V  ()
+     4 return
+
+=== hasContinuationBit(I)Z ===
+    12 return 0
+
+=== pack(D)J ===
+     4 ?? opcode 0x6b
+     8 ?? opcode 0x63
+    12 ?? opcode 0x6b
+    13 invokestatic java/lang/Math.round(D)J  (0.5, 32766.0)
+    16 return Math.round(0.5, 32766.0)
+
+=== read(Lio/netty/buffer/ByteBuf;)Lnet/minecraft/world/phys/Vec3; ===
+     1 invokevirtual io/netty/buffer/ByteBuf.readUnsignedByte()S  ()
+    12 return net/minecraft/world/phys/Vec3.ZERO
+    14 invokevirtual io/netty/buffer/ByteBuf.readUnsignedByte()S  ()
+    19 invokevirtual io/netty/buffer/ByteBuf.readUnsignedInt()J  ()
+    30 ?? opcode 0x78
+    45 invokestatic net/minecraft/network/LpVec3.hasContinuationBit(I)Z  (loc1=loc0.readUnsignedInt())
+    54 invokestatic net/minecraft/network/VarInt.read(Lio/netty/buffer/ByteBuf;)I  (loc0)
+    75 invokestatic net/minecraft/network/LpVec3.unpack(J)D  (new net/minecraft/world/phys/Vec3, arith)
+    81 ?? opcode 0x6b
+    87 invokestatic net/minecraft/network/LpVec3.unpack(J)D  (arith, arith)
+    93 ?? opcode 0x6b
+    99 invokestatic net/minecraft/network/LpVec3.unpack(J)D  (arith, arith)
+   105 ?? opcode 0x6b
+   106 invokespecial net/minecraft/world/phys/Vec3.<init>(DDD)V  (arith, new net/minecraft/world/phys/Vec3, LpVec3.unpack(new net/minecraft/world/phys/Vec3, arith), LpVec3.unpack(arith, arith), LpVec3.unpack(arith, arith), arith)
+   109 return ?
+
+=== sanitize(D)D ===
+     1 invokestatic java/lang/Double.isNaN(D)Z  (?, loc2)
+    18 invokestatic java/lang/Math.clamp(DDD)D  (?, ?, 0.0, loc2, -17179869183.0, 17179869183.0)
+    21 return Math.clamp(?, ?, 0.0, loc2, -17179869183.0, 17179869183.0)
+
+=== unpack(J)D ===
+     9 invokestatic java/lang/Math.min(DD)D  (?, ?, arith, 32766.0)
+    15 ?? opcode 0x6b
+    19 ?? opcode 0x6f
+    21 ?? opcode 0x67
+    22 return 1.0
+
+=== write(Lio/netty/buffer/ByteBuf;Lnet/minecraft/world/phys/Vec3;)V ===
+     1 getfield net/minecraft/world/phys/Vec3.x  (loc1)
+     4 invokestatic net/minecraft/network/LpVec3.sanitize(D)D  (?, loc1.x)
+     9 getfield net/minecraft/world/phys/Vec3.y  (loc1)
+    12 invokestatic net/minecraft/network/LpVec3.sanitize(D)D  (?, loc1.y)
+    18 getfield net/minecraft/world/phys/Vec3.z  (loc1)
+    21 invokestatic net/minecraft/network/LpVec3.sanitize(D)D  (?, loc1.z)
+    26 ?? opcode 0x28
+    31 invokestatic net/minecraft/util/Mth.absMax(DD)D  (?, ?, loc4=LpVec3.sanitize(?, loc1.y), loc6=LpVec3.sanitize(?, loc1.z))
+    34 invokestatic net/minecraft/util/Mth.absMax(DD)D  (?, ?, ?, Mth.absMax(?, ?, loc4=LpVec3.sanitize(?, loc1.y), loc6=LpVec3.sanitize(?, loc1.z)))
+    50 invokevirtual io/netty/buffer/ByteBuf.writeByte(I)Lio/netty/buffer/ByteBuf;  (0)
+    54 return
+    57 invokestatic net/minecraft/util/Mth.ceilLong(D)J  (?, loc8=Mth.absMax(?, ?, ?, Mth.absMax(?, ?, loc4=LpVec3.sanitize(?, loc1.y), loc6=LpVec3.sanitize(?, loc1.z))))
+   103 ?? opcode 0x28
+   107 ?? opcode 0x6f
+   108 invokestatic net/minecraft/network/LpVec3.pack(D)J  (arith, arith)
+   120 ?? opcode 0x6f
+   121 invokestatic net/minecraft/network/LpVec3.pack(D)J  (loc4=LpVec3.sanitize(?, loc1.y), arith)
+   134 ?? opcode 0x6f
+   135 invokestatic net/minecraft/network/LpVec3.pack(D)J  (loc6=LpVec3.sanitize(?, loc1.z), arith)
+   161 invokevirtual io/netty/buffer/ByteBuf.writeByte(I)Lio/netty/buffer/ByteBuf;  (arith)
+   173 invokevirtual io/netty/buffer/ByteBuf.writeByte(I)Lio/netty/buffer/ByteBuf;  (arith)
+   184 invokevirtual io/netty/buffer/ByteBuf.writeInt(I)Lio/netty/buffer/ByteBuf;  (arith)
+   199 invokestatic net/minecraft/network/VarInt.write(Lio/netty/buffer/ByteBuf;I)Lio/netty/buffer/ByteBuf;  (loc0, arith)
+   203 return
+
+=== MultiPlayerGameMode.interact (the walk: ensure, the cursor = hit.getLocation().subtract(entity origin), the SEND ServerboundInteractPacket(id, hand, cursor, isShiftKeyDown), the spectator PASS, player.interactOn) ===
+=== interact(Lnet/minecraft/world/entity/player/Player;Lnet/minecraft/world/entity/Entity;Lnet/minecraft/world/phys/EntityHitResult;Lnet/minecraft/world/InteractionHand;)Lnet/minecraft/world/InteractionResult; ===
+     0 aload_0 
+     1 invokevirtual net/minecraft/client/multiplayer/MultiPlayerGameMode.ensureHasSentCarriedItem()V
+     4 aload_3 
+     5 invokevirtual net/minecraft/world/phys/EntityHitResult.getLocation()Lnet/minecraft/world/phys/Vec3;
+     8 aload_2 
+     9 invokevirtual net/minecraft/world/entity/Entity.getX()D
+    12 aload_2 
+    13 invokevirtual net/minecraft/world/entity/Entity.getY()D
+    16 aload_2 
+    17 invokevirtual net/minecraft/world/entity/Entity.getZ()D
+    20 invokevirtual net/minecraft/world/phys/Vec3.subtract(DDD)Lnet/minecraft/world/phys/Vec3;
+    23 astore loc5
+    25 aload_0 
+    26 getfield net/minecraft/client/multiplayer/MultiPlayerGameMode.connectionLnet/minecraft/client/multiplayer/ClientPacketListener;
+    29 new net/minecraft/network/protocol/game/ServerboundInteractPacket
+    32 dup 
+    33 aload_2 
+    34 invokevirtual net/minecraft/world/entity/Entity.getId()I
+    37 aload loc4
+    39 aload loc5
+    41 aload_1 
+    42 invokevirtual net/minecraft/world/entity/player/Player.isShiftKeyDown()Z
+    45 invokespecial net/minecraft/network/protocol/game/ServerboundInteractPacket.<init>(ILnet/minecraft/world/InteractionHand;Lnet/minecraft/world/phys/Vec3;Z)V
+    48 invokevirtual net/minecraft/client/multiplayer/ClientPacketListener.send(Lnet/minecraft/network/protocol/Packet;)V
+    51 aload_0 
+    52 getfield net/minecraft/client/multiplayer/MultiPlayerGameMode.localPlayerModeLnet/minecraft/world/level/GameType;
+    55 getstatic net/minecraft/world/level/GameType.SPECTATORLnet/minecraft/world/level/GameType;
+    58 if_acmpne -> 65
+    61 getstatic net/minecraft/world/InteractionResult.PASSLnet/minecraft/world/InteractionResult$Pass;
+    64 areturn 
+    65 aload_1 
+    66 aload_2 
+    67 aload loc4
+    69 aload loc5
+    71 invokevirtual net/minecraft/world/entity/player/Player.interactOn(Lnet/minecraft/world/entity/Entity;Lnet/minecraft/world/InteractionHand;Lnet/minecraft/world/phys/Vec3;)Lnet/minecraft/world/InteractionResult;
+    74 areturn 
+
+=== Mth.absMax(DD) + Mth.ceilLong(D) (the write walk's own helpers) ===
+=== absMax(DD)D ===
+     0 dload_0 
+     1 invokestatic java/lang/Math.abs(D)D
+     4 dload_2 
+     5 invokestatic java/lang/Math.abs(D)D
+     8 invokestatic java/lang/Math.max(DD)D
+    11 dreturn 
+=== ceilLong(D)J ===
+     0 dload_0 
+     1 invokestatic java/lang/Math.ceil(D)D
+     4 d2l 
+     5 lreturn 
+=== the constant pool's own words: #37 = Long 4294967295 (0xFFFFFFFF — the signed-VarInt mask), #66 = 3.051944088384301e-05 (the zero threshold), #76 = Long 3, #78 = Long 4 (the head mask + the flag bit), #96/#98 = ∓17179869183.0 (2^34-1), #106 = 0.5, #108 = 32766.0, #113 = Long 32767, #118 = 2.0 ===
+=== read(Lio/netty/buffer/ByteBuf;)Lnet/minecraft/world/phys/Vec3; ===
+     0 aload_0 
+     1 invokevirtual io/netty/buffer/ByteBuf.readUnsignedByte()S
+     4 istore_1 
+     5 iload_1 
+     6 ifne -> 13
+     9 getstatic net/minecraft/world/phys/Vec3.ZEROLnet/minecraft/world/phys/Vec3;
+    12 areturn 
+    13 aload_0 
+    14 invokevirtual io/netty/buffer/ByteBuf.readUnsignedByte()S
+    17 istore_2 
+    18 aload_0 
+    19 invokevirtual io/netty/buffer/ByteBuf.readUnsignedInt()J
+    22 lstore_3 
+    23 lload_3 
+    24 bipush 16
+    26 lshl 
+    27 iload_2 
+    28 bipush 8
+    30 ishl 
+    31 i2l 
+    32 lor 
+    33 iload_1 
+    34 i2l 
+    35 lor 
+    36 lstore loc5
+    38 iload_1 
+    39 iconst_3 
+    40 iand 
+    41 i2l 
+    42 lstore loc7
+    44 iload_1 
+    45 invokestatic net/minecraft/network/LpVec3.hasContinuationBit(I)Z
+    48 ifeq -> 67
+    51 lload loc7
+    53 aload_0 
+    54 invokestatic net/minecraft/network/VarInt.read(Lio/netty/buffer/ByteBuf;)I
+    57 i2l 
+    58 ldc2_w #37 Long
+    61 land 
+    62 iconst_2 
+    63 lshl 
+    64 lor 
+    65 lstore loc7
+    67 new net/minecraft/world/phys/Vec3
+    70 dup 
+    71 lload loc5
+    73 iconst_3 
+    74 lshr 
+    75 invokestatic net/minecraft/network/LpVec3.unpack(J)D
+    78 lload loc7
+    80 l2d 
+    81 dmul 
+    82 lload loc5
+    84 bipush 18
+    86 lshr 
+    87 invokestatic net/minecraft/network/LpVec3.unpack(J)D
+    90 lload loc7
+    92 l2d 
+    93 dmul 
+    94 lload loc5
+    96 bipush 33
+    98 lshr 
+    99 invokestatic net/minecraft/network/LpVec3.unpack(J)D
+   102 lload loc7
+   104 l2d 
+   105 dmul 
+   106 invokespecial net/minecraft/world/phys/Vec3.<init>(DDD)V
+   109 areturn 
+=== write(Lio/netty/buffer/ByteBuf;Lnet/minecraft/world/phys/Vec3;)V ===
+     0 aload_1 
+     1 getfield net/minecraft/world/phys/Vec3.xD
+     4 invokestatic net/minecraft/network/LpVec3.sanitize(D)D
+     7 dstore_2 
+     8 aload_1 
+     9 getfield net/minecraft/world/phys/Vec3.yD
+    12 invokestatic net/minecraft/network/LpVec3.sanitize(D)D
+    15 dstore loc4
+    17 aload_1 
+    18 getfield net/minecraft/world/phys/Vec3.zD
+    21 invokestatic net/minecraft/network/LpVec3.sanitize(D)D
+    24 dstore loc6
+    26 dload_2 
+    27 dload loc4
+    29 dload loc6
+    31 invokestatic net/minecraft/util/Mth.absMax(DD)D
+    34 invokestatic net/minecraft/util/Mth.absMax(DD)D
+    37 dstore loc8
+    39 dload loc8
+    41 ldc2_w #66 3.051944088384301e-05
+    44 dcmpg 
+    45 ifge -> 55
+    48 aload_0 
+    49 iconst_0 
+    50 invokevirtual io/netty/buffer/ByteBuf.writeByte(I)Lio/netty/buffer/ByteBuf;
+    53 pop 
+    54 return 
+    55 dload loc8
+    57 invokestatic net/minecraft/util/Mth.ceilLong(D)J
+    60 lstore loc10
+    62 lload loc10
+    64 ldc2_w #76 Long
+    67 land 
+    68 lload loc10
+    70 lcmp 
+    71 ifeq -> 78
+    74 iconst_1 
+    75 goto -> 79
+    78 iconst_0 
+    79 istore loc12
+    81 iload loc12
+    83 ifeq -> 99
+    86 lload loc10
+    88 ldc2_w #76 Long
+    91 land 
+    92 ldc2_w #78 Long
+    95 lor 
+    96 goto -> 101
+    99 lload loc10
+   101 lstore loc13
+   103 dload_2 
+   104 lload loc10
+   106 l2d 
+   107 ddiv 
+   108 invokestatic net/minecraft/network/LpVec3.pack(D)J
+   111 iconst_3 
+   112 lshl 
+   113 lstore loc15
+   115 dload loc4
+   117 lload loc10
+   119 l2d 
+   120 ddiv 
+   121 invokestatic net/minecraft/network/LpVec3.pack(D)J
+   124 bipush 18
+   126 lshl 
+   127 lstore loc17
+   129 dload loc6
+   131 lload loc10
+   133 l2d 
+   134 ddiv 
+   135 invokestatic net/minecraft/network/LpVec3.pack(D)J
+   138 bipush 33
+   140 lshl 
+   141 lstore loc19
+   143 lload loc13
+   145 lload loc15
+   147 lor 
+   148 lload loc17
+   150 lor 
+   151 lload loc19
+   153 lor 
+   154 lstore loc21
+   156 aload_0 
+   157 lload loc21
+   159 l2i 
+   160 i2b 
+   161 invokevirtual io/netty/buffer/ByteBuf.writeByte(I)Lio/netty/buffer/ByteBuf;
+   164 pop 
+   165 aload_0 
+   166 lload loc21
+   168 bipush 8
+   170 lshr 
+   171 l2i 
+   172 i2b 
+   173 invokevirtual io/netty/buffer/ByteBuf.writeByte(I)Lio/netty/buffer/ByteBuf;
+   176 pop 
+   177 aload_0 
+   178 lload loc21
+   180 bipush 16
+   182 lshr 
+   183 l2i 
+   184 invokevirtual io/netty/buffer/ByteBuf.writeInt(I)Lio/netty/buffer/ByteBuf;
+   187 pop 
+   188 iload loc12
+   190 ifeq -> 203
+   193 aload_0 
+   194 lload loc10
+   196 iconst_2 
+   197 lshr 
+   198 l2i 
+   199 invokestatic net/minecraft/network/VarInt.write(Lio/netty/buffer/ByteBuf;I)Lio/netty/buffer/ByteBuf;
+   202 pop 
+   203 return 

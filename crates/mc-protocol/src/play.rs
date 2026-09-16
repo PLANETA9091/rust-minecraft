@@ -5160,6 +5160,99 @@ pub fn encode_attack(entity_id: i32) -> Vec<u8> {
     p
 }
 
+/// THE LOW-PRECISION VEC3 (the 26.2's own `net/minecraft/network/LpVec3`
+/// — the codec the Interact record's `location` field rides, the
+/// `Vec3.LP_STREAM_CODEC` the clinit's composite passes). THE WIRE
+/// (javap of the real class's write/read/sanitize/pack/unpack/
+/// hasContinuationBit walks + the constant pool's own values):
+///
+/// * sanitize: NaN → 0.0, else clamp to ±17179869183.0 (the 2^34−1 the
+///   clinit's #96/#98 doubles speak);
+/// * max = absMax(absMax(x, y), z) = max(|x|, |y|, |z|) (Mth.absMax's
+///   own abs-then-max walk — always positive, the threshold compare
+///   safe);
+/// * THE ZERO FORM: max < 3.051944088384301e-05 (the 2^-15 the #66
+///   double speaks) → the single 0x00 byte (the read's `if (b0 == 0)
+///   return Vec3.ZERO`);
+/// * else the SCALE `l = ceilLong(max)` = (long)Math.ceil(max), the
+///   three axes' 15-bit fields the pack walk produces (pack =
+///   round((d·0.5 + 0.5)·32766.0) — the [-1,1] normalize the x/l
+///   division speaks, 0.0 the exact midpoint 16383 keeps), packed
+///   `word = head | fx << 3 | fy << 18 | fz << 33` where the HEAD is
+///   l's low TWO bits (bit 2 = the continuation flag the
+///   hasContinuationBit(i) = (i & 4) == 4 speaks, set iff `(l & 3) != l`
+///   — the #76/#78 longs' own 3 and 4);
+/// * the 48-bit word rides SIX bytes (writeByte word, writeByte
+///   word >> 8, writeInt word >> 16 — the BE int the read's
+///   readUnsignedInt << 16 mirrors); the scale's bits 2..33 follow as
+///   ONE VarInt((int)(l >> 2)) when the flag lives;
+/// * unpack reverses: min(field & 0x7FFF, 32766.0)·2.0/32766.0 − 1.0
+///   (the 32767 sentinel the Math.min clamps — the #113/#118/#125
+///   constants), × the scale the read reconstructs: `(byte0 & 3) |
+///   ((VarInt & 0xFFFFFFFF) << 2)` — the 0xFFFFFFFF mask (#37) the
+///   signed VarInt's own roundtrip keeps (the 2^34−1 bound's l >> 2
+///   overflows the i32 the mask un-folds).
+pub fn encode_lp_vec3(x: f64, y: f64, z: f64) -> Vec<u8> {
+    let sanitize = |d: f64| {
+        if d.is_nan() {
+            0.0
+        } else {
+            d.clamp(-17179869183.0, 17179869183.0)
+        }
+    };
+    let x = sanitize(x);
+    let y = sanitize(y);
+    let z = sanitize(z);
+    let max = x.abs().max(y.abs()).max(z.abs());
+    if max < 3.051944088384301e-05 {
+        return vec![0];
+    }
+    let pack = |d: f64| ((d * 0.5 + 0.5) * 32766.0).round() as i64;
+    let l = max.ceil() as i64;
+    let cont = (l & 3) != l;
+    let head = if cont { (l & 3) | 4 } else { l };
+    let word = head | pack(x / l as f64) << 3 | pack(y / l as f64) << 18 | pack(z / l as f64) << 33;
+    let mut p = Vec::with_capacity(7);
+    p.push((word & 0xFF) as u8);
+    p.push(((word >> 8) & 0xFF) as u8);
+    p.extend_from_slice(&((word >> 16) as i32).to_be_bytes());
+    if cont {
+        write_varint(&mut p, (l >> 2) as i32);
+    }
+    p
+}
+
+/// The low-precision Vec3's read side — the exact inverse the LpVec3
+/// read walk speaks (the zero form's single byte, the 6-byte word, the
+/// continuation scale's VarInt through the 0xFFFFFFFF mask). Returns
+/// the vector and the bytes consumed (the tail's own length the
+/// variable form speaks).
+pub fn parse_lp_vec3(payload: &[u8]) -> Result<((f64, f64, f64), usize)> {
+    let mut c: &[u8] = payload;
+    let b0 = read_u8(&mut c)?;
+    if b0 == 0 {
+        return Ok(((0.0, 0.0, 0.0), 1));
+    }
+    let b1 = read_u8(&mut c)?;
+    let hi = read_u32(&mut c)? as i64;
+    let word = (hi << 16) | ((b1 as i64) << 8) | (b0 as i64);
+    let mut scale = (b0 & 3) as i64;
+    if b0 & 4 != 0 {
+        let tail = read_varint(&mut c)?;
+        scale |= (tail as i64 & 0xFFFF_FFFF) << 2;
+    }
+    let unpack =
+        |j: i64| (j & 0x7FFF).min(32766) as f64 * 2.0 / 32766.0 - 1.0;
+    Ok((
+        (
+            unpack(word >> 3) * scale as f64,
+            unpack(word >> 18) * scale as f64,
+            unpack(word >> 33) * scale as f64,
+        ),
+        payload.len() - c.len(),
+    ))
+}
+
 /// Client Command's wire shape (generated id 12 —
 /// `minecraft:client_command`). javap of the real 26.2
 /// `ServerboundClientCommandPacket`'s STREAM_CODEC write: the action's
@@ -10706,6 +10799,101 @@ mod tests {
             encode_attack(1),
             vec![0x01, 0x01],
             "the id byte and the payload byte the same value — the two speak"
+        );
+    }
+
+    /// The low-precision Vec3's own wire — the hex the LpVec3 dump's
+    /// walk speaks (the zero form, the 6-byte word, the continuation
+    /// scale's VarInt tail, the 2^34−1 bound's signed-VarInt roundtrip).
+    #[test]
+    fn the_lp_vec3_speaks_the_packed_wire() {
+        // THE ZERO FORM: the max below the 2^-15 threshold the #66
+        // double speaks — the single byte the read's `if (b0 == 0)`
+        // answers with Vec3.ZERO
+        assert_eq!(encode_lp_vec3(0.0, 0.0, 0.0), vec![0x00]);
+        assert_eq!(
+            encode_lp_vec3(1.0e-6, 0.0, 0.0),
+            vec![0x00],
+            "the sub-threshold max the zero form keeps"
+        );
+        // THE UNIT AXIS: l = 1 (no continuation — the head's own bit 0
+        // rides), fx = 32766 the pack(1.0) speaks, fy/fz the midpoint
+        // 16383 the pack(0.0) keeps
+        assert_eq!(
+            encode_lp_vec3(1.0, 0.0, 0.0),
+            vec![0xF1, 0xFF, 0x7F, 0xFE, 0xFF, 0xFF]
+        );
+        // THE NEGATIVE ARM: fx = pack(-1.0) = 0 — the head's bit 0 the
+        // only low word
+        assert_eq!(
+            encode_lp_vec3(-1.0, 0.0, 0.0),
+            vec![0x01, 0x00, 0x7F, 0xFE, 0xFF, 0xFC]
+        );
+        // THE CONTINUATION: 1000.5 → l = 1001, the flag bit 2 the head
+        // 0xB5 = 1|4|(1001&3) speaks, the VarInt(250) tail the l>>2
+        // carries
+        assert_eq!(
+            encode_lp_vec3(1000.5, 0.0, 0.0),
+            vec![0xB5, 0xFF, 0x7F, 0xFE, 0xFF, 0xFF, 0xFA, 0x01]
+        );
+        // THE 2^34−1 BOUND: l = 17179869183, the l>>2 = 0xFFFFFFFF the
+        // i32 overflow rides — the 5-byte VarInt(-1) the 0xFFFFFFFF
+        // mask un-folds on the read
+        assert_eq!(
+            encode_lp_vec3(17179869183.0, 0.0, 0.0),
+            vec![
+                0xF7, 0xFF, 0x7F, 0xFE, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x0F
+            ]
+        );
+        // THE ROUNDTRIP: every vector the encode speaks, the read
+        // answers within the quantization's own half-step bound (the
+        // scale l's 2/32766 step the pack/unpack pair rides); the
+        // consumed count the form's own length keeps
+        for (x, y, z) in [
+            (1.0, 0.0, 0.0),
+            (-1.0, 0.0, 0.0),
+            (0.0, 1.0, 0.0),
+            (0.0, 0.0, 1.0),
+            (1000.5, 0.0, 0.0),
+            (-12.7, 64.0, 3.25),
+            (17179869183.0, 0.0, 0.0),
+            (-17179869183.0, 0.0, 0.0),
+            (0.5, -0.5, 0.25),
+            (3.051944088384301e-05, 0.0, 0.0),
+        ] {
+            let wire = encode_lp_vec3(x, y, z);
+            let ((rx, ry, rz), used) = parse_lp_vec3(&wire).unwrap();
+            assert_eq!(used, wire.len(), "the consumed bytes the form's own length keeps");
+            let max = x.abs().max(y.abs()).max(z.abs());
+            if max < 3.051944088384301e-05 {
+                assert_eq!(
+                    (rx, ry, rz),
+                    (0.0, 0.0, 0.0),
+                    "the zero form the read answers exactly"
+                );
+                continue;
+            }
+            let half_step = max.ceil() * 2.0 / 32766.0 / 2.0;
+            assert!(
+                (rx - x).abs() <= half_step,
+                "x {x} -> {rx} beyond the half-step {half_step}"
+            );
+            assert!(
+                (ry - y).abs() <= half_step,
+                "y {y} -> {ry} beyond the half-step {half_step}"
+            );
+            assert!(
+                (rz - z).abs() <= half_step,
+                "z {z} -> {rz} beyond the half-step {half_step}"
+            );
+        }
+        // the sanitize's own arms the walk speaks: the NaN the zero
+        // keeps, the overflow the clamp answers
+        assert_eq!(encode_lp_vec3(f64::NAN, 0.0, 0.0), vec![0x00]);
+        assert_eq!(
+            encode_lp_vec3(1.0e30, 0.0, 0.0),
+            encode_lp_vec3(17179869183.0, 0.0, 0.0),
+            "the overflow the 2^34-1 clamp answers"
         );
     }
 
