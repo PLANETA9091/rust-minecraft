@@ -786,8 +786,9 @@ pub struct SheepState {
     /// server bakes in radians — the xRot the model's own assign
     /// REPLACES the quadruped's with)
     pub head_eat_angle: f32,
-    /// `SheepRenderState.ageScale` (the adult's 1.0 — the baby variant
-    /// the scale would ride is a lane the client never arms yet)
+    /// `SheepRenderState.ageScale` (the adult's 1.0, the baby's
+    /// 0.5 — AgeableMob.getScale's own arm the eat drop divides by;
+    /// the baby lane the dedicated BabySheepModel arms)
     pub age_scale: f32,
 }
 
@@ -1116,6 +1117,571 @@ fn build_sheep_fur_parts(state: &SheepState) -> Vec<Part> {
             y_rot: 0.0,
             z_rot: 0.0,
             cubes: vec![fur_leg],
+            children: vec![],
+        },
+    ]
+}
+
+/// The full BABY SHEEP model — the 26.2 `BabySheepModel.createBodyLayer`'s
+/// own numbers, bytecode-proven off the official jar (scripts/
+/// classfile_dump.py + scripts/babysheepmodel.txt: the constant pool +
+/// the createBodyLayer walk): the dedicated BABY GEOMETRY the
+/// AgeableMobRenderer's own babyModel field speaks — NOT a scaled adult
+/// (javap SheepRenderer: `babyModel = BabySheepModel(bakeLayer(SHEEP_BABY))`,
+/// the isBaby word picks it, the render pose's scale fold the dedicated
+/// layer REPLACES): the head 5x5x5 (uv 0,0) at pivot (0, 15.5, -2.5) —
+/// the PROPORTIONALLY BIGGER head the baby look speaks (5/16 box on a
+/// 13/16-tall body vs the adult's 6x6x8 on 21/16), the body 6x4x9 (uv
+/// 0,10) at pivot (0, 17, 0.5) with NO x-rotation (the horizontal box
+/// the adult's rotX PI/2 barrel never needed), the four 2x5x2 legs (uv
+/// 0,23 / 24,12 / 8,23 / 24,5 — FOUR distinct rects the adult's ONE
+/// shared 0,16 builder never spoke, all four NO mirror) at pivots
+/// (+-2, 19, 3/-2), `LayerDefinition.create(64, 32)` over the
+/// sheep_baby.png the baby lane's own texture. BabySheepModel extends
+/// SheepModel with ONLY the layer overridden — the setupAnim walk/eat
+/// laws the adult's own copy rides verbatim.
+pub struct BabySheepModel {
+    rgba: Vec<u8>,
+}
+
+impl BabySheepModel {
+    /// Load + sha1-verify the BABY sheep's skin (the SheepRenderer's
+    /// own `sheep_baby.png` — the dedicated baby lane's texture).
+    /// `None` = the baby never renders (the same honesty the adult
+    /// lanes speak — the renderer must not lie about its data).
+    pub fn load(root: &Path) -> Option<BabySheepModel> {
+        let bytes = std::fs::read(root.join(skin::SHEEP_BABY_RUNTIME_PATH)).ok()?;
+        let digest = sha1::Sha1::digest(&bytes);
+        if hex::encode(digest) != skin::SHEEP_BABY_PNG_SHA1 {
+            return None;
+        }
+        let (w, h, rgba) = decode_rgba(&bytes).ok()?;
+        if w != 64 || h != 32 || rgba.len() != 64 * 32 * 4 {
+            return None;
+        }
+        Some(BabySheepModel { rgba })
+    }
+
+    /// The baby skin pixel at (u, v) — the RGBA row-major words, v down
+    /// (the 64x32 layout's own stride the load verified).
+    pub fn pixel(&self, u: f32, v: f32) -> [u8; 4] {
+        let (uu, vv) = (u.clamp(0.0, 63.999_9), v.clamp(0.0, 31.999_9));
+        let x = uu as usize;
+        let y = vv as usize;
+        let o = (y * 64 + x) * 4;
+        [self.rgba[o], self.rgba[o + 1], self.rgba[o + 2], self.rgba[o + 3]]
+    }
+
+    /// THE POSED RENDER: the world-space textured quads of the baby at
+    /// `state` — the SAME entity chain fold the adult speaks (one law,
+    /// every living model, babies included — the death flip and the
+    /// walk lerp never aged).
+    pub fn quads(
+        &self,
+        state: &SheepState,
+        feet: Vec3,
+        cam_yaw: f32,
+        cam_pitch: f32,
+    ) -> Vec<AvatarQuad> {
+        let parts = build_baby_sheep_parts(state);
+        let (fold_point, fold_normal) = entity_folds(state.yaw_deg, state.death_time, 0.0, feet);
+        let mut out: Vec<AvatarQuad> = Vec::with_capacity(6 * 6);
+        let ident = Mat4::IDENT;
+        for part in &parts {
+            collect_part(part, &ident, &fold_point, &fold_normal, cam_yaw, cam_pitch, &mut out);
+        }
+        out
+    }
+}
+
+/// The full BABY SHEEP WOOL model — the SheepWoolLayer's baby arm's own
+/// overlay (javap SheepWoolLayer: `babyModel = SheepFurModel(bakeLayer
+/// (SHEEP_BABY_WOOL))`, and javap LayerDefinitions: the SHEEP_BABY_WOOL
+/// layer bakes `BabySheepModel.createBodyLayer()` — the SAME loc49 the
+/// SHEEP_BABY layer rides, the baby wool layer's own geometry IS the
+/// baby body's) — the boxes the baby body speaks, textured with the
+/// sheep_wool_baby.png the SHEEP_WOOL_BABY_LOCATION names, the dye
+/// color tint the same getWoolColor word multiplies.
+pub struct BabySheepWoolModel {
+    rgba: Vec<u8>,
+}
+
+impl BabySheepWoolModel {
+    /// Load + sha1-verify the BABY wool texture (the SheepWoolLayer's
+    /// `sheep_wool_baby.png`). `None` = the baby's wool never renders
+    /// (the same honesty every overlay lane speaks).
+    pub fn load(root: &Path) -> Option<BabySheepWoolModel> {
+        let bytes = std::fs::read(root.join(skin::SHEEP_WOOL_BABY_RUNTIME_PATH)).ok()?;
+        let digest = sha1::Sha1::digest(&bytes);
+        if hex::encode(digest) != skin::SHEEP_WOOL_BABY_PNG_SHA1 {
+            return None;
+        }
+        let (w, h, rgba) = decode_rgba(&bytes).ok()?;
+        if w != 64 || h != 32 || rgba.len() != 64 * 32 * 4 {
+            return None;
+        }
+        Some(BabySheepWoolModel { rgba })
+    }
+
+    /// The baby wool pixel at (u, v) — the RGBA row-major words, v down.
+    pub fn pixel(&self, u: f32, v: f32) -> [u8; 4] {
+        let (uu, vv) = (u.clamp(0.0, 63.999_9), v.clamp(0.0, 31.999_9));
+        let x = uu as usize;
+        let y = vv as usize;
+        let o = (y * 64 + x) * 4;
+        [self.rgba[o], self.rgba[o + 1], self.rgba[o + 2], self.rgba[o + 3]]
+    }
+
+    /// THE POSED OVERLAY: the baby's wool quads — the baby body's own
+    /// builder the SHEEP_BABY_WOOL layer bakes, the tint the caller
+    /// carries (the same law the adult's overlay speaks).
+    pub fn quads(
+        &self,
+        state: &SheepState,
+        feet: Vec3,
+        cam_yaw: f32,
+        cam_pitch: f32,
+    ) -> Vec<AvatarQuad> {
+        let parts = build_baby_sheep_parts(state);
+        let (fold_point, fold_normal) = entity_folds(state.yaw_deg, state.death_time, 0.0, feet);
+        let mut out: Vec<AvatarQuad> = Vec::with_capacity(6 * 6);
+        let ident = Mat4::IDENT;
+        for part in &parts {
+            collect_part(part, &ident, &fold_point, &fold_normal, cam_yaw, cam_pitch, &mut out);
+        }
+        out
+    }
+}
+
+/// The full BABY COW model — the 26.2 `BabyCowModel.createBodyLayer`'s
+/// own numbers, bytecode-proven off the official jar (scripts/
+/// babycowmodel.txt): the head 6x6x5 (uv 0,18) at pivot (0, 13.569,
+/// -5.1667) with the TWO HORN cubes (right uv 8,29 at (3, -5.569,
+/// -3.8333), LEFT uv 4,29 the builder's own .mirror() ride at (-4,
+/// -5.569, -3.8333)) and the muzzle cube (uv 12,29 at (-2, -1.569,
+/// -5.8333)) — the calf's horns the adult's variant table never
+/// dropped, the body 8x6x12 (uv 0,0) at pivot (3, 19, -5) with NO
+/// x-rotation (the horizontal box the adult's rotX PI/2 barrel never
+/// needed), the four 3x6x3 legs (uv 22,18 / 34,18 / 22,27 / 34,27 —
+/// four distinct rects, no mirror) at pivots (+-2.5, 18, -3.5/3.5),
+/// `LayerDefinition.create(64, 64)` over the cow_temperate_baby.png.
+/// BabyCowModel extends CowModel with only the layer overridden — the
+/// QuadrupedModel.setupAnim walk the adult's fold rides verbatim.
+pub struct BabyCowModel {
+    rgba: Vec<u8>,
+}
+
+impl BabyCowModel {
+    /// Load + sha1-verify the BABY cow's skin (the CowRenderer's
+    /// temperate variant table's `_baby` entry). `None` = the baby
+    /// never renders (the same honesty the adult lane speaks).
+    pub fn load(root: &Path) -> Option<BabyCowModel> {
+        let bytes = std::fs::read(root.join(skin::COW_TEMPERATE_BABY_RUNTIME_PATH)).ok()?;
+        let digest = sha1::Sha1::digest(&bytes);
+        if hex::encode(digest) != skin::COW_TEMPERATE_BABY_PNG_SHA1 {
+            return None;
+        }
+        let (w, h, rgba) = decode_rgba(&bytes).ok()?;
+        if w != 64 || h != 64 || rgba.len() != 64 * 64 * 4 {
+            return None;
+        }
+        Some(BabyCowModel { rgba })
+    }
+
+    /// The baby skin pixel at (u, v) — the RGBA row-major words, v down.
+    pub fn pixel(&self, u: f32, v: f32) -> [u8; 4] {
+        let (uu, vv) = (u.clamp(0.0, 63.999_9), v.clamp(0.0, 63.999_9));
+        let x = uu as usize;
+        let y = vv as usize;
+        let o = (y * 64 + x) * 4;
+        [self.rgba[o], self.rgba[o + 1], self.rgba[o + 2], self.rgba[o + 3]]
+    }
+
+    /// THE POSED RENDER: the baby cow's quads — the same entity chain
+    /// fold, the same walk store the adult speaks.
+    pub fn quads(
+        &self,
+        state: &QuadrupedState,
+        feet: Vec3,
+        cam_yaw: f32,
+        cam_pitch: f32,
+    ) -> Vec<AvatarQuad> {
+        let parts = build_baby_cow_parts(state);
+        let (fold_point, fold_normal) = entity_folds(state.yaw_deg, state.death_time, 0.0, feet);
+        let mut out: Vec<AvatarQuad> = Vec::with_capacity(6 * 7);
+        let ident = Mat4::IDENT;
+        for part in &parts {
+            collect_part(part, &ident, &fold_point, &fold_normal, cam_yaw, cam_pitch, &mut out);
+        }
+        out
+    }
+}
+
+/// The full BABY PIG model — the 26.2 `BabyPigModel.createBodyLayer`'s
+/// own numbers, bytecode-proven off the official jar (scripts/
+/// babypigmodel.txt): the body 7x6x9 (uv 0,0) at pivot (0, 19, 0.5)
+/// with NO x-rotation, the head 7x6x6 (uv 0,15, inflate 0.025) at
+/// pivot (0, 19, -2) with the snout cube (uv 6,27, inflate 0.015, at
+/// (-1.5, -1.975, -6)) — the inflate deformations the adult's NONE
+/// never spoke, the four STUB legs 2x2x2 (uv 0,0 / 23,0 / 0,4 / 23,4 —
+/// four distinct rects, no mirror) at pivots (+-2.5, 22, -3/4),
+/// `LayerDefinition.create(32, 32)` over the pig_temperate_baby.png —
+/// the baby's OWN half-size texture the adult's 64x64 never shared.
+/// BabyPigModel extends PigModel with only the layer overridden — the
+/// QuadrupedModel.setupAnim walk the adult's fold rides verbatim.
+pub struct BabyPigModel {
+    rgba: Vec<u8>,
+}
+
+impl BabyPigModel {
+    /// Load + sha1-verify the BABY pig's skin (the PigRenderer's
+    /// temperate variant table's `_baby` entry). `None` = the baby
+    /// never renders (the same honesty the adult lane speaks).
+    pub fn load(root: &Path) -> Option<BabyPigModel> {
+        let bytes = std::fs::read(root.join(skin::PIG_TEMPERATE_BABY_RUNTIME_PATH)).ok()?;
+        let digest = sha1::Sha1::digest(&bytes);
+        if hex::encode(digest) != skin::PIG_TEMPERATE_BABY_PNG_SHA1 {
+            return None;
+        }
+        let (w, h, rgba) = decode_rgba(&bytes).ok()?;
+        if w != 32 || h != 32 || rgba.len() != 32 * 32 * 4 {
+            return None;
+        }
+        Some(BabyPigModel { rgba })
+    }
+
+    /// The baby skin pixel at (u, v) — the RGBA row-major words, v down
+    /// (the 32x32 layout's own stride the load verified).
+    pub fn pixel(&self, u: f32, v: f32) -> [u8; 4] {
+        let (uu, vv) = (u.clamp(0.0, 31.999_9), v.clamp(0.0, 31.999_9));
+        let x = uu as usize;
+        let y = vv as usize;
+        let o = (y * 32 + x) * 4;
+        [self.rgba[o], self.rgba[o + 1], self.rgba[o + 2], self.rgba[o + 3]]
+    }
+
+    /// THE POSED RENDER: the baby pig's quads — the same entity chain
+    /// fold, the same walk store the adult speaks.
+    pub fn quads(
+        &self,
+        state: &PigState,
+        feet: Vec3,
+        cam_yaw: f32,
+        cam_pitch: f32,
+    ) -> Vec<AvatarQuad> {
+        let parts = build_baby_pig_parts(state);
+        let (fold_point, fold_normal) = entity_folds(state.yaw_deg, state.death_time, 0.0, feet);
+        let mut out: Vec<AvatarQuad> = Vec::with_capacity(6 * 6);
+        let ident = Mat4::IDENT;
+        for part in &parts {
+            collect_part(part, &ident, &fold_point, &fold_normal, cam_yaw, cam_pitch, &mut out);
+        }
+        out
+    }
+}
+
+/// The ovine BABY's parts, posed by `state` — the BabySheepModel's own
+/// bytecode-proven mesh (the 5x5x5 head, the horizontal 6x4x9 body, the
+/// four 2x5x2 legs on their FOUR distinct rects), the SAME pose law the
+/// adult speaks (the walk's diagonal pairs + the eat fold —
+/// BabySheepModel inherits SheepModel's setupAnim verbatim; the eat
+/// drop's base rides the baby's own 15.5 pivot the layer speaks).
+fn build_baby_sheep_parts(state: &SheepState) -> Vec<Part> {
+    let pos = state.walk_pos;
+    let speed = state.walk_speed;
+    let leg_rh = mth_cos(pos * 0.6662) * 1.4 * speed;
+    let leg_lh = mth_cos(pos * 0.6662 + std::f32::consts::PI) * 1.4 * speed;
+    // THE EAT FOLD (the inherited setupAnim's own two statements over
+    // the baby's own pivot — the *9.0*ageScale drop the adult speaks)
+    let head_pivot_y = 15.5 + state.head_eat_position * 9.0 * state.age_scale;
+    let head_x = state.head_eat_angle;
+    let head_y = state.head_yaw_off_deg.to_radians();
+    let leg_cube = |tex: (f32, f32)| Cube {
+        tex,
+        origin: [-1.0, 0.0, -1.0],
+        size: [2.0, 5.0, 2.0],
+        inflate: 0.0,
+        mirror: false,
+    };
+    vec![
+        // head (the baby's own 5x5x5 — the big-headed look the
+        // dedicated layer speaks)
+        Part {
+            pivot: [0.0, head_pivot_y, -2.5],
+            x_rot: head_x,
+            y_rot: head_y,
+            z_rot: 0.0,
+            cubes: vec![Cube {
+                tex: (0.0, 0.0),
+                origin: [-2.5, -4.5, -3.5],
+                size: [5.0, 5.0, 5.0],
+                inflate: 0.0,
+                mirror: false,
+            }],
+            children: vec![],
+        },
+        // body (the horizontal box — NO rotX the adult's barrel rides)
+        Part {
+            pivot: [0.0, 17.0, 0.5],
+            x_rot: 0.0,
+            y_rot: 0.0,
+            z_rot: 0.0,
+            cubes: vec![Cube {
+                tex: (0.0, 10.0),
+                origin: [-3.0, -2.0, -4.5],
+                size: [6.0, 4.0, 9.0],
+                inflate: 0.0,
+                mirror: false,
+            }],
+            children: vec![],
+        },
+        // right hind leg (uv 0,23 — no mirror the dump speaks)
+        Part {
+            pivot: [-2.0, 19.0, 3.0],
+            x_rot: leg_rh,
+            y_rot: 0.0,
+            z_rot: 0.0,
+            cubes: vec![leg_cube((0.0, 23.0))],
+            children: vec![],
+        },
+        // left hind leg (uv 24,12)
+        Part {
+            pivot: [2.0, 19.0, 3.0],
+            x_rot: leg_lh,
+            y_rot: 0.0,
+            z_rot: 0.0,
+            cubes: vec![leg_cube((24.0, 12.0))],
+            children: vec![],
+        },
+        // right front leg (uv 8,23)
+        Part {
+            pivot: [-2.0, 19.0, -2.0],
+            x_rot: leg_lh,
+            y_rot: 0.0,
+            z_rot: 0.0,
+            cubes: vec![leg_cube((8.0, 23.0))],
+            children: vec![],
+        },
+        // left front leg (uv 24,5)
+        Part {
+            pivot: [2.0, 19.0, -2.0],
+            x_rot: leg_rh,
+            y_rot: 0.0,
+            z_rot: 0.0,
+            cubes: vec![leg_cube((24.0, 5.0))],
+            children: vec![],
+        },
+    ]
+}
+
+/// The bovine BABY's parts, posed by `state` — the BabyCowModel's own
+/// bytecode-proven mesh (the four-cube head with the mirrored left
+/// horn, the horizontal 8x6x12 body at the +3 x pivot the layer
+/// speaks, the four 3x6x3 legs on four distinct rects), the SAME pose
+/// law the adult speaks (the walk's diagonal pairs — CowModel carries
+/// no setupAnim override, the QuadrupedModel base rides verbatim).
+fn build_baby_cow_parts(state: &QuadrupedState) -> Vec<Part> {
+    let pos = state.walk_pos;
+    let speed = state.walk_speed;
+    let leg_rh = mth_cos(pos * 0.6662) * 1.4 * speed;
+    let leg_lh = mth_cos(pos * 0.6662 + std::f32::consts::PI) * 1.4 * speed;
+    let head_x = state.pitch_deg.to_radians();
+    let head_y = state.head_yaw_off_deg.to_radians();
+    let leg_cube = |tex: (f32, f32)| Cube {
+        tex,
+        origin: [-1.5, 0.0, -1.5],
+        size: [3.0, 6.0, 3.0],
+        inflate: 0.0,
+        mirror: false,
+    };
+    vec![
+        // head (the four cubes the fluent chain speaks — main, right
+        // horn, LEFT horn mirrored, muzzle)
+        Part {
+            pivot: [0.0, 13.569, -5.1667],
+            x_rot: head_x,
+            y_rot: head_y,
+            z_rot: 0.0,
+            cubes: vec![
+                Cube {
+                    tex: (0.0, 18.0),
+                    origin: [-3.0, -4.569, -4.8333],
+                    size: [6.0, 6.0, 5.0],
+                    inflate: 0.0,
+                    mirror: false,
+                },
+                Cube {
+                    tex: (8.0, 29.0),
+                    origin: [3.0, -5.569, -3.8333],
+                    size: [1.0, 2.0, 1.0],
+                    inflate: 0.0,
+                    mirror: false,
+                },
+                Cube {
+                    tex: (4.0, 29.0),
+                    origin: [-4.0, -5.569, -3.8333],
+                    size: [1.0, 2.0, 1.0],
+                    inflate: 0.0,
+                    mirror: true,
+                },
+                Cube {
+                    tex: (12.0, 29.0),
+                    origin: [-2.0, -1.569, -5.8333],
+                    size: [4.0, 3.0, 1.0],
+                    inflate: 0.0,
+                    mirror: false,
+                },
+            ],
+            children: vec![],
+        },
+        // body (the horizontal box at the +3 x pivot — NO rotX)
+        Part {
+            pivot: [3.0, 19.0, -5.0],
+            x_rot: 0.0,
+            y_rot: 0.0,
+            z_rot: 0.0,
+            cubes: vec![Cube {
+                tex: (0.0, 0.0),
+                origin: [-7.0, -7.0, -1.0],
+                size: [8.0, 6.0, 12.0],
+                inflate: 0.0,
+                mirror: false,
+            }],
+            children: vec![],
+        },
+        // right front leg (uv 22,18)
+        Part {
+            pivot: [-2.5, 18.0, -3.5],
+            x_rot: leg_lh,
+            y_rot: 0.0,
+            z_rot: 0.0,
+            cubes: vec![leg_cube((22.0, 18.0))],
+            children: vec![],
+        },
+        // left front leg (uv 34,18)
+        Part {
+            pivot: [2.5, 18.0, -3.5],
+            x_rot: leg_rh,
+            y_rot: 0.0,
+            z_rot: 0.0,
+            cubes: vec![leg_cube((34.0, 18.0))],
+            children: vec![],
+        },
+        // right hind leg (uv 22,27)
+        Part {
+            pivot: [-2.5, 18.0, 3.5],
+            x_rot: leg_rh,
+            y_rot: 0.0,
+            z_rot: 0.0,
+            cubes: vec![leg_cube((22.0, 27.0))],
+            children: vec![],
+        },
+        // left hind leg (uv 34,27)
+        Part {
+            pivot: [2.5, 18.0, 3.5],
+            x_rot: leg_lh,
+            y_rot: 0.0,
+            z_rot: 0.0,
+            cubes: vec![leg_cube((34.0, 27.0))],
+            children: vec![],
+        },
+    ]
+}
+
+/// the porcine BABY's parts, posed by `state` — the BabyPigModel's own
+/// bytecode-proven mesh (the 7x6x9 horizontal body, the two-cube head
+/// with its inflate deformations, the four 2x2x2 stub legs on four
+/// distinct rects), the SAME pose law the adult speaks (the walk's
+/// diagonal pairs — PigModel carries no setupAnim override either).
+fn build_baby_pig_parts(state: &PigState) -> Vec<Part> {
+    let pos = state.walk_pos;
+    let speed = state.walk_speed;
+    let leg_rh = mth_cos(pos * 0.6662) * 1.4 * speed;
+    let leg_lh = mth_cos(pos * 0.6662 + std::f32::consts::PI) * 1.4 * speed;
+    let head_x = state.pitch_deg.to_radians();
+    let head_y = state.head_yaw_off_deg.to_radians();
+    let leg_cube = |tex: (f32, f32)| Cube {
+        tex,
+        origin: [-1.0, 0.0, -1.0],
+        size: [2.0, 2.0, 2.0],
+        inflate: 0.0,
+        mirror: false,
+    };
+    vec![
+        // head (+ the snout — the same part's two cubes, the inflate
+        // deformations the baby layer speaks)
+        Part {
+            pivot: [0.0, 19.0, -2.0],
+            x_rot: head_x,
+            y_rot: head_y,
+            z_rot: 0.0,
+            cubes: vec![
+                Cube {
+                    tex: (0.0, 15.0),
+                    origin: [-3.5, -5.0, -5.0],
+                    size: [7.0, 6.0, 6.0],
+                    inflate: 0.025,
+                    mirror: false,
+                },
+                Cube {
+                    tex: (6.0, 27.0),
+                    origin: [-1.5, -1.975, -6.0],
+                    size: [3.0, 2.0, 1.0],
+                    inflate: 0.015,
+                    mirror: false,
+                },
+            ],
+            children: vec![],
+        },
+        // body (the horizontal box — NO rotX)
+        Part {
+            pivot: [0.0, 19.0, 0.5],
+            x_rot: 0.0,
+            y_rot: 0.0,
+            z_rot: 0.0,
+            cubes: vec![Cube {
+                tex: (0.0, 0.0),
+                origin: [-3.5, -3.0, -4.5],
+                size: [7.0, 6.0, 9.0],
+                inflate: 0.0,
+                mirror: false,
+            }],
+            children: vec![],
+        },
+        // left front leg (uv 0,0 — the stub)
+        Part {
+            pivot: [2.5, 22.0, -3.0],
+            x_rot: leg_rh,
+            y_rot: 0.0,
+            z_rot: 0.0,
+            cubes: vec![leg_cube((0.0, 0.0))],
+            children: vec![],
+        },
+        // right front leg (uv 23,0)
+        Part {
+            pivot: [-2.5, 22.0, -3.0],
+            x_rot: leg_lh,
+            y_rot: 0.0,
+            z_rot: 0.0,
+            cubes: vec![leg_cube((23.0, 0.0))],
+            children: vec![],
+        },
+        // left hind leg (uv 0,4)
+        Part {
+            pivot: [2.5, 22.0, 4.0],
+            x_rot: leg_lh,
+            y_rot: 0.0,
+            z_rot: 0.0,
+            cubes: vec![leg_cube((0.0, 4.0))],
+            children: vec![],
+        },
+        // right hind leg (uv 23,4)
+        Part {
+            pivot: [-2.5, 22.0, 4.0],
+            x_rot: leg_rh,
+            y_rot: 0.0,
+            z_rot: 0.0,
+            cubes: vec![leg_cube((23.0, 4.0))],
             children: vec![],
         },
     ]
@@ -3247,5 +3813,358 @@ mod tests {
         let px = screen.pixel(8.0, 8.0);
         assert!(px[2] > px[0], "the blue reads blue-over-red: {px:?}");
         assert!(px[3] > 0 && px[3] < 255, "the texel is translucent: {px:?}");
+    }
+
+    /// THE BABY SHEEP'S OWN GEOMETRY (javap BabySheepModel.createBodyLayer's
+    /// own numbers — the DEDICATED baby layer the AgeableMobRenderer's
+    /// babyModel field bakes, NOT a scaled adult): the 5x5x5 head at
+    /// pivot (0, 15.5, -2.5), the horizontal 6x4x9 body with NO x-rot
+    /// at pivot (0, 17, 0.5), the four 2x5x2 legs on their FOUR
+    /// distinct rects (0,23 / 24,12 / 8,23 / 24,5) with NO mirror.
+    #[test]
+    fn the_baby_sheeps_own_geometry_the_layer_bakes() {
+        let state = SheepState {
+            yaw_deg: 0.0,
+            head_yaw_off_deg: 0.0,
+            walk_pos: 0.0,
+            walk_speed: 0.0,
+            age_ticks: 40.0,
+            death_time: 0.0,
+            head_eat_position: 0.0,
+            head_eat_angle: 0.0,
+            age_scale: 0.5,
+        };
+        let parts = build_baby_sheep_parts(&state);
+        assert_eq!(parts.len(), 6, "the baby layer bakes six parts");
+        let head = &parts[0];
+        assert_eq!(head.pivot, [0.0, 15.5, -2.5], "the head's own pivot");
+        assert_eq!(head.cubes.len(), 1);
+        assert_eq!(head.cubes[0].tex, (0.0, 0.0), "the head's uv rect");
+        assert_eq!(head.cubes[0].size, [5.0, 5.0, 5.0], "the baby head's own 5x5x5");
+        let body = &parts[1];
+        assert_eq!(body.pivot, [0.0, 17.0, 0.5], "the body's own pivot");
+        assert_eq!(body.x_rot, 0.0, "NO rotX — the horizontal box the adult's barrel never needed");
+        assert_eq!(body.cubes[0].tex, (0.0, 10.0));
+        assert_eq!(body.cubes[0].size, [6.0, 4.0, 9.0]);
+        // the four legs: the pivots the layer speaks, the FOUR uv
+        // rects the adult's shared builder never had, no mirror
+        let expect: [([f32; 3], (f32, f32)); 4] = [
+            ([-2.0, 19.0, 3.0], (0.0, 23.0)),
+            ([2.0, 19.0, 3.0], (24.0, 12.0)),
+            ([-2.0, 19.0, -2.0], (8.0, 23.0)),
+            ([2.0, 19.0, -2.0], (24.0, 5.0)),
+        ];
+        for (i, (pivot, tex)) in expect.iter().enumerate() {
+            let leg = &parts[2 + i];
+            assert_eq!(leg.pivot, *pivot, "leg {i}'s own pivot");
+            assert_eq!(leg.cubes[0].tex, *tex, "leg {i}'s own uv rect");
+            assert_eq!(leg.cubes[0].size, [2.0, 5.0, 2.0], "leg {i}'s stub");
+            assert!(!leg.cubes[0].mirror, "leg {i} rides no mirror");
+        }
+    }
+
+    /// THE BABY COW'S OWN GEOMETRY (javap BabyCowModel.createBodyLayer's
+    /// own numbers): the four-cube head at pivot (0, 13.569, -5.1667) —
+    /// main 6x6x5 (uv 0,18), right horn 1x2x1 (uv 8,29), LEFT horn
+    /// 1x2x1 the builder's own .mirror() ride (uv 4,29), muzzle 4x3x1
+    /// (uv 12,29) — the horizontal 8x6x12 body at pivot (3, 19, -5)
+    /// with NO x-rot, the four 3x6x3 legs on four distinct rects.
+    #[test]
+    fn the_baby_cows_own_horns_the_mirror_speaks() {
+        let state = QuadrupedState {
+            yaw_deg: 0.0,
+            pitch_deg: 0.0,
+            head_yaw_off_deg: 0.0,
+            walk_pos: 0.0,
+            walk_speed: 0.0,
+            age_ticks: 40.0,
+            death_time: 0.0,
+        };
+        let parts = build_baby_cow_parts(&state);
+        assert_eq!(parts.len(), 6, "the baby layer bakes six parts");
+        let head = &parts[0];
+        assert_eq!(head.pivot, [0.0, 13.569, -5.1667], "the head's own pivot");
+        assert_eq!(head.cubes.len(), 4, "main + two horns + muzzle");
+        assert_eq!(head.cubes[0].tex, (0.0, 18.0));
+        assert_eq!(head.cubes[0].size, [6.0, 6.0, 5.0]);
+        assert_eq!(head.cubes[1].tex, (8.0, 29.0), "the right horn's rect");
+        assert_eq!(head.cubes[1].origin, [3.0, -5.569, -3.8333]);
+        assert!(!head.cubes[1].mirror, "the right horn rides no mirror");
+        assert_eq!(head.cubes[2].tex, (4.0, 29.0), "the left horn's rect");
+        assert_eq!(head.cubes[2].origin, [-4.0, -5.569, -3.8333]);
+        assert!(head.cubes[2].mirror, "the LEFT horn the builder's own mirror speaks");
+        assert_eq!(head.cubes[3].tex, (12.0, 29.0), "the muzzle's rect");
+        assert_eq!(head.cubes[3].size, [4.0, 3.0, 1.0]);
+        let body = &parts[1];
+        assert_eq!(body.pivot, [3.0, 19.0, -5.0], "the body's own +3 x pivot");
+        assert_eq!(body.x_rot, 0.0, "NO rotX — the horizontal box");
+        assert_eq!(body.cubes[0].tex, (0.0, 0.0));
+        assert_eq!(body.cubes[0].size, [8.0, 6.0, 12.0]);
+        let expect: [([f32; 3], (f32, f32)); 4] = [
+            ([-2.5, 18.0, -3.5], (22.0, 18.0)),
+            ([2.5, 18.0, -3.5], (34.0, 18.0)),
+            ([-2.5, 18.0, 3.5], (22.0, 27.0)),
+            ([2.5, 18.0, 3.5], (34.0, 27.0)),
+        ];
+        for (i, (pivot, tex)) in expect.iter().enumerate() {
+            let leg = &parts[2 + i];
+            assert_eq!(leg.pivot, *pivot, "leg {i}'s own pivot");
+            assert_eq!(leg.cubes[0].tex, *tex, "leg {i}'s own uv rect");
+            assert_eq!(leg.cubes[0].size, [3.0, 6.0, 3.0], "leg {i}'s own stub");
+        }
+    }
+
+    /// THE BABY PIG'S OWN GEOMETRY (javap BabyPigModel.createBodyLayer's
+    /// own numbers): the horizontal 7x6x9 body at pivot (0, 19, 0.5)
+    /// with NO x-rot, the two-cube head at pivot (0, 19, -2) — the
+    /// inflate deformations 0.025 / 0.015 the adult's NONE never spoke
+    /// — and the four 2x2x2 STUB legs on four distinct rects, the
+    /// baby's own 32x32 texture the load law pins.
+    #[test]
+    fn the_baby_pigs_own_stubs_the_inflate_speaks() {
+        let state = PigState {
+            yaw_deg: 0.0,
+            pitch_deg: 0.0,
+            head_yaw_off_deg: 0.0,
+            walk_pos: 0.0,
+            walk_speed: 0.0,
+            age_ticks: 40.0,
+            death_time: 0.0,
+        };
+        let parts = build_baby_pig_parts(&state);
+        assert_eq!(parts.len(), 6, "the baby layer bakes six parts");
+        let head = &parts[0];
+        assert_eq!(head.pivot, [0.0, 19.0, -2.0], "the head's own pivot");
+        assert_eq!(head.cubes.len(), 2, "head + snout");
+        assert_eq!(head.cubes[0].tex, (0.0, 15.0));
+        assert_eq!(head.cubes[0].size, [7.0, 6.0, 6.0]);
+        assert!(
+            (head.cubes[0].inflate - 0.025).abs() < 1e-6,
+            "the head's own inflate the baby layer speaks"
+        );
+        assert_eq!(head.cubes[1].tex, (6.0, 27.0), "the snout's rect");
+        assert_eq!(head.cubes[1].size, [3.0, 2.0, 1.0]);
+        assert!(
+            (head.cubes[1].inflate - 0.015).abs() < 1e-6,
+            "the snout's own inflate"
+        );
+        let body = &parts[1];
+        assert_eq!(body.pivot, [0.0, 19.0, 0.5]);
+        assert_eq!(body.x_rot, 0.0, "NO rotX — the horizontal box");
+        assert_eq!(body.cubes[0].tex, (0.0, 0.0));
+        assert_eq!(body.cubes[0].size, [7.0, 6.0, 9.0]);
+        let expect: [([f32; 3], (f32, f32)); 4] = [
+            ([2.5, 22.0, -3.0], (0.0, 0.0)),
+            ([-2.5, 22.0, -3.0], (23.0, 0.0)),
+            ([2.5, 22.0, 4.0], (0.0, 4.0)),
+            ([-2.5, 22.0, 4.0], (23.0, 4.0)),
+        ];
+        for (i, (pivot, tex)) in expect.iter().enumerate() {
+            let leg = &parts[2 + i];
+            assert_eq!(leg.pivot, *pivot, "leg {i}'s own pivot");
+            assert_eq!(leg.cubes[0].tex, *tex, "leg {i}'s own uv rect");
+            assert_eq!(leg.cubes[0].size, [2.0, 2.0, 2.0], "leg {i}'s own stub");
+        }
+    }
+
+    /// THE BABY WALK'S OWN PAIRING (the inherited
+    /// QuadrupedModel.setupAnim the baby models ride verbatim): the
+    /// DIAGONAL pairs swing together — right-hind + left-front in
+    /// phase, left-hind + right-front +PI — the same law the adult's
+    /// legs speak, the baby's own stubs beneath.
+    #[test]
+    fn the_baby_pigs_walk_rides_the_diagonal_pairs() {
+        let rest = PigState {
+            yaw_deg: 0.0,
+            pitch_deg: 0.0,
+            head_yaw_off_deg: 0.0,
+            walk_pos: 0.0,
+            walk_speed: 0.0,
+            age_ticks: 40.0,
+            death_time: 0.0,
+        };
+        let walked = PigState {
+            walk_pos: 0.0,
+            walk_speed: 1.0,
+            ..rest
+        };
+        let rest_parts = build_baby_pig_parts(&rest);
+        let walked_parts = build_baby_pig_parts(&walked);
+        // the leg swing the fold speaks: cos(0) * 1.4 at the walk_pos 0
+        let rh = mth_cos(0.0) * 1.4;
+        assert!(
+            (walked_parts[2].x_rot.abs() - rh.abs()) < 1e-5,
+            "the legs' swing magnitude rides the 1.4 the law speaks"
+        );
+        // the DIAGONAL pairing: right-hind (part 5) + left-front (part
+        // 2) in phase, left-hind (part 3) + right-front (part 4) +PI
+        let (lf, rf, lh, rhind) = (
+            &walked_parts[2],
+            &walked_parts[3],
+            &walked_parts[4],
+            &walked_parts[5],
+        );
+        assert_eq!(
+            lf.x_rot, rhind.x_rot,
+            "right-hind + left-front the diagonal pair in phase"
+        );
+        assert_eq!(
+            lh.x_rot, rf.x_rot,
+            "left-hind + right-front the anti pair in phase"
+        );
+        assert!(
+            (lf.x_rot + lh.x_rot).abs() < 1e-5,
+            "the two pairs ride the +PI the cos fold speaks"
+        );
+        assert!(rest_parts[2].x_rot == 0.0, "the rest stand never swings");
+    }
+
+    /// THE BABY MODELS' OWN STATURE (the entity chain's world-space
+    /// verdict): the baby meshes stand the ground the legs' own 24
+    /// model-y reaches, the heads' tops the DEDICATED geometry's own
+    /// heights speak — the baby sheep 13/16 above the feet (model y 11
+    /// head top vs the adult's 22/16), the baby pig 10/16 + inflate.
+    #[test]
+    fn the_baby_models_span_the_dedicated_heights() {
+        let feet = Vec3::new(10.0, 64.0, 20.0);
+        let sheep_state = SheepState {
+            yaw_deg: 0.0,
+            head_yaw_off_deg: 0.0,
+            walk_pos: 0.0,
+            walk_speed: 0.0,
+            age_ticks: 40.0,
+            death_time: 0.0,
+            head_eat_position: 0.0,
+            head_eat_angle: 0.0,
+            age_scale: 0.5,
+        };
+        let baby_sheep = BabySheepModel {
+            rgba: vec![255u8; 64 * 32 * 4],
+        };
+        let quads = baby_sheep.quads(&sheep_state, feet, 0.0, 0.0);
+        let mut min_y = f32::MAX;
+        let mut max_y = f32::MIN;
+        for q in &quads {
+            for p in q.pts {
+                min_y = min_y.min(p[1]);
+                max_y = max_y.max(p[1]);
+            }
+        }
+        // legs' bottoms at model y 24 (the ground), head's top at
+        // model y 11 (pivot 15.5 - 4.5) -> feet + 13/16
+        assert!((min_y - (feet.y as f32 + 0.001)).abs() < 1e-4, "the baby sheep stands the ground: {min_y}");
+        assert!(
+            (max_y - (feet.y as f32 + 13.0 / 16.0 + 0.001)).abs() < 1e-4,
+            "the baby sheep's head top rides 13/16: {max_y}"
+        );
+        // the ADULT comparison the dedicated layer's own proportions
+        // speak: the adult head top at model y 2 -> feet + 22/16 — the
+        // baby stands under HALF the adult's stature
+        let adult_state = SheepState { age_scale: 1.0, ..sheep_state };
+        let adult = SheepModel {
+            rgba: vec![255u8; 64 * 32 * 4],
+        };
+        let adult_quads = adult.quads(&adult_state, feet, 0.0, 0.0);
+        let adult_max = adult_quads
+            .iter()
+            .flat_map(|q| q.pts.iter().map(|p| p[1]))
+            .fold(f32::MIN, f32::max);
+        assert!(
+            max_y < adult_max - 0.25,
+            "the baby's stature the dedicated geometry keeps under the adult's: {max_y} vs {adult_max}"
+        );
+        // THE BABY PIG: head top at model y 14 - 0.025 inflate -> feet
+        // + 10/16 (the 0.625 the stub-legged piglet speaks)
+        let pig_state = PigState {
+            yaw_deg: 0.0,
+            pitch_deg: 0.0,
+            head_yaw_off_deg: 0.0,
+            walk_pos: 0.0,
+            walk_speed: 0.0,
+            age_ticks: 40.0,
+            death_time: 0.0,
+        };
+        let baby_pig = BabyPigModel {
+            rgba: vec![255u8; 32 * 32 * 4],
+        };
+        let pig_quads = baby_pig.quads(&pig_state, feet, 0.0, 0.0);
+        let pig_max = pig_quads
+            .iter()
+            .flat_map(|q| q.pts.iter().map(|p| p[1]))
+            .fold(f32::MIN, f32::max);
+        assert!(
+            (pig_max - (feet.y as f32 + 10.025 / 16.0 + 0.001)).abs() < 1e-3,
+            "the baby pig's head top rides 10/16 + the inflate: {pig_max}"
+        );
+    }
+
+    /// THE BABY WOOL'S OWN BOXES (javap LayerDefinitions: the
+    /// SHEEP_BABY_WOOL layer bakes BabySheepModel.createBodyLayer —
+    /// the SAME loc49 the SHEEP_BABY layer rides): the wool overlay's
+    /// quads the BABY body's own geometry speak, pixel-identical
+    /// positions the baby body's builder leaves — the adult fur's
+    /// inflate boxes the baby never wears.
+    #[test]
+    fn the_baby_wool_rides_the_babys_own_boxes() {
+        let state = SheepState {
+            yaw_deg: 0.0,
+            head_yaw_off_deg: 0.0,
+            walk_pos: 0.0,
+            walk_speed: 0.0,
+            age_ticks: 40.0,
+            death_time: 0.0,
+            head_eat_position: 0.0,
+            head_eat_angle: 0.0,
+            age_scale: 0.5,
+        };
+        let feet = Vec3::new(1.0, 64.0, 2.0);
+        let wool = BabySheepWoolModel {
+            rgba: vec![200u8; 64 * 32 * 4],
+        };
+        let body = BabySheepModel {
+            rgba: vec![255u8; 64 * 32 * 4],
+        };
+        let wool_quads = wool.quads(&state, feet, 0.0, 0.0);
+        let body_quads = body.quads(&state, feet, 0.0, 0.0);
+        assert_eq!(wool_quads.len(), body_quads.len(), "the same mesh the layer bakes");
+        for (wq, bq) in wool_quads.iter().zip(body_quads.iter()) {
+            assert_eq!(wq.pts, bq.pts, "the wool rides the baby body's own boxes");
+        }
+        // the sampler's own verdict: the baby wool texture the pixel
+        // read answers (the uniform fixture the constructor carries —
+        // every channel the 200 word fills, alpha included)
+        assert_eq!(
+            wool.pixel(5.0, 5.0),
+            [200, 200, 200, 200],
+            "the baby wool texture the sampler reads"
+        );
+    }
+
+    /// THE BABY SKINS LOAD (the runtime cache's own verdict — the
+    /// generator's extraction decodes the four _baby textures the
+    /// sha1s pin, each its OWN layout the baby layer defs speak).
+    #[test]
+    #[ignore = "needs runtime assets (assets-cache/jar) from mc2rs-gen generate"]
+    fn the_baby_skins_load_sha1_verified() {
+        let mut dir = std::env::current_dir().unwrap();
+        let root = loop {
+            let cand = dir.join("assets-cache/jar");
+            if cand.exists() {
+                break cand;
+            }
+            dir = dir.parent().expect("the runtime root above").to_path_buf();
+        };
+        let sheep = BabySheepModel::load(&root).expect("the baby sheep loads");
+        // the baby sheep's skin reads blue-less warm texels — the
+        // opaque verdict the decode law keeps
+        let px = sheep.pixel(8.0, 8.0);
+        assert_eq!(px[3], 255, "the baby sheep's texel is opaque");
+        let wool = BabySheepWoolModel::load(&root).expect("the baby wool loads");
+        let wpx = wool.pixel(20.0, 10.0);
+        assert_eq!(wpx[0], wpx[1], "the greyscale wool rides equal channels");
+        let cow = BabyCowModel::load(&root).expect("the baby cow loads");
+        assert_eq!(cow.pixel(16.0, 20.0)[3], 255, "the baby cow's texel is opaque");
+        let pig = BabyPigModel::load(&root).expect("the baby pig loads");
+        assert_eq!(pig.pixel(8.0, 18.0)[3], 255, "the baby pig's texel is opaque");
     }
 }

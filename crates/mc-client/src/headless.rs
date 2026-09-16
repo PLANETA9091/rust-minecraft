@@ -145,7 +145,7 @@ pub struct SceneOpts {
     /// leaves (600 both), then the settle ticks the caller passes run
     /// the pairing — the child the spawn walk leaves, the hearts the
     /// event 18 rides, the XP orb the MOB_DROPS roll owes. The staged
-    /// baby the 0.5 pose scale draws.
+    /// baby the dedicated BabySheepModel the isBaby word picks draws.
     pub breed: Option<u32>,
     /// THE MIX WALK'S OWN STAGE: the breed walk's own pair the red
     /// and the blue dyes speak (the parents' wool 14 and 11 — the
@@ -1916,7 +1916,8 @@ pub fn render_gui_screen_opts(
         // (the courted pair the meet's own gate answers), the child
         // the spawn walk leaves, the hearts the event 18 rides, the
         // XP orb the MOB_DROPS roll owes; the frozen shot stages the
-        // family (the baby the 0.5 pose scale draws).
+        // family (the baby the dedicated BabySheepModel the isBaby
+        // word picks draws — its own sheep_baby.png the render reads).
         let yaw_cam = opts.body_yaw.unwrap_or(-90.0);
         let n = app.world_size;
         let (fx, fz) = (

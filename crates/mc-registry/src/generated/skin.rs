@@ -103,6 +103,23 @@ pub const SHEEP_RUNTIME_PATH: &str = "entity/sheep/sheep.png";
 pub const SHEEP_WOOL_PNG_SHA1: &str = "0dc8efe62ffb5a76ee51517566b4d3772f01b996";
 pub const SHEEP_WOOL_RUNTIME_PATH: &str = "entity/sheep/sheep_wool.png";
 
+/// The BABY skins (the dedicated baby lane's own textures), generated
+/// from the same jar: the source sha1s the baby models verify before
+/// they draw (javap SheepRenderer's babyModel =
+/// BabySheepModel(bakeLayer(SHEEP_BABY)) + the 'sheep_baby.png'
+/// location, the SheepWoolLayer's babyModel + the
+/// SHEEP_WOOL_BABY_LOCATION, the cow/pig variant tables' _baby
+/// entries — each the OWN layout the baby layer defs speak:
+/// 64x32 sheep, 64x64 cow, 32x32 pig).
+pub const SHEEP_BABY_PNG_SHA1: &str = "999b567a830cc2e35c98b85221c79314afca60ac";
+pub const SHEEP_BABY_RUNTIME_PATH: &str = "entity/sheep/sheep_baby.png";
+pub const SHEEP_WOOL_BABY_PNG_SHA1: &str = "ca7361a45bc49fd56481a205c5e1f21c91606813";
+pub const SHEEP_WOOL_BABY_RUNTIME_PATH: &str = "entity/sheep/sheep_wool_baby.png";
+pub const COW_TEMPERATE_BABY_PNG_SHA1: &str = "6cc6bccfea6410be161f8443c4b4db88dfbc4594";
+pub const COW_TEMPERATE_BABY_RUNTIME_PATH: &str = "entity/cow/cow_temperate_baby.png";
+pub const PIG_TEMPERATE_BABY_PNG_SHA1: &str = "f65f53388b9779d103b34d90a6cc8e154d6820fa";
+pub const PIG_TEMPERATE_BABY_RUNTIME_PATH: &str = "entity/pig/pig_temperate_baby.png";
+
 /// The FLAME strips (the burn lane's pixel sources), generated from
 /// the same jar: the source sha1s the burning mob's renderer verifies
 /// before it draws (javap: `FlameFeatureRenderer.buildGroup`'s

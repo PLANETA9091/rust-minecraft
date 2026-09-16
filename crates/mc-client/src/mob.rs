@@ -196,8 +196,10 @@ pub const PANIC_SPEED_SHEEP: f64 = 1.25;
 pub const PANIC_SPEED_COW: f64 = 2.0;
 pub const PANIC_SPEED_PIG: f64 = 1.25;
 /// `AgeableMob.getScale`'s own baby arm (the `isBaby() ? 0.5F : 1.0F`
-/// the render state's scale carries — the pose scale the
-/// LivingEntityRenderer folds around the feet anchor).
+/// the entity dims' getDefaultDimensions arm carries — the half the
+/// bbox ask folds; the RENDER's age the dedicated baby models the
+/// AgeableMobRenderer's babyModel field picks already speak — the
+/// pose-scale fold the model swap replaced).
 pub const BABY_RENDER_SCALE: f32 = 0.5;
 
 /// THE WOOL BYTE'S OWN DECODE (Sheep.isSheared/getColor's own fold —

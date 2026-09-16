@@ -44,6 +44,19 @@ pub const SHEEP_JAR_PATH: &str = "assets/minecraft/textures/entity/sheep/sheep.p
 /// the DyeColor's textureDiffuseColor the clinit's own ints speak).
 pub const SHEEP_WOOL_JAR_PATH: &str = "assets/minecraft/textures/entity/sheep/sheep_wool.png";
 
+/// The jar entries the BABY skins live at (the AgeableMobRenderer's
+/// dedicated baby lane — the renderer's `babyModel` field the isBaby
+/// word picks, javap SheepRenderer/CowRenderer/PigRenderer: the
+/// `textures/entity/<kind>/<skin>_baby.png` files the baby models
+/// unwrap — BabySheepModel.createBodyLayer's `LayerDefinition.create
+/// (64, 32)`, BabyCowModel's `create(64, 64)`, BabyPigModel's
+/// `create(32, 32)`, plus the SheepWoolLayer's SHEEP_WOOL_BABY_LOCATION
+/// the `sheep_wool_baby.png` the baby's wool tints).
+pub const SHEEP_BABY_JAR_PATH: &str = "assets/minecraft/textures/entity/sheep/sheep_baby.png";
+pub const SHEEP_WOOL_BABY_JAR_PATH: &str = "assets/minecraft/textures/entity/sheep/sheep_wool_baby.png";
+pub const COW_TEMPERATE_BABY_JAR_PATH: &str = "assets/minecraft/textures/entity/cow/cow_temperate_baby.png";
+pub const PIG_TEMPERATE_BABY_JAR_PATH: &str = "assets/minecraft/textures/entity/pig/pig_temperate_baby.png";
+
 /// The flame feature's two animated strips (`FlameFeatureRenderer`'s
 /// ModelBakery.FIRE_0 / FIRE_1 sprite sources) — the burn lane reads
 /// their frames off the blocks atlas path the runtime cache mirrors.
@@ -183,6 +196,10 @@ pub const PIG_TEMPERATE_RUNTIME_PATH: &str = "entity/pig/pig_temperate.png";
 pub const COW_TEMPERATE_RUNTIME_PATH: &str = "entity/cow/cow_temperate.png";
 pub const SHEEP_RUNTIME_PATH: &str = "entity/sheep/sheep.png";
 pub const SHEEP_WOOL_RUNTIME_PATH: &str = "entity/sheep/sheep_wool.png";
+pub const SHEEP_BABY_RUNTIME_PATH: &str = "entity/sheep/sheep_baby.png";
+pub const SHEEP_WOOL_BABY_RUNTIME_PATH: &str = "entity/sheep/sheep_wool_baby.png";
+pub const COW_TEMPERATE_BABY_RUNTIME_PATH: &str = "entity/cow/cow_temperate_baby.png";
+pub const PIG_TEMPERATE_BABY_RUNTIME_PATH: &str = "entity/pig/pig_temperate_baby.png";
 
 /// The vanilla `PlayerModel` arm box for the wide model: texOffs (40, 16),
 /// box 4x12x4 texels (w, h, d).
@@ -224,6 +241,14 @@ pub struct SkinData {
     /// sha1 of the sheep's WOOL source PNG bytes (jar-verbatim
     /// integrity) — the fur overlay's texture the wool layer tints.
     pub sheep_wool_png_sha1: String,
+    /// sha1s of the BABY skins (jar-verbatim integrity) — the
+    /// dedicated baby lane's textures the baby models unwrap (the
+    /// AgeableMobRenderer's isBaby word the model swap arms, the
+    /// SheepWoolLayer's baby arm the wool_baby tints).
+    pub sheep_baby_png_sha1: String,
+    pub sheep_wool_baby_png_sha1: String,
+    pub cow_baby_png_sha1: String,
+    pub pig_baby_png_sha1: String,
     /// sha1 of the flame feature's fire_0 strip (jar-verbatim integrity)
     /// — the burn lane's pixel source (the 16x512, 32-frame strip).
     pub fire_0_png_sha1: String,
@@ -382,6 +407,56 @@ pub fn generate<R: std::io::Read + std::io::Seek>(archive: &mut zip::ZipArchive<
         wool_h
     );
     std::mem::drop(_wool_rgba);
+    // THE BABY SKINS (the dedicated baby lane's own textures — the
+    // AgeableMobRenderer's isBaby word the model swap arms): the baby
+    // sheep and its wool ride the 64x32 layout the BabySheepModel's
+    // create(64, 32) speaks, the baby cow the 64x64 the BabyCowModel
+    // speaks, the baby pig the 32x32 the BabyPigModel speaks — each
+    // its OWN file the renderer's baby lane unwraps (javap
+    // SheepRenderer's 'textures/entity/sheep/sheep_baby.png' + the
+    // SheepWoolLayer's SHEEP_WOOL_BABY_LOCATION, the variant tables'
+    // _baby entries the cow/pig renderers speak). The integrity sha1s
+    // the baby lanes verify before they draw.
+    let sheep_baby_bytes = read_entry(archive, SHEEP_BABY_JAR_PATH).context("read the sheep baby skin")?;
+    let sheep_baby_png_sha1 = crate::util::sha1_hex(&sheep_baby_bytes);
+    let (sby_w, sby_h, _sheep_baby_rgba) = decode_rgba(&sheep_baby_bytes).context("decode the sheep baby skin")?;
+    anyhow::ensure!(
+        (sby_w, sby_h) == (64, 32),
+        "the sheep baby skin must be the 64x32 layout (javap BabySheepModel LayerDefinition.create(64, 32)), got {}x{}",
+        sby_w,
+        sby_h
+    );
+    std::mem::drop(_sheep_baby_rgba);
+    let sheep_wool_baby_bytes = read_entry(archive, SHEEP_WOOL_BABY_JAR_PATH).context("read the sheep wool baby skin")?;
+    let sheep_wool_baby_png_sha1 = crate::util::sha1_hex(&sheep_wool_baby_bytes);
+    let (wbw, wbh, _wool_baby_rgba) = decode_rgba(&sheep_wool_baby_bytes).context("decode the sheep wool baby skin")?;
+    anyhow::ensure!(
+        (wbw, wbh) == (64, 32),
+        "the sheep wool baby must be the 64x32 layout (the SHEEP_BABY_WOOL layer bakes the BabySheepModel body), got {}x{}",
+        wbw,
+        wbh
+    );
+    std::mem::drop(_wool_baby_rgba);
+    let cow_baby_bytes = read_entry(archive, COW_TEMPERATE_BABY_JAR_PATH).context("read the cow temperate baby skin")?;
+    let cow_baby_png_sha1 = crate::util::sha1_hex(&cow_baby_bytes);
+    let (cbw, cbh, _cow_baby_rgba) = decode_rgba(&cow_baby_bytes).context("decode the cow temperate baby skin")?;
+    anyhow::ensure!(
+        (cbw, cbh) == (64, 64),
+        "the cow baby skin must be the 64x64 layout (javap BabyCowModel LayerDefinition.create(64, 64)), got {}x{}",
+        cbw,
+        cbh
+    );
+    std::mem::drop(_cow_baby_rgba);
+    let pig_baby_bytes = read_entry(archive, PIG_TEMPERATE_BABY_JAR_PATH).context("read the pig temperate baby skin")?;
+    let pig_baby_png_sha1 = crate::util::sha1_hex(&pig_baby_bytes);
+    let (pbw, pbh, _pig_baby_rgba) = decode_rgba(&pig_baby_bytes).context("decode the pig temperate baby skin")?;
+    anyhow::ensure!(
+        (pbw, pbh) == (32, 32),
+        "the pig baby skin must be the 32x32 layout (javap BabyPigModel LayerDefinition.create(32, 32)), got {}x{}",
+        pbw,
+        pbh
+    );
+    std::mem::drop(_pig_baby_rgba);
     // THE FIRE STRIPS: the flame feature's two animated pixel sources
     // (javap `FlameFeatureRenderer.buildGroup`: ModelBakery.FIRE_0 /
     // FIRE_1) — 16x512 = 32 stacked 16x16 frames each, the mcmeta
@@ -538,6 +613,10 @@ pub fn generate<R: std::io::Read + std::io::Seek>(archive: &mut zip::ZipArchive<
         cow_png_sha1,
         sheep_png_sha1,
         sheep_wool_png_sha1,
+        sheep_baby_png_sha1,
+        sheep_wool_baby_png_sha1,
+        cow_baby_png_sha1,
+        pig_baby_png_sha1,
         fire_0_png_sha1,
         fire_1_png_sha1,
         underwater_png_sha1,
@@ -662,6 +741,35 @@ pub fn emit(data: &SkinData) -> Result<String> {
     ));
     out.push_str(&format!(
         "pub const SHEEP_WOOL_RUNTIME_PATH: &str = \"{SHEEP_WOOL_RUNTIME_PATH}\";\n"
+    ));
+    out.push_str("\n/// The BABY skins (the dedicated baby lane's own textures), generated\n/// from the same jar: the source sha1s the baby models verify before\n/// they draw (javap SheepRenderer's babyModel =\n/// BabySheepModel(bakeLayer(SHEEP_BABY)) + the 'sheep_baby.png'\n/// location, the SheepWoolLayer's babyModel + the\n/// SHEEP_WOOL_BABY_LOCATION, the cow/pig variant tables' _baby\n/// entries — each the OWN layout the baby layer defs speak:\n/// 64x32 sheep, 64x64 cow, 32x32 pig).\n");
+    out.push_str(&format!(
+        "pub const SHEEP_BABY_PNG_SHA1: &str = \"{}\";\n",
+        data.sheep_baby_png_sha1
+    ));
+    out.push_str(&format!(
+        "pub const SHEEP_BABY_RUNTIME_PATH: &str = \"{SHEEP_BABY_RUNTIME_PATH}\";\n"
+    ));
+    out.push_str(&format!(
+        "pub const SHEEP_WOOL_BABY_PNG_SHA1: &str = \"{}\";\n",
+        data.sheep_wool_baby_png_sha1
+    ));
+    out.push_str(&format!(
+        "pub const SHEEP_WOOL_BABY_RUNTIME_PATH: &str = \"{SHEEP_WOOL_BABY_RUNTIME_PATH}\";\n"
+    ));
+    out.push_str(&format!(
+        "pub const COW_TEMPERATE_BABY_PNG_SHA1: &str = \"{}\";\n",
+        data.cow_baby_png_sha1
+    ));
+    out.push_str(&format!(
+        "pub const COW_TEMPERATE_BABY_RUNTIME_PATH: &str = \"{COW_TEMPERATE_BABY_RUNTIME_PATH}\";\n"
+    ));
+    out.push_str(&format!(
+        "pub const PIG_TEMPERATE_BABY_PNG_SHA1: &str = \"{}\";\n",
+        data.pig_baby_png_sha1
+    ));
+    out.push_str(&format!(
+        "pub const PIG_TEMPERATE_BABY_RUNTIME_PATH: &str = \"{PIG_TEMPERATE_BABY_RUNTIME_PATH}\";\n"
     ));
     out.push_str("\n/// The FLAME strips (the burn lane's pixel sources), generated from\n/// the same jar: the source sha1s the burning mob's renderer verifies\n/// before it draws (javap: `FlameFeatureRenderer.buildGroup`'s\n/// ModelBakery.FIRE_0 / FIRE_1 — the 16x512, 32-frame strips; fire_0's\n/// mcmeta playlist [16..31, 0..15], fire_1 sequential).\n");
     out.push_str(&format!(
@@ -948,6 +1056,14 @@ mod tests {
         let expected_sheep_sha1 = crate::util::sha1_hex(&sheep);
         let sheep_wool = sheep_png();
         let expected_sheep_wool_sha1 = crate::util::sha1_hex(&sheep_wool);
+        let sheep_baby = sheep_png();
+        let expected_sheep_baby_sha1 = crate::util::sha1_hex(&sheep_baby);
+        let sheep_wool_baby = sheep_png();
+        let expected_sheep_wool_baby_sha1 = crate::util::sha1_hex(&sheep_wool_baby);
+        let cow_baby = skin_png();
+        let expected_cow_baby_sha1 = crate::util::sha1_hex(&cow_baby);
+        let pig_baby = sweep_png();
+        let expected_pig_baby_sha1 = crate::util::sha1_hex(&pig_baby);
         let damage = tiny_png();
         let expected_damage_sha1 = crate::util::sha1_hex(&damage);
         let heart = tiny_png();
@@ -964,6 +1080,10 @@ mod tests {
             (COW_TEMPERATE_JAR_PATH, png.clone()),
             (SHEEP_JAR_PATH, sheep.clone()),
             (SHEEP_WOOL_JAR_PATH, sheep_wool.clone()),
+            (SHEEP_BABY_JAR_PATH, sheep_baby.clone()),
+            (SHEEP_WOOL_BABY_JAR_PATH, sheep_wool_baby.clone()),
+            (COW_TEMPERATE_BABY_JAR_PATH, cow_baby.clone()),
+            (PIG_TEMPERATE_BABY_JAR_PATH, pig_baby.clone()),
             (FIRE_0_JAR_PATH, strip.clone()),
             (FIRE_1_JAR_PATH, strip),
             (UNDERWATER_JAR_PATH, underwater),
@@ -1023,6 +1143,22 @@ mod tests {
         assert_eq!(
             data.sheep_wool_png_sha1, expected_sheep_wool_sha1,
             "the wool's own sha1 (the fur overlay's own 64x32 shape)"
+        );
+        assert_eq!(
+            data.sheep_baby_png_sha1, expected_sheep_baby_sha1,
+            "the baby sheep's own sha1 (the dedicated baby lane's 64x32)"
+        );
+        assert_eq!(
+            data.sheep_wool_baby_png_sha1, expected_sheep_wool_baby_sha1,
+            "the baby wool's own sha1 (the SHEEP_BABY_WOOL lane's 64x32)"
+        );
+        assert_eq!(
+            data.cow_baby_png_sha1, expected_cow_baby_sha1,
+            "the baby cow's own sha1 (the baby lane's 64x64)"
+        );
+        assert_eq!(
+            data.pig_baby_png_sha1, expected_pig_baby_sha1,
+            "the baby pig's own sha1 (the baby lane's 32x32)"
         );
         assert_eq!(
             data.particle_crit_png_sha1, expected_crit_sha1,
@@ -1088,6 +1224,15 @@ mod tests {
         // the sheep wool: the sha1 and the runtime path land verbatim
         assert!(emitted.contains(&format!("pub const SHEEP_WOOL_PNG_SHA1: &str = \"{expected_sheep_wool_sha1}\";")));
         assert!(emitted.contains("pub const SHEEP_WOOL_RUNTIME_PATH: &str = \"entity/sheep/sheep_wool.png\";"));
+        // the baby skins: the sha1s and the runtime paths land verbatim
+        assert!(emitted.contains(&format!("pub const SHEEP_BABY_PNG_SHA1: &str = \"{expected_sheep_baby_sha1}\";")));
+        assert!(emitted.contains("pub const SHEEP_BABY_RUNTIME_PATH: &str = \"entity/sheep/sheep_baby.png\";"));
+        assert!(emitted.contains(&format!("pub const SHEEP_WOOL_BABY_PNG_SHA1: &str = \"{expected_sheep_wool_baby_sha1}\";")));
+        assert!(emitted.contains("pub const SHEEP_WOOL_BABY_RUNTIME_PATH: &str = \"entity/sheep/sheep_wool_baby.png\";"));
+        assert!(emitted.contains(&format!("pub const COW_TEMPERATE_BABY_PNG_SHA1: &str = \"{expected_cow_baby_sha1}\";")));
+        assert!(emitted.contains("pub const COW_TEMPERATE_BABY_RUNTIME_PATH: &str = \"entity/cow/cow_temperate_baby.png\";"));
+        assert!(emitted.contains(&format!("pub const PIG_TEMPERATE_BABY_PNG_SHA1: &str = \"{expected_pig_baby_sha1}\";")));
+        assert!(emitted.contains("pub const PIG_TEMPERATE_BABY_RUNTIME_PATH: &str = \"entity/pig/pig_temperate_baby.png\";"));
         // the particle lane: the crit star's + the poof frames' sha1s
         // and the runtime paths land verbatim
         assert!(emitted.contains(&format!("pub const PARTICLE_CRIT_PNG_SHA1: &str = \"{expected_crit_sha1}\";")));

@@ -661,6 +661,20 @@ pub struct App {
     /// beside the sheep's, `None` = the fur stays unseen while the
     /// bodies keep drawing (the overlay's honesty its own lane).
     pub sheep_wool_model: Option<crate::avatar::SheepWoolModel>,
+    /// THE BABY LANE's own models (the AgeableMobRenderer's dedicated
+    /// babyModel field the isBaby word picks — the BabySheepModel/
+    /// BabyCowModel/BabyPigModel geometry the baby layer defs bake,
+    /// each over its OWN _baby texture the generator pinned) — loaded
+    /// lazily beside the adults', `None` = the BABIES of that kind stay
+    /// unseen while the adults keep drawing (the same honesty, one
+    /// lane deeper).
+    pub baby_sheep_model: Option<crate::avatar::BabySheepModel>,
+    /// THE BABY SHEEP's own WOOL (the SHEEP_BABY_WOOL layer's baby
+    /// body boxes over the sheep_wool_baby.png the SheepWoolLayer's
+    /// babyModel tints) — `None` = the baby's fur stays unseen.
+    pub baby_sheep_wool_model: Option<crate::avatar::BabySheepWoolModel>,
+    pub baby_cow_model: Option<crate::avatar::BabyCowModel>,
+    pub baby_pig_model: Option<crate::avatar::BabyPigModel>,
     /// The flame feature's two strips (the burn lane's pixel source —
     /// lazy-loaded and sha1-verified the zombie skin's way).
     pub fire_strips: Option<crate::avatar::FireStrips>,
@@ -1182,6 +1196,10 @@ impl App {
             cow_model: None,
             sheep_model: None,
             sheep_wool_model: None,
+            baby_sheep_model: None,
+            baby_sheep_wool_model: None,
+            baby_cow_model: None,
+            baby_pig_model: None,
             fire_strips: None,
             orb_sheet: None,
             underwater_screen: None,
@@ -6182,6 +6200,26 @@ impl App {
             self.sheep_wool_model =
                 crate::avatar::SheepWoolModel::load(std::path::Path::new("assets-cache/jar"));
         }
+        // THE BABY LANE's own lazy loads (the AgeableMobRenderer's
+        // babyModel field the isBaby word picks — each kind's honesty
+        // its own lane, a failed baby skin keeps only the BABIES of
+        // that kind unseen)
+        if self.baby_sheep_model.is_none() {
+            self.baby_sheep_model =
+                crate::avatar::BabySheepModel::load(std::path::Path::new("assets-cache/jar"));
+        }
+        if self.baby_sheep_wool_model.is_none() {
+            self.baby_sheep_wool_model =
+                crate::avatar::BabySheepWoolModel::load(std::path::Path::new("assets-cache/jar"));
+        }
+        if self.baby_cow_model.is_none() {
+            self.baby_cow_model =
+                crate::avatar::BabyCowModel::load(std::path::Path::new("assets-cache/jar"));
+        }
+        if self.baby_pig_model.is_none() {
+            self.baby_pig_model =
+                crate::avatar::BabyPigModel::load(std::path::Path::new("assets-cache/jar"));
+        }
         // the pig's honesty is its OWN lane: a failed pig skin keeps
         // only the pigs unseen, the zombies keep drawing
         let pig_model = self.pig_model.as_ref();
@@ -6194,14 +6232,25 @@ impl App {
         // the wool's honesty is ITS OWN lane: a failed wool skin keeps
         // only the FUR unseen (the sheared sheep never drew it anyway)
         let sheep_wool_model = self.sheep_wool_model.as_ref();
+        // THE BABY LANE's own honesty (the AgeableMobRenderer's
+        // babyModel field the isBaby word picks — each lane's own
+        // `None` keeps only that kind's babies unseen)
+        let baby_sheep_model = self.baby_sheep_model.as_ref();
+        let baby_sheep_wool_model = self.baby_sheep_wool_model.as_ref();
+        let baby_cow_model = self.baby_cow_model.as_ref();
+        let baby_pig_model = self.baby_pig_model.as_ref();
         // the two lanes' own union (the offline AI bodies + the wire's
         // remote bodies — the SAME lerp folds speak both, the model
         // kind the registry's name arms at the merge)
         // THE WOOL LAYER's out-of-band carry (the SheepWoolLayer's own
         // render order — the fur draws AFTER the body, BEFORE the
         // flame feature): the Sheep arm sets it, the draw below rides
-        // it, the dye tint the DyeColor table speaks
-        let mut wool_overlay: Option<(Vec<crate::avatar::AvatarQuad>, [f32; 3])> = None;
+        // it, the dye tint the DyeColor table speaks; the AGE WORD the
+        // tuple's third slot carries — the baby arm's quads sample the
+        // sheep_wool_baby.png the SHEEP_WOOL_BABY_LOCATION names, the
+        // adult's the sheep_wool.png (each lane's own Some the
+        // unwrap's honesty reads)
+        let mut wool_overlay: Option<(Vec<crate::avatar::AvatarQuad>, [f32; 3], bool)> = None;
         // THE CROSSHAIR'S OWN VERDICT (the per-frame pick the
         // Minecraft.pick arms — crosshairPickEntity the shouldShowName's
         // second arm reads): ONE verdict per frame over the SAME chain
@@ -6229,98 +6278,180 @@ impl App {
                 Box<dyn Fn(f32, f32) -> [u8; 4] + '_>,
             ) = match mob.kind {
                 crate::mob::MobKind::Sheep => {
-                    let Some(sheep) = sheep_model else {
-                        continue; // the sheep skin failed its sha1 — this body stays unseen
+                    // THE COLOR WORD (SheepRenderState.getWoolColor's
+                    // own law): the jeb_ name the checkMagicName gate
+                    // speaks arms the rainbow clock (the ageInTicks
+                    // the lerpedColor rides), the dye id the MODIFIED
+                    // table indexes (the getModifiedColor word the
+                    // ColorLerper$Type ctor pre-speaks — the white
+                    // 0xE6E6E6 the raw word never was) — ONE color
+                    // law, both age lanes the tint rides
+                    let dye = if mob.custom_name.as_deref() == Some("jeb_") {
+                        crate::mob::jeb_rainbow_rgb(
+                            mob.age_ticks as f32 + self.partial_tick,
+                        )
+                    } else {
+                        crate::mob::sheep_wool_tint(mob.wool_color & 0x0F)
                     };
-                    // THE OVINE STATE (the 26.2 SheepModel carries its
-                    // OWN setupAnim — the eat fold the head rides:
-                    // the *9.0 pivot drop + the eat-angle xRot the
-                    // server's clock bakes; the wire's pitch word is
-                    // NOT an input, the replacement law the bytecode
-                    // speaks — and the lane's honest 0/0 eat pair
-                    // keeps the AI/wire sheep at the shared walk fold
-                    // the quadruped base owns)
-                    let state = crate::avatar::SheepState {
-                        yaw_deg: mob.yaw,
-                        head_yaw_off_deg: head_yaw,
-                        walk_pos: mob.walk.position_at(self.partial_tick),
-                        walk_speed: mob.walk.speed_at(self.partial_tick),
-                        age_ticks: mob.age_ticks as f32 + 0.5,
-                        death_time: mob.death_time_at(self.partial_tick),
-                        head_eat_position: 0.0,
-                        head_eat_angle: 0.0,
-                        age_scale: 1.0,
-                    };
-                    // THE WOOL LAYER's own gate (SheepWoolLayer.submit's
-                    // law: the sheared bit the fur's render SKIPS — the
-                    // sheared body shows its skin the shear spoke): the
-                    // fur rides the SAME state the body speaks, the tint
-                    // the SheepRenderState.getWoolColor word speaks (the
-                    // jeb_ name the rainbow clock arms, the dye id the
-                    // modified table indexes)
-                    if !mob.sheared {
-                        if let Some(wool) = sheep_wool_model {
-                            // THE COLOR WORD (SheepRenderState.getWoolColor's
-                            // own law): the jeb_ name the checkMagicName gate
-                            // speaks arms the rainbow clock (the ageInTicks
-                            // the lerpedColor rides), the dye id the MODIFIED
-                            // table indexes (the getModifiedColor word the
-                            // ColorLerper$Type ctor pre-speaks — the white
-                            // 0xE6E6E6 the raw word never was)
-                            let dye = if mob.custom_name.as_deref() == Some("jeb_") {
-                                crate::mob::jeb_rainbow_rgb(
-                                    mob.age_ticks as f32 + self.partial_tick,
-                                )
-                            } else {
-                                crate::mob::sheep_wool_tint(mob.wool_color & 0x0F)
-                            };
-                            wool_overlay = Some((
-                                wool.quads(&state, feet, cam.yaw, cam.pitch),
-                                [
-                                    ((dye >> 16) & 0xFF) as f32 / 255.0,
-                                    ((dye >> 8) & 0xFF) as f32 / 255.0,
-                                    (dye & 0xFF) as f32 / 255.0,
-                                ],
-                            ));
+                    let dye_tint = [
+                        ((dye >> 16) & 0xFF) as f32 / 255.0,
+                        ((dye >> 8) & 0xFF) as f32 / 255.0,
+                        (dye & 0xFF) as f32 / 255.0,
+                    ];
+                    // THE AGEABLE MOB'S OWN BRANCH (AgeableMobRenderer
+                    // .submit's law: the isBaby word the babyModel pick
+                    // arms — the DEDICATED baby geometry the SHEEP_BABY
+                    // layer bakes, the pose-scale fold the model swap
+                    // REPLACES; the adult's skin the baby lane never
+                    // reads — one lane's sha1 each age's own verdict)
+                    if mob.is_baby() {
+                        let Some(baby) = baby_sheep_model else {
+                            continue; // the baby skin failed its sha1 — this body stays unseen
+                        };
+                        let state = crate::avatar::SheepState {
+                            yaw_deg: mob.yaw,
+                            head_yaw_off_deg: head_yaw,
+                            walk_pos: mob.walk.position_at(self.partial_tick),
+                            walk_speed: mob.walk.speed_at(self.partial_tick),
+                            age_ticks: mob.age_ticks as f32 + 0.5,
+                            death_time: mob.death_time_at(self.partial_tick),
+                            head_eat_position: 0.0,
+                            head_eat_angle: 0.0,
+                            // AgeableMob.getScale's own baby arm — the
+                            // eat drop's divisor the inherited setupAnim
+                            // reads (0.5 the baby's own scale speaks)
+                            age_scale: 0.5,
+                        };
+                        // THE WOOL LAYER's BABY ARM (SheepWoolLayer
+                        // .submit's law: the isBaby word the babyModel
+                        // + the SHEEP_WOOL_BABY_LOCATION pick arms, the
+                        // sheared bit the render skips the same way)
+                        if !mob.sheared {
+                            if let Some(wool) = baby_sheep_wool_model {
+                                wool_overlay = Some((
+                                    wool.quads(&state, feet, cam.yaw, cam.pitch),
+                                    dye_tint,
+                                    true,
+                                ));
+                            }
                         }
+                        let quads = baby.quads(&state, feet, cam.yaw, cam.pitch);
+                        (quads, Box::new(move |u, v| baby.pixel(u, v)))
+                    } else {
+                        let Some(sheep) = sheep_model else {
+                            continue; // the sheep skin failed its sha1 — this body stays unseen
+                        };
+                        // THE OVINE STATE (the 26.2 SheepModel carries its
+                        // OWN setupAnim — the eat fold the head rides:
+                        // the *9.0 pivot drop + the eat-angle xRot the
+                        // server's clock bakes; the wire's pitch word is
+                        // NOT an input, the replacement law the bytecode
+                        // speaks — and the lane's honest 0/0 eat pair
+                        // keeps the AI/wire sheep at the shared walk fold
+                        // the quadruped base owns)
+                        let state = crate::avatar::SheepState {
+                            yaw_deg: mob.yaw,
+                            head_yaw_off_deg: head_yaw,
+                            walk_pos: mob.walk.position_at(self.partial_tick),
+                            walk_speed: mob.walk.speed_at(self.partial_tick),
+                            age_ticks: mob.age_ticks as f32 + 0.5,
+                            death_time: mob.death_time_at(self.partial_tick),
+                            head_eat_position: 0.0,
+                            head_eat_angle: 0.0,
+                            age_scale: 1.0,
+                        };
+                        // THE WOOL LAYER's own gate (SheepWoolLayer.submit's
+                        // law: the sheared bit the fur's render SKIPS — the
+                        // sheared body shows its skin the shear spoke): the
+                        // fur rides the SAME state the body speaks, the tint
+                        // the getWoolColor word above spoke
+                        if !mob.sheared {
+                            if let Some(wool) = sheep_wool_model {
+                                wool_overlay = Some((
+                                    wool.quads(&state, feet, cam.yaw, cam.pitch),
+                                    dye_tint,
+                                    false,
+                                ));
+                            }
+                        }
+                        let quads = sheep.quads(&state, feet, cam.yaw, cam.pitch);
+                        (quads, Box::new(move |u, v| sheep.pixel(u, v)))
                     }
-                    let quads = sheep.quads(&state, feet, cam.yaw, cam.pitch);
-                    (quads, Box::new(move |u, v| sheep.pixel(u, v)))
                 }
                 crate::mob::MobKind::Cow => {
-                    let Some(cow) = cow_model else {
-                        continue; // the cow skin failed its sha1 — this body stays unseen
-                    };
-                    // THE QUADRUPED STATE (the 26.2 CowModel carries NO
-                    // setupAnim override — the same fold the pig speaks
-                    // rides the bovine's own parts beneath)
-                    let state = crate::avatar::QuadrupedState {
-                        yaw_deg: mob.yaw,
-                        pitch_deg: head_pitch,
-                        head_yaw_off_deg: head_yaw,
-                        walk_pos: mob.walk.position_at(self.partial_tick),
-                        walk_speed: mob.walk.speed_at(self.partial_tick),
-                        age_ticks: mob.age_ticks as f32 + 0.5,
-                        death_time: mob.death_time_at(self.partial_tick),
-                    };
-                    let quads = cow.quads(&state, feet, cam.yaw, cam.pitch);
-                    (quads, Box::new(move |u, v| cow.pixel(u, v)))
+                    // THE AGEABLE MOB'S OWN BRANCH (the isBaby word the
+                    // dedicated BabyCowModel pick arms — the calf's own
+                    // geometry + its own _baby texture)
+                    if mob.is_baby() {
+                        let Some(baby) = baby_cow_model else {
+                            continue; // the baby skin failed its sha1 — this body stays unseen
+                        };
+                        let state = crate::avatar::QuadrupedState {
+                            yaw_deg: mob.yaw,
+                            pitch_deg: head_pitch,
+                            head_yaw_off_deg: head_yaw,
+                            walk_pos: mob.walk.position_at(self.partial_tick),
+                            walk_speed: mob.walk.speed_at(self.partial_tick),
+                            age_ticks: mob.age_ticks as f32 + 0.5,
+                            death_time: mob.death_time_at(self.partial_tick),
+                        };
+                        let quads = baby.quads(&state, feet, cam.yaw, cam.pitch);
+                        (quads, Box::new(move |u, v| baby.pixel(u, v)))
+                    } else {
+                        let Some(cow) = cow_model else {
+                            continue; // the cow skin failed its sha1 — this body stays unseen
+                        };
+                        // THE QUADRUPED STATE (the 26.2 CowModel carries NO
+                        // setupAnim override — the same fold the pig speaks
+                        // rides the bovine's own parts beneath)
+                        let state = crate::avatar::QuadrupedState {
+                            yaw_deg: mob.yaw,
+                            pitch_deg: head_pitch,
+                            head_yaw_off_deg: head_yaw,
+                            walk_pos: mob.walk.position_at(self.partial_tick),
+                            walk_speed: mob.walk.speed_at(self.partial_tick),
+                            age_ticks: mob.age_ticks as f32 + 0.5,
+                            death_time: mob.death_time_at(self.partial_tick),
+                        };
+                        let quads = cow.quads(&state, feet, cam.yaw, cam.pitch);
+                        (quads, Box::new(move |u, v| cow.pixel(u, v)))
+                    }
                 }
                 crate::mob::MobKind::Pig => {
-                    let Some(pig) = pig_model else {
-                        continue; // the pig skin failed its sha1 — this body stays unseen
-                    };
-                    let state = crate::avatar::PigState {
-                        yaw_deg: mob.yaw,
-                        pitch_deg: head_pitch,
-                        head_yaw_off_deg: head_yaw,
-                        walk_pos: mob.walk.position_at(self.partial_tick),
-                        walk_speed: mob.walk.speed_at(self.partial_tick),
-                        age_ticks: mob.age_ticks as f32 + 0.5,
-                        death_time: mob.death_time_at(self.partial_tick),
-                    };
-                    let quads = pig.quads(&state, feet, cam.yaw, cam.pitch);
-                    (quads, Box::new(move |u, v| pig.pixel(u, v)))
+                    // THE AGEABLE MOB'S OWN BRANCH (the isBaby word the
+                    // dedicated BabyPigModel pick arms — the piglet's own
+                    // geometry over its own 32x32 _baby texture)
+                    if mob.is_baby() {
+                        let Some(baby) = baby_pig_model else {
+                            continue; // the baby skin failed its sha1 — this body stays unseen
+                        };
+                        let state = crate::avatar::PigState {
+                            yaw_deg: mob.yaw,
+                            pitch_deg: head_pitch,
+                            head_yaw_off_deg: head_yaw,
+                            walk_pos: mob.walk.position_at(self.partial_tick),
+                            walk_speed: mob.walk.speed_at(self.partial_tick),
+                            age_ticks: mob.age_ticks as f32 + 0.5,
+                            death_time: mob.death_time_at(self.partial_tick),
+                        };
+                        let quads = baby.quads(&state, feet, cam.yaw, cam.pitch);
+                        (quads, Box::new(move |u, v| baby.pixel(u, v)))
+                    } else {
+                        let Some(pig) = pig_model else {
+                            continue; // the pig skin failed its sha1 — this body stays unseen
+                        };
+                        let state = crate::avatar::PigState {
+                            yaw_deg: mob.yaw,
+                            pitch_deg: head_pitch,
+                            head_yaw_off_deg: head_yaw,
+                            walk_pos: mob.walk.position_at(self.partial_tick),
+                            walk_speed: mob.walk.speed_at(self.partial_tick),
+                            age_ticks: mob.age_ticks as f32 + 0.5,
+                            death_time: mob.death_time_at(self.partial_tick),
+                        };
+                        let quads = pig.quads(&state, feet, cam.yaw, cam.pitch);
+                        (quads, Box::new(move |u, v| pig.pixel(u, v)))
+                    }
                 }
                 crate::mob::MobKind::Zombie => {
                     // THE RENDER STATE (extractRenderState's own sampling — the
@@ -6345,27 +6476,12 @@ impl App {
                     (quads, Box::new(move |u, v| model.pixel(u, v)))
                 }
             };
-            // THE BABY'S OWN POSE (javap `AgeableMob.getScale`'s own
-            // 0.5F the render state's scale carries — the pose scale
-            // the LivingEntityRenderer folds around the feet anchor,
-            // the same half the getDefaultDimensions isBaby arm the
-            // bbox ask speaks below). The adults the fold never
-            // touches — the golden scenes stage none.
-            let mut quads = quads;
-            if mob.is_baby() {
-                let s = crate::mob::BABY_RENDER_SCALE;
-                for q in quads.iter_mut() {
-                    for p in q.pts.iter_mut() {
-                        p[0] = feet.x + (p[0] - feet.x) * s;
-                        p[1] = feet.y + (p[1] - feet.y) * s;
-                        p[2] = feet.z + (p[2] - feet.z) * s;
-                    }
-                }
-            }
             // THE FLAME FEATURE's own bbox ask — the registration's
             // dims the kind's own EntityTypes speaks (the zombie
             // 0.6x1.95, the pig 0.9x0.9); the baby's own
-            // getDefaultDimensions arm the half-scale rides
+            // getDefaultDimensions arm the half-scale rides (the
+            // ENTITY dims' own law — the MODEL's age the dedicated
+            // baby geometry above already speaks)
             let (bbox_w, bbox_h) = match mob.kind {
                 crate::mob::MobKind::Sheep => (
                     crate::mob::SHEEP_WIDTH as f32,
@@ -6408,7 +6524,7 @@ impl App {
             // fur renders AFTER the body, the flame feature after it):
             // the same hurt shade multiplies the dye tint (the flash
             // covers the coat the body's own mix speaks)
-            if let Some((fur_quads, dye_tint)) = wool_overlay.take() {
+            if let Some((fur_quads, dye_tint, fur_baby)) = wool_overlay.take() {
                 let fur_sampled: Vec<crate::raster::SampledQuad> = fur_quads
                     .iter()
                     .map(|q| crate::raster::SampledQuad {
@@ -6422,8 +6538,17 @@ impl App {
                         ],
                     })
                     .collect();
+                // the sampler the AGE WORD picks — the baby arm's quads
+                // read the sheep_wool_baby.png, the adult's the
+                // sheep_wool.png (each arm's own Some the unwrap's
+                // honesty reads — the overlay is set only when its own
+                // texture loaded)
                 fb.draw_sampled_quads(ctx.proj.mul(&ctx.view), &fur_sampled, &mut |_tex, u, v| {
-                    let [r, g, b, a] = sheep_wool_model.unwrap().pixel(u, v);
+                    let [r, g, b, a] = if fur_baby {
+                        baby_sheep_wool_model.unwrap().pixel(u, v)
+                    } else {
+                        sheep_wool_model.unwrap().pixel(u, v)
+                    };
                     Some([r, g, b, a])
                 });
             }
