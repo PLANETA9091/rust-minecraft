@@ -4381,16 +4381,35 @@ piston-meta manifest ──► version json ──► client jar ──► analy
 The same pipeline works for `26.2`, `1.21.1`, `26.3-snapshot-10`, whatever —
 as long as Mojang publishes the version, the generator can consume it.
 
-## Clean-room policy (important)
+## Licensing & clean-room posture (important — read `NOTICE.md`)
 
-* **No Mojang code and no Mojang assets are committed to this repository.**
-* The generator downloads official jars from Mojang's own CDN at *generation
-  time* and only extracts **functional metadata** (identifiers, state
-  property names, asset hashes).
-* Art/sound assets are downloaded at *runtime* by the end user from official
-  servers and stored in a local cache. You must own the game.
-* Protocol layer is written against public community documentation
-  (wiki.vg), not against decompiled sources.
+* **Mojang's assets and code are NOT distributed here and are NOT
+  MIT-licensed.** The MIT line (`LICENSE`) covers this project's own
+  hand-written code only. *Minecraft* is a trademark of Mojang
+  Synergies AB; this is an unofficial interop reimplementation, not an
+  approved product and not affiliated with Mojang or Microsoft.
+* The official jar is fetched **from Mojang's own endpoints** at
+  generation/runtime time (the CI caches the fetch, it never sources
+  the jar from this repo), and art/sound assets are downloaded by the
+  end user at runtime into a local cache. You must own the game.
+* **The bytecode evidence discipline:** the client's laws are proven
+  by javap walks of the official jar (the dumps live in
+  `scripts/*.txt` — **untracked**, regenerable via
+  `scripts/classfile_dump.py`; the conclusions live baked into the
+  Rust doc comments). Behavior reimplementation for interop; no
+  decompiled code is copied into the source tree.
+* **The honest migration debt:** as of v0.3.200 the generated
+  registry tables under `crates/mc-registry/src/generated/` (texture
+  atlas pixels, font glyph bitmaps, colormap, lang, splashes, sounds
+  metadata) are still committed — that is the DMCA-pattern exposure
+  the migration roadmap removes: the tables move to locally-generated
+  cache files loaded at boot (the `assets-cache/jar` path the loader
+  already opens), so a fresh clone never carries jar-derived bytes.
+  Until that lands, the exposure stands documented in `NOTICE.md`
+  rather than hidden behind a clean-room claim it cannot keep.
+* Rendered screenshots (`goldens/`, `shots/`) ride Mojang's permitted
+  screenshot/footage usage rights — derivative renderings, not asset
+  data files.
 
 ## Usage
 

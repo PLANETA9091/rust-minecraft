@@ -1,9 +1,0 @@
-Compiled from "ZombieModel.java"
-public class net.minecraft.client.model.monster.zombie.ZombieModel<S extends net.minecraft.client.renderer.entity.state.ZombieRenderState> extends net.minecraft.client.model.monster.zombie.AbstractZombieModel<S> {
-  public net.minecraft.client.model.monster.zombie.ZombieModel(net.minecraft.client.model.geom.ModelPart);
-    Code:
-         0: aload_0
-         1: aload_1
-         2: invokespecial #1                  // Method net/minecraft/client/model/monster/zombie/AbstractZombieModel."<init>":(Lnet/minecraft/client/model/geom/ModelPart;)V
-         5: return
-}

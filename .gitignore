@@ -5,3 +5,9 @@ assets-cache/
 *.log
 .DS_Store
 gen-report-tmp/
+
+# THE MOJANG-DERIVED EVIDENCE the repo never ships (the NOTICE law):
+# the javap disassembly of net.minecraft classes regenerates from the
+# official jar the generator fetches: python3 scripts/classfile_dump.py
+# <client.jar> <class-slash-path> > scripts/<name>.txt
+scripts/*.txt
