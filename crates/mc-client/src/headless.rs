@@ -121,6 +121,17 @@ pub struct SceneOpts {
     /// the spawn column when no body) at THAT column's surface, facing
     /// west — toward the body the way the mob lane's AI approaches.
     pub zombie: bool,
+    /// Stage one OFFLINE sheep ON the body's facing line 2.2 cells out
+    /// (the surface scan the --zombie discipline speaks, the body the
+    /// white dye's own default) — the offline lane's own body the
+    /// mob.interact table's shear lane serves.
+    pub sheep: bool,
+    /// THE RIGHT PRESS'S OWN VERDICT: fire the REAL on_right_press
+    /// (the vanilla startUseItem walk the mob.interact table's shear
+    /// lane answers — the shears the held stack must speak) and walk
+    /// N swing-clock ticks after. Requires --sheep +
+    /// --held-item item/shears.
+    pub shear: Option<u32>,
     /// The zombie's remainingFireTicks (the sun-burn brand's own
     /// clock; the igniteForSeconds(8) law speaks 160).
     pub zombie_fire: Option<i32>,
@@ -456,6 +467,68 @@ pub fn seed_scene(app: &mut crate::screens::App, opts: &SceneOpts) -> Result<()>
         z.walk.speed = 0.7;
         z.walk.position = 2.5;
         app.mobs.push(z);
+    }
+    if opts.sheep {
+        // THE OFFLINE SHEEP'S OWN LINE (the --zombie discipline's own
+        // surface law on the CROSSHAIR's own ray — the mob.interact
+        // table's shear lane needs the OFFLINE body the pick's chain
+        // lands): the camera's facing ray the yaw names (the mob
+        // ring's own forward fold), the first cell 3..=8 out whose
+        // surface equals the body's own spawn level (the hilltop/
+        // hole candidates the surface law refuses — a sheep the level
+        // look never picks renders a guessed scene). No candidate on
+        // the ray refuses loudly — the pick would silently miss.
+        let yaw_cam = opts.body_yaw.unwrap_or(-90.0);
+        let (fx, fz) = (
+            (-yaw_cam.to_radians().sin()) as i32,
+            (yaw_cam.to_radians().cos()) as i32,
+        );
+        let bx = n / 2;
+        let bz = n / 2;
+        let spawn_y = app.spawn_y;
+        let mut cell = None;
+        for d in 3..=8i32 {
+            let (cx, cz) = (bx + fx * d, bz + fz * d);
+            let y = app
+                .offline_world
+                .as_ref()
+                .map(|w| crate::screens::top_solid_y(w, cx, cz))
+                .unwrap_or(spawn_y);
+            if y == spawn_y {
+                cell = Some((cx, cz, y));
+                break;
+            }
+        }
+        let Some((cx, cz, y)) = cell else {
+            anyhow::bail!(
+                "--sheep: no same-surface cell on the facing ray 3..=8 — aim the body at flat ground"
+            );
+        };
+        let mut sheep = crate::mob::Zombie::new(
+            1,
+            cx as f64 + 0.5,
+            y as f64,
+            cz as f64 + 0.5,
+            262, // the 26.2 jar's own number — as good a seed as any
+        );
+        // facing the body it stands before: the cardinal the ray names
+        // (the vanilla yaw degrees — east 90 when fx +1 speaks)
+        sheep.yaw = if fx > 0 {
+            90.0
+        } else if fx < 0 {
+            -90.0
+        } else if fz > 0 {
+            180.0
+        } else {
+            0.0
+        };
+        sheep.kind = crate::mob::MobKind::Sheep;
+        sheep.on_ground = true;
+        sheep.age_ticks = 40; // two seconds in — the bob's stable mid value
+        app.mobs.push(sheep);
+        println!(
+            "the sheep stages at {cx},{cz} (surface {y}), the camera's own facing"
+        );
     }
     if opts.orbs {
         // THE ORB SEED (the --zombie-fire discipline: the deterministic
@@ -1741,6 +1814,34 @@ pub fn render_gui_screen_opts(
         // the game loop speaks — the 6-tick duration the
         // SwingAnimation.DEFAULT bakes), the frame frozen mid-arc.
         app.on_attack();
+        for _ in 0..beat {
+            app.swing.tick();
+        }
+    }
+    if let Some(beat) = opts.shear {
+        // THE OFFLINE STAND-IN'S OWN ARM: the --held-item's model the
+        // render lane alone holds (the `app.held_item` the 1355 stage
+        // speaks) never arms the press lanes' key — the unified held
+        // id's own second fall (the offline stand-in the
+        // offline_held_updated entry arms) the mob.interact table's
+        // gate reads. The shears the model id names, the gate the
+        // held_id walk resolves.
+        anyhow::ensure!(
+            held_item.is_some(),
+            "--shear requires --held-item item/shears (the mob.interact table's own gate reads the held stack)"
+        );
+        app.offline_held_updated(held_item);
+        // THE RIGHT PRESS'S OWN VERDICT (the vanilla startUseItem walk
+        // the REAL on_right_press speaks — the ENTITY case the pick's
+        // chain lands, the mob.interact table the shears' gate arms):
+        // the Shear the shearing/sheep/<color> table rolls (the voice
+        // the lane plays, the loot the copyWithCount(1) singles spawn,
+        // the swing the SwingSource.SERVER starts), the beat the
+        // swing's own clock walks (the 6-tick duration the
+        // SwingAnimation.DEFAULT bakes), the frame frozen in the
+        // sheared aftermath (the wool bit the fur layer's gate reads).
+        let consumed = app.on_right_press(0, 0);
+        println!("the shear's own press consumed: {consumed}");
         for _ in 0..beat {
             app.swing.tick();
         }

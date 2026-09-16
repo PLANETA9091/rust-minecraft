@@ -143,6 +143,23 @@ struct Cli {
     /// walkable-approach scan's own cell, the mid-stride walk).
     #[arg(long)]
     zombie: bool,
+    /// Stage one OFFLINE sheep ON the facing line 2.2 cells out (the
+    /// surface scan the --zombie discipline speaks) — the body the
+    /// mob.interact table's shear lane serves (the offline lane's own
+    /// body, the wire's remote bodies the server's to resolve).
+    /// Requires --body (the facing line the body's camera speaks).
+    #[arg(long)]
+    sheep: bool,
+    /// THE RIGHT PRESS'S OWN VERDICT: fire the REAL right press (the
+    /// vanilla startUseItem walk — the ENTITY case the pick's chain
+    /// lands, the mob.interact table the shears' gate arms: the Shear
+    /// the shearing/sheep/<color> table rolls, the voice the lane
+    /// plays, the loot the singles spawn, the swing the
+    /// SwingSource.SERVER starts) and walk N swing-clock ticks after
+    /// — the frame freezes the sheared aftermath. Requires --sheep +
+    /// --held-item item/shears.
+    #[arg(long)]
+    shear: Option<u32>,
     /// The zombie's remainingFireTicks (the igniteForSeconds(8) law
     /// speaks 160).
     #[arg(long)]
@@ -381,6 +398,8 @@ fn main() -> Result<()> {
             body_walk,
             body_crouch: cli.body_crouch,
             zombie: cli.zombie,
+            sheep: cli.sheep,
+            shear: cli.shear,
             zombie_fire: cli.zombie_fire,
             zombie_death: cli.zombie_death,
             zombie_aggro: cli.zombie_aggro,

@@ -2960,11 +2960,56 @@ impl App {
                 if i < self.mobs.len() {
                     // THE OFFLINE ARM: the local prediction
                     // `player.interactOn` the walk returns — the
-                    // vocabulary's mob.interact table is empty (no
-                    // feeding/shearing lane yet), the honest PASS:
-                    // the walk falls to the ITEM lane below, the
-                    // BLOCK case it never reaches (the vanilla never
+                    // mob.interact table the 26.2's own
+                    // Sheep.mobInteract walk arms (the shears the
+                    // held stack speaks, the readyForShearing gate
+                    // the wool byte's sheared bit closes): the SHEAR
+                    // verdict the SUCCESS_SERVER merge speaks (the
+                    // integrated walk's own verdict — the voice the
+                    // playSound law rides, the loot the lambda's
+                    // copyWithCount(1) singles spawn at the body's
+                    // feet, the swing the SwingSource.SERVER arm
+                    // starts), the miss arms the honest PASS: the
+                    // walk falls to the ITEM lane below, the BLOCK
+                    // case it never reaches (the vanilla never
                     // places through the body the crosshair picked)
+                    let held = self.held_id().and_then(mc_registry::item_name);
+                    let verdict = match held {
+                        Some(name) => {
+                            self.mobs[i].mob_interact(name, &mut self.mob_rng)
+                        }
+                        None => crate::mob::MobInteract::Pass,
+                    };
+                    if let crate::mob::MobInteract::Shear(wool) = verdict {
+                        // the playSound(SHEEP_SHEAR, PLAYERS, 1.0, 1.0)
+                        // the shear's own walk opens with
+                        self.sounds
+                            .play_voice(self.frame, "entity.sheep.shear", 1.0, 1.0);
+                        let (mx, my, mz) = (self.mobs[i].x, self.mobs[i].y, self.mobs[i].z);
+                        // the loot's own singles (the lambda$0 walk:
+                        // one spawnAtLocation per copyWithCount(1),
+                        // the pickup delay the default 10)
+                        for item in wool {
+                            let id = self.next_drop_id;
+                            self.next_drop_id += 1;
+                            self.drops.push(
+                                crate::drops::ItemDrop::spawn_entity_loot(
+                                    id,
+                                    item,
+                                    1,
+                                    mx,
+                                    my,
+                                    mz,
+                                    &mut self.mob_rng,
+                                ),
+                            );
+                        }
+                        // the SUCCESS_SERVER's own swing (the
+                        // SwingSource.SERVER the verdict carries —
+                        // the same arm the attack lane's tail speaks)
+                        self.swing.start();
+                        return true;
+                    }
                     entity_pass = true;
                 } else {
                     // THE WIRE ARM (the 26.2's own gameMode.interact
@@ -13515,12 +13560,12 @@ mod tests {
     fn the_offline_entity_pass_skips_the_block_lane() {
         // THE ENTITY CASE'S OWN FALL-THROUGH (the vanilla startUseItem's
         // walk): the offline body the pick speaks PASSes — the
-        // vocabulary's mob.interact table is empty (no feeding/shearing
-        // lane yet) — and the BLOCK case the switch never reaches on an
-        // entity hit: the held dirt the ray aims at a face BEHIND the
-        // body never places (the vanilla never places through the body
-        // the crosshair picked), the press the item lane's own PASS
-        // refuses.
+        // ZOMBIE's own mob.interact table empty (the sheep's shear the
+        // table's first entry — its own test speaks) — and the BLOCK
+        // case the switch never reaches on an entity hit: the held
+        // dirt the ray aims at a face BEHIND the body never places
+        // (the vanilla never places through the body the crosshair
+        // picked), the press the item lane's own PASS refuses.
         let mut app = App::new(3);
         app.enter_world();
         app.offline_held_updated(Some("item/dirt"));
@@ -13573,6 +13618,73 @@ mod tests {
             app.offline_world.as_ref().unwrap().get(c, top, c),
             crate::world::DIRT,
             "the held dirt landed the block case speaks"
+        );
+    }
+
+    #[test]
+    fn the_right_press_shears_the_offline_sheep() {
+        // THE TABLE'S FIRST VERDICT (the vanilla startUseItem's ENTITY
+        // case — the offline prediction `player.interactOn` returns):
+        // the sheep the pick lands, the shears the held stack speaks —
+        // the Shear the shearing/sheep/red table rolls, the press the
+        // SUCCESS_SERVER merge consumes (the voice the playSound law
+        // rides, the loot the copyWithCount(1) singles spawn at the
+        // body's feet, the swing the SwingSource.SERVER starts); the
+        // sheared bit closes the gate — the second press the item
+        // lane's own PASS refuses (the shears no use def carry).
+        let mut app = App::new(3);
+        app.enter_world();
+        app.offline_held_updated(Some("item/shears"));
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let top = app.spawn_y;
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, top as f32 + 4.0, c as f32 + 0.5),
+            yaw: 0.0,
+            pitch: -std::f32::consts::FRAC_PI_2,
+        });
+        let mut sheep =
+            crate::mob::Zombie::new(7, c as f64 + 0.5, top as f64, c as f64 + 0.5, 3);
+        sheep.kind = crate::mob::MobKind::Sheep;
+        sheep.wool_color = 14;
+        app.mobs.push(sheep);
+        assert_eq!(
+            app.pick_mob(&app.mobs),
+            Some(0),
+            "the offline sheep the verdict speaks"
+        );
+        assert!(
+            app.on_right_press(0, 0),
+            "the Shear verdict consumed the press"
+        );
+        // THE WOOL'S OWN TRUTH: the bit set, the singles spawned (the
+        // App's own mob_rng first draw — the seed 0x5EED_10CA's % 3
+        // speaks 1), each one red_wool count 1 at the body's feet
+        assert!(app.mobs[0].sheared, "setSheared(true) the press speaks");
+        let red = crate::mob::wire_id("red_wool").expect("red_wool the table draws");
+        assert_eq!(app.drops.len(), 1, "the mob_rng's own first roll");
+        assert_eq!(app.drops[0].item, red, "the red table's own item");
+        assert_eq!(app.drops[0].count, 1, "the copyWithCount(1) law");
+        assert!(
+            (app.drops[0].x - (c as f64 + 0.5)).abs() < 0.5,
+            "the spawnAtLocation law's own x"
+        );
+        // THE VOICE: the playSound(SHEEP_SHEAR, PLAYERS, 1.0, 1.0)
+        // the shear's own walk opens with
+        assert!(
+            app.sounds
+                .events
+                .iter()
+                .any(|e| e.starts_with("entity.sheep.shear ")),
+            "the shear's own voice the lane carries"
+        );
+        // THE SWING: the SwingSource.SERVER the verdict carries
+        assert!(app.swing.swinging, "the press swung the arm");
+        // THE CLOSED GATE: the second press falls to the item lane —
+        // the shears the use def never speak, the PASS refuses
+        assert!(
+            !app.on_right_press(0, 0),
+            "the sheared sheep the gate closed"
         );
     }
 

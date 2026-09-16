@@ -2,7 +2,7 @@
 
 Every lane that ships pixels owes the folder a frame. The gallery is the
 proof the features exist as rendered images, not as test names alone.
-128 frames and counting — grouped below by the lane that spoke them.
+129 frames and counting — grouped below by the lane that spoke them.
 
 ## The F5 lane (the third-person avatar) — v0.3.154+
 
@@ -422,6 +422,7 @@ lasts 20 real minutes again, the eat hold 1.6s, the swing 0.3s.
 | `wire_nametag.png` | THE SERVER'S OWN NAMEPLATE (v0.3.194): the name tag — the visibility bit the accessor 3 carries (Entity's DATA_CUSTOM_NAME_VISIBLE the same clinit defineId walk lands at 3, the Boolean serializer the shouldShowName gate's own first arm `isCustomNameVisible()` the raw walk speaks) arms the floating text the 26.2 SubmitNodeCollection.submitNameTag law draws: the pose translate(attachment.x, attachment.y + 0.5, z) (the NAME_TAG fallback AT_HEIGHT (0, bbHeight, 0) the EntityAttachment$Fallback lambda bakes, the +0.5 the ldc2_w dadd adds), the camera billboard the roll-0 basis speaks, the scale(0.025, -0.025, 0.025) one font px = 0.025 world units, the centered x = -font.width/2.0F the ineg/fdiv computes, the markBackground box (left x-1, top y-1, right x+advance, bottom y+9) the PreparedTextBuilder min/max folds bound in ARGB.color(0.25F, -16777216) alpha 64, the two passes the raw walk speaks — the dim 0x80FFFFFF see-through copy the translucent phase blends, the bright -1 core the standing body keeps (the crouch rides isDiscrete: the dim form only); the glyphs ride the font table's own cells through the SAME font pages the GUI lane loads; the shot stages "Wooly" (named AND visible) through the merge's own carry — the tag hangs above the wool the unnamed companion keeps unsaid; the companion at the identical staging diffs rms 3.8 (the nameplate's own 408 pixels) |
 | `wire_crosshair.png` | THE CROSSHAIR'S OWN VERDICT (v0.3.195): shouldShowName's SECOND ARM — `hasCustomName() && entity == dispatcher.crosshairPickEntity` the 26.2 EntityRenderer raw walk speaks — the per-frame pick the Minecraft.pick arms (the player's raycastHitResult → LocalPlayer.pick(camera, blockInteractionRange 4.5, entityInteractionRange 3.0, partial): the BLOCK clip clamps the entity ray, the entity wins the STRICT `entityHit.distanceToSqr(eye) < blockDistSq` compare, the WINNING hit rides filterHitResult(hit, eye, entityRange) — the clip point stays `closerThan(eye, 3.0)` STRICT (the Attributes clinit's own ctor args: entity_interaction_range 3.0 / block_interaction_range 4.5), else the MISS the null crosshairPickEntity speaks; ProjectileUtil's own walk: the bb inflated by getPickRadius (0.0), the clip, the eye-inside arm canBePickedFromInside speaks TRUE, the nearest d2 wins); the client's one verdict now rides BOTH consumers — the attack lane's reach the 3.0 filter corrects (the 4-east ring staging sat outside it) and the tag the byte never arms; the shot stages "Lurker" named-but-UNFLAGGED snapped to the facing line (t 1.8, the side zeroed) — the tag hangs dead-center above the crosshair's own zombie; the companion (the snap alone, `--net-crosshair ""`) diffs rms 11.9 — 5168 pixels, EXACTLY the 136x38 box the bbox bounds (the mesh identical, the tag's own word) |
 | `wire_attack.png` | THE WIRE BODY'S OWN ATTACK (v0.3.196): the left press the wire lane ANSWERS — the 26.2's dedicated ServerboundAttackPacket the gameMode.attack dump speaks (`new ServerboundAttackPacket(target.getId())` — the record `(int entityId)` the clinit's composite loads ByteBufCodecs.VAR_INT alone, generated id 1 `minecraft:attack` the generated table keeps, the SEND the dump's own order speaks: ensure, SEND, attack, RESET), the attack site's pick now walks the SAME chain the render walks — the offline lane first, the wire's remote bodies after — and the wire arm sends the SERVER'S OWN id the Add Entity minted (the command lane the live worker echoes, the local prediction the wire body never runs — the health the server's to keep, the Hurt echo the v0.3.185 lane renders the verdict the client waits for, the RESET the resetAttackStrengthTicker step rides); the shot stages the REAL on_attack press at the "Lurker" body --net-crosshair snapped on the line, the swing clock 3 of its 6 ticks walked — the arm mid-arc crossing toward the crosshair's own zombie; the at-rest companion at the identical staging diffs rms 17.9 — 39799 bytes, the arm's own arc the only word |
+| `offline_shear.png` | THE MOB.INTERACT TABLE'S OWN FIRST ENTRY (v0.3.199): the right press the OFFLINE sheep ANSWERS — the 26.2's Sheep.mobInteract walk the dump speaks (the held stack's `is(Items.SHEARS)` gate, the `readyForShearing()` gate — `!isSheared() && !isBaby()` the wool byte's own bit arms), the Shear the shearing/sheep/<color> table rolls (uniform 1..3 the pool speaks, the lambda$0's `copyWithCount(1)` singles the drops spawn), the playSound(SHEEP_SHEAR, PLAYERS, 1.0, 1.0) the voice lane plays, the swing the SUCCESS_SERVER's SwingSource.SERVER arm starts — the sheep's wool coat gone, the pinkish undercoat body the fur layer's own gate reveals, the shears frozen mid-arc; the un-sheared companion at the identical staging diffs rms 33.1 (the coat's own absence, honest and loud) |
 
 Regenerate the family (the flag the CLI speaks today):
 
@@ -642,6 +643,23 @@ cargo run -p mc-client --release -- --headless --screen world \
 # after — the frame freezes mid-arc (3 of the 6 the
 # SwingAnimation.DEFAULT speaks); the at-rest companion (no
 # --net-attack) diffs rms 17.9 — the arm's own arc the only word
+```
+
+The mob.interact table's own first entry (v0.3.199 — the shear):
+
+```sh
+cargo run -p mc-client --release -- --headless --screen world \
+  --seed 3 --body --sheep --held-item item/shears --shear 3 \
+  --ui-frame 3 --out shots/offline_shear.png
+# --sheep stages the OFFLINE sheep on the camera's facing ray (the
+# same-surface scan 3..=8 out, the pick's own law), --shear N fires
+# the REAL right press (the mob.interact table the shears' gate arms:
+# the Shear the shearing/sheep/<color> table rolls, the voice the
+# lane plays, the loot the singles spawn, the swing the
+# SwingSource.SERVER starts) and walks N swing-clock ticks; requires
+# --held-item item/shears (the gate reads the held stack — the
+# offline stand-in the beat itself arms); the un-sheared companion
+# (no --shear) diffs rms 33.1 — the coat's own absence
 ```
 
 The fourth body's own ring (v0.3.191 — the ovine):

@@ -197,6 +197,53 @@ pub fn jeb_rainbow_rgb(age_ticks: f32) -> u32 {
     (lerp(a >> 16, b >> 16) << 16) | (lerp(a >> 8 & 0xFF, b >> 8 & 0xFF) << 8) | lerp(a & 0xFF, b & 0xFF)
 }
 
+/// THE SHEAR LOOT'S OWN NAME LAW (javap DyeColor's clinit — the 16
+/// enum names the ctor's own String argument speaks, WHITE ordinal 0
+/// .. BLACK ordinal 15, the lowercase the registry path rides):
+/// the shearing loot tables the 26.2 jar's data/minecraft
+/// /loot_table/shearing/sheep/<name>.json speaks — one table per
+/// dye, the item `<name>_wool` the table's own entry names, the
+/// count the uniform 1.0..3.0 rolls (the Mth.nextInt inclusive law
+/// the block_drops generator pins: min + nextInt(max - min + 1)).
+pub const DYE_NAMES: [&str; 16] = [
+    "white",
+    "orange",
+    "magenta",
+    "light_blue",
+    "yellow",
+    "lime",
+    "pink",
+    "gray",
+    "light_gray",
+    "cyan",
+    "purple",
+    "blue",
+    "brown",
+    "green",
+    "red",
+    "black",
+];
+
+/// The mob.interact table's own verdict (javap `InteractionResult` —
+/// the refactor the 26.2 jar speaks: `Success` carries a
+/// `SwingSource` (NONE / CLIENT / SERVER), the clinit's three
+/// constructs SUCCESS = CLIENT, SUCCESS_SERVER = SERVER, CONSUME =
+/// NONE). The walk's PASS answers the honest fall-through the right
+/// press speaks; the Shear carries the loot the shear rolled — the
+/// copyWithCount(1) singles the lambda's own loop spawns (one vec
+/// entry per spawned ItemEntity, count 1 each).
+#[derive(Debug, Clone, PartialEq)]
+pub enum MobInteract {
+    /// the empty table's own PASS (the walk falls to the item lane,
+    /// the BLOCK case never reached — the vanilla never places
+    /// through the body the crosshair picked)
+    Pass,
+    /// SUCCESS_SERVER — the shear the shears' gate speaks; the vec
+    /// rides the shearing/sheep/<color> table's roll, each entry one
+    /// single-item entity (the lambda$0's copyWithCount(1) law)
+    Shear(Vec<i32>),
+}
+
 /// THE DYE TINT TABLE (javap DyeColor's clinit — the 16
 /// textureDiffuseColor ints the ctor's own last argument speaks, the
 /// ColorLerper$Type.SHEEP map's values the wool layer multiplies):
@@ -1082,6 +1129,68 @@ impl Zombie {
     /// own random stream (the two nextFloat draws in order).
     pub fn voice_pitch(&mut self) -> f32 {
         (self.rng.next_f32() - self.rng.next_f32()) * 0.2 + 1.0
+    }
+
+    /// The mob.interact table's own walk (javap `Sheep.mobInteract` —
+    /// the 26.2 bytecode the dump keeps: `loc2 = player.getItemInHand
+    /// (hand)`, the gate `loc2.is(Items.SHEARS) && readyForShearing()`,
+    /// the server arm `shear(level, SoundSource.PLAYERS, loc2)` +
+    /// `gameEvent(GameEvent.SHEAR, player)` + the shears'
+    /// `hurtAndBreak(1, player, asEquipmentSlot())`, the SUCCESS_SERVER
+    /// return; the client arm CONSUME; the miss falls to
+    /// `Animal.mobInteract`). The repo's held stack rides the caller's
+    /// unified id (the item_name the id resolves); the shears' own
+    /// durability the repo's item vocabulary never speaks (no
+    /// damage-component lane — the hurtAndBreak arm honest-skipped).
+    /// The FEEDING lane the Animal super handles stays the empty
+    /// table's PASS until the love-mode vocabulary lands. The voice
+    /// playSound(SHEEP_SHEAR, PLAYERS, 1.0, 1.0) rides the caller's
+    /// sound lane (the entity owns no speaker); the loot spawns at the
+    /// entity's own feet (spawnAtLocation's law).
+    pub fn mob_interact(&mut self, held_item: &str, rng: &mut Lcg) -> MobInteract {
+        match held_item {
+            "shears" if self.kind == MobKind::Sheep && self.ready_for_shearing() => {
+                MobInteract::Shear(self.shear(rng))
+            }
+            // the miss arms: the wrong stack, the wrong body, the
+            // already-sheared wool (readyForShearing's own false) — the
+            // super's own PASS the walk returns
+            _ => MobInteract::Pass,
+        }
+    }
+
+    /// `Sheep.readyForShearing` — the gate's own walk (javap: `return
+    /// !isSheared() && !isBaby()`): the wool byte's sheared bit is
+    /// the repo's only word (the baby lane the repo never arms —
+    /// no growth vocabulary — isBaby the honest constant false).
+    pub fn ready_for_shearing(&self) -> bool {
+        !self.sheared
+    }
+
+    /// THE SHEAR'S OWN WALK (javap `Sheep.shear(ServerLevel,
+    /// SoundSource, ItemStack)` — the 26.2 bytecode the dump keeps:
+    /// `playSound(null, this, SoundEvents.SHEEP_SHEAR, source, 1.0F,
+    /// 1.0F)`, `dropFromShearingLootTable(level,
+    /// BuiltInLootTables.SHEAR_SHEEP, stack, lambda$0)`,
+    /// `setSheared(true)`): the wool byte's sheared bit sets first
+    /// (the fur layer's own gate closes), the loot rides the
+    /// shearing/sheep/<color> table the getColor keys — the pool's
+    /// uniform 1.0..3.0 rolls (the inclusive nextInt law), the
+    /// lambda's own loop the spawned entities walk (`copyWithCount
+    /// (1)` per spawn — the singles the vec speaks). The playSound
+    /// rides the caller's voice lane.
+    fn shear(&mut self, rng: &mut Lcg) -> Vec<i32> {
+        self.sheared = true;
+        // the pool's own roll (uniform 1..3 — min + nextInt(max - min + 1))
+        let count = rng.next_int_inclusive(1, 3);
+        // the table's own item: `<name>_wool` the DyeColor names
+        let name = format!("{}_wool", DYE_NAMES[(self.wool_color & 0x0F) as usize]);
+        match wire_id(&name) {
+            Some(id) => vec![id; count as usize],
+            // the honest vanish: the name the registry never drew
+            // invents no id (the wire_id law the drop lane speaks)
+            None => Vec::new(),
+        }
     }
 
     /// THE DEATH LOOT (javap `dropAllDeathLoot` — the
@@ -2033,5 +2142,92 @@ mod tests {
             jeb_rainbow_rgb(25.0),
             "the lap's own wrap"
         );
+    }
+
+    #[test]
+    fn the_dye_names_speak_the_shear_tables() {
+        // the jar's own table walk: shearing/sheep/<name>.json, one
+        // table per dye (the loot_table dir's own 16 entries), the
+        // item `<name>_wool` each table's entry names — every name
+        // the registry draws (the wire_id law: the miss invents no id)
+        for name in DYE_NAMES.iter() {
+            assert!(
+                wire_id(&format!("{name}_wool")).is_some(),
+                "{name}_wool the item table draws"
+            );
+        }
+        // the count the table dir speaks (one per DyeColor ordinal)
+        assert_eq!(DYE_NAMES.len(), 16);
+        // the two ends the tint test speaks (0 white, 14 red, 15 black)
+        assert_eq!(DYE_NAMES[0], "white");
+        assert_eq!(DYE_NAMES[14], "red");
+        assert_eq!(DYE_NAMES[15], "black");
+    }
+
+    #[test]
+    fn the_shear_walks_the_sheep_law() {
+        // Sheep.mobInteract's own verdict: the shears the held stack
+        // speaks, the readyForShearing gate open — the Shear the
+        // shearing/sheep/red table rolls (wool_color 14 the dye's own
+        // ordinal), the count the uniform 1..3, the singles the
+        // lambda's copyWithCount(1) speaks, the sheared bit set after
+        // (setSheared(true) — the second press the closed gate refuses)
+        let mut mob = Zombie::new(7, 0.0, 64.0, 0.0, 262);
+        mob.kind = MobKind::Sheep;
+        mob.wool_color = 14;
+        let red = wire_id("red_wool").expect("red_wool the table draws");
+        let verdict = mob.mob_interact("shears", &mut Lcg::new(42));
+        match verdict {
+            MobInteract::Shear(drops) => {
+                assert!(
+                    (1..=3).contains(&drops.len()),
+                    "the uniform 1..3 the pool speaks, got {}",
+                    drops.len()
+                );
+                assert!(drops.iter().all(|d| *d == red), "the red table's own item");
+                // the seed's own roll: Lcg(42)'s first next() % 3 = 1
+                // — the uniform's min + roll speaks 2
+                assert_eq!(drops.len(), 2, "the seed 42 roll the law speaks");
+            }
+            other => panic!("expected the Shear, got {other:?}"),
+        }
+        assert!(mob.sheared, "setSheared(true) the walk closes with");
+        assert!(
+            !mob.ready_for_shearing(),
+            "readyForShearing's own false the bit arms"
+        );
+        assert_eq!(
+            mob.mob_interact("shears", &mut Lcg::new(42)),
+            MobInteract::Pass,
+            "the sheared sheep the gate refuses"
+        );
+    }
+
+    #[test]
+    fn the_shear_gate_refuses_the_wrong_arms() {
+        // the miss arms the super's PASS speaks: the zombie's own
+        // table empty (the held shears the body's kind refuses), the
+        // sheep's FEEDING lane the Animal super handles (the wheat
+        // the shears' gate refuses — the love-mode vocabulary the
+        // table never carried), the bare hand the gate refuses
+        let mut sheep = Zombie::new(7, 0.0, 64.0, 0.0, 262);
+        sheep.kind = MobKind::Sheep;
+        let mut zombie = Zombie::new(8, 0.0, 64.0, 0.0, 262);
+        assert_eq!(
+            zombie.mob_interact("shears", &mut Lcg::new(1)),
+            MobInteract::Pass,
+            "the zombie's table the kind's own empty"
+        );
+        assert_eq!(
+            sheep.mob_interact("wheat", &mut Lcg::new(1)),
+            MobInteract::Pass,
+            "the feeding lane the super's own (not yet the table's)"
+        );
+        assert_eq!(
+            sheep.mob_interact("dirt", &mut Lcg::new(1)),
+            MobInteract::Pass,
+            "the block item the gate refuses"
+        );
+        assert!(!sheep.sheared, "the PASS arms no wool bit");
     }
 }
