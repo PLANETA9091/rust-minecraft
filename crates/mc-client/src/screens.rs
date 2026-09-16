@@ -3412,6 +3412,11 @@ impl App {
                 } else {
                     m.fire_ticks = 0;
                 }
+                // THE CROUCH WORD (the same accessor's bit 1 —
+                // Entity.isCrouching's own query): the pose IS the
+                // server's word, the binary assign the state speaks —
+                // the silence is the honest stand
+                m.crouching = w.crouching;
                 m.on_ground = true;
                 m.age_ticks = 40; // two seconds in — the bob's stable mid
                 self.net_mobs.push(m);
@@ -3453,6 +3458,11 @@ impl App {
             } else {
                 m.fire_ticks = 0;
             }
+            // THE CROUCH WORD rides with the pose (the same query the
+            // fresh spawn speaks): the pose is the server's own STATE
+            // — no clock, no floor, the bend and the stand both ride
+            // the same binary assign
+            m.crouching = w.crouching;
             self.net_mobs.push(m);
         }
         // the ids the wire no longer names never re-enter net_mobs —
@@ -5461,7 +5471,7 @@ impl App {
                 pitch_deg: head_pitch,
                 walk_pos: mob.walk.position_at(self.partial_tick),
                 walk_speed: mob.walk.speed_at(self.partial_tick),
-                crouching: false,
+                crouching: mob.crouching,
                 attack_time: mob.swing.get_attack_anim(self.partial_tick),
                 attack_right: true,
                 age_ticks: mob.age_ticks as f32 + 0.5,
@@ -8815,6 +8825,43 @@ mod tests {
         assert_eq!(app.net_mobs[0].fire_ticks, 0, "the silence never ignites");
     }
 
+    /// THE WIRE MOBS' CROUCH (the vanilla isCrouching's own query):
+    /// the shared-flags accessor's bit 1 arms the avatar's crouch pose
+    /// the render bends through — the pose is the server's own STATE
+    /// (no clock, no floor: the bend and the stand both ride the same
+    /// binary assign), the never-spoken accessor is the honest stand.
+    #[test]
+    fn the_wire_mobs_bend_at_the_servers_pose() {
+        let mut app = App::new(3);
+        app.open(ScreenKind::Connect);
+        app.net_world = Some(air_net_world(2, 0));
+        app.enter_network_world(None, Skybox::Overworld, None, None);
+        // the crouch word rides the FRESH spawn: the pose arms (the
+        // render state's own isCrouching the model folds)
+        let mut crouched = wire_zombie(7, 10.0, 64.0, 10.0);
+        crouched.crouching = true;
+        app.live_mobs_updated(vec![crouched]);
+        assert!(app.net_mobs[0].crouching, "the word bends the fresh spawn");
+        // the pose is STATE, not a countdown: the own tick owns NO
+        // clock for it (the server owns the pose the flag summarizes)
+        app.tick_net_mobs();
+        assert!(app.net_mobs[0].crouching, "the bend stands between the ships");
+        // the stand rides the SAME lane: the word's drop is the pose's
+        // own drop (the binary assign the merge law speaks)
+        app.live_mobs_updated(vec![wire_zombie(7, 10.0, 64.0, 10.0)]);
+        assert!(!app.net_mobs[0].crouching, "the stand rides the same lane");
+        // the re-bend: the word's return re-poses the matched mob
+        let mut re_bent = wire_zombie(7, 10.0, 64.0, 10.0);
+        re_bent.crouching = true;
+        app.live_mobs_updated(vec![re_bent, wire_zombie(11, 14.0, 64.0, 10.0)]);
+        assert_eq!(app.net_mobs.len(), 2, "both ids ride");
+        assert!(app.net_mobs[0].crouching, "the word re-bends");
+        assert!(
+            !app.net_mobs[1].crouching,
+            "the never-spoken id stands (the arm rides its own lane only)"
+        );
+    }
+
     fn wire_zombie(id: i32, x: f64, y: f64, z: f64) -> crate::world_view::WireMob {
         crate::world_view::WireMob {
             id,
@@ -8827,6 +8874,7 @@ mod tests {
             health: None,
             hurt_time: 0,
             on_fire: false,
+            crouching: false,
             type_name: "minecraft:zombie".to_string(),
         }
     }

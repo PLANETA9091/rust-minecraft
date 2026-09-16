@@ -293,6 +293,12 @@ pub struct Zombie {
     pub walk: WalkAnimationState,
     /// `ZombieRenderState.isAggressive` (the mob flag bit 0x4)
     pub aggressive: bool,
+    /// the shared-flags accessor's bit 1 (Entity.isCrouching's own
+    /// query — the pose word the wire's mobs speak): the avatar's
+    /// crouch pose the render folds. The AI lane never arms it (the
+    /// zombie's own goals never crouch) — the wire's word is the
+    /// only writer the lane owes.
+    pub crouching: bool,
     /// `ZombieAttackGoal.raiseArmTicks`
     raise_arm_ticks: i32,
     /// `MeleeAttackGoal.ticksUntilNextAttack`
@@ -350,6 +356,7 @@ impl Zombie {
             swing: SwingState::default(),
             walk: WalkAnimationState::default(),
             aggressive: false,
+            crouching: false,
             raise_arm_ticks: 0,
             ticks_until_attack: 0,
             attack_recheck: 0,

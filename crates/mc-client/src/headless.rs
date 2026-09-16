@@ -192,6 +192,10 @@ pub struct SceneOpts {
     /// THE BURNING WORD: the staged shared-flags arm — the flame
     /// rings the render draws at the server's word, N ticks walked.
     pub net_fire: Option<u32>,
+    /// THE CROUCH WORD: the staged shared-flags bit 1 — the avatar's
+    /// crouch pose the render bends through, N ticks walked (the
+    /// frame frozen mid-bend).
+    pub net_crouch: Option<u32>,
     /// THE DIVE SEED: carve a 3x3 pool AT the body's own column — three
     /// cells of water down (the old surface cell becomes the water
     /// surface), a forced-solid basin floor, the headroom cleared — and
@@ -1360,6 +1364,7 @@ pub fn render_gui_screen_opts(
                             health: None,
                             hurt_time: 0,
                             on_fire: false,
+                            crouching: false,
                             type_name: "minecraft:zombie".to_string(),
                         });
                     }
@@ -1402,6 +1407,18 @@ pub fn render_gui_screen_opts(
                             m.fire_ticks = m.fire_ticks.max(6);
                         }
                         for _ in 0..burn {
+                            app.tick_net_mobs();
+                        }
+                    }
+                    if let Some(crouch) = opts.net_crouch {
+                        // THE CROUCH WORD (the same accessor's bit 1 —
+                        // Entity.isCrouching's own query): the pose the
+                        // avatar model bends through, N ticks walked,
+                        // the frame frozen mid-bend
+                        if let Some(m) = app.net_mobs.first_mut() {
+                            m.crouching = true;
+                        }
+                        for _ in 0..crouch {
                             app.tick_net_mobs();
                         }
                     }

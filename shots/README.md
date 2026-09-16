@@ -2,7 +2,7 @@
 
 Every lane that ships pixels owes the folder a frame. The gallery is the
 proof the features exist as rendered images, not as test names alone.
-119 frames and counting — grouped below by the lane that spoke them.
+120 frames and counting — grouped below by the lane that spoke them.
 
 ## The F5 lane (the third-person avatar) — v0.3.154+
 
@@ -413,6 +413,7 @@ lasts 20 real minutes again, the eat hold 1.6s, the swing 0.3s.
 | `wire_death_flip.png` | THE SERVER'S OWN KILL (v0.3.184): the wire mob's death clock — the metadata health 0.0 (LivingEntity's DATA_HEALTH_ID 8 the Set Entity Data store keeps) walks the tickDeath law's 20-tick flip, the frame frozen at the half-fall (the body rotated past its side, the stride the lerpTo walk still eases beneath it); the accessor never spoken is the honest no-opinion the walk never mistakes for a kill |
 | `wire_hurt_flash.png` | THE SERVER'S OWN HIT (v0.3.185): the wire mob's hurt flash — the Hurt Animation packet's mailbox arm (the foreign ids' traffic the model once dropped, now the animateHurt 10-tick window it arms) lands on the mob and its OWN tick counts it down, the frame frozen mid-window with the 0.7 shade the render's mix speaks; the un-armed companion at the identical staging diffs rms 13.1 (the flash's own darkening, honest and loud) |
 | `wire_burning.png` | THE SERVER'S OWN FIRE (v0.3.187): the wire mob's burning — the shared-flags accessor's bit 0 (Entity.isOnFire's own `getSharedFlag(0)` the 26.2 bytecode speaks, the metadata byte the Set Entity Data store keeps) arms the flame gate the merge law's own floor carries, and the vanilla flame rings climb the zombie's whole body (the billboard stack the flame feature draws, the day_time the animation rides); the unburnt companion at the identical staging diffs rms 44.5 (the fire's own word, the loudest the lane has spoken) |
+| `wire_crouch.png` | THE SERVER'S OWN POSE (v0.3.188): the wire mob's crouch — the same shared-flags accessor's bit 1 (Entity.isCrouching's own `getSharedFlag(0) & 2` the render state's isCrouching speaks) arms the avatar's crouch pose the model folds (the body's own bend the vanilla HumanoidModel speaks), the zombie bows at the server's word; the standing companion at the identical staging diffs rms 30.2 (the pose's own silhouette, honestly bent) |
 
 Regenerate the family (the flag the CLI speaks today):
 
@@ -521,6 +522,18 @@ cargo run -p mc-client --release -- --headless --screen world \
 # --net-fire N arms the shared-flags accessor's bit 0 and walks N
 # ticks (the flame rings the flame feature draws at the server's
 # word); the unburnt companion (--net-mobs 1 alone) diffs rms 44.5
+```
+
+The server's own pose (v0.3.188 — the crouching wire word):
+
+```sh
+cargo run -p mc-client --release -- --headless --screen world \
+  --seed 42 --body --walk-ticks 1 --net-mobs 1 --net-crouch 4 \
+  --ui-frame 3 --out shots/wire_crouch.png
+# --net-crouch N arms the shared-flags accessor's bit 1 and walks N
+# ticks (the crouch pose the avatar model bends through at the
+# server's word); the standing companion (--net-mobs 1 alone) diffs
+# rms 30.2
 ```
 
 ## The lava-fog lane (the ember murk) — v0.3.167

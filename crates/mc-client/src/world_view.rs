@@ -340,6 +340,12 @@ pub struct WireMob {
     /// server says the mob burns, false while the accessor never
     /// spoke (the honest unburnt — the silence never ignites).
     pub on_fire: bool,
+    /// The metadata's own CROUCH WORD (the same shared-flags accessor
+    /// — bit 1: `Entity.isCrouching`'s own `getSharedFlag(0) & 2` the
+    /// vanilla client's render state speaks): true while the server
+    /// says the mob bends, false while the accessor never spoke (the
+    /// honest stand — the silence never crouches).
+    pub crouching: bool,
     /// The synced registry's own name (`minecraft:zombie` v1 renders;
     /// anything else is the honest not-yet-drawn type).
     pub type_name: String,
@@ -961,6 +967,13 @@ impl LiveView {
                         e.data.get(&0),
                         Some(mc_protocol::play::EntityDataEntry::Byte(b)) if b & 1 != 0
                     ),
+                    // the crouch word (the same accessor's bit 1 —
+                    // Entity.isCrouching's own query; the accessor
+                    // never spoken is the honest stand)
+                    crouching: matches!(
+                        e.data.get(&0),
+                        Some(mc_protocol::play::EntityDataEntry::Byte(b)) if b & 2 != 0
+                    ),
                     type_name,
                 })
             })
@@ -1472,6 +1485,85 @@ mod tests {
         }));
         let upd = view.refresh(example_mapper);
         assert!(!upd.mobs[0].on_fire, "the douse rides the same lane");
+    }
+
+    /// THE CROUCH WORD'S PROJECTION (the same shared-flags accessor —
+    /// bit 1: `Entity.isCrouching`'s own `getSharedFlag(0) & 2`): the
+    /// flag rides the projection verbatim, the FIRE's own bit never
+    /// bends the mob, the accessor never spoken is the honest stand.
+    #[test]
+    fn the_projection_carries_the_crouch_word() {
+        use mc_protocol::play::EntitySpawn;
+        let mut m = WorldModel::new();
+        m.registry.entity_types = vec!["minecraft:zombie".to_string()];
+        m.apply(PlayEvent::Spawn(EntitySpawn {
+            id: 7,
+            uuid: 1,
+            type_id: 0,
+            x: 10.0,
+            y: 64.0,
+            z: 12.0,
+            movement: [0.0; 3],
+            x_rot: 5.0,
+            y_rot: 90.0,
+            y_head_rot: 60.0,
+            data: 0,
+        }));
+        let mut view = LiveView {
+            model: m,
+            side: 1,
+        };
+        // no accessor spoken: the honest stand (the silence never
+        // crouches)
+        let upd = view.refresh(example_mapper);
+        assert!(!upd.mobs[0].crouching, "the silence never crouches");
+        // the shared-flags accessor's bit 1: the crouch word rides
+        view.model.apply(PlayEvent::EntityData(mc_protocol::play::EntityDataSet {
+            id: 7,
+            entries: vec![mc_protocol::play::SetEntityDataEntry {
+                index: 0,
+                serializer: 0,
+                value: mc_protocol::play::EntityDataEntry::Byte(0x02),
+            }],
+        }));
+        let upd = view.refresh(example_mapper);
+        assert!(upd.mobs[0].crouching, "the flag's own bit bends");
+        // the FIRE's own bit never bends the mob (bit 0 — the byte's
+        // own word, the bit-1 mask the query speaks)
+        view.model.apply(PlayEvent::EntityData(mc_protocol::play::EntityDataSet {
+            id: 7,
+            entries: vec![mc_protocol::play::SetEntityDataEntry {
+                index: 0,
+                serializer: 0,
+                value: mc_protocol::play::EntityDataEntry::Byte(0x01),
+            }],
+        }));
+        let upd = view.refresh(example_mapper);
+        assert!(!upd.mobs[0].crouching, "the fire's bit never bends");
+        // both words at once: each query reads its own mask (0x03 —
+        // burning AND crouching, the bits' independence)
+        view.model.apply(PlayEvent::EntityData(mc_protocol::play::EntityDataSet {
+            id: 7,
+            entries: vec![mc_protocol::play::SetEntityDataEntry {
+                index: 0,
+                serializer: 0,
+                value: mc_protocol::play::EntityDataEntry::Byte(0x03),
+            }],
+        }));
+        let upd = view.refresh(example_mapper);
+        assert!(upd.mobs[0].crouching, "the two words ride together");
+        assert!(upd.mobs[0].on_fire, "the fire's word rides too");
+        // the stand: bit 1 clear — the flag's own drop
+        view.model.apply(PlayEvent::EntityData(mc_protocol::play::EntityDataSet {
+            id: 7,
+            entries: vec![mc_protocol::play::SetEntityDataEntry {
+                index: 0,
+                serializer: 0,
+                value: mc_protocol::play::EntityDataEntry::Byte(0x00),
+            }],
+        }));
+        let upd = view.refresh(example_mapper);
+        assert!(!upd.mobs[0].crouching, "the stand rides the same lane");
     }
 
     fn materialize_carries_the_models_day_tick() {

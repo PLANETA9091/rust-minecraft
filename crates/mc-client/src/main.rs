@@ -228,6 +228,12 @@ struct Cli {
     /// walked. Requires --net-mobs.
     #[arg(long)]
     net_fire: Option<u32>,
+    /// THE CROUCH WORD: stage the wire mob's shared-flags accessor
+    /// bit 1 (Entity.isCrouching's own query the metadata carries) —
+    /// the avatar's crouch pose the render bends through, N ticks
+    /// walked. Requires --net-mobs.
+    #[arg(long)]
+    net_crouch: Option<u32>,
     /// Carve a 3x3 pool AT the body and sink it to the basin floor —
     /// the eye sits under the water surface and the REAL water-screen
     /// gate speaks (the underwater overlay, no scripted blue).
@@ -346,6 +352,7 @@ fn main() -> Result<()> {
             net_death: cli.net_death,
             net_hurt: cli.net_hurt,
             net_fire: cli.net_fire,
+            net_crouch: cli.net_crouch,
             water_pool: cli.water_pool,
             water_vision: cli.water_vision,
             air_supply: cli.air_supply,
