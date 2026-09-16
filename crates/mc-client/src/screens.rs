@@ -862,6 +862,116 @@ const BOOT_STAGES: [&str; 5] = [
     "mc2rs.boot.worldgen",
 ];
 
+/// One glyph's world-space plane (the name-tag's own draw unit): the
+/// billboard corners + the font-page texel window the sampler reads.
+#[derive(Debug, Clone, PartialEq)]
+pub(crate) struct NameTagGlyph {
+    pub page: u16,
+    pub pts: [[f32; 3]; 4],
+    pub uv: [[f32; 2]; 4],
+}
+
+/// THE NAMEPLATE'S OWN PLANES (the 26.2 `SubmitNodeCollection
+/// .submitNameTag` raw walk, every operand spoken). The pose:
+/// `translate(attachment.x, attachment.y + 0.5, attachment.z)` — the
+/// NAME_TAG fallback AT_HEIGHT the `EntityAttachment$Fallback`
+/// lambda$static$1 bakes as `(0, bbHeight, 0)`, the +0.5 the `ldc2_w
+/// 0.5; dadd` adds, so `top_y` carries the total lift; the
+/// `mulPose(camera.orientation)` the roll-0 camera basis the orb
+/// lane's own fold speaks (`right = [cy, 0, sy]`, `up = [-sy*sp, cp,
+/// cy*sp]`); the `scale(0.025, -0.025, 0.025)` makes one FONT pixel
+/// 0.025 world units with the y-down the negative scale speaks (the
+/// world offset = `right*(fx*k) - up*(fy*k)`). The text x is
+/// `(float)(-font.width(text)) / 2.0F` (the `ineg; i2f; fconst_2;
+/// fdiv` the raw walk prints); the background the
+/// `ARGB.color(getBackgroundOpacity(0.25F), -16777216)` box the
+/// `PreparedTextBuilder.markBackground` law bounds — left `x - 1`,
+/// top `y - 1`, right `x + advance`, bottom `y + 9` (the one-font-px
+/// pad each way the min/max folds speak). The glyph planes ride the
+/// font table's own cells (`top = y + ascent - gh` the GUI lane
+/// walks, the page texel window the uv carries).
+pub(crate) fn name_tag_planes(
+    feet: crate::math::Vec3,
+    top_y: f64,
+    name: &str,
+    cam_yaw: f32,
+    cam_pitch: f32,
+) -> (Option<[[f32; 3]; 4]>, Vec<NameTagGlyph>) {
+    // the camera basis (the render_orbs lane's own billboard fold)
+    let sy = cam_yaw.sin();
+    let cy = cam_yaw.cos();
+    let sp = cam_pitch.sin();
+    let cp = cam_pitch.cos();
+    let right = [cy, 0.0, sy];
+    let up = [-sy * sp, cp, cy * sp];
+    let k = 0.025f32;
+    // font px (fx, fy) -> world: right*(fx*k) - up*(fy*k) — the
+    // scale's -0.025 y speaks (font y down = world -up)
+    let corner = |fx: f32, fy: f32| {
+        [
+            feet.x + right[0] * (fx * k) - up[0] * (fy * k),
+            top_y as f32 + right[1] * (fx * k) - up[1] * (fy * k),
+            feet.z + right[2] * (fx * k) - up[2] * (fy * k),
+        ]
+    };
+    let w = crate::gui::font_text_width(name);
+    let x0 = -(w as f32) / 2.0;
+    // the BACKGROUND (the markBackground law: left x0-1, top -1,
+    // right x0+w, bottom 9 — the box the see-through pass draws)
+    // the winding the raster's edge fold accepts (the flame lane's
+    // own [BL, BR, TR, TL] — font y down = world down the -0.025
+    // scale speaks, so the font-bottom corners walk world-down)
+    let bg = [
+        corner(x0 - 1.0, 9.0),
+        corner(x0 + w as f32, 9.0),
+        corner(x0 + w as f32, -1.0),
+        corner(x0 - 1.0, -1.0),
+    ];
+    // the GLYPHS (the pen walk the GUI lane speaks — the advance
+    // gw+1, the space its own advance, the cell top ascent - gh)
+    let mut glyphs = Vec::new();
+    let mut pen = x0;
+    let mut in_code = false;
+    for ch in name.chars() {
+        if in_code {
+            in_code = false;
+            continue;
+        }
+        if ch == '§' {
+            in_code = true;
+            continue;
+        }
+        let Some(g) = mc_registry::generated::font::glyph(ch) else {
+            pen += 4.0;
+            continue;
+        };
+        if g.space_advance != 0 {
+            pen += g.space_advance as f32;
+            continue;
+        }
+        if g.gw > 0 {
+            let top = (g.ascent as i32 - g.gh as i32) as f32;
+            glyphs.push(NameTagGlyph {
+                page: g.tex,
+                pts: [
+                    corner(pen, top + g.gh as f32),
+                    corner(pen + g.gw as f32, top + g.gh as f32),
+                    corner(pen + g.gw as f32, top),
+                    corner(pen, top),
+                ],
+                uv: [
+                    [g.u as f32, (g.v + g.gh) as f32],
+                    [(g.u + g.gw) as f32, (g.v + g.gh) as f32],
+                    [(g.u + g.gw) as f32, g.v as f32],
+                    [g.u as f32, g.v as f32],
+                ],
+            });
+        }
+        pen += g.gw as f32 + 1.0;
+    }
+    (Some(bg), glyphs)
+}
+
 impl App {
     /// Deterministic boot: splash selection from the seed (vanilla picks a
     /// random line; here the RNG is seeded for reproducible rendering).
@@ -3461,6 +3571,10 @@ impl App {
                 // projection carried — the jeb_ arm the rainbow gate
                 // reads, the silence the honest unnamed)
                 m.custom_name = w.custom_name.clone();
+                // THE VISIBILITY BIT rides the same carry (the accessor
+                // 3's Boolean — the shouldShowName gate's first arm,
+                // the tag's own arm/disarm the byte speaks)
+                m.name_visible = w.name_visible;
                 m.on_ground = true;
                 m.age_ticks = 40; // two seconds in — the bob's stable mid
                 self.net_mobs.push(m);
@@ -3516,6 +3630,10 @@ impl App {
             // assign the fresh spawn speaks — the name is STATE, the
             // rename the server speaks replaces, the silence unnamed)
             m.custom_name = w.custom_name.clone();
+            // THE VISIBILITY BIT rides with the name (the same binary
+            // assign — the server's rename/visibility word replaces
+            // the arm the spawn spoke)
+            m.name_visible = w.name_visible;
             self.net_mobs.push(m);
         }
         // the ids the wire no longer names never re-enter net_mobs —
@@ -4761,7 +4879,7 @@ impl App {
                 // GATE (the vanilla death screen's own shape): a dead
                 // player's HUD sleeps and the DeathScreen renders
                 // instead — the world stays beneath the red gradient.
-                self.render_world_3d(fb);
+                self.render_world_3d(fb, a);
                 let mut g = Gui::new(fb, Gui::auto_scale(fb.w, fb.h));
                 if self.dead {
                     let (gw, gh) = (g.w(), g.h());
@@ -4778,7 +4896,7 @@ impl App {
                 // the container screen covers the HUD (the panel draws
                 // over the hotbar's ground): world underneath, dimmed,
                 // then the generic_9x3 chrome — the pause flow's shape.
-                self.render_world_3d(fb);
+                self.render_world_3d(fb, a);
                 let mut g = Gui::new(fb, Gui::auto_scale(fb.w, fb.h));
                 let (gw, gh) = (g.w(), g.h());
                 self.render_chest(&mut g, a, gw, gh);
@@ -4864,7 +4982,7 @@ impl App {
     /// celestial textures), textured quads from the generated atlas, fog
     /// in the official color — the exact same raster path the headless
     /// pixel tests exercise.
-    fn render_world_3d(&mut self, fb: &mut crate::raster::Framebuf) {
+    fn render_world_3d(&mut self, fb: &mut crate::raster::Framebuf, a: &mut GuiAssets) {
         self.ensure_world();
         let n = self.world_size as f32;
         let cam = self.world_camera();
@@ -4955,7 +5073,7 @@ impl App {
         // first-person's own-body gate never touches them; the day
         // tick feeds the flame feature's frame law)
         let render_day_time = (self.day_time_base + self.frame) as i64;
-        self.render_mobs(fb, &ctx, &cam, render_day_time);
+        self.render_mobs(fb, &ctx, &cam, render_day_time, a);
         // THE EAT ARC's pieces (the BreakingItemParticle pass — the
         // vanilla's own particle layer rides the entity pass): the
         // mouth's debris as camera-facing quads
@@ -5493,6 +5611,7 @@ impl App {
         ctx: &RenderCtx,
         cam: &crate::camera::Camera,
         day_time: i64,
+        a: &mut GuiAssets,
     ) {
         if self.mobs.is_empty() && self.net_mobs.is_empty() {
             return; // the deterministic scenes carry no mobs — the goldens stay
@@ -5769,6 +5888,99 @@ impl App {
                             Some([r, g, b, a])
                         },
                     );
+                }
+            }
+            // THE NAMEPLATE'S OWN DRAW (the NameTagFeatureRenderer the
+            // 26.2 feature pipeline speaks — the SubmitNodeCollection
+            // .submitNameTag raw walk rides the planes builder below):
+            // the gate is shouldShowName's own first arm — the
+            // accessor-3 Boolean isCustomNameVisible() (the
+            // crosshairPickEntity arm the dispatcher owns is the
+            // client-side pick this lane does not speak yet). The
+            // crouch rides the isDiscrete word: the standing body
+            // draws the bright core pass, the crouching body only its
+            // dim see-through copy.
+            if mob.name_visible {
+                if let Some(name) = &mob.custom_name {
+                    // the anchor (translate(attachment.x,
+                    // attachment.y + 0.5, z): the AT_HEIGHT fallback
+                    // (0, bbHeight, 0) the EntityAttachment lambda
+                    // speaks, the +0.5 the ldc2_w dadd adds)
+                    let top_y = my + bbox_h as f64 + 0.5;
+                    let (bg, glyphs) =
+                        name_tag_planes(feet, top_y, name, cam.yaw, cam.pitch);
+                    let vp = ctx.proj.mul(&ctx.view);
+                    // THE BOX (the ARGB.color(0.25F, -16777216) the
+                    // background the markBackground law bounds — the
+                    // alpha 64 the 0.25 * 255 round speaks) — the
+                    // white sampler under the black tint, the alpha
+                    // scale the color's own 64 rides
+                    if let Some(bg_pts) = bg {
+                        let bg_quad = [crate::raster::SampledQuad {
+                            pts: bg_pts,
+                            uv: [[0.0, 0.0]; 4],
+                            tex: "",
+                            tint: [0.0, 0.0, 0.0],
+                        }];
+                        fb.draw_translucent_sampled_quads(
+                            vp,
+                            &bg_quad,
+                            64.0 / 255.0,
+                            &mut |_t, _u, _v| Some([255, 255, 255, 255]),
+                        );
+                    }
+                    // THE TEXT (the two passes the raw walk speaks —
+                    // the dim 0x80FFFFFF copy WITH the box, the bright
+                    // -1 core without; the glyphs grouped by their
+                    // font page the sampler resolves)
+                    let mut pages: std::collections::BTreeMap<u16, Vec<NameTagGlyph>> =
+                        std::collections::BTreeMap::new();
+                    for gl in glyphs {
+                        pages.entry(gl.page).or_default().push(gl);
+                    }
+                    for (page, quads) in &pages {
+                        let sampled: Vec<crate::raster::SampledQuad> = quads
+                            .iter()
+                            .map(|gl| crate::raster::SampledQuad {
+                                pts: gl.pts,
+                                uv: gl.uv,
+                                tex: "",
+                                tint: [1.0, 1.0, 1.0],
+                            })
+                            .collect();
+                        let Some(tex) = a.font_texture(*page).cloned() else {
+                            continue; // the page failed its load — the tag's text stays unsaid
+                        };
+                        let sample_page =
+                            |tex: &crate::gui::Sprite, u: f32, v: f32| -> [u8; 4] {
+                                let c =
+                                    tex.sample(u.floor() as u32, v.floor() as u32);
+                                [
+                                    (c[0] * 255.0) as u8,
+                                    (c[1] * 255.0) as u8,
+                                    (c[2] * 255.0) as u8,
+                                    (c[3] * 255.0) as u8,
+                                ]
+                            };
+                        // the see-through pass (0x80FFFFFF — the white
+                        // at alpha 128, the box rides this lane)
+                        fb.draw_translucent_sampled_quads(
+                            vp,
+                            &sampled,
+                            128.0 / 255.0,
+                            &mut |_t, u, v| Some(sample_page(&tex, u, v)),
+                        );
+                        // the bright core (-1 — ONLY the standing body,
+                        // the isDiscrete gate the crouch word speaks)
+                        if !mob.crouching {
+                            fb.draw_translucent_sampled_quads(
+                                vp,
+                                &sampled,
+                                1.0,
+                                &mut |_t, u, v| Some(sample_page(&tex, u, v)),
+                            );
+                        }
+                    }
                 }
             }
         }
@@ -9104,6 +9316,7 @@ mod tests {
             crouching: false,
             wool_byte: 0,
             custom_name: None,
+            name_visible: false,
             type_name: "minecraft:zombie".to_string(),
         }
     }
@@ -9129,6 +9342,7 @@ mod tests {
             crouching: false,
             wool_byte: 0,
             custom_name: None,
+            name_visible: false,
             type_name: type_name.to_string(),
         }
     }
@@ -9324,6 +9538,20 @@ mod tests {
             Some("jeb_"),
             "the name the merge carries"
         );
+        // THE VISIBILITY BIT rides the same carry (the accessor 3's
+        // Boolean — the shouldShowName gate's own first arm): the
+        // raised bit arms the tag, the silent byte disarms the arm
+        // the spawn spoke
+        let mut w = wire_mob_named(10, 16.0, 64.0, 10.0, "minecraft:sheep");
+        w.custom_name = Some("Named".to_string());
+        w.name_visible = true;
+        app.live_mobs_updated(vec![w]);
+        let sheep = app.net_mobs.iter().find(|m| m.id == 10).unwrap();
+        assert!(sheep.name_visible, "the raised bit the merge carries");
+        let w = wire_mob_named(10, 16.2, 64.0, 10.0, "minecraft:sheep");
+        app.live_mobs_updated(vec![w]);
+        let sheep = app.net_mobs.iter().find(|m| m.id == 10).unwrap();
+        assert!(!sheep.name_visible, "the silent byte the disarm speaks");
         // the RENAME rides the same assign (state, not countdown —
         // the server's word replaces the old one)
         let mut w = wire_mob_named(10, 16.5, 64.0, 10.0, "minecraft:sheep");
@@ -9341,6 +9569,104 @@ mod tests {
         app.live_mobs_updated(vec![w]);
         let sheep = app.net_mobs.iter().find(|m| m.id == 10).unwrap();
         assert_eq!(sheep.custom_name, None, "the silence the unnamed speaks");
+    }
+
+    /// THE NAMEPLATE'S OWN PLANES — the geometry the 26.2 raw walk
+    /// speaks: the +0.5 lift over the AT_HEIGHT attachment, the 0.025
+    /// font-px scale (the negative-y the flip speaks), the centered
+    /// x the ineg/fdiv computes, the markBackground box the min/max
+    /// folds bound, the glyph cells the font table's own law rides.
+    #[test]
+    fn the_name_tag_planes_walk_the_billboard_law() {
+        let feet = crate::math::Vec3::new(10.5, 64.0, 10.5);
+        // the sheep's own total lift (the attachment's bbHeight + the
+        // dadd's 0.5): the SHEEP_HEIGHT constant the bbox law speaks
+        let top_y = 64.0 + crate::mob::SHEEP_HEIGHT + 0.5;
+        let name = "jeb_";
+        let w = crate::gui::font_text_width(name);
+        let x0 = -(w as f32) / 2.0;
+        let (bg, glyphs) = name_tag_planes(feet, top_y, name, 0.0, 0.0);
+        // yaw 0 pitch 0: right = +x, up = +y — the corner law the
+        // basis fold speaks: world = feet + (fx*k, -fy*k)
+        let bg = bg.expect("the box the see-through pass draws");
+        // the [BL, BR, TR, TL] order the raster's edge fold accepts:
+        // the bottom edge at fy = 9 (the 8px cell + the pad below),
+        // the top edge at fy = -1 (the markBackground top pad — one
+        // font px ABOVE the anchor)
+        assert!(
+            (bg[0][1] - (top_y as f32 - 0.225)).abs() < 1e-4,
+            "the box's bottom the y+9 law drops"
+        );
+        assert!(
+            (bg[2][1] - (top_y as f32 + 0.025)).abs() < 1e-4,
+            "the box's top the -1 pad lifts"
+        );
+        // the left/right edges the centered x ± the pads speak
+        assert!(
+            (bg[0][0] - (10.5 + (x0 - 1.0) * 0.025)).abs() < 1e-4,
+            "the box's left the x-1 pad speaks"
+        );
+        assert!(
+            (bg[1][0] - (10.5 + (x0 + w as f32) * 0.025)).abs() < 1e-4,
+            "the box's right the x+w law speaks"
+        );
+        // THE GLYPHS: one plane per non-space char, the cells the
+        // font table bakes (top = ascent - gh, the page texel window)
+        assert_eq!(glyphs.len(), 4, "j/e/b/_ the four planes the walk speaks");
+        let mut pen = x0;
+        for (gl, ch) in glyphs.iter().zip(name.chars()) {
+            let g = mc_registry::generated::font::glyph(ch).unwrap();
+            let top = (g.ascent as i32 - g.gh as i32) as f32;
+            assert!(
+                (gl.pts[0][0] - (10.5 + pen * 0.025)).abs() < 1e-4,
+                "the cell's left the pen walk speaks"
+            );
+            assert!(
+                (gl.pts[0][1] - (top_y as f32 - (top + g.gh as f32) * 0.025)).abs() < 1e-4,
+                "the cell's bottom the ascent-gh + gh walk speaks"
+            );
+            assert!(
+                (gl.pts[3][1] - (top_y as f32 - top * 0.025)).abs() < 1e-4,
+                "the cell's top the ascent-gh law speaks"
+            );
+            assert_eq!(
+                gl.uv[0],
+                [g.u as f32, (g.v + g.gh) as f32],
+                "the cell's bottom-left the page window speaks"
+            );
+            assert_eq!(
+                gl.uv[2],
+                [(g.u + g.gw) as f32, g.v as f32],
+                "the cell's top-right the page window speaks"
+            );
+            pen += g.gw as f32 + 1.0;
+        }
+        // THE BILLBOARD'S OWN TILT (the yaw the camera basis rides):
+        // yaw 90 makes right = +z (the [cy, 0, sy] fold speaks) — the
+        // box's font-left edge walks the tag's own plane in Z while X
+        // stays the anchor's (the right axis carries no x)
+        let (bg_t, _) = name_tag_planes(feet, top_y, "a", 90f32.to_radians(), 0.0);
+        let bg_t = bg_t.unwrap();
+        let w_a = crate::gui::font_text_width("a");
+        let x0_a = -(w_a as f32) / 2.0;
+        assert!(
+            (bg_t[0][0] - 10.5).abs() < 1e-4,
+            "the yaw's right axis carries no x"
+        );
+        assert!(
+            (bg_t[0][2] - (10.5 + (x0_a - 1.0) * 0.025)).abs() < 1e-4,
+            "the font-left edge walks z the yaw-90 basis speaks"
+        );
+        let (bg_p, _) = name_tag_planes(feet, top_y, "a", 0.0, 90f32.to_radians());
+        let bg_p = bg_p.unwrap();
+        assert!(
+            (bg_p[0][0] - (10.5 + (x0_a - 1.0) * 0.025)).abs() < 1e-4,
+            "the right axis stays the yaw's +x"
+        );
+        assert!(
+            (bg_p[0][2] - (10.5 - 0.225)).abs() < 1e-4,
+            "the pitch re-aims the UP axis: at 90 the bottom pad walks -z"
+        );
     }
 
     #[test]
@@ -12725,7 +13051,8 @@ mod tests {
         app.water_vision_time = 0;
         let mut fb = crate::raster::Framebuf::new(64, 64);
         fb.color.fill(0);
-        app.render_world_3d(&mut fb);
+        let mut assets = GuiAssets::open("assets-cache/jar");
+        app.render_world_3d(&mut fb, &mut assets);
         let murk_pixels = fb
             .color
             .chunks_exact(3)
@@ -12741,7 +13068,8 @@ mod tests {
         app.water_vision_time = 600;
         let mut open = crate::raster::Framebuf::new(64, 64);
         open.color.fill(0);
-        app.render_world_3d(&mut open);
+        let mut open_assets = GuiAssets::open("assets-cache/jar");
+        app.render_world_3d(&mut open, &mut open_assets);
         let moved = open
             .color
             .chunks_exact(3)

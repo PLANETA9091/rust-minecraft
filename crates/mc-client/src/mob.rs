@@ -138,6 +138,16 @@ pub const SHEEP_DATA_WOOL_ID: u8 = 17;
 /// ENTITY's own — the sheep's jeb_ gate is only one consumer).
 pub const DATA_CUSTOM_NAME_ID: u8 = 2;
 
+/// THE NAMEPLATE'S OWN VISIBILITY WORD (Entity's clinit defineId walk
+/// the same tree lands: SHARED_FLAGS 0, AIR_SUPPLY 1, CUSTOM_NAME 2,
+/// NAME_VISIBLE 3 — the Boolean serializer the read rides). The
+/// byte's own law (Entity.shouldShowName: `isCustomNameVisible()`
+/// IS the gate's first arm — the entityData Boolean verbatim):
+/// a named body whose server never raised the bit keeps its tag
+/// unsaid; the raised bit arms the floating text the NameTagFeature
+/// renderer draws.
+pub const DATA_CUSTOM_NAME_VISIBLE: u8 = 3;
+
 /// THE WOOL TINT'S OWN WORD (javap ColorLerper$Type.SHEEP.getColor's
 /// law — the colorByDye map the ctor's lambda pre-speaks through
 /// ColorLerper.getModifiedColor(dye, 0.75F)): WHITE never multiplies —
@@ -474,6 +484,11 @@ pub struct Zombie {
     /// gate reads, the accessor never spoken is the honest unnamed
     /// (the ctor's own None = the SynchedEntityData default).
     pub custom_name: Option<String>,
+    /// THE NAMEPLATE'S OWN ARM (Entity's DATA_CUSTOM_NAME_VISIBLE
+    /// accessor 3 — the shouldShowName gate's first arm the merge
+    /// carries): the byte the server raised says the floating text,
+    /// the silent byte keeps the name unsaid.
+    pub name_visible: bool,
     /// `ZombieAttackGoal.raiseArmTicks`
     raise_arm_ticks: i32,
     /// THE BODY'S OWN KIND (the renderer's variant table): which mesh
@@ -539,6 +554,7 @@ impl Zombie {
             sheared: false,
             wool_color: 0,
             custom_name: None,
+            name_visible: false,
             kind: MobKind::Zombie,
             raise_arm_ticks: 0,
             ticks_until_attack: 0,

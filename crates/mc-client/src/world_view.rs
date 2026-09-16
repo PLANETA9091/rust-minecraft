@@ -365,6 +365,13 @@ pub struct WireMob {
     /// (None). The read is the ENTITY's own (the name is generic
     /// entity data — the sheep's rainbow gate is only one consumer).
     pub custom_name: Option<String>,
+    /// THE NAMEPLATE'S VISIBILITY BIT (the accessor 3 the same clinit
+    /// walk lands — the Boolean serializer's own word). The
+    /// shouldShowName gate's first arm is `isCustomNameVisible()`:
+    /// the byte raised arms the floating text, the silent byte keeps
+    /// the name unsaid (a named body whose server never raised the
+    /// bit renders no tag — the honest gate the vanilla client rides).
+    pub name_visible: bool,
     /// The synced registry's own name (`minecraft:zombie` v1 renders;
     /// anything else is the honest not-yet-drawn type).
     pub type_name: String,
@@ -1046,6 +1053,13 @@ impl LiveView {
                         },
                         _ => None,
                     },
+                    // THE VISIBILITY BIT (the accessor 3's Boolean —
+                    // the shouldShowName gate's own first arm, the
+                    // byte the server raised the tag rides)
+                    name_visible: match e.data.get(&crate::mob::DATA_CUSTOM_NAME_VISIBLE) {
+                        Some(mc_protocol::play::EntityDataEntry::Bool(b)) => *b,
+                        _ => false,
+                    },
                     type_name,
                 })
             })
@@ -1578,6 +1592,38 @@ mod tests {
         let upd = view.refresh(example_mapper);
         let z = upd.mobs.iter().find(|m| m.id == 7).unwrap();
         assert_eq!(z.custom_name, None, "the empty optional the None speaks");
+        // THE NAMEPLATE'S VISIBILITY BIT (the accessor 3's Boolean —
+        // Entity.shouldShowName's own first arm the raw walk speaks:
+        // `isCustomNameVisible()` IS the gate): the raised bit arms
+        // the tag, the absent byte keeps the named body's silence,
+        // the false the disarm the byte speaks
+        view.model.apply(PlayEvent::EntityData(mc_protocol::play::EntityDataSet {
+            id: 7,
+            entries: vec![mc_protocol::play::SetEntityDataEntry {
+                index: 3,
+                serializer: 8,
+                value: mc_protocol::play::EntityDataEntry::Bool(true),
+            }],
+        }));
+        let upd = view.refresh(example_mapper);
+        let z = upd.mobs.iter().find(|m| m.id == 7).unwrap();
+        assert!(z.name_visible, "the raised bit the projection carries");
+        let s = upd.mobs.iter().find(|m| m.id == 10).unwrap();
+        assert!(
+            !s.name_visible,
+            "the sheep's absent byte the named silence keeps"
+        );
+        view.model.apply(PlayEvent::EntityData(mc_protocol::play::EntityDataSet {
+            id: 7,
+            entries: vec![mc_protocol::play::SetEntityDataEntry {
+                index: 3,
+                serializer: 8,
+                value: mc_protocol::play::EntityDataEntry::Bool(false),
+            }],
+        }));
+        let upd = view.refresh(example_mapper);
+        let z = upd.mobs.iter().find(|m| m.id == 7).unwrap();
+        assert!(!z.name_visible, "the false the disarm speaks");
         // THE MOBS' OWN FLASH (the Hurt Animation's other arm — the
         // mailbox the foreign ids' packets arm): the zombie's id ships
         // the 10-tick window, the pig's silence stays the honest 0

@@ -2,7 +2,7 @@
 
 Every lane that ships pixels owes the folder a frame. The gallery is the
 proof the features exist as rendered images, not as test names alone.
-125 frames and counting — grouped below by the lane that spoke them.
+126 frames and counting — grouped below by the lane that spoke them.
 
 ## The F5 lane (the third-person avatar) — v0.3.154+
 
@@ -419,6 +419,7 @@ lasts 20 real minutes again, the eat hold 1.6s, the swing 0.3s.
 | `wire_sheep.png` | THE SERVER'S OWN SHEEP (v0.3.191): the FOURTH drawn body — the wire sheep the Add Entity type id names through the synced registry renders the bytecode-proven 26.2 SheepModel mesh (the head 6x6x8 the ovine's own replacement over the createBodyMesh default, the rotX 8x16x6 barrel, the four 4x12x4 legs the RIGHT pair's mirror rides — the createLegs(loc1=false, loc2=true) walk the pig/cow LEFT-pair convention INVERTED) over the single sheep.png the getTextureLocation speaks, the 64x32 HALF-HEIGHT layout the load verifies; the model's OWN setupAnim the eat fold rides (the head the *9.0*ageScale drop + the eat-angle xRot the replacement law speaks — the wire's pitch word the struct never carried); the empty companion at the identical staging diffs rms 28.2 (the ovine's own presence, face and wool honest) |
 | `wire_wool.png` | THE SERVER'S OWN WOOL (v0.3.192): the fur OVERLAY — the SheepWoolLayer's own gate (the sheared bit the fur's render skips) + the SheepFurModel inflate-mesh the 26.2 bytecode proves (the head hood 6x6x6+0.6 the z-SHORTER box the tan face's own gap speaks, the body coat 8x16x6+1.75, the wool boots 4x6x4+0.5 the ONE shared no-mirror builder rides) over the sheep_wool.png greyscale the dye color tints — the DyeColor table's 16 textureDiffuseColor ints the clinit's own ctor args speak, the DATA_WOOL_ID byte 17 the class-tree id walk lands (Sheep.isSheared/getColor's own decode: bit 0x10 sheared, low nibble the dye); the shot stages the RED byte (14) through the merge's own decode — the red coat the white-companion's default byte 0 keeps; the companion at the identical staging diffs rms 14.5 (the dye's own word) |
 | `wire_jeb.png` | THE NAME'S OWN RAINBOW (v0.3.193): the jeb_ sheep — the custom name the accessor 2 carries (Entity's DATA_CUSTOM_NAME the clinit defineId walk lands at 2, the OPTIONAL_COMPONENT the wire rides, MobRenderer.checkMagicName's own "jeb_" equality the SheepRenderer.extractRenderState bakes into isJebSheep) arms SheepRenderState.getWoolColor's rainbow branch: ColorLerper.getLerpedColor(SHEEP, ageInTicks) the raw disassembly speaks — the window (floor(t)/25) % 16, the blend ((floor(t) % 25) + frac(t)) / 25, the ARGB.srgbLerp per-component lerpInt a + floor(t×(b−a)) — over the MODIFIED table getModifiedColor pre-speaks (WHITE the literal 0xE6E6E6, every other dye the 0.75F modifier's floors — the raw table the earlier wool rode one step bright); the shot stages the name through the merge's own carry — the fur wears the ORANGE→MAGENTA window's magenta-pink (191,21,143) the age-44 phase speaks, the white companion's modified 230-grey the unnamed silence keeps; the companion at the identical staging diffs rms 9.3 (the rainbow's own word) |
+| `wire_nametag.png` | THE SERVER'S OWN NAMEPLATE (v0.3.194): the name tag — the visibility bit the accessor 3 carries (Entity's DATA_CUSTOM_NAME_VISIBLE the same clinit defineId walk lands at 3, the Boolean serializer the shouldShowName gate's own first arm `isCustomNameVisible()` the raw walk speaks) arms the floating text the 26.2 SubmitNodeCollection.submitNameTag law draws: the pose translate(attachment.x, attachment.y + 0.5, z) (the NAME_TAG fallback AT_HEIGHT (0, bbHeight, 0) the EntityAttachment$Fallback lambda bakes, the +0.5 the ldc2_w dadd adds), the camera billboard the roll-0 basis speaks, the scale(0.025, -0.025, 0.025) one font px = 0.025 world units, the centered x = -font.width/2.0F the ineg/fdiv computes, the markBackground box (left x-1, top y-1, right x+advance, bottom y+9) the PreparedTextBuilder min/max folds bound in ARGB.color(0.25F, -16777216) alpha 64, the two passes the raw walk speaks — the dim 0x80FFFFFF see-through copy the translucent phase blends, the bright -1 core the standing body keeps (the crouch rides isDiscrete: the dim form only); the glyphs ride the font table's own cells through the SAME font pages the GUI lane loads; the shot stages "Wooly" (named AND visible) through the merge's own carry — the tag hangs above the wool the unnamed companion keeps unsaid; the companion at the identical staging diffs rms 3.8 (the nameplate's own 408 pixels) |
 
 Regenerate the family (the flag the CLI speaks today):
 
@@ -593,6 +594,20 @@ cargo run -p mc-client --release -- --headless --screen world \
 # merge's own carry; "jeb_" arms SheepRenderState.getWoolColor's
 # rainbow branch — the ColorLerper 25-tick windows over the MODIFIED
 # table — the unnamed white companion (no --net-name) diffs rms 9.3
+```
+
+The server's own nameplate (v0.3.194 — the visibility word):
+
+```sh
+cargo run -p mc-client --release -- --headless --screen world \
+  --seed 42 --body --walk-ticks 1 --body-yaw 0 --net-sheep 2 \
+  --net-name Wooly --perspective third-back --ui-frame 3 \
+  --out shots/wire_nametag.png
+# --net-name NAME arms the first wire sheep's custom name AND the
+# accessor-3 visibility bit (the staging's named-AND-visible form) —
+# the tag the SubmitNodeCollection.submitNameTag law draws hangs at
+# bbHeight + 0.5, the markBackground box behind the two-pass text —
+# the unnamed companion (no --net-name) diffs rms 3.8
 ```
 cargo run -p mc-client --release -- --headless --screen world \
   --seed 42 --body --walk-ticks 1 --body-yaw 0 --net-sheep 2 \

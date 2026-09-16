@@ -1400,6 +1400,7 @@ pub fn render_gui_screen_opts(
                             crouching: false,
                             wool_byte: 0,
                             custom_name: None,
+                            name_visible: false,
                             type_name: "minecraft:zombie".to_string(),
                         });
                     }
@@ -1442,6 +1443,7 @@ pub fn render_gui_screen_opts(
                             crouching: false,
                             wool_byte: 0,
                             custom_name: None,
+                            name_visible: false,
                             type_name: "minecraft:pig".to_string(),
                         });
                     }
@@ -1485,6 +1487,7 @@ pub fn render_gui_screen_opts(
                             crouching: false,
                             wool_byte: 0,
                             custom_name: None,
+                            name_visible: false,
                             type_name: "minecraft:cow".to_string(),
                         });
                     }
@@ -1542,6 +1545,7 @@ pub fn render_gui_screen_opts(
                             crouching: false,
                             wool_byte: 0,
                             custom_name: None,
+                            name_visible: false,
                             type_name: "minecraft:sheep".to_string(),
                         });
                     }
@@ -1560,13 +1564,18 @@ pub fn render_gui_screen_opts(
                     }
                     // THE NAME WORD's own arm (the same first-sheep law
                     // the wool byte rides — the custom name the merge
-                    // carries, the jeb_ gate the render speaks)
+                    // carries, the jeb_ gate the render speaks). THE
+                    // VISIBILITY BIT rides the arm (the accessor-3
+                    // Boolean the shouldShowName gate reads — the
+                    // staged word is the named-AND-visible form the
+                    // tag renders).
                     if let Some(name) = opts.net_name.clone() {
                         if let Some(w) = wire_mobs
                             .iter_mut()
                             .find(|w| w.type_name == "minecraft:sheep")
                         {
                             w.custom_name = Some(name);
+                            w.name_visible = true;
                         }
                     }
                     app.live_mobs_updated(wire_mobs);

@@ -73,6 +73,31 @@ pub struct Sprite {
     pub rgba: Vec<u8>,
 }
 
+/// The advance walk the text lanes share (the vanilla Font.width's own
+/// rule the GUI lane speaks: glyph + 1px spacing, the space its own
+/// advance, the missing glyph the honest 4). Free so the world-space
+/// lanes (the name-tag planes) walk the SAME metric the HUD draws.
+pub(crate) fn font_text_width(s: &str) -> i32 {
+    let mut w = 0i32;
+    let mut in_code = false;
+    for ch in s.chars() {
+        if in_code {
+            in_code = false;
+            continue;
+        }
+        if ch == '§' {
+            in_code = true;
+            continue;
+        }
+        w += match font::glyph(ch) {
+            Some(g) if g.space_advance != 0 => g.space_advance as i32,
+            Some(g) => g.gw as i32 + 1,
+            None => 4,
+        };
+    }
+    w
+}
+
 impl Sprite {
     pub fn decode(bytes: &[u8]) -> anyhow::Result<Self> {
         let (w, h, rgba) = decode_png_rgba(bytes)?;
@@ -157,7 +182,7 @@ impl GuiAssets {
         gui::sprite(name).map(|d| d.name)
     }
 
-    fn font_texture(&mut self, idx: u16) -> Option<&Sprite> {
+    pub(crate) fn font_texture(&mut self, idx: u16) -> Option<&Sprite> {
         if self.font_textures.len() <= idx as usize {
             self.font_textures.resize(idx as usize + 1, None);
         }
@@ -427,24 +452,7 @@ impl<'a> Gui<'a> {
 
     /// Width of a string in GUI pixels (vanilla advance rule: glyph + 1px).
     pub fn text_width(&self, s: &str) -> i32 {
-        let mut w = 0i32;
-        let mut in_code = false;
-        for ch in s.chars() {
-            if in_code {
-                in_code = false;
-                continue;
-            }
-            if ch == '§' {
-                in_code = true;
-                continue;
-            }
-            w += match font::glyph(ch) {
-                Some(g) if g.space_advance != 0 => g.space_advance as i32,
-                Some(g) => g.gw as i32 + 1,
-                None => 4,
-            };
-        }
-        w
+        font_text_width(s)
     }
 
     /// Draw text with `§` color codes; when `shadow`, first draw a darkened
