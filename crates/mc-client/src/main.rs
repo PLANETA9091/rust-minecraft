@@ -173,6 +173,11 @@ struct Cli {
     /// rolls. Requires --body.
     #[arg(long)]
     breed: Option<u32>,
+    /// The breed walk's own pair the RED and BLUE dyes speak (the
+    /// parents' wool 14 and 11) — the child the crafting recipe the
+    /// purple wears. Requires --body.
+    #[arg(long)]
+    breed_mix: Option<u32>,
     /// The zombie's remainingFireTicks (the igniteForSeconds(8) law
     /// speaks 160).
     #[arg(long)]
@@ -415,6 +420,7 @@ fn main() -> Result<()> {
             shear: cli.shear,
             feed: cli.feed,
             breed: cli.breed,
+            breed_mix: cli.breed_mix,
             zombie_fire: cli.zombie_fire,
             zombie_death: cli.zombie_death,
             zombie_aggro: cli.zombie_aggro,

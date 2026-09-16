@@ -1542,6 +1542,53 @@ pub fn try_spawn(
     true
 }
 
+/// THE DYE-PAIR MIX TABLE (javap DyeColor.getMixedColor — the 26.2
+/// jar's Sheep.getBreedOffspring walk the sheep_262 dump keeps: the
+/// parents' dyes the crafting grid pairs, the recipe the result dye
+/// speaks — the nine two-dye recipes the dye crafting law keeps,
+/// the unordered pairs stored (low, high) the walk's own sort
+/// answers). WHITE+GRAY the light-gray doubles, PURPLE+PINK the
+/// magenta doubles, the rest the single result dye — every row the
+/// shapeless grid speaks both ways.
+pub const DYE_MIX_TABLE: [((u8, u8), u8); 9] = [
+    ((0, 8), 8),    // WHITE + LIGHT_GRAY -> LIGHT_GRAY
+    ((0, 11), 3),   // WHITE + BLUE -> LIGHT_BLUE
+    ((0, 13), 5),   // WHITE + GREEN -> LIME
+    ((0, 14), 6),   // WHITE + RED -> PINK
+    ((0, 15), 7),   // WHITE + BLACK -> GRAY
+    ((4, 14), 1),   // YELLOW + RED -> ORANGE
+    ((6, 10), 2),   // PINK + PURPLE -> MAGENTA
+    ((11, 13), 9),  // BLUE + GREEN -> CYAN
+    ((11, 14), 10), // BLUE + RED -> PURPLE
+];
+
+/// THE OFFSPRING'S OWN COLOR WALK (javap `Sheep.getBreedOffspring`:
+/// `setColor(DyeColor.getMixedColor(level, a, b))` — the parents'
+/// dyes the crafting grid pairs, the recipe result the baby speaks;
+/// the recipe-less pair the `nextBoolean` coin the fallback arm
+/// keeps — one parent's dye the coin picks, the same-dye pair the
+/// identical wool answers). The mix arm the coin never reaches
+/// (the else arm's own draw the vanilla skips — the stream the xp
+/// roll rides keeps its two-draw span).
+pub fn mixed_wool_color(first: u8, second: u8, rng: &mut Lcg) -> u8 {
+    let (lo, hi) = if first <= second {
+        (first, second)
+    } else {
+        (second, first)
+    };
+    for ((a, b), out) in DYE_MIX_TABLE {
+        if a == lo && b == hi {
+            return out;
+        }
+    }
+    // the fallback arm's own coin (javap: nextBoolean ? first : second)
+    if rng.next() & 1 == 0 {
+        first
+    } else {
+        second
+    }
+}
+
 /// THE BREED'S OWN OUT-EDGE (the spawn walk the caller answers): the
 /// child the addFreshEntityWithPassengers arms, the HEART burst the
 /// event 18 broadcast spawns (the spawning parent's own box the
@@ -1568,10 +1615,9 @@ pub struct BreedSpawn {
 /// the MOB_DROPS-gated `ExperienceOrb` at the parent's own spot. The
 /// `bred` flags the double-pair the same pass refuses (an in-love
 /// parent breeds once per scan — the goal's own one-shot law). The
-/// child's RNG seed and the sheep's wool mix draw the shared stream
-/// (the getMixedColor fallback arm the mix-table absence keeps — the
-/// random-parent law the method's own shape speaks; the dye-pair table
-/// the future lane owes).
+/// child's RNG seed, the wool arm's coin (the recipe-less fallback
+/// only — DYE_MIX_TABLE the recipe arm answers, the mix the coin
+/// draw never consumes) and the orb roll draw the shared stream.
 pub fn try_breed(
     mobs: &mut [Zombie],
     next_id: &mut i32,
@@ -1612,16 +1658,12 @@ pub fn try_breed(
             child.age = BABY_START_AGE;
             child.on_ground = true;
             // THE OFFSPRING'S OWN COLOR (javap `Sheep.getBreedOffspring`:
-            // `setColor(DyeColor.getMixedColor(level, a, b))` — the mix
-            // table the evidence set doesn't carry, the random-parent
-            // fallback arm the method's own shape keeps: one parent's
-            // dye the coin picks)
+            // `setColor(DyeColor.getMixedColor(level, a, b))` — the
+            // parents' dyes the crafting recipe pairs, the recipe-less
+            // pair the nextBoolean coin the fallback arm keeps)
             if child.kind == MobKind::Sheep {
-                child.wool_color = if rng.next() & 1 == 0 {
-                    mobs[i].wool_color
-                } else {
-                    mobs[j].wool_color
-                };
+                child.wool_color =
+                    mixed_wool_color(mobs[i].wool_color, mobs[j].wool_color, rng);
             }
             // THE ORB ROLL (javap: `random.nextInt(7)` — the 0..6 the
             // MOB_DROPS gate keeps)
@@ -2872,6 +2914,100 @@ mod tests {
         // the hearts' bbox the spawning parent's own box names
         let expected = mobs[0].box_for();
         assert_eq!(spawn.heart_bbox, expected, "the event-18 ask the parent's own box");
+    }
+
+    #[test]
+    fn the_dye_pair_mix_table_speaks_the_nine_recipes() {
+        // javap DyeColor.getMixedColor's crafting walk: every pair the
+        // table keeps the recipe result speaks — both orders (the
+        // shapeless grid the walk answers), the same-dye pair the
+        // recipe-less pass the identical wool keeps
+        for ((a, b), out) in DYE_MIX_TABLE {
+            assert_eq!(
+                mixed_wool_color(a, b, &mut Lcg::new(1)),
+                out,
+                "the recipe the ({a},{b}) pair answers"
+            );
+            assert_eq!(
+                mixed_wool_color(b, a, &mut Lcg::new(1)),
+                out,
+                "the shapeless grid the reversed pair answers"
+            );
+        }
+        // the identical pair: no recipe — the fallback coin picks one
+        // parent's dye, the identical wool the same value speaks
+        assert_eq!(mixed_wool_color(0, 0, &mut Lcg::new(1)), 0);
+        assert_eq!(mixed_wool_color(12, 12, &mut Lcg::new(1)), 12);
+    }
+
+    #[test]
+    fn the_breeding_mix_walks_the_recipe_arm() {
+        // the red + blue pair the purple child speaks — the coin draw
+        // the mix arm never consumes (the stream the xp roll rides
+        // keeps its two-draw span: the child's seed, the orb roll)
+        let mut a = Zombie::new(1, 10.0, 64.0, 10.0, 262);
+        a.kind = MobKind::Sheep;
+        a.in_love = 600;
+        a.wool_color = 14; // RED
+        let mut b = Zombie::new(2, 12.0, 64.0, 10.0, 263);
+        b.kind = MobKind::Sheep;
+        b.in_love = 600;
+        b.wool_color = 11; // BLUE
+        let mut mobs = vec![a, b];
+        let mut next_id = 3;
+        let spawns = try_breed(&mut mobs, &mut next_id, &mut Lcg::new(42));
+        assert_eq!(spawns.len(), 1, "the pair the canMate law answers");
+        assert_eq!(
+            spawns[0].child.wool_color, 10,
+            "the purple the crafting recipe speaks"
+        );
+        // the parents' own coats the walk never touches
+        assert_eq!(mobs[0].wool_color, 14, "the first parent's dye stands");
+        assert_eq!(mobs[1].wool_color, 11, "the second parent's dye stands");
+        // the stream's own span: the child's seed then the orb roll —
+        // no coin draw between (the probe the same seed replays)
+        let mut probe = Lcg::new(42);
+        let _child_seed = probe.next();
+        let expected_xp = (probe.next() % 7) as i32;
+        assert_eq!(
+            spawns[0].orb.3, expected_xp,
+            "the two-draw span the mix arm keeps"
+        );
+    }
+
+    #[test]
+    fn the_recipeless_pair_keeps_the_coin_fallback() {
+        // green + brown: no recipe the crafting grid speaks — the
+        // nextBoolean coin one parent's dye picks (the fallback arm
+        // the vanilla keeps), the stream the three-draw span rides
+        // (the child's seed, the coin, the orb roll)
+        let mut a = Zombie::new(1, 10.0, 64.0, 10.0, 262);
+        a.kind = MobKind::Sheep;
+        a.in_love = 600;
+        a.wool_color = 13; // GREEN
+        let mut b = Zombie::new(2, 12.0, 64.0, 10.0, 263);
+        b.kind = MobKind::Sheep;
+        b.in_love = 600;
+        b.wool_color = 12; // BROWN
+        let mut mobs = vec![a, b];
+        let mut next_id = 3;
+        let spawns = try_breed(&mut mobs, &mut next_id, &mut Lcg::new(42));
+        assert_eq!(spawns.len(), 1, "the pair the canMate law answers");
+        let coat = spawns[0].child.wool_color;
+        assert!(
+            coat == 13 || coat == 12,
+            "the fallback one parent's dye picks: {coat}"
+        );
+        // the stream's own span: the coin the fallback consumed (the
+        // probe the same seed replays — the third draw the orb rolls)
+        let mut probe = Lcg::new(42);
+        let _child_seed = probe.next();
+        let _coin = probe.next();
+        let expected_xp = (probe.next() % 7) as i32;
+        assert_eq!(
+            spawns[0].orb.3, expected_xp,
+            "the three-draw span the fallback keeps"
+        );
     }
 
     #[test]

@@ -147,6 +147,13 @@ pub struct SceneOpts {
     /// event 18 rides, the XP orb the MOB_DROPS roll owes. The staged
     /// baby the 0.5 pose scale draws.
     pub breed: Option<u32>,
+    /// THE MIX WALK'S OWN STAGE: the breed walk's own pair the red
+    /// and the blue dyes speak (the parents' wool 14 and 11 — the
+    /// DYE_MIX_TABLE's own recipe arm the child's purple answers),
+    /// then the settle ticks the pairing walks. The breed walk's
+    /// own staging the colors arm — everything else the --breed
+    /// law keeps.
+    pub breed_mix: Option<u32>,
     /// The zombie's remainingFireTicks (the sun-burn brand's own
     /// clock; the igniteForSeconds(8) law speaks 160).
     pub zombie_fire: Option<i32>,
@@ -1893,7 +1900,7 @@ pub fn render_gui_screen_opts(
             app.update();
         }
     }
-    if let Some(settle) = opts.breed {
+    if let Some(settle) = opts.breed.or(opts.breed_mix) {
         // THE BREEDING WALK'S OWN STAGE (the canMate pair the scan
         // answers): TWO sheep on the camera's facing ray — the
         // same-surface cells 3 and 5 out (the ring the 8.0 search
@@ -1941,6 +1948,12 @@ pub fn render_gui_screen_opts(
             // THE LOVE CLOCK the feed verdict leaves (the setInLove
             // walk's own 600 — the pair the scan needs)
             sheep.in_love = 600;
+            // THE MIX WALK'S OWN COATS (the recipe arm the pixels
+            // speak): the red and the blue dyes the parents wear —
+            // the child the crafting recipe the purple answers
+            if opts.breed_mix.is_some() {
+                sheep.wool_color = if idx == 0 { 14 } else { 11 };
+            }
             // facing the camera (the cardinal the ray names — the
             // vanilla yaw degrees)
             sheep.yaw = if fx > 0 {
