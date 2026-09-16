@@ -398,6 +398,22 @@ impl MobKind {
         }
     }
 
+    /// THE MONSTER CHAIN'S OWN WORD (the class hierarchy the javap
+    /// dumps keep: Zombie → Monster → PathfinderMob; the animals'
+    /// own chain Sheep/Cow/Pig → Animal → AgeableMob → PathfinderMob
+    /// never reaches the Monster branch). The targetSelector the
+    /// zombie's own registerGoals fills (zombie_262.txt: getfield
+    /// targetSelector, `new NearestAttackableTargetGoal(Mob, Class, Z)`
+    /// the prio-2 walk three arms speak) the animals' registerGoals
+    /// never touches — the sheep's own prio walk the dump keeps
+    /// (0 float, 1 panic, 2 breed, 3 tempt, 4 follow, 5 eat, 6 stroll,
+    /// 7 look, 8 look-around — every addGoal the goalSelector's own
+    /// field rides) speaks no target goal at all. The scan the monster
+    /// kinds gate; the animals the goal-else chain's own peace keeps.
+    pub fn is_monster(self) -> bool {
+        matches!(self, MobKind::Zombie)
+    }
+
     /// THE VOICE TABLE (the vanilla rows the four drawn kinds speak —
     /// each the class's own `getAmbientSound` / `getHurtSound` /
     /// `getDeathSound` return: the zombie's groan, the sheep's baa,
@@ -1018,12 +1034,22 @@ impl Zombie {
         self.move_speed_modifier = 1.0;
 
         // THE TARGET SCAN (NearestAttackableTargetGoal(Player, mustSee)
-        // — the FOLLOW_RANGE 35 ring, the dead never retarget)
-        let target = player.filter(|p| !p.dead).filter(|p| {
-            let dx = p.x - self.x;
-            let dz = p.z - self.z;
-            dx * dx + dz * dz <= ZOMBIE_FOLLOW_RANGE * ZOMBIE_FOLLOW_RANGE
-        });
+        // — the FOLLOW_RANGE 35 ring, the dead never retarget). THE
+        // ANIMALS' OWN PEACE: the targetSelector the zombie's
+        // registerGoals fills the sheep's/cow's/pig's own registerGoals
+        // never fills — the scan the monster kinds gate, the animals
+        // the goal-else chain's own rest keeps (the fed sheep the
+        // in-range player no longer charges — the empty targetSelector
+        // the animal chain speaks)
+        let target = if self.kind.is_monster() {
+            player.filter(|p| !p.dead).filter(|p| {
+                let dx = p.x - self.x;
+                let dz = p.z - self.z;
+                dx * dx + dz * dz <= ZOMBIE_FOLLOW_RANGE * ZOMBIE_FOLLOW_RANGE
+            })
+        } else {
+            None
+        };
 
         if let Some(p) = target {
             // ZOMBIEATTACKGOAL (prio 3): the canUse re-check rides the
@@ -1177,13 +1203,18 @@ impl Zombie {
         }
 
         // THE BURN ROLL (Mob.aiStep's BURN_IN_DAYLIGHT branch ->
-        // burnUndead -> isSunBurnTick, the short-circuit order the
-        // bytecode speaks: the track gate, the water gate, the light
+        // shouldBurnInDay -> burnUndead -> isSunBurnTick, the
+        // short-circuit order the bytecode speaks: THE KIND'S OWN WORD
+        // first — the Mob base speaks false, the undead classes'
+        // override the true the sun's brand rides (the animals the
+        // base's own false keeps: the noon sky the sheep never
+        // brands), then the track gate, the water gate, the light
         // gate, THE DRAW, the sky gate — the helmet branch never fires
         // on this lane's bare-headed zombie, so the hit ignites):
         // igniteForSeconds(8.0) = remainingFireTicks = max(remaining,
         // 160).
-        if crate::timeline::monsters_burn(day_time)
+        if self.kind.is_monster()
+            && crate::timeline::monsters_burn(day_time)
             && !self.in_water(world)
             && self.burn_light_gate(world, day_time)
             && self.rng.next_f32() * BURN_ROLL_SCALE
@@ -3677,6 +3708,113 @@ mod tests {
             met.breed_love_time, 60,
             "the met court the gate's own count keeps"
         );
+    }
+
+    /// THE ANIMALS' OWN PEACE (the registerGoals dumps' own verdict):
+    /// the targetSelector the zombie's registerGoals fills
+    /// (NearestAttackableTargetGoal the prio-2 walk speaks) the
+    /// animals' registerGoals never fills — the scan the monster
+    /// kinds gate: the melee-ring player the sheep/cow/pig never
+    /// targets, never charges, never hits (the aggressive arms the
+    /// monster's own word keeps lowered), the zombie the same
+    /// staging the chase's own yaw answers.
+    #[test]
+    fn the_animals_own_peace_gates_the_target_scan() {
+        let world = flat_world();
+        // the is_monster table (the class chain the dumps keep)
+        assert!(MobKind::Zombie.is_monster());
+        assert!(!MobKind::Sheep.is_monster());
+        assert!(!MobKind::Cow.is_monster());
+        assert!(!MobKind::Pig.is_monster());
+
+        // the melee-ring player the monster's scan answers — the
+        // animals the same staging the peace keeps over the whole
+        // walk (no hit, no raised arms; the stroll/look rest the
+        // goal-else chain keeps, the 120-gate's own rolls ride)
+        for kind in [MobKind::Sheep, MobKind::Cow, MobKind::Pig] {
+            let mut animal = Zombie::new(1, 8.0, 5.0, 8.0, 262);
+            animal.kind = kind;
+            animal.on_ground = true;
+            let player = player_at(5.0, 5.0, 8.0); // 3 west — the chase test's own ring
+            for tick in 0..200 {
+                let ev = animal.tick(&world, Some(&player), NIGHT);
+                assert!(
+                    ev.attack.is_none(),
+                    "the {kind:?} the player never hits (tick {tick})"
+                );
+                assert!(
+                    !animal.aggressive && animal.raise_arm_ticks == 0,
+                    "the {kind:?} the monster's arms never raises (tick {tick})"
+                );
+            }
+        }
+
+        // the control: the same staging the zombie's own scan answers —
+        // the body yaw swings at the player the first tick speaks
+        let mut z = Zombie::new(1, 8.0, 5.0, 8.0, 7);
+        z.on_ground = true;
+        let player = player_at(5.0, 5.0, 8.0);
+        z.tick(&world, Some(&player), NIGHT);
+        assert!(
+            (z.yaw - 90.0).abs() < 1e-6,
+            "the zombie's scan the player targets (yaw {})",
+            z.yaw
+        );
+    }
+
+    /// THE NOON BRAND THE ANIMALS NEVER WEARS (shouldBurnInDay's own
+    /// override walk): the Mob base speaks false, the undead classes'
+    /// override the true the sun's brand rides — the sheep/cow/pig
+    /// the same noon surface the brand never lands (the kind word the
+    /// short-circuit's first gate keeps: the roll's draw never fires,
+    /// the stream the goal chain's own shape keeps). The zombie's own
+    /// brand the noon test pins beside.
+    #[test]
+    fn the_noon_brand_the_animals_never_wears() {
+        let world = wide_flat_world();
+        for kind in [MobKind::Sheep, MobKind::Cow, MobKind::Pig] {
+            let mut animal = Zombie::new(1, 32.0, 5.0, 32.0, 262);
+            animal.kind = kind;
+            animal.on_ground = true;
+            for _ in 0..600 {
+                animal.tick(&world, None, NOON);
+                assert_eq!(
+                    animal.fire_ticks, 0,
+                    "the {kind:?} the noon never brands"
+                );
+            }
+            assert_eq!(
+                animal.health, ZOMBIE_MAX_HEALTH,
+                "the {kind:?} the fire hurt never speaks"
+            );
+        }
+    }
+
+    /// THE FED SHEEP'S COURT THE PEACE KEEPS (the staging lane's own
+    /// law the kind gate speaks): the armed breed walk the in-range
+    /// player never steals — the goal-else chain the breed arm's prio
+    /// owns, the body yaw the partner's east speaks (the pre-fix scan
+    /// the player's west would have charged), the court's own clock
+    /// the loveTime++ counts, the arms the peace keeps lowered.
+    #[test]
+    fn the_fed_sheeps_court_survives_the_in_range_player() {
+        let world = wide_flat_world();
+        let mut sheep = Zombie::new(1, 8.0, 5.0, 8.0, 262);
+        sheep.kind = MobKind::Sheep;
+        sheep.in_love = 600;
+        sheep.on_ground = true;
+        sheep.breed_partner = Some((2, 13.0, 5.0, 8.0)); // 5 east
+        let player = player_at(3.0, 5.0, 8.0); // 5 west — the old scan would charge
+        let ev = sheep.tick(&world, Some(&player), NOON);
+        assert!(ev.attack.is_none(), "the peace the hit refuses");
+        assert!(
+            (sheep.yaw - (-90.0)).abs() < 1e-6,
+            "the body yaw the partner's east speaks ({})",
+            sheep.yaw
+        );
+        assert_eq!(sheep.breed_love_time, 1, "the court's clock counts");
+        assert!(sheep.x > 8.0, "the walk the partner's east speaks");
+        assert!(!sheep.aggressive, "the arms the peace keeps lowered");
     }
 
     #[test]

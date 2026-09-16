@@ -1907,11 +1907,11 @@ pub fn render_gui_screen_opts(
         // speaks, both surfaces the body's own level — the hilltop
         // candidates the surface law refuses), the love clock the feed
         // verdict leaves (600 both) and the court clock the goal's own
-        // 60-tick walk the completed court stands in for (the feed-
-        // and-leave lane the player's away speaks — the body's own
-        // in-range lane the attack arm owns, the goal-else chain the
-        // no-target rest keeps, the staged pair the off-camera court
-        // the clock stand-in freezes). The settle ticks the caller
+        // 60-tick walk the completed court stands in for (THE
+        // ANIMALS' OWN PEACE the target scan's kind gate keeps — the
+        // in-range body the pair never charges, the goal-else chain
+        // the court's own walk answers, the completed clock the first
+        // settle tick's pairing fires). The settle ticks the caller
         // passes run the tick lane — the pairing fires on the first
         // (the courted pair the meet's own gate answers), the child
         // the spawn walk leaves, the hearts the event 18 rides, the
