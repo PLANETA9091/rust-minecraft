@@ -35,6 +35,7 @@ mod raster;
 mod screens;
 mod sky;
 mod sound;
+mod sound_table;
 mod textures;
 mod timeline;
 mod tint;

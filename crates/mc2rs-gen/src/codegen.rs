@@ -1,9 +1,11 @@
 //! Codegen: write the generated registry + build info + report files.
 //! Everything the client renders (registry, fonts, language, GUI sprites,
-//! sounds, worldgen) is emitted here from official data — the splashes
-//! table the FIRST migration step moved out of the compiled source: the
-//! jar's texts/splashes.txt the runtime cache keeps verbatim, the
-//! client's own loader parses it.
+//! worldgen) is emitted here from official data — the splashes table the
+//! FIRST migration step moved out of the compiled source (the jar's
+//! texts/splashes.txt the runtime cache keeps verbatim, the client's own
+//! loader parses it), the lang table the SECOND moved the same walk, the
+//! sound-event table the THIRD (the asset-index fetch the generator copies
+//! verbatim into the runtime cache, the client's loader the only parser).
 
 use std::fs;
 use std::path::Path;
@@ -11,7 +13,6 @@ use std::path::Path;
 use anyhow::{Context, Result};
 
 use crate::jar::JarReport;
-use crate::soundgen::SoundData;
 use crate::fontgen::FontData;
 use crate::uigen::UiData;
 use crate::worldgen::WorldgenData;
@@ -21,7 +22,6 @@ use crate::skygen::SkyData;
 pub struct GenAll {
     pub font: FontData,
     pub ui: UiData,
-    pub sounds: SoundData,
     pub worldgen: WorldgenData,
     pub sky: SkyData,
 }
@@ -71,16 +71,18 @@ pub fn emit(
     items.push_str("];\n");
     fs::write(reg_dir.join("items.rs"), items).context("write items.rs")?;
 
-    // ---- font.rs / gui.rs / sounds.rs / worldgen.rs ----
+    // ---- font.rs / gui.rs / worldgen.rs ----
     // (the splashes.rs write the first migration step retired — the
     // jar's own texts/splashes.txt the extract_runtime_assets walk now
     // copies verbatim into the runtime cache, the client's loader the
     // only parser; the lang.rs write the second migration step retired
     // the same walk — the jar's own lang/en_us.json the runtime cache
-    // keeps verbatim, the client's loader the only parser)
+    // keeps verbatim, the client's loader the only parser; the sounds.rs
+    // write the THIRD migration step retired — the asset-index fetch the
+    // generator copies verbatim into the runtime cache
+    // assets/minecraft/sounds.json, the client's loader the only parser)
     fs::write(reg_dir.join("font.rs"), crate::fontgen::emit(&gen.font)?).context("write font.rs")?;
     fs::write(reg_dir.join("gui.rs"), crate::uigen::emit(&gen.ui)?).context("write gui.rs")?;
-    fs::write(reg_dir.join("sounds.rs"), crate::soundgen::emit(&gen.sounds)?).context("write sounds.rs")?;
     fs::write(reg_dir.join("worldgen.rs"), crate::worldgen::emit(&gen.worldgen)?)
         .context("write worldgen.rs")?;
     fs::write(reg_dir.join("sky.rs"), crate::skygen::emit(&gen.sky)?).context("write sky.rs")?;
@@ -138,7 +140,6 @@ pub fn emit(
         "glyphs": gen.font.glyphs.len(),
         "fontTextures": gen.font.textures.len(),
         "guiSprites": gen.ui.sprites.len(),
-        "soundEvents": gen.sounds.events.len(),
         "biomes": gen.worldgen.biomes.len(),
         "noiseSettings": gen.worldgen.noise_settings.len(),
         "moonPhases": gen.sky.moon_phase_names.len(),

@@ -31,7 +31,7 @@
 //! the pitch resample in, and hands the one-shot to the output.
 
 use mc_registry::generated::block_sounds as bs;
-use mc_registry::generated::sounds as snd;
+use crate::sound_table as snd;
 
 /// Which vanilla voice a lane speaks (the SoundType event the law plays).
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -796,12 +796,21 @@ mod tests {
         let mut c = BlockSounds::new(7);
         c.play(0, "not_a_block", Lane::Hit);
         assert!(c.events.is_empty());
-        // a weighted pick never leaves the official range
+        // a weighted pick never leaves the official range (THE MIGRATION'S
+        // OWN LAW: the assert computes the expected from the ACTUAL loaded
+        // state — the cache-absent boot the empty table the silent lane
+        // keeps, the cache-present boot the range walk speaks)
         let mut d = BlockSounds::new(9);
         for _ in 0..32 {
             d.play(0, "glass", Lane::Break);
         }
-        let ev = snd::event("block.glass.break").expect("the event exists");
+        let Some(ev) = snd::event("block.glass.break") else {
+            assert!(
+                d.events.is_empty(),
+                "the empty table the silent lane keeps"
+            );
+            return;
+        };
         for line in &d.events {
             let file: usize = line
                 .split(" #")

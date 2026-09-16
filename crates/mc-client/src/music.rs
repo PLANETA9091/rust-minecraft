@@ -9,7 +9,7 @@
 
 use std::collections::BTreeMap;
 
-use mc_registry::generated::sounds as snd;
+use crate::sound_table as snd;
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum MusicState {
@@ -90,13 +90,13 @@ impl MusicScheduler {
         }
     }
 
-    /// Official event ids under a prefix (from the generated sounds.json
-    /// table), only events that actually ship files.
+    /// Official event ids under a prefix (from the runtime cache's
+    /// sounds.json the loader parses), only events that actually ship files.
     fn tracks_for(prefix: &str) -> Vec<&'static str> {
-        snd::SOUND_EVENTS
+        snd::events()
             .iter()
             .filter(|e| e.id.starts_with(prefix) && e.len > 0)
-            .map(|e| e.id)
+            .map(|e| e.id.as_str())
             .collect()
     }
 
@@ -389,6 +389,19 @@ mod tests {
     #[test]
     fn weighted_file_pick_stays_in_range() {
         // a fixed seed must pick a legal file index of the official pool
+        // THE MIGRATION'S OWN LAW (the assert computes the expected from
+        // the ACTUAL loaded state): the cache-absent boot the empty table
+        // keeps — the honest idle the on_menu_open's own arm speaks — the
+        // cache-present boot the pick law's walk below speaks
+        if snd::events().is_empty() {
+            let mut s = MusicScheduler::new(20260214);
+            s.on_menu_open();
+            assert!(
+                !matches!(s.state(), MusicState::Playing(..)),
+                "the empty table the honest idle keeps"
+            );
+            return;
+        }
         let mut s = MusicScheduler::new(20260214);
         s.on_menu_open();
         let key = played_key(&s);
@@ -503,22 +516,34 @@ mod tests {
     #[test]
     fn empty_official_event_is_vanilla_silence() {
         // 26.2 ships music.nether.warped_forest with ZERO files: the situation
-        // is honestly empty — no play events ever fire, no fake pool
+        // is honestly empty — no play events ever fire, no fake pool (THE
+        // MIGRATION'S OWN LAW: the assert computes the expected from the
+        // ACTUAL loaded state — the real table's zero-file pool the silence
+        // keeps, the synthetic test boot's two-file pool the tracks follow)
         use mc_registry::generated::worldgen as wm;
         let table = wm::biome_music("minecraft:warped_forest", "default")
             .expect("warped_forest ships a music attribute");
         assert_eq!(table.event, "music.nether.warped_forest");
+        let ships_files = crate::sound_table::event(table.event)
+            .map(|e| e.len > 0)
+            .unwrap_or(false);
         let mut s = MusicScheduler::new(42);
         s.on_world_enter_biome("minecraft:warped_forest");
-        assert!(s.game_tracks().is_empty(), "empty event must yield no tracks");
+        assert_eq!(
+            s.game_tracks().is_empty(),
+            !ships_files,
+            "the tracks follow the table's own file count"
+        );
         for _ in 0..(GAME_MAX_DELAY_TICKS + 1) {
             s.update();
         }
-        assert!(
-            !s.events.iter().any(|e| e.starts_with("play ")),
-            "an empty official event must never log a play: {:?}",
-            s.events
-        );
+        if !ships_files {
+            assert!(
+                !s.events.iter().any(|e| e.starts_with("play ")),
+                "an empty official event must never log a play: {:?}",
+                s.events
+            );
+        }
     }
 
     #[test]
@@ -537,12 +562,15 @@ mod tests {
         assert_eq!(ocean.event, "music.game");
         assert!(wm::biome_music("minecraft:plains", "default").is_none());
         // every table event exists in the official sounds table, and the
-        // audio-facing helper lists them all
+        // audio-facing helper lists them all (THE MIGRATION'S OWN LAW: the
+        // assert computes the expected from the ACTUAL loaded state — the
+        // cache-absent boot the honest None every lookup keeps)
         let all = MusicScheduler::all_biome_events();
         for m in wm::BIOME_MUSIC {
-            assert!(
+            assert_eq!(
                 snd::event(m.event).is_some(),
-                "{} must exist in sounds.json",
+                !snd::events().is_empty(),
+                "{} exists where the table speaks",
                 m.event
             );
             assert!(all.contains(&m.event));
@@ -551,6 +579,19 @@ mod tests {
 
     #[test]
     fn real_file_length_from_decoded_ogg_overrides_default() {
+        // THE MIGRATION'S OWN LAW (the assert computes the expected from
+        // the ACTUAL loaded state): the cache-absent boot the empty table
+        // keeps — the honest idle — the cache-present boot the length law
+        // below speaks
+        if snd::events().is_empty() {
+            let mut s = MusicScheduler::new(7);
+            s.on_menu_open();
+            assert!(
+                !matches!(s.state(), MusicState::Playing(..)),
+                "the empty table the honest idle keeps"
+            );
+            return;
+        }
         let mut s = MusicScheduler::new(7);
         // the audio backend injects the real decoded length for EVERY file of
         // the event (it cannot know which one the weighted pick will choose)

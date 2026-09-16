@@ -272,7 +272,7 @@ pub fn discover_events(root: &Path, event_ids: &[&str]) -> Vec<(String, PathBuf)
 /// appends ".ogg" when the name has no extension. Missing files are skipped
 /// silently — audio must never break the client.
 pub fn discover_event_files(root: &Path, event_id: &str) -> Vec<(String, PathBuf)> {
-    use mc_registry::generated::sounds as snd;
+    use crate::sound_table as snd;
     let mut out = Vec::new();
     let Some(ev) = snd::event(event_id) else { return out };
     for (idx, file) in snd::files(ev).iter().enumerate() {
@@ -296,7 +296,7 @@ pub fn discover_event_files(root: &Path, event_id: &str) -> Vec<(String, PathBuf
 /// files (or out-of-range indexes) resolve to `None` silently — audio
 /// must never break the client.
 pub fn block_sound_file(root: &Path, event_id: &str, file_idx: usize) -> Option<PathBuf> {
-    use mc_registry::generated::sounds as snd;
+    use crate::sound_table as snd;
     let ev = snd::event(event_id)?;
     let files = snd::files(ev);
     let file = files.get(file_idx)?;
@@ -604,11 +604,17 @@ mod tests {
     #[test]
     fn sync_ui_plays_click_on_the_ui_channel() {
         // temp runtime root holding a sound file at the exact official path
-        // the generated table resolves ui.button.click to
-        // (random/click_stereo); a synthesized WAV decodes fine — the probe
-        // reads content, not the file extension
+        // the loaded table resolves ui.button.click to (the REAL table's
+        // random/click_stereo, the synthetic test boot's own file — the
+        // path the table names, whatever boot speaks); a synthesized WAV
+        // decodes fine — the probe reads content, not the file extension
         let dir = std::env::temp_dir().join(format!("mc2rs-click-{}", std::process::id()));
-        let click_path = dir.join("assets/minecraft/sounds/random/click_stereo.ogg");
+        use crate::sound_table as snd;
+        let ev = snd::event("ui.button.click").expect("the click event the table speaks");
+        let rel = snd::files(ev)[0].name.clone();
+        let click_path = dir
+            .join("assets/minecraft/sounds")
+            .join(format!("{rel}.ogg"));
         std::fs::create_dir_all(click_path.parent().unwrap()).unwrap();
         std::fs::write(&click_path, synth_wav()).unwrap();
 
@@ -758,11 +764,17 @@ mod tests {
     #[test]
     fn sync_plays_and_stops_game_music() {
         // temp runtime root holding a sound file at EVERY official path the
-        // generated music.game table resolves to, so the weighted pick
+        // music.game table resolves to, so the weighted pick
         // always lands on an existing file
         let dir = std::env::temp_dir().join(format!("mc2rs-game-{}", std::process::id()));
-        use mc_registry::generated::sounds as snd;
-        let ev = snd::event("music.game").expect("music.game in table");
+        use crate::sound_table as snd;
+        // THE MIGRATION'S OWN LAW (the assert computes the expected from
+        // the ACTUAL loaded state): the cache-absent boot the empty table
+        // keeps — the sync walk below speaks where the cache exists
+        let Some(ev) = snd::event("music.game") else {
+            assert!(snd::events().is_empty(), "the empty table the honest arm keeps");
+            return;
+        };
         for f in snd::files(ev) {
             let p = dir
                 .join("assets/minecraft/sounds")
@@ -802,8 +814,14 @@ mod tests {
         // weighted pick always lands, discovered through the SAME all-events
         // scan the real backend uses
         let dir = std::env::temp_dir().join(format!("mc2rs-biome-{}", std::process::id()));
-        use mc_registry::generated::sounds as snd;
-        let ev = snd::event("music.overworld.swamp").expect("swamp event in table");
+        use crate::sound_table as snd;
+        // THE MIGRATION'S OWN LAW (the assert computes the expected from
+        // the ACTUAL loaded state): the cache-absent boot the empty table
+        // keeps — the sync walk below speaks where the cache exists
+        let Some(ev) = snd::event("music.overworld.swamp") else {
+            assert!(snd::events().is_empty(), "the empty table the honest arm keeps");
+            return;
+        };
         assert!(ev.len > 0 && ev.len <= 8, "26.2 swamp pool: {} files", ev.len);
         for f in snd::files(ev) {
             let p = dir

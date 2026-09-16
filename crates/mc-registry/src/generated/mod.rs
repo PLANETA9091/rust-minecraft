@@ -14,7 +14,6 @@ pub mod item_order;
 pub mod items;
 pub mod models;
 pub mod mob_effects;
-pub mod sounds;
 pub mod sky;
 pub mod skin;
 pub mod registry_order;

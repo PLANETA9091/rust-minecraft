@@ -649,7 +649,7 @@ fn generate(agent: &ureq::Agent, cache: &util::Cache, version: &str, out: &Path)
         }
     };
     let sounds_json = match &index {
-        Some(i) => match fetch_sounds_json(agent, cache, i) {
+        Some(i) => match fetch_sounds_json(agent, cache, i, &workspace_root) {
             Ok(b) => soundgen::generate(&b)?,
             Err(e) => {
                 eprintln!("      warning: sounds.json unavailable ({e}); emitting empty sound table");
@@ -728,7 +728,7 @@ fn generate(agent: &ureq::Agent, cache: &util::Cache, version: &str, out: &Path)
     );
 
     println!("[5/7] generating registry + build info...");
-    let gen = codegen::GenAll { font, ui, sounds: sounds_json, worldgen, sky };
+    let gen = codegen::GenAll { font, ui, worldgen, sky };
     let report_path = codegen::emit(&workspace_root, version, &client_sha1, &report, &gen)?;
 
     println!("[6/7] extracting REAL texture atlas (blockstates -> models -> PNGs)...");
@@ -775,11 +775,16 @@ fn fetch_asset_index(
 }
 
 /// Fetch the official sounds.json through the asset index (it ships as an
-/// index object, not inside the client jar).
+/// index object, not inside the client jar) and copy it VERBATIM into the
+/// runtime cache (assets-cache/jar/assets/minecraft/sounds.json — the
+/// generated/ -> runtime-load migration's third lane: the sound-event
+/// table lives OFF the compiled source, the client's loader the only
+/// parser — the only-if-absent law the other runtime files keep).
 fn fetch_sounds_json(
     agent: &ureq::Agent,
     cache: &util::Cache,
     index: &mc_assets::AssetIndex,
+    workspace_root: &Path,
 ) -> Result<Vec<u8>> {
     let obj = index
         .objects
@@ -789,6 +794,15 @@ fn fetch_sounds_json(
     let url = format!("https://resources.download.minecraft.net/{}/{}", &obj.hash[..2], obj.hash);
     let bytes = cache.fetch(agent, &format!("sounds-json:{}", obj.hash), &url)?;
     util::verify(&bytes, Some(obj.hash.as_str()), "sounds.json")?;
+    let dest = workspace_root.join("assets-cache/jar/assets/minecraft/sounds.json");
+    if !dest.exists() {
+        if let Some(parent) = dest.parent() {
+            std::fs::create_dir_all(parent)
+                .with_context(|| format!("mkdir {}", parent.display()))?;
+        }
+        std::fs::write(&dest, &bytes)
+            .with_context(|| format!("write {}", dest.display()))?;
+    }
     Ok(bytes)
 }
 

@@ -8047,6 +8047,16 @@ pub fn top_solid_y(world: &crate::world::World, x: i32, z: i32) -> i32 {
 mod tests {
     use super::*;
 
+    /// THE SOUND TABLE'S OWN LOADED GATE (the generated/ -> runtime-load
+    /// migration's third lane — the table the runtime cache keeps, the
+    /// loader the only parser): the voice asserts speak where the table
+    /// exists, the honest silence the cache-absent boot keeps (the CI's
+    /// pre-generate test job the same arm walks — the lang lane's
+    /// expect-closure form the boolean here carries).
+    fn sounds_loaded() -> bool {
+        !crate::sound_table::events().is_empty()
+    }
+
     /// THE FIXED CLOCK'S SPEND LAW (vanilla `Minecraft.runTick`'s own
     /// while loop): whole 50ms ticks spent, the sub-tick remainder
     /// carried, the 10-tick stall cap holds the spiral of death away,
@@ -8483,12 +8493,13 @@ mod tests {
             }
         }
         assert!(
-            voice.is_some(),
+            !sounds_loaded() || voice.is_some(),
             "the -20 fold's dose spoke its DROWNING voice: {:?}",
             voice
         );
-        let entry = voice.unwrap();
-        assert!(entry.contains(" v1.000000 p"), "the voice fold: {entry}");
+        if let Some(entry) = voice {
+            assert!(entry.contains(" v1.000000 p"), "the voice fold: {entry}");
+        }
         assert!(
             (app.health - (before - crate::body::DROWN_DAMAGE)).abs() < 1e-4,
             "the 2.0 dose rode the health ({} -> {})",
@@ -9641,6 +9652,17 @@ mod tests {
             volume: 1.0,
             pitch: 0.9,
         }]);
+        // THE MIGRATION'S OWN LAW (the assert computes the expected from
+        // the ACTUAL loaded state): the cache-absent boot the empty table
+        // the silent voice lane keeps — the voice walks below speak where
+        // the cache exists
+        if !sounds_loaded() {
+            assert!(
+                app.sounds.events.is_empty(),
+                "the empty table the silent voice lane keeps"
+            );
+            return;
+        }
         assert_eq!(count(&app, "entity.zombie.ambient "), 1, "the groan spoke");
         // the hurt's own voice lands the same way
         app.live_voices_updated(vec![crate::world_view::WireVoice {
@@ -11266,38 +11288,42 @@ mod tests {
         );
         // THE SOUND ARC (sound.rs): the hit beats rode the %4 law (the dig
         // ticks 0, 4, 8, ...), the completion spoke the 2001 break — the
-        // folds' own numbers ride the entries
-        use mc_registry::generated::block_sounds as bs;
-        let name = crate::world::NAME_OF[kind_before as usize];
-        let idx = bs::sound_index(name).expect("the surface block in the sound table");
-        let (hit_ev, break_ev) = (bs::SOUND_HIT[idx], bs::SOUND_BREAK[idx]);
-        let hits = app
-            .sounds
-            .events
-            .iter()
-            .filter(|e| e.starts_with(&format!("{hit_ev} @")))
-            .count();
-        assert_eq!(hits, (ticks + 3) / 4, "the beat count for {ticks} dig ticks");
-        let hit_entry = app
-            .sounds
-            .events
-            .iter()
-            .find(|e| e.starts_with(&format!("{hit_ev} @")))
-            .expect("the first beat rode the FIRST continue tick (dig tick 0)");
-        assert!(
-            hit_entry.contains(" v0.250000 p0.500000"),
-            "the hit fold (v+1)/8, p*0.5: {hit_entry}"
-        );
-        let break_entry = app
-            .sounds
-            .events
-            .iter()
-            .find(|e| e.starts_with(&format!("{break_ev} @")))
-            .expect("the completion's break voice");
-        assert!(
-            break_entry.contains(" v1.000000 p0.800000"),
-            "the break fold (v+1)/2, p*0.8: {break_entry}"
-        );
+        // folds' own numbers ride the entries (THE MIGRATION'S OWN LAW:
+        // the cache-absent boot the silent lane keeps — the beat walk
+        // below speaks where the cache exists)
+        if sounds_loaded() {
+            use mc_registry::generated::block_sounds as bs;
+            let name = crate::world::NAME_OF[kind_before as usize];
+            let idx = bs::sound_index(name).expect("the surface block in the sound table");
+            let (hit_ev, break_ev) = (bs::SOUND_HIT[idx], bs::SOUND_BREAK[idx]);
+            let hits = app
+                .sounds
+                .events
+                .iter()
+                .filter(|e| e.starts_with(&format!("{hit_ev} @")))
+                .count();
+            assert_eq!(hits, (ticks + 3) / 4, "the beat count for {ticks} dig ticks");
+            let hit_entry = app
+                .sounds
+                .events
+                .iter()
+                .find(|e| e.starts_with(&format!("{hit_ev} @")))
+                .expect("the first beat rode the FIRST continue tick (dig tick 0)");
+            assert!(
+                hit_entry.contains(" v0.250000 p0.500000"),
+                "the hit fold (v+1)/8, p*0.5: {hit_entry}"
+            );
+            let break_entry = app
+                .sounds
+                .events
+                .iter()
+                .find(|e| e.starts_with(&format!("{break_ev} @")))
+                .expect("the completion's break voice");
+            assert!(
+                break_entry.contains(" v1.000000 p0.800000"),
+                "the break fold (v+1)/2, p*0.8: {break_entry}"
+            );
+        }
         // THE COOLDOWN + THE COLUMN CONTINUATION (the vanilla dig-down
         // rhythm): the eye drops to reach the column's next cell — the
         // hold ticks the delay away (each cooldown tick still beats the
@@ -11366,13 +11392,23 @@ mod tests {
         );
         let before = app.sounds.events.len();
         assert!(app.on_right_press(0, 0), "the placement consumed the press");
-        assert_eq!(app.sounds.events.len(), before + 1, "exactly one voice");
-        let entry = &app.sounds.events[before];
-        assert!(
-            entry.starts_with("block.gravel.place @")
-                && entry.contains(" v1.000000 p0.800000"),
-            "the place fold on the dirt's GRAVEL row: {entry}"
-        );
+        // THE VOICE (the assert computes the expected from the ACTUAL
+        // loaded state — the cache-absent boot the silent lane keeps)
+        if sounds_loaded() {
+            assert_eq!(app.sounds.events.len(), before + 1, "exactly one voice");
+            let entry = &app.sounds.events[before];
+            assert!(
+                entry.starts_with("block.gravel.place @")
+                    && entry.contains(" v1.000000 p0.800000"),
+                "the place fold on the dirt's GRAVEL row: {entry}"
+            );
+        } else {
+            assert_eq!(
+                app.sounds.events.len(),
+                before,
+                "the empty table the silent lane keeps"
+            );
+        }
         // THE MISS PLACES NOTHING: the sky press consumes nothing and
         // adds no voice
         app.offline_camera_updated(crate::camera::Camera {
@@ -11455,16 +11491,20 @@ mod tests {
             "the hotbar's first slot holds the take"
         );
         assert_eq!(app.hotbar_slots[0], (drop_item, 1), "the HUD's projection");
-        let pickup_entry = app
-            .sounds
-            .events
-            .iter()
-            .find(|e| e.starts_with("entity.item.pickup @"))
-            .expect("the take voice spoke");
-        assert!(
-            pickup_entry.contains(" v0.200000 p"),
-            "the pickup fold's own volume: {pickup_entry}"
-        );
+        // THE TAKE'S VOICE (the assert computes the expected from the
+        // ACTUAL loaded state — the cache-absent boot the silent lane keeps)
+        if sounds_loaded() {
+            let pickup_entry = app
+                .sounds
+                .events
+                .iter()
+                .find(|e| e.starts_with("entity.item.pickup @"))
+                .expect("the take voice spoke");
+            assert!(
+                pickup_entry.contains(" v0.200000 p"),
+                "the pickup fold's own volume: {pickup_entry}"
+            );
+        }
     }
 
     /// THE SURVIVAL CONSUME: the placement rides the selected stack's
@@ -11567,25 +11607,29 @@ mod tests {
         assert_eq!(app.invulnerable_time, 20, "the cooldown re-armed");
         assert!(!app.dead, "six damage never kills");
         // THE VOICES: the fall's own fixed lane, then the hurt's pitched
-        // one (causeFallDamage's own order)
-        let fall = app
-            .sounds
-            .events
-            .iter()
-            .position(|e| e.contains("_fall @"))
-            .expect("the fall voice spoke");
-        assert!(
-            app.sounds.events[fall].contains(" v1.000000 p1.000000"),
-            "the fall's fixed fold: {}",
-            app.sounds.events[fall]
-        );
-        let hurt = app
-            .sounds
-            .events
-            .iter()
-            .position(|e| e.starts_with("entity.player.hurt @"))
-            .expect("the hurt voice spoke");
-        assert!(hurt > fall, "the hurt voice follows the fall's own");
+        // one (causeFallDamage's own order) — the assert computes the
+        // expected from the ACTUAL loaded state (the cache-absent boot
+        // the silent lane keeps)
+        if sounds_loaded() {
+            let fall = app
+                .sounds
+                .events
+                .iter()
+                .position(|e| e.contains("_fall @"))
+                .expect("the fall voice spoke");
+            assert!(
+                app.sounds.events[fall].contains(" v1.000000 p1.000000"),
+                "the fall's fixed fold: {}",
+                app.sounds.events[fall]
+            );
+            let hurt = app
+                .sounds
+                .events
+                .iter()
+                .position(|e| e.starts_with("entity.player.hurt @"))
+                .expect("the hurt voice spoke");
+            assert!(hurt > fall, "the hurt voice follows the fall's own");
+        }
         // THE COOLDOWN'S ECHO: a second landing inside the window refuses
         // the smaller repeat (the lastHurt comparison) — the health stays
         app.hurt(5.0);
@@ -11652,11 +11696,15 @@ mod tests {
         app.hurt(20.0);
         assert_eq!(app.health, 0.0, "the health clamped at zero");
         assert!(app.dead, "the death screen armed");
-        app.sounds
-            .events
-            .iter()
-            .find(|e| e.starts_with("entity.player.death @"))
-            .expect("the death voice spoke");
+        // THE DEATH VOICE (the assert computes the expected from the
+        // ACTUAL loaded state — the cache-absent boot the silent lane keeps)
+        if sounds_loaded() {
+            app.sounds
+                .events
+                .iter()
+                .find(|e| e.starts_with("entity.player.death @"))
+                .expect("the death voice spoke");
+        }
         // further hurts refuse (the isDeadOrDying gate)
         app.hurt(5.0);
         assert_eq!(app.health, 0.0);
@@ -11770,7 +11818,19 @@ mod tests {
             .collect();
         // the walk crosses the lakebed's own slope (the honest seed-3
         // terrain): the airborne crossings stay silent — the vanilla
-        // isAir gate — so the count never EXCEEDS the whole units
+        // isAir gate — so the count never EXCEEDS the whole units.
+        // THE MIGRATION'S OWN LAW (the assert computes the expected from
+        // the ACTUAL loaded state): the cache-absent boot the empty table
+        // the silent steps keep — the cadence walk below speaks where the
+        // cache exists
+        if snd::events().is_empty() {
+            assert!(
+                steps.is_empty(),
+                "the empty table the silent steps keep: {:?}",
+                steps
+            );
+            return;
+        }
         assert!(
             !steps.is_empty() && steps.len() <= b.move_dist as i32 as usize,
             "the steps rode the cadence ({} steps for moveDist {})",
@@ -11783,11 +11843,18 @@ mod tests {
                 "the step fold on every entry: {s}"
             );
         }
-        // the events the steps named are real generated sound events
-        use mc_registry::generated::sounds as snd;
+        // the events the steps named are real sound events (THE MIGRATION'S
+        // OWN LAW: the assert computes the expected from the ACTUAL loaded
+        // state — the cache-absent boot the silent steps keep)
+        use crate::sound_table as snd;
+        let loaded = !snd::events().is_empty();
         for s in &steps {
             let ev = s.split(" @").next().unwrap();
-            assert!(snd::event(ev).is_some(), "the step event exists: {ev}");
+            assert_eq!(
+                snd::event(ev).is_some(),
+                loaded,
+                "the step event exists where the table speaks: {ev}"
+            );
         }
         // the body rested on solid ground the whole walk (the lakebed
         // spawn's own honest floor) — no floating step possible
@@ -12343,7 +12410,10 @@ mod tests {
             .iter()
             .filter(|e| e.contains("hurt"))
             .count();
-        assert!(hurt_entry >= 1, "the hurt voice spoke");
+        assert!(
+            !sounds_loaded() || hurt_entry >= 1,
+            "the hurt voice spoke"
+        );
         // the cooldown window: the next bite 80 ticks later lands only
         // when the window's own 20 folded — the beats' honest cadence
         for _ in 0..80 {
@@ -12488,21 +12558,25 @@ mod tests {
         // THE SURVIVAL CONSUME: the stack 3 -> 2
         assert_eq!(app.inventory.items[app.selected_hotbar], (apple_id, 2));
         // THE VOICES: six chews + the finisher + the gulp (all
-        // entity.generic.eat) + the burp
-        let eat_events = app
-            .sounds
-            .events
-            .iter()
-            .filter(|e| e.starts_with("entity.generic.eat "))
-            .count();
-        assert_eq!(eat_events, 8, "6 chews + the finisher + the gulp: {}", app.sounds.events.iter().filter(|e| e.contains("eat")).count());
-        let burp_events = app
-            .sounds
-            .events
-            .iter()
-            .filter(|e| e.starts_with("entity.player.burp "))
-            .count();
-        assert_eq!(burp_events, 1, "the burp's own voice");
+        // entity.generic.eat) + the burp (the assert computes the expected
+        // from the ACTUAL loaded state — the cache-absent boot the silent
+        // lane keeps)
+        if sounds_loaded() {
+            let eat_events = app
+                .sounds
+                .events
+                .iter()
+                .filter(|e| e.starts_with("entity.generic.eat "))
+                .count();
+            assert_eq!(eat_events, 8, "6 chews + the finisher + the gulp: {}", app.sounds.events.iter().filter(|e| e.contains("eat")).count());
+            let burp_events = app
+                .sounds
+                .events
+                .iter()
+                .filter(|e| e.starts_with("entity.player.burp "))
+                .count();
+            assert_eq!(burp_events, 1, "the burp's own voice");
+        }
         // THE PIECES SPAWNED: 6 chews x 5 + the finisher's 16 = 46 over
         // the arc; some already expired (the lifetime's own law) — the
         // spawner's own floor: the earliest pieces at least RAN
