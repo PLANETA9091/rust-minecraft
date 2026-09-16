@@ -133,8 +133,8 @@ impl ArmModel {
 /// (`swing`, `updateSwingTime`, `getAttackAnim`, `getCurrentSwingDuration`
 /// + `SwingAnimation.DEFAULT = (WHACK, 6)` — the fist swing is 6 ticks).
 /// Our client advances one game tick per frame, so `tick()` rides the
-/// frame loop; the renderer samples `get_attack_anim(0.5)` (the canonical
-/// mid-tick partial the game's camera renders with).
+/// frame loop; the renderer samples `get_attack_anim(partial_tick)` —
+/// the fixed clock's own remainder the frame renders with.
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct SwingState {
     pub swinging: bool,

@@ -2742,4 +2742,32 @@ mod tests {
         // the clamp arm: partial 0.0 walks FROM the previous feet
         assert_eq!(b.lerped_pos(0.0), (b.prev_x, b.prev_y, b.prev_z));
     }
+
+    #[test]
+    fn the_walk_cosines_ride_the_frame_partial() {
+        // the two sampling laws the render state speaks (javap
+        // WalkAnimationState.speed/position — the backward
+        // extrapolation the setupAnim cosines walk): the store MOVED,
+        // so the partial chooses the phase the frame renders
+        let mut w = WalkAnimationState::default();
+        w.speed_old = 0.2;
+        w.speed = 0.6;
+        w.position = 3.0;
+        w.position_scale = 1.0;
+        // speed(partial): the old->current blend, clamped [0, 1]
+        assert!((w.speed_at(0.0) - 0.2).abs() < 1e-6);
+        assert!((w.speed_at(0.5) - 0.4).abs() < 1e-6);
+        assert!((w.speed_at(1.0) - 0.6).abs() < 1e-6);
+        w.speed = 9.0; // the clamp arm pins at 1.0
+        assert_eq!(w.speed_at(1.0), 1.0);
+        // position(partial): position - speed * (1 - partial) —
+        // 0.0 the pre-move phase whole, 1.0 the current phase
+        w.speed = 0.6;
+        assert!((w.position_at(0.0) - 2.4).abs() < 1e-6);
+        assert!((w.position_at(0.5) - 2.7).abs() < 1e-6);
+        assert!((w.position_at(1.0) - 3.0).abs() < 1e-6);
+        // the scale arm: the baby's 3.0 fold rides the product
+        w.position_scale = 3.0;
+        assert!((w.position_at(1.0) - 9.0).abs() < 1e-6);
+    }
 }

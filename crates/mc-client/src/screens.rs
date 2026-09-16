@@ -4726,20 +4726,20 @@ impl App {
         // instead of the arm; the empty hand draws the arm. Exactly one of
         // the two per frame. The EAT POSE rides the item's draw (the
         // consumable's hold: the pull-in + the bite bob + the rotations —
-        // the remaining the pose reads at the frame's own 0.5 partial).
+        // the remaining the pose reads at the frame's own partial_tick)
         let eat_pose = self.eating.as_ref().map(|eat| {
             crate::eat::apply_eat_transform(
                 eat.remaining(),
-                0.5,
+                self.partial_tick,
                 eat.total,
                 1.0, // the main hand's side (the right-handed view)
             )
         });
         if self.perspective.is_first_person() {
             if let Some(item) = &self.held_item {
-                item.draw_with_pose(fb, ctx.proj, self.swing.get_attack_anim(0.5), eat_pose);
+                item.draw_with_pose(fb, ctx.proj, self.swing.get_attack_anim(self.partial_tick), eat_pose);
             } else if let Some(arm) = &self.arm {
-                arm.draw(fb, ctx.proj, self.swing.get_attack_anim(0.5));
+                arm.draw(fb, ctx.proj, self.swing.get_attack_anim(self.partial_tick));
             }
         }
         // THE SCREEN EFFECT OVERLAYS (the vanilla ScreenEffectRenderer
@@ -5118,14 +5118,16 @@ impl App {
             return; // the skin asset failed its sha1 — the renderer stays honest
         };
         // THE RENDER STATE (LivingEntityRenderer.extractRenderState's own
-        // sampling, the 0.5 partial the camera lane speaks)
+        // sampling — every clock rides the frame's own partial_tick now:
+        // the walk cosines, the swing, the age — no canonical mid-tick
+        // stand-in any more)
         let state = crate::avatar::AvatarState {
             yaw_deg: body.yaw,
             pitch_deg: body.pitch,
-            walk_pos: body.walk.position_at(crate::avatar::RENDER_PARTIAL),
-            walk_speed: body.walk.speed_at(crate::avatar::RENDER_PARTIAL),
+            walk_pos: body.walk.position_at(self.partial_tick),
+            walk_speed: body.walk.speed_at(self.partial_tick),
             crouching: body.crouching,
-            attack_time: self.swing.get_attack_anim(0.5),
+            attack_time: self.swing.get_attack_anim(self.partial_tick),
             attack_right: true, // the client's own right main hand
             age_ticks: self.frame as f32 + 0.5,
             zombie: false,
@@ -5235,20 +5237,21 @@ impl App {
         for mob in &self.mobs {
             // THE RENDER STATE (extractRenderState's own sampling — the
             // head rides the netHeadYaw the AI's clamp speaks, the
-            // death clock rides the deathTime + partial read)
+            // death clock rides the deathTime + partial read, every
+            // clock the frame's own partial_tick now)
             let state = crate::avatar::AvatarState {
                 yaw_deg: mob.yaw,
                 pitch_deg: mob.head_pitch,
-                walk_pos: mob.walk.position_at(crate::avatar::RENDER_PARTIAL),
-                walk_speed: mob.walk.speed_at(crate::avatar::RENDER_PARTIAL),
+                walk_pos: mob.walk.position_at(self.partial_tick),
+                walk_speed: mob.walk.speed_at(self.partial_tick),
                 crouching: false,
-                attack_time: mob.swing.get_attack_anim(0.5),
+                attack_time: mob.swing.get_attack_anim(self.partial_tick),
                 attack_right: true,
                 age_ticks: mob.age_ticks as f32 + 0.5,
                 zombie: true,
                 zombie_aggressive: mob.aggressive,
                 head_yaw_off_deg: mob.head_yaw_off,
-                death_time: mob.death_time_at(crate::avatar::RENDER_PARTIAL),
+                death_time: mob.death_time_at(self.partial_tick),
             };
             // THE RENDER FOLD (javap Entity.render's own lerp): the
             // feet the frame walks ON — the prev the tick head saved,

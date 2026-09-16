@@ -79,10 +79,6 @@ use sha1::Digest;
 
 use crate::math::{Mat4, Vec3};
 
-/// The renderer samples the game's canonical mid-tick partial (the
-/// partial the eat pose and the swing lane already speak).
-pub const RENDER_PARTIAL: f32 = 0.5;
-
 /// `Mth.cos(float)` — the f64 cos narrowed back to f32 (the Mth body).
 fn mth_cos(x: f32) -> f32 {
     (x as f64).cos() as f32

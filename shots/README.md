@@ -2,7 +2,7 @@
 
 Every lane that ships pixels owes the folder a frame. The gallery is the
 proof the features exist as rendered images, not as test names alone.
-111 frames and counting — grouped below by the lane that spoke them.
+112 frames and counting — grouped below by the lane that spoke them.
 
 ## The F5 lane (the third-person avatar) — v0.3.154+
 
@@ -405,6 +405,7 @@ lasts 20 real minutes again, the eat hold 1.6s, the swing 0.3s.
 |---|---|
 | `partial_fold.png` | THE MID-TICK SAMPLE: the damage-star scene rendered at `--partial 0.5` — the crimson star hangs BETWEEN the tick lattices over the approaching zombie, the zombie's own feet halfway into the stride the last tick walked; the same staging at `--partial 0.0` / `--partial 1.0` diffs rms 17.1 / 16.7 against it (the fold's honest spread) |
 | `drops_fold.png` | THE LOOT'S OWN FOLD (v0.3.178): the drop lane rendered at `--partial 0.5` — the kill's rotten flesh hangs mid-bounce above the sand path, the dig's dirt rides the water's edge, the kill's three orbs fly the follow pull (the camera-facing quads the pulse speaks) — every entity BETWEEN the tick lattices the `Mth.lerp(partialTicks, xo, x)` law walks; the same staging at `--partial 0.0` / `--partial 1.0` diffs rms 25.2 / 25.2 against it (the fold's honest spread) |
+| `walk_fold.png` | THE STRIDE'S OWN FOLD (v0.3.179): the F5 avatar wading seed 42's pond rendered at `--partial 0.25` — the limb cosines ride the frame's own partial_tick now (the walk phase the WalkAnimationState.position(partial) extrapolates, the swing + the death flip the same extract speaks — the canonical 0.5 retired); the same staging at `--partial 0.0` / `--partial 1.0` diffs rms 18.7 / 24.7 against it (the limbs' own honest spread) |
 
 Regenerate the family (the flag the CLI speaks today):
 
@@ -428,6 +429,17 @@ cargo run -p mc-client --release -- --screen world --seed 20260214 \
 # --drops stages the dig's dirt + the kill's rotten flesh ahead of the
 # body (the popResource physics the gravity + sweep laws own); the
 # ItemDrop/ExperienceOrb lerp rides the same partial the body speaks
+```
+
+The stride's own frame (v0.3.179 — the limb cosines joined the fold):
+
+```sh
+cargo run -p mc-client --release -- --screen world --seed 42 \
+  --body --walk-ticks 2 --perspective third-back --partial 0.25 \
+  --ui-frame 3 --out shots/walk_fold.png
+# the render state's clocks — the walk cosines, the swing, the eat
+# wiggle, the death flip — sample the frame's own partial_tick now;
+# the frozen/staged scenes read identical (the goldens never moved)
 ```
 
 ## The lava-fog lane (the ember murk) — v0.3.167
