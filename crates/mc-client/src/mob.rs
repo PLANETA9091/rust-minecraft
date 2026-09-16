@@ -127,6 +127,22 @@ pub const BREED_COOLDOWN_TICKS: i32 = 6000;
 /// goal for; the canMate law the animal dump carries is the round's
 /// own bytecode evidence, the ring the goal's own shape keeps).
 pub const BREED_SEARCH_RANGE: f64 = 8.0;
+/// THE FOLLOWPARENTGOAL'S OWN VOCABULARY (javap `FollowParentGoal` the
+/// followparentgoal dump keeps — canUse/canContinueToUse/tick): the
+/// scan the baby's own bbox `inflate(8.0, 4.0, 8.0)` names (the
+/// getEntitiesOfClass ring — the same-class adults the box keeps),
+/// the 9.0 the close ring speaks (`d0 < 9.0 -> false` the start
+/// refuses, canContinueToUse's own `d < 9.0` the stop arms — the
+/// 3.0 the squared word), the speed 1.1 the Sheep's own registerGoals
+/// clinit keeps (`addGoal(4, new FollowParentGoal(this, 1.1))` —
+/// prio 4, the stroll's 7 the priority owns). The 256.0 give-up ring
+/// canContinueToUse speaks the re-arm's own box law folds — the
+/// per-frame scan the parent's drift answers before the 16.0 ring
+/// the navigation could ever speak.
+pub const FOLLOW_PARENT_RANGE: f64 = 8.0;
+pub const FOLLOW_PARENT_HEIGHT: f64 = 4.0;
+pub const FOLLOW_PARENT_CLOSE_SQ: f64 = 9.0;
+pub const FOLLOW_PARENT_SPEED: f64 = 1.1;
 /// `AgeableMob.getScale`'s own baby arm (the `isBaby() ? 0.5F : 1.0F`
 /// the render state's scale carries — the pose scale the
 /// LivingEntityRenderer folds around the feet anchor).
@@ -657,6 +673,16 @@ pub struct Zombie {
     attack_recheck: i64,
     /// the stroll's target (the navigation's own destination stand-in)
     stroll_target: Option<(f64, f64)>,
+    /// THE FOLLOWPARENTGOAL'S OWN ARM (the goal's own `parent` field
+    /// the canUse walk stores): the parent's id + the position
+    /// snapshot the tick's straight-line stand-in steers to — the
+    /// None the disarmed goal keeps (the caller's per-frame re-arm
+    /// the re-evaluation speaks)
+    follow_parent: Option<(i32, f64, f64, f64)>,
+    /// THE GOAL'S OWN SPEED MODIFIER (the moveTo's `speedModifier`
+    /// double the FollowParentGoal's 1.1 rides — the tick resets it
+    /// to 1.0, the armed goal the multiplication speaks)
+    move_speed_modifier: f64,
     /// the look goal's remaining clock (the lookTime)
     look_ticks: i32,
     /// the age clock (the bob's ageInTicks, 20 tps)
@@ -718,6 +744,8 @@ impl Zombie {
             ticks_until_attack: 0,
             attack_recheck: 0,
             stroll_target: None,
+            follow_parent: None,
+            move_speed_modifier: 1.0,
             look_ticks: 0,
             age_ticks: 0,
             ambient_time: -AMBIENT_INTERVAL_TICKS,
@@ -949,6 +977,10 @@ impl Zombie {
 
         let mut want_move = false;
         let (mut ix, mut iz) = (0.0f64, 0.0f64);
+        // THE GOALS' OWN SPEED (the moveTo's speedModifier the tick
+        // re-resolves — the armed follow the 1.1 speaks, every other
+        // goal the plain attribute keeps)
+        self.move_speed_modifier = 1.0;
 
         // THE TARGET SCAN (NearestAttackableTargetGoal(Player, mustSee)
         // — the FOLLOW_RANGE 35 ring, the dead never retarget)
@@ -1014,10 +1046,28 @@ impl Zombie {
             // the goal's stop(): the arms lower, the raise clock resets
             self.aggressive = false;
             self.raise_arm_ticks = 0;
-            // THE STROLL GOAL (prio 7): the canUse gate rides the
-            // 120-tick interval (the RandomStrollGoal's own), the
-            // target walks until the arrival slack speaks
-            if let Some((tx, tz)) = self.stroll_target {
+            // THE FOLLOWPARENTGOAL'S OWN TICK (prio 4 — the stroll's
+            // 7 the priority owns, the armed scan the caller's
+            // pre-pass keeps): the `moveTo(parent, 1.1)` the
+            // navigation's straight-line stand-in walks — the yaw
+            // faces the parent, the forward impulse rides the speed
+            // modifier the goal's own ctor speaks, the stroll's
+            // target the higher-priority goal replaces (the stop()
+            // walk the GoalSelector speaks)
+            if let Some((_id, px, _py, pz)) = self.follow_parent {
+                let dx = px - self.x;
+                let dz = pz - self.z;
+                let len = (dx * dx + dz * dz).sqrt().max(1e-9);
+                self.yaw = (-(dx / len)).atan2(dz / len).to_degrees() as f32;
+                ix = 0.0;
+                iz = 1.0;
+                want_move = true;
+                self.move_speed_modifier = FOLLOW_PARENT_SPEED;
+                self.stroll_target = None;
+            } else if let Some((tx, tz)) = self.stroll_target {
+                // THE STROLL GOAL (prio 7): the canUse gate rides the
+                // 120-tick interval (the RandomStrollGoal's own), the
+                // target walks until the arrival slack speaks
                 let dx = tx - self.x;
                 let dz = tz - self.z;
                 let d2 = dx * dx + dz * dz;
@@ -1092,7 +1142,7 @@ impl Zombie {
                     / (friction * friction * friction) as f64
             } else {
                 ZOMBIE_MOVEMENT_SPEED
-            };
+            } * self.move_speed_modifier;
             let rad = self.yaw as f64 * std::f64::consts::PI / 180.0;
             let (s, c) = (rad.sin(), rad.cos());
             self.vx += (ix * c - iz * s) * speed;
@@ -1678,6 +1728,81 @@ pub fn try_breed(
         }
     }
     out
+}
+
+/// THE FOLLOWPARENTGOAL'S OWN SCAN (javap `canUse` the followparentgoal
+/// dump keeps — the canUse walk the caller's pre-pass answers before
+/// the ticks, the goals' own moment): every BABY (`getAge() < 0` the
+/// first gate) scans the same-kind ADULTS (`getAge() >= 0` the loop's
+/// own skip, `isAlive` the `health > 0.0` word) whose box intersects
+/// the baby's own bbox `inflate(8.0, 4.0, 8.0)` (the getEntitiesOfClass
+/// ring the AABB.intersects inclusive law keeps), the nearest by the
+/// feet-to-feet `distanceToSqr` (the `d1 > d0` strict-greater skip —
+/// the first minimum the list order keeps), the arm only past the
+/// close ring (`d0 >= 9.0` — the 3.0 the squared word speaks). The
+/// armed tuple (the parent's id + the position snapshot) the tick's
+/// straight-line stand-in steers to; every other baby the disarmed
+/// None keeps. Returns the armed count (the caller's evidence).
+pub fn arm_follow_parents(mobs: &mut [Zombie]) -> usize {
+    // the adults' own snapshot (the level query's stand-in — the read
+    // the per-entity walk's borrow keeps)
+    let adults: Vec<(i32, MobKind, f64, f64, f64, (f64, f64, f64, f64, f64, f64))> = mobs
+        .iter()
+        .filter(|m| m.age >= 0 && m.health > 0.0)
+        .map(|m| (m.id, m.kind, m.x, m.y, m.z, m.box_for()))
+        .collect();
+    let mut armed = 0;
+    for i in 0..mobs.len() {
+        if mobs[i].age >= 0 {
+            continue;
+        }
+        let baby = &mobs[i];
+        let (bminx, bminy, bminz, bmaxx, bmaxy, bmaxz) = baby.box_for();
+        // the scan box (the inflate(8.0, 4.0, 8.0) the canUse speaks)
+        let (minx, miny, minz) = (
+            bminx - FOLLOW_PARENT_RANGE,
+            bminy - FOLLOW_PARENT_HEIGHT,
+            bminz - FOLLOW_PARENT_RANGE,
+        );
+        let (maxx, maxy, maxz) = (
+            bmaxx + FOLLOW_PARENT_RANGE,
+            bmaxy + FOLLOW_PARENT_HEIGHT,
+            bmaxz + FOLLOW_PARENT_RANGE,
+        );
+        let mut best: Option<(i32, f64, f64, f64, f64)> = None;
+        for (id, kind, ax, ay, az, abox) in &adults {
+            if *id == baby.id || *kind != baby.kind {
+                continue;
+            }
+            // the box law (AABB.intersects — the inclusive fold)
+            let (aminx, aminy, aminz, amaxx, amaxy, amaxz) = *abox;
+            if amaxx < minx
+                || aminx > maxx
+                || amaxy < miny
+                || aminy > maxy
+                || amaxz < minz
+                || aminz > maxz
+            {
+                continue;
+            }
+            let dx = ax - baby.x;
+            let dy = ay - baby.y;
+            let dz = az - baby.z;
+            let d2 = dx * dx + dy * dy + dz * dz;
+            // the nearest wins (d1 > d0 the skip — ties keep the first)
+            if best.map_or(true, |(_, bd2, _, _, _)| d2 <= bd2) {
+                best = Some((*id, d2, *ax, *ay, *az));
+            }
+        }
+        mobs[i].follow_parent = match best {
+            Some((id, d2, x, y, z)) if d2 >= FOLLOW_PARENT_CLOSE_SQ => {
+                armed += 1;
+                Some((id, x, y, z))
+            }
+            _ => None,
+        };
+    }
+    armed
 }
 
 /// THE ENTITY PICK's own ray-box test (javap `AABB.clip` — the slab
@@ -3007,6 +3132,164 @@ mod tests {
         assert_eq!(
             spawns[0].orb.3, expected_xp,
             "the three-draw span the fallback keeps"
+        );
+    }
+
+    #[test]
+    fn the_follow_parent_scan_arms_the_babys_nearest_adult() {
+        // javap FollowParentGoal.canUse: the baby the age word speaks,
+        // the same-kind adults the inflate(8,4,8) box keeps, the
+        // nearest the d1>d0 skip answers, the armed tuple the
+        // steering's snapshot keeps
+        let mut baby = Zombie::new(1, 0.0, 5.0, 0.0, 262);
+        baby.kind = MobKind::Sheep;
+        baby.age = BABY_START_AGE;
+        baby.on_ground = true;
+        let mut near = Zombie::new(2, 5.0, 5.0, 0.0, 263);
+        near.kind = MobKind::Sheep;
+        let mut far = Zombie::new(3, 8.0, 5.0, 0.0, 264);
+        far.kind = MobKind::Sheep;
+        let mut mobs = vec![baby, near, far];
+        let armed = arm_follow_parents(&mut mobs);
+        assert_eq!(armed, 1, "the one baby the scan arms");
+        let (id, x, y, z) = mobs[0]
+            .follow_parent
+            .expect("the armed tuple the nearest adult speaks");
+        assert_eq!(id, 2, "the nearest the d1>d0 skip answers");
+        assert_eq!(
+            (x, y, z),
+            (5.0, 5.0, 0.0),
+            "the snapshot the steering walks"
+        );
+        assert!(
+            mobs[1].follow_parent.is_none(),
+            "the adult the baby word refuses"
+        );
+        assert!(
+            mobs[2].follow_parent.is_none(),
+            "the second adult the same law refuses"
+        );
+    }
+
+    #[test]
+    fn the_follow_scan_refuses_the_wrong_rings() {
+        // the 9.0 close ring the start refuses (the 3.0 the squared
+        // word speaks), the boundary the >= law arms, the cross-kind
+        // the class law refuses, the baby sibling the adult word
+        // refuses, the dying parent the isAlive word refuses, the far
+        // adult the box law refuses
+        let baby = || {
+            let mut b = Zombie::new(1, 0.0, 5.0, 0.0, 262);
+            b.kind = MobKind::Sheep;
+            b.age = BABY_START_AGE;
+            b.on_ground = true;
+            b
+        };
+
+        // the adult INSIDE the close ring (distSq 6.25 < 9.0)
+        let mut close = Zombie::new(2, 2.5, 5.0, 0.0, 263);
+        close.kind = MobKind::Sheep;
+        let mut mobs = vec![baby(), close];
+        assert_eq!(
+            arm_follow_parents(&mut mobs),
+            0,
+            "the close ring the start refuses"
+        );
+        assert!(mobs[0].follow_parent.is_none(), "the disarmed None keeps");
+
+        // the boundary: exactly 3.0 out — the `d0 < 9.0 -> false` the
+        // >= arm answers
+        let mut edge = Zombie::new(2, 3.0, 5.0, 0.0, 263);
+        edge.kind = MobKind::Sheep;
+        let mut mobs = vec![baby(), edge];
+        assert_eq!(
+            arm_follow_parents(&mut mobs),
+            1,
+            "the boundary the >= law arms"
+        );
+
+        // the cross-kind adult the class law refuses
+        let mut cow = Zombie::new(2, 5.0, 5.0, 0.0, 263);
+        cow.kind = MobKind::Cow;
+        let mut mobs = vec![baby(), cow];
+        assert_eq!(
+            arm_follow_parents(&mut mobs),
+            0,
+            "the cross-kind the class law refuses"
+        );
+
+        // the baby sibling the adult word refuses
+        let mut sibling = Zombie::new(2, 5.0, 5.0, 0.0, 263);
+        sibling.kind = MobKind::Sheep;
+        sibling.age = BABY_START_AGE;
+        let mut mobs = vec![baby(), sibling];
+        assert_eq!(
+            arm_follow_parents(&mut mobs),
+            0,
+            "the baby sibling the adult word refuses"
+        );
+
+        // the dying parent the isAlive word refuses
+        let mut dying = Zombie::new(2, 5.0, 5.0, 0.0, 263);
+        dying.kind = MobKind::Sheep;
+        dying.health = 0.0;
+        let mut mobs = vec![baby(), dying];
+        assert_eq!(
+            arm_follow_parents(&mut mobs),
+            0,
+            "the dying parent the isAlive word refuses"
+        );
+
+        // the far adult the box law refuses (the inflate ring the
+        // bbox-intersects speaks)
+        let mut far = Zombie::new(2, 20.0, 5.0, 0.0, 263);
+        far.kind = MobKind::Sheep;
+        let mut mobs = vec![baby(), far];
+        assert_eq!(
+            arm_follow_parents(&mut mobs),
+            0,
+            "the far adult the box law refuses"
+        );
+    }
+
+    #[test]
+    fn the_babys_own_walk_folds_the_parent_steering() {
+        // the follow tick: the yaw faces the parent, the impulse rides
+        // the 1.1 the goal's ctor speaks (the stroll control the same
+        // walk at the plain attribute keeps — the displacement ratio
+        // the modifier pins), the stroll's target the higher priority
+        // replaces
+        let world = wide_flat_world();
+        let mut follow = Zombie::new(1, 8.0, 5.0, 8.0, 262);
+        follow.kind = MobKind::Sheep;
+        follow.age = BABY_START_AGE;
+        follow.on_ground = true;
+        follow.follow_parent = Some((2, 13.0, 5.0, 8.0)); // 5 east
+        follow.stroll_target = Some((-2.0, 8.0));
+        let ev = follow.tick(&world, None, NOON);
+        assert!(ev.attack.is_none(), "the follow no attack speaks");
+        assert!((follow.yaw - (-90.0)).abs() < 1e-6, "the yaw the parent's east speaks ({})", follow.yaw);
+        assert!(
+            follow.stroll_target.is_none(),
+            "the stroll's target the higher priority replaces"
+        );
+        let follow_dx = follow.x - 8.0;
+        assert!(follow_dx > 0.0, "the walk the parent's east speaks");
+
+        // the control: the same 5-east walk the stroll's own impulse
+        // rides — the ratio the 1.1 the moveTo's speedModifier pins
+        let mut stroll = Zombie::new(1, 8.0, 5.0, 8.0, 262);
+        stroll.kind = MobKind::Sheep;
+        stroll.age = BABY_START_AGE;
+        stroll.on_ground = true;
+        stroll.stroll_target = Some((13.0, 8.0));
+        stroll.tick(&world, None, NOON);
+        let stroll_dx = stroll.x - 8.0;
+        assert!(stroll_dx > 0.0, "the stroll's own walk the control speaks");
+        let ratio = follow_dx / stroll_dx;
+        assert!(
+            (ratio - FOLLOW_PARENT_SPEED).abs() < 1e-9,
+            "the 1.1 the modifier speaks ({ratio})"
         );
     }
 

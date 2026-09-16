@@ -2011,6 +2011,12 @@ impl App {
                             dead: self.dead,
                             width: crate::body::WIDTH,
                         });
+                        // THE FOLLOWPARENTGOAL'S OWN SCAN (the canUse
+                        // walk the babies' nearest adult answers — the
+                        // ticks' BEFORE the goals' own moment speaks,
+                        // the armed target the tick's straight-line
+                        // stand-in walks)
+                        crate::mob::arm_follow_parents(&mut self.mobs);
                         for mob in self.mobs.iter_mut() {
                             let ev = mob.tick(world, player.as_ref(), day_time);
                             // THE AISTEP'S OWN AMBIENT GATE (javap
@@ -12366,6 +12372,63 @@ mod tests {
         assert!(
             app.particles.iter().any(|p| p.kind == crate::particles::ParticleKind::Heart),
             "the burst the broadcast owes"
+        );
+    }
+
+    /// THE FOLLOWPARENTGOAL'S OWN WALK (the tick lane the family
+    /// answers end to end): the baby the caller's pre-pass scan arms
+    /// (the nearest adult the inflate ring keeps), the ticks walk the
+    /// straight-line stand-in — the distance the family's own walk
+    /// speaks, the close ring the 3.0 the disarm keeps.
+    #[test]
+    fn the_babys_follow_walks_the_family_through_the_tick_lane() {
+        let mut app = App::new(5);
+        app.enter_world();
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let surface = app.spawn_y;
+        // the adult the parent speaks — 5 blocks east of the baby
+        let mut adult = crate::mob::Zombie::new(
+            1,
+            c as f64 + 0.5 + 5.0,
+            surface as f64,
+            c as f64 + 0.5,
+            262,
+        );
+        adult.kind = crate::mob::MobKind::Sheep;
+        adult.on_ground = true;
+        let mut baby = crate::mob::Zombie::new(
+            2,
+            c as f64 + 0.5,
+            surface as f64,
+            c as f64 + 0.5,
+            263,
+        );
+        baby.kind = crate::mob::MobKind::Sheep;
+        baby.age = crate::mob::BABY_START_AGE;
+        baby.on_ground = true;
+        app.mobs.push(adult);
+        app.mobs.push(baby);
+        let d0 = 25.0f64; // the 5.0 the squared ring speaks
+        for _ in 0..20 {
+            app.update();
+        }
+        let baby_now = app
+            .mobs
+            .iter()
+            .find(|m| m.is_baby())
+            .expect("the baby the birth arms");
+        let adult_now = app
+            .mobs
+            .iter()
+            .find(|m| m.age >= 0)
+            .expect("the adult the scan armed");
+        let dx = adult_now.x - baby_now.x;
+        let dz = adult_now.z - baby_now.z;
+        let d1 = dx * dx + dz * dz;
+        assert!(
+            d1 < d0 - 1.0,
+            "the family's own walk the distance speaks ({d1} vs {d0})"
         );
     }
 
