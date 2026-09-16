@@ -156,6 +156,34 @@ pub struct WorldModel {
     /// fresh packet re-arms. Dies with the level (the dimension
     /// swap's population does not cross).
     pub entity_hurts: std::collections::BTreeMap<i32, i32>,
+    /// The mobs' PENDING VOICES (the Entity Sound packets — the
+    /// ambient/hurt/death sounds the SERVER plays and broadcasts:
+    /// `Mob.baseTick`'s playAmbientSound, `LivingEntity.hurt`'s
+    /// playHurtSound, `die`'s tail): the arms in wire order, each the
+    /// entity id + the sound's NAME (the registry arm resolved through
+    /// the synced sound_event table, the direct lane's own location —
+    /// `None` when the id lies outside the table, the honest
+    /// no-voice) + the volume/pitch. A MAILBOX like the hurts' — the
+    /// refresh ships each voice exactly once, the drain empties it.
+    pub entity_sounds: Vec<EntityVoiceArm>,
+}
+
+/// One pending mob voice — the Entity Sound packet's resolution the
+/// model keeps until the refresh ships it (see
+/// [`WorldModel::entity_sounds`]).
+#[derive(Debug, Clone, PartialEq)]
+pub struct EntityVoiceArm {
+    /// The sounding entity's id (the mob lane's own match key).
+    pub entity_id: i32,
+    /// The sound event's name — the registry arm resolved through the
+    /// synced sound_event table, the direct lane's own location;
+    /// `None` when the registry id lies outside the table (the honest
+    /// no-voice the projection drops).
+    pub name: Option<String>,
+    /// The volume, verbatim from the packet.
+    pub volume: f32,
+    /// The pitch, verbatim from the packet.
+    pub pitch: f32,
 }
 
 /// The model's view of ONE active mob effect on the LOCAL player — the
@@ -415,6 +443,7 @@ impl WorldModel {
             hurt: None,
             death_message: None,
             entity_hurts: std::collections::BTreeMap::new(),
+            entity_sounds: Vec::new(),
         }
     }
 
@@ -439,6 +468,14 @@ impl WorldModel {
     /// own window already spent. A fresh packet re-arms.
     pub fn drain_entity_hurts(&mut self) -> std::collections::BTreeMap<i32, i32> {
         std::mem::take(&mut self.entity_hurts)
+    }
+
+    /// The mobs' voice mailbox's own drain (`std::mem::take` — the
+    /// vanilla `handleEntitySound` plays the voice the moment the
+    /// packet lands; the client's lane ships each voice exactly once,
+    /// the mob lane's audio edge owns the playback after).
+    pub fn drain_entity_sounds(&mut self) -> Vec<EntityVoiceArm> {
+        std::mem::take(&mut self.entity_sounds)
     }
 
     /// One entity type's registry name, by the synced-registry id the
@@ -597,6 +634,9 @@ impl WorldModel {
                 // arms name the OLD population's ids — the new level's
                 // entities never read them)
                 self.entity_hurts.clear();
+                // the voices' mailbox dies with the level too (the same
+                // ids — the new level's population speaks its own)
+                self.entity_sounds.clear();
                 self.pin_dimension(&spawn.dimension);
                 true
             }
@@ -1065,6 +1105,29 @@ impl WorldModel {
                     self.entity_hurts.insert(a.entity_id, 10);
                     true
                 }
+            }
+            PlayEvent::EntitySound(s) => {
+                // THE MOBS' OWN VOICES (the SERVER plays the ambient/
+                // hurt/death sounds and broadcasts them): the voice
+                // resolves NOW, at the arm's birth — the registry id
+                // through the synced sound_event table, the direct
+                // lane's own location; the id outside the table ships
+                // UNNAMED (the honest no-voice the projection drops)
+                let name = match &s.sound {
+                    mc_protocol::ConsumableSound::Registry(id) => self
+                        .registry
+                        .sound_events
+                        .get(*id as usize)
+                        .cloned(),
+                    mc_protocol::ConsumableSound::Direct { id, .. } => Some(id.clone()),
+                };
+                self.entity_sounds.push(EntityVoiceArm {
+                    entity_id: s.entity_id,
+                    name,
+                    volume: s.volume,
+                    pitch: s.pitch,
+                });
+                true
             }
             PlayEvent::CombatKill(k) => {
                 if self.own_entity_id() == Some(k.player_id) {
@@ -2004,6 +2067,7 @@ mod tests {
             biome_tags: Vec::new(),
             world_clocks: Vec::new(),
             entity_types: Vec::new(),
+            sound_events: Vec::new(),
             timelines: Vec::new(),
             timeline_tags: Vec::new(),
         };
@@ -2402,6 +2466,7 @@ mod tests {
             // the synced id table: overworld = 0, the_end = 1
             world_clocks: vec!["minecraft:overworld".to_string(), "minecraft:the_end".to_string()],
             entity_types: Vec::new(),
+            sound_events: Vec::new(),
             timelines: Vec::new(),
             timeline_tags: Vec::new(),
         };
@@ -2466,6 +2531,7 @@ mod tests {
             biome_tags: Vec::new(),
             world_clocks: vec!["minecraft:overworld".to_string()],
             entity_types: Vec::new(),
+            sound_events: Vec::new(),
             timelines: vec![
                 // id 0: carries a curve but is NOT in the dimension's
                 // tag — vanilla merges only the tag's members, so this
@@ -2751,8 +2817,9 @@ mod tests {
                 biome_tags: Vec::new(),
                 world_clocks: Vec::new(),
                 entity_types: Vec::new(),
-            timelines: Vec::new(),
-            timeline_tags: Vec::new(),
+                sound_events: Vec::new(),
+                timelines: Vec::new(),
+                timeline_tags: Vec::new(),
             },
         });
         assert_eq!(m.loaded_chunks(), 1);
@@ -2838,8 +2905,9 @@ mod tests {
                 biome_tags: Vec::new(),
                 world_clocks: Vec::new(),
                 entity_types: Vec::new(),
-            timelines: Vec::new(),
-            timeline_tags: Vec::new(),
+                sound_events: Vec::new(),
+                timelines: Vec::new(),
+                timeline_tags: Vec::new(),
             },
         };
         m.adopt_snapshot(snap(&[
@@ -2941,6 +3009,7 @@ mod tests {
                 biome_tags: Vec::new(),
                 world_clocks: Vec::new(),
                 entity_types: Vec::new(),
+                sound_events: Vec::new(),
                 timelines: Vec::new(),
                 timeline_tags: Vec::new(),
             },
@@ -2971,6 +3040,7 @@ mod tests {
             biome_tags: Vec::new(),
             world_clocks: Vec::new(),
             entity_types: Vec::new(),
+            sound_events: Vec::new(),
             timelines: Vec::new(),
             timeline_tags: Vec::new(),
         };
@@ -3469,6 +3539,56 @@ mod tests {
         assert_eq!(m.drain_entity_hurts().get(&99), Some(&10), "the drain ships once");
         assert!(m.entity_hurts.is_empty(), "the mailbox spent");
         assert!(m.drain_entity_hurts().is_empty(), "the drained silence ships nothing");
+        // THE MOBS' OWN VOICES (the Entity Sound packets): the registry
+        // arm resolves through the synced sound_event table, the id
+        // outside it ships UNNAMED (the honest no-voice), the drain
+        // ships each voice once, the respawn clears the mailbox
+        m.registry.sound_events = vec![
+            "minecraft:entity.zombie.ambient".to_string(),
+            "minecraft:entity.zombie.hurt".to_string(),
+        ];
+        assert!(m.apply(PlayEvent::EntitySound(mc_protocol::EntitySoundPacket {
+            entity_id: 99,
+            sound: mc_protocol::ConsumableSound::Registry(0),
+            volume: 1.0,
+            pitch: 0.9,
+            seed: 7,
+        })));
+        assert!(m.apply(PlayEvent::EntitySound(mc_protocol::EntitySoundPacket {
+            entity_id: 99,
+            sound: mc_protocol::ConsumableSound::Registry(41), // outside the table
+            volume: 1.0,
+            pitch: 1.0,
+            seed: 7,
+        })));
+        assert!(m.apply(PlayEvent::EntitySound(mc_protocol::EntitySoundPacket {
+            entity_id: 99,
+            sound: mc_protocol::ConsumableSound::Direct {
+                id: "minecraft:entity.zombie.death".to_string(),
+                range: 16.0,
+            },
+            volume: 1.0,
+            pitch: 1.0,
+            seed: 7,
+        })));
+        assert_eq!(m.entity_sounds.len(), 3, "the three arms ride in wire order");
+        assert_eq!(
+            m.entity_sounds[0].name.as_deref(),
+            Some("minecraft:entity.zombie.ambient"),
+            "the registry arm resolved"
+        );
+        assert_eq!(m.entity_sounds[1].name, None, "the unknown id ships unnamed");
+        assert_eq!(
+            m.entity_sounds[2].name.as_deref(),
+            Some("minecraft:entity.zombie.death"),
+            "the direct lane's own location"
+        );
+        assert_eq!(m.entity_sounds[0].volume, 1.0);
+        assert_eq!(m.entity_sounds[0].pitch, 0.9);
+        let drained = m.drain_entity_sounds();
+        assert_eq!(drained.len(), 3, "the drain ships the whole mailbox");
+        assert!(m.entity_sounds.is_empty(), "the mailbox spent");
+        assert!(m.drain_entity_sounds().is_empty(), "the drained silence ships nothing");
         // COMBAT KILL: the message lands on the own id
         assert!(m.apply(PlayEvent::CombatKill(mc_protocol::PlayerCombatKill {
             player_id: 17,
@@ -3493,6 +3613,7 @@ mod tests {
             portal_cooldown: 0,
         })));
         assert!(m.entity_hurts.is_empty(), "the mailbox dies with the level");
+        assert!(m.entity_sounds.is_empty(), "the voices die with the level");
         // the vitals ride the player (NOT cleared — the health the
         // server speaks crosses the dimension like the effects do)
         assert_eq!(m.health, Some(vitals), "the vitals ride the player");
@@ -4073,6 +4194,7 @@ mod tests {
             biome_tags: Vec::new(),
             world_clocks: Vec::new(),
             entity_types: Vec::new(),
+            sound_events: Vec::new(),
             timelines: Vec::new(),
             timeline_tags: Vec::new(),
         };
@@ -4195,6 +4317,7 @@ mod tests {
             biome_tags: Vec::new(),
             world_clocks: Vec::new(),
             entity_types: Vec::new(),
+            sound_events: Vec::new(),
             timelines: Vec::new(),
             timeline_tags: Vec::new(),
         };
@@ -4276,6 +4399,7 @@ mod tests {
             biome_tags: Vec::new(),
             world_clocks: Vec::new(),
             entity_types: Vec::new(),
+            sound_events: Vec::new(),
             timelines: Vec::new(),
             timeline_tags: Vec::new(),
         };
@@ -4344,6 +4468,7 @@ mod tests {
             biome_tags: Vec::new(),
             world_clocks: Vec::new(),
             entity_types: Vec::new(),
+            sound_events: Vec::new(),
             timelines: Vec::new(),
             timeline_tags: Vec::new(),
         };
@@ -4404,6 +4529,7 @@ mod tests {
             biome_tags: Vec::new(),
             world_clocks: Vec::new(),
             entity_types: Vec::new(),
+            sound_events: Vec::new(),
             timelines: Vec::new(),
             timeline_tags: Vec::new(),
         };
@@ -4482,6 +4608,7 @@ mod tests {
             biome_tags: Vec::new(),
             world_clocks: vec!["minecraft:overworld".to_string()],
             entity_types: Vec::new(),
+            sound_events: Vec::new(),
             timelines: Vec::new(),
             timeline_tags: Vec::new(),
         };
@@ -4573,6 +4700,7 @@ mod tests {
             biome_tags: Vec::new(),
             world_clocks: Vec::new(),
             entity_types: Vec::new(),
+            sound_events: Vec::new(),
             timelines: Vec::new(),
             timeline_tags: Vec::new(),
         };
@@ -4654,6 +4782,7 @@ mod tests {
             biome_tags: Vec::new(),
             world_clocks: Vec::new(),
             entity_types: Vec::new(),
+            sound_events: Vec::new(),
             timelines: Vec::new(),
             timeline_tags: Vec::new(),
         };

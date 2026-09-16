@@ -129,6 +129,7 @@ fn run_join(
                 [(i32, i32); 9],
                 crate::world_view::HealthView,
                 Vec<crate::world_view::WireMob>,
+                Vec<crate::world_view::WireVoice>,
             ),
             String,
         >,
@@ -179,10 +180,12 @@ fn run_join(
             // cloud fog or None — the bytecode default's domain
             let cloud_fog_end = view.model.cloud_fog_end_distance();
             let first = view.refresh(crate::world_view::runtime_mapper);
-            // the mobs' hurt mailbox ships with this view — the drain
-            // empties it (each arm rides exactly one refresh, the mob
-            // lane's own tick owns the countdown after the landing)
+            // the mobs' hurt + voice mailboxes ship with this view —
+            // the drains empty them (each arm rides exactly one
+            // refresh, the mob lane's own tick/audio edge owns the
+            // countdown and the playback after the landing)
             view.model.drain_entity_hurts();
+            view.model.drain_entity_sounds();
             let spawn_biome = first.biome.clone();
             let shipped = tx.send((
                 id,
@@ -408,12 +411,14 @@ fn run_join(
                     Ok(event) => {
                         if view.apply(event) && last_ship.elapsed() >= VIEW_CADENCE {
                             let upd = view.refresh(crate::world_view::runtime_mapper);
-                            // the mobs' hurt mailbox ships with this
-                            // view — the drain empties it (each arm
-                            // rides exactly one refresh, the mob
-                            // lane's own tick owns the countdown after
-                            // the landing; a fresh packet re-arms)
+                            // the mobs' hurt + voice mailboxes ship with
+                            // this view — the drains empty them (each
+                            // arm rides exactly one refresh, the mob
+                            // lane's own tick/audio edge owns the
+                            // countdown and the playback after the
+                            // landing; a fresh packet re-arms)
                             view.model.drain_entity_hurts();
+                            view.model.drain_entity_sounds();
                             if live_tx
                                 .send(Ok((
                                     upd.world,
@@ -440,6 +445,10 @@ fn run_join(
                                     // the vitals — the mobs the server
                                     // spawned stream to the mob lane
                                     upd.mobs,
+                                    // the mobs' voices ride with the
+                                    // population — the sounds the server
+                                    // played stream to the voice lane
+                                    upd.voices,
                                 )))
                                 .is_err()
                             {
@@ -534,6 +543,7 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
                 [(i32, i32); 9],
                 crate::world_view::HealthView,
                 Vec<crate::world_view::WireMob>,
+                Vec<crate::world_view::WireVoice>,
             ),
             String,
         >,
@@ -729,7 +739,7 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
         // Disconnect screen, exactly like the original's kick
         while let Ok(upd) = live_rx.try_recv() {
             match upd {
-                Ok((world, camera, biome, container, held, hotbar, health, mobs)) => {
+                Ok((world, camera, biome, container, held, hotbar, health, mobs, voices)) => {
                     app.live_view_updated(world, camera, biome, container);
                     // the hand's lane beside the world's: the selected
                     // hotbar stack's model loads on change (the reload
@@ -748,6 +758,11 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
                     // lerpTo law walks — the zombies the server spawned
                     // render at its word)
                     app.live_mobs_updated(mobs);
+                    // the voice lane beside the mob lane's: the sounds
+                    // the SERVER played for its mobs land at the named
+                    // entities (the entity lookup's own gate — the
+                    // voice the id doesn't name drops)
+                    app.live_voices_updated(voices);
                 }
                 Err(reason) => app.live_session_lost(reason),
             }

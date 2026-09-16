@@ -3434,6 +3434,25 @@ impl App {
         // the moved-out map drops them (the server's truth, no ghosts)
     }
 
+    /// THE WIRE MOBS' VOICE LANE (the vanilla ClientLevel's own
+    /// handleEntitySound): the Entity Sound mailbox's shipped voices
+    /// land at the ENTITIES the level names — an id outside the mob
+    /// lane drops its voice (the entity lookup's own gate), a name
+    /// the audio clip table doesn't own is the player's honest no-op
+    /// (the play_voice's own pick_file return). The volume/pitch ride
+    /// the packet verbatim.
+    pub fn live_voices_updated(&mut self, voices: Vec<crate::world_view::WireVoice>) {
+        for v in voices {
+            if !self.net_mobs.iter().any(|m| m.id == v.entity_id) {
+                continue;
+            }
+            // the audio lane's clip table speaks the names WITHOUT the
+            // namespace prefix — the registry name strips its own
+            let clip = v.name.strip_prefix("minecraft:").unwrap_or(&v.name);
+            self.sounds.play_voice(self.frame, clip, v.volume, v.pitch);
+        }
+    }
+
     /// THE WIRE MOBS' OWN TICK (javap LivingEntity's remote walk —
     /// no AI, no physics: the server owns both): the tick head saves
     /// the prev feet + the head pair (the render's lerps walk them at
@@ -8666,6 +8685,64 @@ mod tests {
         app.tick_net_mobs();
         assert_eq!(app.net_mobs[0].hurt_time, 9, "the hit's own walk");
         assert_eq!(app.net_mobs[1].hurt_time, 0, "the silence's own walk");
+    }
+
+    /// THE WIRE MOBS' VOICE LANE (the vanilla handleEntitySound's own
+    /// gate): the Entity Sound mailbox's shipped voice lands at the
+    /// entity the level names — the registry name's namespace strip
+    /// the audio table speaks, the volume/pitch the packet carries
+    /// verbatim; the unknown id's voice drops (the entity lookup's
+    /// own gate), the unowned clip name is the honest no-op.
+    #[test]
+    fn the_wire_mobs_speak_the_servers_voices() {
+        let mut app = App::new(3);
+        app.open(ScreenKind::Connect);
+        app.net_world = Some(air_net_world(2, 0));
+        app.enter_network_world(None, Skybox::Overworld, None, None);
+        app.live_mobs_updated(vec![wire_zombie(7, 10.0, 64.0, 10.0)]);
+        let count = |app: &App, prefix: &str| {
+            app.sounds
+                .events
+                .iter()
+                .filter(|e| e.starts_with(prefix))
+                .count()
+        };
+        // the ambient groan lands (the registry name's own strip —
+        // `minecraft:entity.zombie.ambient` the audio table's
+        // `entity.zombie.ambient` clip speaks), the volume/pitch ride
+        app.live_voices_updated(vec![crate::world_view::WireVoice {
+            entity_id: 7,
+            name: "minecraft:entity.zombie.ambient".to_string(),
+            volume: 1.0,
+            pitch: 0.9,
+        }]);
+        assert_eq!(count(&app, "entity.zombie.ambient "), 1, "the groan spoke");
+        // the hurt's own voice lands the same way
+        app.live_voices_updated(vec![crate::world_view::WireVoice {
+            entity_id: 7,
+            name: "minecraft:entity.zombie.hurt".to_string(),
+            volume: 1.0,
+            pitch: 1.0,
+        }]);
+        assert_eq!(count(&app, "entity.zombie.hurt "), 1, "the hurt spoke");
+        // the UNKNOWN id's voice drops (the entity lookup's own gate —
+        // the vanilla client never plays a voice at a missing entity)
+        app.live_voices_updated(vec![crate::world_view::WireVoice {
+            entity_id: 404,
+            name: "minecraft:entity.zombie.death".to_string(),
+            volume: 1.0,
+            pitch: 1.0,
+        }]);
+        assert_eq!(count(&app, "entity.zombie.death "), 0, "the ghost is silent");
+        // the unowned clip name is the honest no-op (the play_voice's
+        // own pick_file return — the sound registry's own verdict)
+        app.live_voices_updated(vec![crate::world_view::WireVoice {
+            entity_id: 7,
+            name: "minecraft:this.sound.does.not.exist".to_string(),
+            volume: 1.0,
+            pitch: 1.0,
+        }]);
+        assert_eq!(count(&app, "this.sound.does.not.exist "), 0, "the no-op spoke not");
     }
 
     fn wire_zombie(id: i32, x: f64, y: f64, z: f64) -> crate::world_view::WireMob {

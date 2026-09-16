@@ -379,6 +379,15 @@ pub struct RegistryData {
     /// element payloads (the EntityType codec's data components) are
     /// walked past — the mob lane needs the NAME, nothing more.
     pub entity_types: Vec<String>,
+    /// The `minecraft:sound_event` entries in ARRIVAL ORDER — the id
+    /// table the Entity Sound packet's holder varint resolves through
+    /// (`ByteBufCodecs.holder(Registries.SOUND_EVENT, ...)` — the same
+    /// tagged holder the consumable's sound lane reads, wire tag >= 1
+    /// the `(tag - 1)` registry id). Names only: the element payloads
+    /// (the direct lane's optional range is NOT the registry element's
+    /// shape) are walked past — the voice lane needs the NAME, nothing
+    /// more.
+    pub sound_events: Vec<String>,
     /// The `minecraft:timeline` entries in ARRIVAL ORDER (javap:
     /// `Registries.TIMELINE` = the "minecraft:timeline" registry key,
     /// in `RegistryDataLoader`'s synced list). The sky-light curve the
@@ -450,6 +459,7 @@ impl RegistryData {
         self.biome_tags.extend(other.biome_tags);
         self.world_clocks.extend(other.world_clocks);
         self.entity_types.extend(other.entity_types);
+        self.sound_events.extend(other.sound_events);
         self.timelines.extend(other.timelines);
         self.timeline_tags.extend(other.timeline_tags);
     }
@@ -808,6 +818,20 @@ pub fn parse_registry_data(payload: &[u8]) -> Result<RegistryData> {
             // the element payloads (the EntityType codec's data
             // components) are walked past — nothing decodable needed
             out.entity_types.push(entry_id);
+            if present {
+                crate::play::skip_network_nbt(&mut c)
+                    .with_context(|| format!("skip {registry_name} entry nbt"))?;
+            }
+            continue;
+        }
+        if registry_name == "minecraft:sound_event" {
+            // same arrival-order id table (the Entity Sound packet's
+            // holder varint resolves through it — the voice lane reads
+            // the NAME, `entity.zombie.ambient` the audio lane's own
+            // clip table speaks); the element payloads are walked past
+            // (the holder's direct lane carries the range, the registry
+            // element rides nothing decodable)
+            out.sound_events.push(entry_id);
             if present {
                 crate::play::skip_network_nbt(&mut c)
                     .with_context(|| format!("skip {registry_name} entry nbt"))?;
@@ -1432,6 +1456,23 @@ pub mod test_support {
         p
     }
 
+    /// A `minecraft:sound_event` Registry Data packet: two entries in
+    /// arrival order — the zombie's ambient groan then its hurt voice
+    /// (the Entity Sound packet's holder varint resolves through this
+    /// table; the element payloads are walked past — the direct lane's
+    /// optional range is NOT the registry element's shape).
+    pub fn sound_event_packet() -> Vec<u8> {
+        let mut p = Vec::new();
+        write_varint(&mut p, clientbound::REGISTRY_DATA);
+        write_string(&mut p, "minecraft:sound_event");
+        write_varint(&mut p, 2);
+        write_string(&mut p, "minecraft:entity.zombie.ambient");
+        p.push(0); // no tag
+        write_string(&mut p, "minecraft:entity.zombie.hurt");
+        p.push(0);
+        p
+    }
+
     /// A `minecraft:timeline` Registry Data packet: the FOUR built-in
     /// overworld timelines in the in_overworld tag's id reality —
     /// `minecraft:day` (overworld clock, period 24000, the REAL
@@ -1575,7 +1616,8 @@ pub mod test_support {
 mod tests {
     use super::*;
     use super::test_support::{
-        entity_type_packet, registry_packet, timeline_packet, update_tags_packet, world_clock_packet,
+        entity_type_packet, registry_packet, sound_event_packet, timeline_packet,
+        update_tags_packet, world_clock_packet,
     };
     use crate::login::{encode_login_disconnect, encode_login_success, encode_set_compression};
     use crate::varint::write_varint;
@@ -2008,6 +2050,18 @@ mod tests {
         );
         assert!(clocks.entity_types.is_empty(), "no type knowledge rides the clock packet");
         assert!(ents.world_clocks.is_empty(), "no clock knowledge rides the type packet");
+        // the sound_event registry: the arrival-order id table the
+        // Entity Sound packet's holder varint resolves through (the
+        // voice lane reads the NAME, nothing more)
+        let sounds = parse_registry_data(&sound_event_packet()).expect("sound_event parses");
+        assert_eq!(
+            sounds.sound_events,
+            vec![
+                "minecraft:entity.zombie.ambient".to_string(),
+                "minecraft:entity.zombie.hurt".to_string()
+            ]
+        );
+        assert!(sounds.entity_types.is_empty(), "no type knowledge rides the sound packet");
         // the timeline registry: FOUR entries in arrival order, only
         // `minecraft:day` carrying the visual/sky_light_factor track —
         // the string/bool tracks and the ease field are walked past

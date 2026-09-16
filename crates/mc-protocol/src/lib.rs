@@ -46,7 +46,7 @@ pub use play::{
     PlaySession, PlayStart, PlayerPosition, PredicateTypeLane, PropertyMatcher, PropertyValue,
     SetEntityDataEntry, SetHeldSlot, SetHealth, SpawnInfo, TimeSync, WorldInfo, WorldOutcome, WorldSnapshot,
     DESIRED_CHUNKS_PER_TICK, encode_client_command, encode_container_click, encode_container_close, pack_entries,
-    HurtAnimation, PlayerCombatKill,
+    HurtAnimation, PlayerCombatKill, EntitySoundPacket,
 };
 pub use login::{connect_and_login, login, LoginOutcome};
 pub use status::{ping, PingResponse};

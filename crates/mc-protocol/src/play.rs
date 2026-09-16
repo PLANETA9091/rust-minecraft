@@ -108,6 +108,7 @@ pub mod clientbound {
         CB_UPDATE_MOB_EFFECT as UPDATE_MOB_EFFECT,
         CB_SET_HEALTH as SET_HEALTH, CB_HURT_ANIMATION as HURT_ANIMATION,
         CB_PLAYER_COMBAT_KILL as PLAYER_COMBAT_KILL,
+        CB_SOUND_ENTITY as SOUND_ENTITY,
     };
 }
 
@@ -5696,6 +5697,51 @@ pub fn parse_hurt_animation(payload: &[u8]) -> Result<HurtAnimation> {
     Ok(HurtAnimation { entity_id, yaw })
 }
 
+/// Entity Sound (clientbound play, generated id 116 —
+/// `minecraft:sound_entity`). javap of the real 26.2
+/// `ClientboundEntitySoundPacket`'s STREAM_CODEC read: a VarInt entity
+/// id, the SoundEvent holder (the SAME tagged union the consumable's
+/// sound lane reads — [`ConsumableSound`]; one codec, N call sites),
+/// the BE float volume, the BE float pitch, the i64 seed. The mob
+/// voices' own channel — the SERVER plays the ambient/hurt/death
+/// sounds (`Mob.baseTick`'s playAmbientSound, `LivingEntity.hurt`'s
+/// playHurtSound, `die`'s tail) and the named entity's client copy
+/// speaks them (`ClientLevel.handleEntitySound` → the entity lookup
+/// the voice rides).
+#[derive(Debug, Clone, PartialEq)]
+pub struct EntitySoundPacket {
+    /// The sounding entity's id (the level's entity registry key).
+    pub entity_id: i32,
+    /// The sound event: the registry id (the synced sound_event
+    /// table's arrival order) or the direct lane (location + range).
+    pub sound: ConsumableSound,
+    /// The volume, verbatim (the client's playSound carries it).
+    pub volume: f32,
+    /// The pitch, verbatim.
+    pub pitch: f32,
+    /// The seeded random's seed (the file-variant pick's own seed —
+    /// the engine's weighted roll keeps its own draw).
+    pub seed: i64,
+}
+
+/// Entity Sound's wire walk (see [`EntitySoundPacket`] — the VarInt id
+/// + the tagged sound holder + the two floats + the seed, the
+/// generated-id guard).
+pub fn parse_entity_sound(payload: &[u8]) -> Result<EntitySoundPacket> {
+    let mut c: &[u8] = payload;
+    let id = read_varint(&mut c)?;
+    anyhow::ensure!(
+        id == clientbound::SOUND_ENTITY,
+        "not an entity sound packet (0x{id:02X})"
+    );
+    let entity_id = read_varint(&mut c)?;
+    let sound = read_consumable_sound(&mut c)?;
+    let volume = read_f32(&mut c)?;
+    let pitch = read_f32(&mut c)?;
+    let seed = read_i64(&mut c)?;
+    Ok(EntitySoundPacket { entity_id, sound, volume, pitch, seed })
+}
+
 /// Player Combat Kill (clientbound play, generated id 68 —
 /// `minecraft:player_combat_kill`). javap of the real 26.2 record's
 /// STREAM_CODEC read: a VarInt player id, then the death message
@@ -5919,6 +5965,12 @@ pub enum PlayEvent {
     /// + the tilt yaw float (the damage feedback's own channel; the
     /// model filters the LOCAL player's own id).
     Hurt(HurtAnimation),
+    /// Entity Sound: ONE entity's played voice (the ambient/hurt/death
+    /// sounds the SERVER plays — `Mob.baseTick`'s playAmbientSound and
+    /// friends) — the VarInt id + the tagged sound holder + the
+    /// volume/pitch floats + the seed. The mob lane's own audio
+    /// channel (the voice the named entity's client copy speaks).
+    EntitySound(EntitySoundPacket),
     /// Player Combat Kill: the LOCAL player died — the VarInt player id
     /// + the death message component (the death screen's own wire).
     CombatKill(PlayerCombatKill),
@@ -6043,6 +6095,9 @@ impl<S: Read + Write> PlaySession<S> {
             }
             clientbound::SET_HEALTH => Ok(PlayEvent::Health(parse_set_health(&pkt)?)),
             clientbound::HURT_ANIMATION => Ok(PlayEvent::Hurt(parse_hurt_animation(&pkt)?)),
+            clientbound::SOUND_ENTITY => {
+                Ok(PlayEvent::EntitySound(parse_entity_sound(&pkt)?))
+            }
             clientbound::PLAYER_COMBAT_KILL => {
                 Ok(PlayEvent::CombatKill(parse_player_combat_kill(&pkt)?))
             }
@@ -10917,6 +10972,56 @@ mod tests {
         write_varint(&mut p, clientbound::HURT_ANIMATION);
         write_varint(&mut p, 1);
         assert!(parse_hurt_animation(&p).is_err());
+
+        // ENTITY SOUND: the VarInt id + the tagged sound holder + the
+        // volume/pitch floats + the seed (the registry arm rides tag 1
+        // = registry id 0 — the synced sound_event table's own order)
+        let mut p = Vec::new();
+        write_varint(&mut p, clientbound::SOUND_ENTITY);
+        write_varint(&mut p, 137);
+        write_varint(&mut p, 1); // holder tag 1 -> registry id 0
+        p.extend_from_slice(&0.85f32.to_be_bytes());
+        p.extend_from_slice(&1.2f32.to_be_bytes());
+        p.extend_from_slice(&1234567890123i64.to_be_bytes());
+        let s = parse_entity_sound(&p).unwrap();
+        assert_eq!(s.entity_id, 137);
+        assert_eq!(s.sound, ConsumableSound::Registry(0), "the registry arm");
+        assert_eq!(s.volume, 0.85);
+        assert_eq!(s.pitch, 1.2);
+        assert_eq!(s.seed, 1234567890123);
+        // the DIRECT lane rides tag 0: the location string + the range
+        let mut p = Vec::new();
+        write_varint(&mut p, clientbound::SOUND_ENTITY);
+        write_varint(&mut p, 5);
+        write_varint(&mut p, 0); // holder tag 0 -> direct
+        write_string(&mut p, "minecraft:entity.zombie.ambient");
+        p.extend_from_slice(&16.0f32.to_be_bytes());
+        p.extend_from_slice(&1.0f32.to_be_bytes());
+        p.extend_from_slice(&2.0f32.to_be_bytes());
+        p.extend_from_slice(&0i64.to_be_bytes());
+        let s = parse_entity_sound(&p).unwrap();
+        assert_eq!(
+            s.sound,
+            ConsumableSound::Direct {
+                id: "minecraft:entity.zombie.ambient".to_string(),
+                range: 16.0,
+            },
+            "the direct lane verbatim"
+        );
+        // the truncation map: the seed missing refuses
+        let mut p = Vec::new();
+        write_varint(&mut p, clientbound::SOUND_ENTITY);
+        write_varint(&mut p, 5);
+        write_varint(&mut p, 1);
+        p.extend_from_slice(&1.0f32.to_be_bytes());
+        p.extend_from_slice(&1.0f32.to_be_bytes());
+        assert!(parse_entity_sound(&p).is_err(), "seed missing");
+        // the NEGATIVE holder tag refuses (the consumable's own law)
+        let mut p = Vec::new();
+        write_varint(&mut p, clientbound::SOUND_ENTITY);
+        write_varint(&mut p, 5);
+        write_varint(&mut p, -7);
+        assert!(parse_entity_sound(&p).is_err(), "negative holder tag");
 
         // PLAYER COMBAT KILL: the VarInt id + the JSON component the
         // disconnect's own flatten law reads

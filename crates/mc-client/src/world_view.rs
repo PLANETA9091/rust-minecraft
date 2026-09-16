@@ -285,6 +285,26 @@ pub struct SnapshotView {
     /// model; every other type id stays honest data the screen
     /// doesn't draw yet.
     pub mobs: Vec<WireMob>,
+    /// The wire mobs' PENDING VOICES — the Entity Sound mailbox the
+    /// model resolved (see [`WireVoice`]): the sounds the SERVER
+    /// played for its mobs, shipped once with the refresh that
+    /// carried them (the worker's own drain empties the mailbox
+    /// after — each voice rides exactly one ship).
+    pub voices: Vec<WireVoice>,
+}
+
+/// One wire mob's played voice — the Entity Sound packet's own
+/// landing (the vanilla `ClientLevel.handleEntitySound`'s data): the
+/// sounding entity's id (the mob lane's match key), the sound event's
+/// NAME resolved through the synced sound_event registry (the
+/// verbatim registry name — the audio edge strips its namespace
+/// prefix), the volume and the pitch verbatim.
+#[derive(Debug, Clone, PartialEq)]
+pub struct WireVoice {
+    pub entity_id: i32,
+    pub name: String,
+    pub volume: f32,
+    pub pitch: f32,
 }
 
 /// One wire mob as the renderer consumes it — the Add Entity
@@ -855,6 +875,9 @@ pub fn materialize_snapshot_view(
         // the join snapshot's own population (a fresh world carries
         // none — the empty lane the projection walks)
         mobs: Vec::new(),
+        // and no voices yet (the join snapshot carries no played sounds
+        // — the empty mailbox the projection walks)
+        voices: Vec::new(),
     }
 }
 
@@ -929,6 +952,23 @@ impl LiveView {
                 })
             })
             .collect();
+        // the voices' own projection (the mailbox's arms verbatim — the
+        // UNNAMED arm (the id outside the sound_event table) is the
+        // honest no-voice the projection drops; the named ones ship
+        // once with this view)
+        let voices = self
+            .model
+            .entity_sounds
+            .iter()
+            .filter_map(|arm| {
+                Some(WireVoice {
+                    entity_id: arm.entity_id,
+                    name: arm.name.clone()?,
+                    volume: arm.volume,
+                    pitch: arm.pitch,
+                })
+            })
+            .collect();
         let Some(player) = self.model.player.as_ref() else {
             return SnapshotView {
                 world: materialize(
@@ -949,6 +989,7 @@ impl LiveView {
                 hotbar: hotbar_row_view(&self.model),
                 health: health_view(&self.model),
                 mobs,
+                voices,
             };
         };
         let origin = snapshot_window_origin(player, self.side);
@@ -973,6 +1014,7 @@ impl LiveView {
             // the wire's own population rides with them — the mobs the
             // server spawned follow the store exactly like the hearts do
             mobs,
+            voices,
         }
     }
 }
@@ -1321,6 +1363,35 @@ mod tests {
         assert!(view.model.entity_hurts.is_empty(), "the mailbox spent");
         let upd = view.refresh(example_mapper);
         assert_eq!(upd.mobs[0].hurt_time, 0, "the shipped arm never re-arms");
+        // THE VOICES' OWN SHIP (the Entity Sound mailbox): the named
+        // arm rides the view (the registry name verbatim), the id
+        // outside the sound_event table ships UNNAMED and the
+        // projection honestly drops it, the drain empties the mailbox
+        view.model.registry.sound_events =
+            vec!["minecraft:entity.zombie.ambient".to_string()];
+        view.model.apply(PlayEvent::EntitySound(mc_protocol::EntitySoundPacket {
+            entity_id: 7,
+            sound: mc_protocol::ConsumableSound::Registry(0),
+            volume: 1.0,
+            pitch: 0.85,
+            seed: 9,
+        }));
+        view.model.apply(PlayEvent::EntitySound(mc_protocol::EntitySoundPacket {
+            entity_id: 7,
+            sound: mc_protocol::ConsumableSound::Registry(17), // outside the table
+            volume: 1.0,
+            pitch: 1.0,
+            seed: 9,
+        }));
+        let upd = view.refresh(example_mapper);
+        assert_eq!(upd.voices.len(), 1, "the unnamed arm is the honest no-voice");
+        assert_eq!(upd.voices[0].entity_id, 7);
+        assert_eq!(upd.voices[0].name, "minecraft:entity.zombie.ambient");
+        assert_eq!(upd.voices[0].volume, 1.0);
+        assert_eq!(upd.voices[0].pitch, 0.85);
+        view.model.drain_entity_sounds();
+        let upd = view.refresh(example_mapper);
+        assert!(upd.voices.is_empty(), "the shipped voice never re-ships");
     }
 
     fn materialize_carries_the_models_day_tick() {
@@ -1982,6 +2053,7 @@ mod tests {
             biome_tags: Vec::new(),
             world_clocks: Vec::new(),
             entity_types: Vec::new(),
+            sound_events: Vec::new(),
             timelines: Vec::new(),
             timeline_tags: Vec::new(),
         };
@@ -2127,6 +2199,7 @@ mod tests {
             biome_tags: Vec::new(),
             world_clocks: Vec::new(),
             entity_types: Vec::new(),
+            sound_events: Vec::new(),
             timelines: Vec::new(),
             timeline_tags: Vec::new(),
         };
