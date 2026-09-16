@@ -65,6 +65,10 @@ pub const STANDING_HEIGHT: f64 = 1.8;
 pub const CROUCH_HEIGHT: f64 = 1.5;
 pub const STANDING_EYE: f64 = 1.62;
 pub const CROUCH_EYE: f64 = 1.27;
+/// The eye walk's own per-tick blend (javap the pose section's
+/// `eyeHeight += (f - eyeHeight) * 0.5` — the crouch eases over a few
+/// ticks, never snaps).
+pub const EYE_HEIGHT_BLEND: f64 = 0.5;
 pub const MAX_UP_STEP: f64 = 0.6; // the sneak edge-guard's probe depth
 pub const EDGE_STEP: f64 = 0.05; // the guard's own zeroing step
 pub const LOOK_SCALE: f64 = 0.15; // Entity.turn's degrees per unit
@@ -521,6 +525,14 @@ pub struct PlayerBody {
     pub prev_x: f64,
     pub prev_y: f64,
     pub prev_z: f64,
+    /// THE EYE'S OWN WALK (javap `LivingEntity.eyeHeight` / `oEyeHeight`):
+    /// the SMOOTHED eye height the pose blends toward (`eyeHeight +=
+    /// (f - eyeHeight) * 0.5` per tick — the crouch eases, the snap
+    /// never speaks) and the pre-tick pose the render's lerp walks
+    /// FROM. The camera reads the lerped pair; the gameplay reads keep
+    /// the pose target `eye_height()`.
+    pub eye_height: f64,
+    pub prev_eye_height: f64,
     /// The velocity (the vanilla deltaMovement).
     pub vx: f64,
     pub vy: f64,
@@ -704,6 +716,8 @@ impl PlayerBody {
             prev_x: x,
             prev_y: y,
             prev_z: z,
+            eye_height: STANDING_EYE,
+            prev_eye_height: STANDING_EYE,
             vx: 0.0,
             vy: 0.0,
             vz: 0.0,
@@ -777,13 +791,30 @@ impl PlayerBody {
         }
     }
 
-    /// The pose's eye height (the camera rides it).
+    /// The POSE's eye height (the target the smooth store blends
+    /// toward — the gameplay reads speak it: the eye cell, the look
+    /// targets, the reach). The CAMERA rides `lerped_eye_height` —
+    /// the smoothed walk the crouch eases along.
     pub fn eye_height(&self) -> f64 {
         if self.crouching {
             CROUCH_EYE
         } else {
             STANDING_EYE
         }
+    }
+
+    /// THE CAMERA'S OWN EYE (javap the render's
+    /// `Mth.lerp(partialTicks, oEyeHeight, eyeHeight)` fold): the
+    /// smoothed eye the frame rides — the previous tick's pose walked
+    /// `partial` of the way to the current. The partial >= 1.0 arm
+    /// speaks the CURRENT eye bit for bit (the headless lanes'
+    /// byte-identical contract).
+    pub fn lerped_eye_height(&self, partial: f32) -> f64 {
+        if partial >= 1.0 {
+            return self.eye_height;
+        }
+        let t = partial as f64;
+        self.prev_eye_height + (self.eye_height - self.prev_eye_height) * t
     }
 
     /// The speed attribute's current value (the base, the sprint's
@@ -880,6 +911,11 @@ impl PlayerBody {
         self.prev_x = x0;
         self.prev_y = y0;
         self.prev_z = z0;
+        // the eye's own walk head (javap LivingEntity.tick's own
+        // `oEyeHeight = eyeHeight` fold): the current smoothed pose
+        // becomes the previous, the blend below then eases the crouch
+        // the camera's lerp walks between
+        self.prev_eye_height = self.eye_height;
         // THE RISING BODY'S ACCUMULATION CLAMP (javap
         // LivingEntity.updateFallFlying's own first call —
         // checkFallDistanceAccumulation: `vy > -0.5 && fallDistance >
@@ -991,6 +1027,17 @@ impl PlayerBody {
         // while the key holds AND un-crouches only when the standing
         // box fits (the ceiling never embeds the grown body)
         self.crouching = self.want_crouch || !self.can_stand(world, self.x, self.z);
+        // THE EYE'S OWN BLEND (javap the pose section's own tail —
+        // `eyeHeight += (f - eyeHeight) * 0.5` the f the pose's eye
+        // speaks): the smoothed store walks the crouch over a few
+        // ticks, the camera's lerp rides the frame's partial between
+        // the two stores
+        let eye_target = if self.crouching {
+            CROUCH_EYE
+        } else {
+            STANDING_EYE
+        };
+        self.eye_height += (eye_target - self.eye_height) * EYE_HEIGHT_BLEND;
         // THE JUMP GATE (the aiStep's own): held jump + ground + the
         // delay elapsed -> jumpFromGround
         if self.jumping && self.on_ground && self.no_jump_delay == 0 {
@@ -2769,5 +2816,40 @@ mod tests {
         // the scale arm: the baby's 3.0 fold rides the product
         w.position_scale = 3.0;
         assert!((w.position_at(1.0) - 9.0).abs() < 1e-6);
+    }
+
+    #[test]
+    fn the_eye_height_walks_the_crouch_smooth() {
+        // the ctor starts settled at the standing eye
+        let w = flat_world();
+        let mut b = PlayerBody::new(3.0, 1.0, 3.0, 0.0, 0.0);
+        assert_eq!(b.eye_height, STANDING_EYE);
+        assert_eq!(b.lerped_eye_height(0.5), STANDING_EYE);
+        // the crouch key arms: one tick blends HALF the gap toward the
+        // crouch eye (the 0.5 fold), the head keeps the standing eye
+        // the lerp walks FROM
+        b.want_crouch = true;
+        b.tick(&w, false);
+        assert!(b.crouching, "the pose resolved");
+        assert_eq!(b.prev_eye_height, STANDING_EYE, "the head saved");
+        let half = STANDING_EYE + (CROUCH_EYE - STANDING_EYE) * EYE_HEIGHT_BLEND;
+        assert!((b.eye_height - half).abs() < 1e-12, "the blend's own half");
+        // the camera's lerp folds the midpoint; >= 1.0 the current
+        // bit for bit, 0.0 the prev whole
+        let mid = STANDING_EYE + (b.eye_height - STANDING_EYE) * 0.5;
+        assert!((b.lerped_eye_height(0.5) - mid).abs() < 1e-12);
+        assert_eq!(b.lerped_eye_height(1.0), b.eye_height);
+        assert_eq!(b.lerped_eye_height(0.0), b.prev_eye_height);
+        // the settled walk: the blend converges to the crouch eye,
+        // the release walks it back up
+        for _ in 0..12 {
+            b.tick(&w, false);
+        }
+        assert!((b.eye_height - CROUCH_EYE).abs() < 0.001, "the crouch settled");
+        b.want_crouch = false;
+        for _ in 0..12 {
+            b.tick(&w, false);
+        }
+        assert!((b.eye_height - STANDING_EYE).abs() < 0.001, "the stand settled");
     }
 }

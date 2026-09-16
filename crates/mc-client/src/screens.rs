@@ -4545,7 +4545,11 @@ impl App {
             let (lx, ly, lz) = body.lerped_pos(self.partial_tick);
             base.pos = crate::math::Vec3::new(
                 lx as f32,
-                (ly + body.eye_height()) as f32,
+                // THE EYE'S OWN WALK (the lerped oEyeHeight/eyeHeight
+                // pair the render fold speaks): the crouch eases over
+                // the ticks, the camera rides the frame's partial
+                // between the two stores — the snap never renders
+                (ly + body.lerped_eye_height(self.partial_tick)) as f32,
                 lz as f32,
             );
             // THE DETACHED CAMERA (Camera.setup's third-person branch):

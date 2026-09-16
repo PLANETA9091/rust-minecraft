@@ -2,7 +2,7 @@
 
 Every lane that ships pixels owes the folder a frame. The gallery is the
 proof the features exist as rendered images, not as test names alone.
-112 frames and counting — grouped below by the lane that spoke them.
+113 frames and counting — grouped below by the lane that spoke them.
 
 ## The F5 lane (the third-person avatar) — v0.3.154+
 
@@ -406,6 +406,7 @@ lasts 20 real minutes again, the eat hold 1.6s, the swing 0.3s.
 | `partial_fold.png` | THE MID-TICK SAMPLE: the damage-star scene rendered at `--partial 0.5` — the crimson star hangs BETWEEN the tick lattices over the approaching zombie, the zombie's own feet halfway into the stride the last tick walked; the same staging at `--partial 0.0` / `--partial 1.0` diffs rms 17.1 / 16.7 against it (the fold's honest spread) |
 | `drops_fold.png` | THE LOOT'S OWN FOLD (v0.3.178): the drop lane rendered at `--partial 0.5` — the kill's rotten flesh hangs mid-bounce above the sand path, the dig's dirt rides the water's edge, the kill's three orbs fly the follow pull (the camera-facing quads the pulse speaks) — every entity BETWEEN the tick lattices the `Mth.lerp(partialTicks, xo, x)` law walks; the same staging at `--partial 0.0` / `--partial 1.0` diffs rms 25.2 / 25.2 against it (the fold's honest spread) |
 | `walk_fold.png` | THE STRIDE'S OWN FOLD (v0.3.179): the F5 avatar wading seed 42's pond rendered at `--partial 0.25` — the limb cosines ride the frame's own partial_tick now (the walk phase the WalkAnimationState.position(partial) extrapolates, the swing + the death flip the same extract speaks — the canonical 0.5 retired); the same staging at `--partial 0.0` / `--partial 1.0` diffs rms 18.7 / 24.7 against it (the limbs' own honest spread) |
+| `crouch_eye_fold.png` | THE EYE'S OWN WALK (v0.3.180): the F5 crouch-wade rendered at `--partial 0.5` — the camera's eye rides the lerped oEyeHeight/eyeHeight pair the 0.5-per-tick blend speaks (the crouch eases over a few ticks, the pivot BETWEEN the stores — the snap never renders); the same staging at `--partial 0.0` / `--partial 1.0` diffs rms 25.1 / 25.1 against it (the eye + the stride's honest spread) |
 
 Regenerate the family (the flag the CLI speaks today):
 
@@ -440,6 +441,16 @@ cargo run -p mc-client --release -- --screen world --seed 42 \
 # the render state's clocks — the walk cosines, the swing, the eat
 # wiggle, the death flip — sample the frame's own partial_tick now;
 # the frozen/staged scenes read identical (the goldens never moved)
+```
+
+The eye's own frame (v0.3.180 — the camera's crouch snap retired):
+
+```sh
+cargo run -p mc-client --release -- --screen world --seed 42 \
+  --body --body-crouch --walk-ticks 2 --perspective third-back \
+  --partial 0.5 --ui-frame 3 --out shots/crouch_eye_fold.png
+# --body-crouch arms the resolved pose; the walk ticks advance the
+# 0.5-per-tick eye blend the lerped oEyeHeight/eyeHeight pair speaks
 ```
 
 ## The lava-fog lane (the ember murk) — v0.3.167
