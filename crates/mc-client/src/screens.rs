@@ -2011,10 +2011,12 @@ impl App {
                 // the in-love mobs arm — the spawns land AFTER the
                 // loop the disjoint-borrow pattern keeps)
                 let mut love_boxes: Vec<(f64, f64, f64, f64, f64, f64)> = Vec::new();
-                // the footsteps' own distances (the cadence's flat voice
-                // rides the mob's own spot — the DISTANCE LAW the trio
-                // speaks, the fold the play_voice_at keeps)
-                let mut mob_steps: Vec<f64> = Vec::new();
+                // the footsteps' own voices (the cadence's beat rides
+                // the mob's own spot — the DISTANCE LAW the trio
+                // speaks, the fold the play_voice_at keeps; the
+                // (event, volume, pitch) the kind's own law answers —
+                // the zombie's flat override, the animals' block law)
+                let mut mob_steps: Vec<(&'static str, f32, f32, f64)> = Vec::new();
                 // the day tick the burn lane's tracks read (the same
                 // clock the sky samples)
                 let day_time = (self.day_time_base + self.frame) as i64;
@@ -2081,8 +2083,27 @@ impl App {
                                 ));
                             }
                             if ev.step {
-                                mob_steps
-                                    .push(ear_distance(ear, mob.x, mob.y, mob.z));
+                                // THE KIND'S OWN VOICE (MobKind::step_voice
+                                // — the zombie's flat 0.15F/1.0F override,
+                                // the animals' Entity.playStepSound block
+                                // law): the block under the feet the same
+                                // getOnPos law the cadence's gate reads,
+                                // the world the same tick state keeps
+                                let under = crate::world::NAME_OF[world.get(
+                                    mob.x.floor() as i32,
+                                    (mob.y - 0.2).floor() as i32,
+                                    mob.z.floor() as i32,
+                                ) as usize];
+                                if let Some((event, volume, pitch)) =
+                                    mob.kind.step_voice(Some(under))
+                                {
+                                    mob_steps.push((
+                                        event,
+                                        volume,
+                                        pitch,
+                                        ear_distance(ear, mob.x, mob.y, mob.z),
+                                    ));
+                                }
                             }
                         }
                     }
@@ -2204,19 +2225,13 @@ impl App {
                         ));
                     }
                 }
-                for dist in mob_steps {
-                    // the footstep (Zombie.playStepSound's own flat
-                    // fold — the ZOMBIE_STEP event at 0.15F / 1.0F, no
-                    // randoms ride the voice; the mob's own spot the
-                    // DISTANCE LAW the trio speaks — the same fold the
-                    // ambient/hurt/death voices ride)
-                    self.sounds.play_voice_at(
-                        self.frame,
-                        "entity.zombie.step",
-                        crate::mob::ZOMBIE_STEP_VOLUME,
-                        crate::mob::ZOMBIE_STEP_PITCH,
-                        dist,
-                    );
+                for (event, volume, pitch, dist) in mob_steps {
+                    // the footstep (the kind's own voice — the zombie's
+                    // flat 0.15F/1.0F override, the animals' block law
+                    // the SoundType's own base speaks; the mob's own
+                    // spot the DISTANCE LAW the trio speaks — the same
+                    // fold the ambient/hurt/death voices ride)
+                    self.sounds.play_voice_at(self.frame, event, volume, pitch, dist);
                 }
                 // THE DEATH CLOCK'S REMOVAL (the tickDeath tail: the
                 // broadcast-60 tick discards the corpse) — and the
@@ -10383,6 +10398,82 @@ mod tests {
             assert!(
                 v < 0.15,
                 "the fold the step's gain speaks ({v} < 0.15): {line}"
+            );
+        }
+    }
+
+    /// THE ANIMALS' OWN STEP VOICE (Entity.playStepSound the base impl
+    /// the animals inherit — the state's SoundType speaks, NOT the
+    /// zombie's flat override): the hurt-stamped sheep the panic walk
+    /// flees, the footsteps the caller plays speak the blocks' own
+    /// events (the block.*.step rows the generated table keeps at the
+    /// SoundType's *0.15 fold) — the kind-blind zombie voice the old
+    /// stand-in kept for every kind, no longer.
+    #[test]
+    fn the_walking_sheep_speaks_the_blocks_own_voice() {
+        let mut app = App::new(3);
+        app.enter_world();
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let mut sheep = crate::mob::Zombie::new(
+            7,
+            c as f64 + 0.5,
+            app.spawn_y as f64,
+            c as f64 + 0.5,
+            5,
+        );
+        sheep.kind = crate::mob::MobKind::Sheep;
+        sheep.on_ground = true;
+        app.mobs.push(sheep);
+        // the hurt the panic's own stamp arms (the 40-tick window the
+        // flee walk speaks; the re-hurt the window's life re-arms —
+        // the damage the sheep's 20-health body survives)
+        for _ in 0..5 {
+            if let Some(m) = app.mobs.iter_mut().find(|m| m.id == 7) {
+                m.hurt(1.0);
+            }
+            for _ in 0..30 {
+                app.update();
+            }
+        }
+        if !sounds_loaded() {
+            assert!(
+                app.sounds.events.is_empty(),
+                "the empty table the silent voice lane keeps"
+            );
+            return;
+        }
+        assert!(
+            app.mobs.iter().find(|m| m.id == 7).map(|m| m.move_dist)
+                > Some(1.0),
+            "the panic walk accumulated the vanilla law"
+        );
+        // the sheep's own steps the BLOCK law names (the player never
+        // moved — no player block steps compete; the spawner's monsters
+        // the zombie event speaks, the filter never reads)
+        let block_steps: Vec<&String> = app
+            .sounds
+            .events
+            .iter()
+            .filter(|e| e.contains(".step @") && e.starts_with("block."))
+            .collect();
+        assert!(
+            !block_steps.is_empty(),
+            "the animals' block law the walk speaks: {:?}",
+            app.sounds.events
+        );
+        for line in &block_steps {
+            // the fold the SoundType's base speaks — the *0.15 volume
+            // the block law walks (the distance the gain attenuates)
+            let v: f32 = line
+                .rsplit(" v")
+                .next()
+                .and_then(|s| s.split(' ').next())
+                .and_then(|s| s.parse().ok())
+                .expect("the gain the log line carries");
+            assert!(
+                v <= 0.15,
+                "the animals' own fold ({v} <= 0.15): {line}"
             );
         }
     }

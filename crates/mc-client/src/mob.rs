@@ -486,6 +486,38 @@ impl MobKind {
             (MobKind::Pig, VoiceSlot::Death) => "entity.pig.death",
         }
     }
+
+    /// THE STEP VOICE (the playStepSound law the kinds split — javap
+    /// the 26.2 jar speaks both arms): the zombie's own override the
+    /// FLAT fold keeps (`Zombie.playStepSound`: `playSound(
+    /// getStepSound(), 0.15F, 1.0F)` — no block state the voice reads,
+    /// every surface the same word, no randoms ride); the animals
+    /// override NOTHING — Sheep/Cow/Pig carry no playStepSound the
+    /// classfile dumps answer — so the `Entity.playStepSound(pos,
+    /// state)` base impl speaks: `soundtype = state.getSoundType();
+    /// playSound(soundtype.getStepSound(), soundtype.getVolume() *
+    /// 0.15F, soundtype.getPitch())` — the block under the feet
+    /// (getOnPos) the voice reads, the SoundType's own base (volume,
+    /// pitch) the generated table carries, the `Lane::Step` fold the
+    /// *0.15 walks. `None` keeps the silent lanes honest: the air
+    /// block the cadence's own gate refuses, the unknown block the
+    /// table never names (the vanilla never hears them either).
+    pub fn step_voice(self, under: Option<&str>) -> Option<(&'static str, f32, f32)> {
+        match self {
+            MobKind::Zombie => Some((
+                "entity.zombie.step",
+                ZOMBIE_STEP_VOLUME,
+                ZOMBIE_STEP_PITCH,
+            )),
+            MobKind::Sheep | MobKind::Cow | MobKind::Pig => {
+                use mc_registry::generated::block_sounds as bs;
+                let idx = bs::sound_index(under?)?;
+                let (volume, pitch) =
+                    crate::sound::Lane::Step.fold(bs::SOUND_VOLUME[idx], bs::SOUND_PITCH[idx]);
+                Some((crate::sound::Lane::Step.event_of(idx), volume, pitch))
+            }
+        }
+    }
 }
 
 /// The voice slots (LivingEntity's own trio — the three playSound
@@ -626,8 +658,9 @@ pub struct MobEvents {
     /// entity.generic.extinguish_fire at 0.7 / the pitch)
     pub extinguished: Option<f32>,
     /// the footstep's own beat (the Entity.move cadence crossed
-    /// nextStep over solid ground this tick — the caller plays
-    /// entity.zombie.step at 0.15F / 1.0F flat)
+    /// nextStep over solid ground this tick — the caller plays the
+    /// kind's own voice, `MobKind::step_voice` the law speaks: the
+    /// zombie's flat override, the animals' block law)
     pub step: bool,
 }
 
@@ -2651,6 +2684,52 @@ mod tests {
             }
         }
         assert!(steps >= 1, "the landing fired the accumulated step");
+    }
+
+    /// THE STEP VOICE'S OWN SPLIT (javap the 26.2 jar's playStepSound
+    /// pair): the zombie's own override the FLAT fold keeps — every
+    /// surface (even the air the caller never passes) the same voice,
+    /// no block state the fold reads; the animals override NOTHING —
+    /// the Entity base impl the state's SoundType speaks (the
+    /// getStepSound() event at getVolume() * 0.15F / getPitch()), the
+    /// grass pad (1.0, 1.0) the fold walks to block.grass.step at
+    /// 0.15/1.0, the stone pad the same base pair answers. The air
+    /// and the unknown block the None keeps — the vanilla never
+    /// hears them either.
+    #[test]
+    fn the_step_voice_splits_the_kinds_the_block_law_speaks() {
+        // the zombie's flat override — two surfaces, one voice
+        for under in [None, Some("grass_block"), Some("stone")] {
+            assert_eq!(
+                MobKind::Zombie.step_voice(under),
+                Some((
+                    "entity.zombie.step",
+                    ZOMBIE_STEP_VOLUME,
+                    ZOMBIE_STEP_PITCH
+                )),
+                "the zombie's flat fold answers every surface"
+            );
+        }
+        // the animals' block law — the SoundType's own base the fold walks
+        for kind in [MobKind::Sheep, MobKind::Cow, MobKind::Pig] {
+            let (event, v, p) = kind
+                .step_voice(Some("grass_block"))
+                .expect("the grass pad's voice");
+            assert_eq!(event, "block.grass.step", "the grass pad's event");
+            assert_eq!((v, p), (0.15, 1.0), "the grass base pair the fold walks");
+            let (event, v, p) = kind
+                .step_voice(Some("stone"))
+                .expect("the stone pad's voice");
+            assert_eq!(event, "block.stone.step", "the stone pad's event");
+            assert_eq!((v, p), (0.15, 1.0), "the stone base pair the fold walks");
+            // the silent lanes the None keeps
+            assert_eq!(kind.step_voice(None), None, "the air never speaks");
+            assert_eq!(
+                kind.step_voice(Some("not_a_block")),
+                None,
+                "the unknown block the table never names"
+            );
+        }
     }
 
     /// THE PICK's own slab test (javap `AABB.clip`): the ray through
