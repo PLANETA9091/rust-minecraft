@@ -14,7 +14,11 @@
 //!   `ZombieAttackGoal(this, 1.0, false)`, prio 7
 //!   `WaterAvoidingRandomStrollGoal(this, 1.0)`, prio 8
 //!   `LookAtPlayerGoal(this, Player, 8.0)` + `RandomLookAroundGoal`;
-//!   targetSelector prio 2 `NearestAttackableTargetGoal(Player, true)`.
+//!   targetSelector prio 2 `NearestAttackableTargetGoal(Player, true)`;
+//!   the animals' own registerGoals the panic's prio-1 flee fills (the
+//!   Sheep's/Pig's `addGoal(1, new PanicGoal(this, 1.25))`, the
+//!   AbstractCow's `addGoal(1, new PanicGoal(this, 2.0))` — the cow's
+//!   goals the parent class fills) — the zombie's speaks none.
 //! - `MeleeAttackGoal` — attackInterval 20 (the ctor's bipush 20; the
 //!   canUse re-check gates every 20 ticks, the resetAttackCooldown
 //!   refills 20), `canPerformAttack` = isTimeToAttack &&
@@ -163,6 +167,34 @@ pub const FOLLOW_PARENT_SPEED: f64 = 1.1;
 pub const BREED_CLOSE_SQ: f64 = 9.0;
 pub const BREED_COURT_TICKS: i32 = 60;
 pub const BREED_SPEED: f64 = 1.0;
+/// THE PANICGOAL'S OWN VOCABULARY (javap `PanicGoal` the panicgoal
+/// dump keeps — canUse/shouldPanic/findRandomPosition/start/
+/// canContinueToUse/stop): the shouldPanic gate the last damage
+/// source's own 40-tick memory speaks (`Entity.getLastDamageSource`'s
+/// `tickCount - lastDamageStamp > 40 -> null` window the hurt stamp
+/// arms), the causes the jar's own PANIC_CAUSES tag json names —
+/// #panic_environmental_causes (in_fire/on_fire the fire lane's own
+/// brand rides) plus mob_attack and #is_player_attack (the melee hits
+/// speak) — EVERY hurt source this lane keeps is a member, the flee
+/// target the `DefaultRandomPos.getPos(mob, 5, 4)` ring names (the
+/// on-fire arm the `lookForWater(level, mob, 5)` lane speaks FIRST —
+/// the water cell the flee walks TO), the speeds the registerGoals
+/// clinits keep (the Sheep's/Pig's 1.25, the AbstractCow's 2.0 —
+/// `addGoal(1, new PanicGoal(this, D))` each speaks, the zombie's own
+/// registerGoals fills no panic goal the kind word keeps). The goal's
+/// own lifecycle the dump answers: canUse arms while the memory lives
+/// (the water arm first, else the random ring draw), start() the
+/// moveTo + the isRunning word sets, canContinueToUse the
+/// navigation-done walk keeps, stop() the isRunning clears (the
+/// PathfinderMob.isPanicking fallback's own read — the brain lane the
+/// repo never keeps, the running-PanicGoal walk the method's own else
+/// answers).
+pub const PANIC_DAMAGE_MEMORY_TICKS: i32 = 40;
+pub const PANIC_RING_XZ: f64 = 5.0;
+pub const PANIC_WATER_RING: i32 = 5;
+pub const PANIC_SPEED_SHEEP: f64 = 1.25;
+pub const PANIC_SPEED_COW: f64 = 2.0;
+pub const PANIC_SPEED_PIG: f64 = 1.25;
 /// `AgeableMob.getScale`'s own baby arm (the `isBaby() ? 0.5F : 1.0F`
 /// the render state's scale carries — the pose scale the
 /// LivingEntityRenderer folds around the feet anchor).
@@ -412,6 +444,21 @@ impl MobKind {
     /// kinds gate; the animals the goal-else chain's own peace keeps.
     pub fn is_monster(self) -> bool {
         matches!(self, MobKind::Zombie)
+    }
+
+    /// THE PANIC GOAL'S OWN PER-KIND WORD (the registerGoals clinits
+    /// the dumps keep: the Sheep's and the Pig's own `addGoal(1, new
+    /// PanicGoal(this, 1.25))`, the AbstractCow's own `addGoal(1, new
+    /// PanicGoal(this, 2.0))` — the cow's goals the parent class
+    /// fills; the zombie's own registerGoals speaks no panic goal —
+    /// the None the monster's lane keeps).
+    pub fn panic_speed(self) -> Option<f64> {
+        match self {
+            MobKind::Zombie => None,
+            MobKind::Sheep => Some(PANIC_SPEED_SHEEP),
+            MobKind::Cow => Some(PANIC_SPEED_COW),
+            MobKind::Pig => Some(PANIC_SPEED_PIG),
+        }
     }
 
     /// THE VOICE TABLE (the vanilla rows the four drawn kinds speak —
@@ -732,6 +779,15 @@ pub struct Zombie {
     /// double the FollowParentGoal's 1.1 rides — the tick resets it
     /// to 1.0, the armed goal the multiplication speaks)
     move_speed_modifier: f64,
+    /// THE PANICGOAL'S OWN FLEE (the goal's posXD/YD/ZD fields the
+    /// start()'s moveTo names): the flee walk the armed target keeps —
+    /// the Some the goal's isRunning word stands for (the
+    /// isPanicking fallback's own read), the None the stop law keeps
+    pub panic_target: Option<(f64, f64, f64)>,
+    /// THE LAST DAMAGE SOURCE'S OWN WINDOW (the shouldPanic gate the
+    /// `getLastDamageSource` 40-tick law keeps — the hurt stamp arms,
+    /// the tick's own drain closes)
+    pub panic_memory_ticks: i32,
     /// the look goal's remaining clock (the lookTime)
     look_ticks: i32,
     /// the age clock (the bob's ageInTicks, 20 tps)
@@ -797,6 +853,8 @@ impl Zombie {
             breed_partner: None,
             breed_love_time: 0,
             move_speed_modifier: 1.0,
+            panic_target: None,
+            panic_memory_ticks: 0,
             look_ticks: 0,
             age_ticks: 0,
             ambient_time: -AMBIENT_INTERVAL_TICKS,
@@ -914,6 +972,21 @@ impl Zombie {
         self.health -= amount * (1.0 - f6 / 25.0);
         self.hurt_time = HURT_DURATION_TICKS;
         self.walk.set_speed(crate::body::HURT_WALK_SPEED);
+        // THE PANIC STAMP (PanicGoal.shouldPanic's own gate — the last
+        // damage source the 40-tick window keeps; the jar's own
+        // PANIC_CAUSES tag names every source this lane speaks — the
+        // melee the mob_attack/#is_player_attack members ride, the
+        // fire lane the in_fire/on_fire members keep)
+        self.panic_memory_ticks = PANIC_DAMAGE_MEMORY_TICKS;
+    }
+
+    /// THE ISPANICKING WORD (javap `PathfinderMob.isPanicking` the
+    /// dump keeps — the brain lane the repo never keeps, the method's
+    /// own brain-dead fallback walk the running-goal law answers: any
+    /// RUNNING goal that is a PanicGoal speaks true — the flee walk
+    /// the armed target the isRunning word stands for).
+    pub fn is_panicking(&self) -> bool {
+        self.panic_target.is_some()
     }
 
     /// `LivingEntity.knockback(strength, x, z)` verbatim — the (x, 0, z)
@@ -1107,23 +1180,91 @@ impl Zombie {
             // the goal's stop(): the arms lower, the raise clock resets
             self.aggressive = false;
             self.raise_arm_ticks = 0;
-            // THE BREEDGOAL'S OWN TICK (prio 2 — the Sheep's own
-            // registerGoals clinit speaks `addGoal(2, new
-            // BreedGoal(this, 1.0))`, the follow's 4 the priority
-            // owns, the armed scan the caller's pre-pass keeps): the
-            // `moveTo(partner, speedModifier)` the navigation's
-            // straight-line stand-in walks — the yaw faces the
-            // partner, the forward impulse rides the 1.0 the goal's
-            // own ctor speaks, the stroll's target and the follow's
-            // own arm the higher priority replaces — and the court's
-            // own clock the `loveTime++` counts: the 60 the
-            // `adjustedTickDelay(60)` gate reads, the close ring the
-            // breed() trigger's `distanceToSqr(partner) < 9.0` the
-            // caller's post-tick scan answers, the 60-miss beyond the
-            // ring the canContinueToUse's own stop law resets (the
-            // goal re-arms, the court restarts — the pair's own drift
-            // the per-frame re-arm answers)
-            if let Some((_id, px, py, pz)) = self.breed_partner {
+            // THE PANICGOAL'S OWN FLEE (prio 1 — the Sheep's and the
+            // Pig's own registerGoals clinit speaks `addGoal(1, new
+            // PanicGoal(this, 1.25))`, the AbstractCow's own
+            // `addGoal(1, new PanicGoal(this, 2.0))` the parent's
+            // clinit keeps, the breed's 2 the priority owns, the
+            // zombie's own registerGoals fills no panic goal the kind
+            // word keeps): the tick's straight-line stand-in walks the
+            // armed flee target — the yaw faces it, the forward
+            // impulse rides the goal's own speedModifier (the
+            // per-kind word the registerGoals clinits keep), the
+            // arrival the canContinueToUse's own navigation-done law
+            // stops (the isRunning word the None answers — the canUse
+            // re-check the memory's window re-arms while it lives)
+            if let Some((tx, _ty, tz)) = self.panic_target {
+                let dx = tx - self.x;
+                let dz = tz - self.z;
+                if dx * dx + dz * dz < STROLL_ARRIVAL * STROLL_ARRIVAL {
+                    self.panic_target = None;
+                } else {
+                    let len = (dx * dx + dz * dz).sqrt();
+                    self.yaw = (-(dx / len)).atan2(dz / len).to_degrees() as f32;
+                    ix = 0.0;
+                    iz = 1.0;
+                    want_move = true;
+                    self.move_speed_modifier = self.kind.panic_speed().unwrap_or(1.0);
+                }
+                // the goal's own continued run the lower arms' stop law
+                // keeps (the flag-conflict the running walk owns — the
+                // breed's own stop the court's clock zeroes)
+                self.stroll_target = None;
+                self.follow_parent = None;
+                if self.breed_partner.take().is_some() {
+                    self.breed_love_time = 0;
+                }
+            } else if self.panic_memory_ticks > 0 && self.kind.panic_speed().is_some() {
+                // THE PANICGOAL'S OWN CANUSE (shouldPanic the memory's
+                // window answers — the kinds whose registerGoals fills
+                // the goal speak the arm): the on-fire arm the
+                // lookForWater(5) lane speaks FIRST — the water cell
+                // the flee walks TO — else the random ring the
+                // DefaultRandomPos.getPos(mob, 5, 4) draw keeps (the
+                // polar fold the stroll's own stand-in speaks). The
+                // goal's own start the lower arms replaces (the
+                // GoalSelector's flag-conflict law the higher priority
+                // keeps — the breed's own stop the court's clock zeroes)
+                let water_arm = if self.fire_ticks > 0 {
+                    self.look_for_water(world)
+                } else {
+                    None
+                };
+                match water_arm {
+                    Some((wx, wy, wz)) => self.panic_target = Some((wx, wy, wz)),
+                    None => {
+                        let ang = self.rng.next_f64() * std::f64::consts::TAU;
+                        let dist = self.rng.next_f64() * PANIC_RING_XZ;
+                        self.panic_target = Some((
+                            self.x + ang.cos() * dist,
+                            self.y,
+                            self.z + ang.sin() * dist,
+                        ));
+                    }
+                }
+                self.stroll_target = None;
+                self.follow_parent = None;
+                if self.breed_partner.take().is_some() {
+                    // the breed goal's own stop the court's clock zeroes
+                    self.breed_love_time = 0;
+                }
+            } else if let Some((_id, px, py, pz)) = self.breed_partner {
+                // THE BREEDGOAL'S OWN TICK (prio 2 — the Sheep's own
+                // registerGoals clinit speaks `addGoal(2, new
+                // BreedGoal(this, 1.0))`, the follow's 4 the priority
+                // owns, the armed scan the caller's pre-pass keeps): the
+                // `moveTo(partner, speedModifier)` the navigation's
+                // straight-line stand-in walks — the yaw faces the
+                // partner, the forward impulse rides the 1.0 the goal's
+                // own ctor speaks, the stroll's target and the follow's
+                // own arm the higher priority replaces — and the court's
+                // own clock the `loveTime++` counts: the 60 the
+                // `adjustedTickDelay(60)` gate reads, the close ring the
+                // breed() trigger's `distanceToSqr(partner) < 9.0` the
+                // caller's post-tick scan answers, the 60-miss beyond the
+                // ring the canContinueToUse's own stop law resets (the
+                // goal re-arms, the court restarts — the pair's own drift
+                // the per-frame re-arm answers)
                 let dx = px - self.x;
                 let dy = py - self.y;
                 let dz = pz - self.z;
@@ -1200,6 +1341,15 @@ impl Zombie {
                 self.head_yaw_off = (self.rng.next_f64() * 2.0 - 1.0) as f32 * 75.0;
                 self.head_pitch = 0.0;
             }
+        }
+
+        // THE PANIC MEMORY'S OWN DRAIN (Entity.getLastDamageSource's
+        // own window — the `tickCount - lastDamageStamp > 40 -> null`
+        // law the countdown answers: the goals' own read the window
+        // keeps alive the 40 ticks past the stamp, the drain the
+        // walk's own end closes)
+        if self.panic_memory_ticks > 0 {
+            self.panic_memory_ticks -= 1;
         }
 
         // THE BURN ROLL (Mob.aiStep's BURN_IN_DAYLIGHT branch ->
@@ -1328,6 +1478,33 @@ impl Zombie {
             }
         }
         false
+    }
+
+    /// THE PANICGOAL'S OWN WATER SCAN (javap `lookForWater(level, mob,
+    /// radius)` the canUse dump keeps — `BlockPos.findClosestMatch(
+    /// blockPosition(), radius, radius, the fluid-state WATER word)`:
+    /// the closest-match walk the chebyshev rings answer — the mob's
+    /// own block the first ring keeps, each shell the radius speaks,
+    /// the first water cell the nearest the match returns).
+    fn look_for_water(&self, world: &World) -> Option<(f64, f64, f64)> {
+        let bx = self.x.floor() as i32;
+        let by = self.y.floor() as i32;
+        let bz = self.z.floor() as i32;
+        for r in 0..=PANIC_WATER_RING {
+            for dy in -r..=r {
+                for dz in -r..=r {
+                    for dx in -r..=r {
+                        if dx.abs().max(dz.abs()).max(dy.abs()) != r {
+                            continue; // the shell the ring keeps
+                        }
+                        if world.get(bx + dx, by + dy, bz + dz) == crate::world::WATER {
+                            return Some(((bx + dx) as f64, (by + dy) as f64, (bz + dz) as f64));
+                        }
+                    }
+                }
+            }
+        }
+        None
     }
 
     /// The eye cell's (sky, block) levels — `BlockPos.containing(x,
@@ -1855,7 +2032,9 @@ pub fn try_breed(
 /// close ring (`d0 >= 9.0` — the 3.0 the squared word speaks). The
 /// armed tuple (the parent's id + the position snapshot) the tick's
 /// straight-line stand-in steers to; every other baby the disarmed
-/// None keeps. Returns the armed count (the caller's evidence).
+/// None keeps — the panicked baby the goal's own MOVEL flag the
+/// panic's prio-1 walk owns (the GoalSelector's conflict law the stop
+/// answers). Returns the armed count (the caller's evidence).
 pub fn arm_follow_parents(mobs: &mut [Zombie]) -> usize {
     // the adults' own snapshot (the level query's stand-in — the read
     // the per-entity walk's borrow keeps)
@@ -1867,6 +2046,13 @@ pub fn arm_follow_parents(mobs: &mut [Zombie]) -> usize {
     let mut armed = 0;
     for i in 0..mobs.len() {
         if mobs[i].age >= 0 {
+            continue;
+        }
+        if mobs[i].is_panicking() {
+            // the goal's own MOVEL flag the panic's prio-1 walk owns
+            // (the GoalSelector's conflict law the flag keeps) — the
+            // stop the disarmed None answers
+            mobs[i].follow_parent = None;
             continue;
         }
         let baby = &mobs[i];
@@ -1927,9 +2113,13 @@ pub fn arm_follow_parents(mobs: &mut [Zombie]) -> usize {
 /// (the getNearbyEntities ring the AABB.intersects inclusive law
 /// keeps — the uniform 8.0 the single-double inflate speaks), the
 /// nearest by the feet-to-feet `distanceToSqr` (the `d1 > d0`
-/// strict-greater skip — the first minimum the list order keeps,
-/// the isPanicking gate the panic state the repo never keeps the
-/// honest note names). The armed tuple (the mate's id + the position
+/// strict-greater skip — the first minimum the list order keeps),
+/// the isPanicking gate the getFreePartner's own candidate walk
+/// speaks (the breedgoal dump's `candidate.isPanicking() -> skip`
+/// line — the panicked mate the pairing refuses; the breeder's own
+/// panic the goal's MOVEL flag the prio-1 walk owns, the
+/// GoalSelector's conflict law the court's stop answers). The armed
+/// tuple (the mate's id + the position
 /// snapshot) the tick's `moveTo(partner, speedModifier)` stand-in
 /// steers to; the court's own clock the arm ride keeps (the goal's
 /// lifetime — only the disarm or the 60-expiry the tick's own stop
@@ -1942,7 +2132,7 @@ pub fn arm_breeders(mobs: &mut [Zombie]) -> usize {
     // the per-entity walk's borrow keeps)
     let mates: Vec<(i32, MobKind, f64, f64, f64, (f64, f64, f64, f64, f64, f64))> = mobs
         .iter()
-        .filter(|m| m.age >= 0 && m.health > 0.0 && m.in_love > 0)
+        .filter(|m| m.age >= 0 && m.health > 0.0 && m.in_love > 0 && !m.is_panicking())
         .map(|m| (m.id, m.kind, m.x, m.y, m.z, m.box_for()))
         .collect();
     let mut armed = 0;
@@ -1950,7 +2140,11 @@ pub fn arm_breeders(mobs: &mut [Zombie]) -> usize {
         // the canUse first gate (isInLove) — the baby's age word and
         // the dying body the canMate law keeps: the goal's stop the
         // disarmed None answers (the cooled pair's own clock rests)
-        if mobs[i].age < 0 || mobs[i].in_love <= 0 || mobs[i].health <= 0.0 {
+        if mobs[i].age < 0
+            || mobs[i].in_love <= 0
+            || mobs[i].health <= 0.0
+            || mobs[i].is_panicking()
+        {
             mobs[i].breed_partner = None;
             mobs[i].breed_love_time = 0;
             continue;
@@ -3873,6 +4067,296 @@ mod tests {
         let mut mobs = vec![a, b];
         let spawns = try_breed(&mut mobs, &mut next_id, &mut Lcg::new(42));
         assert_eq!(spawns.len(), 1, "the met court the child answers");
+    }
+
+    #[test]
+    fn the_hurts_own_stamp_arms_the_panic_memory() {
+        // shouldPanic's own gate: the last damage source the 40-tick
+        // memory keeps (Entity.getLastDamageSource's own window), the
+        // countdown the tick's own drain closes, the dead the hurt
+        // gate refuses
+        let world = ground_world();
+        let mut sheep = Zombie::new(1, 8.0, 5.0, 8.0, 262);
+        sheep.kind = MobKind::Sheep;
+        assert_eq!(
+            sheep.panic_memory_ticks, 0,
+            "the peace the unhurt body keeps"
+        );
+        sheep.hurt(2.0);
+        assert_eq!(
+            sheep.panic_memory_ticks, PANIC_DAMAGE_MEMORY_TICKS,
+            "the 40 the stamp arms"
+        );
+        // the goals' own read the window keeps alive, the drain the
+        // walk's own end speaks
+        sheep.tick(&world, None, NOON);
+        assert_eq!(
+            sheep.panic_memory_ticks,
+            PANIC_DAMAGE_MEMORY_TICKS - 1,
+            "the window the tick drains"
+        );
+        for _ in 0..(PANIC_DAMAGE_MEMORY_TICKS - 1) {
+            sheep.tick(&world, None, NOON);
+        }
+        assert_eq!(sheep.panic_memory_ticks, 0, "the window the drain closes");
+        // the dead the hurt gate refuses (the dying never re-hurt —
+        // the stamp the corpse never re-arms)
+        let mut corpse = Zombie::new(2, 8.0, 5.0, 8.0, 263);
+        corpse.kind = MobKind::Sheep;
+        corpse.health = 0.0;
+        corpse.hurt(2.0);
+        assert_eq!(
+            corpse.panic_memory_ticks, 0,
+            "the dead the hurt gate refuses"
+        );
+    }
+
+    #[test]
+    fn the_panic_scan_arms_the_flee_ring() {
+        // canUse's own law: the memory's window the shouldPanic gate
+        // answers, the flee target the DefaultRandomPos.getPos(mob, 5,
+        // 4) ring keeps, the zombie's own registerGoals the kind gate
+        // keeps (the monster's lane the panic never fills)
+        let world = wide_flat_world();
+        let mut sheep = Zombie::new(1, 10.0, 5.0, 10.0, 262);
+        sheep.kind = MobKind::Sheep;
+        sheep.on_ground = true;
+        sheep.hurt(2.0);
+        sheep.tick(&world, None, NOON);
+        let (tx, ty, tz) = sheep
+            .panic_target
+            .expect("the flee target the canUse draw arms");
+        let d2 = (tx - 10.0) * (tx - 10.0) + (tz - 10.0) * (tz - 10.0);
+        assert!(
+            d2 <= PANIC_RING_XZ * PANIC_RING_XZ + 1e-9,
+            "the ring the 5.0 speaks ({d2})"
+        );
+        assert_eq!(ty, 5.0, "the ground plane the walk keeps");
+
+        // the zombie's own registerGoals speaks no panic goal — the
+        // memory the hurt stamp arms never draws
+        let mut zombie = Zombie::new(2, 10.0, 5.0, 10.0, 262);
+        zombie.hurt(2.0);
+        zombie.tick(&world, None, NOON);
+        assert!(
+            zombie.panic_target.is_none(),
+            "the monster's own registerGoals the panic never fills"
+        );
+
+        // the unhurt body the shouldPanic gate refuses — no draw, no
+        // flee
+        let mut calm = Zombie::new(3, 10.0, 5.0, 10.0, 262);
+        calm.kind = MobKind::Sheep;
+        calm.on_ground = true;
+        calm.tick(&world, None, NOON);
+        assert!(
+            calm.panic_target.is_none(),
+            "the unhurt body the shouldPanic gate refuses"
+        );
+    }
+
+    #[test]
+    fn the_panic_walk_folds_the_flee_steering() {
+        // the tick's flee walk: the yaw faces the target, the impulse
+        // rides the 1.25 the Sheep's own clinit speaks (the stroll
+        // control the same walk at the plain attribute keeps — the
+        // ratio pins), the cow's own 2.0 the AbstractCow clinit keeps,
+        // the breed's stale arm the flag-conflict law replaces (the
+        // court's own clock the stop zeroes)
+        let world = wide_flat_world();
+        let mut flee = Zombie::new(1, 8.0, 5.0, 8.0, 262);
+        flee.kind = MobKind::Sheep;
+        flee.on_ground = true;
+        flee.panic_target = Some((13.0, 5.0, 8.0)); // 5 east
+        flee.stroll_target = Some((-2.0, 8.0));
+        flee.breed_partner = Some((2, 14.0, 5.0, 10.0));
+        flee.breed_love_time = 30;
+        let ev = flee.tick(&world, None, NOON);
+        assert!(ev.attack.is_none(), "the flee no attack speaks");
+        assert!(
+            (flee.yaw - (-90.0)).abs() < 1e-6,
+            "the yaw the target's east speaks ({})",
+            flee.yaw
+        );
+        assert!(
+            flee.stroll_target.is_none(),
+            "the stroll's target the higher priority replaces"
+        );
+        assert!(
+            flee.breed_partner.is_none(),
+            "the breed's stale arm the start replaces"
+        );
+        assert_eq!(
+            flee.breed_love_time, 0,
+            "the court's own clock the stop zeroes"
+        );
+        let flee_dx = flee.x - 8.0;
+        assert!(flee_dx > 0.0, "the walk the target's east speaks");
+
+        // the control: the same 5-east walk the stroll's own impulse
+        // rides — the ratio the 1.25 the moveTo's speedModifier pins
+        let mut stroll = Zombie::new(1, 8.0, 5.0, 8.0, 262);
+        stroll.kind = MobKind::Sheep;
+        stroll.on_ground = true;
+        stroll.stroll_target = Some((13.0, 8.0));
+        stroll.tick(&world, None, NOON);
+        let stroll_dx = stroll.x - 8.0;
+        assert!(stroll_dx > 0.0, "the stroll's own walk the control speaks");
+        let ratio = flee_dx / stroll_dx;
+        assert!(
+            (ratio - PANIC_SPEED_SHEEP).abs() < 1e-9,
+            "the 1.25 the modifier speaks ({ratio})"
+        );
+
+        // the cow's own 2.0 the AbstractCow clinit keeps
+        let mut cow_flee = Zombie::new(3, 8.0, 5.0, 8.0, 262);
+        cow_flee.kind = MobKind::Cow;
+        cow_flee.on_ground = true;
+        cow_flee.panic_target = Some((13.0, 5.0, 8.0));
+        cow_flee.tick(&world, None, NOON);
+        let mut cow_stroll = Zombie::new(3, 8.0, 5.0, 8.0, 262);
+        cow_stroll.kind = MobKind::Cow;
+        cow_stroll.on_ground = true;
+        cow_stroll.stroll_target = Some((13.0, 8.0));
+        cow_stroll.tick(&world, None, NOON);
+        let cow_ratio = (cow_flee.x - 8.0) / (cow_stroll.x - 8.0);
+        assert!(
+            (cow_ratio - PANIC_SPEED_COW).abs() < 1e-9,
+            "the 2.0 the AbstractCow speaks ({cow_ratio})"
+        );
+    }
+
+    #[test]
+    fn the_panic_walk_stops_the_arrival_the_window_rearms() {
+        // canContinueToUse's own law: the navigation's done the walk
+        // stops (the isRunning word the None answers), the canUse
+        // re-check the memory's window re-arms while it lives — the
+        // fresh draw the walk's own restart speaks — the expired
+        // window the re-arm refuses
+        let world = wide_flat_world();
+        let mut sheep = Zombie::new(1, 8.0, 5.0, 8.0, 262);
+        sheep.kind = MobKind::Sheep;
+        sheep.on_ground = true;
+        // the arrival inside the slack — the stop law answers, the
+        // dead window the re-arm refuses
+        sheep.panic_target = Some((8.1, 5.0, 8.0));
+        sheep.tick(&world, None, NOON);
+        assert!(
+            sheep.panic_target.is_none(),
+            "the arrival the stop law answers"
+        );
+        // the live window the canUse re-arms — the fresh draw the next
+        // tick's own canUse keeps
+        sheep.panic_memory_ticks = 5;
+        sheep.tick(&world, None, NOON);
+        assert!(
+            sheep.panic_target.is_some(),
+            "the live window the canUse re-arms"
+        );
+    }
+
+    #[test]
+    fn the_breed_scan_refuses_the_panicked_court() {
+        // getFreePartner's own isPanicking gate (the breedgoal dump's
+        // candidate walk speaks): the panicked mate the pairing
+        // refuses — and the panicked breeder the goal's own MOVEL flag
+        // the panic's prio-1 walk owns (the GoalSelector's conflict
+        // law the court's stop answers); the panicked baby the
+        // follow's own flag law refuses the same way
+        let mut a = Zombie::new(1, 10.0, 5.0, 10.0, 262);
+        a.kind = MobKind::Sheep;
+        a.in_love = 600;
+        let mut b = Zombie::new(2, 14.0, 5.0, 10.0, 263);
+        b.kind = MobKind::Sheep;
+        b.in_love = 600;
+        b.panic_target = Some((20.0, 5.0, 10.0)); // the panicked mate
+        let mut mobs = vec![a, b];
+        assert_eq!(
+            arm_breeders(&mut mobs),
+            0,
+            "the panicked mate the candidate walk refuses"
+        );
+        assert!(
+            mobs[0].breed_partner.is_none(),
+            "the disarmed None keeps"
+        );
+
+        // the panicked breeder's own court the flag law stops
+        let mut c = Zombie::new(3, 10.0, 5.0, 10.0, 262);
+        c.kind = MobKind::Sheep;
+        c.in_love = 600;
+        c.breed_partner = Some((4, 14.0, 5.0, 10.0));
+        c.breed_love_time = 30;
+        c.panic_target = Some((20.0, 5.0, 10.0)); // the breeder panics
+        let mut mobs = vec![c];
+        assert_eq!(
+            arm_breeders(&mut mobs),
+            0,
+            "the panicked breeder the flag law refuses"
+        );
+        assert!(
+            mobs[0].breed_partner.is_none(),
+            "the court the stop law disarms"
+        );
+        assert_eq!(
+            mobs[0].breed_love_time, 0,
+            "the clock the stop zeroes"
+        );
+
+        // the panicked baby the follow's own flag law refuses
+        let mut baby = Zombie::new(5, 0.0, 5.0, 0.0, 262);
+        baby.kind = MobKind::Sheep;
+        baby.age = BABY_START_AGE;
+        baby.on_ground = true;
+        let mut parent = Zombie::new(6, 5.0, 5.0, 0.0, 263);
+        parent.kind = MobKind::Sheep;
+        baby.panic_target = Some((20.0, 5.0, 0.0));
+        let mut mobs = vec![baby, parent];
+        assert_eq!(
+            arm_follow_parents(&mut mobs),
+            0,
+            "the panicked baby the flag law refuses"
+        );
+        assert!(
+            mobs[0].follow_parent.is_none(),
+            "the follow the stop law disarms"
+        );
+    }
+
+    #[test]
+    fn the_fire_lane_flees_the_water_cell() {
+        // canUse's own on-fire arm: the lookForWater(5) lane the
+        // burning body speaks FIRST — the water cell the flee walks
+        // TO (the closest-match law the nearest cell answers), the
+        // water-less ring the random draw answers
+        let mut world = wide_flat_world();
+        world.set(32, 5, 32, crate::world::WATER);
+        world.set(32, 6, 32, crate::world::WATER);
+        let mut burning = Zombie::new(1, 30.0, 5.0, 32.0, 262);
+        burning.kind = MobKind::Sheep;
+        burning.on_ground = true;
+        // the brand burns — the fire lane's own hurt the stamp keeps
+        burning.fire_ticks = 160;
+        burning.tick(&world, None, NOON);
+        assert_eq!(
+            burning.panic_target,
+            Some((32.0, 5.0, 32.0)),
+            "the water cell the closest match answers"
+        );
+
+        // the water-less ring the random draw keeps — the flee target
+        // the 5.0 ring answers (the pool the ring never reaches)
+        let mut dry = Zombie::new(2, 8.0, 5.0, 8.0, 262);
+        dry.kind = MobKind::Sheep;
+        dry.on_ground = true;
+        dry.fire_ticks = 160;
+        dry.tick(&world, None, NOON);
+        let (tx, _ty, tz) = dry.panic_target.expect("the draw the canUse keeps");
+        let d2 = (tx - 8.0) * (tx - 8.0) + (tz - 8.0) * (tz - 8.0);
+        assert!(
+            d2 <= PANIC_RING_XZ * PANIC_RING_XZ + 1e-9,
+            "the ring the 5.0 speaks ({d2})"
+        );
     }
 
     #[test]
