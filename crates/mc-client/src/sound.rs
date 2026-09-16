@@ -490,6 +490,25 @@ impl BlockSounds {
         let gain = attenuate(volume, dist, voice_max_distance(volume));
         self.play_voice(tick, event, gain, pitch);
     }
+
+    /// THE POSITIONED BLOCK LANE (the 2001 event's own walk the mob's
+    /// bite rides — `LevelEventHandler.levelEvent` case 2001 the dig
+    /// lane's completion speaks, the sheep's EatBlockGoal the same
+    /// event the below arm's setBlock walk plays): the block's own
+    /// sound row the lane folds first ((v+1)/2, p*0.8 the break law
+    /// keeps), then the distance law's gain the positioned voices
+    /// speak — the ear the SoundEngine's camera keeps, the source the
+    /// block's own cell. The file pick rides the engine's own LCG the
+    /// one-shot lanes share.
+    pub fn play_lane_at(&mut self, tick: u64, block: &str, lane: Lane, dist: f64) {
+        let Some(idx) = bs::sound_index(block) else {
+            return;
+        };
+        let event = lane.event_of(idx);
+        let (volume, pitch) = lane.fold(bs::SOUND_VOLUME[idx], bs::SOUND_PITCH[idx]);
+        let gain = attenuate(volume, dist, voice_max_distance(volume));
+        self.play_voice(tick, event, gain, pitch);
+    }
 }
 
 #[cfg(test)]
@@ -853,6 +872,53 @@ mod tests {
         // dirt speaks the GRAVEL SoundType (the vanilla's own pairing)
         let idx = bs::sound_index("dirt").expect("dirt in the table");
         assert_eq!(Lane::Step.event_of(idx), "block.gravel.step");
+    }
+
+    #[test]
+    fn the_positioned_block_lane_folds_then_attenuates() {
+        // THE GRAZE'S OWN VOICE (the 2001 event the mob's bite rides —
+        // `LevelEventHandler` case 2001 the dig lane's completion
+        // speaks): the block's own row the lane folds first ((v+1)/2,
+        // p*0.8 the break law keeps), the distance law's gain the
+        // positioned voices speak — the log the folded gain records
+        let mut s = BlockSounds::new(7);
+        s.play_lane_at(36, "grass_block", Lane::Break, 0.0);
+        assert_eq!(s.events.len(), 1, "the ear-at-source voice");
+        let e = &s.events[0];
+        assert!(
+            e.starts_with("block.grass.break @36 #"),
+            "the grass block's own break voice: {e}"
+        );
+        assert!(e.contains(" v1.000000 p0.800000"), "the fold: {e}");
+        // THE MID WALK: the armed max the volume's own 16 speaks, the
+        // linear law 1 - dist/max folds (the 4-out ear 0.75 answers)
+        let mut s = BlockSounds::new(7);
+        s.play_lane_at(36, "grass_block", Lane::Break, 4.0);
+        assert!(
+            s.events[0].contains(" v0.750000 p0.800000"),
+            "the 4-out fold: {}",
+            s.events[0]
+        );
+        // THE SILENCE BEYOND (the zero crossing the armed max names —
+        // the line the folded zero records, the backend the silence
+        // plays)
+        let mut s = BlockSounds::new(7);
+        s.play_lane_at(36, "grass_block", Lane::Break, 20.0);
+        assert!(
+            s.events[0].contains(" v0.000000 p0.800000"),
+            "the beyond-max fold: {}",
+            s.events[0]
+        );
+        // THE TABLE'S OWN MISS: the unknown block the silent lane keeps
+        let mut s = BlockSounds::new(7);
+        s.play_lane_at(36, "not_a_block", Lane::Break, 0.0);
+        assert!(s.events.is_empty(), "the miss never speaks");
+        // determinism: the same seed speaks the same positioned voice
+        let mut a = BlockSounds::new(31);
+        let mut b = BlockSounds::new(31);
+        a.play_lane_at(9, "grass_block", Lane::Break, 5.0);
+        b.play_lane_at(9, "grass_block", Lane::Break, 5.0);
+        assert_eq!(a.events, b.events, "seeded runs stay identical");
     }
 
     #[test]

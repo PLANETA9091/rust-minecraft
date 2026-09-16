@@ -2202,12 +2202,44 @@ impl App {
                 // the tick's reads the immutable borrow keeps, the
                 // applies the mut world owns: the grass block the
                 // dirt speaks, the edible cell the destroyBlock's AIR
-                // answers; the levelEvent(2001) break particles the
-                // dig lane's own debris keeps none here — the honest
-                // note the swap's own pixels render)
+                // answers) — THE 2001 EVENT'S OWN WALK rides (javap
+                // `LevelEventHandler` case 2001 the dig lane's
+                // completion speaks: the sound rides FIRST, then
+                // `addDestroyBlockEffect` — the event id carries the
+                // PRE-swap state `Block.getId(state)` the below arm's
+                // levelEvent call names, the feet arm's destroyBlock
+                // the same event the Level's own walk plays): the
+                // break voice the positioned lane folds (the ear the
+                // camera keeps, the source the eaten cell), the
+                // 4x4x4 debris burst the block's own particle tile
+                // carries — the world's own pixels the bite throws
                 if !eat_swaps.is_empty() {
+                    let ear = self
+                        .body
+                        .as_ref()
+                        .map(|b| (b.x, b.y + b.eye_height(), b.z));
                     if let Some(w) = self.offline_world.as_mut() {
                         for (bx, by, bz, id) in eat_swaps {
+                            let old = w.get(bx, by, bz);
+                            let dist = ear_distance(
+                                ear,
+                                bx as f64 + 0.5,
+                                by as f64 + 0.5,
+                                bz as f64 + 0.5,
+                            );
+                            self.sounds.play_lane_at(
+                                self.frame,
+                                crate::world::NAME_OF[old as usize],
+                                crate::sound::Lane::Break,
+                                dist,
+                            );
+                            let tile = particle_tile(old);
+                            if tile != mc_registry::generated::atlas::TILE_NONE {
+                                let burst = crate::particles::terrain_burst(
+                                    tile, bx, by, bz, &mut self.mob_rng,
+                                );
+                                self.particles.extend(burst);
+                            }
                             w.set(bx, by, bz, id);
                         }
                     }
@@ -15434,6 +15466,96 @@ mod tests {
         );
         assert!(app.swing.swinging, "the press swung the arm");
         assert_eq!(app.mobs[0].in_love, 600, "setInLove's own 600");
+    }
+
+    #[test]
+    fn the_grazes_own_2001_walks_the_burst_and_the_voice() {
+        // THE EATBLOCKGOAL'S OWN LANDING the caller's 2001 walk now
+        // speaks (javap `LevelEventHandler` case 2001 the dig lane's
+        // completion speaks — the sound rides FIRST, then
+        // `addDestroyBlockEffect`): the below arm's setBlock(DIRT) the
+        // break voice + the 4x4x4 debris burst the PRE-swap state's
+        // own particle tile carries — the ear the camera keeps, the
+        // spawn the eaten cell's own fractions fold
+        let mut app = App::new(3);
+        app.enter_world();
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let top = app.spawn_y;
+        // THE PAD the bite reads: the below cell the GRASS arm's own
+        // law keeps (the staging's own surface word)
+        app.offline_world
+            .as_mut()
+            .unwrap()
+            .set(c, top - 1, c, crate::world::GRASS);
+        let mut sheep =
+            crate::mob::Zombie::new(9, c as f64 + 0.5, top as f64, c as f64 + 0.5, 3);
+        sheep.kind = crate::mob::MobKind::Sheep;
+        app.mobs.push(sheep);
+        // THE STAGE: the goal's start walk the timer arms (the 40
+        // window the canUse roll's stand-in keeps), the 36 updates the
+        // consume's `== 4` landing walks
+        app.mobs[0].eat_animation_tick = crate::mob::EAT_ANIMATION_TICKS;
+        for _ in 0..36 {
+            app.update();
+        }
+        // THE SWAP: the grass block the dirt speaks
+        assert_eq!(
+            app.offline_world.as_ref().unwrap().get(c, top - 1, c),
+            crate::world::DIRT,
+            "the below arm's own swap landed"
+        );
+        // THE BURST: the 64 debris the full cube's 4x4x4 grid keeps,
+        // the grass's own particle tile (dirt — the model's particle
+        // the table speaks), the spawn the eaten cell's own law folds
+        let debris: Vec<_> = app
+            .particles
+            .iter()
+            .filter(|p| matches!(p.kind, crate::particles::ParticleKind::Terrain { tile: 1 }))
+            .collect();
+        assert_eq!(debris.len(), 64, "the full cube's own 4x4x4 burst");
+        let (fx, fy, fz) = (
+            app.mobs[0].x.floor() as i32,
+            app.mobs[0].y.floor() as i32,
+            app.mobs[0].z.floor() as i32,
+        );
+        assert_eq!(
+            (fx, fy - 1, fz),
+            (c, top - 1, c),
+            "the frozen feet the eaten cell keeps"
+        );
+        for p in &debris {
+            assert!(
+                (fx as f64..fx as f64 + 1.0).contains(&p.x)
+                    && ((fy - 1) as f64..(fy) as f64).contains(&p.y)
+                    && (fz as f64..fz as f64 + 1.0).contains(&p.z),
+                "the debris rides the eaten cell: {} {} {}",
+                p.x,
+                p.y,
+                p.z
+            );
+        }
+        // THE VOICE: the break fold (v+1)/2, p*0.8 the grass block's
+        // own row speaks — the gain the ear's own distance folds (the
+        // expected the caller's own law computes)
+        let entry = app
+            .sounds
+            .events
+            .iter()
+            .find(|e| e.starts_with("block.grass.break @"))
+            .expect("the 2001 event's own break voice");
+        let ear = app.body.as_ref().map(|b| (b.x, b.y + b.eye_height(), b.z));
+        let dist = ear_distance(
+            ear,
+            c as f64 + 0.5,
+            (top - 1) as f64 + 0.5,
+            c as f64 + 0.5,
+        );
+        let gain = crate::sound::attenuate(1.0, dist, crate::sound::voice_max_distance(1.0));
+        assert!(
+            entry.contains(&format!(" v{gain:.6} p0.800000")),
+            "the fold + the distance law: {entry}"
+        );
     }
 
     #[test]

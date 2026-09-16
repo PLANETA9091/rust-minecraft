@@ -813,11 +813,12 @@ pub struct MobEvents {
     /// THE GRAZE'S OWN BITE (the EatBlockGoal.tick's `== 4` landing —
     /// the feet arm the edible cell's destroyBlock keeps (AIR), the
     /// below arm the grass block's setBlock(DIRT) rides; the
-    /// levelEvent(2001) break particles the repo's dig lane owns the
-    /// honest note the swap itself renders — the caller applies the
-    /// id at the carried cell, the tick's &World read the immutable
-    /// borrow keeps). The ate() walk the tick answers IN the mob —
-    /// the wool regrow and the baby's ageUp the event never carries.
+    /// levelEvent(2001) the event id carries the PRE-swap state the
+    /// caller's own walk speaks — the break voice + the debris burst
+    /// the dig lane's 2001 walk keeps, the id applied at the carried
+    /// cell, the tick's &World read the immutable borrow keeps). The
+    /// ate() walk the tick answers IN the mob — the wool regrow and
+    /// the baby's ageUp the event never carries.
     pub eat_block: Option<(i32, i32, i32, u16)>,
 }
 
