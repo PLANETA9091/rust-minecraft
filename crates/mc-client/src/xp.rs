@@ -28,6 +28,12 @@ pub struct ExperienceOrb {
     /// the age clock (the LIFETIME's own discard at 6000)
     pub age: i32,
     pub on_ground: bool,
+    /// the previous tick's position (javap `Entity.baseTick`'s own
+    /// `xo = x` fold — the pre-move pose the render's lerp walks
+    /// FROM). `None` = the just-spawned: the render shows the spawn
+    /// point whole. The tick's own head saves it before the physics
+    /// moves.
+    pub prev: Option<(f64, f64, f64)>,
 }
 
 /// `LIFETIME` (javap the age tail's `sipush 6000` — the discard).
@@ -93,6 +99,7 @@ impl ExperienceOrb {
             vz: 0.0,
             age: 0,
             on_ground: false,
+            prev: None,
         }
     }
 
@@ -119,6 +126,11 @@ impl ExperienceOrb {
     /// server's own (the offline vocabulary has no lava pools and the
     /// orbs spawn one value each — the merge never speaks).
     pub fn tick(&mut self, world: &crate::world::World, player: Option<&crate::mob::PlayerView>) {
+        // the tick's own head (javap `Entity.baseTick`'s first fold —
+        // `xo = x` rides BEFORE the physics): the current pose becomes
+        // the previous, the render's lerp then walks the frame between
+        // the two
+        self.prev = Some((self.x, self.y, self.z));
         // setUnderwaterMovement's shape (the buoyant lift the water
         // branch speaks — the same fold the drops' tick carries)
         let in_water = world.get(
@@ -183,6 +195,29 @@ impl ExperienceOrb {
         self.vy *= crate::drops::AIR_DRAG;
         self.vz *= f3;
         self.age += 1;
+    }
+
+    /// THE RENDER FOLD (javap `ExperienceOrbRenderer.render`'s own
+    /// lerp — the `Mth.lerp(partialTicks, xo, x)` law every entity
+    /// render speaks): the pose the frame rides — the previous tick's
+    /// position walked `partial` of the way to the current. `None`
+    /// prev (the just-spawned) renders the spawn point whole. The
+    /// partial >= 1.0 arm speaks the CURRENT tick position bit for
+    /// bit (the headless lanes' own default — the goldens'
+    /// byte-identical contract).
+    pub fn lerped_pos(&self, partial: f32) -> (f64, f64, f64) {
+        let Some((px, py, pz)) = self.prev else {
+            return (self.x, self.y, self.z);
+        };
+        if partial >= 1.0 {
+            return (self.x, self.y, self.z);
+        }
+        let t = partial as f64;
+        (
+            px + (self.x - px) * t,
+            py + (self.y - py) * t,
+            pz + (self.z - pz) * t,
+        )
     }
 
     /// The touch check (javap the `playerTouch` dispatch's own bbox
@@ -596,6 +631,24 @@ mod tests {
         old.age = ORB_LIFETIME - 1;
         old.tick(&world, None);
         assert_eq!(old.age, ORB_LIFETIME, "the boundary tick rides");
+    }
+
+    #[test]
+    fn the_lerped_pos_walks_the_prev_to_the_current() {
+        // the None prev (the just-spawned): the spawn point whole
+        let mut orb = ExperienceOrb::spawn(1, 10.0, 20.0, 30.0, 3);
+        assert_eq!(orb.lerped_pos(0.5), (10.0, 20.0, 30.0));
+        // the walk: the lerp folds the midpoint
+        orb.prev = Some((10.0, 20.0, 30.0));
+        orb.x = 14.0;
+        orb.y = 18.0;
+        orb.z = 36.0;
+        assert_eq!(orb.lerped_pos(0.5), (12.0, 19.0, 33.0));
+        // the exactness arms: >= 1.0 the CURRENT bit for bit,
+        // 0.0 the prev whole
+        assert_eq!(orb.lerped_pos(1.0), (orb.x, orb.y, orb.z));
+        assert_eq!(orb.lerped_pos(1.5), (orb.x, orb.y, orb.z));
+        assert_eq!(orb.lerped_pos(0.0), (10.0, 20.0, 30.0));
     }
 
     #[test]

@@ -197,6 +197,12 @@ pub struct ItemDrop {
     /// The render seed (`random.nextFloat() * PI * 2` at spawn).
     pub bob_offs: f32,
     pub on_ground: bool,
+    /// The previous tick's position (javap `Entity.baseTick`'s own
+    /// `xo = x` fold — the pre-move pose the render's lerp walks
+    /// FROM). `None` = the just-spawned (no tick has walked it yet):
+    /// the render shows the spawn point whole. The tick's own head
+    /// saves it before the physics moves.
+    pub prev: Option<(f64, f64, f64)>,
 }
 
 impl ItemDrop {
@@ -219,6 +225,7 @@ impl ItemDrop {
             pickup_delay: POP_PICKUP_DELAY,
             bob_offs: rng.next_f32() * std::f32::consts::PI * 2.0,
             on_ground: false,
+            prev: None,
         }
     }
 
@@ -244,6 +251,7 @@ impl ItemDrop {
             pickup_delay: POP_PICKUP_DELAY,
             bob_offs: rng.next_f32() * std::f32::consts::PI * 2.0,
             on_ground: false,
+            prev: None,
         }
     }
 
@@ -261,6 +269,11 @@ impl ItemDrop {
     /// sweep, the drag, the landing bounce, the clocks. Returns false
     /// when the entity discards (the empty stack, the despawn age).
     pub fn tick(&mut self, world: &World) -> bool {
+        // the tick's own head (javap `Entity.baseTick`'s first fold —
+        // `xo = x` rides BEFORE the physics): the current pose becomes
+        // the previous, the render's lerp then walks the frame between
+        // the two
+        self.prev = Some((self.x, self.y, self.z));
         if self.count <= 0 {
             return false;
         }
@@ -338,6 +351,29 @@ impl ItemDrop {
             return false;
         }
         true
+    }
+
+    /// THE RENDER FOLD (javap `EntityRenderDispatcher`'s own lerp —
+    /// the `Mth.lerp(partialTicks, xo, x)` law every entity render
+    /// speaks): the pose the frame rides — the previous tick's
+    /// position walked `partial` of the way to the current. `None`
+    /// prev (the just-spawned) renders the spawn point whole. The
+    /// partial >= 1.0 arm speaks the CURRENT tick position bit for
+    /// bit (the headless lanes' own default — the goldens'
+    /// byte-identical contract).
+    pub fn lerped_pos(&self, partial: f32) -> (f64, f64, f64) {
+        let Some((px, py, pz)) = self.prev else {
+            return (self.x, self.y, self.z);
+        };
+        if partial >= 1.0 {
+            return (self.x, self.y, self.z);
+        }
+        let t = partial as f64;
+        (
+            px + (self.x - px) * t,
+            py + (self.y - py) * t,
+            pz + (self.z - pz) * t,
+        )
     }
 
     /// The un-stuck push (moveTowardsClosestSpace's own shape): the
@@ -1149,6 +1185,40 @@ mod tests {
     }
 
     // ---------- the render laws ----------
+
+    #[test]
+    fn the_lerped_pos_walks_the_prev_to_the_current() {
+        // the None prev (the just-spawned): the spawn point whole
+        let mut d = ItemDrop::spawn(1, 1, 1, 0, 0, 0, &mut Lcg::new(7));
+        assert_eq!(d.lerped_pos(0.5), (d.x, d.y, d.z));
+        // the tick head saves, the physics walks, the lerp folds
+        d.prev = Some((d.x, d.y, d.z));
+        d.x += 4.0;
+        d.y -= 2.0;
+        d.z += 6.0;
+        let (px, py, pz) = d.prev.expect("the head saved");
+        let (lx, ly, lz) = d.lerped_pos(0.5);
+        assert!((lx - (px + 2.0)).abs() < 1e-12);
+        assert!((ly - (py - 1.0)).abs() < 1e-12);
+        assert!((lz - (pz + 3.0)).abs() < 1e-12);
+        // the exactness arms: >= 1.0 the CURRENT bit for bit,
+        // 0.0 the prev whole
+        assert_eq!(d.lerped_pos(1.0), (d.x, d.y, d.z));
+        assert_eq!(d.lerped_pos(1.5), (d.x, d.y, d.z));
+        assert_eq!(d.lerped_pos(0.0), (px, py, pz));
+    }
+
+    #[test]
+    fn the_tick_head_saves_before_the_physics() {
+        // the falling drop: one tick walks the gravity, the prev keeps
+        // the pre-move pose the lerp walks FROM
+        let world = World::new(2, 42);
+        let mut d = ItemDrop::spawn(1, 1, 1, 0, 40, 0, &mut Lcg::new(7));
+        let (x0, y0, z0) = (d.x, d.y, d.z);
+        assert!(d.tick(&world));
+        assert_eq!(d.prev, Some((x0, y0, z0)));
+        assert!(d.y < y0, "the gravity walked down");
+    }
 
     #[test]
     fn render_laws_match_the_javap() {

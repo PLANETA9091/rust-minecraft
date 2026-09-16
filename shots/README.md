@@ -2,7 +2,7 @@
 
 Every lane that ships pixels owes the folder a frame. The gallery is the
 proof the features exist as rendered images, not as test names alone.
-110 frames and counting — grouped below by the lane that spoke them.
+111 frames and counting — grouped below by the lane that spoke them.
 
 ## The F5 lane (the third-person avatar) — v0.3.154+
 
@@ -404,6 +404,7 @@ lasts 20 real minutes again, the eat hold 1.6s, the swing 0.3s.
 | frame | the scene |
 |---|---|
 | `partial_fold.png` | THE MID-TICK SAMPLE: the damage-star scene rendered at `--partial 0.5` — the crimson star hangs BETWEEN the tick lattices over the approaching zombie, the zombie's own feet halfway into the stride the last tick walked; the same staging at `--partial 0.0` / `--partial 1.0` diffs rms 17.1 / 16.7 against it (the fold's honest spread) |
+| `drops_fold.png` | THE LOOT'S OWN FOLD (v0.3.178): the drop lane rendered at `--partial 0.5` — the kill's rotten flesh hangs mid-bounce above the sand path, the dig's dirt rides the water's edge, the kill's three orbs fly the follow pull (the camera-facing quads the pulse speaks) — every entity BETWEEN the tick lattices the `Mth.lerp(partialTicks, xo, x)` law walks; the same staging at `--partial 0.0` / `--partial 1.0` diffs rms 25.2 / 25.2 against it (the fold's honest spread) |
 
 Regenerate the family (the flag the CLI speaks today):
 
@@ -415,6 +416,18 @@ cargo run -p mc-client --release -- --headless --screen world --seed 42 \
 # the windowed loop's own value; the headless default 1.0 pins the
 # current tick position bit for bit (the goldens' byte-identical
 # contract — the 13-gate matrix never moved)
+```
+
+The loot's own frame (v0.3.178 — the drops and the orbs joined the
+fold):
+
+```sh
+cargo run -p mc-client --release -- --screen world --seed 20260214 \
+  --body --drops --orbs --body-pitch 15 --walk-ticks 3 --partial 0.5 \
+  --ui-frame 3 --out shots/drops_fold.png
+# --drops stages the dig's dirt + the kill's rotten flesh ahead of the
+# body (the popResource physics the gravity + sweep laws own); the
+# ItemDrop/ExperienceOrb lerp rides the same partial the body speaks
 ```
 
 ## The lava-fog lane (the ember murk) — v0.3.167

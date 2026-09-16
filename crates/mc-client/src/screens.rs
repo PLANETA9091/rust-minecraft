@@ -5374,7 +5374,11 @@ impl App {
                 .flat_map(|(q, _)| q.vertices.iter().map(|v| v[1]))
                 .fold(f32::INFINITY, f32::min);
             let age = d.age as f32;
-            let m = Mat4::translation(d.x as f32, d.y as f32, d.z as f32)
+            // the render's lerp (the lerped_pos law the body, the mobs
+            // and the particles speak): the frame rides between the
+            // ticks, the bob and the spin keep the age's own lane
+            let (lx, ly, lz) = d.lerped_pos(self.partial_tick);
+            let m = Mat4::translation(lx as f32, ly as f32, lz as f32)
                 .mul(&Mat4::rot_y(crate::drops::spin(age, d.bob_offs)))
                 .mul(&Mat4::translation(
                     0.0,
@@ -5461,10 +5465,12 @@ impl App {
             let tint = [r / 255.0, 1.0, b / 255.0];
             // the pose: the translate(0, 0.1, 0) rides the WORLD y (the
             // entity-space arm the pre-rotation fold speaks), the
-            // camera basis carries the scaled local plane
-            let cx = o.x as f32;
-            let cy0 = o.y as f32 + 0.1;
-            let cz = o.z as f32;
+            // camera basis carries the scaled local plane; the lerp
+            // walks the ticks the lerped_pos law speaks
+            let (lx, ly, lz) = o.lerped_pos(self.partial_tick);
+            let cx = lx as f32;
+            let cy0 = ly as f32 + 0.1;
+            let cz = lz as f32;
             let corner = |lx: f32, ly: f32| {
                 [
                     cx + (right[0] * lx + up[0] * ly) * 0.3,

@@ -165,6 +165,11 @@ pub struct SceneOpts {
     /// floating at chest height two blocks out along the facing so the
     /// shot stages the flight the follow law owns).
     pub orbs: bool,
+    /// Stage the item drops ahead of the body (the dig's own dirt and
+    /// the kill's own rotten flesh — the popResource law's own
+    /// physics): the mid-bounce and the settle hop the gravity law
+    /// owns, the fold the render's lerp walks at the partial frames.
+    pub drops: bool,
     /// THE DIVE SEED: carve a 3x3 pool AT the body's own column — three
     /// cells of water down (the old surface cell becomes the water
     /// surface), a forced-solid basin floor, the headroom cleared — and
@@ -415,6 +420,57 @@ pub fn seed_scene(app: &mut crate::screens::App, opts: &SceneOpts) -> Result<()>
             app.next_orb_id += 1;
             app.orbs.push(o);
         }
+    }
+    if opts.drops {
+        // THE DROP SEED (the --orbs discipline: the deterministic
+        // stand-in for the loot the dig's popResource and the kill's
+        // spawnAtLocation spawn): the dig's own dirt and the kill's
+        // own rotten flesh, placed ahead of the body's facing on the
+        // ground lane (the physics the gravity + sweep laws own — the
+        // shot stages the mid-bounce, the fold the render's lerp
+        // walks at the partial frames). The unknown model renders
+        // nothing — the honest skip the render law speaks.
+        let yaw = opts.body_yaw.unwrap_or(-90.0);
+        let (fx, fz) = (
+            (-yaw.to_radians().sin()) as f64,
+            yaw.to_radians().cos() as f64,
+        );
+        let (bx, by, bz) = match app.body.as_ref() {
+            Some(b) => (b.x, b.y, b.z),
+            None => (n as f64 / 2.0 + 0.5, app.spawn_y as f64, n as f64 / 2.0 + 0.5),
+        };
+        let dirt = mc_registry::item_id_by_name("dirt").unwrap_or(0);
+        let flesh = mc_registry::item_id_by_name("rotten_flesh").unwrap_or(dirt);
+        let mut rng = crate::drops::Lcg::new(0xD10F);
+        // the dig's own reward: one dirt at the near lane, the settle
+        // phase's own hop (the ticks stagger the bob's phase spread)
+        let mut d0 = crate::drops::ItemDrop::spawn_entity_loot(
+            app.next_drop_id,
+            dirt,
+            1,
+            bx + fx * 1.5 - fz * 0.3,
+            by + 0.6,
+            bz + fz * 1.5 + fx * 0.3,
+            &mut rng,
+        );
+        d0.age = 12;
+        app.next_drop_id += 1;
+        app.drops.push(d0);
+        // the kill's own loot: one rotten flesh further out, the
+        // fresh-spawn mid-bounce (the popResource lift the law
+        // speaks)
+        let mut d1 = crate::drops::ItemDrop::spawn_entity_loot(
+            app.next_drop_id,
+            flesh,
+            1,
+            bx + fx * 2.2 + fz * 0.4,
+            by + 0.8,
+            bz + fz * 2.2 - fx * 0.4,
+            &mut rng,
+        );
+        d1.vy = 0.12;
+        app.next_drop_id += 1;
+        app.drops.push(d1);
     }
     if let Some(fire) = opts.body_fire {
         if let Some(b) = app.body.as_mut() {

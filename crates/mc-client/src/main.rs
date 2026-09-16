@@ -190,6 +190,12 @@ struct Cli {
     /// law owns (the camera-facing quads, the pulse, the icon bands).
     #[arg(long)]
     orbs: bool,
+    /// Stage the item drops ahead of the body — the dig's own dirt and
+    /// the kill's own rotten flesh riding the popResource physics (the
+    /// mid-bounce the gravity law owns, the fold the render's lerp
+    /// walks at the partial frames).
+    #[arg(long)]
+    drops: bool,
     /// Carve a 3x3 pool AT the body and sink it to the basin floor —
     /// the eye sits under the water surface and the REAL water-screen
     /// gate speaks (the underwater overlay, no scripted blue).
@@ -302,6 +308,7 @@ fn main() -> Result<()> {
             body_fire: cli.body_fire,
             lava_pool: cli.lava_pool,
             orbs: cli.orbs,
+            drops: cli.drops,
             water_pool: cli.water_pool,
             water_vision: cli.water_vision,
             air_supply: cli.air_supply,
