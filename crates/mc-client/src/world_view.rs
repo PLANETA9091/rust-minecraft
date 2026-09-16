@@ -542,6 +542,19 @@ pub enum ContainerCommand {
     /// Hurt echo the hurt lane renders the verdict the client never
     /// predicts).
     Attack { entity_id: i32 },
+    /// THE WIRE BODY'S OWN INTERACT (the vanilla gameMode.interact's
+    /// lane): the flat Interact record the right press ON A BODY
+    /// speaks — the server's entity id, the CURSOR the hit location
+    /// minus the body's origin (the LpVec3 the location field rides),
+    /// the shift the isShiftKeyDown carries. The worker speaks the
+    /// packet; the interaction the server's to resolve (the local
+    /// prediction the wire body never runs — the echo the entity-event
+    /// lane owes).
+    Interact {
+        entity_id: i32,
+        cursor: (f64, f64, f64),
+        shift: bool,
+    },
     /// The death screen's RESPAWN (the vanilla DeathScreen's own
     /// serverbound echo: the Client Command packet's PERFORM_RESPAWN
     /// action — the server respawns the player and re-streams the

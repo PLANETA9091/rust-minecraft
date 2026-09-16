@@ -125,7 +125,7 @@ pub mod serverbound {
         SB_MOVE_PLAYER_ROT as MOVE_PLAYER_ROT, SB_MOVE_PLAYER_STATUS_ONLY as MOVE_PLAYER_STATUS_ONLY,
         SB_PLAYER_ACTION as PLAYER_ACTION, SB_SET_CARRIED_ITEM as SET_CARRIED_ITEM,
         SB_SWING as SWING, SB_USE_ITEM as USE_ITEM, SB_USE_ITEM_ON as USE_ITEM_ON,
-        SB_CLIENT_COMMAND as CLIENT_COMMAND,
+        SB_CLIENT_COMMAND as CLIENT_COMMAND, SB_INTERACT as INTERACT,
     };
 }
 
@@ -5160,6 +5160,35 @@ pub fn encode_attack(entity_id: i32) -> Vec<u8> {
     p
 }
 
+/// The INTERACT wire (the vanilla `MultiPlayerGameMode.interact`'s own
+/// echo — the 26.2's flat ServerboundInteractPacket record, generated
+/// id 26, `minecraft:interact`, the generated table's SB_INTERACT).
+/// THE WIRE (javap of the real 26.2 record's clinit composite, the
+/// field order the record declares): the entity id as a VarInt, the
+/// hand as a VarInt (the writeEnum's ordinal, MAIN_HAND = 0,
+/// OFF_HAND = 1), the CURSOR as the `Vec3.LP_STREAM_CODEC` the
+/// `net/minecraft/network/LpVec3` class speaks (the hit location minus
+/// the entity's own origin — the walk's
+/// `hit.getLocation().subtract(entity.getX/Y/Z)` the dump keeps), the
+/// `usingSecondaryAction` as ONE BOOL byte (the isShiftKeyDown the
+/// sneak key speaks). The walk the dump keeps beside: ensure, the
+/// cursor, the SEND, the spectator PASS, `player.interactOn` the local
+/// prediction's own return.
+pub fn encode_interact(
+    entity_id: i32,
+    hand: u8,
+    cursor: (f64, f64, f64),
+    shift: bool,
+) -> Vec<u8> {
+    let mut p = Vec::with_capacity(10);
+    write_varint(&mut p, serverbound::INTERACT);
+    write_varint(&mut p, entity_id);
+    write_varint(&mut p, hand as i32);
+    p.extend_from_slice(&encode_lp_vec3(cursor.0, cursor.1, cursor.2));
+    write_bool(&mut p, shift);
+    p
+}
+
 /// THE LOW-PRECISION VEC3 (the 26.2's own `net/minecraft/network/LpVec3`
 /// — the codec the Interact record's `location` field rides, the
 /// `Vec3.LP_STREAM_CODEC` the clinit's composite passes). THE WIRE
@@ -6315,6 +6344,23 @@ impl<S: Read + Write> PlaySession<S> {
         self.conn
             .send_packet(&encode_attack(entity_id))
             .context("send attack")
+    }
+
+    /// The INTERACT wire (the vanilla gameMode.interact's own echo —
+    /// the 26.2's flat ServerboundInteractPacket the record's composite
+    /// order carries: the VarInt id, the VarInt hand, the LpVec3 cursor
+    /// the hit location minus the entity origin speaks, the Bool the
+    /// shift key rides).
+    pub fn interact(
+        &mut self,
+        entity_id: i32,
+        hand: u8,
+        cursor: (f64, f64, f64),
+        shift: bool,
+    ) -> Result<()> {
+        self.conn
+            .send_packet(&encode_interact(entity_id, hand, cursor, shift))
+            .context("send interact")
     }
 
     /// The client command (the vanilla `LocalPlayer`'s own
@@ -10800,6 +10846,45 @@ mod tests {
             vec![0x01, 0x01],
             "the id byte and the payload byte the same value — the two speak"
         );
+    }
+
+    /// The interact record's own wire — the composite order the clinit
+    /// speaks (VarInt id, VarInt hand, the LpVec3 cursor, the Bool
+    /// shift) and the cursor segment the LpVec3 codec's own walk
+    /// produces byte for byte.
+    #[test]
+    fn the_interact_speaks_the_flat_record() {
+        // the ids: SB_INTERACT = 26 = 0x1A (the single-byte VarInt);
+        // THE ZERO CURSOR: the LpVec3's zero form the 2^-15 threshold
+        // keeps — the whole packet the FIVE bytes the record's own
+        // order speaks
+        assert_eq!(
+            encode_interact(1, 0, (0.0, 0.0, 0.0), false),
+            vec![0x1A, 0x01, 0x00, 0x00, 0x00],
+            "the zero cursor's single 0x00 the LpVec3 zero form speaks"
+        );
+        // the cursor segment rides the SAME bytes the codec's own walk
+        // produces — the exact roundtrip the unit axis' midpoints keep
+        // (pack(±1.0) = 32766/0, pack(0.0) = the 16383 midpoint), the
+        // consumed count the variable tail the Bool byte follows
+        let packet = encode_interact(99, 1, (1.0, 0.0, -1.0), true);
+        assert_eq!(
+            &packet[..3],
+            &[0x1A, 0x63, 0x01],
+            "id 26, entity 99, the OFF_HAND ordinal"
+        );
+        let (decoded, used) = parse_lp_vec3(&packet[3..]).expect("the cursor segment");
+        assert_eq!(
+            decoded,
+            (1.0, 0.0, -1.0),
+            "the exact unpack the axis' own fields keep"
+        );
+        assert_eq!(
+            used,
+            packet.len() - 4,
+            "the LpVec3 tail the record's ONE Bool byte follows"
+        );
+        assert_eq!(*packet.last().expect("the tail"), 0x01, "the shift byte");
     }
 
     /// The low-precision Vec3's own wire — the hex the LpVec3 dump's

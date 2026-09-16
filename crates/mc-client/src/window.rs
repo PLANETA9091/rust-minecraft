@@ -395,6 +395,19 @@ fn run_join(
                             // wire lane keeps)
                             session.attack(entity_id)
                         }
+                        crate::world_view::ContainerCommand::Interact {
+                            entity_id,
+                            cursor,
+                            shift,
+                        } => {
+                            // THE WIRE BODY'S OWN INTERACT (the vanilla
+                            // gameMode.interact's send — the flat
+                            // record the composite order carries: the
+                            // VarInt id, the VarInt hand the MAIN
+                            // ordinal speaks, the LpVec3 cursor, the
+                            // Bool shift)
+                            session.interact(entity_id, 0, cursor, shift)
+                        }
                         crate::world_view::ContainerCommand::Respawn => {
                             // the death screen's own wire: the Client
                             // Command's PERFORM_RESPAWN action 0

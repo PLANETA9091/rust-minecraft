@@ -2948,11 +2948,79 @@ impl App {
             if self.dig.is_destroying {
                 return false;
             }
-            // THE BLOCK LANE FIRST (the vanilla startUseItem's own
-            // order): the crosshair clip + the useItemOn echo + the
-            // block item's placement CONSUME; the PASS results fall
-            // through to the item's use lane below
-            if self.on_right_press_block_lane() {
+            // THE ENTITY LANE FIRST (the vanilla startUseItem's own
+            // walk — the hitResult type == ENTITY case the crosshair
+            // pick's own verdict arms): the pick chain the attack lane
+            // walks (the offline bodies first, the wire's remote
+            // bodies after) decides BEFORE the BLOCK case the switch
+            // speaks only on a block hit — an entity hit the BLOCK
+            // case never reaches.
+            let mut entity_pass = false;
+            if let Some(i) = self.pick_mob(&self.net_mobs) {
+                if i < self.mobs.len() {
+                    // THE OFFLINE ARM: the local prediction
+                    // `player.interactOn` the walk returns — the
+                    // vocabulary's mob.interact table is empty (no
+                    // feeding/shearing lane yet), the honest PASS:
+                    // the walk falls to the ITEM lane below, the
+                    // BLOCK case it never reaches (the vanilla never
+                    // places through the body the crosshair picked)
+                    entity_pass = true;
+                } else {
+                    // THE WIRE ARM (the 26.2's own gameMode.interact
+                    // walk — the dump's order: ensure, the CURSOR the
+                    // hit location minus the entity origin speaks,
+                    // the SEND, the spectator PASS): the flat record
+                    // the LpVec3 cursor carries, the shift the
+                    // isShiftKeyDown speaks. The local prediction the
+                    // wire body never runs — the interaction the
+                    // server's to resolve (the verdict the client
+                    // waits for, the attack lane's own law), so the
+                    // SWING the result's shouldSwing speaks stays
+                    // silent until the echo rides.
+                    let m = &self.net_mobs[i - self.mobs.len()];
+                    let (mx, my, mz) = (m.x, m.y, m.z);
+                    let (bx0, by0, bz0, bx1, by1, bz1) = m.box_at();
+                    let entity_id = m.id;
+                    let cam = self.world_camera();
+                    let f = cam.forward();
+                    let eye = (cam.pos.x as f64, cam.pos.y as f64, cam.pos.z as f64);
+                    let search = crate::world::BLOCK_INTERACTION_RANGE.max(3.0);
+                    let end = (
+                        eye.0 + f.x as f64 * search,
+                        eye.1 + f.y as f64 * search,
+                        eye.2 + f.z as f64 * search,
+                    );
+                    // THE HIT LOCATION (the same clip the pick's own
+                    // distance walk measured — the eye-inside arm the
+                    // 0.0 distance speaks lands the eye itself)
+                    let location = crate::mob::aabb_clip(
+                        eye,
+                        end,
+                        (bx0, by0, bz0),
+                        (bx1, by1, bz1),
+                    )
+                    .map(|(p, _)| p)
+                    .unwrap_or(eye);
+                    let cursor = (location.0 - mx, location.1 - my, location.2 - mz);
+                    let shift = self.shift_down;
+                    if let Some(sink) = self.live_clicks.as_ref() {
+                        let _ =
+                            sink.send(crate::world_view::ContainerCommand::Interact {
+                                entity_id,
+                                cursor,
+                                shift,
+                            });
+                    }
+                    return true;
+                }
+            }
+            // THE BLOCK LANE (the BLOCK case — the entity hit the
+            // switch never routes here): the crosshair clip + the
+            // useItemOn echo + the block item's placement CONSUME;
+            // the PASS results fall through to the item's use lane
+            // below
+            if !entity_pass && self.on_right_press_block_lane() {
                 return true;
             }
             // the item lane reads the UNIFIED held id (the networked
@@ -13337,6 +13405,174 @@ mod tests {
         assert_eq!(
             app.net_mobs[0].health, health_before,
             "the wire body's health the client never predicts"
+        );
+    }
+
+    #[test]
+    fn the_wire_body_answers_the_right_press() {
+        // THE VANILLA startUseItem'S OWN WALK (the hitResult type ==
+        // ENTITY case the switch speaks FIRST): the crosshair's verdict
+        // lands the wire body, the flat Interact record the LpVec3
+        // cursor carries rides the command lane — the cursor the hit
+        // location minus the body's origin, the shift the
+        // isShiftKeyDown speaks. The local prediction the wire body
+        // never runs — the interaction the server's to resolve (the
+        // SWING the result's shouldSwing speaks stays silent until the
+        // echo rides), and the BLOCK case the switch never reaches.
+        let mut app = App::new(3);
+        app.open(ScreenKind::Connect);
+        app.net_world = Some(air_net_world(2, 0));
+        app.enter_network_world(None, Skybox::Overworld, None, None);
+        let n = app.world_size as f64;
+        let mut body = crate::body::PlayerBody::new(
+            n / 2.0 + 0.5,
+            app.spawn_y as f64,
+            n / 2.0 + 0.5,
+            -90.0,
+            0.0,
+        );
+        body.on_ground = true;
+        app.body = Some(body);
+        let (bx, bz) = {
+            let b = app.body.as_ref().unwrap();
+            (b.x, b.z)
+        };
+        // the wire zombie ON the facing line (the eye's own ray the
+        // pick walks), the SERVER'S OWN id 100 the offline counter
+        // never mints
+        app.live_mobs_updated(vec![wire_mob_named(
+            100,
+            bx + 1.8,
+            app.spawn_y as f64,
+            bz,
+            "minecraft:zombie",
+        )]);
+        assert_eq!(
+            app.pick_mob(&app.net_mobs),
+            Some(0),
+            "the wire body the verdict speaks (the offline lane sleeps)"
+        );
+        let (tx, rx) = std::sync::mpsc::channel();
+        app.live_clicks = Some(tx);
+        // THE PRESS: the entity lane consumes — the BLOCK case the
+        // switch never routes on an entity hit
+        assert!(
+            app.on_right_press(0, 0),
+            "the entity hit consumed the press"
+        );
+        match rx.try_recv().expect("the interact") {
+            crate::world_view::ContainerCommand::Interact {
+                entity_id,
+                cursor,
+                shift,
+            } => {
+                assert_eq!(
+                    entity_id, 100,
+                    "the server's own id the record carries"
+                );
+                // THE CURSOR: the hit location minus the body's origin —
+                // the ray along the facing line clips the box's near
+                // face (the 1.8 standoff minus the half-width 0.3), the
+                // eye's height the box's y span contains rides
+                assert!(
+                    (cursor.0 - (-0.3)).abs() < 1e-9,
+                    "the near face the clip speaks, got {cursor:?}"
+                );
+                assert!(
+                    (cursor.1 - 1.62).abs() < 1e-4,
+                    "the eye's height the box contains, got {cursor:?}"
+                );
+                assert!(
+                    cursor.2.abs() < 1e-6,
+                    "the facing line the z keeps (the f32 trig's own residual), got {cursor:?}"
+                );
+                assert!(
+                    !shift,
+                    "the unpressed shift the record's own field keeps"
+                );
+            }
+            other => panic!("expected an interact, got {other:?}"),
+        }
+        assert!(
+            rx.try_recv().is_err(),
+            "nothing else the press speaks — no swing, the verdict the server's own"
+        );
+        // THE SHIFT: the sneak key the record's fourth field rides
+        app.on_shift_down(true);
+        assert!(app.on_right_press(0, 0), "the press consumed again");
+        match rx.try_recv().expect("the shifted interact") {
+            crate::world_view::ContainerCommand::Interact { shift, .. } => {
+                assert!(
+                    shift,
+                    "the pressed shift the isShiftKeyDown speaks"
+                );
+            }
+            other => panic!("expected an interact, got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn the_offline_entity_pass_skips_the_block_lane() {
+        // THE ENTITY CASE'S OWN FALL-THROUGH (the vanilla startUseItem's
+        // walk): the offline body the pick speaks PASSes — the
+        // vocabulary's mob.interact table is empty (no feeding/shearing
+        // lane yet) — and the BLOCK case the switch never reaches on an
+        // entity hit: the held dirt the ray aims at a face BEHIND the
+        // body never places (the vanilla never places through the body
+        // the crosshair picked), the press the item lane's own PASS
+        // refuses.
+        let mut app = App::new(3);
+        app.enter_world();
+        app.offline_held_updated(Some("item/dirt"));
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let top = app.spawn_y;
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, top as f32 + 4.0, c as f32 + 0.5),
+            yaw: 0.0,
+            pitch: -std::f32::consts::FRAC_PI_2,
+        });
+        // the offline body IN the cell the straight-down ray walks (the
+        // box the ray enters at the top face — 2.05 below the eye, the
+        // block's own hit 4.0 the strict compare loses)
+        app.mobs.push(crate::mob::Zombie::new(
+            7,
+            c as f64 + 0.5,
+            top as f64,
+            c as f64 + 0.5,
+            3,
+        ));
+        assert_eq!(
+            app.pick_mob(&app.mobs),
+            Some(0),
+            "the offline body the verdict speaks (the wire lane sleeps)"
+        );
+        let (tx, rx) = std::sync::mpsc::channel();
+        app.live_clicks = Some(tx);
+        assert!(
+            !app.on_right_press(0, 0),
+            "the entity PASS + the dirt's own PASS refuse the press"
+        );
+        assert!(
+            rx.try_recv().is_err(),
+            "no UseItemOn the entity hit ever routes"
+        );
+        assert_eq!(
+            app.offline_world.as_ref().unwrap().get(c, top, c),
+            crate::world::AIR,
+            "the placement cell the body's own verdict guards"
+        );
+        // THE BODY STEPS ASIDE: the pick misses, the BLOCK case speaks —
+        // the same press the block lane's own placement answers
+        app.mobs.clear();
+        assert!(
+            app.on_right_press(0, 0),
+            "the block hit consumed the press"
+        );
+        assert_eq!(
+            app.offline_world.as_ref().unwrap().get(c, top, c),
+            crate::world::DIRT,
+            "the held dirt landed the block case speaks"
         );
     }
 
