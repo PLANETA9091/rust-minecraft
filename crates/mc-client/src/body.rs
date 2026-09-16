@@ -50,6 +50,13 @@ pub const MOVEMENT_SPEED: f32 = 0.10000000149011612;
 pub const SPRINT_MULTIPLIER: f32 = 1.3; // the 0.3 ADD_MULTIPLIED_TOTAL
 pub const SNEAK_MULTIPLIER: f32 = 0.7; // 1 - the SNEAKING_SPEED 0.3
 pub const USING_MULTIPLIER: f32 = 0.2; // the using-item slowdown
+/// `Camera.tickFov`'s own words (the 26.2 jar's raw disasm, the
+/// scripts/camera_tickfov.txt dump): the half-step the tick arms toward
+/// the getFieldOfViewModifier target, then the 0.1/1.5 clamp the
+/// bytecode pins.
+pub const FOV_TICK_BLEND: f32 = 0.5;
+pub const FOV_MODIFIER_MIN: f32 = 0.10000000149011612;
+pub const FOV_MODIFIER_MAX: f32 = 1.5;
 pub const BLOCK_FRICTION: f32 = 0.6;
 pub const AIR_FRICTION: f32 = 1.0;
 pub const GROUND_DRAG: f32 = 0.91; // the horizontal drag's constant part
@@ -549,6 +556,13 @@ pub struct PlayerBody {
     /// the key releases when the standing box does not fit).
     pub want_crouch: bool,
     pub sprinting: bool,
+    /// THE CAMERA'S OWN FOV STATE (Camera's fovModifier/oldFovModifier
+    /// pair — tickFov's own two fields): the modifier the projection's
+    /// 70° option multiplies — the sprint's 1.15 the speed ratio speaks,
+    /// the half-step the tick keeps smooth, the pair the frame's partial
+    /// lerp walks.
+    pub fov_modifier: f32,
+    pub prev_fov_modifier: f32,
     /// The input impulses (the KeyboardInput's own ±1 shape).
     pub forward: f32,
     pub left: f32,
@@ -728,6 +742,8 @@ impl PlayerBody {
             crouching: false,
             want_crouch: false,
             sprinting: false,
+            fov_modifier: 1.0,
+            prev_fov_modifier: 1.0,
             forward: 0.0,
             left: 0.0,
             jumping: false,
@@ -832,6 +848,53 @@ impl PlayerBody {
             s *= USING_MULTIPLIER;
         }
         s
+    }
+
+    /// `AbstractClientPlayer.getFieldOfViewModifier`'s own walk (the
+    /// 26.2 jar's raw disasm, the scripts/abstractclientplayer_getfovmodifier.txt
+    /// dump): f = 1.0, the flying *1.1 the abilities' word keeps (the
+    /// body's no-flight lane never arms it), the speed ratio the
+    /// ATTRIBUTE speaks — `f *= (speed / walkSpeed + 1.0) / 2.0` over
+    /// the same attribute law `speed()` folds, so the sprint's 1.3
+    /// answers 1.15, the sneak's 0.7 answers 0.85, the using slowdown's
+    /// 0.2 answers 0.6 — the Abilities.getWalkingSpeed default the
+    /// MOVEMENT_SPEED base speaks. The bow's draw zoom and the
+    /// spyglass's 0.1 the client's own arms never draw (no bow, no
+    /// spyglass the inventory keeps); the fovEffectScale lerp the
+    /// no-option client keeps at its own 1.0 default (lerp(1.0, 1.0, f)
+    /// = f — the modifier rides unblended).
+    fn fov_target(&self, using_item: bool) -> f32 {
+        if MOVEMENT_SPEED == 0.0 {
+            return 1.0;
+        }
+        let ratio = self.speed(using_item) / MOVEMENT_SPEED;
+        (ratio + 1.0) / 2.0
+    }
+
+    /// `Camera.tickFov`'s own beat (the scripts/camera_tickfov.txt
+    /// dump): the old store first (the pair the frame's lerp walks),
+    /// the half-step toward the target, then the 0.1/1.5 clamp the
+    /// bytecode pins. The body ticks it at the tail — the camera state
+    /// the projection reads, the render lerp smooths.
+    fn tick_fov(&mut self, target: f32) {
+        self.prev_fov_modifier = self.fov_modifier;
+        self.fov_modifier = (self.fov_modifier
+            + (target - self.fov_modifier) * FOV_TICK_BLEND)
+            .clamp(FOV_MODIFIER_MIN, FOV_MODIFIER_MAX);
+    }
+
+    /// `Camera.calculateFov`'s own read (the
+    /// scripts/camera_calculatefov.txt dump): the frame's modifier the
+    /// 70° option multiplies — the lerp the partial walks between the
+    /// two stores, the partial >= 1.0 arm the headless lanes'
+    /// byte-identical contract keeps (the same shape the lerped eye
+    /// speaks). The panoramic 90.0 and the death/fluid modifier lanes
+    /// the repo's camera never arms.
+    pub fn fov_modifier_at(&self, partial: f32) -> f32 {
+        if partial >= 1.0 {
+            return self.fov_modifier;
+        }
+        self.prev_fov_modifier + (self.fov_modifier - self.prev_fov_modifier) * partial
     }
 
     /// The ground under the moved box probe (the sneak edge-guard's
@@ -1288,6 +1351,11 @@ impl PlayerBody {
         } else {
             self.walk.stop();
         }
+        // THE CAMERA'S OWN FOV BEAT (Camera.tickFov — the modifier the
+        // projection's 70° option multiplies): the target the speed
+        // attribute's ratio speaks, the half-step the tick arms, the
+        // clamp the bytecode pins.
+        self.tick_fov(self.fov_target(using_item));
         // THE FIRST-TICK GATE (Entity.firstTick's own clearing): the
         // body's first 50ms beat spoke its lanes splash-free — the
         // gate opens
@@ -2851,5 +2919,140 @@ mod tests {
             b.tick(&w, false);
         }
         assert!((b.eye_height - STANDING_EYE).abs() < 0.001, "the stand settled");
+    }
+
+    // ===== THE CAMERA'S OWN FOV (Camera.tickFov + the
+    // getFieldOfViewModifier law the 26.2 jar's raw disasms speak) =====
+
+    /// The idle walk's ratio speaks 1.0 — the modifier the walk lane
+    /// never moves (the walk-speed denominator the attribute's own
+    /// base keeps), the pair of stores the 1.0 the whole walk keeps.
+    #[test]
+    fn the_idle_walk_keeps_the_ones_modifier() {
+        let w = flat_world();
+        let mut b = PlayerBody::new(2.5, 1.0, 2.5, 90.0, 0.0);
+        settle(&mut b, &w);
+        for _ in 0..10 {
+            b.tick(&w, false);
+        }
+        assert_eq!(b.fov_modifier, 1.0, "the idle walk the 1.0 keeps");
+        assert_eq!(b.prev_fov_modifier, 1.0, "the old store the 1.0 keeps");
+    }
+
+    /// The sprint's 1.3 attribute the ratio law speaks — the target
+    /// 1.15 the (1.3 + 1)/2 fold answers, the half-step the first
+    /// beat arms (1.075 the bytecode's own blend), the convergence
+    /// the ticks speak, the old store the pre-tick value keeps.
+    #[test]
+    fn the_sprint_target_speaks_the_ratio_law() {
+        let w = flat_world();
+        let mut b = PlayerBody::new(2.5, 1.0, 2.5, 90.0, 0.0);
+        settle(&mut b, &w);
+        b.sprinting = true;
+        let prev = b.fov_modifier;
+        b.tick(&w, false);
+        assert_eq!(
+            b.prev_fov_modifier, prev,
+            "the old store the pre-tick value keeps"
+        );
+        assert!(
+            (b.fov_modifier - 1.075).abs() < 1e-5,
+            "the first beat the half-step speaks: {}",
+            b.fov_modifier
+        );
+        for _ in 0..24 {
+            b.tick(&w, false);
+        }
+        assert!(
+            (b.fov_modifier - 1.15).abs() < 1e-5,
+            "the convergence the 1.15 speaks: {}",
+            b.fov_modifier
+        );
+    }
+
+    /// The sneak's 0.7 attribute the ratio law speaks — the target
+    /// 0.85 the (0.7 + 1)/2 fold answers, the narrower frame the
+    /// crouched walk converges to.
+    #[test]
+    fn the_sneak_target_speaks_the_ratio_law() {
+        let w = flat_world();
+        let mut b = PlayerBody::new(2.5, 1.0, 2.5, 90.0, 0.0);
+        settle(&mut b, &w);
+        b.want_crouch = true;
+        b.tick(&w, false);
+        assert!(b.crouching, "the flat ground the crouch resolves");
+        for _ in 0..24 {
+            b.tick(&w, false);
+        }
+        assert!(
+            (b.fov_modifier - 0.85).abs() < 1e-4,
+            "the crouch walk the 0.85 speaks: {}",
+            b.fov_modifier
+        );
+    }
+
+    /// The using slowdown's 0.2 the ratio law speaks — the target 0.6
+    /// the (0.2 + 1)/2 fold answers, the zoom-in the eating frame
+    /// converges to.
+    #[test]
+    fn the_using_slowdown_narrows_the_frame() {
+        let w = flat_world();
+        let mut b = PlayerBody::new(2.5, 1.0, 2.5, 90.0, 0.0);
+        settle(&mut b, &w);
+        for _ in 0..24 {
+            b.tick(&w, true);
+        }
+        assert!(
+            (b.fov_modifier - 0.6).abs() < 1e-4,
+            "the using walk the 0.6 speaks: {}",
+            b.fov_modifier
+        );
+    }
+
+    /// The clamp the bytecode pins (0.1/1.5): an extreme target the
+    /// half-step never lets through — the 1.5 ceiling the raw 2.0
+    /// meets, the 0.1 floor the fourth low beat meets.
+    #[test]
+    fn the_fov_clamp_walks_the_bytecode_bounds() {
+        let mut b = PlayerBody::new(2.5, 1.0, 2.5, 90.0, 0.0);
+        b.tick_fov(3.0);
+        assert_eq!(
+            b.fov_modifier, FOV_MODIFIER_MAX,
+            "the ceiling the raw 2.0 meets"
+        );
+        let mut b = PlayerBody::new(2.5, 1.0, 2.5, 90.0, 0.0);
+        for _ in 0..4 {
+            b.tick_fov(0.0);
+        }
+        // the beats walk 0.5, 0.25, 0.125, 0.0625 — the floor the
+        // fourth meets
+        assert_eq!(
+            b.fov_modifier, FOV_MODIFIER_MIN,
+            "the floor the low beats meet"
+        );
+    }
+
+    /// The frame's read the calculateFov lerp speaks: the partial the
+    /// walk between the two stores keeps, the >= 1.0 arm the current
+    /// bit for bit (the headless lanes' byte-identical contract), the
+    /// 0.0 the old store whole.
+    #[test]
+    fn the_fov_read_walks_the_frame_partial() {
+        let mut b = PlayerBody::new(2.5, 1.0, 2.5, 90.0, 0.0);
+        b.prev_fov_modifier = 1.0;
+        b.fov_modifier = 1.075;
+        assert_eq!(
+            b.fov_modifier_at(1.0),
+            1.075,
+            "the full partial the current keeps"
+        );
+        assert!(
+            (b.fov_modifier_at(0.5) - 1.0375).abs() < 1e-6,
+            "the half partial the midpoint speaks"
+        );
+        assert!(
+            (b.fov_modifier_at(0.0) - 1.0).abs() < 1e-6,
+            "the zero partial the old store keeps"
+        );
     }
 }

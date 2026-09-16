@@ -140,6 +140,11 @@ struct Cli {
     /// The resolved crouch pose (rides the walk ticks when they run).
     #[arg(long)]
     body_crouch: bool,
+    /// THE SPRINT WALK: the body sprints the walk ticks through (the
+    /// canStartSprinting gate the input lane speaks) — the camera's fov
+    /// modifier the tick walks toward 1.15, the zoom the frame speaks.
+    #[arg(long)]
+    body_sprint: bool,
     /// Spawn one deterministic zombie approaching the body (the
     /// walkable-approach scan's own cell, the mid-stride walk).
     #[arg(long)]
@@ -415,6 +420,7 @@ fn main() -> Result<()> {
             body_pitch: cli.body_pitch,
             body_walk,
             body_crouch: cli.body_crouch,
+            body_sprint: cli.body_sprint,
             zombie: cli.zombie,
             sheep: cli.sheep,
             shear: cli.shear,

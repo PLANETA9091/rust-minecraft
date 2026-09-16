@@ -2,7 +2,7 @@
 
 Every lane that ships pixels owes the folder a frame. The gallery is the
 proof the features exist as rendered images, not as test names alone.
-137 frames and counting — grouped below by the lane that spoke them.
+139 frames and counting — grouped below by the lane that spoke them.
 
 ## The F5 lane (the third-person avatar) — v0.3.154+
 
@@ -426,6 +426,7 @@ lasts 20 real minutes again, the eat hold 1.6s, the swing 0.3s.
 | `offline_feed.png` | THE MOB.INTERACT TABLE'S OWN FOOD ARM (v0.3.201): the right press the OFFLINE sheep FEEDS — the 26.2's Animal.mobInteract walk the dump speaks (the `isFood(item)` hit — the tag tables the jar's own `tags/item/*.json` keeps verbatim: SHEEP_FOOD/COW_FOOD the wheat, PIG_FOOD the carrot/potato/beetroot, the zombie's monster chain the gate refuses; the ADULT arm `getAge() == 0 && canFallInLove()` — inLove <= 0 the gate reads), the setInLove the inLove = 600 arms (+ the loveCause + the broadcastEntityEvent(18) the HEART burst the render lane owes), the playEatingSound the override the jar keeps SILENT — the Sheep the base's own empty law speaks, the PIG the entity.pig.eat voice the only eater; the second press the in-love adult keeps — the CONSUME the fallback returns, SwingSource.NONE no swing; the wheat frozen mid-arc the swing's own word; the at-rest companion at the identical staging diffs rms 24.8 — 26997 pixels the arm's own arc + the held stack's render the press walked |
 | `breeding_walk.png` | THE BREEDING WALK'S OWN FAMILY (v0.3.206): the canMate pair the scan ANSWERS — the two in-love sheep the --breed staging arms (the same kind, both in love, the 8.0 ring the goal speaks), the pairing the tick lane's own scan walks (Animal.canMate the dump's own law), the CHILD the spawnChildFromBreeding walk leaves (the -24000 the birth arms, the snapTo at the parent's own spot, the 0.5 pose scale the render folds — the getDefaultDimensions isBaby arm the bbox halves), the parents the finalizeSpawnChildFromBreeding tail cools (setAge(6000) both, resetLove() both), the HEARTS the event 18 broadcast spawns (the burst the particle store rides), the XP orb the MOB_DROPS roll owes (nextInt(7) the zero roll honestly keeps); the at-rest companion at the identical staging diffs rms 20.4 — the family's own walk the hearts + the child + the cooled pair speak (v0.3.214 regen: THE ANIMALS' OWN PEACE the target scan's kind gate keeps — the in-range body the parents no longer charge, the family stands at the facing cells the court walk owns; the old frames the charge lane filled, the parents hugging the eye the attack arm's own steal spoke) (v0.3.216 regen: THE BABY'S OWN MODEL the AgeableMobRenderer's isBaby pick draws — the dedicated BabySheepModel geometry + the sheep_baby.png the baby lane reads, the 0.5 pose-scale stand-in the model swap replaced, the old-vs-new frame rms 17.6 speaks while the rest staging's identical frames keep rms 0.000; the armed-vs-rest diff the new model's own mass re-speaks rms 15.5) |
 | `breeding_mix.png` | THE MIX WALK'S OWN FAMILY (v0.3.210): the breed staging the RED and BLUE dyes arm (the parents' wool 14 and 11), the child the crafting recipe the PURPLE wears — DyeColor.getMixedColor the sheep_262 dump speaks (the parents' dyes the grid pairs, the recipe result the baby answers), the DYE_MIX_TABLE's own nine rows the recipe arm keeps — the purple mass the baby's coat fills the lower frame the white family's mass answered white, the blue parent mid-frame the red one's glimpse the baby's shoulder names (v0.3.214 regen: the peace gate the family frames re-walks — the parents the facing cells keep, the baby the meet's own spot holds) (v0.3.216 regen: the baby's own model the mix frame re-speaks — old-vs-new rms 16.9, the rest staging the identical frames' rms 0.000 keeps); the at-rest companion (--breed-mix 0, the red parent at the camera pre-pair, no baby, no hearts) diffs rms 24.1 — the mix's own walk the baby + the hearts speak, the white staging the identical frames' rms 24.0 names |
+| `sprint_fov.png` | THE CAMERA'S OWN ZOOM (v0.3.217): the sprint the fov modifier arms — Camera.tickFov's own half-step the body's tail beat walks (the target the speed attribute's ratio speaks: the sprint's 1.3 the (1.3+1)/2 fold answers 1.15), Camera.calculateFov's own read the 70° option multiplies — the first-person frame the 80.5° zoom renders (the block outline smaller, the world wider, the hand the wider frame carries), the walk the 12 ticks speak; the at-rest companion (the same walk, no sprint) diffs rms 14.8 — the zoom's own word the wider view names |
 
 Regenerate the family (the flag the CLI speaks today):
 
@@ -744,6 +745,24 @@ cargo run -p mc-client --release -- --headless --screen world \
 # companion (--breed-mix 0, the red parent at the camera pre-pair, no
 # baby, no hearts) diffs rms 24.1 — the mix's own walk the baby + the
 # hearts speak, the white staging the identical frames' rms 24.0 names
+```
+
+The camera's own zoom (v0.3.217 — the sprint's fov modifier joined the
+fold):
+
+```sh
+cargo run -p mc-client --release -- --headless --screen world \
+  --seed 42 --body --body-sprint --walk-ticks 12 --ui-frame 12 \
+  --out shots/sprint_fov.png
+cargo run -p mc-client --release -- --headless --screen world \
+  --seed 42 --body --walk-ticks 12 --ui-frame 12 \
+  --out shots/sprint_fov_rest.png
+# --body-sprint arms the canStartSprinting gate the input lane speaks
+# (the forward the walk feeds, the food gate the fresh bar opens): the
+# fov modifier the Camera.tickFov half-step walks toward 1.15 (the
+# speed attribute's own ratio the getFieldOfViewModifier law speaks),
+# the projection the calculateFov read multiplies — the 80.5° zoom the
+# sprint frame renders, the 70° the rest keeps; the pair diffs rms 14.8
 ```
 
 The fourth body's own ring (v0.3.191 — the ovine):

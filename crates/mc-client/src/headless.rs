@@ -117,6 +117,12 @@ pub struct SceneOpts {
     /// The resolved crouch pose (the POSES table's own 1.5-body fold
     /// the avatar's setupAnim crouch branch speaks).
     pub body_crouch: bool,
+    /// THE SPRINT WALK'S OWN ARM: the body sprints the walk ticks
+    /// through (the canStartSprinting gate the input lane speaks — the
+    /// forward impulse past 0.8 the staging's own walk feeds, the food
+    /// gate the fresh bar opens) — the fov modifier the camera state
+    /// walks toward 1.15, the zoom the frame speaks.
+    pub body_sprint: bool,
     /// Spawn one deterministic zombie 4 blocks east of the body (or of
     /// the spawn column when no body) at THAT column's surface, facing
     /// west — toward the body the way the mob lane's AI approaches.
@@ -1294,9 +1300,11 @@ pub fn tick_scene(
     );
     for _ in 0..opts.walk_ticks {
         // the forward impulse (the crouch rides the body's own seed —
-        // the crouch-walk the POSES table's 1.5-body fold speaks)
+        // the crouch-walk the POSES table's 1.5-body fold speaks); the
+        // sprint arm rides the same gate the input lane speaks (the
+        // forward the walk feeds, the food gate the fresh bar opens)
         let crouch = app.body.as_ref().map(|b| b.want_crouch).unwrap_or(false);
-        app.on_movement_input(1.0, 0.0, false, crouch, false);
+        app.on_movement_input(1.0, 0.0, false, crouch, opts.body_sprint);
         app.update();
     }
     for _ in 0..opts.settle_ticks {
@@ -2164,6 +2172,65 @@ mod tests {
         );
         assert!(body.walk.speed > 0.05, "the walk store filled: {}", body.walk.speed);
         assert_eq!(app.frame, 12, "one frame per tick");
+    }
+
+    /// THE SPRINT WALK's own arm: the staged body sprints the walk
+    /// ticks through — the sprint state the gate arms (the forward the
+    /// walk feeds, the food gate the fresh bar opens), the fov modifier
+    /// the camera state walks toward 1.15, the plain walk the 1.0 the
+    /// rest keeps.
+    #[test]
+    fn the_body_sprint_flag_arms_the_sprint_walk() {
+        let mut app = crate::screens::App::new(262);
+        app.enter_world();
+        seed_scene(
+            &mut app,
+            &SceneOpts {
+                body: true,
+                ..SceneOpts::default()
+            },
+        )
+        .unwrap();
+        tick_scene(
+            &mut app,
+            &SceneOpts {
+                walk_ticks: 12,
+                body_sprint: true,
+                ..SceneOpts::default()
+            },
+            None,
+        )
+        .unwrap();
+        let body = app.body.as_ref().expect("the body survives the sprint");
+        assert!(body.sprinting, "the sprint state the gate arms");
+        assert!(
+            (body.fov_modifier - 1.15).abs() < 1e-4,
+            "the zoom the camera state walks: {}",
+            body.fov_modifier
+        );
+        // the plain walk's own control: the same walk the 1.0 keeps
+        let mut app = crate::screens::App::new(262);
+        app.enter_world();
+        seed_scene(
+            &mut app,
+            &SceneOpts {
+                body: true,
+                ..SceneOpts::default()
+            },
+        )
+        .unwrap();
+        tick_scene(
+            &mut app,
+            &SceneOpts {
+                walk_ticks: 12,
+                ..SceneOpts::default()
+            },
+            None,
+        )
+        .unwrap();
+        let body = app.body.as_ref().expect("the body survives the walk");
+        assert!(!body.sprinting, "the plain walk the sprint refuses");
+        assert_eq!(body.fov_modifier, 1.0, "the walk lane the 1.0 keeps");
     }
 
     /// The tick lane refuses the menu screens (a silently ticked menu

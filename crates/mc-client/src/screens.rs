@@ -5589,8 +5589,20 @@ impl App {
         };
         let ctx = RenderCtx {
             view: cam.view(),
+            // CAMERA.calculateFov'S OWN FOLD (the 26.2 jar's raw disasm,
+            // the scripts/camera_calculatefov.txt dump): the 70° option ×
+            // the modifier the body's fov state lerps — the sprint's 1.15
+            // the zoom the frame speaks, the sneak's 0.85 the narrower
+            // walk keeps; the no-body lanes the 1.0 stand-in holds (the
+            // ×1.0 the bit-exact fold never rounds).
             proj: Mat4::perspective(
-                70.0f32.to_radians(),
+                (70.0f32
+                    * self
+                        .body
+                        .as_ref()
+                        .map(|b| b.fov_modifier_at(self.partial_tick))
+                        .unwrap_or(1.0))
+                .to_radians(),
                 fb.w as f32 / fb.h as f32,
                 0.1,
                 512.0,
