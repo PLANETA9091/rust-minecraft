@@ -1215,14 +1215,19 @@ impl Zombie {
         if self.age != 0 {
             self.in_love = 0;
         }
-        // THE AGEABLEMOB'S OWN WALK (javap `AgeableMob.aiStep`: the
-        // baby's age climbs toward 0 — the grow-up the zero crossing
-        // names — the adult's cooldown drains toward 0, the gate the
-        // feed arm reads)
+        // THE AGEABLEMOB'S OWN WALK (javap `AgeableMob.aiStep`'s
+        // server arm the full disasm speaks: `i = getAge(); if
+        // (canAgeUp()) setAge(i + 1); else if (i > 0) setAge(i - 1);`
+        // — BOTH arms route through setAge, the grow-up crossing the
+        // -1 -> 0 beat the boundary branch arms (the canAgeUp gate =
+        // isBaby && !isAgeLocked, the age-lock lane the repo keeps
+        // none of — the age < 0 word the same gate answers); the
+        // positive drain the adult's cooldown walks, the 1 -> 0 the
+        // same-sign set the boundary never arms)
         if self.age < 0 {
-            self.age += 1;
+            self.set_age(self.age + 1);
         } else if self.age > 0 {
-            self.age -= 1;
+            self.set_age(self.age - 1);
         }
         // THE FEED'S OWN SPARKLES (javap `AgeableMob.aiStep`'s client
         // arm verbatim: the `forcedAgeTimer > 0` gate the ageUp's
@@ -2005,15 +2010,23 @@ impl Zombie {
         }
     }
 
-    /// `AgeableMob.ageUp(IZ)` verbatim (the 26.2 raw disasm speaks):
+    /// `AgeableMob.ageUp(IZ)` verbatim (the 26.2 full disasm speaks):
     /// `i = age; i += amount * 20; if (i > 0) i = 0;` — the ZERO
     /// CEILING the grow-up crossing never overshoots — then
-    /// `setAge(i)`, the over-grow arm `forcedAge += (the APPLIED
-    /// delta — the new-minus-old fold, POSITIVE for the growth)` + the
-    /// 40-tick sparkle
-    /// window the zero timer marks, the boundary the `getAge() == 0`
-    /// gate answers (the boat lane the offline walk never rides —
-    /// the grow-up the isBaby flip the render lane speaks).
+    /// `setAge(i)` (the BOUNDARY BRANCH the sign flip arms — the
+    /// crossing the setAge's own walk speaks), the over-grow arm
+    /// `forcedAge += (the APPLIED delta — the new-minus-old fold,
+    /// POSITIVE for the growth)` + the 40-tick sparkle window the
+    /// zero timer marks — and the TAIL the lossless dump folds:
+    /// `if (getAge() == 0) setAge(forcedAge);` — the BANKED SURPLUS
+    /// the zero landing spends (the big jump the ceiling lands, the
+    /// banked growth the positive age keeps — the natural tick's own
+    /// drain the cooldown walks back to 0). The ten-percent feed the
+    /// jump never crosses (the +n/10 shave the remaining walk keeps
+    /// negative) — the crossing the ceiling's big jump or the
+    /// natural tick's own beat owes. The boat lane the offline walk
+    /// never rides (ageBoundaryReached the vehicle-less world
+    /// keeps).
     fn age_up(&mut self, amount: i32, over_grow: bool) {
         let i = self.age;
         let mut j = i;
@@ -2022,13 +2035,56 @@ impl Zombie {
             j = 0;
         }
         let k = j - i;
-        self.age = j;
+        self.set_age(j);
         if over_grow {
             self.forced_age += k;
             if self.forced_age_timer == 0 {
                 self.forced_age_timer = FEED_FORCED_AGE_TIMER;
             }
         }
+        // THE TAIL (the lossless disasm pcs 60-72: `getAge(); ifne
+        // +75; setAge(forcedAge)` — the gate reads getAge AFTER the
+        // over-grow arm, the spend the plain walk answers too —
+        // forcedAge 0 the setAge(0) the same-sign set keeps)
+        if self.age == 0 {
+            self.set_age(self.forced_age);
+        }
+    }
+
+    /// `AgeableMob.setAge(I)` verbatim (the 26.2 full disasm speaks):
+    /// the old age the loc2 fold saves, the field the new writes, the
+    /// BOUNDARY BRANCH the sign flip arms — `old < 0 != new < 0` —
+    /// the DATA_BABY_ID write the derived is_baby() read keeps + the
+    /// ageBoundaryReached() call the crossing speaks. Returns whether
+    /// the set crossed the zero boundary (the adult↔baby flip the
+    /// wire flag's own walk names — every setAge caller rides it:
+    /// the natural tick's grow-up, the feed's big jump, the birth's
+    /// -24000, the parents' 6000 cooldown the same-sign set the
+    /// branch never arms).
+    pub fn set_age(&mut self, new_age: i32) -> bool {
+        let old = self.age;
+        self.age = new_age;
+        let crossed = (old < 0) != (new_age < 0);
+        if crossed {
+            self.age_boundary_reached();
+        }
+        crossed
+    }
+
+    /// `AgeableMob.ageBoundaryReached()` verbatim (the 26.2 full
+    /// disasm speaks): `if (!isBaby() && isPassenger() && getVehicle()
+    /// instanceof AbstractBoat boat && !boat.hasEnoughSpaceFor(this))
+    /// stopRiding();` — the grown-up the boat's own room gate
+    /// dismounts (the isBaby FIRST gate the re-babying crossing
+    /// rides — the still-baby the arm never speaks). The repo's
+    /// offline walk keeps no passengers and no boats — the gate
+    /// chain the vehicle-less world answers with the honest still
+    /// (every term the walk keeps false), the call chain the
+    /// crossing's own walk keeps for the vehicle rounds to come.
+    fn age_boundary_reached(&mut self) {
+        // the verbatim gate chain: !is_baby() && passenger && boat
+        // && !hasEnoughSpaceFor -> stopRiding() — the no-vehicle
+        // world the empty arm answers.
     }
 
     /// `AgeableMob.isBaby` — the gate's own word (the `age < 0` the
@@ -2284,18 +2340,24 @@ pub fn try_breed(mobs: &mut [Zombie], next_id: &mut i32, rng: &mut Lcg) -> Vec<B
                 continue;
             }
             // THE PAIR COOLS (javap `finalizeSpawnChildFromBreeding`:
-            // `setAge(6000)` both, `resetLove()` both)
-            mobs[i].age = BREED_COOLDOWN_TICKS;
+            // `setAge(6000)` both, `resetLove()` both — the setAge
+            // walk the boundary branch rides: adult 0 -> 6000 the
+            // same-sign set the crossing never arms)
+            mobs[i].set_age(BREED_COOLDOWN_TICKS);
             mobs[i].in_love = 0;
-            mobs[j].age = BREED_COOLDOWN_TICKS;
+            mobs[j].set_age(BREED_COOLDOWN_TICKS);
             mobs[j].in_love = 0;
-            // THE CHILD (javap `spawnChildFromBreeding`: `setBaby(true)`,
-            // the `snapTo` at THIS parent's own x/y/z, the
-            // `getBabyStartAge` -24000 the birth arms)
+            // THE CHILD (javap `spawnChildFromBreeding`:
+            // `setBaby(true)`, the `snapTo` at THIS parent's own x/y/z,
+            // the `getBabyStartAge` -24000 the birth arms — the setAge
+            // walk the boundary branch rides: the fresh body 0 ->
+            // -24000 the crossing arms, the still-baby the
+            // ageBoundaryReached's isBaby gate keeps silent — the
+            // vanilla's own order the boat lane never hears)
             let mut child = Zombie::new(*next_id, mobs[i].x, mobs[i].y, mobs[i].z, rng.next());
             *next_id += 1;
             child.kind = mobs[i].kind;
-            child.age = BABY_START_AGE;
+            child.set_age(BABY_START_AGE);
             child.on_ground = true;
             // THE OFFSPRING'S OWN COLOR (javap `Sheep.getBreedOffspring`:
             // `setColor(DyeColor.getMixedColor(level, a, b))` — the
@@ -3844,31 +3906,143 @@ mod tests {
 
     /// THE AGEUP'S OWN ZERO CEILING (javap `ageUp(IZ)` verbatim: the
     /// `if (i > 0) i = 0` fold the grow-up crossing never overshoots —
-    /// the direct walk the overgrow amount answers, the boundary the
-    /// `getAge() == 0` gate speaks, the adult the crossing names).
+    /// the direct walk the overgrow amount answers — and the TAIL the
+    /// lossless dump folds: `if (getAge() == 0) setAge(forcedAge);` —
+    /// the ceiling's zero landing the BANKED SURPLUS spends, the
+    /// positive age the adult keeps (the natural tick's own drain the
+    /// cooldown walks back to 0)).
     #[test]
     fn the_ageup_never_crosses_the_zero_ceiling() {
         let mut child = Zombie::new(7, 0.0, 64.0, 0.0, 262);
         child.age = BABY_START_AGE;
         // 1300 seconds the * 20 refold = 26000 ticks past the -24000 —
         // the ceiling the zero answers (the crossing the isBaby flip
-        // closes), the applied delta the +24000 the fold carries (the
-        // vanilla's own arithmetic the verbatim walk keeps)
+        // closes), the applied delta the +24000 the fold carries — and
+        // the TAIL the zero landing speaks: setAge(forcedAge) the
+        // banked surplus spends, the adult the +24000 cooldown keeps
+        // (the vanilla's own arithmetic the verbatim walk keeps)
         child.age_up(1300, true);
-        assert_eq!(child.age, 0, "the ceiling the grow-up crossing names");
+        assert_eq!(
+            child.age, 24000,
+            "the tail the banked surplus spends — the positive age \
+             the zero landing keeps"
+        );
         assert!(!child.is_baby(), "the baby word the zero closes");
         assert_eq!(
             child.forced_age, 24000,
             "the applied delta the verbatim fold carries"
         );
+        // the natural tick the positive drain walks: the cooldown the
+        // -1 step answers, the 1 -> 0 beat the boundary never arms
+        let world = World::new(1, 42);
+        child.tick(&world, None, NIGHT);
+        assert_eq!(child.age, 23999, "the drain the natural tick walks");
         // the over-grow false arm: the window the mark never arms, the
-        // accumulator the fold never touches
+        // accumulator the fold never touches — the zero landing the
+        // EMPTY bank keeps (setAge(0) the same-sign set the no-op
+        // answers)
         let mut dry = Zombie::new(7, 0.0, 64.0, 0.0, 262);
         dry.age = -1000;
         dry.age_up(50, false);
         assert_eq!(dry.age, 0, "the ceiling the plain walk answers too");
         assert_eq!(dry.forced_age, 0, "the plain arm the accumulator keeps");
         assert_eq!(dry.forced_age_timer, 0, "the plain arm no window marks");
+    }
+
+    /// THE SETAGE'S OWN BOUNDARY BRANCH (javap `setAge(I)` the full
+    /// disasm speaks: `old = getAge(); age = new; if ((old < 0) !=
+    /// (new < 0)) { DATA_BABY_ID = new < 0; ageBoundaryReached(); }` —
+    /// the sign flip the crossing arms, the same-sign set the branch
+    /// never arms, the derived is_baby() the flag's own read keeps).
+    #[test]
+    fn the_setage_boundary_the_sign_flip_speaks() {
+        let mut mob = Zombie::new(9, 0.0, 64.0, 0.0, 262);
+        mob.kind = MobKind::Sheep;
+        mob.age = -100;
+        // the same-sign sets the boundary never arms
+        assert!(!mob.set_age(-50), "the still-baby set no crossing names");
+        assert!(!mob.set_age(-1), "the walk's own -1 step no crossing arms");
+        // the negative -> zero the grow-up crossing speaks
+        assert!(mob.set_age(0), "the grow-up the sign flip arms");
+        assert!(!mob.is_baby(), "the adult the zero names");
+        // the zero -> zero and the zero -> positive the same-sign sets
+        // the branch never arms (the cooldown the setAge(6000) walk)
+        assert!(!mob.set_age(0), "the still-zero the boundary keeps");
+        assert!(!mob.set_age(6000), "the cooldown the same-sign keeps");
+        // the positive -> negative the re-babying the boundary arms —
+        // the isBaby FIRST gate the ageBoundaryReached's own walk
+        // rides (the still-baby the boat lane never hears)
+        assert!(mob.set_age(BABY_START_AGE), "the re-babying the flip arms");
+        assert!(mob.is_baby(), "the baby the -24000 names");
+    }
+
+    /// THE NATURAL TICK'S OWN CROSSING (javap `aiStep` the full disasm
+    /// speaks: both arms route through setAge — the baby's `setAge(i
+    /// + 1)` the -1 -> 0 beat the boundary branch arms, the adult's
+    /// cooldown the same-sign sets never arm — the grow-up the
+    /// is_baby flip the dims the adult box answers).
+    #[test]
+    fn the_natural_tick_crosses_the_boundary_the_adult_walks() {
+        let mut mob = Zombie::new(9, 0.0, 64.0, 0.0, 262);
+        mob.kind = MobKind::Sheep;
+        mob.age = -2;
+        let world = World::new(1, 42);
+        // the first tick: -2 -> -1 the still-baby the same-sign keeps
+        mob.tick(&world, None, NIGHT);
+        assert_eq!(mob.age, -1, "the climb the first tick walks");
+        assert!(mob.is_baby(), "the baby the -1 keeps");
+        // the second tick: -1 -> 0 the CROSSING the boundary arms (the
+        // everyday grow-up the natural walk speaks), the adult the
+        // zero names
+        mob.tick(&world, None, NIGHT);
+        assert_eq!(mob.age, 0, "the grow-up the crossing names");
+        assert!(!mob.is_baby(), "the adult the zero keeps");
+        // the dims the adult box answers (the baby's own half the
+        // getDefaultDimensions arm keeps — the sheep 0.9x1.3 the
+        // registration speaks, the baby the half-sized box)
+        let (x0, y0, _z0, x1, y1, _z1) = mob.box_for();
+        assert!(
+            (x1 - x0 - 0.9).abs() < 1e-9 && (y1 - y0 - 1.3).abs() < 1e-9,
+            "the sheep's own adult box the zero keeps: ({x1}-{x0}, {y1}-{y0})"
+        );
+    }
+
+    /// THE TEN-PERCENT LAW'S OWN HONEST LIMIT (javap
+    /// `getSpeedUpSecondsWhenFeeding` the +n/10 shave the remaining
+    /// walk keeps — the feed the jump never crosses: `amount * 20 =
+    /// 20 * floor(n/200) <= n/10 < n` — the baby the wheat never
+    /// grows UP, the crossing the natural tick's own beat or the
+    /// ceiling's big jump owes — the growth the shave still speaks,
+    /// the age the climb answers).
+    #[test]
+    fn the_ten_percent_feed_never_crosses_the_zero() {
+        let mut mob = Zombie::new(9, 0.0, 64.0, 0.0, 262);
+        mob.kind = MobKind::Sheep;
+        mob.age = BABY_START_AGE;
+        for i in 0..300 {
+            let amount = speed_up_seconds_when_feeding(-mob.age);
+            mob.age_up(amount, true);
+            assert!(
+                mob.is_baby(),
+                "the feed the law never crosses (feed {i}, age {})" ,
+                mob.age
+            );
+        }
+        assert!(
+            mob.age > BABY_START_AGE,
+            "the growth the shave still speaks: {}",
+            mob.age
+        );
+        // the stall the small-remainder fold keeps: the sub-200
+        // remainder the floor rounds to zero seconds — the age the
+        // further feeds never shave (the zero-amount edge the window
+        // still marks)
+        let stalled = mob.age;
+        mob.age_up(speed_up_seconds_when_feeding(-mob.age), true);
+        assert_eq!(
+            mob.age, stalled,
+            "the stall the zero-amount fold keeps"
+        );
     }
 
     /// THE FEED'S OWN SPARKLES (javap `AgeableMob.aiStep`'s client arm

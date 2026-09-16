@@ -2,7 +2,7 @@
 
 Every lane that ships pixels owes the folder a frame. The gallery is the
 proof the features exist as rendered images, not as test names alone.
-141 frames and counting — grouped below by the lane that spoke them.
+143 frames and counting — grouped below by the lane that spoke them.
 
 ## The F5 lane (the third-person avatar) — v0.3.154+
 
@@ -428,6 +428,7 @@ lasts 20 real minutes again, the eat hold 1.6s, the swing 0.3s.
 | `breeding_walk.png` | THE BREEDING WALK'S OWN FAMILY (v0.3.206): the canMate pair the scan ANSWERS — the two in-love sheep the --breed staging arms (the same kind, both in love, the 8.0 ring the goal speaks), the pairing the tick lane's own scan walks (Animal.canMate the dump's own law), the CHILD the spawnChildFromBreeding walk leaves (the -24000 the birth arms, the snapTo at the parent's own spot, the 0.5 pose scale the render folds — the getDefaultDimensions isBaby arm the bbox halves), the parents the finalizeSpawnChildFromBreeding tail cools (setAge(6000) both, resetLove() both), the HEARTS the event 18 broadcast spawns (the burst the particle store rides), the XP orb the MOB_DROPS roll owes (nextInt(7) the zero roll honestly keeps); the at-rest companion at the identical staging diffs rms 20.4 — the family's own walk the hearts + the child + the cooled pair speak (v0.3.214 regen: THE ANIMALS' OWN PEACE the target scan's kind gate keeps — the in-range body the parents no longer charge, the family stands at the facing cells the court walk owns; the old frames the charge lane filled, the parents hugging the eye the attack arm's own steal spoke) (v0.3.216 regen: THE BABY'S OWN MODEL the AgeableMobRenderer's isBaby pick draws — the dedicated BabySheepModel geometry + the sheep_baby.png the baby lane reads, the 0.5 pose-scale stand-in the model swap replaced, the old-vs-new frame rms 17.6 speaks while the rest staging's identical frames keep rms 0.000; the armed-vs-rest diff the new model's own mass re-speaks rms 15.5) |
 | `breeding_mix.png` | THE MIX WALK'S OWN FAMILY (v0.3.210): the breed staging the RED and BLUE dyes arm (the parents' wool 14 and 11), the child the crafting recipe the PURPLE wears — DyeColor.getMixedColor the sheep_262 dump speaks (the parents' dyes the grid pairs, the recipe result the baby answers), the DYE_MIX_TABLE's own nine rows the recipe arm keeps — the purple mass the baby's coat fills the lower frame the white family's mass answered white, the blue parent mid-frame the red one's glimpse the baby's shoulder names (v0.3.214 regen: the peace gate the family frames re-walks — the parents the facing cells keep, the baby the meet's own spot holds) (v0.3.216 regen: the baby's own model the mix frame re-speaks — old-vs-new rms 16.9, the rest staging the identical frames' rms 0.000 keeps); the at-rest companion (--breed-mix 0, the red parent at the camera pre-pair, no baby, no hearts) diffs rms 24.1 — the mix's own walk the baby + the hearts speak, the white staging the identical frames' rms 24.0 names |
 | `sprint_fov.png` | THE CAMERA'S OWN ZOOM (v0.3.217): the sprint the fov modifier arms — Camera.tickFov's own half-step the body's tail beat walks (the target the speed attribute's ratio speaks: the sprint's 1.3 the (1.3+1)/2 fold answers 1.15), Camera.calculateFov's own read the 70° option multiplies — the first-person frame the 80.5° zoom renders (the block outline smaller, the world wider, the hand the wider frame carries), the walk the 12 ticks speak; the at-rest companion (the same walk, no sprint) diffs rms 14.8 — the zoom's own word the wider view names |
+| `growth_boundary.png` | THE BOUNDARY'S OWN CROSSING (v0.3.221): the natural tick the GROWN-UP RENDERS — the setAge boundary branch the 26.2 full disasm speaks (`old = getAge(); age = new; if ((old < 0) != (new < 0)) { DATA_BABY_ID = new < 0; ageBoundaryReached(); }` — the sign flip the crossing arms, the same-sign set the branch never arms), the aiStep's own walk BOTH arms setAge routes (`if (canAgeUp()) setAge(i + 1); else if (i > 0) setAge(i - 1);` — the -1 -> 0 beat the everyday grow-up names), the ageBoundaryReached the boat lane keeps (`!isBaby() && isPassenger() && getVehicle() instanceof AbstractBoat boat && !hasEnoughSpaceFor(this) -> stopRiding()` — the isBaby FIRST gate the re-babying crossing rides, the vehicle-less world the honest still answers), the ageUp tail the lossless dump folds (`if (getAge() == 0) setAge(forcedAge);` — the banked surplus the zero landing spends, the ten-percent feed the jump never crosses — the +n/10 shave the remaining walk keeps negative — the crossing the natural tick's own beat or the ceiling's big jump owes); the frame stages the LAST TICK of the baby walk (--baby-ticks 23990 the -10 arms, the 10 settle ticks the crossing walks at the final one) — the tall ADULT the swap renders where the half-sized baby stood; the companion (--baby-ticks 23890, the same 10-tick walk 100 short) diffs rms 34.67 — the model swap the only word (the rng streams the same seed keeps aligned, the walk the same path takes) |
 
 Regenerate the family (the flag the CLI speaks today):
 
@@ -729,6 +730,24 @@ cargo run -p mc-client --release -- --headless --screen world \
 # the at-rest companion (no --feed) diffs rms 6.8 — the green dots
 # the frame's own sky-side crop speaks (0, 201, 77) + the swing arc
 # the press walked
+```
+
+The boundary's own crossing (v0.3.221 — the natural tick's grow-up):
+
+```sh
+cargo run -p mc-client --release -- --headless --screen world \
+  --seed 3 --body --sheep --baby --baby-ticks 23990 \
+  --settle-ticks 10 --ui-frame 10 --out shots/growth_boundary.png
+cargo run -p mc-client --release -- --headless --screen world \
+  --seed 3 --body --sheep --baby --baby-ticks 23890 \
+  --settle-ticks 10 --ui-frame 10 --out shots/growth_boundary_rest.png
+# --baby-ticks re-arms the staged baby's walk offset (1600 the default
+# keeps): the 23990 stage the -10 last-walk body composes, the 10
+# settle ticks the natural tick's own crossing walks at the final one
+# (the setAge boundary branch the sign flip arms, the ageBoundaryReached
+# the boat lane the vehicle-less world keeps) — the tall ADULT the swap
+# renders; the 23890 stage the same walk 100 short the baby keeps;
+# the pair diffs rms 34.67 — the model swap the only word
 ```
 
 The breeding walk's own family (v0.3.206 — the pair, the child, the burst):

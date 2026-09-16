@@ -161,11 +161,22 @@ pub struct SceneOpts {
     /// law keeps.
     pub breed_mix: Option<u32>,
     /// THE BABY'S OWN STAGE (the --sheep discipline's age word): the
-    /// staged sheep the `BABY_START_AGE + 1600` birth walk arms — the
-    /// dedicated BabySheepModel the isBaby word picks draws, the wheat
-    /// press the mob_interact's canAgeUp arm takes (the feed walk the
-    /// ten-percent law + the sparkle window speaks).
+    /// staged sheep the `BABY_START_AGE + walk-ticks` birth walk arms
+    /// (the 1600 default the ten-percent law's 112-second jump
+    /// answers) — the dedicated BabySheepModel the isBaby word picks
+    /// draws, the wheat press the mob_interact's canAgeUp arm takes
+    /// (the feed walk the ten-percent law + the sparkle window
+    /// speaks). The walk offset the --baby-ticks word re-arms — the
+    /// late-walk stage the natural tick's own crossing composes (the
+    /// -1 -> 0 beat the boundary branch arms, the adult the swap
+    /// renders).
     pub baby: bool,
+    /// THE WALK OFFSET'S OWN STAGE (the --baby discipline's tick
+    /// word): the staged baby's age the `BABY_START_AGE + N` walk
+    /// arms (1600 the default keeps) — the 23900 stage the -100
+    /// late-walk body composes, the settle ticks the natural tick's
+    /// own crossing walks, the grown-up the boundary's swap renders.
+    pub baby_ticks: Option<u32>,
     /// The zombie's remainingFireTicks (the sun-burn brand's own
     /// clock; the igniteForSeconds(8) law speaks 160).
     pub zombie_fire: Option<i32>,
@@ -561,10 +572,11 @@ pub fn seed_scene(app: &mut crate::screens::App, opts: &SceneOpts) -> Result<()>
         sheep.age_ticks = 40; // two seconds in — the bob's stable mid value
         if opts.baby {
             // THE BABY'S OWN AGE (the --baby word the stage arms —
-            // 1600 ticks into the -24000 walk: the feed's ten-percent
-            // law the 112-second jump answers, the sparkles the
-            // forcedAge window speaks)
-            sheep.age = crate::mob::BABY_START_AGE + 1600;
+            // the walk offset the --baby-ticks word re-arms (1600
+            // the default the feed's ten-percent law answers): the
+            // late-walk stage the natural tick's own crossing
+            // composes, the sparkles the forcedAge window speaks)
+            sheep.age = crate::mob::BABY_START_AGE + opts.baby_ticks.unwrap_or(1600) as i32;
         }
         app.mobs.push(sheep);
         println!(

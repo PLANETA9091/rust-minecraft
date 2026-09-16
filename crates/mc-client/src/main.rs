@@ -188,6 +188,13 @@ struct Cli {
     /// canAgeUp arm takes, the sparkles the forcedAge window speaks).
     #[arg(long)]
     baby: bool,
+    /// The walk offset the --baby stage's age word re-arms (1600 the
+    /// default keeps): the staged baby's age the BABY_START_AGE + N
+    /// walk speaks — the 23900 stage the -100 late-walk body composes,
+    /// the settle ticks the natural tick's own crossing walks, the
+    /// grown-up the boundary's swap renders.
+    #[arg(long)]
+    baby_ticks: Option<u32>,
     /// The zombie's remainingFireTicks (the igniteForSeconds(8) law
     /// speaks 160).
     #[arg(long)]
@@ -433,6 +440,7 @@ fn main() -> Result<()> {
             breed: cli.breed,
             breed_mix: cli.breed_mix,
             baby: cli.baby,
+            baby_ticks: cli.baby_ticks,
             zombie_fire: cli.zombie_fire,
             zombie_death: cli.zombie_death,
             zombie_aggro: cli.zombie_aggro,
