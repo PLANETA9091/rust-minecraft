@@ -5239,13 +5239,18 @@ impl App {
             return; // the zombie skin failed its sha1 — the mobs stay unseen
         };
         for mob in &self.mobs {
+            // the head's own lerp (LivingEntityRenderer's
+            // `Mth.lerp(partialTicks, yHeadRotO, yHeadRot)`): the AI's
+            // new look target the head EASES to between the tick
+            // lattices, the same fixed clock the feet speak
+            let (head_yaw, head_pitch) = mob.lerped_head_pose(self.partial_tick);
             // THE RENDER STATE (extractRenderState's own sampling — the
             // head rides the netHeadYaw the AI's clamp speaks, the
             // death clock rides the deathTime + partial read, every
             // clock the frame's own partial_tick now)
             let state = crate::avatar::AvatarState {
                 yaw_deg: mob.yaw,
-                pitch_deg: mob.head_pitch,
+                pitch_deg: head_pitch,
                 walk_pos: mob.walk.position_at(self.partial_tick),
                 walk_speed: mob.walk.speed_at(self.partial_tick),
                 crouching: false,
@@ -5254,7 +5259,7 @@ impl App {
                 age_ticks: mob.age_ticks as f32 + 0.5,
                 zombie: true,
                 zombie_aggressive: mob.aggressive,
-                head_yaw_off_deg: mob.head_yaw_off,
+                head_yaw_off_deg: head_yaw,
                 death_time: mob.death_time_at(self.partial_tick),
             };
             // THE RENDER FOLD (javap Entity.render's own lerp): the

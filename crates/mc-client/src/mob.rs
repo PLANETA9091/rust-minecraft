@@ -267,6 +267,11 @@ pub struct Zombie {
     pub head_yaw_off: f32,
     /// the head's pitch (positive = down, the model's xRot)
     pub head_pitch: f32,
+    /// the head's O pose (javap LivingEntity's `yHeadRotO` + Entity's
+    /// `xRotO` — the pre-move head the render's lerp walks FROM).
+    /// Saved at the tick's own head, before the AI's look resolves.
+    pub prev_head_yaw_off: f32,
+    pub prev_head_pitch: f32,
     pub on_ground: bool,
     /// the LivingEntity health (the MAX_HEALTH attribute's own float)
     pub health: f32,
@@ -327,6 +332,8 @@ impl Zombie {
             yaw: 0.0,
             head_yaw_off: 0.0,
             head_pitch: 0.0,
+            prev_head_yaw_off: 0.0,
+            prev_head_pitch: 0.0,
             on_ground: false,
             health: ZOMBIE_MAX_HEALTH,
             hurt_time: 0,
@@ -369,6 +376,24 @@ impl Zombie {
             self.prev_x + (self.x - self.prev_x) * t,
             self.prev_y + (self.y - self.prev_y) * t,
             self.prev_z + (self.z - self.prev_z) * t,
+        )
+    }
+
+    /// THE HEAD POSE'S OWN RENDER FOLD (LivingEntityRenderer's
+    /// `Mth.lerp(partialTicks, yHeadRotO, yHeadRot)` the netHeadYaw
+    /// speaks): the previous tick's head carried `partial` of the way
+    /// to the current — the AI's new look target the head EASES to,
+    /// never snaps. The partial >= 1.0 arm speaks the CURRENT head
+    /// bit for bit (the headless lanes' byte-identical contract).
+    pub fn lerped_head_pose(&self, partial: f32) -> (f32, f32) {
+        if partial >= 1.0 {
+            return (self.head_yaw_off, self.head_pitch);
+        }
+        let t = partial;
+        (
+            self.prev_head_yaw_off
+                + (self.head_yaw_off - self.prev_head_yaw_off) * t,
+            self.prev_head_pitch + (self.head_pitch - self.prev_head_pitch) * t,
         )
     }
 
@@ -445,6 +470,12 @@ impl Zombie {
         self.prev_x = self.x;
         self.prev_y = self.y;
         self.prev_z = self.z;
+        // the head's own O pair (LivingEntity's `yHeadRotO = yHeadRot`
+        // + Entity.baseTick's `xRotO = xRot` — the pre-move head the
+        // render's lerp walks FROM, saved BEFORE the AI's look resolves
+        // a new target)
+        self.prev_head_yaw_off = self.head_yaw_off;
+        self.prev_head_pitch = self.head_pitch;
         // THE FIRE CLOCK (Entity.baseTick's own block, run BEFORE the
         // death gate — the corpse keeps its clock but the dying refuse
         // the hurt): remainingFireTicks > 0 && !fireImmune -> the %20
@@ -1683,5 +1714,51 @@ mod tests {
         assert!((lx - half).abs() < 1e-12, "midpoint: {lx} vs {half}");
         assert_eq!(z.lerped_pos(1.0), (z.x, z.y, z.z));
         assert_eq!(z.lerped_pos(0.0), (z.prev_x, z.prev_y, z.prev_z));
+    }
+
+    /// THE HEAD POSE'S OWN RENDER FOLD (LivingEntityRenderer's
+    /// `Mth.lerp(partialTicks, yHeadRotO, yHeadRot)` the netHeadYaw
+    /// speaks): the AI's new look target the head EASES to — the
+    /// previous tick's head carried `partial` of the way to the
+    /// current, the 0.0 arm speaks the previous pose, the >= 1.0 arm
+    /// the current bit for bit (the headless contract).
+    #[test]
+    fn the_head_pose_eases_to_the_look_target() {
+        let mut z = Zombie::new(1, 10.0, 64.0, 10.0, 7);
+        // the ctor arms the settled head: the O pair rides the spawn's
+        // own 0 pose (the vanilla O fields start at the ctor's)
+        assert_eq!(z.prev_head_yaw_off, 0.0);
+        assert_eq!(z.prev_head_pitch, 0.0);
+        // the AI swung the head to a look target this tick: the old
+        // pose the O pair holds, the new the current speaks
+        z.prev_head_yaw_off = 0.0;
+        z.prev_head_pitch = 0.0;
+        z.head_yaw_off = 40.0;
+        z.head_pitch = 12.0;
+        // the mid frame rides BETWEEN the stores
+        let (yaw, pitch) = z.lerped_head_pose(0.5);
+        assert_eq!(yaw, 20.0, "the head yaw eases half way");
+        assert_eq!(pitch, 6.0, "the head pitch eases half way");
+        // the exactness arms: the 0.0 prev pose, the >= 1.0 current
+        assert_eq!(z.lerped_head_pose(0.0), (0.0, 0.0));
+        assert_eq!(z.lerped_head_pose(1.0), (40.0, 12.0));
+        assert_eq!(z.lerped_head_pose(1.5), (40.0, 12.0));
+    }
+
+    /// THE TICK HEAD SAVES THE HEAD'S O PAIR (LivingEntity's
+    /// `yHeadRotO = yHeadRot` + Entity.baseTick's `xRotO = xRot`):
+    /// the pre-look pose the tick's own head saved BEFORE the goals
+    /// resolved a new look target — the render walks FROM it.
+    #[test]
+    fn the_tick_head_saves_the_head_pose() {
+        let world = wide_flat_world();
+        let mut z = Zombie::new(1, 32.0, 5.0, 32.0, 7);
+        z.head_yaw_off = -30.0;
+        z.head_pitch = 8.0;
+        let _ = z.tick(&world, None, NOON);
+        // whatever the goals resolved the head TO this tick, the O
+        // pair holds the pre-look pose the lerp walks FROM
+        assert_eq!(z.prev_head_yaw_off, -30.0, "the pre-look yaw saved");
+        assert_eq!(z.prev_head_pitch, 8.0, "the pre-look pitch saved");
     }
 }
