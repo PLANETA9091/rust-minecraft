@@ -160,6 +160,12 @@ struct Cli {
     /// --held-item item/shears.
     #[arg(long)]
     shear: Option<u32>,
+    /// Fire the REAL right press with the held food stack (the
+    /// Animal.isFood tag tables the mob.interact feed lane reads) and
+    /// walk N swing-clock ticks after. Requires --sheep + --held-item
+    /// wheat.
+    #[arg(long)]
+    feed: Option<u32>,
     /// The zombie's remainingFireTicks (the igniteForSeconds(8) law
     /// speaks 160).
     #[arg(long)]
@@ -400,6 +406,7 @@ fn main() -> Result<()> {
             zombie: cli.zombie,
             sheep: cli.sheep,
             shear: cli.shear,
+            feed: cli.feed,
             zombie_fire: cli.zombie_fire,
             zombie_death: cli.zombie_death,
             zombie_aggro: cli.zombie_aggro,

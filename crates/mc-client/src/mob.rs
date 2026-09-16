@@ -242,6 +242,35 @@ pub enum MobInteract {
     /// rides the shearing/sheep/<color> table's roll, each entry one
     /// single-item entity (the lambda$0's copyWithCount(1) law)
     Shear(Vec<i32>),
+    /// the FOOD arm the `Animal.mobInteract` super speaks (the 26.2
+    /// bytecode: `isFood(item)` hit, the ADULT arm `getAge() == 0 &&
+    /// canFallInLove()` — `usePlayerItem` + `setInLove(player)` +
+    /// `playEatingSound()`, the SUCCESS_SERVER return — the love arm
+    /// rides `love: true`; the fallback the `canFallInLove` false
+    /// adult keeps — in love already, the press the CONSUME verdict
+    /// consumes, `SwingSource.NONE` no swing, `love: false`). The
+    /// BABY arm the `canAgeUp` gate arms the repo never walks (no
+    /// growth vocabulary — isBaby the honest constant false); the
+    /// `usePlayerItem` consume the repo's item lane never speaks (no
+    /// inventory — the held stack the caller's stand-in keeps). The
+    /// eat voice the `playEatingSound` override the jar keeps — the
+    /// PIG only (the Sheep/Cow the base's own empty law keeps
+    /// silent), the caller's sound lane plays it.
+    Feed {
+        /// SUCCESS_SERVER (the setInLove arm) vs CONSUME (the
+        /// already-in-love fallback the canFallInLove gate refuses)
+        love: bool,
+    },
+}
+
+impl MobInteract {
+    /// THE VERDICT'S OWN LOVE WORD — the setInLove arm the
+    /// SUCCESS_SERVER verdict carries (the swing the
+    /// SwingSource.SERVER starts, the heart burst the event 18
+    /// broadcast speaks), the CONSUME fallback the false keeps.
+    pub fn love(&self) -> bool {
+        matches!(self, MobInteract::Feed { love: true })
+    }
 }
 
 /// THE DYE TINT TABLE (javap DyeColor's clinit — the 16
@@ -504,6 +533,13 @@ pub struct Zombie {
     pub hurt_time: i32,
     /// the death clock (deathTime — 0 alive, 20 removes)
     pub death_time: i32,
+    /// THE LOVE CLOCK (javap `Animal.inLove` — the private int the
+    /// `setInLove` walk arms at 600, the `aiStep` own decrement the
+    /// dump speaks: `inLove > 0 → inLove--`, the baby's
+    /// `customServerAiStep` reset the age != 0 arm owns). The
+    /// `canFallInLove()` gate reads it (`inLove <= 0`), the feed
+    /// verdict's own arms key on it.
+    pub in_love: i32,
     /// the swing clock (the attack anim the render state's attackTime
     /// samples — the same LivingEntity law the player's hand speaks)
     pub swing: SwingState,
@@ -594,6 +630,7 @@ impl Zombie {
             health: ZOMBIE_MAX_HEALTH,
             hurt_time: 0,
             death_time: 0,
+            in_love: 0,
             swing: SwingState::default(),
             walk: WalkAnimationState::default(),
             aggressive: false,
@@ -784,6 +821,12 @@ impl Zombie {
         // THE HURT CLOCK (LivingEntity.tick's own decrement)
         if self.hurt_time > 0 {
             self.hurt_time -= 1;
+        }
+        // THE LOVE CLOCK (javap `Animal.aiStep`'s own walk: the
+        // `inLove > 0` arm the decrement speaks — the 600 the
+        // setInLove armed walks to 0, the gate reopens)
+        if self.in_love > 0 {
+            self.in_love -= 1;
         }
         self.swing.tick();
         self.age_ticks = self.age_ticks.wrapping_add(1);
@@ -1142,20 +1185,85 @@ impl Zombie {
     /// unified id (the item_name the id resolves); the shears' own
     /// durability the repo's item vocabulary never speaks (no
     /// damage-component lane — the hurtAndBreak arm honest-skipped).
-    /// The FEEDING lane the Animal super handles stays the empty
-    /// table's PASS until the love-mode vocabulary lands. The voice
-    /// playSound(SHEEP_SHEAR, PLAYERS, 1.0, 1.0) rides the caller's
-    /// sound lane (the entity owns no speaker); the loot spawns at the
-    /// entity's own feet (spawnAtLocation's law).
+    /// THE FEEDING LANE the `Animal.mobInteract` super walks (the 26.2
+    /// bytecode the dump keeps: the `isFood(item)` hit, the ADULT arm
+    /// `getAge() == 0 && canFallInLove()` — `usePlayerItem` +
+    /// `setInLove(player)` + `playEatingSound()`, the SUCCESS_SERVER
+    /// return; the fallback the in-love adult keeps — the CONSUME
+    /// return; the BABY arm the `canAgeUp` gate arms the repo never
+    /// walks — isBaby the honest constant false): the tag tables the
+    /// jar's own `tags/item/*_food.json` speak (SHEEP_FOOD/COW_FOOD the
+    /// wheat, PIG_FOOD the carrot/potato/beetroot), the zombie's chain
+    /// never reaching the Animal super (the monster the food gate
+    /// refuses). The voice `playEatingSound` the override the jar
+    /// keeps — the PIG only; the playSound rides the caller's sound
+    /// lane. The loot's lane the shear's own shape keeps (the drops
+    /// spawn the caller's walk speaks).
     pub fn mob_interact(&mut self, held_item: &str, rng: &mut Lcg) -> MobInteract {
         match held_item {
             "shears" if self.kind == MobKind::Sheep && self.ready_for_shearing() => {
                 MobInteract::Shear(self.shear(rng))
             }
+            // the FOOD arm the Animal super walks (the miss the
+            // Sheep's own shears gate speaks falls here — the vanilla
+            // order the chain keeps): the isFood tag tables, the
+            // canFallInLove gate the in_love clock reads, the
+            // setInLove the 600 arms
+            _ if self.is_food(held_item) => self.feed(),
             // the miss arms: the wrong stack, the wrong body, the
-            // already-sheared wool (readyForShearing's own false) — the
-            // super's own PASS the walk returns
+            // already-sheared wool (readyForShearing's own false), the
+            // food the monster's chain never reaches — the super's
+            // own PASS the walk returns
             _ => MobInteract::Pass,
+        }
+    }
+
+    /// THE FOOD TAG TABLES (javap `Sheep.isFood` / `AbstractCow.isFood`
+    /// / `Pig.isFood` — the `ItemStack.is(ItemTags.*)` walk the dumps
+    /// keep — and the jar's own `data/minecraft/tags/item/*.json` the
+    /// values speak verbatim: SHEEP_FOOD = [wheat], COW_FOOD = [wheat],
+    /// PIG_FOOD = [carrot, potato, beetroot]; the Chicken the repo's
+    /// mesh never drew, its CHICKEN_FOOD tag the table honest-skips).
+    /// The ZOMBIE the gate refuses outright — the monster's chain
+    /// (Zombie → Monster → PathfinderMob → Mob) never reaches the
+    /// `Animal.mobInteract` super the food arm lives in.
+    pub fn is_food(&self, held_item: &str) -> bool {
+        match self.kind {
+            MobKind::Sheep | MobKind::Cow => held_item == "wheat",
+            MobKind::Pig => {
+                held_item == "carrot" || held_item == "potato" || held_item == "beetroot"
+            }
+            // the monster (and the kinds the mesh lane never drew) —
+            // the food gate closed
+            MobKind::Zombie => false,
+        }
+    }
+
+    /// THE SET-IN-LOVE WALK (javap `Animal.mobInteract`'s ADULT arm —
+    /// the 26.2 bytecode the dump keeps: the `getAge() == 0 &&
+    /// canFallInLove()` gate, `usePlayerItem(player, hand, item)` the
+    /// consume the repo's inventory-less lane honest-skips,
+    /// `setInLove(player)` — the `inLove = 600` the field walk arms
+    /// + the loveCause + the broadcastEntityEvent(18) the HEART
+    /// burst rides, `playEatingSound()`, the SUCCESS_SERVER return;
+    /// the fallback the `canFallInLove` false adult keeps — the
+    /// CONSUME return, `SwingSource.NONE` no swing): the love clock
+    /// arms 600 the gate reopens the decrement's walk, the verdict
+    /// the love word carries. The HEART particles the event 18
+    /// broadcast spawns the repo's render never draws yet (the
+    /// particle lane the next round owes) — the state the verdict's
+    /// own walk keeps.
+    fn feed(&mut self) -> MobInteract {
+        if self.in_love <= 0 {
+            // the setInLove walk: inLove = 600 (the loveCause the
+            // EntityReference ride and the event 18 burst the
+            // offline walk's own verdict stands for)
+            self.in_love = 600;
+            MobInteract::Feed { love: true }
+        } else {
+            // the already-in-love adult: the CONSUME the isClientSide
+            // arm returns, the press consumed the swing never starts
+            MobInteract::Feed { love: false }
         }
     }
 
@@ -2207,9 +2315,9 @@ mod tests {
     fn the_shear_gate_refuses_the_wrong_arms() {
         // the miss arms the super's PASS speaks: the zombie's own
         // table empty (the held shears the body's kind refuses), the
-        // sheep's FEEDING lane the Animal super handles (the wheat
-        // the shears' gate refuses — the love-mode vocabulary the
-        // table never carried), the bare hand the gate refuses
+        // sheep's FEEDING lane the Animal super now WALKS (the wheat
+        // the food arm answers — the setInLove the 600 arms), the
+        // bare hand the gate refuses
         let mut sheep = Zombie::new(7, 0.0, 64.0, 0.0, 262);
         sheep.kind = MobKind::Sheep;
         let mut zombie = Zombie::new(8, 0.0, 64.0, 0.0, 262);
@@ -2220,8 +2328,8 @@ mod tests {
         );
         assert_eq!(
             sheep.mob_interact("wheat", &mut Lcg::new(1)),
-            MobInteract::Pass,
-            "the feeding lane the super's own (not yet the table's)"
+            MobInteract::Feed { love: true },
+            "the feeding lane the Animal super walks"
         );
         assert_eq!(
             sheep.mob_interact("dirt", &mut Lcg::new(1)),
@@ -2229,5 +2337,92 @@ mod tests {
             "the block item the gate refuses"
         );
         assert!(!sheep.sheared, "the PASS arms no wool bit");
+    }
+
+    #[test]
+    fn the_food_tables_speak_the_tag_values() {
+        // the jar's own `data/minecraft/tags/item/*.json` the table
+        // keeps verbatim: SHEEP_FOOD = [wheat], COW_FOOD = [wheat],
+        // PIG_FOOD = [carrot, potato, beetroot]; the zombie the
+        // monster's chain refuses (Mob the Animal super never its
+        // parent — the food gate closed outright)
+        let mut sheep = Zombie::new(7, 0.0, 64.0, 0.0, 262);
+        sheep.kind = MobKind::Sheep;
+        let mut cow = Zombie::new(9, 0.0, 64.0, 0.0, 262);
+        cow.kind = MobKind::Cow;
+        let mut pig = Zombie::new(10, 0.0, 64.0, 0.0, 262);
+        pig.kind = MobKind::Pig;
+        let mut zombie = Zombie::new(8, 0.0, 64.0, 0.0, 262);
+        assert!(sheep.is_food("wheat"), "SHEEP_FOOD the wheat speaks");
+        assert!(!sheep.is_food("carrot"), "the pig's food the sheep's tag refuses");
+        assert!(cow.is_food("wheat"), "COW_FOOD the wheat speaks");
+        assert!(!cow.is_food("carrot"), "COW_FOOD the carrot refuses");
+        assert!(pig.is_food("carrot"), "PIG_FOOD the carrot speaks");
+        assert!(pig.is_food("potato"), "PIG_FOOD the potato speaks");
+        assert!(pig.is_food("beetroot"), "PIG_FOOD the beetroot speaks");
+        assert!(!pig.is_food("wheat"), "the sheep's food the pig's tag refuses");
+        assert!(!zombie.is_food("wheat"), "the monster the gate refuses");
+    }
+
+    #[test]
+    fn the_feed_walks_the_animal_law() {
+        // Animal.mobInteract's own walk: the isFood hit, the ADULT
+        // arm `getAge() == 0 && canFallInLove()` — the setInLove the
+        // inLove = 600 arms, the Feed verdict the SUCCESS_SERVER
+        // love word carries; the second press the canFallInLove
+        // false adult keeps — the CONSUME the fallback returns (no
+        // swing the SwingSource.NONE speaks, the clock unchanged);
+        // the aiStep the decrement walks (600 → 599)
+        let mut sheep = Zombie::new(7, 0.0, 64.0, 0.0, 262);
+        sheep.kind = MobKind::Sheep;
+        assert_eq!(
+            sheep.mob_interact("wheat", &mut Lcg::new(1)),
+            MobInteract::Feed { love: true },
+            "the ADULT arm the SUCCESS_SERVER speaks"
+        );
+        assert_eq!(sheep.in_love, 600, "setInLove's own 600 the walk arms");
+        assert_eq!(
+            sheep.mob_interact("wheat", &mut Lcg::new(1)),
+            MobInteract::Feed { love: false },
+            "the in-love adult the CONSUME fallback keeps"
+        );
+        assert_eq!(sheep.in_love, 600, "the CONSUME arm no clock change");
+        // the aiStep's own decrement (the in_love > 0 arm walks)
+        sheep.in_love = 1;
+        let world = World::new(1, 42);
+        sheep.tick(&world, None, NIGHT);
+        assert_eq!(sheep.in_love, 0, "the decrement the aiStep speaks");
+        assert!(
+            sheep.mob_interact("wheat", &mut Lcg::new(1)).love(),
+            "the gate reopened the zero clock keeps"
+        );
+    }
+
+    #[test]
+    fn the_feed_gate_refuses_the_wrong_arms() {
+        // the food gate's own order: the shears the Sheep's own gate
+        // speaks FIRST (the vanilla chain the mobInteract walk keeps
+        // — the shear the food arm never reaches), the wrong stack
+        // the tag refuses, the zombie the monster's chain refuses
+        let mut sheep = Zombie::new(7, 0.0, 64.0, 0.0, 262);
+        sheep.kind = MobKind::Sheep;
+        sheep.wool_color = 14;
+        let mut zombie = Zombie::new(8, 0.0, 64.0, 0.0, 262);
+        assert_eq!(
+            sheep.mob_interact("shears", &mut Lcg::new(42)),
+            MobInteract::Shear(vec![wire_id("red_wool").expect("red_wool"), wire_id("red_wool").expect("red_wool")]),
+            "the shears the chain's own first gate keeps"
+        );
+        assert_eq!(
+            sheep.mob_interact("dirt", &mut Lcg::new(1)),
+            MobInteract::Pass,
+            "the wrong stack the tag refuses"
+        );
+        assert_eq!(
+            zombie.mob_interact("wheat", &mut Lcg::new(1)),
+            MobInteract::Pass,
+            "the monster's chain the Animal super never reaches"
+        );
+        assert_eq!(zombie.in_love, 0, "the zombie no love clock arms");
     }
 }

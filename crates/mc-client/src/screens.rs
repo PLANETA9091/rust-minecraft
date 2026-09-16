@@ -3010,6 +3010,31 @@ impl App {
                         self.swing.start();
                         return true;
                     }
+                    if let crate::mob::MobInteract::Feed { love } = verdict {
+                        // THE FOOD ARM'S OWN WALK (the Animal
+                        // mobInteract the 26.2 bytecode speaks): the
+                        // setInLove arm the SUCCESS_SERVER verdict
+                        // carries — the eat voice the
+                        // playEatingSound override the jar keeps (the
+                        // PIG only — entity.pig.eat the sounds.json
+                        // speaks; the Sheep/Cow the base's own empty
+                        // law keeps silent), the swing the
+                        // SwingSource.SERVER starts; the CONSUME
+                        // fallback (the already-in-love adult the
+                        // canFallInLove gate refuses) the press
+                        // consumes, SwingSource.NONE the swing never
+                        // starts — both arms the press's own verdict
+                        // speak (the item lane the consumesAction
+                        // law never reaches)
+                        if love {
+                            if self.mobs[i].kind == crate::mob::MobKind::Pig {
+                                self.sounds
+                                    .play_voice(self.frame, "entity.pig.eat", 1.0, 1.0);
+                            }
+                            self.swing.start();
+                        }
+                        return true;
+                    }
                     entity_pass = true;
                 } else {
                     // THE WIRE ARM (the 26.2's own gameMode.interact
@@ -13686,6 +13711,111 @@ mod tests {
             !app.on_right_press(0, 0),
             "the sheared sheep the gate closed"
         );
+    }
+
+    #[test]
+    fn the_right_press_feeds_the_offline_sheep() {
+        // THE FOOD ARM'S OWN PRESS (the Animal.mobInteract walk the
+        // offline prediction speaks): the wheat the held stack talks,
+        // the ADULT arm the canFallInLove gate opens — the setInLove
+        // the 600 arms, the SUCCESS_SERVER the press consumes (the
+        // swing the SwingSource.SERVER starts, the EAT VOICE the
+        // playEatingSound base keeps SILENT — the Sheep the override
+        // never speaks, the jar's own law); the second press the
+        // in-love adult keeps — the CONSUME the fallback speaks (the
+        // press consumed, SwingSource.NONE no swing restarts)
+        let mut app = App::new(3);
+        app.enter_world();
+        app.offline_held_updated(Some("item/wheat"));
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let top = app.spawn_y;
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, top as f32 + 4.0, c as f32 + 0.5),
+            yaw: 0.0,
+            pitch: -std::f32::consts::FRAC_PI_2,
+        });
+        let mut sheep =
+            crate::mob::Zombie::new(7, c as f64 + 0.5, top as f64, c as f64 + 0.5, 3);
+        sheep.kind = crate::mob::MobKind::Sheep;
+        app.mobs.push(sheep);
+        assert_eq!(
+            app.pick_mob(&app.mobs),
+            Some(0),
+            "the offline sheep the pick speaks"
+        );
+        assert!(
+            app.on_right_press(0, 0),
+            "the Feed verdict consumed the press"
+        );
+        // THE LOVE'S OWN TRUTH: the clock the 600 arms, the swing the
+        // SERVER word starts, the loot lane NO drop speaks (the food
+        // the wool's table never is)
+        assert_eq!(app.mobs[0].in_love, 600, "setInLove's own 600");
+        assert!(app.swing.swinging, "the press swung the arm");
+        assert!(app.drops.is_empty(), "the feed the loot lane never speaks");
+        // THE SILENCE: the Sheep the base's own empty playEatingSound
+        // keeps — no voice event the lane carries
+        assert!(
+            !app.sounds
+                .events
+                .iter()
+                .any(|e| e.contains(".eat")),
+            "the sheep's feed the silent law keeps"
+        );
+        // the swing's own clock walks to rest (the 6-tick duration)
+        for _ in 0..8 {
+            app.swing.tick();
+        }
+        assert!(!app.swing.swinging, "the swing the clock completes");
+        // THE CONSUME FALLBACK: the in-love adult the canFallInLove
+        // gate refuses — the press consumed, NO swing restarts, the
+        // clock the fallback never changes
+        assert!(
+            app.on_right_press(0, 0),
+            "the CONSUME verdict consumed the press"
+        );
+        assert!(!app.swing.swinging, "the CONSUME no swing starts");
+        assert_eq!(
+            app.mobs[0].in_love, 600,
+            "the fallback the clock never changes (no ticks walked)"
+        );
+    }
+
+    #[test]
+    fn the_feed_plays_the_pig_eat_voice() {
+        // THE PLAYEATINGSOUND OVERRIDE the jar keeps — the PIG only:
+        // the eat voice the sounds.json's own event speaks
+        // (entity.pig.eat), the carrot the PIG_FOOD tag's own first
+        // value talks, the SUCCESS_SERVER the press consumes
+        let mut app = App::new(3);
+        app.enter_world();
+        app.offline_held_updated(Some("item/carrot"));
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let top = app.spawn_y;
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, top as f32 + 4.0, c as f32 + 0.5),
+            yaw: 0.0,
+            pitch: -std::f32::consts::FRAC_PI_2,
+        });
+        let mut pig = crate::mob::Zombie::new(9, c as f64 + 0.5, top as f64, c as f64 + 0.5, 3);
+        pig.kind = crate::mob::MobKind::Pig;
+        app.mobs.push(pig);
+        assert!(
+            app.on_right_press(0, 0),
+            "the Feed verdict consumed the press"
+        );
+        // THE VOICE: the playEatingSound the Pig's own override speaks
+        assert!(
+            app.sounds
+                .events
+                .iter()
+                .any(|e| e.starts_with("entity.pig.eat ")),
+            "the pig's eat voice the override carries"
+        );
+        assert!(app.swing.swinging, "the press swung the arm");
+        assert_eq!(app.mobs[0].in_love, 600, "setInLove's own 600");
     }
 
     #[test]

@@ -132,6 +132,13 @@ pub struct SceneOpts {
     /// N swing-clock ticks after. Requires --sheep +
     /// --held-item item/shears.
     pub shear: Option<u32>,
+    /// THE FOOD ARM'S OWN VERDICT: fire the REAL on_right_press (the
+    /// vanilla startUseItem walk the mob.interact table's feed lane
+    /// answers — the Animal.isFood tag tables the held stack must
+    /// speak: wheat the sheep/cow, carrot/potato/beetroot the pig)
+    /// and walk N swing-clock ticks after. Requires --sheep +
+    /// --held-item wheat.
+    pub feed: Option<u32>,
     /// The zombie's remainingFireTicks (the sun-burn brand's own
     /// clock; the igniteForSeconds(8) law speaks 160).
     pub zombie_fire: Option<i32>,
@@ -1842,6 +1849,29 @@ pub fn render_gui_screen_opts(
         // sheared aftermath (the wool bit the fur layer's gate reads).
         let consumed = app.on_right_press(0, 0);
         println!("the shear's own press consumed: {consumed}");
+        for _ in 0..beat {
+            app.swing.tick();
+        }
+    }
+    if let Some(beat) = opts.feed {
+        // THE FOOD ARM'S OWN STAGE (the Animal.mobInteract walk the
+        // feed lane speaks): the held stack the food gate reads (the
+        // isFood tag tables the unified name resolves — wheat the
+        // sheep's SHEEP_FOOD speaks), the REAL on_right_press the
+        // ENTITY case lands, the Feed verdict the setInLove arm
+        // speaks (the love clock the 600 arms, the eat voice the
+        // playEatingSound override keeps — the PIG only), the swing
+        // the SwingSource.SERVER starts. The beat the swing's own
+        // clock walks, the frame frozen mid-arc (the love state the
+        // render lane never draws — the HEART particles the next
+        // round owes).
+        anyhow::ensure!(
+            held_item.is_some(),
+            "--feed requires --held-item wheat (the mob.interact table's food gate reads the held stack)"
+        );
+        app.offline_held_updated(held_item);
+        let consumed = app.on_right_press(0, 0);
+        println!("the feed's own press consumed: {consumed}");
         for _ in 0..beat {
             app.swing.tick();
         }
