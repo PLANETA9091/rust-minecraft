@@ -1051,6 +1051,49 @@ impl LavaSprite {
     }
 }
 
+/// The PARTICLE LANE's damage indicator sprite — the 8x8 the
+/// `damage` particle type's own set holds (javap: the jar's
+/// `particles/damage_indicator.json` lists ONE texture,
+/// `minecraft:damage` — the `CritParticle$DamageIndicatorProvider`'s
+/// `SpriteSet.get(random)` returns it whatever the draw; the WHITE
+/// star the hit's own burst rides, the crit's critical_hit.png
+/// sibling the atlas lane landed), loaded and sha1-verified the same
+/// stream the lava sprite speaks. A missing or tampered file keeps
+/// the indicators invisible (the honest absence the other lanes
+/// speak).
+pub struct DamageSprite {
+    pub rgba: Vec<u8>,
+}
+
+/// The damage texture's own layout (the jar's 8x8 the IHDR speaks).
+pub const DAMAGE_SPRITE_SIDE: u32 = 8;
+
+impl DamageSprite {
+    /// Load from the runtime cache root (the generator's
+    /// `assets-cache/jar/`), verify the generated sha1, decode, and
+    /// shape-check the 8x8 layout.
+    pub fn load(root: &std::path::Path) -> Option<DamageSprite> {
+        let bytes = std::fs::read(root.join(skin::PARTICLE_DAMAGE_RUNTIME_PATH)).ok()?;
+        if hex::encode(sha1::Sha1::digest(&bytes)) != skin::PARTICLE_DAMAGE_PNG_SHA1 {
+            return None;
+        }
+        let (w, h, rgba) = decode_rgba(&bytes).ok()?;
+        if w != DAMAGE_SPRITE_SIDE || h != DAMAGE_SPRITE_SIDE {
+            return None;
+        }
+        Some(DamageSprite { rgba })
+    }
+
+    /// The sprite pixel at (u, v) in TEXTURE UNITS (the 0..8 the
+    /// particle quad's uv walk speaks), nearest texel.
+    pub fn pixel(&self, u: f32, v: f32) -> [u8; 4] {
+        let x = (u.floor().clamp(0.0, DAMAGE_SPRITE_SIDE as f32 - 1.0)) as usize;
+        let y = (v.floor().clamp(0.0, DAMAGE_SPRITE_SIDE as f32 - 1.0)) as usize;
+        let o = (y * DAMAGE_SPRITE_SIDE as usize + x) * 4;
+        [self.rgba[o], self.rgba[o + 1], self.rgba[o + 2], self.rgba[o + 3]]
+    }
+}
+
 /// The PARTICLE LANE's splash droplet frames — the entry splash's
 /// second ring's 4-frame sprite set (javap: the `splash` particle
 /// type's own sprites, the jar's `textures/particle/splash_0..3.png`,

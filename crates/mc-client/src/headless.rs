@@ -668,6 +668,45 @@ pub fn seed_scene(app: &mut crate::screens::App, opts: &SceneOpts) -> Result<()>
                     app.crit_emitters.push(em);
                 }
             }
+            "damage" => {
+                // THE HIT'S OWN STAGE (the damageStatsAndHearts law the
+                // live attack site answers at the gate): the staged
+                // zombie at the facing point, the dealt-3.0 hit's
+                // count-1... the stage replays the FULL emitter chain
+                // with the dealt the staging names (6.0 -> 3 stars —
+                // the sword's own band), the six gaussians the packet
+                // walk speaks, the +1.0 up-burst the provider rides
+                let px = bx + fx * 1.8;
+                let pz = bz + fz * 1.8;
+                let y = app
+                    .offline_world
+                    .as_ref()
+                    .map(|w| {
+                        let mut gy = by as i32;
+                        while gy > 0
+                            && w.get(px.floor() as i32, gy, pz.floor() as i32)
+                                == crate::world::AIR
+                        {
+                            gy -= 1;
+                        }
+                        gy + 1
+                    })
+                    .unwrap_or(by as i32);
+                let z = crate::mob::Zombie::new(1, px, y as f64, pz, 262);
+                app.mobs.push(z);
+                // THE COUNT THE SWORD SPEAKS (damageStatsAndHearts'
+                // own gate: the dealt 6.0 crosses > 2.0 and counts
+                // (int)(6.0 * 0.5) = 3 — the three stars the walk
+                // spreads)
+                let stars = crate::particles::damage_indicators(
+                    px,
+                    y as f64 + crate::mob::ZOMBIE_HEIGHT * 0.5,
+                    pz,
+                    3,
+                    &mut app.mob_rng,
+                );
+                app.particles.extend(stars);
+            }
             "bubble" => {
                 // THE DROWN MOMENT'S OWN STAGE (the broadcast-67 arm
                 // the live lane answers at the dose): the pool the
@@ -734,7 +773,7 @@ pub fn seed_scene(app: &mut crate::screens::App, opts: &SceneOpts) -> Result<()>
             }
             other => {
                 anyhow::bail!(
-                    "--particles: unknown scene '{other}' (the lane speaks burst | poof | crit | bubble | splash | lava)"
+                    "--particles: unknown scene '{other}' (the lane speaks burst | poof | crit | damage | bubble | splash | lava)"
                 );
             }
         }
@@ -748,6 +787,10 @@ pub fn seed_scene(app: &mut crate::screens::App, opts: &SceneOpts) -> Result<()>
         let walk = match kind {
             "poof" => 20,
             "crit" => 6,
+            // the stars' own flight (the +1.0 burst lifts them a
+            // block a tick — the shutter catches the head-height
+            // moment the first tick speaks)
+            "damage" => 1,
             "bubble" => 10,
             "splash" => 4,
             // the drips' own flight (the pop's arc rides ~3 ticks of

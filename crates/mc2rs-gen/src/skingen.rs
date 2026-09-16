@@ -75,6 +75,12 @@ pub const PARTICLE_SPLASH_JAR_PATHS: [&str; 4] = [
 /// `LavaParticle$Provider`'s `SpriteSet.get(random)` returns it
 /// whatever the draw).
 pub const PARTICLE_LAVA_JAR_PATH: &str = "assets/minecraft/textures/particle/lava.png";
+/// The damage indicator's single sprite (javap: the `damage_indicator`
+/// particle type's sprite set — the jar's `particles/damage_indicator.json`
+/// lists ONE texture, `minecraft:damage`, the 8x8 the IHDR verifies; the
+/// `CritParticle$DamageIndicatorProvider`'s `SpriteSet.get(random)`
+/// returns it whatever the draw).
+pub const PARTICLE_DAMAGE_JAR_PATH: &str = "assets/minecraft/textures/particle/damage.png";
 /// The runtime-cache paths the client's loader reads (the same
 /// textures/ prefix strip the other lanes speak).
 pub const FIRE_0_RUNTIME_PATH: &str = "block/fire_0.png";
@@ -102,6 +108,7 @@ pub const PARTICLE_SPLASH_RUNTIME_PATHS: [&str; 4] = [
     "particle/splash_3.png",
 ];
 pub const PARTICLE_LAVA_RUNTIME_PATH: &str = "particle/lava.png";
+pub const PARTICLE_DAMAGE_RUNTIME_PATH: &str = "particle/damage.png";
 /// Where the client reads the skin at runtime (under the runtime asset root).
 pub const RUNTIME_PATH: &str = "entity/player/wide/steve.png";
 pub const SLIM_RUNTIME_PATH: &str = "entity/player/slim/alex.png";
@@ -162,6 +169,9 @@ pub struct SkinData {
     /// sha1 of the lava drip's single 8x8 sprite (jar-verbatim
     /// integrity) — the pool's own drip's pixel source.
     pub particle_lava_png_sha1: String,
+    /// sha1 of the damage indicator's single 8x8 sprite (jar-verbatim
+    /// integrity) — the hit's own burst's pixel source.
+    pub particle_damage_png_sha1: String,
 }
 
 /// One UV rect in the skin texture, in texels: (u, v, w, h).
@@ -331,6 +341,17 @@ pub fn generate<R: std::io::Read + std::io::Seek>(archive: &mut zip::ZipArchive<
         lw,
         lh
     );
+    // the damage indicator's single sprite (the same shape check the
+    // lava speaks — the json's one-texture set)
+    let damage_bytes = read_entry(archive, PARTICLE_DAMAGE_JAR_PATH).context("read damage")?;
+    let particle_damage_png_sha1 = crate::util::sha1_hex(&damage_bytes);
+    let (dw2, dh2, _damage_rgba) = decode_rgba(&damage_bytes).context("decode damage")?;
+    anyhow::ensure!(
+        (dw2, dh2) == (8, 8),
+        "damage must be the 8x8 sprite, got {}x{}",
+        dw2,
+        dh2
+    );
     Ok(SkinData {
         png_sha1,
         rgba_sha1: crate::util::sha1_hex(&rgba),
@@ -347,6 +368,7 @@ pub fn generate<R: std::io::Read + std::io::Seek>(archive: &mut zip::ZipArchive<
         particle_poof_png_sha1s,
         particle_splash_png_sha1s,
         particle_lava_png_sha1,
+        particle_damage_png_sha1,
     })
 }
 
@@ -513,6 +535,13 @@ pub fn emit(data: &SkinData) -> Result<String> {
     out.push_str(&format!(
         "pub const PARTICLE_LAVA_RUNTIME_PATH: &str = \"{PARTICLE_LAVA_RUNTIME_PATH}\";\n"
     ));
+    out.push_str(&format!(
+        "pub const PARTICLE_DAMAGE_PNG_SHA1: &str = \"{}\";\n",
+        data.particle_damage_png_sha1
+    ));
+    out.push_str(&format!(
+        "pub const PARTICLE_DAMAGE_RUNTIME_PATH: &str = \"{PARTICLE_DAMAGE_RUNTIME_PATH}\";\n"
+    ));
     Ok(out)
 }
 
@@ -642,6 +671,8 @@ mod tests {
             splashes.iter().map(|p| crate::util::sha1_hex(p)).collect();
         let lava = tiny_png();
         let expected_lava_sha1 = crate::util::sha1_hex(&lava);
+        let damage = tiny_png();
+        let expected_damage_sha1 = crate::util::sha1_hex(&damage);
 
         let mut zip = zip_of(&[
             (WIDE_STEVE_JAR_PATH, png.clone()),
@@ -666,6 +697,7 @@ mod tests {
             (PARTICLE_SPLASH_JAR_PATHS[2], splashes[2].clone()),
             (PARTICLE_SPLASH_JAR_PATHS[3], splashes[3].clone()),
             (PARTICLE_LAVA_JAR_PATH, lava),
+            (PARTICLE_DAMAGE_JAR_PATH, damage),
         ]);
         let data = generate(&mut zip).unwrap();
         assert_eq!(data.side, 64);
@@ -702,6 +734,10 @@ mod tests {
         assert_eq!(
             data.particle_lava_png_sha1, expected_lava_sha1,
             "the lava sprite's own sha1"
+        );
+        assert_eq!(
+            data.particle_damage_png_sha1, expected_damage_sha1,
+            "the damage sprite's own sha1"
         );
 
         let emitted = emit(&data).unwrap();

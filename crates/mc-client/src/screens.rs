@@ -706,6 +706,9 @@ pub struct App {
     /// The lava drip's single sprite (the same lazy load — the pool's
     /// own drip's pixel source).
     pub lava_sprite: Option<crate::avatar::LavaSprite>,
+    /// The damage indicator's single sprite (the same lazy load — the
+    /// hit's own burst's pixel source).
+    pub damage_sprite: Option<crate::avatar::DamageSprite>,
     pub hurt_time: i32,
     pub hurt_duration: i32,
     pub invulnerable_time: i32,
@@ -909,6 +912,7 @@ impl App {
             bubble_sprite: None,
             splash_frames: None,
             lava_sprite: None,
+            damage_sprite: None,
             next_drop_id: 1,
             orbs: Vec::new(),
             next_orb_id: 1,
@@ -1986,7 +1990,29 @@ impl App {
             self.crit_emitters
                 .push(crate::particles::CritEmitter::new(mob.id, mob.box_at()));
         }
+        // the pre-hit health the stats law reads (the dealt the
+        // indicator's gate speaks)
+        let pre_health = mob.health;
         mob.hurt(dmg as f64);
+        // THE DAMAGE INDICATOR (javap `Player.damageStatsAndHearts`
+        // verbatim — the call site the attack speaks AFTER the hurt:
+        // the dealt `pre - post` gates `> 2.0F` and counts
+        // `(int)(dealt * 0.5F)`, the sendParticles at the target's own
+        // x / getY(0.5) = y + height * 0.5 / z with the 0.1 / 0.0 /
+        // 0.1 offsets and the 0.2 speed — the client's packet walk the
+        // damage_indicators emitter verbatim replays)
+        let dealt = pre_health - mob.health;
+        if dealt > 2.0 {
+            let count = (dealt * 0.5) as usize;
+            let stars = crate::particles::damage_indicators(
+                mob.x,
+                mob.y + crate::mob::ZOMBIE_HEIGHT * 0.5,
+                mob.z,
+                count,
+                &mut self.mob_rng,
+            );
+            self.particles.extend(stars);
+        }
         // THE KNOCKBACK (the hurt pipeline's own dealDefaultKnockback:
         // the caller's (x, z) runs attacker-minus-victim — the
         // knockback's minus law pushes the mob away)
@@ -5348,6 +5374,10 @@ impl App {
             self.lava_sprite =
                 crate::avatar::LavaSprite::load(std::path::Path::new("assets-cache/jar"));
         }
+        if self.damage_sprite.is_none() {
+            self.damage_sprite =
+                crate::avatar::DamageSprite::load(std::path::Path::new("assets-cache/jar"));
+        }
         let sy = cam.yaw.sin();
         let cy = cam.yaw.cos();
         let sp = cam.pitch.sin();
@@ -5362,6 +5392,7 @@ impl App {
         let mut bubble_quads: Vec<crate::raster::SampledQuad> = Vec::new();
         let mut splash_groups: Vec<(usize, Vec<crate::raster::SampledQuad>)> = Vec::new();
         let mut lava_quads: Vec<crate::raster::SampledQuad> = Vec::new();
+        let mut damage_quads: Vec<crate::raster::SampledQuad> = Vec::new();
         let mut smoke_groups: Vec<(usize, Vec<crate::raster::SampledQuad>)> = Vec::new();
         for p in &self.particles {
             let half = p.half();
@@ -5427,6 +5458,17 @@ impl App {
                         pts,
                         uv: [[0.0, 8.0], [8.0, 8.0], [8.0, 0.0], [0.0, 0.0]],
                         tex: "particle_crit",
+                        tint: p.col,
+                    });
+                }
+                crate::particles::ParticleKind::Damage => {
+                    // the indicator's own quad (the damage sprite the
+                    // json's one-texture set holds — the crit's white
+                    // star sibling, the tint the ctor's white keeps)
+                    damage_quads.push(crate::raster::SampledQuad {
+                        pts,
+                        uv: [[0.0, 8.0], [8.0, 8.0], [8.0, 0.0], [0.0, 0.0]],
+                        tex: "particle_damage",
                         tint: p.col,
                     });
                 }
@@ -5538,6 +5580,13 @@ impl App {
         if let Some(lava) = &self.lava_sprite {
             fb.draw_sampled_quads(vp, &lava_quads, &mut |_tex, u, v| {
                 Some(lava.pixel(u, v))
+            });
+        }
+        // the damage group (the hit's own white stars — the full
+        // sprite the single-texture json speaks)
+        if let Some(damage) = &self.damage_sprite {
+            fb.draw_sampled_quads(vp, &damage_quads, &mut |_tex, u, v| {
+                Some(damage.pixel(u, v))
             });
         }
         // the smoke groups (the age's own frame walk — the same
@@ -11379,6 +11428,82 @@ mod tests {
             moved > 64 * 64 / 10,
             "the fog end's open speaks through the frame: {moved} pixels moved"
         );
+    }
+
+    #[test]
+    fn the_crit_hit_arms_the_damage_indicators() {
+        // THE WIRING'S OWN TRUTH (damageStatsAndHearts at the attack
+        // site): the crit's 3.0 dealt crosses the > 2.0 gate and lands
+        // ONE indicator at the mob's mid height; the plain fist's 2.0
+        // dealt stays under the gate — the honest vanilla shape
+        let mut app = App::new(3);
+        app.enter_world();
+        crate::headless::seed_scene(
+            &mut app,
+            &crate::headless::SceneOpts {
+                body: true,
+                zombie: true,
+                ..crate::headless::SceneOpts::default()
+            },
+        )
+        .unwrap();
+        let idx = 0;
+        // aim at the zombie's mid height (the vanilla getY(0.5) the
+        // burst rides)
+        {
+            let (tx, ty, tz) = {
+                let m = &app.mobs[idx];
+                (m.x, m.y + crate::mob::ZOMBIE_HEIGHT * 0.5, m.z)
+            };
+            let b = app.body.as_mut().unwrap();
+            let (dx, dy, dz) = (tx - b.x, ty - (b.y + b.eye_height()), tz - b.z);
+            let horiz = (dx * dx + dz * dz).sqrt().max(1e-9);
+            let len3 = (dx * dx + dy * dy + dz * dz).sqrt().max(1e-9);
+            b.yaw = ((dx / horiz).atan2(-dz / horiz) - std::f64::consts::PI).to_degrees() as f32;
+            b.pitch = -(dy / len3).asin().to_degrees() as f32;
+        }
+        // THE PLAIN FIST'S GATE: the full charge deals 2.0 — the dealt
+        // stays at the gate's edge, no indicator spawns
+        app.attack_ticker = 20;
+        app.on_attack();
+        let plain = app
+            .particles
+            .iter()
+            .filter(|p| matches!(p.kind, crate::particles::ParticleKind::Damage))
+            .count();
+        assert_eq!(plain, 0, "the 2.0 dealt never crosses the gate");
+        // THE CRIT'S OWN BURST: the fall distance arms the crit (the
+        // 1.5x the damage law speaks — 3.0 dealt, the count-1 walk)
+        app.mobs[idx].health = 10.0;
+        {
+            let b = app.body.as_mut().unwrap();
+            b.fall_distance = 1.0;
+            b.on_ground = false;
+            b.sprinting = false;
+        }
+        app.attack_ticker = 20;
+        app.on_attack();
+        let stars = app
+            .particles
+            .iter()
+            .filter(|p| matches!(p.kind, crate::particles::ParticleKind::Damage))
+            .count();
+        assert_eq!(stars, 1, "the 3.0 dealt speaks the count-1 walk");
+        let m = &app.mobs[idx];
+        for p in app
+            .particles
+            .iter()
+            .filter(|p| matches!(p.kind, crate::particles::ParticleKind::Damage))
+        {
+            let mid = m.y + crate::mob::ZOMBIE_HEIGHT * 0.5;
+            assert!(
+                (p.y - mid).abs() <= 0.6,
+                "the mid-height band the getY(0.5) speaks: {} vs {mid}",
+                p.y
+            );
+            assert!(p.vy > 0.5, "the +1.0 burst rides: {}", p.vy);
+            assert_eq!(p.lifetime, 20);
+        }
     }
 
     #[test]

@@ -173,6 +173,11 @@ pub enum ParticleKind {
     Poof,
     /// `CritParticle` — the crit star (the critical_hit texture).
     Crit,
+    /// `CritParticle` the DAMAGE_INDICATOR provider speaks — the same
+    /// class the crit rides (the fade, the zero gravity), the own
+    /// `damage` sprite the json's one-texture set holds, the lifetime
+    /// the provider's setLifetime(20) pins.
+    Damage,
     /// `BubbleParticle` — the drown bubble (the bubble texture, the
     /// full sprite the quad samples, the body's own rise).
     Bubble,
@@ -248,9 +253,11 @@ impl Particle {
         self.vy *= self.friction;
         self.vz *= self.friction;
         match self.kind {
-            ParticleKind::Crit => {
+            ParticleKind::Crit | ParticleKind::Damage => {
                 // javap CritParticle.tick: super.tick() then the two
-                // color folds — the star cools as it flies
+                // color folds — the star cools as it flies (the
+                // indicator IS the crit's own class, the provider's
+                // ctor chain keeps the laws)
                 self.col[1] *= 0.96;
                 self.col[2] *= 0.9;
             }
@@ -486,6 +493,69 @@ pub fn crit(
         vo: 0.0,
         col: [1.0, 1.0, 1.0],
     }
+}
+
+/// The damage indicator's own particle (javap
+/// `CritParticle$DamageIndicatorProvider.createParticle` verbatim):
+/// the CRIT's own ctor chain (the same class, the same draws — the
+/// base lifetime's float first, the base size's float second) then
+/// the provider's `setLifetime(20)` pin — the indicator always lives
+/// 20 ticks, whatever the base lifetime draw rolled.
+pub fn damage_indicator(
+    x: f64,
+    y: f64,
+    z: f64,
+    vx: f64,
+    vy: f64,
+    vz: f64,
+    r_life: f32,
+    r_size: f32,
+) -> Particle {
+    let mut p = crit(x, y, z, vx, vy, vz, r_life, r_size);
+    p.kind = ParticleKind::Damage;
+    p.lifetime = 20;
+    p
+}
+
+/// THE HIT'S OWN BURST (javap `Player.damageStatsAndHearts` ->
+/// `ServerLevel.sendParticles` -> the client's
+/// `ClientPacketListener.handleParticleEvent` count>0 walk verbatim):
+/// the caller's dealt gates (`> 2.0F`) and counts
+/// (`(int)(dealt * 0.5F)`) ride the attack site; the six gaussians
+/// per particle speak the packet handler's own order — the position
+/// offsets `gauss * 0.1 / gauss * 0.0 / gauss * 0.1` (the y draw
+/// consumed, the offset zero) then the velocities
+/// `gauss * 0.2` per axis — at the mob's mid height
+/// (`getY(0.5)` = y + height * 0.5). The provider's
+/// `ySpeed + 1.0` bumps the burst UP (the dconst_1/dadd the
+/// stack walk speaks) before the ctor's draws.
+pub fn damage_indicators(
+    x: f64,
+    y: f64,
+    z: f64,
+    count: usize,
+    rng: &mut crate::drops::Lcg,
+) -> Vec<Particle> {
+    let mut out = Vec::with_capacity(count);
+    for _ in 0..count {
+        let ox = rng.next_gaussian() * 0.1;
+        let oy = rng.next_gaussian() * 0.0;
+        let oz = rng.next_gaussian() * 0.1;
+        let vx = rng.next_gaussian() * 0.2;
+        let vy = rng.next_gaussian() * 0.2;
+        let vz = rng.next_gaussian() * 0.2;
+        out.push(damage_indicator(
+            x + ox,
+            y + oy,
+            z + oz,
+            vx,
+            vy + 1.0,
+            vz,
+            rng.next_f32(),
+            rng.next_f32(),
+        ));
+    }
+    out
 }
 
 /// The bubble particle's ctor (javap `BubbleParticle` verbatim). Draw
@@ -1513,6 +1583,67 @@ mod tests {
         let mut mid = smoke_puff(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
         mid.age = mid.lifetime / 16; // 32 * (1/16) = 2 -> clamped 1.0
         assert_eq!(mid.half(), base_quad_size(0.0) * 0.75 * 0.5);
+    }
+
+    #[test]
+    fn the_damage_indicator_rides_the_crit_chain_and_the_pin() {
+        // the provider's ctor chain: the same crit laws (the fade's
+        // base, the zero gravity, the 0.98 friction, the base size)
+        // then the setLifetime(20) pin
+        let p = damage_indicator(1.0, 2.0, 3.0, 0.1, 1.1, 0.3, 0.0, 0.0);
+        assert_eq!(p.kind, ParticleKind::Damage);
+        assert_eq!(p.lifetime, 20, "the pin the provider speaks");
+        assert_eq!(p.gravity, 0.0);
+        assert_eq!(p.friction, 0.98);
+        assert_eq!(p.vx, 0.1);
+        assert_eq!(p.vy, 1.1, "the +1.0 burst the provider rides");
+        assert_eq!(p.vz, 0.3);
+        // the fade: the same CritParticle.tick the crit speaks
+        let mut p = damage_indicator(0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0);
+        let g0 = p.col[1];
+        p.tick();
+        assert!((p.col[1] - g0 * 0.96).abs() < 1e-6, "the fade walks");
+    }
+
+    #[test]
+    fn the_damage_burst_rides_the_six_gaussian_law() {
+        // the packet walk's own order: ox, oy, oz, vx, vy, vz — six
+        // gaussians per particle, the offsets 0.1/0.0/0.1, the
+        // velocities 0.2, the +1.0 up-burst, the ctor draws last
+        let mut r = rng();
+        let stars = damage_indicators(10.0, 20.0, 30.0, 3, &mut r);
+        assert_eq!(stars.len(), 3);
+        for s in &stars {
+            assert!(
+                (s.x - 10.0).abs() <= 0.6,
+                "the x offset's gaussian band: {}",
+                s.x - 10.0
+            );
+            assert_eq!(s.y, 20.0, "the y offset's zero the 0.0 dist speaks");
+            assert!(
+                (s.z - 30.0).abs() <= 0.6,
+                "the z offset's gaussian band: {}",
+                s.z - 30.0
+            );
+            assert!(
+                s.vy > 0.5 && s.vy < 1.5,
+                "the +1.0 burst over the 0.2 gaussian: {}",
+                s.vy
+            );
+            assert!((s.vx).abs() < 1.0 && (s.vz).abs() < 1.0);
+            assert_eq!(s.lifetime, 20);
+            assert_eq!(s.kind, ParticleKind::Damage);
+        }
+        // the replay: the same seed walks the same stars
+        let mut a = rng();
+        let mut b = rng();
+        let da = damage_indicators(0.0, 0.0, 0.0, 2, &mut a);
+        let db = damage_indicators(0.0, 0.0, 0.0, 2, &mut b);
+        for (pa, pb) in da.iter().zip(db.iter()) {
+            assert_eq!(pa.x, pb.x);
+            assert_eq!(pa.vy, pb.vy);
+            assert_eq!(pa.lifetime, pb.lifetime);
+        }
     }
 
     #[test]
