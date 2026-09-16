@@ -12,7 +12,6 @@ pub mod gui;
 pub mod item_models;
 pub mod item_order;
 pub mod items;
-pub mod lang;
 pub mod models;
 pub mod mob_effects;
 pub mod sounds;

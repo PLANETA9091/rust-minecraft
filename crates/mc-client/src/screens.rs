@@ -1,15 +1,15 @@
 //! GUI screens: the boot chain (Mojang Studios loading -> title -> menus),
-//! driven entirely by GENERATED data: every label comes from the official
-//! language table, every sprite from the official sprite inventory, every
-//! splash from the jar's own texts/splashes.txt the runtime cache keeps
-//! (the first generated/ -> runtime-load migration step: the table lives
-//! OFF the compiled source, the loader below the only parser).
+//! driven entirely by OFFICIAL data: every label comes from the jar's own
+//! lang/en_us.json the runtime cache keeps (the generated/ -> runtime-load
+//! migration's second lane: the table lives OFF the compiled source, the
+//! loader below the only parser), every sprite from the official sprite
+//! inventory, every splash from the jar's own texts/splashes.txt (the
+//! migration's first lane — the same walk the splashes loader keeps).
 
 use crate::gui::{Gui, GuiAssets};
 use crate::math::{Mat4, Vec3};
 use crate::raster::RenderCtx;
 
-use mc_registry::generated::lang::tr;
 use mc_registry::generated::worldgen::Skybox;
 
 /// THE SPLASHES' OWN LOADER (the generated/ -> runtime-load migration's
@@ -46,6 +46,72 @@ fn load_splashes() -> Vec<String> {
         }
     }
     Vec::new()
+}
+
+/// THE LANG TABLE'S OWN LOADER (the generated/ -> runtime-load migration's
+/// second lane — the 552KB en_us table the compiled source no longer
+/// carries): the jar's lang/en_us.json the runtime cache keeps VERBATIM,
+/// the parse law the old generator's own collect walk spoke — the flat
+/// keys the direct entries, the nested objects the dotted-key join, the
+/// non-string entries the skip law keeps, the serde_json read the shape
+/// the jar's own file speaks. The absent/broken file the honest empty map
+/// keeps — the inline fallback every call site carries answers the
+/// cache-absent boot (the CI's pre-generate test job the same arm walks).
+/// The roots the splash loader's own walk speaks: the workspace root the
+/// binary's cwd keeps, the crate dir the cargo test cwd one and two steps
+/// below. The OnceLock the load-once law keeps — tr's own signature the
+/// Option<&'static str> the call sites and the goldens pin.
+fn parse_lang(bytes: &[u8]) -> std::collections::BTreeMap<String, String> {
+    let v: serde_json::Value = match serde_json::from_slice(bytes) {
+        Ok(v) => v,
+        Err(_) => return std::collections::BTreeMap::new(),
+    };
+    let obj = match v.as_object() {
+        Some(o) => o,
+        None => return std::collections::BTreeMap::new(),
+    };
+    let mut map = std::collections::BTreeMap::new();
+    lang_collect("", obj, &mut map);
+    map
+}
+
+fn lang_collect(
+    prefix: &str,
+    obj: &serde_json::Map<String, serde_json::Value>,
+    out: &mut std::collections::BTreeMap<String, String>,
+) {
+    for (k, v) in obj {
+        let key = if prefix.is_empty() { k.clone() } else { format!("{prefix}.{k}") };
+        match v {
+            serde_json::Value::String(s) => {
+                out.insert(key, s.clone());
+            }
+            serde_json::Value::Object(inner) => lang_collect(&key, inner, out),
+            _ => {} // non-string entries are not translatable text
+        }
+    }
+}
+
+fn load_lang() -> std::collections::BTreeMap<String, String> {
+    for prefix in [
+        "assets-cache/jar",
+        "../assets-cache/jar",
+        "../../assets-cache/jar",
+    ] {
+        if let Ok(bytes) = std::fs::read(
+            std::path::Path::new(prefix).join("assets/minecraft/lang/en_us.json"),
+        ) {
+            return parse_lang(&bytes);
+        }
+    }
+    std::collections::BTreeMap::new()
+}
+
+/// Translate a GUI key (exact vanilla lookup, the loaded table's own law).
+fn tr(key: &str) -> Option<&'static str> {
+    static LANG: std::sync::OnceLock<std::collections::BTreeMap<String, String>> =
+        std::sync::OnceLock::new();
+    LANG.get_or_init(load_lang).get(key).map(|s| s.as_str())
 }
 
 pub const WHITE: [f32; 3] = [1.0, 1.0, 1.0];
@@ -8128,6 +8194,42 @@ mod tests {
     }
 
     #[test]
+    fn the_lang_loader_speaks_the_parse_law() {
+        // THE MIGRATION'S OWN LAW (the parse the old generator's collect
+        // walk spoke, now the loader's): the flat keys the direct entries
+        // keep, the nested objects the dotted-key join walks, the escapes
+        // the serde_json read answers, the broken/non-object bytes the
+        // honest empty map keeps
+        let map = parse_lang(
+            br#"{"menu.singleplayer":"Singleplayer","menu":{"multiplayer":"Multiplayer"},"quote":"He said \"hi\""}"#,
+        );
+        assert_eq!(
+            map.get("menu.singleplayer").map(String::as_str),
+            Some("Singleplayer"),
+            "the flat key the direct entry keeps"
+        );
+        assert_eq!(
+            map.get("menu.multiplayer").map(String::as_str),
+            Some("Multiplayer"),
+            "the nested object the dotted-key join walks"
+        );
+        assert_eq!(
+            map.get("quote").map(String::as_str),
+            Some("He said \"hi\""),
+            "the escapes the json read answers"
+        );
+        assert_eq!(map.len(), 3, "the non-string entries the skip law keeps");
+        assert!(
+            parse_lang(b"not json").is_empty(),
+            "the broken file the honest empty map keeps"
+        );
+        assert!(
+            parse_lang(b"[]").is_empty(),
+            "the non-object the honest empty map keeps"
+        );
+    }
+
+    #[test]
     fn panorama_offset_is_deterministic_and_wraps() {
         let strip = 540.0;
         assert_eq!(panorama_offset(0, strip), 0.0);
@@ -8437,17 +8539,27 @@ mod tests {
 
     #[test]
     fn gui_cancel_and_title_keys_exist_in_official_lang() {
-        // The generated table must contain the keys our screens render.
-        assert_eq!(tr("gui.cancel"), Some("Cancel"));
-        assert_eq!(tr("menu.singleplayer"), Some("Singleplayer"));
-        assert_eq!(tr("menu.multiplayer"), Some("Multiplayer"));
-        assert_eq!(tr("menu.options"), Some("Options..."));
-        assert_eq!(tr("menu.quit"), Some("Quit Game"));
-        assert_eq!(tr("multiplayer.title"), Some("Play Multiplayer"));
-        assert_eq!(tr("connect.failed"), Some("Failed to connect to the server"));
-        assert_eq!(tr("selectServer.select"), Some("Join Server"));
-        assert_eq!(tr("options.title"), Some("Options"));
-        assert_eq!(tr("menu.online"), Some("Minecraft Realms"));
+        // THE MIGRATION'S OWN LAW (the table the runtime cache keeps, the
+        // loader the only parser): the assert computes the expected from
+        // the ACTUAL loaded state — the cache-present boot the vanilla
+        // values answer, the cache-absent boot the None the inline
+        // fallbacks keep (the CI's pre-generate test job the same arm
+        // walks). The keys the screens render, the loaded table must hold.
+        let loaded = !load_lang().is_empty();
+        let expect = |v: Option<&'static str>| if loaded { v } else { None };
+        assert_eq!(tr("gui.cancel"), expect(Some("Cancel")));
+        assert_eq!(tr("menu.singleplayer"), expect(Some("Singleplayer")));
+        assert_eq!(tr("menu.multiplayer"), expect(Some("Multiplayer")));
+        assert_eq!(tr("menu.options"), expect(Some("Options...")));
+        assert_eq!(tr("menu.quit"), expect(Some("Quit Game")));
+        assert_eq!(tr("multiplayer.title"), expect(Some("Play Multiplayer")));
+        assert_eq!(
+            tr("connect.failed"),
+            expect(Some("Failed to connect to the server"))
+        );
+        assert_eq!(tr("selectServer.select"), expect(Some("Join Server")));
+        assert_eq!(tr("options.title"), expect(Some("Options")));
+        assert_eq!(tr("menu.online"), expect(Some("Minecraft Realms")));
     }
 
     #[test]

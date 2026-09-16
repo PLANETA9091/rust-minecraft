@@ -13,7 +13,6 @@ use anyhow::{Context, Result};
 use crate::jar::JarReport;
 use crate::soundgen::SoundData;
 use crate::fontgen::FontData;
-use crate::langgen::LangData;
 use crate::uigen::UiData;
 use crate::worldgen::WorldgenData;
 use crate::skygen::SkyData;
@@ -21,7 +20,6 @@ use crate::skygen::SkyData;
 /// All extractor outputs for one version.
 pub struct GenAll {
     pub font: FontData,
-    pub lang: LangData,
     pub ui: UiData,
     pub sounds: SoundData,
     pub worldgen: WorldgenData,
@@ -73,13 +71,14 @@ pub fn emit(
     items.push_str("];\n");
     fs::write(reg_dir.join("items.rs"), items).context("write items.rs")?;
 
-    // ---- font.rs / lang.rs / gui.rs / sounds.rs / worldgen.rs ----
+    // ---- font.rs / gui.rs / sounds.rs / worldgen.rs ----
     // (the splashes.rs write the first migration step retired — the
     // jar's own texts/splashes.txt the extract_runtime_assets walk now
     // copies verbatim into the runtime cache, the client's loader the
-    // only parser)
+    // only parser; the lang.rs write the second migration step retired
+    // the same walk — the jar's own lang/en_us.json the runtime cache
+    // keeps verbatim, the client's loader the only parser)
     fs::write(reg_dir.join("font.rs"), crate::fontgen::emit(&gen.font)?).context("write font.rs")?;
-    fs::write(reg_dir.join("lang.rs"), crate::langgen::emit(&gen.lang)?).context("write lang.rs")?;
     fs::write(reg_dir.join("gui.rs"), crate::uigen::emit(&gen.ui)?).context("write gui.rs")?;
     fs::write(reg_dir.join("sounds.rs"), crate::soundgen::emit(&gen.sounds)?).context("write sounds.rs")?;
     fs::write(reg_dir.join("worldgen.rs"), crate::worldgen::emit(&gen.worldgen)?)
@@ -138,7 +137,6 @@ pub fn emit(
         "hasLang": report.has_lang_en_us,
         "glyphs": gen.font.glyphs.len(),
         "fontTextures": gen.font.textures.len(),
-        "langEntries": gen.lang.map.len(),
         "guiSprites": gen.ui.sprites.len(),
         "soundEvents": gen.sounds.events.len(),
         "biomes": gen.worldgen.biomes.len(),
@@ -176,6 +174,20 @@ pub fn extract_runtime_assets(
         let dest = out_root.join("assets/minecraft/texts/splashes.txt");
         if !dest.exists() {
             if let Ok(bytes) = read_entry(archive, "assets/minecraft/texts/splashes.txt") {
+                fs::create_dir_all(dest.parent().unwrap())?;
+                fs::write(dest, bytes)?;
+                n += 1;
+            }
+        }
+    }
+    // THE LANG TABLE'S OWN CACHE (the jar's lang/en_us.json VERBATIM —
+    // the second migration lane the same walk speaks: no parsing here,
+    // the client's loader the only parser, the flat + nested dotted-key
+    // law the client's own collect walk keeps)
+    {
+        let dest = out_root.join("assets/minecraft/lang/en_us.json");
+        if !dest.exists() {
+            if let Ok(bytes) = read_entry(archive, "assets/minecraft/lang/en_us.json") {
                 fs::create_dir_all(dest.parent().unwrap())?;
                 fs::write(dest, bytes)?;
                 n += 1;
