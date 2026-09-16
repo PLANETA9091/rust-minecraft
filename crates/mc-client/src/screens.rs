@@ -3354,6 +3354,14 @@ impl App {
         }
     }
 
+    /// THE BURNING WORD'S OWN FLOOR: the shared-flags accessor's bit 0
+    /// arms the flame gate through this floor — one past the 250ms
+    /// refresh cadence's 5 ticks, the flame never stutters between the
+    /// ships the query semantics speak (the vanilla client's
+    /// `isOnFire()` is a live flag query; the wire's own word lands
+    /// every refresh, the floor bridges the gap).
+    const WIRE_FIRE_FLOOR: i32 = 6;
+
     /// THE WIRE'S OWN MOB LANE (the Add Entity store's projection
     /// lands — the server's population at its word): existing ids arm
     /// the `lerpTo` walk (javap LivingEntity's remote law — the pose
@@ -3395,6 +3403,15 @@ impl App {
                 // the hurt mailbox's shipped arm rides the spawn (the
                 // flash the render's 0.7 shade speaks from tick one)
                 m.hurt_time = w.hurt_time;
+                // THE BURNING WORD (the shared-flags accessor's bit 0 —
+                // Entity.isOnFire's own query the vanilla client speaks
+                // per frame): the flag arms the flame gate, the silence
+                // is the honest unburnt
+                if w.on_fire {
+                    m.fire_ticks = m.fire_ticks.max(Self::WIRE_FIRE_FLOOR);
+                } else {
+                    m.fire_ticks = 0;
+                }
                 m.on_ground = true;
                 m.age_ticks = 40; // two seconds in — the bob's stable mid
                 self.net_mobs.push(m);
@@ -3427,6 +3444,14 @@ impl App {
             // re-arms a flash the window already spent
             if w.hurt_time > 0 {
                 m.hurt_time = w.hurt_time;
+            }
+            // THE BURNING WORD rides with the pose (the same query the
+            // fresh spawn speaks — the flag's drop is the douse, the
+            // floor outlives the 250ms refresh window un-stuttered)
+            if w.on_fire {
+                m.fire_ticks = m.fire_ticks.max(Self::WIRE_FIRE_FLOOR);
+            } else {
+                m.fire_ticks = 0;
             }
             self.net_mobs.push(m);
         }
@@ -8745,6 +8770,51 @@ mod tests {
         assert_eq!(count(&app, "this.sound.does.not.exist "), 0, "the no-op spoke not");
     }
 
+    /// THE WIRE MOBS' BURNING (the vanilla isOnFire's own query): the
+    /// shared-flags accessor's bit 0 arms the flame gate through the
+    /// merge law's own floor (the flame never stutters between the
+    /// 250ms refreshes), the flag's drop is the douse, the accessor
+    /// never spoken is the honest unburnt.
+    #[test]
+    fn the_wire_mobs_burn_at_the_servers_word() {
+        let mut app = App::new(3);
+        app.open(ScreenKind::Connect);
+        app.net_world = Some(air_net_world(2, 0));
+        app.enter_network_world(None, Skybox::Overworld, None, None);
+        // the burning word rides the FRESH spawn: the flag arms the
+        // flame gate (the floor the refresh window's own pacing speaks)
+        let mut burning = wire_zombie(7, 10.0, 64.0, 10.0);
+        burning.on_fire = true;
+        app.live_mobs_updated(vec![burning]);
+        assert!(
+            app.net_mobs[0].fire_ticks >= App::WIRE_FIRE_FLOOR,
+            "the flag arms the flame gate"
+        );
+        // the refresh keeps the flame lit (the max fold — the floor
+        // never resets the arm the query semantics speak): the server
+        // STILL says burning, the word rides again
+        let mut still_burning = wire_zombie(7, 10.0, 64.0, 10.0);
+        still_burning.on_fire = true;
+        app.live_mobs_updated(vec![still_burning]);
+        assert!(
+            app.net_mobs[0].fire_ticks >= App::WIRE_FIRE_FLOOR,
+            "the refresh never stutters the flame"
+        );
+        // the ticks walk: the wire tick owns NO fire clock (the server
+        // owns the countdown the flag summarizes) — the arm stands
+        app.tick_net_mobs();
+        assert!(
+            app.net_mobs[0].fire_ticks > 0,
+            "the arm stands between the ships"
+        );
+        // the flag's drop: the douse (the binary word the server speaks)
+        app.live_mobs_updated(vec![wire_zombie(7, 10.0, 64.0, 10.0)]);
+        assert_eq!(app.net_mobs[0].fire_ticks, 0, "the drop is the douse");
+        // the never-hit accessor: the honest unburnt
+        app.live_mobs_updated(vec![wire_zombie(11, 14.0, 64.0, 10.0)]);
+        assert_eq!(app.net_mobs[0].fire_ticks, 0, "the silence never ignites");
+    }
+
     fn wire_zombie(id: i32, x: f64, y: f64, z: f64) -> crate::world_view::WireMob {
         crate::world_view::WireMob {
             id,
@@ -8756,6 +8826,7 @@ mod tests {
             head_yaw: 60.0,
             health: None,
             hurt_time: 0,
+            on_fire: false,
             type_name: "minecraft:zombie".to_string(),
         }
     }

@@ -189,6 +189,9 @@ pub struct SceneOpts {
     /// the frame frozen mid-window (the 0.7 shade the render
     /// speaks).
     pub net_hurt: Option<u32>,
+    /// THE BURNING WORD: the staged shared-flags arm — the flame
+    /// rings the render draws at the server's word, N ticks walked.
+    pub net_fire: Option<u32>,
     /// THE DIVE SEED: carve a 3x3 pool AT the body's own column — three
     /// cells of water down (the old surface cell becomes the water
     /// surface), a forced-solid basin floor, the headroom cleared — and
@@ -1356,6 +1359,7 @@ pub fn render_gui_screen_opts(
                             head_yaw: face + 35.0, // the look mid-swing
                             health: None,
                             hurt_time: 0,
+                            on_fire: false,
                             type_name: "minecraft:zombie".to_string(),
                         });
                     }
@@ -1385,6 +1389,19 @@ pub fn render_gui_screen_opts(
                             m.hurt_time = 10;
                         }
                         for _ in 0..hurt {
+                            app.tick_net_mobs();
+                        }
+                    }
+                    if let Some(burn) = opts.net_fire {
+                        // THE BURNING WORD (the shared-flags accessor's
+                        // bit 0 — Entity.isOnFire's own query): the
+                        // flag armed through the merge law's own floor,
+                        // N ticks walked, the flame rings the render
+                        // draws at the server's word
+                        if let Some(m) = app.net_mobs.first_mut() {
+                            m.fire_ticks = m.fire_ticks.max(6);
+                        }
+                        for _ in 0..burn {
                             app.tick_net_mobs();
                         }
                     }

@@ -2,7 +2,7 @@
 
 Every lane that ships pixels owes the folder a frame. The gallery is the
 proof the features exist as rendered images, not as test names alone.
-118 frames and counting — grouped below by the lane that spoke them.
+119 frames and counting — grouped below by the lane that spoke them.
 
 ## The F5 lane (the third-person avatar) — v0.3.154+
 
@@ -411,6 +411,8 @@ lasts 20 real minutes again, the eat hold 1.6s, the swing 0.3s.
 | `wire_day_sync.png` | THE WIRE'S OWN HOUR (v0.3.182): the world screen staged as a NETWORK world carrying the server's Set Time opinion (`--net-day 18000`, midnight) — the day clock re-bases through the live lane's own fold (live_view_updated's align_day_clock_to_wire: base+frame reads the server's day NOW, the frame keeps the local 20-tps advance, the 250ms syncs absorb the drift) and the sky renders the server's midnight over the SAME seed-42 terrain (the stars + the night sky the timeline speaks); the client's own dawn at the identical staging diffs rms 73.9 (the clock's authority, honest and loud) |
 | `wire_mobs.png` | THE WIRE'S OWN MOBS (v0.3.183): the network world's zombie at the facing point — the Add Entity snapshot the synced entity-type registry names `minecraft:zombie` renders through the mob lane's own avatar model + lerp folds (the head's offset the wire's yHeadRot−yaw speaks, the pose the lerpTo 3-tick law walks), the SERVER'S word standing where its packet said; the pig the registry also named stays honest data the v1 lane doesn't draw |
 | `wire_death_flip.png` | THE SERVER'S OWN KILL (v0.3.184): the wire mob's death clock — the metadata health 0.0 (LivingEntity's DATA_HEALTH_ID 8 the Set Entity Data store keeps) walks the tickDeath law's 20-tick flip, the frame frozen at the half-fall (the body rotated past its side, the stride the lerpTo walk still eases beneath it); the accessor never spoken is the honest no-opinion the walk never mistakes for a kill |
+| `wire_hurt_flash.png` | THE SERVER'S OWN HIT (v0.3.185): the wire mob's hurt flash — the Hurt Animation packet's mailbox arm (the foreign ids' traffic the model once dropped, now the animateHurt 10-tick window it arms) lands on the mob and its OWN tick counts it down, the frame frozen mid-window with the 0.7 shade the render's mix speaks; the un-armed companion at the identical staging diffs rms 13.1 (the flash's own darkening, honest and loud) |
+| `wire_burning.png` | THE SERVER'S OWN FIRE (v0.3.187): the wire mob's burning — the shared-flags accessor's bit 0 (Entity.isOnFire's own `getSharedFlag(0)` the 26.2 bytecode speaks, the metadata byte the Set Entity Data store keeps) arms the flame gate the merge law's own floor carries, and the vanilla flame rings climb the zombie's whole body (the billboard stack the flame feature draws, the day_time the animation rides); the unburnt companion at the identical staging diffs rms 44.5 (the fire's own word, the loudest the lane has spoken) |
 
 Regenerate the family (the flag the CLI speaks today):
 
@@ -497,6 +499,28 @@ cargo run -p mc-client --release -- --headless --screen world \
   --ui-frame 3 --out shots/wire_death_flip.png
 # --net-death N arms the metadata health 0.0 and walks N ticks of
 # the flip (10 = the half-fall the frame freezes)
+```
+
+The server's own hit (v0.3.185 — the hurt flash's wire word):
+
+```sh
+cargo run -p mc-client --release -- --headless --screen world \
+  --seed 42 --body --walk-ticks 1 --net-mobs 1 --net-hurt 4 \
+  --ui-frame 3 --out shots/wire_hurt_flash.png
+# --net-hurt N arms the 10-tick flash window and walks N ticks of
+# the countdown (4 = hurt_time 6 standing, the 0.7 shade full); the
+# un-armed companion (--net-mobs 1 alone) diffs rms 13.1
+```
+
+The server's own fire (v0.3.187 — the burning wire word):
+
+```sh
+cargo run -p mc-client --release -- --headless --screen world \
+  --seed 42 --body --walk-ticks 1 --net-mobs 1 --net-fire 3 \
+  --ui-frame 3 --out shots/wire_burning.png
+# --net-fire N arms the shared-flags accessor's bit 0 and walks N
+# ticks (the flame rings the flame feature draws at the server's
+# word); the unburnt companion (--net-mobs 1 alone) diffs rms 44.5
 ```
 
 ## The lava-fog lane (the ember murk) — v0.3.167

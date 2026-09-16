@@ -334,6 +334,12 @@ pub struct WireMob {
     /// mailbox's shipped value: the mob lane's own tick counts it
     /// down after the landing (the client entity's own clock).
     pub hurt_time: i32,
+    /// The metadata's own BURNING WORD (the shared-flags accessor —
+    /// index 0, the BYTE serializer, bit 0: `Entity.isOnFire`'s own
+    /// `getSharedFlag(0)` the 26.2 bytecode speaks): true while the
+    /// server says the mob burns, false while the accessor never
+    /// spoke (the honest unburnt — the silence never ignites).
+    pub on_fire: bool,
     /// The synced registry's own name (`minecraft:zombie` v1 renders;
     /// anything else is the honest not-yet-drawn type).
     pub type_name: String,
@@ -948,6 +954,13 @@ impl LiveView {
                     // window the packet spoke for THIS id — the ids
                     // the wire never hit stay unhurt, the honest 0)
                     hurt_time: self.model.entity_hurts.get(&id).copied().unwrap_or(0),
+                    // the burning word (the shared-flags accessor's
+                    // own bit 0 — Entity.isOnFire's getSharedFlag(0);
+                    // the accessor never spoken is the honest unburnt)
+                    on_fire: matches!(
+                        e.data.get(&0),
+                        Some(mc_protocol::play::EntityDataEntry::Byte(b)) if b & 1 != 0
+                    ),
                     type_name,
                 })
             })
@@ -1392,6 +1405,73 @@ mod tests {
         view.model.drain_entity_sounds();
         let upd = view.refresh(example_mapper);
         assert!(upd.voices.is_empty(), "the shipped voice never re-ships");
+    }
+
+    /// THE BURNING WORD'S PROJECTION (the shared-flags accessor —
+    /// index 0, the BYTE serializer, bit 0: `Entity.isOnFire`'s own
+    /// `getSharedFlag(0)` the 26.2 bytecode speaks): the flag rides
+    /// the projection verbatim, the other bits never ignite, the
+    /// accessor never spoken is the honest unburnt.
+    #[test]
+    fn the_projection_carries_the_burning_word() {
+        use mc_protocol::play::EntitySpawn;
+        let mut m = WorldModel::new();
+        m.registry.entity_types = vec!["minecraft:zombie".to_string()];
+        m.apply(PlayEvent::Spawn(EntitySpawn {
+            id: 7,
+            uuid: 1,
+            type_id: 0,
+            x: 10.0,
+            y: 64.0,
+            z: 12.0,
+            movement: [0.0; 3],
+            x_rot: 5.0,
+            y_rot: 90.0,
+            y_head_rot: 60.0,
+            data: 0,
+        }));
+        let mut view = LiveView {
+            model: m,
+            side: 1,
+        };
+        // no accessor spoken: the honest unburnt (the silence never
+        // ignites)
+        let upd = view.refresh(example_mapper);
+        assert!(!upd.mobs[0].on_fire, "the silence never ignites");
+        // the shared-flags accessor's bit 0: the burning word rides
+        view.model.apply(PlayEvent::EntityData(mc_protocol::play::EntityDataSet {
+            id: 7,
+            entries: vec![mc_protocol::play::SetEntityDataEntry {
+                index: 0,
+                serializer: 0,
+                value: mc_protocol::play::EntityDataEntry::Byte(0x01),
+            }],
+        }));
+        let upd = view.refresh(example_mapper);
+        assert!(upd.mobs[0].on_fire, "the flag's own bit speaks");
+        // the OTHER bits never ignite (bit 1 crouching, bit 3 sprinting
+        // — the byte's own word, the bit-0 mask the query speaks)
+        view.model.apply(PlayEvent::EntityData(mc_protocol::play::EntityDataSet {
+            id: 7,
+            entries: vec![mc_protocol::play::SetEntityDataEntry {
+                index: 0,
+                serializer: 0,
+                value: mc_protocol::play::EntityDataEntry::Byte(0x0A),
+            }],
+        }));
+        let upd = view.refresh(example_mapper);
+        assert!(!upd.mobs[0].on_fire, "the other bits never ignite");
+        // the douse: bit 0 clear — the flag's own drop
+        view.model.apply(PlayEvent::EntityData(mc_protocol::play::EntityDataSet {
+            id: 7,
+            entries: vec![mc_protocol::play::SetEntityDataEntry {
+                index: 0,
+                serializer: 0,
+                value: mc_protocol::play::EntityDataEntry::Byte(0x00),
+            }],
+        }));
+        let upd = view.refresh(example_mapper);
+        assert!(!upd.mobs[0].on_fire, "the douse rides the same lane");
     }
 
     fn materialize_carries_the_models_day_tick() {
