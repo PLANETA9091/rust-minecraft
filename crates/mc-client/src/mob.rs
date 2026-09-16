@@ -143,6 +143,26 @@ pub const FOLLOW_PARENT_RANGE: f64 = 8.0;
 pub const FOLLOW_PARENT_HEIGHT: f64 = 4.0;
 pub const FOLLOW_PARENT_CLOSE_SQ: f64 = 9.0;
 pub const FOLLOW_PARENT_SPEED: f64 = 1.1;
+/// THE BREEDGOAL'S OWN VOCABULARY (javap `BreedGoal` the breedgoal
+/// dump keeps — canUse/canContinueToUse/tick/breed/getFreePartner):
+/// the partner scan the animal's own bbox `inflate(8.0)` names (the
+/// getNearbyEntities ring — the same 8.0 BREED_SEARCH_RANGE the
+/// registerGoals search speaks), the 9.0 the close ring speaks (the
+/// tick's own `distanceToSqr(partner) < 9.0` the breed() trigger
+/// keeps — the 3.0 the squared word), the 60 the court clock rides
+/// (the tick's `loveTime >= adjustedTickDelay(60)` — the canUse
+/// start's own zero the stop law resets), the speed 1.0 the Sheep's
+/// own registerGoals clinit keeps (`addGoal(2, new
+/// BreedGoal(this, 1.0))` — prio 2, the follow's 4 the priority
+/// owns). The goal's own lifecycle the dump answers: canUse arms
+/// while `isInLove()` and the nearest mate answers, the tick walks
+/// `moveTo(partner, speedModifier)` and counts loveTime, the 60 miss
+/// beyond the ring the stop+re-arm law resets (canContinueToUse's
+/// own `loveTime < 60` the gate keeps), stop() the partner nulls and
+/// the clock zeroes.
+pub const BREED_CLOSE_SQ: f64 = 9.0;
+pub const BREED_COURT_TICKS: i32 = 60;
+pub const BREED_SPEED: f64 = 1.0;
 /// `AgeableMob.getScale`'s own baby arm (the `isBaby() ? 0.5F : 1.0F`
 /// the render state's scale carries — the pose scale the
 /// LivingEntityRenderer folds around the feet anchor).
@@ -679,6 +699,19 @@ pub struct Zombie {
     /// None the disarmed goal keeps (the caller's per-frame re-arm
     /// the re-evaluation speaks)
     follow_parent: Option<(i32, f64, f64, f64)>,
+    /// THE BREEDGOAL'S OWN ARM (the goal's own `partner` field the
+    /// canUse walk stores): the mate's id + the position snapshot the
+    /// tick's `moveTo(partner, speedModifier)` stand-in steers to —
+    /// the None the disarmed goal keeps (the caller's per-frame
+    /// re-arm the re-evaluation speaks)
+    breed_partner: Option<(i32, f64, f64, f64)>,
+    /// THE GOAL'S OWN COURT CLOCK (javap `BreedGoal.loveTime` — the
+    /// private int the tick's `loveTime++` counts, the 60 the
+    /// `adjustedTickDelay(60)` gate reads, the stop() law zeroes).
+    /// The staged pair the feed-and-leave walk's completed court the
+    /// staging's own stand-in arms (the --breed law the in_love 600
+    /// stage keeps company).
+    pub breed_love_time: i32,
     /// THE GOAL'S OWN SPEED MODIFIER (the moveTo's `speedModifier`
     /// double the FollowParentGoal's 1.1 rides — the tick resets it
     /// to 1.0, the armed goal the multiplication speaks)
@@ -745,6 +778,8 @@ impl Zombie {
             attack_recheck: 0,
             stroll_target: None,
             follow_parent: None,
+            breed_partner: None,
+            breed_love_time: 0,
             move_speed_modifier: 1.0,
             look_ticks: 0,
             age_ticks: 0,
@@ -1046,15 +1081,43 @@ impl Zombie {
             // the goal's stop(): the arms lower, the raise clock resets
             self.aggressive = false;
             self.raise_arm_ticks = 0;
-            // THE FOLLOWPARENTGOAL'S OWN TICK (prio 4 — the stroll's
-            // 7 the priority owns, the armed scan the caller's
-            // pre-pass keeps): the `moveTo(parent, 1.1)` the
-            // navigation's straight-line stand-in walks — the yaw
-            // faces the parent, the forward impulse rides the speed
-            // modifier the goal's own ctor speaks, the stroll's
-            // target the higher-priority goal replaces (the stop()
-            // walk the GoalSelector speaks)
-            if let Some((_id, px, _py, pz)) = self.follow_parent {
+            // THE BREEDGOAL'S OWN TICK (prio 2 — the Sheep's own
+            // registerGoals clinit speaks `addGoal(2, new
+            // BreedGoal(this, 1.0))`, the follow's 4 the priority
+            // owns, the armed scan the caller's pre-pass keeps): the
+            // `moveTo(partner, speedModifier)` the navigation's
+            // straight-line stand-in walks — the yaw faces the
+            // partner, the forward impulse rides the 1.0 the goal's
+            // own ctor speaks, the stroll's target and the follow's
+            // own arm the higher priority replaces — and the court's
+            // own clock the `loveTime++` counts: the 60 the
+            // `adjustedTickDelay(60)` gate reads, the close ring the
+            // breed() trigger's `distanceToSqr(partner) < 9.0` the
+            // caller's post-tick scan answers, the 60-miss beyond the
+            // ring the canContinueToUse's own stop law resets (the
+            // goal re-arms, the court restarts — the pair's own drift
+            // the per-frame re-arm answers)
+            if let Some((_id, px, py, pz)) = self.breed_partner {
+                let dx = px - self.x;
+                let dy = py - self.y;
+                let dz = pz - self.z;
+                let len = (dx * dx + dz * dz).sqrt().max(1e-9);
+                self.yaw = (-(dx / len)).atan2(dz / len).to_degrees() as f32;
+                ix = 0.0;
+                iz = 1.0;
+                want_move = true;
+                self.move_speed_modifier = BREED_SPEED;
+                self.stroll_target = None;
+                self.follow_parent = None;
+                self.breed_love_time += 1;
+                if self.breed_love_time >= BREED_COURT_TICKS
+                    && dx * dx + dy * dy + dz * dz >= BREED_CLOSE_SQ
+                {
+                    // the court expired beyond the close ring — the
+                    // goal's own stop+re-arm the 60-clock restarts
+                    self.breed_love_time = 0;
+                }
+            } else if let Some((_id, px, _py, pz)) = self.follow_parent {
                 let dx = px - self.x;
                 let dz = pz - self.z;
                 let len = (dx * dx + dz * dz).sqrt().max(1e-9);
@@ -1668,6 +1731,16 @@ pub struct BreedSpawn {
 /// child's RNG seed, the wool arm's coin (the recipe-less fallback
 /// only — DYE_MIX_TABLE the recipe arm answers, the mix the coin
 /// draw never consumes) and the orb roll draw the shared stream.
+/// THE BREEDGOAL'S OWN TRIGGER the spawn gate reads (javap
+/// `BreedGoal.tick` the breedgoal dump keeps): the court the goal's
+/// own `loveTime >= adjustedTickDelay(60)` speaks, the meet the
+/// `distanceToSqr(partner) < 9.0` close ring answers — the pair the
+/// court WALKED together, the child the meet's own tick leaves. The
+/// caller's atomic scan the mutual court's both-counters fold keeps
+/// (the symmetric goals arm together, the clocks count together;
+/// the pairing the proximity law the canMate gate answers — the
+/// armed partner identity the goal's own walk steers, the spawn the
+/// same verdict the one-shot law folds).
 pub fn try_breed(
     mobs: &mut [Zombie],
     next_id: &mut i32,
@@ -1675,7 +1748,6 @@ pub fn try_breed(
 ) -> Vec<BreedSpawn> {
     let mut out = Vec::new();
     let mut bred = vec![false; mobs.len()];
-    let ring = BREED_SEARCH_RANGE * BREED_SEARCH_RANGE;
     for i in 0..mobs.len() {
         for j in (i + 1)..mobs.len() {
             if bred[i] || bred[j] {
@@ -1690,7 +1762,17 @@ pub fn try_breed(
             let dx = a.x - b.x;
             let dy = a.y - b.y;
             let dz = a.z - b.z;
-            if dx * dx + dy * dy + dz * dz >= ring {
+            // THE BREED TRIGGER'S OWN VERDICT (javap `BreedGoal.tick`:
+            // the `loveTime >= adjustedTickDelay(60)` the court
+            // speaks, the `distanceToSqr(partner) < 9.0` the meet the
+            // close ring answers — the approach walk the goal's own
+            // moveTo closes, the miss the re-court law restarts)
+            if dx * dx + dy * dy + dz * dz >= BREED_CLOSE_SQ {
+                continue;
+            }
+            if mobs[i].breed_love_time < BREED_COURT_TICKS
+                || mobs[j].breed_love_time < BREED_COURT_TICKS
+            {
                 continue;
             }
             // THE PAIR COOLS (javap `finalizeSpawnChildFromBreeding`:
@@ -1801,6 +1883,100 @@ pub fn arm_follow_parents(mobs: &mut [Zombie]) -> usize {
             }
             _ => None,
         };
+    }
+    armed
+}
+
+/// THE BREEDGOAL'S OWN SCAN (javap `canUse` + `getFreePartner` the
+/// breedgoal dump keeps — the canUse walk the caller's pre-pass
+/// answers before the ticks, the goals' own moment): every IN-LOVE
+/// ADULT (the `isInLove()` first gate, the `getAge() >= 0` the
+/// canMate law keeps, the `isAlive` health word) scans the same-kind
+/// in-love adults whose box intersects its own bbox `inflate(8.0)`
+/// (the getNearbyEntities ring the AABB.intersects inclusive law
+/// keeps — the uniform 8.0 the single-double inflate speaks), the
+/// nearest by the feet-to-feet `distanceToSqr` (the `d1 > d0`
+/// strict-greater skip — the first minimum the list order keeps,
+/// the isPanicking gate the panic state the repo never keeps the
+/// honest note names). The armed tuple (the mate's id + the position
+/// snapshot) the tick's `moveTo(partner, speedModifier)` stand-in
+/// steers to; the court's own clock the arm ride keeps (the goal's
+/// lifetime — only the disarm or the 60-expiry the tick's own stop
+/// law resets), every other breeder the disarmed None + the zeroed
+/// clock (the stop() law: the partner nulls, the loveTime zeroes —
+/// the cooled pair the love word's own gate refuses). Returns the
+/// armed count (the caller's evidence).
+pub fn arm_breeders(mobs: &mut [Zombie]) -> usize {
+    // the mates' own snapshot (the level query's stand-in — the read
+    // the per-entity walk's borrow keeps)
+    let mates: Vec<(i32, MobKind, f64, f64, f64, (f64, f64, f64, f64, f64, f64))> = mobs
+        .iter()
+        .filter(|m| m.age >= 0 && m.health > 0.0 && m.in_love > 0)
+        .map(|m| (m.id, m.kind, m.x, m.y, m.z, m.box_for()))
+        .collect();
+    let mut armed = 0;
+    for i in 0..mobs.len() {
+        // the canUse first gate (isInLove) — the baby's age word and
+        // the dying body the canMate law keeps: the goal's stop the
+        // disarmed None answers (the cooled pair's own clock rests)
+        if mobs[i].age < 0 || mobs[i].in_love <= 0 || mobs[i].health <= 0.0 {
+            mobs[i].breed_partner = None;
+            mobs[i].breed_love_time = 0;
+            continue;
+        }
+        let breeder = &mobs[i];
+        let (bminx, bminy, bminz, bmaxx, bmaxy, bmaxz) = breeder.box_for();
+        // the scan box (the inflate(8.0) the getFreePartner speaks —
+        // the uniform ring the single-double law keeps)
+        let (minx, miny, minz) = (
+            bminx - BREED_SEARCH_RANGE,
+            bminy - BREED_SEARCH_RANGE,
+            bminz - BREED_SEARCH_RANGE,
+        );
+        let (maxx, maxy, maxz) = (
+            bmaxx + BREED_SEARCH_RANGE,
+            bmaxy + BREED_SEARCH_RANGE,
+            bmaxz + BREED_SEARCH_RANGE,
+        );
+        let mut best: Option<(i32, f64, f64, f64, f64)> = None;
+        for (id, kind, mx, my, mz, mbox) in &mates {
+            if *id == breeder.id || *kind != breeder.kind {
+                continue;
+            }
+            // the box law (AABB.intersects — the inclusive fold)
+            let (aminx, aminy, aminz, amaxx, amaxy, amaxz) = *mbox;
+            if amaxx < minx
+                || aminx > maxx
+                || amaxy < miny
+                || aminy > maxy
+                || amaxz < minz
+                || aminz > maxz
+            {
+                continue;
+            }
+            let dx = mx - breeder.x;
+            let dy = my - breeder.y;
+            let dz = mz - breeder.z;
+            let d2 = dx * dx + dy * dy + dz * dz;
+            // the nearest wins (d1 > d0 the skip — ties keep the first)
+            if best.map_or(true, |(_, bd2, _, _, _)| d2 <= bd2) {
+                best = Some((*id, d2, *mx, *my, *mz));
+            }
+        }
+        match best {
+            Some((id, _d2, x, y, z)) => {
+                // the arm (or the re-arm) — the fresh snapshot the
+                // per-frame re-arm speaks, the court's own clock the
+                // goal's lifetime keeps
+                mobs[i].breed_partner = Some((id, x, y, z));
+                armed += 1;
+            }
+            None => {
+                // the partner-less canUse the stop law answers
+                mobs[i].breed_partner = None;
+                mobs[i].breed_love_time = 0;
+            }
+        }
     }
     armed
 }
@@ -3002,6 +3178,11 @@ mod tests {
         let mut b = Zombie::new(2, 12.0, 64.0, 10.0, 263);
         b.kind = MobKind::Sheep;
         b.in_love = 600;
+        // THE COURT the goal's own walk completed (the loveTime 60 the
+        // BreedGoal's own gate reads — the approach the pair walked,
+        // the meet the spawn's own tick answers)
+        a.breed_love_time = BREED_COURT_TICKS;
+        b.breed_love_time = BREED_COURT_TICKS;
         let mut mobs = vec![a, b];
         let mut next_id = 3;
         let spawns = try_breed(&mut mobs, &mut next_id, &mut Lcg::new(42));
@@ -3078,6 +3259,11 @@ mod tests {
         b.kind = MobKind::Sheep;
         b.in_love = 600;
         b.wool_color = 11; // BLUE
+        // THE COURT the goal's own walk completed (the loveTime 60 the
+        // BreedGoal's own gate reads — the approach the pair walked,
+        // the meet the spawn's own tick answers)
+        a.breed_love_time = BREED_COURT_TICKS;
+        b.breed_love_time = BREED_COURT_TICKS;
         let mut mobs = vec![a, b];
         let mut next_id = 3;
         let spawns = try_breed(&mut mobs, &mut next_id, &mut Lcg::new(42));
@@ -3114,6 +3300,11 @@ mod tests {
         b.kind = MobKind::Sheep;
         b.in_love = 600;
         b.wool_color = 12; // BROWN
+        // THE COURT the goal's own walk completed (the loveTime 60 the
+        // BreedGoal's own gate reads — the approach the pair walked,
+        // the meet the spawn's own tick answers)
+        a.breed_love_time = BREED_COURT_TICKS;
+        b.breed_love_time = BREED_COURT_TICKS;
         let mut mobs = vec![a, b];
         let mut next_id = 3;
         let spawns = try_breed(&mut mobs, &mut next_id, &mut Lcg::new(42));
@@ -3294,6 +3485,259 @@ mod tests {
     }
 
     #[test]
+    fn the_breed_scan_arms_the_love_pairs_nearest_mate() {
+        // getFreePartner's own law: the in-love adult the nearest
+        // same-kind in-love mate the inflate(8.0) box keeps — the
+        // mutual pair the symmetric arms answer, the love-less
+        // neighbour the canMate gate refuses, the far in-love sheep
+        // the box law refuses
+        let mut a = Zombie::new(1, 10.0, 5.0, 10.0, 262);
+        a.kind = MobKind::Sheep;
+        a.in_love = 600;
+        let mut b = Zombie::new(2, 14.0, 5.0, 10.0, 263); // 4 east — inside the ring
+        b.kind = MobKind::Sheep;
+        b.in_love = 600;
+        let mut stranger = Zombie::new(3, 11.0, 5.0, 10.0, 264); // nearer, never fed
+        stranger.kind = MobKind::Sheep;
+        let mut far = Zombie::new(4, 40.0, 5.0, 10.0, 265); // in love, beyond the box
+        far.kind = MobKind::Sheep;
+        far.in_love = 600;
+        let mut mobs = vec![a, b, stranger, far];
+        assert_eq!(
+            arm_breeders(&mut mobs),
+            2,
+            "the mutual pair the scan arms, the ring-less two the gates refuse"
+        );
+        assert_eq!(
+            mobs[0].breed_partner,
+            Some((2, 14.0, 5.0, 10.0)),
+            "the first's mate the nearest in-love adult speaks"
+        );
+        assert_eq!(
+            mobs[1].breed_partner,
+            Some((1, 10.0, 5.0, 10.0)),
+            "the second's mate the mirror answers"
+        );
+        assert_eq!(
+            mobs[2].breed_partner, None,
+            "the love-less neighbour the canMate gate refuses"
+        );
+        assert_eq!(
+            mobs[3].breed_partner, None,
+            "the far sheep the inflate box refuses"
+        );
+        // the court clocks the arm ride keeps (the goal's own
+        // lifetime — the re-arm the per-frame re-scan answers never
+        // restarts the count)
+        mobs[0].breed_love_time = 17;
+        arm_breeders(&mut mobs);
+        assert_eq!(
+            mobs[0].breed_love_time, 17,
+            "the re-arm the court's own count keeps"
+        );
+    }
+
+    #[test]
+    fn the_breed_scan_stops_the_broken_courts() {
+        // the canContinueToUse + stop law the per-frame scan answers:
+        // the dying mate the isAlive word refuses, the cooled breeder
+        // the love word refuses — the stop the partner nulls and the
+        // court clock zeroes (the re-court the fresh arm restarts)
+        let mut a = Zombie::new(1, 10.0, 5.0, 10.0, 262);
+        a.kind = MobKind::Sheep;
+        a.in_love = 600;
+        a.breed_love_time = 30; // mid-court
+        a.breed_partner = Some((2, 14.0, 5.0, 10.0));
+        let mut dying = Zombie::new(2, 14.0, 5.0, 10.0, 263);
+        dying.kind = MobKind::Sheep;
+        dying.in_love = 600;
+        dying.health = 0.0; // the fire's own kill the clock spoke
+        let mut mobs = vec![a, dying];
+        assert_eq!(
+            arm_breeders(&mut mobs),
+            0,
+            "the dying mate the isAlive word refuses"
+        );
+        assert_eq!(
+            mobs[0].breed_partner, None,
+            "the broken court the stop law disarms"
+        );
+        assert_eq!(
+            mobs[0].breed_love_time, 0,
+            "the stop's own zero the clock keeps"
+        );
+
+        // the cooled breeder (resetLove spoke — the bred pair's own
+        // tail): the love word's own gate the scan refuses — and the
+        // in-love mate whose only candidate cooled the partner-less
+        // canUse refuses too (the stop law the disarmed None keeps)
+        let mut cooled = Zombie::new(1, 10.0, 5.0, 10.0, 262);
+        cooled.kind = MobKind::Sheep;
+        cooled.in_love = 0;
+        cooled.breed_love_time = 45; // the stale count the stop zeroes
+        let mut mate = Zombie::new(2, 12.0, 5.0, 10.0, 263);
+        mate.kind = MobKind::Sheep;
+        mate.in_love = 600;
+        let mut mobs = vec![cooled, mate];
+        assert_eq!(
+            arm_breeders(&mut mobs),
+            0,
+            "the cooled pair the love word's own gate refuses"
+        );
+        assert_eq!(
+            mobs[0].breed_partner, None,
+            "the cooled breeder the love word disarms"
+        );
+        assert_eq!(mobs[0].breed_love_time, 0, "the stale count the stop zeroes");
+        assert_eq!(
+            mobs[1].breed_partner, None,
+            "the mate-less canUse the stop law answers"
+        );
+    }
+
+    #[test]
+    fn the_breeders_own_walk_folds_the_partner_steering() {
+        // the breed tick: the yaw faces the partner, the impulse rides
+        // the 1.0 the goal's ctor speaks (the stroll control the same
+        // attribute keeps — the displacement ratio the modifier pins),
+        // the stroll's target and the follow's own stale arm the
+        // higher priority replaces, the court clock the loveTime++
+        // counts
+        let world = wide_flat_world();
+        let mut breed = Zombie::new(1, 8.0, 5.0, 8.0, 262);
+        breed.kind = MobKind::Sheep;
+        breed.in_love = 600;
+        breed.on_ground = true;
+        breed.breed_partner = Some((2, 13.0, 5.0, 8.0)); // 5 east
+        breed.stroll_target = Some((-2.0, 8.0));
+        breed.follow_parent = Some((3, 0.0, 5.0, 8.0)); // the stale arm the prio owns
+        let ev = breed.tick(&world, None, NOON);
+        assert!(ev.attack.is_none(), "the breed no attack speaks");
+        assert!(
+            (breed.yaw - (-90.0)).abs() < 1e-6,
+            "the yaw the partner's east speaks ({})",
+            breed.yaw
+        );
+        assert!(
+            breed.stroll_target.is_none(),
+            "the stroll's target the higher priority replaces"
+        );
+        assert!(
+            breed.follow_parent.is_none(),
+            "the follow's stale arm the priority replaces"
+        );
+        assert_eq!(
+            breed.breed_love_time, 1,
+            "the court clock the loveTime++ counts"
+        );
+        let breed_dx = breed.x - 8.0;
+        assert!(breed_dx > 0.0, "the walk the partner's east speaks");
+
+        // the control: the same 5-east walk the stroll's own impulse
+        // rides — the ratio the 1.0 the moveTo's speedModifier pins
+        let mut stroll = Zombie::new(1, 8.0, 5.0, 8.0, 262);
+        stroll.kind = MobKind::Sheep;
+        stroll.in_love = 600;
+        stroll.on_ground = true;
+        stroll.stroll_target = Some((13.0, 8.0));
+        stroll.tick(&world, None, NOON);
+        let stroll_dx = stroll.x - 8.0;
+        assert!(stroll_dx > 0.0, "the stroll's own walk the control speaks");
+        let ratio = breed_dx / stroll_dx;
+        assert!(
+            (ratio - BREED_SPEED).abs() < 1e-9,
+            "the 1.0 the modifier speaks ({ratio})"
+        );
+
+        // THE 60-MISS the canContinueToUse stop law answers: the court
+        // expired beyond the close ring — the clock zeroes (the
+        // re-court the fresh arm restarts), the walk keeps
+        let mut late = Zombie::new(1, 8.0, 5.0, 8.0, 262);
+        late.kind = MobKind::Sheep;
+        late.in_love = 600;
+        late.on_ground = true;
+        late.breed_partner = Some((2, 20.0, 5.0, 8.0)); // 12 east — beyond the 3.0 ring
+        late.breed_love_time = 59;
+        late.tick(&world, None, NOON);
+        assert_eq!(
+            late.breed_love_time, 0,
+            "the 60-miss the stop law resets"
+        );
+
+        // THE MET COURT: the 60 lands inside the close ring — the
+        // clock keeps (the gate the caller's post-tick scan reads)
+        let mut met = Zombie::new(1, 8.0, 5.0, 8.0, 262);
+        met.kind = MobKind::Sheep;
+        met.in_love = 600;
+        met.on_ground = true;
+        met.breed_partner = Some((2, 10.0, 5.0, 8.0)); // 2 east — inside the ring
+        met.breed_love_time = 59;
+        met.tick(&world, None, NOON);
+        assert_eq!(
+            met.breed_love_time, 60,
+            "the met court the gate's own count keeps"
+        );
+    }
+
+    #[test]
+    fn the_breeders_own_court_gates_the_spawn() {
+        // the BreedGoal.tick's own verdict the spawn gate reads: the
+        // uncourted pair the loveTime 60 refuses (the court the
+        // approach walk owes), the courted pair beyond the close ring
+        // the meet refuses (the walk the distance closes), the met
+        // court the child answers
+        let mut next_id = 3;
+
+        // the uncourted pair — 2.0 apart, the meet inside the ring,
+        // the clocks the walk never counted
+        let mut a = Zombie::new(1, 10.0, 64.0, 10.0, 262);
+        a.kind = MobKind::Sheep;
+        a.in_love = 600;
+        let mut b = Zombie::new(2, 12.0, 64.0, 10.0, 263);
+        b.kind = MobKind::Sheep;
+        b.in_love = 600;
+        let mut mobs = vec![a, b];
+        assert!(
+            try_breed(&mut mobs, &mut next_id, &mut Lcg::new(42)).is_empty(),
+            "the uncourted pair the 60-clock refuses"
+        );
+        assert!(
+            mobs[0].in_love == 600 && mobs[1].in_love == 600,
+            "the refusal no clocks touch"
+        );
+
+        // the courted pair beyond the close ring — 5.0 apart, the
+        // court counted, the meet the walk still owes
+        let mut a = Zombie::new(1, 10.0, 64.0, 10.0, 262);
+        a.kind = MobKind::Sheep;
+        a.in_love = 600;
+        a.breed_love_time = BREED_COURT_TICKS;
+        let mut b = Zombie::new(2, 15.0, 64.0, 10.0, 263);
+        b.kind = MobKind::Sheep;
+        b.in_love = 600;
+        b.breed_love_time = BREED_COURT_TICKS;
+        let mut mobs = vec![a, b];
+        assert!(
+            try_breed(&mut mobs, &mut next_id, &mut Lcg::new(42)).is_empty(),
+            "the distant court the meet's own ring refuses"
+        );
+
+        // the met court — the clocks the 60 keep, the meet the ring
+        // answers, the child the spawn walk leaves
+        let mut a = Zombie::new(1, 10.0, 64.0, 10.0, 262);
+        a.kind = MobKind::Sheep;
+        a.in_love = 600;
+        a.breed_love_time = BREED_COURT_TICKS;
+        let mut b = Zombie::new(2, 12.0, 64.0, 10.0, 263);
+        b.kind = MobKind::Sheep;
+        b.in_love = 600;
+        b.breed_love_time = BREED_COURT_TICKS;
+        let mut mobs = vec![a, b];
+        let spawns = try_breed(&mut mobs, &mut next_id, &mut Lcg::new(42));
+        assert_eq!(spawns.len(), 1, "the met court the child answers");
+    }
+
+    #[test]
     fn the_breed_scan_refuses_the_wrong_pairs() {
         // canMate's own arms: the cross-kind pair the class law
         // refuses, the lone in-love mob the partner-less scan refuses,
@@ -3329,13 +3773,15 @@ mod tests {
         let mut far_a = Zombie::new(1, 10.0, 64.0, 10.0, 262);
         far_a.kind = MobKind::Sheep;
         far_a.in_love = 600;
+        far_a.breed_love_time = BREED_COURT_TICKS;
         let mut far_b = Zombie::new(2, 30.0, 64.0, 10.0, 263);
         far_b.kind = MobKind::Sheep;
         far_b.in_love = 600;
+        far_b.breed_love_time = BREED_COURT_TICKS;
         let mut mobs = vec![far_a, far_b];
         assert!(
             try_breed(&mut mobs, &mut next_id, &mut Lcg::new(42)).is_empty(),
-            "the far pair the 8.0 ring refuses"
+            "the far pair the meet's own 3.0 ring refuses"
         );
 
         // the one-shot law: three in-love sheep — ONE pair breeds, the
@@ -3345,6 +3791,7 @@ mod tests {
                 let mut m = Zombie::new(i as i32 + 1, 10.0 + i as f64, 64.0, 10.0, 262 + i as u64);
                 m.kind = MobKind::Sheep;
                 m.in_love = 600;
+                m.breed_love_time = BREED_COURT_TICKS;
                 m
             })
             .collect();

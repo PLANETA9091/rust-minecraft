@@ -1906,11 +1906,17 @@ pub fn render_gui_screen_opts(
         // same-surface cells 3 and 5 out (the ring the 8.0 search
         // speaks, both surfaces the body's own level — the hilltop
         // candidates the surface law refuses), the love clock the feed
-        // verdict leaves (600 both). The settle ticks the caller
-        // passes run the tick lane — the pairing fires on the first,
-        // the child the spawn walk leaves, the hearts the event 18
-        // rides, the XP orb the MOB_DROPS roll owes; the frozen shot
-        // stages the family (the baby the 0.5 pose scale draws).
+        // verdict leaves (600 both) and the court clock the goal's own
+        // 60-tick walk the completed court stands in for (the feed-
+        // and-leave lane the player's away speaks — the body's own
+        // in-range lane the attack arm owns, the goal-else chain the
+        // no-target rest keeps, the staged pair the off-camera court
+        // the clock stand-in freezes). The settle ticks the caller
+        // passes run the tick lane — the pairing fires on the first
+        // (the courted pair the meet's own gate answers), the child
+        // the spawn walk leaves, the hearts the event 18 rides, the
+        // XP orb the MOB_DROPS roll owes; the frozen shot stages the
+        // family (the baby the 0.5 pose scale draws).
         let yaw_cam = opts.body_yaw.unwrap_or(-90.0);
         let n = app.world_size;
         let (fx, fz) = (
@@ -1946,8 +1952,13 @@ pub fn render_gui_screen_opts(
             sheep.on_ground = true;
             sheep.age_ticks = 40; // two seconds in — the bob's stable mid value
             // THE LOVE CLOCK the feed verdict leaves (the setInLove
-            // walk's own 600 — the pair the scan needs)
+            // walk's own 600 — the pair the scan needs) + THE COURT
+            // CLOCK the goal's own 60-tick walk completes (the
+            // `loveTime >= adjustedTickDelay(60)` gate the spawn
+            // reads — the staging's own stand-in the completed court
+            // freezes, the off-camera walk the real lane speaks)
             sheep.in_love = 600;
+            sheep.breed_love_time = crate::mob::BREED_COURT_TICKS;
             // THE MIX WALK'S OWN COATS (the recipe arm the pixels
             // speak): the red and the blue dyes the parents wear —
             // the child the crafting recipe the purple answers
@@ -1968,12 +1979,13 @@ pub fn render_gui_screen_opts(
             app.mobs.push(sheep);
         }
         println!(
-            "the breed pair stages at the facing ray cells 3 and 5 (both in love), {settle} settle ticks follow"
+            "the breed pair stages at the facing ray cells 3 and 5 (both in love, the court's 60 the completed walk stands), {settle} settle ticks follow"
         );
         // THE SETTLE TICKS the pairing runs through (the REAL updates
-        // the tick lane speaks — the scan fires on the first, the
-        // hearts' burst + the baby's join land, the later ticks let
-        // the particles bloom past the point-origin the clamp speaks)
+        // the tick lane speaks — the courted pair the gate answers on
+        // the first, the hearts' burst + the baby's join land, the
+        // later ticks let the particles bloom past the point-origin
+        // the clamp speaks)
         for _ in 0..settle {
             app.on_movement_input(0.0, 0.0, false, false, false);
             app.update();

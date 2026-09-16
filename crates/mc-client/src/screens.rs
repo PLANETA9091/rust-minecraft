@@ -2011,11 +2011,14 @@ impl App {
                             dead: self.dead,
                             width: crate::body::WIDTH,
                         });
-                        // THE FOLLOWPARENTGOAL'S OWN SCAN (the canUse
-                        // walk the babies' nearest adult answers — the
-                        // ticks' BEFORE the goals' own moment speaks,
-                        // the armed target the tick's straight-line
-                        // stand-in walks)
+                        // THE GOALS' OWN PRE-PASS (the scans the
+                        // callers' moment answer before the ticks):
+                        // the BreedGoal's own canUse the love pairs'
+                        // nearest mate arms (prio 2 — the walk the
+                        // court speaks), the FollowParentGoal's own
+                        // canUse the babies' nearest adult (prio 4 —
+                        // the same fold the follow round speaks)
+                        crate::mob::arm_breeders(&mut self.mobs);
                         crate::mob::arm_follow_parents(&mut self.mobs);
                         for mob in self.mobs.iter_mut() {
                             let ev = mob.tick(world, player.as_ref(), day_time);
@@ -2073,7 +2076,10 @@ impl App {
                 // broadcasts, the XP orb the MOB_DROPS roll owes): the
                 // scan runs the ticks' AFTER (the goals' own moment —
                 // the aiStep's ambient hearts the pre-pair state queued
-                // still draw, the vanilla's own per-entity order)
+                // still draw, the vanilla's own per-entity order), the
+                // BreedGoal's own trigger the court+close-ring gates
+                // speak (the loveTime 60 the goal's own walk counts,
+                // the meet the 3.0 the ring answers)
                 let spawns =
                     crate::mob::try_breed(&mut self.mobs, &mut self.next_mob_id, &mut self.mob_rng);
                 for spawn in spawns {
@@ -12464,12 +12470,14 @@ mod tests {
 
     /// THE BREEDING WALK'S OWN TICK LANE (the canMate pair the scan
     /// answers end to end): the two in-love sheep the feed verdicts
-    /// armed — the pairing fires on the app's own update, the child
-    /// the spawn walk leaves (the -24000 the baby's own word), the
-    /// parents the finalize walk cools (the 6000 the breed delay
-    /// speaks), the HEARTS the event 18 broadcasts ride the particle
-    /// store, the XP orb the MOB_DROPS roll owes (the zero roll the
-    /// honest absence keeps).
+    /// armed — the court the goal's own 60-tick walk the completed
+    /// count stands in for (the approach the feed-and-leave lane's
+    /// own legs walk off-camera) — the pairing fires on the app's own
+    /// update, the child the spawn walk leaves (the -24000 the baby's
+    /// own word), the parents the finalize walk cools (the 6000 the
+    /// breed delay speaks), the HEARTS the event 18 broadcasts ride
+    /// the particle store, the XP orb the MOB_DROPS roll owes (the
+    /// zero roll the honest absence keeps).
     #[test]
     fn the_breeding_pair_spawns_the_child_through_the_tick_lane() {
         let mut app = App::new(5);
@@ -12488,6 +12496,10 @@ mod tests {
             sheep.kind = crate::mob::MobKind::Sheep;
             sheep.on_ground = true;
             sheep.in_love = 600; // the setInLove verdict's own word
+            // THE COURT the goal's own walk completed (the loveTime 60
+            // the BreedGoal's own gate reads — the pair the approach
+            // walk courted, the meet the spawn's own tick answers)
+            sheep.breed_love_time = crate::mob::BREED_COURT_TICKS;
             app.mobs.push(sheep);
         }
         let mobs_before = app.mobs.len();
@@ -12577,6 +12589,66 @@ mod tests {
             d1 < d0 - 1.0,
             "the family's own walk the distance speaks ({d1} vs {d0})"
         );
+    }
+
+    /// THE BREEDGOAL'S OWN WALK (the tick lane the pair answers end to
+    /// end): the in-love pair the caller's pre-pass scan arms (the
+    /// nearest mate the inflate ring keeps), the ticks walk the
+    /// straight-line stand-in — the court's own clock counts, the
+    /// approach the distance closes, the meet the close ring answers,
+    /// the child the spawn walk leaves, the parents the finalize walk
+    /// cools.
+    #[test]
+    fn the_breeders_walk_the_pair_through_the_tick_lane() {
+        let mut app = App::new(5);
+        app.enter_world();
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let surface = app.spawn_y;
+        // the pair the feed-and-leave walk leaves — 5 blocks apart,
+        // both in love, the court the real lane's own walk owes (the
+        // player the body-less lane never passes — the goal-else chain
+        // the no-target rest keeps)
+        for (i, dx) in [0.0f64, 5.0].into_iter().enumerate() {
+            let mut sheep = crate::mob::Zombie::new(
+                1 + i as i32,
+                c as f64 + 0.5 + dx,
+                surface as f64,
+                c as f64 + 0.5,
+                262 + i as u64,
+            );
+            sheep.kind = crate::mob::MobKind::Sheep;
+            sheep.on_ground = true;
+            sheep.in_love = 600;
+            app.mobs.push(sheep);
+        }
+        // the court's own 60 the walk runs through (the approach the
+        // pair's own legs close well inside the ring) + the margin the
+        // meet's own tick rides
+        for _ in 0..90 {
+            app.update();
+        }
+        assert_eq!(
+            app.mobs.len(),
+            3,
+            "the child the walked court answers (the third the spawn leaves)"
+        );
+        let baby = app
+            .mobs
+            .iter()
+            .find(|m| m.is_baby())
+            .expect("the baby the birth arms");
+        assert_eq!(
+            baby.kind,
+            crate::mob::MobKind::Sheep,
+            "the child the same kind names"
+        );
+        let cooled = app
+            .mobs
+            .iter()
+            .filter(|m| !m.is_baby())
+            .all(|m| m.in_love == 0);
+        assert!(cooled, "the walked pair the finalize walk cools");
     }
 
     /// THE BLOCK-SOUND ARC'S FOOTSTEPS: the walking body's steps ride
