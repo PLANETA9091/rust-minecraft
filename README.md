@@ -17,7 +17,7 @@ client for that exact version:
 | Crate | Purpose |
 |---|---|
 | `mc2rs-gen` | The generator CLI. Fetches manifests, downloads official jars, analyzes them, emits generated code. |
-| `mc-registry` | **Generated** from official data: blocks/items registry, the full bitmap font (real glyph metrics from the real font textures), the complete `en_us` language table, all 454 official splashes, the GUI sprite inventory (real sizes + nine-slice borders from `.mcmeta`), the sound-event table (official `sounds.json` via the asset index), biome/worldgen tables, and the block texture atlas (blockstates → models → PNG pixels, first frame, biome tints). |
+| `mc-registry` | **Generated** from official data: blocks/items registry, the full bitmap font (real glyph metrics from the real font textures), the complete `en_us` language table, the GUI sprite inventory (real sizes + nine-slice borders from `.mcmeta`), the sound-event table (official `sounds.json` via the asset index), biome/worldgen tables, and the block texture atlas (blockstates → models → PNG pixels, first frame, biome tints). The splashes table is runtime-loaded from the jar's own `texts/splashes.txt` (the migration's first lane — not compiled in). |
 | `mc-protocol` | Hand-rolled protocol layer: VarInt/VarLong, packet framing (incl. zlib compression), handshake, **server list ping**, **offline-mode login + the configuration phase** (client information, brand, keep-alive/ping, **select-known-packs + cookie replies**, finish-configuration ack), **play state** — the first real world from the network (world login, keep-alive/ping/teleport/chunk-batch answered, chunk-data decoded into resolved block/biome ids with vanilla palette packing). |
 | `mc-assets` | Asset index parsing + parallel downloader (runtime, from official CDN, sha1-verified). |
 | `mc-client` | The client itself: CPU reference renderer (deterministic, pixel-perfect tests), the GUI runtime (boot chain → title → menus) rendering official fonts/sprites/strings, and a windowed fly-camera. |
@@ -4400,8 +4400,10 @@ as long as Mojang publishes the version, the generator can consume it.
   decompiled code is copied into the source tree.
 * **The honest migration debt:** as of v0.3.200 the generated
   registry tables under `crates/mc-registry/src/generated/` (texture
-  atlas pixels, font glyph bitmaps, colormap, lang, splashes, sounds
-  metadata) are still committed — that is the DMCA-pattern exposure
+  atlas pixels, font glyph bitmaps, colormap, lang, sounds metadata)
+  are still committed — that is the DMCA-pattern exposure (the
+  splashes table the v0.3.202 first migration step already moved out
+  — the runtime cache the loader parses)
   the migration roadmap removes: the tables move to locally-generated
   cache files loaded at boot (the `assets-cache/jar` path the loader
   already opens), so a fresh clone never carries jar-derived bytes.

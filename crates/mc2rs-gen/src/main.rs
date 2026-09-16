@@ -17,7 +17,6 @@ mod skygen;
 mod skingen;
 mod soundgen;
 mod specialgen;
-mod splashgen;
 mod texturesgen;
 mod uigen;
 mod util;
@@ -632,12 +631,11 @@ fn generate(agent: &ureq::Agent, cache: &util::Cache, version: &str, out: &Path)
         report.obfuscated, report.obfuscation_ratio, report.class_count, report.net_minecraft_classes
     );
 
-    println!("[4/7] extracting official data (font chain, lang, splashes, GUI sprites, sounds, worldgen)...");
+    println!("[4/7] extracting official data (font chain, lang, GUI sprites, sounds, worldgen)...");
     let mut zip = zip::ZipArchive::new(std::io::Cursor::new(jar_bytes.as_slice()))
         .context("open client jar as zip")?;
     let font = fontgen::generate(&mut zip)?;
     let lang = langgen::generate(&mut zip)?;
-    let splashes = splashgen::generate(&mut zip)?;
     let mut ui = uigen::generate(&mut zip)?;
     let worldgen = worldgen::generate(&mut zip)?;
     // The 26.x day-night cycle is data: timeline tracks + dimension colors +
@@ -708,11 +706,10 @@ fn generate(agent: &ureq::Agent, cache: &util::Cache, version: &str, out: &Path)
         .collect();
     uigen::merge_from_disk(&mut ui, &pano_root, &pano_names, true)?;
     println!(
-        "      glyphs: {} ({} textures) | lang: {} | splashes: {} | sprites: {} | sound events: {} | biomes: {} | panorama faces: {} | menu music: {} | game music: {} | ui sounds: {} | biome music: {} files / {} events | mob voices: {} files | player voices: {} files",
+        "      glyphs: {} ({} textures) | lang: {} | sprites: {} | sound events: {} | biomes: {} | panorama faces: {} | menu music: {} | game music: {} | ui sounds: {} | biome music: {} files / {} events | mob voices: {} files | player voices: {} files",
         font.glyphs.len(),
         font.textures.len(),
         lang.map.len(),
-        splashes.lines.len(),
         ui.sprites.len(),
         sounds_json.events.len(),
         worldgen.biomes.len(),
@@ -734,7 +731,7 @@ fn generate(agent: &ureq::Agent, cache: &util::Cache, version: &str, out: &Path)
     );
 
     println!("[5/7] generating registry + build info...");
-    let gen = codegen::GenAll { font, lang, splashes, ui, sounds: sounds_json, worldgen, sky };
+    let gen = codegen::GenAll { font, lang, ui, sounds: sounds_json, worldgen, sky };
     let report_path = codegen::emit(&workspace_root, version, &client_sha1, &report, &gen)?;
 
     println!("[6/7] extracting REAL texture atlas (blockstates -> models -> PNGs)...");

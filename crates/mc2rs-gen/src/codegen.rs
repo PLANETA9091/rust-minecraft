@@ -1,6 +1,9 @@
 //! Codegen: write the generated registry + build info + report files.
-//! Everything the client renders (registry, fonts, language, splashes,
-//! GUI sprites, sounds, worldgen) is emitted here from official data.
+//! Everything the client renders (registry, fonts, language, GUI sprites,
+//! sounds, worldgen) is emitted here from official data — the splashes
+//! table the FIRST migration step moved out of the compiled source: the
+//! jar's texts/splashes.txt the runtime cache keeps verbatim, the
+//! client's own loader parses it.
 
 use std::fs;
 use std::path::Path;
@@ -9,7 +12,6 @@ use anyhow::{Context, Result};
 
 use crate::jar::JarReport;
 use crate::soundgen::SoundData;
-use crate::splashgen::SplashData;
 use crate::fontgen::FontData;
 use crate::langgen::LangData;
 use crate::uigen::UiData;
@@ -20,7 +22,6 @@ use crate::skygen::SkyData;
 pub struct GenAll {
     pub font: FontData,
     pub lang: LangData,
-    pub splashes: SplashData,
     pub ui: UiData,
     pub sounds: SoundData,
     pub worldgen: WorldgenData,
@@ -72,11 +73,13 @@ pub fn emit(
     items.push_str("];\n");
     fs::write(reg_dir.join("items.rs"), items).context("write items.rs")?;
 
-    // ---- font.rs / lang.rs / splashes.rs / gui.rs / sounds.rs / worldgen.rs ----
+    // ---- font.rs / lang.rs / gui.rs / sounds.rs / worldgen.rs ----
+    // (the splashes.rs write the first migration step retired — the
+    // jar's own texts/splashes.txt the extract_runtime_assets walk now
+    // copies verbatim into the runtime cache, the client's loader the
+    // only parser)
     fs::write(reg_dir.join("font.rs"), crate::fontgen::emit(&gen.font)?).context("write font.rs")?;
     fs::write(reg_dir.join("lang.rs"), crate::langgen::emit(&gen.lang)?).context("write lang.rs")?;
-    fs::write(reg_dir.join("splashes.rs"), crate::splashgen::emit(&gen.splashes)?)
-        .context("write splashes.rs")?;
     fs::write(reg_dir.join("gui.rs"), crate::uigen::emit(&gen.ui)?).context("write gui.rs")?;
     fs::write(reg_dir.join("sounds.rs"), crate::soundgen::emit(&gen.sounds)?).context("write sounds.rs")?;
     fs::write(reg_dir.join("worldgen.rs"), crate::worldgen::emit(&gen.worldgen)?)
@@ -136,7 +139,6 @@ pub fn emit(
         "glyphs": gen.font.glyphs.len(),
         "fontTextures": gen.font.textures.len(),
         "langEntries": gen.lang.map.len(),
-        "splashes": gen.splashes.lines.len(),
         "guiSprites": gen.ui.sprites.len(),
         "soundEvents": gen.sounds.events.len(),
         "biomes": gen.worldgen.biomes.len(),
@@ -166,6 +168,20 @@ pub fn extract_runtime_assets(
     use crate::extract::read_entry;
     let out_root = workspace_root.join("assets-cache/jar");
     let mut n = 0usize;
+    // THE SPLASHES' OWN CACHE (the jar's texts/splashes.txt VERBATIM —
+    // the pure-metadata table the first migration step moved out of the
+    // compiled source: no parsing here, the client's loader the only
+    // parser, the line order the pick law's own contract keeps)
+    {
+        let dest = out_root.join("assets/minecraft/texts/splashes.txt");
+        if !dest.exists() {
+            if let Ok(bytes) = read_entry(archive, "assets/minecraft/texts/splashes.txt") {
+                fs::create_dir_all(dest.parent().unwrap())?;
+                fs::write(dest, bytes)?;
+                n += 1;
+            }
+        }
+    }
     for s in ui.sprites.values() {
         let jar_path = format!("assets/minecraft/textures/{}", s.file);
         let dest = out_root.join(&s.file);

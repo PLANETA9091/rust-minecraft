@@ -1,15 +1,52 @@
 //! GUI screens: the boot chain (Mojang Studios loading -> title -> menus),
 //! driven entirely by GENERATED data: every label comes from the official
 //! language table, every sprite from the official sprite inventory, every
-//! splash from texts/splashes.txt.
+//! splash from the jar's own texts/splashes.txt the runtime cache keeps
+//! (the first generated/ -> runtime-load migration step: the table lives
+//! OFF the compiled source, the loader below the only parser).
 
 use crate::gui::{Gui, GuiAssets};
 use crate::math::{Mat4, Vec3};
 use crate::raster::RenderCtx;
 
 use mc_registry::generated::lang::tr;
-use mc_registry::generated::splashes::SPLASHES;
 use mc_registry::generated::worldgen::Skybox;
+
+/// THE SPLASHES' OWN LOADER (the generated/ -> runtime-load migration's
+/// first lane — the pure-metadata table the compiled source no longer
+/// carries): the jar's texts/splashes.txt the runtime cache keeps
+/// VERBATIM, the parse law the old generator's own walk spoke — the
+/// from_utf8_lossy read, the '\n' split, the '\r' trim, the empty
+/// lines' filter. The line ORDER the pick law's own contract keeps
+/// (the splitmix(seed) % len index the title golden's frame pins —
+/// the same lines the old generated array held in the same order).
+/// The absent file the honest empty list keeps — the title renders
+/// the static fallback the empty-table law always spoke. The walk
+/// speaks the boot's own roots: the workspace root the binary's cwd
+/// keeps, the crate dir the cargo test cwd speaks one and two steps
+/// below it.
+fn parse_splashes(bytes: &[u8]) -> Vec<String> {
+    String::from_utf8_lossy(bytes)
+        .split('\n')
+        .map(|l| l.trim_end_matches('\r').to_string())
+        .filter(|l| !l.is_empty())
+        .collect()
+}
+
+fn load_splashes() -> Vec<String> {
+    for prefix in [
+        "assets-cache/jar",
+        "../assets-cache/jar",
+        "../../assets-cache/jar",
+    ] {
+        if let Ok(bytes) = std::fs::read(
+            std::path::Path::new(prefix).join("assets/minecraft/texts/splashes.txt"),
+        ) {
+            return parse_splashes(&bytes);
+        }
+    }
+    Vec::new()
+}
 
 pub const WHITE: [f32; 3] = [1.0, 1.0, 1.0];
 pub const YELLOW: [f32; 3] = [1.0, 1.0, 0.333];
@@ -328,6 +365,10 @@ pub struct App {
     pub servers: Vec<ServerEntry>,
     pub buttons: Vec<Button>,
     pub splash_index: usize,
+    /// THE SPLASHES' OWN LIST (the runtime cache's parse — the loaded
+    /// table the pick law indexes, the compiled static the migration
+    /// retired)
+    pub splashes: Vec<String>,
     pub seed: u64,
     pub frame: u64,
     pub music: crate::music::MusicScheduler,
@@ -980,10 +1021,11 @@ impl App {
     /// Deterministic boot: splash selection from the seed (vanilla picks a
     /// random line; here the RNG is seeded for reproducible rendering).
     pub fn new(seed: u64) -> Self {
-        let splash_index = if SPLASHES.is_empty() {
+        let splashes = load_splashes();
+        let splash_index = if splashes.is_empty() {
             0
         } else {
-            (splitmix(seed) % SPLASHES.len() as u64) as usize
+            (splitmix(seed) % splashes.len() as u64) as usize
         };
         let servers = vec![
             ServerEntry {
@@ -1012,6 +1054,7 @@ impl App {
             servers,
             buttons: Vec::new(),
             splash_index,
+            splashes,
             seed,
             frame: 0,
             music: crate::music::MusicScheduler::new(seed),
@@ -7361,7 +7404,11 @@ impl App {
         };
         // splash text (yellow, pulsing, deterministic pick) anchored at the
         // logo's bottom-right corner like vanilla
-        let splash = SPLASHES.get(self.splash_index).copied().unwrap_or("Now in Rust!");
+        let splash = self
+            .splashes
+            .get(self.splash_index)
+            .map(|s| s.as_str())
+            .unwrap_or("Now in Rust!");
         let pulse = ((self.frame as f32 * 0.1).sin() * 0.5 + 0.5) * 2.0;
         let splash_scale = 1 + (pulse.round() as i32);
         let sw = g.text_width(splash);
@@ -8052,8 +8099,32 @@ mod tests {
         let a = App::new(20260214);
         let b = App::new(20260214);
         assert_eq!(a.splash_index, b.splash_index);
-        assert!(a.splash_index < SPLASHES.len(), "splash index in range");
-        assert!(!SPLASHES.is_empty());
+        // THE PICK'S OWN LAW (the cache-absent boot the CI's pre-generate
+        // test job speaks 0 — the empty-table arm the fallback renders;
+        // the cache-present boot the splitmix index rides)
+        let expected = if a.splashes.is_empty() {
+            0
+        } else {
+            (splitmix(20260214) % a.splashes.len() as u64) as usize
+        };
+        assert_eq!(a.splash_index, expected, "the pick the list's own length speaks");
+    }
+
+    #[test]
+    fn the_splash_loader_speaks_the_parse_law() {
+        // THE MIGRATION'S OWN LAW (the parse the old generator's walk
+        // spoke, now the loader's): the '\n' split, the '\r' trim, the
+        // empty lines' filter, the empty bytes the honest empty keeps
+        let lines = parse_splashes(b"As seen on TV!\nAwesome!\n\n100% pure!\r\nMore polygons!\n");
+        assert_eq!(
+            lines,
+            vec!["As seen on TV!", "Awesome!", "100% pure!", "More polygons!"],
+            "the parse law the cache file's own lines keep"
+        );
+        assert!(
+            parse_splashes(b"").is_empty(),
+            "the empty file the honest empty list keeps"
+        );
     }
 
     #[test]
