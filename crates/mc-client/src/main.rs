@@ -172,6 +172,14 @@ struct Cli {
     /// wheat.
     #[arg(long)]
     feed: Option<u32>,
+    /// Fire the REAL right press with the held golden dandelion (the
+    /// AgeableMob.mobInteract's dandelion arm — the toggle+reset walk
+    /// the lock lane speaks: the growth freezes, the 40-tick PAUSE
+    /// window walks, the use/unuse voice plays) and walk N
+    /// swing-clock ticks after. Requires --baby + --held-item
+    /// item/golden_dandelion.
+    #[arg(long)]
+    golden_dandelion: Option<u32>,
     /// Seed TWO in-love sheep on the camera's facing ray (the canMate
     /// pair the breeding walk needs) and run N settle ticks — the
     /// pairing fires, the child spawns, the hearts burst, the XP orb
@@ -437,6 +445,7 @@ fn main() -> Result<()> {
             sheep: cli.sheep,
             shear: cli.shear,
             feed: cli.feed,
+            golden_dandelion: cli.golden_dandelion,
             breed: cli.breed,
             breed_mix: cli.breed_mix,
             baby: cli.baby,

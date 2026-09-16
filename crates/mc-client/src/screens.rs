@@ -2067,6 +2067,20 @@ impl App {
                                     sx, sy, sz, &mut self.mob_rng,
                                 ));
                             }
+                            if let Some((lx, ly, lz, _locked)) = ev.age_lock_sparkle {
+                                // THE AGE-LOCK PARTICLE'S OWN RIDE (the
+                                // makeAgeLockedParticle walk the `% 2`
+                                // cadence speaks — the SAME glint sprite
+                                // the happy sparkles share the jar's own
+                                // particles/*.json keeps: pause_mob_growth
+                                // and reset_mob_growth both the minecraft:glint
+                                // texture name — the spawn the caller's
+                                // level-random stand-in the sparkle lane
+                                // keeps)
+                                self.particles.push(crate::particles::happy_villager_sparkle(
+                                    lx, ly, lz, &mut self.mob_rng,
+                                ));
+                            }
                             if let Some(atk) = ev.attack {
                                 hit_events.push((atk.damage, atk.dir_x, atk.dir_z));
                             }
@@ -3358,6 +3372,36 @@ impl App {
                             }
                             self.swing.start();
                         }
+                        return true;
+                    }
+                    if let crate::mob::MobInteract::AgeLock { locked } = verdict {
+                        // THE GOLDEN-DANDELION'S OWN WALK (the
+                        // AgeableMob.mobInteract arm the 26.2 full
+                        // disasm speaks): the toggle+reset walk ran
+                        // inside the mob (the consumer the static
+                        // accepts first), the SUCCESS verdict the
+                        // swing starts, the sound pick the post-toggle
+                        // read speaks — item.golden_dandelion.use the
+                        // LOCKED arm plays, item.golden_dandelion.unuse
+                        // the unlock answers — v1.0 p1.0, the PLAYERS
+                        // source (the playSound the static's own tail
+                        // speaks); the consume the inventory-less lane
+                        // honest-skips, the persistence arm the
+                        // despawn-less world never rides, the PAUSE/
+                        // RESET particles the aiStep's own window
+                        // walks (the age_lock_sparkle beat the tick's
+                        // own event carries)
+                        self.sounds.play_voice(
+                            self.frame,
+                            if locked {
+                                "item.golden_dandelion.use"
+                            } else {
+                                "item.golden_dandelion.unuse"
+                            },
+                            1.0,
+                            1.0,
+                        );
+                        self.swing.start();
                         return true;
                     }
                     entity_pass = true;
@@ -15242,6 +15286,94 @@ mod tests {
         assert_eq!(
             app.mobs[0].in_love, 600,
             "the fallback the clock never changes (no ticks walked)"
+        );
+    }
+
+    #[test]
+    fn the_golden_dandelion_press_locks_the_baby() {
+        // THE AGEABLEMOB.MOBINTERACT'S OWN ARM the 26.2 full disasm
+        // speaks — the REAL on_right_press the ENTITY case lands: the
+        // canUseGoldenDandelion gate the held stack, the baby, the
+        // drained timer reads, the AgeLock verdict the toggle+reset
+        // walk speaks, the use voice the post-toggle pick plays, the
+        // swing the SUCCESS starts
+        let mut app = App::new(3);
+        app.enter_world();
+        app.offline_held_updated(Some("item/golden_dandelion"));
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let top = app.spawn_y;
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, top as f32 + 4.0, c as f32 + 0.5),
+            yaw: 0.0,
+            pitch: -std::f32::consts::FRAC_PI_2,
+        });
+        let mut sheep =
+            crate::mob::Zombie::new(9, c as f64 + 0.5, top as f64, c as f64 + 0.5, 3);
+        sheep.kind = crate::mob::MobKind::Sheep;
+        sheep.age = crate::mob::BABY_START_AGE + 1600;
+        app.mobs.push(sheep);
+        assert!(
+            app.on_right_press(0, 0),
+            "the AgeLock verdict consumed the press"
+        );
+        // THE VOICE: the playSound the static's own tail speaks — the
+        // locked arm the USE event names
+        assert!(
+            app.sounds
+                .events
+                .iter()
+                .any(|e| e.starts_with("item.golden_dandelion.use ")),
+            "the locked arm the use voice speaks"
+        );
+        assert!(app.swing.swinging, "the press swung the arm");
+        // THE LOCK: the toggle arms, the re-baby the -24000 walks, the
+        // window the 40 marks
+        assert!(app.mobs[0].age_locked, "the lock the toggle arms");
+        assert_eq!(
+            app.mobs[0].age,
+            crate::mob::BABY_START_AGE,
+            "the re-baby the fresh walk arms"
+        );
+        assert_eq!(
+            app.mobs[0].age_lock_particle_timer,
+            crate::mob::AGE_LOCK_PARTICLE_WINDOW,
+            "the window the toggle marks"
+        );
+        // THE UNLOCK PRESS: the drained window the re-use gate requires
+        // — the settle walks the window empty, the second press the
+        // unuse voice speaks. The camera re-pins the body the idle
+        // walk may have moved (the stroll's own drift the 40 ticks
+        // carry) — the aim the pick's own range needs.
+        for _ in 0..40 {
+            app.update();
+        }
+        {
+            let m = &app.mobs[0];
+            app.offline_camera_updated(crate::camera::Camera {
+                pos: crate::math::Vec3::new(
+                    m.x as f32,
+                    (m.y + 4.0) as f32,
+                    m.z as f32,
+                ),
+                yaw: 0.0,
+                pitch: -std::f32::consts::FRAC_PI_2,
+            });
+        }
+        assert!(
+            app.on_right_press(0, 0),
+            "the drained window the re-use arms"
+        );
+        assert!(
+            app.sounds
+                .events
+                .iter()
+                .any(|e| e.starts_with("item.golden_dandelion.unuse ")),
+            "the unlock arm the unuse voice speaks"
+        );
+        assert!(
+            !app.mobs[0].age_locked,
+            "the unlock the toggle walks back"
         );
     }
 

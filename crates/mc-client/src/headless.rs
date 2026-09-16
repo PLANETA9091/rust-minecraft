@@ -145,6 +145,15 @@ pub struct SceneOpts {
     /// and walk N swing-clock ticks after. Requires --sheep +
     /// --held-item wheat.
     pub feed: Option<u32>,
+    /// THE GOLDEN-DANDELION'S OWN STAGE: fire the REAL on_right_press
+    /// (the AgeableMob.mobInteract arm the dandelion lane answers —
+    /// the canUseGoldenDandelion gate the held stack, the baby, the
+    /// drained timer reads) and walk N swing-clock ticks after. The
+    /// toggle+reset walk the press arms — the lock freezes the growth,
+    /// the 40-tick PAUSE/RESET window the aiStep's `% 2` cadence
+    /// walks, the use/unuse voice the post-toggle pick speaks.
+    /// Requires --sheep/--pig + --baby + --held-item item/golden_dandelion.
+    pub golden_dandelion: Option<u32>,
     /// THE BREEDING WALK'S OWN STAGE: seed TWO sheep on the camera's
     /// facing ray (the same-surface cells 3 and 5 out — the canMate
     /// pair the ring speaks), arm the love clock the feed verdict
@@ -1900,6 +1909,38 @@ pub fn render_gui_screen_opts(
         println!("the shear's own press consumed: {consumed}");
         for _ in 0..beat {
             app.swing.tick();
+        }
+    }
+    if let Some(beat) = opts.golden_dandelion {
+        // THE GOLDEN-DANDELION'S OWN STAGE (the AgeableMob.mobInteract
+        // walk the lock lane speaks): the held stack the
+        // canUseGoldenDandelion gate reads (the GOLDEN_DANDELION item
+        // the unified name resolves), the REAL on_right_press the
+        // ENTITY case lands, the AgeLock verdict the toggle+reset walk
+        // speaks (the lock the canAgeUp gate freezes, the -24000 the
+        // fresh babyhood arms, the 40-tick PAUSE window the aiStep's
+        // `% 2` cadence walks — twenty glint flashes the settle ticks
+        // compose, the use voice the post-toggle pick keeps), the
+        // swing the SUCCESS verdict starts. The beat the swing's own
+        // clock walks, the frame frozen mid-arc.
+        anyhow::ensure!(
+            held_item.is_some(),
+            "--golden-dandelion requires --held-item item/golden_dandelion (the mob.interact table's dandelion gate reads the held stack)"
+        );
+        app.offline_held_updated(held_item);
+        let consumed = app.on_right_press(0, 0);
+        println!("the golden dandelion's own press consumed: {consumed}");
+        for _ in 0..beat {
+            app.swing.tick();
+        }
+        // THE PAUSE WINDOW'S OWN STAGE (the settle ticks the caller
+        // passes — the REAL updates the even-tick spawns need: the
+        // glint particles the `% 2` cadence leaves age past the 32x
+        // clamp's point-origin, the frozen lock shot the window's own
+        // bloom composes)
+        for _ in 0..opts.settle_ticks {
+            app.on_movement_input(0.0, 0.0, false, false, false);
+            app.update();
         }
     }
     if let Some(beat) = opts.feed {

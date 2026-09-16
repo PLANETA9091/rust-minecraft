@@ -217,6 +217,8 @@ fn test_fixture_table() -> SoundTable {
         "entity.zombie.death",
         "entity.zombie.hurt",
         "entity.zombie.step",
+        "item.golden_dandelion.unuse",
+        "item.golden_dandelion.use",
         "music.game",
         "music.menu",
         "music.overworld.swamp",

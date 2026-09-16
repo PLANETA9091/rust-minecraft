@@ -141,6 +141,12 @@ pub const BREED_COOLDOWN_TICKS: i32 = 6000;
 /// over-grow arm speaks — the HAPPY_VILLAGER sparkles the aiStep's
 /// `% 4` cadence walks over the next 40 ticks, ten green flashes).
 pub const FEED_FORCED_AGE_TIMER: i32 = 40;
+/// `AgeableMob.setAgeLockedData`'s own ageLockParticleTimer mark (the
+/// bipush 40 the toggle's tail speaks — the PAUSE/RESET particles the
+/// aiStep's makeAgeLockedParticle walk spawns over the next 40 ticks
+/// at the `% 2` cadence, twenty glint flashes; the window's own drain
+/// the canUseGoldenDandelion re-use gate requires).
+pub const AGE_LOCK_PARTICLE_WINDOW: i32 = 40;
 /// The BreedGoal's own 8.0 ring (the AABB inflate the goal's pairing
 /// search speaks — the class source's constant the chicken/pig
 /// registrations' `BreedGoal(animal, 1.0)` clinit entries name the
@@ -373,6 +379,24 @@ pub enum MobInteract {
         /// SUCCESS (the baby arm) — the grow-up the ageUp law walked
         /// this press, the swing the SUCCESS verdict speaks
         grow: bool,
+    },
+    /// THE GOLDEN-DANDELION'S OWN VERDICT (the `AgeableMob.mobInteract`
+    /// arm the 26.2 full disasm speaks: `canUseGoldenDandelion(stack,
+    /// isBaby(), ageLockParticleTimer, this)` hit —
+    /// `setAgeLocked(this, this::setAgeLockedData, player, stack,
+    /// consumer)` the SUCCESS return — the consumer the toggle+reset
+    /// walk runs, `stack.consume(1, player)` the dandelion the press
+    /// spends, the `isAgeLocked()` post-toggle read the sound pick
+    /// carries: `GOLDEN_DANDELION_USE` the locked arm plays,
+    /// `GOLDEN_DANDELION_UNUSE` the unlock speaks — v1.0 p1.0, the
+    /// PLAYERS source). Rides `locked` = the POST-toggle lock state.
+    /// The persistence arm (`setPersistenceRequired` the locked read
+    /// guards) the repo's despawn-less world honest-skips; the
+    /// consume the inventory-less lane the Feed verdict's own note
+    /// keeps.
+    AgeLock {
+        /// the post-toggle `isAgeLocked()` — the sound pick's own word
+        locked: bool,
     },
 }
 
@@ -730,6 +754,16 @@ pub struct MobEvents {
     /// 0.5 / getRandomZ(1.0)` walk carried, the caller spawns the
     /// happy villager's green the glint texture speaks)
     pub happy_sparkle: Option<(f64, f64, f64)>,
+    /// THE AGE-LOCK PARTICLE'S OWN BEAT (the aiStep's makeAgeLockedParticle
+    /// walk — the `% 2` cadence the even timer ticks speak, the position
+    /// `getRandomX(1.0) / getRandomY(0.2) + getBbHeight() + lift /
+    /// getRandomZ(1.0)` carries — the lift the lock state's own word
+    /// keeps: 0.2 the PAUSE arm, 0.0 the RESET) — the bool the
+    /// post-toggle lock state rides, the particle kind the caller
+    /// picks: PAUSE_MOB_GROWTH the locked speaks, RESET_MOB_GROWTH the
+    /// unlock's re-baby answers (both the glint sprite the happy
+    /// sparkles share — the same quad the render draws)
+    pub age_lock_sparkle: Option<(f64, f64, f64, bool)>,
 }
 
 /// The zombie's attack out-edge (the doHurtTarget the melee goal
@@ -825,6 +859,21 @@ pub struct Zombie {
     /// ageUp's over-grow arm marks (the aiStep's `% 4` cadence the
     /// HAPPY_VILLAGER spawns speak, the decrement the window drains).
     pub forced_age_timer: i32,
+    /// `AgeableMob`'s `AGE_LOCKED` synched data (the accessor the
+    /// defineSynchedData walk speaks — the golden dandelion's own
+    /// word): the baby's growth the lock PAUSES (the canAgeUp gate
+    /// the natural walk reads — the locked baby the walk never grows),
+    /// the toggle the golden-dandelion press walks both directions.
+    pub age_locked: bool,
+    /// `AgeableMob.ageLockParticleTimer` — the 40-tick PAUSE/RESET
+    /// window the toggle's own walk marks (the aiStep's `% 2` cadence
+    /// the makeAgeLockedParticle spawns speak — the glint sprite the
+    /// happy sparkles share, the lock state the particle kind reads —
+    /// PAUSE the locked press leaves, RESET the unlock's re-baby
+    /// speaks; the decrement the window drains on every tick it
+    /// counts). The gate the re-use reads: the timer's own zero the
+    /// canUseGoldenDandelion word requires.
+    pub age_lock_particle_timer: i32,
     /// the swing clock (the attack anim the render state's attackTime
     /// samples — the same LivingEntity law the player's hand speaks)
     pub swing: SwingState,
@@ -951,6 +1000,8 @@ impl Zombie {
             age: 0,
             forced_age: 0,
             forced_age_timer: 0,
+            age_locked: false,
+            age_lock_particle_timer: 0,
             swing: SwingState::default(),
             walk: WalkAnimationState::default(),
             aggressive: false,
@@ -1220,11 +1271,12 @@ impl Zombie {
         // (canAgeUp()) setAge(i + 1); else if (i > 0) setAge(i - 1);`
         // — BOTH arms route through setAge, the grow-up crossing the
         // -1 -> 0 beat the boundary branch arms (the canAgeUp gate =
-        // isBaby && !isAgeLocked, the age-lock lane the repo keeps
-        // none of — the age < 0 word the same gate answers); the
-        // positive drain the adult's cooldown walks, the 1 -> 0 the
-        // same-sign set the boundary never arms)
-        if self.age < 0 {
+        // isBaby && !isAgeLocked — the lock the golden dandelion's
+        // own word PAUSES: the locked baby the walk never grows, the
+        // drain the same gate the positive age keeps); the positive
+        // drain the adult's cooldown walks, the 1 -> 0 the same-sign
+        // set the boundary never arms)
+        if self.can_age_up() {
             self.set_age(self.age + 1);
         } else if self.age > 0 {
             self.set_age(self.age - 1);
@@ -1247,6 +1299,40 @@ impl Zombie {
                 events.happy_sparkle = Some((sx, sy, sz));
             }
             self.forced_age_timer -= 1;
+        }
+        // THE AGE-LOCK PARTICLE'S OWN WALK (javap `AgeableMob.aiStep`'s
+        // tail — `ageLockParticleTimer = makeAgeLockedParticle(level(),
+        // this, ageLockParticleTimer, isAgeLocked())` the BOTH-sides
+        // call speaks: `if (timer > 0) { if (isClientSide() && timer %
+        // 2 == 0) { spawn } timer--; } return timer;` the lossless dump
+        // answers — the spawn the even timer ticks keep, the decrement
+        // EVERY tick the window counts). The position law the Vec3 ctor
+        // speaks: `getRandomX(1.0)` the x, `getRandomY(0.2) +
+        // getBbHeight() + (locked ? 0.2F : 0.0F)` the y — the lift the
+        // PAUSE arm's own ldc 0.2 speaks — `getRandomZ(1.0)` the z,
+        // each the symmetric triangle `(2.0 * nextDouble() - 1.0) *
+        // scale` the Entity.getRandomX/getRandomY(D)/getRandomZ disasm
+        // pins (the x/z draws 1.0, the y draw 0.2 — the three draws the
+        // ctor's left-to-right order keeps). The particle pick the
+        // lock state's own word: PAUSE_MOB_GROWTH the locked speaks,
+        // RESET_MOB_GROWTH the unlock's re-baby answers. The timer's
+        // zero the re-use gate reads (the canUseGoldenDandelion word).
+        if self.age_lock_particle_timer > 0 {
+            if self.age_lock_particle_timer % 2 == 0 {
+                // the bb top the box's own fold answers (the
+                // registration dims the isBaby half-scale speaks)
+                let bb_h = {
+                    let (_, _, _, _, y1, _) = self.box_for();
+                    y1 - self.y
+                };
+                let lift: f64 = if self.age_locked { 0.2 } else { 0.0 };
+                let px = self.x + (2.0 * self.rng.next_f64() - 1.0) * 1.0;
+                let py =
+                    self.y + (2.0 * self.rng.next_f64() - 1.0) * 0.2 + bb_h + lift;
+                let pz = self.z + (2.0 * self.rng.next_f64() - 1.0) * 1.0;
+                events.age_lock_sparkle = Some((px, py, pz, self.age_locked));
+            }
+            self.age_lock_particle_timer -= 1;
         }
         self.swing.tick();
         self.age_ticks = self.age_ticks.wrapping_add(1);
@@ -1937,6 +2023,19 @@ impl Zombie {
             // canFallInLove gate the in_love clock reads, the
             // setInLove the 600 arms
             _ if self.is_food(held_item) => self.feed(),
+            // THE GOLDEN-DANDELION'S OWN ARM (the AgeableMob.mobInteract
+            // the full disasm speaks — the chain's own order the super
+            // call keeps: Sheep's shears, Animal's food, AgeableMob's
+            // dandelion, PathfinderMob's pass — the gate the
+            // canUseGoldenDandelion word arms: the GOLDEN_DANDELION
+            // item the stack's own getItem answers, the isBaby the
+            // grown-up the gate refuses, the timer's zero the
+            // 40-tick window's own drain requires, the
+            // CANNOT_BE_AGE_LOCKED tag the zoo's AgeableMob kinds —
+            // Sheep/Cow/Pig — the jar's own tag json never carries;
+            // the ZOMBIE the monster chain the AgeableMob super never
+            // reaches, the kind gate the monster's own chain speaks)
+            _ if self.can_use_golden_dandelion(held_item) => self.use_golden_dandelion(),
             // the miss arms: the wrong stack, the wrong body, the
             // already-sheared wool (readyForShearing's own false), the
             // food the monster's chain never reaches — the super's
@@ -2049,6 +2148,73 @@ impl Zombie {
         if self.age == 0 {
             self.set_age(self.forced_age);
         }
+    }
+
+    /// `AgeableMob.canAgeUp()` verbatim (the 26.2 full disasm speaks):
+    /// `isBaby() && !isAgeLocked()` — the baby the age's own sign
+    /// speaks, the lock the golden dandelion's word the gate reads —
+    /// the locked baby the natural walk never grows (the PAUSE the
+    /// dandelion's press speaks), the unlocked the everyday walk
+    /// answers, the adult the gate refuses outright.
+    pub fn can_age_up(&self) -> bool {
+        self.age < 0 && !self.age_locked
+    }
+
+    /// `AgeableMob.canUseGoldenDandelion(ItemStack, Z, I, Mob)` verbatim
+    /// (the 26.2 full disasm speaks): `stack.getItem() ==
+    /// Items.GOLDEN_DANDELION && baby && timer == 0 &&
+    /// !mob.getType().is(CANNOT_BE_AGE_LOCKED)` — the AND-chain the
+    /// four branches speak (if_acmpne the item, ifeq the baby,
+    /// ifne the timer's nonzero, ifne the in-tag refusal — all
+    /// `start+32` the iconst_0 arm). The `baby` arg the caller's
+    /// `isBaby()` read rides (the `age < 0` word the derived fold
+    /// answers), the `timer` arg the `ageLockParticleTimer` field
+    /// speaks — the 40-tick window's own drain the re-use gate
+    /// requires. The CANNOT_BE_AGE_LOCKED tag the zoo's AgeableMob
+    /// kinds (Sheep/Cow/Pig) the jar's own tag json never carries —
+    /// the honest always-pass the zoo's kinds keep; the ZOMBIE the
+    /// monster chain never reaches the AgeableMob arm (the kind gate
+    /// the chain's own walk speaks).
+    pub fn can_use_golden_dandelion(&self, held_item: &str) -> bool {
+        match self.kind {
+            MobKind::Sheep | MobKind::Cow | MobKind::Pig => {
+                held_item == "golden_dandelion" && self.age < 0
+                    && self.age_lock_particle_timer == 0
+            }
+            MobKind::Zombie => false,
+        }
+    }
+
+    /// THE GOLDEN-DANDELION'S OWN WALK (javap `AgeableMob.setAgeLocked`
+    /// static + `setAgeLockedData` the consumer the full disasm speaks):
+    /// the consumer `setAgeLockedData()` runs FIRST —
+    /// `setAgeLocked(!isAgeLocked())` the TOGGLE (ifne the locked arm's
+    /// iconst_0, the unlocked's iconst_1 — both directions the same
+    /// call answers), `setAge(getBabyStartAge())` the UNCONDITIONAL
+    /// re-baby the BOTH directions walk (the -24000 the lock freezes,
+    /// the unlock's RESET the fresh babyhood speaks), `ageLockParticleTimer
+    /// = 40` the PAUSE/RESET window the both arms mark — then the
+    /// static's own tail: `stack.consume(1, player)` the dandelion the
+    /// press spends (the inventory-less lane the Feed verdict's own
+    /// note honest-skips), the `isAgeLocked()` post-toggle read the
+    /// persistence + sound picks carry (`setPersistenceRequired` the
+    /// locked arm the despawn-less world honest-skips; the playSound
+    /// `locked ? GOLDEN_DANDELION_USE : GOLDEN_DANDELION_UNUSE` the
+    /// PLAYERS source v1.0 p1.0 keeps — the caller's sound lane plays).
+    /// The SUCCESS verdict the swing speaks.
+    fn use_golden_dandelion(&mut self) -> MobInteract {
+        // THE CONSUMER (setAgeLockedData verbatim — the toggle, the
+        // re-baby, the window)
+        self.age_locked = !self.age_locked;
+        self.set_age(self.baby_start_age());
+        self.age_lock_particle_timer = AGE_LOCK_PARTICLE_WINDOW;
+        MobInteract::AgeLock { locked: self.age_locked }
+    }
+
+    /// `AgeableMob.getBabyStartAge()` verbatim (the disasm's own
+    /// `return -24000` — the same walk setBaby/finalizeSpawn ride).
+    fn baby_start_age(&self) -> i32 {
+        -24000
     }
 
     /// `AgeableMob.setAge(I)` verbatim (the 26.2 full disasm speaks):
@@ -4042,6 +4208,242 @@ mod tests {
         assert_eq!(
             mob.age, stalled,
             "the stall the zero-amount fold keeps"
+        );
+    }
+
+    /// THE GOLDEN-DANDELION'S OWN TOGGLE (javap `setAgeLockedData` +
+    /// the static `setAgeLocked` the full disasm speaks:
+    /// `setAgeLocked(!isAgeLocked())` the toggle, `setAge(
+    /// getBabyStartAge())` the UNCONDITIONAL re-baby BOTH directions
+    /// walk, `ageLockParticleTimer = 40` the window the both arms
+    /// mark — the lock the canAgeUp gate PAUSES, the unlock the fresh
+    /// babyhood RESETS, the natural walk the unlock's own climb
+    /// resumes).
+    #[test]
+    fn the_golden_dandelion_toggles_the_lock_and_rebabies() {
+        let mut mob = Zombie::new(9, 0.0, 64.0, 0.0, 262);
+        mob.kind = MobKind::Sheep;
+        mob.age = -1000;
+        let mut rng = Lcg::new(7);
+        // THE LOCK PRESS: the toggle arms, the re-baby the -24000
+        // walks, the window the 40 marks
+        assert_eq!(
+            mob.mob_interact("golden_dandelion", &mut rng),
+            MobInteract::AgeLock { locked: true },
+            "the lock press the SUCCESS verdict speaks"
+        );
+        assert!(mob.age_locked, "the lock the toggle arms");
+        assert_eq!(mob.age, BABY_START_AGE, "the re-baby the fresh walk arms");
+        assert_eq!(
+            mob.age_lock_particle_timer, AGE_LOCK_PARTICLE_WINDOW,
+            "the window the toggle marks"
+        );
+        assert!(
+            !mob.can_age_up(),
+            "the lock the canAgeUp gate closes — the walk never grows"
+        );
+        // THE FROZEN WALK: the natural tick the locked baby keeps —
+        // the age the -24000 the PAUSE answers, the even timer tick
+        // the first spawn speaks
+        let world = World::new(1, 42);
+        mob.tick(&world, None, NIGHT);
+        assert_eq!(
+            mob.age, BABY_START_AGE,
+            "the locked baby the natural walk never grows"
+        );
+        assert_eq!(
+            mob.age_lock_particle_timer, AGE_LOCK_PARTICLE_WINDOW - 1,
+            "the window the tick drains"
+        );
+        // THE RE-USE GATE: the window's own drain the canUse arm
+        // requires — the press the mid-window keeps the PASS
+        assert_eq!(
+            mob.mob_interact("golden_dandelion", &mut rng),
+            MobInteract::Pass,
+            "the mid-window press the timer's nonzero refuses"
+        );
+        // the drain the window empties (the remaining 39 ticks)
+        for _ in 1..AGE_LOCK_PARTICLE_WINDOW {
+            mob.tick(&world, None, NIGHT);
+        }
+        assert_eq!(mob.age_lock_particle_timer, 0, "the window the drain empties");
+        assert_eq!(mob.age, BABY_START_AGE, "the frozen walk the whole window keeps");
+        // THE UNLOCK PRESS: the toggle walks back, the RESET the fresh
+        // babyhood re-arms, the window the both arms mark
+        assert_eq!(
+            mob.mob_interact("golden_dandelion", &mut rng),
+            MobInteract::AgeLock { locked: false },
+            "the unlock press the post-toggle false carries"
+        );
+        assert!(!mob.age_locked, "the lock the toggle walks back");
+        assert_eq!(
+            mob.age, BABY_START_AGE,
+            "the RESET the fresh babyhood BOTH directions walks"
+        );
+        assert_eq!(mob.age_lock_particle_timer, AGE_LOCK_PARTICLE_WINDOW, "the window the unlock marks too");
+        assert!(mob.can_age_up(), "the unlock the natural walk resumes");
+        // the resumed climb: the tick the -24000 -> -23999 beat walks
+        mob.tick(&world, None, NIGHT);
+        assert_eq!(
+            mob.age,
+            BABY_START_AGE + 1,
+            "the resumed walk the unlocked baby climbs"
+        );
+    }
+
+    /// THE DANDELION GATE'S OWN FOUR BRANCHES (javap
+    /// `canUseGoldenDandelion` the full disasm speaks: the item's
+    /// if_acmpne, the baby's ifeq, the timer's ifne, the in-tag's
+    /// ifne — all the iconst_0 arm — AND the chain order the
+    /// mobInteract super-calls keep: the shears, the food, the
+    /// dandelion, the pass — the ZOMBIE the monster chain the
+    /// AgeableMob arm never reaches).
+    #[test]
+    fn the_dandelion_gate_the_four_branches_arms() {
+        let mut rng = Lcg::new(11);
+        // THE BABY + THE DANDELION + the drained timer: the gate arms
+        let mut baby = Zombie::new(9, 0.0, 64.0, 0.0, 262);
+        baby.kind = MobKind::Sheep;
+        baby.age = -1600;
+        assert!(
+            baby.can_use_golden_dandelion("golden_dandelion"),
+            "the baby the dandelion the drained window arms"
+        );
+        assert_eq!(
+            baby.mob_interact("golden_dandelion", &mut rng),
+            MobInteract::AgeLock { locked: true },
+            "the press the lock verdict speaks"
+        );
+        // THE GROWN-UP the baby branch refuses (the ifeq the false
+        // keeps) — the press the super's own PASS answers
+        let mut adult = Zombie::new(9, 0.0, 64.0, 0.0, 262);
+        adult.kind = MobKind::Sheep;
+        assert!(
+            !adult.can_use_golden_dandelion("golden_dandelion"),
+            "the grown-up the baby branch refuses"
+        );
+        assert_eq!(
+            adult.mob_interact("golden_dandelion", &mut rng),
+            MobInteract::Pass,
+            "the adult press the chain's own pass answers"
+        );
+        // THE WRONG STACK the item branch refuses — the wheat the FOOD
+        // arm's own order the chain keeps (the Animal super the
+        // dandelion arm AHEAD walks)
+        let mut baby2 = Zombie::new(9, 0.0, 64.0, 0.0, 262);
+        baby2.kind = MobKind::Sheep;
+        baby2.age = -1600;
+        assert!(
+            !baby2.can_use_golden_dandelion("wheat"),
+            "the wrong stack the item branch refuses"
+        );
+        assert!(
+            matches!(
+                baby2.mob_interact("wheat", &mut rng),
+                MobInteract::Feed { .. }
+            ),
+            "the wheat press the FOOD arm's own order takes"
+        );
+        // THE ZOMBIE the monster chain the AgeableMob super never
+        // reaches — the kind gate the chain's own walk speaks
+        let mut zombie = Zombie::new(9, 0.0, 64.0, 0.0, 262);
+        zombie.age = -1600;
+        assert!(
+            !zombie.can_use_golden_dandelion("golden_dandelion"),
+            "the monster the chain's own walk refuses"
+        );
+        assert_eq!(
+            zombie.mob_interact("golden_dandelion", &mut rng),
+            MobInteract::Pass,
+            "the monster press the pass keeps"
+        );
+        // THE PIG the same zoo arms (the kind's own gate the tag json
+        // never carries — the CANNOT_BE_AGE_LOCKED honest pass)
+        let mut pig = Zombie::new(9, 0.0, 64.0, 0.0, 262);
+        pig.kind = MobKind::Pig;
+        pig.age = -1600;
+        assert!(
+            pig.can_use_golden_dandelion("golden_dandelion"),
+            "the pig the tag's honest pass arms"
+        );
+    }
+
+    /// THE AGE-LOCK WINDOW'S OWN CADENCE (javap `makeAgeLockedParticle`
+    /// the full disasm speaks: the timer's own gate `if (timer > 0)`,
+    /// the spawn the even ticks keep (`timer % 2 == 0` the irem/ifne
+    /// fold — twenty glint flashes the 40-tick window walks), the
+    /// position the Vec3 ctor's own law carries — the x/z the unit
+    /// triangle, the y `getRandomY(0.2) + getBbHeight() + lift` the
+    /// lock's own word keeps — the decrement EVERY tick, the pick the
+    /// lock state's own bool: PAUSE the locked speaks, RESET the
+    /// unlock answers).
+    #[test]
+    fn the_age_lock_window_the_even_cadence_walks() {
+        let mut mob = Zombie::new(9, 0.0, 64.0, 0.0, 262);
+        mob.kind = MobKind::Sheep;
+        mob.age = BABY_START_AGE;
+        mob.age_locked = true;
+        mob.age_lock_particle_timer = AGE_LOCK_PARTICLE_WINDOW;
+        let world = World::new(1, 42);
+        let bb_h = {
+            let (_, _, _, _, y1, _) = mob.box_for();
+            y1 - mob.y
+        };
+        let mut flashes = 0;
+        for _ in 0..44 {
+            // the spawn walk the tick's head carries: the particle's
+            // position the PRE-MOVE pose reads (the physics the tail
+            // walks) — the pose the sparkle test's own capture keeps
+            let (x0, y0, z0) = (mob.x, mob.y, mob.z);
+            let ev = mob.tick(&world, None, NIGHT);
+            if let Some((lx, ly, lz, locked)) = ev.age_lock_sparkle {
+                flashes += 1;
+                assert!(locked, "the locked walk the PAUSE pick speaks");
+                assert!(
+                    (lx - x0).abs() <= 1.0 && (lz - z0).abs() <= 1.0,
+                    "the x/z the unit triangle keeps: ({lx}, {lz})"
+                );
+                // the y the bb-top + 0.2 lift the PAUSE arm keeps, the
+                // ±0.2 triangle the getRandomY(0.2) draw speaks
+                let y_lo = y0 + bb_h + 0.2 - 0.2;
+                let y_hi = y0 + bb_h + 0.2 + 0.2;
+                assert!(
+                    (y_lo..y_hi).contains(&ly),
+                    "the y the bb-top band keeps: {ly} in [{y_lo}, {y_hi})"
+                );
+            }
+        }
+        assert_eq!(
+            flashes, 20,
+            "the twenty flashes the even ticks the 40-window keeps"
+        );
+        assert_eq!(
+            mob.age_lock_particle_timer, 0,
+            "the window the drain empties"
+        );
+        // the empty tail the drained window keeps silent
+        for _ in 0..10 {
+            let ev = mob.tick(&world, None, NIGHT);
+            assert!(
+                ev.age_lock_sparkle.is_none(),
+                "the drained window the walk never arms again"
+            );
+        }
+        // THE UNLOCK'S OWN RESET WALK: the window the both arms mark,
+        // the pick the lock state's own false speaks (the RESET the
+        // fresh babyhood answers), the lift the 0.0 arm keeps
+        mob.age_lock_particle_timer = AGE_LOCK_PARTICLE_WINDOW;
+        mob.age_locked = false;
+        let ev = mob.tick(&world, None, NIGHT);
+        let Some((_, ly, _, locked)) = ev.age_lock_sparkle else {
+            panic!("the re-armed window the first even tick speaks");
+        };
+        assert!(!locked, "the unlock walk the RESET pick speaks");
+        let (_, _, _, _, y1, _) = mob.box_for();
+        let adult_band = (mob.y + (y1 - mob.y) - 0.2..mob.y + (y1 - mob.y) + 0.2);
+        assert!(
+            adult_band.contains(&ly),
+            "the RESET lift the 0.0 arm keeps: {ly}"
         );
     }
 
