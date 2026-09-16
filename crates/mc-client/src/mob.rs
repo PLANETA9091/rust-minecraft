@@ -126,6 +126,67 @@ pub const SHEEP_WOOL_COLOR_MASK: u8 = 0x0F;
 /// and Sheep's own defineId lands the wool byte at 17.
 pub const SHEEP_DATA_WOOL_ID: u8 = 17;
 
+/// THE CUSTOM NAME'S OWN INDEX — the SynchedEntityData id the class
+/// tree speaks: Entity's clinit defineId walk lands DATA_CUSTOM_NAME
+/// at 2 (SHARED_FLAGS 0, AIR_SUPPLY 1, CUSTOM_NAME 2, NAME_VISIBLE 3,
+/// SILENT 4, NO_GRAVITY 5, POSE 6, TICKS_FROZEN 7 — the walk the raw
+/// disassembly speaks). The wire rides it as the OPTIONAL_COMPONENT
+/// serializer (the flag byte, then the bare component tag only if
+/// present) — the plain-text form a TAG_String, the structured form a
+/// TAG_Compound whose `text` key carries the words. MobRenderer's
+/// checkMagicName reads it for every body (the accessor is the
+/// ENTITY's own — the sheep's jeb_ gate is only one consumer).
+pub const DATA_CUSTOM_NAME_ID: u8 = 2;
+
+/// THE WOOL TINT'S OWN WORD (javap ColorLerper$Type.SHEEP.getColor's
+/// law — the colorByDye map the ctor's lambda pre-speaks through
+/// ColorLerper.getModifiedColor(dye, 0.75F)): WHITE never multiplies —
+/// the method's own first branch returns the literal 0xFFE6E6E6 (the
+/// 230-grey the vanilla white wool wears); every other dye's
+/// textureDiffuseColor rides the 0.75F modifier per channel, the
+/// Mth.floor + Mth.clamp(0,255) fold the bytecode speaks. The repo's
+/// earlier wool rode the RAW diffuse ints — the table the class tree
+/// reads is the MODIFIED one, the tint one step darker than the raw
+/// word (red 191 not 255, white 230 not 255).
+pub fn sheep_wool_tint(dye_id: u8) -> u32 {
+    if dye_id == 0 {
+        return 0xE6E6E6; // the WHITE branch's own literal (alpha dropped)
+    }
+    let c = DYE_TEXTURE_COLORS[(dye_id & 0x0F) as usize];
+    let ch = |v: u32| ((v as f32 * 0.75).floor() as i32).clamp(0, 255) as u32;
+    (ch(c >> 16) << 16) | (ch(c >> 8 & 0xFF) << 8) | ch(c & 0xFF)
+}
+
+/// THE JEB_ RAINBOW'S OWN WORD (javap ColorLerper.getLerpedColor's
+/// law — the isJebSheep branch SheepRenderState.getWoolColor speaks,
+/// the input the state's ageInTicks): the 16-color cycle walks the
+/// MODIFIED table (25 ticks per color, the 400-tick full rainbow),
+/// `i = Mth.floor(time)`, the window `(i / 25) % 16` and its `(i+1)`
+/// successor, and the blend `t = ((i % 25) + Mth.frac(time)) / 25.0`
+/// — the ramp that rides 0→1 across each 25-tick window. The lerp is
+/// ARGB.srgbLerp's own component walk: `Mth.lerpInt(t, a, b) =
+/// a + Mth.floor(t * (b - a))` per channel (the two alphas are both
+/// 255 — the word drops them). The jeb_ sheep named by
+/// MobRenderer.checkMagicName("jeb_") renders its fur through THIS
+/// clock — the color never holds still.
+pub fn jeb_rainbow_rgb(age_ticks: f32) -> u32 {
+    let i = age_ticks.floor() as i32;
+    let idx = (i / 25).rem_euclid(16) as usize;
+    let next = ((i / 25) + 1).rem_euclid(16) as usize;
+    let frac = age_ticks - age_ticks.floor();
+    let t = ((i % 25) as f32 + frac) / 25.0;
+    let a = sheep_wool_tint(idx as u8);
+    let b = sheep_wool_tint(next as u8);
+    // Mth.lerpInt's own walk: a + floor(t * (b - a)) per channel —
+    // the floor is Math.floor semantics (the negative half matters:
+    // t * (b - a) dips below zero when the target darkens)
+    let lerp = |x: u32, y: u32| -> u32 {
+        let d = y as i32 - x as i32;
+        (x as i32 + (t * d as f32).floor() as i32).clamp(0, 255) as u32
+    };
+    (lerp(a >> 16, b >> 16) << 16) | (lerp(a >> 8 & 0xFF, b >> 8 & 0xFF) << 8) | lerp(a & 0xFF, b & 0xFF)
+}
+
 /// THE DYE TINT TABLE (javap DyeColor's clinit — the 16
 /// textureDiffuseColor ints the ctor's own last argument speaks, the
 /// ColorLerper$Type.SHEEP map's values the wool layer multiplies):
@@ -407,6 +468,12 @@ pub struct Zombie {
     /// — the vanilla client's local default the define speaks).
     pub sheared: bool,
     pub wool_color: u8,
+    /// THE NAME'S OWN WORD (MobRenderer.checkMagicName's own read —
+    /// Entity.getCustomName the DATA_CUSTOM_NAME accessor 2 carries,
+    /// the component's plain text): the jeb_ sheep's arm the rainbow
+    /// gate reads, the accessor never spoken is the honest unnamed
+    /// (the ctor's own None = the SynchedEntityData default).
+    pub custom_name: Option<String>,
     /// `ZombieAttackGoal.raiseArmTicks`
     raise_arm_ticks: i32,
     /// THE BODY'S OWN KIND (the renderer's variant table): which mesh
@@ -471,6 +538,7 @@ impl Zombie {
             crouching: false,
             sheared: false,
             wool_color: 0,
+            custom_name: None,
             kind: MobKind::Zombie,
             raise_arm_ticks: 0,
             ticks_until_attack: 0,
@@ -1891,5 +1959,63 @@ mod tests {
         // pair holds the pre-look pose the lerp walks FROM
         assert_eq!(z.prev_head_yaw_off, -30.0, "the pre-look yaw saved");
         assert_eq!(z.prev_head_pitch, 8.0, "the pre-look pitch saved");
+    }
+
+    /// THE WOOL TINT'S MODIFIED TABLE (javap ColorLerper.getModifiedColor's
+    /// own law — the colorByDye map the ColorLerper$Type.SHEEP ctor
+    /// pre-speaks): WHITE never multiplies (the method's first branch
+    /// returns the literal — the 230-grey the vanilla white wool
+    /// wears), every other dye's diffuse color rides the 0.75F
+    /// modifier per channel, the floor the bytecode speaks (red 191
+    /// not 255 — the raw table the earlier wool rode one step bright).
+    #[test]
+    fn the_wool_tint_rides_the_modified_table() {
+        assert_eq!(sheep_wool_tint(0), 0xE6E6E6, "the WHITE branch's own literal");
+        // RED 0xFF0000: floor(255 * 0.75) = 191 = 0xBF, the others 0
+        assert_eq!(sheep_wool_tint(14), 0xBF0000, "the red the modifier speaks");
+        // BLACK 0x000000: floor(0 * 0.75) = 0 — the same black both words speak
+        assert_eq!(sheep_wool_tint(15), 0x000000, "the black stands");
+        // GREEN 0x00FF00: floor(255 * 0.75) = 191 the green channel rides
+        assert_eq!(sheep_wool_tint(13), 0x00BF00, "the green's own fold");
+        // ORANGE 0xFF681F: (191, 78, 23) the floor walk speaks
+        assert_eq!(sheep_wool_tint(1), 0xBF4E17, "the orange's three floors");
+    }
+
+    /// THE JEB_ RAINBOW'S OWN RAMP (javap ColorLerper.getLerpedColor +
+    /// ARGB.srgbLerp + Mth.lerpInt — the exact laws the raw
+    /// disassembly speaks): the window (floor(time)/25) % 16 arms, the
+    /// blend ((floor(time) % 25) + frac(time)) / 25 rides 0→1 across
+    /// each 25-tick window, and the lerp is a + floor(t * (b - a)) per
+    /// channel (the floor's negative half the darken steps ride).
+    #[test]
+    fn the_jeb_rainbow_lerps_the_modified_colors() {
+        // t = 0 at the window's own head: the color HOLDS at the boundary
+        assert_eq!(jeb_rainbow_rgb(0.0), 0xE6E6E6, "the white the cycle opens");
+        assert_eq!(
+            jeb_rainbow_rgb(25.0),
+            0xBF4E17,
+            "the orange the second window opens (the color never skips)"
+        );
+        // mid-window 0.5: 230 + floor(0.5 * (191 - 230)) = 230 - 20 = 210
+        // (the negative half floors DOWN — the -0.5 the truncation never
+        // rides), 230 - 76 = 154, 230 - 104 = 126
+        assert_eq!(
+            jeb_rainbow_rgb(12.5),
+            0xD29A7E,
+            "the half-step the floor lerp speaks"
+        );
+        // the cycle's own tail: i = 399, the BLACK→WHITE window at
+        // t = (24 + 0.9) / 25 = 0.996 — 0 + floor(0.996 * 230) = 229
+        assert_eq!(
+            jeb_rainbow_rgb(399.9),
+            0xE5E5E5,
+            "the 400-tick cycle's own return to white"
+        );
+        // the second lap rides the same 16 windows (i / 25 % 16 wraps)
+        assert_eq!(
+            jeb_rainbow_rgb(425.0),
+            jeb_rainbow_rgb(25.0),
+            "the lap's own wrap"
+        );
     }
 }

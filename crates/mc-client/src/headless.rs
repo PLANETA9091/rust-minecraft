@@ -215,6 +215,12 @@ pub struct SceneOpts {
     /// the vanilla default (unsheared, WHITE); 14 = RED; 30 = red AND
     /// sheared.
     pub net_wool: Option<u8>,
+    /// THE NAME WORD's own stage (the --net-wool mirror: the custom
+    /// name the Set Entity Data store keeps on the accessor 2): lands
+    /// on the FIRST wire sheep through the merge's own carry. "jeb_"
+    /// arms the rainbow clock the render's getWoolColor gate speaks —
+    /// any other name rides the fur unnamed (the honest word).
+    pub net_name: Option<String>,
     /// THE DIVE SEED: carve a 3x3 pool AT the body's own column — three
     /// cells of water down (the old surface cell becomes the water
     /// surface), a forced-solid basin floor, the headroom cleared — and
@@ -1393,6 +1399,7 @@ pub fn render_gui_screen_opts(
                             on_fire: false,
                             crouching: false,
                             wool_byte: 0,
+                            custom_name: None,
                             type_name: "minecraft:zombie".to_string(),
                         });
                     }
@@ -1434,6 +1441,7 @@ pub fn render_gui_screen_opts(
                             on_fire: false,
                             crouching: false,
                             wool_byte: 0,
+                            custom_name: None,
                             type_name: "minecraft:pig".to_string(),
                         });
                     }
@@ -1476,6 +1484,7 @@ pub fn render_gui_screen_opts(
                             on_fire: false,
                             crouching: false,
                             wool_byte: 0,
+                            custom_name: None,
                             type_name: "minecraft:cow".to_string(),
                         });
                     }
@@ -1532,6 +1541,7 @@ pub fn render_gui_screen_opts(
                             on_fire: false,
                             crouching: false,
                             wool_byte: 0,
+                            custom_name: None,
                             type_name: "minecraft:sheep".to_string(),
                         });
                     }
@@ -1546,6 +1556,17 @@ pub fn render_gui_screen_opts(
                             .find(|w| w.type_name == "minecraft:sheep")
                         {
                             w.wool_byte = byte;
+                        }
+                    }
+                    // THE NAME WORD's own arm (the same first-sheep law
+                    // the wool byte rides — the custom name the merge
+                    // carries, the jeb_ gate the render speaks)
+                    if let Some(name) = opts.net_name.clone() {
+                        if let Some(w) = wire_mobs
+                            .iter_mut()
+                            .find(|w| w.type_name == "minecraft:sheep")
+                        {
+                            w.custom_name = Some(name);
                         }
                     }
                     app.live_mobs_updated(wire_mobs);

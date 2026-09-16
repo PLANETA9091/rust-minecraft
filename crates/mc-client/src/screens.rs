@@ -3457,6 +3457,10 @@ impl App {
                 // client's own (unsheared, WHITE).
                 m.sheared = w.wool_byte & crate::mob::SHEEP_WOOL_SHEARED_BIT != 0;
                 m.wool_color = w.wool_byte & crate::mob::SHEEP_WOOL_COLOR_MASK;
+                // THE NAME WORD rides the spawn (the accessor 2 the
+                // projection carried — the jeb_ arm the rainbow gate
+                // reads, the silence the honest unnamed)
+                m.custom_name = w.custom_name.clone();
                 m.on_ground = true;
                 m.age_ticks = 40; // two seconds in — the bob's stable mid
                 self.net_mobs.push(m);
@@ -3508,6 +3512,10 @@ impl App {
             // the dye both ride the same binary assign)
             m.sheared = w.wool_byte & crate::mob::SHEEP_WOOL_SHEARED_BIT != 0;
             m.wool_color = w.wool_byte & crate::mob::SHEEP_WOOL_COLOR_MASK;
+            // THE NAME WORD rides with the pose (the same binary
+            // assign the fresh spawn speaks — the name is STATE, the
+            // rename the server speaks replaces, the silence unnamed)
+            m.custom_name = w.custom_name.clone();
             self.net_mobs.push(m);
         }
         // the ids the wire no longer names never re-enter net_mobs —
@@ -5577,13 +5585,26 @@ impl App {
                     // THE WOOL LAYER's own gate (SheepWoolLayer.submit's
                     // law: the sheared bit the fur's render SKIPS — the
                     // sheared body shows its skin the shear spoke): the
-                    // fur rides the SAME state the body speaks, the dye
-                    // tint the DyeColor table multiplies (the white's
-                    // 0xFFFFFF the no-op the default sheep speaks)
+                    // fur rides the SAME state the body speaks, the tint
+                    // the SheepRenderState.getWoolColor word speaks (the
+                    // jeb_ name the rainbow clock arms, the dye id the
+                    // modified table indexes)
                     if !mob.sheared {
                         if let Some(wool) = sheep_wool_model {
-                            let dye = crate::mob::DYE_TEXTURE_COLORS
-                                [mob.wool_color as usize & 0x0F];
+                            // THE COLOR WORD (SheepRenderState.getWoolColor's
+                            // own law): the jeb_ name the checkMagicName gate
+                            // speaks arms the rainbow clock (the ageInTicks
+                            // the lerpedColor rides), the dye id the MODIFIED
+                            // table indexes (the getModifiedColor word the
+                            // ColorLerper$Type ctor pre-speaks — the white
+                            // 0xE6E6E6 the raw word never was)
+                            let dye = if mob.custom_name.as_deref() == Some("jeb_") {
+                                crate::mob::jeb_rainbow_rgb(
+                                    mob.age_ticks as f32 + self.partial_tick,
+                                )
+                            } else {
+                                crate::mob::sheep_wool_tint(mob.wool_color & 0x0F)
+                            };
                             wool_overlay = Some((
                                 wool.quads(&state, feet, cam.yaw, cam.pitch),
                                 [
@@ -9081,7 +9102,8 @@ mod tests {
             hurt_time: 0,
             on_fire: false,
             crouching: false,
-                            wool_byte: 0,
+            wool_byte: 0,
+            custom_name: None,
             type_name: "minecraft:zombie".to_string(),
         }
     }
@@ -9105,7 +9127,8 @@ mod tests {
             hurt_time: 0,
             on_fire: false,
             crouching: false,
-                            wool_byte: 0,
+            wool_byte: 0,
+            custom_name: None,
             type_name: type_name.to_string(),
         }
     }
@@ -9279,6 +9302,45 @@ mod tests {
         let sheep = app.net_mobs.iter().find(|m| m.id == 10).unwrap();
         assert!(!sheep.sheared, "the bit's drop the same assign speaks");
         assert_eq!(sheep.wool_color, 14, "the dye stands");
+    }
+
+    /// THE JEB_ SHEEP'S OWN NAME (MobRenderer.checkMagicName's law —
+    /// the custom name the accessor 2 carries, the "jeb_" equality the
+    /// rainbow gate reads): the name rides the merge's own binary
+    /// assign, the rename replaces, the unnamed silence drops the word.
+    #[test]
+    fn the_wire_sheep_answers_to_its_name() {
+        let mut app = App::new(3);
+        app.open(ScreenKind::Connect);
+        app.net_world = Some(air_net_world(2, 0));
+        app.enter_network_world(None, Skybox::Overworld, None, None);
+        // the named sheep lands (the jeb_ word the wire carries)
+        let mut w = wire_mob_named(10, 16.0, 64.0, 10.0, "minecraft:sheep");
+        w.custom_name = Some("jeb_".to_string());
+        app.live_mobs_updated(vec![w]);
+        let sheep = app.net_mobs.iter().find(|m| m.id == 10).unwrap();
+        assert_eq!(
+            sheep.custom_name.as_deref(),
+            Some("jeb_"),
+            "the name the merge carries"
+        );
+        // the RENAME rides the same assign (state, not countdown —
+        // the server's word replaces the old one)
+        let mut w = wire_mob_named(10, 16.5, 64.0, 10.0, "minecraft:sheep");
+        w.custom_name = Some("Dinnerbone".to_string());
+        app.live_mobs_updated(vec![w]);
+        let sheep = app.net_mobs.iter().find(|m| m.id == 10).unwrap();
+        assert_eq!(
+            sheep.custom_name.as_deref(),
+            Some("Dinnerbone"),
+            "the rename the same assign speaks"
+        );
+        // the SILENCE unnamed (the accessor never spoken — the honest
+        // None the projection's own default rides)
+        let w = wire_mob_named(10, 17.0, 64.0, 10.0, "minecraft:sheep");
+        app.live_mobs_updated(vec![w]);
+        let sheep = app.net_mobs.iter().find(|m| m.id == 10).unwrap();
+        assert_eq!(sheep.custom_name, None, "the silence the unnamed speaks");
     }
 
     #[test]

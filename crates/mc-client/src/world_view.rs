@@ -356,6 +356,15 @@ pub struct WireMob {
     /// bodies' projections carry (the wool word never asks for their
     /// index-17 traffic).
     pub wool_byte: u8,
+    /// The metadata's own CUSTOM NAME (Entity's DATA_CUSTOM_NAME 2 —
+    /// the accessor the class tree lands at 2, the component's plain
+    /// text the projection extracts: the TAG_String verbatim, the
+    /// structured form's `text` key): the name MobRenderer's
+    /// checkMagicName reads for every body — the jeb_ sheep's arm
+    /// rides here, the accessor never spoken is the honest unnamed
+    /// (None). The read is the ENTITY's own (the name is generic
+    /// entity data — the sheep's rainbow gate is only one consumer).
+    pub custom_name: Option<String>,
     /// The synced registry's own name (`minecraft:zombie` v1 renders;
     /// anything else is the honest not-yet-drawn type).
     pub type_name: String,
@@ -1014,6 +1023,29 @@ impl LiveView {
                     } else {
                         0
                     },
+                    // THE CUSTOM NAME (Entity's DATA_CUSTOM_NAME 2 —
+                    // the OPTIONAL_COMPONENT the store keeps, the
+                    // plain text the projection extracts: the
+                    // TAG_String verbatim, the structured form's
+                    // `text` key the compound carries; the accessor
+                    // never spoken, the None default is the honest
+                    // unnamed)
+                    custom_name: match e.data.get(&crate::mob::DATA_CUSTOM_NAME_ID) {
+                        Some(mc_protocol::play::EntityDataEntry::OptionalComponent(Some(
+                            nbt,
+                        ))) => match nbt {
+                            mc_protocol::nbt::Nbt::String(s) => Some(s.clone()),
+                            mc_protocol::nbt::Nbt::Compound(pairs) => pairs
+                                .iter()
+                                .find(|(k, _)| k == "text")
+                                .and_then(|(_, v)| match v {
+                                    mc_protocol::nbt::Nbt::String(s) => Some(s.clone()),
+                                    _ => None,
+                                }),
+                            _ => None,
+                        },
+                        _ => None,
+                    },
                     type_name,
                 })
             })
@@ -1487,6 +1519,65 @@ mod tests {
         assert_eq!(z.wool_byte, 0, "the zombie's index-17 traffic the wool never asks for");
         let s = upd.mobs.iter().find(|m| m.id == 10).unwrap();
         assert_eq!(s.wool_byte, 0x1E, "the sheep's own byte rides verbatim");
+        // THE CUSTOM NAME'S OWN RIDE (Entity's DATA_CUSTOM_NAME 2 — the
+        // OPTIONAL_COMPONENT the store keeps, the plain text the
+        // projection extracts): the zombie's accessor-2 traffic is the
+        // ENTITY's own word (the name is generic data — checkMagicName
+        // is every body's read), the sheep's structured form's `text`
+        // key the same extract speaks
+        view.model.apply(PlayEvent::EntityData(mc_protocol::play::EntityDataSet {
+            id: 7,
+            entries: vec![mc_protocol::play::SetEntityDataEntry {
+                index: 2,
+                serializer: 6,
+                value: mc_protocol::play::EntityDataEntry::OptionalComponent(Some(
+                    mc_protocol::nbt::Nbt::String("Dinnerbone".into()),
+                )),
+            }],
+        }));
+        view.model.apply(PlayEvent::EntityData(mc_protocol::play::EntityDataSet {
+            id: 10,
+            entries: vec![mc_protocol::play::SetEntityDataEntry {
+                index: 2,
+                serializer: 6,
+                value: mc_protocol::play::EntityDataEntry::OptionalComponent(Some(
+                    mc_protocol::nbt::Nbt::Compound(vec![(
+                        "text".into(),
+                        mc_protocol::nbt::Nbt::String("jeb_".into()),
+                    )]),
+                )),
+            }],
+        }));
+        let upd = view.refresh(example_mapper);
+        let z = upd.mobs.iter().find(|m| m.id == 7).unwrap();
+        assert_eq!(
+            z.custom_name.as_deref(),
+            Some("Dinnerbone"),
+            "the TAG_String the projection carries verbatim"
+        );
+        let s = upd.mobs.iter().find(|m| m.id == 10).unwrap();
+        assert_eq!(
+            s.custom_name.as_deref(),
+            Some("jeb_"),
+            "the compound's text key the extract speaks"
+        );
+        // THE UNNAMED'S OWN SILENCE (the accessor never spoken, the
+        // None default the projection carries — the pig's word)
+        let p = upd.mobs.iter().find(|m| m.id == 8).unwrap();
+        assert_eq!(p.custom_name, None, "the silence the unnamed speaks");
+        // the absent-optional arm (the flag byte alone — the server
+        // unnamed the entity): the None rides
+        view.model.apply(PlayEvent::EntityData(mc_protocol::play::EntityDataSet {
+            id: 7,
+            entries: vec![mc_protocol::play::SetEntityDataEntry {
+                index: 2,
+                serializer: 6,
+                value: mc_protocol::play::EntityDataEntry::OptionalComponent(None),
+            }],
+        }));
+        let upd = view.refresh(example_mapper);
+        let z = upd.mobs.iter().find(|m| m.id == 7).unwrap();
+        assert_eq!(z.custom_name, None, "the empty optional the None speaks");
         // THE MOBS' OWN FLASH (the Hurt Animation's other arm — the
         // mailbox the foreign ids' packets arm): the zombie's id ships
         // the 10-tick window, the pig's silence stays the honest 0

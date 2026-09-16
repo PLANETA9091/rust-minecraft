@@ -2,7 +2,7 @@
 
 Every lane that ships pixels owes the folder a frame. The gallery is the
 proof the features exist as rendered images, not as test names alone.
-124 frames and counting — grouped below by the lane that spoke them.
+125 frames and counting — grouped below by the lane that spoke them.
 
 ## The F5 lane (the third-person avatar) — v0.3.154+
 
@@ -418,6 +418,7 @@ lasts 20 real minutes again, the eat hold 1.6s, the swing 0.3s.
 | `wire_cow.png` | THE SERVER'S OWN COW (v0.3.190): the THIRD drawn body — the wire cow the Add Entity type id names through the synced registry renders the bytecode-proven 26.2 CowModel mesh (the head 8x8x6 + the muzzle cube + the two horn cubes, the rotX barrel body + the udder cube, the four 4x12x4 legs the LEFT pair's mirror rides — the astore/aload pairing the classfile walk proved) over the temperate skin the variant table defaults to; the empty companion at the identical staging diffs rms 29.5 (the bovine's own presence, horns and muzzle honest) |
 | `wire_sheep.png` | THE SERVER'S OWN SHEEP (v0.3.191): the FOURTH drawn body — the wire sheep the Add Entity type id names through the synced registry renders the bytecode-proven 26.2 SheepModel mesh (the head 6x6x8 the ovine's own replacement over the createBodyMesh default, the rotX 8x16x6 barrel, the four 4x12x4 legs the RIGHT pair's mirror rides — the createLegs(loc1=false, loc2=true) walk the pig/cow LEFT-pair convention INVERTED) over the single sheep.png the getTextureLocation speaks, the 64x32 HALF-HEIGHT layout the load verifies; the model's OWN setupAnim the eat fold rides (the head the *9.0*ageScale drop + the eat-angle xRot the replacement law speaks — the wire's pitch word the struct never carried); the empty companion at the identical staging diffs rms 28.2 (the ovine's own presence, face and wool honest) |
 | `wire_wool.png` | THE SERVER'S OWN WOOL (v0.3.192): the fur OVERLAY — the SheepWoolLayer's own gate (the sheared bit the fur's render skips) + the SheepFurModel inflate-mesh the 26.2 bytecode proves (the head hood 6x6x6+0.6 the z-SHORTER box the tan face's own gap speaks, the body coat 8x16x6+1.75, the wool boots 4x6x4+0.5 the ONE shared no-mirror builder rides) over the sheep_wool.png greyscale the dye color tints — the DyeColor table's 16 textureDiffuseColor ints the clinit's own ctor args speak, the DATA_WOOL_ID byte 17 the class-tree id walk lands (Sheep.isSheared/getColor's own decode: bit 0x10 sheared, low nibble the dye); the shot stages the RED byte (14) through the merge's own decode — the red coat the white-companion's default byte 0 keeps; the companion at the identical staging diffs rms 14.5 (the dye's own word) |
+| `wire_jeb.png` | THE NAME'S OWN RAINBOW (v0.3.193): the jeb_ sheep — the custom name the accessor 2 carries (Entity's DATA_CUSTOM_NAME the clinit defineId walk lands at 2, the OPTIONAL_COMPONENT the wire rides, MobRenderer.checkMagicName's own "jeb_" equality the SheepRenderer.extractRenderState bakes into isJebSheep) arms SheepRenderState.getWoolColor's rainbow branch: ColorLerper.getLerpedColor(SHEEP, ageInTicks) the raw disassembly speaks — the window (floor(t)/25) % 16, the blend ((floor(t) % 25) + frac(t)) / 25, the ARGB.srgbLerp per-component lerpInt a + floor(t×(b−a)) — over the MODIFIED table getModifiedColor pre-speaks (WHITE the literal 0xE6E6E6, every other dye the 0.75F modifier's floors — the raw table the earlier wool rode one step bright); the shot stages the name through the merge's own carry — the fur wears the ORANGE→MAGENTA window's magenta-pink (191,21,143) the age-44 phase speaks, the white companion's modified 230-grey the unnamed silence keeps; the companion at the identical staging diffs rms 9.3 (the rainbow's own word) |
 
 Regenerate the family (the flag the CLI speaks today):
 
@@ -578,6 +579,20 @@ cargo run -p mc-client --release -- --headless --screen world \
 # sheared gate, low nibble the dye id — 14 = RED) on the first wire
 # sheep through the merge's own isSheared/getColor decode; the white
 # companion (no --net-wool) diffs rms 14.5
+```
+
+The name's own rainbow (v0.3.193 — the jeb_ word):
+
+```sh
+cargo run -p mc-client --release -- --headless --screen world \
+  --seed 42 --body --walk-ticks 1 --body-yaw 0 --net-sheep 2 \
+  --net-name jeb_ --perspective third-back --ui-frame 3 \
+  --out shots/wire_jeb.png
+# --net-name NAME stages the custom name (the accessor 2 the
+# OPTIONAL_COMPONENT wire rides) on the first wire sheep through the
+# merge's own carry; "jeb_" arms SheepRenderState.getWoolColor's
+# rainbow branch — the ColorLerper 25-tick windows over the MODIFIED
+# table — the unnamed white companion (no --net-name) diffs rms 9.3
 ```
 cargo run -p mc-client --release -- --headless --screen world \
   --seed 42 --body --walk-ticks 1 --body-yaw 0 --net-sheep 2 \

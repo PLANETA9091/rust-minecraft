@@ -258,6 +258,12 @@ struct Cli {
     /// default). Requires --net-sheep.
     #[arg(long)]
     net_wool: Option<u8>,
+    /// Stage the CUSTOM NAME on the first wire sheep — the name the
+    /// Set Entity Data store keeps on the accessor 2 ("jeb_" arms the
+    /// rainbow the isJebSheep gate speaks, any other name rides the
+    /// fur unnamed). Requires --net-sheep.
+    #[arg(long)]
+    net_name: Option<String>,
     /// Carve a 3x3 pool AT the body and sink it to the basin floor —
     /// the eye sits under the water surface and the REAL water-screen
     /// gate speaks (the underwater overlay, no scripted blue).
@@ -381,6 +387,7 @@ fn main() -> Result<()> {
             net_cow: cli.net_cow,
             net_sheep: cli.net_sheep,
             net_wool: cli.net_wool,
+            net_name: cli.net_name,
             water_pool: cli.water_pool,
             water_vision: cli.water_vision,
             air_supply: cli.air_supply,
