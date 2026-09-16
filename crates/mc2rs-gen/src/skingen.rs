@@ -107,6 +107,13 @@ pub const PARTICLE_LAVA_JAR_PATH: &str = "assets/minecraft/textures/particle/lav
 /// `CritParticle$DamageIndicatorProvider`'s `SpriteSet.get(random)`
 /// returns it whatever the draw).
 pub const PARTICLE_DAMAGE_JAR_PATH: &str = "assets/minecraft/textures/particle/damage.png";
+/// The heart's single sprite (javap: the `heart` particle type's sprite
+/// set — the jar's `particles/heart.json` lists ONE texture,
+/// `minecraft:heart`, the 8x8 the IHDR verifies; the
+/// `HeartParticle$Provider`'s `SpriteSet.get(random)` returns it
+/// whatever the draw — the love-mode burst the event 18 broadcast
+/// speaks, the ambient drip the aiStep walks).
+pub const PARTICLE_HEART_JAR_PATH: &str = "assets/minecraft/textures/particle/heart.png";
 /// The sweep attack's 8-frame arc (javap: the `sweep_attack` particle
 /// type's sprite set — the jar's `particles/sweep_attack.json` lists
 /// EIGHT textures, `minecraft:sweep_0..7` in ASCENDING order — the
@@ -152,6 +159,9 @@ pub const PARTICLE_SPLASH_RUNTIME_PATHS: [&str; 4] = [
 ];
 pub const PARTICLE_LAVA_RUNTIME_PATH: &str = "particle/lava.png";
 pub const PARTICLE_DAMAGE_RUNTIME_PATH: &str = "particle/damage.png";
+/// The heart's runtime-cache path (the same textures/ prefix strip the
+/// other lanes speak).
+pub const PARTICLE_HEART_RUNTIME_PATH: &str = "particle/heart.png";
 /// The sweep arc's runtime-cache paths (the same textures/ prefix
 /// strip the other lanes speak — the json's ascending list IS the
 /// array order).
@@ -244,6 +254,7 @@ pub struct SkinData {
     /// sha1 of the damage indicator's single 8x8 sprite (jar-verbatim
     /// integrity) — the hit's own burst's pixel source.
     pub particle_damage_png_sha1: String,
+    pub particle_heart_png_sha1: String,
     /// sha1s of the sweep arc's 8 frames (jar-verbatim integrity) —
     /// the sword's own swing's pixel sources (the 32x32 sweep frames
     /// the json's ascending list orders).
@@ -491,6 +502,17 @@ pub fn generate<R: std::io::Read + std::io::Seek>(archive: &mut zip::ZipArchive<
         dw2,
         dh2
     );
+    // the heart's single sprite (the same shape check the damage
+    // speaks — the json's one-texture set, the love burst's own red)
+    let heart_bytes = read_entry(archive, PARTICLE_HEART_JAR_PATH).context("read heart")?;
+    let particle_heart_png_sha1 = crate::util::sha1_hex(&heart_bytes);
+    let (hw2, hh2, _heart_rgba) = decode_rgba(&heart_bytes).context("decode heart")?;
+    anyhow::ensure!(
+        (hw2, hh2) == (8, 8),
+        "heart must be the 8x8 sprite, got {}x{}",
+        hw2,
+        hh2
+    );
     // the sweep arc's 8 frames (the same shape check the poof walk
     // speaks — the 32x32 the arc quad samples over its own life)
     let mut particle_sweep_png_sha1s: [String; 8] = std::array::from_fn(|_| String::new());
@@ -526,6 +548,7 @@ pub fn generate<R: std::io::Read + std::io::Seek>(archive: &mut zip::ZipArchive<
         particle_splash_png_sha1s,
         particle_lava_png_sha1,
         particle_damage_png_sha1,
+        particle_heart_png_sha1,
         particle_sweep_png_sha1s,
     })
 }
@@ -733,6 +756,13 @@ pub fn emit(data: &SkinData) -> Result<String> {
         "pub const PARTICLE_DAMAGE_RUNTIME_PATH: &str = \"{PARTICLE_DAMAGE_RUNTIME_PATH}\";\n"
     ));
     out.push_str(&format!(
+        "pub const PARTICLE_HEART_PNG_SHA1: &str = \"{}\";\n",
+        data.particle_heart_png_sha1
+    ));
+    out.push_str(&format!(
+        "pub const PARTICLE_HEART_RUNTIME_PATH: &str = \"{PARTICLE_HEART_RUNTIME_PATH}\";\n"
+    ));
+    out.push_str(&format!(
         "pub const PARTICLE_SWEEP_PNG_SHA1S: [&str; 8] = [{}];\n",
         data.particle_sweep_png_sha1s
             .iter()
@@ -920,6 +950,8 @@ mod tests {
         let expected_sheep_wool_sha1 = crate::util::sha1_hex(&sheep_wool);
         let damage = tiny_png();
         let expected_damage_sha1 = crate::util::sha1_hex(&damage);
+        let heart = tiny_png();
+        let expected_heart_sha1 = crate::util::sha1_hex(&heart);
         let sweeps = [sweep_png(), sweep_png(), sweep_png(), sweep_png(), sweep_png(), sweep_png(), sweep_png(), sweep_png()];
         let expected_sweep_sha1s: Vec<String> =
             sweeps.iter().map(|p| crate::util::sha1_hex(p)).collect();
@@ -952,6 +984,7 @@ mod tests {
             (PARTICLE_SPLASH_JAR_PATHS[3], splashes[3].clone()),
             (PARTICLE_LAVA_JAR_PATH, lava),
             (PARTICLE_DAMAGE_JAR_PATH, damage),
+            (PARTICLE_HEART_JAR_PATH, heart),
             (PARTICLE_SWEEP_JAR_PATHS[0], sweeps[0].clone()),
             (PARTICLE_SWEEP_JAR_PATHS[1], sweeps[1].clone()),
             (PARTICLE_SWEEP_JAR_PATHS[2], sweeps[2].clone()),
@@ -1016,6 +1049,10 @@ mod tests {
         assert_eq!(
             data.particle_damage_png_sha1, expected_damage_sha1,
             "the damage sprite's own sha1"
+        );
+        assert_eq!(
+            data.particle_heart_png_sha1, expected_heart_sha1,
+            "the heart sprite's own sha1"
         );
         assert_eq!(
             data.particle_sweep_png_sha1s,

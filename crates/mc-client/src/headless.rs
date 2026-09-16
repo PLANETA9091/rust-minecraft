@@ -1875,6 +1875,15 @@ pub fn render_gui_screen_opts(
         for _ in 0..beat {
             app.swing.tick();
         }
+        // THE LOVE WALK'S OWN STAGE (the settle ticks the caller
+        // passes — the REAL updates the hearts' bloom needs: the
+        // burst ages past the 32x clamp's point-origin, the aiStep's
+        // ambient drip the in-love gate speaks; the frozen feed shot
+        // passes none — the staging stays the state it froze)
+        for _ in 0..opts.settle_ticks {
+            app.on_movement_input(0.0, 0.0, false, false, false);
+            app.update();
+        }
     }
     // THE PARTIAL OVERRIDE (the --partial lane): the fixed clock's
     // remainder the staged frame speaks — clamped to the fold's [0, 1]

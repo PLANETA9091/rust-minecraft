@@ -2,7 +2,7 @@
 
 Every lane that ships pixels owes the folder a frame. The gallery is the
 proof the features exist as rendered images, not as test names alone.
-131 frames and counting — grouped below by the lane that spoke them.
+133 frames and counting — grouped below by the lane that spoke them.
 
 ## The F5 lane (the third-person avatar) — v0.3.154+
 
@@ -345,7 +345,7 @@ gravity lane `yd -= 0.04 * gravity`, the move, the friction `xd *=
 | frame | the scene |
 |---|---|
 | `block_break_burst.png` | THE 2001 EVENT'S OWN BURST: the sand cell two blocks ahead broken, the 64 debris mid-flight around the pit — each riding the block's own particle tile (the quarter-region slice the mirrored-U law speaks), the outward fraction velocity the lambda's grid walks |
-| `zombie_death_poof.png` | THE DEATH CLOUD: the 20-particle poof at the facing point, the grey puffs riding the −0.1 gravity's rise and the 8-frame generic walk — the broadcast-60 arm the corpse removal speaks |
+| `zombie_death_poof.png` | THE DEATH CLOUD: the 20-particle poof at the facing point, the grey puffs riding the −0.1 gravity's rise and the 8-frame generic walk — the broadcast-60 arm the corpse removal speaks (regenerated v0.3.202: the cloud's y-spread the `getRandomY` law's own bbHeight reads — the max-z misread the love walk exposed flattened the body band the tuple's max-y slot keeps) |
 | `crit_stars.png` | THE CRIT'S OWN STARS: the staged zombie at the facing point, the emitter's white stars mid-flight around the body (the unit-ball rejects the lane's 16-sample walk spoke, the bloom the 32× law drives) |
 | `underwater_bubbles.png` | THE DROWN BUBBLES (v0.3.172): the broadcast-67 moment — the pool the dive carve speaks, the air clock SPENT (the HUD's bubble row reads the zero), the 8 bubbles riding the triangle offsets around the body's feet, the body's own delta movement thinned to a fifth + the ±0.02 jitter, the buoyancy `yd += 0.002` lifting them, the ring sprite the jar's `textures/particle/bubble.png` |
 | `water_entry_splash.png` | THE ENTRY SPLASH (v0.3.173): the doWaterSplashEffect rings the entry gate arms — the pool the dive carve speaks, the BUBBLE ring (13 drops, the carried velocity's z thinned − r · 0.2, the ctor's own fifth-fold + the ±0.02 jitter) and the SPLASH ring (13 white droplets, the ctor's random `nextFloat() * 0.2F + 0.1F` pop, the 0.01 quad the `setSize(0.01F, 0.01F)` folds), both rings at the surface Y the Mth.floor law folds (floor(feet) + 1.0), the 13-per-ring walk the width · 20 bound speaks |
@@ -677,6 +677,28 @@ cargo run -p mc-client --release -- --headless --screen world \
 # --held-item item/wheat (the food gate reads the held stack); the
 # at-rest companion (no --feed) diffs rms 24.8 — the arm's own arc
 # the press walked
+```
+
+The love burst's own red (v0.3.202 — the hearts):
+
+```sh
+cargo run -p mc-client --release -- --headless --screen world \
+  --seed 3 --body --sheep --held-item item/wheat --feed 3 \
+  --settle-ticks 6 --ui-frame 6 --out shots/offline_feed_hearts.png
+cargo run -p mc-client --release -- --headless --screen world \
+  --seed 3 --body --sheep --held-item item/wheat --settle-ticks 12 \
+  --ui-frame 6 --out shots/offline_feed_hearts_rest.png
+# the event-18 burst the setInLove broadcast owes (the SEVEN hearts
+# the Animal.handleEntityEvent arm spawns at the body's own
+# registration box) + the aiStep's ambient drip (the ONE heart the
+# post-decrement inLove > 0 gate spawns per tick) — the HeartSprite
+# the jar's particle/heart.png keeps, the flat 16-tick life the 26.2
+# ctor speaks, the 32x bloom the getQuadSize clamp rides; the staging
+# walks 12 REAL updates total (6 pre-press via --settle-ticks, 6
+# post-press in the feed block) — the sheep strolls off the press
+# point, the burst hangs in the open air; the at-rest companion (no
+# --feed, the same 12 updates) diffs rms 10.5 — 3625 pixels the
+# hearts' own red + the swing arc the press walked
 ```
 
 The fourth body's own ring (v0.3.191 — the ovine):

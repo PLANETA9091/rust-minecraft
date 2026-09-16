@@ -660,6 +660,24 @@ impl Zombie {
         (self.x - h, self.y, self.z - h, self.x + h, self.y + ZOMBIE_HEIGHT, self.z + h)
     }
 
+    /// THE LOVE WALK'S OWN BOX — the feet-anchored bbox the body's
+    /// OWN registration dims speak (javap `Entity.getRandomX` /
+    /// `getRandomY`: the spread rides `getBbWidth() * 0.5` and
+    /// `getBbHeight()` — the EntityTypes `sized(w, h)` each kind's
+    /// own clinit arms: the sheep 0.9x1.3, the cow 0.9x1.4, the pig
+    /// 0.9x0.9, the zombie 0.6x1.95 — the same table the render's
+    /// flame feature reads).
+    pub fn box_for(&self) -> (f64, f64, f64, f64, f64, f64) {
+        let (w, h) = match self.kind {
+            MobKind::Sheep => (SHEEP_WIDTH, SHEEP_HEIGHT),
+            MobKind::Cow => (COW_WIDTH, COW_HEIGHT),
+            MobKind::Pig => (PIG_WIDTH, PIG_HEIGHT),
+            MobKind::Zombie => (ZOMBIE_WIDTH, ZOMBIE_HEIGHT),
+        };
+        let h2 = w / 2.0;
+        (self.x - h2, self.y, self.z - h2, self.x + h2, self.y + h, self.z + h2)
+    }
+
     /// THE RENDER FOLD (javap `Entity.render`'s own lerp — `Mth.lerp(
     /// partialTicks, xo, x)` the renderer's pose rides): the feet the
     /// frame walks ON — the previous tick's feet carried `partial` of

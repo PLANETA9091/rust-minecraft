@@ -1896,6 +1896,45 @@ impl DamageSprite {
     }
 }
 
+/// The PARTICLE LANE's heart sprite — the love burst's own red (javap:
+/// the `heart` particle type's single sprite, the jar's
+/// `textures/particle/heart.png` the `HeartParticle$Provider`'s
+/// `SpriteSet.get(random)` returns whatever the draw — the one-texture
+/// set the damage sprite's own json speaks, the `HeartParticle` the
+/// event-18 burst and the aiStep ambient drip both spawn).
+pub struct HeartSprite {
+    pub rgba: Vec<u8>,
+}
+
+/// The heart texture's own layout (the jar's 8x8 the IHDR speaks).
+pub const HEART_SPRITE_SIDE: u32 = 8;
+
+impl HeartSprite {
+    /// Load from the runtime cache root (the generator's
+    /// `assets-cache/jar/`), verify the generated sha1, decode, and
+    /// shape-check the 8x8 layout (the damage loader's own walk).
+    pub fn load(root: &std::path::Path) -> Option<HeartSprite> {
+        let bytes = std::fs::read(root.join(skin::PARTICLE_HEART_RUNTIME_PATH)).ok()?;
+        if hex::encode(sha1::Sha1::digest(&bytes)) != skin::PARTICLE_HEART_PNG_SHA1 {
+            return None;
+        }
+        let (w, h, rgba) = decode_rgba(&bytes).ok()?;
+        if w != HEART_SPRITE_SIDE || h != HEART_SPRITE_SIDE {
+            return None;
+        }
+        Some(HeartSprite { rgba })
+    }
+
+    /// The sprite pixel at (u, v) in TEXTURE UNITS (the 0..8 the
+    /// particle quad's uv walk speaks), nearest texel.
+    pub fn pixel(&self, u: f32, v: f32) -> [u8; 4] {
+        let x = (u.floor().clamp(0.0, HEART_SPRITE_SIDE as f32 - 1.0)) as usize;
+        let y = (v.floor().clamp(0.0, HEART_SPRITE_SIDE as f32 - 1.0)) as usize;
+        let o = (y * HEART_SPRITE_SIDE as usize + x) * 4;
+        [self.rgba[o], self.rgba[o + 1], self.rgba[o + 2], self.rgba[o + 3]]
+    }
+}
+
 /// The PARTICLE LANE's sweep arc frames — the sword's own swing's
 /// 8-frame sprite set (javap: the `sweep_attack` particle type's own
 /// sprites, the jar's `textures/particle/sweep_0..7.png`, the

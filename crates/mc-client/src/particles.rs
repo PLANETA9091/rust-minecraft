@@ -204,6 +204,16 @@ pub enum ParticleKind {
     /// `1.0 - xSpeed * 0.5` fold the ctor's velocity arg gives, the
     /// full-bright look the getLightCoords override speaks).
     Sweep,
+    /// `HeartParticle` — the love burst's own red (the `heart` type
+    /// the event-18 broadcast spawns, the aiStep's ambient drip the
+    /// in-love walk speaks; javap verbatim: the friction the ctor's
+    /// 0.86 fold keeps, the velocity the `*0.01` super-zeroed fields
+    /// the `+=` args own, the quadSize the `*1.5` fold carries, the
+    /// lifetime the 26.2's flat 16 speaks, the `hasPhysics = false`
+    /// the no-collision client already keeps, the OPAQUE layer the
+    /// getLayer override returns, the growth the getQuadSize's 32x
+    /// clamp rides — the same law the crit star blooms by).
+    Heart,
 }
 
 /// The splash droplet's 4 frames (the `splash_0..3` textures the jar
@@ -334,6 +344,11 @@ impl Particle {
         let base = self.quad_size * 0.5;
         match self.kind {
             ParticleKind::Crit => base * crit_grow(self.age, self.lifetime, 0.0),
+            // the heart's own bloom (javap HeartParticle.getQuadSize —
+            // the SAME 32x clamp law the crit speaks: the sprite grows
+            // from a point inside the first lifetime/32 ticks, the
+            // full size the rest of the life keeps)
+            ParticleKind::Heart => base * crit_grow(self.age, self.lifetime, 0.0),
             // the drip's own quadratic thin (the getQuadSize override's
             // (1 - t*t) fold — the partial rides 0.0 the same way the
             // crit's bloom does)
@@ -571,6 +586,51 @@ pub fn crit(
         gravity: 0.0,
         friction: 0.98,
         quad_size: base_quad_size(r_size),
+        uo: 0.0,
+        vo: 0.0,
+        col: [1.0, 1.0, 1.0],
+    }
+}
+
+/// The heart particle's ctor (javap `HeartParticle.<init>` verbatim).
+/// The super call passes the zero velocity (`0.0, 0.0, 0.0` the dump's
+/// own args speak), so the ctor's `xd *= 0.01F` walk zeroes the
+/// super's fields and the `+=` folds carry the args VERBATIM — the
+/// effective velocity IS the caller's gaussian trio. The overrides:
+/// `friction = 0.86F` (the base 0.98 replaced), `quadSize *= 1.5F`
+/// (the base 0.1..0.2 walks 0.15..0.3), `lifetime = 16` (the 26.2's
+/// flat constant — the draw-order discipline keeps the BASE ctor's
+/// lifetime float the chain consumed first, the override discards
+/// it), `hasPhysics = false` (the client's no-collision lane already
+/// keeps the shape), the gravity untouched (the base 0.0), the u/v
+/// offsets the super's zeros keep. The layer the getLayer override
+/// returns is OPAQUE — the render samples the one 8x8 sprite the
+/// provider's json lists.
+pub fn heart(
+    x: f64,
+    y: f64,
+    z: f64,
+    vx: f64,
+    vy: f64,
+    vz: f64,
+    r_base_life: f32,
+    r_size: f32,
+) -> Particle {
+    let _ = r_base_life; // the base ctor's own draw — the flat 16 overrides it
+    Particle {
+        kind: ParticleKind::Heart,
+        x,
+        y,
+        z,
+        prev: None,
+        vx,
+        vy,
+        vz,
+        age: 0,
+        lifetime: 16,
+        gravity: 0.0,
+        friction: 0.86,
+        quad_size: base_quad_size(r_size) * 1.5,
         uo: 0.0,
         vo: 0.0,
         col: [1.0, 1.0, 1.0],
@@ -1101,7 +1161,12 @@ pub fn poof_cloud(
         let rx = rng.next_f64() * 2.0 - 1.0;
         let ry = rng.next_f64();
         let rz = rng.next_f64() * 2.0 - 1.0;
-        let (bw, bh) = ((bbox.3 - bbox.0) * 0.5, bbox.5 - bbox.1);
+        // the box's own reads: the ±half-width the min/max x pair
+        // speaks, the HEIGHT the max-y minus the min-y speaks (the
+        // getRandomY walk the vanilla law keeps — the max-z the
+        // bbox.5 slot held was the tuple's own misread the love walk
+        // exposed)
+        let (bw, bh) = ((bbox.3 - bbox.0) * 0.5, bbox.4 - bbox.1);
         let px = bbox.0 + bw + bw * rx - d0 * 10.0;
         let py = bbox.1 + bh * ry - d1 * 10.0;
         let pz = bbox.2 + bw + bw * rz - d2 * 10.0;
@@ -1122,6 +1187,62 @@ pub fn poof_cloud(
         ));
     }
     out
+}
+
+/// THE LOVE WALK the two heart emitters share (javap `Animal.aiStep`'s
+/// own loop body and `Animal.handleEntityEvent`'s event-18 arm — the
+/// identical walk both speak). The draw order the bytecode keeps:
+/// THREE `nextGaussian() * 0.02` draws first (the velocity), then the
+/// position's `getRandomX(1.0)`, `getRandomY()`, `getRandomZ(1.0)`
+/// (one `nextDouble` each — the `*2.0 - 1.0` spread the ±half-width
+/// law speaks, the height fraction the `getY() + nextDouble() *
+/// getBbHeight()` walk speaks, the `+ 0.5` the dump's dadd carries),
+/// then the ctor chain's own draws (the base lifetime float the flat
+/// 16 overrides, the base size float the 1.5 fold carries).
+fn heart_walk(bbox: (f64, f64, f64, f64, f64, f64), rng: &mut crate::drops::Lcg) -> Particle {
+    let d0 = rng.next_gaussian() * 0.02;
+    let d1 = rng.next_gaussian() * 0.02;
+    let d2 = rng.next_gaussian() * 0.02;
+    let rx = rng.next_f64() * 2.0 - 1.0;
+    let ry = rng.next_f64();
+    let rz = rng.next_f64() * 2.0 - 1.0;
+    // the box's own reads: the ±half-width the min/max x pair speaks,
+    // the HEIGHT the max-y minus the min-y speaks (the tuple the
+    // (minx, miny, minz, maxx, maxy, maxz) order keeps — the same
+    // read the CritEmitter's z-center fold speaks)
+    let (bw, bh) = ((bbox.3 - bbox.0) * 0.5, bbox.4 - bbox.1);
+    let px = bbox.0 + bw + bw * rx;
+    let py = bbox.1 + bh * ry + 0.5;
+    let pz = bbox.2 + bw + bw * rz;
+    let r_base_life = rng.next_f32();
+    let r_size = rng.next_f32();
+    heart(px, py, pz, d0, d1, d2, r_base_life, r_size)
+}
+
+/// The event-18 burst (javap `Animal.handleEntityEvent` verbatim: the
+/// `(byte)18` arm the `setInLove` broadcast speaks — the SEVEN hearts
+/// the loop's own count keeps, each riding the shared love walk above,
+/// the position the body's own registration box spreads).
+pub fn heart_burst(
+    bbox: (f64, f64, f64, f64, f64, f64),
+    rng: &mut crate::drops::Lcg,
+) -> Vec<Particle> {
+    let mut out = Vec::with_capacity(7);
+    for _ in 0..7 {
+        out.push(heart_walk(bbox, rng));
+    }
+    out
+}
+
+/// The aiStep ambient (javap `Animal.aiStep` verbatim: the `isInLove`
+/// gate ONE heart per tick — the decrement the same walk arms, the
+/// spawn the post-decrement gate `inLove > 0` keeps, so the last
+/// in-love tick spawns none).
+pub fn heart_ambient(
+    bbox: (f64, f64, f64, f64, f64, f64),
+    rng: &mut crate::drops::Lcg,
+) -> Particle {
+    heart_walk(bbox, rng)
 }
 
 /// The crit's own emitter (javap `TrackingEmitter` verbatim): the
@@ -1349,6 +1470,17 @@ mod tests {
             assert_eq!(p.kind, ParticleKind::Poof);
             // the |d| band: gauss * 0.02 keeps the velocity tiny
             assert!(p.vx.abs() < 0.5 && p.vy.abs() < 0.5 && p.vz.abs() < 0.5);
+            // THE HEIGHT BAND (the getRandomY law the fix keeps — the
+            // body's own 0..1.95 band the max-y read speaks, walked
+            // back the |d1 * 10| <= g*0.2 <= 2.4 the gaussian tail
+            // gives): the max-z misread the love walk exposed would
+            // have flattened this cloud to the 0..0.3 sliver the
+            // bbox's z pair speaks
+            assert!(
+                p.y >= -2.5 && p.y <= 4.4,
+                "the walked-back height band: {}",
+                p.y
+            );
         }
         // the gaussian sanity (the honest band): the polar method's
         // own law rides THIS Lcg's sequential pairs — the pair walk
@@ -1893,5 +2025,78 @@ mod tests {
         assert_eq!(p.lerped_pos(2.0), (p.x, p.y, p.z));
         // partial 0.0 = the previous pose, the walk's own source
         assert_eq!(p.lerped_pos(0.0), (10.0, 20.0, 30.0));
+    }
+
+    #[test]
+    fn the_heart_ctor_speaks_the_bytecode() {
+        // draw order (the ctor chain's own): the base lifetime float
+        // the flat 16 overrides, the base size float the 1.5 carries
+        let p = heart(1.0, 2.0, 3.0, 0.02, -0.03, 0.04, 0.5, 0.0);
+        assert_eq!(p.kind, ParticleKind::Heart);
+        assert_eq!(p.lifetime, 16, "the 26.2's flat 16 the ctor speaks");
+        assert!((p.friction - 0.86).abs() < 1e-6, "the ctor's own 0.86 fold");
+        assert!(p.gravity.abs() < 1e-12, "the base 0.0 the ctor never touches");
+        // the super's zeroed fields the += args own — the velocity
+        // rides the caller's gaussians verbatim
+        assert!((p.vx - 0.02).abs() < 1e-9 && (p.vy + 0.03).abs() < 1e-9 && (p.vz - 0.04).abs() < 1e-9);
+        // the size: base_quad_size(0.0) = 0.1, the *1.5 fold walks 0.15
+        assert!((p.quad_size - 0.15).abs() < 1e-6);
+        // the OPAQUE layer's white tint, the zeros the super's u/v keep
+        assert_eq!(p.col, [1.0, 1.0, 1.0]);
+        assert!(p.uo.abs() < 1e-6 && p.vo.abs() < 1e-6);
+    }
+
+    #[test]
+    fn the_heart_burst_walks_the_event18_law() {
+        // the SEVEN the loop's own count keeps, the box spread the
+        // getRandomX/getRandomY law speaks, the determinism the shared
+        // walk's own draw order keeps
+        let bbox = (1.0, 2.0, 3.0, 1.9, 3.3, 3.9); // the sheep's 0.9 x 1.3
+        let burst = heart_burst(bbox, &mut rng());
+        assert_eq!(burst.len(), 7, "the event-18 arm's own count");
+        let (bw, bh) = ((bbox.3 - bbox.0) * 0.5, bbox.4 - bbox.1);
+        let (cx, cz) = (bbox.0 + bw, bbox.2 + bw);
+        for p in &burst {
+            assert_eq!(p.lifetime, 16);
+            assert!((p.x - cx).abs() <= bw + 1e-9, "the ±half-width spread: {}", p.x);
+            assert!((p.z - cz).abs() <= bw + 1e-9, "the ±half-width spread: {}", p.z);
+            assert!(
+                p.y >= bbox.1 + 0.5 - 1e-9 && p.y <= bbox.4 + 0.5 + 1e-9,
+                "the height fraction + 0.5: {}",
+                p.y
+            );
+            assert!(
+                p.vx.abs() < 0.3 && p.vy.abs() < 0.3 && p.vz.abs() < 0.3,
+                "the gaussian * 0.02 scale the dump speaks"
+            );
+        }
+        // the same seed the same burst speaks — the draw order the
+        // bytecode keeps is the walk's own determinism
+        let again = heart_burst(bbox, &mut rng());
+        for (a, b) in burst.iter().zip(again.iter()) {
+            assert_eq!((a.x, a.y, a.z), (b.x, b.y, b.z));
+            assert_eq!((a.vx, a.vy, a.vz), (b.vx, b.vy, b.vz));
+        }
+    }
+
+    #[test]
+    fn the_heart_ambient_and_bloom_ride_their_laws() {
+        // the aiStep's own one-per-tick walk
+        let bbox = (0.0, 0.0, 0.0, 0.9, 1.3, 0.9);
+        let mut p = heart_ambient(bbox, &mut rng());
+        assert_eq!(p.kind, ParticleKind::Heart);
+        // the bloom: the 32x clamp law the crit shares — the point the
+        // spawn starts, the full quad the first tick speaks
+        assert!(p.half().abs() < 1e-6, "age 0 the point the bloom starts");
+        let full = p.quad_size * 0.5;
+        p.age = 1;
+        assert!((p.half() - full).abs() < 1e-6, "age 1 the full quad speaks");
+        p.age = 15;
+        assert!((p.half() - full).abs() < 1e-6, "the rest of the life the size keeps");
+        // the base tick's own walk under the 0.86 friction
+        p.age = 14;
+        assert!(p.tick(), "the 16-tick life walks");
+        assert_eq!(p.age, 15);
+        assert!(!p.tick(), "the lifetime's removal speaks");
     }
 }

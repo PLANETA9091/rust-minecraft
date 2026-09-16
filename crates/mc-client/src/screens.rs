@@ -774,6 +774,10 @@ pub struct App {
     /// The sweep arc's 8 frames (the same lazy load — the sword's own
     /// swing's pixel sources).
     pub sweep_frames: Option<crate::avatar::SweepFrames>,
+    /// The heart's single sprite (the same lazy load — the love
+    /// burst's own red pixel source, the event-18 arm and the aiStep
+    /// ambient drip both ride).
+    pub heart_sprite: Option<crate::avatar::HeartSprite>,
     pub hurt_time: i32,
     pub hurt_duration: i32,
     pub invulnerable_time: i32,
@@ -1095,6 +1099,7 @@ impl App {
             lava_sprite: None,
             damage_sprite: None,
             sweep_frames: None,
+            heart_sprite: None,
             next_drop_id: 1,
             orbs: Vec::new(),
             next_orb_id: 1,
@@ -1853,6 +1858,10 @@ impl App {
                 let mut fire_hurts: Vec<f32> = Vec::new();
                 let mut fire_deaths: Vec<(f64, f64, f64, f32, Vec<(i32, i32)>)> = Vec::new();
                 let mut fizzes: Vec<f32> = Vec::new();
+                // the love walk's own boxes (the aiStep's ambient gate
+                // the in-love mobs arm — the spawns land AFTER the
+                // loop the disjoint-borrow pattern keeps)
+                let mut love_boxes: Vec<(f64, f64, f64, f64, f64, f64)> = Vec::new();
                 // the footsteps' own count (the cadence's flat voice —
                 // no per-event pitch law, so a counter rides where the
                 // pitches ride vectors)
@@ -1873,6 +1882,15 @@ impl App {
                         });
                         for mob in self.mobs.iter_mut() {
                             let ev = mob.tick(world, player.as_ref(), day_time);
+                            // THE AISTEP'S OWN AMBIENT GATE (javap
+                            // `Animal.aiStep`: the tick's own decrement
+                            // the love clock walks, then the spawn the
+                            // POST-decrement `inLove > 0` gate keeps —
+                            // one heart per tick while in love, the
+                            // last in-love tick spawns none)
+                            if mob.in_love > 0 {
+                                love_boxes.push(mob.box_for());
+                            }
                             if let Some(atk) = ev.attack {
                                 hit_events.push((atk.damage, atk.dir_x, atk.dir_z));
                             }
@@ -1900,6 +1918,13 @@ impl App {
                             }
                         }
                     }
+                }
+                // THE LOVE WALK'S OWN SPAWNS (the boxes the aiStep gate
+                // collected — one ambient heart each, the draw order
+                // the mob iteration speaks)
+                for bbox in love_boxes {
+                    let heart = crate::particles::heart_ambient(bbox, &mut self.mob_rng);
+                    self.particles.push(heart);
                 }
                 for (dmg, dir_x, dir_z) in hit_events {
                     if self.hurt(dmg as f32) {
@@ -3027,6 +3052,14 @@ impl App {
                         // speak (the item lane the consumesAction
                         // law never reaches)
                         if love {
+                            // THE EVENT-18 BURST (the broadcastEntityEvent
+                            // (byte)18 the setInLove walk speaks — the
+                            // SEVEN hearts the handleEntityEvent arm
+                            // spawns at the body's own registration box)
+                            let bbox = self.mobs[i].box_for();
+                            let burst =
+                                crate::particles::heart_burst(bbox, &mut self.mob_rng);
+                            self.particles.extend(burst);
                             if self.mobs[i].kind == crate::mob::MobKind::Pig {
                                 self.sounds
                                     .play_voice(self.frame, "entity.pig.eat", 1.0, 1.0);
@@ -6489,6 +6522,10 @@ impl App {
             self.sweep_frames =
                 crate::avatar::SweepFrames::load(std::path::Path::new("assets-cache/jar"));
         }
+        if self.heart_sprite.is_none() {
+            self.heart_sprite =
+                crate::avatar::HeartSprite::load(std::path::Path::new("assets-cache/jar"));
+        }
         let sy = cam.yaw.sin();
         let cy = cam.yaw.cos();
         let sp = cam.pitch.sin();
@@ -6506,6 +6543,7 @@ impl App {
         let mut damage_quads: Vec<crate::raster::SampledQuad> = Vec::new();
         let mut smoke_groups: Vec<(usize, Vec<crate::raster::SampledQuad>)> = Vec::new();
         let mut sweep_groups: Vec<(usize, Vec<crate::raster::SampledQuad>)> = Vec::new();
+        let mut heart_quads: Vec<crate::raster::SampledQuad> = Vec::new();
         for p in &self.particles {
             let half = p.half();
             // THE RENDER FOLD (javap Particle.render's own lerp): the
@@ -6678,6 +6716,19 @@ impl App {
                         None => sweep_groups.push((frame, vec![quad])),
                     }
                 }
+                crate::particles::ParticleKind::Heart => {
+                    // the love's own quad (the single heart sprite the
+                    // json's one-texture set speaks — the full sprite
+                    // the quad samples, the white tint the ctor keeps,
+                    // the OPAQUE layer the getLayer override speaks,
+                    // the growth the 32x clamp law the bloom rides)
+                    heart_quads.push(crate::raster::SampledQuad {
+                        pts,
+                        uv: [[0.0, 8.0], [8.0, 8.0], [8.0, 0.0], [0.0, 0.0]],
+                        tex: "particle_heart",
+                        tint: p.col,
+                    });
+                }
             }
         }
         let vp = ctx.proj.mul(&ctx.view);
@@ -6753,6 +6804,15 @@ impl App {
                     Some(frames.pixel(*frame, u, v))
                 });
             }
+        }
+        // the heart group (the love burst's own red pixels — the full
+        // sprite the single-texture json speaks)
+        // the heart group (the love burst's own red pixels — the full
+        // sprite the single-texture json speaks)
+        if let Some(heart) = &self.heart_sprite {
+            fb.draw_sampled_quads(vp, &heart_quads, &mut |_tex, u, v| {
+                Some(heart.pixel(u, v))
+            });
         }
     }
 
@@ -13816,6 +13876,113 @@ mod tests {
         );
         assert!(app.swing.swinging, "the press swung the arm");
         assert_eq!(app.mobs[0].in_love, 600, "setInLove's own 600");
+    }
+
+    #[test]
+    fn the_feed_press_spawns_the_event18_burst() {
+        // THE BROADCAST'S OWN BURST (the setInLove walk the press's
+        // verdict carries — the (byte)18 the handleEntityEvent arm
+        // answers with the SEVEN hearts, each at the body's own
+        // registration box the getRandomX/getRandomY law spreads); the
+        // CONSUME fallback the burst never speaks
+        let mut app = App::new(3);
+        app.enter_world();
+        app.offline_held_updated(Some("item/wheat"));
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let top = app.spawn_y;
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, top as f32 + 4.0, c as f32 + 0.5),
+            yaw: 0.0,
+            pitch: -std::f32::consts::FRAC_PI_2,
+        });
+        let mut sheep =
+            crate::mob::Zombie::new(7, c as f64 + 0.5, top as f64, c as f64 + 0.5, 3);
+        sheep.kind = crate::mob::MobKind::Sheep;
+        app.mobs.push(sheep);
+        assert!(
+            app.on_right_press(0, 0),
+            "the Feed verdict consumed the press"
+        );
+        // THE SEVEN: the kind the heart lane speaks, the flat 16, the
+        // box spread, the gaussian*0.02 scale
+        assert_eq!(
+            app.particles.len(),
+            7,
+            "the handleEntityEvent arm's own count"
+        );
+        let bw = crate::mob::SHEEP_WIDTH / 2.0;
+        let bh = crate::mob::SHEEP_HEIGHT;
+        let cx = c as f64 + 0.5;
+        let cz = c as f64 + 0.5;
+        for p in &app.particles {
+            assert!(
+                matches!(p.kind, crate::particles::ParticleKind::Heart),
+                "the love's own kind"
+            );
+            assert_eq!(p.lifetime, 16, "the flat 16 the 26.2 speaks");
+            assert!((p.x - cx).abs() <= bw + 1e-9, "the ±half-width spread: {}", p.x);
+            assert!((p.z - cz).abs() <= bw + 1e-9, "the ±half-width spread: {}", p.z);
+            assert!(
+                p.y >= top as f64 + 0.5 - 1e-9 && p.y <= top as f64 + bh + 0.5 + 1e-9,
+                "the height fraction + 0.5: {}",
+                p.y
+            );
+            assert!(
+                p.vx.abs() < 0.3 && p.vy.abs() < 0.3 && p.vz.abs() < 0.3,
+                "the gaussian * 0.02 scale"
+            );
+        }
+        // THE CONSUME FALLBACK: the second press the in-love adult
+        // keeps — no burst the fallback speaks
+        let before = app.particles.len();
+        assert!(
+            app.on_right_press(0, 0),
+            "the CONSUME verdict consumed the press"
+        );
+        assert_eq!(app.particles.len(), before, "the fallback no burst speaks");
+    }
+
+    #[test]
+    fn the_love_clock_walks_the_ambient_hearts() {
+        // THE AISTEP'S OWN DRIP (javap `Animal.aiStep`: the tick's
+        // decrement the love clock walks, the ONE heart the
+        // post-decrement gate spawns while in love)
+        let mut app = App::new(3);
+        app.enter_world();
+        app.offline_held_updated(Some("item/wheat"));
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let top = app.spawn_y;
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, top as f32 + 4.0, c as f32 + 0.5),
+            yaw: 0.0,
+            pitch: -std::f32::consts::FRAC_PI_2,
+        });
+        let mut sheep =
+            crate::mob::Zombie::new(7, c as f64 + 0.5, top as f64, c as f64 + 0.5, 3);
+        sheep.kind = crate::mob::MobKind::Sheep;
+        app.mobs.push(sheep);
+        assert!(app.on_right_press(0, 0), "the Feed verdict consumed the press");
+        assert_eq!(app.particles.len(), 7, "the burst the press speaks");
+        for _ in 0..3 {
+            app.update();
+        }
+        // the burst + the ONE-per-tick drip the three updates walked
+        assert_eq!(
+            app.particles.len(),
+            7 + 3,
+            "the aiStep gate one heart per tick"
+        );
+        assert!(app.mobs[0].in_love > 0, "the clock the 600 arms walks");
+        // every heart the young one the 16-tick life keeps
+        assert!(
+            app.particles
+                .iter()
+                .all(|p| matches!(p.kind, crate::particles::ParticleKind::Heart)
+                    && p.age < p.lifetime),
+            "the hearts the lifetime walk keeps"
+        );
     }
 
     #[test]
