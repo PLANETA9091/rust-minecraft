@@ -1988,15 +1988,15 @@ impl App {
                 let mut groans: Vec<(f32, f64)> = Vec::new();
                 let mut fire_hurts: Vec<(f32, f64)> = Vec::new();
                 let mut fire_deaths: Vec<(f64, f64, f64, f32, Vec<(i32, i32)>)> = Vec::new();
-                let mut fizzes: Vec<f32> = Vec::new();
+                let mut fizzes: Vec<(f32, f64)> = Vec::new();
                 // the love walk's own boxes (the aiStep's ambient gate
                 // the in-love mobs arm — the spawns land AFTER the
                 // loop the disjoint-borrow pattern keeps)
                 let mut love_boxes: Vec<(f64, f64, f64, f64, f64, f64)> = Vec::new();
-                // the footsteps' own count (the cadence's flat voice —
-                // no per-event pitch law, so a counter rides where the
-                // pitches ride vectors)
-                let mut mob_steps: usize = 0;
+                // the footsteps' own distances (the cadence's flat voice
+                // rides the mob's own spot — the DISTANCE LAW the trio
+                // speaks, the fold the play_voice_at keeps)
+                let mut mob_steps: Vec<f64> = Vec::new();
                 // the day tick the burn lane's tracks read (the same
                 // clock the sky samples)
                 let day_time = (self.day_time_base + self.frame) as i64;
@@ -2054,10 +2054,14 @@ impl App {
                                 fire_deaths.push((mob.x, mob.y, mob.z, pitch, loot));
                             }
                             if let Some(pitch) = ev.extinguished {
-                                fizzes.push(pitch);
+                                fizzes.push((
+                                    pitch,
+                                    ear_distance(ear, mob.x, mob.y, mob.z),
+                                ));
                             }
                             if ev.step {
-                                mob_steps += 1;
+                                mob_steps
+                                    .push(ear_distance(ear, mob.x, mob.y, mob.z));
                             }
                         }
                     }
@@ -2135,15 +2139,18 @@ impl App {
                         dist,
                     );
                 }
-                for pitch in fizzes {
+                for (pitch, dist) in fizzes {
                     // the extinguish transition (javap
                     // playEntityOnFireExtinguishedSound — 0.7 volume,
-                    // the 1.6 +- 0.4 pitch fold)
-                    self.sounds.play_voice(
+                    // the 1.6 +- 0.4 pitch fold, the entity's own spot
+                    // the DISTANCE LAW the trio speaks — the same fold
+                    // the ambient/hurt/death voices ride)
+                    self.sounds.play_voice_at(
                         self.frame,
                         "entity.generic.extinguish_fire",
                         crate::mob::EXTINGUISH_VOLUME,
                         pitch,
+                        dist,
                     );
                 }
                 for (mx, my, mz, pitch, loot) in fire_deaths {
@@ -2173,15 +2180,18 @@ impl App {
                         ));
                     }
                 }
-                for _ in 0..mob_steps {
+                for dist in mob_steps {
                     // the footstep (Zombie.playStepSound's own flat
                     // fold — the ZOMBIE_STEP event at 0.15F / 1.0F, no
-                    // randoms ride the voice)
-                    self.sounds.play_voice(
+                    // randoms ride the voice; the mob's own spot the
+                    // DISTANCE LAW the trio speaks — the same fold the
+                    // ambient/hurt/death voices ride)
+                    self.sounds.play_voice_at(
                         self.frame,
                         "entity.zombie.step",
                         crate::mob::ZOMBIE_STEP_VOLUME,
                         crate::mob::ZOMBIE_STEP_PITCH,
+                        dist,
                     );
                 }
                 // THE DEATH CLOCK'S REMOVAL (the tickDeath tail: the
@@ -10095,6 +10105,143 @@ mod tests {
             "the fist's own fold: {:?}",
             app.sounds.events
         );
+    }
+
+    /// THE MOB FIZZ'S OWN DISTANCE LAW (the extinguish transition the
+    /// douse arm speaks — the playEntityOnFireExtinguishedSound the
+    /// entity's own spot carries): the log line's gain the LIVE
+    /// geometry answers — the ear-to-spot distance the caller's
+    /// post-tick read keeps, the fold `0.7 * (1 - d/16)` the
+    /// attenuate law speaks (the un-folded 0.7 the pre-law lane
+    /// spoke).
+    #[test]
+    fn the_mobs_fizz_folds_the_distance() {
+        let mut app = App::new(3);
+        app.enter_world();
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let surface = app.spawn_y;
+        // the body ON the surface column (the standing eye 1.62 above)
+        app.body = Some(crate::body::PlayerBody::new(
+            c as f64 + 0.5,
+            surface as f64,
+            c as f64 + 0.5,
+            0.0,
+            0.0,
+        ));
+        // the water cell the douse arm's bbox scan reads + the burning
+        // zombie 4.0 east, the FEET at the eye's own level — the dy
+        // the zero keeps, the approach's own drift the live read folds
+        app.offline_world
+            .as_mut()
+            .unwrap()
+            .set(c + 4, surface + 1, c, crate::world::WATER);
+        app.mobs.push(crate::mob::Zombie::new(
+            7,
+            c as f64 + 4.5,
+            surface as f64 + 1.62,
+            c as f64 + 0.5,
+            3,
+        ));
+        app.mobs[0].fire_ticks = 160;
+        app.update();
+        if !sounds_loaded() {
+            assert!(
+                app.sounds.events.is_empty(),
+                "the empty table the silent voice lane keeps"
+            );
+            return;
+        }
+        // the fold's own law the live geometry answers: the distance
+        // the caller's post-tick read keeps (the mob's own approach
+        // walked the first tick's span), the gain the attenuate speaks
+        let b = app.body.as_ref().unwrap();
+        let ear_pos = (b.x, b.y + b.eye_height(), b.z);
+        let m = &app.mobs[0];
+        let d = ear_distance(Some(ear_pos), m.x, m.y, m.z);
+        let expected = crate::sound::attenuate(
+            crate::mob::EXTINGUISH_VOLUME,
+            d,
+            crate::sound::voice_max_distance(crate::mob::EXTINGUISH_VOLUME),
+        );
+        assert!(
+            d > 3.0 && d < 4.0,
+            "the staged approach the walk's own drift keeps ({d})"
+        );
+        assert!(
+            app.sounds
+                .events
+                .iter()
+                .any(|e| e.starts_with("entity.generic.extinguish_fire ")
+                    && e.contains(&format!(" v{expected:.6} p"))),
+            "the douse's own fold (d = {d}, v = {expected:.6}): {:?}",
+            app.sounds.events
+        );
+    }
+
+    /// THE MOB STEP'S OWN DISTANCE LAW (the cadence's flat voice the
+    /// mob's own spot carries — the approach the fold speaks): every
+    /// step line's gain the base 0.15 never reaches (the d > 0 the
+    /// walking approach keeps — the fold's own ceiling), the walk the
+    /// zombie's own approach answers.
+    #[test]
+    fn the_mobs_step_folds_the_distance() {
+        let mut app = App::new(3);
+        app.enter_world();
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let surface = app.spawn_y;
+        // the body ON the surface column — the zombie 8 east the
+        // approach walks (the target scan the 35 ring keeps)
+        app.body = Some(crate::body::PlayerBody::new(
+            c as f64 + 0.5,
+            surface as f64,
+            c as f64 + 0.5,
+            0.0,
+            0.0,
+        ));
+        app.mobs.push(crate::mob::Zombie::new(
+            7,
+            c as f64 + 8.5,
+            surface as f64,
+            c as f64 + 0.5,
+            3,
+        ));
+        for _ in 0..80 {
+            app.update();
+        }
+        if !sounds_loaded() {
+            assert!(
+                app.sounds.events.is_empty(),
+                "the empty table the silent voice lane keeps"
+            );
+            return;
+        }
+        let steps: Vec<&String> = app
+            .sounds
+            .events
+            .iter()
+            .filter(|e| e.starts_with("entity.zombie.step "))
+            .collect();
+        assert!(
+            !steps.is_empty(),
+            "the approach's own steps the walk speaks: {:?}",
+            app.sounds.events
+        );
+        for line in &steps {
+            // the gain the log line carries — the parse the format's
+            // own `#<int> v<gain> p<pitch>` shape answers
+            let v: f32 = line
+                .rsplit(" v")
+                .next()
+                .and_then(|s| s.split(' ').next())
+                .and_then(|s| s.parse().ok())
+                .expect("the gain the log line carries");
+            assert!(
+                v < 0.15,
+                "the fold the step's gain speaks ({v} < 0.15): {line}"
+            );
+        }
     }
 
     /// THE WIRE MOBS' HURT FLASH (javap LivingEntity's own hurt
