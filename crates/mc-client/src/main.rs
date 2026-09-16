@@ -234,6 +234,12 @@ struct Cli {
     /// walked. Requires --net-mobs.
     #[arg(long)]
     net_crouch: Option<u32>,
+    /// Stage N wire PIGS through the mob ring's own facing point —
+    /// the quadruped mesh the kind's own branch draws (the registry
+    /// name the Add Entity carries). Works standalone or beside
+    /// --net-mobs.
+    #[arg(long)]
+    net_pig: Option<u32>,
     /// Carve a 3x3 pool AT the body and sink it to the basin floor —
     /// the eye sits under the water surface and the REAL water-screen
     /// gate speaks (the underwater overlay, no scripted blue).
@@ -353,6 +359,7 @@ fn main() -> Result<()> {
             net_hurt: cli.net_hurt,
             net_fire: cli.net_fire,
             net_crouch: cli.net_crouch,
+            net_pig: cli.net_pig,
             water_pool: cli.water_pool,
             water_vision: cli.water_vision,
             air_supply: cli.air_supply,

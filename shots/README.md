@@ -2,7 +2,7 @@
 
 Every lane that ships pixels owes the folder a frame. The gallery is the
 proof the features exist as rendered images, not as test names alone.
-120 frames and counting — grouped below by the lane that spoke them.
+121 frames and counting — grouped below by the lane that spoke them.
 
 ## The F5 lane (the third-person avatar) — v0.3.154+
 
@@ -414,6 +414,7 @@ lasts 20 real minutes again, the eat hold 1.6s, the swing 0.3s.
 | `wire_hurt_flash.png` | THE SERVER'S OWN HIT (v0.3.185): the wire mob's hurt flash — the Hurt Animation packet's mailbox arm (the foreign ids' traffic the model once dropped, now the animateHurt 10-tick window it arms) lands on the mob and its OWN tick counts it down, the frame frozen mid-window with the 0.7 shade the render's mix speaks; the un-armed companion at the identical staging diffs rms 13.1 (the flash's own darkening, honest and loud) |
 | `wire_burning.png` | THE SERVER'S OWN FIRE (v0.3.187): the wire mob's burning — the shared-flags accessor's bit 0 (Entity.isOnFire's own `getSharedFlag(0)` the 26.2 bytecode speaks, the metadata byte the Set Entity Data store keeps) arms the flame gate the merge law's own floor carries, and the vanilla flame rings climb the zombie's whole body (the billboard stack the flame feature draws, the day_time the animation rides); the unburnt companion at the identical staging diffs rms 44.5 (the fire's own word, the loudest the lane has spoken) |
 | `wire_crouch.png` | THE SERVER'S OWN POSE (v0.3.188): the wire mob's crouch — the same shared-flags accessor's bit 1 (Entity.isCrouching's own `getSharedFlag(0) & 2` the render state's isCrouching speaks) arms the avatar's crouch pose the model folds (the body's own bend the vanilla HumanoidModel speaks), the zombie bows at the server's word; the standing companion at the identical staging diffs rms 30.2 (the pose's own silhouette, honestly bent) |
+| `wire_pig.png` | THE SERVER'S OWN PIG (v0.3.189): the SECOND drawn body — the wire pig the Add Entity type id names through the synced registry (the v1 lane kept the quadrupeds honest data, the pigs invisible) renders the javap-proven 26.2 PigModel mesh (the head 8x8x8 + the snout cube, the rotX barrel body, the four 4x6x4 legs, the diagonal-pair walk the QuadrupedModel fold speaks) over the temperate skin the variant table defaults to; the empty companion at the identical staging diffs rms 20.2 (the pig's own presence, eyes and snout honest) |
 
 Regenerate the family (the flag the CLI speaks today):
 
@@ -534,6 +535,17 @@ cargo run -p mc-client --release -- --headless --screen world \
 # ticks (the crouch pose the avatar model bends through at the
 # server's word); the standing companion (--net-mobs 1 alone) diffs
 # rms 30.2
+```
+
+The server's own pig (v0.3.189 — the second drawn body):
+
+```sh
+cargo run -p mc-client --release -- --headless --screen world \
+  --seed 42 --body --walk-ticks 1 --body-yaw 0 --net-pig 2 \
+  --ui-frame 3 --out shots/wire_pig.png
+# --net-pig N stages N wire pigs through the mob ring's own facing
+# point (the kind the registry name arms at the merge draws the
+# quadruped mesh); the empty companion (no --net-pig) diffs rms 20.2
 ```
 
 ## The lava-fog lane (the ember murk) — v0.3.167

@@ -941,7 +941,7 @@ impl LiveView {
             .entities()
             .filter_map(|(id, e)| {
                 let type_name = self.model.entity_type_name(e.type_id)?.to_string();
-                if type_name != "minecraft:zombie" {
+                if type_name != "minecraft:zombie" && type_name != "minecraft:pig" {
                     return None; // not-yet-drawn types stay honest data
                 }
                 Some(WireMob {
@@ -1304,9 +1304,9 @@ mod tests {
         assert_eq!(sky, None, "unsent column: unknown");
     }
 
-    /// The mob projection: the Add Entity store's zombies ride the
-    /// refresh (the synced entity-type registry names the id), the
-    /// unknown types stay honest data, the pose verbatim (the
+    /// The mob projection: the Add Entity store's zombies AND pigs
+    /// ride the refresh (the synced entity-type registry names the
+    /// id), the unknown types stay honest data, the pose verbatim (the
     /// server's own authority the lerpTo law will walk).
     #[test]
     fn refresh_projects_the_wire_zombies() {
@@ -1327,7 +1327,8 @@ mod tests {
             y_head_rot: 60.0,
             data: 0,
         }));
-        // a pig: an honest type the v1 mob lane doesn't draw
+        // a pig: the SECOND drawn body (the quadruped mesh the kind's
+        // own branch speaks — the registry name rides the projection)
         m.apply(PlayEvent::Spawn(EntitySpawn {
             id: 8,
             uuid: 2,
@@ -1346,13 +1347,19 @@ mod tests {
             side: 1,
         };
         let upd = view.refresh(example_mapper);
-        assert_eq!(upd.mobs.len(), 1, "only the zombie renders v1");
-        let z = &upd.mobs[0];
-        assert_eq!(z.id, 7);
+        assert_eq!(upd.mobs.len(), 2, "the zombie AND the pig render v2");
+        // THE ID KEYS THE LOOKUP (the entities' walk order is the
+        // store's own — the id names the body, never the position)
+        let z = upd.mobs.iter().find(|m| m.id == 7).unwrap();
         assert_eq!(z.type_name, "minecraft:zombie");
         assert_eq!((z.x, z.y, z.z), (10.0, 64.0, 12.0));
         assert_eq!((z.yaw, z.pitch, z.head_yaw), (90.0, 5.0, 60.0));
         assert_eq!(z.health, None, "no accessor spoken: the honest no-opinion");
+        // the pig's own word rides the SAME projection (the type name
+        // verbatim, the pose the server's own)
+        let p = upd.mobs.iter().find(|m| m.id == 8).unwrap();
+        assert_eq!(p.type_name, "minecraft:pig");
+        assert_eq!((p.x, p.y, p.z), (30.0, 64.0, 32.0));
         // the metadata's own health word (LivingEntity's DATA_HEALTH_ID
         // 8 — the FLOAT accessor the Set Entity Data store keeps)
         view.model.apply(PlayEvent::EntityData(mc_protocol::play::EntityDataSet {
@@ -1364,7 +1371,8 @@ mod tests {
             }],
         }));
         let upd = view.refresh(example_mapper);
-        assert_eq!(upd.mobs[0].health, Some(6.0), "the server's word rides");
+        let z = upd.mobs.iter().find(|m| m.id == 7).unwrap();
+        assert_eq!(z.health, Some(6.0), "the server's word rides");
         // THE MOBS' OWN FLASH (the Hurt Animation's other arm — the
         // mailbox the foreign ids' packets arm): the zombie's id ships
         // the 10-tick window, the pig's silence stays the honest 0
@@ -1381,14 +1389,20 @@ mod tests {
             yaw: -20.0,
         }));
         let upd = view.refresh(example_mapper);
-        assert_eq!(upd.mobs[0].hurt_time, 10, "the packet's own window");
+        let z = upd.mobs.iter().find(|m| m.id == 7).unwrap();
+        assert_eq!(z.hurt_time, 10, "the packet's own window");
+        // the pig's own flash rides ITS lane (the hit's own id — the
+        // two windows never mix)
+        let p = upd.mobs.iter().find(|m| m.id == 8).unwrap();
+        assert_eq!(p.hurt_time, 10, "the pig's own hit ships its own window");
         // the drain speaks after the ship (the mailbox's own law —
         // the mob's tick owns the countdown, the stale arm never
         // re-arms the flash the window already spent)
         assert_eq!(view.model.drain_entity_hurts().get(&7), Some(&10));
         assert!(view.model.entity_hurts.is_empty(), "the mailbox spent");
         let upd = view.refresh(example_mapper);
-        assert_eq!(upd.mobs[0].hurt_time, 0, "the shipped arm never re-arms");
+        let z = upd.mobs.iter().find(|m| m.id == 7).unwrap();
+        assert_eq!(z.hurt_time, 0, "the shipped arm never re-arms");
         // THE VOICES' OWN SHIP (the Entity Sound mailbox): the named
         // arm rides the view (the registry name verbatim), the id
         // outside the sound_event table ships UNNAMED and the

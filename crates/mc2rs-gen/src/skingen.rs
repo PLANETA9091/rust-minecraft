@@ -18,6 +18,12 @@ pub const SLIM_ALEX_JAR_PATH: &str = "assets/minecraft/textures/entity/player/sl
 /// humanoid layout the PlayerModel geometry unwraps).
 pub const ZOMBIE_JAR_PATH: &str = "assets/minecraft/textures/entity/zombie/zombie.png";
 
+/// The jar entry the PIG's temperate skin lives at (the PigRenderer's
+/// variant table's default — the plain pig in the temperate biome; the
+/// 26.2 pig variants replaced the single pig.png). The quadruped mesh
+/// rides `LayerDefinition.create(64, 64)` (javap PigModel).
+pub const PIG_TEMPERATE_JAR_PATH: &str = "assets/minecraft/textures/entity/pig/pig_temperate.png";
+
 /// The flame feature's two animated strips (`FlameFeatureRenderer`'s
 /// ModelBakery.FIRE_0 / FIRE_1 sprite sources) — the burn lane reads
 /// their frames off the blocks atlas path the runtime cache mirrors.
@@ -143,6 +149,7 @@ pub const PARTICLE_SWEEP_RUNTIME_PATHS: [&str; 8] = [
 pub const RUNTIME_PATH: &str = "entity/player/wide/steve.png";
 pub const SLIM_RUNTIME_PATH: &str = "entity/player/slim/alex.png";
 pub const ZOMBIE_RUNTIME_PATH: &str = "entity/zombie/zombie.png";
+pub const PIG_TEMPERATE_RUNTIME_PATH: &str = "entity/pig/pig_temperate.png";
 
 /// The vanilla `PlayerModel` arm box for the wide model: texOffs (40, 16),
 /// box 4x12x4 texels (w, h, d).
@@ -172,6 +179,9 @@ pub struct SkinData {
     /// sha1 of the zombie's source PNG bytes (jar-verbatim integrity) —
     /// the first mob's texture the avatar renderer sha1-verifies.
     pub zombie_png_sha1: String,
+    /// sha1 of the pig's temperate source PNG bytes (jar-verbatim
+    /// integrity) — the quadruped's texture the pig renderer verifies.
+    pub pig_png_sha1: String,
     /// sha1 of the flame feature's fire_0 strip (jar-verbatim integrity)
     /// — the burn lane's pixel source (the 16x512, 32-frame strip).
     pub fire_0_png_sha1: String,
@@ -266,6 +276,22 @@ pub fn generate<R: std::io::Read + std::io::Seek>(archive: &mut zip::ZipArchive<
         zombie_side
     );
     std::mem::drop(zombie_rgba);
+    // THE PIG SKIN (the second mob's own): the temperate variant the
+    // PigRenderer's variant table defaults to (the 26.2 pig variants
+    // replaced the single pig.png). The quadruped mesh rides
+    // `LayerDefinition.create(64, 64)` (javap PigModel) — the same
+    // 64-texel square, its own UV layout the pig model unwraps. The
+    // integrity sha1 the pig lane verifies before it draws.
+    let pig_bytes = read_entry(archive, PIG_TEMPERATE_JAR_PATH).context("read the pig temperate skin")?;
+    let pig_png_sha1 = crate::util::sha1_hex(&pig_bytes);
+    let (pig_w, pig_h, _pig_rgba) = decode_rgba(&pig_bytes).context("decode the pig temperate skin")?;
+    anyhow::ensure!(
+        (pig_w, pig_h) == (64, 64),
+        "the pig skin must be the 64x64 layout (javap LayerDefinition.create(64, 64)), got {}x{}",
+        pig_w,
+        pig_h
+    );
+    std::mem::drop(_pig_rgba);
     // THE FIRE STRIPS: the flame feature's two animated pixel sources
     // (javap `FlameFeatureRenderer.buildGroup`: ModelBakery.FIRE_0 /
     // FIRE_1) — 16x512 = 32 stacked 16x16 frames each, the mcmeta
@@ -407,6 +433,7 @@ pub fn generate<R: std::io::Read + std::io::Seek>(archive: &mut zip::ZipArchive<
         slim_png_sha1,
         slim_rgba_sha1: crate::util::sha1_hex(&slim_rgba),
         zombie_png_sha1,
+        pig_png_sha1,
         fire_0_png_sha1,
         fire_1_png_sha1,
         underwater_png_sha1,
@@ -498,6 +525,14 @@ pub fn emit(data: &SkinData) -> Result<String> {
     ));
     out.push_str(&format!(
         "pub const ZOMBIE_RUNTIME_PATH: &str = \"{ZOMBIE_RUNTIME_PATH}\";\n"
+    ));
+    out.push_str("\n/// The PIG skin (the temperate variant the PigRenderer's variant\n/// table defaults to), generated from the same jar: the source sha1\n/// the pig renderer verifies before it draws (javap PigModel:\n/// `LayerDefinition.create(64, 64)` — the quadruped's own UV layout).\n");
+    out.push_str(&format!(
+        "pub const PIG_TEMPERATE_PNG_SHA1: &str = \"{}\";\n",
+        data.pig_png_sha1
+    ));
+    out.push_str(&format!(
+        "pub const PIG_TEMPERATE_RUNTIME_PATH: &str = \"{PIG_TEMPERATE_RUNTIME_PATH}\";\n"
     ));
     out.push_str("\n/// The FLAME strips (the burn lane's pixel sources), generated from\n/// the same jar: the source sha1s the burning mob's renderer verifies\n/// before it draws (javap: `FlameFeatureRenderer.buildGroup`'s\n/// ModelBakery.FIRE_0 / FIRE_1 — the 16x512, 32-frame strips; fire_0's\n/// mcmeta playlist [16..31, 0..15], fire_1 sequential).\n");
     out.push_str(&format!(
@@ -764,6 +799,7 @@ mod tests {
             (WIDE_STEVE_JAR_PATH, png.clone()),
             (SLIM_ALEX_JAR_PATH, png.clone()),
             (ZOMBIE_JAR_PATH, png.clone()),
+            (PIG_TEMPERATE_JAR_PATH, png.clone()),
             (FIRE_0_JAR_PATH, strip.clone()),
             (FIRE_1_JAR_PATH, strip),
             (UNDERWATER_JAR_PATH, underwater),
@@ -806,6 +842,10 @@ mod tests {
         assert_eq!(
             data.experience_orb_png_sha1, expected_orb_sha1,
             "the orb sheet's own sha1"
+        );
+        assert_eq!(
+            data.pig_png_sha1, expected_png_sha1,
+            "the pig's own sha1 (the fixture doubles as the temperate skin)"
         );
         assert_eq!(
             data.particle_crit_png_sha1, expected_crit_sha1,
@@ -855,6 +895,9 @@ mod tests {
         // the xp orb: the sha1 and the runtime path land verbatim
         assert!(emitted.contains(&format!("pub const EXPERIENCE_ORB_PNG_SHA1: &str = \"{expected_orb_sha1}\";")));
         assert!(emitted.contains("pub const EXPERIENCE_ORB_RUNTIME_PATH: &str = \"entity/experience/experience_orb.png\";"));
+        // the pig: the sha1 and the runtime path land verbatim
+        assert!(emitted.contains(&format!("pub const PIG_TEMPERATE_PNG_SHA1: &str = \"{expected_png_sha1}\";")));
+        assert!(emitted.contains("pub const PIG_TEMPERATE_RUNTIME_PATH: &str = \"entity/pig/pig_temperate.png\";"));
         // the particle lane: the crit star's + the poof frames' sha1s
         // and the runtime paths land verbatim
         assert!(emitted.contains(&format!("pub const PARTICLE_CRIT_PNG_SHA1: &str = \"{expected_crit_sha1}\";")));
@@ -954,6 +997,18 @@ mod tests {
             skin_png(),
         ), (SLIM_ALEX_JAR_PATH, skin_png())]);
         assert!(generate(&mut zip).is_err(), "missing zombie skin must be refused");
+    }
+
+    #[test]
+    fn refuses_a_zip_without_the_pig_skin() {
+        // the pig's table must not be invented either: a jar missing
+        // pig_temperate.png fails the generation (the same data-driven
+        // rule the zombie skin speaks)
+        let mut zip = zip_of(&[(
+            WIDE_STEVE_JAR_PATH,
+            skin_png(),
+        ), (SLIM_ALEX_JAR_PATH, skin_png()), (ZOMBIE_JAR_PATH, skin_png())]);
+        assert!(generate(&mut zip).is_err(), "missing pig skin must be refused");
     }
 
     #[test]

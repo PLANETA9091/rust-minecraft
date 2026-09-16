@@ -192,12 +192,15 @@ impl AvatarState {
 }
 
 /// One pivot-relative cube: texOffs, the box (texels) and the
-/// `CubeDeformation` inflation (the overlay layers' extend).
+/// `CubeDeformation` inflation (the overlay layers' extend), plus the
+/// builder's MIRROR flag (javap `CubeListBuilder.mirror` — the
+/// quadruped's left legs speak it: every face rect's u axis flips).
 struct Cube {
     tex: (f32, f32),
     origin: [f32; 3],
     size: [f32; 3],
     inflate: f32,
+    mirror: bool,
 }
 
 /// One model part: the pivot (texels), the setupAnim rotation
@@ -294,47 +297,12 @@ impl AvatarModel {
         cam_pitch: f32,
     ) -> Vec<AvatarQuad> {
         let parts = build_posed_parts(state);
-        // THE ENTITY CHAIN (LivingEntityRenderer.render), folded per
-        // resolved model point: T(0, -1.501, 0) first, then S(-1,-1,1),
-        // then the DEATH FLIP (javap: the deathTime branch's ZP rotation
-        // — sqrt(min(1, (deathTime-1)/20 * 1.6)) * 90°, riding BETWEEN
-        // the S and the R_y), then R_y(180 - bodyRot), then the feet
-        // translation (+ the crouch render offset's -2/16).
-        let a = (180.0f32 - state.yaw_deg).to_radians();
-        let (sa, ca) = a.sin_cos();
-        // THE DEATH FLIP (the same javap branch): the state clock rides
-        // the entity's deathTime + partialTick (0 = alive — the flip 0)
-        let flip_rad = if state.death_time > 0.0 {
-            let f5 = ((state.death_time - 1.0) / 20.0 * 1.6).max(0.0);
-            mth_sqrt(f5).min(1.0) * std::f32::consts::FRAC_PI_2
-        } else {
-            0.0
-        };
-        let (sf, cf) = flip_rad.sin_cos();
+        // THE ENTITY CHAIN (LivingEntityRenderer.render) — the shared
+        // fold every living model rides (the crouch render offset is
+        // the humanoid's own branch, the quadruped never speaks it)
         let crouch_drop = if state.crouching { -2.0 / 16.0 } else { 0.0 };
-        let fold_point = |p: [f32; 3]| -> [f32; 3] {
-            let mx = -p[0]; // the S(-1,-1,1) x flip (blocks)
-            let my = -p[1]; // the y flip over the -1.501 line
-            let mz = p[2];
-            // the ZP death flip (between the S and the R_y)
-            let fx = mx * cf - my * sf;
-            let fy = mx * sf + my * cf;
-            let px = fx * ca + mz * sa; // the joml YP yaw fold
-            let pz = -fx * sa + mz * ca;
-            [
-                feet.x + px,
-                feet.y as f32 + (fy + 1.501) + crouch_drop,
-                feet.z + pz,
-            ]
-        };
-        let fold_normal = |n: [f32; 3]| -> [f32; 3] {
-            let nx = -n[0];
-            let ny = -n[1];
-            let nz = n[2];
-            let fx = nx * cf - ny * sf;
-            let fy = nx * sf + ny * cf;
-            [fx * ca + nz * sa, fy, -fx * sa + nz * ca]
-        };
+        let (fold_point, fold_normal) =
+            entity_folds(state.yaw_deg, state.death_time, crouch_drop, feet);
         let mut out: Vec<AvatarQuad> = Vec::with_capacity(12 * 6);
         let ident = Mat4::IDENT;
         for part in &parts {
@@ -342,6 +310,244 @@ impl AvatarModel {
         }
         out
     }
+}
+
+/// THE ENTITY CHAIN (LivingEntityRenderer.render), folded per resolved
+/// model point: T(0, -1.501, 0) first, then S(-1,-1,1), then the DEATH
+/// FLIP (javap: the deathTime branch's ZP rotation —
+/// sqrt(min(1, (deathTime-1)/20 * 1.6)) * 90°, riding BETWEEN the S
+/// and the R_y), then R_y(180 - bodyRot), then the feet translation
+/// (+ any pre-forgone render offset the caller's own branch speaks).
+/// Returns the point and normal folds EVERY living model shares.
+fn entity_folds(
+    yaw_deg: f32,
+    death_time: f32,
+    crouch_drop: f32,
+    feet: Vec3,
+) -> (
+    impl Fn([f32; 3]) -> [f32; 3],
+    impl Fn([f32; 3]) -> [f32; 3],
+) {
+    let a = (180.0f32 - yaw_deg).to_radians();
+    let (sa, ca) = a.sin_cos();
+    // THE DEATH FLIP (the same javap branch): the state clock rides
+    // the entity's deathTime + partialTick (0 = alive — the flip 0)
+    let flip_rad = if death_time > 0.0 {
+        let f5 = ((death_time - 1.0) / 20.0 * 1.6).max(0.0);
+        mth_sqrt(f5).min(1.0) * std::f32::consts::FRAC_PI_2
+    } else {
+        0.0
+    };
+    let (sf, cf) = flip_rad.sin_cos();
+    let fold_point = move |p: [f32; 3]| -> [f32; 3] {
+        let mx = -p[0]; // the S(-1,-1,1) x flip (blocks)
+        let my = -p[1]; // the y flip over the -1.501 line
+        let mz = p[2];
+        // the ZP death flip (between the S and the R_y)
+        let fx = mx * cf - my * sf;
+        let fy = mx * sf + my * cf;
+        let px = fx * ca + mz * sa; // the joml YP yaw fold
+        let pz = -fx * sa + mz * ca;
+        [
+            feet.x + px,
+            feet.y as f32 + (fy + 1.501) + crouch_drop,
+            feet.z + pz,
+        ]
+    };
+    let fold_normal = move |n: [f32; 3]| -> [f32; 3] {
+        let nx = -n[0];
+        let ny = -n[1];
+        let nz = n[2];
+        let fx = nx * cf - ny * sf;
+        let fy = nx * sf + ny * cf;
+        [fx * ca + nz * sa, fy, -fx * sa + nz * ca]
+    };
+    (fold_point, fold_normal)
+}
+
+/// The QUADRUPED's pose inputs — the pig render state's own fields
+/// (javap `QuadrupedModel.setupAnim(LivingEntityRenderState)`: the
+/// walk fold + the head's degree->radian pair the pool's 0.017453
+/// speaks; no crouch, no arms — the quadruped has neither branch).
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct PigState {
+    /// vanilla yaw degrees (the body's own)
+    pub yaw_deg: f32,
+    /// vanilla pitch degrees, positive = DOWN (the head's xRot)
+    pub pitch_deg: f32,
+    /// the head's yaw offset from the body (the netHeadYaw clamp)
+    pub head_yaw_off_deg: f32,
+    /// walkAnimationPos (the backward-extrapolated walk phase)
+    pub walk_pos: f32,
+    /// walkAnimationSpeed (the min(abs, 1) blend)
+    pub walk_speed: f32,
+    /// ageInTicks (the pig's idle owns no bob — carried for parity)
+    pub age_ticks: f32,
+    /// `LivingEntityRenderState.deathTime` (the same flip law's clock
+    /// the avatar fold speaks — one chain, every living model)
+    pub death_time: f32,
+}
+
+/// The full pig model — the 26.2 `PigModel.createBodyLayer`'s own
+/// numbers, bytecode-proven off the official jar (the classfile's
+/// constant pool + the createBasePigModel walk): the head 8x8x8 at
+/// pivot (0, 12, -6) with the snout cube (uv 16,16), the body
+/// 10x16x8 rotated x=PI/2 at pivot (0, 11, 0), the four 4x6x4 legs at
+/// pivots (+-3, 18, +7/-5), `LayerDefinition.create(64, 64)`.
+pub struct PigModel {
+    rgba: Vec<u8>,
+}
+
+impl PigModel {
+    /// Load + sha1-verify the PIG's temperate skin (the PigRenderer's
+    /// variant table's default — the generated table's own constant).
+    /// `None` = the pig never renders (the same honesty the zombie
+    /// path speaks: the renderer must not lie about its data).
+    pub fn load(root: &Path) -> Option<PigModel> {
+        let bytes = std::fs::read(root.join(skin::PIG_TEMPERATE_RUNTIME_PATH)).ok()?;
+        let digest = sha1::Sha1::digest(&bytes);
+        if hex::encode(digest) != skin::PIG_TEMPERATE_PNG_SHA1 {
+            return None;
+        }
+        let (w, h, rgba) = decode_rgba(&bytes).ok()?;
+        if w != 64 || h != 64 || rgba.len() != 64 * 64 * 4 {
+            return None;
+        }
+        Some(PigModel { rgba })
+    }
+
+    /// The skin pixel at (u, v) — the RGBA row-major words, v down.
+    pub fn pixel(&self, u: f32, v: f32) -> [u8; 4] {
+        let (uu, vv) = (u.clamp(0.0, 63.999_9), v.clamp(0.0, 63.999_9));
+        let x = uu as usize;
+        let y = vv as usize;
+        let o = (y * 64 + x) * 4;
+        [self.rgba[o], self.rgba[o + 1], self.rgba[o + 2], self.rgba[o + 3]]
+    }
+
+    /// THE POSED RENDER: the world-space textured quads of the pig at
+    /// `state` — the SAME entity chain fold the avatar speaks (one
+    /// law, every living model), the quadruped's own parts beneath.
+    pub fn quads(
+        &self,
+        state: &PigState,
+        feet: Vec3,
+        cam_yaw: f32,
+        cam_pitch: f32,
+    ) -> Vec<AvatarQuad> {
+        let parts = build_pig_parts(state);
+        let (fold_point, fold_normal) = entity_folds(state.yaw_deg, state.death_time, 0.0, feet);
+        let mut out: Vec<AvatarQuad> = Vec::with_capacity(6 * 6);
+        let ident = Mat4::IDENT;
+        for part in &parts {
+            collect_part(part, &ident, &fold_point, &fold_normal, cam_yaw, cam_pitch, &mut out);
+        }
+        out
+    }
+}
+
+/// The quadruped's parts, posed by `state` — the javap-proven mesh:
+/// `PigModel.createBasePigModel` overrides the head over
+/// `QuadrupedModel.createBodyMesh(6, true, false, deformation)`'s own
+/// stand (the snout rides the SAME part's cube list — the fluent
+/// chain's second texOffs/addBox pair), the body and the legs speak
+/// the quadruped base verbatim. THE WALK (javap
+/// `QuadrupedModel.setupAnim`): the DIAGONAL pairs swing together —
+/// right-hind + left-front in phase, the other pair +PI, the pool's
+/// own 0.6662 / 1.4 the fold speaks.
+fn build_pig_parts(state: &PigState) -> Vec<Part> {
+    let pos = state.walk_pos;
+    let speed = state.walk_speed;
+    let leg_rh = mth_cos(pos * 0.6662) * 1.4 * speed;
+    let leg_lh = mth_cos(pos * 0.6662 + std::f32::consts::PI) * 1.4 * speed;
+    let head_x = state.pitch_deg.to_radians();
+    let head_y = state.head_yaw_off_deg.to_radians();
+    let leg_cube = |mirror: bool| Cube {
+        tex: (0.0, 16.0),
+        origin: [-2.0, 0.0, -2.0],
+        size: [4.0, 6.0, 4.0],
+        inflate: 0.0,
+        mirror,
+    };
+    vec![
+        // head (+ the snout — the same part's second cube)
+        Part {
+            pivot: [0.0, 12.0, -6.0],
+            x_rot: head_x,
+            y_rot: head_y,
+            z_rot: 0.0,
+            cubes: vec![
+                Cube {
+                    tex: (0.0, 0.0),
+                    origin: [-4.0, -4.0, -8.0],
+                    size: [8.0, 8.0, 8.0],
+                    inflate: 0.0,
+                    mirror: false,
+                },
+                Cube {
+                    tex: (16.0, 16.0),
+                    origin: [-2.0, 0.0, -9.0],
+                    size: [4.0, 3.0, 1.0],
+                    inflate: 0.0,
+                    mirror: false,
+                },
+            ],
+            children: vec![],
+        },
+        // body (the horizontal barrel — the rotX PI/2 the PartPose
+        // offsetAndRotation speaks)
+        Part {
+            pivot: [0.0, 11.0, 0.0],
+            x_rot: std::f32::consts::FRAC_PI_2,
+            y_rot: 0.0,
+            z_rot: 0.0,
+            cubes: vec![Cube {
+                tex: (28.0, 8.0),
+                origin: [-5.0, -10.0, -7.0],
+                size: [10.0, 16.0, 8.0],
+                inflate: 0.0,
+                mirror: false,
+            }],
+            children: vec![],
+        },
+        // right hind leg (the builder's own unwrap — no mirror)
+        Part {
+            pivot: [-3.0, 18.0, 7.0],
+            x_rot: leg_rh,
+            y_rot: 0.0,
+            z_rot: 0.0,
+            cubes: vec![leg_cube(false)],
+            children: vec![],
+        },
+        // left hind leg (the mirrored builder — the u axis flips)
+        Part {
+            pivot: [3.0, 18.0, 7.0],
+            x_rot: leg_lh,
+            y_rot: 0.0,
+            z_rot: 0.0,
+            cubes: vec![leg_cube(true)],
+            children: vec![],
+        },
+        // right front leg (anti-phase of the right hind — the diagonal
+        // pair the setupAnim's own cos fold speaks)
+        Part {
+            pivot: [-3.0, 18.0, -5.0],
+            x_rot: leg_lh,
+            y_rot: 0.0,
+            z_rot: 0.0,
+            cubes: vec![leg_cube(false)],
+            children: vec![],
+        },
+        // left front leg (in phase with the right hind)
+        Part {
+            pivot: [3.0, 18.0, -5.0],
+            x_rot: leg_rh,
+            y_rot: 0.0,
+            z_rot: 0.0,
+            cubes: vec![leg_cube(true)],
+            children: vec![],
+        },
+    ]
 }
 
 /// The six base parts with their overlay children, posed by `state`
@@ -461,7 +667,8 @@ fn build_posed_parts(state: &AvatarState) -> Vec<Part> {
                 origin: [-4.0, -8.0, -4.0],
                 size: [8.0, 8.0, 8.0],
                 inflate: 0.0,
-            }],
+                        mirror: false,
+                        }],
             children: vec![Part {
                 pivot: [0.0, 0.0, 0.0],
                 x_rot: 0.0,
@@ -472,7 +679,8 @@ fn build_posed_parts(state: &AvatarState) -> Vec<Part> {
                     origin: [-4.0, -8.0, -4.0],
                     size: [8.0, 8.0, 8.0],
                     inflate: 0.5,
-                }],
+                                mirror: false,
+                                }],
                 children: vec![],
             }],
         },
@@ -487,7 +695,8 @@ fn build_posed_parts(state: &AvatarState) -> Vec<Part> {
                 origin: [-4.0, 0.0, -2.0],
                 size: [8.0, 12.0, 4.0],
                 inflate: 0.0,
-            }],
+                        mirror: false,
+                        }],
             children: vec![Part {
                 pivot: [0.0, 0.0, 0.0],
                 x_rot: 0.0,
@@ -498,7 +707,8 @@ fn build_posed_parts(state: &AvatarState) -> Vec<Part> {
                     origin: [-4.0, 0.0, -2.0],
                     size: [8.0, 12.0, 4.0],
                     inflate: 0.25,
-                }],
+                                mirror: false,
+                                }],
                 children: vec![],
             }],
         },
@@ -513,7 +723,8 @@ fn build_posed_parts(state: &AvatarState) -> Vec<Part> {
                 origin: [-3.0, -2.0, -2.0],
                 size: [4.0, 12.0, 4.0],
                 inflate: 0.0,
-            }],
+                        mirror: false,
+                        }],
             children: vec![Part {
                 pivot: [0.0, 0.0, 0.0],
                 x_rot: 0.0,
@@ -524,7 +735,8 @@ fn build_posed_parts(state: &AvatarState) -> Vec<Part> {
                     origin: [-3.0, -2.0, -2.0],
                     size: [4.0, 12.0, 4.0],
                     inflate: 0.25,
-                }],
+                                mirror: false,
+                                }],
                 children: vec![],
             }],
         },
@@ -539,7 +751,8 @@ fn build_posed_parts(state: &AvatarState) -> Vec<Part> {
                 origin: [-1.0, -2.0, -2.0],
                 size: [4.0, 12.0, 4.0],
                 inflate: 0.0,
-            }],
+                        mirror: false,
+                        }],
             children: vec![Part {
                 pivot: [0.0, 0.0, 0.0],
                 x_rot: 0.0,
@@ -550,7 +763,8 @@ fn build_posed_parts(state: &AvatarState) -> Vec<Part> {
                     origin: [-1.0, -2.0, -2.0],
                     size: [4.0, 12.0, 4.0],
                     inflate: 0.25,
-                }],
+                                mirror: false,
+                                }],
                 children: vec![],
             }],
         },
@@ -565,7 +779,8 @@ fn build_posed_parts(state: &AvatarState) -> Vec<Part> {
                 origin: [-2.0, 0.0, -2.0],
                 size: [4.0, 12.0, 4.0],
                 inflate: 0.0,
-            }],
+                        mirror: false,
+                        }],
             children: vec![Part {
                 pivot: [0.0, 0.0, 0.0],
                 x_rot: 0.0,
@@ -576,7 +791,8 @@ fn build_posed_parts(state: &AvatarState) -> Vec<Part> {
                     origin: [-2.0, 0.0, -2.0],
                     size: [4.0, 12.0, 4.0],
                     inflate: 0.25,
-                }],
+                                mirror: false,
+                                }],
                 children: vec![],
             }],
         },
@@ -591,7 +807,8 @@ fn build_posed_parts(state: &AvatarState) -> Vec<Part> {
                 origin: [-2.0, 0.0, -2.0],
                 size: [4.0, 12.0, 4.0],
                 inflate: 0.0,
-            }],
+                        mirror: false,
+                        }],
             children: vec![Part {
                 pivot: [0.0, 0.0, 0.0],
                 x_rot: 0.0,
@@ -602,7 +819,8 @@ fn build_posed_parts(state: &AvatarState) -> Vec<Part> {
                     origin: [-2.0, 0.0, -2.0],
                     size: [4.0, 12.0, 4.0],
                     inflate: 0.25,
-                }],
+                                mirror: false,
+                                }],
                 children: vec![],
             }],
         },
@@ -694,8 +912,14 @@ fn emit_cube(
     for (corners, (ru, rv), (rw, rh), normal) in faces {
         let (ru1, rv1) = (ru + rw, rv + rh);
         // the Polygon constructor's fixed rect corners: k=0 -> (u1,v0),
-        // 1 -> (u0,v0), 2 -> (u0,v1), 3 -> (u1,v1)
-        let uv = [[ru1, rv], [ru, rv], [ru, rv1], [ru1, rv1]];
+        // 1 -> (u0,v0), 2 -> (u0,v1), 3 -> (u1,v1); the MIRROR flag
+        // (javap ModelPart$Cube's own `mirror` branch) flips every
+        // face rect's u axis — the polygon corners sample it reversed
+        let uv = if cube.mirror {
+            [[ru, rv], [ru1, rv], [ru1, rv1], [ru, rv1]]
+        } else {
+            [[ru1, rv], [ru, rv], [ru, rv1], [ru1, rv1]]
+        };
         let pts = [
             fold_point(px(corners[0])),
             fold_point(px(corners[1])),
@@ -1321,6 +1545,185 @@ pub fn flame_quads(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// THE QUADRUPED'S OWN EXTENTS (javap PigModel.createBodyLayer's
+    /// own numbers): the mesh spans the ground (model y 24) to the
+    /// head's top (model y 8) — the feet epsilon the entity chain's
+    /// own -1.501 speaks, the 1.0-block body above it.
+    #[test]
+    fn the_pig_mesh_spans_the_quadruped_height() {
+        let pig = PigModel {
+            rgba: vec![255u8; 64 * 64 * 4],
+        };
+        let feet = Vec3::new(10.0, 64.0, 20.0);
+        let state = PigState {
+            yaw_deg: 0.0,
+            pitch_deg: 0.0,
+            head_yaw_off_deg: 0.0,
+            walk_pos: 0.0,
+            walk_speed: 0.0,
+            age_ticks: 40.0,
+            death_time: 0.0,
+        };
+        let quads = pig.quads(&state, feet, 0.0, 0.0);
+        assert!(!quads.is_empty(), "the mesh speaks quads");
+        let mut min_y = f32::MAX;
+        let mut max_y = f32::MIN;
+        let mut min_x = f32::MAX;
+        let mut max_x = f32::MIN;
+        for q in &quads {
+            for p in q.pts {
+                min_y = min_y.min(p[1]);
+                max_y = max_y.max(p[1]);
+                min_x = min_x.min(p[0]);
+                max_x = max_x.max(p[0]);
+            }
+        }
+        // model y 24 (the ground) -> feet + 0.001 (the fold's own
+        // epsilon); model y 8 (the head's top) -> feet + 1.001
+        assert!(
+            (min_y - (feet.y as f32 + 0.001)).abs() < 1e-4,
+            "the feet ride the ground: {min_y}"
+        );
+        assert!(
+            (max_y - (feet.y as f32 + 1.001)).abs() < 1e-4,
+            "the head's top rides 1.0 above the feet: {max_y}"
+        );
+        // the body's barrel spans -5/16..5/16 (10 texels wide), the
+        // head -4/16..4/16 — the widest word is the body's own
+        assert!(
+            (min_x - (feet.x as f32 - 5.0 / 16.0)).abs() < 1e-4,
+            "the body's west face: {min_x}"
+        );
+        assert!(
+            (max_x - (feet.x as f32 + 5.0 / 16.0)).abs() < 1e-4,
+            "the body's east face: {max_x}"
+        );
+    }
+
+    /// THE QUADRUPED WALK (javap QuadrupedModel.setupAnim's own fold):
+    /// the DIAGONAL pairs swing together — right-hind + left-front in
+    /// phase, left-hind + right-front +PI — the legs' top corners
+    /// ride opposite z offsets the mirrored x_rots speak.
+    #[test]
+    fn the_pig_walk_swings_the_diagonal_pairs() {
+        let pig = PigModel {
+            rgba: vec![255u8; 64 * 64 * 4],
+        };
+        let feet = Vec3::new(0.0, 64.0, 0.0);
+        let rest = PigState {
+            yaw_deg: 0.0,
+            pitch_deg: 0.0,
+            head_yaw_off_deg: 0.0,
+            walk_pos: 0.0,
+            walk_speed: 0.0,
+            age_ticks: 40.0,
+            death_time: 0.0,
+        };
+        let walked = PigState {
+            walk_pos: 0.0,
+            walk_speed: 1.0,
+            ..rest
+        };
+        let rest_quads = pig.quads(&rest, feet, 0.0, 0.0);
+        let walked_quads = pig.quads(&walked, feet, 0.0, 0.0);
+        assert_eq!(rest_quads.len(), walked_quads.len(), "same mesh, moved legs");
+        // THE DIAGONAL PAIR: the right-hind leg's top front corner
+        // (pivot (-3, 18, 7) + the box's front-top edge) rides the
+        // +1.4 rad swing, the left-hind the -1.4 — their z offsets
+        // from rest land OPPOSITE (the cos(+PI) fold)
+        let rest_z: Vec<f32> = rest_quads.iter().flat_map(|q| q.pts.iter().map(|p| p[2])).collect();
+        let rest_min_z = rest_z.iter().cloned().fold(f32::MAX, f32::min);
+        let rest_max_z = rest_z.iter().cloned().fold(f32::MIN, f32::max);
+        let walk_z: Vec<f32> = walked_quads
+            .iter()
+            .flat_map(|q| q.pts.iter().map(|p| p[2]))
+            .collect();
+        let walk_min_z = walk_z.iter().cloned().fold(f32::MAX, f32::min);
+        let walk_max_z = walk_z.iter().cloned().fold(f32::MIN, f32::max);
+        // the swing's backward kick passes the rest stand (the legs'
+        // own reach — the forward kick never beats the snout's reach,
+        // the max the head's word holds)
+        assert!(
+            walk_min_z < rest_min_z - 0.05,
+            "the swing reaches past the stand: rest [{rest_min_z}, {rest_max_z}] walked [{walk_min_z}, {walk_max_z}]"
+        );
+        // and the legs MOVED — some quad corner left its rest spot
+        let moved = walked_quads
+            .iter()
+            .zip(rest_quads.iter())
+            .any(|(wq, rq)| wq.pts.iter().zip(rq.pts.iter()).any(|(wp, rp)| (wp[2] - rp[2]).abs() > 1e-4));
+        assert!(moved, "the walk's own swing moved the legs");
+    }
+
+    /// THE MIRROR UNWRAP (javap CubeListBuilder.mirror — the LEFT
+    /// legs' builders speak it): the mirrored cube's front face
+    /// samples the leg rect reversed — the u corners swap, the v
+    /// corners stand.
+    #[test]
+    fn the_pig_left_legs_ride_the_mirror_unwrap() {
+        let pig = PigModel {
+            rgba: vec![255u8; 64 * 64 * 4],
+        };
+        let state = PigState {
+            yaw_deg: 0.0,
+            pitch_deg: 0.0,
+            head_yaw_off_deg: 0.0,
+            walk_pos: 0.0,
+            walk_speed: 0.0,
+            age_ticks: 40.0,
+            death_time: 0.0,
+        };
+        let quads = pig.quads(&state, Vec3::new(0.0, 64.0, 0.0), 0.0, 0.0);
+        // the legs' unwrap region: texOffs (0,16), box 4x6x4 — every
+        // face rect inside u [0,16), v [16,26)
+        let leg_quads: Vec<&AvatarQuad> = quads
+            .iter()
+            .filter(|q| {
+                q.uv.iter().all(|c| c[0] >= 0.0 && c[0] <= 16.0 && c[1] >= 16.0 && c[1] <= 26.0)
+            })
+            .collect();
+        assert_eq!(leg_quads.len(), 24, "4 legs x 6 faces");
+        // the unmirrored front face (k=0 -> (u1,v0)): [[8,20],[4,20],[4,26],[8,26]]
+        let plain_front = leg_quads.iter().any(|q| {
+            q.uv[0] == [8.0, 20.0]
+                && q.uv[1] == [4.0, 20.0]
+                && q.uv[2] == [4.0, 26.0]
+                && q.uv[3] == [8.0, 26.0]
+        });
+        // the mirrored front face: the u axis flipped
+        let mirrored_front = leg_quads.iter().any(|q| {
+            q.uv[0] == [4.0, 20.0]
+                && q.uv[1] == [8.0, 20.0]
+                && q.uv[2] == [8.0, 26.0]
+                && q.uv[3] == [4.0, 26.0]
+        });
+        assert!(plain_front, "the right legs' own unwrap rides");
+        assert!(mirrored_front, "the left legs' mirror flips the u axis");
+    }
+
+    /// THE PIG LOADS — the real runtime cache (the generator's
+    /// extraction) decodes the 64x64 temperate skin the sha1 the
+    /// generated table pins (the PigRenderer's variant default).
+    #[test]
+    #[ignore = "needs runtime assets (assets-cache/jar) from mc2rs-gen generate"]
+    fn the_pig_model_loads_sha1_verified() {
+        let mut dir = std::env::current_dir().unwrap();
+        let root = loop {
+            let cand = dir.join("assets-cache/jar");
+            if cand.exists() {
+                break cand;
+            }
+            dir = dir.parent().expect("the runtime root above").to_path_buf();
+        };
+        let pig = PigModel::load(&root).expect("the pig loads from the runtime cache");
+        // the temperate pig's pink: the head's front face (the unwrap
+        // rect (8,8)-(16,16) the 8x8x8 head speaks) reads pink —
+        // red over blue, the opaque texel the palette carries
+        let px = pig.pixel(12.0, 12.0);
+        assert!(px[0] > px[2], "the pink reads red-over-blue: {px:?}");
+        assert_eq!(px[3], 255, "the texel is opaque");
+    }
 
     #[test]
     fn the_orb_sheet_pixel_rides_the_16_unit_space() {

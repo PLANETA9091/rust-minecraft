@@ -93,10 +93,44 @@ use crate::world::World;
 /// The ZOMBIE registration's own `sized(0.6F, 1.95F)` (EntityTypes).
 pub const ZOMBIE_WIDTH: f64 = 0.6;
 pub const ZOMBIE_HEIGHT: f64 = 1.95;
+/// The PIG registration's own `sized(0.9F, 0.9F)` (EntityTypes) — the
+/// second drawn body's own bbox (the flame ring's dims the render asks).
+pub const PIG_WIDTH: f64 = 0.9;
+pub const PIG_HEIGHT: f64 = 0.9;
+
 /// The registration's `eyeHeight(1.74F)`.
 pub const ZOMBIE_EYE_HEIGHT: f64 = 1.74;
 /// `Zombie.createAttributes` — MOVEMENT_SPEED 0.23000000417232513.
 pub const ZOMBIE_MOVEMENT_SPEED: f64 = 0.230_000_004_172_325_13;
+/// THE MOB'S OWN MODEL KIND (the renderer's variant table the vanilla
+/// EntityRenderDispatcher walks): the humanoid's zombie branch the
+/// avatar model owns, the quadruped's pig mesh the pig model owns.
+/// The AI lane spawns zombies (the ctor's own default); the wire's
+/// word — the Add Entity type through the synced registry's name —
+/// arms the kind at the merge.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum MobKind {
+    /// the humanoid pose branch (javap AbstractZombieModel's own chain)
+    Zombie,
+    /// the quadruped mesh (javap PigModel.createBodyLayer's own
+    /// numbers — head 8x8x8 + snout, the rotX barrel body, 4 legs)
+    Pig,
+}
+
+impl MobKind {
+    /// THE REGISTRY NAME'S OWN MAPPING (the entity_type table the
+    /// client keeps). The honest default is the zombie — the lane's
+    /// first body; the projection only admits the drawn names, so the
+    /// merge never sees an undrawn one.
+    pub fn from_wire_name(name: &str) -> Self {
+        if name == "minecraft:pig" {
+            MobKind::Pig
+        } else {
+            MobKind::Zombie
+        }
+    }
+}
+
 /// The LivingEntity base MAX_HEALTH (the monster base adds none).
 pub const ZOMBIE_MAX_HEALTH: f32 = 20.0;
 /// `Zombie.createAttributes` — ATTACK_DAMAGE 3.0.
@@ -301,6 +335,10 @@ pub struct Zombie {
     pub crouching: bool,
     /// `ZombieAttackGoal.raiseArmTicks`
     raise_arm_ticks: i32,
+    /// THE BODY'S OWN KIND (the renderer's variant table): which mesh
+    /// the render lane draws — the AI lane's ctor speaks Zombie, the
+    /// wire's registry name re-arms the word at the merge.
+    pub kind: MobKind,
     /// `MeleeAttackGoal.ticksUntilNextAttack`
     ticks_until_attack: i32,
     /// the canUse re-check clock (lastCanUseCheck)
@@ -357,6 +395,7 @@ impl Zombie {
             walk: WalkAnimationState::default(),
             aggressive: false,
             crouching: false,
+            kind: MobKind::Zombie,
             raise_arm_ticks: 0,
             ticks_until_attack: 0,
             attack_recheck: 0,

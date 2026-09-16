@@ -516,6 +516,12 @@ pub struct App {
     /// sha1 the generator pinned) — loaded lazily beside the player's,
     /// `None` = the mobs stay unseen (the honest-missing-data law).
     pub zombie_avatar: Option<crate::avatar::AvatarModel>,
+    /// THE SECOND MOB's own skin (the pig's temperate 64x64 texture —
+    /// the PigRenderer's variant default, the sha1 the generator
+    /// pinned) — loaded lazily beside the zombie's, `None` = the PIGS
+    /// stay unseen while the zombies keep drawing (each model's
+    /// honesty is its own lane).
+    pub pig_model: Option<crate::avatar::PigModel>,
     /// The flame feature's two strips (the burn lane's pixel source —
     /// lazy-loaded and sha1-verified the zombie skin's way).
     pub fire_strips: Option<crate::avatar::FireStrips>,
@@ -917,6 +923,7 @@ impl App {
             perspective: crate::camera::CameraType::FirstPerson,
             avatar: None,
             zombie_avatar: None,
+            pig_model: None,
             fire_strips: None,
             orb_sheet: None,
             underwater_screen: None,
@@ -3385,6 +3392,10 @@ impl App {
                 // prev trio arms at it (the render walks from the spawn
                 // the tick's own first prev speaks)
                 let mut m = crate::mob::Zombie::new(w.id, w.x, w.y, w.z, 0x5EED);
+                // THE BODY'S OWN KIND (the registry's name the Add
+                // Entity spoke): the model the render lane draws —
+                // the zombie's humanoid, the pig's quadruped
+                m.kind = crate::mob::MobKind::from_wire_name(&w.type_name);
                 m.yaw = w.yaw;
                 let mut off = w.head_yaw - w.yaw;
                 while off > 180.0 {
@@ -5452,41 +5463,87 @@ impl App {
         let Some(model) = &self.zombie_avatar else {
             return; // the zombie skin failed its sha1 — the mobs stay unseen
         };
+        if self.pig_model.is_none() {
+            self.pig_model = crate::avatar::PigModel::load(std::path::Path::new("assets-cache/jar"));
+        }
+        // the pig's honesty is its OWN lane: a failed pig skin keeps
+        // only the pigs unseen, the zombies keep drawing
+        let pig_model = self.pig_model.as_ref();
         // the two lanes' own union (the offline AI bodies + the wire's
-        // remote bodies — the SAME avatar model + the SAME lerp folds
-        // speak both: the server's zombies render exactly like the
-        // client's own, the pose's authority the only difference)
+        // remote bodies — the SAME lerp folds speak both, the model
+        // kind the registry's name arms at the merge)
         for mob in self.mobs.iter().chain(self.net_mobs.iter()) {
             // the head's own lerp (LivingEntityRenderer's
             // `Mth.lerp(partialTicks, yHeadRotO, yHeadRot)`): the AI's
             // new look target the head EASES to between the tick
             // lattices, the same fixed clock the feet speak
             let (head_yaw, head_pitch) = mob.lerped_head_pose(self.partial_tick);
-            // THE RENDER STATE (extractRenderState's own sampling — the
-            // head rides the netHeadYaw the AI's clamp speaks, the
-            // death clock rides the deathTime + partial read, every
-            // clock the frame's own partial_tick now)
-            let state = crate::avatar::AvatarState {
-                yaw_deg: mob.yaw,
-                pitch_deg: head_pitch,
-                walk_pos: mob.walk.position_at(self.partial_tick),
-                walk_speed: mob.walk.speed_at(self.partial_tick),
-                crouching: mob.crouching,
-                attack_time: mob.swing.get_attack_anim(self.partial_tick),
-                attack_right: true,
-                age_ticks: mob.age_ticks as f32 + 0.5,
-                zombie: true,
-                zombie_aggressive: mob.aggressive,
-                head_yaw_off_deg: head_yaw,
-                death_time: mob.death_time_at(self.partial_tick),
-            };
             // THE RENDER FOLD (javap Entity.render's own lerp): the
             // feet the frame walks ON — the prev the tick head saved,
             // carried the fixed clock's partial of the way. The flame
             // rings ride the same fold (the bbox they climb).
             let (mx, my, mz) = mob.lerped_pos(self.partial_tick);
             let feet = Vec3::new(mx as f32, my as f32, mz as f32);
-            let quads = model.quads(&state, feet, cam.yaw, cam.pitch);
+            // THE MODEL KIND'S OWN BRANCH (the renderer's variant
+            // table): the zombie rides the humanoid avatar, the pig
+            // the quadruped mesh — both through the SAME entity chain
+            // fold, the SAME walk store, the SAME death flip law
+            let (quads, pixel): (
+                Vec<crate::avatar::AvatarQuad>,
+                Box<dyn Fn(f32, f32) -> [u8; 4] + '_>,
+            ) = match mob.kind {
+                crate::mob::MobKind::Pig => {
+                    let Some(pig) = pig_model else {
+                        continue; // the pig skin failed its sha1 — this body stays unseen
+                    };
+                    let state = crate::avatar::PigState {
+                        yaw_deg: mob.yaw,
+                        pitch_deg: head_pitch,
+                        head_yaw_off_deg: head_yaw,
+                        walk_pos: mob.walk.position_at(self.partial_tick),
+                        walk_speed: mob.walk.speed_at(self.partial_tick),
+                        age_ticks: mob.age_ticks as f32 + 0.5,
+                        death_time: mob.death_time_at(self.partial_tick),
+                    };
+                    let quads = pig.quads(&state, feet, cam.yaw, cam.pitch);
+                    (quads, Box::new(move |u, v| pig.pixel(u, v)))
+                }
+                crate::mob::MobKind::Zombie => {
+                    // THE RENDER STATE (extractRenderState's own sampling — the
+                    // head rides the netHeadYaw the AI's clamp speaks, the
+                    // death clock rides the deathTime + partial read, every
+                    // clock the frame's own partial_tick now)
+                    let state = crate::avatar::AvatarState {
+                        yaw_deg: mob.yaw,
+                        pitch_deg: head_pitch,
+                        walk_pos: mob.walk.position_at(self.partial_tick),
+                        walk_speed: mob.walk.speed_at(self.partial_tick),
+                        crouching: mob.crouching,
+                        attack_time: mob.swing.get_attack_anim(self.partial_tick),
+                        attack_right: true,
+                        age_ticks: mob.age_ticks as f32 + 0.5,
+                        zombie: true,
+                        zombie_aggressive: mob.aggressive,
+                        head_yaw_off_deg: head_yaw,
+                        death_time: mob.death_time_at(self.partial_tick),
+                    };
+                    let quads = model.quads(&state, feet, cam.yaw, cam.pitch);
+                    (quads, Box::new(move |u, v| model.pixel(u, v)))
+                }
+            };
+            // THE FLAME FEATURE's own bbox ask — the registration's
+            // dims the kind's own EntityTypes speaks (the zombie
+            // 0.6x1.95, the pig 0.9x0.9)
+            let (bbox_w, bbox_h) = match mob.kind {
+                crate::mob::MobKind::Pig => (
+                    crate::mob::PIG_WIDTH as f32,
+                    crate::mob::PIG_HEIGHT as f32,
+                ),
+                crate::mob::MobKind::Zombie => (
+                    crate::mob::ZOMBIE_WIDTH as f32,
+                    crate::mob::ZOMBIE_HEIGHT as f32,
+                ),
+            };
             // the hurt overlay's own shade term (the mix law's 0.7)
             let shade = if mob.hurt_time > 0 { 0.7 } else { 1.0 };
             let sampled: Vec<crate::raster::SampledQuad> = quads
@@ -5499,7 +5556,7 @@ impl App {
                 })
                 .collect();
             fb.draw_sampled_quads(ctx.proj.mul(&ctx.view), &sampled, &mut |_tex, u, v| {
-                let [r, g, b, a] = model.pixel(u, v);
+                let [r, g, b, a] = pixel(u, v);
                 Some([r, g, b, a])
             });
             // THE FLAME FEATURE (the burning mob's own overlay — the
@@ -5512,13 +5569,7 @@ impl App {
                         crate::avatar::FireStrips::load(std::path::Path::new("assets-cache/jar"));
                 }
                 if let Some(strips) = &self.fire_strips {
-                    let flames = crate::avatar::flame_quads(
-                        feet,
-                        crate::mob::ZOMBIE_WIDTH as f32,
-                        crate::mob::ZOMBIE_HEIGHT as f32,
-                        cam.yaw,
-                        day_time,
-                    );
+                    let flames = crate::avatar::flame_quads(feet, bbox_w, bbox_h, cam.yaw, day_time);
                     // the white tint (no entity diffuse, no hurt mix —
                     // the fire's own light speaks), the strip tag rides
                     // the ring parity (fire_0 even / fire_1 odd), the
@@ -8877,6 +8928,76 @@ mod tests {
             crouching: false,
             type_name: "minecraft:zombie".to_string(),
         }
+    }
+
+    fn wire_mob_named(
+        id: i32,
+        x: f64,
+        y: f64,
+        z: f64,
+        type_name: &str,
+    ) -> crate::world_view::WireMob {
+        crate::world_view::WireMob {
+            id,
+            x,
+            y,
+            z,
+            yaw: 90.0,
+            pitch: 0.0,
+            head_yaw: 90.0,
+            health: None,
+            hurt_time: 0,
+            on_fire: false,
+            crouching: false,
+            type_name: type_name.to_string(),
+        }
+    }
+
+    /// THE SECOND BODY'S OWN MERGE (the registry name the Add Entity
+    /// carries): the wire PIG lands through the same live_mobs_updated
+    /// entry the zombies ride — the kind the name arms draws the
+    /// quadruped mesh, the lerpTo walk speaks the SAME ease, the ids
+    /// the wire stops naming despawn the same law.
+    #[test]
+    fn the_wire_pig_walks_the_same_lerpto_lane() {
+        let mut app = App::new(3);
+        app.open(ScreenKind::Connect);
+        app.net_world = Some(air_net_world(2, 0));
+        app.enter_network_world(None, Skybox::Overworld, None, None);
+        // the pig + the zombie share the ring (the ids apart, the kinds
+        // the registry names armed)
+        app.live_mobs_updated(vec![
+            wire_zombie(7, 10.0, 64.0, 10.0),
+            wire_mob_named(8, 12.0, 64.0, 10.0, "minecraft:pig"),
+        ]);
+        assert_eq!(app.net_mobs.len(), 2, "both bodies land");
+        let pig = app.net_mobs.iter().find(|m| m.id == 8).unwrap();
+        assert_eq!(pig.kind, crate::mob::MobKind::Pig, "the pig's own kind");
+        let zombie = app.net_mobs.iter().find(|m| m.id == 7).unwrap();
+        assert_eq!(
+            zombie.kind,
+            crate::mob::MobKind::Zombie,
+            "the zombie's kind stands"
+        );
+        // the SECOND ship rides the MATCHED branch (the spawn's pose
+        // was the first word, the ease the cadence's own next beat)
+        app.live_mobs_updated(vec![
+            wire_zombie(7, 10.5, 64.0, 10.0),
+            wire_mob_named(8, 12.5, 64.0, 10.0, "minecraft:pig"),
+        ]);
+        let pig = app.net_mobs.iter().find(|m| m.id == 8).unwrap();
+        assert!(pig.lerp_target.is_some(), "the ease armed");
+        assert_eq!(pig.lerp_steps, 3, "the 3-tick walk the cadence arms");
+        app.tick_net_mobs();
+        let pig = app.net_mobs.iter().find(|m| m.id == 8).unwrap();
+        assert_eq!(pig.lerp_steps, 2, "the own tick consumed one step");
+        // the pig's head rides level (the pitch the wire spoke)
+        assert_eq!(pig.head_pitch, 0.0);
+        // the despawn law: the wire stops naming the pig, the ghost
+        // never re-enters
+        app.live_mobs_updated(vec![wire_zombie(7, 11.0, 64.0, 10.0)]);
+        assert_eq!(app.net_mobs.len(), 1, "the pig despawned at the wire's word");
+        assert_eq!(app.net_mobs[0].id, 7);
     }
 
     #[test]

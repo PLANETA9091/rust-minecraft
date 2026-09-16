@@ -74,6 +74,13 @@ pub const SLIM_RUNTIME_PATH: &str = "entity/player/slim/alex.png";
 pub const ZOMBIE_PNG_SHA1: &str = "3d28d27b5388a7c2a296586649e98d068a795c2d";
 pub const ZOMBIE_RUNTIME_PATH: &str = "entity/zombie/zombie.png";
 
+/// The PIG skin (the temperate variant the PigRenderer's variant
+/// table defaults to), generated from the same jar: the source sha1
+/// the pig renderer verifies before it draws (javap PigModel:
+/// `LayerDefinition.create(64, 64)` — the quadruped's own UV layout).
+pub const PIG_TEMPERATE_PNG_SHA1: &str = "e1020c127b9db75f9a53cf25bedbc8a3a406d250";
+pub const PIG_TEMPERATE_RUNTIME_PATH: &str = "entity/pig/pig_temperate.png";
+
 /// The FLAME strips (the burn lane's pixel sources), generated from
 /// the same jar: the source sha1s the burning mob's renderer verifies
 /// before it draws (javap: `FlameFeatureRenderer.buildGroup`'s
