@@ -2,7 +2,7 @@
 
 Every lane that ships pixels owes the folder a frame. The gallery is the
 proof the features exist as rendered images, not as test names alone.
-105 frames and counting — grouped below by the lane that spoke them.
+110 frames and counting — grouped below by the lane that spoke them.
 
 ## The F5 lane (the third-person avatar) — v0.3.154+
 
@@ -384,6 +384,37 @@ cargo run -p mc-client --release -- --screen world --seed 42 \
 # the dig's break speaks, the cloud the removal speaks, the stars the
 # crit attack arms, the bubbles the broadcast-67 dose arms — the real
 # lanes ride the live ticks)
+```
+
+## The fixed-clock lane (the 20 TPS fold) — v0.3.177
+
+THE GAME CLOCK vanilla speaks: `Minecraft.runTick`'s own law — one game
+tick every 50ms (20 TPS, the pace every clock rides: the hunger drain,
+the eat hold, the swing, the day cycle's 24000), the wall time between
+frames spends in whole ticks (the 10-tick catch-up cap holds a stalled
+machine — the time dilates, the loop never spirals), and the sub-tick
+remainder rides the frame's render as the partial tick. The render's
+interpolation folds read it — javap `Entity.render`'s own
+`Mth.lerp(partialTicks, xo, x)`: the body's feet (the camera and the F5
+avatar ride the same), the zombies' feet (the flame rings follow the
+bbox), the particles' billboards (the `xo/yo/zo` the base tick's head
+saves). The game logic no longer runs at the render rate — the day
+lasts 20 real minutes again, the eat hold 1.6s, the swing 0.3s.
+
+| frame | the scene |
+|---|---|
+| `partial_fold.png` | THE MID-TICK SAMPLE: the damage-star scene rendered at `--partial 0.5` — the crimson star hangs BETWEEN the tick lattices over the approaching zombie, the zombie's own feet halfway into the stride the last tick walked; the same staging at `--partial 0.0` / `--partial 1.0` diffs rms 17.1 / 16.7 against it (the fold's honest spread) |
+
+Regenerate the family (the flag the CLI speaks today):
+
+```sh
+cargo run -p mc-client --release -- --headless --screen world --seed 42 \
+  --body --particles damage --perspective first --body-pitch=6 \
+  --walk-ticks 1 --partial 0.5 --ui-frame 30 --out shots/partial_fold.png
+# --partial F (0.0..=1.0) stages the fixed clock's render remainder —
+# the windowed loop's own value; the headless default 1.0 pins the
+# current tick position bit for bit (the goldens' byte-identical
+# contract — the 13-gate matrix never moved)
 ```
 
 ## The lava-fog lane (the ember murk) — v0.3.167

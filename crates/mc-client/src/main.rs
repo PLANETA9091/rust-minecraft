@@ -231,6 +231,12 @@ struct Cli {
     /// emitter's stars). Anything else refuses loudly.
     #[arg(long)]
     particles: Option<String>,
+    /// THE FIXED CLOCK's render remainder override (0.0..=1.0): the
+    /// partial tick the staged frame's interpolation folds ride — the
+    /// windowed loop's own value the headless default 1.0 pins (the
+    /// current tick position bit for bit, the goldens' contract).
+    #[arg(long)]
+    partial: Option<f32>,
     #[arg(long, default_value = "render.png")]
     out: PathBuf,
     /// Path to official asset index json (enables real texture-average colors).
@@ -303,6 +309,7 @@ fn main() -> Result<()> {
             bury: cli.bury,
             xp,
             particles: cli.particles,
+            partial: cli.partial,
         };
         headless::render_gui_screen_opts(
             screen,

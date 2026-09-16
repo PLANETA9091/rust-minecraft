@@ -239,6 +239,12 @@ pub struct Particle {
     pub vx: f64,
     pub vy: f64,
     pub vz: f64,
+    /// The previous tick's position (javap `Particle.tick`'s own `xo,
+    /// yo, zo` — the pre-move pose the render's lerp walks FROM).
+    /// `None` = the just-spawned (no tick has walked it yet): the
+    /// render shows the spawn point whole, the vanilla new-particle
+    /// shape. The tick heads save it before the physics moves.
+    pub prev: Option<(f64, f64, f64)>,
     pub age: u32,
     pub lifetime: u32,
     /// The gravity field (the base default 0.0; the terrain's 1.0,
@@ -265,7 +271,38 @@ impl Particle {
     /// collision). The per-kind tails follow: the poof's sprite walk
     /// (the frame rides `age`), the crit's color fade (`gCol *=
     /// 0.96F`, `bCol *= 0.9F`).
+    /// The tick's own head (javap `Particle.tick`'s first fold — `xo
+    /// = x` rides BEFORE the physics): the current pose becomes the
+    /// previous, the render's lerp then walks the frame between the
+    /// two. Every per-kind tick calls this first.
+    pub fn tick_head(&mut self) {
+        self.prev = Some((self.x, self.y, self.z));
+    }
+
+    /// THE RENDER FOLD (javap `Particle.render`'s own lerp — `x =
+    /// Mth.lerp(partialTicks, xo, x)`): the pose the frame rides —
+    /// the previous tick's position walked `partial` of the way to
+    /// the current. `None` prev (the just-spawned) renders the spawn
+    /// point whole. The partial >= 1.0 arm speaks the CURRENT tick
+    /// position bit for bit (the headless lanes' own default — the
+    /// goldens' byte-identical contract).
+    pub fn lerped_pos(&self, partial: f32) -> (f64, f64, f64) {
+        let Some((px, py, pz)) = self.prev else {
+            return (self.x, self.y, self.z);
+        };
+        if partial >= 1.0 {
+            return (self.x, self.y, self.z);
+        }
+        let t = partial as f64;
+        (
+            px + (self.x - px) * t,
+            py + (self.y - py) * t,
+            pz + (self.z - pz) * t,
+        )
+    }
+
     pub fn tick(&mut self) -> bool {
+        self.tick_head();
         self.age += 1;
         if self.age >= self.lifetime {
             return false;
@@ -318,6 +355,7 @@ impl Particle {
     /// gate with the active world's own read, the client's fluid
     /// query the body's eye scan speaks).
     pub fn tick_bubble(&mut self, in_water: bool) -> bool {
+        self.tick_head();
         // the countdown's own gate: `original = lifetime; lifetime -=
         // 1; if (original <= 0) remove` — the u32 walk stops at zero
         // (the vanilla's int never counts below the removal)
@@ -341,6 +379,7 @@ impl Particle {
     /// gravity, NO friction; the arc HANGS in the air the whole 4-tick
     /// life, the frame the render's `sweep_frame` computation picks).
     pub fn tick_sweep(&mut self) -> bool {
+        self.tick_head();
         self.age += 1;
         if self.age >= self.lifetime {
             return false;
@@ -356,6 +395,7 @@ impl Particle {
     /// sleeps (the collision lane's honest absence — no particle
     /// ground exists for the pieces, none for the drop).
     pub fn tick_splash(&mut self) -> bool {
+        self.tick_head();
         if self.lifetime == 0 {
             return false;
         }
@@ -391,6 +431,7 @@ impl Particle {
         rng: &mut crate::drops::Lcg,
         smoke_out: &mut Vec<(f64, f64, f64, f64, f64, f64)>,
     ) -> bool {
+        self.tick_head();
         // the base Particle.tick's own walk (the age, the gravity
         // lane, the move, the friction — the same law the match arm's
         // base tick speaks), inlined: the removal speaks before the
@@ -443,6 +484,7 @@ pub fn terrain(
         x,
         y,
         z,
+        prev: None,
         vx,
         vy,
         vz,
@@ -488,6 +530,7 @@ pub fn poof(
         x,
         y,
         z,
+        prev: None,
         vx: vx + (r_jx * 2.0 - 1.0) as f64 * 0.05,
         vy: vy + (r_jy * 2.0 - 1.0) as f64 * 0.05,
         vz: vz + (r_jz * 2.0 - 1.0) as f64 * 0.05,
@@ -519,6 +562,7 @@ pub fn crit(
         x,
         y,
         z,
+        prev: None,
         vx,
         vy,
         vz,
@@ -571,6 +615,7 @@ pub fn sweep(x: f64, y: f64, z: f64, x_speed: f64, z_speed: f64, r_grey: f32) ->
         x,
         y,
         z,
+        prev: None,
         vx: x_speed,
         vy: 0.0,
         vz: z_speed,
@@ -660,6 +705,7 @@ pub fn bubble(
         x,
         y,
         z,
+        prev: None,
         vx: vx * 0.2 + (r_jx * 2.0 - 1.0) as f64 * 0.02,
         vy: vy * 0.2 + (r_jy * 2.0 - 1.0) as f64 * 0.02,
         vz: vz * 0.2 + (r_jz * 2.0 - 1.0) as f64 * 0.02,
@@ -774,6 +820,7 @@ pub fn splash(
         x,
         y,
         z,
+        prev: None,
         vx: vx_out,
         vy: vy_out,
         vz: vz_out,
@@ -886,6 +933,7 @@ pub fn lava_drip(x: f64, y: f64, z: f64, r_base: f32, r_yd: f32, r_size: f32, r_
         x,
         y,
         z,
+        prev: None,
         vx: 0.0,
         vy: (r_yd * 0.4 + 0.05) as f64,
         vz: 0.0,
@@ -918,6 +966,7 @@ pub fn smoke_puff(x: f64, y: f64, z: f64, vx: f64, vy: f64, vz: f64, r_base: f32
         x,
         y,
         z,
+        prev: None,
         vx,
         vy,
         vz,
@@ -1799,5 +1848,50 @@ mod tests {
         assert_eq!(q.x, 5.0);
         assert_eq!(q.y, 6.0);
         assert_eq!(q.z, 7.0);
+    }
+
+    /// The tick-head save law (javap `Particle.tick`'s own `xo = x`
+    /// fold): the pre-move pose lands in `prev` before the physics
+    /// walks, every tick re-arms it — the lerp walks FROM the pose
+    /// the last tick spoke.
+    #[test]
+    fn the_tick_head_saves_the_pre_move_pose() {
+        let mut p = crit(10.0, 20.0, 30.0, 1.0, 0.0, 0.0, 0.5, 0.5);
+        assert!(p.prev.is_none(), "the just-spawned carries no prev");
+        assert!(p.tick(), "tick 1 lives");
+        let (px, py, pz) = p.prev.expect("the tick saves the pose");
+        assert_eq!(px, 10.0);
+        assert_eq!(py, 20.0);
+        assert_eq!(pz, 30.0);
+        // the second tick re-arms: the pose the FIRST tick landed
+        let x1 = p.x;
+        assert!(p.tick(), "tick 2 lives");
+        let (px2, _, _) = p.prev.expect("tick 2 re-arms");
+        assert_eq!(px2, x1);
+    }
+
+    /// The render fold's own lerp (javap `Particle.render`'s
+    /// `Mth.lerp(partialTicks, xo, x)`): the half-way frame rides the
+    /// midpoint, the spawn-fresh particle (None prev) renders the
+    /// spawn point whole, and the partial >= 1.0 arm speaks the
+    /// CURRENT position bit for bit (the headless lanes' byte-identical
+    /// contract).
+    #[test]
+    fn the_lerped_pos_walks_the_prev_to_the_current() {
+        let mut p = crit(10.0, 20.0, 30.0, 2.0, 0.0, 0.0, 0.5, 0.5);
+        // the fresh spawn: any partial, the spawn point whole
+        assert_eq!(p.lerped_pos(0.25), (10.0, 20.0, 30.0));
+        assert!(p.tick(), "tick 1 lives");
+        // the walk moved x by +2 (friction 0.98 lands 1.96): the
+        // midpoint rides half the delta
+        let (lx, _, _) = p.lerped_pos(0.5);
+        let half = 10.0 + (p.x - 10.0) * 0.5;
+        assert!((lx - half).abs() < 1e-12, "midpoint: {lx} vs {half}");
+        // the exactness arm: partial 1.0 = the current position, the
+        // f64 round-trip bit for bit
+        assert_eq!(p.lerped_pos(1.0), (p.x, p.y, p.z));
+        assert_eq!(p.lerped_pos(2.0), (p.x, p.y, p.z));
+        // partial 0.0 = the previous pose, the walk's own source
+        assert_eq!(p.lerped_pos(0.0), (10.0, 20.0, 30.0));
     }
 }

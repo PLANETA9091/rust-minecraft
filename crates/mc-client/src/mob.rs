@@ -251,6 +251,12 @@ pub struct Zombie {
     pub x: f64,
     pub y: f64,
     pub z: f64,
+    /// The previous tick's feet (javap `Entity.tick`'s own `xo = x`
+    /// head — the pre-move pose the render's interpolation walks
+    /// FROM). Saved at the tick's own head, before the AI physics.
+    pub prev_x: f64,
+    pub prev_y: f64,
+    pub prev_z: f64,
     pub vx: f64,
     pub vy: f64,
     pub vz: f64,
@@ -312,6 +318,9 @@ impl Zombie {
             x,
             y,
             z,
+            prev_x: x,
+            prev_y: y,
+            prev_z: z,
             vx: 0.0,
             vy: 0.0,
             vz: 0.0,
@@ -343,6 +352,24 @@ impl Zombie {
     pub fn box_at(&self) -> (f64, f64, f64, f64, f64, f64) {
         let h = ZOMBIE_WIDTH / 2.0;
         (self.x - h, self.y, self.z - h, self.x + h, self.y + ZOMBIE_HEIGHT, self.z + h)
+    }
+
+    /// THE RENDER FOLD (javap `Entity.render`'s own lerp — `Mth.lerp(
+    /// partialTicks, xo, x)` the renderer's pose rides): the feet the
+    /// frame walks ON — the previous tick's feet carried `partial` of
+    /// the way to the current. The partial >= 1.0 arm speaks the
+    /// CURRENT feet bit for bit (the headless lanes' byte-identical
+    /// contract — the fixed clock's remainder never touches them).
+    pub fn lerped_pos(&self, partial: f32) -> (f64, f64, f64) {
+        if partial >= 1.0 {
+            return (self.x, self.y, self.z);
+        }
+        let t = partial as f64;
+        (
+            self.prev_x + (self.x - self.prev_x) * t,
+            self.prev_y + (self.y - self.prev_y) * t,
+            self.prev_z + (self.z - self.prev_z) * t,
+        )
     }
 
     /// The flat distance² to the player (the melee range law's own
@@ -413,6 +440,11 @@ impl Zombie {
     /// (the MONSTERS_BURN track + the sky darken the light law rides).
     pub fn tick(&mut self, world: &World, player: Option<&PlayerView>, day_time: i64) -> MobEvents {
         let mut events = MobEvents::default();
+        // THE TICK'S OWN HEAD (javap `Entity.tick`'s `xo = x` fold): the
+        // pre-move feet the render's interpolation walks FROM
+        self.prev_x = self.x;
+        self.prev_y = self.y;
+        self.prev_z = self.z;
         // THE FIRE CLOCK (Entity.baseTick's own block, run BEFORE the
         // death gate — the corpse keeps its clock but the dying refuse
         // the hurt): remainingFireTicks > 0 && !fireImmune -> the %20
@@ -1608,5 +1640,48 @@ mod tests {
         // pool never fires (the death_loot contract the loot lane pins)
         let flesh = wire_id("rotten_flesh").expect("the rotten flesh rides the wire");
         assert!(z.death_loot(false).iter().all(|(item, _)| *item == flesh));
+    }
+
+    /// THE TICK'S OWN HEAD SAVES THE PREV (javap `Entity.tick`'s `xo =
+    /// x` fold): the ctor arms the spawn, the AI tick re-arms it before
+    /// the walk moves the feet, and the render fold's lerp rides the
+    /// half-way point at partial 0.5 while the partial >= 1.0 arm
+    /// speaks the CURRENT feet bit for bit (the headless contract).
+    #[test]
+    fn the_tick_head_saves_the_prev_and_the_lerp_walks_it() {
+        let world = wide_flat_world();
+        let mut z = Zombie::new(1, 32.0, 5.0, 32.0, 7);
+        // the ctor arm: the spawn is its own first prev
+        assert_eq!((z.prev_x, z.prev_y, z.prev_z), (32.0, 5.0, 32.0));
+        // the aggro walk: the player nearby pulls the chase goal — the
+        // feet move this tick, the head saved the pre-move pose first
+        let pv = PlayerView {
+            x: 36.0,
+            y: 5.0,
+            z: 32.0,
+            eye_y: 6.0,
+            dead: false,
+            width: 0.6,
+        };
+        let _ = z.tick(&world, Some(&pv), NOON);
+        assert_eq!(z.prev_x, 32.0, "the pre-move feet the head saved");
+        // the chase may arm over a few goals' rechecks — walk until the
+        // feet MOVED, then the fold's laws speak on a real delta
+        for _ in 0..60 {
+            if (z.x - 32.0).abs() > 1e-6 {
+                break;
+            }
+            let _ = z.tick(&world, Some(&pv), NOON);
+        }
+        assert!(
+            (z.x - 32.0).abs() > 1e-6,
+            "the chase moved the zombie: {}",
+            z.x
+        );
+        let (lx, _, _) = z.lerped_pos(0.5);
+        let half = z.prev_x + (z.x - z.prev_x) * 0.5;
+        assert!((lx - half).abs() < 1e-12, "midpoint: {lx} vs {half}");
+        assert_eq!(z.lerped_pos(1.0), (z.x, z.y, z.z));
+        assert_eq!(z.lerped_pos(0.0), (z.prev_x, z.prev_y, z.prev_z));
     }
 }

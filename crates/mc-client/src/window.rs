@@ -491,6 +491,12 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
     // in-world like the vanilla pointer-lock, shows on every menu)
     let mut prev_mouse: Option<(f32, f32)> = None;
     let mut was_in_world = false;
+    // THE FIXED CLOCK's own state (vanilla `Minecraft.runTick`): the
+    // wall time accrues between frames, spends in whole 50ms game ticks
+    // (the 10-tick catch-up cap), the remainder carries AND rides the
+    // frame's render as the partial tick the interpolation folds read
+    let mut tick_acc_ms = 0.0f64;
+    let mut t_clock = std::time::Instant::now();
     // offline-mode joins ride the same architecture: the "join" button
     // records the request, a detached worker runs the live join (login +
     // configuration + the play state pumped to the world-load milestone,
@@ -637,7 +643,21 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
                 app.on_perspective_key();
             }
         }
-        app.update();
+        // THE FIXED CLOCK SPENDS (vanilla `Minecraft.runTick`'s own
+        // while loop): the accrued wall time becomes whole 50ms game
+        // ticks (the catch-up cap holds a stalled machine — the game
+        // logic runs 20 TPS like vanilla, never 3x fast with the render
+        // rate), the sub-tick remainder rides THIS frame's render as
+        // the partial tick (the body/mob/particle interpolation folds)
+        let now = std::time::Instant::now();
+        tick_acc_ms += (now - t_clock).as_secs_f64() * 1000.0;
+        t_clock = now;
+        let (ticks, rem) = crate::screens::ticks_due(tick_acc_ms);
+        tick_acc_ms = rem;
+        for _ in 0..ticks {
+            app.update();
+        }
+        app.partial_tick = (rem / crate::screens::MILLIS_PER_TICK) as f32;
         // dispatch newly requested server-list pings to worker threads
         for req in &app.net_requests[net_seen..] {
             let tx = net_tx.clone();

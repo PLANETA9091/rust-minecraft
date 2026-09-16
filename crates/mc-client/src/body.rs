@@ -514,6 +514,13 @@ pub struct PlayerBody {
     pub x: f64,
     pub y: f64,
     pub z: f64,
+    /// The previous tick's feet (javap `Entity.tick`'s own `xo = x`
+    /// head — the pre-move pose the render's interpolation walks
+    /// FROM). Saved at the tick's own head, before the physics; the
+    /// lerp the fixed clock's partial rides.
+    pub prev_x: f64,
+    pub prev_y: f64,
+    pub prev_z: f64,
     /// The velocity (the vanilla deltaMovement).
     pub vx: f64,
     pub vy: f64,
@@ -694,6 +701,9 @@ impl PlayerBody {
             x,
             y,
             z,
+            prev_x: x,
+            prev_y: y,
+            prev_z: z,
             vx: 0.0,
             vy: 0.0,
             vz: 0.0,
@@ -863,8 +873,13 @@ impl PlayerBody {
         self.fire_doused_due = false;
         self.drown_hurt_due = false;
         // the pre-tick position — the walk distance law's own source
-        // (calculateEntityAnimation's getX() - xo fold)
+        // (calculateEntityAnimation's getX() - xo fold) AND the render
+        // interpolation's own source (the prev the frame's lerp walks
+        // FROM)
         let (x0, y0, z0) = (self.x, self.y, self.z);
+        self.prev_x = x0;
+        self.prev_y = y0;
+        self.prev_z = z0;
         // THE RISING BODY'S ACCUMULATION CLAMP (javap
         // LivingEntity.updateFallFlying's own first call —
         // checkFallDistanceAccumulation: `vy > -0.5 && fallDistance >
@@ -1373,6 +1388,24 @@ impl PlayerBody {
         self.last_on_ground = self.on_ground;
         self.last_horizontal_collision = self.horizontal_collision;
         out
+    }
+
+    /// THE RENDER FOLD (javap `Entity.render`'s own lerp — `Mth.lerp(
+    /// partialTicks, xo, x)` the renderer's pose rides): the feet the
+    /// frame walks ON — the previous tick's feet carried `partial` of
+    /// the way to the current. The partial >= 1.0 arm speaks the
+    /// CURRENT feet bit for bit (the headless lanes' byte-identical
+    /// contract — the fixed clock's remainder never touches them).
+    pub fn lerped_pos(&self, partial: f32) -> (f64, f64, f64) {
+        if partial >= 1.0 {
+            return (self.x, self.y, self.z);
+        }
+        let t = partial as f64;
+        (
+            self.prev_x + (self.x - self.prev_x) * t,
+            self.prev_y + (self.y - self.prev_y) * t,
+            self.prev_z + (self.z - self.prev_z) * t,
+        )
     }
 
     /// The camera pose (the snapshot_camera conversion's own inverse:
@@ -2665,5 +2698,48 @@ mod tests {
             "the -20 floor folds the dose every 20 ticks after the reset"
         );
     }
-}
 
+    /// The tick-head save (javap `Entity.tick`'s own `xo = x` head):
+    /// the pre-move feet land in prev_* before the physics walks, the
+    /// ctor arms prev at the spawn, and the render fold's lerp rides
+    /// the half-way point at partial 0.5 while the partial >= 1.0 arm
+    /// speaks the CURRENT feet bit for bit (the headless contract).
+    #[test]
+    fn the_tick_head_saves_the_prev_and_the_lerp_walks_it() {
+        let mut w = World::new(1, 42);
+        for x in 0..16 {
+            for z in 0..16 {
+                for y in 0..crate::world::CHUNK_Y {
+                    w.set(x, y as i32, z, if y == 0 { crate::world::STONE } else { crate::world::AIR });
+                }
+            }
+        }
+        let mut b = PlayerBody::new(8.0, 1.0, 8.0, 0.0, 0.0);
+        // the ctor arm: the spawn is its own first prev
+        assert_eq!((b.prev_x, b.prev_y, b.prev_z), (8.0, 1.0, 8.0));
+        settle(&mut b, &w);
+        b.forward = 1.0;
+        // the walk impulse builds momentum (the vanilla movement's own
+        // friction walk) — tick until the feet MOVED, then the fold's
+        // laws speak on a real delta. The yaw-0 walk's own axis: the
+        // HORIZONTAL distance is the honest moved read, whichever axis
+        // the facing speaks
+        let moved = |b: &PlayerBody| ((b.x - 8.0).powi(2) + (b.z - 8.0).powi(2)).sqrt();
+        for _ in 0..40 {
+            b.tick(&w, false);
+            if moved(&b) > 1e-6 {
+                break;
+            }
+        }
+        // the body MOVED (the walk impulse speaks), the midpoint rides
+        // half the delta, and 1.0 = the current feet
+        assert!(moved(&b) > 1e-6, "the walk moved the body: {}", moved(&b));
+        let (lx, _, _) = b.lerped_pos(0.5);
+        let half = b.prev_x + (b.x - b.prev_x) * 0.5;
+        assert!((lx - half).abs() < 1e-12, "midpoint: {lx} vs {half}");
+        assert_eq!(b.lerped_pos(1.0), (b.x, b.y, b.z));
+        assert_eq!(b.lerped_pos(1.5), (b.x, b.y, b.z));
+        // the clamp arm: partial 0.0 walks FROM the previous feet
+        assert_eq!(b.lerped_pos(0.0), (b.prev_x, b.prev_y, b.prev_z));
+    }
+}

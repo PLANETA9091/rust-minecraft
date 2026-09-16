@@ -211,6 +211,11 @@ pub struct SceneOpts {
     /// 16-sample stars around a staged zombie. Anything else refuses
     /// loudly (the CLI's own paranoia).
     pub particles: Option<String>,
+    /// THE FIXED CLOCK's render remainder override (the --partial
+    /// lane): the staged frame's interpolation folds ride it — None
+    /// keeps the default 1.0 (the current tick position bit for bit,
+    /// the goldens' byte-identical contract).
+    pub partial: Option<f32>,
 }
 
 impl SceneOpts {
@@ -1241,6 +1246,12 @@ pub fn render_gui_screen_opts(
     }
     seed_scene(&mut app, opts)?;
     tick_scene(&mut app, opts, swing_progress)?;
+    // THE PARTIAL OVERRIDE (the --partial lane): the fixed clock's
+    // remainder the staged frame speaks — clamped to the fold's [0, 1]
+    // domain (the lerp's own walk, the vanilla partialTick shape)
+    if let Some(p) = opts.partial {
+        app.partial_tick = p.clamp(0.0, 1.0);
+    }
 
     let mut fb = Framebuf::new(width, height);
     let mut assets = GuiAssets::open("assets-cache/jar");

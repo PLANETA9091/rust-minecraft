@@ -24,6 +24,30 @@ pub const TEXT_OUTLINE_BLACK: [f32; 3] = [0.0, 0.0, 0.0];
 /// Mojang Studios loading screen background (vanilla constant).
 pub const MOJANG_RED: [f32; 3] = [239.0 / 255.0, 50.0 / 255.0, 61.0 / 255.0];
 
+/// THE FIXED CLOCK (vanilla `Minecraft.runTick`'s own law): one game
+/// tick every 50ms — 20 TPS, the pace every clock in the game speaks
+/// (the hunger drain, the eat hold, the swing, the day cycle's 24000).
+pub const MILLIS_PER_TICK: f64 = 50.0;
+/// The catch-up cap (vanilla runTick's own max — a stalled machine
+/// spends at most ten ticks per frame, the time dilates instead of the
+/// spiral-of-death the unbounded loop would build).
+pub const MAX_CATCHUP_TICKS: u32 = 10;
+
+/// The fixed clock's own spend law: the accumulated wall time (ms)
+/// becomes (ticks, remainder) — whole 50ms ticks spent (the cap holds
+/// the stall), the sub-tick remainder carried for the next frame AND
+/// spoken as the render's partial tick. Negative input (the clock's
+/// own backwards jump — a suspended tab) spends nothing and resets
+/// clean.
+pub fn ticks_due(acc_ms: f64) -> (u32, f64) {
+    if !(acc_ms > 0.0) {
+        return (0, 0.0);
+    }
+    let capped = acc_ms.min(MILLIS_PER_TICK * MAX_CATCHUP_TICKS as f64);
+    let ticks = (capped / MILLIS_PER_TICK).floor() as u32;
+    (ticks, capped - ticks as f64 * MILLIS_PER_TICK)
+}
+
 /// THE BLOCK SCREEN TINT (javap `ScreenEffectRenderer.submit`'s own
 /// `ldc -15132391` = 0xFF191919): the rgb 25/255 the head-in-block
 /// quad's dark multiply speaks, the alpha 0xFF the opaque cover rides.
@@ -328,6 +352,14 @@ pub struct App {
     /// Base world tick for the day-night cycle (0 = vanilla dawn; the frame
     /// counter advances time 1 tick per frame like the vanilla clock).
     pub day_time_base: u64,
+    /// THE FIXED CLOCK'S RENDER REMAINDER (vanilla `Minecraft.runTick`'s
+    /// own partialTick): the fraction of the next 50ms tick the wall
+    /// clock has already accrued when this frame renders — the windowed
+    /// loop writes it every frame; the render's interpolation folds ride
+    /// it (the body's feet, the mobs, the particles). The default 1.0
+    /// speaks the CURRENT tick position bit for bit — the headless
+    /// lanes' (and the goldens') byte-identical contract.
+    pub partial_tick: f32,
     /// The END sky's flash state (javap `ClientLevel.endFlashState`):
     /// ticked every frame on the client's game-time clock — the same
     /// `day_time` the celestials ride — and read by the END branch of
@@ -848,6 +880,7 @@ impl App {
             selected_hotbar: 0,
             hotbar_slots: [(0, 0); 9],
             day_time_base: 0,
+            partial_tick: 1.0,
             end_flash: crate::end_flash::EndFlashState::new(),
             ui_sounds: Vec::new(),
             net_requests: Vec::new(),
@@ -4503,7 +4536,18 @@ impl App {
         // client's own position); the deterministic scenes never own a
         // body and keep the disciplines below bit for bit
         if let Some(body) = &self.body {
-            let base = body.camera();
+            let mut base = body.camera();
+            // THE RENDER FOLD (javap Entity.render's own lerp): the
+            // first-person camera rides the interpolated feet — the
+            // fixed clock's partial the frame speaks. The angles keep
+            // the body's CURRENT values (the mouse look applies per
+            // frame, the vanilla KeyHandler's own cadence).
+            let (lx, ly, lz) = body.lerped_pos(self.partial_tick);
+            base.pos = crate::math::Vec3::new(
+                lx as f32,
+                (ly + body.eye_height()) as f32,
+                lz as f32,
+            );
             // THE DETACHED CAMERA (Camera.setup's third-person branch):
             // a non-first-person perspective backs the camera off along
             // its own view (the mirrored type flips first), clipped by
@@ -5089,7 +5133,10 @@ impl App {
             head_yaw_off_deg: 0.0,
             death_time: 0.0,
         };
-        let feet = Vec3::new(body.x as f32, body.y as f32, body.z as f32);
+        let feet = {
+            let (lx, ly, lz) = body.lerped_pos(self.partial_tick);
+            Vec3::new(lx as f32, ly as f32, lz as f32)
+        };
         let quads = model.quads(&state, feet, cam.yaw, cam.pitch);
         let sampled: Vec<crate::raster::SampledQuad> = quads
             .iter()
@@ -5203,7 +5250,12 @@ impl App {
                 head_yaw_off_deg: mob.head_yaw_off,
                 death_time: mob.death_time_at(crate::avatar::RENDER_PARTIAL),
             };
-            let feet = Vec3::new(mob.x as f32, mob.y as f32, mob.z as f32);
+            // THE RENDER FOLD (javap Entity.render's own lerp): the
+            // feet the frame walks ON — the prev the tick head saved,
+            // carried the fixed clock's partial of the way. The flame
+            // rings ride the same fold (the bbox they climb).
+            let (mx, my, mz) = mob.lerped_pos(self.partial_tick);
+            let feet = Vec3::new(mx as f32, my as f32, mz as f32);
             let quads = model.quads(&state, feet, cam.yaw, cam.pitch);
             // the hurt overlay's own shade term (the mix law's 0.7)
             let shade = if mob.hurt_time > 0 { 0.7 } else { 1.0 };
@@ -5573,11 +5625,17 @@ impl App {
         let mut sweep_groups: Vec<(usize, Vec<crate::raster::SampledQuad>)> = Vec::new();
         for p in &self.particles {
             let half = p.half();
+            // THE RENDER FOLD (javap Particle.render's own lerp): the
+            // billboard rides the interpolated position — the prev the
+            // tick head saved, carried the fixed clock's partial of the
+            // way (the partial >= 1.0 arm speaks the current tick bit
+            // for bit, the headless contract)
+            let (lx, ly, lz) = p.lerped_pos(self.partial_tick);
             let corner = |sx: f32, syp: f32| {
                 [
-                    p.x as f32 + (right[0] * sx + up[0] * syp) * half,
-                    p.y as f32 + (right[1] * sx + up[1] * syp) * half,
-                    p.z as f32 + (right[2] * sx + up[2] * syp) * half,
+                    lx as f32 + (right[0] * sx + up[0] * syp) * half,
+                    ly as f32 + (right[1] * sx + up[1] * syp) * half,
+                    lz as f32 + (right[2] * sx + up[2] * syp) * half,
                 ]
             };
             // THE CORNER WALK the orb lane speaks (the CCW-in-screen
@@ -6932,6 +6990,36 @@ pub fn top_solid_y(world: &crate::world::World, x: i32, z: i32) -> i32 {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// THE FIXED CLOCK'S SPEND LAW (vanilla `Minecraft.runTick`'s own
+    /// while loop): whole 50ms ticks spent, the sub-tick remainder
+    /// carried, the 10-tick stall cap holds the spiral of death away,
+    /// the backwards clock spends nothing.
+    #[test]
+    fn the_fixed_clock_spends_whole_ticks_and_carries_the_remainder() {
+        // the empty frame: nothing accrues, nothing spends
+        assert_eq!(ticks_due(0.0), (0, 0.0));
+        // the backwards jump (a suspended tab's clock): spends nothing,
+        // resets clean
+        assert_eq!(ticks_due(-30.0), (0, 0.0));
+        // the sub-tick frame: the remainder carries, no tick yet
+        let (n, rem) = ticks_due(30.0);
+        assert_eq!(n, 0);
+        assert!((rem - 30.0).abs() < 1e-9);
+        // the exact tick: one spent, nothing carried
+        assert_eq!(ticks_due(50.0), (1, 0.0));
+        // the drift frame: one spent, 10ms toward the next
+        assert_eq!(ticks_due(60.0), (1, 10.0));
+        // the multi-tick catch-up: two whole ticks, the tail carried
+        assert_eq!(ticks_due(120.0), (2, 20.0));
+        // the STALL CAP (vanilla's own max): 4000ms of wall time spends
+        // at most ten ticks — the time dilates, the loop never spirals
+        let (n, rem) = ticks_due(4000.0);
+        assert_eq!(n, MAX_CATCHUP_TICKS);
+        assert!((rem - 0.0).abs() < 1e-9);
+        // the partial tick the render rides: the remainder's fraction
+        assert!((ticks_due(60.0).1 as f32 / MILLIS_PER_TICK as f32 - 0.2).abs() < 1e-6);
+    }
 
     #[test]
     fn chest_geometry_carries_the_generic_54_layout() {
