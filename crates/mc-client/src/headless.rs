@@ -221,6 +221,17 @@ pub struct SceneOpts {
     /// arms the rainbow clock the render's getWoolColor gate speaks —
     /// any other name rides the fur unnamed (the honest word).
     pub net_name: Option<String>,
+    /// THE CROSSHAIR'S OWN WORD (the shouldShowName second arm's
+    /// stage): the custom name lands on the FIRST wire mob — named
+    /// but UNFLAGGED (the accessor-3 Boolean stays silent — the byte
+    /// the name_visible tag would ride) — and the mob SNAPS to the
+    /// facing line (the ring's side offset zeroed, the crosshair's
+    /// own ray the eye rides). The tag the byte never arms speaks
+    /// through the pick: `entity == dispatcher.crosshairPickEntity`,
+    /// the entity arm's 3.0 reach the filterHitResult speaks. Stage
+    /// with --net-mobs (the zombie ring: the level eye ray crosses
+    /// the 1.95-tall box, the sheep's 1.3 stays under it).
+    pub net_crosshair: Option<String>,
     /// THE DIVE SEED: carve a 3x3 pool AT the body's own column — three
     /// cells of water down (the old surface cell becomes the water
     /// surface), a forced-solid basin floor, the headroom cleared — and
@@ -1576,6 +1587,47 @@ pub fn render_gui_screen_opts(
                         {
                             w.custom_name = Some(name);
                             w.name_visible = true;
+                        }
+                    }
+                    // THE CROSSHAIR'S OWN ARM (the shouldShowName second
+                    // arm's stage): the FIRST wire mob rides the custom
+                    // name WITHOUT the visibility byte (the accessor-3
+                    // Boolean the named-AND-visible form rides stays
+                    // silent) — and the body SNAPS to the facing line
+                    // (the ring's side offset zeroed, the first ring's
+                    // own 1.8 t the line keeps): the eye's own ray the
+                    // pick walks crosses the box, the entity arm's 3.0
+                    // reach the filterHitResult speaks stays inside.
+                    if let Some(name) = opts.net_crosshair.clone() {
+                        // the body lands AFTER this block (the
+                        // seed_scene call at the pipeline's tail) — the
+                        // placement the body stage speaks is the
+                        // world-center column the fallback mirrors
+                        let (b_x, b_z) = app
+                            .body
+                            .as_ref()
+                            .map(|b| (b.x, b.z))
+                            .unwrap_or((
+                                app.world_size as f64 / 2.0 + 0.5,
+                                app.world_size as f64 / 2.0 + 0.5,
+                            ));
+                        let yaw_cam = opts.body_yaw.unwrap_or(-90.0);
+                        let (fx, fz) = (
+                            (-yaw_cam.to_radians().sin()) as f64,
+                            yaw_cam.to_radians().cos() as f64,
+                        );
+                        if let Some(w) = wire_mobs.first_mut() {
+                            w.x = b_x + fx * 1.8;
+                            w.z = b_z + fz * 1.8;
+                            // the name rides the flag's word — the EMPTY
+                            // name stages the snap alone (the companion
+                            // form: the same body, the byte silent, the
+                            // tag's own pixels the diff isolates)
+                            if !name.is_empty() {
+                                w.custom_name = Some(name);
+                            }
+                            // the byte stays silent — the name_visible
+                            // the ring ctor wrote is the honest false
                         }
                     }
                     app.live_mobs_updated(wire_mobs);

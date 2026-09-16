@@ -78,6 +78,15 @@ pub const NAME_OF: [&str; 27] = [
 /// sibling). The block clip's own reach.
 pub const BLOCK_INTERACTION_RANGE: f64 = 4.5;
 
+/// The entity interaction reach — the `Attributes.ENTITY_INTERACTION_RANGE`
+/// attribute's own default (the 26.2 clinit's own ctor args:
+/// `('entity_interaction_range', ..., 3.0, 0.0, 64.0)` — the 4.5 block
+/// sibling's pairing the raw dump speaks). The crosshair's entity arm
+/// rides it: `LocalPlayer.filterHitResult(hit, eye, entityRange)` keeps
+/// the picked entity only while its hit location stays `closerThan(eye,
+/// 3.0)` — the strict compare, else the hit degrades to a MISS.
+pub const ENTITY_INTERACTION_RANGE: f64 = 3.0;
+
 /// One block-ray hit — the vanilla `BlockHitResult`'s own shape: the hit
 /// voxel, the entry face's Direction ordinal, the exact hit location the
 /// wire's cursor floats subtract from (double math, float cast), and the

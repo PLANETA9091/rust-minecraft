@@ -264,6 +264,13 @@ struct Cli {
     /// fur unnamed). Requires --net-sheep.
     #[arg(long)]
     net_name: Option<String>,
+    /// Stage the CUSTOM NAME on the first wire mob, named but
+    /// UNFLAGGED (no --net-name visibility byte) — the tag the byte
+    /// never arms speaks through the CROSSHAIR's own pick (the
+    /// shouldShowName second arm, the entity arm's 3.0 reach). The
+    /// mob snaps to the facing line. Requires --net-mobs.
+    #[arg(long)]
+    net_crosshair: Option<String>,
     /// Carve a 3x3 pool AT the body and sink it to the basin floor —
     /// the eye sits under the water surface and the REAL water-screen
     /// gate speaks (the underwater overlay, no scripted blue).
@@ -388,6 +395,7 @@ fn main() -> Result<()> {
             net_sheep: cli.net_sheep,
             net_wool: cli.net_wool,
             net_name: cli.net_name,
+            net_crosshair: cli.net_crosshair,
             water_pool: cli.water_pool,
             water_vision: cli.water_vision,
             air_supply: cli.air_supply,

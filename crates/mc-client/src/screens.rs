@@ -2026,10 +2026,10 @@ impl App {
         // the max(4.5, 3.0) search sphere, and the entity wins only
         // when it sits CLOSER than the block's own hit: the
         // `entityHit.distanceToSqr(eye) < hitDist` compare the
-        // LocalPlayer.pick tail speaks). A picked mob EXECUTES the
-        // attack (MultiPlayerGameMode.attack's own branch — the swing
-        // rides it too) and returns before the block lane.
-        if let Some(i) = self.pick_mob() {
+        // LocalPlayer.pick tail speaks, the entity arm's own 3.0
+        // reach the filterHitResult speaks). The attack's write arm
+        // rides the offline lane only — the empty extra the law asks.
+        if let Some(i) = self.pick_mob(&[]) {
             self.attack_mob(i);
             self.swing.start();
             if let Some(sink) = self.live_clicks.as_ref() {
@@ -2102,15 +2102,33 @@ impl App {
         }
     }
 
-    /// THE CROSSHAIR'S MOB VERDICT (javap `LocalPlayer.pick`'s own
-    /// compare): the entity pick at the max(4.5, 3.0) search range,
-    /// kept only when the entity's hit sits closer than the BLOCK
-    /// clip's own location (the `d2 < hitDist` strict compare — a
-    /// block in front of the mob eats the hit, the vanilla's own
-    /// verdict). The corpse-free search rides the camera ray (the
-    /// same camera-pick stand-in the crosshair clip speaks).
-    fn pick_mob(&self) -> Option<usize> {
-        if self.mobs.is_empty() {
+    /// THE CROSSHAIR'S MOB VERDICT (the 26.2 `Minecraft.pick`'s own
+    /// chain, every operand the raw disassembly speaks): the per-frame
+    /// `raycastHitResult` rides `LocalPlayer.pick(camera, 4.5, 3.0,
+    /// partial)` — the entity search at the max(4.5, 3.0) range, the
+    /// BLOCK clip first (the block's own distance CLAMPS the entity
+    /// ray: `rangeSq = blockDistSq`), the entity winning only when its
+    /// hit sits CLOSER than the block's own (`entityHit.distanceToSqr
+    /// (eye) < hitDist` — the strict dcmpg the tail speaks) — and the
+    /// WINNING hit filtered through `filterHitResult(hit, eye,
+    /// entityRange)`: the entity's clip point must stay `closerThan
+    /// (eye, 3.0)` STRICT (the `Attributes.ENTITY_INTERACTION_RANGE`
+    /// 3.0 default the clinit ctor args speak), else the hit degrades
+    /// to a MISS and `crosshairPickEntity` stays null. The verdict is
+    /// the SAME one both consumers read: the attack lane and
+    /// `shouldShowName`'s second arm (`hasCustomName() && entity ==
+    /// dispatcher.crosshairPickEntity`).
+    ///
+    /// `extra` rides the wire's own mob lane (the offline AI bodies
+    /// and the remote bodies are two vecs the client keeps — vanilla
+    /// walks ONE entity list; the chain index this returns counts the
+    /// offline lane first, the wire lane after, the order the render's
+    /// own chain speaks). The ATTACK site passes `&[]`: its write arm
+    /// (`attack_mob`) mutates the offline lane only — the wire attack
+    /// (the Interact/Attack packet the real client sends) is the
+    /// honest absence the wire lane has not spoken yet.
+    fn pick_mob(&self, extra: &[crate::mob::Zombie]) -> Option<usize> {
+        if self.mobs.is_empty() && extra.is_empty() {
             return None;
         }
         let cam = self.world_camera();
@@ -2118,7 +2136,23 @@ impl App {
         let eye = (cam.pos.x as f64, cam.pos.y as f64, cam.pos.z as f64);
         let view = (f.x as f64, f.y as f64, f.z as f64);
         let search_range = crate::world::BLOCK_INTERACTION_RANGE.max(3.0);
-        let (i, mob_d2) = crate::mob::pick_entity(&self.mobs, eye, view, search_range)?;
+        // the two lanes' own nearest (the nearest overall is the
+        // nearest of each lane's own nearest — the same verdict the
+        // one-list walk speaks)
+        let own = crate::mob::pick_entity(&self.mobs, eye, view, search_range);
+        let wire = crate::mob::pick_entity(extra, eye, view, search_range);
+        let (i, mob_d2) = match (own, wire) {
+            (Some((i, a)), Some((j, b))) => {
+                if a <= b {
+                    (i, a)
+                } else {
+                    (self.mobs.len() + j, b)
+                }
+            }
+            (Some(x), None) => x,
+            (None, Some((j, b))) => (self.mobs.len() + j, b),
+            (None, None) => return None,
+        };
         // the block clip's own distance term (the same law the pick's
         // tail speaks — the blockHit at the search range)
         let block_d2 = self
@@ -2130,7 +2164,12 @@ impl App {
                 dx * dx + dy * dy + dz * dz
             })
             .unwrap_or(f64::INFINITY);
-        if mob_d2 < block_d2 {
+        // THE ENTITY ARM'S OWN FILTER (the filterHitResult the winning
+        // hit rides): the clip point inside the 3.0 entity reach
+        // STRICT (`closerThan` = `distanceToSqr < d*d`) — else MISS,
+        // the crosshairPickEntity the null speaks
+        let entity_reach = crate::world::ENTITY_INTERACTION_RANGE * crate::world::ENTITY_INTERACTION_RANGE;
+        if mob_d2 < block_d2 && mob_d2 < entity_reach {
             Some(i)
         } else {
             None
@@ -5658,7 +5697,13 @@ impl App {
         // flame feature): the Sheep arm sets it, the draw below rides
         // it, the dye tint the DyeColor table speaks
         let mut wool_overlay: Option<(Vec<crate::avatar::AvatarQuad>, [f32; 3])> = None;
-        for mob in self.mobs.iter().chain(self.net_mobs.iter()) {
+        // THE CROSSHAIR'S OWN VERDICT (the per-frame pick the
+        // Minecraft.pick arms — crosshairPickEntity the shouldShowName's
+        // second arm reads): ONE verdict per frame over the SAME chain
+        // the draw below walks (the offline lane first, the wire lane
+        // after — the chain index the enumerate speaks)
+        let crosshair_pick = self.pick_mob(&self.net_mobs);
+        for (ci, mob) in self.mobs.iter().chain(self.net_mobs.iter()).enumerate() {
             // the head's own lerp (LivingEntityRenderer's
             // `Mth.lerp(partialTicks, yHeadRotO, yHeadRot)`): the AI's
             // new look target the head EASES to between the tick
@@ -5893,14 +5938,15 @@ impl App {
             // THE NAMEPLATE'S OWN DRAW (the NameTagFeatureRenderer the
             // 26.2 feature pipeline speaks — the SubmitNodeCollection
             // .submitNameTag raw walk rides the planes builder below):
-            // the gate is shouldShowName's own first arm — the
-            // accessor-3 Boolean isCustomNameVisible() (the
-            // crosshairPickEntity arm the dispatcher owns is the
-            // client-side pick this lane does not speak yet). The
-            // crouch rides the isDiscrete word: the standing body
-            // draws the bright core pass, the crouching body only its
-            // dim see-through copy.
-            if mob.name_visible {
+            // the gate is shouldShowName's OWN two arms — the
+            // accessor-3 Boolean isCustomNameVisible(), OR the
+            // crosshair's own verdict: `hasCustomName() && entity ==
+            // dispatcher.crosshairPickEntity` — the per-frame pick the
+            // Minecraft.pick arms (the entity arm's 3.0 reach the
+            // filterHitResult speaks). The crouch rides the isDiscrete
+            // word: the standing body draws the bright core pass, the
+            // crouching body only its dim see-through copy.
+            if mob.name_visible || crosshair_pick == Some(ci) {
                 if let Some(name) = &mob.custom_name {
                     // the anchor (translate(attachment.x,
                     // attachment.y + 0.5, z): the AT_HEIGHT fallback
@@ -13083,6 +13129,120 @@ mod tests {
     }
 
     #[test]
+    fn the_crosshair_verdict_speaks_the_entity_reach_law() {
+        // THE 26.2 ENTITY ARM (LocalPlayer.pick's own tail): the
+        // winning hit rides `filterHitResult(hit, eye, entityRange)` —
+        // the clip point stays `closerThan(eye, 3.0)` STRICT (the
+        // entity_interaction_range 3.0 the Attributes clinit's ctor
+        // args speak), else the MISS the null crosshairPickEntity
+        // speaks. The 2.5 body the attack tests stage picks; the 3.5
+        // body sits INSIDE the 4.5 search sphere but OUTSIDE the 3.0
+        // arm — the verdict the null speaks.
+        let mut app = App::new(3);
+        app.enter_world();
+        crate::headless::seed_scene(
+            &mut app,
+            &crate::headless::SceneOpts {
+                body: true,
+                zombie: true,
+                ..crate::headless::SceneOpts::default()
+            },
+        )
+        .unwrap();
+        let mut aim_at_first = |app: &mut App| {
+            let (tx, ty, tz) = {
+                let m = &app.mobs[0];
+                (m.x, m.y + crate::mob::ZOMBIE_HEIGHT * 0.5, m.z)
+            };
+            let b = app.body.as_mut().unwrap();
+            let (dx, dy, dz) = (tx - b.x, ty - (b.y + b.eye_height()), tz - b.z);
+            let horiz = (dx * dx + dz * dz).sqrt().max(1e-9);
+            let len3 = (dx * dx + dy * dy + dz * dz).sqrt().max(1e-9);
+            b.yaw = ((dx / horiz).atan2(-dz / horiz) - std::f64::consts::PI).to_degrees() as f32;
+            b.pitch = -(dy / len3).asin().to_degrees() as f32;
+        };
+        // INSIDE the reach: the 2.5 body the verdict keeps
+        {
+            let bx = app.body.as_ref().unwrap().x;
+            app.mobs[0].x = bx + 2.5;
+        }
+        aim_at_first(&mut app);
+        assert!(
+            app.pick_mob(&[]).is_some(),
+            "the 2.5 body inside the entity arm's reach"
+        );
+        // BEYOND the 3.0 arm, inside the 4.5 search sphere: the
+        // closerThan refuses — the verdict the null speaks
+        {
+            let bx = app.body.as_ref().unwrap().x;
+            app.mobs[0].x = bx + 3.5;
+        }
+        aim_at_first(&mut app);
+        assert!(
+            app.pick_mob(&[]).is_none(),
+            "the 3.5 body the closerThan(3.0) refuses"
+        );
+    }
+
+    #[test]
+    fn the_wire_lane_rides_the_crosshair_verdict() {
+        // THE ONE VERDICT the 26.2 law speaks: the per-frame pick
+        // walks the SAME chain the render walks — the wire's remote
+        // bodies the offline lane never owned. The named-but-unflagged
+        // zombie (the accessor-3 Boolean silent — the byte the
+        // named-AND-visible form rides, the --net-crosshair stage's
+        // own word) ON the facing line: the chain index the wire side
+        // carries when the offline lane sleeps.
+        let mut app = App::new(3);
+        app.open(ScreenKind::Connect);
+        app.net_world = Some(air_net_world(2, 0));
+        app.enter_network_world(None, Skybox::Overworld, None, None);
+        // the body (the camera's own authority — the seed_scene
+        // placement: the world-center column, the east facing)
+        let n = app.world_size as f64;
+        let mut body = crate::body::PlayerBody::new(
+            n / 2.0 + 0.5,
+            app.spawn_y as f64,
+            n / 2.0 + 0.5,
+            -90.0,
+            0.0,
+        );
+        body.on_ground = true;
+        app.body = Some(body);
+        // the named-but-unflagged zombie ON the facing line (the eye's
+        // own ray the pick walks — yaw -90 faces +x, the level ray at
+        // feet + 1.62 crosses the 0..1.95 box)
+        let (bx, bz) = {
+            let b = app.body.as_ref().unwrap();
+            (b.x, b.z)
+        };
+        let mut w = wire_mob_named(100, bx + 1.8, app.spawn_y as f64, bz, "minecraft:zombie");
+        w.custom_name = Some("Lurker".to_string());
+        app.live_mobs_updated(vec![w]);
+        // the staged word: named, the byte silent
+        assert_eq!(app.net_mobs[0].custom_name.as_deref(), Some("Lurker"));
+        assert!(
+            !app.net_mobs[0].name_visible,
+            "the byte the tag's first arm reads stays silent"
+        );
+        // the verdict: the chain index 0 — the wire side's own (the
+        // offline lane empty), the tag's second arm the gate rides
+        assert_eq!(
+            app.pick_mob(&app.net_mobs),
+            Some(0),
+            "the wire mob the crosshair verdict speaks"
+        );
+        // THE OFF-LINE BODY: the ray the line rides misses the box
+        // laterally (the 0.9 side, the half-width 0.3 the box keeps)
+        // — the verdict the null speaks
+        app.net_mobs[0].z = bz + 0.9;
+        assert!(
+            app.pick_mob(&app.net_mobs).is_none(),
+            "the lateral miss the one-list walk speaks"
+        );
+    }
+
+    #[test]
     fn the_crit_hit_arms_the_damage_indicators() {
         // THE WIRING'S OWN TRUTH (damageStatsAndHearts at the attack
         // site): the crit's 3.0 dealt crosses the > 2.0 gate and lands
@@ -13100,6 +13260,15 @@ mod tests {
         )
         .unwrap();
         let idx = 0;
+        // THE REACH THE 26.2 LAW SPEAKS (the entity arm's own
+        // filterHitResult): the crosshair's entity verdict only lands
+        // inside the 3.0 entity_interaction_range — the ring's 4-east
+        // staging sits OUTSIDE it, the mob snaps to 2.5 (the 2.5 the
+        // attack tests stage) so the fist lands
+        {
+            let bx = app.body.as_ref().unwrap().x;
+            app.mobs[idx].x = bx + 2.5;
+        }
         // aim at the zombie's mid height (the vanilla getY(0.5) the
         // burst rides)
         {
