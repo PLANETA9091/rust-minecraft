@@ -95,6 +95,49 @@ pub fn next_step(move_dist: f32) -> f32 {
     (move_dist as i32) as f32 + 1.0
 }
 
+/// THE SOUND ENGINE'S OWN DISTANCE LAW (javap SoundEngine.play +
+/// Channel.linearAttenuation the 26.2 jar speaks — the positioned
+/// voices' own fold):
+///
+/// * the play walk arms the channel with `Math.max(getVolume(), 1.0F) *
+///   (float)Sound.getAttenuationDistance()` (the play() bytecode's
+///   fmax/fmul into the linearAttenuation call's float arg) — THE
+///   ARMED MAX DISTANCE: the louder the voice the farther it carries,
+///   the quiet never shrinks the reach;
+/// * `Channel.linearAttenuation` sets the source's distance model
+///   AL_LINEAR_DISTANCE (alSourcei 53248 -> 53251), the reference
+///   distance 0.0 (alSourcef 4128), the rolloff factor 1.0 (alSourcef
+///   4129) and the armed max (alSourcef 4131);
+/// * the OpenAL 1.1 spec's linear law folds the channel gain
+///   `1 - rolloff * (dist - ref) / (max - ref)`, which at the 0.0
+///   reference and the 1.0 rolloff reads `1 - dist / max` — the full
+///   voice at the ear, the zero crossing at the armed max, the silence
+///   beyond it the AL_MIN_GAIN 0.0 floor keeps;
+/// * the output chain's AL_MAX_GAIN 1.0 ceiling caps the loud packets'
+///   fold (the 4.0F voice the ghast row speaks never plays louder than
+///   the ear can take — it merely carries farther).
+///
+/// The default `attenuation_distance` the sounds.json rows keep is 16
+/// (`Sound`'s own ctor default — the mob voices' rows name no
+/// override), so a volume-1.0 voice goes silent exactly 16 blocks out.
+pub const DEFAULT_ATTENUATION_DISTANCE: f64 = 16.0;
+
+/// THE ARMED MAX (the play walk's own `Math.max(getVolume(), 1.0F) *
+/// getAttenuationDistance()`): the louder the voice the farther the
+/// zero crossing lands, the quiet never shrinks the reach.
+pub fn voice_max_distance(volume: f32) -> f64 {
+    f64::from(volume.max(1.0)) * DEFAULT_ATTENUATION_DISTANCE
+}
+
+/// THE LINEAR FOLD (the spec's `1 - rolloff * (d - ref) / (max - ref)`
+/// at the 0.0 reference and the 1.0 rolloff the linearAttenuation
+/// arms): the floor the AL_MIN_GAIN 0.0 keeps, the ceiling the
+/// AL_MAX_GAIN 1.0 keeps.
+pub fn attenuate(volume: f32, dist: f64, max_distance: f64) -> f32 {
+    let linear = (1.0 - dist / max_distance).max(0.0);
+    (f64::from(volume) * linear).min(1.0) as f32
+}
+
 /// The deterministic block-sound engine: the log the tests pin and the
 /// audio backend mirrors. The RNG is the music scheduler's own LCG (the
 /// same seed scramble, the same step constants) — the whole audio lane
@@ -437,6 +480,16 @@ impl BlockSounds {
             volume, pitch
         ));
     }
+
+    /// THE POSITIONED VOICE (the SoundEngine's own distance law the
+    /// mob voices ride first): the source's volume the gain the fold
+    /// speaks, the armed max the play walk's own `Math.max(v, 1.0F) *
+    /// getAttenuationDistance()` names — the log line records the
+    /// FOLDED gain (the audio backend's own mirror plays it).
+    pub fn play_voice_at(&mut self, tick: u64, event: &str, volume: f32, pitch: f32, dist: f64) {
+        let gain = attenuate(volume, dist, voice_max_distance(volume));
+        self.play_voice(tick, event, gain, pitch);
+    }
 }
 
 #[cfg(test)]
@@ -476,6 +529,33 @@ mod tests {
         assert_eq!(next_step(0.132), 1.0);
         assert_eq!(next_step(1.0), 2.0);
         assert_eq!(next_step(2.66), 3.0);
+    }
+
+    #[test]
+    fn the_distance_law_speaks_the_channel_folds() {
+        // THE ARMED MAX (the play walk's own `Math.max(v, 1.0F) *
+        // getAttenuationDistance()`): the default 16 the volume-1.0
+        // voices arm, the louder the farther (the 4.0F packet carries
+        // to 64), the quiet never shrinks the reach
+        assert_eq!(voice_max_distance(1.0), 16.0);
+        assert_eq!(voice_max_distance(4.0), 64.0);
+        assert_eq!(voice_max_distance(0.5), 16.0);
+        // THE LINEAR FOLD at the 0.0 reference and the 1.0 rolloff:
+        // the full voice at the ear, the half at half the max, the
+        // zero crossing at the max, the silence beyond it the
+        // AL_MIN_GAIN floor keeps
+        assert_eq!(attenuate(1.0, 0.0, 16.0), 1.0);
+        assert_eq!(attenuate(1.0, 4.0, 16.0), 0.75);
+        assert_eq!(attenuate(1.0, 8.0, 16.0), 0.5);
+        assert_eq!(attenuate(1.0, 16.0, 16.0), 0.0);
+        assert_eq!(attenuate(1.0, 24.0, 16.0), 0.0);
+        // the quiet voice rides the same law at its own gain
+        assert_eq!(attenuate(0.8, 4.0, 16.0), 0.6);
+        // the loud packet's fold: the cap the AL_MAX_GAIN 1.0 keeps
+        // at the ear, the stretch the armed 64 speaks at 56 out
+        assert_eq!(attenuate(4.0, 0.0, 64.0), 1.0);
+        assert_eq!(attenuate(4.0, 56.0, 64.0), 0.5);
+        assert_eq!(attenuate(4.0, 64.0, 64.0), 0.0);
     }
 
     #[test]

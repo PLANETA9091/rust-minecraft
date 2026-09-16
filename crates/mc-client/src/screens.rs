@@ -374,6 +374,20 @@ fn parse_address(addr: &str) -> (String, u16) {
     }
 }
 
+/// THE EAR'S OWN DISTANCE (the SoundEngine's camera-to-source measure
+/// the positioned voices ride): the straight-line walk from the
+/// listener's eye to the sound's own spot. The `None` ear — no body
+/// the staging knows — sits the ear at the source (the distance-zero
+/// arm the no-fold reads).
+fn ear_distance(ear: Option<(f64, f64, f64)>, x: f64, y: f64, z: f64) -> f64 {
+    match ear {
+        Some((ex, ey, ez)) => {
+            ((x - ex).powi(2) + (y - ey).powi(2) + (z - ez).powi(2)).sqrt()
+        }
+        None => 0.0,
+    }
+}
+
 impl ServerEntry {
     pub fn ping_icon(&self) -> &'static str {
         match self.ping_ms {
@@ -4043,17 +4057,29 @@ impl App {
     /// land at the ENTITIES the level names — an id outside the mob
     /// lane drops its voice (the entity lookup's own gate), a name
     /// the audio clip table doesn't own is the player's honest no-op
-    /// (the play_voice's own pick_file return). The volume/pitch ride
-    /// the packet verbatim.
+    /// (the play_voice's own pick_file return). The pitch rides the
+    /// packet verbatim; the volume rides THE DISTANCE LAW the
+    /// positioned voice speaks (the named entity's own feet the
+    /// camera's ear measures).
     pub fn live_voices_updated(&mut self, voices: Vec<crate::world_view::WireVoice>) {
         for v in voices {
-            if !self.net_mobs.iter().any(|m| m.id == v.entity_id) {
+            let Some(m) = self.net_mobs.iter().find(|m| m.id == v.entity_id) else {
                 continue;
-            }
+            };
+            // THE NAMED ENTITY'S OWN SPOT (the sound position the
+            // SoundEngine's camera measures from — the mob's feet the
+            // lane keeps)
+            let (mx, my, mz) = (m.x, m.y, m.z);
             // the audio lane's clip table speaks the names WITHOUT the
             // namespace prefix — the registry name strips its own
             let clip = v.name.strip_prefix("minecraft:").unwrap_or(&v.name);
-            self.sounds.play_voice(self.frame, clip, v.volume, v.pitch);
+            let ear = self
+                .body
+                .as_ref()
+                .map(|b| (b.x, b.y + b.eye_height(), b.z));
+            let dist = ear_distance(ear, mx, my, mz);
+            self.sounds
+                .play_voice_at(self.frame, clip, v.volume, v.pitch, dist);
         }
     }
 
@@ -4077,9 +4103,17 @@ impl App {
     /// getVoicePitch law over the mob's own voice rng; the events land
     /// post-loop (the disjoint-borrow pattern the local lane speaks).
     pub fn tick_net_mobs(&mut self) {
-        let mut groans: Vec<(&'static str, f32)> = Vec::new();
-        let mut hurts: Vec<(&'static str, f32)> = Vec::new();
-        let mut deaths: Vec<(&'static str, f32)> = Vec::new();
+        let mut groans: Vec<(&'static str, f32, f64)> = Vec::new();
+        let mut hurts: Vec<(&'static str, f32, f64)> = Vec::new();
+        let mut deaths: Vec<(&'static str, f32, f64)> = Vec::new();
+        // THE LISTENER'S OWN EAR (the SoundEngine's camera — the
+        // body's standing/crouching eye the render's own walk speaks):
+        // no body known the staging's ear sits at the source (the
+        // distance-zero arm the no-fold reads)
+        let ear = self
+            .body
+            .as_ref()
+            .map(|b| (b.x, b.y + b.eye_height(), b.z));
         for m in &mut self.net_mobs {
             m.prev_x = m.x;
             m.prev_y = m.y;
@@ -4110,6 +4144,7 @@ impl App {
                     deaths.push((
                         m.kind.voice_event(crate::mob::VoiceSlot::Death),
                         m.voice_pitch(),
+                        ear_distance(ear, m.x, m.y, m.z),
                     ));
                 }
                 m.death_time += 1;
@@ -4122,6 +4157,7 @@ impl App {
                 groans.push((
                     m.kind.voice_event(crate::mob::VoiceSlot::Ambient),
                     m.voice_pitch(),
+                    ear_distance(ear, m.x, m.y, m.z),
                 ));
             }
             // THE HURT VOICE at the arm's own value (the 10 the Hurt
@@ -4135,6 +4171,7 @@ impl App {
                 hurts.push((
                     m.kind.voice_event(crate::mob::VoiceSlot::Hurt),
                     m.voice_pitch(),
+                    ear_distance(ear, m.x, m.y, m.z),
                 ));
             }
             if m.hurt_time > 0 {
@@ -4144,15 +4181,17 @@ impl App {
         }
         // THE VOICES LAND (the play order the local lane's own
         // post-loop speaks — the groans, then the hurts, then the
-        // deaths; the volume the Mob.getSoundVolume default 1.0 keeps)
-        for (clip, pitch) in groans {
-            self.sounds.play_voice(self.frame, clip, 1.0, pitch);
+        // deaths; the volume the Mob.getSoundVolume default 1.0 arms
+        // and THE DISTANCE LAW folds — the SoundEngine's linear
+        // channel gain the mob's own feet-to-ear walk speaks)
+        for (clip, pitch, dist) in groans {
+            self.sounds.play_voice_at(self.frame, clip, 1.0, pitch, dist);
         }
-        for (clip, pitch) in hurts {
-            self.sounds.play_voice(self.frame, clip, 1.0, pitch);
+        for (clip, pitch, dist) in hurts {
+            self.sounds.play_voice_at(self.frame, clip, 1.0, pitch, dist);
         }
-        for (clip, pitch) in deaths {
-            self.sounds.play_voice(self.frame, clip, 1.0, pitch);
+        for (clip, pitch, dist) in deaths {
+            self.sounds.play_voice_at(self.frame, clip, 1.0, pitch, dist);
         }
     }
 
@@ -9833,6 +9872,123 @@ mod tests {
         assert_eq!(count(&app, "entity.sheep.death "), 1, "the baa's last word");
         assert_eq!(count(&app, "entity.cow.death "), 0, "the cow stands");
         assert_eq!(count(&app, "entity.pig.death "), 0, "the pig stands");
+    }
+
+    /// THE WIRE VOICES' OWN DISTANCE FOLD (the SoundEngine's linear
+    /// channel the positioned voices ride — javap SoundEngine.play +
+    /// Channel.linearAttenuation): the ear the body's own eye speaks —
+    /// the at-ear voice full, the 4-out voice three quarters, the
+    /// 20-out voice the silence the zero crossing keeps — the log line
+    /// the folded gain records.
+    #[test]
+    fn the_wire_voices_fall_with_the_distance() {
+        let mut app = App::new(3);
+        app.open(ScreenKind::Connect);
+        app.net_world = Some(air_net_world(2, 0));
+        app.enter_network_world(None, Skybox::Overworld, None, None);
+        // THE LISTENER (the body's standing eye the camera speaks): the
+        // ear at (0.0, 65.62, 0.0) — the mobs' own y the same eye line
+        // keeps (the distance the z axis alone speaks)
+        app.body = Some(crate::body::PlayerBody::new(0.0, 64.0, 0.0, 0.0, 0.0));
+        app.live_mobs_updated(vec![
+            wire_zombie(7, 0.0, 65.62, 0.0),
+            wire_zombie(8, 0.0, 65.62, 4.0),
+            wire_zombie(9, 0.0, 65.62, 20.0),
+        ]);
+        for m in app.net_mobs.iter_mut() {
+            m.hurt_time = crate::mob::HURT_DURATION_TICKS;
+        }
+        app.tick_net_mobs();
+        if !sounds_loaded() {
+            assert!(
+                app.sounds.events.is_empty(),
+                "the empty table the silent voice lane keeps"
+            );
+            return;
+        }
+        let hurt_lines: Vec<&String> = app
+            .sounds
+            .events
+            .iter()
+            .filter(|e| e.starts_with("entity.zombie.hurt "))
+            .collect();
+        assert_eq!(hurt_lines.len(), 3, "the three arms spoke");
+        // the at-ear arm — the fold's 1.0
+        assert!(
+            hurt_lines.iter().any(|e| e.contains(" v1.000000 p")),
+            "the at-ear voice full: {:?}",
+            hurt_lines
+        );
+        // the 4-out arm — 1 - 4/16 = 0.75
+        assert!(
+            hurt_lines.iter().any(|e| e.contains(" v0.750000 p")),
+            "the near voice folded: {:?}",
+            hurt_lines
+        );
+        // the 20-out arm — past the 16 the zero crossing keeps
+        assert!(
+            hurt_lines.iter().any(|e| e.contains(" v0.000000 p")),
+            "the far voice silent: {:?}",
+            hurt_lines
+        );
+    }
+
+    /// THE WIRE MAILBOX'S OWN FOLD (the handleEntitySound walk the
+    /// positioned voices speak): the packet's pitch verbatim, the
+    /// packet's volume the distance law's gain — the named entity's
+    /// own feet the ear measures, the loud packet's armed max the
+    /// stretch speaks, the cap the AL_MAX_GAIN keeps.
+    #[test]
+    fn the_wire_mailbox_speaks_the_distance_law() {
+        let mut app = App::new(3);
+        app.open(ScreenKind::Connect);
+        app.net_world = Some(air_net_world(2, 0));
+        app.enter_network_world(None, Skybox::Overworld, None, None);
+        app.body = Some(crate::body::PlayerBody::new(0.0, 64.0, 0.0, 0.0, 0.0));
+        let voice = |entity_id: i32, name: &str, volume: f32| crate::world_view::WireVoice {
+            entity_id,
+            name: name.to_string(),
+            volume,
+            pitch: 1.0,
+        };
+        // the quiet packet at 8 out: 1.0 x (1 - 8/16) = 0.5
+        app.live_mobs_updated(vec![wire_zombie(7, 0.0, 65.62, 8.0)]);
+        app.live_voices_updated(vec![voice(7, "minecraft:entity.zombie.ambient", 1.0)]);
+        if !sounds_loaded() {
+            assert!(
+                app.sounds.events.is_empty(),
+                "the empty table the silent voice lane keeps"
+            );
+            return;
+        }
+        assert!(
+            app.sounds.events.iter().any(|e| e
+                .starts_with("entity.zombie.ambient ")
+                && e.contains(" v0.500000 p1.000000")),
+            "the half-gain groan: {:?}",
+            app.sounds.events
+        );
+        // the loud packet's stretch: the 4.0 arms the 64 — at 56 out
+        // the fold lands 0.5 (the un-stretched 16 would be silent)
+        app.live_mobs_updated(vec![wire_zombie(8, 0.0, 65.62, 56.0)]);
+        app.live_voices_updated(vec![voice(8, "minecraft:entity.zombie.hurt", 4.0)]);
+        assert!(
+            app.sounds.events.iter().any(|e| e
+                .starts_with("entity.zombie.hurt ")
+                && e.contains(" v0.500000 p1.000000")),
+            "the stretched half: {:?}",
+            app.sounds.events
+        );
+        // the cap: the 4.0 at the ear — the AL_MAX_GAIN 1.0 keeps
+        app.live_mobs_updated(vec![wire_zombie(9, 0.0, 65.62, 0.0)]);
+        app.live_voices_updated(vec![voice(9, "minecraft:entity.zombie.death", 4.0)]);
+        assert!(
+            app.sounds.events.iter().any(|e| e
+                .starts_with("entity.zombie.death ")
+                && e.contains(" v1.000000 p1.000000")),
+            "the capped ear shot: {:?}",
+            app.sounds.events
+        );
     }
 
     /// THE WIRE MOBS' HURT FLASH (javap LivingEntity's own hurt
