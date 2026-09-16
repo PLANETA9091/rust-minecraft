@@ -269,9 +269,10 @@ pub fn extract_runtime_assets(
 /// — the award orbs' 64x64 icon grid), and the PARTICLE LANE's
 /// fourteen sprites beside those (the crit star's 8x8, the drown
 /// bubble's 8x8 + the poof cloud's 8 8x8 generic frames + the splash
-/// droplet's 4 8x8 frames — the `crit`, `bubble`, `poof` and `splash`
-/// particle types' own sources the dust lane sha1-verifies).
-const RUNTIME_TEXTURE_JAR_PATHS: [&str; 18] = [
+/// droplet's 4 8x8 frames + the lava drip's 8x8 — the `crit`, `bubble`,
+/// `poof`, `splash` and `lava` particle types' own sources the dust
+/// lane sha1-verifies).
+const RUNTIME_TEXTURE_JAR_PATHS: [&str; 19] = [
     "assets/minecraft/textures/block/fire_0.png",
     "assets/minecraft/textures/block/fire_1.png",
     "assets/minecraft/textures/misc/underwater.png",
@@ -290,4 +291,5 @@ const RUNTIME_TEXTURE_JAR_PATHS: [&str; 18] = [
     "assets/minecraft/textures/particle/splash_1.png",
     "assets/minecraft/textures/particle/splash_2.png",
     "assets/minecraft/textures/particle/splash_3.png",
+    "assets/minecraft/textures/particle/lava.png",
 ];

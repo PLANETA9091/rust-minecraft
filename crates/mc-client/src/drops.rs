@@ -153,6 +153,20 @@ impl Lcg {
         }
         min + self.next_f64() * (max - min)
     }
+
+    /// `RandomSource.nextInt(bound)` — the bound-draw law the ambient
+    /// walk's gates speak (the 16/32/100/200 bounds the fluid's own
+    /// ticks ride). The stand-in convention the audio lane's weighted
+    /// pick already speaks: one raw draw mod the bound (the client's
+    /// own LCG never spoke the Java rejection walk — the mod law IS
+    /// the lane's stand-in). The zero bound stays silent (the vanilla
+    /// would throw — the caller never asks).
+    pub fn next_int(&mut self, bound: u64) -> i32 {
+        if bound == 0 {
+            return 0;
+        }
+        (self.next() % bound) as i32
+    }
 }
 
 /// One item entity — the vanilla `ItemEntity`'s own fields (the pos is

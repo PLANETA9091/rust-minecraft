@@ -69,6 +69,12 @@ pub const PARTICLE_SPLASH_JAR_PATHS: [&str; 4] = [
     "assets/minecraft/textures/particle/splash_2.png",
     "assets/minecraft/textures/particle/splash_3.png",
 ];
+/// The lava drip's single sprite (javap: the `lava` particle type's
+/// sprite set — the jar's `particles/lava.json` lists ONE texture,
+/// `minecraft:lava`, the 8x8 the IHDR verifies; the
+/// `LavaParticle$Provider`'s `SpriteSet.get(random)` returns it
+/// whatever the draw).
+pub const PARTICLE_LAVA_JAR_PATH: &str = "assets/minecraft/textures/particle/lava.png";
 /// The runtime-cache paths the client's loader reads (the same
 /// textures/ prefix strip the other lanes speak).
 pub const FIRE_0_RUNTIME_PATH: &str = "block/fire_0.png";
@@ -95,6 +101,7 @@ pub const PARTICLE_SPLASH_RUNTIME_PATHS: [&str; 4] = [
     "particle/splash_2.png",
     "particle/splash_3.png",
 ];
+pub const PARTICLE_LAVA_RUNTIME_PATH: &str = "particle/lava.png";
 /// Where the client reads the skin at runtime (under the runtime asset root).
 pub const RUNTIME_PATH: &str = "entity/player/wide/steve.png";
 pub const SLIM_RUNTIME_PATH: &str = "entity/player/slim/alex.png";
@@ -152,6 +159,9 @@ pub struct SkinData {
     /// — the entry splash's second ring's pixel sources (the 8x8
     /// splash frames).
     pub particle_splash_png_sha1s: [String; 4],
+    /// sha1 of the lava drip's single 8x8 sprite (jar-verbatim
+    /// integrity) — the pool's own drip's pixel source.
+    pub particle_lava_png_sha1: String,
 }
 
 /// One UV rect in the skin texture, in texels: (u, v, w, h).
@@ -310,6 +320,17 @@ pub fn generate<R: std::io::Read + std::io::Seek>(archive: &mut zip::ZipArchive<
         );
         particle_splash_png_sha1s[i] = crate::util::sha1_hex(&bytes);
     }
+    // the lava drip's single sprite (the same shape check the bubble
+    // speaks — the json's one-texture set)
+    let lava_bytes = read_entry(archive, PARTICLE_LAVA_JAR_PATH).context("read lava")?;
+    let particle_lava_png_sha1 = crate::util::sha1_hex(&lava_bytes);
+    let (lw, lh, _lava_rgba) = decode_rgba(&lava_bytes).context("decode lava")?;
+    anyhow::ensure!(
+        (lw, lh) == (8, 8),
+        "lava must be the 8x8 sprite, got {}x{}",
+        lw,
+        lh
+    );
     Ok(SkinData {
         png_sha1,
         rgba_sha1: crate::util::sha1_hex(&rgba),
@@ -325,6 +346,7 @@ pub fn generate<R: std::io::Read + std::io::Seek>(archive: &mut zip::ZipArchive<
         particle_bubble_png_sha1,
         particle_poof_png_sha1s,
         particle_splash_png_sha1s,
+        particle_lava_png_sha1,
     })
 }
 
@@ -484,6 +506,13 @@ pub fn emit(data: &SkinData) -> Result<String> {
             .collect::<Vec<_>>()
             .join(", ")
     ));
+    out.push_str(&format!(
+        "pub const PARTICLE_LAVA_PNG_SHA1: &str = \"{}\";\n",
+        data.particle_lava_png_sha1
+    ));
+    out.push_str(&format!(
+        "pub const PARTICLE_LAVA_RUNTIME_PATH: &str = \"{PARTICLE_LAVA_RUNTIME_PATH}\";\n"
+    ));
     Ok(out)
 }
 
@@ -611,6 +640,8 @@ mod tests {
         let splashes = [tiny_png(), tiny_png(), tiny_png(), tiny_png()];
         let expected_splash_sha1s: Vec<String> =
             splashes.iter().map(|p| crate::util::sha1_hex(p)).collect();
+        let lava = tiny_png();
+        let expected_lava_sha1 = crate::util::sha1_hex(&lava);
 
         let mut zip = zip_of(&[
             (WIDE_STEVE_JAR_PATH, png.clone()),
@@ -634,6 +665,7 @@ mod tests {
             (PARTICLE_SPLASH_JAR_PATHS[1], splashes[1].clone()),
             (PARTICLE_SPLASH_JAR_PATHS[2], splashes[2].clone()),
             (PARTICLE_SPLASH_JAR_PATHS[3], splashes[3].clone()),
+            (PARTICLE_LAVA_JAR_PATH, lava),
         ]);
         let data = generate(&mut zip).unwrap();
         assert_eq!(data.side, 64);
@@ -666,6 +698,10 @@ mod tests {
             data.particle_splash_png_sha1s,
             expected_splash_sha1s.as_slice(),
             "the splash frames' own sha1s"
+        );
+        assert_eq!(
+            data.particle_lava_png_sha1, expected_lava_sha1,
+            "the lava sprite's own sha1"
         );
 
         let emitted = emit(&data).unwrap();

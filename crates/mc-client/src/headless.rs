@@ -707,9 +707,34 @@ pub fn seed_scene(app: &mut crate::screens::App, opts: &SceneOpts) -> Result<()>
                     app.particles.extend(rings);
                 }
             }
+            "lava" => {
+                // THE POOL'S OWN STAGE (the animateTick lane the live
+                // tick answers every world tick): the lava pool the
+                // --lava-pool carve speaks (the stage DEMANDS it — the
+                // CLI's own paranoia), the body AT the pool (the
+                // spawn valleys' walls sit 2-3 cells out — a shifted
+                // body lands on the hillside the walls carry), the
+                // 667x2 walk run for the staged tick count (the two
+                // seeded streams the live lane speaks) so the drips +
+                // the ambient voices fire on the pool's 9 surface
+                // cells
+                if !opts.lava_pool {
+                    anyhow::bail!(
+                        "--particles lava demands --lava-pool (the pool the walk reads)"
+                    );
+                }
+                for _ in 0..240 {
+                    let spawns = if let Some(b) = app.body.as_ref() {
+                        app.lava_ambient_walk((b.x, b.y, b.z))
+                    } else {
+                        Vec::new()
+                    };
+                    app.particles.extend(spawns);
+                }
+            }
             other => {
                 anyhow::bail!(
-                    "--particles: unknown scene '{other}' (the lane speaks burst | poof | crit | bubble | splash)"
+                    "--particles: unknown scene '{other}' (the lane speaks burst | poof | crit | bubble | splash | lava)"
                 );
             }
         }
@@ -725,9 +750,13 @@ pub fn seed_scene(app: &mut crate::screens::App, opts: &SceneOpts) -> Result<()>
             "crit" => 6,
             "bubble" => 10,
             "splash" => 4,
+            // the drips' own flight (the pop's arc rides ~3 ticks of
+            // the 16..80 lifetime — mid-air at the shutter)
+            "lava" => 3,
             _ => 2,
         };
         let wet_world = app.offline_world.as_ref();
+        let mut smoke_out: Vec<(f64, f64, f64, f64, f64, f64)> = Vec::new();
         for _ in 0..walk {
             app.particles.retain_mut(|p| match p.kind {
                 crate::particles::ParticleKind::Bubble => {
@@ -743,8 +772,31 @@ pub fn seed_scene(app: &mut crate::screens::App, opts: &SceneOpts) -> Result<()>
                     p.tick_bubble(wet)
                 }
                 crate::particles::ParticleKind::Splash { .. } => p.tick_splash(),
+                // the staged drips tick the same law (the smoke gate's
+                // rolls ride the level stream, the children land after
+                // — the pool's own truth the live lane speaks)
+                crate::particles::ParticleKind::Lava => {
+                    let mut rng = std::mem::replace(
+                        &mut app.level_ambient_rng,
+                        crate::drops::Lcg::new(0),
+                    );
+                    let kept = p.tick_lava(&mut rng, &mut smoke_out);
+                    app.level_ambient_rng = rng;
+                    kept
+                }
                 _ => p.tick(),
             });
+        }
+        // the staged children land after the loop (the live lane's
+        // own order — the ctor draws ride the level stream)
+        for (px, py, pz, pvx, pvy, pvz) in smoke_out {
+            let child = crate::particles::smoke_puff(
+                px, py, pz, pvx, pvy, pvz,
+                app.level_ambient_rng.next_f32(),
+                app.level_ambient_rng.next_f32(),
+                app.level_ambient_rng.next_f32(),
+            );
+            app.particles.push(child);
         }
     }
     Ok(())

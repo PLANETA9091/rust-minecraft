@@ -1010,6 +1010,47 @@ impl BubbleSprite {
     }
 }
 
+/// The PARTICLE LANE's lava drip sprite — the single 8x8 the `lava`
+/// particle type's sprite set holds (javap: the `particles/lava.json`
+/// the jar speaks — ONE texture, `minecraft:lava`, the 8x8 the IHDR
+/// verifies; the `LavaParticle$Provider`'s `SpriteSet.get(random)`
+/// returns that one sprite whatever the draw), loaded and
+/// sha1-verified the same stream the bubble sprite speaks. A missing
+/// or tampered file keeps the drips invisible (the honest absence the
+/// other lanes speak).
+pub struct LavaSprite {
+    pub rgba: Vec<u8>,
+}
+
+/// The lava texture's own layout (the jar's 8x8 the IHDR speaks).
+pub const LAVA_SPRITE_SIDE: u32 = 8;
+
+impl LavaSprite {
+    /// Load from the runtime cache root (the generator's
+    /// `assets-cache/jar/`), verify the generated sha1, decode, and
+    /// shape-check the 8x8 layout.
+    pub fn load(root: &std::path::Path) -> Option<LavaSprite> {
+        let bytes = std::fs::read(root.join(skin::PARTICLE_LAVA_RUNTIME_PATH)).ok()?;
+        if hex::encode(sha1::Sha1::digest(&bytes)) != skin::PARTICLE_LAVA_PNG_SHA1 {
+            return None;
+        }
+        let (w, h, rgba) = decode_rgba(&bytes).ok()?;
+        if w != LAVA_SPRITE_SIDE || h != LAVA_SPRITE_SIDE {
+            return None;
+        }
+        Some(LavaSprite { rgba })
+    }
+
+    /// The sprite pixel at (u, v) in TEXTURE UNITS (the 0..8 the
+    /// particle quad's uv walk speaks), nearest texel.
+    pub fn pixel(&self, u: f32, v: f32) -> [u8; 4] {
+        let x = (u.floor().clamp(0.0, LAVA_SPRITE_SIDE as f32 - 1.0)) as usize;
+        let y = (v.floor().clamp(0.0, LAVA_SPRITE_SIDE as f32 - 1.0)) as usize;
+        let o = (y * LAVA_SPRITE_SIDE as usize + x) * 4;
+        [self.rgba[o], self.rgba[o + 1], self.rgba[o + 2], self.rgba[o + 3]]
+    }
+}
+
 /// The PARTICLE LANE's splash droplet frames — the entry splash's
 /// second ring's 4-frame sprite set (javap: the `splash` particle
 /// type's own sprites, the jar's `textures/particle/splash_0..3.png`,
@@ -1020,7 +1061,6 @@ impl BubbleSprite {
 pub struct SplashFrames {
     pub frames: Vec<Vec<u8>>,
 }
-
 impl SplashFrames {
     /// Load the 4 frames from the runtime cache root, verify each
     /// sha1, decode, shape-check the 8x8 layout.

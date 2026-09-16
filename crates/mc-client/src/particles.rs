@@ -105,8 +105,28 @@ pub fn base_quad_size(r: f32) -> f32 {
 
 /// The poof's frame walk (`MutableSpriteSet.get(age, lifetime)`
 /// verbatim): `age * (size - 1) / lifetime` — the 8 generic frames.
+/// The index rides the SPRITE LIST the json speaks (smoke.json /
+/// poof.json both list `generic_7..generic_0` — descending), NOT the
+/// file order: index 0 reads the list's FIRST entry, generic_7.
 pub fn poof_frame(age: u32, lifetime: u32) -> usize {
     (age as usize * (POOF_FRAME_COUNT - 1)) / lifetime.max(1) as usize
+}
+
+/// The sprite list's own direction (the two jsons' descending order):
+/// the list index the `get` law speaks maps to the generic_N FILE via
+/// `count - 1 - index` — the pool's smoke pops in the DENSE puff
+/// (generic_7, 29/64 opaque pixels the decode speaks) and dissolves
+/// into the wisp (generic_0, 1/64). The poof and the smoke share the
+/// one law (the two jsons' identical texture lists).
+pub fn generic_file_index(list_index: usize) -> usize {
+    (POOF_FRAME_COUNT - 1).saturating_sub(list_index)
+}
+
+/// The smoke's render-file index (the full chain the smoke's frame
+/// ride speaks): the `get(age, lifetime)` list index, then the json's
+/// descending order fold.
+pub fn smoke_sprite_file_index(age: u32, lifetime: u32) -> usize {
+    generic_file_index(poof_frame(age, lifetime))
 }
 
 /// The poof's 8 frames (the `generic_0..7` textures the jar speaks).
@@ -118,6 +138,29 @@ pub const POOF_FRAME_COUNT: usize = 8;
 pub fn crit_grow(age: u32, lifetime: u32, partial: f32) -> f32 {
     let t = (age as f32 + partial) / lifetime.max(1) as f32 * 32.0;
     t.clamp(0.0, 1.0)
+}
+
+/// The lava drip's own lifetime law (javap `LavaParticle` ctor:
+/// `(int)(16.0D / (nextFloat() * 0.8D + 0.2D))`) — 16..80 ticks.
+pub fn lava_lifetime(r: f32) -> u32 {
+    (16.0f32 / (r * 0.8 + 0.2)) as u32
+}
+
+/// The smoke child's own lifetime law (javap
+/// `BaseAshSmokeParticle` ctor: `(int)(lifetimeBase / (nextFloat() *
+/// 0.8D + 0.2D) * scaleMul)` with the SMOKE provider's base 8 and
+/// scale 1.0, then the `Math.max(lifetime, 1)` floor) — 8..40 ticks.
+pub fn smoke_lifetime(r: f32) -> u32 {
+    let life = (8.0f32 / (r * 0.8 + 0.2)) as u32;
+    life.max(1)
+}
+
+/// The lava drip's render-shrink law (javap `LavaParticle.getQuadSize`:
+/// `quadSize * (1 - t * t)` with `t = (age + partial) / lifetime`) —
+/// the blob thins quadratically to nothing at its death.
+pub fn lava_shrink(age: u32, lifetime: u32, partial: f32) -> f32 {
+    let t = (age as f32 + partial) / lifetime.max(1) as f32;
+    1.0 - t * t
 }
 
 /// The three kinds this client speaks.
@@ -137,6 +180,17 @@ pub enum ParticleKind {
     /// sprite set's random frame the Provider's `SpriteSet.get`
     /// speaks, the drop's own countdown tick).
     Splash { frame: usize },
+    /// `LavaParticle` — the lava pool's own drip (the single 8x8 lava
+    /// sprite the `lava` particle type speaks, the pop the ctor's yd
+    /// draw gives, the full block light the getLightCoords override
+    /// speaks, the shrink the (1 - t²) fold rides).
+    Lava,
+    /// `SmokeParticle` — the drip's own child (the SMOKE type the
+    /// LavaParticle.tick's draw speaks, the BaseAshSmokeParticle laws:
+    /// the rise the −0.1 gravity gives, the grey tint the r*0.3 draw,
+    /// the 0.75 size fold, the 8 generic frames the smoke.json's
+    /// descending order lists).
+    Smoke,
 }
 
 /// The splash droplet's 4 frames (the `splash_0..3` textures the jar
@@ -211,6 +265,13 @@ impl Particle {
         let base = self.quad_size * 0.5;
         match self.kind {
             ParticleKind::Crit => base * crit_grow(self.age, self.lifetime, 0.0),
+            // the drip's own quadratic thin (the getQuadSize override's
+            // (1 - t*t) fold — the partial rides 0.0 the same way the
+            // crit's bloom does)
+            ParticleKind::Lava => base * lava_shrink(self.age, self.lifetime, 0.0).max(0.0),
+            // the smoke's own fast bloom (the BaseAshSmokeParticle's
+            // getQuadSize override — the SAME 32x law the crit speaks)
+            ParticleKind::Smoke => base * crit_grow(self.age, self.lifetime, 0.0),
             _ => base,
         }
     }
@@ -264,6 +325,50 @@ impl Particle {
         self.vx *= 0.98;
         self.vy *= 0.98;
         self.vz *= 0.98;
+        true
+    }
+
+    /// The `LavaParticle.tick` verbatim (the base law first — the
+    /// gravity 0.75's pull, the move, the 0.999 friction — then the
+    /// smoke child's own gate: `nextFloat() > age / lifetime` spawns
+    /// the SMOKE child AT the blob's own position riding the blob's
+    /// OWN velocity). The gate's draw rides the PARENT's own random —
+    /// the Particle's `this.random = level.random` field the ctor
+    /// speaks — so the caller's level stream takes it (the draw order
+    /// the bytecode lists: the roll AFTER the motion, one per living
+    /// tick). The child's six floats ride the caller's out-vec (the
+    /// spawn lands AFTER the tick loop the vanilla queue order
+    /// speaks). The bytecode's `if (!removed)` gate sits BEFORE the
+    /// draw: a blob the base tick removed never speaks the child —
+    /// and never draws the roll.
+    pub fn tick_lava(
+        &mut self,
+        rng: &mut crate::drops::Lcg,
+        smoke_out: &mut Vec<(f64, f64, f64, f64, f64, f64)>,
+    ) -> bool {
+        // the base Particle.tick's own walk (the age, the gravity
+        // lane, the move, the friction — the same law the match arm's
+        // base tick speaks), inlined: the removal speaks before the
+        // draw
+        self.age += 1;
+        if self.age >= self.lifetime {
+            return false;
+        }
+        self.vy -= 0.04 * self.gravity;
+        self.x += self.vx;
+        self.y += self.vy;
+        self.z += self.vz;
+        self.vx *= self.friction;
+        self.vy *= self.friction;
+        self.vz *= self.friction;
+        // the child's own gate: `nextFloat() <= t` stays silent, the
+        // spawn fires only when the roll rides OVER the age's own
+        // fraction (the fcmpl/ifle the javap speaks — the smoke comes
+        // likelier as the blob ages)
+        let t = self.age as f32 / self.lifetime.max(1) as f32;
+        if rng.next_f32() > t {
+            smoke_out.push((self.x, self.y, self.z, self.vx, self.vy, self.vz));
+        }
         true
     }
 }
@@ -625,6 +730,68 @@ pub fn water_entry_rings(
         j += 1.0;
     }
     out
+}
+
+/// The lava pool's own drip (javap `LavaParticle` ctor verbatim): the
+/// zero velocity base the super call speaks, the gravity 0.75, the
+/// friction 0.999, the pop `yd = nextFloat() * 0.4F + 0.05F`, the
+/// size `quadSize *= nextFloat() * 2.0F + 0.2F`, the lifetime
+/// `(int)(16.0D / (nextFloat() * 0.8D + 0.2D))`. Draw order (the ctor
+/// chain's own, all on the LEVEL random the Particle's field speaks):
+/// the base ctor's size float FIRST, then the yd draw, the size-mul
+/// draw, the lifetime draw. The position/velocity the addParticle
+/// call speaks: `(x + nextDouble(), y + 1.0, z + nextDouble(),
+/// 0.0, 0.0, 0.0)` — the caller's floats land verbatim.
+pub fn lava_drip(x: f64, y: f64, z: f64, r_base: f32, r_yd: f32, r_size: f32, r_life: f32) -> Particle {
+    Particle {
+        kind: ParticleKind::Lava,
+        x,
+        y,
+        z,
+        vx: 0.0,
+        vy: (r_yd * 0.4 + 0.05) as f64,
+        vz: 0.0,
+        age: 0,
+        lifetime: lava_lifetime(r_life),
+        gravity: 0.75,
+        friction: 0.999,
+        quad_size: base_quad_size(r_base) * (r_size * 2.0 + 0.2),
+        uo: 0.0,
+        vo: 0.0,
+        col: [1.0, 1.0, 1.0],
+    }
+}
+
+/// The drip's own smoke child (javap `SmokeParticle` + `BaseAshSmokeParticle`
+/// ctor verbatim): the friction 0.96, the gravity −0.1 (the smoke RISES —
+/// the negative the base's gravity field rides), the `speedUpWhenYMotionIsBlocked`
+/// the base speaks (the collision lane sleeps here — the fold's own
+/// absence), the velocity `xd(0) * 0.1 + d = d` — the carried velocity
+/// verbatim, the grey tint `r=g=b = nextFloat() * 0.3F`, the size
+/// `quadSize *= 0.75F * 1.0F`, the lifetime `(int)(8 / (r * 0.8 + 0.2) * 1.0)`
+/// with the `max(1)` floor. Draw order (the ctor chain's own, all on
+/// the LEVEL random): the base ctor's size float FIRST, then the tint
+/// draw, the lifetime draw. The frames ride `setSpriteFromAge` — the
+/// render index the smoke_sprite_file_index law speaks.
+pub fn smoke_puff(x: f64, y: f64, z: f64, vx: f64, vy: f64, vz: f64, r_base: f32, r_tint: f32, r_life: f32) -> Particle {
+    let grey = r_tint * 0.3;
+    Particle {
+        kind: ParticleKind::Smoke,
+        x,
+        y,
+        z,
+        vx,
+        vy,
+        vz,
+        age: 0,
+        lifetime: smoke_lifetime(r_life),
+        gravity: -0.1,
+        friction: 0.96,
+        quad_size: base_quad_size(r_base) * 0.75,
+        uo: 0.0,
+        vo: 0.0,
+        col: [grey, grey, grey],
+    }
 }
 
 /// The 2001 event's own burst (`ClientLevel.addDestroyBlockEffect`'s
@@ -1248,5 +1415,117 @@ mod tests {
             assert_eq!(pa.z, pb.z);
             assert_eq!(pa.lifetime, pb.lifetime);
         }
+    }
+
+    #[test]
+    fn the_lava_drip_ctor_rides_the_javap_bands() {
+        // the pop: `nextFloat() * 0.4F + 0.05F` — 0.05..0.45 (the f32
+        // widen the ctor's f2d speaks — the tolerance rides it)
+        let p = lava_drip(1.0, 2.0, 3.0, 0.0, 0.0, 0.0, 0.0);
+        assert!((p.vy - 0.05).abs() < 1e-9, "the pop's floor {}", p.vy);
+        assert_eq!(p.vx, 0.0);
+        assert_eq!(p.vz, 0.0);
+        let top = lava_drip(0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0);
+        assert!((top.vy - 0.45f64).abs() < 1e-6, "the pop's top {}", top.vy);
+        // the lifetime: `(int)(16.0 / (r * 0.8 + 0.2))` — 16..80
+        assert_eq!(lava_lifetime(0.0), 80);
+        assert_eq!(lava_lifetime(1.0), 16);
+        // the size: base `0.1 * (r*0.5+0.5) * 2` times the mul
+        // `r * 2 + 0.2` — 0.2..2.2
+        assert!((p.quad_size - 0.1 * 1.0 * 0.2).abs() < 1e-9);
+        // the body fields: the gravity 0.75, the friction 0.999
+        assert_eq!(p.gravity, 0.75);
+        assert_eq!(p.friction, 0.999);
+        assert_eq!(p.lifetime, lava_lifetime(0.0));
+    }
+
+    #[test]
+    fn the_lava_shrink_law_folds_the_quadratic() {
+        // `quadSize * (1 - t*t)` — the full quad at birth, a quarter
+        // at the 87% mark, nothing at the death
+        assert_eq!(lava_shrink(0, 100, 0.0), 1.0);
+        assert!((lava_shrink(50, 100, 0.0) - 0.75).abs() < 1e-6);
+        assert!((lava_shrink(100, 100, 0.0)).abs() < 1e-6);
+        // the half-span rides it: the blob's own corners thin
+        let mut p = lava_drip(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
+        p.age = p.lifetime / 2;
+        let full_half = base_quad_size(0.0) * 0.5;
+        assert!(p.half() < full_half, "the thin walks");
+    }
+
+    #[test]
+    fn the_lava_tick_answers_the_smoke_gate_in_order() {
+        // the roll `<= t` stays silent, the roll `> t` spawns the
+        // child at the blob's own position riding its own velocity —
+        // the draw consumed EVERY living tick, the removed tick
+        // consumes none
+        let mut p = lava_drip(10.0, 20.0, 30.0, 0.0, 0.0, 0.0, 0.0);
+        p.age = p.lifetime - 1; // the next tick removes
+        let mut out = Vec::new();
+        let mut r = rng();
+        assert!(!p.tick_lava(&mut r, &mut out), "the death walk");
+        assert!(out.is_empty(), "the removed blob never speaks");
+        // a young blob with a HIGH roll (next_f32 after seeding —
+        // replay the seeded stream's own draw)
+        let mut p = lava_drip(1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0);
+        let mut r = crate::drops::Lcg::new(7);
+        r.next_f32(); // burn one draw so the next is known-ish
+        let mut out = Vec::new();
+        let kept = p.tick_lava(&mut r, &mut out);
+        assert!(kept);
+        // the six floats ride verbatim when the gate fired
+        if !out.is_empty() {
+            assert_eq!(out[0].0, 1.0);
+            assert_eq!(out[0].2, 1.0);
+        }
+    }
+
+    #[test]
+    fn the_smoke_puff_ctor_rides_the_base_ash_bands() {
+        // the tint: `nextFloat() * 0.3F` — 0..0.3
+        let p = smoke_puff(0.0, 0.0, 0.0, 0.1, 0.2, 0.3, 0.0, 0.0, 0.0);
+        assert_eq!(p.col, [0.0, 0.0, 0.0]);
+        let light = smoke_puff(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
+        assert_eq!(light.col, [0.3, 0.3, 0.3]);
+        // the velocity rides the CARRIED verbatim (the `xd(0) * 0.1 + d`
+        // fold the base ctor speaks)
+        assert_eq!(p.vx, 0.1);
+        assert_eq!(p.vy, 0.2);
+        assert_eq!(p.vz, 0.3);
+        // the rise: the gravity -0.1, the friction 0.96
+        assert_eq!(p.gravity, -0.1);
+        assert_eq!(p.friction, 0.96);
+        // the size: base times the 0.75 fold
+        assert!((p.quad_size - base_quad_size(0.0) * 0.75).abs() < 1e-9);
+        // the lifetime: `max(1, (int)(8 / (r * 0.8 + 0.2)))` — 8..40
+        assert_eq!(smoke_lifetime(0.0), 40);
+        assert_eq!(smoke_lifetime(1.0), 8);
+        assert_eq!(smoke_lifetime(0.0), 40);
+        assert_eq!(p.lifetime, 40);
+    }
+
+    #[test]
+    fn the_smoke_bloom_rides_the_32x_law() {
+        // the BaseAshSmokeParticle's getQuadSize: `clamp(32 * t, 0, 1)`
+        // — the full quad inside the first lifetime/32 ticks
+        let p = smoke_puff(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
+        assert_eq!(p.half(), 0.0, "the point at birth");
+        let mut mid = smoke_puff(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
+        mid.age = mid.lifetime / 16; // 32 * (1/16) = 2 -> clamped 1.0
+        assert_eq!(mid.half(), base_quad_size(0.0) * 0.75 * 0.5);
+    }
+
+    #[test]
+    fn the_generic_file_index_folds_the_json_order() {
+        // the jsons list generic_7..generic_0 — the list index 0 reads
+        // the DENSE puff (the file 7), the index 7 the wisp (the file
+        // 0): the pool's smoke pops dense and dissolves
+        assert_eq!(generic_file_index(0), 7);
+        assert_eq!(generic_file_index(7), 0);
+        assert_eq!(generic_file_index(3), 4);
+        // the full chain: age 0 -> list 0 -> file 7; the death tick's
+        // own age rides the walk's clamp — the poof_frame law
+        assert_eq!(smoke_sprite_file_index(0, 40), 7);
+        assert_eq!(smoke_sprite_file_index(40, 40), 0);
     }
 }

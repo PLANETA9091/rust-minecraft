@@ -505,6 +505,18 @@ pub struct App {
     pub next_mob_id: i32,
     /// The mob lane's own RNG (the goal clocks + the spawn draws).
     pub mob_rng: crate::drops::Lcg,
+    /// THE AMBIENT WALK'S TWO STREAMS (javap `ClientLevel.animateTick`
+    /// — the pair the walk's bytecode speaks): the LEVEL random (the
+    /// position jitter's six draws per sample, the particle ctors' own
+    /// draws, the lava tick's smoke-gate rolls — the `this.random`
+    /// field the Particle ctor copies) and the THREAD-LOCAL random
+    /// (`RandomSource.createThreadLocalInstance()` — the instance the
+    /// fluid's own animateTick speaks: the 1/100 and 1/200 gates, the
+    /// drip's position fracs, the two voices' volume/pitch draws).
+    /// Both seeded — the shots ride the same determinism the mob lane
+    /// speaks.
+    pub ambient_rng: crate::drops::Lcg,
+    pub level_ambient_rng: crate::drops::Lcg,
     /// `Player.attackStrengthTicker` — the charge clock the fist's
     /// damage law speaks (the delay = (1/ATTACK_SPEED 4.0)·20 = 5.0,
     /// the reset the onAttack call performs).
@@ -691,6 +703,9 @@ pub struct App {
     /// The splash droplet's 4 frames (the same lazy load — the entry
     /// splash's second ring's pixel source).
     pub splash_frames: Option<crate::avatar::SplashFrames>,
+    /// The lava drip's single sprite (the same lazy load — the pool's
+    /// own drip's pixel source).
+    pub lava_sprite: Option<crate::avatar::LavaSprite>,
     pub hurt_time: i32,
     pub hurt_duration: i32,
     pub invulnerable_time: i32,
@@ -864,6 +879,8 @@ impl App {
             spawn_clock: 0,
             next_mob_id: 1,
             mob_rng: crate::drops::Lcg::new(0x5EED_10CA),
+            ambient_rng: crate::drops::Lcg::new(0x5EED_1ABA),
+            level_ambient_rng: crate::drops::Lcg::new(0x5EED_7E11),
             attack_ticker: 0,
             dig: crate::dig::DigState::new(),
             dig_held: false,
@@ -891,6 +908,7 @@ impl App {
             poof_frames: None,
             bubble_sprite: None,
             splash_frames: None,
+            lava_sprite: None,
             next_drop_id: 1,
             orbs: Vec::new(),
             next_orb_id: 1,
@@ -1018,6 +1036,11 @@ impl App {
         } else {
             self.offline_world.as_ref()
         };
+        // the lava lane's own locals (the disjoint-field splits the
+        // retain closure needs: the level stream the gate rolls ride,
+        // the out-vec the children land in — pushed AFTER the loop)
+        let mut smoke_spawns: Vec<(f64, f64, f64, f64, f64, f64)> = Vec::new();
+        let level_rng = &mut self.level_ambient_rng;
         self.particles.retain_mut(|p| match p.kind {
             crate::particles::ParticleKind::Bubble => {
                 let wet = bubble_world
@@ -1032,8 +1055,28 @@ impl App {
                 p.tick_bubble(wet)
             }
             crate::particles::ParticleKind::Splash { .. } => p.tick_splash(),
+            // the drip's own walk: the base law + the smoke child's
+            // gate (the roll rides the LEVEL random the parent's own
+            // field speaks, the six floats ride the out-vec)
+            crate::particles::ParticleKind::Lava => {
+                p.tick_lava(level_rng, &mut smoke_spawns)
+            }
             _ => p.tick(),
         });
+        // THE SMOKE CHILDREN LAND AFTER THE TICK LOOP (the vanilla
+        // queue order: addParticle queues the child, the engine ticks
+        // it from the NEXT tick — the render still sees it this
+        // frame). The child's ctor draws ride the LEVEL random: the
+        // base size, the grey tint, the lifetime.
+        for (px, py, pz, pvx, pvy, pvz) in smoke_spawns {
+            let child = crate::particles::smoke_puff(
+                px, py, pz, pvx, pvy, pvz,
+                self.level_ambient_rng.next_f32(),
+                self.level_ambient_rng.next_f32(),
+                self.level_ambient_rng.next_f32(),
+            );
+            self.particles.push(child);
+        }
         for i in (0..self.crit_emitters.len()).rev() {
             let target = self
                 .mobs
@@ -1194,6 +1237,18 @@ impl App {
             }
             if let Some(dmg) = fall_event {
                 self.apply_fall_damage(dmg);
+            }
+            // THE AMBIENT WALK (ClientLevel.animateTick's own law —
+            // the per-tick sampler the lava pool's own drips ride):
+            // the 667-iteration double call around the CAMERA entity
+            // (the body — the vanilla passes the camera entity's block
+            // pos), the drip spawns landing straight in the particle
+            // vec (the tick loop already walked this tick — the
+            // children render this frame, first TICK next — the
+            // vanilla queue order the smoke drain speaks too)
+            if let Some(b) = self.body.as_ref() {
+                let drips = self.lava_ambient_walk((b.x, b.y, b.z));
+                self.particles.extend(drips);
             }
             // THE LAVA HURT (lavaHurt's own call, answered through the
             // hurt pipeline's cooldown): the GENERIC_BURN speaks ONLY
@@ -2025,6 +2080,104 @@ impl App {
     pub fn open(&mut self, kind: ScreenKind) {
         self.screen = kind;
         self.buttons.clear();
+    }
+
+    /// THE AMBIENT WALK (javap `ClientLevel.animateTick` +
+    /// `doAnimateTick` verbatim — the per-tick sampler the lava pool's
+    /// own drips ride): 667 iterations, each speaking the radius-16
+    /// then the radius-32 `doAnimateTick` — the ±triangle jitter per
+    /// axis `px + nextInt(r) - nextInt(r)` on the LEVEL random (six
+    /// draws per sample), the sampled cell read, and the LAVA fluid's
+    /// own answer on the THREAD-LOCAL random (the instance the
+    /// fluid's animateTick speaks): the air gate (`above().isAir() &&
+    /// !isSolidRender()` — above must be AIR, the gate consumes no
+    /// draws), the `nextInt(100) == 0` drip + the LAVA_POP voice, the
+    /// `nextInt(200) == 0` LAVA_AMBIENT voice. The drip's ctor draws
+    /// ride the LEVEL random (the Particle's own field the base ctor
+    /// copies): the base size, the yd pop, the size mul, the
+    /// lifetime. The voices: volume `0.2F + nextFloat() * 0.2F`,
+    /// pitch `0.9F + nextFloat() * 0.15F` — the formula BOTH the
+    /// bytecode's playLocalSound calls share, the AMBIENT source the
+    /// pair speaks, no distance delay. Returns the drips (the caller
+    /// lands them after its own tick loop — the vanilla queue order).
+    pub fn lava_ambient_walk(
+        &mut self,
+        cam: (f64, f64, f64),
+    ) -> Vec<crate::particles::Particle> {
+        let world: Option<&crate::world::World> = if self.world_is_network {
+            self.net_world.as_ref()
+        } else {
+            self.offline_world.as_ref()
+        };
+        let Some(w) = world else {
+            return Vec::new();
+        };
+        let mut out = Vec::new();
+        let (cx, cy, cz) = (cam.0 as i32, cam.1 as i32, cam.2 as i32);
+        for _ in 0..667 {
+            for r in [16i32, 32] {
+                // the six draws the doAnimateTick bytecode speaks:
+                // two nextInt(r) per axis on the LEVEL random (x, y,
+                // z — the ±triangle the add/sub pair folds)
+                let x = cx
+                    + self.level_ambient_rng.next_int(r as u64)
+                    - self.level_ambient_rng.next_int(r as u64);
+                let y = cy
+                    + self.level_ambient_rng.next_int(r as u64)
+                    - self.level_ambient_rng.next_int(r as u64);
+                let z = cz
+                    + self.level_ambient_rng.next_int(r as u64)
+                    - self.level_ambient_rng.next_int(r as u64);
+                // the fluid's own gate: the sampled cell IS the lava
+                // and the cell above IS the air (the isAir &&
+                // !isSolidRender pair the LavaFluid.animateTick
+                // speaks — the gate draws NOTHING when it fails)
+                if w.get(x, y, z) != crate::world::LAVA
+                    || w.get(x, y + 1, z) != crate::world::AIR
+                {
+                    continue;
+                }
+                // THE DRIP GATE (nextInt(100) == 0 on the thread-local
+                // stand-in): the addParticle's position
+                // `(x + nextDouble(), y + 1.0, z + nextDouble())`, the
+                // ctor's four draws on the LEVEL random (the base
+                // size, the yd pop, the size mul, the lifetime), the
+                // LAVA_POP voice's two draws (the volume then the
+                // pitch — the bytecode's own order)
+                if self.ambient_rng.next_int(100) == 0 {
+                    let px = x as f64 + self.ambient_rng.next_f64();
+                    let pz = z as f64 + self.ambient_rng.next_f64();
+                    let drip = crate::particles::lava_drip(
+                        px,
+                        y as f64 + 1.0,
+                        pz,
+                        self.level_ambient_rng.next_f32(),
+                        self.level_ambient_rng.next_f32(),
+                        self.level_ambient_rng.next_f32(),
+                        self.level_ambient_rng.next_f32(),
+                    );
+                    out.push(drip);
+                    self.sounds.play_voice(
+                        self.frame,
+                        "block.lava.pop",
+                        0.2 + self.ambient_rng.next_f32() * 0.2,
+                        0.9 + self.ambient_rng.next_f32() * 0.15,
+                    );
+                }
+                // THE AMBIENT VOICE GATE (nextInt(200) == 0): the raw
+                // block coords the bytecode speaks, the same
+                // volume/pitch formula the pop rides
+                if self.ambient_rng.next_int(200) == 0 {
+                    self.sounds.play_voice(
+                        self.frame,
+                        "block.lava.ambient",
+                        0.2 + self.ambient_rng.next_f32() * 0.2,
+                        0.9 + self.ambient_rng.next_f32() * 0.15,
+                    );
+                }
+            }
+        }
+        out
     }
 
     /// Enter the singleplayer world (3D view + HUD), building the mesh once.
@@ -5191,6 +5344,10 @@ impl App {
             self.splash_frames =
                 crate::avatar::SplashFrames::load(std::path::Path::new("assets-cache/jar"));
         }
+        if self.lava_sprite.is_none() {
+            self.lava_sprite =
+                crate::avatar::LavaSprite::load(std::path::Path::new("assets-cache/jar"));
+        }
         let sy = cam.yaw.sin();
         let cy = cam.yaw.cos();
         let sp = cam.pitch.sin();
@@ -5204,6 +5361,8 @@ impl App {
         let mut crit_quads: Vec<crate::raster::SampledQuad> = Vec::new();
         let mut bubble_quads: Vec<crate::raster::SampledQuad> = Vec::new();
         let mut splash_groups: Vec<(usize, Vec<crate::raster::SampledQuad>)> = Vec::new();
+        let mut lava_quads: Vec<crate::raster::SampledQuad> = Vec::new();
+        let mut smoke_groups: Vec<(usize, Vec<crate::raster::SampledQuad>)> = Vec::new();
         for p in &self.particles {
             let half = p.half();
             let corner = |sx: f32, syp: f32| {
@@ -5252,9 +5411,15 @@ impl App {
                         tex: "particle_poof",
                         tint: p.col,
                     };
-                    match poof_groups.iter_mut().find(|(f, _)| *f == frame) {
+                    // the FILE index the json's descending list order
+                    // speaks: list index 0 reads generic_7 (the dense
+                    // puff the decode counts 29/64), index 7 the wisp
+                    // — the cloud pops dense and dissolves, not the
+                    // reverse walk the file order would speak
+                    let file = crate::particles::generic_file_index(frame);
+                    match poof_groups.iter_mut().find(|(f, _)| *f == file) {
                         Some((_, quads)) => quads.push(quad),
-                        None => poof_groups.push((frame, vec![quad])),
+                        None => poof_groups.push((file, vec![quad])),
                     }
                 }
                 crate::particles::ParticleKind::Crit => {
@@ -5290,6 +5455,39 @@ impl App {
                     match splash_groups.iter_mut().find(|(f, _)| *f == frame) {
                         Some((_, quads)) => quads.push(quad),
                         None => splash_groups.push((frame, vec![quad])),
+                    }
+                }
+                crate::particles::ParticleKind::Lava => {
+                    // the drip's own quad (the single lava sprite the
+                    // json's one-texture list speaks — the full sprite
+                    // the quad samples, the white tint the ctor keeps,
+                    // the full-bright look the getLightCoords
+                    // withBlock(15) override speaks — the renderer's
+                    // particle lane carries no lightmap fold, the
+                    // untinted full sample IS the honest equivalent)
+                    lava_quads.push(crate::raster::SampledQuad {
+                        pts,
+                        uv: [[0.0, 8.0], [8.0, 8.0], [8.0, 0.0], [0.0, 0.0]],
+                        tex: "particle_lava",
+                        tint: p.col,
+                    });
+                }
+                crate::particles::ParticleKind::Smoke => {
+                    // the child's own quad (the generic frame the
+                    // age's own walk speaks — the same
+                    // setSpriteFromAge chain the poof rides, the
+                    // json's descending order the file index folds,
+                    // the grey tint the ctor's r*0.3 draw carries)
+                    let file = crate::particles::smoke_sprite_file_index(p.age, p.lifetime);
+                    let quad = crate::raster::SampledQuad {
+                        pts,
+                        uv: [[0.0, 8.0], [8.0, 8.0], [8.0, 0.0], [0.0, 0.0]],
+                        tex: "particle_poof",
+                        tint: p.col,
+                    };
+                    match smoke_groups.iter_mut().find(|(f, _)| *f == file) {
+                        Some((_, quads)) => quads.push(quad),
+                        None => smoke_groups.push((file, vec![quad])),
                     }
                 }
             }
@@ -5332,6 +5530,23 @@ impl App {
             for (frame, quads) in &splash_groups {
                 fb.draw_sampled_quads(vp, quads, &mut |_tex, u, v| {
                     Some(splash.pixel(*frame, u, v))
+                });
+            }
+        }
+        // the lava group (the drip's own bright pixels — the full
+        // sprite the single-texture json speaks)
+        if let Some(lava) = &self.lava_sprite {
+            fb.draw_sampled_quads(vp, &lava_quads, &mut |_tex, u, v| {
+                Some(lava.pixel(u, v))
+            });
+        }
+        // the smoke groups (the age's own frame walk — the same
+        // generic pixels the poof lane loads, the file index the json
+        // order folds)
+        if let Some(frames) = &self.poof_frames {
+            for (file, quads) in &smoke_groups {
+                fb.draw_sampled_quads(vp, quads, &mut |_tex, u, v| {
+                    Some(frames.pixel(*file, u, v))
                 });
             }
         }
@@ -11165,4 +11380,118 @@ mod tests {
             "the fog end's open speaks through the frame: {moved} pixels moved"
         );
     }
+
+    #[test]
+    fn the_ambient_walk_spawns_the_pool_drips() {
+        // THE STAGE'S OWN TRUTH: the lava pool + the 24-tick walk —
+        // the 667x2 sampler lands the pool's 9 surface cells, the
+        // 1/100 gate fires the drips (the 8x8 sprite's surface Y the
+        // +1.0 speaks), the voices log the two formulas
+        let mut app = App::new(3);
+        app.enter_world();
+        crate::headless::seed_scene(
+            &mut app,
+            &crate::headless::SceneOpts {
+                body: true,
+                lava_pool: true,
+                particles: Some("lava".into()),
+                ..crate::headless::SceneOpts::default()
+            },
+        )
+        .unwrap();
+        let drips = app
+            .particles
+            .iter()
+            .filter(|p| matches!(p.kind, crate::particles::ParticleKind::Lava))
+            .count();
+        assert!(drips > 0, "the walk fires on the pool's surface: {drips}");
+        // the surface Y: the pool's top cells speak floor+1.0 — every
+        // drip's birth Y rides the band the carve's level names
+        for p in app.particles.iter() {
+            if matches!(p.kind, crate::particles::ParticleKind::Lava) {
+                // the spawn band 0.05..0.45 DECAYS the staged flight's
+                // three ticks speak (0.04 * 0.75 per tick) — the
+                // post-flight band rides it
+                assert!(
+                    p.vy >= -0.05 && p.vy < 0.4,
+                    "the pop band the ctor speaks: {}",
+                    p.vy
+                );
+                assert_eq!(p.gravity, 0.75);
+            }
+            if matches!(p.kind, crate::particles::ParticleKind::Smoke) {
+                assert_eq!(p.gravity, -0.1, "the child RISES");
+                assert!(p.col[0] <= 0.3, "the grey tint's band");
+            }
+        }
+        // the voices: the pop + the ambient formulas ride the log
+        let pops = app
+            .sounds
+            .events
+            .iter()
+            .filter(|e| e.starts_with("block.lava.pop @"))
+            .count();
+        assert!(pops > 0, "the pop voice the gate speaks: {pops}");
+        for e in app.sounds.events.iter() {
+            if let Some((v, p)) = e
+                .split_once(" v")
+                .and_then(|(_, rest)| rest.split_once(" p"))
+            {
+                if e.starts_with("block.lava.pop") || e.starts_with("block.lava.ambient") {
+                    let vol: f32 = v.parse().unwrap();
+                    let pitch: f32 = p.parse().unwrap();
+                    assert!(
+                        (0.2..0.4).contains(&vol),
+                        "the volume formula's band: {vol}"
+                    );
+                    assert!(
+                        (0.9..1.05).contains(&pitch),
+                        "the pitch formula's band: {pitch}"
+                    );
+                }
+            }
+        }
+        // the replay: the same app walks the same seeds — the two
+        // streams' determinism the shots ride
+        let mut a = App::new(3);
+        a.enter_world();
+        crate::headless::seed_scene(
+            &mut a,
+            &crate::headless::SceneOpts {
+                body: true,
+                lava_pool: true,
+                particles: Some("lava".into()),
+                ..crate::headless::SceneOpts::default()
+            },
+        )
+        .unwrap();
+        let mut b = App::new(3);
+        b.enter_world();
+        crate::headless::seed_scene(
+            &mut b,
+            &crate::headless::SceneOpts {
+                body: true,
+                lava_pool: true,
+                particles: Some("lava".into()),
+                ..crate::headless::SceneOpts::default()
+            },
+        )
+        .unwrap();
+        let da: Vec<(u32, f64, f64, f64)> = a
+            .particles
+            .iter()
+            .filter(|p| matches!(p.kind, crate::particles::ParticleKind::Lava))
+            .map(|p| (p.lifetime, p.x, p.y, p.z))
+            .collect();
+        let db: Vec<(u32, f64, f64, f64)> = b
+            .particles
+            .iter()
+            .filter(|p| matches!(p.kind, crate::particles::ParticleKind::Lava))
+            .map(|p| (p.lifetime, p.x, p.y, p.z))
+            .collect();
+        assert_eq!(da, db, "the seeded walk replays");
+    }
 }
+
+
+

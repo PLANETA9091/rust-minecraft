@@ -117,3 +117,5 @@ pub const PARTICLE_POOF_PNG_SHA1S: [&str; 8] = ["678f7ffb52a4e91694185f99ec2552c
 pub const PARTICLE_POOF_RUNTIME_PATHS: [&str; 8] = ["particle/generic_0.png", "particle/generic_1.png", "particle/generic_2.png", "particle/generic_3.png", "particle/generic_4.png", "particle/generic_5.png", "particle/generic_6.png", "particle/generic_7.png"];
 pub const PARTICLE_SPLASH_PNG_SHA1S: [&str; 4] = ["52032e5f3820cf65c12515bffd2e12a306ba38a8", "e728b2706c15f05d70732d89df4f7ad3784ba087", "a6101891413b64e969802a3f8c03e9bf8a945d83", "3b9dd35b536798a87ba59f81a43038a0e3494327"];
 pub const PARTICLE_SPLASH_RUNTIME_PATHS: [&str; 4] = ["particle/splash_0.png", "particle/splash_1.png", "particle/splash_2.png", "particle/splash_3.png"];
+pub const PARTICLE_LAVA_PNG_SHA1: &str = "20a3d96087bb1b4c620acd186757b84bdffc68e5";
+pub const PARTICLE_LAVA_RUNTIME_PATH: &str = "particle/lava.png";
