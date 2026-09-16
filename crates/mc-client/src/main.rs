@@ -183,6 +183,11 @@ struct Cli {
     /// purple wears. Requires --body.
     #[arg(long)]
     breed_mix: Option<u32>,
+    /// The staged sheep the BABY age word arms (--sheep's own age:
+    /// 1600 ticks into the -24000 walk — the wheat press the feed's
+    /// canAgeUp arm takes, the sparkles the forcedAge window speaks).
+    #[arg(long)]
+    baby: bool,
     /// The zombie's remainingFireTicks (the igniteForSeconds(8) law
     /// speaks 160).
     #[arg(long)]
@@ -427,6 +432,7 @@ fn main() -> Result<()> {
             feed: cli.feed,
             breed: cli.breed,
             breed_mix: cli.breed_mix,
+            baby: cli.baby,
             zombie_fire: cli.zombie_fire,
             zombie_death: cli.zombie_death,
             zombie_aggro: cli.zombie_aggro,

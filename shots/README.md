@@ -2,7 +2,7 @@
 
 Every lane that ships pixels owes the folder a frame. The gallery is the
 proof the features exist as rendered images, not as test names alone.
-139 frames and counting — grouped below by the lane that spoke them.
+141 frames and counting — grouped below by the lane that spoke them.
 
 ## The F5 lane (the third-person avatar) — v0.3.154+
 
@@ -424,6 +424,7 @@ lasts 20 real minutes again, the eat hold 1.6s, the swing 0.3s.
 | `wire_attack.png` | THE WIRE BODY'S OWN ATTACK (v0.3.196): the left press the wire lane ANSWERS — the 26.2's dedicated ServerboundAttackPacket the gameMode.attack dump speaks (`new ServerboundAttackPacket(target.getId())` — the record `(int entityId)` the clinit's composite loads ByteBufCodecs.VAR_INT alone, generated id 1 `minecraft:attack` the generated table keeps, the SEND the dump's own order speaks: ensure, SEND, attack, RESET), the attack site's pick now walks the SAME chain the render walks — the offline lane first, the wire's remote bodies after — and the wire arm sends the SERVER'S OWN id the Add Entity minted (the command lane the live worker echoes, the local prediction the wire body never runs — the health the server's to keep, the Hurt echo the v0.3.185 lane renders the verdict the client waits for, the RESET the resetAttackStrengthTicker step rides); the shot stages the REAL on_attack press at the "Lurker" body --net-crosshair snapped on the line, the swing clock 3 of its 6 ticks walked — the arm mid-arc crossing toward the crosshair's own zombie; the at-rest companion at the identical staging diffs rms 17.9 — 39799 bytes, the arm's own arc the only word |
 | `offline_shear.png` | THE MOB.INTERACT TABLE'S OWN FIRST ENTRY (v0.3.199): the right press the OFFLINE sheep ANSWERS — the 26.2's Sheep.mobInteract walk the dump speaks (the held stack's `is(Items.SHEARS)` gate, the `readyForShearing()` gate — `!isSheared() && !isBaby()` the wool byte's own bit arms), the Shear the shearing/sheep/<color> table rolls (uniform 1..3 the pool speaks, the lambda$0's `copyWithCount(1)` singles the drops spawn), the playSound(SHEEP_SHEAR, PLAYERS, 1.0, 1.0) the voice lane plays, the swing the SUCCESS_SERVER's SwingSource.SERVER arm starts — the sheep's wool coat gone, the pinkish undercoat body the fur layer's own gate reveals, the shears frozen mid-arc; the un-sheared companion at the identical staging diffs rms 33.1 (the coat's own absence, honest and loud) |
 | `offline_feed.png` | THE MOB.INTERACT TABLE'S OWN FOOD ARM (v0.3.201): the right press the OFFLINE sheep FEEDS — the 26.2's Animal.mobInteract walk the dump speaks (the `isFood(item)` hit — the tag tables the jar's own `tags/item/*.json` keeps verbatim: SHEEP_FOOD/COW_FOOD the wheat, PIG_FOOD the carrot/potato/beetroot, the zombie's monster chain the gate refuses; the ADULT arm `getAge() == 0 && canFallInLove()` — inLove <= 0 the gate reads), the setInLove the inLove = 600 arms (+ the loveCause + the broadcastEntityEvent(18) the HEART burst the render lane owes), the playEatingSound the override the jar keeps SILENT — the Sheep the base's own empty law speaks, the PIG the entity.pig.eat voice the only eater; the second press the in-love adult keeps — the CONSUME the fallback returns, SwingSource.NONE no swing; the wheat frozen mid-arc the swing's own word; the at-rest companion at the identical staging diffs rms 24.8 — 26997 pixels the arm's own arc + the held stack's render the press walked |
+| `feeding_growth.png` | THE FEEDING'S OWN GROWTH (v0.3.220): the wheat press the OFFLINE BABY FEEDS — the `Animal.mobInteract`'s canAgeUp arm the 26.2 raw disasm speaks (`usePlayerItem` + `ageUp(getSpeedUpSecondsWhenFeeding(-age), true)` + `playEatingSound()`, the SUCCESS verdict the swing carries), the ageUp the getSpeedUpSecondsWhenFeeding law walks ((int)((-age/20) · 0.1F) — the ten percent of the remaining baby time, the 2400-tick jump the -24000 start answers), the forcedAge the APPLIED delta carries, the 40-tick forcedAgeTimer window the over-grow arm marks, the HAPPY_VILLAGER sparkles the aiStep's % 4 cadence spawns at getRandomX(1.0) / getRandomY() + 0.5 / getRandomZ(1.0) — the glint sprite the happy_villager json's one-texture set keeps (the setColor(1,1,1) the texture's own green passes), the lifetime the 20.0 / (nf · 0.8 + 0.2) fold answers [20, 100], the SuspendedTown drift the · 0.99 friction walks, the zero-amount feed the sparkle window still arms (the f32 trunc's own floor the 1/20 edge speaks); the at-rest companion at the identical staging diffs rms 6.8 — the green dots (0, 201, 77) the sky-side crop speaks + the swing arc the press walked |
 | `breeding_walk.png` | THE BREEDING WALK'S OWN FAMILY (v0.3.206): the canMate pair the scan ANSWERS — the two in-love sheep the --breed staging arms (the same kind, both in love, the 8.0 ring the goal speaks), the pairing the tick lane's own scan walks (Animal.canMate the dump's own law), the CHILD the spawnChildFromBreeding walk leaves (the -24000 the birth arms, the snapTo at the parent's own spot, the 0.5 pose scale the render folds — the getDefaultDimensions isBaby arm the bbox halves), the parents the finalizeSpawnChildFromBreeding tail cools (setAge(6000) both, resetLove() both), the HEARTS the event 18 broadcast spawns (the burst the particle store rides), the XP orb the MOB_DROPS roll owes (nextInt(7) the zero roll honestly keeps); the at-rest companion at the identical staging diffs rms 20.4 — the family's own walk the hearts + the child + the cooled pair speak (v0.3.214 regen: THE ANIMALS' OWN PEACE the target scan's kind gate keeps — the in-range body the parents no longer charge, the family stands at the facing cells the court walk owns; the old frames the charge lane filled, the parents hugging the eye the attack arm's own steal spoke) (v0.3.216 regen: THE BABY'S OWN MODEL the AgeableMobRenderer's isBaby pick draws — the dedicated BabySheepModel geometry + the sheep_baby.png the baby lane reads, the 0.5 pose-scale stand-in the model swap replaced, the old-vs-new frame rms 17.6 speaks while the rest staging's identical frames keep rms 0.000; the armed-vs-rest diff the new model's own mass re-speaks rms 15.5) |
 | `breeding_mix.png` | THE MIX WALK'S OWN FAMILY (v0.3.210): the breed staging the RED and BLUE dyes arm (the parents' wool 14 and 11), the child the crafting recipe the PURPLE wears — DyeColor.getMixedColor the sheep_262 dump speaks (the parents' dyes the grid pairs, the recipe result the baby answers), the DYE_MIX_TABLE's own nine rows the recipe arm keeps — the purple mass the baby's coat fills the lower frame the white family's mass answered white, the blue parent mid-frame the red one's glimpse the baby's shoulder names (v0.3.214 regen: the peace gate the family frames re-walks — the parents the facing cells keep, the baby the meet's own spot holds) (v0.3.216 regen: the baby's own model the mix frame re-speaks — old-vs-new rms 16.9, the rest staging the identical frames' rms 0.000 keeps); the at-rest companion (--breed-mix 0, the red parent at the camera pre-pair, no baby, no hearts) diffs rms 24.1 — the mix's own walk the baby + the hearts speak, the white staging the identical frames' rms 24.0 names |
 | `sprint_fov.png` | THE CAMERA'S OWN ZOOM (v0.3.217): the sprint the fov modifier arms — Camera.tickFov's own half-step the body's tail beat walks (the target the speed attribute's ratio speaks: the sprint's 1.3 the (1.3+1)/2 fold answers 1.15), Camera.calculateFov's own read the 70° option multiplies — the first-person frame the 80.5° zoom renders (the block outline smaller, the world wider, the hand the wider frame carries), the walk the 12 ticks speak; the at-rest companion (the same walk, no sprint) diffs rms 14.8 — the zoom's own word the wider view names |
@@ -704,6 +705,30 @@ cargo run -p mc-client --release -- --headless --screen world \
 # hangs around it; the at-rest companion (no
 # --feed, the same 12 updates) diffs rms 8.7 — 3625 pixels the
 # hearts' own red + the swing arc the press walked
+```
+
+The feeding's own growth (v0.3.220 — the baby arm):
+
+```sh
+cargo run -p mc-client --release -- --headless --screen world \
+  --seed 3 --body --sheep --baby --held-item item/wheat --feed 3 \
+  --settle-ticks 10 --ui-frame 10 --out shots/feeding_growth.png
+cargo run -p mc-client --release -- --headless --screen world \
+  --seed 3 --body --sheep --baby --held-item item/wheat \
+  --settle-ticks 10 --ui-frame 10 --out shots/feeding_growth_rest.png
+# --baby arms the staged sheep's BABY age (1600 ticks into the
+# -24000 walk — the dedicated BabySheepModel the isBaby word picks
+# draws), the wheat press the mob_interact's canAgeUp arm takes: the
+# ageUp the getSpeedUpSecondsWhenFeeding law walks ((int)((-age/20) *
+# 0.1F) — the ten percent of the remaining baby time), the forcedAge
+# window the over-grow arm marks, the HAPPY_VILLAGER sparkles the
+# aiStep's % 4 cadence spawns at getRandomX(1.0) / getRandomY() + 0.5
+# / getRandomZ(1.0) — the glint sprite the happy_villager json's
+# one-texture set keeps, the lifetime the 20.0 / (nf * 0.8 + 0.2)
+# fold answers, the SuspendedTown drift the * 0.99 friction walks;
+# the at-rest companion (no --feed) diffs rms 6.8 — the green dots
+# the frame's own sky-side crop speaks (0, 201, 77) + the swing arc
+# the press walked
 ```
 
 The breeding walk's own family (v0.3.206 — the pair, the child, the burst):

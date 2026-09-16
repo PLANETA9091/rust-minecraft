@@ -137,6 +137,10 @@ pub const BABY_START_AGE: i32 = -24000;
 /// `setAge(6000)` the walk folds on BOTH parents — the breed delay
 /// the aiStep's own decrement drains, the gate the feed arm reads).
 pub const BREED_COOLDOWN_TICKS: i32 = 6000;
+/// `AgeableMob.ageUp(IZ)`'s own forcedAgeTimer mark (the bipush 40 the
+/// over-grow arm speaks — the HAPPY_VILLAGER sparkles the aiStep's
+/// `% 4` cadence walks over the next 40 ticks, ten green flashes).
+pub const FEED_FORCED_AGE_TIMER: i32 = 40;
 /// The BreedGoal's own 8.0 ring (the AABB inflate the goal's pairing
 /// search speaks — the class source's constant the chicken/pig
 /// registrations' `BreedGoal(animal, 1.0)` clinit entries name the
@@ -349,20 +353,26 @@ pub enum MobInteract {
     /// bytecode: `isFood(item)` hit, the ADULT arm `getAge() == 0 &&
     /// canFallInLove()` — `usePlayerItem` + `setInLove(player)` +
     /// `playEatingSound()`, the SUCCESS_SERVER return — the love arm
-    /// rides `love: true`; the fallback the `canFallInLove` false
-    /// adult keeps — in love already, the press the CONSUME verdict
-    /// consumes, `SwingSource.NONE` no swing, `love: false`). The
-    /// BABY arm the `canAgeUp` gate arms the repo never walks (no
-    /// growth vocabulary — isBaby the honest constant false); the
-    /// `usePlayerItem` consume the repo's item lane never speaks (no
-    /// inventory — the held stack the caller's stand-in keeps). The
-    /// eat voice the `playEatingSound` override the jar keeps — the
-    /// PIG only (the Sheep/Cow the base's own empty law keeps
-    /// silent), the caller's sound lane plays it.
+    /// rides `love: true`; the BABY arm the `canAgeUp` gate arms —
+    /// `usePlayerItem` + `ageUp(getSpeedUpSecondsWhenFeeding(-age),
+    /// true)` the ten-percent growth law walks + `playEatingSound()`,
+    /// the SUCCESS return — rides `grow: true` (the grow-up the
+    /// ageUp's own walk carries, the swing the SUCCESS verdict
+    /// speaks, the heart burst the setInLove arm the baby never
+    /// rides); the fallbacks the false pair keeps — in love already,
+    /// the press the CONSUME verdict consumes, `SwingSource.NONE` no
+    /// swing). The `usePlayerItem` consume the repo's item lane never
+    /// speaks (no inventory — the held stack the caller's stand-in
+    /// keeps). The eat voice the `playEatingSound` override the jar
+    /// keeps — the PIG only (the Sheep/Cow the base's own empty law
+    /// keeps silent), the caller's sound lane plays it.
     Feed {
         /// SUCCESS_SERVER (the setInLove arm) vs CONSUME (the
         /// already-in-love fallback the canFallInLove gate refuses)
         love: bool,
+        /// SUCCESS (the baby arm) — the grow-up the ageUp law walked
+        /// this press, the swing the SUCCESS verdict speaks
+        grow: bool,
     },
 }
 
@@ -372,7 +382,7 @@ impl MobInteract {
     /// SwingSource.SERVER starts, the heart burst the event 18
     /// broadcast speaks), the CONSUME fallback the false keeps.
     pub fn love(&self) -> bool {
-        matches!(self, MobInteract::Feed { love: true })
+        matches!(self, MobInteract::Feed { love: true, .. })
     }
 }
 
@@ -665,6 +675,14 @@ const STROLL_ARRIVAL: f64 = 0.5;
 /// y<0 law keeps NO ground here — the vanilla isOutsideLimits word
 /// the out-of-world candidate dies on, the void column's phantom
 /// stone the world.get read can never stand on.
+/// `AgeableMob.getSpeedUpSecondsWhenFeeding(I)` verbatim (the 26.2 raw
+/// disasm speaks): `(int) ((float) (negativeGrowingAge / 20) * 0.1F)`
+/// — the feeding's own ten-percent law, the remaining baby time the
+/// SECONDS the ageUp's `* 20` refold answers.
+fn speed_up_seconds_when_feeding(negative_growing_age: i32) -> i32 {
+    ((negative_growing_age / 20) as f32 * 0.1) as i32
+}
+
 fn stroll_cell_solid(world: &World, x: i32, y: i32, z: i32) -> bool {
     if y < 0 {
         return false;
@@ -707,6 +725,11 @@ pub struct MobEvents {
     /// kind's own voice, `MobKind::step_voice` the law speaks: the
     /// zombie's flat override, the animals' block law)
     pub step: bool,
+    /// THE FEED SPARKLE'S OWN BEAT (the aiStep's `% 4` cadence fired
+    /// this tick — the position the `getRandomX(1.0) / getRandomY() +
+    /// 0.5 / getRandomZ(1.0)` walk carried, the caller spawns the
+    /// happy villager's green the glint texture speaks)
+    pub happy_sparkle: Option<(f64, f64, f64)>,
 }
 
 /// The zombie's attack out-edge (the doHurtTarget the melee goal
@@ -792,6 +815,16 @@ pub struct Zombie {
     /// split the wire channel keeps, the single field the same verdicts
     /// the client's own store answers).
     pub age: i32,
+    /// `AgeableMob.forcedAge` — the feed's own growth accumulator (the
+    /// ageUp's over-grow arm adds the APPLIED delta — the new-minus-old
+    /// fold the bytecode speaks, POSITIVE for the growth the walk made;
+    /// the age-lock lane the repo keeps none of — the honest note the
+    /// server arm's walk never fires).
+    pub forced_age: i32,
+    /// `AgeableMob.forcedAgeTimer` — the 40-tick sparkle window the
+    /// ageUp's over-grow arm marks (the aiStep's `% 4` cadence the
+    /// HAPPY_VILLAGER spawns speak, the decrement the window drains).
+    pub forced_age_timer: i32,
     /// the swing clock (the attack anim the render state's attackTime
     /// samples — the same LivingEntity law the player's hand speaks)
     pub swing: SwingState,
@@ -916,6 +949,8 @@ impl Zombie {
             death_time: 0,
             in_love: 0,
             age: 0,
+            forced_age: 0,
+            forced_age_timer: 0,
             swing: SwingState::default(),
             walk: WalkAnimationState::default(),
             aggressive: false,
@@ -1188,6 +1223,25 @@ impl Zombie {
             self.age += 1;
         } else if self.age > 0 {
             self.age -= 1;
+        }
+        // THE FEED'S OWN SPARKLES (javap `AgeableMob.aiStep`'s client
+        // arm verbatim: the `forcedAgeTimer > 0` gate the ageUp's
+        // over-grow arm marks, the `% 4` cadence the HAPPY_VILLAGER
+        // spawn speaks at `getRandomX(1.0) / getRandomY() + 0.5 /
+        // getRandomZ(1.0)` — the x and z both `+ (2.0 * nextDouble() -
+        // 1.0) * 1.0`, the y `+ nextDouble() + 0.5` the no-arg
+        // getRandomY's `getY(nextDouble())` law carries — the spawn
+        // BEFORE the decrement, the ten flashes the 40-tick window
+        // keeps; the server's forcedAge arm the age-lock lane the
+        // repo keeps none of, the honest note the walk never fires)
+        if self.forced_age_timer > 0 {
+            if self.forced_age_timer % 4 == 0 {
+                let sx = self.x + (2.0 * self.rng.next_f64() - 1.0);
+                let sy = self.y + self.rng.next_f64() + 0.5;
+                let sz = self.z + (2.0 * self.rng.next_f64() - 1.0);
+                events.happy_sparkle = Some((sx, sy, sz));
+            }
+            self.forced_age_timer -= 1;
         }
         self.swing.tick();
         self.age_ticks = self.age_ticks.wrapping_add(1);
@@ -1923,20 +1977,57 @@ impl Zombie {
     /// own walk keeps.
     fn feed(&mut self) -> MobInteract {
         // THE AGE GATE (javap `Animal.mobInteract`'s own arm: `isFood`
-        // then `getAge() == 0` the adult arm speaks — the baby and the
-        // breed cooldown both refuse the love word, the CONSUME the
-        // non-zero age returns)
+        // then `getAge() == 0` the adult arm speaks — the baby the
+        // canAgeUp arm takes, the breed cooldown the CONSUME keeps)
         if self.age == 0 && self.in_love <= 0 {
             // the setInLove walk: inLove = 600 (the loveCause the
             // EntityReference ride and the event 18 burst the
             // offline walk's own verdict stands for)
             self.in_love = 600;
-            MobInteract::Feed { love: true }
+            MobInteract::Feed { love: true, grow: false }
+        } else if self.age < 0 {
+            // THE BABY ARM (javap `Animal.mobInteract`'s canAgeUp arm
+            // verbatim: `usePlayerItem` (the consume the offline
+            // walk's own verdict stands for) + `ageUp(
+            // getSpeedUpSecondsWhenFeeding(-age), true)` the
+            // ten-percent growth law walks + `playEatingSound()` (the
+            // base's own empty law the Sheep/Cow keep silent) — the
+            // SUCCESS verdict the swing speaks, the heart burst the
+            // setInLove arm the baby never rides)
+            let amount = speed_up_seconds_when_feeding(-self.age);
+            self.age_up(amount, true);
+            MobInteract::Feed { love: false, grow: true }
         } else {
-            // the already-in-love adult (or the baby/cooldown the age
-            // gate refuses): the CONSUME the isClientSide arm returns,
-            // the press consumed the swing never starts
-            MobInteract::Feed { love: false }
+            // the already-in-love adult (or the cooldown the age gate
+            // refuses): the CONSUME the isClientSide arm returns, the
+            // press consumed the swing never starts
+            MobInteract::Feed { love: false, grow: false }
+        }
+    }
+
+    /// `AgeableMob.ageUp(IZ)` verbatim (the 26.2 raw disasm speaks):
+    /// `i = age; i += amount * 20; if (i > 0) i = 0;` — the ZERO
+    /// CEILING the grow-up crossing never overshoots — then
+    /// `setAge(i)`, the over-grow arm `forcedAge += (the APPLIED
+    /// delta — the new-minus-old fold, POSITIVE for the growth)` + the
+    /// 40-tick sparkle
+    /// window the zero timer marks, the boundary the `getAge() == 0`
+    /// gate answers (the boat lane the offline walk never rides —
+    /// the grow-up the isBaby flip the render lane speaks).
+    fn age_up(&mut self, amount: i32, over_grow: bool) {
+        let i = self.age;
+        let mut j = i;
+        j += amount * 20;
+        if j > 0 {
+            j = 0;
+        }
+        let k = j - i;
+        self.age = j;
+        if over_grow {
+            self.forced_age += k;
+            if self.forced_age_timer == 0 {
+                self.forced_age_timer = FEED_FORCED_AGE_TIMER;
+            }
         }
     }
 
@@ -3511,7 +3602,7 @@ mod tests {
         );
         assert_eq!(
             sheep.mob_interact("wheat", &mut Lcg::new(1)),
-            MobInteract::Feed { love: true },
+            MobInteract::Feed { love: true, grow: false },
             "the feeding lane the Animal super walks"
         );
         assert_eq!(
@@ -3566,13 +3657,13 @@ mod tests {
         sheep.kind = MobKind::Sheep;
         assert_eq!(
             sheep.mob_interact("wheat", &mut Lcg::new(1)),
-            MobInteract::Feed { love: true },
+            MobInteract::Feed { love: true, grow: false },
             "the ADULT arm the SUCCESS_SERVER speaks"
         );
         assert_eq!(sheep.in_love, 600, "setInLove's own 600 the walk arms");
         assert_eq!(
             sheep.mob_interact("wheat", &mut Lcg::new(1)),
-            MobInteract::Feed { love: false },
+            MobInteract::Feed { love: false, grow: false },
             "the in-love adult the CONSUME fallback keeps"
         );
         assert_eq!(sheep.in_love, 600, "the CONSUME arm no clock change");
@@ -3674,21 +3765,195 @@ mod tests {
     fn the_feed_and_shear_gates_refuse_the_baby() {
         // javap Animal.mobInteract (the getAge() == 0 arm) +
         // Sheep.readyForShearing (!isSheared() && !isBaby()): the baby
-        // the feed's love word never arms, the coat the shear never
-        // takes
+        // the feed's love word never arms — the BABY arm the canAgeUp
+        // gate takes instead (the SUCCESS verdict the grow word
+        // carries), the coat the shear never takes
         let mut baby = Zombie::new(7, 0.0, 64.0, 0.0, 262);
         baby.kind = MobKind::Sheep;
         baby.age = -1;
         assert_eq!(
             baby.mob_interact("wheat", &mut Lcg::new(1)),
-            MobInteract::Feed { love: false },
-            "the baby the age gate refuses (the CONSUME arm)"
+            MobInteract::Feed { love: false, grow: true },
+            "the baby the canAgeUp gate takes (the SUCCESS arm)"
         );
         assert_eq!(baby.in_love, 0, "the baby no love clock arms");
+        // the ten-percent law's own floor: the 1/20 = 0.05 the f32
+        // trunc rounds to ZERO seconds — the age the ceiling keeps,
+        // the sparkle window the over-grow arm still marks
+        assert_eq!(baby.age, -1, "the zero-amount ageUp the law keeps");
+        assert_eq!(
+            baby.forced_age_timer, FEED_FORCED_AGE_TIMER,
+            "the window the over-grow arm marks"
+        );
         assert!(
             !baby.ready_for_shearing(),
             "the baby's coat the shear never takes"
         );
+    }
+
+    /// THE FEEDING'S OWN TEN-PERCENT LAW (javap
+    /// `Animal.mobInteract`'s canAgeUp arm + `AgeableMob.ageUp(IZ)` +
+    /// `getSpeedUpSecondsWhenFeeding`): the wheat press the baby arm
+    /// takes — the ageUp the `(-age / 20) * 0.1` seconds answers (24000
+    /// / 20 = 1200, x 0.1 = 120, the * 20 refold = 2400 ticks — the
+    /// ten percent of the remaining walk), the forcedAge the APPLIED
+    /// delta -2400 carries, the 40-tick sparkle window the over-grow
+    /// arm marks, the SUCCESS verdict the grow word carries, the love
+    /// clock the setInLove arm the baby never rides.
+    #[test]
+    fn the_feeding_walks_the_ten_percent_law() {
+        let mut child = Zombie::new(7, 0.0, 64.0, 0.0, 262);
+        child.kind = MobKind::Sheep;
+        child.age = BABY_START_AGE;
+        let verdict = child.mob_interact("wheat", &mut Lcg::new(1));
+        assert_eq!(
+            verdict,
+            MobInteract::Feed { love: false, grow: true },
+            "the baby arm the SUCCESS verdict speaks"
+        );
+        assert_eq!(
+            child.age,
+            BABY_START_AGE + 2400,
+            "the ten-percent jump the ageUp's own fold answers"
+        );
+        assert!(child.is_baby(), "the baby the walk never crosses");
+        assert_eq!(
+            child.forced_age, 2400,
+            "the applied delta the forcedAge accumulator carries (the
+             new-minus-old fold the bytecode speaks: the growth POSITIVE)"
+        );
+        assert_eq!(
+            child.forced_age_timer, FEED_FORCED_AGE_TIMER,
+            "the window the over-grow arm marks"
+        );
+        assert_eq!(child.in_love, 0, "the baby no love clock arms");
+        // the f32 trunc's own floor: the 1/20 = 0.05 the fold rounds
+        // to zero seconds — the age the zero-amount ageUp keeps, the
+        // window the arm still marks
+        let mut edge = Zombie::new(7, 0.0, 64.0, 0.0, 262);
+        edge.kind = MobKind::Sheep;
+        edge.age = -1;
+        edge.mob_interact("wheat", &mut Lcg::new(1));
+        assert_eq!(edge.age, -1, "the zero-amount ageUp the law keeps");
+        assert_eq!(edge.forced_age, 0, "the zero delta the fold carries");
+        assert_eq!(
+            edge.forced_age_timer, FEED_FORCED_AGE_TIMER,
+            "the window the zero-amount arm still marks"
+        );
+    }
+
+    /// THE AGEUP'S OWN ZERO CEILING (javap `ageUp(IZ)` verbatim: the
+    /// `if (i > 0) i = 0` fold the grow-up crossing never overshoots —
+    /// the direct walk the overgrow amount answers, the boundary the
+    /// `getAge() == 0` gate speaks, the adult the crossing names).
+    #[test]
+    fn the_ageup_never_crosses_the_zero_ceiling() {
+        let mut child = Zombie::new(7, 0.0, 64.0, 0.0, 262);
+        child.age = BABY_START_AGE;
+        // 1300 seconds the * 20 refold = 26000 ticks past the -24000 —
+        // the ceiling the zero answers (the crossing the isBaby flip
+        // closes), the applied delta the +24000 the fold carries (the
+        // vanilla's own arithmetic the verbatim walk keeps)
+        child.age_up(1300, true);
+        assert_eq!(child.age, 0, "the ceiling the grow-up crossing names");
+        assert!(!child.is_baby(), "the baby word the zero closes");
+        assert_eq!(
+            child.forced_age, 24000,
+            "the applied delta the verbatim fold carries"
+        );
+        // the over-grow false arm: the window the mark never arms, the
+        // accumulator the fold never touches
+        let mut dry = Zombie::new(7, 0.0, 64.0, 0.0, 262);
+        dry.age = -1000;
+        dry.age_up(50, false);
+        assert_eq!(dry.age, 0, "the ceiling the plain walk answers too");
+        assert_eq!(dry.forced_age, 0, "the plain arm the accumulator keeps");
+        assert_eq!(dry.forced_age_timer, 0, "the plain arm no window marks");
+    }
+
+    /// THE FEED'S OWN SPARKLES (javap `AgeableMob.aiStep`'s client arm
+    /// verbatim: the `% 4` cadence the HAPPY_VILLAGER spawn speaks, the
+    /// position the `getRandomX(1.0) / getRandomY() + 0.5 /
+    /// getRandomZ(1.0)` walk carries (x and z the `2d - 1` unit box, y
+    /// the `d + 0.5` half-band), the spawn BEFORE the decrement — the
+    /// ten flashes the 40-tick window keeps, the empty ticks the
+    /// non-multiple answers).
+    #[test]
+    fn the_forced_age_timer_spawns_the_happy_villager_walk() {
+        let mut child = Zombie::new(7, 0.0, 64.0, 0.0, 262);
+        child.kind = MobKind::Sheep;
+        child.age = BABY_START_AGE + 1600;
+        child.forced_age_timer = FEED_FORCED_AGE_TIMER;
+        let world = World::new(1, 42);
+        let mut flashes = 0;
+        for _ in 0..44 {
+            // the spawn walk the tick's head carries: the sparkle's
+            // position the PRE-MOVE pose reads (the physics the tail
+            // walks), the band the spawn tick's own y keeps
+            let y0 = child.y;
+            let x0 = child.x;
+            let z0 = child.z;
+            let ev = child.tick(&world, None, NIGHT);
+            if let Some((sx, sy, sz)) = ev.happy_sparkle {
+                flashes += 1;
+                assert!(
+                    (sx - x0).abs() <= 1.0 && (sz - z0).abs() <= 1.0,
+                    "the x/z the unit box keeps: ({sx}, {sz})"
+                );
+                assert!(
+                    (y0 + 0.5..y0 + 1.5).contains(&sy),
+                    "the y the half-band keeps: {sy} over {y0}"
+                );
+            }
+        }
+        assert_eq!(flashes, 10, "the ten flashes the 40-tick window keeps");
+        assert_eq!(
+            child.forced_age_timer, 0,
+            "the window the drain empties"
+        );
+        // the empty tail: the drained window the walk never arms again
+        for _ in 0..20 {
+            let ev = child.tick(&world, None, NIGHT);
+            assert!(
+                ev.happy_sparkle.is_none(),
+                "the drained window the walk keeps silent"
+            );
+        }
+    }
+
+    /// THE SPARKLE'S OWN PARTICLE (javap `SuspendedTownParticle` + the
+    /// `$HappyVillagerProvider` verbatim: the lifetime the `20.0 /
+    /// (nf * 0.8 + 0.2)` fold answers [20, 100], the size the `0.02 *
+    /// (nf * 0.6 + 0.5)` draw answers [0.01, 0.022], the zero velocity
+    /// the aiStep's own (0, 0, 0) the ctor's `* 0.02` fold keeps, the
+    /// friction the tick's own `* 0.99` speaks, the gravity the law
+    /// never arms, the white tint the provider's setColor(1,1,1)
+    /// passes — the glint texture's own green the quad samples whole).
+    #[test]
+    fn the_sparkle_rides_the_suspended_town_laws() {
+        for seed in 0..64u64 {
+            let mut rng = Lcg::new(seed + 500);
+            let p = crate::particles::happy_villager_sparkle(1.5, 5.6, 2.5, &mut rng);
+            assert_eq!(p.x, 1.5, "the aiStep position the caller carried");
+            assert_eq!(p.y, 5.6, "the aiStep position the caller carried");
+            assert_eq!(p.z, 2.5, "the aiStep position the caller carried");
+            assert_eq!(p.vx, 0.0, "the zero drift the aiStep's own (0,0,0) keeps");
+            assert_eq!(p.vy, 0.0, "the zero drift the aiStep's own (0,0,0) keeps");
+            assert_eq!(p.vz, 0.0, "the zero drift the aiStep's own (0,0,0) keeps");
+            assert!(
+                (20..=100).contains(&p.lifetime),
+                "the lifetime the fold's own range keeps: {}",
+                p.lifetime
+            );
+            assert!(
+                (0.01..=0.022).contains(&p.quad_size),
+                "the size the draw's own range keeps: {}",
+                p.quad_size
+            );
+            assert_eq!(p.col, [1.0, 1.0, 1.0], "the white the provider passes");
+            assert_eq!(p.friction, 0.99, "the tick's own friction fold");
+            assert_eq!(p.gravity, 0.0, "the gravity the law never arms");
+        }
     }
 
     #[test]
@@ -4929,3 +5194,4 @@ mod tests {
         );
     }
 }
+

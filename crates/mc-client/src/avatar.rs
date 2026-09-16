@@ -2295,6 +2295,46 @@ impl CritSprite {
     }
 }
 
+/// The happy villager's sparkle (javap: the `happy_villager` particle
+/// type's sprite set — the jar's `particles/happy_villager.json` lists
+/// ONE texture, `minecraft:glint`; the
+/// `SuspendedTownParticle$HappyVillagerProvider`'s `SpriteSet.get(random)`
+/// returns it whatever the draw and the `setColor(1.0F, 1.0F, 1.0F)`
+/// override passes the texture's own green whole — the feed sparkle the
+/// `AgeableMob.aiStep`'s forcedAgeTimer walk spawns).
+pub struct GlintSprite {
+    pub rgba: Vec<u8>,
+}
+
+/// The glint texture's own layout (the jar's 8x8 the IHDR speaks).
+pub const GLINT_SPRITE_SIDE: u32 = 8;
+
+impl GlintSprite {
+    /// Load from the runtime cache root (the generator's
+    /// `assets-cache/jar/`), verify the generated sha1, decode, and
+    /// shape-check the 8x8 layout.
+    pub fn load(root: &std::path::Path) -> Option<GlintSprite> {
+        let bytes = std::fs::read(root.join(skin::PARTICLE_GLINT_RUNTIME_PATH)).ok()?;
+        if hex::encode(sha1::Sha1::digest(&bytes)) != skin::PARTICLE_GLINT_PNG_SHA1 {
+            return None;
+        }
+        let (w, h, rgba) = decode_rgba(&bytes).ok()?;
+        if w != GLINT_SPRITE_SIDE || h != GLINT_SPRITE_SIDE {
+            return None;
+        }
+        Some(GlintSprite { rgba })
+    }
+
+    /// The sprite pixel at (u, v) in TEXTURE UNITS (the 0..8 the
+    /// particle quad's uv walk speaks), nearest texel.
+    pub fn pixel(&self, u: f32, v: f32) -> [u8; 4] {
+        let x = (u.floor().clamp(0.0, GLINT_SPRITE_SIDE as f32 - 1.0)) as usize;
+        let y = (v.floor().clamp(0.0, GLINT_SPRITE_SIDE as f32 - 1.0)) as usize;
+        let o = (y * GLINT_SPRITE_SIDE as usize + x) * 4;
+        [self.rgba[o], self.rgba[o + 1], self.rgba[o + 2], self.rgba[o + 3]]
+    }
+}
+
 /// The PARTICLE LANE's poof frames — the death cloud's 8-frame walk
 /// (javap: the `poof` particle type's sprite set, the jar's
 /// `textures/particle/generic_0..7.png`, the `MutableSpriteSet.get`

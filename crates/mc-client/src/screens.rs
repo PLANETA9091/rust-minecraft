@@ -913,6 +913,10 @@ pub struct App {
     /// burst's own red pixel source, the event-18 arm and the aiStep
     /// ambient drip both ride).
     pub heart_sprite: Option<crate::avatar::HeartSprite>,
+    /// the happy villager's glint sprite (the feed sparkle's own green
+    /// the happy_villager json's one-texture set speaks — the lazy
+    /// load the crit/damage lanes speak)
+    pub glint_sprite: Option<crate::avatar::GlintSprite>,
     pub hurt_time: i32,
     pub hurt_duration: i32,
     pub invulnerable_time: i32,
@@ -1241,6 +1245,7 @@ impl App {
             damage_sprite: None,
             sweep_frames: None,
             heart_sprite: None,
+            glint_sprite: None,
             next_drop_id: 1,
             orbs: Vec::new(),
             next_orb_id: 1,
@@ -2050,6 +2055,17 @@ impl App {
                             // last in-love tick spawns none)
                             if mob.in_love > 0 {
                                 love_boxes.push(mob.box_for());
+                            }
+                            if let Some((sx, sy, sz)) = ev.happy_sparkle {
+                                // THE FEED SPARKLE'S OWN RIDE (the
+                                // aiStep's `% 4` cadence the event
+                                // carries — the level random the
+                                // lifetime/size draws speak, the
+                                // mob_rng the heart lanes' own stand-in
+                                // keeps)
+                                self.particles.push(crate::particles::happy_villager_sparkle(
+                                    sx, sy, sz, &mut self.mob_rng,
+                                ));
                             }
                             if let Some(atk) = ev.attack {
                                 hit_events.push((atk.damage, atk.dir_x, atk.dir_z));
@@ -3295,7 +3311,7 @@ impl App {
                         self.swing.start();
                         return true;
                     }
-                    if let crate::mob::MobInteract::Feed { love } = verdict {
+                    if let crate::mob::MobInteract::Feed { love, grow } = verdict {
                         // THE FOOD ARM'S OWN WALK (the Animal
                         // mobInteract the 26.2 bytecode speaks): the
                         // setInLove arm the SUCCESS_SERVER verdict
@@ -3320,6 +3336,22 @@ impl App {
                             let burst =
                                 crate::particles::heart_burst(bbox, &mut self.mob_rng);
                             self.particles.extend(burst);
+                            if self.mobs[i].kind == crate::mob::MobKind::Pig {
+                                self.sounds
+                                    .play_voice(self.frame, "entity.pig.eat", 1.0, 1.0);
+                            }
+                            self.swing.start();
+                        }
+                        if grow {
+                            // THE BABY ARM'S OWN WALK (the canAgeUp arm
+                            // the ageUp law walked inside the mob — the
+                            // eat voice the playEatingSound override
+                            // speaks (the PIG only, the Sheep/Cow the
+                            // base's own empty law keeps silent), the
+                            // swing the SUCCESS verdict starts, the
+                            // heart burst the setInLove arm the baby
+                            // never rides, the sparkles the forcedAge
+                            // window the aiStep walk drains)
                             if self.mobs[i].kind == crate::mob::MobKind::Pig {
                                 self.sounds
                                     .play_voice(self.frame, "entity.pig.eat", 1.0, 1.0);
@@ -7011,6 +7043,10 @@ impl App {
             self.heart_sprite =
                 crate::avatar::HeartSprite::load(std::path::Path::new("assets-cache/jar"));
         }
+        if self.glint_sprite.is_none() {
+            self.glint_sprite =
+                crate::avatar::GlintSprite::load(std::path::Path::new("assets-cache/jar"));
+        }
         let sy = cam.yaw.sin();
         let cy = cam.yaw.cos();
         let sp = cam.pitch.sin();
@@ -7029,6 +7065,7 @@ impl App {
         let mut smoke_groups: Vec<(usize, Vec<crate::raster::SampledQuad>)> = Vec::new();
         let mut sweep_groups: Vec<(usize, Vec<crate::raster::SampledQuad>)> = Vec::new();
         let mut heart_quads: Vec<crate::raster::SampledQuad> = Vec::new();
+        let mut glint_quads: Vec<crate::raster::SampledQuad> = Vec::new();
         for p in &self.particles {
             let half = p.half();
             // THE RENDER FOLD (javap Particle.render's own lerp): the
@@ -7214,6 +7251,19 @@ impl App {
                         tint: p.col,
                     });
                 }
+                crate::particles::ParticleKind::HappyVillager => {
+                    // the feed sparkle's own quad (the single glint
+                    // sprite the happy_villager json's one-texture set
+                    // speaks — the full sprite the quad samples, the
+                    // white tint the provider's setColor(1,1,1) keeps,
+                    // the OPAQUE layer the getLayer override speaks)
+                    glint_quads.push(crate::raster::SampledQuad {
+                        pts,
+                        uv: [[0.0, 8.0], [8.0, 8.0], [8.0, 0.0], [0.0, 0.0]],
+                        tex: "particle_glint",
+                        tint: p.col,
+                    });
+                }
             }
         }
         let vp = ctx.proj.mul(&ctx.view);
@@ -7297,6 +7347,13 @@ impl App {
         if let Some(heart) = &self.heart_sprite {
             fb.draw_sampled_quads(vp, &heart_quads, &mut |_tex, u, v| {
                 Some(heart.pixel(u, v))
+            });
+        }
+        // the glint group (the feed sparkle's own green pixels — the
+        // full sprite the single-texture json speaks)
+        if let Some(glint) = &self.glint_sprite {
+            fb.draw_sampled_quads(vp, &glint_quads, &mut |_tex, u, v| {
+                Some(glint.pixel(u, v))
             });
         }
     }

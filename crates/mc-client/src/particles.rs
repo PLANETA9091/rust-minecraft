@@ -214,6 +214,18 @@ pub enum ParticleKind {
     /// getLayer override returns, the growth the getQuadSize's 32x
     /// clamp rides — the same law the crit star blooms by).
     Heart,
+    /// `SuspendedTownParticle` the happy villager's own green (the
+    /// `happy_villager` type the `AgeableMob.aiStep`'s forcedAgeTimer
+    /// walk spawns — javap verbatim: the lifetime the `20.0 /
+    /// (nextFloat() * 0.8 + 0.2)` fold answers [20, 100], the quadSize
+    /// the `setSize(0.02, 0.02)` x the `* (nextFloat() * 0.6 + 0.5)`
+    /// draw gives, the zero drift the aiStep's (0,0,0) velocity the
+    /// `* 0.02` ctor fold keeps, the friction the tick's own `* 0.99`
+    /// speaks (no gravity the law never arms), the white tint the
+    /// provider's `setColor(1, 1, 1)` override — the glint texture's
+    /// own green the quad samples whole, the OPAQUE layer the
+    /// getLayer override returns).
+    HappyVillager,
 }
 
 /// The splash droplet's 4 frames (the `splash_0..3` textures the jar
@@ -1243,6 +1255,37 @@ pub fn heart_ambient(
     rng: &mut crate::drops::Lcg,
 ) -> Particle {
     heart_walk(bbox, rng)
+}
+
+/// THE FEED SPARKLE (javap `SuspendedTownParticle` + the
+/// `$HappyVillagerProvider` verbatim: the position the aiStep's own
+/// `getRandomX(1.0) / getRandomY() + 0.5 / getRandomZ(1.0)` walk
+/// carried (the caller's word), the lifetime the `20.0 / (nf * 0.8 +
+/// 0.2)` fold answers, the size the `0.02 * (nf * 0.6 + 0.5)` draw
+/// gives, the zero velocity the ctor's `* 0.02` fold keeps whole,
+/// the friction the tick's own `* 0.99` speaks, the white tint the
+/// glint texture's own green passes).
+pub fn happy_villager_sparkle(x: f64, y: f64, z: f64, rng: &mut crate::drops::Lcg) -> Particle {
+    let lifetime = (20.0 / (rng.next_f32() as f64 * 0.8 + 0.2)) as u32;
+    let quad_size = 0.02 * (rng.next_f32() * 0.6 + 0.5);
+    Particle {
+        kind: ParticleKind::HappyVillager,
+        x,
+        y,
+        z,
+        vx: 0.0,
+        vy: 0.0,
+        vz: 0.0,
+        prev: None,
+        age: 0,
+        lifetime,
+        gravity: 0.0,
+        friction: 0.99,
+        quad_size,
+        uo: 0.0,
+        vo: 0.0,
+        col: [1.0, 1.0, 1.0],
+    }
 }
 
 /// The crit's own emitter (javap `TrackingEmitter` verbatim): the
