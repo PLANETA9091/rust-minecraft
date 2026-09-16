@@ -308,6 +308,12 @@ pub struct WireMob {
     /// while the server never spoke the accessor — the honest
     /// no-opinion the death walk never mistakes for a kill.
     pub health: Option<f32>,
+    /// The hurt flash's remaining window (the Hurt Animation packet's
+    /// own arm — the animateHurt 10-tick law the mailbox shipped for
+    /// this id), 0 when the server never spoke the flash. The
+    /// mailbox's shipped value: the mob lane's own tick counts it
+    /// down after the landing (the client entity's own clock).
+    pub hurt_time: i32,
     /// The synced registry's own name (`minecraft:zombie` v1 renders;
     /// anything else is the honest not-yet-drawn type).
     pub type_name: String,
@@ -915,6 +921,10 @@ impl LiveView {
                         Some(mc_protocol::play::EntityDataEntry::Float(h)) => Some(*h),
                         _ => None,
                     },
+                    // the hurt mailbox's shipped arm (the animateHurt
+                    // window the packet spoke for THIS id — the ids
+                    // the wire never hit stay unhurt, the honest 0)
+                    hurt_time: self.model.entity_hurts.get(&id).copied().unwrap_or(0),
                     type_name,
                 })
             })
@@ -1287,6 +1297,30 @@ mod tests {
         }));
         let upd = view.refresh(example_mapper);
         assert_eq!(upd.mobs[0].health, Some(6.0), "the server's word rides");
+        // THE MOBS' OWN FLASH (the Hurt Animation's other arm — the
+        // mailbox the foreign ids' packets arm): the zombie's id ships
+        // the 10-tick window, the pig's silence stays the honest 0
+        view.model.apply(PlayEvent::Hurt(mc_protocol::HurtAnimation {
+            entity_id: 7,
+            yaw: -20.0,
+        }));
+        view.model.apply(PlayEvent::Hurt(mc_protocol::HurtAnimation {
+            entity_id: 8,
+            yaw: 0.0,
+        }));
+        view.model.apply(PlayEvent::Hurt(mc_protocol::HurtAnimation {
+            entity_id: 7,
+            yaw: -20.0,
+        }));
+        let upd = view.refresh(example_mapper);
+        assert_eq!(upd.mobs[0].hurt_time, 10, "the packet's own window");
+        // the drain speaks after the ship (the mailbox's own law —
+        // the mob's tick owns the countdown, the stale arm never
+        // re-arms the flash the window already spent)
+        assert_eq!(view.model.drain_entity_hurts().get(&7), Some(&10));
+        assert!(view.model.entity_hurts.is_empty(), "the mailbox spent");
+        let upd = view.refresh(example_mapper);
+        assert_eq!(upd.mobs[0].hurt_time, 0, "the shipped arm never re-arms");
     }
 
     fn materialize_carries_the_models_day_tick() {

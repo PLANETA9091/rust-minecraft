@@ -3392,6 +3392,9 @@ impl App {
                 if let Some(h) = w.health {
                     m.health = h;
                 }
+                // the hurt mailbox's shipped arm rides the spawn (the
+                // flash the render's 0.7 shade speaks from tick one)
+                m.hurt_time = w.hurt_time;
                 m.on_ground = true;
                 m.age_ticks = 40; // two seconds in — the bob's stable mid
                 self.net_mobs.push(m);
@@ -3417,6 +3420,13 @@ impl App {
             // Set Entity Data accessor the store keeps current)
             if let Some(h) = w.health {
                 m.health = h;
+            }
+            // THE HURT RE-ARM (the mailbox's shipped window): the arm
+            // lands only when the wire SPOKE one — the mob's own tick
+            // owns the countdown between packets, the silence never
+            // re-arms a flash the window already spent
+            if w.hurt_time > 0 {
+                m.hurt_time = w.hurt_time;
             }
             self.net_mobs.push(m);
         }
@@ -3450,6 +3460,13 @@ impl App {
             }
             m.walk
                 .update((dist as f32 * crate::body::WALK_DISTANCE_SCALE).min(1.0), crate::body::WALK_BLEND, 1.0);
+            // THE HURT CLOCK (LivingEntity.tick's own decrement the
+            // local player's lane speaks): the flash window walks down
+            // one per tick, the 0.7 shade the render's mix reads at
+            // the frame
+            if m.hurt_time > 0 {
+                m.hurt_time -= 1;
+            }
             // THE DEATH CLOCK (LivingEntity.tickDeath's own law the AI
             // lane speaks): the server's health word <= 0 — deathTime++
             // per tick, the flip the render's deathTime+partial read
@@ -8600,6 +8617,57 @@ mod tests {
         assert_eq!(app.net_mobs[0].death_time, 0, "the silence is not a kill");
     }
 
+    /// THE WIRE MOBS' HURT FLASH (javap LivingEntity's own hurt
+    /// clocks): the Hurt Animation's mailbox arm lands on the mob (the
+    /// 10-tick window the render's 0.7 shade speaks), the mob's OWN
+    /// tick counts it down — the refresh's silence never re-arms the
+    /// window the countdown already spent, a fresh packet re-arms.
+    #[test]
+    fn the_wire_mobs_flash_and_their_own_tick_counts_it_down() {
+        let mut app = App::new(3);
+        app.open(ScreenKind::Connect);
+        app.net_world = Some(air_net_world(2, 0));
+        app.enter_network_world(None, Skybox::Overworld, None, None);
+        // the hit's own packet: the arm rides the FRESH spawn (the
+        // window the projection shipped, the flash from tick one)
+        let mut hit = wire_zombie(7, 10.0, 64.0, 10.0);
+        hit.hurt_time = 10;
+        app.live_mobs_updated(vec![hit]);
+        assert_eq!(app.net_mobs[0].hurt_time, 10, "the shipped arm lands");
+        // the mob's own tick counts the window down (the vanilla
+        // client entity's own hurtTime, the store's not the boss)
+        app.tick_net_mobs();
+        assert_eq!(app.net_mobs[0].hurt_time, 9, "the own tick speaks");
+        // the refresh WITHOUT an arm: the countdown STANDS (the
+        // mailbox's drained silence never re-arms the spent window)
+        app.live_mobs_updated(vec![wire_zombie(7, 10.0, 64.0, 10.0)]);
+        assert_eq!(app.net_mobs[0].hurt_time, 9, "the silence never re-arms");
+        // the window spends: 9 more ticks walk it to the honest 0
+        for _ in 0..9 {
+            app.tick_net_mobs();
+        }
+        assert_eq!(app.net_mobs[0].hurt_time, 0, "the window spent");
+        app.tick_net_mobs();
+        assert_eq!(app.net_mobs[0].hurt_time, 0, "the 0 floors, never wraps");
+        // the RE-HIT: a fresh arm re-arms the flash (the packet's own
+        // window, the mob's clock the only owner between packets)
+        let mut rehit = wire_zombie(7, 10.0, 64.0, 10.0);
+        rehit.hurt_time = 10;
+        app.live_mobs_updated(vec![rehit.clone()]);
+        assert_eq!(app.net_mobs[0].hurt_time, 10, "the re-hit re-arms");
+        // the never-hit mob joins beside the hit one (both ids named):
+        // the hit mob's countdown STANDS through the silent refresh,
+        // the never-hit id stays the honest 0 the shade never darkens
+        // — the arm rides its own id's lane only
+        app.live_mobs_updated(vec![rehit, wire_zombie(11, 14.0, 64.0, 10.0)]);
+        assert_eq!(app.net_mobs.len(), 2, "both ids ride");
+        assert_eq!(app.net_mobs[0].hurt_time, 10, "the silence never re-arms");
+        assert_eq!(app.net_mobs[1].hurt_time, 0, "the never-hit stays unhurt");
+        app.tick_net_mobs();
+        assert_eq!(app.net_mobs[0].hurt_time, 9, "the hit's own walk");
+        assert_eq!(app.net_mobs[1].hurt_time, 0, "the silence's own walk");
+    }
+
     fn wire_zombie(id: i32, x: f64, y: f64, z: f64) -> crate::world_view::WireMob {
         crate::world_view::WireMob {
             id,
@@ -8610,6 +8678,7 @@ mod tests {
             pitch: 5.0,
             head_yaw: 60.0,
             health: None,
+            hurt_time: 0,
             type_name: "minecraft:zombie".to_string(),
         }
     }

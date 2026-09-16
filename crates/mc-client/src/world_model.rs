@@ -145,6 +145,17 @@ pub struct WorldModel {
     /// packet's own store — the death screen's flattened component);
     /// cleared on the next Respawn's world adoption.
     pub death_message: Option<String>,
+    /// The wire mobs' PENDING hurt arms (the Hurt Animation packets
+    /// the own-entity filter passes over — ClientLevel's
+    /// handleHurtAnimation names each entity, LivingEntity's
+    /// animateHurt arms the 10-tick window): the id → the window the
+    /// packet armed. The store is a MAILBOX, not a standing clock —
+    /// the refresh ships each arm exactly once (the projection reads
+    /// it, the mob lane's own tick owns the countdown after the
+    /// landing) and [`WorldModel::drain_entity_hurts`] empties it; a
+    /// fresh packet re-arms. Dies with the level (the dimension
+    /// swap's population does not cross).
+    pub entity_hurts: std::collections::BTreeMap<i32, i32>,
 }
 
 /// The model's view of ONE active mob effect on the LOCAL player — the
@@ -403,6 +414,7 @@ impl WorldModel {
             health: None,
             hurt: None,
             death_message: None,
+            entity_hurts: std::collections::BTreeMap::new(),
         }
     }
 
@@ -416,6 +428,17 @@ impl WorldModel {
     /// lane's projection rides both).
     pub fn entities(&self) -> impl Iterator<Item = (i32, &EntitySnapshot)> {
         self.entities.iter().map(|(id, e)| (*id, e))
+    }
+
+    /// The mobs' hurt mailbox's own drain (`std::mem::take` — the
+    /// vanilla `Entity.hurtTime` the client entity counts down is the
+    /// MOB's clock, not the store's): the refresh ships each arm
+    /// exactly once — the projection reads the map, the mob lane's
+    /// own tick owns the countdown after the landing — and the drain
+    /// empties it, so a stale arm never re-arms a flash the mob's
+    /// own window already spent. A fresh packet re-arms.
+    pub fn drain_entity_hurts(&mut self) -> std::collections::BTreeMap<i32, i32> {
+        std::mem::take(&mut self.entity_hurts)
     }
 
     /// One entity type's registry name, by the synced-registry id the
@@ -570,6 +593,10 @@ impl WorldModel {
                 // closes the DeathScreen when the new level lands)
                 self.death_message = None;
                 self.hurt = None;
+                // the mobs' hurt mailbox dies with the level too (the
+                // arms name the OLD population's ids — the new level's
+                // entities never read them)
+                self.entity_hurts.clear();
                 self.pin_dimension(&spawn.dimension);
                 true
             }
@@ -1019,14 +1046,24 @@ impl WorldModel {
             PlayEvent::Hurt(a) => {
                 // the flash-and-lean acts on the named entity; the
                 // model's hurt store is the LOCAL player's (the HUD's
-                // flash consumer) — other entities' hurt traffic drops
+                // flash consumer) — the OTHER entities' hurt traffic
+                // arms the mobs' own mailbox (the animateHurt 10-tick
+                // window the mob lane's render speaks; the tilt yaw
+                // the packet carries is the lean the avatar model
+                // doesn't draw yet)
                 if self.own_entity_id() == Some(a.entity_id) {
                     // the animateHurt law: the 10-tick window arms,
                     // the tilt yaw rides verbatim
                     self.hurt = Some((10, a.yaw));
                     true
                 } else {
-                    false
+                    // THE MOBS' OWN FLASH (handleHurtAnimation's other
+                    // arm): the mailbox arms — the refresh ships it
+                    // once, the mob's own tick counts the window down
+                    // after the landing (the client entity's clock,
+                    // exactly the vanilla client's own hurtTime)
+                    self.entity_hurts.insert(a.entity_id, 10);
+                    true
                 }
             }
             PlayEvent::CombatKill(k) => {
@@ -3397,8 +3434,12 @@ mod tests {
         // client closes the DeathScreen when the new level lands).
         use mc_protocol::HurtAnimation;
         let mut m = WorldModel::new();
-        // no info pinned: the own-entity filter drops the flash
-        assert!(!m.apply(PlayEvent::Hurt(HurtAnimation { entity_id: 17, yaw: -45.5 })));
+        // no info pinned yet: the flash has no owner — the foreign
+        // arm treats it as the mobs' mailbox's own lane (the ids the
+        // level names are all foreign until the login pins the own)
+        assert!(m.apply(PlayEvent::Hurt(HurtAnimation { entity_id: 17, yaw: -45.5 })));
+        assert_eq!(m.entity_hurts.get(&17), Some(&10), "the foreign arm");
+        m.entity_hurts.clear();
         // the login pins the own id
         assert!(m.apply(PlayEvent::WorldInfo(WorldInfo {
             entity_id: 17,
@@ -3416,10 +3457,18 @@ mod tests {
         assert!(m.apply(PlayEvent::Health(vitals)));
         assert_eq!(m.health, Some(vitals));
         assert!(!m.apply(PlayEvent::Health(vitals)), "the repeat is a no-op");
-        // HURT ANIMATION: the own id lands, the foreign id drops
+        // HURT ANIMATION: the own id lands on the player's store, the
+        // foreign id arms the MOBS' mailbox (the animateHurt window
+        // the mob lane's own render speaks — the flash traffic no
+        // longer drops, it speaks)
         assert!(m.apply(PlayEvent::Hurt(HurtAnimation { entity_id: 17, yaw: -45.5 })));
         assert_eq!(m.hurt, Some((10, -45.5)), "the animateHurt arm");
-        assert!(!m.apply(PlayEvent::Hurt(HurtAnimation { entity_id: 99, yaw: 0.0 })));
+        assert!(m.entity_hurts.is_empty(), "the own arm never touches the mobs' lane");
+        assert!(m.apply(PlayEvent::Hurt(HurtAnimation { entity_id: 99, yaw: 0.0 })));
+        assert_eq!(m.entity_hurts.get(&99), Some(&10), "the mobs' own mailbox arm");
+        assert_eq!(m.drain_entity_hurts().get(&99), Some(&10), "the drain ships once");
+        assert!(m.entity_hurts.is_empty(), "the mailbox spent");
+        assert!(m.drain_entity_hurts().is_empty(), "the drained silence ships nothing");
         // COMBAT KILL: the message lands on the own id
         assert!(m.apply(PlayEvent::CombatKill(mc_protocol::PlayerCombatKill {
             player_id: 17,
@@ -3435,6 +3484,15 @@ mod tests {
         })));
         assert!(m.death_message.is_none(), "the respawn closed the death");
         assert!(m.hurt.is_none(), "the flash dies with the level");
+        // the mobs' mailbox dies with the level too (the arms name the
+        // OLD population's ids — the new level never reads them)
+        assert!(m.apply(PlayEvent::Hurt(HurtAnimation { entity_id: 99, yaw: 0.0 })));
+        assert!(m.apply(PlayEvent::Respawn(SpawnInfo {
+            dimension_type_id: 0,
+            dimension: "minecraft:the_end".to_string(),
+            portal_cooldown: 0,
+        })));
+        assert!(m.entity_hurts.is_empty(), "the mailbox dies with the level");
         // the vitals ride the player (NOT cleared — the health the
         // server speaks crosses the dimension like the effects do)
         assert_eq!(m.health, Some(vitals), "the vitals ride the player");

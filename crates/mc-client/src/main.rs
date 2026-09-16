@@ -215,6 +215,13 @@ struct Cli {
     /// over, N=19 nearly flat). Requires --net-mobs.
     #[arg(long)]
     net_death: Option<u32>,
+    /// THE HIT'S OWN PACKET: stage the wire mob's Hurt Animation arm
+    /// (the 10-tick flash window the mob lane's own tick counts down)
+    /// and walk N ticks of the countdown — the frame freezes
+    /// mid-window (the 0.7 shade the render's mix speaks). Requires
+    /// --net-mobs.
+    #[arg(long)]
+    net_hurt: Option<u32>,
     /// Carve a 3x3 pool AT the body and sink it to the basin floor —
     /// the eye sits under the water surface and the REAL water-screen
     /// gate speaks (the underwater overlay, no scripted blue).
@@ -331,6 +338,7 @@ fn main() -> Result<()> {
             net_day: cli.net_day,
             net_mobs: cli.net_mobs,
             net_death: cli.net_death,
+            net_hurt: cli.net_hurt,
             water_pool: cli.water_pool,
             water_vision: cli.water_vision,
             air_supply: cli.air_supply,

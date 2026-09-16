@@ -184,6 +184,11 @@ pub struct SceneOpts {
     /// the health 0.0 the death clock speaks, N ticks walked, the
     /// frame frozen mid-fall.
     pub net_death: Option<u32>,
+    /// THE HIT'S OWN PACKET: the staged flash arm — the 10-tick
+    /// window the mob lane's own tick counts down, N ticks walked,
+    /// the frame frozen mid-window (the 0.7 shade the render
+    /// speaks).
+    pub net_hurt: Option<u32>,
     /// THE DIVE SEED: carve a 3x3 pool AT the body's own column — three
     /// cells of water down (the old surface cell becomes the water
     /// surface), a forced-solid basin floor, the headroom cleared — and
@@ -1350,6 +1355,7 @@ pub fn render_gui_screen_opts(
                             pitch: 0.0,
                             head_yaw: face + 35.0, // the look mid-swing
                             health: None,
+                            hurt_time: 0,
                             type_name: "minecraft:zombie".to_string(),
                         });
                     }
@@ -1366,6 +1372,19 @@ pub fn render_gui_screen_opts(
                             m.health = 0.0;
                         }
                         for _ in 0..flip {
+                            app.tick_net_mobs();
+                        }
+                    }
+                    if let Some(hurt) = opts.net_hurt {
+                        // THE HIT'S OWN PACKET: the 10-tick flash
+                        // window the mob lane's own tick counts down —
+                        // the staged frame frozen mid-window (the 0.7
+                        // shade the render's mix speaks, the shade the
+                        // un-armed companion never reads)
+                        if let Some(m) = app.net_mobs.first_mut() {
+                            m.hurt_time = 10;
+                        }
+                        for _ in 0..hurt {
                             app.tick_net_mobs();
                         }
                     }

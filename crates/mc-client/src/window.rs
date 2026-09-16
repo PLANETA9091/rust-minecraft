@@ -179,6 +179,10 @@ fn run_join(
             // cloud fog or None — the bytecode default's domain
             let cloud_fog_end = view.model.cloud_fog_end_distance();
             let first = view.refresh(crate::world_view::runtime_mapper);
+            // the mobs' hurt mailbox ships with this view — the drain
+            // empties it (each arm rides exactly one refresh, the mob
+            // lane's own tick owns the countdown after the landing)
+            view.model.drain_entity_hurts();
             let spawn_biome = first.biome.clone();
             let shipped = tx.send((
                 id,
@@ -404,6 +408,12 @@ fn run_join(
                     Ok(event) => {
                         if view.apply(event) && last_ship.elapsed() >= VIEW_CADENCE {
                             let upd = view.refresh(crate::world_view::runtime_mapper);
+                            // the mobs' hurt mailbox ships with this
+                            // view — the drain empties it (each arm
+                            // rides exactly one refresh, the mob
+                            // lane's own tick owns the countdown after
+                            // the landing; a fresh packet re-arms)
+                            view.model.drain_entity_hurts();
                             if live_tx
                                 .send(Ok((
                                     upd.world,
