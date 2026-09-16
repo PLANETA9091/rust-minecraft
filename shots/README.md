@@ -350,6 +350,7 @@ gravity lane `yd -= 0.04 * gravity`, the move, the friction `xd *=
 | `underwater_bubbles.png` | THE DROWN BUBBLES (v0.3.172): the broadcast-67 moment — the pool the dive carve speaks, the air clock SPENT (the HUD's bubble row reads the zero), the 8 bubbles riding the triangle offsets around the body's feet, the body's own delta movement thinned to a fifth + the ±0.02 jitter, the buoyancy `yd += 0.002` lifting them, the ring sprite the jar's `textures/particle/bubble.png` |
 | `water_entry_splash.png` | THE ENTRY SPLASH (v0.3.173): the doWaterSplashEffect rings the entry gate arms — the pool the dive carve speaks, the BUBBLE ring (13 drops, the carried velocity's z thinned − r · 0.2, the ctor's own fifth-fold + the ±0.02 jitter) and the SPLASH ring (13 white droplets, the ctor's random `nextFloat() * 0.2F + 0.1F` pop, the 0.01 quad the `setSize(0.01F, 0.01F)` folds), both rings at the surface Y the Mth.floor law folds (floor(feet) + 1.0), the 13-per-ring walk the width · 20 bound speaks |
 | `damage_indicators.png` | THE HIT'S OWN STARS (v0.3.175): the damageStatsAndHearts lane the attack site arms — the dealt > 2.0 gate speaks, the (int)(dealt · 0.5) count rides, the packet walk's six gaussians spread the burst at the mob's mid height (getY(0.5) = y + height · 0.5), the provider's `ySpeed + 1.0` pops the stars UP, the setLifetime(20) pins the flight, the `damage` sprite's own red the json's one-texture set holds — the crimson star floating over the zombie's head, the sword-hit feedback the vanilla combat speaks |
+| `sweep_attack.png` | THE SWORD'S OWN ARC (v0.3.176): the doSweepAttack lane the attack site arms — the isSweepAttack gate (full charge, no crit, no sprint knockback, on ground, the movement band the getSpeed · 2.5 speaks, the SWORDS tag the main hand holds), the count-0 sendParticles leaving ONE arc at the body's own mid height one forward block (getX() − sin(yaw), getY(0.5), getZ() + cos(yaw)), the (d8, 0.0, d10) velocity the quadSize `1.0 − xSpeed · 0.5` fold reads (the yaw quirk — the 82° stance's −sin 0.99 widens the arc to ~1.5), the grey tint the r · 0.6 + 0.4 draw keeps, the 4-tick static life the tick override speaks, the sweep_0..7 frames the json's ascending list orders — the white sweep across the zombie's legs, the vanilla sweep-attack's own look |
 | `lava_drips.png` | THE LAVA DRIPS (v0.3.174): the LavaFluid.animateTick lane the pool's own surface speaks — the 667×2 sampler's 1/100 gate fires the LAVA blobs (the single 8x8 lava sprite the json's one-texture list holds, the pop `r·0.4+0.05` lifting them, the gravity 0.75's arc, the quad shrinking `(1−t²)` — the three mid-flight blobs the frame catches: the big one against the sky, the shrunken one beside it, the third over the wall), the SMOKE children the blob's own `r > age/lifetime` draw arms (the −0.1 rise, the grey `r·0.3`, the 8 generic frames the descending json order rides), the LAVA_POP + LAVA_AMBIENT voices at the `0.2+r·0.2 / 0.9+r·0.15` pair |
 
 Regenerate the family:
@@ -375,7 +376,10 @@ cargo run -p mc-client --release -- --screen world --seed 42 \
 cargo run -p mc-client --release -- --screen world --seed 42 \
   --body --particles damage --perspective first --body-pitch=6 \
   --ui-frame 30 --out shots/damage_indicators.png
-# --particles burst|poof|crit|damage|bubble|splash|lava stages the lane's seven scenes (the
+cargo run -p mc-client --release -- --screen world --seed 42 \
+  --body --particles sweep --perspective first --body-yaw 82 \
+  --body-pitch=14 --ui-frame 30 --out shots/sweep_attack.png
+# --particles burst|poof|crit|damage|bubble|splash|lava|sweep stages the lane's eight scenes (the
 # --zombie-fire discipline: the deterministic stand-in for the debris
 # the dig's break speaks, the cloud the removal speaks, the stars the
 # crit attack arms, the bubbles the broadcast-67 dose arms — the real

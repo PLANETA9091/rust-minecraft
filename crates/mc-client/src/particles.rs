@@ -196,12 +196,37 @@ pub enum ParticleKind {
     /// the 0.75 size fold, the 8 generic frames the smoke.json's
     /// descending order lists).
     Smoke,
+    /// `AttackSweepParticle` — the sword's own arc (the SWEEP_ATTACK
+    /// type the `doSweepAttack` sendParticles speaks, the 8 32x32
+    /// sweep frames the json's ascending order lists, the static pose
+    /// the tick override keeps — no motion, no gravity, the 4-tick
+    /// life, the grey tint the r*0.6+0.4 draw, the quadSize the
+    /// `1.0 - xSpeed * 0.5` fold the ctor's velocity arg gives, the
+    /// full-bright look the getLightCoords override speaks).
+    Sweep,
 }
 
 /// The splash droplet's 4 frames (the `splash_0..3` textures the jar
 /// speaks — the sprite set the Provider's `SpriteSet.get(random)`
 /// picks one of, the frame static for the particle's own life).
 pub const SPLASH_FRAME_COUNT: usize = 4;
+
+/// The sweep arc's 8 frames (the `sweep_0..7` textures the jar speaks
+/// — the sprite set the json's ASCENDING list orders, the list index
+/// the frame law reads directly).
+pub const SWEEP_FRAME_COUNT: usize = 8;
+
+/// The sweep arc's own frame law (javap `Particle.setSpriteFromAge`
+/// -> `MutableSpriteSet.get(age, lifetime)` verbatim:
+/// `sprites.get(age * (size - 1) / lifetime)` — 8 frames, the 4-tick
+/// life walking frames 0, 1, 3, 5 over ages 0..3; the min clamp the
+/// list.get's own bound speaks — the vanilla walk never fires it
+/// (the age walk removes the particle at the lifetime first), the
+/// Rust shape keeps it honest).
+pub fn sweep_frame(age: u32, lifetime: u32) -> usize {
+    ((age as usize * (SWEEP_FRAME_COUNT - 1)) / lifetime.max(1) as usize)
+        .min(SWEEP_FRAME_COUNT - 1)
+}
 
 /// One particle — the vanilla `Particle` + `SingleQuadParticle` fields
 /// the three kinds' laws speak (the fields the tick and the render
@@ -308,6 +333,19 @@ impl Particle {
         self.vy *= 0.85;
         self.vz *= 0.85;
         in_water
+    }
+
+    /// The `AttackSweepParticle.tick` verbatim — the arc rides NONE of
+    /// the base law (the override's own block: the age walk, the
+    /// removal at the lifetime, the sprite walk — NO motion, NO
+    /// gravity, NO friction; the arc HANGS in the air the whole 4-tick
+    /// life, the frame the render's `sweep_frame` computation picks).
+    pub fn tick_sweep(&mut self) -> bool {
+        self.age += 1;
+        if self.age >= self.lifetime {
+            return false;
+        }
+        true
     }
 
     /// The `WaterDropParticle.tick` verbatim — the countdown lifetime
@@ -515,6 +553,36 @@ pub fn damage_indicator(
     p.kind = ParticleKind::Damage;
     p.lifetime = 20;
     p
+}
+
+/// The sweep arc's own particle (javap `AttackSweepParticle` ctor
+/// verbatim): the velocity args are KEPT (the packet walk passes the
+/// `(d8, 0.0, d10)` pair the sendParticles spoke — the xSpeed the
+/// quadSize fold reads) but the tick override never moves the arc;
+/// the lifetime 4 the ctor pins; the grey tint ONE draw
+/// `nextFloat() * 0.6 + 0.4` to all three channels; the quadSize the
+/// `1.0F - xSpeed * 0.5F` fold — the yaw's x-component the vanilla
+/// law scales the arc with (the law's own quirk the bytecode keeps);
+/// the white-adjacent defaults the gravity-free static pose keeps.
+pub fn sweep(x: f64, y: f64, z: f64, x_speed: f64, z_speed: f64, r_grey: f32) -> Particle {
+    let v = r_grey * 0.6 + 0.4;
+    Particle {
+        kind: ParticleKind::Sweep,
+        x,
+        y,
+        z,
+        vx: x_speed,
+        vy: 0.0,
+        vz: z_speed,
+        age: 0,
+        lifetime: 4,
+        gravity: 0.0,
+        friction: 1.0,
+        quad_size: 1.0 - x_speed as f32 * 0.5,
+        uo: 0.0,
+        vo: 0.0,
+        col: [v, v, v],
+    }
 }
 
 /// THE HIT'S OWN BURST (javap `Player.damageStatsAndHearts` ->
@@ -1658,5 +1726,78 @@ mod tests {
         // own age rides the walk's clamp — the poof_frame law
         assert_eq!(smoke_sprite_file_index(0, 40), 7);
         assert_eq!(smoke_sprite_file_index(40, 40), 0);
+    }
+
+    #[test]
+    fn the_sweep_frame_rides_the_get_law() {
+        // the MutableSpriteSet.get law `age * (size - 1) / lifetime`:
+        // 8 frames over the 4-tick life walk 0, 1, 3, 5 — the ages
+        // 0..3 the arc's own life speaks, the json's ASCENDING order
+        // the index reads directly (the poof's descending walk the
+        // mirror image)
+        assert_eq!(sweep_frame(0, 4), 0);
+        assert_eq!(sweep_frame(1, 4), 1);
+        assert_eq!(sweep_frame(2, 4), 3);
+        assert_eq!(sweep_frame(3, 4), 5);
+        // a zero lifetime never divides (the max(1) floor keeps — the
+        // min clamp rides the list bound the vanilla walk never fires)
+        assert_eq!(sweep_frame(2, 0), 7);
+    }
+
+    #[test]
+    fn the_sweep_ctor_rides_the_attack_sweep_laws() {
+        // the AttackSweepParticle ctor: the lifetime 4 the ctor pins,
+        // the grey tint ONE draw `r * 0.6 + 0.4` to all three
+        // channels, the quadSize the `1.0 - xSpeed * 0.5` fold (the
+        // yaw's x-component the vanilla quirk scales the arc with),
+        // the velocity args KEPT (the packet walk's (d8, 0.0, d10)
+        // pair) — the zero gravity, the neutral friction (the tick
+        // override never moves the arc anyway)
+        let p = sweep(10.0, 20.0, 30.0, -0.5, 1.0, 0.5);
+        assert_eq!(p.kind, ParticleKind::Sweep);
+        assert_eq!(p.lifetime, 4, "the 4-tick life the ctor pins");
+        assert_eq!(p.gravity, 0.0);
+        assert_eq!(p.friction, 1.0);
+        assert_eq!(p.vx, -0.5, "the d8 arg the packet walk passes");
+        assert_eq!(p.vy, 0.0, "the ySpeed the 0.0 constant speaks");
+        assert_eq!(p.vz, 1.0, "the d10 arg the packet walk passes");
+        assert!(
+            (p.quad_size - (1.0 - (-0.5) * 0.5)).abs() < 1e-6,
+            "the 1.0 - xSpeed/2 fold: {}",
+            p.quad_size
+        );
+        // the grey band: r in [0, 1) -> v in [0.4, 1.0)
+        let lo = sweep(0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
+        assert!((lo.col[0] - 0.4).abs() < 1e-6);
+        assert_eq!(lo.col[0], lo.col[1], "the ONE draw all three speak");
+        assert_eq!(lo.col[1], lo.col[2]);
+        let hi = sweep(0.0, 0.0, 0.0, 0.0, 0.0, 1.0 - 1e-6);
+        assert!(hi.col[0] < 1.0 && hi.col[0] > 0.99, "the top band: {}", hi.col[0]);
+        // the yaw quirk: the west-facing swing's xSpeed -1.0 widens
+        // the arc to 1.5, the south-facing 0.0 keeps 1.0, the
+        // east-facing 1.0 thins to 0.5
+        assert!((sweep(0.0, 0.0, 0.0, -1.0, 0.0, 0.0).quad_size - 1.5).abs() < 1e-6);
+        assert!((sweep(0.0, 0.0, 0.0, 0.0, 1.0, 0.0).quad_size - 1.0).abs() < 1e-6);
+        assert!((sweep(0.0, 0.0, 0.0, 1.0, 0.0, 0.0).quad_size - 0.5).abs() < 1e-6);
+    }
+
+    #[test]
+    fn the_sweep_tick_hangs_the_arc_static() {
+        // the AttackSweepParticle.tick override: the age walk + the
+        // removal at the lifetime — NO motion, NO gravity, NO
+        // friction; the arc hangs in the air the whole 4-tick life
+        let mut p = sweep(5.0, 6.0, 7.0, 0.8, 0.6, 0.3);
+        assert!(p.tick_sweep(), "tick 1 keeps the arc");
+        assert_eq!(p.age, 1);
+        assert!(p.tick_sweep(), "tick 2 keeps the arc");
+        assert!(p.tick_sweep(), "tick 3 keeps the arc");
+        assert!(!p.tick_sweep(), "tick 4 removes the arc");
+        // the stillness: the position never moves whatever the
+        // velocity args carry
+        let mut q = sweep(5.0, 6.0, 7.0, 0.8, 0.6, 0.3);
+        q.tick_sweep();
+        assert_eq!(q.x, 5.0);
+        assert_eq!(q.y, 6.0);
+        assert_eq!(q.z, 7.0);
     }
 }

@@ -771,9 +771,59 @@ pub fn seed_scene(app: &mut crate::screens::App, opts: &SceneOpts) -> Result<()>
                     app.particles.extend(spawns);
                 }
             }
+            "sweep" => {
+                // THE ARC'S OWN STAGE (the doSweepAttack tail the live
+                // attack site answers at the gate): the staged zombie
+                // at the facing point (the sword's own hit the arc
+                // rides), the ONE particle the count-0 walk leaves at
+                // the body's own mid height one forward block — the
+                // position `getX() - sin(yaw), getY(0.5), getZ() +
+                // cos(yaw)` the tail speaks, the (d8, 0.0, d10)
+                // velocity pair the ctor's quadSize fold reads, the
+                // grey tint the one draw the ctor keeps
+                let px = bx + fx * 1.8;
+                let pz = bz + fz * 1.8;
+                let y = app
+                    .offline_world
+                    .as_ref()
+                    .map(|w| {
+                        let mut gy = by as i32;
+                        while gy > 0
+                            && w.get(px.floor() as i32, gy, pz.floor() as i32)
+                                == crate::world::AIR
+                        {
+                            gy -= 1;
+                        }
+                        gy + 1
+                    })
+                    .unwrap_or(by as i32);
+                let z = crate::mob::Zombie::new(1, px, y as f64, pz, 262);
+                app.mobs.push(z);
+                if let Some(b) = app.body.as_ref() {
+                    let vyaw = b.yaw as f64 * std::f64::consts::PI / 180.0;
+                    let sy = vyaw.sin();
+                    let cy = vyaw.cos();
+                    let mid = b.y
+                        + if b.crouching {
+                            crate::body::CROUCH_HEIGHT
+                        } else {
+                            crate::body::STANDING_HEIGHT
+                        }
+                            * 0.5;
+                    let arc = crate::particles::sweep(
+                        b.x - sy,
+                        mid,
+                        b.z + cy,
+                        -sy,
+                        cy,
+                        app.mob_rng.next_f32(),
+                    );
+                    app.particles.push(arc);
+                }
+            }
             other => {
                 anyhow::bail!(
-                    "--particles: unknown scene '{other}' (the lane speaks burst | poof | crit | damage | bubble | splash | lava)"
+                    "--particles: unknown scene '{other}' (the lane speaks burst | poof | crit | damage | bubble | splash | lava | sweep)"
                 );
             }
         }
@@ -791,6 +841,10 @@ pub fn seed_scene(app: &mut crate::screens::App, opts: &SceneOpts) -> Result<()>
             // block a tick — the shutter catches the head-height
             // moment the first tick speaks)
             "damage" => 1,
+            // the arc's own walk (the static pose the override keeps —
+            // the shutter catches age 1, the frame-1 moment the get
+            // law speaks)
+            "sweep" => 1,
             "bubble" => 10,
             "splash" => 4,
             // the drips' own flight (the pop's arc rides ~3 ticks of
@@ -815,6 +869,9 @@ pub fn seed_scene(app: &mut crate::screens::App, opts: &SceneOpts) -> Result<()>
                     p.tick_bubble(wet)
                 }
                 crate::particles::ParticleKind::Splash { .. } => p.tick_splash(),
+                // the staged arc ticks the same age-only walk (the
+                // static pose the override keeps)
+                crate::particles::ParticleKind::Sweep => p.tick_sweep(),
                 // the staged drips tick the same law (the smoke gate's
                 // rolls ride the level stream, the children land after
                 // — the pool's own truth the live lane speaks)

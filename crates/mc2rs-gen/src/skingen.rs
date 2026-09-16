@@ -81,6 +81,23 @@ pub const PARTICLE_LAVA_JAR_PATH: &str = "assets/minecraft/textures/particle/lav
 /// `CritParticle$DamageIndicatorProvider`'s `SpriteSet.get(random)`
 /// returns it whatever the draw).
 pub const PARTICLE_DAMAGE_JAR_PATH: &str = "assets/minecraft/textures/particle/damage.png";
+/// The sweep attack's 8-frame arc (javap: the `sweep_attack` particle
+/// type's sprite set — the jar's `particles/sweep_attack.json` lists
+/// EIGHT textures, `minecraft:sweep_0..7` in ASCENDING order — the
+/// index the `MutableSpriteSet.get` walk reads IS the file index, the
+/// poof json's descending list the mirror image; each frame the 32x32
+/// the IHDR verifies; the `AttackSweepParticle`'s `setSpriteFromAge`
+/// rides the list the json speaks).
+pub const PARTICLE_SWEEP_JAR_PATHS: [&str; 8] = [
+    "assets/minecraft/textures/particle/sweep_0.png",
+    "assets/minecraft/textures/particle/sweep_1.png",
+    "assets/minecraft/textures/particle/sweep_2.png",
+    "assets/minecraft/textures/particle/sweep_3.png",
+    "assets/minecraft/textures/particle/sweep_4.png",
+    "assets/minecraft/textures/particle/sweep_5.png",
+    "assets/minecraft/textures/particle/sweep_6.png",
+    "assets/minecraft/textures/particle/sweep_7.png",
+];
 /// The runtime-cache paths the client's loader reads (the same
 /// textures/ prefix strip the other lanes speak).
 pub const FIRE_0_RUNTIME_PATH: &str = "block/fire_0.png";
@@ -109,6 +126,19 @@ pub const PARTICLE_SPLASH_RUNTIME_PATHS: [&str; 4] = [
 ];
 pub const PARTICLE_LAVA_RUNTIME_PATH: &str = "particle/lava.png";
 pub const PARTICLE_DAMAGE_RUNTIME_PATH: &str = "particle/damage.png";
+/// The sweep arc's runtime-cache paths (the same textures/ prefix
+/// strip the other lanes speak — the json's ascending list IS the
+/// array order).
+pub const PARTICLE_SWEEP_RUNTIME_PATHS: [&str; 8] = [
+    "particle/sweep_0.png",
+    "particle/sweep_1.png",
+    "particle/sweep_2.png",
+    "particle/sweep_3.png",
+    "particle/sweep_4.png",
+    "particle/sweep_5.png",
+    "particle/sweep_6.png",
+    "particle/sweep_7.png",
+];
 /// Where the client reads the skin at runtime (under the runtime asset root).
 pub const RUNTIME_PATH: &str = "entity/player/wide/steve.png";
 pub const SLIM_RUNTIME_PATH: &str = "entity/player/slim/alex.png";
@@ -172,6 +202,10 @@ pub struct SkinData {
     /// sha1 of the damage indicator's single 8x8 sprite (jar-verbatim
     /// integrity) — the hit's own burst's pixel source.
     pub particle_damage_png_sha1: String,
+    /// sha1s of the sweep arc's 8 frames (jar-verbatim integrity) —
+    /// the sword's own swing's pixel sources (the 32x32 sweep frames
+    /// the json's ascending list orders).
+    pub particle_sweep_png_sha1s: [String; 8],
 }
 
 /// One UV rect in the skin texture, in texels: (u, v, w, h).
@@ -352,6 +386,20 @@ pub fn generate<R: std::io::Read + std::io::Seek>(archive: &mut zip::ZipArchive<
         dw2,
         dh2
     );
+    // the sweep arc's 8 frames (the same shape check the poof walk
+    // speaks — the 32x32 the arc quad samples over its own life)
+    let mut particle_sweep_png_sha1s: [String; 8] = std::array::from_fn(|_| String::new());
+    for (i, path) in PARTICLE_SWEEP_JAR_PATHS.iter().enumerate() {
+        let bytes = read_entry(archive, path).context("read sweep frame")?;
+        particle_sweep_png_sha1s[i] = crate::util::sha1_hex(&bytes);
+        let (sw, sh, _sweep_rgba) = decode_rgba(&bytes).context("decode sweep frame")?;
+        anyhow::ensure!(
+            (sw, sh) == (32, 32),
+            "sweep frames must be the 32x32 sprites, got {}x{}",
+            sw,
+            sh
+        );
+    }
     Ok(SkinData {
         png_sha1,
         rgba_sha1: crate::util::sha1_hex(&rgba),
@@ -369,6 +417,7 @@ pub fn generate<R: std::io::Read + std::io::Seek>(archive: &mut zip::ZipArchive<
         particle_splash_png_sha1s,
         particle_lava_png_sha1,
         particle_damage_png_sha1,
+        particle_sweep_png_sha1s,
     })
 }
 
@@ -542,6 +591,22 @@ pub fn emit(data: &SkinData) -> Result<String> {
     out.push_str(&format!(
         "pub const PARTICLE_DAMAGE_RUNTIME_PATH: &str = \"{PARTICLE_DAMAGE_RUNTIME_PATH}\";\n"
     ));
+    out.push_str(&format!(
+        "pub const PARTICLE_SWEEP_PNG_SHA1S: [&str; 8] = [{}];\n",
+        data.particle_sweep_png_sha1s
+            .iter()
+            .map(|s| format!("\"{s}\""))
+            .collect::<Vec<_>>()
+            .join(", ")
+    ));
+    out.push_str(&format!(
+        "pub const PARTICLE_SWEEP_RUNTIME_PATHS: [&str; 8] = [{}];\n",
+        PARTICLE_SWEEP_RUNTIME_PATHS
+            .iter()
+            .map(|s| format!("\"{s}\""))
+            .collect::<Vec<_>>()
+            .join(", ")
+    ));
     Ok(out)
 }
 
@@ -647,6 +712,24 @@ mod tests {
         out
     }
 
+    /// A 32x32 RGBA png — the sweep arc's frame shape, one lit texel so
+    /// the decode is non-trivial.
+    fn sweep_png() -> Vec<u8> {
+        let (w, h) = (32u32, 32u32);
+        let mut rgba = vec![0u8; (w * h * 4) as usize];
+        let o = ((16 * w + 16) * 4) as usize;
+        rgba[o..o + 4].copy_from_slice(&[240, 240, 240, 255]);
+        let mut out = Vec::new();
+        {
+            let mut enc = png::Encoder::new(&mut out, w, h);
+            enc.set_color(png::ColorType::Rgba);
+            enc.set_depth(png::BitDepth::Eight);
+            let mut wr = enc.write_header().unwrap();
+            wr.write_image_data(&rgba).unwrap();
+        }
+        out
+    }
+
     #[test]
     fn parses_the_skins_and_emits_the_arm_geometry() {
         let png = skin_png();
@@ -673,6 +756,9 @@ mod tests {
         let expected_lava_sha1 = crate::util::sha1_hex(&lava);
         let damage = tiny_png();
         let expected_damage_sha1 = crate::util::sha1_hex(&damage);
+        let sweeps = [sweep_png(), sweep_png(), sweep_png(), sweep_png(), sweep_png(), sweep_png(), sweep_png(), sweep_png()];
+        let expected_sweep_sha1s: Vec<String> =
+            sweeps.iter().map(|p| crate::util::sha1_hex(p)).collect();
 
         let mut zip = zip_of(&[
             (WIDE_STEVE_JAR_PATH, png.clone()),
@@ -698,6 +784,14 @@ mod tests {
             (PARTICLE_SPLASH_JAR_PATHS[3], splashes[3].clone()),
             (PARTICLE_LAVA_JAR_PATH, lava),
             (PARTICLE_DAMAGE_JAR_PATH, damage),
+            (PARTICLE_SWEEP_JAR_PATHS[0], sweeps[0].clone()),
+            (PARTICLE_SWEEP_JAR_PATHS[1], sweeps[1].clone()),
+            (PARTICLE_SWEEP_JAR_PATHS[2], sweeps[2].clone()),
+            (PARTICLE_SWEEP_JAR_PATHS[3], sweeps[3].clone()),
+            (PARTICLE_SWEEP_JAR_PATHS[4], sweeps[4].clone()),
+            (PARTICLE_SWEEP_JAR_PATHS[5], sweeps[5].clone()),
+            (PARTICLE_SWEEP_JAR_PATHS[6], sweeps[6].clone()),
+            (PARTICLE_SWEEP_JAR_PATHS[7], sweeps[7].clone()),
         ]);
         let data = generate(&mut zip).unwrap();
         assert_eq!(data.side, 64);
@@ -739,6 +833,11 @@ mod tests {
             data.particle_damage_png_sha1, expected_damage_sha1,
             "the damage sprite's own sha1"
         );
+        assert_eq!(
+            data.particle_sweep_png_sha1s,
+            expected_sweep_sha1s.as_slice(),
+            "the sweep frames' own sha1s"
+        );
 
         let emitted = emit(&data).unwrap();
         assert!(emitted.contains(&format!("pub const SKIN_SIDE: u32 = 64;")));
@@ -772,6 +871,13 @@ mod tests {
                 "splash frame {i}'s sha1"
             );
             assert!(emitted.contains(&format!("\"particle/splash_{i}.png\"")));
+        }
+        for (i, sha) in expected_sweep_sha1s.iter().enumerate() {
+            assert!(
+                emitted.contains(&format!("\"{sha}\"")),
+                "sweep frame {i}'s sha1"
+            );
+            assert!(emitted.contains(&format!("\"particle/sweep_{i}.png\"")));
         }
         assert!(emitted.contains("pub const SLIM_ARM_BOX_PX: [u16; 3] = [3, 12, 4];"));
         assert!(emitted.contains("pub const SLIM_ARM_BOX_ORIGIN_PX: [i16; 3] = [-2, -2, -2];"));

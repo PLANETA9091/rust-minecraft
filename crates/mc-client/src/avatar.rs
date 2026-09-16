@@ -732,6 +732,17 @@ fn decode_rgba(bytes: &[u8]) -> anyhow::Result<(u32, u32, Vec<u8>)> {
                 rgba[o + 1] = s[1];
                 rgba[o + 2] = s[2];
             }
+            2 => {
+                // GRAYSCALE + ALPHA (the sweep arc's own layout — the
+                // png crate's EXPAND keeps the two samples): the gray
+                // rides all three channels, the ALPHA the fourth — the
+                // cutout the 0.5 threshold reads (the pre-filled 255
+                // would paint every transparent texel opaque black)
+                rgba[o] = s[0];
+                rgba[o + 1] = s[0];
+                rgba[o + 2] = s[0];
+                rgba[o + 3] = s[1];
+            }
             _ => {
                 rgba[o] = s[0];
                 rgba[o + 1] = s[0];
@@ -1091,6 +1102,59 @@ impl DamageSprite {
         let y = (v.floor().clamp(0.0, DAMAGE_SPRITE_SIDE as f32 - 1.0)) as usize;
         let o = (y * DAMAGE_SPRITE_SIDE as usize + x) * 4;
         [self.rgba[o], self.rgba[o + 1], self.rgba[o + 2], self.rgba[o + 3]]
+    }
+}
+
+/// The PARTICLE LANE's sweep arc frames — the sword's own swing's
+/// 8-frame sprite set (javap: the `sweep_attack` particle type's own
+/// sprites, the jar's `textures/particle/sweep_0..7.png`, the
+/// `sweep_attack.json`'s ASCENDING list the index law reads — the
+/// list index IS the file index, the poof json's descending order the
+/// mirror image; each frame the 32x32 the IHDR verifies, the
+/// `AttackSweepParticle`'s `setSpriteFromAge` walk the
+/// `MutableSpriteSet.get` law `sprites.get(age * (size - 1) /
+/// lifetime)` speaks), each file loaded and sha1-verified the same
+/// stream the splash frames speak. A missing or tampered frame keeps
+/// the arc invisible (the honest absence the other lanes speak).
+pub struct SweepFrames {
+    pub frames: Vec<Vec<u8>>,
+}
+
+/// The sweep texture's own layout (the jar's 32x32 the IHDR speaks).
+pub const SWEEP_SPRITE_SIDE: u32 = 32;
+
+impl SweepFrames {
+    /// Load the 8 frames from the runtime cache root, verify each
+    /// sha1, decode, shape-check the 32x32 layout.
+    pub fn load(root: &std::path::Path) -> Option<SweepFrames> {
+        let mut frames = Vec::with_capacity(crate::particles::SWEEP_FRAME_COUNT);
+        for i in 0..crate::particles::SWEEP_FRAME_COUNT {
+            let bytes =
+                std::fs::read(root.join(skin::PARTICLE_SWEEP_RUNTIME_PATHS[i])).ok()?;
+            if hex::encode(sha1::Sha1::digest(&bytes)) != skin::PARTICLE_SWEEP_PNG_SHA1S[i] {
+                return None;
+            }
+            let (w, h, rgba) = decode_rgba(&bytes).ok()?;
+            if w != SWEEP_SPRITE_SIDE || h != SWEEP_SPRITE_SIDE {
+                return None;
+            }
+            frames.push(rgba);
+        }
+        Some(SweepFrames { frames })
+    }
+
+    /// The frame pixel at (u, v) in TEXTURE UNITS (the 0..32 the
+    /// 32x32 quad's uv walk speaks), nearest texel.
+    pub fn pixel(&self, frame: usize, u: f32, v: f32) -> [u8; 4] {
+        let empty = [0u8; 4];
+        let f = match self.frames.get(frame) {
+            Some(f) => f,
+            None => return empty,
+        };
+        let x = (u.floor().clamp(0.0, SWEEP_SPRITE_SIDE as f32 - 1.0)) as usize;
+        let y = (v.floor().clamp(0.0, SWEEP_SPRITE_SIDE as f32 - 1.0)) as usize;
+        let o = (y * SWEEP_SPRITE_SIDE as usize + x) * 4;
+        [f[o], f[o + 1], f[o + 2], f[o + 3]]
     }
 }
 
