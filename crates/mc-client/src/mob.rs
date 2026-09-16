@@ -27,7 +27,16 @@
 //!   getTicksUntilNextAttack() < getAttackInterval()/2` drives
 //!   `setAggressive(true)` (the raised-arms law the render state
 //!   speaks); `stop()` clears it.
-//! - `RandomStrollGoal` — the canUse gate's interval 120 (bipush 120).
+//! - `RandomStrollGoal` — the canUse gate's interval 120 (bipush 120);
+//!   the WaterAvoiding override's own getPosition the stroll target
+//!   picks: the in-water arm the 15/7 land ring rides (LandRandomPos —
+//!   the lift out of solid + the isWater word + the stable-destination
+//!   ground), the null the super's raw pick answers, the dry arm the
+//!   0.001 probability roll splits (the super's DefaultRandomPos the
+//!   low roll keeps, the 10/7 land ring the rest walk — the ten-try
+//!   loop `RandomPos.generateRandomPos` speaks, each try its
+//!   three-draw direction the `generateRandomDirection` bytecode
+//!   pins: x `nextInt(2x+1)-x`, y `nextInt(2z+1)-z`, z `nextInt(2x+1)-x`).
 //! - `LookAtPlayerGoal` — the ctor's 8.0 range, the 0.02 probability
 //!   ldc, the 40-tick look clock (the two bipush 40s).
 //! - `Mob.isAggressive` — the DATA_MOB_FLAGS_ID byte's bit 0x4.
@@ -89,7 +98,10 @@
 //!   at night) — the frames ride the day tick (fire_0's mcmeta
 //!   playlist [16..31, 0..15], fire_1 sequential).
 
-use crate::body::{collide, WalkAnimationState, AIR_FRICTION, BLOCK_FRICTION, CUBE_SPEED_NUMERATOR, GRAVITY, GROUND_DRAG, JUMP_POWER, VERTICAL_DRAG, WALK_BLEND, WALK_DISTANCE_SCALE};
+use crate::body::{
+    collide, WalkAnimationState, AIR_FRICTION, BLOCK_FRICTION, CUBE_SPEED_NUMERATOR, GRAVITY,
+    GROUND_DRAG, JUMP_POWER, VERTICAL_DRAG, WALK_BLEND, WALK_DISTANCE_SCALE,
+};
 use crate::drops::Lcg;
 use crate::hand::SwingState;
 use crate::world::World;
@@ -283,7 +295,9 @@ pub fn jeb_rainbow_rgb(age_ticks: f32) -> u32 {
         let d = y as i32 - x as i32;
         (x as i32 + (t * d as f32).floor() as i32).clamp(0, 255) as u32
     };
-    (lerp(a >> 16, b >> 16) << 16) | (lerp(a >> 8 & 0xFF, b >> 8 & 0xFF) << 8) | lerp(a & 0xFF, b & 0xFF)
+    (lerp(a >> 16, b >> 16) << 16)
+        | (lerp(a >> 8 & 0xFF, b >> 8 & 0xFF) << 8)
+        | lerp(a & 0xFF, b & 0xFF)
 }
 
 /// THE SHEAR LOOT'S OWN NAME LAW (javap DyeColor's clinit — the 16
@@ -504,11 +518,7 @@ impl MobKind {
     /// table never names (the vanilla never hears them either).
     pub fn step_voice(self, under: Option<&str>) -> Option<(&'static str, f32, f32)> {
         match self {
-            MobKind::Zombie => Some((
-                "entity.zombie.step",
-                ZOMBIE_STEP_VOLUME,
-                ZOMBIE_STEP_PITCH,
-            )),
+            MobKind::Zombie => Some(("entity.zombie.step", ZOMBIE_STEP_VOLUME, ZOMBIE_STEP_PITCH)),
             MobKind::Sheep | MobKind::Cow | MobKind::Pig => {
                 use mc_registry::generated::block_sounds as bs;
                 let idx = bs::sound_index(under?)?;
@@ -564,6 +574,27 @@ pub const ATTACK_RECHECK_TICKS: i64 = 20;
 pub const RAISE_ARM_DELAY: i32 = 5;
 /// `RandomStrollGoal`'s interval (the canUse gate's bipush 120).
 pub const STROLL_INTERVAL_TICKS: i32 = 120;
+/// `WaterAvoidingRandomStrollGoal`'s own ctor constant (the ldc 0.001
+/// the 26.2 dump speaks — the two-arg ctor folds
+/// `this(mob, speed, 0.001)` and the field the dry-arm roll reads).
+pub const STROLL_LAND_PROBABILITY: f32 = 0.001;
+/// `RandomPos.generateRandomPos`'s own loop bound (the bipush 10 the
+/// Supplier fold speaks): the tries the stroll's pick draws — each
+/// try its direction (the supplier the loop calls all ten times, the
+/// rng stream the flow pins).
+const STROLL_LAND_TRIES: i32 = 10;
+/// The stroll's own land rings (the getPosition calls the dump
+/// speaks): the dry arm's `LandRandomPos.getPos(mob, 10, 7)`, the
+/// in-water flee's `getPos(mob, 15, 7)` — the first int the
+/// HORIZONTAL radius the two ±x draws speak, the second the VERTICAL
+/// spread the middle ±z draw carries (the BlockPos(draw_x, draw_y,
+/// draw_z) ctor the bytecode pins: the x and z components both draw
+/// `nextInt(2*x+1) - x`, the y component `nextInt(2*z+1) - z`).
+const STROLL_LAND_RING: i64 = 10;
+const STROLL_LAND_RING_IN_WATER: i64 = 15;
+/// The vertical spread the second getPosition int carries (the ±7 the
+/// middle draw answers).
+const STROLL_LAND_SPREAD: i64 = 7;
 /// `LookAtPlayerGoal`'s ctor float 8.0 — the look range.
 pub const LOOK_RANGE: f64 = 8.0;
 /// `LookAtPlayerGoal`'s 0.02 probability.
@@ -627,6 +658,20 @@ pub fn wire_id(name: &str) -> Option<i32> {
 /// The horizontal capture the stroll target walks to (the vanilla
 /// navigation's arrival slack).
 const STROLL_ARRIVAL: f64 = 0.5;
+/// THE STROLL CANDIDATE'S OWN SOLID WORD (the world clip's own law —
+/// `solid = id != AIR && id != WATER && id != LAVA` the ray's
+/// fluid-NONE read speaks): the cell the lift climbs out of, the
+/// ground the stable-destination word reads. The below-world the
+/// y<0 law keeps NO ground here — the vanilla isOutsideLimits word
+/// the out-of-world candidate dies on, the void column's phantom
+/// stone the world.get read can never stand on.
+fn stroll_cell_solid(world: &World, x: i32, y: i32, z: i32) -> bool {
+    if y < 0 {
+        return false;
+    }
+    let id = world.get(x, y, z);
+    id != crate::world::AIR && id != crate::world::WATER && id != crate::world::LAVA
+}
 /// The monster category's own spawn cap (MobCategory.MONSTER — the
 /// client-side spawner respects the same ceiling).
 pub const MONSTER_CAP: usize = 70;
@@ -903,7 +948,14 @@ impl Zombie {
     /// The zombie's feet-anchored bbox (the registration's own dims).
     pub fn box_at(&self) -> (f64, f64, f64, f64, f64, f64) {
         let h = ZOMBIE_WIDTH / 2.0;
-        (self.x - h, self.y, self.z - h, self.x + h, self.y + ZOMBIE_HEIGHT, self.z + h)
+        (
+            self.x - h,
+            self.y,
+            self.z - h,
+            self.x + h,
+            self.y + ZOMBIE_HEIGHT,
+            self.z + h,
+        )
     }
 
     /// THE LOVE WALK'S OWN BOX — the feet-anchored bbox the body's
@@ -930,7 +982,14 @@ impl Zombie {
             (w, h)
         };
         let h2 = w / 2.0;
-        (self.x - h2, self.y, self.z - h2, self.x + h2, self.y + h, self.z + h2)
+        (
+            self.x - h2,
+            self.y,
+            self.z - h2,
+            self.x + h2,
+            self.y + h,
+            self.z + h2,
+        )
     }
 
     /// THE RENDER FOLD (javap `Entity.render`'s own lerp — `Mth.lerp(
@@ -963,8 +1022,7 @@ impl Zombie {
         }
         let t = partial;
         (
-            self.prev_head_yaw_off
-                + (self.head_yaw_off - self.prev_head_yaw_off) * t,
+            self.prev_head_yaw_off + (self.head_yaw_off - self.prev_head_yaw_off) * t,
             self.prev_head_pitch + (self.head_pitch - self.prev_head_pitch) * t,
         )
     }
@@ -1270,11 +1328,8 @@ impl Zombie {
                     None => {
                         let ang = self.rng.next_f64() * std::f64::consts::TAU;
                         let dist = self.rng.next_f64() * PANIC_RING_XZ;
-                        self.panic_target = Some((
-                            self.x + ang.cos() * dist,
-                            self.y,
-                            self.z + ang.sin() * dist,
-                        ));
+                        self.panic_target =
+                            Some((self.x + ang.cos() * dist, self.y, self.z + ang.sin() * dist));
                     }
                 }
                 self.stroll_target = None;
@@ -1346,11 +1401,33 @@ impl Zombie {
                     want_move = true;
                 }
             } else if self.rng.next() % STROLL_INTERVAL_TICKS as u64 == 0 {
-                // the random stroll target (the LandRandomPos ring's
-                // own +-10 the goal's getPosition speaks)
-                let ang = self.rng.next_f64() * std::f64::consts::TAU;
-                let dist = self.rng.next_f64() * 10.0;
-                self.stroll_target = Some((self.x + ang.cos() * dist, self.z + ang.sin() * dist));
+                // THE WATER-AVOIDING PICK (javap
+                // `WaterAvoidingRandomStrollGoal.getPosition` the 26.2
+                // jar speaks): the in-water arm rides the 15/7 land
+                // ring — the null the SUPER's raw pick answers (the
+                // getPos(mob, 15, 7) fallback the ifnonnull fold
+                // speaks); the dry arm the 0.001 probability roll
+                // splits — the low roll keeps the super pick (the
+                // iflt fold), the rest walk the 10/7 land ring whose
+                // null the canUse gate answers with NO stroll this
+                // cycle (the vec3 == null law the goal's own use
+                // speaks).
+                let target = if self.in_water(world) {
+                    match self.land_random_pos(world, STROLL_LAND_RING_IN_WATER, STROLL_LAND_SPREAD)
+                    {
+                        Some(t) => Some(t),
+                        None => Some(
+                            self.default_random_pos(STROLL_LAND_RING_IN_WATER, STROLL_LAND_SPREAD),
+                        ),
+                    }
+                } else if self.rng.next_f32() < STROLL_LAND_PROBABILITY {
+                    Some(self.default_random_pos(STROLL_LAND_RING, STROLL_LAND_SPREAD))
+                } else {
+                    self.land_random_pos(world, STROLL_LAND_RING, STROLL_LAND_SPREAD)
+                };
+                if let Some((tx, tz)) = target {
+                    self.stroll_target = Some((tx, tz));
+                }
             }
             // THE LOOK GOAL (prio 8): the look-at-player branch rides
             // the 0.02 probability per 40-tick cycle (the ctor's own
@@ -1415,7 +1492,11 @@ impl Zombie {
         // correction the player's law speaks verbatim)
         let (x0, y0, z0) = (self.x, self.y, self.z);
         if want_move && (ix * ix + iz * iz) > 1e-7 {
-            let friction = if self.on_ground { BLOCK_FRICTION } else { AIR_FRICTION };
+            let friction = if self.on_ground {
+                BLOCK_FRICTION
+            } else {
+                AIR_FRICTION
+            };
             let speed = if friction > 0.6 {
                 ZOMBIE_MOVEMENT_SPEED * CUBE_SPEED_NUMERATOR as f64
                     / (friction * friction * friction) as f64
@@ -1477,7 +1558,11 @@ impl Zombie {
         if col.collided_z {
             self.vz = 0.0;
         }
-        let friction = if was_on_ground { BLOCK_FRICTION } else { AIR_FRICTION };
+        let friction = if was_on_ground {
+            BLOCK_FRICTION
+        } else {
+            AIR_FRICTION
+        };
         self.vy = (self.vy - GRAVITY) * VERTICAL_DRAG as f64;
         let drag = (friction * GROUND_DRAG) as f64;
         self.vx *= drag;
@@ -1540,6 +1625,97 @@ impl Zombie {
             }
         }
         None
+    }
+
+    /// THE WATER-AVOIDING STROLL'S OWN DIRECTION DRAW (javap
+    /// `RandomPos.generateRandomDirection(RandomSource, II)` the 26.2
+    /// jar speaks): THREE nextInt draws in the order the istore chain
+    /// pins — the x component `nextInt(2*x+1) - x`, the y component
+    /// `nextInt(2*z+1) - z` (the SECOND arg the vertical spread
+    /// carries), the z component `nextInt(2*x+1) - x` again (the
+    /// bytecode's second ±x draw) — folded into BlockPos(draw_x,
+    /// draw_y, draw_z). The modulo the repo's goal clocks already
+    /// speak stands in for nextInt's own fold (the honest stand-in).
+    fn generate_random_direction(&mut self, rx: i64, ry: i64) -> (i64, i64, i64) {
+        let dx = (self.rng.next() % (2 * rx + 1) as u64) as i64 - rx;
+        let dy = (self.rng.next() % (2 * ry + 1) as u64) as i64 - ry;
+        let dz = (self.rng.next() % (2 * rx + 1) as u64) as i64 - rx;
+        (dx, dy, dz)
+    }
+
+    /// THE LAND PICK (javap `LandRandomPos.getPos(mob, x, z)` over
+    /// `RandomPos.generateRandomPos`'s ten-try loop): every try draws
+    /// its direction (the supplier the loop calls all ten times — the
+    /// rng stream the flow pins, the early hit the loop never
+    /// short-circuits), the first DRY STANDABLE candidate the score-0
+    /// fold keeps. The candidate's own gates the helper classes speak:
+    /// the lift (movePosUpOutOfSolid) walks the cell up out of the
+    /// solid it landed in, the isWater word (GoalUtils.isWater: the
+    /// fluid state the lifted cell carries) rejects the pool surface
+    /// the lift surfaces into, and the stable-destination word
+    /// (isNotStable's honest stand-in — the simplified walker keeps
+    /// no navigator) rejects the unlifted candidate whose ground
+    /// below is not solid (the floating cell the real navigator's
+    /// walk never answers). The pathfinding malus table the repo
+    /// keeps none of — the honest unknown the fold never invents.
+    /// None after the ten — the vanilla null the stroll's canUse
+    /// answers with NO walk this cycle.
+    fn land_random_pos(&mut self, world: &World, rx: i64, ry: i64) -> Option<(f64, f64)> {
+        let bx = self.x.floor() as i64;
+        let by = self.y.floor() as i64;
+        let bz = self.z.floor() as i64;
+        let mut picked: Option<(f64, f64)> = None;
+        for _ in 0..STROLL_LAND_TRIES {
+            let (dx, dy, dz) = self.generate_random_direction(rx, ry);
+            if picked.is_some() {
+                continue;
+            }
+            let (cx, cz) = (bx + dx, bz + dz);
+            // THE LIFT (movePosUpOutOfSolid): up out of the solid cell
+            // the candidate landed in, the world's ceiling the bound
+            // keeps.
+            let mut cy = by + dy;
+            let mut lifted = false;
+            while cy < crate::world::CHUNK_Y as i64
+                && stroll_cell_solid(world, cx as i32, cy as i32, cz as i32)
+            {
+                cy += 1;
+                lifted = true;
+            }
+            // THE ISWATER WORD: the pool surface the lift spoke.
+            if world.get(cx as i32, cy as i32, cz as i32) == crate::world::WATER {
+                continue;
+            }
+            // THE STABLE-DESTINATION WORD: the unlifted candidate the
+            // solid ground below keeps.
+            if !lifted && !stroll_cell_solid(world, cx as i32, (cy - 1) as i32, cz as i32) {
+                continue;
+            }
+            picked = Some((cx as f64 + 0.5, cz as f64 + 0.5));
+        }
+        picked
+    }
+
+    /// THE SUPER PICK (javap `DefaultRandomPos.getPos(mob, 10, 7)` —
+    /// the RandomStrollGoal.getPosition the WaterAvoiding override
+    /// falls back to): the same ten-try loop, each try its direction
+    /// draw, the FIRST candidate the score-0 fold keeps — the
+    /// outside/restricted/stable/malus gates the simplified walker
+    /// keeps no leash, no navigator and no malus table for, so every
+    /// candidate passes (the honest note the vanilla's own null never
+    /// speaks here). The water the gate never reads — the raw ring's
+    /// own law, the 0.001 arm and the in-water fallback ride it
+    /// verbatim.
+    fn default_random_pos(&mut self, rx: i64, ry: i64) -> (f64, f64) {
+        let bx = self.x.floor() as i64;
+        let bz = self.z.floor() as i64;
+        let (dx, _dy, dz) = self.generate_random_direction(rx, ry);
+        // the nine remaining tries draw their directions too (the
+        // supplier the loop calls all ten times)
+        for _ in 1..STROLL_LAND_TRIES {
+            let _ = self.generate_random_direction(rx, ry);
+        }
+        ((bx + dx) as f64 + 0.5, (bz + dz) as f64 + 0.5)
     }
 
     /// The eye cell's (sky, block) levels — `BlockPos.containing(x,
@@ -1616,7 +1792,9 @@ impl Zombie {
         let dz = tz - self.z;
         let dy = ty - (self.y + ZOMBIE_EYE_HEIGHT);
         let horiz = (dx * dx + dz * dz).sqrt();
-        let head_abs = (-(dx.max(1e-9) / horiz.max(1e-9))).atan2(dz / horiz.max(1e-9)).to_degrees();
+        let head_abs = (-(dx.max(1e-9) / horiz.max(1e-9)))
+            .atan2(dz / horiz.max(1e-9))
+            .to_degrees();
         let body = self.yaw as f64;
         let mut off = head_abs - body;
         while off > 180.0 {
@@ -1984,11 +2162,7 @@ pub struct BreedSpawn {
 /// the pairing the proximity law the canMate gate answers — the
 /// armed partner identity the goal's own walk steers, the spawn the
 /// same verdict the one-shot law folds).
-pub fn try_breed(
-    mobs: &mut [Zombie],
-    next_id: &mut i32,
-    rng: &mut Lcg,
-) -> Vec<BreedSpawn> {
+pub fn try_breed(mobs: &mut [Zombie], next_id: &mut i32, rng: &mut Lcg) -> Vec<BreedSpawn> {
     let mut out = Vec::new();
     let mut bred = vec![false; mobs.len()];
     for i in 0..mobs.len() {
@@ -2037,8 +2211,7 @@ pub fn try_breed(
             // parents' dyes the crafting recipe pairs, the recipe-less
             // pair the nextBoolean coin the fallback arm keeps)
             if child.kind == MobKind::Sheep {
-                child.wool_color =
-                    mixed_wool_color(mobs[i].wool_color, mobs[j].wool_color, rng);
+                child.wool_color = mixed_wool_color(mobs[i].wool_color, mobs[j].wool_color, rng);
             }
             // THE ORB ROLL (javap: `random.nextInt(7)` — the 0..6 the
             // MOB_DROPS gate keeps)
@@ -2396,7 +2569,11 @@ mod tests {
     fn the_armor_law_speaks_combat_rules() {
         let mut z = Zombie::new(1, 0.0, 0.0, 0.0, 7);
         z.hurt(2.0);
-        assert!((z.health - (20.0 - 1.92)).abs() < 1e-4, "health {}", z.health);
+        assert!(
+            (z.health - (20.0 - 1.92)).abs() < 1e-4,
+            "health {}",
+            z.health
+        );
         assert_eq!(z.hurt_time, HURT_DURATION_TICKS, "the 10-tick flash");
         // the walk store's own hurt kick (the 1.5 speed the setSpeed
         // law banks — the sampler's own min(.., 1.0) clamp rides the
@@ -2475,7 +2652,10 @@ mod tests {
             MobKind::Zombie.voice_event(VoiceSlot::Ambient),
             "entity.zombie.ambient"
         );
-        assert_eq!(MobKind::Zombie.voice_event(VoiceSlot::Hurt), "entity.zombie.hurt");
+        assert_eq!(
+            MobKind::Zombie.voice_event(VoiceSlot::Hurt),
+            "entity.zombie.hurt"
+        );
         assert_eq!(
             MobKind::Zombie.voice_event(VoiceSlot::Death),
             "entity.zombie.death"
@@ -2484,17 +2664,32 @@ mod tests {
             MobKind::Sheep.voice_event(VoiceSlot::Ambient),
             "entity.sheep.ambient"
         );
-        assert_eq!(MobKind::Sheep.voice_event(VoiceSlot::Hurt), "entity.sheep.hurt");
+        assert_eq!(
+            MobKind::Sheep.voice_event(VoiceSlot::Hurt),
+            "entity.sheep.hurt"
+        );
         assert_eq!(
             MobKind::Sheep.voice_event(VoiceSlot::Death),
             "entity.sheep.death"
         );
-        assert_eq!(MobKind::Cow.voice_event(VoiceSlot::Ambient), "entity.cow.ambient");
+        assert_eq!(
+            MobKind::Cow.voice_event(VoiceSlot::Ambient),
+            "entity.cow.ambient"
+        );
         assert_eq!(MobKind::Cow.voice_event(VoiceSlot::Hurt), "entity.cow.hurt");
-        assert_eq!(MobKind::Cow.voice_event(VoiceSlot::Death), "entity.cow.death");
-        assert_eq!(MobKind::Pig.voice_event(VoiceSlot::Ambient), "entity.pig.ambient");
+        assert_eq!(
+            MobKind::Cow.voice_event(VoiceSlot::Death),
+            "entity.cow.death"
+        );
+        assert_eq!(
+            MobKind::Pig.voice_event(VoiceSlot::Ambient),
+            "entity.pig.ambient"
+        );
         assert_eq!(MobKind::Pig.voice_event(VoiceSlot::Hurt), "entity.pig.hurt");
-        assert_eq!(MobKind::Pig.voice_event(VoiceSlot::Death), "entity.pig.death");
+        assert_eq!(
+            MobKind::Pig.voice_event(VoiceSlot::Death),
+            "entity.pig.death"
+        );
         // the round trip: the wire spawn's own walk (the registry name
         // the Add Entity spoke -> the kind -> the voice)
         for (name, kind) in [
@@ -2702,11 +2897,7 @@ mod tests {
         for under in [None, Some("grass_block"), Some("stone")] {
             assert_eq!(
                 MobKind::Zombie.step_voice(under),
-                Some((
-                    "entity.zombie.step",
-                    ZOMBIE_STEP_VOLUME,
-                    ZOMBIE_STEP_PITCH
-                )),
+                Some(("entity.zombie.step", ZOMBIE_STEP_VOLUME, ZOMBIE_STEP_PITCH)),
                 "the zombie's flat fold answers every surface"
             );
         }
@@ -2763,7 +2954,7 @@ mod tests {
         let mobs = vec![near, far];
         let eye = (0.0, 1.0, 0.0);
         let view = (1.0, -0.2 / 2.0, 0.0); // level-out: the boxes at y 0..1.95
-        // aim level at the bodies' middle (y 1.0 eye, the ray rides x)
+                                           // aim level at the bodies' middle (y 1.0 eye, the ray rides x)
         let view = (1.0, 0.0, 0.0);
         let picked = pick_entity(&mobs, eye, view, 4.5);
         assert_eq!(picked.unwrap().0, 0, "the nearer zombie wins");
@@ -2823,7 +3014,13 @@ mod tests {
         let mut next_id = 1;
         let mut rng = Lcg::new(99);
         assert!(!try_spawn(
-            &mut mobs, &mut next_id, px, pz, &world, &mut rng, false
+            &mut mobs,
+            &mut next_id,
+            px,
+            pz,
+            &world,
+            &mut rng,
+            false
         ));
         assert!(mobs.is_empty());
     }
@@ -2864,12 +3061,24 @@ mod tests {
         // the uniform law: the three counts split ~evenly (the wide
         // band over the seed spread)
         let third = (n / 3) as i32;
-        assert!(((third - 700)..=(third + 700)).contains(&zeros), "the zero band {zeros}");
-        assert!(((third - 700)..=(third + 700)).contains(&ones), "the one band {ones}");
-        assert!(((third - 700)..=(third + 700)).contains(&twos), "the two band {twos}");
+        assert!(
+            ((third - 700)..=(third + 700)).contains(&zeros),
+            "the zero band {zeros}"
+        );
+        assert!(
+            ((third - 700)..=(third + 700)).contains(&ones),
+            "the one band {ones}"
+        );
+        assert!(
+            ((third - 700)..=(third + 700)).contains(&twos),
+            "the two band {twos}"
+        );
         // the rare: 0.025 of the player kills (the wide band)
         let expect = n as f64 * RARE_DROP_CHANCE as f64;
-        assert!(((expect - 70.0)..=(expect + 70.0)).contains(&(rares_n as f64)), "the rare band {rares_n}");
+        assert!(
+            ((expect - 70.0)..=(expect + 70.0)).contains(&(rares_n as f64)),
+            "the rare band {rares_n}"
+        );
         // the no-player-kill gate: the rare never fires
         let mut rare_without_player = 0;
         for seed in 0..n {
@@ -3003,22 +3212,17 @@ mod tests {
     /// THE WATER DROWNS THE BRAND — the inside-block effect clears
     /// the fire (clearFire = remaining 0) and the transition speaks
     /// the fizz at 0.7 volume / the 1.6 +- 0.4 pitch fold; the wet
-    /// body never re-ignites while it stands in the pool.
+    /// body never re-ignites while it stands in the water. The
+    /// all-surface ocean keeps the walk wet — the stroll's own
+    /// in-water flee the land pick never answers (every column
+    /// water, the vanilla null the canUse gate speaks), the burn
+    /// chain's !isInWater gate the wet body never passes.
     #[test]
     fn the_water_drowns_the_brand() {
         let mut world = wide_flat_world();
-        // a walled pool cage: the interior cell (32, 5..6, 32) water,
-        // the ring walls 4 tall so the stroll can never walk the zombie
-        // out — the water effect clears the brand and keeps it cleared
-        for wy in 5..9 {
-            for wx in 31..34 {
-                for wz in 31..34 {
-                    if wx == 32 && wz == 32 && wy <= 6 {
-                        world.set(wx, wy, wz, crate::world::WATER);
-                    } else if wx != 32 || wz != 32 {
-                        world.set(wx, wy, wz, crate::world::STONE);
-                    }
-                }
+        for x in 0..world.size_blocks() {
+            for z in 0..world.size_blocks() {
+                world.set(x, 5, z, crate::world::WATER);
             }
         }
         let mut z = Zombie::new(1, 32.5, 5.0, 32.5, 7);
@@ -3033,7 +3237,7 @@ mod tests {
         // the wet body never re-ignites
         for _ in 0..200 {
             z.tick(&world, None, NOON);
-            assert_eq!(z.fire_ticks, 0, "the pool keeps it out");
+            assert_eq!(z.fire_ticks, 0, "the ocean keeps it out");
         }
     }
 
@@ -3178,7 +3382,11 @@ mod tests {
     /// not 255 — the raw table the earlier wool rode one step bright).
     #[test]
     fn the_wool_tint_rides_the_modified_table() {
-        assert_eq!(sheep_wool_tint(0), 0xE6E6E6, "the WHITE branch's own literal");
+        assert_eq!(
+            sheep_wool_tint(0),
+            0xE6E6E6,
+            "the WHITE branch's own literal"
+        );
         // RED 0xFF0000: floor(255 * 0.75) = 191 = 0xBF, the others 0
         assert_eq!(sheep_wool_tint(14), 0xBF0000, "the red the modifier speaks");
         // BLACK 0x000000: floor(0 * 0.75) = 0 — the same black both words speak
@@ -3329,13 +3537,19 @@ mod tests {
         pig.kind = MobKind::Pig;
         let mut zombie = Zombie::new(8, 0.0, 64.0, 0.0, 262);
         assert!(sheep.is_food("wheat"), "SHEEP_FOOD the wheat speaks");
-        assert!(!sheep.is_food("carrot"), "the pig's food the sheep's tag refuses");
+        assert!(
+            !sheep.is_food("carrot"),
+            "the pig's food the sheep's tag refuses"
+        );
         assert!(cow.is_food("wheat"), "COW_FOOD the wheat speaks");
         assert!(!cow.is_food("carrot"), "COW_FOOD the carrot refuses");
         assert!(pig.is_food("carrot"), "PIG_FOOD the carrot speaks");
         assert!(pig.is_food("potato"), "PIG_FOOD the potato speaks");
         assert!(pig.is_food("beetroot"), "PIG_FOOD the beetroot speaks");
-        assert!(!pig.is_food("wheat"), "the sheep's food the pig's tag refuses");
+        assert!(
+            !pig.is_food("wheat"),
+            "the sheep's food the pig's tag refuses"
+        );
         assert!(!zombie.is_food("wheat"), "the monster the gate refuses");
     }
 
@@ -3385,7 +3599,10 @@ mod tests {
         let mut zombie = Zombie::new(8, 0.0, 64.0, 0.0, 262);
         assert_eq!(
             sheep.mob_interact("shears", &mut Lcg::new(42)),
-            MobInteract::Shear(vec![wire_id("red_wool").expect("red_wool"), wire_id("red_wool").expect("red_wool")]),
+            MobInteract::Shear(vec![
+                wire_id("red_wool").expect("red_wool"),
+                wire_id("red_wool").expect("red_wool")
+            ]),
             "the shears the chain's own first gate keeps"
         );
         assert_eq!(
@@ -3447,7 +3664,10 @@ mod tests {
         sheep.age = 0;
         sheep.in_love = 600;
         sheep.tick(&world, None, NIGHT);
-        assert_eq!(sheep.in_love, 599, "the adult's clock the plain decrement walks");
+        assert_eq!(
+            sheep.in_love, 599,
+            "the adult's clock the plain decrement walks"
+        );
     }
 
     #[test]
@@ -3494,7 +3714,11 @@ mod tests {
         let spawns = try_breed(&mut mobs, &mut next_id, &mut Lcg::new(42));
         assert_eq!(spawns.len(), 1, "the pair the canMate law answers");
         let spawn = &spawns[0];
-        assert_eq!(spawn.child.kind, MobKind::Sheep, "the child the same kind names");
+        assert_eq!(
+            spawn.child.kind,
+            MobKind::Sheep,
+            "the child the same kind names"
+        );
         assert_eq!(
             spawn.child.age, BABY_START_AGE,
             "getBabyStartAge the birth arms"
@@ -3519,13 +3743,22 @@ mod tests {
         );
         // the parents the finalize walk cools (the in-place mutation
         // the scan speaks)
-        assert_eq!(mobs[0].age, BREED_COOLDOWN_TICKS, "setAge(6000) the first parent");
+        assert_eq!(
+            mobs[0].age, BREED_COOLDOWN_TICKS,
+            "setAge(6000) the first parent"
+        );
         assert_eq!(mobs[0].in_love, 0, "resetLove the first parent");
-        assert_eq!(mobs[1].age, BREED_COOLDOWN_TICKS, "setAge(6000) the second parent");
+        assert_eq!(
+            mobs[1].age, BREED_COOLDOWN_TICKS,
+            "setAge(6000) the second parent"
+        );
         assert_eq!(mobs[1].in_love, 0, "resetLove the second parent");
         // the hearts' bbox the spawning parent's own box names
         let expected = mobs[0].box_for();
-        assert_eq!(spawn.heart_bbox, expected, "the event-18 ask the parent's own box");
+        assert_eq!(
+            spawn.heart_bbox, expected,
+            "the event-18 ask the parent's own box"
+        );
     }
 
     #[test]
@@ -3565,9 +3798,9 @@ mod tests {
         b.kind = MobKind::Sheep;
         b.in_love = 600;
         b.wool_color = 11; // BLUE
-        // THE COURT the goal's own walk completed (the loveTime 60 the
-        // BreedGoal's own gate reads — the approach the pair walked,
-        // the meet the spawn's own tick answers)
+                           // THE COURT the goal's own walk completed (the loveTime 60 the
+                           // BreedGoal's own gate reads — the approach the pair walked,
+                           // the meet the spawn's own tick answers)
         a.breed_love_time = BREED_COURT_TICKS;
         b.breed_love_time = BREED_COURT_TICKS;
         let mut mobs = vec![a, b];
@@ -3606,9 +3839,9 @@ mod tests {
         b.kind = MobKind::Sheep;
         b.in_love = 600;
         b.wool_color = 12; // BROWN
-        // THE COURT the goal's own walk completed (the loveTime 60 the
-        // BreedGoal's own gate reads — the approach the pair walked,
-        // the meet the spawn's own tick answers)
+                           // THE COURT the goal's own walk completed (the loveTime 60 the
+                           // BreedGoal's own gate reads — the approach the pair walked,
+                           // the meet the spawn's own tick answers)
         a.breed_love_time = BREED_COURT_TICKS;
         b.breed_love_time = BREED_COURT_TICKS;
         let mut mobs = vec![a, b];
@@ -3665,6 +3898,195 @@ mod tests {
         assert!(
             mobs[2].follow_parent.is_none(),
             "the second adult the same law refuses"
+        );
+    }
+
+    /// THE DIRECTION DRAW'S OWN AXES (javap
+    /// `RandomPos.generateRandomDirection(RandomSource, II)` the
+    /// bytecode pins): the x and z components both draw
+    /// `nextInt(2*x+1) - x` (the SECOND ±x draw the istore loc5
+    /// speaks), the y component `nextInt(2*z+1) - z` — the second
+    /// arg the VERTICAL spread carries. The full range each axis
+    /// walks over the seeds the spread's own bounds keep.
+    #[test]
+    fn the_direction_draw_splits_the_axes() {
+        for seed in 0..64u64 {
+            let mut z = Zombie::new(1, 0.0, 5.0, 0.0, seed + 700);
+            let (dx, dy, dz) = z.generate_random_direction(STROLL_LAND_RING, STROLL_LAND_SPREAD);
+            assert!(
+                (-STROLL_LAND_RING..=STROLL_LAND_RING).contains(&dx),
+                "the x draw the horizontal ring keeps: {dx}"
+            );
+            assert!(
+                (-STROLL_LAND_SPREAD..=STROLL_LAND_SPREAD).contains(&dy),
+                "the y draw the vertical spread keeps: {dy}"
+            );
+            assert!(
+                (-STROLL_LAND_RING..=STROLL_LAND_RING).contains(&dz),
+                "the z draw the second horizontal ring keeps: {dz}"
+            );
+        }
+        // the FULL range each axis answers over the seed walk — the
+        // bounds the modulo fold never clips silent
+        let mut seen_x = (i64::MAX, i64::MIN);
+        let mut seen_y = (i64::MAX, i64::MIN);
+        for seed in 0..512u64 {
+            let mut z = Zombie::new(1, 0.0, 5.0, 0.0, seed + 700);
+            let (dx, dy, _) = z.generate_random_direction(STROLL_LAND_RING, STROLL_LAND_SPREAD);
+            seen_x.0 = seen_x.0.min(dx);
+            seen_x.1 = seen_x.1.max(dx);
+            seen_y.0 = seen_y.0.min(dy);
+            seen_y.1 = seen_y.1.max(dy);
+        }
+        assert_eq!(
+            seen_x,
+            (-10, 10),
+            "the horizontal ring the full walk speaks"
+        );
+        assert_eq!(seen_y, (-7, 7), "the vertical spread the full walk speaks");
+    }
+
+    /// THE LAND STROLL NEVER TARGETS THE WATER (javap
+    /// `LandRandomPos.getPos` + `GoalUtils.isWater`): the lake
+    /// columns the isWater word keeps (the lift the pool surface
+    /// walks into, the floating cell the stable-destination ground
+    /// refuses), every accepted target the dry column's own top
+    /// answers; the OCEAN the ten tries never answers — the vanilla
+    /// null the canUse gate answers with no stroll.
+    #[test]
+    fn the_land_stroll_never_targets_the_water() {
+        let column_top = |world: &World, tx: i32, tz: i32| -> u16 {
+            for y in (0..crate::world::CHUNK_Y as i32).rev() {
+                let id = world.get(tx, y, tz);
+                if id != crate::world::AIR {
+                    return id;
+                }
+            }
+            crate::world::AIR
+        };
+        // a stone plain with a 9x9 lake carved at (12..21): the mob
+        // on the dry shore, the ring 10 both worlds reach
+        let mut world = wide_flat_world();
+        for x in 12..21 {
+            for z in 12..21 {
+                world.set(x, 5, z, crate::world::WATER);
+            }
+        }
+        for seed in 0..64u64 {
+            let mut s = Zombie::new(1, 8.5, 5.0, 8.5, seed + 800);
+            if let Some((tx, tz)) = s.land_random_pos(&world, STROLL_LAND_RING, STROLL_LAND_SPREAD)
+            {
+                let (itx, itz) = (tx.floor() as i32, tz.floor() as i32);
+                assert_ne!(
+                    column_top(&world, itx, itz),
+                    crate::world::WATER,
+                    "the seed {} the water column the land pick refused",
+                    seed
+                );
+            }
+        }
+        // the OCEAN: every column water — the ten tries the null
+        // keeps (the isWater + the floating-ground words answer all)
+        let mut ocean = wide_flat_world();
+        for x in 0..ocean.size_blocks() {
+            for z in 0..ocean.size_blocks() {
+                ocean.set(x, 5, z, crate::world::WATER);
+            }
+        }
+        let mut s = Zombie::new(1, 8.5, 5.0, 8.5, 42);
+        assert!(
+            s.land_random_pos(&ocean, STROLL_LAND_RING, STROLL_LAND_SPREAD)
+                .is_none(),
+            "the ocean the ten tries never answers"
+        );
+    }
+
+    /// THE TEN-TRY STREAM THE FLOW PINS (javap
+    /// `RandomPos.generateRandomPos`'s bipush-10 loop): the supplier
+    /// the loop calls ALL TEN times — the land pick's null the ocean
+    /// answers still advances the mob's stream exactly thirty draws
+    /// (three per try), the super pick the same thirty — the early
+    /// hit the loop never short-circuits.
+    #[test]
+    fn the_stroll_stream_draws_the_ten_tries() {
+        let mut ocean = wide_flat_world();
+        for x in 0..ocean.size_blocks() {
+            for z in 0..ocean.size_blocks() {
+                ocean.set(x, 5, z, crate::world::WATER);
+            }
+        }
+        let mut s = Zombie::new(1, 8.5, 5.0, 8.5, 42);
+        let _ = s.land_random_pos(&ocean, STROLL_LAND_RING, STROLL_LAND_SPREAD);
+        // the reference stream advanced the same thirty raw draws
+        let mut reference = Lcg::new(42);
+        for _ in 0..30 {
+            reference.next();
+        }
+        assert_eq!(
+            s.rng.next(),
+            reference.next(),
+            "the land pick's thirty draws the ocean null never skips"
+        );
+        // the super pick: the same thirty (the first candidate the
+        // score-0 fold keeps, the nine the loop still draws)
+        let mut s2 = Zombie::new(1, 8.5, 5.0, 8.5, 42);
+        let _ = s2.default_random_pos(STROLL_LAND_RING, STROLL_LAND_SPREAD);
+        let mut reference2 = Lcg::new(42);
+        for _ in 0..30 {
+            reference2.next();
+        }
+        assert_eq!(
+            s2.rng.next(),
+            reference2.next(),
+            "the super pick's thirty draws the first-kept candidate never clips"
+        );
+    }
+
+    /// THE IN-WATER STROLL FLEES TO THE LAND (the tick's own
+    /// in-water arm): the pooled body the 15/7 ring rides, the
+    /// stroll target the tick sets lands on a DRY column within the
+    /// ring — the pool the isWater word keeps, the flee the walk
+    /// answers.
+    #[test]
+    fn the_in_water_stroll_flees_to_the_land() {
+        let mut world = wide_flat_world();
+        // a 9x9 pool centered at (24, 24): the surface water at y 5,
+        // the dry plain all around — the 15 ring reaches land
+        for x in 20..29 {
+            for z in 20..29 {
+                world.set(x, 5, z, crate::world::WATER);
+            }
+        }
+        // the brute-forced seed whose stroll gate arms on tick 1 (the
+        // interval gate the 120 fold speaks — the first stream draw
+        // the tick's own order keeps)
+        let mut found: Option<(u64, (f64, f64))> = None;
+        for seed in 0..2000u64 {
+            let mut z = Zombie::new(1, 24.5, 5.0, 24.5, seed);
+            z.tick(&world, None, NOON);
+            if let Some(t) = z.stroll_target {
+                found = Some((seed, t));
+                break;
+            }
+        }
+        let (seed, (tx, tz)) = found.expect("the seed walk the stroll gate arms within");
+        let mut z = Zombie::new(1, 24.5, 5.0, 24.5, seed);
+        assert!(z.in_water(&world), "the pooled body the arm rides");
+        let (itx, itz) = (tx.floor() as i32, tz.floor() as i32);
+        // the dry column the land ring keeps (the pool the gate
+        // refuses), the ring bound the 15/7 call speaks
+        let mut top = crate::world::AIR;
+        for y in (0..crate::world::CHUNK_Y as i32).rev() {
+            let id = world.get(itx, y, itz);
+            if id != crate::world::AIR {
+                top = id;
+                break;
+            }
+        }
+        assert_ne!(top, crate::world::WATER, "the flee the dry column answers");
+        assert!(
+            (itx as f64 - 24.5).abs() <= 15.0 && (itz as f64 - 24.5).abs() <= 15.0,
+            "the ring bound the 15/7 call keeps"
         );
     }
 
@@ -3765,7 +4187,11 @@ mod tests {
         follow.stroll_target = Some((-2.0, 8.0));
         let ev = follow.tick(&world, None, NOON);
         assert!(ev.attack.is_none(), "the follow no attack speaks");
-        assert!((follow.yaw - (-90.0)).abs() < 1e-6, "the yaw the parent's east speaks ({})", follow.yaw);
+        assert!(
+            (follow.yaw - (-90.0)).abs() < 1e-6,
+            "the yaw the parent's east speaks ({})",
+            follow.yaw
+        );
         assert!(
             follow.stroll_target.is_none(),
             "the stroll's target the higher priority replaces"
@@ -3894,7 +4320,10 @@ mod tests {
             mobs[0].breed_partner, None,
             "the cooled breeder the love word disarms"
         );
-        assert_eq!(mobs[0].breed_love_time, 0, "the stale count the stop zeroes");
+        assert_eq!(
+            mobs[0].breed_love_time, 0,
+            "the stale count the stop zeroes"
+        );
         assert_eq!(
             mobs[1].breed_partner, None,
             "the mate-less canUse the stop law answers"
@@ -3965,10 +4394,7 @@ mod tests {
         late.breed_partner = Some((2, 20.0, 5.0, 8.0)); // 12 east — beyond the 3.0 ring
         late.breed_love_time = 59;
         late.tick(&world, None, NOON);
-        assert_eq!(
-            late.breed_love_time, 0,
-            "the 60-miss the stop law resets"
-        );
+        assert_eq!(late.breed_love_time, 0, "the 60-miss the stop law resets");
 
         // THE MET COURT: the 60 lands inside the close ring — the
         // clock keeps (the gate the caller's post-tick scan reads)
@@ -4053,10 +4479,7 @@ mod tests {
             animal.on_ground = true;
             for _ in 0..600 {
                 animal.tick(&world, None, NOON);
-                assert_eq!(
-                    animal.fire_ticks, 0,
-                    "the {kind:?} the noon never brands"
-                );
+                assert_eq!(animal.fire_ticks, 0, "the {kind:?} the noon never brands");
             }
             assert_eq!(
                 animal.health, ZOMBIE_MAX_HEALTH,
@@ -4357,10 +4780,7 @@ mod tests {
             0,
             "the panicked mate the candidate walk refuses"
         );
-        assert!(
-            mobs[0].breed_partner.is_none(),
-            "the disarmed None keeps"
-        );
+        assert!(mobs[0].breed_partner.is_none(), "the disarmed None keeps");
 
         // the panicked breeder's own court the flag law stops
         let mut c = Zombie::new(3, 10.0, 5.0, 10.0, 262);
@@ -4379,10 +4799,7 @@ mod tests {
             mobs[0].breed_partner.is_none(),
             "the court the stop law disarms"
         );
-        assert_eq!(
-            mobs[0].breed_love_time, 0,
-            "the clock the stop zeroes"
-        );
+        assert_eq!(mobs[0].breed_love_time, 0, "the clock the stop zeroes");
 
         // the panicked baby the follow's own flag law refuses
         let mut baby = Zombie::new(5, 0.0, 5.0, 0.0, 262);
@@ -4500,9 +4917,15 @@ mod tests {
             .collect();
         let spawns = try_breed(&mut trio, &mut next_id, &mut Lcg::new(42));
         assert_eq!(spawns.len(), 1, "the one-shot law the single pair speaks");
-        let bred_count = trio.iter().filter(|m| m.age == BREED_COOLDOWN_TICKS).count();
+        let bred_count = trio
+            .iter()
+            .filter(|m| m.age == BREED_COOLDOWN_TICKS)
+            .count();
         assert_eq!(bred_count, 2, "the bred pair the cooldown names");
         let third = trio.iter().find(|m| m.age == 0).expect("the un-bred third");
-        assert_eq!(third.in_love, 600, "the third's love clock the scan never touches");
+        assert_eq!(
+            third.in_love, 600,
+            "the third's love clock the scan never touches"
+        );
     }
 }
