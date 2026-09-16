@@ -24,6 +24,12 @@ pub const ZOMBIE_JAR_PATH: &str = "assets/minecraft/textures/entity/zombie/zombi
 /// rides `LayerDefinition.create(64, 64)` (javap PigModel).
 pub const PIG_TEMPERATE_JAR_PATH: &str = "assets/minecraft/textures/entity/pig/pig_temperate.png";
 
+/// The jar entry the COW's temperate skin lives at (the CowRenderer's
+/// variant table's default — the plain cow; the 26.2 cow variants
+/// replaced the single cow.png). The bovine mesh rides
+/// `LayerDefinition.create(64, 64)` (javap CowModel).
+pub const COW_TEMPERATE_JAR_PATH: &str = "assets/minecraft/textures/entity/cow/cow_temperate.png";
+
 /// The flame feature's two animated strips (`FlameFeatureRenderer`'s
 /// ModelBakery.FIRE_0 / FIRE_1 sprite sources) — the burn lane reads
 /// their frames off the blocks atlas path the runtime cache mirrors.
@@ -150,6 +156,7 @@ pub const RUNTIME_PATH: &str = "entity/player/wide/steve.png";
 pub const SLIM_RUNTIME_PATH: &str = "entity/player/slim/alex.png";
 pub const ZOMBIE_RUNTIME_PATH: &str = "entity/zombie/zombie.png";
 pub const PIG_TEMPERATE_RUNTIME_PATH: &str = "entity/pig/pig_temperate.png";
+pub const COW_TEMPERATE_RUNTIME_PATH: &str = "entity/cow/cow_temperate.png";
 
 /// The vanilla `PlayerModel` arm box for the wide model: texOffs (40, 16),
 /// box 4x12x4 texels (w, h, d).
@@ -182,6 +189,9 @@ pub struct SkinData {
     /// sha1 of the pig's temperate source PNG bytes (jar-verbatim
     /// integrity) — the quadruped's texture the pig renderer verifies.
     pub pig_png_sha1: String,
+    /// sha1 of the cow's temperate source PNG bytes (jar-verbatim
+    /// integrity) — the bovine's texture the cow renderer verifies.
+    pub cow_png_sha1: String,
     /// sha1 of the flame feature's fire_0 strip (jar-verbatim integrity)
     /// — the burn lane's pixel source (the 16x512, 32-frame strip).
     pub fire_0_png_sha1: String,
@@ -292,6 +302,22 @@ pub fn generate<R: std::io::Read + std::io::Seek>(archive: &mut zip::ZipArchive<
         pig_h
     );
     std::mem::drop(_pig_rgba);
+    // THE COW SKIN (the third mob's own): the temperate variant the
+    // CowRenderer's variant table defaults to (the 26.2 cow variants
+    // replaced the single cow.png). The bovine mesh rides
+    // `LayerDefinition.create(64, 64)` (javap CowModel) — the same
+    // 64-texel square, its own UV layout the cow model unwraps. The
+    // integrity sha1 the cow lane verifies before it draws.
+    let cow_bytes = read_entry(archive, COW_TEMPERATE_JAR_PATH).context("read the cow temperate skin")?;
+    let cow_png_sha1 = crate::util::sha1_hex(&cow_bytes);
+    let (cow_w, cow_h, _cow_rgba) = decode_rgba(&cow_bytes).context("decode the cow temperate skin")?;
+    anyhow::ensure!(
+        (cow_w, cow_h) == (64, 64),
+        "the cow skin must be the 64x64 layout (javap LayerDefinition.create(64, 64)), got {}x{}",
+        cow_w,
+        cow_h
+    );
+    std::mem::drop(_cow_rgba);
     // THE FIRE STRIPS: the flame feature's two animated pixel sources
     // (javap `FlameFeatureRenderer.buildGroup`: ModelBakery.FIRE_0 /
     // FIRE_1) — 16x512 = 32 stacked 16x16 frames each, the mcmeta
@@ -434,6 +460,7 @@ pub fn generate<R: std::io::Read + std::io::Seek>(archive: &mut zip::ZipArchive<
         slim_rgba_sha1: crate::util::sha1_hex(&slim_rgba),
         zombie_png_sha1,
         pig_png_sha1,
+        cow_png_sha1,
         fire_0_png_sha1,
         fire_1_png_sha1,
         underwater_png_sha1,
@@ -533,6 +560,14 @@ pub fn emit(data: &SkinData) -> Result<String> {
     ));
     out.push_str(&format!(
         "pub const PIG_TEMPERATE_RUNTIME_PATH: &str = \"{PIG_TEMPERATE_RUNTIME_PATH}\";\n"
+    ));
+    out.push_str("\n/// The COW skin (the temperate variant the CowRenderer's variant\n/// table defaults to), generated from the same jar: the source sha1\n/// the cow renderer verifies before it draws (javap CowModel:\n/// `LayerDefinition.create(64, 64)` — the bovine's own UV layout).\n");
+    out.push_str(&format!(
+        "pub const COW_TEMPERATE_PNG_SHA1: &str = \"{}\";\n",
+        data.cow_png_sha1
+    ));
+    out.push_str(&format!(
+        "pub const COW_TEMPERATE_RUNTIME_PATH: &str = \"{COW_TEMPERATE_RUNTIME_PATH}\";\n"
     ));
     out.push_str("\n/// The FLAME strips (the burn lane's pixel sources), generated from\n/// the same jar: the source sha1s the burning mob's renderer verifies\n/// before it draws (javap: `FlameFeatureRenderer.buildGroup`'s\n/// ModelBakery.FIRE_0 / FIRE_1 — the 16x512, 32-frame strips; fire_0's\n/// mcmeta playlist [16..31, 0..15], fire_1 sequential).\n");
     out.push_str(&format!(
@@ -800,6 +835,7 @@ mod tests {
             (SLIM_ALEX_JAR_PATH, png.clone()),
             (ZOMBIE_JAR_PATH, png.clone()),
             (PIG_TEMPERATE_JAR_PATH, png.clone()),
+            (COW_TEMPERATE_JAR_PATH, png.clone()),
             (FIRE_0_JAR_PATH, strip.clone()),
             (FIRE_1_JAR_PATH, strip),
             (UNDERWATER_JAR_PATH, underwater),
@@ -846,6 +882,10 @@ mod tests {
         assert_eq!(
             data.pig_png_sha1, expected_png_sha1,
             "the pig's own sha1 (the fixture doubles as the temperate skin)"
+        );
+        assert_eq!(
+            data.cow_png_sha1, expected_png_sha1,
+            "the cow's own sha1 (the fixture doubles as the temperate skin)"
         );
         assert_eq!(
             data.particle_crit_png_sha1, expected_crit_sha1,
@@ -898,6 +938,9 @@ mod tests {
         // the pig: the sha1 and the runtime path land verbatim
         assert!(emitted.contains(&format!("pub const PIG_TEMPERATE_PNG_SHA1: &str = \"{expected_png_sha1}\";")));
         assert!(emitted.contains("pub const PIG_TEMPERATE_RUNTIME_PATH: &str = \"entity/pig/pig_temperate.png\";"));
+        // the cow: the sha1 and the runtime path land verbatim
+        assert!(emitted.contains(&format!("pub const COW_TEMPERATE_PNG_SHA1: &str = \"{expected_png_sha1}\";")));
+        assert!(emitted.contains("pub const COW_TEMPERATE_RUNTIME_PATH: &str = \"entity/cow/cow_temperate.png\";"));
         // the particle lane: the crit star's + the poof frames' sha1s
         // and the runtime paths land verbatim
         assert!(emitted.contains(&format!("pub const PARTICLE_CRIT_PNG_SHA1: &str = \"{expected_crit_sha1}\";")));
@@ -1009,6 +1052,18 @@ mod tests {
             skin_png(),
         ), (SLIM_ALEX_JAR_PATH, skin_png()), (ZOMBIE_JAR_PATH, skin_png())]);
         assert!(generate(&mut zip).is_err(), "missing pig skin must be refused");
+    }
+
+    #[test]
+    fn refuses_a_zip_without_the_cow_skin() {
+        // the cow's table must not be invented either: a jar missing
+        // cow_temperate.png fails the generation (the same data-driven
+        // rule the pig skin speaks)
+        let mut zip = zip_of(&[(
+            WIDE_STEVE_JAR_PATH,
+            skin_png(),
+        ), (SLIM_ALEX_JAR_PATH, skin_png()), (ZOMBIE_JAR_PATH, skin_png()), (PIG_TEMPERATE_JAR_PATH, skin_png())]);
+        assert!(generate(&mut zip).is_err(), "missing cow skin must be refused");
     }
 
     #[test]

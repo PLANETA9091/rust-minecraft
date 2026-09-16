@@ -522,6 +522,12 @@ pub struct App {
     /// stay unseen while the zombies keep drawing (each model's
     /// honesty is its own lane).
     pub pig_model: Option<crate::avatar::PigModel>,
+    /// THE THIRD MOB's own skin (the cow's temperate 64x64 texture —
+    /// the CowRenderer's variant default, the sha1 the generator
+    /// pinned) — loaded lazily beside the pig's, `None` = the COWS
+    /// stay unseen while the other bodies keep drawing (each model's
+    /// honesty is its own lane).
+    pub cow_model: Option<crate::avatar::CowModel>,
     /// The flame feature's two strips (the burn lane's pixel source —
     /// lazy-loaded and sha1-verified the zombie skin's way).
     pub fire_strips: Option<crate::avatar::FireStrips>,
@@ -924,6 +930,7 @@ impl App {
             avatar: None,
             zombie_avatar: None,
             pig_model: None,
+            cow_model: None,
             fire_strips: None,
             orb_sheet: None,
             underwater_screen: None,
@@ -5466,9 +5473,15 @@ impl App {
         if self.pig_model.is_none() {
             self.pig_model = crate::avatar::PigModel::load(std::path::Path::new("assets-cache/jar"));
         }
+        if self.cow_model.is_none() {
+            self.cow_model = crate::avatar::CowModel::load(std::path::Path::new("assets-cache/jar"));
+        }
         // the pig's honesty is its OWN lane: a failed pig skin keeps
         // only the pigs unseen, the zombies keep drawing
         let pig_model = self.pig_model.as_ref();
+        // the cow's honesty is ITS OWN lane: a failed cow skin keeps
+        // only the cows unseen, the other bodies keep drawing
+        let cow_model = self.cow_model.as_ref();
         // the two lanes' own union (the offline AI bodies + the wire's
         // remote bodies — the SAME lerp folds speak both, the model
         // kind the registry's name arms at the merge)
@@ -5492,6 +5505,25 @@ impl App {
                 Vec<crate::avatar::AvatarQuad>,
                 Box<dyn Fn(f32, f32) -> [u8; 4] + '_>,
             ) = match mob.kind {
+                crate::mob::MobKind::Cow => {
+                    let Some(cow) = cow_model else {
+                        continue; // the cow skin failed its sha1 — this body stays unseen
+                    };
+                    // THE QUADRUPED STATE (the 26.2 CowModel carries NO
+                    // setupAnim override — the same fold the pig speaks
+                    // rides the bovine's own parts beneath)
+                    let state = crate::avatar::QuadrupedState {
+                        yaw_deg: mob.yaw,
+                        pitch_deg: head_pitch,
+                        head_yaw_off_deg: head_yaw,
+                        walk_pos: mob.walk.position_at(self.partial_tick),
+                        walk_speed: mob.walk.speed_at(self.partial_tick),
+                        age_ticks: mob.age_ticks as f32 + 0.5,
+                        death_time: mob.death_time_at(self.partial_tick),
+                    };
+                    let quads = cow.quads(&state, feet, cam.yaw, cam.pitch);
+                    (quads, Box::new(move |u, v| cow.pixel(u, v)))
+                }
                 crate::mob::MobKind::Pig => {
                     let Some(pig) = pig_model else {
                         continue; // the pig skin failed its sha1 — this body stays unseen
@@ -5535,6 +5567,10 @@ impl App {
             // dims the kind's own EntityTypes speaks (the zombie
             // 0.6x1.95, the pig 0.9x0.9)
             let (bbox_w, bbox_h) = match mob.kind {
+                crate::mob::MobKind::Cow => (
+                    crate::mob::COW_WIDTH as f32,
+                    crate::mob::COW_HEIGHT as f32,
+                ),
                 crate::mob::MobKind::Pig => (
                     crate::mob::PIG_WIDTH as f32,
                     crate::mob::PIG_HEIGHT as f32,
@@ -8998,6 +9034,47 @@ mod tests {
         app.live_mobs_updated(vec![wire_zombie(7, 11.0, 64.0, 10.0)]);
         assert_eq!(app.net_mobs.len(), 1, "the pig despawned at the wire's word");
         assert_eq!(app.net_mobs[0].id, 7);
+    }
+
+    #[test]
+    fn the_wire_cow_walks_the_same_lerpto_lane() {
+        let mut app = App::new(3);
+        app.open(ScreenKind::Connect);
+        app.net_world = Some(air_net_world(2, 0));
+        app.enter_network_world(None, Skybox::Overworld, None, None);
+        // the three bodies share the ring (the ids apart, the kinds
+        // the registry names armed — the bovine the third word)
+        app.live_mobs_updated(vec![
+            wire_zombie(7, 10.0, 64.0, 10.0),
+            wire_mob_named(8, 12.0, 64.0, 10.0, "minecraft:pig"),
+            wire_mob_named(9, 14.0, 64.0, 10.0, "minecraft:cow"),
+        ]);
+        assert_eq!(app.net_mobs.len(), 3, "all three bodies land");
+        let cow = app.net_mobs.iter().find(|m| m.id == 9).unwrap();
+        assert_eq!(cow.kind, crate::mob::MobKind::Cow, "the cow's own kind");
+        // the SECOND ship rides the MATCHED branch (the spawn's pose
+        // was the first word, the ease the cadence's own next beat)
+        app.live_mobs_updated(vec![
+            wire_zombie(7, 10.5, 64.0, 10.0),
+            wire_mob_named(8, 12.5, 64.0, 10.0, "minecraft:pig"),
+            wire_mob_named(9, 14.5, 64.0, 10.0, "minecraft:cow"),
+        ]);
+        let cow = app.net_mobs.iter().find(|m| m.id == 9).unwrap();
+        assert!(cow.lerp_target.is_some(), "the ease armed");
+        assert_eq!(cow.lerp_steps, 3, "the 3-tick walk the cadence arms");
+        app.tick_net_mobs();
+        let cow = app.net_mobs.iter().find(|m| m.id == 9).unwrap();
+        assert_eq!(cow.lerp_steps, 2, "the own tick consumed one step");
+        // the cow's head rides level (the pitch the wire spoke)
+        assert_eq!(cow.head_pitch, 0.0);
+        // the despawn law: the wire stops naming the cow, the ghost
+        // never re-enters
+        app.live_mobs_updated(vec![
+            wire_zombie(7, 11.0, 64.0, 10.0),
+            wire_mob_named(8, 13.0, 64.0, 10.0, "minecraft:pig"),
+        ]);
+        assert_eq!(app.net_mobs.len(), 2, "the cow despawned at the wire's word");
+        assert!(app.net_mobs.iter().all(|m| m.id != 9));
     }
 
     #[test]

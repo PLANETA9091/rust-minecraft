@@ -81,6 +81,13 @@ pub const ZOMBIE_RUNTIME_PATH: &str = "entity/zombie/zombie.png";
 pub const PIG_TEMPERATE_PNG_SHA1: &str = "e1020c127b9db75f9a53cf25bedbc8a3a406d250";
 pub const PIG_TEMPERATE_RUNTIME_PATH: &str = "entity/pig/pig_temperate.png";
 
+/// The COW skin (the temperate variant the CowRenderer's variant
+/// table defaults to), generated from the same jar: the source sha1
+/// the cow renderer verifies before it draws (javap CowModel:
+/// `LayerDefinition.create(64, 64)` — the bovine's own UV layout).
+pub const COW_TEMPERATE_PNG_SHA1: &str = "300373b9a751509dc5472a0fc5796a0b929c75ef";
+pub const COW_TEMPERATE_RUNTIME_PATH: &str = "entity/cow/cow_temperate.png";
+
 /// The FLAME strips (the burn lane's pixel sources), generated from
 /// the same jar: the source sha1s the burning mob's renderer verifies
 /// before it draws (javap: `FlameFeatureRenderer.buildGroup`'s

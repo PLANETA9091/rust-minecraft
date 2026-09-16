@@ -550,6 +550,200 @@ fn build_pig_parts(state: &PigState) -> Vec<Part> {
     ]
 }
 
+/// THE QUADRUPED POSE the bovine shares (the javap-proven law: 26.2's
+/// `CowModel` carries NO setupAnim override — the dump's own method
+/// table lists only the layer factory + `getHead`, so the cow speaks
+/// `QuadrupedModel.setupAnim`'s diagonal fold verbatim — the SAME walk
+/// store, the SAME head pose inputs, every field the pig state owns).
+pub type QuadrupedState = PigState;
+
+/// The full cow model — the 26.2 `CowModel.createBaseCowModel`'s own
+/// numbers, bytecode-proven off the official jar (scripts/classfile_dump.py:
+/// the constant pool + the createBaseCowModel walk): the head 8x8x6
+/// (uv 0,0) at pivot (0, 4, -8) with the muzzle cube (uv 1,33) and the
+/// two horn cubes (uv 22,0) riding the SAME part's fluent chain, the
+/// body 12x18x10 (uv 18,4) with the udder cube (uv 52,0) rotated x=PI/2
+/// at pivot (0, 5, 2), the four 4x12x4 legs (uv 0,16) at pivots
+/// (+-4, 12, +7/-5) — the LEFT pair's builders the MIRROR flag rides
+/// (the astore/aload walk's own pairing), `LayerDefinition.create(64, 64)`.
+pub struct CowModel {
+    rgba: Vec<u8>,
+}
+
+impl CowModel {
+    /// Load + sha1-verify the COW's temperate skin (the CowRenderer's
+    /// variant table's default — the generated table's own constant).
+    /// `None` = the cow never renders (the same honesty the pig path
+    /// speaks: the renderer must not lie about its data).
+    pub fn load(root: &Path) -> Option<CowModel> {
+        let bytes = std::fs::read(root.join(skin::COW_TEMPERATE_RUNTIME_PATH)).ok()?;
+        let digest = sha1::Sha1::digest(&bytes);
+        if hex::encode(digest) != skin::COW_TEMPERATE_PNG_SHA1 {
+            return None;
+        }
+        let (w, h, rgba) = decode_rgba(&bytes).ok()?;
+        if w != 64 || h != 64 || rgba.len() != 64 * 64 * 4 {
+            return None;
+        }
+        Some(CowModel { rgba })
+    }
+
+    /// The skin pixel at (u, v) — the RGBA row-major words, v down.
+    pub fn pixel(&self, u: f32, v: f32) -> [u8; 4] {
+        let (uu, vv) = (u.clamp(0.0, 63.999_9), v.clamp(0.0, 63.999_9));
+        let x = uu as usize;
+        let y = vv as usize;
+        let o = (y * 64 + x) * 4;
+        [self.rgba[o], self.rgba[o + 1], self.rgba[o + 2], self.rgba[o + 3]]
+    }
+
+    /// THE POSED RENDER: the world-space textured quads of the cow at
+    /// `state` — the SAME entity chain fold the avatar speaks (one
+    /// law, every living model), the bovine's own parts beneath.
+    pub fn quads(
+        &self,
+        state: &QuadrupedState,
+        feet: Vec3,
+        cam_yaw: f32,
+        cam_pitch: f32,
+    ) -> Vec<AvatarQuad> {
+        let parts = build_cow_parts(state);
+        let (fold_point, fold_normal) = entity_folds(state.yaw_deg, state.death_time, 0.0, feet);
+        let mut out: Vec<AvatarQuad> = Vec::with_capacity(6 * 6);
+        let ident = Mat4::IDENT;
+        for part in &parts {
+            collect_part(part, &ident, &fold_point, &fold_normal, cam_yaw, cam_pitch, &mut out);
+        }
+        out
+    }
+}
+
+/// The bovine's parts, posed by `state` — the javap-proven mesh:
+/// `CowModel.createBaseCowModel`'s own fluent chains (the head's four
+/// cubes, the body's two, the shared leg builders the LEFT pair's
+/// mirror rides). THE WALK: the same `QuadrupedModel.setupAnim`
+/// diagonal fold the pig speaks — right-hind + left-front in phase,
+/// the other pair +PI (the cow never overrides it).
+fn build_cow_parts(state: &QuadrupedState) -> Vec<Part> {
+    let pos = state.walk_pos;
+    let speed = state.walk_speed;
+    let leg_rh = mth_cos(pos * 0.6662) * 1.4 * speed;
+    let leg_lh = mth_cos(pos * 0.6662 + std::f32::consts::PI) * 1.4 * speed;
+    let head_x = state.pitch_deg.to_radians();
+    let head_y = state.head_yaw_off_deg.to_radians();
+    let leg_cube = |mirror: bool| Cube {
+        tex: (0.0, 16.0),
+        origin: [-2.0, 0.0, -2.0],
+        size: [4.0, 12.0, 4.0],
+        inflate: 0.0,
+        mirror,
+    };
+    vec![
+        // head (+ the muzzle + the two horns — the same part's fluent
+        // chain the bytecode's addBox walk speaks)
+        Part {
+            pivot: [0.0, 4.0, -8.0],
+            x_rot: head_x,
+            y_rot: head_y,
+            z_rot: 0.0,
+            cubes: vec![
+                Cube {
+                    tex: (0.0, 0.0),
+                    origin: [-4.0, -4.0, -6.0],
+                    size: [8.0, 8.0, 6.0],
+                    inflate: 0.0,
+                    mirror: false,
+                },
+                Cube {
+                    tex: (1.0, 33.0),
+                    origin: [-3.0, 1.0, -7.0],
+                    size: [6.0, 3.0, 1.0],
+                    inflate: 0.0,
+                    mirror: false,
+                },
+                Cube {
+                    tex: (22.0, 0.0),
+                    origin: [-5.0, -5.0, -5.0],
+                    size: [1.0, 3.0, 1.0],
+                    inflate: 0.0,
+                    mirror: false,
+                },
+                Cube {
+                    tex: (22.0, 0.0),
+                    origin: [4.0, -5.0, -5.0],
+                    size: [1.0, 3.0, 1.0],
+                    inflate: 0.0,
+                    mirror: false,
+                },
+            ],
+            children: vec![],
+        },
+        // body (the horizontal barrel — the rotX PI/2 the PartPose
+        // offsetAndRotation speaks) + the udder (the same part's
+        // second cube)
+        Part {
+            pivot: [0.0, 5.0, 2.0],
+            x_rot: std::f32::consts::FRAC_PI_2,
+            y_rot: 0.0,
+            z_rot: 0.0,
+            cubes: vec![
+                Cube {
+                    tex: (18.0, 4.0),
+                    origin: [-6.0, -10.0, -7.0],
+                    size: [12.0, 18.0, 10.0],
+                    inflate: 0.0,
+                    mirror: false,
+                },
+                Cube {
+                    tex: (52.0, 0.0),
+                    origin: [-2.0, 2.0, -8.0],
+                    size: [4.0, 6.0, 1.0],
+                    inflate: 0.0,
+                    mirror: false,
+                },
+            ],
+            children: vec![],
+        },
+        // right hind leg (the plain builder's own unwrap — no mirror)
+        Part {
+            pivot: [-4.0, 12.0, 7.0],
+            x_rot: leg_rh,
+            y_rot: 0.0,
+            z_rot: 0.0,
+            cubes: vec![leg_cube(false)],
+            children: vec![],
+        },
+        // left hind leg (the mirrored builder — the u axis flips)
+        Part {
+            pivot: [4.0, 12.0, 7.0],
+            x_rot: leg_lh,
+            y_rot: 0.0,
+            z_rot: 0.0,
+            cubes: vec![leg_cube(true)],
+            children: vec![],
+        },
+        // right front leg (anti-phase of the right hind — the diagonal
+        // pair the setupAnim's own cos fold speaks)
+        Part {
+            pivot: [-4.0, 12.0, -5.0],
+            x_rot: leg_lh,
+            y_rot: 0.0,
+            z_rot: 0.0,
+            cubes: vec![leg_cube(false)],
+            children: vec![],
+        },
+        // left front leg (in phase with the right hind)
+        Part {
+            pivot: [4.0, 12.0, -5.0],
+            x_rot: leg_rh,
+            y_rot: 0.0,
+            z_rot: 0.0,
+            cubes: vec![leg_cube(true)],
+            children: vec![],
+        },
+    ]
+}
+
 /// The six base parts with their overlay children, posed by `state`
 /// (the setupAnim + setupAttackAnimation + crouch laws, verbatim).
 fn build_posed_parts(state: &AvatarState) -> Vec<Part> {
@@ -1722,6 +1916,182 @@ mod tests {
         // red over blue, the opaque texel the palette carries
         let px = pig.pixel(12.0, 12.0);
         assert!(px[0] > px[2], "the pink reads red-over-blue: {px:?}");
+        assert_eq!(px[3], 255, "the texel is opaque");
+    }
+
+    /// THE BOVINE'S OWN EXTENTS (javap CowModel.createBaseCowModel's
+    /// own numbers): the mesh spans the ground (model y 24 — the legs'
+    /// 12-texel reach rides the same 24px plane the pig speaks) to the
+    /// horns' crown (model y -1 — the 1-texel poke above the head's
+    /// own top the y -5 box origin speaks).
+    #[test]
+    fn the_cow_mesh_spans_the_bovine_height() {
+        let cow = CowModel {
+            rgba: vec![255u8; 64 * 64 * 4],
+        };
+        let feet = Vec3::new(10.0, 64.0, 20.0);
+        let state = QuadrupedState {
+            yaw_deg: 0.0,
+            pitch_deg: 0.0,
+            head_yaw_off_deg: 0.0,
+            walk_pos: 0.0,
+            walk_speed: 0.0,
+            age_ticks: 40.0,
+            death_time: 0.0,
+        };
+        let quads = cow.quads(&state, feet, 0.0, 0.0);
+        assert!(!quads.is_empty(), "the mesh speaks quads");
+        let mut min_y = f32::MAX;
+        let mut max_y = f32::MIN;
+        let mut min_x = f32::MAX;
+        let mut max_x = f32::MIN;
+        for q in &quads {
+            for p in q.pts {
+                min_y = min_y.min(p[1]);
+                max_y = max_y.max(p[1]);
+                min_x = min_x.min(p[0]);
+                max_x = max_x.max(p[0]);
+            }
+        }
+        // model y 24 (the legs' ground) -> feet + 0.001 (the fold's own
+        // epsilon); model y -1 (the horns' crown) -> feet + 1.5635
+        assert!(
+            (min_y - (feet.y as f32 + 0.001)).abs() < 1e-4,
+            "the feet ride the ground: {min_y}"
+        );
+        assert!(
+            (max_y - (feet.y as f32 + 1.5635)).abs() < 1e-4,
+            "the horns' crown rides 1.5625 above the feet: {max_y}"
+        );
+        // the body's barrel spans -6/16..6/16 (12 texels wide), the
+        // legs' pivots +-4/16 carry the same +-6/16 reach — the widest
+        // word is the barrel's own
+        assert!(
+            (min_x - (feet.x as f32 - 6.0 / 16.0)).abs() < 1e-4,
+            "the body's west face: {min_x}"
+        );
+        assert!(
+            (max_x - (feet.x as f32 + 6.0 / 16.0)).abs() < 1e-4,
+            "the body's east face: {max_x}"
+        );
+    }
+
+    /// THE BOVINE WALK (the same javap QuadrupedModel.setupAnim fold —
+    /// the 26.2 CowModel carries NO setupAnim override): the DIAGONAL
+    /// pairs swing together — the longer 12-texel legs' backward kick
+    /// reaches past the rest stand the same law the pig speaks.
+    #[test]
+    fn the_cow_walk_swings_the_diagonal_pairs() {
+        let cow = CowModel {
+            rgba: vec![255u8; 64 * 64 * 4],
+        };
+        let feet = Vec3::new(0.0, 64.0, 0.0);
+        let rest = QuadrupedState {
+            yaw_deg: 0.0,
+            pitch_deg: 0.0,
+            head_yaw_off_deg: 0.0,
+            walk_pos: 0.0,
+            walk_speed: 0.0,
+            age_ticks: 40.0,
+            death_time: 0.0,
+        };
+        let walked = QuadrupedState {
+            walk_pos: 0.0,
+            walk_speed: 1.0,
+            ..rest
+        };
+        let rest_quads = cow.quads(&rest, feet, 0.0, 0.0);
+        let walked_quads = cow.quads(&walked, feet, 0.0, 0.0);
+        assert_eq!(rest_quads.len(), walked_quads.len(), "same mesh, moved legs");
+        // the swing's backward kick (the 12-texel legs' own reach)
+        // passes the rest stand — the hind legs' rest back edge the
+        // yaw fold's -z holds
+        let rest_z: Vec<f32> = rest_quads.iter().flat_map(|q| q.pts.iter().map(|p| p[2])).collect();
+        let rest_min_z = rest_z.iter().cloned().fold(f32::MAX, f32::min);
+        let walk_z: Vec<f32> = walked_quads
+            .iter()
+            .flat_map(|q| q.pts.iter().map(|p| p[2]))
+            .collect();
+        let walk_min_z = walk_z.iter().cloned().fold(f32::MAX, f32::min);
+        assert!(
+            walk_min_z < rest_min_z - 0.05,
+            "the swing reaches past the stand: rest {rest_min_z} walked {walk_min_z}"
+        );
+        // and the legs MOVED — some quad corner left its rest spot
+        let moved = walked_quads
+            .iter()
+            .zip(rest_quads.iter())
+            .any(|(wq, rq)| wq.pts.iter().zip(rq.pts.iter()).any(|(wp, rp)| (wp[2] - rp[2]).abs() > 1e-4));
+        assert!(moved, "the walk's own swing moved the legs");
+    }
+
+    /// THE MIRROR UNWRAP (the bytecode's own astore/aload pairing —
+    /// the LEFT legs' builders speak the mirror()): the mirrored
+    /// cube's front face samples the leg rect reversed — the u corners
+    /// swap, the v corners stand.
+    #[test]
+    fn the_cow_left_legs_ride_the_mirror_unwrap() {
+        let cow = CowModel {
+            rgba: vec![255u8; 64 * 64 * 4],
+        };
+        let state = QuadrupedState {
+            yaw_deg: 0.0,
+            pitch_deg: 0.0,
+            head_yaw_off_deg: 0.0,
+            walk_pos: 0.0,
+            walk_speed: 0.0,
+            age_ticks: 40.0,
+            death_time: 0.0,
+        };
+        let quads = cow.quads(&state, Vec3::new(0.0, 64.0, 0.0), 0.0, 0.0);
+        // the legs' unwrap region: texOffs (0,16), box 4x12x4 — every
+        // face rect inside u [0,16), v [16,32)
+        let leg_quads: Vec<&AvatarQuad> = quads
+            .iter()
+            .filter(|q| {
+                q.uv.iter().all(|c| c[0] >= 0.0 && c[0] <= 16.0 && c[1] >= 16.0 && c[1] <= 32.0)
+            })
+            .collect();
+        assert_eq!(leg_quads.len(), 24, "4 legs x 6 faces");
+        // the unmirrored front face (k=0 -> (u1,v0)): the 12-texel
+        // leg's front rect (4,20)-(8,32) — [[8,20],[4,20],[4,32],[8,32]]
+        let plain_front = leg_quads.iter().any(|q| {
+            q.uv[0] == [8.0, 20.0]
+                && q.uv[1] == [4.0, 20.0]
+                && q.uv[2] == [4.0, 32.0]
+                && q.uv[3] == [8.0, 32.0]
+        });
+        // the mirrored front face: the u axis flipped
+        let mirrored_front = leg_quads.iter().any(|q| {
+            q.uv[0] == [4.0, 20.0]
+                && q.uv[1] == [8.0, 20.0]
+                && q.uv[2] == [8.0, 32.0]
+                && q.uv[3] == [4.0, 32.0]
+        });
+        assert!(plain_front, "the right legs' own unwrap rides");
+        assert!(mirrored_front, "the left legs' mirror flips the u axis");
+    }
+
+    /// THE COW LOADS — the real runtime cache (the generator's
+    /// extraction) decodes the 64x64 temperate skin the sha1 the
+    /// generated table pins (the CowRenderer's variant default).
+    #[test]
+    #[ignore = "needs runtime assets (assets-cache/jar) from mc2rs-gen generate"]
+    fn the_cow_model_loads_sha1_verified() {
+        let mut dir = std::env::current_dir().unwrap();
+        let root = loop {
+            let cand = dir.join("assets-cache/jar");
+            if cand.exists() {
+                break cand;
+            }
+            dir = dir.parent().expect("the runtime root above").to_path_buf();
+        };
+        let cow = CowModel::load(&root).expect("the cow loads from the runtime cache");
+        // the temperate cow's brown: the head's front face (the unwrap
+        // rect (6,6)-(14,14) the 8x8x6 head speaks) reads brown —
+        // red over blue, the opaque texel the palette carries
+        let px = cow.pixel(10.0, 10.0);
+        assert!(px[0] > px[2], "the brown reads red-over-blue: {px:?}");
         assert_eq!(px[3], 255, "the texel is opaque");
     }
 

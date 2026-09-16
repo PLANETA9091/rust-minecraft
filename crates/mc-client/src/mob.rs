@@ -97,6 +97,12 @@ pub const ZOMBIE_HEIGHT: f64 = 1.95;
 /// second drawn body's own bbox (the flame ring's dims the render asks).
 pub const PIG_WIDTH: f64 = 0.9;
 pub const PIG_HEIGHT: f64 = 0.9;
+/// The COW registration's own `sized(0.9F, 1.4F)` (EntityTypes clinit's
+/// javap block — the third drawn body's own bbox the flame ring asks).
+pub const COW_WIDTH: f64 = 0.9;
+pub const COW_HEIGHT: f64 = 1.4;
+/// The COW registration's own `eyeHeight(1.3F)` (the same block).
+pub const COW_EYE_HEIGHT: f64 = 1.3;
 
 /// The registration's `eyeHeight(1.74F)`.
 pub const ZOMBIE_EYE_HEIGHT: f64 = 1.74;
@@ -115,6 +121,10 @@ pub enum MobKind {
     /// the quadruped mesh (javap PigModel.createBodyLayer's own
     /// numbers — head 8x8x8 + snout, the rotX barrel body, 4 legs)
     Pig,
+    /// the bovine mesh (javap CowModel.createBaseCowModel's own
+    /// numbers — head 8x8x6 + muzzle + horns, the rotX barrel +
+    /// udder, 4 long legs the LEFT pair's mirror rides)
+    Cow,
 }
 
 impl MobKind {
@@ -125,6 +135,8 @@ impl MobKind {
     pub fn from_wire_name(name: &str) -> Self {
         if name == "minecraft:pig" {
             MobKind::Pig
+        } else if name == "minecraft:cow" {
+            MobKind::Cow
         } else {
             MobKind::Zombie
         }
