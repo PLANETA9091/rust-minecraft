@@ -3387,6 +3387,11 @@ impl App {
                 }
                 m.head_yaw_off = off;
                 m.head_pitch = w.pitch;
+                // the metadata's own health word (None = the server
+                // never spoke the accessor — the full bar the ctor arms)
+                if let Some(h) = w.health {
+                    m.health = h;
+                }
                 m.on_ground = true;
                 m.age_ticks = 40; // two seconds in — the bob's stable mid
                 self.net_mobs.push(m);
@@ -3408,6 +3413,11 @@ impl App {
             }
             m.head_yaw_off = off;
             m.head_pitch = w.pitch;
+            // the metadata's own health word rides with the pose (the
+            // Set Entity Data accessor the store keeps current)
+            if let Some(h) = w.health {
+                m.health = h;
+            }
             self.net_mobs.push(m);
         }
         // the ids the wire no longer names never re-enter net_mobs —
@@ -3440,6 +3450,14 @@ impl App {
             }
             m.walk
                 .update((dist as f32 * crate::body::WALK_DISTANCE_SCALE).min(1.0), crate::body::WALK_BLEND, 1.0);
+            // THE DEATH CLOCK (LivingEntity.tickDeath's own law the AI
+            // lane speaks): the server's health word <= 0 — deathTime++
+            // per tick, the flip the render's deathTime+partial read
+            // walks; the REMOVAL stays the wire's own (EntitiesRemoved
+            // drops the id, the refresh lane's despawn)
+            if m.health <= 0.0 {
+                m.death_time += 1;
+            }
             m.age_ticks = m.age_ticks.wrapping_add(1);
         }
     }
@@ -8548,6 +8566,40 @@ mod tests {
         assert!(app.net_mobs.is_empty(), "the server's truth, no ghosts");
     }
 
+    /// THE WIRE MOBS' DEATH CLOCK (LivingEntity.tickDeath's own law
+    /// the AI lane speaks): the server's health word <= 0 — deathTime
+    /// walks (the flip the render's deathTime+partial read speaks);
+    /// the accessor the server never spoke is the honest no-opinion
+    /// the walk never mistakes for a kill.
+    #[test]
+    fn the_wire_mobs_walk_the_death_clock() {
+        let mut app = App::new(3);
+        app.open(ScreenKind::Connect);
+        app.net_world = Some(air_net_world(2, 0));
+        app.enter_network_world(None, Skybox::Overworld, None, None);
+        // the kill's own word: the metadata's health 0.0 rides the
+        // projection into the mob's own store
+        let mut dying = wire_zombie(7, 10.0, 64.0, 10.0);
+        dying.health = Some(0.0);
+        app.live_mobs_updated(vec![dying]);
+        assert_eq!(app.net_mobs[0].health, 0.0, "the server's word stands");
+        // the flip walks: deathTime++ per tick (the 20-tick walk the
+        // render's deathTime+partial read speaks)
+        app.tick_net_mobs();
+        assert_eq!(app.net_mobs[0].death_time, 1);
+        app.tick_net_mobs();
+        app.tick_net_mobs();
+        assert_eq!(app.net_mobs[0].death_time, 3, "the flip walks");
+        // the no-opinion arm: the accessor never spoken — the walk
+        // never mistakes the silence for a kill (the refresh's own
+        // despawn drops the dying id 7 — the server's truth)
+        app.live_mobs_updated(vec![wire_zombie(9, 12.0, 64.0, 10.0)]);
+        assert_eq!(app.net_mobs.len(), 1, "the dying id despawned");
+        assert!(app.net_mobs[0].health > 0.0, "the ctor's full bar stands");
+        app.tick_net_mobs();
+        assert_eq!(app.net_mobs[0].death_time, 0, "the silence is not a kill");
+    }
+
     fn wire_zombie(id: i32, x: f64, y: f64, z: f64) -> crate::world_view::WireMob {
         crate::world_view::WireMob {
             id,
@@ -8557,6 +8609,7 @@ mod tests {
             yaw: 90.0,
             pitch: 5.0,
             head_yaw: 60.0,
+            health: None,
             type_name: "minecraft:zombie".to_string(),
         }
     }

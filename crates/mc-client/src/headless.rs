@@ -180,6 +180,10 @@ pub struct SceneOpts {
     /// the live_mobs_updated entry the drain speaks, the lerpTo law
     /// walking their pose.
     pub net_mobs: usize,
+    /// THE KILL'S OWN WORD: the staged metadata kill's flip tick —
+    /// the health 0.0 the death clock speaks, N ticks walked, the
+    /// frame frozen mid-fall.
+    pub net_death: Option<u32>,
     /// THE DIVE SEED: carve a 3x3 pool AT the body's own column — three
     /// cells of water down (the old surface cell becomes the water
     /// surface), a forced-solid basin floor, the headroom cleared — and
@@ -1345,6 +1349,7 @@ pub fn render_gui_screen_opts(
                             yaw: face,
                             pitch: 0.0,
                             head_yaw: face + 35.0, // the look mid-swing
+                            health: None,
                             type_name: "minecraft:zombie".to_string(),
                         });
                     }
@@ -1352,6 +1357,18 @@ pub fn render_gui_screen_opts(
                     // the lerpTo walk's own first step: one tick of the
                     // half-cell drift the refresh cadence paces
                     app.tick_net_mobs();
+                    if let Some(flip) = opts.net_death {
+                        // THE KILL'S OWN WORD: the metadata health 0.0
+                        // the Set Entity Data store keeps — the death
+                        // clock walks the flip the law speaks, the
+                        // staged frame frozen mid-fall
+                        if let Some(m) = app.net_mobs.first_mut() {
+                            m.health = 0.0;
+                        }
+                        for _ in 0..flip {
+                            app.tick_net_mobs();
+                        }
+                    }
                 }
             }
         }

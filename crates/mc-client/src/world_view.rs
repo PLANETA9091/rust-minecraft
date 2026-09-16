@@ -303,6 +303,11 @@ pub struct WireMob {
     pub yaw: f32,
     pub pitch: f32,
     pub head_yaw: f32,
+    /// The metadata's own health word (LivingEntity's DATA_HEALTH_ID 8
+    /// — the FLOAT accessor the Set Entity Data store keeps): `None`
+    /// while the server never spoke the accessor — the honest
+    /// no-opinion the death walk never mistakes for a kill.
+    pub health: Option<f32>,
     /// The synced registry's own name (`minecraft:zombie` v1 renders;
     /// anything else is the honest not-yet-drawn type).
     pub type_name: String,
@@ -906,6 +911,10 @@ impl LiveView {
                     yaw: e.y_rot,
                     pitch: e.x_rot,
                     head_yaw: e.y_head_rot,
+                    health: match e.data.get(&8) {
+                        Some(mc_protocol::play::EntityDataEntry::Float(h)) => Some(*h),
+                        _ => None,
+                    },
                     type_name,
                 })
             })
@@ -1254,7 +1263,7 @@ mod tests {
             y_head_rot: 0.0,
             data: 0,
         }));
-        let view = LiveView {
+        let mut view = LiveView {
             model: m,
             side: 1,
         };
@@ -1265,6 +1274,19 @@ mod tests {
         assert_eq!(z.type_name, "minecraft:zombie");
         assert_eq!((z.x, z.y, z.z), (10.0, 64.0, 12.0));
         assert_eq!((z.yaw, z.pitch, z.head_yaw), (90.0, 5.0, 60.0));
+        assert_eq!(z.health, None, "no accessor spoken: the honest no-opinion");
+        // the metadata's own health word (LivingEntity's DATA_HEALTH_ID
+        // 8 — the FLOAT accessor the Set Entity Data store keeps)
+        view.model.apply(PlayEvent::EntityData(mc_protocol::play::EntityDataSet {
+            id: 7,
+            entries: vec![mc_protocol::play::SetEntityDataEntry {
+                index: 8,
+                serializer: 3,
+                value: mc_protocol::play::EntityDataEntry::Float(6.0),
+            }],
+        }));
+        let upd = view.refresh(example_mapper);
+        assert_eq!(upd.mobs[0].health, Some(6.0), "the server's word rides");
     }
 
     fn materialize_carries_the_models_day_tick() {

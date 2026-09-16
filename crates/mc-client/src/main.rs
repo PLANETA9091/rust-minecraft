@@ -209,6 +209,12 @@ struct Cli {
     /// network arm to be armed (--net-day or --net-mobs alone works).
     #[arg(long, default_value = "0")]
     net_mobs: usize,
+    /// THE KILL'S OWN WORD: stage the wire mob's metadata health 0.0
+    /// (the Set Entity Data accessor the death clock speaks) and walk
+    /// N ticks of the flip — the frame freezes mid-fall (N=10 half
+    /// over, N=19 nearly flat). Requires --net-mobs.
+    #[arg(long)]
+    net_death: Option<u32>,
     /// Carve a 3x3 pool AT the body and sink it to the basin floor —
     /// the eye sits under the water surface and the REAL water-screen
     /// gate speaks (the underwater overlay, no scripted blue).
@@ -324,6 +330,7 @@ fn main() -> Result<()> {
             drops: cli.drops,
             net_day: cli.net_day,
             net_mobs: cli.net_mobs,
+            net_death: cli.net_death,
             water_pool: cli.water_pool,
             water_vision: cli.water_vision,
             air_supply: cli.air_supply,
