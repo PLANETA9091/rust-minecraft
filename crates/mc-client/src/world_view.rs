@@ -534,6 +534,14 @@ pub enum ContainerCommand {
     /// The arm SWING (the vanilla LocalPlayer.swing's echo — the attack
     /// press's own beat and every mining beat the hold speaks).
     Swing,
+    /// THE WIRE BODY'S OWN ATTACK (the vanilla gameMode.attack's lane):
+    /// the server's entity id the 26.2's dedicated Attack packet
+    /// carries — the record's ONE VarInt the clinit composite speaks.
+    /// The worker speaks the packet BEFORE the swing beat (the dump's
+    /// own order), the wire body's health the server's to keep (the
+    /// Hurt echo the hurt lane renders the verdict the client never
+    /// predicts).
+    Attack { entity_id: i32 },
     /// The death screen's RESPAWN (the vanilla DeathScreen's own
     /// serverbound echo: the Client Command packet's PERFORM_RESPAWN
     /// action — the server respawns the player and re-streams the

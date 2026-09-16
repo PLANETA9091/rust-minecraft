@@ -2,7 +2,7 @@
 
 Every lane that ships pixels owes the folder a frame. The gallery is the
 proof the features exist as rendered images, not as test names alone.
-127 frames and counting — grouped below by the lane that spoke them.
+128 frames and counting — grouped below by the lane that spoke them.
 
 ## The F5 lane (the third-person avatar) — v0.3.154+
 
@@ -421,6 +421,7 @@ lasts 20 real minutes again, the eat hold 1.6s, the swing 0.3s.
 | `wire_jeb.png` | THE NAME'S OWN RAINBOW (v0.3.193): the jeb_ sheep — the custom name the accessor 2 carries (Entity's DATA_CUSTOM_NAME the clinit defineId walk lands at 2, the OPTIONAL_COMPONENT the wire rides, MobRenderer.checkMagicName's own "jeb_" equality the SheepRenderer.extractRenderState bakes into isJebSheep) arms SheepRenderState.getWoolColor's rainbow branch: ColorLerper.getLerpedColor(SHEEP, ageInTicks) the raw disassembly speaks — the window (floor(t)/25) % 16, the blend ((floor(t) % 25) + frac(t)) / 25, the ARGB.srgbLerp per-component lerpInt a + floor(t×(b−a)) — over the MODIFIED table getModifiedColor pre-speaks (WHITE the literal 0xE6E6E6, every other dye the 0.75F modifier's floors — the raw table the earlier wool rode one step bright); the shot stages the name through the merge's own carry — the fur wears the ORANGE→MAGENTA window's magenta-pink (191,21,143) the age-44 phase speaks, the white companion's modified 230-grey the unnamed silence keeps; the companion at the identical staging diffs rms 9.3 (the rainbow's own word) |
 | `wire_nametag.png` | THE SERVER'S OWN NAMEPLATE (v0.3.194): the name tag — the visibility bit the accessor 3 carries (Entity's DATA_CUSTOM_NAME_VISIBLE the same clinit defineId walk lands at 3, the Boolean serializer the shouldShowName gate's own first arm `isCustomNameVisible()` the raw walk speaks) arms the floating text the 26.2 SubmitNodeCollection.submitNameTag law draws: the pose translate(attachment.x, attachment.y + 0.5, z) (the NAME_TAG fallback AT_HEIGHT (0, bbHeight, 0) the EntityAttachment$Fallback lambda bakes, the +0.5 the ldc2_w dadd adds), the camera billboard the roll-0 basis speaks, the scale(0.025, -0.025, 0.025) one font px = 0.025 world units, the centered x = -font.width/2.0F the ineg/fdiv computes, the markBackground box (left x-1, top y-1, right x+advance, bottom y+9) the PreparedTextBuilder min/max folds bound in ARGB.color(0.25F, -16777216) alpha 64, the two passes the raw walk speaks — the dim 0x80FFFFFF see-through copy the translucent phase blends, the bright -1 core the standing body keeps (the crouch rides isDiscrete: the dim form only); the glyphs ride the font table's own cells through the SAME font pages the GUI lane loads; the shot stages "Wooly" (named AND visible) through the merge's own carry — the tag hangs above the wool the unnamed companion keeps unsaid; the companion at the identical staging diffs rms 3.8 (the nameplate's own 408 pixels) |
 | `wire_crosshair.png` | THE CROSSHAIR'S OWN VERDICT (v0.3.195): shouldShowName's SECOND ARM — `hasCustomName() && entity == dispatcher.crosshairPickEntity` the 26.2 EntityRenderer raw walk speaks — the per-frame pick the Minecraft.pick arms (the player's raycastHitResult → LocalPlayer.pick(camera, blockInteractionRange 4.5, entityInteractionRange 3.0, partial): the BLOCK clip clamps the entity ray, the entity wins the STRICT `entityHit.distanceToSqr(eye) < blockDistSq` compare, the WINNING hit rides filterHitResult(hit, eye, entityRange) — the clip point stays `closerThan(eye, 3.0)` STRICT (the Attributes clinit's own ctor args: entity_interaction_range 3.0 / block_interaction_range 4.5), else the MISS the null crosshairPickEntity speaks; ProjectileUtil's own walk: the bb inflated by getPickRadius (0.0), the clip, the eye-inside arm canBePickedFromInside speaks TRUE, the nearest d2 wins); the client's one verdict now rides BOTH consumers — the attack lane's reach the 3.0 filter corrects (the 4-east ring staging sat outside it) and the tag the byte never arms; the shot stages "Lurker" named-but-UNFLAGGED snapped to the facing line (t 1.8, the side zeroed) — the tag hangs dead-center above the crosshair's own zombie; the companion (the snap alone, `--net-crosshair ""`) diffs rms 11.9 — 5168 pixels, EXACTLY the 136x38 box the bbox bounds (the mesh identical, the tag's own word) |
+| `wire_attack.png` | THE WIRE BODY'S OWN ATTACK (v0.3.196): the left press the wire lane ANSWERS — the 26.2's dedicated ServerboundAttackPacket the gameMode.attack dump speaks (`new ServerboundAttackPacket(target.getId())` — the record `(int entityId)` the clinit's composite loads ByteBufCodecs.VAR_INT alone, generated id 1 `minecraft:attack` the generated table keeps, the SEND the dump's own order speaks: ensure, SEND, attack, RESET), the attack site's pick now walks the SAME chain the render walks — the offline lane first, the wire's remote bodies after — and the wire arm sends the SERVER'S OWN id the Add Entity minted (the command lane the live worker echoes, the local prediction the wire body never runs — the health the server's to keep, the Hurt echo the v0.3.185 lane renders the verdict the client waits for, the RESET the resetAttackStrengthTicker step rides); the shot stages the REAL on_attack press at the "Lurker" body --net-crosshair snapped on the line, the swing clock 3 of its 6 ticks walked — the arm mid-arc crossing toward the crosshair's own zombie; the at-rest companion at the identical staging diffs rms 17.9 — 39799 bytes, the arm's own arc the only word |
 
 Regenerate the family (the flag the CLI speaks today):
 
@@ -625,6 +626,22 @@ cargo run -p mc-client --release -- --headless --screen world \
 # never arms speaks through the crosshair verdict — the EMPTY name
 # (`--net-crosshair ""`) stages the snap alone, the companion form:
 # the diff isolates the tag's own 136x38 pixels (rms 11.9)
+```
+
+The wire body's own attack (v0.3.196 — the send):
+
+```sh
+cargo run -p mc-client --release -- --headless --screen world \
+  --seed 42 --body --walk-ticks 1 --net-mobs 1 \
+  --net-crosshair Lurker --net-attack 3 --perspective first --ui-frame 3 \
+  --out shots/wire_attack.png
+# --net-attack N fires the REAL left press at the snapped body (the
+# pick's chain verdict lands the wire lane, the dedicated Attack
+# packet the server's own id carries the wire arm speaks — the
+# command lane the live worker echoes) and walks N swing-clock ticks
+# after — the frame freezes mid-arc (3 of the 6 the
+# SwingAnimation.DEFAULT speaks); the at-rest companion (no
+# --net-attack) diffs rms 17.9 — the arm's own arc the only word
 ```
 
 The fourth body's own ring (v0.3.191 — the ovine):

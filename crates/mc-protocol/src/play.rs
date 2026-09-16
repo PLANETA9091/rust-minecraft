@@ -118,7 +118,7 @@ pub mod clientbound {
 /// keep alive = 28, pong = 45.
 pub mod serverbound {
     pub use crate::generated::packet_ids::{
-        SB_ACCEPT_TELEPORTATION as CONFIRM_TELEPORTATION,
+        SB_ACCEPT_TELEPORTATION as CONFIRM_TELEPORTATION, SB_ATTACK as ATTACK,
         SB_CHUNK_BATCH_RECEIVED as CHUNK_BATCH_RECEIVED, SB_CONTAINER_CLICK as CONTAINER_CLICK,
         SB_CONTAINER_CLOSE as CONTAINER_CLOSE, SB_KEEP_ALIVE as KEEP_ALIVE, SB_PONG as PONG,
         SB_MOVE_PLAYER_POS as MOVE_PLAYER_POS, SB_MOVE_PLAYER_POS_ROT as MOVE_PLAYER_POS_ROT,
@@ -5143,6 +5143,23 @@ pub fn encode_swing(hand: u8) -> Vec<u8> {
     p
 }
 
+/// The ATTACK wire (the vanilla `MultiPlayerGameMode.attack`'s own
+/// echo — the 26.2's dedicated ServerboundAttackPacket, generated id
+/// 1, `minecraft:attack`, the generated table's SB_ATTACK). THE WIRE
+/// (javap of the real 26.2 class): the record `(int entityId)` — the
+/// clinit's composite loads ByteBufCodecs.VAR_INT alone (the
+/// single-field StreamCodec the two-Function call speaks), the id the
+/// Entity.getId carries. The packet the attack walk sends BEFORE the
+/// local prediction (the dump's own order: ensure, SEND, attack,
+/// RESET) — the server owns the wire body's health, the client's own
+/// prediction never speaks it.
+pub fn encode_attack(entity_id: i32) -> Vec<u8> {
+    let mut p = Vec::with_capacity(6);
+    write_varint(&mut p, serverbound::ATTACK);
+    write_varint(&mut p, entity_id);
+    p
+}
+
 /// Client Command's wire shape (generated id 12 —
 /// `minecraft:client_command`). javap of the real 26.2
 /// `ServerboundClientCommandPacket`'s STREAM_CODEC write: the action's
@@ -6195,6 +6212,16 @@ impl<S: Read + Write> PlaySession<S> {
         self.conn
             .send_packet(&encode_swing(hand))
             .context("send swing")
+    }
+
+    /// The ATTACK wire (the vanilla gameMode.attack's own echo — the
+    /// 26.2's dedicated ServerboundAttackPacket the attack walk sends
+    /// BEFORE the local prediction; the record's ONE VarInt entityId
+    /// the clinit's composite speaks).
+    pub fn attack(&mut self, entity_id: i32) -> Result<()> {
+        self.conn
+            .send_packet(&encode_attack(entity_id))
+            .context("send attack")
     }
 
     /// The client command (the vanilla `LocalPlayer`'s own
@@ -10650,6 +10677,36 @@ mod tests {
             "MAIN_HAND's own beat"
         );
         assert_eq!(encode_swing(1), vec![0x3F, 0x01], "the off-hand ordinal");
+    }
+
+    /// The ATTACK lane's serverbound echo — the 26.2's dedicated
+    /// ServerboundAttackPacket the gameMode.attack walk sends BEFORE
+    /// the local prediction. The hex is the real class's own
+    /// composition (javap: the record `(int entityId)`, the clinit's
+    /// composite loading ByteBufCodecs.VAR_INT alone — the
+    /// single-field StreamCodec the two-Function call speaks).
+    #[test]
+    fn the_attack_lane_speaks_the_record_varint() {
+        // the ids: SB_ATTACK = 1 = 0x01 (the single-byte VarInt)
+        assert_eq!(
+            encode_attack(99),
+            vec![0x01, 0x63],
+            "entity id 99: the record's ONE VarInt payload"
+        );
+        // the two-byte VarInt form (128 = 0x80 0x01 — the continuation
+        // bit the high byte's own set speaks)
+        assert_eq!(
+            encode_attack(128),
+            vec![0x01, 0x80, 0x01],
+            "entity id 128: the VarInt's own two-byte form"
+        );
+        // the id 1 shape — the packet id's own byte and the payload's
+        // own byte the same value, the two the adjacency separates
+        assert_eq!(
+            encode_attack(1),
+            vec![0x01, 0x01],
+            "the id byte and the payload byte the same value — the two speak"
+        );
     }
 
     /// The use-item-ON lane's serverbound echo — the block half of the

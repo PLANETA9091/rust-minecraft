@@ -196,6 +196,13 @@ pub struct SceneOpts {
     /// crouch pose the render bends through, N ticks walked (the
     /// frame frozen mid-bend).
     pub net_crouch: Option<u32>,
+    /// THE WIRE BODY'S OWN ATTACK: the real left-press walk (the
+    /// pick's chain verdict lands the wire body the --net-crosshair
+    /// stage snapped on the line, the dedicated Attack packet the
+    /// server's own id carries the wire arm sends, the swing beat the
+    /// shared tail starts) and N swing-clock ticks walked after — the
+    /// frame frozen mid-arc. Requires --net-mobs + --net-crosshair.
+    pub net_attack: Option<u32>,
     /// THE SECOND BODY: N wire PIGS staged through the same facing
     /// point the zombie ring speaks (the quadruped mesh the kind's
     /// own branch draws — the registry name the Add Entity carries).
@@ -1721,6 +1728,23 @@ pub fn render_gui_screen_opts(
     }
     seed_scene(&mut app, opts)?;
     tick_scene(&mut app, opts, swing_progress)?;
+    if let Some(beat) = opts.net_attack {
+        // THE WIRE BODY'S OWN ATTACK (the vanilla gameMode.attack walk
+        // the client's left press speaks — the REAL on_attack path):
+        // the pick's chain verdict lands the wire body the
+        // --net-crosshair stage snapped on the line, the wire arm
+        // speaks (the dedicated Attack packet the server's own id
+        // carries — the command lane the live session's worker echoes;
+        // the staging's sink sleeps, the send the live mode owns), the
+        // RESET the ticker's law rides, the SWING the shared tail
+        // starts. The beat the swing's own clock walks (the same tick
+        // the game loop speaks — the 6-tick duration the
+        // SwingAnimation.DEFAULT bakes), the frame frozen mid-arc.
+        app.on_attack();
+        for _ in 0..beat {
+            app.swing.tick();
+        }
+    }
     // THE PARTIAL OVERRIDE (the --partial lane): the fixed clock's
     // remainder the staged frame speaks — clamped to the fold's [0, 1]
     // domain (the lerp's own walk, the vanilla partialTick shape)

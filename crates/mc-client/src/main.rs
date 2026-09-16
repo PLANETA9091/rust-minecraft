@@ -271,6 +271,15 @@ struct Cli {
     /// mob snaps to the facing line. Requires --net-mobs.
     #[arg(long)]
     net_crosshair: Option<String>,
+    /// THE WIRE BODY'S OWN ATTACK: fire the REAL left press (the
+    /// vanilla gameMode.attack walk — the pick's chain verdict lands
+    /// the wire body --net-crosshair snapped on the line, the
+    /// dedicated Attack packet the server's own id carries the wire
+    /// arm sends, the swing beat the shared tail starts) and walk N
+    /// swing-clock ticks after — the frame freezes mid-arc. Requires
+    /// --net-mobs + --net-crosshair.
+    #[arg(long)]
+    net_attack: Option<u32>,
     /// Carve a 3x3 pool AT the body and sink it to the basin floor —
     /// the eye sits under the water surface and the REAL water-screen
     /// gate speaks (the underwater overlay, no scripted blue).
@@ -396,6 +405,7 @@ fn main() -> Result<()> {
             net_wool: cli.net_wool,
             net_name: cli.net_name,
             net_crosshair: cli.net_crosshair,
+            net_attack: cli.net_attack,
             water_pool: cli.water_pool,
             water_vision: cli.water_vision,
             air_supply: cli.air_supply,

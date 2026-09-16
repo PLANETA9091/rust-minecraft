@@ -387,6 +387,14 @@ fn run_join(
                             session.player_action(action, pos, face, use_sequence)
                         }
                         crate::world_view::ContainerCommand::Swing => session.swing(0),
+                        crate::world_view::ContainerCommand::Attack { entity_id } => {
+                            // THE WIRE BODY'S OWN ATTACK (the vanilla
+                            // gameMode.attack's send — the 26.2's
+                            // dedicated Attack packet the record's ONE
+                            // VarInt carries; the server's own id the
+                            // wire lane keeps)
+                            session.attack(entity_id)
+                        }
                         crate::world_view::ContainerCommand::Respawn => {
                             // the death screen's own wire: the Client
                             // Command's PERFORM_RESPAWN action 0

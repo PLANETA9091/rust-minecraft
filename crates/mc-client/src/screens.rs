@@ -2027,10 +2027,33 @@ impl App {
         // when it sits CLOSER than the block's own hit: the
         // `entityHit.distanceToSqr(eye) < hitDist` compare the
         // LocalPlayer.pick tail speaks, the entity arm's own 3.0
-        // reach the filterHitResult speaks). The attack's write arm
-        // rides the offline lane only — the empty extra the law asks.
-        if let Some(i) = self.pick_mob(&[]) {
-            self.attack_mob(i);
+        // reach the filterHitResult speaks). THE ONE-LIST WALK the
+        // render chain speaks: the offline lane first, the wire's
+        // remote bodies after — the chain index the split reads.
+        if let Some(i) = self.pick_mob(&self.net_mobs) {
+            if i < self.mobs.len() {
+                // THE OFFLINE ARM: the body the client's own AI owns —
+                // the full local prediction (the damage, the crit
+                // emitter, the knockback) the vanilla's player.attack
+                // call speaks
+                self.attack_mob(i);
+            } else {
+                // THE WIRE ARM (the 26.2's own gameMode.attack walk —
+                // the dump's order: ensure, SEND, attack, RESET): the
+                // dedicated Attack packet the record's ONE VarInt
+                // carries, the SERVER'S OWN ID the wire lane keeps.
+                // The local prediction the wire body never runs — the
+                // server owns the health, the Hurt Animation echo the
+                // hurt lane renders the verdict the client waits for.
+                // The RESET the resetAttackStrengthTicker step rides
+                // unconditionally (the same beat the offline arm's
+                // onAttack speaks).
+                let entity_id = self.net_mobs[i - self.mobs.len()].id;
+                if let Some(sink) = self.live_clicks.as_ref() {
+                    let _ = sink.send(crate::world_view::ContainerCommand::Attack { entity_id });
+                }
+                self.attack_ticker = 0;
+            }
             self.swing.start();
             if let Some(sink) = self.live_clicks.as_ref() {
                 let _ = sink.send(crate::world_view::ContainerCommand::Swing);
@@ -2123,10 +2146,11 @@ impl App {
     /// and the remote bodies are two vecs the client keeps — vanilla
     /// walks ONE entity list; the chain index this returns counts the
     /// offline lane first, the wire lane after, the order the render's
-    /// own chain speaks). The ATTACK site passes `&[]`: its write arm
-    /// (`attack_mob`) mutates the offline lane only — the wire attack
-    /// (the Interact/Attack packet the real client sends) is the
-    /// honest absence the wire lane has not spoken yet.
+    /// own chain speaks). The ATTACK site passes the wire lane too —
+    /// the chain index the split reads: below the offline len the
+    /// local prediction runs, at-or-above it the dedicated Attack
+    /// packet the server's own id carries speaks (the 26.2
+    /// gameMode.attack walk the wire arm obeys).
     fn pick_mob(&self, extra: &[crate::mob::Zombie]) -> Option<usize> {
         if self.mobs.is_empty() && extra.is_empty() {
             return None;
@@ -13240,6 +13264,141 @@ mod tests {
             app.pick_mob(&app.net_mobs).is_none(),
             "the lateral miss the one-list walk speaks"
         );
+    }
+
+    #[test]
+    fn the_wire_attack_speaks_the_server_id() {
+        // THE 26.2'S OWN gameMode.attack WALK (the dump's order: ensure,
+        // SEND, attack, RESET): the crosshair's verdict lands the wire
+        // body, the dedicated Attack packet the SERVER'S OWN id carries
+        // rides the command lane, the local prediction the wire body
+        // never runs (the health the server's to keep — the Hurt echo
+        // the hurt lane renders), the RESET the resetAttackStrengthTicker
+        // step speaks, the SWING the shared tail rides.
+        let mut app = App::new(3);
+        app.open(ScreenKind::Connect);
+        app.net_world = Some(air_net_world(2, 0));
+        app.enter_network_world(None, Skybox::Overworld, None, None);
+        let n = app.world_size as f64;
+        let mut body = crate::body::PlayerBody::new(
+            n / 2.0 + 0.5,
+            app.spawn_y as f64,
+            n / 2.0 + 0.5,
+            -90.0,
+            0.0,
+        );
+        body.on_ground = true;
+        app.body = Some(body);
+        let (bx, bz) = {
+            let b = app.body.as_ref().unwrap();
+            (b.x, b.z)
+        };
+        // the wire zombie ON the facing line (the eye's own ray the
+        // pick walks), the SERVER'S OWN id 100 the offline counter
+        // never mints
+        app.live_mobs_updated(vec![wire_mob_named(
+            100,
+            bx + 1.8,
+            app.spawn_y as f64,
+            bz,
+            "minecraft:zombie",
+        )]);
+        let health_before = app.net_mobs[0].health;
+        assert_eq!(
+            app.pick_mob(&app.net_mobs),
+            Some(0),
+            "the wire body the verdict speaks (the offline lane sleeps)"
+        );
+        // the command lane the live session owns — the test's own
+        // recorder
+        let (tx, rx) = std::sync::mpsc::channel();
+        app.live_clicks = Some(tx);
+        app.attack_ticker = 10; // the charged clock the reset re-arms
+        app.on_attack();
+        // THE SEND: the record's one VarInt carries the server's own
+        // id, the packet the swing beat FOLLOWS (the dump's order)
+        assert_eq!(
+            rx.try_recv().unwrap(),
+            crate::world_view::ContainerCommand::Attack { entity_id: 100 },
+            "the server's own id the Attack packet carries"
+        );
+        assert_eq!(
+            rx.try_recv().unwrap(),
+            crate::world_view::ContainerCommand::Swing,
+            "the swing beat the shared tail rides"
+        );
+        assert!(
+            rx.try_recv().is_err(),
+            "nothing else the press speaks"
+        );
+        // THE RESET the ticker's law speaks; THE PREDICTION the wire
+        // body never runs — the health the server's own
+        assert_eq!(app.attack_ticker, 0, "the reset the walk speaks");
+        assert_eq!(
+            app.net_mobs[0].health, health_before,
+            "the wire body's health the client never predicts"
+        );
+    }
+
+    #[test]
+    fn the_offline_arm_rides_when_the_chain_speaks_it() {
+        // THE ONE-LIST WALK's own split: the offline body NEARER the
+        // wire's — the chain index lands the offline side, the local
+        // prediction rides (the health the client's own to mutate),
+        // the Attack packet the press never speaks (the Swing the only
+        // beat the lane carries).
+        let mut app = App::new(3);
+        app.open(ScreenKind::Connect);
+        app.net_world = Some(air_net_world(2, 0));
+        app.enter_network_world(None, Skybox::Overworld, None, None);
+        let n = app.world_size as f64;
+        let mut body = crate::body::PlayerBody::new(
+            n / 2.0 + 0.5,
+            app.spawn_y as f64,
+            n / 2.0 + 0.5,
+            -90.0,
+            0.0,
+        );
+        body.on_ground = true;
+        app.body = Some(body);
+        let (bx, bz) = {
+            let b = app.body.as_ref().unwrap();
+            (b.x, b.z)
+        };
+        // the wire body at 1.8 (the crosshair stage's own t), the
+        // offline body NEARER at 1.5 — the chain's own order rides
+        app.live_mobs_updated(vec![wire_mob_named(
+            100,
+            bx + 1.8,
+            app.spawn_y as f64,
+            bz,
+            "minecraft:zombie",
+        )]);
+        app.mobs
+            .push(crate::mob::Zombie::new(7, bx + 1.5, app.spawn_y as f64, bz, 3));
+        let wire_health_before = app.net_mobs[0].health;
+        let offline_health_before = app.mobs[0].health;
+        let (tx, rx) = std::sync::mpsc::channel();
+        app.live_clicks = Some(tx);
+        app.on_attack();
+        // THE OFFLINE ARM: the local prediction the health drop speaks;
+        // the wire body the untouched mirror
+        assert!(
+            app.mobs[0].health < offline_health_before,
+            "the offline body the local prediction owns"
+        );
+        assert_eq!(
+            app.net_mobs[0].health, wire_health_before,
+            "the wire body the offline prediction never touches"
+        );
+        // THE LANE: the Swing the only command — the Attack packet the
+        // offline arm never mints
+        assert_eq!(
+            rx.try_recv().unwrap(),
+            crate::world_view::ContainerCommand::Swing,
+            "the offline arm the Swing alone speaks"
+        );
+        assert!(rx.try_recv().is_err(), "no Attack packet the offline press sends");
     }
 
     #[test]

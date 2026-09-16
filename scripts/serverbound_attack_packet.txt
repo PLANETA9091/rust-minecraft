@@ -1,0 +1,105 @@
+=== ServerboundAttackPacket (the 26.2 jar, the wire the record speaks) ===
+class net/minecraft/network/protocol/game/ServerboundAttackPacket
+
+=== <clinit>()V ===
+    13 invokestatic net/minecraft/network/codec/StreamCodec.composite(Lnet/minecraft/network/codec/StreamCodec;Ljava/util/function/Function;Ljava/util/function/Function;)Lnet/minecraft/network/codec/StreamCodec;  (?, ?, net/minecraft/network/codec/ByteBufCodecs.VAR_INT)
+    19 return
+
+=== <init>(I)V ===
+     1 invokespecial java/lang/Record.<init>()V  ()
+     6 putfield net/minecraft/network/protocol/game/ServerboundAttackPacket.entityId = loc1
+     9 return
+
+=== entityId()I ===
+     1 getfield net/minecraft/network/protocol/game/ServerboundAttackPacket.entityId  (loc0)
+     4 return loc0.entityId
+
+=== equals(Ljava/lang/Object;)Z ===
+     7 return loc1
+
+=== handle(Lnet/minecraft/network/PacketListener;)V ===
+     5 invokevirtual net/minecraft/network/protocol/game/ServerboundAttackPacket.handle(Lnet/minecraft/network/protocol/game/ServerGamePacketListener;)V  (loc1)
+     8 return
+
+=== handle(Lnet/minecraft/network/protocol/game/ServerGamePacketListener;)V ===
+     2 invokeinterface net/minecraft/network/protocol/game/ServerGamePacketListener.handleAttack(Lnet/minecraft/network/protocol/game/ServerboundAttackPacket;)V  (loc0)
+     7 return
+
+=== hashCode()I ===
+     6 return loc0
+
+=== toString()Ljava/lang/String; ===
+     6 return loc0
+
+=== type()Lnet/minecraft/network/protocol/PacketType; ===
+     3 return net/minecraft/network/protocol/game/GamePacketTypes.SERVERBOUND_ATTACK
+
+=== MultiPlayerGameMode.attack (the walk's own order: ensure, SEND, attack, RESET) ===
+=== attack(Lnet/minecraft/world/entity/player/Player;Lnet/minecraft/world/entity/Entity;)V ===
+     0 aload_0 
+     1 invokevirtual net/minecraft/client/multiplayer/MultiPlayerGameMode.ensureHasSentCarriedItem()V
+     4 aload_0 
+     5 getfield net/minecraft/client/multiplayer/MultiPlayerGameMode.connectionLnet/minecraft/client/multiplayer/ClientPacketListener;
+     8 new net/minecraft/network/protocol/game/ServerboundAttackPacket
+    11 dup 
+    12 aload_2 
+    13 invokevirtual net/minecraft/world/entity/Entity.getId()I
+    16 invokespecial net/minecraft/network/protocol/game/ServerboundAttackPacket.<init>(I)V
+    19 invokevirtual net/minecraft/client/multiplayer/ClientPacketListener.send(Lnet/minecraft/network/protocol/Packet;)V
+    22 aload_1 
+    23 aload_2 
+    24 invokevirtual net/minecraft/world/entity/player/Player.attack(Lnet/minecraft/world/entity/Entity;)V
+    27 aload_1 
+    28 invokevirtual net/minecraft/world/entity/player/Player.resetAttackStrengthTicker()V
+    31 return 
+
+=== ServerboundInteractPacket (the flat record the 26.2 keeps: entityId, hand, location, usingSecondaryAction — the interact lane the ATTACK left behind) ===
+class net/minecraft/network/protocol/game/ServerboundInteractPacket
+
+=== <clinit>()V ===
+    37 invokestatic net/minecraft/network/codec/StreamCodec.composite(Lnet/minecraft/network/codec/StreamCodec;Ljava/util/function/Function;Lnet/minecraft/network/codec/StreamCodec;Ljava/util/function/Function;Lnet/minecraft/network/codec/StreamCodec;Ljava/util/function/Function;Lnet/minecraft/network/codec/StreamCodec;Ljava/util/function/Function;Lcom/mojang/datafixers/util/Function4;)Lnet/minecraft/network/codec/StreamCodec;  (?, ?, ?, ?, ?, net/minecraft/network/codec/ByteBufCodecs.VAR_INT, net/minecraft/world/InteractionHand.STREAM_CODEC, net/minecraft/world/phys/Vec3.LP_STREAM_CODEC, net/minecraft/network/codec/ByteBufCodecs.BOOL)
+    43 return
+
+=== <init>(ILnet/minecraft/world/InteractionHand;Lnet/minecraft/world/phys/Vec3;Z)V ===
+     1 invokespecial java/lang/Record.<init>()V  ()
+     6 putfield net/minecraft/network/protocol/game/ServerboundInteractPacket.entityId = loc1
+    11 putfield net/minecraft/network/protocol/game/ServerboundInteractPacket.hand = loc2
+    16 putfield net/minecraft/network/protocol/game/ServerboundInteractPacket.location = loc3
+    22 putfield net/minecraft/network/protocol/game/ServerboundInteractPacket.usingSecondaryAction = loc4
+    25 return
+
+=== entityId()I ===
+     1 getfield net/minecraft/network/protocol/game/ServerboundInteractPacket.entityId  (loc0)
+     4 return loc0.entityId
+
+=== equals(Ljava/lang/Object;)Z ===
+     7 return loc1
+
+=== hand()Lnet/minecraft/world/InteractionHand; ===
+     1 getfield net/minecraft/network/protocol/game/ServerboundInteractPacket.hand  (loc0)
+     4 return loc0.hand
+
+=== handle(Lnet/minecraft/network/PacketListener;)V ===
+     5 invokevirtual net/minecraft/network/protocol/game/ServerboundInteractPacket.handle(Lnet/minecraft/network/protocol/game/ServerGamePacketListener;)V  (loc1)
+     8 return
+
+=== handle(Lnet/minecraft/network/protocol/game/ServerGamePacketListener;)V ===
+     2 invokeinterface net/minecraft/network/protocol/game/ServerGamePacketListener.handleInteract(Lnet/minecraft/network/protocol/game/ServerboundInteractPacket;)V  (loc0)
+     7 return
+
+=== hashCode()I ===
+     6 return loc0
+
+=== location()Lnet/minecraft/world/phys/Vec3; ===
+     1 getfield net/minecraft/network/protocol/game/ServerboundInteractPacket.location  (loc0)
+     4 return loc0.location
+
+=== toString()Ljava/lang/String; ===
+     6 return loc0
+
+=== type()Lnet/minecraft/network/protocol/PacketType; ===
+     3 return net/minecraft/network/protocol/game/GamePacketTypes.SERVERBOUND_INTERACT
+
+=== usingSecondaryAction()Z ===
+     1 getfield net/minecraft/network/protocol/game/ServerboundInteractPacket.usingSecondaryAction  (loc0)
+     4 return loc0.usingSecondaryAction
