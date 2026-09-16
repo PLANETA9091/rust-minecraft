@@ -2630,6 +2630,10 @@ impl App {
         self.world_fog = fog;
         self.world_cloud_fog_end = cloud_fog_end;
         self.net_biome = spawn_biome.clone();
+        // the join snapshot's own day opinion: the server's Set Time
+        // the join materialized re-bases the clock BEFORE the first
+        // frame renders (the sky never lies about the server's hour)
+        self.align_day_clock_to_wire();
         self.paused = false;
         self.music
             .on_world_enter_biome(spawn_biome.as_deref().unwrap_or(""));
@@ -3323,6 +3327,18 @@ impl App {
     /// world (the vanilla closeContainer's own return). The offline
     /// deterministic chest (open_chest) is never touched: the live
     /// flag gates the close, the flows stay separate.
+    /// THE DAY CLOCK'S WIRE RE-SYNC (vanilla ClientLevel's own absolute
+    /// SetTime fold): the wire's day opinion re-bases the fixed clock —
+    /// `day_time_base + frame` reads the server's day NOW, the frame
+    /// keeps the local 20-tps advance between the syncs, the drift the
+    /// syncs absorb. No opinion (`None` — no Set Time ever arrived)
+    /// is the honest no-op: the clock keeps the client's own base.
+    fn align_day_clock_to_wire(&mut self) {
+        if let Some(day) = self.net_world.as_ref().and_then(|w| w.day_tick) {
+            self.day_time_base = (day - self.frame as i64).max(0) as u64;
+        }
+    }
+
     pub fn live_view_updated(
         &mut self,
         world: crate::world::World,
@@ -3363,6 +3379,10 @@ impl App {
             }
         }
         self.net_world = Some(world);
+        // the day clock rides the same refresh — the wire's absolute
+        // time re-bases the fixed clock on every shipped window (the
+        // vanilla sync cadence the 250ms view lane speaks)
+        self.align_day_clock_to_wire();
         if let Some(b) = biome {
             if self.net_biome.as_deref() != Some(b.as_str()) {
                 self.net_biome = Some(b.clone());
@@ -8339,7 +8359,55 @@ mod tests {
         }
     }
 
+    /// THE DAY CLOCK'S WIRE RE-SYNC (vanilla ClientLevel's own absolute
+    /// SetTime fold): the join snapshot's day opinion re-bases the
+    /// fixed clock BEFORE the first frame renders, the 250ms refresh
+    /// lane re-absorbs the drift, and a world with NO opinion (no Set
+    /// Time ever arrived) is the honest no-op — the clock keeps the
+    /// client's own base.
     #[test]
+    fn the_wire_day_time_rebases_the_fixed_clock() {
+        let mut app = App::new(3);
+        app.open(ScreenKind::Connect);
+        // the join snapshot carries the server's Set Time opinion
+        let mut joined = air_net_world(2, 0);
+        joined.day_tick = Some(18_000);
+        app.net_world = Some(joined);
+        app.frame = 500;
+        app.enter_network_world(None, Skybox::Overworld, None, None);
+        assert!(app.world_is_network);
+        // base + frame reads the server's day NOW (the first frame
+        // renders the server's hour, never the client's dawn)
+        assert_eq!(
+            (app.day_time_base as i64) + app.frame as i64,
+            18_000,
+            "the join's own clock lands the server's day"
+        );
+
+        // the refresh lane's own re-sync: the fixed clock ADVANCED
+        // (the local 20-tps law) and drifted off the server's truth —
+        // the shipped window re-bases the pair to the wire's day
+        app.frame = 700;
+        let mut drifted = air_net_world(2, 0);
+        drifted.day_tick = Some(18_100);
+        app.live_view_updated(drifted, None, None, None);
+        assert_eq!(
+            (app.day_time_base as i64) + app.frame as i64,
+            18_100,
+            "the refresh absorbs the drift"
+        );
+
+        // the no-opinion arm: a world without Set Time never touches
+        // the clock (the honest no-op — the client's own base stands)
+        let silent = air_net_world(2, 0);
+        app.live_view_updated(silent, None, None, None);
+        assert_eq!(
+            (app.day_time_base as i64) + app.frame as i64,
+            18_100,
+            "no opinion keeps the clock"
+        );
+    }
+
     fn live_view_updates_swap_the_network_world_in_place() {
         let mut app = App::new(3);
         app.open(ScreenKind::Connect);

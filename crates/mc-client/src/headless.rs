@@ -170,6 +170,12 @@ pub struct SceneOpts {
     /// physics): the mid-bounce and the settle hop the gravity law
     /// owns, the fold the render's lerp walks at the partial frames.
     pub drops: bool,
+    /// THE WIRE'S OWN HOUR: the network world's Set Time opinion (the
+    /// day tick the wire speaks) — the world arm swaps the staged world
+    /// to the network lane and the day clock re-bases through the REAL
+    /// live fold (live_view_updated's align_day_clock_to_wire), the
+    /// sky renders the server's hour.
+    pub net_day: Option<i64>,
     /// THE DIVE SEED: carve a 3x3 pool AT the body's own column — three
     /// cells of water down (the old surface cell becomes the water
     /// surface), a forced-solid basin floor, the headroom cleared — and
@@ -1267,6 +1273,21 @@ pub fn render_gui_screen_opts(
         "world" => {
             app.enter_world();
             app.frame = frame;
+            if let Some(day) = opts.net_day {
+                // THE WIRE'S OWN HOUR: the network world swaps in with
+                // the server's Set Time opinion — the day clock re-bases
+                // through the REAL live fold (live_view_updated's own
+                // align_day_clock_to_wire), the sky renders the server's
+                // hour over the SAME terrain (the re-mesh the swap
+                // speaks), the client's dawn never shows
+                let mut net = app
+                    .offline_world
+                    .take()
+                    .unwrap_or_else(|| crate::world::World::new(16, 42));
+                net.day_tick = Some(day);
+                app.world_is_network = true;
+                app.live_view_updated(net, None, None, None);
+            }
         }
         "worldnight" => {
             // Night world view (tick 14040 = ~20:00 in-game): full moon ~25

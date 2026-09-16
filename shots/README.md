@@ -2,7 +2,7 @@
 
 Every lane that ships pixels owes the folder a frame. The gallery is the
 proof the features exist as rendered images, not as test names alone.
-114 frames and counting — grouped below by the lane that spoke them.
+115 frames and counting — grouped below by the lane that spoke them.
 
 ## The F5 lane (the third-person avatar) — v0.3.154+
 
@@ -408,6 +408,7 @@ lasts 20 real minutes again, the eat hold 1.6s, the swing 0.3s.
 | `walk_fold.png` | THE STRIDE'S OWN FOLD (v0.3.179): the F5 avatar wading seed 42's pond rendered at `--partial 0.25` — the limb cosines ride the frame's own partial_tick now (the walk phase the WalkAnimationState.position(partial) extrapolates, the swing + the death flip the same extract speaks — the canonical 0.5 retired); the same staging at `--partial 0.0` / `--partial 1.0` diffs rms 18.7 / 24.7 against it (the limbs' own honest spread) |
 | `crouch_eye_fold.png` | THE EYE'S OWN WALK (v0.3.180): the F5 crouch-wade rendered at `--partial 0.5` — the camera's eye rides the lerped oEyeHeight/eyeHeight pair the 0.5-per-tick blend speaks (the crouch eases over a few ticks, the pivot BETWEEN the stores — the snap never renders); the same staging at `--partial 0.0` / `--partial 1.0` diffs rms 25.1 / 25.1 against it (the eye + the stride's honest spread) |
 | `head_fold.png` | THE HEAD'S OWN EASE (v0.3.181): the AI's look swing rendered at `--partial 0.5` — the zombie's head rides the lerped yHeadRotO/yHeadRot pair the netHeadYaw extraction speaks (the face half-way into the turn the look target demanded, the pitch the same pair speaks); the same staging at `--partial 0.0` / `--partial 1.0` diffs rms 18.3 / 17.7 against it (the head + the stride's honest spread) |
+| `wire_day_sync.png` | THE WIRE'S OWN HOUR (v0.3.182): the world screen staged as a NETWORK world carrying the server's Set Time opinion (`--net-day 18000`, midnight) — the day clock re-bases through the live lane's own fold (live_view_updated's align_day_clock_to_wire: base+frame reads the server's day NOW, the frame keeps the local 20-tps advance, the 250ms syncs absorb the drift) and the sky renders the server's midnight over the SAME seed-42 terrain (the stars + the night sky the timeline speaks); the client's own dawn at the identical staging diffs rms 73.9 (the clock's authority, honest and loud) |
 
 Regenerate the family (the flag the CLI speaks today):
 
@@ -462,6 +463,17 @@ cargo run -p mc-client --release -- --screen world --seed 42 \
   --walk-ticks 1 --partial 0.5 --ui-frame 30 --out shots/head_fold.png
 # --particles damage stages the zombie at the facing point; the tick
 # head's O pair + the lerped yHeadRotO/yHeadRot read ease the look
+```
+
+The wire's own hour (v0.3.182 — the live day clock's own lane):
+
+```sh
+cargo run -p mc-client --release -- --headless --screen world \
+  --seed 42 --body --net-day 18000 --ui-frame 3 \
+  --out shots/wire_day_sync.png
+# --net-day N stages the network world's Set Time opinion; the day
+# clock re-bases through the real live_view_updated fold, the sky
+# speaks the server's hour (the no-flag staging stays the client's dawn)
 ```
 
 ## The lava-fog lane (the ember murk) — v0.3.167

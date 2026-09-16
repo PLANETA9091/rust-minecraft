@@ -196,6 +196,13 @@ struct Cli {
     /// walks at the partial frames).
     #[arg(long)]
     drops: bool,
+    /// THE WIRE'S OWN HOUR: stage the world screen as a NETWORK world
+    /// carrying the server's Set Time opinion (the day tick the wire
+    /// speaks) — the day clock re-bases through the live lane's own
+    /// fold (live_view_updated's align_day_clock_to_wire), the sky
+    /// renders the server's hour, the client's dawn never shows.
+    #[arg(long)]
+    net_day: Option<i64>,
     /// Carve a 3x3 pool AT the body and sink it to the basin floor —
     /// the eye sits under the water surface and the REAL water-screen
     /// gate speaks (the underwater overlay, no scripted blue).
@@ -309,6 +316,7 @@ fn main() -> Result<()> {
             lava_pool: cli.lava_pool,
             orbs: cli.orbs,
             drops: cli.drops,
+            net_day: cli.net_day,
             water_pool: cli.water_pool,
             water_vision: cli.water_vision,
             air_supply: cli.air_supply,
