@@ -278,6 +278,34 @@ pub struct SnapshotView {
     /// The LOCAL player's vitals — the health row's own projection
     /// (see [`HealthView`]).
     pub health: HealthView,
+    /// The wire's MOB population — the Add Entity store's own
+    /// projection through the synced entity-type registry (see
+    /// [`WireMob`]). Zombie-only v1: the type ids the registry names
+    /// `minecraft:zombie` render through the mob lane's own avatar
+    /// model; every other type id stays honest data the screen
+    /// doesn't draw yet.
+    pub mobs: Vec<WireMob>,
+}
+
+/// One wire mob as the renderer consumes it — the Add Entity
+/// snapshot's pose verbatim (the server's own authority, the
+/// `lerpTo` law the client walks): the numeric id (the update key
+/// the refresh lane matches), the world doubles, the body yaw, the
+/// head pitch, the ABSOLUTE head yaw (`yHeadRot` — the offset the
+/// render's netHeadYaw extraction derives), and the registry NAME
+/// the type id resolved through (`minecraft:zombie` renders).
+#[derive(Debug, Clone, PartialEq)]
+pub struct WireMob {
+    pub id: i32,
+    pub x: f64,
+    pub y: f64,
+    pub z: f64,
+    pub yaw: f32,
+    pub pitch: f32,
+    pub head_yaw: f32,
+    /// The synced registry's own name (`minecraft:zombie` v1 renders;
+    /// anything else is the honest not-yet-drawn type).
+    pub type_name: String,
 }
 
 /// The OPEN container window as the UI consumes it — the
@@ -813,6 +841,9 @@ pub fn materialize_snapshot_view(
         held: held_item_view(&model),
         hotbar: hotbar_row_view(&model),
         health: health_view(&model),
+        // the join snapshot's own population (a fresh world carries
+        // none — the empty lane the projection walks)
+        mobs: Vec::new(),
     }
 }
 
@@ -857,6 +888,28 @@ impl LiveView {
     /// y base or column-local 0) with no camera — the honest state,
     /// never a guess.
     pub fn refresh(&self, mapper: impl FnMut(u32) -> u16) -> SnapshotView {
+        // the mob projection first (both arms ride the same walk —
+        // the wire's population is pose data, never a guess)
+        let mobs = self
+            .model
+            .entities()
+            .filter_map(|(id, e)| {
+                let type_name = self.model.entity_type_name(e.type_id)?.to_string();
+                if type_name != "minecraft:zombie" {
+                    return None; // not-yet-drawn types stay honest data
+                }
+                Some(WireMob {
+                    id,
+                    x: e.x,
+                    y: e.y,
+                    z: e.z,
+                    yaw: e.y_rot,
+                    pitch: e.x_rot,
+                    head_yaw: e.y_head_rot,
+                    type_name,
+                })
+            })
+            .collect();
         let Some(player) = self.model.player.as_ref() else {
             return SnapshotView {
                 world: materialize(
@@ -876,6 +929,7 @@ impl LiveView {
                 held: held_item_view(&self.model),
                 hotbar: hotbar_row_view(&self.model),
                 health: health_view(&self.model),
+                mobs,
             };
         };
         let origin = snapshot_window_origin(player, self.side);
@@ -897,6 +951,9 @@ impl LiveView {
             // the vitals ride every refresh too — the hearts follow the
             // store exactly like the hotbar row does
             health: health_view(&self.model),
+            // the wire's own population rides with them — the mobs the
+            // server spawned follow the store exactly like the hearts do
+            mobs,
         }
     }
 }
@@ -1160,7 +1217,56 @@ mod tests {
         assert_eq!(sky, None, "unsent column: unknown");
     }
 
+    /// The mob projection: the Add Entity store's zombies ride the
+    /// refresh (the synced entity-type registry names the id), the
+    /// unknown types stay honest data, the pose verbatim (the
+    /// server's own authority the lerpTo law will walk).
     #[test]
+    fn refresh_projects_the_wire_zombies() {
+        use mc_protocol::play::EntitySpawn;
+        let mut m = WorldModel::new();
+        // the synced registry: type id 0 = pig, id 1 = zombie
+        m.registry.entity_types = vec!["minecraft:pig".to_string(), "minecraft:zombie".to_string()];
+        m.apply(PlayEvent::Spawn(EntitySpawn {
+            id: 7,
+            uuid: 1,
+            type_id: 1,
+            x: 10.0,
+            y: 64.0,
+            z: 12.0,
+            movement: [0.0; 3],
+            x_rot: 5.0,
+            y_rot: 90.0,
+            y_head_rot: 60.0,
+            data: 0,
+        }));
+        // a pig: an honest type the v1 mob lane doesn't draw
+        m.apply(PlayEvent::Spawn(EntitySpawn {
+            id: 8,
+            uuid: 2,
+            type_id: 0,
+            x: 30.0,
+            y: 64.0,
+            z: 32.0,
+            movement: [0.0; 3],
+            x_rot: 0.0,
+            y_rot: 0.0,
+            y_head_rot: 0.0,
+            data: 0,
+        }));
+        let view = LiveView {
+            model: m,
+            side: 1,
+        };
+        let upd = view.refresh(example_mapper);
+        assert_eq!(upd.mobs.len(), 1, "only the zombie renders v1");
+        let z = &upd.mobs[0];
+        assert_eq!(z.id, 7);
+        assert_eq!(z.type_name, "minecraft:zombie");
+        assert_eq!((z.x, z.y, z.z), (10.0, 64.0, 12.0));
+        assert_eq!((z.yaw, z.pitch, z.head_yaw), (90.0, 5.0, 60.0));
+    }
+
     fn materialize_carries_the_models_day_tick() {
         let mut m = WorldModel::new();
         m.apply(PlayEvent::Chunk(ChunkColumn {
@@ -1819,6 +1925,7 @@ mod tests {
             biomes: Vec::new(),
             biome_tags: Vec::new(),
             world_clocks: Vec::new(),
+            entity_types: Vec::new(),
             timelines: Vec::new(),
             timeline_tags: Vec::new(),
         };
@@ -1963,6 +2070,7 @@ mod tests {
             biomes: Vec::new(),
             biome_tags: Vec::new(),
             world_clocks: Vec::new(),
+            entity_types: Vec::new(),
             timelines: Vec::new(),
             timeline_tags: Vec::new(),
         };

@@ -257,6 +257,13 @@ pub struct Zombie {
     pub prev_x: f64,
     pub prev_y: f64,
     pub prev_z: f64,
+    /// THE WIRE'S OWN LERP TARGET (javap `Entity.lerpTo` + the
+    /// `lerpSteps` walk — the REMOTE entity's law): the server's
+    /// absolute pose the client EASES to over 3 ticks (the 250ms
+    /// refresh cadence's own pacing). `None` for the AI mobs — the
+    /// goal-driven bodies own their physics, the lerp never speaks.
+    pub lerp_target: Option<(f64, f64, f64)>,
+    pub lerp_steps: u8,
     pub vx: f64,
     pub vy: f64,
     pub vz: f64,
@@ -326,6 +333,8 @@ impl Zombie {
             prev_x: x,
             prev_y: y,
             prev_z: z,
+            lerp_target: None,
+            lerp_steps: 0,
             vx: 0.0,
             vy: 0.0,
             vz: 0.0,

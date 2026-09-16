@@ -128,6 +128,7 @@ fn run_join(
                 Option<(i32, i32)>,
                 [(i32, i32); 9],
                 crate::world_view::HealthView,
+                Vec<crate::world_view::WireMob>,
             ),
             String,
         >,
@@ -425,6 +426,10 @@ fn run_join(
                                     // hearts follow the store exactly like
                                     // the hotbar's icons do
                                     upd.health,
+                                    // the wire's own population rides with
+                                    // the vitals — the mobs the server
+                                    // spawned stream to the mob lane
+                                    upd.mobs,
                                 )))
                                 .is_err()
                             {
@@ -518,6 +523,7 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
                 Option<(i32, i32)>,
                 [(i32, i32); 9],
                 crate::world_view::HealthView,
+                Vec<crate::world_view::WireMob>,
             ),
             String,
         >,
@@ -713,7 +719,7 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
         // Disconnect screen, exactly like the original's kick
         while let Ok(upd) = live_rx.try_recv() {
             match upd {
-                Ok((world, camera, biome, container, held, hotbar, health)) => {
+                Ok((world, camera, biome, container, held, hotbar, health, mobs)) => {
                     app.live_view_updated(world, camera, biome, container);
                     // the hand's lane beside the world's: the selected
                     // hotbar stack's model loads on change (the reload
@@ -727,6 +733,11 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
                     // land verbatim (the flash, the death message and
                     // all — the health row speaks the store)
                     app.live_health_updated(health);
+                    // the mob lane beside the vitals': the wire's own
+                    // population lands verbatim (the server's poses the
+                    // lerpTo law walks — the zombies the server spawned
+                    // render at its word)
+                    app.live_mobs_updated(mobs);
                 }
                 Err(reason) => app.live_session_lost(reason),
             }

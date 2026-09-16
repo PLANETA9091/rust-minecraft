@@ -411,6 +411,25 @@ impl WorldModel {
         self.entities.get(&id)
     }
 
+    /// The world's whole population, id + snapshot pairs (the Add
+    /// Entity store's own walk — the id KEYS the map, the render
+    /// lane's projection rides both).
+    pub fn entities(&self) -> impl Iterator<Item = (i32, &EntitySnapshot)> {
+        self.entities.iter().map(|(id, e)| (*id, e))
+    }
+
+    /// One entity type's registry name, by the synced-registry id the
+    /// Add Entity packet carries (`minecraft:zombie` the mob lane's
+    /// render model speaks). `None` when the registry never synced or
+    /// the id lies outside the table — the honest unknown, never a
+    /// guessed type.
+    pub fn entity_type_name(&self, type_id: i32) -> Option<&str> {
+        self.registry
+            .entity_types
+            .get(type_id as usize)
+            .map(|s| s.as_str())
+    }
+
     /// The session's own entity id (the play Login packet's playerId) —
     /// the filter the effect-state traffic rides through (the model's
     /// effect store is the LOCAL player's).
@@ -1947,6 +1966,7 @@ mod tests {
             ],
             biome_tags: Vec::new(),
             world_clocks: Vec::new(),
+            entity_types: Vec::new(),
             timelines: Vec::new(),
             timeline_tags: Vec::new(),
         };
@@ -2344,6 +2364,7 @@ mod tests {
             biome_tags: Vec::new(),
             // the synced id table: overworld = 0, the_end = 1
             world_clocks: vec!["minecraft:overworld".to_string(), "minecraft:the_end".to_string()],
+            entity_types: Vec::new(),
             timelines: Vec::new(),
             timeline_tags: Vec::new(),
         };
@@ -2407,6 +2428,7 @@ mod tests {
             biomes: Vec::new(),
             biome_tags: Vec::new(),
             world_clocks: vec!["minecraft:overworld".to_string()],
+            entity_types: Vec::new(),
             timelines: vec![
                 // id 0: carries a curve but is NOT in the dimension's
                 // tag — vanilla merges only the tag's members, so this
@@ -2691,6 +2713,7 @@ mod tests {
                 biomes: Vec::new(),
                 biome_tags: Vec::new(),
                 world_clocks: Vec::new(),
+                entity_types: Vec::new(),
             timelines: Vec::new(),
             timeline_tags: Vec::new(),
             },
@@ -2777,6 +2800,7 @@ mod tests {
                 biomes: Vec::new(),
                 biome_tags: Vec::new(),
                 world_clocks: Vec::new(),
+                entity_types: Vec::new(),
             timelines: Vec::new(),
             timeline_tags: Vec::new(),
             },
@@ -2879,6 +2903,7 @@ mod tests {
                 biomes: Vec::new(),
                 biome_tags: Vec::new(),
                 world_clocks: Vec::new(),
+                entity_types: Vec::new(),
                 timelines: Vec::new(),
                 timeline_tags: Vec::new(),
             },
@@ -2908,6 +2933,7 @@ mod tests {
             biomes: Vec::new(),
             biome_tags: Vec::new(),
             world_clocks: Vec::new(),
+            entity_types: Vec::new(),
             timelines: Vec::new(),
             timeline_tags: Vec::new(),
         };
@@ -3988,6 +4014,7 @@ mod tests {
             biomes: Vec::new(),
             biome_tags: Vec::new(),
             world_clocks: Vec::new(),
+            entity_types: Vec::new(),
             timelines: Vec::new(),
             timeline_tags: Vec::new(),
         };
@@ -4109,6 +4136,7 @@ mod tests {
             biomes: Vec::new(),
             biome_tags: Vec::new(),
             world_clocks: Vec::new(),
+            entity_types: Vec::new(),
             timelines: Vec::new(),
             timeline_tags: Vec::new(),
         };
@@ -4189,6 +4217,7 @@ mod tests {
             biomes: Vec::new(),
             biome_tags: Vec::new(),
             world_clocks: Vec::new(),
+            entity_types: Vec::new(),
             timelines: Vec::new(),
             timeline_tags: Vec::new(),
         };
@@ -4256,6 +4285,7 @@ mod tests {
             biomes: Vec::new(),
             biome_tags: Vec::new(),
             world_clocks: Vec::new(),
+            entity_types: Vec::new(),
             timelines: Vec::new(),
             timeline_tags: Vec::new(),
         };
@@ -4315,6 +4345,7 @@ mod tests {
             biomes: Vec::new(),
             biome_tags: Vec::new(),
             world_clocks: Vec::new(),
+            entity_types: Vec::new(),
             timelines: Vec::new(),
             timeline_tags: Vec::new(),
         };
@@ -4392,6 +4423,7 @@ mod tests {
             biomes: Vec::new(),
             biome_tags: Vec::new(),
             world_clocks: vec!["minecraft:overworld".to_string()],
+            entity_types: Vec::new(),
             timelines: Vec::new(),
             timeline_tags: Vec::new(),
         };
@@ -4482,6 +4514,7 @@ mod tests {
             biomes: Vec::new(),
             biome_tags: Vec::new(),
             world_clocks: Vec::new(),
+            entity_types: Vec::new(),
             timelines: Vec::new(),
             timeline_tags: Vec::new(),
         };
@@ -4562,6 +4595,7 @@ mod tests {
             biomes: Vec::new(),
             biome_tags: Vec::new(),
             world_clocks: Vec::new(),
+            entity_types: Vec::new(),
             timelines: Vec::new(),
             timeline_tags: Vec::new(),
         };

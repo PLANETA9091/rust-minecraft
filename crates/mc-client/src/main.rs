@@ -203,6 +203,12 @@ struct Cli {
     /// renders the server's hour, the client's dawn never shows.
     #[arg(long)]
     net_day: Option<i64>,
+    /// THE WIRE'S OWN MOBS: stage N wire zombies into the network
+    /// world's mob lane (the live_mobs_updated entry the session's
+    /// refresh rides — the lerpTo law walks their pose). Requires the
+    /// network arm to be armed (--net-day or --net-mobs alone works).
+    #[arg(long, default_value = "0")]
+    net_mobs: usize,
     /// Carve a 3x3 pool AT the body and sink it to the basin floor —
     /// the eye sits under the water surface and the REAL water-screen
     /// gate speaks (the underwater overlay, no scripted blue).
@@ -317,6 +323,7 @@ fn main() -> Result<()> {
             orbs: cli.orbs,
             drops: cli.drops,
             net_day: cli.net_day,
+            net_mobs: cli.net_mobs,
             water_pool: cli.water_pool,
             water_vision: cli.water_vision,
             air_supply: cli.air_supply,

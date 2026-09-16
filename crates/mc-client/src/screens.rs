@@ -531,6 +531,12 @@ pub struct App {
     /// deterministic headless scenes never spawn one: the pixel
     /// goldens stay.
     pub mobs: Vec<crate::mob::Zombie>,
+    /// THE WIRE'S OWN MOB LANE (the networked world's population —
+    /// the Add Entity store's projection the live refresh ships): the
+    /// remote zombies the SERVER owns (the lerpTo walk the pose
+    /// eases through, no AI, no physics). The offline lane's own
+    /// `mobs` stay the client's authority — the two never mix.
+    pub net_mobs: Vec<crate::mob::Zombie>,
     /// The spawner's clock (the client's own cadence the mob lane
     /// speaks) and the id counter (the entity ids the drops ride).
     pub spawn_clock: i64,
@@ -915,6 +921,7 @@ impl App {
             orb_sheet: None,
             underwater_screen: None,
             mobs: Vec::new(),
+            net_mobs: Vec::new(),
             spawn_clock: 0,
             next_mob_id: 1,
             mob_rng: crate::drops::Lcg::new(0x5EED_10CA),
@@ -1657,6 +1664,14 @@ impl App {
             // zombies' AI tick, the attacks the player's hurt pipeline
             // answers, the ambient groans the baseTick gate speaks,
             // the death clock's own removal.
+            //
+            // THE WIRE MOBS' OWN TICK (the networked arm — the remote
+            // bodies the SERVER owns: no AI, no physics, the lerpTo
+            // walk the 250ms refresh paces, the prev trio + the head
+            // pair the render's lerp walks, the age the bob speaks):
+            if self.world_is_network {
+                self.tick_net_mobs();
+            }
             if !self.world_is_network {
                 // THE SPAWNER'S BEAT (the vanilla spawn cycle's
                 // stand-in): one attempt per SPAWN_CYCLE_TICKS, the
@@ -3336,6 +3351,96 @@ impl App {
     fn align_day_clock_to_wire(&mut self) {
         if let Some(day) = self.net_world.as_ref().and_then(|w| w.day_tick) {
             self.day_time_base = (day - self.frame as i64).max(0) as u64;
+        }
+    }
+
+    /// THE WIRE'S OWN MOB LANE (the Add Entity store's projection
+    /// lands — the server's population at its word): existing ids arm
+    /// the `lerpTo` walk (javap LivingEntity's remote law — the pose
+    /// eases to the server's latest word over 3 ticks, the 250ms
+    /// refresh cadence's own pacing), fresh ids spawn at the pose,
+    /// missing ids despawn (the server's truth, never a ghost). The
+    /// offline lane's mobs are never touched.
+    pub fn live_mobs_updated(&mut self, mobs: Vec<crate::world_view::WireMob>) {
+        if !self.world_is_network {
+            return;
+        }
+        let mut old: std::collections::HashMap<i32, crate::mob::Zombie> = std::mem::take(
+            &mut self.net_mobs,
+        )
+        .into_iter()
+        .map(|m| (m.id, m))
+        .collect();
+        for w in mobs {
+            let Some(m) = old.remove(&w.id) else {
+                // THE FRESH SPAWN: the pose IS the server's word, the
+                // prev trio arms at it (the render walks from the spawn
+                // the tick's own first prev speaks)
+                let mut m = crate::mob::Zombie::new(w.id, w.x, w.y, w.z, 0x5EED);
+                m.yaw = w.yaw;
+                let mut off = w.head_yaw - w.yaw;
+                while off > 180.0 {
+                    off -= 360.0;
+                }
+                while off < -180.0 {
+                    off += 360.0;
+                }
+                m.head_yaw_off = off;
+                m.head_pitch = w.pitch;
+                m.on_ground = true;
+                m.age_ticks = 40; // two seconds in — the bob's stable mid
+                self.net_mobs.push(m);
+                continue;
+            };
+            // THE LERPTO LAW: the target arms, the 3-tick walk eases
+            // (the tick's own `x += (t - x) / steps` the vanilla
+            // remote body speaks), the body + the head read the wire
+            let mut m = m;
+            m.lerp_target = Some((w.x, w.y, w.z));
+            m.lerp_steps = 3;
+            m.yaw = w.yaw;
+            let mut off = w.head_yaw - w.yaw;
+            while off > 180.0 {
+                off -= 360.0;
+            }
+            while off < -180.0 {
+                off += 360.0;
+            }
+            m.head_yaw_off = off;
+            m.head_pitch = w.pitch;
+            self.net_mobs.push(m);
+        }
+        // the ids the wire no longer names never re-enter net_mobs —
+        // the moved-out map drops them (the server's truth, no ghosts)
+    }
+
+    /// THE WIRE MOBS' OWN TICK (javap LivingEntity's remote walk —
+    /// no AI, no physics: the server owns both): the tick head saves
+    /// the prev feet + the head pair (the render's lerps walk them at
+    /// the fixed clock's partial), the lerpSteps eases the pose
+    /// (`x += (t - x) / steps` then the decrement — the exact landing
+    /// the vanilla remote body speaks), the walk store fed the tick's
+    /// own horizontal distance (the limbs swing the stride).
+    pub fn tick_net_mobs(&mut self) {
+        for m in &mut self.net_mobs {
+            m.prev_x = m.x;
+            m.prev_y = m.y;
+            m.prev_z = m.z;
+            m.prev_head_yaw_off = m.head_yaw_off;
+            m.prev_head_pitch = m.head_pitch;
+            let mut dist = 0.0f64;
+            if m.lerp_steps > 0 {
+                let (tx, ty, tz) = m.lerp_target.expect("the steps name a target");
+                let (ox, oz) = (m.x, m.z);
+                m.x += (tx - m.x) / m.lerp_steps as f64;
+                m.y += (ty - m.y) / m.lerp_steps as f64;
+                m.z += (tz - m.z) / m.lerp_steps as f64;
+                m.lerp_steps -= 1;
+                dist = ((m.x - ox) * (m.x - ox) + (m.z - oz) * (m.z - oz)).sqrt();
+            }
+            m.walk
+                .update((dist as f32 * crate::body::WALK_DISTANCE_SCALE).min(1.0), crate::body::WALK_BLEND, 1.0);
+            m.age_ticks = m.age_ticks.wrapping_add(1);
         }
     }
 
@@ -5247,7 +5352,7 @@ impl App {
         cam: &crate::camera::Camera,
         day_time: i64,
     ) {
-        if self.mobs.is_empty() {
+        if self.mobs.is_empty() && self.net_mobs.is_empty() {
             return; // the deterministic scenes carry no mobs — the goldens stay
         }
         if self.zombie_avatar.is_none() {
@@ -5258,7 +5363,11 @@ impl App {
         let Some(model) = &self.zombie_avatar else {
             return; // the zombie skin failed its sha1 — the mobs stay unseen
         };
-        for mob in &self.mobs {
+        // the two lanes' own union (the offline AI bodies + the wire's
+        // remote bodies — the SAME avatar model + the SAME lerp folds
+        // speak both: the server's zombies render exactly like the
+        // client's own, the pose's authority the only difference)
+        for mob in self.mobs.iter().chain(self.net_mobs.iter()) {
             // the head's own lerp (LivingEntityRenderer's
             // `Mth.lerp(partialTicks, yHeadRotO, yHeadRot)`): the AI's
             // new look target the head EASES to between the tick
@@ -8408,6 +8517,51 @@ mod tests {
         );
     }
 
+    /// THE WIRE MOBS' LERPTO LAW (javap LivingEntity's remote walk):
+    /// the refresh arms the 3-tick ease, the ticks land EXACTLY on the
+    /// server's word, the walk store speaks the stride, the head
+    /// offset reads the wrapped difference, the missing ids despawn.
+    #[test]
+    fn the_wire_mobs_walk_the_lerpto_law() {
+        let mut app = App::new(3);
+        app.open(ScreenKind::Connect);
+        app.net_world = Some(air_net_world(2, 0));
+        app.enter_network_world(None, Skybox::Overworld, None, None);
+        // the spawn lands at the pose (the prev trio arms at it)
+        app.live_mobs_updated(vec![wire_zombie(7, 10.0, 64.0, 10.0)]);
+        assert_eq!(app.net_mobs.len(), 1, "the spawn rendered v1");
+        assert_eq!(app.net_mobs[0].id, 7);
+        assert_eq!(app.net_mobs[0].head_yaw_off, -30.0, "the head reads the wrap");
+        // the server's update: the target arms, the 3-tick walk eases
+        app.live_mobs_updated(vec![wire_zombie(7, 16.0, 64.0, 10.0)]);
+        app.tick_net_mobs();
+        assert!((app.net_mobs[0].x - 12.0).abs() < 1e-9, "one third of the way");
+        app.tick_net_mobs();
+        assert!((app.net_mobs[0].x - 14.0).abs() < 1e-9, "two thirds");
+        app.tick_net_mobs();
+        assert_eq!(app.net_mobs[0].x, 16.0, "the exact landing");
+        assert_eq!(app.net_mobs[0].lerp_steps, 0, "the walk spent");
+        // the walk store's feed: the moved ticks spoke (the limbs swing)
+        assert!(app.net_mobs[0].walk.position > 0.0, "the stride speaks");
+        // the despawn: the wire stops naming id 7 — no ghost
+        app.live_mobs_updated(vec![]);
+        assert!(app.net_mobs.is_empty(), "the server's truth, no ghosts");
+    }
+
+    fn wire_zombie(id: i32, x: f64, y: f64, z: f64) -> crate::world_view::WireMob {
+        crate::world_view::WireMob {
+            id,
+            x,
+            y,
+            z,
+            yaw: 90.0,
+            pitch: 5.0,
+            head_yaw: 60.0,
+            type_name: "minecraft:zombie".to_string(),
+        }
+    }
+
+    #[test]
     fn live_view_updates_swap_the_network_world_in_place() {
         let mut app = App::new(3);
         app.open(ScreenKind::Connect);

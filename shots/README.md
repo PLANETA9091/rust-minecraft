@@ -2,7 +2,7 @@
 
 Every lane that ships pixels owes the folder a frame. The gallery is the
 proof the features exist as rendered images, not as test names alone.
-115 frames and counting — grouped below by the lane that spoke them.
+116 frames and counting — grouped below by the lane that spoke them.
 
 ## The F5 lane (the third-person avatar) — v0.3.154+
 
@@ -409,6 +409,7 @@ lasts 20 real minutes again, the eat hold 1.6s, the swing 0.3s.
 | `crouch_eye_fold.png` | THE EYE'S OWN WALK (v0.3.180): the F5 crouch-wade rendered at `--partial 0.5` — the camera's eye rides the lerped oEyeHeight/eyeHeight pair the 0.5-per-tick blend speaks (the crouch eases over a few ticks, the pivot BETWEEN the stores — the snap never renders); the same staging at `--partial 0.0` / `--partial 1.0` diffs rms 25.1 / 25.1 against it (the eye + the stride's honest spread) |
 | `head_fold.png` | THE HEAD'S OWN EASE (v0.3.181): the AI's look swing rendered at `--partial 0.5` — the zombie's head rides the lerped yHeadRotO/yHeadRot pair the netHeadYaw extraction speaks (the face half-way into the turn the look target demanded, the pitch the same pair speaks); the same staging at `--partial 0.0` / `--partial 1.0` diffs rms 18.3 / 17.7 against it (the head + the stride's honest spread) |
 | `wire_day_sync.png` | THE WIRE'S OWN HOUR (v0.3.182): the world screen staged as a NETWORK world carrying the server's Set Time opinion (`--net-day 18000`, midnight) — the day clock re-bases through the live lane's own fold (live_view_updated's align_day_clock_to_wire: base+frame reads the server's day NOW, the frame keeps the local 20-tps advance, the 250ms syncs absorb the drift) and the sky renders the server's midnight over the SAME seed-42 terrain (the stars + the night sky the timeline speaks); the client's own dawn at the identical staging diffs rms 73.9 (the clock's authority, honest and loud) |
+| `wire_mobs.png` | THE WIRE'S OWN MOBS (v0.3.183): the network world's zombie at the facing point — the Add Entity snapshot the synced entity-type registry names `minecraft:zombie` renders through the mob lane's own avatar model + lerp folds (the head's offset the wire's yHeadRot−yaw speaks, the pose the lerpTo 3-tick law walks), the SERVER'S word standing where its packet said; the pig the registry also named stays honest data the v1 lane doesn't draw |
 
 Regenerate the family (the flag the CLI speaks today):
 
@@ -474,6 +475,17 @@ cargo run -p mc-client --release -- --headless --screen world \
 # --net-day N stages the network world's Set Time opinion; the day
 # clock re-bases through the real live_view_updated fold, the sky
 # speaks the server's hour (the no-flag staging stays the client's dawn)
+```
+
+The wire's own mobs (v0.3.183 — the live mob lane's first draw):
+
+```sh
+cargo run -p mc-client --release -- --headless --screen world \
+  --seed 42 --body --walk-ticks 1 --net-mobs 1 --ui-frame 3 \
+  --out shots/wire_mobs.png
+# --net-mobs N stages N wire zombies at the facing point (the
+# live_mobs_updated entry the session's refresh rides, the lerpTo
+# walk the first tick speaks); add --net-day 18000 for the night hour
 ```
 
 ## The lava-fog lane (the ember murk) — v0.3.167

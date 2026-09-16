@@ -176,6 +176,10 @@ pub struct SceneOpts {
     /// live fold (live_view_updated's align_day_clock_to_wire), the
     /// sky renders the server's hour.
     pub net_day: Option<i64>,
+    /// THE WIRE'S OWN MOBS: the network world's staged zombie count —
+    /// the live_mobs_updated entry the drain speaks, the lerpTo law
+    /// walking their pose.
+    pub net_mobs: usize,
     /// THE DIVE SEED: carve a 3x3 pool AT the body's own column — three
     /// cells of water down (the old surface cell becomes the water
     /// surface), a forced-solid basin floor, the headroom cleared — and
@@ -1273,20 +1277,82 @@ pub fn render_gui_screen_opts(
         "world" => {
             app.enter_world();
             app.frame = frame;
-            if let Some(day) = opts.net_day {
-                // THE WIRE'S OWN HOUR: the network world swaps in with
-                // the server's Set Time opinion — the day clock re-bases
-                // through the REAL live fold (live_view_updated's own
-                // align_day_clock_to_wire), the sky renders the server's
-                // hour over the SAME terrain (the re-mesh the swap
-                // speaks), the client's dawn never shows
+            if opts.net_day.is_some() || opts.net_mobs > 0 {
+                // THE WIRE'S OWN LANE: the network world swaps in — the
+                // server's Set Time opinion re-bases the day clock, the
+                // wire mobs land through the REAL live_mobs_updated
+                // entry (the lerpTo law the session's refresh rides),
+                // the sky and the mobs render the SERVER'S word over
+                // the SAME terrain (the re-mesh the swap speaks)
                 let mut net = app
                     .offline_world
                     .take()
                     .unwrap_or_else(|| crate::world::World::new(16, 42));
-                net.day_tick = Some(day);
+                net.day_tick = opts.net_day;
                 app.world_is_network = true;
                 app.live_view_updated(net, None, None, None);
+                if opts.net_mobs > 0 {
+                    // THE MOB RING (the --zombie discipline's own
+                    // facing point: the surface scan ahead of the
+                    // body's camera — the mobs land IN VIEW, never a
+                    // guessed cell behind the terrain): the wire's
+                    // zombies face the camera, the head mid-look, the
+                    // lerpTo walk armed to a half-cell drift (the ease
+                    // the 250ms refresh speaks, frozen at its step)
+                    let yaw_cam = opts.body_yaw.unwrap_or(-90.0);
+                    let (fx, fz) = (
+                        (-yaw_cam.to_radians().sin()) as f64,
+                        yaw_cam.to_radians().cos() as f64,
+                    );
+                    let (b_x, b_z) = app
+                        .body
+                        .as_ref()
+                        .map(|b| (b.x, b.z))
+                        .unwrap_or((
+                            app.world_size as f64 / 2.0,
+                            app.world_size as f64 / 2.0,
+                        ));
+                    let mut wire_mobs = Vec::new();
+                    for i in 0..opts.net_mobs {
+                        // the staggered line the drops lane speaks:
+                        // 2.0/3.5 cells ahead, the side offsets the
+                        // Lcg's own draw (the deterministic spread)
+                        let t = 1.8 + i as f64 * 1.5;
+                        let side = if i % 2 == 0 { 0.4 } else { -0.4 };
+                        let px = b_x + fx * t - fz * side;
+                        let pz = b_z + fz * t + fx * side;
+                        let w = app.net_world.as_ref().unwrap();
+                        // the surface scan the damage lane speaks: DOWN
+                        // from the body's own level (never the world
+                        // top — the wall's roof would hide the mob)
+                        let b_y = app.body.as_ref().map(|b| b.y as i32).unwrap_or(64);
+                        let mut gy = b_y;
+                        while gy > 0
+                            && w.get(px.floor() as i32, gy, pz.floor() as i32)
+                                == crate::world::AIR
+                        {
+                            gy -= 1;
+                        }
+                        let y = (gy + 1) as f64;
+                        // facing the body (the vanilla yaw the
+                        // atan2 fold speaks), the head mid-look
+                        let face = (-((b_x - px)).atan2(b_z - pz)).to_degrees() as f32;
+                        wire_mobs.push(crate::world_view::WireMob {
+                            id: 100 + i as i32,
+                            x: px,
+                            y,
+                            z: pz,
+                            yaw: face,
+                            pitch: 0.0,
+                            head_yaw: face + 35.0, // the look mid-swing
+                            type_name: "minecraft:zombie".to_string(),
+                        });
+                    }
+                    app.live_mobs_updated(wire_mobs);
+                    // the lerpTo walk's own first step: one tick of the
+                    // half-cell drift the refresh cadence paces
+                    app.tick_net_mobs();
+                }
             }
         }
         "worldnight" => {

@@ -372,6 +372,13 @@ pub struct RegistryData {
     /// (`WorldClock.DIRECT_CODEC = MapCodec.unitCodec`), so real
     /// entries ride WITHOUT a tag — nothing decodable beyond the name.
     pub world_clocks: Vec<String>,
+    /// The `minecraft:entity_type` entries in ARRIVAL ORDER — the id
+    /// table the Add Entity packet's type varint resolves through
+    /// (`ByteBufCodecs.registry(Registries.ENTITY_TYPE)`, the same
+    /// registry the configuration phase syncs). Names only: the
+    /// element payloads (the EntityType codec's data components) are
+    /// walked past — the mob lane needs the NAME, nothing more.
+    pub entity_types: Vec<String>,
     /// The `minecraft:timeline` entries in ARRIVAL ORDER (javap:
     /// `Registries.TIMELINE` = the "minecraft:timeline" registry key,
     /// in `RegistryDataLoader`'s synced list). The sky-light curve the
@@ -442,6 +449,7 @@ impl RegistryData {
         self.biomes.extend(other.biomes);
         self.biome_tags.extend(other.biome_tags);
         self.world_clocks.extend(other.world_clocks);
+        self.entity_types.extend(other.entity_types);
         self.timelines.extend(other.timelines);
         self.timeline_tags.extend(other.timeline_tags);
     }
@@ -787,6 +795,19 @@ pub fn parse_registry_data(payload: &[u8]) -> Result<RegistryData> {
             // entries ride tagless — a tag, if one ever rides, is
             // walked and skipped
             out.world_clocks.push(entry_id);
+            if present {
+                crate::play::skip_network_nbt(&mut c)
+                    .with_context(|| format!("skip {registry_name} entry nbt"))?;
+            }
+            continue;
+        }
+        if registry_name == "minecraft:entity_type" {
+            // same arrival-order id table (the Add Entity packet's
+            // type varint resolves through it — the mob lane reads the
+            // NAME, `minecraft:zombie` the renderer's own model speaks);
+            // the element payloads (the EntityType codec's data
+            // components) are walked past — nothing decodable needed
+            out.entity_types.push(entry_id);
             if present {
                 crate::play::skip_network_nbt(&mut c)
                     .with_context(|| format!("skip {registry_name} entry nbt"))?;
@@ -1392,6 +1413,25 @@ pub mod test_support {
         p
     }
 
+    /// A `minecraft:entity_type` Registry Data packet: two entries in
+    /// arrival order — `minecraft:pig` then `minecraft:zombie` (the
+    /// Add Entity packet's type varint resolves through this table;
+    /// one entry rides a tag id the walk-past consumes, the real
+    /// EntityType payloads' shape the client needs nothing from).
+    pub fn entity_type_packet() -> Vec<u8> {
+        let mut p = Vec::new();
+        write_varint(&mut p, clientbound::REGISTRY_DATA);
+        write_string(&mut p, "minecraft:entity_type");
+        write_varint(&mut p, 2);
+        write_string(&mut p, "minecraft:pig");
+        p.push(0); // no tag
+        write_string(&mut p, "minecraft:zombie");
+        p.push(1); // a tag rides — walked past
+        p.push(0x0A); // the network NBT's root compound
+        p.push(0x00); // the end tag — an empty element payload
+        p
+    }
+
     /// A `minecraft:timeline` Registry Data packet: the FOUR built-in
     /// overworld timelines in the in_overworld tag's id reality —
     /// `minecraft:day` (overworld clock, period 24000, the REAL
@@ -1534,7 +1574,9 @@ pub mod test_support {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use super::test_support::{registry_packet, timeline_packet, update_tags_packet, world_clock_packet};
+    use super::test_support::{
+        entity_type_packet, registry_packet, timeline_packet, update_tags_packet, world_clock_packet,
+    };
     use crate::login::{encode_login_disconnect, encode_login_success, encode_set_compression};
     use crate::varint::write_varint;
     use std::net::{TcpListener, TcpStream};
@@ -1956,6 +1998,16 @@ mod tests {
         assert_eq!(clocks.world_clock_id("minecraft:the_end"), Some(1));
         assert_eq!(clocks.world_clock_id("minecraft:nowhere"), None);
         assert!(clocks.biomes.is_empty() && clocks.dimension_types.is_empty());
+        // the entity_type registry: the arrival-order id table the Add
+        // Entity packet's type varint resolves through (the element
+        // payloads walked past — the names the mob lane needs)
+        let ents = parse_registry_data(&entity_type_packet()).expect("entity_type parses");
+        assert_eq!(
+            ents.entity_types,
+            vec!["minecraft:pig".to_string(), "minecraft:zombie".to_string()]
+        );
+        assert!(clocks.entity_types.is_empty(), "no type knowledge rides the clock packet");
+        assert!(ents.world_clocks.is_empty(), "no clock knowledge rides the type packet");
         // the timeline registry: FOUR entries in arrival order, only
         // `minecraft:day` carrying the visual/sky_light_factor track —
         // the string/bool tracks and the ease field are walked past
