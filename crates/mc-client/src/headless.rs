@@ -204,6 +204,10 @@ pub struct SceneOpts {
     /// continue the ids through the same facing-point placement law,
     /// standalone or beside the zombie/pig rings).
     pub net_cow: Option<u32>,
+    /// THE FOURTH BODY's own ring (the --net-cow mirror: the sheep
+    /// continue the ids through the same facing-point placement law,
+    /// standalone or beside the zombie/pig/cow rings).
+    pub net_sheep: Option<u32>,
     /// THE DIVE SEED: carve a 3x3 pool AT the body's own column — three
     /// cells of water down (the old surface cell becomes the water
     /// surface), a forced-solid basin floor, the headroom cleared — and
@@ -1305,6 +1309,7 @@ pub fn render_gui_screen_opts(
                 || opts.net_mobs > 0
                 || opts.net_pig.is_some()
                 || opts.net_cow.is_some()
+                || opts.net_sheep.is_some()
             {
                 // THE WIRE'S OWN LANE: the network world swaps in — the
                 // server's Set Time opinion re-bases the day clock, the
@@ -1321,7 +1326,8 @@ pub fn render_gui_screen_opts(
                 app.live_view_updated(net, None, None, None);
                 let pig_count = opts.net_pig.unwrap_or(0);
                 let cow_count = opts.net_cow.unwrap_or(0);
-                if opts.net_mobs > 0 || pig_count > 0 || cow_count > 0 {
+                let sheep_count = opts.net_sheep.unwrap_or(0);
+                if opts.net_mobs > 0 || pig_count > 0 || cow_count > 0 || sheep_count > 0 {
                     // THE MOB RING (the --zombie discipline's own
                     // facing point: the surface scan ahead of the
                     // body's camera — the mobs land IN VIEW, never a
@@ -1461,6 +1467,61 @@ pub fn render_gui_screen_opts(
                             on_fire: false,
                             crouching: false,
                             type_name: "minecraft:cow".to_string(),
+                        });
+                    }
+                    // THE FOURTH BODY's own ring (the same facing point
+                    // the cow ring speaks — the registry name the Add
+                    // Entity carries arms the kind at the merge): the
+                    // sheep continue the ids, the ovine mesh + the eat
+                    // fold the kind's own branch draws
+                    for i in 0..sheep_count {
+                        let t = 1.8
+                            + (opts.net_mobs
+                                + pig_count as usize
+                                + cow_count as usize
+                                + i as usize) as f64
+                                * 1.5;
+                        let side = if (opts.net_mobs
+                            + pig_count as usize
+                            + cow_count as usize
+                            + i as usize)
+                            % 2
+                            == 0
+                        {
+                            0.4
+                        } else {
+                            -0.4
+                        };
+                        let px = b_x + fx * t - fz * side;
+                        let pz = b_z + fz * t + fx * side;
+                        let w = app.net_world.as_ref().unwrap();
+                        let b_y = app.body.as_ref().map(|b| b.y as i32).unwrap_or(64);
+                        let mut gy = b_y;
+                        while gy > 0
+                            && w.get(px.floor() as i32, gy, pz.floor() as i32)
+                                == crate::world::AIR
+                        {
+                            gy -= 1;
+                        }
+                        let y = (gy + 1) as f64;
+                        let face = (-((b_x - px)).atan2(b_z - pz)).to_degrees() as f32;
+                        wire_mobs.push(crate::world_view::WireMob {
+                            id: 100
+                                + (opts.net_mobs
+                                    + pig_count as usize
+                                    + cow_count as usize
+                                    + i as usize) as i32,
+                            x: px,
+                            y,
+                            z: pz,
+                            yaw: face,
+                            pitch: 0.0,
+                            head_yaw: face, // the sheep's own look rides level
+                            health: None,
+                            hurt_time: 0,
+                            on_fire: false,
+                            crouching: false,
+                            type_name: "minecraft:sheep".to_string(),
                         });
                     }
                     app.live_mobs_updated(wire_mobs);

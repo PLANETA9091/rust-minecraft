@@ -744,6 +744,210 @@ fn build_cow_parts(state: &QuadrupedState) -> Vec<Part> {
     ]
 }
 
+/// THE OVINE POSE INPUTS — the quadruped's shared store PLUS the eat
+/// fold's own pair (javap `SheepModel.setupAnim(SheepRenderState)`, the
+/// dump's own two-field word: `head.y += headEatPositionScale * 9.0 *
+/// ageScale` then `head.xRot = headEatAngleScale` — the eat angle
+/// REPLACES the head pitch the quadruped fold spoke, the server's
+/// Sheep.getHeadEatAngleScale the renderer bakes verbatim in radians).
+/// The cow carried no override — the sheep is the first body whose own
+/// setupAnim the lane rides beyond the shared diagonal walk. The wire's
+/// pitch word is NOT an input: the sheep model's own putfield the
+/// replacement speaks leaves the look-pitch unrendered (the honest
+/// reading of the bytecode — the field the struct never carried).
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct SheepState {
+    /// vanilla yaw degrees (the body's own)
+    pub yaw_deg: f32,
+    /// the head's yaw offset from the body (the netHeadYaw clamp — the
+    /// yRot the quadruped fold's own state read speaks)
+    pub head_yaw_off_deg: f32,
+    /// walkAnimationPos (the backward-extrapolated walk phase)
+    pub walk_pos: f32,
+    /// walkAnimationSpeed (the min(abs, 1) blend)
+    pub walk_speed: f32,
+    /// ageInTicks (the idle owns no bob — carried for parity)
+    pub age_ticks: f32,
+    /// `LivingEntityRenderState.deathTime` (the same flip law's clock
+    /// the avatar fold speaks — one chain, every living model)
+    pub death_time: f32,
+    /// `SheepRenderState.headEatPositionScale` (the graze's head-drop
+    /// scale — the lane's honest 0.0, the AI sheep never eats)
+    pub head_eat_position: f32,
+    /// `SheepRenderState.headEatAngleScale` (the graze's pitch the
+    /// server bakes in radians — the xRot the model's own assign
+    /// REPLACES the quadruped's with)
+    pub head_eat_angle: f32,
+    /// `SheepRenderState.ageScale` (the adult's 1.0 — the baby variant
+    /// the scale would ride is a lane the client never arms yet)
+    pub age_scale: f32,
+}
+
+/// The full sheep model — the 26.2 `SheepModel.createBodyLayer`'s own
+/// numbers, bytecode-proven off the official jar (scripts/classfile_dump.py:
+/// the constant pool + the createBodyLayer walk): the head 6x6x8 (uv
+/// 0,0) at pivot (0, 6, -8) — the ovine's own REPLACEMENT over
+/// `QuadrupedModel.createBodyMesh(12, false, true, NONE)`'s 8x8x8
+/// default, the body 8x16x6 (uv 28,8) rotated x=PI/2 at pivot (0, 5,
+/// 2), the four 4x12x4 legs (uv 0,16) at pivots (+-3, 12, +7/-5) — the
+/// createLegs(loc1=false, loc2=true) walk's own pairing the RIGHT
+/// pair's mirror rides (the pig/cow LEFT-pair convention INVERTED, the
+/// bytecode's own word), `LayerDefinition.create(64, 32)` — the
+/// HALF-HEIGHT layout the 64x64 quadrupeds' replaced.
+pub struct SheepModel {
+    rgba: Vec<u8>,
+}
+
+impl SheepModel {
+    /// Load + sha1-verify the SHEEP's skin (the SheepRenderer's
+    /// `getTextureLocation` — the single sheep.png, no biome variants).
+    /// `None` = the sheep never renders (the same honesty the pig/cow
+    /// paths speak: the renderer must not lie about its data).
+    pub fn load(root: &Path) -> Option<SheepModel> {
+        let bytes = std::fs::read(root.join(skin::SHEEP_RUNTIME_PATH)).ok()?;
+        let digest = sha1::Sha1::digest(&bytes);
+        if hex::encode(digest) != skin::SHEEP_PNG_SHA1 {
+            return None;
+        }
+        let (w, h, rgba) = decode_rgba(&bytes).ok()?;
+        if w != 64 || h != 32 || rgba.len() != 64 * 32 * 4 {
+            return None;
+        }
+        Some(SheepModel { rgba })
+    }
+
+    /// The skin pixel at (u, v) — the RGBA row-major words, v down
+    /// (the 64x32 layout's own stride the load verified).
+    pub fn pixel(&self, u: f32, v: f32) -> [u8; 4] {
+        let (uu, vv) = (u.clamp(0.0, 63.999_9), v.clamp(0.0, 31.999_9));
+        let x = uu as usize;
+        let y = vv as usize;
+        let o = (y * 64 + x) * 4;
+        [self.rgba[o], self.rgba[o + 1], self.rgba[o + 2], self.rgba[o + 3]]
+    }
+
+    /// THE POSED RENDER: the world-space textured quads of the sheep at
+    /// `state` — the SAME entity chain fold the avatar speaks (one
+    /// law, every living model), the ovine's own parts + the eat fold
+    /// the head's pivot rides beneath.
+    pub fn quads(
+        &self,
+        state: &SheepState,
+        feet: Vec3,
+        cam_yaw: f32,
+        cam_pitch: f32,
+    ) -> Vec<AvatarQuad> {
+        let parts = build_sheep_parts(state);
+        let (fold_point, fold_normal) = entity_folds(state.yaw_deg, state.death_time, 0.0, feet);
+        let mut out: Vec<AvatarQuad> = Vec::with_capacity(6 * 6);
+        let ident = Mat4::IDENT;
+        for part in &parts {
+            collect_part(part, &ident, &fold_point, &fold_normal, cam_yaw, cam_pitch, &mut out);
+        }
+        out
+    }
+}
+
+/// The ovine's parts, posed by `state` — the javap-proven mesh: the
+/// head/body the createBodyLayer's own fluent chains speak, the legs
+/// the shared `QuadrupedModel.createLegs` walk lays (the RIGHT pair's
+/// mirror the loc2=true ride). THE WALK: the same `QuadrupedModel.setupAnim`
+/// diagonal fold the pig speaks — right-hind + left-front in phase,
+/// the other pair +PI (the sheep's own override only re-poses the
+/// head). THE EAT (the override's own word): the head's pivot y the
+/// `headEatPositionScale * 9.0 * ageScale` fold drops, the head's
+/// xRot the eat angle the server bakes REPLACES the quadruped's pitch.
+fn build_sheep_parts(state: &SheepState) -> Vec<Part> {
+    let pos = state.walk_pos;
+    let speed = state.walk_speed;
+    let leg_rh = mth_cos(pos * 0.6662) * 1.4 * speed;
+    let leg_lh = mth_cos(pos * 0.6662 + std::f32::consts::PI) * 1.4 * speed;
+    // THE EAT FOLD (SheepModel.setupAnim's own two statements — the
+    // head's y offset rides the model units the *9.0 speaks, the
+    // eatScale the adult's own 1.0 divides nothing)
+    let head_pivot_y = 6.0 + state.head_eat_position * 9.0 * state.age_scale;
+    let head_x = state.head_eat_angle;
+    let head_y = state.head_yaw_off_deg.to_radians();
+    let leg_cube = |mirror: bool| Cube {
+        tex: (0.0, 16.0),
+        origin: [-2.0, 0.0, -2.0],
+        size: [4.0, 12.0, 4.0],
+        inflate: 0.0,
+        mirror,
+    };
+    vec![
+        // head (the ovine's own replacement — one cube, no snout)
+        Part {
+            pivot: [0.0, head_pivot_y, -8.0],
+            x_rot: head_x,
+            y_rot: head_y,
+            z_rot: 0.0,
+            cubes: vec![Cube {
+                tex: (0.0, 0.0),
+                origin: [-3.0, -4.0, -6.0],
+                size: [6.0, 6.0, 8.0],
+                inflate: 0.0,
+                mirror: false,
+            }],
+            children: vec![],
+        },
+        // body (the horizontal barrel — the rotX PI/2 the PartPose
+        // offsetAndRotation speaks)
+        Part {
+            pivot: [0.0, 5.0, 2.0],
+            x_rot: std::f32::consts::FRAC_PI_2,
+            y_rot: 0.0,
+            z_rot: 0.0,
+            cubes: vec![Cube {
+                tex: (28.0, 8.0),
+                origin: [-4.0, -10.0, -7.0],
+                size: [8.0, 16.0, 6.0],
+                inflate: 0.0,
+                mirror: false,
+            }],
+            children: vec![],
+        },
+        // right hind leg (the MIRRORED builder — the loc2=true word the
+        // createLegs walk speaks, the pig/cow convention inverted)
+        Part {
+            pivot: [-3.0, 12.0, 7.0],
+            x_rot: leg_rh,
+            y_rot: 0.0,
+            z_rot: 0.0,
+            cubes: vec![leg_cube(true)],
+            children: vec![],
+        },
+        // left hind leg (the plain builder)
+        Part {
+            pivot: [3.0, 12.0, 7.0],
+            x_rot: leg_lh,
+            y_rot: 0.0,
+            z_rot: 0.0,
+            cubes: vec![leg_cube(false)],
+            children: vec![],
+        },
+        // right front leg (anti-phase of the right hind — the diagonal
+        // pair the setupAnim's own cos fold speaks)
+        Part {
+            pivot: [-3.0, 12.0, -5.0],
+            x_rot: leg_lh,
+            y_rot: 0.0,
+            z_rot: 0.0,
+            cubes: vec![leg_cube(true)],
+            children: vec![],
+        },
+        // left front leg (in phase with the right hind)
+        Part {
+            pivot: [3.0, 12.0, -5.0],
+            x_rot: leg_rh,
+            y_rot: 0.0,
+            z_rot: 0.0,
+            cubes: vec![leg_cube(false)],
+            children: vec![],
+        },
+    ]
+}
+
 /// The six base parts with their overlay children, posed by `state`
 /// (the setupAnim + setupAttackAnimation + crouch laws, verbatim).
 fn build_posed_parts(state: &AvatarState) -> Vec<Part> {
@@ -2092,6 +2296,264 @@ mod tests {
         // red over blue, the opaque texel the palette carries
         let px = cow.pixel(10.0, 10.0);
         assert!(px[0] > px[2], "the brown reads red-over-blue: {px:?}");
+        assert_eq!(px[3], 255, "the texel is opaque");
+    }
+
+    /// THE OVINE'S OWN EXTENTS (javap SheepModel.createBodyLayer's own
+    /// numbers): the mesh spans the ground (model y 24 — the legs'
+    /// 12-texel reach rides the same 24px plane the pig/cow speak) to
+    /// the head's top (model y 2 — the 6x6x8 head at pivot y 6 the
+    /// ovine's own replacement speaks), and the LEGS carry the widest
+    /// x (the ±5/16 the pivots +-3 + the 4-texel box speak — the
+    /// 8-texel barrel's ±4/16 stays inside).
+    #[test]
+    fn the_sheep_mesh_spans_the_ovine_height() {
+        let sheep = SheepModel {
+            rgba: vec![255u8; 64 * 32 * 4],
+        };
+        let feet = Vec3::new(10.0, 64.0, 20.0);
+        let state = SheepState {
+            yaw_deg: 0.0,
+            head_yaw_off_deg: 0.0,
+            walk_pos: 0.0,
+            walk_speed: 0.0,
+            age_ticks: 40.0,
+            death_time: 0.0,
+            head_eat_position: 0.0,
+            head_eat_angle: 0.0,
+            age_scale: 1.0,
+        };
+        let quads = sheep.quads(&state, feet, 0.0, 0.0);
+        assert!(!quads.is_empty(), "the mesh speaks quads");
+        let mut min_y = f32::MAX;
+        let mut max_y = f32::MIN;
+        let mut min_x = f32::MAX;
+        let mut max_x = f32::MIN;
+        for q in &quads {
+            for p in q.pts {
+                min_y = min_y.min(p[1]);
+                max_y = max_y.max(p[1]);
+                min_x = min_x.min(p[0]);
+                max_x = max_x.max(p[0]);
+            }
+        }
+        // model y 24 (the legs' ground) -> feet + 0.001 (the fold's own
+        // epsilon); model y 2 (the head's top) -> feet + 1.376
+        assert!(
+            (min_y - (feet.y as f32 + 0.001)).abs() < 1e-4,
+            "the feet ride the ground: {min_y}"
+        );
+        assert!(
+            (max_y - (feet.y as f32 + 1.376)).abs() < 1e-4,
+            "the head's top rides 1.375 above the feet: {max_y}"
+        );
+        // the legs' own ±5/16 (pivots +-3 + the 4-texel box) — the
+        // 8-texel barrel's ±4/16 the narrower word stays inside
+        assert!(
+            (min_x - (feet.x as f32 - 5.0 / 16.0)).abs() < 1e-4,
+            "the legs' west face: {min_x}"
+        );
+        assert!(
+            (max_x - (feet.x as f32 + 5.0 / 16.0)).abs() < 1e-4,
+            "the legs' east face: {max_x}"
+        );
+    }
+
+    /// THE OVINE WALK (the same javap QuadrupedModel.setupAnim fold —
+    /// the sheep's own override only re-poses the HEAD): the DIAGONAL
+    /// pairs swing together — the 12-texel legs' backward kick reaches
+    /// past the rest stand the same law the pig/cow speak.
+    #[test]
+    fn the_sheep_walk_swings_the_diagonal_pairs() {
+        let sheep = SheepModel {
+            rgba: vec![255u8; 64 * 32 * 4],
+        };
+        let feet = Vec3::new(0.0, 64.0, 0.0);
+        let rest = SheepState {
+            yaw_deg: 0.0,
+            head_yaw_off_deg: 0.0,
+            walk_pos: 0.0,
+            walk_speed: 0.0,
+            age_ticks: 40.0,
+            death_time: 0.0,
+            head_eat_position: 0.0,
+            head_eat_angle: 0.0,
+            age_scale: 1.0,
+        };
+        let walked = SheepState {
+            walk_pos: 0.0,
+            walk_speed: 1.0,
+            ..rest
+        };
+        let rest_quads = sheep.quads(&rest, feet, 0.0, 0.0);
+        let walked_quads = sheep.quads(&walked, feet, 0.0, 0.0);
+        assert_eq!(rest_quads.len(), walked_quads.len(), "same mesh, moved legs");
+        // the swing's backward kick (the 12-texel legs' own reach)
+        // passes the rest stand — the hind legs' rest back edge the
+        // yaw fold's -z holds
+        let rest_z: Vec<f32> = rest_quads.iter().flat_map(|q| q.pts.iter().map(|p| p[2])).collect();
+        let rest_min_z = rest_z.iter().cloned().fold(f32::MAX, f32::min);
+        let walk_z: Vec<f32> = walked_quads
+            .iter()
+            .flat_map(|q| q.pts.iter().map(|p| p[2]))
+            .collect();
+        let walk_min_z = walk_z.iter().cloned().fold(f32::MAX, f32::min);
+        assert!(
+            walk_min_z < rest_min_z - 0.05,
+            "the swing reaches past the stand: rest {rest_min_z} walked {walk_min_z}"
+        );
+        // and the legs MOVED — some quad corner left its rest spot
+        let moved = walked_quads
+            .iter()
+            .zip(rest_quads.iter())
+            .any(|(wq, rq)| wq.pts.iter().zip(rq.pts.iter()).any(|(wp, rp)| (wp[2] - rp[2]).abs() > 1e-4));
+        assert!(moved, "the walk's own swing moved the legs");
+    }
+
+    /// THE MIRROR UNWRAP (the bytecode's own createLegs(loc1=false,
+    /// loc2=true) walk — the RIGHT legs' builders speak the mirror(),
+    /// the pig/cow LEFT-pair convention INVERTED): the mirrored cube's
+    /// front face samples the leg rect reversed — the u corners swap,
+    /// the v corners stand.
+    #[test]
+    fn the_sheep_right_legs_ride_the_mirror_unwrap() {
+        let sheep = SheepModel {
+            rgba: vec![255u8; 64 * 32 * 4],
+        };
+        let state = SheepState {
+            yaw_deg: 0.0,
+            head_yaw_off_deg: 0.0,
+            walk_pos: 0.0,
+            walk_speed: 0.0,
+            age_ticks: 40.0,
+            death_time: 0.0,
+            head_eat_position: 0.0,
+            head_eat_angle: 0.0,
+            age_scale: 1.0,
+        };
+        let quads = sheep.quads(&state, Vec3::new(0.0, 64.0, 0.0), 0.0, 0.0);
+        // the legs' unwrap region: texOffs (0,16), box 4x12x4 — every
+        // face rect inside u [0,16), v [16,32)
+        let leg_quads: Vec<&AvatarQuad> = quads
+            .iter()
+            .filter(|q| {
+                q.uv.iter().all(|c| c[0] >= 0.0 && c[0] <= 16.0 && c[1] >= 16.0 && c[1] <= 32.0)
+            })
+            .collect();
+        assert_eq!(leg_quads.len(), 24, "4 legs x 6 faces");
+        // the unmirrored front face (k=0 -> (u1,v0)): the 12-texel
+        // leg's front rect (4,20)-(8,32) — [[8,20],[4,20],[4,32],[8,32]]
+        let plain_front = leg_quads.iter().any(|q| {
+            q.uv[0] == [8.0, 20.0]
+                && q.uv[1] == [4.0, 20.0]
+                && q.uv[2] == [4.0, 32.0]
+                && q.uv[3] == [8.0, 32.0]
+        });
+        // the mirrored front face: the u axis flipped
+        let mirrored_front = leg_quads.iter().any(|q| {
+            q.uv[0] == [4.0, 20.0]
+                && q.uv[1] == [8.0, 20.0]
+                && q.uv[2] == [8.0, 32.0]
+                && q.uv[3] == [4.0, 32.0]
+        });
+        assert!(plain_front, "the left legs' own unwrap rides");
+        assert!(mirrored_front, "the right legs' mirror flips the u axis");
+    }
+
+    /// THE EAT FOLD (javap SheepModel.setupAnim's own two statements —
+    /// the override the cow never spoke): the head's pivot the
+    /// `headEatPositionScale * 9.0 * ageScale` fold DROPS (model y 6
+    /// -> 10.5 at the half-eat — the head's top face 1.376 -> 1.095
+    /// above the feet), and the eat angle the head's xRot REPLACES the
+    /// quadruped's pitch with pitches the head (some corner moves).
+    #[test]
+    fn the_sheep_eat_fold_drops_and_pitches_the_head() {
+        let sheep = SheepModel {
+            rgba: vec![255u8; 64 * 32 * 4],
+        };
+        let feet = Vec3::new(0.0, 64.0, 0.0);
+        let rest = SheepState {
+            yaw_deg: 0.0,
+            head_yaw_off_deg: 0.0,
+            walk_pos: 0.0,
+            walk_speed: 0.0,
+            age_ticks: 40.0,
+            death_time: 0.0,
+            head_eat_position: 0.0,
+            head_eat_angle: 0.0,
+            age_scale: 1.0,
+        };
+        let max_y_of = |state: &SheepState| {
+            sheep
+                .quads(state, feet, 0.0, 0.0)
+                .iter()
+                .flat_map(|q| q.pts.iter().map(|p| p[1]))
+                .fold(f32::MIN, f32::max)
+        };
+        // the rest stand's own top: the head's model y 2 -> 1.376
+        let rest_max = max_y_of(&rest);
+        assert!(
+            (rest_max - (feet.y as f32 + 1.376)).abs() < 1e-4,
+            "the rest top the head's own: {rest_max}"
+        );
+        // the quarter-eat: pivot 6 -> 6 + 0.25*9.0*1.0 = 8.25, the
+        // head's top model y 2 -> 4.25 (still the mesh's top — the
+        // 8-texel barrel's own top model y 6 stays below) -> feet +
+        // 1.235375 (the fold's own epsilon the ground speaks)
+        let eating = SheepState {
+            head_eat_position: 0.25,
+            ..rest
+        };
+        let eat_max = max_y_of(&eating);
+        assert!(
+            (eat_max - (feet.y as f32 + 1.235_375)).abs() < 1e-4,
+            "the quarter-eat drops the head the *9.0 fold speaks: {eat_max}"
+        );
+        // the ageScale the fold rides: the half-adult's drop halves
+        let half_grown = SheepState {
+            head_eat_position: 0.25,
+            age_scale: 0.5,
+            ..rest
+        };
+        let half_max = max_y_of(&half_grown);
+        assert!(
+            half_max > eat_max && half_max < rest_max,
+            "the ageScale halves the drop: {half_max} between {eat_max} and {rest_max}"
+        );
+        // the eat angle pitches the head (the xRot the assign replaces
+        // the quadruped's pitch with) — some corner moves vs the rest
+        let pitched = SheepState {
+            head_eat_angle: 0.9,
+            ..rest
+        };
+        let moved = sheep
+            .quads(&pitched, feet, 0.0, 0.0)
+            .iter()
+            .zip(sheep.quads(&rest, feet, 0.0, 0.0).iter())
+            .any(|(pq, rq)| pq.pts.iter().zip(rq.pts.iter()).any(|(pp, rp)| (pp[2] - rp[2]).abs() > 1e-4));
+        assert!(moved, "the eat angle's own pitch moved the head");
+    }
+
+    /// THE SHEEP LOADS — the real runtime cache (the generator's
+    /// extraction) decodes the 64x32 skin the sha1 the generated table
+    /// pins (the SheepRenderer's getTextureLocation).
+    #[test]
+    #[ignore = "needs runtime assets (assets-cache/jar) from mc2rs-gen generate"]
+    fn the_sheep_model_loads_sha1_verified() {
+        let mut dir = std::env::current_dir().unwrap();
+        let root = loop {
+            let cand = dir.join("assets-cache/jar");
+            if cand.exists() {
+                break cand;
+            }
+            dir = dir.parent().expect("the runtime root above").to_path_buf();
+        };
+        let sheep = SheepModel::load(&root).expect("the sheep loads from the runtime cache");
+        // the ovine's tan face: the head's front face (the unwrap rect
+        // (8,8)-(14,14) the 6x6x8 head speaks) reads tan — red over
+        // blue, the opaque texel the palette carries
+        let px = sheep.pixel(11.0, 11.0);
+        assert!(px[0] > px[2], "the tan reads red-over-blue: {px:?}");
         assert_eq!(px[3], 255, "the texel is opaque");
     }
 

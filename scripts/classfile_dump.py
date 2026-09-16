@@ -204,14 +204,26 @@ def trace_code(cp, code):
                 a = pop(); b = pop(); c = pop(); stack += [b, a, b, c, b]
         elif op == 0x5f:
             a = pop(); b = pop(); stack += [a, b]
-        elif op in (0x60, 0x64, 0x68, 0x6c, 0x70, 0x74, 0x77, 0x7b, 0x7f, 0x7e, 0x80, 0x81, 0x83, 0x82, 0x7d, 0x79):
+        elif op in (0x60, 0x64, 0x68, 0x6c, 0x70, 0x74, 0x77, 0x7b, 0x7f, 0x7e, 0x80, 0x81, 0x83, 0x82, 0x7d, 0x79,
+                    0x62, 0x66, 0x6a, 0x6e):
             b = pop(); a = pop()
             va = a[1] if a[0] == 'lit' else None
             vb = b[1] if b[0] == 'lit' else None
             name = {0x60:'iadd',0x64:'isub',0x68:'imul',0x6c:'idiv',0x70:'irem',
                     0x74:'ladd',0x77:'lmul',0x7b:'lshl',0x7f:'land',0x7e:'iand',
-                    0x80:'ior',0x81:'ixor',0x83:'lor',0x82:'lxor',0x7d:'lushr',0x79:'lshr'}[op]
-            if op in (0x7b, 0x79, 0x7d):
+                    0x80:'ior',0x81:'ixor',0x83:'lor',0x82:'lxor',0x7d:'lushr',0x79:'lshr',
+                    0x62:'fadd',0x66:'fsub',0x6a:'fmul',0x6e:'fdiv'}[op]
+            if op in (0x62, 0x66, 0x6a, 0x6e):
+                # float arith: fold when both sides literal, else keep the symbolic expr
+                if va is not None and vb is not None:
+                    try:
+                        res = {0x62: va+vb, 0x66: va-vb, 0x6a: va*vb, 0x6e: va/vb if vb else None}.get(op)
+                        stack.append(('lit', res) if res is not None else ('arith', name, short(a), short(b)))
+                    except Exception:
+                        stack.append(('arith', name, short(a), short(b)))
+                else:
+                    stack.append(('expr', f"({short(a)} {('+' if op==0x62 else '-' if op==0x66 else '*' if op==0x6a else '/')} {short(b)})"))
+            elif op in (0x7b, 0x79, 0x7d):
                 if va is not None: stack.append(('lit', va))
                 else: stack.append(('arith', name, short(a), short(b)))
             else:
@@ -275,8 +287,12 @@ def trace_code(cp, code):
         elif op == 0xb4:
             i = r.u2(); owner, nm, desc = cp_ref(cp, i)
             a = pop()
-            stack.append(('arith', 'getfield', f"{nm}", short(a)))
-        elif op == 0xb5: r.u2(); popn(1)
+            stack.append(('expr', f"{short(a)}.{nm}"))
+            out.append(f"  {pc:4d} getfield {owner}.{nm}  ({short(a)})")
+        elif op == 0xb5:
+            i = r.u2(); owner, nm, desc = cp_ref(cp, i)
+            v = pop()
+            out.append(f"  {pc:4d} putfield {owner}.{nm} = {short(v)}")
         elif op in (0xb6, 0xb7, 0xb8, 0xb9):
             i = r.u2()
             if op == 0xb9: r.u2()

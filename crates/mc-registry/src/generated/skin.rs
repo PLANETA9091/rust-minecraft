@@ -88,6 +88,14 @@ pub const PIG_TEMPERATE_RUNTIME_PATH: &str = "entity/pig/pig_temperate.png";
 pub const COW_TEMPERATE_PNG_SHA1: &str = "300373b9a751509dc5472a0fc5796a0b929c75ef";
 pub const COW_TEMPERATE_RUNTIME_PATH: &str = "entity/cow/cow_temperate.png";
 
+/// The SHEEP skin (the single sheep.png the SheepRenderer's
+/// getTextureLocation speaks — no biome variants), generated from the
+/// same jar: the source sha1 the sheep renderer verifies before it
+/// draws (javap SheepModel: `LayerDefinition.create(64, 32)` — the
+/// ovine's own HALF-HEIGHT UV layout).
+pub const SHEEP_PNG_SHA1: &str = "e7c4f9b5279e356724fd48fbbf1cba93b8e6cf26";
+pub const SHEEP_RUNTIME_PATH: &str = "entity/sheep/sheep.png";
+
 /// The FLAME strips (the burn lane's pixel sources), generated from
 /// the same jar: the source sha1s the burning mob's renderer verifies
 /// before it draws (javap: `FlameFeatureRenderer.buildGroup`'s

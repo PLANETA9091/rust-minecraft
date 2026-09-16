@@ -944,6 +944,7 @@ impl LiveView {
                 if type_name != "minecraft:zombie"
                     && type_name != "minecraft:pig"
                     && type_name != "minecraft:cow"
+                    && type_name != "minecraft:sheep"
                 {
                     return None; // not-yet-drawn types stay honest data
                 }
@@ -1307,19 +1308,20 @@ mod tests {
         assert_eq!(sky, None, "unsent column: unknown");
     }
 
-    /// The mob projection: the Add Entity store's zombies, pigs AND
-    /// cows ride the refresh (the synced entity-type registry names the
-    /// id), the unknown types stay honest data, the pose verbatim (the
-    /// server's own authority the lerpTo law will walk).
+    /// The mob projection: the Add Entity store's zombies, pigs, cows
+    /// AND sheep ride the refresh (the synced entity-type registry
+    /// names the id), the unknown types stay honest data, the pose
+    /// verbatim (the server's own authority the lerpTo law will walk).
     #[test]
     fn refresh_projects_the_wire_zombies() {
         use mc_protocol::play::EntitySpawn;
         let mut m = WorldModel::new();
-        // the synced registry: type id 0 = pig, id 1 = zombie, id 2 = cow
+        // the synced registry: type id 0 = pig, id 1 = zombie, id 2 = cow, id 3 = sheep
         m.registry.entity_types = vec![
             "minecraft:pig".to_string(),
             "minecraft:zombie".to_string(),
             "minecraft:cow".to_string(),
+            "minecraft:sheep".to_string(),
         ];
         m.apply(PlayEvent::Spawn(EntitySpawn {
             id: 7,
@@ -1368,8 +1370,24 @@ mod tests {
             y_head_rot: 180.0,
             data: 0,
         }));
+        // a sheep: the FOURTH drawn body (the ovine mesh + the eat
+        // fold the kind's own branch speaks — the registry name rides
+        // the projection)
+        view.model.apply(PlayEvent::Spawn(EntitySpawn {
+            id: 10,
+            uuid: 4,
+            type_id: 3,
+            x: 70.0,
+            y: 64.0,
+            z: 72.0,
+            movement: [0.0; 3],
+            x_rot: 0.0,
+            y_rot: 270.0,
+            y_head_rot: 270.0,
+            data: 0,
+        }));
         let upd = view.refresh(example_mapper);
-        assert_eq!(upd.mobs.len(), 3, "the zombie AND the pig AND the cow render v2");
+        assert_eq!(upd.mobs.len(), 4, "the zombie AND the pig AND the cow AND the sheep render v2");
         // THE ID KEYS THE LOOKUP (the entities' walk order is the
         // store's own — the id names the body, never the position)
         let z = upd.mobs.iter().find(|m| m.id == 7).unwrap();
@@ -1388,6 +1406,12 @@ mod tests {
         assert_eq!(c.type_name, "minecraft:cow");
         assert_eq!((c.x, c.y, c.z), (50.0, 64.0, 52.0));
         assert_eq!((c.yaw, c.head_yaw), (180.0, 180.0));
+        // the sheep's own word rides the SAME projection (the type
+        // name verbatim, the pose the server's own)
+        let s = upd.mobs.iter().find(|m| m.id == 10).unwrap();
+        assert_eq!(s.type_name, "minecraft:sheep");
+        assert_eq!((s.x, s.y, s.z), (70.0, 64.0, 72.0));
+        assert_eq!((s.yaw, s.head_yaw), (270.0, 270.0));
         // the metadata's own health word (LivingEntity's DATA_HEALTH_ID
         // 8 — the FLOAT accessor the Set Entity Data store keeps)
         view.model.apply(PlayEvent::EntityData(mc_protocol::play::EntityDataSet {

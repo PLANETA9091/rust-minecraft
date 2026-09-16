@@ -30,6 +30,15 @@ pub const PIG_TEMPERATE_JAR_PATH: &str = "assets/minecraft/textures/entity/pig/p
 /// `LayerDefinition.create(64, 64)` (javap CowModel).
 pub const COW_TEMPERATE_JAR_PATH: &str = "assets/minecraft/textures/entity/cow/cow_temperate.png";
 
+/// The jar entry the SHEEP's skin lives at (the SheepRenderer's
+/// `getTextureLocation` — the plain sheep carries NO biome variants,
+/// the single sheep.png the 26.2 jar keeps; the wool overlay's
+/// sheep_wool.png is the fur layer's own texture the body's render
+/// never reads). The ovine mesh rides `LayerDefinition.create(64, 32)`
+/// (javap SheepModel — the HALF-HEIGHT layout the 64-texel-wide
+/// quadrupeds' 64x64 replaced).
+pub const SHEEP_JAR_PATH: &str = "assets/minecraft/textures/entity/sheep/sheep.png";
+
 /// The flame feature's two animated strips (`FlameFeatureRenderer`'s
 /// ModelBakery.FIRE_0 / FIRE_1 sprite sources) — the burn lane reads
 /// their frames off the blocks atlas path the runtime cache mirrors.
@@ -157,6 +166,7 @@ pub const SLIM_RUNTIME_PATH: &str = "entity/player/slim/alex.png";
 pub const ZOMBIE_RUNTIME_PATH: &str = "entity/zombie/zombie.png";
 pub const PIG_TEMPERATE_RUNTIME_PATH: &str = "entity/pig/pig_temperate.png";
 pub const COW_TEMPERATE_RUNTIME_PATH: &str = "entity/cow/cow_temperate.png";
+pub const SHEEP_RUNTIME_PATH: &str = "entity/sheep/sheep.png";
 
 /// The vanilla `PlayerModel` arm box for the wide model: texOffs (40, 16),
 /// box 4x12x4 texels (w, h, d).
@@ -192,6 +202,9 @@ pub struct SkinData {
     /// sha1 of the cow's temperate source PNG bytes (jar-verbatim
     /// integrity) — the bovine's texture the cow renderer verifies.
     pub cow_png_sha1: String,
+    /// sha1 of the sheep's source PNG bytes (jar-verbatim integrity) —
+    /// the ovine's texture the sheep renderer verifies.
+    pub sheep_png_sha1: String,
     /// sha1 of the flame feature's fire_0 strip (jar-verbatim integrity)
     /// — the burn lane's pixel source (the 16x512, 32-frame strip).
     pub fire_0_png_sha1: String,
@@ -318,6 +331,23 @@ pub fn generate<R: std::io::Read + std::io::Seek>(archive: &mut zip::ZipArchive<
         cow_h
     );
     std::mem::drop(_cow_rgba);
+    // THE SHEEP SKIN (the fourth mob's own): the single sheep.png the
+    // SheepRenderer's getTextureLocation speaks — no biome variants
+    // (the pig/cow's temperate tables the sheep never grew). The ovine
+    // mesh rides `LayerDefinition.create(64, 32)` (javap SheepModel) —
+    // the HALF-HEIGHT layout, its own UV layout the sheep model
+    // unwraps. The integrity sha1 the sheep lane verifies before it
+    // draws.
+    let sheep_bytes = read_entry(archive, SHEEP_JAR_PATH).context("read the sheep skin")?;
+    let sheep_png_sha1 = crate::util::sha1_hex(&sheep_bytes);
+    let (sheep_w, sheep_h, _sheep_rgba) = decode_rgba(&sheep_bytes).context("decode the sheep skin")?;
+    anyhow::ensure!(
+        (sheep_w, sheep_h) == (64, 32),
+        "the sheep skin must be the 64x32 layout (javap LayerDefinition.create(64, 32)), got {}x{}",
+        sheep_w,
+        sheep_h
+    );
+    std::mem::drop(_sheep_rgba);
     // THE FIRE STRIPS: the flame feature's two animated pixel sources
     // (javap `FlameFeatureRenderer.buildGroup`: ModelBakery.FIRE_0 /
     // FIRE_1) — 16x512 = 32 stacked 16x16 frames each, the mcmeta
@@ -461,6 +491,7 @@ pub fn generate<R: std::io::Read + std::io::Seek>(archive: &mut zip::ZipArchive<
         zombie_png_sha1,
         pig_png_sha1,
         cow_png_sha1,
+        sheep_png_sha1,
         fire_0_png_sha1,
         fire_1_png_sha1,
         underwater_png_sha1,
@@ -568,6 +599,14 @@ pub fn emit(data: &SkinData) -> Result<String> {
     ));
     out.push_str(&format!(
         "pub const COW_TEMPERATE_RUNTIME_PATH: &str = \"{COW_TEMPERATE_RUNTIME_PATH}\";\n"
+    ));
+    out.push_str("\n/// The SHEEP skin (the single sheep.png the SheepRenderer's\n/// getTextureLocation speaks — no biome variants), generated from the\n/// same jar: the source sha1 the sheep renderer verifies before it\n/// draws (javap SheepModel: `LayerDefinition.create(64, 32)` — the\n/// ovine's own HALF-HEIGHT UV layout).\n");
+    out.push_str(&format!(
+        "pub const SHEEP_PNG_SHA1: &str = \"{}\";\n",
+        data.sheep_png_sha1
+    ));
+    out.push_str(&format!(
+        "pub const SHEEP_RUNTIME_PATH: &str = \"{SHEEP_RUNTIME_PATH}\";\n"
     ));
     out.push_str("\n/// The FLAME strips (the burn lane's pixel sources), generated from\n/// the same jar: the source sha1s the burning mob's renderer verifies\n/// before it draws (javap: `FlameFeatureRenderer.buildGroup`'s\n/// ModelBakery.FIRE_0 / FIRE_1 — the 16x512, 32-frame strips; fire_0's\n/// mcmeta playlist [16..31, 0..15], fire_1 sequential).\n");
     out.push_str(&format!(
@@ -800,6 +839,25 @@ mod tests {
         out
     }
 
+    /// A 64x32 RGBA png — the sheep skin's own shape (the ovine's
+    /// HALF-HEIGHT layout, javap `LayerDefinition.create(64, 32)`), one
+    /// lit texel so the decode is non-trivial.
+    fn sheep_png() -> Vec<u8> {
+        let (w, h) = (64u32, 32u32);
+        let mut rgba = vec![0u8; (w * h * 4) as usize];
+        let o = ((10 * w + 10) * 4) as usize;
+        rgba[o..o + 4].copy_from_slice(&[228, 228, 228, 255]);
+        let mut out = Vec::new();
+        {
+            let mut enc = png::Encoder::new(&mut out, w, h);
+            enc.set_color(png::ColorType::Rgba);
+            enc.set_depth(png::BitDepth::Eight);
+            let mut wr = enc.write_header().unwrap();
+            wr.write_image_data(&rgba).unwrap();
+        }
+        out
+    }
+
     #[test]
     fn parses_the_skins_and_emits_the_arm_geometry() {
         let png = skin_png();
@@ -824,6 +882,8 @@ mod tests {
             splashes.iter().map(|p| crate::util::sha1_hex(p)).collect();
         let lava = tiny_png();
         let expected_lava_sha1 = crate::util::sha1_hex(&lava);
+        let sheep = sheep_png();
+        let expected_sheep_sha1 = crate::util::sha1_hex(&sheep);
         let damage = tiny_png();
         let expected_damage_sha1 = crate::util::sha1_hex(&damage);
         let sweeps = [sweep_png(), sweep_png(), sweep_png(), sweep_png(), sweep_png(), sweep_png(), sweep_png(), sweep_png()];
@@ -836,6 +896,7 @@ mod tests {
             (ZOMBIE_JAR_PATH, png.clone()),
             (PIG_TEMPERATE_JAR_PATH, png.clone()),
             (COW_TEMPERATE_JAR_PATH, png.clone()),
+            (SHEEP_JAR_PATH, sheep.clone()),
             (FIRE_0_JAR_PATH, strip.clone()),
             (FIRE_1_JAR_PATH, strip),
             (UNDERWATER_JAR_PATH, underwater),
@@ -886,6 +947,10 @@ mod tests {
         assert_eq!(
             data.cow_png_sha1, expected_png_sha1,
             "the cow's own sha1 (the fixture doubles as the temperate skin)"
+        );
+        assert_eq!(
+            data.sheep_png_sha1, expected_sheep_sha1,
+            "the sheep's own sha1 (its own 64x32 shape the fixture speaks)"
         );
         assert_eq!(
             data.particle_crit_png_sha1, expected_crit_sha1,
@@ -941,6 +1006,9 @@ mod tests {
         // the cow: the sha1 and the runtime path land verbatim
         assert!(emitted.contains(&format!("pub const COW_TEMPERATE_PNG_SHA1: &str = \"{expected_png_sha1}\";")));
         assert!(emitted.contains("pub const COW_TEMPERATE_RUNTIME_PATH: &str = \"entity/cow/cow_temperate.png\";"));
+        // the sheep: the sha1 and the runtime path land verbatim
+        assert!(emitted.contains(&format!("pub const SHEEP_PNG_SHA1: &str = \"{expected_sheep_sha1}\";")));
+        assert!(emitted.contains("pub const SHEEP_RUNTIME_PATH: &str = \"entity/sheep/sheep.png\";"));
         // the particle lane: the crit star's + the poof frames' sha1s
         // and the runtime paths land verbatim
         assert!(emitted.contains(&format!("pub const PARTICLE_CRIT_PNG_SHA1: &str = \"{expected_crit_sha1}\";")));
@@ -1067,6 +1135,18 @@ mod tests {
     }
 
     #[test]
+    fn refuses_a_zip_without_the_sheep_skin() {
+        // the sheep's table must not be invented either: a jar missing
+        // sheep.png fails the generation (the same data-driven rule the
+        // cow skin speaks)
+        let mut zip = zip_of(&[(
+            WIDE_STEVE_JAR_PATH,
+            skin_png(),
+        ), (SLIM_ALEX_JAR_PATH, skin_png()), (ZOMBIE_JAR_PATH, skin_png()), (PIG_TEMPERATE_JAR_PATH, skin_png()), (COW_TEMPERATE_JAR_PATH, skin_png())]);
+        assert!(generate(&mut zip).is_err(), "missing sheep skin must be refused");
+    }
+
+    #[test]
     fn refuses_a_zip_without_the_underwater_screen() {
         // the water screen's table must not be invented either: a jar
         // missing underwater.png fails the generation (the same
@@ -1075,6 +1155,9 @@ mod tests {
             (WIDE_STEVE_JAR_PATH, skin_png()),
             (SLIM_ALEX_JAR_PATH, skin_png()),
             (ZOMBIE_JAR_PATH, skin_png()),
+            (PIG_TEMPERATE_JAR_PATH, skin_png()),
+            (COW_TEMPERATE_JAR_PATH, skin_png()),
+            (SHEEP_JAR_PATH, sheep_png()),
             (FIRE_0_JAR_PATH, strip_png()),
             (FIRE_1_JAR_PATH, strip_png()),
         ]);

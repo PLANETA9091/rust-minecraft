@@ -2,7 +2,7 @@
 
 Every lane that ships pixels owes the folder a frame. The gallery is the
 proof the features exist as rendered images, not as test names alone.
-122 frames and counting — grouped below by the lane that spoke them.
+123 frames and counting — grouped below by the lane that spoke them.
 
 ## The F5 lane (the third-person avatar) — v0.3.154+
 
@@ -416,6 +416,7 @@ lasts 20 real minutes again, the eat hold 1.6s, the swing 0.3s.
 | `wire_crouch.png` | THE SERVER'S OWN POSE (v0.3.188): the wire mob's crouch — the same shared-flags accessor's bit 1 (Entity.isCrouching's own `getSharedFlag(0) & 2` the render state's isCrouching speaks) arms the avatar's crouch pose the model folds (the body's own bend the vanilla HumanoidModel speaks), the zombie bows at the server's word; the standing companion at the identical staging diffs rms 30.2 (the pose's own silhouette, honestly bent) |
 | `wire_pig.png` | THE SERVER'S OWN PIG (v0.3.189): the SECOND drawn body — the wire pig the Add Entity type id names through the synced registry (the v1 lane kept the quadrupeds honest data, the pigs invisible) renders the javap-proven 26.2 PigModel mesh (the head 8x8x8 + the snout cube, the rotX barrel body, the four 4x6x4 legs, the diagonal-pair walk the QuadrupedModel fold speaks) over the temperate skin the variant table defaults to; the empty companion at the identical staging diffs rms 20.2 (the pig's own presence, eyes and snout honest) |
 | `wire_cow.png` | THE SERVER'S OWN COW (v0.3.190): the THIRD drawn body — the wire cow the Add Entity type id names through the synced registry renders the bytecode-proven 26.2 CowModel mesh (the head 8x8x6 + the muzzle cube + the two horn cubes, the rotX barrel body + the udder cube, the four 4x12x4 legs the LEFT pair's mirror rides — the astore/aload pairing the classfile walk proved) over the temperate skin the variant table defaults to; the empty companion at the identical staging diffs rms 29.5 (the bovine's own presence, horns and muzzle honest) |
+| `wire_sheep.png` | THE SERVER'S OWN SHEEP (v0.3.191): the FOURTH drawn body — the wire sheep the Add Entity type id names through the synced registry renders the bytecode-proven 26.2 SheepModel mesh (the head 6x6x8 the ovine's own replacement over the createBodyMesh default, the rotX 8x16x6 barrel, the four 4x12x4 legs the RIGHT pair's mirror rides — the createLegs(loc1=false, loc2=true) walk the pig/cow LEFT-pair convention INVERTED) over the single sheep.png the getTextureLocation speaks, the 64x32 HALF-HEIGHT layout the load verifies; the model's OWN setupAnim the eat fold rides (the head the *9.0*ageScale drop + the eat-angle xRot the replacement law speaks — the wire's pitch word the struct never carried); the empty companion at the identical staging diffs rms 28.2 (the ovine's own presence, face and wool honest) |
 
 Regenerate the family (the flag the CLI speaks today):
 
@@ -559,6 +560,19 @@ cargo run -p mc-client --release -- --headless --screen world \
 # point (the kind the registry name arms at the merge draws the
 # bovine mesh — standalone or beside --net-mobs/--net-pig); the
 # empty companion (no --net-cow) diffs rms 29.5
+```
+
+The server's own sheep (v0.3.191 — the fourth drawn body):
+
+```sh
+cargo run -p mc-client --release -- --headless --screen world \
+  --seed 42 --body --walk-ticks 1 --body-yaw 0 --net-sheep 2 \
+  --ui-frame 3 --out shots/wire_sheep.png
+# --net-sheep N stages N wire sheep through the mob ring's own facing
+# point (the kind the registry name arms at the merge draws the
+# ovine mesh + the eat fold — standalone or beside
+# --net-mobs/--net-pig/--net-cow); the empty companion (no
+# --net-sheep) diffs rms 28.2
 ```
 
 ## The lava-fog lane (the ember murk) — v0.3.167

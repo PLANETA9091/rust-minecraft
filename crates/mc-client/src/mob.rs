@@ -104,6 +104,15 @@ pub const COW_HEIGHT: f64 = 1.4;
 /// The COW registration's own `eyeHeight(1.3F)` (the same block).
 pub const COW_EYE_HEIGHT: f64 = 1.3;
 
+/// The SHEEP registration's own `sized(0.8999999761581421F,
+/// 1.2999999523162842F)` (EntityTypes clinit's own builder chain — the
+/// fourth drawn body's bbox the flame ring asks).
+pub const SHEEP_WIDTH: f64 = 0.9;
+pub const SHEEP_HEIGHT: f64 = 1.3;
+/// The SHEEP registration's own `eyeHeight(1.2350000143051147F)` (the
+/// same chain).
+pub const SHEEP_EYE_HEIGHT: f64 = 1.235;
+
 /// The registration's `eyeHeight(1.74F)`.
 pub const ZOMBIE_EYE_HEIGHT: f64 = 1.74;
 /// `Zombie.createAttributes` — MOVEMENT_SPEED 0.23000000417232513.
@@ -125,6 +134,13 @@ pub enum MobKind {
     /// numbers — head 8x8x6 + muzzle + horns, the rotX barrel +
     /// udder, 4 long legs the LEFT pair's mirror rides)
     Cow,
+    /// the ovine mesh (javap SheepModel.createBodyLayer's own numbers
+    /// — head 6x6x8 the ovine's own replacement, the rotX 8x16x6
+    /// barrel, 4 long legs the RIGHT pair's mirror the
+    /// createLegs(loc1=false, loc2=true) walk rides) PLUS the eat
+    /// fold the own setupAnim speaks (the head the *9.0 drop and the
+    /// eat-angle replacement the cow never carried)
+    Sheep,
 }
 
 impl MobKind {
@@ -137,6 +153,8 @@ impl MobKind {
             MobKind::Pig
         } else if name == "minecraft:cow" {
             MobKind::Cow
+        } else if name == "minecraft:sheep" {
+            MobKind::Sheep
         } else {
             MobKind::Zombie
         }

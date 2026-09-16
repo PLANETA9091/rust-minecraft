@@ -528,6 +528,12 @@ pub struct App {
     /// stay unseen while the other bodies keep drawing (each model's
     /// honesty is its own lane).
     pub cow_model: Option<crate::avatar::CowModel>,
+    /// THE FOURTH MOB's own skin (the sheep's single 64x32 texture —
+    /// the SheepRenderer's getTextureLocation, the sha1 the generator
+    /// pinned) — loaded lazily beside the cow's, `None` = the SHEEP
+    /// stay unseen while the other bodies keep drawing (each model's
+    /// honesty is its own lane).
+    pub sheep_model: Option<crate::avatar::SheepModel>,
     /// The flame feature's two strips (the burn lane's pixel source —
     /// lazy-loaded and sha1-verified the zombie skin's way).
     pub fire_strips: Option<crate::avatar::FireStrips>,
@@ -931,6 +937,7 @@ impl App {
             zombie_avatar: None,
             pig_model: None,
             cow_model: None,
+            sheep_model: None,
             fire_strips: None,
             orb_sheet: None,
             underwater_screen: None,
@@ -5476,12 +5483,19 @@ impl App {
         if self.cow_model.is_none() {
             self.cow_model = crate::avatar::CowModel::load(std::path::Path::new("assets-cache/jar"));
         }
+        if self.sheep_model.is_none() {
+            self.sheep_model =
+                crate::avatar::SheepModel::load(std::path::Path::new("assets-cache/jar"));
+        }
         // the pig's honesty is its OWN lane: a failed pig skin keeps
         // only the pigs unseen, the zombies keep drawing
         let pig_model = self.pig_model.as_ref();
         // the cow's honesty is ITS OWN lane: a failed cow skin keeps
         // only the cows unseen, the other bodies keep drawing
         let cow_model = self.cow_model.as_ref();
+        // the sheep's honesty is ITS OWN lane: a failed sheep skin
+        // keeps only the sheep unseen, the other bodies keep drawing
+        let sheep_model = self.sheep_model.as_ref();
         // the two lanes' own union (the offline AI bodies + the wire's
         // remote bodies — the SAME lerp folds speak both, the model
         // kind the registry's name arms at the merge)
@@ -5505,6 +5519,32 @@ impl App {
                 Vec<crate::avatar::AvatarQuad>,
                 Box<dyn Fn(f32, f32) -> [u8; 4] + '_>,
             ) = match mob.kind {
+                crate::mob::MobKind::Sheep => {
+                    let Some(sheep) = sheep_model else {
+                        continue; // the sheep skin failed its sha1 — this body stays unseen
+                    };
+                    // THE OVINE STATE (the 26.2 SheepModel carries its
+                    // OWN setupAnim — the eat fold the head rides:
+                    // the *9.0 pivot drop + the eat-angle xRot the
+                    // server's clock bakes; the wire's pitch word is
+                    // NOT an input, the replacement law the bytecode
+                    // speaks — and the lane's honest 0/0 eat pair
+                    // keeps the AI/wire sheep at the shared walk fold
+                    // the quadruped base owns)
+                    let state = crate::avatar::SheepState {
+                        yaw_deg: mob.yaw,
+                        head_yaw_off_deg: head_yaw,
+                        walk_pos: mob.walk.position_at(self.partial_tick),
+                        walk_speed: mob.walk.speed_at(self.partial_tick),
+                        age_ticks: mob.age_ticks as f32 + 0.5,
+                        death_time: mob.death_time_at(self.partial_tick),
+                        head_eat_position: 0.0,
+                        head_eat_angle: 0.0,
+                        age_scale: 1.0,
+                    };
+                    let quads = sheep.quads(&state, feet, cam.yaw, cam.pitch);
+                    (quads, Box::new(move |u, v| sheep.pixel(u, v)))
+                }
                 crate::mob::MobKind::Cow => {
                     let Some(cow) = cow_model else {
                         continue; // the cow skin failed its sha1 — this body stays unseen
@@ -5567,6 +5607,10 @@ impl App {
             // dims the kind's own EntityTypes speaks (the zombie
             // 0.6x1.95, the pig 0.9x0.9)
             let (bbox_w, bbox_h) = match mob.kind {
+                crate::mob::MobKind::Sheep => (
+                    crate::mob::SHEEP_WIDTH as f32,
+                    crate::mob::SHEEP_HEIGHT as f32,
+                ),
                 crate::mob::MobKind::Cow => (
                     crate::mob::COW_WIDTH as f32,
                     crate::mob::COW_HEIGHT as f32,
@@ -9075,6 +9119,52 @@ mod tests {
         ]);
         assert_eq!(app.net_mobs.len(), 2, "the cow despawned at the wire's word");
         assert!(app.net_mobs.iter().all(|m| m.id != 9));
+    }
+
+    #[test]
+    fn the_wire_sheep_walks_the_same_lerpto_lane() {
+        let mut app = App::new(3);
+        app.open(ScreenKind::Connect);
+        app.net_world = Some(air_net_world(2, 0));
+        app.enter_network_world(None, Skybox::Overworld, None, None);
+        // the four bodies share the ring (the ids apart, the kinds
+        // the registry names armed — the ovine the fourth word)
+        app.live_mobs_updated(vec![
+            wire_zombie(7, 10.0, 64.0, 10.0),
+            wire_mob_named(8, 12.0, 64.0, 10.0, "minecraft:pig"),
+            wire_mob_named(9, 14.0, 64.0, 10.0, "minecraft:cow"),
+            wire_mob_named(10, 16.0, 64.0, 10.0, "minecraft:sheep"),
+        ]);
+        assert_eq!(app.net_mobs.len(), 4, "all four bodies land");
+        let sheep = app.net_mobs.iter().find(|m| m.id == 10).unwrap();
+        assert_eq!(sheep.kind, crate::mob::MobKind::Sheep, "the sheep's own kind");
+        // the SECOND ship rides the MATCHED branch (the spawn's pose
+        // was the first word, the ease the cadence's own next beat)
+        app.live_mobs_updated(vec![
+            wire_zombie(7, 10.5, 64.0, 10.0),
+            wire_mob_named(8, 12.5, 64.0, 10.0, "minecraft:pig"),
+            wire_mob_named(9, 14.5, 64.0, 10.0, "minecraft:cow"),
+            wire_mob_named(10, 16.5, 64.0, 10.0, "minecraft:sheep"),
+        ]);
+        let sheep = app.net_mobs.iter().find(|m| m.id == 10).unwrap();
+        assert!(sheep.lerp_target.is_some(), "the ease armed");
+        assert_eq!(sheep.lerp_steps, 3, "the 3-tick walk the cadence arms");
+        app.tick_net_mobs();
+        let sheep = app.net_mobs.iter().find(|m| m.id == 10).unwrap();
+        assert_eq!(sheep.lerp_steps, 2, "the own tick consumed one step");
+        // the sheep's head rides level (the wire's pitch word is data
+        // the ovine model's own eat-angle replacement never reads —
+        // the bytecode's own putfield)
+        assert_eq!(sheep.head_pitch, 0.0);
+        // the despawn law: the wire stops naming the sheep, the ghost
+        // never re-enters
+        app.live_mobs_updated(vec![
+            wire_zombie(7, 11.0, 64.0, 10.0),
+            wire_mob_named(8, 13.0, 64.0, 10.0, "minecraft:pig"),
+            wire_mob_named(9, 15.0, 64.0, 10.0, "minecraft:cow"),
+        ]);
+        assert_eq!(app.net_mobs.len(), 3, "the sheep despawned at the wire's word");
+        assert!(app.net_mobs.iter().all(|m| m.id != 10));
     }
 
     #[test]
