@@ -180,6 +180,14 @@ struct Cli {
     /// item/golden_dandelion.
     #[arg(long)]
     golden_dandelion: Option<u32>,
+    /// Arm the staged sheep's graze (the EatBlockGoal walk the eat
+    /// lane speaks — the goal's own start the 40 window arms, the
+    /// canUse roll the staging's own stand-in keeps) and run N settle
+    /// ticks — the window drains, the head the graze scales drop,
+    /// the consume the `== 4` landing answers when N crosses 36 (the
+    /// grass block the dirt speaks). Requires --sheep.
+    #[arg(long)]
+    graze: Option<u32>,
     /// Seed TWO in-love sheep on the camera's facing ray (the canMate
     /// pair the breeding walk needs) and run N settle ticks — the
     /// pairing fires, the child spawns, the hearts burst, the XP orb
@@ -446,6 +454,7 @@ fn main() -> Result<()> {
             shear: cli.shear,
             feed: cli.feed,
             golden_dandelion: cli.golden_dandelion,
+            graze: cli.graze,
             breed: cli.breed,
             breed_mix: cli.breed_mix,
             baby: cli.baby,

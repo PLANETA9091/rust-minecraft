@@ -2000,6 +2000,12 @@ impl App {
                 // dealDefaultKnockback law speaks), the ambient groans
                 // draw their pitch from the entity's own stream.
                 let mut hit_events: Vec<(f64, f64, f64)> = Vec::new();
+                // THE GRAZE'S OWN SWAPS (the EatBlockGoal's `== 4`
+                // landing the events carry — the caller applies the
+                // id the tick's &World read the immutable borrow
+                // keeps: the grass block the dirt speaks, the wool
+                // regrow the ate() walk already answered in-mob)
+                let mut eat_swaps: Vec<(i32, i32, i32, u16)> = Vec::new();
                 // THE LISTENER'S OWN EAR (the SoundEngine's camera —
                 // the body's standing/crouching eye the render's own
                 // walk speaks): the mob voices' distance fold the wire
@@ -2083,6 +2089,9 @@ impl App {
                             }
                             if let Some(atk) = ev.attack {
                                 hit_events.push((atk.damage, atk.dir_x, atk.dir_z));
+                            }
+                            if let Some(swap) = ev.eat_block {
+                                eat_swaps.push(swap);
                             }
                             if ev.ambient {
                                 groans.push((
@@ -2186,6 +2195,20 @@ impl App {
                             if b.on_ground {
                                 b.vy = (b.vy / 2.0 + crate::mob::KNOCKBACK_STRENGTH).min(0.4);
                             }
+                        }
+                    }
+                }
+                // THE GRAZE'S OWN SWAPS (the caller's setBlock walk —
+                // the tick's reads the immutable borrow keeps, the
+                // applies the mut world owns: the grass block the
+                // dirt speaks, the edible cell the destroyBlock's AIR
+                // answers; the levelEvent(2001) break particles the
+                // dig lane's own debris keeps none here — the honest
+                // note the swap's own pixels render)
+                if !eat_swaps.is_empty() {
+                    if let Some(w) = self.offline_world.as_mut() {
+                        for (bx, by, bz, id) in eat_swaps {
+                            w.set(bx, by, bz, id);
                         }
                     }
                 }
@@ -6418,8 +6441,8 @@ impl App {
                             walk_speed: mob.walk.speed_at(self.partial_tick),
                             age_ticks: mob.age_ticks as f32 + 0.5,
                             death_time: mob.death_time_at(self.partial_tick),
-                            head_eat_position: 0.0,
-                            head_eat_angle: 0.0,
+                            head_eat_position: mob.head_eat_position_at(self.partial_tick),
+                            head_eat_angle: mob.head_eat_angle_at(self.partial_tick),
                             // AgeableMob.getScale's own baby arm — the
                             // eat drop's divisor the inherited setupAnim
                             // reads (0.5 the baby's own scale speaks)
@@ -6459,8 +6482,8 @@ impl App {
                             walk_speed: mob.walk.speed_at(self.partial_tick),
                             age_ticks: mob.age_ticks as f32 + 0.5,
                             death_time: mob.death_time_at(self.partial_tick),
-                            head_eat_position: 0.0,
-                            head_eat_angle: 0.0,
+                            head_eat_position: mob.head_eat_position_at(self.partial_tick),
+                            head_eat_angle: mob.head_eat_angle_at(self.partial_tick),
                             age_scale: 1.0,
                         };
                         // THE WOOL LAYER's own gate (SheepWoolLayer.submit's

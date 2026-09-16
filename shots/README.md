@@ -2,7 +2,7 @@
 
 Every lane that ships pixels owes the folder a frame. The gallery is the
 proof the features exist as rendered images, not as test names alone.
-145 frames and counting — grouped below by the lane that spoke them.
+146 frames and counting — grouped below by the lane that spoke them.
 
 ## The F5 lane (the third-person avatar) — v0.3.154+
 
@@ -430,6 +430,7 @@ lasts 20 real minutes again, the eat hold 1.6s, the swing 0.3s.
 | `breeding_mix.png` | THE MIX WALK'S OWN FAMILY (v0.3.210): the breed staging the RED and BLUE dyes arm (the parents' wool 14 and 11), the child the crafting recipe the PURPLE wears — DyeColor.getMixedColor the sheep_262 dump speaks (the parents' dyes the grid pairs, the recipe result the baby answers), the DYE_MIX_TABLE's own nine rows the recipe arm keeps — the purple mass the baby's coat fills the lower frame the white family's mass answered white, the blue parent mid-frame the red one's glimpse the baby's shoulder names (v0.3.214 regen: the peace gate the family frames re-walks — the parents the facing cells keep, the baby the meet's own spot holds) (v0.3.216 regen: the baby's own model the mix frame re-speaks — old-vs-new rms 16.9, the rest staging the identical frames' rms 0.000 keeps); the at-rest companion (--breed-mix 0, the red parent at the camera pre-pair, no baby, no hearts) diffs rms 24.1 — the mix's own walk the baby + the hearts speak, the white staging the identical frames' rms 24.0 names |
 | `sprint_fov.png` | THE CAMERA'S OWN ZOOM (v0.3.217): the sprint the fov modifier arms — Camera.tickFov's own half-step the body's tail beat walks (the target the speed attribute's ratio speaks: the sprint's 1.3 the (1.3+1)/2 fold answers 1.15), Camera.calculateFov's own read the 70° option multiplies — the first-person frame the 80.5° zoom renders (the block outline smaller, the world wider, the hand the wider frame carries), the walk the 12 ticks speak; the at-rest companion (the same walk, no sprint) diffs rms 14.8 — the zoom's own word the wider view names |
 | `growth_boundary.png` | THE BOUNDARY'S OWN CROSSING (v0.3.221): the natural tick the GROWN-UP RENDERS — the setAge boundary branch the 26.2 full disasm speaks (`old = getAge(); age = new; if ((old < 0) != (new < 0)) { DATA_BABY_ID = new < 0; ageBoundaryReached(); }` — the sign flip the crossing arms, the same-sign set the branch never arms), the aiStep's own walk BOTH arms setAge routes (`if (canAgeUp()) setAge(i + 1); else if (i > 0) setAge(i - 1);` — the -1 -> 0 beat the everyday grow-up names), the ageBoundaryReached the boat lane keeps (`!isBaby() && isPassenger() && getVehicle() instanceof AbstractBoat boat && !hasEnoughSpaceFor(this) -> stopRiding()` — the isBaby FIRST gate the re-babying crossing rides, the vehicle-less world the honest still answers), the ageUp tail the lossless dump folds (`if (getAge() == 0) setAge(forcedAge);` — the banked surplus the zero landing spends, the ten-percent feed the jump never crosses — the +n/10 shave the remaining walk keeps negative — the crossing the natural tick's own beat or the ceiling's big jump owes); the frame stages the LAST TICK of the baby walk (--baby-ticks 23990 the -10 arms, the 10 settle ticks the crossing walks at the final one) — the tall ADULT the swap renders where the half-sized baby stood; the companion (--baby-ticks 23890, the same 10-tick walk 100 short) diffs rms 34.67 — the model swap the only word (the rng streams the same seed keeps aligned, the walk the same path takes) |
+| `sheep_graze.png` | THE GRAZE'S OWN BITE (v0.3.223): the EatBlockGoal walk the sheep's own registerGoals arms — the canUse gate the isBaby word splits (`nextInt(adjustedTickDelay(isBaby ? 50 : 1000)) == 0` — the baby's 1/50 the adult's 1/1000), the IS_EDIBLE tag the feet cell reads (the `edible_for_sheep` members the world table none keeps — the honest still), the grass block below the live arm answers (the consume the `== adjustedTickDelay(4)` landing — the 36th tick of the 40-tick window, the setBlock(DIRT) the swap speaks, the levelEvent(2001) the dig lane owns), the Sheep.ate() walk the bite spends (`super.ate()` the game-event lane keeps none of — the honest note; `setSheared(false)` the wool regrow the fur layer's gate renders; `if (canAgeUp()) ageUp(60)` the +1200-tick jump the grazing baby's growth rides — the zero ceiling's crossing the grow-up answers), the RUNNING graze the MOVE/LOOK/JUMP flags holds (the want_move stays false — the frozen feet the hold speaks, the stroll the conflict clears, the panic/breed/follow the higher priority replaces — the eat's own stop the timer zeroes); the render the SheepRenderer extraction drives (`headEatPositionScale` the getHeadEatPositionScale fold speaks — the 4..=36 full drop the iconst_1 keeps, the ease-in/ease-out bands the /4.0 divisors walk, `headEatAngleScale` the getHeadEatAngleScale fold answers — the chew wobble `0.62831855 + 0.21991149 · sin(f · 28.7)` the 32.0 divisor rides, the pi/5 hold the 0<tick<=4 keeps, the idle arm the xRot's deg→rad fold carries); the frame stages the mid-window chew (--graze 8 — the start the staging arms, the 8 settle ticks the window drains to 32, the head the full drop renders); the at-rest companion diffs rms 11.62 — the dropped head the only word (the body the hold keeps planted, the sky the same frame keeps) |
 
 Regenerate the family (the flag the CLI speaks today):
 
@@ -776,6 +777,28 @@ cargo run -p mc-client --release -- --headless --screen world \
 # the boat lane the vehicle-less world keeps) — the tall ADULT the swap
 # renders; the 23890 stage the same walk 100 short the baby keeps;
 # the pair diffs rms 34.67 — the model swap the only word
+```
+
+The graze's own bite (v0.3.223 — the EatBlockGoal's window):
+
+```sh
+cargo run -p mc-client --release -- --headless --screen world \
+  --seed 3 --body --sheep --graze 8 --ui-frame 8 \
+  --out shots/sheep_graze.png
+cargo run -p mc-client --release -- --headless --screen world \
+  --seed 3 --body --sheep --settle-ticks 8 --ui-frame 8 \
+  --out shots/sheep_graze_rest.png
+# --graze N arms the staged sheep's graze (the goal's own start walk
+# the 40 window keeps — the canUse roll the staging's own stand-in,
+# the 1/1000 draw the shot's walk can't wait for) and runs N settle
+# ticks (the RUNNING arm the decrement keeps, the hold the MOVE flag
+# speaks — the frozen feet the pair's planted body answers): the
+# 8-tick stage the window drains to 32 — the head the full drop
+# renders, the chew the sin wobble rides; the consume the `== 4`
+# landing answers when N crosses 36 (the setBlock(DIRT) the swap
+# speaks, the ate() walk the wool regrow and the baby's ageUp(60)
+# ride); the at-rest companion diffs rms 11.62 — the dropped head
+# the only word
 ```
 
 The breeding walk's own family (v0.3.206 — the pair, the child, the burst):

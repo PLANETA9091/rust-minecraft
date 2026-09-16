@@ -780,7 +780,8 @@ pub struct SheepState {
     /// the avatar fold speaks — one chain, every living model)
     pub death_time: f32,
     /// `SheepRenderState.headEatPositionScale` (the graze's head-drop
-    /// scale — the lane's honest 0.0, the AI sheep never eats)
+    /// scale — the Sheep.getHeadEatPositionScale fold the mob's own
+    /// timer drives, the ease bands the window speaks)
     pub head_eat_position: f32,
     /// `SheepRenderState.headEatAngleScale` (the graze's pitch the
     /// server bakes in radians — the xRot the model's own assign

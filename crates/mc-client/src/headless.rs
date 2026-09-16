@@ -154,6 +154,17 @@ pub struct SceneOpts {
     /// walks, the use/unuse voice the post-toggle pick speaks.
     /// Requires --sheep/--pig + --baby + --held-item item/golden_dandelion.
     pub golden_dandelion: Option<u32>,
+    /// THE GRAZE'S OWN STAGE: the staged sheep the goal's own start
+    /// walk arms (the EatBlockGoal lane the sheep's registerGoals
+    /// speaks — the 40 window the canUse roll's own stand-in keeps,
+    /// the 1/1000 draw the shot's walk can't wait for), then N settle
+    /// ticks run the REAL update walk the window's drain needs (the
+    /// RUNNING arm the decrement keeps, the hold the MOVE flag
+    /// speaks, the consume the `== 4` landing answers when N
+    /// crosses 36 — the grass block the dirt speaks). The frame
+    /// frozen mid-window: the head the graze scales own, the chew
+    /// the sin wobble rides. Requires --sheep.
+    pub graze: Option<u32>,
     /// THE BREEDING WALK'S OWN STAGE: seed TWO sheep on the camera's
     /// facing ray (the same-surface cells 3 and 5 out — the canMate
     /// pair the ring speaks), arm the love clock the feed verdict
@@ -1971,6 +1982,34 @@ pub fn render_gui_screen_opts(
         // ambient drip the in-love gate speaks; the frozen feed shot
         // passes none — the staging stays the state it froze)
         for _ in 0..opts.settle_ticks {
+            app.on_movement_input(0.0, 0.0, false, false, false);
+            app.update();
+        }
+    }
+    if let Some(beat) = opts.graze {
+        // THE GRAZE'S OWN STAGE (the EatBlockGoal walk the eat lane
+        // speaks): the staged sheep the goal's own start walk arms —
+        // the 40 window the start() keeps (the canUse roll the
+        // 1/1000 the shot's own walk can't wait for — the staging
+        // the roll's own stand-in keeps, the timer the field write
+        // arms; the stroll/look the start's stop law zeroes — the
+        // freshly staged body the None state already answers). The
+        // settle ticks the REAL updates the window's drain walks
+        // (the RUNNING arm the decrement keeps, the hold the MOVE
+        // flag speaks — the sheep the frozen feet answer, the
+        // consume the `== 4` landing answers when the beat crosses
+        // 36 — the swap the caller applies, the dirt the pixels
+        // speak), the frame frozen mid-window (the head the graze
+        // scales own, the chew the sin wobble rides).
+        let idx = app
+            .mobs
+            .iter()
+            .rposition(|m| m.kind == crate::mob::MobKind::Sheep)
+            .ok_or_else(|| {
+                anyhow::anyhow!("--graze requires --sheep (the goal the staged body's own walk arms)")
+            })?;
+        app.mobs[idx].eat_animation_tick = crate::mob::EAT_ANIMATION_TICKS;
+        for _ in 0..beat {
             app.on_movement_input(0.0, 0.0, false, false, false);
             app.update();
         }

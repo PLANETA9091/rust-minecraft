@@ -147,6 +147,43 @@ pub const FEED_FORCED_AGE_TIMER: i32 = 40;
 /// at the `% 2` cadence, twenty glint flashes; the window's own drain
 /// the canUseGoldenDandelion re-use gate requires).
 pub const AGE_LOCK_PARTICLE_WINDOW: i32 = 40;
+/// `EatBlockGoal.start()`'s own window (the bipush 40 the
+/// adjustedTickDelay speaks — the graze holds the head down and the
+/// MOVE/LOOK/JUMP flags for the next 40 ticks; the consume the
+/// tick's `== 4` landing answers at the window's tail).
+pub const EAT_ANIMATION_TICKS: i32 = 40;
+/// `EatBlockGoal.tick()`'s own consume landing (the adjustedTickDelay(4)
+/// the post-decrement compare reads — the 36th tick of the 40-tick
+/// window, the bite the block swap and the ate() walk answer).
+pub const EAT_CONSUME_TICK: i32 = 4;
+/// `EatBlockGoal.canUse()`'s own denominators (the ifeq branch the
+/// isBaby word splits: `nextInt(adjustedTickDelay(isBaby ? 50 : 1000))
+/// == 0` — the baby grazes twenty times the adult's own odds).
+pub const EAT_GATE_BABY: u64 = 50;
+pub const EAT_GATE_ADULT: u64 = 1000;
+/// `Sheep.ate()`'s own ageUp (the bipush 60 the canAgeUp gate speaks —
+/// the +1200-tick jump the grazing baby's growth rides, the zero
+/// ceiling's crossing the grow-up answers).
+pub const EAT_AGEUP_TICKS: i32 = 60;
+/// `Sheep.getHeadEatPositionScale/getHeadEatAngleScale`'s own constants
+/// (the cp_probe walk the ldc operands resolve): the position's 4.0
+/// divisor the ease bands speak, the angle's 32.0 divisor the chew
+/// wobble rides, `0.62831855F` (pi/5) the hold/peak the window keeps,
+/// `0.21991149F * sin(f * 28.7F)` the graze's own chew, `0.017453292F`
+/// the idle xRot's deg->rad fold.
+pub const EAT_POSITION_DIV: f32 = 4.0;
+pub const EAT_ANGLE_DIV: f32 = 32.0;
+pub const EAT_ANGLE_BASE: f32 = 0.62831855;
+pub const EAT_ANGLE_AMP: f32 = 0.21991149;
+pub const EAT_ANGLE_FREQ: f32 = 28.7;
+pub const EAT_IDLE_RAD: f32 = 0.017453292;
+/// `EatBlockGoal.IS_EDIBLE`'s own tag (`minecraft:edible_for_sheep` —
+/// the tag json the jar keeps: short_grass, short_dry_grass,
+/// tall_dry_grass, fern). The repo's world table admits none of the
+/// four (NAME_OF keeps 27 ids, no plant block), the feet arm the
+/// honest still answers — the below-grass-block arm the live one.
+pub const EDIBLE_FOR_SHEEP: [&str; 4] =
+    ["short_grass", "short_dry_grass", "tall_dry_grass", "fern"];
 /// The BreedGoal's own 8.0 ring (the AABB inflate the goal's pairing
 /// search speaks — the class source's constant the chicken/pig
 /// registrations' `BreedGoal(animal, 1.0)` clinit entries name the
@@ -714,6 +751,15 @@ fn stroll_cell_solid(world: &World, x: i32, y: i32, z: i32) -> bool {
     let id = world.get(x, y, z);
     id != crate::world::AIR && id != crate::world::WATER && id != crate::world::LAVA
 }
+/// `EatBlockGoal.IS_EDIBLE`'s own test (the lambda the <clinit> folds:
+/// `state.is(EDIBLE_FOR_SHEEP)` — the tag json's four members the
+/// cp_probe walk names). The repo's world table keeps none of the four
+/// (NAME_OF's 27 ids carry no plant block), the feet arm the honest
+/// still answers — the predicate the law keeps for the worlds to come.
+fn edible_for_sheep(id: u16) -> bool {
+    let name = crate::world::NAME_OF.get(id as usize).copied().unwrap_or("air");
+    EDIBLE_FOR_SHEEP.contains(&name)
+}
 /// The monster category's own spawn cap (MobCategory.MONSTER — the
 /// client-side spawner respects the same ceiling).
 pub const MONSTER_CAP: usize = 70;
@@ -764,6 +810,15 @@ pub struct MobEvents {
     /// unlock's re-baby answers (both the glint sprite the happy
     /// sparkles share — the same quad the render draws)
     pub age_lock_sparkle: Option<(f64, f64, f64, bool)>,
+    /// THE GRAZE'S OWN BITE (the EatBlockGoal.tick's `== 4` landing —
+    /// the feet arm the edible cell's destroyBlock keeps (AIR), the
+    /// below arm the grass block's setBlock(DIRT) rides; the
+    /// levelEvent(2001) break particles the repo's dig lane owns the
+    /// honest note the swap itself renders — the caller applies the
+    /// id at the carried cell, the tick's &World read the immutable
+    /// borrow keeps). The ate() walk the tick answers IN the mob —
+    /// the wool regrow and the baby's ageUp the event never carries.
+    pub eat_block: Option<(i32, i32, i32, u16)>,
 }
 
 /// The zombie's attack out-edge (the doHurtTarget the melee goal
@@ -895,6 +950,12 @@ pub struct Zombie {
     /// — the vanilla client's local default the define speaks).
     pub sheared: bool,
     pub wool_color: u8,
+    /// THE GRAZE'S OWN CLOCK (Sheep.eatAnimationTick — the goal's
+    /// start() the 40 window arms, the tick's decrement the window
+    /// drains, the handleEntityEvent(10) the client copy re-arms: the
+    /// offline merge the one field both laws keep — the goal walk the
+    /// server side speaks, the render folds the client copy reads).
+    pub eat_animation_tick: i32,
     /// THE NAME'S OWN WORD (MobRenderer.checkMagicName's own read —
     /// Entity.getCustomName the DATA_CUSTOM_NAME accessor 2 carries,
     /// the component's plain text): the jeb_ sheep's arm the rainbow
@@ -1008,6 +1069,7 @@ impl Zombie {
             crouching: false,
             sheared: false,
             wool_color: 0,
+            eat_animation_tick: 0,
             custom_name: None,
             name_visible: false,
             kind: MobKind::Zombie,
@@ -1446,9 +1508,11 @@ impl Zombie {
                 }
                 // the goal's own continued run the lower arms' stop law
                 // keeps (the flag-conflict the running walk owns — the
-                // breed's own stop the court's clock zeroes)
+                // breed's own stop the court's clock zeroes, the graze's
+                // own stop the window's timer zeroes)
                 self.stroll_target = None;
                 self.follow_parent = None;
+                self.eat_animation_tick = 0;
                 if self.breed_partner.take().is_some() {
                     self.breed_love_time = 0;
                 }
@@ -1479,6 +1543,7 @@ impl Zombie {
                 }
                 self.stroll_target = None;
                 self.follow_parent = None;
+                self.eat_animation_tick = 0;
                 if self.breed_partner.take().is_some() {
                     // the breed goal's own stop the court's clock zeroes
                     self.breed_love_time = 0;
@@ -1511,6 +1576,7 @@ impl Zombie {
                 self.move_speed_modifier = BREED_SPEED;
                 self.stroll_target = None;
                 self.follow_parent = None;
+                self.eat_animation_tick = 0;
                 self.breed_love_time += 1;
                 if self.breed_love_time >= BREED_COURT_TICKS
                     && dx * dx + dy * dy + dz * dz >= BREED_CLOSE_SQ
@@ -1529,6 +1595,67 @@ impl Zombie {
                 want_move = true;
                 self.move_speed_modifier = FOLLOW_PARENT_SPEED;
                 self.stroll_target = None;
+                self.eat_animation_tick = 0;
+            } else if self.eat_animation_tick > 0 {
+                // THE EATBLOCKGOAL'S OWN TICK (prio 5 — the Sheep's own
+                // registerGoals clinit speaks `addGoal(5,
+                // this.eatBlockGoal)` the follow's 4 the priority owns,
+                // the stroll's 6/7 the flags stop): the RUNNING graze
+                // holds the MOVE/LOOK/JUMP flags the ctor keeps — the
+                // want_move stays false the nav-stop's still keeps, the
+                // stroll's target the conflict clears. The goal's own
+                // tick walk: the decrement max(0, -1) the client's
+                // aiStep arm shares, the consume the `==
+                // adjustedTickDelay(4)` landing answers: the feet cell
+                // the IS_EDIBLE tag test reads (the edible_for_sheep
+                // members the world table none keeps — the honest
+                // still), else the below cell the GRASS_BLOCK arm swaps
+                // to dirt; the MOB_GRIEFING the default-true the
+                // gamerule table speaks; the ate() walk BOTH arms ride
+                // (the wool regrow, the baby's ageUp(60) the canAgeUp
+                // gate keeps — the byte-level law the mob-local state
+                // answers in-tick).
+                self.stroll_target = None;
+                self.eat_animation_tick = (self.eat_animation_tick - 1).max(0);
+                if self.eat_animation_tick == EAT_CONSUME_TICK {
+                    let (fx, fy, fz) =
+                        (self.x.floor() as i32, self.y.floor() as i32, self.z.floor() as i32);
+                    if edible_for_sheep(world.get(fx, fy, fz)) {
+                        events.eat_block = Some((fx, fy, fz, crate::world::AIR));
+                        self.ate();
+                    } else if world.get(fx, fy - 1, fz) == crate::world::GRASS {
+                        // levelEvent(2001, below, Block.getId(grass)) —
+                        // the break particles the dig lane owns
+                        events.eat_block = Some((fx, fy - 1, fz, crate::world::DIRT));
+                        self.ate();
+                    }
+                }
+            } else if self.kind == MobKind::Sheep
+                && self.rng.next()
+                    % (if self.is_baby() { EAT_GATE_BABY } else { EAT_GATE_ADULT })
+                    == 0
+                && (edible_for_sheep(
+                    world.get(self.x.floor() as i32, self.y.floor() as i32, self.z.floor() as i32),
+                ) || world.get(
+                    self.x.floor() as i32,
+                    self.y.floor() as i32 - 1,
+                    self.z.floor() as i32,
+                ) == crate::world::GRASS)
+            {
+                // THE EATBLOCKGOAL'S OWN CANUSE+START (prio 5 — the
+                // Sheep's own registerGoals the goal the kind arms, the
+                // cow's/pig's own clinit the goal never fills): the
+                // nextInt gate the isBaby word splits (the baby's 50,
+                // the adult's 1000 — the adjustedTickDelay the identity
+                // keeps), the block reads the gate's truth arms — the
+                // feet edible OR the grass block below. The start():
+                // the 40 window arms, the broadcast(10) the offline
+                // merge the direct field write keeps, the navigation's
+                // stop the repo's no-navigator still answers, the LOOK
+                // flag the look goal's clock zeroes.
+                self.eat_animation_tick = EAT_ANIMATION_TICKS;
+                self.stroll_target = None;
+                self.look_ticks = 0;
             } else if let Some((tx, tz)) = self.stroll_target {
                 // THE STROLL GOAL (prio 7): the canUse gate rides the
                 // 120-tick interval (the RandomStrollGoal's own), the
@@ -1577,7 +1704,12 @@ impl Zombie {
             // THE LOOK GOAL (prio 8): the look-at-player branch rides
             // the 0.02 probability per 40-tick cycle (the ctor's own
             // constants), the look holds 40 ticks
-            if self.look_ticks > 0 {
+            if self.eat_animation_tick > 0 {
+                // THE GRAZE'S OWN LOOK (the LOOK flag the eat goal's
+                // ctor keeps — the running graze the look goals' own
+                // stop law keeps silent, the head the graze's own
+                // scales own)
+            } else if self.look_ticks > 0 {
                 self.look_ticks -= 1;
                 if let Some(p) = player.filter(|p| !p.dead) {
                     self.look_at(p.x, p.eye_y, p.z);
@@ -2158,6 +2290,70 @@ impl Zombie {
     /// answers, the adult the gate refuses outright.
     pub fn can_age_up(&self) -> bool {
         self.age < 0 && !self.age_locked
+    }
+
+    /// THE SHEEP'S OWN ATE (Sheep.ate() verbatim — the 26.2 full disasm
+    /// speaks: `super.ate(); setSheared(false); if (canAgeUp())
+    /// ageUp(60)`). The super's own word (Mob.ate():
+    /// `gameEvent(GameEvent.EAT)` the getstatic/invokevirtual pair
+    /// speaks) the offline world's game-event lane keeps none of — the
+    /// honest note the sculk-less world records. The sheared reset
+    /// BOTH ages speak (the baby's wool the render's isBaby gate
+    /// never draws anyway), the ageUp the one-arg arm's own call
+    /// (ageUp(60) = ageUp(60, false) — the forcedAge lane the feed
+    /// walk's over-grow keeps silent) the canAgeUp gate rides: the
+    /// unlocked baby's +1200-tick jump the zero ceiling's own walk
+    /// keeps (the crossing the grow-up answers — the graze the
+    /// babyhood's own clock spends), the locked baby the gate refuses,
+    /// the adult the gate refuses outright.
+    fn ate(&mut self) {
+        self.sheared = false;
+        if self.can_age_up() {
+            self.age_up(EAT_AGEUP_TICKS, false);
+        }
+    }
+
+    /// `Sheep.getHeadEatPositionScale(F)F` verbatim (the 26.2 full
+    /// disasm speaks): the `tick <= 0` arm the fconst_0 keeps, the
+    /// `4 <= tick <= 36` window the iconst_1 keeps (the head's full
+    /// drop the graze holds), the `tick < 4` ease-in
+    /// `(tick - partial) / 4.0` the head's own descent speaks, the
+    /// tail `-(tick - 40 - partial) / 4.0` the ease-out the window's
+    /// own rise answers — the partial the render's frame rides.
+    pub fn head_eat_position_at(&self, partial: f32) -> f32 {
+        let t = self.eat_animation_tick;
+        if t <= 0 {
+            return 0.0;
+        }
+        if (EAT_CONSUME_TICK..=36).contains(&t) {
+            return 1.0;
+        }
+        if t < EAT_CONSUME_TICK {
+            (t as f32 - partial) / EAT_POSITION_DIV
+        } else {
+            -((t as f32 - EAT_ANIMATION_TICKS as f32 - partial) / EAT_POSITION_DIV)
+        }
+    }
+
+    /// `Sheep.getHeadEatAngleScale(F)F` verbatim (the 26.2 full disasm
+    /// speaks): the `4 < tick <= 36` window the chew wobble keeps —
+    /// `0.62831855F + 0.21991149F * sin(((tick - 4 - partial) / 32.0) *
+    /// 28.7F)` the graze's own chew (the 32.0 divisor the cp_probe
+    /// walk names), the `0 < tick <= 4` arm the pi/5 hold speaks (the
+    /// head pitched while the position eases in), the idle arm
+    /// `getXRot(partial) * 0.017453292F` the head's own look pitch
+    /// carries — the deg->rad fold the lerped pair answers.
+    pub fn head_eat_angle_at(&self, partial: f32) -> f32 {
+        let t = self.eat_animation_tick;
+        if t > EAT_CONSUME_TICK && t <= 36 {
+            let f = (t as f32 - EAT_CONSUME_TICK as f32 - partial) / EAT_ANGLE_DIV;
+            EAT_ANGLE_BASE + EAT_ANGLE_AMP * f32::sin(f * EAT_ANGLE_FREQ)
+        } else if t > 0 {
+            EAT_ANGLE_BASE
+        } else {
+            let lerped = self.prev_head_pitch + (self.head_pitch - self.prev_head_pitch) * partial;
+            lerped * EAT_IDLE_RAD
+        }
     }
 
     /// `AgeableMob.canUseGoldenDandelion(ItemStack, Z, I, Mob)` verbatim
@@ -3070,6 +3266,27 @@ mod tests {
                     world.set(x, y, z, crate::world::AIR);
                 }
                 for y in 0..5 {
+                    world.set(x, y, z, crate::world::STONE);
+                }
+            }
+        }
+        world
+    }
+
+    /// A grass pad (the graze tests' own arena — the flat stone pad's
+    /// sibling: the grass block the sheep's own below-cell arms) —
+    /// stone 0..3, the grass block at 4, the air above, the surface
+    /// top at y = 5: the feet cell (x, 5, z) the AIR keeps, the below
+    /// cell (x, 4, z) the GRASS speaks.
+    fn graze_world() -> World {
+        let mut world = World::new(1, 42);
+        for x in 0..world.size_blocks() {
+            for z in 0..world.size_blocks() {
+                for y in 5..world.size_blocks() {
+                    world.set(x, y, z, crate::world::AIR);
+                }
+                world.set(x, 4, z, crate::world::GRASS);
+                for y in 0..4 {
                     world.set(x, y, z, crate::world::STONE);
                 }
             }
@@ -5767,6 +5984,298 @@ mod tests {
         assert_eq!(
             third.in_love, 600,
             "the third's love clock the scan never touches"
+        );
+    }
+
+    /// THE GATE'S OWN DENOMINATOR SPLIT (javap `EatBlockGoal.canUse`:
+    /// `nextInt(adjustedTickDelay(isBaby ? 50 : 1000)) == 0` the ifeq
+    /// branch the bipush-50/sipush-1000 pair speaks) — the SAME seed
+    /// the twin streams keep (both mobs draw the identical values),
+    /// the is_baby word the denominator picks: a draw that answers
+    /// `% 50 == 0` but `% 1000 != 0` the BABY's graze starts and the
+    /// ADULT's own gate refuses — the twenty-fold odds the babyhood
+    /// speaks. The brute-forced seed the pin walks (the shared world,
+    /// the grass block the below-cell arms).
+    #[test]
+    fn the_eat_gate_splits_the_denominators() {
+        // the seed hunt: the gate draw answers % 50 == 0 && % 1000 != 0
+        // (the second next() the tick's chain walks — the ambient's
+        // first draw the baseTick law keeps)
+        let mut found = None;
+        for seed in 0u64..20_000 {
+            let mut probe = Zombie::new(9, 0.0, 5.0, 0.0, seed);
+            probe.kind = MobKind::Sheep;
+            probe.age = -100;
+            probe.ambient_voice(); // the first draw the tick's head keeps
+            let mut adult_probe = Zombie::new(9, 0.0, 5.0, 0.0, seed);
+            adult_probe.kind = MobKind::Sheep;
+            adult_probe.ambient_voice();
+            let baby_draw = probe.rng.next();
+            let adult_draw = adult_probe.rng.next();
+            assert_eq!(baby_draw, adult_draw, "the twin streams the seed keeps");
+            if baby_draw % EAT_GATE_BABY == 0 && baby_draw % EAT_GATE_ADULT != 0 {
+                found = Some((seed, probe, adult_probe));
+                break;
+            }
+        }
+        let (seed, _probe_b, _probe_a) = found.expect("the split seed the hunt answers");
+        let world = graze_world();
+        // the FRESH TWINS the tick's own stream keeps (the probe's two
+        // draws the hunt spent — the tick's ambient + poll the same
+        // two draws the fresh ctor re-walks)
+        let mut baby = Zombie::new(9, 0.0, 5.0, 0.0, seed);
+        baby.kind = MobKind::Sheep;
+        // the BABY: the gate the 50 answers — the start() the 40 arms
+        baby.age = -100;
+        baby.tick(&world, None, NIGHT);
+        assert_eq!(
+            baby.eat_animation_tick, EAT_ANIMATION_TICKS,
+            "the baby's gate the 1/50 the seed answers (seed {seed})"
+        );
+        // the ADULT: the same draw the 1000 refuses — the gate the
+        // odds the adult's own walk keeps (the fresh twin the same
+        // seed keeps — the poll's draw the split speaks)
+        let mut adult = Zombie::new(9, 0.0, 5.0, 0.0, seed);
+        adult.kind = MobKind::Sheep;
+        adult.tick(&world, None, NIGHT);
+        assert_eq!(
+            adult.eat_animation_tick, 0,
+            "the adult's gate the same draw refuses (seed {seed})"
+        );
+    }
+
+    /// THE WINDOW'S OWN WALK (javap `EatBlockGoal.start/tick`): the
+    /// start() the 40 window arms, the tick's decrement max(0, -1)
+    /// the window drains, the hold the MOVE flag keeps (the position
+    /// the frozen feet answer — no stroll, no impulse), the consume
+    /// the `== adjustedTickDelay(4)` landing answers: the grass block
+    /// below the DIRT speaks, the event the swap carries, the ate()
+    /// walk the sheared bit resets (the wool regrow the adult's own
+    /// word keeps), the window's tail the idle keeps silent.
+    #[test]
+    fn the_graze_window_the_consume_at_four_walks() {
+        let world = graze_world();
+        let mut mob = Zombie::new(9, 0.0, 5.0, 0.0, 262);
+        mob.kind = MobKind::Sheep;
+        // the shorn sheep the regrow's own payoff arms
+        mob.sheared = true;
+        // the start() the goal's own arm — the window the 40 speaks
+        mob.eat_animation_tick = EAT_ANIMATION_TICKS;
+        mob.stroll_target = Some((4.0, 4.0));
+        let (sx, sz) = (mob.x, mob.z);
+        // the window's walk: 36 ticks land the timer on 4 (the
+        // consume the 36th tick answers), the position the hold keeps
+        let mut consume_event = None;
+        for i in 0..36 {
+            let ev = mob.tick(&world, None, NIGHT);
+            assert_eq!(
+                mob.eat_animation_tick,
+                EAT_ANIMATION_TICKS - i - 1,
+                "the decrement the tick {i} walks"
+            );
+            assert!(
+                (mob.x - sx).abs() < 1e-9 && (mob.z - sz).abs() < 1e-9,
+                "the hold the MOVE flag keeps at tick {i}"
+            );
+            if i + 1 < 36 {
+                assert!(
+                    ev.eat_block.is_none(),
+                    "the window's walk no swap the pre-landing keeps (tick {i})"
+                );
+            } else {
+                consume_event = ev.eat_block;
+            }
+        }
+        assert_eq!(
+            mob.eat_animation_tick, EAT_CONSUME_TICK,
+            "the landing the 36th tick walks"
+        );
+        assert_eq!(
+            consume_event,
+            Some((0, 4, 0, crate::world::DIRT)),
+            "the consume the below-grass arm carries — the DIRT the setBlock speaks"
+        );
+        assert!(
+            !mob.sheared,
+            "the ate() walk the sheared bit resets — the wool regrow"
+        );
+        assert_eq!(
+            mob.age, 0,
+            "the adult the canAgeUp gate refuses — the age the zero keeps"
+        );
+        // the stroll target the conflict cleared — the graze's own
+        // start the flag law keeps
+        assert!(
+            mob.stroll_target.is_none(),
+            "the stroll the flag conflict stopped"
+        );
+        // the window's tail: the drain the zero keeps, the next tick
+        // the idle walk answers (no swap — the re-armed poll the
+        // 1/1000 draw the seed's own walk answers or refuses)
+        let ev = mob.tick(&world, None, NIGHT);
+        assert!(ev.eat_block.is_none(), "the drained window keeps silent");
+    }
+
+    /// THE SHEEP'S OWN ATE WORDS (javap `Sheep.ate()`: `super.ate();
+    /// setSheared(false); if (canAgeUp()) ageUp(60)` the three calls
+    /// the walk speaks) — the sheared reset BOTH ages answer, the
+    /// +1200-tick jump the unlocked baby's growth rides (the -100
+    /// body the ceiling's crossing grows UP — the age the zero
+    /// lands, the adult the boundary arms), the locked baby the
+    /// canAgeUp gate refuses (the PAUSE the dandelion's lock keeps —
+    /// the sheared bit still resets), the adult the gate refuses
+    /// outright.
+    #[test]
+    fn the_ate_walk_the_sheeps_own_words() {
+        // THE UNLOCKED BABY: the ageUp the crossing grows UP
+        let mut baby = Zombie::new(9, 0.0, 64.0, 0.0, 262);
+        baby.kind = MobKind::Sheep;
+        baby.age = -100;
+        baby.sheared = true;
+        baby.ate();
+        assert!(!baby.sheared, "the sheared reset the baby speaks");
+        assert_eq!(
+            baby.age, 0,
+            "the +1200 jump the ceiling's crossing lands — the grow-up"
+        );
+        assert!(!baby.is_baby(), "the adult the crossing names");
+        // THE LOCKED BABY: the gate refuses, the sheared bit still resets
+        let mut locked = Zombie::new(9, 0.0, 64.0, 0.0, 262);
+        locked.kind = MobKind::Sheep;
+        locked.age = -100;
+        locked.age_locked = true;
+        locked.sheared = true;
+        locked.ate();
+        assert!(!locked.sheared, "the sheared reset the lock never gates");
+        assert_eq!(locked.age, -100, "the PAUSE the canAgeUp refusal keeps");
+        // THE ADULT: the gate refuses outright, the sheared bit resets
+        let mut adult = Zombie::new(9, 0.0, 64.0, 0.0, 262);
+        adult.kind = MobKind::Sheep;
+        adult.sheared = true;
+        adult.ate();
+        assert!(!adult.sheared, "the sheared reset the adult speaks");
+        assert_eq!(adult.age, 0, "the adult's age the gate never moves");
+    }
+
+    /// THE RENDER FOLDS' OWN SCALES (javap
+    /// `Sheep.getHeadEatPositionScale/getHeadEatAngleScale`): the
+    /// position's arms the window/ease bands speak (the 4..=36 full
+    /// drop, the <4 ease-in, the >36 ease-out), the angle's chew
+    /// wobble the sin fold answers, the pi/5 hold the 0<tick<=4
+    /// keeps, the idle arm the xRot's deg->rad fold carries.
+    #[test]
+    fn the_render_folds_the_scales_speak() {
+        let mut mob = Zombie::new(9, 0.0, 64.0, 0.0, 262);
+        mob.kind = MobKind::Sheep;
+        // THE IDLE ARM (tick 0): the lerped xRot the deg->rad fold keeps
+        mob.head_pitch = 90.0;
+        mob.prev_head_pitch = 90.0;
+        mob.eat_animation_tick = 0;
+        assert_eq!(mob.head_eat_position_at(1.0), 0.0, "the idle the 0.0 keeps");
+        let idle_angle = mob.head_eat_angle_at(1.0);
+        assert!(
+            (idle_angle - 90.0 * EAT_IDLE_RAD).abs() < 1e-6,
+            "the idle arm the xRot fold answers: {idle_angle}"
+        );
+        // THE WINDOW: the 4..=36 band the full drop keeps
+        mob.eat_animation_tick = 36;
+        assert_eq!(mob.head_eat_position_at(1.0), 1.0, "the window the 1.0 keeps");
+        mob.eat_animation_tick = 4;
+        assert_eq!(mob.head_eat_position_at(1.0), 1.0, "the band's head the 1.0 keeps");
+        // THE EASE-IN (tick < 4): (tick - partial) / 4
+        mob.eat_animation_tick = 2;
+        assert!(
+            (mob.head_eat_position_at(1.0) - 0.25).abs() < 1e-6,
+            "the ease-in the (2-1)/4 answers"
+        );
+        // THE EASE-OUT (tick > 36): -(tick - 40 - partial) / 4
+        mob.eat_animation_tick = 37;
+        assert!(
+            (mob.head_eat_position_at(1.0) - 1.0).abs() < 1e-6,
+            "the ease-out's head the (37-40-1)/-4 answers"
+        );
+        mob.eat_animation_tick = 40;
+        assert!(
+            (mob.head_eat_position_at(1.0) - 0.25).abs() < 1e-6,
+            "the window's own start the partial ease speaks"
+        );
+        // THE CHEW WOBBLE (4 < tick <= 36): the sin fold the constants keep
+        mob.eat_animation_tick = 20;
+        let chew = mob.head_eat_angle_at(1.0);
+        let expect = EAT_ANGLE_BASE + EAT_ANGLE_AMP * ((20.0 - 4.0 - 1.0) / 32.0 * EAT_ANGLE_FREQ).sin();
+        assert!(
+            (chew - expect).abs() < 1e-6,
+            "the chew wobble the fold answers: {chew} vs {expect}"
+        );
+        // THE HOLD (0 < tick <= 4): the pi/5 the graze's own pitch keeps
+        mob.eat_animation_tick = 2;
+        assert!(
+            (mob.head_eat_angle_at(1.0) - EAT_ANGLE_BASE).abs() < 1e-6,
+            "the hold the pi/5 keeps"
+        );
+    }
+
+    /// THE PRIORITY'S OWN LAW (the GoalSelector's flag-conflict walk
+    /// the goal chain speaks): the panic's prio-1 the RUNNING graze
+    /// replaces (the eat's own stop the timer zeroes), the graze's
+    /// own start the look goal's clock zeroes (the LOOK flag the
+    /// conflict answers), the kind gate the cow's own walk keeps
+    /// silent (the EatBlockGoal the Sheep's registerGoals only fills).
+    #[test]
+    fn the_graze_the_priority_law_walks() {
+        let world = graze_world();
+        // THE PANIC REPLACES THE RUNNING GRAZE (prio 1 over 5 — the
+        // eat's own stop() the zero keeps)
+        let mut mob = Zombie::new(9, 0.0, 5.0, 0.0, 262);
+        mob.kind = MobKind::Sheep;
+        mob.eat_animation_tick = EAT_ANIMATION_TICKS;
+        mob.panic_memory_ticks = PANIC_DAMAGE_MEMORY_TICKS;
+        mob.tick(&world, None, NIGHT);
+        assert_eq!(
+            mob.eat_animation_tick, 0,
+            "the panic the graze replaces — the stop's own zero speaks"
+        );
+        assert!(
+            mob.panic_target.is_some(),
+            "the panic's own flee the memory arms"
+        );
+        // THE START ZEROES THE LOOK CLOCK (the LOOK flag the graze
+        // holds — the look goal's own stop the conflict answers):
+        // the twin-seed trick the denominator test keeps — brute-force
+        // a seed the adult's 1/1000 answers
+        let mut found = None;
+        for seed in 0u64..20_000 {
+            let mut probe = Zombie::new(9, 2.0, 5.0, 2.0, seed);
+            probe.kind = MobKind::Sheep;
+            probe.ambient_voice();
+            let draw = probe.rng.next();
+            if draw % EAT_GATE_ADULT == 0 {
+                found = Some((seed, probe));
+                break;
+            }
+        }
+        let (seed, _probe) = found.expect("the adult gate seed the hunt answers");
+        let mut gated = Zombie::new(9, 2.0, 5.0, 2.0, seed);
+        gated.kind = MobKind::Sheep;
+        gated.look_ticks = LOOK_INTERVAL_TICKS;
+        gated.tick(&world, None, NIGHT);
+        assert_eq!(
+            gated.eat_animation_tick, EAT_ANIMATION_TICKS,
+            "the adult's gate the seed answers (seed {seed})"
+        );
+        assert_eq!(
+            gated.look_ticks, 0,
+            "the start the look clock zeroes — the LOOK flag the graze holds"
+        );
+        // THE KIND GATE: the cow the goal never fills — the same draw
+        // the cow's chain never polls (the eat gate the Sheep only
+        // arms), the timer the zero keeps
+        let mut cow = Zombie::new(9, 2.0, 5.0, 2.0, seed);
+        cow.kind = MobKind::Cow;
+        cow.tick(&world, None, NIGHT);
+        assert_eq!(
+            cow.eat_animation_tick, 0,
+            "the cow the EatBlockGoal never fills — the kind gate keeps"
         );
     }
 }
