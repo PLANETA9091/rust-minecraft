@@ -992,6 +992,12 @@ pub struct Zombie {
     /// carries): the byte the server raised says the floating text,
     /// the silent byte keeps the name unsaid.
     pub name_visible: bool,
+    /// THE BELOW-NAME LINE (the wire mob's own scoreboard word — the
+    /// `Entity.belowNameDisplay` walk the projection pre-computes:
+    /// `"score display"` for the BELOW_NAME slot's objective + this
+    /// entity's UUID-keyed row). The ctor's None = the honest silent
+    /// slot; the merge carries the projection's every-refresh word.
+    pub score_text: Option<String>,
     /// `ZombieAttackGoal.raiseArmTicks`
     raise_arm_ticks: i32,
     /// THE BODY'S OWN KIND (the renderer's variant table): which mesh
@@ -1097,6 +1103,7 @@ impl Zombie {
             eat_animation_tick: 0,
             custom_name: None,
             name_visible: false,
+            score_text: None,
             kind: MobKind::Zombie,
             raise_arm_ticks: 0,
             ticks_until_attack: 0,

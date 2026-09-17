@@ -6124,6 +6124,11 @@ pub const RENDER_TYPE_HEARTS: u8 = 1;
 /// below-name, 3..18 the team sidebars).
 pub const DISPLAY_SLOT_SIDEBAR: u8 = 1;
 
+/// The DisplaySlot id the BELOW-NAME lane renders from (the
+/// `Entity.belowNameDisplay` walk's own slot — the score the
+/// nametag's own display draws under the name within ten blocks).
+pub const DISPLAY_SLOT_BELOW_NAME: u8 = 2;
+
 /// One Set Objective packet (clientbound play, generated id 106).
 /// The wire walk (raw disasm of `ClientboundSetObjectivePacket.<init>(
 /// RegistryFriendlyByteBuf)`): `readUtf()` objective name, `readByte()`

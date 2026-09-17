@@ -145,6 +145,12 @@ pub const SIDEBAR_BODY_BG: [f32; 4] = [0.0, 0.0, 0.0, 102.0 / 255.0];
 /// budget rides).
 pub const SIDEBAR_SCORE_SEPARATOR: &str = ": ";
 
+/// THE BELOW-NAME'S OWN LIFT (javap `submitNameDisplay` — the
+/// translate the score's presence rides: `9.0 * 1.15 * 0.025` in the
+/// bytecode's own f32s — the name draws this much ABOVE the
+/// attachment point the score line sits at).
+pub const NAME_TAG_SCORE_OFFSET: f64 = (9.0f32 * 1.15f32 * 0.025f32) as f64;
+
 /// THE FIXED CLOCK (vanilla `Minecraft.runTick`'s own law): one game
 /// tick every 50ms — 20 TPS, the pace every clock in the game speaks
 /// (the hunger drain, the eat hold, the swing, the day cycle's 24000).
@@ -6957,6 +6963,10 @@ impl App {
                 // 3's Boolean — the shouldShowName gate's first arm,
                 // the tag's own arm/disarm the byte speaks)
                 m.name_visible = w.name_visible;
+                // THE BELOW-NAME LINE rides the same carry (the
+                // projection's own word — the score the ten-block gate
+                // draws under the tag)
+                m.score_text = w.score_text.clone();
                 m.on_ground = true;
                 m.age_ticks = 40; // two seconds in — the bob's stable mid
                 self.net_mobs.push(m);
@@ -7016,6 +7026,10 @@ impl App {
             // assign — the server's rename/visibility word replaces
             // the arm the spawn spoke)
             m.name_visible = w.name_visible;
+            // THE BELOW-NAME LINE rides with the pose (the same
+            // every-refresh carry — the score the projection
+            // re-speaks, the ten-block gate the render folds)
+            m.score_text = w.score_text.clone();
             self.net_mobs.push(m);
         }
         // the ids the wire no longer names never re-enter net_mobs —
@@ -9724,88 +9738,138 @@ impl App {
             // filterHitResult speaks). The crouch rides the isDiscrete
             // word: the standing body draws the bright core pass, the
             // crouching body only its dim see-through copy.
+            //
+            // THE SCORE LINE (the 26.2 submitNameDisplay's own law):
+            // within TEN blocks of the camera the below-name
+            // objective's score draws AT the attachment — INDEPENDENT
+            // of the name (the score's own submit the walk makes
+            // first, no shouldShowName gate the extract keeps), and
+            // the NAME the +0.25875 translate lifts (9.0 * 1.15 *
+            // 0.025 — the fmul pair the bytecode keeps), so the score
+            // sits BELOW the name when both ride.
+            let (sdx, sdy, sdz) = (
+                mob.x - cam.pos.x as f64,
+                mob.y - cam.pos.y as f64,
+                mob.z - cam.pos.z as f64,
+            );
+            let score_line = if sdx * sdx + sdy * sdy + sdz * sdz < 100.0 {
+                mob.score_text.as_deref()
+            } else {
+                None // the ten-block gate refused — the score stays unsaid
+            };
+            // the anchor (translate(attachment.x,
+            // attachment.y + 0.5, z): the AT_HEIGHT fallback
+            // (0, bbHeight, 0) the EntityAttachment lambda
+            // speaks, the +0.5 the ldc2_w dadd adds)
+            let attach_y = my + bbox_h as f64 + 0.5;
+            let vp = ctx.proj.mul(&ctx.view);
+            if let Some(score) = score_line {
+                Self::draw_name_tag(
+                    fb, a, vp, feet, attach_y, score, cam.yaw, cam.pitch, mob.crouching,
+                );
+            }
             if mob.name_visible || crosshair_pick == Some(ci) {
                 if let Some(name) = &mob.custom_name {
-                    // the anchor (translate(attachment.x,
-                    // attachment.y + 0.5, z): the AT_HEIGHT fallback
-                    // (0, bbHeight, 0) the EntityAttachment lambda
-                    // speaks, the +0.5 the ldc2_w dadd adds)
-                    let top_y = my + bbox_h as f64 + 0.5;
-                    let (bg, glyphs) =
-                        name_tag_planes(feet, top_y, name, cam.yaw, cam.pitch);
-                    let vp = ctx.proj.mul(&ctx.view);
-                    // THE BOX (the ARGB.color(0.25F, -16777216) the
-                    // background the markBackground law bounds — the
-                    // alpha 64 the 0.25 * 255 round speaks) — the
-                    // white sampler under the black tint, the alpha
-                    // scale the color's own 64 rides
-                    if let Some(bg_pts) = bg {
-                        let bg_quad = [crate::raster::SampledQuad {
-                            pts: bg_pts,
-                            uv: [[0.0, 0.0]; 4],
-                            tex: "",
-                            tint: [0.0, 0.0, 0.0],
-                        }];
-                        fb.draw_translucent_sampled_quads(
-                            vp,
-                            &bg_quad,
-                            64.0 / 255.0,
-                            &mut |_t, _u, _v| Some([255, 255, 255, 255]),
-                        );
-                    }
-                    // THE TEXT (the two passes the raw walk speaks —
-                    // the dim 0x80FFFFFF copy WITH the box, the bright
-                    // -1 core without; the glyphs grouped by their
-                    // font page the sampler resolves)
-                    let mut pages: std::collections::BTreeMap<u16, Vec<NameTagGlyph>> =
-                        std::collections::BTreeMap::new();
-                    for gl in glyphs {
-                        pages.entry(gl.page).or_default().push(gl);
-                    }
-                    for (page, quads) in &pages {
-                        let sampled: Vec<crate::raster::SampledQuad> = quads
-                            .iter()
-                            .map(|gl| crate::raster::SampledQuad {
-                                pts: gl.pts,
-                                uv: gl.uv,
-                                tex: "",
-                                tint: [1.0, 1.0, 1.0],
-                            })
-                            .collect();
-                        let Some(tex) = a.font_texture(*page).cloned() else {
-                            continue; // the page failed its load — the tag's text stays unsaid
-                        };
-                        let sample_page =
-                            |tex: &crate::gui::Sprite, u: f32, v: f32| -> [u8; 4] {
-                                let c =
-                                    tex.sample(u.floor() as u32, v.floor() as u32);
-                                [
-                                    (c[0] * 255.0) as u8,
-                                    (c[1] * 255.0) as u8,
-                                    (c[2] * 255.0) as u8,
-                                    (c[3] * 255.0) as u8,
-                                ]
-                            };
-                        // the see-through pass (0x80FFFFFF — the white
-                        // at alpha 128, the box rides this lane)
-                        fb.draw_translucent_sampled_quads(
-                            vp,
-                            &sampled,
-                            128.0 / 255.0,
-                            &mut |_t, u, v| Some(sample_page(&tex, u, v)),
-                        );
-                        // the bright core (-1 — ONLY the standing body,
-                        // the isDiscrete gate the crouch word speaks)
-                        if !mob.crouching {
-                            fb.draw_translucent_sampled_quads(
-                                vp,
-                                &sampled,
-                                1.0,
-                                &mut |_t, u, v| Some(sample_page(&tex, u, v)),
-                            );
-                        }
-                    }
+                    // the name's own anchor: the score's presence lifts
+                    // it the 0.25875 the walk's translate keeps (the
+                    // name draws ABOVE the score line)
+                    let top_y =
+                        attach_y + if score_line.is_some() { NAME_TAG_SCORE_OFFSET } else { 0.0 };
+                    Self::draw_name_tag(
+                        fb, a, vp, feet, top_y, name, cam.yaw, cam.pitch, mob.crouching,
+                    );
                 }
+            }
+        }
+    }
+
+    /// ONE NAME TAG'S OWN DRAW (the submitNameTag walk BOTH the name
+    /// and the below-name score ride — the same box, the same two
+    /// text passes): the planes builder billboards the string at the
+    /// attachment point, the `ARGB.color(0.25F, -16777216)` background
+    /// box bounds it (the alpha 64 the 0.25 * 255 round speaks), the
+    /// dim 0x80FFFFFF copy draws WITH the box, the bright -1 core
+    /// ONLY for the standing body (the isDiscrete gate the crouch
+    /// word speaks).
+    fn draw_name_tag(
+        fb: &mut crate::raster::Framebuf,
+        a: &mut GuiAssets,
+        vp: crate::math::Mat4,
+        feet: crate::math::Vec3,
+        top_y: f64,
+        text: &str,
+        cam_yaw: f32,
+        cam_pitch: f32,
+        crouching: bool,
+    ) {
+        let (bg, glyphs) = name_tag_planes(feet, top_y, text, cam_yaw, cam_pitch);
+        // THE BOX (the ARGB.color(0.25F, -16777216) the
+        // background the markBackground law bounds — the
+        // alpha 64 the 0.25 * 255 round speaks) — the
+        // white sampler under the black tint, the alpha
+        // scale the color's own 64 rides
+        if let Some(bg_pts) = bg {
+            let bg_quad = [crate::raster::SampledQuad {
+                pts: bg_pts,
+                uv: [[0.0, 0.0]; 4],
+                tex: "",
+                tint: [0.0, 0.0, 0.0],
+            }];
+            fb.draw_translucent_sampled_quads(
+                vp,
+                &bg_quad,
+                64.0 / 255.0,
+                &mut |_t, _u, _v| Some([255, 255, 255, 255]),
+            );
+        }
+        // THE TEXT (the two passes the raw walk speaks —
+        // the dim 0x80FFFFFF copy WITH the box, the bright
+        // -1 core without; the glyphs grouped by their
+        // font page the sampler resolves)
+        let mut pages: std::collections::BTreeMap<u16, Vec<NameTagGlyph>> =
+            std::collections::BTreeMap::new();
+        for gl in glyphs {
+            pages.entry(gl.page).or_default().push(gl);
+        }
+        for (page, quads) in &pages {
+            let sampled: Vec<crate::raster::SampledQuad> = quads
+                .iter()
+                .map(|gl| crate::raster::SampledQuad {
+                    pts: gl.pts,
+                    uv: gl.uv,
+                    tex: "",
+                    tint: [1.0, 1.0, 1.0],
+                })
+                .collect();
+            let Some(tex) = a.font_texture(*page).cloned() else {
+                continue; // the page failed its load — the tag's text stays unsaid
+            };
+            let sample_page = |tex: &crate::gui::Sprite, u: f32, v: f32| -> [u8; 4] {
+                let c = tex.sample(u.floor() as u32, v.floor() as u32);
+                [
+                    (c[0] * 255.0) as u8,
+                    (c[1] * 255.0) as u8,
+                    (c[2] * 255.0) as u8,
+                    (c[3] * 255.0) as u8,
+                ]
+            };
+            // the see-through pass (0x80FFFFFF — the white
+            // at alpha 128, the box rides this lane)
+            fb.draw_translucent_sampled_quads(
+                vp,
+                &sampled,
+                128.0 / 255.0,
+                &mut |_t, u, v| Some(sample_page(&tex, u, v)),
+            );
+            // the bright core (-1 — ONLY the standing body,
+            // the isDiscrete gate the crouch word speaks)
+            if !crouching {
+                fb.draw_translucent_sampled_quads(
+                    vp,
+                    &sampled,
+                    1.0,
+                    &mut |_t, u, v| Some(sample_page(&tex, u, v)),
+                );
             }
         }
     }
@@ -14619,6 +14683,7 @@ mod tests {
             wool_byte: 0,
             custom_name: None,
             name_visible: false,
+            score_text: None,
             type_name: "minecraft:zombie".to_string(),
         }
     }
@@ -14645,6 +14710,7 @@ mod tests {
             wool_byte: 0,
             custom_name: None,
             name_visible: false,
+            score_text: None,
             type_name: type_name.to_string(),
         }
     }

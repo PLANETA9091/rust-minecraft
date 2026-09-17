@@ -1619,6 +1619,7 @@ pub fn render_gui_screen_opts(
                         // atan2 fold speaks), the head mid-look
                         let face = (-((b_x - px)).atan2(b_z - pz)).to_degrees() as f32;
                         wire_mobs.push(crate::world_view::WireMob {
+                            score_text: None,
                             id: 100 + i as i32,
                             x: px,
                             y,
@@ -1662,6 +1663,7 @@ pub fn render_gui_screen_opts(
                         let y = (gy + 1) as f64;
                         let face = (-((b_x - px)).atan2(b_z - pz)).to_degrees() as f32;
                         wire_mobs.push(crate::world_view::WireMob {
+                            score_text: None,
                             id: 100 + (opts.net_mobs + i as usize) as i32,
                             x: px,
                             y,
@@ -1706,6 +1708,7 @@ pub fn render_gui_screen_opts(
                         let y = (gy + 1) as f64;
                         let face = (-((b_x - px)).atan2(b_z - pz)).to_degrees() as f32;
                         wire_mobs.push(crate::world_view::WireMob {
+                            score_text: None,
                             id: 100 + (opts.net_mobs + pig_count as usize + i as usize) as i32,
                             x: px,
                             y,
@@ -1760,6 +1763,7 @@ pub fn render_gui_screen_opts(
                         let y = (gy + 1) as f64;
                         let face = (-((b_x - px)).atan2(b_z - pz)).to_degrees() as f32;
                         wire_mobs.push(crate::world_view::WireMob {
+                            score_text: None,
                             id: 100
                                 + (opts.net_mobs
                                     + pig_count as usize

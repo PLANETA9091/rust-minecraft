@@ -54,6 +54,11 @@ use mc_protocol::{
 pub struct EntitySnapshot {
     /// The entity type's registry id (resolved by the synced registry).
     pub type_id: i32,
+    /// The entity's wire UUID (the 128 bits packed most-long first) —
+    /// the SCOREBOARD HOLDER the below-name lane resolves (the vanilla
+    /// getScoreboardName walk returns the stringUUID: the hyphenated
+    /// lowercase form [`string_uuid`] formats).
+    pub uuid: u128,
     /// World position (the latest full-precision doubles).
     pub x: f64,
     pub y: f64,
@@ -208,6 +213,21 @@ pub struct ObjectiveState {
 pub struct ScoreState {
     pub value: i32,
     pub display: Option<String>,
+}
+
+/// The scoreboard HOLDER's own string (the vanilla
+/// `Entity.getScoreboardName` walk — `return this.stringUUID`): the
+/// 128 wire bits render as Java's lowercase hyphenated form, the
+/// most-significant long first (`8-4-4-4-12` hex words).
+pub fn string_uuid(u: u128) -> String {
+    format!(
+        "{:08x}-{:04x}-{:04x}-{:04x}-{:012x}",
+        (u >> 96) & 0xFFFF_FFFF,
+        (u >> 80) & 0xFFFF,
+        (u >> 64) & 0xFFFF,
+        (u >> 48) & 0xFFFF,
+        u & 0xFFFF_FFFF_FFFF,
+    )
 }
 
 /// One pending mob voice — the Entity Sound packet's resolution the
@@ -846,6 +866,7 @@ impl WorldModel {
                     e.id,
                     EntitySnapshot {
                         type_id: e.type_id,
+                        uuid: e.uuid,
                         x: e.x,
                         y: e.y,
                         z: e.z,
@@ -5208,5 +5229,32 @@ mod tests {
             Some("a"),
             "the slot survives the swap"
         );
+    }
+
+    #[test]
+    fn the_string_uuid_rides_the_holder_law() {
+        // the known Java UUID.toString shape: the 8-4-4-4-12 lowercase
+        // hyphenated words, the most-significant long first (the wire's
+        // own pack order the u128's high half keeps)
+        let u = (0x550e8400e29b41d4u128 << 64) | 0xa716446655440000u128;
+        assert_eq!(string_uuid(u), "550e8400-e29b-41d4-a716-446655440000");
+        assert_eq!(string_uuid(0), "00000000-0000-0000-0000-000000000000");
+        // the SPAWN keeps the wire's own bits (the Add Entity packet's
+        // 128 bits the scoreboard holder's string renders from)
+        let mut m = WorldModel::new();
+        m.apply(PlayEvent::Spawn(EntitySpawn {
+            id: 7,
+            uuid: u,
+            type_id: 0,
+            x: 1.0,
+            y: 2.0,
+            z: 3.0,
+            movement: [0.0; 3],
+            x_rot: 0.0,
+            y_rot: 0.0,
+            y_head_rot: 0.0,
+            data: 0,
+        }));
+        assert_eq!(m.entity(7).unwrap().uuid, u, "the bits the holder rides");
     }
 }

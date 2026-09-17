@@ -456,6 +456,15 @@ pub struct WireMob {
     /// The synced registry's own name (`minecraft:zombie` v1 renders;
     /// anything else is the honest not-yet-drawn type).
     pub type_name: String,
+    /// THE BELOW-NAME LINE (the `Entity.belowNameDisplay` walk's own
+    /// projection): the BELOW_NAME slot's objective + THIS entity's
+    /// row (the holder the stringUUID law keeps) joined as
+    /// `"score display"` — the NO_STYLE component the vanilla text
+    /// builds. `None` while the slot is silent, the objective's row
+    /// for this UUID is absent, or the ten-block gate the RENDER's
+    /// distance law keeps refuses (the distance is the camera's own
+    /// business — the extract law runs per frame, not per ship).
+    pub score_text: Option<String>,
 }
 
 /// The OPEN container window as the UI consumes it — the
@@ -1216,6 +1225,21 @@ fn held_item_view(model: &WorldModel) -> Option<(i32, i32)> {
 /// SCORE_DISPLAY_ORDER comparator's own walk), the rows cap at 15
 /// (the stream's own limit), each row's name the display override
 /// (else the holder — the ownerName walk).
+/// THE BELOW-NAME LINE (the `Entity.belowNameDisplay` walk's own
+/// projection): the BELOW_NAME slot's objective is looked up first
+/// (the silent slot is the honest `None`), then the entity's own row
+/// — the holder the stringUUID law formats (the vanilla
+/// getScoreboardName's `return this.stringUUID`) — and the text the
+/// walk builds: `score + ' ' + objective display` (the
+/// `Component.empty().append(value).append(SPACE).append(displayName)`
+/// chain, the NO_STYLE default the format keeps).
+fn below_name_view(model: &WorldModel, uuid: u128) -> Option<String> {
+    let objective = model.display_slots.get(&mc_protocol::DISPLAY_SLOT_BELOW_NAME)?;
+    let obj = model.objectives.get(objective)?;
+    let state = model.scores.get(&(crate::world_model::string_uuid(uuid), objective.clone()))?;
+    Some(format!("{} {}", state.value, obj.display))
+}
+
 fn sidebar_view(model: &WorldModel) -> Option<WireSidebar> {
     let objective = model.display_slots.get(&SIDEBAR_SLOT)?;
     let obj = model.objectives.get(objective)?;
@@ -1557,6 +1581,11 @@ impl LiveView {
                         Some(mc_protocol::play::EntityDataEntry::Bool(b)) => *b,
                         _ => false,
                     },
+                    // THE BELOW-NAME LINE (the belowNameDisplay walk —
+                    // the slot's objective + the entity's own row, the
+                    // holder the stringUUID law formats, the text the
+                    // score + space + the objective's display speak)
+                    score_text: below_name_view(&self.model, e.uuid),
                     type_name,
                 })
             })
@@ -3953,5 +3982,61 @@ mod tests {
         assert!(sidebar_view(&model).is_none(), "no slot, no sidebar");
         model.display_slots.insert(1, "ghost".into());
         assert!(sidebar_view(&model).is_none(), "no objective, no sidebar");
+    }
+
+    #[test]
+    fn the_below_name_projection_rides_the_holder() {
+        use crate::world_model::string_uuid;
+        use mc_protocol::{
+            DisplayObjectiveUpdate, ObjectiveUpdate, PlayEvent, ScoreUpdate, OBJECTIVE_METHOD_ADD,
+            RENDER_TYPE_INTEGER,
+        };
+        let mut model = WorldModel::new();
+        let mob_uuid = (0x550e8400e29b41d4u128 << 64) | 0xa716446655440000u128;
+        assert!(
+            model.apply(PlayEvent::Objective(ObjectiveUpdate {
+                objective: "deaths".into(),
+                method: OBJECTIVE_METHOD_ADD,
+                display: Some("Deaths".into()),
+                render_type: RENDER_TYPE_INTEGER,
+            })),
+            "the objective add"
+        );
+        // the silent slot: no BELOW_NAME display — the honest None
+        assert_eq!(below_name_view(&model, mob_uuid), None, "no slot, no line");
+        // the slot speaks but the entity's row is absent — still None
+        assert!(
+            model.apply(PlayEvent::DisplayObjective(DisplayObjectiveUpdate {
+                slot: mc_protocol::DISPLAY_SLOT_BELOW_NAME,
+                objective: "deaths".into(),
+            })),
+            "the below-name slot set"
+        );
+        assert_eq!(
+            below_name_view(&model, mob_uuid),
+            None,
+            "no row, no line"
+        );
+        // the row lands (the holder the stringUUID law formats): the
+        // text the score + space + the objective's display speak
+        assert!(model.apply(PlayEvent::Score(ScoreUpdate {
+            owner: string_uuid(mob_uuid),
+            objective: "deaths".into(),
+            score: 42,
+            display: None,
+        })));
+        assert_eq!(
+            below_name_view(&model, mob_uuid).as_deref(),
+            Some("42 Deaths"),
+            "the NO_STYLE component's own words"
+        );
+        // a foreign holder's row never rides this entity's line
+        assert!(model.apply(PlayEvent::Score(ScoreUpdate {
+            owner: "someone-else".into(),
+            objective: "deaths".into(),
+            score: 999,
+            display: None,
+        })));
+        assert_eq!(below_name_view(&model, mob_uuid).as_deref(), Some("42 Deaths"));
     }
 }
