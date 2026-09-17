@@ -526,9 +526,11 @@ pub struct App {
     /// rects keep, the inventory's menu order — result 0, craft 1..4,
     /// armor 5..8, offhand 45, the store rows 9..44). The `set-slot`'s
     /// component sync is the feeder round (the HashedPatch the wire
-    /// speaks); the toggle walk reads and writes the rows, and every
-    /// container switch CLEARS the map — the rows are window-scoped,
-    /// a stale row never rides a later screen's bundle.
+    /// speaks); the toggle walk reads and writes the rows, and the
+    /// rows are window-scoped — a foreign window's open re-learns
+    /// from its own sync (the clear), the player's OWN inventory
+    /// keeps its rows across the E toggle (the component data the
+    /// vanilla screen-open never touches).
     pub bundle_contents: std::collections::HashMap<i32, BundleContents>,
     /// The LIVE store's hotbar row — the HUD's icons and counts are
     /// the store's projection (the vanilla renderHotbar's own lane,
@@ -537,6 +539,17 @@ pub struct App {
     /// carries no store — the row stays empty and the hotbar renders
     /// its chrome only (the honest shape the goldens pin).
     pub hotbar_slots: [(i32, i32); 9],
+    /// THE WINDOW-0 STORE'S OWN PROJECTION (the live store lane the
+    /// chest's slots speak, the player's own inventory window): the
+    /// full 46-slot shape in the wire's own numbering (result 0,
+    /// craft 1..5, armor 5..9, the main grid 9..36, the hotbar
+    /// 36..45, the offhand 45), the index IS the menu id. A slot the
+    /// store never spoke stays `(0, 0)` — the wire's own emptiness
+    /// the render and the hover walk both skip, never a guessed
+    /// stack. The OFFLINE world carries no store — the offline
+    /// `inventory` field stays the truth there (the two lanes never
+    /// mix).
+    pub live_inv_slots: [(i32, i32); crate::world_view::INVENTORY_MENU_SLOTS],
     /// Base world tick for the day-night cycle (0 = vanilla dawn; the frame
     /// counter advances time 1 tick per frame like the vanilla clock).
     pub day_time_base: u64,
@@ -1280,6 +1293,7 @@ impl App {
             bundle_scroll_acc_y: 0.0,
             bundle_contents: std::collections::HashMap::new(),
             hotbar_slots: [(0, 0); 9],
+            live_inv_slots: [(0, 0); crate::world_view::INVENTORY_MENU_SLOTS],
             day_time_base: 0,
             partial_tick: 1.0,
             end_flash: crate::end_flash::EndFlashState::new(),
@@ -3130,14 +3144,24 @@ impl App {
 
     pub fn open(&mut self, kind: ScreenKind) {
         // THE BUNDLE CONTENTS' OWN LIFECYCLE (the map's window-scoped
-        // rows): any container switch clears — the chest's menu ids and
-        // the inventory's SHARE the numeric domain, a stale row never
-        // rides a later screen's bundle (the set-slot's sync is the
-        // re-learner, the walk the scroll's own lane keeps)
+        // rows): any container switch resets the fold's stale
+        // remainder, and the ROWS follow the window's ownership — a
+        // LIVE foreign window's open re-learns from its own sync (the
+        // clear the chest's ids and the inventory's numeric-domain
+        // share keeps honest), the player's OWN inventory keeps its
+        // rows (the same window's component data the vanilla
+        // screen-open never touches — the selection survives the E
+        // toggle; a chest-live switch the stale rows it never rides,
+        // the ownership gate's own discipline). The offline world
+        // carries no rows at all — the clears are its no-ops.
         if matches!(kind, ScreenKind::Chest | ScreenKind::Inventory) {
-            self.bundle_contents.clear();
             self.bundle_scroll_acc_x = 0.0;
             self.bundle_scroll_acc_y = 0.0;
+        }
+        if kind == ScreenKind::Chest
+            || (kind == ScreenKind::Inventory && self.chest_live_window.is_some())
+        {
+            self.bundle_contents.clear();
         }
         self.screen = kind;
         self.buttons.clear();
@@ -3334,9 +3358,10 @@ impl App {
     /// speaks, the body's tick gate the screen test holds), the cursor
     /// stack fresh-empty (the vanilla open's own carried). The wire
     /// sessions open the same screen (the client's own inventory the
-    /// E key opens server-side too) — the hotbar row renders the live
-    /// lane's belief, the main rows their chrome until the store lane
-    /// rides.
+    /// E key opens server-side too) — the whole store the window-0
+    /// projection rides (the hotbar row, the main rows, the bundle
+    /// rows the live lane feeds; the rows survive the toggle, the
+    /// component data the vanilla screen-open never touches).
     pub fn open_inventory(&mut self) {
         self.inv_carried = (0, 0);
         self.open(ScreenKind::Inventory);
@@ -4318,12 +4343,15 @@ impl App {
     /// `container.inventory` at (8, 94) — the title/inventory label
     /// defaults init() pins, the 0x404040 no-shadow draw), and the
     /// carried stack's cursor-follow. The wire sessions render the
-    /// hotbar row from the live lane's belief and the main rows their
-    /// chrome (the offline store stays the only filled lane).
+    /// live store lane's own projection — the hotbar row the HUD's
+    /// belief, the main/armor/offhand/craft rows the window-0 store's
+    /// own truth (the same data the hover walk hits).
     fn render_inventory_slots(&mut self, g: &mut Gui, a: &mut GuiAssets) {
         let panel = self.inv_panel;
         // the store's own slots: the offline store everywhere, the wire
-        // session's hotbar row the live lane's belief rides
+        // session's rows the live store lane's projection rides (the
+        // hotbar row the HUD's own belief, the main rows the window-0
+        // store's own truth)
         let hotbar: [(i32, i32); 9] = if self.world_is_network {
             self.hotbar_slots
         } else {
@@ -4333,7 +4361,9 @@ impl App {
             let (id, count) = if i < 9 {
                 hotbar[i]
             } else if self.world_is_network {
-                continue; // the wire's main rows stay chrome-only (the store lane rides later)
+                // the store's own rows the window-0 projection speaks
+                // (the live store lane the chest's slots ride)
+                self.live_inv_slots[i]
             } else {
                 self.inventory.items[i]
             };
@@ -4351,8 +4381,9 @@ impl App {
         // THE ARMOR COLUMN + THE OFFHAND (the menu's own slot list
         // the ctor walk keeps — result 0, craft 1..4, armor 5..8, the
         // store rows, the offhand 45; the offline store the filled
-        // lane, the wire sessions' equipment rows stay chrome — the
-        // wire's own armor slots ride later). The icons the store's
+        // lane, the wire sessions' rows the window-0 projection's own
+        // truth — menu ids 5..8 and 45 the live store speaks). The
+        // icons the store's
         // own draw speaks; the EMPTY slots the `getNoItemIcon` lane
         // draws — the 16x16 sprite at the +1 inset the extractSlot
         // blit keeps (helmet, chestplate, leggings, boots, shield —
@@ -4367,7 +4398,7 @@ impl App {
         for k in 0..4usize {
             let (sx, sy) = armor_slot_origin(panel, k);
             let (id, count) = if self.world_is_network {
-                (0, 0)
+                self.live_inv_slots[5 + k] // the menu's own armor ids the projection keys
             } else {
                 self.inventory.armor[k]
             };
@@ -4385,7 +4416,7 @@ impl App {
         {
             let (sx, sy) = offhand_slot_origin(panel);
             let (id, count) = if self.world_is_network {
-                (0, 0)
+                self.live_inv_slots[45] // the anonymous slot's own id
             } else {
                 self.inventory.offhand[0]
             };
@@ -4402,10 +4433,15 @@ impl App {
         }
         // THE CRAFT REGION (the 2x2 cells + the computed result slot —
         // the icons the store's own draw keeps, the recompute verdict
-        // the slotsChanged walk speaks; the wire sessions' cells stay
-        // empty — the click lane the store refusal keeps)
+        // the slotsChanged walk speaks; the wire sessions' cells the
+        // window-0 projection's own truth — the server-synced slots
+        // the menu carries, the offline store's local grid otherwise)
         for cell in 0..4 {
-            let (id, count) = self.craft_grid[cell];
+            let (id, count) = if self.world_is_network {
+                self.live_inv_slots[1 + cell] // the craft cells' own menu ids
+            } else {
+                self.craft_grid[cell]
+            };
             if count <= 0 {
                 continue;
             }
@@ -4417,13 +4453,20 @@ impl App {
                 g.text(a, sx + 17 - tw, sy + 9, &s, WHITE, true);
             }
         }
-        if self.craft_result.1 > 0 {
-            let (sx, sy) = craft_slot_origin(panel, 4);
-            draw_item_icon(g, self.craft_result.0, sx + 1, sy + 1);
-            if self.craft_result.1 > 1 {
-                let s = self.craft_result.1.to_string();
-                let tw = g.text_width(&s);
-                g.text(a, sx + 17 - tw, sy + 9, &s, WHITE, true);
+        {
+            let (id, count) = if self.world_is_network {
+                self.live_inv_slots[0] // the result slot's own menu id
+            } else {
+                self.craft_result
+            };
+            if count > 0 {
+                let (sx, sy) = craft_slot_origin(panel, 4);
+                draw_item_icon(g, id, sx + 1, sy + 1);
+                if count > 1 {
+                    let s = count.to_string();
+                    let tw = g.text_width(&s);
+                    g.text(a, sx + 17 - tw, sy + 9, &s, WHITE, true);
+                }
             }
         }
         // the labels (the extractLabels + the inventory label lane —
@@ -5477,39 +5520,63 @@ impl App {
                 }
                 let panel = self.inv_panel;
                 // the menu's own order — result 0, craft 1..4, armor
-                // 5..8, offhand 45, the store rows the walk keeps last
+                // 5..8, offhand 45, the store rows the walk keeps last.
+                // THE WIRE SESSIONS the window-0 projection's own
+                // truth (the live store lane the render speaks — the
+                // hover and the render can never disagree), the
+                // offline store its own.
                 let (rx, ry) = craft_slot_origin(panel, 4);
                 if mx >= rx + 1 && mx < rx + 17 && my >= ry + 1 && my < ry + 17 {
-                    let s = self.craft_result;
+                    let s = if self.world_is_network {
+                        self.live_inv_slots[0]
+                    } else {
+                        self.craft_result
+                    };
                     return Some((s.0, s.1, 0));
                 }
                 for cell in 0..4 {
                     let (cx, cy) = craft_slot_origin(panel, cell);
                     if mx >= cx + 1 && mx < cx + 17 && my >= cy + 1 && my < cy + 17 {
-                        let s = self.craft_grid[cell];
+                        let s = if self.world_is_network {
+                            self.live_inv_slots[1 + cell]
+                        } else {
+                            self.craft_grid[cell]
+                        };
                         return Some((s.0, s.1, 1 + cell as i32));
                     }
                 }
                 for k in 0..4 {
                     let (ax, ay) = armor_slot_origin(panel, k);
                     if mx >= ax + 1 && mx < ax + 17 && my >= ay + 1 && my < ay + 17 {
-                        let s = self.inventory.armor[k];
+                        let s = if self.world_is_network {
+                            self.live_inv_slots[5 + k]
+                        } else {
+                            self.inventory.armor[k]
+                        };
                         return Some((s.0, s.1, 5 + k as i32));
                     }
                 }
                 let (ox, oy) = offhand_slot_origin(panel);
                 if mx >= ox + 1 && mx < ox + 17 && my >= oy + 1 && my < oy + 17 {
-                    let s = self.inventory.offhand[0];
+                    let s = if self.world_is_network {
+                        self.live_inv_slots[45]
+                    } else {
+                        self.inventory.offhand[0]
+                    };
                     return Some((s.0, s.1, 45));
                 }
                 for i in 0..36 {
                     let (sx, sy) = inventory_slot_origin(panel, i);
                     if mx >= sx + 1 && mx < sx + 17 && my >= sy + 1 && my < sy + 17 {
-                        let s = self.inventory.items[i];
                         // the menu's own store numbering: the array's
                         // 0..8 the HOTBAR row speaks (menu 36..44), the
                         // 9..35 the main grid (menu 9..35)
                         let slot_id = if i < 9 { 36 + i as i32 } else { i as i32 };
+                        let s = if self.world_is_network {
+                            self.live_inv_slots[slot_id as usize]
+                        } else {
+                            self.inventory.items[i]
+                        };
                         return Some((s.0, s.1, slot_id));
                     }
                 }
@@ -7528,6 +7595,52 @@ impl App {
                 self.bundle_scroll_acc_y = 0.0;
             }
         }
+    }
+
+    /// THE WINDOW-0 STORE'S OWN LANE (the player's inventory window —
+    /// the projection the chest's slots speak, the window-0 shape):
+    /// the slots the wire spoke land verbatim (the screen's live
+    /// store lane renders and hits them), and the store's OWN bundle
+    /// rows feed the [`App::bundle_contents`] map keyed by the
+    /// window's own menu ids. THE OWNERSHIP GATE first: a live
+    /// foreign window OWNS the map (the chest sync's wholesale
+    /// replacement the same numeric domain shares) — the inventory
+    /// rows stay silent until it closes. THE FEED then speaks the
+    /// chest lane's exact law: the WHOLESALE replacement (the
+    /// projection is the store's own snapshot), identical contents
+    /// preserve the client's own selection (the wire never carries
+    /// the index — the belief survives the refresh cadence), a
+    /// CHANGED or removed row the -1 resets, the rowless sync
+    /// empties the map.
+    pub fn live_inventory_updated(
+        &mut self,
+        slots: [(i32, i32); crate::world_view::INVENTORY_MENU_SLOTS],
+        bundles: Vec<(i32, Vec<(i32, i32)>)>,
+    ) {
+        if !self.world_is_network {
+            return; // the live lane's own precondition — the offline store is the truth
+        }
+        self.live_inv_slots = slots;
+        if self.chest_live_window.is_some() {
+            return; // the foreign window owns the map — the inventory rows wait
+        }
+        let mut rows = std::collections::HashMap::new();
+        for (slot_id, items) in &bundles {
+            let selected = match self.bundle_contents.get(slot_id) {
+                Some(prev) if prev.items == *items => prev.selected_item_index,
+                _ => BundleContents::NO_SELECTED_INDEX,
+            };
+            rows.insert(
+                *slot_id,
+                BundleContents {
+                    items: items.clone(),
+                    selected_item_index: selected,
+                },
+            );
+        }
+        self.bundle_contents = rows;
+        self.bundle_scroll_acc_x = 0.0;
+        self.bundle_scroll_acc_y = 0.0;
     }
 
     /// The live session ended (a server kick or a transport error) while
@@ -16105,15 +16218,15 @@ mod tests {
         app.open_inventory();
         app.inv_panel = inventory_panel_origin(640, 360);
         let bundle = mc_registry::item_id_by_name("bundle").expect("the bundle the wire keeps");
-        // the main grid's first cell (store index 9 — the menu's own
-        // slot id 9 the inventory numbering keeps) carries the bundle
-        app.inventory.items[9] = (bundle, 1);
-        // the contents row the set-slot's sync feeds (the five stacks
-        // the walk's own counts ride) — inserted AFTER the open (the
-        // switch's clear the lifecycle keeps)
-        app.bundle_contents.insert(
-            9,
-            BundleContents::new(vec![(62, 16), (63, 12), (4, 1), (5, 7), (17, 3)]),
+        // the window-0 sync feeds BOTH lanes (the projection the hover
+        // speaks, the contents row the walk's gate keeps) — the main
+        // grid's first cell (store index 9, the menu's own slot id 9)
+        // carries the bundle, the walk's own five-entry contents ride
+        let mut slots = [(0, 0); crate::world_view::INVENTORY_MENU_SLOTS];
+        slots[9] = (bundle, 1);
+        app.live_inventory_updated(
+            slots,
+            vec![(9, vec![(62, 16), (63, 12), (4, 1), (5, 7), (17, 3)])],
         );
         let (ox, oy) = inventory_slot_origin(app.inv_panel, 9);
         // THE FIRST SCROLL (the up-notch): the fold's -2 steps the 2.0
@@ -16261,6 +16374,9 @@ mod tests {
         let (click_tx, click_rx) = std::sync::mpsc::channel::<ContainerCommand>();
         app.attach_live_clicks(click_tx);
         app.open(ScreenKind::Chest);
+        // the LIVE window's identity (the sync's own lane): the chest
+        // the wire opened — the ownership the switch's clear speaks
+        app.chest_live_window = Some((5, 7));
         let panel = chest_panel_origin(640, 360);
         app.chest_slots = vec![(0, 0); 27];
         app.chest_mirror = vec![(0, 0); 36];
@@ -16407,6 +16523,221 @@ mod tests {
         assert!(app.bundle_contents.is_empty(), "the drop the lifecycle keeps");
         assert_eq!(app.bundle_scroll_acc_x, 0.0, "the accumulator the drop resets");
         assert_eq!(app.bundle_scroll_acc_y, 0.0, "the accumulator the drop resets");
+    }
+
+    /// THE WINDOW-0 SYNC'S OWN FEED (the live_inventory_updated lane —
+    /// the player's OWN inventory window the store projection speaks):
+    /// the slots land verbatim (the index IS the menu id), the bundle
+    /// rows feed the map the chest lane's exact law keeps (the
+    /// wholesale replacement, the identical row's belief survival, the
+    /// CHANGED row's -1 reset, the rowless sync's emptiness), the
+    /// OFFLINE world the lane never rides, the LIVE CHEST owns the map
+    /// while its window stands (the ownership gate the numeric-domain
+    /// share keeps honest), and the E TOGGLE the rows survive (the
+    /// same window's component data the vanilla screen-open never
+    /// touches) while a chest-open re-learns from its own sync.
+    #[test]
+    fn the_window0_sync_feeds_the_inventory_bundles() {
+        let mut app = App::new(3);
+        let bundle = mc_registry::item_id_by_name("bundle").expect("the bundle the wire keeps");
+        // the window-0 shape: the store's own slots keyed by the menu
+        // id — the loaded bundle rides the HOTBAR's cell 4 (menu id
+        // 40), the plain stack the main grid's first cell (menu id 9)
+        let mut slots = [(0, 0); crate::world_view::INVENTORY_MENU_SLOTS];
+        slots[9] = (745, 7);
+        slots[40] = (bundle, 1);
+        // THE OFFLINE REFUSAL: the live lane's own precondition — the
+        // offline store stays the truth, the projection never lands
+        app.live_inventory_updated(slots, vec![(40, vec![(62, 16)])]);
+        assert_eq!(app.live_inv_slots[40], (0, 0), "the offline lane refused");
+        assert!(app.bundle_contents.is_empty(), "no rows the offline lane feeds");
+        app.open(ScreenKind::Connect);
+        app.net_world = Some(air_net_world(2, 0));
+        app.enter_network_world(None, Skybox::Overworld, None, None);
+        // THE FEED: the rows land keyed by the window's own menu ids
+        app.live_inventory_updated(slots, vec![(40, vec![(62, 16), (63, 12), (4, 1), (5, 7), (17, 3)])]);
+        assert_eq!(app.live_inv_slots[40], (bundle, 1), "the slot the projection keys");
+        assert_eq!(app.live_inv_slots[9], (745, 7), "the plain stack rides too");
+        assert_eq!(
+            app.bundle_contents[&40].items.len(),
+            5,
+            "the row the window-0 sync fed"
+        );
+        assert_eq!(
+            app.bundle_contents[&40].selected_item_index,
+            BundleContents::NO_SELECTED_INDEX,
+            "the wire's own -1 default the fresh row keeps"
+        );
+        // the client's own selection rides the toggle walk's belief
+        app.bundle_contents.get_mut(&40).unwrap().selected_item_index = 1;
+        // the SAME sync again: identical contents preserve the belief
+        app.live_inventory_updated(slots, vec![(40, vec![(62, 16), (63, 12), (4, 1), (5, 7), (17, 3)])]);
+        assert_eq!(
+            app.bundle_contents[&40].selected_item_index,
+            1,
+            "the identical row the belief survives"
+        );
+        // the CHANGED contents: the -1 the wrap's default resets
+        app.live_inventory_updated(slots, vec![(40, vec![(62, 16)])]);
+        assert_eq!(app.bundle_contents[&40].items.len(), 1, "the changed row");
+        assert_eq!(
+            app.bundle_contents[&40].selected_item_index,
+            BundleContents::NO_SELECTED_INDEX,
+            "the changed component the reset speaks"
+        );
+        // the ROWLESS sync: no bundle-bearing slot — the map empties
+        app.live_inventory_updated(slots, Vec::new());
+        assert!(app.bundle_contents.is_empty(), "the rowless sync");
+        // re-feed: the rows the E toggle's keep-law needs
+        app.live_inventory_updated(slots, vec![(40, vec![(62, 16), (63, 12)])]);
+        app.bundle_contents.get_mut(&40).unwrap().selected_item_index = 1;
+        // THE E TOGGLE: the player's OWN inventory opens — the rows
+        // survive (the component data the vanilla screen-open never
+        // touches), the selection the toggle's belief keeps
+        app.open_inventory();
+        assert_eq!(app.screen, ScreenKind::Inventory, "the E key shows");
+        assert_eq!(
+            app.bundle_contents[&40].selected_item_index,
+            1,
+            "the rows the own-window open keeps"
+        );
+        // back to the world and E again — the belief still stands
+        app.open(ScreenKind::World);
+        app.open_inventory();
+        assert_eq!(
+            app.bundle_contents[&40].selected_item_index,
+            1,
+            "the E cycle the rows survive"
+        );
+        // the world screen back (the chest's window the world's own
+        // lane opens) — THE OWNERSHIP GATE: the chest's sync lands the
+        // map, the inventory feed the foreign window's ownership
+        // silences (the numeric domain the two windows share, a stale
+        // row never rides)
+        app.open(ScreenKind::World);
+        let chest = crate::world_view::LiveContainer {
+            id: 5,
+            menu_type_id: crate::world_model::MENU_TYPE_CHEST,
+            slots: vec![(0, 0); 63],
+            bundle_rows: vec![(9, vec![(5, 7)])],
+            carried: (0, 0),
+            state_id: 7,
+        };
+        app.live_view_updated(air_net_world(2, 1), None, None, Some(chest));
+        assert_eq!(app.screen, ScreenKind::Chest, "the window shows");
+        assert_eq!(app.bundle_contents[&9].items.len(), 1, "the chest row owns");
+        app.live_inventory_updated(slots, vec![(40, vec![(62, 16)])]);
+        assert_eq!(
+            app.bundle_contents[&9].items.len(),
+            1,
+            "the chest row the inventory feed never displaced"
+        );
+        assert!(
+            app.bundle_contents.get(&40).is_none(),
+            "the inventory row the ownership gate refused"
+        );
+        // the chest drops: the rows die with the window, the next
+        // inventory sync the map re-learns
+        app.live_view_updated(air_net_world(2, 1), None, None, None);
+        assert!(app.bundle_contents.is_empty(), "the drop the lifecycle keeps");
+        app.live_inventory_updated(slots, vec![(40, vec![(62, 16)])]);
+        assert!(app.bundle_contents.contains_key(&40), "the feed re-lands");
+        // the CHEST-OPEN clear: a foreign window's open re-learns from
+        // its own sync — the inventory rows it never rides
+        app.open(ScreenKind::Chest);
+        assert!(app.bundle_contents.is_empty(), "the foreign open the clear keeps");
+    }
+
+    /// THE WIRE INVENTORY SCREEN'S OWN WALK (the vanilla scroll chain
+    /// over the player's OWN store): the window-0 projection the hover
+    /// speaks (the hotbar cell and the main-grid cell both keyed by
+    /// the menu id), the bundle the player carries in their own
+    /// inventory the wheel walks — the fold, the selection, the
+    /// SelectBundleItem echo the menu id carries. The OFFLINE store
+    /// the walk never touches (the live lane's own truth).
+    #[test]
+    fn the_wire_inventory_screen_walks_the_players_own_bundle() {
+        use crate::world_view::ContainerCommand;
+        let mut app = App::new(3);
+        app.open(ScreenKind::Connect);
+        app.net_world = Some(air_net_world(2, 0));
+        app.enter_network_world(None, Skybox::Overworld, None, None);
+        let (click_tx, click_rx) = std::sync::mpsc::channel::<ContainerCommand>();
+        app.attach_live_clicks(click_tx);
+        let bundle = mc_registry::item_id_by_name("bundle").expect("the bundle the wire keeps");
+        // the store's own shape: the loaded bundle the HOTBAR's cell 4
+        // (menu id 40) and a second bundle the main grid's cell 12
+        // (menu id 12) — the menu ids the window-0 numbering keys
+        let mut slots = [(0, 0); crate::world_view::INVENTORY_MENU_SLOTS];
+        slots[40] = (bundle, 1);
+        slots[12] = (bundle, 1);
+        slots[9] = (745, 7); // the plain stack the no-action arm keeps
+        let contents = vec![(62, 16), (63, 12), (4, 1), (5, 7), (17, 3)];
+        app.live_inventory_updated(slots, vec![(40, contents.clone()), (12, contents.clone())]);
+        app.open_inventory();
+        app.inv_panel = inventory_panel_origin(640, 360);
+        // THE HOTBAR CELL (store index 4, menu id 40): the hover the
+        // window-0 projection speaks — the live lane's own truth, the
+        // offline store untouched
+        let (hx, hy) = inventory_slot_origin(app.inv_panel, 4);
+        assert_eq!(
+            app.hovered_container_stack(hx + 8, hy + 8),
+            Some((bundle, 1)),
+            "the wire's own stack the hover keeps"
+        );
+        assert_eq!(
+            app.inventory.items[4],
+            (0, 0),
+            "the offline store the walk never touched"
+        );
+        // THE WALK: the scroll moves the selection, the echo the menu
+        // id 40 carries — the packet the server's own bundle speaks
+        assert!(
+            app.on_container_scroll(0.0, -1.0, hx + 8, hy + 8),
+            "the open gate the live row keeps"
+        );
+        assert_eq!(
+            app.bundle_contents[&40].selected_item_index,
+            0,
+            "the selection the walk moved"
+        );
+        match click_rx.try_recv().expect("the echo rode the lane") {
+            ContainerCommand::SelectBundleItem {
+                slot_id,
+                selected_item_index,
+            } => {
+                assert_eq!(slot_id, 40, "the hotbar cell's own menu id");
+                assert_eq!(selected_item_index, 0);
+            }
+            other => panic!("expected a bundle selection, got {other:?}"),
+        }
+        // THE MAIN-GRID CELL (menu id 12): the same walk over the
+        // store's own rows — the id the second bundle's echo carries
+        let (gx, gy) = inventory_slot_origin(app.inv_panel, 12);
+        assert!(app.on_container_scroll(0.0, 1.0, gx + 8, gy + 8));
+        assert_eq!(
+            app.bundle_contents[&12].selected_item_index,
+            4,
+            "the wrap the clamp's law keeps"
+        );
+        match click_rx.try_recv().expect("the echo rode the lane") {
+            ContainerCommand::SelectBundleItem {
+                slot_id,
+                selected_item_index,
+            } => {
+                assert_eq!(slot_id, 12, "the main grid's own menu id");
+                assert_eq!(selected_item_index, 4);
+            }
+            other => panic!("expected a bundle selection, got {other:?}"),
+        }
+        // the plain stack the same hover walk keeps honest — no
+        // action matches, no packet rides
+        let (px, py) = inventory_slot_origin(app.inv_panel, 9);
+        assert!(
+            !app.on_container_scroll(0.0, -1.0, px + 8, py + 8),
+            "the plain stack's honest false"
+        );
+        assert!(click_rx.try_recv().is_err(), "no packet the plain stack spoke");
     }
 
     /// THE PICK'S WIRE HALF (the gameMode.handlePickItemFromBlock walk

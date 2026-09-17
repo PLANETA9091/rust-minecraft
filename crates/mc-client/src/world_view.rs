@@ -291,6 +291,18 @@ pub struct SnapshotView {
     /// carried them (the worker's own drain empties the mailbox
     /// after — each voice rides exactly one ship).
     pub voices: Vec<WireVoice>,
+    /// The player's OWN inventory window (the window-0 store)
+    /// projected for the UI — the full 46-slot shape in the wire's
+    /// own numbering (result 0, craft 1..5, armor 5..9, the main
+    /// grid 9..36, the hotbar 36..45, the offhand 45), keyed by the
+    /// window's OWN menu id (the index IS the id). A slot the store
+    /// never spoke stays `(0, 0)` — the wire's own emptiness the
+    /// render skips, never a guessed stack.
+    pub inventory_slots: [(i32, i32); INVENTORY_MENU_SLOTS],
+    /// The window-0 store's OWN bundle rows (the set-slot sync's
+    /// projection the chest lane shares) — the inventory screen's
+    /// scroll lane's feeder, keyed by the window's own menu id.
+    pub inventory_bundles: Vec<(i32, Vec<(i32, i32)>)>,
 }
 
 /// One wire mob's played voice — the Entity Sound packet's own
@@ -1017,19 +1029,15 @@ pub fn predict_quick_move_to_store(
     (changed, remaining)
 }
 
-/// The model's open-container store projected for the UI — `None`
-/// while no foreign window is open (the join's own state: no screen
-/// is up until the server opens one).
-fn open_container_view(model: &WorldModel) -> Option<LiveContainer> {
-    let oc = model.open_container()?;
-    // THE BUNDLE ROWS' EXTRACTION (the set-slot sync's projection):
-    // the slots whose component patch carries the `bundle_contents`
-    // value — the menu slot id keyed with the entries' (id, count)
-    // pairs, the wire order kept. The patches the store already
-    // parsed (the value codec's own lane); the selection index the
-    // wire never carries, the screens' own belief.
-    let bundle_rows = oc
-        .slots
+/// The component patch's OWN bundle rows (the set-slot sync's
+/// projection, shared by both container lanes): the slots whose
+/// component patch carries the `bundle_contents` value — the slot's
+/// OWN index keyed with the entries' (id, count) pairs, the wire
+/// order kept. The patches the store already parsed (the value
+/// codec's own lane); the selection index the wire never carries,
+/// the screens' own belief.
+fn bundle_rows_of(slots: &[mc_protocol::play::ItemStack]) -> Vec<(i32, Vec<(i32, i32)>)> {
+    slots
         .iter()
         .enumerate()
         .filter_map(|(i, s)| {
@@ -1051,7 +1059,18 @@ fn open_container_view(model: &WorldModel) -> Option<LiveContainer> {
                 _ => None,
             }
         })
-        .collect();
+        .collect()
+}
+
+/// The model's open-container store projected for the UI — `None`
+/// while no foreign window is open (the join's own state: no screen
+/// is up until the server opens one).
+fn open_container_view(model: &WorldModel) -> Option<LiveContainer> {
+    let oc = model.open_container()?;
+    // THE BUNDLE ROWS' EXTRACTION (the set-slot sync's projection):
+    // the shared walk over the window's own slots — the menu slot id
+    // keyed with the entries' (id, count) pairs, the wire order kept.
+    let bundle_rows = bundle_rows_of(&oc.slots);
     Some(LiveContainer {
         id: oc.id,
         menu_type_id: oc.menu_type_id,
@@ -1060,6 +1079,31 @@ fn open_container_view(model: &WorldModel) -> Option<LiveContainer> {
         carried: (oc.carried.item_id, oc.carried.count),
         state_id: oc.state_id,
     })
+}
+
+/// The player's OWN inventory window's full slot shape (the wire's
+/// own numbering — result 0, craft 1..5, armor 5..9, the main grid
+/// 9..36, the hotbar 36..45, the offhand 45; the `InventoryMenu`
+/// constants' audited layout).
+pub const INVENTORY_MENU_SLOTS: usize = crate::world_model::SHIELD_SLOT + 1;
+
+/// The window-0 store projected for the UI — the pairs the screen's
+/// live store lane renders and hits, keyed by the window's OWN menu
+/// id (the index IS the id, the store's Vec numbering verbatim). A
+/// slot the store never spoke stays `(0, 0)` — the wire's own
+/// emptiness the render skips, never a guessed stack (the hotbar
+/// row's own law).
+fn live_inventory_view(model: &WorldModel) -> ([(i32, i32); INVENTORY_MENU_SLOTS], Vec<(i32, Vec<(i32, i32)>)>) {
+    let inv = model.inventory();
+    let mut slots = [(0i32, 0i32); INVENTORY_MENU_SLOTS];
+    for (i, s) in inv.slots.iter().enumerate().take(INVENTORY_MENU_SLOTS) {
+        slots[i] = (s.item_id, s.count);
+    }
+    // THE BUNDLE ROWS' EXTRACTION (the set-slot sync's projection):
+    // the shared walk over the window's own slots — the menu slot id
+    // keyed with the entries' (id, count) pairs, the wire order kept.
+    let bundles = bundle_rows_of(&inv.slots);
+    (slots, bundles)
 }
 
 /// The store's SELECTED hotbar stack projected for the UI — the
@@ -1218,6 +1262,10 @@ pub fn materialize_snapshot_view(
     let y_base = snapshot_y_base(player, model.min_y);
     let camera = snapshot_camera(player, model.min_y, side);
     let biome = player_biome(&model);
+    // the join's own store — the window-0 lane reads the adopted
+    // state the same way the hand's lane does (empty until the wire
+    // speaks)
+    let (inventory_slots, inventory_bundles) = live_inventory_view(&model);
     SnapshotView {
         world: materialize(&model, origin, side, y_base, mapper),
         camera,
@@ -1236,6 +1284,11 @@ pub fn materialize_snapshot_view(
         // and no voices yet (the join snapshot carries no played sounds
         // — the empty mailbox the projection walks)
         voices: Vec::new(),
+        // the join's own store — the window-0 lane reads the adopted
+        // state the same way the hand's lane does (empty until the
+        // wire speaks)
+        inventory_slots,
+        inventory_bundles,
     }
 }
 
@@ -1401,6 +1454,10 @@ impl LiveView {
                 })
             })
             .collect();
+        // the window-0 store's own projection rides every refresh —
+        // the inventory screen follows the store exactly like the
+        // hand and the HUD's row do (the pose-less arm included)
+        let (inventory_slots, inventory_bundles) = live_inventory_view(&self.model);
         let Some(player) = self.model.player.as_ref() else {
             return SnapshotView {
                 world: materialize(
@@ -1419,6 +1476,10 @@ impl LiveView {
                 // reads the store the same way (and the HUD's row)
                 held: held_item_view(&self.model),
                 hotbar: hotbar_row_view(&self.model),
+                // the window-0 store's own projection — the screen's
+                // live lane reads the store exactly like the hand does
+                inventory_slots,
+                inventory_bundles,
                 health: health_view(&self.model),
                 mobs,
                 voices,
@@ -1447,6 +1508,11 @@ impl LiveView {
             // server spawned follow the store exactly like the hearts do
             mobs,
             voices,
+            // the player's OWN store rides with them — the inventory
+            // screen's live lane follows the store exactly like the
+            // chest's slots do
+            inventory_slots,
+            inventory_bundles,
         }
     }
 }
@@ -3104,6 +3170,69 @@ mod tests {
             c.bundle_rows,
             vec![(4, vec![(926, 12), (921, 5)]), (6, Vec::new())],
             "the bundle-bearing slots the extraction keys, wire order"
+        );
+    }
+
+    #[test]
+    fn the_window0_store_projection_rides_the_view() {
+        // the player's OWN inventory window: the store the window-0
+        // sync feeds projects BOTH lanes — the slots keyed by the
+        // menu id (the index IS the id, the never-spoken tail the
+        // (0, 0) emptiness keeps) and the bundle rows the patches
+        // carry (the same extraction the chest lane speaks)
+        let mut live = LiveView::from_snapshot(surface_snapshot(), 5);
+        let bundle = mc_registry::item_id_by_name("bundle").expect("the bundle the table keeps");
+        let bundle_patch = mc_protocol::play::ComponentPatch {
+            added: vec![(
+                mc_protocol::play::data_component_types::BUNDLE_CONTENTS,
+                mc_protocol::play::ComponentValue::BundleContents(vec![
+                    mc_protocol::play::BundleEntry {
+                        item_id: 926,
+                        count: 12,
+                        patch: mc_protocol::play::ComponentPatch::default(),
+                    },
+                ]),
+            )],
+            removed: Vec::new(),
+        };
+        let stack = |count, item_id, patch| mc_protocol::play::ItemStack {
+            count,
+            item_id,
+            patch,
+        };
+        // the window-0 full snapshot: the loaded bundle rides the
+        // main grid's second cell (menu id 10), a plain stack the
+        // first cell (menu id 9) — the InventoryMenu numbering, the
+        // never-spoken heads the empty pairs keep
+        let mut items = vec![stack(0, 0, Default::default()); 9];
+        items.push(stack(7, 745, Default::default())); // slot 9: the plain stack
+        items.push(stack(1, bundle, bundle_patch)); // slot 10: the loaded bundle
+        live.apply(PlayEvent::ContainerFilled(mc_protocol::play::ContainerContent {
+            container_id: crate::world_model::INVENTORY_WINDOW_ID,
+            state_id: 3,
+            items,
+            carried_item: stack(0, 0, Default::default()),
+        }));
+        let view = live.refresh(example_mapper);
+        assert_eq!(
+            view.inventory_slots[9],
+            (745, 7),
+            "the plain stack the menu id keys"
+        );
+        assert_eq!(
+            view.inventory_slots[10],
+            (bundle, 1),
+            "the bundle the menu id keys"
+        );
+        assert_eq!(
+            view.inventory_slots[40],
+            (0, 0),
+            "the never-spoken tail the emptiness keeps"
+        );
+        assert_eq!(
+            view.inventory_bundles,
+            vec![(10, vec![(926, 12)])],
+            "the bundle rows the patches carry"
         );
     }
 

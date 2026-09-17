@@ -130,6 +130,8 @@ fn run_join(
                 crate::world_view::HealthView,
                 Vec<crate::world_view::WireMob>,
                 Vec<crate::world_view::WireVoice>,
+                [(i32, i32); crate::world_view::INVENTORY_MENU_SLOTS],
+                Vec<(i32, Vec<(i32, i32)>)>,
             ),
             String,
         >,
@@ -498,6 +500,15 @@ fn run_join(
                                     // population — the sounds the server
                                     // played stream to the voice lane
                                     upd.voices,
+                                    // the player's OWN store rides with
+                                    // them — the inventory screen's live
+                                    // lane follows the window-0 store
+                                    // exactly like the chest's slots do
+                                    upd.inventory_slots,
+                                    // and the store's own bundle rows —
+                                    // the scroll lane's feeder the patches
+                                    // carry
+                                    upd.inventory_bundles,
                                 )))
                                 .is_err()
                             {
@@ -594,6 +605,8 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
                 crate::world_view::HealthView,
                 Vec<crate::world_view::WireMob>,
                 Vec<crate::world_view::WireVoice>,
+                [(i32, i32); crate::world_view::INVENTORY_MENU_SLOTS],
+                Vec<(i32, Vec<(i32, i32)>)>,
             ),
             String,
         >,
@@ -856,7 +869,19 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
         // Disconnect screen, exactly like the original's kick
         while let Ok(upd) = live_rx.try_recv() {
             match upd {
-                Ok((world, camera, biome, container, held, hotbar, health, mobs, voices)) => {
+                Ok((
+                    world,
+                    camera,
+                    biome,
+                    container,
+                    held,
+                    hotbar,
+                    health,
+                    mobs,
+                    voices,
+                    inv_slots,
+                    inv_bundles,
+                )) => {
                     app.live_view_updated(world, camera, biome, container);
                     // the hand's lane beside the world's: the selected
                     // hotbar stack's model loads on change (the reload
@@ -880,6 +905,12 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
                     // entities (the entity lookup's own gate — the
                     // voice the id doesn't name drops)
                     app.live_voices_updated(voices);
+                    // the window-0 store's lane beside the chest's: the
+                    // player's own inventory the screen's live store
+                    // projection rides (the slots the wire spoke, the
+                    // bundle rows the patches carry — the ownership
+                    // gate the chest's live window keeps)
+                    app.live_inventory_updated(inv_slots, inv_bundles);
                 }
                 Err(reason) => app.live_session_lost(reason),
             }
