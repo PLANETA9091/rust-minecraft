@@ -4095,6 +4095,47 @@ impl App {
                 }
             }
         }
+        // THE HELD-ITEM LANE (ItemInHandLayer.submitArmWithItem — the
+        // main-hand stack the extraction fills, the mannequin's own
+        // SELECTED hotbar slot): the plain def's bake the
+        // thirdperson_righthand stanza poses, the arm chain the
+        // translateToHand walk rides, the rotX(-90)+rotY(180)+
+        // (1/16, 2/16, -10/16) adult law the bytecode speaks. The
+        // specials (the shield/bow family the first-person's special
+        // lanes keep) the plain def's honest miss serves this round.
+        if let Some(&(held_id, held_count)) = self.inventory.items.get(self.selected_hotbar) {
+            if held_count > 0 {
+                if let Some(name) = mc_registry::item_name(held_id) {
+                    if let Some((_, model, _, _)) = mc_registry::generated::item_models::ITEM_MODEL_DEFS
+                        .iter()
+                        .find(|d| d.0 == name)
+                    {
+                        let model_id = model.strip_prefix("minecraft:").unwrap_or(model);
+                        if let Some(hq) = crate::avatar::held_item_quads(
+                            &state,
+                            Vec3::new(0.0, 0.0, 0.0),
+                            0.0,
+                            0.0,
+                            model_id,
+                        ) {
+                            for q in &hq {
+                                // the entity fold's x mirror flips the
+                                // winding — the SAME corner re-order the
+                                // head lanes speak keeps the raster's
+                                // front-face law (the corner-bound
+                                // texels ride the swap verbatim)
+                                sampled.push(crate::raster::SampledQuad {
+                                    pts: [q.pts[0], q.pts[2], q.pts[1], q.pts[3]],
+                                    uv: [q.uv[0], q.uv[2], q.uv[1], q.uv[3]],
+                                    tex: q.texture,
+                                    tint: [q.shade, q.shade, q.shade],
+                                });
+                            }
+                        }
+                    }
+                }
+            }
+        }
         fb.clear_depth();
         fb.draw_sampled_quads(vp, &sampled, &mut |tex, u, v| {
             if tex.is_empty() {
@@ -4131,11 +4172,16 @@ impl App {
                 let [r, g, b, al] = layer.pixel(u, v);
                 return Some([r, g, b, al]);
             }
-            // THE BLOCK LANE (the head-block's + the skull's texture
-            // ids): the resolved material the element/dump bakes carry
-            // — the same atlas fetch the GUI icons speak, the quad's
-            // own shade already folded in the tint.
-            if tex.starts_with("minecraft:") || tex.starts_with("entity/") {
+            // THE BLOCK LANE (the head-block's + the skull's + the
+            // held item's texture ids): the resolved material the
+            // element/dump/item bakes carry — the same atlas fetch the
+            // GUI icons speak, the quad's own shade already folded in
+            // the tint (the item bake's layer textures speak the bare
+            // "item/..." the generated namespace keeps).
+            if tex.starts_with("minecraft:")
+                || tex.starts_with("entity/")
+                || tex.starts_with("item/")
+            {
                 return match mc_registry::sprite_uv::sample_uv(tex, u, v) {
                     mc_registry::sprite_uv::Sample::Pixel(c) => Some(c),
                     mc_registry::sprite_uv::Sample::Missing(c) => Some(c),
@@ -19936,6 +19982,116 @@ mod tests {
         }
         assert!(slot_px > 100, "the skull icon painted the slot: {slot_px}");
         assert!(strays.is_empty(), "the icon stayed in its slot: {strays:?}");
+    }
+
+    /// THE MANNEQUIN'S HELD ITEM (the ItemInHandLayer
+    /// submitArmWithItem walk the selected hotbar stack keeps — the
+    /// main hand the extraction fills): the selected slot's stone
+    /// paints the mannequin's hand (the bare-skin diff speaks), the
+    /// empty store renders pixel-identical twice (the no-item path
+    /// adds ZERO quads — the golden law's own gate), a DIFFERENT
+    /// selected slot keeps the mannequin bare (the selection the main
+    /// hand follows), and the equipment loads stay EMPTY (the held
+    /// lane is no armor lane).
+    #[test]
+    fn the_mannequin_holds_the_selected_stack() {
+        let root = ["assets-cache/jar", "../assets-cache/jar", "../../assets-cache/jar"]
+            .iter()
+            .map(std::path::Path::new)
+            .find(|p| p.join("gui/container/inventory.png").exists());
+        let Some(root) = root else { return };
+        let Some(_) = crate::avatar::AvatarModel::load(&root) else { return };
+        let mut app = App::new(3);
+        app.enter_world();
+        app.spawn_offline_body();
+        app.open_inventory();
+        let mut assets = GuiAssets::open(&root);
+        let bare = {
+            let mut fb = crate::raster::Framebuf::new(640, 360);
+            app.render(&mut fb, &mut assets);
+            fb.color.clone()
+        };
+        let bare_twice = {
+            let mut fb = crate::raster::Framebuf::new(640, 360);
+            app.render(&mut fb, &mut assets);
+            fb.color
+        };
+        assert_eq!(bare, bare_twice, "the empty-hand path adds zero quads");
+        let px = |c: &[u8], x: usize, y: usize| -> [u8; 3] {
+            let o = (y * 640 + x) * 3;
+            [c[o], c[o + 1], c[o + 2]]
+        };
+        // the mannequin's own neighborhood (the window the PiP owns +
+        // the held item's spill past its chrome — the hand's own
+        // reach), the pair the held lane's paint speaks through
+        let diff_in_window = |a: &[u8], b: &[u8]| -> usize {
+            let mut diff = 0usize;
+            for y in 96..168 {
+                for x in 250..320 {
+                    if px(a, x, y) != px(b, x, y) {
+                        diff += 1;
+                    }
+                }
+            }
+            diff
+        };
+        // THE SELECTED STACK (the stone in the main hand — slot 0 the
+        // default selected speaks)
+        let id = mc_registry::item_id_by_name("stone").expect("the registry speaks");
+        app.inventory.items[app.selected_hotbar] = (id, 27);
+        let held = {
+            let mut fb = crate::raster::Framebuf::new(640, 360);
+            app.render(&mut fb, &mut assets);
+            fb.color.clone()
+        };
+        let held_diff = diff_in_window(&bare, &held);
+        assert!(held_diff > 20, "the held stone painted: {held_diff} pixels");
+        // no strays outside the mannequin's neighborhood (the slot
+        // icon the slot pass paints rides its own region — the slot 0
+        // icon the store's own draw keeps; the rest is the held lane's)
+        let (sx, sy) = inventory_slot_origin((232, 97), 0);
+        let mut strays = Vec::new();
+        for y in 0..360 {
+            for x in 0..640 {
+                if px(&bare, x, y) != px(&held, x, y) {
+                    let in_window = x >= 250 && x < 320 && y >= 96 && y < 168;
+                    let in_slot0 = x >= sx as usize && x < sx as usize + 18
+                        && y >= sy as usize && y < sy as usize + 18;
+                    if !in_window && !in_slot0 {
+                        if strays.len() < 8 {
+                            strays.push((x, y));
+                        }
+                    }
+                }
+            }
+        }
+        assert!(strays.is_empty(), "the paint stayed home: {strays:?}");
+        // the equipment loads stay EMPTY (the held lane is no armor lane)
+        assert!(app.armor_textures.is_empty(), "no armor loads");
+        // A DIFFERENT SELECTION (slot 3 empty): the main hand's stack
+        // the selection names — the mannequin back to bare
+        app.selected_hotbar = 3;
+        let other = {
+            let mut fb = crate::raster::Framebuf::new(640, 360);
+            app.render(&mut fb, &mut assets);
+            fb.color.clone()
+        };
+        assert_eq!(
+            diff_in_window(&bare, &other),
+            0,
+            "the empty selected slot keeps the hand bare"
+        );
+        // THE SELECTED SLOT'S OWN STACK (the sword at slot 3 — the
+        // selection moves the item's paint)
+        let sword = mc_registry::item_id_by_name("iron_sword").expect("the registry speaks");
+        app.inventory.items[app.selected_hotbar] = (sword, 1);
+        let swd = {
+            let mut fb = crate::raster::Framebuf::new(640, 360);
+            app.render(&mut fb, &mut assets);
+            fb.color.clone()
+        };
+        let swd_diff = diff_in_window(&bare, &swd);
+        assert!(swd_diff > 5, "the held sword painted: {swd_diff} pixels");
     }
 }
 

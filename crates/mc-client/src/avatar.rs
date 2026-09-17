@@ -2358,6 +2358,73 @@ pub fn skull_quads(
 
 pub const SKULL_SCALE: f32 = 1.1875;
 
+/// THE MANNEQUIN'S HELD-ITEM LANE (ItemInHandLayer.submitArmWithItem —
+/// the 26.2 bytecode the evidence walk pinned): the main-hand stack the
+/// extraction fills (`ArmedEntityRenderState.rightHandItemStack` — the
+/// entity's own main hand, the mannequin's SELECTED hotbar stack here)
+/// rides the ARM chain the `ArmedModel.translateToHand` walk speaks —
+/// the HumanoidModel's two `translateAndRotate` calls (the root's
+/// identity + the right arm's own posed chain, the same part matrix the
+/// armor pieces ride) — then the layer's own law: `mulPose(rotX -90°)`,
+/// `mulPose(rotY 180°)`, the adult offset `translate(1/16, 2/16,
+/// -10/16)` (the baby gate the isBaby check keeps is no mannequin's
+/// branch), the swing/using animations the rest state's exact zeros
+/// silence. The item's quads are the bake through the
+/// `thirdperson_righthand` display stanza the ItemStackRenderState
+/// submit speaks (the same composition the first-person lane's
+/// `posed_item_layer_quads` folds, the OTHER context). The shade rides
+/// the block face constants the quads' own direction/shade flag carries
+/// — the same law the head-block lane pins (the same
+/// ItemStackRenderState.submit family). `None` = the model carries no
+/// bake (the honest not-this-lane).
+pub fn held_item_quads(
+    state: &AvatarState,
+    feet: Vec3,
+    cam_yaw: f32,
+    cam_pitch: f32,
+    model_id: &str,
+) -> Option<Vec<HeadBlockQuad>> {
+    let _ = (cam_yaw, cam_pitch);
+    let quads = match mc_registry::display::posed_item_layer_quads(
+        model_id,
+        None,
+        mc_registry::display::THIRDPERSON_RIGHTHAND,
+    ) {
+        // a broken display stanza binds nothing (vanilla warns + drops)
+        Some(Ok(q)) => q,
+        _ => return None,
+    };
+    let posed = build_posed_parts(state);
+    // translateToHand: the root's identity + the right arm's own chain
+    // (the HumanoidModel bytecode's two translateAndRotate calls —
+    // the posed part matrix the armor walk's copyPropertiesTo keeps)
+    let m_arm = posed[2].matrix(&Mat4::IDENT);
+    // the layer's own law: rotX(-90), rotY(180), the adult
+    // (1/16, 2/16, -10/16) — the bytecode's own three folds
+    let layer = Mat4::rot_x(-std::f32::consts::FRAC_PI_2)
+        .mul(&Mat4::rot_y(std::f32::consts::PI))
+        .mul(&Mat4::translation(1.0 / 16.0, 2.0 / 16.0, -10.0 / 16.0));
+    let m = m_arm.mul(&layer);
+    let crouch_drop = if state.crouching { -2.0 / 16.0 } else { 0.0 };
+    let (fold_point, _fold_normal) =
+        entity_folds(state.yaw_deg, state.death_time, crouch_drop, feet);
+    let mut out: Vec<HeadBlockQuad> = Vec::new();
+    for q in quads {
+        let pts = q.vertices.map(|v| {
+            let p = m.transform_point(Vec3::new(v[0], v[1], v[2]));
+            fold_point([p[0], p[1], p[2]])
+        });
+        let shade = block_face_shade(q.direction, q.shade);
+        out.push(HeadBlockQuad {
+            pts,
+            uv: q.uvs,
+            shade,
+            texture: q.texture,
+        });
+    }
+    Some(out)
+}
+
 /// The leather layer's UNDYED tint (the client info JSON's
 /// `color_when_undyed: -6265536` = 0xFFA06540 — the classic brown the
 /// tint law unpacks; the store's bare (id, count) carries no dye
@@ -4985,6 +5052,82 @@ mod tests {
         assert_eq!(dragon.len(), 42);
         let (dlo, _) = bbox(&dragon);
         assert!(dlo[2] < -1.2, "the snout juts: {}", dlo[2]);
+    }
+
+    /// THE HELD-ITEM CHAIN (the ItemInHandLayer.submitArmWithItem law
+    /// the evidence walk pinned): the stone's block bake through the
+    /// block/block stanza's thirdperson_righthand ([75,45,0] x0.375 +
+    /// [0, 2.5/16, 0]) rides the ARM chain — the exact box the oracle
+    /// walk speaks (the hand's own neighborhood: x 0.202..0.794 the
+    /// fold's mirror puts the mannequin's right arm on the world +x
+    /// side, y 0.531..1.021 the hanging hand's band, z -0.586..0.023
+    /// in front of the body), the block face shade set the quads' own
+    /// directions keep, the head's pitch the item does NOT ride (the
+    /// arm chain, not the head chain — the head-block lane's own
+    /// contrast), the flat sword's generated bake the same chain
+    /// carries, and the unknown model the honest None.
+    #[test]
+    fn the_held_item_rides_the_third_person_chain() {
+        let rest = AvatarState::rest(180.0, 0.0, 0.0);
+        let quads = held_item_quads(&rest, Vec3::ZERO, 0.0, 0.0, "block/stone")
+            .expect("the stone's block bake speaks");
+        assert_eq!(quads.len(), 6, "the cube bake's six faces");
+        let mut lo = [f32::MAX; 3];
+        let mut hi = [f32::MIN; 3];
+        for q in &quads {
+            for p in q.pts.iter() {
+                for k in 0..3 {
+                    lo[k] = lo[k].min(p[k]);
+                    hi[k] = hi[k].max(p[k]);
+                }
+            }
+        }
+        // the oracle walk's exact box (the composite the chain speaks)
+        assert!((lo[0] - 0.20206).abs() < 1e-4, "lo.x = {}", lo[0]);
+        assert!((lo[1] - 0.53111).abs() < 1e-4, "lo.y = {}", lo[1]);
+        assert!((lo[2] + 0.58591).abs() < 1e-4, "lo.z = {}", lo[2]);
+        assert!((hi[0] - 0.79378).abs() < 1e-4, "hi.x = {}", hi[0]);
+        assert!((hi[1] - 1.02064).abs() < 1e-4, "hi.y = {}", hi[1]);
+        assert!((hi[2] - 0.02341).abs() < 1e-4, "hi.z = {}", hi[2]);
+        // the block face shade set the quads' own directions keep (the
+        // up 1.0, the down 0.5, the sides 0.8/0.6 — the stone's own
+        // texture everywhere)
+        assert!(quads.iter().all(|q| q.texture.ends_with("block/stone")));
+        for want in [1.0f32, 0.5, 0.8, 0.6] {
+            assert!(
+                quads.iter().any(|q| (q.shade - want).abs() < 1e-6),
+                "the shade {want} rides the set"
+            );
+        }
+        // THE HEAD'S PITCH the item does NOT ride (the arm chain, not
+        // the head chain): the pitched pose's box EXACTLY the rest's
+        let down = AvatarState::rest(180.0, 80.0, 0.0);
+        let dq = held_item_quads(&down, Vec3::ZERO, 0.0, 0.0, "block/stone")
+            .expect("the pitched pose speaks");
+        let mut dlo = [f32::MAX; 3];
+        let mut dhi = [f32::MIN; 3];
+        for q in &dq {
+            for p in q.pts.iter() {
+                for k in 0..3 {
+                    dlo[k] = dlo[k].min(p[k]);
+                    dhi[k] = dhi[k].max(p[k]);
+                }
+            }
+        }
+        assert_eq!(lo, dlo, "the pitch never swings the held item");
+        assert_eq!(hi, dhi, "the pitch never swings the held item");
+        // THE FLAT SWORD (the item/generated bake the handheld stanza's
+        // own thirdperson [0,-90,55] x0.85 carries): quads speak, the
+        // texture names the sword
+        let sword = held_item_quads(&rest, Vec3::ZERO, 0.0, 0.0, "item/iron_sword")
+            .expect("the sword's bake speaks");
+        assert!(!sword.is_empty(), "the extrusion's quads");
+        assert!(
+            sword.iter().all(|q| q.texture.ends_with("item/iron_sword")),
+            "the sword's own layer texture"
+        );
+        // THE UNKNOWN MODEL'S HONEST NONE
+        assert!(held_item_quads(&rest, Vec3::ZERO, 0.0, 0.0, "item/no_such_model").is_none());
     }
 
     /// THE EQUIPMENT TEXTURES LOAD (the runtime cache's own verdict —
