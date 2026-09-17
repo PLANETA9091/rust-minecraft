@@ -133,6 +133,7 @@ fn run_join(
                 Vec<crate::world_view::WireWorldVoice>,
                 Option<crate::world_view::WireSidebar>,
                 crate::world_view::WirePlayerList,
+                Option<crate::world_view::WireRide>,
                 [(i32, i32); crate::world_view::INVENTORY_MENU_SLOTS],
                 Vec<(i32, Vec<(i32, i32)>)>,
                 i32,
@@ -449,6 +450,30 @@ fn run_join(
                             // Command's PERFORM_RESPAWN action 0
                             session.client_command(0)
                         }
+                        crate::world_view::ContainerCommand::PlayerInput {
+                            forward,
+                            backward,
+                            left,
+                            right,
+                            jump,
+                            shift,
+                            sprint,
+                        } => {
+                            // THE INPUT WIRE (the vanilla LocalPlayer.tick's
+                            // own echo): the seven booleans' record the ONE
+                            // byte rides — the riding lanes read it
+                            // server-side (the boat's steering, the shift's
+                            // dismount ask)
+                            session.player_input(mc_protocol::InputFlags {
+                                forward,
+                                backward,
+                                left,
+                                right,
+                                jump,
+                                shift,
+                                sprint,
+                            })
+                        }
                     };
                     if let Err(e) = sent {
                         // a send failure is a transport error: a framed
@@ -521,6 +546,11 @@ fn run_join(
                                     // store keeps stream to the TAB
                                     // overlay's lane
                                     upd.player_list,
+                                    // the ride's anchor rides with them —
+                                    // the carried position the vehicle's
+                                    // own snapshot keeps streams to the
+                                    // body's ride lane
+                                    upd.ride,
                                     // the player's OWN store rides with
                                     // them — the inventory screen's live
                                     // lane follows the window-0 store
@@ -634,6 +664,7 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
                 Vec<crate::world_view::WireWorldVoice>,
                 Option<crate::world_view::WireSidebar>,
                 crate::world_view::WirePlayerList,
+                Option<crate::world_view::WireRide>,
                 [(i32, i32); crate::world_view::INVENTORY_MENU_SLOTS],
                 Vec<(i32, Vec<(i32, i32)>)>,
                 i32,
@@ -918,12 +949,17 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
                     world_voices,
                     sidebar,
                     player_list,
+                    ride,
                     inv_slots,
                     inv_bundles,
                     inv_state_id,
                     inv_carried,
                 )) => {
                     app.live_view_updated(world, camera, biome, container);
+                    // the ride's lane beside the world's: the carried
+                    // position the vehicle's own snapshot keeps (the
+                    // mount snap + the seat the projection walked)
+                    app.live_ride_updated(ride);
                     // the hand's lane beside the world's: the selected
                     // hotbar stack's model loads on change (the reload
                     // key makes the refresh cadence cheap)

@@ -110,6 +110,7 @@ pub mod clientbound {
         CB_PLAYER_COMBAT_KILL as PLAYER_COMBAT_KILL,
         CB_SOUND_ENTITY as SOUND_ENTITY, CB_SOUND as SOUND,
         CB_SET_OBJECTIVE as SET_OBJECTIVE, CB_SET_DISPLAY_OBJECTIVE as SET_DISPLAY_OBJECTIVE,
+        CB_SET_PASSENGERS as SET_PASSENGERS,
         CB_SET_SCORE as SET_SCORE, CB_RESET_SCORE as RESET_SCORE,
         CB_PLAYER_INFO_REMOVE as PLAYER_INFO_REMOVE, CB_PLAYER_INFO_UPDATE as PLAYER_INFO_UPDATE,
         CB_TAB_LIST as TAB_LIST,
@@ -130,6 +131,7 @@ pub mod serverbound {
         SB_PLAYER_ACTION as PLAYER_ACTION, SB_SET_CARRIED_ITEM as SET_CARRIED_ITEM,
         SB_SWING as SWING, SB_USE_ITEM as USE_ITEM, SB_USE_ITEM_ON as USE_ITEM_ON,
         SB_CLIENT_COMMAND as CLIENT_COMMAND, SB_INTERACT as INTERACT,
+        SB_PLAYER_INPUT as PLAYER_INPUT,
         SB_PICK_ITEM_FROM_BLOCK as PICK_ITEM_FROM_BLOCK,
         SB_PICK_ITEM_FROM_ENTITY as PICK_ITEM_FROM_ENTITY,
         SB_BUNDLE_ITEM_SELECTED as BUNDLE_ITEM_SELECTED,
@@ -1125,6 +1127,49 @@ pub fn parse_remove_entities(payload: &[u8]) -> Result<Vec<i32>> {
         c.len()
     );
     Ok(ids)
+}
+
+/// Set Passengers: who rides what NOW (the vanilla `ClientboundSet-
+/// PassengersPacket` — generated id 107, `minecraft:set_passengers`).
+/// THE WIRE (javap of the real record's ctor): the vehicle's entity id
+/// as ONE VarInt, then the passengers as `readVarIntArray()` — a VarInt
+/// count then that many VarInt entity ids. An EMPTY array is the
+/// dismount broadcast (the vehicle now carries nobody); the packet is
+/// the FULL list, not a delta.
+#[derive(Debug, Clone, PartialEq)]
+pub struct SetPassengers {
+    /// The vehicle's entity id.
+    pub vehicle: i32,
+    /// The FULL passenger list (empty = the vehicle carries nobody).
+    pub passengers: Vec<i32>,
+}
+
+/// The Set Passengers walk (the ctor's own two reads, verbatim).
+pub fn parse_set_passengers(payload: &[u8]) -> Result<SetPassengers> {
+    let mut c: &[u8] = payload;
+    let id = read_varint(&mut c)?;
+    anyhow::ensure!(
+        id == clientbound::SET_PASSENGERS,
+        "not a set passengers packet (0x{id:02X})"
+    );
+    let vehicle = read_varint(&mut c)?;
+    let count = read_varint(&mut c)?;
+    if count < 0 || count as usize > c.len() {
+        return Err(anyhow::anyhow!(
+            "absurd passenger count {count} for {} remaining bytes",
+            c.len()
+        ));
+    }
+    let mut passengers = Vec::with_capacity(count as usize);
+    for _ in 0..count {
+        passengers.push(read_varint(&mut c)?);
+    }
+    anyhow::ensure!(
+        c.is_empty(),
+        "{} trailing bytes after the set passengers packet",
+        c.len()
+    );
+    Ok(SetPassengers { vehicle, passengers })
 }
 
 /// The unpacked Entity Position Sync payload (clientbound play,
@@ -5348,6 +5393,83 @@ pub fn encode_interact(
     p
 }
 
+/// The ride's INPUT RECORD (the 26.2's own `net/minecraft/world/entity/
+/// player/Input` — the record ServerboundPlayerInputPacket carries, the
+/// `Input.STREAM_CODEC` the packet's clinit composite passes). SEVEN
+/// BOOLS: forward, backward, left, right, jump, shift, sprint — the
+/// ctor's own parameter order the javap walk keeps. THE WIRE: one BYTE,
+/// bit 0 = forward, bit 1 = backward, bit 2 = left, bit 3 = right,
+/// bit 4 = jump, bit 5 = shift, bit 6 = sprint (the encode/decode
+/// walks' own 1/2/4/8/16/32/64 constants — the ior fold the encode
+/// speaks, the iand probes the decode answers).
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub struct InputFlags {
+    pub forward: bool,
+    pub backward: bool,
+    pub left: bool,
+    pub right: bool,
+    pub jump: bool,
+    pub shift: bool,
+    pub sprint: bool,
+}
+
+impl InputFlags {
+    /// The record's ONE-BYTE wire form (the Input$1 codec's own ior
+    /// fold: each boolean ORs its ordinal's power of two, the byte the
+    /// writeByte/iand pair the decompile keeps).
+    pub fn to_byte(self) -> u8 {
+        let mut b = 0u8;
+        if self.forward {
+            b |= 1;
+        }
+        if self.backward {
+            b |= 2;
+        }
+        if self.left {
+            b |= 4;
+        }
+        if self.right {
+            b |= 8;
+        }
+        if self.jump {
+            b |= 16;
+        }
+        if self.shift {
+            b |= 32;
+        }
+        if self.sprint {
+            b |= 64;
+        }
+        b
+    }
+
+    /// The byte's own inverse (the decode's iand probes: bit i set =
+    /// the boolean true).
+    pub fn from_byte(b: u8) -> InputFlags {
+        InputFlags {
+            forward: b & 1 != 0,
+            backward: b & 2 != 0,
+            left: b & 4 != 0,
+            right: b & 8 != 0,
+            jump: b & 16 != 0,
+            shift: b & 32 != 0,
+            sprint: b & 64 != 0,
+        }
+    }
+}
+
+/// The PLAYER INPUT wire (the vanilla `LocalPlayer.tick`'s own send —
+/// `lastSentInput != input.keyPresses()` sends one ServerboundPlayer-
+/// InputPacket, the record rides the Input.STREAM_CODEC, the generated
+/// id 43, `minecraft:player_input`): the packet id then the record's
+/// ONE BYTE (the seven booleans' bit law [`InputFlags::to_byte`]).
+pub fn encode_player_input(flags: InputFlags) -> Vec<u8> {
+    let mut p = Vec::with_capacity(2);
+    write_varint(&mut p, serverbound::PLAYER_INPUT);
+    p.push(flags.to_byte());
+    p
+}
+
 /// THE LOW-PRECISION VEC3 (the 26.2's own `net/minecraft/network/LpVec3`
 /// — the codec the Interact record's `location` field rides, the
 /// `Vec3.LP_STREAM_CODEC` the clinit's composite passes). THE WIRE
@@ -6716,6 +6838,10 @@ pub enum PlayEvent {
     Spawn(EntitySpawn),
     /// Remove Entities: a batch of entity ids ceased to exist.
     EntitiesRemoved(Vec<i32>),
+    /// Set Passengers: who rides what NOW (the full list, the empty
+    /// array the dismount broadcast — the model's vehicle belief
+    /// re-baselines at it).
+    SetPassengers(SetPassengers),
     /// Entity Position Sync: the server's authoritative position
     /// correction for ONE entity (the model moves it in place).
     EntityMoved(EntityPositionSync),
@@ -6902,6 +7028,9 @@ impl<S: Read + Write> PlaySession<S> {
             clientbound::ADD_ENTITY => Ok(PlayEvent::Spawn(parse_add_entity(&pkt)?)),
             clientbound::REMOVE_ENTITIES => {
                 Ok(PlayEvent::EntitiesRemoved(parse_remove_entities(&pkt)?))
+            }
+            clientbound::SET_PASSENGERS => {
+                Ok(PlayEvent::SetPassengers(parse_set_passengers(&pkt)?))
             }
             clientbound::ENTITY_POSITION_SYNC => {
                 Ok(PlayEvent::EntityMoved(parse_entity_position_sync(&pkt)?))
@@ -7121,6 +7250,18 @@ impl<S: Read + Write> PlaySession<S> {
         self.conn
             .send_packet(&encode_interact(entity_id, hand, cursor, shift))
             .context("send interact")
+    }
+
+    /// The INPUT WIRE (the vanilla `LocalPlayer.tick`'s own send —
+    /// `lastSentInput != input.keyPresses()` sends one
+    /// ServerboundPlayerInputPacket): the seven booleans' record rides
+    /// the Input.STREAM_CODEC, the ONE byte the generated-id-43 packet
+    /// keeps. The riding lanes read it (the boat's steering the
+    /// server-side input drives, the shift the dismount asks).
+    pub fn player_input(&mut self, flags: InputFlags) -> Result<()> {
+        self.conn
+            .send_packet(&encode_player_input(flags))
+            .context("send player input")
     }
 
     /// The client command (the vanilla `LocalPlayer`'s own
@@ -12655,6 +12796,77 @@ mod tests {
     /// `FriendlyByteBuf.readContainerId` = `VarInt.read`), the menu
     /// type rides the registry(MENU) VarInt, and the title is ONE bare
     /// network NBT tag — walked, retained VERBATIM.
+    #[test]
+    fn the_set_passengers_wire_rides_the_full_list() {
+        // THE MOUNT (the ctor's own two reads): vehicle 7 carries the
+        // two riders 1 (the local player) and 9 — the VarInt vehicle,
+        // the VarInt count, the VarInt riders in the wire's own order
+        let mut p = Vec::new();
+        write_varint(&mut p, clientbound::SET_PASSENGERS);
+        write_varint(&mut p, 7);
+        write_varint(&mut p, 2);
+        write_varint(&mut p, 1);
+        write_varint(&mut p, 9);
+        let u = parse_set_passengers(&p).unwrap();
+        assert_eq!(u.vehicle, 7);
+        assert_eq!(u.passengers, vec![1, 9], "the FULL list, the wire's own order");
+
+        // THE DISMOUNT BROADCAST: the empty array the vehicle now
+        // carries nobody — the packet's count 0 speaks it
+        let mut p = Vec::new();
+        write_varint(&mut p, clientbound::SET_PASSENGERS);
+        write_varint(&mut p, 7);
+        write_varint(&mut p, 0);
+        let u = parse_set_passengers(&p).unwrap();
+        assert_eq!(u.vehicle, 7);
+        assert!(u.passengers.is_empty(), "the empty list IS the dismount");
+
+        // the wrong id refuses (the parse's own ensure)
+        let mut p = Vec::new();
+        write_varint(&mut p, clientbound::REMOVE_ENTITIES);
+        assert!(parse_set_passengers(&p).is_err());
+        // the absurd count refuses (the array's own bounds)
+        let mut p = Vec::new();
+        write_varint(&mut p, clientbound::SET_PASSENGERS);
+        write_varint(&mut p, 7);
+        write_varint(&mut p, 99);
+        p.push(0);
+        assert!(parse_set_passengers(&p).is_err());
+    }
+
+    #[test]
+    fn the_input_record_byte_keeps_the_seven_keys() {
+        // THE BIT LAW (the Input$1 codec's own ior fold): bit 0
+        // forward, bit 1 backward, bit 2 left, bit 3 right, bit 4
+        // jump, bit 5 shift, bit 6 sprint — each boolean its own
+        // power of two
+        let f = InputFlags {
+            forward: true,
+            backward: true,
+            left: true,
+            right: true,
+            jump: true,
+            shift: true,
+            sprint: true,
+        };
+        assert_eq!(f.to_byte(), 0b0111_1111);
+        assert_eq!(InputFlags::from_byte(0b0111_1111), f, "the decode's own iand probes");
+        // the single keys' own pins (the powers of two verbatim)
+        assert_eq!(InputFlags { forward: true, ..Default::default() }.to_byte(), 1);
+        assert_eq!(InputFlags { backward: true, ..Default::default() }.to_byte(), 2);
+        assert_eq!(InputFlags { left: true, ..Default::default() }.to_byte(), 4);
+        assert_eq!(InputFlags { right: true, ..Default::default() }.to_byte(), 8);
+        assert_eq!(InputFlags { jump: true, ..Default::default() }.to_byte(), 16);
+        assert_eq!(InputFlags { shift: true, ..Default::default() }.to_byte(), 32);
+        assert_eq!(InputFlags { sprint: true, ..Default::default() }.to_byte(), 64);
+        // the silence is the zero byte (the ride's quiet keys)
+        assert_eq!(InputFlags::default().to_byte(), 0);
+        // THE PACKET (LocalPlayer.tick's own send): the generated id
+        // 43 then the ONE byte
+        let p = encode_player_input(InputFlags { forward: true, jump: true, ..Default::default() });
+        assert_eq!(p, vec![43, 1 | 16], "the id then the record's byte");
+    }
+
     #[test]
     fn the_open_screen_lanes_pin_the_window() {
         assert_eq!(clientbound::OPEN_SCREEN, 59, "minecraft:open_screen");

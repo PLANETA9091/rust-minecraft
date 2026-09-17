@@ -117,6 +117,14 @@ pub struct WorldModel {
     /// Entity packet's numeric key). Cleared on Respawn — the entities
     /// of the crossed dimension's level do not follow the player.
     entities: HashMap<i32, EntitySnapshot>,
+    /// THE RIDE BELIEF: the vehicle's entity id -> its FULL passenger
+    /// list (the Set Passengers packet's own shape — the vanilla
+    /// ClientPacketListener.handleSetEntityPassengersPacket walk: the
+    /// unknown vehicle the warn-and-return keeps, the eject + the
+    /// startRiding walk the list rebuild speaks). Cleared on Respawn
+    /// (the vehicles ARE the entities) and pruned by the entity
+    /// removals (the dead mount takes its riders' belief away).
+    vehicles: HashMap<i32, Vec<i32>>,
     /// The LOCAL player's active mob effects, keyed by the mob-effect
     /// registry id. Only the own-entity traffic lands here (vanilla's
     /// LocalPlayer carries its own effects; the lightmap consumes the
@@ -560,6 +568,7 @@ impl WorldModel {
             clocks: Vec::new(),
             columns: HashMap::new(),
             entities: HashMap::new(),
+            vehicles: HashMap::new(),
             effects: HashMap::new(),
             inventory: InventoryState::default(),
             open_container: None,
@@ -588,6 +597,34 @@ impl WorldModel {
     /// lane's projection rides both).
     pub fn entities(&self) -> impl Iterator<Item = (i32, &EntitySnapshot)> {
         self.entities.iter().map(|(id, e)| (*id, e))
+    }
+
+    /// WHO CARRIES this entity right now (the inverse walk of the
+    /// belief — the passenger's id scanned across the vehicles' lists;
+    /// the map's own size the vanilla client's passenger sets keep
+    /// small). The silent walk is the honest None (nothing carries).
+    pub fn vehicle_of(&self, passenger: i32) -> Option<i32> {
+        self.vehicles
+            .iter()
+            .find(|(_, riders)| riders.contains(&passenger))
+            .map(|(vehicle, _)| *vehicle)
+    }
+
+    /// THE PASSENGER'S SEAT INDEX inside its vehicle's list (the
+    /// AbstractBoat.getPassengerAttachmentPoint's own indexOf — the
+    /// multi-rider seat offsets the index speaks). `None` when nothing
+    /// carries the entity.
+    pub fn passenger_index(&self, passenger: i32) -> Option<usize> {
+        self.vehicles
+            .iter()
+            .find_map(|(_, riders)| riders.iter().position(|&r| r == passenger))
+    }
+
+    /// The VEHICLE'S OWN rider list (the belief's verbatim read — the
+    /// seat count the multi-rider offsets gate on). `None` when the id
+    /// carries nobody.
+    pub fn vehicle_passengers(&self, vehicle: i32) -> Option<&Vec<i32>> {
+        self.vehicles.get(&vehicle)
     }
 
     /// The mobs' hurt mailbox's own drain (`std::mem::take` — the
@@ -764,6 +801,10 @@ impl WorldModel {
                 // swap's population does not cross (the vanilla client
                 // swaps the whole ClientLevel — entities included)
                 self.entities.clear();
+                // the ride belief follows the level too (the vehicles
+                // ARE the entities — the crossed dimension's mounts
+                // never carry the new one's rider)
+                self.vehicles.clear();
                 // the death screen's message dies with the level (the
                 // respawn's own world recreation — the vanilla client
                 // closes the DeathScreen when the new level lands)
@@ -929,8 +970,51 @@ impl WorldModel {
                 let mut any = false;
                 for id in ids {
                     any |= self.entities.remove(&id).is_some();
+                    // the ride belief prunes with the population: a dead
+                    // vehicle takes its whole rider list away, a dead
+                    // rider's seat empties (the removal IS the auto-
+                    // dismount the vanilla server speaks)
+                    any |= self.vehicles.remove(&id).is_some();
+                    let mut pruned = false;
+                    for riders in self.vehicles.values_mut() {
+                        let before = riders.len();
+                        riders.retain(|&r| r != id);
+                        pruned |= riders.len() != before;
+                    }
+                    any |= pruned;
                 }
                 any
+            }
+            PlayEvent::SetPassengers(p) => {
+                // THE VANILLA HANDLER'S OWN LAW (ClientPacketListener.
+                // handleSetEntityPassengersPacket): the vehicle MUST be
+                // a known entity — `level.getEntity(vehicle) == null`
+                // warns and returns, the packet's word lands NOTHING
+                // (an unknown mount can never carry a belief)
+                if !self.entities.contains_key(&p.vehicle) {
+                    return false;
+                }
+                // the eject + startRiding walk: each listed passenger
+                // un-rides EVERY other vehicle first (the startRiding's
+                // own stopRiding — a passenger holds one seat), then the
+                // vehicle's list re-baselines at the packet's FULL
+                // list; the empty list (the dismount broadcast) drops
+                // the entry entirely (no riders, no belief)
+                let changed = self.vehicles.get(&p.vehicle).map(|r| r.as_slice())
+                    != Some(p.passengers.as_slice())
+                    || p.passengers.iter().any(|r| self.vehicle_of(*r) != Some(p.vehicle));
+                for rider in self.vehicles.values_mut() {
+                    rider.retain(|r| !p.passengers.contains(r));
+                }
+                // the emptied seats drop (no riders, no entry — the
+                // remount's own stopRiding the eject walk keeps)
+                self.vehicles.retain(|_, riders| !riders.is_empty());
+                if p.passengers.is_empty() {
+                    self.vehicles.remove(&p.vehicle);
+                } else {
+                    self.vehicles.insert(p.vehicle, p.passengers.clone());
+                }
+                changed
             }
             PlayEvent::EntityMoved(sync) => {
                 // a position correction names an entity the client is
@@ -2123,6 +2207,7 @@ mod tests {
     use mc_protocol::{
         BiomeEffects, BiomeEntry, EntityDeltaPos, EntityDeltaPosRot, EntityDeltaRot,
         EntityHeadRot, EntityPositionSync, EntitySpawn, GrassColorModifier, SetEntityDataEntry,
+        SetPassengers,
     };
 
     /// One synced biome element under the mock tables — the real
@@ -3548,6 +3633,110 @@ mod tests {
         assert!(m.entity(8).is_some(), "the unlisted neighbor survives");
         // nothing left in the batch existed — the no-op reports false
         assert!(!m.apply(PlayEvent::EntitiesRemoved(vec![7, 999])));
+    }
+
+    #[test]
+    fn the_vehicles_belief_rides_the_packet_law() {
+        let mut m = WorldModel::new();
+        m.apply(PlayEvent::WorldInfo(WorldInfo {
+            entity_id: 1,
+            hardcore: false,
+            dimensions: vec!["minecraft:overworld".to_string()],
+            view_distance: 8,
+            simulation_distance: 8,
+            portal_cooldown: 300,
+            current_dimension: "minecraft:overworld".to_string(),
+        }));
+        // the world's population: the local player's entity (id 1),
+        // two boats (ids 7 and 9) — the belief's own cast
+        for (id, type_id) in [(1, 1), (7, 2101), (9, 2102)] {
+            m.apply(PlayEvent::Spawn(EntitySpawn {
+                id,
+                uuid: id as u128,
+                type_id,
+                x: 0.0,
+                y: 64.0,
+                z: 0.0,
+                movement: [0.0; 3],
+                x_rot: 0.0,
+                y_rot: 90.0,
+                y_head_rot: 0.0,
+                data: 0,
+            }));
+        }
+        // THE UNKNOWN VEHICLE REFUSES (the handler's own warn-and-
+        // return): level.getEntity(vehicle) == null lands NOTHING —
+        // the belief stays silent, the world never learns the lie
+        assert!(!m.apply(PlayEvent::SetPassengers(SetPassengers {
+            vehicle: 99,
+            passengers: vec![1],
+        })));
+        assert_eq!(m.vehicle_of(1), None, "an unknown mount carries nobody");
+
+        // THE MOUNT: the boat 7 carries the player (the FULL list the
+        // packet speaks, the belief re-baselines at it)
+        assert!(m.apply(PlayEvent::SetPassengers(SetPassengers {
+            vehicle: 7,
+            passengers: vec![1],
+        })));
+        assert_eq!(m.vehicle_of(1), Some(7));
+        assert_eq!(m.vehicle_passengers(7).map(|r| r.as_slice()), Some(&[1][..]));
+
+        // THE REMOUNT'S EJECT WALK: the player switches to boat 9 —
+        // the startRiding's own stopRiding empties boat 7's seat
+        // before boat 9's list lands
+        assert!(m.apply(PlayEvent::SetPassengers(SetPassengers {
+            vehicle: 9,
+            passengers: vec![1],
+        })));
+        assert_eq!(m.vehicle_of(1), Some(9));
+        assert_eq!(
+            m.vehicle_passengers(7).map(|r| r.as_slice()),
+            None,
+            "the old vehicle's seat emptied (no riders, no entry)"
+        );
+
+        // THE MULTI-RIDER LIST: boat 9 carries the player and a mate —
+        // the seat index the attachment law reads
+        m.apply(PlayEvent::SetPassengers(SetPassengers {
+            vehicle: 9,
+            passengers: vec![7, 1],
+        }));
+        assert_eq!(m.passenger_index(1), Some(1), "the second seat");
+        assert_eq!(m.passenger_index(7), Some(0), "the front seat");
+
+        // THE DISMOUNT BROADCAST: the empty list drops the entry — the
+        // walk owns the player again
+        assert!(m.apply(PlayEvent::SetPassengers(SetPassengers {
+            vehicle: 9,
+            passengers: vec![],
+        })));
+        assert_eq!(m.vehicle_of(1), None, "the dismount is the freedom");
+        assert_eq!(m.passenger_index(7), None);
+
+        // THE DEAD MOUNT PRUNES: the vehicle's removal takes its
+        // riders' belief away (the removal IS the auto-dismount)
+        m.apply(PlayEvent::SetPassengers(SetPassengers {
+            vehicle: 7,
+            passengers: vec![1],
+        }));
+        assert_eq!(m.vehicle_of(1), Some(7));
+        assert!(m.apply(PlayEvent::EntitiesRemoved(vec![7])));
+        assert_eq!(m.vehicle_of(1), None, "the dead boat carries nobody");
+
+        // THE RESPAWN CLEARS THE BELIEF (the vehicles ARE the
+        // entities — the crossed dimension's mounts never follow)
+        m.apply(PlayEvent::SetPassengers(SetPassengers {
+            vehicle: 9,
+            passengers: vec![1],
+        }));
+        assert_eq!(m.vehicle_of(1), Some(9));
+        assert!(m.apply(PlayEvent::Respawn(SpawnInfo {
+            dimension_type_id: 1,
+            dimension: "minecraft:the_nether".to_string(),
+            portal_cooldown: 60,
+        })));
+        assert_eq!(m.vehicle_of(1), None, "the ride belief dies with the level");
     }
 
     #[test]

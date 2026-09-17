@@ -715,6 +715,16 @@ pub struct App {
     /// hand-installed world, or a join without layout knowledge) — the
     /// deterministic flight camera stands. Cleared with the level.
     pub net_camera: Option<crate::camera::Camera>,
+    /// THE RIDE'S BELIEF (the projection's own word): the carried feet
+    /// + the vehicle's yaw while a boat family vehicle holds the local
+    /// player, `None` while nothing does — the walk's own freedom the
+    /// ride's silence keeps (the body's physics own the player again).
+    pub net_ride: Option<crate::world_view::WireRide>,
+    /// THE LAST SENT INPUT (the vanilla `LocalPlayer.lastSentInput`'s
+    /// own law): the input record the wire last spoke — the CHANGE
+    /// against it sends one ServerboundPlayerInputPacket, riding or
+    /// not (the vanilla's own unconditional-on-change send).
+    pub last_sent_input: mc_protocol::InputFlags,
     /// True while the World screen shows the NETWORK world (the quad mesh
     /// came from a join snapshot, not the procedural singleplayer world).
     pub world_is_network: bool,
@@ -1433,6 +1443,8 @@ impl App {
             disconnect_reason: String::new(),
             net_world: None,
             net_camera: None,
+            net_ride: None,
+            last_sent_input: mc_protocol::InputFlags::default(),
             world_is_network: false,
             world_skybox: Skybox::Overworld,
             world_fog: None,
@@ -1768,7 +1780,36 @@ impl App {
                 } else {
                     self.offline_world.as_ref()
                 };
-                if let Some(w) = world {
+                // THE RIDE CARRY (the vanilla Entity.rideTick's own law):
+                // while a boat holds the player the body's physics never
+                // walk — no impulses (the input steers the VEHICLE
+                // server-side), no gravity, no fluid lanes (the
+                // step/splash/drift windows never fire), the carried
+                // feet the projection keeps set (prev = current — the
+                // render lerp walks zero distance), the ground never
+                // claims the rider. The move wire flows below exactly
+                // as the standing walk's does (the vanilla
+                // isControlledCamera gate keeps sending while riding —
+                // the carried position the packet speaks).
+                if self.net_ride.is_some() {
+                    let r = self.net_ride.as_ref().expect("ride checked above");
+                    b.prev_x = r.feet_x;
+                    b.prev_y = r.feet_y;
+                    b.prev_z = r.feet_z;
+                    b.x = r.feet_x;
+                    b.y = r.feet_y;
+                    b.z = r.feet_z;
+                    b.vx = 0.0;
+                    b.vy = 0.0;
+                    b.vz = 0.0;
+                    b.on_ground = false;
+                    b.horizontal_collision = false;
+                    b.forward = 0.0;
+                    b.left = 0.0;
+                    b.jumping = false;
+                    b.sprinting = false;
+                    b.want_crouch = false;
+                } else if let Some(w) = world {
                     b.tick(w, using);
                     // THE FOOTSTEP: the body's own cadence law fired on a
                     // solid block under the feet — the block's step voice
@@ -7348,6 +7389,28 @@ impl App {
         self.live_container_updated(container);
     }
 
+    /// THE RIDE'S LANE (the refresh's own carry — the Set Passengers
+    /// belief the projection resolved into the carried feet): the mount
+    /// that APPEARS under the player snaps the body's yaw to the
+    /// vehicle's own (the vanilla handleSetEntityPassengersPacket's
+    /// fresh-mount law — the yRotOF/setYRot/setYHeadRot fold speaks
+    /// one value three times), the body's physics then sleep while the
+    /// carry walks (see the tick's ride gate), and the ride's drop
+    /// hands the body back to itself (the server's dismount teleport
+    /// re-anchors through the position lane it always speaks). No-op
+    /// outside the network walk (the offline world keeps no vehicles).
+    pub fn live_ride_updated(&mut self, ride: Option<crate::world_view::WireRide>) {
+        if !self.world_is_network {
+            return;
+        }
+        if self.net_ride.is_none() {
+            if let (Some(b), Some(r)) = (self.body.as_mut(), ride.as_ref()) {
+                b.yaw = r.vehicle_yaw;
+            }
+        }
+        self.net_ride = ride;
+    }
+
     /// The OFFLINE world screen's camera pose — the look-control lane's
     /// own set (the vanilla teleport/pose shape the net side speaks: the
     /// pose lands, the world renders from it). The placement lane's clip
@@ -7428,6 +7491,22 @@ impl App {
         crouch: bool,
         sprint: bool,
     ) {
+        // THE INPUT RECORD (the vanilla KeyboardInput.tick's own
+        // rebuild — the Input record's seven booleans are the RAW key
+        // states, the ±1 impulses then DERIVED through
+        // calculateImpulse): W/S/A/D fold to the four direction keys
+        // through the impulse's sign, the state keys ride verbatim
+        // (the sprint the RAW key — the food/crouch gates are the
+        // body's own prediction, never the wire's word)
+        let flags = mc_protocol::InputFlags {
+            forward: forward > 0.0,
+            backward: forward < 0.0,
+            left: left > 0.0,
+            right: left < 0.0,
+            jump,
+            shift: crouch,
+            sprint,
+        };
         if let Some(b) = self.body.as_mut() {
             b.forward = forward;
             b.left = left;
@@ -7437,6 +7516,26 @@ impl App {
                 && forward > 0.8
                 && !crouch
                 && self.food_data.has_enough_food();
+        }
+        // THE INPUT WIRE (the vanilla `LocalPlayer.tick`'s own law —
+        // `lastSentInput != input.keyPresses()` sends one
+        // ServerboundPlayerInputPacket and re-baselines, riding or
+        // not): the record that CHANGED speaks one packet. The riding
+        // lanes read it server-side — the boat's steering the input
+        // drives, the shift the dismount asks.
+        if flags != self.last_sent_input {
+            self.last_sent_input = flags;
+            if let Some(sink) = self.live_clicks.as_ref() {
+                let _ = sink.send(crate::world_view::ContainerCommand::PlayerInput {
+                    forward: flags.forward,
+                    backward: flags.backward,
+                    left: flags.left,
+                    right: flags.right,
+                    jump: flags.jump,
+                    shift: flags.shift,
+                    sprint: flags.sprint,
+                });
+            }
         }
     }
 
@@ -24281,6 +24380,100 @@ mod tests {
         // vanilla extract draws regardless (the 22px content width)
         let (_, r0, w0, _, _) = tab_layout(427, 0, 0, 0);
         assert_eq!((r0, w0), (0, 22), "the empty tab still speaks its width");
+    }
+
+    #[test]
+    fn the_ride_lane_carries_the_body_and_snaps_the_mount() {
+        use crate::world_view::{ContainerCommand, WireRide};
+        let mut app = App::new(3);
+        app.net_world = Some(air_net_world(2, 0));
+        app.enter_network_world(None, Skybox::Overworld, None, None);
+        let (click_tx, click_rx) = std::sync::mpsc::channel::<ContainerCommand>();
+        app.attach_live_clicks(click_tx);
+        // the body stands (the teleport re-anchor materialized it)
+        let pose = crate::camera::Camera {
+            pos: Vec3::new(1.0, 2.0, 3.0),
+            yaw: 0.5,
+            pitch: -0.1,
+        };
+        app.live_view_updated(air_net_world(2, 1), Some(pose), None, None);
+        assert!(app.body.is_some(), "the network body materialized");
+
+        // THE INPUT WIRE (the vanilla LocalPlayer.tick's own law): the
+        // CHANGED record speaks one packet — the seven booleans the
+        // raw keys fold, the sprint the RAW key (never the food
+        // gate's verdict)
+        app.on_movement_input(1.0, 0.0, false, false, false);
+        match click_rx.try_recv().expect("the input change rode the lane") {
+            ContainerCommand::PlayerInput {
+                forward, sprint, ..
+            } => {
+                assert!(forward, "W held");
+                assert!(!sprint, "the raw Ctrl key state, not the body's gate");
+            }
+            other => panic!("the wrong command rode the lane: {other:?}"),
+        }
+        // the SAME record never re-speaks (the lastSentInput re-baseline)
+        app.on_movement_input(1.0, 0.0, false, false, false);
+        assert!(click_rx.try_recv().is_err(), "no change, no packet");
+        // the SHIFT press IS a change (the dismount's own ask)
+        app.on_movement_input(1.0, 0.0, false, true, false);
+        match click_rx.try_recv().expect("the shift rode the lane") {
+            ContainerCommand::PlayerInput { shift, .. } => assert!(shift),
+            other => panic!("the wrong command rode the lane: {other:?}"),
+        }
+
+        // THE MOUNT SNAP (the fresh-mount law): the ride that appears
+        // under the player turns the body's yaw to the vehicle's own
+        let ride = WireRide {
+            feet_x: 5.0,
+            feet_y: 64.2,
+            feet_z: -3.0,
+            vehicle_yaw: 270.0,
+        };
+        app.live_ride_updated(Some(ride));
+        assert_eq!(app.net_ride, Some(ride));
+        assert_eq!(
+            app.body.as_ref().unwrap().yaw,
+            270.0,
+            "the yRotOF/setYRot/setYHeadRot fold speaks once"
+        );
+
+        // THE CARRY (the rideTick's own law): the fixed tick sleeps the
+        // body's physics — the carried feet the projection keeps set,
+        // the impulses zeroed (the boat steers, not the body), the
+        // ground never claims the rider, and the move wire keeps
+        // flowing with the carried position (the vanilla
+        // isControlledCamera gate keeps sending while riding)
+        let b = app.body.as_mut().unwrap();
+        b.forward = 1.0; // the W impulse the ride must silence
+        b.on_ground = true; // the ground's stale claim
+        b.vx = 0.3; // the drift the ride must zero
+        drop(b);
+        app.update();
+        let b = app.body.as_ref().unwrap();
+        assert_eq!(
+            (b.x, b.y, b.z),
+            (5.0, 64.2, -3.0),
+            "the carried feet the projection keeps"
+        );
+        assert_eq!(
+            (b.forward, b.vx, b.on_ground),
+            (0.0, 0.0, false),
+            "the physics asleep, the ground's claim dropped"
+        );
+
+        // THE DISMOUNT (the ride's drop): the walk owns the player
+        // again — the next tick's physics run (the carried feet stop
+        // being assigned, the impulses the keys speak flow again)
+        app.live_ride_updated(None);
+        assert_eq!(app.net_ride, None);
+        app.update();
+        let b = app.body.as_ref().unwrap();
+        assert!(
+            b.y != 64.2 || b.vy != 0.0,
+            "the body's own physics resumed after the ride dropped"
+        );
     }
 }
 

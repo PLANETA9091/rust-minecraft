@@ -310,6 +310,11 @@ pub struct SnapshotView {
     /// the join's default, and the shape the TAB key's gate renders
     /// when the server never spoke.
     pub player_list: WirePlayerList,
+    /// THE RIDE ANCHOR (see [`WireRide`]) — the carried position the
+    /// vehicle's own snapshot keeps (the boat family only), `None`
+    /// while nothing carries the local player (the walk keeps the
+    /// body's own physics — the ride's silence IS the freedom).
+    pub ride: Option<WireRide>,
     /// The player's OWN inventory window (the window-0 store)
     /// projected for the UI — the full 46-slot shape in the wire's
     /// own numbering (result 0, craft 1..5, armor 5..9, the main
@@ -430,6 +435,90 @@ pub struct WirePlayerList {
     pub header: String,
     pub footer: String,
     pub rows: Vec<WirePlayerRow>,
+}
+
+/// THE RIDE ANCHOR (the vanilla rideTick's own word — the position the
+/// vehicle carries the LOCAL player at): the vehicle's world-space
+/// position plus the passenger attachment (the
+/// AbstractBoat.getPassengerAttachmentPoint walk), and the vehicle's
+/// yaw the mount snap reads (the handleSetEntityPassengersPacket's own
+/// yRotOF/setYRot/setYHeadRot fold). The camera rides the feet plus
+/// the eye height; the body's own pose rides the feet verbatim.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct WireRide {
+    pub feet_x: f64,
+    pub feet_y: f64,
+    pub feet_z: f64,
+    /// The vehicle's body yaw in degrees (the mount snap's source).
+    pub vehicle_yaw: f32,
+}
+
+/// THE BOAT FAMILY'S OWN DIMENSIONS (the vanilla EntityType constants
+/// the client bakes: BOAT / CHEST_BOAT / RAFT / CHEST_RAFT all scale
+/// 1.375 wide × 0.562 tall — the registry never ships dimensions, the
+/// type's own constant the vanilla source keeps). The ride height the
+/// AbstractBoat.rideHeight override speaks: `dimensions.height() / 3`
+/// (the Boat/ChestBoat/Raft/ChestRaft bytecode's own fdiv).
+pub const BOAT_DIMENSIONS_HEIGHT: f32 = 0.562;
+
+/// The multi-rider seat offsets the AbstractBoat
+/// getPassengerAttachmentPoint bytecode keeps: the first seat of a
+/// MULTI-rider list sits at +0.2, every later seat at −0.6 (the
+/// single-rider boat's own x offset is 0.0 — the
+/// getSinglePassengerXOffset base the Boat/Raft family never
+/// overrides). Animal passengers add +0.2 more — a branch the local
+/// player can never ride (the rider's own seat law only).
+pub const BOAT_FRONT_SEAT_OFFSET: f32 = 0.2;
+pub const BOAT_BACK_SEAT_OFFSET: f32 = -0.6;
+
+/// THE RIDE PROJECTION: the LOCAL player's carried position, from the
+/// Set Passengers belief + the vehicle's own entity snapshot. The
+/// chain (each link the honest None — no belief, no vehicle entity,
+/// no boat family, no seat): the Login's entity id -> the vehicle
+/// that carries it -> the vehicle's snapshot -> the type name's boat
+/// family gate (`boat` / `chest_boat` / `raft` / `chest_raft` — the
+/// registry names the ends-with walk keeps, the 26.2 boat family's
+/// own four) -> the attachment: `Vec3(0, height/3, seat_x).yRot(
+/// -yaw·π/180)` added to the vehicle's position (the
+/// getPassengerAttachmentPoint's own return, the yRot the vanilla
+/// Vec3's own cos/sin fold).
+pub fn ride_view(model: &WorldModel) -> Option<WireRide> {
+    let info = model.info.as_ref()?;
+    let vehicle_id = model.vehicle_of(info.entity_id)?;
+    let vehicle = model.entity(vehicle_id)?;
+    let name = model.entity_type_name(vehicle.type_id)?;
+    let is_boat_family = name.ends_with("boat") || name.ends_with("raft");
+    if !is_boat_family {
+        return None;
+    }
+    let ride_height = BOAT_DIMENSIONS_HEIGHT / 3.0;
+    let seat_x = match model.passenger_index(info.entity_id) {
+        Some(0) => {
+            // the front seat: +0.2 only when the boat carries MORE than
+            // one (the size>1 branch the bytecode gates; the single
+            // rider keeps the 0.0 base)
+            match model.vehicle_passengers(vehicle_id) {
+                Some(riders) if riders.len() > 1 => BOAT_FRONT_SEAT_OFFSET,
+                _ => 0.0,
+            }
+        }
+        Some(_) => BOAT_BACK_SEAT_OFFSET,
+        None => 0.0,
+    };
+    // the vanilla Vec3.yRot(-yaw * π/180) walk: x' = x·cos + z·sin,
+    // z' = −x·sin + z·cos — the attachment's local x rides the seat,
+    // the y the ride height
+    let theta = -(vehicle.y_rot as f64) * std::f64::consts::PI / 180.0;
+    let (sin, cos) = theta.sin_cos();
+    let (lx, lz) = (seat_x as f64, 0.0f64);
+    let ax = lx * cos + lz * sin;
+    let az = -lx * sin + lz * cos;
+    Some(WireRide {
+        feet_x: vehicle.x + ax,
+        feet_y: vehicle.y + ride_height as f64,
+        feet_z: vehicle.z + az,
+        vehicle_yaw: vehicle.y_rot,
+    })
 }
 
 /// One wire mob as the renderer consumes it — the Add Entity
@@ -725,6 +814,21 @@ pub enum ContainerCommand {
     /// action — the server respawns the player and re-streams the
     /// position and the vitals).
     Respawn,
+    /// THE INPUT WIRE (the vanilla `LocalPlayer.tick`'s own echo —
+    /// `lastSentInput != input.keyPresses()` sends one
+    /// ServerboundPlayerInputPacket): the seven booleans' record the
+    /// movement lane rebuilt, the worker speaks the ONE byte. The
+    /// riding lanes read it server-side (the boat's steering, the
+    /// shift's dismount ask).
+    PlayerInput {
+        forward: bool,
+        backward: bool,
+        left: bool,
+        right: bool,
+        jump: bool,
+        shift: bool,
+        sprint: bool,
+    },
 }
 
 /// The camera's pose in the VANILLA wire degrees — the inverse of
@@ -1526,6 +1630,9 @@ pub fn materialize_snapshot_view(
         // player-info packets are the only source (the empty overlay:
         // no rows, no bands — the render's gate keeps it silent)
         player_list: WirePlayerList { header: String::new(), footer: String::new(), rows: Vec::new() },
+        // and no ride belief — the Set Passengers packets are the only
+        // source (the join's feet stand on their own, nothing carries)
+        ride: None,
         // the join's own store — the window-0 lane reads the adopted
         // state the same way the hand's lane does (empty until the
         // wire speaks)
@@ -1763,6 +1870,9 @@ impl LiveView {
                 // rows the projection sorted and capped (the TAB key's
                 // screen the overlay renders)
                 player_list: player_list_view(&self.model),
+                // the ride's belief rides the pose-less arm too — the
+                // mount is the connection's own word, not the pose's
+                ride: ride_view(&self.model),
             };
         };
         let origin = snapshot_window_origin(player, self.side);
@@ -1797,6 +1907,10 @@ impl LiveView {
             // rows follow the player-info store exactly like the
             // scoreboard does
             player_list: player_list_view(&self.model),
+            // the ride's anchor rides every refresh too — the carried
+            // position follows the vehicle's own snapshot exactly like
+            // the mobs' poses do
+            ride: ride_view(&self.model),
             // the player's OWN store rides with them — the inventory
             // screen's live lane follows the store exactly like the
             // chest's slots do
@@ -4086,6 +4200,108 @@ mod tests {
         assert!(sidebar_view(&model).is_none(), "no slot, no sidebar");
         model.display_slots.insert(1, "ghost".into());
         assert!(sidebar_view(&model).is_none(), "no objective, no sidebar");
+    }
+
+    #[test]
+    fn the_ride_projection_keeps_the_boat_anchor() {
+        use mc_protocol::play::EntitySpawn;
+        use mc_protocol::{PlayEvent, SetPassengers};
+        let mut model = WorldModel::new();
+        // the login pins the local entity id; the registry names the
+        // population the family gate reads (type id 0 = the boat, id 1
+        // = the zombie — the honest contrast the gate needs)
+        model.apply(PlayEvent::WorldInfo(WorldInfo {
+            entity_id: 1,
+            hardcore: false,
+            dimensions: vec!["minecraft:overworld".to_string()],
+            view_distance: 8,
+            simulation_distance: 8,
+            portal_cooldown: 300,
+            current_dimension: "minecraft:overworld".to_string(),
+        }));
+        model.registry.entity_types =
+            vec!["minecraft:boat".to_string(), "minecraft:zombie".to_string()];
+        for (id, type_id) in [(1, 1), (7, 0), (8, 1), (9, 0)] {
+            model.apply(PlayEvent::Spawn(EntitySpawn {
+                id,
+                uuid: id as u128,
+                type_id,
+                x: 10.0,
+                y: 64.0,
+                z: -20.0,
+                movement: [0.0; 3],
+                x_rot: 0.0,
+                y_rot: 90.0,
+                y_head_rot: 0.0,
+                data: 0,
+            }));
+        }
+        // THE HONEST SILENCE: no belief yet — the walk owns the player
+        assert_eq!(ride_view(&model), None, "nothing carries yet");
+
+        // THE FAMILY GATE: the mount lands on the ZOMBIE (the belief
+        // accepts it — the vanilla handler only checks existence) but
+        // the projection refuses the anchor (the boat family only)
+        model.apply(PlayEvent::SetPassengers(SetPassengers {
+            vehicle: 8,
+            passengers: vec![1],
+        }));
+        assert_eq!(ride_view(&model), None, "a zombie is no boat");
+
+        // THE SINGLE-RIDER ANCHOR: boat 7 carries the player — the
+        // attachment = Vec3(0, height/3, 0.0), the seat x 0.0, the yaw
+        // rotation of a zero offset never moves it
+        model.apply(PlayEvent::SetPassengers(SetPassengers {
+            vehicle: 7,
+            passengers: vec![1],
+        }));
+        let ride = ride_view(&model).expect("the boat carries");
+        let ride_height = (BOAT_DIMENSIONS_HEIGHT / 3.0) as f64;
+        assert_eq!(
+            (ride.feet_x, ride.feet_y, ride.feet_z),
+            (10.0, 64.0 + ride_height, -20.0),
+            "the single rider sits over the keel, the ride height above"
+        );
+        assert_eq!(ride.vehicle_yaw, 90.0, "the mount snap's source");
+
+        // THE MULTI-RIDER SEATS: boat 9 carries boat 7's mate in the
+        // front seat and the player behind — the front seat of a
+        // multi-rider list at +0.2, the player's second seat at −0.6,
+        // the offsets rotated by −yaw (90° folds the local x into the
+        // world z, the cos/sin the vanilla Vec3.yRot speaks)
+        model.apply(PlayEvent::SetPassengers(SetPassengers {
+            vehicle: 9,
+            passengers: vec![7, 1],
+        }));
+        let ride = ride_view(&model).expect("the boat carries two");
+        let theta = -90.0f64 * std::f64::consts::PI / 180.0;
+        let (sin, cos) = theta.sin_cos();
+        let lx = BOAT_BACK_SEAT_OFFSET as f64;
+        assert!(
+            (ride.feet_x - 10.0).abs() < 1e-9,
+            "the rotated x: x·cos + z·sin with x=−0.6, z=0, cos(−90°)=0"
+        );
+        assert!(
+            (ride.feet_y - (64.0 + ride_height)).abs() < 1e-9,
+            "the ride height the height/3 law keeps"
+        );
+        assert!(
+            (ride.feet_z - (-20.0 + (-lx) * sin)).abs() < 1e-9,
+            "the rotated z: −x·sin + z·cos (sin(−90°) = −1 flips the sign)"
+        );
+
+        // THE FRONT SEAT'S OWN OFFSET (the index-0 rider's +0.2 the
+        // projection ships when the PLAYER holds it)
+        model.apply(PlayEvent::SetPassengers(SetPassengers {
+            vehicle: 9,
+            passengers: vec![1, 7],
+        }));
+        let ride = ride_view(&model).expect("the player holds the front seat");
+        let lx = BOAT_FRONT_SEAT_OFFSET as f64;
+        assert!(
+            (ride.feet_z - (-20.0 + (-lx) * sin)).abs() < 1e-9,
+            "the +0.2 front seat rotated with the boat"
+        );
     }
 
     #[test]
