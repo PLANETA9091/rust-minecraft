@@ -2205,6 +2205,28 @@ pub fn bubble_column_variant(id: u32) -> u8 {
     }
 }
 
+/// The column's own variant at a world cell — the TWO vocabularies the
+/// grid holds: the offline terrain's REAL ids the props decode names
+/// (the 15294/15295 walk above — 1 = the whirlpool, 2 = the upward),
+/// the materialized network world's WATER cells the variants layer
+/// stamps (the materialize walk's 1/2 bytes beside leaf_litter's).
+/// `0` = no column (the plain water, the rest of the world — the read
+/// consumes no random draws). The inside-blocks walk (the body's own
+/// drag) and the animateTick answer both speak through it.
+pub fn column_variant_at(world: &crate::world::World, x: i32, y: i32, z: i32, cell: u16) -> u8 {
+    let v = bubble_column_variant(cell as u32);
+    if v != 0 {
+        return v;
+    }
+    if cell == crate::world::WATER {
+        let wv = world.variant(x, y, z);
+        if wv == 1 || wv == 2 {
+            return wv;
+        }
+    }
+    0
+}
+
 /// The REAL id mapper, GENERATED from the official jar's bootstrapped
 /// runtime registry (`mc2rs-gen dump-block-states` -> the block_ids
 /// table): a global state id resolves to its block NAME, and the runtime

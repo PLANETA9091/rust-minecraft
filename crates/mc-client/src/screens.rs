@@ -514,33 +514,6 @@ pub fn bubble_inside_scan(
     None
 }
 
-/// The column's own variant at a sampled cell — the TWO vocabularies
-/// the grid holds: the offline terrain's REAL ids the props decode
-/// names (`bubble_column_variant`'s own 15294/15295 walk — 1 = the
-/// whirlpool, 2 = the upward), the materialized network world's WATER
-/// cells the variants layer stamps (the materialize walk's 1/2 bytes
-/// beside leaf_litter's). `0` = no column (the plain water, the rest
-/// of the world — the read consumes no random draws).
-fn column_variant_at(
-    world: &crate::world::World,
-    x: i32,
-    y: i32,
-    z: i32,
-    cell: u16,
-) -> u8 {
-    let v = crate::world_view::bubble_column_variant(cell as u32);
-    if v != 0 {
-        return v;
-    }
-    if cell == crate::world::WATER {
-        let wv = world.variant(x, y, z);
-        if wv == 1 || wv == 2 {
-            return wv;
-        }
-    }
-    0
-}
-
 /// THE DEGREE WRAP (Mth.wrapDegrees(F)F's own walk — the frem's % 360
 /// fold, the `>= 180` arm subtracts a full turn, the `< -180` arm adds
 /// one; the famous 180.0F itself the first arm folds to -180.0F).
@@ -3957,7 +3930,7 @@ impl App {
                     // the LEVEL stream (the same stand-in the drip's
                     // chain keeps), the body's own draws the
                     // thread-local's.
-                    match column_variant_at(w, x, y, z, cell) {
+                    match crate::world_view::column_variant_at(w, x, y, z, cell) {
                         1 => {
                             // the fixed (x+0.5, y+0.8, z+0.5) birth the
                             // addAlwaysVisibleParticle call speaks — no

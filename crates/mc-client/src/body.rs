@@ -91,6 +91,29 @@ pub const COLLISION_EPSILON: f64 = 1e-7;
 /// poses.
 pub const COLLISION_SKIN: f64 = 1e-6;
 
+/// THE COLUMN'S OWN DRAG (javap `Entity.handleOnInsideBubbleColumn` +
+/// `Entity.handleOnAboveBubbleColumn` verbatim — the two laws the
+/// bubble column's entityInside branch keeps): the whirlpool's steady
+/// pull `y - 0.03` floored at −0.3 (the body cell) or −0.9 (the
+/// surface cell — the column's mouth), the upward's steady push
+/// `y + 0.06` capped at 0.7 (the body) or the `y + 0.1` launch capped
+/// at 1.8 (the surface). The x/z the laws never touch — the column's
+/// pull is VERTICAL; the fall-distance reset the INSIDE law's own tail
+/// speaks (the surface law carries none), the reset the caller arms.
+pub fn bubble_column_drag(vy: f64, drag: bool, surface: bool) -> f64 {
+    if drag {
+        if surface {
+            (vy - 0.03).max(-0.9)
+        } else {
+            (vy - 0.03).max(-0.3)
+        }
+    } else if surface {
+        (vy + 0.1).min(1.8)
+    } else {
+        (vy + 0.06).min(0.7)
+    }
+}
+
 // THE FALL-DAMAGE ARC's constants (javap, the same jar):
 /// `Attributes.SAFE_FALL_DISTANCE`'s default — the fall's own grace.
 /// javap `LivingEntity.calculateFallPower`: `(distance + 1.0E-6) -
@@ -1285,6 +1308,19 @@ impl PlayerBody {
                 self.swim_volume = swim_vol;
             }
         }
+        // THE COLUMN'S OWN DRAG (javap `BubbleColumnBlock.entityInside`'s
+        // own beat — the inside-blocks walk the move's tail speaks: the
+        // DIRECT onInsideBubbleColumn/onAboveBubbleColumn calls the walk
+        // fires per overlapped column cell, BEFORE the applier queue the
+        // lava/water effects ride): the whirlpool's pull and the
+        // upward's push fold the carried velocity here — the NEXT
+        // tick's move consumes it (the vanilla's own rhythm), the
+        // inside law's fall-distance reset the walk's tail speaks. The
+        // ride gate the App keeps (the rideTick's law: the body's
+        // physics never walk while a boat holds the player) means this
+        // beat speaks for the STANDING body only — the vanilla's own
+        // passenger lane rides the vehicle's walk.
+        self.apply_bubble_column_drag(world);
         // THE LAVA CONTACT (javap `LavaFluid.entityInside`'s own beat —
         // the aiStep tail's applyEffectsFromBlocks the tick's move
         // speaks AFTER, the InsideBlockEffectApplier's order kept:
@@ -1433,6 +1469,49 @@ impl PlayerBody {
             }
         }
         false
+    }
+
+    /// THE COLUMN'S OWN WALK (javap `BubbleColumnBlock.entityInside`'s
+    /// own branch over the inside-blocks walk the move's tail speaks —
+    /// the lambda$checkInsideBlocks$0's own flag the box's overlap
+    /// answers: `moved > 1 block || box.intersects(cell)` — the
+    /// stationary body the box-overlap arm keeps DRAGGING): the body's
+    /// (deflated 1e-5) box over the column cells, the per-cell law the
+    /// drag bit keeps — the SURFACE cell (the above cell air-like: the
+    /// empty collision shape AND the empty fluid the bytecode checks)
+    /// the launch/sink caps speak, the body cell the steady drag — the
+    /// fall distance the INSIDE law resets (the surface law never does:
+    /// the launch keeps the fall's honest arc the landing reads). The
+    /// AIR-LIKE read rides the project's own vocabulary: the empty cell
+    /// the grid names AIR (the plant shapes the collision lane never
+    /// arms). The both-vocabularies read (the offline's real ids, the
+    /// networked WATER + variant stamp) the materialize walk keeps.
+    /// The x/z the law never touches — the column's pull is VERTICAL.
+    pub fn apply_bubble_column_drag(&mut self, world: &World) {
+        let e = 1e-5f64;
+        let (bx0, by0, bz0, bx1, by1, bz1) = box_at(self.x, self.y, self.z, self.height());
+        let x0 = (bx0 + e).floor() as i32;
+        let x1 = (bx1 - e).floor() as i32;
+        let y0 = (by0 + e).floor() as i32;
+        let y1 = (by1 - e).floor() as i32;
+        let z0 = (bz0 + e).floor() as i32;
+        let z1 = (bz1 - e).floor() as i32;
+        for wz in z0..=z1 {
+            for wy in y0..=y1 {
+                for wx in x0..=x1 {
+                    let cell = world.get(wx, wy, wz);
+                    let variant = crate::world_view::column_variant_at(world, wx, wy, wz, cell);
+                    if variant == 0 {
+                        continue;
+                    }
+                    let surface = world.get(wx, wy + 1, wz) == AIR;
+                    self.vy = bubble_column_drag(self.vy, variant == 1, surface);
+                    if !surface {
+                        self.fall_distance = 0.0;
+                    }
+                }
+            }
+        }
     }
 
     /// THE SPLASH RINGS' OWN DRAIN (doWaterSplashEffect's loops the
@@ -3053,6 +3132,141 @@ mod tests {
         assert!(
             (b.fov_modifier_at(0.0) - 1.0).abs() < 1e-6,
             "the zero partial the old store keeps"
+        );
+    }
+
+    /// A column world: the whirlpool's (15294) or the upward's (15295)
+    /// real ids stacked x=8, y=low..high (the surface cell at `high`,
+    /// the air above), the variants layer the honest empty.
+    fn column_world(id: u16, low: i32, high: i32) -> World {
+        let mut w = flat_world();
+        w.variants = Some(vec![vec![0u8; 16 * 48 * 16]; 1]);
+        for y in low..=high {
+            w.set(8, y, 8, id);
+        }
+        w
+    }
+
+    #[test]
+    fn the_column_drag_folds_the_bytecode_caps() {
+        // THE WHIRLPOOL'S STEADY PULL: `y - 0.03` floored at -0.3 the
+        // body cell keeps, -0.9 the surface cell's mouth keeps
+        assert!((bubble_column_drag(0.0, true, false) - (-0.03)).abs() < 1e-12);
+        assert_eq!(bubble_column_drag(-0.5, true, false), -0.3, "the body's floor");
+        assert!((bubble_column_drag(-0.5, true, true) - (-0.53)).abs() < 1e-12);
+        assert_eq!(bubble_column_drag(-1.0, true, true), -0.9, "the surface's floor");
+        // THE UPWARD'S STEADY PUSH: `y + 0.06` capped at 0.7 the body
+        // cell keeps, the `y + 0.1` launch capped at 1.8 the surface
+        assert!((bubble_column_drag(0.0, false, false) - 0.06).abs() < 1e-12);
+        assert_eq!(bubble_column_drag(1.0, false, false), 0.7, "the body's cap");
+        assert!((bubble_column_drag(0.0, false, true) - 0.1).abs() < 1e-12);
+        assert_eq!(bubble_column_drag(2.0, false, true), 1.8, "the launch's cap");
+    }
+
+    #[test]
+    fn the_body_walks_the_column_drag_laws() {
+        // THE WHIRLPOOL'S OWN SINK (the two body cells the standing box
+        // overlaps both speak the pull): the double -0.03 the per-cell
+        // walk folds, the fall distance the inside law resets
+        let w = column_world(15294, 8, 11);
+        let mut b = PlayerBody::new(8.0, 9.0, 8.0, 90.0, 0.0);
+        b.fall_distance = 3.0;
+        b.apply_bubble_column_drag(&w);
+        let expected = (-0.03f64).max(-0.3);
+        let expected = (expected - 0.03).max(-0.3);
+        assert!(
+            (b.vy - expected).abs() < 1e-12,
+            "the two-cell pull: {} vs {}",
+            b.vy,
+            expected
+        );
+        assert_eq!(b.fall_distance, 0.0, "the inside law's reset");
+        // THE UPWARD'S OWN LIFT (the same two-cell body): the double
+        // +0.06 the walk folds
+        let w = column_world(15295, 8, 11);
+        let mut b = PlayerBody::new(8.0, 9.0, 8.0, 90.0, 0.0);
+        b.fall_distance = 3.0;
+        b.apply_bubble_column_drag(&w);
+        let expected = (0.0f64 + 0.06).min(0.7);
+        let expected = (expected + 0.06).min(0.7);
+        assert!((b.vy - expected).abs() < 1e-12, "the two-cell lift: {}", b.vy);
+        assert_eq!(b.fall_distance, 0.0);
+        // THE SURFACE'S OWN LAUNCH (the top cell's above air — the
+        // +0.1 the 1.8 cap keeps): the fall distance the SURFACE law
+        // never resets (the launch keeps the fall's honest arc)
+        let mut b = PlayerBody::new(8.0, 11.0, 8.0, 90.0, 0.0);
+        b.fall_distance = 3.0;
+        b.apply_bubble_column_drag(&w);
+        assert!((b.vy - 0.1).abs() < 1e-12, "the launch's push: {}", b.vy);
+        assert_eq!(b.fall_distance, 3.0, "the surface law never resets");
+        // the whirlpool's mouth: the -0.9 floor the surface cell keeps
+        let w = column_world(15294, 8, 11);
+        let mut b = PlayerBody::new(8.0, 11.0, 8.0, 90.0, 0.0);
+        b.vy = -1.0;
+        b.apply_bubble_column_drag(&w);
+        assert!((b.vy - (-0.9)).abs() < 1e-12, "the mouth's floor: {}", b.vy);
+        // THE PLAIN WATER'S OWN SILENCE (variant 0): the drag never
+        // speaks for the un-stamped cell
+        let mut w = flat_world();
+        w.variants = Some(vec![vec![0u8; 16 * 48 * 16]; 1]);
+        w.set(8, 9, 8, crate::world::WATER);
+        let mut b = PlayerBody::new(8.0, 9.0, 8.0, 90.0, 0.0);
+        b.apply_bubble_column_drag(&w);
+        assert_eq!(b.vy, 0.0, "the plain water the drag skips");
+        // THE STRICT EDGE (the inside walk's 1e-5 deflated box): the
+        // box's max edge landing exactly on the integer EXCLUDES the
+        // boundary cell — the whirlpool one cell east never speaks;
+        // the 0.01 nudge east and the pull fires
+        let w = column_world(15294, 8, 11);
+        let mut b = PlayerBody::new(7.7, 9.0, 8.0, 90.0, 0.0);
+        b.apply_bubble_column_drag(&w);
+        assert_eq!(b.vy, 0.0, "the exact boundary cell the strict edge excludes");
+        let mut b = PlayerBody::new(7.71, 9.0, 8.0, 90.0, 0.0);
+        b.apply_bubble_column_drag(&w);
+        assert!(
+            (b.vy - (-0.06)).abs() < 1e-12,
+            "the nudge the overlap arm answers: {}",
+            b.vy
+        );
+    }
+
+    #[test]
+    fn the_body_drag_walks_both_vocabularies() {
+        // THE NETWORKED VOCABULARY (the materialized WATER cells the
+        // variants layer stamps): the same drags answer
+        let mut w = flat_world();
+        w.variants = Some(vec![vec![0u8; 16 * 48 * 16]; 1]);
+        for y in 8..=11 {
+            w.set(8, y, 8, crate::world::WATER);
+            w.variants.as_mut().expect("built above")[0]
+                [(8 + 8 * 16 + (y as usize) * 256)] = 2;
+        }
+        let mut b = PlayerBody::new(8.0, 9.0, 8.0, 90.0, 0.0);
+        b.apply_bubble_column_drag(&w);
+        let expected = (0.0f64 + 0.06).min(0.7);
+        let expected = (expected + 0.06).min(0.7);
+        assert!(
+            (b.vy - expected).abs() < 1e-12,
+            "the materialized column's lift: {}",
+            b.vy
+        );
+        // THE FULL TICK'S OWN RIDE (the walk sits at the effect beat —
+        // after the move, before the drags/gravity): one tick in the
+        // whirlpool folds the pull into the carried velocity the
+        // gravity line then decays
+        let w = column_world(15294, 8, 11);
+        let mut b = PlayerBody::new(8.0, 9.0, 8.0, 90.0, 0.0);
+        b.tick(&w, false);
+        // the post-drag vy the gravity fold rides: (max(-0.3, -0.03)
+        // twice) then (vy - 0.08) * 0.98
+        let dragged = (-0.03f64).max(-0.3);
+        let dragged = (dragged - 0.03).max(-0.3);
+        let expected = (dragged - GRAVITY) * VERTICAL_DRAG as f64;
+        assert!(
+            (b.vy - expected).abs() < 1e-12,
+            "the tick's carried velocity: {} vs {}",
+            b.vy,
+            expected
         );
     }
 }
