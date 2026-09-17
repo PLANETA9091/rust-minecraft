@@ -3386,6 +3386,14 @@ impl App {
     /// The result slot's own emptiness the carried-empty arm gates
     /// (the 806/814 walk — nothing to take).
     fn click_craft_result(&mut self, button: i8) {
+        if self.shift_down {
+            // THE QUICK_MOVE LANE (the doClick walk's own routing — the
+            // shift the hasShiftDown query rides, the button byte the
+            // lane never consults): the batch craft the result keeps
+            // speaking until the store or the recipe runs dry.
+            self.craft_result_quick_move();
+            return;
+        }
         let (id, count) = self.craft_result;
         if count <= 0 {
             return; // the result slot's own emptiness — nothing to take
@@ -3408,6 +3416,91 @@ impl App {
         }
         // carried DIFFERENT item: the ifeq arm's silence — no swap on
         // the mayPlace-false slot
+    }
+
+    /// THE QUICK_MOVE BATCH (doClick's QUICK_MOVE arm 663-741 — the
+    /// quickMoveStack loop the while-same-item guard keeps): each
+    /// iteration is one quickMoveStack call over the result slot
+    /// (InventoryMenu.quickMoveStack index 0 — the arm the bytecode
+    /// 45-75 speaks):
+    /// 1. the result stack rides `moveItemStackTo(stack, 9, 45, TRUE)`
+    ///    — the REVERSE iteration the menu's own slot order speaks
+    ///    (the hotbar menu indices 36..44 the standard walk adds
+    ///    LAST, so the reverse walks the hotbar END-first, the main
+    ///    rows after): the merge pass over the whole range FIRST, the
+    ///    first-empty pass after (the moveItemStackTo walk's own two
+    ///    passes);
+    /// 2. the nothing-moved EMPTY return breaks the loop (the 60-66
+    ///    bytecode);
+    /// 3. the count-changed gate fires `slot.onTake` (the 350-371
+    ///    tail — [`Self::craft_on_take`]'s per-cell decrement + the
+    ///    recompute, the recipe's repeat the loop keeps answering);
+    /// 4. the index-0 leftover tail (the 378-385 bytecode): the stack
+    ///    part the store never held rides `player.drop(stack, false)`
+    ///    — the AIMED throw the shared drop lane speaks.
+    fn craft_result_quick_move(&mut self) {
+        loop {
+            let (id, count) = self.craft_result;
+            if count <= 0 {
+                break; // the result slot's own emptiness
+            }
+            let moved = self.move_result_stack_to_store(id, count);
+            if moved == 0 {
+                break; // the nothing-moved EMPTY the loop break keeps
+            }
+            let leftover = count - moved;
+            self.craft_on_take();
+            if leftover > 0 {
+                // THE LEFTOVER DROP (the index-0 tail — the aimed
+                // throw the store's own lane keeps)
+                self.drop_item_entity_aimed(id, leftover);
+            }
+            // the loop guard: the recompute's own verdict — the same
+            // recipe the same result keeps speaking, the spent
+            // ingredients the EMPTY verdict breaks
+        }
+        // the HUD hotbar row the every-mutation law syncs
+        self.hotbar_slots = self.inventory.hotbar();
+    }
+
+    /// The store's moveItemStackTo walk for the result stack (the
+    /// [9, 45) reverse range the quickMoveStack arm keeps, folded to
+    /// the store's own indexing — menu 36..44 = hotbar 8..0, menu
+    /// 35..9 = main 35..9): the merge pass over the WHOLE range first
+    /// (the isStackable walk — the same item, the count below the
+    /// max, the room the min speaks), then the first-empty pass (the
+    /// same order, 64 the slot's max). Returns the moved count.
+    fn move_result_stack_to_store(&mut self, id: i32, count: i32) -> i32 {
+        let max = crate::world_view::ITEM_MAX_STACK_DEFAULT;
+        let order: Vec<usize> = (0..9)
+            .rev()
+            .chain((9..36).rev())
+            .collect(); // hotbar 8..0, then main 35..9
+        let mut rest = count;
+        // pass 1: the merges (the same-item stacks the range keeps)
+        for &s in &order {
+            if rest == 0 {
+                break;
+            }
+            let (sid, sc) = self.inventory.items[s];
+            if sc > 0 && sid == id && sc < max {
+                let take = (max - sc).min(rest);
+                self.inventory.items[s].1 = sc + take;
+                rest -= take;
+            }
+        }
+        // pass 2: the first-empty walk (the same reverse order)
+        for &s in &order {
+            if rest == 0 {
+                break;
+            }
+            if self.inventory.items[s].1 <= 0 {
+                let take = rest.min(max);
+                self.inventory.items[s] = (id, take);
+                rest -= take;
+            }
+        }
+        count - rest
     }
 
     /// The survival inventory's slot click (the vanilla doClick's
@@ -18421,6 +18514,97 @@ mod tests {
         app.on_press(338, 123);
         assert_eq!(app.craft_grid[0], (planks, 4), "the wire refusal holds");
         assert_eq!(app.inv_carried, (log, 1), "the hand whole on the wire");
+    }
+
+    /// THE SHIFT-CLICK BATCH (the doClick QUICK_MOVE arm over the
+    /// result slot — the quickMoveStack loop the while-same-item guard
+    /// keeps): the whole log stack crafts in ONE press, the store the
+    /// moveItemStackTo(stack, 9, 45, TRUE) walk fills — the merge pass
+    /// over the whole range FIRST (the hotbar END-first the menu's own
+    /// slot order speaks), the first-empty pass after — and the batch
+    /// NEVER touches the carried stack (the quickMoveStack walk the
+    /// carried ignores). The empty result the silence keeps, the wire
+    /// session the lane's own early return.
+    #[test]
+    fn the_shift_click_crafts_the_whole_log_into_the_store() {
+        let log = mc_registry::item_id_by_name("oak_log").unwrap();
+        let planks = mc_registry::item_id_by_name("oak_planks").unwrap();
+        let mut app = App::new(3);
+        app.enter_world();
+        app.spawn_offline_body();
+        app.open_inventory();
+        app.inv_panel = inventory_panel_origin(640, 360);
+        // the EMPTY result — the shift's silence (no store move, no drop)
+        app.shift_down = true;
+        app.on_press(394, 133);
+        assert!(app.drops.is_empty(), "the empty result never spoke");
+        assert_eq!(app.inventory.items[8], (0, 0), "the store whole");
+        // the stage: five logs in the cell, a partial plank stack in
+        // the hotbar END (the merge-first order's own witness), a
+        // carried stack the batch must never touch
+        app.craft_grid[0] = (log, 5);
+        app.refresh_craft_result();
+        app.inventory.items[8] = (planks, 62);
+        app.inv_carried = (log, 1);
+        app.hotbar_slots = app.inventory.hotbar();
+        // THE BATCH — one shift-click crafts the whole cell
+        app.on_press(394, 133);
+        // craft 1: the merge pass took 2 into store 8 (62 -> 64), the
+        // first-empty pass landed the rest in store 7; crafts 2..5
+        // merged into store 7 (the hotbar-END-first law)
+        assert_eq!(app.inventory.items[8], (planks, 64), "the merge first");
+        assert_eq!(app.inventory.items[7], (planks, 18), "the rest merged there");
+        for s in (0..7).chain(9..36) {
+            assert_eq!(app.inventory.items[s], (0, 0), "slot {s} untouched");
+        }
+        assert_eq!(app.craft_grid[0], (0, 0), "the cell spent");
+        assert_eq!(app.craft_result, (0, 0), "the spent grid's EMPTY verdict");
+        assert_eq!(app.inv_carried, (log, 1), "the carried never rode");
+        assert!(app.drops.is_empty(), "nothing the store could not hold");
+        assert_eq!(app.hotbar_slots[7], (planks, 18), "the HUD synced");
+        assert_eq!(app.hotbar_slots[8], (planks, 64), "the HUD synced");
+        // THE WIRE — the lane's own early return keeps the shift silent
+        app.world_is_network = true;
+        app.on_press(394, 133);
+        assert_eq!(app.inventory.items[7], (planks, 18), "the wire refusal holds");
+    }
+
+    /// THE LEFTOVER DROP (the quickMoveStack index-0 tail — the 378-385
+    /// bytecode): the stack part the store never holds rides
+    /// `player.drop(stack, false)` — the AIMED throw the shared lane
+    /// keeps — and the batch breaks on the nothing-moved EMPTY the
+    /// NEXT iteration speaks (the recipe still matching, the store
+    /// full, the loop the EMPTY verdict ends).
+    #[test]
+    fn the_shift_click_drops_the_leftover_when_the_store_cannot_hold() {
+        let log = mc_registry::item_id_by_name("oak_log").unwrap();
+        let planks = mc_registry::item_id_by_name("oak_planks").unwrap();
+        let mut app = App::new(3);
+        app.enter_world();
+        app.spawn_offline_body();
+        app.open_inventory();
+        app.inv_panel = inventory_panel_origin(640, 360);
+        // the store FULL of planks but ONE room in the hotbar end
+        for s in 0..36 {
+            app.inventory.items[s] = (planks, 64);
+        }
+        app.inventory.items[8] = (planks, 63);
+        app.craft_grid[0] = (log, 2); // two crafts speak
+        app.refresh_craft_result();
+        // THE BATCH: craft 1 merges ONE into store 8 (63 -> 64), the
+        // leftover 3 rides the aimed drop; craft 2 the nothing-moved
+        // EMPTY breaks — the result still speaks, the cell holds one
+        app.shift_down = true;
+        app.on_press(394, 133);
+        assert_eq!(app.inventory.items[8], (planks, 64), "the one room filled");
+        assert_eq!(app.drops.len(), 1, "the leftover dropped");
+        let d = app.drops.last().unwrap();
+        assert_eq!(d.item, planks, "the result's own item");
+        assert_eq!(d.count, 3, "the store's leftover (4 - 1)");
+        assert_eq!(d.pickup_delay, 40, "the aimed throw's own delay");
+        assert_eq!(app.craft_grid[0], (log, 1), "ONE craft's decrement");
+        assert_eq!(app.craft_result, (planks, 4), "the recipe still speaks");
+        assert_eq!(app.hotbar_slots[8], (planks, 64), "the HUD synced");
     }
 
     /// THE INVENTORY'S OWN Q (the AbstractContainerScreen.keyPressed's
