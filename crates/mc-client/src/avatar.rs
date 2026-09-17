@@ -1965,6 +1965,263 @@ fn build_posed_parts(state: &AvatarState) -> Vec<Part> {
     ]
 }
 
+// ---------------------------------------------------------------------------
+// THE ARMOR LAYERS (HumanoidArmorLayer.renderArmorPiece, the 26.2 jar's own
+// bytecode): the store's worn piece rides the humanoid armor model — the
+// SAME createMesh part tree the skin speaks, re-cubed by the slot's
+// `ArmorModelSet.get(slot)` mesh and textured by the equipment asset the
+// Equippable component names.
+// ---------------------------------------------------------------------------
+
+/// The store's armor-row indexes (the SLOT_IDS loop's own order —
+/// HEAD, CHEST, LEGS, FEET, the container indices 39-k).
+pub const ARMOR_SLOT_HEAD: usize = 0;
+pub const ARMOR_SLOT_CHEST: usize = 1;
+pub const ARMOR_SLOT_LEGS: usize = 2;
+pub const ARMOR_SLOT_FEET: usize = 3;
+
+/// THE SLOT'S DEFORMATION (javap `LayerDefinitions.<clinit>`): the
+/// OUTER_ARMOR_DEFORMATION 1.0 for the helmet/chestplate/boots slots'
+/// models, the INNER_ARMOR_DEFORMATION 0.5 for the leggings — the
+/// `usesInnerModel` verdict (slot == LEGS) the bytecode speaks.
+fn armor_inflate(slot: usize) -> f32 {
+    if slot == ARMOR_SLOT_LEGS {
+        0.5
+    } else {
+        1.0
+    }
+}
+
+/// THE SLOT'S PART SET (javap `HumanoidModel.ADULT_ARMOR_PARTS_PER_SLOT`,
+/// the <clinit>'s own Set.of walk): HEAD {head}, CHEST {body, right_arm,
+/// left_arm}, LEGS {body, right_leg, left_leg}, FEET {right_leg,
+/// left_leg} — the retainExactParts/retainPartsAndChildren folds the
+/// armor mesh's own builder keeps (the overlays the skin model carries
+/// NEVER ride: the armor mesh has no hat/jacket/sleeve/pants parts).
+/// The cube table is `createBaseArmorMesh`: createMesh's own boxes, the
+/// LEGS pair replaced (texOffs (0, 16), the deformation extended -0.1
+/// the boots/leggings stack's own clearance speaks), the LEFT pair the
+/// mirror flag speaks (the 64x32 armor layout the skin's dedicated
+/// left-side UVs never shared).
+pub fn armor_parts(state: &AvatarState, slot: usize) -> Vec<Part> {
+    let def = armor_inflate(slot);
+    let leg_def = def - 0.1;
+    // the posed walk's own index law: 0 head, 1 body, 2 right_arm,
+    // 3 left_arm, 4 right_leg, 5 left_leg — the armor part rides the
+    // SAME pivot and setupAnim rotation (copyPropertiesTo's own walk)
+    let posed = build_posed_parts(state);
+    let mk = |src: &Part, cubes: Vec<Cube>| Part {
+        pivot: src.pivot,
+        x_rot: src.x_rot,
+        y_rot: src.y_rot,
+        z_rot: src.z_rot,
+        cubes,
+        children: vec![],
+    };
+    match slot {
+        ARMOR_SLOT_HEAD => vec![mk(
+            &posed[0],
+            vec![Cube {
+                tex: (0.0, 0.0),
+                origin: [-4.0, -8.0, -4.0],
+                size: [8.0, 8.0, 8.0],
+                inflate: def,
+                mirror: false,
+            }],
+        )],
+        ARMOR_SLOT_CHEST => vec![
+            mk(
+                &posed[1],
+                vec![Cube {
+                    tex: (16.0, 16.0),
+                    origin: [-4.0, 0.0, -2.0],
+                    size: [8.0, 12.0, 4.0],
+                    inflate: def,
+                    mirror: false,
+                }],
+            ),
+            mk(
+                &posed[2],
+                vec![Cube {
+                    tex: (40.0, 16.0),
+                    origin: [-3.0, -2.0, -2.0],
+                    size: [4.0, 12.0, 4.0],
+                    inflate: def,
+                    mirror: false,
+                }],
+            ),
+            mk(
+                &posed[3],
+                vec![Cube {
+                    tex: (40.0, 16.0),
+                    origin: [-1.0, -2.0, -2.0],
+                    size: [4.0, 12.0, 4.0],
+                    inflate: def,
+                    mirror: true,
+                }],
+            ),
+        ],
+        ARMOR_SLOT_LEGS => vec![
+            mk(
+                &posed[1],
+                vec![Cube {
+                    tex: (16.0, 16.0),
+                    origin: [-4.0, 0.0, -2.0],
+                    size: [8.0, 12.0, 4.0],
+                    inflate: def,
+                    mirror: false,
+                }],
+            ),
+            mk(
+                &posed[4],
+                vec![Cube {
+                    tex: (0.0, 16.0),
+                    origin: [-2.0, 0.0, -2.0],
+                    size: [4.0, 12.0, 4.0],
+                    inflate: leg_def,
+                    mirror: false,
+                }],
+            ),
+            mk(
+                &posed[5],
+                vec![Cube {
+                    tex: (0.0, 16.0),
+                    origin: [-2.0, 0.0, -2.0],
+                    size: [4.0, 12.0, 4.0],
+                    inflate: leg_def,
+                    mirror: true,
+                }],
+            ),
+        ],
+        ARMOR_SLOT_FEET => vec![
+            mk(
+                &posed[4],
+                vec![Cube {
+                    tex: (0.0, 16.0),
+                    origin: [-2.0, 0.0, -2.0],
+                    size: [4.0, 12.0, 4.0],
+                    inflate: leg_def,
+                    mirror: false,
+                }],
+            ),
+            mk(
+                &posed[5],
+                vec![Cube {
+                    tex: (0.0, 16.0),
+                    origin: [-2.0, 0.0, -2.0],
+                    size: [4.0, 12.0, 4.0],
+                    inflate: leg_def,
+                    mirror: true,
+                }],
+            ),
+        ],
+        _ => vec![],
+    }
+}
+
+/// The armor layer's world-space quads at `state` — the skin's own
+/// entity chain (`AvatarModel::quads`'s fold verbatim) over the slot's
+/// armor parts. `feet` = the body's feet position (the mannequin
+/// speaks Vec3::ZERO — the PiP's own body space).
+pub fn armor_quads(
+    state: &AvatarState,
+    feet: Vec3,
+    cam_yaw: f32,
+    cam_pitch: f32,
+    slot: usize,
+) -> Vec<AvatarQuad> {
+    let parts = armor_parts(state, slot);
+    let crouch_drop = if state.crouching { -2.0 / 16.0 } else { 0.0 };
+    let (fold_point, fold_normal) =
+        entity_folds(state.yaw_deg, state.death_time, crouch_drop, feet);
+    let mut out: Vec<AvatarQuad> = Vec::new();
+    let ident = Mat4::IDENT;
+    for part in &parts {
+        collect_part(part, &ident, &fold_point, &fold_normal, cam_yaw, cam_pitch, &mut out);
+    }
+    out
+}
+
+/// THE ITEM'S EQUIPMENT ASSET (the vanilla datapack's default EQUIPPABLE
+/// components the armor family speaks — the same name fold
+/// `equippable_loop_k` keeps for the slots): the material prefixes the
+/// registry names carry fold to the EquipmentAssets keys the 26.2
+/// clinit pinned (iron→iron, golden→gold, chainmail→chainmail,
+/// diamond→diamond, copper→copper, netherite→netherite, leather→
+/// leather), the turtle helmet to its own scute. `None` for the HEAD
+/// family the asset never textures (carved pumpkin, the skull family —
+/// vanilla's own `assetId` empty Optional the shouldRender gate
+/// refuses) and the elytra (the wings layer the humanoid slots never
+/// speak).
+pub fn armor_asset_name(name: Option<&str>) -> Option<&'static str> {
+    let name = name?;
+    if name == "turtle_helmet" {
+        return Some("turtle_scute");
+    }
+    let asset = match name.split_once('_')?.0 {
+        "iron" => "iron",
+        "golden" => "gold",
+        "chainmail" => "chainmail",
+        "diamond" => "diamond",
+        "copper" => "copper",
+        "netherite" => "netherite",
+        "leather" => "leather",
+        _ => return None,
+    };
+    Some(asset)
+}
+
+/// The leather layer's UNDYED tint (the client info JSON's
+/// `color_when_undyed: -6265536` = 0xFFA06540 — the classic brown the
+/// tint law unpacks; the store's bare (id, count) carries no dye
+/// component, so the undyed default IS the color).
+pub const LEATHER_UNDYED_COLOR: u32 = 0xFFA06540u32;
+
+/// The equipment texture — one humanoid / humanoid_leggings layer png,
+/// sha1-verified against the generated `equipment` table before a
+/// single texel is trusted (the skin's own honesty law), shape-checked
+/// 64x32 (the armor layout every layer png speaks).
+pub struct ArmorTex {
+    rgba: Vec<u8>,
+}
+
+impl ArmorTex {
+    /// Load from the runtime cache root, verify the table's sha1 for
+    /// the layer dir, decode, shape-check. `None` = the layer never
+    /// renders (the renderer must not lie about its data).
+    pub fn load(
+        root: &Path,
+        layer_dir: &str,
+        tex: &mc_registry::generated::equipment::EquipmentTex,
+    ) -> Option<ArmorTex> {
+        use mc_registry::generated::equipment;
+        let sha1 = if layer_dir == equipment::LEGGINGS_DIR {
+            tex.leggings?
+        } else {
+            tex.humanoid
+        };
+        let bytes = std::fs::read(root.join(layer_dir).join(format!("{}.png", tex.name))).ok()?;
+        if hex::encode(sha1::Sha1::digest(&bytes)) != sha1 {
+            return None;
+        }
+        let (w, h, rgba) = decode_rgba(&bytes).ok()?;
+        if w != 64 || h != 32 {
+            return None;
+        }
+        Some(ArmorTex { rgba })
+    }
+
+    /// The layer pixel at (u, v) in armor texels — the skin's own
+    /// clamp-to-edge nearest-texel law, 64x32.
+    pub fn pixel(&self, u: f32, v: f32) -> [u8; 4] {
+        let (uu, vv) = (u.clamp(0.0, 64.0 - 1e-4), v.clamp(0.0, 32.0 - 1e-4));
+        let x = uu as usize;
+        let y = vv as usize;
+        let o = (y * 64 + x) * 4;
+        [self.rgba[o], self.rgba[o + 1], self.rgba[o + 2], self.rgba[o + 3]]
+    }
+}
+
 /// Walk one part tree node: the part's matrix, then every cube's six
 /// faces through the entity-chain fold, then the children (the
 /// overlays ride the base part's swing).
@@ -4207,5 +4464,220 @@ mod tests {
         assert_eq!(cow.pixel(16.0, 20.0)[3], 255, "the baby cow's texel is opaque");
         let pig = BabyPigModel::load(&root).expect("the baby pig loads");
         assert_eq!(pig.pixel(8.0, 18.0)[3], 255, "the baby pig's texel is opaque");
+    }
+
+    /// THE ARMOR LAYERS' OWN TABLES (javap 26.2 the round pinned): the
+    /// slot's part set the ADULT_ARMOR_PARTS_PER_SLOT clinit speaks
+    /// (HEAD {head}, CHEST {body, right_arm, left_arm}, LEGS {body,
+    /// right_leg, left_leg}, FEET {right_leg, left_leg}), the
+    /// deformation pair the LayerDefinitions clinit speaks (the OUTER
+    /// 1.0 the helmet/chest/boots models ride, the INNER 0.5 the LEGS
+    /// slot's usesInnerModel verdict keeps, the legs pair the -0.1
+    /// extend createBaseArmorMesh speaks), and the mirror flags the
+    /// 64x32 armor layout's shared left UVs keep.
+    #[test]
+    fn the_armor_parts_pin_the_slot_tables() {
+        let state = AvatarState::rest(0.0, 0.0, 0.0);
+        // THE HELMET: the head alone (no hat part — the armor mesh has
+        // no overlays), the OUTER deformation 1.0, texOffs (0, 0)
+        let head = armor_parts(&state, ARMOR_SLOT_HEAD);
+        assert_eq!(head.len(), 1, "the helmet keeps the head alone");
+        assert_eq!(head[0].pivot, [0.0, 0.0, 0.0]);
+        assert_eq!(head[0].children.len(), 0, "the armor mesh has no overlays");
+        assert_eq!((head[0].cubes[0].tex, head[0].cubes[0].inflate), ((0.0, 0.0), 1.0));
+        // THE CHESTPLATE: the body + BOTH arms, the left the MIRROR
+        // flag speaks (the skin's dedicated left UVs the armor layout
+        // never shared), the arms' pivots the createMesh walk keeps
+        let chest = armor_parts(&state, ARMOR_SLOT_CHEST);
+        assert_eq!(chest.len(), 3, "the chest keeps body + both arms");
+        assert_eq!((chest[0].cubes[0].tex, chest[0].cubes[0].inflate), ((16.0, 16.0), 1.0));
+        assert_eq!(
+            (chest[1].pivot, chest[1].cubes[0].tex, chest[1].cubes[0].mirror),
+            ([-5.0, 2.0, 0.0], (40.0, 16.0), false),
+            "the right arm speaks no mirror"
+        );
+        assert_eq!(
+            (chest[2].pivot, chest[2].cubes[0].tex, chest[2].cubes[0].mirror),
+            ([5.0, 2.0, 0.0], (40.0, 16.0), true),
+            "the left arm rides the shared-UV mirror"
+        );
+        // THE LEGGINGS: the INNER model (0.5) — the body AND both legs
+        // (the setPartVisibility walk the LEGS arm speaks), the legs'
+        // -0.1 extend 0.4 keeps
+        let legs = armor_parts(&state, ARMOR_SLOT_LEGS);
+        assert_eq!(legs.len(), 3, "the leggings keep body + both legs");
+        assert_eq!(legs[0].cubes[0].inflate, 0.5, "the body rides the INNER deformation");
+        assert_eq!(
+            (legs[1].pivot, legs[1].cubes[0].tex, legs[1].cubes[0].inflate),
+            ([-1.9, 12.0, 0.0], (0.0, 16.0), 0.4),
+            "the right leg the extend(-0.1) speaks"
+        );
+        assert_eq!(legs[2].cubes[0].mirror, true, "the left leg mirrors");
+        // THE BOOTS: the legs pair alone, the OUTER model's own 0.9
+        // (1.0 - the 0.1 extend)
+        let feet = armor_parts(&state, ARMOR_SLOT_FEET);
+        assert_eq!(feet.len(), 2, "the boots keep the legs pair alone");
+        assert_eq!(feet[0].cubes[0].inflate, 0.9);
+        assert_eq!(feet[1].cubes[0].inflate, 0.9);
+        // the unknown slot never speaks
+        assert!(armor_parts(&state, 9).is_empty());
+    }
+
+    /// THE ARMOR'S POSE (copyPropertiesTo's own walk): the armor part
+    /// rides the skin part's EXACT pivot and setupAnim rotation — the
+    /// posed quads' centroid the symmetric inflate leaves unmoved, and
+    /// the helmet's crown rides exactly the 1-texel OUTER inflation
+    /// above the skin's own crown (the fold the entity chain keeps
+    /// verbatim).
+    #[test]
+    fn the_armor_quads_ride_the_skin_pose() {
+        // a LIVING pose (the walk swing, the attack arc, the pitched
+        // head — the copyPropertiesTo walk copies them all)
+        let mut state = AvatarState::rest(25.0, 31.0, 77.0);
+        state.walk_pos = 2.5;
+        state.walk_speed = 0.8;
+        state.attack_time = 0.4;
+        let feet = Vec3::new(3.0, 64.0, -2.0);
+        // the skin's own head part (the base cube alone — the hat child
+        // dropped the armor's part-set law keeps)
+        let posed = build_posed_parts(&state);
+        let skin_head = Part {
+            pivot: posed[0].pivot,
+            x_rot: posed[0].x_rot,
+            y_rot: posed[0].y_rot,
+            z_rot: posed[0].z_rot,
+            cubes: posed[0].cubes.clone(),
+            children: vec![],
+        };
+        let mut skin_quads = Vec::new();
+        let ident = Mat4::IDENT;
+        let (fp, fno) = entity_folds(state.yaw_deg, state.death_time, 0.0, feet);
+        collect_part(&skin_head, &ident, &fp, &fno, 0.0, 0.0, &mut skin_quads);
+        let armor_head = armor_quads(&state, feet, 0.0, 0.0, ARMOR_SLOT_HEAD);
+        assert_eq!(armor_head.len(), skin_quads.len(), "the same cube walk, 6 faces");
+        let centroid = |quads: &[AvatarQuad]| -> [f64; 3] {
+            let mut acc = [0.0f64; 3];
+            let mut n = 0.0f64;
+            for q in quads {
+                for p in q.pts.iter() {
+                    for k in 0..3 {
+                        acc[k] += p[k] as f64;
+                    }
+                    n += 1.0;
+                }
+            }
+            [acc[0] / n, acc[1] / n, acc[2] / n]
+        };
+        let (sc, ac) = (centroid(&skin_quads), centroid(&armor_head));
+        for k in 0..3 {
+            assert!(
+                (sc[k] - ac[k]).abs() < 1e-4,
+                "the armor rides the skin's own pose: {sc:?} vs {ac:?}"
+            );
+        }
+        // the crown's 1-texel lift (the OUTER deformation 1.0) — the
+        // REST pose keeps the head axis-aligned, so the crown rides
+        // exactly the one texel the inflation speaks
+        let rest = AvatarState::rest(0.0, 0.0, 0.0);
+        let rest_feet = Vec3::new(0.0, 64.0, 0.0);
+        let (rfp, rfno) = entity_folds(rest.yaw_deg, rest.death_time, 0.0, rest_feet);
+        let mut rest_skin = Vec::new();
+        let rest_posed = build_posed_parts(&rest);
+        let rest_head = Part {
+            pivot: rest_posed[0].pivot,
+            x_rot: rest_posed[0].x_rot,
+            y_rot: rest_posed[0].y_rot,
+            z_rot: rest_posed[0].z_rot,
+            cubes: rest_posed[0].cubes.clone(),
+            children: vec![],
+        };
+        collect_part(&rest_head, &ident, &rfp, &rfno, 0.0, 0.0, &mut rest_skin);
+        let rest_armor = armor_quads(&rest, rest_feet, 0.0, 0.0, ARMOR_SLOT_HEAD);
+        let top = |quads: &[AvatarQuad]| -> f64 {
+            quads
+                .iter()
+                .flat_map(|q| q.pts.iter().map(|p| p[1] as f64))
+                .fold(f64::MIN, f64::max)
+        };
+        assert!(
+            ((top(&rest_armor) - top(&rest_skin)) - 1.0 / 16.0).abs() < 1e-4,
+            "the helmet rides the OUTER inflate: {} vs {}",
+            top(&rest_armor),
+            top(&rest_skin)
+        );
+    }
+
+    /// THE ITEM'S ASSET FOLD (the vanilla datapack's default EQUIPPABLE
+    /// components the armor family speaks): the material prefixes fold
+    /// to the EquipmentAssets keys the 26.2 clinit pinned, the turtle
+    /// helmet to its own scute, the HEAD family the asset never
+    /// textures (the carved pumpkin, the skulls) and the elytra stay
+    /// None (the shouldRender gate's empty-asset verdict).
+    #[test]
+    fn the_armor_asset_fold_pins_the_equipment_keys() {
+        assert_eq!(armor_asset_name(Some("iron_helmet")), Some("iron"));
+        assert_eq!(armor_asset_name(Some("golden_chestplate")), Some("gold"));
+        assert_eq!(armor_asset_name(Some("chainmail_leggings")), Some("chainmail"));
+        assert_eq!(armor_asset_name(Some("diamond_boots")), Some("diamond"));
+        assert_eq!(armor_asset_name(Some("copper_helmet")), Some("copper"));
+        assert_eq!(armor_asset_name(Some("netherite_chestplate")), Some("netherite"));
+        assert_eq!(armor_asset_name(Some("leather_leggings")), Some("leather"));
+        assert_eq!(armor_asset_name(Some("turtle_helmet")), Some("turtle_scute"));
+        // the components the humanoid slots never texture
+        assert_eq!(armor_asset_name(Some("elytra")), None, "the wings ride their own lane");
+        assert_eq!(armor_asset_name(Some("carved_pumpkin")), None);
+        assert_eq!(armor_asset_name(Some("skeleton_skull")), None);
+        assert_eq!(armor_asset_name(Some("stone")), None);
+        assert_eq!(armor_asset_name(None), None);
+    }
+
+    /// THE LEATHER UNDYED TINT (the equipment client info JSON's own
+    /// `color_when_undyed: -6265536`): the packed word the tint law
+    /// unpacks speaks the classic brown — 0xA06540 the base texture's
+    /// grayscale multiplies (the store's bare (id, count) carries no
+    /// dye component, the undyed default IS the color).
+    #[test]
+    fn the_leather_undyed_tint_pins_the_client_info() {
+        assert_eq!(LEATHER_UNDYED_COLOR, (-6265536i32) as u32, "the JSON's own word");
+        assert_eq!(LEATHER_UNDYED_COLOR, 0xFFA06540);
+        let t = crate::tint::unpack(LEATHER_UNDYED_COLOR);
+        let want = [160.0 / 255.0, 101.0 / 255.0, 64.0 / 255.0];
+        for k in 0..3 {
+            assert!((t[k] - want[k]).abs() < 1e-9, "the undyed brown: {t:?}");
+        }
+    }
+
+    /// THE EQUIPMENT TEXTURES LOAD (the runtime cache's own verdict —
+    /// the generator's extraction carries the humanoid and
+    /// humanoid_leggings layer pngs the sha1 table pins, each the
+    /// 64x32 layout the armor UVs speak).
+    #[test]
+    #[ignore = "needs runtime assets (assets-cache/jar) from mc2rs-gen generate"]
+    fn the_equipment_textures_load_sha1_verified() {
+        let mut dir = std::env::current_dir().unwrap();
+        let root = loop {
+            let cand = dir.join("assets-cache/jar");
+            if cand.exists() {
+                break cand;
+            }
+            dir = dir.parent().expect("the runtime root above").to_path_buf();
+        };
+        use mc_registry::generated::equipment;
+        for tex in equipment::EQUIPMENT_ASSETS {
+            let humanoid = ArmorTex::load(&root, equipment::HUMANOID_DIR, tex)
+                .expect("the humanoid layer loads");
+            assert_eq!(humanoid.pixel(8.0, 8.0)[3], 255, "the layer texel is opaque");
+            if let Some(_) = tex.leggings {
+                let leggings = ArmorTex::load(&root, equipment::LEGGINGS_DIR, tex)
+                    .expect("the leggings layer loads");
+                assert_eq!(leggings.pixel(8.0, 8.0)[3], 255, "the layer texel is opaque");
+            }
+        }
+        // the honest miss: the leggings dir the table never named
+        let turtle = equipment::find("turtle_scute").expect("the scute speaks");
+        assert!(
+            ArmorTex::load(&root, equipment::LEGGINGS_DIR, turtle).is_none(),
+            "the turtle scute has no leggings layer — the load refuses"
+        );
     }
 }

@@ -650,6 +650,13 @@ pub struct App {
     /// the skin asset is absent or failed its sha1 verification and
     /// the third-person body draws nothing.
     pub avatar: Option<crate::avatar::AvatarModel>,
+    /// THE MANNEQUIN'S ARMOR LAYERS' textures (the equipment table's
+    /// humanoid / humanoid_leggings pngs, sha1-verified — the avatar's
+    /// own honesty law), lazily loaded for the assets the store's worn
+    /// pieces name. Key: "<layer_dir>/<asset>" (the equipment table's
+    /// own layout), value `None` = the layer failed its verification
+    /// and that piece never renders.
+    pub armor_textures: std::collections::HashMap<String, Option<crate::avatar::ArmorTex>>,
     /// THE FIRST MOB's own skin (the zombie's 64x64 wide texture, the
     /// sha1 the generator pinned) — loaded lazily beside the player's,
     /// `None` = the mobs stay unseen (the honest-missing-data law).
@@ -1242,6 +1249,7 @@ impl App {
             body: None,
             perspective: crate::camera::CameraType::FirstPerson,
             avatar: None,
+            armor_textures: std::collections::HashMap::new(),
             zombie_avatar: None,
             pig_model: None,
             cow_model: None,
@@ -3904,8 +3912,11 @@ impl App {
     /// quads ride the vanilla PiP chain folded in
     /// [`App::mannequin_vp`], and the corner re-order keeps the
     /// raster's front-face law against the vanilla's own -z mirror.
-    /// The depth clears first — the vanilla PiP owns its own depth
-    /// texture (the entity never loses to the world beneath).
+    /// The store's ARMOR rows ride the HumanoidArmorLayer walk between
+    /// the same folds — the piece's slot mesh, the equipment table's
+    /// sha1-verified layer textures, the leather pair's dyeable
+    /// composite. The depth clears first — the vanilla PiP owns its own
+    /// depth texture (the entity never loses to the world beneath).
     fn render_inventory_mannequin(&mut self, fb: &mut crate::raster::Framebuf, gs: f32) {
         if self.avatar.is_none() {
             // the loaders' prefix walk (the sound/font tables' own law —
@@ -3924,8 +3935,53 @@ impl App {
         let (yaw, pitch) = mannequin_turn(self.mouse_pos, panel.0, panel.1);
         let state = crate::avatar::AvatarState::rest(yaw, pitch, self.frame as f32 + 0.5);
         let vp = mannequin_vp(panel.0, panel.1, gs, fb.w as f32, fb.h as f32, pitch);
+        // THE EQUIPMENT ROOT (the loaders' prefix walk — the equipment
+        // table's own dir the runtime cache keeps)
+        let equipment_root = ["assets-cache/jar", "../assets-cache/jar", "../../assets-cache/jar"]
+            .iter()
+            .map(std::path::Path::new)
+            .find(|p| {
+                p.join(mc_registry::generated::equipment::HUMANOID_DIR).exists()
+            });
+        // THE LOAD PHASE (the lazy cache the avatar's own honesty law
+        // keeps — one sha1-verified entry per "<dir>/<asset>", the
+        // leather pair BOTH: the dyeable base AND the untinted overlay
+        // the client info JSON's layers array speaks)
+        if let Some(root) = equipment_root {
+            for (slot, &(id, count)) in self.inventory.armor.iter().enumerate() {
+                if count <= 0 {
+                    continue;
+                }
+                let Some(asset) =
+                    crate::avatar::armor_asset_name(mc_registry::item_name(id))
+                else {
+                    continue;
+                };
+                let Some(tex_entry) = mc_registry::generated::equipment::find(asset) else {
+                    continue;
+                };
+                let dir = if slot == crate::avatar::ARMOR_SLOT_LEGS {
+                    mc_registry::generated::equipment::LEGGINGS_DIR
+                } else {
+                    mc_registry::generated::equipment::HUMANOID_DIR
+                };
+                let mut wanted = vec![(dir, tex_entry.name)];
+                if asset == "leather" {
+                    wanted.push((dir, "leather_overlay"));
+                }
+                for (d, name) in wanted {
+                    let key = format!("{d}/{name}");
+                    if self.armor_textures.contains_key(&key) {
+                        continue;
+                    }
+                    let loaded = mc_registry::generated::equipment::find(name)
+                        .and_then(|e| crate::avatar::ArmorTex::load(root, d, e));
+                    self.armor_textures.insert(key, loaded);
+                }
+            }
+        }
         let quads = model.quads(&state, Vec3::new(0.0, 0.0, 0.0), 0.0, 0.0);
-        let sampled: Vec<crate::raster::SampledQuad> = quads
+        let mut sampled: Vec<crate::raster::SampledQuad> = quads
             .iter()
             .map(|q| crate::raster::SampledQuad {
                 // THE CORNER RE-ORDER (the vanilla -z mirror's own
@@ -3938,9 +3994,80 @@ impl App {
                 tint: [q.shade, q.shade, q.shade],
             })
             .collect();
+        // THE ARMOR LAYERS (HumanoidArmorLayer.renderArmorPiece over the
+        // store's own armor rows — the offline store stays the only
+        // filled lane, the wire sessions' equipment rows stay chrome):
+        // the piece's slot mesh the ArmorModelSet.get speaks, the SAME
+        // pose the skin walks (copyPropertiesTo's own law), the layer
+        // textures the equipment table's sha1 verified. The plan owns
+        // the texture keys (the leather piece's key carries the
+        // +overlay suffix the composite sampler folds) so the quad pass
+        // borrows nothing.
+        let mut plans: Vec<(usize, String)> = Vec::new();
+        for (slot, &(id, count)) in self.inventory.armor.iter().enumerate() {
+            if count <= 0 {
+                continue;
+            }
+            let Some(asset) = crate::avatar::armor_asset_name(mc_registry::item_name(id)) else {
+                continue;
+            };
+            let Some(tex_entry) = mc_registry::generated::equipment::find(asset) else {
+                continue;
+            };
+            let dir = if slot == crate::avatar::ARMOR_SLOT_LEGS {
+                mc_registry::generated::equipment::LEGGINGS_DIR
+            } else {
+                mc_registry::generated::equipment::HUMANOID_DIR
+            };
+            let base_key = format!("{dir}/{}", tex_entry.name);
+            if !matches!(self.armor_textures.get(&base_key), Some(Some(_))) {
+                continue; // the layer failed its verification — the slot stays bare
+            }
+            let key = if asset == "leather" {
+                format!("{base_key}+overlay")
+            } else {
+                base_key
+            };
+            plans.push((slot, key));
+        }
+        for (slot, tex_key) in &plans {
+            let aquads =
+                crate::avatar::armor_quads(&state, Vec3::new(0.0, 0.0, 0.0), 0.0, 0.0, *slot);
+            sampled.extend(aquads.iter().map(|q| armor_sample(q, tex_key.as_str())));
+        }
         fb.clear_depth();
-        fb.draw_sampled_quads(vp, &sampled, &mut |_tex, u, v| {
-            let [r, g, b, al] = model.pixel(u, v);
+        fb.draw_sampled_quads(vp, &sampled, &mut |tex, u, v| {
+            if tex.is_empty() {
+                let [r, g, b, al] = model.pixel(u, v);
+                return Some([r, g, b, al]);
+            }
+            if let Some(base_key) = tex.strip_suffix("+overlay") {
+                // THE LEATHER COMPOSITE: the overlay's opaque texel
+                // first (the layers array's own order — the trim paints
+                // over the base), the dye fold over the base's holes
+                let base = self.armor_textures.get(base_key).and_then(|o| o.as_ref());
+                let overlay_key = format!("{base_key}_overlay");
+                let overlay = self.armor_textures.get(&overlay_key).and_then(|o| o.as_ref());
+                if let (Some(base), Some(overlay)) = (base, overlay) {
+                    let [r, g, b, al] = overlay.pixel(u, v);
+                    if al >= 128 {
+                        return Some([r, g, b, al]);
+                    }
+                    let [r, g, b, al] = base.pixel(u, v);
+                    let t = crate::tint::unpack(crate::avatar::LEATHER_UNDYED_COLOR);
+                    return Some([
+                        (r as f32 / 255.0 * t[0] * 255.0).round() as u8,
+                        (g as f32 / 255.0 * t[1] * 255.0).round() as u8,
+                        (b as f32 / 255.0 * t[2] * 255.0).round() as u8,
+                        al,
+                    ]);
+                }
+                return None;
+            }
+            let Some(layer) = self.armor_textures.get(tex).and_then(|o| o.as_ref()) else {
+                return None;
+            };
+            let [r, g, b, al] = layer.pixel(u, v);
             Some([r, g, b, al])
         });
     }
@@ -9810,6 +9937,23 @@ fn mannequin_turn(mouse: Option<(i32, i32)>, left: i32, top: i32) -> (f32, f32) 
     (180.0 + dx.atan() * 20.0, dy.atan() * 20.0)
 }
 
+/// One armor layer quad's sampled form — the skin pass's OWN corner
+/// re-order (the vanilla -z mirror's winding the raster's front-face
+/// law consumes), the piece's texture key riding, the tint field the
+/// light's own shade (the dye multiply the leather composite's sampler
+/// speaks).
+fn armor_sample<'a>(
+    q: &crate::avatar::AvatarQuad,
+    tex: &'a str,
+) -> crate::raster::SampledQuad<'a> {
+    crate::raster::SampledQuad {
+        pts: [q.pts[0], q.pts[2], q.pts[1], q.pts[3]],
+        uv: [q.uv[0], q.uv[2], q.uv[1], q.uv[3]],
+        tex,
+        tint: [q.shade, q.shade, q.shade],
+    }
+}
+
 /// THE MANNEQUIN'S VIEW-PROJECTION (the vanilla PiP chain, folded to
 /// one matrix — javap PictureInPictureRenderer.prepareTexturesAnd-
 /// Projection: the ortho window is the rect's own size times the GUI
@@ -10001,15 +10145,23 @@ fn draw_item_icon_3d(g: &mut Gui, item_id: i32, x: i32, y: i32) -> bool {
     let s = 16.0 * scale;
     // translate(slot center) . scale(s, -s, s) as the NDC projection:
     // x_ndc = 2(x_px)/w - 1 with x_px = cx + bx*s; y_px = cy - by*s (the
-    // atlas's own y-flip) -> y_ndc = 1 - 2 y_px/h; the w row carries the
-    // depth (nearer = smaller): w = 1.5 - bz
+    // atlas's own y-flip) -> y_ndc = 1 - 2 y_px/h; w' stays 1.0 (the
+    // affine gui law — the mapping comment below keeps)
     let mut proj = crate::math::Mat4::IDENT;
     proj.0[0] = 2.0 * s / w_fb;
     proj.0[5] = 2.0 * s / h_fb;
-    proj.0[11] = -1.0;
+    // THE AFFINE GUI LAW (the mapping this projection's own comment
+    // speaks): x_ndc = 2(x_px)/w - 1 with x_px = cx + bx*s — w' stays
+    // 1.0 so the sampler's perspective divide never moves a texel. The
+    // former w row (w = 1.5 - bz, the depth proxy) rode the SAME
+    // divide and spread every 3D icon ~3x past its slot (the divide
+    // the draw_sampled_quads walk applies to the position rows too) —
+    // the depth the icons' tiled faces never needed (the isometric
+    // faces disjoint), the cleared-MAX buffer the uniform w' passes.
+    proj.0[11] = 0.0;
     proj.0[12] = 2.0 * cx / w_fb - 1.0;
     proj.0[13] = 1.0 - 2.0 * cy / h_fb;
-    proj.0[15] = 1.5;
+    proj.0[15] = 1.0;
     g.fb.clear_depth();
     let sampled: Vec<crate::raster::SampledQuad> = layers
         .iter()
@@ -19403,6 +19555,144 @@ mod tests {
             }
             assert!(diff > 200, "the mannequin painted: {diff} pixels");
         }
+    }
+
+    /// THE MANNEQUIN'S ARMOR (the HumanoidArmorLayer walk the store's
+    /// own rows keep): the EMPTY store renders pixel-identical twice
+    /// (the no-armor path adds ZERO quads — the golden law's own gate),
+    /// the iron kit paints the head/chest/legs (the equipment textures
+    /// the sha1 table verified), the elytra renders NOTHING (the
+    /// wings-layer asset the humanoid slots never texture), and the
+    /// leather chestplate rides its dyeable composite (the overlay
+    /// over the tinted base the client info JSON speaks).
+    #[test]
+    fn the_mannequin_wears_the_store_armor() {
+        // the runtime root the loaders' prefix walk keeps (the absent
+        // cache the honest skip answers — the mannequin tests' own law)
+        let root = ["assets-cache/jar", "../assets-cache/jar", "../../assets-cache/jar"]
+            .iter()
+            .map(std::path::Path::new)
+            .find(|p| p.join("gui/container/inventory.png").exists());
+        let Some(root) = root else { return };
+        let Some(_) = crate::avatar::AvatarModel::load(&root) else {
+            return; // the skin asset gate — the armor rides the same honesty
+        };
+        let mut app = App::new(3);
+        app.enter_world();
+        app.spawn_offline_body();
+        app.open_inventory();
+        let mut assets = GuiAssets::open(&root);
+        let bare = {
+            let mut fb = crate::raster::Framebuf::new(640, 360);
+            app.render(&mut fb, &mut assets);
+            fb.color.clone()
+        };
+        let bare_twice = {
+            let mut fb = crate::raster::Framebuf::new(640, 360);
+            app.render(&mut fb, &mut assets);
+            fb.color
+        };
+        assert_eq!(bare, bare_twice, "the empty-armor path adds zero quads");
+        let px = |color: &[u8], x: usize, y: usize| -> [u8; 3] {
+            let o = (y * 640 + x) * 3;
+            [color[o], color[o + 1], color[o + 2]]
+        };
+        // the mannequin's own window (the hole the PiP owns — the armor
+        // slots' icons never overlap it)
+        let diff_in_window = |a: &[u8], b: &[u8]| -> usize {
+            let mut diff = 0usize;
+            for y in 110..165 {
+                for x in 262..303 {
+                    if px(a, x, y) != px(b, x, y) {
+                        diff += 1;
+                    }
+                }
+            }
+            diff
+        };
+        // THE IRON KIT (the SLOT_IDS order: HEAD, CHEST, LEGS, FEET)
+        let id = |name: &str| mc_registry::item_id_by_name(name).expect("the registry speaks");
+        app.inventory.armor = [
+            (id("iron_helmet"), 1),
+            (id("iron_chestplate"), 1),
+            (id("iron_leggings"), 1),
+            (id("iron_boots"), 1),
+        ];
+        let iron = {
+            let mut fb = crate::raster::Framebuf::new(640, 360);
+            app.render(&mut fb, &mut assets);
+            fb.color.clone()
+        };
+        let iron_diff = diff_in_window(&bare, &iron);
+        assert!(iron_diff > 120, "the iron kit painted: {iron_diff} pixels");
+        // each body region the kit covers changed (the helmet's crown
+        // band, the chestplate's torso band, the legs' own band)
+        let band_diff = |a: &[u8], b: &[u8], y0: usize, y1: usize| -> usize {
+            let mut diff = 0usize;
+            for y in y0..y1 {
+                for x in 262..303 {
+                    if px(a, x, y) != px(b, x, y) {
+                        diff += 1;
+                    }
+                }
+            }
+            diff
+        };
+        assert!(band_diff(&bare, &iron, 108, 122) > 5, "the helmet painted");
+        assert!(band_diff(&bare, &iron, 126, 146) > 5, "the chestplate painted");
+        assert!(band_diff(&bare, &iron, 148, 165) > 5, "the legs painted");
+        // the cache holds the TWO layer entries the iron kit names (the
+        // humanoid dir the head/chest/feet share, the leggings dir the
+        // legs' own layer rides) — both sha1-verified loads
+        use mc_registry::generated::equipment;
+        assert_eq!(app.armor_textures.len(), 2);
+        assert!(matches!(
+            app.armor_textures.get(&format!("{}/iron", equipment::HUMANOID_DIR)),
+            Some(Some(_))
+        ));
+        assert!(matches!(
+            app.armor_textures.get(&format!("{}/iron", equipment::LEGGINGS_DIR)),
+            Some(Some(_))
+        ));
+        // THE ELYTRA'S HONEST MISS: the CHEST slot's piece the
+        // equipment asset never names (the wings layer the humanoid
+        // slots never texture) renders nothing — the mannequin back to
+        // the bare skin (the shouldRender gate's empty-asset verdict;
+        // the piece itself rides an item icon — the flat slot path)
+        app.inventory.armor = [(0, 0), (id("elytra"), 1), (0, 0), (0, 0)];
+        let elytra = {
+            let mut fb = crate::raster::Framebuf::new(640, 360);
+            app.render(&mut fb, &mut assets);
+            fb.color.clone()
+        };
+        let elytra_diff = diff_in_window(&bare, &elytra);
+        assert_eq!(elytra_diff, 0, "the elytra rides no humanoid layer");
+        // THE LEATHER COMPOSITE: the dyeable pair loads (the base + the
+        // untinted overlay), the chest band paints the tinted brown
+        app.inventory.armor = [(0, 0), (id("leather_chestplate"), 1), (0, 0), (0, 0)];
+        let leather = {
+            let mut fb = crate::raster::Framebuf::new(640, 360);
+            app.render(&mut fb, &mut assets);
+            fb.color.clone()
+        };
+        assert!(matches!(
+            app.armor_textures.get(&format!("{}/leather", equipment::HUMANOID_DIR)),
+            Some(Some(_))
+        ));
+        assert!(matches!(
+            app.armor_textures
+                .get(&format!("{}/leather_overlay", equipment::HUMANOID_DIR)),
+            Some(Some(_))
+        ));
+        let mut leather_diff = 0usize;
+        for y in 120..155 {
+            for x in 262..303 {
+                if px(&bare, x, y) != px(&leather, x, y) {
+                    leather_diff += 1;
+                }
+            }
+        }
+        assert!(leather_diff > 60, "the leather chest painted: {leather_diff}");
     }
 }
 
