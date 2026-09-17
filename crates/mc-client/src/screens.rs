@@ -477,6 +477,13 @@ impl BundleContents {
     }
 }
 
+/// THE EMPTY BUNDLE'S OWN DESCRIPTION (the 26.2
+/// BUNDLE_EMPTY_DESCRIPTION field — the
+/// item.minecraft.bundle.empty.description key the en_us lang
+/// keeps): the word the word-wrap law splits at 96 the grey
+/// -5592406 speaks.
+pub(crate) const BUNDLE_EMPTY_DESCRIPTION: &str = "Can hold a mixed stack of items";
+
 /// THE BUNDLE TOOLTIP'S OWN VIEW (the hovered row the gate speaks —
 /// the data the render consumes, the shape the tests pin): the items
 /// the contents row keeps, the selected index the scroll's walk
@@ -6107,8 +6114,10 @@ impl App {
     /// tooltip component answers): the hovered slot's stack the
     /// bundles tag speaks, the contents row the map keeps (the
     /// client's stacks never carry the component — the row the syncs
-    /// feed IS the truth), the EMPTY bundle the show-count law's 0
-    /// keeps silent. The view the render consumes: the items the row
+    /// feed IS the truth), and the EMPTY bundle the 26.2 extractImage
+    /// dispatch's own isEmpty branch answers — the view the zero
+    /// total carries, the description's own walk the render rides.
+    /// The view the render consumes: the items the row
     /// owns, the selected index the scroll's walk moves, the shape
     /// the 26.2 grid speaks, and the HIDDEN count the surplus cell
     /// speaks (getAmountOfHiddenItems — the skipped stacks' counts
@@ -6119,10 +6128,21 @@ impl App {
             return None;
         }
         let contents = self.bundle_contents.get(&slot_id)?;
-        let (shown, rows, _slots) = Self::bundle_tooltip_shape(contents.items.len() as i32);
-        if shown <= 0 {
-            return None;
+        if contents.items.is_empty() {
+            // THE EMPTY WALK (the extractImage dispatch's own isEmpty
+            // branch — the extractEmptyBundleTooltip the jar speaks):
+            // the zero total the Fraction.ZERO bar rides, the rows
+            // the 0 the grid's own range self-skips
+            return Some(BundleTooltipView {
+                items: Vec::new(),
+                selected: contents.selected_item_index,
+                shown: 0,
+                rows: 0,
+                hidden: 0,
+                total: 0,
+            });
         }
+        let (shown, rows, _slots) = Self::bundle_tooltip_shape(contents.items.len() as i32);
         let hidden: i32 = contents.items[shown as usize..].iter().map(|&(_, c)| c).sum();
         let total: i32 = contents.items.iter().map(|&(_, c)| c).sum();
         Some(BundleTooltipView {
@@ -6160,6 +6180,16 @@ impl App {
         }
     }
 
+    /// THE EMPTY PANEL'S OWN HEIGHT (the 26.2
+    /// getEmptyBundleBackgroundHeight walk — the split law's line
+    /// count the 9px pitch speaks, the +13 +8 the bar region keeps;
+    /// the house's +24 tail the 3px top margin + the 4px gap + the
+    /// 13px bar + the 4px spare folds — the full grid's own +24 the
+    /// same tail speaks).
+    fn bundle_tooltip_empty_panel_height(lines: usize) -> i32 {
+        lines as i32 * 9 + 24
+    }
+
     /// THE BUNDLE TOOLTIP'S OWN RENDER (the 26.2
     /// ClientBundleTooltip.extractBundleWithItemsTooltip walk — the
     /// bytecode's own layout): the background the
@@ -6181,7 +6211,12 @@ impl App {
     /// surplus cell never increments). The positioner the vanilla
     /// walk keeps — the +12/-12 cursor offset, the right overflow
     /// the 24-flip the max-4 clamp holds, the vertical the screen's
-    /// own edges keep. The cursor-driven pass the headless scenes
+    /// own edges keep. The EMPTY bundle the extractImage dispatch's
+    /// own isEmpty branch answers: the description the
+    /// extractEmptyBundleTooltip walk speaks (the textWithWordWrap
+    /// the 96-wide split law keeps, the grey -5592406 the lang
+    /// speaks), the ZERO bar the shared extractProgressbar ride
+    /// keeps. The cursor-driven pass the headless scenes
     /// never see (`mouse_pos` is None — the pixel goldens can never
     /// read it).
     fn render_bundle_tooltip(&mut self, g: &mut Gui, a: &mut GuiAssets) {
@@ -6194,13 +6229,28 @@ impl App {
         let size = view.items.len() as i32;
         let overflow = size > 12; // the loc8 law the walk keeps
         let rows = view.rows;
+        // THE EMPTY DISPATCH (extractImage's own isEmpty branch — the
+        // description's lines the split law feeds, the panel's height
+        // the empty walk keeps; the grid's own loop the 0-row range
+        // self-skips)
+        let empty = size == 0;
+        let lines: Vec<String> = if empty {
+            wrap_lines(g, BUNDLE_EMPTY_DESCRIPTION, 96)
+        } else {
+            Vec::new()
+        };
         // THE PANEL (the content 96 wide the 4x24 grid speaks, the
         // 3px margin each side the hand-drawn fill keeps; the height
         // the backgroundHeight law keeps — itemGridHeight + 13 + 8:
         // the grid, the 4px gap the extractProgressbar's +4 speaks,
-        // the 13px bar, the 4px spare the tail keeps)
+        // the 13px bar, the 4px spare the tail keeps; the EMPTY walk
+        // the same +24 tail the description's 9px lines keep)
         let w = 96 + 6;
-        let h = (rows * 24 + 24) as i32;
+        let h = if empty {
+            Self::bundle_tooltip_empty_panel_height(lines.len())
+        } else {
+            (rows * 24 + 24) as i32
+        };
         // THE POSITIONER (the vanilla walk — the right overflow the
         // 24-flip the max-4 clamp keeps, the vertical the edges hold)
         let mut tx = mx + 12;
@@ -6232,6 +6282,16 @@ impl App {
             ];
             g.fill(tx - 1, ty + i, 1, 1, c); // the left strip
             g.fill(tx + w, ty + i, 1, 1, c); // the right strip
+        }
+        // THE EMPTY DESCRIPTION (the 26.2
+        // extractEmptyBundleDescriptionText — the textWithWordWrap the
+        // bytecode keeps: the lines the split law feeds at the content
+        // origin, the 9px pitch the walk's +9 speaks, the grey the
+        // -5592406 color keeps, the shadow the iconst_1 delegate rides)
+        if empty {
+            for (i, line) in lines.iter().enumerate() {
+                g.text(a, tx + 3, ty + 3 + i as i32 * 9, line, GRAY, true);
+            }
         }
         // THE GRID WALK (the extractBundleWithItemsTooltip loops —
         // the row 1 = the BOTTOM row the -24 sy speaks, the col 1 =
@@ -6285,10 +6345,19 @@ impl App {
         }
         // THE PROGRESS BAR (extractProgressbar — the grid's own tail
         // the bytecode keeps: x + getContentXOffset(width), y +
-        // itemGridHeight + 4; the 96x13 border the fill rides under,
+        // itemGridHeight + 4; the EMPTY walk the same law rides (y +
+        // the description's own height + 4, the Fraction.ZERO the
+        // total speaks); the 96x13 border the fill rides under,
         // the weight the bar's own width speaks)
         let bx = tx + 3;
-        let by = ty + 3 + rows as i32 * 24 + 4;
+        let by = ty
+            + 3
+            + if empty {
+                lines.len() as i32 * 9
+            } else {
+                rows as i32 * 24
+            }
+            + 4;
         let fillw = Self::bundle_progressbar_fill(view.total);
         if fillw > 0 {
             // THE FILL (the bundle_progressbar_fill sprite's own
@@ -23412,11 +23481,25 @@ mod tests {
             app.bundle_tooltip_view(sx + 8, sy + 8).is_none(),
             "no row the map keeps — no tooltip"
         );
-        // THE EMPTY BUNDLE: the show-count law's own 0 wall
+        // THE EMPTY BUNDLE (the 26.2 extractImage dispatch — the
+        // contents' isEmpty the EMPTY branch speaks): the view the
+        // zero total carries, the description's own walk the render
+        // rides
         app.bundle_contents.insert(9, BundleContents::new(Vec::new()));
+        let view = app
+            .bundle_tooltip_view(sx + 8, sy + 8)
+            .expect("the empty bundle the EMPTY branch answers");
         assert!(
-            app.bundle_tooltip_view(sx + 8, sy + 8).is_none(),
-            "the empty bundle the 0 wall keeps silent"
+            view.items.is_empty(),
+            "the empty bundle's own row the view keeps"
+        );
+        assert_eq!(
+            view.shown, 0,
+            "the show-count law's own 0 the empty row keeps"
+        );
+        assert_eq!(
+            view.total, 0,
+            "the zero total the Fraction.ZERO bar rides"
         );
         // THE OVERFLOWING BUNDLE (the 26.2 grid the 12-cell budget
         // keeps): 13 stacks the shown count the lone-tail cut caps to
@@ -23478,6 +23561,58 @@ mod tests {
             App::bundle_tooltip_shape(64),
             (11, 3, 12),
             "the full bundle's 11 + the surplus cell"
+        );
+    }
+
+    /// THE EMPTY BUNDLE'S OWN WALK (the 26.2 extractEmptyBundleTooltip
+    /// the extractImage dispatch speaks): the description the split
+    /// law wraps at 96, the 9px pitch the height law keeps, the +24
+    /// tail the bar region folds, and the ZERO bar the shared
+    /// extractProgressbar walk rides (the fill the 0 keeps, the
+    /// "Empty" the strict word speaks).
+    #[test]
+    fn the_bundle_tooltip_empty_walk_rides_the_description() {
+        // THE WRAP (font.split at 96 — the house's own greedy walk the
+        // metrics keep): the vanilla description's own lines
+        let mut fb = crate::raster::Framebuf::new(64, 64);
+        let g = Gui::new(&mut fb, 2);
+        let lines = wrap_lines(&g, BUNDLE_EMPTY_DESCRIPTION, 96);
+        assert_eq!(
+            lines.join(" "),
+            BUNDLE_EMPTY_DESCRIPTION,
+            "the words the wrap never loses"
+        );
+        assert!(
+            lines.len() >= 2,
+            "the 31-char description the 96-width law wraps"
+        );
+        for line in &lines {
+            assert!(
+                g.text_width(line) <= 96,
+                "each line the 96-width law keeps"
+            );
+        }
+        // THE HEIGHT (getEmptyBundleBackgroundHeight — the split's
+        // count the 9px pitch speaks, the +24 tail the bar region
+        // keeps: 3 margin + 4 gap + 13 bar + 4 spare)
+        assert_eq!(
+            App::bundle_tooltip_empty_panel_height(lines.len()),
+            lines.len() as i32 * 9 + 24,
+            "the panel the height law keeps"
+        );
+        assert_eq!(
+            App::bundle_tooltip_empty_panel_height(2),
+            42,
+            "the two-line walk's own 42 (the 18 + the 24 tail)"
+        );
+        // THE ZERO BAR (the shared extractProgressbar walk the empty
+        // tooltip rides — the Fraction.ZERO the bytecode speaks): the
+        // fill the 0 keeps, the word the strict ZERO speaks
+        assert_eq!(App::bundle_progressbar_fill(0), 0, "the zero fill");
+        assert_eq!(
+            App::bundle_progressbar_fill_text(0),
+            Some("Empty"),
+            "the Empty word the ZERO fraction speaks"
         );
     }
 
