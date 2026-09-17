@@ -473,6 +473,38 @@ impl World {
         dir: (f64, f64, f64),
         reach: f64,
     ) -> Option<ClipHit> {
+        // THE FLUID-NONE LAW (the ClipContext.Fluid.NONE the block clip
+        // speaks): neither fluid ever decides the hit — the water AND
+        // the lava stay transparent to the pick ray
+        self.clip_by(origin, dir, reach, |id| id != AIR && id != WATER && id != LAVA)
+    }
+
+    /// THE FLUID-ANY CLIP (the ClipContext.Fluid.ANY the boat's POV
+    /// walk speaks — javap Item.getPlayerPOVHitResult's third arg): the
+    /// fluids COUNT — the ray stops at the water's own surface (and the
+    /// lava's), the solids the same lane keeps. The hit location rides
+    /// the same DDA boundary the block walk speaks: for the full-cube
+    /// fluid cell the project's vocabulary keeps, the shape's entry IS
+    /// the cell boundary.
+    pub fn clip_fluid_any(
+        &self,
+        origin: (f64, f64, f64),
+        dir: (f64, f64, f64),
+        reach: f64,
+    ) -> Option<ClipHit> {
+        self.clip_by(origin, dir, reach, |id| id != AIR)
+    }
+
+    /// The shared DDA walk (the clip's own traversal): the predicate
+    /// decides the hit cells, everything else — the boundary math, the
+    /// entry face, the exact location — the one walk both laws speak.
+    fn clip_by(
+        &self,
+        origin: (f64, f64, f64),
+        dir: (f64, f64, f64),
+        reach: f64,
+        solid: impl Fn(u16) -> bool,
+    ) -> Option<ClipHit> {
         let len = (dir.0 * dir.0 + dir.1 * dir.1 + dir.2 * dir.2).sqrt();
         if len < 1e-9 {
             return None;
@@ -480,10 +512,6 @@ impl World {
         let dx = dir.0 / len;
         let dy = dir.1 / len;
         let dz = dir.2 / len;
-        // THE FLUID-NONE LAW (the ClipContext.Fluid.NONE the block clip
-        // speaks): neither fluid ever decides the hit — the water AND
-        // the lava stay transparent to the pick ray
-        let solid = |id: u16| id != AIR && id != WATER && id != LAVA;
         let mut x = origin.0.floor() as i32;
         let mut y = origin.1.floor() as i32;
         let mut z = origin.2.floor() as i32;
@@ -723,6 +751,60 @@ mod tests {
         assert_eq!(hit5.pos, (7, 8, 7));
         assert_eq!(hit5.face, 1, "the -y boundary is the one the ray crossed last");
         assert_eq!(hit5.location, (7.5, 9.0, 7.5));
+    }
+
+    /// THE FLUID-ANY CLIP (the boat's POV walk — javap
+    /// Item.getPlayerPOVHitResult's `ClipContext.Fluid.ANY`): the
+    /// fluids COUNT — the ray stops at the water's own surface (and
+    /// the lava's), the solids the same lane keeps, the open air the
+    /// honest miss keeps. The block clip's own NONE law (the water the
+    /// pick ray passes through) rides the same walk for the contrast.
+    #[test]
+    fn the_fluid_any_clip_speaks_the_surface_law() {
+        let mut w = slab_world();
+        // the water cell above the slab — the pool the hull spawns on
+        w.set(8, 11, 8, WATER);
+        // THE FLUID'S OWN SURFACE: the straight-down ray stops at the
+        // water cell's top boundary (the fluid the NONE law passes)
+        let hit = w
+            .clip_fluid_any((8.5, 14.0, 8.5), (0.0, -1.0, 0.0), BLOCK_INTERACTION_RANGE)
+            .expect("the water decides the hit on this lane");
+        assert_eq!(hit.pos, (8, 11, 8), "the water cell the ray entered");
+        assert_eq!(hit.face, 1, "UP — the fluid's own entry face");
+        assert_eq!(hit.location, (8.5, 12.0, 8.5), "the surface plane exactly");
+        assert!(!hit.inside);
+        // THE CONTRAST: the NONE law's own walk the same pool speaks —
+        // the water transparent, the slab's top the hit (the ray from
+        // 12.0: 3.0 to the slab, inside the reach)
+        let none = w
+            .clip((8.5, 12.0, 8.5), (0.0, -1.0, 0.0), BLOCK_INTERACTION_RANGE)
+            .expect("the slab decides the NONE walk");
+        assert_eq!(none.pos, (8, 8, 8), "the fluid never decided the NONE hit");
+        // THE LAVA COUNTS TOO: the ANY law's own set the fluid family keeps
+        let mut w2 = slab_world();
+        w2.set(3, 9, 3, LAVA);
+        let lava = w2
+            .clip_fluid_any((3.5, 12.0, 3.5), (0.0, -1.0, 0.0), BLOCK_INTERACTION_RANGE)
+            .expect("the lava decides the hit");
+        assert_eq!(lava.pos, (3, 9, 3));
+        assert_eq!(lava.location, (3.5, 10.0, 3.5));
+        // THE SOLID STILL COUNTS: the stone's own lane the ANY walk keeps
+        let stone = w2
+            .clip_fluid_any((8.5, 12.0, 8.5), (0.0, -1.0, 0.0), BLOCK_INTERACTION_RANGE)
+            .expect("the slab decides the ANY walk too");
+        assert_eq!(stone.pos, (8, 8, 8));
+        // THE OPEN AIR: the honest miss both laws speak
+        let mut w3 = slab_world();
+        for x in 0..16 {
+            for z in 0..16 {
+                w3.set(x, 8, z, AIR);
+            }
+        }
+        assert!(
+            w3.clip_fluid_any((8.5, 12.0, 8.5), (0.0, -1.0, 0.0), BLOCK_INTERACTION_RANGE)
+                .is_none(),
+            "no fluid, no solid — the ray ends in the open air"
+        );
     }
 
     /// The diagonal's helper — the ray from (9.5, 11.0, 9.5) along

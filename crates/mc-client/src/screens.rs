@@ -1086,6 +1086,13 @@ pub struct App {
     /// carries). The ride lane's own anchor carries the player; this
     /// lane carries the boat the camera sits in.
     pub net_boats: Vec<crate::world_view::WireBoat>,
+    /// THE OFFLINE SPAWNER'S OWN HULLS (the BoatItem.use walk's
+    /// singleplayer arm — the local hulls the wire's boats are the
+    /// future own of): the hull the offline right-click spawns at the
+    /// Fluid-ANY surface hit, the player's yaw the vanilla setYRot
+    /// speaks. The render walk speaks both lists (the same submit the
+    /// wire's hulls ride); the wire's own lane never reads these.
+    pub offline_boats: Vec<crate::world_view::WireBoat>,
     /// The boat render lane's own lazy model cache (the (raft, chest,
     /// wood) key the hull's shape + texture speak): a failed load's
     /// `None` stays cached (the session's own honesty — the drifted
@@ -1506,6 +1513,10 @@ pub struct App {
     /// The orb entity id counter (the client's own — the wire ids stay
     /// the server's).
     pub next_orb_id: i32,
+    /// The offline spawner's own hull id counter (the client's own —
+    /// the BoatItem.use walk's singleplayer arm; the wire ids stay the
+    /// server's).
+    pub next_boat_id: i32,
     /// The orb pickup's own throttle (`Player.takeXpDelay` — the touch
     /// sets 2, the aiStep tail ticks it down; one orb per window).
     pub take_xp_delay: i32,
@@ -1859,6 +1870,7 @@ impl App {
             net_camera: None,
             net_ride: None,
             net_boats: Vec::new(),
+            offline_boats: Vec::new(),
             boat_models: std::collections::HashMap::new(),
             paddle_positions: std::collections::HashMap::new(),
             bubble_state: std::collections::HashMap::new(),
@@ -1947,6 +1959,7 @@ impl App {
             next_drop_id: 1,
             orbs: Vec::new(),
             next_orb_id: 1,
+            next_boat_id: 1,
             take_xp_delay: 0,
             health: 20.0,
             food_data: crate::food::FoodData::new(),
@@ -4034,6 +4047,9 @@ impl App {
             // the App OWNS the procedural voxels now (the block-use
             // lane's placement prediction edits them in place)
             self.offline_world = Some(world);
+            // the fresh terrain's own honesty — the previous offline
+            // session's hulls drop with the world that carried them
+            self.offline_boats.clear();
             // the dig lane predicts locally on the offline terrain (the
             // singleplayer behavior — the machine's own default re-armed)
             self.dig.apply_locally = true;
@@ -5595,6 +5611,9 @@ impl App {
         // voxels drop (the placement prediction is the server's own
         // chunk refresh on this lane)
         self.offline_world = None;
+        // the offline spawner's hulls drop with it — the wire's own
+        // boat lane owns this world's water
+        self.offline_boats.clear();
         // the dig lane's prediction flag follows the world's authority
         // (the networked terrain is the server's own — the placement
         // lane's verdict the dig speaks too)
@@ -6224,6 +6243,16 @@ impl App {
             // the offline client's use animations are the vanilla's own
             // singleplayer behavior)
             if let Some(id) = self.held_id() {
+                // THE BOAT'S OWN USE WALK (javap BoatItem.use — the held
+                // hull's spawn arc the item's use() speaks): the
+                // Fluid-ANY POV clip, the eye-inside gate, the
+                // noCollision fold, the verdict the lanes' own order
+                // keeps. The None the item lanes' fall-through keeps (a
+                // PASS — the vanilla's own order), the Some the press's
+                // own verdict speaks.
+                if let Some(consumed) = self.on_right_press_boat_lane(id) {
+                    return consumed;
+                }
                 // THE EAT LANE FIRST (the vanilla startUseItem's own
                 // order — the item's use() speaks: the CONSUMABLE's
                 // startConsuming opens the hold; the pull lanes ride
@@ -8781,6 +8810,138 @@ impl App {
         true
     }
 
+    /// THE BOAT'S OWN USE WALK — javap BoatItem.use over the 26.2 jar:
+    /// the held stack, the POV clip with `ClipContext.Fluid.ANY` (the
+    /// reach `player.blockInteractionRange()` speaks — the static's own
+    /// bytecode —, the fluids COUNT: the water surface the block clip's
+    /// own Fluid-NONE law keeps transparent), the MISS the PASS keeps,
+    /// the eye-inside gate (the `getEntities(..., CAN_BE_PICKED)` walk's
+    /// refusal — the eye inside any pickable body's box: the mobs the
+    /// LivingEntity.isPickable law picks, the hulls the AbstractBoat's
+    /// own override), the BLOCK case's `getBoat` spawn arc: the fresh
+    /// hull at the hit location (`setInitialPos(hit.getLocation())`),
+    /// the player's yaw the `setYRot(player.getYRot())` fold speaks, the
+    /// `level.noCollision` gate (the 1.375 x 0.562 box the fluids never
+    /// block — the FAIL the silent consume keeps), then the SUCCESS: the
+    /// swing (the consumesAction law) and the spawn the lanes split —
+    /// the NETWORKED lane's UseItem echo (the client predicts NOTHING:
+    /// the vanilla's own `isClientSide` guard, the server's addFreshEntity
+    /// the Add Entity echo lands through) or the OFFLINE lane's local
+    /// hull (the singleplayer's own addFreshEntity + the survival
+    /// `ItemStack.consume(1, player)` the stack rides down). `None` =
+    /// the boat gate's silence (the held item is no hull) or a PASS
+    /// result — the item lanes' fall-through the vanilla's own order
+    /// keeps.
+    fn on_right_press_boat_lane(&mut self, id: i32) -> Option<bool> {
+        // THE BOAT GATE: the item name's own family parse (the
+        // BoatItem's entityType — the item and the entity share the
+        // name the registry order speaks)
+        let name = mc_registry::item_name(id)?;
+        let (kind, chest, wood) = crate::world_view::boat_family_parts(name)?;
+        let cam = self.world_camera();
+        let f = cam.forward();
+        // THE FLUID-ANY POV CLIP (the getPlayerPOVHitResult walk — the
+        // blockInteractionRange reach, the fluids count)
+        let hit = self.active_world().and_then(|w| {
+            w.clip_fluid_any(
+                (cam.pos.x as f64, cam.pos.y as f64, cam.pos.z as f64),
+                (f.x as f64, f.y as f64, f.z as f64),
+                crate::world::BLOCK_INTERACTION_RANGE,
+            )
+        })?;
+        // THE EYE-INSIDE GATE (the CAN_BE_PICKED walk's own refusal —
+        // the pick radius the 0.0 the living and the hulls keep, the
+        // box the [min, max) contains law speaks): the mobs first (the
+        // offline bodies and the wire's), the hulls after (the wire's
+        // and the offline spawner's own)
+        let eye = (cam.pos.x as f64, cam.pos.y as f64, cam.pos.z as f64);
+        let in_box = |b: (f64, f64, f64, f64, f64, f64)| {
+            eye.0 >= b.0 && eye.0 < b.3 && eye.1 >= b.1 && eye.1 < b.4 && eye.2 >= b.2 && eye.2 < b.5
+        };
+        for m in self.mobs.iter().chain(self.net_mobs.iter()) {
+            if in_box(m.box_at()) {
+                return None; // the PASS — the vanilla's own refusal
+            }
+        }
+        let hw = crate::world_view::BOAT_DIMENSIONS_WIDTH as f64 / 2.0;
+        let bh = crate::world_view::BOAT_DIMENSIONS_HEIGHT as f64;
+        for b in self.net_boats.iter().chain(self.offline_boats.iter()) {
+            if in_box((b.x - hw, b.y, b.z - hw, b.x + hw, b.y + bh, b.z + hw)) {
+                return None;
+            }
+        }
+        // THE NO-COLLISION GATE (the level.noCollision walk — the
+        // spawned box the fluids never block, the solids the FAIL
+        // speaks: the press consumes, the water stays hull-less)
+        let (hx, hy, hz) = hit.location;
+        let box_cells =
+            |lo: f64, hi: f64| (lo.floor() as i32)..=(hi.floor() as i32);
+        for cx in box_cells(hx - hw, hx + hw) {
+            for cy in box_cells(hy, hy + bh) {
+                for cz in box_cells(hz - hw, hz + hw) {
+                    let solid_cell = matches!(
+                        self.active_world().map(|w| w.get(cx, cy, cz)),
+                        Some(cid) if cid != crate::world::AIR
+                            && cid != crate::world::WATER
+                            && cid != crate::world::LAVA
+                    );
+                    if solid_cell {
+                        return Some(true); // the FAIL — consumed, silent
+                    }
+                }
+            }
+        }
+        // THE SUCCESS ARC: the swing (the consumesAction law) and the
+        // spawn the lanes split — the wire's echo (the client predicts
+        // nothing; the Add Entity the hull lands through) or the
+        // offline spawner's own hull (the singleplayer's
+        // addFreshEntity)
+        let (yaw, pitch) = crate::world_view::wire_angles(&cam);
+        if self.world_is_network {
+            if let Some(sink) = self.live_clicks.as_ref() {
+                let _ = sink.send(crate::world_view::ContainerCommand::UseItem { yaw, pitch });
+            }
+            self.swing.start();
+            return Some(true);
+        }
+        // THE OFFLINE SPAWN (the singleplayer's own walk — the hull at
+        // the hit location, the player's yaw the setYRot fold speaks,
+        // the shape bits the item name's family parse keeps, the paddle
+        // words the rest the never-ridden hull keeps)
+        let bid = self.next_boat_id;
+        self.next_boat_id += 1;
+        self.offline_boats.push(crate::world_view::WireBoat {
+            id: bid,
+            x: hx,
+            y: hy,
+            z: hz,
+            yaw,
+            raft: kind == "raft",
+            chest,
+            wood: wood.to_string(),
+            paddle_left: false,
+            paddle_right: false,
+            bubble_time: 0,
+            hurt_time: 0,
+            hurt_dir: 1,
+            damage: 0.0,
+        });
+        // THE SURVIVAL CONSUME (the ItemStack.consume(1, player) the
+        // server side speaks — the offline lane's own singleplayer law;
+        // the `--held-item` stand-in speaks no stack: the honest skip)
+        let sel = self.selected_hotbar;
+        let stack = self.inventory.items[sel];
+        if stack.1 > 0 && stack.0 == id {
+            self.inventory.items[sel].1 -= 1;
+            if self.inventory.items[sel].1 <= 0 {
+                self.inventory.items[sel] = (0, 0);
+            }
+            self.hotbar_slots = self.inventory.hotbar();
+        }
+        self.swing.start();
+        Some(true)
+    }
+
     /// The networked held-item lane: the store's selected hotbar stack
     /// drives the first-person hand exactly like the vanilla
     /// renderItemInHand's own projection — the id's RESTING-HAND layers
@@ -10225,13 +10386,13 @@ impl App {
         ctx: &RenderCtx,
         cam: &crate::camera::Camera,
     ) {
-        if self.net_boats.is_empty() {
+        if self.net_boats.is_empty() && self.offline_boats.is_empty() {
             return; // the deterministic scenes carry no hulls — the goldens stay
         }
         // THE LAZY LOAD PASS (the same honesty the mob skins speak):
         // each (raft, chest, wood) shape its own texture — a failed
         // load's None stays cached, that hull unseen, the others draw
-        for boat in &self.net_boats {
+        for boat in self.net_boats.iter().chain(self.offline_boats.iter()) {
             let key = (boat.raft, boat.chest, boat.wood.clone());
             if !self.boat_models.contains_key(&key) {
                 let model = crate::avatar::BoatModel::load(
@@ -10244,7 +10405,7 @@ impl App {
             }
         }
         let pm = ctx.proj.mul(&ctx.view);
-        for boat in &self.net_boats {
+        for boat in self.net_boats.iter().chain(self.offline_boats.iter()) {
             let Some(model) = self
                 .boat_models
                 .get(&(boat.raft, boat.chest, boat.wood.clone()))
@@ -10266,8 +10427,7 @@ impl App {
             // never rocks, the lerp the partial speaks:
             // getBubbleAngle(F) = Mth.lerp(partial, angleO, angle))
             let under = self
-                .net_world
-                .as_ref()
+                .active_world()
                 .map(|w| boat_under_water(w, boat))
                 .unwrap_or(false);
             let rock = match self.bubble_state.get(&boat.id) {
@@ -17381,6 +17541,216 @@ mod tests {
         );
     }
 
+    /// THE BOAT'S OWN USE WALK — the OFFLINE arc (javap BoatItem.use):
+    /// the Fluid-ANY POV clip finds the pool, the eye gate the clean
+    /// water keeps silent, the noCollision fold the open water speaks,
+    /// and the local hull lands at the surface hit (the singleplayer's
+    /// own addFreshEntity): the position the hit location verbatim, the
+    /// yaw the player's own, the shape bits the item name's family
+    /// parse keeps, the survival consume the stack rides down, the
+    /// swing the SUCCESS verdict arms.
+    #[test]
+    fn the_boat_use_walk_spawns_the_local_hull_offline() {
+        let mut app = App::new(3);
+        app.enter_world();
+        let wire = |name: &str| {
+            mc_registry::generated::item_order::ITEM_WIRE_ORDER
+                .iter()
+                .position(|&n| n == name)
+                .expect("the item rides the wire") as i32
+        };
+        // the held stack: the oak boat's five-count the hotbar's own
+        // selection carries (the consume's own lane)
+        let boat_id = wire("oak_boat");
+        app.inventory.items[app.selected_hotbar] = (boat_id, 5);
+        app.hotbar_slots = app.inventory.hotbar();
+        // the pool: a water cell floating in the spawn column's air
+        // band — every cell the spawned box spans stays air (the
+        // terrain's own tops never reach this high)
+        let c = app.offline_world.as_ref().unwrap().size_blocks() / 2;
+        let pool_y = app.spawn_y + 6;
+        app.offline_world
+            .as_mut()
+            .unwrap()
+            .set(c, pool_y, c, crate::world::WATER);
+        // the eye 3.0 above the water's top boundary (pool_y + 1), the
+        // straight-down aim, the yaw the vanilla fold keeps honest
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, (pool_y + 4) as f32, c as f32 + 0.5),
+            yaw: std::f32::consts::PI,
+            pitch: -std::f32::consts::FRAC_PI_2,
+        });
+        assert!(app.on_right_press(0, 0), "the boat use consumed the press");
+        // THE LOCAL HULL: one offline boat at the surface hit, the
+        // player's yaw (the camera's yaw - PI in the vanilla degrees —
+        // 0.0 here), the oak shape bits the family parse keeps, the
+        // rest words the never-ridden hull's own defaults
+        assert_eq!(app.offline_boats.len(), 1, "the local hull spawned");
+        let hull = &app.offline_boats[0];
+        // the surface hit's own words: the y the exact boundary plane,
+        // the x/z the honest ray's own drift (the camera forward's
+        // f32 yaw the pitch fold carries — the vanilla's own ray)
+        assert_eq!(hull.y, (pool_y + 1) as f64, "the surface plane exactly");
+        assert!(
+            (hull.x - (c as f64 + 0.5)).abs() < 1e-3,
+            "hull x {}",
+            hull.x
+        );
+        assert!(
+            (hull.z - (c as f64 + 0.5)).abs() < 1e-3,
+            "hull z {}",
+            hull.z
+        );
+        assert_eq!(hull.id, 1, "the offline spawner's own counter");
+        assert_eq!(hull.yaw, 0.0, "the camera yaw - PI in the vanilla degrees");
+        assert!(!hull.raft && !hull.chest, "the plain oak boat");
+        assert_eq!(hull.wood, "oak");
+        assert!(!hull.paddle_left && !hull.paddle_right, "the never-ridden rest");
+        assert_eq!(
+            (hull.bubble_time, hull.hurt_time, hull.hurt_dir, hull.damage),
+            (0, 0, 1, 0.0),
+            "the define's own defaults the absent words keep"
+        );
+        // THE SURVIVAL CONSUME: the stack rode down one
+        assert_eq!(app.inventory.items[app.selected_hotbar], (boat_id, 4));
+        // THE SWING: the SUCCESS verdict's own arm
+        assert!(app.swing.swinging, "the swing started");
+    }
+
+    /// THE BOAT'S OWN USE WALK — the EYE-INSIDE GATE (the
+    /// getEntities/CAN_BE_PICKED walk's own refusal): the eye inside
+    /// any pickable body's box the PASS keeps — the press consumes
+    /// nothing, the water stays hull-less. The hulls and the living
+    /// bodies the same gate walks.
+    #[test]
+    fn the_boat_use_walk_refuses_the_eye_inside_bodies() {
+        let mut app = App::new(3);
+        app.enter_world();
+        app.offline_held_updated(Some("item/oak_boat"));
+        let c = app.offline_world.as_ref().unwrap().size_blocks() / 2;
+        let pool_y = app.spawn_y + 6;
+        app.offline_world
+            .as_mut()
+            .unwrap()
+            .set(c, pool_y, c, crate::world::WATER);
+        let eye_y = (pool_y + 4) as f64;
+        // the wire hull parked around the eye: its 1.375 x 0.562 box
+        // contains the eye position (the boat family the
+        // AbstractBoat.isPickable law picks)
+        app.net_boats.push(crate::world_view::WireBoat {
+            id: 77,
+            x: c as f64 + 0.5,
+            y: eye_y - 0.3,
+            z: c as f64 + 0.5,
+            yaw: 0.0,
+            raft: false,
+            chest: false,
+            wood: "oak".to_string(),
+            paddle_left: false,
+            paddle_right: false,
+            bubble_time: 0,
+            hurt_time: 0,
+            hurt_dir: 1,
+            damage: 0.0,
+        });
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, eye_y as f32, c as f32 + 0.5),
+            yaw: 0.0,
+            pitch: -std::f32::consts::FRAC_PI_2,
+        });
+        assert!(!app.on_right_press(0, 0), "the eye inside the hull — the PASS");
+        assert!(app.offline_boats.is_empty(), "no hull spawned");
+        // THE MOB WALK: the same gate the living bodies speak (the
+        // LivingEntity.isPickable law's own family)
+        app.net_boats.clear();
+        app.mobs.push(crate::mob::Zombie::new(
+            88,
+            c as f64 + 0.5,
+            eye_y - 0.5,
+            c as f64 + 0.5,
+            7,
+        ));
+        assert!(!app.on_right_press(0, 0), "the eye inside the mob — the PASS");
+        assert!(app.offline_boats.is_empty(), "no hull spawned");
+    }
+
+    /// THE BOAT'S OWN USE WALK — the NO-COLLISION GATE (the
+    /// level.noCollision walk's own verdict): the spawned box the
+    /// fluids never block, the solids the FAIL speaks — the press
+    /// consumes (the vanilla's own FAIL), the water stays hull-less.
+    #[test]
+    fn the_boat_use_walk_speaks_the_no_collision_law() {
+        let mut app = App::new(3);
+        app.enter_world();
+        app.offline_held_updated(Some("item/oak_boat"));
+        let c = app.offline_world.as_ref().unwrap().size_blocks() / 2;
+        let pool_y = app.spawn_y + 6;
+        app.offline_world
+            .as_mut()
+            .unwrap()
+            .set(c, pool_y, c, crate::world::WATER);
+        // the stone INSIDE the spawned box's span (the box's x cells
+        // c-1..c+1 at the surface level the hull's own body rides)
+        app.offline_world
+            .as_mut()
+            .unwrap()
+            .set(c + 1, pool_y + 1, c, crate::world::STONE);
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, (pool_y + 4) as f32, c as f32 + 0.5),
+            yaw: 0.0,
+            pitch: -std::f32::consts::FRAC_PI_2,
+        });
+        assert!(app.on_right_press(0, 0), "the FAIL consumes the press");
+        assert!(app.offline_boats.is_empty(), "the FAIL never spawns");
+    }
+
+    /// THE BOAT'S OWN USE WALK — the NETWORKED arc (the vanilla's own
+    /// isClientSide guard): the client predicts NOTHING — the UseItem
+    /// echo rides the command channel (the server's own use() the
+    /// spawn rides, the Add Entity the hull lands through), the local
+    /// hull lists stay empty, the store's stack the server's own echo
+    /// updates.
+    #[test]
+    fn the_boat_use_walk_echoes_the_networked_lane() {
+        use crate::world_view::ContainerCommand;
+        let wire = |name: &str| {
+            mc_registry::generated::item_order::ITEM_WIRE_ORDER
+                .iter()
+                .position(|&n| n == name)
+                .expect("the item rides the wire") as i32
+        };
+        let mut app = App::new(3);
+        app.open(ScreenKind::Connect);
+        let mut net = air_net_world(2, 0);
+        let c = net.size_blocks() / 2;
+        let pool_y = net.size_blocks() / 4;
+        net.set(c, pool_y, c, crate::world::WATER);
+        app.net_world = Some(net);
+        app.enter_network_world(None, Skybox::Overworld, None, None);
+        let (click_tx, click_rx) = std::sync::mpsc::channel::<ContainerCommand>();
+        app.attach_live_clicks(click_tx);
+        app.live_held_updated(Some((wire("oak_boat"), 5)));
+        app.net_camera = Some(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, (pool_y + 4) as f32, c as f32 + 0.5),
+            yaw: 0.0,
+            pitch: -std::f32::consts::FRAC_PI_2,
+        });
+        assert!(app.on_right_press(0, 0), "the boat use consumed the press");
+        match click_rx.try_recv().expect("the use-item echo rode the lane") {
+            ContainerCommand::UseItem { yaw, pitch } => {
+                // the wire's angles in the vanilla degrees (the
+                // conversion's own fold — the float words the tolerance
+                // keeps)
+                assert!((yaw + 180.0).abs() < 1e-3, "yaw {yaw}");
+                assert!((pitch - 90.0).abs() < 1e-3, "pitch {pitch}");
+            }
+            other => panic!("expected a UseItem echo, got {other:?}"),
+        }
+        // THE CLIENT PREDICTS NOTHING: the wire's own Add Entity is the
+        // authority — no local hull on either lane
+        assert!(app.net_boats.is_empty(), "no local hull on the wire lane");
+        assert!(app.offline_boats.is_empty(), "no offline hull on the wire lane");
+    }
 
     /// THE DIG LANE's OFFLINE ARC — the left press arms the destroy
     /// (startDestroyBlock), the hold mines on the frame==tick model

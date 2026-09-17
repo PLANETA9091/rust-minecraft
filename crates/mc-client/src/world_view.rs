@@ -641,7 +641,10 @@ pub struct WireBoat {
 /// honest unknown the ride anchor still carries (the anchor's math
 /// the wood never reads).
 pub fn boat_family_parts(name: &str) -> Option<(&'static str, bool, &str)> {
-    let body = name.strip_prefix("minecraft:")?;
+    // the namespace the OPTIONAL word keeps: the entity names carry the
+    // "minecraft:" prefix the Add Entity speaks, the item lane's own
+    // registry order the plain word ("oak_boat") — both parse
+    let body = name.strip_prefix("minecraft:").unwrap_or(name);
     let (kind, chest, wood) = if let Some(wood) = body.strip_suffix("_chest_boat") {
         ("boat", true, wood)
     } else if let Some(wood) = body.strip_suffix("_chest_raft") {
