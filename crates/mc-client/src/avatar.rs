@@ -5237,7 +5237,14 @@ mod tests {
     /// THE EQUIPMENT TEXTURES LOAD (the runtime cache's own verdict —
     /// the generator's extraction carries the humanoid and
     /// humanoid_leggings layer pngs the sha1 table pins, each the
-    /// 64x32 layout the armor UVs speak).
+    /// 64x32 layout the armor UVs speak). The decode's honesty rides
+    /// the EXACT opaque-texel count per layer — the png crate's EXPAND
+    /// decode must reproduce every layer's alpha mask VERBATIM (the
+    /// PIL ground truth the round's own walk spoke): the chainmail's
+    /// mesh holes and the leather overlay's trim-only coverage are
+    /// REAL vanilla transparency — the former per-texel probe wrongly
+    /// demanded every layer opaque at (8,8) and the mesh's holes
+    /// refused — the count law replaces it.
     #[test]
     #[ignore = "needs runtime assets (assets-cache/jar) from mc2rs-gen generate"]
     fn the_equipment_textures_load_sha1_verified() {
@@ -5250,14 +5257,58 @@ mod tests {
             dir = dir.parent().expect("the runtime root above").to_path_buf();
         };
         use mc_registry::generated::equipment;
+        // the EXACT opaque-texel counts the 64x32 layers speak (the
+        // RGBA decode's own alpha mask, texel-verbatim)
+        const HUMANOID_OPAQUE: &[(&str, usize)] = &[
+            ("chainmail", 389),
+            ("copper", 648),
+            ("diamond", 632),
+            ("gold", 648),
+            ("iron", 648),
+            ("leather", 660),
+            ("leather_overlay", 52),
+            ("netherite", 699),
+            ("turtle_scute", 216),
+        ];
+        const LEGGINGS_OPAQUE: &[(&str, usize)] = &[
+            ("chainmail", 137),
+            ("copper", 280),
+            ("diamond", 280),
+            ("gold", 280),
+            ("iron", 280),
+            ("leather", 280),
+            ("leather_overlay", 108),
+            ("netherite", 272),
+        ];
+        let opaque_count = |t: &ArmorTex| t.rgba.chunks_exact(4).filter(|p| p[3] == 255).count();
         for tex in equipment::EQUIPMENT_ASSETS {
             let humanoid = ArmorTex::load(&root, equipment::HUMANOID_DIR, tex)
                 .expect("the humanoid layer loads");
-            assert_eq!(humanoid.pixel(8.0, 8.0)[3], 255, "the layer texel is opaque");
+            let want = HUMANOID_OPAQUE
+                .iter()
+                .find(|(n, _)| *n == tex.name)
+                .map(|(_, c)| *c)
+                .unwrap_or_else(|| panic!("{} missing from the count table", tex.name));
+            assert_eq!(
+                opaque_count(&humanoid),
+                want,
+                "the {} humanoid layer's opaque mask",
+                tex.name
+            );
             if let Some(_) = tex.leggings {
                 let leggings = ArmorTex::load(&root, equipment::LEGGINGS_DIR, tex)
                     .expect("the leggings layer loads");
-                assert_eq!(leggings.pixel(8.0, 8.0)[3], 255, "the layer texel is opaque");
+                let want = LEGGINGS_OPAQUE
+                    .iter()
+                    .find(|(n, _)| *n == tex.name)
+                    .map(|(_, c)| *c)
+                    .unwrap_or_else(|| panic!("{} missing from the count table", tex.name));
+                assert_eq!(
+                    opaque_count(&leggings),
+                    want,
+                    "the {} leggings layer's opaque mask",
+                    tex.name
+                );
             }
         }
         // the honest miss: the leggings dir the table never named

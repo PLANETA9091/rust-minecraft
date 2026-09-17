@@ -1363,6 +1363,71 @@ pub fn tick_scene(
     Ok(())
 }
 
+/// THE INVENTORY SCREEN'S OWN STAGING LOADOUT: the offline world stands
+/// first (the mannequin's world beneath), then the store's demo loadout
+/// — the REAL gameplay state the dig lane's pickups fill (the hotbar
+/// row store 0..9, the main rows 9..36, the way the `--held-item` stage
+/// speaks for the hand) — plus THE GEAR SHOWCASE the mannequin lanes
+/// render: the SELECTED slot's iron sword the held-item lane rides
+/// (the thirdperson_righthand stanza the ItemStackRenderState submit
+/// folds), the four armor rows the armor + head-block lanes read (the
+/// carved pumpkin the head slot's item branch keeps, the iron kit the
+/// HumanoidArmorLayer walk renders), the offhand container 40 the
+/// left-hand mirror keeps. One frame, the whole PiP layer stack.
+fn stage_inventory_loadout(app: &mut crate::screens::App) {
+    app.enter_world();
+    let sword = mc_registry::item_id_by_name("iron_sword").expect("the registry speaks");
+    let pumpkin = mc_registry::item_id_by_name("carved_pumpkin").expect("the registry speaks");
+    let chest = mc_registry::item_id_by_name("iron_chestplate").expect("the registry speaks");
+    let legs = mc_registry::item_id_by_name("iron_leggings").expect("the registry speaks");
+    let boots = mc_registry::item_id_by_name("iron_boots").expect("the registry speaks");
+    app.inventory.items = [
+        (sword, 1), // the SELECTED slot — the mannequin's main hand rides it
+        (63, 16),   // oak_planks
+        (924, 41),  // coal
+        (921, 5),   // apple
+        (981, 3),   // bread
+        (926, 12),  // diamond
+        (0, 0),
+        (0, 0),
+        (0, 0), // the hotbar row's tail
+        (932, 64),  // iron_ingot
+        (936, 7),   // gold_ingot
+        (62, 19),   // cobblestone
+        (62, 27),   // the dig's own stack — the sword displaced it to the first free main row
+        (0, 0),
+        (0, 0),
+        (0, 0),
+        (0, 0),
+        (0, 0),
+        (0, 0),
+        (0, 0),
+        (0, 0),
+        (0, 0),
+        (0, 0),
+        (0, 0),
+        (0, 0),
+        (0, 0),
+        (0, 0),
+        (0, 0),
+        (0, 0),
+        (0, 0),
+        (0, 0),
+        (0, 0),
+        (0, 0),
+        (0, 0),
+        (0, 0),
+        (0, 0), // the main rows' tail
+    ];
+    app.inventory.armor = [
+        (pumpkin, 1), // the head slot — the carved face the head-block lane paints
+        (chest, 1),
+        (legs, 1),
+        (boots, 1), // the iron kit the armor layers wear
+    ];
+    app.inventory.offhand = [(62, 1)]; // the left hand's cobble — the offhand mirror lane
+}
+
 /// Render one deterministic GUI screen (boot chain / menus) to PNG.
 /// `frame` drives boot progress, splash pulse and music scheduling.
 /// `held_item` (a model id, e.g. "item/iron_sword") holds that item in
@@ -1864,50 +1929,12 @@ pub fn render_gui_screen_opts(
         "inventory" => {
             // THE E-KEY SCREEN'S OWN STAGING: the offline world stands
             // first (the mannequin's world beneath), then the store's
-            // demo loadout — the REAL gameplay state the dig lane's
-            // pickups fill, the shot staging pre-filling it the way the
-            // `--held-item` stage speaks for the hand (the hotbar row
-            // store 0..9, the main rows 9..36) — and the screen opens
-            // (the E key's own lane, the carried fresh-empty).
-            app.enter_world();
-            app.inventory.items = [
-                (62, 27),   // cobblestone
-                (63, 16),   // oak_planks
-                (924, 41),  // coal
-                (921, 5),   // apple
-                (981, 3),   // bread
-                (926, 12),  // diamond
-                (0, 0),
-                (0, 0),
-                (0, 0), // the hotbar row's tail
-                (932, 64),  // iron_ingot
-                (936, 7),   // gold_ingot
-                (62, 19),   // cobblestone
-                (0, 0),
-                (0, 0),
-                (0, 0),
-                (0, 0),
-                (0, 0),
-                (0, 0),
-                (0, 0),
-                (0, 0),
-                (0, 0),
-                (0, 0),
-                (0, 0),
-                (0, 0),
-                (0, 0),
-                (0, 0),
-                (0, 0),
-                (0, 0),
-                (0, 0),
-                (0, 0),
-                (0, 0),
-                (0, 0),
-                (0, 0),
-                (0, 0),
-                (0, 0),
-                (0, 0), // the main rows' tail
-            ];
+            // demo loadout PLUS the gear showcase the mannequin lanes
+            // render (the sword the held lane rides, the pumpkin + iron
+            // kit the armor walk wears, the offhand the left-hand mirror
+            // keeps) — and the screen opens (the E key's own lane, the
+            // carried fresh-empty).
+            stage_inventory_loadout(&mut app);
             app.hotbar_slots = app.inventory.hotbar();
             app.open_inventory();
             app.frame = frame;
@@ -2191,6 +2218,54 @@ mod tests {
         assert!(app.body.is_none());
         assert!(app.mobs.is_empty());
         assert!(app.perspective.is_first_person());
+    }
+
+    /// THE GEAR SHOWCASE's own store: the inventory staging the shot
+    /// recipe speaks dresses the mannequin through the SAME rows the
+    /// PiP lanes read — the SELECTED slot's sword the held-item lane
+    /// rides, the four armor rows the armor + head-block lanes read,
+    /// the offhand container the left-hand mirror keeps, the dig's
+    /// displaced cobble the first free main row holds (the loadout's
+    /// own honesty: a replaced stack is never lost), the HUD row the
+    /// hotbar sync law keeps.
+    #[test]
+    fn the_inventory_staging_dresses_the_mannequin() {
+        let mut app = crate::screens::App::new(3);
+        stage_inventory_loadout(&mut app);
+        let sword = mc_registry::item_id_by_name("iron_sword").unwrap();
+        let pumpkin = mc_registry::item_id_by_name("carved_pumpkin").unwrap();
+        let chest = mc_registry::item_id_by_name("iron_chestplate").unwrap();
+        let legs = mc_registry::item_id_by_name("iron_leggings").unwrap();
+        let boots = mc_registry::item_id_by_name("iron_boots").unwrap();
+        // the SELECTED slot holds the sword — the held-item lane's main
+        // hand (selected_hotbar defaults 0, the rest pose's own lane)
+        assert_eq!(
+            app.inventory.items[app.selected_hotbar],
+            (sword, 1),
+            "the mannequin's main hand holds the sword"
+        );
+        // the four armor rows: the carved pumpkin the head-block lane
+        // paints, the iron kit the armor layers wear
+        assert_eq!(
+            app.inventory.armor,
+            [(pumpkin, 1), (chest, 1), (legs, 1), (boots, 1)],
+            "the mannequin wears the pumpkin + the iron kit"
+        );
+        // the offhand container 40 — the left-hand mirror's stack
+        assert_eq!(
+            app.inventory.offhand,
+            [(62, 1)],
+            "the left hand holds the cobble"
+        );
+        // the displaced cobblestone stack landed the first free main
+        // row slot (the loadout never loses a stack it replaces)
+        assert_eq!(app.inventory.items[12], (62, 27), "the dig's stack survives");
+        // the HUD row rides the hotbar sync law (the shot arm's own step)
+        app.hotbar_slots = app.inventory.hotbar();
+        assert_eq!(app.hotbar_slots[0], (sword, 1), "the HUD names the sword");
+        // the world stands beneath (the mannequin's backdrop the recipe
+        // freezes at frame 6)
+        assert!(app.spawn_y > 0, "the offline world stands");
     }
 
     /// The body seed stands on the spawn column's surface facing east,
