@@ -481,7 +481,8 @@ impl BundleContents {
 /// the data the render consumes, the shape the tests pin): the items
 /// the contents row keeps, the selected index the scroll's walk
 /// moves, the shown count the show-count law caps, the rows the
-/// FOUR-wide grid speaks.
+/// 12-cell budget's FOUR-wide grid speaks, and the hidden count the
+/// surplus cell speaks (the skipped stacks' counts the sum keeps).
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) struct BundleTooltipView {
     /// The contents' stacks (the row's own items list).
@@ -490,8 +491,11 @@ pub(crate) struct BundleTooltipView {
     pub selected: i32,
     /// The shown count (the getNumberOfItemsToShow law's cap).
     pub shown: usize,
-    /// The rows the ceil-over-four grid speaks.
+    /// The rows the 12-cell budget's ceil-over-four grid speaks.
     pub rows: usize,
+    /// The hidden item count (the getAmountOfHiddenItems sum — the
+    /// skipped stacks' counts the surplus cell speaks as "+N").
+    pub hidden: i32,
 }
 
 pub struct App {
@@ -6075,17 +6079,22 @@ impl App {
         });
     }
 
-    /// THE TOOLTIP'S OWN SHAPE (the grid the tooltip panel speaks):
-    /// the shown count the show-count law caps, the FOUR columns the
-    /// whole-rows-of-four law the tooltip keeps (the pad the
-    /// `4 - size % 4` walk carries rows the panel never splits), the
-    /// rows the positive ceil over the shown count. Pins: 0 -> (0, 4,
-    /// 0), 5 -> (5, 4, 2), 12 -> (12, 4, 3), 13 -> (8, 4, 2), 64 ->
-    /// (11, 4, 3).
+    /// THE TOOLTIP'S OWN SHAPE (the 26.2 ClientBundleTooltip walk —
+    /// slotCount/gridSizeY/getNumberOfItemsToShow the bytecode keeps):
+    /// the grid's own slot budget `min(12, size)` the slotCount law
+    /// speaks, the rows the positive ceil over FOUR the gridSizeY
+    /// walk keeps (Mth.positiveCeilDiv(slotCount, 4) — the itemGrid
+    /// height the *24 pitch carries), and the shown count the
+    /// show-count law caps (getNumberOfItemsToShow — the lone-tail
+    /// cut the cap-pad walk speaks). Pins: 0 -> (0, 0, 0), 1 -> (1,
+    /// 1, 1), 5 -> (5, 2, 5), 12 -> (12, 3, 12), 13 -> (8, 3, 12),
+    /// 64 -> (11, 3, 12) — a 13-stack bundle the 12-cell budget keeps
+    /// (the 8 items the surplus cell + the blanks the tail speaks).
     fn bundle_tooltip_shape(size: i32) -> (i32, i32, i32) {
+        let slots = 12.min(size);
+        let rows = (slots + 3) / 4; // the positive ceil the walk keeps
         let shown = Self::bundle_number_of_items_to_show(size);
-        // the positive ceil the rows speak (shown >= 0 the cap keeps)
-        (shown, 4, (shown + 3) / 4)
+        (shown, rows, slots)
     }
 
     /// THE BUNDLE TOOLTIP'S OWN GATE (the AbstractContainerScreen's
@@ -6094,41 +6103,55 @@ impl App {
     /// bundles tag speaks, the contents row the map keeps (the
     /// client's stacks never carry the component — the row the syncs
     /// feed IS the truth), the EMPTY bundle the show-count law's 0
-    /// keeps silent. Returns the view the render consumes (the items
-    /// the row owns, the selected index the scroll's walk moves, the
-    /// shape the grid speaks) — `None` the gates refuse.
+    /// keeps silent. The view the render consumes: the items the row
+    /// owns, the selected index the scroll's walk moves, the shape
+    /// the 26.2 grid speaks, and the HIDDEN count the surplus cell
+    /// speaks (getAmountOfHiddenItems — the skipped stacks' counts
+    /// the stream-sum law keeps). `None` the gates refuse.
     fn bundle_tooltip_view(&self, mx: i32, my: i32) -> Option<BundleTooltipView> {
         let (id, count, slot_id) = self.hovered_container(mx, my)?;
         if count <= 0 || !Self::is_bundle_item(id) {
             return None;
         }
         let contents = self.bundle_contents.get(&slot_id)?;
-        let (shown, _cols, rows) = Self::bundle_tooltip_shape(contents.items.len() as i32);
+        let (shown, rows, _slots) = Self::bundle_tooltip_shape(contents.items.len() as i32);
         if shown <= 0 {
             return None;
         }
+        let hidden: i32 = contents.items[shown as usize..].iter().map(|&(_, c)| c).sum();
         Some(BundleTooltipView {
             items: contents.items.clone(),
             selected: contents.selected_item_index,
             shown: shown as usize,
             rows: rows as usize,
+            hidden,
         })
     }
 
-    /// THE BUNDLE TOOLTIP'S OWN RENDER (the AbstractContainerScreen's
-    /// post-panel tooltip pass — the bundle's contents grid the
-    /// hovered row speaks): the background the renderTooltipBackground
-    /// law paints (the 0xF0100010 fill, the 1px gradient frame ring
-    /// 1px OUTSIDE the fill, the 0x505000FF -> 0x5028007F vertical
-    /// lerp the 1.20.1 walk keeps), the FOUR-wide grid the cells
-    /// 18x20 pitch speak (the icons the store's own draw keeps, the
-    /// count text the slots' own law renders), and the SELECTED row
-    /// the 1px white frame highlights (the overlay's highlight the
-    /// scroll's walk moves). The positioner the vanilla walk keeps —
-    /// the +12/-12 cursor offset, the right overflow the 24-flip the
-    /// max-4 clamp holds, the vertical the screen's own edges keep.
-    /// The cursor-driven pass the headless scenes never see
-    /// (`mouse_pos` is None — the pixel goldens can never read it).
+    /// THE BUNDLE TOOLTIP'S OWN RENDER (the 26.2
+    /// ClientBundleTooltip.extractBundleWithItemsTooltip walk — the
+    /// bytecode's own layout): the background the
+    /// renderTooltipBackground law paints (the 0xF0100010 fill, the
+    /// 1px gradient frame ring 1px OUTSIDE the fill, the 0x505000FF
+    /// -> 0x5028007F vertical lerp the 1.20.1 walk keeps), the FOUR
+    /// columns of 24x24 cells the grid speaks (the content 96 wide,
+    /// the cells the walk fills RIGHT-to-LEFT, BOTTOM-to-TOP — the
+    /// slotNo the walk keeps maps the shown list in REVERSE: the last
+    /// item the bottom-right cell takes, the first the walk's tail),
+    /// the icons the +4 inset the extractSlot blit keeps, the count
+    /// text the itemDecorations law renders, the SELECTED cell the
+    /// highlight ring rides (the SLOT_HIGHLIGHT pair the sprites
+    /// speak — the house assets carry none, the ring the stand-in),
+    /// and the SURPLUS cell the bottom-right corner speaks when size
+    /// > 12: the "+N" text the extractCount law keeps (the recipe
+    /// `+\u0001` the constant pool speaks, the centeredText at the
+    /// +12/+10 the cell's own center rides, the slot counter the
+    /// surplus cell never increments). The positioner the vanilla
+    /// walk keeps — the +12/-12 cursor offset, the right overflow
+    /// the 24-flip the max-4 clamp holds, the vertical the screen's
+    /// own edges keep. The cursor-driven pass the headless scenes
+    /// never see (`mouse_pos` is None — the pixel goldens can never
+    /// read it).
     fn render_bundle_tooltip(&mut self, g: &mut Gui, a: &mut GuiAssets) {
         let Some((mx, my)) = self.mouse_pos else {
             return; // the headless scenes track no mouse — no tooltip
@@ -6136,9 +6159,13 @@ impl App {
         let Some(view) = self.bundle_tooltip_view(mx, my) else {
             return; // the gates the bundle tooltip refuses
         };
-        let cols = 4usize;
-        let w = (cols * 18 + 6) as i32; // the 3px margin each side speaks
-        let h = (view.rows * 20 + 6) as i32;
+        let size = view.items.len() as i32;
+        let overflow = size > 12; // the loc8 law the walk keeps
+        let rows = view.rows;
+        // THE PANEL (the content 96 wide the 4x24 grid speaks, the
+        // 3px margin each side the hand-drawn fill keeps)
+        let w = 96 + 6;
+        let h = (rows * 24 + 6) as i32;
         // THE POSITIONER (the vanilla walk — the right overflow the
         // 24-flip the max-4 clamp keeps, the vertical the edges hold)
         let mut tx = mx + 12;
@@ -6171,28 +6198,55 @@ impl App {
             g.fill(tx - 1, ty + i, 1, 1, c); // the left strip
             g.fill(tx + w, ty + i, 1, 1, c); // the right strip
         }
-        // THE CELLS (the 4-wide grid — the icon the cell's own inset
-        // keeps in the 18x20 pitch, the count text the slots' own law
-        // renders, the SELECTED the 1px white ring highlights)
-        for (i, (id, count)) in view.items.iter().enumerate().take(view.shown) {
-            if *count <= 0 {
-                continue; // the wire's own emptiness sentinel
+        // THE GRID WALK (the extractBundleWithItemsTooltip loops —
+        // the row 1 = the BOTTOM row the -24 sy speaks, the col 1 =
+        // the RIGHTMOST cell the -24 sx speaks: the cells fill
+        // right-to-left, bottom-to-top)
+        let grid_left = tx + 3;
+        let grid_bottom = ty + 3 + rows as i32 * 24;
+        let mut slot_no = 1usize; // the 1-based counter the walk keeps
+        for p in 1..=(rows * 4) {
+            let row = (p - 1) / 4 + 1;
+            let col = (p - 1) % 4 + 1;
+            let cell_x = grid_left + (4 - col) as i32 * 24;
+            let cell_y = grid_bottom - row as i32 * 24;
+            if overflow && col * row == 1 {
+                // THE SURPLUS (extractCount — the "+N" the recipe
+                // speaks, the centeredText at the cell's own center,
+                // the slot counter the surplus cell never increments)
+                g.text_centered(
+                    a,
+                    cell_x + 12,
+                    cell_y + 10,
+                    &format!("+{}", view.hidden),
+                    WHITE,
+                    true,
+                );
+                continue;
             }
-            let ox = tx + 3 + (i % cols) as i32 * 18;
-            let oy = ty + 3 + (i / cols) as i32 * 20;
-            if i as i32 == view.selected {
+            if slot_no > view.shown {
+                continue; // shouldRenderItemSlot's own false — the blank tail
+            }
+            // THE SLOT (extractSlot — the REVERSE index the size -
+            // slotNo law keeps, the item at the +4 inset, the count
+            // the itemDecorations law renders, the SELECTED the
+            // highlight ring rides)
+            let idx = view.shown - slot_no; // the reverse the walk feeds
+            let (id, count) = view.items[idx];
+            if idx as i32 == view.selected {
                 let ring = [1.0, 1.0, 1.0, 1.0];
-                g.fill(ox, oy + 1, 18, 1, ring);
-                g.fill(ox, oy + 18, 18, 1, ring);
-                g.fill(ox, oy + 1, 1, 18, ring);
-                g.fill(ox + 17, oy + 1, 1, 18, ring);
+                g.fill(cell_x, cell_y, 24, 1, ring);
+                g.fill(cell_x, cell_y + 23, 24, 1, ring);
+                g.fill(cell_x, cell_y, 1, 24, ring);
+                g.fill(cell_x + 23, cell_y, 1, 24, ring);
             }
-            draw_item_icon(g, *id, ox + 1, oy + 2);
-            if *count > 1 {
+            draw_item_icon(g, id, cell_x + 4, cell_y + 4);
+            if count > 1 {
                 let s = count.to_string();
                 let tw = g.text_width(&s);
-                g.text(a, ox + 17 - tw, oy + 10, &s, WHITE, true);
+                g.text(a, cell_x + 20 - tw, cell_y + 12, &s, WHITE, true);
             }
+            slot_no += 1; // the counter only the item cells increment
         }
     }
 
@@ -23272,6 +23326,7 @@ mod tests {
         assert_eq!(view.selected, 1, "the scroll's moved index rides");
         assert_eq!(view.shown, 3, "the show-count the three items speak");
         assert_eq!(view.rows, 1, "the single row the 3-of-4 grid keeps");
+        assert_eq!(view.hidden, 0, "nothing the shown count hides");
         // THE PLAIN STACK: the walk refuses
         let (sx, sy) = inventory_slot_origin(app.inv_panel, 10);
         assert!(
@@ -23291,35 +23346,66 @@ mod tests {
             app.bundle_tooltip_view(sx + 8, sy + 8).is_none(),
             "the empty bundle the 0 wall keeps silent"
         );
+        // THE OVERFLOWING BUNDLE (the 26.2 grid the 12-cell budget
+        // keeps): 13 stacks the shown count the lone-tail cut caps to
+        // 8, the rows the 12-cell budget speaks (3), and the HIDDEN
+        // count the surplus cell speaks the skipped stacks' SUM keeps
+        app.bundle_contents.insert(
+            9,
+            BundleContents {
+                items: vec![(log, 2); 13],
+                selected_item_index: -1,
+            },
+        );
+        let (sx, sy) = inventory_slot_origin(app.inv_panel, 9);
+        let view = app
+            .bundle_tooltip_view(sx + 8, sy + 8)
+            .expect("the overflowing bundle the gate answers");
+        assert_eq!(
+            view.shown, 8,
+            "the lone tail the cap-pad walk cuts (the getNumberOfItemsToShow law)"
+        );
+        assert_eq!(
+            view.rows, 3,
+            "the 12-cell budget the slotCount law keeps (the surplus + the blanks the tail speaks)"
+        );
+        assert_eq!(
+            view.hidden, 10,
+            "the five skipped stacks' counts the stream-sum law keeps"
+        );
     }
 
-    /// THE SHAPE'S OWN PINS (the rows-of-four grid the tooltip panel
-    /// speaks): the show-count law's caps the grid rides — the lone
-    /// tail item never starts a row past the cap, the full bundle's
-    /// 11 the three rows keep.
+    /// THE SHAPE'S OWN PINS (the 26.2 ClientBundleTooltip walk —
+    /// slotCount/gridSizeY/getNumberOfItemsToShow the bytecode
+    /// keeps): the grid the 12-cell budget speaks, the rows the
+    /// positive ceil over FOUR, the shown count the show-count law
+    /// caps — the lone tail item never starts a row past the cap,
+    /// the full bundle's 11 the three rows keep, a 13-stack bundle
+    /// the 12-cell budget holds (the surplus + the blanks the tail
+    /// speaks).
     #[test]
     fn the_bundle_tooltip_shape_rides_the_rows_of_four() {
         assert_eq!(
             App::bundle_tooltip_shape(0),
-            (0, 4, 0),
+            (0, 0, 0),
             "the empty bundle's wall"
         );
-        assert_eq!(App::bundle_tooltip_shape(1), (1, 4, 1), "the one item's row");
-        assert_eq!(App::bundle_tooltip_shape(5), (5, 4, 2), "the 4+1 grid");
+        assert_eq!(App::bundle_tooltip_shape(1), (1, 1, 1), "the one item's cell");
+        assert_eq!(App::bundle_tooltip_shape(5), (5, 2, 5), "the 4+1 grid");
         assert_eq!(
             App::bundle_tooltip_shape(12),
-            (12, 4, 3),
+            (12, 3, 12),
             "the three full rows"
         );
         assert_eq!(
             App::bundle_tooltip_shape(13),
-            (8, 4, 2),
-            "the lone tail the cap cuts"
+            (8, 3, 12),
+            "the lone tail the cap cuts, the 12-cell budget the grid keeps"
         );
         assert_eq!(
             App::bundle_tooltip_shape(64),
-            (11, 4, 3),
-            "the full bundle's 11"
+            (11, 3, 12),
+            "the full bundle's 11 + the surplus cell"
         );
     }
 }
