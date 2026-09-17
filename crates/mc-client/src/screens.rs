@@ -3296,9 +3296,10 @@ impl App {
     /// see [`crate::world_view::predict_quick_move_inventory`]). The
     /// wire sessions refuse (the store the server owns — the window-0
     /// click lane the follow-up names); the offline store IS the
-    /// truth, the click a local act. Clicks between the slots do
-    /// nothing yet (the vanilla's drop-outside lane the follow-up
-    /// names too).
+    /// truth, the click a local act. A press on NO slot first asks the
+    /// drop-outside law: the point outside the panel the THROW input
+    /// speaks ([`Self::throw_carried_outside`]), the press between the
+    /// slots (inside the panel) stays silent.
     fn click_inventory_slot(&mut self, mx: i32, my: i32, button: i8) {
         if self.world_is_network {
             return; // the wire's own inventory window lane rides later
@@ -3314,7 +3315,17 @@ impl App {
             })
             .find(|&(x, y, _)| mx >= x && mx < x + 16 && my >= y && my < y + 16)
         else {
-            return; // the press landed between the slots — no click
+            // THE DROP-OUTSIDE LANE (the 26.2 mouseClicked's own walk):
+            // a press on no slot first asks hasClickedOutside — the rect
+            // compare the imageWidth/imageHeight bytecode speaks (strict:
+            // mx < leftPos || my < topPos || mx >= leftPos+176 ||
+            // my >= topPos+166) — and the OUTSIDE press rides the THROW
+            // input (slotClicked(null, -999, button, ContainerInput.THROW)).
+            // The press BETWEEN the slots (inside the panel) stays silent.
+            if mx < panel.0 || my < panel.1 || mx >= panel.0 + 176 || my >= panel.1 + 166 {
+                self.throw_carried_outside(button);
+            }
+            return;
         };
         if self.shift_down {
             // THE QUICK_MOVE LANE: the whole stack moves to the other
@@ -3336,6 +3347,58 @@ impl App {
         self.inventory.items[store] = new_slot;
         self.inv_carried = new_carried;
         self.hotbar_slots = self.inventory.hotbar();
+    }
+
+    /// THE DROP-OUTSIDE LANE (the doClick THROW's own law, the slot -999
+    /// the 26.2 AbstractContainerScreen.mouseClicked rides): the LEFT
+    /// press drops the WHOLE carried stack (drop(getCarried(), true) ->
+    /// setCarried(EMPTY), the bytecode 631-639 walk), the right press
+    /// drops ONE (carried.split(1) the bytecode 652-656 walks — the
+    /// carry decrements). The EMPTY cursor's press is silence (the
+    /// doClick's own isEmpty guard). The container STAYS OPEN — only
+    /// the close keys close it. The dropped items ride the vanilla
+    /// Player.drop law (LivingEntity.createItemStackToDrop's bytecode):
+    /// the spawn at (x, eyeY - 0.30000001192092896, z), the 40-tick
+    /// pickup delay (the throw's own — the 10-tick loot default
+    /// replaced), the DROPAROUND impulse the boolean's true form speaks
+    /// (the random horizontal 0..0.5 spread, the 0.20000000298023224
+    /// upward — NOT the aimed look throw, the doClick passes
+    /// dropAround=true). The wire sessions never reach here (the
+    /// caller's world_is_network guard keeps the store the server's).
+    fn throw_carried_outside(&mut self, button: i8) {
+        let (id, count) = self.inv_carried;
+        if count <= 0 {
+            return; // the doClick THROW's own isEmpty guard — silence
+        }
+        if let Some(b) = self.body.as_ref() {
+            let dropped = if button == 0 { count } else { 1 };
+            // the createItemStackToDrop law: the eye position minus the
+            // 0.30000001192092896 lift, the 40-tick delay, the dropAround
+            // impulse (f = nextFloat*0.5, f1 = nextFloat*2*PI — the
+            // Mth.sin/cos radian-table walk), the bob seed the ItemEntity
+            // ctor drew FIRST (the spawn_entity_loot walk keeps the order)
+            let f = self.mob_rng.next_f32() * 0.5;
+            let f1 = self.mob_rng.next_f32() * std::f32::consts::PI * 2.0;
+            let did = self.next_drop_id;
+            let mut d = crate::drops::ItemDrop::spawn_entity_loot(
+                did,
+                id,
+                dropped,
+                b.x,
+                b.y + b.eye_height() - 0.30000001192092896,
+                b.z,
+                &mut self.mob_rng,
+            );
+            self.next_drop_id += 1;
+            d.pickup_delay = 40;
+            d.vx = (-(f1.sin()) * f) as f64;
+            d.vy = 0.2;
+            d.vz = ((f1.cos()) * f) as f64;
+            self.drops.push(d);
+        }
+        // the carried stack's own prediction: the whole stack gone (left)
+        // or the one item split off (right — the doClick's split(1) law)
+        self.inv_carried = if button == 0 { (0, 0) } else { (id, count - 1) };
     }
 
     /// The chest screen render: the frozen world dimmed underneath (the
@@ -16969,10 +17032,108 @@ mod tests {
         app.on_press(ox + 8, oy + 8);
         assert_eq!(app.inventory.items[1], (62, 27), "the swap landed");
         assert_eq!(app.inv_carried, (63, 16), "the oak rides the cursor");
-        // the between-slots press does nothing yet (the drop-outside lane
-        // the follow-up names)
-        app.on_press(4, 4);
+        // the between-slots press INSIDE the panel does nothing (the
+        // vanilla's own silence — only the OUTSIDE press throws, the
+        // drop-outside lane's own tests speak)
+        app.on_press(app.inv_panel.0 + 90, app.inv_panel.1 + 10);
         assert_eq!(app.inv_carried, (63, 16), "the carried untouched");
+    }
+
+    /// THE DROP-OUTSIDE LANE (the 26.2 AbstractContainerScreen's own
+    /// hasClickedOutside walk + the doClick THROW's slot -999): the LEFT
+    /// press outside the panel drops the WHOLE carried stack — the carry
+    /// empties, one ItemDrop spawns at the eye minus the
+    /// 0.30000001192092896 lift with the 40-tick pickup delay and the
+    /// dropAround impulse (the 0.2 upward, the 0..0.5 horizontal
+    /// scatter) — and the container STAYS OPEN.
+    #[test]
+    fn the_outside_left_press_throws_the_whole_carried() {
+        let mut app = App::new(3);
+        app.enter_world();
+        app.spawn_offline_body();
+        app.open_inventory();
+        app.inv_panel = inventory_panel_origin(640, 360);
+        app.inventory.items[0] = (62, 27);
+        let (ox, oy) = inventory_slot_origin(app.inv_panel, 0);
+        app.on_press(ox + 8, oy + 8);
+        assert_eq!(app.inv_carried, (62, 27), "the stack rides the cursor");
+        let drops_before = app.drops.len();
+        // the OUTSIDE press (the 4,4 corner hasClickedOutside answers true)
+        app.on_press(4, 4);
+        assert_eq!(app.inv_carried, (0, 0), "the cursor emptied");
+        assert_eq!(app.drops.len(), drops_before + 1, "one drop spawned");
+        let d = app.drops.last().unwrap();
+        assert_eq!(d.item, 62);
+        assert_eq!(d.count, 27, "the WHOLE stack thrown");
+        assert_eq!(d.pickup_delay, 40, "the throw's own delay");
+        let b = app.body.as_ref().unwrap();
+        assert_eq!(d.x, b.x, "the body's x");
+        assert_eq!(d.z, b.z, "the body's z");
+        assert_eq!(
+            d.y,
+            b.y + b.eye_height() - 0.30000001192092896,
+            "the eye minus the 0.30000001192092896 lift"
+        );
+        assert_eq!(d.vy, 0.2, "the dropAround upward");
+        assert!(
+            d.vx.abs() <= 0.5 && d.vz.abs() <= 0.5,
+            "the 0..0.5 horizontal scatter"
+        );
+        // the container STAYS OPEN (only the close keys close it)
+        assert_eq!(app.screen, ScreenKind::Inventory);
+        // and the store untouched (the throw rides the CURSOR, not the slots)
+        assert_eq!(app.inventory.items[0], (0, 0));
+    }
+
+    /// THE DROP-OUTSIDE'S RIGHT PRESS (the doClick THROW's split(1)
+    /// arm): ONE item flies, the carry decrements — twice for the count.
+    #[test]
+    fn the_outside_right_press_throws_one() {
+        let mut app = App::new(3);
+        app.enter_world();
+        app.spawn_offline_body();
+        app.open_inventory();
+        app.inv_panel = inventory_panel_origin(640, 360);
+        app.inventory.items[0] = (63, 5);
+        let (ox, oy) = inventory_slot_origin(app.inv_panel, 0);
+        app.on_press(ox + 8, oy + 8);
+        assert_eq!(app.inv_carried, (63, 5), "the stack rides");
+        let drops_before = app.drops.len();
+        app.on_right_press(4, 4);
+        assert_eq!(app.inv_carried, (63, 4), "one split off");
+        assert_eq!(app.drops.len(), drops_before + 1);
+        let d = app.drops.last().unwrap();
+        assert_eq!(d.item, 63);
+        assert_eq!(d.count, 1, "ONE item");
+        assert_eq!(d.pickup_delay, 40);
+        // the second press throws the next one
+        app.on_right_press(4, 4);
+        assert_eq!(app.inv_carried, (63, 3), "one more gone");
+        assert_eq!(app.drops.len(), drops_before + 2);
+        assert_eq!(app.drops.last().unwrap().count, 1);
+        // the container stays open
+        assert_eq!(app.screen, ScreenKind::Inventory);
+    }
+
+    /// THE DROP-OUTSIDE'S EMPTY-CURSOR SILENCE (the doClick THROW's own
+    /// isEmpty guard): a press outside with nothing carried spawns
+    /// nothing and leaves the screen whole.
+    #[test]
+    fn the_empty_cursor_outside_press_is_silence() {
+        let mut app = App::new(3);
+        app.enter_world();
+        app.spawn_offline_body();
+        app.open_inventory();
+        app.inv_panel = inventory_panel_origin(640, 360);
+        app.inventory.items[0] = (62, 27);
+        let drops_before = app.drops.len();
+        app.on_press(4, 4);
+        assert_eq!(app.drops.len(), drops_before, "no drop spawned");
+        assert_eq!(app.inv_carried, (0, 0), "the cursor stayed empty");
+        assert_eq!(app.screen, ScreenKind::Inventory, "the screen stays");
+        // and the right press keeps the same silence
+        app.on_right_press(4, 4);
+        assert_eq!(app.drops.len(), drops_before, "still no drop");
     }
 
     /// THE RIGHT PRESS'S OWN TABLE (the doClick PICKUP button-1 branch):
