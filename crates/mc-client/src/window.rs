@@ -732,6 +732,18 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
                 app.on_pick_block(window.is_key_down(Key::LeftCtrl));
             }
             was_middle_down = middle_down;
+            // THE SCROLL WHEEL (vanilla MouseHandler.onScroll's
+            // screen-null arm — the hotbar cycle the survival player's
+            // wheel answers): the folded deltas ride the App's own
+            // ScrollWheelHandler walk (the accumulator + the
+            // getNextScrollWheelSelection signum law — the down-scroll
+            // moving toward the higher numbers). The SCREEN-OPEN scroll
+            // is the container's own mouseScrolled lane — the client's
+            // screens name no consumer yet, the silence the in_world
+            // block keeps is the honest shape
+            if let Some((sdx, sdy)) = window.get_scroll_wheel() {
+                app.on_hotbar_scroll(sdx as f64, sdy as f64);
+            }
         }
         // THE FIXED CLOCK SPENDS (vanilla `Minecraft.runTick`'s own
         // while loop): the accrued wall time becomes whole 50ms game

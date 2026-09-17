@@ -471,6 +471,15 @@ pub struct App {
     pub options_return: ScreenKind,
     /// Active hotbar slot (vanilla HUD selection).
     pub selected_hotbar: usize,
+    /// THE SCROLL WHEEL'S ACCUMULATOR (the 26.2 `ScrollWheelHandler`'s
+    /// own two fields — `accumulatedScrollX/scrollY` verbatim): the
+    /// folded deltas accumulate across frames, the whole steps emit
+    /// when the crossing speaks, the FRACTIONAL remainder stays for
+    /// the next frame (the trackpad's own smoothing), the direction
+    /// flip resets. The defaults the options model keeps (discrete
+    /// false, the sensitivity 1.0) fold the raw wheel deltas.
+    pub scroll_acc_x: f64,
+    pub scroll_acc_y: f64,
     /// The LIVE store's hotbar row — the HUD's icons and counts are
     /// the store's projection (the vanilla renderHotbar's own lane,
     /// `USE_ROW_SLOT_START..USE_ROW_SLOT_END` verbatim, the `(0, 0)`
@@ -1183,6 +1192,8 @@ impl App {
             spawn_y: 0,
             options_return: ScreenKind::Title,
             selected_hotbar: 0,
+            scroll_acc_x: 0.0,
+            scroll_acc_y: 0.0,
             hotbar_slots: [(0, 0); 9],
             day_time_base: 0,
             partial_tick: 1.0,
@@ -4461,6 +4472,61 @@ impl App {
                 selection: selection as u8,
             });
         }
+    }
+
+    /// THE SCROLL WHEEL'S HOTBAR CYCLE (the 26.2 `MouseHandler.onScroll`'s
+    /// own walk — the screen-null arm the spectator gate keeps for the
+    /// survival player). The chain the bytecode speaks: the FOLD first
+    /// (the options' defaults — discrete false, the sensitivity 1.0 —
+    /// the Y axis the 2.0 the ldc2_w carries, the X the raw delta), the
+    /// ACCUMULATOR next (`ScrollWheelHandler.onMouseScroll` code 148:
+    /// the direction flip RESETS each axis's accumulation — the
+    /// dcmpg/dcmpl pair the bytecode 0-55 walks — then the deltas ADD,
+    /// the `d2i` whole steps emit at 78-90, the no-step arm returns the
+    /// zero vector at 91-111, the emitted steps SUBTRACT back out — the
+    /// fractional remainder stays for the next frame), the DIRECTION at
+    /// the call site (`int i = vector2i.y != 0 ? vector2i.y :
+    /// -vector2i.x` — the Y wheel wins, the X tilt inverts), and the
+    /// SELECTION rides `getNextScrollWheelSelection`'s own signum law
+    /// (the `(int)Math.signum(direction)` the d2i speaks — ONE slot per
+    /// event, the DOWN-scroll moving toward the higher numbers — the
+    /// real game's own feel, the wrap the floor-mod keeps). The move
+    /// lands through [`Self::on_number_key`] — the same
+    /// `setSelectedSlot` walk the number keys answer (the held model's
+    /// refresh, the live session's SelectHotbar echo, the repeat and
+    /// the out-of-domain the gates hold).
+    pub fn on_hotbar_scroll(&mut self, delta_x: f64, delta_y: f64) {
+        // THE FOLD (the defaults the options model keeps: discrete
+        // false, the sensitivity 1.0 — the Y axis the 2.0 fold carries)
+        let folded_x = delta_x;
+        let folded_y = delta_y * 2.0;
+        // THE ACCUMULATOR'S SIGN-FLIP RESET (the direction change
+        // discards the stale remainder)
+        if self.scroll_acc_x != 0.0 && folded_x.signum() != self.scroll_acc_x.signum() {
+            self.scroll_acc_x = 0.0;
+        }
+        if self.scroll_acc_y != 0.0 && folded_y.signum() != self.scroll_acc_y.signum() {
+            self.scroll_acc_y = 0.0;
+        }
+        self.scroll_acc_x += folded_x;
+        self.scroll_acc_y += folded_y;
+        // THE WHOLE STEPS EMIT (the d2i walk — the crossing speaks),
+        // the remainder rides to the next frame
+        let steps_x = self.scroll_acc_x as i32;
+        let steps_y = self.scroll_acc_y as i32;
+        if steps_x == 0 && steps_y == 0 {
+            return; // the no-step arm — the sub-step deltas accumulate
+        }
+        self.scroll_acc_x -= steps_x as f64;
+        self.scroll_acc_y -= steps_y as f64;
+        // THE DIRECTION (the call site's own law: the Y wins, the X
+        // tilt inverts)
+        let i = if steps_y != 0 { steps_y } else { -steps_x };
+        // THE SELECTION (getNextScrollWheelSelection's own signum law —
+        // ONE slot per event, the down-scroll toward the higher
+        // numbers, the wrap the floor-mod keeps)
+        let selection = (self.selected_hotbar as i32 - i.signum()).rem_euclid(9) as usize;
+        self.on_number_key(selection);
     }
 
     /// The chest screen's slot click (the button byte's own lane: 0 =
@@ -14131,6 +14197,96 @@ mod tests {
         offline.on_number_key(2);
         assert_eq!(offline.selected_hotbar, 2, "the offline HUD moves");
         assert!(click_rx.try_recv().is_err(), "the offline wire is silent");
+    }
+
+    /// THE SCROLL WHEEL'S HOTBAR CYCLE (the MouseHandler.onScroll's
+    /// own walk): the down-scroll moves toward the higher numbers, the
+    /// up-scroll back, the wrap the floor-mod keeps (0 scrolls up to
+    /// 8), and the held model follows the selection — the offline
+    /// walk's own lane, the store's counts untouched, NO swing, NO
+    /// drop (the selection the scroll never names).
+    #[test]
+    fn the_scroll_wheel_cycles_the_hotbar() {
+        let mut app = App::new(3);
+        app.enter_world();
+        app.spawn_offline_body();
+        app.inventory.items[1] = (62, 5);
+        app.hotbar_slots = app.inventory.hotbar(); // the staging's own sync
+        // the DOWN notch: the folded -2.0 emits the step, the selection
+        // moves toward the higher numbers
+        app.on_hotbar_scroll(0.0, -1.0);
+        assert_eq!(app.selected_hotbar, 1, "the down-scroll's next slot");
+        assert_eq!(app.inventory.items[1], (62, 5), "the store untouched");
+        // the UP notch: back
+        app.on_hotbar_scroll(0.0, 1.0);
+        assert_eq!(app.selected_hotbar, 0, "the up-scroll's previous slot");
+        // the WRAP: 0 scrolls up to 8 (the floor-mod's own answer)
+        app.on_hotbar_scroll(0.0, 1.0);
+        assert_eq!(app.selected_hotbar, 8, "the wrap the floor-mod keeps");
+        // and down wraps back to 0
+        app.on_hotbar_scroll(0.0, -1.0);
+        assert_eq!(app.selected_hotbar, 0, "the wrap speaks both ways");
+        // the held model follows the selection (the item lands in the
+        // crosshair's hand)
+        app.on_hotbar_scroll(0.0, -1.0); // -> 1
+        assert_eq!(app.held_id(), Some(62), "the held model follows");
+        // the HUD hotbar row untouched by the selection (the counts are
+        // the store's projection, the selection the HUD's own box)
+        assert_eq!(app.hotbar_slots[1], (62, 5), "the row whole");
+        assert!(app.drops.is_empty(), "no drop the scroll never names");
+        assert!(!app.swing.swinging, "no swing the scroll never names");
+    }
+
+    /// THE ACCUMULATOR'S OWN LAW (ScrollWheelHandler.onMouseScroll code
+    /// 148): the sub-step deltas accumulate across frames (the folded
+    /// 0.6 + 0.6 = 1.2 -> ONE step, the 0.2 remainder stays), the
+    /// direction flip RESETS the stale remainder, and the X tilt rides
+    /// the inverted arm the call site keeps (`-vector2i.x`).
+    #[test]
+    fn the_scroll_accumulator_keeps_the_remainder_and_resets() {
+        let mut app = App::new(3);
+        app.enter_world();
+        app.spawn_offline_body();
+        // the sub-step trackpad frame: 0.3 folded -> 0.6 < 1 — no step
+        app.on_hotbar_scroll(0.0, 0.3);
+        assert_eq!(app.selected_hotbar, 0, "the sub-step stays silent");
+        assert!((app.scroll_acc_y - 0.6).abs() < 1e-9, "the accumulator holds");
+        // the crossing: +0.6 more -> 1.2 -> ONE step, the 0.2 remainder
+        app.on_hotbar_scroll(0.0, 0.3);
+        assert_eq!(app.selected_hotbar, 8, "the crossing fires (up-scroll)");
+        assert!((app.scroll_acc_y - 0.2).abs() < 1e-9, "the remainder kept");
+        // the DIRECTION FLIP resets the stale positive remainder — the
+        // first negative frame stays sub-step
+        app.on_hotbar_scroll(0.0, -0.4);
+        assert_eq!(app.selected_hotbar, 8, "the flipped frame stays silent");
+        assert!((app.scroll_acc_y + 0.8).abs() < 1e-9, "the reset + the fold");
+        // the crossing the other way
+        app.on_hotbar_scroll(0.0, -0.4);
+        assert_eq!(app.selected_hotbar, 0, "the down-scroll crossing fires");
+        // the X TILT (the call site's inverted arm): the right tilt
+        // moves toward the higher numbers
+        app.on_hotbar_scroll(1.0, 0.0);
+        assert_eq!(app.selected_hotbar, 1, "the tilt's own direction");
+    }
+
+    /// THE SCROLL'S LIVE ECHO (the SelectHotbar command the number-key
+    /// lane shares): the LIVE session's belief rides the command
+    /// channel, the same walk the keys answer.
+    #[test]
+    fn the_scroll_wheel_echoes_the_live_session() {
+        use crate::world_view::ContainerCommand;
+        let mut app = App::new(3);
+        app.open(ScreenKind::Connect);
+        app.net_world = Some(air_net_world(2, 0));
+        app.enter_network_world(None, Skybox::Overworld, None, None);
+        let (click_tx, click_rx) = std::sync::mpsc::channel::<ContainerCommand>();
+        app.attach_live_clicks(click_tx);
+        app.on_hotbar_scroll(0.0, -1.0);
+        assert_eq!(app.selected_hotbar, 1, "the live belief moved");
+        match click_rx.try_recv().expect("the echo rode the lane") {
+            ContainerCommand::SelectHotbar { selection } => assert_eq!(selection, 1),
+            other => panic!("expected a selection, got {other:?}"),
+        }
     }
 
     #[test]
