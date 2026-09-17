@@ -689,6 +689,16 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
                 window.is_key_down(Key::LeftShift),
                 window.is_key_down(Key::LeftCtrl),
             );
+            // THE Q DROP KEY (vanilla handleKeybinds's keyDrop lane —
+            // the keybinds the overlay==null && screen==null gate reads,
+            // the in_world shape keeps it): the rising edge throws from
+            // the selected hotbar slot, the Ctrl modifier the whole
+            // stack (hasControlDown the LocalPlayer.drop boolean speaks
+            // — the same key the sprint gate reads, the vanilla's own
+            // dual use)
+            if window.is_key_pressed(Key::Q, minifb::KeyRepeat::No) {
+                app.on_drop_key(window.is_key_down(Key::LeftCtrl));
+            }
             // THE F5 PERSPECTIVE (vanilla handleKeybinds's
             // keyTogglePerspective lane): the rising edge cycles the
             // three views — first person, third-person back, third-person

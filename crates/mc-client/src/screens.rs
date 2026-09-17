@@ -3349,6 +3349,62 @@ impl App {
         self.hotbar_slots = self.inventory.hotbar();
     }
 
+    /// THE AIMED THROW (LivingEntity.createItemStackToDrop's own else
+    /// arm — the 26.2 bytecode 125-296 walk): the ItemEntity spawns at
+    /// (x, eyeY - 0.30000001192092896, z) with the 40-tick pickup delay
+    /// (the throw's own — the 10-tick loot default replaced), and the
+    /// LOOK-DIRECTION impulse the dropAround=false branch speaks:
+    /// the radian folds f8=sin(xRot·rad) f9=cos(xRot·rad)
+    /// f10=sin(yRot·rad) f11=cos(yRot·rad) (the float multiply by
+    /// 0.017453292 the bytecode folds BEFORE the widen, the Mth.sin/cos
+    /// f64-narrowed shape), the f12=nextFloat·6.2831855 and
+    /// f13=0.02·nextFloat bob draws AFTER the ctor's bob seed (the
+    /// spawn_entity_loot walk keeps the order), and the vy's
+    /// (nextFloat−nextFloat)·0.1 jitter pair the bytecode's last two
+    /// draws speak:
+    ///   vx = −f10·f9·0.3 + cos(f12)·f13
+    ///   vy = −f8·0.3 + 0.1 + (r1−r2)·0.1
+    ///   vz = +f11·f9·0.3 + sin(f12)·f13
+    /// BOTH throw callers ride THIS branch — the doClick's
+    /// drop(stack, true) (the 2-arg Player.drop(ItemStack, boolean)'s
+    /// own iconst_0 pins dropAround=FALSE, the boolean rides the
+    /// includeThrower slot) and the Q key's
+    /// drop(removeFromSelected(stack), false, true) — the aimed look
+    /// throw the vanilla's own law keeps (the scatter branch the
+    /// dropAround=true form rides is the death-drop's walk, not the
+    /// throw's).
+    fn drop_item_entity_aimed(&mut self, item: i32, count: i32) {
+        let Some(b) = self.body.as_ref() else {
+            return; // no body — no eye to throw from (the headless menus)
+        };
+        let did = self.next_drop_id;
+        let mut d = crate::drops::ItemDrop::spawn_entity_loot(
+            did,
+            item,
+            count,
+            b.x,
+            b.y + b.eye_height() - 0.30000001192092896,
+            b.z,
+            &mut self.mob_rng,
+        );
+        self.next_drop_id += 1;
+        let xrad = (b.pitch * 0.017453_292_f32) as f64;
+        let yrad = (b.yaw * 0.017453_292_f32) as f64;
+        let f8 = (xrad.sin()) as f32; // Mth.sin — the f64 sin narrowed back
+        let f9 = (xrad.cos()) as f32;
+        let f10 = (yrad.sin()) as f32;
+        let f11 = (yrad.cos()) as f32;
+        let f12 = self.mob_rng.next_f32() * std::f32::consts::PI * 2.0;
+        let f13 = 0.02_f32 * self.mob_rng.next_f32();
+        let r1 = self.mob_rng.next_f32();
+        let r2 = self.mob_rng.next_f32();
+        d.pickup_delay = 40;
+        d.vx = (-f10 * f9 * 0.3_f32) as f64 + (f12 as f64).cos() * (f13 as f64);
+        d.vy = (-f8 * 0.3_f32 + 0.1_f32 + (r1 - r2) * 0.1_f32) as f64;
+        d.vz = (f11 * f9 * 0.3_f32) as f64 + (f12 as f64).sin() * (f13 as f64);
+        self.drops.push(d);
+    }
+
     /// THE DROP-OUTSIDE LANE (the doClick THROW's own law, the slot -999
     /// the 26.2 AbstractContainerScreen.mouseClicked rides): the LEFT
     /// press drops the WHOLE carried stack (drop(getCarried(), true) ->
@@ -3357,45 +3413,26 @@ impl App {
     /// carry decrements). The EMPTY cursor's press is silence (the
     /// doClick's own isEmpty guard). The container STAYS OPEN — only
     /// the close keys close it. The dropped items ride the vanilla
-    /// Player.drop law (LivingEntity.createItemStackToDrop's bytecode):
-    /// the spawn at (x, eyeY - 0.30000001192092896, z), the 40-tick
-    /// pickup delay (the throw's own — the 10-tick loot default
-    /// replaced), the DROPAROUND impulse the boolean's true form speaks
-    /// (the random horizontal 0..0.5 spread, the 0.20000000298023224
-    /// upward — NOT the aimed look throw, the doClick passes
-    /// dropAround=true). The wire sessions never reach here (the
-    /// caller's world_is_network guard keeps the store the server's).
+    /// Player.drop law's AIMED branch — the 2-arg
+    /// drop(ItemStack, boolean)'s own delegation drop(stack, iconst_0,
+    /// boolean) pins dropAround=FALSE and rides the boolean into the
+    /// includeThrower slot: the look-direction throw
+    /// ([`Self::drop_item_entity_aimed`], the bytecode 125-296 walk),
+    /// NOT the scatter the dropAround=true form speaks. The wire
+    /// sessions never reach here (the caller's world_is_network guard
+    /// keeps the store the server's).
     fn throw_carried_outside(&mut self, button: i8) {
         let (id, count) = self.inv_carried;
         if count <= 0 {
             return; // the doClick THROW's own isEmpty guard — silence
         }
-        if let Some(b) = self.body.as_ref() {
-            let dropped = if button == 0 { count } else { 1 };
-            // the createItemStackToDrop law: the eye position minus the
-            // 0.30000001192092896 lift, the 40-tick delay, the dropAround
-            // impulse (f = nextFloat*0.5, f1 = nextFloat*2*PI — the
-            // Mth.sin/cos radian-table walk), the bob seed the ItemEntity
-            // ctor drew FIRST (the spawn_entity_loot walk keeps the order)
-            let f = self.mob_rng.next_f32() * 0.5;
-            let f1 = self.mob_rng.next_f32() * std::f32::consts::PI * 2.0;
-            let did = self.next_drop_id;
-            let mut d = crate::drops::ItemDrop::spawn_entity_loot(
-                did,
-                id,
-                dropped,
-                b.x,
-                b.y + b.eye_height() - 0.30000001192092896,
-                b.z,
-                &mut self.mob_rng,
-            );
-            self.next_drop_id += 1;
-            d.pickup_delay = 40;
-            d.vx = (-(f1.sin()) * f) as f64;
-            d.vy = 0.2;
-            d.vz = ((f1.cos()) * f) as f64;
-            self.drops.push(d);
-        }
+        let dropped = if button == 0 { count } else { 1 };
+        // the createItemStackToDrop law: the eye position minus the
+        // 0.30000001192092896 lift, the 40-tick delay, the AIMED
+        // look-direction impulse (the radian folds + the 0.3 speed +
+        // the f12/f13 bob draws + the vy jitter pair — the bytecode's
+        // own draw order the ctor's bob seed keeps FIRST)
+        self.drop_item_entity_aimed(id, dropped);
         // the carried stack's own prediction: the whole stack gone (left)
         // or the one item split off (right — the doClick's split(1) law)
         self.inv_carried = if button == 0 { (0, 0) } else { (id, count - 1) };
@@ -3738,6 +3775,47 @@ impl App {
     /// cycle the CameraType bytecode speaks.
     pub fn on_perspective_key(&mut self) {
         self.perspective = self.perspective.cycle();
+    }
+
+    /// THE Q-DROP LANE (the vanilla handleKeybinds's keyDrop walk —
+    /// the keybinds the overlay==null && screen==null gate reads, the
+    /// caller's in_world shape): while (keyDrop.consumeClick()) {
+    /// if (!player.isSpectator()) { if (player.drop(hasControlDown()))
+    /// player.swing(MAIN_HAND); } }. Player.drop(boolean wholeStack)'s
+    /// own walk (LocalPlayer.drop the packet law sends —
+    /// ServerboundPlayerActionPacket DROP_ITEM / DROP_ALL_ITEMS — the
+    /// offline world runs the server side locally):
+    /// Inventory.removeFromSelected(wholeStack) — the selected stack
+    /// EMPTY -> EMPTY (drop returns false: no entity, no swing), the
+    /// Ctrl form removes the WHOLE stack (removeItem(selected,
+    /// getCount()) the iload_1's ifeq speaks), the plain Q exactly ONE
+    /// (removeItem(selected, 1)) — then
+    /// LivingEntity.drop(stack, dropAround=false, includeThrower=true):
+    /// the AIMED look throw ([`Self::drop_item_entity_aimed`], the
+    /// createItemStackToDrop bytecode's else arm). The wire sessions
+    /// refuse honestly (the store the server owns — the DROP_ITEM
+    /// action packet lane rides later).
+    pub fn on_drop_key(&mut self, whole_stack: bool) {
+        if self.world_is_network {
+            return; // the wire's store the server owns — the drop action
+                    // packet the server answers rides later
+        }
+        if self.screen != ScreenKind::World || self.dead || self.paused {
+            return; // the handleKeybinds gate — the overlay/screen pair
+                    // the keybinds never pass, the death screen modal
+        }
+        let sel = self.selected_hotbar;
+        let (id, count) = self.inventory.items[sel];
+        if count <= 0 {
+            return; // removeFromSelected's EMPTY law — drop false, silence
+        }
+        let dropped = if whole_stack { count } else { 1 };
+        self.drop_item_entity_aimed(id, dropped);
+        // removeFromSelected's store walk: the whole stack gone or
+        // exactly one off (the removeItem(selected, 1) law)
+        self.inventory.items[sel] = if whole_stack { (0, 0) } else { (id, count - 1) };
+        self.hotbar_slots = self.inventory.hotbar();
+        self.swing.start(); // the handleKeybinds success arm's MAIN_HAND swing
     }
 
     /// The LEFT press's rising edge (the vanilla MouseHandler's own
@@ -17044,8 +17122,10 @@ mod tests {
     /// press outside the panel drops the WHOLE carried stack — the carry
     /// empties, one ItemDrop spawns at the eye minus the
     /// 0.30000001192092896 lift with the 40-tick pickup delay and the
-    /// dropAround impulse (the 0.2 upward, the 0..0.5 horizontal
-    /// scatter) — and the container STAYS OPEN.
+    /// AIMED look throw (the 2-arg drop's own iconst_0 pins
+    /// dropAround=FALSE — the boolean rides the includeThrower slot, the
+    /// look-direction impulse the createItemStackToDrop else arm speaks)
+    /// — and the container STAYS OPEN.
     #[test]
     fn the_outside_left_press_throws_the_whole_carried() {
         let mut app = App::new(3);
@@ -17074,10 +17154,22 @@ mod tests {
             b.y + b.eye_height() - 0.30000001192092896,
             "the eye minus the 0.30000001192092896 lift"
         );
-        assert_eq!(d.vy, 0.2, "the dropAround upward");
+        // the AIMED branch's own folds (seed 3's draw chain: the ctor's
+        // bob seed, then f12 = nextFloat*6.2831855, f13 = 0.02*nextFloat,
+        // the vy jitter pair r1/r2 — the look-direction law at the spawn
+        // angles: the forward 0.3 fold minus the sin(pitch) share, the
+        // 0.1 base lift, the ±0.05 jitter band, the cos/sin(f12)·f13
+        // bob-cosine scatter ±0.02 wide — the spawn's own yaw speaks the
+        // +X axis, the horizontal SPEED the axis-free pin)
+        let speed = (d.vx * d.vx + d.vz * d.vz).sqrt();
         assert!(
-            d.vx.abs() <= 0.5 && d.vz.abs() <= 0.5,
-            "the 0..0.5 horizontal scatter"
+            (speed - 0.3).abs() <= 0.03,
+            "the look-direction 0.3 fold (speed={speed})"
+        );
+        assert!(
+            d.vy > 0.05 && d.vy < 0.15,
+            "the 0.1 base lift within the ±0.05 jitter band (vy={vy})",
+            vy = d.vy
         );
         // the container STAYS OPEN (only the close keys close it)
         assert_eq!(app.screen, ScreenKind::Inventory);
@@ -17134,6 +17226,127 @@ mod tests {
         // and the right press keeps the same silence
         app.on_right_press(4, 4);
         assert_eq!(app.drops.len(), drops_before, "still no drop");
+    }
+
+    /// THE Q-DROP LANE (the handleKeybinds keyDrop walk — the plain Q):
+    /// the selected slot's ONE item flies the AIMED look throw, the slot
+    /// decrements, the MAIN_HAND swing fires, the HUD hotbar syncs.
+    #[test]
+    fn the_q_key_throws_one_from_the_selected_slot() {
+        let mut app = App::new(3);
+        app.enter_world();
+        app.spawn_offline_body();
+        app.inventory.items[app.selected_hotbar] = (62, 7);
+        let drops_before = app.drops.len();
+        app.on_drop_key(false);
+        // removeFromSelected(false): exactly ONE off
+        assert_eq!(
+            app.inventory.items[app.selected_hotbar],
+            (62, 6),
+            "one item gone from the selected slot"
+        );
+        assert_eq!(app.drops.len(), drops_before + 1, "one drop spawned");
+        let d = app.drops.last().unwrap();
+        assert_eq!(d.item, 62);
+        assert_eq!(d.count, 1, "ONE item");
+        assert_eq!(d.pickup_delay, 40, "the throw's own delay");
+        let b = app.body.as_ref().unwrap();
+        assert_eq!(d.x, b.x, "the body's x");
+        assert_eq!(d.z, b.z, "the body's z");
+        assert_eq!(
+            d.y,
+            b.y + b.eye_height() - 0.30000001192092896,
+            "the eye minus the 0.30000001192092896 lift"
+        );
+        // the AIMED look throw's own shape: the forward 0.3 fold (the
+        // spawn's yaw/pitch speak the axis), the 0.1 base lift within
+        // the ±0.05 jitter band, the bob-cosine scatter ±0.02 wide
+        let speed = (d.vx * d.vx + d.vz * d.vz).sqrt();
+        assert!(
+            (speed - 0.3).abs() <= 0.03,
+            "the horizontal speed the 0.3 fold speaks (speed={speed})"
+        );
+        assert!(
+            d.vy > 0.05 && d.vy < 0.15,
+            "the 0.1 base lift within the ±0.05 jitter band (vy={vy})",
+            vy = d.vy
+        );
+        // the success arm's own swing (LivingEntity.swing MAIN_HAND)
+        assert!(app.swing.swinging, "the swing fired");
+        // and the HUD hotbar row synced (the store's own mirror)
+        assert_eq!(app.hotbar_slots[app.selected_hotbar], (62, 6), "the HUD synced");
+    }
+
+    /// THE CTRL+Q FORM (LocalPlayer.drop's wholeStack boolean — the
+    /// hasControlDown the keyDrop lane speaks): the WHOLE selected stack
+    /// flies (removeFromSelected's removeItem(selected, getCount())
+    /// arm), the slot empties.
+    #[test]
+    fn the_ctrl_q_throws_the_whole_stack() {
+        let mut app = App::new(3);
+        app.enter_world();
+        app.spawn_offline_body();
+        app.inventory.items[app.selected_hotbar] = (63, 12);
+        let drops_before = app.drops.len();
+        app.on_drop_key(true);
+        assert_eq!(
+            app.inventory.items[app.selected_hotbar],
+            (0, 0),
+            "the slot emptied"
+        );
+        assert_eq!(app.drops.len(), drops_before + 1, "one drop spawned");
+        let d = app.drops.last().unwrap();
+        assert_eq!(d.item, 63);
+        assert_eq!(d.count, 12, "the WHOLE stack");
+        assert_eq!(d.pickup_delay, 40);
+        assert!(app.swing.swinging, "the swing fired");
+    }
+
+    /// THE EMPTY SLOT'S SILENCE (removeFromSelected's own EMPTY law —
+    /// drop returns false): no entity, no swing, no draw burned.
+    #[test]
+    fn the_empty_selected_slot_q_is_silence() {
+        let mut app = App::new(3);
+        app.enter_world();
+        app.spawn_offline_body();
+        let drops_before = app.drops.len();
+        app.on_drop_key(false);
+        assert_eq!(app.drops.len(), drops_before, "no drop spawned");
+        assert!(!app.swing.swinging, "no swing — drop returned false");
+        // the Ctrl form keeps the same silence
+        app.on_drop_key(true);
+        assert_eq!(app.drops.len(), drops_before, "still no drop");
+        assert!(!app.swing.swinging, "still no swing");
+    }
+
+    /// THE Q KEY'S OWN GATE (the handleKeybinds overlay==null &&
+    /// screen==null law): the keybinds the OPEN SCREEN never passes —
+    /// the inventory-open Q is silence — and the wire session refuses
+    /// honestly (the store the server owns, the DROP_ITEM action packet
+    /// lane the follow-up names).
+    #[test]
+    fn the_q_key_refuses_the_screens_and_the_wire() {
+        let mut app = App::new(3);
+        app.enter_world();
+        app.spawn_offline_body();
+        app.inventory.items[app.selected_hotbar] = (62, 7);
+        // the inventory OPEN — the screen != World the gate refuses
+        app.open_inventory();
+        let drops_before = app.drops.len();
+        app.on_drop_key(false);
+        assert_eq!(app.drops.len(), drops_before, "the screen gate holds");
+        assert_eq!(app.inventory.items[app.selected_hotbar], (62, 7), "the store whole");
+        // the PAUSE — the vanilla's own freeze lane
+        app.close_inventory();
+        app.paused = true;
+        app.on_drop_key(false);
+        assert_eq!(app.drops.len(), drops_before, "the pause freeze holds");
+        // the WIRE session — the store the server owns
+        app.paused = false;
+        app.world_is_network = true;
+        app.on_drop_key(false);
+        assert_eq!(app.drops.len(), drops_before, "the wire refusal holds");
+        assert_eq!(app.inventory.items[app.selected_hotbar], (62, 7), "the wire store whole");
     }
 
     /// THE RIGHT PRESS'S OWN TABLE (the doClick PICKUP button-1 branch):
