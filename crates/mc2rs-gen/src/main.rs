@@ -1241,7 +1241,10 @@ fn write_item_models(workspace_root: &Path, jar_bytes: &[u8]) -> Result<std::pat
     Ok(path)
 }
 
-/// Resolve + write crates/mc-registry/src/generated/{atlas,colormap}.rs.
+/// Resolve + write crates/mc-registry/src/generated/atlas.rs; copy the
+/// three biome colormap PNGs into the runtime cache VERBATIM (the
+/// migration's fourth lane — generated/colormap.rs is OFF the tree, the
+/// client's loader the only decoder).
 fn write_atlas(workspace_root: &Path, version: &str, client_sha1: &str, jar_bytes: &[u8]) -> Result<()> {
     let reg_dir = workspace_root.join("crates/mc-registry/src/generated");
     std::fs::create_dir_all(&reg_dir)?;
@@ -1251,15 +1254,36 @@ fn write_atlas(workspace_root: &Path, version: &str, client_sha1: &str, jar_byte
     std::fs::write(&path, &src)?;
     let tiles = src.matches("static TILE_").count();
     println!("      atlas: {} tiles -> {}", tiles, path.display());
-    let cmap = atlas::build_colormap(jar_bytes, version, client_sha1)
-        .with_context(|| format!("colormap build for {version}"))?;
-    let cmap_path = reg_dir.join("colormap.rs");
-    std::fs::write(&cmap_path, &cmap)?;
+    // THE MIGRATION'S FOURTH LANE (the colormap): the jar's
+    // assets/minecraft/textures/colormap/{grass,foliage,dry_foliage}.png
+    // copied byte-for-byte into the cache the client's loader reads
+    // (assets-cache/jar/assets/minecraft/textures/colormap/ — the same
+    // verbatim contract the splashes/lang/sounds walks keep), the
+    // only-if-absent law the sounds.json walk speaks.
+    let cmap_dir = workspace_root.join("assets-cache/jar/assets/minecraft/textures/colormap");
+    std::fs::create_dir_all(&cmap_dir)
+        .with_context(|| format!("mkdir {}", cmap_dir.display()))?;
+    let mut zip = zip::ZipArchive::new(std::io::Cursor::new(jar_bytes))
+        .context("open client jar for the colormap copy")?;
+    let mut copied = 0usize;
+    for stem in atlas::COLORMAP_STEMS {
+        let dest = cmap_dir.join(format!("{stem}.png"));
+        if dest.exists() {
+            continue; // the standing only-if-absent law
+        }
+        let raw = crate::extract::read_entry(
+            &mut zip,
+            &format!("assets/minecraft/textures/colormap/{stem}.png"),
+        )
+        .with_context(|| format!("colormap {stem}.png"))?;
+        std::fs::write(&dest, &raw).with_context(|| format!("write {}", dest.display()))?;
+        copied += 1;
+    }
     println!(
-        "      colormap: {}x{} grass/foliage grids -> {}",
-        atlas::COLORMAP_SIDE,
-        atlas::COLORMAP_SIDE,
-        cmap_path.display()
+        "      colormap: {} grids verbatim -> {} ({} copied)",
+        atlas::COLORMAP_STEMS.len(),
+        cmap_dir.display(),
+        copied
     );
     Ok(())
 }

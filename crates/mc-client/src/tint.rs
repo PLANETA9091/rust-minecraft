@@ -52,8 +52,9 @@
 //!   `Biome.BIOME_INFO_NOISE` at (x·0.0225, z·0.0225) (two fixed
 //!   verdicts, position-dependent) — unreachable without per-position
 //!   noise, the base passes through (documented).
-//! - A no-jar fallback build (`REAL_GRIDS = false`, zeroed grids) keeps
-//!   the pre-colormap verdicts: an override-less biome then reports no
+//! - A cache-absent/broken boot (the loader's honest `real = false`,
+//!   empty grids — the runtime cache the colormap lane reads) keeps the
+//!   pre-colormap verdicts: an override-less biome then reports no
 //!   opinion and stays on the baked plains look.
 
 use crate::colormap;
