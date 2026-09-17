@@ -291,6 +291,12 @@ pub struct SnapshotView {
     /// carried them (the worker's own drain empties the mailbox
     /// after — each voice rides exactly one ship).
     pub voices: Vec<WireVoice>,
+    /// The world's PENDING VOICES — the Sound mailbox the model
+    /// resolved (see [`WireWorldVoice`]): the GLOBAL sounds the
+    /// SERVER played at a world spot, shipped once with the refresh
+    /// that carried them (the worker's own drain empties the mailbox
+    /// after — each voice rides exactly one ship).
+    pub world_voices: Vec<WireWorldVoice>,
     /// The player's OWN inventory window (the window-0 store)
     /// projected for the UI — the full 46-slot shape in the wire's
     /// own numbering (result 0, craft 1..5, armor 5..9, the main
@@ -324,6 +330,23 @@ pub struct SnapshotView {
 pub struct WireVoice {
     pub entity_id: i32,
     pub name: String,
+    pub volume: f32,
+    pub pitch: f32,
+}
+
+/// One wire WORLD voice — the Sound packet's own landing (the global
+/// channel the entity voices' sibling answers): the sound event's
+/// NAME resolved through the synced sound_event registry (the
+/// verbatim registry name — the audio edge strips its namespace
+/// prefix), the WORLD SPOT the packet carried (the ear's own
+/// distance law folds the gain from it), the volume and the pitch
+/// verbatim.
+#[derive(Debug, Clone, PartialEq)]
+pub struct WireWorldVoice {
+    pub name: String,
+    pub x: f64,
+    pub y: f64,
+    pub z: f64,
     pub volume: f32,
     pub pitch: f32,
 }
@@ -1306,6 +1329,7 @@ pub fn materialize_snapshot_view(
         // and no voices yet (the join snapshot carries no played sounds
         // — the empty mailbox the projection walks)
         voices: Vec::new(),
+        world_voices: Vec::new(),
         // the join's own store — the window-0 lane reads the adopted
         // state the same way the hand's lane does (empty until the
         // wire speaks)
@@ -1478,6 +1502,25 @@ impl LiveView {
                 })
             })
             .collect();
+        // the world sounds' own projection (the same walk the voices'
+        // keep — the UNNAMED arm the id outside the sound_event table
+        // ships is the honest no-voice the projection drops; the named
+        // ones ship once with this view, the spot verbatim)
+        let world_voices = self
+            .model
+            .world_sounds
+            .iter()
+            .filter_map(|arm| {
+                Some(WireWorldVoice {
+                    name: arm.name.clone()?,
+                    x: arm.x,
+                    y: arm.y,
+                    z: arm.z,
+                    volume: arm.volume,
+                    pitch: arm.pitch,
+                })
+            })
+            .collect();
         // the window-0 store's own projection rides every refresh —
         // the inventory screen follows the store exactly like the
         // hand and the HUD's row do (the pose-less arm included)
@@ -1510,6 +1553,7 @@ impl LiveView {
                 health: health_view(&self.model),
                 mobs,
                 voices,
+                world_voices,
             };
         };
         let origin = snapshot_window_origin(player, self.side);
@@ -1535,6 +1579,7 @@ impl LiveView {
             // server spawned follow the store exactly like the hearts do
             mobs,
             voices,
+            world_voices,
             // the player's OWN store rides with them — the inventory
             // screen's live lane follows the store exactly like the
             // chest's slots do

@@ -108,7 +108,7 @@ pub mod clientbound {
         CB_UPDATE_MOB_EFFECT as UPDATE_MOB_EFFECT,
         CB_SET_HEALTH as SET_HEALTH, CB_HURT_ANIMATION as HURT_ANIMATION,
         CB_PLAYER_COMBAT_KILL as PLAYER_COMBAT_KILL,
-        CB_SOUND_ENTITY as SOUND_ENTITY,
+        CB_SOUND_ENTITY as SOUND_ENTITY, CB_SOUND as SOUND,
     };
 }
 
@@ -6036,6 +6036,65 @@ pub fn parse_entity_sound(payload: &[u8]) -> Result<EntitySoundPacket> {
     Ok(EntitySoundPacket { entity_id, sound, volume, pitch, seed })
 }
 
+/// Sound (clientbound play, generated id 117 — `minecraft:sound`).
+/// javap of the real 26.2 `ClientboundSoundPacket`'s STREAM_CODEC read
+/// (the RegistryFriendlyByteBuf ctor): the SoundEvent holder (the SAME
+/// tagged union the entity voice reads — [`ConsumableSound`]), the
+/// SoundSource enum (the VarInt ordinal — the declaration order the
+/// jar's constant pool speaks: MASTER, MUSIC, RECORD, WEATHER, BLOCK,
+/// HOSTILE, NEUTRAL, PLAYER, AMBIENT, VOICE), the THREE BE ints (the
+/// position at 1/8 block resolution — the ctor's `* 8.0` fold the
+/// getter's /8.0 law mirrors), the BE float volume, the BE float
+/// pitch, the i64 seed. The GLOBAL sound channel — the sounds the
+/// SERVER plays at a world spot (the door the block-use opened on the
+/// other player's screen, the chests, the dispensers, the weather)
+/// the entity voices' position-less sibling answers.
+#[derive(Debug, Clone, PartialEq)]
+pub struct WorldSoundPacket {
+    /// The sound source's enum ordinal (the SoundSource declaration
+    /// order the jar keeps: 0 master .. 9 voice).
+    pub source: u8,
+    /// The sound event: the registry id (the synced sound_event
+    /// table's arrival order) or the direct lane (location + range).
+    pub sound: ConsumableSound,
+    /// The world spot (the wire's 1/8-block ints the /8 law reads).
+    pub x: f64,
+    pub y: f64,
+    pub z: f64,
+    /// The volume, verbatim (the client's playSound carries it — the
+    /// 16-and-over the silence law keeps downstream).
+    pub volume: f32,
+    /// The pitch, verbatim.
+    pub pitch: f32,
+    /// The seeded random's seed (the file-variant pick's own seed).
+    pub seed: i64,
+}
+
+/// Sound's wire walk (see [`WorldSoundPacket`] — the holder + the
+/// source enum + the 1/8-grid ints + the two floats + the seed, the
+/// generated-id guard).
+pub fn parse_sound(payload: &[u8]) -> Result<WorldSoundPacket> {
+    let mut c: &[u8] = payload;
+    let id = read_varint(&mut c)?;
+    anyhow::ensure!(
+        id == clientbound::SOUND,
+        "not a sound packet (0x{id:02X})"
+    );
+    let sound = read_consumable_sound(&mut c)?;
+    let source = read_varint(&mut c)?;
+    anyhow::ensure!(
+        (0..=9).contains(&source),
+        "sound source ordinal {source} outside the enum"
+    );
+    let x = read_i32(&mut c)? as f64 / 8.0;
+    let y = read_i32(&mut c)? as f64 / 8.0;
+    let z = read_i32(&mut c)? as f64 / 8.0;
+    let volume = read_f32(&mut c)?;
+    let pitch = read_f32(&mut c)?;
+    let seed = read_i64(&mut c)?;
+    Ok(WorldSoundPacket { source: source as u8, sound, x, y, z, volume, pitch, seed })
+}
+
 /// Player Combat Kill (clientbound play, generated id 68 —
 /// `minecraft:player_combat_kill`). javap of the real 26.2 record's
 /// STREAM_CODEC read: a VarInt player id, then the death message
@@ -6265,6 +6324,15 @@ pub enum PlayEvent {
     /// volume/pitch floats + the seed. The mob lane's own audio
     /// channel (the voice the named entity's client copy speaks).
     EntitySound(EntitySoundPacket),
+    /// Sound: the GLOBAL sound channel — the sound the SERVER played
+    /// at a WORLD SPOT (the block-use voices the other players' lanes
+    /// trigger, the server-side machines, the weather) — the tagged
+    /// holder + the source-category enum + the 1/8-grid world
+    /// position + the volume/pitch/seed (see [`WorldSoundPacket`]).
+    /// The model resolves the name through the synced sound_event
+    /// table and arms the positioned voice the ear's own distance
+    /// law folds.
+    WorldSound(WorldSoundPacket),
     /// Player Combat Kill: the LOCAL player died — the VarInt player id
     /// + the death message component (the death screen's own wire).
     CombatKill(PlayerCombatKill),
@@ -6392,6 +6460,7 @@ impl<S: Read + Write> PlaySession<S> {
             clientbound::SOUND_ENTITY => {
                 Ok(PlayEvent::EntitySound(parse_entity_sound(&pkt)?))
             }
+            clientbound::SOUND => Ok(PlayEvent::WorldSound(parse_sound(&pkt)?)),
             clientbound::PLAYER_COMBAT_KILL => {
                 Ok(PlayEvent::CombatKill(parse_player_combat_kill(&pkt)?))
             }
@@ -11751,6 +11820,54 @@ mod tests {
         write_varint(&mut p, 5);
         write_varint(&mut p, -7);
         assert!(parse_entity_sound(&p).is_err(), "negative holder tag");
+
+        // SOUND (the GLOBAL lane): the tagged holder + the source
+        // enum + the THREE 1/8-grid ints + the volume/pitch floats +
+        // the seed (the 26.2 ctor's *8 fold the /8 law reads — the
+        // BLOCK source the enum's own order names 4)
+        let mut p = Vec::new();
+        write_varint(&mut p, clientbound::SOUND);
+        write_varint(&mut p, 1); // holder tag 1 -> registry id 0
+        write_varint(&mut p, 4); // source BLOCK
+        p.extend_from_slice(&768i32.to_be_bytes()); // 768 / 8 = 96.0
+        p.extend_from_slice(&520i32.to_be_bytes()); // 520 / 8 = 65.0
+        p.extend_from_slice(&(-1024i32).to_be_bytes()); // -1024 / 8 = -128.0
+        p.extend_from_slice(&1.0f32.to_be_bytes());
+        p.extend_from_slice(&0.9f32.to_be_bytes());
+        p.extend_from_slice(&999i64.to_be_bytes());
+        let s = parse_sound(&p).unwrap();
+        assert_eq!(s.sound, ConsumableSound::Registry(0), "the registry arm");
+        assert_eq!(s.source, 4, "the BLOCK source the enum order keeps");
+        assert_eq!((s.x, s.y, s.z), (96.0, 65.0, -128.0), "the /8 law");
+        assert_eq!(s.volume, 1.0);
+        assert_eq!(s.pitch, 0.9);
+        assert_eq!(s.seed, 999);
+        // the DIRECT lane rides tag 0 verbatim (the location + range
+        // the holder's own union speaks)
+        let mut p = Vec::new();
+        write_varint(&mut p, clientbound::SOUND);
+        write_varint(&mut p, 0); // holder tag 0 -> direct
+        write_string(&mut p, "minecraft:block.wooden_door.open");
+        write_varint(&mut p, 3); // source HOSTILE rides after the holder
+        assert!(parse_sound(&p).is_err(), "the truncated tail refuses");
+        // the source ordinal outside the enum refuses (the 0..=9 guard
+        // the declaration's own 10 constants keep)
+        let mut p = Vec::new();
+        write_varint(&mut p, clientbound::SOUND);
+        write_varint(&mut p, 1);
+        write_varint(&mut p, 10);
+        assert!(parse_sound(&p).is_err(), "source 10 outside the enum");
+        // the truncation map: the seed missing refuses
+        let mut p = Vec::new();
+        write_varint(&mut p, clientbound::SOUND);
+        write_varint(&mut p, 1);
+        write_varint(&mut p, 4);
+        p.extend_from_slice(&0i32.to_be_bytes());
+        p.extend_from_slice(&0i32.to_be_bytes());
+        p.extend_from_slice(&0i32.to_be_bytes());
+        p.extend_from_slice(&1.0f32.to_be_bytes());
+        p.extend_from_slice(&1.0f32.to_be_bytes());
+        assert!(parse_sound(&p).is_err(), "seed missing");
 
         // PLAYER COMBAT KILL: the VarInt id + the JSON component the
         // disconnect's own flatten law reads

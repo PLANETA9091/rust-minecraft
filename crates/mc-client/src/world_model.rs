@@ -166,6 +166,17 @@ pub struct WorldModel {
     /// no-voice) + the volume/pitch. A MAILBOX like the hurts' — the
     /// refresh ships each voice exactly once, the drain empties it.
     pub entity_sounds: Vec<EntityVoiceArm>,
+    /// The world's PENDING VOICES (the Sound packets — the GLOBAL
+    /// sounds the SERVER plays at a world spot: the doors and the
+    /// machines the block-use lanes trigger, the weather, the
+    /// server-side effects): the arms in wire order, each the
+    /// sound's NAME (the registry arm resolved through the synced
+    /// sound_event table, the direct lane's own location — `None`
+    /// when the id lies outside the table, the honest no-voice) +
+    /// the WORLD SPOT the packet carried + the volume/pitch. A
+    /// MAILBOX like the voices' — the refresh ships each exactly
+    /// once, the drain empties it, the dimension swap clears it.
+    pub world_sounds: Vec<WorldVoiceArm>,
 }
 
 /// One pending mob voice — the Entity Sound packet's resolution the
@@ -180,6 +191,28 @@ pub struct EntityVoiceArm {
     /// `None` when the registry id lies outside the table (the honest
     /// no-voice the projection drops).
     pub name: Option<String>,
+    /// The volume, verbatim from the packet.
+    pub volume: f32,
+    /// The pitch, verbatim from the packet.
+    pub pitch: f32,
+}
+
+/// One pending WORLD voice — the Sound packet's resolution the model
+/// keeps until the refresh ships it (see
+/// [`WorldModel::world_sounds`]).
+#[derive(Debug, Clone, PartialEq)]
+pub struct WorldVoiceArm {
+    /// The sound event's name — the registry arm resolved through the
+    /// synced sound_event table, the direct lane's own location;
+    /// `None` when the registry id lies outside the table (the honest
+    /// no-voice the projection drops).
+    pub name: Option<String>,
+    /// The world spot the packet carried (the 1/8-grid ints the
+    /// parse's /8 law read) — the ear's own distance law folds the
+    /// gain from it.
+    pub x: f64,
+    pub y: f64,
+    pub z: f64,
     /// The volume, verbatim from the packet.
     pub volume: f32,
     /// The pitch, verbatim from the packet.
@@ -444,6 +477,7 @@ impl WorldModel {
             death_message: None,
             entity_hurts: std::collections::BTreeMap::new(),
             entity_sounds: Vec::new(),
+            world_sounds: Vec::new(),
         }
     }
 
@@ -476,6 +510,14 @@ impl WorldModel {
     /// the mob lane's audio edge owns the playback after).
     pub fn drain_entity_sounds(&mut self) -> Vec<EntityVoiceArm> {
         std::mem::take(&mut self.entity_sounds)
+    }
+
+    /// The world sounds' mailbox's own drain (the same walk the
+    /// voices' speak — each arm ships exactly once): the positioned
+    /// voices the Sound packet armed, the consumer's ear law folds
+    /// the gain from the arm's own spot.
+    pub fn drain_world_sounds(&mut self) -> Vec<WorldVoiceArm> {
+        std::mem::take(&mut self.world_sounds)
     }
 
     /// One entity type's registry name, by the synced-registry id the
@@ -637,6 +679,9 @@ impl WorldModel {
                 // the voices' mailbox dies with the level too (the same
                 // ids — the new level's population speaks its own)
                 self.entity_sounds.clear();
+                // the world sounds' mailbox dies with the level (the
+                // same walk — the old level's spots never speak again)
+                self.world_sounds.clear();
                 self.pin_dimension(&spawn.dimension);
                 true
             }
@@ -1124,6 +1169,34 @@ impl WorldModel {
                 self.entity_sounds.push(EntityVoiceArm {
                     entity_id: s.entity_id,
                     name,
+                    volume: s.volume,
+                    pitch: s.pitch,
+                });
+                true
+            }
+            PlayEvent::WorldSound(s) => {
+                // THE WORLD'S OWN VOICES (the SERVER plays a sound at a
+                // world spot — the global channel the entity voices'
+                // sibling answers): the name resolves NOW, at the arm's
+                // birth (the same walk the entity lane keeps — the
+                // registry id through the synced sound_event table, the
+                // direct lane's own location; the id outside the table
+                // ships UNNAMED, the honest no-voice the projection
+                // drops), the spot rides verbatim (the parse's /8 law
+                // read it), the consumer's ear law folds the gain
+                let name = match &s.sound {
+                    mc_protocol::ConsumableSound::Registry(id) => self
+                        .registry
+                        .sound_events
+                        .get(*id as usize)
+                        .cloned(),
+                    mc_protocol::ConsumableSound::Direct { id, .. } => Some(id.clone()),
+                };
+                self.world_sounds.push(WorldVoiceArm {
+                    name,
+                    x: s.x,
+                    y: s.y,
+                    z: s.z,
                     volume: s.volume,
                     pitch: s.pitch,
                 });
@@ -3589,6 +3662,63 @@ mod tests {
         assert_eq!(drained.len(), 3, "the drain ships the whole mailbox");
         assert!(m.entity_sounds.is_empty(), "the mailbox spent");
         assert!(m.drain_entity_sounds().is_empty(), "the drained silence ships nothing");
+        // THE WORLD'S OWN VOICES (the Sound packet's global lane): the
+        // arms ride in wire order, the registry arm resolves, the
+        // unknown id ships UNNAMED, the direct lane's own location
+        // speaks, the spot rides verbatim, the drain empties the box
+        m.registry.sound_events = vec!["minecraft:block.wooden_door.open".to_string()];
+        assert!(m.apply(PlayEvent::WorldSound(mc_protocol::WorldSoundPacket {
+            source: 4,
+            sound: mc_protocol::ConsumableSound::Registry(0),
+            x: 96.0,
+            y: 65.0,
+            z: -128.0,
+            volume: 1.0,
+            pitch: 0.9,
+            seed: 7,
+        })));
+        assert!(m.apply(PlayEvent::WorldSound(mc_protocol::WorldSoundPacket {
+            source: 0,
+            sound: mc_protocol::ConsumableSound::Registry(41), // outside the table
+            x: 0.0,
+            y: 64.0,
+            z: 0.0,
+            volume: 0.5,
+            pitch: 1.0,
+            seed: 7,
+        })));
+        assert!(m.apply(PlayEvent::WorldSound(mc_protocol::WorldSoundPacket {
+            source: 3,
+            sound: mc_protocol::ConsumableSound::Direct {
+                id: "minecraft:ambient.weather.thunder".to_string(),
+                range: 16.0,
+            },
+            x: -8.5,
+            y: 90.125,
+            z: 12.0,
+            volume: 2.0,
+            pitch: 1.0,
+            seed: 7,
+        })));
+        assert_eq!(m.world_sounds.len(), 3, "the three arms ride in wire order");
+        assert_eq!(
+            m.world_sounds[0].name.as_deref(),
+            Some("minecraft:block.wooden_door.open"),
+            "the registry arm resolved"
+        );
+        assert_eq!(m.world_sounds[1].name, None, "the unknown id ships unnamed");
+        assert_eq!(
+            m.world_sounds[2].name.as_deref(),
+            Some("minecraft:ambient.weather.thunder"),
+            "the direct lane's own location"
+        );
+        assert_eq!((m.world_sounds[0].x, m.world_sounds[0].y, m.world_sounds[0].z),
+            (96.0, 65.0, -128.0), "the spot the packet carried verbatim");
+        assert_eq!(m.world_sounds[0].pitch, 0.9);
+        let drained = m.drain_world_sounds();
+        assert_eq!(drained.len(), 3, "the drain ships the whole mailbox");
+        assert!(m.world_sounds.is_empty(), "the mailbox spent");
+        assert!(m.drain_world_sounds().is_empty(), "the drained silence ships nothing");
         // COMBAT KILL: the message lands on the own id
         assert!(m.apply(PlayEvent::CombatKill(mc_protocol::PlayerCombatKill {
             player_id: 17,

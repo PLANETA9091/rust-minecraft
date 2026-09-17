@@ -7030,6 +7030,31 @@ impl App {
         }
     }
 
+    /// THE WORLD'S OWN VOICES (the Sound packet's global lane — the
+    /// sounds the SERVER played at a world spot: the block-use voices
+    /// the other players' lanes trigger, the machines, the weather):
+    /// the spot the packet carried IS the sound position (no entity
+    /// lookup the mob lane needs — the ear's own distance law folds
+    /// the gain from it), the name the audio edge's namespace strip
+    /// reads, the volume/pitch verbatim.
+    pub fn live_world_voices_updated(
+        &mut self,
+        voices: Vec<crate::world_view::WireWorldVoice>,
+    ) {
+        for v in voices {
+            // the audio lane's clip table speaks the names WITHOUT the
+            // namespace prefix — the registry name strips its own
+            let clip = v.name.strip_prefix("minecraft:").unwrap_or(&v.name);
+            let ear = self
+                .body
+                .as_ref()
+                .map(|b| (b.x, b.y + b.eye_height(), b.z));
+            let dist = ear_distance(ear, v.x, v.y, v.z);
+            self.sounds
+                .play_voice_at(self.frame, clip, v.volume, v.pitch, dist);
+        }
+    }
+
     /// THE WIRE MOBS' OWN TICK (javap LivingEntity's remote walk —
     /// no AI, no physics: the server owns both): the tick head saves
     /// the prev feet + the head pair (the render's lerps walk them at

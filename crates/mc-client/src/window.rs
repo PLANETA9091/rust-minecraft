@@ -130,6 +130,7 @@ fn run_join(
                 crate::world_view::HealthView,
                 Vec<crate::world_view::WireMob>,
                 Vec<crate::world_view::WireVoice>,
+                Vec<crate::world_view::WireWorldVoice>,
                 [(i32, i32); crate::world_view::INVENTORY_MENU_SLOTS],
                 Vec<(i32, Vec<(i32, i32)>)>,
                 i32,
@@ -190,6 +191,7 @@ fn run_join(
             // countdown and the playback after the landing)
             view.model.drain_entity_hurts();
             view.model.drain_entity_sounds();
+            view.model.drain_world_sounds();
             let spawn_biome = first.biome.clone();
             let shipped = tx.send((
                 id,
@@ -472,6 +474,7 @@ fn run_join(
                             // landing; a fresh packet re-arms)
                             view.model.drain_entity_hurts();
                             view.model.drain_entity_sounds();
+                            view.model.drain_world_sounds();
                             if live_tx
                                 .send(Ok((
                                     upd.world,
@@ -502,6 +505,11 @@ fn run_join(
                                     // population — the sounds the server
                                     // played stream to the voice lane
                                     upd.voices,
+                                    // the world's own voices ride with
+                                    // them — the GLOBAL sounds the server
+                                    // played at a world spot stream to
+                                    // the positioned lane
+                                    upd.world_voices,
                                     // the player's OWN store rides with
                                     // them — the inventory screen's live
                                     // lane follows the window-0 store
@@ -612,6 +620,7 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
                 crate::world_view::HealthView,
                 Vec<crate::world_view::WireMob>,
                 Vec<crate::world_view::WireVoice>,
+                Vec<crate::world_view::WireWorldVoice>,
                 [(i32, i32); crate::world_view::INVENTORY_MENU_SLOTS],
                 Vec<(i32, Vec<(i32, i32)>)>,
                 i32,
@@ -888,6 +897,7 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
                     health,
                     mobs,
                     voices,
+                    world_voices,
                     inv_slots,
                     inv_bundles,
                     inv_state_id,
@@ -916,6 +926,11 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
                     // entities (the entity lookup's own gate — the
                     // voice the id doesn't name drops)
                     app.live_voices_updated(voices);
+                    // the world's own voice lane beside the mob lane's:
+                    // the GLOBAL sounds the server played at a world spot
+                    // land at their own positions (the ear's distance law
+                    // the packet's own spot feeds — no entity lookup)
+                    app.live_world_voices_updated(world_voices);
                     // the window-0 store's lane beside the chest's: the
                     // player's own inventory the screen's live store
                     // projection rides (the slots the wire spoke, the
