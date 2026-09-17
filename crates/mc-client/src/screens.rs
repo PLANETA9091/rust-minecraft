@@ -3818,6 +3818,79 @@ impl App {
         self.swing.start(); // the handleKeybinds success arm's MAIN_HAND swing
     }
 
+    /// THE INVENTORY'S OWN Q (the 26.2 AbstractContainerScreen.keyPressed's
+    /// keyDrop arm — the container screen's own walk beside the world's
+    /// handleKeybinds lane): the HOVERED slot's stack the Q throws.
+    /// keyPressed's own gate chain — `hoveredSlot != null &&
+    /// hoveredSlot.hasItem()` (the bytecode 39-53 the keyDrop arm
+    /// shares with the middle-click CLONE lane it keeps company) — then
+    /// `slotClicked(hoveredSlot, hoveredSlot.index, hasControlDown() ?
+    /// 1 : 0, ContainerInput.THROW)` (bytecode 112-139, the button int
+    /// the Ctrl boolean rides). The doClick's THROW arm answers (the
+    /// bytecode 1450-1540 walk): the `getCarried().isEmpty()` gate (the
+    /// cursor must carry NOTHING — a held stack's Q is silence), the
+    /// slotIndex >= 0 the iload_1's iflt speaks, the
+    /// `count = button == 0 ? 1 : slot.getItem().getCount()` (plain Q
+    /// exactly ONE, the Ctrl the slot's WHOLE count), the canDropItems()
+    /// survival gate, `slot.safeTake(count, Integer.MAX_VALUE, player)`
+    /// — and `player.drop(taken, true)`: the AIMED look throw
+    /// ([`Self::drop_item_entity_aimed`] — the dropAround=false branch
+    /// the same walk the world's Q and the drop-outside share). The
+    /// doClick's button==1 repeat loop (the while `!taken.isEmpty() &&
+    /// isSameItem(slot.getItem(), taken)` drain the bytecode 1540-1605
+    /// speaks) the one-shot whole-take answers on plain stacks —
+    /// safeTake(count, MAX) empties the slot in one call. NO swing (the
+    /// keyPressed chain the handleKeybinds success arm never names), the
+    /// container STAYS OPEN, the HUD hotbar row the every-mutation law
+    /// syncs. The hovered slot IS the mouse position's own rect walk
+    /// ([`Self::click_inventory_slot`]'s geometry — the cursor the Q
+    /// reads, not the store index); the headless scenes track no mouse
+    /// (`mouse_pos` None — silence, the goldens never see the pass).
+    /// The wire sessions refuse (the store the server owns — the
+    /// inventory window's click lane rides later).
+    pub fn on_inventory_drop_key(&mut self, whole_stack: bool) {
+        if self.world_is_network {
+            return; // the wire's inventory window lane rides later
+        }
+        if self.screen != ScreenKind::Inventory {
+            return; // this lane IS the container screen's own walk
+        }
+        if self.inv_panel == (0, 0) {
+            return; // no render spoke yet — no geometry to hit
+        }
+        let Some((mx, my)) = self.mouse_pos else {
+            return; // no cursor — no hoveredSlot (the null gate's shape)
+        };
+        let panel = self.inv_panel;
+        // THE HOVERED SLOT (the getHoveredSlot walk — the click lane's
+        // own 16x16 rect over the store's slot origins)
+        let Some((_, _, store)) = (0..36)
+            .map(|i| {
+                let (ox, oy) = inventory_slot_origin(panel, i);
+                (ox + 1, oy + 1, i)
+            })
+            .find(|&(x, y, _)| mx >= x && mx < x + 16 && my >= y && my < y + 16)
+        else {
+            return; // hoveredSlot null — the keyPressed gate returns
+        };
+        let (id, count) = self.inventory.items[store];
+        if count <= 0 {
+            return; // hoveredSlot.hasItem()'s own gate — silence
+        }
+        if self.inv_carried.1 > 0 {
+            return; // THE doClick THROW's getCarried().isEmpty() gate —
+                    // the cursor's own stack the Q never throws
+        }
+        let dropped = if whole_stack { count } else { 1 };
+        self.drop_item_entity_aimed(id, dropped);
+        // safeTake(count, MAX)'s own store walk: the whole stack gone or
+        // exactly one off (the tryRemove law the doClick arm speaks)
+        self.inventory.items[store] = if whole_stack { (0, 0) } else { (id, count - 1) };
+        self.hotbar_slots = self.inventory.hotbar();
+        // NO swing — the keyPressed chain the handleKeybinds arm never
+        // rides; the container STAYS OPEN (only the close keys close it).
+    }
+
     /// The LEFT press's rising edge (the vanilla MouseHandler's own
     /// press routing): a container screen's press clicks the slot it
     /// landed on (button 0); every other screen falls through to the
@@ -17347,6 +17420,149 @@ mod tests {
         app.on_drop_key(false);
         assert_eq!(app.drops.len(), drops_before, "the wire refusal holds");
         assert_eq!(app.inventory.items[app.selected_hotbar], (62, 7), "the wire store whole");
+    }
+
+    /// THE INVENTORY'S OWN Q (the AbstractContainerScreen.keyPressed's
+    /// keyDrop arm — the plain form): the HOVERED slot's ONE item flies
+    /// the AIMED look throw, the slot decrements, NO swing (the
+    /// keyPressed chain the success arm never names), the HUD hotbar
+    /// row syncs, the container stays open.
+    #[test]
+    fn the_inventory_q_throws_one_from_the_hovered_slot() {
+        let mut app = App::new(3);
+        app.enter_world();
+        app.spawn_offline_body();
+        app.open_inventory();
+        app.inv_panel = inventory_panel_origin(640, 360);
+        // store 5 = the hotbar row's own rect (the slot origin walk):
+        // panel (232, 97) -> slot 5 origin (330, 239), the cursor inside
+        app.inventory.items[5] = (62, 7);
+        app.mouse_pos = Some((336, 246));
+        let drops_before = app.drops.len();
+        app.on_inventory_drop_key(false);
+        // safeTake(1, MAX): exactly ONE off the hovered slot
+        assert_eq!(app.inventory.items[5], (62, 6), "one item gone");
+        assert_eq!(app.drops.len(), drops_before + 1, "one drop spawned");
+        let d = app.drops.last().unwrap();
+        assert_eq!(d.item, 62);
+        assert_eq!(d.count, 1, "ONE item");
+        assert_eq!(d.pickup_delay, 40, "the throw's own delay");
+        let b = app.body.as_ref().unwrap();
+        assert_eq!(d.x, b.x, "the body's x");
+        assert_eq!(d.z, b.z, "the body's z");
+        assert_eq!(
+            d.y,
+            b.y + b.eye_height() - 0.30000001192092896,
+            "the eye minus the 0.30000001192092896 lift"
+        );
+        // the AIMED look throw's own shape (the createItemStackToDrop
+        // folds — the 0.3 forward, the 0.1 lift within the jitter band)
+        let speed = (d.vx * d.vx + d.vz * d.vz).sqrt();
+        assert!(
+            (speed - 0.3).abs() <= 0.03,
+            "the horizontal speed the 0.3 fold speaks (speed={speed})"
+        );
+        assert!(
+            d.vy > 0.05 && d.vy < 0.15,
+            "the 0.1 base lift within the ±0.05 jitter band (vy={vy})",
+            vy = d.vy
+        );
+        // the keyPressed chain names NO swing — the handleKeybinds
+        // success arm the container walk never rides
+        assert!(!app.swing.swinging, "no swing on the container's Q");
+        // the HUD hotbar row synced (store 5 IS the hotbar row)
+        assert_eq!(app.hotbar_slots[5], (62, 6), "the HUD synced");
+        // the container stays open
+        assert_eq!(app.screen, ScreenKind::Inventory, "the screen stays");
+    }
+
+    /// THE INVENTORY'S CTRL+Q (the keyPressed hasControlDown ? 1 : 0
+    /// button int — the doClick's `count = button == 0 ? 1 :
+    /// slot.getItem().getCount()` arm): the WHOLE hovered stack flies,
+    /// the slot empties — and a MAIN-ROW slot the hotbar never
+    /// contains answers too (the geometry walk beyond the hotbar row).
+    #[test]
+    fn the_inventory_ctrl_q_throws_the_whole_hovered_stack() {
+        let mut app = App::new(3);
+        app.enter_world();
+        app.spawn_offline_body();
+        app.open_inventory();
+        app.inv_panel = inventory_panel_origin(640, 360);
+        // store 12 = the main row's own rect: i = 3 -> panel-relative
+        // (62, 84) -> absolute (294, 181), the cursor inside
+        app.inventory.items[12] = (63, 12);
+        app.mouse_pos = Some((300, 190));
+        let drops_before = app.drops.len();
+        app.on_inventory_drop_key(true);
+        assert_eq!(app.inventory.items[12], (0, 0), "the slot emptied");
+        assert_eq!(app.drops.len(), drops_before + 1, "one drop spawned");
+        let d = app.drops.last().unwrap();
+        assert_eq!(d.item, 63);
+        assert_eq!(d.count, 12, "the WHOLE stack");
+        assert_eq!(d.pickup_delay, 40);
+        assert!(!app.swing.swinging, "no swing");
+        // the main row is NOT the hotbar — the HUD row untouched
+        assert_eq!(app.hotbar_slots[app.selected_hotbar], (0, 0), "the hotbar untouched");
+        // the doClick's button==1 repeat loop the one-shot whole-take
+        // answers on plain stacks — safeTake(count, MAX) empties in one
+        // call: a second Ctrl+Q on the now-empty slot is silence
+        app.on_inventory_drop_key(true);
+        assert_eq!(app.drops.len(), drops_before + 1, "still one drop");
+    }
+
+    /// THE INVENTORY Q'S OWN GATES (the keyPressed chain + the doClick
+    /// THROW arm's own pair): the EMPTY hovered slot silence (the
+    /// hasItem() gate), the CARRIED cursor silence (the
+    /// getCarried().isEmpty() gate — the held stack the Q never
+    /// throws), the hoveredSlot-null silence (the mouse off the slots —
+    /// the gate the keyPressed bytecode 39-53 speaks), the world-screen
+    /// cross silence (this lane IS the container's own), and the wire
+    /// session refusal (the store the server owns).
+    #[test]
+    fn the_inventory_q_refuses_the_empty_and_the_carried_and_the_wire() {
+        let mut app = App::new(3);
+        app.enter_world();
+        app.spawn_offline_body();
+        app.open_inventory();
+        app.inv_panel = inventory_panel_origin(640, 360);
+        app.inventory.items[5] = (62, 7);
+        let drops_before = app.drops.len();
+        // the hoveredSlot NULL (the cursor between the slots — the
+        // mannequin's own region): the keyPressed gate returns false
+        app.mouse_pos = Some((332, 157));
+        app.on_inventory_drop_key(false);
+        assert_eq!(app.drops.len(), drops_before, "the null hover is silence");
+        // the world screen CROSS — this lane the world Q's chain never
+        // doubles (the screen gate holds)
+        app.screen = ScreenKind::World;
+        app.mouse_pos = Some((336, 246));
+        app.on_inventory_drop_key(false);
+        assert_eq!(app.drops.len(), drops_before, "the world screen cross is silence");
+        app.open_inventory(); // back on the container screen
+        // the EMPTY hovered slot (the hasItem() gate — slot 0 the store
+        // never carried: origin (240, 239), the cursor inside)
+        app.mouse_pos = Some((246, 246));
+        app.on_inventory_drop_key(false);
+        assert_eq!(app.drops.len(), drops_before, "the empty hover is silence");
+        // the CARRIED cursor (the getCarried().isEmpty() gate — the
+        // doClick's own first test; the cursor back over the FULL slot 5
+        // so the silence IS the carried gate's own, not the empty slot's)
+        app.mouse_pos = Some((336, 246));
+        app.inv_carried = (62, 5);
+        app.on_inventory_drop_key(false);
+        assert_eq!(app.drops.len(), drops_before, "the carried cursor is silence");
+        assert_eq!(app.inventory.items[5], (62, 7), "the store whole");
+        assert_eq!(app.inv_carried, (62, 5), "the carry untouched");
+        // the Ctrl form keeps every gate
+        app.on_inventory_drop_key(true);
+        assert_eq!(app.drops.len(), drops_before, "still silence");
+        // the WIRE session — the store the server owns
+        app.inv_carried = (0, 0);
+        app.mouse_pos = Some((336, 246));
+        app.world_is_network = true;
+        app.on_inventory_drop_key(false);
+        assert_eq!(app.drops.len(), drops_before, "the wire refusal holds");
+        assert_eq!(app.inventory.items[5], (62, 7), "the wire store whole");
     }
 
     /// THE RIGHT PRESS'S OWN TABLE (the doClick PICKUP button-1 branch):

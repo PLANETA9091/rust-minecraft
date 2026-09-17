@@ -581,6 +581,18 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
         if window.is_key_pressed(Key::E, minifb::KeyRepeat::No) {
             app.on_inventory_key();
         }
+        // THE INVENTORY'S OWN Q (the AbstractContainerScreen.keyPressed's
+        // keyDrop arm — the container screen's own chain beside the
+        // world's handleKeybinds lane below): the hovered slot's stack
+        // the Q throws, the Ctrl modifier the whole stack (the button
+        // int the hasControlDown the keyPressed bytecode 124-136 rides).
+        // The world screen's own Q rides the in_world lane — the App's
+        // screen gates keep the two chains honest (the world Q the
+        // inventory walk never passes, the container Q the handleKeybinds
+        // gate never did)
+        if window.is_key_pressed(Key::Q, minifb::KeyRepeat::No) {
+            app.on_inventory_drop_key(window.is_key_down(Key::LeftCtrl));
+        }
         // the number keys' hotbar selection (the vanilla keyPress's own
         // lane): 1..9 move the selection, the live session's belief
         // rides the command channel (the worker echoes the wire AND
