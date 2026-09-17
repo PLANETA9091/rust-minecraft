@@ -2094,20 +2094,29 @@ fn boat_texture_sha1(chest: bool, wood: &str) -> Option<&'static str> {
 /// 6/16 of a block above the entity's origin).
 pub const BOAT_SUBMIT_LIFT: f32 = 0.375;
 
-/// THE PADDLE REST POSE (AbstractBoatModel.animatePaddle's rowingTime-0
-/// word): the client's paddlePositions clock the vanilla client's own boat
-/// tick feeds — the wire never speaks it, the honest rest is rowingTime 0:
-/// `xRot = clampedLerp((sin(0)+1)/2, -60°, -15°)` = the -39.274° midpoint,
-/// `yRot = clampedLerp(0.5, -45°, 45°)` = 0 (the right paddle the side-1
-/// fold mirrors: `π − yRot`), the PartPose zRot (+11.25°) the walk never
-/// writes survives. The ANIMATED swing (a rowing mob or the client's own
-/// physics clock) stays a named future lane — the wire speaks the paddle
-/// booleans (DATA_ID_PADDLE_LEFT/RIGHT), the phase it never does.
-fn boat_paddle_rest() -> (f32, f32) {
+/// THE PADDLE POSE (AbstractBoatModel.animatePaddle's own bytecode —
+/// `animatePaddle(F rowingTime, I side, ModelPart paddle)`): the phase
+/// folds through `clampedLerp((sin(rowingTime)+1)/2, ...)`, the xRot
+/// between −60° and −15°, the yRot between −45° and +45°, and the
+/// SIDE-1 FOLD the right paddle speaks (`yRot = π − yRot`). The
+/// rowingTime-0 word IS the rest pose the previous lane pinned:
+/// sin 0 → frac 0.5 → xRot −0.6545 (the −37.5° midpoint), yRot 0
+/// (the right paddle's π). The phase the CLIENT'S OWN CLOCK feeds
+/// — the AbstractBoat.tick walk's paddlePositions, the wire's
+/// paddle booleans the moving gate speaks (see [`rowing_time`] in
+/// the screens lane).
+pub fn animate_paddle(rowing_time: f32, side: i32) -> (f32, f32) {
     const PI_F: f32 = std::f32::consts::PI;
-    // Mth.clampedLerp(delta, start, end): start + delta*(end-start)
-    let x = -1.0471975803375244 + 0.5 * (-0.2617993950843811 - -1.0471975803375244);
-    (x, PI_F)
+    // Mth.clampedLerp(delta, start, end): start + delta*(end-start),
+    // the delta the [0,1] clamp keeps — the sin fold's frac rides
+    // [0,1] inherently, the clamp the vanilla helper's own shape
+    let frac = ((rowing_time.sin() + 1.0) / 2.0).clamp(0.0, 1.0);
+    let x = -1.0471975803375244 + frac * (-0.2617993950843811 - -1.0471975803375244);
+    let mut y = -0.7853981852531433 + frac * (0.7853981852531433 - -0.7853981852531433);
+    if side == 1 {
+        y = PI_F - y;
+    }
+    (x, y)
 }
 
 /// The full boat/raft model — the 26.2 `BoatModel`/`RaftModel` +
@@ -2174,8 +2183,10 @@ impl BoatModel {
     /// THE SUBMIT RENDER: the world-space textured quads of the boat at
     /// `feet` — the submit fold above (R_y(90) first, the S flip, the
     /// R_y(180 − yaw), the 0.375 lift), the part tree the model kind and
-    /// the chest bit pick. `cam_yaw/cam_pitch` speak the view rotation
-    /// the entity diffuse folds (the same mix_light every entity rides).
+    /// the chest bit pick, the paddles the rowing times pose (the
+    /// animatePaddle walk — 0.0 both, the rest the silence speaks).
+    /// `cam_yaw/cam_pitch` speak the view rotation the entity diffuse
+    /// folds (the same mix_light every entity rides).
     pub fn quads(
         &self,
         yaw_deg: f32,
@@ -2183,8 +2194,10 @@ impl BoatModel {
         feet: Vec3,
         cam_yaw: f32,
         cam_pitch: f32,
+        rowing_left: f32,
+        rowing_right: f32,
     ) -> Vec<AvatarQuad> {
-        let parts = build_boat_parts(self.raft, chest);
+        let parts = build_boat_parts(self.raft, chest, rowing_left, rowing_right);
         let (fold_point, fold_normal) = boat_folds(yaw_deg, feet);
         let mut out: Vec<AvatarQuad> = Vec::with_capacity(72);
         let ident = Mat4::IDENT;
@@ -2236,13 +2249,13 @@ fn boat_folds(
 /// THE HULL PARTS (the addCommonParts walk's own boxes — every number the
 /// bytecode's constant pool speaks): the boat's five-piece hull + the
 /// raft's two-plank bottom (no rails — the bamboo family's own open deck),
-/// the paddles at the rest pose, the chest variant's three cubes riding
+/// the paddles the rowing times pose, the chest variant's three cubes riding
 /// the chest UV band (the lid/lock texOffs (0,59), the bottom (0,76)).
-fn build_boat_parts(raft: bool, chest: bool) -> Vec<Part> {
+fn build_boat_parts(raft: bool, chest: bool, rowing_left: f32, rowing_right: f32) -> Vec<Part> {
     const PI_F: f32 = std::f32::consts::PI;
     const HALF_PI: f32 = 1.5707963705062866;
     const PADDLE_TILT: f32 = 0.19634954631328583;
-    let (pad_x, pad_y_right) = boat_paddle_rest();
+    let pose_left = animate_paddle(rowing_left, 0);
     let mut parts: Vec<Part> = Vec::with_capacity(8);
     if raft {
         // RaftModel.addCommonParts 'bottom': TWO stacked planks, the
@@ -2347,19 +2360,21 @@ fn build_boat_parts(raft: bool, chest: bool) -> Vec<Part> {
             children: vec![],
         });
     }
-    // THE PADDLES (the AbstractBoatModel.setupAnim's rowingTime-0 rest the
-    // client's own clock never rides — the shaft + the blade each): the
-    // boat's texOffs (62,0)/(62,20) at pivot y −5, the raft's (0,24)/(40,24)
-    // at y −4, the right paddle's yRot the side-1 fold's π − 0
+    // THE PADDLES (the AbstractBoatModel.setupAnim's own walk —
+    // animatePaddle(rowingTimeLeft, 0, leftPaddle) then
+    // animatePaddle(rowingTimeRight, 1, rightPaddle), the phase the
+    // client's paddlePositions clock feeds): the boat's texOffs
+    // (62,0)/(62,20) at pivot y −5, the raft's (0,24)/(40,24) at y −4,
+    // the right paddle's yRot the side-1 fold's π − yRot
     let (tex_l, tex_r, pad_pivot_y) = if raft {
         ((0.0f32, 24.0f32), (40.0f32, 24.0f32), -4.0f32)
     } else {
         ((62.0f32, 0.0f32), (62.0f32, 20.0f32), -5.0f32)
     };
-    let paddle = |tex: (f32, f32), pivot_y: f32, pivot_z: f32, y_rot: f32| Part {
+    let paddle = |tex: (f32, f32), pivot_y: f32, pivot_z: f32, pose: (f32, f32)| Part {
         pivot: [3.0, pivot_y, pivot_z],
-        x_rot: pad_x,
-        y_rot,
+        x_rot: pose.0,
+        y_rot: pose.1,
         z_rot: PADDLE_TILT,
         cubes: vec![
             Cube {
@@ -2379,8 +2394,13 @@ fn build_boat_parts(raft: bool, chest: bool) -> Vec<Part> {
         ],
         children: vec![],
     };
-    parts.push(paddle(tex_l, pad_pivot_y, 9.0, 0.0));
-    parts.push(paddle(tex_r, pad_pivot_y, -9.0, pad_y_right));
+    parts.push(paddle(tex_l, pad_pivot_y, 9.0, pose_left));
+    parts.push(paddle(
+        tex_r,
+        pad_pivot_y,
+        -9.0,
+        animate_paddle(rowing_right, 1),
+    ));
     // THE CHEST VARIANT (createChestBoatModel / createChestRaftModel's own
     // three cubes): the bottom (0,76) 12x8x12, the lid (0,59) 12x4x12, the
     // lock (0,59) 2x4x1 — all yRot −π/2, the pivots the model kind's own
@@ -3864,18 +3884,18 @@ mod tests {
             raft: false,
         };
         let feet = Vec3::new(10.0, 64.0, -20.0);
-        let quads = boat.quads(0.0, false, feet, 0.0, 0.0);
+        let quads = boat.quads(0.0, false, feet, 0.0, 0.0, 0.0, 0.0);
         assert_eq!(quads.len(), 54, "5 hull parts + 2 paddles, 6 quads a cube");
-        let chest = boat.quads(0.0, true, feet, 0.0, 0.0);
+        let chest = boat.quads(0.0, true, feet, 0.0, 0.0, 0.0, 0.0);
         assert_eq!(chest.len(), 72, "the chest variant's three cubes ride +18");
         let raft = BoatModel {
             rgba: vec![255u8; 128 * 64 * 4],
             tex_h: 64,
             raft: true,
         };
-        let raft_quads = raft.quads(0.0, false, feet, 0.0, 0.0);
+        let raft_quads = raft.quads(0.0, false, feet, 0.0, 0.0, 0.0, 0.0);
         assert_eq!(raft_quads.len(), 36, "the two-plank bottom, no rails");
-        let raft_chest = raft.quads(0.0, true, feet, 0.0, 0.0);
+        let raft_chest = raft.quads(0.0, true, feet, 0.0, 0.0, 0.0, 0.0);
         assert_eq!(raft_chest.len(), 54, "the chest raft rides +18 too");
 
         // THE HULL'S VERTICAL SPAN (the model numbers' own word): the
@@ -3923,6 +3943,66 @@ mod tests {
         assert!(pin.is_some(), "the keel corner rides the submit fold");
     }
 
+    /// THE PADDLE'S OWN SWING (javap AbstractBoatModel.animatePaddle's
+    /// own walk — `xRot = clampedLerp((sin(t)+1)/2, −60°, −15°)`,
+    /// `yRot = clampedLerp((sin(t)+1)/2, −45°, +45°)`, the side-1 fold
+    /// `yRot = π − yRot`): the rowingTime-0 word IS the rest pose the
+    /// previous lane pinned, the phase extremes the sin fold's 0/1
+    /// fracs speak, and the ANIMATED quads differ from the rest (the
+    /// rowing oar the client's own clock rows).
+    #[test]
+    fn the_paddle_animates_the_rowing_clock() {
+        // THE REST (t = 0): the previous lane's own pins — the left
+        // paddle's yRot 0, the right's the side-1 fold's π, both
+        // xRot the −37.5° midpoint
+        let (rest_x, rest_y_left) = animate_paddle(0.0, 0);
+        let (rest_x_r, rest_y_right) = animate_paddle(0.0, 1);
+        assert!(
+            (rest_x - -0.6544984877109527).abs() < 1e-6,
+            "the −0.6545 rest the rowingTime-0 fold speaks: {rest_x}"
+        );
+        assert!((rest_x_r - rest_x).abs() < 1e-6, "both paddles one rest xRot");
+        assert!(rest_y_left.abs() < 1e-6, "the left paddle's yRot 0");
+        assert!(
+            (rest_y_right - std::f32::consts::PI).abs() < 1e-6,
+            "the right paddle's side-1 fold: {rest_y_right}"
+        );
+        // THE PHASE EXTREMES (the sin fold's own fracs): t = π/2 →
+        // frac 1 → xRot −15°, yRot +45° (the right's π − 45°); t =
+        // −π/2 → frac 0 → xRot −60°, yRot −45°
+        let (peak_x, peak_y) = animate_paddle(std::f32::consts::FRAC_PI_2, 0);
+        assert!((peak_x - -0.2617993950843811).abs() < 1e-6, "the −15° peak: {peak_x}");
+        assert!((peak_y - 0.7853981852531433).abs() < 1e-6, "the +45° peak: {peak_y}");
+        let (low_x, low_y) = animate_paddle(-std::f32::consts::FRAC_PI_2, 0);
+        assert!((low_x - -1.0471975803375244).abs() < 1e-6, "the −60° trough: {low_x}");
+        assert!((low_y - -0.7853981852531433).abs() < 1e-6, "the −45° trough: {low_y}");
+        // THE SIDE-1 FOLD AT THE PEAK (π − 45° the right paddle's own word)
+        let (_, peak_y_r) = animate_paddle(std::f32::consts::FRAC_PI_2, 1);
+        assert!(
+            (peak_y_r - (std::f32::consts::PI - 0.7853981852531433)).abs() < 1e-6,
+            "the side-1 fold's own peak: {peak_y_r}"
+        );
+        // THE ANIMATED MESH (the swing the client's clock rows): the
+        // counts the rest keeps (the pose never adds a quad) and the
+        // paddle corner the phase MOVES (the rowing oar the rest never
+        // freezes)
+        let boat = BoatModel {
+            rgba: vec![255u8; 128 * 64 * 4],
+            tex_h: 64,
+            raft: false,
+        };
+        let feet = Vec3::new(10.0, 64.0, -20.0);
+        let rest = boat.quads(0.0, false, feet, 0.0, 0.0, 0.0, 0.0);
+        assert_eq!(rest.len(), 54, "the swing never adds a quad");
+        let swung = boat.quads(0.0, false, feet, 0.0, 0.0, std::f32::consts::FRAC_PI_2, 0.0);
+        assert_eq!(swung.len(), 54, "the swing keeps the count");
+        let moved = rest
+            .iter()
+            .zip(&swung)
+            .any(|(r, s)| r.pts != s.pts);
+        assert!(moved, "the rowing phase moves the left paddle's own points");
+    }
+
     /// THE BOAT TEXTURE GATE (the load's own honesty — the runtime
     /// extract the sha1s verify): the oak loads (128×64), the chest
     /// band loads (128×128), the unknown wood refuses.
@@ -3938,17 +4018,17 @@ mod tests {
             dir = dir.parent().expect("the runtime root above").to_path_buf();
         };
         let oak = BoatModel::load(&root, false, false, "oak").expect("the oak texture loads");
-        let quads = oak.quads(0.0, false, Vec3::new(0.0, 0.0, 0.0), 0.0, 0.0);
+        let quads = oak.quads(0.0, false, Vec3::new(0.0, 0.0, 0.0), 0.0, 0.0, 0.0, 0.0);
         assert_eq!(quads.len(), 54, "the real texture draws the real hull");
         let chest_oak = BoatModel::load(&root, false, true, "oak").expect("the chest band loads");
-        let chest_quads = chest_oak.quads(0.0, true, Vec3::new(0.0, 0.0, 0.0), 0.0, 0.0);
+        let chest_quads = chest_oak.quads(0.0, true, Vec3::new(0.0, 0.0, 0.0), 0.0, 0.0, 0.0, 0.0);
         assert_eq!(chest_quads.len(), 72, "the chest cubes ride the real band");
         assert!(
             BoatModel::load(&root, false, false, "unknown_wood").is_none(),
             "the unknown wood refuses"
         );
         let raft = BoatModel::load(&root, true, false, "bamboo").expect("the raft loads");
-        let raft_quads = raft.quads(0.0, false, Vec3::new(0.0, 0.0, 0.0), 0.0, 0.0);
+        let raft_quads = raft.quads(0.0, false, Vec3::new(0.0, 0.0, 0.0), 0.0, 0.0, 0.0, 0.0);
         assert_eq!(raft_quads.len(), 36, "the plank deck the raft speaks");
     }
 

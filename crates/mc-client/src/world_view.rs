@@ -451,6 +451,9 @@ pub struct WirePlayerList {
 /// the eye height; the body's own pose rides the feet verbatim.
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct WireRide {
+    /// The vehicle's own id (the belief's key — the paddle clock's
+    /// index, the input-derived paddle booleans' override target).
+    pub vehicle_id: i32,
     pub feet_x: f64,
     pub feet_y: f64,
     pub feet_z: f64,
@@ -519,12 +522,22 @@ pub fn ride_view(model: &WorldModel) -> Option<WireRide> {
     let ax = lx * cos + lz * sin;
     let az = -lx * sin + lz * cos;
     Some(WireRide {
+        vehicle_id,
         feet_x: vehicle.x + ax,
         feet_y: vehicle.y + ride_height as f64,
         feet_z: vehicle.z + az,
         vehicle_yaw: vehicle.y_rot,
     })
 }
+
+/// THE PADDLE ACCESSORS' OWN INDICES (the SynchedEntityData defineId
+/// walk's own count — Entity's clinit defines EIGHT base accessors
+/// (flags 0 .. frozen 7), VehicleEntity's three (hurt 8, hurtDir 9,
+/// damage 10), and AbstractBoat's own three then land: PADDLE_LEFT
+/// 11, PADDLE_RIGHT 12, BUBBLE_TIME 13 — the BOOLEAN serializer ids
+/// the boat's clinit passes). The boats_view read's own keys.
+pub const BOAT_DATA_PADDLE_LEFT: u8 = 11;
+pub const BOAT_DATA_PADDLE_RIGHT: u8 = 12;
 
 /// One wire boat as the renderer consumes it — the Add Entity snapshot's
 /// pose verbatim (the server's own word, the same lane the mobs ride) plus
@@ -551,6 +564,19 @@ pub struct WireBoat {
     /// the wood the registry named (`oak`, `bamboo`, ... — the texture
     /// path's own word, the unknown wood the load gate refuses).
     pub wood: String,
+    /// THE PADDLE STATE (AbstractBoat.getPaddleState's own walk —
+    /// `entityData.get(side == 1 ? DATA_ID_PADDLE_RIGHT :
+    /// DATA_ID_PADDLE_LEFT) && getControllingPassenger() != null`):
+    /// the wire's boolean accessor (index 11 left / 12 right, the
+    /// defineId walk's own count — Entity's eight base accessors +
+    /// VehicleEntity's hurt 8 / hurtDir 9 / damage 10 + the boat's
+    /// own three) AND the rider gate the belief's non-empty list
+    /// keeps (a vanilla server only speaks a moving paddle while a
+    /// controlling passenger rides — the client's own copy the gate
+    /// re-derives; the projection's honest word for the remote
+    /// hulls the booleans already encode).
+    pub paddle_left: bool,
+    pub paddle_right: bool,
 }
 
 /// THE BOAT FAMILY'S OWN NAME PARSE (the 26.2 registry's per-wood entity
@@ -597,6 +623,20 @@ pub fn boats_view(model: &WorldModel) -> Vec<WireBoat> {
         .filter_map(|(id, e)| {
             let name = model.entity_type_name(e.type_id)?;
             let (kind, chest, wood) = boat_family_parts(name)?;
+            // THE PADDLE READ (the getPaddleState walk): the wire's
+            // boolean accessor AND the rider gate — the boat's own
+            // belief list non-empty (the controlling passenger the
+            // first rider's own word keeps)
+            let gate = model
+                .vehicle_passengers(id)
+                .is_some_and(|riders| !riders.is_empty());
+            let paddle = |index: u8| {
+                gate
+                    && matches!(
+                        e.data.get(&index),
+                        Some(mc_protocol::EntityDataEntry::Bool(true))
+                    )
+            };
             Some(WireBoat {
                 id,
                 x: e.x,
@@ -606,6 +646,8 @@ pub fn boats_view(model: &WorldModel) -> Vec<WireBoat> {
                 raft: kind == "raft",
                 chest,
                 wood: wood.to_string(),
+                paddle_left: paddle(BOAT_DATA_PADDLE_LEFT),
+                paddle_right: paddle(BOAT_DATA_PADDLE_RIGHT),
             })
         })
         .collect()
@@ -919,6 +961,14 @@ pub enum ContainerCommand {
         shift: bool,
         sprint: bool,
     },
+    /// THE PADDLE WIRE (the vanilla `AbstractBoat.tick`'s own send —
+    /// ONE ServerboundPaddleBoatPacket every client tick while the
+    /// boat carries the local player, the two booleans the
+    /// controlBoat law derived from the input record): the riding
+    /// tick's unconditional word, the server stores the booleans
+    /// into the boat's entity data (the echo the Set Entity Data
+    /// lane speaks back to every viewer).
+    PaddleBoat { left: bool, right: bool },
 }
 
 /// The camera's pose in the VANILLA wire degrees — the inverse of
@@ -4504,6 +4554,110 @@ mod tests {
         assert!(chest.chest, "the chest variant's own bit");
         assert!(!chest.raft, "the chest boat rides the railed hull");
         assert_eq!(chest.wood, "oak", "the chest boat's own wood");
+    }
+
+    #[test]
+    fn the_boat_paddles_speak_the_wire_booleans_and_the_rider_gate() {
+        use crate::world_view::{boats_view, BOAT_DATA_PADDLE_LEFT, BOAT_DATA_PADDLE_RIGHT};
+        use mc_protocol::play::{EntityDataSet, SetEntityDataEntry, EntitySpawn};
+        use mc_protocol::{EntityDataEntry as Val, PlayEvent, WorldInfo};
+        let mut model = WorldModel::new();
+        model.registry.entity_types = vec!["minecraft:oak_boat".to_string()];
+        model.apply(PlayEvent::Spawn(EntitySpawn {
+            id: 7,
+            uuid: 7,
+            type_id: 0,
+            x: 1.0,
+            y: 64.0,
+            z: -2.0,
+            movement: [0.0; 3],
+            x_rot: 0.0,
+            y_rot: 45.0,
+            y_head_rot: 0.0,
+            data: 0,
+        }));
+        // THE ACCESSOR INDICES (the defineId walk's own count: Entity's
+        // eight base + VehicleEntity's hurt/hurtDir/damage 8/9/10, the
+        // boat's own paddles 11/12 the clinit order speaks)
+        assert_eq!(BOAT_DATA_PADDLE_LEFT, 11);
+        assert_eq!(BOAT_DATA_PADDLE_RIGHT, 12);
+        // THE SILENCE (no wire word, no riders): both paddles rest
+        let boats = boats_view(&model);
+        let boat = boats.iter().find(|b| b.id == 7).unwrap();
+        assert!(
+            !boat.paddle_left && !boat.paddle_right,
+            "the silence never rows"
+        );
+        // THE BOOLEANS WITHOUT THE GATE (the empty rider list — the
+        // controlling passenger the getPaddleState gate demands): the
+        // wire's true booleans still refuse
+        model.apply(PlayEvent::EntityData(EntityDataSet {
+            id: 7,
+            entries: vec![
+                SetEntityDataEntry {
+                    index: BOAT_DATA_PADDLE_LEFT,
+                    serializer: 8,
+                    value: Val::Bool(true),
+                },
+                SetEntityDataEntry {
+                    index: BOAT_DATA_PADDLE_RIGHT,
+                    serializer: 8,
+                    value: Val::Bool(true),
+                },
+            ],
+        }));
+        let boats = boats_view(&model);
+        let boat = boats.iter().find(|b| b.id == 7).unwrap();
+        assert!(
+            !boat.paddle_left && !boat.paddle_right,
+            "no controlling passenger, no row — the gate holds"
+        );
+        // THE GATE OPENS (the rider boards — the Set Passengers belief
+        // the mount law keeps): the wire's booleans speak
+        model.apply(PlayEvent::SetPassengers(mc_protocol::SetPassengers {
+            vehicle: 7,
+            passengers: vec![1],
+        }));
+        let boats = boats_view(&model);
+        let boat = boats.iter().find(|b| b.id == 7).unwrap();
+        assert!(
+            boat.paddle_left && boat.paddle_right,
+            "the rower aboard, the wire's own booleans speak"
+        );
+        // THE ONE-SIDED WORD (the left boolean false again — the A-key
+        // turn the right paddle rows): the per-side walk stays honest
+        model.apply(PlayEvent::EntityData(EntityDataSet {
+            id: 7,
+            entries: vec![SetEntityDataEntry {
+                index: BOAT_DATA_PADDLE_LEFT,
+                serializer: 8,
+                value: Val::Bool(false),
+            }],
+        }));
+        let boats = boats_view(&model);
+        let boat = boats.iter().find(|b| b.id == 7).unwrap();
+        assert!(
+            !boat.paddle_left && boat.paddle_right,
+            "the right paddle rows alone"
+        );
+        // THE RIDE'S OWN ID (the projection's word — the paddle clock's
+        // key, the input override's target)
+        model.info = Some(WorldInfo {
+            entity_id: 1,
+            hardcore: false,
+            dimensions: vec!["minecraft:overworld".to_string()],
+            view_distance: 8,
+            simulation_distance: 8,
+            portal_cooldown: 300,
+            current_dimension: "minecraft:overworld".to_string(),
+        });
+        let ride = crate::world_view::ride_view(&model).expect("the ride resolves");
+        assert_eq!(ride.vehicle_id, 7, "the vehicle's own id the ride ships");
+        assert_eq!(
+            ride.feet_y,
+            64.0 + (0.562f32 / 3.0) as f64,
+            "the ride height rides too (the f32 fold the constant keeps)"
+        );
     }
 
     #[test]

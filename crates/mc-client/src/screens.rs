@@ -219,6 +219,28 @@ pub fn ticks_due(acc_ms: f64) -> (u32, f64) {
     (ticks, capped - ticks as f64 * MILLIS_PER_TICK)
 }
 
+/// THE PADDLE'S OWN INCREMENT (the AbstractBoat.tick walk's own
+/// constant — `paddlePositions[i] += 0.39269909262657166` per tick
+/// while the paddle moves, the π/8 the raw_disasm lane's ldc_w
+/// #387 speaks, reset to 0.0 the silence keeps).
+pub const PADDLE_TICK_STEP: f32 = 0.39269909262657166;
+
+/// THE ROWING TIME (the vanilla `AbstractBoat.getRowingTime(IF)F`'s
+/// own law — the render feed the BoatRenderState.rowingTimeLeft/
+/// Right carry): a MOVING paddle's phase is
+/// `clampedLerp(partialTick, paddlePositions[side] − π/8,
+/// paddlePositions[side])` — one tick's own step behind the clock,
+/// the partial tick's fraction of the step folded back in — and a
+/// SILENT paddle's phase is `0.0` VERBATIM (the rest pose the
+/// animatePaddle's sin fold speaks, never a frozen swing).
+pub fn rowing_time(partial_tick: f32, moving: bool, pos: f32) -> f32 {
+    if !moving {
+        return 0.0;
+    }
+    let start = pos - PADDLE_TICK_STEP;
+    start + partial_tick.clamp(0.0, 1.0) * (pos - start)
+}
+
 /// THE BLOCK SCREEN TINT (javap `ScreenEffectRenderer.submit`'s own
 /// `ldc -15132391` = 0xFF191919): the rgb 25/255 the head-in-block
 /// quad's dark multiply speaks, the alpha 0xFF the opaque cover rides.
@@ -733,6 +755,17 @@ pub struct App {
     /// extract never retried, the boat unseen).
     pub boat_models:
         std::collections::HashMap<(bool, bool, String), Option<crate::avatar::BoatModel>>,
+    /// THE PADDLE CLOCK (the vanilla `AbstractBoat.paddlePositions`'s
+    /// own field, per boat): the client's own tick walk feeds it —
+    /// `paddlePositions[i] += π/8` while the paddle moves, `0.0` the
+    /// silence resets to (the raw_disasm walk's own 386-407 lane).
+    /// The ridden boat's booleans the INPUT derives (the controlBoat
+    /// law — the local player's own prediction, never gated on the
+    /// wire echo), the remote hulls' the projection's gated booleans
+    /// speak; the render's rowingTime lerp (the getRowingTime law)
+    /// reads it through [`rowing_time`]. Pruned on the refresh's
+    /// despawn (the ghost clocks the gone ids never keep).
+    pub paddle_positions: std::collections::HashMap<i32, [f32; 2]>,
     /// THE LAST SENT INPUT (the vanilla `LocalPlayer.lastSentInput`'s
     /// own law): the input record the wire last spoke — the CHANGE
     /// against it sends one ServerboundPlayerInputPacket, riding or
@@ -1459,6 +1492,7 @@ impl App {
             net_ride: None,
             net_boats: Vec::new(),
             boat_models: std::collections::HashMap::new(),
+            paddle_positions: std::collections::HashMap::new(),
             last_sent_input: mc_protocol::InputFlags::default(),
             world_is_network: false,
             world_skybox: Skybox::Overworld,
@@ -2296,6 +2330,7 @@ impl App {
             // pair the render's lerp walks, the age the bob speaks):
             if self.world_is_network {
                 self.tick_net_mobs();
+                self.tick_paddles();
             }
             if !self.world_is_network {
                 // THE SPAWNER'S BEAT (the vanilla spawn cycle's
@@ -7009,6 +7044,11 @@ impl App {
         if !self.world_is_network {
             return;
         }
+        // THE DESPAWN'S OWN PRUNE (the gone ids' ghost clocks never
+        // stay — the vanilla client's entity removal takes the
+        // paddlePositions with the boat)
+        let ids: std::collections::HashSet<i32> = boats.iter().map(|b| b.id).collect();
+        self.paddle_positions.retain(|k, _| ids.contains(k));
         self.net_boats = boats;
     }
 
@@ -7263,6 +7303,69 @@ impl App {
     /// subsequent death ticks keep the silence). The pitches ride the
     /// getVoicePitch law over the mob's own voice rng; the events land
     /// post-loop (the disjoint-borrow pattern the local lane speaks).
+    /// THE PADDLE CLOCK'S OWN TICK (the vanilla `AbstractBoat.tick`'s
+    /// own walk, the raw_disasm lane's own two halves): (1) the RIDDEN
+    /// boat's paddle booleans the INPUT derives — the controlBoat law's
+    /// own tail, `paddleLeft = inputRight && inputLeft ? inputUp :
+    /// inputRight || inputUp`, `paddleRight = inputLeft && inputRight
+    /// ? inputUp : inputLeft || inputUp` — the local player's own
+    /// prediction (the wire echo never gates it), and ONE
+    /// ServerboundPaddleBoatPacket sent UNCONDITIONALLY every tick
+    /// while the ride lasts (the bytecode's own 163-188 lane, no
+    /// change gate); (2) EVERY boat's clock walks — `+= π/8` while its
+    /// paddle moves (the input-derived word for the ridden hull, the
+    /// projection's gated booleans for the remote ones), `0.0` the
+    /// silence resets to (the bytecode's own 386-407 loop).
+    pub fn tick_paddles(&mut self) {
+        // THE INPUT-DERIVED BOOLEANS (the controlBoat law's own tail:
+        // inputLeft/right = the A/D keys, inputUp = the W key — the
+        // input record's raw booleans, the backward key never arms a
+        // paddle)
+        let ours: Option<(i32, bool, bool)> = self.net_ride.as_ref().map(|r| {
+            let f = &self.last_sent_input;
+            let left = if f.right && f.left {
+                f.forward
+            } else {
+                f.right || f.forward
+            };
+            let right = if f.left && f.right {
+                f.forward
+            } else {
+                f.left || f.forward
+            };
+            (r.vehicle_id, left, right)
+        });
+        // THE WIRE (every tick while riding — the vanilla's own
+        // unconditional send; the headless scenes' sink silence keeps)
+        if let Some((_, left, right)) = ours {
+            if let Some(sink) = self.live_clicks.as_ref() {
+                let _ = sink.send(crate::world_view::ContainerCommand::PaddleBoat {
+                    left,
+                    right,
+                });
+            }
+        }
+        // THE CLOCKS (every boat, both sides — the vanilla loop's own
+        // shape; the ridden hull's booleans the prediction overrides)
+        for boat in &self.net_boats {
+            let (moving_l, moving_r) = match ours {
+                Some((id, l, r)) if id == boat.id => (l, r),
+                _ => (boat.paddle_left, boat.paddle_right),
+            };
+            let entry = self.paddle_positions.entry(boat.id).or_insert([0.0; 2]);
+            entry[0] = if moving_l {
+                entry[0] + PADDLE_TICK_STEP
+            } else {
+                0.0
+            };
+            entry[1] = if moving_r {
+                entry[1] + PADDLE_TICK_STEP
+            } else {
+                0.0
+            };
+        }
+    }
+
     pub fn tick_net_mobs(&mut self) {
         let mut groans: Vec<(&'static str, f32, f64)> = Vec::new();
         let mut hurts: Vec<(&'static str, f32, f64)> = Vec::new();
@@ -9469,9 +9572,16 @@ impl App {
                 continue; // the texture failed its sha1 — this hull stays unseen
             };
             // THE SUBMIT POSE (the renderer's own fold — no lerp, no
-            // death flip, the hull the snapshot's word carries)
+            // death flip, the hull the snapshot's word carries) and
+            // THE PADDLES' OWN PHASE (the getRowingTime law the
+            // BoatRenderState carries — the clock's word through the
+            // partial-tick lerp, the silence the 0.0 rest speaks)
             let feet = Vec3::new(boat.x as f32, boat.y as f32, boat.z as f32);
-            let quads = model.quads(boat.yaw, boat.chest, feet, cam.yaw, cam.pitch);
+            let clock = self.paddle_positions.get(&boat.id).copied().unwrap_or([0.0; 2]);
+            let rowing_l = rowing_time(self.partial_tick, boat.paddle_left, clock[0]);
+            let rowing_r = rowing_time(self.partial_tick, boat.paddle_right, clock[1]);
+            let quads =
+                model.quads(boat.yaw, boat.chest, feet, cam.yaw, cam.pitch, rowing_l, rowing_r);
             let sampled: Vec<crate::raster::SampledQuad> = quads
                 .iter()
                 .map(|q| crate::raster::SampledQuad {
@@ -24514,6 +24624,7 @@ mod tests {
         // THE MOUNT SNAP (the fresh-mount law): the ride that appears
         // under the player turns the body's yaw to the vehicle's own
         let ride = WireRide {
+            vehicle_id: 7,
             feet_x: 5.0,
             feet_y: 64.2,
             feet_z: -3.0,
@@ -24579,6 +24690,8 @@ mod tests {
             raft: false,
             chest: false,
             wood: "oak".to_string(),
+            paddle_left: false,
+            paddle_right: false,
         }]);
         assert!(
             app.net_boats.is_empty(),
@@ -24599,6 +24712,8 @@ mod tests {
                 raft: false,
                 chest: false,
                 wood: "oak".to_string(),
+                paddle_left: false,
+                paddle_right: false,
             },
             WireBoat {
                 id: 9,
@@ -24609,10 +24724,151 @@ mod tests {
                 raft: true,
                 chest: true,
                 wood: "bamboo".to_string(),
+                paddle_left: false,
+                paddle_right: false,
             },
         ];
         app.live_boats_updated(boats.clone());
         assert_eq!(app.net_boats, boats, "the hulls land verbatim");
+    }
+
+    #[test]
+    fn the_paddle_clock_walks_the_vanilla_tick() {
+        use crate::world_view::{ContainerCommand, WireBoat, WireRide};
+        use crate::screens::{rowing_time, PADDLE_TICK_STEP};
+        let mut app = App::new(3);
+        app.net_world = Some(air_net_world(2, 0));
+        app.enter_network_world(None, Skybox::Overworld, None, None);
+        let (click_tx, click_rx) = std::sync::mpsc::channel::<ContainerCommand>();
+        app.attach_live_clicks(click_tx);
+        let boat = |id: i32, left: bool, right: bool| WireBoat {
+            id,
+            x: 10.0,
+            y: 64.0,
+            z: -20.0,
+            yaw: 0.0,
+            raft: false,
+            chest: false,
+            wood: "oak".to_string(),
+            paddle_left: left,
+            paddle_right: right,
+        };
+
+        // THE REMOTE CLOCK (the projection's gated booleans the walk
+        // feeds): a rowing hull advances π/8 per tick, a SILENT hull's
+        // clock the 0.0 reset keeps
+        app.live_boats_updated(vec![boat(5, true, false), boat(6, false, false)]);
+        app.update();
+        assert_eq!(
+            app.paddle_positions.get(&5).copied(),
+            Some([PADDLE_TICK_STEP, 0.0]),
+            "the left paddle rows, the right rests"
+        );
+        assert_eq!(
+            app.paddle_positions.get(&6).copied(),
+            Some([0.0, 0.0]),
+            "the silent hull's clock the reset keeps"
+        );
+        app.update();
+        assert_eq!(
+            app.paddle_positions.get(&5).copied(),
+            Some([PADDLE_TICK_STEP * 2.0, 0.0]),
+            "the phase climbs one step a tick"
+        );
+        // THE SILENCE RESETS (the rower lifts — the next tick's walk
+        // speaks 0.0, never a frozen swing)
+        app.live_boats_updated(vec![boat(5, false, false)]);
+        app.update();
+        assert_eq!(
+            app.paddle_positions.get(&5).copied(),
+            Some([0.0, 0.0]),
+            "the silence the vanilla loop resets to"
+        );
+
+        // THE RIDDEN HULL'S OVERRIDE (the controlBoat law the input
+        // record feeds — the wire echo never gates the local player's
+        // own prediction): W rows BOTH paddles, A rows the RIGHT one
+        // only (the turn's own stroke), and ONE PaddleBoat packet
+        // rides UNCONDITIONALLY every tick (the vanilla's own send)
+        app.last_sent_input = mc_protocol::InputFlags {
+            forward: true,
+            ..Default::default()
+        };
+        app.net_ride = Some(WireRide {
+            vehicle_id: 9,
+            feet_x: 10.0,
+            feet_y: 64.187,
+            feet_z: -20.0,
+            vehicle_yaw: 0.0,
+        });
+        app.live_boats_updated(vec![boat(9, false, false)]);
+        app.update();
+        assert_eq!(
+            app.paddle_positions.get(&9).copied(),
+            Some([PADDLE_TICK_STEP, PADDLE_TICK_STEP]),
+            "the W key rows both paddles — the prediction, not the echo"
+        );
+        match click_rx
+            .try_recv()
+            .expect("the ride's own tick speaks the paddle wire")
+        {
+            ContainerCommand::PaddleBoat { left, right } => {
+                assert!(left && right, "the input-derived booleans ride");
+            }
+            other => panic!("the wrong command rode the lane: {other:?}"),
+        }
+        app.last_sent_input = mc_protocol::InputFlags {
+            left: true,
+            ..Default::default()
+        };
+        app.update();
+        match click_rx
+            .try_recv()
+            .expect("the second tick's unconditional send")
+        {
+            ContainerCommand::PaddleBoat { left, right } => {
+                assert!(!left && right, "the A turn the RIGHT paddle strokes");
+            }
+            other => panic!("the wrong command rode the lane: {other:?}"),
+        }
+        assert_eq!(
+            app.paddle_positions.get(&9).copied(),
+            Some([0.0, PADDLE_TICK_STEP * 2.0]),
+            "the left paddle rests, the right climbs"
+        );
+        // THE DISMOUNT (the ride's drop): the wire falls silent, the
+        // clocks back to the projection's gated booleans
+        app.net_ride = None;
+        app.update();
+        assert!(
+            click_rx.try_recv().is_err(),
+            "no ride, no paddle wire"
+        );
+
+        // THE DESPAWN PRUNE (the gone ids' ghost clocks never stay)
+        app.live_boats_updated(vec![boat(11, true, true)]);
+        assert!(
+            !app.paddle_positions.contains_key(&9),
+            "the refreshed list's prune takes the gone hull's clock"
+        );
+
+        // THE ROWING TIME (the getRowingTime law): a moving paddle's
+        // phase the clock's one-tick-ago word through the partial
+        // lerp, a silent paddle's 0.0 verbatim
+        let pos = PADDLE_TICK_STEP * 3.0;
+        assert_eq!(rowing_time(0.0, false, pos), 0.0, "the silence the 0.0 keeps");
+        assert!(
+            (rowing_time(0.0, true, pos) - (pos - PADDLE_TICK_STEP)).abs() < 1e-6,
+            "the partial 0 folds to one tick behind the clock"
+        );
+        assert!(
+            (rowing_time(1.0, true, pos) - pos).abs() < 1e-6,
+            "the partial 1 folds to the clock's own word"
+        );
+        assert!(
+            (rowing_time(0.25, true, pos) - (pos - PADDLE_TICK_STEP * 0.75)).abs() < 1e-6,
+            "the quarter's own fraction"
+        );
     }
 }
 

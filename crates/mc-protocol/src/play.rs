@@ -132,6 +132,7 @@ pub mod serverbound {
         SB_SWING as SWING, SB_USE_ITEM as USE_ITEM, SB_USE_ITEM_ON as USE_ITEM_ON,
         SB_CLIENT_COMMAND as CLIENT_COMMAND, SB_INTERACT as INTERACT,
         SB_PLAYER_INPUT as PLAYER_INPUT,
+        SB_PADDLE_BOAT as PADDLE_BOAT,
         SB_PICK_ITEM_FROM_BLOCK as PICK_ITEM_FROM_BLOCK,
         SB_PICK_ITEM_FROM_ENTITY as PICK_ITEM_FROM_ENTITY,
         SB_BUNDLE_ITEM_SELECTED as BUNDLE_ITEM_SELECTED,
@@ -5470,6 +5471,24 @@ pub fn encode_player_input(flags: InputFlags) -> Vec<u8> {
     p
 }
 
+/// The PADDLE BOAT wire (the vanilla `AbstractBoat.tick`'s own send —
+/// the client's authoritative boat speaks ONE ServerboundPaddleBoat-
+/// Packet EVERY tick while it carries the local player, paddling or
+/// not: `level.sendPacketToServer(new ServerboundPaddleBoatPacket(
+/// getPaddleState(0), getPaddleState(1)))` — the raw_disasm walk's
+/// own 163-188 lane, NO change gate). The generated id 35,
+/// `minecraft:paddle_boat`; the body the class's own write walk
+/// keeps: `writeBoolean(left)` then `writeBoolean(right)` — TWO
+/// bytes, the left paddle first (FriendlyByteBuf.readBoolean's own
+/// one-byte truth).
+pub fn encode_paddle_boat(left: bool, right: bool) -> Vec<u8> {
+    let mut p = Vec::with_capacity(3);
+    write_varint(&mut p, serverbound::PADDLE_BOAT);
+    p.push(left as u8);
+    p.push(right as u8);
+    p
+}
+
 /// THE LOW-PRECISION VEC3 (the 26.2's own `net/minecraft/network/LpVec3`
 /// — the codec the Interact record's `location` field rides, the
 /// `Vec3.LP_STREAM_CODEC` the clinit's composite passes). THE WIRE
@@ -7262,6 +7281,17 @@ impl<S: Read + Write> PlaySession<S> {
         self.conn
             .send_packet(&encode_player_input(flags))
             .context("send player input")
+    }
+
+    /// The PADDLE BOAT wire (the vanilla `AbstractBoat.tick`'s own
+    /// send — every client tick while the boat carries the local
+    /// player, the two paddle booleans the controlBoat law derived:
+    /// the server stores them into the boat's entity data, the
+    /// echo the Set Entity Data lane speaks back).
+    pub fn paddle_boat(&mut self, left: bool, right: bool) -> Result<()> {
+        self.conn
+            .send_packet(&encode_paddle_boat(left, right))
+            .context("send paddle boat")
     }
 
     /// The client command (the vanilla `LocalPlayer`'s own
@@ -12865,6 +12895,21 @@ mod tests {
         // 43 then the ONE byte
         let p = encode_player_input(InputFlags { forward: true, jump: true, ..Default::default() });
         assert_eq!(p, vec![43, 1 | 16], "the id then the record's byte");
+    }
+
+    #[test]
+    fn the_paddle_boat_rides_the_two_booleans() {
+        // THE ID (the generated table's own word): 35,
+        // minecraft:paddle_boat — the ServerboundPaddleBoatPacket's
+        // type() the GamePacketTypes constant speaks
+        assert_eq!(serverbound::PADDLE_BOAT, 35, "minecraft:paddle_boat");
+        // THE BODY (the class's own write walk): writeBoolean(left)
+        // then writeBoolean(right) — TWO one-byte booleans, the left
+        // paddle first
+        assert_eq!(encode_paddle_boat(true, false), vec![35, 1, 0], "left only");
+        assert_eq!(encode_paddle_boat(false, true), vec![35, 0, 1], "right only");
+        assert_eq!(encode_paddle_boat(true, true), vec![35, 1, 1], "both row");
+        assert_eq!(encode_paddle_boat(false, false), vec![35, 0, 0], "the quiet ride");
     }
 
     #[test]

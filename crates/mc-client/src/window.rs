@@ -475,6 +475,13 @@ fn run_join(
                                 sprint,
                             })
                         }
+                        crate::world_view::ContainerCommand::PaddleBoat { left, right } => {
+                            // THE PADDLE WIRE (the vanilla AbstractBoat.tick's
+                            // own send): the two booleans the controlBoat law
+                            // derived — the generated-id-35 packet, the
+                            // server stores them into the boat's entity data
+                            session.paddle_boat(left, right)
+                        }
                     };
                     if let Err(e) = sent {
                         // a send failure is a transport error: a framed
