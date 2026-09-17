@@ -587,7 +587,7 @@ pub(crate) fn narrow_sin(angle: f32) -> f64 {
 /// ONE Mth.cos(D)F — the quarter-turn shift the +16384.0 speaks
 /// (65536 steps / 4): `SIN[(int)((long)(angle * 10430.378350470453 +
 /// 16384.0) & 65535)]` (see [`narrow_sin`]).
-fn narrow_cos(angle: f32) -> f64 {
+pub(crate) fn narrow_cos(angle: f32) -> f64 {
     let idx = (f64::from(angle) * 10430.378350470453 + 16384.0) as i64 & 65535;
     f64::from(table_sin_cell(idx))
 }

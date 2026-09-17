@@ -73,14 +73,23 @@ pub enum HullStatus {
     InAir,
 }
 
+/// THE DEGREE'S OWN RADIAN (the controlBoat fold's ldc word — the f32
+/// `0.01745329238474369` the π/180 rounding keeps, the sin/cos angles
+/// the thrust's direction folds multiply).
+pub const HULL_RAD: f32 = 0.01745329238474369;
+
 /// One hull's own physics state — the AbstractBoat fields the
-/// authoritative lane keeps: the delta's y word (the x/z the placed
-/// hull's zeros keep), the delta rotation the friction decays, the two
+/// authoritative lane keeps: the delta's three words (the y the float's
+/// lift keeps, the x/z the controlBoat thrust feeds and the friction
+/// decays — the placed hull's zeros the silence keeps), the delta
+/// rotation the friction decays and the ±1 folds turn, the two
 /// statuses the tick's head walks, the water level the detection's
 /// side effects write, the lastYd the move's checkFallDamage stores.
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct HullPhys {
+    pub delta_x: f64,
     pub delta_y: f64,
+    pub delta_z: f64,
     pub delta_rotation: f32,
     pub status: HullStatus,
     pub old_status: HullStatus,
@@ -91,7 +100,9 @@ pub struct HullPhys {
 impl Default for HullPhys {
     fn default() -> Self {
         Self {
+            delta_x: 0.0,
             delta_y: 0.0,
+            delta_z: 0.0,
             delta_rotation: 0.0,
             status: HullStatus::InAir,
             old_status: HullStatus::InAir,
@@ -402,7 +413,9 @@ pub fn hull_tick(
     // hull's zeros stay zeros), the y the gravity's own word adds, the
     // delta rotation the friction decays, the lift the 0.75 damping
     // folds (the d2 > 0 gate the bytecode keeps)
+    phys.delta_x *= f5 as f64;
     phys.delta_y += d0;
+    phys.delta_z *= f5 as f64;
     phys.delta_rotation *= f5;
     if d2 > 0.0 {
         phys.delta_y = (phys.delta_y + d2 * HULL_GRAVITY / 0.65) * 0.75;
@@ -417,6 +430,166 @@ pub fn hull_tick(
         phys.delta_y = 0.0;
     }
     ny
+}
+
+/// THE RIDER'S OWN INPUT (the controlBoat walk's four raw booleans —
+/// the KeyboardInput record the last_sent_input baseline keeps: the
+/// A/D the turn arms, the W the forward thrust, the S the reverse).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct HullInput {
+    pub left: bool,
+    pub right: bool,
+    pub up: bool,
+    pub down: bool,
+}
+
+/// javap controlBoat's own walk (raw_disasm over the 26.2 jar — the
+/// authoritative hull the offline ride speaks): the `!isVehicle` gate
+/// the CALLER's own Option keeps (no rider the walk never arms), the
+/// deltaRotation the ±1 folds turn (the f32 field the friction's tail
+/// decayed BEFORE this walk — the vanilla order the composition keeps),
+/// the single-turn thrust the 0.005 the `right != left && !up && !down`
+/// band speaks, the yaw the `setYRot(getYRot() + deltaRotation)` fold
+/// carries (BEFORE the up/down thrust reads — the bytecode's own
+/// order), the W the 0.04 adds, the S the 0.005 subtracts, the delta
+/// movement the `sin(-yaw·rad)·d0 / cos(yaw·rad)·d0` products absorb
+/// (the Mth table's own f32 cells, the products the f2d widens), and
+/// the paddle state the setPaddleState law speaks — the swapped
+/// mapping the boat's own sides keep (`paddleLeft = inputRight &&
+/// !inputLeft || inputUp`: the A key strokes the RIGHT paddle, the
+/// turn the law carries — the same words the wire lane's override
+/// speaks). Returns the new yaw + the two paddle booleans.
+pub fn hull_control(phys: &mut HullPhys, input: HullInput, yaw: f32) -> (f32, bool, bool) {
+    // THE DELTA ROTATION'S OWN FOLDS (the f32 field the ±1 turns)
+    if input.left {
+        phys.delta_rotation -= 1.0;
+    }
+    if input.right {
+        phys.delta_rotation += 1.0;
+    }
+    // THE THRUST LOCAL (the f32 var the bytecode's own slot 1 keeps)
+    let mut d0: f32 = 0.0;
+    if input.right != input.left && !input.up && !input.down {
+        // the single-turn's own 0.005 (the ldc 0.004999999888241291
+        // the f32 word widens)
+        d0 += 0.005;
+    }
+    // THE YAW FOLD (the setYRot the sum carries — the thrust's
+    // direction the NEW yaw reads)
+    let new_yaw = yaw + phys.delta_rotation;
+    if input.up {
+        // the forward's own 0.04 (the ldc 0.03999999910593033)
+        d0 += 0.04;
+    }
+    if input.down {
+        // the reverse's own 0.005
+        d0 -= 0.005;
+    }
+    // THE DELTA MOVEMENT'S OWN ABSORB (the Mth.sin(D)F / Mth.cos(D)F
+    // the table's own cells keep, the f32 products the f2d widens)
+    let rad = new_yaw * HULL_RAD;
+    phys.delta_x += (crate::world_model::narrow_sin(-rad) as f32 * d0) as f64;
+    phys.delta_z += (crate::world_model::narrow_cos(rad) as f32 * d0) as f64;
+    // THE PADDLE STATE (the setPaddleState law — the swapped mapping)
+    let paddle_left = (input.right && !input.left) || input.up;
+    let paddle_right = (input.left && !input.right) || input.up;
+    (new_yaw, paddle_left, paddle_right)
+}
+
+/// Entity.move's x/z axes over full cubes (the compound's own
+/// y-then-x-then-z order the caller's composition keeps — the y the
+/// hull_tick moved first, the x the z's own sweep resolves): the swept
+/// span the strict intersect trims, the +axis walk the nearest
+/// blocking cell's near plane minus the half width clamps, the -axis
+/// walk the far plane plus the half width, the blocked axis the
+/// delta's zero speaks. Returns the clamped (x, z).
+pub fn hull_move_xz(
+    phys: &mut HullPhys,
+    x: f64,
+    y: f64,
+    z: f64,
+    cell: &impl Fn(i32, i32, i32) -> u16,
+) -> (f64, f64) {
+    let hw = HULL_WIDTH / 2.0;
+    // THE X SWEEP (the box's z span the pre-move pose carries)
+    let dx = phys.delta_x;
+    let nx = x + dx;
+    let final_x = if dx == 0.0 {
+        x
+    } else {
+        let (min_z, max_z) = (z - hw, z + hw);
+        let (min_x, max_x) = (nx.min(x) - hw, nx.max(x) + hw);
+        let mut best: Option<f64> = None;
+        for cx in (min_x.floor() as i32)..=(max_x.floor() as i32) {
+            for cy in (y.floor() as i32)..=((y + HULL_HEIGHT).floor() as i32 + 1) {
+                for cz in (min_z.floor() as i32)..=(max_z.floor() as i32) {
+                    if !solid(cell(cx, cy, cz)) {
+                        continue;
+                    }
+                    if !span_hits(cx as f64, cx as f64 + 1.0, nx - hw, nx + hw)
+                        || !span_hits(cy as f64, cy as f64 + 1.0, y, y + HULL_HEIGHT)
+                        || !span_hits(cz as f64, cz as f64 + 1.0, min_z, max_z)
+                    {
+                        continue;
+                    }
+                    best = Some(match (best, dx < 0.0) {
+                        (Some(b), true) => b.max(cx as f64 + 1.0),
+                        (Some(b), false) => b.min(cx as f64),
+                        (None, true) => cx as f64 + 1.0,
+                        (None, false) => cx as f64,
+                    });
+                }
+            }
+        }
+        match best {
+            Some(b_lo) if dx < 0.0 => nx.max(b_lo + hw),
+            Some(b_hi) => nx.min(b_hi - hw),
+            None => nx,
+        }
+    };
+    if final_x != x + dx {
+        phys.delta_x = 0.0;
+    }
+    // THE Z SWEEP (the box's x span the x-resolved position carries)
+    let dz = phys.delta_z;
+    let nz = z + dz;
+    let final_z = if dz == 0.0 {
+        z
+    } else {
+        let (min_x, max_x) = (final_x - hw, final_x + hw);
+        let (min_z, max_z) = (nz.min(z) - hw, nz.max(z) + hw);
+        let mut best: Option<f64> = None;
+        for cz in (min_z.floor() as i32)..=(max_z.floor() as i32) {
+            for cy in (y.floor() as i32)..=((y + HULL_HEIGHT).floor() as i32 + 1) {
+                for cx in (min_x.floor() as i32)..=(max_x.floor() as i32) {
+                    if !solid(cell(cx, cy, cz)) {
+                        continue;
+                    }
+                    if !span_hits(cz as f64, cz as f64 + 1.0, nz - hw, nz + hw)
+                        || !span_hits(cy as f64, cy as f64 + 1.0, y, y + HULL_HEIGHT)
+                        || !span_hits(cx as f64, cx as f64 + 1.0, min_x, max_x)
+                    {
+                        continue;
+                    }
+                    best = Some(match (best, dz < 0.0) {
+                        (Some(b), true) => b.max(cz as f64 + 1.0),
+                        (Some(b), false) => b.min(cz as f64),
+                        (None, true) => cz as f64 + 1.0,
+                        (None, false) => cz as f64,
+                    });
+                }
+            }
+        }
+        match best {
+            Some(b_lo) if dz < 0.0 => nz.max(b_lo + hw),
+            Some(b_hi) => nz.min(b_hi - hw),
+            None => nz,
+        }
+    };
+    if final_z != z + dz {
+        phys.delta_z = 0.0;
+    }
+    (final_x, final_z)
 }
 
 #[cfg(test)]
@@ -444,6 +617,206 @@ mod tests {
             return crate::world::STONE;
         }
         AIR
+    }
+
+    /// THE X WALL FIXTURE: the solid column at x=2, everything else
+    /// air — the wall the x sweep's own clamp speaks.
+    fn wall_cell(x: i32, _y: i32, _z: i32) -> u16 {
+        if x == 2 {
+            return crate::world::STONE;
+        }
+        AIR
+    }
+
+    /// THE Z WALL FIXTURE: the solid column at z=2 — the z sweep's own
+    /// clamp speaks (the box's x span the x-resolved position carries).
+    fn zwall_cell(_x: i32, _y: i32, z: i32) -> u16 {
+        if z == 2 {
+            return crate::world::STONE;
+        }
+        AIR
+    }
+
+    #[test]
+    fn the_control_walks_the_bytecode_folds() {
+        // THE D KEY (the right's own +1, the yaw the sum carries, the
+        // single-turn's 0.005 thrust the band arms — the direction the
+        // NEW yaw's sin/cos cells read)
+        let mut p = HullPhys::default();
+        let (yaw, pl, pr) = hull_control(
+            &mut p,
+            HullInput {
+                left: false,
+                right: true,
+                up: false,
+                down: false,
+            },
+            0.0,
+        );
+        assert_eq!(p.delta_rotation, 1.0, "the right's own +1");
+        assert_eq!(yaw, 1.0, "the yaw the sum carries");
+        assert_eq!(
+            p.delta_z,
+            (crate::world_model::narrow_cos(yaw * HULL_RAD) as f32 * 0.005f32) as f64,
+            "the thrust the cos cell carries"
+        );
+        assert_eq!(
+            p.delta_x,
+            (crate::world_model::narrow_sin(-(yaw * HULL_RAD)) as f32 * 0.005f32) as f64,
+            "the drift the sin's negated word carries"
+        );
+        assert!(pl && !pr, "the LEFT paddle the D key strokes (the swapped law)");
+        // THE W THRUST AT YAW 0 (the table's own 0/1 cells: sin 0.0,
+        // cos 1.0 — the f32 products the exact words keep)
+        let mut p = HullPhys::default();
+        let (yaw, pl, pr) = hull_control(
+            &mut p,
+            HullInput {
+                left: false,
+                right: false,
+                up: true,
+                down: false,
+            },
+            0.0,
+        );
+        assert_eq!(p.delta_x, 0.0, "the sin cell the zero yaw silences");
+        assert_eq!(
+            p.delta_z,
+            0.04f32 as f64,
+            "the forward's own 0.04 the cos 1.0 keeps (the f32's own widen)"
+        );
+        assert_eq!(yaw, 0.0, "the straight run the yaw never turns");
+        assert_eq!(p.delta_rotation, 0.0, "the no-turn the rotation keeps");
+        assert!(pl && pr, "the W the both paddles strokes");
+        // THE REVERSE (the 0.005 the S subtracts)
+        let mut p = HullPhys::default();
+        let _ = hull_control(
+            &mut p,
+            HullInput {
+                left: false,
+                right: false,
+                up: false,
+                down: true,
+            },
+            0.0,
+        );
+        assert_eq!(p.delta_z, -0.005f32 as f64, "the reverse's own word");
+        // THE BOTH-KEYS BRAKE (the band the right == left refuses — no
+        // thrust, no turn, the paddles the silence keeps)
+        let mut p = HullPhys::default();
+        let (_, pl, pr) = hull_control(
+            &mut p,
+            HullInput {
+                left: true,
+                right: true,
+                up: false,
+                down: false,
+            },
+            0.0,
+        );
+        assert_eq!(p.delta_x + p.delta_z, 0.0, "the both-keys the thrust never arms");
+        assert_eq!(p.delta_rotation, 0.0, "the ±1 the cancels keep");
+        assert!(!pl && !pr, "the both-keys the paddles silence");
+        // THE A KEY (the left's own −1 over the yaw 5, the RIGHT paddle
+        // the swap strokes)
+        let mut p = HullPhys::default();
+        let (yaw, pl, pr) = hull_control(
+            &mut p,
+            HullInput {
+                left: true,
+                right: false,
+                up: false,
+                down: false,
+            },
+            5.0,
+        );
+        assert_eq!(p.delta_rotation, -1.0, "the left's own −1");
+        assert_eq!(yaw, 4.0, "the yaw the sum carries");
+        assert!(!pl && pr, "the A the right paddle strokes");
+        // THE W + A TOGETHER (the band the up refuses — the 0.005 never
+        // arms, the 0.04 alone speaks, the turn the ±1 keeps)
+        let mut p = HullPhys::default();
+        let (yaw, pl, pr) = hull_control(
+            &mut p,
+            HullInput {
+                left: true,
+                right: false,
+                up: true,
+                down: false,
+            },
+            0.0,
+        );
+        assert_eq!(p.delta_rotation, -1.0, "the turn the W never blocks");
+        assert_eq!(yaw, -1.0, "the yaw the sum carries");
+        assert_eq!(
+            p.delta_z,
+            (crate::world_model::narrow_cos(yaw * HULL_RAD) as f32 * 0.04f32) as f64,
+            "the 0.04 alone the band's skip keeps"
+        );
+        assert!(pl && pr, "the W the both paddles stroke through the turn");
+    }
+
+    #[test]
+    fn the_move_xz_clamps_the_walls() {
+        // THE +X WALK (the wall the near plane keeps: the box's right
+        // edge touches cx=2's left plane exactly — the touching
+        // boundary never intersects — the delta the block zeroes)
+        let mut p = HullPhys::default();
+        p.delta_x = 1.5;
+        let (nx, nz) = hull_move_xz(&mut p, 0.0, 10.0, 0.0, &wall_cell);
+        assert_eq!(nx, 2.0 - HULL_WIDTH / 2.0, "the near plane's own clamp");
+        assert_eq!(nz, 0.0, "the idle axis the pass keeps");
+        assert_eq!(p.delta_x, 0.0, "the blocked axis the zero keeps");
+        // THE -X WALK (the far plane plus the half width — the box's
+        // left edge touches the wall's right plane exactly)
+        let mut p = HullPhys::default();
+        p.delta_x = -0.4;
+        let (nx, _) = hull_move_xz(&mut p, 3.7, 10.0, 0.0, &wall_cell);
+        assert_eq!(nx, 3.0 + HULL_WIDTH / 2.0, "the far plane's own clamp");
+        assert_eq!(p.delta_x, 0.0, "the blocked axis the zero keeps");
+        // THE Z SWEEP (the x the resolved position carries — the z wall
+        // the box's own x span tests)
+        let mut p = HullPhys::default();
+        p.delta_x = 1.5;
+        p.delta_z = 1.5;
+        let (nx, nz) = hull_move_xz(&mut p, 0.0, 10.0, 0.0, &zwall_cell);
+        assert_eq!(nx, 1.5, "the free x the pass keeps");
+        assert_eq!(nz, 2.0 - HULL_WIDTH / 2.0, "the z wall's own clamp");
+        assert_eq!(p.delta_z, 0.0, "the blocked z the zero keeps");
+        assert_eq!(p.delta_x, 1.5, "the free x the delta keeps");
+        // THE OPEN AIR (no blocker the honest pass keeps — the deltas
+        // the walk never touches)
+        let mut p = HullPhys::default();
+        p.delta_x = 0.3;
+        p.delta_z = -0.2;
+        let (nx, nz) = hull_move_xz(&mut p, 0.0, 10.0, 0.0, &wall_cell);
+        assert_eq!((nx, nz), (0.3, -0.2), "the open air's own pass");
+        assert_eq!(p.delta_x, 0.3, "the pass the delta keeps");
+        // THE DIAGONAL (the x the wall clamps, the z the free walk
+        // carries — the compound's own per-axis shape)
+        let mut p = HullPhys::default();
+        p.delta_x = 1.5;
+        p.delta_z = 0.3;
+        let (nx, nz) = hull_move_xz(&mut p, 0.0, 10.0, 0.0, &wall_cell);
+        assert_eq!(nx, 2.0 - HULL_WIDTH / 2.0, "the wall the x clamps");
+        assert_eq!(nz, 0.3, "the z the free axis carries");
+    }
+
+    #[test]
+    fn the_friction_decays_the_thrust_words() {
+        // THE FLOAT'S OWN TAIL (the InAir f5 0.9 the x/z multiplies —
+        // the decay the control's own add PRECEDES, the vanilla order
+        // the composition keeps)
+        let mut p = HullPhys::default();
+        p.delta_x = 0.04;
+        p.delta_z = 0.04;
+        let y = hull_tick(&mut p, 5.0, 20.0, 5.0, &pool_cell);
+        // THE F32'S OWN WIDENING (the Java double×float the f64 carry
+        // keeps — 0.9f32's widen the exact multiplier speaks)
+        let f5 = 0.9f32 as f64;
+        assert_eq!(p.delta_x, 0.04 * f5, "the x the friction decays");
+        assert_eq!(p.delta_z, 0.04 * f5, "the z the friction decays");
+        assert_eq!(y, 20.0 - 0.04, "the air fall the y keeps");
     }
 
     #[test]
@@ -570,7 +943,9 @@ mod tests {
         // level above 11.0, the -bbHeight, the +0.101), the delta the
         // zero keeps, the move the return skips
         let mut phys = HullPhys {
+            delta_x: 0.0,
             delta_y: -0.04,
+            delta_z: 0.0,
             status: HullStatus::InAir,
             old_status: HullStatus::InAir,
             water_level: 0.0,

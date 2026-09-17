@@ -2351,6 +2351,19 @@ impl App {
                         fx = v.x + lx * cos;
                         fy = v.y + r.ride_height as f64;
                         fz = v.z + (-lx) * sin;
+                        // THE ROTATION DRAG (positionRider's own law —
+                        // `passenger.setYRot(getYRot() + deltaRotation)`
+                        // the control's own word carries, the
+                        // clampRotation's ±105° band the wire lane's
+                        // boat_rider_yaw_after encodes — the local hull
+                        // the delta the fold itself speaks, never the
+                        // observed wire word the snapshots need)
+                        let dr = self
+                            .offline_boat_phys
+                            .get(&r.vehicle_id)
+                            .map(|p| p.delta_rotation)
+                            .unwrap_or(0.0);
+                        b.yaw = boat_rider_yaw_after(b.yaw, v.yaw, dr);
                     }
                     // THE PREV TRIO (the carried path's own trail — the
                     // render's partial-tick lerp anchors at the pose
@@ -9239,10 +9252,13 @@ impl App {
     /// authoritative lane the singleplayer keeps: the status detection
     /// (hull_status's own bands), the floatBoat folds (the splash-down
     /// arm, the lift the water line keeps, the gravity's own word),
-    /// the y-move's clamp (Entity.move's axis over full cubes). The
-    /// hull's new y the walk returns, the boat's own pose the write
-    /// carries. The wire's hulls stay the server's (the gate at the
-    /// call site the offline lane keeps).
+    /// the y-move's clamp (Entity.move's axis over full cubes), the
+    /// CONTROL the rider's input speaks (the `!isVehicle` gate the
+    /// offline ride's own Option keeps — the deltaRotation's ±1 folds,
+    /// the yaw's sum, the thrust the delta absorbs, the paddle state
+    /// the input law sets), and the x/z move's swept clamp (the
+    /// compound's own y-then-x-then-z order). The wire's hulls stay the
+    /// server's (the gate at the call site the offline lane keeps).
     fn tick_offline_hulls(&mut self) {
         if self.offline_boats.is_empty() {
             return;
@@ -9251,9 +9267,43 @@ impl App {
             return;
         };
         let cell = |x: i32, y: i32, z: i32| world.get(x, y, z);
+        // THE RIDER'S OWN INPUT (the authoritative lane's controlBoat
+        // the offline ride speaks): the ride's hull the record reaches,
+        // the raw booleans the last_sent_input baseline keeps (the
+        // wire's own law the offline lane's twin speaks — the A/D/W/S
+        // the flags' raw words keep)
+        let ride_id = self.offline_ride.as_ref().map(|r| r.vehicle_id);
+        let input = self.last_sent_input;
         for boat in &mut self.offline_boats {
             let phys = self.offline_boat_phys.entry(boat.id).or_default();
             boat.y = crate::hull::hull_tick(phys, boat.x, boat.y, boat.z, &cell);
+            // THE CONTROL (javap controlBoat — the `!isVehicle` gate the
+            // Option's None keeps: the ridden hull the walk arms, the
+            // placed hulls the silence keeps). The vanilla order the
+            // composition speaks: the float's tail decayed the
+            // deltaRotation and the delta x/z BEFORE the thrust lands,
+            // the move the thrust-included delta consumes.
+            let control = ride_id
+                .filter(|id| *id == boat.id)
+                .map(|_| crate::hull::HullInput {
+                    left: input.left,
+                    right: input.right,
+                    up: input.forward,
+                    down: input.backward,
+                });
+            if let Some(i) = control {
+                let (yaw, paddle_left, paddle_right) =
+                    crate::hull::hull_control(phys, i, boat.yaw);
+                boat.yaw = yaw;
+                boat.paddle_left = paddle_left;
+                boat.paddle_right = paddle_right;
+            }
+            // THE X/Z MOVE (the compound's own tail — the y the
+            // hull_tick moved first, the swept clamps the walls speak,
+            // the blocked axis the delta's zero keeps)
+            let (nx, nz) = crate::hull::hull_move_xz(phys, boat.x, boat.y, boat.z, &cell);
+            boat.x = nx;
+            boat.z = nz;
         }
     }
 
@@ -18624,6 +18674,138 @@ mod tests {
         assert!(
             app.overlay_message.is_none(),
             "the mount's word the refusal never speaks"
+        );
+    }
+
+    /// THE RIDDEN HULL'S OWN STEER — javap controlBoat the offline ride
+    /// speaks: the W the 0.04 thrust feeds, the A the −1 fold turns,
+    /// the single-turn's 0.005 the band arms, the paddle state the
+    /// swapped law sets, the float's tail the decayed words keeps, and
+    /// the rider the fresh pose + the drag the positionRider carries.
+    /// The placed bystander the `!isVehicle` gate keeps silent.
+    #[test]
+    fn the_ridden_hull_steers_the_input_word() {
+        let mut app = App::new(3);
+        app.enter_world();
+        let c = app.offline_world.as_ref().unwrap().size_blocks() / 2;
+        let pool_y = app.spawn_y + 6;
+        app.offline_world
+            .as_mut()
+            .unwrap()
+            .set(c, pool_y, c, crate::world::WATER);
+        let rh = (crate::world_view::BOAT_DIMENSIONS_HEIGHT / 3.0) as f64;
+        let settled_y = (pool_y + 1) as f64 - 0.65 * crate::hull::HULL_HEIGHT;
+        app.offline_boats.push(crate::world_view::WireBoat {
+            id: 7,
+            x: c as f64 + 0.5,
+            y: settled_y,
+            z: c as f64 + 0.5,
+            yaw: 0.0,
+            raft: false,
+            chest: false,
+            wood: "oak".to_string(),
+            paddle_left: false,
+            paddle_right: false,
+            bubble_time: 0,
+            hurt_time: 0,
+            hurt_dir: 1,
+            damage: 0.0,
+        });
+        // THE PLACED BYSTANDER (the `!isVehicle` gate the walk keeps —
+        // no ride the control never arms)
+        app.offline_boats.push(crate::world_view::WireBoat {
+            id: 8,
+            x: c as f64 + 0.5,
+            y: (app.spawn_y + 8) as f64,
+            z: c as f64 + 0.5,
+            yaw: 0.0,
+            raft: false,
+            chest: false,
+            wood: "oak".to_string(),
+            paddle_left: false,
+            paddle_right: false,
+            bubble_time: 0,
+            hurt_time: 0,
+            hurt_dir: 1,
+            damage: 0.0,
+        });
+        app.body = Some(crate::body::PlayerBody::new(
+            c as f64 + 0.5,
+            settled_y + rh,
+            c as f64 + 0.5,
+            0.0,
+            0.0,
+        ));
+        assert!(app.mount_offline_hull(7), "the ride armed");
+        // THE W RUN (the forward's own 0.04: the decay the zero delta
+        // keeps, the thrust the exact word lands, the move the z
+        // carries, the rider the fresh pose follows)
+        app.on_movement_input(1.0, 0.0, false, false, false);
+        app.update();
+        assert_eq!(
+            app.offline_boats[0].z,
+            c as f64 + 0.5 + 0.04f32 as f64,
+            "the thrust's first tick the z carries (the f32's own widen)"
+        );
+        assert_eq!(
+            app.offline_boats[0].yaw, 0.0,
+            "the straight run the yaw keeps"
+        );
+        assert!(
+            app.offline_boats[0].paddle_left && app.offline_boats[0].paddle_right,
+            "the W the both paddles strokes"
+        );
+        assert_eq!(
+            app.body.as_ref().unwrap().z,
+            c as f64 + 0.5 + 0.04f32 as f64,
+            "the rider the hull's fresh pose carries"
+        );
+        // THE A TURN (the −1 the fold keeps over the decayed word, the
+        // single-turn's 0.005 the band arms — the W's release the
+        // decayed thrust keeps, the drag the rider's yaw carries, the
+        // swapped paddle the A strokes)
+        app.on_movement_input(0.0, 1.0, false, false, false);
+        app.update();
+        let hull = &app.offline_boats[0];
+        assert_eq!(hull.yaw, -1.0, "the left's own −1 the yaw carries");
+        assert!(
+            !hull.paddle_left && hull.paddle_right,
+            "the A the right paddle strokes"
+        );
+        let f5 = 0.9f32 as f64;
+        // the pose the tick 1's own full thrust already carries + the
+        // tick 2's decayed word + the single-turn's own cos product
+        let want_dz = c as f64 + 0.5 + 0.04f32 as f64
+            + 0.04f32 as f64 * f5
+            + ((crate::world_model::narrow_cos(-1.0 * crate::hull::HULL_RAD) as f32
+                * 0.005f32) as f64);
+        assert_eq!(
+            hull.z, want_dz,
+            "the decayed thrust the turn's own cos carries"
+        );
+        let want_dx = c as f64 + 0.5
+            + ((crate::world_model::narrow_sin(1.0 * crate::hull::HULL_RAD) as f32
+                * 0.005f32) as f64);
+        assert_eq!(hull.x, want_dx, "the drift the turn's own sin carries");
+        assert_eq!(
+            app.body.as_ref().unwrap().yaw, -1.0,
+            "the drag the rider's yaw carries"
+        );
+        // THE BYSTANDER (the `!isVehicle` gate the walk keeps: no ride
+        // the control never arms — the paddles the silence keeps, the
+        // delta the zeros stay, the fold the rotation never turns)
+        assert!(
+            !app.offline_boats[1].paddle_left && !app.offline_boats[1].paddle_right,
+            "the bystander the control never arms"
+        );
+        assert_eq!(
+            app.offline_boat_phys[&8].delta_x + app.offline_boat_phys[&8].delta_z,
+            0.0,
+            "the bystander the thrust never feeds"
+        );
+        assert_eq!(
+            app.offline_boat_phys[&8].delta_rotation, 0.0,
+            "the bystander the fold never turns"
         );
     }
 
