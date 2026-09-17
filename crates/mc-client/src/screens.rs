@@ -3737,24 +3737,22 @@ impl App {
         // the result rides THE RESULT SLOT'S OWN TAKE (the
         // mayPlace-false walk — the whole/half take, the onTake's
         // ingredient decrement + the recipe recompute the belief
-        // keeps between the syncs). The SHIFT press sends the
-        // QuickMove the server performs (the batch craft the local
-        // walk never predicted — the belief stays, the sync's truth
-        // lands).
+        // keeps between the syncs). The SHIFT press rides THE
+        // QUICK-MOVE BATCH (the quickMoveStack loop the offline walk
+        // models — the believed result the store rows take, the
+        // onTake the loop keeps answering, the leftover the SERVER
+        // drops, the sync's truth the belief's walk replaces).
         let (rx, ry) = craft_slot_origin(panel, 4);
         if mx >= rx + 1 && mx < rx + 17 && my >= ry + 1 && my < ry + 17 {
             if self.shift_down {
-                let _ = sink.send(crate::world_view::ContainerCommand::Click(
-                    crate::world_view::ContainerClick {
-                        window_id: 0,
-                        state_id,
-                        slot: 0,
-                        button,
-                        input: crate::world_view::ContainerInput::QuickMove,
-                        changed: Vec::new(),
-                        carried: self.live_inv_carried,
-                    },
-                ));
+                wire_craft_result_quick_move(
+                    sink,
+                    &mut self.live_inv_slots,
+                    &mut self.hotbar_slots,
+                    self.live_inv_carried,
+                    button,
+                    state_id,
+                );
             } else {
                 wire_craft_result_take(
                     sink,
@@ -11006,6 +11004,121 @@ fn wire_craft_result_take(
             input: crate::world_view::ContainerInput::Pickup,
             changed,
             carried: *carried,
+        },
+    ));
+}
+
+/// THE BATCH CHANGED ENTRY (the changedSlots Int2ObjectMap the client
+/// menu's own clicked walk keeps): a slot mutated AGAIN in a later
+/// iteration REPLACES its entry's pair in place (the map's own put
+/// law — the packet carries the slot's FINAL pair, one entry per
+/// slot), a fresh slot rides at its first-touch position (the
+/// mutation order the house walk speaks).
+fn note_batch_change(changed: &mut Vec<(i16, (i32, i32))>, slot: i16, pair: (i32, i32)) {
+    if let Some(entry) = changed.iter_mut().find(|(s, _)| *s == slot) {
+        entry.1 = pair;
+    } else {
+        changed.push((slot, pair));
+    }
+}
+
+/// THE CRAFT RESULT'S OWN QUICK-MOVE BATCH (the doClick QUICK_MOVE
+/// arm over the result slot — the offline
+/// [`App::craft_result_quick_move`] walk the wire belief feeds): the
+/// quickMoveStack LOOP the while-same-item guard keeps — each
+/// iteration moves the believed result over the store rows (the
+/// [9, 45) REVERSE range the moveItemStackTo walk speaks — the
+/// hotbar END-first 44..36, the main rows 35..9 after: the merge
+/// pass over the whole range FIRST, the first-empty pass after), the
+/// nothing-moved EMPTY return breaks the loop, the count-changed
+/// gate fires the onTake ([`wire_craft_on_take`] — the per-cell
+/// decrement + the recipe recompute, the recipe's repeat the loop
+/// keeps answering), and the index-0 LEFTOVER the stack part the
+/// store never held rides the SERVER's drop (the wire's own Add
+/// Entity lane — the belief never holds it, the walk never names
+/// it, the loop CONTINUES while ingredients remain). The changed
+/// vec the batch's actual mutations name — one entry per slot, the
+/// final pair the [`note_batch_change`] map law keeps (the
+/// re-spoken verdict no entry names, the untouched cell neither).
+/// The cursor the quickMove never rides. A free function — the
+/// frame thread's disjoint field borrows (the live_clicks sink
+/// stays held across the walk, the chest lane's own shape).
+fn wire_craft_result_quick_move(
+    sink: &std::sync::mpsc::Sender<crate::world_view::ContainerCommand>,
+    live_slots: &mut [(i32, i32); crate::world_view::INVENTORY_MENU_SLOTS],
+    hotbar: &mut [(i32, i32); 9],
+    carried: (i32, i32),
+    button: i8,
+    state_id: i32,
+) {
+    let max = crate::world_view::ITEM_MAX_STACK_DEFAULT;
+    // the [9, 45) reverse range the quickMoveStack arm keeps — the
+    // hotbar END-first (menu 44..36), the main rows after (35..9):
+    // the SAME walk the offline move_result_stack_to_store speaks
+    let order: Vec<usize> = (36..45).rev().chain((9..36).rev()).collect();
+    let mut changed: Vec<(i16, (i32, i32))> = Vec::new();
+    loop {
+        let (id, count) = live_slots[0];
+        if count <= 0 {
+            break; // the result slot's own emptiness
+        }
+        // pass 1: the merges (the same-item stacks the range keeps)
+        let mut rest = count;
+        for &s in &order {
+            if rest == 0 {
+                break;
+            }
+            let (sid, sc) = live_slots[s];
+            if sc > 0 && sid == id && sc < max {
+                let take = (max - sc).min(rest);
+                live_slots[s] = (sid, sc + take);
+                note_batch_change(&mut changed, s as i16, live_slots[s]);
+                rest -= take;
+            }
+        }
+        // pass 2: the first-empty walk (the same reverse order)
+        for &s in &order {
+            if rest == 0 {
+                break;
+            }
+            if live_slots[s].1 <= 0 {
+                let take = rest.min(max);
+                live_slots[s] = (id, take);
+                note_batch_change(&mut changed, s as i16, live_slots[s]);
+                rest -= take;
+            }
+        }
+        if rest == count {
+            break; // the nothing-moved EMPTY the loop break keeps
+        }
+        // the count-changed gate: the onTake's per-cell decrement +
+        // the recompute the loop keeps answering (the recipe's
+        // repeat the same verdict re-speaks, the spent ingredients
+        // the EMPTY verdict breaks)
+        for (slot, pair) in wire_craft_on_take(live_slots) {
+            note_batch_change(&mut changed, slot, pair);
+        }
+        if rest > 0 {
+            // the index-0 leftover tail: the stack part the store
+            // never held the SERVER drops (the wire's own Add Entity
+            // lane) — the belief never holds it, the loop continues
+            // the while-same-item guard keeps
+        }
+    }
+    // the HUD row's belief follows the hotbar's menu ids the batch
+    // may have merged into (the every-mutation law the sync corrects)
+    let mut row = [(0, 0); 9];
+    row.copy_from_slice(&live_slots[36..45]);
+    *hotbar = row;
+    let _ = sink.send(crate::world_view::ContainerCommand::Click(
+        crate::world_view::ContainerClick {
+            window_id: 0,
+            state_id,
+            slot: 0,
+            button,
+            input: crate::world_view::ContainerInput::QuickMove,
+            changed,
+            carried,
         },
     ));
 }
@@ -22772,6 +22885,198 @@ mod tests {
             ContainerCommand::Click(c) => {
                 assert_eq!(c.changed, Vec::new(), "no slot the silence touched");
                 assert_eq!(c.carried, (dirt, 2));
+            }
+            other => panic!("expected a container click, got {other:?}"),
+        }
+    }
+
+    /// THE BATCH'S OWN BELIEF WALK (the shift-press on the result —
+    /// the quickMoveStack loop the offline craft_result_quick_move
+    /// models): two logs the grid holds, the (planks, 4) verdict TWO
+    /// iterations speak — each the store rows take (the merge the
+    /// hotbar cell menu 36 keeps, the reverse range the walk speaks),
+    /// each the onTake the cell consumes, the spent ingredients the
+    /// EMPTY verdict breaks; the changed vec one entry per slot, the
+    /// final pair the map law keeps (the store cell the merge filled
+    /// twice its LAST pair rides, the re-spoken verdict the diff law
+    /// never names); the HUD row the merge follows; the cursor and
+    /// the offline store the quickMove never touch.
+    #[test]
+    fn the_wire_inventory_result_quick_move_batches_the_belief() {
+        use crate::world_view::ContainerCommand;
+        let mut app = App::new(3);
+        app.open(ScreenKind::Connect);
+        app.net_world = Some(air_net_world(2, 0));
+        app.enter_network_world(None, Skybox::Overworld, None, None);
+        let (click_tx, click_rx) = std::sync::mpsc::channel::<ContainerCommand>();
+        app.attach_live_clicks(click_tx);
+        app.open_inventory();
+        app.inv_panel = inventory_panel_origin(640, 360);
+        app.on_shift_down(true);
+        let log = mc_registry::item_id_by_name("oak_log").unwrap();
+        let planks = mc_registry::item_id_by_name("oak_planks").unwrap();
+        // the recipe the belief speaks: two logs in the cell menu 1,
+        // the result (planks, 4), the hotbar cell menu 36 the merge
+        // target (planks, 2) — the batch the two iterations speaks
+        let mut slots = [(0, 0); crate::world_view::INVENTORY_MENU_SLOTS];
+        slots[1] = (log, 2);
+        slots[0] = (planks, 4);
+        slots[36] = (planks, 2);
+        app.live_inventory_updated(slots, Vec::new(), 14, (0, 0));
+        let (rx, ry) = craft_slot_origin(app.inv_panel, 4);
+        app.on_press(rx + 8, ry + 8);
+        assert_eq!(
+            app.live_inv_slots[36], (planks, 10),
+            "the merge the two iterations filled"
+        );
+        assert_eq!(
+            app.live_inv_slots[1], (0, 0),
+            "the onTake the two logs consumed"
+        );
+        assert_eq!(
+            app.live_inv_slots[0], (0, 0),
+            "the spent grid the EMPTY verdict breaks"
+        );
+        assert_eq!(
+            app.hotbar_slots[0], (planks, 10),
+            "the HUD row the merge follows"
+        );
+        assert_eq!(
+            app.live_inv_carried, (0, 0),
+            "the cursor the quickMove never rides"
+        );
+        assert_eq!(
+            app.inventory.items[12], (0, 0),
+            "the offline store the wire world never touches"
+        );
+        match click_rx.try_recv().expect("the packet rode the lane") {
+            ContainerCommand::Click(c) => {
+                assert_eq!(c.window_id, 0, "the player's OWN menu the ctor pins");
+                assert_eq!(c.state_id, 14, "the revision the feed spoke");
+                assert_eq!(c.slot, 0, "the result slot's own menu id");
+                assert_eq!(c.input, crate::world_view::ContainerInput::QuickMove);
+                assert_eq!(
+                    c.changed,
+                    vec![(36, (planks, 10)), (1, (0, 0)), (0, (0, 0))],
+                    "the batch's own deltas — the store, the cell, the verdict, \
+                     the final pairs the map law keeps"
+                );
+                assert_eq!(c.carried, (0, 0));
+            }
+            other => panic!("expected a container click, got {other:?}"),
+        }
+    }
+
+    /// THE FULL STORE'S OWN REFUSAL (the nothing-moved EMPTY the loop
+    /// break keeps): every store row a foreign item holds, the merge
+    /// pass and the first-empty pass both refuse — the belief
+    /// untouched, the packet still rides with the empty changed (the
+    /// doClick's own unconditional send the house law keeps).
+    #[test]
+    fn the_wire_inventory_result_quick_move_refuses_the_full_store() {
+        use crate::world_view::ContainerCommand;
+        let mut app = App::new(3);
+        app.open(ScreenKind::Connect);
+        app.net_world = Some(air_net_world(2, 0));
+        app.enter_network_world(None, Skybox::Overworld, None, None);
+        let (click_tx, click_rx) = std::sync::mpsc::channel::<ContainerCommand>();
+        app.attach_live_clicks(click_tx);
+        app.open_inventory();
+        app.inv_panel = inventory_panel_origin(640, 360);
+        app.on_shift_down(true);
+        let log = mc_registry::item_id_by_name("oak_log").unwrap();
+        let planks = mc_registry::item_id_by_name("oak_planks").unwrap();
+        let stone = mc_registry::item_id_by_name("stone").unwrap();
+        // the store's whole range (menu 9..44) the foreign stack fills
+        let mut slots = [(0, 0); crate::world_view::INVENTORY_MENU_SLOTS];
+        for s in 9..45 {
+            slots[s] = (stone, 64);
+        }
+        slots[1] = (log, 3);
+        slots[0] = (planks, 4);
+        app.live_inventory_updated(slots, Vec::new(), 15, (0, 0));
+        let (rx, ry) = craft_slot_origin(app.inv_panel, 4);
+        app.on_press(rx + 8, ry + 8);
+        assert_eq!(app.live_inv_slots[1], (log, 3), "the cell untouched");
+        assert_eq!(
+            app.live_inv_slots[0], (planks, 4),
+            "the result the nothing-moved break keeps"
+        );
+        assert_eq!(
+            app.live_inv_slots[9], (stone, 64),
+            "the store the refused walk never touched"
+        );
+        match click_rx.try_recv().expect("the packet rode the lane") {
+            ContainerCommand::Click(c) => {
+                assert_eq!(c.slot, 0);
+                assert_eq!(c.input, crate::world_view::ContainerInput::QuickMove);
+                assert_eq!(c.changed, Vec::new(), "no slot the refusal touched");
+                assert_eq!(c.carried, (0, 0));
+            }
+            other => panic!("expected a container click, got {other:?}"),
+        }
+    }
+
+    /// THE LEFTOVER'S OWN LANE (the index-0 tail the 378-385 bytecode
+    /// speaks): the store's one planks cell space 2 keeps, the merge
+    /// takes 2, the stack part the store never held the SERVER drops
+    /// (the wire's own Add Entity lane — the belief never names it),
+    /// and the recipe's repeat the loop keeps answering — the second
+    /// iteration the full store breaks (the nothing-moved EMPTY), the
+    /// re-spoken verdict the belief keeps (the sync's truth replaces).
+    #[test]
+    fn the_wire_inventory_result_quick_move_drops_the_leftover_lane() {
+        use crate::world_view::ContainerCommand;
+        let mut app = App::new(3);
+        app.open(ScreenKind::Connect);
+        app.net_world = Some(air_net_world(2, 0));
+        app.enter_network_world(None, Skybox::Overworld, None, None);
+        let (click_tx, click_rx) = std::sync::mpsc::channel::<ContainerCommand>();
+        app.attach_live_clicks(click_tx);
+        app.open_inventory();
+        app.inv_panel = inventory_panel_origin(640, 360);
+        app.on_shift_down(true);
+        let log = mc_registry::item_id_by_name("oak_log").unwrap();
+        let planks = mc_registry::item_id_by_name("oak_planks").unwrap();
+        let stone = mc_registry::item_id_by_name("stone").unwrap();
+        // the store's whole range the foreign stack fills BUT the
+        // hotbar cell menu 36 keeps two spaces for the merge
+        let mut slots = [(0, 0); crate::world_view::INVENTORY_MENU_SLOTS];
+        for s in 9..45 {
+            if s != 36 {
+                slots[s] = (stone, 64);
+            }
+        }
+        slots[36] = (planks, 62);
+        slots[1] = (log, 2);
+        slots[0] = (planks, 4);
+        app.live_inventory_updated(slots, Vec::new(), 16, (0, 0));
+        let (rx, ry) = craft_slot_origin(app.inv_panel, 4);
+        app.on_press(rx + 8, ry + 8);
+        assert_eq!(
+            app.live_inv_slots[36], (planks, 64),
+            "the merge the two spaces filled"
+        );
+        assert_eq!(
+            app.live_inv_slots[1], (log, 1),
+            "the one log the first onTake consumed"
+        );
+        assert_eq!(
+            app.live_inv_slots[0], (planks, 4),
+            "the recipe's REPEAT the belief keeps — the second iteration \
+             the full store broke, the sync's truth replaces"
+        );
+        match click_rx.try_recv().expect("the packet rode the lane") {
+            ContainerCommand::Click(c) => {
+                assert_eq!(c.slot, 0);
+                assert_eq!(c.input, crate::world_view::ContainerInput::QuickMove);
+                assert_eq!(
+                    c.changed,
+                    vec![(36, (planks, 64)), (1, (log, 1))],
+                    "the leftover the changed vec never names — the server's \
+                     drop the wire's own lane spawns"
+                );
+                assert_eq!(c.carried, (0, 0));
             }
             other => panic!("expected a container click, got {other:?}"),
         }
