@@ -2384,26 +2384,75 @@ pub fn held_item_quads(
     cam_pitch: f32,
     model_id: &str,
 ) -> Option<Vec<HeadBlockQuad>> {
+    hand_item_quads(state, feet, cam_yaw, cam_pitch, model_id, false)
+}
+
+/// THE MANNEQUIN'S OFFHAND LANE (ItemInHandLayer.submit's SECOND
+/// `submitArmWithItem` — the bytecode loc 22-41 the walk speaks: the
+/// leftHandItemState/leftHandItemStack pair with `HumanoidArm.LEFT`).
+/// The extraction fills that pair the offhand's own way
+/// (`ArmedEntityRenderState.extractArmedEntityRenderState`: the LEFT
+/// arm's stack through `updateForLiving(..., THIRD_PERSON_LEFT_HAND)`
+/// — the mannequin's OFFHAND slot 45 stack here). The chain is the
+/// main hand's own three folds with the TWO laws the left arm speaks:
+/// the `translateToHand` arm the `getArm(LEFT)` check answers (the
+/// `leftArm` part's own posed chain — the SAME two translateAndRotate
+/// calls), and the adult translate's X the bytecode's own sign branch
+/// keeps (`arm == LEFT ? -1 : 1` over the loc 124-151 fdiv walk — the
+/// Y 2/16 and the Z -10/16 the branch never touches). The display
+/// stanza rides the THIRDPERSON_LEFTHAND context the
+/// `ItemDisplayContext.leftHand` flag speaks (the registry's own
+/// mirrored application — the tx/ry/rz negation the build_pose walk
+/// pins). The rest is the main hand's law verbatim: the
+/// rotX(-90)+rotY(180) both arms share, the block face shade, the
+/// entity fold. `None` = the model carries no bake.
+pub fn offhand_item_quads(
+    state: &AvatarState,
+    feet: Vec3,
+    cam_yaw: f32,
+    cam_pitch: f32,
+    model_id: &str,
+) -> Option<Vec<HeadBlockQuad>> {
+    hand_item_quads(state, feet, cam_yaw, cam_pitch, model_id, true)
+}
+
+/// The TWO HANDS' shared composition (ItemInHandLayer.submitArmWithItem
+/// is arm-agnostic except the two laws above — the walk keeps one
+/// chain, the arm index + the translate X sign + the display context
+/// are the branch's own three terms).
+fn hand_item_quads(
+    state: &AvatarState,
+    feet: Vec3,
+    cam_yaw: f32,
+    cam_pitch: f32,
+    model_id: &str,
+    left: bool,
+) -> Option<Vec<HeadBlockQuad>> {
     let _ = (cam_yaw, cam_pitch);
-    let quads = match mc_registry::display::posed_item_layer_quads(
-        model_id,
-        None,
-        mc_registry::display::THIRDPERSON_RIGHTHAND,
-    ) {
+    let ctx = if left {
+        mc_registry::display::THIRDPERSON_LEFTHAND
+    } else {
+        mc_registry::display::THIRDPERSON_RIGHTHAND
+    };
+    let quads = match mc_registry::display::posed_item_layer_quads(model_id, None, ctx) {
         // a broken display stanza binds nothing (vanilla warns + drops)
         Some(Ok(q)) => q,
         _ => return None,
     };
     let posed = build_posed_parts(state);
-    // translateToHand: the root's identity + the right arm's own chain
-    // (the HumanoidModel bytecode's two translateAndRotate calls —
-    // the posed part matrix the armor walk's copyPropertiesTo keeps)
-    let m_arm = posed[2].matrix(&Mat4::IDENT);
-    // the layer's own law: rotX(-90), rotY(180), the adult
-    // (1/16, 2/16, -10/16) — the bytecode's own three folds
+    // translateToHand: the root's identity + the arm's own chain (the
+    // HumanoidModel bytecode's two translateAndRotate calls — the
+    // posed part matrix the armor walk's copyPropertiesTo keeps); the
+    // getArm check the LEFT/RIGHT constants answer (leftArm = the
+    // parts' [3], rightArm = [2])
+    let m_arm = posed[if left { 3 } else { 2 }].matrix(&Mat4::IDENT);
+    // the layer's own law: rotX(-90), rotY(180) both arms share, the
+    // adult (±1/16, 2/16, -10/16) — the bytecode's sign branch rides
+    // the X alone
+    let x_off = if left { -1.0 } else { 1.0 } / 16.0;
     let layer = Mat4::rot_x(-std::f32::consts::FRAC_PI_2)
         .mul(&Mat4::rot_y(std::f32::consts::PI))
-        .mul(&Mat4::translation(1.0 / 16.0, 2.0 / 16.0, -10.0 / 16.0));
+        .mul(&Mat4::translation(x_off, 2.0 / 16.0, -10.0 / 16.0));
     let m = m_arm.mul(&layer);
     let crouch_drop = if state.crouching { -2.0 / 16.0 } else { 0.0 };
     let (fold_point, _fold_normal) =
@@ -5128,6 +5177,61 @@ mod tests {
         );
         // THE UNKNOWN MODEL'S HONEST NONE
         assert!(held_item_quads(&rest, Vec3::ZERO, 0.0, 0.0, "item/no_such_model").is_none());
+    }
+
+    /// THE OFFHAND'S LEFT-ARM CHAIN (the oracle walk
+    /// `scripts/offhand_item_oracle.py` speaks — the RIGHT chain's
+    /// honesty gate reproduces the main-hand pins first, the LEFT
+    /// numbers land here): the leftArm part's own matrix the
+    /// `getArm(LEFT)` branch answers, the layer's -1/16 the sign
+    /// branch keeps (Y/Z untouched), the mirrored stanza application
+    /// the left-hand flag speaks. The stone's box lands the WORLD -x
+    /// side — the exact x-mirror the main hand's +x box pins (the
+    /// block stanza's tx=0 keeps the corner set mirror-symmetric).
+    #[test]
+    fn the_offhand_item_rides_the_left_arm_chain() {
+        let rest = AvatarState::rest(180.0, 0.0, 0.0);
+        let quads = offhand_item_quads(&rest, Vec3::ZERO, 0.0, 0.0, "block/stone")
+            .expect("the stone's block bake speaks");
+        assert_eq!(quads.len(), 6, "the cube bake's six faces");
+        let mut lo = [f32::MAX; 3];
+        let mut hi = [f32::MIN; 3];
+        for q in &quads {
+            for p in q.pts.iter() {
+                for k in 0..3 {
+                    lo[k] = lo[k].min(p[k]);
+                    hi[k] = hi[k].max(p[k]);
+                }
+            }
+        }
+        // the oracle walk's exact box (the mirrored main-hand box)
+        assert!((lo[0] + 0.79378).abs() < 1e-4, "lo.x = {}", lo[0]);
+        assert!((lo[1] - 0.53111).abs() < 1e-4, "lo.y = {}", lo[1]);
+        assert!((lo[2] + 0.58591).abs() < 1e-4, "lo.z = {}", lo[2]);
+        assert!((hi[0] + 0.20206).abs() < 1e-4, "hi.x = {}", hi[0]);
+        assert!((hi[1] - 1.02064).abs() < 1e-4, "hi.y = {}", hi[1]);
+        assert!((hi[2] - 0.02341).abs() < 1e-4, "hi.z = {}", hi[2]);
+        // the offhand's own side: the whole box on the WORLD -x half
+        assert!(hi[0] < 0.0, "the offhand rides the -x side (hi.x = {})", hi[0]);
+        // the block face shade set the shared law keeps (the same six
+        // faces the main hand speaks)
+        assert!(quads.iter().all(|q| q.texture.ends_with("block/stone")));
+        for want in [1.0f32, 0.5, 0.8, 0.6] {
+            assert!(
+                quads.iter().any(|q| (q.shade - want).abs() < 1e-6),
+                "the shade {want} rides the set"
+            );
+        }
+        // THE FLAT SWORD rides the mirrored handheld stanza too
+        let sword = offhand_item_quads(&rest, Vec3::ZERO, 0.0, 0.0, "item/iron_sword")
+            .expect("the sword's bake speaks");
+        assert!(!sword.is_empty(), "the extrusion's quads");
+        assert!(
+            sword.iter().all(|q| q.texture.ends_with("item/iron_sword")),
+            "the sword's own layer texture"
+        );
+        // THE UNKNOWN MODEL'S HONEST NONE (the same verdict both hands)
+        assert!(offhand_item_quads(&rest, Vec3::ZERO, 0.0, 0.0, "item/no_such_model").is_none());
     }
 
     /// THE EQUIPMENT TEXTURES LOAD (the runtime cache's own verdict —

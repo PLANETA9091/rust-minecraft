@@ -4136,6 +4136,48 @@ impl App {
                 }
             }
         }
+        // THE OFFHAND LANE (ItemInHandLayer.submit's SECOND
+        // submitArmWithItem — the leftHandItemState/Stack pair the
+        // extraction's updateForLiving fills with the
+        // THIRD_PERSON_LEFT_HAND context): the mannequin's own OFFHAND
+        // slot 45 stack the store keeps, the leftArm chain the
+        // getArm(LEFT) branch answers, the adult translate's -1/16 the
+        // bytecode's sign branch keeps (Y/Z untouched), the mirrored
+        // stanza application the left-hand flag speaks. The specials
+        // the plain def's honest miss serves — the main hand's own
+        // verdict this lane shares.
+        if let Some(&(held_id, held_count)) = self.inventory.offhand.first() {
+            if held_count > 0 {
+                if let Some(name) = mc_registry::item_name(held_id) {
+                    if let Some((_, model, _, _)) = mc_registry::generated::item_models::ITEM_MODEL_DEFS
+                        .iter()
+                        .find(|d| d.0 == name)
+                    {
+                        let model_id = model.strip_prefix("minecraft:").unwrap_or(model);
+                        if let Some(hq) = crate::avatar::offhand_item_quads(
+                            &state,
+                            Vec3::new(0.0, 0.0, 0.0),
+                            0.0,
+                            0.0,
+                            model_id,
+                        ) {
+                            for q in &hq {
+                                // the entity fold's x mirror flips the
+                                // winding — the SAME corner re-order the
+                                // main hand's lane speaks keeps the
+                                // raster's front-face law
+                                sampled.push(crate::raster::SampledQuad {
+                                    pts: [q.pts[0], q.pts[2], q.pts[1], q.pts[3]],
+                                    uv: [q.uv[0], q.uv[2], q.uv[1], q.uv[3]],
+                                    tex: q.texture,
+                                    tint: [q.shade, q.shade, q.shade],
+                                });
+                            }
+                        }
+                    }
+                }
+            }
+        }
         fb.clear_depth();
         fb.draw_sampled_quads(vp, &sampled, &mut |tex, u, v| {
             if tex.is_empty() {
@@ -20092,6 +20134,101 @@ mod tests {
         };
         let swd_diff = diff_in_window(&bare, &swd);
         assert!(swd_diff > 5, "the held sword painted: {swd_diff} pixels");
+    }
+
+    /// THE OFFHAND'S OWN LANE (ItemInHandLayer.submit's SECOND
+    /// submitArmWithItem — the leftHandItemState/Stack pair the
+    /// extraction fills, the mannequin's OFFHAND slot 45 the store
+    /// keeps): the offhand stack paints the mannequin's LEFT side the
+    /// leftArm chain rides, the empty offhand adds zero quads, the
+    /// paint stays home (the mannequin's window + the offhand slot's
+    /// own icon the slot pass draws), the equipment loads stay empty.
+    #[test]
+    fn the_mannequin_holds_the_offhand_stack() {
+        let root = ["assets-cache/jar", "../assets-cache/jar", "../../assets-cache/jar"]
+            .iter()
+            .map(std::path::Path::new)
+            .find(|p| p.join("gui/container/inventory.png").exists());
+        let Some(root) = root else { return };
+        let Some(_) = crate::avatar::AvatarModel::load(&root) else { return };
+        let mut app = App::new(3);
+        app.enter_world();
+        app.spawn_offline_body();
+        app.open_inventory();
+        let mut assets = GuiAssets::open(&root);
+        let bare = {
+            let mut fb = crate::raster::Framebuf::new(640, 360);
+            app.render(&mut fb, &mut assets);
+            fb.color.clone()
+        };
+        let bare_twice = {
+            let mut fb = crate::raster::Framebuf::new(640, 360);
+            app.render(&mut fb, &mut assets);
+            fb.color
+        };
+        assert_eq!(bare, bare_twice, "the empty-offhand path adds zero quads");
+        let px = |c: &[u8], x: usize, y: usize| -> [u8; 3] {
+            let o = (y * 640 + x) * 3;
+            [c[o], c[o + 1], c[o + 2]]
+        };
+        let diff_in_window = |a: &[u8], b: &[u8]| -> usize {
+            let mut diff = 0usize;
+            for y in 96..168 {
+                for x in 250..320 {
+                    if px(a, x, y) != px(b, x, y) {
+                        diff += 1;
+                    }
+                }
+            }
+            diff
+        };
+        // THE OFFHAND STACK (the stone rides slot 45 — the main hand
+        // stays empty so the paint is the offhand lane's alone)
+        let id = mc_registry::item_id_by_name("stone").expect("the registry speaks");
+        app.inventory.offhand[0] = (id, 5);
+        let off = {
+            let mut fb = crate::raster::Framebuf::new(640, 360);
+            app.render(&mut fb, &mut assets);
+            fb.color.clone()
+        };
+        let off_diff = diff_in_window(&bare, &off);
+        assert!(off_diff > 20, "the offhand stone painted: {off_diff} pixels");
+        // no strays outside the mannequin's neighborhood (the offhand
+        // slot's own icon the slot pass paints rides its region — the
+        // rest is the offhand lane's)
+        let (ox, oy) = offhand_slot_origin((232, 97));
+        let mut strays = Vec::new();
+        for y in 0..360 {
+            for x in 0..640 {
+                if px(&bare, x, y) != px(&off, x, y) {
+                    let in_window = x >= 250 && x < 320 && y >= 96 && y < 168;
+                    let in_slot = x >= ox as usize && x < ox as usize + 18
+                        && y >= oy as usize && y < oy as usize + 18;
+                    if !in_window && !in_slot {
+                        if strays.len() < 8 {
+                            strays.push((x, y));
+                        }
+                    }
+                }
+            }
+        }
+        assert!(strays.is_empty(), "the paint stayed home: {strays:?}");
+        // the equipment loads stay EMPTY (the offhand lane is no armor
+        // lane — the main hand's own verdict this lane shares)
+        assert!(app.armor_textures.is_empty(), "no armor loads");
+        // THE CLEARED OFFHAND (slot 45 back to empty): the mannequin
+        // back to bare — the lane's gate the count's zero keeps
+        app.inventory.offhand[0] = (0, 0);
+        let cleared = {
+            let mut fb = crate::raster::Framebuf::new(640, 360);
+            app.render(&mut fb, &mut assets);
+            fb.color.clone()
+        };
+        assert_eq!(
+            diff_in_window(&bare, &cleared),
+            0,
+            "the empty offhand keeps the hand bare"
+        );
     }
 }
 
