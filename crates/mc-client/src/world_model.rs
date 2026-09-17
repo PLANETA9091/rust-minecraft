@@ -194,6 +194,28 @@ pub struct WorldModel {
     pub objectives: std::collections::HashMap<String, ObjectiveState>,
     pub display_slots: std::collections::HashMap<u8, String>,
     pub scores: std::collections::HashMap<(String, String), ScoreState>,
+    /// THE TAB'S OWN POPULATION (the Player Info Update / Remove
+    /// packets' store — the vanilla `ClientPacketListener.players` map
+    /// the PlayerTabOverlay's getPlayerInfos walks): the entries by
+    /// profile UUID (the 128 wire bits the entry's own key keeps),
+    /// each carrying the name, the game mode, the LISTED bit, the
+    /// latency and the list order. NOT cleared on Respawn: the tab is
+    /// the CONNECTION's own object (the vanilla map lives on the
+    /// listener, one level above the level the Respawn recreates —
+    /// the player list survives the dimension swap exactly like the
+    /// scoreboard does).
+    pub players: std::collections::HashMap<u128, PlayerEntryState>,
+    /// THE TAB'S OWN HEADER (the Tab List packet's flattened header
+    /// component — the overlay's top band's text). The vanilla
+    /// PlayerTabOverlay's header starts NULL (no band until the
+    /// server speaks); the house's EMPTY string renders no band the
+    /// same honest way (the band draws only when the text is
+    /// non-empty — the render's own gate).
+    pub tab_header: String,
+    /// THE TAB'S OWN FOOTER (the Tab List packet's flattened footer —
+    /// the overlay's bottom band's text, the same empty-means-silent
+    /// law the header keeps).
+    pub tab_footer: String,
 }
 
 /// One objective's standing belief (the Set Objective packet's own
@@ -213,6 +235,24 @@ pub struct ObjectiveState {
 pub struct ScoreState {
     pub value: i32,
     pub display: Option<String>,
+}
+
+/// One tab entry's standing belief (the Player Info Update packet's
+/// own store — the vanilla `PlayerInfo` the ClientPacketListener
+/// keeps): the profile name the ADD_PLAYER carried, the game mode's
+/// ordinal verbatim (the UPDATE_GAME_MODE walk's GameType.byId law —
+/// 3 spectator), the LISTED bit (the tab's own visibility), the
+/// latency milliseconds (the bars' law reads), the list order (the
+/// sort's first key). A name the ADD alone never carried is the
+/// honest no-entry — an update-only packet for an unknown uuid is a
+/// no-op, the wire's own shape.
+#[derive(Debug, Clone, PartialEq)]
+pub struct PlayerEntryState {
+    pub name: String,
+    pub game_mode: u8,
+    pub listed: bool,
+    pub latency: i32,
+    pub list_order: i32,
 }
 
 /// The scoreboard HOLDER's own string (the vanilla
@@ -532,6 +572,9 @@ impl WorldModel {
             objectives: std::collections::HashMap::new(),
             display_slots: std::collections::HashMap::new(),
             scores: std::collections::HashMap::new(),
+            players: std::collections::HashMap::new(),
+            tab_header: String::new(),
+            tab_footer: String::new(),
         }
     }
 
@@ -1361,6 +1404,95 @@ impl WorldModel {
             }
             // probes and skipped packets carry no world state
             PlayEvent::KeepAlive(_) | PlayEvent::Ping(_) | PlayEvent::ChunkBatch => false,
+            PlayEvent::PlayerInfoUpdate(u) => {
+                // THE HANDLER'S OWN WALK (javap
+                // ClientPacketListener.handlePlayerInfoUpdate): the
+                // ADD_PLAYER action creates the entry (the putIfAbsent
+                // walk — the vanilla PlayerInfo ctor's own defaults:
+                // latency -1, unlisted, the default game mode); every
+                // OTHER action updates the entry in place, GATED on it
+                // existing (an update for an unknown uuid is the
+                // silent no-op the map walk speaks). The per-entry
+                // patch's `Some` fields overlay the belief; `None`
+                // fields the mask never spoke.
+                let mut changed = false;
+                for patch in &u.entries {
+                    match self.players.get_mut(&patch.uuid) {
+                        Some(entry) => {
+                            if let Some(name) = &patch.name {
+                                if entry.name != *name {
+                                    entry.name = name.clone();
+                                    changed = true;
+                                }
+                            }
+                            if let Some(gm) = patch.game_mode {
+                                if entry.game_mode != gm {
+                                    entry.game_mode = gm;
+                                    changed = true;
+                                }
+                            }
+                            if let Some(l) = patch.listed {
+                                if entry.listed != l {
+                                    entry.listed = l;
+                                    changed = true;
+                                }
+                            }
+                            if let Some(l) = patch.latency {
+                                if entry.latency != l {
+                                    entry.latency = l;
+                                    changed = true;
+                                }
+                            }
+                            if let Some(o) = patch.list_order {
+                                if entry.list_order != o {
+                                    entry.list_order = o;
+                                    changed = true;
+                                }
+                            }
+                        }
+                        // the birth walk: only a patch the ADD action
+                        // named creates (an update-only packet for an
+                        // unknown uuid — the honest no-op)
+                        None => {
+                            if let Some(name) = &patch.name {
+                                self.players.insert(
+                                    patch.uuid,
+                                    PlayerEntryState {
+                                        name: name.clone(),
+                                        game_mode: patch.game_mode.unwrap_or(0),
+                                        listed: patch.listed.unwrap_or(false),
+                                        latency: patch.latency.unwrap_or(-1),
+                                        list_order: patch.list_order.unwrap_or(0),
+                                    },
+                                );
+                                changed = true;
+                            }
+                        }
+                    }
+                }
+                changed
+            }
+            PlayEvent::PlayerInfoRemove(u) => {
+                // THE HANDLER'S OWN WALK (javap handlePlayerInfoRemove):
+                // each uuid's entry dies; an unknown uuid is no-op.
+                let before = self.players.len();
+                for uuid in &u.uuids {
+                    self.players.remove(uuid);
+                }
+                before != self.players.len()
+            }
+            PlayEvent::TabList(u) => {
+                // THE HANDLER'S OWN WALK (javap
+                // handleTabListCustomisation): the header/footer set
+                // verbatim (the PlayerTabOverlay.setHeader/setFooter
+                // the nulls gate — the house's empty string IS the
+                // no-band silence).
+                let changed =
+                    self.tab_header != u.header || self.tab_footer != u.footer;
+                self.tab_header = u.header;
+                self.tab_footer = u.footer;
+                changed
+            }
             PlayEvent::Disconnected { .. } | PlayEvent::Skipped => false,
         }
     }
@@ -5256,5 +5388,123 @@ mod tests {
             data: 0,
         }));
         assert_eq!(m.entity(7).unwrap().uuid, u, "the bits the holder rides");
+    }
+
+    #[test]
+    fn the_player_info_lanes_keep_the_tab_belief() {
+        // THE BIRTH WALK (the putIfAbsent law): a NAMED patch creates
+        // the entry — the vanilla PlayerInfo ctor's own defaults ride
+        // the fields the mask never spoke (latency -1, unlisted, the
+        // default game mode)
+        let mut m = WorldModel::new();
+        let steve = (0x5500_0000u128 << 96) | 0x55AAu128;
+        assert!(m.apply(PlayEvent::PlayerInfoUpdate(mc_protocol::PlayerInfoUpdate {
+            entries: vec![mc_protocol::PlayerEntryPatch {
+                uuid: steve,
+                name: Some("Steve".into()),
+                game_mode: None,
+                listed: Some(true),
+                latency: None,
+                display_name: None,
+                list_order: Some(5),
+            }],
+        })));
+        let e = m.players.get(&steve).unwrap();
+        assert_eq!(e.name, "Steve");
+        assert_eq!(e.game_mode, 0, "the ADD-alone's default mode");
+        assert!(e.listed);
+        assert_eq!(e.latency, -1, "the ctor's own default latency");
+        assert_eq!(e.list_order, 5);
+
+        // THE OVERLAY WALK: the second update touches the SAME entry
+        // in place (the fields the mask spoke change, the rest ride)
+        assert!(m.apply(PlayEvent::PlayerInfoUpdate(mc_protocol::PlayerInfoUpdate {
+            entries: vec![mc_protocol::PlayerEntryPatch {
+                uuid: steve,
+                name: None,
+                game_mode: Some(3),
+                listed: None,
+                latency: Some(77),
+                display_name: None,
+                list_order: None,
+            }],
+        })));
+        let e = m.players.get(&steve).unwrap();
+        assert_eq!((e.game_mode, e.latency, e.name.as_str()), (3, 77, "Steve"));
+        // the IDENTICAL walk is the honest no-op (no change)
+        assert!(!m.apply(PlayEvent::PlayerInfoUpdate(mc_protocol::PlayerInfoUpdate {
+            entries: vec![mc_protocol::PlayerEntryPatch {
+                uuid: steve,
+                name: None,
+                game_mode: Some(3),
+                listed: None,
+                latency: Some(77),
+                display_name: None,
+                list_order: None,
+            }],
+        })));
+
+        // an UPDATE-ONLY patch for an unknown uuid is the silent no-op
+        // (the map walk's own guard)
+        assert!(!m.apply(PlayEvent::PlayerInfoUpdate(mc_protocol::PlayerInfoUpdate {
+            entries: vec![mc_protocol::PlayerEntryPatch {
+                uuid: 9,
+                name: None,
+                game_mode: None,
+                listed: Some(true),
+                latency: None,
+                display_name: None,
+                list_order: None,
+            }],
+        })));
+        assert!(!m.players.contains_key(&9), "no ghost entry");
+
+        // THE REMOVAL: the entry dies, the unknown uuid no-ops
+        assert!(m.apply(PlayEvent::PlayerInfoRemove(mc_protocol::PlayerInfoRemove {
+            uuids: vec![steve]
+        })));
+        assert!(m.players.is_empty());
+        assert!(!m.apply(PlayEvent::PlayerInfoRemove(mc_protocol::PlayerInfoRemove {
+            uuids: vec![steve]
+        })));
+
+        // THE TAB LIST: the header/footer land verbatim (the
+        // handleTabListCustomisation walk), the identical re-speak is
+        // the honest no-op
+        assert!(m.apply(PlayEvent::TabList(mc_protocol::TabListUpdate {
+            header: "The Top".into(),
+            footer: "The Bottom".into(),
+        })));
+        assert_eq!(
+            (m.tab_header.as_str(), m.tab_footer.as_str()),
+            ("The Top", "The Bottom")
+        );
+        assert!(!m.apply(PlayEvent::TabList(mc_protocol::TabListUpdate {
+            header: "The Top".into(),
+            footer: "The Bottom".into(),
+        })));
+
+        // THE RESPAWN SURVIVES (the scoreboard's own law mirrored): the
+        // tab is the CONNECTION's own object — the vanilla map lives on
+        // the ClientPacketListener one level above the level the
+        // Respawn recreates, the entries and the bands ride the swap
+        assert!(m.apply(PlayEvent::PlayerInfoUpdate(mc_protocol::PlayerInfoUpdate {
+            entries: vec![mc_protocol::PlayerEntryPatch {
+                uuid: steve,
+                name: Some("Steve".into()),
+                game_mode: None,
+                listed: Some(true),
+                latency: None,
+                display_name: None,
+                list_order: None,
+            }],
+        })));
+        m.apply(PlayEvent::Respawn(SpawnInfo {
+            dimension_type_id: 0,
+            dimension: "minecraft:overworld".into(),
+            portal_cooldown: 0,
+        }));
+        assert_eq!(m.players.get(&steve).unwrap().name, "Steve", "the tab rides the swap");
+        assert_eq!(m.tab_header, "The Top", "the band rides too");
     }
 }

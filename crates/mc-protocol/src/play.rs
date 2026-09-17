@@ -111,6 +111,8 @@ pub mod clientbound {
         CB_SOUND_ENTITY as SOUND_ENTITY, CB_SOUND as SOUND,
         CB_SET_OBJECTIVE as SET_OBJECTIVE, CB_SET_DISPLAY_OBJECTIVE as SET_DISPLAY_OBJECTIVE,
         CB_SET_SCORE as SET_SCORE, CB_RESET_SCORE as RESET_SCORE,
+        CB_PLAYER_INFO_REMOVE as PLAYER_INFO_REMOVE, CB_PLAYER_INFO_UPDATE as PLAYER_INFO_UPDATE,
+        CB_TAB_LIST as TAB_LIST,
     };
 }
 
@@ -6339,6 +6341,220 @@ pub fn parse_reset_score(payload: &[u8]) -> Result<ResetScore> {
     Ok(ResetScore { owner, objective })
 }
 
+/// One player-info entry's PATCH (the ClientboundPlayerInfoUpdate
+/// packet's per-entry walk): the UUID every entry carries FIRST, then
+/// ONE field per action bit the packet's mask spoke — `None` means
+/// the action was not in the mask, the field the wire never spoke.
+#[derive(Debug, Clone, PartialEq)]
+pub struct PlayerEntryPatch {
+    /// The profile's UUID (two big-endian longs, most-significant
+    /// first — the `new UUID(readLong(), readLong())` law).
+    pub uuid: u128,
+    /// ADD_PLAYER's profile name (the tab row's own text).
+    pub name: Option<String>,
+    /// UPDATE_GAME_MODE's GameType.byId VarInt (0 survival, 1
+    /// creative, 2 adventure, 3 spectator).
+    pub game_mode: Option<u8>,
+    /// UPDATE_LISTED's Boolean — the tab's own visibility bit.
+    pub listed: Option<bool>,
+    /// UPDATE_LATENCY's VarInt (the milliseconds the bars read).
+    pub latency: Option<i32>,
+    /// UPDATE_DISPLAY_NAME's optional component (the flat text; the
+    /// double option: `Some(None)` = the flag spoke an ABSENT name).
+    pub display_name: Option<Option<String>>,
+    /// UPDATE_LIST_ORDER's VarInt (the sort's first key).
+    pub list_order: Option<i32>,
+}
+
+/// The Player Info Update packet (clientbound play, generated id 70 —
+/// `minecraft:player_info_update`). The wire walk (raw disasm of the
+/// 26.2 ctor + the Action enum's clinit/readers): `readEnumSet` = ONE
+/// `readFixedBitSet(8)` byte (bit i = Action ordinal i), then
+/// `readList` — a VarInt count, and per entry `readUUID()` followed by
+/// EACH masked action's reader IN ORDINAL ORDER:
+/// ADD_PLAYER(0) = STRING name + the property map, INITIALIZE_CHAT(1)
+/// = readNullable chat session, UPDATE_GAME_MODE(2) = VarInt,
+/// UPDATE_LISTED(3) = Boolean, UPDATE_LATENCY(4) = VarInt,
+/// UPDATE_DISPLAY_NAME(5) = readNullable component, UPDATE_LIST_ORDER
+/// (6) = VarInt, UPDATE_HAT(7) = Boolean. 26.2's enum has NO
+/// REMOVE_PLAYER — the removal is its own packet (id 69).
+#[derive(Debug, Clone, PartialEq)]
+pub struct PlayerInfoUpdate {
+    /// One patch per entry, in the wire's own order.
+    pub entries: Vec<PlayerEntryPatch>,
+}
+
+/// The Player Info Remove packet (clientbound play, generated id 69 —
+/// `minecraft:player_info_remove`). The wire walk (raw disasm of the
+/// record's `<init>(FriendlyByteBuf)`): `readList(UUIDUtil.STREAM_CODEC)`
+/// — a VarInt count then that many UUIDs.
+#[derive(Debug, Clone, PartialEq)]
+pub struct PlayerInfoRemove {
+    /// The profile UUIDs whose entries die.
+    pub uuids: Vec<u128>,
+}
+
+/// The Tab List packet (clientbound play, generated id 122 —
+/// `minecraft:tab_list`). The wire walk (raw disasm of the composite
+/// clinit): header + footer, BOTH `ComponentSerialization.
+/// TRUSTED_STREAM_CODEC` — ONE bare network NBT tag each, the same
+/// walk the objective display reads (never absent: an EMPTY title
+/// still ships the bare tag).
+#[derive(Debug, Clone, PartialEq)]
+pub struct TabListUpdate {
+    /// The header's flattened TEXT.
+    pub header: String,
+    /// The footer's flattened TEXT.
+    pub footer: String,
+}
+
+/// The ADD_PLAYER property map's own walk (the authlib GameProfile
+/// codec's second read — the stable 1.19.3+ law the modern client
+/// keeps): a VarInt count, then per property the name STRING, the
+/// value STRING, and an optional signature (a Boolean flag, then the
+/// STRING). The house carries no skin lane — the map's only wire duty
+/// is to be CONSUMED (the textures property's base64 never parses).
+fn skip_property_map(r: &mut &[u8]) -> Result<()> {
+    let count = read_varint(r)?;
+    for _ in 0..count {
+        let _name = read_string(r)?;
+        let _value = read_string(r)?;
+        if read_bool(r)? {
+            let _signature = read_string(r)?;
+        }
+    }
+    Ok(())
+}
+
+/// The INITIALIZE_CHAT action's own consumption (the
+/// `RemoteChatSession.Data.read` walk the raw disasm speaks): a
+/// Boolean flag, then UUID + `ProfilePublicKey.Data` — the expiry
+/// Instant (a long, the epoch millis), the public key (a
+/// varint-length byte array), the key signature (a varint-length byte
+/// array). The house speaks no signed chat — the session's only wire
+/// duty is to be consumed exactly.
+fn skip_chat_session(r: &mut &[u8]) -> Result<()> {
+    if read_bool(r)? {
+        let _session_id = u128::from_be_bytes(read_uuid(r)?);
+        let _expires_at = read_i64(r)?;
+        let key = read_varint(r)? as usize;
+        skip_len_bytes(r, key)?;
+        let sig = read_varint(r)? as usize;
+        skip_len_bytes(r, sig)?;
+    }
+    Ok(())
+}
+
+/// One varint-length byte array's own consumption (the
+/// `readByteArray(n)` law the key/signature reads speak): the length
+/// was already read — the payload's duty is to be exactly there.
+fn skip_len_bytes(r: &mut &[u8], len: usize) -> Result<()> {
+    if r.len() < len {
+        anyhow::bail!("byte array needs {len} bytes, only {} left", r.len());
+    }
+    *r = &r[len..];
+    Ok(())
+}
+
+/// The TWO-LONG UUID's own fold (the `new UUID(readLong(), readLong())`
+/// law the Add Entity walk shares): the most-significant long FIRST,
+/// the pair a big-endian u128.
+fn read_u128(r: &mut &[u8]) -> Result<u128> {
+    let msb = read_i64(r)? as u64;
+    let lsb = read_i64(r)? as u64;
+    Ok(((msb as u128) << 64) | (lsb as u128))
+}
+
+/// Player Info Update's wire walk (see [`PlayerInfoUpdate`] — the
+/// generated-id guard, the bitmask's ordinal dispatch).
+pub fn parse_player_info_update(payload: &[u8]) -> Result<PlayerInfoUpdate> {
+    let mut c: &[u8] = payload;
+    let id = read_varint(&mut c)?;
+    anyhow::ensure!(
+        id == clientbound::PLAYER_INFO_UPDATE,
+        "not a player info update packet (0x{id:02X})"
+    );
+    let mask = read_u8(&mut c)?;
+    let count = read_varint(&mut c)?;
+    let mut entries = Vec::with_capacity(count.min(1024) as usize);
+    for _ in 0..count {
+        let uuid = read_u128(&mut c)?;
+        let mut patch = PlayerEntryPatch {
+            uuid,
+            name: None,
+            game_mode: None,
+            listed: None,
+            latency: None,
+            display_name: None,
+            list_order: None,
+        };
+        if mask & 0x01 != 0 {
+            patch.name = Some(read_string(&mut c)?);
+            skip_property_map(&mut c)?;
+        }
+        if mask & 0x02 != 0 {
+            skip_chat_session(&mut c)?;
+        }
+        if mask & 0x04 != 0 {
+            let gm = read_varint(&mut c)?;
+            anyhow::ensure!(
+                (0..=3).contains(&gm),
+                "game mode {gm} outside the GameType enum"
+            );
+            patch.game_mode = Some(gm as u8);
+        }
+        if mask & 0x08 != 0 {
+            patch.listed = Some(read_bool(&mut c)?);
+        }
+        if mask & 0x10 != 0 {
+            patch.latency = Some(read_varint(&mut c)?);
+        }
+        if mask & 0x20 != 0 {
+            patch.display_name = Some(if read_bool(&mut c)? {
+                Some(flatten_component_text(&read_bare_nbt(&mut c)?))
+            } else {
+                None
+            });
+        }
+        if mask & 0x40 != 0 {
+            patch.list_order = Some(read_varint(&mut c)?);
+        }
+        if mask & 0x80 != 0 {
+            let _show_hat = read_bool(&mut c)?;
+        }
+        entries.push(patch);
+    }
+    Ok(PlayerInfoUpdate { entries })
+}
+
+/// Player Info Remove's wire walk (see [`PlayerInfoRemove`] — the
+/// generated-id guard, the UUID list).
+pub fn parse_player_info_remove(payload: &[u8]) -> Result<PlayerInfoRemove> {
+    let mut c: &[u8] = payload;
+    let id = read_varint(&mut c)?;
+    anyhow::ensure!(
+        id == clientbound::PLAYER_INFO_REMOVE,
+        "not a player info remove packet (0x{id:02X})"
+    );
+    let count = read_varint(&mut c)?;
+    let mut uuids = Vec::with_capacity(count.min(1024) as usize);
+    for _ in 0..count {
+        uuids.push(read_u128(&mut c)?);
+    }
+    Ok(PlayerInfoRemove { uuids })
+}
+
+/// Tab List's wire walk (see [`TabListUpdate`] — the generated-id
+/// guard, the two bare-NBT components).
+pub fn parse_tab_list(payload: &[u8]) -> Result<TabListUpdate> {
+    let mut c: &[u8] = payload;
+    let id = read_varint(&mut c)?;
+    anyhow::ensure!(id == clientbound::TAB_LIST, "not a tab list packet (0x{id:02X})");
+    let header = flatten_component_text(&read_bare_nbt(&mut c)?);
+    let footer = flatten_component_text(&read_bare_nbt(&mut c)?);
+    Ok(TabListUpdate { header, footer })
+}
+
 /// Player Combat Kill (clientbound play, generated id 68 —
 /// `minecraft:player_combat_kill`). javap of the real 26.2 record's
 /// STREAM_CODEC read: a VarInt player id, then the death message
@@ -6595,6 +6811,17 @@ pub enum PlayEvent {
     /// Reset Score: one holder's row dies — the named objective's or
     /// every objective's (see [`ResetScore`]).
     ResetScore(ResetScore),
+    /// Player Info Update: the tab's own population walk — the add
+    /// (name + properties), the game-mode/listed/latency/display-name/
+    /// list-order/hat updates, the chat session (see
+    /// [`PlayerInfoUpdate`]).
+    PlayerInfoUpdate(PlayerInfoUpdate),
+    /// Player Info Remove: the profiles whose tab entries die (see
+    /// [`PlayerInfoRemove`]).
+    PlayerInfoRemove(PlayerInfoRemove),
+    /// Tab List: the header + footer components the TAB overlay draws
+    /// (see [`TabListUpdate`]).
+    TabList(TabListUpdate),
     /// Any packet without a client surface yet (skipped silently).
     Skipped,
 }
@@ -6733,6 +6960,13 @@ impl<S: Read + Write> PlaySession<S> {
             clientbound::RESET_SCORE => {
                 Ok(PlayEvent::ResetScore(parse_reset_score(&pkt)?))
             }
+            clientbound::PLAYER_INFO_UPDATE => {
+                Ok(PlayEvent::PlayerInfoUpdate(parse_player_info_update(&pkt)?))
+            }
+            clientbound::PLAYER_INFO_REMOVE => {
+                Ok(PlayEvent::PlayerInfoRemove(parse_player_info_remove(&pkt)?))
+            }
+            clientbound::TAB_LIST => Ok(PlayEvent::TabList(parse_tab_list(&pkt)?)),
             _ => Ok(PlayEvent::Skipped),
         }
     }
@@ -12292,6 +12526,125 @@ mod tests {
         let p = encode_client_command(0);
         assert_eq!(p, vec![0x0C, 0x00], "the respawn wire's own bytes");
         assert_eq!(encode_client_command(1), vec![0x0C, 0x01], "REQUEST_STATS");
+    }
+
+    /// The player-info + tab-list lanes' wire walks (the TAB
+    /// overlay's own wire — raw disasm of the 26.2
+    /// `ClientboundPlayerInfoUpdatePacket` ctor + Action clinit,
+    /// `ClientboundPlayerInfoRemovePacket`, `ClientboundTabListPacket`):
+    /// the mask byte (bit i = Action ordinal i, the readFixedBitSet(8)
+    /// law), the per-entry walks in ordinal order (ADD = name +
+    /// properties, CHAT = the nullable session, GAME_MODE = VarInt,
+    /// LISTED = Boolean, LATENCY = VarInt, DISPLAY_NAME = optional
+    /// component, LIST_ORDER = VarInt, HAT = Boolean), the UUID list
+    /// the removal rides, the two bare-NBT components the header and
+    /// footer speak.
+    #[test]
+    fn the_player_info_lanes_walk_the_masked_entries() {
+        // THE FULL WALK: ADD(0) + GAME_MODE(2) + LISTED(3) + LATENCY(4)
+        // = mask 0x1D — one entry, the fields in the enum's own order
+        let mut p = Vec::new();
+        write_varint(&mut p, clientbound::PLAYER_INFO_UPDATE);
+        p.push(0x1D); // ADD | GAME_MODE | LISTED | LATENCY
+        write_varint(&mut p, 1); // one entry
+        p.extend_from_slice(&[0x55, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]); // msb
+        p.extend_from_slice(&[0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x55, 0xAA]); // lsb
+        write_string(&mut p, "Steve");
+        write_varint(&mut p, 0); // no properties
+        write_varint(&mut p, 1); // game mode CREATIVE
+        p.push(1); // listed
+        write_varint(&mut p, 42); // latency ms
+        let u = parse_player_info_update(&p).unwrap();
+        assert_eq!(u.entries.len(), 1);
+        let e = &u.entries[0];
+        assert_eq!(
+            e.uuid,
+            0x5500_0000_0000_0000_0000_0000_0000_55AAu128,
+            "the two-long UUID fold, msb first"
+        );
+        assert_eq!(e.name.as_deref(), Some("Steve"));
+        assert_eq!(e.game_mode, Some(1));
+        assert_eq!(e.listed, Some(true));
+        assert_eq!(e.latency, Some(42));
+        assert_eq!(e.display_name, None, "the mask never spoke it");
+        assert_eq!(e.list_order, None);
+
+        // THE CHAT SESSION'S OWN CONSUMPTION (ADD + INITIALIZE_CHAT =
+        // mask 0x03): the property WITH its signature, the session's
+        // uuid + expiry + key + signature arrays the walk swallows
+        let mut p = Vec::new();
+        write_varint(&mut p, clientbound::PLAYER_INFO_UPDATE);
+        p.push(0x03);
+        write_varint(&mut p, 1);
+        p.extend_from_slice(&[0u8; 16]);
+        write_string(&mut p, "Alex");
+        write_varint(&mut p, 1); // one property
+        write_string(&mut p, "textures");
+        write_string(&mut p, "base64-skin");
+        p.push(1); // signature present
+        write_string(&mut p, "sig");
+        p.push(1); // chat session present
+        p.extend_from_slice(&[2u8; 16]); // session id
+        p.extend_from_slice(&1234567i64.to_be_bytes()); // expiry
+        write_varint(&mut p, 3); // key bytes
+        p.extend_from_slice(&[9, 9, 9]);
+        write_varint(&mut p, 2); // signature bytes
+        p.extend_from_slice(&[8, 8]);
+        let u = parse_player_info_update(&p).unwrap();
+        assert_eq!(u.entries[0].name.as_deref(), Some("Alex"));
+        assert!(p.len() > 0 && p.len() < usize::MAX, "consumed");
+
+        // the truncated tail refuses (the byte array's own bounds)
+        let mut p = Vec::new();
+        write_varint(&mut p, clientbound::PLAYER_INFO_UPDATE);
+        p.push(0x02); // CHAT only
+        write_varint(&mut p, 1);
+        p.extend_from_slice(&[1u8; 10]); // the session's 16-byte uuid starves
+        assert!(parse_player_info_update(&p).is_err(), "truncated chat session refuses");
+
+        // the game-mode guard (the GameType enum's own bounds)
+        let mut p = Vec::new();
+        write_varint(&mut p, clientbound::PLAYER_INFO_UPDATE);
+        p.push(0x04); // GAME_MODE
+        write_varint(&mut p, 1);
+        p.extend_from_slice(&[0u8; 16]);
+        write_varint(&mut p, 7); // outside 0..=3
+        assert!(parse_player_info_update(&p).is_err(), "game mode 7 refuses");
+
+        // THE REMOVAL: the VarInt count + the UUIDs (the
+        // readList(UUIDUtil.STREAM_CODEC) law)
+        let mut p = Vec::new();
+        write_varint(&mut p, clientbound::PLAYER_INFO_REMOVE);
+        write_varint(&mut p, 2);
+        p.extend_from_slice(&[1u8; 16]);
+        p.extend_from_slice(&[2u8; 16]);
+        let r = parse_player_info_remove(&p).unwrap();
+        assert_eq!(r.uuids.len(), 2, "two entries");
+        assert_eq!(r.uuids[0], u128::from_be_bytes([1u8; 16]));
+        assert_eq!(r.uuids[1], u128::from_be_bytes([2u8; 16]));
+
+        // THE TAB LIST: header + footer, ONE bare NBT tag each — the
+        // string form and the compound form the flatten walks
+        let mut p = Vec::new();
+        write_varint(&mut p, clientbound::TAB_LIST);
+        write_bare_nbt(&Nbt::String("Welcome".into()), &mut p);
+        write_bare_nbt(
+            &Nbt::Compound(vec![(
+                "text".into(),
+                Nbt::String("server ip".into()),
+            )]),
+            &mut p,
+        );
+        let t = parse_tab_list(&p).unwrap();
+        assert_eq!(t.header, "Welcome");
+        assert_eq!(t.footer, "server ip");
+
+        // not-the-right-packet refusals (the generated-id guards)
+        let mut p = Vec::new();
+        write_varint(&mut p, clientbound::TAB_LIST);
+        assert!(parse_player_info_update(&p).is_err());
+        write_varint(&mut p, clientbound::PLAYER_INFO_UPDATE);
+        assert!(parse_tab_list(&p).is_err());
     }
 
     /// The Open Screen and Container Close packets' wire walks (the

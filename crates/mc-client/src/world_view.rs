@@ -303,6 +303,13 @@ pub struct SnapshotView {
     /// its objective gone) — the HUD renders nothing, the honest
     /// absence.
     pub sidebar: Option<WireSidebar>,
+    /// The TAB overlay's own projection (see [`WirePlayerList`]) —
+    /// the listed rows the player-info store keeps, sorted and
+    /// capped the comparator law keeps, plus the header/footer texts.
+    /// The EMPTY overlay (no rows, no bands) is the honest silence —
+    /// the join's default, and the shape the TAB key's gate renders
+    /// when the server never spoke.
+    pub player_list: WirePlayerList,
     /// The player's OWN inventory window (the window-0 store)
     /// projected for the UI — the full 46-slot shape in the wire's
     /// own numbering (result 0, craft 1..5, armor 5..9, the main
@@ -386,6 +393,43 @@ pub struct WireSidebarLine {
 pub struct WireSidebar {
     pub title: String,
     pub lines: Vec<WireSidebarLine>,
+}
+
+/// The TAB overlay's own row cap (the `getPlayerInfos` walk's
+/// `limit(80L)` — the stream's own Long the constant pool speaks).
+pub const PLAYER_ROW_CAP: usize = 80;
+
+/// One TAB row as the renderer consumes it (the vanilla
+/// `PlayerTabOverlay.PlayerInfo` walk's own words): the profile name
+/// the ADD_PLAYER carried, the game mode's ordinal verbatim (the 3
+/// the spectator dim speaks), the latency milliseconds (the bar
+/// lanes' law reads — the icon lane the house's no-sprite render
+/// keeps honest data for), and the list order (the sort's first
+/// key). The LIST-objective score rides when the scoreboard speaks
+/// for the player's NAME (the ScoreHolder.fromGameProfile law — the
+/// players' rows score by name, the entities' by stringUUID);
+/// `None` = no row on the list objective.
+#[derive(Debug, Clone, PartialEq)]
+pub struct WirePlayerRow {
+    pub name: String,
+    pub game_mode: u8,
+    pub latency: i32,
+    pub list_order: i32,
+    pub score: Option<i32>,
+}
+
+/// The TAB overlay's own projection (the Hud extractTabList →
+/// PlayerTabOverlay.extractRenderState's stand-in): the header and
+/// footer texts (empty = the no-band silence the vanilla nulls
+/// keep), and the rows the display law keeps — the LISTED entries
+/// sorted by (list order ASC, spectator LAST, profile name ASC —
+/// the PLAYER_COMPARATOR's own chain, the house's no-team lane the
+/// team-name tiebreak skips), capped at 80.
+#[derive(Debug, Clone, PartialEq)]
+pub struct WirePlayerList {
+    pub header: String,
+    pub footer: String,
+    pub rows: Vec<WirePlayerRow>,
 }
 
 /// One wire mob as the renderer consumes it — the Add Entity
@@ -1266,6 +1310,54 @@ fn sidebar_view(model: &WorldModel) -> Option<WireSidebar> {
     })
 }
 
+/// The TAB overlay's own projection (the getPlayerInfos +
+/// extractRenderState walks the wire's store feeds — see
+/// [`WirePlayerList`]). The score column walks the LIST slot: the
+/// objective the slot names (the Hud extractTabList's own lookup),
+/// each listed entry's NAME the score holder (the
+/// ScoreHolder.fromGameProfile law), the row's value the score store
+/// keeps — the honest `None` when the objective is silent or the
+/// player has no row on it.
+fn player_list_view(model: &WorldModel) -> WirePlayerList {
+    let list_objective = model.display_slots.get(&0);
+    let score_of = |name: &str| {
+        let obj_name = list_objective?;
+        model.scores.get(&(name.to_string(), obj_name.clone())).map(|s| s.value)
+    };
+    let mut rows: Vec<WirePlayerRow> = model
+        .players
+        .values()
+        .filter(|e| e.listed)
+        .map(|e| WirePlayerRow {
+            name: e.name.clone(),
+            game_mode: e.game_mode,
+            latency: e.latency,
+            list_order: e.list_order,
+            score: score_of(&e.name),
+        })
+        .collect();
+    // THE PLAYER_COMPARATOR's own chain (the lambda$static$0..3 walk):
+    // the list order ascending, the spectator LAST (the
+    // gameMode == SPECTATOR ? 1 : 0 law — the flag the comparator
+    // sorts ascending, the 1 the spectator owns sinks), the profile
+    // name ascending in the String.compareTo's own case-sensitive
+    // order (the team-name tiebreak the house's no-team lane skips —
+    // every entry's team is the same empty string, the order never
+    // speaks).
+    rows.sort_by(|a, b| {
+        a.list_order
+            .cmp(&b.list_order)
+            .then_with(|| (a.game_mode == 3).cmp(&(b.game_mode == 3)))
+            .then_with(|| a.name.cmp(&b.name))
+    });
+    rows.truncate(PLAYER_ROW_CAP);
+    WirePlayerList {
+        header: model.tab_header.clone(),
+        footer: model.tab_footer.clone(),
+        rows,
+    }
+}
+
 fn hotbar_row_view(model: &WorldModel) -> [(i32, i32); 9] {
     let inv = model.inventory();
     let mut row = [(0i32, 0i32); 9];
@@ -1430,6 +1522,10 @@ pub fn materialize_snapshot_view(
         // the join snapshot carries no scoreboard belief — the wire
         // trio's packets are the only source (the empty lane)
         sidebar: None,
+        // the join snapshot carries no tab belief either — the
+        // player-info packets are the only source (the empty overlay:
+        // no rows, no bands — the render's gate keeps it silent)
+        player_list: WirePlayerList { header: String::new(), footer: String::new(), rows: Vec::new() },
         // the join's own store — the window-0 lane reads the adopted
         // state the same way the hand's lane does (empty until the
         // wire speaks)
@@ -1663,6 +1759,10 @@ impl LiveView {
                 // the sidebar is the session's own truth, not the
                 // pose's
                 sidebar: sidebar_view(&self.model),
+                // the tab's belief rides the same arm — the listed
+                // rows the projection sorted and capped (the TAB key's
+                // screen the overlay renders)
+                player_list: player_list_view(&self.model),
             };
         };
         let origin = snapshot_window_origin(player, self.side);
@@ -1693,6 +1793,10 @@ impl LiveView {
             // sidebar follows the wire trio's store exactly like the
             // vitals do
             sidebar: sidebar_view(&self.model),
+            // the tab's belief rides every refresh too — the listed
+            // rows follow the player-info store exactly like the
+            // scoreboard does
+            player_list: player_list_view(&self.model),
             // the player's OWN store rides with them — the inventory
             // screen's live lane follows the store exactly like the
             // chest's slots do
@@ -4038,5 +4142,91 @@ mod tests {
             display: None,
         })));
         assert_eq!(below_name_view(&model, mob_uuid).as_deref(), Some("42 Deaths"));
+    }
+
+    #[test]
+    fn the_player_list_projection_sorts_and_caps() {
+        use mc_protocol::{
+            DisplayObjectiveUpdate, ObjectiveUpdate, PlayEvent, PlayerEntryPatch, PlayerInfoUpdate,
+            ScoreUpdate, OBJECTIVE_METHOD_ADD, RENDER_TYPE_INTEGER,
+        };
+        let mut model = WorldModel::new();
+        // the silent overlay: the join's own empty shape
+        let empty = player_list_view(&model);
+        assert_eq!(empty.rows.len(), 0);
+        assert_eq!(empty.header, "");
+        // the entries: order asc rides first, the spectator sinks, the
+        // unlisted never render, the names tiebreak case-sensitive
+        let patch = |uuid: u128, name: &str, gm: Option<u8>, listed: bool| PlayerEntryPatch {
+            uuid,
+            name: Some(name.into()),
+            game_mode: gm,
+            listed: Some(listed),
+            latency: None,
+            display_name: None,
+            list_order: Some(0),
+        };
+        assert!(model.apply(PlayEvent::PlayerInfoUpdate(PlayerInfoUpdate {
+            entries: vec![
+                patch(1, "Zed", None, true),
+                patch(2, "SpectatorBot", Some(3), true),
+                patch(3, "Alpha", None, true),
+                patch(4, "Hidden", None, false),
+            ],
+        })));
+        // the list-order key: Alpha re-sorts FIRST on order 3
+        assert!(model.apply(PlayEvent::PlayerInfoUpdate(PlayerInfoUpdate {
+            entries: vec![PlayerEntryPatch {
+                uuid: 3,
+                name: None,
+                game_mode: None,
+                listed: None,
+                latency: None,
+                display_name: None,
+                list_order: Some(-3),
+            }],
+        })));
+        let list = player_list_view(&model);
+        let names: Vec<&str> = list.rows.iter().map(|r| r.name.as_str()).collect();
+        assert_eq!(
+            names,
+            vec!["Alpha", "Zed", "SpectatorBot"],
+            "the order asc, the non-spectators' name asc, the spectator sinks, the unlisted drops"
+        );
+        assert_eq!(list.rows[2].game_mode, 3, "the spectator's mode rides the row");
+
+        // THE SCORE COLUMN (the LIST slot's own lane): the objective
+        // the slot names, the row the player's NAME holds (the
+        // ScoreHolder.fromGameProfile law — players score by name)
+        assert!(model.apply(PlayEvent::Objective(ObjectiveUpdate {
+            objective: "kills".into(),
+            method: OBJECTIVE_METHOD_ADD,
+            display: Some("Kills".into()),
+            render_type: RENDER_TYPE_INTEGER,
+        })));
+        assert!(model.apply(PlayEvent::DisplayObjective(DisplayObjectiveUpdate {
+            slot: 0, // the LIST slot
+            objective: "kills".into(),
+        })));
+        assert!(model.apply(PlayEvent::Score(ScoreUpdate {
+            owner: "Zed".into(),
+            objective: "kills".into(),
+            score: 7,
+            display: None,
+        })));
+        let list = player_list_view(&model);
+        let zed = list.rows.iter().find(|r| r.name == "Zed").unwrap();
+        assert_eq!(zed.score, Some(7), "the name-holder's row rides");
+        let alpha = list.rows.iter().find(|r| r.name == "Alpha").unwrap();
+        assert_eq!(alpha.score, None, "no row, no score — the honest None");
+
+        // THE CAP (the limit(80L) the stream speaks): 85 listed entries
+        // truncate to 80
+        let mut flood = Vec::new();
+        for i in 0..85u128 {
+            flood.push(patch(100 + i, &format!("Player{i:03}"), None, true));
+        }
+        model.apply(PlayEvent::PlayerInfoUpdate(PlayerInfoUpdate { entries: flood }));
+        assert_eq!(player_list_view(&model).rows.len(), 80, "the stream's own limit");
     }
 }

@@ -145,6 +145,50 @@ pub const SIDEBAR_BODY_BG: [f32; 4] = [0.0, 0.0, 0.0, 102.0 / 255.0];
 /// budget rides).
 pub const SIDEBAR_SCORE_SEPARATOR: &str = ": ";
 
+/// THE TAB'S BANDS (javap `extractRenderState` — the header/footer
+/// bands' own fill: the `ldc_w -2147483648` = 0x80000000, the
+/// half-alpha black the band rectangle speaks).
+pub const TAB_BAND_BG: [f32; 4] = [0.0, 0.0, 0.0, 128.0 / 255.0];
+/// THE TAB'S ROW HIGHLIGHT (the `ldc_w 553648127` = 0x20FFFFFF the
+/// `Options.getBackgroundColor(I)` walk reads — the option default
+/// (`backgroundForChatOnly` true) returns the color VERBATIM, the
+/// alpha-0x20 white the row's 8px band keeps).
+pub const TAB_ROW_BG: [f32; 4] = [1.0, 1.0, 1.0, 32.0 / 255.0];
+/// THE TAB'S SPECTATOR NAME (the `ldc_w -1862270977` = 0x90FFFFFF the
+/// name text's own color speaks when the game mode is SPECTATOR — the
+/// dimmer white the ghost rows wear). The house's text lane paints
+/// opaque (the alpha-less raster `Gui::text` owns), so the ARGB's
+/// 0x90 alpha folds onto the white RGB — the composite over the dark
+/// band the vanilla alpha walk paints.
+pub const TAB_SPECTATOR_NAME: [f32; 3] =
+    [144.0 / 255.0, 144.0 / 255.0, 144.0 / 255.0];
+/// THE TAB'S ROW PITCH (javap — the `bipush 9` the row stride and the
+/// band heights keep: 9px per row, the font's own line).
+pub const TAB_ROW_PITCH: i32 = 9;
+/// THE TAB'S HEADER SPACING (javap — the `bipush 10` the y cursor
+/// starts at, the band gap the header's `iinc += 1` and the body's
+/// own margins ride).
+pub const TAB_TOP: i32 = 10;
+/// THE TAB'S GUTTER (javap — the `bipush 5` the columns' separation
+/// keeps: `col * colWidth + col * 5` the row x law speaks).
+pub const TAB_GUTTER: i32 = 5;
+/// THE TAB'S ENTRY PADDING (javap — the `bipush 13` the column
+/// width's content budget adds: ping 9 + name + score + 13).
+pub const TAB_ENTRY_PAD: i32 = 13;
+/// THE TAB'S FACE SLOT (javap — the `bipush 9` the online-mode row
+/// advances before the name text: the 8x8 face + 1px pad the skin
+/// lane keeps; the house's no-skin render reserves the offset the
+/// vanilla law names).
+pub const TAB_FACE_SLOT: i32 = 9;
+/// THE TAB'S PING SLOT (the same walk's `bipush 9` inside the column
+/// width's budget: the 10x8 bar icon + pad the online mode reserves
+/// at the row's right edge).
+pub const TAB_PING_SLOT: i32 = 9;
+/// THE TAB'S ROW CAP HEIGHT (javap — the `bipush 8` the per-row band
+/// fill keeps: `fill(x, y, x + colWidth, y + 8)` — the band is 8px
+/// high on the 9px pitch, the vanilla row's own hairline).
+pub const TAB_ROW_BAND_H: i32 = 8;
+
 /// THE BELOW-NAME'S OWN LIFT (javap `submitNameDisplay` — the
 /// translate the score's presence rides: `9.0 * 1.15 * 0.025` in the
 /// bytecode's own f32s — the name draws this much ABOVE the
@@ -1161,6 +1205,16 @@ pub struct App {
     /// [`crate::world_view::WireSidebar`]) — `None` while the slot is
     /// silent (the HUD renders nothing, the honest absence).
     pub sidebar: Option<crate::world_view::WireSidebar>,
+    /// The TAB overlay's projection as the wire last spoke it (see
+    /// [`crate::world_view::WirePlayerList`]) — the listed rows the
+    /// player-info store keeps (the empty overlay the join's default).
+    pub player_list: crate::world_view::WirePlayerList,
+    /// THE TAB KEY'S HELD STATE (the vanilla extractTabList's
+    /// `keyPlayerList.isDown()` gate): true while TAB sleeps on the
+    /// keyboard — the overlay renders only under this flag, the
+    /// headless scenes never raise it (the goldens never see the
+    /// overlay).
+    pub tab_held: bool,
     /// The spawn pose the body materialized at (the offline spawn law's
     /// own feet/angles, the network teleport's pose) — the respawn's
     /// own re-anchor (the vanilla respawn teleports the player to the
@@ -1477,6 +1531,12 @@ impl App {
             dead: false,
             death_message: None,
             sidebar: None,
+            player_list: crate::world_view::WirePlayerList {
+                header: String::new(),
+                footer: String::new(),
+                rows: Vec::new(),
+            },
+            tab_held: false,
             spawn_pose: None,
         }
     }
@@ -7100,6 +7160,22 @@ impl App {
         self.sidebar = sidebar;
     }
 
+    /// THE TAB'S OWN LANE (the player-info packets' HUD half — the
+    /// listed rows the server's population keeps): the view's
+    /// projection (sorted, capped) lands verbatim and stands until the
+    /// next ship — the render walks it while the TAB key sleeps.
+    pub fn live_player_list_updated(&mut self, list: crate::world_view::WirePlayerList) {
+        self.player_list = list;
+    }
+
+    /// THE TAB KEY'S OWN GATE (the vanilla extractTabList's
+    /// `keyPlayerList.isDown()` walk — the held state the window loop
+    /// polls each frame): the overlay's visibility rides it, the
+    /// key's lift hides the list the same frame.
+    pub fn on_tab_key(&mut self, down: bool) {
+        self.tab_held = down;
+    }
+
     /// THE WIRE MOBS' OWN TICK (javap LivingEntity's remote walk —
     /// no AI, no physics: the server owns both): the tick head saves
     /// the prev feet + the head pair (the render's lerps walk them at
@@ -10892,6 +10968,120 @@ impl App {
                 g.text(a, right - score_w, y, score, SIDEBAR_SCORE_RED, false);
             }
         }
+        // THE TAB OVERLAY (javap Hud.extractTabList +
+        // PlayerTabOverlay.extractRenderState — the live server's
+        // population the player-info lane keeps): the TAB key's held
+        // gate arms the whole walk (the headless scenes never raise
+        // it — the goldens never see the overlay). The vanilla law:
+        // the header band + the centered shadowed lines, the BODY
+        // BAND UNCONDITIONAL (the extract fills it with zero rows —
+        // the empty server's tab still speaks), the rows the
+        // (columns × rows) grid keeps (the 5px gutters, the
+        // per-row alpha-0x20 white bands 8px high on the 9px pitch),
+        // the face slot the online mode reserves (+9 the name rides),
+        // the names in white (the spectator's 0x90FFFFFF dim), the
+        // score right-aligned inside the column's budget when the
+        // LIST objective speaks for the row's name, the ping slot
+        // reserved at the right edge (the icon lane the house's
+        // no-sprite render honestly skips).
+        if self.tab_held {
+            let pl = &self.player_list;
+            let n = pl.rows.len();
+            let max_name_w = pl
+                .rows
+                .iter()
+                .map(|r| g.text_width(&r.name))
+                .max()
+                .unwrap_or(0);
+            let space_w = g.text_width(" ");
+            let score_col_w = pl
+                .rows
+                .iter()
+                .map(|r| match r.score {
+                    Some(v) if r.game_mode != 3 => space_w + g.text_width(&v.to_string()),
+                    _ => 0,
+                })
+                .max()
+                .unwrap_or(0);
+            let (columns, row_count, col_width, grid_x, grid_w) =
+                tab_layout(w, max_name_w, score_col_w, n);
+            let _ = columns; // the grid's own x count rides the math
+            let mut y = TAB_TOP;
+            // THE HEADER (the header != null band: fill(w/2 - gridW/2
+            // - 1, y - 1, w/2 + gridW/2 + 1, y + lines*9) at
+            // 0x80000000, the centered shadowed line, the 9px pitch,
+            // the iinc 1 after)
+            if !pl.header.is_empty() {
+                g.fill(
+                    w / 2 - grid_w / 2 - 1,
+                    y - 1,
+                    grid_w + 2,
+                    TAB_ROW_PITCH + 1,
+                    TAB_BAND_BG,
+                );
+                let hx = w / 2 - g.text_width(&pl.header) / 2;
+                g.text(a, hx, y, &pl.header, WHITE, true);
+                y += TAB_ROW_PITCH + 1;
+            }
+            // THE BODY BAND (unconditional — the extract's own walk
+            // fills it before any row reads: the empty list's tab is
+            // still the small band the 22px content width keeps)
+            g.fill(
+                w / 2 - grid_w / 2 - 1,
+                y - 1,
+                grid_w + 2,
+                row_count * TAB_ROW_PITCH + 1,
+                TAB_BAND_BG,
+            );
+            for (idx, row) in pl.rows.iter().enumerate() {
+                let col = idx as i32 / row_count.max(1);
+                let r = idx as i32 % row_count.max(1);
+                let x = grid_x + col * (col_width + TAB_GUTTER);
+                let ry = y + r * TAB_ROW_PITCH;
+                g.fill(x, ry, col_width, TAB_ROW_BAND_H, TAB_ROW_BG);
+                // the face slot the online mode reserves (the +9 the
+                // iinc speaks — the house's no-skin lane keeps the
+                // offset, the name at the vanilla's own x)
+                let tx = x + TAB_FACE_SLOT;
+                let name_color = if row.game_mode == 3 {
+                    TAB_SPECTATOR_NAME
+                } else {
+                    WHITE
+                };
+                g.text(a, tx, ry, &row.name, name_color, true);
+                // THE SCORE (the extractTablistScore walk: the sx =
+                // x + maxName + 1, the ex = sx + scoreCol, the
+                // `ex - sx > 5` gate, the text right-aligned at
+                // ex - scoreWidth — the spectator's row never scores)
+                if let Some(v) = row.score {
+                    if row.game_mode != 3 && score_col_w > 0 {
+                        let sx = tx + max_name_w + 1;
+                        let ex = sx + score_col_w;
+                        if ex - sx > 5 {
+                            let s = v.to_string();
+                            g.text(a, ex - g.text_width(&s), ry, &s, WHITE, true);
+                        }
+                    }
+                }
+                // the ping slot reserved (the icon the no-sprite
+                // render honestly skips — the width the budget keeps)
+            }
+            // THE FOOTER (the footer != null band: the y += rows*9 + 1
+            // walk, the band + the centered shadowed line — the
+            // header's own shape mirrored below the grid)
+            if !pl.footer.is_empty() {
+                y += row_count * TAB_ROW_PITCH + 1;
+                g.fill(
+                    w / 2 - grid_w / 2 - 1,
+                    y - 1,
+                    grid_w + 2,
+                    TAB_ROW_PITCH + 1,
+                    TAB_BAND_BG,
+                );
+                let fx = w / 2 - g.text_width(&pl.footer) / 2;
+                g.text(a, fx, y, &pl.footer, WHITE, true);
+            }
+        }
     }
 
     /// THE DEATH SCREEN (javap DeathScreen, the vanilla's own layout):
@@ -11358,6 +11548,30 @@ fn sidebar_layout(w: i32, h: i32, title_w: i32, sep_w: i32, rows: &[(i32, i32)])
     let right = w - 3 + 2;
     let left = w - width - 3;
     (left, top, bottom, right, width)
+}
+
+/// THE TAB OVERLAY'S OWN GRID (javap `extractRenderState`'s layout
+/// arithmetic, the byte-verified five): the columns walk (`for(k = 1;
+/// rows > 20; k++) rows = (i + k - 1) / k` — the smallest column count
+/// whose row count sinks to 20), the column width (`min(k * (ping +
+/// maxName + score + 13), w - 50) / k` — the content budget the 50px
+/// screen margin caps), the grid width + the centered origin (the
+/// `colWidth * k + (k - 1) * 5` the gutters ride). Returns `(columns,
+/// rows, col_width, grid_x, grid_w)` — the five numbers every draw
+/// call walks.
+fn tab_layout(w: i32, max_name_w: i32, score_col_w: i32, entry_count: usize) -> (i32, i32, i32, i32, i32) {
+    let i = entry_count as i32;
+    let mut rows = i;
+    let mut columns = 1;
+    while rows > 20 {
+        columns += 1;
+        rows = (i + columns - 1) / columns;
+    }
+    let content = TAB_PING_SLOT + max_name_w + score_col_w + TAB_ENTRY_PAD;
+    let col_width = (columns * content).min(w - 50) / columns;
+    let grid_w = col_width * columns + (columns - 1) * TAB_GUTTER;
+    let grid_x = w / 2 - grid_w / 2;
+    (columns, rows, col_width, grid_x, grid_w)
 }
 
 /// Deterministic splitmix64 (same primitive as the world seed).
@@ -24037,6 +24251,36 @@ mod tests {
         // the zero-row panel: top == bottom (the title-only band)
         let (_, t3, b3, _, _) = sidebar_layout(427, 244, 40, 6, &[]);
         assert_eq!(t3, b3, "no rows, no body");
+    }
+
+    #[test]
+    fn the_tab_layout_walks_the_grid() {
+        // THE COLUMN WALK (the `for(k=1; rows>20; k++) rows=(i+k-1)/k`
+        // law): 25 entries need TWO columns (25 > 20 → k=2, ceil(25/2)
+        // = 13 ≤ 20); 400 entries ride 20 columns of 20
+        let (columns, rows, col_width, grid_x, grid_w) = tab_layout(427, 20, 6, 25);
+        assert_eq!((columns, rows), (2, 13), "the smallest k whose rows sink to 20");
+        // the content budget: ping 9 + name 20 + score 6 + pad 13 = 48;
+        // the grid = min(2*48, w-50)/2 per column + the 5px gutter
+        assert_eq!(col_width, (2 * 48).min(427 - 50) / 2, "the capped budget");
+        assert_eq!(grid_w, col_width * 2 + 5, "the gutter rides the grid");
+        assert_eq!(grid_x, 427 / 2 - grid_w / 2, "the centered origin");
+        // the 20x20 ceiling: 400 entries exactly fill the grid
+        let (c4, r4, _, _, _) = tab_layout(427, 20, 6, 400);
+        assert_eq!((c4, r4), (20, 20), "the walk's own ceiling");
+        // 81 entries: k=2 → 41 > 20, k=3 → 27 > 20, k=4 → 21 > 20,
+        // k=5 → 17 ≤ 20 (the walk's five-step climb)
+        let (c5, r5, _, _, _) = tab_layout(427, 20, 6, 81);
+        assert_eq!((c5, r5), (5, 17));
+        // the tiny list: ONE column (the loop never climbs), the
+        // content budget the whole width share
+        let (c1, r1, w1, _, _) = tab_layout(427, 20, 0, 3);
+        assert_eq!((c1, r1), (1, 3));
+        assert_eq!(w1, 9 + 20 + 0 + 13, "the uncapped budget");
+        // the EMPTY list: one column, zero rows — the body band the
+        // vanilla extract draws regardless (the 22px content width)
+        let (_, r0, w0, _, _) = tab_layout(427, 0, 0, 0);
+        assert_eq!((r0, w0), (0, 22), "the empty tab still speaks its width");
     }
 }
 

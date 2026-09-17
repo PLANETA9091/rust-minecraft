@@ -132,6 +132,7 @@ fn run_join(
                 Vec<crate::world_view::WireVoice>,
                 Vec<crate::world_view::WireWorldVoice>,
                 Option<crate::world_view::WireSidebar>,
+                crate::world_view::WirePlayerList,
                 [(i32, i32); crate::world_view::INVENTORY_MENU_SLOTS],
                 Vec<(i32, Vec<(i32, i32)>)>,
                 i32,
@@ -515,6 +516,11 @@ fn run_join(
                                     // them — the sidebar the wire trio
                                     // keeps streams to the HUD's lane
                                     upd.sidebar,
+                                    // the tab's belief rides with them —
+                                    // the listed rows the player-info
+                                    // store keeps stream to the TAB
+                                    // overlay's lane
+                                    upd.player_list,
                                     // the player's OWN store rides with
                                     // them — the inventory screen's live
                                     // lane follows the window-0 store
@@ -627,6 +633,7 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
                 Vec<crate::world_view::WireVoice>,
                 Vec<crate::world_view::WireWorldVoice>,
                 Option<crate::world_view::WireSidebar>,
+                crate::world_view::WirePlayerList,
                 [(i32, i32); crate::world_view::INVENTORY_MENU_SLOTS],
                 Vec<(i32, Vec<(i32, i32)>)>,
                 i32,
@@ -696,6 +703,11 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
         // query's own shape): the press's rising edge routes the
         // shift-click's QUICK_MOVE lane through it
         app.on_shift_down(window.is_key_down(Key::LeftShift));
+        // the keyboard lane's TAB state (the vanilla extractTabList's
+        // keyPlayerList.isDown() gate's own shape): the HELD state the
+        // overlay's visibility reads — the list shows while the key
+        // sleeps on the keyboard, hides the frame the key lifts
+        app.on_tab_key(window.is_key_down(Key::Tab));
         let left_down = window.get_mouse_down(minifb::MouseButton::Left);
         if left_down {
             app.on_click(gmx, gmy);
@@ -905,6 +917,7 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
                     voices,
                     world_voices,
                     sidebar,
+                    player_list,
                     inv_slots,
                     inv_bundles,
                     inv_state_id,
@@ -943,6 +956,12 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
                     // projection sorted and capped — the HUD renders it
                     // while the slot speaks, nothing while it doesn't)
                     app.live_sidebar_updated(sidebar);
+                    // the tab's lane beside the sidebar's: the TAB
+                    // overlay's projection lands verbatim (the listed
+                    // rows the comparator sorted and capped — the
+                    // held-key gate renders it, nothing while the key
+                    // sleeps)
+                    app.live_player_list_updated(player_list);
                     // the window-0 store's lane beside the chest's: the
                     // player's own inventory the screen's live store
                     // projection rides (the slots the wire spoke, the
