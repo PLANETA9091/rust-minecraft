@@ -226,6 +226,21 @@ pub enum ParticleKind {
     /// own green the quad samples whole, the OPAQUE layer the
     /// getLayer override returns).
     HappyVillager,
+    /// `BubbleColumnUpParticle` — the upward column's own bubble (the
+    /// `bubble_column_up` type the column's animateTick spawns two of,
+    /// the same `minecraft:bubble` sprite the swim bubble rides, the
+    /// −0.125 gravity the base tick's lane turns into the rise —
+    /// `yd -= 0.04 * g` ADDS 0.005 a tick — the 0.85 friction the move
+    /// keeps, the dry death the fluid gate speaks: the containing cell
+    /// leaving WATER removes).
+    BubbleColumnUp,
+    /// `WaterCurrentDownParticle` — the whirlpool's own sinking droplet
+    /// (the `current_down` type the column's animateTick spawns one of,
+    /// the same `minecraft:bubble` sprite, the fixed −0.05 birth speed
+    /// the ctor's own fields speak, the 0.002 gravity the
+    /// WaterDropParticle tick's plain-field pull rides, the 0.98
+    /// friction, no fluid gate — the droplet sinks its lifetime whole).
+    CurrentDown,
 }
 
 /// The splash droplet's 4 frames (the `splash_0..3` textures the jar
@@ -398,6 +413,18 @@ impl Particle {
         self.vy *= 0.85;
         self.vz *= 0.85;
         in_water
+    }
+
+    /// The `BubbleColumnUpParticle.tick` verbatim — the base law rides
+    /// FIRST (the age walk, the gravity lane the −0.125 field turns
+    /// into the rise — `yd -= 0.04 * g` ADDS 0.005 a tick, the move,
+    /// the 0.85 friction), then the fluid gate the override's own tail
+    /// speaks: the containing cell leaving WATER removes (the caller
+    /// answers with the world's own read — the same wet lane the swim
+    /// bubble's gate walks). The already-removed walk never re-arms.
+    pub fn tick_bubble_column_up(&mut self, in_water: bool) -> bool {
+        let alive = self.tick();
+        alive && in_water
     }
 
     /// The `AttackSweepParticle.tick` verbatim — the arc rides NONE of
@@ -786,6 +813,96 @@ pub fn bubble(
         gravity: 0.0,
         friction: 0.85,
         quad_size,
+        uo: 0.0,
+        vo: 0.0,
+        col: [1.0, 1.0, 1.0],
+    }
+}
+
+/// The upward column's own bubble (javap `BubbleColumnUpParticle` ctor
+/// verbatim — the `bubble_column_up` type the column's animateTick
+/// spawns two of). The chain and the draw order the swim bubble's own
+/// fold speaks (the SQ 5-arg -> the base 4-arg): the dead base
+/// lifetime float, the SingleQuadParticle's 0.1..0.2 quadSize draw,
+/// then the bubble's own: the quadSize *= r*0.6+0.2 fold, the three
+/// velocity folds (`va * 0.2 + (r * 2 - 1) * 0.02` — the caller's push
+/// thinned to a fifth, the ±0.02 jitter added), the lifetime
+/// `(int)(40.0 / (r * 0.8 + 0.2))` — the 26.2's own 40.0 the swim
+/// bubble's 8 shares the fold's shape with. The −0.125 gravity the
+/// base tick's lane turns into the rise, the 0.85 friction the move
+/// keeps, the `minecraft:bubble` sprite the json names.
+#[allow(clippy::too_many_arguments)]
+pub fn bubble_column_up(
+    x: f64,
+    y: f64,
+    z: f64,
+    vx: f64,
+    vy: f64,
+    vz: f64,
+    r_base_life: f32,
+    r_size0: f32,
+    r_scale: f32,
+    r_jx: f32,
+    r_jy: f32,
+    r_jz: f32,
+    r_life: f32,
+) -> Particle {
+    let _ = r_base_life; // the dead draw the chain's order keeps
+    let quad_size = base_quad_size(r_size0) * (r_scale * 0.6 + 0.2);
+    Particle {
+        kind: ParticleKind::BubbleColumnUp,
+        x,
+        y,
+        z,
+        prev: None,
+        vx: vx * 0.2 + (r_jx * 2.0 - 1.0) as f64 * 0.02,
+        vy: vy * 0.2 + (r_jy * 2.0 - 1.0) as f64 * 0.02,
+        vz: vz * 0.2 + (r_jz * 2.0 - 1.0) as f64 * 0.02,
+        age: 0,
+        lifetime: (40.0f32 / (r_life * 0.8 + 0.2)) as u32,
+        gravity: -0.125,
+        friction: 0.85,
+        quad_size,
+        uo: 0.0,
+        vo: 0.0,
+        col: [1.0, 1.0, 1.0],
+    }
+}
+
+/// The whirlpool's own sinking droplet (javap `WaterCurrentDownParticle`
+/// ctor verbatim — the `current_down` type the column's animateTick
+/// spawns one of). The chain rides the SQ 5-arg -> the base 4-arg: the
+/// dead base lifetime float, the SingleQuadParticle's quadSize draw,
+/// then the particle's own — the lifetime `(int)(r * 60.0F) + 30` FIRST
+/// (the bytecode's own order), the quadSize *= r*0.6+0.2 fold after.
+/// The fixed motion the ctor's own fields speak: xd/zd 0.0, yd −0.05
+/// (the current's pull), the 0.002 gravity the WaterDropParticle tick's
+/// plain-field fold rides, the 0.98 friction the move keeps, the
+/// `minecraft:bubble` sprite the json names.
+pub fn current_down(
+    x: f64,
+    y: f64,
+    z: f64,
+    r_base_life: f32,
+    r_size0: f32,
+    r_life: f32,
+    r_scale: f32,
+) -> Particle {
+    let _ = r_base_life; // the dead draw the chain's order keeps
+    Particle {
+        kind: ParticleKind::CurrentDown,
+        x,
+        y,
+        z,
+        prev: None,
+        vx: 0.0,
+        vy: -0.05,
+        vz: 0.0,
+        age: 0,
+        lifetime: (r_life * 60.0) as u32 + 30,
+        gravity: 0.002,
+        friction: 0.98,
+        quad_size: base_quad_size(r_size0) * (r_scale * 0.6 + 0.2),
         uo: 0.0,
         vo: 0.0,
         col: [1.0, 1.0, 1.0],
@@ -1642,6 +1759,100 @@ mod tests {
             assert!(q.tick_bubble(true));
         }
         assert!(!q.tick_bubble(true));
+    }
+
+    #[test]
+    fn the_column_particles_fold_the_ctor_chains() {
+        // THE UP BUBBLE'S OWN FOLD (the swim bubble's chain — the dead
+        // base lifetime float, the quadSize 0.1..0.2 draw, the
+        // r*0.6+0.2 scale fold, the three velocity folds, the
+        // lifetime): the 26.2's own 40.0 the fold divides, the −0.125
+        // gravity the base tick's rise rides, the 0.85 friction
+        let p = bubble_column_up(
+            5.5, 11.0, 7.5, 0.0, 0.04, 0.0, 0.25, 0.5, 0.7, 0.125, 0.25, 0.375, 0.5,
+        );
+        assert_eq!(p.kind, ParticleKind::BubbleColumnUp);
+        assert_eq!(p.lifetime, (40.0f32 / (0.5 * 0.8 + 0.2)) as u32, "the 40.0 fold's word");
+        assert_eq!(p.gravity, -0.125);
+        assert_eq!(p.friction, 0.85);
+        assert!((p.quad_size - base_quad_size(0.5) * (0.7 * 0.6 + 0.2)).abs() < 1e-6);
+        assert!(
+            (p.vy - (0.04 * 0.2 + (0.25 * 2.0 - 1.0) as f64 * 0.02)).abs() < 1e-12,
+            "the push's fifth + the jitter: {}",
+            p.vy
+        );
+        assert_eq!(p.col, [1.0, 1.0, 1.0], "the white the defaults speak");
+        // the lifetime band: r=0 -> 40/0.2 = 200, r=1 -> 40/1.0 = 40
+        let young = bubble_column_up(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
+        assert_eq!(young.lifetime, 200);
+        let old = bubble_column_up(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0);
+        assert_eq!(old.lifetime, 40);
+        // THE WHIRLPOOL DROPLET'S OWN FOLD: the (int)(r*60)+30 lifetime
+        // FIRST (the bytecode's own order — the scale fold rides the
+        // LAST draw), the fixed −0.05 birth speed the ctor's own
+        // fields speak, the 0.002 gravity, the 0.98 friction
+        let d = current_down(5.5, 11.8, 7.5, 0.3, 0.5, 0.25, 0.7);
+        assert_eq!(d.kind, ParticleKind::CurrentDown);
+        assert_eq!(d.lifetime, (0.25f32 * 60.0) as u32 + 30, "the (int)(r*60)+30 fold");
+        assert_eq!(d.vx, 0.0);
+        assert_eq!(d.vy, -0.05);
+        assert_eq!(d.vz, 0.0);
+        assert_eq!(d.gravity, 0.002);
+        assert_eq!(d.friction, 0.98);
+        assert!((d.quad_size - base_quad_size(0.5) * (0.7 * 0.6 + 0.2)).abs() < 1e-6);
+        // the lifetime band: r=0 -> 30, r=1 -> 90
+        let short = current_down(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
+        assert_eq!(short.lifetime, 30);
+        let long = current_down(0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
+        assert_eq!(long.lifetime, 90);
+    }
+
+    #[test]
+    fn the_column_particles_walk_their_tick_laws() {
+        // THE UP BUBBLE'S RISE (the base law the −0.125 field turns):
+        // `yd -= 0.04 * g` ADDS 0.005 a tick, the 0.85 friction AFTER
+        // the move, then the dry death the wet gate speaks
+        let mut p = bubble_column_up(
+            5.5, 11.0, 7.5, 0.0, 0.04, 0.0, 0.25, 0.5, 0.7, 0.5, 0.5, 0.5, 0.5,
+        );
+        let vy0 = p.vy;
+        let y0 = p.y;
+        assert!(p.tick_bubble_column_up(true), "the wet cell keeps it");
+        let expected = (vy0 + 0.005) * 0.85;
+        assert!(
+            (p.vy - expected).abs() < 1e-12,
+            "the rise then the friction: {} vs {}",
+            p.vy,
+            expected
+        );
+        assert!(p.y > y0, "the column bubble RISES");
+        assert!(!p.tick_bubble_column_up(false), "the dry cell removes");
+        // the age walk rides the base law: the age check FIRST (the
+        // removal tick speaks no motion — L-1 alive ticks), then the
+        // gate never re-arms the dead
+        let mut q = bubble_column_up(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.5, 0.5, 0.5, 0.5, 0.5, 0.0);
+        let total = q.lifetime;
+        for _ in 0..total - 1 {
+            assert!(q.tick_bubble_column_up(true), "alive inside the age walk");
+        }
+        assert!(!q.tick_bubble_column_up(true), "the lifetime spent");
+        assert!(!q.tick_bubble_column_up(true), "the dead never re-arms");
+        // THE DROPLET'S OWN SINK (the WaterDropParticle law): the
+        // countdown, the plain-field gravity pull (−0.002 a tick), the
+        // 0.98 friction AFTER the move, no fluid gate
+        let mut d = current_down(5.5, 11.8, 7.5, 0.3, 0.5, 0.5, 0.7);
+        let dvy = d.vy;
+        let dy0 = d.y;
+        assert!(d.tick_splash());
+        let dexpected = (dvy - 0.002) * 0.98;
+        assert!(
+            (d.vy - dexpected).abs() < 1e-12,
+            "the sink then the friction: {} vs {}",
+            d.vy,
+            dexpected
+        );
+        assert!(d.y < dy0, "the droplet SINKS");
+        assert!(d.tick_splash(), "no wet gate — the sink rides its whole life");
     }
 
     #[test]

@@ -1041,7 +1041,7 @@ pub fn seed_scene(app: &mut crate::screens::App, opts: &SceneOpts) -> Result<()>
                 }
                 for _ in 0..240 {
                     let spawns = if let Some(b) = app.body.as_ref() {
-                        app.lava_ambient_walk((b.x, b.y, b.z))
+                        app.animate_tick_walk((b.x, b.y, b.z))
                     } else {
                         Vec::new()
                     };
@@ -1145,6 +1145,22 @@ pub fn seed_scene(app: &mut crate::screens::App, opts: &SceneOpts) -> Result<()>
                         .unwrap_or(false);
                     p.tick_bubble(wet)
                 }
+                // the column bubbles' own walks (the same laws the live
+                // lane speaks: the upward's the base law + the wet
+                // gate, the whirlpool droplet's the countdown law)
+                crate::particles::ParticleKind::BubbleColumnUp => {
+                    let wet = wet_world
+                        .map(|w| {
+                            w.get(
+                                p.x.floor() as i32,
+                                p.y.floor() as i32,
+                                p.z.floor() as i32,
+                            ) == crate::world::WATER
+                        })
+                        .unwrap_or(false);
+                    p.tick_bubble_column_up(wet)
+                }
+                crate::particles::ParticleKind::CurrentDown => p.tick_splash(),
                 crate::particles::ParticleKind::Splash { .. } => p.tick_splash(),
                 // the staged arc ticks the same age-only walk (the
                 // static pose the override keeps)

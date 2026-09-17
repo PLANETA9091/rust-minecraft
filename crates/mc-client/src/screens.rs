@@ -514,6 +514,33 @@ pub fn bubble_inside_scan(
     None
 }
 
+/// The column's own variant at a sampled cell — the TWO vocabularies
+/// the grid holds: the offline terrain's REAL ids the props decode
+/// names (`bubble_column_variant`'s own 15294/15295 walk — 1 = the
+/// whirlpool, 2 = the upward), the materialized network world's WATER
+/// cells the variants layer stamps (the materialize walk's 1/2 bytes
+/// beside leaf_litter's). `0` = no column (the plain water, the rest
+/// of the world — the read consumes no random draws).
+fn column_variant_at(
+    world: &crate::world::World,
+    x: i32,
+    y: i32,
+    z: i32,
+    cell: u16,
+) -> u8 {
+    let v = crate::world_view::bubble_column_variant(cell as u32);
+    if v != 0 {
+        return v;
+    }
+    if cell == crate::world::WATER {
+        let wv = world.variant(x, y, z);
+        if wv == 1 || wv == 2 {
+            return wv;
+        }
+    }
+    0
+}
+
 /// THE DEGREE WRAP (Mth.wrapDegrees(F)F's own walk — the frem's % 360
 /// fold, the `>= 180` arm subtracts a full turn, the `< -180` arm adds
 /// one; the famous 180.0F itself the first arm folds to -180.0F).
@@ -2102,6 +2129,24 @@ impl App {
                     .unwrap_or(false);
                 p.tick_bubble(wet)
             }
+            // the column bubbles' own walks: the upward's the base law
+            // + the wet gate (the same world read the swim bubble's
+            // lane speaks — the dry cell removes), the whirlpool
+            // droplet's the countdown WaterDropParticle law (no gate —
+            // the droplet sinks its lifetime whole)
+            crate::particles::ParticleKind::BubbleColumnUp => {
+                let wet = bubble_world
+                    .map(|w| {
+                        w.get(
+                            p.x.floor() as i32,
+                            p.y.floor() as i32,
+                            p.z.floor() as i32,
+                        ) == crate::world::WATER
+                    })
+                    .unwrap_or(false);
+                p.tick_bubble_column_up(wet)
+            }
+            crate::particles::ParticleKind::CurrentDown => p.tick_splash(),
             crate::particles::ParticleKind::Splash { .. } => p.tick_splash(),
             // the arc's own walk: the age-only override (no motion, no
             // gravity — the arc hangs the whole 4-tick life)
@@ -2329,15 +2374,16 @@ impl App {
                 self.apply_fall_damage(dmg);
             }
             // THE AMBIENT WALK (ClientLevel.animateTick's own law —
-            // the per-tick sampler the lava pool's own drips ride):
+            // the per-tick sampler the lava pool's drips AND the
+            // bubble columns' own answers ride):
             // the 667-iteration double call around the CAMERA entity
             // (the body — the vanilla passes the camera entity's block
-            // pos), the drip spawns landing straight in the particle
+            // pos), the spawns landing straight in the particle
             // vec (the tick loop already walked this tick — the
             // children render this frame, first TICK next — the
             // vanilla queue order the smoke drain speaks too)
             if let Some(b) = self.body.as_ref() {
-                let drips = self.lava_ambient_walk((b.x, b.y, b.z));
+                let drips = self.animate_tick_walk((b.x, b.y, b.z));
                 self.particles.extend(drips);
             }
             // THE INSIDE VOICE WALK (BubbleColumnAmbientSoundHandler.tick's
@@ -3797,23 +3843,34 @@ impl App {
 
     /// THE AMBIENT WALK (javap `ClientLevel.animateTick` +
     /// `doAnimateTick` verbatim — the per-tick sampler the lava pool's
-    /// own drips ride): 667 iterations, each speaking the radius-16
+    /// own drips AND the bubble columns' own answers ride): 667
+    /// iterations, each speaking the radius-16
     /// then the radius-32 `doAnimateTick` — the ±triangle jitter per
     /// axis `px + nextInt(r) - nextInt(r)` on the LEVEL random (six
-    /// draws per sample), the sampled cell read, and the LAVA fluid's
-    /// own answer on the THREAD-LOCAL random (the instance the
-    /// fluid's animateTick speaks): the air gate (`above().isAir() &&
-    /// !isSolidRender()` — above must be AIR, the gate consumes no
-    /// draws), the `nextInt(100) == 0` drip + the LAVA_POP voice, the
-    /// `nextInt(200) == 0` LAVA_AMBIENT voice. The drip's ctor draws
-    /// ride the LEVEL random (the Particle's own field the base ctor
-    /// copies): the base size, the yd pop, the size mul, the
-    /// lifetime. The voices: volume `0.2F + nextFloat() * 0.2F`,
-    /// pitch `0.9F + nextFloat() * 0.15F` — the formula BOTH the
-    /// bytecode's playLocalSound calls share, the AMBIENT source the
-    /// pair speaks, no distance delay. Returns the drips (the caller
-    /// lands them after its own tick loop — the vanilla queue order).
-    pub fn lava_ambient_walk(
+    /// draws per sample), the sampled cell read, and the answers the
+    /// cell carries. The LAVA fluid's own answer on the THREAD-LOCAL
+    /// random (the instance the fluid's animateTick speaks): the air
+    /// gate (`above().isAir() && !isSolidRender()` — above must be
+    /// AIR, the gate consumes no draws), the `nextInt(100) == 0` drip
+    /// + the LAVA_POP voice, the `nextInt(200) == 0` LAVA_AMBIENT
+    /// voice. The drip's ctor draws ride the LEVEL random (the
+    /// Particle's own field the base ctor copies): the base size, the
+    /// yd pop, the size mul, the lifetime. The voices: volume `0.2F +
+    /// nextFloat() * 0.2F`, pitch `0.9F + nextFloat() * 0.15F` — the
+    /// formula BOTH the bytecode's playLocalSound calls share, the
+    /// AMBIENT source the pair speaks, no distance delay. The BUBBLE
+    /// COLUMN block's own answer (javap `BubbleColumnBlock.animateTick`
+    /// verbatim — the blockstate's arm the same doAnimateTick call
+    /// walks BEFORE the fluid's, its draws riding the same thread-local
+    /// stream): the whirlpool's one CURRENT_DOWN at the fixed
+    /// `(x+0.5, y+0.8, z+0.5)`, the upward's two BUBBLE_COLUMN_UP — the
+    /// first at the fixed `(x+0.5, y, z+0.5)`, the second's offsets
+    /// three nextFloat draws on the block's own stream — the `nextInt(200) == 0`
+    /// voice each branch's tail keeps. The ctors' draws ride the LEVEL
+    /// stream (the same stand-in the drip's chain keeps). Returns the
+    /// particles (the caller lands them after its own tick loop — the
+    /// vanilla queue order).
+    pub fn animate_tick_walk(
         &mut self,
         cam: (f64, f64, f64),
     ) -> Vec<crate::particles::Particle> {
@@ -3844,49 +3901,142 @@ impl App {
                 // the fluid's own gate: the sampled cell IS the lava
                 // and the cell above IS the air (the isAir &&
                 // !isSolidRender pair the LavaFluid.animateTick
-                // speaks — the gate draws NOTHING when it fails)
-                if w.get(x, y, z) != crate::world::LAVA
-                    || w.get(x, y + 1, z) != crate::world::AIR
-                {
-                    continue;
-                }
-                // THE DRIP GATE (nextInt(100) == 0 on the thread-local
-                // stand-in): the addParticle's position
-                // `(x + nextDouble(), y + 1.0, z + nextDouble())`, the
-                // ctor's four draws on the LEVEL random (the base
-                // size, the yd pop, the size mul, the lifetime), the
-                // LAVA_POP voice's two draws (the volume then the
-                // pitch — the bytecode's own order)
-                if self.ambient_rng.next_int(100) == 0 {
-                    let px = x as f64 + self.ambient_rng.next_f64();
-                    let pz = z as f64 + self.ambient_rng.next_f64();
-                    let drip = crate::particles::lava_drip(
-                        px,
-                        y as f64 + 1.0,
-                        pz,
-                        self.level_ambient_rng.next_f32(),
-                        self.level_ambient_rng.next_f32(),
-                        self.level_ambient_rng.next_f32(),
-                        self.level_ambient_rng.next_f32(),
-                    );
-                    out.push(drip);
-                    self.sounds.play_voice(
-                        self.frame,
-                        "block.lava.pop",
-                        0.2 + self.ambient_rng.next_f32() * 0.2,
-                        0.9 + self.ambient_rng.next_f32() * 0.15,
-                    );
-                }
-                // THE AMBIENT VOICE GATE (nextInt(200) == 0): the raw
-                // block coords the bytecode speaks, the same
-                // volume/pitch formula the pop rides
-                if self.ambient_rng.next_int(200) == 0 {
-                    self.sounds.play_voice(
-                        self.frame,
-                        "block.lava.ambient",
-                        0.2 + self.ambient_rng.next_f32() * 0.2,
-                        0.9 + self.ambient_rng.next_f32() * 0.15,
-                    );
+                // speaks — the gate draws NOTHING when it fails); the
+                // failed gate falls through to the BLOCK's own
+                // animateTick arm — the bubble_column's answer the
+                // same doAnimateTick call walks (vanilla's own order:
+                // the blockstate's answer, then the fluid's — the
+                // WATER fluid's own answer is empty, no draws)
+                let cell = w.get(x, y, z);
+                if cell == crate::world::LAVA && w.get(x, y + 1, z) == crate::world::AIR {
+                    // THE DRIP GATE (nextInt(100) == 0 on the thread-local
+                    // stand-in): the addParticle's position
+                    // `(x + nextDouble(), y + 1.0, z + nextDouble())`, the
+                    // ctor's four draws on the LEVEL random (the base
+                    // size, the yd pop, the size mul, the lifetime), the
+                    // LAVA_POP voice's two draws (the volume then the
+                    // pitch — the bytecode's own order)
+                    if self.ambient_rng.next_int(100) == 0 {
+                        let px = x as f64 + self.ambient_rng.next_f64();
+                        let pz = z as f64 + self.ambient_rng.next_f64();
+                        let drip = crate::particles::lava_drip(
+                            px,
+                            y as f64 + 1.0,
+                            pz,
+                            self.level_ambient_rng.next_f32(),
+                            self.level_ambient_rng.next_f32(),
+                            self.level_ambient_rng.next_f32(),
+                            self.level_ambient_rng.next_f32(),
+                        );
+                        out.push(drip);
+                        self.sounds.play_voice(
+                            self.frame,
+                            "block.lava.pop",
+                            0.2 + self.ambient_rng.next_f32() * 0.2,
+                            0.9 + self.ambient_rng.next_f32() * 0.15,
+                        );
+                    }
+                    // THE AMBIENT VOICE GATE (nextInt(200) == 0): the raw
+                    // block coords the bytecode speaks, the same
+                    // volume/pitch formula the pop rides
+                    if self.ambient_rng.next_int(200) == 0 {
+                        self.sounds.play_voice(
+                            self.frame,
+                            "block.lava.ambient",
+                            0.2 + self.ambient_rng.next_f32() * 0.2,
+                            0.9 + self.ambient_rng.next_f32() * 0.15,
+                        );
+                    }
+                } else {
+                    // THE COLUMN'S OWN ANSWER (javap
+                    // `BubbleColumnBlock.animateTick` verbatim): the
+                    // whirlpool's one CURRENT_DOWN, the upward's two
+                    // BUBBLE_COLUMN_UP, the 1/200 voice each branch's
+                    // tail keeps — the volume/pitch formula the lava
+                    // lane's own voices share. The ctors' draws ride
+                    // the LEVEL stream (the same stand-in the drip's
+                    // chain keeps), the body's own draws the
+                    // thread-local's.
+                    match column_variant_at(w, x, y, z, cell) {
+                        1 => {
+                            // the fixed (x+0.5, y+0.8, z+0.5) birth the
+                            // addAlwaysVisibleParticle call speaks — no
+                            // offset draws, the (0, 0, 0) velocity the
+                            // ctor's own fields override. The ctor's
+                            // four draws (the dead base lifetime, the
+                            // base quadSize, the own lifetime, the own
+                            // scale fold), then the 1/200 roll.
+                            out.push(crate::particles::current_down(
+                                x as f64 + 0.5,
+                                y as f64 + 0.8,
+                                z as f64 + 0.5,
+                                self.level_ambient_rng.next_f32(),
+                                self.level_ambient_rng.next_f32(),
+                                self.level_ambient_rng.next_f32(),
+                                self.level_ambient_rng.next_f32(),
+                            ));
+                            if self.ambient_rng.next_int(200) == 0 {
+                                self.sounds.play_voice(
+                                    self.frame,
+                                    "block.bubble_column.whirlpool_ambient",
+                                    0.2 + self.ambient_rng.next_f32() * 0.2,
+                                    0.9 + self.ambient_rng.next_f32() * 0.15,
+                                );
+                            }
+                        }
+                        2 => {
+                            // the first bubble rides the fixed corner
+                            // (x+0.5, y, z+0.5), the (0, 0.04, 0) push;
+                            // the second's offsets ride the BLOCK's own
+                            // stream (the three nextFloat draws the
+                            // bytecode lists before the roll), the
+                            // 1/200 roll the pair's tail keeps. Seven
+                            // ctor draws each — the swim bubble's own
+                            // chain, the 40.0 lifetime fold.
+                            out.push(crate::particles::bubble_column_up(
+                                x as f64 + 0.5,
+                                y as f64,
+                                z as f64 + 0.5,
+                                0.0,
+                                0.04,
+                                0.0,
+                                self.level_ambient_rng.next_f32(),
+                                self.level_ambient_rng.next_f32(),
+                                self.level_ambient_rng.next_f32(),
+                                self.level_ambient_rng.next_f32(),
+                                self.level_ambient_rng.next_f32(),
+                                self.level_ambient_rng.next_f32(),
+                                self.level_ambient_rng.next_f32(),
+                            ));
+                            let ox = self.ambient_rng.next_f32() as f64;
+                            let oy = self.ambient_rng.next_f32() as f64;
+                            let oz = self.ambient_rng.next_f32() as f64;
+                            out.push(crate::particles::bubble_column_up(
+                                x as f64 + ox,
+                                y as f64 + oy,
+                                z as f64 + oz,
+                                0.0,
+                                0.04,
+                                0.0,
+                                self.level_ambient_rng.next_f32(),
+                                self.level_ambient_rng.next_f32(),
+                                self.level_ambient_rng.next_f32(),
+                                self.level_ambient_rng.next_f32(),
+                                self.level_ambient_rng.next_f32(),
+                                self.level_ambient_rng.next_f32(),
+                                self.level_ambient_rng.next_f32(),
+                            ));
+                            if self.ambient_rng.next_int(200) == 0 {
+                                self.sounds.play_voice(
+                                    self.frame,
+                                    "block.bubble_column.upwards_ambient",
+                                    0.2 + self.ambient_rng.next_f32() * 0.2,
+                                    0.9 + self.ambient_rng.next_f32() * 0.15,
+                                );
+                            }
+                        }
+                        _ => {}
+                    }
                 }
             }
         }
@@ -11243,10 +11393,14 @@ impl App {
                         tint: p.col,
                     });
                 }
-                crate::particles::ParticleKind::Bubble => {
+                crate::particles::ParticleKind::Bubble
+                | crate::particles::ParticleKind::BubbleColumnUp
+                | crate::particles::ParticleKind::CurrentDown => {
                     // the full sprite's own quad (the bubble texture's
                     // 8x8, no quarter walk, the white tint the ctor's
-                    // defaults speak)
+                    // defaults speak — the swim bubble AND the column
+                    // pair share the sprite, the three jsons the jar
+                    // speaks all name the same `minecraft:bubble`)
                     bubble_quads.push(crate::raster::SampledQuad {
                         pts,
                         uv: [[0.0, 8.0], [8.0, 8.0], [8.0, 0.0], [0.0, 0.0]],
@@ -22238,6 +22392,140 @@ mod tests {
             .map(|p| (p.lifetime, p.x, p.y, p.z))
             .collect();
         assert_eq!(da, db, "the seeded walk replays");
+    }
+
+    #[test]
+    fn the_column_ambient_walk_speaks_the_column_cells() {
+        // THE WHIRLPOOL'S OWN WORLD (every cell the 15294 id names —
+        // the sampler cannot miss): the walk answers ONE CURRENT_DOWN
+        // per in-bounds sample, the fixed (x+0.5, y+0.8, z+0.5) birth
+        // the addAlwaysVisibleParticle call speaks, the 1/200 rolls
+        // firing the whirlpool's ambient voice
+        let stamp = |id: u16| -> crate::world::World {
+            let mut world = crate::world::World::new(1, 0);
+            world.variants = Some(vec![vec![0u8; 16 * 48 * 16]; 1]);
+            for y in 0..48 {
+                for z in 0..16 {
+                    for x in 0..16 {
+                        world.set(x, y, z, id);
+                    }
+                }
+            }
+            world
+        };
+        let mut app = App::new(3);
+        app.offline_world = Some(stamp(15294));
+        let out = app.animate_tick_walk((8.0, 12.0, 8.0));
+        assert!(!out.is_empty(), "the column cells answer the walk");
+        for p in out.iter() {
+            assert!(
+                matches!(p.kind, crate::particles::ParticleKind::CurrentDown),
+                "the whirlpool's own droplet"
+            );
+            assert_eq!(p.vy, -0.05, "the fixed birth speed");
+            assert_eq!(p.gravity, 0.002);
+            assert!((30..=90).contains(&p.lifetime), "the (int)(r*60)+30 band");
+            // the fixed offsets: the fractional .5/.8 the cell coords
+            // speak — no offset draws the whirlpool's arm keeps
+            assert_eq!(p.x.fract(), 0.5, "the x+0.5 the call speaks");
+            assert_eq!(p.z.fract(), 0.5, "the z+0.5 the call speaks");
+            assert!((p.y.fract() - 0.8).abs() < 1e-9, "the y+0.8 the call speaks");
+        }
+        // the voices: the whirlpool event the 1/200 gate speaks, the
+        // volume/pitch formula's bands the log's ` v.. p..` tail keeps
+        let mut voices = 0;
+        for e in app.sounds.events.iter() {
+            if !e.starts_with("block.bubble_column.whirlpool_ambient @") {
+                continue;
+            }
+            voices += 1;
+            if let Some((v, p)) = e
+                .split_once(" v")
+                .and_then(|(_, rest)| rest.split_once(" p"))
+            {
+                let vol: f32 = v.parse().unwrap();
+                let pitch: f32 = p.parse().unwrap();
+                assert!(
+                    (0.2..0.4).contains(&vol),
+                    "the volume formula's band: {vol}"
+                );
+                assert!(
+                    (0.9..1.05).contains(&pitch),
+                    "the pitch formula's band: {pitch}"
+                );
+            }
+        }
+        assert!(voices > 0, "the whirlpool's ambient voice fires: {voices}");
+        // the replay: the same stamps walk the same seeds
+        let mut a = App::new(3);
+        a.offline_world = Some(stamp(15294));
+        let da: Vec<(u32, f64, f64, f64)> = a
+            .animate_tick_walk((8.0, 12.0, 8.0))
+            .iter()
+            .map(|p| (p.lifetime, p.x, p.y, p.z))
+            .collect();
+        let mut b = App::new(3);
+        b.offline_world = Some(stamp(15294));
+        let db: Vec<(u32, f64, f64, f64)> = b
+            .animate_tick_walk((8.0, 12.0, 8.0))
+            .iter()
+            .map(|p| (p.lifetime, p.x, p.y, p.z))
+            .collect();
+        assert_eq!(da, db, "the seeded walk replays");
+        // THE UPWARD'S OWN WORLD: TWO bubbles per sampled cell — the
+        // first at the fixed corner (x+0.5, y, z+0.5), the second's
+        // offsets the block stream draws inside the same cell
+        let mut app2 = App::new(3);
+        app2.offline_world = Some(stamp(15295));
+        let out2 = app2.animate_tick_walk((8.0, 12.0, 8.0));
+        assert!(!out2.is_empty(), "the upward cells answer the walk");
+        assert_eq!(out2.len() % 2, 0, "two bubbles per sampled cell");
+        for pair in out2.chunks(2) {
+            assert!(
+                matches!(pair[0].kind, crate::particles::ParticleKind::BubbleColumnUp),
+                "the upward's own bubble"
+            );
+            assert_eq!(pair[0].x.fract(), 0.5, "the fixed corner birth");
+            assert_eq!(pair[0].y.fract(), 0.0, "the raw y the corner keeps");
+            assert_eq!(pair[0].z.fract(), 0.5, "the fixed corner birth");
+            assert!(
+                ((pair[0].vy - 0.008).abs() <= 0.02),
+                "the push's fifth ± the jitter band: {}",
+                pair[0].vy
+            );
+            assert_eq!(pair[0].gravity, -0.125, "the rise the base lane turns");
+            assert_eq!(pair[0].friction, 0.85);
+            assert!((40..=200).contains(&pair[0].lifetime), "the 40.0 fold's band");
+            // the second rides the SAME cell: the offsets the [0,1)
+            // band holds — x/z within ±0.5 of the corner birth, y
+            // within [y, y+1)
+            assert!(pair[1].x >= pair[0].x - 0.5 && pair[1].x < pair[0].x + 0.5);
+            assert!(pair[1].y >= pair[0].y && pair[1].y < pair[0].y + 1.0);
+            assert!(pair[1].z >= pair[0].z - 0.5 && pair[1].z < pair[0].z + 0.5);
+        }
+        // the upward's voice: the sibling event the 1/200 gate speaks
+        let up_voices = app2
+            .sounds
+            .events
+            .iter()
+            .filter(|e| e.starts_with("block.bubble_column.upwards_ambient @"))
+            .count();
+        assert!(up_voices > 0, "the upward's ambient voice fires: {up_voices}");
+        // the plain world's silence (the honest no-column answer):
+        // water everywhere, the variants layer zero — no spawns, no
+        // voices
+        let mut app3 = App::new(3);
+        app3.offline_world = Some(stamp(crate::world::WATER));
+        let out3 = app3.animate_tick_walk((8.0, 12.0, 8.0));
+        assert!(out3.is_empty(), "the plain water the column answer skips");
+        assert!(
+            !app3
+                .sounds
+                .events
+                .iter()
+                .any(|e| e.contains("bubble_column")),
+            "no column voice the plain world keeps"
+        );
     }
 
     /// THE E KEY'S OWN LANE: the world screen opens the survival
