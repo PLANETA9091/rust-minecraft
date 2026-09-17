@@ -249,8 +249,11 @@ impl BlockSounds {
     }
 
     /// A [0,1) float from the engine's own LCG (the pickup pitch's two
-    /// draws speak it — the same 24-bit shape the file pick rolls).
-    fn next_rand_f32(&mut self) -> f32 {
+    /// draws speak it — the same 24-bit shape the file pick rolls). The
+    /// paddle voice's caller reads it too — the boat's own RandomSource
+    /// the `0.8F + 0.4F * random.nextFloat()` pitch fold draws stands
+    /// in, the entity random the client's copy never carried.
+    pub fn next_rand_f32(&mut self) -> f32 {
         (self.next_rand() % (1u64 << 24)) as f32 / (1u64 << 24) as f32
     }
 

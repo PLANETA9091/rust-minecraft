@@ -241,6 +241,68 @@ pub fn rowing_time(partial_tick: f32, moving: bool, pos: f32) -> f32 {
     start + partial_tick.clamp(0.0, 1.0) * (pos - start)
 }
 
+/// THE PADDLE SOUND WINDOW'S OWN TWO CONSTANTS (the AbstractBoat.tick
+/// sound arm's own ldc pair — `ldc_w #384` the f32 `6.2831855` the
+/// frem modulus keeps, `ldc2_w #385` the f64
+/// `0.7853981852531433` the dcmpg/dcmpl probes keep — the f32 clock
+/// widened the f64 compares speak, the quarter band π/4 names).
+pub const PADDLE_WINDOW_TAU: f32 = 6.2831855;
+pub const PADDLE_WINDOW_QUARTER: f64 = 0.7853981852531433;
+
+/// THE PADDLE VOICES (the `getPaddleSound()` walk's own arms — the
+/// three water statuses IN_WATER/UNDER_WATER/UNDER_FLOWING_WATER the
+/// `BOAT_PADDLE_WATER` constant names, the ON_LAND the
+/// `BOAT_PADDLE_LAND` speaks, the IN_AIR the null keeps; the events
+/// the SoundEvents clinit's own strings are).
+pub const PADDLE_WATER_VOICE: &str = "entity.boat.paddle_water";
+pub const PADDLE_LAND_VOICE: &str = "entity.boat.paddle_land";
+
+/// THE STROKE WINDOW (the bytecode's own compares verbatim: the
+/// clock's remainder `<= π/4` AND the next step's remainder `>= π/4`
+/// — the dcmpg's `ifgt` skip the first probe keeps, the dcmpl's
+/// `iflt` skip the second speaks; the EQUAL compares both fire, so
+/// the π/8 and the π/4 clocks are the two firing steps of the
+/// sixteen-tick cycle the π/8 step walks).
+pub fn paddle_stroke_fires(pos: f32) -> bool {
+    ((pos % PADDLE_WINDOW_TAU) as f64) <= PADDLE_WINDOW_QUARTER
+        && (((pos + PADDLE_TICK_STEP) % PADDLE_WINDOW_TAU) as f64) >= PADDLE_WINDOW_QUARTER
+}
+
+/// THE PADDLE'S SPOT (the tick walk's own side offsets — the
+/// `getViewVector(1.0)` forward the yaw folds to `(-sin, cos)` on the
+/// ground plane, then `x += side==1 ? -v.z : v.z` and
+/// `z += side==1 ? v.x : -v.x` the bytecode's zD/xD reads keep: the
+/// LEFT paddle rides the boat's left flank, the RIGHT its mirror).
+pub fn paddle_side_offset(yaw: f32, side: usize) -> (f64, f64) {
+    let r = yaw.to_radians();
+    let (fwd_x, fwd_z) = (-(r.sin() as f64), r.cos() as f64);
+    if side == 1 {
+        (-fwd_z, fwd_x)
+    } else {
+        (fwd_z, -fwd_x)
+    }
+}
+
+/// THE MEDIUM (the `getStatus()` law's honest v1 — the
+/// `checkInWater()` bottom-layer sample the hull's own cell keeps,
+/// the `getGroundFriction()` the block BELOW the hull keeps): the
+/// hull's cell WATER → the water voice, the hull's cell LAVA →
+/// silent (the vanilla IN_AIR the fluid's null ground friction
+/// keeps), the cell below solid → the land voice, everything else —
+/// the air, the water surface's own top, the window's unloaded edge
+/// (the `World::get` AIR law) — silent.
+pub fn paddle_medium(world: &crate::world::World, x: f64, y: f64, z: f64) -> Option<&'static str> {
+    let (fx, fy, fz) = (x.floor() as i32, y.floor() as i32, z.floor() as i32);
+    match world.get(fx, fy, fz) {
+        crate::world::WATER => Some(PADDLE_WATER_VOICE),
+        crate::world::LAVA => None,
+        _ => match world.get(fx, fy - 1, fz) {
+            crate::world::AIR | crate::world::WATER | crate::world::LAVA => None,
+            _ => Some(PADDLE_LAND_VOICE),
+        },
+    }
+}
+
 /// THE BLOCK SCREEN TINT (javap `ScreenEffectRenderer.submit`'s own
 /// `ldc -15132391` = 0xFF191919): the rgb 25/255 the head-in-block
 /// quad's dark multiply speaks, the alpha 0xFF the opaque cover rides.
@@ -7347,22 +7409,52 @@ impl App {
         }
         // THE CLOCKS (every boat, both sides — the vanilla loop's own
         // shape; the ridden hull's booleans the prediction overrides)
+        // + THE PADDLE VOICES (the vanilla sound arm rides the same
+        // walk: the window test BEFORE the clock's increment, the
+        // boat's own medium the status law folds, the side-offset
+        // spot the view vector speaks, the pitch `0.8F + 0.4F *
+        // random.nextFloat()` the engine's LCG stands in for; the
+        // isSilent bit the wire never carried the non-silent arm
+        // keeps)
+        let ear = self
+            .body
+            .as_ref()
+            .map(|b| (b.x, b.y + b.eye_height(), b.z));
+        let mut strokes: Vec<(&'static str, f32, f64)> = Vec::new();
         for boat in &self.net_boats {
             let (moving_l, moving_r) = match ours {
                 Some((id, l, r)) if id == boat.id => (l, r),
                 _ => (boat.paddle_left, boat.paddle_right),
             };
             let entry = self.paddle_positions.entry(boat.id).or_insert([0.0; 2]);
-            entry[0] = if moving_l {
-                entry[0] + PADDLE_TICK_STEP
-            } else {
-                0.0
-            };
-            entry[1] = if moving_r {
-                entry[1] + PADDLE_TICK_STEP
-            } else {
-                0.0
-            };
+            for (side, moving) in [(0usize, moving_l), (1usize, moving_r)] {
+                if moving {
+                    if paddle_stroke_fires(entry[side]) {
+                        // the medium the net window's own word speaks —
+                        // the unloaded window's AIR the honest silence keeps
+                        if let Some(world) = self.net_world.as_ref() {
+                            if let Some(clip) = paddle_medium(world, boat.x, boat.y, boat.z) {
+                                let (dx, dz) = paddle_side_offset(boat.yaw, side);
+                                let pitch = 0.8 + 0.4 * self.sounds.next_rand_f32();
+                                strokes.push((
+                                    clip,
+                                    pitch,
+                                    ear_distance(ear, boat.x + dx, boat.y, boat.z + dz),
+                                ));
+                            }
+                        }
+                    }
+                    entry[side] += PADDLE_TICK_STEP;
+                } else {
+                    entry[side] = 0.0;
+                }
+            }
+        }
+        // THE VOICES LAND (the post-loop play the mob lane's own order
+        // speaks — the volume 1.0 the playSound call's own arg keeps,
+        // the gain the ear's distance law folds)
+        for (clip, pitch, dist) in strokes {
+            self.sounds.play_voice_at(self.frame, clip, 1.0, pitch, dist);
         }
     }
 
@@ -24869,6 +24961,175 @@ mod tests {
             (rowing_time(0.25, true, pos) - (pos - PADDLE_TICK_STEP * 0.75)).abs() < 1e-6,
             "the quarter's own fraction"
         );
+    }
+
+    #[test]
+    fn the_paddle_window_fires_the_vanilla_crossing() {
+        use crate::screens::{paddle_stroke_fires, PADDLE_TICK_STEP};
+        // THE SIXTEEN-STEP CYCLE (the π/8 step the clock walks): the
+        // window speaks ONLY the π/8 and the π/4 steps — the two
+        // firing steps the bytecode's own <= / >= compares keep, the
+        // rest of the cycle the probes skip
+        let fires: Vec<usize> = (0..16)
+            .filter(|k| paddle_stroke_fires(PADDLE_TICK_STEP * *k as f32))
+            .collect();
+        assert_eq!(fires, vec![1, 2], "the two firing steps of the cycle");
+        // THE FRESH CLOCK never speaks: the (pos + π/8) probe the
+        // first step keeps under the quarter band
+        assert!(!paddle_stroke_fires(0.0), "the fresh clock stays silent");
+    }
+
+    #[test]
+    fn the_paddle_side_offset_walks_the_view_vector() {
+        use crate::screens::paddle_side_offset;
+        // yaw 0 = facing south (+Z): the left paddle rides the east
+        // (+X) flank, the right the west — the forward the (-sin, cos)
+        // fold keeps, the side law the zD/xD reads speak
+        assert_eq!(paddle_side_offset(0.0, 0), (1.0, 0.0), "the left flank");
+        assert_eq!(paddle_side_offset(0.0, 1), (-1.0, 0.0), "the right flank");
+        // yaw 90 = facing west (-X): the left paddle rides the south
+        // (+Z) flank, the right the north (the f32 pi/2's own cos the
+        // epsilon keeps)
+        let (dx, dz) = paddle_side_offset(90.0, 0);
+        assert!(dx.abs() < 1e-6 && (dz - 1.0).abs() < 1e-6, "the left of a west-facing hull: ({dx}, {dz})");
+        let (dx, dz) = paddle_side_offset(90.0, 1);
+        assert!(dx.abs() < 1e-6 && (dz + 1.0).abs() < 1e-6, "the right of a west-facing hull: ({dx}, {dz})");
+    }
+
+    #[test]
+    fn the_paddle_medium_walks_the_status_law() {
+        use crate::screens::{paddle_medium, PADDLE_LAND_VOICE, PADDLE_WATER_VOICE};
+        let mut world = air_net_world(2, 0);
+        world.set(5, 30, 5, crate::world::WATER);
+        world.set(7, 31, 7, crate::world::GRASS);
+        world.set(9, 30, 9, crate::world::LAVA);
+        // the hull's own cell water — the checkInWater bottom-layer
+        // sample the water voice keeps
+        assert_eq!(
+            paddle_medium(&world, 5.4, 30.3, 5.6),
+            Some(PADDLE_WATER_VOICE),
+            "the water cell the water voice speaks"
+        );
+        // the hull's cell air, the block below solid — the ground
+        // friction the land voice keeps
+        assert_eq!(
+            paddle_medium(&world, 7.4, 32.0, 7.6),
+            Some(PADDLE_LAND_VOICE),
+            "the solid ground the land voice speaks"
+        );
+        // the hull's cell air over the water surface — the vanilla
+        // IN_AIR the water's null ground friction keeps silent
+        assert_eq!(
+            paddle_medium(&world, 5.4, 31.3, 5.6),
+            None,
+            "the water top stays silent"
+        );
+        // the lava cell — the IN_AIR arm the fluid keeps silent
+        assert_eq!(
+            paddle_medium(&world, 9.4, 30.3, 9.6),
+            None,
+            "the lava hull stays silent"
+        );
+        // mid-air — nothing below, the null the silence keeps
+        assert_eq!(
+            paddle_medium(&world, 20.4, 40.3, 20.6),
+            None,
+            "the air hull stays silent"
+        );
+    }
+
+    #[test]
+    fn the_paddle_voices_speak_the_stroke_window() {
+        use crate::world_view::WireBoat;
+        let mut app = App::new(3);
+        let mut world = air_net_world(2, 0);
+        world.set(5, 30, 5, crate::world::WATER);
+        world.set(5, 33, 5, crate::world::GRASS);
+        app.net_world = Some(world);
+        app.enter_network_world(None, Skybox::Overworld, None, None);
+        // THE LISTENER: none — the staging's ear sits at the source (the
+        // distance-zero arm the no-fold reads), every voice's gain the
+        // 1.0 the full-volume law speaks; the spots' own offsets the
+        // paddle_side_offset pins carry
+        let boat = |id: i32, x: f64, y: f64, z: f64| WireBoat {
+            id,
+            x,
+            y,
+            z,
+            yaw: 0.0,
+            raft: false,
+            chest: false,
+            wood: "oak".to_string(),
+            paddle_left: true,
+            paddle_right: false,
+        };
+        app.live_boats_updated(vec![
+            boat(5, 5.4, 30.3, 5.6),  // the water hull
+            boat(7, 5.4, 34.0, 5.6),  // the land hull (grass below)
+            boat(9, 20.4, 40.3, 20.6), // the air hull
+        ]);
+        // THE FOUR TICKS: the fresh clock silent, the π/8 and the π/4
+        // steps fire (two voices per rowing hull), the π*3/8 step and
+        // beyond silent
+        for _ in 0..4 {
+            app.update();
+        }
+        if !sounds_loaded() {
+            assert!(
+                app.sounds.events.is_empty(),
+                "the empty table the silent voice lane keeps"
+            );
+            return;
+        }
+        let water: Vec<&String> = app
+            .sounds
+            .events
+            .iter()
+            .filter(|e| e.starts_with("entity.boat.paddle_water "))
+            .collect();
+        assert_eq!(
+            water.len(),
+            2,
+            "the two firing steps spoke: {:?}",
+            app.sounds.events
+        );
+        assert!(
+            water.iter().all(|e| e.contains(" v1.000000 p")),
+            "the at-ear voices full volume: {:?}",
+            water
+        );
+        let land: Vec<&String> = app
+            .sounds
+            .events
+            .iter()
+            .filter(|e| e.starts_with("entity.boat.paddle_land "))
+            .collect();
+        assert_eq!(
+            land.len(),
+            2,
+            "the land hull's own strokes: {:?}",
+            land
+        );
+        assert!(
+            land.iter().all(|e| e.contains(" v1.000000 p")),
+            "the at-ear land voices full: {:?}",
+            land
+        );
+        // THE PITCH (the boat's own RandomSource the `0.8F + 0.4F *
+        // random.nextFloat()` fold draws — the engine's LCG stands
+        // in): every voice inside the band
+        for e in water.iter().chain(land.iter()) {
+            let p: f32 = e
+                .rsplit(" p")
+                .next()
+                .expect("the pitch tail")
+                .parse()
+                .expect("the pitch float");
+            assert!(
+                (0.8..1.2).contains(&p),
+                "the pitch band the vanilla fold keeps: {e}"
+            );
+        }
     }
 }
 
