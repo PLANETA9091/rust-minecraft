@@ -2,7 +2,7 @@
 
 Every lane that ships pixels owes the folder a frame. The gallery is the
 proof the features exist as rendered images, not as test names alone.
-150 frames and counting — grouped below by the lane that spoke them.
+151 frames and counting — grouped below by the lane that spoke them.
 
 ## The F5 lane (the third-person avatar) — v0.3.154+
 
@@ -968,6 +968,19 @@ cargo run -p mc-client --release -- --headless --screen world --seed 42 \
   --body --mobs 1 --ignite 8 --out shots/zombie_burn.png
 # --zombie (single deterministic spawn), --zombie-fire/--zombie-death/
 # --zombie-aggro/--zombie-hurt, --mobs N, --walk-ticks/--settle-ticks
+```
+
+## The survival inventory lane (the E key's own screen) — v0.3.228
+
+| frame | the scene |
+|---|---|
+| `inventory_screen.png` | THE E-KEY SCREEN'S OWN PIXELS (v0.3.228): the survival inventory the vanilla InventoryScreen renders over the frozen world — the LEGACY background texture the 26.2's INVENTORY_LOCATION blit keeps (the sprite migration the one container left texture-based, the 176x166 region of the 256x256 canvas at leftPos/topPos), the REAL 36-slot store's icons and counts (the hotbar row store 0..9, the main rows store 9..36 — the chest's icon/count law verbatim, the demo loadout the staging fills the same store the dig lane's pickups fill), the MANNEQUIN the 26.2 extractEntityInInventoryFollowsMouse draws (the PiP chain the bytecode pins: the ortho window the rect's own 49x70 times the gui scale, the scale-30 pose the -z mirror carries, the T(0, bbHeight/2 + 0.0625, 0) lift the Vector3f ctor speaks, the Rz(π)∘Rx(pitch) rotation the JOML mul order pins — the feet 28.875 px below the rect center, the head 25.125 above, the vanilla's slightly-low placement), the atan turn law the mouse leans (the neutral pose the headless staging honestly keeps — no mouse the headless frames speak), the two labels the base extractLabels draws ("Crafting" at (97, 6), "Inventory" at (8, imageHeight−94) — the init's own isub fold — the 0x404040 no-shadow draw); the offline click walks ride beneath (the pickup/split/quick-move predictions over the player's OWN store, the E/Escape round-trip, the carried's add-back close) — the commands the shot list keeps |
+
+Regenerate the lane:
+
+```sh
+cargo run -p mc-client --release -- --headless --screen inventory --seed 3 \
+  --width 640 --height 360 --ui-frame 6 --out shots/inventory_screen.png
 ```
 
 ## The golden matrix (the pixel discipline)

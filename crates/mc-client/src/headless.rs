@@ -1861,8 +1861,59 @@ pub fn render_gui_screen_opts(
             app.open_chest();
             app.frame = frame;
         }
+        "inventory" => {
+            // THE E-KEY SCREEN'S OWN STAGING: the offline world stands
+            // first (the mannequin's world beneath), then the store's
+            // demo loadout — the REAL gameplay state the dig lane's
+            // pickups fill, the shot staging pre-filling it the way the
+            // `--held-item` stage speaks for the hand (the hotbar row
+            // store 0..9, the main rows 9..36) — and the screen opens
+            // (the E key's own lane, the carried fresh-empty).
+            app.enter_world();
+            app.inventory.items = [
+                (62, 27),   // cobblestone
+                (63, 16),   // oak_planks
+                (924, 41),  // coal
+                (921, 5),   // apple
+                (981, 3),   // bread
+                (926, 12),  // diamond
+                (0, 0),
+                (0, 0),
+                (0, 0), // the hotbar row's tail
+                (932, 64),  // iron_ingot
+                (936, 7),   // gold_ingot
+                (62, 19),   // cobblestone
+                (0, 0),
+                (0, 0),
+                (0, 0),
+                (0, 0),
+                (0, 0),
+                (0, 0),
+                (0, 0),
+                (0, 0),
+                (0, 0),
+                (0, 0),
+                (0, 0),
+                (0, 0),
+                (0, 0),
+                (0, 0),
+                (0, 0),
+                (0, 0),
+                (0, 0),
+                (0, 0),
+                (0, 0),
+                (0, 0),
+                (0, 0),
+                (0, 0),
+                (0, 0),
+                (0, 0), // the main rows' tail
+            ];
+            app.hotbar_slots = app.inventory.hotbar();
+            app.open_inventory();
+            app.frame = frame;
+        }
         other => anyhow::bail!(
-            "unknown screen {other} (loading|title|servers|options|world|worldnight|pause|chest)"
+            "unknown screen {other} (loading|title|servers|options|world|worldnight|pause|chest|inventory)"
         ),
     }
 

@@ -5,7 +5,7 @@
 //!   --headless      deterministic offscreen render -> PNG (pixel CI)
 //!   --window        force windowed mode
 //!   --gui           windowed GUI app (boot -> title -> menus), generated data
-//!   --screen S      headless GUI screenshot: loading|title|servers|options|world|worldnight|pause|chest
+//!   --screen S      headless GUI screenshot: loading|title|servers|options|world|worldnight|pause|chest|inventory
 
 mod avatar;
 mod audio;
@@ -65,7 +65,7 @@ struct Cli {
     /// Windowed GUI application (boot chain + menus from generated data).
     #[arg(long)]
     gui: bool,
-    /// Headless GUI screen render: loading|title|servers|options|world|pause|chest.
+    /// Headless GUI screen render: loading|title|servers|options|world|pause|chest|inventory.
     #[arg(long)]
     screen: Option<String>,
     /// UI frame to capture (drives splash pulse / boot progress).

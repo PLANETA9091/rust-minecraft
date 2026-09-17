@@ -574,6 +574,13 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
         if window.is_key_pressed(Key::Escape, minifb::KeyRepeat::No) {
             app.on_escape();
         }
+        // THE E KEY'S OWN LANE (the vanilla keyPress's key.inventory
+        // toggle): the world screen opens the survival inventory, the
+        // inventory screen closes it back — the App's own death gate
+        // keeps the DeathScreen modal
+        if window.is_key_pressed(Key::E, minifb::KeyRepeat::No) {
+            app.on_inventory_key();
+        }
         // the number keys' hotbar selection (the vanilla keyPress's own
         // lane): 1..9 move the selection, the live session's belief
         // rides the command channel (the worker echoes the wire AND

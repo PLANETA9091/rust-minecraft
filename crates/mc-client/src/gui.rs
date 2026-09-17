@@ -175,6 +175,26 @@ impl GuiAssets {
         self.sprites.get(name)
     }
 
+    /// THE LEGACY TEXTURE LANE (the 26.2's own path blit — javap
+    /// `InventoryScreen.extractBackground`: `blit(GUI_TEXTURED,
+    /// INVENTORY_LOCATION, ...)` rides a raw `textures/gui/...` path
+    /// the sprite inventory never carried): the survival inventory's
+    /// background is the one container screen the sprite migration
+    /// left texture-based, so the loader keeps the direct path walk
+    /// (`gui/container/inventory.png` under the cache root — the
+    /// extract's own layout). The static key keeps the map's contract.
+    pub fn sprite_file(&mut self, rel: &'static str) -> Option<&Sprite> {
+        if !self.sprites.contains_key(rel) {
+            if rel.contains("..") {
+                return None; // the path walk's own escape gate
+            }
+            let bytes = std::fs::read(self.root.join(rel)).ok()?;
+            let s = Sprite::decode(&bytes).ok()?;
+            self.sprites.insert(rel, s);
+        }
+        self.sprites.get(rel)
+    }
+
     /// The static table's hit rewrites the dynamic name to the
     /// generated entry's `&'static str` (the same cache slot both
     /// lanes share).
@@ -340,6 +360,41 @@ impl<'a> Gui<'a> {
         y: i32,
     ) {
         let Some(s) = a.sprite_any(name).cloned() else { return };
+        if rw <= 0 || rh <= 0 {
+            return;
+        }
+        for dy in 0..rh {
+            for dx in 0..rw {
+                let sx = u + dx as u32;
+                let sy = v + dy as u32;
+                if sx >= s.w || sy >= s.h {
+                    continue; // the region's past-edge reads never speak
+                }
+                let c = s.sample(sx, sy);
+                if c[3] <= 0.0 {
+                    continue;
+                }
+                self.px(x + dx, y + dy, c);
+            }
+        }
+    }
+
+    /// The legacy texture's region blit (the sprite_region walk over
+    /// the sprite_file lane — the INVENTORY_LOCATION blit's own 176x166
+    /// region of the 256x256 canvas, the uv origin (0,0) the vanilla
+    /// call's own floats speak).
+    pub fn sprite_file_region(
+        &mut self,
+        a: &mut GuiAssets,
+        rel: &'static str,
+        u: u32,
+        v: u32,
+        rw: i32,
+        rh: i32,
+        x: i32,
+        y: i32,
+    ) {
+        let Some(s) = a.sprite_file(rel).cloned() else { return };
         if rw <= 0 || rh <= 0 {
             return;
         }

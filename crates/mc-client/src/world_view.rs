@@ -749,6 +749,67 @@ pub fn predict_quick_move(slots: &[(i32, i32)], src: usize) -> Vec<(usize, (i32,
     changed
 }
 
+/// The vanilla `InventoryMenu.quickMoveStack` prediction — the
+/// survival inventory's own shift-click (javap 26.2, the slot-range
+/// walk the bytecode pins): the main rows (menu 9..35) feed the
+/// hotbar (36..45) and the hotbar feeds the main rows, BOTH FORWARD
+/// (`moveItemStackTo(stack, 36, 45, false)` / `(9, 36, false)` — the
+/// inventory menu's forward order, the chest menu's fillFromEnd the
+/// other menus speak). The slots slice is the STORE's own layout
+/// (`Inventory.items`: 0..9 the hotbar, 9..36 the main rows — the
+/// container the menu's standard slots wrap), the store index the
+/// menu's own mapping (menu 9+i = store 9+i, menu 36+i = store i).
+/// The two-pass walk is the chest law's own: the same-item merges
+/// first, then the empty slots take the remainder. Returns the
+/// changed `(store index, pair)` entries, the source first. NO
+/// entries means the stack did not move.
+pub fn predict_quick_move_inventory(slots: &[(i32, i32); 36], src: usize) -> Vec<(usize, (i32, i32))> {
+    let src_item = slots[src];
+    if src_item.1 <= 0 {
+        return Vec::new(); // nothing to move
+    }
+    let order: Vec<usize> = if src < 9 {
+        (9..36).collect() // the hotbar -> the main rows, store 9 forward
+    } else {
+        (0..9).collect() // the main rows -> the hotbar, store 0 forward
+    };
+    let mut slots = *slots;
+    let mut remaining = src_item.1;
+    let mut changed: Vec<(usize, (i32, i32))> = Vec::new();
+    // pass 1: the same-item merge into the stacks with room
+    for &i in &order {
+        if remaining == 0 {
+            break;
+        }
+        let d = slots[i];
+        if d.1 > 0 && d.0 == src_item.0 && d.1 < ITEM_MAX_STACK_DEFAULT {
+            let take = (ITEM_MAX_STACK_DEFAULT - d.1).min(remaining);
+            slots[i] = (d.0, d.1 + take);
+            remaining -= take;
+            changed.push((i, slots[i]));
+        }
+    }
+    // pass 2: the empty slots take the remainder
+    if remaining > 0 {
+        for &i in &order {
+            if remaining == 0 {
+                break;
+            }
+            if slots[i].1 <= 0 {
+                let take = remaining.min(ITEM_MAX_STACK_DEFAULT);
+                slots[i] = (src_item.0, take);
+                remaining -= take;
+                changed.push((i, slots[i]));
+            }
+        }
+    }
+    let src_new = if remaining > 0 { (src_item.0, remaining) } else { (0, 0) };
+    if src_new != src_item || !changed.is_empty() {
+        changed.insert(0, (src, src_new));
+    }
+    changed
+}
+
 /// The model's open-container store projected for the UI — `None`
 /// while no foreign window is open (the join's own state: no screen
 /// is up until the server opens one).

@@ -4329,6 +4329,22 @@ hand-drawn:
   Back to Game / Options... / Save and Quit to Title, all official strings
   and widgets; Escape toggles it in `--gui` (`--screen pause`).
 - **Options** — `Options` screen with volume/FOV controls (`--screen options`).
+- **Survival inventory (the E key, v0.3.228)** — the vanilla InventoryScreen
+  over the frozen world: the LEGACY `container/inventory.png` background
+  the 26.2 bytecode still blits by path (the one container the sprite
+  migration left texture-based), the REAL 36-slot store's icons and
+  counts, the mouse-following mannequin through the bytecode-pinned PiP
+  chain (the ortho 49x70 window, the scale-30 pose with its -z mirror,
+  the `bbHeight/2 + 0.0625` lift, the Rz(π)∘Rx(pitch) rotation, the
+  `atan(dx/40)·20` lean), the two labels at their bytecode positions,
+  and the OFFLINE click walks — pickup/place/swap/merge on the left
+  press, the ceiling-half split and place-one on the right, the
+  shift-click quick-move in the 26.2's own forward order (the chest
+  menu's fillFromEnd the inventory menu inverts), the carried stack
+  following the cursor, and the close's add-back walk returning it to
+  the store (the full store's remainder drops at the body's feet).
+  E opens and closes; Escape closes; the death gate keeps the
+  DeathScreen modal (`--screen inventory`).
 - **Music, generated — and now audible** — the vanilla menu-music behavior
   (weighted-random file from `music.menu` → play → random delay → next),
   driven by the official `sounds.json` tables. `mc2rs-gen` fetches the real

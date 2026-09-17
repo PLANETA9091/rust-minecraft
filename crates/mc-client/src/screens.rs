@@ -422,6 +422,14 @@ pub enum ScreenKind {
     /// The OFFLINE deterministic stand-in; the networked store wiring is
     /// the next round's own line.
     Chest,
+    /// The survival inventory's SCREEN round: the vanilla InventoryScreen
+    /// (the E key's own lane) over the frozen world — the legacy
+    /// `container/inventory.png` background the sprite migration left
+    /// texture-based, the REAL 36-slot store's icons and counts, the
+    /// mouse-following mannequin (the 26.2 extractEntityInInventory-
+    /// FollowsMouse's own atan law), the offline click walks (the pickup /
+    /// split / quick-move predictions over the player's own store).
+    Inventory,
 }
 
 /// THE HURT VOICE THE DAMAGE TYPE'S EFFECTS NAME (javap the 26.2
@@ -804,6 +812,18 @@ pub struct App {
     /// `None` wherever no live mouse has moved (the headless scenes:
     /// the pixel goldens never see the render).
     pub mouse_pos: Option<(i32, i32)>,
+    /// THE SURVIVAL INVENTORY'S OWN CURSOR STACK (the vanilla carried
+    /// render over the E-key screen — the player's OWN store the
+    /// offline clicks mutate between presses, the same pickup
+    /// prediction the chest's live lane rides). The close returns it
+    /// to the store (the vanilla close's add-back walk). The (0, 0)
+    /// sentinel is the emptiness.
+    pub inv_carried: (i32, i32),
+    /// The inventory panel's GUI origin the LAST render laid out —
+    /// the click lane's own geometry (the chest's render-then-hit
+    /// pattern; the static layout needs no per-slot rects). The (0, 0)
+    /// sentinel refuses the click before the first render spoke.
+    pub inv_panel: (i32, i32),
     /// The keyboard lane's shift state the LAST loop tick tracked —
     /// the vanilla `Screen.hasShiftDown()` query: the press's rising
     /// edge reads it to route the shift-click's QUICK_MOVE lane. Fed
@@ -1228,6 +1248,8 @@ impl App {
             chest_carried: (0, 0),
             mouse_pos: None,
             shift_down: false,
+            inv_carried: (0, 0),
+            inv_panel: (0, 0),
             live_held: None,
             drops: Vec::new(),
             inventory: crate::drops::Inventory::default(),
@@ -3181,6 +3203,141 @@ impl App {
         self.open(ScreenKind::Chest);
     }
 
+    /// THE E KEY'S OWN LANE (the vanilla KeyMapping `key.inventory`
+    /// toggle): the world screen opens the survival inventory, the
+    /// inventory screen closes it back — the death gate keeps the
+    /// DeathScreen modal (the Escape lane's own law), every other
+    /// screen ignores the key the vanilla's screen stack never
+    /// dispatches to a lower panel.
+    pub fn on_inventory_key(&mut self) {
+        match self.screen {
+            ScreenKind::World if !self.dead => self.open_inventory(),
+            ScreenKind::Inventory => self.close_inventory(),
+            _ => {}
+        }
+    }
+
+    /// Open the survival inventory over the standing world (the vanilla
+    /// `Minecraft.handleKeybinds` → `setScreen(new InventoryScreen)`):
+    /// the screen swap alone — the world the player left keeps ticking
+    /// beneath nothing (the frozen-container convention the chest lane
+    /// speaks, the body's tick gate the screen test holds), the cursor
+    /// stack fresh-empty (the vanilla open's own carried). The wire
+    /// sessions open the same screen (the client's own inventory the
+    /// E key opens server-side too) — the hotbar row renders the live
+    /// lane's belief, the main rows their chrome until the store lane
+    /// rides.
+    pub fn open_inventory(&mut self) {
+        self.inv_carried = (0, 0);
+        self.open(ScreenKind::Inventory);
+    }
+
+    /// Close the survival inventory (the E key's second half and the
+    /// Escape's own arm on the screen). The vanilla close's add-back
+    /// walk first: a carried stack returns to the store (the same-item
+    /// merges first, then the first empty slot takes it — the
+    /// `Inventory.add` law the touch lane speaks), the screen back to
+    /// the world. The offline store IS the truth — no echo rides.
+    pub fn close_inventory(&mut self) {
+        if self.inv_carried.1 > 0 {
+            let (id, count) = self.inv_carried;
+            let mut rest = count;
+            // pass 1: the same-item merges (the add walk's own order)
+            for it in self.inventory.items.iter_mut() {
+                if rest == 0 {
+                    break;
+                }
+                if it.1 > 0 && it.0 == id && it.1 < crate::world_view::ITEM_MAX_STACK_DEFAULT {
+                    let take = (crate::world_view::ITEM_MAX_STACK_DEFAULT - it.1).min(rest);
+                    it.1 += take;
+                    rest -= take;
+                }
+            }
+            // pass 2: the first empty slot takes the remainder
+            for it in self.inventory.items.iter_mut() {
+                if rest == 0 {
+                    break;
+                }
+                if it.1 <= 0 {
+                    *it = (id, rest);
+                    rest = 0;
+                }
+            }
+            // a full store drops the remainder on the floor (the vanilla
+            // close's own Player.drop tail) — the spawn lane the dig's
+            // own drop walk keeps
+            if rest > 0 {
+                if let Some(b) = self.body.as_ref() {
+                    let (dx, dy, dz) = (b.x, b.y + 1.0, b.z);
+                    let did = self.next_drop_id;
+                    self.next_drop_id += 1;
+                    self.drops.push(crate::drops::ItemDrop::spawn_entity_loot(
+                        did,
+                        id,
+                        rest,
+                        dx,
+                        dy,
+                        dz,
+                        &mut self.mob_rng,
+                    ));
+                }
+            }
+            self.inv_carried = (0, 0);
+            self.hotbar_slots = self.inventory.hotbar();
+        }
+        self.open(ScreenKind::World);
+    }
+
+    /// The survival inventory's slot click (the vanilla doClick's
+    /// PICKUP / QUICK_MOVE modes over the player's OWN store): the
+    /// left press picks up / places / merges / swaps, the right press
+    /// splits and places one, the shift-click quick-moves the stack to
+    /// the OTHER section (the 26.2 quickMoveStack's forward order —
+    /// see [`crate::world_view::predict_quick_move_inventory`]). The
+    /// wire sessions refuse (the store the server owns — the window-0
+    /// click lane the follow-up names); the offline store IS the
+    /// truth, the click a local act. Clicks between the slots do
+    /// nothing yet (the vanilla's drop-outside lane the follow-up
+    /// names too).
+    fn click_inventory_slot(&mut self, mx: i32, my: i32, button: i8) {
+        if self.world_is_network {
+            return; // the wire's own inventory window lane rides later
+        }
+        if self.inv_panel == (0, 0) {
+            return; // no render spoke yet — no geometry to hit
+        }
+        let panel = self.inv_panel;
+        let Some((_, _, store)) = (0..36)
+            .map(|i| {
+                let (ox, oy) = inventory_slot_origin(panel, i);
+                (ox + 1, oy + 1, i)
+            })
+            .find(|&(x, y, _)| mx >= x && mx < x + 16 && my >= y && my < y + 16)
+        else {
+            return; // the press landed between the slots — no click
+        };
+        if self.shift_down {
+            // THE QUICK_MOVE LANE: the whole stack moves to the other
+            // section (the store's own layout feeds the prediction)
+            let changed =
+                crate::world_view::predict_quick_move_inventory(&self.inventory.items, store);
+            for (i, pair) in &changed {
+                self.inventory.items[*i] = *pair;
+            }
+            self.hotbar_slots = self.inventory.hotbar();
+            return;
+        }
+        let believed = self.inventory.items[store];
+        let (new_slot, new_carried) = if button == 0 {
+            crate::world_view::predict_pickup(believed, self.inv_carried)
+        } else {
+            crate::world_view::predict_pickup_right(believed, self.inv_carried)
+        };
+        self.inventory.items[store] = new_slot;
+        self.inv_carried = new_carried;
+        self.hotbar_slots = self.inventory.hotbar();
+    }
+
     /// The chest screen render: the frozen world dimmed underneath (the
     /// container background's own treatment), the classic gray panel
     /// with its white/0x555555 bevels, the real `container/slot` insets,
@@ -3273,6 +3430,134 @@ impl App {
                 draw_item_icon(g, self.chest_carried.0, mx - 8, my - 8);
                 if self.chest_carried.1 > 1 {
                     let s = self.chest_carried.1.to_string();
+                    let tw = g.text_width(&s);
+                    g.text(a, mx - 8 + 17 - tw, my - 8 + 9, &s, WHITE, true);
+                }
+            }
+        }
+    }
+
+    /// The survival inventory's BASE pass: the frozen world dimmed
+    /// underneath (the container background's own treatment) and the
+    /// LEGACY background texture — the 26.2's INVENTORY_LOCATION blit
+    /// (javap extractBackground: the 176x166 region of the 256x256
+    /// canvas at leftPos/topPos) the sprite migration left
+    /// texture-based. The texture paints the slot chrome, the mannequin
+    /// hole and the craft grid; the panel origin lands in `inv_panel`
+    /// for the click lane (the render-then-hit pattern's own order).
+    fn render_inventory_base(&mut self, g: &mut Gui, a: &mut GuiAssets, w: i32, h: i32) {
+        g.fill(0, 0, w, h, [0.0, 0.0, 0.0, 0.35]);
+        let panel = inventory_panel_origin(w, h);
+        self.inv_panel = panel;
+        g.sprite_file_region(a, "gui/container/inventory.png", 0, 0, 176, 166, panel.0, panel.1);
+    }
+
+    /// The survival inventory's MANNEQUIN pass (the vanilla
+    /// extractEntityInInventoryFollowsMouse's own draw, between the
+    /// background and the slot pass): the rest pose leans toward the
+    /// mouse (the atan turn law — the neutral pose when no mouse
+    /// speaks, the headless scenes' honest stand-in), the model's
+    /// quads ride the vanilla PiP chain folded in
+    /// [`App::mannequin_vp`], and the corner re-order keeps the
+    /// raster's front-face law against the vanilla's own -z mirror.
+    /// The depth clears first — the vanilla PiP owns its own depth
+    /// texture (the entity never loses to the world beneath).
+    fn render_inventory_mannequin(&mut self, fb: &mut crate::raster::Framebuf, gs: f32) {
+        if self.avatar.is_none() {
+            // the loaders' prefix walk (the sound/font tables' own law —
+            // the CWD the process speaks varies)
+            for prefix in ["assets-cache/jar", "../assets-cache/jar", "../../assets-cache/jar"] {
+                if let Some(m) = crate::avatar::AvatarModel::load(std::path::Path::new(prefix)) {
+                    self.avatar = Some(m);
+                    break;
+                }
+            }
+        }
+        let Some(model) = &self.avatar else {
+            return; // the skin asset failed its sha1 — the renderer stays honest
+        };
+        let panel = self.inv_panel;
+        let (yaw, pitch) = mannequin_turn(self.mouse_pos, panel.0, panel.1);
+        let state = crate::avatar::AvatarState::rest(yaw, pitch, self.frame as f32 + 0.5);
+        let vp = mannequin_vp(panel.0, panel.1, gs, fb.w as f32, fb.h as f32, pitch);
+        let quads = model.quads(&state, Vec3::new(0.0, 0.0, 0.0), 0.0, 0.0);
+        let sampled: Vec<crate::raster::SampledQuad> = quads
+            .iter()
+            .map(|q| crate::raster::SampledQuad {
+                // THE CORNER RE-ORDER (the vanilla -z mirror's own
+                // winding): pts 1/2 and uv 1/2 swap — the same quad,
+                // the same corner-bound texels, the fan's order flipped
+                // to the raster's front-face law
+                pts: [q.pts[0], q.pts[2], q.pts[1], q.pts[3]],
+                uv: [q.uv[0], q.uv[2], q.uv[1], q.uv[3]],
+                tex: "",
+                tint: [q.shade, q.shade, q.shade],
+            })
+            .collect();
+        fb.clear_depth();
+        fb.draw_sampled_quads(vp, &sampled, &mut |_tex, u, v| {
+            let [r, g, b, al] = model.pixel(u, v);
+            Some([r, g, b, al])
+        });
+    }
+
+    /// The survival inventory's SLOT pass: the REAL 36-slot store's
+    /// icons and counts (the hotbar row from store 0..9, the main rows
+    /// from store 9..36 — the chest's icon/count law verbatim), the
+    /// two labels the 26.2 speaks (`container.crafting` at (97, 6),
+    /// `container.inventory` at (8, 94) — the title/inventory label
+    /// defaults init() pins, the 0x404040 no-shadow draw), and the
+    /// carried stack's cursor-follow. The wire sessions render the
+    /// hotbar row from the live lane's belief and the main rows their
+    /// chrome (the offline store stays the only filled lane).
+    fn render_inventory_slots(&mut self, g: &mut Gui, a: &mut GuiAssets) {
+        let panel = self.inv_panel;
+        // the store's own slots: the offline store everywhere, the wire
+        // session's hotbar row the live lane's belief rides
+        let hotbar: [(i32, i32); 9] = if self.world_is_network {
+            self.hotbar_slots
+        } else {
+            self.inventory.hotbar()
+        };
+        for i in 0..36usize {
+            let (id, count) = if i < 9 {
+                hotbar[i]
+            } else if self.world_is_network {
+                continue; // the wire's main rows stay chrome-only (the store lane rides later)
+            } else {
+                self.inventory.items[i]
+            };
+            if count <= 0 {
+                continue; // the wire's own emptiness sentinel
+            }
+            let (sx, sy) = inventory_slot_origin(panel, i);
+            draw_item_icon(g, id, sx + 1, sy + 1);
+            if count > 1 {
+                let s = count.to_string();
+                let tw = g.text_width(&s);
+                g.text(a, sx + 17 - tw, sy + 9, &s, WHITE, true);
+            }
+        }
+        // the labels (the extractLabels + the inventory label lane —
+        // the -12566464 the bytecode speaks is 0xFF404040)
+        let label = [0.251, 0.251, 0.251];
+        if let Some(t) = tr("container.crafting") {
+            g.text(a, panel.0 + 97, panel.1 + 6, t, label, false);
+        }
+        if let Some(t) = tr("container.inventory") {
+            // the label the base extractLabels draws at inventoryLabelX /
+            // inventoryLabelY — the init's own fold inventoryLabelY =
+            // imageHeight - 94 = 72 (the 166 canvas the defaults ride)
+            g.text(a, panel.0 + 8, panel.1 + 166 - 94, t, label, false);
+        }
+        // THE HELD STACK follows the cursor (the vanilla carried render
+        // — the chest live lane's own treatment, the offline carried
+        // the LOCAL store's own state)
+        if self.inv_carried.1 > 0 {
+            if let Some((mx, my)) = self.mouse_pos {
+                draw_item_icon(g, self.inv_carried.0, mx - 8, my - 8);
+                if self.inv_carried.1 > 1 {
+                    let s = self.inv_carried.1.to_string();
                     let tw = g.text_width(&s);
                     g.text(a, mx - 8 + 17 - tw, my - 8 + 9, &s, WHITE, true);
                 }
@@ -3374,6 +3659,11 @@ impl App {
             // belief resets with the window
             self.chest_carried = (0, 0);
             self.open(ScreenKind::World);
+        } else if self.screen == ScreenKind::Inventory {
+            // the survival inventory's own close (the vanilla Escape on
+            // the E-key screen): the carried's add-back walk rides, the
+            // screen back to the world
+            self.close_inventory();
         } else if matches!(self.screen, ScreenKind::Connect | ScreenKind::Disconnect) {
             self.open(ScreenKind::Servers);
         }
@@ -3395,6 +3685,10 @@ impl App {
     pub fn on_press(&mut self, mx: i32, my: i32) {
         if self.screen == ScreenKind::Chest {
             self.click_chest_slot(mx, my, 0);
+            return;
+        }
+        if self.screen == ScreenKind::Inventory {
+            self.click_inventory_slot(mx, my, 0);
             return;
         }
         self.on_attack();
@@ -3421,6 +3715,10 @@ impl App {
     pub fn on_right_press(&mut self, mx: i32, my: i32) -> bool {
         if self.screen == ScreenKind::Chest {
             self.click_chest_slot(mx, my, 1);
+            return false;
+        }
+        if self.screen == ScreenKind::Inventory {
+            self.click_inventory_slot(mx, my, 1);
             return false;
         }
         if self.screen == ScreenKind::World && !self.paused {
@@ -5720,6 +6018,28 @@ impl App {
                 let mut g = Gui::new(fb, Gui::auto_scale(fb.w, fb.h));
                 let (gw, gh) = (g.w(), g.h());
                 self.render_chest(&mut g, a, gw, gh);
+            }
+            ScreenKind::Inventory => {
+                // the survival inventory's own round (the vanilla
+                // InventoryScreen over the frozen world): world
+                // underneath, dimmed, the legacy background texture,
+                // THEN the mannequin (the vanilla PiP draws the entity
+                // between the background and the slots — the frame
+                // buffer's own depth space the clear speaks), then the
+                // slot icons and labels and the carried follow.
+                self.render_world_3d(fb, a);
+                let gs = Gui::auto_scale(fb.w, fb.h);
+                let (gw, gh) = (fb.w / gs as usize, fb.h / gs as usize);
+                {
+                    let mut g = Gui::new(fb, gs);
+                    self.render_inventory_base(&mut g, a, gw as i32, gh as i32);
+                }
+                // the mannequin pass (the frame buffer's own draw — the
+                // vanilla's offscreen PiP texture blitted between the
+                // background and the slot pass)
+                self.render_inventory_mannequin(fb, gs as f32);
+                let mut g = Gui::new(fb, gs);
+                self.render_inventory_slots(&mut g, a);
             }
         }
     }
@@ -8398,6 +8718,120 @@ fn hotbar_rect(gui_w: i32, gui_h: i32) -> (i32, i32) {
 /// (176x166) centered in the GUI workspace.
 fn chest_panel_origin(gui_w: i32, gui_h: i32) -> (i32, i32) {
     ((gui_w - 176) / 2, (gui_h - 166) / 2)
+}
+
+/// The survival inventory's panel origin — the 26.2's own leftPos /
+/// topPos walk (javap AbstractContainerScreen.init: imageWidth 176,
+/// imageHeight 166, leftPos = (width - imageWidth) / 2, topPos likewise
+/// — the same centered canvas the chest lane speaks).
+fn inventory_panel_origin(gui_w: i32, gui_h: i32) -> (i32, i32) {
+    ((gui_w - 176) / 2, (gui_h - 166) / 2)
+}
+
+/// The survival inventory's slot origin by STORE index (the 26.2
+/// InventoryMenu's own numbers, the store's container the menu's
+/// standard slots wrap): the main rows (store 9..36) at
+/// panel-relative (8, 84) pitch 18 — `addStandardInventorySlots(8, 84)`
+/// — and the hotbar row (store 0..9) at y 142 (the +58 the standard
+/// walk's own constant speaks). The armor / craft / result / offhand
+/// cells are the texture's own chrome this round (the store keeps no
+/// armor or crafting state — the honest emptiness the follow-up
+/// names).
+fn inventory_slot_origin(panel: (i32, i32), store: usize) -> (i32, i32) {
+    let (x, y) = if store < 9 {
+        (8 + store as i32 * 18, 142)
+    } else {
+        let i = (store - 9) as i32;
+        (8 + i % 9 * 18, 84 + i / 9 * 18)
+    };
+    (panel.0 + x, panel.1 + y)
+}
+
+/// THE MANNEQUIN'S RECT (javap 26.2 InventoryScreen.extractBackground,
+/// the exact constants the extractEntityInInventoryFollowsMouse call
+/// pushes): x1 = leftPos + 26, y1 = topPos + 8, x2 = leftPos + 75,
+/// y2 = topPos + 78 — the 49x70 window the PiP renders the player
+/// into, panel-relative.
+pub const MANNEQUIN_RECT: (i32, i32, i32, i32) = (26, 8, 75, 78);
+
+/// THE MANNEQUIN'S TURN LAW (javap 26.2 extractEntityInInventory-
+/// FollowsMouse verbatim): the rect-center minus the mouse, /40.0,
+/// Math.atan, *20 — the body's own lean in vanilla's radians-as-
+/// degrees soup (the max deflection atan(24.5/40)*20 ≈ 10.9, the
+/// gentle famous follow). The mouse in GUI coords; the yaw degree
+/// value the AvatarState rides IS the vanilla bodyRot (180 + the
+/// lean) — the state the model's R_y(180 - yaw) fold consumes. The
+/// `None` mouse (the headless scenes' honest stand-in) speaks the
+/// neutral pose: the cursor ON the rect's center, no lean.
+fn mannequin_turn(mouse: Option<(i32, i32)>, left: i32, top: i32) -> (f32, f32) {
+    let (x1, y1, x2, y2) = MANNEQUIN_RECT;
+    let cx = (left + x1 + left + x2) as f32 / 2.0;
+    let cy = (top + y1 + top + y2) as f32 / 2.0;
+    let (dx, dy) = match mouse {
+        // THE NEUTRAL POSE (the headless scenes' honest stand-in): the
+        // cursor ON the rect's center — no lean
+        None => (0.0, 0.0),
+        Some((mx, my)) => ((cx - mx as f32) / 40.0, (cy - my as f32) / 40.0),
+    };
+    (180.0 + dx.atan() * 20.0, dy.atan() * 20.0)
+}
+
+/// THE MANNEQUIN'S VIEW-PROJECTION (the vanilla PiP chain, folded to
+/// one matrix — javap PictureInPictureRenderer.prepareTexturesAnd-
+/// Projection: the ortho window is the rect's own size times the GUI
+/// scale (w = 49*S, h = 70*S, the near/far the ±1000 constants speak)
+/// and the pose scales (s, s, -s) with s = 30*S (the extractor's
+/// scale-30 constant — the NEGATIVE z the vanilla's own mirror). The
+/// entity renders through T(0, bbHeight/2 + 0.0625, 0) ∘ Rz(π) ∘
+/// Rx(pitch·π/180) — the pose rotation the JOML mul order pins (Rx
+/// first, the flip after). The vanilla's [0..w]×[0..h] window plus its
+/// translate(w/2, h/2) pose step EQUAL this chain's centered window
+/// with no pose translation — the rect center rides the ortho's own
+/// translation terms (the y-down fold the orthoInvertY walk speaks,
+/// the raster's NDC mapping the consumer). The chain lands the model's
+/// feet 28.875*S px below and the head 25.125*S px above the rect
+/// center — the vanilla's slightly-low placement. The winding flips
+/// once (the -z mirror) — the caller re-orders each quad's corners to
+/// keep the raster's front-face law.
+fn mannequin_vp(
+    left: i32,
+    top: i32,
+    gs: f32,
+    fb_w: f32,
+    fb_h: f32,
+    pitch_deg: f32,
+) -> crate::math::Mat4 {
+    let (x1, y1, x2, y2) = MANNEQUIN_RECT;
+    let w = (x2 - x1) as f32 * gs;
+    let h = (y2 - y1) as f32 * gs;
+    let s = 30.0 * gs;
+    // the rect's center in FB px (the texture blit's own placement)
+    let cx = (left as f32 + (x1 + x2) as f32 / 2.0) * gs;
+    let cy = (top as f32 + (y1 + y2) as f32 / 2.0) * gs;
+    // the y-down ortho onto the FULL framebuffer, centered on the rect:
+    // x_ndc = 2/W·(cx + x_local) - 1, y_ndc = 1 - 2/H·(cy + y_local)
+    let sx = 2.0 / fb_w;
+    let sy = -2.0 / fb_h;
+    let tx = 2.0 * cx / fb_w - 1.0;
+    let ty = 1.0 - 2.0 * cy / fb_h;
+    let ortho = crate::math::Mat4([
+        sx, 0.0, 0.0, 0.0, 0.0, sy, 0.0, 0.0, 0.0, 0.0, 2.0 / 2000.0, 0.0, tx, ty, 0.0, 1.0,
+    ]);
+    let mirror = crate::math::Mat4([
+        s, 0.0, 0.0, 0.0, 0.0, s, 0.0, 0.0, 0.0, 0.0, -s, 0.0, 0.0, 0.0, 0.0, 1.0,
+    ]);
+    let lift = crate::math::Mat4::translation(
+        0.0,
+        crate::body::STANDING_HEIGHT as f32 / 2.0 + 0.0625,
+        0.0,
+    );
+    let flip = crate::math::Mat4::rot_z(std::f32::consts::PI);
+    let pitch_rot = crate::math::Mat4::rot_x(pitch_deg * (std::f32::consts::PI / 180.0));
+    ortho
+        .mul(&mirror)
+        .mul(&lift)
+        .mul(&flip)
+        .mul(&pitch_rot)
 }
 
 /// The 9x3 container grid's slot origin (the sprite's top-left): the
@@ -16459,6 +16893,322 @@ mod tests {
             .map(|p| (p.lifetime, p.x, p.y, p.z))
             .collect();
         assert_eq!(da, db, "the seeded walk replays");
+    }
+
+    /// THE E KEY'S OWN LANE: the world screen opens the survival
+    /// inventory, the inventory screen closes it back (E and Escape
+    /// both), the death gate keeps the DeathScreen modal, and the
+    /// vanilla inventory never pauses the world (the container's own
+    /// law — the pause flag the open never touches).
+    #[test]
+    fn the_e_key_opens_and_closes_the_inventory() {
+        let mut app = App::new(3);
+        app.enter_world();
+        app.spawn_offline_body();
+        app.on_inventory_key();
+        assert_eq!(app.screen, ScreenKind::Inventory, "E opens over the world");
+        assert!(!app.paused, "the vanilla inventory never pauses");
+        assert_eq!(app.inv_carried, (0, 0), "the carried fresh-empty");
+        // the frozen-container convention: the body's tick gate reads
+        // the screen (the World test the gate's own arm speaks)
+        assert_ne!(app.screen, ScreenKind::World);
+        // the E key's second half: back to the world
+        app.on_inventory_key();
+        assert_eq!(app.screen, ScreenKind::World, "E closes it back");
+        // the Escape arm on the open screen
+        app.on_inventory_key();
+        assert_eq!(app.screen, ScreenKind::Inventory);
+        app.on_escape();
+        assert_eq!(app.screen, ScreenKind::World, "Escape closes too");
+        // THE DEATH GATE: a dead player's E never opens
+        app.dead = true;
+        app.on_inventory_key();
+        assert_eq!(app.screen, ScreenKind::World, "the DeathScreen stays modal");
+        assert_ne!(app.screen, ScreenKind::Inventory);
+        // the OTHER screens ignore the key (the screen stack's own law)
+        app.dead = false;
+        app.screen = ScreenKind::Servers;
+        app.on_inventory_key();
+        assert_eq!(app.screen, ScreenKind::Servers, "no inventory over the list");
+    }
+
+    /// THE INVENTORY'S OWN CLICK WALK: the left press's pickup / place /
+    /// merge / swap over the REAL store (the doClick PICKUP prediction),
+    /// the hotbar row the store's own mirror (the HUD syncs on every
+    /// mutation), and the hit boxes the 26.2 layout pins.
+    #[test]
+    fn the_inventory_click_walks_the_pickup_law() {
+        let mut app = App::new(3);
+        app.enter_world();
+        app.spawn_offline_body();
+        app.open_inventory();
+        // the panel origin the render lays out first (the render-then-hit
+        // pattern) — a 640x360 gui the geometry test pins
+        app.inv_panel = inventory_panel_origin(640, 360);
+        assert_eq!(app.inv_panel, (232, 97));
+        // the store: cobblestone x27 in the hotbar slot 0, oak x16 slot 1
+        app.inventory.items[0] = (62, 27);
+        app.inventory.items[1] = (63, 16);
+        app.hotbar_slots = app.inventory.hotbar();
+        // THE PICKUP: the left press on the slot takes the whole stack
+        let (ox, oy) = inventory_slot_origin(app.inv_panel, 0);
+        app.on_press(ox + 8, oy + 8);
+        assert_eq!(app.inventory.items[0], (0, 0), "the slot emptied");
+        assert_eq!(app.inv_carried, (62, 27), "the cursor holds the stack");
+        // THE PLACE: the same press on the empty main slot 9 puts it down
+        let (ox, oy) = inventory_slot_origin(app.inv_panel, 9);
+        app.on_press(ox + 8, oy + 8);
+        assert_eq!(app.inventory.items[9], (62, 27), "the stack placed");
+        assert_eq!(app.inv_carried, (0, 0), "the cursor empty");
+        // the hotbar row synced (the store's own mirror)
+        assert_eq!(app.hotbar_slots[0], (0, 0));
+        // THE MERGE: pick the cobblestone up, drop it on oak — the swap
+        let (ox, oy) = inventory_slot_origin(app.inv_panel, 9);
+        app.on_press(ox + 8, oy + 8);
+        let (ox, oy) = inventory_slot_origin(app.inv_panel, 1);
+        app.on_press(ox + 8, oy + 8);
+        assert_eq!(app.inventory.items[1], (62, 27), "the swap landed");
+        assert_eq!(app.inv_carried, (63, 16), "the oak rides the cursor");
+        // the between-slots press does nothing yet (the drop-outside lane
+        // the follow-up names)
+        app.on_press(4, 4);
+        assert_eq!(app.inv_carried, (63, 16), "the carried untouched");
+    }
+
+    /// THE RIGHT PRESS'S OWN TABLE (the doClick PICKUP button-1 branch):
+    /// the ceiling-half take (5 -> 3 taken, 2 left), the place-one, and
+    /// the same-item move-one.
+    #[test]
+    fn the_right_press_places_one() {
+        let mut app = App::new(3);
+        app.enter_world();
+        app.spawn_offline_body();
+        app.open_inventory();
+        app.inv_panel = inventory_panel_origin(640, 360);
+        app.inventory.items[0] = (62, 5);
+        // the ceiling-half take
+        let (ox, oy) = inventory_slot_origin(app.inv_panel, 0);
+        app.on_right_press(ox + 8, oy + 8);
+        assert_eq!(app.inventory.items[0], (62, 2), "2 left");
+        assert_eq!(app.inv_carried, (62, 3), "3 taken");
+        // the place-one into the empty slot 9
+        let (ox, oy) = inventory_slot_origin(app.inv_panel, 9);
+        app.on_right_press(ox + 8, oy + 8);
+        assert_eq!(app.inventory.items[9], (62, 1), "one placed");
+        assert_eq!(app.inv_carried, (62, 2), "two ride");
+        // the same-item move-one on the next press
+        app.on_right_press(ox + 8, oy + 8);
+        assert_eq!(app.inventory.items[9], (62, 2), "one more moved");
+        assert_eq!(app.inv_carried, (62, 1), "one rides");
+    }
+
+    /// THE QUICK-MOVE'S FORWARD SECTIONS (the 26.2 quickMoveStack law —
+    /// the inventory menu's own order, the chest's fillFromEnd the other
+    /// menus speak): the shift-click moves the whole stack to the OTHER
+    /// section, the same-item merges first, the FIRST empty slot takes
+    /// the remainder (store 0 forward for the hotbar, store 9 forward
+    /// for the main rows).
+    #[test]
+    fn the_quick_move_walks_the_forward_sections() {
+        let mut app = App::new(3);
+        app.enter_world();
+        app.spawn_offline_body();
+        app.open_inventory();
+        app.inv_panel = inventory_panel_origin(640, 360);
+        // the main rows: cobblestone x70 at store 9 (30 over the stack
+        // ceiling), the hotbar: cobblestone x40 at store 3 (24 room)
+        app.inventory.items[9] = (62, 70);
+        app.inventory.items[3] = (62, 40);
+        // THE SHIFT-CLICK on the main stack: the hotbar's 40 merges to 64
+        // first (pass 1), the first EMPTY hotbar slot (store 0) takes the
+        // whole 46 remainder (pass 2 — the empty slot takes the stack up
+        // to its ceiling, forward)
+        let (ox, oy) = inventory_slot_origin(app.inv_panel, 9);
+        app.shift_down = true;
+        app.on_press(ox + 8, oy + 8);
+        app.shift_down = false;
+        assert_eq!(app.inventory.items[3], (62, 64), "the merge ceiling");
+        assert_eq!(app.inventory.items[0], (62, 46), "the FIRST empty took the rest");
+        assert_eq!(app.inventory.items[9], (0, 0), "the source emptied");
+        // THE REVERSE: the hotbar stack quick-moves to the main rows —
+        // the same-item merge at store 9's neighbors first, the first
+        // empty main slot after
+        app.inventory.items[0] = (62, 6);
+        app.inventory.items[12] = (62, 60);
+        let (ox, oy) = inventory_slot_origin(app.inv_panel, 0);
+        app.shift_down = true;
+        app.on_press(ox + 8, oy + 8);
+        app.shift_down = false;
+        assert_eq!(app.inventory.items[12], (62, 64), "the main merge ceiling");
+        assert_eq!(app.inventory.items[9], (62, 2), "the FIRST main empty (slot 9) took the rest");
+        assert_eq!(app.inventory.items[0], (0, 0), "the hotbar source emptied");
+    }
+
+    /// THE CLOSE'S ADD-BACK WALK (the vanilla close's own tail): a
+    /// carried stack returns to the store (the same-item merges first,
+    /// the first empty slot takes the remainder), the full store's
+    /// remainder DROPS at the body's feet (the Player.drop law).
+    #[test]
+    fn the_close_returns_the_carried_to_the_store() {
+        let mut app = App::new(3);
+        app.enter_world();
+        app.spawn_offline_body();
+        app.open_inventory();
+        // the carried stack with a same-item home: merges into it
+        app.inventory.items[5] = (921, 10); // apple
+        app.inv_carried = (921, 7);
+        app.close_inventory();
+        assert_eq!(app.inventory.items[5], (921, 17), "the merge back");
+        assert_eq!(app.inv_carried, (0, 0));
+        assert_eq!(app.screen, ScreenKind::World, "the screen back");
+        // the carried with NO same-item home: the first empty slot
+        app.open_inventory();
+        app.inv_carried = (926, 4); // diamond
+        app.close_inventory();
+        assert_eq!(app.inventory.items[0], (926, 4), "the first empty took it");
+        // the FULL store: the remainder drops at the body's feet
+        app.open_inventory();
+        for it in app.inventory.items.iter_mut() {
+            *it = (62, 64);
+        }
+        app.inv_carried = (62, 9);
+        let (bx, by, bz) = {
+            let b = app.body.as_ref().unwrap();
+            (b.x, b.y, b.z)
+        };
+        app.close_inventory();
+        assert_eq!(app.inv_carried, (0, 0), "the cursor emptied");
+        let dropped = app
+            .drops
+            .iter()
+            .find(|d| d.item == 62 && d.count == 9)
+            .expect("the remainder dropped");
+        assert!((dropped.x - bx).abs() < 1.0 && (dropped.z - bz).abs() < 1.0);
+        let _ = by;
+    }
+
+    /// THE MANNEQUIN'S OWN LAW (the 26.2 bytecode the round pinned): the
+    /// neutral pose when no mouse speaks, the atan turn law on the mouse
+    /// (the rect-center delta over 40, atan, *20 — the bodyRot 180 + the
+    /// lean), and the VP chain's placement (the feet 28.875*S below the
+    /// rect center, the model's center 1.875*S above — the slightly-low
+    /// vanilla placement inside the 49x70 rect).
+    #[test]
+    fn the_mannequin_law_pins_the_vanilla_chain() {
+        // THE TURN LAW: the neutral pose (the headless stand-in)
+        assert_eq!(mannequin_turn(None, 232, 97), (180.0, 0.0));
+        // the mouse 40 px left of the rect center (the i32 mouse the
+        // real input speaks — the expected folds the ACTUAL 40.5 delta
+        // the center's half-pixel keeps): atan(d/40)*20 = the lean the
+        // vanilla radians-as-degrees soup speaks
+        let (x1, y1, x2, y2) = MANNEQUIN_RECT;
+        let cx = (232 + x1 + 232 + x2) as f32 / 2.0;
+        let cy = (97 + y1 + 97 + y2) as f32 / 2.0;
+        let mx = cx as i32 - 40;
+        let d = (cx - mx as f32) / 40.0;
+        let (yaw, pitch) = mannequin_turn(Some((mx, cy as i32)), 232, 97);
+        assert!((yaw - (180.0 + 20.0 * d.atan())).abs() < 1e-4);
+        assert!(pitch.abs() < 1e-4, "the vertical delta zero");
+        // THE VP: the feet and the model's center project through the
+        // chain the raster's own NDC mapping consumes
+        let vp = mannequin_vp(232, 97, 1.0, 640.0, 360.0, 0.0);
+        let project = |p: [f32; 3]| -> (f32, f32) {
+            let c = vp.transform_point(crate::math::Vec3::new(p[0], p[1], p[2]));
+            let ndc_x = c[0] / c[3];
+            let ndc_y = c[1] / c[3];
+            (
+                (ndc_x * 0.5 + 0.5) * 640.0,
+                (1.0 - (ndc_y * 0.5 + 0.5)) * 360.0,
+            )
+        };
+        let (fx, fy) = project([0.0, 0.0, 0.0]);
+        let (mx, my) = project([0.0, 0.9, 0.0]);
+        assert!((fx - cx).abs() < 0.01, "the feet centered: {fx} vs {cx}");
+        assert!(
+            (fy - (cy + 28.875)).abs() < 0.01,
+            "the feet 28.875 below: {fy}"
+        );
+        assert!(
+            (my - (cy + 1.875)).abs() < 0.01,
+            "the center 1.875 below (the 0.0625 lift's own quirk): {my}"
+        );
+        // both inside the mannequin rect (the 49x70 window the PiP owns)
+        let (rx0, ry0, rx1, ry1) = (232 + x1, 97 + y1, 232 + x2, 97 + y2);
+        assert!(fx >= rx0 as f32 && fx < rx1 as f32);
+        assert!(fy >= ry0 as f32 && fy < ry1 as f32);
+        assert!(mx >= rx0 as f32 && mx < rx1 as f32);
+        assert!(my >= ry0 as f32 && my < ry1 as f32);
+    }
+
+    /// THE SCREEN'S OWN PIXELS: the background texture blits (the panel
+    /// face the bevel's own gray speaks), the store's icons and counts
+    /// land in the slots (the pair against the empty store differs), and
+    /// the mannequin's body pixels fill the hole (the model-loaded gate
+    /// the sha1 walk keeps — the no-cache boot skips the pass honestly).
+    #[test]
+    fn the_inventory_screen_renders_the_store() {
+        // the test's own pixel reader (the fb's public color vec)
+        fn px(fb: &crate::raster::Framebuf, x: usize, y: usize) -> [u8; 3] {
+            let o = (y * fb.w + x) * 3;
+            [fb.color[o], fb.color[o + 1], fb.color[o + 2]]
+        }
+        // the cache root the loaders' prefix walk keeps (the CWD the
+        // cargo test process speaks varies — the absent cache the
+        // honest skip answers, the font tests' real() gate the shape)
+        let root = ["assets-cache/jar", "../assets-cache/jar", "../../assets-cache/jar"]
+            .iter()
+            .map(std::path::Path::new)
+            .find(|p| p.join("gui/container/inventory.png").exists());
+        let Some(root) = root else { return };
+        let mut app = App::new(3);
+        app.enter_world();
+        app.spawn_offline_body();
+        app.open_inventory();
+        // the EMPTY store first (the baseline the pair speaks against)
+        let mut fb = crate::raster::Framebuf::new(640, 360);
+        let mut assets = GuiAssets::open(&root);
+        app.render(&mut fb, &mut assets);
+        let empty = fb.color.clone();
+        // THE STAGED STORE: the same loadout the headless staging speaks
+        app.inventory.items[0] = (62, 27);
+        app.inventory.items[1] = (63, 16);
+        app.hotbar_slots = app.inventory.hotbar();
+        let mut fb = crate::raster::Framebuf::new(640, 360);
+        app.render(&mut fb, &mut assets);
+        // the panel face pixel (the texture's own 198 gray at panel
+        // (50, 81) — between the hole and the rows, no chrome)
+        let face = px(&fb, 232 + 50, 97 + 81);
+        assert_eq!(face, [198, 198, 198], "the background blit speaks");
+        // the slot pair differs (the icons painted over the chrome)
+        let (sx, sy) = inventory_slot_origin((232, 97), 0);
+        let mut diff = 0usize;
+        for dy in 0..16 {
+            for dx in 0..16 {
+                if px(&fb, sx as usize + 1 + dx, sy as usize + 1 + dy)
+                    != [
+                        empty[((sy as usize + 1 + dy) * fb.w + sx as usize + 1 + dx) * 3],
+                        empty[((sy as usize + 1 + dy) * fb.w + sx as usize + 1 + dx) * 3 + 1],
+                        empty[((sy as usize + 1 + dy) * fb.w + sx as usize + 1 + dx) * 3 + 2],
+                    ]
+                {
+                    diff += 1;
+                }
+            }
+        }
+        assert!(diff > 40, "the icon painted: {diff} pixels differ");
+        // the mannequin's body pixels inside the hole (the model gate —
+        // the same root the loader walks)
+        if crate::avatar::AvatarModel::load(&root).is_some() {
+            let mut diff = 0usize;
+            for y in 110..165 {
+                for x in 262..303 {
+                    if px(&fb, x, y) != [0, 0, 0] {
+                        diff += 1;
+                    }
+                }
+            }
+            assert!(diff > 200, "the mannequin painted: {diff} pixels");
+        }
     }
 }
 
