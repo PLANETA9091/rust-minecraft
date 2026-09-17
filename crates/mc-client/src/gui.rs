@@ -5,7 +5,7 @@
 
 use crate::raster::Framebuf;
 
-use mc_registry::generated::font;
+use crate::font_table;
 use mc_registry::generated::gui;
 
 /// Decode a PNG into RGBA8 (expands palette/grayscale/16-bit forms).
@@ -89,7 +89,7 @@ pub(crate) fn font_text_width(s: &str) -> i32 {
             in_code = true;
             continue;
         }
-        w += match font::glyph(ch) {
+        w += match font_table::glyph(ch) {
             Some(g) if g.space_advance != 0 => g.space_advance as i32,
             Some(g) => g.gw as i32 + 1,
             None => 4,
@@ -187,7 +187,7 @@ impl GuiAssets {
             self.font_textures.resize(idx as usize + 1, None);
         }
         if self.font_textures[idx as usize].is_none() {
-            let file = font::FONT_TEXTURES.get(idx as usize)?;
+            let file = font_table::font_textures().get(idx as usize)?;
             let path = self.root.join(file);
             let bytes = std::fs::read(path).ok()?;
             let s = Sprite::decode(&bytes).ok()?;
@@ -496,7 +496,7 @@ impl<'a> Gui<'a> {
                 in_code = true;
                 continue;
             }
-            let Some(g) = font::glyph(ch) else {
+            let Some(g) = font_table::glyph(ch) else {
                 cx += 4;
                 continue;
             };
@@ -590,7 +590,7 @@ impl<'a> Gui<'a> {
                 in_code = true;
                 continue;
             }
-            let Some(g) = font::glyph(ch) else {
+            let Some(g) = font_table::glyph(ch) else {
                 cx += 4 * k;
                 continue;
             };

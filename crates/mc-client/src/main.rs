@@ -19,6 +19,7 @@ mod drops;
 mod eat;
 mod effects;
 mod end_flash;
+mod font_table;
 mod mob;
 mod particles;
 mod food;

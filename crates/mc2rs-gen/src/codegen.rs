@@ -71,7 +71,7 @@ pub fn emit(
     items.push_str("];\n");
     fs::write(reg_dir.join("items.rs"), items).context("write items.rs")?;
 
-    // ---- font.rs / gui.rs / worldgen.rs ----
+    // ---- font cache / gui.rs / worldgen.rs ----
     // (the splashes.rs write the first migration step retired — the
     // jar's own texts/splashes.txt the extract_runtime_assets walk now
     // copies verbatim into the runtime cache, the client's loader the
@@ -80,8 +80,17 @@ pub fn emit(
     // keeps verbatim, the client's loader the only parser; the sounds.rs
     // write the THIRD migration step retired — the asset-index fetch the
     // generator copies verbatim into the runtime cache
-    // assets/minecraft/sounds.json, the client's loader the only parser)
-    fs::write(reg_dir.join("font.rs"), crate::fontgen::emit(&gen.font)?).context("write font.rs")?;
+    // assets/minecraft/sounds.json, the client's loader the only parser;
+    // the font.rs write the FIFTH migration step retires — the measured
+    // glyph table the generator's own BINARY emit carries into the cache
+    // assets-cache/gen/font.bin, the client's loader the only parser)
+    let font_cache_dir = workspace_root.join("assets-cache/gen");
+    fs::create_dir_all(&font_cache_dir)?;
+    fs::write(
+        font_cache_dir.join("font.bin"),
+        crate::fontgen::emit_cache(&gen.font)?,
+    )
+    .context("write assets-cache/gen/font.bin")?;
     fs::write(reg_dir.join("gui.rs"), crate::uigen::emit(&gen.ui)?).context("write gui.rs")?;
     fs::write(reg_dir.join("worldgen.rs"), crate::worldgen::emit(&gen.worldgen)?)
         .context("write worldgen.rs")?;

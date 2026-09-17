@@ -17,7 +17,7 @@ client for that exact version:
 | Crate | Purpose |
 |---|---|
 | `mc2rs-gen` | The generator CLI. Fetches manifests, downloads official jars, analyzes them, emits generated code. |
-| `mc-registry` | **Generated** from official data: blocks/items registry, the full bitmap font (real glyph metrics from the real font textures), the GUI sprite inventory (real sizes + nine-slice borders from `.mcmeta`), biome/worldgen tables, and the block texture atlas (blockstates → models → PNG pixels, first frame, biome tints). The splashes, lang, sound-event and biome-colormap tables are runtime-loaded from the jar's own `texts/splashes.txt`, `lang/en_us.json`, the asset index's `sounds.json` and the verbatim `textures/colormap/*.png` copies (the migration's first four lanes — not compiled in). |
+| `mc-registry` | **Generated** from official data: blocks/items registry, the full bitmap font (real glyph metrics from the real font textures), the GUI sprite inventory (real sizes + nine-slice borders from `.mcmeta`), biome/worldgen tables, and the block texture atlas (blockstates → models → PNG pixels, first frame, biome tints). The splashes, lang, sound-event, biome-colormap and font-glyph tables are runtime-loaded (the jar's own `texts/splashes.txt`, `lang/en_us.json`, the asset index's `sounds.json`, the verbatim `textures/colormap/*.png` copies, and the measured `assets-cache/gen/font.bin` the generator's binary emit writes — the migration's first five lanes, not compiled in). |
 | `mc-protocol` | Hand-rolled protocol layer: VarInt/VarLong, packet framing (incl. zlib compression), handshake, **server list ping**, **offline-mode login + the configuration phase** (client information, brand, keep-alive/ping, **select-known-packs + cookie replies**, finish-configuration ack), **play state** — the first real world from the network (world login, keep-alive/ping/teleport/chunk-batch answered, chunk-data decoded into resolved block/biome ids with vanilla palette packing). |
 | `mc-assets` | Asset index parsing + parallel downloader (runtime, from official CDN, sha1-verified). |
 | `mc-client` | The client itself: CPU reference renderer (deterministic, pixel-perfect tests), the GUI runtime (boot chain → title → menus) rendering official fonts/sprites/strings, and a windowed fly-camera. |
@@ -4399,8 +4399,8 @@ as long as Mojang publishes the version, the generator can consume it.
   Rust doc comments). Behavior reimplementation for interop; no
   decompiled code is copied into the source tree.
 * **The honest migration debt:** as of v0.3.200 the generated
-  registry tables under `crates/mc-registry/src/generated/` (texture
-  atlas pixels, font glyph bitmaps)
+  registry tables under `crates/mc-registry/src/generated/` (the
+  texture atlas pixels — the last and biggest lane)
   are still committed — that is the DMCA-pattern exposure (the
   splashes table the v0.3.202 first migration step already moved out
   — the runtime cache the loader parses — the lang table the
@@ -4411,7 +4411,11 @@ as long as Mojang publishes the version, the generator can consume it.
   step: the jar's `textures/colormap/*.png` the generator copies
   verbatim into the runtime cache, the client's loader the only
   decoder — the full 3x65536-cell equality proof ran against the old
-  compiled grids before they left the tree)
+  compiled grids before they left the tree, the font glyph tables
+  the v0.3.227 fifth step: the measured metrics the generator's own
+  binary emit carries into `assets-cache/gen/font.bin`, the client's
+  loader the only parser — the full 2414-glyph round-trip proof ran
+  the same walk)
   the migration roadmap removes: the tables move to locally-generated
   cache files loaded at boot (the `assets-cache/jar` path the loader
   already opens), so a fresh clone never carries jar-derived bytes.

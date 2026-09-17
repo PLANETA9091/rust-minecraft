@@ -6,7 +6,6 @@ pub mod block_sounds;
 pub mod blockstates;
 pub mod blocks;
 pub mod elements;
-pub mod font;
 pub mod gui;
 pub mod item_models;
 pub mod item_order;
