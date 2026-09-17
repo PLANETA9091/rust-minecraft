@@ -469,6 +469,12 @@ pub struct WireRide {
 /// (the Boat/ChestBoat/Raft/ChestRaft bytecode's own fdiv).
 pub const BOAT_DIMENSIONS_HEIGHT: f32 = 0.562;
 
+/// The boat family's own WIDTH (the same EntityType constants the
+/// height's doc names — the half-width the isUnderwater rim scan
+/// walks: floor(min) .. ceil(max) over x/z, the cells the hull's box
+/// actually covers).
+pub const BOAT_DIMENSIONS_WIDTH: f32 = 1.375;
+
 /// The multi-rider seat offsets the AbstractBoat
 /// getPassengerAttachmentPoint bytecode keeps: the first seat of a
 /// MULTI-rider list sits at +0.2, every later seat at −0.6 (the
@@ -538,6 +544,12 @@ pub fn ride_view(model: &WorldModel) -> Option<WireRide> {
 /// the boat's clinit passes). The boats_view read's own keys.
 pub const BOAT_DATA_PADDLE_LEFT: u8 = 11;
 pub const BOAT_DATA_PADDLE_RIGHT: u8 = 12;
+/// THE BUBBLE TIME'S OWN ACCESSOR (the defineId walk's third boat
+/// word — the Integer the server's floatBoat sets while the hull sits
+/// above a bubble column, the tick count the client-side
+/// tickBubbleColumn's rocking decay reads; 0 the column's silence
+/// keeps, 60 the entry arms).
+pub const BOAT_DATA_BUBBLE_TIME: u8 = 13;
 
 /// One wire boat as the renderer consumes it — the Add Entity snapshot's
 /// pose verbatim (the server's own word, the same lane the mobs ride) plus
@@ -576,6 +588,12 @@ pub struct WireBoat {
     /// re-derives; the projection's honest word for the remote
     /// hulls the booleans already encode).
     pub paddle_left: bool,
+    /// THE BUBBLE TIME (the DATA_ID_BUBBLE_TIME accessor 13 — the
+    /// Integer the server's floatBoat arms while the hull rides a
+    /// bubble column; the tickBubbleColumn walk's decay reads it, the
+    /// rocking's whole driver): 0 the no-column silence keeps, the
+    /// absent accessor the same silence (the server never spoke).
+    pub bubble_time: i32,
     pub paddle_right: bool,
 }
 
@@ -648,6 +666,10 @@ pub fn boats_view(model: &WorldModel) -> Vec<WireBoat> {
                 wood: wood.to_string(),
                 paddle_left: paddle(BOAT_DATA_PADDLE_LEFT),
                 paddle_right: paddle(BOAT_DATA_PADDLE_RIGHT),
+                bubble_time: match e.data.get(&BOAT_DATA_BUBBLE_TIME) {
+                    Some(mc_protocol::EntityDataEntry::Int(t)) => *t,
+                    _ => 0,
+                },
             })
         })
         .collect()
@@ -4658,6 +4680,63 @@ mod tests {
             64.0 + (0.562f32 / 3.0) as f64,
             "the ride height rides too (the f32 fold the constant keeps)"
         );
+    }
+
+    #[test]
+    fn the_bubble_time_reads_the_third_accessor() {
+        use crate::world_view::{boats_view, BOAT_DATA_BUBBLE_TIME};
+        use mc_protocol::play::{EntityDataSet, SetEntityDataEntry, EntitySpawn};
+        use mc_protocol::{EntityDataEntry as Val, PlayEvent};
+        // THE ACCESSOR'S OWN INDEX (the defineId walk's third boat word:
+        // the paddles 11/12 the clinit's own order speaks, the bubble
+        // time 13 the Integer serializer the floatBoat arms)
+        assert_eq!(BOAT_DATA_BUBBLE_TIME, 13);
+        let mut model = WorldModel::new();
+        model.registry.entity_types = vec!["minecraft:oak_boat".to_string()];
+        model.apply(PlayEvent::Spawn(EntitySpawn {
+            id: 7,
+            uuid: 7,
+            type_id: 0,
+            x: 1.0,
+            y: 64.0,
+            z: -2.0,
+            movement: [0.0; 3],
+            x_rot: 0.0,
+            y_rot: 0.0,
+            y_head_rot: 0.0,
+            data: 0,
+        }));
+        // THE SILENCE (no wire word): the projection's 0 the absent
+        // accessor keeps — the no-column hull never rocks
+        let boats = boats_view(&model);
+        let boat = boats.iter().find(|b| b.id == 7).unwrap();
+        assert_eq!(boat.bubble_time, 0, "the silence the 0 keeps");
+        // THE ARMED WORD (the server's floatBoat sets the tick count —
+        // the Integer the Set Entity Data carries)
+        model.apply(PlayEvent::EntityData(EntityDataSet {
+            id: 7,
+            entries: vec![SetEntityDataEntry {
+                index: BOAT_DATA_BUBBLE_TIME,
+                serializer: 1,
+                value: Val::Int(60),
+            }],
+        }));
+        let boats = boats_view(&model);
+        let boat = boats.iter().find(|b| b.id == 7).unwrap();
+        assert_eq!(boat.bubble_time, 60, "the column's tick count speaks");
+        // THE WRONG-TYPE WORD (a boolean at the accessor the Bool
+        // variant carries): the honest 0 the type mismatch keeps
+        model.apply(PlayEvent::EntityData(EntityDataSet {
+            id: 7,
+            entries: vec![SetEntityDataEntry {
+                index: BOAT_DATA_BUBBLE_TIME,
+                serializer: 8,
+                value: Val::Bool(true),
+            }],
+        }));
+        let boats = boats_view(&model);
+        let boat = boats.iter().find(|b| b.id == 7).unwrap();
+        assert_eq!(boat.bubble_time, 0, "the type mismatch the silence keeps");
     }
 
     #[test]

@@ -303,6 +303,59 @@ pub fn paddle_medium(world: &crate::world::World, x: f64, y: f64, z: f64) -> Opt
     }
 }
 
+/// ONE HULL'S OWN ROCK STATE (the AbstractBoat fields the client-side
+/// `tickBubbleColumn` walks — the client arm the bytecode keeps): the
+/// bubbleMultiplier the bubbleTime's presence ramps, the bubbleAngle
+/// the sin wobble speaks, the bubbleAngleO the render lerp's from
+/// keeps, and the tickCount the client's own age counter keeps (the
+/// spawn the client saw the zero starts at — the same drift the
+/// vanilla client's own local counter carries).
+#[derive(Debug, Clone, Copy, PartialEq, Default)]
+pub struct BubbleRock {
+    pub multiplier: f32,
+    pub angle: f32,
+    pub angle_o: f32,
+    pub tick: i32,
+}
+
+/// THE UNDER-WATER RIM SCAN (AbstractBoat.isUnderwater's own walk, the
+/// isUnderWater() gate's data half — the hull's box rim band
+/// `floor(minX) ..< ceil(maxX)` over x/z at the single y layer
+/// `floor(maxY)` the ceil(maxY + 0.001) bound speaks): a WATER cell
+/// whose fluid surface (`cellY + 8/9` — the source height the runtime
+/// palette's single water id the level distinction flattens; the
+/// flowing family's UNDER_FLOWING_WATER verdict gates the tilt the
+/// same true) rises above `maxY + 0.001` sinks the hull. The
+/// bubble_column the WATER tag's own family — the runtime palette's
+/// single water word covers it. The out-of-window cells the grid's
+/// AIR answer keeps — the same honest limitation the paddle medium's
+/// read already speaks.
+pub fn boat_under_water(world: &crate::world::World, boat: &crate::world_view::WireBoat) -> bool {
+    let half = (crate::world_view::BOAT_DIMENSIONS_WIDTH / 2.0) as f64;
+    let max_y = boat.y + crate::world_view::BOAT_DIMENSIONS_HEIGHT as f64;
+    // the fluid surface test hoisted (the one water id: every water
+    // cell's top = its cell y + the 8/9 source height) — the vanilla
+    // per-cell getHeight arm the runtime palette cannot distinguish
+    let rim = max_y.floor() as i32;
+    if max_y + 0.001 >= rim as f64 + (8.0f64 / 9.0) {
+        return false;
+    }
+    let x_end = (boat.x + half).ceil() as i32;
+    let z_end = (boat.z + half).ceil() as i32;
+    let mut x = (boat.x - half).floor() as i32;
+    while x < x_end {
+        let mut z = (boat.z - half).floor() as i32;
+        while z < z_end {
+            if world.get(x, rim, z) == crate::world::WATER {
+                return true;
+            }
+            z += 1;
+        }
+        x += 1;
+    }
+    false
+}
+
 /// THE DEGREE WRAP (Mth.wrapDegrees(F)F's own walk — the frem's % 360
 /// fold, the `>= 180` arm subtracts a full turn, the `< -180` arm adds
 /// one; the famous 180.0F itself the first arm folds to -180.0F).
@@ -892,6 +945,10 @@ pub struct App {
     /// reads it through [`rowing_time`]. Pruned on the refresh's
     /// despawn (the ghost clocks the gone ids never keep).
     pub paddle_positions: std::collections::HashMap<i32, [f32; 2]>,
+    /// ONE ROCK STATE PER HULL (the AbstractBoat fields the client-side
+    /// tickBubbleColumn walks — see [`BubbleRock`]): the entry the first
+    /// sight births, the despawn's prune the paddle clocks' own law keeps.
+    pub bubble_state: std::collections::HashMap<i32, BubbleRock>,
     /// THE LAST SENT INPUT (the vanilla `LocalPlayer.lastSentInput`'s
     /// own law): the input record the wire last spoke — the CHANGE
     /// against it sends one ServerboundPlayerInputPacket, riding or
@@ -1636,6 +1693,7 @@ impl App {
             net_boats: Vec::new(),
             boat_models: std::collections::HashMap::new(),
             paddle_positions: std::collections::HashMap::new(),
+            bubble_state: std::collections::HashMap::new(),
             last_sent_input: mc_protocol::InputFlags::default(),
             ride_boat_yaw_prev: None,
             overlay_message: None,
@@ -7202,6 +7260,7 @@ impl App {
         // paddlePositions with the boat)
         let ids: std::collections::HashSet<i32> = boats.iter().map(|b| b.id).collect();
         self.paddle_positions.retain(|k, _| ids.contains(k));
+        self.bubble_state.retain(|k, _| ids.contains(k));
         self.net_boats = boats;
     }
 
@@ -7518,6 +7577,23 @@ impl App {
                 _ => (boat.paddle_left, boat.paddle_right),
             };
             let entry = self.paddle_positions.entry(boat.id).or_insert([0.0; 2]);
+            // THE ROCKING WALK (tickBubbleColumn's client arm — every
+            // tick, whatever the paddles say): the multiplier the
+            // bubbleTime's presence ramps (+0.05 the armed word,
+            // -0.1 the decay) through the 0..1 clamp, the angle the
+            // `10.0f * sin(0.5 * tickCount as f32) * multiplier` fold
+            // (the OLD angle the lerp's from keeps first), the
+            // per-hull tick the client's own age counter keeps.
+            let rock = self.bubble_state.entry(boat.id).or_default();
+            rock.angle_o = rock.angle;
+            if boat.bubble_time > 0 {
+                rock.multiplier += 0.05000000074505806;
+            } else {
+                rock.multiplier -= 0.10000000149011612;
+            }
+            rock.multiplier = rock.multiplier.clamp(0.0, 1.0);
+            rock.angle = (10.0f32 * ((0.5 * rock.tick as f64).sin() as f32)) * rock.multiplier;
+            rock.tick += 1;
             for (side, moving) in [(0usize, moving_l), (1usize, moving_r)] {
                 if moving {
                     if paddle_stroke_fires(entry[side]) {
@@ -9842,8 +9918,23 @@ impl App {
             let clock = self.paddle_positions.get(&boat.id).copied().unwrap_or([0.0; 2]);
             let rowing_l = rowing_time(self.partial_tick, boat.paddle_left, clock[0]);
             let rowing_r = rowing_time(self.partial_tick, boat.paddle_right, clock[1]);
+            // THE ROCK'S OWN GATE (submit's `!isUnderWater &&
+            // !Mth.equal(bubbleAngle, 0)` walk — the under-water hull
+            // never rocks, the lerp the partial speaks:
+            // getBubbleAngle(F) = Mth.lerp(partial, angleO, angle))
+            let under = self
+                .net_world
+                .as_ref()
+                .map(|w| boat_under_water(w, boat))
+                .unwrap_or(false);
+            let rock = match self.bubble_state.get(&boat.id) {
+                Some(r) if !under && r.angle.abs() >= 1.0e-5 => {
+                    r.angle_o + (r.angle - r.angle_o) * self.partial_tick
+                }
+                _ => 0.0,
+            };
             let quads =
-                model.quads(boat.yaw, boat.chest, feet, cam.yaw, cam.pitch, rowing_l, rowing_r);
+                model.quads(boat.yaw, boat.chest, feet, cam.yaw, cam.pitch, rowing_l, rowing_r, rock);
             let sampled: Vec<crate::raster::SampledQuad> = quads
                 .iter()
                 .map(|q| crate::raster::SampledQuad {
@@ -24958,6 +25049,7 @@ mod tests {
             wood: "oak".to_string(),
             paddle_left: false,
             paddle_right: false,
+            bubble_time: 0,
         }]);
         assert!(
             app.net_boats.is_empty(),
@@ -24980,6 +25072,7 @@ mod tests {
                 wood: "oak".to_string(),
                 paddle_left: false,
                 paddle_right: false,
+                bubble_time: 0,
             },
             WireBoat {
                 id: 9,
@@ -24992,6 +25085,7 @@ mod tests {
                 wood: "bamboo".to_string(),
                 paddle_left: false,
                 paddle_right: false,
+                bubble_time: 0,
             },
         ];
         app.live_boats_updated(boats.clone());
@@ -25018,6 +25112,7 @@ mod tests {
             wood: "oak".to_string(),
             paddle_left: left,
             paddle_right: right,
+            bubble_time: 0,
         };
 
         // THE REMOTE CLOCK (the projection's gated booleans the walk
@@ -25517,6 +25612,7 @@ mod tests {
             wood: "oak".to_string(),
             paddle_left: true,
             paddle_right: false,
+            bubble_time: 0,
         };
         app.live_boats_updated(vec![
             boat(5, 5.4, 30.3, 5.6),  // the water hull
@@ -25585,6 +25681,93 @@ mod tests {
                 "the pitch band the vanilla fold keeps: {e}"
             );
         }
+    }
+
+    #[test]
+    fn the_bubble_rock_walks_the_tick_bubble_column_law() {
+        use crate::world_view::WireBoat;
+        let mut app = App::new(3);
+        let world = air_net_world(2, 0);
+        app.net_world = Some(world);
+        app.enter_network_world(None, Skybox::Overworld, None, None);
+        let boat = |id: i32, bubble_time: i32| WireBoat {
+            id,
+            x: 5.4,
+            y: 40.3,
+            z: 5.6,
+            yaw: 0.0,
+            raft: false,
+            chest: false,
+            wood: "oak".to_string(),
+            paddle_left: false,
+            paddle_right: false,
+            bubble_time,
+        };
+        // THE ARMED HULL (the column's word 60) and the silent one (0
+        // — the decay lane the no-column silence keeps)
+        app.live_boats_updated(vec![boat(5, 60), boat(7, 0)]);
+        // THE FOUR TICKS: the armed multiplier ramps 0.05 a tick (the
+        // 0..1 clamp far), the angle the `10.0f * sin(0.5*tick) *
+        // multiplier` fold speaks; the silent multiplier decays -0.1 a
+        // tick INTO the 0 floor — the angle stays 0 exactly
+        for _ in 0..4 {
+            app.update();
+        }
+        let armed = app.bubble_state.get(&5).copied().expect("the armed state");
+        assert_eq!(
+            armed.multiplier, 0.20000000298023224,
+            "the four 0.05 ramps the f32 words keep"
+        );
+        assert_eq!(armed.tick, 4, "the client's own age counter walked");
+        assert_eq!(
+            armed.angle, 1.9949899911880493,
+            "the tick-3 word: 10.0f * sin(1.5) as f32 * 0.2"
+        );
+        assert_eq!(
+            armed.angle_o, 1.2622064352035522,
+            "the tick-2 word the lerp's from keeps"
+        );
+        let silent = app.bubble_state.get(&7).copied().expect("the silent state");
+        assert_eq!(silent.multiplier, 0.0, "the decay clamped at the floor");
+        assert_eq!(silent.angle, 0.0, "the floor's zero wobble");
+        // THE DESPAWN'S OWN PRUNE (the gone ids' rock states never stay)
+        app.live_boats_updated(vec![boat(7, 0)]);
+        assert!(!app.bubble_state.contains_key(&5), "the gone hull pruned");
+        assert!(app.bubble_state.contains_key(&7), "the survivor keeps its word");
+    }
+
+    #[test]
+    fn the_boat_rocks_only_above_the_surface() {
+        use crate::world_view::WireBoat;
+        let mut world = air_net_world(2, 0);
+        // a 3x3 water patch at y 30 (the fluid's own surface at 30 + 8/9)
+        for x in 4..7 {
+            for z in 4..7 {
+                world.set(x, 30, z, crate::world::WATER);
+            }
+        }
+        let hull = |x: f64, y: f64, z: f64| WireBoat {
+            id: 5,
+            x,
+            y,
+            z,
+            yaw: 0.0,
+            raft: false,
+            chest: false,
+            wood: "oak".to_string(),
+            paddle_left: false,
+            paddle_right: false,
+            bubble_time: 0,
+        };
+        // THE FLOATING HULL (the feet at the fluid's own top — the rim
+        // cell above the patch the surface test never reaches): dry
+        assert!(!boat_under_water(&world, &hull(5.4, 30.888, 5.6)));
+        // THE SUNK HULL (the rim band inside the water — the surface
+        // rises above maxY + 0.001): under
+        assert!(boat_under_water(&world, &hull(5.4, 29.8, 5.6)));
+        // THE DRY HULL (the same height over air — no water at the
+        // rim's own cells): never under
+        assert!(!boat_under_water(&world, &hull(12.4, 29.8, 12.6)));
     }
 }
 
