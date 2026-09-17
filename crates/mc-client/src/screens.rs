@@ -333,6 +333,40 @@ pub fn boat_rider_yaw_after(rider_yaw: f32, boat_yaw: f32, delta: f32) -> f32 {
     dragged + (g - f)
 }
 
+/// THE MOUNT'S OWN MESSAGE (the ClientPacketListener.handleSetEntityPassengersPacket's
+/// own translatable walk — `mount.onboard` with the shift binding's
+/// `getTranslatedKeyMessage()` the one arg; the en_us the jar's lang
+/// keeps: `mount.onboard` = "Press %1$s to Dismount",
+/// `key.keyboard.left.shift` = "Left Shift" — the fresh mount of ANY
+/// vehicle the `!hadIndirect` gate speaks, the narrator's own
+/// saySystemNow the client's no-TTS lane keeps silent).
+pub const MOUNT_ONBOARD_FORMAT: &str = "Press %1$s to Dismount";
+pub const SHIFT_KEY_DISPLAY: &str = "Left Shift";
+
+/// THE OVERLAY'S OWN LIFE (Hud.setOverlayMessage's own 60-tick store —
+/// three seconds, the first 40 the full alpha, the last 20 the fade).
+pub const OVERLAY_MESSAGE_LIFE: i32 = 60;
+
+/// THE OVERLAY'S OWN ALPHA (extractOverlayMessage's own fold — the
+/// `f = time - partialTick` the delta keeps, `(int)(f * 255.0F /
+/// 20.0F)` the truncation speaks, the 255 clamp, the <= 0 skip the
+/// caller keeps: the first 40 ticks the full white, the last 20 the
+/// fade).
+pub fn overlay_message_alpha(time: i32, partial_tick: f32) -> i32 {
+    let f = time as f32 - partial_tick;
+    let a = (f * 255.0 / 20.0) as i32;
+    a.min(255)
+}
+
+/// THE OVERLAY'S OWN SPOT (extractOverlayMessage's translate +
+/// textWithBackdrop's own args — the pose translate `(guiWidth / 2,
+/// guiHeight - 68)`, the text at `(-width / 2, -4)`; the backdrop the
+/// fill's own pads speak: `x - 2, y - 2, x + w + 2, y + 9 + 2` — the
+/// 13px band the 2+9+2 sums). Returns the text's own GUI origin.
+pub fn overlay_message_origin(gui_w: i32, gui_h: i32, text_w: i32) -> (i32, i32) {
+    (gui_w / 2 - text_w / 2, gui_h - 68 - 4)
+}
+
 /// THE BLOCK SCREEN TINT (javap `ScreenEffectRenderer.submit`'s own
 /// `ldc -15132391` = 0xFF191919): the rgb 25/255 the head-in-block
 /// quad's dark multiply speaks, the alpha 0xFF the opaque cover rides.
@@ -873,6 +907,13 @@ pub struct App {
     /// deltaRotation 0.0 the vanilla field starts at; the dismount's
     /// ride silence clears it.
     pub ride_boat_yaw_prev: Option<(i32, f32)>,
+    /// THE OVERLAY MESSAGE (the vanilla `Hud.overlayMessageString` +
+    /// `overlayMessageTime`'s own pair): the mount's "Press Left Shift
+    /// to Dismount" the fresh mount speaks, the 60-tick life the decay
+    /// walks, the dismount NO explicit clear keeps (the timeout's own
+    /// fade the vanilla honesty is).
+    pub overlay_message: Option<String>,
+    pub overlay_message_time: i32,
     /// True while the World screen shows the NETWORK world (the quad mesh
     /// came from a join snapshot, not the procedural singleplayer world).
     pub world_is_network: bool,
@@ -1597,6 +1638,8 @@ impl App {
             paddle_positions: std::collections::HashMap::new(),
             last_sent_input: mc_protocol::InputFlags::default(),
             ride_boat_yaw_prev: None,
+            overlay_message: None,
+            overlay_message_time: 0,
             world_is_network: false,
             world_skybox: Skybox::Overworld,
             world_fog: None,
@@ -1726,6 +1769,12 @@ impl App {
         // the swing clock ticks every game tick like the player entity's
         // (at rest it pins swingTime to 0 and attackAnim to 0 — no-op)
         self.swing.tick();
+        // THE OVERLAY CLOCK (Hud.tick's own arm — the overlay message's
+        // time ticks down while it lives, the > 0 gate the negative
+        // never keeps)
+        if self.overlay_message_time > 0 {
+            self.overlay_message_time -= 1;
+        }
         // THE WATER VISION CLOCK (javap LocalPlayer.tick, the 26.2
         // jar's offsets 737-812): the eye's water speaks +1/tick (the
         // spectator's +10 sleeps — no spectator lane here), the air
@@ -7688,6 +7737,42 @@ impl App {
         self.live_container_updated(container);
     }
 
+    /// THE OVERLAY'S SET (Hud.setOverlayMessage's own law: the string
+    /// the store keeps, the 60 the time takes, the animate flag the
+    /// mount's own false keeps — the hsv pulse arm the other callers
+    /// speak this lane never arms).
+    pub fn set_overlay_message(&mut self, msg: &str) {
+        self.overlay_message = Some(msg.to_string());
+        self.overlay_message_time = OVERLAY_MESSAGE_LIFE;
+    }
+
+    /// THE OVERLAY DRAW (extractOverlayMessage's own walk, the HUD
+    /// walk's own stratum): the null-or-time gate, the alpha fold the
+    /// partial keeps, the translate's centered text at the -4, the
+    /// backdrop the 2px pads + the 9px line speaks — the black the
+    /// text-background-opacity 0.25 default keeps, the fade the
+    /// ARGB.multiply folds into both, the shadow the Z=true speaks.
+    pub fn draw_overlay_message(&self, g: &mut Gui, a: &mut GuiAssets, w: i32, h: i32) {
+        let Some(s) = self.overlay_message.as_ref() else {
+            return;
+        };
+        if self.overlay_message_time <= 0 {
+            return;
+        }
+        let alpha = overlay_message_alpha(self.overlay_message_time, self.partial_tick);
+        if alpha <= 0 {
+            return;
+        }
+        let fade = alpha as f32 / 255.0;
+        let tw = g.text_width(s);
+        let (tx, ty) = overlay_message_origin(w, h, tw);
+        // THE BACKDROP (textWithBackdrop's own fill: x - 2, y - 2,
+        // w + 4, the 13 the 2+9+2 sums — the black at 0.25 the
+        // multiply × the fade keeps)
+        g.fill(tx - 2, ty - 2, tw + 4, 13, [0.0, 0.0, 0.0, 0.25 * fade]);
+        g.text_faded(a, tx, ty, s, WHITE, fade, true);
+    }
+
     /// THE RIDE'S LANE (the refresh's own carry — the Set Passengers
     /// belief the projection resolved into the carried feet): the mount
     /// that APPEARS under the player snaps the body's yaw to the
@@ -7703,8 +7788,16 @@ impl App {
             return;
         }
         if self.net_ride.is_none() {
-            if let (Some(b), Some(r)) = (self.body.as_mut(), ride.as_ref()) {
-                b.yaw = r.vehicle_yaw;
+            if let Some(r) = ride.as_ref() {
+                if let Some(b) = self.body.as_mut() {
+                    b.yaw = r.vehicle_yaw;
+                }
+                // THE MOUNT'S OWN MESSAGE (the fresh-mount arm the packet
+                // handler speaks — the !hadIndirect gate the re-speak
+                // never passes): the translatable the lang folds, the
+                // setOverlayMessage's 60-tick life, the dismount's no
+                // explicit clear the timeout owns
+                self.set_overlay_message(&MOUNT_ONBOARD_FORMAT.replace("%1$s", SHIFT_KEY_DISPLAY));
             }
         }
         self.net_ride = ride;
@@ -11548,6 +11641,10 @@ impl App {
                 g.text(a, fx, y, &pl.footer, WHITE, true);
             }
         }
+        // THE OVERLAY MESSAGE (extractOverlayMessage's own layer — the
+        // mount's "Press Left Shift to Dismount" the 60-tick life the
+        // fade walks, the stratum the HUD's own layers close with)
+        self.draw_overlay_message(g, a, w, h);
     }
 
     /// THE DEATH SCREEN (javap DeathScreen, the vanilla's own layout):
@@ -25187,6 +25284,154 @@ mod tests {
         app.net_ride = None;
         app.tick_ride_yaw();
         assert_eq!(app.ride_boat_yaw_prev, None, "the dismount the tracker clears");
+    }
+
+    #[test]
+    fn the_overlay_message_alpha_walks_the_extract_fold() {
+        use crate::screens::overlay_message_alpha;
+        // THE 255 CLAMP (the first 40 ticks the full white: the time's
+        // own 60 the set takes, the *255/20 fold overflows the byte
+        // until the time drops to 20)
+        assert_eq!(overlay_message_alpha(60, 1.0), 255, "the fresh set's clamp");
+        assert_eq!(overlay_message_alpha(20, 0.0), 255, "the boundary the exact fold keeps");
+        // THE FADE (the last 20 ticks the linear walk: the *255/20 the
+        // truncation speaks)
+        assert_eq!(overlay_message_alpha(10, 0.0), 127, "the half-life's truncation");
+        assert_eq!(overlay_message_alpha(5, 0.5), 57, "the partial's own fraction");
+        // THE GATES (the <= 0 skip the caller keeps)
+        assert_eq!(overlay_message_alpha(1, 1.0), 0, "the last tick's own zero");
+        assert_eq!(overlay_message_alpha(0, 0.0), 0, "the dead clock");
+    }
+
+    #[test]
+    fn the_overlay_message_lives_the_set_overlay_law() {
+        let mut app = App::new(3);
+        assert_eq!(app.overlay_message, None, "the fresh app's silence");
+        // THE SET (Hud.setOverlayMessage's own store: the string, the
+        // 60 the time takes)
+        app.set_overlay_message("Press Left Shift to Dismount");
+        assert_eq!(
+            app.overlay_message.as_deref(),
+            Some("Press Left Shift to Dismount"),
+            "the string the store keeps"
+        );
+        assert_eq!(app.overlay_message_time, 60, "the vanilla's own life");
+        // THE DECAY (Hud.tick's own arm: -1 per tick while it lives)
+        for _ in 0..60 {
+            app.update();
+        }
+        assert_eq!(app.overlay_message_time, 0, "the 60 ticks the life spends");
+        assert_eq!(
+            app.overlay_message.as_deref(),
+            Some("Press Left Shift to Dismount"),
+            "the STRING never clears — the time's own gate the render reads"
+        );
+        // THE FLOOR (the > 0 gate the negative never keeps)
+        for _ in 0..10 {
+            app.update();
+        }
+        assert_eq!(app.overlay_message_time, 0, "the floor holds");
+    }
+
+    #[test]
+    fn the_mount_speaks_the_press_shift_message() {
+        let mut app = App::new(3);
+        app.world_is_network = true;
+        app.body = Some(crate::body::PlayerBody::new(10.0, 64.0, -20.0, 0.0, 0.0));
+        let ride = |id: i32, yaw: f32| crate::world_view::WireRide {
+            vehicle_id: id,
+            feet_x: 10.0,
+            feet_y: 64.187,
+            feet_z: -20.0,
+            vehicle_yaw: yaw,
+        };
+        // THE MESSAGE'S OWN TEXT (the translatable the lang folds:
+        // mount.onboard + the shift binding's display)
+        assert_eq!(
+            MOUNT_ONBOARD_FORMAT.replace("%1$s", SHIFT_KEY_DISPLAY),
+            "Press Left Shift to Dismount",
+            "the en_us the jar speaks"
+        );
+        // THE NO-RIDE REFRESH never speaks (the refresh's own None the
+        // walk sees every beat — the mount arm the Some gate keeps)
+        app.live_ride_updated(None);
+        assert_eq!(app.overlay_message, None, "no mount, no message");
+        // THE FRESH MOUNT SPEAKS (the packet handler's own arm: the
+        // !hadIndirect gate the fresh passenger passes)
+        app.live_ride_updated(Some(ride(9, 0.0)));
+        assert_eq!(
+            app.overlay_message.as_deref(),
+            Some("Press Left Shift to Dismount"),
+            "the mount's own words"
+        );
+        assert_eq!(app.overlay_message_time, 60, "the fresh 60");
+        // THE RE-SPEAK never re-sets (the refresh re-ships the same
+        // ride — the hadIndirect shape the second packet keeps; the
+        // decayed time the walk respects)
+        for _ in 0..5 {
+            app.update();
+        }
+        assert_eq!(app.overlay_message_time, 55, "the decay between refreshes");
+        app.live_ride_updated(Some(ride(9, 0.0)));
+        assert_eq!(app.overlay_message_time, 55, "the re-speak no re-set");
+        // THE DISMOUNT clears NOTHING (the packet handler's own
+        // honesty: no clear call — the 60-tick timeout the fade owns)
+        app.live_ride_updated(None);
+        assert_eq!(
+            app.overlay_message.as_deref(),
+            Some("Press Left Shift to Dismount"),
+            "the message outlives the ride"
+        );
+        assert_eq!(app.overlay_message_time, 55);
+        // THE TIMEOUT lands (the remaining ticks the fade spends)
+        for _ in 0..55 {
+            app.update();
+        }
+        assert_eq!(app.overlay_message_time, 0, "the time out");
+        // THE REMOUNT speaks fresh (a new ride the None the walk crossed)
+        app.live_ride_updated(Some(ride(12, 90.0)));
+        assert_eq!(app.overlay_message_time, 60, "the remount's fresh life");
+    }
+
+    #[test]
+    fn the_overlay_message_lands_the_vanilla_spot() {
+        use crate::screens::overlay_message_origin;
+        // THE GEOMETRY (extractOverlayMessage's translate +
+        // textWithBackdrop's own args): the centered x at gui_w/2, the
+        // y the h - 68 - 4 fold keeps
+        let s = "Press Left Shift to Dismount";
+        let tw = crate::gui::font_text_width(s);
+        assert_eq!(overlay_message_origin(320, 180, tw), (160 - tw / 2, 108));
+        assert_eq!(overlay_message_origin(640, 360, 40), (300, 288));
+        // THE DRAW (the backdrop's own rect the pixels pin — the empty
+        // assets the text lane keeps silent, the white ground the
+        // 0.75/0.25 blend speaks): the 2px pads + the 13px band edges
+        let mut fb = crate::raster::Framebuf::new(320, 180);
+        fb.clear([1.0, 1.0, 1.0], [1.0, 1.0, 1.0]);
+        let (tx, ty) = overlay_message_origin(320, 180, tw);
+        {
+            let mut g = Gui {
+                fb: &mut fb,
+                scale: 1,
+            };
+            let mut assets = crate::gui::GuiAssets::open(std::env::temp_dir());
+            let mut app = App::new(3);
+            app.set_overlay_message(s);
+            app.draw_overlay_message(&mut g, &mut assets, 320, 180);
+        }
+        let px_at = |x: i32, y: i32| -> u8 {
+            let o = (y as usize * 320 + x as usize) * 3;
+            fb.color[o]
+        };
+        // THE BACKDROP's inside: the 0.25 black over white the blend
+        // lands at 191 (the 0.75/0.25 mix the px law speaks)
+        assert_eq!(px_at(tx - 2, ty - 2), 191, "the top-left pad's own corner");
+        assert_eq!(px_at(tx + tw + 1, ty - 2), 191, "the right pad's own edge");
+        assert_eq!(px_at(tx, ty + 10), 191, "the 13px band's own bottom row");
+        // THE OUTSIDE stays the ground (the pads the rect's own bounds keep)
+        assert_eq!(px_at(tx - 3, ty - 2), 255, "the left of the pad untouched");
+        assert_eq!(px_at(tx, ty + 11), 255, "below the band untouched");
+        assert_eq!(px_at(tx - 2, ty - 3), 255, "above the band untouched");
     }
 
     #[test]

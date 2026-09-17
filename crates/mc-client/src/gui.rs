@@ -521,11 +521,28 @@ impl<'a> Gui<'a> {
         color: [f32; 3],
         shadow: bool,
     ) -> i32 {
+        self.text_faded(a, x, y, s, color, 1.0, shadow)
+    }
+
+    /// THE FADED TEXT (the overlay message's own variant — the vanilla
+    /// drawString's alpha the `ARGB.white(alpha)` color carries; the
+    /// shadow's own pass the same fade folds, the glyph's own alpha
+    /// the multiply keeps).
+    pub fn text_faded(
+        &mut self,
+        a: &mut GuiAssets,
+        x: i32,
+        y: i32,
+        s: &str,
+        color: [f32; 3],
+        alpha: f32,
+        shadow: bool,
+    ) -> i32 {
         let dark = [color[0] * 0.25, color[1] * 0.25, color[2] * 0.25];
         if shadow {
-            self.draw_text_raw(a, x + 1, y + 1, s, dark, false);
+            self.draw_text_raw(a, x + 1, y + 1, s, dark, alpha);
         }
-        self.draw_text_raw(a, x, y, s, color, shadow)
+        self.draw_text_raw(a, x, y, s, color, alpha)
     }
 
     fn draw_text_raw(
@@ -535,7 +552,7 @@ impl<'a> Gui<'a> {
         y: i32,
         s: &str,
         mut color: [f32; 3],
-        _shadow_capable: bool,
+        alpha: f32,
     ) -> i32 {
         let mut cx = x;
         let mut in_code = false;
@@ -572,7 +589,7 @@ impl<'a> Gui<'a> {
                             if c[3] <= 0.1 {
                                 continue;
                             }
-                            let a = c[3];
+                            let a = c[3] * alpha;
                             self.px(
                                 cx + gx as i32,
                                 top + gy as i32,
