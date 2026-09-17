@@ -2267,6 +2267,12 @@ impl App {
                 self.tick_net_boats();
             } else {
                 self.tick_offline_hulls();
+                // THE PADDLE VOICES' OWN BEAT (the AbstractBoat.tick's
+                // sound tail — the move the authoritative walk consumed,
+                // the sound arm the same tick's tail speaks; the wire's
+                // lane the server's own beat paces, the singleplayer's
+                // the hull's own tick keeps)
+                self.tick_offline_paddle_voices();
             }
             let using = self.using_item.is_some();
             // the disjoint field borrows: the body mutates while the
@@ -4256,6 +4262,11 @@ impl App {
             self.offline_ride = None;
             self.net_boats.clear();
             self.net_boat_lerp.clear();
+            // the paddle clocks the fresh world's own zero keeps (the
+            // vanilla paddlePosition the fresh entity's field starts —
+            // the stale session's mid-cycle word the new hull never
+            // inherits)
+            self.paddle_positions.clear();
             // the dig lane predicts locally on the offline terrain (the
             // singleplayer behavior — the machine's own default re-armed)
             self.dig.apply_locally = true;
@@ -5825,6 +5836,10 @@ impl App {
         self.offline_boat_phys.clear();
         self.offline_ride = None;
         self.net_boat_lerp.clear();
+        // the paddle clocks the fresh world's own zero keeps (the wire's
+        // hulls the fresh sync's word arms — the stale session's
+        // mid-cycle clock the new id never inherits)
+        self.paddle_positions.clear();
         // the dig lane's prediction flag follows the world's authority
         // (the networked terrain is the server's own — the placement
         // lane's verdict the dig speaks too)
@@ -9304,6 +9319,70 @@ impl App {
             let (nx, nz) = crate::hull::hull_move_xz(phys, boat.x, boat.y, boat.z, &cell);
             boat.x = nx;
             boat.z = nz;
+        }
+    }
+
+    /// THE OFFLINE HULL'S OWN PADDLE VOICES (the AbstractBoat.tick's
+    /// sound tail the authoritative lane keeps — the same walk the
+    /// wire's [`Self::tick_paddles`] speaks for the server-owned
+    /// hulls, now the singleplayer's own): per hull, per side, the
+    /// window test BEFORE the clock's increment (`paddle_stroke_fires`
+    /// — the π/8 step the TAU/16 law walks, the fresh clock's first
+    /// tick silent, the π/8 and the π/4 steps the two firing words
+    /// speak), the booleans the control walk's own tail keeps (the
+    /// offline hulls' `hull_control` words — the wire lane's input
+    /// prediction the local authority never needs), the medium the
+    /// OFFLINE world's own cells fold (`paddle_medium` — the water
+    /// voice, the land voice, the air and the lava the silence keeps),
+    /// the spot the side offset speaks (the paddle's own flank), the
+    /// pitch `0.8F + 0.4F * random.nextFloat()` the engine's LCG
+    /// draws, the gain the ear's distance law folds. The no-packet
+    /// arm: the offline hull IS the authoritative instance — the
+    /// PaddleBoat send the wire's own beat keeps is the networked
+    /// lane's word alone.
+    fn tick_offline_paddle_voices(&mut self) {
+        if self.offline_boats.is_empty() {
+            return;
+        }
+        // THE LISTENER'S OWN EAR (the mob lane's own walk — the body's
+        // standing/crouching eye; no body the staging's ear sits at
+        // the source, the distance-zero arm the no-fold reads)
+        let ear = self
+            .body
+            .as_ref()
+            .map(|b| (b.x, b.y + b.eye_height(), b.z));
+        let mut strokes: Vec<(&'static str, f32, f64)> = Vec::new();
+        for boat in &self.offline_boats {
+            let entry = self.paddle_positions.entry(boat.id).or_insert([0.0; 2]);
+            for (side, moving) in [(0usize, boat.paddle_left), (1usize, boat.paddle_right)] {
+                if moving {
+                    if paddle_stroke_fires(entry[side]) {
+                        // THE MEDIUM the local window's own word speaks —
+                        // the offline terrain the status law folds (the
+                        // wire's net_world the local walk never reads)
+                        if let Some(world) = self.offline_world.as_ref() {
+                            if let Some(clip) = paddle_medium(world, boat.x, boat.y, boat.z) {
+                                let (dx, dz) = paddle_side_offset(boat.yaw, side);
+                                let pitch = 0.8 + 0.4 * self.sounds.next_rand_f32();
+                                strokes.push((
+                                    clip,
+                                    pitch,
+                                    ear_distance(ear, boat.x + dx, boat.y, boat.z + dz),
+                                ));
+                            }
+                        }
+                    }
+                    entry[side] += PADDLE_TICK_STEP;
+                } else {
+                    entry[side] = 0.0;
+                }
+            }
+        }
+        // THE VOICES LAND (the post-loop play the wire's own order
+        // speaks — the volume 1.0 the playSound call's own arg keeps,
+        // the gain the ear's distance law folds)
+        for (clip, pitch, dist) in strokes {
+            self.sounds.play_voice_at(self.frame, clip, 1.0, pitch, dist);
         }
     }
 
@@ -27793,6 +27872,386 @@ mod tests {
                 "the pitch band the vanilla fold keeps: {e}"
             );
         }
+    }
+
+    #[test]
+    fn the_offline_strokes_speak_the_water_voice() {
+        use crate::world_view::WireBoat;
+        use crate::screens::PADDLE_TICK_STEP;
+        let mut app = App::new(3);
+        app.enter_world();
+        let c = app.offline_world.as_ref().unwrap().size_blocks() / 2;
+        let pool_y = app.spawn_y + 6;
+        app.offline_world
+            .as_mut()
+            .unwrap()
+            .set(c, pool_y, c, crate::world::WATER);
+        let rh = (crate::world_view::BOAT_DIMENSIONS_HEIGHT / 3.0) as f64;
+        let settled_y = (pool_y + 1) as f64 - 0.65 * crate::hull::HULL_HEIGHT;
+        app.offline_boats.push(WireBoat {
+            id: 7,
+            x: c as f64 + 0.5,
+            y: settled_y,
+            z: c as f64 + 0.5,
+            yaw: 0.0,
+            raft: false,
+            chest: false,
+            wood: "oak".to_string(),
+            paddle_left: false,
+            paddle_right: false,
+            bubble_time: 0,
+            hurt_time: 0,
+            hurt_dir: 1,
+            damage: 0.0,
+        });
+        // THE PLACED BYSTANDER (no ride the control never arms — the
+        // silence the `!isVehicle` gate keeps, the clock the zero stays)
+        app.offline_boats.push(WireBoat {
+            id: 8,
+            x: c as f64 + 0.5,
+            y: (app.spawn_y + 8) as f64,
+            z: c as f64 + 0.5,
+            yaw: 0.0,
+            raft: false,
+            chest: false,
+            wood: "oak".to_string(),
+            paddle_left: false,
+            paddle_right: false,
+            bubble_time: 0,
+            hurt_time: 0,
+            hurt_dir: 1,
+            damage: 0.0,
+        });
+        app.body = Some(crate::body::PlayerBody::new(
+            c as f64 + 0.5,
+            settled_y + rh,
+            c as f64 + 0.5,
+            0.0,
+            0.0,
+        ));
+        assert!(app.mount_offline_hull(7), "the ride armed");
+        // THE W RUN (four ticks): the fresh clock silent, the π/8 and
+        // the π/4 steps fire — TWO voices per stroking paddle, FOUR
+        // with both rowing
+        app.last_sent_input = mc_protocol::InputFlags {
+            forward: true,
+            ..Default::default()
+        };
+        for _ in 0..4 {
+            app.update();
+        }
+        if !sounds_loaded() {
+            assert!(
+                app.sounds.events.is_empty(),
+                "the empty table the silent voice lane keeps"
+            );
+            return;
+        }
+        let water: Vec<&String> = app
+            .sounds
+            .events
+            .iter()
+            .filter(|e| e.starts_with("entity.boat.paddle_water "))
+            .collect();
+        assert_eq!(
+            water.len(),
+            4,
+            "the two firing steps spoke per rowing paddle: {:?}",
+            app.sounds.events
+        );
+        // THE PITCH (the `0.8F + 0.4F * random.nextFloat()` fold — the
+        // engine's LCG stands in, every voice inside the band)
+        for e in &water {
+            let p: f32 = e
+                .rsplit(" p")
+                .next()
+                .expect("the pitch tail")
+                .parse()
+                .expect("the pitch float");
+            assert!(
+                (0.8..1.2).contains(&p),
+                "the pitch band the vanilla fold keeps: {e}"
+            );
+        }
+        // THE CLOCKS (four strokes climbed, both sides) — the
+        // bystander's own the zero stays
+        assert_eq!(
+            app.paddle_positions.get(&7).copied(),
+            Some([PADDLE_TICK_STEP * 4.0, PADDLE_TICK_STEP * 4.0]),
+            "the W the both clocks climbed"
+        );
+        assert_eq!(
+            app.paddle_positions.get(&8).copied(),
+            Some([0.0, 0.0]),
+            "the bystander the control never arms"
+        );
+    }
+
+    #[test]
+    fn the_offline_clock_walks_the_stroke_law() {
+        use crate::world_view::WireBoat;
+        use crate::screens::PADDLE_TICK_STEP;
+        let mut app = App::new(3);
+        app.enter_world();
+        let c = app.offline_world.as_ref().unwrap().size_blocks() / 2;
+        let pool_y = app.spawn_y + 6;
+        app.offline_world
+            .as_mut()
+            .unwrap()
+            .set(c, pool_y, c, crate::world::WATER);
+        let rh = (crate::world_view::BOAT_DIMENSIONS_HEIGHT / 3.0) as f64;
+        let settled_y = (pool_y + 1) as f64 - 0.65 * crate::hull::HULL_HEIGHT;
+        app.offline_boats.push(WireBoat {
+            id: 7,
+            x: c as f64 + 0.5,
+            y: settled_y,
+            z: c as f64 + 0.5,
+            yaw: 0.0,
+            raft: false,
+            chest: false,
+            wood: "oak".to_string(),
+            paddle_left: false,
+            paddle_right: false,
+            bubble_time: 0,
+            hurt_time: 0,
+            hurt_dir: 1,
+            damage: 0.0,
+        });
+        app.body = Some(crate::body::PlayerBody::new(
+            c as f64 + 0.5,
+            settled_y + rh,
+            c as f64 + 0.5,
+            0.0,
+            0.0,
+        ));
+        assert!(app.mount_offline_hull(7), "the ride armed");
+        // THE W TICKS (the fresh clock's first tick silent, the phase
+        // climbs one step a tick — both sides row)
+        app.last_sent_input = mc_protocol::InputFlags {
+            forward: true,
+            ..Default::default()
+        };
+        app.update();
+        assert_eq!(
+            app.paddle_positions.get(&7).copied(),
+            Some([PADDLE_TICK_STEP, PADDLE_TICK_STEP]),
+            "the W the both paddles stroke, the first step climbed"
+        );
+        app.update();
+        assert_eq!(
+            app.paddle_positions.get(&7).copied(),
+            Some([PADDLE_TICK_STEP * 2.0, PADDLE_TICK_STEP * 2.0]),
+            "the phase climbs one step a tick"
+        );
+        // THE A TURN (the swapped law the offline control speaks — the
+        // left paddle rests to 0.0, the right keeps climbing)
+        app.last_sent_input = mc_protocol::InputFlags {
+            left: true,
+            ..Default::default()
+        };
+        app.update();
+        assert_eq!(
+            app.paddle_positions.get(&7).copied(),
+            Some([0.0, PADDLE_TICK_STEP * 3.0]),
+            "the A the right paddle strokes, the left the reset keeps"
+        );
+        // THE S KEY (the backward never arms a paddle — the vanilla
+        // law the both clocks reset to zero, never a frozen swing)
+        app.last_sent_input = mc_protocol::InputFlags {
+            backward: true,
+            ..Default::default()
+        };
+        app.update();
+        assert_eq!(
+            app.paddle_positions.get(&7).copied(),
+            Some([0.0, 0.0]),
+            "the silence the vanilla loop resets to"
+        );
+    }
+
+    #[test]
+    fn the_offline_medium_walks_the_local_window() {
+        use crate::world_view::WireBoat;
+        // THE LAND ARM (the local terrain's own word — the hull's cell
+        // air, the solid below the land voice speaks): the grass
+        // platform the center column keeps (the spawn column's own air
+        // above the surface the walk guarantees)
+        let mut app = App::new(3);
+        app.enter_world();
+        let c = app.offline_world.as_ref().unwrap().size_blocks() / 2;
+        let gy = app.spawn_y + 4;
+        app.offline_world
+            .as_mut()
+            .unwrap()
+            .set(c, gy, c, crate::world::GRASS);
+        let rh = (crate::world_view::BOAT_DIMENSIONS_HEIGHT / 3.0) as f64;
+        let rest_y = (gy + 1) as f64;
+        app.offline_boats.push(WireBoat {
+            id: 7,
+            x: c as f64 + 0.5,
+            y: rest_y,
+            z: c as f64 + 0.5,
+            yaw: 0.0,
+            raft: false,
+            chest: false,
+            wood: "oak".to_string(),
+            paddle_left: false,
+            paddle_right: false,
+            bubble_time: 0,
+            hurt_time: 0,
+            hurt_dir: 1,
+            damage: 0.0,
+        });
+        app.body = Some(crate::body::PlayerBody::new(
+            c as f64 + 0.5,
+            rest_y + rh,
+            c as f64 + 0.5,
+            0.0,
+            0.0,
+        ));
+        assert!(app.mount_offline_hull(7), "the ride armed");
+        app.last_sent_input = mc_protocol::InputFlags {
+            forward: true,
+            ..Default::default()
+        };
+        // THE TWO TICKS (the fresh clock silent, the π/8 step fires —
+        // both paddles one voice apiece)
+        for _ in 0..2 {
+            app.update();
+        }
+        if !sounds_loaded() {
+            assert!(
+                app.sounds.events.is_empty(),
+                "the empty table the silent voice lane keeps"
+            );
+        } else {
+            let land: Vec<&String> = app
+                .sounds
+                .events
+                .iter()
+                .filter(|e| e.starts_with("entity.boat.paddle_land "))
+                .collect();
+            assert_eq!(
+                land.len(),
+                2,
+                "the solid ground the land voice speaks: {:?}",
+                app.sounds.events
+            );
+            assert!(
+                app.sounds
+                    .events
+                    .iter()
+                    .all(|e| !e.starts_with("entity.boat.paddle_water ")),
+                "the solid ground the water voice never speaks: {:?}",
+                app.sounds.events
+            );
+        }
+        // THE AIR ARM (the open sky the medium's silence keeps — the
+        // window the clock arms, the voice the null medium withholds)
+        let mut app2 = App::new(3);
+        app2.enter_world();
+        let c2 = app2.offline_world.as_ref().unwrap().size_blocks() / 2;
+        app2.offline_boats.push(WireBoat {
+            id: 7,
+            x: c2 as f64 + 0.5,
+            y: (app2.spawn_y + 8) as f64,
+            z: c2 as f64 + 0.5,
+            yaw: 0.0,
+            raft: false,
+            chest: false,
+            wood: "oak".to_string(),
+            paddle_left: false,
+            paddle_right: false,
+            bubble_time: 0,
+            hurt_time: 0,
+            hurt_dir: 1,
+            damage: 0.0,
+        });
+        app2.body = Some(crate::body::PlayerBody::new(
+            c2 as f64 + 0.5,
+            app2.spawn_y as f64 + 8.0 + rh,
+            c2 as f64 + 0.5,
+            0.0,
+            0.0,
+        ));
+        assert!(app2.mount_offline_hull(7), "the ride armed");
+        app2.last_sent_input = mc_protocol::InputFlags {
+            forward: true,
+            ..Default::default()
+        };
+        for _ in 0..2 {
+            app2.update();
+        }
+        assert!(
+            app2.sounds.events.is_empty(),
+            "the open air the stroke's voice never lands: {:?}",
+            app2.sounds.events
+        );
+    }
+
+    #[test]
+    fn the_fresh_world_the_fresh_clocks_keep() {
+        use crate::world_view::WireBoat;
+        let mut app = App::new(3);
+        app.enter_world();
+        let c = app.offline_world.as_ref().unwrap().size_blocks() / 2;
+        let pool_y = app.spawn_y + 6;
+        app.offline_world
+            .as_mut()
+            .unwrap()
+            .set(c, pool_y, c, crate::world::WATER);
+        let rh = (crate::world_view::BOAT_DIMENSIONS_HEIGHT / 3.0) as f64;
+        let settled_y = (pool_y + 1) as f64 - 0.65 * crate::hull::HULL_HEIGHT;
+        app.offline_boats.push(WireBoat {
+            id: 7,
+            x: c as f64 + 0.5,
+            y: settled_y,
+            z: c as f64 + 0.5,
+            yaw: 0.0,
+            raft: false,
+            chest: false,
+            wood: "oak".to_string(),
+            paddle_left: false,
+            paddle_right: false,
+            bubble_time: 0,
+            hurt_time: 0,
+            hurt_dir: 1,
+            damage: 0.0,
+        });
+        app.body = Some(crate::body::PlayerBody::new(
+            c as f64 + 0.5,
+            settled_y + rh,
+            c as f64 + 0.5,
+            0.0,
+            0.0,
+        ));
+        assert!(app.mount_offline_hull(7), "the ride armed");
+        app.last_sent_input = mc_protocol::InputFlags {
+            forward: true,
+            ..Default::default()
+        };
+        app.update();
+        app.update();
+        assert!(
+            app.paddle_positions.contains_key(&7),
+            "the strokes the clocks armed"
+        );
+        // THE NETWORKED WORLD'S OWN ENTER (the wire's lane owns this
+        // water now — the stale offline clocks the prune takes, the
+        // vanilla fresh-entity zero the new world's hulls keep)
+        app.net_world = Some(air_net_world(2, 0));
+        app.enter_network_world(None, Skybox::Overworld, None, None);
+        assert!(
+            app.paddle_positions.is_empty(),
+            "the stale clocks the fresh world's prune takes: {:?}",
+            app.paddle_positions
+        );
+        // AND BACK (the offline terrain's re-entry the same word keeps)
+        app.enter_world();
+        assert!(
+            app.paddle_positions.is_empty(),
+            "the re-entry the same prune keeps"
+        );
     }
 
     #[test]
