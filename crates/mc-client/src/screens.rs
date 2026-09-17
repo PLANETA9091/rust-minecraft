@@ -4073,6 +4073,26 @@ impl App {
                         }
                     }
                 }
+            } else if crate::avatar::skull_item(mc_registry::item_name(head_id)) {
+                // THE WORN-SKULL LANE (CustomHeadLayer's wornHeadType
+                // branch): the seven heads the extraction's
+                // AbstractSkullBlock verdict fills — the model straight
+                // through the head's own chain (skullYOffset 0, the
+                // 1.1875 scale the submitSkull walk keeps — no stanza,
+                // no direction rotation the block-entity paths speak),
+                // the entity diffuse the shade folds.
+                if let Some(sq) =
+                    crate::avatar::skull_quads(&state, Vec3::new(0.0, 0.0, 0.0), 0.0, 0.0, head_id)
+                {
+                    for q in &sq {
+                        sampled.push(crate::raster::SampledQuad {
+                            pts: [q.pts[0], q.pts[2], q.pts[1], q.pts[3]],
+                            uv: [q.uv[0], q.uv[2], q.uv[1], q.uv[3]],
+                            tex: q.texture,
+                            tint: [q.shade, q.shade, q.shade],
+                        });
+                    }
+                }
             }
         }
         fb.clear_depth();
@@ -4104,22 +4124,25 @@ impl App {
                 }
                 return None;
             }
-            // THE BLOCK LANE (the head-block's texture ids): the
-            // resolved material the element bake carries — the same
-            // atlas fetch the GUI icons speak, the quad's own shade
-            // already folded in the tint.
-            if tex.starts_with("minecraft:") {
+            // THE ARMOR LANE FIRST (the equipment keys are the map's
+            // own — "entity/equipment/..." rides the sha1-verified
+            // layer textures, NEVER the atlas lane below)
+            if let Some(layer) = self.armor_textures.get(tex).and_then(|o| o.as_ref()) {
+                let [r, g, b, al] = layer.pixel(u, v);
+                return Some([r, g, b, al]);
+            }
+            // THE BLOCK LANE (the head-block's + the skull's texture
+            // ids): the resolved material the element/dump bakes carry
+            // — the same atlas fetch the GUI icons speak, the quad's
+            // own shade already folded in the tint.
+            if tex.starts_with("minecraft:") || tex.starts_with("entity/") {
                 return match mc_registry::sprite_uv::sample_uv(tex, u, v) {
                     mc_registry::sprite_uv::Sample::Pixel(c) => Some(c),
                     mc_registry::sprite_uv::Sample::Missing(c) => Some(c),
                     mc_registry::sprite_uv::Sample::Unknown => None,
                 };
             }
-            let Some(layer) = self.armor_textures.get(tex).and_then(|o| o.as_ref()) else {
-                return None;
-            };
-            let [r, g, b, al] = layer.pixel(u, v);
-            Some([r, g, b, al])
+            None
         });
     }
 
@@ -19804,16 +19827,56 @@ mod tests {
         // the equipment loads stay EMPTY (the asset fold refuses the
         // pumpkin — the head-block lane speaks no armor texture)
         assert!(app.armor_textures.is_empty());
-        // THE SKULL'S HONEST SILENCE (the wornHeadType branch the
-        // special-model lane keeps — nothing renders yet)
+    }
+
+    /// THE MANNEQUIN'S WORN SKULL (the CustomHeadLayer wornHeadType
+    /// branch the skeleton skull rides — the model straight through the
+    /// head's own chain, the 1.1875 scale the submitSkull walk keeps):
+    /// the skull paints the mannequin (the entity diffuse the skin's
+    /// own law shades it), the equipment loads stay EMPTY (the asset
+    /// fold refuses the whole family), and the piglin's ears + the
+    /// dragon's jaw ride their part-tree poses (the quad counts the
+    /// dump speaks).
+    #[test]
+    fn the_mannequin_wears_the_skeleton_skull() {
+        let root = ["assets-cache/jar", "../assets-cache/jar", "../../assets-cache/jar"]
+            .iter()
+            .map(std::path::Path::new)
+            .find(|p| p.join("gui/container/inventory.png").exists());
+        let Some(root) = root else { return };
+        let Some(_) = crate::avatar::AvatarModel::load(&root) else { return };
+        let mut app = App::new(3);
+        app.enter_world();
+        app.spawn_offline_body();
+        app.open_inventory();
+        let mut assets = GuiAssets::open(&root);
+        let bare = {
+            let mut fb = crate::raster::Framebuf::new(640, 360);
+            app.render(&mut fb, &mut assets);
+            fb.color.clone()
+        };
+        let id = |name: &str| mc_registry::item_id_by_name(name).expect("the registry speaks");
         app.inventory.armor = [(id("skeleton_skull"), 1), (0, 0), (0, 0), (0, 0)];
         let skull = {
             let mut fb = crate::raster::Framebuf::new(640, 360);
             app.render(&mut fb, &mut assets);
             fb.color.clone()
         };
-        let skull_diff = diff_in_window(&bare, &skull);
-        assert_eq!(skull_diff, 0, "the skull family rides no plain-block lane");
+        let px = |color: &[u8], x: usize, y: usize| -> [u8; 3] {
+            let o = (y * 640 + x) * 3;
+            [color[o], color[o + 1], color[o + 2]]
+        };
+        let mut skull_diff = 0usize;
+        for y in 96..168 {
+            for x in 262..303 {
+                if px(&bare, x, y) != px(&skull, x, y) {
+                    skull_diff += 1;
+                }
+            }
+        }
+        assert!(skull_diff > 40, "the worn skull painted: {skull_diff}");
+        // the asset fold's own verdict — the family speaks no armor texture
+        assert!(app.armor_textures.is_empty());
     }
 
     #[test]
@@ -19851,8 +19914,11 @@ mod tests {
             [c[o], c[o + 1], c[o + 2]]
         };
         // the head slot's own region (panel 232,97 + (8,8), the +1 inset
-        // the icon draw keeps — a 2px margin around the 16x16)
+        // the icon draw keeps — a 2px margin around the 16x16), PLUS the
+        // mannequin's own window (the worn skull the wornHeadType lane
+        // paints — the diff law's second home)
         let in_slot = |x: usize, y: usize| x >= 239 && x < 258 && y >= 104 && y < 123;
+        let in_window = |x: usize, y: usize| x >= 262 && x < 303 && y >= 96 && y < 168;
         let mut slot_px = 0usize;
         let mut strays = Vec::new();
         for y in 0..360 {
@@ -19860,7 +19926,7 @@ mod tests {
                 if px(&bare, x, y) != px(&skull, x, y) {
                     if in_slot(x, y) {
                         slot_px += 1;
-                    } else {
+                    } else if !in_window(x, y) {
                         if strays.len() < 8 {
                             strays.push((x, y));
                         }

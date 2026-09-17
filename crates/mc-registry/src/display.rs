@@ -758,6 +758,20 @@ fn special_layer_quads(layer: &crate::generated::special_models::SpecialLayer, t
     quads
 }
 
+/// One special layer's RAW block-unit bake — the WORN-SKULL lane's own
+/// law (the 26.2 CustomHeadLayer wornHeadType branch): the model goes
+/// STRAIGHT (no item display stanza, no local pose — the item context's
+/// transform is the GUI's own law, the worn chain applies its own
+/// skullYOffset + 1.1875 scale over the plain bake), the part tree's
+/// transforms (the piglin's ears, the dragon's head pose + jaw) ride
+/// the part_pose composition the /16 consumer speaks.
+pub fn special_layer_bake(
+    layer: &crate::generated::special_models::SpecialLayer,
+    texture: &'static str,
+) -> Vec<crate::element_quads::Quad> {
+    special_layer_quads(layer, texture)
+}
+
 /// The SPECIAL item's posed first-person quads — the dump-backed arc:
 /// the item's special renderer layers (the running client's OWN
 /// LayerDefinitions polygons through their part-tree transforms) carry

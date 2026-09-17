@@ -2257,6 +2257,107 @@ pub fn head_block_quads(
     Some(out)
 }
 
+/// THE WORN-SKULL VERDICT (the extraction's `AbstractSkullBlock` check
+/// the 26.2 extractRenderState bytecode speaks — the seven heads the
+/// SkullBlock family names): these ride the `wornHeadType` branch of
+/// the CustomHeadLayer, NEVER the item branch (the pumpkin's lane) and
+/// never the armor layers (the asset fold refuses them all).
+pub const SKULL_ITEMS: [&str; 7] = [
+    "skeleton_skull",
+    "wither_skeleton_skull",
+    "zombie_head",
+    "player_head",
+    "creeper_head",
+    "piglin_head",
+    "dragon_head",
+];
+
+pub fn skull_item(name: Option<&str>) -> bool {
+    match name {
+        Some(n) => SKULL_ITEMS.contains(&n),
+        None => false,
+    }
+}
+
+/// The entity-model face's model-space normal (the dump's face table
+/// the cube order speaks — the SAME convention the emit_cube's own
+/// table keeps; the entity fold maps it to the world normal the
+/// diffuse law samples).
+fn entity_face_normal(direction: mc_registry::generated::elements::Cull) -> [f32; 3] {
+    use mc_registry::generated::elements::Cull;
+    match direction {
+        Cull::Down => [0.0, -1.0, 0.0],
+        Cull::Up => [0.0, 1.0, 0.0],
+        Cull::West => [-1.0, 0.0, 0.0],
+        Cull::North => [0.0, 0.0, -1.0],
+        Cull::East => [1.0, 0.0, 0.0],
+        Cull::South => [0.0, 0.0, 1.0],
+    }
+}
+
+/// THE WORN-SKULL LANE (CustomHeadLayer.submit's wornHeadType branch —
+/// the 26.2 bytecode the evidence walk pinned): the head chain rides
+/// first (the SAME head part's matrix the item branch speaks), then
+/// `translate(0, skullYOffset, 0)` [the DEFAULT Transforms skullYOffset
+/// 0], `scale(1.1875, 1.1875, 1.1875)` — and SkullBlockRenderer's own
+/// submitSkull goes STRAIGHT (the bytecode builds the State
+/// (animationPos) and submits the model AS-IS — no direction rotation
+/// the block-entity wall/ground paths keep, no item stanza, no
+/// centering: the skull models bake CENTERED — the cube +-0.25, y
+/// -0.5..0 — and the 1.1875 rides the entity model's own 0.09375
+/// inflation all around the head's own box). The seven heads the dump
+/// carries render whole: the piglin's ears (the part poses +-4.5/-6),
+/// the dragon's head pose + jaw (the skull juts the face side), the
+/// zombie/player hat. The shade rides the ENTITY DIFFUSE (the skull is
+/// an entity model — the `shade: true` the dump bake speaks, the skin's
+/// own law), NOT the block face constants the pumpkin lane keeps.
+/// `None` = a non-skull item (the honest not-this-lane).
+pub fn skull_quads(
+    state: &AvatarState,
+    feet: Vec3,
+    cam_yaw: f32,
+    cam_pitch: f32,
+    item_id: i32,
+) -> Option<Vec<HeadBlockQuad>> {
+    if !skull_item(mc_registry::item_name(item_id)) {
+        return None;
+    }
+    let render = mc_registry::special_item_renderer(item_id)?;
+    let posed = build_posed_parts(state);
+    let m_head = posed[0].matrix(&Mat4::IDENT);
+    // translate(0, skullYOffset, 0) · scale(1.1875) — the DEFAULT
+    // Transforms' skullYOffset speaks 0.0 (the clinit's (0,0,1))
+    let layer = Mat4::translation(0.0, 0.0, 0.0)
+        .mul(&Mat4::scale_3d(SKULL_SCALE, SKULL_SCALE, SKULL_SCALE));
+    let m = m_head.mul(&layer);
+    let crouch_drop = if state.crouching { -2.0 / 16.0 } else { 0.0 };
+    let (fold_point, fold_normal) =
+        entity_folds(state.yaw_deg, state.death_time, crouch_drop, feet);
+    let mut out: Vec<HeadBlockQuad> = Vec::new();
+    for item_layer in &render.layers {
+        for q in mc_registry::display::special_layer_bake(item_layer.layer, item_layer.texture) {
+            let pts = q.vertices.map(|v| {
+                let p = m.transform_point(Vec3::new(v[0], v[1], v[2]));
+                fold_point([p[0], p[1], p[2]])
+            });
+            // the entity diffuse over the FOLDED world normal (the
+            // same law the skin and the armor pieces ride)
+            let n = entity_face_normal(q.direction);
+            let wn = fold_normal(n);
+            let shade = entity_diffuse(wn, cam_yaw, cam_pitch);
+            out.push(HeadBlockQuad {
+                pts,
+                uv: q.uvs,
+                shade,
+                texture: q.texture,
+            });
+        }
+    }
+    Some(out)
+}
+
+pub const SKULL_SCALE: f32 = 1.1875;
+
 /// The leather layer's UNDYED tint (the client info JSON's
 /// `color_when_undyed: -6265536` = 0xFFA06540 — the classic brown the
 /// tint law unpacks; the store's bare (id, count) carries no dye
@@ -4817,6 +4918,73 @@ mod tests {
         // (the SkullBlockRenderer's special models the follow-up keeps)
         assert!(head_block_quads(&rest, Vec3::ZERO, 0.0, 0.0, "item/template_skull").is_none());
         assert!(head_block_quads(&rest, Vec3::ZERO, 0.0, 0.0, "block/no_such_model").is_none());
+    }
+
+    /// THE WORN-SKULL CHAIN (the CustomHeadLayer wornHeadType branch's
+    /// own law): the skeleton skull's box EXACTLY the head's own box
+    /// x1.1875 (the 0.09375 inflation all around), the mob's own entity
+    /// skin the texture speaks, the non-skull items the verdict
+    /// refuses, the piglin's ears and the dragon's jaw the part-tree
+    /// poses ride, the zombie/player hats the second cube speaks.
+    #[test]
+    fn the_worn_skull_rides_the_1_1875_chain() {
+        let rest = AvatarState::rest(180.0, 0.0, 0.0);
+        let id = |name: &str| mc_registry::item_id_by_name(name).expect("the registry speaks");
+        let bbox = |quads: &[HeadBlockQuad]| -> ([f32; 3], [f32; 3]) {
+            let mut lo = [f32::MAX; 3];
+            let mut hi = [f32::MIN; 3];
+            for q in quads {
+                for p in q.pts.iter() {
+                    for k in 0..3 {
+                        lo[k] = lo[k].min(p[k]);
+                        hi[k] = hi[k].max(p[k]);
+                    }
+                }
+            }
+            (lo, hi)
+        };
+        // THE SKELETON SKULL: one cube, six faces, the exact 1.1875 box
+        let quads = skull_quads(&rest, Vec3::ZERO, 0.0, 0.0, id("skeleton_skull"))
+            .expect("the skeleton skull speaks");
+        assert_eq!(quads.len(), 6);
+        let (lo, hi) = bbox(&quads);
+        assert!((lo[0] + 0.296875).abs() < 1e-4, "lo.x = {}", lo[0]);
+        assert!((hi[0] - 0.296875).abs() < 1e-4, "hi.x = {}", hi[0]);
+        assert!((lo[2] + 0.296875).abs() < 1e-4, "lo.z = {}", lo[2]);
+        assert!((lo[1] - 1.501).abs() < 1e-4, "lo.y = {}", lo[1]);
+        assert!((hi[1] - 2.09475).abs() < 1e-4, "hi.y = {}", hi[1]);
+        assert!(quads.iter().all(|q| q.texture == "entity/skeleton/skeleton"));
+        // the shade rides the entity diffuse (0.5..1.0, never the block's 0.5 flat)
+        assert!(quads.iter().all(|q| q.shade > 0.4 && q.shade <= 1.0));
+        // THE NON-SKULL REFUSAL (the pumpkin rides its own lane)
+        assert!(skull_quads(&rest, Vec3::ZERO, 0.0, 0.0, id("carved_pumpkin")).is_none());
+        // THE FAMILY'S SEVEN (each speaks its own skin)
+        let expect = [
+            ("wither_skeleton_skull", "entity/skeleton/wither_skeleton", 6),
+            ("zombie_head", "entity/zombie/zombie", 12),
+            ("player_head", "entity/player/slim/steve", 12),
+            ("creeper_head", "entity/creeper/creeper", 6),
+        ];
+        for (name, tex, count) in expect {
+            let quads = skull_quads(&rest, Vec3::ZERO, 0.0, 0.0, id(name))
+                .unwrap_or_else(|| panic!("{name} speaks"));
+            assert_eq!(quads.len(), count, "{name}'s cube walk");
+            assert!(quads.iter().all(|q| q.texture == tex), "{name}'s skin");
+        }
+        // THE PIGLIN'S EARS (the part poses +-4.5/-6 the composition
+        // rides — six cubes, the box wider than the bare skull's)
+        let pig = skull_quads(&rest, Vec3::ZERO, 0.0, 0.0, id("piglin_head"))
+            .expect("the piglin speaks");
+        assert_eq!(pig.len(), 36);
+        let (plo, phi) = bbox(&pig);
+        assert!(phi[0] > 0.33, "the ears widen the box: {}", phi[0]);
+        // THE DRAGON'S JAW (the head pose + the jaw part — the snout
+        // juts the face side past a block's own length)
+        let dragon = skull_quads(&rest, Vec3::ZERO, 0.0, 0.0, id("dragon_head"))
+            .expect("the dragon speaks");
+        assert_eq!(dragon.len(), 42);
+        let (dlo, _) = bbox(&dragon);
+        assert!(dlo[2] < -1.2, "the snout juts: {}", dlo[2]);
     }
 
     /// THE EQUIPMENT TEXTURES LOAD (the runtime cache's own verdict —
