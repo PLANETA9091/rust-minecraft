@@ -481,6 +481,27 @@ pub struct WireRide {
     pub ride_height: f32,
 }
 
+/// THE OFFLINE RIDE'S OWN BELIEF (the singleplayer's local mount —
+/// the AbstractBoat.interact's startRiding the client IS the
+/// authority of): the hull's id + the attachment's own local words
+/// (the single rider's seat the 0.0 base keeps, the ride height the
+/// AbstractBoat.rideHeight's `dimensions.height() / 3` speaks). The
+/// hull's pose the offline_boats list carries each tick — no wire
+/// belief, no snapshot feet the stale walk must fall back to (the
+/// local pose IS the word; the hull's own silence — the world enter's
+/// prune the belief outlives — the carried pose the body keeps).
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct OfflineRide {
+    /// The local hull's own id (the offline spawner's counter named).
+    pub vehicle_id: i32,
+    /// The seat's local x (the single rider's 0.0 the
+    /// getSinglePassengerXOffset base keeps — the multi-rider lane the
+    /// wire's snapshots speak, the offline hull never carries).
+    pub seat_x: f32,
+    /// The AbstractBoat.rideHeight's own fold (`height / 3`).
+    pub ride_height: f32,
+}
+
 /// THE BOAT FAMILY'S OWN DIMENSIONS (the vanilla EntityType constants
 /// the client bakes: BOAT / CHEST_BOAT / RAFT / CHEST_RAFT all scale
 /// 1.375 wide × 0.562 tall — the registry never ships dimensions, the

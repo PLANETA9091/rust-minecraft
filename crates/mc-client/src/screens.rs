@@ -1079,6 +1079,14 @@ pub struct App {
     /// player, `None` while nothing does — the walk's own freedom the
     /// ride's silence keeps (the body's physics own the player again).
     pub net_ride: Option<crate::world_view::WireRide>,
+    /// THE OFFLINE RIDE'S OWN BELIEF (the singleplayer's local mount —
+    /// the startRiding the interact's CONSUME verdict carries): the
+    /// hull's id + the attachment's local words, the pose the
+    /// offline_boats list owns each tick (see
+    /// [`crate::world_view::OfflineRide`]). `None` while nothing holds
+    /// the player — the wire's own lane the net_ride field keeps (the
+    /// two beliefs never ride together, the mount's own gate speaks).
+    pub offline_ride: Option<crate::world_view::OfflineRide>,
     /// THE WIRE'S OWN BOAT LANE (the networked world's hulls — the
     /// boat-family entities the live refresh ships): the boats the
     /// SERVER owns, the submit render the wood-textured models draw
@@ -1882,6 +1890,7 @@ impl App {
             net_world: None,
             net_camera: None,
             net_ride: None,
+            offline_ride: None,
             net_boats: Vec::new(),
             net_boat_lerp: std::collections::HashMap::new(),
             offline_boats: Vec::new(),
@@ -2249,9 +2258,15 @@ impl App {
             // THE WIRE HULLS' OWN EASE (the lerpTo walk the vehicle's
             // own tick speaks BEFORE the rider's carry — the vanilla
             // order the positionRider law keeps: the vehicle moves,
-            // the passenger follows the pose the ease reached)
+            // the passenger follows the pose the ease reached) — the
+            // OFFLINE HULLS' OWN TICK the same beat speaks for the
+            // singleplayer's lane (the authoritative walk the hull's
+            // own float keeps; the wire's hulls the snapshots'
+            // authority never touches)
             if self.world_is_network {
                 self.tick_net_boats();
+            } else {
+                self.tick_offline_hulls();
             }
             let using = self.using_item.is_some();
             // the disjoint field borrows: the body mutates while the
@@ -2299,6 +2314,50 @@ impl App {
                     // render's partial-tick lerp anchors at the pose
                     // the last tick carried, the camera eases sub-tick
                     // the same walk the body's own move speaks)
+                    b.prev_x = b.x;
+                    b.prev_y = b.y;
+                    b.prev_z = b.z;
+                    b.x = fx;
+                    b.y = fy;
+                    b.z = fz;
+                    b.vx = 0.0;
+                    b.vy = 0.0;
+                    b.vz = 0.0;
+                    b.on_ground = false;
+                    b.horizontal_collision = false;
+                    b.forward = 0.0;
+                    b.left = 0.0;
+                    b.jumping = false;
+                    b.sprinting = false;
+                    b.want_crouch = false;
+                } else if self.offline_ride.is_some() {
+                    // THE OFFLINE POSITIONRIDER (the same law the wire
+                    // lane speaks — the LOCAL hull the pose IS the
+                    // word, no snapshot the stale walk must fall back
+                    // to): the hull's own pose this tick's authoritative
+                    // walk reached (the vehicle-moves-then-passenger
+                    // order the call site's arm keeps), the local
+                    // attachment re-rotated by the hull's CURRENT yaw
+                    // (the vanilla Vec3.yRot fold), the ride height the
+                    // y adds. The hull's silence (the world enter's
+                    // prune the belief outlives) the carried pose holds.
+                    let r = self.offline_ride.as_ref().expect("ride checked above");
+                    let (mut fx, mut fy, mut fz) = (b.x, b.y, b.z);
+                    if let Some(v) = self.offline_boats.iter().find(|bb| bb.id == r.vehicle_id)
+                    {
+                        let theta = -(v.yaw as f64) * std::f64::consts::PI / 180.0;
+                        let (sin, cos) = theta.sin_cos();
+                        let lx = r.seat_x as f64;
+                        fx = v.x + lx * cos;
+                        fy = v.y + r.ride_height as f64;
+                        fz = v.z + (-lx) * sin;
+                    }
+                    // THE PREV TRIO (the carried path's own trail — the
+                    // render's partial-tick lerp anchors at the pose
+                    // the last tick carried) + THE BODY'S OWN SLEEP
+                    // (the rideTick's law the wire lane speaks: no
+                    // impulses, no gravity, no fluid lanes, the ground
+                    // never claims the rider)
                     b.prev_x = b.x;
                     b.prev_y = b.y;
                     b.prev_z = b.z;
@@ -2814,14 +2873,6 @@ impl App {
                 self.tick_ride_yaw();
             }
             if !self.world_is_network {
-                // THE OFFLINE HULLS' OWN TICK (the AbstractBoat.tick's
-                // authoritative lane the singleplayer keeps): the
-                // status detection, the floatBoat folds, the y-move's
-                // clamp — the hull the water line settles, the ground
-                // the fall clamps. The wire's own hulls the snapshots'
-                // authority never touches (the networked lane's own
-                // walk the gate keeps).
-                self.tick_offline_hulls();
                 // THE SPAWNER'S BEAT (the vanilla spawn cycle's
                 // stand-in): one attempt per SPAWN_CYCLE_TICKS, the
                 // night gate rides the sky lane's own celestial track
@@ -3457,6 +3508,15 @@ impl App {
     /// packet the server's own id carries speaks (the 26.2
     /// gameMode.attack walk the wire arm obeys).
     fn pick_mob(&self, extra: &[crate::mob::Zombie]) -> Option<usize> {
+        self.pick_mob_pair(extra).map(|(i, _)| i)
+    }
+
+    /// The pick's own distance-exposing pair (the right-press entity
+    /// lane's nearest law — the mob and the hull the ONE entity pick
+    /// ranks, the nearer candidate the interact speaks): the index +
+    /// the hit's distance² from the eye (the block clip's compare's
+    /// own term).
+    fn pick_mob_pair(&self, extra: &[crate::mob::Zombie]) -> Option<(usize, f64)> {
         if self.mobs.is_empty() && extra.is_empty() {
             return None;
         }
@@ -3499,7 +3559,80 @@ impl App {
         // the crosshairPickEntity the null speaks
         let entity_reach = crate::world::ENTITY_INTERACTION_RANGE * crate::world::ENTITY_INTERACTION_RANGE;
         if mob_d2 < block_d2 && mob_d2 < entity_reach {
-            Some(i)
+            Some((i, mob_d2))
+        } else {
+            None
+        }
+    }
+
+    /// THE HULL PICK (the same entity pick the AbstractBoat's own
+    /// `isPickable` override keeps — the hulls the mob lane's walk
+    /// never spoke): the ray from the eye along the view, each hull's
+    /// box clipped (the 1.375 x 0.562 box the eye-inside gate speaks —
+    /// the eye inside the box the 0.0 the start-inside law keeps), the
+    /// NEAREST hull wins, and the hit must beat the block clip AND the
+    /// 3.0 entity reach (the same `closerThan` law the mob arm speaks).
+    /// Returns the hull's id + the hit's distance² from the eye (the
+    /// nearest-of-entity-pick compare's own term).
+    fn pick_hull(&self) -> Option<(i32, f64)> {
+        let cam = self.world_camera();
+        let f = cam.forward();
+        let eye = (cam.pos.x as f64, cam.pos.y as f64, cam.pos.z as f64);
+        let view = (f.x as f64, f.y as f64, f.z as f64);
+        let search_range = crate::world::BLOCK_INTERACTION_RANGE.max(3.0);
+        let end = (
+            eye.0 + view.0 * search_range,
+            eye.1 + view.1 * search_range,
+            eye.2 + view.2 * search_range,
+        );
+        let hw = crate::world_view::BOAT_DIMENSIONS_WIDTH as f64 / 2.0;
+        let bh = crate::world_view::BOAT_DIMENSIONS_HEIGHT as f64;
+        let mut best: Option<(i32, f64)> = None;
+        for b in self.net_boats.iter().chain(self.offline_boats.iter()) {
+            // the eye inside the box: the vanilla contains(start) law
+            let inside = eye.0 >= b.x - hw
+                && eye.0 <= b.x + hw
+                && eye.1 >= b.y
+                && eye.1 <= b.y + bh
+                && eye.2 >= b.z - hw
+                && eye.2 <= b.z + hw;
+            let d2 = if inside {
+                0.0
+            } else {
+                match crate::mob::aabb_clip(
+                    eye,
+                    end,
+                    (b.x - hw, b.y, b.z - hw),
+                    (b.x + hw, b.y + bh, b.z + hw),
+                ) {
+                    Some((point, _)) => {
+                        let (px, py, pz) = point;
+                        let (ex, ey, ez) = (px - eye.0, py - eye.1, pz - eye.2);
+                        ex * ex + ey * ey + ez * ez
+                    }
+                    None => continue,
+                }
+            };
+            if d2 < search_range * search_range && best.map_or(true, |(_, b)| d2 < b) {
+                best = Some((b.id, d2));
+            }
+        }
+        // the block clip's own distance term (the same law the pick's
+        // tail speaks — the hull behind the wall the miss keeps)
+        let block_d2 = self
+            .active_world()
+            .and_then(|w| w.clip(eye, view, search_range))
+            .map(|hit| {
+                let (lx, ly, lz) = hit.location;
+                let (dx, dy, dz) = (lx - eye.0, ly - eye.1, lz - eye.2);
+                dx * dx + dy * dy + dz * dz
+            })
+            .unwrap_or(f64::INFINITY);
+        let entity_reach =
+            crate::world::ENTITY_INTERACTION_RANGE * crate::world::ENTITY_INTERACTION_RANGE;
+        let (id, d2) = best?;
+        if d2 < block_d2 && d2 < entity_reach {
+            Some((id, d2))
         } else {
             None
         }
@@ -4107,6 +4240,7 @@ impl App {
             // stale session's lerp state never names a local hull)
             self.offline_boats.clear();
             self.offline_boat_phys.clear();
+            self.offline_ride = None;
             self.net_boats.clear();
             self.net_boat_lerp.clear();
             // the dig lane predicts locally on the offline terrain (the
@@ -5676,6 +5810,7 @@ impl App {
         // fresh walk arms)
         self.offline_boats.clear();
         self.offline_boat_phys.clear();
+        self.offline_ride = None;
         self.net_boat_lerp.clear();
         // the dig lane's prediction flag follows the world's authority
         // (the networked terrain is the server's own — the placement
@@ -6108,9 +6243,95 @@ impl App {
             // walks (the offline bodies first, the wire's remote
             // bodies after) decides BEFORE the BLOCK case the switch
             // speaks only on a block hit — an entity hit the BLOCK
-            // case never reaches.
+            // case never reaches. The HULLS the same pick ranks (the
+            // AbstractBoat's own isPickable): the NEAREST candidate
+            // the one pick's own law speaks.
             let mut entity_pass = false;
-            if let Some(i) = self.pick_mob(&self.net_mobs) {
+            let mob_hit = self.pick_mob_pair(&self.net_mobs);
+            let hull_hit = self.pick_hull();
+            let hull_wins = match (mob_hit, hull_hit) {
+                (Some((_, md)), Some((_, hd))) => hd < md,
+                (None, Some(_)) => true,
+                _ => false,
+            };
+            if hull_wins {
+                // THE HULL'S INTERACT ARM (javap AbstractBoat.interact —
+                // the chest arm the secondary use speaks, then the
+                // startRiding the CONSUME verdict carries). The RIDE
+                // GATE stands the walk down while a hull already holds
+                // the player (the vanilla startRiding's own false —
+                // the PASS the item lane's eye gate then keeps
+                // transparent), the lanes split exactly as the spawn
+                // walk's own: the OFFLINE hull the singleplayer's
+                // local mount answers, the WIRE hull the server's
+                // resolve the interact send asks (the client predicts
+                // nothing — the SetPassengers echo the ride lane's
+                // own mount speaks).
+                if self.net_ride.is_none() && self.offline_ride.is_none() {
+                    if let Some((id, _)) = hull_hit {
+                        if self.offline_boats.iter().any(|b| b.id == id) {
+                            if self.mount_offline_hull(id) {
+                                // the startRiding's own true — the CONSUME
+                                // verdict the interact carries (consumes
+                                // action, the swing the CONSUME never
+                                // starts)
+                                return true;
+                            }
+                        } else {
+                            // THE WIRE ARM (the 26.2's own gameMode.interact
+                            // walk the mob lane speaks): the CURSOR the hit
+                            // location minus the hull origin, the SEND, the
+                            // spectator PASS. The local prediction the wire
+                            // body never runs — the mount the server's
+                            // SetPassengers echo lands through, the swing
+                            // the result's shouldSwing speaks stays silent.
+                            let cam = self.world_camera();
+                            let f = cam.forward();
+                            let eye = (cam.pos.x as f64, cam.pos.y as f64, cam.pos.z as f64);
+                            let search = crate::world::BLOCK_INTERACTION_RANGE.max(3.0);
+                            let end = (
+                                eye.0 + f.x as f64 * search,
+                                eye.1 + f.y as f64 * search,
+                                eye.2 + f.z as f64 * search,
+                            );
+                            let hw = crate::world_view::BOAT_DIMENSIONS_WIDTH as f64 / 2.0;
+                            let bh = crate::world_view::BOAT_DIMENSIONS_HEIGHT as f64;
+                            let (vx, vy, vz) = self
+                                .net_boats
+                                .iter()
+                                .find(|b| b.id == id)
+                                .map(|b| (b.x, b.y, b.z))
+                                .expect("the picked hull's own lane");
+                            let location = crate::mob::aabb_clip(
+                                eye,
+                                end,
+                                (vx - hw, vy, vz - hw),
+                                (vx + hw, vy + bh, vz + hw),
+                            )
+                            .map(|(p, _)| p)
+                            .unwrap_or(eye);
+                            let cursor = (location.0 - vx, location.1 - vy, location.2 - vz);
+                            let shift = self.shift_down;
+                            if let Some(sink) = self.live_clicks.as_ref() {
+                                let _ =
+                                    sink.send(crate::world_view::ContainerCommand::Interact {
+                                        entity_id: id,
+                                        cursor,
+                                        shift,
+                                    });
+                            }
+                            return true;
+                        }
+                    }
+                    // THE ENTITY HIT'S OWN PASS (the vanilla's own
+                    // else-if the startUseItem keeps): the hull the
+                    // crosshair picked — the ride gate's stand-down, the
+                    // startRiding's own false — the BLOCK case never
+                    // reaches (the walk falls to the ITEM lane, the
+                    // entity hit's own shape)
+                    entity_pass = true;
+                }
+            } else if let Some((i, _)) = mob_hit {
                 if i < self.mobs.len() {
                     // THE OFFLINE ARM: the local prediction
                     // `player.interactOn` the walk returns — the
@@ -8390,6 +8611,54 @@ impl App {
         self.net_ride = ride;
     }
 
+    /// THE OFFLINE MOUNT (javap AbstractBoat.interact's tail — the
+    /// `startRiding` the CONSUME verdict carries; the singleplayer's
+    /// client IS the authority the offline lane keeps, the local
+    /// prediction the wire's echo never gates): the ride belief arms
+    /// (the single rider's seat the 0.0 base keeps, the ride height
+    /// the AbstractBoat.rideHeight's height/3 fold speaks), the FRESH
+    /// MOUNT'S OWN YAW SNAP (the handleSetEntityPassengers law the
+    /// wire lane speaks — the yRotOF/setYRot/setYHeadRot fold one
+    /// value three times), the mount's own overlay message (the
+    /// !hadIndirect arm — the translatable the lang folds, the 60-tick
+    /// life the decay walks). The ALREADY-RIDING gate the vanilla
+    /// startRiding's own false keeps (a hull already holds the player
+    /// — the wire's belief the same word stands), the unknown id the
+    /// honest false keeps. Returns the startRiding's own word: the
+    /// CONSUME verdict the true carries, the PASS the false.
+    pub fn mount_offline_hull(&mut self, id: i32) -> bool {
+        if self.net_ride.is_some() || self.offline_ride.is_some() {
+            return false;
+        }
+        let Some(boat) = self.offline_boats.iter().find(|b| b.id == id) else {
+            return false;
+        };
+        let yaw = boat.yaw;
+        self.offline_ride = Some(crate::world_view::OfflineRide {
+            vehicle_id: id,
+            seat_x: 0.0,
+            ride_height: crate::world_view::BOAT_DIMENSIONS_HEIGHT / 3.0,
+        });
+        if let Some(b) = self.body.as_mut() {
+            b.yaw = yaw;
+        }
+        // THE MOUNT'S OWN MESSAGE (the fresh-mount arm the packet
+        // handler speaks — the same translatable the wire lane folds)
+        self.set_overlay_message(&MOUNT_ONBOARD_FORMAT.replace("%1$s", SHIFT_KEY_DISPLAY));
+        true
+    }
+
+    /// THE OFFLINE DISMOUNT (the shift edge the server's own
+    /// handlePlayerInput lane speaks for the wire rides — the
+    /// singleplayer's client IS the authority): the ride's drop hands
+    /// the body back to itself at the carried pose (the stopRiding's
+    /// no-path fallback the vanilla keeps — the physics the next
+    /// tick's walk resumes), the overlay's life the timeout owns (no
+    /// explicit clear the wire lane keeps).
+    pub fn dismount_offline_hull(&mut self) {
+        self.offline_ride = None;
+    }
+
     /// The OFFLINE world screen's camera pose — the look-control lane's
     /// own set (the vanilla teleport/pose shape the net side speaks: the
     /// pose lands, the world renders from it). The placement lane's clip
@@ -8495,6 +8764,23 @@ impl App {
                 && forward > 0.8
                 && !crouch
                 && self.food_data.has_enough_food();
+        }
+        // THE OFFLINE DISMOUNT (the shift edge the server's own
+        // handlePlayerInput lane speaks for the wire rides — the
+        // singleplayer's client IS the authority): the ride's drop the
+        // edge arms, the body the carried pose keeps (the physics the
+        // next tick's walk resumes). The edge the wire's own baseline
+        // reads (the held word through the mount the vanilla input law
+        // keeps silent — a fresh press the drop asks), the game
+        // screen's own gate the look lane speaks (the pause the ask
+        // freezes).
+        let shift_edge = flags.shift && !self.last_sent_input.shift;
+        if shift_edge
+            && self.offline_ride.is_some()
+            && self.screen == ScreenKind::World
+            && !self.paused
+        {
+            self.dismount_offline_hull();
         }
         // THE INPUT WIRE (the vanilla `LocalPlayer.tick`'s own law —
         // `lastSentInput != input.keyPresses()` sends one
@@ -17799,10 +18085,17 @@ mod tests {
     }
 
     /// THE BOAT'S OWN USE WALK — the EYE-INSIDE GATE (the
-    /// getEntities/CAN_BE_PICKED walk's own refusal): the eye inside
-    /// any pickable body's box the PASS keeps — the press consumes
-    /// nothing, the water stays hull-less. The hulls and the living
-    /// bodies the same gate walks.
+    /// getEntities/CAN_BE_PICKED walk's own refusal) BEHIND the entity
+    /// lane's own start-inside law: the eye inside a HULL's box the
+    /// ENTITY PICK's d²=0 word speaks (the ProjectileUtil walk's own
+    /// start-inside arm) — the interact lane OUTRANKS the item lane
+    /// (the vanilla startUseItem's own else-if), the wire hull the
+    /// interact send consumes, the local prediction the wire body
+    /// never runs. The MOB the same pick picks (the
+    /// LivingEntity.isPickable law's own family) — the mob arm's Pass
+    /// verdict the ITEM lane falls through to, and THERE the eye gate
+    /// speaks: the eye inside any pickable body's box the PASS keeps,
+    /// the water stays hull-less.
     #[test]
     fn the_boat_use_walk_refuses_the_eye_inside_bodies() {
         let mut app = App::new(3);
@@ -17839,10 +18132,23 @@ mod tests {
             yaw: 0.0,
             pitch: -std::f32::consts::FRAC_PI_2,
         });
-        assert!(!app.on_right_press(0, 0), "the eye inside the hull — the PASS");
+        // THE ENTITY LANE'S OWN OUTRANK (the start-inside d²=0 the
+        // pick speaks): the interact the press consumes — the WIRE
+        // arm's send the verdict carries, no local hull spawned, the
+        // local ride prediction the wire body never runs
+        assert!(
+            app.on_right_press(0, 0),
+            "the eye inside the hull — the interact the start-inside law consumes"
+        );
         assert!(app.offline_boats.is_empty(), "no hull spawned");
+        assert!(
+            app.offline_ride.is_none(),
+            "the wire's own lane the client never predicts"
+        );
         // THE MOB WALK: the same gate the living bodies speak (the
-        // LivingEntity.isPickable law's own family)
+        // LivingEntity.isPickable law's own family) — the mob arm's
+        // Pass the ITEM lane falls through to, the eye gate the boat's
+        // use walk keeps (the PASS the press never consumes)
         app.net_boats.clear();
         app.mobs.push(crate::mob::Zombie::new(
             88,
@@ -18020,6 +18326,305 @@ mod tests {
         });
         app.tick_offline_hulls();
         assert_eq!(app.net_boats[0].y, 4.0, "the wire's own word stands");
+    }
+
+    /// THE OFFLINE MOUNT — the AbstractBoat.interact's own arc the
+    /// right-press lane speaks: the ride belief arms (the single
+    /// rider's seat the 0.0 base keeps, the ride height the height/3
+    /// fold speaks), the body's yaw the hull's own word snaps, the
+    /// mount's overlay message the 60-tick life carries, and the
+    /// ALREADY-RIDING gate the startRiding's own false keeps (the
+    /// second ask the first belief stands — the wire's hold the same
+    /// word keeps).
+    #[test]
+    fn the_offline_mount_arms_the_ride_belief() {
+        let mut app = App::new(3);
+        app.enter_world();
+        app.offline_boats.push(crate::world_view::WireBoat {
+            id: 7,
+            x: 10.0,
+            y: 64.0,
+            z: -3.0,
+            yaw: 90.0,
+            raft: false,
+            chest: false,
+            wood: "oak".to_string(),
+            paddle_left: false,
+            paddle_right: false,
+            bubble_time: 0,
+            hurt_time: 0,
+            hurt_dir: 1,
+            damage: 0.0,
+        });
+        app.body = Some(crate::body::PlayerBody::new(10.5, 65.0, -2.0, 0.0, 0.0));
+        assert!(app.mount_offline_hull(7), "the startRiding's own true");
+        let r = app.offline_ride.as_ref().expect("the ride belief armed");
+        assert_eq!(r.vehicle_id, 7, "the hull's own id");
+        assert_eq!(r.seat_x, 0.0, "the single rider's own seat");
+        assert_eq!(
+            r.ride_height,
+            crate::world_view::BOAT_DIMENSIONS_HEIGHT / 3.0,
+            "the ride height the height/3 fold speaks (the f32's own word —
+            the snapshot's 0.1875 the wire's stale walk keeps)"
+        );
+        assert_eq!(
+            app.body.as_ref().unwrap().yaw,
+            90.0,
+            "the fresh mount's own yaw snap"
+        );
+        assert_eq!(
+            app.overlay_message.as_deref(),
+            Some("Press Left Shift to Dismount"),
+            "the mount's own overlay word"
+        );
+        // THE ALREADY-RIDING GATE (the startRiding's own false): a
+        // second ask the first belief stands — the overlay the mount's
+        // own life keeps (the re-arm never re-speaks)
+        app.overlay_message_time = 5;
+        assert!(!app.mount_offline_hull(7), "the second ask the false keeps");
+        assert_eq!(
+            app.offline_ride.as_ref().unwrap().vehicle_id,
+            7,
+            "the first belief stands"
+        );
+        assert_eq!(app.overlay_message_time, 5, "the re-arm's own silence");
+        // THE UNKNOWN ID the honest false keeps (no hull the belief
+        // never names)
+        app.offline_ride = None;
+        assert!(!app.mount_offline_hull(999), "the unknown id's own false");
+        // THE WIRE'S OWN BELIEF the same gate stands (the two lanes
+        // never ride together)
+        app.net_ride = Some(crate::world_view::WireRide {
+            vehicle_id: 9,
+            feet_x: 0.0,
+            feet_y: 0.0,
+            feet_z: 0.0,
+            vehicle_yaw: 0.0,
+            seat_x: 0.0,
+            ride_height: 0.1875,
+        });
+        assert!(!app.mount_offline_hull(7), "the wire's own hold stands");
+        assert!(app.offline_ride.is_none(), "the wire's lane the belief keeps");
+    }
+
+    /// THE OFFLINE CARRY — the positionRider law the local hull's own
+    /// pose keeps: the hull's authoritative tick moves FIRST (the
+    /// vehicle-moves-then-passenger order the wire lane speaks — the
+    /// call site's own arm), the body's feet the hull's FRESH pose +
+    /// the attachment ride (the pre-move word the stale walk never
+    /// speaks), the prev trio the render's trail anchors, the body's
+    /// physics sleep (no impulses, no gravity — the rideTick's own
+    /// silence), and the SHIFT EDGE's drop hands the body back to
+    /// itself (the physics the next tick's walk resumes).
+    #[test]
+    fn the_offline_carry_follows_the_local_hull() {
+        let mut app = App::new(3);
+        app.enter_world();
+        // THE ATTACHMENT'S OWN WORD (the rideHeight fold the mount
+        // speaks — the f32/3 the honest recompute keeps, the 0.1875
+        // the wire's SNAPSHOT word never names here)
+        let rh = (crate::world_view::BOAT_DIMENSIONS_HEIGHT / 3.0) as f64;
+        let c = app.offline_world.as_ref().unwrap().size_blocks() / 2;
+        let hull_y0 = (app.spawn_y + 8) as f64;
+        app.offline_boats.push(crate::world_view::WireBoat {
+            id: 7,
+            x: c as f64 + 0.5,
+            y: hull_y0,
+            z: c as f64 + 0.5,
+            yaw: 0.0,
+            raft: false,
+            chest: false,
+            wood: "oak".to_string(),
+            paddle_left: false,
+            paddle_right: false,
+            bubble_time: 0,
+            hurt_time: 0,
+            hurt_dir: 1,
+            damage: 0.0,
+        });
+        app.body = Some(crate::body::PlayerBody::new(
+            c as f64 + 0.5,
+            hull_y0 + rh,
+            c as f64 + 0.5,
+            0.0,
+            0.0,
+        ));
+        app.offline_ride = Some(crate::world_view::OfflineRide {
+            vehicle_id: 7,
+            seat_x: 0.0,
+            ride_height: rh as f32,
+        });
+        // THE FIRST UPDATE: the hull's own fall the gravity arms (the
+        // spawn column's air band the verdict keeps — the -0.04 the
+        // InAir word speaks), then the CARRY the fresh pose rides
+        app.update();
+        let hull_y1 = app.offline_boats[0].y;
+        assert_eq!(hull_y1, hull_y0 - 0.04, "the hull's own fall first");
+        let b = app.body.as_ref().unwrap();
+        assert!(
+            (b.y - (hull_y0 - 0.04 + rh)).abs() < 1.0e-9,
+            "the carried feet the hull's FRESH pose keeps (b.y {} vs want {})",
+            b.y,
+            hull_y0 - 0.04 + rh
+        );
+        assert_eq!(b.x, c as f64 + 0.5, "the seat's cos the zero yaw keeps");
+        assert_eq!(b.z, c as f64 + 0.5, "the seat's sin the zero yaw silences");
+        assert_eq!(
+            (b.prev_x, b.prev_y, b.prev_z),
+            (c as f64 + 0.5, hull_y0 + rh, c as f64 + 0.5),
+            "the trail the render's partial lerp anchors"
+        );
+        assert_eq!(b.vx, 0.0, "the body's own sleep");
+        assert_eq!(b.vy, 0.0, "the gravity the ride never arms");
+        assert!(!b.on_ground, "the ground never claims the rider");
+        // THE SHIFT EDGE (the dismount's own ask — the
+        // onMovementInput walk the offline lane speaks locally): the
+        // ride drops, the body the carried pose keeps
+        app.on_movement_input(0.0, 0.0, false, true, false);
+        assert!(app.offline_ride.is_none(), "the edge's own drop");
+        let carried_y = app.body.as_ref().unwrap().y;
+        // THE PHYSICS RESUME (the rideTick's silence ends): the
+        // FIRST tick's own stillness the move-before-gravity order
+        // speaks (the ride's sleep handed a zero velocity — the
+        // gravity the fold applies AFTER the collide), the SECOND
+        // tick's walk the fall speaks
+        app.update();
+        let b1 = app.body.as_ref().unwrap();
+        assert_eq!(
+            b1.y, carried_y,
+            "the first tick's own stillness the zero velocity keeps"
+        );
+        app.update();
+        let b2 = app.body.as_ref().unwrap();
+        assert!(
+            b2.y < carried_y,
+            "the body's own gravity the drop resumes ({} -> {})",
+            carried_y,
+            b2.y
+        );
+    }
+
+    /// THE HULL PICK'S OWN MOUNT ARC — the right-press lane's own
+    /// walk: the hull the crosshair holds (the box the pick clips, the
+    /// block clip's own distance term the hull-behind-the-wall refusal
+    /// speaks) the OFFLINE MOUNT arms (the press the CONSUME verdict
+    /// consumes), the riding hull the second press the startRiding's
+    /// own false keeps (the entity PASS the BLOCK case never reaches —
+    /// the empty hand the item lane's silence keeps).
+    #[test]
+    fn the_right_press_mounts_the_nearest_hull() {
+        let mut app = App::new(3);
+        app.enter_world();
+        let c = app.offline_world.as_ref().unwrap().size_blocks() / 2;
+        let sy = app.spawn_y;
+        app.offline_boats.push(crate::world_view::WireBoat {
+            id: 7,
+            x: c as f64 + 0.5,
+            y: (sy + 2) as f64,
+            z: c as f64 + 0.5,
+            yaw: 90.0,
+            raft: false,
+            chest: false,
+            wood: "oak".to_string(),
+            paddle_left: false,
+            paddle_right: false,
+            bubble_time: 0,
+            hurt_time: 0,
+            hurt_dir: 1,
+            damage: 0.0,
+        });
+        app.body = Some(crate::body::PlayerBody::new(
+            c as f64 + 0.5,
+            (sy + 3) as f64 + 0.5,
+            c as f64 + 0.5,
+            0.0,
+            90.0,
+        ));
+        // THE MOUNT ARC: the hull top's hit the reach keeps (the eye
+        // — the feet + the standing eye's 1.62 — rides 2.56 above the
+        // box top, the 3.0 the strict law speaks; the terrain top's
+        // plane the block term keeps 4.1 away — the hull the nearer
+        // word speaks), the press the CONSUME verdict consumes. THE
+        // BODY'S OWN DEGREES (the vanilla pitch the turn walk speaks —
+        // the 90 the straight-down aim keeps)
+        assert!(app.on_right_press(0, 0), "the mount the press consumes");
+        assert_eq!(
+            app.offline_ride.as_ref().expect("the ride armed").vehicle_id,
+            7,
+            "the hull's own id the press arms"
+        );
+        assert_eq!(
+            app.body.as_ref().unwrap().yaw,
+            90.0,
+            "the fresh mount's own yaw snap"
+        );
+        // THE SECOND PRESS (the startRiding's own false): the entity
+        // PASS the BLOCK case never reaches — the empty hand the item
+        // lane's silence keeps, the press the honest unconsumed keeps,
+        // the ride the first belief stands
+        assert!(
+            !app.on_right_press(0, 0),
+            "the riding hull's second ask the PASS keeps"
+        );
+        assert_eq!(
+            app.offline_ride.as_ref().unwrap().vehicle_id,
+            7,
+            "the ride the false keeps"
+        );
+    }
+
+    /// THE HULL PICK'S OWN WALL TERM — the block clip's own distance
+    /// the pick's tail speaks: the hull behind the wall the miss keeps
+    /// (the block the nearer word speaks), the press the block lane's
+    /// own verdict rides (the empty hand the honest PASS keeps), the
+    /// ride belief the silence never arms.
+    #[test]
+    fn the_wall_between_the_pick_refuses_the_hull() {
+        let mut app = App::new(3);
+        app.enter_world();
+        let c = app.offline_world.as_ref().unwrap().size_blocks() / 2;
+        let sy = app.spawn_y;
+        app.offline_boats.push(crate::world_view::WireBoat {
+            id: 7,
+            x: c as f64 + 0.5,
+            y: (sy + 2) as f64,
+            z: c as f64 + 0.5,
+            yaw: 90.0,
+            raft: false,
+            chest: false,
+            wood: "oak".to_string(),
+            paddle_left: false,
+            paddle_right: false,
+            bubble_time: 0,
+            hurt_time: 0,
+            hurt_dir: 1,
+            damage: 0.0,
+        });
+        // THE WALL (the solid cell between the eye and the hull top —
+        // the block the nearer hit the compare speaks)
+        app.offline_world
+            .as_mut()
+            .unwrap()
+            .set(c, sy + 3, c, crate::world::STONE);
+        app.body = Some(crate::body::PlayerBody::new(
+            c as f64 + 0.5,
+            (sy + 3) as f64 + 0.5,
+            c as f64 + 0.5,
+            0.0,
+            90.0,
+        ));
+        assert!(
+            !app.on_right_press(0, 0),
+            "the wall the hull pick refuses (the empty hand the PASS keeps)"
+        );
+        assert!(
+            app.offline_ride.is_none(),
+            "the refused pick the belief never arms"
+        );
+        assert!(
+            app.overlay_message.is_none(),
+            "the mount's word the refusal never speaks"
+        );
     }
 
     /// THE DIG LANE's OFFLINE ARC — the left press arms the destroy
