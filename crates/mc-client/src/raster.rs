@@ -965,6 +965,112 @@ impl Framebuf {
             }
         }
     }
+
+    /// THE PIP'S OWN DEPTH WALK (the inventory mannequin's draw — the
+    /// affine ortho chain the PiP speaks): identical to
+    /// `draw_sampled_quads` in clip / interpolation / cutout, but the
+    /// depth proxy rides NEGATED clip z instead of clip w. The affine
+    /// chain leaves w = 1 for every vertex, so the w proxy ties every
+    /// quad and the first-drawn layer (the skin) wins every pixel the
+    /// armor's inflated shell actually covers — the sparse margin-only
+    /// paint the v0.3.244 dig named. The ortho's z row already encodes
+    /// the view depth (z_clip = 2/2000 * z_view), and the chain's -z
+    /// mirror makes the camera-facing side land LARGER z_clip, so the
+    /// negation restores the raster's smaller-is-nearer law and each
+    /// inflate step wins the pixels its geometry covers — the vanilla
+    /// depth-tested layer stack.
+    pub fn draw_pip_sampled_quads(
+        &mut self,
+        proj: Mat4,
+        quads: &[SampledQuad],
+        sample: &mut dyn FnMut(&str, f32, f32) -> Option<[u8; 4]>,
+    ) {
+        let w_px = self.w as f32;
+        let h_px = self.h as f32;
+        for quad in quads {
+            let clip: Vec<[f32; 4]> = quad
+                .pts
+                .iter()
+                .map(|p| proj.transform_point(Vec3::new(p[0], p[1], p[2])))
+                .collect();
+            let clipped = clip_near(&clip);
+            if clipped.len() < 3 {
+                continue;
+            }
+            let mut sx = vec![0f32; clipped.len()];
+            let mut sy = vec![0f32; clipped.len()];
+            let mut ow = vec![0f32; clipped.len()];
+            let mut vz = vec![0f32; clipped.len()];
+            for i in 0..clipped.len() {
+                let c = clipped[i];
+                let iw = 1.0 / c[3];
+                sx[i] = (c[0] * iw * 0.5 + 0.5) * w_px;
+                sy[i] = (1.0 - (c[1] * iw * 0.5 + 0.5)) * h_px;
+                ow[i] = iw;
+                vz[i] = -c[2]; // the pip's depth: nearer (larger z_clip) rides smaller
+            }
+            for tri in 1..clipped.len() - 1 {
+                let (ax, ay, a_ow, a_vz) = (sx[0], sy[0], ow[0], vz[0]);
+                let (bx, by, b_ow, b_vz) = (sx[tri], sy[tri], ow[tri], vz[tri]);
+                let (cx, cy, c_ow, c_vz) = (sx[tri + 1], sy[tri + 1], ow[tri + 1], vz[tri + 1]);
+                let (ua, va) = (quad.uv[0][0], quad.uv[0][1]);
+                let (ub, vb) = (quad.uv[tri.min(3)][0], quad.uv[tri.min(3)][1]);
+                let (uc, vc) = (
+                    quad.uv[(tri + 1).min(3)][0],
+                    quad.uv[(tri + 1).min(3)][1],
+                );
+                let area_ab = edge(ax, ay, bx, by, cx, cy);
+                if area_ab.abs() < 1e-9 {
+                    continue;
+                }
+                let inv_area = 1.0 / area_ab;
+                let minx = ax.min(bx).min(cx).floor().max(0.0) as isize;
+                let miny = ay.min(by).min(cy).floor().max(0.0) as isize;
+                let maxx = ax.max(bx).max(cx).ceil().min(w_px - 1.0) as isize;
+                let maxy = ay.max(by).max(cy).ceil().min(h_px - 1.0) as isize;
+                for py in miny..=maxy {
+                    for px_ in minx..=maxx {
+                        let fx = px_ as f32 + 0.5;
+                        let fy = py as f32 + 0.5;
+                        let w0 = edge(bx, by, cx, cy, fx, fy);
+                        let w1 = edge(cx, cy, ax, ay, fx, fy);
+                        let w2 = edge(ax, ay, bx, by, fx, fy);
+                        if w0 < 0.0 || w1 < 0.0 || w2 < 0.0 {
+                            continue;
+                        }
+                        let b0 = w0 * inv_area;
+                        let b1 = w1 * inv_area;
+                        let b2 = w2 * inv_area;
+                        let dist = 1.0 / (b0 * a_ow + b1 * b_ow + b2 * c_ow);
+                        let z = (b0 * a_vz * a_ow + b1 * b_vz * b_ow + b2 * c_vz * c_ow) * dist;
+                        let u = (b0 * ua * a_ow + b1 * ub * b_ow + b2 * uc * c_ow) * dist;
+                        let v = (b0 * va * a_ow + b1 * vb * b_ow + b2 * vc * c_ow) * dist;
+                        let idx = (py as usize) * self.w + px_ as usize;
+                        if z >= self.depth[idx] {
+                            continue;
+                        }
+                        let Some(texel) = sample(quad.tex, u, v) else {
+                            continue;
+                        };
+                        if texel[3] < 128 {
+                            continue; // cutout hole: no color, no depth
+                        }
+                        let texel = [
+                            (texel[0] as f32 / 255.0 * quad.tint[0] * 255.0).round() as u8,
+                            (texel[1] as f32 / 255.0 * quad.tint[1] * 255.0).round() as u8,
+                            (texel[2] as f32 / 255.0 * quad.tint[2] * 255.0).round() as u8,
+                            texel[3],
+                        ];
+                        self.depth[idx] = z;
+                        let o = idx * 3;
+                        for (ch, texel) in (0..3).zip(&texel[..3]) {
+                            self.color[o + ch] = *texel;
+                        }
+                    }
+                }
+            }
+        }
+    }
 }
 
 /// Clip a clip-space polygon against w >= eps.

@@ -3984,12 +3984,19 @@ impl App {
         let mut sampled: Vec<crate::raster::SampledQuad> = quads
             .iter()
             .map(|q| crate::raster::SampledQuad {
-                // THE CORNER RE-ORDER (the vanilla -z mirror's own
-                // winding): pts 1/2 and uv 1/2 swap — the same quad,
-                // the same corner-bound texels, the fan's order flipped
-                // to the raster's front-face law
-                pts: [q.pts[0], q.pts[2], q.pts[1], q.pts[3]],
-                uv: [q.uv[0], q.uv[2], q.uv[1], q.uv[3]],
+                // THE RAW PERIMETER ORDER (the world-side entity draw's
+                // own law — the mob lane feeds q.pts/q.uv verbatim): the
+                // mannequin chain PRESERVES the winding (the fold's x
+                // mirror and the vp's -z mirror cancel, det > 0), so the
+                // emitted perimeter walk passes the raster's front-face
+                // rule on BOTH fan triangles with every corner bound to
+                // its own texel. The old 1<->2 "re-order" flipped the
+                // winding into a BOWTIE (the corner walk crossed itself,
+                // one fan triangle culled, the survivor sampled sheared)
+                // — half every face missing, the armor's holed texture
+                // speaking the garble the plain skin hid.
+                pts: q.pts,
+                uv: q.uv,
                 tex: "",
                 tint: [q.shade, q.shade, q.shade],
             })
@@ -4059,14 +4066,11 @@ impl App {
                         model_id,
                     ) {
                         for q in &hb {
-                            // the entity fold's x mirror flips the
-                            // winding — the SAME corner re-order the
-                            // body quads speak keeps the raster's
-                            // front-face law (the corner-bound texels
-                            // ride the swap verbatim)
+                            // the raw perimeter order — the winding
+                            // the chain preserves (the world-side law)
                             sampled.push(crate::raster::SampledQuad {
-                                pts: [q.pts[0], q.pts[2], q.pts[1], q.pts[3]],
-                                uv: [q.uv[0], q.uv[2], q.uv[1], q.uv[3]],
+                                pts: q.pts,
+                                uv: q.uv,
                                 tex: q.texture,
                                 tint: [q.shade, q.shade, q.shade],
                             });
@@ -4086,8 +4090,10 @@ impl App {
                 {
                     for q in &sq {
                         sampled.push(crate::raster::SampledQuad {
-                            pts: [q.pts[0], q.pts[2], q.pts[1], q.pts[3]],
-                            uv: [q.uv[0], q.uv[2], q.uv[1], q.uv[3]],
+                            // the raw perimeter order — the head-block
+                            // lane's own law
+                            pts: q.pts,
+                            uv: q.uv,
                             tex: q.texture,
                             tint: [q.shade, q.shade, q.shade],
                         });
@@ -4119,14 +4125,11 @@ impl App {
                             model_id,
                         ) {
                             for q in &hq {
-                                // the entity fold's x mirror flips the
-                                // winding — the SAME corner re-order the
-                                // head lanes speak keeps the raster's
-                                // front-face law (the corner-bound
-                                // texels ride the swap verbatim)
+                                // the raw perimeter order — the
+                                // head-block lane's own law
                                 sampled.push(crate::raster::SampledQuad {
-                                    pts: [q.pts[0], q.pts[2], q.pts[1], q.pts[3]],
-                                    uv: [q.uv[0], q.uv[2], q.uv[1], q.uv[3]],
+                                    pts: q.pts,
+                                    uv: q.uv,
                                     tex: q.texture,
                                     tint: [q.shade, q.shade, q.shade],
                                 });
@@ -4162,13 +4165,11 @@ impl App {
                             model_id,
                         ) {
                             for q in &hq {
-                                // the entity fold's x mirror flips the
-                                // winding — the SAME corner re-order the
-                                // main hand's lane speaks keeps the
-                                // raster's front-face law
                                 sampled.push(crate::raster::SampledQuad {
-                                    pts: [q.pts[0], q.pts[2], q.pts[1], q.pts[3]],
-                                    uv: [q.uv[0], q.uv[2], q.uv[1], q.uv[3]],
+                                    // the raw perimeter order — the
+                                    // head-block lane's own law
+                                    pts: q.pts,
+                                    uv: q.uv,
                                     tex: q.texture,
                                     tint: [q.shade, q.shade, q.shade],
                                 });
@@ -4179,7 +4180,10 @@ impl App {
             }
         }
         fb.clear_depth();
-        fb.draw_sampled_quads(vp, &sampled, &mut |tex, u, v| {
+        // THE PIP'S OWN DEPTH WALK (the -clip-z proxy): the affine chain
+        // ties clip w at 1, so the plain walk would hand every overlapped
+        // pixel to the first-drawn skin and leave the armor its margins
+        fb.draw_pip_sampled_quads(vp, &sampled, &mut |tex, u, v| {
             if tex.is_empty() {
                 let [r, g, b, al] = model.pixel(u, v);
                 return Some([r, g, b, al]);
@@ -10099,18 +10103,19 @@ fn mannequin_turn(mouse: Option<(i32, i32)>, left: i32, top: i32) -> (f32, f32) 
     (180.0 + dx.atan() * 20.0, dy.atan() * 20.0)
 }
 
-/// One armor layer quad's sampled form — the skin pass's OWN corner
-/// re-order (the vanilla -z mirror's winding the raster's front-face
-/// law consumes), the piece's texture key riding, the tint field the
-/// light's own shade (the dye multiply the leather composite's sampler
-/// speaks).
+/// One armor layer quad's sampled form — the raw perimeter order the
+/// skin pass speaks (the winding the mannequin chain preserves), the
+/// piece's texture key riding, the tint field the light's own shade
+/// (the dye multiply the leather composite's sampler speaks).
 fn armor_sample<'a>(
     q: &crate::avatar::AvatarQuad,
     tex: &'a str,
 ) -> crate::raster::SampledQuad<'a> {
+    // THE RAW PERIMETER ORDER (the skin pass's own law): the chain
+    // preserves the winding, the corner-bound texels ride verbatim.
     crate::raster::SampledQuad {
-        pts: [q.pts[0], q.pts[2], q.pts[1], q.pts[3]],
-        uv: [q.uv[0], q.uv[2], q.uv[1], q.uv[3]],
+        pts: q.pts,
+        uv: q.uv,
         tex,
         tint: [q.shade, q.shade, q.shade],
     }
@@ -10167,6 +10172,11 @@ fn mannequin_vp(
     );
     let flip = crate::math::Mat4::rot_z(std::f32::consts::PI);
     let pitch_rot = crate::math::Mat4::rot_x(pitch_deg * (std::f32::consts::PI / 180.0));
+    // THE PURE AFFINE CHAIN (the vanilla PiP's own ortho — NO
+    // perspective divide): the depth the PiP needs rides the raster's
+    // pip draw (the clip z row the matrix already carries), never the
+    // w row — a w term would perspective-divide the positions and
+    // shift the silhouette off the vanilla ortho's own.
     ortho
         .mul(&mirror)
         .mul(&lift)
@@ -10472,6 +10482,124 @@ pub fn top_solid_y(world: &crate::world::World, x: i32, z: i32) -> i32 {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// THE MANNEQUIN'S QUAD PATH RIDES THE RAW PERIMETER ORDER (the
+    /// world-side entity draw's own law): the mannequin chain PRESERVES
+    /// the winding — the fold's x mirror and the vp's -z mirror cancel —
+    /// so the body-front quad's two fan triangles BOTH pass the raster's
+    /// front-face rule and the full face paints. The old 1<->2 corner
+    /// swap flipped the winding into a BOWTIE: the corner walk crossed
+    /// itself, one fan triangle culled, the survivor sampled sheared —
+    /// half every face missing, and the armor's holed iron texture spoke
+    /// the garble the plain skin hid. The test renders the CHEST slot's
+    /// body-front quad ALONE through the mannequin vp over the real
+    /// iron.png layer and pins the region's own vanilla shape: the
+    /// neckline notch (the top-middle texels transparent), the dense
+    /// band painted across BOTH halves, and the hem taper (the bottom
+    /// texel row empty).
+    #[test]
+    fn the_body_front_quad_paints_both_fan_halves() {
+        use mc_registry::generated::equipment;
+        let root = ["assets-cache/jar", "../assets-cache/jar", "../../assets-cache/jar"]
+            .iter()
+            .map(std::path::Path::new)
+            .find(|p| p.join(equipment::HUMANOID_DIR).exists());
+        let Some(root) = root else { return };
+        let entry = equipment::find("iron").expect("the iron entry speaks");
+        let Some(tex) = crate::avatar::ArmorTex::load(root, equipment::HUMANOID_DIR, entry)
+        else {
+            return; // the sha1 gate — the honest skip
+        };
+        let state = crate::avatar::AvatarState::rest(180.0, 0.0, 3.5);
+        let vp = mannequin_vp(232, 97, 1.0, 640.0, 360.0, 0.0);
+        let quad = crate::avatar::armor_quads(
+            &state,
+            Vec3::new(0.0, 0.0, 0.0),
+            0.0,
+            0.0,
+            crate::avatar::ARMOR_SLOT_CHEST,
+        )
+        .into_iter()
+        .find(|q| q.uv == [[28.0, 20.0], [20.0, 20.0], [20.0, 32.0], [28.0, 32.0]])
+        .expect("the body front quad speaks");
+        // the quad's screen rect (the raster's own sx/sy walk)
+        let scr = |p: [f32; 3]| -> (f32, f32) {
+            let c = vp.transform_point(Vec3::new(p[0], p[1], p[2]));
+            (
+                (c[0] / c[3] * 0.5 + 0.5) * 640.0,
+                (1.0 - (c[1] / c[3] * 0.5 + 0.5)) * 360.0,
+            )
+        };
+        let (left, top) = scr(quad.pts[1]); // the LEFT-TOP corner
+        let (right, bottom) = scr(quad.pts[3]); // the RIGHT-BOTTOM corner
+        assert!(
+            right - left > 15.0 && bottom - top > 20.0,
+            "the projected rect speaks: ({left:.1},{top:.1})..({right:.1},{bottom:.1})"
+        );
+        let mut fb = crate::raster::Framebuf::new(640, 360);
+        fb.clear_depth();
+        fb.draw_pip_sampled_quads(
+            vp,
+            &[crate::raster::SampledQuad {
+                pts: quad.pts,
+                uv: quad.uv,
+                tex: "f",
+                tint: [quad.shade, quad.shade, quad.shade],
+            }],
+            &mut |_k, u, v| Some(tex.pixel(u, v)),
+        );
+        let px = |x: usize, y: usize| -> [u8; 3] {
+            let o = (y * 640 + x) * 3;
+            [fb.color[o], fb.color[o + 1], fb.color[o + 2]]
+        };
+        let painted = |x: usize, y: usize| -> bool {
+            let c = px(x, y);
+            (c[0] as i32 - c[1] as i32).abs() < 8
+                && (c[1] as i32 - c[2] as i32).abs() < 8
+                && c[0] > 60
+        };
+        // THE DENSE BAND (texel rows ~23..27 of the rect): paint on BOTH
+        // fan halves — the bowtie regression kills one whole half
+        let band_top = (top + 5.0) as usize;
+        let band_bot = (top + 15.0) as usize;
+        let mid = ((left + right) / 2.0) as usize;
+        let mut l = 0usize;
+        let mut r = 0usize;
+        for y in band_top..band_bot {
+            for x in (left as usize..mid).rev().take(4) {
+                if painted(x, y) {
+                    l += 1;
+                }
+            }
+            for x in mid..(right as usize).min(mid + 4) {
+                if painted(x, y) {
+                    r += 1;
+                }
+            }
+        }
+        assert!(l > 10, "the LEFT fan half paints: {l}");
+        assert!(r > 10, "the RIGHT fan half paints: {r}");
+        // THE NECKLINE NOTCH (the top-middle texels transparent): the
+        // top rows' middle paints nothing
+        let mut notch = 0usize;
+        for y in (top as usize)..(top as usize + 2) {
+            for x in (mid - 1)..(mid + 2) {
+                if painted(x, y) {
+                    notch += 1;
+                }
+            }
+        }
+        assert_eq!(notch, 0, "the neckline notch stays transparent: {notch}");
+        // THE HEM (the bottom texel row fully transparent): the last
+        // screen row before the rect's bottom edge paints nothing
+        let mut hem = 0usize;
+        for x in left as usize..right as usize {
+            if painted(x, bottom as usize - 1) {
+                hem += 1;
+            }
+        }
+        assert_eq!(hem, 0, "the hem row stays transparent: {hem}");
+    }
 
     /// THE SOUND TABLE'S OWN LOADED GATE (the generated/ -> runtime-load
     /// migration's third lane — the table the runtime cache keeps, the
@@ -19911,7 +20039,13 @@ mod tests {
             fb.color.clone()
         };
         let pumpkin_diff = diff_in_window(&bare, &pumpkin);
-        assert!(pumpkin_diff > 200, "the pumpkin painted: {pumpkin_diff}");
+        // 98 at the raw-order fix (v0.3.245): the CORRECT paint stays
+        // inside the head block (the carved face replaces the skin's
+        // own, the dark carved texels matching the bare render's dark
+        // hair/eyes where they overlap) — the old bowtie garble scored
+        // higher only because its sheared survivor spilled over the
+        // gui background. The regression floor: no paint scores ~0.
+        assert!(pumpkin_diff > 60, "the pumpkin painted: {pumpkin_diff}");
         // the equipment loads stay EMPTY (the asset fold refuses the
         // pumpkin — the head-block lane speaks no armor texture)
         assert!(app.armor_textures.is_empty());
