@@ -777,6 +777,41 @@ impl Framebuf {
         quads: &[SampledQuad],
         sample: &mut dyn FnMut(&str, f32, f32) -> Option<[u8; 4]>,
     ) {
+        self.draw_sampled_quads_impl(proj, quads, false, sample);
+    }
+
+    /// The textured-quad raster over a texel SAMPLER with the LEQUAL
+    /// depth func (the UNDERCOAT's own entry — the vanilla entity
+    /// layer's depth law: the coplanar body-mesh overlay the
+    /// SheepWoolUndercoatLayer speaks renders AFTER the body, the depth
+    /// TIE the LEQUAL func answers — the undercoat's OPAQUE texels win
+    /// the tie the body's own face set (the fringe over the brow the
+    /// vanilla face keeps), the transparent ones keep it; any CLOSER
+    /// geometry (the fur hood's inflated mesh the unsheared sheep
+    /// wears) still wins on its own smaller z, the strict-LESS walk the
+    /// other entries keep untouched).
+    pub fn draw_sampled_quads_lequal(
+        &mut self,
+        proj: Mat4,
+        quads: &[SampledQuad],
+        sample: &mut dyn FnMut(&str, f32, f32) -> Option<[u8; 4]>,
+    ) {
+        self.draw_sampled_quads_impl(proj, quads, true, sample);
+    }
+
+    /// The shared raster core — `depth_lequal` picks the depth func:
+    /// `false` = the strict-LESS convention every existing lane keeps
+    /// (`z >= depth` rejects, ties never overwrite), `true` = the
+    /// entity-layer LEQUAL (`z > depth` rejects, ties overwrite — the
+    /// later layer's own draw order wins the coplanar tie the vanilla
+    /// layer stack speaks).
+    fn draw_sampled_quads_impl(
+        &mut self,
+        proj: Mat4,
+        quads: &[SampledQuad],
+        depth_lequal: bool,
+        sample: &mut dyn FnMut(&str, f32, f32) -> Option<[u8; 4]>,
+    ) {
         let w_px = self.w as f32;
         let h_px = self.h as f32;
         for quad in quads {
@@ -838,7 +873,11 @@ impl Framebuf {
                         let u = (b0 * ua * a_ow + b1 * ub * b_ow + b2 * uc * c_ow) * dist;
                         let v = (b0 * va * a_ow + b1 * vb * b_ow + b2 * vc * c_ow) * dist;
                         let idx = (py as usize) * self.w + px_ as usize;
-                        if z >= self.depth[idx] {
+                        if if depth_lequal {
+                            z > self.depth[idx]
+                        } else {
+                            z >= self.depth[idx]
+                        } {
                             continue;
                         }
                         let Some(texel) = sample(quad.tex, u, v) else {
@@ -1220,4 +1259,69 @@ fn translucent_sampled_quads_blend_and_skip_depth() {
         Some([0, 255, 0, 0])
     });
     assert_eq!(fb.color, fb2_color, "the transparent texel blends nothing");
+}
+
+#[test]
+fn lequal_entry_wins_the_coplanar_tie_the_strict_entry_keeps() {
+    use crate::math::Mat4;
+    // THE UNDERCOAT'S OWN DEPTH LAW: two COPLANAR full-viewport quads
+    // at z=-1 — the body's face the first draw fills RED, the
+    // undercoat's overlay the second draws BLUE. The strict-LESS entry
+    // (`z >= depth` rejects) keeps the tie the body set — the blue
+    // never lands. The LEQUAL entry (`z > depth` rejects) answers the
+    // tie the vanilla entity layer speaks — the later layer's opaque
+    // texels overwrite, and any CLOSER geometry (z=-0.5 white) still
+    // wins on its own smaller z, the FARTHER one (z=-2 green) never
+    // comes back.
+    let quad_at = |z: f32| SampledQuad {
+        pts: [
+            [-1.0, -1.0, z],
+            [1.0, -1.0, z],
+            [1.0, 1.0, z],
+            [-1.0, 1.0, z],
+        ],
+        uv: [[0.0, 0.0], [16.0, 0.0], [16.0, 16.0], [0.0, 16.0]],
+        tex: "test",
+        tint: [1.0, 1.0, 1.0],
+    };
+    let proj = Mat4::perspective(70.0f32.to_radians(), 1.0, 0.1, 512.0);
+    let solid = |r: u8, g: u8, b: u8| {
+        move |_tex: &str, _u: f32, _v: f32| Some([r, g, b, 255])
+    };
+    let count = |fb: &Framebuf, px: [u8; 3]| -> usize {
+        fb.color.chunks_exact(3).filter(|c| c[..3] == px).count()
+    };
+    // THE STRICT TIE: the coplanar second draw the strict entry rejects
+    let mut fb = Framebuf::new(32, 32);
+    fb.clear([0.0, 0.0, 0.0], [0.0, 0.0, 0.0]);
+    fb.draw_sampled_quads(proj, &[quad_at(-1.0)], &mut solid(255, 0, 0));
+    fb.draw_sampled_quads(proj, &[quad_at(-1.0)], &mut solid(0, 0, 255));
+    assert_eq!(count(&fb, [0, 0, 255]), 0, "the strict tie never overwrites");
+    assert!(count(&fb, [255, 0, 0]) > 0, "the body's own red stays");
+    // THE LEQUAL TIE: the same coplanar draw the LEQUAL entry WINS
+    let mut fb = Framebuf::new(32, 32);
+    fb.clear([0.0, 0.0, 0.0], [0.0, 0.0, 0.0]);
+    fb.draw_sampled_quads(proj, &[quad_at(-1.0)], &mut solid(255, 0, 0));
+    fb.draw_sampled_quads_lequal(proj, &[quad_at(-1.0)], &mut solid(0, 0, 255));
+    assert!(count(&fb, [0, 0, 255]) > 0, "the layer's own tie wins");
+    assert_eq!(count(&fb, [255, 0, 0]), 0, "the body's own red replaced");
+    // THE CLOSER GEOMETRY STILL WINS + THE CUTOUT HOLE KEEPS: a nearer
+    // white quad through the strict entry covers the lequal blue, the
+    // farther green never comes back
+    fb.draw_sampled_quads(proj, &[quad_at(-0.5)], &mut solid(255, 255, 255));
+    assert!(count(&fb, [255, 255, 255]) > 0, "the nearer quad covers");
+    assert_eq!(count(&fb, [0, 0, 255]), 0);
+    fb.draw_sampled_quads(proj, &[quad_at(-2.0)], &mut solid(0, 255, 0));
+    assert_eq!(count(&fb, [0, 255, 0]), 0, "the farther quad never returns");
+    // THE TRANSPARENT TEXEL: the lequal entry's cutout hole keeps the
+    // body's color AND depth (no write, no overwrite)
+    let mut fb = Framebuf::new(32, 32);
+    fb.clear([0.0, 0.0, 0.0], [0.0, 0.0, 0.0]);
+    fb.draw_sampled_quads(proj, &[quad_at(-1.0)], &mut solid(255, 0, 0));
+    let depth_after_body = fb.depth.clone();
+    fb.draw_sampled_quads_lequal(proj, &[quad_at(-1.0)], &mut |_tex, _u, _v| {
+        Some([0, 0, 255, 0]) // alpha 0 -> the cutout hole
+    });
+    assert!(count(&fb, [255, 0, 0]) > 0, "the hole keeps the body's red");
+    assert_eq!(fb.depth, depth_after_body, "the hole writes no depth");
 }

@@ -685,6 +685,15 @@ pub struct App {
     /// beside the sheep's, `None` = the fur stays unseen while the
     /// bodies keep drawing (the overlay's honesty its own lane).
     pub sheep_wool_model: Option<crate::avatar::SheepWoolModel>,
+    /// THE UNDERCOAT's own lane (the SheepWoolUndercoatLayer's
+    /// body-shaped overlay over the sheep_wool_undercoat.png the
+    /// SHEEP_WOOL_UNDERCOAT layer bakes — the dye-tinted coat the gate
+    /// renders on the non-white NON-baby sheep the layer's jumps speak,
+    /// the SHEARED dyed sheep's own color the wool fur's removal
+    /// uncovers) — loaded lazily beside the wool's, `None` = the
+    /// undercoat stays unseen while the bodies keep drawing (the
+    /// overlay's honesty its own lane).
+    pub sheep_wool_undercoat_model: Option<crate::avatar::SheepWoolUndercoatModel>,
     /// THE BABY LANE's own models (the AgeableMobRenderer's dedicated
     /// babyModel field the isBaby word picks — the BabySheepModel/
     /// BabyCowModel/BabyPigModel geometry the baby layer defs bake,
@@ -1255,6 +1264,7 @@ impl App {
             cow_model: None,
             sheep_model: None,
             sheep_wool_model: None,
+            sheep_wool_undercoat_model: None,
             baby_sheep_model: None,
             baby_sheep_wool_model: None,
             baby_cow_model: None,
@@ -8103,6 +8113,13 @@ impl App {
             self.sheep_wool_model =
                 crate::avatar::SheepWoolModel::load(std::path::Path::new("assets-cache/jar"));
         }
+        // THE UNDERCOAT's own lazy load (the SheepWoolUndercoatLayer's
+        // own texture — the same honesty: a failed undercoat keeps only
+        // the undercoat unseen, the bodies + the wool fur keep drawing)
+        if self.sheep_wool_undercoat_model.is_none() {
+            self.sheep_wool_undercoat_model =
+                crate::avatar::SheepWoolUndercoatModel::load(std::path::Path::new("assets-cache/jar"));
+        }
         // THE BABY LANE's own lazy loads (the AgeableMobRenderer's
         // babyModel field the isBaby word picks — each kind's honesty
         // its own lane, a failed baby skin keeps only the BABIES of
@@ -8135,6 +8152,11 @@ impl App {
         // the wool's honesty is ITS OWN lane: a failed wool skin keeps
         // only the FUR unseen (the sheared sheep never drew it anyway)
         let sheep_wool_model = self.sheep_wool_model.as_ref();
+        // the undercoat's honesty is ITS OWN lane: a failed undercoat
+        // keeps only the undercoat unseen (the sheared dyed sheep falls
+        // back to the pale skin the base lane drew before the lane
+        // existed)
+        let sheep_wool_undercoat_model = self.sheep_wool_undercoat_model.as_ref();
         // THE BABY LANE's own honesty (the AgeableMobRenderer's
         // babyModel field the isBaby word picks — each lane's own
         // `None` keeps only that kind's babies unseen)
@@ -8154,6 +8176,16 @@ impl App {
         // adult's the sheep_wool.png (each lane's own Some the
         // unwrap's honesty reads)
         let mut wool_overlay: Option<(Vec<crate::avatar::AvatarQuad>, [f32; 3], bool)> = None;
+        // THE UNDERCOAT LAYER's out-of-band carry (the
+        // SheepWoolUndercoatLayer's own render order — SheepRenderer's
+        // ctor bytecode adds the undercoat layer FIRST (loc 45..48),
+        // the wool fur SECOND (loc 62..65), so the undercoat draws
+        // after the body, BEFORE the fur): the Sheep arm sets it, the
+        // draw below rides it, the dye tint the same getWoolColor word
+        // the fur speaks; the GATE the layer's own jumps speak — the
+        // baby never, the white adult never, the dyed/jeb_ adult
+        // ALWAYS (the sheared bit no gate reads)
+        let mut undercoat_overlay: Option<(Vec<crate::avatar::AvatarQuad>, [f32; 3])> = None;
         // THE CROSSHAIR'S OWN VERDICT (the per-frame pick the
         // Minecraft.pick arms — crosshairPickEntity the shouldShowName's
         // second arm reads): ONE verdict per frame over the SAME chain
@@ -8274,6 +8306,27 @@ impl App {
                                     wool.quads(&state, feet, cam.yaw, cam.pitch),
                                     dye_tint,
                                     false,
+                                ));
+                            }
+                        }
+                        // THE UNDERCOAT LAYER's own gate (SheepWoolUndercoat
+                        // Layer.submit's law — the gate helper mob::sheep_
+                        // undercoat_shows speaks, the isSheared field NO
+                        // gate reads): the dyed/jeb_ adult the gate arms
+                        // stages the body-shaped coat, the tint the SAME
+                        // getWoolColor word the fur spoke; the sheared
+                        // dyed sheep the wool's skip leaves bare keeps its
+                        // color through the undercoat — the layer's whole
+                        // gameplay word
+                        if crate::mob::sheep_undercoat_shows(
+                            mob.is_baby(),
+                            mob.custom_name.as_deref() == Some("jeb_"),
+                            mob.wool_color,
+                        ) {
+                            if let Some(undercoat) = sheep_wool_undercoat_model {
+                                undercoat_overlay = Some((
+                                    undercoat.quads(&state, feet, cam.yaw, cam.pitch),
+                                    dye_tint,
                                 ));
                             }
                         }
@@ -8423,6 +8476,33 @@ impl App {
                 let [r, g, b, a] = pixel(u, v);
                 Some([r, g, b, a])
             });
+            // THE UNDERCOAT LAYER's own draw (the vanilla layer order —
+            // SheepRenderer's ctor bytecode adds the undercoat FIRST, the
+            // wool fur SECOND, so the body-shaped coat draws after the
+            // body, BEFORE the fur): the same hurt shade multiplies the
+            // dye tint the fur's draw multiplies (the flash covers the
+            // coat the same law speaks); the sampler the UNDERCOAT
+            // texture reads (the undercoat_overlay's Some only its own
+            // loaded model set)
+            if let Some((uc_quads, uc_tint)) = undercoat_overlay.take() {
+                let uc_sampled: Vec<crate::raster::SampledQuad> = uc_quads
+                    .iter()
+                    .map(|q| crate::raster::SampledQuad {
+                        pts: q.pts,
+                        uv: q.uv,
+                        tex: "",
+                        tint: [
+                            q.shade * shade * uc_tint[0],
+                            q.shade * shade * uc_tint[1],
+                            q.shade * shade * uc_tint[2],
+                        ],
+                    })
+                    .collect();
+                fb.draw_sampled_quads_lequal(ctx.proj.mul(&ctx.view), &uc_sampled, &mut |_tex, u, v| {
+                    let [r, g, b, a] = sheep_wool_undercoat_model.unwrap().pixel(u, v);
+                    Some([r, g, b, a])
+                });
+            }
             // THE WOOL LAYER's own draw (the vanilla layer order — the
             // fur renders AFTER the body, the flame feature after it):
             // the same hurt shade multiplies the dye tint (the flash

@@ -44,6 +44,20 @@ pub const SHEEP_JAR_PATH: &str = "assets/minecraft/textures/entity/sheep/sheep.p
 /// the DyeColor's textureDiffuseColor the clinit's own ints speak).
 pub const SHEEP_WOOL_JAR_PATH: &str = "assets/minecraft/textures/entity/sheep/sheep_wool.png";
 
+/// The jar entry the SHEEP's WOOL UNDERCOAT lives at (the
+/// SheepWoolUndercoatLayer's SHEEP_WOOL_UNDERCOAT_LOCATION static init —
+/// `textures/entity/sheep/sheep_wool_undercoat.png`, the body-shaped
+/// undercoat the sheared dyed sheep keeps showing: the layer's own gate
+/// renders it whenever the sheep is NOT white (the DyeColor.WHITE
+/// if_acmpeq the gate's bytecode speaks) — no isSheared read anywhere,
+/// the sheared dyed coat the wool fur's removal never erased). The
+/// mesh rides `SheepModel.createBodyLayer()` (javap LayerDefinitions:
+/// the SHEEP_WOOL_UNDERCOAT entry bakes the BODY layer, NOT a
+/// SheepFurModel.createFurLayer inflation — the undercoat hugs the
+/// body's own shape the base skin draws).
+pub const SHEEP_WOOL_UNDERCOAT_JAR_PATH: &str =
+    "assets/minecraft/textures/entity/sheep/sheep_wool_undercoat.png";
+
 /// The jar entries the BABY skins live at (the AgeableMobRenderer's
 /// dedicated baby lane — the renderer's `babyModel` field the isBaby
 /// word picks, javap SheepRenderer/CowRenderer/PigRenderer: the
@@ -204,6 +218,7 @@ pub const PIG_TEMPERATE_RUNTIME_PATH: &str = "entity/pig/pig_temperate.png";
 pub const COW_TEMPERATE_RUNTIME_PATH: &str = "entity/cow/cow_temperate.png";
 pub const SHEEP_RUNTIME_PATH: &str = "entity/sheep/sheep.png";
 pub const SHEEP_WOOL_RUNTIME_PATH: &str = "entity/sheep/sheep_wool.png";
+pub const SHEEP_WOOL_UNDERCOAT_RUNTIME_PATH: &str = "entity/sheep/sheep_wool_undercoat.png";
 pub const SHEEP_BABY_RUNTIME_PATH: &str = "entity/sheep/sheep_baby.png";
 pub const SHEEP_WOOL_BABY_RUNTIME_PATH: &str = "entity/sheep/sheep_wool_baby.png";
 pub const COW_TEMPERATE_BABY_RUNTIME_PATH: &str = "entity/cow/cow_temperate_baby.png";
@@ -249,6 +264,11 @@ pub struct SkinData {
     /// sha1 of the sheep's WOOL source PNG bytes (jar-verbatim
     /// integrity) — the fur overlay's texture the wool layer tints.
     pub sheep_wool_png_sha1: String,
+    /// sha1 of the sheep's WOOL UNDERCOAT source PNG bytes (jar-verbatim
+    /// integrity) — the body-shaped undercoat the undercoat layer tints
+    /// (the sheared dyed sheep's own coat the wool fur's removal never
+    /// erased).
+    pub sheep_wool_undercoat_png_sha1: String,
     /// sha1s of the BABY skins (jar-verbatim integrity) — the
     /// dedicated baby lane's textures the baby models unwrap (the
     /// AgeableMobRenderer's isBaby word the model swap arms, the
@@ -418,6 +438,23 @@ pub fn generate<R: std::io::Read + std::io::Seek>(archive: &mut zip::ZipArchive<
         wool_h
     );
     std::mem::drop(_wool_rgba);
+    // THE SHEEP WOOL UNDERCOAT (the SheepWoolUndercoatLayer's own
+    // texture — the body-shaped coat the sheared dyed sheep keeps): the
+    // same 64x32 layout the body layer bakes (javap LayerDefinitions:
+    // SHEEP_WOOL_UNDERCOAT = SheepModel.createBodyLayer()). The
+    // integrity sha1 the undercoat lane verifies before it draws.
+    let sheep_wool_undercoat_bytes =
+        read_entry(archive, SHEEP_WOOL_UNDERCOAT_JAR_PATH).context("read the sheep wool undercoat skin")?;
+    let sheep_wool_undercoat_png_sha1 = crate::util::sha1_hex(&sheep_wool_undercoat_bytes);
+    let (ucw, uch, _undercoat_rgba) =
+        decode_rgba(&sheep_wool_undercoat_bytes).context("decode the sheep wool undercoat skin")?;
+    anyhow::ensure!(
+        (ucw, uch) == (64, 32),
+        "the sheep wool undercoat must be the 64x32 layout (the SHEEP_WOOL_UNDERCOAT layer bakes the body), got {}x{}",
+        ucw,
+        uch
+    );
+    std::mem::drop(_undercoat_rgba);
     // THE BABY SKINS (the dedicated baby lane's own textures — the
     // AgeableMobRenderer's isBaby word the model swap arms): the baby
     // sheep and its wool ride the 64x32 layout the BabySheepModel's
@@ -636,6 +673,7 @@ pub fn generate<R: std::io::Read + std::io::Seek>(archive: &mut zip::ZipArchive<
         cow_png_sha1,
         sheep_png_sha1,
         sheep_wool_png_sha1,
+        sheep_wool_undercoat_png_sha1,
         sheep_baby_png_sha1,
         sheep_wool_baby_png_sha1,
         cow_baby_png_sha1,
@@ -765,6 +803,14 @@ pub fn emit(data: &SkinData) -> Result<String> {
     ));
     out.push_str(&format!(
         "pub const SHEEP_WOOL_RUNTIME_PATH: &str = \"{SHEEP_WOOL_RUNTIME_PATH}\";\n"
+    ));
+    out.push_str("\n/// The SHEEP WOOL UNDERCOAT (the undercoat layer's own texture),\n/// generated from the same jar: the source sha1 the undercoat lane\n/// verifies before it tints (javap SheepWoolUndercoatLayer: the\n/// SHEEP_WOOL_UNDERCOAT_LOCATION static — the body-shaped coat the\n/// gate renders when the sheep's dye ISN'T the WHITE default, the\n/// sheared coat the wool fur's removal never erased; LayerDefinitions\n/// bakes the BODY layer the base skin's mesh speaks).\n");
+    out.push_str(&format!(
+        "pub const SHEEP_WOOL_UNDERCOAT_PNG_SHA1: &str = \"{}\";\n",
+        data.sheep_wool_undercoat_png_sha1
+    ));
+    out.push_str(&format!(
+        "pub const SHEEP_WOOL_UNDERCOAT_RUNTIME_PATH: &str = \"{SHEEP_WOOL_UNDERCOAT_RUNTIME_PATH}\";\n"
     ));
     out.push_str("\n/// The BABY skins (the dedicated baby lane's own textures), generated\n/// from the same jar: the source sha1s the baby models verify before\n/// they draw (javap SheepRenderer's babyModel =\n/// BabySheepModel(bakeLayer(SHEEP_BABY)) + the 'sheep_baby.png'\n/// location, the SheepWoolLayer's babyModel + the\n/// SHEEP_WOOL_BABY_LOCATION, the cow/pig variant tables' _baby\n/// entries — each the OWN layout the baby layer defs speak:\n/// 64x32 sheep, 64x64 cow, 32x32 pig).\n");
     out.push_str(&format!(
@@ -1086,6 +1132,8 @@ mod tests {
         let expected_sheep_sha1 = crate::util::sha1_hex(&sheep);
         let sheep_wool = sheep_png();
         let expected_sheep_wool_sha1 = crate::util::sha1_hex(&sheep_wool);
+        let sheep_wool_undercoat = sheep_png();
+        let expected_sheep_wool_undercoat_sha1 = crate::util::sha1_hex(&sheep_wool_undercoat);
         let sheep_baby = sheep_png();
         let expected_sheep_baby_sha1 = crate::util::sha1_hex(&sheep_baby);
         let sheep_wool_baby = sheep_png();
@@ -1112,6 +1160,7 @@ mod tests {
             (COW_TEMPERATE_JAR_PATH, png.clone()),
             (SHEEP_JAR_PATH, sheep.clone()),
             (SHEEP_WOOL_JAR_PATH, sheep_wool.clone()),
+            (SHEEP_WOOL_UNDERCOAT_JAR_PATH, sheep_wool_undercoat.clone()),
             (SHEEP_BABY_JAR_PATH, sheep_baby.clone()),
             (SHEEP_WOOL_BABY_JAR_PATH, sheep_wool_baby.clone()),
             (COW_TEMPERATE_BABY_JAR_PATH, cow_baby.clone()),
@@ -1176,6 +1225,10 @@ mod tests {
         assert_eq!(
             data.sheep_wool_png_sha1, expected_sheep_wool_sha1,
             "the wool's own sha1 (the fur overlay's own 64x32 shape)"
+        );
+        assert_eq!(
+            data.sheep_wool_undercoat_png_sha1, expected_sheep_wool_undercoat_sha1,
+            "the undercoat's own sha1 (the body-shaped lane's 64x32)"
         );
         assert_eq!(
             data.sheep_baby_png_sha1, expected_sheep_baby_sha1,
@@ -1261,6 +1314,7 @@ mod tests {
         // the sheep wool: the sha1 and the runtime path land verbatim
         assert!(emitted.contains(&format!("pub const SHEEP_WOOL_PNG_SHA1: &str = \"{expected_sheep_wool_sha1}\";")));
         assert!(emitted.contains("pub const SHEEP_WOOL_RUNTIME_PATH: &str = \"entity/sheep/sheep_wool.png\";"));
+        assert!(emitted.contains("pub const SHEEP_WOOL_UNDERCOAT_RUNTIME_PATH: &str = \"entity/sheep/sheep_wool_undercoat.png\";"));
         // the baby skins: the sha1s and the runtime paths land verbatim
         assert!(emitted.contains(&format!("pub const SHEEP_BABY_PNG_SHA1: &str = \"{expected_sheep_baby_sha1}\";")));
         assert!(emitted.contains("pub const SHEEP_BABY_RUNTIME_PATH: &str = \"entity/sheep/sheep_baby.png\";"));

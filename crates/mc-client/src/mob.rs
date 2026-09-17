@@ -315,6 +315,30 @@ pub fn sheep_wool_tint(dye_id: u8) -> u32 {
     (ch(c >> 16) << 16) | (ch(c >> 8 & 0xFF) << 8) | ch(c & 0xFF)
 }
 
+/// THE UNDERCOAT'S OWN GATE (javap SheepWoolUndercoatLayer.submit's
+/// exact jumps — raw_disasm.py walks the opcodes: `isInvisible ifne ->
+/// return`, `isJebSheep ifne -> 27`, `woolColor WHITE if_acmpeq ->
+/// return`, `isBaby ifeq -> render`, `return`). Rendered-undercoat
+/// condition, in the state words the client keeps:
+/// `!isBaby && (isJebSheep || woolColor != WHITE)`.
+///
+/// THE LAW THE BYTECODE SPEAKS: the isSheared field is NEVER read (no
+/// isSheared getfield anywhere in the layer) — a SHEARED dyed sheep
+/// keeps its dye color through the undercoat the wool fur's removal
+/// uncovered, the lane's whole gameplay word. The WHITE sheep's
+/// undercoat the `if_acmpeq -> return` skips (DyeColor.WHITE == the
+/// wool byte 0 the SHEEP_WOOL_COLOR_MASK keeps — the base skin's pale
+/// look IS the white coat), the BABY the isBaby arm returns (the baby
+/// wool the sheep_wool_baby lane tints), the jeb_ sheep the
+/// isJebSheep short-circuit arms. THE INVISIBLE HALF: the layer's
+/// first gate reads SheepRenderState.isInvisible — a word the
+/// client's mob model never carries (no wire lane arms it), so the
+/// gate the client keeps is the visible half above, the honest shape
+/// the model speaks.
+pub fn sheep_undercoat_shows(is_baby: bool, is_jeb: bool, wool_color: u8) -> bool {
+    !is_baby && (is_jeb || (wool_color & SHEEP_WOOL_COLOR_MASK) != 0)
+}
+
 /// THE JEB_ RAINBOW'S OWN WORD (javap ColorLerper.getLerpedColor's
 /// law — the isJebSheep branch SheepRenderState.getWoolColor speaks,
 /// the input the state's ageInTicks): the 16-color cycle walks the
@@ -3932,6 +3956,43 @@ mod tests {
         assert_eq!(sheep_wool_tint(13), 0x00BF00, "the green's own fold");
         // ORANGE 0xFF681F: (191, 78, 23) the floor walk speaks
         assert_eq!(sheep_wool_tint(1), 0xBF4E17, "the orange's three floors");
+    }
+
+    /// THE UNDERCOAT'S OWN GATE (javap SheepWoolUndercoatLayer.submit's
+    /// exact jumps the helper's doc speaks): the dyed/jeb_ ADULT the
+    /// gate arms, the white adult the `if_acmpeq -> return` skips, the
+    /// baby the isBaby arm returns EVEN jeb_ (the 32 `ifeq -> 36` the
+    /// isBaby word gates, AFTER the jeb short-circuit lands), and the
+    /// SHEARED bit no gate reads — the byte the caller carries raw
+    /// (0x10 sheared + the dye) the mask law strips, the sheared dyed
+    /// sheep keeps its coat.
+    #[test]
+    fn the_undercoat_gate_walks_the_layer_jumps() {
+        // the WHITE adult (the wool byte 0 the default spawn speaks):
+        // the if_acmpeq arm returns — the base skin's pale look IS the
+        // white coat, the undercoat would be invisible beneath it
+        assert!(!sheep_undercoat_shows(false, false, 0), "the white adult the gate skips");
+        // the DYED adults (the red 14 / blue 11 the breed-mix staging
+        // speaks, any non-zero dye the table keeps): the gate arms
+        assert!(sheep_undercoat_shows(false, false, 14), "the red adult keeps its coat");
+        assert!(sheep_undercoat_shows(false, false, 11), "the blue adult keeps its coat");
+        assert!(sheep_undercoat_shows(false, false, 15), "the black adult too");
+        // the jeb_ ADULT: the isJebSheep short-circuit arms — the WHITE
+        // jeb_ sheep rides the rainbow the getWoolColor's lerped arm speaks
+        assert!(sheep_undercoat_shows(false, true, 0), "the jeb_ adult the short-circuit arms");
+        // the BABY: the isBaby arm returns — the DYED baby too (the
+        // gate order the bytecode speaks: the baby check is the LAST
+        // word, the jump the 32 `ifeq -> 36` keeps)
+        assert!(!sheep_undercoat_shows(true, false, 14), "the dyed baby never");
+        assert!(!sheep_undercoat_shows(true, true, 14), "the jeb_ baby never either");
+        // THE SHEARED BIT NO GATE READS: the wire byte carries the
+        // 0x10 sheared bit OVER the dye (the SHEEP_WOOL_COLOR_MASK the
+        // decode keeps strips it) — the SHEARED red sheep keeps its
+        // coat (the lane's whole gameplay word: the shear uncovers the
+        // dyed undercoat the fur's removal hid), the sheared WHITE
+        // sheep stays bare (the mask zero, the white skip the same)
+        assert!(sheep_undercoat_shows(false, false, 0x10 | 14), "the sheared red KEEPS its coat");
+        assert!(!sheep_undercoat_shows(false, false, 0x10), "the sheared white stays bare");
     }
 
     /// THE JEB_ RAINBOW'S OWN RAMP (javap ColorLerper.getLerpedColor +

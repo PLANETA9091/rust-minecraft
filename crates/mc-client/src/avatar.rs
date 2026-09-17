@@ -1027,6 +1027,85 @@ impl SheepWoolModel {
     }
 }
 
+/// The full SHEEP WOOL UNDERCOAT model — the 26.2
+/// `SheepWoolUndercoatLayer`'s own lane, bytecode-proven off the
+/// official jar (scripts/classfile_dump.py: the layer's <clinit> the
+/// SHEEP_WOOL_UNDERCOAT_LOCATION static speaks, the submit walk the
+/// gate's exact jumps keep). THE TEXTURE: `sheep_wool_undercoat.png`,
+/// the greyscale the wool color tints. THE MESH: NOT a fur inflation —
+/// LayerDefinitions bakes the SHEEP_WOOL_UNDERCOAT entry from
+/// `SheepModel.createBodyLayer()` (the SAME body layer the base skin's
+/// mesh speaks), so the undercoat hugs the body's own shape and rides
+/// `build_sheep_parts` (the walk SheepModel::quads speaks) — the
+/// SheepFurModel.createFurLayer inflate the wool fur keeps is a mesh
+/// the undercoat never grows.
+///
+/// THE GATE (SheepWoolUndercoatLayer.submit's own jumps): render iff
+/// `!isInvisible && !isBaby && (isJebSheep || woolColor != WHITE)` —
+/// the isSheared field is NEVER read (the bytecode keeps NO isSheared
+/// getfield), so a SHEARED dyed sheep keeps showing its dye color
+/// through the undercoat the wool fur's removal uncovered — the lane's
+/// whole gameplay word. The white sheep's undercoat the gate skips (the
+/// base skin's pale look IS the white coat), the baby the isBaby arm
+/// returns (the baby wool the sheep_wool_baby lane tints), the jeb_
+/// sheep the isJebSheep short-circuit arms (the rainbow the
+/// getWoolColor's ColorLerper arm speaks).
+pub struct SheepWoolUndercoatModel {
+    rgba: Vec<u8>,
+}
+
+impl SheepWoolUndercoatModel {
+    /// Load + sha1-verify the UNDERCOAT texture (the
+    /// SheepWoolUndercoatLayer's SHEEP_WOOL_UNDERCOAT_LOCATION).
+    /// `None` = the undercoat never renders (the same honesty every
+    /// lane speaks — a failed overlay keeps the body drawing).
+    pub fn load(root: &Path) -> Option<SheepWoolUndercoatModel> {
+        let bytes = std::fs::read(root.join(skin::SHEEP_WOOL_UNDERCOAT_RUNTIME_PATH)).ok()?;
+        let digest = sha1::Sha1::digest(&bytes);
+        if hex::encode(digest) != skin::SHEEP_WOOL_UNDERCOAT_PNG_SHA1 {
+            return None;
+        }
+        let (w, h, rgba) = decode_rgba(&bytes).ok()?;
+        if w != 64 || h != 32 || rgba.len() != 64 * 32 * 4 {
+            return None;
+        }
+        Some(SheepWoolUndercoatModel { rgba })
+    }
+
+    /// The undercoat pixel at (u, v) — the RGBA row-major words, v down
+    /// (the 64x32 layout the body layer bakes, the load verified).
+    pub fn pixel(&self, u: f32, v: f32) -> [u8; 4] {
+        let (uu, vv) = (u.clamp(0.0, 63.999_9), v.clamp(0.0, 31.999_9));
+        let x = uu as usize;
+        let y = vv as usize;
+        let o = (y * 64 + x) * 4;
+        [self.rgba[o], self.rgba[o + 1], self.rgba[o + 2], self.rgba[o + 3]]
+    }
+
+    /// THE POSED OVERLAY: the world-space textured quads of the
+    /// undercoat at `state` — the BODY mesh's own walk (the
+    /// `build_sheep_parts` chain SheepModel::quads speaks: the same
+    /// parts, the same entity folds, the same collect_part — one pose
+    /// law, body and undercoat), so the undercoat's quads EXACTLY
+    /// overlay the body's own quads the base skin draws beneath.
+    pub fn quads(
+        &self,
+        state: &SheepState,
+        feet: Vec3,
+        cam_yaw: f32,
+        cam_pitch: f32,
+    ) -> Vec<AvatarQuad> {
+        let parts = build_sheep_parts(state);
+        let (fold_point, fold_normal) = entity_folds(state.yaw_deg, state.death_time, 0.0, feet);
+        let mut out: Vec<AvatarQuad> = Vec::with_capacity(6 * 6);
+        let ident = Mat4::IDENT;
+        for part in &parts {
+            collect_part(part, &ident, &fold_point, &fold_normal, cam_yaw, cam_pitch, &mut out);
+        }
+        out
+    }
+}
+
 /// The ovine's fur parts, posed by `state` — the bytecode-proven mesh
 /// (the head fur's own z-shorter box, the body fur's 1.75 inflate, the
 /// leg furs' shared no-mirror builder), the SAME pose law the body
@@ -4022,6 +4101,123 @@ mod tests {
         assert_eq!(px[0], px[1], "the greyscale's own channels: {px:?}");
         assert_eq!(px[1], px[2], "the greyscale's own channels: {px:?}");
         assert_eq!(px[3], 255, "the texel is opaque");
+    }
+
+    /// THE UNDERCOAT'S MESH (javap LayerDefinitions clinit loc 2824:
+    /// `SHEEP_WOOL_UNDERCOAT -> SheepModel.createBodyLayer()` — the
+    /// SAME body layer the base skin's mesh speaks, NOT the
+    /// SheepFurModel.createFurLayer inflate the wool fur keeps): the
+    /// undercoat's quads EXACTLY overlay the body's own quads —
+    /// point-for-point at rest AND walked (the one pose law both
+    /// rides) — while the FUR mesh the same state arms stays the wider
+    /// inflated walk the wool test pins.
+    #[test]
+    fn the_sheep_undercoat_rides_the_body_mesh() {
+        let undercoat = SheepWoolUndercoatModel {
+            rgba: vec![200u8; 64 * 32 * 4],
+        };
+        let body = SheepModel {
+            rgba: vec![255u8; 64 * 32 * 4],
+        };
+        let feet = Vec3::new(0.0, 64.0, 0.0);
+        let rest = SheepState {
+            yaw_deg: 0.0,
+            head_yaw_off_deg: 0.0,
+            walk_pos: 0.0,
+            walk_speed: 0.0,
+            age_ticks: 40.0,
+            death_time: 0.0,
+            head_eat_position: 0.0,
+            head_eat_angle: 0.0,
+            age_scale: 1.0,
+        };
+        let uc = undercoat.quads(&rest, feet, 0.0, 0.0);
+        let bq = body.quads(&rest, feet, 0.0, 0.0);
+        assert_eq!(uc.len(), bq.len(), "the same 6 body parts x 6 faces");
+        for (uq, rq) in uc.iter().zip(bq.iter()) {
+            for (up, rp) in uq.pts.iter().zip(rq.pts.iter()) {
+                assert!(
+                    (up[0] - rp[0]).abs() < 1e-5
+                        && (up[1] - rp[1]).abs() < 1e-5
+                        && (up[2] - rp[2]).abs() < 1e-5,
+                    "the undercoat's corner rides the body's own walk: {up:?} vs {rp:?}"
+                );
+            }
+        }
+        // the walked + eating state: the SAME identity (the eat fold
+        // the head's pivot rides, the diagonal walk the legs swing —
+        // both meshes the one setupAnim law re-poses)
+        let moved = SheepState {
+            walk_pos: 1.7,
+            walk_speed: 0.9,
+            head_eat_position: 0.8,
+            head_eat_angle: 0.4,
+            ..rest
+        };
+        let uc2 = undercoat.quads(&moved, feet, 0.0, 0.0);
+        let bq2 = body.quads(&moved, feet, 0.0, 0.0);
+        assert_eq!(uc2.len(), bq2.len());
+        for (uq, rq) in uc2.iter().zip(bq2.iter()) {
+            for (up, rp) in uq.pts.iter().zip(rq.pts.iter()) {
+                assert!(
+                    (up[0] - rp[0]).abs() < 1e-5
+                        && (up[1] - rp[1]).abs() < 1e-5
+                        && (up[2] - rp[2]).abs() < 1e-5,
+                    "the undercoat's walked corner rides the body's own walk: {up:?} vs {rp:?}"
+                );
+            }
+        }
+        // the FUR the same state arms stays WIDER (the undercoat never
+        // the fur's mesh — the 1.75-inflated barrel the wool test pins
+        // rides past the body's own 8-texel barrel the undercoat hugs)
+        let fur = SheepWoolModel {
+            rgba: vec![255u8; 64 * 32 * 4],
+        };
+        let fur_quads = fur.quads(&rest, feet, 0.0, 0.0);
+        let max_x = |quads: &[AvatarQuad]| {
+            quads
+                .iter()
+                .flat_map(|q| q.pts.iter())
+                .map(|p| p[0])
+                .fold(f32::MIN, f32::max)
+        };
+        let (uc_max_x, fur_max_x) = (max_x(&uc), max_x(&fur_quads));
+        assert!(
+            fur_max_x > uc_max_x + 0.5 / 16.0,
+            "the fur's inflate rides past the body the undercoat hugs: {fur_max_x} vs {uc_max_x}"
+        );
+    }
+
+    /// THE UNDERCOAT LOADS — the real runtime cache decodes the 64x32
+    /// undercoat the sha1 the generated table pins (the
+    /// SheepWoolUndercoatLayer's SHEEP_WOOL_UNDERCOAT_LOCATION): the
+    /// head's top band the grey undercoat paints, the FACE HOLE the
+    /// undercoat keeps transparent (the sheared sheep's tan face the
+    /// body lane draws beneath shows through the cutout).
+    #[test]
+    #[ignore = "needs runtime assets (assets-cache/jar) from mc2rs-gen generate"]
+    fn the_sheep_undercoat_loads_sha1_verified() {
+        let mut dir = std::env::current_dir().unwrap();
+        let root = loop {
+            let cand = dir.join("assets-cache/jar");
+            if cand.exists() {
+                break cand;
+            }
+            dir = dir.parent().expect("the runtime root above").to_path_buf();
+        };
+        let uc =
+            SheepWoolUndercoatModel::load(&root).expect("the undercoat loads from the runtime cache");
+        // the face hole: the head's front-face unwrap rect (8,8)-(14,14)
+        // the 6x6x8 head speaks — the texel (11,11) the undercoat keeps
+        // TRANSPARENT (alpha 0, the PIL ground truth probe walked it)
+        let hole = uc.pixel(11.0, 11.0);
+        assert_eq!(hole[3], 0, "the face hole stays open: {hole:?}");
+        // the head's top band: the texel (8,0) the undercoat paints —
+        // the grey the dye tint multiplies, the opaque texel
+        let top = uc.pixel(8.0, 0.0);
+        assert_eq!(top[0], top[1], "the grey band's own channels: {top:?}");
+        assert_eq!(top[1], top[2], "the grey band's own channels: {top:?}");
+        assert_eq!(top[3], 255, "the texel is opaque");
     }
 
     #[test]

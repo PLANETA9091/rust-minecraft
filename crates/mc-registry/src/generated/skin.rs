@@ -103,6 +103,16 @@ pub const SHEEP_RUNTIME_PATH: &str = "entity/sheep/sheep.png";
 pub const SHEEP_WOOL_PNG_SHA1: &str = "0dc8efe62ffb5a76ee51517566b4d3772f01b996";
 pub const SHEEP_WOOL_RUNTIME_PATH: &str = "entity/sheep/sheep_wool.png";
 
+/// The SHEEP WOOL UNDERCOAT (the undercoat layer's own texture),
+/// generated from the same jar: the source sha1 the undercoat lane
+/// verifies before it tints (javap SheepWoolUndercoatLayer: the
+/// SHEEP_WOOL_UNDERCOAT_LOCATION static — the body-shaped coat the
+/// gate renders when the sheep's dye ISN'T the WHITE default, the
+/// sheared coat the wool fur's removal never erased; LayerDefinitions
+/// bakes the BODY layer the base skin's mesh speaks).
+pub const SHEEP_WOOL_UNDERCOAT_PNG_SHA1: &str = "23cb0f3945b7e90acfff137ff686bf7a2537533b";
+pub const SHEEP_WOOL_UNDERCOAT_RUNTIME_PATH: &str = "entity/sheep/sheep_wool_undercoat.png";
+
 /// The BABY skins (the dedicated baby lane's own textures), generated
 /// from the same jar: the source sha1s the baby models verify before
 /// they draw (javap SheepRenderer's babyModel =
