@@ -720,6 +720,19 @@ pub struct App {
     /// player, `None` while nothing does — the walk's own freedom the
     /// ride's silence keeps (the body's physics own the player again).
     pub net_ride: Option<crate::world_view::WireRide>,
+    /// THE WIRE'S OWN BOAT LANE (the networked world's hulls — the
+    /// boat-family entities the live refresh ships): the boats the
+    /// SERVER owns, the submit render the wood-textured models draw
+    /// (no physics, no lerp — the hull the snapshot's own word
+    /// carries). The ride lane's own anchor carries the player; this
+    /// lane carries the boat the camera sits in.
+    pub net_boats: Vec<crate::world_view::WireBoat>,
+    /// The boat render lane's own lazy model cache (the (raft, chest,
+    /// wood) key the hull's shape + texture speak): a failed load's
+    /// `None` stays cached (the session's own honesty — the drifted
+    /// extract never retried, the boat unseen).
+    pub boat_models:
+        std::collections::HashMap<(bool, bool, String), Option<crate::avatar::BoatModel>>,
     /// THE LAST SENT INPUT (the vanilla `LocalPlayer.lastSentInput`'s
     /// own law): the input record the wire last spoke — the CHANGE
     /// against it sends one ServerboundPlayerInputPacket, riding or
@@ -1444,6 +1457,8 @@ impl App {
             net_world: None,
             net_camera: None,
             net_ride: None,
+            net_boats: Vec::new(),
+            boat_models: std::collections::HashMap::new(),
             last_sent_input: mc_protocol::InputFlags::default(),
             world_is_network: false,
             world_skybox: Skybox::Overworld,
@@ -6985,6 +7000,18 @@ impl App {
     /// every refresh, the floor bridges the gap).
     const WIRE_FIRE_FLOOR: i32 = 6;
 
+    /// THE WIRE'S OWN BOAT LANE (the live refresh's hull list): the
+    /// boats the SERVER spawned land verbatim (the snapshot's own
+    /// poses — no merge state, the next refresh's word the truth).
+    /// The offline lane's world is never touched (the offline spawner's
+    /// boats are the wire's future own).
+    pub fn live_boats_updated(&mut self, boats: Vec<crate::world_view::WireBoat>) {
+        if !self.world_is_network {
+            return;
+        }
+        self.net_boats = boats;
+    }
+
     /// THE WIRE'S OWN MOB LANE (the Add Entity store's projection
     /// lands — the server's population at its word): existing ids arm
     /// the `lerpTo` walk (javap LivingEntity's remote law — the pose
@@ -8874,6 +8901,10 @@ impl App {
         // render: the body the detached camera watches — nothing in
         // first person)
         self.render_avatar(fb, &ctx, &cam);
+        // THE BOAT LANE's draw (the vanilla LevelRenderer's entity
+        // submit — the hulls the server spawned render in EVERY
+        // perspective, the ride lane's own vehicle the camera sits in)
+        self.render_boats(fb, &ctx, &cam);
         // THE MOB LANE's draw (the vanilla LevelRenderer's entity
         // submit — the zombies render in EVERY perspective, the
         // first-person's own-body gate never touches them; the day
@@ -9397,6 +9428,63 @@ impl App {
                     },
                 );
             }
+        }
+    }
+
+    /// THE BOAT LANE's draw (the vanilla LevelRenderer's entity submit
+    /// — AbstractBoatRenderer.submit's own walk): the server's hulls at
+    /// their snapshot poses, the wood-textured models the lazy cache
+    /// keeps. The headless scenes carry no boats (the goldens stay).
+    fn render_boats(
+        &mut self,
+        fb: &mut crate::raster::Framebuf,
+        ctx: &RenderCtx,
+        cam: &crate::camera::Camera,
+    ) {
+        if self.net_boats.is_empty() {
+            return; // the deterministic scenes carry no hulls — the goldens stay
+        }
+        // THE LAZY LOAD PASS (the same honesty the mob skins speak):
+        // each (raft, chest, wood) shape its own texture — a failed
+        // load's None stays cached, that hull unseen, the others draw
+        for boat in &self.net_boats {
+            let key = (boat.raft, boat.chest, boat.wood.clone());
+            if !self.boat_models.contains_key(&key) {
+                let model = crate::avatar::BoatModel::load(
+                    std::path::Path::new("assets-cache/jar"),
+                    boat.raft,
+                    boat.chest,
+                    &boat.wood,
+                );
+                self.boat_models.insert(key, model);
+            }
+        }
+        let pm = ctx.proj.mul(&ctx.view);
+        for boat in &self.net_boats {
+            let Some(model) = self
+                .boat_models
+                .get(&(boat.raft, boat.chest, boat.wood.clone()))
+                .and_then(|m| m.as_ref())
+            else {
+                continue; // the texture failed its sha1 — this hull stays unseen
+            };
+            // THE SUBMIT POSE (the renderer's own fold — no lerp, no
+            // death flip, the hull the snapshot's word carries)
+            let feet = Vec3::new(boat.x as f32, boat.y as f32, boat.z as f32);
+            let quads = model.quads(boat.yaw, boat.chest, feet, cam.yaw, cam.pitch);
+            let sampled: Vec<crate::raster::SampledQuad> = quads
+                .iter()
+                .map(|q| crate::raster::SampledQuad {
+                    pts: q.pts,
+                    uv: q.uv,
+                    tex: "",
+                    tint: [q.shade, q.shade, q.shade],
+                })
+                .collect();
+            fb.draw_sampled_quads(pm, &sampled, &mut |_tex, u, v| {
+                let [r, g, b, a] = model.pixel(u, v);
+                Some([r, g, b, a])
+            });
         }
     }
 
@@ -24474,6 +24562,57 @@ mod tests {
             b.y != 64.2 || b.vy != 0.0,
             "the body's own physics resumed after the ride dropped"
         );
+    }
+
+    #[test]
+    fn the_boat_lane_lands_verbatim_and_gates_the_offline_world() {
+        use crate::world_view::WireBoat;
+        let mut app = App::new(3);
+        // THE OFFLINE GATE: the lane never lands (the offline world's
+        // lanes the client's own authority keeps)
+        app.live_boats_updated(vec![WireBoat {
+            id: 7,
+            x: 1.0,
+            y: 2.0,
+            z: 3.0,
+            yaw: 90.0,
+            raft: false,
+            chest: false,
+            wood: "oak".to_string(),
+        }]);
+        assert!(
+            app.net_boats.is_empty(),
+            "the offline world keeps the hulls out"
+        );
+
+        // THE NETWORK WORLD: the hulls land verbatim (the snapshot's
+        // own word — both shapes one list speaks)
+        app.net_world = Some(air_net_world(2, 0));
+        app.enter_network_world(None, Skybox::Overworld, None, None);
+        let boats = vec![
+            WireBoat {
+                id: 7,
+                x: 10.0,
+                y: 64.0,
+                z: -20.0,
+                yaw: 90.0,
+                raft: false,
+                chest: false,
+                wood: "oak".to_string(),
+            },
+            WireBoat {
+                id: 9,
+                x: 0.0,
+                y: 62.5,
+                z: 5.0,
+                yaw: 0.0,
+                raft: true,
+                chest: true,
+                wood: "bamboo".to_string(),
+            },
+        ];
+        app.live_boats_updated(boats.clone());
+        assert_eq!(app.net_boats, boats, "the hulls land verbatim");
     }
 }
 

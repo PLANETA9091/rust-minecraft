@@ -129,6 +129,7 @@ fn run_join(
                 [(i32, i32); 9],
                 crate::world_view::HealthView,
                 Vec<crate::world_view::WireMob>,
+                Vec<crate::world_view::WireBoat>,
                 Vec<crate::world_view::WireVoice>,
                 Vec<crate::world_view::WireWorldVoice>,
                 Option<crate::world_view::WireSidebar>,
@@ -528,6 +529,10 @@ fn run_join(
                                     // the vitals — the mobs the server
                                     // spawned stream to the mob lane
                                     upd.mobs,
+                                    // the hulls ride with the population —
+                                    // the boats the server spawned stream to
+                                    // the boat lane
+                                    upd.boats,
                                     // the mobs' voices ride with the
                                     // population — the sounds the server
                                     // played stream to the voice lane
@@ -660,6 +665,7 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
                 [(i32, i32); 9],
                 crate::world_view::HealthView,
                 Vec<crate::world_view::WireMob>,
+                Vec<crate::world_view::WireBoat>,
                 Vec<crate::world_view::WireVoice>,
                 Vec<crate::world_view::WireWorldVoice>,
                 Option<crate::world_view::WireSidebar>,
@@ -945,6 +951,7 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
                     hotbar,
                     health,
                     mobs,
+                    boats,
                     voices,
                     world_voices,
                     sidebar,
@@ -977,6 +984,11 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
                     // lerpTo law walks — the zombies the server spawned
                     // render at its word)
                     app.live_mobs_updated(mobs);
+                    // the boat lane beside the mob lane's: the hulls the
+                    // SERVER spawned land verbatim (the wood-textured
+                    // models the submit render draws — the ride lane's
+                    // own vehicle the camera sits in)
+                    app.live_boats_updated(boats);
                     // the voice lane beside the mob lane's: the sounds
                     // the SERVER played for its mobs land at the named
                     // entities (the entity lookup's own gate — the

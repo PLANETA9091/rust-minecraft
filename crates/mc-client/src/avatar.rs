@@ -2045,6 +2045,399 @@ fn build_posed_parts(state: &AvatarState) -> Vec<Part> {
 }
 
 // ---------------------------------------------------------------------------
+// THE BOAT MODEL (AbstractBoatRenderer.submit + the model/object/boat family,
+// the 26.2 jar's own bytecode): the boat entity's hull the world draws — the
+// BoatModel's five hull parts (bottom/back/front/right/left) + the two
+// paddles, the RaftModel's two-plank bottom (the bamboo family's own hull),
+// the chest variant's three cubes riding the chest texture's own UV band.
+// ---------------------------------------------------------------------------
+
+/// The boat textures' own sha1 table (the 26.2 jar's verbatim bytes, hashed
+/// by scripts: `sha1sum` over the extracted entity/boat + entity/chest_boat
+/// PNGs) — the load gate every other model speaks (a drifted extract keeps
+/// the boat unseen, the honest missing-asset law). The wood the registry
+/// named resolves here: an unknown wood (`None`) never draws.
+fn boat_texture_sha1(chest: bool, wood: &str) -> Option<&'static str> {
+    if chest {
+        Some(match wood {
+            "acacia" => "66035134c4a6331af983a9608b3c7ecd00bb0572",
+            "bamboo" => "14e6b35ecd5c2285c866286d5d3782eb43ecdfec",
+            "birch" => "c9e7a72e030ec598fb1871f322c0e74d992a46eb",
+            "cherry" => "df74908ef192bba9bb2748dcdf9c2befbf2d718f",
+            "dark_oak" => "fe1ff0360e30cf34241f9b8849a325cc54e025d4",
+            "jungle" => "bdf9554c065cf91e0e9322a10457e1b1382f1adc",
+            "mangrove" => "884bcf6c6b57f512a1a05ac61e232f5b0de15c9a",
+            "oak" => "4bd1b1b519a6d1a626e77f8de476cd13d07ac0cc",
+            "pale_oak" => "b5ff45affe5766ba8f89e9b328595296f0711f33",
+            "spruce" => "5c32e44c3718fc6cb6430758097ee13fb126705a",
+            _ => return None,
+        })
+    } else {
+        Some(match wood {
+            "acacia" => "7ecc55e150d2b789a1acf0fe0ae161e599bfccbb",
+            "bamboo" => "5047fea8d58093e9bed42cc45b8c3c122b6f73df",
+            "birch" => "cdf73b9d074b06629dfa7a37519a28a6247252a6",
+            "cherry" => "2407397c8e5dc242adf4ffa155a4e980118dc6ae",
+            "dark_oak" => "501ad53fd32e2f055f6d110217eb50eb2f76fb0d",
+            "jungle" => "1d05d12cc638136825a7ff395370e09f716e6a4f",
+            "mangrove" => "738326734408547ceb76c54692bfe56cc9f29ef3",
+            "oak" => "97b86c0d78d778d8976f08b6051ed6615c616852",
+            "pale_oak" => "0d20521e5af0b06ed79cdd2f92aec9eb46066d94",
+            "spruce" => "03a8ff8cdb7ce79848533cdfac09a2735c738119",
+            _ => return None,
+        })
+    }
+}
+
+/// THE SUBMIT FOLD'S OWN LIFT (the AbstractBoatRenderer.submit bytecode's
+/// first pose word: `PoseStack.translate(0.0, 0.375, 0.0)` — the hull rides
+/// 6/16 of a block above the entity's origin).
+pub const BOAT_SUBMIT_LIFT: f32 = 0.375;
+
+/// THE PADDLE REST POSE (AbstractBoatModel.animatePaddle's rowingTime-0
+/// word): the client's paddlePositions clock the vanilla client's own boat
+/// tick feeds — the wire never speaks it, the honest rest is rowingTime 0:
+/// `xRot = clampedLerp((sin(0)+1)/2, -60°, -15°)` = the -39.274° midpoint,
+/// `yRot = clampedLerp(0.5, -45°, 45°)` = 0 (the right paddle the side-1
+/// fold mirrors: `π − yRot`), the PartPose zRot (+11.25°) the walk never
+/// writes survives. The ANIMATED swing (a rowing mob or the client's own
+/// physics clock) stays a named future lane — the wire speaks the paddle
+/// booleans (DATA_ID_PADDLE_LEFT/RIGHT), the phase it never does.
+fn boat_paddle_rest() -> (f32, f32) {
+    const PI_F: f32 = std::f32::consts::PI;
+    // Mth.clampedLerp(delta, start, end): start + delta*(end-start)
+    let x = -1.0471975803375244 + 0.5 * (-0.2617993950843811 - -1.0471975803375244);
+    (x, PI_F)
+}
+
+/// The full boat/raft model — the 26.2 `BoatModel`/`RaftModel` +
+/// `AbstractBoatModel` bytecode's own numbers (scripts/classfile_dump.py:
+/// the addCommonParts + createChestBoatModel + createChestRaftModel walks),
+/// textured by the boat/chest_boat PNG the wood named. The fold is the
+/// renderer's OWN chain (`submit`): T(0, 0.375, 0) · R_y(180 − yRot) ·
+/// S(−1,−1,1) · R_y(90°) — the living models' −1.501 line and death flip
+/// the boat never speaks.
+pub struct BoatModel {
+    rgba: Vec<u8>,
+    /// the texture's own band (the 64-tall boat layout, the 128-tall
+    /// chest band — the pixel sampler's row clamp the layout speaks)
+    tex_h: usize,
+    /// the raft hull (the RaftModel's two-plank bottom, no rails — the
+    /// bamboo family's own geometry the model kind names)
+    raft: bool,
+}
+
+impl BoatModel {
+    /// Load + sha1-verify the boat texture the wood named (`entity/boat/`
+    /// for the bare family, `entity/chest_boat/` for the chest variant —
+    /// the boat PNGs 128×64, the chest band the 128×128 layout speaks).
+    /// `None` = the boat never renders (the same honesty the mob paths
+    /// speak: the renderer must not lie about its data).
+    pub fn load(root: &Path, raft: bool, chest: bool, wood: &str) -> Option<BoatModel> {
+        let sha = boat_texture_sha1(chest, wood)?;
+        let rel = if chest {
+            format!("entity/chest_boat/{wood}.png")
+        } else {
+            format!("entity/boat/{wood}.png")
+        };
+        let bytes = std::fs::read(root.join(rel)).ok()?;
+        let digest = sha1::Sha1::digest(&bytes);
+        if hex::encode(digest) != sha {
+            return None;
+        }
+        let (w, h, rgba) = decode_rgba(&bytes).ok()?;
+        let (ew, eh): (u32, u32) = if chest { (128, 128) } else { (128, 64) };
+        if w != ew || h != eh || rgba.len() != (ew * eh * 4) as usize {
+            return None;
+        }
+        Some(BoatModel {
+            rgba,
+            tex_h: eh as usize,
+            raft,
+        })
+    }
+
+    /// The texture pixel at (u, v) — the RGBA row-major words, v down
+    /// (the row the texture's own height clamps — the 64 and the 128
+    /// bands one sampler speaks).
+    pub fn pixel(&self, u: f32, v: f32) -> [u8; 4] {
+        let (uu, vv) = (
+            u.clamp(0.0, 127.999_9),
+            v.clamp(0.0, self.tex_h as f32 - 0.000_1),
+        );
+        let x = uu as usize;
+        let y = vv as usize;
+        let o = (y * 128 + x) * 4;
+        [self.rgba[o], self.rgba[o + 1], self.rgba[o + 2], self.rgba[o + 3]]
+    }
+
+    /// THE SUBMIT RENDER: the world-space textured quads of the boat at
+    /// `feet` — the submit fold above (R_y(90) first, the S flip, the
+    /// R_y(180 − yaw), the 0.375 lift), the part tree the model kind and
+    /// the chest bit pick. `cam_yaw/cam_pitch` speak the view rotation
+    /// the entity diffuse folds (the same mix_light every entity rides).
+    pub fn quads(
+        &self,
+        yaw_deg: f32,
+        chest: bool,
+        feet: Vec3,
+        cam_yaw: f32,
+        cam_pitch: f32,
+    ) -> Vec<AvatarQuad> {
+        let parts = build_boat_parts(self.raft, chest);
+        let (fold_point, fold_normal) = boat_folds(yaw_deg, feet);
+        let mut out: Vec<AvatarQuad> = Vec::with_capacity(72);
+        let ident = Mat4::IDENT;
+        for part in &parts {
+            collect_part(part, &ident, &fold_point, &fold_normal, cam_yaw, cam_pitch, &mut out);
+        }
+        out
+    }
+}
+
+/// THE SUBMIT FOLD (AbstractBoatRenderer.submit's own pose chain), folded
+/// per resolved model point: R_y(90°) first (the innermost mulPose — the
+/// model's +x axis the fold swings to the bow), then the S(−1,−1,1) flip
+/// (the entity models' +y-down the flip stands up), then R_y(180 − yRot)
+/// (the joml YP fold the living chain shares), then the 0.375 lift + the
+/// feet translation. No death flip, no −1.501 line — the boat's own words.
+fn boat_folds(
+    yaw_deg: f32,
+    feet: Vec3,
+) -> (
+    impl Fn([f32; 3]) -> [f32; 3],
+    impl Fn([f32; 3]) -> [f32; 3],
+) {
+    let a = (180.0f32 - yaw_deg).to_radians();
+    let (sa, ca) = a.sin_cos();
+    let lift = BOAT_SUBMIT_LIFT;
+    let fold_point = move |p: [f32; 3]| -> [f32; 3] {
+        // R_y(90°): x' = x·cos90 + z·sin90 = z; z' = −x·sin90 + z·cos90 = −x
+        let (qx, qy, qz) = (p[2], p[1], -p[0]);
+        // the S(−1,−1,1) flip
+        let (sx, sy, sz) = (-qx, -qy, qz);
+        // the R_y(180 − yaw) fold
+        let px = sx * ca + sz * sa;
+        let pz = -sx * sa + sz * ca;
+        [
+            feet.x + px,
+            feet.y as f32 + sy + lift,
+            feet.z + pz,
+        ]
+    };
+    let fold_normal = move |n: [f32; 3]| -> [f32; 3] {
+        let (qx, qy, qz) = (n[2], n[1], -n[0]);
+        let (sx, sy, sz) = (-qx, -qy, qz);
+        [sx * ca + sz * sa, sy, -sx * sa + sz * ca]
+    };
+    (fold_point, fold_normal)
+}
+
+/// THE HULL PARTS (the addCommonParts walk's own boxes — every number the
+/// bytecode's constant pool speaks): the boat's five-piece hull + the
+/// raft's two-plank bottom (no rails — the bamboo family's own open deck),
+/// the paddles at the rest pose, the chest variant's three cubes riding
+/// the chest UV band (the lid/lock texOffs (0,59), the bottom (0,76)).
+fn build_boat_parts(raft: bool, chest: bool) -> Vec<Part> {
+    const PI_F: f32 = std::f32::consts::PI;
+    const HALF_PI: f32 = 1.5707963705062866;
+    const PADDLE_TILT: f32 = 0.19634954631328583;
+    let (pad_x, pad_y_right) = boat_paddle_rest();
+    let mut parts: Vec<Part> = Vec::with_capacity(8);
+    if raft {
+        // RaftModel.addCommonParts 'bottom': TWO stacked planks, the
+        // wider 28x20x4 over the 28x16x4, pivot (0, −2.1, 1), xRot ≈ π/2
+        parts.push(Part {
+            pivot: [0.0, -2.0999999046325684, 1.0],
+            x_rot: 1.5707999467849731,
+            y_rot: 0.0,
+            z_rot: 0.0,
+            cubes: vec![
+                Cube {
+                    tex: (0.0, 0.0),
+                    origin: [-14.0, -11.0, -4.0],
+                    size: [28.0, 20.0, 4.0],
+                    inflate: 0.0,
+                    mirror: false,
+                },
+                Cube {
+                    tex: (0.0, 0.0),
+                    origin: [-14.0, -9.0, -8.0],
+                    size: [28.0, 16.0, 4.0],
+                    inflate: 0.0,
+                    mirror: false,
+                },
+            ],
+            children: vec![],
+        });
+    } else {
+        // BoatModel 'bottom': the 28x16x3 floor slab, pivot (0, 3, 1)
+        parts.push(Part {
+            pivot: [0.0, 3.0, 1.0],
+            x_rot: HALF_PI,
+            y_rot: 0.0,
+            z_rot: 0.0,
+            cubes: vec![Cube {
+                tex: (0.0, 0.0),
+                origin: [-14.0, -9.0, -3.0],
+                size: [28.0, 16.0, 3.0],
+                inflate: 0.0,
+                mirror: false,
+            }],
+            children: vec![],
+        });
+        // 'back': the stern rail, pivot (−15, 4, 4), yRot 3π/2
+        parts.push(Part {
+            pivot: [-15.0, 4.0, 4.0],
+            x_rot: 0.0,
+            y_rot: 4.71238899230957,
+            z_rot: 0.0,
+            cubes: vec![Cube {
+                tex: (0.0, 19.0),
+                origin: [-13.0, -7.0, -1.0],
+                size: [18.0, 6.0, 2.0],
+                inflate: 0.0,
+                mirror: false,
+            }],
+            children: vec![],
+        });
+        // 'front': the bow rail, pivot (15, 4, 0), yRot π/2
+        parts.push(Part {
+            pivot: [15.0, 4.0, 0.0],
+            x_rot: 0.0,
+            y_rot: HALF_PI,
+            z_rot: 0.0,
+            cubes: vec![Cube {
+                tex: (0.0, 27.0),
+                origin: [-8.0, -7.0, -1.0],
+                size: [16.0, 6.0, 2.0],
+                inflate: 0.0,
+                mirror: false,
+            }],
+            children: vec![],
+        });
+        // 'right': the starboard rail, pivot (0, 4, −9), yRot π
+        parts.push(Part {
+            pivot: [0.0, 4.0, -9.0],
+            x_rot: 0.0,
+            y_rot: PI_F,
+            z_rot: 0.0,
+            cubes: vec![Cube {
+                tex: (0.0, 35.0),
+                origin: [-14.0, -7.0, -1.0],
+                size: [28.0, 6.0, 2.0],
+                inflate: 0.0,
+                mirror: false,
+            }],
+            children: vec![],
+        });
+        // 'left': the port rail, pivot (0, 4, 9), yRot 0
+        parts.push(Part {
+            pivot: [0.0, 4.0, 9.0],
+            x_rot: 0.0,
+            y_rot: 0.0,
+            z_rot: 0.0,
+            cubes: vec![Cube {
+                tex: (0.0, 43.0),
+                origin: [-14.0, -7.0, -1.0],
+                size: [28.0, 6.0, 2.0],
+                inflate: 0.0,
+                mirror: false,
+            }],
+            children: vec![],
+        });
+    }
+    // THE PADDLES (the AbstractBoatModel.setupAnim's rowingTime-0 rest the
+    // client's own clock never rides — the shaft + the blade each): the
+    // boat's texOffs (62,0)/(62,20) at pivot y −5, the raft's (0,24)/(40,24)
+    // at y −4, the right paddle's yRot the side-1 fold's π − 0
+    let (tex_l, tex_r, pad_pivot_y) = if raft {
+        ((0.0f32, 24.0f32), (40.0f32, 24.0f32), -4.0f32)
+    } else {
+        ((62.0f32, 0.0f32), (62.0f32, 20.0f32), -5.0f32)
+    };
+    let paddle = |tex: (f32, f32), pivot_y: f32, pivot_z: f32, y_rot: f32| Part {
+        pivot: [3.0, pivot_y, pivot_z],
+        x_rot: pad_x,
+        y_rot,
+        z_rot: PADDLE_TILT,
+        cubes: vec![
+            Cube {
+                tex,
+                origin: [-1.0, 0.0, -5.0],
+                size: [2.0, 2.0, 18.0],
+                inflate: 0.0,
+                mirror: false,
+            },
+            Cube {
+                tex,
+                origin: [-1.0010000467300415, -3.0, 8.0],
+                size: [1.0, 6.0, 7.0],
+                inflate: 0.0,
+                mirror: false,
+            },
+        ],
+        children: vec![],
+    };
+    parts.push(paddle(tex_l, pad_pivot_y, 9.0, 0.0));
+    parts.push(paddle(tex_r, pad_pivot_y, -9.0, pad_y_right));
+    // THE CHEST VARIANT (createChestBoatModel / createChestRaftModel's own
+    // three cubes): the bottom (0,76) 12x8x12, the lid (0,59) 12x4x12, the
+    // lock (0,59) 2x4x1 — all yRot −π/2, the pivots the model kind's own
+    // boat (−5/−9/−6) vs raft (−10.1/−14.1/−11.1) walk speaks
+    if chest {
+        let (by, ly, ky) = if raft {
+            (-10.100000381469727f32, -14.100000381469727f32, -11.100000381469727f32)
+        } else {
+            (-5.0f32, -9.0f32, -6.0f32)
+        };
+        parts.push(Part {
+            pivot: [-2.0, by, -6.0],
+            x_rot: 0.0,
+            y_rot: -HALF_PI,
+            z_rot: 0.0,
+            cubes: vec![Cube {
+                tex: (0.0, 76.0),
+                origin: [0.0, 0.0, 0.0],
+                size: [12.0, 8.0, 12.0],
+                inflate: 0.0,
+                mirror: false,
+            }],
+            children: vec![],
+        });
+        parts.push(Part {
+            pivot: [-2.0, ly, -6.0],
+            x_rot: 0.0,
+            y_rot: -HALF_PI,
+            z_rot: 0.0,
+            cubes: vec![Cube {
+                tex: (0.0, 59.0),
+                origin: [0.0, 0.0, 0.0],
+                size: [12.0, 4.0, 12.0],
+                inflate: 0.0,
+                mirror: false,
+            }],
+            children: vec![],
+        });
+        parts.push(Part {
+            pivot: [-1.0, ky, -1.0],
+            x_rot: 0.0,
+            y_rot: -HALF_PI,
+            z_rot: 0.0,
+            cubes: vec![Cube {
+                tex: (0.0, 59.0),
+                origin: [0.0, 0.0, 0.0],
+                size: [2.0, 4.0, 1.0],
+                inflate: 0.0,
+                mirror: false,
+            }],
+            children: vec![],
+        });
+    }
+    parts
+}
+
+// ---------------------------------------------------------------------------
 // THE ARMOR LAYERS (HumanoidArmorLayer.renderArmorPiece, the 26.2 jar's own
 // bytecode): the store's worn piece rides the humanoid armor model — the
 // SAME createMesh part tree the skin speaks, re-cubed by the slot's
@@ -3455,6 +3848,108 @@ mod tests {
             (max_x - (feet.x as f32 + 5.0 / 16.0)).abs() < 1e-4,
             "the body's east face: {max_x}"
         );
+    }
+
+    /// THE BOAT'S OWN EXTENTS (the AbstractBoatRenderer.submit fold's
+    /// own words): the five-piece hull + two paddles speak 54 quads,
+    /// the chest variant's three cubes +18, the raft's two-plank
+    /// bottom (no rails) 36 — and the hull floor the RIDE HEIGHT's
+    /// own level (the passenger attachment y the height/3 law keeps
+    /// = the model's floor slab the S flip stands up).
+    #[test]
+    fn the_boat_mesh_spans_the_hull_and_rides_the_lift() {
+        let boat = BoatModel {
+            rgba: vec![255u8; 128 * 64 * 4],
+            tex_h: 64,
+            raft: false,
+        };
+        let feet = Vec3::new(10.0, 64.0, -20.0);
+        let quads = boat.quads(0.0, false, feet, 0.0, 0.0);
+        assert_eq!(quads.len(), 54, "5 hull parts + 2 paddles, 6 quads a cube");
+        let chest = boat.quads(0.0, true, feet, 0.0, 0.0);
+        assert_eq!(chest.len(), 72, "the chest variant's three cubes ride +18");
+        let raft = BoatModel {
+            rgba: vec![255u8; 128 * 64 * 4],
+            tex_h: 64,
+            raft: true,
+        };
+        let raft_quads = raft.quads(0.0, false, feet, 0.0, 0.0);
+        assert_eq!(raft_quads.len(), 36, "the two-plank bottom, no rails");
+        let raft_chest = raft.quads(0.0, true, feet, 0.0, 0.0);
+        assert_eq!(raft_chest.len(), 54, "the chest raft rides +18 too");
+
+        // THE HULL'S VERTICAL SPAN (the model numbers' own word): the
+        // bottom slab dips to the entity origin (the model y −9 the
+        // +0.375 lift cancels), the rails' top at +0.5625 — the 9/16
+        // the EntityType's height constant speaks. The PADDLES dip a
+        // whisker below (the blades the water's own lane keeps — the
+        // rest pose's xRot −0.6545 the rowingTime-0 fold speaks)
+        let mut min_y = f32::MAX;
+        let mut max_y = f32::MIN;
+        for q in &quads {
+            for p in q.pts {
+                min_y = min_y.min(p[1]);
+                max_y = max_y.max(p[1]);
+            }
+        }
+        assert!(
+            min_y > 63.95 && min_y <= 64.0 + 1e-4,
+            "the keel rides the origin, the paddles dip below: {min_y}"
+        );
+        // the PADDLE HANDLES rise above the rails (the held oar the
+        // rest pose keeps — the rowingTime-0 fold's own silhouette)
+        assert!(
+            max_y > 64.0 + 9.0 / 16.0 && max_y < 65.0,
+            "the handles above the gunwale: {max_y}"
+        );
+        // the RAILS' own top rides exactly 9/16 above (the hull's own
+        // word — the membership pin the extremes' walk keeps)
+        let rail_top = quads
+            .iter()
+            .flat_map(|q| q.pts)
+            .find(|p| (p[1] - (64.0 + 9.0 / 16.0)).abs() < 1e-4);
+        assert!(rail_top.is_some(), "the rails' top rides 9/16 above");
+
+        // THE FOLD'S OWN CORNER PIN (the 'bottom' part's cube corner
+        // (−14,−9,−3) at yaw 0): Rx(π/2) + the pivot (0,3,1) lands
+        // model (−0.875, 0.375, −0.5); R_y(90)·S·R_y(180−0) folds it
+        // to world (feet − 0.5, feet, feet − 0.875)
+        let pin = quads
+            .iter()
+            .flat_map(|q| q.pts)
+            .find(|p| {
+                (p[0] - 9.5).abs() < 1e-4 && (p[1] - 64.0).abs() < 1e-4 && (p[2] + 20.875).abs() < 1e-4
+            });
+        assert!(pin.is_some(), "the keel corner rides the submit fold");
+    }
+
+    /// THE BOAT TEXTURE GATE (the load's own honesty — the runtime
+    /// extract the sha1s verify): the oak loads (128×64), the chest
+    /// band loads (128×128), the unknown wood refuses.
+    #[test]
+    #[ignore = "needs runtime assets (assets-cache/jar) from mc2rs-gen generate"]
+    fn the_boat_model_loads_the_wood_gate() {
+        let mut dir = std::env::current_dir().unwrap();
+        let root = loop {
+            let cand = dir.join("assets-cache/jar");
+            if cand.exists() {
+                break cand;
+            }
+            dir = dir.parent().expect("the runtime root above").to_path_buf();
+        };
+        let oak = BoatModel::load(&root, false, false, "oak").expect("the oak texture loads");
+        let quads = oak.quads(0.0, false, Vec3::new(0.0, 0.0, 0.0), 0.0, 0.0);
+        assert_eq!(quads.len(), 54, "the real texture draws the real hull");
+        let chest_oak = BoatModel::load(&root, false, true, "oak").expect("the chest band loads");
+        let chest_quads = chest_oak.quads(0.0, true, Vec3::new(0.0, 0.0, 0.0), 0.0, 0.0);
+        assert_eq!(chest_quads.len(), 72, "the chest cubes ride the real band");
+        assert!(
+            BoatModel::load(&root, false, false, "unknown_wood").is_none(),
+            "the unknown wood refuses"
+        );
+        let raft = BoatModel::load(&root, true, false, "bamboo").expect("the raft loads");
+        let raft_quads = raft.quads(0.0, false, Vec3::new(0.0, 0.0, 0.0), 0.0, 0.0);
+        assert_eq!(raft_quads.len(), 36, "the plank deck the raft speaks");
     }
 
     /// THE QUADRUPED WALK (javap QuadrupedModel.setupAnim's own fold):

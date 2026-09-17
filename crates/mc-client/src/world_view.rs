@@ -285,6 +285,11 @@ pub struct SnapshotView {
     /// model; every other type id stays honest data the screen
     /// doesn't draw yet.
     pub mobs: Vec<WireMob>,
+    /// The wire's BOAT population (see [`WireBoat`]) — the boat-family
+    /// entities the registry named, the hulls the render lane draws.
+    /// The empty list the honest silence (no boat the server spawned),
+    /// the shape every lane rides.
+    pub boats: Vec<WireBoat>,
     /// The wire mobs' PENDING VOICES — the Entity Sound mailbox the
     /// model resolved (see [`WireVoice`]): the sounds the SERVER
     /// played for its mobs, shipped once with the refresh that
@@ -519,6 +524,91 @@ pub fn ride_view(model: &WorldModel) -> Option<WireRide> {
         feet_z: vehicle.z + az,
         vehicle_yaw: vehicle.y_rot,
     })
+}
+
+/// One wire boat as the renderer consumes it — the Add Entity snapshot's
+/// pose verbatim (the server's own word, the same lane the mobs ride) plus
+/// the boat family's own shape bits the registry name parses: the model
+/// kind (`_raft` the RaftModel's two-plank deck picks, `_boat` the
+/// BoatModel's five-piece hull), the chest bit (`_chest_` the variant's
+/// three cubes + the 128-tall texture band pick), and the wood the
+/// texture resolves through.
+#[derive(Debug, Clone, PartialEq)]
+pub struct WireBoat {
+    pub id: i32,
+    pub x: f64,
+    pub y: f64,
+    pub z: f64,
+    /// The boat's body yaw in degrees (the submit fold's `180 − yRot`
+    /// source).
+    pub yaw: f32,
+    /// the RaftModel hull (the `*_raft` names) — false rides the
+    /// BoatModel's railed hull.
+    pub raft: bool,
+    /// the chest variant (`*_chest_boat` / `*_chest_raft`) — the chest
+    /// cubes + the 128×128 texture band.
+    pub chest: bool,
+    /// the wood the registry named (`oak`, `bamboo`, ... — the texture
+    /// path's own word, the unknown wood the load gate refuses).
+    pub wood: String,
+}
+
+/// THE BOAT FAMILY'S OWN NAME PARSE (the 26.2 registry's per-wood entity
+/// types — the wood the name itself speaks, the variant accessor the
+/// AbstractBoat clinit never defined): `minecraft:oak_boat` ->
+/// ("boat", false, "oak"), `minecraft:bamboo_chest_raft` ->
+/// ("raft", true, "bamboo"). The CHEST suffixes read FIRST (every
+/// `*_chest_boat` ends with `*_boat` too — the plain walk the wood
+/// would corrupt). The bare `boat`/`chest_boat` names (no wood — the
+/// pre-split naming) refuse: no wood, no texture, no render — the
+/// honest unknown the ride anchor still carries (the anchor's math
+/// the wood never reads).
+pub fn boat_family_parts(name: &str) -> Option<(&'static str, bool, &str)> {
+    let body = name.strip_prefix("minecraft:")?;
+    let (kind, chest, wood) = if let Some(wood) = body.strip_suffix("_chest_boat") {
+        ("boat", true, wood)
+    } else if let Some(wood) = body.strip_suffix("_chest_raft") {
+        ("raft", true, wood)
+    } else if let Some(wood) = body.strip_suffix("_boat") {
+        ("boat", false, wood)
+    } else if let Some(wood) = body.strip_suffix("_raft") {
+        ("raft", false, wood)
+    } else {
+        return None;
+    };
+    // the bare `chest_boat` / `chest_raft` (no wood — the pre-split
+    // naming) fall through: the chest arm's suffix needs the leading
+    // underscore the bare body lacks, the plain arm leaves the word
+    // "chest" — and the bare `boat` leaves it empty. All three refuse:
+    // no wood, no texture, no render.
+    if wood.is_empty() || wood == "chest" {
+        return None;
+    }
+    Some((kind, chest, wood))
+}
+
+/// THE BOAT PROJECTION: the entity store's boat-family bodies, the
+/// renderer's own shape bits the name parse keeps. The boat's pose rides
+/// the snapshot verbatim (the same authority the mobs speak) — no lerp
+/// walk, no death flip: the hull the server's word carries.
+pub fn boats_view(model: &WorldModel) -> Vec<WireBoat> {
+    model
+        .entities()
+        .filter_map(|(id, e)| {
+            let name = model.entity_type_name(e.type_id)?;
+            let (kind, chest, wood) = boat_family_parts(name)?;
+            Some(WireBoat {
+                id,
+                x: e.x,
+                y: e.y,
+                z: e.z,
+                yaw: e.y_rot,
+                raft: kind == "raft",
+                chest,
+                wood: wood.to_string(),
+            })
+        })
+        .collect()
 }
 
 /// One wire mob as the renderer consumes it — the Add Entity
@@ -1619,6 +1709,9 @@ pub fn materialize_snapshot_view(
         // the join snapshot's own population (a fresh world carries
         // none — the empty lane the projection walks)
         mobs: Vec::new(),
+        // and no boats (a fresh join carries no spawned hulls — the
+        // empty lane the render skips)
+        boats: Vec::new(),
         // and no voices yet (the join snapshot carries no played sounds
         // — the empty mailbox the projection walks)
         voices: Vec::new(),
@@ -1860,6 +1953,10 @@ impl LiveView {
                 inventory_carried,
                 health: health_view(&self.model),
                 mobs,
+                // the boats' belief rides the pose-less arm too — the
+                // hulls are the connection's own population, not the
+                // pose's
+                boats: boats_view(&self.model),
                 voices,
                 world_voices,
                 // the scoreboard's belief rides the pose-less arm too —
@@ -1897,6 +1994,9 @@ impl LiveView {
             // the wire's own population rides with them — the mobs the
             // server spawned follow the store exactly like the hearts do
             mobs,
+            // the hulls ride with the population — the boats the server
+            // spawned follow the store exactly like the mobs do
+            boats: boats_view(&self.model),
             voices,
             world_voices,
             // the scoreboard's belief rides every refresh too — the
@@ -4302,6 +4402,108 @@ mod tests {
             (ride.feet_z - (-20.0 + (-lx) * sin)).abs() < 1e-9,
             "the +0.2 front seat rotated with the boat"
         );
+    }
+
+    #[test]
+    fn the_boat_name_parse_keeps_the_family_bits() {
+        use crate::world_view::boat_family_parts;
+        // THE FOUR SHAPES (the 26.2 registry's per-wood entity types —
+        // the wood the name itself speaks)
+        assert_eq!(
+            boat_family_parts("minecraft:oak_boat"),
+            Some(("boat", false, "oak"))
+        );
+        assert_eq!(
+            boat_family_parts("minecraft:bamboo_raft"),
+            Some(("raft", false, "bamboo"))
+        );
+        assert_eq!(
+            boat_family_parts("minecraft:oak_chest_boat"),
+            Some(("boat", true, "oak"))
+        );
+        assert_eq!(
+            boat_family_parts("minecraft:bamboo_chest_raft"),
+            Some(("raft", true, "bamboo"))
+        );
+        // THE CHEST SUFFIX READS FIRST (every *_chest_boat ends with
+        // *_boat too — the plain walk the wood would corrupt)
+        let (_, chest, wood) = boat_family_parts("minecraft:dark_oak_chest_boat").unwrap();
+        assert!(chest, "the chest bit the suffix speaks");
+        assert_eq!(wood, "dark_oak", "the wood the chest-first walk keeps");
+        // THE BARE NAMES REFUSE (the pre-split naming — no wood, no
+        // texture, no render; the ride anchor still carries them)
+        assert_eq!(boat_family_parts("minecraft:boat"), None);
+        assert_eq!(boat_family_parts("minecraft:chest_boat"), None);
+        // no prefix, no family — the registry's own names verbatim
+        assert_eq!(boat_family_parts("boat"), None);
+        assert_eq!(boat_family_parts("minecraft:zombie"), None);
+        assert_eq!(boat_family_parts("minecraft:pig"), None);
+    }
+
+    #[test]
+    fn the_boat_projection_walks_the_family_store() {
+        use crate::world_view::boats_view;
+        use mc_protocol::play::EntitySpawn;
+        use mc_protocol::{PlayEvent, WorldInfo};
+        let mut model = WorldModel::new();
+        model.apply(PlayEvent::WorldInfo(WorldInfo {
+            entity_id: 1,
+            hardcore: false,
+            dimensions: vec!["minecraft:overworld".to_string()],
+            view_distance: 8,
+            simulation_distance: 8,
+            portal_cooldown: 300,
+            current_dimension: "minecraft:overworld".to_string(),
+        }));
+        // the registry names the family: 0 the oak boat, 1 the zombie
+        // (the honest contrast), 2 the bamboo raft, 3 the oak chest
+        // boat, 4 the BARE boat (the pre-split name the render refuses)
+        model.registry.entity_types = vec![
+            "minecraft:oak_boat".to_string(),
+            "minecraft:zombie".to_string(),
+            "minecraft:bamboo_raft".to_string(),
+            "minecraft:oak_chest_boat".to_string(),
+            "minecraft:boat".to_string(),
+        ];
+        for (id, type_id, y, yaw) in [
+            (7, 0, 64.0, 90.0f32),
+            (8, 1, 65.0, 0.0),
+            (9, 2, 66.0, 180.0),
+            (10, 3, 67.0, 270.0),
+            (11, 4, 68.0, 0.0),
+        ] {
+            model.apply(PlayEvent::Spawn(EntitySpawn {
+                id,
+                uuid: id as u128,
+                type_id,
+                x: 10.0,
+                y,
+                z: -20.0,
+                movement: [0.0; 3],
+                x_rot: 0.0,
+                y_rot: yaw,
+                y_head_rot: 0.0,
+                data: 0,
+            }));
+        }
+        let boats = boats_view(&model);
+        assert_eq!(boats.len(), 3, "the zombie AND the bare boat stay out");
+        let oak = boats.iter().find(|b| b.id == 7).unwrap();
+        assert_eq!(
+            (oak.x, oak.y, oak.z, oak.yaw),
+            (10.0, 64.0, -20.0, 90.0),
+            "the pose the snapshot verbatim keeps"
+        );
+        assert!(!oak.raft, "the oak boat rides the railed hull");
+        assert!(!oak.chest, "the plain boat carries no chest");
+        assert_eq!(oak.wood, "oak", "the wood the name speaks");
+        let raft = boats.iter().find(|b| b.id == 9).unwrap();
+        assert!(raft.raft, "the bamboo raft rides the plank deck");
+        assert_eq!(raft.wood, "bamboo", "the raft's own wood");
+        let chest = boats.iter().find(|b| b.id == 10).unwrap();
+        assert!(chest.chest, "the chest variant's own bit");
+        assert!(!chest.raft, "the chest boat rides the railed hull");
+        assert_eq!(chest.wood, "oak", "the chest boat's own wood");
     }
 
     #[test]
