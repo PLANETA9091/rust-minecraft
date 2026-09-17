@@ -836,6 +836,48 @@ fn bubble_rock_step(rock: &mut BubbleRock, bubble_time: i32) {
     rock.tick += 1;
 }
 
+/// THE SPLASH'S OWN ARM (javap `AbstractBoat.onAboveBubbleColumn`'s
+/// client branch — the words BOTH lanes speak): the GENERIC_SPLASH
+/// voice the volume 1.0 / pitch `0.8F + 0.8F * nextFloat()` keeps,
+/// the SPLASH droplet the (x + rnd, y + 0.7, z + rnd) zero-velocity
+/// call arms, the ctor's three draws the level's own stream rides —
+/// the frame pick, the yd float, the lifetime float. The entity
+/// stream the boat's own random stand-in rides, the gameEvent the
+/// no-vocabulary silence keeps. The free fn the loop borrows keep
+/// (the lanes' &mut self walks the disjoint fields speak directly).
+#[allow(clippy::too_many_arguments)]
+fn bubble_splash_arm(
+    entity_rng: &mut crate::drops::Lcg,
+    level_rng: &mut crate::drops::Lcg,
+    sounds: &mut crate::sound::BlockSounds,
+    particles: &mut Vec<crate::particles::Particle>,
+    frame: u64,
+    x: f64,
+    y: f64,
+    z: f64,
+    ear: Option<(f64, f64, f64)>,
+) {
+    let pitch = 0.8 + 0.8 * entity_rng.next_f32();
+    let dist = ear_distance(ear, x, y, z);
+    sounds.play_voice_at(frame, "entity.generic.splash", 1.0, pitch, dist);
+    let ox = entity_rng.next_f32() as f64;
+    let oz = entity_rng.next_f32() as f64;
+    let r_frame = level_rng.next_f32();
+    let r_yd = level_rng.next_f32();
+    let r_life = level_rng.next_f32();
+    particles.push(crate::particles::splash(
+        x + ox,
+        y + 0.7,
+        z + oz,
+        0.0,
+        0.0,
+        0.0,
+        r_yd,
+        r_life,
+        r_frame,
+    ));
+}
+
 impl ServerEntry {
     pub fn ping_icon(&self) -> &'static str {
         match self.ping_ms {
@@ -8382,6 +8424,60 @@ impl App {
             // per-hull tick the client's own age counter keeps.
             let rock = self.bubble_state.entry(boat.id).or_default();
             bubble_rock_step(rock, boat.bubble_time);
+            // THE COLUMN'S OWN CLIENT ARM (the wire hull's own splash —
+            // the mouth's 1/100 the client's own baseTick speaks for the
+            // remote bodies too: the fields the ServerLevel gate keeps
+            // server-owned — the SYNCED bubble_time the rock's word is —
+            // and the countdown/launch the server's own motion the
+            // snapshots carry; the splash the client's OWN word is, the
+            // pose the snapshot's raw word keeps — the same word the
+            // paddle voices' medium reads). The box's overlapped cells
+            // the offline lane's scan mirrors, the per-mouth-cell gate
+            // the vanilla entityInside fires, the under gate the
+            // client's own fluid read speaks.
+            if let Some(net_world) = self.net_world.as_ref() {
+                let e = 1e-5f64;
+                let hw = crate::hull::HULL_WIDTH / 2.0;
+                let mut mouths = 0usize;
+                for wz in ((boat.z - hw + e).floor() as i32)
+                    ..=((boat.z + hw - e).floor() as i32)
+                {
+                    for wy in ((boat.y + e).floor() as i32)
+                        ..=((boat.y + crate::hull::HULL_HEIGHT - e).floor() as i32)
+                    {
+                        for wx in ((boat.x - hw + e).floor() as i32)
+                            ..=((boat.x + hw - e).floor() as i32)
+                        {
+                            let c = net_world.get(wx, wy, wz);
+                            let variant =
+                                crate::world_view::column_variant_at(net_world, wx, wy, wz, c);
+                            if variant == 0 {
+                                continue;
+                            }
+                            if net_world.get(wx, wy + 1, wz) == crate::world::AIR {
+                                mouths += 1;
+                            }
+                        }
+                    }
+                }
+                if mouths > 0 && !boat_under_water(net_world, boat) {
+                    for _ in 0..mouths {
+                        if self.mob_rng.next_int(100) == 0 {
+                            bubble_splash_arm(
+                                &mut self.mob_rng,
+                                &mut self.level_ambient_rng,
+                                &mut self.sounds,
+                                &mut self.particles,
+                                self.frame,
+                                boat.x,
+                                boat.y,
+                                boat.z,
+                                ear,
+                            );
+                        }
+                    }
+                }
+            }
             for (side, moving) in [(0usize, moving_l), (1usize, moving_r)] {
                 if moving {
                     if paddle_stroke_fires(entry[side]) {
@@ -9364,33 +9460,20 @@ impl App {
             let mouth = crate::hull::hull_bubble_inside(phys, bubble, &cells);
             // THE 1/100 SPLASH (the onAboveBubbleColumn's client arm —
             // the `!isUnderWater && random.nextInt(100) == 0` band: the
-            // GENERIC_SPLASH voice the volume 1.0 / pitch `0.8F + 0.8F *
-            // nextFloat()` keeps, the SPLASH droplet the
-            // (x + rnd, y + 0.7, z + rnd) zero-velocity call arms, the
-            // ctor's three draws the level's own stream rides — the
-            // frame pick, the yd float, the lifetime float; the
-            // gameEvent the no-vocabulary silence keeps)
+            // shared arm the free fn folds — the entity stream the
+            // gate's own draw rides)
             if mouth && !under && self.mob_rng.next_int(100) == 0 {
-                let pitch = 0.8 + 0.8 * self.mob_rng.next_f32();
-                let dist = ear_distance(ear, boat.x, boat.y, boat.z);
-                self.sounds
-                    .play_voice_at(self.frame, "entity.generic.splash", 1.0, pitch, dist);
-                let ox = self.mob_rng.next_f32() as f64;
-                let oz = self.mob_rng.next_f32() as f64;
-                let r_frame = self.level_ambient_rng.next_f32();
-                let r_yd = self.level_ambient_rng.next_f32();
-                let r_life = self.level_ambient_rng.next_f32();
-                self.particles.push(crate::particles::splash(
-                    boat.x + ox,
-                    boat.y + 0.7,
-                    boat.z + oz,
-                    0.0,
-                    0.0,
-                    0.0,
-                    r_yd,
-                    r_life,
-                    r_frame,
-                ));
+                bubble_splash_arm(
+                    &mut self.mob_rng,
+                    &mut self.level_ambient_rng,
+                    &mut self.sounds,
+                    &mut self.particles,
+                    self.frame,
+                    boat.x,
+                    boat.y,
+                    boat.z,
+                    ear,
+                );
             }
             // THE FLOAT'S OWN FOLD (the vanilla `floatBoat()` the
             // baseTick's walk follows — the gravity/lift/friction the
@@ -19034,6 +19117,117 @@ mod tests {
         assert!(
             app2.offline_ride.is_some(),
             "the rider the UP launch carries"
+        );
+    }
+
+    /// THE WIRE HULL'S OWN COLUMN FIXTURE (the net world's stamped
+    /// column the client arm's scan rides — the WATER cells the
+    /// variants layer carries, the mouth the top row's AIR above
+    /// speaks, the hull the snapshot's own pose the scan reads).
+    fn wire_column_app(hull_y: f64, variant: Option<u8>) -> App {
+        let mut app = App::new(3);
+        let side = 2usize;
+        let mut net = air_net_world(side, 0);
+        net.set(8, 10, 8, crate::world::WATER);
+        net.set(8, 9, 8, crate::world::WATER);
+        if let Some(v) = variant {
+            net.variants = Some(vec![vec![0u8; 16 * 48 * 16]; side * side]);
+            let ci = 8 / 16 + (8 / 16) * side;
+            net.variants.as_mut().unwrap()[ci][8 + 8 * 16 + 10 * (16 * 16)] = v;
+            net.variants.as_mut().unwrap()[ci][8 + 8 * 16 + 9 * (16 * 16)] = v;
+        }
+        app.net_world = Some(net);
+        app.net_boats.push(crate::world_view::WireBoat {
+            id: 700,
+            x: 8.5,
+            y: hull_y,
+            z: 8.5,
+            yaw: 0.0,
+            raft: false,
+            chest: false,
+            wood: "oak".to_string(),
+            paddle_left: false,
+            paddle_right: false,
+            bubble_time: 0,
+            hurt_time: 0,
+            hurt_dir: 1,
+            damage: 0.0,
+        });
+        app
+    }
+
+    fn wire_splash_count(app: &App) -> usize {
+        app.sounds
+            .events
+            .iter()
+            .filter(|e| e.starts_with("entity.generic.splash @"))
+            .count()
+    }
+
+    /// THE WIRE MOUTH'S OWN SPLASH — the client arm the remote body's
+    /// baseTick speaks (the fields the ServerLevel gate keeps
+    /// server-owned, the splash the client's OWN word is): the mouth's
+    /// 1/100 the long drive's fixed stream hits, the voice the
+    /// GENERIC_SPLASH event carries, the droplet the particle lane
+    /// births.
+    #[test]
+    fn the_wire_mouth_splashes_the_client_arm() {
+        let settled_y = (10.0f64 + 1.0) - 0.65 * crate::hull::HULL_HEIGHT;
+        let mut app = wire_column_app(settled_y, Some(1));
+        for _ in 0..600 {
+            app.tick_paddles();
+        }
+        let splashes = wire_splash_count(&app);
+        assert!(
+            splashes >= 1,
+            "the wire mouth's splash the gate speaks: {splashes}"
+        );
+        let droplets = app
+            .particles
+            .iter()
+            .filter(|p| matches!(p.kind, crate::particles::ParticleKind::Splash { .. }))
+            .count();
+        assert!(droplets >= 1, "the droplet the arm births: {droplets}");
+    }
+
+    /// THE UNDER GATE'S OWN SILENCE (the `!isUnderWater` band the
+    /// client's own fluid read speaks): the submerged hull's mouth
+    /// overlap the 1/100 never draws — the long drive's stream the
+    /// silence keeps at zero.
+    #[test]
+    fn the_under_gate_silences_the_wire_splash() {
+        // the box top 10.4625 under the rim's 8/9 surface the under
+        // verdict speaks, the box the mouth cell (row 10) overlaps
+        let under_y = 9.9f64;
+        let mut app = wire_column_app(under_y, Some(1));
+        assert!(
+            boat_under_water(app.net_world.as_ref().unwrap(), &app.net_boats[0]),
+            "the fixture's own under verdict"
+        );
+        for _ in 0..600 {
+            app.tick_paddles();
+        }
+        assert_eq!(
+            wire_splash_count(&app),
+            0,
+            "the under gate the splash silences"
+        );
+    }
+
+    /// THE PLAIN POOL'S OWN SILENCE (the variant gate the scan keeps):
+    /// the unstamped water cell no column the variant read answers,
+    /// the mouths the zero the splash's draw never rides.
+    #[test]
+    fn the_plain_pool_never_splashes_the_wire_lane() {
+        let settled_y = (10.0f64 + 1.0) - 0.65 * crate::hull::HULL_HEIGHT;
+        let mut app = wire_column_app(settled_y, None);
+        for _ in 0..600 {
+            app.tick_paddles();
+        }
+        assert_eq!(
+            wire_splash_count(&app),
+            0,
+            "the plain pool the variant gate silences"
         );
     }
 
