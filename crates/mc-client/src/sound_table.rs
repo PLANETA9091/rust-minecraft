@@ -178,6 +178,8 @@ fn test_fixture_table() -> SoundTable {
     }
     for id in [
         "ambient.cave",
+        "block.bubble_column.upwards_inside",
+        "block.bubble_column.whirlpool_inside",
         "block.glass.break",
         "block.lava.ambient",
         "block.lava.pop",

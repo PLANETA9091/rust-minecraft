@@ -318,6 +318,64 @@ pub struct BubbleRock {
     pub tick: i32,
 }
 
+/// THE PLAYER'S OWN INSIDE-COLUMN STATE (the
+/// BubbleColumnAmbientSoundHandler fields the LocalPlayer's
+/// ambientSoundHandlers walk keeps — the handler the LocalPlayer
+/// construction births, one per session): `wasInBubbleColumn` the
+/// in-column edge's memory, `firstTick` the handler's own birth
+/// gate (the spawn-inside-a-column moment the FIRST tick keeps
+/// silent — the vanilla's own arm, the handler's first tick always
+/// clears it). Default the handler's own birth: false / true.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct BubbleInsideVoice {
+    pub was_in_column: bool,
+    pub first_tick: bool,
+}
+
+impl Default for BubbleInsideVoice {
+    /// THE HANDLER'S OWN BIRTH (javap <init>: wasInBubbleColumn the
+    /// zero default keeps, firstTick the iconst_1 the ctor arms) —
+    /// the derived false/false the vanilla ctor never speaks.
+    fn default() -> Self {
+        Self {
+            was_in_column: false,
+            first_tick: true,
+        }
+    }
+}
+
+impl BubbleInsideVoice {
+    /// THE HANDLER'S OWN WALK (javap
+    /// BubbleColumnAmbientSoundHandler.tick, the 26.2 jar): the box
+    /// scan's verdict `found` — `Some(drag_down)` a bubble column cell
+    /// rides the player's own box, `None` it doesn't — drives the
+    /// edge-triggered voice: `Some(drag)` returned ONLY on the
+    /// `!wasInBubbleColumn && !firstTick` entry (the hold never
+    /// repeats), `wasInBubbleColumn` the column's presence keeps
+    /// true, the absence resets it, and `firstTick` the EVERY tick
+    /// clears. The tick order the bytecode speaks: the voice gate
+    /// first, the wasIn latch second, the firstTick clear last.
+    pub fn tick(&mut self, found: Option<bool>) -> Option<bool> {
+        let voice = match found {
+            Some(drag) => {
+                let voice = if !self.was_in_column && !self.first_tick {
+                    Some(drag)
+                } else {
+                    None
+                };
+                self.was_in_column = true;
+                voice
+            }
+            None => {
+                self.was_in_column = false;
+                None
+            }
+        };
+        self.first_tick = false;
+        voice
+    }
+}
+
 /// ONE HULL'S OWN HURT STATE (the VehicleEntity trio the client's
 /// accessor copies keep — the SynchedEntityData's own relationship the
 /// model walks): the wire's word the seen-tracker's fresh broadcast
@@ -399,6 +457,61 @@ pub fn boat_under_water(world: &crate::world::World, boat: &crate::world_view::W
         x += 1;
     }
     false
+}
+
+/// THE INSIDE-COLUMN BOX SCAN (BubbleColumnAmbientSoundHandler.tick's
+/// own walk, the box half — javap the 26.2 jar): the player's own AABB
+/// `inflate(0.0, -0.4, 0.0).deflate(1e-06)` — the y band feet+0.4 ..
+/// feet+1.4 the negative dy the shrink keeps (the torso's own band,
+/// the head and the shins outside it), the 1e-6 the deflate's shave —
+/// the cells `floor(min)..floor(max)` per axis the
+/// LevelReader.getBlockStatesIfLoaded floors keep, the betweenClosed
+/// walk x the INNERMOST, y the middle, z the outer
+/// (BlockPos$4.computeNext's own index arithmetic: `i % width` the x,
+/// `i / width % height` the y, `i / width / height` the z). The FIRST
+/// bubble cell the stream's findFirst keeps — the smallest
+/// (z, y, x) — is the verdict: `Some(drag_down)` the column's DRAG
+/// bit speaks (1 = drag=true the whirlpool, 2 = drag=false the
+/// upward — `bubble_column_variant`'s own decode, the per-cell
+/// variant byte the materialize walk stamps; the WATER id gate the
+/// read keeps is what holds the leaf_litter family's 1..=16
+/// vocabulary apart), `None` the plain water (variant 0) and the
+/// empty box keep. The out-of-window cells the grid's AIR answer
+/// keeps — the same honest limitation every grid read speaks.
+pub fn bubble_inside_scan(
+    world: &crate::world::World,
+    px: f64,
+    feet_y: f64,
+    pz: f64,
+) -> Option<bool> {
+    // the box: the player's own shape (feet x±0.3, y feet..feet+1.8,
+    // z±0.3 — the body's WIDTH/HEIGHT the collision keeps), the
+    // inflate(0, -0.4, 0)'s vertical shrink, the deflate(1e-06)'s
+    // all-sides shave, then the floors
+    let e = 1e-6f64;
+    let x0 = (px - 0.3 + e).floor() as i32;
+    let x1 = (px + 0.3 - e).floor() as i32;
+    let y0 = (feet_y + 0.4 + e).floor() as i32;
+    let y1 = (feet_y + 1.8 - 0.4 - e).floor() as i32;
+    let z0 = (pz - 0.3 + e).floor() as i32;
+    let z1 = (pz + 0.3 - e).floor() as i32;
+    // the betweenClosed order: z the outermost, y the middle, x the
+    // innermost — the findFirst the walk's first bubble cell keeps
+    for wz in z0..=z1 {
+        for wy in y0..=y1 {
+            for wx in x0..=x1 {
+                if world.get(wx, wy, wz) != crate::world::WATER {
+                    continue;
+                }
+                match world.variant(wx, wy, wz) {
+                    1 => return Some(true),
+                    2 => return Some(false),
+                    _ => {}
+                }
+            }
+        }
+    }
+    None
 }
 
 /// THE DEGREE WRAP (Mth.wrapDegrees(F)F's own walk — the frem's % 360
@@ -998,6 +1111,12 @@ pub struct App {
     /// accessor copies keep — see [`HurtWobble`]): the entry the first
     /// sight births, the despawn's prune the rock state's own law keeps.
     pub hurt_state: std::collections::HashMap<i32, HurtWobble>,
+    /// THE INSIDE-COLUMN HANDLER (the BubbleColumnAmbientSoundHandler
+    /// fields the LocalPlayer's ambientSoundHandlers walk keeps — see
+    /// [`BubbleInsideVoice`]): the box scan's verdict drives the
+    /// edge-triggered entry voice, the handler's own birth state the
+    /// default keeps (firstTick the spawn's silence arms).
+    pub bubble_inside: BubbleInsideVoice,
     /// THE LAST SENT INPUT (the vanilla `LocalPlayer.lastSentInput`'s
     /// own law): the input record the wire last spoke — the CHANGE
     /// against it sends one ServerboundPlayerInputPacket, riding or
@@ -1744,6 +1863,7 @@ impl App {
             paddle_positions: std::collections::HashMap::new(),
             bubble_state: std::collections::HashMap::new(),
             hurt_state: std::collections::HashMap::new(),
+            bubble_inside: BubbleInsideVoice::default(),
             last_sent_input: mc_protocol::InputFlags::default(),
             ride_boat_yaw_prev: None,
             overlay_message: None,
@@ -2219,6 +2339,28 @@ impl App {
             if let Some(b) = self.body.as_ref() {
                 let drips = self.lava_ambient_walk((b.x, b.y, b.z));
                 self.particles.extend(drips);
+            }
+            // THE INSIDE VOICE WALK (BubbleColumnAmbientSoundHandler.tick's
+            // own law — the LocalPlayer.ambientSoundHandlers entry the
+            // tick's own tail walks, after the movement work the body's
+            // settle speaks): the box scan over the ACTIVE world's cells
+            // (the networked world and the offline terrain alike — the
+            // client level the vanilla handler reads), the verdict drives
+            // the edge-triggered inside voice (the hold never repeats,
+            // the firstTick the birth keeps silent)
+            if let Some(b) = self.body.as_ref() {
+                let (px, py, pz) = (b.x, b.y, b.z);
+                let world = if self.world_is_network {
+                    self.net_world.as_ref()
+                } else {
+                    self.offline_world.as_ref()
+                };
+                if let Some(w) = world {
+                    let found = bubble_inside_scan(w, px, py, pz);
+                    if let Some(whirlpool) = self.bubble_inside.tick(found) {
+                        self.sounds.play_bubble_inside(self.frame, whirlpool);
+                    }
+                }
             }
             // THE LAVA HURT (lavaHurt's own call, answered through the
             // hurt pipeline's cooldown): the GENERIC_BURN speaks ONLY
@@ -26006,6 +26148,121 @@ mod tests {
         // THE DRY HULL (the same height over air — no water at the
         // rim's own cells): never under
         assert!(!boat_under_water(&world, &hull(12.4, 29.8, 12.6)));
+    }
+
+    /// A bubble-cell helper: WATER at the cell + the variant byte the
+    /// materialize walk would stamp (1 = whirlpool, 2 = upward).
+    fn bubble_cell(world: &mut crate::world::World, x: i32, y: i32, z: i32, variant: u8) {
+        world.set(x, y, z, crate::world::WATER);
+        world.variants.as_mut().expect("the caller builds it")[0]
+            [(x.rem_euclid(16) + z.rem_euclid(16) * 16 + y.rem_euclid(48) * 256) as usize] =
+            variant;
+    }
+
+    #[test]
+    fn the_inside_scan_walks_the_box_cells() {
+        let mut world = crate::world::World::new(1, 0);
+        world.variants = Some(vec![vec![0u8; 16 * 48 * 16]; 4]);
+        // THE WHIRLPOOL'S OWN ANSWER (variant 1, drag=true): the box
+        // over the column's cells finds it
+        bubble_cell(&mut world, 5, 11, 5, 1);
+        // the player inside the column: feet 10.0 -> the y band 10.4..
+        // 11.4 covers the cells 10 AND 11 (the torso's own band)
+        assert_eq!(bubble_inside_scan(&world, 5.0, 10.0, 5.0), Some(true));
+        // THE UPWARD'S OWN ANSWER (variant 2, drag=false)
+        let mut world = crate::world::World::new(1, 0);
+        world.variants = Some(vec![vec![0u8; 16 * 48 * 16]; 4]);
+        bubble_cell(&mut world, 5, 11, 5, 2);
+        assert_eq!(bubble_inside_scan(&world, 5.0, 10.0, 5.0), Some(false));
+        // THE FINDFIRST'S OWN ORDER (the betweenClosed walk: x the
+        // innermost, y the middle, z the outer — the smallest
+        // (z, y, x) wins): the player straddles the x/z boundary
+        // (4.71 -> the x cells 4..5, the z cells 4..5), the upward at
+        // (4,11,4) the (z, y, x) minimum speaks BEFORE the whirlpool at
+        // (5,11,5) the walk reaches later
+        let mut world = crate::world::World::new(1, 0);
+        world.variants = Some(vec![vec![0u8; 16 * 48 * 16]; 4]);
+        bubble_cell(&mut world, 5, 11, 5, 1);
+        bubble_cell(&mut world, 4, 11, 4, 2);
+        assert_eq!(
+            bubble_inside_scan(&world, 4.71, 10.0, 4.71),
+            Some(false),
+            "the (z,y,x) minimum the findFirst keeps"
+        );
+        // the z flip: the whirlpool at the smaller z wins the same walk
+        let mut world = crate::world::World::new(1, 0);
+        world.variants = Some(vec![vec![0u8; 16 * 48 * 16]; 4]);
+        bubble_cell(&mut world, 5, 11, 4, 1);
+        bubble_cell(&mut world, 4, 11, 5, 2);
+        assert_eq!(
+            bubble_inside_scan(&world, 4.71, 10.0, 4.71),
+            Some(true),
+            "the smaller z the outer arm reaches first"
+        );
+        // THE PLAIN WATER'S OWN SKIP (variant 0 — the y cell BELOW the
+        // bubble never ends the walk): the plain water at y 10, the
+        // bubble at y 11 — both in the torso band, the walk finds the
+        // bubble through the water
+        let mut world = crate::world::World::new(1, 0);
+        world.variants = Some(vec![vec![0u8; 16 * 48 * 16]; 4]);
+        world.set(5, 10, 5, crate::world::WATER);
+        bubble_cell(&mut world, 5, 11, 5, 1);
+        assert_eq!(
+            bubble_inside_scan(&world, 5.0, 10.0, 5.0),
+            Some(true),
+            "the plain water skipped, the bubble above found"
+        );
+        // THE STRICT EDGE (the deflate's 1e-6 shave): the box max
+        // landing exactly on the integer (x = 4.7 -> 4.7 + 0.3 = 5.0)
+        // EXCLUDES the boundary cell — the bubble at x 5 alone never
+        // enters the walk's answer
+        let mut world = crate::world::World::new(1, 0);
+        world.variants = Some(vec![vec![0u8; 16 * 48 * 16]; 4]);
+        bubble_cell(&mut world, 5, 11, 5, 1);
+        assert_eq!(
+            bubble_inside_scan(&world, 4.7, 10.0, 5.0),
+            None,
+            "the exact boundary cell the strict edge excludes"
+        );
+        // THE OUT-OF-WINDOW'S OWN ANSWER (the grid's AIR): the bubble
+        // beyond the 2x2 window never found
+        let mut world = crate::world::World::new(1, 0);
+        world.variants = Some(vec![vec![0u8; 16 * 48 * 16]; 4]);
+        bubble_cell(&mut world, 40, 11, 40, 1);
+        assert_eq!(bubble_inside_scan(&world, 5.0, 10.0, 5.0), None);
+        // THE NO-LAYER WORLD (the procedural scene's variants None):
+        // water everywhere, no opinion — silent
+        let mut world = crate::world::World::new(1, 0);
+        world.set(5, 11, 5, crate::world::WATER);
+        assert_eq!(bubble_inside_scan(&world, 5.0, 10.0, 5.0), None);
+    }
+
+    #[test]
+    fn the_inside_voice_walks_the_handler_state() {
+        use crate::screens::BubbleInsideVoice;
+        // THE HANDLER'S OWN BIRTH (firstTick armed): the spawn-inside-
+        // a-column moment the FIRST tick keeps silent, the latch arms
+        let mut h = BubbleInsideVoice::default();
+        assert!((h.was_in_column, h.first_tick) == (false, true), "the birth");
+        assert_eq!(h.tick(Some(true)), None, "the first tick's silence");
+        assert!(h.was_in_column, "the latch armed");
+        // THE HOLD (the in-column ticks never repeat the voice)
+        assert_eq!(h.tick(Some(true)), None, "the hold never repeats");
+        assert_eq!(h.tick(Some(true)), None, "still held");
+        // THE EXIT'S OWN RESET (the absence the latch clears)
+        assert_eq!(h.tick(None), None);
+        assert!(!h.was_in_column, "the latch cleared");
+        // THE RE-ENTRY'S OWN VOICE (the entry edge speaks the column's
+        // drag bit — the upward's false the Some carries)
+        assert_eq!(h.tick(Some(false)), Some(false), "the entry edge speaks");
+        assert!(h.was_in_column, "the latch armed again");
+        // THE SECOND ENTRY'S OWN VOICE (the exit-re-enter pair speaks
+        // every time — the whirlpool's true)
+        assert_eq!(h.tick(None), None);
+        assert_eq!(h.tick(Some(true)), Some(true), "the whirlpool's entry");
+        // the firstTick clear is UNCONDITIONAL (the every-tick arm the
+        // bytecode's own tail keeps — even the absent ticks clear it)
+        assert!(!h.first_tick, "the birth gate spent");
     }
 }
 

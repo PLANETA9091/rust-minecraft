@@ -400,6 +400,30 @@ impl World {
         }
     }
 
+    /// The per-cell STATE-VARIANT byte (the network world's
+    /// `variants` layer the materialize walk stamps — see
+    /// [`crate::world_view::leaf_litter_variant`] and
+    /// [`crate::world_view::bubble_column_variant`]): the state
+    /// properties one decode the wire's id keeps. `0` the no-opinion
+    /// answer everywhere else — the procedural scene (no layer), the
+    /// outside-the-grid cell, the unsent chunk.
+    pub fn variant(&self, wx: i32, wy: i32, wz: i32) -> u8 {
+        let Some(vs) = self.variants.as_ref() else {
+            return 0;
+        };
+        if wy < 0 || wy >= CHUNK_Y as i32 {
+            return 0;
+        }
+        let cx = wx.div_euclid(CHUNK_X as i32);
+        let cz = wz.div_euclid(CHUNK_Z as i32);
+        let Some(ci) = self.chunk_index(cx, cz) else {
+            return 0;
+        };
+        let lx = wx.rem_euclid(CHUNK_X as i32) as usize;
+        let lz = wz.rem_euclid(CHUNK_Z as i32) as usize;
+        vs[ci][lx + lz * CHUNK_X + wy as usize * CHUNK_X * CHUNK_Z]
+    }
+
     /// The entry face's own normal offsets, indexed by the Direction
     /// ordinal the wire speaks (DOWN=0, UP=1, NORTH=2, SOUTH=3, WEST=4,
     /// EAST=5 — the enum's own order). The placement cell is the hit

@@ -167,8 +167,18 @@ pub fn materialize(
                         }
                         // the variant rides the SAME walk (the 14th audit):
                         // the state's properties, decoded once here — the
-                        // mesher reads the byte, never the wire id
+                        // mesher reads the byte, never the wire id. The
+                        // bubble column's drag bit rides the same byte
+                        // (the leaf_litter family speaks 1..=16 on
+                        // LEAF_LITTER cells, the column 1/2 on WATER cells
+                        // — the id gate the readers keep is what keeps
+                        // the two vocabularies apart).
                         let variant = leaf_litter_variant(id);
+                        let variant = if variant != 0 {
+                            variant
+                        } else {
+                            bubble_column_variant(id)
+                        };
                         if variant != 0 {
                             variants[(gx + gz * side_i) as usize]
                                 [lx as usize + lz as usize * CHUNK_X + gy as usize * CHUNK_X * CHUNK_Z] =
@@ -2176,6 +2186,25 @@ pub fn leaf_litter_variant(id: u32) -> u8 {
     1 + facing + (segment - 1) * 4
 }
 
+/// THE BUBBLE COLUMN'S OWN DRAG BIT (the state property the generated
+/// per-state table keeps — the same decode law [`leaf_litter_variant`]
+/// speaks): the bubble_column's one property `drag` (the serialized
+/// word the DRAG_DOWN BooleanProperty carries) — `drag=true` the
+/// whirlpool's 1, `drag=false` the upward's 2, every other block (and
+/// any props string that fails to parse) the 0 no-opinion keeps. The
+/// two real states the table holds: 15294 (`drag=true`) and 15295
+/// (`drag=false`) — the column's whole state pair.
+pub fn bubble_column_variant(id: u32) -> u8 {
+    if mc_registry::generated::block_ids::block_name_of(id) != Some("minecraft:bubble_column") {
+        return 0;
+    }
+    match mc_registry::generated::block_ids::props_of(id) {
+        Some("drag=true") => 1,
+        Some("drag=false") => 2,
+        _ => 0,
+    }
+}
+
 /// The REAL id mapper, GENERATED from the official jar's bootstrapped
 /// runtime registry (`mc2rs-gen dump-block-states` -> the block_ids
 /// table): a global state id resolves to its block NAME, and the runtime
@@ -2193,6 +2222,12 @@ pub fn runtime_mapper(id: u32) -> u16 {
         Some("minecraft:oak_log") => LOG,
         Some("minecraft:oak_leaves") => LEAVES,
         Some("minecraft:water") => WATER,
+        // the WATER tag's own family (the column's fluid state IS water —
+        // the getFluidState the block keeps): the single water word covers
+        // it, the mesher's liquid lane the look renders, and the DRAG bit
+        // the variant byte carries (see [`bubble_column_variant`]) — the
+        // voice lanes the box scan reads it through
+        Some("minecraft:bubble_column") => WATER,
         Some("minecraft:sand") => SAND,
         Some("minecraft:granite") => GRANITE,
         Some("minecraft:diorite") => DIORITE,
@@ -2265,6 +2300,25 @@ mod tests {
         entries[idx(2, 3, 4)] = 30339;
         let mut s = Vec::new();
         s.extend_from_slice(&1i16.to_be_bytes());
+        s.push(15); // direct: global ids, no palette
+        s.extend_from_slice(&mc_protocol::pack_entries(&entries, 15));
+        s.push(0); // biomes: single valued
+        write_varint(&mut s, 1);
+        parse_one_section(s)
+    }
+
+    /// One section whose block states ride the DIRECT palette (15 bits:
+    /// the entries ARE the global state ids — vanilla's own encoding for
+    /// big palettes). The bubble_column pair — the whirlpool's 15294
+    /// (`drag=true`) at (2,3,4), the upward's 15295 (`drag=false`) at
+    /// (5,7,6) — the drag bit's own decode input.
+    fn bubble_column_section() -> mc_protocol::ChunkSection {
+        let idx = |x: usize, y: usize, z: usize| (y << 8) | (z << 4) | x;
+        let mut entries = vec![0u32; 4096];
+        entries[idx(2, 3, 4)] = 15294;
+        entries[idx(5, 7, 6)] = 15295;
+        let mut s = Vec::new();
+        s.extend_from_slice(&2i16.to_be_bytes());
         s.push(15); // direct: global ids, no palette
         s.extend_from_slice(&mc_protocol::pack_entries(&entries, 15));
         s.push(0); // biomes: single valued
@@ -3273,6 +3327,51 @@ mod tests {
         );
         // every other cell: the no-opinion byte
         assert_eq!(world.variants.as_ref().unwrap()[0][0], 0, "air carries none");
+    }
+
+    #[test]
+    fn bubble_column_variant_decodes_the_real_state_ids() {
+        // GENERATED facts from the official 26.2 registry (block_ids.rs):
+        // the bubble_column pair — 15294 (`drag=true`, the whirlpool),
+        // 15295 (`drag=false`, the upward)
+        assert_eq!(bubble_column_variant(15294), 1, "drag=true -> the whirlpool's 1");
+        assert_eq!(bubble_column_variant(15295), 2, "drag=false -> the upward's 2");
+        // outside the block: the no-opinion byte
+        assert_eq!(bubble_column_variant(86), 0, "water");
+        assert_eq!(bubble_column_variant(15293), 0, "cave_air");
+        assert_eq!(bubble_column_variant(0), 0, "air");
+    }
+
+    #[test]
+    fn runtime_mapper_speaks_the_bubble_column_water_word() {
+        // the WATER tag's own family: the column's two states ride the
+        // single water word (the mesher's liquid lane the look renders,
+        // the boat's under-water read the same family keeps counting)
+        assert_eq!(runtime_mapper(15294), WATER, "drag=true");
+        assert_eq!(runtime_mapper(15295), WATER, "drag=false");
+        assert_eq!(runtime_mapper(15296), AIR, "past the pair: polished_granite_stairs");
+    }
+
+    #[test]
+    fn materialize_decodes_the_bubble_column_drag_bit_into_the_grid() {
+        let mut m = WorldModel::new();
+        m.apply(PlayEvent::Chunk(ChunkColumn {
+            x: 0,
+            z: 0,
+            sections: vec![bubble_column_section()],
+            light: ChunkLight::default(),
+        }));
+        let world = materialize(&m, (0, 0), 1, 0, runtime_mapper);
+        // the column's states ride the WATER word the family keeps
+        assert_eq!(world.get(2, 3, 4), WATER, "the whirlpool's kind");
+        assert_eq!(world.get(5, 7, 6), WATER, "the upward's kind");
+        // the drag bit rides the variant byte the same walk stamps
+        assert_eq!(world.variant(2, 3, 4), 1, "drag=true -> the whirlpool's 1");
+        assert_eq!(world.variant(5, 7, 6), 2, "drag=false -> the upward's 2");
+        // every other cell: the no-opinion byte (air AND the accessor's
+        // honest arms — the no-layer world speaks 0 through the get path)
+        assert_eq!(world.variant(0, 0, 0), 0, "air carries none");
+        assert_eq!(world.variant(2, 40, 4), 0, "outside the grid: none");
     }
 
     #[test]

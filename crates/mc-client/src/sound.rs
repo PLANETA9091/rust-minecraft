@@ -469,6 +469,34 @@ impl BlockSounds {
         ));
     }
 
+    /// THE BUBBLE COLUMN'S INSIDE VOICE (javap
+    /// `BubbleColumnAmbientSoundHandler.tick` — the
+    /// LocalPlayer.ambientSoundHandlers entry the tick's own tail
+    /// walks): the edge-triggered one-shot the column ENTRY speaks —
+    /// `player.playSound(BUBBLE_COLUMN_WHIRLPOOL_INSIDE, 1.0F, 1.0F)`
+    /// the drag=true column answers, `BUBBLE_COLUMN_UPWARDS_INSIDE,
+    /// 1.0F, 1.0F` the drag=false one — the volume/pitch BOTH the
+    /// fixed 1.0 the bytecode's fconst_1 pair speaks, NO randoms (the
+    /// fixed fold playSound's own shape). The play rides the player's
+    /// own position (the ear itself — the dist-0 voice the gain's
+    /// identity keeps, no attenuation the self lane folds). The
+    /// caller's edge trigger (the !wasInBubbleColumn && !firstTick
+    /// gate the handler's walk keeps) rides upstream — one voice per
+    /// entry, the hold never repeats.
+    pub fn play_bubble_inside(&mut self, tick: u64, whirlpool: bool) {
+        let event = if whirlpool {
+            "block.bubble_column.whirlpool_inside"
+        } else {
+            "block.bubble_column.upwards_inside"
+        };
+        let Some(file) = self.pick_file(event) else {
+            return;
+        };
+        self.events.push(format!(
+            "{event} @{tick} #{file} v1.000000 p1.000000"
+        ));
+    }
+
     /// The FIXED-VOICE lane (the fall voice's generalized shape — the
     /// eat arc's completion speaks it): the caller's volume/pitch fold
     /// (the entity random's own verdict, the bytecode's draw order
@@ -863,6 +891,46 @@ mod tests {
         a.events.clear();
         a.play_bubble_pop(9, 2);
         assert!(a.events[0].contains(" v0.500000 p1.000000"), "the base: {}", a.events[0]);
+    }
+
+    /// THE BUBBLE COLUMN'S INSIDE VOICE's law (the handler's own fold):
+    /// the volume/pitch BOTH the fixed 1.0 the bytecode's fconst_1 pair
+    /// speaks, no randoms — the drag bit picks the event, the
+    /// whirlpool_inside the drag=true column answers, the
+    /// upwards_inside the drag=false one.
+    #[test]
+    fn the_bubble_inside_voice_speaks_the_fixed_fold() {
+        let mut a = BlockSounds::new(37);
+        a.play_bubble_inside(9, true);
+        assert_eq!(a.events.len(), 1);
+        assert!(
+            a.events[0].starts_with("block.bubble_column.whirlpool_inside @9 #"),
+            "the whirlpool entry: {}",
+            a.events[0]
+        );
+        assert!(
+            a.events[0].contains(" v1.000000 p1.000000"),
+            "the fixed fold: {}",
+            a.events[0]
+        );
+        // the upward's own event word (a fresh engine — the first draw
+        // the file pick consumes is the determinism's own state)
+        let mut b = BlockSounds::new(37);
+        b.play_bubble_inside(9, false);
+        assert!(
+            b.events[0].starts_with("block.bubble_column.upwards_inside @9 #"),
+            "the upward entry: {}",
+            b.events[0]
+        );
+        assert!(
+            b.events[0].contains(" v1.000000 p1.000000"),
+            "the fixed fold: {}",
+            b.events[0]
+        );
+        // determinism: the same seed speaks the same voice
+        let mut c = BlockSounds::new(37);
+        c.play_bubble_inside(9, true);
+        assert_eq!(a.events, c.events);
     }
 
     #[test]
