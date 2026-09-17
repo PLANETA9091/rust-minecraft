@@ -553,6 +553,130 @@ fn delta_axis(base: f64, delta: i16) -> f64 {
     }
 }
 
+/// THE RELATIVE BITS (the 1.21.2+ Relative enum's own ordinals — the
+/// packet's flags int the bits speak; the javap-proven order X, Y, Z,
+/// Y_ROT, X_ROT, DELTA_X, DELTA_Y, DELTA_Z, ROTATE_DELTA).
+const RELATIVE_X: i32 = 1 << 0;
+const RELATIVE_Y: i32 = 1 << 1;
+const RELATIVE_Z: i32 = 1 << 2;
+const RELATIVE_Y_ROT: i32 = 1 << 3;
+const RELATIVE_X_ROT: i32 = 1 << 4;
+const RELATIVE_DELTA_X: i32 = 1 << 5;
+const RELATIVE_DELTA_Y: i32 = 1 << 6;
+const RELATIVE_DELTA_Z: i32 = 1 << 7;
+const RELATIVE_ROTATE_DELTA: i32 = 1 << 8;
+
+/// THE SIN TABLE'S OWN CELL (Mth.SIN's static fill —
+/// `lambda$static$0`'s own walk: `SIN[i] = (float)Math.sin((double)i /
+/// 10430.378350470453)`, the DIVISION the bytecode keeps).
+fn table_sin_cell(idx: i64) -> f32 {
+    (((idx as f64) / 10430.378350470453).sin()) as f32
+}
+
+/// ONE Mth.sin(D)F of the bytecode's own walk: the angle's 65536-step
+/// table quantization — `SIN[(int)((long)(angle * 10430.378350470453)
+/// & 65535)]` — the cell the table's own construction computes. The
+/// quantization IS the law: nearby angles share a cell, the walk never
+/// interpolates.
+fn narrow_sin(angle: f32) -> f64 {
+    let idx = (f64::from(angle) * 10430.378350470453) as i64 & 65535;
+    f64::from(table_sin_cell(idx))
+}
+
+/// ONE Mth.cos(D)F — the quarter-turn shift the +16384.0 speaks
+/// (65536 steps / 4): `SIN[(int)((long)(angle * 10430.378350470453 +
+/// 16384.0) & 65535)]` (see [`narrow_sin`]).
+fn narrow_cos(angle: f32) -> f64 {
+    let idx = (f64::from(angle) * 10430.378350470453 + 16384.0) as i64 & 65535;
+    f64::from(table_sin_cell(idx))
+}
+
+/// THE POSITION SYNC'S OWN FOLD (PositionMoveRotation.calculateAbsolute's
+/// own walk — ClientPacketListener.setValuesFromPositionPacket's first
+/// step, the javap-proven 26.2 law): the stored pose the CURRENT the
+/// fold reads, the packet's relative bits the ADD arms speak, the
+/// absent bits the REPLACE arms keep. Position x/y/z, yaw, and the
+/// pitch the Mth.clamp's ±90 band keeps; the velocity word the
+/// ROTATE_DELTA bit may spin FIRST (Vec3.xRot then Vec3.yRot — the
+/// bytecode's own order; the angles the current-minus-new deltas
+/// speak), then each axis calculateDelta's (the relative bit adds,
+/// the absent bit replaces). The teleport id and the flags ride
+/// verbatim — the fold is the pose's act, never the record's rewrite.
+fn fold_position_sync(current: &PlayerPosition, p: &PlayerPosition) -> PlayerPosition {
+    let has = |bit: i32| p.flags & bit != 0;
+    let x = if has(RELATIVE_X) {
+        current.x + p.x
+    } else {
+        p.x
+    };
+    let y = if has(RELATIVE_Y) {
+        current.y + p.y
+    } else {
+        p.y
+    };
+    let z = if has(RELATIVE_Z) {
+        current.z + p.z
+    } else {
+        p.z
+    };
+    let yaw = if has(RELATIVE_Y_ROT) {
+        current.yaw + p.yaw
+    } else {
+        p.yaw
+    };
+    let pitch = if has(RELATIVE_X_ROT) {
+        (current.pitch + p.pitch).clamp(-90.0, 90.0)
+    } else {
+        p.pitch
+    };
+    // THE DELTA'S OWN WALK (the current delta the rotation arm may
+    // spin; the angles the f32-cast radians the d2f keeps)
+    let (mut dx, mut dy, mut dz) = (current.dx, current.dy, current.dz);
+    if has(RELATIVE_ROTATE_DELTA) {
+        // Vec3.xRot first: y' = y·cos + z·sin, z' = z·cos − y·sin
+        // (the angles the f32 fsub THEN the f64 toRadians the d2f
+        // cast keeps — the bytecode's own precision ladder)
+        let angle = ((current.pitch - pitch) as f64).to_radians() as f32;
+        let (c, s) = (narrow_cos(angle), narrow_sin(angle));
+        let (ny, nz) = (dy * c + dz * s, dz * c - dy * s);
+        dy = ny;
+        dz = nz;
+        // Vec3.yRot second: x' = x·cos + z·sin, z' = z·cos − x·sin
+        let angle = ((current.yaw - yaw) as f64).to_radians() as f32;
+        let (c, s) = (narrow_cos(angle), narrow_sin(angle));
+        let (nx, nz) = (dx * c + dz * s, dz * c - dx * s);
+        dx = nx;
+        dz = nz;
+    }
+    let dx = if has(RELATIVE_DELTA_X) {
+        dx + p.dx
+    } else {
+        p.dx
+    };
+    let dy = if has(RELATIVE_DELTA_Y) {
+        dy + p.dy
+    } else {
+        p.dy
+    };
+    let dz = if has(RELATIVE_DELTA_Z) {
+        dz + p.dz
+    } else {
+        p.dz
+    };
+    PlayerPosition {
+        teleport_id: p.teleport_id,
+        x,
+        y,
+        z,
+        dx,
+        dy,
+        dz,
+        yaw,
+        pitch,
+        flags: p.flags,
+    }
+}
+
 impl WorldModel {
     #![allow(dead_code)] // wired into the frame loop when the mesher input lands
 
@@ -824,7 +948,31 @@ impl WorldModel {
                 true
             }
             PlayEvent::Position(p) => {
-                self.player = Some(p);
+                // THE RIDING GATE (ClientPacketListener.handleMovePlayer's
+                // own pc20 law — `if (!player.isPassenger())` the
+                // setValuesFromPositionPacket call never passes while a
+                // vehicle holds the player: the boat's own syncs carry the
+                // rider, the stored pose stays the mount teleport's word,
+                // and the confirm still spoke inside the pump. The
+                // dismount's empty-list broadcast drops the belief and the
+                // gate opens — the dismount teleport's own word lands then.)
+                let riding = self
+                    .info
+                    .as_ref()
+                    .and_then(|i| self.vehicle_of(i.entity_id))
+                    .is_some();
+                if riding {
+                    return true;
+                }
+                // THE FOLD (PositionMoveRotation.calculateAbsolute's own
+                // walk — the stored pose the CURRENT the relative bits
+                // read, the absolute bits the replace arms keep; the
+                // first sync the zero-baseline the None current keeps,
+                // the relative arms' 0.0 + change the verbatim lands)
+                self.player = Some(match self.player.as_ref() {
+                    Some(cur) => fold_position_sync(cur, &p),
+                    None => p,
+                });
                 true
             }
             PlayEvent::Chunk(col) => {
@@ -3737,6 +3885,266 @@ mod tests {
             portal_cooldown: 60,
         })));
         assert_eq!(m.vehicle_of(1), None, "the ride belief dies with the level");
+    }
+
+    #[test]
+    fn the_position_sync_folds_the_calculate_absolute_law() {
+        let mut m = WorldModel::new();
+        // THE MOUNT WORD (an absolute pose — flags 0 — lands verbatim:
+        // the vanilla teleport's own shape, every replace arm keeps)
+        let base = PlayerPosition {
+            teleport_id: 1,
+            x: 10.0,
+            y: 64.0,
+            z: 20.0,
+            dx: 0.1,
+            dy: 0.2,
+            dz: 0.3,
+            yaw: 30.0,
+            pitch: -45.0,
+            flags: 0,
+        };
+        assert!(m.apply(PlayEvent::Position(base.clone())));
+        let p = m.player.as_ref().expect("the pose landed");
+        assert_eq!((p.x, p.y, p.z), (10.0, 64.0, 20.0));
+        assert_eq!((p.yaw, p.pitch), (30.0, -45.0));
+        assert_eq!((p.dx, p.dy, p.dz), (0.1, 0.2, 0.3));
+
+        // THE RELATIVE X ARM (bit 0): the stored x the fold reads, the
+        // packet's delta the add speaks; EVERY absent arm replaces —
+        // the angles, the other axes, and the velocity word too
+        let rel = PlayerPosition {
+            teleport_id: 2,
+            x: 0.5,
+            y: 70.0,
+            z: 21.0,
+            dx: 0.0,
+            dy: 0.0,
+            dz: 0.0,
+            yaw: 90.0,
+            pitch: 10.0,
+            flags: RELATIVE_X,
+        };
+        assert!(m.apply(PlayEvent::Position(rel)));
+        let p = m.player.as_ref().expect("the fold landed");
+        assert_eq!(p.x, 10.5, "the relative x added");
+        assert_eq!((p.y, p.z), (70.0, 21.0), "the absent bits replaced");
+        assert_eq!((p.yaw, p.pitch), (90.0, 10.0), "the angles replaced too");
+        assert_eq!((p.dx, p.dy, p.dz), (0.0, 0.0, 0.0), "the delta replaced");
+        assert_eq!(p.flags, RELATIVE_X, "the flags ride verbatim");
+
+        // THE RELATIVE YAW ARM (bit 3) + THE PITCH'S OWN BAND: the yaw
+        // adds (90 + 15), the pitch adds THROUGH the ±90 clamp
+        // (Mth.clamp the fold's own walk keeps — 10 + 100 = 110 speaks 90)
+        let rel = PlayerPosition {
+            teleport_id: 3,
+            x: 0.0,
+            y: 0.0,
+            z: 0.0,
+            dx: 0.0,
+            dy: 0.0,
+            dz: 0.0,
+            yaw: 15.0,
+            pitch: 100.0,
+            flags: RELATIVE_Y_ROT | RELATIVE_X_ROT,
+        };
+        assert!(m.apply(PlayEvent::Position(rel)));
+        let p = m.player.as_ref().expect("the fold landed");
+        assert_eq!(p.yaw, 105.0, "the relative yaw added");
+        assert_eq!(p.pitch, 90.0, "the band held the + side");
+
+        // THE ABSOLUTE RESET (the walk's known baseline: the pose, the
+        // pitch -45 the band's - side reads, the delta (0,0,1) the
+        // rotation spins)
+        let reset = PlayerPosition {
+            teleport_id: 4,
+            x: 0.0,
+            y: 0.0,
+            z: 0.0,
+            dx: 0.0,
+            dy: 0.0,
+            dz: 1.0,
+            yaw: 0.0,
+            pitch: -45.0,
+            flags: 0,
+        };
+        assert!(m.apply(PlayEvent::Position(reset.clone())));
+        let p = m.player.as_ref().expect("landed");
+        assert_eq!(p.pitch, -45.0);
+        assert_eq!(p.dz, 1.0);
+
+        // THE BAND'S OTHER SIDE: -45 - 60 = -105 speaks -90
+        let rel = PlayerPosition {
+            teleport_id: 5,
+            x: 0.0,
+            y: 0.0,
+            z: 0.0,
+            dx: 0.0,
+            dy: 0.0,
+            dz: 0.0,
+            yaw: 0.0,
+            pitch: -60.0,
+            flags: RELATIVE_X_ROT,
+        };
+        assert!(m.apply(PlayEvent::Position(rel)));
+        assert_eq!(m.player.as_ref().expect("landed").pitch, -90.0);
+
+        // THE CUMULATIVE FOLD: two relative y syncs add twice — the
+        // stored pose IS the next fold's current
+        let rel = PlayerPosition {
+            teleport_id: 6,
+            x: 0.0,
+            y: 1.0,
+            z: 0.0,
+            dx: 0.0,
+            dy: 0.0,
+            dz: 0.0,
+            yaw: 0.0,
+            pitch: 0.0,
+            flags: RELATIVE_Y,
+        };
+        assert!(m.apply(PlayEvent::Position(rel.clone())));
+        assert_eq!(m.player.as_ref().expect("landed").y, 1.0, "0 + 1");
+        assert!(m.apply(PlayEvent::Position(rel)));
+        assert_eq!(m.player.as_ref().expect("landed").y, 2.0, "1 + 1");
+
+        // THE ABSOLUTE RESET (the delta (0,0,1) and the yaw 0 the
+        // rotation's own walk reads)
+        let reset = PlayerPosition {
+            teleport_id: 7,
+            x: 0.0,
+            y: 0.0,
+            z: 0.0,
+            dx: 0.0,
+            dy: 0.0,
+            dz: 1.0,
+            yaw: 0.0,
+            pitch: 0.0,
+            flags: 0,
+        };
+        assert!(m.apply(PlayEvent::Position(reset)));
+
+        // THE VELOCITY WORD: the ROTATE_DELTA bit spins the current
+        // delta FIRST (Vec3.xRot then yRot — the Mth table the angles
+        // walk), then the axis bits calculateDelta's. The yaw bit adds
+        // 30 (0 -> 30): the dYRot the current-minus-new speaks
+        // (-30deg) rotates the (0,0,1) onto (-0.5, 0, sqrt(3)/2) —
+        // the xRot arm the unchanged pitch keeps identity (cos 0, sin
+        // 0). The axis bits RELATIVE-add, the rotated word survives.
+        let rotated = PlayerPosition {
+            teleport_id: 8,
+            x: 0.0,
+            y: 0.0,
+            z: 0.0,
+            dx: 0.0,
+            dy: 0.0,
+            dz: 0.0,
+            yaw: 30.0,
+            pitch: 0.0,
+            flags: RELATIVE_Y_ROT
+                | RELATIVE_ROTATE_DELTA
+                | RELATIVE_DELTA_X
+                | RELATIVE_DELTA_Y
+                | RELATIVE_DELTA_Z,
+        };
+        assert!(m.apply(PlayEvent::Position(rotated)));
+        let p = m.player.as_ref().expect("landed");
+        // THE TABLE'S OWN WORDS (the quantization the index walk keeps:
+        // the -30deg the dYRot speaks lands at the f32 angle
+        // -0.5235988, the *10430.378... index -5461.33 the d2l
+        // truncates to -5461 -> the cells 60075/10922 — the
+        // floor's own -0.0055deg the verdicts carry, bit-for-bit the
+        // jar's SIN array at those cells)
+        assert_eq!(
+            p.dx, -0.49997231364250183,
+            "the yRot walk carried the table's sin cell"
+        );
+        assert_eq!(p.dy, 0.0);
+        assert_eq!(
+            p.dz, 0.8659934401512146,
+            "the z walked the table's cos cell"
+        );
+    }
+
+    #[test]
+    fn the_position_sync_never_lands_while_the_ride_holds() {
+        let mut m = WorldModel::new();
+        m.apply(PlayEvent::WorldInfo(WorldInfo {
+            entity_id: 1,
+            hardcore: false,
+            dimensions: vec!["minecraft:overworld".to_string()],
+            view_distance: 8,
+            simulation_distance: 8,
+            portal_cooldown: 300,
+            current_dimension: "minecraft:overworld".to_string(),
+        }));
+        m.apply(PlayEvent::Spawn(EntitySpawn {
+            id: 9,
+            uuid: 9,
+            type_id: 2101,
+            x: 0.0,
+            y: 64.0,
+            z: 0.0,
+            movement: [0.0; 3],
+            x_rot: 0.0,
+            y_rot: 0.0,
+            y_head_rot: 0.0,
+            data: 0,
+        }));
+        // THE MOUNT WORD: the server's teleport spoke first — the pose
+        // lands free-standing (the gate the no-ride belief keeps open)
+        let mount = PlayerPosition {
+            teleport_id: 1,
+            x: 10.0,
+            y: 64.0,
+            z: 20.0,
+            dx: 0.0,
+            dy: 0.0,
+            dz: 0.0,
+            yaw: 30.0,
+            pitch: 0.0,
+            flags: 0,
+        };
+        assert!(m.apply(PlayEvent::Position(mount.clone())));
+        assert_eq!(m.player.as_ref().expect("landed").y, 64.0);
+        // THE MOUNT: the boat's list claims the player — the belief
+        // the gate reads now holds
+        m.apply(PlayEvent::SetPassengers(SetPassengers {
+            vehicle: 9,
+            passengers: vec![1],
+        }));
+        // THE SYNC WHILE RIDING: consumed (true — the confirm still
+        // spoke inside the pump) but the pose NEVER lands — the boat's
+        // own syncs carry the rider, the stored word stays the mount's
+        let mid = PlayerPosition { teleport_id: 2, y: 70.0, ..mount };
+        assert!(m.apply(PlayEvent::Position(mid)));
+        assert_eq!(
+            m.player.as_ref().expect("the mount word kept").y,
+            64.0,
+            "the ride holds the pose"
+        );
+        // THE DISMOUNT: the empty list drops the belief — the gate
+        // opens, the dismount teleport's own word lands (the vanilla
+        // server's dismountTo the position lane always speaks)
+        m.apply(PlayEvent::SetPassengers(SetPassengers {
+            vehicle: 9,
+            passengers: vec![],
+        }));
+        let land = PlayerPosition {
+            teleport_id: 3,
+            x: 11.0,
+            y: 70.5,
+            z: 21.0,
+            dx: 0.0,
+            dy: 0.0,
+            dz: 0.0,
+            yaw: 30.0,
+            pitch: 0.0,
+            flags: 0,
+        };
+        assert!(m.apply(PlayEvent::Position(land)));
+        let p = m.player.as_ref().expect("the dismount teleport landed");
+        assert_eq!((p.x, p.y, p.z), (11.0, 70.5, 21.0));
     }
 
     #[test]
