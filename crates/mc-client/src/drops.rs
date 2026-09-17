@@ -500,20 +500,32 @@ pub fn merge_pass(drops: &mut Vec<ItemDrop>) {
     drops.retain(|d| d.count > 0);
 }
 
-/// `Inventory.add`'s own shape (javap Inventory): 36 slots (0..8 the
-/// hotbar, 9..35 the main), the stacks (id, count) with count <= 0 the
-/// empty. The OFFHAND lane: the vanilla's slot-40 check answers no
-/// against the client's absent offhand stack — the same verdict our
-/// 36-slot model speaks by never checking it.
+/// `Inventory`'s own shape (javap Inventory): the THREE lists the
+/// container's own indices speak — 36 `items` (0..8 the hotbar, 9..35
+/// the main), 4 `armor` (the SLOT_IDS loop's own order HEAD, CHEST,
+/// LEGS, FEET — the ctor walk's container indices 39-k), 1 `offhand`
+/// (container 40); the stacks (id, count) with count <= 0 the empty.
+/// The armor list carries NO components — the curse-of-binding gate
+/// (`EnchantmentHelper.has(PREVENT_ARMOR_CHANGE)` the ArmorSlot.
+/// mayPickup walk keeps) never speaks against a bare (id, count),
+/// `mayPickup` answers true (the store's own honest shape).
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Inventory {
     pub items: [(i32, i32); 36],
+    pub armor: [(i32, i32); 4],
+    pub offhand: [(i32, i32); 1],
 }
+
+/// The offhand's container index (the `getItem(40)` the pickup walk
+/// speaks — the three-list fold's own tail).
+pub const OFFHAND_CONTAINER: usize = 40;
 
 impl Default for Inventory {
     fn default() -> Self {
         Self {
             items: [(0, 0); 36],
+            armor: [(0, 0); 4],
+            offhand: [(0, 0); 1],
         }
     }
 }
@@ -527,11 +539,15 @@ impl Inventory {
     }
 
     /// `getSlotWithRemainingSpace` (javap): the SELECTED hotbar slot
-    /// first, then the offhand (absent — the empty verdict), then the
-    /// full scan.
+    /// first, then the OFFHAND container 40 (the `getItem(40)` arm the
+    /// bytecode 21-37 speaks), then the full items scan — the armor
+    /// list the walk never consults (the pickup's own lanes answer).
     fn get_slot_with_remaining_space(&self, selected: usize, id: i32) -> Option<usize> {
         if Self::has_remaining_space(self.items[selected], id) {
             return Some(selected);
+        }
+        if Self::has_remaining_space(self.offhand[0], id) {
+            return Some(OFFHAND_CONTAINER);
         }
         (0..36).find(|&i| Self::has_remaining_space(self.items[i], id))
     }
@@ -543,17 +559,37 @@ impl Inventory {
 
     /// `addResource(slot)` (javap): the empty slot takes the id, the
     /// fill rides `min(incoming, max - count)`, the leftover returns.
+    /// The offhand's container 40 routes to its own list (the
+    /// remaining-space walk's slot-40 verdict lands here).
     fn add_resource(&mut self, slot: usize, id: i32, incoming: i32) -> i32 {
-        let cur = self.items[slot];
+        let offhand = slot == OFFHAND_CONTAINER;
+        let cur = if offhand {
+            self.offhand[0]
+        } else {
+            self.items[slot]
+        };
         if cur.1 <= 0 {
-            self.items[slot] = (id, 0);
+            if offhand {
+                self.offhand[0] = (id, 0);
+            } else {
+                self.items[slot] = (id, 0);
+            }
         }
-        let space = 64 - self.items[slot].1;
+        let count = if offhand {
+            self.offhand[0].1
+        } else {
+            self.items[slot].1
+        };
+        let space = 64 - count;
         let take = incoming.min(space);
         if take == 0 {
             return incoming;
         }
-        self.items[slot].1 += take;
+        if offhand {
+            self.offhand[0].1 += take;
+        } else {
+            self.items[slot].1 += take;
+        }
         incoming - take
     }
 

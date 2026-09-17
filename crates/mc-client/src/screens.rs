@@ -3367,6 +3367,84 @@ impl App {
         self.refresh_craft_result();
     }
 
+    /// The armor column's click (the doClick PICKUP arm over an
+    /// ArmorSlot — [`crate::world_view::predict_pickup_armor`]'s own
+    /// walk: the `mayPlace` gate the `isEquippableInSlot` verdict
+    /// keeps, the slot max 1, the matching piece's swap): the left
+    /// press picks up / places / swaps, the right press the same
+    /// table (a single piece the half-take and the place-one arms
+    /// both answer whole). The SHIFT press rides the quickMoveStack's
+    /// own fallthrough (menu 5..8 matches no section arm — the final
+    /// `[9, 45)` FORWARD move answers: the piece walks to the store,
+    /// the main rows first, the hotbar after —
+    /// [`crate::world_view::predict_quick_move_to_store`]). The
+    /// curse-of-binding gate the mayPickup walk keeps never speaks
+    /// against the store's bare (id, count) — the pickup answers
+    /// true.
+    fn click_armor_slot(&mut self, k: usize, _button: i8) {
+        // the button byte the single-piece table never consults — the
+        // half-take's (count+1)/2 and the place-one arm both answer
+        // whole against the max 1 the ArmorSlot speaks
+        let believed = self.inventory.armor[k];
+        if self.shift_down {
+            if believed.1 <= 0 {
+                return; // the empty piece slot — nothing to move
+            }
+            let (id, count) = believed;
+            let (changed, rest) =
+                crate::world_view::predict_quick_move_to_store(&self.inventory.items, id, count);
+            for (i, pair) in &changed {
+                self.inventory.items[*i] = *pair;
+            }
+            self.inventory.armor[k] = if rest > 0 { (id, rest) } else { (0, 0) };
+            // the store rows may have taken the piece — the HUD row
+            // the every-mutation law syncs
+            self.hotbar_slots = self.inventory.hotbar();
+            return;
+        }
+        let (new_slot, new_carried) = crate::world_view::predict_pickup_armor(
+            believed,
+            self.inv_carried,
+            k,
+        );
+        self.inventory.armor[k] = new_slot;
+        self.inv_carried = new_carried;
+        // the armor list the hotbar row never mirrors — no HUD sync
+        // the mutation speaks (the items' own 0..35 the hotbar() walk
+        // reads, untouched here)
+    }
+
+    /// The offhand slot's click (the doClick PICKUP arm over the
+    /// anonymous slot 45 — `mayPlace` the base slot's unconditional
+    /// TRUE keeps, the max the item's own 64 speaks: the plain
+    /// predict_pickup walk verbatim). The SHIFT press rides the same
+    /// fallthrough the armor sources keep — the `[9, 45)` FORWARD
+    /// move to the store rows (the main first, the hotbar after).
+    fn click_offhand_slot(&mut self, button: i8) {
+        let believed = self.inventory.offhand[0];
+        if self.shift_down {
+            if believed.1 <= 0 {
+                return; // the empty offhand — nothing to move
+            }
+            let (id, count) = believed;
+            let (changed, rest) =
+                crate::world_view::predict_quick_move_to_store(&self.inventory.items, id, count);
+            for (i, pair) in &changed {
+                self.inventory.items[*i] = *pair;
+            }
+            self.inventory.offhand[0] = if rest > 0 { (id, rest) } else { (0, 0) };
+            self.hotbar_slots = self.inventory.hotbar();
+            return;
+        }
+        let (new_slot, new_carried) = if button == 0 {
+            crate::world_view::predict_pickup(believed, self.inv_carried)
+        } else {
+            crate::world_view::predict_pickup_right(believed, self.inv_carried)
+        };
+        self.inventory.offhand[0] = new_slot;
+        self.inv_carried = new_carried;
+    }
+
     /// The RESULT slot's click (the InventoryMenu's slot 0 — the
     /// doClick PICKUP arm over a mayPlace-false slot: ResultSlot.
     /// mayPlace the iconst_0 speaks, so the PLACE arm refuses and the
@@ -3541,6 +3619,26 @@ impl App {
                 return;
             }
         }
+        // THE ARMOR COLUMN (the menu's own slot order — result 0,
+        // craft 1..4, armor 5..8 the ctor loop adds next; the 16x16
+        // hit rect at the +1 inset the store walk speaks). The wire
+        // refusal the walk's own early return keeps.
+        for k in 0..4 {
+            let (ax, ay) = armor_slot_origin(panel, k);
+            if mx >= ax + 1 && mx < ax + 17 && my >= ay + 1 && my < ay + 17 {
+                self.click_armor_slot(k, button);
+                return;
+            }
+        }
+        // THE OFFHAND (menu 45 — the anonymous slot the ctor adds
+        // last, at (77, 62) the init call's own numbers speak).
+        {
+            let (ox2, oy2) = offhand_slot_origin(panel);
+            if mx >= ox2 + 1 && mx < ox2 + 17 && my >= oy2 + 1 && my < oy2 + 17 {
+                self.click_offhand_slot(button);
+                return;
+            }
+        }
         let Some((_, _, store)) = (0..36)
             .map(|i| {
                 let (ox, oy) = inventory_slot_origin(panel, i);
@@ -3561,12 +3659,25 @@ impl App {
             return;
         };
         if self.shift_down {
-            // THE QUICK_MOVE LANE: the whole stack moves to the other
-            // section (the store's own layout feeds the prediction)
-            let changed =
-                crate::world_view::predict_quick_move_inventory(&self.inventory.items, store);
+            // THE QUICK_MOVE LANE: the stack moves to the other
+            // section, the ARMOR ARM the quickMoveStack's own walk
+            // answers FIRST (the matching piece's empty slot the
+            // bytecode 135 arm takes — the walk ends there), the
+            // section routing after. The changed entries name the
+            // store's own 0..35 and the armor list at 36..39 (loop k
+            // = index - 36).
+            let changed = crate::world_view::predict_quick_move_inventory(
+                &self.inventory.items,
+                &self.inventory.armor,
+                &self.inventory.offhand[0],
+                store,
+            );
             for (i, pair) in &changed {
-                self.inventory.items[*i] = *pair;
+                if *i >= 36 {
+                    self.inventory.armor[*i - 36] = *pair;
+                } else {
+                    self.inventory.items[*i] = *pair;
+                }
             }
             self.hotbar_slots = self.inventory.hotbar();
             return;
@@ -3869,6 +3980,58 @@ impl App {
                 let s = count.to_string();
                 let tw = g.text_width(&s);
                 g.text(a, sx + 17 - tw, sy + 9, &s, WHITE, true);
+            }
+        }
+        // THE ARMOR COLUMN + THE OFFHAND (the menu's own slot list
+        // the ctor walk keeps — result 0, craft 1..4, armor 5..8, the
+        // store rows, the offhand 45; the offline store the filled
+        // lane, the wire sessions' equipment rows stay chrome — the
+        // wire's own armor slots ride later). The icons the store's
+        // own draw speaks; the EMPTY slots the `getNoItemIcon` lane
+        // draws — the 16x16 sprite at the +1 inset the extractSlot
+        // blit keeps (helmet, chestplate, leggings, boots, shield —
+        // the clinit's own texture map, the offhand's anonymous
+        // override).
+        const ARMOR_EMPTY: [&str; 4] = [
+            "container/slot/helmet",
+            "container/slot/chestplate",
+            "container/slot/leggings",
+            "container/slot/boots",
+        ];
+        for k in 0..4usize {
+            let (sx, sy) = armor_slot_origin(panel, k);
+            let (id, count) = if self.world_is_network {
+                (0, 0)
+            } else {
+                self.inventory.armor[k]
+            };
+            if count > 0 {
+                draw_item_icon(g, id, sx + 1, sy + 1);
+                if count > 1 {
+                    let s = count.to_string();
+                    let tw = g.text_width(&s);
+                    g.text(a, sx + 17 - tw, sy + 9, &s, WHITE, true);
+                }
+            } else {
+                g.sprite(a, ARMOR_EMPTY[k], sx + 1, sy + 1);
+            }
+        }
+        {
+            let (sx, sy) = offhand_slot_origin(panel);
+            let (id, count) = if self.world_is_network {
+                (0, 0)
+            } else {
+                self.inventory.offhand[0]
+            };
+            if count > 0 {
+                draw_item_icon(g, id, sx + 1, sy + 1);
+                if count > 1 {
+                    let s = count.to_string();
+                    let tw = g.text_width(&s);
+                    g.text(a, sx + 17 - tw, sy + 9, &s, WHITE, true);
+                }
+            } else {
+                g.sprite(a, "container/slot/shield", sx + 1, sy + 1);
             }
         }
         // THE CRAFT REGION (the 2x2 cells + the computed result slot —
@@ -4268,7 +4431,17 @@ impl App {
         };
         let panel = self.inv_panel;
         // THE HOVERED SLOT (the getHoveredSlot walk — the click lane's
-        // own 16x16 rect over the store's slot origins)
+        // own 16x16 rect over the store's slot origins; the armor
+        // column and the offhand the menu's own slot list adds — the
+        // piece the hovered slot holds the Q throw speaks too)
+        let hovered_armor = (0..4).find(|&k| {
+            let (ax, ay) = armor_slot_origin(panel, k);
+            mx >= ax + 1 && mx < ax + 17 && my >= ay + 1 && my < ay + 17
+        });
+        let hovered_offhand = {
+            let (ox2, oy2) = offhand_slot_origin(panel);
+            mx >= ox2 + 1 && mx < ox2 + 17 && my >= oy2 + 1 && my < oy2 + 17
+        };
         let Some((_, _, store)) = (0..36)
             .map(|i| {
                 let (ox, oy) = inventory_slot_origin(panel, i);
@@ -4276,7 +4449,32 @@ impl App {
             })
             .find(|&(x, y, _)| mx >= x && mx < x + 16 && my >= y && my < y + 16)
         else {
-            return; // hoveredSlot null — the keyPressed gate returns
+            // THE ARMOR / OFFHAND SOURCES (the menu's own slot list —
+            // the same gates the store walk keeps)
+            let (id, count) = if let Some(k) = hovered_armor {
+                self.inventory.armor[k]
+            } else if hovered_offhand {
+                self.inventory.offhand[0]
+            } else {
+                (0, 0)
+            };
+            if count <= 0 {
+                return; // hoveredSlot null or empty — the gate returns
+            }
+            if self.inv_carried.1 > 0 {
+                return; // THE doClick THROW's getCarried().isEmpty() gate
+            }
+            let dropped = if whole_stack { count } else { 1 };
+            self.drop_item_entity_aimed(id, dropped);
+            // the same safeTake walk over the equipment lists — the
+            // whole piece gone or exactly one off
+            let new = if whole_stack { (0, 0) } else { (id, count - 1) };
+            if let Some(k) = hovered_armor {
+                self.inventory.armor[k] = new;
+            } else if hovered_offhand {
+                self.inventory.offhand[0] = new;
+            }
+            return;
         };
         let (id, count) = self.inventory.items[store];
         if count <= 0 {
@@ -9435,6 +9633,27 @@ fn craft_slot_origin(panel: (i32, i32), kind: usize) -> (i32, i32) {
         (98 + (kind % 2) as i32 * 18, 18 + (kind / 2) as i32 * 18)
     };
     (panel.0 + x, panel.1 + y)
+}
+
+/// The armor column's slot origins by LOOP index k (the 26.2 ctor's
+/// own walk — `ArmorSlot(inv, owner, SLOT_IDS[k], 39 - k, 8,
+/// 8 + k * 18, TEXTURE_EMPTY_SLOTS.get(...))`): the SLOT_IDS order
+/// HEAD, CHEST, LEGS, FEET, container indices 39-k, menu slots
+/// 5..8, the panel-relative x 8 and y 8 + k * 18 the bytecode's
+/// bipush/imul/iadd chain speaks. The empty icons the
+/// `getNoItemIcon` lane draws (helmet, chestplate, leggings, boots
+/// — the clinit's own texture map).
+fn armor_slot_origin(panel: (i32, i32), k: usize) -> (i32, i32) {
+    (panel.0 + 8, panel.1 + 8 + k as i32 * 18)
+}
+
+/// The offhand slot's origin (the 26.2 ctor's own anonymous slot —
+/// `InventoryMenu$1(menu, inv, 40, 77, 62, owner)`: container 40,
+/// panel-relative (77, 62), the `EMPTY_ARMOR_SLOT_SHIELD` icon the
+/// getNoItemIcon override speaks, `mayPlace` the base slot's
+/// unconditional TRUE keeps — any stack rides the offhand).
+fn offhand_slot_origin(panel: (i32, i32)) -> (i32, i32) {
+    (panel.0 + 77, panel.1 + 62)
 }
 
 /// THE PACK LAW (javap 26.2 CraftingInput.ofPositioned — the walk the
@@ -18364,6 +18583,206 @@ mod tests {
         assert_eq!(app.craft_grid[0], (0, 0), "the cell spent");
         assert_eq!(app.craft_result, (0, 0), "the empty grid's EMPTY verdict");
         assert_eq!(app.inventory.items[5], (0, 0), "the store slot still empty");
+    }
+
+    /// THE ARMOR COLUMN (the 26.2 ArmorSlot's own mayPlace law — the
+    /// isEquippableInSlot verdict the EQUIPPABLE component folds to,
+    /// the slot max 1, the matching piece's swap the doClick arm
+    /// speaks): the matching piece PLACES, the wrong piece's slot
+    /// refuses (the stack stays on the cursor), the same-item full
+    /// slot the silence keeps, the different matching piece SWAPS.
+    /// The panel geometry: the armor column at (240, 105 + k * 18),
+    /// the head center (248, 113), the chest center (248, 131).
+    #[test]
+    fn the_armor_slots_take_the_matching_piece_and_refuse_the_rest() {
+        let helmet = mc_registry::item_id_by_name("iron_helmet").unwrap();
+        let chest = mc_registry::item_id_by_name("iron_chestplate").unwrap();
+        let diamond = mc_registry::item_id_by_name("diamond_helmet").unwrap();
+        let planks = mc_registry::item_id_by_name("oak_planks").unwrap();
+        let mut app = App::new(3);
+        app.enter_world();
+        app.spawn_offline_body();
+        app.open_inventory();
+        app.inv_panel = inventory_panel_origin(640, 360);
+        // THE MATCHING PIECE PLACES (the head slot takes the helmet)
+        app.inv_carried = (helmet, 1);
+        app.on_press(248, 113);
+        assert_eq!(app.inventory.armor[0], (helmet, 1), "the head wears it");
+        assert_eq!(app.inv_carried, (0, 0), "the cursor emptied");
+        // THE PICKUP (the empty cursor takes the piece back)
+        app.on_press(248, 113);
+        assert_eq!(app.inventory.armor[0], (0, 0), "the head bare");
+        assert_eq!(app.inv_carried, (helmet, 1), "the piece in the hand");
+        // THE WRONG PIECE'S SLOT REFUSES (the chest slot keeps its
+        // gate — the helmet is not a chestplate)
+        app.on_press(248, 131);
+        assert_eq!(app.inventory.armor[1], (0, 0), "the chest still bare");
+        assert_eq!(app.inv_carried, (helmet, 1), "the helmet stays held");
+        // THE NON-ARMOR ITEM THE MAINHAND VERDICT REFUSES
+        app.inv_carried = (planks, 12);
+        app.on_press(248, 131);
+        assert_eq!(app.inventory.armor[1], (0, 0), "the planks refused");
+        assert_eq!(app.inv_carried, (planks, 12), "the planks stay held");
+        // THE HEAD WORN AGAIN (the held helmet rides back — the swap
+        // needs the slot SPEAKING)
+        app.inv_carried = (helmet, 1);
+        app.on_press(248, 113);
+        assert_eq!(app.inventory.armor[0], (helmet, 1), "the head re-worn");
+        assert_eq!(app.inv_carried, (0, 0), "the hand empty again");
+        // THE SWAP (the different matching piece trades places — the
+        // doClick mayPlace-true arm the result slot never speaks)
+        app.inv_carried = (diamond, 1);
+        app.on_press(248, 113);
+        assert_eq!(app.inventory.armor[0], (diamond, 1), "the head re-wears");
+        assert_eq!(app.inv_carried, (helmet, 1), "the iron rides the hand");
+    }
+
+    /// THE QUICK-MOVE ARMOR WALK (the quickMoveStack's own arm order —
+    /// the bytecode 135 armor arm fires BEFORE the section routing and
+    /// ENDS the walk when it moves): the store row's helmet lands in
+    /// the EMPTY head slot (the hotbar routing never speaks), the
+    /// occupied head sends the next helmet down the hotbar lane, the
+    /// carved pumpkin the HEAD family keeps. The store 9 hit center
+    /// (248, 189), store 10 (266, 189).
+    #[test]
+    fn the_shift_click_sends_the_store_row_helmet_to_the_empty_head_slot() {
+        let helmet = mc_registry::item_id_by_name("iron_helmet").unwrap();
+        let pumpkin = mc_registry::item_id_by_name("carved_pumpkin").unwrap();
+        let mut app = App::new(3);
+        app.enter_world();
+        app.spawn_offline_body();
+        app.open_inventory();
+        app.inv_panel = inventory_panel_origin(640, 360);
+        // THE ARMOR ARM ENDS THE WALK (the head empty — the whole
+        // piece moves, the remainder stays, no hotbar routing)
+        app.inventory.items[9] = (helmet, 1);
+        app.shift_down = true;
+        app.on_press(248, 189);
+        app.shift_down = false;
+        assert_eq!(app.inventory.armor[0], (helmet, 1), "the head took it");
+        assert_eq!(app.inventory.items[9], (0, 0), "the source emptied");
+        assert_eq!(app.inventory.items[0], (0, 0), "the hotbar untouched");
+        // THE OCCUPIED HEAD SENDS IT DOWN THE SECTION LANE (the hotbar
+        // rows the main-row source feeds — store 10's pumpkin is the
+        // HEAD family too, but the head is full: the FIRST hotbar slot
+        // takes it)
+        app.inventory.items[10] = (pumpkin, 1);
+        app.shift_down = true;
+        app.on_press(266, 189);
+        app.shift_down = false;
+        assert_eq!(app.inventory.armor[0], (helmet, 1), "the head kept its piece");
+        assert_eq!(app.inventory.items[10], (0, 0), "the source emptied");
+        assert_eq!(app.inventory.items[0], (pumpkin, 1), "the hotbar took the rest");
+    }
+
+    /// THE OFFHAND SLOT (the anonymous slot 45's own law — mayPlace
+    /// the base slot's unconditional TRUE keeps, the max the item's
+    /// own 64 speaks): ANY stack places, the pickup takes it back,
+    /// and the ADD walk's container-40 arm the getSlotWithRemainingSpace
+    /// bytecode 21-37 keeps speaks — the selected stack full, the
+    /// store's free slots gone, the offhand's same-item stack the
+    /// remaining-space verdict takes the rest.
+    #[test]
+    fn the_offhand_takes_any_stack_and_the_pickup_lands_there() {
+        let torch = mc_registry::item_id_by_name("torch").unwrap();
+        let cobble = mc_registry::item_id_by_name("cobblestone").unwrap();
+        let mut app = App::new(3);
+        app.enter_world();
+        app.spawn_offline_body();
+        app.open_inventory();
+        app.inv_panel = inventory_panel_origin(640, 360);
+        // THE PLACE (any stack rides the offhand)
+        app.inv_carried = (torch, 10);
+        app.on_press(317, 167);
+        assert_eq!(app.inventory.offhand[0], (torch, 10), "the offhand took it");
+        assert_eq!(app.inv_carried, (0, 0), "the cursor emptied");
+        // THE PICKUP (the whole stack back)
+        app.on_press(317, 167);
+        assert_eq!(app.inventory.offhand[0], (0, 0), "the offhand bare");
+        assert_eq!(app.inv_carried, (torch, 10), "the stack in the hand");
+        // THE ADD WALK'S OFFHAND LANE (the selected full, the main
+        // rows full with the OTHER item, the offhand's 30 the
+        // container-40 verdict fills)
+        app.inventory.items[0] = (torch, 64);
+        app.inventory.offhand[0] = (torch, 30);
+        for it in app.inventory.items.iter_mut().skip(9) {
+            *it = (cobble, 64);
+        }
+        let leftover = app.inventory.add(0, torch, 5);
+        assert_eq!(leftover, 0, "the offhand took all five");
+        assert_eq!(app.inventory.offhand[0], (torch, 35), "the container-40 fill");
+        assert_eq!(app.inventory.items[0], (torch, 64), "the selected untouched");
+    }
+
+    /// THE WORN PIECE'S SHIFT-CLICK (the quickMoveStack's own
+    /// fallthrough for the menu 5..8 sources — the final `[9, 45)`
+    /// FORWARD move the section arms never match): the piece walks to
+    /// the store, the MAIN rows first (the forward order the menu's
+    /// own ascending walk keeps), the hotbar after when the main rows
+    /// speak no home. The chest hit center (248, 131).
+    #[test]
+    fn the_shift_click_moves_the_worn_piece_to_the_store() {
+        let chest = mc_registry::item_id_by_name("iron_chestplate").unwrap();
+        let helmet = mc_registry::item_id_by_name("iron_helmet").unwrap();
+        let cobble = mc_registry::item_id_by_name("cobblestone").unwrap();
+        let mut app = App::new(3);
+        app.enter_world();
+        app.spawn_offline_body();
+        app.open_inventory();
+        app.inv_panel = inventory_panel_origin(640, 360);
+        // THE MAIN ROWS FIRST (the forward [9, 45) walk — store 9 the
+        // first empty the ascending order answers)
+        app.inventory.armor[1] = (chest, 1);
+        app.shift_down = true;
+        app.on_press(248, 131);
+        app.shift_down = false;
+        assert_eq!(app.inventory.items[9], (chest, 1), "the main row took it");
+        assert_eq!(app.inventory.armor[1], (0, 0), "the chest bare");
+        // THE MAIN ROWS FULL — THE HOTBAR AFTER (the forward walk's
+        // own tail: the hotbar 0..8 the range's last arm answers)
+        app.inventory.armor[0] = (helmet, 1);
+        for it in app.inventory.items.iter_mut().skip(9) {
+            *it = (cobble, 64);
+        }
+        app.shift_down = true;
+        app.on_press(248, 113);
+        app.shift_down = false;
+        assert_eq!(app.inventory.items[0], (helmet, 1), "the hotbar took it");
+        assert_eq!(app.inventory.armor[0], (0, 0), "the head bare");
+        assert_eq!(app.hotbar_slots[0], (helmet, 1), "the HUD row synced");
+    }
+
+    /// THE Q-OVER-THE-EQUIPMENT LANE (the getHoveredSlot walk's own
+    /// completeness — the armor column and the offhand the menu's
+    /// slot list keeps): the hovered piece the doClick THROW speaks,
+    /// the carried stack's own gate the silence keeps.
+    #[test]
+    fn the_drop_key_throws_the_hovered_piece() {
+        let helmet = mc_registry::item_id_by_name("iron_helmet").unwrap();
+        let torch = mc_registry::item_id_by_name("torch").unwrap();
+        let mut app = App::new(3);
+        app.enter_world();
+        app.spawn_offline_body();
+        app.open_inventory();
+        app.inv_panel = inventory_panel_origin(640, 360);
+        // THE PIECE THROWS (one off — the single piece the whole-stack
+        // law answers the same; the safeTake walk leaves the count-0
+        // pair the store's own empty sentinel keeps)
+        app.inventory.armor[0] = (helmet, 1);
+        app.mouse_pos = Some((248, 113));
+        app.on_inventory_drop_key(false);
+        assert_eq!(app.inventory.armor[0], (helmet, 0), "the head bare");
+        assert!(
+            app.drops.iter().any(|d| d.item == helmet && d.count == 1),
+            "the piece rides the aimed throw"
+        );
+        // THE CARRIED STACK'S GATE (the cursor full — the throw
+        // refuses)
+        app.inventory.offhand[0] = (torch, 3);
+        app.inv_carried = (torch, 5);
+        app.mouse_pos = Some((317, 167));
+        app.on_inventory_drop_key(false);
+        assert_eq!(app.inventory.offhand[0], (torch, 3), "the offhand kept it");
     }
 
     /// THE SHAPED SET (ShapedRecipePattern.matches's own law — the

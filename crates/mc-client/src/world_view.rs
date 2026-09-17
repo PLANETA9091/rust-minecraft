@@ -593,6 +593,94 @@ pub fn wire_angles(cam: &crate::camera::Camera) -> (f32, f32) {
 /// contract). The store's future component lanes carry the real maxes.
 pub const ITEM_MAX_STACK_DEFAULT: i32 = 64;
 
+/// THE EQUIPPABLE FOLD (javap 26.2 `LivingEntity.isEquippableInSlot` +
+/// `getEquipmentSlotForItem` — the verdict the armor slots' `mayPlace`
+/// keeps): the stack's `EQUIPPABLE` component names its
+/// `EquipmentSlot`; a component-less stack folds to the MAINHAND
+/// verdict (the `ifnonnull` else-arm — armor slots refuse it). The
+/// client's (id, count) stacks carry no components, so the component
+/// itself rides the registry's item names — the armor family the
+/// vanilla datapack's default components speak: the four piece
+/// suffixes, the carved pumpkin and the head family (HEAD), the
+/// elytra (CHEST). Returns the ARMOR LOOP index the item equips —
+/// the ctor's SLOT_IDS order (HEAD=0, CHEST=1, LEGS=2, FEET=3, the
+/// container indices 39-k) — `None` for the MAINHAND verdict (and
+/// the OFFHAND verdict no base item's component ever names — the
+/// quickMoveStack's offhand arm the bytecode keeps stands honest).
+pub fn equippable_loop_k(id: i32) -> Option<usize> {
+    let name = mc_registry::item_name(id)?;
+    if name.ends_with("_helmet")
+        || name == "carved_pumpkin"
+        || matches!(
+            name,
+            "player_head"
+                | "zombie_head"
+                | "creeper_head"
+                | "skeleton_skull"
+                | "wither_skeleton_skull"
+                | "dragon_head"
+                | "piglin_head"
+        )
+    {
+        return Some(0); // HEAD — container 39, menu slot 5
+    }
+    if name.ends_with("_chestplate") || name == "elytra" {
+        return Some(1); // CHEST — container 38, menu slot 6
+    }
+    if name.ends_with("_leggings") {
+        return Some(2); // LEGS — container 37, menu slot 7
+    }
+    if name.ends_with("_boots") {
+        return Some(3); // FEET — container 36, menu slot 8
+    }
+    None
+}
+
+/// The armor slot's PICKUP prediction (the doClick PICKUP arm over an
+/// ArmorSlot — the `mayPlace` gate the `isEquippableInSlot` verdict
+/// keeps, the `getMaxStackSize()` 1 the slot's own constant speaks):
+/// an empty cursor takes the whole piece (the count's own 1 — the
+/// half-rounded-up arm the secondary speaks lands the same); a held
+/// stack the matching piece PLACES (the safeInsert the slot's own
+/// max caps — count 1), the same item's merge arm the full-slot
+/// silence keeps (room = 1 - 1 = 0), a DIFFERENT matching-piece
+/// arm... the swap the doClick's `mayPlace`-true arm speaks — the
+/// worn piece and the held trade places; ANY other item the gate
+/// refuses (the stack stays on the cursor — the real game's own
+/// feel).
+pub fn predict_pickup_armor(
+    slot: (i32, i32),
+    carried: (i32, i32),
+    loop_k: usize,
+) -> ((i32, i32), (i32, i32)) {
+    let slot_empty = slot.1 <= 0;
+    let carried_empty = carried.1 <= 0;
+    match (slot_empty, carried_empty) {
+        // both empty — nothing to do
+        (true, true) => (slot, carried),
+        // an empty cursor over a filled slot — the piece comes off
+        (false, true) => ((0, 0), slot),
+        // a held stack: the mayPlace gate answers FIRST
+        _ => {
+            if equippable_loop_k(carried.0) != Some(loop_k) {
+                return (slot, carried); // the gate's refusal — silence
+            }
+            if slot_empty {
+                // the place arm — the slot's own max (1) caps the take
+                let take = carried.1.min(1);
+                let rest = carried.1 - take;
+                ((carried.0, take), if rest > 0 { (carried.0, rest) } else { (0, 0) })
+            } else if slot.0 == carried.0 {
+                // the same item — the full slot takes nothing (max 1)
+                (slot, carried)
+            } else {
+                // the matching piece — the swap the mayPlace arm speaks
+                (carried, slot)
+            }
+        }
+    }
+}
+
 /// The vanilla `AbstractContainerMenu.doClick` PICKUP prediction for
 /// the left press (button 0) — the client's own menu logic, run
 /// locally so the click's believed deltas and the held cursor ride the
@@ -761,25 +849,65 @@ pub fn predict_quick_move(slots: &[(i32, i32)], src: usize) -> Vec<(usize, (i32,
     changed
 }
 
-/// The vanilla `InventoryMenu.quickMoveStack` prediction — the
-/// survival inventory's own shift-click (javap 26.2, the slot-range
-/// walk the bytecode pins): the main rows (menu 9..35) feed the
-/// hotbar (36..45) and the hotbar feeds the main rows, BOTH FORWARD
-/// (`moveItemStackTo(stack, 36, 45, false)` / `(9, 36, false)` — the
-/// inventory menu's forward order, the chest menu's fillFromEnd the
-/// other menus speak). The slots slice is the STORE's own layout
-/// (`Inventory.items`: 0..9 the hotbar, 9..36 the main rows — the
-/// container the menu's standard slots wrap), the store index the
-/// menu's own mapping (menu 9+i = store 9+i, menu 36+i = store i).
-/// The two-pass walk is the chest law's own: the same-item merges
-/// first, then the empty slots take the remainder. Returns the
-/// changed `(store index, pair)` entries, the source first. NO
-/// entries means the stack did not move.
-pub fn predict_quick_move_inventory(slots: &[(i32, i32); 36], src: usize) -> Vec<(usize, (i32, i32))> {
+/// The quickMoveStack walk over the player's own store (javap 26.2
+/// `InventoryMenu.quickMoveStack` — the arms the bytecode speaks in
+/// order). The sources are the STORE rows (menu 9..35 the main grid,
+/// menu 36..44 the hotbar; the armor/offhand sources ride
+/// [`predict_quick_move_to_store`]):
+///
+/// 1. THE ARMOR ARM (bytecode 135-200 — it fires for EVERY source
+///    past the menu's own early arms): `getEquipmentSlotForItem`
+///    names HUMANOID_ARMOR and the matching menu slot (8 - the
+///    equipment index) is EMPTY → the move rides
+///    `moveItemStackTo(target, target+1, false)` and the walk ENDS
+///    (the `ifne -> 325` the tail's own goto keeps) — the remainder
+///    stays in the source, the hotbar routing never speaks. The
+///    moveItemStackTo consults `mayPlace` — the matching piece's own
+///    slot takes it, nothing else does.
+/// 2. THE OFFHAND ARM (bytecode 203-246): `getEquipmentSlotForItem`
+///    == OFFHAND and menu 45 empty → menu 45. The vanilla registry's
+///    base items' components never name OFFHAND (the verdict folds
+///    MAINHAND for component-less stacks) — the arm stands honest in
+///    the bytecode, the registry keeps it silent.
+/// 3. THE SECTION ARM (bytecode 247-306): a main-row source moves to
+///    the hotbar rows (`moveItemStackTo(36, 45, false)` — menu 36..44
+///    ascending = containers 0..8), a hotbar source to the main rows
+///    (`moveItemStackTo(9, 36, false)`). The two passes
+///    moveItemStackTo keeps: the merge pass over the whole range
+///    first, the first-empty pass after, 64 the slot's max.
+///
+/// Returns the believed CHANGES as (container_index, stack) pairs —
+/// the items' own 0..35, the armor list at 36..39 (loop k = index -
+/// 36), the offhand at 40 — the source first (its remainder). An
+/// empty vec means nothing moved.
+pub fn predict_quick_move_inventory(
+    slots: &[(i32, i32); 36],
+    armor: &[(i32, i32); 4],
+    offhand: &(i32, i32),
+    src: usize,
+) -> Vec<(usize, (i32, i32))> {
     let src_item = slots[src];
     if src_item.1 <= 0 {
         return Vec::new(); // nothing to move
     }
+    // THE ARMOR ARM FIRST (the bytecode 135 gate the section arms
+    // precede — the matching empty piece slot takes the whole stack,
+    // capped at the slot's own max 1, and the walk ends)
+    if let Some(k) = equippable_loop_k(src_item.0) {
+        if armor[k].1 <= 0 {
+            let take = src_item.1.min(1);
+            let rest = src_item.1 - take;
+            let mut changed = vec![(36 + k, (src_item.0, take))];
+            let src_new = if rest > 0 { (src_item.0, rest) } else { (0, 0) };
+            if src_new != src_item {
+                changed.push((src, src_new));
+            }
+            return changed;
+        }
+    }
+    // THE OFFHAND ARM — the registry never names it (see the doc);
+    // the fallthrough the bytecode keeps speaks next.
+    let _ = offhand;
     let order: Vec<usize> = if src < 9 {
         (9..36).collect() // the hotbar -> the main rows, store 9 forward
     } else {
@@ -820,6 +948,54 @@ pub fn predict_quick_move_inventory(slots: &[(i32, i32); 36], src: usize) -> Vec
         changed.insert(0, (src, src_new));
     }
     changed
+}
+
+/// The quickMoveStack walk for the ARMOR and OFFHAND sources (the
+/// bytecode's own fallthrough — menu 5..8 and menu 45 match no
+/// earlier section arm, so the final
+/// `moveItemStackTo(9, 45, false)` answers): the [9, 45) FORWARD
+/// range over the store's rows — menu 9..35 ascending = the main
+/// rows 9..35, menu 36..44 ascending = the hotbar 0..8 — the merge
+/// pass over the whole range first, the first-empty pass after, 64
+/// the slot's max. Returns the believed changes (the store index
+/// pairs) and the remainder that stayed in the source slot.
+pub fn predict_quick_move_to_store(
+    slots: &[(i32, i32); 36],
+    id: i32,
+    count: i32,
+) -> (Vec<(usize, (i32, i32))>, i32) {
+    let order: Vec<usize> = (9..36).chain(0..9).collect();
+    let mut slots = *slots;
+    let mut remaining = count;
+    let mut changed: Vec<(usize, (i32, i32))> = Vec::new();
+    // pass 1: the same-item merge into the stacks with room
+    for &i in &order {
+        if remaining == 0 {
+            break;
+        }
+        let d = slots[i];
+        if d.1 > 0 && d.0 == id && d.1 < ITEM_MAX_STACK_DEFAULT {
+            let take = (ITEM_MAX_STACK_DEFAULT - d.1).min(remaining);
+            slots[i] = (d.0, d.1 + take);
+            remaining -= take;
+            changed.push((i, slots[i]));
+        }
+    }
+    // pass 2: the empty slots take the remainder
+    if remaining > 0 {
+        for &i in &order {
+            if remaining == 0 {
+                break;
+            }
+            if slots[i].1 <= 0 {
+                let take = remaining.min(ITEM_MAX_STACK_DEFAULT);
+                slots[i] = (id, take);
+                remaining -= take;
+                changed.push((i, slots[i]));
+            }
+        }
+    }
+    (changed, remaining)
 }
 
 /// The model's open-container store projected for the UI — `None`
