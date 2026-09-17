@@ -833,6 +833,22 @@ pub struct App {
     /// pattern; the static layout needs no per-slot rects). The (0, 0)
     /// sentinel refuses the click before the first render spoke.
     pub inv_panel: (i32, i32),
+    /// THE CRAFT CELLS (the InventoryMenu's own 2x2 `craftSlots` — the
+    /// TransientCraftingContainer the ctor's AbstractCraftingMenu walk
+    /// builds width-2/height-2): the four cells the survival inventory's
+    /// texture paints chrome for, the (id, count) stack shape the store
+    /// speaks. The menu lives as long as the player (the ctor's own
+    /// field, no removed() clearing the InventoryMenu names) — the
+    /// contents PERSIST across open/close; only the carried stack
+    /// returns ([`Self::close_inventory`]'s walk).
+    pub craft_grid: [(i32, i32); 4],
+    /// The craft grid's computed result slot (the InventoryMenu's slot
+    /// 0 — the ctor's `addResultSlot(154, 28)`): the recompute law
+    /// `InventoryMenu.slotsChanged` walks every container mutation
+    /// (CraftingMenu.slotChangedCraftingGrid — the getRecipeFor walk's
+    /// own verdict, assemble or EMPTY), [`Self::refresh_craft_result`]
+    /// the offline answer keeps.
+    pub craft_result: (i32, i32),
     /// The keyboard lane's shift state the LAST loop tick tracked —
     /// the vanilla `Screen.hasShiftDown()` query: the press's rising
     /// edge reads it to route the shift-click's QUICK_MOVE lane. Fed
@@ -1261,6 +1277,8 @@ impl App {
             shift_down: false,
             inv_carried: (0, 0),
             inv_panel: (0, 0),
+            craft_grid: [(0, 0); 4],
+            craft_result: (0, 0),
             live_held: None,
             drops: Vec::new(),
             inventory: crate::drops::Inventory::default(),
@@ -3299,6 +3317,99 @@ impl App {
         self.open(ScreenKind::World);
     }
 
+    /// The recompute law (the InventoryMenu.slotsChanged walk — the
+    /// container mutation the craft cells ride every time):
+    /// CraftingMenu.slotChangedCraftingGrid's getRecipeFor ask, the
+    /// assemble-or-EMPTY verdict the result slot keeps.
+    fn refresh_craft_result(&mut self) {
+        self.craft_result = craft_result_for(&self.craft_grid);
+    }
+
+    /// THE ON-TAKE WALK (javap 26.2 ResultSlot.onTake — the walk the
+    /// result slot's take rides): the positioned input's per-cell
+    /// removeItem(i, 1) — every non-empty cell one off — then the
+    /// slotsChanged recompute the container's own chain fires (the
+    /// recipe may fire AGAIN when the ingredients speak — the two-log
+    /// planks the real game crafts). The remainders arm the walk keeps
+    /// (the buckets' NonNullList) — this recipe set carries none.
+    fn craft_on_take(&mut self) {
+        for cell in self.craft_grid.iter_mut() {
+            if cell.1 > 0 {
+                cell.1 -= 1;
+                if cell.1 == 0 {
+                    *cell = (0, 0);
+                }
+            }
+        }
+        self.refresh_craft_result();
+    }
+
+    /// The craft cell's click (the doClick PICKUP/QUICK_MOVE walk's
+    /// own shape — the TransientCraftingContainer cells the mayPlace
+    /// default TRUE keeps): the left press picks up / places / merges /
+    /// swaps (the predict_pickup walk the store slots speak verbatim),
+    /// the right press splits and places one. The shift-click's
+    /// quick-move INTO the craft region rides later (the
+    /// quickMoveStack's 1..9 walk the menu keeps — silence here). The
+    /// mutation's slotsChanged recompute the result follows.
+    fn click_craft_cell(&mut self, cell: usize, button: i8) {
+        if self.shift_down {
+            return; // the quick-move-into-craft lane rides later
+        }
+        let believed = self.craft_grid[cell];
+        let (new_cell, new_carried) = if button == 0 {
+            crate::world_view::predict_pickup(believed, self.inv_carried)
+        } else {
+            crate::world_view::predict_pickup_right(believed, self.inv_carried)
+        };
+        self.craft_grid[cell] = new_cell;
+        self.inv_carried = new_carried;
+        self.refresh_craft_result();
+    }
+
+    /// The RESULT slot's click (the InventoryMenu's slot 0 — the
+    /// doClick PICKUP arm over a mayPlace-false slot: ResultSlot.
+    /// mayPlace the iconst_0 speaks, so the PLACE arm refuses and the
+    /// walk rides the pickup/merge arms):
+    /// - carried EMPTY: the tryRemove(count | (count+1)/2) take — the
+    ///   whole result on the left press, HALF rounded up on the right
+    ///   (the (count+1)/2 the secondary arm speaks) — then the onTake
+    ///   walk ([`Self::craft_on_take`]) the safeTake chain fires.
+    /// - carried SAME item: the 1020 arm's tryRemove walk — the take
+    ///   the carried's own SPACE caps (the carriedMax - carriedCount
+    ///   isub the bytecode speaks), the grow the consumer keeps, the
+    ///   onTake inside; the FULL carried (64) refuses (the
+    ///   getMaxStackSize if_icmpgt the 1001 arm speaks).
+    /// - carried DIFFERENT item: silence (the isSameItemSameComponents
+    ///   ifeq the 1027 arm keeps — the mayPlace-false slot no swap
+    ///   speaks).
+    /// The result slot's own emptiness the carried-empty arm gates
+    /// (the 806/814 walk — nothing to take).
+    fn click_craft_result(&mut self, button: i8) {
+        let (id, count) = self.craft_result;
+        if count <= 0 {
+            return; // the result slot's own emptiness — nothing to take
+        }
+        if self.inv_carried.1 <= 0 {
+            // THE PICKUP ARM (the carried-empty walk — the whole or
+            // the half-rounded-up the secondary speaks)
+            let taken = if button == 0 { count } else { (count + 1) / 2 };
+            self.inv_carried = (id, taken);
+            self.craft_on_take();
+        } else if self.inv_carried.0 == id {
+            // THE MERGE ARM (the 1020 walk — the carried's space caps
+            // the take, the FULL carried refuses)
+            let space = crate::world_view::ITEM_MAX_STACK_DEFAULT - self.inv_carried.1;
+            if space > 0 {
+                let taken = space.min(count);
+                self.inv_carried.1 += taken;
+                self.craft_on_take();
+            }
+        }
+        // carried DIFFERENT item: the ifeq arm's silence — no swap on
+        // the mayPlace-false slot
+    }
+
     /// The survival inventory's slot click (the vanilla doClick's
     /// PICKUP / QUICK_MOVE modes over the player's OWN store): the
     /// left press picks up / places / merges / swaps, the right press
@@ -3319,6 +3430,24 @@ impl App {
             return; // no render spoke yet — no geometry to hit
         }
         let panel = self.inv_panel;
+        // THE CRAFT REGION FIRST (the InventoryMenu's own slot order —
+        // the result slot 0 the ctor places at (154, 28), the craft
+        // cells at addCraftingGridSlots(98, 18); the hovered-slot walk
+        // the menu's order keeps hits them before the store rows).
+        // The 16x16 hit rect at the +1 inset the store's own walk
+        // speaks.
+        let (rx, ry) = craft_slot_origin(panel, 4);
+        if mx >= rx + 1 && mx < rx + 17 && my >= ry + 1 && my < ry + 17 {
+            self.click_craft_result(button);
+            return;
+        }
+        for cell in 0..4 {
+            let (cx, cy) = craft_slot_origin(panel, cell);
+            if mx >= cx + 1 && mx < cx + 17 && my >= cy + 1 && my < cy + 17 {
+                self.click_craft_cell(cell, button);
+                return;
+            }
+        }
         let Some((_, _, store)) = (0..36)
             .map(|i| {
                 let (ox, oy) = inventory_slot_origin(panel, i);
@@ -3645,6 +3774,32 @@ impl App {
             draw_item_icon(g, id, sx + 1, sy + 1);
             if count > 1 {
                 let s = count.to_string();
+                let tw = g.text_width(&s);
+                g.text(a, sx + 17 - tw, sy + 9, &s, WHITE, true);
+            }
+        }
+        // THE CRAFT REGION (the 2x2 cells + the computed result slot —
+        // the icons the store's own draw keeps, the recompute verdict
+        // the slotsChanged walk speaks; the wire sessions' cells stay
+        // empty — the click lane the store refusal keeps)
+        for cell in 0..4 {
+            let (id, count) = self.craft_grid[cell];
+            if count <= 0 {
+                continue;
+            }
+            let (sx, sy) = craft_slot_origin(panel, cell);
+            draw_item_icon(g, id, sx + 1, sy + 1);
+            if count > 1 {
+                let s = count.to_string();
+                let tw = g.text_width(&s);
+                g.text(a, sx + 17 - tw, sy + 9, &s, WHITE, true);
+            }
+        }
+        if self.craft_result.1 > 0 {
+            let (sx, sy) = craft_slot_origin(panel, 4);
+            draw_item_icon(g, self.craft_result.0, sx + 1, sy + 1);
+            if self.craft_result.1 > 1 {
+                let s = self.craft_result.1.to_string();
                 let tw = g.text_width(&s);
                 g.text(a, sx + 17 - tw, sy + 9, &s, WHITE, true);
             }
@@ -9171,6 +9326,147 @@ fn inventory_slot_origin(panel: (i32, i32), store: usize) -> (i32, i32) {
         (8 + i % 9 * 18, 84 + i / 9 * 18)
     };
     (panel.0 + x, panel.1 + y)
+}
+
+/// The craft grid's slot origins by CONTAINER index (the 26.2
+/// InventoryMenu's own numbers): the 2x2 cells at
+/// `addCraftingGridSlots(98, 18)` — the ctor's bytecode walk, cell i at
+/// panel-relative (98 + (i % 2) * 18, 18 + (i / 2) * 18) — and the
+/// result slot at the ctor's `addResultSlot(154, 28)` (kind 4). The
+/// texture already paints the chrome; the icons land at the +1 inset
+/// the store's own draw speaks.
+fn craft_slot_origin(panel: (i32, i32), kind: usize) -> (i32, i32) {
+    let (x, y) = if kind == 4 {
+        (154, 28)
+    } else {
+        (98 + (kind % 2) as i32 * 18, 18 + (kind / 2) as i32 * 18)
+    };
+    (panel.0 + x, panel.1 + y)
+}
+
+/// THE PACK LAW (javap 26.2 CraftingInput.ofPositioned — the walk the
+/// asCraftInput lane keeps before every recipe ask): the grid's
+/// non-empty cells' bounding box folds to its own minimal input —
+/// min/max x and y over the non-empty cells (the Math.min/Math.max
+/// pair each cell walk speaks), width' = max_x - min_x + 1, height' =
+/// max_y - min_y + 1, left = min_x, top = min_y. Returns the packed
+/// ROW-MAJOR cell ids (0 = the empty sentinel the list walk keeps) and
+/// the packed (width, height) — (0, 0) for the all-empty grid (the
+/// Positioned.EMPTY the early return keeps).
+fn pack_craft_cells(cells: &[(i32, i32); 4]) -> ([i32; 4], i32, i32) {
+    let mut min_x = 2;
+    let mut max_x = -1;
+    let mut min_y = 2;
+    let mut max_y = -1;
+    for i in 0..4 {
+        if cells[i].1 > 0 {
+            let (x, y) = (i % 2, i / 2);
+            min_x = min_x.min(x);
+            max_x = max_x.max(x as i32);
+            min_y = min_y.min(y);
+            max_y = max_y.max(y as i32);
+        }
+    }
+    if max_x < 0 {
+        return ([0; 4], 0, 0);
+    }
+    let w = (max_x - min_x as i32 + 1) as usize;
+    let h = (max_y - min_y as i32 + 1) as usize;
+    let mut packed = [0i32; 4];
+    for i in 0..4 {
+        let (x, y) = (i % 2, i / 2);
+        if x >= min_x && x as i32 <= max_x && y >= min_y && y as i32 <= max_y {
+            packed[(y - min_y) * w + (x - min_x)] = cells[i].0;
+        }
+    }
+    (packed, w as i32, h as i32)
+}
+
+/// THE 2x2 RECIPE SET (the vanilla datapack's crafting recipes the
+/// 26.2 recipe manager loads — the minimal set the registry's own
+/// items speak): the shapeless log->planks quartet the single-item
+/// fast path serves (ShapelessRecipe.matches: input.size() == 1 &&
+/// ingredients.size() == 1 -> Ingredient.test), and the shaped walks
+/// (ShapedRecipePattern.matches: the ingredient count, the packed
+/// w/h equality, the cell-by-cell test — the mirror arm the
+/// symmetrical flag holds, every pattern here symmetrical or 1-wide).
+/// The planks tag (#minecraft:planks) the mixed stacks answer — each
+/// cell tests the tag INDEPENDENTLY (the oak+spruce table the real
+/// game crafts).
+fn craft_result_for(cells: &[(i32, i32); 4]) -> (i32, i32) {
+    let id = |name: &str| mc_registry::item_id_by_name(name).unwrap_or(0);
+    let log = id("oak_log");
+    let spruce_log = id("spruce_log");
+    let birch_log = id("birch_log");
+    let oak = id("oak_planks");
+    let spruce = id("spruce_planks");
+    let birch = id("birch_planks");
+    let sand = id("sand");
+    let sandstone = id("sandstone");
+    let coal = id("coal");
+    let stick = id("stick");
+    let torch = id("torch");
+    let table = id("crafting_table");
+    let (packed, w, h) = pack_craft_cells(cells);
+    if w == 0 || h == 0 {
+        return (0, 0);
+    }
+    // THE SHAPELESS SINGLES (the fast path the one-cell input rides —
+    // ShapelessRecipe.matches's input.size() == 1 arm)
+    if w == 1 && h == 1 {
+        let out = [
+            (log, oak),
+            (spruce_log, spruce),
+            (birch_log, birch),
+        ]
+        .iter()
+        .find(|(log, _)| *log != 0 && packed[0] == *log)
+        .map(|(_, out)| (*out, 4));
+        if let Some(out) = out {
+            return out;
+        }
+    }
+    // THE SHAPED WALKS (ShapedRecipePattern.matches — the packed w/h
+    // equality, then each packed cell against its ingredient SET, the
+    // tag law the #minecraft:planks cells speak independently; the
+    // mirror arm the symmetrical flag holds — every pattern here
+    // symmetrical or 1-wide, the w=1 mirror the identity keeps).
+    // wants = row-major ingredient sets.
+    let planks: &[i32] = &[oak, spruce, birch];
+    let sand_l: &[i32] = &[sand];
+    let coal_l: &[i32] = &[coal];
+    let stick_l: &[i32] = &[stick];
+    let patterns: Vec<(i32, i32, Vec<&[i32]>, i32, i32)> = {
+        let mut v = Vec::new();
+        // the sticks ([P, P] — the vertical column the pack law
+        // answers in EITHER column)
+        if stick != 0 {
+            v.push((1, 2, vec![planks, planks], stick, 4));
+        }
+        // the torch ([C, S] — coal over stick)
+        if torch != 0 && coal != 0 && stick != 0 {
+            v.push((1, 2, vec![coal_l, stick_l], torch, 4));
+        }
+        // the crafting table ([P, P / P, P] — the tag each cell tests,
+        // the mixed-planks table the real game crafts)
+        if table != 0 {
+            v.push((2, 2, vec![planks, planks, planks, planks], table, 1));
+        }
+        // the sandstone ([S, S / S, S])
+        if sandstone != 0 && sand != 0 {
+            v.push((2, 2, vec![sand_l, sand_l, sand_l, sand_l], sandstone, 1));
+        }
+        v
+    };
+    for (pw, ph, wants, out, count) in &patterns {
+        if w == *pw && h == *ph {
+            let n = (*pw * *ph) as usize;
+            if (0..n).all(|i| wants[i].contains(&packed[i])) {
+                return (*out, *count);
+            }
+        }
+    }
+    (0, 0)
 }
 
 /// THE MANNEQUIN'S RECT (javap 26.2 InventoryScreen.extractBackground,
@@ -17929,6 +18225,202 @@ mod tests {
         app.on_pick_block(false);
         assert_eq!(app.selected_hotbar, 0, "the wire refusal holds");
         assert_eq!(app.inventory.items[3], (62, 7), "the store whole throughout");
+    }
+
+    /// THE 2x2 CRAFT GRID — the log's own loop (the survival chain the
+    /// real game's muscle memory rides): the store's log rides the
+    /// carried into a craft cell (the predict_pickup walk), the
+    /// recompute law speaks the shapeless fast path (oak_log -> 4
+    /// oak_planks), and the result slot's take rides the onTake walk —
+    /// the whole result, the per-cell decrement, the recompute FIRING
+    /// AGAIN while the logs speak (the further takes the real game
+    /// clicks), the spent grid the EMPTY verdict keeps.
+    #[test]
+    fn the_craft_grid_turns_a_log_into_four_planks() {
+        let log = mc_registry::item_id_by_name("oak_log").unwrap();
+        let planks = mc_registry::item_id_by_name("oak_planks").unwrap();
+        let mut app = App::new(3);
+        app.enter_world();
+        app.spawn_offline_body();
+        app.open_inventory();
+        app.inv_panel = inventory_panel_origin(640, 360);
+        // the store's log into the hand, then INTO the craft cell 0
+        // (panel (232, 97): store 5 at (330, 239), cell 0 at (330, 115)
+        // — the 16x16 hit rects at the +1 inset, the result at (386,
+        // 125); the clicks ride the on_press routing the store lane
+        // shares)
+        app.inventory.items[5] = (log, 3);
+        app.on_press(338, 246);
+        assert_eq!(app.inv_carried, (log, 3), "the log in the hand");
+        app.on_press(338, 123);
+        assert_eq!(app.craft_grid[0], (log, 3), "the cell holds the stack");
+        assert_eq!(app.inv_carried, (0, 0), "the hand emptied");
+        // THE RECOMPUTE (InventoryMenu.slotsChanged's own ask — the
+        // getRecipeFor verdict the result slot keeps)
+        assert_eq!(app.craft_result, (planks, 4), "the shapeless fast path");
+        // THE TAKE — the whole result, the onTake's per-cell decrement,
+        // the recompute firing again while the logs speak
+        app.on_press(394, 133);
+        assert_eq!(app.inv_carried, (planks, 4), "the whole result taken");
+        assert_eq!(app.craft_grid[0], (log, 2), "one log off the cell");
+        assert_eq!(app.craft_result, (planks, 4), "the recipe fires AGAIN");
+        app.on_press(394, 133);
+        assert_eq!(app.inv_carried, (planks, 8), "the second take merged");
+        app.on_press(394, 133);
+        assert_eq!(app.inv_carried, (planks, 12), "the third take");
+        assert_eq!(app.craft_grid[0], (0, 0), "the cell spent");
+        assert_eq!(app.craft_result, (0, 0), "the empty grid's EMPTY verdict");
+        assert_eq!(app.inventory.items[5], (0, 0), "the store slot still empty");
+    }
+
+    /// THE SHAPED SET (ShapedRecipePattern.matches's own law — the
+    /// packed w/h equality, the cell-by-cell test, the tag law): the
+    /// sticks' 1x2 column the pack law folds to w=1 in EITHER column
+    /// (the bounding box the ofPositioned walk keeps), the horizontal
+    /// pair the w/h equality refuses, the mixed-planks table the
+    /// independent tag cells craft, the torch's order the pattern
+    /// speaks, the sandstone the 2x2 keeps, the spruce singles the
+    /// shapeless fast path answers, the lone plank no recipe names.
+    #[test]
+    fn the_craft_grid_speaks_the_shaped_set() {
+        let oak = mc_registry::item_id_by_name("oak_planks").unwrap();
+        let spruce = mc_registry::item_id_by_name("spruce_planks").unwrap();
+        let birch = mc_registry::item_id_by_name("birch_planks").unwrap();
+        let stick = mc_registry::item_id_by_name("stick").unwrap();
+        let coal = mc_registry::item_id_by_name("coal").unwrap();
+        let torch = mc_registry::item_id_by_name("torch").unwrap();
+        let table = mc_registry::item_id_by_name("crafting_table").unwrap();
+        let sand = mc_registry::item_id_by_name("sand").unwrap();
+        let sandstone = mc_registry::item_id_by_name("sandstone").unwrap();
+        let spruce_log = mc_registry::item_id_by_name("spruce_log").unwrap();
+        // THE STICKS — the RIGHT column (cells 1 + 3), the pack law's
+        // bounding box answers the same as the left
+        let cells = [(oak, 1), (0, 0), (oak, 1), (0, 0)];
+        assert_eq!(craft_result_for(&cells), (stick, 4), "the right column");
+        let cells = [(oak, 1), (0, 0), (0, 0), (oak, 1)];
+        assert_eq!(
+            craft_result_for(&cells), (0, 0),
+            "the diagonal's holes the pack keeps — no recipe names it"
+        );
+        let cells = [(oak, 1), (oak, 1), (0, 0), (0, 0)];
+        assert_eq!(
+            craft_result_for(&cells), (0, 0),
+            "the horizontal pair the w/h equality refuses"
+        );
+        // THE MIXED-PLANKS TABLE (the tag each cell tests INDEPENDENTLY
+        // — the oak+spruce+birch mix the real game crafts)
+        let cells = [(oak, 1), (spruce, 2), (birch, 1), (oak, 3)];
+        assert_eq!(craft_result_for(&cells), (table, 1), "the tag's own verdict");
+        // THE TORCH — coal over stick, the order the pattern speaks
+        let cells = [(coal, 1), (0, 0), (stick, 1), (0, 0)];
+        assert_eq!(craft_result_for(&cells), (torch, 4), "the [C, S] column");
+        let cells = [(stick, 1), (0, 0), (coal, 1), (0, 0)];
+        assert_eq!(craft_result_for(&cells), (0, 0), "the stick-under-coal refused");
+        // THE SANDSTONE — the 2x2
+        let cells = [(sand, 1); 4];
+        assert_eq!(craft_result_for(&cells), (sandstone, 1), "the 2x2 sand");
+        // THE SPRUCE SINGLES (the shapeless fast path per wood)
+        let cells = [(spruce_log, 1), (0, 0), (0, 0), (0, 0)];
+        assert_eq!(craft_result_for(&cells), (spruce, 4), "the spruce pair");
+        // THE LONE PLANK — no recipe names it
+        let cells = [(oak, 1), (0, 0), (0, 0), (0, 0)];
+        assert_eq!(craft_result_for(&cells), (0, 0), "the single plank's silence");
+    }
+
+    /// THE TAKE'S OWN GATES (the doClick PICKUP walk over the
+    /// mayPlace-false result slot): the same-item merge the 1020 arm
+    /// keeps (the carried's own space caps the take), the FULL carried
+    /// refuses (the getMaxStackSize if_icmpgt), the different item's
+    /// silence (the isSameItemSameComponents ifeq — no swap rides a
+    /// mayPlace-false slot), and the secondary take's half rounded up
+    /// (the (count+1)/2 the arm speaks).
+    #[test]
+    fn the_craft_result_take_gates_and_the_secondary_half() {
+        let log = mc_registry::item_id_by_name("oak_log").unwrap();
+        let planks = mc_registry::item_id_by_name("oak_planks").unwrap();
+        let stick = mc_registry::item_id_by_name("stick").unwrap();
+        let mut app = App::new(3);
+        app.enter_world();
+        app.spawn_offline_body();
+        app.open_inventory();
+        app.inv_panel = inventory_panel_origin(640, 360);
+        // one cell, two logs — the two crafts (the shapeless law's own
+        // count: TWO cells of logs the ingredientCount equality
+        // REFUSES — the one-ingredient recipe speaks only the
+        // one-cell input, the multi-count stack the crafts repeat)
+        app.craft_grid[0] = (log, 2);
+        app.craft_grid[2] = (log, 2);
+        app.refresh_craft_result();
+        assert_eq!(app.craft_result, (0, 0), "two cells the count law refuses");
+        app.craft_grid[2] = (0, 0);
+        app.refresh_craft_result();
+        assert_eq!(app.craft_result, (planks, 4), "the one-cell input speaks");
+        // THE MERGE ARM — the carried's space (2) caps the take
+        app.inv_carried = (planks, 62);
+        app.on_press(394, 133);
+        assert_eq!(app.inv_carried, (planks, 64), "the space caps the take");
+        assert_eq!(app.craft_result, (planks, 4), "the craft still speaks");
+        // THE FULL CARRIED — the if_icmpgt arm's silence
+        app.on_press(394, 133);
+        assert_eq!(app.inv_carried, (planks, 64), "the full carried refuses");
+        assert_eq!(app.craft_result, (planks, 4), "no take, no decrement");
+        // THE DIFFERENT ITEM — the ifeq arm's silence
+        app.inv_carried = (stick, 10);
+        app.on_press(394, 133);
+        assert_eq!(app.inv_carried, (stick, 10), "no swap on the result slot");
+        assert_eq!(app.craft_result, (planks, 4), "the result untouched");
+        // THE SECONDARY TAKE — the half rounded up, ONE craft's
+        // decrement per take, the last craft the spent cell gives
+        app.inv_carried = (0, 0);
+        app.on_right_press(394, 133);
+        assert_eq!(app.inv_carried, (planks, 2), "the (count+1)/2 arm");
+        assert_eq!(app.craft_grid[0], (0, 0), "the last craft spent");
+        assert_eq!(app.craft_result, (0, 0), "the spent grid's EMPTY verdict");
+    }
+
+    /// THE CRAFT CELLS' OWN PICKUP LANES (the doClick PICKUP over the
+    /// mayPlace-default cells — the TransientCraftingContainer the
+    /// place walk accepts): the right press's ceiling-half split, the
+    /// one-by-one place, the merge-back, the shift-click's silence
+    /// (the quick-move-into-craft lane rides later), and the WIRE
+    /// session's refusal (the store the server owns — the whole
+    /// inventory click lane's own gate the craft region rides).
+    #[test]
+    fn the_craft_cells_keep_the_pickup_lanes_and_the_refusals() {
+        let planks = mc_registry::item_id_by_name("oak_planks").unwrap();
+        let log = mc_registry::item_id_by_name("oak_log").unwrap();
+        let mut app = App::new(3);
+        app.enter_world();
+        app.spawn_offline_body();
+        app.open_inventory();
+        app.inv_panel = inventory_panel_origin(640, 360);
+        // the RIGHT press takes the ceiling half (4 -> 2 + 2)
+        app.craft_grid[0] = (planks, 4);
+        app.on_right_press(338, 123);
+        assert_eq!(app.craft_grid[0], (planks, 2), "half stays");
+        assert_eq!(app.inv_carried, (planks, 2), "the ceiling half taken");
+        // the RIGHT press places ONE back
+        app.on_right_press(338, 123);
+        assert_eq!(app.craft_grid[0], (planks, 3), "one placed back");
+        assert_eq!(app.inv_carried, (planks, 1), "the hand one lighter");
+        // the LEFT press merges the hand's single back (the same-item
+        // walk the store slots speak)
+        app.on_press(338, 123);
+        assert_eq!(app.craft_grid[0], (planks, 4), "the merge-back");
+        assert_eq!(app.inv_carried, (0, 0), "the hand emptied");
+        // the SHIFT-click's silence (the quick-move lane rides later)
+        app.shift_down = true;
+        app.inv_carried = (log, 1);
+        app.on_press(338, 123);
+        assert_eq!(app.craft_grid[0], (planks, 4), "the shift never moved it");
+        assert_eq!(app.inv_carried, (log, 1), "the hand whole");
+        app.shift_down = false;
+        // the WIRE session — the store the server owns (the click
+        // lane's own early return the craft region rides too)
+        app.world_is_network = true;
+        app.on_press(338, 123);
+        assert_eq!(app.craft_grid[0], (planks, 4), "the wire refusal holds");
+        assert_eq!(app.inv_carried, (log, 1), "the hand whole on the wire");
     }
 
     /// THE INVENTORY'S OWN Q (the AbstractContainerScreen.keyPressed's
