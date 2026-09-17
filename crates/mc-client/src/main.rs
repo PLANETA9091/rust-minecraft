@@ -27,6 +27,7 @@ mod gpu;
 mod gui;
 mod hand;
 mod headless;
+mod hull;
 mod math;
 mod mesher;
 mod net_fixture;

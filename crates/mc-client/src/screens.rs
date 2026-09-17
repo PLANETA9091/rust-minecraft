@@ -1517,6 +1517,12 @@ pub struct App {
     /// the BoatItem.use walk's singleplayer arm; the wire ids stay the
     /// server's).
     pub next_boat_id: i32,
+    /// THE OFFLINE HULLS' OWN PHYSICS (the AbstractBoat fields the
+    /// authoritative lane keeps — the delta's y word, the two
+    /// statuses, the water level, the lastYd): the id keys the
+    /// offline_boats list's own hulls; the wire's hulls the snapshots'
+    /// authority never speaks.
+    pub offline_boat_phys: std::collections::HashMap<i32, crate::hull::HullPhys>,
     /// The orb pickup's own throttle (`Player.takeXpDelay` — the touch
     /// sets 2, the aiStep tail ticks it down; one orb per window).
     pub take_xp_delay: i32,
@@ -1871,6 +1877,7 @@ impl App {
             net_ride: None,
             net_boats: Vec::new(),
             offline_boats: Vec::new(),
+            offline_boat_phys: std::collections::HashMap::new(),
             boat_models: std::collections::HashMap::new(),
             paddle_positions: std::collections::HashMap::new(),
             bubble_state: std::collections::HashMap::new(),
@@ -2768,6 +2775,14 @@ impl App {
                 self.tick_ride_yaw();
             }
             if !self.world_is_network {
+                // THE OFFLINE HULLS' OWN TICK (the AbstractBoat.tick's
+                // authoritative lane the singleplayer keeps): the
+                // status detection, the floatBoat folds, the y-move's
+                // clamp — the hull the water line settles, the ground
+                // the fall clamps. The wire's own hulls the snapshots'
+                // authority never touches (the networked lane's own
+                // walk the gate keeps).
+                self.tick_offline_hulls();
                 // THE SPAWNER'S BEAT (the vanilla spawn cycle's
                 // stand-in): one attempt per SPAWN_CYCLE_TICKS, the
                 // night gate rides the sky lane's own celestial track
@@ -4050,6 +4065,7 @@ impl App {
             // the fresh terrain's own honesty — the previous offline
             // session's hulls drop with the world that carried them
             self.offline_boats.clear();
+            self.offline_boat_phys.clear();
             // the dig lane predicts locally on the offline terrain (the
             // singleplayer behavior — the machine's own default re-armed)
             self.dig.apply_locally = true;
@@ -5614,6 +5630,7 @@ impl App {
         // the offline spawner's hulls drop with it — the wire's own
         // boat lane owns this world's water
         self.offline_boats.clear();
+        self.offline_boat_phys.clear();
         // the dig lane's prediction flag follows the world's authority
         // (the networked terrain is the server's own — the placement
         // lane's verdict the dig speaks too)
@@ -8808,6 +8825,28 @@ impl App {
         let name = crate::world::NAME_OF[block as usize];
         self.sounds.play(self.frame, name, crate::sound::Lane::Place);
         true
+    }
+
+    /// THE OFFLINE HULLS' OWN TICK — the AbstractBoat.tick's
+    /// authoritative lane the singleplayer keeps: the status detection
+    /// (hull_status's own bands), the floatBoat folds (the splash-down
+    /// arm, the lift the water line keeps, the gravity's own word),
+    /// the y-move's clamp (Entity.move's axis over full cubes). The
+    /// hull's new y the walk returns, the boat's own pose the write
+    /// carries. The wire's hulls stay the server's (the gate at the
+    /// call site the offline lane keeps).
+    fn tick_offline_hulls(&mut self) {
+        if self.offline_boats.is_empty() {
+            return;
+        }
+        let Some(world) = self.offline_world.as_ref() else {
+            return;
+        };
+        let cell = |x: i32, y: i32, z: i32| world.get(x, y, z);
+        for boat in &mut self.offline_boats {
+            let phys = self.offline_boat_phys.entry(boat.id).or_default();
+            boat.y = crate::hull::hull_tick(phys, boat.x, boat.y, boat.z, &cell);
+        }
     }
 
     /// THE BOAT'S OWN USE WALK — javap BoatItem.use over the 26.2 jar:
@@ -17750,6 +17789,95 @@ mod tests {
         // authority — no local hull on either lane
         assert!(app.net_boats.is_empty(), "no local hull on the wire lane");
         assert!(app.offline_boats.is_empty(), "no offline hull on the wire lane");
+    }
+
+    /// THE OFFLINE HULL'S OWN FLOAT — the AbstractBoat.tick's
+    /// authoritative lane the singleplayer keeps: the placed hull's
+    /// first ticks speak the splash-down's own dip (the InAir fall the
+    /// gravity arms, the arm the water's surface catches at the d6
+    /// fold), then the settle the fixed point reaches (the 0.65
+    /// submersion fraction the lift's equilibrium speaks). The wire's
+    /// own hulls the walk never touches.
+    #[test]
+    fn the_offline_hull_settles_the_water_line() {
+        let mut app = App::new(3);
+        app.enter_world();
+        app.offline_held_updated(Some("item/oak_boat"));
+        let c = app.offline_world.as_ref().unwrap().size_blocks() / 2;
+        // the pool high in the air band: every row the friction slab's
+        // own ring reaches stays air (the terrain's own tops never
+        // reach spawn_y + 7 — the InAir verdict the first tick keeps,
+        // the splash-down the arm's InAir gate demands)
+        let pool_y = app.spawn_y + 8;
+        app.offline_world
+            .as_mut()
+            .unwrap()
+            .set(c, pool_y, c, crate::world::WATER);
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, (pool_y + 4) as f32, c as f32 + 0.5),
+            yaw: 0.0,
+            pitch: -std::f32::consts::FRAC_PI_2,
+        });
+        assert!(app.on_right_press(0, 0), "the placed hull at the surface");
+        let hull_y0 = app.offline_boats[0].y;
+        assert_eq!(hull_y0, (pool_y + 1) as f64, "the surface hit's own spawn");
+        // THE FIRST TICKS: the InAir fall the gravity arms (the placed
+        // hull sits exactly ON the plane the base band's row misses),
+        // then the splash-down the water's own surface catches
+        app.tick_offline_hulls();
+        let after_fall = app.offline_boats[0].y;
+        assert_eq!(
+            after_fall,
+            hull_y0 - 0.04,
+            "the InAir fall's own word"
+        );
+        app.tick_offline_hulls();
+        assert_eq!(
+            app.offline_boats[0].y,
+            (pool_y + 1) as f64 - crate::hull::HULL_HEIGHT + crate::hull::SPLASH_DOWN,
+            "the splash-down's own d6 fold"
+        );
+        assert_eq!(
+            app.offline_boat_phys[&1].status,
+            crate::hull::HullStatus::InWater,
+            "the arm's own status swap"
+        );
+        // THE SETTLE: the fixed point the equilibrium speaks — the
+        // water level's own plane minus the 0.65 submersion fraction,
+        // the delta's own zero the rest keeps
+        for _ in 0..400 {
+            app.tick_offline_hulls();
+        }
+        let y_star = (pool_y + 1) as f64 - 0.65 * crate::hull::HULL_HEIGHT;
+        let settled = app.offline_boats[0].y;
+        assert!(
+            (settled - y_star).abs() < 1.0e-4,
+            "the settled y {settled} vs the fixed point {y_star}"
+        );
+        assert!(
+            app.offline_boat_phys[&1].delta_y.abs() < 1.0e-4,
+            "the rest's own silence"
+        );
+        // THE WIRE'S OWN AUTHORITY: a snapshot hull the walk never
+        // moves (the offline lane's own gate keeps)
+        app.net_boats.push(crate::world_view::WireBoat {
+            id: 501,
+            x: c as f64 + 0.5,
+            y: 4.0,
+            z: c as f64 + 0.5,
+            yaw: 0.0,
+            raft: false,
+            chest: false,
+            wood: "oak".to_string(),
+            paddle_left: false,
+            paddle_right: false,
+            bubble_time: 0,
+            hurt_time: 0,
+            hurt_dir: 1,
+            damage: 0.0,
+        });
+        app.tick_offline_hulls();
+        assert_eq!(app.net_boats[0].y, 4.0, "the wire's own word stands");
     }
 
     /// THE DIG LANE's OFFLINE ARC — the left press arms the destroy
