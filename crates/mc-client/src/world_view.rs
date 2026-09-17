@@ -471,6 +471,18 @@ pub enum ContainerCommand {
     /// hand follows through the store's own projection) and echoes the
     /// serverbound Set Carried Item (the dump's short-shaped slot).
     SelectHotbar { selection: u8 },
+    /// THE MIDDLE-CLICK PICK's wire half (the vanilla
+    /// `MultiPlayerGameMode.handlePickItemFromBlock`'s own lane — the
+    /// packet send ALONE, the inventory law server-side): the clip's
+    /// hit voxel and the Ctrl flag the packet's includeData slot
+    /// rides. The client predicts NOTHING here (the offline store walk
+    /// the pick's own lane keeps is the OFFLINE world's answer) — the
+    /// server's verdict rides the clientbound Set Held Slot echo back
+    /// through its gate, the store the server's to move.
+    PickBlock {
+        pos: (i32, i32, i32),
+        include_data: bool,
+    },
     /// The right-mouse USE (the vanilla gameMode.useItem's own lane):
     /// the camera's angles converted to the vanilla wire degrees
     /// ([`wire_angles`]), the MAIN_HAND ordinal the worker speaks.

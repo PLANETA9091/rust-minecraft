@@ -303,6 +303,22 @@ fn run_join(
                             view.model.select_hotbar(selection as usize);
                             session.set_carried_item(selection)
                         }
+                        crate::world_view::ContainerCommand::PickBlock {
+                            pos,
+                            include_data,
+                        } => {
+                            // THE PICK's wire half (the vanilla
+                            // gameMode.handlePickItemFromBlock walk): the
+                            // packet send ALONE — NO local prediction the
+                            // vanilla never predicts, the inventory law
+                            // server-side (the findSlotMatchingItem scan,
+                            // the pickSlot swap, the Set Held Slot echo +
+                            // broadcastChanges the ALWAYS tail speaks).
+                            // The verdict rides the clientbound echo back
+                            // through its gate — the store the server's
+                            // to move.
+                            session.pick_item_from_block(pos, include_data)
+                        }
                         crate::world_view::ContainerCommand::UseItem { yaw, pitch } => {
                             // THE USE ARC's wire echo (the vanilla
                             // gameMode.useItem's own shape): the MAIN_HAND

@@ -126,6 +126,8 @@ pub mod serverbound {
         SB_PLAYER_ACTION as PLAYER_ACTION, SB_SET_CARRIED_ITEM as SET_CARRIED_ITEM,
         SB_SWING as SWING, SB_USE_ITEM as USE_ITEM, SB_USE_ITEM_ON as USE_ITEM_ON,
         SB_CLIENT_COMMAND as CLIENT_COMMAND, SB_INTERACT as INTERACT,
+        SB_PICK_ITEM_FROM_BLOCK as PICK_ITEM_FROM_BLOCK,
+        SB_PICK_ITEM_FROM_ENTITY as PICK_ITEM_FROM_ENTITY,
     };
 }
 
@@ -5019,6 +5021,48 @@ pub fn encode_set_carried_item(slot: u8) -> Vec<u8> {
     p
 }
 
+/// The middle-click PICK's wire half (the vanilla
+/// `MultiPlayerGameMode.handlePickItemFromBlock`'s own echo —
+/// ServerboundPickItemFromBlockPacket, generated id 36,
+/// `minecraft:pick_item_from_block`). THE WIRE (javap of the real
+/// 26.2 class: the STREAM_CODEC composite the static init speaks —
+/// `BlockPos.STREAM_CODEC` first, `ByteBufCodecs.BOOL` second): the
+/// hit block's position as a BE i64 (the same `asLong` 38/12/0 pack
+/// the use-item-on walk rides) then the includeData boolean — the
+/// Ctrl flag the client's hasControlDown() carries (the survival
+/// conjunct the server's own `hasInfiniteMaterials() && includeData()`
+/// gate keeps FALSE). THE CLIENT PREDICTS NOTHING: the inventory law
+/// lives server-side (the integrated server's tryPickItem walk — the
+/// findSlotMatchingItem scan, the pickSlot swap, the Set Held Slot
+/// echo + broadcastChanges the ALWAYS tail speaks), the packet the
+/// gameMode's networked half sends ALONE.
+pub fn encode_pick_item_from_block(x: i32, y: i32, z: i32, include_data: bool) -> Vec<u8> {
+    let mut p = Vec::with_capacity(10);
+    write_varint(&mut p, serverbound::PICK_ITEM_FROM_BLOCK);
+    p.extend_from_slice(&pack_block_pos(x, y, z).to_be_bytes());
+    write_bool(&mut p, include_data);
+    p
+}
+
+/// The pick's ENTITY arm's wire (the vanilla
+/// `MultiPlayerGameMode.handlePickItemFromEntity`'s own echo —
+/// ServerboundPickItemFromEntityPacket, generated id 37,
+/// `minecraft:pick_item_from_entity`). THE WIRE (javap of the real
+/// 26.2 class: the STREAM_CODEC composite — `ByteBufCodecs.VAR_INT`
+/// first, `ByteBufCodecs.BOOL` second): the target's entity id as a
+/// VarInt, then the includeData boolean. The SURVIVAL client never
+/// sends this one (the pick result the mob lanes never name —
+/// `getPickResult` null, the spawn eggs the creative gate holds); the
+/// encoder rides the protocol's own completeness (the generated pair
+/// the id table keeps together).
+pub fn encode_pick_item_from_entity(entity_id: i32, include_data: bool) -> Vec<u8> {
+    let mut p = Vec::with_capacity(6);
+    write_varint(&mut p, serverbound::PICK_ITEM_FROM_ENTITY);
+    write_varint(&mut p, entity_id);
+    write_bool(&mut p, include_data);
+    p
+}
+
 /// The right-mouse USE (the vanilla `MultiPlayerGameMode.useItem`'s
 /// serverbound echo — ServerboundUseItemPacket, generated id 67,
 /// `minecraft:use_item`). THE WIRE (javap of the real 26.2 class, its
@@ -6268,6 +6312,28 @@ impl<S: Read + Write> PlaySession<S> {
         self.conn
             .send_packet(&encode_set_carried_item(slot))
             .context("send set carried item")
+    }
+
+    /// The middle-click PICK's wire half (the vanilla
+    /// gameMode.handlePickItemFromBlock's own echo — the pick the
+    /// keyPickItem loop answers). The hit block's position and the
+    /// Ctrl flag the packet's includeData slot rides; the client
+    /// predicts NOTHING (the inventory law server-side — the Set Held
+    /// Slot echo the verdict's own ride back).
+    pub fn pick_item_from_block(&mut self, pos: (i32, i32, i32), include_data: bool) -> Result<()> {
+        self.conn
+            .send_packet(&encode_pick_item_from_block(pos.0, pos.1, pos.2, include_data))
+            .context("send pick item from block")
+    }
+
+    /// The pick's ENTITY arm's wire (the vanilla
+    /// gameMode.handlePickItemFromEntity's own echo). The SURVIVAL
+    /// client never sends it (the pick result the mob lanes never
+    /// name); the method rides the protocol's own completeness.
+    pub fn pick_item_from_entity(&mut self, entity_id: i32, include_data: bool) -> Result<()> {
+        self.conn
+            .send_packet(&encode_pick_item_from_entity(entity_id, include_data))
+            .context("send pick item from entity")
     }
 
     /// The player's right-mouse USE (the vanilla gameMode.useItem's own
@@ -10716,6 +10782,51 @@ mod tests {
             encode_set_carried_item(8),
             vec![0x35, 0x00, 0x08],
             "slot 8: the selection domain's own end"
+        );
+    }
+
+    /// The middle-click pick's serverbound pair — the BLOCK half the
+    /// survival client speaks, the ENTITY arm the protocol keeps
+    /// whole. The bytes are the javap STREAM_CODEC composites' own
+    /// composition (the real 26.2 classes): Pick Item From Block =
+    /// the generated id 36 = 0x24 (the single-byte VarInt), the
+    /// BlockPos BE i64 (the asLong 38/12/0 pack — (1, 64, 2) folds to
+    /// (1<<38) | (2<<12) | 64 = 0x0000_0040_0000_2040), the includeData
+    /// boolean; Pick Item From Entity = the id 37 = 0x25, the entity
+    /// id VarInt (100 rides the single 0x64 — under the 128 the
+    /// continuation bit never lights), the boolean.
+    #[test]
+    fn the_pick_item_lanes_speak_the_codec_composites() {
+        // the BLOCK half: id 36, the packed pos, the Ctrl flag FALSE
+        assert_eq!(
+            encode_pick_item_from_block(1, 64, 2, false),
+            vec![0x24, 0x00, 0x00, 0x00, 0x40, 0x00, 0x00, 0x20, 0x40, 0x00],
+            "pos (1, 64, 2): the asLong pack then the false byte"
+        );
+        // the Ctrl form — the includeData byte lights
+        assert_eq!(
+            encode_pick_item_from_block(1, 64, 2, true),
+            vec![0x24, 0x00, 0x00, 0x00, 0x40, 0x00, 0x00, 0x20, 0x40, 0x01],
+            "the same pos, the includeData byte the Ctrl flag rides"
+        );
+        // the ZERO pos — the origin's own i64 (the release lane's
+        // BlockPos.ZERO the player-action walk keeps company with)
+        assert_eq!(
+            encode_pick_item_from_block(0, 0, 0, false),
+            vec![0x24, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00],
+            "the origin packs to the zero i64"
+        );
+        // the ENTITY arm: id 37, the VarInt id, the boolean
+        assert_eq!(
+            encode_pick_item_from_entity(100, true),
+            vec![0x25, 0x64, 0x01],
+            "entity 100: the single-byte VarInt then the true byte"
+        );
+        // a wide id — 300 needs the continuation bit (0xAC 0x02)
+        assert_eq!(
+            encode_pick_item_from_entity(300, false),
+            vec![0x25, 0xAC, 0x02, 0x00],
+            "entity 300: the two-byte VarInt then the false byte"
         );
     }
 

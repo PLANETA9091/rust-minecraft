@@ -3862,20 +3862,23 @@ impl App {
     /// the ALWAYS tail: `ClientboundSetHeldSlotPacket
     /// (getSelectedSlot())` + `inventoryMenu.broadcastChanges()` (the
     /// HUD hotbar row the every-mutation law syncs). The client's own
-    /// walk answers the same law offline; the wire sessions refuse
-    /// honestly (the store the server owns — the
-    /// ServerboundPickItemFromBlockPacket lane rides later). NO swing
-    /// (the pick chain never names one), NO drop. The ENTITY arm: the
-    /// survival pick result the mob lanes never name (`getPickResult`
-    /// null — the spawn eggs the creative gate holds) — the honest
-    /// silence the pick_mob verdict keeps (the entity winning the
-    /// crosshair CLOSER than the block's own, the attack lane's own
-    /// law).
-    pub fn on_pick_block(&mut self, _include_data: bool) {
-        if self.world_is_network {
-            return; // the wire's store the server owns — the pick item
-                    // packet the server answers rides later
-        }
+    /// walk answers the same law offline; the LIVE session speaks the
+    /// networked half — the packet send ALONE (the gameMode's own
+    /// shape): the gates, the entity arm, the BLOCK clip, then
+    /// [`ContainerCommand::PickBlock`] rides the command channel and
+    /// the worker speaks the ServerboundPickItemFromBlockPacket — NO
+    /// local prediction the vanilla never predicts, the store the
+    /// server's to move, the verdict riding the clientbound Set Held
+    /// Slot echo back through its gate. The sink-less wire session
+    /// (no live channel) refuses honestly. NO swing (the pick chain
+    /// never names one), NO drop. The ENTITY arm: the survival pick
+    /// result the mob lanes never name (`getPickResult` null — the
+    /// spawn eggs the creative gate holds) — the honest silence the
+    /// pick_mob verdict keeps (the entity winning the crosshair
+    /// CLOSER than the block's own, the attack lane's own law); the
+    /// FromEntity packet the survival client never sends (the
+    /// protocol encoder the pair keeps whole).
+    pub fn on_pick_block(&mut self, include_data: bool) {
         if self.screen != ScreenKind::World || self.dead || self.paused {
             return; // the handleKeybinds gate — the overlay/screen pair
                     // the keyPickItem loop never passes
@@ -3892,6 +3895,24 @@ impl App {
         let Some(hit) = self.clip_crosshair() else {
             return; // the MISS type — the pick never speaks
         };
+        // THE WIRE LANE (the gameMode.handlePickItemFromBlock walk —
+        // the networked half is the packet send ALONE): the hit voxel
+        // and the Ctrl flag ride the command channel, the worker
+        // speaks the ServerboundPickItemFromBlockPacket, the store
+        // the server's to move (the Set Held Slot echo the verdict's
+        // own ride back through its gate). NO local prediction — the
+        // walk below is the OFFLINE world's own answer.
+        if let Some(sink) = self.live_clicks.as_ref() {
+            let _ = sink.send(crate::world_view::ContainerCommand::PickBlock {
+                pos: (hit.pos.0, hit.pos.1, hit.pos.2),
+                include_data,
+            });
+            return;
+        }
+        if self.world_is_network {
+            return; // the sink-less wire session — the store the
+                    // server owns, the honest refusal
+        }
         let Some(kind) = self
             .active_world()
             .map(|w| w.get(hit.pos.0, hit.pos.1, hit.pos.2))
@@ -14287,6 +14308,80 @@ mod tests {
             ContainerCommand::SelectHotbar { selection } => assert_eq!(selection, 1),
             other => panic!("expected a selection, got {other:?}"),
         }
+    }
+
+    /// THE PICK'S WIRE HALF (the gameMode.handlePickItemFromBlock walk
+    /// — the packet send ALONE): the LIVE session's middle-click rides
+    /// the PickBlock command with the clip's hit voxel and the Ctrl
+    /// flag verbatim, the store the server's to move — NO local
+    /// prediction (the offline walk the pick's own lane keeps is the
+    /// OFFLINE world's answer), the voxels whole, the selection and
+    /// the hotbar row untouched (the Set Held Slot echo the verdict's
+    /// own ride back is the only mover). The MISS the gates keep
+    /// silent ON the wire too — the sky aim sends NOTHING.
+    #[test]
+    fn the_wire_pick_sends_the_block_packet() {
+        use crate::world_view::ContainerCommand;
+        let mut app = App::new(3);
+        app.open(ScreenKind::Connect);
+        // the net world with a stone floor under the spawn column
+        let mut net = air_net_world(2, 0);
+        let c = net.size_blocks() / 2;
+        let floor_y = net.size_blocks() / 4;
+        for x in 0..net.size_blocks() {
+            for z in 0..net.size_blocks() {
+                net.set(x, floor_y, z, crate::world::STONE);
+            }
+        }
+        app.net_world = Some(net);
+        app.enter_network_world(None, Skybox::Overworld, None, None);
+        let (click_tx, click_rx) = std::sync::mpsc::channel::<ContainerCommand>();
+        app.attach_live_clicks(click_tx);
+        // the camera: the eye 3.0 above the floor plane, straight down
+        app.net_camera = Some(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, floor_y as f32 + 4.0, c as f32 + 0.5),
+            yaw: 0.0,
+            pitch: -std::f32::consts::FRAC_PI_2,
+        });
+        // the plain middle-click: the packet's includeData byte LOW
+        app.on_pick_block(false);
+        match click_rx.try_recv().expect("the pick rode the lane") {
+            ContainerCommand::PickBlock { pos, include_data } => {
+                assert_eq!(pos, (c, floor_y, c), "the hit voxel");
+                assert!(!include_data, "the plain form's flag");
+            }
+            other => panic!("expected a PickBlock echo, got {other:?}"),
+        }
+        // the CTRL form: the flag rides the packet's includeData slot
+        app.on_pick_block(true);
+        match click_rx.try_recv().expect("the ctrl pick rode the lane") {
+            ContainerCommand::PickBlock { pos, include_data } => {
+                assert_eq!(pos, (c, floor_y, c), "the same hit voxel");
+                assert!(include_data, "the ctrl form's flag");
+            }
+            other => panic!("expected a PickBlock echo, got {other:?}"),
+        }
+        // the local voxels are untouched — the server's own verdict
+        // (the tryPickItem walk the integrated server's bytecode
+        // speaks) owns the store on this lane
+        assert_eq!(
+            app.net_world.as_ref().unwrap().get(c, floor_y, c),
+            crate::world::STONE,
+            "no local prediction on the networked lane"
+        );
+        // the MISS: the sky aim sends NOTHING (the second command
+        // stays consumed — the channel's emptiness the silence is)
+        app.net_camera.as_mut().unwrap().pitch = std::f32::consts::FRAC_PI_2;
+        app.on_pick_block(false);
+        assert!(
+            click_rx.try_recv().is_err(),
+            "the MISS never speaks on the wire"
+        );
+        assert_eq!(
+            app.net_world.as_ref().unwrap().get(c, floor_y, c),
+            crate::world::STONE,
+            "the store whole throughout"
+        );
     }
 
     #[test]
