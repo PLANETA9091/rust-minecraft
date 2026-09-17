@@ -577,8 +577,9 @@ fn table_sin_cell(idx: i64) -> f32 {
 /// table quantization — `SIN[(int)((long)(angle * 10430.378350470453)
 /// & 65535)]` — the cell the table's own construction computes. The
 /// quantization IS the law: nearby angles share a cell, the walk never
-/// interpolates.
-fn narrow_sin(angle: f32) -> f64 {
+/// interpolates. (The boat hurt tilt's submit fold reads it too —
+/// `Mth.sin((double)hurtTime)` the extract's f2d walk keeps.)
+pub(crate) fn narrow_sin(angle: f32) -> f64 {
     let idx = (f64::from(angle) * 10430.378350470453) as i64 & 65535;
     f64::from(table_sin_cell(idx))
 }

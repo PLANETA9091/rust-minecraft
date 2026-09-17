@@ -550,6 +550,19 @@ pub const BOAT_DATA_PADDLE_RIGHT: u8 = 12;
 /// tickBubbleColumn's rocking decay reads; 0 the column's silence
 /// keeps, 60 the entry arms).
 pub const BOAT_DATA_BUBBLE_TIME: u8 = 13;
+/// THE HURT TRIO'S OWN ACCESSORS (the VehicleEntity clinit's own
+/// three — the defineId walk's own arithmetic the doc comment above
+/// speaks: Entity's eight base accessors 0..7, then the trio 8/9/10,
+/// then the boat's own three 11..13): HURT the INT the hurt() walk
+/// arms at 10 (`setHurtTime(10)`, the client tick's −1 decay reads),
+/// HURTDIR the INT the hit's negate flips (`setHurtDir(-getHurtDir())`,
+/// the define's own default +1 the never-hit hull keeps), DAMAGE the
+/// FLOAT the amount's ×10 ramps (`setDamage(getDamage() + amount *
+/// 10.0F)`, the client tick's −1.0 decay reads). The tilt's whole
+/// driver — the render fold the trio's words speak.
+pub const BOAT_DATA_HURT: u8 = 8;
+pub const BOAT_DATA_HURTDIR: u8 = 9;
+pub const BOAT_DATA_DAMAGE: u8 = 10;
 
 /// One wire boat as the renderer consumes it — the Add Entity snapshot's
 /// pose verbatim (the server's own word, the same lane the mobs ride) plus
@@ -594,6 +607,16 @@ pub struct WireBoat {
     /// rocking's whole driver): 0 the no-column silence keeps, the
     /// absent accessor the same silence (the server never spoke).
     pub bubble_time: i32,
+    /// THE HURT TRIO (the VehicleEntity accessors 8/9/10 — the words
+    /// the server's hurt() walk arms and the client's own tick decays:
+    /// the time the hit arms at 10, the dir the hit's negate flips
+    /// (the define's own +1 the never-hit default keeps), the damage
+    /// the amount's ×10 ramps). The absent words the define's own
+    /// defaults keep (0 / 1 / 0.0), the wrong-type word the same
+    /// honest default (the bubble_time read's own shape).
+    pub hurt_time: i32,
+    pub hurt_dir: i32,
+    pub damage: f32,
     pub paddle_right: bool,
 }
 
@@ -669,6 +692,18 @@ pub fn boats_view(model: &WorldModel) -> Vec<WireBoat> {
                 bubble_time: match e.data.get(&BOAT_DATA_BUBBLE_TIME) {
                     Some(mc_protocol::EntityDataEntry::Int(t)) => *t,
                     _ => 0,
+                },
+                hurt_time: match e.data.get(&BOAT_DATA_HURT) {
+                    Some(mc_protocol::EntityDataEntry::Int(t)) => *t,
+                    _ => 0,
+                },
+                hurt_dir: match e.data.get(&BOAT_DATA_HURTDIR) {
+                    Some(mc_protocol::EntityDataEntry::Int(d)) => *d,
+                    _ => 1,
+                },
+                damage: match e.data.get(&BOAT_DATA_DAMAGE) {
+                    Some(mc_protocol::EntityDataEntry::Float(v)) => *v,
+                    _ => 0.0,
                 },
             })
         })
@@ -4737,6 +4772,93 @@ mod tests {
         let boats = boats_view(&model);
         let boat = boats.iter().find(|b| b.id == 7).unwrap();
         assert_eq!(boat.bubble_time, 0, "the type mismatch the silence keeps");
+    }
+
+    #[test]
+    fn the_hurt_trio_reads_the_vehicle_accessors() {
+        use crate::world_view::{boats_view, BOAT_DATA_DAMAGE, BOAT_DATA_HURT, BOAT_DATA_HURTDIR};
+        use mc_protocol::play::{EntityDataSet, SetEntityDataEntry, EntitySpawn};
+        use mc_protocol::{EntityDataEntry as Val, PlayEvent};
+        // THE ACCESSOR ARITHMETIC (the VehicleEntity clinit's own three —
+        // the defineId walk's own count the doc comment speaks: Entity's
+        // eight base accessors 0..7, then the trio 8/9/10, then the
+        // boat's own three 11..13 the paddles/bubble pins keep)
+        assert_eq!(BOAT_DATA_HURT, 8, "the INT the hurt() arms at 10");
+        assert_eq!(BOAT_DATA_HURTDIR, 9, "the INT the hit's negate flips");
+        assert_eq!(BOAT_DATA_DAMAGE, 10, "the FLOAT the amount's ×10 ramps");
+        let mut model = WorldModel::new();
+        model.registry.entity_types = vec!["minecraft:oak_boat".to_string()];
+        model.apply(PlayEvent::Spawn(EntitySpawn {
+            id: 7,
+            uuid: 7,
+            type_id: 0,
+            x: 1.0,
+            y: 64.0,
+            z: -2.0,
+            movement: [0.0; 3],
+            x_rot: 0.0,
+            y_rot: 0.0,
+            y_head_rot: 0.0,
+            data: 0,
+        }));
+        // THE SILENCE (no wire word): the projection's defaults the
+        // define's own values keep — time 0, dir +1 (the define's own
+        // initial the never-hit hull keeps), damage 0.0
+        let boats = boats_view(&model);
+        let boat = boats.iter().find(|b| b.id == 7).unwrap();
+        assert_eq!(boat.hurt_time, 0, "the never-hit silence the 0 keeps");
+        assert_eq!(boat.hurt_dir, 1, "the define's own +1 the default keeps");
+        assert_eq!(boat.damage, 0.0, "the no-damage rest the 0.0 keeps");
+        // THE HIT'S OWN WORDS (the server's hurt() walk — time 10, the
+        // first hit's negate flips the +1 default to −1, the damage the
+        // amount's ×10 ramps at 90.0 — each the Set Entity Data's own
+        // serializer: INT 1 / INT 1 / FLOAT 3)
+        model.apply(PlayEvent::EntityData(EntityDataSet {
+            id: 7,
+            entries: vec![
+                SetEntityDataEntry {
+                    index: BOAT_DATA_HURT,
+                    serializer: 1,
+                    value: Val::Int(10),
+                },
+                SetEntityDataEntry {
+                    index: BOAT_DATA_HURTDIR,
+                    serializer: 1,
+                    value: Val::Int(-1),
+                },
+                SetEntityDataEntry {
+                    index: BOAT_DATA_DAMAGE,
+                    serializer: 3,
+                    value: Val::Float(90.0),
+                },
+            ],
+        }));
+        let boats = boats_view(&model);
+        let boat = boats.iter().find(|b| b.id == 7).unwrap();
+        assert_eq!(boat.hurt_time, 10, "the hit's arm the wire speaks");
+        assert_eq!(boat.hurt_dir, -1, "the first hit's flip the negate keeps");
+        assert_eq!(boat.damage, 90.0, "the amount's ramp the ×10 speaks");
+        // THE WRONG-TYPE WORDS (a float at HURT, an int at DAMAGE — the
+        // variant mismatch the honest defaults keep)
+        model.apply(PlayEvent::EntityData(EntityDataSet {
+            id: 7,
+            entries: vec![
+                SetEntityDataEntry {
+                    index: BOAT_DATA_HURT,
+                    serializer: 3,
+                    value: Val::Float(1.0),
+                },
+                SetEntityDataEntry {
+                    index: BOAT_DATA_DAMAGE,
+                    serializer: 1,
+                    value: Val::Int(5),
+                },
+            ],
+        }));
+        let boats = boats_view(&model);
+        let boat = boats.iter().find(|b| b.id == 7).unwrap();
+        assert_eq!(boat.hurt_time, 0, "the type mismatch the 0 keeps");
+        assert_eq!(boat.damage, 0.0, "the type mismatch the 0.0 keeps");
     }
 
     #[test]

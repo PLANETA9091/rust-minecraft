@@ -318,6 +318,51 @@ pub struct BubbleRock {
     pub tick: i32,
 }
 
+/// ONE HULL'S OWN HURT STATE (the VehicleEntity trio the client's
+/// accessor copies keep — the SynchedEntityData's own relationship the
+/// model walks): the wire's word the seen-tracker's fresh broadcast
+/// adopts wholesale (the SetData overwrite the server's dirty mark
+/// speaks), and the client's own copy the tick decays (`getHurtTime()
+/// > 0` the −1 step speaks, `getDamage() > 0.0F` the −1.0 ramp falls,
+/// the AbstractBoat.tick's own client arm — the isClientSide gate
+/// jumps straight to it, the out-of-control eject the server keeps).
+/// The render's extract reads the copy: hurtTime = (float)time −
+/// partial, damageTime = max(0, damage − partial), the wobble's whole
+/// driver (see [`boat_hurt_angle`]).
+#[derive(Debug, Clone, Copy, PartialEq, Default)]
+pub struct HurtWobble {
+    /// the LAST SEEN wire word (the adopt-on-differ's reference — a
+    /// word different from this one is a broadcast the copy takes)
+    pub seen_time: i32,
+    pub seen_dir: i32,
+    pub seen_damage: f32,
+    /// THE CLIENT'S OWN DECAYED COPY (the accessor stand-in)
+    pub time: i32,
+    pub dir: i32,
+    pub damage: f32,
+}
+
+/// THE HURT TILT'S OWN ANGLE (AbstractBoatRenderer's two-fold walk over
+/// the client's decayed copy): the EXTRACT — `hurtTime = (float)
+/// getHurtTime() - partial`, `damageTime = Math.max(0.0F, getDamage()
+/// - partial)` — then the SUBMIT's fold — the gate `hurtTime > 0` the
+/// wobble's arm keeps (fcmpl ifle), the angle `Mth.sin((double)
+/// hurtTime) * hurtTime * damageTime / 10.0F * (float) hurtDir` the
+/// bytecode's exact f32 order speaks (f2d→sin→fmul time→fmul
+/// damage→fdiv 10.0→i2f·fmul dir), the sin the 65536-step table's own
+/// cell (see `narrow_sin`). 0.0 the closed gate keeps — the rest pose
+/// the pre-wobble chain bit-for-bit.
+pub fn boat_hurt_angle(time: i32, dir: i32, damage: f32, partial: f32) -> f32 {
+    let hurt_time_f = time as f32 - partial;
+    let damage_time_f = (damage - partial).max(0.0);
+    if hurt_time_f > 0.0 {
+        crate::world_model::narrow_sin(hurt_time_f) as f32 * hurt_time_f * damage_time_f / 10.0
+            * dir as f32
+    } else {
+        0.0
+    }
+}
+
 /// THE UNDER-WATER RIM SCAN (AbstractBoat.isUnderwater's own walk, the
 /// isUnderWater() gate's data half — the hull's box rim band
 /// `floor(minX) ..< ceil(maxX)` over x/z at the single y layer
@@ -949,6 +994,10 @@ pub struct App {
     /// tickBubbleColumn walks — see [`BubbleRock`]): the entry the first
     /// sight births, the despawn's prune the paddle clocks' own law keeps.
     pub bubble_state: std::collections::HashMap<i32, BubbleRock>,
+    /// ONE HURT STATE PER HULL (the VehicleEntity trio the client's
+    /// accessor copies keep — see [`HurtWobble`]): the entry the first
+    /// sight births, the despawn's prune the rock state's own law keeps.
+    pub hurt_state: std::collections::HashMap<i32, HurtWobble>,
     /// THE LAST SENT INPUT (the vanilla `LocalPlayer.lastSentInput`'s
     /// own law): the input record the wire last spoke — the CHANGE
     /// against it sends one ServerboundPlayerInputPacket, riding or
@@ -1694,6 +1743,7 @@ impl App {
             boat_models: std::collections::HashMap::new(),
             paddle_positions: std::collections::HashMap::new(),
             bubble_state: std::collections::HashMap::new(),
+            hurt_state: std::collections::HashMap::new(),
             last_sent_input: mc_protocol::InputFlags::default(),
             ride_boat_yaw_prev: None,
             overlay_message: None,
@@ -7261,6 +7311,7 @@ impl App {
         let ids: std::collections::HashSet<i32> = boats.iter().map(|b| b.id).collect();
         self.paddle_positions.retain(|k, _| ids.contains(k));
         self.bubble_state.retain(|k, _| ids.contains(k));
+        self.hurt_state.retain(|k, _| ids.contains(k));
         self.net_boats = boats;
     }
 
@@ -7577,6 +7628,33 @@ impl App {
                 _ => (boat.paddle_left, boat.paddle_right),
             };
             let entry = self.paddle_positions.entry(boat.id).or_insert([0.0; 2]);
+            // THE HURT WOBBLE'S OWN WALK (the AbstractBoat.tick's own
+            // client arm — the isClientSide gate jumps straight to it,
+            // every tick, whatever the paddles say): the wire's word
+            // the seen-tracker's fresh broadcast adopts wholesale (the
+            // SynchedEntityData's SetData overwrite), then the client's
+            // own decay — `getHurtTime() > 0` the −1 step speaks,
+            // `getDamage() > 0.0F` the −1.0 ramp falls, the silence
+            // the 0 keeps (the ramp the clamp the multiplier's walk
+            // keeps is the bubble's own; the hurt trio needs no band —
+            // the decay's own `> 0` gate IS the clamp).
+            let hurt = self.hurt_state.entry(boat.id).or_default();
+            if (boat.hurt_time, boat.hurt_dir, boat.damage)
+                != (hurt.seen_time, hurt.seen_dir, hurt.seen_damage)
+            {
+                hurt.seen_time = boat.hurt_time;
+                hurt.seen_dir = boat.hurt_dir;
+                hurt.seen_damage = boat.damage;
+                hurt.time = boat.hurt_time;
+                hurt.dir = boat.hurt_dir;
+                hurt.damage = boat.damage;
+            }
+            if hurt.time > 0 {
+                hurt.time -= 1;
+            }
+            if hurt.damage > 0.0 {
+                hurt.damage -= 1.0;
+            }
             // THE ROCKING WALK (tickBubbleColumn's client arm — every
             // tick, whatever the paddles say): the multiplier the
             // bubbleTime's presence ramps (+0.05 the armed word,
@@ -9933,8 +10011,25 @@ impl App {
                 }
                 _ => 0.0,
             };
-            let quads =
-                model.quads(boat.yaw, boat.chest, feet, cam.yaw, cam.pitch, rowing_l, rowing_r, rock);
+            // THE HURT TILT'S OWN ANGLE (the extract + submit fold over
+            // the client's decayed copy — see [`boat_hurt_angle`]): the
+            // wobble the hit's word arms, the R_x the submit chain
+            // speaks, the closed gate the 0.0 rest keeps.
+            let wobble = match self.hurt_state.get(&boat.id) {
+                Some(h) => boat_hurt_angle(h.time, h.dir, h.damage, self.partial_tick),
+                None => 0.0,
+            };
+            let quads = model.quads(
+                boat.yaw,
+                boat.chest,
+                feet,
+                cam.yaw,
+                cam.pitch,
+                rowing_l,
+                rowing_r,
+                rock,
+                wobble,
+            );
             let sampled: Vec<crate::raster::SampledQuad> = quads
                 .iter()
                 .map(|q| crate::raster::SampledQuad {
@@ -25050,6 +25145,9 @@ mod tests {
             paddle_left: false,
             paddle_right: false,
             bubble_time: 0,
+            hurt_time: 0,
+            hurt_dir: 1,
+            damage: 0.0,
         }]);
         assert!(
             app.net_boats.is_empty(),
@@ -25073,6 +25171,9 @@ mod tests {
                 paddle_left: false,
                 paddle_right: false,
                 bubble_time: 0,
+                hurt_time: 0,
+                hurt_dir: 1,
+                damage: 0.0,
             },
             WireBoat {
                 id: 9,
@@ -25086,6 +25187,9 @@ mod tests {
                 paddle_left: false,
                 paddle_right: false,
                 bubble_time: 0,
+                hurt_time: 0,
+                hurt_dir: 1,
+                damage: 0.0,
             },
         ];
         app.live_boats_updated(boats.clone());
@@ -25113,6 +25217,9 @@ mod tests {
             paddle_left: left,
             paddle_right: right,
             bubble_time: 0,
+            hurt_time: 0,
+            hurt_dir: 1,
+            damage: 0.0,
         };
 
         // THE REMOTE CLOCK (the projection's gated booleans the walk
@@ -25613,6 +25720,9 @@ mod tests {
             paddle_left: true,
             paddle_right: false,
             bubble_time: 0,
+            hurt_time: 0,
+            hurt_dir: 1,
+            damage: 0.0,
         };
         app.live_boats_updated(vec![
             boat(5, 5.4, 30.3, 5.6),  // the water hull
@@ -25702,6 +25812,9 @@ mod tests {
             paddle_left: false,
             paddle_right: false,
             bubble_time,
+            hurt_time: 0,
+            hurt_dir: 1,
+            damage: 0.0,
         };
         // THE ARMED HULL (the column's word 60) and the silent one (0
         // — the decay lane the no-column silence keeps)
@@ -25737,6 +25850,128 @@ mod tests {
     }
 
     #[test]
+    fn the_hurt_wobble_walks_the_tick_decay_law() {
+        use crate::screens::HurtWobble;
+        use crate::world_view::WireBoat;
+        let mut app = App::new(3);
+        app.net_world = Some(air_net_world(2, 0));
+        app.enter_network_world(None, Skybox::Overworld, None, None);
+        let boat = |hurt_time: i32, hurt_dir: i32, damage: f32| WireBoat {
+            id: 5,
+            x: 10.0,
+            y: 64.0,
+            z: -20.0,
+            yaw: 0.0,
+            raft: false,
+            chest: false,
+            wood: "oak".to_string(),
+            paddle_left: false,
+            paddle_right: false,
+            bubble_time: 0,
+            hurt_time,
+            hurt_dir,
+            damage,
+        };
+        // THE NEVER-HIT HULL (the define's own defaults the projection
+        // keeps): the walk births the state, the decay's gate the
+        // silence keeps — one tick, nothing moved
+        app.live_boats_updated(vec![boat(0, 1, 0.0)]);
+        app.update();
+        let rest = app.hurt_state.get(&5).copied().expect("the state births");
+        assert_eq!(rest.time, 0, "the silence the 0 keeps");
+        assert_eq!(rest.damage, 0.0, "the no-damage rest");
+        // THE HIT'S OWN ADOPT (the server's hurt() words — time 10,
+        // the first hit's negate, the damage the amount's ×10 ramps):
+        // the seen-tracker's fresh broadcast adopts wholesale, then
+        // THE SAME TICK'S OWN DECAY walks (the vanilla client's tick
+        // order: the accessor's words the wire set, then the tick's
+        // −1/−1.0 the client's own copy keeps)
+        app.live_boats_updated(vec![boat(10, -1, 90.0)]);
+        app.update();
+        let hit = app.hurt_state.get(&5).copied().expect("the hit's state");
+        assert_eq!(hit.time, 9, "the arm the adopt speaks, the decay the tick keeps");
+        assert_eq!(hit.dir, -1, "the first hit's flip the negate keeps");
+        assert_eq!(hit.damage, 89.0, "the −1.0 ramp the tick falls");
+        assert_eq!(
+            (hit.seen_time, hit.seen_dir, hit.seen_damage),
+            (10, -1, 90.0),
+            "the seen-tracker's reference the wire's word keeps"
+        );
+        // THE DECAY'S OWN WALK (two more ticks — 9→7, 89.0→87.0)
+        app.update();
+        app.update();
+        let dec = app.hurt_state.get(&5).copied().expect("the decayed state");
+        assert_eq!(dec.time, 7, "the two −1 steps the ticks keep");
+        assert_eq!(dec.damage, 87.0, "the two −1.0 steps the ticks keep");
+        // THE SILENT HULL'S OWN REST (the wire's word back at the
+        // define's defaults — the server's decay caught up, the fresh
+        // broadcast the copy takes wholesale: the gate keeps nothing)
+        app.live_boats_updated(vec![boat(0, 1, 0.0)]);
+        app.update();
+        let rest = app.hurt_state.get(&5).copied().expect("the re-adopted state");
+        assert_eq!(rest.time, 0, "the fresh word's silence the adopt speaks");
+        assert_eq!(rest.damage, 0.0, "the fresh word's rest the adopt speaks");
+        // THE DESPAWN'S OWN PRUNE (the gone ids' hurt states never stay)
+        app.live_boats_updated(vec![boat(0, 1, 0.0); 1]);
+        // a second hull's id absent — the prune rides the same retain
+        app.hurt_state.insert(99, HurtWobble::default());
+        app.live_boats_updated(vec![boat(0, 1, 0.0)]);
+        assert!(!app.hurt_state.contains_key(&99), "the ghost's hurt state pruned");
+        assert!(app.hurt_state.contains_key(&5), "the survivor keeps its word");
+    }
+
+    #[test]
+    fn the_hurt_angle_folds_the_table_sin_chain() {
+        use crate::screens::boat_hurt_angle;
+        // THE GATE'S OWN SILENCE (the never-hit hull: hurtTime_f = −0.25
+        // the ifle the closed gate keeps — 0.0 the rest pose speaks)
+        assert_eq!(boat_hurt_angle(0, 1, 0.0, 0.25), 0.0, "the closed gate");
+        // THE EXTRACT'S OWN LERP (the hit's word at the render's
+        // partial 0.25: hurtTime_f = 10 − 0.25 = 9.75, damageTime_f =
+        // max(0, 90 − 0.25) = 89.75) and THE SUBMIT'S OWN FOLD (the
+        // f32 chain sin·time·damage/10.0·dir — the sin the 65536-step
+        // table's own cell at 9.75): the exact words the bytecode
+        // keeps — the f32 sin's own rounding the ideal-math assert
+        // would miss
+        assert_eq!(
+            boat_hurt_angle(10, 1, 90.0, 0.25),
+            -27.958423614501953,
+            "the dir +1 word the table's cell speaks"
+        );
+        assert_eq!(
+            boat_hurt_angle(10, -1, 90.0, 0.25),
+            27.958423614501953,
+            "the negate the dir's own flip speaks"
+        );
+        // THE PARTIAL-ZERO WORD (the headless scenes' own render tick:
+        // the cell at 10 ticks, the damage at its full 90.0)
+        assert_eq!(
+            boat_hurt_angle(10, 1, 90.0, 0.0),
+            -48.95623016357422,
+            "the full-damage word the cell at 10 speaks"
+        );
+        // THE CLAMP'S OWN FLOOR (the damage already decayed past the
+        // partial: max(0, −0.25) and max(0, −5.25) the extract's own
+        // Math.max keeps — both the 0.0 silence the time's arm alone
+        // never rescues)
+        assert_eq!(boat_hurt_angle(2, 1, 0.0, 0.25), 0.0, "the floored damage");
+        assert_eq!(
+            boat_hurt_angle(2, 1, -5.0, 0.25),
+            0.0,
+            "the deeper negative the same floor keeps"
+        );
+        // THE TIME'S OWN DECAY RESHAPES THE WOBBLE (the cell at 5
+        // ticks its own word speaks — the table's quantization the
+        // nearby ticks' shared cells the same word may keep)
+        let mid = boat_hurt_angle(5, 1, 45.0, 0.0);
+        assert!(
+            (mid - (-21.57634162902832)).abs() < 1e-6,
+            "the tick-5 word: {}",
+            mid
+        );
+    }
+
+    #[test]
     fn the_boat_rocks_only_above_the_surface() {
         use crate::world_view::WireBoat;
         let mut world = air_net_world(2, 0);
@@ -25758,6 +25993,9 @@ mod tests {
             paddle_left: false,
             paddle_right: false,
             bubble_time: 0,
+            hurt_time: 0,
+            hurt_dir: 1,
+            damage: 0.0,
         };
         // THE FLOATING HULL (the feet at the fluid's own top — the rim
         // cell above the patch the surface test never reaches): dry

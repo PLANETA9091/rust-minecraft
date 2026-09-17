@@ -2186,7 +2186,9 @@ impl BoatModel {
     /// the chest bit pick, the paddles the rowing times pose (the
     /// animatePaddle walk — 0.0 both, the rest the silence speaks).
     /// `cam_yaw/cam_pitch` speak the view rotation the entity diffuse
-    /// folds (the same mix_light every entity rides).
+    /// folds (the same mix_light every entity rides). `rock` the bubble
+    /// column's diagonal wobble (0.0 the silence), `hurt` the hit's R_x
+    /// wobble in degrees (0.0 the closed gate — see [`boat_folds`]).
     pub fn quads(
         &self,
         yaw_deg: f32,
@@ -2197,9 +2199,10 @@ impl BoatModel {
         rowing_left: f32,
         rowing_right: f32,
         rock: f32,
+        hurt: f32,
     ) -> Vec<AvatarQuad> {
         let parts = build_boat_parts(self.raft, chest, rowing_left, rowing_right);
-        let (fold_point, fold_normal) = boat_folds(yaw_deg, feet, rock);
+        let (fold_point, fold_normal) = boat_folds(yaw_deg, feet, rock, hurt);
         let mut out: Vec<AvatarQuad> = Vec::with_capacity(72);
         let ident = Mat4::IDENT;
         for part in &parts {
@@ -2220,11 +2223,17 @@ impl BoatModel {
 /// the S and the R_y, exactly the mulPose order the bytecode keeps),
 /// then R_y(180 − yRot) (the joml YP fold the living chain shares), then
 /// the 0.375 lift + the feet translation. No death flip, no −1.501 line —
-/// the boat's own words.
+/// the boat's own words. THE HURT TILT (the second arm — the mulPose the
+/// bytecode's offset 44 speaks, the yaw chain's mulPose and the rock's
+/// own the sibling slots bookend): the R_x the hurt degrees speak, the
+/// gate `hurtTime > 0` the caller's 0.0 rest keeps, the origin the
+/// pivot — riding BETWEEN the rock and the R_y(180 − yRot), exactly the
+/// mulPose order the bytecode keeps.
 fn boat_folds(
     yaw_deg: f32,
     feet: Vec3,
     rock: f32,
+    hurt: f32,
 ) -> (
     impl Fn([f32; 3]) -> [f32; 3],
     impl Fn([f32; 3]) -> [f32; 3],
@@ -2232,6 +2241,14 @@ fn boat_folds(
     let a = (180.0f32 - yaw_deg).to_radians();
     let (sa, ca) = a.sin_cos();
     let lift = BOAT_SUBMIT_LIFT;
+    // THE HURT TILT'S OWN FOLD: the R_x the XP axis keeps (the
+    // rotationDegrees' deg→rad fold), the standard walk x' = x,
+    // y' = y·cos − z·sin, z' = y·sin + z·cos.
+    let theta_h = hurt * (std::f32::consts::PI / 180.0);
+    let (hs, hc) = theta_h.sin_cos();
+    let hurt_point = move |p: [f32; 3]| -> [f32; 3] {
+        [p[0], p[1] * hc - p[2] * hs, p[1] * hs + p[2] * hc]
+    };
     // THE ROCK'S OWN ANGLE-AXIS (setAngleAxis's internal normalize: the
     // (1, 0, 1) axis the 1/sqrt(2) half-steps speak — the Rodrigues
     // walk v' = v·cos + (k×v)·sin + k·(k·v)·(1−cos) the fold keeps)
@@ -2266,12 +2283,16 @@ fn boat_folds(
         // THE ROCK (the bubble tilt — the origin the pivot: the
         // translated feet + lift the PoseStack's own order keeps)
         let [rx, ry, rz] = rock_point([sx, sy, sz]);
+        // THE HURT TILT (the R_x the hit's word speaks — the slot the
+        // mulPose order keeps: the yaw chain the tilt bookends, the
+        // rock the scale's own does)
+        let [hx, hy, hz] = hurt_point([rx, ry, rz]);
         // the R_y(180 − yaw) fold
-        let px = rx * ca + rz * sa;
-        let pz = -rx * sa + rz * ca;
+        let px = hx * ca + hz * sa;
+        let pz = -hx * sa + hz * ca;
         [
             feet.x + px,
-            feet.y as f32 + ry + lift,
+            feet.y as f32 + hy + lift,
             feet.z + pz,
         ]
     };
@@ -2279,7 +2300,8 @@ fn boat_folds(
         let (qx, qy, qz) = (n[2], n[1], -n[0]);
         let (sx, sy, sz) = (-qx, -qy, qz);
         let [rx, ry, rz] = rock_normal([sx, sy, sz]);
-        [rx * ca + rz * sa, ry, -rx * sa + rz * ca]
+        let [hx, hy, hz] = hurt_point([rx, ry, rz]);
+        [hx * ca + hz * sa, hy, -hx * sa + hz * ca]
     };
     (fold_point, fold_normal)
 }
@@ -3922,18 +3944,18 @@ mod tests {
             raft: false,
         };
         let feet = Vec3::new(10.0, 64.0, -20.0);
-        let quads = boat.quads(0.0, false, feet, 0.0, 0.0, 0.0, 0.0, 0.0);
+        let quads = boat.quads(0.0, false, feet, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
         assert_eq!(quads.len(), 54, "5 hull parts + 2 paddles, 6 quads a cube");
-        let chest = boat.quads(0.0, true, feet, 0.0, 0.0, 0.0, 0.0, 0.0);
+        let chest = boat.quads(0.0, true, feet, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
         assert_eq!(chest.len(), 72, "the chest variant's three cubes ride +18");
         let raft = BoatModel {
             rgba: vec![255u8; 128 * 64 * 4],
             tex_h: 64,
             raft: true,
         };
-        let raft_quads = raft.quads(0.0, false, feet, 0.0, 0.0, 0.0, 0.0, 0.0);
+        let raft_quads = raft.quads(0.0, false, feet, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
         assert_eq!(raft_quads.len(), 36, "the two-plank bottom, no rails");
-        let raft_chest = raft.quads(0.0, true, feet, 0.0, 0.0, 0.0, 0.0, 0.0);
+        let raft_chest = raft.quads(0.0, true, feet, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
         assert_eq!(raft_chest.len(), 54, "the chest raft rides +18 too");
 
         // THE HULL'S VERTICAL SPAN (the model numbers' own word): the
@@ -4030,9 +4052,9 @@ mod tests {
             raft: false,
         };
         let feet = Vec3::new(10.0, 64.0, -20.0);
-        let rest = boat.quads(0.0, false, feet, 0.0, 0.0, 0.0, 0.0, 0.0);
+        let rest = boat.quads(0.0, false, feet, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
         assert_eq!(rest.len(), 54, "the swing never adds a quad");
-        let swung = boat.quads(0.0, false, feet, 0.0, 0.0, std::f32::consts::FRAC_PI_2, 0.0, 0.0);
+        let swung = boat.quads(0.0, false, feet, 0.0, 0.0, std::f32::consts::FRAC_PI_2, 0.0, 0.0, 0.0);
         assert_eq!(swung.len(), 54, "the swing keeps the count");
         let moved = rest
             .iter()
@@ -4050,7 +4072,7 @@ mod tests {
     #[test]
     fn the_rock_tilts_the_hull_the_diagonal_speaks() {
         let feet = Vec3::new(10.0, 64.0, -20.0);
-        let (fold_point, _) = boat_folds(0.0, feet, 0.0);
+        let (fold_point, _) = boat_folds(0.0, feet, 0.0, 0.0);
         let rest = fold_point([0.0, 0.0, 1.0]);
         // the rock-free word: R_y(90) -> S -> R_y(180) -> lift + feet —
         // [11.0, 64.375, -20.0] the existing hull pins speak
@@ -4060,7 +4082,7 @@ mod tests {
         // THE 90° ROCK (the local word through the diagonal: the
         // Rodrigues walk v' = v·cos + (k×v)·sin + k·(k·v)·(1−cos) over
         // k = (1,0,1)/sqrt(2)) — the bow word swings off its axis
-        let (fold_rock, _) = boat_folds(0.0, feet, 90.0);
+        let (fold_rock, _) = boat_folds(0.0, feet, 90.0, 0.0);
         let rocked = fold_rock([0.0, 0.0, 1.0]);
         assert!((rocked[0] - 10.5).abs() < 1e-4, "the rocked x: {}", rocked[0]);
         assert!(
@@ -4071,6 +4093,60 @@ mod tests {
         assert!((rocked[2] - (-19.5)).abs() < 1e-4, "the rocked z: {}", rocked[2]);
         let tilted = rest.iter().zip(&rocked).any(|(r, s)| (r - s).abs() > 1e-5);
         assert!(tilted, "the rock moves the point the rest keeps");
+    }
+
+    /// THE HURT TILT'S OWN PIVOT (the submit chain's second arm — the
+    /// R_x the hurt degrees speak, riding BETWEEN the rock and the
+    /// R_y(180−yaw) the mulPose order keeps): the rest word (hurt 0.0,
+    /// the closed gate) the pre-wobble chain bit-for-bit keeps, the
+    /// wobble word the X-axis pivot walks — the y the cos fold carries,
+    /// the z the sin walk swings, the negate the dir's own flip the
+    /// mirror speaks (the y the same, the z the sign's own mirror).
+    #[test]
+    fn the_hurt_tilt_pivots_the_x_axis() {
+        let feet = Vec3::new(10.0, 20.0, 10.0);
+        // THE REST (the closed gate the 0.0 keeps): the rock-free chain
+        // the existing pins speak — [10.0, 19.375, 10.0] the (0,1,0)
+        // local word through R_y(90) -> S -> R_y(180) -> lift+feet
+        let (fold_point, _) = boat_folds(0.0, feet, 0.0, 0.0);
+        let rest = fold_point([0.0, 1.0, 0.0]);
+        assert!((rest[0] - 10.0).abs() < 1e-5, "the rest x: {}", rest[0]);
+        assert!((rest[1] - 19.375).abs() < 1e-5, "the rest y: {}", rest[1]);
+        assert!((rest[2] - 10.0).abs() < 1e-5, "the rest z: {}", rest[2]);
+        // THE WOBBLE (the hit's word the extract+fold speaks — the
+        // submit's angle at time 10 / damage 90 / partial 0 the
+        // screens' pin carries): the X-axis pivot — the y the cos walk
+        // carries to 19.718…, the z the sin walk swings off 10.0
+        let (fold_hurt, _) = boat_folds(0.0, feet, 0.0, -48.95623016357422);
+        let hurt = fold_hurt([0.0, 1.0, 0.0]);
+        assert!((hurt[0] - 10.0).abs() < 1e-5, "the pivot keeps the x: {}", hurt[0]);
+        assert!(
+            (hurt[1] - 19.718364715576172).abs() < 1e-5,
+            "the cos fold's y: {}",
+            hurt[1]
+        );
+        assert!(
+            (hurt[2] - 9.2457914352417).abs() < 1e-5,
+            "the sin walk's z: {}",
+            hurt[2]
+        );
+        // THE MIRROR (the dir's own flip the negate speaks): the same
+        // cos y, the z the sign's own mirror swings the other way
+        let (fold_flip, _) = boat_folds(0.0, feet, 0.0, 48.95623016357422);
+        let flip = fold_flip([0.0, 1.0, 0.0]);
+        assert!(
+            (flip[1] - hurt[1]).abs() < 1e-6,
+            "the negate keeps the cos walk: {}",
+            flip[1]
+        );
+        assert!(
+            (flip[2] - 10.7542085647583).abs() < 1e-5,
+            "the sin walk's mirrored z: {}",
+            flip[2]
+        );
+        // THE MOVED POINT (the wobble moves what the rest keeps)
+        let moved = rest.iter().zip(&hurt).any(|(r, s)| (r - s).abs() > 1e-5);
+        assert!(moved, "the hurt moves the point the rest keeps");
     }
 
     /// THE BOAT TEXTURE GATE (the load's own honesty — the runtime
@@ -4088,17 +4164,17 @@ mod tests {
             dir = dir.parent().expect("the runtime root above").to_path_buf();
         };
         let oak = BoatModel::load(&root, false, false, "oak").expect("the oak texture loads");
-        let quads = oak.quads(0.0, false, Vec3::new(0.0, 0.0, 0.0), 0.0, 0.0, 0.0, 0.0, 0.0);
+        let quads = oak.quads(0.0, false, Vec3::new(0.0, 0.0, 0.0), 0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
         assert_eq!(quads.len(), 54, "the real texture draws the real hull");
         let chest_oak = BoatModel::load(&root, false, true, "oak").expect("the chest band loads");
-        let chest_quads = chest_oak.quads(0.0, true, Vec3::new(0.0, 0.0, 0.0), 0.0, 0.0, 0.0, 0.0, 0.0);
+        let chest_quads = chest_oak.quads(0.0, true, Vec3::new(0.0, 0.0, 0.0), 0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
         assert_eq!(chest_quads.len(), 72, "the chest cubes ride the real band");
         assert!(
             BoatModel::load(&root, false, false, "unknown_wood").is_none(),
             "the unknown wood refuses"
         );
         let raft = BoatModel::load(&root, true, false, "bamboo").expect("the raft loads");
-        let raft_quads = raft.quads(0.0, false, Vec3::new(0.0, 0.0, 0.0), 0.0, 0.0, 0.0, 0.0, 0.0);
+        let raft_quads = raft.quads(0.0, false, Vec3::new(0.0, 0.0, 0.0), 0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
         assert_eq!(raft_quads.len(), 36, "the plank deck the raft speaks");
     }
 
