@@ -469,6 +469,16 @@ pub struct WireRide {
     pub feet_z: f64,
     /// The vehicle's body yaw in degrees (the mount snap's source).
     pub vehicle_yaw: f32,
+    /// THE ATTACHMENT'S OWN LOCAL WORDS (the getPassengerAttachmentPoint
+    /// return's unrotated form — the seat x the multi-rider list picks,
+    /// the ride height the AbstractBoat's `dimensions.height() / 3`
+    /// speaks): the tick's carry re-rotates the local x by the
+    /// vehicle's CURRENT yaw every tick (the positionRider law — the
+    /// vanilla Vec3.yRot(-yaw·π/180) fold the eased hull rides), the
+    /// feet_x/z the projection keeps are the snapshot-yaw's own words
+    /// (the stale walk's fallback).
+    pub seat_x: f32,
+    pub ride_height: f32,
 }
 
 /// THE BOAT FAMILY'S OWN DIMENSIONS (the vanilla EntityType constants
@@ -543,6 +553,10 @@ pub fn ride_view(model: &WorldModel) -> Option<WireRide> {
         feet_y: vehicle.y + ride_height as f64,
         feet_z: vehicle.z + az,
         vehicle_yaw: vehicle.y_rot,
+        // the attachment's own local words (the re-rotate the tick's
+        // carry speaks — the snapshot-yaw rotation the feet keep)
+        seat_x,
+        ride_height,
     })
 }
 

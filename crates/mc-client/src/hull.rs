@@ -22,6 +22,45 @@ pub const HULL_GRAVITY: f64 = 0.04;
 /// fold speaks).
 pub const SPLASH_DOWN: f64 = 0.101;
 
+/// THE WIRE HULL'S OWN LERPTO STATE — the client's eased copy of the
+/// server-owned hull (the vanilla Entity.lerpTo law the remote bodies
+/// speak: the target the latest sync arms, the 3-tick walk eases, the
+/// prev trio the render's partial-tick lerp anchors). The offline
+/// hulls keep no lerp — their own tick IS the truth.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct HullLerp {
+    /// the pose the last tick eased FROM (the render's own anchor)
+    pub prev: (f64, f64, f64),
+    /// the latest sync's word the walk eases toward
+    pub target: (f64, f64, f64),
+    /// the steps the walk has left (the vanilla lerpSteps' own 3 the
+    /// sync's arrival arms; the 0 the exhausted walk keeps)
+    pub steps: u8,
+}
+
+/// THE LERPTO'S OWN STEP (the vanilla Entity.lerp's walk the mobs
+/// speak): `pos += (target - pos) / steps`, then the count's descent.
+/// The zero-steps silence the exhausted walk keeps (the hull rests at
+/// its word until the next sync re-arms).
+pub fn hull_lerp_axes(
+    cur: (f64, f64, f64),
+    target: (f64, f64, f64),
+    steps: u8,
+) -> ((f64, f64, f64), u8) {
+    if steps == 0 {
+        return (cur, steps);
+    }
+    let s = steps as f64;
+    (
+        (
+            cur.0 + (target.0 - cur.0) / s,
+            cur.1 + (target.1 - cur.1) / s,
+            cur.2 + (target.2 - cur.2) / s,
+        ),
+        steps - 1,
+    )
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum HullStatus {
     InWater,
@@ -405,6 +444,27 @@ mod tests {
             return crate::world::STONE;
         }
         AIR
+    }
+
+    #[test]
+    fn the_lerp_axes_walk_the_vanilla_fold() {
+        // THE LERPTO'S OWN THIRDS (the vanilla Entity.lerp's `/steps`
+        // fold the remote bodies speak): 1/3, then 1/2 of the rest,
+        // then the whole — the third step lands the word exactly, the
+        // count's descent the walk keeps, the zero-steps silence the
+        // exhausted walk rests at
+        let (c, s) = hull_lerp_axes((0.0, 0.0, 0.0), (3.0, 6.0, 9.0), 3);
+        assert_eq!(c, (1.0, 2.0, 3.0), "the first third");
+        assert_eq!(s, 2, "the count's descent");
+        let (c, s) = hull_lerp_axes(c, (3.0, 6.0, 9.0), s);
+        assert_eq!(c, (2.0, 4.0, 6.0), "the half of the rest");
+        assert_eq!(s, 1);
+        let (c, s) = hull_lerp_axes(c, (3.0, 6.0, 9.0), s);
+        assert_eq!(c, (3.0, 6.0, 9.0), "the last step lands the word");
+        assert_eq!(s, 0);
+        let (c, s) = hull_lerp_axes(c, (3.0, 6.0, 9.0), s);
+        assert_eq!(c, (3.0, 6.0, 9.0), "the exhausted walk rests at its word");
+        assert_eq!(s, 0, "the silence the zero keeps");
     }
 
     /// THE STATUS WORD — the bands the detection walks: the base

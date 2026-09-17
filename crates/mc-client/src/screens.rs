@@ -1082,10 +1082,17 @@ pub struct App {
     /// THE WIRE'S OWN BOAT LANE (the networked world's hulls — the
     /// boat-family entities the live refresh ships): the boats the
     /// SERVER owns, the submit render the wood-textured models draw
-    /// (no physics, no lerp — the hull the snapshot's own word
-    /// carries). The ride lane's own anchor carries the player; this
-    /// lane carries the boat the camera sits in.
+    /// (no physics — the hull the lerpTo walk's eased copy carries,
+    /// see [`App::net_boat_lerp`]). The ride lane's own anchor carries
+    /// the player; this lane carries the boat the camera sits in.
     pub net_boats: Vec<crate::world_view::WireBoat>,
+    /// THE WIRE HULL'S OWN LERPTO STATE (per id — the vanilla
+    /// Entity.lerpTo's client copy the remote hulls speak): the fresh
+    /// sync's word the target arms, the 3-tick walk eases, the prev
+    /// trio the render's partial-tick lerp anchors. The fresh id's
+    /// first landing keeps no walk (the pose IS the word); the offline
+    /// lane's ids never enter this map (their own tick IS the truth).
+    pub net_boat_lerp: std::collections::HashMap<i32, crate::hull::HullLerp>,
     /// THE OFFLINE SPAWNER'S OWN HULLS (the BoatItem.use walk's
     /// singleplayer arm — the local hulls the wire's boats are the
     /// future own of): the hull the offline right-click spawns at the
@@ -1876,6 +1883,7 @@ impl App {
             net_camera: None,
             net_ride: None,
             net_boats: Vec::new(),
+            net_boat_lerp: std::collections::HashMap::new(),
             offline_boats: Vec::new(),
             offline_boat_phys: std::collections::HashMap::new(),
             boat_models: std::collections::HashMap::new(),
@@ -2238,6 +2246,13 @@ impl App {
                 }
                 self.dig_held = false;
             }
+            // THE WIRE HULLS' OWN EASE (the lerpTo walk the vehicle's
+            // own tick speaks BEFORE the rider's carry — the vanilla
+            // order the positionRider law keeps: the vehicle moves,
+            // the passenger follows the pose the ease reached)
+            if self.world_is_network {
+                self.tick_net_boats();
+            }
             let using = self.using_item.is_some();
             // the disjoint field borrows: the body mutates while the
             // level reads (the borrow checker splits the fields)
@@ -2252,20 +2267,44 @@ impl App {
                 // walk — no impulses (the input steers the VEHICLE
                 // server-side), no gravity, no fluid lanes (the
                 // step/splash/drift windows never fire), the carried
-                // feet the projection keeps set (prev = current — the
-                // render lerp walks zero distance), the ground never
-                // claims the rider. The move wire flows below exactly
-                // as the standing walk's does (the vanilla
+                // feet the vehicle's own motion carries, the ground
+                // never claims the rider. The move wire flows below
+                // exactly as the standing walk's does (the vanilla
                 // isControlledCamera gate keeps sending while riding —
                 // the carried position the packet speaks).
                 if self.net_ride.is_some() {
                     let r = self.net_ride.as_ref().expect("ride checked above");
-                    b.prev_x = r.feet_x;
-                    b.prev_y = r.feet_y;
-                    b.prev_z = r.feet_z;
-                    b.x = r.feet_x;
-                    b.y = r.feet_y;
-                    b.z = r.feet_z;
+                    // THE POSITIONRIDER'S OWN WALK (the vehicle's
+                    // positionRider the vanilla rideTick calls): the
+                    // EASED hull's pose this tick's lerpTo reached, the
+                    // local attachment re-rotated by the vehicle's
+                    // CURRENT yaw (the vanilla Vec3.yRot(-yaw·π/180)
+                    // fold — `x' = x·cos + z·sin, z' = −x·sin + z·cos`
+                    // over the seat's local x, the z the 0.0 the boat
+                    // seat keeps), the ride height the y adds. The
+                    // vehicle's silence (the despawn the broadcast
+                    // hasn't named yet) falls back to the projection's
+                    // own snapshot feet — the stale word, never a
+                    // teleport to the origin.
+                    let (mut fx, mut fy, mut fz) = (r.feet_x, r.feet_y, r.feet_z);
+                    if let Some(v) = self.net_boats.iter().find(|b| b.id == r.vehicle_id) {
+                        let theta = -(v.yaw as f64) * std::f64::consts::PI / 180.0;
+                        let (sin, cos) = theta.sin_cos();
+                        let lx = r.seat_x as f64;
+                        fx = v.x + lx * cos;
+                        fy = v.y + r.ride_height as f64;
+                        fz = v.z + (-lx) * sin;
+                    }
+                    // THE PREV TRIO (the carried path's own trail — the
+                    // render's partial-tick lerp anchors at the pose
+                    // the last tick carried, the camera eases sub-tick
+                    // the same walk the body's own move speaks)
+                    b.prev_x = b.x;
+                    b.prev_y = b.y;
+                    b.prev_z = b.z;
+                    b.x = fx;
+                    b.y = fy;
+                    b.z = fz;
                     b.vx = 0.0;
                     b.vy = 0.0;
                     b.vz = 0.0;
@@ -4063,9 +4102,13 @@ impl App {
             // lane's placement prediction edits them in place)
             self.offline_world = Some(world);
             // the fresh terrain's own honesty — the previous offline
-            // session's hulls drop with the world that carried them
+            // session's hulls drop with the world that carried them;
+            // the wire's lane the same word keeps (the eased copies the
+            // stale session's lerp state never names a local hull)
             self.offline_boats.clear();
             self.offline_boat_phys.clear();
+            self.net_boats.clear();
+            self.net_boat_lerp.clear();
             // the dig lane predicts locally on the offline terrain (the
             // singleplayer behavior — the machine's own default re-armed)
             self.dig.apply_locally = true;
@@ -5628,9 +5671,12 @@ impl App {
         // chunk refresh on this lane)
         self.offline_world = None;
         // the offline spawner's hulls drop with it — the wire's own
-        // boat lane owns this world's water
+        // boat lane owns this world's water; the previous session's
+        // lerp state the drop takes too (the fresh sync's word the
+        // fresh walk arms)
         self.offline_boats.clear();
         self.offline_boat_phys.clear();
+        self.net_boat_lerp.clear();
         // the dig lane's prediction flag follows the world's authority
         // (the networked terrain is the server's own — the placement
         // lane's verdict the dig speaks too)
@@ -7608,8 +7654,11 @@ impl App {
     const WIRE_FIRE_FLOOR: i32 = 6;
 
     /// THE WIRE'S OWN BOAT LANE (the live refresh's hull list): the
-    /// boats the SERVER spawned land verbatim (the snapshot's own
-    /// poses — no merge state, the next refresh's word the truth).
+    /// boats the SERVER spawned land verbatim on their FIRST word (the
+    /// fresh id's pose IS the snapshot's), the known id's fresh word
+    /// the lerpTo walk's target arms (the eased copy the
+    /// [`App::net_boat_lerp`] state keeps — the paddled hull the
+    /// vanilla client eases over 3 ticks, never a teleport).
     /// The offline lane's world is never touched (the offline spawner's
     /// boats are the wire's future own).
     pub fn live_boats_updated(&mut self, boats: Vec<crate::world_view::WireBoat>) {
@@ -7623,7 +7672,80 @@ impl App {
         self.paddle_positions.retain(|k, _| ids.contains(k));
         self.bubble_state.retain(|k, _| ids.contains(k));
         self.hurt_state.retain(|k, _| ids.contains(k));
-        self.net_boats = boats;
+        // THE LERPTO'S OWN ARM (the mobs' law the hulls now speak — the
+        // vanilla Entity.lerpTo the remote bodies keep): the existing
+        // hull's EASED pose the walk stands on (the fresh sync's word
+        // the target arms, the 3 steps the vanilla lerpSteps speaks —
+        // the ease continues from where the render left off, never a
+        // backwards jump to the raw), the fresh id's pose IS the word
+        // (the first landing verbatim, no walk), the gone id's lerp
+        // the prune takes with the hull.
+        let old: std::collections::HashMap<i32, crate::world_view::WireBoat> = std::mem::take(
+            &mut self.net_boats,
+        )
+        .into_iter()
+        .map(|b| (b.id, b))
+        .collect();
+        self.net_boat_lerp.retain(|k, _| ids.contains(k));
+        let mut eased: Vec<crate::world_view::WireBoat> = Vec::with_capacity(boats.len());
+        for w in boats {
+            match old.get(&w.id) {
+                Some(prev) => {
+                    let e = self.net_boat_lerp.entry(w.id).or_insert(crate::hull::HullLerp {
+                        prev: (w.x, w.y, w.z),
+                        target: (w.x, w.y, w.z),
+                        steps: 0,
+                    });
+                    e.prev = (prev.x, prev.y, prev.z);
+                    e.target = (w.x, w.y, w.z);
+                    e.steps = 3;
+                    eased.push(crate::world_view::WireBoat {
+                        x: prev.x,
+                        y: prev.y,
+                        z: prev.z,
+                        ..w
+                    });
+                }
+                None => {
+                    self.net_boat_lerp.insert(
+                        w.id,
+                        crate::hull::HullLerp {
+                            prev: (w.x, w.y, w.z),
+                            target: (w.x, w.y, w.z),
+                            steps: 0,
+                        },
+                    );
+                    eased.push(w);
+                }
+            }
+        }
+        self.net_boats = eased;
+    }
+
+    /// THE WIRE HULLS' OWN LERPTO TICK (the vanilla Entity.lerp's walk
+    /// the mobs speak): the prev trio arms at the pose the last tick
+    /// carried (the render's partial-tick anchor), the steps>0 walk
+    /// eases the stored pose toward the latest sync's word
+    /// (`pos += (target - pos) / steps`, the count's descent). The
+    /// exhausted walk rests the hull at its word — the next refresh's
+    /// arm re-opens. The offline lane's hulls the wire's map never
+    /// names (their own tick IS the truth).
+    fn tick_net_boats(&mut self) {
+        if self.net_boats.is_empty() {
+            return;
+        }
+        for b in &mut self.net_boats {
+            let Some(l) = self.net_boat_lerp.get_mut(&b.id) else {
+                continue;
+            };
+            l.prev = (b.x, b.y, b.z);
+            if l.steps > 0 {
+                let (cur, steps) =
+                    crate::hull::hull_lerp_axes((b.x, b.y, b.z), l.target, l.steps);
+                (b.x, b.y, b.z) = cur;
+                l.steps = steps;
+            }
+        }
     }
 
     /// THE WIRE'S OWN MOB LANE (the Add Entity store's projection
@@ -10452,12 +10574,32 @@ impl App {
             else {
                 continue; // the texture failed its sha1 — this hull stays unseen
             };
-            // THE SUBMIT POSE (the renderer's own fold — no lerp, no
-            // death flip, the hull the snapshot's word carries) and
+            // THE SUBMIT POSE (the renderer's own fold — the hull the
+            // lerpTo walk's eased copy carries: the wire lane's prev
+            // trio the partial-tick lerp anchors (the vanilla render's
+            // own `lerp(prev, cur, partialTick)` the remote bodies
+            // speak — the ease the 20Hz tick keeps walking, the 60fps
+            // frame the sub-tick trail smooths), the offline world the
+            // pose verbatim keeps — its own tick IS the truth, the
+            // stale wire ids never lerp a local hull) and
             // THE PADDLES' OWN PHASE (the getRowingTime law the
             // BoatRenderState carries — the clock's word through the
             // partial-tick lerp, the silence the 0.0 rest speaks)
-            let feet = Vec3::new(boat.x as f32, boat.y as f32, boat.z as f32);
+            let feet = if self.world_is_network {
+                match self.net_boat_lerp.get(&boat.id) {
+                    Some(l) => {
+                        let t = self.partial_tick as f64;
+                        Vec3::new(
+                            (l.prev.0 + (boat.x - l.prev.0) * t) as f32,
+                            (l.prev.1 + (boat.y - l.prev.1) * t) as f32,
+                            (l.prev.2 + (boat.z - l.prev.2) * t) as f32,
+                        )
+                    }
+                    None => Vec3::new(boat.x as f32, boat.y as f32, boat.z as f32),
+                }
+            } else {
+                Vec3::new(boat.x as f32, boat.y as f32, boat.z as f32)
+            };
             let clock = self.paddle_positions.get(&boat.id).copied().unwrap_or([0.0; 2]);
             let rowing_l = rowing_time(self.partial_tick, boat.paddle_left, clock[0]);
             let rowing_r = rowing_time(self.partial_tick, boat.paddle_right, clock[1]);
@@ -25982,6 +26124,8 @@ mod tests {
             feet_y: 64.2,
             feet_z: -3.0,
             vehicle_yaw: 270.0,
+            seat_x: 0.0,
+            ride_height: 0.1875,
         };
         app.live_ride_updated(Some(ride));
         assert_eq!(app.net_ride, Some(ride));
@@ -26098,6 +26242,170 @@ mod tests {
     }
 
     #[test]
+    fn the_wire_hull_lerps_the_paddled_word() {
+        use crate::world_view::WireBoat;
+        let mut app = App::new(3);
+        app.net_world = Some(air_net_world(2, 0));
+        app.enter_network_world(None, Skybox::Overworld, None, None);
+        let hull = |x: f64| WireBoat {
+            id: 9,
+            x,
+            y: 64.0,
+            z: -20.0,
+            yaw: 0.0,
+            raft: false,
+            chest: false,
+            wood: "oak".to_string(),
+            paddle_left: false,
+            paddle_right: false,
+            bubble_time: 0,
+            hurt_time: 0,
+            hurt_dir: 1,
+            damage: 0.0,
+        };
+        // THE FIRST LANDING VERBATIM (the fresh id's pose IS the word —
+        // the first sync's own honesty, no walk it keeps)
+        app.live_boats_updated(vec![hull(10.0)]);
+        assert_eq!(app.net_boats[0].x, 10.0, "the first landing verbatim");
+        assert_eq!(app.net_boat_lerp[&9].steps, 0, "no walk the first word keeps");
+        // THE PADDLED WORD ARMS (the fresh sync the target speaks — the
+        // stored pose the eased stand keeps until the tick, never a
+        // teleport to the raw word)
+        app.live_boats_updated(vec![hull(13.0)]);
+        assert_eq!(
+            app.net_boats[0].x, 10.0,
+            "the eased stand holds until the tick"
+        );
+        assert_eq!(app.net_boat_lerp[&9].target, (13.0, 64.0, -20.0));
+        assert_eq!(app.net_boat_lerp[&9].steps, 3, "the vanilla lerpSteps");
+        // THE THREE-TICK WALK (the vanilla lerp's own fold — /3, /2,
+        // /1: the third step lands the word exactly, the prev trio the
+        // render's partial lerp anchors at the pose the tick eased
+        // FROM)
+        app.update();
+        assert_eq!(app.net_boats[0].x, 11.0, "the first third");
+        assert_eq!(
+            app.net_boat_lerp[&9].prev,
+            (10.0, 64.0, -20.0),
+            "the render's own anchor"
+        );
+        app.update();
+        assert!((app.net_boats[0].x - 12.0).abs() < 1e-9, "the half of the rest");
+        app.update();
+        assert_eq!(app.net_boats[0].x, 13.0, "the last step lands the word");
+        assert_eq!(app.net_boat_lerp[&9].steps, 0);
+        // THE EXHAUSTED REST (no sync, no motion — the next refresh's
+        // arm re-opens)
+        app.update();
+        assert_eq!(app.net_boats[0].x, 13.0, "the walk rests at its word");
+    }
+
+    #[test]
+    fn the_ride_carry_follows_the_eased_vehicle() {
+        use crate::world_view::WireBoat;
+        let mut app = App::new(3);
+        app.net_world = Some(air_net_world(2, 0));
+        app.enter_network_world(None, Skybox::Overworld, None, None);
+        app.body = Some(crate::body::PlayerBody::new(9.4, 64.187, -20.0, 0.0, 0.0));
+        let hull = |x: f64, yaw: f32| WireBoat {
+            id: 9,
+            x,
+            y: 64.0,
+            z: -20.0,
+            yaw,
+            raft: false,
+            chest: false,
+            wood: "oak".to_string(),
+            paddle_left: false,
+            paddle_right: false,
+            bubble_time: 0,
+            hurt_time: 0,
+            hurt_dir: 1,
+            damage: 0.0,
+        };
+        // THE MOUNT (the projection's own word — the seat the snapshot
+        // yaw rotated: the back seat's −0.6 the multi-rider list
+        // speaks, the y the ride height carries)
+        app.net_ride = Some(crate::world_view::WireRide {
+            vehicle_id: 9,
+            feet_x: 9.4,
+            feet_y: 64.187,
+            feet_z: -20.0,
+            vehicle_yaw: 0.0,
+            seat_x: -0.6,
+            ride_height: 0.1875,
+        });
+        app.live_boats_updated(vec![hull(10.0, 0.0)]);
+        // THE PADDLED WORD (the hull eases toward +3 — the rider the
+        // EASED pose carries, the positionRider law the vanilla
+        // rideTick speaks, never the raw target's jump)
+        app.live_boats_updated(vec![hull(13.0, 0.0)]);
+        app.update();
+        let b = app.body.as_ref().unwrap();
+        // THE F32 SEAT'S OWN ROUNDING (the vanilla fconst the seat's
+        // local word keeps — -0.6f32 the f64 sum's own drift speaks,
+        // the tolerance the honest fold asserts)
+        assert!(
+            (b.x - 10.4).abs() < 1.0e-7,
+            "the carried feet the eased vehicle keeps (the hull's first third)"
+        );
+        assert!(
+            (b.y - 64.1875).abs() < 1.0e-9,
+            "the ride height the vehicle's own y adds"
+        );
+        assert_eq!(b.z, -20.0, "the seat's sin the zero yaw silences");
+        assert_eq!(
+            (b.prev_x, b.prev_y, b.prev_z),
+            (9.4, 64.187, -20.0),
+            "the trail the render's partial lerp anchors"
+        );
+        // THE TURN'S OWN RE-ROTATE (the positionRider law the CURRENT
+        // yaw speaks — the seat's local x the yRot(-yaw·π/180) fold
+        // rotates, the rider the orbit the hull's center keeps: the
+        // 90° word's cos ~0 / sin −1 the az = −lx·sin fold rides)
+        app.live_boats_updated(vec![hull(13.0, 90.0)]);
+        app.update();
+        let b = app.body.as_ref().unwrap();
+        assert!(
+            (b.x - 11.666666666666668).abs() < 1e-9,
+            "the eased x the carry keeps (the second arm's first third)"
+        );
+        assert!(
+            (b.z - (-20.6)).abs() < 1.0e-7,
+            "the seat the turn's re-rotate orbits"
+        );
+        assert_eq!(b.y, 64.1875, "the ride height the vehicle's own y adds");
+    }
+
+    #[test]
+    fn the_vehicle_gone_the_carry_keeps_the_stale_word() {
+        let mut app = App::new(3);
+        app.net_world = Some(air_net_world(2, 0));
+        app.enter_network_world(None, Skybox::Overworld, None, None);
+        app.body = Some(crate::body::PlayerBody::new(0.0, 70.0, 0.0, 0.0, 0.0));
+        // the ride whose vehicle the boat lane never names (the
+        // despawn the broadcast hasn't dropped yet): the projection's
+        // own snapshot feet the stale walk keeps — a non-zero seat the
+        // re-rotate would move, the silence the fallback pins
+        app.net_ride = Some(crate::world_view::WireRide {
+            vehicle_id: 42,
+            feet_x: 5.0,
+            feet_y: 64.2,
+            feet_z: -3.0,
+            vehicle_yaw: 270.0,
+            seat_x: -0.6,
+            ride_height: 0.1875,
+        });
+        app.update();
+        let b = app.body.as_ref().unwrap();
+        assert_eq!(
+            (b.x, b.y, b.z),
+            (5.0, 64.2, -3.0),
+            "the snapshot's own feet the vehicle's silence keeps"
+        );
+    }
+
+    #[test]
     fn the_paddle_clock_walks_the_vanilla_tick() {
         use crate::world_view::{ContainerCommand, WireBoat, WireRide};
         use crate::screens::{rowing_time, PADDLE_TICK_STEP};
@@ -26169,6 +26477,8 @@ mod tests {
             feet_y: 64.187,
             feet_z: -20.0,
             vehicle_yaw: 0.0,
+            seat_x: 0.0,
+            ride_height: 0.1875,
         });
         app.live_boats_updated(vec![boat(9, false, false)]);
         app.update();
@@ -26322,6 +26632,8 @@ mod tests {
             feet_y: 64.187,
             feet_z: -20.0,
             vehicle_yaw: yaw,
+            seat_x: 0.0,
+            ride_height: 0.1875,
         };
         // THE FRESH MOUNT ARMS (the first tick never drags — the
         // deltaRotation 0.0 the vanilla field starts at)
@@ -26447,6 +26759,8 @@ mod tests {
             feet_y: 64.187,
             feet_z: -20.0,
             vehicle_yaw: yaw,
+            seat_x: 0.0,
+            ride_height: 0.1875,
         };
         // THE MESSAGE'S OWN TEXT (the translatable the lang folds:
         // mount.onboard + the shift binding's display)
