@@ -6190,6 +6190,54 @@ impl App {
         lines as i32 * 9 + 24
     }
 
+    /// THE TOOLTIP BACKGROUND'S OWN PAINT (the
+    /// renderTooltipBackground law BOTH tooltip boxes keep — the
+    /// 0xF0100010 fill, the 1px gradient frame ring 1px OUTSIDE the
+    /// fill: the top strip the start color speaks, the bottom the
+    /// end, the sides the vertical lerp the per-pixel walk keeps).
+    fn paint_tooltip_background(g: &mut Gui, tx: i32, ty: i32, w: i32, h: i32) {
+        let bg = [0.0627, 0.0, 0.0627, 0.9412]; // 0xF0100010
+        let start = [0.3137, 0.0, 1.0, 0.3137]; // 0x505000FF
+        let end = [0.1569, 0.0, 0.498, 0.3137]; // 0x5028007F
+        g.fill(tx, ty, w, h, bg);
+        g.fill(tx - 1, ty - 1, w + 2, 1, start);
+        g.fill(tx - 1, ty + h, w + 2, 1, end);
+        for i in 0..h {
+            let t = if h <= 1 { 0.0 } else { i as f32 / (h - 1) as f32 };
+            let c = [
+                start[0] + (end[0] - start[0]) * t,
+                start[1] + (end[1] - start[1]) * t,
+                start[2] + (end[2] - start[2]) * t,
+                start[3] + (end[3] - start[3]) * t,
+            ];
+            g.fill(tx - 1, ty + i, 1, 1, c); // the left strip
+            g.fill(tx + w, ty + i, 1, 1, c); // the right strip
+        }
+    }
+
+    /// THE SELECTED ITEM'S OWN NAME ORIGIN (the 26.2
+    /// extractSelectedItemTooltip + DefaultTooltipPositioner walk —
+    /// the virtual cursor the call passes (x + width/2 - 12 -
+    /// textWidth/2, y - 15), the entry's +12/-12 the centering keeps
+    /// (the x collapses to the panel's own center minus the half
+    /// name, the y to -27), the box the house's 3px margins speak
+    /// (the text +6 wide, the 9px line +6 tall), the right overflow
+    /// the 24-flip the max-4 clamp keeps, the bottom the +3 the
+    /// screen's own edge keeps).
+    fn bundle_name_tooltip_origin(cx: i32, cy: i32, nw: i32, sw: i32, sh: i32) -> (i32, i32) {
+        let pw = nw + 6;
+        let ph = 9 + 6;
+        let mut px = cx + 48 - nw / 2;
+        let mut py = cy - 27;
+        if px + pw > sw {
+            px = (px - 24 - pw).max(4);
+        }
+        if py + ph + 3 > sh {
+            py = sh - ph - 3;
+        }
+        (px, py)
+    }
+
     /// THE BUNDLE TOOLTIP'S OWN RENDER (the 26.2
     /// ClientBundleTooltip.extractBundleWithItemsTooltip walk — the
     /// bytecode's own layout): the background the
@@ -6262,27 +6310,9 @@ impl App {
         if ty + h > g.h() {
             ty = g.h() - h;
         }
-        // THE BACKGROUND (the renderTooltipBackground law — the fill,
-        // the 1px gradient frame ring 1px OUTSIDE the fill: the top
-        // strip the start color speaks, the bottom the end, the sides
-        // the vertical lerp the per-pixel walk keeps)
-        let bg = [0.0627, 0.0, 0.0627, 0.9412]; // 0xF0100010
-        let start = [0.3137, 0.0, 1.0, 0.3137]; // 0x505000FF
-        let end = [0.1569, 0.0, 0.498, 0.3137]; // 0x5028007F
-        g.fill(tx, ty, w, h, bg);
-        g.fill(tx - 1, ty - 1, w + 2, 1, start);
-        g.fill(tx - 1, ty + h, w + 2, 1, end);
-        for i in 0..h {
-            let t = if h <= 1 { 0.0 } else { i as f32 / (h - 1) as f32 };
-            let c = [
-                start[0] + (end[0] - start[0]) * t,
-                start[1] + (end[1] - start[1]) * t,
-                start[2] + (end[2] - start[2]) * t,
-                start[3] + (end[3] - start[3]) * t,
-            ];
-            g.fill(tx - 1, ty + i, 1, 1, c); // the left strip
-            g.fill(tx + w, ty + i, 1, 1, c); // the right strip
-        }
+        // THE BACKGROUND (the renderTooltipBackground law — the same
+        // paint both tooltip boxes keep)
+        Self::paint_tooltip_background(g, tx, ty, w, h);
         // THE EMPTY DESCRIPTION (the 26.2
         // extractEmptyBundleDescriptionText — the textWithWordWrap the
         // bytecode keeps: the lines the split law feeds at the content
@@ -6342,6 +6372,29 @@ impl App {
                 g.text(a, cell_x + 20 - tw, cell_y + 12, &s, WHITE, true);
             }
             slot_no += 1; // the counter only the item cells increment
+        }
+        // THE SELECTED ITEM'S OWN NAME TOOLTIP (the 26.2
+        // extractSelectedItemTooltip walk the FULL branch's own tail
+        // keeps — the second tooltip the cursor positioner rides): the
+        // selected stack's styled hover name the single component
+        // speaks, the List.of the one-line tooltip keeps, the
+        // getSelectedItem null the no-selection wall holds (the
+        // house's -1 the same wall speaks); the TOOLTIP_STYLE frame
+        // sprite the house assets carry none, the standard background
+        // the stand-in keeps
+        if !empty && view.selected >= 0 {
+            if let Some(&(id, _)) = view.items.get(view.selected as usize) {
+                if let Some(reg) = mc_registry::item_name(id) {
+                    let name = item_display_name(reg);
+                    let nw = g.text_width(&name);
+                    let (nx, ny) =
+                        Self::bundle_name_tooltip_origin(tx + 3, ty + 3, nw, g.w(), g.h());
+                    // THE BOX (the house's 3px margins the one line
+                    // keeps) + the name the white rides
+                    Self::paint_tooltip_background(g, nx, ny, nw + 6, 9 + 6);
+                    g.text(a, nx + 3, ny + 3, &name, WHITE, true);
+                }
+            }
         }
         // THE PROGRESS BAR (extractProgressbar — the grid's own tail
         // the bytecode keeps: x + getContentXOffset(width), y +
@@ -11107,6 +11160,23 @@ fn wrap_lines(g: &Gui, text: &str, max_w: i32) -> Vec<String> {
         lines.push(cur);
     }
     lines
+}
+
+/// THE ITEM'S OWN HOVER NAME (the getStyledHoverName walk's honest
+/// stand-in — the registry name the en_us default keeps: the
+/// underscores the spaces speak, each word the initial capital
+/// rides; `oak_log` -> `Oak Log`, `dirt` -> `Dirt`). The mechanical
+/// law the house's name-less stacks keep — the styled components
+/// (the custom names, the colors) the client's data model never
+/// sees, the plain default the wire's own items speak.
+fn item_display_name(name: &str) -> String {
+    name.split('_')
+        .map(|word| match word.chars().next() {
+            Some(first) => first.to_ascii_uppercase().to_string() + &word[1..],
+            None => String::new(),
+        })
+        .collect::<Vec<_>>()
+        .join(" ")
 }
 
 /// Deterministic splitmix64 (same primitive as the world seed).
@@ -23614,6 +23684,44 @@ mod tests {
             Some("Empty"),
             "the Empty word the ZERO fraction speaks"
         );
+    }
+
+    /// THE SELECTED ITEM'S OWN NAME TOOLTIP (the 26.2
+    /// extractSelectedItemTooltip walk the FULL branch's own tail
+    /// keeps): the display name the registry's own vocabulary speaks,
+    /// the origin the centering + the flips keep, the view's own
+    /// selection the walk rides (the items the gate test pins, the
+    /// selected index the scroll's walk moves).
+    #[test]
+    fn the_bundle_name_tooltip_rides_the_selection() {
+        // THE DISPLAY NAME (the getStyledHoverName stand-in — the
+        // underscores the spaces speak, the words the capitals ride)
+        assert_eq!(item_display_name("oak_log"), "Oak Log", "the two-word name");
+        assert_eq!(item_display_name("dirt"), "Dirt", "the single word");
+        assert_eq!(
+            item_display_name("oak_planks"),
+            "Oak Planks",
+            "the planks' own two words"
+        );
+        // THE ORIGIN (the virtual cursor the centering keeps — the
+        // name's left edge at the panel's own center minus the half
+        // name, the -27 the call's -15 and the entry's -12 speak; the
+        // box the house's 3px margins keep — the text +6 wide, the
+        // 9px line +6 tall)
+        let (px, py) = App::bundle_name_tooltip_origin(100, 200, 20, 640, 360);
+        assert_eq!(px, 138, "the centering the +12/-12 cancel keeps");
+        assert_eq!(py, 173, "the -27 the -15 and the entry keep");
+        // THE FLIP (the right overflow the 24-flip the max-4 clamp
+        // keeps — the name box the screen's own edge refuses; the
+        // bottom the +3 the guard keeps — the y the flip never moves)
+        let (px, py) = App::bundle_name_tooltip_origin(600, 200, 60, 640, 360);
+        assert_eq!(px, 528, "the 24-flip the overflow speaks (618 - 24 - 66)");
+        assert_eq!(py, 173, "the y the flip never moves");
+        // THE BOTTOM CLAMP (the +3 the screen's own edge keeps — the
+        // guard the bytecode's own branch holds: the box + gap the
+        // screen's bottom refuses)
+        let (_, py) = App::bundle_name_tooltip_origin(100, 60, 20, 640, 36);
+        assert_eq!(py, 36 - 18, "the clamp the +3 keeps (15 + 3 the box + gap)");
     }
 
     /// THE PROGRESS BAR'S OWN WEIGHT (the 26.2 extractProgressbar
