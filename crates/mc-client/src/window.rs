@@ -131,6 +131,7 @@ fn run_join(
                 Vec<crate::world_view::WireMob>,
                 Vec<crate::world_view::WireVoice>,
                 Vec<crate::world_view::WireWorldVoice>,
+                Option<crate::world_view::WireSidebar>,
                 [(i32, i32); crate::world_view::INVENTORY_MENU_SLOTS],
                 Vec<(i32, Vec<(i32, i32)>)>,
                 i32,
@@ -510,6 +511,10 @@ fn run_join(
                                     // played at a world spot stream to
                                     // the positioned lane
                                     upd.world_voices,
+                                    // the scoreboard's belief rides with
+                                    // them — the sidebar the wire trio
+                                    // keeps streams to the HUD's lane
+                                    upd.sidebar,
                                     // the player's OWN store rides with
                                     // them — the inventory screen's live
                                     // lane follows the window-0 store
@@ -621,6 +626,7 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
                 Vec<crate::world_view::WireMob>,
                 Vec<crate::world_view::WireVoice>,
                 Vec<crate::world_view::WireWorldVoice>,
+                Option<crate::world_view::WireSidebar>,
                 [(i32, i32); crate::world_view::INVENTORY_MENU_SLOTS],
                 Vec<(i32, Vec<(i32, i32)>)>,
                 i32,
@@ -898,6 +904,7 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
                     mobs,
                     voices,
                     world_voices,
+                    sidebar,
                     inv_slots,
                     inv_bundles,
                     inv_state_id,
@@ -931,6 +938,11 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
                     // land at their own positions (the ear's distance law
                     // the packet's own spot feeds — no entity lookup)
                     app.live_world_voices_updated(world_voices);
+                    // the scoreboard's lane beside the voices': the
+                    // SIDEBAR slot's belief lands verbatim (the rows the
+                    // projection sorted and capped — the HUD renders it
+                    // while the slot speaks, nothing while it doesn't)
+                    app.live_sidebar_updated(sidebar);
                     // the window-0 store's lane beside the chest's: the
                     // player's own inventory the screen's live store
                     // projection rides (the slots the wire spoke, the

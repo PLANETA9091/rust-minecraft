@@ -127,6 +127,24 @@ pub const TEXT_OUTLINE_BLACK: [f32; 3] = [0.0, 0.0, 0.0];
 /// Mojang Studios loading screen background (vanilla constant).
 pub const MOJANG_RED: [f32; 3] = [239.0 / 255.0, 50.0 / 255.0, 61.0 / 255.0];
 
+/// THE SIDEBAR'S RED (javap `displayScoreboardSidebar` — the score
+/// text's own style: `StyledFormat.SIDEBAR_DEFAULT` =
+/// `Style.EMPTY.withColor(ChatFormatting.RED)`, the classic §c red
+/// 0xFF5555 the number format's default speaks).
+pub const SIDEBAR_SCORE_RED: [f32; 3] = [1.0, 85.0 / 255.0, 85.0 / 255.0];
+/// THE SIDEBAR'S HEADER BAND (javap — `Options.getBackgroundColor(0.3F)`
+/// = `ARGB.colorFromFloat` → `as8BitChannel` = FLOOR(f × 255) per
+/// channel over black: floor(0.3 × 255) = 76 — the title band's own
+/// translucency).
+pub const SIDEBAR_HEADER_BG: [f32; 4] = [0.0, 0.0, 0.0, 76.0 / 255.0];
+/// THE SIDEBAR'S BODY (the same walk at 0.4: floor(0.4 × 255) = 102 —
+/// the rows' band).
+pub const SIDEBAR_BODY_BG: [f32; 4] = [0.0, 0.0, 0.0, 102.0 / 255.0];
+/// THE SIDEBAR'S SCORE SEPARATOR (javap — the `ldc ": "` the width
+/// law's third measure keeps: the colon-space the score's width
+/// budget rides).
+pub const SIDEBAR_SCORE_SEPARATOR: &str = ": ";
+
 /// THE FIXED CLOCK (vanilla `Minecraft.runTick`'s own law): one game
 /// tick every 50ms — 20 TPS, the pace every clock in the game speaks
 /// (the hunger drain, the eat hold, the swing, the day cycle's 24000).
@@ -1133,6 +1151,10 @@ pub struct App {
     /// lane's fall death rides the client's own title).
     pub dead: bool,
     pub death_message: Option<String>,
+    /// The scoreboard's SIDEBAR slot as the wire last spoke it (see
+    /// [`crate::world_view::WireSidebar`]) — `None` while the slot is
+    /// silent (the HUD renders nothing, the honest absence).
+    pub sidebar: Option<crate::world_view::WireSidebar>,
     /// The spawn pose the body materialized at (the offline spawn law's
     /// own feet/angles, the network teleport's pose) — the respawn's
     /// own re-anchor (the vanilla respawn teleports the player to the
@@ -1448,6 +1470,7 @@ impl App {
             last_level_up_time: 0,
             dead: false,
             death_message: None,
+            sidebar: None,
             spawn_pose: None,
         }
     }
@@ -7055,6 +7078,14 @@ impl App {
         }
     }
 
+    /// THE SCOREBOARD'S OWN LANE (the wire trio's HUD half — the
+    /// sidebar the server's sidebar slot keeps): the view's projection
+    /// (sorted, capped) lands verbatim and stands until the next ship
+    /// — the render walks it at the vanilla panel's own geometry.
+    pub fn live_sidebar_updated(&mut self, sidebar: Option<crate::world_view::WireSidebar>) {
+        self.sidebar = sidebar;
+    }
+
     /// THE WIRE MOBS' OWN TICK (javap LivingEntity's remote walk —
     /// no AI, no physics: the server owns both): the tick head saves
     /// the prev feet + the head pair (the render's lerps walk them at
@@ -10758,6 +10789,45 @@ impl App {
                 }
             }
         }
+        // THE SCOREBOARD SIDEBAR (javap Hud.extractScoreboardSidebar +
+        // displayScoreboardSidebar — the live server's sidebar the wire
+        // trio keeps): the extract's own walk speaks the SIDEBAR slot
+        // (the player-team color slots never arm — the house's belief
+        // keeps no team lanes), and the display law draws the panel —
+        // the header band ABOVE the title's own 9px row (the 0.3
+        // opacity the floor law keeps), the body under it (0.4), the
+        // title centered on the panel's own width (white, shadowless
+        // — the Z=false every text call carries), the rows
+        // bottom-anchored at the 9px pitch, the name at the left edge,
+        // the score right-aligned in the SIDEBAR_DEFAULT red. The
+        // geometry numbers (left/top/bottom/right/width) the pure
+        // layout law computes — the byte-verified five.
+        if let Some(sb) = &self.sidebar {
+            let rows: Vec<(String, String)> = sb
+                .lines
+                .iter()
+                .map(|l| (l.name.clone(), l.score.to_string()))
+                .collect();
+            let row_widths: Vec<(i32, i32)> = rows
+                .iter()
+                .map(|(name, score)| (g.text_width(name), g.text_width(score)))
+                .collect();
+            let sep_w = g.text_width(SIDEBAR_SCORE_SEPARATOR);
+            let (left, top, bottom, right, width) =
+                sidebar_layout(w, h, g.text_width(&sb.title), sep_w, &row_widths);
+            // the vanilla fill's x1/y1/x2/y2 shape → the house's x/y/w/h
+            g.fill(left - 2, top - 10, right - (left - 2), 9, SIDEBAR_HEADER_BG);
+            g.fill(left - 2, top - 1, right - (left - 2), bottom - (top - 1), SIDEBAR_BODY_BG);
+            let title_x = left + width / 2 - g.text_width(&sb.title) / 2;
+            g.text(a, title_x, top - 9, &sb.title, WHITE, false);
+            let n = rows.len() as i32;
+            for (i, (name, score)) in rows.iter().enumerate() {
+                let y = bottom - (n - i as i32) * 9;
+                g.text(a, left, y, name, WHITE, false);
+                let score_w = g.text_width(score);
+                g.text(a, right - score_w, y, score, SIDEBAR_SCORE_RED, false);
+            }
+        }
     }
 
     /// THE DEATH SCREEN (javap DeathScreen, the vanilla's own layout):
@@ -11204,6 +11274,28 @@ fn item_display_name(name: &str) -> String {
         .join(" ")
 }
 
+/// THE SIDEBAR'S OWN GEOMETRY (javap `Hud.displayScoreboardSidebar` —
+/// the panel's own layout law): the width is the title's own measure
+/// vs the rows' (`name + (scoreWidth > 0 ? width(": ") + scoreWidth
+/// : 0)` — the jar's own conditional), the bottom rides
+/// `guiHeight/2 + rows*9/3`, the top is the rows' own height below
+/// it, the right edge is `guiWidth - 3 + 2`, the left
+/// `guiWidth - width - 3`. Returns `(left, top, bottom, right,
+/// width)` — the five numbers every draw call walks.
+fn sidebar_layout(w: i32, h: i32, title_w: i32, sep_w: i32, rows: &[(i32, i32)]) -> (i32, i32, i32, i32, i32) {
+    let mut width = title_w;
+    for &(name_w, score_w) in rows {
+        let row = name_w + if score_w > 0 { sep_w + score_w } else { 0 };
+        width = width.max(row);
+    }
+    let rows_h = rows.len() as i32 * 9;
+    let bottom = h / 2 + rows_h / 3;
+    let top = bottom - rows_h;
+    let right = w - 3 + 2;
+    let left = w - width - 3;
+    (left, top, bottom, right, width)
+}
+
 /// Deterministic splitmix64 (same primitive as the world seed).
 fn splitmix(x: u64) -> u64 {
     let mut z = x.wrapping_add(0x9E37_79B9_7F4A_7C15);
@@ -11211,7 +11303,6 @@ fn splitmix(x: u64) -> u64 {
     z = (z ^ (z >> 27)).wrapping_mul(0x94D0_49BB_1331_11EB);
     z ^ (z >> 31)
 }
-
 /// The world's spawn biome: a seeded pick from the OFFICIAL biome registry
 /// (generated worldgen table). Until the terrain generator evaluates the
 /// real climate source, this stands in as the situation's biome owner —
@@ -23858,6 +23949,28 @@ mod tests {
             Some("Full"),
             "the ONE fraction the bar's own word speaks"
         );
+    }
+
+    #[test]
+    fn the_sidebar_layout_rides_the_geometry() {
+        // two rows on a 427x244 screen: the width law keeps the rows
+        // (name + sep + score) vs the title; the center law rides
+        // `h/2 + rows*9/3` and the right edge is `w - 3 + 2`
+        let rows = [(20, 8), (30, 12)];
+        let (left, top, bottom, right, width) = sidebar_layout(427, 244, 40, 6, &rows);
+        assert_eq!(width, 30 + 6 + 12, "the widest row wins (sep rides when >0)");
+        assert_eq!(right, 426, "the -3 +2 edge law");
+        assert_eq!(left, 427 - width - 3, "the left edge the width feeds");
+        assert_eq!(bottom, 244 / 2 + 18 / 3, "the h/2 + rows/3 center");
+        assert_eq!(top, bottom - 18, "the rows' own height below");
+        // a score width of ZERO contributes nothing (the jar's own
+        // conditional); a wide title outgrows the rows
+        let (l2, _, _, _, w2) = sidebar_layout(427, 244, 200, 6, &[(20, 0)]);
+        assert_eq!(w2, 200, "the title wins and the zero score adds naught");
+        assert_eq!(l2, 427 - 200 - 3);
+        // the zero-row panel: top == bottom (the title-only band)
+        let (_, t3, b3, _, _) = sidebar_layout(427, 244, 40, 6, &[]);
+        assert_eq!(t3, b3, "no rows, no body");
     }
 }
 

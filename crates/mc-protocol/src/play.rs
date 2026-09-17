@@ -109,6 +109,8 @@ pub mod clientbound {
         CB_SET_HEALTH as SET_HEALTH, CB_HURT_ANIMATION as HURT_ANIMATION,
         CB_PLAYER_COMBAT_KILL as PLAYER_COMBAT_KILL,
         CB_SOUND_ENTITY as SOUND_ENTITY, CB_SOUND as SOUND,
+        CB_SET_OBJECTIVE as SET_OBJECTIVE, CB_SET_DISPLAY_OBJECTIVE as SET_DISPLAY_OBJECTIVE,
+        CB_SET_SCORE as SET_SCORE, CB_RESET_SCORE as RESET_SCORE,
     };
 }
 
@@ -6095,6 +6097,243 @@ pub fn parse_sound(payload: &[u8]) -> Result<WorldSoundPacket> {
     Ok(WorldSoundPacket { source: source as u8, sound, x, y, z, volume, pitch, seed })
 }
 
+// ===== THE SCOREBOARD WIRE TRIO =====
+// Set Objective (106) / Set Display Objective (98) / Set Score (110) +
+// the sibling Reset Score (79) — the sidebar lane the live server
+// speaks. Every walk below was raw-disassembled from the 26.2 jar
+// (the four packets' STREAM_CODEC composites + the four
+// ClientPacketListener handlers).
+
+/// Set Objective's method byte (the ctor's own dispatch): 0 = add (the
+/// payload branch), 1 = remove (no payload), 2 = update display (the
+/// SAME payload branch the add reads). Any other byte walks the
+/// payload-less defaults branch on the wire and is a no-op in the
+/// handler.
+pub const OBJECTIVE_METHOD_ADD: u8 = 0;
+pub const OBJECTIVE_METHOD_REMOVE: u8 = 1;
+pub const OBJECTIVE_METHOD_UPDATE: u8 = 2;
+
+/// `ObjectiveCriteria$RenderType`'s own declaration order (the
+/// readEnum VarInt ordinal): INTEGER = 0, HEARTS = 1. The readEnum
+/// guard refuses everything else (the values-array bounds throw).
+pub const RENDER_TYPE_INTEGER: u8 = 0;
+pub const RENDER_TYPE_HEARTS: u8 = 1;
+
+/// The DisplaySlot id the SIDEBAR renders from (the
+/// `extractScoreboardSidebar` walk's own slot; 0 = list, 2 =
+/// below-name, 3..18 the team sidebars).
+pub const DISPLAY_SLOT_SIDEBAR: u8 = 1;
+
+/// One Set Objective packet (clientbound play, generated id 106).
+/// The wire walk (raw disasm of `ClientboundSetObjectivePacket.<init>(
+/// RegistryFriendlyByteBuf)`): `readUtf()` objective name, `readByte()`
+/// method, then — ONLY for method 0 or 2 (the ctor's own `ifeq` +
+/// `iconst_2` dispatch) — the display Component (ONE bare network NBT
+/// tag, the TRUSTED_STREAM_CODEC machinery), the render type
+/// (`readEnum` VarInt ordinal), the optional number format. Method 1
+/// (and every other byte) reads NOTHING further — the ctor's own
+/// defaults branch (EMPTY display, INTEGER, empty format).
+#[derive(Debug, Clone, PartialEq)]
+pub struct ObjectiveUpdate {
+    /// The objective's registry name (the server's own key).
+    pub objective: String,
+    /// The method byte, verbatim (see the METHOD_* constants).
+    pub method: u8,
+    /// The display component's flattened TEXT (the sidebar title
+    /// renders) — `None` for the payload-less methods.
+    pub display: Option<String>,
+    /// The render type's VarInt ordinal, guarded to 0..=1.
+    pub render_type: u8,
+}
+
+/// One Set Display Objective packet (clientbound play, generated id
+/// 98). The wire walk (raw disasm): `readById(DisplaySlot.BY_ID)` — a
+/// VarInt slot id (the BY_ID map's own OutOfBoundsStrategy.ZERO folds
+/// an out-of-range id onto slot 0; the id rides here VERBATIM, the
+/// house's ordinal law) — then `readUtf()` the objective name, the
+/// EMPTY string the handler's getObjective(null-objective) walk
+/// reads as "clear the slot".
+#[derive(Debug, Clone, PartialEq)]
+pub struct DisplayObjectiveUpdate {
+    /// The display slot id, verbatim (0 list, 1 sidebar, 2
+    /// below-name, 3..18 the team sidebars).
+    pub slot: u8,
+    /// The objective's name; EMPTY = clear the slot.
+    pub objective: String,
+}
+
+/// One Set Score packet (clientbound play, generated id 110). The
+/// wire walk (raw disasm of the record's STREAM_CODEC composite, in
+/// order): STRING_UTF8 owner, STRING_UTF8 objective name, VAR_INT
+/// score, TRUSTED_OPTIONAL_STREAM_CODEC display component (a boolean
+/// flag, then ONE bare network NBT tag), NumberFormatTypes's
+/// OPTIONAL_STREAM_CODEC number format (a boolean flag, then the
+/// dispatched payload).
+#[derive(Debug, Clone, PartialEq)]
+pub struct ScoreUpdate {
+    /// The score holder (the player's scoreboard name — the "#hidden"
+    /// convention the sidebar's own filter keeps lives here).
+    pub owner: String,
+    /// The objective the score rides (the handler gates on it: an
+    /// unknown objective is a logged WARN + drop, no state change).
+    pub objective: String,
+    /// The value the sidebar renders.
+    pub score: i32,
+    /// The display component's flattened text — the sidebar row's
+    /// name the owner's own string overrides when the server named
+    /// one (`None` = render the owner).
+    pub display: Option<String>,
+}
+
+/// One Reset Score packet (clientbound play, generated id 79). The
+/// wire walk (raw disasm of the `<init>(FriendlyByteBuf)` decode):
+/// `readUtf()` owner, then `readNullable(STRING_UTF8)` objective — a
+/// boolean flag, then the name. A `None` objective resets EVERY
+/// score the holder owns (the resetAllPlayerScore walk).
+#[derive(Debug, Clone, PartialEq)]
+pub struct ResetScore {
+    /// The score holder whose rows die.
+    pub owner: String,
+    /// The objective's name — `None` = every objective's row.
+    pub objective: Option<String>,
+}
+
+/// The component tag's own TEXT (the flatten the sidebar renders):
+/// a bare TAG_String IS the text; a structured compound speaks its
+/// "text" field followed by every "extra" child (the vanilla walk's
+/// own order); anything else renders empty — the honest
+/// never-a-guess. (The structured form's colors/styles the model
+/// never sees — the sidebar is the monochrome text's lane.)
+pub fn flatten_component_text(tag: &Nbt) -> String {
+    match tag {
+        Nbt::String(s) => s.clone(),
+        Nbt::Compound(_) => {
+            let mut out = String::new();
+            if let Some(Nbt::String(s)) = tag.get("text") {
+                out.push_str(s);
+            }
+            if let Some(Nbt::List(children)) = tag.get("extra") {
+                for child in children {
+                    out.push_str(&flatten_component_text(child));
+                }
+            }
+            out
+        }
+        _ => String::new(),
+    }
+}
+
+/// One number format's payload walk (the dispatch the registry ids
+/// speak — 26.2's own bootstrap order: blank, styled, fixed; the
+/// FIXED-WIDTH format the 1.21 era spoke is GONE from 26.2). The
+/// model renders plain integers (the INTEGER render type's own
+/// default law), so the format's only wire duty is to be CONSUMED:
+/// blank reads nothing, styled/fixed are ONE bare network NBT tag
+/// each (the Style / Component TRUSTED_STREAM_CODEC machinery).
+fn skip_number_format(r: &mut &[u8]) -> Result<()> {
+    let ty = read_varint(r)?;
+    match ty {
+        0 => Ok(()),
+        1 | 2 => {
+            read_bare_nbt(r)?;
+            Ok(())
+        }
+        _ => Err(anyhow::anyhow!(
+            "number format type {ty} outside 26.2's registry (blank 0 / styled 1 / fixed 2)"
+        )),
+    }
+}
+
+/// The OPTIONAL op over the number format (the same boolean-flag walk
+/// every optional codec the house speaks keeps).
+fn skip_optional_number_format(r: &mut &[u8]) -> Result<()> {
+    if read_bool(r)? {
+        skip_number_format(r)
+    } else {
+        Ok(())
+    }
+}
+
+/// Set Objective's wire walk (see [`ObjectiveUpdate`] — the
+/// generated-id guard).
+pub fn parse_set_objective(payload: &[u8]) -> Result<ObjectiveUpdate> {
+    let mut c: &[u8] = payload;
+    let id = read_varint(&mut c)?;
+    anyhow::ensure!(
+        id == clientbound::SET_OBJECTIVE,
+        "not a set objective packet (0x{id:02X})"
+    );
+    let objective = read_string(&mut c)?;
+    let method = read_u8(&mut c)?;
+    let (display, render_type) = if method == OBJECTIVE_METHOD_ADD
+        || method == OBJECTIVE_METHOD_UPDATE
+    {
+        let display = flatten_component_text(&read_bare_nbt(&mut c)?);
+        let rt = read_varint(&mut c)?;
+        anyhow::ensure!(
+            (0..=1).contains(&rt),
+            "objective render type ordinal {rt} outside the enum"
+        );
+        skip_optional_number_format(&mut c)?;
+        (Some(display), rt as u8)
+    } else {
+        // the ctor's own defaults branch: no further wire reads
+        (None, RENDER_TYPE_INTEGER)
+    };
+    Ok(ObjectiveUpdate { objective, method, display, render_type })
+}
+
+/// Set Display Objective's wire walk (see [`DisplayObjectiveUpdate`] —
+/// the generated-id guard).
+pub fn parse_set_display_objective(payload: &[u8]) -> Result<DisplayObjectiveUpdate> {
+    let mut c: &[u8] = payload;
+    let id = read_varint(&mut c)?;
+    anyhow::ensure!(
+        id == clientbound::SET_DISPLAY_OBJECTIVE,
+        "not a set display objective packet (0x{id:02X})"
+    );
+    let slot = read_varint(&mut c)?;
+    anyhow::ensure!((0..=255).contains(&slot), "display slot {slot} outside the byte range");
+    let objective = read_string(&mut c)?;
+    Ok(DisplayObjectiveUpdate { slot: slot as u8, objective })
+}
+
+/// Set Score's wire walk (see [`ScoreUpdate`] — the generated-id
+/// guard).
+pub fn parse_set_score(payload: &[u8]) -> Result<ScoreUpdate> {
+    let mut c: &[u8] = payload;
+    let id = read_varint(&mut c)?;
+    anyhow::ensure!(id == clientbound::SET_SCORE, "not a set score packet (0x{id:02X})");
+    let owner = read_string(&mut c)?;
+    let objective = read_string(&mut c)?;
+    let score = read_varint(&mut c)?;
+    let display = if read_bool(&mut c)? {
+        Some(flatten_component_text(&read_bare_nbt(&mut c)?))
+    } else {
+        None
+    };
+    skip_optional_number_format(&mut c)?;
+    Ok(ScoreUpdate { owner, objective, score, display })
+}
+
+/// Reset Score's wire walk (see [`ResetScore`] — the generated-id
+/// guard).
+pub fn parse_reset_score(payload: &[u8]) -> Result<ResetScore> {
+    let mut c: &[u8] = payload;
+    let id = read_varint(&mut c)?;
+    anyhow::ensure!(
+        id == clientbound::RESET_SCORE,
+        "not a reset score packet (0x{id:02X})"
+    );
+    let owner = read_string(&mut c)?;
+    let objective = if read_bool(&mut c)? {
+        Some(read_string(&mut c)?)
+    } else {
+        None
+    };
+    Ok(ResetScore { owner, objective })
+}
+
 /// Player Combat Kill (clientbound play, generated id 68 —
 /// `minecraft:player_combat_kill`). javap of the real 26.2 record's
 /// STREAM_CODEC read: a VarInt player id, then the death message
@@ -6336,6 +6575,21 @@ pub enum PlayEvent {
     /// Player Combat Kill: the LOCAL player died — the VarInt player id
     /// + the death message component (the death screen's own wire).
     CombatKill(PlayerCombatKill),
+    /// Set Objective: the scoreboard's objective bookkeeping — the add
+    /// (display + render type + optional number format), the remove,
+    /// the display update (see [`ObjectiveUpdate`]). The sidebar lane's
+    /// first wire word.
+    Objective(ObjectiveUpdate),
+    /// Set Display Objective: the slot the sidebar renders from — the
+    /// slot id + the objective name (the EMPTY name clears the slot;
+    /// see [`DisplayObjectiveUpdate`]).
+    DisplayObjective(DisplayObjectiveUpdate),
+    /// Set Score: one score row's upsert — the holder, the objective,
+    /// the value, the optional display override (see [`ScoreUpdate`]).
+    Score(ScoreUpdate),
+    /// Reset Score: one holder's row dies — the named objective's or
+    /// every objective's (see [`ResetScore`]).
+    ResetScore(ResetScore),
     /// Any packet without a client surface yet (skipped silently).
     Skipped,
 }
@@ -6463,6 +6717,16 @@ impl<S: Read + Write> PlaySession<S> {
             clientbound::SOUND => Ok(PlayEvent::WorldSound(parse_sound(&pkt)?)),
             clientbound::PLAYER_COMBAT_KILL => {
                 Ok(PlayEvent::CombatKill(parse_player_combat_kill(&pkt)?))
+            }
+            clientbound::SET_OBJECTIVE => {
+                Ok(PlayEvent::Objective(parse_set_objective(&pkt)?))
+            }
+            clientbound::SET_DISPLAY_OBJECTIVE => {
+                Ok(PlayEvent::DisplayObjective(parse_set_display_objective(&pkt)?))
+            }
+            clientbound::SET_SCORE => Ok(PlayEvent::Score(parse_set_score(&pkt)?)),
+            clientbound::RESET_SCORE => {
+                Ok(PlayEvent::ResetScore(parse_reset_score(&pkt)?))
             }
             _ => Ok(PlayEvent::Skipped),
         }
@@ -11884,6 +12148,139 @@ mod tests {
         write_varint(&mut p, 42);
         write_string(&mut p, "You died!");
         assert_eq!(parse_player_combat_kill(&p).unwrap().message, "You died!");
+
+        // ===== THE SCOREBOARD WIRE TRIO =====
+
+        // SET OBJECTIVE add: the name + the method 0 + the display
+        // component (a plain string tag — the bare NBT the TRUSTED
+        // codec speaks) + the render type + the format's absence flag
+        let mut p = Vec::new();
+        write_varint(&mut p, clientbound::SET_OBJECTIVE);
+        write_string(&mut p, "money");
+        p.push(0); // method ADD
+        write_bare_nbt(&Nbt::String("Coins".into()), &mut p);
+        write_varint(&mut p, 0); // render type INTEGER
+        p.push(0); // optional number format: absent
+        let o = parse_set_objective(&p).unwrap();
+        assert_eq!(o.objective, "money");
+        assert_eq!(o.method, OBJECTIVE_METHOD_ADD);
+        assert_eq!(o.display.as_deref(), Some("Coins"));
+        assert_eq!(o.render_type, RENDER_TYPE_INTEGER);
+
+        // the structured compound flattens through text + extra (the
+        // vanilla component walk's own order)
+        let mut p = Vec::new();
+        write_varint(&mut p, clientbound::SET_OBJECTIVE);
+        write_string(&mut p, "money");
+        p.push(0);
+        write_bare_nbt(
+            &Nbt::Compound(vec![
+                ("text".into(), Nbt::String("A".into())),
+                ("extra".into(), Nbt::List(vec![Nbt::String("B".into())])),
+            ]),
+            &mut p,
+        );
+        write_varint(&mut p, 1); // render type HEARTS
+        p.push(1); // optional number format: PRESENT
+        write_varint(&mut p, 1); // ... styled — ONE bare style tag
+        write_bare_nbt(&Nbt::Compound(vec![]), &mut p);
+        let o = parse_set_objective(&p).unwrap();
+        assert_eq!(o.display.as_deref(), Some("AB"), "the text+extra flatten");
+        assert_eq!(o.render_type, RENDER_TYPE_HEARTS, "the readEnum ordinal");
+
+        // the UPDATE method rides the SAME payload branch (the ctor's
+        // own dispatch) — and the render type outside the enum refuses
+        // (the readEnum bounds the readEnum guard keeps)
+        let mut p = Vec::new();
+        write_varint(&mut p, clientbound::SET_OBJECTIVE);
+        write_string(&mut p, "money");
+        p.push(2); // method UPDATE
+        write_bare_nbt(&Nbt::String("Coins!".into()), &mut p);
+        write_varint(&mut p, 2); // OUTSIDE the enum
+        assert!(parse_set_objective(&p).is_err(), "render type 2 refuses");
+
+        // the REMOVE method reads NOTHING further (the ctor's defaults
+        // branch — the empty tail the walk accepts)
+        let mut p = Vec::new();
+        write_varint(&mut p, clientbound::SET_OBJECTIVE);
+        write_string(&mut p, "money");
+        p.push(1); // method REMOVE
+        let o = parse_set_objective(&p).unwrap();
+        assert_eq!(o.display, None, "the defaults branch");
+        assert_eq!(o.render_type, RENDER_TYPE_INTEGER);
+
+        // SET DISPLAY OBJECTIVE: the slot VarInt + the name (the EMPTY
+        // name the clear walk keeps); the slot rides verbatim
+        let mut p = Vec::new();
+        write_varint(&mut p, clientbound::SET_DISPLAY_OBJECTIVE);
+        write_varint(&mut p, 1); // SIDEBAR
+        write_string(&mut p, "money");
+        let d = parse_set_display_objective(&p).unwrap();
+        assert_eq!((d.slot, d.objective.as_str()), (1u8, "money"));
+        let mut p = Vec::new();
+        write_varint(&mut p, clientbound::SET_DISPLAY_OBJECTIVE);
+        write_varint(&mut p, 1);
+        write_string(&mut p, "");
+        assert_eq!(parse_set_display_objective(&p).unwrap().objective, "");
+
+        // SET SCORE: the owner + the objective + the value + the
+        // optional display + the optional number format (a FIXED —
+        // registry id 2 — the bare component tag the walk consumes)
+        let mut p = Vec::new();
+        write_varint(&mut p, clientbound::SET_SCORE);
+        write_string(&mut p, "Zed");
+        write_string(&mut p, "money");
+        write_varint(&mut p, 42);
+        p.push(1); // display present
+        write_bare_nbt(&Nbt::String("Zed Inc.".into()), &mut p);
+        p.push(1); // number format present
+        write_varint(&mut p, 2); // ... fixed
+        write_bare_nbt(&Nbt::String("42 coins".into()), &mut p);
+        let s = parse_set_score(&p).unwrap();
+        assert_eq!(s.owner, "Zed");
+        assert_eq!(s.objective, "money");
+        assert_eq!(s.score, 42);
+        assert_eq!(s.display.as_deref(), Some("Zed Inc."));
+        // no display + a BLANK format (registry id 0 — zero payload)
+        let mut p = Vec::new();
+        write_varint(&mut p, clientbound::SET_SCORE);
+        write_string(&mut p, "Zed");
+        write_string(&mut p, "money");
+        write_varint(&mut p, -7);
+        p.push(0); // display absent
+        p.push(1); // format present
+        write_varint(&mut p, 0); // ... blank
+        let s = parse_set_score(&p).unwrap();
+        assert_eq!((s.score, s.display), (-7, None));
+        // an unknown format type refuses (the registry's own bounds)
+        let mut p = Vec::new();
+        write_varint(&mut p, clientbound::SET_SCORE);
+        write_string(&mut p, "Zed");
+        write_string(&mut p, "money");
+        write_varint(&mut p, 0);
+        p.push(0);
+        p.push(1);
+        write_varint(&mut p, 3); // the fixed-width the 26.2 registry LOST
+        assert!(parse_set_score(&p).is_err(), "format type 3 refuses");
+
+        // RESET SCORE: the owner + the optional objective name
+        let mut p = Vec::new();
+        write_varint(&mut p, clientbound::RESET_SCORE);
+        write_string(&mut p, "Zed");
+        p.push(0); // no objective — the holder's WHOLE ledger dies
+        let r = parse_reset_score(&p).unwrap();
+        assert_eq!((r.owner, r.objective), ("Zed".to_string(), None));
+        let mut p = Vec::new();
+        write_varint(&mut p, clientbound::RESET_SCORE);
+        write_string(&mut p, "Zed");
+        p.push(1);
+        write_string(&mut p, "money");
+        let r = parse_reset_score(&p).unwrap();
+        assert_eq!(r.objective.as_deref(), Some("money"));
+
+        // the flatten's own walk: the non-component renders empty
+        assert_eq!(flatten_component_text(&Nbt::Int(5)), "");
+        assert_eq!(flatten_component_text(&Nbt::Compound(vec![])), "");
 
         // CLIENT COMMAND encode: the generated id 12 + the action
         // VarInt — PERFORM_RESPAWN 0's exact two bytes

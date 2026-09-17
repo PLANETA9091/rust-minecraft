@@ -177,6 +177,37 @@ pub struct WorldModel {
     /// MAILBOX like the voices' — the refresh ships each exactly
     /// once, the drain empties it, the dimension swap clears it.
     pub world_sounds: Vec<WorldVoiceArm>,
+    /// THE SCOREBOARD'S OWN BELIEF (the wire trio's store — Set
+    /// Objective / Set Display Objective / Set Score + the sibling
+    /// Reset Score): the objectives by name, the display slots by id
+    /// (0 list, 1 sidebar, 2 below-name, 3..18 the team sidebars),
+    /// the scores by (holder, objective). NOT cleared on Respawn: the
+    /// vanilla scoreboard is the CONNECTION's own object
+    /// (ClientPacketListener holds one for the session; the level's
+    /// getScoreboard borrows it — the sidebar survives the dimension
+    /// swap exactly like the real client's does).
+    pub objectives: std::collections::HashMap<String, ObjectiveState>,
+    pub display_slots: std::collections::HashMap<u8, String>,
+    pub scores: std::collections::HashMap<(String, String), ScoreState>,
+}
+
+/// One objective's standing belief (the Set Objective packet's own
+/// store): the display component's flattened TEXT the sidebar's
+/// title renders, the render type's ordinal verbatim (0 integer, 1
+/// hearts — the hearts the model never draws, honest data).
+#[derive(Debug, Clone, PartialEq)]
+pub struct ObjectiveState {
+    pub display: String,
+    pub render_type: u8,
+}
+
+/// One score row (the Set Score packet's own store): the value the
+/// sidebar renders + the display override the row's name keeps
+/// (`None` = render the holder's own string, the ownerName walk).
+#[derive(Debug, Clone, PartialEq)]
+pub struct ScoreState {
+    pub value: i32,
+    pub display: Option<String>,
 }
 
 /// One pending mob voice — the Entity Sound packet's resolution the
@@ -478,6 +509,9 @@ impl WorldModel {
             entity_hurts: std::collections::BTreeMap::new(),
             entity_sounds: Vec::new(),
             world_sounds: Vec::new(),
+            objectives: std::collections::HashMap::new(),
+            display_slots: std::collections::HashMap::new(),
+            scores: std::collections::HashMap::new(),
         }
     }
 
@@ -1208,6 +1242,100 @@ impl WorldModel {
                     true
                 } else {
                     false
+                }
+            }
+            PlayEvent::Objective(u) => {
+                // THE HANDLER'S OWN DISPATCH (javap
+                // ClientPacketListener.handleAddObjective): 0 = the add
+                // (the display + render type ride the packet), 1 = the
+                // remove GATED on the objective existing (the null walk
+                // is a no-op), 2 = the display/render-type update GATED
+                // the same way, anything else = the ctor's no-op
+                // fallthrough. The remove's own bookkeeping walks the
+                // slots pointing at the objective and the scores keyed
+                // by it (the removeObjective cleanup — the sidebar
+                // empties the moment the objective dies).
+                match u.method {
+                    mc_protocol::OBJECTIVE_METHOD_ADD => {
+                        self.objectives.insert(
+                            u.objective,
+                            ObjectiveState {
+                                display: u.display.unwrap_or_default(),
+                                render_type: u.render_type,
+                            },
+                        );
+                        true
+                    }
+                    mc_protocol::OBJECTIVE_METHOD_REMOVE => {
+                        if self.objectives.remove(&u.objective).is_none() {
+                            return false;
+                        }
+                        self.display_slots
+                            .retain(|_, name| name != &u.objective);
+                        self.scores.retain(|(_, obj), _| obj != &u.objective);
+                        true
+                    }
+                    mc_protocol::OBJECTIVE_METHOD_UPDATE => {
+                        match self.objectives.get_mut(&u.objective) {
+                            Some(o) => {
+                                o.display = u.display.unwrap_or_default();
+                                o.render_type = u.render_type;
+                                true
+                            }
+                            None => false,
+                        }
+                    }
+                    _ => false,
+                }
+            }
+            PlayEvent::DisplayObjective(u) => {
+                // THE HANDLER'S OWN WALK (javap
+                // handleSetDisplayObjective): the objective is looked
+                // up BY NAME and the slot set UNCONDITIONALLY with the
+                // result — the EMPTY name (and any unknown name) is the
+                // NULL objective the set clears the slot with.
+                let known = self.objectives.contains_key(&u.objective);
+                if known {
+                    let changed = self.display_slots.get(&u.slot) != Some(&u.objective);
+                    self.display_slots.insert(u.slot, u.objective);
+                    changed
+                } else {
+                    self.display_slots.remove(&u.slot).is_some()
+                }
+            }
+            PlayEvent::Score(u) => {
+                // THE HANDLER'S OWN GATE (javap handleSetScore): the
+                // objective lookup FIRST — an unknown objective is the
+                // logged warn + drop, no state change. The known one
+                // upserts the row (the getOrCreatePlayerScore + set +
+                // display walk).
+                if !self.objectives.contains_key(&u.objective) {
+                    return false;
+                }
+                let state = ScoreState { value: u.score, display: u.display };
+                let changed =
+                    self.scores.get(&(u.owner.clone(), u.objective.clone())) != Some(&state);
+                self.scores.insert((u.owner, u.objective), state);
+                changed
+            }
+            PlayEvent::ResetScore(u) => {
+                // THE HANDLER'S OWN WALK (javap handleResetScore): a
+                // NULL objective resets EVERY score the holder owns
+                // (resetAllPlayerScores); a named one is GATED on the
+                // objective existing (the same warn + drop the Set
+                // Score walk keeps).
+                match u.objective {
+                    None => {
+                        let before = self.scores.len();
+                        self.scores.retain(|(owner, _), _| owner != &u.owner);
+                        before != self.scores.len()
+                    }
+                    Some(name) => {
+                        if !self.objectives.contains_key(&name) {
+                            return false;
+                        }
+                        self.scores.remove(&(u.owner, name)).is_some()
+                    }
                 }
             }
             // probes and skipped packets carry no world state
@@ -4928,6 +5056,157 @@ mod tests {
             m.night_vision_color(),
             None,
             "the sync arrived and is silent: no stated value, never a guess"
+        );
+    }
+
+    #[test]
+    fn the_scoreboard_trio_rides_the_belief() {
+        let mut m = WorldModel::new();
+
+        // SET OBJECTIVE add: the belief stores the display + the type
+        assert!(m.apply(PlayEvent::Objective(mc_protocol::ObjectiveUpdate {
+            objective: "money".into(),
+            method: mc_protocol::OBJECTIVE_METHOD_ADD,
+            display: Some("Coins".into()),
+            render_type: mc_protocol::RENDER_TYPE_INTEGER,
+        })));
+        assert_eq!(m.objectives["money"].display, "Coins");
+
+        // SET DISPLAY OBJECTIVE: the sidebar slot names the objective
+        assert!(m.apply(PlayEvent::DisplayObjective(mc_protocol::DisplayObjectiveUpdate {
+            slot: 1,
+            objective: "money".into(),
+        })));
+        // ... and the repeat is a no-op (the changed answer's own law)
+        assert!(!m.apply(PlayEvent::DisplayObjective(mc_protocol::DisplayObjectiveUpdate {
+            slot: 1,
+            objective: "money".into(),
+        })));
+
+        // SET SCORE: an UNKNOWN objective is the warn + drop (no state)
+        assert!(!m.apply(PlayEvent::Score(mc_protocol::ScoreUpdate {
+            owner: "Zed".into(),
+            objective: "ghost".into(),
+            score: 5,
+            display: None,
+        })));
+        assert!(m.scores.is_empty(), "the gate refused the ghost row");
+        // the known one upserts
+        assert!(m.apply(PlayEvent::Score(mc_protocol::ScoreUpdate {
+            owner: "Zed".into(),
+            objective: "money".into(),
+            score: 42,
+            display: Some("Zed Inc.".into()),
+        })));
+        assert_eq!(m.scores[&("Zed".into(), "money".into())].value, 42);
+        assert_eq!(
+            m.scores[&("Zed".into(), "money".into())].display.as_deref(),
+            Some("Zed Inc.")
+        );
+
+        // SET DISPLAY OBJECTIVE with an UNKNOWN name CLEARS the slot
+        // (the handler's null-objective set)
+        assert!(m.apply(PlayEvent::DisplayObjective(mc_protocol::DisplayObjectiveUpdate {
+            slot: 1,
+            objective: "ghost".into(),
+        })));
+        assert!(!m.display_slots.contains_key(&1), "the unknown name cleared");
+        // ... and the re-set restores
+        assert!(m.apply(PlayEvent::DisplayObjective(mc_protocol::DisplayObjectiveUpdate {
+            slot: 1,
+            objective: "money".into(),
+        })));
+
+        // OBJECTIVE UPDATE (method 2): the display + the type re-speak
+        assert!(m.apply(PlayEvent::Objective(mc_protocol::ObjectiveUpdate {
+            objective: "money".into(),
+            method: mc_protocol::OBJECTIVE_METHOD_UPDATE,
+            display: Some("Gold".into()),
+            render_type: mc_protocol::RENDER_TYPE_HEARTS,
+        })));
+        assert_eq!(m.objectives["money"].display, "Gold");
+        assert_eq!(m.objectives["money"].render_type, mc_protocol::RENDER_TYPE_HEARTS);
+
+        // RESET SCORE: a named reset is GATED on the objective existing
+        assert!(!m.apply(PlayEvent::ResetScore(mc_protocol::ResetScore {
+            owner: "Zed".into(),
+            objective: Some("ghost".into()),
+        })));
+        // the known one removes the row
+        assert!(m.apply(PlayEvent::Score(mc_protocol::ScoreUpdate {
+            owner: "Amy".into(),
+            objective: "money".into(),
+            score: 7,
+            display: None,
+        })));
+        assert!(m.apply(PlayEvent::ResetScore(mc_protocol::ResetScore {
+            owner: "Amy".into(),
+            objective: Some("money".into()),
+        })));
+        assert!(!m.scores.contains_key(&("Amy".into(), "money".into())));
+
+        // OBJECTIVE REMOVE: the slots pointing at it clear, the scores
+        // keyed by it die (the removeObjective cleanup)
+        assert!(m.apply(PlayEvent::Objective(mc_protocol::ObjectiveUpdate {
+            objective: "money".into(),
+            method: mc_protocol::OBJECTIVE_METHOD_REMOVE,
+            display: None,
+            render_type: mc_protocol::RENDER_TYPE_INTEGER,
+        })));
+        assert!(!m.objectives.contains_key("money"), "the objective died");
+        assert!(!m.display_slots.contains_key(&1), "the slot cleared");
+        assert!(m.scores.is_empty(), "the objective's rows died with it");
+
+        // the whole-owner reset (the NULL objective walk)
+        assert!(m.apply(PlayEvent::Objective(mc_protocol::ObjectiveUpdate {
+            objective: "a".into(),
+            method: mc_protocol::OBJECTIVE_METHOD_ADD,
+            display: Some("A".into()),
+            render_type: mc_protocol::RENDER_TYPE_INTEGER,
+        })));
+        assert!(m.apply(PlayEvent::Objective(mc_protocol::ObjectiveUpdate {
+            objective: "b".into(),
+            method: mc_protocol::OBJECTIVE_METHOD_ADD,
+            display: Some("B".into()),
+            render_type: mc_protocol::RENDER_TYPE_INTEGER,
+        })));
+        for obj in ["a", "b"] {
+            assert!(m.apply(PlayEvent::Score(mc_protocol::ScoreUpdate {
+                owner: "Zed".into(),
+                objective: obj.into(),
+                score: 1,
+                display: None,
+            })));
+        }
+        assert!(m.apply(PlayEvent::ResetScore(mc_protocol::ResetScore {
+            owner: "Zed".into(),
+            objective: None,
+        })));
+        assert!(m.scores.is_empty(), "the holder's whole ledger died");
+
+        // THE RESPAWN SURVIVES (the scoreboard is the CONNECTION's own
+        // object — the dimension swap clears the level's columns and
+        // the mailboxes but NEVER the sidebar's belief)
+        assert!(m.apply(PlayEvent::DisplayObjective(mc_protocol::DisplayObjectiveUpdate {
+            slot: 1,
+            objective: "a".into(),
+        })));
+        assert!(m.apply(PlayEvent::Score(mc_protocol::ScoreUpdate {
+            owner: "Zed".into(),
+            objective: "a".into(),
+            score: 9,
+            display: None,
+        })));
+        assert!(m.apply(PlayEvent::Respawn(SpawnInfo {
+            dimension_type_id: 0,
+            dimension: "minecraft:the_nether".to_string(),
+            portal_cooldown: 0,
+        })));
+        assert_eq!(m.scores[&("Zed".into(), "a".into())].value, 9, "the belief rides");
+        assert_eq!(
+            m.display_slots.get(&1).map(String::as_str),
+            Some("a"),
+            "the slot survives the swap"
         );
     }
 }

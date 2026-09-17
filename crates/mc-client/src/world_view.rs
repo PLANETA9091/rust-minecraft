@@ -297,6 +297,12 @@ pub struct SnapshotView {
     /// that carried them (the worker's own drain empties the mailbox
     /// after — each voice rides exactly one ship).
     pub world_voices: Vec<WireWorldVoice>,
+    /// The SIDEBAR slot's own projection (see [`WireSidebar`]) — the
+    /// scoreboard the wire trio keeps, sorted and capped the display
+    /// law keeps. `None` while the slot is silent (no display set, or
+    /// its objective gone) — the HUD renders nothing, the honest
+    /// absence.
+    pub sidebar: Option<WireSidebar>,
     /// The player's OWN inventory window (the window-0 store)
     /// projected for the UI — the full 46-slot shape in the wire's
     /// own numbering (result 0, craft 1..5, armor 5..9, the main
@@ -349,6 +355,37 @@ pub struct WireWorldVoice {
     pub z: f64,
     pub volume: f32,
     pub pitch: f32,
+}
+
+/// The DisplaySlot id the sidebar renders from (the
+/// `extractScoreboardSidebar` walk's own slot — the player-team
+/// color slots the extract reads first never arm in the house's
+/// laneless belief).
+pub const SIDEBAR_SLOT: u8 = 1;
+
+/// The sidebar's own row cap (the `displayScoreboardSidebar` walk's
+/// `limit(15L)` — the stream's own Long speaks it).
+pub const SIDEBAR_ROW_CAP: usize = 15;
+
+/// One sidebar row — the row's NAME (the display override the Set
+/// Score packet carried, else the holder's own string — the
+/// ownerName walk) and the value.
+#[derive(Debug, Clone, PartialEq)]
+pub struct WireSidebarLine {
+    pub name: String,
+    pub score: i32,
+}
+
+/// The SIDEBAR slot's own projection (the Hud
+/// extractScoreboardSidebar's stand-in): the objective's flattened
+/// display as the title, the rows the display law keeps — the
+/// non-hidden holders sorted value-DESCENDING with the owner's
+/// case-insensitive tiebreak (the SCORE_DISPLAY_ORDER comparator),
+/// capped at 15 (the stream's own limit).
+#[derive(Debug, Clone, PartialEq)]
+pub struct WireSidebar {
+    pub title: String,
+    pub lines: Vec<WireSidebarLine>,
 }
 
 /// One wire mob as the renderer consumes it — the Add Entity
@@ -1169,6 +1206,42 @@ fn held_item_view(model: &WorldModel) -> Option<(i32, i32)> {
 /// but the whole row verbatim: the nine pairs ride the inventory
 /// window's own order, the never-spoken tail stays `(0, 0)` — the
 /// emptiness sentinel the HUD skips, exactly like the chest grid's.
+/// The SIDEBAR slot's own view (the scoreboard wire trio's projection
+/// — the model's belief through the display law the extract keeps):
+/// the SIDEBAR slot's objective is looked up first (no slot, no
+/// objective — `None`), then the objective's scores walk the
+/// display law's shape: the hidden holders (the `#` prefix the
+/// PlayerScoreEntry.isHidden law keeps) drop, the rest sort
+/// value-DESCENDING with the owner's case-insensitive tiebreak (the
+/// SCORE_DISPLAY_ORDER comparator's own walk), the rows cap at 15
+/// (the stream's own limit), each row's name the display override
+/// (else the holder — the ownerName walk).
+fn sidebar_view(model: &WorldModel) -> Option<WireSidebar> {
+    let objective = model.display_slots.get(&SIDEBAR_SLOT)?;
+    let obj = model.objectives.get(objective)?;
+    let mut rows: Vec<(&String, i32, String)> = model
+        .scores
+        .iter()
+        .filter(|((_, obj_name), _)| obj_name == objective)
+        .filter(|((owner, _), _)| !owner.starts_with('#'))
+        .map(|((owner, _), state)| {
+            (owner, state.value, state.display.clone().unwrap_or_else(|| owner.clone()))
+        })
+        .collect();
+    rows.sort_by(|a, b| {
+        b.1.cmp(&a.1)
+            .then_with(|| a.0.to_lowercase().cmp(&b.0.to_lowercase()))
+    });
+    rows.truncate(SIDEBAR_ROW_CAP);
+    Some(WireSidebar {
+        title: obj.display.clone(),
+        lines: rows
+            .into_iter()
+            .map(|(_, score, name)| WireSidebarLine { name, score })
+            .collect(),
+    })
+}
+
 fn hotbar_row_view(model: &WorldModel) -> [(i32, i32); 9] {
     let inv = model.inventory();
     let mut row = [(0i32, 0i32); 9];
@@ -1330,6 +1403,9 @@ pub fn materialize_snapshot_view(
         // — the empty mailbox the projection walks)
         voices: Vec::new(),
         world_voices: Vec::new(),
+        // the join snapshot carries no scoreboard belief — the wire
+        // trio's packets are the only source (the empty lane)
+        sidebar: None,
         // the join's own store — the window-0 lane reads the adopted
         // state the same way the hand's lane does (empty until the
         // wire speaks)
@@ -1554,6 +1630,10 @@ impl LiveView {
                 mobs,
                 voices,
                 world_voices,
+                // the scoreboard's belief rides the pose-less arm too —
+                // the sidebar is the session's own truth, not the
+                // pose's
+                sidebar: sidebar_view(&self.model),
             };
         };
         let origin = snapshot_window_origin(player, self.side);
@@ -1580,6 +1660,10 @@ impl LiveView {
             mobs,
             voices,
             world_voices,
+            // the scoreboard's belief rides every refresh too — the
+            // sidebar follows the wire trio's store exactly like the
+            // vitals do
+            sidebar: sidebar_view(&self.model),
             // the player's OWN store rides with them — the inventory
             // screen's live lane follows the store exactly like the
             // chest's slots do
@@ -3781,5 +3865,93 @@ mod tests {
             vec![(2, (0, 0)), (50, (926, 64)), (62, (926, 60))],
             "the merge took 4, the empty fill took the 60"
         );
+    }
+
+    #[test]
+    fn the_sidebar_projection_sorts_and_caps() {
+        use crate::world_model::{ObjectiveState, ScoreState};
+        use mc_protocol::{
+            DisplayObjectiveUpdate, ObjectiveUpdate, PlayEvent, ScoreUpdate, OBJECTIVE_METHOD_ADD,
+            RENDER_TYPE_INTEGER,
+        };
+        let mut model = WorldModel::new();
+        assert!(
+            model.apply(PlayEvent::Objective(ObjectiveUpdate {
+                objective: "money".into(),
+                method: OBJECTIVE_METHOD_ADD,
+                display: Some("Coins".into()),
+                render_type: RENDER_TYPE_INTEGER,
+            })),
+            "the objective add"
+        );
+        assert!(
+            model.apply(PlayEvent::DisplayObjective(DisplayObjectiveUpdate {
+                slot: 1,
+                objective: "money".into(),
+            })),
+            "the sidebar slot set"
+        );
+        assert!(model.apply(PlayEvent::Score(ScoreUpdate {
+            owner: "Amy".into(),
+            objective: "money".into(),
+            score: 5,
+            display: None,
+        })));
+        assert!(model.apply(PlayEvent::Score(ScoreUpdate {
+            owner: "bob".into(),
+            objective: "money".into(),
+            score: 10,
+            display: None,
+        })));
+        assert!(model.apply(PlayEvent::Score(ScoreUpdate {
+            owner: "Zed".into(),
+            objective: "money".into(),
+            score: 10,
+            display: Some("Zed Inc.".into()),
+        })));
+        // the hidden holder (the '#' convention) drops; a foreign
+        // objective's row never rides this sidebar
+        model.objectives.insert(
+            "hidden".into(),
+            ObjectiveState { display: String::new(), render_type: 0 },
+        );
+        model.scores.insert(
+            ("#server_ticks".into(), "money".into()),
+            ScoreState { value: 999, display: None },
+        );
+        model.scores.insert(
+            ("Amy".into(), "hidden".into()),
+            ScoreState { value: 777, display: None },
+        );
+
+        let sb = sidebar_view(&model).expect("the slot speaks");
+        assert_eq!(sb.title, "Coins");
+        let names: Vec<(&str, i32)> =
+            sb.lines.iter().map(|l| (l.name.as_str(), l.score)).collect();
+        // the value-DESCENDING order; the 10-tie breaks case-insensitive
+        // on the OWNER ascending (bob < zed — the comparator's own law)
+        assert_eq!(
+            names,
+            vec![("bob", 10), ("Zed Inc.", 10), ("Amy", 5)],
+            "the display override names the row, the tie rides the owner ci"
+        );
+
+        // the cap: 17 rows walk out 15 (the stream's own limit)
+        for i in 0..17 {
+            model.scores.insert(
+                (format!("holder{i:02}"), "money".into()),
+                ScoreState { value: i, display: None },
+            );
+        }
+        let sb = sidebar_view(&model).unwrap();
+        assert_eq!(sb.lines.len(), crate::world_view::SIDEBAR_ROW_CAP, "the cap");
+        assert_eq!(sb.lines[0].score, 16, "the top row is the max");
+
+        // the silent slot: the display cleared (or the objective gone)
+        // is the honest None — never an empty guess
+        model.display_slots.remove(&1);
+        assert!(sidebar_view(&model).is_none(), "no slot, no sidebar");
+        model.display_slots.insert(1, "ghost".into());
+        assert!(sidebar_view(&model).is_none(), "no objective, no sidebar");
     }
 }

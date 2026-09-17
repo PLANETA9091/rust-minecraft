@@ -45,6 +45,10 @@ pub use play::{
     ProfileProperty, ResolvableProfile, SkinAsset,
     PlaySession, PlayStart, PlayerPosition, PredicateTypeLane, PropertyMatcher, PropertyValue,
     SetEntityDataEntry, SetHeldSlot, SetHealth, SpawnInfo, TimeSync, WorldInfo, WorldOutcome, WorldSnapshot,
+    ObjectiveUpdate, DisplayObjectiveUpdate, ScoreUpdate, ResetScore,
+    flatten_component_text, parse_set_objective, parse_set_display_objective, parse_set_score,
+    parse_reset_score, OBJECTIVE_METHOD_ADD, OBJECTIVE_METHOD_REMOVE, OBJECTIVE_METHOD_UPDATE,
+    RENDER_TYPE_INTEGER, RENDER_TYPE_HEARTS, DISPLAY_SLOT_SIDEBAR,
     DESIRED_CHUNKS_PER_TICK, encode_client_command, encode_container_click, encode_container_close, pack_entries,
     HurtAnimation, PlayerCombatKill, EntitySoundPacket, WorldSoundPacket,
 };
