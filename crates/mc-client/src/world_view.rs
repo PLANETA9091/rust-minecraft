@@ -303,6 +303,15 @@ pub struct SnapshotView {
     /// projection the chest lane shares) — the inventory screen's
     /// scroll lane's feeder, keyed by the window's own menu id.
     pub inventory_bundles: Vec<(i32, Vec<(i32, i32)>)>,
+    /// The window-0 store's revision (the `state_id` the server's
+    /// Set Content / Set Slot packets keep) — the click lane's echo
+    /// input (the ServerboundContainerClickPacket's own stateId field
+    /// the vanilla client fills from its menu's last-seen revision).
+    pub inventory_state_id: i32,
+    /// The window-0 store's GUI cursor (the Set Content packet's
+    /// carriedItem — the stack riding the mouse) — the click lane's
+    /// believed cursor the prediction walks speak.
+    pub inventory_carried: (i32, i32),
 }
 
 /// One wire mob's played voice — the Entity Sound packet's own
@@ -1093,7 +1102,14 @@ pub const INVENTORY_MENU_SLOTS: usize = crate::world_model::SHIELD_SLOT + 1;
 /// slot the store never spoke stays `(0, 0)` — the wire's own
 /// emptiness the render skips, never a guessed stack (the hotbar
 /// row's own law).
-fn live_inventory_view(model: &WorldModel) -> ([(i32, i32); INVENTORY_MENU_SLOTS], Vec<(i32, Vec<(i32, i32)>)>) {
+fn live_inventory_view(
+    model: &WorldModel,
+) -> (
+    [(i32, i32); INVENTORY_MENU_SLOTS],
+    Vec<(i32, Vec<(i32, i32)>)>,
+    i32,
+    (i32, i32),
+) {
     let inv = model.inventory();
     let mut slots = [(0i32, 0i32); INVENTORY_MENU_SLOTS];
     for (i, s) in inv.slots.iter().enumerate().take(INVENTORY_MENU_SLOTS) {
@@ -1103,7 +1119,12 @@ fn live_inventory_view(model: &WorldModel) -> ([(i32, i32); INVENTORY_MENU_SLOTS
     // the shared walk over the window's own slots — the menu slot id
     // keyed with the entries' (id, count) pairs, the wire order kept.
     let bundles = bundle_rows_of(&inv.slots);
-    (slots, bundles)
+    // the revision and the GUI cursor — the click lane's own inputs
+    // (the stateId the server's packets keep, the carriedItem the
+    // Set Content's last word held)
+    let state_id = inv.state_id;
+    let carried = (inv.carried.item_id, inv.carried.count);
+    (slots, bundles, state_id, carried)
 }
 
 /// The store's SELECTED hotbar stack projected for the UI — the
@@ -1265,7 +1286,8 @@ pub fn materialize_snapshot_view(
     // the join's own store — the window-0 lane reads the adopted
     // state the same way the hand's lane does (empty until the wire
     // speaks)
-    let (inventory_slots, inventory_bundles) = live_inventory_view(&model);
+    let (inventory_slots, inventory_bundles, inventory_state_id, inventory_carried) =
+        live_inventory_view(&model);
     SnapshotView {
         world: materialize(&model, origin, side, y_base, mapper),
         camera,
@@ -1289,6 +1311,8 @@ pub fn materialize_snapshot_view(
         // wire speaks)
         inventory_slots,
         inventory_bundles,
+        inventory_state_id,
+        inventory_carried,
     }
 }
 
@@ -1457,7 +1481,8 @@ impl LiveView {
         // the window-0 store's own projection rides every refresh —
         // the inventory screen follows the store exactly like the
         // hand and the HUD's row do (the pose-less arm included)
-        let (inventory_slots, inventory_bundles) = live_inventory_view(&self.model);
+        let (inventory_slots, inventory_bundles, inventory_state_id, inventory_carried) =
+            live_inventory_view(&self.model);
         let Some(player) = self.model.player.as_ref() else {
             return SnapshotView {
                 world: materialize(
@@ -1480,6 +1505,8 @@ impl LiveView {
                 // live lane reads the store exactly like the hand does
                 inventory_slots,
                 inventory_bundles,
+                inventory_state_id,
+                inventory_carried,
                 health: health_view(&self.model),
                 mobs,
                 voices,
@@ -1513,6 +1540,8 @@ impl LiveView {
             // chest's slots do
             inventory_slots,
             inventory_bundles,
+            inventory_state_id,
+            inventory_carried,
         }
     }
 }

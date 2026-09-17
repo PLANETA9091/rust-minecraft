@@ -132,6 +132,8 @@ fn run_join(
                 Vec<crate::world_view::WireVoice>,
                 [(i32, i32); crate::world_view::INVENTORY_MENU_SLOTS],
                 Vec<(i32, Vec<(i32, i32)>)>,
+                i32,
+                (i32, i32),
             ),
             String,
         >,
@@ -509,6 +511,11 @@ fn run_join(
                                     // the scroll lane's feeder the patches
                                     // carry
                                     upd.inventory_bundles,
+                                    // the store's revision + the GUI
+                                    // cursor — the click lane's own echo
+                                    // inputs the packets speak
+                                    upd.inventory_state_id,
+                                    upd.inventory_carried,
                                 )))
                                 .is_err()
                             {
@@ -607,6 +614,8 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
                 Vec<crate::world_view::WireVoice>,
                 [(i32, i32); crate::world_view::INVENTORY_MENU_SLOTS],
                 Vec<(i32, Vec<(i32, i32)>)>,
+                i32,
+                (i32, i32),
             ),
             String,
         >,
@@ -881,6 +890,8 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
                     voices,
                     inv_slots,
                     inv_bundles,
+                    inv_state_id,
+                    inv_carried,
                 )) => {
                     app.live_view_updated(world, camera, biome, container);
                     // the hand's lane beside the world's: the selected
@@ -909,8 +920,15 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
                     // player's own inventory the screen's live store
                     // projection rides (the slots the wire spoke, the
                     // bundle rows the patches carry — the ownership
-                    // gate the chest's live window keeps)
-                    app.live_inventory_updated(inv_slots, inv_bundles);
+                    // gate the chest's live window keeps); the
+                    // revision and the cursor ride beside them — the
+                    // click lane's own echo inputs
+                    app.live_inventory_updated(
+                        inv_slots,
+                        inv_bundles,
+                        inv_state_id,
+                        inv_carried,
+                    );
                 }
                 Err(reason) => app.live_session_lost(reason),
             }
