@@ -35,7 +35,8 @@
 //!   quadrants. The general generateMissingImage(int, int) keeps the
 //!   same XOR at any dims; the atlas materializes 16x16.
 
-use crate::generated::textures::{is_missing, texture_index, texture_rgba, texture_size};
+use crate::generated::textures::texture_index;
+use crate::textures_table::{is_missing, texture_rgba, texture_size};
 
 /// The missingno sprite's edge (generateMissingImage() default).
 pub const MISSING_SIZE: u32 = 16;
@@ -201,6 +202,9 @@ mod tests {
 
     #[test]
     fn samples_the_heavy_core_quads_end_to_end() {
+        if !crate::textures_table::real() {
+            return; // the no-cache boot has no pixels to pin
+        }
         // quads (v0.3.68) -> slots (v0.3.69) -> pixels (v0.3.70): the
         // held-item pixel link against the independent PIL decode of the
         // jar's block/heavy_core.png (16x16 cutout with a hole)
@@ -256,6 +260,9 @@ mod tests {
 
     #[test]
     fn the_namespace_forms_lookup_identically() {
+        if !crate::textures_table::real() {
+            return; // the pixel half of the identity needs the real table
+        }
         let bare = sample_uv("block/heavy_core", 0.0, 0.0);
         let namespaced = sample_uv("minecraft:block/heavy_core", 0.0, 0.0);
         assert_eq!(bare, namespaced, "10287 namespaced vs 807 bare values: one lookup");
@@ -268,6 +275,9 @@ mod tests {
 
     #[test]
     fn the_consumer_returns_the_raw_master_no_baked_tint() {
+        if !crate::textures_table::real() {
+            return; // the no-cache boot has no pixels to pin
+        }
         // grass_block_top: the raw grayscale master — the world atlas
         // bakes the 0x91BD59 plains tint; this consumer does NOT (the
         // tintindex multiply is the draw-time step)
@@ -297,6 +307,9 @@ mod tests {
 
     #[test]
     fn sample_material_composes_the_slots_and_the_sampler() {
+        if !crate::textures_table::real() {
+            return; // the pixel pins need the real table
+        }
         // heavy_core's bare value, sampled through the full chain
         assert_eq!(
             sample_material("block/heavy_core", "all", 0.0, 0.0),

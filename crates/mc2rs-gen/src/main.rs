@@ -1198,8 +1198,10 @@ fn write_blockstates(workspace_root: &Path, jar_bytes: &[u8]) -> Result<std::pat
 }
 
 /// Resolve + write crates/mc-registry/src/generated/textures.rs (the texture
-/// namespace: every concrete id the models table references, raw RGBA8, the
-/// atlas-mapping round's data half) from a local jar.
+/// NAMESPACE only — the sixth migration lane: the decoded RGBA8 the compiled
+/// source no longer carries) from a local jar, plus the runtime cache's
+/// assets-cache/gen/textures.bin (the generator's own binary emit the loader
+/// parses — the font.bin walk's company).
 fn write_textures(workspace_root: &Path, jar_bytes: &[u8], version: &str) -> Result<std::path::PathBuf> {
     let mut zip =
         zip::ZipArchive::new(std::io::Cursor::new(jar_bytes)).context("open client jar as zip")?;
@@ -1208,15 +1210,21 @@ fn write_textures(workspace_root: &Path, jar_bytes: &[u8], version: &str) -> Res
     std::fs::create_dir_all(&reg_dir)?;
     let path = reg_dir.join("textures.rs");
     std::fs::write(&path, texturesgen::emit(&data, version, &util::sha1_hex(jar_bytes))?)?;
+    // The sixth lane's binary: the decoded texels the runtime cache keeps
+    // (the DERIVED files' lane beside the jar-verbatim tree).
+    let cache_dir = workspace_root.join("assets-cache/gen");
+    std::fs::create_dir_all(&cache_dir)?;
+    std::fs::write(cache_dir.join("textures.bin"), texturesgen::emit_cache(&data)?)?;
     println!(
-        "      textures: {} model files -> {} ids ({} present / {} missing), {} first-frame crops, {} texels -> {}",
+        "      textures: {} model files -> {} ids ({} present / {} missing), {} first-frame crops, {} texels -> {} + {}",
         data.n_model_files,
         data.ids.len(),
         data.n_present,
         data.n_missing,
         data.n_first_frame,
         data.texels.len(),
-        path.display()
+        path.display(),
+        cache_dir.join("textures.bin").display()
     );
     Ok(path)
 }

@@ -76,7 +76,8 @@ use crate::element_quads::{
     calculate_facing, faceinfo_corners, recalculate_winding, vertex_uvs, Direction, Quad,
 };
 use crate::generated::models::MODELS;
-use crate::generated::textures::{texture_index, texture_rgba, texture_size};
+use crate::generated::textures::texture_index;
+use crate::textures_table::{is_missing, texture_rgba, texture_size};
 use crate::texture_slots;
 
 /// The extrusion depth (ItemModelGenerator's MIN_Z/MAX_Z constants).
@@ -268,7 +269,7 @@ pub fn derive_item_model(model_id: &str) -> Option<Vec<Quad>> {
             break;
         };
         let bare = id.strip_prefix("minecraft:").unwrap_or(id);
-        let (texels, w, h, texture) = match texture_index(bare).filter(|i| !crate::generated::textures::is_missing(*i)) {
+        let (texels, w, h, texture) = match texture_index(bare).filter(|i| !crate::textures_table::is_missing(*i)) {
             Some(idx) => (texture_rgba(idx).to_vec(), texture_size(idx).0, texture_size(idx).1, {
                 // the Quad.texture is the bare id (a 'static str from the
                 // table; strip the namespace like sprite_uv's join does)
@@ -296,6 +297,9 @@ mod tests {
 
     #[test]
     fn derives_the_iron_sword_extrusion() {
+        if !crate::textures_table::real() {
+            return; // the bake's texture half needs the real table
+        }
         // the oracle (scripts/item_bake_census.py, strict-f32): 82 quads.
         let quads = derive_item_model("item/iron_sword")
             .expect("in the bake domain");
@@ -386,6 +390,9 @@ mod tests {
 
     #[test]
     fn derives_the_copper_torch_and_bow() {
+        if !crate::textures_table::real() {
+            return; // the bake's texture half needs the real table
+        }
         // copper_torch: the MINIMUM fixture (26 quads); its 0.1f insets
         // round to DIFFERENT bits than iron_sword's (7.0f + 0.1f)
         let quads = derive_item_model("item/copper_torch")
@@ -429,6 +436,9 @@ mod tests {
 
     #[test]
     fn the_missing_layer_bakes_the_missingno_checkerboard() {
+        if !crate::textures_table::real() {
+            return; // the REAL-layer half needs the real table
+        }
         // item/chainmail_boots_amethyst_trim: layer0 = item/chainmail_boots
         // (66 quads), layer1 = trims/items/boots_trim_amethyst — MISSING
         // from the namespace -> the missingno checkerboard (16x16, fully
@@ -471,6 +481,9 @@ mod tests {
 
     #[test]
     fn the_registry_wide_bake_census_holds() {
+        if !crate::textures_table::real() {
+            return; // the census's quad totals need the real texels
+        }
         // scripts/item_bake_census.py over the real jar
         let mut domain = 0usize;
         let mut layer_models = [0usize; 5];
@@ -494,7 +507,7 @@ mod tests {
                 layer_models[i] += 1;
                 let bare = t.strip_prefix("minecraft:").unwrap_or(t);
                 let missing = texture_index(bare)
-                    .map(|idx| crate::generated::textures::is_missing(idx))
+                    .map(|idx| crate::textures_table::is_missing(idx))
                     .unwrap_or(true);
                 if missing {
                     missing_layer_textures.insert(bare);

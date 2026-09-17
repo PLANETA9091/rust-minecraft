@@ -23,6 +23,14 @@ pub mod element_quads;
 /// makes bare refs behave identically. Pure data, no render path.
 pub mod texture_slots;
 
+/// THE TEXTURE TABLE'S OWN LOADER (the migration's sixth lane): the
+/// decoded RGBA8 texels the compiled source no longer carries, the
+/// runtime cache's `assets-cache/gen/textures.bin` the only source, the
+/// honest empty table (the vanilla checkerboard) the no-cache boot keeps.
+/// The pixel accessors' home — `texture_index` stays on the compiled
+/// namespace, the pixels load.
+pub mod textures_table;
+
 /// The vanilla sprite-uv consumer — the quads' 0..16 uv space mapped to
 /// texels over generated::textures (CuboidFace.getU /16, the
 /// TextureAtlasSprite span, NEAREST + CLAMP_TO_EDGE) with the vanilla
@@ -141,11 +149,8 @@ pub fn item_name(id: i32) -> Option<&'static str> {
 pub fn item_icon(id: i32) -> Option<(&'static [u8], u16, u16)> {
     let name = item_name(id)?;
     let idx = generated::textures::texture_index(&format!("item/{name}"))?;
-    Some((
-        generated::textures::texture_rgba(idx),
-        generated::textures::WIDTHS[idx as usize],
-        generated::textures::HEIGHTS[idx as usize],
-    ))
+    let (w, h) = textures_table::texture_size(idx);
+    Some((textures_table::texture_rgba(idx), w, h))
 }
 
 /// The ITEM registry id's first-person model path — the generated
@@ -1863,7 +1868,8 @@ mod tests {
 
     #[test]
     fn the_texture_namespace_is_sorted_and_binary_searchable() {
-        use generated::textures::{is_missing, texture_index, TEXTURE_IDS, N_TEXTURES};
+        use crate::generated::textures::{texture_index, TEXTURE_IDS, N_TEXTURES};
+        use crate::textures_table::{is_missing, texture_rgba};
 
         // the census: 2172 distinct ids over the 3928 model files + the
         // special renderers' 59 entity textures (43 raw + the banner
@@ -1881,10 +1887,10 @@ mod tests {
         }
         // a hit is NOT existence: the literal `missingno` (item/air.json and
         // block/air.json reference `minecraft:missingno`) is a domain member
-        // pinned missing
+        // pinned missing — the empty span both boot arms speak
         let air = texture_index("missingno").expect("the air models' literal ref");
         assert!(is_missing(air));
-        assert!(generated::textures::texture_rgba(air).is_empty());
+        assert!(texture_rgba(air).is_empty());
 
         // misses: the empty id, a bare stem, an unknown block, a texture
         // that EXISTS in the jar but is NOT model-referenced (the skin rides
@@ -1897,21 +1903,30 @@ mod tests {
 
     #[test]
     fn every_present_tile_spans_exactly_its_size() {
-        use generated::textures::{
-            is_missing, texture_size, HEIGHTS, OFFSETS, TEXELS, TEXTURE_IDS, WIDTHS, N_MISSING,
-            N_TEXTURES,
-        };
+        use crate::generated::textures::{TEXTURE_IDS, N_MISSING, N_TEXTURES};
+        use crate::textures_table::{is_missing, real, texture_rgba, texture_size};
 
         assert_eq!(N_MISSING, 65);
+        // the no-cache boot the honest-empty arms walk (every id missing,
+        // the census pins gate on the real table)
+        if !real() {
+            for i in 0..N_TEXTURES {
+                assert!(is_missing(i as u16), "{} missing at the empty table", TEXTURE_IDS[i]);
+                assert!(texture_rgba(i as u16).is_empty());
+                assert_eq!(texture_size(i as u16), (0, 0));
+            }
+            return;
+        }
         let mut present = 0usize;
         let mut n16 = 0usize;
         let mut n32 = 0usize;
         let mut n64 = 0usize;
         let mut n_skin = 0usize;
         let mut n_dragon = 0usize;
+        let mut total = 0usize;
         for i in 0..N_TEXTURES {
             let (w, h) = texture_size(i as u16);
-            let span = (OFFSETS[i + 1] - OFFSETS[i]) as usize;
+            let span = texture_rgba(i as u16).len();
             if w == 0 {
                 // the missing invariant: all three encodings agree
                 assert_eq!(h, 0, "{} must be fully empty", TEXTURE_IDS[i]);
@@ -1921,6 +1936,7 @@ mod tests {
             }
             assert!(!is_missing(i as u16));
             assert_eq!(span, w as usize * h as usize * 4, "{}", TEXTURE_IDS[i]);
+            total += span;
             match (w, h) {
                 (16, 16) => n16 += 1,
                 (32, 32) => n32 += 1,
@@ -1937,25 +1953,26 @@ mod tests {
         }
         // the census, verbatim: 2107 present (2003 square-16 + 49
         // square-32 + 49 64-wide skins/canvases + 5 skin strips + 1
-        // dragon sheet) + 65 missing = 2172; the offsets tile the
-        // texels exactly
+        // dragon sheet) + 65 missing = 2172; the spans tile the
+        // decoded texels exactly
         assert_eq!(present, 2107);
         assert_eq!((n16, n32), (2003, 49));
         assert_eq!(n64, 49);
         assert_eq!(n_skin, 5, "the 32x16/64x32 strips: conduit base x2 + creeper/skeleton-family skins");
         assert_eq!(n_dragon, 1);
         assert_eq!(present + N_MISSING, N_TEXTURES);
-        assert_eq!(OFFSETS[N_TEXTURES] as usize, TEXELS.len());
-        assert_eq!(TEXELS.len(), 3_345_408, "the census texel total");
-        assert_eq!(WIDTHS.len(), N_TEXTURES);
-        assert_eq!(HEIGHTS.len(), N_TEXTURES);
+        assert_eq!(total, 3_345_408, "the census texel total");
     }
 
     #[test]
     fn block_stone_pixels_are_the_world_atlas_tile_byte_for_byte() {
-        use generated::atlas::{TILE_NAMES, TILES};
-        use generated::textures::{texture_index, texture_rgba, texture_size};
+        use crate::generated::atlas::{TILE_NAMES, TILES};
+        use crate::generated::textures::texture_index;
+        use crate::textures_table::{real, texture_rgba, texture_size};
 
+        if !real() {
+            return; // the no-cache boot has no pixels to pin
+        }
         // the CROSS-TABLE pin: stone is untinted, so the world atlas's baked
         // tile and this table's raw tile must be byte-identical
         let stone = texture_index("block/stone").expect("stone in the namespace");
@@ -1978,9 +1995,13 @@ mod tests {
 
     #[test]
     fn the_raw_pixels_carry_no_baked_tint() {
-        use generated::atlas::{TILE_NAMES, TILES};
-        use generated::textures::{texture_index, texture_rgba};
+        use crate::generated::atlas::{TILE_NAMES, TILES};
+        use crate::generated::textures::texture_index;
+        use crate::textures_table::{real, texture_rgba};
 
+        if !real() {
+            return; // the no-cache boot has no pixels to pin
+        }
         // the TINT-BOUNDARY pair: stone (no tint) is byte-identical to the
         // atlas; grass_block_top (the 0x91BD59 plains bake in the world
         // atlas) must DIFFER — this table keeps the raw grayscale master the
@@ -2010,8 +2031,12 @@ mod tests {
 
     #[test]
     fn animated_strips_ride_their_first_frame_and_signs_ride_whole() {
-        use generated::textures::{texture_index, texture_rgba, texture_size};
+        use crate::generated::textures::texture_index;
+        use crate::textures_table::{real, texture_rgba, texture_size};
 
+        if !real() {
+            return; // the no-cache boot has no pixels to pin
+        }
         // water_still.png is 16x512 with an animation mcmeta: the table's
         // sprite is the first 16x16 frame (the world atlas's crop rule,
         // now mcmeta-faithful and pinned on the namespace)
@@ -2037,8 +2062,12 @@ mod tests {
 
     #[test]
     fn the_missing_materials_are_exactly_the_census() {
-        use generated::textures::{is_missing, texture_index, TEXTURE_IDS, N_MISSING};
+        use crate::generated::textures::{texture_index, TEXTURE_IDS, N_MISSING};
+        use crate::textures_table::{is_missing, real};
 
+        if !real() {
+            return; // the census of MISSINGNESS needs the real table
+        }
         // 65 missing: the 64 trims/items armor-trim refs (the client jar
         // ships no PNG for them — vanilla renders the checkerboard) + the
         // literal `missingno`; NOTHING from block/ or item/ is missing
@@ -2071,9 +2100,13 @@ mod tests {
 
     #[test]
     fn the_special_payloads_join_the_dump_and_the_texture_namespace() {
-        use generated::item_models::ITEM_SPECIAL_MODELS;
-        use generated::textures::texture_index;
+        use crate::generated::item_models::ITEM_SPECIAL_MODELS;
+        use crate::generated::textures::texture_index;
+        use crate::textures_table::{real, texture_size};
 
+        if !real() {
+            return; // the join's pixel half needs the real table
+        }
         // THE BIJECTION: 63 payloads, every one resolving through the
         // join — the dump geometry, the base model path, and (for the
         // tinted layers) the pre-tinted texture variant all in place
@@ -2085,7 +2118,7 @@ mod tests {
             for layer in &render.layers {
                 let idx = texture_index(layer.texture)
                     .unwrap_or_else(|| panic!("{id}: texture {} absent", layer.texture));
-                let (w, h) = generated::textures::texture_size(idx);
+                let (w, h) = texture_size(idx);
                 assert!(w > 0, "{id}: texture {} missing", layer.texture);
             }
         }
