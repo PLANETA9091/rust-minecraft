@@ -748,17 +748,30 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
                 app.on_pick_block(window.is_key_down(Key::LeftCtrl));
             }
             was_middle_down = middle_down;
-            // THE SCROLL WHEEL (vanilla MouseHandler.onScroll's
-            // screen-null arm — the hotbar cycle the survival player's
-            // wheel answers): the folded deltas ride the App's own
-            // ScrollWheelHandler walk (the accumulator + the
-            // getNextScrollWheelSelection signum law — the down-scroll
-            // moving toward the higher numbers). The SCREEN-OPEN scroll
-            // is the container's own mouseScrolled lane — the client's
-            // screens name no consumer yet, the silence the in_world
-            // block keeps is the honest shape
-            if let Some((sdx, sdy)) = window.get_scroll_wheel() {
+        }
+        // THE SCROLL WHEEL (vanilla `MouseHandler.onScroll`'s own law —
+        // the event the frame thread answers EVERY frame, the SCREEN
+        // arm the bytecode 121-195 keeps first): a CONTAINER screen's
+        // wheel folds into the screen's own mouseScrolled walk
+        // ([`crate::screens::App::on_container_scroll`] — the
+        // hovered-slot + itemSlotMouseActions chain), the OTHER screens
+        // (the pause, the menus) the dispatch's `pop` silences. The
+        // SCREEN-NULL arm (the hotbar cycle — the MouseHandler's own
+        // ScrollWheelHandler fold, bytecode 198+) only the in-world
+        // screen rides: the accumulator the pause screen never
+        // advances. The poll consumes
+        // the event HERE every frame — the dropped delta the x11
+        // backend's per-frame clear kept silent, the explicit poll keeps
+        // the law honest (the screen-open wheel never leaks a stale
+        // hotbar step).
+        if let Some((sdx, sdy)) = window.get_scroll_wheel() {
+            if in_world {
                 app.on_hotbar_scroll(sdx as f64, sdy as f64);
+            } else if matches!(
+                app.screen,
+                crate::screens::ScreenKind::Chest | crate::screens::ScreenKind::Inventory
+            ) {
+                app.on_container_scroll(sdx as f64, sdy as f64, gmx, gmy);
             }
         }
         // THE FIXED CLOCK SPENDS (vanilla `Minecraft.runTick`'s own

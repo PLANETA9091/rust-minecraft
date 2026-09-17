@@ -5289,6 +5289,154 @@ impl App {
         self.on_number_key(selection);
     }
 
+    /// THE CONTAINER'S OWN mouseScrolled (the 26.2
+    /// `AbstractContainerScreen.mouseScrolled(DDDD)Z` walk the
+    /// `MouseHandler.onScroll` SCREEN arm routes — the bytecode 121-195:
+    /// `screen != null` folds the wheel INTO the screen and returns, the
+    /// hotbar cycle the screen-null arm keeps never rides the same
+    /// event). The chain the 98 bytecode bytes speak:
+    /// `hoveredSlot != null` -> `hoveredSlot.hasItem()` -> the
+    /// `itemSlotMouseActions` walk — the ONE registered action the
+    /// client's screens keep is the bundle lane
+    /// ([`crate::screens::App::is_bundle_item`] the
+    /// `BundleMouseActions.matches`' `ItemTags.BUNDLES` verdict rides),
+    /// and the bundle's own opening gate
+    /// (`BundleItem.getNumberOfItemsToShow` — the `bundle_contents`
+    /// component the client's stacks never carry, the EMPTY default the
+    /// `getOrDefault` speaks) reads 0 at every stack the client's model
+    /// represents: the `return false` the bytecode 12-13 keeps fires
+    /// BEFORE the `ScrollWheelHandler.onMouseScroll` fold (bytecode
+    /// 14-20) — the accumulator the gate order never touches. The
+    /// `toggleSelectedBundleItem` tail (the selected-item walk + the
+    /// `bundle_item_selected` echo the protocol's SB id 3 names) is the
+    /// contents round's own line — the seam this walk arms. Returns the
+    /// walk's verdict (the boolean the dispatch's `pop` discards — the
+    /// contract the honest walk keeps). The DELTA NAMES the
+    /// underscore keeps honest — the fold the gate precedes is
+    /// unreachable at every stack the model represents, the parameters
+    /// the walk never reads today (the contents round reads them).
+    pub fn on_container_scroll(
+        &mut self,
+        _delta_x: f64,
+        _delta_y: f64,
+        mx: i32,
+        my: i32,
+    ) -> bool {
+        // THE HOVERED SLOT'S OWN GATE (the bytecode 1-14): the slot the
+        // mouse rides — null, or empty, the walk refuses
+        let Some(stack) = self.hovered_container_stack(mx, my) else {
+            return false; // hoveredSlot null — the iconst_0 the walk keeps
+        };
+        if stack.1 <= 0 {
+            return false; // hasItem() false — the ifeq -> 97 arm
+        }
+        // THE ACTION WALK (the bytecode 17-94): the matches -> the
+        // onMouseScrolled chain; the ONE action the client registers is
+        // the bundle lane, and its opening gate reads the
+        // bundle_contents component the client's stacks never carry —
+        // the 0 the EMPTY default speaks, the fold the gate precedes
+        if Self::is_bundle_item(stack.0) {
+            // BundleMouseActions.matches TRUE — onMouseScrolled's own
+            // `getNumberOfItemsToShow == 0 -> return false` arm (the
+            // bytecode 0-13): the accumulator untouched, the toggle
+            // unreachable, the honest verdict false
+            return false;
+        }
+        false // no action matched — the walk's own iconst_0 (bytecode 97)
+    }
+
+    /// The hovered slot's stack (the AbstractContainerScreen's
+    /// `hoveredSlot` the render's own isHovering walk keeps — the SAME
+    /// 16x16 rects the click lane rides, the menu order the ctor
+    /// speaks): the chest screen's grid + mirror rows, the inventory's
+    /// craft/result/armor/offhand/store rows. The 16x16 hit rect at the
+    /// +1 inset the store's own click walk speaks; `None` the no-slot
+    /// and no-geometry arms keep (the render-then-hit pattern the
+    /// buttons' own lane rides).
+    fn hovered_container_stack(&self, mx: i32, my: i32) -> Option<(i32, i32)> {
+        match self.screen {
+            ScreenKind::Chest => {
+                let &(_, _, slot) = self
+                    .chest_slot_rects
+                    .iter()
+                    .find(|&&(x, y, _)| mx >= x && mx < x + 16 && my >= y && my < y + 16)?;
+                let s = slot as usize;
+                Some(if s < 27 {
+                    self.chest_slots[s]
+                } else {
+                    self.chest_mirror[s - 27]
+                })
+            }
+            ScreenKind::Inventory => {
+                if self.inv_panel == (0, 0) {
+                    return None; // no render spoke yet — no geometry to ride
+                }
+                let panel = self.inv_panel;
+                // the menu's own order — result 0, craft 1..4, armor
+                // 5..8, offhand 45, the store rows the walk keeps last
+                let (rx, ry) = craft_slot_origin(panel, 4);
+                if mx >= rx + 1 && mx < rx + 17 && my >= ry + 1 && my < ry + 17 {
+                    return Some(self.craft_result);
+                }
+                for cell in 0..4 {
+                    let (cx, cy) = craft_slot_origin(panel, cell);
+                    if mx >= cx + 1 && mx < cx + 17 && my >= cy + 1 && my < cy + 17 {
+                        return Some(self.craft_grid[cell]);
+                    }
+                }
+                for k in 0..4 {
+                    let (ax, ay) = armor_slot_origin(panel, k);
+                    if mx >= ax + 1 && mx < ax + 17 && my >= ay + 1 && my < ay + 17 {
+                        return Some(self.inventory.armor[k]);
+                    }
+                }
+                let (ox, oy) = offhand_slot_origin(panel);
+                if mx >= ox + 1 && mx < ox + 17 && my >= oy + 1 && my < oy + 17 {
+                    return Some(self.inventory.offhand[0]);
+                }
+                for i in 0..36 {
+                    let (sx, sy) = inventory_slot_origin(panel, i);
+                    if mx >= sx + 1 && mx < sx + 17 && my >= sy + 1 && my < sy + 17 {
+                        return Some(self.inventory.items[i]);
+                    }
+                }
+                None // the press between the slots — the hover's own miss
+            }
+            _ => None, // the walk only the container screens answer
+        }
+    }
+
+    /// THE BUNDLES TAG (the `BundleMouseActions.matches` walk —
+    /// `stack.is(ItemTags.BUNDLES)`): the tag json the jar's
+    /// `tags/item/bundles.json` keeps — the plain bundle + the 16 dyed
+    /// variants, the 17 names the client's wire order speaks. The
+    /// name-based verdict the client's tag-less data model rides (the
+    /// same shape the mob interact's edible table keeps).
+    fn is_bundle_item(id: i32) -> bool {
+        matches!(
+            mc_registry::item_name(id),
+            Some("bundle")
+                | Some(
+                    "white_bundle"
+                        | "orange_bundle"
+                        | "magenta_bundle"
+                        | "light_blue_bundle"
+                        | "yellow_bundle"
+                        | "lime_bundle"
+                        | "pink_bundle"
+                        | "gray_bundle"
+                        | "light_gray_bundle"
+                        | "cyan_bundle"
+                        | "purple_bundle"
+                        | "blue_bundle"
+                        | "brown_bundle"
+                        | "green_bundle"
+                        | "red_bundle"
+                        | "black_bundle"
+                )
+        )
+    }
+
     /// The chest screen's slot click (the button byte's own lane: 0 =
     /// the left table, 1 = the right table; the SHIFT state overrides
     /// either table with the QUICK_MOVE lane — the vanilla
@@ -15358,6 +15506,177 @@ mod tests {
             ContainerCommand::SelectHotbar { selection } => assert_eq!(selection, 1),
             other => panic!("expected a selection, got {other:?}"),
         }
+    }
+
+    /// THE CONTAINER'S OWN mouseScrolled — THE GATE CHAIN (the 26.2
+    /// AbstractContainerScreen.mouseScrolled walk): the hovered-slot
+    /// verdict the SAME 16x16 rects the click lane keeps — null (the
+    /// between-slots point), empty (the cleared store row), and the
+    /// filled non-bundle stack (no action matches) all return FALSE,
+    /// the hotbar the screen arm never touches (the selection and the
+    /// MouseHandler fold the walk leaves where they were — the
+    /// scroll_acc the screen event never advances).
+    #[test]
+    fn the_container_scroll_walks_the_gates() {
+        let mut app = App::new(3);
+        app.enter_world();
+        app.spawn_offline_body();
+        app.open_inventory();
+        app.inv_panel = inventory_panel_origin(640, 360);
+        app.inventory.items[0] = (62, 27); // the cobblestone the hotbar keeps
+        app.hotbar_slots = app.inventory.hotbar();
+        // the hovered verdict the rects speak
+        let (ox, oy) = inventory_slot_origin(app.inv_panel, 0);
+        assert_eq!(
+            app.hovered_container_stack(ox + 8, oy + 8),
+            Some((62, 27)),
+            "the slot's stack the hover keeps"
+        );
+        assert_eq!(
+            app.hovered_container_stack(app.inv_panel.0 + 90, app.inv_panel.1 + 10),
+            None,
+            "the between-slots point the hover refuses"
+        );
+        // THE WALK: every gate's own false — no slot, empty slot, the
+        // non-bundle stack no action matches
+        assert!(
+            !app.on_container_scroll(0.0, -1.0, app.inv_panel.0 + 90, app.inv_panel.1 + 10),
+            "the hoveredSlot-null arm"
+        );
+        assert!(
+            !app.on_container_scroll(0.0, -1.0, ox + 8, oy + 8),
+            "the filled cobble matches no action"
+        );
+        let (ox9, oy9) = inventory_slot_origin(app.inv_panel, 9);
+        assert!(
+            !app.on_container_scroll(0.0, -1.0, ox9 + 8, oy9 + 8),
+            "the empty slot's hasItem gate"
+        );
+        // THE SCREEN-CONSUMES LAW: the hotbar untouched through the
+        // whole walk — the selection, the row, the fold's accumulator
+        assert_eq!(app.selected_hotbar, 0, "the selection never moved");
+        assert_eq!(app.hotbar_slots[0], (62, 27), "the row untouched");
+        assert_eq!(app.scroll_acc_x, 0.0, "the fold never rode");
+        assert_eq!(app.scroll_acc_y, 0.0, "the fold never rode");
+        // the walk only the container screens answer — the world's
+        // wheel the hotbar arm owns (the screen arm the routing keeps)
+        app.open(ScreenKind::World);
+        assert_eq!(app.hovered_container_stack(ox + 8, oy + 8), None);
+    }
+
+    /// THE BUNDLE LANE'S OWN WALL (the BundleMouseActions.onMouseScrolled
+    /// opening gate — `getNumberOfItemsToShow(stack) == 0 -> return
+    /// false` at the bytecode 0-13): the hovered BUNDLE matches the
+    /// BUNDLES tag (the 17 names the verdict rides), and the
+    /// bundle_contents component the client's stacks never carry reads
+    /// the EMPTY default's 0 — the false the fold's gate precedes (the
+    /// accumulator untouched), the toggleSelectedBundleItem tail the
+    /// contents round owns.
+    #[test]
+    fn the_bundle_lane_matches_and_stops_at_the_contents_wall() {
+        let mut app = App::new(3);
+        app.enter_world();
+        app.spawn_offline_body();
+        app.open_inventory();
+        app.inv_panel = inventory_panel_origin(640, 360);
+        let bundle = mc_registry::item_id_by_name("bundle").expect("the bundle the wire keeps");
+        // THE TAG VERDICT (ItemTags.BUNDLES): the plain bundle + the
+        // dyed variants the 17-name law keeps, the neighbors it refuses
+        assert!(App::is_bundle_item(bundle), "the plain bundle rides");
+        for name in ["black_bundle", "light_blue_bundle", "red_bundle"] {
+            let id = mc_registry::item_id_by_name(name).expect(name);
+            assert!(App::is_bundle_item(id), "{name} rides the tag");
+        }
+        assert!(
+            !App::is_bundle_item(62),
+            "the cobblestone no action matches"
+        );
+        // the hovered bundle stack
+        app.inventory.items[3] = (bundle, 1);
+        let (ox, oy) = inventory_slot_origin(app.inv_panel, 3);
+        assert_eq!(
+            app.hovered_container_stack(ox + 8, oy + 8),
+            Some((bundle, 1)),
+            "the bundle the hover keeps"
+        );
+        // THE WALK: the match rides, the wall stops it — the contents
+        // component the model never carries, the 0 the gate reads
+        assert!(
+            !app.on_container_scroll(0.0, -1.0, ox + 8, oy + 8),
+            "the empty contents the false keeps"
+        );
+        // the fold's gate order: repeated scrolls touch NOTHING — no
+        // accumulator, no selection, no row move
+        app.on_container_scroll(0.0, -1.0, ox + 8, oy + 8);
+        assert_eq!(app.scroll_acc_x, 0.0, "the fold never rode");
+        assert_eq!(app.scroll_acc_y, 0.0, "the fold never rode");
+        assert_eq!(app.selected_hotbar, 0, "the selection never moved");
+        assert_eq!(app.inventory.items[3], (bundle, 1), "the stack stayed");
+    }
+
+    /// THE CHEST SCREEN'S OWN SCROLL WALK (the same mouseScrolled the
+    /// generic_9x3 container rides): the grid + mirror rows the hover's
+    /// rect walk keeps — the filled non-bundle stack the false keeps,
+    /// the between-slots point the null arm holds, the bundle the same
+    /// contents wall stops. The offline stand-in's rects the render
+    /// lays (the test speaks them directly — the render-then-hit
+    /// pattern).
+    #[test]
+    fn the_chest_screen_rides_the_same_scroll_walk() {
+        let mut app = App::new(3);
+        app.enter_world();
+        app.spawn_offline_body();
+        app.open(ScreenKind::Chest);
+        let panel = chest_panel_origin(640, 360);
+        app.chest_slots = vec![(0, 0); 27];
+        app.chest_mirror = vec![(0, 0); 36];
+        // the rects the render lays: the grid's 0..27, the mirror's
+        // 27..63 — the +1 inset the store's own lane speaks
+        app.chest_slot_rects = (0..27)
+            .map(|i| {
+                let (sx, sy) = chest_container_slot(panel, i);
+                (sx + 1, sy + 1, i as i16)
+            })
+            .chain((0..36).map(|i| {
+                let (sx, sy) = chest_mirror_slot(panel, i);
+                (sx + 1, sy + 1, (27 + i) as i16)
+            }))
+            .collect();
+        // the grid's stack: the oak the offline story keeps (63)
+        app.chest_slots[5] = (63, 12);
+        let (gx, gy) = chest_container_slot(panel, 5);
+        assert_eq!(
+            app.hovered_container_stack(gx + 8, gy + 8),
+            Some((63, 12)),
+            "the grid cell the hover keeps"
+        );
+        // the mirror row's stack (the player's own store the container
+        // mirrors — the bundle rides here too)
+        let bundle = mc_registry::item_id_by_name("bundle").unwrap();
+        app.chest_mirror[9] = (bundle, 1);
+        let (mx, my) = chest_mirror_slot(panel, 9);
+        assert_eq!(
+            app.hovered_container_stack(mx + 8, my + 8),
+            Some((bundle, 1)),
+            "the mirror row the hover keeps"
+        );
+        // THE WALK: the oak no action matches, the bundle the wall
+        // stops, the between-slots point the null arm holds
+        assert!(
+            !app.on_container_scroll(0.0, -1.0, gx + 8, gy + 8),
+            "the oak's honest false"
+        );
+        assert!(
+            !app.on_container_scroll(0.0, -1.0, mx + 8, my + 8),
+            "the bundle's contents wall"
+        );
+        assert!(
+            !app.on_container_scroll(0.0, -1.0, panel.0 + 88, panel.1 + 2),
+            "the between-slots null"
+        );
+        // the hotbar the container walk never touches
+        assert_eq!(app.selected_hotbar, 0, "the selection never moved");
+        assert_eq!(app.scroll_acc_x, 0.0, "the fold never rode");
     }
 
     /// THE PICK'S WIRE HALF (the gameMode.handlePickItemFromBlock walk
