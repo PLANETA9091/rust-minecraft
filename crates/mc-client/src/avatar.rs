@@ -2171,6 +2171,92 @@ pub fn armor_asset_name(name: Option<&str>) -> Option<&'static str> {
     Some(asset)
 }
 
+/// One head-block quad: the CustomHeadLayer item branch's geometry over
+/// the element bake — the texture id rides for the sampler (the atlas
+/// lane the GUI icons speak), the shade is the block's own face law.
+pub struct HeadBlockQuad {
+    pub pts: [[f32; 3]; 4],
+    pub uv: [[f32; 2]; 4],
+    pub shade: f32,
+    pub texture: &'static str,
+}
+
+/// The element quad's model-space face shade (the block renderer's own
+/// law — Level.getShade's constants, NOT the entity diffuse the skin
+/// and the armor pieces ride; a block on the head shades per its MODEL
+/// face and never re-shades as the head turns — the baked quad's own
+/// direction the render speaks). `"shade": false` elements ride bare.
+fn block_face_shade(direction: mc_registry::generated::elements::Cull, shade: bool) -> f32 {
+    use mc_registry::generated::elements::Cull;
+    if !shade {
+        return 1.0;
+    }
+    let idx = match direction {
+        Cull::East => 0,
+        Cull::West => 1,
+        Cull::Up => 2,
+        Cull::Down => 3,
+        Cull::South => 4,
+        Cull::North => 5,
+    };
+    crate::colors::FACE_SHADE[idx]
+}
+
+/// THE HEAD-BLOCK LANE (CustomHeadLayer.submit's item branch — the
+/// 26.2 bytecode the evidence walk pinned): the head stack the
+/// extraction keeps (the skull family the `wornHeadType` branch
+/// clears, the helmet the `HumanoidArmorLayer.shouldRender` gate
+/// clears, the ASSETLESS plain block the `updateForLiving` HEAD
+/// context fills) renders the item's model through the head's own
+/// posed chain — `head.translateAndRotate` (the posed head part's
+/// matrix over the identity root), then translateToHead's law
+/// `translate(0, -0.25+yOffset, 0)` [the DEFAULT Transforms yOffset 0],
+/// `mulPose(rotY 180°)`, `scale(0.625, -0.625, -0.625)`, then the
+/// item's quads at the HEAD display context — NO_TRANSFORM's own bare
+/// centering `translate(-0.5, -0.5, -0.5)` the item pipeline's
+/// apply_transform(None) speaks (the block model's [0..1] bake folds
+/// centered, the pumpkin's center lands EXACTLY on the head's own).
+/// The block vertices ride BLOCK units (no /16 — the bake's own space,
+/// not the texel space the cubes speak). `None` = the model carries no
+/// element geometry (the skull family's special models — the honest
+/// not-this-lane, the follow-up names).
+pub fn head_block_quads(
+    state: &AvatarState,
+    feet: Vec3,
+    cam_yaw: f32,
+    cam_pitch: f32,
+    model_id: &str,
+) -> Option<Vec<HeadBlockQuad>> {
+    let quads = mc_registry::element_quads::derive_model_inherited(model_id)?;
+    let posed = build_posed_parts(state);
+    let head = &posed[0]; // the head part's pivot + setupAnim rotation
+    let m_head = head.matrix(&Mat4::IDENT);
+    // translateToHead + the HEAD context's bare centering, one chain
+    let layer = Mat4::translation(0.0, -0.25, 0.0)
+        .mul(&Mat4::rot_y(std::f32::consts::PI))
+        .mul(&Mat4::scale_3d(0.625, -0.625, -0.625))
+        .mul(&Mat4::translation(-0.5, -0.5, -0.5));
+    let m = m_head.mul(&layer);
+    let crouch_drop = if state.crouching { -2.0 / 16.0 } else { 0.0 };
+    let (fold_point, _fold_normal) =
+        entity_folds(state.yaw_deg, state.death_time, crouch_drop, feet);
+    let mut out: Vec<HeadBlockQuad> = Vec::new();
+    for q in quads {
+        let pts = q.vertices.map(|v| {
+            let p = m.transform_point(Vec3::new(v[0], v[1], v[2]));
+            fold_point([p[0], p[1], p[2]])
+        });
+        let shade = block_face_shade(q.direction, q.shade);
+        out.push(HeadBlockQuad {
+            pts,
+            uv: q.uvs,
+            shade,
+            texture: q.texture,
+        });
+    }
+    Some(out)
+}
+
 /// The leather layer's UNDYED tint (the client info JSON's
 /// `color_when_undyed: -6265536` = 0xFFA06540 — the classic brown the
 /// tint law unpacks; the store's bare (id, count) carries no dye
@@ -4645,6 +4731,92 @@ mod tests {
         for k in 0..3 {
             assert!((t[k] - want[k]).abs() < 1e-9, "the undyed brown: {t:?}");
         }
+    }
+
+    /// THE HEAD-BLOCK CHAIN (the CustomHeadLayer item branch's own law
+    /// — the carved pumpkin the HEAD family's only plain block speaks):
+    /// the rest pose's bounding box EXACTLY the centered 0.625 block
+    /// over the head's own center, the carved face (the model's north —
+    /// the carved_pumpkin texture) riding the skin's face side with its
+    /// own face shade, the Level.getShade set the other faces speak,
+    /// the head's pitch the block rides, and the element-less models
+    /// the lane honestly refuses (the skull family's special-model
+    /// domain — the follow-up names).
+    #[test]
+    fn the_head_block_rides_the_head_chain() {
+        let rest = AvatarState::rest(180.0, 0.0, 0.0);
+        let quads = head_block_quads(&rest, Vec3::ZERO, 0.0, 0.0, "block/carved_pumpkin")
+            .expect("the carved pumpkin's block model speaks");
+        // the vanilla cube: the 6 faces the block/cube chain bakes
+        assert_eq!(quads.len(), 6);
+        let mut lo = [f32::MAX; 3];
+        let mut hi = [f32::MIN; 3];
+        for q in &quads {
+            for p in q.pts.iter() {
+                for k in 0..3 {
+                    lo[k] = lo[k].min(p[k]);
+                    hi[k] = hi[k].max(p[k]);
+                }
+            }
+        }
+        // the centered 0.625 block over the head's own center: x/z
+        // spans -0.3125..0.3125 (the fold's mirror keeps the span), y
+        // 1.4385..2.0635 — the head's center 1.751 +- 0.3125
+        assert!((lo[0] + 0.3125).abs() < 1e-4, "lo.x = {}", lo[0]);
+        assert!((lo[2] + 0.3125).abs() < 1e-4, "lo.z = {}", lo[2]);
+        assert!((lo[1] - 1.4385).abs() < 1e-4, "lo.y = {}", lo[1]);
+        assert!((hi[0] - 0.3125).abs() < 1e-4, "hi.x = {}", hi[0]);
+        assert!((hi[2] - 0.3125).abs() < 1e-4, "hi.z = {}", hi[2]);
+        assert!((hi[1] - 2.0635).abs() < 1e-4, "hi.y = {}", hi[1]);
+        // THE CARVED FACE (the model's north — the skin's face side):
+        // one quad, the carved texture, centroid z -0.3125 (in front of
+        // the skin's own -0.25 plane — the pumpkin sits proud), the
+        // NORTH face's own 0.8 shade the block law speaks
+        let carved: Vec<_> = quads
+            .iter()
+            .filter(|q| q.texture.ends_with("block/carved_pumpkin"))
+            .collect();
+        assert_eq!(carved.len(), 1, "the carved texture names ONE face");
+        let cz = carved[0].pts.iter().map(|p| p[2]).sum::<f32>() / 4.0;
+        assert!(cz < -0.3, "the carved face rides the face side: {cz}");
+        assert!((carved[0].shade - 0.8).abs() < 1e-6, "the north face's shade");
+        // the Level.getShade set the other faces speak (the up 1.0,
+        // the down 0.5, the east/west 0.6 — the sides the pumpkin_top
+        // / pumpkin_side textures paint)
+        let up = quads.iter().find(|q| q.texture.ends_with("pumpkin_top") && (q.shade - 1.0).abs() < 1e-6)
+            .expect("the up face shades 1.0");
+        assert!(up.pts.iter().all(|p| p[1] > 2.0), "the up face rides the crown");
+        assert!(
+            quads.iter().any(|q| (q.shade - 0.5).abs() < 1e-6),
+            "the down face shades 0.5"
+        );
+        assert_eq!(
+            quads.iter().filter(|q| q.texture.ends_with("pumpkin_side")).count(),
+            3,
+            "the three plain sides"
+        );
+        // THE HEAD'S PITCH the block rides (the head part's own
+        // rotation — looking down swings the block forward and drops it)
+        let down = AvatarState::rest(180.0, 80.0, 0.0);
+        let dq = head_block_quads(&down, Vec3::ZERO, 0.0, 0.0, "block/carved_pumpkin")
+            .expect("the pitched pose speaks");
+        let mut z_sum = 0.0f32;
+        let mut y_sum = 0.0f32;
+        let mut n = 0.0f32;
+        for q in &dq {
+            for p in q.pts.iter() {
+                z_sum += p[2];
+                y_sum += p[1];
+                n += 1.0;
+            }
+        }
+        assert!(z_sum / n < -0.15, "the block swung to the face side: {z_sum}");
+        assert!(y_sum / n < 1.7, "the block dropped with the head: {y_sum}");
+        // THE ELEMENT-LESS REFUSAL: the skull template the family's
+        // items speak carries no elements — the lane honestly None
+        // (the SkullBlockRenderer's special models the follow-up keeps)
+        assert!(head_block_quads(&rest, Vec3::ZERO, 0.0, 0.0, "item/template_skull").is_none());
+        assert!(head_block_quads(&rest, Vec3::ZERO, 0.0, 0.0, "block/no_such_model").is_none());
     }
 
     /// THE EQUIPMENT TEXTURES LOAD (the runtime cache's own verdict —

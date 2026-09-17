@@ -69,6 +69,14 @@ impl Mat4 {
         ])
     }
 
+    /// Per-axis scale matrix (column-major; PoseStack.scale's twin —
+    /// the negative components the head-block chain speaks ride here).
+    pub fn scale_3d(x: f32, y: f32, z: f32) -> Mat4 {
+        Mat4([
+            x, 0.0, 0.0, 0.0, 0.0, y, 0.0, 0.0, 0.0, 0.0, z, 0.0, 0.0, 0.0, 0.0, 1.0,
+        ])
+    }
+
     pub fn mul(&self, o: &Mat4) -> Mat4 {
         let a = &self.0;
         let b = &o.0;

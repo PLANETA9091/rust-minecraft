@@ -743,7 +743,12 @@ fn special_layer_quads(layer: &crate::generated::special_models::SpecialLayer, t
                     light_emission: None,
                 };
                 for (vi, v) in face.verts.iter().enumerate() {
-                    q.vertices[vi] = apply_vertex(&m, [v[0], v[1], v[2]]);
+                    // the cube corners divide by 16 at the consumer —
+                    // the vanilla Cube constructor's own law (the
+                    // polygons bake /16 — the model units the item and
+                    // entity pipelines share; the PART POSE's /16 above
+                    // is translateAndRotate's twin, this is the cube's)
+                    q.vertices[vi] = apply_vertex(&m, [v[0] / 16.0, v[1] / 16.0, v[2] / 16.0]);
                     q.uvs[vi] = [v[3] * 16.0, v[4] * 16.0];
                 }
                 quads.push(q);
@@ -1676,9 +1681,11 @@ mod tests {
     fn the_special_layer_bake_is_the_dump_polygon_times_sixteen() {
         // the shield's geometry, RAW model space: 2 parts x 1 cube x 6
         // faces = 12 quads; the plate's TOP face first vertex is the
-        // dump's own xyz (the part pose is identity), and the uv rides
-        // the dump's normalized value scaled into the 0..16 sample
-        // domain (13/64 -> 13/4 = 3.25, an exact f32 shift)
+        // dump's own xyz through the vanilla Cube constructor's /16
+        // (the polygons bake in block units — the model space every
+        // item/entity consumer speaks), and the uv rides the dump's
+        // normalized value scaled into the 0..16 sample domain
+        // (13/64 -> 13/4 = 3.25, an exact f32 shift)
         let layer = crate::special_item_render_by_name("shield")
             .expect("shield")
             .layers
@@ -1690,11 +1697,11 @@ mod tests {
         let v0 = quads[6].vertices[0]; // part 0 = root (6 faces), part 1 = plate -> quad 6 = its first face (down), quad 6+? -- pin via the raw polygon instead
         let _ = v0;
         // find the plate's UP-face quad by its first vertex matching the
-        // dump's raw xyz (identity pose -> bit-exact)
+        // dump's raw xyz through the /16 (identity pose -> bit-exact)
         let q = quads
             .iter()
-            .find(|q| q.vertices[0] == [6.0, -11.0, -1.0])
-            .expect("the plate's top face, raw");
+            .find(|q| q.vertices[0] == [6.0 / 16.0, -11.0 / 16.0, -1.0 / 16.0])
+            .expect("the plate's top face, the /16 bake");
         assert_eq!(q.texture, "entity/shield/shield_base_nopattern");
         assert_eq!(q.uvs[0], [13.0 / 64.0 * 16.0, 0.0]);
         assert_eq!(q.uvs[1], [1.0 / 64.0 * 16.0, 0.0]);
@@ -1719,10 +1726,10 @@ mod tests {
         assert!(quads
             .iter()
             .all(|q| q.texture == "entity/shield/shield_base_nopattern"));
-        // the raw bake's plate top v0 was [6, -11, -1]; the posed vertex
-        // differs (the stanza's 0.68 scale + the translation) — the
-        // display arc actually RAN
-        let raw = [6.0f32, -11.0, -1.0];
+        // the raw bake's plate top v0 was [6/16, -11/16, -1/16] (the
+        // vanilla Cube's /16); the posed vertex differs (the stanza's
+        // 0.68 scale + the translation) — the display arc actually RAN
+        let raw = [6.0f32 / 16.0, -11.0 / 16.0, -1.0 / 16.0];
         assert!(quads.iter().all(|q| q.vertices.iter().all(|v| *v != raw)));
         // the GUI context resolves too (the same geometry, the stanza's
         // gui branch) — and the unknown id is the honest None

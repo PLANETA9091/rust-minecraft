@@ -4035,6 +4035,46 @@ impl App {
                 crate::avatar::armor_quads(&state, Vec3::new(0.0, 0.0, 0.0), 0.0, 0.0, *slot);
             sampled.extend(aquads.iter().map(|q| armor_sample(q, tex_key.as_str())));
         }
+        // THE HEAD-BLOCK LANE (CustomHeadLayer's item branch — the
+        // extraction law the 26.2 extractRenderState bytecode speaks):
+        // the head stack the armor walk refuses (the carved pumpkin's
+        // empty-asset `shouldRender` verdict) rides the item branch —
+        // the item's block model through the head's own posed chain
+        // (translateToHead's 0.625 law the avatar lane folds), the
+        // block's own face shade the sampler tints. The skull family
+        // the `wornHeadType` branch keeps stays the special-models'
+        // follow-up — the honest silence here.
+        if let Some(&(head_id, head_count)) = self.inventory.armor.first() {
+            if head_count > 0 && mc_registry::item_name(head_id) == Some("carved_pumpkin") {
+                if let Some((_, model, _, _)) = mc_registry::generated::item_models::ITEM_MODEL_DEFS
+                    .iter()
+                    .find(|d| d.0 == "carved_pumpkin")
+                {
+                    let model_id = model.strip_prefix("minecraft:").unwrap_or(model);
+                    if let Some(hb) = crate::avatar::head_block_quads(
+                        &state,
+                        Vec3::new(0.0, 0.0, 0.0),
+                        0.0,
+                        0.0,
+                        model_id,
+                    ) {
+                        for q in &hb {
+                            // the entity fold's x mirror flips the
+                            // winding — the SAME corner re-order the
+                            // body quads speak keeps the raster's
+                            // front-face law (the corner-bound texels
+                            // ride the swap verbatim)
+                            sampled.push(crate::raster::SampledQuad {
+                                pts: [q.pts[0], q.pts[2], q.pts[1], q.pts[3]],
+                                uv: [q.uv[0], q.uv[2], q.uv[1], q.uv[3]],
+                                tex: q.texture,
+                                tint: [q.shade, q.shade, q.shade],
+                            });
+                        }
+                    }
+                }
+            }
+        }
         fb.clear_depth();
         fb.draw_sampled_quads(vp, &sampled, &mut |tex, u, v| {
             if tex.is_empty() {
@@ -4063,6 +4103,17 @@ impl App {
                     ]);
                 }
                 return None;
+            }
+            // THE BLOCK LANE (the head-block's texture ids): the
+            // resolved material the element bake carries — the same
+            // atlas fetch the GUI icons speak, the quad's own shade
+            // already folded in the tint.
+            if tex.starts_with("minecraft:") {
+                return match mc_registry::sprite_uv::sample_uv(tex, u, v) {
+                    mc_registry::sprite_uv::Sample::Pixel(c) => Some(c),
+                    mc_registry::sprite_uv::Sample::Missing(c) => Some(c),
+                    mc_registry::sprite_uv::Sample::Unknown => None,
+                };
             }
             let Some(layer) = self.armor_textures.get(tex).and_then(|o| o.as_ref()) else {
                 return None;
@@ -19693,6 +19744,132 @@ mod tests {
             }
         }
         assert!(leather_diff > 60, "the leather chest painted: {leather_diff}");
+    }
+
+    /// THE MANNEQUIN'S HEAD-BLOCK (the CustomHeadLayer item branch the
+    /// carved pumpkin rides — the head stack the armor walk refuses
+    /// still paints the mannequin): the pumpkin's block pixels cover
+    /// the head (the bare-skin diff speaks), the equipment loads stay
+    /// EMPTY (the asset fold's own verdict — the head-block lane is no
+    /// armor lane), and the skull family the `wornHeadType` branch
+    /// keeps renders NOTHING (the special-models' follow-up — the
+    /// honest silence the elytra's own miss speaks).
+    #[test]
+    fn the_mannequin_wears_the_carved_pumpkin() {
+        let root = ["assets-cache/jar", "../assets-cache/jar", "../../assets-cache/jar"]
+            .iter()
+            .map(std::path::Path::new)
+            .find(|p| p.join("gui/container/inventory.png").exists());
+        let Some(root) = root else { return };
+        let Some(_) = crate::avatar::AvatarModel::load(&root) else {
+            return; // the skin asset gate — the head-block rides the same honesty
+        };
+        let mut app = App::new(3);
+        app.enter_world();
+        app.spawn_offline_body();
+        app.open_inventory();
+        let mut assets = GuiAssets::open(&root);
+        let bare = {
+            let mut fb = crate::raster::Framebuf::new(640, 360);
+            app.render(&mut fb, &mut assets);
+            fb.color.clone()
+        };
+        let px = |color: &[u8], x: usize, y: usize| -> [u8; 3] {
+            let o = (y * 640 + x) * 3;
+            [color[o], color[o + 1], color[o + 2]]
+        };
+        let diff_in_window = |a: &[u8], b: &[u8]| -> usize {
+            let mut diff = 0usize;
+            for y in 96..168 {
+                for x in 262..303 {
+                    if px(a, x, y) != px(b, x, y) {
+                        diff += 1;
+                    }
+                }
+            }
+            diff
+        };
+        // THE PUMPKIN PAINTS (the 0.625 block over the head — bigger
+        // than the helmet the armor lane paints, the overhang ABOVE the
+        // crown the 2.0635 top speaks)
+        let id = |name: &str| mc_registry::item_id_by_name(name).expect("the registry speaks");
+        app.inventory.armor = [(id("carved_pumpkin"), 1), (0, 0), (0, 0), (0, 0)];
+        let pumpkin = {
+            let mut fb = crate::raster::Framebuf::new(640, 360);
+            app.render(&mut fb, &mut assets);
+            fb.color.clone()
+        };
+        let pumpkin_diff = diff_in_window(&bare, &pumpkin);
+        assert!(pumpkin_diff > 200, "the pumpkin painted: {pumpkin_diff}");
+        // the equipment loads stay EMPTY (the asset fold refuses the
+        // pumpkin — the head-block lane speaks no armor texture)
+        assert!(app.armor_textures.is_empty());
+        // THE SKULL'S HONEST SILENCE (the wornHeadType branch the
+        // special-model lane keeps — nothing renders yet)
+        app.inventory.armor = [(id("skeleton_skull"), 1), (0, 0), (0, 0), (0, 0)];
+        let skull = {
+            let mut fb = crate::raster::Framebuf::new(640, 360);
+            app.render(&mut fb, &mut assets);
+            fb.color.clone()
+        };
+        let skull_diff = diff_in_window(&bare, &skull);
+        assert_eq!(skull_diff, 0, "the skull family rides no plain-block lane");
+    }
+
+    #[test]
+    fn the_skull_icon_bakes_in_its_slot() {
+        // THE /16 LAW (the vanilla Cube constructor's own division):
+        // the dump-backed special polygons bake in block units — the
+        // skeleton skull's icon paints INSIDE the head slot's 16x16
+        // (the former raw-texel bake spread a ~180px smear across the
+        // screen — the regressions this test buries)
+        let root = ["assets-cache/jar", "../assets-cache/jar", "../../assets-cache/jar"]
+            .iter()
+            .map(std::path::Path::new)
+            .find(|p| p.join("gui/container/inventory.png").exists());
+        let Some(root) = root else { return };
+        let Some(_) = crate::avatar::AvatarModel::load(&root) else { return };
+        let mut app = App::new(3);
+        app.enter_world();
+        app.spawn_offline_body();
+        app.open_inventory();
+        let mut assets = GuiAssets::open(&root);
+        let bare = {
+            let mut fb = crate::raster::Framebuf::new(640, 360);
+            app.render(&mut fb, &mut assets);
+            fb.color.clone()
+        };
+        let id = mc_registry::item_id_by_name("skeleton_skull").expect("the registry speaks");
+        app.inventory.armor = [(id, 1), (0, 0), (0, 0), (0, 0)];
+        let skull = {
+            let mut fb = crate::raster::Framebuf::new(640, 360);
+            app.render(&mut fb, &mut assets);
+            fb.color.clone()
+        };
+        let px = |c: &[u8], x: usize, y: usize| -> [u8; 3] {
+            let o = (y * 640 + x) * 3;
+            [c[o], c[o + 1], c[o + 2]]
+        };
+        // the head slot's own region (panel 232,97 + (8,8), the +1 inset
+        // the icon draw keeps — a 2px margin around the 16x16)
+        let in_slot = |x: usize, y: usize| x >= 239 && x < 258 && y >= 104 && y < 123;
+        let mut slot_px = 0usize;
+        let mut strays = Vec::new();
+        for y in 0..360 {
+            for x in 0..640 {
+                if px(&bare, x, y) != px(&skull, x, y) {
+                    if in_slot(x, y) {
+                        slot_px += 1;
+                    } else {
+                        if strays.len() < 8 {
+                            strays.push((x, y));
+                        }
+                    }
+                }
+            }
+        }
+        assert!(slot_px > 100, "the skull icon painted the slot: {slot_px}");
+        assert!(strays.is_empty(), "the icon stayed in its slot: {strays:?}");
     }
 }
 
