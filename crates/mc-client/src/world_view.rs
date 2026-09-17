@@ -483,6 +483,18 @@ pub enum ContainerCommand {
         pos: (i32, i32, i32),
         include_data: bool,
     },
+    /// THE BUNDLE SELECTION's wire half (the vanilla
+    /// `BundleMouseActions.toggleSelectedBundleItem`'s own echo — the
+    /// ServerboundSelectBundleItemPacket the scroll's tail sends after
+    /// the local set): the hovered slot's MENU id (the walk's own
+    /// numbering — the chest's grid/mirror the rects keep, the
+    /// inventory's menu order) and the selection the walk moved (the
+    /// wrap the `[0, n)` domain lands). The worker speaks the packet
+    /// through the session's send path.
+    SelectBundleItem {
+        slot_id: i32,
+        selected_item_index: i32,
+    },
     /// The right-mouse USE (the vanilla gameMode.useItem's own lane):
     /// the camera's angles converted to the vanilla wire degrees
     /// ([`wire_angles`]), the MAIN_HAND ordinal the worker speaks.

@@ -128,6 +128,7 @@ pub mod serverbound {
         SB_CLIENT_COMMAND as CLIENT_COMMAND, SB_INTERACT as INTERACT,
         SB_PICK_ITEM_FROM_BLOCK as PICK_ITEM_FROM_BLOCK,
         SB_PICK_ITEM_FROM_ENTITY as PICK_ITEM_FROM_ENTITY,
+        SB_BUNDLE_ITEM_SELECTED as BUNDLE_ITEM_SELECTED,
     };
 }
 
@@ -5063,6 +5064,29 @@ pub fn encode_pick_item_from_entity(entity_id: i32, include_data: bool) -> Vec<u
     p
 }
 
+/// The bundle selection's wire half (the vanilla
+/// `BundleMouseActions.toggleSelectedBundleItem`'s own echo —
+/// ServerboundSelectBundleItemPacket, generated id 3,
+/// `minecraft:bundle_item_selected`). THE WIRE (javap of the real 26.2
+/// class: the STREAM_CODEC composite the clinit's
+/// `Packet.codec(StreamMemberEncoder, StreamDecoder)` keeps — the
+/// member `write(FriendlyByteBuf)` writes the record's two fields):
+/// the hovered slot's MENU id as a VarInt, then the selected index as
+/// a VarInt. THE VALIDATION lives on the READ side (the server's
+/// `read(FriendlyByteBuf)` ctor: `selectedItemIndex < 0 &&
+/// selectedItemIndex != -1` throws — the deselected -1 the law keeps,
+/// every other negative refuses); the WRITE path (the client's own
+/// walk) carries no check — the `selected >= n` bound the
+/// `toggleSelectedBundleItem` guard speaks is the walk's own, the
+/// wrap the `[0, n)` domain the caller keeps.
+pub fn encode_select_bundle_item(slot_id: i32, selected_item_index: i32) -> Vec<u8> {
+    let mut p = Vec::with_capacity(4);
+    write_varint(&mut p, serverbound::BUNDLE_ITEM_SELECTED);
+    write_varint(&mut p, slot_id);
+    write_varint(&mut p, selected_item_index);
+    p
+}
+
 /// The right-mouse USE (the vanilla `MultiPlayerGameMode.useItem`'s
 /// serverbound echo — ServerboundUseItemPacket, generated id 67,
 /// `minecraft:use_item`). THE WIRE (javap of the real 26.2 class, its
@@ -6334,6 +6358,17 @@ impl<S: Read + Write> PlaySession<S> {
         self.conn
             .send_packet(&encode_pick_item_from_entity(entity_id, include_data))
             .context("send pick item from entity")
+    }
+
+    /// The bundle selection's wire half (the vanilla
+    /// `BundleMouseActions.toggleSelectedBundleItem`'s own echo — the
+    /// ServerboundSelectBundleItemPacket the scroll's tail sends after
+    /// the local set): the hovered slot's MENU id and the selection the
+    /// walk moved (the two VarInts the record's write speaks).
+    pub fn select_bundle_item(&mut self, slot_id: i32, selected_item_index: i32) -> Result<()> {
+        self.conn
+            .send_packet(&encode_select_bundle_item(slot_id, selected_item_index))
+            .context("send select bundle item")
     }
 
     /// The player's right-mouse USE (the vanilla gameMode.useItem's own
@@ -10752,6 +10787,44 @@ mod tests {
         );
         // the close: the window id alone
         assert_eq!(encode_container_close(2), vec![0x13, 0x02]);
+    }
+
+    /// The bundle selection's serverbound lane — the
+    /// `BundleMouseActions.toggleSelectedBundleItem` tail's own echo.
+    /// THE WIRE (javap of the real 26.2 class: the member
+    /// `write(FriendlyByteBuf)` writes the record's two fields, the
+    /// read ctor's `selectedItemIndex < 0 && selectedItemIndex != -1`
+    /// throw the validation the WRITE path never carries): the hovered
+    /// slot's MENU id as a VarInt, the selected index as a VarInt —
+    /// the id prefix rides the house convention (the generated
+    /// SB_BUNDLE_ITEM_SELECTED = 3, the single-byte VarInt).
+    #[test]
+    fn the_select_bundle_item_lane_speaks_the_dumped_wire() {
+        assert_eq!(
+            serverbound::BUNDLE_ITEM_SELECTED,
+            3,
+            "minecraft:bundle_item_selected"
+        );
+        // the selection walk's own shape: the inventory menu's store
+        // slot 12, the selection 0 the first scroll lands
+        assert_eq!(
+            encode_select_bundle_item(12, 0),
+            vec![0x03, 0x0c, 0x00],
+            "slot 12, selection 0 — the two VarInts"
+        );
+        // a deeper slot and a wrapped selection
+        assert_eq!(
+            encode_select_bundle_item(13, 4),
+            vec![0x03, 0x0d, 0x04],
+            "slot 13, selection 4"
+        );
+        // the deselected index the read ctor's law keeps (the -1 the
+        // write path never speaks — the walk's wrap lands in [0, n))
+        assert_eq!(
+            encode_select_bundle_item(2, -1),
+            vec![0x03, 0x02, 0xff, 0xff, 0xff, 0xff, 0x0f],
+            "selection -1 rides its five-byte VarInt"
+        );
     }
 
     /// The serverbound Set Carried Item lane — the number keys'

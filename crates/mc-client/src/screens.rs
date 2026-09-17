@@ -445,6 +445,38 @@ enum HurtVoice {
     Drowning,
 }
 
+/// THE BUNDLE CONTENTS COMPONENT (the 26.2 `BundleContents` record's
+/// own client shape — `items` + `selectedItemIndex`): the stacks the
+/// bundle carries (the (registry id, count) pairs the client's stack
+/// model speaks) and the selected index the scroll's toggle walk moves
+/// (the `NO_SELECTED_INDEX` = -1 the clinit's default keeps — nothing
+/// selected until the wheel speaks). The row rides the App's
+/// [`App::bundle_contents`] map keyed by the hovered slot's MENU id;
+/// the `set-slot`'s component sync is the feeder round.
+#[derive(Debug, Clone, PartialEq, Eq, Default)]
+pub(crate) struct BundleContents {
+    /// The contents' stacks (the component's `items` list).
+    pub items: Vec<(i32, i32)>,
+    /// The selected index (the record's `selectedItemIndex` — the -1
+    /// the NO_SELECTED_INDEX law keeps, the deselected state the
+    /// mutable's same-index arm speaks).
+    pub selected_item_index: i32,
+}
+
+impl BundleContents {
+    /// The NO_SELECTED_INDEX constant (the record's own -1 default).
+    pub const NO_SELECTED_INDEX: i32 = -1;
+
+    /// A contents row with NOTHING selected (the component's own
+    /// construction law — the selected index starts at -1).
+    pub fn new(items: Vec<(i32, i32)>) -> Self {
+        Self {
+            items,
+            selected_item_index: Self::NO_SELECTED_INDEX,
+        }
+    }
+}
+
 pub struct App {
     pub screen: ScreenKind,
     pub boot_progress: f32,
@@ -480,6 +512,24 @@ pub struct App {
     /// false, the sensitivity 1.0) fold the raw wheel deltas.
     pub scroll_acc_x: f64,
     pub scroll_acc_y: f64,
+    /// THE BUNDLE LANE'S OWN ACCUMULATOR (the `BundleMouseActions`'s
+    /// own `ScrollWheelHandler` field — the action the screen's
+    /// itemSlotMouseActions walk keeps, a SECOND handler instance the
+    /// screen-null arm's never touches): the same sign-flip reset /
+    /// whole-step handout / remainder law, fed the screen arm's folded
+    /// deltas the container route speaks.
+    pub bundle_scroll_acc_x: f64,
+    pub bundle_scroll_acc_y: f64,
+    /// THE BUNDLE CONTENTS LANE (the `bundle_contents` component the
+    /// client's stacks could carry — the model's own seam): the rows
+    /// keyed by the hovered slot's MENU id (the chest's grid/mirror the
+    /// rects keep, the inventory's menu order — result 0, craft 1..4,
+    /// armor 5..8, offhand 45, the store rows 9..44). The `set-slot`'s
+    /// component sync is the feeder round (the HashedPatch the wire
+    /// speaks); the toggle walk reads and writes the rows, and every
+    /// container switch CLEARS the map — the rows are window-scoped,
+    /// a stale row never rides a later screen's bundle.
+    pub bundle_contents: std::collections::HashMap<i32, BundleContents>,
     /// The LIVE store's hotbar row — the HUD's icons and counts are
     /// the store's projection (the vanilla renderHotbar's own lane,
     /// `USE_ROW_SLOT_START..USE_ROW_SLOT_END` verbatim, the `(0, 0)`
@@ -1226,6 +1276,9 @@ impl App {
             selected_hotbar: 0,
             scroll_acc_x: 0.0,
             scroll_acc_y: 0.0,
+            bundle_scroll_acc_x: 0.0,
+            bundle_scroll_acc_y: 0.0,
+            bundle_contents: std::collections::HashMap::new(),
             hotbar_slots: [(0, 0); 9],
             day_time_base: 0,
             partial_tick: 1.0,
@@ -3076,6 +3129,16 @@ impl App {
     }
 
     pub fn open(&mut self, kind: ScreenKind) {
+        // THE BUNDLE CONTENTS' OWN LIFECYCLE (the map's window-scoped
+        // rows): any container switch clears — the chest's menu ids and
+        // the inventory's SHARE the numeric domain, a stale row never
+        // rides a later screen's bundle (the set-slot's sync is the
+        // re-learner, the walk the scroll's own lane keeps)
+        if matches!(kind, ScreenKind::Chest | ScreenKind::Inventory) {
+            self.bundle_contents.clear();
+            self.bundle_scroll_acc_x = 0.0;
+            self.bundle_scroll_acc_y = 0.0;
+        }
         self.screen = kind;
         self.buttons.clear();
     }
@@ -5309,61 +5372,91 @@ impl App {
     /// `itemSlotMouseActions` walk — the ONE registered action the
     /// client's screens keep is the bundle lane
     /// ([`crate::screens::App::is_bundle_item`] the
-    /// `BundleMouseActions.matches`' `ItemTags.BUNDLES` verdict rides),
-    /// and the bundle's own opening gate
+    /// `BundleMouseActions.matches`' `ItemTags.BUNDLES` verdict rides).
+    /// THE BUNDLE'S OWN WALK (`BundleMouseActions.onMouseScrolled` —
+    /// the contents round the wall's seam armed): the opening gate
     /// (`BundleItem.getNumberOfItemsToShow` — the `bundle_contents`
-    /// component the client's stacks never carry, the EMPTY default the
-    /// `getOrDefault` speaks) reads 0 at every stack the client's model
-    /// represents: the `return false` the bytecode 12-13 keeps fires
-    /// BEFORE the `ScrollWheelHandler.onMouseScroll` fold (bytecode
-    /// 14-20) — the accumulator the gate order never touches. The
-    /// `toggleSelectedBundleItem` tail (the selected-item walk + the
-    /// `bundle_item_selected` echo the protocol's SB id 3 names) is the
-    /// contents round's own line — the seam this walk arms. Returns the
-    /// walk's verdict (the boolean the dispatch's `pop` discards — the
-    /// contract the honest walk keeps). The DELTA NAMES the
-    /// underscore keeps honest — the fold the gate precedes is
-    /// unreachable at every stack the model represents, the parameters
-    /// the walk never reads today (the contents round reads them).
-    pub fn on_container_scroll(
-        &mut self,
-        _delta_x: f64,
-        _delta_y: f64,
-        mx: i32,
-        my: i32,
-    ) -> bool {
+    /// component row the map keeps, the EMPTY default the
+    /// `getOrDefault` speaks) reads 0 at the contents-less slots the
+    /// old model rode: the `return false` the bytecode 12-13 keeps
+    /// fires BEFORE the fold (bytecode 14-20). A row the map keeps
+    /// rides BEYOND the wall: the action's OWN accumulator folds (the
+    /// `ScrollWheelHandler.onMouseScroll` law — the sign-flip reset,
+    /// the whole steps emit, the fractional remainder stays; the
+    /// screen-arm scale the route speaks rides the Y the hotbar law
+    /// pins), the DIRECTION the call-site law keeps (`y != 0 ? y :
+    /// -x`), the SELECTION `getNextScrollWheelSelection(direction,
+    /// prev, n)` walks (`prev - signum`, the `max(-1)` clamp, the wrap
+    /// into `[0, n)`), and a MOVED selection lands in
+    /// [`App::toggle_selected_bundle_item`] — the local set + the
+    /// `bundle_item_selected` echo the protocol's SB id 3 names. The
+    /// verdict: TRUE from the open gate onward (bytecode 90-91), false
+    /// only the walls keep (the no-row default, the EMPTY contents, no
+    /// hover, no item, no action match).
+    pub fn on_container_scroll(&mut self, delta_x: f64, delta_y: f64, mx: i32, my: i32) -> bool {
         // THE HOVERED SLOT'S OWN GATE (the bytecode 1-14): the slot the
         // mouse rides — null, or empty, the walk refuses
-        let Some(stack) = self.hovered_container_stack(mx, my) else {
+        let Some((id, count, slot_id)) = self.hovered_container(mx, my) else {
             return false; // hoveredSlot null — the iconst_0 the walk keeps
         };
-        if stack.1 <= 0 {
+        if count <= 0 {
             return false; // hasItem() false — the ifeq -> 97 arm
         }
         // THE ACTION WALK (the bytecode 17-94): the matches -> the
         // onMouseScrolled chain; the ONE action the client registers is
-        // the bundle lane, and its opening gate reads the
-        // bundle_contents component the client's stacks never carry —
-        // the 0 the EMPTY default speaks, the fold the gate precedes
-        if Self::is_bundle_item(stack.0) {
-            // BundleMouseActions.matches TRUE — onMouseScrolled's own
-            // `getNumberOfItemsToShow == 0 -> return false` arm (the
-            // bytecode 0-13): the accumulator untouched, the toggle
-            // unreachable, the honest verdict false
-            return false;
+        // the bundle lane
+        if Self::is_bundle_item(id) {
+            // THE OPENING GATE (bytecode 0-13): the row the map keeps —
+            // the getOrDefault's EMPTY default the contents-less slot
+            // rides, the 0 the gate reads, the wall the false keeps
+            let Some(contents) = self.bundle_contents.get(&slot_id) else {
+                return false;
+            };
+            let n = Self::bundle_number_of_items_to_show(contents.items.len() as i32);
+            let prev = contents.selected_item_index;
+            if n == 0 {
+                return false; // the EMPTY default's wall — the fold never rode
+            }
+            // THE FOLD (bytecode 14-20 — the action's OWN handler
+            // instance, the screen arm's folded deltas the route
+            // speaks: the X raw, the Y the 2.0 the hotbar law pins)
+            let (steps_x, steps_y) = Self::fold_scroll_steps(
+                &mut self.bundle_scroll_acc_x,
+                &mut self.bundle_scroll_acc_y,
+                delta_x,
+                delta_y * 2.0,
+            );
+            // THE DIRECTION (bytecode 25-47): the Y wins, the X tilt
+            // inverts
+            let direction = if steps_y != 0 { steps_y } else { -steps_x };
+            if direction != 0 {
+                // THE SELECTION WALK (bytecode 49-77):
+                // getNextScrollWheelSelection's own law, the wrap the
+                // [0, n) domain keeps, the -1 the max clamp feeds
+                let next = Self::get_next_scroll_wheel_selection(direction as f64, prev, n);
+                if prev != next {
+                    self.toggle_selected_bundle_item(slot_id, next, n);
+                }
+            }
+            return true; // the verdict bytecode 90-91 keeps
         }
         false // no action matched — the walk's own iconst_0 (bytecode 97)
     }
 
-    /// The hovered slot's stack (the AbstractContainerScreen's
-    /// `hoveredSlot` the render's own isHovering walk keeps — the SAME
-    /// 16x16 rects the click lane rides, the menu order the ctor
-    /// speaks): the chest screen's grid + mirror rows, the inventory's
-    /// craft/result/armor/offhand/store rows. The 16x16 hit rect at the
-    /// +1 inset the store's own click walk speaks; `None` the no-slot
-    /// and no-geometry arms keep (the render-then-hit pattern the
-    /// buttons' own lane rides).
-    fn hovered_container_stack(&self, mx: i32, my: i32) -> Option<(i32, i32)> {
+    /// The hovered slot's stack AND its menu id (the
+    /// AbstractContainerScreen's `hoveredSlot` the render's own
+    /// isHovering walk keeps — the SAME 16x16 rects the click lane
+    /// rides, the menu order the ctor speaks): the chest screen's grid
+    /// + mirror rows, the inventory's craft/result/armor/offhand/store
+    /// rows. The 16x16 hit rect at the +1 inset the store's own click
+    /// walk speaks; `None` the no-slot and no-geometry arms keep (the
+    /// render-then-hit pattern the buttons' own lane rides). The MENU
+    /// ID rides the tuple's tail — the chest's rects keep their own
+    /// (grid 0..26, the mirror 27..62), the inventory's rows the
+    /// CraftingMenu order speaks (result 0, craft 1..4, armor 5..8,
+    /// the store 9..35, the hotbar row 36..44, offhand 45 — the id the
+    /// bundle selection's packet carries).
+    fn hovered_container(&self, mx: i32, my: i32) -> Option<(i32, i32, i32)> {
         match self.screen {
             ScreenKind::Chest => {
                 let &(_, _, slot) = self
@@ -5371,11 +5464,12 @@ impl App {
                     .iter()
                     .find(|&&(x, y, _)| mx >= x && mx < x + 16 && my >= y && my < y + 16)?;
                 let s = slot as usize;
-                Some(if s < 27 {
+                let (id, count) = if s < 27 {
                     self.chest_slots[s]
                 } else {
                     self.chest_mirror[s - 27]
-                })
+                };
+                Some((id, count, slot as i32))
             }
             ScreenKind::Inventory => {
                 if self.inv_panel == (0, 0) {
@@ -5386,34 +5480,50 @@ impl App {
                 // 5..8, offhand 45, the store rows the walk keeps last
                 let (rx, ry) = craft_slot_origin(panel, 4);
                 if mx >= rx + 1 && mx < rx + 17 && my >= ry + 1 && my < ry + 17 {
-                    return Some(self.craft_result);
+                    let s = self.craft_result;
+                    return Some((s.0, s.1, 0));
                 }
                 for cell in 0..4 {
                     let (cx, cy) = craft_slot_origin(panel, cell);
                     if mx >= cx + 1 && mx < cx + 17 && my >= cy + 1 && my < cy + 17 {
-                        return Some(self.craft_grid[cell]);
+                        let s = self.craft_grid[cell];
+                        return Some((s.0, s.1, 1 + cell as i32));
                     }
                 }
                 for k in 0..4 {
                     let (ax, ay) = armor_slot_origin(panel, k);
                     if mx >= ax + 1 && mx < ax + 17 && my >= ay + 1 && my < ay + 17 {
-                        return Some(self.inventory.armor[k]);
+                        let s = self.inventory.armor[k];
+                        return Some((s.0, s.1, 5 + k as i32));
                     }
                 }
                 let (ox, oy) = offhand_slot_origin(panel);
                 if mx >= ox + 1 && mx < ox + 17 && my >= oy + 1 && my < oy + 17 {
-                    return Some(self.inventory.offhand[0]);
+                    let s = self.inventory.offhand[0];
+                    return Some((s.0, s.1, 45));
                 }
                 for i in 0..36 {
                     let (sx, sy) = inventory_slot_origin(panel, i);
                     if mx >= sx + 1 && mx < sx + 17 && my >= sy + 1 && my < sy + 17 {
-                        return Some(self.inventory.items[i]);
+                        let s = self.inventory.items[i];
+                        // the menu's own store numbering: the array's
+                        // 0..8 the HOTBAR row speaks (menu 36..44), the
+                        // 9..35 the main grid (menu 9..35)
+                        let slot_id = if i < 9 { 36 + i as i32 } else { i as i32 };
+                        return Some((s.0, s.1, slot_id));
                     }
                 }
                 None // the press between the slots — the hover's own miss
             }
             _ => None, // the walk only the container screens answer
         }
+    }
+
+    /// The hovered slot's stack — the walk the click lane keeps, the
+    /// menu id the tuple's tail carries dropped.
+    fn hovered_container_stack(&self, mx: i32, my: i32) -> Option<(i32, i32)> {
+        self.hovered_container(mx, my)
+            .map(|(id, count, _)| (id, count))
     }
 
     /// THE BUNDLES TAG (the `BundleMouseActions.matches` walk —
@@ -5445,6 +5555,113 @@ impl App {
                         | "black_bundle"
                 )
         )
+    }
+
+    /// THE SHOW-COUNT LAW (the 26.2 `BundleContents
+    /// .getNumberOfItemsToShow()` walk — the opening gate's
+    /// `BundleItem.getNumberOfItemsToShow(stack)` rides it over the
+    /// contents component): the contents' size, capped to whole
+    /// TOOLTIP rows of four — the `size > 12 ? 11 : 12` cap the
+    /// bipush pair speaks (a 13th item never starts a lone row past
+    /// the cap), the `4 - size % 4` pad the rem walk carries (the row
+    /// a partial tail would leave), the `min(size, cap - pad)` the
+    /// tail returns. The EMPTY default's 0 the gate reads — the wall
+    /// the scroll's false keeps. The pins: 0 -> 0 (the wall), 1 -> 1,
+    /// 5 -> 5, 12 -> 12, 13 -> 8, 64 -> 11 (a full bundle shows 11).
+    fn bundle_number_of_items_to_show(size: i32) -> i32 {
+        let cap = if size > 12 { 11 } else { 12 };
+        let rem = size % 4;
+        let pad = if rem == 0 { 0 } else { 4 - rem };
+        size.min(cap - pad)
+    }
+
+    /// THE SELECTION LAW (the 26.2 `ScrollWheelHandler
+    /// .getNextScrollWheelSelection(double delta, int from, int size)`
+    /// walk — the inline `rem_euclid` the hotbar's own cycle speaks on
+    /// the hotbar's always-selected domain, the EXACT loop form the
+    /// bundle's UNSELECTED -1 state needs): `cur = from -
+    /// (int)Math.signum(delta)`, the `Math.max(-1, cur)` clamp the
+    /// unselected state rides, then the wrap loops into `[0, size)` —
+    /// a from of -1 walks to `size - 1` on the +1 scroll, to 0 on the
+    /// -1 (the rem_euclid would land `size - 2` there — the clamp the
+    /// bytecode speaks apart).
+    fn get_next_scroll_wheel_selection(delta: f64, from: i32, size: i32) -> i32 {
+        let s = delta.signum() as i32;
+        let mut cur = from - s;
+        cur = cur.max(-1);
+        while cur < 0 {
+            cur += size;
+        }
+        while cur >= size {
+            cur -= size;
+        }
+        cur
+    }
+
+    /// THE FOLD (the 26.2 `ScrollWheelHandler.onMouseScroll` walk —
+    /// the law the hotbar's accumulator speaks, the BUNDLE's own
+    /// handler instance here): the direction flip RESETS each axis's
+    /// stale remainder, the deltas ADD, the `d2i` whole steps emit,
+    /// the emitted steps SUBTRACT back out — the fractional remainder
+    /// stays for the next frame; the no-step arm returns the zero
+    /// pair (the caller the direction's own zero keeps silent).
+    fn fold_scroll_steps(acc_x: &mut f64, acc_y: &mut f64, dx: f64, dy: f64) -> (i32, i32) {
+        if *acc_x != 0.0 && dx.signum() != acc_x.signum() {
+            *acc_x = 0.0;
+        }
+        if *acc_y != 0.0 && dy.signum() != acc_y.signum() {
+            *acc_y = 0.0;
+        }
+        *acc_x += dx;
+        *acc_y += dy;
+        let steps_x = *acc_x as i32;
+        let steps_y = *acc_y as i32;
+        if steps_x == 0 && steps_y == 0 {
+            return (0, 0);
+        }
+        *acc_x -= steps_x as f64;
+        *acc_y -= steps_y as f64;
+        (steps_x, steps_y)
+    }
+
+    /// THE TOGGLE TAIL (the 26.2
+    /// `BundleMouseActions.toggleSelectedBundleItem` walk — the moved
+    /// selection the scroll's caller lands): the CONNECTION GUARD
+    /// first (the `minecraft.getConnection() != null` the bytecode
+    /// 0-7 keeps — the null connection the whole tail bails, the
+    /// offline stand-in no session keeps), the BOUNDS next
+    /// (`selected >= n` the bytecode 10-15 refuses — no set, no
+    /// packet, the wrap's own domain the caller keeps), the LOCAL SET
+    /// (the `BundleItem.toggleSelectedItem`'s mutable law — the
+    /// in-bounds index selects; the same-index deselect arm the
+    /// caller's `prev != next` gate keeps unreachable, the
+    /// out-of-bounds arm the `n <= size` law), and the WIRE last (the
+    /// ServerboundSelectBundleItemPacket the slot + the selection
+    /// ride — the
+    /// [`crate::world_view::ContainerCommand::SelectBundleItem`] the
+    /// worker's session speaks).
+    fn toggle_selected_bundle_item(&mut self, slot_id: i32, selected: i32, n: i32) {
+        // THE CONNECTION GUARD (bytecode 0-7): the live session's own
+        // lane — the offline world the tail never rides
+        let Some(sink) = self.live_clicks.as_ref() else {
+            return;
+        };
+        // THE BOUNDS (bytecode 10-15): the selection past the show
+        // count the tail refuses
+        if selected >= n {
+            return;
+        }
+        // THE LOCAL SET (bytecode 27-29): the component's own update —
+        // the selected index the map's row keeps
+        if let Some(contents) = self.bundle_contents.get_mut(&slot_id) {
+            contents.selected_item_index = selected;
+        }
+        // THE WIRE (bytecode 32-43): the packet send — the slot's menu
+        // id and the selection the wrap landed
+        let _ = sink.send(crate::world_view::ContainerCommand::SelectBundleItem {
+            slot_id,
+            selected_item_index: selected,
+        });
     }
 
     /// The chest screen's slot click (the button byte's own lane: 0 =
@@ -15757,6 +15974,305 @@ mod tests {
         // the hotbar the container walk never touches
         assert_eq!(app.selected_hotbar, 0, "the selection never moved");
         assert_eq!(app.scroll_acc_x, 0.0, "the fold never rode");
+    }
+
+    /// THE BUNDLE CONTENTS' OWN WALK — THE PURE LAWS (the 26.2 pair
+    /// the toggle tail rides): `BundleContents.getNumberOfItemsToShow`'s
+    /// cap-to-whole-rows table (the `size > 12 ? 11 : 12` cap, the
+    /// `4 - size % 4` pad, the `min` tail — the EMPTY default's 0 the
+    /// wall reads, the 13th item's lone row the cap refuses, the full
+    /// bundle's 11) and `getNextScrollWheelSelection`'s exact loop (the
+    /// `prev - signum` walk, the `max(-1)` clamp the UNSELECTED state
+    /// rides — the -1 a rem_euclid would land `size - 2` from, the
+    /// wrap into `[0, n)` both directions keep).
+    #[test]
+    fn the_bundle_show_count_and_the_selection_law_speak_the_walk() {
+        // THE SHOW-COUNT TABLE (the bytecode's own pins)
+        for (size, want) in [
+            (0, 0),   // the EMPTY default — the wall
+            (1, 1),   // cap 12, rem 1, pad 3 -> min(1, 9)
+            (2, 2),   // cap 12, rem 2, pad 2 -> min(2, 10)
+            (3, 3),   // cap 12, rem 3, pad 1 -> min(3, 11)
+            (4, 4),   // the whole row
+            (5, 5),   // min(5, 9)
+            (8, 8),   // the two rows
+            (10, 10), // min(10, 10)
+            (11, 11), // min(11, 11)
+            (12, 12), // the cap's whole keep
+            (13, 8),  // cap 11, rem 1, pad 3 -> min(13, 8)
+            (14, 9),  // cap 11, rem 2, pad 2 -> min(14, 9)
+            (16, 11), // cap 11, rem 0 -> min(16, 11)
+            (20, 11), // the cap's own hold
+            (64, 11), // the FULL bundle's 11
+        ] {
+            assert_eq!(
+                App::bundle_number_of_items_to_show(size),
+                want,
+                "size {size} the show-count law keeps"
+            );
+        }
+        // THE SELECTION LAW: the unselected -1 the clamp feeds
+        assert_eq!(
+            App::get_next_scroll_wheel_selection(1.0, -1, 5),
+            4,
+            "the -1 the +1 scroll wraps to the LAST (the clamp's own walk)"
+        );
+        assert_eq!(
+            App::get_next_scroll_wheel_selection(-1.0, -1, 5),
+            0,
+            "the -1 the -1 scroll walks to the FIRST"
+        );
+        // the wrap the [0, n) domain keeps, both directions
+        assert_eq!(
+            App::get_next_scroll_wheel_selection(1.0, 0, 5),
+            4,
+            "the 0 the +1 scroll wraps past the front"
+        );
+        assert_eq!(
+            App::get_next_scroll_wheel_selection(-1.0, 4, 5),
+            0,
+            "the last the -1 scroll wraps past the back"
+        );
+        // the mid-domain steps the signum rides — ONE index per event
+        assert_eq!(App::get_next_scroll_wheel_selection(-1.0, 1, 5), 2);
+        assert_eq!(App::get_next_scroll_wheel_selection(1.0, 3, 5), 2);
+    }
+
+    /// THE BUNDLE CONTENTS' OWN WALK — THE LIVE TAIL (the 26.2
+    /// `BundleMouseActions.onMouseScrolled` beyond the wall the old
+    /// model's EMPTY default kept): the contents row the map speaks
+    /// opens the gate, the action's OWN accumulator folds (the Y the
+    /// 2.0 the hotbar law pins — the sub-step remainder stays, the
+    /// flip resets), the selection walks the wrap law, and the MOVED
+    /// selection lands the LOCAL set + the SelectBundleItem echo the
+    /// worker's session speaks. The WALLS the walk keeps honest: no
+    /// map row (the getOrDefault default) and an EMPTY row read 0 —
+    /// the false the fold never rides. The OFFLINE guard the tail
+    /// keeps: no live lane, the verdict true, NOTHING moves (the
+    /// bytecode 0-7 the null connection keeps).
+    #[test]
+    fn the_bundle_contents_walk_moves_the_selection_and_echoes_the_live_session() {
+        use crate::world_view::ContainerCommand;
+        let mut app = App::new(3);
+        app.open(ScreenKind::Connect);
+        app.net_world = Some(air_net_world(2, 0));
+        app.enter_network_world(None, Skybox::Overworld, None, None);
+        let (click_tx, click_rx) = std::sync::mpsc::channel::<ContainerCommand>();
+        app.attach_live_clicks(click_tx);
+        app.open_inventory();
+        app.inv_panel = inventory_panel_origin(640, 360);
+        let bundle = mc_registry::item_id_by_name("bundle").expect("the bundle the wire keeps");
+        // the main grid's first cell (store index 9 — the menu's own
+        // slot id 9 the inventory numbering keeps) carries the bundle
+        app.inventory.items[9] = (bundle, 1);
+        // the contents row the set-slot's sync feeds (the five stacks
+        // the walk's own counts ride) — inserted AFTER the open (the
+        // switch's clear the lifecycle keeps)
+        app.bundle_contents.insert(
+            9,
+            BundleContents::new(vec![(62, 16), (63, 12), (4, 1), (5, 7), (17, 3)]),
+        );
+        let (ox, oy) = inventory_slot_origin(app.inv_panel, 9);
+        // THE FIRST SCROLL (the up-notch): the fold's -2 steps the 2.0
+        // scale speaks, the direction -2, the signum -1 — the
+        // UNSELECTED -1 walks to 0 (the clamp's own arm), the local set
+        // + the echo ride
+        assert!(
+            app.on_container_scroll(0.0, -1.0, ox + 8, oy + 8),
+            "the open gate the contents row keeps"
+        );
+        assert_eq!(
+            app.bundle_contents[&9].selected_item_index,
+            0,
+            "the selection the walk moved"
+        );
+        match click_rx.try_recv().expect("the echo rode the lane") {
+            ContainerCommand::SelectBundleItem {
+                slot_id,
+                selected_item_index,
+            } => {
+                assert_eq!(slot_id, 9, "the menu's own slot id");
+                assert_eq!(selected_item_index, 0, "the selection the wrap landed");
+            }
+            other => panic!("expected a bundle selection, got {other:?}"),
+        }
+        // the accumulator's remainder law: the whole steps emitted, the
+        // fractional ride gone (the -2 the fold handed out whole)
+        assert_eq!(app.bundle_scroll_acc_y, 0.0, "the remainder the handout kept");
+        // THE SECOND SCROLL (the down-notch): from 0, the +1 signum —
+        // the max(-1) clamp feeds the -1, the wrap lands the LAST
+        assert!(app.on_container_scroll(0.0, 1.0, ox + 8, oy + 8));
+        assert_eq!(
+            app.bundle_contents[&9].selected_item_index,
+            4,
+            "the wrap the clamp's law keeps"
+        );
+        match click_rx.try_recv().expect("the echo rode the lane") {
+            ContainerCommand::SelectBundleItem {
+                slot_id,
+                selected_item_index,
+            } => {
+                assert_eq!(slot_id, 9);
+                assert_eq!(selected_item_index, 4);
+            }
+            other => panic!("expected a bundle selection, got {other:?}"),
+        }
+        // THE SUB-STEP FRAME (the trackpad's own 0.3): the fold's 0.6
+        // never crosses, the direction 0 — the verdict TRUE, nothing
+        // moves, the remainder stays for the next frame
+        assert!(app.on_container_scroll(0.0, 0.3, ox + 8, oy + 8));
+        assert_eq!(app.bundle_contents[&9].selected_item_index, 4, "the sub-step silent");
+        assert!((app.bundle_scroll_acc_y - 0.6).abs() < 1e-9, "the remainder kept");
+        // THE FLIP RESET (the direction change discards the stale
+        // remainder): the -0.4 frame folds -0.8 — the no-step arm, the
+        // accumulator rides negative, nothing moves
+        assert!(app.on_container_scroll(0.0, -0.4, ox + 8, oy + 8));
+        assert_eq!(app.bundle_contents[&9].selected_item_index, 4, "the flipped frame silent");
+        assert!((app.bundle_scroll_acc_y + 0.8).abs() < 1e-9, "the reset + the fold");
+        // THE CROSSING (the -0.4 more): -0.8 + -0.8 = -1.6 -> ONE step
+        // (the d2i trunc toward zero), the -0.6 remainder rides — from
+        // 4, the -1 signum walks forward, the wrap lands the FIRST
+        assert!(app.on_container_scroll(0.0, -0.4, ox + 8, oy + 8));
+        assert_eq!(app.bundle_contents[&9].selected_item_index, 0, "the crossing fired (the forward wrap)");
+        assert!((app.bundle_scroll_acc_y + 0.6).abs() < 1e-9, "the remainder kept");
+        match click_rx.try_recv().expect("the echo rode the lane") {
+            ContainerCommand::SelectBundleItem {
+                slot_id,
+                selected_item_index,
+            } => {
+                assert_eq!(slot_id, 9);
+                assert_eq!(selected_item_index, 0);
+            }
+            other => panic!("expected a bundle selection, got {other:?}"),
+        }
+        // THE BOUNDS TAIL (the bytecode 10-15): a selection past the
+        // show count refuses BOTH — no set, no packet
+        let before = app.bundle_contents[&9].selected_item_index;
+        app.toggle_selected_bundle_item(9, 5, 5);
+        assert_eq!(
+            app.bundle_contents[&9].selected_item_index, before,
+            "the bounds the tail keeps"
+        );
+        assert!(click_rx.try_recv().is_err(), "no packet the bounds spoke");
+        // THE WALLS: the bundle WITHOUT a map row (the getOrDefault
+        // default the old model rode) and the EMPTY row read 0 — the
+        // false the fold never rides (the crossing's -0.6 remainder
+        // the untouched handler keeps — the wall precedes the fold)
+        app.bundle_contents.remove(&9);
+        assert!(
+            !app.on_container_scroll(0.0, -1.0, ox + 8, oy + 8),
+            "the no-row default's wall"
+        );
+        assert!(
+            (app.bundle_scroll_acc_y + 0.6).abs() < 1e-9,
+            "the wall the fold never rode"
+        );
+        app.bundle_contents.insert(9, BundleContents::new(Vec::new()));
+        assert!(
+            !app.on_container_scroll(0.0, -1.0, ox + 8, oy + 8),
+            "the EMPTY contents' wall"
+        );
+        assert!(
+            (app.bundle_scroll_acc_y + 0.6).abs() < 1e-9,
+            "the wall the fold never rode"
+        );
+        // THE OFFLINE GUARD (the bytecode 0-7): the tail without the
+        // live lane — the walk's verdict TRUE, nothing moves
+        let mut app = App::new(3);
+        app.enter_world();
+        app.spawn_offline_body();
+        app.open_inventory();
+        app.inv_panel = inventory_panel_origin(640, 360);
+        app.inventory.items[9] = (bundle, 1);
+        app.bundle_contents.insert(
+            9,
+            BundleContents::new(vec![(62, 16), (63, 12), (4, 1), (5, 7), (17, 3)]),
+        );
+        assert!(
+            app.on_container_scroll(0.0, -1.0, ox + 8, oy + 8),
+            "the gate the contents row opens offline too"
+        );
+        assert_eq!(
+            app.bundle_contents[&9].selected_item_index,
+            BundleContents::NO_SELECTED_INDEX,
+            "the tail the null connection bails"
+        );
+        // the sub-step offline frames ride the same accumulator: the
+        // 2.0 fold crossed (the -1.0 notch), the remainder the same
+        assert!((app.bundle_scroll_acc_y).abs() < 1e-9, "the -2 handed whole");
+    }
+
+    /// THE CHEST'S OWN BUNDLE RIDE (the same onMouseScrolled the
+    /// generic_9x3's hovered slot walks): the mirror row's bundle the
+    /// map's MENU id keys (the chest's own numbering — the mirror row
+    /// 9 the 27+9=36 the rects keep), the wrap the same law lands, the
+    /// echo the same lane rides — and the SWITCH's clear the
+    /// lifecycle keeps (the window-scoped rows die with the screen).
+    #[test]
+    fn the_chest_bundle_rides_the_same_contents_walk() {
+        use crate::world_view::ContainerCommand;
+        let mut app = App::new(3);
+        app.open(ScreenKind::Connect);
+        app.net_world = Some(air_net_world(2, 0));
+        app.enter_network_world(None, Skybox::Overworld, None, None);
+        let (click_tx, click_rx) = std::sync::mpsc::channel::<ContainerCommand>();
+        app.attach_live_clicks(click_tx);
+        app.open(ScreenKind::Chest);
+        let panel = chest_panel_origin(640, 360);
+        app.chest_slots = vec![(0, 0); 27];
+        app.chest_mirror = vec![(0, 0); 36];
+        // the rects the render lays: the grid's 0..27, the mirror's
+        // 27..63 — the +1 inset the store's own lane speaks
+        app.chest_slot_rects = (0..27)
+            .map(|i| {
+                let (sx, sy) = chest_container_slot(panel, i);
+                (sx + 1, sy + 1, i as i16)
+            })
+            .chain((0..36).map(|i| {
+                let (sx, sy) = chest_mirror_slot(panel, i);
+                (sx + 1, sy + 1, (27 + i) as i16)
+            }))
+            .collect();
+        let bundle = mc_registry::item_id_by_name("bundle").unwrap();
+        // the mirror row 9 the chest's menu id 36 speaks, the contents
+        // row the same id keys
+        app.chest_mirror[9] = (bundle, 1);
+        app.bundle_contents.insert(
+            36,
+            BundleContents::new(vec![(62, 16), (63, 12), (4, 1), (5, 7), (17, 3)]),
+        );
+        let (mx, my) = chest_mirror_slot(panel, 9);
+        // THE WALK: the up-notch from the unselected -1 — the clamp
+        // feeds the wrap, the LAST the selection lands
+        assert!(
+            app.on_container_scroll(0.0, 1.0, mx + 8, my + 8),
+            "the mirror row's bundle the gate opens"
+        );
+        assert_eq!(
+            app.bundle_contents[&36].selected_item_index,
+            4,
+            "the wrap the clamp's law keeps"
+        );
+        match click_rx.try_recv().expect("the echo rode the lane") {
+            ContainerCommand::SelectBundleItem {
+                slot_id,
+                selected_item_index,
+            } => {
+                assert_eq!(slot_id, 36, "the mirror row's own menu id");
+                assert_eq!(selected_item_index, 4);
+            }
+            other => panic!("expected a bundle selection, got {other:?}"),
+        }
+        // THE SWITCH'S CLEAR (the lifecycle the open() keeps): the
+        // window-scoped rows the next container re-learns — no stale
+        // row rides a later screen's bundle
+        app.open(ScreenKind::Inventory);
+        assert!(
+            app.bundle_contents.is_empty(),
+            "the switch the lifecycle keeps"
+        );
+        assert_eq!(app.bundle_scroll_acc_x, 0.0, "the accumulator the switch resets");
+        assert_eq!(app.bundle_scroll_acc_y, 0.0, "the accumulator the switch resets");
     }
 
     /// THE PICK'S WIRE HALF (the gameMode.handlePickItemFromBlock walk

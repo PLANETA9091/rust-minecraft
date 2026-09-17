@@ -303,6 +303,18 @@ fn run_join(
                             view.model.select_hotbar(selection as usize);
                             session.set_carried_item(selection)
                         }
+                        crate::world_view::ContainerCommand::SelectBundleItem {
+                            slot_id,
+                            selected_item_index,
+                        } => {
+                            // THE BUNDLE SELECTION's wire half (the vanilla
+                            // toggleSelectedBundleItem's own echo — the
+                            // local set the App's walk already spoke, the
+                            // packet the tail sends): the hovered slot's
+                            // MENU id and the selection the wrap landed,
+                            // the two VarInts the record's write speaks.
+                            session.select_bundle_item(slot_id, selected_item_index)
+                        }
                         crate::world_view::ContainerCommand::PickBlock {
                             pos,
                             include_data,
