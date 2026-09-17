@@ -477,6 +477,23 @@ impl BundleContents {
     }
 }
 
+/// THE BUNDLE TOOLTIP'S OWN VIEW (the hovered row the gate speaks —
+/// the data the render consumes, the shape the tests pin): the items
+/// the contents row keeps, the selected index the scroll's walk
+/// moves, the shown count the show-count law caps, the rows the
+/// FOUR-wide grid speaks.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub(crate) struct BundleTooltipView {
+    /// The contents' stacks (the row's own items list).
+    pub items: Vec<(i32, i32)>,
+    /// The selected index (the -1 the NO_SELECTED_INDEX law keeps).
+    pub selected: i32,
+    /// The shown count (the getNumberOfItemsToShow law's cap).
+    pub shown: usize,
+    /// The rows the ceil-over-four grid speaks.
+    pub rows: usize,
+}
+
 pub struct App {
     pub screen: ScreenKind,
     pub boot_progress: f32,
@@ -4304,6 +4321,10 @@ impl App {
                 }
             }
         }
+        // THE BUNDLE TOOLTIP (the renderTooltip pass — the hovered
+        // bundle's contents grid the chest lane's rows speak, the
+        // topmost layer the panel and the carried stack keep under)
+        self.render_bundle_tooltip(g, a);
     }
 
     /// The survival inventory's BASE pass: the frozen world dimmed
@@ -4813,6 +4834,10 @@ impl App {
                 }
             }
         }
+        // THE BUNDLE TOOLTIP (the renderTooltip pass — the hovered
+        // bundle's contents grid the window-0 rows speak, the topmost
+        // layer the panel and the carried stack keep under)
+        self.render_bundle_tooltip(g, a);
     }
 
     /// Enter the world screen with the NETWORK world — the vanilla
@@ -6048,6 +6073,127 @@ impl App {
             slot_id,
             selected_item_index: selected,
         });
+    }
+
+    /// THE TOOLTIP'S OWN SHAPE (the grid the tooltip panel speaks):
+    /// the shown count the show-count law caps, the FOUR columns the
+    /// whole-rows-of-four law the tooltip keeps (the pad the
+    /// `4 - size % 4` walk carries rows the panel never splits), the
+    /// rows the positive ceil over the shown count. Pins: 0 -> (0, 4,
+    /// 0), 5 -> (5, 4, 2), 12 -> (12, 4, 3), 13 -> (8, 4, 2), 64 ->
+    /// (11, 4, 3).
+    fn bundle_tooltip_shape(size: i32) -> (i32, i32, i32) {
+        let shown = Self::bundle_number_of_items_to_show(size);
+        // the positive ceil the rows speak (shown >= 0 the cap keeps)
+        (shown, 4, (shown + 3) / 4)
+    }
+
+    /// THE BUNDLE TOOLTIP'S OWN GATE (the AbstractContainerScreen's
+    /// renderTooltip walk — the hoveredSlot's item the bundle's OWN
+    /// tooltip component answers): the hovered slot's stack the
+    /// bundles tag speaks, the contents row the map keeps (the
+    /// client's stacks never carry the component — the row the syncs
+    /// feed IS the truth), the EMPTY bundle the show-count law's 0
+    /// keeps silent. Returns the view the render consumes (the items
+    /// the row owns, the selected index the scroll's walk moves, the
+    /// shape the grid speaks) — `None` the gates refuse.
+    fn bundle_tooltip_view(&self, mx: i32, my: i32) -> Option<BundleTooltipView> {
+        let (id, count, slot_id) = self.hovered_container(mx, my)?;
+        if count <= 0 || !Self::is_bundle_item(id) {
+            return None;
+        }
+        let contents = self.bundle_contents.get(&slot_id)?;
+        let (shown, _cols, rows) = Self::bundle_tooltip_shape(contents.items.len() as i32);
+        if shown <= 0 {
+            return None;
+        }
+        Some(BundleTooltipView {
+            items: contents.items.clone(),
+            selected: contents.selected_item_index,
+            shown: shown as usize,
+            rows: rows as usize,
+        })
+    }
+
+    /// THE BUNDLE TOOLTIP'S OWN RENDER (the AbstractContainerScreen's
+    /// post-panel tooltip pass — the bundle's contents grid the
+    /// hovered row speaks): the background the renderTooltipBackground
+    /// law paints (the 0xF0100010 fill, the 1px gradient frame ring
+    /// 1px OUTSIDE the fill, the 0x505000FF -> 0x5028007F vertical
+    /// lerp the 1.20.1 walk keeps), the FOUR-wide grid the cells
+    /// 18x20 pitch speak (the icons the store's own draw keeps, the
+    /// count text the slots' own law renders), and the SELECTED row
+    /// the 1px white frame highlights (the overlay's highlight the
+    /// scroll's walk moves). The positioner the vanilla walk keeps —
+    /// the +12/-12 cursor offset, the right overflow the 24-flip the
+    /// max-4 clamp holds, the vertical the screen's own edges keep.
+    /// The cursor-driven pass the headless scenes never see
+    /// (`mouse_pos` is None — the pixel goldens can never read it).
+    fn render_bundle_tooltip(&mut self, g: &mut Gui, a: &mut GuiAssets) {
+        let Some((mx, my)) = self.mouse_pos else {
+            return; // the headless scenes track no mouse — no tooltip
+        };
+        let Some(view) = self.bundle_tooltip_view(mx, my) else {
+            return; // the gates the bundle tooltip refuses
+        };
+        let cols = 4usize;
+        let w = (cols * 18 + 6) as i32; // the 3px margin each side speaks
+        let h = (view.rows * 20 + 6) as i32;
+        // THE POSITIONER (the vanilla walk — the right overflow the
+        // 24-flip the max-4 clamp keeps, the vertical the edges hold)
+        let mut tx = mx + 12;
+        let mut ty = my - 12;
+        if tx + w > g.w() {
+            tx = (mx - 24 - w).max(4);
+        }
+        ty = ty.max(4);
+        if ty + h > g.h() {
+            ty = g.h() - h;
+        }
+        // THE BACKGROUND (the renderTooltipBackground law — the fill,
+        // the 1px gradient frame ring 1px OUTSIDE the fill: the top
+        // strip the start color speaks, the bottom the end, the sides
+        // the vertical lerp the per-pixel walk keeps)
+        let bg = [0.0627, 0.0, 0.0627, 0.9412]; // 0xF0100010
+        let start = [0.3137, 0.0, 1.0, 0.3137]; // 0x505000FF
+        let end = [0.1569, 0.0, 0.498, 0.3137]; // 0x5028007F
+        g.fill(tx, ty, w, h, bg);
+        g.fill(tx - 1, ty - 1, w + 2, 1, start);
+        g.fill(tx - 1, ty + h, w + 2, 1, end);
+        for i in 0..h {
+            let t = if h <= 1 { 0.0 } else { i as f32 / (h - 1) as f32 };
+            let c = [
+                start[0] + (end[0] - start[0]) * t,
+                start[1] + (end[1] - start[1]) * t,
+                start[2] + (end[2] - start[2]) * t,
+                start[3] + (end[3] - start[3]) * t,
+            ];
+            g.fill(tx - 1, ty + i, 1, 1, c); // the left strip
+            g.fill(tx + w, ty + i, 1, 1, c); // the right strip
+        }
+        // THE CELLS (the 4-wide grid — the icon the cell's own inset
+        // keeps in the 18x20 pitch, the count text the slots' own law
+        // renders, the SELECTED the 1px white ring highlights)
+        for (i, (id, count)) in view.items.iter().enumerate().take(view.shown) {
+            if *count <= 0 {
+                continue; // the wire's own emptiness sentinel
+            }
+            let ox = tx + 3 + (i % cols) as i32 * 18;
+            let oy = ty + 3 + (i / cols) as i32 * 20;
+            if i as i32 == view.selected {
+                let ring = [1.0, 1.0, 1.0, 1.0];
+                g.fill(ox, oy + 1, 18, 1, ring);
+                g.fill(ox, oy + 18, 18, 1, ring);
+                g.fill(ox, oy + 1, 1, 18, ring);
+                g.fill(ox + 17, oy + 1, 1, 18, ring);
+            }
+            draw_item_icon(g, *id, ox + 1, oy + 2);
+            if *count > 1 {
+                let s = count.to_string();
+                let tw = g.text_width(&s);
+                g.text(a, ox + 17 - tw, oy + 10, &s, WHITE, true);
+            }
+        }
     }
 
     /// The chest screen's slot click (the button byte's own lane: 0 =
@@ -23080,6 +23226,101 @@ mod tests {
             }
             other => panic!("expected a container click, got {other:?}"),
         }
+    }
+
+    /// THE BUNDLE TOOLTIP'S OWN GATE (the renderTooltip walk the
+    /// hovered row answers): the bundle slot the contents row feeds
+    /// the view speaks (the items the row owns, the selected index
+    /// the scroll moved), the plain stack the walk refuses, the
+    /// bundle WITHOUT the row the map's own miss keeps, the EMPTY
+    /// bundle the show-count law's 0 wall keeps.
+    #[test]
+    fn the_bundle_tooltip_gate_speaks_the_hovered_row() {
+        let mut app = App::new(3);
+        app.open(ScreenKind::Connect);
+        app.net_world = Some(air_net_world(2, 0));
+        app.enter_network_world(None, Skybox::Overworld, None, None);
+        app.open_inventory();
+        app.inv_panel = inventory_panel_origin(640, 360);
+        let bundle = mc_registry::item_id_by_name("bundle").unwrap();
+        let log = mc_registry::item_id_by_name("oak_log").unwrap();
+        let dirt = mc_registry::item_id_by_name("dirt").unwrap();
+        let planks = mc_registry::item_id_by_name("oak_planks").unwrap();
+        // the wire store's belief: the bundle at menu 9 (store 9), a
+        // plain dirt stack at menu 10, the contents row the sync fed
+        let mut slots = [(0, 0); crate::world_view::INVENTORY_MENU_SLOTS];
+        slots[9] = (bundle, 1);
+        slots[10] = (dirt, 32);
+        app.live_inventory_updated(slots, Vec::new(), 17, (0, 0));
+        app.bundle_contents.insert(
+            9,
+            BundleContents {
+                items: vec![(log, 2), (planks, 5), (dirt, 1)],
+                selected_item_index: 1,
+            },
+        );
+        // THE BUNDLE'S HOVER: the view the row speaks
+        let (sx, sy) = inventory_slot_origin(app.inv_panel, 9);
+        let view = app
+            .bundle_tooltip_view(sx + 8, sy + 8)
+            .expect("the bundle the gate answers");
+        assert_eq!(
+            view.items,
+            vec![(log, 2), (planks, 5), (dirt, 1)],
+            "the row's own items the view keeps"
+        );
+        assert_eq!(view.selected, 1, "the scroll's moved index rides");
+        assert_eq!(view.shown, 3, "the show-count the three items speak");
+        assert_eq!(view.rows, 1, "the single row the 3-of-4 grid keeps");
+        // THE PLAIN STACK: the walk refuses
+        let (sx, sy) = inventory_slot_origin(app.inv_panel, 10);
+        assert!(
+            app.bundle_tooltip_view(sx + 8, sy + 8).is_none(),
+            "the plain stack the bundles tag refuses"
+        );
+        // THE ROWLESS BUNDLE: the map's own miss
+        app.bundle_contents.remove(&9);
+        let (sx, sy) = inventory_slot_origin(app.inv_panel, 9);
+        assert!(
+            app.bundle_tooltip_view(sx + 8, sy + 8).is_none(),
+            "no row the map keeps — no tooltip"
+        );
+        // THE EMPTY BUNDLE: the show-count law's own 0 wall
+        app.bundle_contents.insert(9, BundleContents::new(Vec::new()));
+        assert!(
+            app.bundle_tooltip_view(sx + 8, sy + 8).is_none(),
+            "the empty bundle the 0 wall keeps silent"
+        );
+    }
+
+    /// THE SHAPE'S OWN PINS (the rows-of-four grid the tooltip panel
+    /// speaks): the show-count law's caps the grid rides — the lone
+    /// tail item never starts a row past the cap, the full bundle's
+    /// 11 the three rows keep.
+    #[test]
+    fn the_bundle_tooltip_shape_rides_the_rows_of_four() {
+        assert_eq!(
+            App::bundle_tooltip_shape(0),
+            (0, 4, 0),
+            "the empty bundle's wall"
+        );
+        assert_eq!(App::bundle_tooltip_shape(1), (1, 4, 1), "the one item's row");
+        assert_eq!(App::bundle_tooltip_shape(5), (5, 4, 2), "the 4+1 grid");
+        assert_eq!(
+            App::bundle_tooltip_shape(12),
+            (12, 4, 3),
+            "the three full rows"
+        );
+        assert_eq!(
+            App::bundle_tooltip_shape(13),
+            (8, 4, 2),
+            "the lone tail the cap cuts"
+        );
+        assert_eq!(
+            App::bundle_tooltip_shape(64),
+            (11, 4, 3),
+            "the full bundle's 11"
+        );
     }
 }
 
