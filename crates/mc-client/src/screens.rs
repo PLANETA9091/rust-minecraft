@@ -496,6 +496,11 @@ pub(crate) struct BundleTooltipView {
     /// The hidden item count (the getAmountOfHiddenItems sum — the
     /// skipped stacks' counts the surplus cell speaks as "+N").
     pub hidden: i32,
+    /// The item-count total the weight law sums over the row (the
+    /// vanilla Fraction the per-item 1/maxStackSize walk keeps — the
+    /// house's default-64 stack law collapses the sum to count/64,
+    /// the progress bar's own numerator the fill law speaks).
+    pub total: i32,
 }
 
 pub struct App {
@@ -6119,13 +6124,40 @@ impl App {
             return None;
         }
         let hidden: i32 = contents.items[shown as usize..].iter().map(|&(_, c)| c).sum();
+        let total: i32 = contents.items.iter().map(|&(_, c)| c).sum();
         Some(BundleTooltipView {
             items: contents.items.clone(),
             selected: contents.selected_item_index,
             shown: shown as usize,
             rows: rows as usize,
             hidden,
+            total,
         })
+    }
+
+    /// THE PROGRESS BAR'S OWN FILL (the 26.2 getProgressBarFill walk
+    /// — Mth.clamp(Mth.mulAndTruncate(weight, 94), 0, 94) the
+    /// bytecode keeps): the weight the per-item 1/maxStackSize
+    /// Fraction sums (BundleContents.getWeight the jar speaks — the
+    /// Fraction.getFraction(1, maxStackSize) law), the house's
+    /// default-64 stack law collapses the row's sum to count/64, and
+    /// the fill the truncate-at-94 walk keeps (the 96-wide border's
+    /// own 1px insets the fill rides between).
+    fn bundle_progressbar_fill(total: i32) -> i32 {
+        (total * 94 / 64).clamp(0, 94)
+    }
+
+    /// THE PROGRESS BAR'S OWN TEXT (the 26.2 getProgressBarFillText
+    /// walk): the ZERO fraction the BUNDLE_EMPTY_TEXT speaks ("Empty"
+    /// the en_us lang keeps), the ONE the BUNDLE_FULL_TEXT ("Full")
+    /// — the STRICT == compares the bytecode's own branches keep, the
+    /// between the null (no text the bar rides bare).
+    fn bundle_progressbar_fill_text(total: i32) -> Option<&'static str> {
+        match total {
+            0 => Some("Empty"),
+            64 => Some("Full"),
+            _ => None,
+        }
     }
 
     /// THE BUNDLE TOOLTIP'S OWN RENDER (the 26.2
@@ -6163,9 +6195,12 @@ impl App {
         let overflow = size > 12; // the loc8 law the walk keeps
         let rows = view.rows;
         // THE PANEL (the content 96 wide the 4x24 grid speaks, the
-        // 3px margin each side the hand-drawn fill keeps)
+        // 3px margin each side the hand-drawn fill keeps; the height
+        // the backgroundHeight law keeps — itemGridHeight + 13 + 8:
+        // the grid, the 4px gap the extractProgressbar's +4 speaks,
+        // the 13px bar, the 4px spare the tail keeps)
         let w = 96 + 6;
-        let h = (rows * 24 + 6) as i32;
+        let h = (rows * 24 + 24) as i32;
         // THE POSITIONER (the vanilla walk — the right overflow the
         // 24-flip the max-4 clamp keeps, the vertical the edges hold)
         let mut tx = mx + 12;
@@ -6247,6 +6282,43 @@ impl App {
                 g.text(a, cell_x + 20 - tw, cell_y + 12, &s, WHITE, true);
             }
             slot_no += 1; // the counter only the item cells increment
+        }
+        // THE PROGRESS BAR (extractProgressbar — the grid's own tail
+        // the bytecode keeps: x + getContentXOffset(width), y +
+        // itemGridHeight + 4; the 96x13 border the fill rides under,
+        // the weight the bar's own width speaks)
+        let bx = tx + 3;
+        let by = ty + 3 + rows as i32 * 24 + 4;
+        let fillw = Self::bundle_progressbar_fill(view.total);
+        if fillw > 0 {
+            // THE FILL (the bundle_progressbar_fill sprite's own
+            // nine-slice — 6x6 border 2, the 0x5555ff the texture
+            // speaks; the FULL the f >= ONE law turns 0xff5555) —
+            // the rounded corners the bands keep
+            let bar = if view.total >= 64 {
+                [1.0, 0.3333, 0.3333, 1.0] // 0xff5555
+            } else {
+                [0.3333, 0.3333, 1.0, 1.0] // 0x5555ff
+            };
+            g.fill(bx + 1, by + 1, fillw, 11, bar);
+            if fillw > 2 {
+                g.fill(bx + 2, by, fillw - 2, 1, bar);
+                g.fill(bx + 2, by + 12, fillw - 2, 1, bar);
+            }
+        }
+        // THE BORDER (the bundle_progressbar_border sprite's own
+        // nine-slice — 12x12 border 2, the 0x373737 ring the texture
+        // speaks: the 2px band the corners round)
+        let ring = [0.2157, 0.2157, 0.2157, 1.0]; // 0x373737
+        g.fill(bx + 1, by, 94, 2, ring);
+        g.fill(bx + 1, by + 11, 94, 2, ring);
+        g.fill(bx, by + 1, 2, 11, ring);
+        g.fill(bx + 94, by + 1, 2, 11, ring);
+        // THE FILL TEXT (getProgressBarFillText — the ZERO/ONE
+        // fractions the Empty/Full strings speak, centeredText at
+        // the bar's own center the x+48/y+3 walk keeps)
+        if let Some(s) = Self::bundle_progressbar_fill_text(view.total) {
+            g.text_centered(a, bx + 48, by + 3, s, WHITE, true);
         }
     }
 
@@ -23406,6 +23478,117 @@ mod tests {
             App::bundle_tooltip_shape(64),
             (11, 3, 12),
             "the full bundle's 11 + the surplus cell"
+        );
+    }
+
+    /// THE PROGRESS BAR'S OWN WEIGHT (the 26.2 extractProgressbar
+    /// walk the grid's tail keeps): the view the row's SUM carries
+    /// (the weight Fraction the per-item 1/maxStackSize law speaks —
+    /// the house's default-64 the sum collapses), the fill the
+    /// truncate-at-94 law keeps (Mth.mulAndTruncate(weight, 94) the
+    /// clamp holds), the text the STRICT ZERO/ONE compares speak
+    /// ("Empty"/"Full" the en_us lang keeps, the between the null),
+    /// and the FULL texture the f >= ONE law turns red (0xff5555 the
+    /// sprite speaks, the 0x5555ff the partial keeps).
+    #[test]
+    fn the_bundle_tooltip_progressbar_rides_the_weight() {
+        // THE LAWS (the pure pins the bytecode keeps)
+        assert_eq!(
+            App::bundle_progressbar_fill(0),
+            0,
+            "the empty row the fill refuses"
+        );
+        assert_eq!(
+            App::bundle_progressbar_fill(32),
+            47,
+            "the half row the 94-scale truncate keeps (32*94/64)"
+        );
+        assert_eq!(
+            App::bundle_progressbar_fill(64),
+            94,
+            "the full row the 94-wide fill speaks"
+        );
+        assert_eq!(
+            App::bundle_progressbar_fill(100),
+            94,
+            "the over-full row the clamp holds"
+        );
+        assert_eq!(
+            App::bundle_progressbar_fill_text(0),
+            Some("Empty"),
+            "the ZERO fraction the BUNDLE_EMPTY_TEXT speaks"
+        );
+        assert_eq!(
+            App::bundle_progressbar_fill_text(64),
+            Some("Full"),
+            "the ONE fraction the BUNDLE_FULL_TEXT speaks"
+        );
+        assert_eq!(
+            App::bundle_progressbar_fill_text(32),
+            None,
+            "the between the null keeps (the strict == the branches hold)"
+        );
+        assert_eq!(
+            App::bundle_progressbar_fill_text(100),
+            None,
+            "the over-full the strict == refuses the text"
+        );
+        // THE VIEW (the row's own sum the weight carries): a
+        // half-filled bundle the 32 the bar's numerator keeps
+        let mut app = App::new(3);
+        app.open(ScreenKind::Connect);
+        app.net_world = Some(air_net_world(2, 0));
+        app.enter_network_world(None, Skybox::Overworld, None, None);
+        app.open_inventory();
+        app.inv_panel = inventory_panel_origin(640, 360);
+        let bundle = mc_registry::item_id_by_name("bundle").unwrap();
+        let log = mc_registry::item_id_by_name("oak_log").unwrap();
+        let planks = mc_registry::item_id_by_name("oak_planks").unwrap();
+        let mut slots = [(0, 0); crate::world_view::INVENTORY_MENU_SLOTS];
+        slots[9] = (bundle, 1);
+        app.live_inventory_updated(slots, Vec::new(), 17, (0, 0));
+        app.bundle_contents.insert(
+            9,
+            BundleContents {
+                items: vec![(log, 16), (planks, 16)],
+                selected_item_index: -1,
+            },
+        );
+        let (sx, sy) = inventory_slot_origin(app.inv_panel, 9);
+        let view = app
+            .bundle_tooltip_view(sx + 8, sy + 8)
+            .expect("the bundle the gate answers");
+        assert_eq!(
+            view.total, 32,
+            "the row's stacks the weight sum keeps (the count/64 law the default stack speaks)"
+        );
+        assert_eq!(
+            App::bundle_progressbar_fill(view.total),
+            47,
+            "the view's own weight the half fill rides"
+        );
+        // THE FULL BUNDLE: the 64 the red texture + the Full text
+        // the ONE fraction speaks
+        app.bundle_contents.insert(
+            9,
+            BundleContents {
+                items: vec![(log, 30), (planks, 34)],
+                selected_item_index: -1,
+            },
+        );
+        let (sx, sy) = inventory_slot_origin(app.inv_panel, 9);
+        let view = app
+            .bundle_tooltip_view(sx + 8, sy + 8)
+            .expect("the full bundle the gate answers");
+        assert_eq!(view.total, 64, "the full row the weight sums");
+        assert!(
+            view.total >= 64,
+            "the f >= ONE law the FULL texture keeps (0xff5555)"
+        );
+        assert_eq!(
+            App::bundle_progressbar_fill_text(view.total),
+            Some("Full"),
+            "the ONE fraction the bar's own word speaks"
         );
     }
 }
