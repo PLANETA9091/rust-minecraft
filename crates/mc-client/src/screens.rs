@@ -1418,11 +1418,21 @@ impl App {
             self.particles.push(child);
         }
         for i in (0..self.crit_emitters.len()).rev() {
+            // THE TARGET'S OWN LIST (the offline lane first, the wire's
+            // remote bodies after — the echo the wire arm's crit
+            // prediction pushes rides the SERVER'S OWN id the wire
+            // list keeps)
             let target = self
                 .mobs
                 .iter()
                 .find(|m| m.id == self.crit_emitters[i].target_id)
-                .map(|m| (m.x, m.y, m.z));
+                .map(|m| (m.x, m.y, m.z))
+                .or_else(|| {
+                    self.net_mobs
+                        .iter()
+                        .find(|m| m.id == self.crit_emitters[i].target_id)
+                        .map(|m| (m.x, m.y, m.z))
+                });
             let (spawned, alive) =
                 self.crit_emitters[i].tick(target, &mut self.mob_rng);
             self.particles.extend(spawned);
@@ -2385,15 +2395,117 @@ impl App {
                 // the dump's order: ensure, SEND, attack, RESET): the
                 // dedicated Attack packet the record's ONE VarInt
                 // carries, the SERVER'S OWN ID the wire lane keeps.
-                // The local prediction the wire body never runs — the
-                // server owns the health, the Hurt Animation echo the
-                // hurt lane renders the verdict the client waits for.
-                // The RESET the resetAttackStrengthTicker step rides
-                // unconditionally (the same beat the offline arm's
-                // onAttack speaks).
-                let entity_id = self.net_mobs[i - self.mobs.len()].id;
+                // The remote body's HURT the isClientSide early-return
+                // answers — the server owns the health, the hurt voice
+                // the broadcast echo speaks, the knockback the server's
+                // own verdict names. THE ATTACKER'S OWN PREDICTION the
+                // client law predicts (the LocalPlayer's own
+                // player.attack the remote target walks): the crit arm
+                // `this.crit(target)` rides BEFORE the hurt (the repo's
+                // own javap the offline arm's emitter walk speaks —
+                // ParticleEngine.createTrackingEmitter the client-only
+                // lane), doSweepAttack's own voice + the arc the
+                // client's walk keeps, the attackVisualEffects's voice
+                // branch the same walk keeps — the strong/weak pick
+                // the charge names, the crit the gate arms. The RESET
+                // the resetAttackStrengthTicker step rides last (the
+                // scale read the echo's own facts precede).
+                let (wid, wbox) = {
+                    let w = &self.net_mobs[i - self.mobs.len()];
+                    (w.id, w.box_at())
+                };
                 if let Some(sink) = self.live_clicks.as_ref() {
-                    let _ = sink.send(crate::world_view::ContainerCommand::Attack { entity_id });
+                    let _ = sink.send(crate::world_view::ContainerCommand::Attack { entity_id: wid });
+                }
+                // THE ECHO'S OWN FACTS (the attacker's own state the
+                // offline arm's walk reads — the same gates the same
+                // law computes; the scale read the PRE-reset ticker
+                // keeps)
+                let charge = ((self.attack_ticker as f32 + 0.5) / 5.0).clamp(0.0, 1.0);
+                let full = charge > 0.9;
+                let (on_ground, eye_water) = self.body_state();
+                let (falling, sprinting, bx, by, bz, bvx, bvz, vyaw, by_mid) = self
+                    .body
+                    .as_ref()
+                    .map(|b| {
+                        (
+                            b.fall_distance > 0.0,
+                            b.sprinting,
+                            b.x,
+                            b.y,
+                            b.z,
+                            b.vx,
+                            b.vz,
+                            b.yaw as f64 * std::f64::consts::PI / 180.0,
+                            b.y
+                                + if b.crouching {
+                                    crate::body::CROUCH_HEIGHT
+                                } else {
+                                    crate::body::STANDING_HEIGHT
+                                }
+                                    * 0.5,
+                        )
+                    })
+                    .unwrap_or((false, false, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0));
+                let crit = full && falling && !on_ground && !eye_water && !sprinting;
+                let holding_sword = self
+                    .held_id()
+                    .and_then(|id| {
+                        mc_registry::generated::item_order::ITEM_WIRE_ORDER.get(id as usize)
+                    })
+                    .map(|n| n.ends_with("_sword"))
+                    .unwrap_or(false);
+                let sweep = full
+                    && !crit
+                    && !sprinting
+                    && on_ground
+                    && holding_sword
+                    && (bvx * bvx + bvz * bvz)
+                        < (crate::body::MOVEMENT_SPEED as f64 * 2.5).powi(2);
+                // THE SWEEP'S OWN PREDICTION (doSweepAttack's client
+                // walk — the voice the offset-0 speaks, the arc the
+                // count-0 sendParticles leaves at the body's own mid
+                // height one forward block; the AoE's hurts the
+                // server's own verdict keeps)
+                if sweep {
+                    let sy = vyaw.sin();
+                    let cy = vyaw.cos();
+                    let svp = (self.mob_rng.next_f32() - self.mob_rng.next_f32()) * 0.2 + 1.0;
+                    self.sounds
+                        .play_voice(self.frame, "entity.player.attack.sweep", 1.0, svp);
+                    let arc = crate::particles::sweep(
+                        bx - sy,
+                        by_mid,
+                        bz + cy,
+                        -sy,
+                        cy,
+                        self.mob_rng.next_f32(),
+                    );
+                    self.particles.push(arc);
+                }
+                // THE CRIT'S OWN PREDICTION (Player.crit →
+                // ParticleEngine.createTrackingEmitter — the tracking
+                // walk the emitter lane owns, the wire body's own box
+                // the ctor freezes)
+                if crit {
+                    self.crit_emitters
+                        .push(crate::particles::CritEmitter::new(wid, wbox));
+                }
+                // THE ATTACK VOICE (attackVisualEffects's own branch —
+                // the strong/weak sound the `!crit && !sweep` gate
+                // speaks, the same law the offline arm answers)
+                let event = if crit {
+                    Some("entity.player.attack.crit")
+                } else if sweep {
+                    None
+                } else if full {
+                    Some("entity.player.attack.strong")
+                } else {
+                    Some("entity.player.attack.weak")
+                };
+                if let Some(event) = event {
+                    let vp = (self.mob_rng.next_f32() - self.mob_rng.next_f32()) * 0.2 + 1.0;
+                    self.sounds.play_voice(self.frame, event, 1.0, vp);
                 }
                 self.attack_ticker = 0;
             }
@@ -14971,10 +15083,13 @@ mod tests {
         // THE 26.2'S OWN gameMode.attack WALK (the dump's order: ensure,
         // SEND, attack, RESET): the crosshair's verdict lands the wire
         // body, the dedicated Attack packet the SERVER'S OWN id carries
-        // rides the command lane, the local prediction the wire body
+        // rides the command lane, the remote body's HURT the client
         // never runs (the health the server's to keep — the Hurt echo
-        // the hurt lane renders), the RESET the resetAttackStrengthTicker
-        // step speaks, the SWING the shared tail rides.
+        // the hurt lane renders), the ATTACKER'S OWN PREDICTION the
+        // client law walks (the crit arm + the voice branch — the
+        // staged ground hit the strong voice speaks, the crit gate
+        // refuses), the RESET the resetAttackStrengthTicker step
+        // speaks, the SWING the shared tail rides.
         let mut app = App::new(3);
         app.open(ScreenKind::Connect);
         app.net_world = Some(air_net_world(2, 0));
@@ -15031,12 +15146,213 @@ mod tests {
             rx.try_recv().is_err(),
             "nothing else the press speaks"
         );
-        // THE RESET the ticker's law speaks; THE PREDICTION the wire
-        // body never runs — the health the server's own
+        // THE RESET the ticker's law speaks; THE HURT PREDICTION the
+        // wire body never runs — the health the server's own
         assert_eq!(app.attack_ticker, 0, "the reset the walk speaks");
         assert_eq!(
             app.net_mobs[0].health, health_before,
             "the wire body's health the client never predicts"
+        );
+        // THE ECHO'S OWN VOICE (attackVisualEffects's branch the client
+        // walk keeps — the staged ground hit the full charge the STRONG
+        // pick names, the weak's absence the crit gate's refusal keeps,
+        // the sweep's no-sword staging the branch never arms)
+        assert!(
+            app.sounds
+                .events
+                .iter()
+                .any(|e| e.starts_with("entity.player.attack.strong ")),
+            "the full charge the strong voice speaks"
+        );
+        assert!(
+            !app.sounds
+                .events
+                .iter()
+                .any(|e| e.starts_with("entity.player.attack.weak ")),
+            "the non-crit ground hit the weak never speaks"
+        );
+        assert!(
+            app.crit_emitters.is_empty(),
+            "the staged ground hit the crit gate refuses"
+        );
+    }
+
+    #[test]
+    fn the_wire_attack_predicts_the_crit_emitter() {
+        // THE CRIT ARM'S OWN PREDICTION (the 26.2 Player.attack's
+        // `this.crit(target)` the repo's javap places BEFORE the hurt —
+        // ParticleEngine.createTrackingEmitter the client-only lane the
+        // remote target walks): the falling attacker the crit gate arms,
+        // the emitter the SERVER'S OWN id tracks, the attack.crit voice
+        // the branch speaks, the HURT the client never runs (the health
+        // the server's own, the damage stars the server's sendParticles
+        // walk keeps)
+        let mut app = App::new(3);
+        app.open(ScreenKind::Connect);
+        app.net_world = Some(air_net_world(2, 0));
+        app.enter_network_world(None, Skybox::Overworld, None, None);
+        let n = app.world_size as f64;
+        let mut body = crate::body::PlayerBody::new(
+            n / 2.0 + 0.5,
+            app.spawn_y as f64,
+            n / 2.0 + 0.5,
+            -90.0,
+            0.0,
+        );
+        // THE FALLING ATTACKER (the crit gate's own facts: the fall
+        // distance, the ground's absence, the eye's dry air, the
+        // sprint's absence)
+        body.on_ground = false;
+        body.fall_distance = 3.0;
+        app.body = Some(body);
+        let (bx, bz) = {
+            let b = app.body.as_ref().unwrap();
+            (b.x, b.z)
+        };
+        app.live_mobs_updated(vec![wire_mob_named(
+            100,
+            bx + 1.8,
+            app.spawn_y as f64,
+            bz,
+            "minecraft:zombie",
+        )]);
+        let health_before = app.net_mobs[0].health;
+        assert_eq!(app.pick_mob(&app.net_mobs), Some(0), "the wire verdict");
+        let (tx, _rx) = std::sync::mpsc::channel();
+        app.live_clicks = Some(tx);
+        app.attack_ticker = 10; // the full charge the crit gate reads
+        app.on_attack();
+        // THE EMITTER (the server's own id the tracking walk reads, the
+        // ctor's frozen box read the wire body's own bbox keeps)
+        assert_eq!(app.crit_emitters.len(), 1, "the crit arm's emitter");
+        assert_eq!(app.crit_emitters[0].target_id, 100, "the server's id");
+        {
+            let b = app.net_mobs[0].box_at();
+            let (cx, cz) = ((b.0 + b.3) * 0.5, (b.2 + b.5) * 0.5);
+            assert!(
+                (app.crit_emitters[0].x - cx).abs() < 1e-9,
+                "the ctor's center-x read: {} vs {cx}",
+                app.crit_emitters[0].x
+            );
+            assert!(
+                (app.crit_emitters[0].z - cz).abs() < 1e-9,
+                "the ctor's center-z read: {} vs {cz}",
+                app.crit_emitters[0].z
+            );
+        }
+        // THE TRACKING WALK (the net list the fallback reads — the
+        // moved body the emitter's refresh follows, the frozen fold the
+        // old walk kept the fallback replaced)
+        app.net_mobs[0].x += 0.5;
+        app.update();
+        assert!(
+            (app.crit_emitters[0].x - app.net_mobs[0].x).abs() < 1e-9,
+            "the emitter follows the wire body: {} vs {}",
+            app.crit_emitters[0].x,
+            app.net_mobs[0].x
+        );
+        // THE VOICE + THE HURT'S ABSENCE (the crit voice the branch
+        // speaks, the health the server's own, the strong's absence the
+        // crit branch's own pick keeps)
+        assert!(
+            app.sounds
+                .events
+                .iter()
+                .any(|e| e.starts_with("entity.player.attack.crit ")),
+            "the crit voice the branch speaks"
+        );
+        assert!(
+            !app.sounds
+                .events
+                .iter()
+                .any(|e| e.starts_with("entity.player.attack.strong ")),
+            "the crit branch the strong never speaks"
+        );
+        assert_eq!(
+            app.net_mobs[0].health, health_before,
+            "the hurt the client never runs"
+        );
+        // the damage stars the server's sendParticles walk keeps — the
+        // client's lane the emitter's own crit stars alone fill (the
+        // Damage kind the provider's walk speaks, the emitter's Crit
+        // kind the stars the tracking walk spawns)
+        assert!(
+            !app.particles
+                .iter()
+                .any(|p| matches!(p.kind, crate::particles::ParticleKind::Damage)),
+            "the damage stars the server's sendParticles walk keeps"
+        );
+    }
+
+    #[test]
+    fn the_wire_attack_echoes_the_sweep() {
+        // THE SWEEP'S OWN PREDICTION (doSweepAttack's client walk the
+        // sword's staging arms — the voice the offset-0 speaks, the arc
+        // the count-0 sendParticles leaves at the body's own mid height
+        // one forward block; the AoE's hurts the server's own verdict
+        // keeps — the wire bodies' health the client never touches)
+        let mut app = App::new(3);
+        app.open(ScreenKind::Connect);
+        app.net_world = Some(air_net_world(2, 0));
+        app.enter_network_world(None, Skybox::Overworld, None, None);
+        let n = app.world_size as f64;
+        let mut body = crate::body::PlayerBody::new(
+            n / 2.0 + 0.5,
+            app.spawn_y as f64,
+            n / 2.0 + 0.5,
+            -90.0,
+            0.0,
+        );
+        body.on_ground = true;
+        app.body = Some(body);
+        let (bx, bz) = {
+            let b = app.body.as_ref().unwrap();
+            (b.x, b.z)
+        };
+        app.live_mobs_updated(vec![wire_mob_named(
+            100,
+            bx + 1.8,
+            app.spawn_y as f64,
+            bz,
+            "minecraft:zombie",
+        )]);
+        let health_before = app.net_mobs[0].health;
+        assert_eq!(app.pick_mob(&app.net_mobs), Some(0), "the wire verdict");
+        app.offline_held_updated(Some("item/wooden_sword"));
+        let (tx, _rx) = std::sync::mpsc::channel();
+        app.live_clicks = Some(tx);
+        app.attack_ticker = 10; // the full charge the sweep gate reads
+        app.on_attack();
+        // THE SWEEP VOICE + THE ARC (the branch's own pair — the
+        // strong's absence the sweep arm's None keeps, the crit the
+        // ground staging refuses)
+        assert!(
+            app.sounds
+                .events
+                .iter()
+                .any(|e| e.starts_with("entity.player.attack.sweep ")),
+            "the sweep voice the offset-0 speaks"
+        );
+        assert!(
+            !app.sounds
+                .events
+                .iter()
+                .any(|e| e.starts_with("entity.player.attack.strong ")),
+            "the sweep arm the strong never speaks"
+        );
+        assert!(
+            app.particles
+                .iter()
+                .any(|p| matches!(p.kind, crate::particles::ParticleKind::Sweep)),
+            "the arc the count-0 sendParticles leaves"
+        );
+        assert!(
+            app.crit_emitters.is_empty(),
+            "the ground staging the crit gate refuses"
+        );
+        assert_eq!(
+            app.net_mobs[0].health, health_before,
+            "the AoE hurts the server's own verdict keeps"
         );
     }
 
