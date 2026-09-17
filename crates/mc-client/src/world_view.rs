@@ -399,6 +399,13 @@ pub struct LiveContainer {
     /// numbering, verbatim from the store (an empty stack is the
     /// wire's own `(0, 0)` — the screen's emptiness sentinel).
     pub slots: Vec<(i32, i32)>,
+    /// THE BUNDLE CONTENTS' OWN FEED (the set-slot sync the screens'
+    /// map rides): the slots whose `bundle_contents` component patch
+    /// the store's stacks carry — the MENU slot id keyed with the
+    /// entries' `(item_id, count)` pairs in wire order. The selected
+    /// index the wire never speaks (the wrap's -1 default — the
+    /// screens' own belief, any CHANGED component's reset).
+    pub bundle_rows: Vec<(i32, Vec<(i32, i32)>)>,
     /// The GUI cursor stack as `(item_id, count)` (the Set Content
     /// packet's carriedItem).
     pub carried: (i32, i32),
@@ -1015,10 +1022,41 @@ pub fn predict_quick_move_to_store(
 /// is up until the server opens one).
 fn open_container_view(model: &WorldModel) -> Option<LiveContainer> {
     let oc = model.open_container()?;
+    // THE BUNDLE ROWS' EXTRACTION (the set-slot sync's projection):
+    // the slots whose component patch carries the `bundle_contents`
+    // value — the menu slot id keyed with the entries' (id, count)
+    // pairs, the wire order kept. The patches the store already
+    // parsed (the value codec's own lane); the selection index the
+    // wire never carries, the screens' own belief.
+    let bundle_rows = oc
+        .slots
+        .iter()
+        .enumerate()
+        .filter_map(|(i, s)| {
+            let value = s.patch.added.iter().find_map(|(ty, v)| {
+                if *ty == mc_protocol::play::data_component_types::BUNDLE_CONTENTS {
+                    Some(v)
+                } else {
+                    None
+                }
+            })?;
+            match value {
+                mc_protocol::play::ComponentValue::BundleContents(entries) => Some((
+                    i as i32,
+                    entries
+                        .iter()
+                        .map(|e| (e.item_id, e.count))
+                        .collect::<Vec<_>>(),
+                )),
+                _ => None,
+            }
+        })
+        .collect();
     Some(LiveContainer {
         id: oc.id,
         menu_type_id: oc.menu_type_id,
         slots: oc.slots.iter().map(|s| (s.item_id, s.count)).collect(),
+        bundle_rows,
         carried: (oc.carried.item_id, oc.carried.count),
         state_id: oc.state_id,
     })
@@ -3000,6 +3038,73 @@ mod tests {
             container_id: 5,
         }));
         assert!(live.refresh(example_mapper).container.is_none(), "the close lands");
+    }
+
+    #[test]
+    fn the_snapshot_view_extracts_the_bundle_rows() {
+        // the set-slot sync's projection: the slots whose component
+        // patch carries the `bundle_contents` value ride the view's
+        // bundle_rows — the menu slot id keyed with the entries'
+        // (id, count) pairs in wire order; the plain slots and the
+        // absence of the component stay rowless
+        let mut live = LiveView::from_snapshot(surface_snapshot(), 5);
+        live.apply(PlayEvent::ScreenOpened(mc_protocol::play::OpenScreen {
+            container_id: 5,
+            menu_type_id: crate::world_model::MENU_TYPE_CHEST,
+            title_nbt: vec![0x0A, 0x00],
+        }));
+        let bundle = mc_registry::item_id_by_name("bundle").expect("the bundle the table keeps");
+        let bundle_patch = mc_protocol::play::ComponentPatch {
+            added: vec![(
+                mc_protocol::play::data_component_types::BUNDLE_CONTENTS,
+                mc_protocol::play::ComponentValue::BundleContents(vec![
+                    mc_protocol::play::BundleEntry {
+                        item_id: 926,
+                        count: 12,
+                        patch: mc_protocol::play::ComponentPatch::default(),
+                    },
+                    mc_protocol::play::BundleEntry {
+                        item_id: 921,
+                        count: 5,
+                        patch: mc_protocol::play::ComponentPatch::default(),
+                    },
+                ]),
+            )],
+            removed: Vec::new(),
+        };
+        let empty_bundle_patch = mc_protocol::play::ComponentPatch {
+            added: vec![(
+                mc_protocol::play::data_component_types::BUNDLE_CONTENTS,
+                mc_protocol::play::ComponentValue::BundleContents(Vec::new()),
+            )],
+            removed: Vec::new(),
+        };
+        let stack = |count, item_id, patch| mc_protocol::play::ItemStack {
+            count,
+            item_id,
+            patch,
+        };
+        live.apply(PlayEvent::ContainerFilled(mc_protocol::play::ContainerContent {
+            container_id: 5,
+            state_id: 11,
+            items: vec![
+                stack(0, 0, Default::default()), // the empty grid heads
+                stack(0, 0, Default::default()),
+                stack(0, 0, Default::default()),
+                stack(0, 0, Default::default()),
+                stack(1, bundle, bundle_patch),   // slot 4: the loaded bundle
+                stack(7, 745, Default::default()), // slot 5: the plain stack
+                stack(1, bundle, empty_bundle_patch), // slot 6: the EMPTY bundle
+            ],
+            carried_item: stack(0, 0, Default::default()),
+        }));
+        let view = live.refresh(example_mapper);
+        let c = view.container.expect("the open window rides the view");
+        assert_eq!(
+            c.bundle_rows,
+            vec![(4, vec![(926, 12), (921, 5)]), (6, Vec::new())],
+            "the bundle-bearing slots the extraction keys, wire order"
+        );
     }
 
     #[test]

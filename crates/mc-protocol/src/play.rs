@@ -1817,6 +1817,24 @@ pub mod data_component_types {
     /// names carry no "status" infix; the wiki-era naming is not
     /// the wire's).
     pub const CONSUMABLE: i32 = 24;
+    /// `BundleContents.STREAM_CODEC` (the clinit walk's registration
+    /// order: custom_data 0 .. bundle_contents 50 — the same census
+    /// the table's 0/1/3 pins share) — `ItemStackTemplate.STREAM_CODEC
+    /// .apply(ByteBufCodecs.list())` mapped: a VarInt count (the
+    /// NO-ARG `ByteBufCodecs.list()`, ceiling `Integer.MAX_VALUE` —
+    /// readCount's ceiling check is the only guard, a negative count
+    /// still dies at the constructor) then count × ItemStackTemplate:
+    /// the item's `$29` byIdOrThrow VarInt (AIR — id 0 — refuses at
+    /// the template ctor's `Item must be non-empty`), the RAW count
+    /// lane (the template carries NO emptiness sentinel — the
+    /// particle lane's own note), and the entry's OWN
+    /// `DataComponentPatch.STREAM_CODEC` (the recursion: a bundle
+    /// riding a bundle — the nesting the port caps at the NBT
+    /// reader's own 128-depth discipline). The wire NEVER carries the
+    /// selected index — the `map`'s wrap builds the contents with the
+    /// (list) ctor's -1 default, any server sync RESETS the client's
+    /// selection (the bundle-selection round's own law).
+    pub const BUNDLE_CONTENTS: i32 = 50;
     /// The client-side DATA_COMPONENT_TYPE registry's SIZE — vanilla's
     /// clinit census (111 registered types; TWENTY-FOUR carry value
     /// codecs, the other 87 refuse). The `byIdOrThrow` bound of every
@@ -1923,6 +1941,26 @@ pub struct PartialPredicate {
     pub payload: Nbt,
 }
 
+/// One bundle-contents ENTRY — the `ItemStackTemplate.STREAM_CODEC`
+/// composite the `BundleContents.STREAM_CODEC` lists: the item's
+/// registry id (the `$29` byIdOrThrow VarInt — AIR, id 0, refuses at
+/// the template ctor's `Item must be non-empty`), the RAW count lane
+/// (the template carries NO emptiness sentinel — the count is the
+/// record's own int, retained verbatim), and the entry's OWN
+/// component patch (the recursion lane — a bundle riding a bundle).
+#[derive(Debug, Clone, PartialEq)]
+pub struct BundleEntry {
+    /// The entry's item REGISTRY id (`BuiltInRegistries.ITEM` order;
+    /// never 0 — the template ctor's own refusal).
+    pub item_id: i32,
+    /// The entry's stack size — the RAW VarInt the template lane
+    /// carries (retained verbatim; the consumer filters).
+    pub count: i32,
+    /// The entry's component patch (the nested lane — the bundle
+    /// riding a bundle's own contents rides here).
+    pub patch: ComponentPatch,
+}
+
 /// One decoded component-patch VALUE — the codec-shape variants of
 /// [`data_component_types`]. The variants share by WIRE SHAPE, not by
 /// meaning: the component type id rides beside the value in
@@ -1932,6 +1970,12 @@ pub struct PartialPredicate {
 /// consumer's act, the same decode-only line the villager ids rode.
 #[derive(Debug, Clone, PartialEq)]
 pub enum ComponentValue {
+    /// The `bundle_contents` component's decoded walk
+    /// ([`data_component_types::BUNDLE_CONTENTS`]): the template list
+    /// the `BundleContents.STREAM_CODEC` carries, in wire order. The
+    /// selected index the wire never speaks (the wrap's -1 default —
+    /// the client's belief, any sync's reset).
+    BundleContents(Vec<BundleEntry>),
     /// The four VAR_INT lanes: max_stack_size (1), max_damage (2),
     /// damage (3), repair_cost (19).
     VarInt(i32),
@@ -2485,9 +2529,36 @@ fn read_component_count(c: &mut &[u8], what: &str) -> Result<i32> {
 /// non-negative unknown refuses because its byte length is only
 /// knowable through a codec the port does not carry — the packet read
 /// fails either way, vanilla's own direction.
-fn read_component_value(type_id: i32, c: &mut &[u8]) -> Result<ComponentValue> {
+fn read_component_value(type_id: i32, c: &mut &[u8], depth: u32) -> Result<ComponentValue> {
     use data_component_types as t;
     Ok(match type_id {
+        t::BUNDLE_CONTENTS => {
+            // THE TEMPLATE LIST (the `BundleContents.STREAM_CODEC`
+            // walk): the no-arg list's ceiling the house law keeps
+            // (the negative count refuses, the byte shortage is the
+            // unframed lane's own guard), then the templates — the
+            // AIR refusal the ctor's IllegalStateException speaks,
+            // the RAW count lane, the entry's own patch (the
+            // recursion the depth cap disciplines)
+            let n = read_component_count(c, "bundle-contents")?;
+            let mut items = Vec::new();
+            for _ in 0..n {
+                let item_id = read_varint(c)?;
+                anyhow::ensure!(
+                    item_id >= 0,
+                    "negative bundle entry item id {item_id}"
+                );
+                anyhow::ensure!(
+                    item_id != 0,
+                    "bundle entry item id 0 (air) — the ItemStackTemplate \
+                     ctor's 'Item must be non-empty' IllegalStateException"
+                );
+                let count = read_varint(c)?;
+                let patch = parse_component_patch_depth(c, depth + 1)?;
+                items.push(BundleEntry { item_id, count, patch });
+            }
+            ComponentValue::BundleContents(items)
+        }
         t::CUSTOM_DATA => {
             let tag = read_bare_nbt(c)?;
             // compoundTagCodec's decode map: anything but a
@@ -3089,7 +3160,7 @@ fn read_block_predicate(c: &mut &[u8]) -> Result<BlockPredicate> {
     for _ in 0..exact_n {
         let type_id = read_varint(c)?;
         anyhow::ensure!(type_id >= 0, "negative component type id {type_id}");
-        let value = read_component_value(type_id, c)?;
+        let value = read_component_value(type_id, c, 0)?;
         exact.push((type_id, value));
     }
     let partial_n = read_component_count(c, "predicate matcher list")?;
@@ -3307,6 +3378,22 @@ fn read_effect_details(c: &mut &[u8]) -> Result<EffectDetails> {
 /// refuses (vanilla's loop would skip and the fastutil map
 /// constructor's negative capacity throws — the read fails there too).
 fn parse_component_patch(c: &mut &[u8]) -> Result<ComponentPatch> {
+    parse_component_patch_depth(c, 0)
+}
+
+/// The depth-threaded patch walk — the recursion the bundle
+/// contents' entries ride (a bundle riding a bundle's own patch
+/// nests the dispatch again). The cap mirrors the NBT reader's own
+/// `MAX_DEPTH` discipline: the wire is unframed, an unbounded nest
+/// would exhaust the reader's stack — the port refuses at the same
+/// lane the NBT family does.
+fn parse_component_patch_depth(c: &mut &[u8], depth: u32) -> Result<ComponentPatch> {
+    const MAX_DEPTH: u32 = 128;
+    anyhow::ensure!(
+        depth <= MAX_DEPTH,
+        "component-patch nesting past the {}-depth lane (the NBT reader's own cap family)",
+        MAX_DEPTH
+    );
     let added_count = read_varint(c)?;
     let removed_count = read_varint(c)?;
     anyhow::ensure!(added_count >= 0, "negative patch added count {added_count}");
@@ -3318,7 +3405,7 @@ fn parse_component_patch(c: &mut &[u8]) -> Result<ComponentPatch> {
     for _ in 0..added_count {
         let type_id = read_varint(c)?;
         anyhow::ensure!(type_id >= 0, "negative component type id {type_id}");
-        let value = read_component_value(type_id, c)?;
+        let value = read_component_value(type_id, c, depth)?;
         added.push((type_id, value));
     }
     let mut removed = Vec::with_capacity(removed_count as usize);
@@ -10824,6 +10911,134 @@ mod tests {
             encode_select_bundle_item(2, -1),
             vec![0x03, 0x02, 0xff, 0xff, 0xff, 0xff, 0x0f],
             "selection -1 rides its five-byte VarInt"
+        );
+    }
+
+    /// The bundle_contents component's VALUE lane — the type-50 walk
+    /// the patch dispatch speaks (the 26.2 BundleContents.STREAM_CODEC:
+    /// the template list the ItemStackTemplate composite carries — the
+    /// item's VarInt, the RAW count lane, the entry's OWN patch; the
+    /// AIR entry the ctor's non-empty law refuses, the nesting the
+    /// 128-depth lane caps). The bytes are hand-packed over the
+    /// codec's own shape, riding a Set Container Slot's stack.
+    #[test]
+    fn the_bundle_contents_component_speaks_the_wire() {
+        assert_eq!(
+            data_component_types::BUNDLE_CONTENTS,
+            50,
+            "the clinit walk's registration order"
+        );
+        // the flat shape: the bundle stack (item 926) carries two
+        // entries — diamond x3 + apple x1, each the EMPTY patch
+        let p: Vec<u8> = vec![
+            0x14, 0x02, 0x07, 0x00, 0x0d, // the set-slot header: id, window 2, state 7, slot 13
+            0x01, 0x9e, 0x07, // the stack: count 1, item 926
+            0x01, 0x00, // the patch: added 1, removed 0
+            0x32, // the type: bundle_contents (50)
+            0x02, // the list: two entries
+            0x9e, 0x07, 0x03, 0x00, 0x00, // diamond x3, the empty patch
+            0x99, 0x07, 0x01, 0x00, 0x00, // apple x1, the empty patch
+        ];
+        let s = parse_set_container_slot(&p).unwrap();
+        assert_eq!(s.item.count, 1, "the stack the sentinel carries");
+        assert_eq!(s.item.item_id, 926);
+        let (ty, value) = s.item.patch.added.first().expect("one added component");
+        assert_eq!(*ty, data_component_types::BUNDLE_CONTENTS);
+        match value {
+            ComponentValue::BundleContents(entries) => {
+                assert_eq!(entries.len(), 2, "the list the wire speaks");
+                assert_eq!(entries[0].item_id, 926);
+                assert_eq!(entries[0].count, 3, "the RAW count lane");
+                assert!(entries[0].patch.added.is_empty(), "the empty patch");
+                assert_eq!(entries[1].item_id, 921);
+                assert_eq!(entries[1].count, 1);
+            }
+            other => panic!("the bundle walk, got {other:?}"),
+        }
+        // the NESTED shape: the first entry rides a bundle of its own
+        // (its patch carries the inner contents — apple x2)
+        let p: Vec<u8> = vec![
+            0x14, 0x02, 0x07, 0x00, 0x0d,
+            0x01, 0x9e, 0x07,
+            0x01, 0x00,
+            0x32,
+            0x02,
+            0x9e, 0x07, 0x03, // entry 1: item 926, count 3, THE NESTED PATCH:
+            0x01, 0x00, // the added 1 / removed 0
+            0x32, // the inner type
+            0x01, // the inner list: one entry
+            0x99, 0x07, 0x02, 0x00, 0x00, // apple x2, the empty patch
+            0x99, 0x07, 0x01, 0x00, 0x00, // entry 2: apple x1, the empty patch
+        ];
+        let s = parse_set_container_slot(&p).unwrap();
+        let (_, value) = s.item.patch.added.first().unwrap();
+        match value {
+            ComponentValue::BundleContents(entries) => {
+                assert_eq!(entries.len(), 2);
+                let inner = &entries[0].patch.added;
+                assert_eq!(inner.len(), 1, "the entry's own patch spoke");
+                assert_eq!(inner[0].0, data_component_types::BUNDLE_CONTENTS);
+                match &inner[0].1 {
+                    ComponentValue::BundleContents(items) => {
+                        assert_eq!(items.len(), 1, "the inner bundle's own list");
+                        assert_eq!(items[0].item_id, 921);
+                        assert_eq!(items[0].count, 2);
+                    }
+                    other => panic!("the inner walk, got {other:?}"),
+                }
+            }
+            other => panic!("the bundle walk, got {other:?}"),
+        }
+        // THE AIR REFUSAL (the template ctor's own law): an entry with
+        // item id 0 refuses the read
+        let p: Vec<u8> = vec![
+            0x14, 0x02, 0x07, 0x00, 0x0d,
+            0x01, 0x9e, 0x07,
+            0x01, 0x00,
+            0x32,
+            0x01, // one entry
+            0x00, 0x01, 0x00, 0x00, // item 0 (air) — the refusal speaks
+        ];
+        assert!(
+            parse_set_container_slot(&p).is_err(),
+            "the air entry the ctor refuses"
+        );
+        // THE DEPTH CAP (the NBT reader's own discipline): 200 nested
+        // bundles refuse the read — the stack the unframed wire's
+        // reader never exhausts
+        let mut value: Vec<u8> = vec![0]; // the innermost: an empty list
+        for _ in 0..200 {
+            let mut entry = vec![0x9e, 0x07, 0x01]; // item 926, count 1
+            entry.extend_from_slice(&[0x01, 0x00]); // the entry's patch: added 1, removed 0
+            entry.push(0x32); // the inner type
+            entry.extend_from_slice(&value); // the inner list
+            value = vec![0x01]; // the next list: one entry
+            value.extend_from_slice(&entry);
+        }
+        let mut p: Vec<u8> = vec![0x14, 0x02, 0x07, 0x00, 0x0d, 0x01, 0x9e, 0x07, 0x01, 0x00, 0x32];
+        p.extend_from_slice(&value);
+        assert!(
+            parse_set_container_slot(&p).is_err(),
+            "the nesting past the depth lane refuses"
+        );
+        // the same nest INSIDE the cap still reads (the boundary the
+        // cap's own law keeps — 100 deep, well under the 128)
+        let mut value: Vec<u8> = vec![0];
+        for _ in 0..100 {
+            let mut entry = vec![0x9e, 0x07, 0x01];
+            entry.extend_from_slice(&[0x01, 0x00]);
+            entry.push(0x32);
+            entry.extend_from_slice(&value);
+            value = vec![0x01];
+            value.extend_from_slice(&entry);
+        }
+        let mut p: Vec<u8> = vec![0x14, 0x02, 0x07, 0x00, 0x0d, 0x01, 0x9e, 0x07, 0x01, 0x00, 0x32];
+        p.extend_from_slice(&value);
+        let s = parse_set_container_slot(&p).unwrap();
+        let (_, value) = s.item.patch.added.first().unwrap();
+        assert!(
+            matches!(value, ComponentValue::BundleContents(_)),
+            "the in-cap nest reads whole"
         );
     }
 

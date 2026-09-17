@@ -7479,6 +7479,36 @@ impl App {
                 if self.screen == ScreenKind::World {
                     self.open(ScreenKind::Chest);
                 }
+                // THE BUNDLE CONTENTS' OWN FEED (the set-slot sync the
+                // map's feeder round is): the rows the wire's patches
+                // speak, the WHOLESALE replacement the container lane
+                // rides (the projection is the store's own snapshot).
+                // THE ORDER the lifecycle keeps — the switch-clear the
+                // open() spoke has already died the stale rows, the
+                // fresh sync's rows land after. THE SELECTION the
+                // belief keeps: identical contents preserve the
+                // client's own selection (the wire never carries the
+                // index — the wrap's -1 default the (list) ctor
+                // speaks), a CHANGED or removed row the law resets —
+                // any real server update rebuilds the component, the
+                // -1 the reset speaks.
+                let mut rows = std::collections::HashMap::new();
+                for (slot_id, items) in &c.bundle_rows {
+                    let selected = match self.bundle_contents.get(slot_id) {
+                        Some(prev) if prev.items == *items => prev.selected_item_index,
+                        _ => BundleContents::NO_SELECTED_INDEX,
+                    };
+                    rows.insert(
+                        *slot_id,
+                        BundleContents {
+                            items: items.clone(),
+                            selected_item_index: selected,
+                        },
+                    );
+                }
+                self.bundle_contents = rows;
+                self.bundle_scroll_acc_x = 0.0;
+                self.bundle_scroll_acc_y = 0.0;
             }
             None => {
                 // the store dropped: a LIVE chest closes back to the
@@ -7490,6 +7520,12 @@ impl App {
                 }
                 self.chest_live_window = None;
                 self.chest_carried = (0, 0); // no window, no held stack
+                // the window's OWN rows die with it (the lifecycle the
+                // open() switch keeps — no stale bundle rides a later
+                // screen, the next window re-learns from its own sync)
+                self.bundle_contents.clear();
+                self.bundle_scroll_acc_x = 0.0;
+                self.bundle_scroll_acc_y = 0.0;
             }
         }
     }
@@ -13811,6 +13847,7 @@ mod tests {
             },
             carried: (0, 0),
             state_id: 7,
+            bundle_rows: Vec::new(),
         };
         app.live_view_updated(air_net_world(2, 1), None, None, Some(chest.clone()));
         assert_eq!(app.screen, ScreenKind::Chest, "the window shows over the world");
@@ -13833,7 +13870,7 @@ mod tests {
 
         // a NON-chest menu is the honest drop: the store keeps it, the
         // screen machinery does not move (its screen is its own round)
-        let hopper = LiveContainer { id: 6, menu_type_id: 15, slots: vec![], carried: (0, 0), state_id: 0 };
+        let hopper = LiveContainer { id: 6, menu_type_id: 15, slots: vec![], carried: (0, 0), state_id: 0, bundle_rows: Vec::new() };
         app.live_view_updated(air_net_world(2, 3), None, None, Some(hopper));
         assert_eq!(app.screen, ScreenKind::Chest, "the wired screen stays");
         assert_eq!(app.chest_slots[9], (981, 3), "the hopper touched nothing");
@@ -13893,6 +13930,7 @@ mod tests {
             },
             carried: (0, 0),
             state_id: 7,
+            bundle_rows: Vec::new(),
         };
         app.live_view_updated(air_net_world(2, 1), None, None, Some(chest));
         assert_eq!(app.screen, ScreenKind::Chest);
@@ -13991,6 +14029,7 @@ mod tests {
             slots: vec![(926, 1)],
             carried: (0, 0),
             state_id: 3,
+            bundle_rows: Vec::new(),
         };
         app.live_view_updated(air_net_world(2, 1), None, None, Some(chest));
         assert_eq!(app.screen, ScreenKind::Chest);
@@ -14037,6 +14076,7 @@ mod tests {
             },
             carried: (0, 0),
             state_id: 11,
+            bundle_rows: Vec::new(),
         };
         app.live_view_updated(air_net_world(2, 1), None, None, Some(chest));
         assert_eq!(app.screen, ScreenKind::Chest);
@@ -14092,6 +14132,7 @@ mod tests {
             },
             carried: (0, 0),
             state_id: 12,
+            bundle_rows: Vec::new(),
         };
         app.live_view_updated(air_net_world(2, 2), None, None, Some(truth));
         assert_eq!(app.chest_slots[9], (0, 0), "the prediction's merge is gone");
@@ -14141,6 +14182,7 @@ mod tests {
             },
             carried: (0, 0),
             state_id: 8,
+            bundle_rows: Vec::new(),
         };
         app.live_view_updated(air_net_world(2, 1), None, None, Some(chest));
         assert_eq!(app.screen, ScreenKind::Chest);
@@ -14225,6 +14267,7 @@ mod tests {
             },
             carried: (921, 3), // a held stack: QUICK_MOVE never touches it
             state_id: 7,
+            bundle_rows: Vec::new(),
         };
         app.live_view_updated(air_net_world(2, 1), None, None, Some(chest));
         assert_eq!(app.screen, ScreenKind::Chest);
@@ -16275,6 +16318,97 @@ mod tests {
         assert_eq!(app.bundle_scroll_acc_y, 0.0, "the accumulator the switch resets");
     }
 
+    /// THE SET-SLOT SYNC'S OWN FEED (the live_container_updated lane —
+    /// the map's feeder round): the chest sync's bundle rows land the
+    /// map wholesale (the projection the store's snapshot speaks),
+    /// identical contents preserve the selection the client believes
+    /// (the wire never carries the index — the wrap's -1 default any
+    /// CHANGED component resets), and the window's drop clears the
+    /// rows the lifecycle keeps.
+    #[test]
+    fn the_chest_sync_feeds_the_bundle_rows() {
+        let mut app = App::new(3);
+        app.open(ScreenKind::Connect);
+        app.net_world = Some(air_net_world(2, 0));
+        app.enter_network_world(None, Skybox::Overworld, None, None);
+        // the chest opens with a loaded bundle in the grid's slot 4 —
+        // the menu id the rows key, the walk's own five-entry contents
+        let chest = crate::world_view::LiveContainer {
+            id: 5,
+            menu_type_id: crate::world_model::MENU_TYPE_CHEST,
+            slots: vec![(0, 0); 63],
+            bundle_rows: vec![(4, vec![(62, 16), (63, 12), (4, 1), (5, 7), (17, 3)])],
+            carried: (0, 0),
+            state_id: 7,
+        };
+        app.live_view_updated(air_net_world(2, 1), None, None, Some(chest));
+        assert_eq!(app.screen, ScreenKind::Chest, "the window shows");
+        assert_eq!(
+            app.bundle_contents[&4].items.len(),
+            5,
+            "the row the sync fed"
+        );
+        assert_eq!(
+            app.bundle_contents[&4].selected_item_index,
+            BundleContents::NO_SELECTED_INDEX,
+            "the wire's own -1 default the fresh row keeps"
+        );
+        // the client's own selection rides the toggle walk's belief
+        app.bundle_contents.get_mut(&4).unwrap().selected_item_index = 2;
+        // the SAME sync again (the projection refreshes every window):
+        // identical contents preserve the belief — the selection the
+        // wire never carries survives the refresh
+        let chest = crate::world_view::LiveContainer {
+            id: 5,
+            menu_type_id: crate::world_model::MENU_TYPE_CHEST,
+            slots: vec![(0, 0); 63],
+            bundle_rows: vec![(4, vec![(62, 16), (63, 12), (4, 1), (5, 7), (17, 3)])],
+            carried: (0, 0),
+            state_id: 8,
+        };
+        app.live_view_updated(air_net_world(2, 1), None, None, Some(chest));
+        assert_eq!(
+            app.bundle_contents[&4].selected_item_index,
+            2,
+            "the identical row the belief survives"
+        );
+        // the CHANGED contents (the server's own update): the -1 the
+        // wrap's default resets
+        let chest = crate::world_view::LiveContainer {
+            id: 5,
+            menu_type_id: crate::world_model::MENU_TYPE_CHEST,
+            slots: vec![(0, 0); 63],
+            bundle_rows: vec![(4, vec![(62, 16)])],
+            carried: (0, 0),
+            state_id: 9,
+        };
+        app.live_view_updated(air_net_world(2, 1), None, None, Some(chest));
+        assert_eq!(app.bundle_contents[&4].items.len(), 1, "the changed row");
+        assert_eq!(
+            app.bundle_contents[&4].selected_item_index,
+            BundleContents::NO_SELECTED_INDEX,
+            "the changed component the reset speaks"
+        );
+        // the ROWLESS sync: no bundle-bearing slot — the map's
+        // wholesale replacement the snapshot semantics keeps
+        let chest = crate::world_view::LiveContainer {
+            id: 5,
+            menu_type_id: crate::world_model::MENU_TYPE_CHEST,
+            slots: vec![(0, 0); 63],
+            bundle_rows: Vec::new(),
+            carried: (0, 0),
+            state_id: 10,
+        };
+        app.live_view_updated(air_net_world(2, 1), None, None, Some(chest));
+        assert!(app.bundle_contents.is_empty(), "the rowless sync");
+        // the WINDOW DROPS (the close): the rows die with the window,
+        // the accumulator the same lifecycle resets
+        app.live_view_updated(air_net_world(2, 1), None, None, None);
+        assert!(app.bundle_contents.is_empty(), "the drop the lifecycle keeps");
+        assert_eq!(app.bundle_scroll_acc_x, 0.0, "the accumulator the drop resets");
+        assert_eq!(app.bundle_scroll_acc_y, 0.0, "the accumulator the drop resets");
+    }
+
     /// THE PICK'S WIRE HALF (the gameMode.handlePickItemFromBlock walk
     /// — the packet send ALONE): the LIVE session's middle-click rides
     /// the PickBlock command with the clip's hit voxel and the Ctrl
@@ -16365,6 +16499,7 @@ mod tests {
             slots: vec![(926, 1)],
             carried: (0, 0),
             state_id: 3,
+            bundle_rows: Vec::new(),
         };
         app.live_view_updated(air_net_world(2, 1), None, None, Some(chest));
         assert_eq!(app.screen, ScreenKind::Chest);
