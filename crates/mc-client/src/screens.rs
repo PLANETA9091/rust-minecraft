@@ -303,6 +303,36 @@ pub fn paddle_medium(world: &crate::world::World, x: f64, y: f64, z: f64) -> Opt
     }
 }
 
+/// THE DEGREE WRAP (Mth.wrapDegrees(F)F's own walk — the frem's % 360
+/// fold, the `>= 180` arm subtracts a full turn, the `< -180` arm adds
+/// one; the famous 180.0F itself the first arm folds to -180.0F).
+pub fn wrap_degrees(value: f32) -> f32 {
+    let mut f = value % 360.0;
+    if f >= 180.0 {
+        f -= 360.0;
+    }
+    if f < -180.0 {
+        f += 360.0;
+    }
+    f
+}
+
+/// THE RIDER'S YAW WALK (AbstractBoat.positionRider's own words — the
+/// drag `passenger.setYRot(getYRot() + deltaRotation)` the caller
+/// speaks, then clampRotation's `f = wrapDegrees(rider - boat)`,
+/// `g = clamp(f, -105, 105)`, `rider += g - f`: the hull's turn the
+/// rider carries, the relative angle the ±105° band bounds, the excess
+/// the (g - f) correction snaps back). The yRotO store the render
+/// interpolation's own buffer (the camera's angles the CURRENT values
+/// the world_camera walk reads — no lerp the camera needs), the
+/// setYHeadRot the camera's own yaw IS.
+pub fn boat_rider_yaw_after(rider_yaw: f32, boat_yaw: f32, delta: f32) -> f32 {
+    let dragged = rider_yaw + delta;
+    let f = wrap_degrees(dragged - boat_yaw);
+    let g = f.clamp(-105.0, 105.0);
+    dragged + (g - f)
+}
+
 /// THE BLOCK SCREEN TINT (javap `ScreenEffectRenderer.submit`'s own
 /// `ldc -15132391` = 0xFF191919): the rgb 25/255 the head-in-block
 /// quad's dark multiply speaks, the alpha 0xFF the opaque cover rides.
@@ -833,6 +863,16 @@ pub struct App {
     /// against it sends one ServerboundPlayerInputPacket, riding or
     /// not (the vanilla's own unconditional-on-change send).
     pub last_sent_input: mc_protocol::InputFlags,
+    /// THE RIDE'S YAW TRACKER (the ridden hull's yaw the last tick
+    /// spoke, keyed by the vehicle's own id — the wire-authoritative
+    /// delta the positionRider drag speaks): the vanilla client's own
+    /// `deltaRotation` field the client-predicted controlBoat feeds;
+    /// the server-owned hull the observed wire word stands in for.
+    /// The fresh mount (no entry, or a NEW vehicle's id) arms with the
+    /// hull's current yaw — the first tick never drags, the
+    /// deltaRotation 0.0 the vanilla field starts at; the dismount's
+    /// ride silence clears it.
+    pub ride_boat_yaw_prev: Option<(i32, f32)>,
     /// True while the World screen shows the NETWORK world (the quad mesh
     /// came from a join snapshot, not the procedural singleplayer world).
     pub world_is_network: bool,
@@ -1556,6 +1596,7 @@ impl App {
             boat_models: std::collections::HashMap::new(),
             paddle_positions: std::collections::HashMap::new(),
             last_sent_input: mc_protocol::InputFlags::default(),
+            ride_boat_yaw_prev: None,
             world_is_network: false,
             world_skybox: Skybox::Overworld,
             world_fog: None,
@@ -2393,6 +2434,7 @@ impl App {
             if self.world_is_network {
                 self.tick_net_mobs();
                 self.tick_paddles();
+                self.tick_ride_yaw();
             }
             if !self.world_is_network {
                 // THE SPAWNER'S BEAT (the vanilla spawn cycle's
@@ -7455,6 +7497,41 @@ impl App {
         // the gain the ear's distance law folds)
         for (clip, pitch, dist) in strokes {
             self.sounds.play_voice_at(self.frame, clip, 1.0, pitch, dist);
+        }
+    }
+
+    /// THE RIDE'S YAW WALK (AbstractBoat.positionRider's own law, the
+    /// tick lane's own call): the ridden hull's turn DRAGS the rider —
+    /// `passenger.setYRot(getYRot() + deltaRotation)` then
+    /// clampRotation's ±105° band (see [`boat_rider_yaw_after`]) — the
+    /// delta the OBSERVED wire word keeps (the hull's yaw this tick
+    /// spoke minus the last tick's, the wrapDegrees fold; the vanilla
+    /// client's own client-predicted deltaRotation the server-owned
+    /// hull the wire stands in for). The CAN_TURN_IN_BOATS gate the
+    /// local player never passes (the vanilla tag's own walk — the
+    /// rider follows the hull), the Animal arm (the id-parity 90/270
+    /// body-rot offsets) a player rider never speaks. The fresh mount
+    /// arms the tracker (no drag), the id change re-arms, the
+    /// dismount's silence clears.
+    pub fn tick_ride_yaw(&mut self) {
+        let Some(r) = self.net_ride.as_ref() else {
+            self.ride_boat_yaw_prev = None;
+            return;
+        };
+        let (vehicle_id, boat_yaw) = (r.vehicle_id, r.vehicle_yaw);
+        match self.ride_boat_yaw_prev {
+            Some((id, prev)) if id == vehicle_id => {
+                let delta = wrap_degrees(boat_yaw - prev);
+                self.ride_boat_yaw_prev = Some((vehicle_id, boat_yaw));
+                if let Some(b) = self.body.as_mut() {
+                    b.yaw = boat_rider_yaw_after(b.yaw, boat_yaw, delta);
+                }
+            }
+            _ => {
+                // THE FRESH MOUNT'S ARM (the deltaRotation 0.0 the
+                // vanilla field starts at — the first tick never drags)
+                self.ride_boat_yaw_prev = Some((vehicle_id, boat_yaw));
+            }
         }
     }
 
@@ -24977,6 +25054,139 @@ mod tests {
         // THE FRESH CLOCK never speaks: the (pos + π/8) probe the
         // first step keeps under the quarter band
         assert!(!paddle_stroke_fires(0.0), "the fresh clock stays silent");
+    }
+
+    #[test]
+    fn the_boat_rider_yaw_walks_the_position_rider_law() {
+        use crate::screens::{boat_rider_yaw_after, wrap_degrees};
+        // THE WRAP (Mth.wrapDegrees(F)F's own arms): the frem fold, the
+        // >= 180 arm subtracts (the famous 180.0F itself the fold's
+        // -180.0F keeps), the < -180 arm adds, the boundary the arm
+        // never speaks
+        assert_eq!(wrap_degrees(0.0), 0.0);
+        assert_eq!(wrap_degrees(380.0), 20.0);
+        assert_eq!(wrap_degrees(-380.0), -20.0);
+        assert_eq!(wrap_degrees(180.0), -180.0, "the first arm's own fold");
+        assert_eq!(wrap_degrees(-180.0), -180.0, "the second arm never fires at the boundary");
+        assert_eq!(wrap_degrees(540.0), -180.0);
+        // THE DRAG (setYRot(getYRot() + deltaRotation)): the aligned
+        // rider the hull's turn carries, the relative angle the drag
+        // keeps
+        let boat = 10.0;
+        assert!(
+            (boat_rider_yaw_after(10.0, boat, 5.0) - 15.0).abs() < 1e-6,
+            "the aligned rider the hull's turn carries"
+        );
+        assert!(
+            (boat_rider_yaw_after(100.0, boat, 5.0) - 105.0).abs() < 1e-6,
+            "the relative 90 the drag preserves — the free-look rides the hull"
+        );
+        // THE CLAMP (clampRotation's ±105° band): the beyond-band rider
+        // the (g - f) correction snaps back to the hull ± 105
+        assert!(
+            (boat_rider_yaw_after(180.0, boat, 0.0) - 115.0).abs() < 1e-6,
+            "the +170 excess the band pulls to +105"
+        );
+        assert!(
+            (boat_rider_yaw_after(-160.0, boat, 0.0) + 95.0).abs() < 1e-6,
+            "the -170 excess the band pulls to -105"
+        );
+        // THE BOUNDARIES hold verbatim
+        assert!(
+            (boat_rider_yaw_after(115.0, boat, 0.0) - 115.0).abs() < 1e-6,
+            "the +105 boundary holds"
+        );
+        assert!(
+            (boat_rider_yaw_after(-95.0, boat, 0.0) + 95.0).abs() < 1e-6,
+            "the -105 boundary holds"
+        );
+        // THE WRAP INSIDE THE CLAMP: the raw 200° difference the wrap
+        // folds the short way round (-160), the band pulls to -105 —
+        // the +55 correction the (g - f) walk lands
+        assert!(
+            (boat_rider_yaw_after(210.0, boat, 0.0) - 265.0).abs() < 1e-6,
+            "the short-way fold the band's own pull keeps"
+        );
+    }
+
+    #[test]
+    fn the_ride_yaw_walks_the_wire_turn() {
+        use crate::world_view::WireRide;
+        let mut app = App::new(3);
+        // THE BODY (the rider the mount carries — the windowed walk's
+        // own shape, the headless scenes never own one)
+        app.body = Some(crate::body::PlayerBody::new(10.0, 64.0, -20.0, 0.0, 0.0));
+        let ride = |id: i32, yaw: f32| WireRide {
+            vehicle_id: id,
+            feet_x: 10.0,
+            feet_y: 64.187,
+            feet_z: -20.0,
+            vehicle_yaw: yaw,
+        };
+        // THE FRESH MOUNT ARMS (the first tick never drags — the
+        // deltaRotation 0.0 the vanilla field starts at)
+        app.net_ride = Some(ride(9, 0.0));
+        app.tick_ride_yaw();
+        assert_eq!(
+            app.ride_boat_yaw_prev,
+            Some((9, 0.0)),
+            "the tracker the hull's own yaw arms"
+        );
+        assert_eq!(app.body.as_ref().expect("body").yaw, 0.0, "the arm tick no drag");
+        // THE TURN DRAGS (the wire speaks 5° the next tick — the
+        // rider's yaw the hull's turn carries)
+        app.net_ride = Some(ride(9, 5.0));
+        app.tick_ride_yaw();
+        assert!(
+            (app.body.as_ref().expect("body").yaw - 5.0).abs() < 1e-6,
+            "the 5° turn the rider follows"
+        );
+        // THE FREE-LOOK SURVIVES (the mouse's +60 the body carries; the
+        // next identical-yaw tick never moves it — the delta 0, the
+        // relative angle the drag preserves)
+        app.body.as_mut().expect("body").yaw = 65.0;
+        app.net_ride = Some(ride(9, 5.0));
+        app.tick_ride_yaw();
+        assert!(
+            (app.body.as_ref().expect("body").yaw - 65.0).abs() < 1e-6,
+            "the free-look the zero delta keeps"
+        );
+        // THE CLAMP BITES (the mouse swings to the relative +170 — the
+        // next tick's walk the (g - f) correction snaps back to the
+        // hull + 105)
+        app.body.as_mut().expect("body").yaw = 175.0;
+        app.net_ride = Some(ride(9, 5.0));
+        app.tick_ride_yaw();
+        assert!(
+            (app.body.as_ref().expect("body").yaw - 110.0).abs() < 1e-6,
+            "the +170 excess the band snaps to +105 (110 - boat 5)"
+        );
+        // THE VEHICLE CHANGE RE-ARMS (a NEW hull's id the tracker takes
+        // fresh — the old hull's word never speaks a delta)
+        app.net_ride = Some(ride(12, 200.0));
+        app.tick_ride_yaw();
+        assert_eq!(
+            app.ride_boat_yaw_prev,
+            Some((12, 200.0)),
+            "the new hull's own arm"
+        );
+        assert!(
+            (app.body.as_ref().expect("body").yaw - 110.0).abs() < 1e-6,
+            "the arm tick no drag"
+        );
+        // THE NEXT TICK DRAGS from the new hull's own word: 110 + 5 =
+        // 115, the relative (115 - 205 = -90) inside the band stays
+        app.net_ride = Some(ride(12, 205.0));
+        app.tick_ride_yaw();
+        assert!(
+            (app.body.as_ref().expect("body").yaw - 115.0).abs() < 1e-6,
+            "the new hull's turn the rider follows"
+        );
+        // THE DISMOUNT CLEARS (the ride's silence the tracker's None
+        // keeps — a later mount arms fresh)
+        app.net_ride = None;
+        app.tick_ride_yaw();
+        assert_eq!(app.ride_boat_yaw_prev, None, "the dismount the tracker clears");
     }
 
     #[test]
