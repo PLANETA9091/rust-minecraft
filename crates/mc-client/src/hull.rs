@@ -592,6 +592,117 @@ pub fn hull_move_xz(
     (final_x, final_z)
 }
 
+/// THE COLUMN'S OWN AUTHORITY STATE (the AbstractBoat fields the
+/// server-side walk keeps — javap the 26.2 jar's
+/// `onAboveBubbleColumn` + `tickBubbleColumn` putfields: the
+/// `isAboveBubbleColumn` the fresh mouth's arm speaks, the
+/// `bubbleColumnDirectionIsDown` the drag bit carries, the
+/// `bubbleTime` the 60 the mouth's zero clock arms — the offline
+/// hull's own words, the singleplayer's integrated server the local
+/// authority stands in for).
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub struct HullBubble {
+    pub bubble_time: i32,
+    pub is_above: bool,
+    pub down: bool,
+}
+
+/// ONE OVERLAPPED COLUMN CELL'S OWN WORDS (the entityInside branch's
+/// decoded law): the drag bit the variant byte keeps (1 = the
+/// whirlpool's `drag=true`, 2 = the upward's `drag=false` — the
+/// [`crate::world_view::column_variant_at`] read), the MOUTH the
+/// above-cell check speaks (`getCollisionShape.isEmpty() &&
+/// getFluidState.isEmpty()` — the AIR the grid's honest word).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct BubbleCell {
+    pub drag: bool,
+    pub mouth: bool,
+}
+
+/// THE LAUNCH'S OWN VERDICT (the fire tick's two words — the DOWN the
+/// `add(0, −0.7, 0)` + the `ejectPassengers()` the caller folds, the
+/// UP the y the `hasPassenger(lambda) ? 2.7 : 0.6` REPLACE keeps, the
+/// lambda `it instanceof Player` the rider's own word speaks).
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum BubbleLaunch {
+    Down,
+    Up { passenger_player: bool },
+}
+
+/// THE BASE-TICK BEAT (javap `BubbleColumnBlock.entityInside` — the
+/// direct calls the boat's checkInsideBlocks walk fires per overlapped
+/// column cell, BEFORE the float's own folds the vanilla tick's
+/// `super.tick()` order keeps): the MOUTH cell the above walk arms
+/// (the server fields' own words — the isAbove fresh true, the down
+/// the drag bit, the bubbleTime the 60 the zero clock keeps) and the
+/// NON-MOUTH cells the INSIDE law speaks (the steady drag on the y —
+/// [`crate::body::bubble_column_drag`]'s own body words the Entity
+/// walk keeps, sequential per cell the live delta reads, the x/z the
+/// laws never touch, the fall-distance reset the inside tail speaks —
+/// no fall field the hull keeps, the reset the honest no-op). Returns
+/// the mouth's presence — the client arm's own gate (the 1/100 splash
+/// the caller folds).
+pub fn hull_bubble_inside(
+    phys: &mut HullPhys,
+    bubble: &mut HullBubble,
+    cells: &[BubbleCell],
+) -> bool {
+    let mut mouth = false;
+    for cell in cells {
+        if cell.mouth {
+            mouth = true;
+            bubble.is_above = true;
+            bubble.down = cell.drag;
+            if bubble.bubble_time == 0 {
+                bubble.bubble_time = 60;
+            }
+        } else {
+            phys.delta_y = crate::body::bubble_column_drag(phys.delta_y, cell.drag, false);
+        }
+    }
+    mouth
+}
+
+/// THE COLUMN'S OWN TAIL (javap `tickBubbleColumn`'s authority walk —
+/// the vanilla tick's LAST call, the launch the NEXT tick's move
+/// consumes): the stale above-bit the silence clears (`!isAbove →
+/// setBubbleTime(0)` the mouth's own absence keeps), the countdown the
+/// armed clock walks (the −1 the `setBubbleTime(getBubbleTime() - 1)`
+/// store speaks), the fire tick the zero crossing keeps (the
+/// `60 - time - 1 > 0 && time == 0` band the bytecode's own words —
+/// the zero the decrement reaches): the DOWN the `motion.add(0,
+/// -0.7, 0)` word ADDS, the UP the y the player-rider's 2.7 / the
+/// empty hull's 0.6 REPLACES (the x/z the words never touch), the
+/// above-bit the tail's own false keeps (the next baseTick's mouth
+/// re-arms the fresh word). Returns the launch's verdict — the eject
+/// the DOWN arm carries.
+pub fn hull_bubble_tail(
+    phys: &mut HullPhys,
+    bubble: &mut HullBubble,
+    passenger_player: bool,
+) -> Option<BubbleLaunch> {
+    if !bubble.is_above {
+        bubble.bubble_time = 0;
+    }
+    let mut fired = None;
+    if bubble.bubble_time > 0 {
+        bubble.bubble_time -= 1;
+        let time = bubble.bubble_time;
+        if 60 - time - 1 > 0 && time == 0 {
+            bubble.bubble_time = 0;
+            if bubble.down {
+                phys.delta_y += -0.7;
+                fired = Some(BubbleLaunch::Down);
+            } else {
+                phys.delta_y = if passenger_player { 2.7 } else { 0.6 };
+                fired = Some(BubbleLaunch::Up { passenger_player });
+            }
+        }
+    }
+    bubble.is_above = false;
+    fired
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -1023,5 +1134,198 @@ mod tests {
         }
         assert_eq!(y, 11.0 - HULL_HEIGHT, "the ceiling's own clamp");
         assert_eq!(phys.delta_y, 0.0);
+    }
+
+    /// THE INSIDE CELLS' OWN DRAG (javap `Entity.handleOnInsideBubbleColumn`
+    /// — the steady words the non-mouth cells speak): the whirlpool's
+    /// `max(−0.3, y − 0.03)` floor, the upward's `min(0.7, y + 0.06)`
+    /// cap, the x/z the laws never touch, the mouth cell the above walk
+    /// arms (the 60 the zero clock keeps, the isAbove the fresh true,
+    /// the down the drag bit — and NO drag fold the mouth's own branch
+    /// speaks), the two-cell overlap the SECOND fold's live delta reads
+    /// (the saturated cap the second application keeps).
+    #[test]
+    fn the_inside_cells_fold_the_steady_words() {
+        let mut phys = HullPhys::default();
+        let mut bubble = HullBubble::default();
+        phys.delta_x = 0.25;
+        phys.delta_z = -0.5;
+        // THE WHIRLPOOL'S OWN PULL (the non-mouth cell): the first fold
+        // the −0.03 word speaks, the −0.29 pose the floor's own −0.3
+        // word keeps (the max the steady fold is)
+        phys.delta_y = 0.0;
+        let mouth = hull_bubble_inside(
+            &mut phys,
+            &mut bubble,
+            &[BubbleCell {
+                drag: true,
+                mouth: false,
+            }],
+        );
+        assert!(!mouth, "the inside cell's own silence");
+        assert_eq!(phys.delta_y, -0.03, "the first fold's own word");
+        phys.delta_y = -0.29;
+        hull_bubble_inside(
+            &mut phys,
+            &mut bubble,
+            &[BubbleCell {
+                drag: true,
+                mouth: false,
+            }],
+        );
+        assert_eq!(phys.delta_y, -0.3, "the floor's own word");
+        assert_eq!(phys.delta_x, 0.25, "the x the law never touches");
+        assert_eq!(phys.delta_z, -0.5, "the z the law never touches");
+        // THE UPWARD'S OWN PUSH (the cap the second fold saturates)
+        let mut bubble_up = HullBubble::default();
+        let mut phys_up = HullPhys::default();
+        phys_up.delta_y = 0.0;
+        hull_bubble_inside(
+            &mut phys_up,
+            &mut bubble_up,
+            &[BubbleCell {
+                drag: false,
+                mouth: false,
+            }],
+        );
+        assert_eq!(phys_up.delta_y, 0.06, "the push's own word");
+        phys_up.delta_y = 0.69;
+        hull_bubble_inside(
+            &mut phys_up,
+            &mut bubble_up,
+            &[BubbleCell {
+                drag: false,
+                mouth: false,
+            }],
+        );
+        assert_eq!(phys_up.delta_y, 0.7, "the cap's own word");
+        // THE MOUTH'S OWN ARM (no drag the mouth branch speaks — the
+        // above walk's words the fields keep)
+        let mut phys_mouth = HullPhys::default();
+        phys_mouth.delta_y = 0.4;
+        let mut bubble_mouth = HullBubble::default();
+        let mouth = hull_bubble_inside(
+            &mut phys_mouth,
+            &mut bubble_mouth,
+            &[BubbleCell {
+                drag: true,
+                mouth: true,
+            }],
+        );
+        assert!(mouth, "the mouth's own presence");
+        assert_eq!(phys_mouth.delta_y, 0.4, "the mouth never drags");
+        assert_eq!(bubble_mouth.bubble_time, 60, "the armed clock's own word");
+        assert!(bubble_mouth.is_above, "the fresh above-bit");
+        assert!(bubble_mouth.down, "the drag bit the mouth carries");
+        // THE SEQUENTIAL WALK (the box's two cells: the mouth first the
+        // z→y→x order lands, the inside cell the live delta folds — the
+        // mouth's arm the drag's fold never overwrites)
+        let mut bubble_pair = HullBubble::default();
+        let mouth = hull_bubble_inside(
+            &mut phys_mouth,
+            &mut bubble_pair,
+            &[
+                BubbleCell {
+                    drag: true,
+                    mouth: true,
+                },
+                BubbleCell {
+                    drag: false,
+                    mouth: false,
+                },
+            ],
+        );
+        assert!(mouth);
+        assert_eq!(bubble_pair.bubble_time, 60);
+        assert_eq!(phys_mouth.delta_y, 0.46, "the upward fold the live delta reads");
+    }
+
+    /// THE TAIL'S OWN WALK (javap `tickBubbleColumn`'s authority branch —
+    /// the countdown the armed clock walks, the fire tick the zero
+    /// crossing keeps): the DOWN launch the `add(0, −0.7, 0)` word
+    /// speaks, the UP the y the 2.7/0.6 REPLACE keeps, the stale
+    /// above-bit the clock's reset keeps, the above-bit the tail's own
+    /// false clears, the re-arm the fresh mouth's 60 speaks.
+    #[test]
+    fn the_tail_counts_the_sixty_clock() {
+        let mut phys = HullPhys::default();
+        let mut bubble = HullBubble::default();
+        // THE ARM + THE COUNTDOWN (the mouth's words the inside walk
+        // keeps, the tail's −1 the same tick's own decrement speaks)
+        hull_bubble_inside(
+            &mut phys,
+            &mut bubble,
+            &[BubbleCell {
+                drag: true,
+                mouth: true,
+            }],
+        );
+        assert!(hull_bubble_tail(&mut phys, &mut bubble, false).is_none());
+        assert_eq!(bubble.bubble_time, 59, "the first decrement's own word");
+        // THE RIDE'S OWN COUNT (59 more tails the zero crossing reaches
+        // — the 60th tick of riding the launch fires)
+        for _ in 0..58 {
+            bubble.is_above = true; // the fresh mouth's own re-arm bit
+            assert!(hull_bubble_tail(&mut phys, &mut bubble, false).is_none());
+        }
+        assert_eq!(bubble.bubble_time, 1, "the last silent tick's own word");
+        bubble.is_above = true;
+        phys.delta_y = 0.2;
+        let fired = hull_bubble_tail(&mut phys, &mut bubble, false);
+        assert_eq!(fired, Some(BubbleLaunch::Down), "the DOWN verdict");
+        assert_eq!(phys.delta_y, 0.2 - 0.7, "the ADD word the DOWN keeps");
+        assert_eq!(bubble.bubble_time, 0, "the fired clock's own rest");
+        assert!(!bubble.is_above, "the tail's own clear");
+        // THE STALE SILENCE (no mouth the next tail resets — the clock
+        // the absence keeps at zero, no re-fire the silence speaks)
+        assert!(hull_bubble_tail(&mut phys, &mut bubble, false).is_none());
+        assert_eq!(bubble.bubble_time, 0);
+        // THE UP'S OWN REPLACE (the y the verdict REPLACES — the
+        // pre-fire word irrelevant, the x/z untouched; the rider's own
+        // 2.7 the player predicate speaks, the empty hull's 0.6)
+        let mut bubble_up = HullBubble::default();
+        let mut phys_up = HullPhys::default();
+        phys_up.delta_y = -0.25;
+        hull_bubble_inside(
+            &mut phys_up,
+            &mut bubble_up,
+            &[BubbleCell {
+                drag: false,
+                mouth: true,
+            }],
+        );
+        for _ in 0..59 {
+            bubble_up.is_above = true;
+            assert!(hull_bubble_tail(&mut phys_up, &mut bubble_up, false).is_none());
+        }
+        bubble_up.is_above = true;
+        phys_up.delta_x = 0.1;
+        let fired = hull_bubble_tail(&mut phys_up, &mut bubble_up, true);
+        assert_eq!(
+            fired,
+            Some(BubbleLaunch::Up { passenger_player: true }),
+            "the UP verdict"
+        );
+        assert_eq!(phys_up.delta_y, 2.7, "the REPLACE word the ridden launch keeps");
+        assert_eq!(phys_up.delta_x, 0.1, "the x the launch never touches");
+        // THE EMPTY HULL'S OWN WORD (the predicate's false the 0.6 speaks)
+        let mut bubble_empty = HullBubble::default();
+        let mut phys_empty = HullPhys::default();
+        hull_bubble_inside(
+            &mut phys_empty,
+            &mut bubble_empty,
+            &[BubbleCell {
+                drag: false,
+                mouth: true,
+            }],
+        );
+        for _ in 0..59 {
+            bubble_empty.is_above = true;
+            assert!(hull_bubble_tail(&mut phys_empty, &mut bubble_empty, false).is_none());
+        }
+        bubble_empty.is_above = true;
+        let fired = hull_bubble_tail(&mut phys_empty, &mut bubble_empty, false);
+        assert_eq!(fired, Some(BubbleLaunch::Up { passenger_player: false }));
+        assert_eq!(phys_empty.delta_y, 0.6, "the empty launch's own word");
     }
 }

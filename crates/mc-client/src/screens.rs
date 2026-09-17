@@ -815,6 +815,27 @@ fn ear_distance(ear: Option<(f64, f64, f64)>, x: f64, y: f64, z: f64) -> f64 {
     }
 }
 
+/// THE ROCK'S OWN STEP (javap `tickBubbleColumn`'s client arm — the
+/// walk BOTH lanes speak: the multiplier the bubbleTime's presence
+/// ramps (+0.05 the armed word, -0.1 the decay) through the 0..1
+/// clamp, the angle the `10.0f * sin(0.5 * tickCount as f32) *
+/// multiplier` fold (the OLD angle the lerp's from keeps first), the
+/// per-hull tick the client's own age counter keeps. The wire lane's
+/// clock the synced word feeds, the offline lane's the local
+/// authority's own post-tick word — the sync the integrated server
+/// would carry.)
+fn bubble_rock_step(rock: &mut BubbleRock, bubble_time: i32) {
+    rock.angle_o = rock.angle;
+    if bubble_time > 0 {
+        rock.multiplier += 0.05000000074505806;
+    } else {
+        rock.multiplier -= 0.10000000149011612;
+    }
+    rock.multiplier = rock.multiplier.clamp(0.0, 1.0);
+    rock.angle = (10.0f32 * ((0.5 * rock.tick as f64).sin() as f32)) * rock.multiplier;
+    rock.tick += 1;
+}
+
 impl ServerEntry {
     pub fn ping_icon(&self) -> &'static str {
         match self.ping_ms {
@@ -1538,6 +1559,13 @@ pub struct App {
     /// offline_boats list's own hulls; the wire's hulls the snapshots'
     /// authority never speaks.
     pub offline_boat_phys: std::collections::HashMap<i32, crate::hull::HullPhys>,
+    /// ONE COLUMN AUTHORITY PER OFFLINE HULL (the AbstractBoat fields
+    /// the server-side walk keeps — see [`crate::hull::HullBubble`]):
+    /// the bubbleTime the mouth's arm counts down, the isAbove the
+    /// fresh mouth's arm speaks, the down the drag bit carries. The
+    /// world-enter prunes the offline lane's own law keeps (the fresh
+    /// terrain the fresh clocks keeps — the paddle clocks' own word).
+    pub offline_bubbles: std::collections::HashMap<i32, crate::hull::HullBubble>,
     /// The orb pickup's own throttle (`Player.takeXpDelay` — the touch
     /// sets 2, the aiStep tail ticks it down; one orb per window).
     pub take_xp_delay: i32,
@@ -1895,6 +1923,7 @@ impl App {
             net_boat_lerp: std::collections::HashMap::new(),
             offline_boats: Vec::new(),
             offline_boat_phys: std::collections::HashMap::new(),
+            offline_bubbles: std::collections::HashMap::new(),
             boat_models: std::collections::HashMap::new(),
             paddle_positions: std::collections::HashMap::new(),
             bubble_state: std::collections::HashMap::new(),
@@ -4265,8 +4294,12 @@ impl App {
             // the paddle clocks the fresh world's own zero keeps (the
             // vanilla paddlePosition the fresh entity's field starts —
             // the stale session's mid-cycle word the new hull never
-            // inherits)
+            // inherits); the column clocks the same word keeps (the
+            // mouth's arm the fresh terrain re-arms, the rock states
+            // the gone hulls never keep)
             self.paddle_positions.clear();
+            self.bubble_state.clear();
+            self.offline_bubbles.clear();
             // the dig lane predicts locally on the offline terrain (the
             // singleplayer behavior — the machine's own default re-armed)
             self.dig.apply_locally = true;
@@ -5838,8 +5871,11 @@ impl App {
         self.net_boat_lerp.clear();
         // the paddle clocks the fresh world's own zero keeps (the wire's
         // hulls the fresh sync's word arms — the stale session's
-        // mid-cycle clock the new id never inherits)
+        // mid-cycle clock the new id never inherits); the column clocks
+        // the same word keeps (the rock states the gone hulls never keep)
         self.paddle_positions.clear();
+        self.bubble_state.clear();
+        self.offline_bubbles.clear();
         // the dig lane's prediction flag follows the world's authority
         // (the networked terrain is the server's own — the placement
         // lane's verdict the dig speaks too)
@@ -8345,15 +8381,7 @@ impl App {
             // (the OLD angle the lerp's from keeps first), the
             // per-hull tick the client's own age counter keeps.
             let rock = self.bubble_state.entry(boat.id).or_default();
-            rock.angle_o = rock.angle;
-            if boat.bubble_time > 0 {
-                rock.multiplier += 0.05000000074505806;
-            } else {
-                rock.multiplier -= 0.10000000149011612;
-            }
-            rock.multiplier = rock.multiplier.clamp(0.0, 1.0);
-            rock.angle = (10.0f32 * ((0.5 * rock.tick as f64).sin() as f32)) * rock.multiplier;
-            rock.tick += 1;
+            bubble_rock_step(rock, boat.bubble_time);
             for (side, moving) in [(0usize, moving_l), (1usize, moving_r)] {
                 if moving {
                     if paddle_stroke_fires(entry[side]) {
@@ -9289,8 +9317,84 @@ impl App {
         // the flags' raw words keep)
         let ride_id = self.offline_ride.as_ref().map(|r| r.vehicle_id);
         let input = self.last_sent_input;
+        // THE LISTENER'S OWN EAR (the splash voice's distance fold —
+        // the paddle voices' own law: no body the distance-zero arm
+        // the no-fold reads)
+        let ear = self
+            .body
+            .as_ref()
+            .map(|b| (b.x, b.y + b.eye_height(), b.z));
         for boat in &mut self.offline_boats {
             let phys = self.offline_boat_phys.entry(boat.id).or_default();
+            // THE COLUMN'S OWN SCAN (the base-tick beat — the
+            // inside-blocks walk the boat's bubble law rides BEFORE the
+            // float's own folds the vanilla `super.tick()` order keeps:
+            // the box's overlapped cells the player's own lane mirrors,
+            // the ε=1e-5 insets, the z→y→x order, the per-cell branch
+            // the boat's own two laws keep — the mouth the above-cell
+            // AIR word speaks, the variant byte the drag bit carries)
+            let e = 1e-5f64;
+            let hw = crate::hull::HULL_WIDTH / 2.0;
+            let mut cells: Vec<crate::hull::BubbleCell> = Vec::new();
+            for wz in ((boat.z - hw + e).floor() as i32)..=((boat.z + hw - e).floor() as i32) {
+                for wy in ((boat.y + e).floor() as i32)
+                    ..=((boat.y + crate::hull::HULL_HEIGHT - e).floor() as i32)
+                {
+                    for wx in ((boat.x - hw + e).floor() as i32)
+                        ..=((boat.x + hw - e).floor() as i32)
+                    {
+                        let c = world.get(wx, wy, wz);
+                        let variant = crate::world_view::column_variant_at(world, wx, wy, wz, c);
+                        if variant == 0 {
+                            continue;
+                        }
+                        let mouth = world.get(wx, wy + 1, wz) == crate::world::AIR;
+                        cells.push(crate::hull::BubbleCell {
+                            drag: variant == 1,
+                            mouth,
+                        });
+                    }
+                }
+            }
+            let bubble = self.offline_bubbles.entry(boat.id).or_default();
+            let under = matches!(
+                phys.status,
+                crate::hull::HullStatus::UnderWater | crate::hull::HullStatus::UnderFlowingWater
+            );
+            let mouth = crate::hull::hull_bubble_inside(phys, bubble, &cells);
+            // THE 1/100 SPLASH (the onAboveBubbleColumn's client arm —
+            // the `!isUnderWater && random.nextInt(100) == 0` band: the
+            // GENERIC_SPLASH voice the volume 1.0 / pitch `0.8F + 0.8F *
+            // nextFloat()` keeps, the SPLASH droplet the
+            // (x + rnd, y + 0.7, z + rnd) zero-velocity call arms, the
+            // ctor's three draws the level's own stream rides — the
+            // frame pick, the yd float, the lifetime float; the
+            // gameEvent the no-vocabulary silence keeps)
+            if mouth && !under && self.mob_rng.next_int(100) == 0 {
+                let pitch = 0.8 + 0.8 * self.mob_rng.next_f32();
+                let dist = ear_distance(ear, boat.x, boat.y, boat.z);
+                self.sounds
+                    .play_voice_at(self.frame, "entity.generic.splash", 1.0, pitch, dist);
+                let ox = self.mob_rng.next_f32() as f64;
+                let oz = self.mob_rng.next_f32() as f64;
+                let r_frame = self.level_ambient_rng.next_f32();
+                let r_yd = self.level_ambient_rng.next_f32();
+                let r_life = self.level_ambient_rng.next_f32();
+                self.particles.push(crate::particles::splash(
+                    boat.x + ox,
+                    boat.y + 0.7,
+                    boat.z + oz,
+                    0.0,
+                    0.0,
+                    0.0,
+                    r_yd,
+                    r_life,
+                    r_frame,
+                ));
+            }
+            // THE FLOAT'S OWN FOLD (the vanilla `floatBoat()` the
+            // baseTick's walk follows — the gravity/lift/friction the
+            // status law speaks, the y the move's own axis consumes)
             boat.y = crate::hull::hull_tick(phys, boat.x, boat.y, boat.z, &cell);
             // THE CONTROL (javap controlBoat — the `!isVehicle` gate the
             // Option's None keeps: the ridden hull the walk arms, the
@@ -9319,6 +9423,24 @@ impl App {
             let (nx, nz) = crate::hull::hull_move_xz(phys, boat.x, boat.y, boat.z, &cell);
             boat.x = nx;
             boat.z = nz;
+            // THE COLUMN'S OWN TAIL (the vanilla tick's LAST call — the
+            // launch the NEXT tick's move consumes, the above-bit the
+            // tail's own false keeps) + THE EJECT the DOWN arm speaks
+            // (the ejectPassengers word — the ride's belief the same
+            // walk the shift edge keeps)
+            let passenger_player = ride_id == Some(boat.id);
+            if let Some(crate::hull::BubbleLaunch::Down) =
+                crate::hull::hull_bubble_tail(phys, bubble, passenger_player)
+            {
+                if passenger_player {
+                    self.offline_ride = None;
+                }
+            }
+            // THE ROCK (the client branch — the post-tick word the sync
+            // would carry: the same walk the wire lane speaks, the
+            // LOCAL clock the authority's own word feeds)
+            let rock = self.bubble_state.entry(boat.id).or_default();
+            bubble_rock_step(rock, bubble.bubble_time);
         }
     }
 
@@ -18753,6 +18875,165 @@ mod tests {
         assert!(
             app.overlay_message.is_none(),
             "the mount's word the refusal never speaks"
+        );
+    }
+
+    /// THE COLUMN'S OWN POOL (the test fixture the whirlpool's walk
+    /// rides — the water cells the mouth + the body keep, the variant
+    /// byte the drag bit carries, the variants layer the grid stamps).
+    fn stamp_offline_column(app: &mut App, c: i32, pool_y: i32, variant: u8) {
+        let w = app.offline_world.as_mut().unwrap();
+        w.set(c, pool_y, c, crate::world::WATER);
+        w.set(c, pool_y - 1, c, crate::world::WATER);
+        w.variants = Some(vec![vec![0u8; 16 * 48 * 16]; WORLD_CHUNKS * WORLD_CHUNKS]);
+        let vi = ((c % 16) + (c % 16) * 16) as usize + (pool_y as usize) * (16 * 16);
+        w.variants.as_mut().unwrap()[((c / 16) + (c / 16) * WORLD_CHUNKS as i32) as usize][vi] =
+            variant;
+    }
+
+    /// THE WHIRLPOOL'S OWN CARRY — the column's current on the offline
+    /// hull (the boat's own bubble law the integrated server's authority
+    /// stands in for): the spawn pose the mouth never names, the dip the
+    /// second tick's box overlap arms (the 60 the clock keeps, the tail
+    /// the −1 counts), the rock the armed word ramps, the 60th riding
+    /// tick the zero crossing fires (the eject the DOWN arm speaks, the
+    /// dive the −0.7 word drives — the exact word the pure tail test
+    /// pins), and the next tick's overlap the fresh 60 re-arms.
+    #[test]
+    fn the_whirlpool_column_carries_the_offline_hull() {
+        let mut app = App::new(3);
+        app.enter_world();
+        let c = app.offline_world.as_ref().unwrap().size_blocks() / 2;
+        let pool_y = app.spawn_y + 8;
+        stamp_offline_column(&mut app, c, pool_y, 1);
+        app.offline_held_updated(Some("item/oak_boat"));
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, (pool_y + 4) as f32, c as f32 + 0.5),
+            yaw: 0.0,
+            pitch: -std::f32::consts::FRAC_PI_2,
+        });
+        assert!(app.on_right_press(0, 0), "the placed hull at the surface");
+        assert!(app.mount_offline_hull(1), "the rider aboard");
+        // THE ARM'S OWN BEAT (the spawn pose rides the air band — the
+        // box the water cell never names; the dip the second tick arms)
+        app.tick_offline_hulls();
+        assert!(
+            app.offline_bubbles.get(&1).map(|b| b.bubble_time).unwrap_or(0) == 0,
+            "the spawn pose the mouth never names"
+        );
+        app.tick_offline_hulls();
+        assert_eq!(
+            app.offline_bubbles[&1].bubble_time, 59,
+            "the armed clock's first count"
+        );
+        let rock = app.bubble_state[&1];
+        assert!(
+            (rock.multiplier - 0.05).abs() < 1.0e-6,
+            "the rock the armed word ramps: {}",
+            rock.multiplier
+        );
+        // THE RIDE'S OWN COUNT (58 more ticks the count walks — the
+        // eject the countdown holds off)
+        for _ in 0..58 {
+            app.tick_offline_hulls();
+            assert!(app.offline_ride.is_some(), "the ride the countdown holds");
+        }
+        assert_eq!(
+            app.offline_bubbles[&1].bubble_time, 1,
+            "the last silent count"
+        );
+        app.tick_offline_hulls(); // THE FIRE
+        assert!(
+            app.offline_ride.is_none(),
+            "the eject the DOWN arm speaks"
+        );
+        let phys = &app.offline_boat_phys[&1];
+        assert!(phys.delta_y < 0.0, "the dive the launch drives: {}", phys.delta_y);
+        // THE MOUTH'S OWN RE-ARM (the next tick's overlap the fresh 60
+        // arms — the cycle the riding keeps)
+        app.tick_offline_hulls();
+        assert_eq!(app.offline_bubbles[&1].bubble_time, 59, "the re-armed clock");
+    }
+
+    /// THE UPWARD COLUMN'S OWN LAUNCH — the fire the y REPLACES (the
+    /// empty hull's 0.6, the ridden hull's 2.7 the player predicate
+    /// speaks), the eject the UP arm never speaks, the next tick's arc
+    /// the launch drives, and the 1/100 splash the mouth's overlap
+    /// speaks (the voice the gate's hit carries — the fixed seed's
+    /// stream the drive replays deterministically).
+    #[test]
+    fn the_upward_column_launches_the_offline_hull() {
+        let mut app = App::new(3);
+        app.enter_world();
+        let c = app.offline_world.as_ref().unwrap().size_blocks() / 2;
+        let pool_y = app.spawn_y + 8;
+        stamp_offline_column(&mut app, c, pool_y, 2);
+        app.offline_held_updated(Some("item/oak_boat"));
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, (pool_y + 4) as f32, c as f32 + 0.5),
+            yaw: 0.0,
+            pitch: -std::f32::consts::FRAC_PI_2,
+        });
+        assert!(app.on_right_press(0, 0), "the placed hull at the surface");
+        app.tick_offline_hulls(); // the fall
+        app.tick_offline_hulls(); // the arm
+        for _ in 0..58 {
+            app.tick_offline_hulls();
+        }
+        assert_eq!(app.offline_bubbles[&1].bubble_time, 1, "the last silent count");
+        app.tick_offline_hulls(); // THE FIRE
+        assert_eq!(
+            app.offline_boat_phys[&1].delta_y, 0.6,
+            "the REPLACE word the empty launch keeps"
+        );
+        // THE RISE (the next tick's move the launch's own word walks —
+        // the InWater lift's 0.75 damping the arc still climbs through)
+        let y_pre = app.offline_boats[0].y;
+        app.tick_offline_hulls();
+        let dy = app.offline_boats[0].y - y_pre;
+        assert!(dy > 0.3, "the arc the launch drives: {dy}");
+        // THE 1/100 SPLASH (the mouth's overlap the long drive keeps —
+        // the GENERIC_SPLASH voice the gate's hit speaks)
+        for _ in 0..600 {
+            app.tick_offline_hulls();
+        }
+        let splashes = app
+            .sounds
+            .events
+            .iter()
+            .filter(|e| e.starts_with("entity.generic.splash @"))
+            .count();
+        assert!(splashes >= 1, "the splash voice the gate speaks: {splashes}");
+
+        // THE RIDER'S OWN 2.7 (the predicate's true the ridden launch
+        // speaks — the fire the rider's own word carries, the eject the
+        // UP arm never speaks)
+        let mut app2 = App::new(3);
+        app2.enter_world();
+        let c2 = app2.offline_world.as_ref().unwrap().size_blocks() / 2;
+        let pool_y2 = app2.spawn_y + 8;
+        stamp_offline_column(&mut app2, c2, pool_y2, 2);
+        app2.offline_held_updated(Some("item/oak_boat"));
+        app2.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c2 as f32 + 0.5, (pool_y2 + 4) as f32, c2 as f32 + 0.5),
+            yaw: 0.0,
+            pitch: -std::f32::consts::FRAC_PI_2,
+        });
+        assert!(app2.on_right_press(0, 0), "the placed hull at the surface");
+        assert!(app2.mount_offline_hull(1), "the rider aboard");
+        app2.tick_offline_hulls();
+        app2.tick_offline_hulls();
+        for _ in 0..58 {
+            app2.tick_offline_hulls();
+        }
+        app2.tick_offline_hulls(); // THE FIRE
+        assert_eq!(
+            app2.offline_boat_phys[&1].delta_y, 2.7,
+            "the REPLACE word the ridden launch keeps"
+        );
+        assert!(
+            app2.offline_ride.is_some(),
+            "the rider the UP launch carries"
         );
     }
 
