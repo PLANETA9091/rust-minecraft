@@ -530,6 +530,7 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
     let mut net_seen = 0usize; // cursor into the append-only request log
     let mut was_left_down = false; // the attack edge detector (vanilla left-click = swing)
     let mut was_right_down = false; // the right press's edge detector (the split-stack lane)
+    let mut was_middle_down = false; // the middle press's edge detector (the pick lane)
     // THE FIRST-PERSON BODY's per-frame state: the previous raw mouse
     // position (the delta look's own stream — None = re-arm without a
     // turn) and the world-screen edge detector (the cursor hides
@@ -718,6 +719,19 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
             if window.is_key_pressed(Key::F5, minifb::KeyRepeat::No) {
                 app.on_perspective_key();
             }
+            // THE MIDDLE-CLICK PICK (vanilla handleKeybinds's keyPickItem
+            // lane — the middle button the keybind maps, the
+            // `Minecraft.pickBlockOrEntity` walk the loop answers): the
+            // rising edge picks the crosshair's block into the inventory
+            // (the Ctrl modifier rides the packet's includeData slot —
+            // the same key the sprint/Q gates read, the vanilla's own
+            // dual use). minifb has no edge API, the press is tracked
+            // like the left/right pair above
+            let middle_down = window.get_mouse_down(minifb::MouseButton::Middle);
+            if middle_down && !was_middle_down {
+                app.on_pick_block(window.is_key_down(Key::LeftCtrl));
+            }
+            was_middle_down = middle_down;
         }
         // THE FIXED CLOCK SPENDS (vanilla `Minecraft.runTick`'s own
         // while loop): the accrued wall time becomes whole 50ms game

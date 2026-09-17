@@ -3818,6 +3818,131 @@ impl App {
         self.swing.start(); // the handleKeybinds success arm's MAIN_HAND swing
     }
 
+    /// THE MIDDLE-CLICK PICK (the 26.2 `Minecraft.pickBlockOrEntity`'s
+    /// own walk — the pick the handleKeybinds' keyPickItem loop answers
+    /// at bytecode 597-614, `while (keyPickItem.consumeClick())
+    /// pickBlockOrEntity()`). The gate chain the disassembly speaks:
+    /// the `hitResult == null || getType() == MISS` early return
+    /// (bytecode 0-20), the ctrl flag the packet's includeData slot
+    /// rides (21-25), the enum switch's two cases — ENTITY
+    /// `gameMode.handlePickItemFromEntity(entity, i)` (94-110), BLOCK
+    /// `gameMode.handlePickItemFromBlock(pos, i)` (72-91). The
+    /// gameMode's networked half is the packet send ALONE — the
+    /// inventory law lives server-side, and the integrated server
+    /// rides the client jar
+    /// (`ServerGamePacketListenerImpl.handlePickItemFromBlock` code
+    /// 113): the `isWithinBlockInteractionRange` + `isLoaded` gates,
+    /// `flag = hasInfiniteMaterials() && includeData()` (the survival
+    /// conjunct keeps it FALSE), `state.getCloneItemStack(level, pos,
+    /// flag)` — the block's own item the clone names — the
+    /// `isEmpty()` silence, then `tryPickItem` (code 101): the
+    /// feature-flag gate, `Inventory.findSlotMatchingItem`'s linear
+    /// scan (the shared walk the client jar carries verbatim — skip
+    /// the empties, `isSameItemSameComponents` the id-only stack model
+    /// collapses to the id compare), the HOTBAR hit
+    /// `Inventory.setSelectedSlot(i)`, the MAIN-INVENTORY hit
+    /// `Inventory.pickSlot(i)` (the shared helper's own walk:
+    /// `setSelectedSlot(getSuitableHotbarSlot())` FIRST — the
+    /// free-slot scan `(selected + i) % 9` the getSuitableHotbarSlot
+    /// code 91 speaks, the non-enchanted loop the id-only model
+    /// answers at the selected itself — then the NonNullList.set pair
+    /// the swap walks), the `-1` the `hasInfiniteMaterials` gate holds
+    /// to the creative `addAndPickItem` — the SURVIVAL SILENCE — and
+    /// the ALWAYS tail: `ClientboundSetHeldSlotPacket
+    /// (getSelectedSlot())` + `inventoryMenu.broadcastChanges()` (the
+    /// HUD hotbar row the every-mutation law syncs). The client's own
+    /// walk answers the same law offline; the wire sessions refuse
+    /// honestly (the store the server owns — the
+    /// ServerboundPickItemFromBlockPacket lane rides later). NO swing
+    /// (the pick chain never names one), NO drop. The ENTITY arm: the
+    /// survival pick result the mob lanes never name (`getPickResult`
+    /// null — the spawn eggs the creative gate holds) — the honest
+    /// silence the pick_mob verdict keeps (the entity winning the
+    /// crosshair CLOSER than the block's own, the attack lane's own
+    /// law).
+    pub fn on_pick_block(&mut self, _include_data: bool) {
+        if self.world_is_network {
+            return; // the wire's store the server owns — the pick item
+                    // packet the server answers rides later
+        }
+        if self.screen != ScreenKind::World || self.dead || self.paused {
+            return; // the handleKeybinds gate — the overlay/screen pair
+                    // the keyPickItem loop never passes
+        }
+        // THE ENTITY ARM (the switch's own verdict — the entity the
+        // pick_mob walk keeps CLOSER than the block's own hit): the
+        // survival pick result the mob lanes never name — the silence
+        if self.pick_mob(&self.net_mobs).is_some() {
+            return;
+        }
+        // THE BLOCK ARM (the MISS gate the early return keeps — the
+        // clip re-runs HERE, the attack lane's own discipline: the
+        // vanilla hitResult is the last pick's own)
+        let Some(hit) = self.clip_crosshair() else {
+            return; // the MISS type — the pick never speaks
+        };
+        let Some(kind) = self
+            .active_world()
+            .map(|w| w.get(hit.pos.0, hit.pos.1, hit.pos.2))
+        else {
+            return; // no world — the honest absence
+        };
+        if kind == crate::world::AIR {
+            return; // the MISS shape the clip's air cell keeps
+        }
+        // THE CLONE (getCloneItemStack's own law — the block's own item
+        // the registry's name walk answers; the includeData flag the
+        // survival conjunct keeps false, the block-entity data lane the
+        // id-only stack model never carries)
+        let Some(item) = mc_registry::item_id_by_name(crate::world::NAME_OF[kind as usize])
+        else {
+            return; // the item-less block — the honest absence
+        };
+        // tryPickItem's scan: findSlotMatchingItem (the empties
+        // skipped, the components compare the id-only model collapses)
+        let Some(i) = self
+            .inventory
+            .items
+            .iter()
+            .position(|&(id, count)| count > 0 && id == item)
+        else {
+            return; // the -1 + the survival gate — the creative
+                    // addAndPickItem the hasInfiniteMaterials arm holds
+        };
+        if i < 9 {
+            // Inventory.isHotbarSlot(i) — the setSelectedSlot law
+            self.selected_hotbar = i;
+        } else {
+            // Inventory.pickSlot(i): the suitable re-point FIRST, the
+            // swap the NonNullList.set pair walks
+            let suitable = self.suitable_hotbar_slot();
+            self.selected_hotbar = suitable;
+            self.inventory.items.swap(suitable, i);
+        }
+        // the ALWAYS tail (SetHeldSlot + broadcastChanges): the HUD
+        // hotbar row the every-mutation law syncs
+        self.hotbar_slots = self.inventory.hotbar();
+    }
+
+    /// `Inventory.getSuitableHotbarSlot` (the client jar's shared
+    /// walk, code 91): the first FREE hotbar slot scanning
+    /// `(selected + i) % 9` (the loop the isEmpty gate speaks), else
+    /// the first NON-enchanted slot on the same scan (the isEnchanted
+    /// gate the id-only stack model answers false for EVERY slot —
+    /// the first scanned slot, the selected itself), else the
+    /// selected (the fallback the tail speaks). The pickSlot walk's
+    /// own re-point input.
+    fn suitable_hotbar_slot(&self) -> usize {
+        let selected = self.selected_hotbar;
+        for i in 0..9 {
+            let j = (selected + i) % 9;
+            if self.inventory.items[j].1 <= 0 {
+                return j; // the free slot the first loop speaks
+            }
+        }
+        selected // the non-enchanted loop's own answer in the id-only model
+    }
+
     /// THE INVENTORY'S OWN Q (the 26.2 AbstractContainerScreen.keyPressed's
     /// keyDrop arm — the container screen's own walk beside the world's
     /// handleKeybinds lane): the HOVERED slot's stack the Q throws.
@@ -17420,6 +17545,139 @@ mod tests {
         app.on_drop_key(false);
         assert_eq!(app.drops.len(), drops_before, "the wire refusal holds");
         assert_eq!(app.inventory.items[app.selected_hotbar], (62, 7), "the wire store whole");
+    }
+
+    /// THE MIDDLE-CLICK PICK (the hotbar hit's own law — tryPickItem's
+    /// `isHotbarSlot(i)` arm): the block the downward crosshair speaks,
+    /// its item found IN the hotbar row — the setSelectedSlot walk
+    /// re-points the selection, the store's counts untouched, NO swing
+    /// (the pick chain never names one), NO drop, the HUD hotbar row
+    /// the always-tail syncs.
+    #[test]
+    fn the_middle_click_picks_the_hotbar_block() {
+        let mut app = App::new(3);
+        app.enter_world();
+        app.spawn_offline_body();
+        app.body.as_mut().unwrap().pitch = 80.0; // the ground speaks — the hit guaranteed
+        let hit = app
+            .clip_crosshair()
+            .expect("the downward aim hits the terrain");
+        let kind = app
+            .active_world()
+            .map(|w| w.get(hit.pos.0, hit.pos.1, hit.pos.2))
+            .expect("the offline world stands");
+        assert_ne!(kind, crate::world::AIR, "the hit cell solid");
+        let item = mc_registry::item_id_by_name(crate::world::NAME_OF[kind as usize])
+            .expect("the terrain block carries its item");
+        app.inventory.items[3] = (item, 5);
+        app.on_pick_block(false);
+        assert_eq!(app.selected_hotbar, 3, "the hotbar hit selected");
+        assert_eq!(app.inventory.items[3], (item, 5), "the store untouched");
+        assert!(!app.swing.swinging, "the pick chain never swings");
+        assert!(app.drops.is_empty(), "no drop the pick never names");
+        assert_eq!(app.hotbar_slots[3], (item, 5), "the HUD synced");
+    }
+
+    /// THE MAIN-INVENTORY HIT (the pickSlot walk the shared helper
+    /// speaks): the item ONLY in the main grid — the suitable re-point
+    /// first (the hand EMPTY answers the scan's first free slot, the
+    /// selected itself), then the swap brings the item INTO the hand,
+    /// the displaced empty rides back to the main grid.
+    #[test]
+    fn the_middle_click_swaps_the_main_inventory_match_into_the_hand() {
+        let mut app = App::new(3);
+        app.enter_world();
+        app.spawn_offline_body();
+        app.body.as_mut().unwrap().pitch = 80.0; // the vanilla positive-down degrees
+        let hit = app.clip_crosshair().expect("the downward aim hits");
+        let kind = app
+            .active_world()
+            .map(|w| w.get(hit.pos.0, hit.pos.1, hit.pos.2))
+            .expect("the offline world stands");
+        let item = mc_registry::item_id_by_name(crate::world::NAME_OF[kind as usize])
+            .expect("the terrain block carries its item");
+        app.inventory.items[9] = (item, 2); // the main grid ONLY — the hotbar clean
+        app.on_pick_block(false);
+        assert_eq!(
+            app.selected_hotbar, 0,
+            "the hand slot the suitable answer (the first free scanned)"
+        );
+        assert_eq!(app.inventory.items[0], (item, 2), "the item IN the hand");
+        assert_eq!(app.inventory.items[9], (0, 0), "the main slot emptied");
+        assert_eq!(app.hotbar_slots[0], (item, 2), "the HUD synced");
+    }
+
+    /// THE SUITABLE RE-POINT'S OWN LAW (getSuitableHotbarSlot code 91):
+    /// the hand FULL and a free hotbar slot ahead — the scan
+    /// `(selected + i) % 9` finds the FREE slot, the swap lands the
+    /// item THERE, the selection follows it, the hand's own stack
+    /// stays put (the displaced empty rides back to the main grid).
+    #[test]
+    fn the_middle_click_lands_in_the_first_free_hotbar_slot() {
+        let mut app = App::new(3);
+        app.enter_world();
+        app.spawn_offline_body();
+        app.body.as_mut().unwrap().pitch = 80.0; // the vanilla positive-down degrees
+        let hit = app.clip_crosshair().expect("the downward aim hits");
+        let kind = app
+            .active_world()
+            .map(|w| w.get(hit.pos.0, hit.pos.1, hit.pos.2))
+            .expect("the offline world stands");
+        let item = mc_registry::item_id_by_name(crate::world::NAME_OF[kind as usize])
+            .expect("the terrain block carries its item");
+        app.inventory.items[0] = (62, 7); // the hand full — the scan moves on
+        app.inventory.items[9] = (item, 2);
+        app.on_pick_block(false);
+        assert_eq!(app.selected_hotbar, 1, "the scan's first free slot");
+        assert_eq!(app.inventory.items[1], (item, 2), "the item lands there");
+        assert_eq!(app.inventory.items[0], (62, 7), "the hand untouched");
+        assert_eq!(app.inventory.items[9], (0, 0), "the displaced empty rides back");
+        assert_eq!(app.hotbar_slots[1], (item, 2), "the HUD synced");
+    }
+
+    /// THE MIDDLE CLICK'S OWN SILENCES (the survival law's gates): the
+    /// item NOWHERE in the store (the -1 the findSlotMatchingItem scan
+    /// speaks — the creative addAndPickItem the hasInfiniteMaterials
+    /// gate holds), the MISS (the sky the clip refuses), the death
+    /// modal, the OPEN SCREEN and the pause (the handleKeybinds gate),
+    /// the wire session (the store the server owns). Every arm leaves
+    /// the selection and the store whole.
+    #[test]
+    fn the_middle_click_misses_silently() {
+        let mut app = App::new(3);
+        app.enter_world();
+        app.spawn_offline_body();
+        app.body.as_mut().unwrap().pitch = 80.0; // the vanilla positive-down degrees
+        // the picked item NOWHERE in the 36 slots: the -1 silence
+        app.on_pick_block(false);
+        assert_eq!(app.selected_hotbar, 0, "the -1 never moved the selection");
+        // the MISS: the sky the clip refuses
+        app.body.as_mut().unwrap().pitch = -80.0; // the vanilla negative-up degrees
+        assert!(app.clip_crosshair().is_none(), "the upward aim misses");
+        app.on_pick_block(false);
+        assert_eq!(app.selected_hotbar, 0, "the MISS never moved the selection");
+        // the death modal
+        app.body.as_mut().unwrap().pitch = 80.0; // the vanilla positive-down degrees
+        app.inventory.items[3] = (62, 7); // a WRONG item — the store's own witness
+        app.dead = true;
+        app.on_pick_block(false);
+        assert_eq!(app.selected_hotbar, 0, "the death gate holds");
+        app.dead = false;
+        // the OPEN SCREEN — the handleKeybinds gate refuses
+        app.open_inventory();
+        app.on_pick_block(false);
+        assert_eq!(app.selected_hotbar, 0, "the screen gate holds");
+        app.close_inventory();
+        // the PAUSE — the vanilla's own freeze lane
+        app.paused = true;
+        app.on_pick_block(false);
+        assert_eq!(app.selected_hotbar, 0, "the pause freeze holds");
+        app.paused = false;
+        // the WIRE session — the store the server owns
+        app.world_is_network = true;
+        app.on_pick_block(false);
+        assert_eq!(app.selected_hotbar, 0, "the wire refusal holds");
+        assert_eq!(app.inventory.items[3], (62, 7), "the store whole throughout");
     }
 
     /// THE INVENTORY'S OWN Q (the AbstractContainerScreen.keyPressed's
