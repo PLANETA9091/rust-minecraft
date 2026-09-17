@@ -3733,12 +3733,14 @@ impl App {
         let panel = self.inv_panel;
         let state_id = self.live_inv_state_id;
         // THE CRAFT REGION FIRST (the menu's own slot order — the
-        // result slot 0, the craft cells 1..4). The PLAIN press rides
-        // the uniform pickup table (the craft's own consume — the
-        // onTake the server answers — the sync corrects the grid's
-        // belief). The SHIFT press sends the QuickMove the server
-        // performs (the batch craft the local walk never predicted —
-        // the belief stays, the sync's truth lands).
+        // result slot 0, the craft cells 1..4). The PLAIN press on
+        // the result rides THE RESULT SLOT'S OWN TAKE (the
+        // mayPlace-false walk — the whole/half take, the onTake's
+        // ingredient decrement + the recipe recompute the belief
+        // keeps between the syncs). The SHIFT press sends the
+        // QuickMove the server performs (the batch craft the local
+        // walk never predicted — the belief stays, the sync's truth
+        // lands).
         let (rx, ry) = craft_slot_origin(panel, 4);
         if mx >= rx + 1 && mx < rx + 17 && my >= ry + 1 && my < ry + 17 {
             if self.shift_down {
@@ -3754,12 +3756,10 @@ impl App {
                     },
                 ));
             } else {
-                wire_inventory_pickup(
+                wire_craft_result_take(
                     sink,
                     &mut self.live_inv_slots,
                     &mut self.live_inv_carried,
-                    &mut self.hotbar_slots,
-                    0,
                     button,
                     state_id,
                 );
@@ -3783,11 +3783,13 @@ impl App {
                         },
                     ));
                 } else {
-                    wire_inventory_pickup(
+                    // THE CELLS' PICKUP + THE SLOTSCHANGED PREVIEW (the
+                    // cell's mutation the recipe verdict answers — the
+                    // instant preview the vanilla screen shows)
+                    wire_craft_cell_pickup(
                         sink,
                         &mut self.live_inv_slots,
                         &mut self.live_inv_carried,
-                        &mut self.hotbar_slots,
                         menu,
                         button,
                         state_id,
@@ -10922,6 +10924,131 @@ fn wire_inventory_pickup(
             button,
             input: crate::world_view::ContainerInput::Pickup,
             changed: vec![(menu as i16, new_slot)],
+            carried: new_carried,
+        },
+    ));
+}
+
+/// THE ON-TAKE WALK OVER THE BELIEF (javap 26.2 ResultSlot.onTake —
+/// the walk the wire result take rides): the positioned input's
+/// per-cell removeItem(i, 1) over the window-0 projection's OWN craft
+/// cells (menu 1..5 — the cells the syncs feed), every non-empty cell
+/// one off, then the recompute the slotsChanged chain fires (the
+/// recipe's verdict over the believed cells — the `craft_result_for`
+/// walk the offline grid speaks). The changed entries name the slots
+/// the walk actually mutated (the broadcastChanges diff law — the
+/// untouched cell and the re-spoken verdict no entry names).
+fn wire_craft_on_take(
+    live_slots: &mut [(i32, i32); crate::world_view::INVENTORY_MENU_SLOTS],
+) -> Vec<(i16, (i32, i32))> {
+    let mut changed = Vec::new();
+    for cell in 1..5 {
+        let (cid, ccount) = live_slots[cell];
+        if ccount > 0 {
+            live_slots[cell] = if ccount > 1 { (cid, ccount - 1) } else { (0, 0) };
+            changed.push((cell as i16, live_slots[cell]));
+        }
+    }
+    let result =
+        craft_result_for(&[live_slots[1], live_slots[2], live_slots[3], live_slots[4]]);
+    if result != live_slots[0] {
+        live_slots[0] = result;
+        changed.push((0, result));
+    }
+    changed
+}
+
+/// THE RESULT SLOT'S OWN TAKE (the doClick PICKUP arm over the
+/// mayPlace-false slot 0 — the offline [`App::click_craft_result`]
+/// walk the wire belief feeds): the carried-empty arm takes the WHOLE
+/// result (left) or HALF rounded up (right) and rides the onTake
+/// ([`wire_craft_on_take`] — the ingredient decrement + the recipe
+/// recompute the belief keeps between the syncs), the carried-same
+/// arm the 1020 walk's space-capped merge rides (the FULL carried
+/// refuses), and the carried-different arm the isSameItemSameComponents
+/// silence keeps (no swap on the mayPlace-false slot — the place arm
+/// the empty result refuses too, the carried stack the cursor keeps).
+/// The packet ALWAYS rides (the slot click the wire speaks even when
+/// the prediction refuses — the handleInventoryMouseClick call the
+/// mouseClicked walk keeps unconditional) — the changed vec the
+/// walk's actual mutations names.
+fn wire_craft_result_take(
+    sink: &std::sync::mpsc::Sender<crate::world_view::ContainerCommand>,
+    live_slots: &mut [(i32, i32); crate::world_view::INVENTORY_MENU_SLOTS],
+    carried: &mut (i32, i32),
+    button: i8,
+    state_id: i32,
+) {
+    let (id, count) = live_slots[0];
+    let mut changed: Vec<(i16, (i32, i32))> = Vec::new();
+    if count > 0 && carried.1 <= 0 {
+        // THE PICKUP ARM (the whole or the half-rounded-up take)
+        let taken = if button == 0 { count } else { (count + 1) / 2 };
+        *carried = (id, taken);
+        changed = wire_craft_on_take(live_slots);
+    } else if count > 0 && carried.0 == id {
+        // THE MERGE ARM (the carried's own space caps the take, the
+        // grow the consumer keeps)
+        let space = crate::world_view::ITEM_MAX_STACK_DEFAULT - carried.1;
+        if space > 0 {
+            carried.1 += space.min(count);
+            changed = wire_craft_on_take(live_slots);
+        }
+    }
+    // THE REFUSALS (the empty result, the different carried, the full
+    // carried): no mutation — the packet still rides the lane
+    let _ = sink.send(crate::world_view::ContainerCommand::Click(
+        crate::world_view::ContainerClick {
+            window_id: 0,
+            state_id,
+            slot: 0,
+            button,
+            input: crate::world_view::ContainerInput::Pickup,
+            changed,
+            carried: *carried,
+        },
+    ));
+}
+
+/// THE CRAFT CELL'S PICKUP + THE SLOTSCHANGED PREVIEW (the doClick
+/// PICKUP walk the uniform table speaks over the believed cell, the
+/// mutation's recipe ask the menu's own chain keeps): after the cell
+/// mutates, the believed result recomputes (`craft_result_for` over
+/// the window-0 projection's OWN cells — the instant preview the
+/// vanilla screen shows before the server's sync lands), the changed
+/// cell + the CHANGED verdict the one packet names (the untouched
+/// verdict no entry speaks — the diff law the onTake keeps).
+fn wire_craft_cell_pickup(
+    sink: &std::sync::mpsc::Sender<crate::world_view::ContainerCommand>,
+    live_slots: &mut [(i32, i32); crate::world_view::INVENTORY_MENU_SLOTS],
+    carried: &mut (i32, i32),
+    menu: i32,
+    button: i8,
+    state_id: i32,
+) {
+    let believed = live_slots[menu as usize];
+    let (new_slot, new_carried) = if button == 0 {
+        crate::world_view::predict_pickup(believed, *carried)
+    } else {
+        crate::world_view::predict_pickup_right(believed, *carried)
+    };
+    live_slots[menu as usize] = new_slot;
+    *carried = new_carried;
+    let mut changed = vec![(menu as i16, new_slot)];
+    let result =
+        craft_result_for(&[live_slots[1], live_slots[2], live_slots[3], live_slots[4]]);
+    if result != live_slots[0] {
+        live_slots[0] = result;
+        changed.push((0, result));
+    }
+    let _ = sink.send(crate::world_view::ContainerCommand::Click(
+        crate::world_view::ContainerClick {
+            window_id: 0,
+            state_id,
+            slot: menu as i16,
+            button,
+            input: crate::world_view::ContainerInput::Pickup,
+            changed,
             carried: new_carried,
         },
     ));
@@ -22400,6 +22527,254 @@ mod tests {
             click_rx.try_recv().is_err(),
             "the empty cursor the THROW arm's guard keeps silent"
         );
+    }
+
+    /// THE RESULT SLOT'S OWN TAKE (the window-0 wire lane's onTake —
+    /// the plain press the result rides): the LEFT press the WHOLE
+    /// result takes (the cursor (planks, 4) holds), the believed cell
+    /// the onTake's per-cell removeItem empties, the recompute's own
+    /// EMPTY verdict the result keeps; the RIGHT press the
+    /// half-rounded-up arm speaks; the changed slots the walk's
+    /// actual mutations name (the cell then the verdict, the order
+    /// the onTake walk keeps).
+    #[test]
+    fn the_wire_inventory_result_take_speaks_the_on_take_consume() {
+        use crate::world_view::ContainerCommand;
+        let mut app = App::new(3);
+        app.open(ScreenKind::Connect);
+        app.net_world = Some(air_net_world(2, 0));
+        app.enter_network_world(None, Skybox::Overworld, None, None);
+        let (click_tx, click_rx) = std::sync::mpsc::channel::<ContainerCommand>();
+        app.attach_live_clicks(click_tx);
+        app.open_inventory();
+        app.inv_panel = inventory_panel_origin(640, 360);
+        let log = mc_registry::item_id_by_name("oak_log").unwrap();
+        let planks = mc_registry::item_id_by_name("oak_planks").unwrap();
+        // the recipe the belief speaks: one log in the cell menu 1,
+        // the result (planks, 4) the server's sync spoke
+        let mut slots = [(0, 0); crate::world_view::INVENTORY_MENU_SLOTS];
+        slots[1] = (log, 1);
+        slots[0] = (planks, 4);
+        app.live_inventory_updated(slots, Vec::new(), 7, (0, 0));
+        let (rx, ry) = craft_slot_origin(app.inv_panel, 4);
+        // THE LEFT PRESS: the whole result rides the cursor, the
+        // onTake the cell consumes, the recompute's EMPTY verdict lands
+        app.on_press(rx + 8, ry + 8);
+        assert_eq!(
+            app.live_inv_carried, (planks, 4),
+            "the whole result the cursor takes"
+        );
+        assert_eq!(app.live_inv_slots[1], (0, 0), "the cell the onTake consumed");
+        assert_eq!(
+            app.live_inv_slots[0], (0, 0),
+            "the recompute's own EMPTY verdict"
+        );
+        assert_eq!(
+            app.inventory.items[12], (0, 0),
+            "the offline store the wire world never touches"
+        );
+        match click_rx.try_recv().expect("the packet rode the lane") {
+            ContainerCommand::Click(c) => {
+                assert_eq!(c.window_id, 0, "the player's OWN menu the ctor pins");
+                assert_eq!(c.state_id, 7, "the revision the feed spoke");
+                assert_eq!(c.slot, 0, "the result slot's own menu id");
+                assert_eq!(c.button, 0);
+                assert_eq!(c.input, crate::world_view::ContainerInput::Pickup);
+                assert_eq!(
+                    c.changed,
+                    vec![(1, (0, 0)), (0, (0, 0))],
+                    "the onTake's own deltas — the cell then the verdict"
+                );
+                assert_eq!(c.carried, (planks, 4));
+            }
+            other => panic!("expected a container click, got {other:?}"),
+        }
+        // THE RIGHT PRESS: the half-rounded-up arm the secondary speaks
+        let mut slots = [(0, 0); crate::world_view::INVENTORY_MENU_SLOTS];
+        slots[1] = (log, 1);
+        slots[0] = (planks, 4);
+        app.live_inventory_updated(slots, Vec::new(), 8, (0, 0));
+        app.on_right_press(rx + 8, ry + 8);
+        assert_eq!(
+            app.live_inv_carried, (planks, 2),
+            "the half-rounded-up the result count speaks"
+        );
+        assert_eq!(app.live_inv_slots[1], (0, 0));
+        assert_eq!(app.live_inv_slots[0], (0, 0));
+        match click_rx.try_recv().expect("the packet rode the lane") {
+            ContainerCommand::Click(c) => {
+                assert_eq!(c.button, 1);
+                assert_eq!(c.changed, vec![(1, (0, 0)), (0, (0, 0))]);
+                assert_eq!(c.carried, (planks, 2));
+            }
+            other => panic!("expected a container click, got {other:?}"),
+        }
+    }
+
+    /// THE MERGE ARM'S OWN WALK (the carried-same-item take — the
+    /// carried's own space caps the take, the grow the consumer
+    /// keeps): the onTake's cell decrement the belief rides, the
+    /// recipe's REPEAT the recompute speaks (the re-spoken verdict
+    /// the diff law never names — the changed vec the cell alone
+    /// carries), the FULL carried the space-0 refusal keeps (no
+    /// mutation, the packet rides with the empty changed).
+    #[test]
+    fn the_wire_inventory_result_merge_rides_the_space_cap() {
+        use crate::world_view::ContainerCommand;
+        let mut app = App::new(3);
+        app.open(ScreenKind::Connect);
+        app.net_world = Some(air_net_world(2, 0));
+        app.enter_network_world(None, Skybox::Overworld, None, None);
+        let (click_tx, click_rx) = std::sync::mpsc::channel::<ContainerCommand>();
+        app.attach_live_clicks(click_tx);
+        app.open_inventory();
+        app.inv_panel = inventory_panel_origin(640, 360);
+        let log = mc_registry::item_id_by_name("oak_log").unwrap();
+        let planks = mc_registry::item_id_by_name("oak_planks").unwrap();
+        // the cursor holds 2 planks, the cell 3 logs, the result 4
+        // planks — the space 62 caps the take at the result's own 4
+        let mut slots = [(0, 0); crate::world_view::INVENTORY_MENU_SLOTS];
+        slots[1] = (log, 3);
+        slots[0] = (planks, 4);
+        app.live_inventory_updated(slots, Vec::new(), 9, (planks, 2));
+        let (rx, ry) = craft_slot_origin(app.inv_panel, 4);
+        app.on_press(rx + 8, ry + 8);
+        assert_eq!(
+            app.live_inv_carried, (planks, 6),
+            "the merge the carried's own space keeps"
+        );
+        assert_eq!(
+            app.live_inv_slots[1], (log, 2),
+            "the one log the onTake consumed"
+        );
+        assert_eq!(
+            app.live_inv_slots[0], (planks, 4),
+            "the recipe's REPEAT the recompute re-spoke"
+        );
+        match click_rx.try_recv().expect("the packet rode the lane") {
+            ContainerCommand::Click(c) => {
+                assert_eq!(c.slot, 0);
+                assert_eq!(c.input, crate::world_view::ContainerInput::Pickup);
+                assert_eq!(
+                    c.changed,
+                    vec![(1, (log, 2))],
+                    "the re-spoken verdict the diff law never names"
+                );
+                assert_eq!(c.carried, (planks, 6));
+            }
+            other => panic!("expected a container click, got {other:?}"),
+        }
+        // THE FULL CARRIED: the space 0 refuses — the belief stays,
+        // the packet rides with the empty changed (the walk's own law)
+        let mut slots = [(0, 0); crate::world_view::INVENTORY_MENU_SLOTS];
+        slots[1] = (log, 3);
+        slots[0] = (planks, 4);
+        app.live_inventory_updated(slots, Vec::new(), 10, (planks, 64));
+        app.on_press(rx + 8, ry + 8);
+        assert_eq!(
+            app.live_inv_carried, (planks, 64),
+            "the full carried the space-0 refusal keeps"
+        );
+        assert_eq!(app.live_inv_slots[1], (log, 3), "the cell untouched");
+        assert_eq!(app.live_inv_slots[0], (planks, 4), "the result untouched");
+        match click_rx.try_recv().expect("the packet rode the lane") {
+            ContainerCommand::Click(c) => {
+                assert_eq!(c.changed, Vec::new(), "no slot the refusal touched");
+                assert_eq!(c.carried, (planks, 64));
+            }
+            other => panic!("expected a container click, got {other:?}"),
+        }
+    }
+
+    /// THE CELL PLACE'S OWN PREVIEW + THE MAYPLACE REFUSALS (the
+    /// result slot's own mayPlace-false law): the carried log the
+    /// cell place rides (the uniform pickup table), the mutation's
+    /// slotsChanged ask the recipe verdict answers INSTANTLY (the
+    /// (planks, 4) preview the client computes — the changed vec the
+    /// cell then the verdict names); the empty result the carried
+    /// stack never takes (the place arm's refusal), the different
+    /// carried the non-empty result never swaps (the
+    /// isSameItemSameComponents silence) — both refusals the belief
+    /// untouched keeps, the packets the walk's law still sends.
+    #[test]
+    fn the_wire_inventory_cell_place_previews_and_the_result_refuses() {
+        use crate::world_view::ContainerCommand;
+        let mut app = App::new(3);
+        app.open(ScreenKind::Connect);
+        app.net_world = Some(air_net_world(2, 0));
+        app.enter_network_world(None, Skybox::Overworld, None, None);
+        let (click_tx, click_rx) = std::sync::mpsc::channel::<ContainerCommand>();
+        app.attach_live_clicks(click_tx);
+        app.open_inventory();
+        app.inv_panel = inventory_panel_origin(640, 360);
+        let log = mc_registry::item_id_by_name("oak_log").unwrap();
+        let planks = mc_registry::item_id_by_name("oak_planks").unwrap();
+        let dirt = mc_registry::item_id_by_name("dirt").unwrap();
+        // (a) THE PLACE + THE PREVIEW: the carried 5 logs the cell
+        // menu 1 takes, the recompute the (planks, 4) verdict speaks
+        app.live_inventory_updated(
+            [(0, 0); crate::world_view::INVENTORY_MENU_SLOTS],
+            Vec::new(),
+            11,
+            (log, 5),
+        );
+        let (cx, cy) = craft_slot_origin(app.inv_panel, 0);
+        app.on_press(cx + 8, cy + 8);
+        assert_eq!(
+            app.live_inv_slots[1], (log, 5),
+            "the cell the carried stack fills"
+        );
+        assert_eq!(app.live_inv_carried, (0, 0), "the cursor's own empty");
+        assert_eq!(
+            app.live_inv_slots[0], (planks, 4),
+            "the instant preview the recompute spoke"
+        );
+        match click_rx.try_recv().expect("the packet rode the lane") {
+            ContainerCommand::Click(c) => {
+                assert_eq!(c.slot, 1, "the cell's own menu id");
+                assert_eq!(c.changed, vec![(1, (log, 5)), (0, (planks, 4))]);
+                assert_eq!(c.carried, (0, 0));
+            }
+            other => panic!("expected a container click, got {other:?}"),
+        }
+        // (b) THE PLACE REFUSAL: the empty result the carried dirt
+        // never takes — no mutation, the packet rides with the empty
+        // changed (the mayPlace-false slot's own law)
+        let mut slots = [(0, 0); crate::world_view::INVENTORY_MENU_SLOTS];
+        app.live_inventory_updated(slots, Vec::new(), 12, (dirt, 3));
+        let (rx, ry) = craft_slot_origin(app.inv_panel, 4);
+        app.on_press(rx + 8, ry + 8);
+        assert_eq!(
+            app.live_inv_carried, (dirt, 3),
+            "the carried stack the refusal keeps"
+        );
+        assert_eq!(app.live_inv_slots[0], (0, 0), "the result stays empty");
+        match click_rx.try_recv().expect("the packet rode the lane") {
+            ContainerCommand::Click(c) => {
+                assert_eq!(c.slot, 0);
+                assert_eq!(c.changed, Vec::new(), "no slot the refusal touched");
+                assert_eq!(c.carried, (dirt, 3));
+            }
+            other => panic!("expected a container click, got {other:?}"),
+        }
+        // (c) THE SWAP REFUSAL: the different carried the non-empty
+        // result never swaps — the result the belief keeps
+        let mut slots = [(0, 0); crate::world_view::INVENTORY_MENU_SLOTS];
+        slots[0] = (planks, 4);
+        app.live_inventory_updated(slots, Vec::new(), 13, (dirt, 2));
+        app.on_press(rx + 8, ry + 8);
+        assert_eq!(app.live_inv_carried, (dirt, 2), "the cursor untouched");
+        assert_eq!(
+            app.live_inv_slots[0], (planks, 4),
+            "the result the silence keeps"
+        );
+        match click_rx.try_recv().expect("the packet rode the lane") {
+            ContainerCommand::Click(c) => {
+                assert_eq!(c.changed, Vec::new(), "no slot the silence touched");
+                assert_eq!(c.carried, (dirt, 2));
+            }
+            other => panic!("expected a container click, got {other:?}"),
+        }
     }
 }
 
