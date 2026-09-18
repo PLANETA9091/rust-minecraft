@@ -586,6 +586,31 @@ impl World {
         Some(id)
     }
 
+    /// THE FARMLAND'S OWN HYDRATION SCAN — javap
+    /// FarmlandBlock.isNearWater over the real 26.2 jar: the
+    /// `BlockPos.betweenClosed(pos.offset(-4, 0, -4), pos.offset(4, 1,
+    /// 4))` box the bytecode's bipush/iconst pairs keep — the x/z ±4
+    /// ring, the y the farmland's own level + the one above (the 9x2x9
+    /// the 162 cells wear), each cell the `getFluidState(cell).
+    /// is(FluidTags.WATER)` read answers (the vocabulary's WATER kind
+    /// the fluid-state law wears, the lava the water tag never
+    /// carries). The randomTick's own hydrate arm the same scan speaks
+    /// (`!isNearWater && !isRainingAt(pos.above())` the dry ramp keeps
+    /// — the MOISTURE 0..7 the state property the kind-only cells
+    /// never carry, the derived verdict the instant answer wears).
+    pub fn is_near_water(&self, x: i32, y: i32, z: i32) -> bool {
+        for dy in 0..=1 {
+            for dx in -4..=4 {
+                for dz in -4..=4 {
+                    if self.get(x + dx, y + dy, z + dz) == WATER {
+                        return true;
+                    }
+                }
+            }
+        }
+        false
+    }
+
     /// THE GROWTH SPEED (javap CropBlock.getGrowthSpeed(Block, BlockGetter,
     /// BlockPos)F over the real 26.2 jar — the audited formula the fields'
     /// rhythm keeps):
@@ -594,11 +619,16 @@ impl World {
     /// 2. the 3x3 scan AT `pos.below()`'s layer (the `below.offset(i, 0, j)`
     ///    walk, i/j in -1..=1): each GROWS_CROPS hit speaks `f1 = 1.0`, the
     ///    moisture read `getValueOrElse(FarmlandBlock.MOISTURE, 0) > 0` the
-    ///    `f1 = 3.0` wet arm names — the arm the offline vocabulary never
-    ///    wears (the palette's farmland IS the moisture=0 variant the dry
-    ///    model resolves, the wet rows the wire world's server answers — the
-    ///    documented fold the plant arm's own light-fold precedent keeps);
-    ///    every NON-CENTER cell the `f1 /= 4.0` quartering speaks
+    ///    `f1 = 3.0` wet arm names — the arm the HYDRATION SCAN answers
+    ///    (FarmlandBlock.isNearWater the 162-cell box wears: the farmland
+    ///    cell's water within the x/z ±4 ring, the y the farmland's own
+    ///    level + the one above — the MOISTURE 0..7 the state property the
+    ///    kind-only cells never carry, the derived verdict the growth law's
+    ///    own `> 0` gate exactly answers: the near-water farmland the wet
+    ///    arm wears, the dry the 1.0 keeps; the drying ramp the state law
+    ///    the fold never carries — the instant verdict the honest fold
+    ///    speaks, the wet tile the atlas's later round wears); every
+    ///    NON-CENTER cell the `f1 /= 4.0` quartering speaks
     ///    (`i != 0 || j != 0`); `f += f1`;
     /// 3. the SAME-LAYER crop neighbors (the `pos.north()/south()/west()/
     ///    east()` reads — the crop's own layer the symbolic trace's loc2
@@ -609,16 +639,29 @@ impl World {
     ///    `((1.0 + 3.0/4.0) / 2.0) / 2.0` keeps.
     ///
     /// The dyadic anchors the tests pin: isolated dry farmland = 2.0 (the
-    /// center 1.0 + the below hit 1.0), the 3x3 farmland ring = 4.0, one
-    /// cardinal neighbor = 2.5, + diagonal = 1.75, no farmland below = 1.0.
+    /// center 1.0 + the below hit 1.0), the isolated wet farmland = 4.0
+    /// (the below hit the 3.0 wet arm wears), the 3x3 farmland ring = 4.0
+    /// dry / 10.0 wet, one cardinal neighbor = 2.5, + diagonal = 1.75, no
+    /// farmland below = 1.0.
     pub fn crop_growth_speed(&self, x: i32, y: i32, z: i32) -> f32 {
         let mut f = 1.0f32;
         for di in -1i32..=1 {
             for dj in -1i32..=1 {
                 let below = self.get(x + di, y - 1, z + dj);
-                // the GROWS_CROPS hit's f1 — the moisture>0 arm the dry
-                // farmland kind never wears (the documented fold above)
-                let mut f1 = if grows_crops(below) { 1.0 } else { 0.0 };
+                // THE MOISTURE'S OWN WET ARM (javap getGrowthSpeed: the
+                // getValueOrElse(MOISTURE, 0) > 0 the 3.0 speaks): the
+                // farmland's hydration the isNearWater scan answers —
+                // the derived verdict the kind-only cells the state
+                // property never carries
+                let mut f1 = if grows_crops(below) {
+                    if self.is_near_water(x + di, y - 1, z + dj) {
+                        3.0
+                    } else {
+                        1.0
+                    }
+                } else {
+                    0.0
+                };
                 if di != 0 || dj != 0 {
                     f1 /= 4.0;
                 }
@@ -1248,6 +1291,200 @@ mod tests {
         assert_eq!(World::placeable_block("wheat"), None);
         assert_eq!(World::placeable_block("wheat_stage1"), None);
         assert_eq!(World::placeable_block("wheat_stage7"), None);
+    }
+
+    /// THE HYDRATION'S OWN BOX — the isNearWater scan's exact bounds
+    /// (javap: the betweenClosed(pos.offset(-4, 0, -4), pos.offset(4, 1,
+    /// 4)) the 162 cells wear): the water at the ring's own edge the wet
+    /// verdict speaks, the one-past cell the dry keeps, the y the
+    /// farmland's own level + the one above the box wears, the
+    /// below-cell water the box never scans.
+    #[test]
+    fn the_hydration_the_water_the_box_scans() {
+        let mut w = World::new(1, 7);
+        for x in 0..16 {
+            for z in 0..16 {
+                for y in 10..32 {
+                    w.set(x, y, z, AIR);
+                }
+            }
+        }
+        w.set(8, 19, 8, FARMLAND);
+        assert!(
+            !w.is_near_water(8, 19, 8),
+            "the cleared world the dry keeps"
+        );
+        // THE RING'S OWN EDGE: the dx=+4 cell the box scans
+        w.set(12, 19, 8, WATER);
+        assert!(
+            w.is_near_water(8, 19, 8),
+            "the dx=4 edge the betweenClosed box scans"
+        );
+        w.set(12, 19, 8, AIR);
+        // ONE PAST THE EDGE: the dx=+5 cell the box never scans
+        w.set(13, 19, 8, WATER);
+        assert!(
+            !w.is_near_water(8, 19, 8),
+            "the dx=5 cell the box never scans"
+        );
+        w.set(13, 19, 8, AIR);
+        // THE Y-BAND: the cell ABOVE the farmland level (the flooded
+        // furrow) the box scans, the below-cell water it never wears
+        // (the betweenClosed's y the offset(4, 1, 4) corner keeps)
+        w.set(8, 20, 8, WATER);
+        assert!(
+            w.is_near_water(8, 19, 8),
+            "the y+1 cell the box scans"
+        );
+        w.set(8, 20, 8, AIR);
+        w.set(8, 18, 8, WATER);
+        assert!(
+            !w.is_near_water(8, 19, 8),
+            "the y-1 cell the box never scans"
+        );
+        w.set(8, 18, 8, AIR);
+        // THE Z EDGE: the dz=+4 cell the box scans
+        w.set(8, 19, 12, WATER);
+        assert!(
+            w.is_near_water(8, 19, 8),
+            "the dz=4 edge the betweenClosed box scans"
+        );
+    }
+
+    /// THE WET ARM'S OWN SPEEDS — the getGrowthSpeed's moisture law the
+    /// hydration scan answers: the isolated wet farmland 4.0 (the below
+    /// hit the 3.0 speaks), the dry boundary the out-of-box water keeps
+    /// (2.0 — the anchor the water-present world re-pins), the 3x3 wet
+    /// ring 10.0 (the center 3.0 + the eight quarters 0.75 — the water
+    /// the intersection corner all nine boxes scan), the corner water
+    /// the honest mixed verdict wears (8.0: the four near cells the wet
+    /// quarter speaks, the four far cells the dry quarter keeps).
+    #[test]
+    fn the_growth_speed_the_wet_arm_speaks() {
+        let mut w = World::new(1, 43);
+        for x in 0..16 {
+            for z in 0..16 {
+                for y in 16..32 {
+                    w.set(x, y, z, AIR);
+                }
+            }
+        }
+        // the isolated WET farmland: 1.0 + 3.0 = 4.0
+        w.set(8, 19, 8, FARMLAND);
+        w.set(8, 20, 8, WHEAT);
+        w.set(4, 19, 8, WATER); // the dx=-4 edge the box scans
+        assert_eq!(w.crop_growth_speed(8, 20, 8), 4.0);
+        // the DRY BOUNDARY: the water one-past the box the 1.0 arm keeps
+        w.set(4, 19, 8, AIR);
+        w.set(2, 19, 8, WATER);
+        assert_eq!(
+            w.crop_growth_speed(8, 20, 8),
+            2.0,
+            "the far ring the dry arm keeps"
+        );
+        w.set(2, 19, 8, AIR);
+        // the 3x3 WET ring: 1.0 + 3.0 + 8 x 0.75 = 10.0 — the water the
+        // intersection corner (5, 5) every farmland cell's box scans
+        for x in 7..=9 {
+            for z in 7..=9 {
+                w.set(x, 19, z, FARMLAND);
+            }
+        }
+        w.set(5, 19, 5, WATER);
+        assert_eq!(
+            w.crop_growth_speed(8, 20, 8),
+            10.0,
+            "the wet ring the 3.0 quarters wear"
+        );
+        // THE MIXED CORNER: the water at (4, 4) — the center + the
+        // three near ring cells wet (3.0 + 3 x 0.75), the five far
+        // ring cells dry (5 x 0.25) — 1.0 + 3.0 + 2.25 + 1.25 = 7.5
+        w.set(5, 19, 5, AIR);
+        w.set(4, 19, 4, WATER);
+        assert_eq!(
+            w.crop_growth_speed(8, 20, 8),
+            7.5,
+            "the corner water the honest mixed verdict wears"
+        );
+    }
+
+    /// THE WET FIELD'S OWN HASTE — the random tick's modulus the speed
+    /// speaks: the isolated wet field (25.0/4.0 -> 6 -> 7) the dry
+    /// isolated (25.0/2.0 -> 12 -> 13) the same seed the divergent roll
+    /// wears (the seed the wet grows the dry keeps), the determinism the
+    /// replay keeps, the one-draw law the post-tick streams pair (the
+    /// modulus the only lane that moved).
+    #[test]
+    fn the_wet_field_the_random_tick_hastes() {
+        // THE DIVERGENT SEED: the fresh-stream first draws — the wet's
+        // next_int(7) the zero speaks, the dry's next_int(13) the
+        // non-zero keeps (two probes the fresh pair wear)
+        let mut seed = 1u64;
+        loop {
+            let mut p1 = crate::drops::Lcg::new(seed);
+            let mut p2 = crate::drops::Lcg::new(seed);
+            if p1.next_int(7) == 0 && p2.next_int(13) != 0 {
+                break;
+            }
+            seed += 1;
+        }
+        let build = |water: bool| -> World {
+            let mut w = World::new(1, 44);
+            for x in 0..16 {
+                for z in 0..16 {
+                    for y in 16..32 {
+                        w.set(x, y, z, AIR);
+                    }
+                }
+            }
+            w.set(8, 19, 8, FARMLAND);
+            w.set(8, 20, 8, WHEAT);
+            if water {
+                w.set(4, 19, 8, WATER); // the dx=-4 edge the box scans
+            }
+            w
+        };
+        let mut wet = build(true);
+        let mut dry = build(false);
+        let mut rng_wet = crate::drops::Lcg::new(seed);
+        let mut rng_dry = crate::drops::Lcg::new(seed);
+        assert!(
+            wet.crop_random_tick(&mut rng_wet, 8, 20, 8),
+            "the wet roll the growth speaks"
+        );
+        assert!(
+            !dry.crop_random_tick(&mut rng_dry, 8, 20, 8),
+            "the dry modulus the growth never speaks"
+        );
+        assert_eq!(
+            wet.get(8, 20, 8),
+            WHEAT_STAGE1,
+            "the wet crop the ladder climbed"
+        );
+        assert_eq!(
+            dry.get(8, 20, 8),
+            WHEAT,
+            "the dry crop the stage keeps"
+        );
+        // THE ONE-DRAW LAW: the moduli 7 and 13 the raw draw the same
+        // count spends — the post-tick streams re-join
+        assert_eq!(
+            rng_wet.next_int(97),
+            rng_dry.next_int(97),
+            "the one draw the streams pair"
+        );
+        // THE DETERMINISM: the same seed the same verdict the replay keeps
+        let mut wet2 = build(true);
+        let mut replay = crate::drops::Lcg::new(seed);
+        assert!(
+            wet2.crop_random_tick(&mut replay, 8, 20, 8),
+            "the same seed the same growth the replay wears"
+        );
+        assert_eq!(
+            wet2.get(8, 20, 8),
+            WHEAT_STAGE1,
+            "the replay the same stage wears"
+        );
     }
 
     /// THE RANDOM TICK WALK — the ServerLevel's per-tick lane: the
