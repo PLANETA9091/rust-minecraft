@@ -566,6 +566,160 @@ fn debug_eye_light(world: &crate::world::World, ex: i32, ey: i32, ez: i32) -> (u
     (light, 0)
 }
 
+/// THE DEBUG PANEL'S OWN SYSTEM MEMORY (javap DebugEntryMemory's own
+/// words — `Runtime.getRuntime()` the JVM's own trio reads, the Rust
+/// client the PROCESS's own /proc lanes answers: VmRSS the resident
+/// word the used slot keeps, VmSize the committed-address-space word
+/// the Allocated slot keeps, the max the cgroup's own limit the
+/// memory.max (v2 bytes / v1 limit_in_bytes) speaks with the
+/// /proc/meminfo MemTotal the fallback lane keeps; the bytesToMebibytes
+/// law the two ldiv-by-1024 walks bank). None the no-/proc lane keeps
+/// (the honest skip the biome row's own law preserves).
+fn system_memory_probe() -> Option<(u64, u64, u64)> {
+    // /proc/self/status — the VmRSS / VmSize pair (kB words)
+    let mut rss_kb: Option<u64> = None;
+    let mut size_kb: Option<u64> = None;
+    let status = std::fs::read_to_string("/proc/self/status").ok()?;
+    for line in status.lines() {
+        let mut parts = line.split_whitespace();
+        match parts.next()? {
+            "VmRSS:" => {
+                rss_kb = parts.next()?.parse::<u64>().ok();
+            }
+            "VmSize:" => {
+                size_kb = parts.next()?.parse::<u64>().ok();
+            }
+            _ => {}
+        }
+    }
+    let used = rss_kb? * 1024;
+    let allocated = size_kb? * 1024;
+    // the max lane: cgroup v2's memory.max (the "max" word the
+    // unlimited verdict keeps — the next lane the fallback speaks),
+    // cgroup v1's limit_in_bytes (the huge word the no-limit lane
+    // keeps — the 1<<50 sanity bound the honest read preserves),
+    // /proc/meminfo's MemTotal the last fallback wears.
+    let mut max = None;
+    if let Ok(v2) = std::fs::read_to_string("/sys/fs/cgroup/memory.max") {
+        let t = v2.trim();
+        if let Ok(b) = t.parse::<u64>() {
+            max = Some(b);
+        }
+    }
+    if max.is_none() {
+        if let Ok(v1) = std::fs::read_to_string(
+            "/sys/fs/cgroup/memory/memory.limit_in_bytes",
+        ) {
+            if let Ok(b) = v1.trim().parse::<u64>() {
+                if b > 0 && b < (1u64 << 50) {
+                    max = Some(b);
+                }
+            }
+        }
+    }
+    if max.is_none() {
+        let info = std::fs::read_to_string("/proc/meminfo").ok()?;
+        for line in info.lines() {
+            if let Some(rest) = line.strip_prefix("MemTotal:") {
+                let kb = rest.trim().split_whitespace().next()?.parse::<u64>().ok()?;
+                max = Some(kb * 1024);
+                break;
+            }
+        }
+    }
+    let max = max?;
+    Some((used, allocated, max))
+}
+
+/// THE DEBUG PANEL'S OWN CPU WORD (javap GLX._getCpuInfo's own law —
+/// oshi's logicalProcessorCount the `%dx %s` count keeps, the
+/// processor identifier's name the model slot wears, the
+/// `.replaceAll('\\s+', ' ')` collapse the whitespace fold speaks;
+/// the no-oshi lane the `<unknown>` word the cpuInfo cache keeps).
+/// The Rust client the /proc/cpuinfo's own pair answers (the
+/// ^processor count, the first model name).
+fn cpu_info_probe() -> String {
+    let Some(text) = std::fs::read_to_string("/proc/cpuinfo").ok() else {
+        return "<unknown>".to_string();
+    };
+    let mut count = 0usize;
+    let mut model: Option<String> = None;
+    for line in text.lines() {
+        if line.starts_with("processor") {
+            count += 1;
+        } else if model.is_none() && line.starts_with("model name") {
+            model = line.split(':').nth(1).map(|s| s.to_string());
+        }
+    }
+    match (count, model) {
+        (c, Some(name)) if c > 0 => cpu_word(c, &name),
+        _ => "<unknown>".to_string(),
+    }
+}
+
+/// THE CPU WORD'S OWN FOLD (`%dx %s` + the whitespace collapse — the
+/// pure lane the probe's own seam keeps, the test the exact words
+/// pins).
+fn cpu_word(count: usize, name: &str) -> String {
+    let collapsed: Vec<&str> = name.split_whitespace().collect();
+    format!("{count}x {}", collapsed.join(" "))
+}
+
+/// THE MEMORY ROWS' OWN FORMATS (javap DebugEntryMemory's own ldc
+/// pair — `Mem: %2d%% %03d/%03dMiB` the used-percent/usedMiB/maxMiB
+/// triple keeps, `Allocated: %2d%% %03dMiB` the total-percent/
+/// totalMiB pair wears; the percent the integer `*100/max` fold
+/// speaks, the MiB the bytesToMebibytes' two ldiv-by-1024 bank).
+fn mem_rows(used: u64, allocated: u64, max: u64) -> (String, String) {
+    let mem = format!(
+        "Mem: {:2}% {:03}/{:03}MiB",
+        used * 100 / max,
+        used / 1048576,
+        max / 1048576
+    );
+    let alloc = format!(
+        "Allocated: {:2}% {:03}MiB",
+        allocated * 100 / max,
+        allocated / 1048576
+    );
+    (mem, alloc)
+}
+
+/// THE DISPLAY ROW'S OWN FORMAT (javap DebugEntrySystemSpecs's
+/// `Display: %dx%d (%s)` — the Window's own getWidth/getHeight pair
+/// the real window speaks, the vendor slot the CPU-rasterizer's own
+/// honest `software` word keeps).
+fn display_row(gui_width: i32, gui_height: i32) -> String {
+    format!("Display: {gui_width}x{gui_height} (software)")
+}
+
+/// THE RIGHT COLUMN'S OWN X ANCHOR (javap DebugScreenOverlay
+/// .extractLines's right branch — `guiWidth - 2 - lineWidth` the
+/// else lane keeps, the left branch's x=2 the MARGIN_LEFT word
+/// wears).
+fn right_column_x(gui_width: i32, line_width: i32) -> i32 {
+    gui_width - 2 - line_width
+}
+
+/// THE RIGHT COLUMN'S LINES (javap DebugScreenEntries' DEFAULT
+/// profile's right side — the memory group's own pair the
+/// process-probe rows keep, the system group's CPU/Display rows the
+/// GLX law wears; the no-JVM Java row and the no-GC allocation-rate
+/// row the honest skip preserves — the Rust process keeps no JVM
+/// heap and no allocation tracker, the drawn rows the real sources
+/// keep).
+fn debug_right_lines(gui_width: i32, gui_height: i32) -> Vec<String> {
+    let mut lines = Vec::new();
+    if let Some((used, allocated, max)) = system_memory_probe() {
+        let (mem, alloc) = mem_rows(used, allocated, max);
+        lines.push(mem);
+        lines.push(alloc);
+    }
+    lines.push(format!("CPU: {}", cpu_info_probe()));
+    lines.push(display_row(gui_width, gui_height));
+    lines
+}
+
 /// THE RIDER'S YAW WALK (AbstractBoat.positionRider's own words — the
 /// drag `passenger.setYRot(getYRot() + deltaRotation)` the caller
 /// speaks, then clampRotation's `f = wrapDegrees(rider - boat)`,
@@ -10960,9 +11114,14 @@ impl App {
     /// DebugEntryBiome / DebugEntryLight the jar's own constants
     /// keep, the no-opinion line (the biome the seed-less lane never
     /// named, the light the world-less frame never read) the honest
-    /// skip preserves.
+    /// skip preserves; the RIGHT column the extractLines' right
+    /// branch wears (`guiWidth - 2 - lineWidth` the x anchor, the
+    /// memory group's process-probe rows and the system group's
+    /// CPU/Display rows the same law draws).
     fn draw_debug_overlay(&self, g: &mut Gui, a: &mut GuiAssets, w: i32, h: i32) {
-        let _ = (w, h); // the column's own geometry the top-left origin owns
+        let _ = h; // the rows' own 9px stride the top origin owns
+        // THE LEFT COLUMN (the extractLines' left branch — the
+        // MARGIN_LEFT x=2 the same walk dev-16 banked)
         let lines = self.debug_lines();
         let (x, mut y) = (2i32, 2i32);
         for line in &lines {
@@ -10976,6 +11135,20 @@ impl App {
                 g.text(a, x, y, line, DEBUG_TEXT, true);
             }
             y += 9;
+        }
+        // THE RIGHT COLUMN (the extractLines' right branch — the x
+        // the `guiWidth - 2 - lineWidth` law keeps, the band/text the
+        // same pair the left column wears)
+        let right = debug_right_lines(w, h);
+        let mut ry = 2i32;
+        for line in &right {
+            if !line.is_empty() {
+                let tw = g.text_width(line);
+                let rx = right_column_x(w, tw);
+                g.fill(rx - 1, ry - 1, tw + 2, 9, DEBUG_BAND_BG);
+                g.text(a, rx, ry, line, DEBUG_TEXT, true);
+            }
+            ry += 9;
         }
     }
 
@@ -18704,6 +18877,80 @@ mod tests {
                 "yaw {yaw}: {line}"
             );
         }
+    }
+
+    #[test]
+    fn the_f3_right_column_the_system_rows_speak() {
+        // THE TOGGLE (the same F3 flip the left column's test keeps —
+        // the right column rides the same panel's own visibility)
+        let mut app = App::new(3);
+        app.enter_world();
+        assert!(!app.debug_held);
+        app.on_debug_key();
+        assert!(app.debug_held);
+
+        // THE MEMORY ROWS' OWN FORMATS (DebugEntryMemory's ldc pair —
+        // the used/allocated/max triple the integer percent fold and
+        // the bytesToMebibytes' two ldiv-by-1024 speak: 224 MiB used,
+        // 500 MiB allocated, 1638 MiB max → `Mem: 13% 224/1638MiB`
+        // (224*100/1638 = 13) and `Allocated: 30% 500MiB`
+        // (500*100/1638 = 30); the %2d min-width and the %03d
+        // zero-pad the small-percent word wears — 5% the ` 5` space
+        // pad keeps)
+        let (mem, alloc) = mem_rows(
+            224 * 1048576,
+            500 * 1048576,
+            1638 * 1048576,
+        );
+        assert_eq!(mem, "Mem: 13% 224/1638MiB");
+        assert_eq!(alloc, "Allocated: 30% 500MiB");
+        let (small_mem, _) = mem_rows(5 * 1048576, 0, 100 * 1048576);
+        assert_eq!(small_mem, "Mem:  5% 005/100MiB");
+
+        // THE PROBE'S OWN HONESTY (the /proc lanes the Linux process
+        // really keeps — the Some verdict, the max > 0, the used <=
+        // max, and the DRAWN row the probe's own numbers re-speaking:
+        // the wire the same fold walks)
+        let probe = system_memory_probe();
+        assert!(probe.is_some(), "the /proc lanes the test env keeps");
+        let (used, allocated, max) = probe.unwrap();
+        assert!(max > 0, "the max the cgroup/meminfo lane keeps");
+        assert!(used <= max, "the resident the limit's own bound keeps");
+        assert!(allocated >= used, "the address space the resident bounds");
+        let right = debug_right_lines(854, 480);
+        let (want_mem, want_alloc) = mem_rows(used, allocated, max);
+        assert_eq!(right[0], want_mem, "{}", right[0]);
+        assert_eq!(right[1], want_alloc, "{}", right[1]);
+        assert!(right[0].starts_with("Mem: "), "{}", right[0]);
+        assert!(right[1].starts_with("Allocated: "), "{}", right[1]);
+
+        // THE CPU ROW (GLX._getCpuInfo's own law — the `%dx %s` count
+        // + name pair and the `.replaceAll('\s+', ' ')` collapse: the
+        // multi-space model the single-space word wears; the probe's
+        // real word the /proc/cpuinfo speaks, the `<unknown>` the
+        // no-proc lane keeps — vanilla's own no-oshi word)
+        assert_eq!(
+            cpu_word(2, "Intel(R)   Xeon(R)  Processor"),
+            "2x Intel(R) Xeon(R) Processor"
+        );
+        let cpu_row = right[2].clone();
+        assert!(cpu_row.starts_with("CPU: "), "{}", cpu_row);
+        assert_ne!(
+            cpu_row, "CPU: <unknown>",
+            "the /proc/cpuinfo the test env really keeps"
+        );
+
+        // THE DISPLAY ROW (DebugEntrySystemSpecs's `Display: %dx%d
+        // (%s)` — the gui pair the caller's own w/h keeps, the
+        // software vendor the CPU-rasterizer's honest word wears)
+        assert_eq!(display_row(854, 480), "Display: 854x480 (software)");
+        assert_eq!(right[3], "Display: 854x480 (software)");
+
+        // THE RIGHT X ANCHOR (extractLines' right branch —
+        // `guiWidth - 2 - lineWidth` the else lane keeps: 854-2-100
+        // = 752, the narrow gui the same law answers)
+        assert_eq!(right_column_x(854, 100), 752);
+        assert_eq!(right_column_x(320, 300), 18);
     }
 
     #[test]
