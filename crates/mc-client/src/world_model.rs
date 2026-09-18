@@ -2822,6 +2822,8 @@ mod tests {
             entity_types: Vec::new(),
             sound_events: Vec::new(),
             chicken_variants: Vec::new(),
+            pig_variants: Vec::new(),
+            cow_variants: Vec::new(),
             timelines: Vec::new(),
             timeline_tags: Vec::new(),
         };
@@ -3222,6 +3224,8 @@ mod tests {
             entity_types: Vec::new(),
             sound_events: Vec::new(),
             chicken_variants: Vec::new(),
+            pig_variants: Vec::new(),
+            cow_variants: Vec::new(),
             timelines: Vec::new(),
             timeline_tags: Vec::new(),
         };
@@ -3288,6 +3292,8 @@ mod tests {
             entity_types: Vec::new(),
             sound_events: Vec::new(),
             chicken_variants: Vec::new(),
+            pig_variants: Vec::new(),
+            cow_variants: Vec::new(),
             timelines: vec![
                 // id 0: carries a curve but is NOT in the dimension's
                 // tag — vanilla merges only the tag's members, so this
@@ -3575,6 +3581,8 @@ mod tests {
                 entity_types: Vec::new(),
                 sound_events: Vec::new(),
                 chicken_variants: Vec::new(),
+                pig_variants: Vec::new(),
+                cow_variants: Vec::new(),
                 timelines: Vec::new(),
                 timeline_tags: Vec::new(),
             },
@@ -3664,6 +3672,8 @@ mod tests {
                 entity_types: Vec::new(),
                 sound_events: Vec::new(),
                 chicken_variants: Vec::new(),
+                pig_variants: Vec::new(),
+                cow_variants: Vec::new(),
                 timelines: Vec::new(),
                 timeline_tags: Vec::new(),
             },
@@ -3769,6 +3779,8 @@ mod tests {
                 entity_types: Vec::new(),
                 sound_events: Vec::new(),
                 chicken_variants: Vec::new(),
+                pig_variants: Vec::new(),
+                cow_variants: Vec::new(),
                 timelines: Vec::new(),
                 timeline_tags: Vec::new(),
             },
@@ -3801,6 +3813,8 @@ mod tests {
             entity_types: Vec::new(),
             sound_events: Vec::new(),
             chicken_variants: Vec::new(),
+            pig_variants: Vec::new(),
+            cow_variants: Vec::new(),
             timelines: Vec::new(),
             timeline_tags: Vec::new(),
         };
@@ -5745,6 +5759,8 @@ mod tests {
             entity_types: Vec::new(),
             sound_events: Vec::new(),
             chicken_variants: Vec::new(),
+            pig_variants: Vec::new(),
+            cow_variants: Vec::new(),
             timelines: Vec::new(),
             timeline_tags: Vec::new(),
         };
@@ -5869,6 +5885,8 @@ mod tests {
             entity_types: Vec::new(),
             sound_events: Vec::new(),
             chicken_variants: Vec::new(),
+            pig_variants: Vec::new(),
+            cow_variants: Vec::new(),
             timelines: Vec::new(),
             timeline_tags: Vec::new(),
         };
@@ -5952,6 +5970,8 @@ mod tests {
             entity_types: Vec::new(),
             sound_events: Vec::new(),
             chicken_variants: Vec::new(),
+            pig_variants: Vec::new(),
+            cow_variants: Vec::new(),
             timelines: Vec::new(),
             timeline_tags: Vec::new(),
         };
@@ -6022,6 +6042,8 @@ mod tests {
             entity_types: Vec::new(),
             sound_events: Vec::new(),
             chicken_variants: Vec::new(),
+            pig_variants: Vec::new(),
+            cow_variants: Vec::new(),
             timelines: Vec::new(),
             timeline_tags: Vec::new(),
         };
@@ -6084,6 +6106,8 @@ mod tests {
             entity_types: Vec::new(),
             sound_events: Vec::new(),
             chicken_variants: Vec::new(),
+            pig_variants: Vec::new(),
+            cow_variants: Vec::new(),
             timelines: Vec::new(),
             timeline_tags: Vec::new(),
         };
@@ -6164,6 +6188,8 @@ mod tests {
             entity_types: Vec::new(),
             sound_events: Vec::new(),
             chicken_variants: Vec::new(),
+            pig_variants: Vec::new(),
+            cow_variants: Vec::new(),
             timelines: Vec::new(),
             timeline_tags: Vec::new(),
         };
@@ -6257,6 +6283,8 @@ mod tests {
             entity_types: Vec::new(),
             sound_events: Vec::new(),
             chicken_variants: Vec::new(),
+            pig_variants: Vec::new(),
+            cow_variants: Vec::new(),
             timelines: Vec::new(),
             timeline_tags: Vec::new(),
         };
@@ -6340,6 +6368,8 @@ mod tests {
             entity_types: Vec::new(),
             sound_events: Vec::new(),
             chicken_variants: Vec::new(),
+            pig_variants: Vec::new(),
+            cow_variants: Vec::new(),
             timelines: Vec::new(),
             timeline_tags: Vec::new(),
         };

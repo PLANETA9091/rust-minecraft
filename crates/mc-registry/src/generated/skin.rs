@@ -174,6 +174,38 @@ pub const CHICKEN_WARM_RUNTIME_PATH: &str = "entity/chicken/chicken_warm.png";
 pub const CHICKEN_WARM_BABY_PNG_SHA1: &str = "9b13e45538daf87b93db3915e18e1863a823e8c1";
 pub const CHICKEN_WARM_BABY_RUNTIME_PATH: &str = "entity/chicken/chicken_warm_baby.png";
 
+/// THE PIG VARIANT SKINS (the cold/warm pairs the 26.2 variant table
+/// added — data/minecraft/pig_variant/{cold,warm}.json's asset_id
+/// pair the PigRenderer's model pick wears: the cold pair rides the
+/// ColdPigModel's coat walk, the warm pair the plain geometry — the
+/// pig's warm.json the model field never names): the source sha1s
+/// the variant loads verify before they draw. The same 64x64 adult /
+/// 32x32 baby layouts the temperate pair keeps.
+pub const PIG_COLD_PNG_SHA1: &str = "6d804567df97ca8f163b19ecf0b245622e14b8ad";
+pub const PIG_COLD_RUNTIME_PATH: &str = "entity/pig/pig_cold.png";
+pub const PIG_COLD_BABY_PNG_SHA1: &str = "0245704b597a7679aab18ac4137cdfd67816a5ef";
+pub const PIG_COLD_BABY_RUNTIME_PATH: &str = "entity/pig/pig_cold_baby.png";
+pub const PIG_WARM_PNG_SHA1: &str = "b9fcb96393b5df2b943eaabaf1a6b5f645fe4d07";
+pub const PIG_WARM_RUNTIME_PATH: &str = "entity/pig/pig_warm.png";
+pub const PIG_WARM_BABY_PNG_SHA1: &str = "f6798b04950628f3e67788984e130c201762e7f3";
+pub const PIG_WARM_BABY_RUNTIME_PATH: &str = "entity/pig/pig_warm_baby.png";
+
+/// THE COW VARIANT SKINS (the cold/warm pairs the 26.2 variant table
+/// added — data/minecraft/cow_variant/{cold,warm}.json's asset_id
+/// pair the CowRenderer's model pick wears: the cold pair rides the
+/// ColdCowModel's coat walk, the warm pair the WarmCowModel's horn
+/// walk — the cow's warm.json the 'model': 'warm' field names): the
+/// source sha1s the variant loads verify before they draw. The same
+/// 64x64 adult / 32x32 baby layouts the temperate pair keeps.
+pub const COW_COLD_PNG_SHA1: &str = "bf63842d545b137d065802a26ee58ef3e93b35d8";
+pub const COW_COLD_RUNTIME_PATH: &str = "entity/cow/cow_cold.png";
+pub const COW_COLD_BABY_PNG_SHA1: &str = "64240d1c91816dd6d5987b68c91ec29bad251f14";
+pub const COW_COLD_BABY_RUNTIME_PATH: &str = "entity/cow/cow_cold_baby.png";
+pub const COW_WARM_PNG_SHA1: &str = "a0ee023f98b1202c28540c5fa9c752394fbbf967";
+pub const COW_WARM_RUNTIME_PATH: &str = "entity/cow/cow_warm.png";
+pub const COW_WARM_BABY_PNG_SHA1: &str = "4746c40a15211a547c9d8a1d95805ac414f8c382";
+pub const COW_WARM_BABY_RUNTIME_PATH: &str = "entity/cow/cow_warm_baby.png";
+
 /// The FLAME strips (the burn lane's pixel sources), generated from
 /// the same jar: the source sha1s the burning mob's renderer verifies
 /// before it draws (javap: `FlameFeatureRenderer.buildGroup`'s

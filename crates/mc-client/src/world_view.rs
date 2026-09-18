@@ -950,6 +950,16 @@ pub struct WireMob {
     /// verdict the model-type law answers (cold.json's `"model":
     /// "cold"` the ColdChickenModel names).
     pub chicken_variant: Option<String>,
+    /// THE PIG VARIANT'S OWN WORD (the PIG_VARIANT holder the slot-19
+    /// entry carries — the CHICKEN's word the same law speaks, the
+    /// PIG's own kind gate the read keeps): `Some("minecraft:cold")`
+    /// the synced cold pig wears, `None` the honest Temperate keeps.
+    pub pig_variant: Option<String>,
+    /// THE COW VARIANT'S OWN WORD (the COW_VARIANT holder the slot-18
+    /// entry carries — the same law the pig's word keeps, the COW's
+    /// own kind gate): `Some("minecraft:warm")` the synced warm cow
+    /// wears, `None` the honest Temperate keeps.
+    pub cow_variant: Option<String>,
     /// THE EQUIPMENT WORD (the Set Equipment store's MAINHAND slot —
     /// the item id the registry's wire order resolves to the BARE
     /// name): the weapon the mob's own hand wears, the same word the
@@ -2225,6 +2235,39 @@ impl LiveView {
                     } else {
                         None
                     },
+                    // THE PIG VARIANT'S OWN WORD (the PIG_VARIANT holder
+                    // the slot-19 entry carries — the read is the PIG's
+                    // own gate, the synced table's name the projection
+                    // resolves)
+                    pig_variant: if type_name == "minecraft:pig" {
+                        match e.data.get(&crate::mob::PIG_DATA_VARIANT_ID) {
+                            Some(mc_protocol::play::EntityDataEntry::PigVariant(vid)) => {
+                                self.model
+                                    .registry
+                                    .pig_variant_name(*vid as u32)
+                                    .map(String::from)
+                            }
+                            _ => None,
+                        }
+                    } else {
+                        None
+                    },
+                    // THE COW VARIANT'S OWN WORD (the COW_VARIANT holder
+                    // the slot-18 entry carries — the same gate the
+                    // pig's word keeps)
+                    cow_variant: if type_name == "minecraft:cow" {
+                        match e.data.get(&crate::mob::COW_DATA_VARIANT_ID) {
+                            Some(mc_protocol::play::EntityDataEntry::CowVariant(vid)) => {
+                                self.model
+                                    .registry
+                                    .cow_variant_name(*vid as u32)
+                                    .map(String::from)
+                            }
+                            _ => None,
+                        }
+                    } else {
+                        None
+                    },
                     // THE EQUIPMENT WORD (the store's MAINHAND slot 0 —
                     // the Set Equipment packet the model merged, the
                     // registry walk the bare name speaks): the render's
@@ -3237,8 +3280,19 @@ mod tests {
             "minecraft:pig".to_string(),
             "minecraft:zombie".to_string(),
             "minecraft:chicken".to_string(),
+            "minecraft:cow".to_string(),
         ];
         m.registry.chicken_variants = vec![
+            "minecraft:cold".to_string(),
+            "minecraft:warm".to_string(),
+            "minecraft:temperate".to_string(),
+        ];
+        m.registry.pig_variants = vec![
+            "minecraft:cold".to_string(),
+            "minecraft:warm".to_string(),
+            "minecraft:temperate".to_string(),
+        ];
+        m.registry.cow_variants = vec![
             "minecraft:cold".to_string(),
             "minecraft:warm".to_string(),
             "minecraft:temperate".to_string(),
@@ -3263,6 +3317,32 @@ mod tests {
             x: 30.0,
             y: 64.0,
             z: 32.0,
+            movement: [0.0; 3],
+            x_rot: 0.0,
+            y_rot: 0.0,
+            y_head_rot: 0.0,
+            data: 0,
+        }));
+        m.apply(PlayEvent::Spawn(EntitySpawn {
+            id: 12,
+            uuid: 4,
+            type_id: 0, // the pig — the slot-19 holder's own body
+            x: 50.0,
+            y: 64.0,
+            z: 52.0,
+            movement: [0.0; 3],
+            x_rot: 0.0,
+            y_rot: 0.0,
+            y_head_rot: 0.0,
+            data: 0,
+        }));
+        m.apply(PlayEvent::Spawn(EntitySpawn {
+            id: 13,
+            uuid: 5,
+            type_id: 3, // the cow — the slot-18 holder's own body
+            x: 70.0,
+            y: 64.0,
+            z: 72.0,
             movement: [0.0; 3],
             x_rot: 0.0,
             y_rot: 0.0,
@@ -3299,6 +3379,25 @@ mod tests {
                 value: mc_protocol::play::EntityDataEntry::ChickenVariant(0),
             }],
         }));
+        // THE PIG'S OWN SLOT (19 — the BOOST slot the pig's variant
+        // index keeps apart) AND THE COW'S (18): the holder ids the
+        // synced tables resolve
+        view.model.apply(PlayEvent::EntityData(mc_protocol::play::EntityDataSet {
+            id: 12,
+            entries: vec![mc_protocol::play::SetEntityDataEntry {
+                index: crate::mob::PIG_DATA_VARIANT_ID,
+                serializer: mc_protocol::play::entity_data_serializers::PIG_VARIANT,
+                value: mc_protocol::play::EntityDataEntry::PigVariant(1),
+            }],
+        }));
+        view.model.apply(PlayEvent::EntityData(mc_protocol::play::EntityDataSet {
+            id: 13,
+            entries: vec![mc_protocol::play::SetEntityDataEntry {
+                index: crate::mob::COW_DATA_VARIANT_ID,
+                serializer: mc_protocol::play::entity_data_serializers::COW_VARIANT,
+                value: mc_protocol::play::EntityDataEntry::CowVariant(0),
+            }],
+        }));
         let upd = view.refresh(example_mapper);
         let z = upd.mobs.iter().find(|m| m.id == 7).unwrap();
         assert_eq!(
@@ -3311,6 +3410,20 @@ mod tests {
             Some("minecraft:cold"),
             "the holder id the synced table's name resolves"
         );
+        let pg = upd.mobs.iter().find(|m| m.id == 12).unwrap();
+        assert_eq!(
+            pg.pig_variant.as_deref(),
+            Some("minecraft:warm"),
+            "the pig's slot-19 holder the synced table resolves"
+        );
+        assert_eq!(pg.cow_variant, None, "the pig's body the cow word never asks for");
+        let cw = upd.mobs.iter().find(|m| m.id == 13).unwrap();
+        assert_eq!(
+            cw.cow_variant.as_deref(),
+            Some("minecraft:cold"),
+            "the cow's slot-18 holder the synced table resolves"
+        );
+        assert_eq!(cw.pig_variant, None, "the cow's body the pig word never asks for");
     }
 
     /// THE SPIDER'S OWN CLIMB WORD (the DATA_FLAGS_ID 16 byte's bit 0x1
@@ -4519,6 +4632,8 @@ mod tests {
             entity_types: Vec::new(),
             sound_events: Vec::new(),
             chicken_variants: Vec::new(),
+            pig_variants: Vec::new(),
+            cow_variants: Vec::new(),
             timelines: Vec::new(),
             timeline_tags: Vec::new(),
         };
@@ -4666,6 +4781,8 @@ mod tests {
             entity_types: Vec::new(),
             sound_events: Vec::new(),
             chicken_variants: Vec::new(),
+            pig_variants: Vec::new(),
+            cow_variants: Vec::new(),
             timelines: Vec::new(),
             timeline_tags: Vec::new(),
         };

@@ -576,9 +576,31 @@ impl PigModel {
     /// `None` = the pig never renders (the same honesty the zombie
     /// path speaks: the renderer must not lie about its data).
     pub fn load(root: &Path) -> Option<PigModel> {
-        let bytes = std::fs::read(root.join(skin::PIG_TEMPERATE_RUNTIME_PATH)).ok()?;
+        Self::load_skin(
+            root,
+            skin::PIG_TEMPERATE_RUNTIME_PATH,
+            skin::PIG_TEMPERATE_PNG_SHA1,
+        )
+    }
+
+    /// THE WARM VARIANT'S OWN SKIN (warm.json's asset_id — the plain
+    /// adult GEOMETRY the warm texture wears, the pig's warm.json the
+    /// model field never names): the same load walk, the variant
+    /// table's own sha1-verdict. `None` = the warm pigs stay unseen.
+    pub fn load_warm(root: &Path) -> Option<PigModel> {
+        Self::load_skin(
+            root,
+            skin::PIG_WARM_RUNTIME_PATH,
+            skin::PIG_WARM_PNG_SHA1,
+        )
+    }
+
+    /// The variant skin's own load walk (the path + sha1 pair the
+    /// caller names, the 64x64 layout the decode verifies).
+    fn load_skin(root: &Path, path: &str, sha1_hex: &str) -> Option<PigModel> {
+        let bytes = std::fs::read(root.join(path)).ok()?;
         let digest = sha1::Sha1::digest(&bytes);
-        if hex::encode(digest) != skin::PIG_TEMPERATE_PNG_SHA1 {
+        if hex::encode(digest) != sha1_hex {
             return None;
         }
         let (w, h, rgba) = decode_rgba(&bytes).ok()?;
@@ -607,7 +629,65 @@ impl PigModel {
         cam_yaw: f32,
         cam_pitch: f32,
     ) -> Vec<AvatarQuad> {
-        let parts = build_pig_parts(state);
+        let parts = build_pig_parts(state, false);
+        let (fold_point, fold_normal) = entity_folds(state.yaw_deg, state.death_time, 0.0, feet);
+        let mut out: Vec<AvatarQuad> = Vec::with_capacity(6 * 6);
+        let ident = Mat4::IDENT;
+        for part in &parts {
+            collect_part(part, &ident, &fold_point, &fold_normal, cam_yaw, cam_pitch, &mut out);
+        }
+        out
+    }
+}
+
+/// THE COLD PIG'S OWN MODEL — the 26.2 `ColdPigModel.createBodyLayer`'s
+/// own replace walk, bytecode-proven: the cold layer rebuilds the base
+/// mesh (`createBasePigModel(deformation)` the shared walk keeps) then
+/// REPLACES the body — the thick hide coat (texOffs (28, 32), the SAME
+/// 10x16x8 box the `CubeDeformation(0.5)` inflate the addBox speaks)
+/// rides the base barrel; the head and the legs the base keeps.
+/// `LayerDefinition.create(mesh, 64, 64)`. The setupAnim the
+/// QuadrupedModel parent inherits rides UNCHANGED.
+pub struct ColdPigModel {
+    rgba: Vec<u8>,
+}
+
+impl ColdPigModel {
+    /// Load + sha1-verify the PIG's cold skin (cold.json's asset_id —
+    /// the variant table's own pair). The `None` = the cold pigs stay
+    /// unseen (the same honesty the other variants keep).
+    pub fn load(root: &Path) -> Option<ColdPigModel> {
+        let bytes = std::fs::read(root.join(skin::PIG_COLD_RUNTIME_PATH)).ok()?;
+        let digest = sha1::Sha1::digest(&bytes);
+        if hex::encode(digest) != skin::PIG_COLD_PNG_SHA1 {
+            return None;
+        }
+        let (w, h, rgba) = decode_rgba(&bytes).ok()?;
+        if w != 64 || h != 64 || rgba.len() != 64 * 64 * 4 {
+            return None;
+        }
+        Some(ColdPigModel { rgba })
+    }
+
+    /// The skin pixel at (u, v) — the same 64x64 layout's own stride.
+    pub fn pixel(&self, u: f32, v: f32) -> [u8; 4] {
+        let (uu, vv) = (u.clamp(0.0, 63.999_9), v.clamp(0.0, 63.999_9));
+        let x = uu as usize;
+        let y = vv as usize;
+        let o = (y * 64 + x) * 4;
+        [self.rgba[o], self.rgba[o + 1], self.rgba[o + 2], self.rgba[o + 3]]
+    }
+
+    /// THE POSED RENDER: the cold pig's own parts (the coat the
+    /// builder's cold arm speaks) beneath the same chain fold.
+    pub fn quads(
+        &self,
+        state: &PigState,
+        feet: Vec3,
+        cam_yaw: f32,
+        cam_pitch: f32,
+    ) -> Vec<AvatarQuad> {
+        let parts = build_pig_parts(state, true);
         let (fold_point, fold_normal) = entity_folds(state.yaw_deg, state.death_time, 0.0, feet);
         let mut out: Vec<AvatarQuad> = Vec::with_capacity(6 * 6);
         let ident = Mat4::IDENT;
@@ -627,7 +707,7 @@ impl PigModel {
 /// `QuadrupedModel.setupAnim`): the DIAGONAL pairs swing together —
 /// right-hind + left-front in phase, the other pair +PI, the pool's
 /// own 0.6662 / 1.4 the fold speaks.
-fn build_pig_parts(state: &PigState) -> Vec<Part> {
+fn build_pig_parts(state: &PigState, cold: bool) -> Vec<Part> {
     let pos = state.walk_pos;
     let speed = state.walk_speed;
     let leg_rh = mth_cos(pos * 0.6662) * 1.4 * speed;
@@ -667,19 +747,42 @@ fn build_pig_parts(state: &PigState) -> Vec<Part> {
             children: vec![],
         },
         // body (the horizontal barrel — the rotX PI/2 the PartPose
-        // offsetAndRotation speaks)
+        // offsetAndRotation speaks). THE COLD ARM the ColdPigModel
+        // .createBodyLayer's own replace keeps: the thick hide coat
+        // (texOffs (28, 32) — the SAME 10x16x8 box the
+        // CubeDeformation(0.5) inflate the bytecode's addBox speaks)
+        // rides the same barrel
         Part {
             pivot: [0.0, 11.0, 0.0],
             x_rot: std::f32::consts::FRAC_PI_2,
             y_rot: 0.0,
             z_rot: 0.0,
-            cubes: vec![Cube {
-                tex: (28.0, 8.0),
-                origin: [-5.0, -10.0, -7.0],
-                size: [10.0, 16.0, 8.0],
-                inflate: 0.0,
-                mirror: false,
-            }],
+            cubes: if cold {
+                vec![
+                    Cube {
+                        tex: (28.0, 8.0),
+                        origin: [-5.0, -10.0, -7.0],
+                        size: [10.0, 16.0, 8.0],
+                        inflate: 0.0,
+                        mirror: false,
+                    },
+                    Cube {
+                        tex: (28.0, 32.0),
+                        origin: [-5.0, -10.0, -7.0],
+                        size: [10.0, 16.0, 8.0],
+                        inflate: 0.5,
+                        mirror: false,
+                    },
+                ]
+            } else {
+                vec![Cube {
+                    tex: (28.0, 8.0),
+                    origin: [-5.0, -10.0, -7.0],
+                    size: [10.0, 16.0, 8.0],
+                    inflate: 0.0,
+                    mirror: false,
+                }]
+            },
             children: vec![],
         },
         // right hind leg (the builder's own unwrap — no mirror)
@@ -779,7 +882,117 @@ impl CowModel {
         cam_yaw: f32,
         cam_pitch: f32,
     ) -> Vec<AvatarQuad> {
-        let parts = build_cow_parts(state);
+        let parts = build_cow_parts(state, crate::mob::ChickenVariantKind::Temperate);
+        let (fold_point, fold_normal) = entity_folds(state.yaw_deg, state.death_time, 0.0, feet);
+        let mut out: Vec<AvatarQuad> = Vec::with_capacity(6 * 6);
+        let ident = Mat4::IDENT;
+        for part in &parts {
+            collect_part(part, &ident, &fold_point, &fold_normal, cam_yaw, cam_pitch, &mut out);
+        }
+        out
+    }
+}
+
+/// THE COLD/WARM COWS' OWN MODELS — the 26.2 `ColdCowModel`/
+/// `WarmCowModel.createBodyLayer`'s own replace walks, bytecode-proven:
+/// the COLD layer rebuilds the base mesh then replaces the body (the
+/// thick hide coat texOffs (20, 32) — the SAME 12x18x10 box the
+/// `CubeDeformation(0.5)` inflate the addBox speaks — rides the base
+/// barrel) and the head (the (9, 33) tuft the horns DROPS); the WARM
+/// layer replaces the head (the BIG horns (27, 0) 4x2x2 + (39, 0)
+/// 2x2x2 pairs the mirrored walk rides — the base's 1x3x1 pair the
+/// replace never names); `LayerDefinition.create(mesh, 64, 64)`. The
+/// setupAnim the QuadrupedModel parent inherits rides UNCHANGED.
+pub struct ColdCowModel {
+    rgba: Vec<u8>,
+}
+
+pub struct WarmCowModel {
+    rgba: Vec<u8>,
+}
+
+impl ColdCowModel {
+    /// Load + sha1-verify the COW's cold skin (cold.json's asset_id).
+    /// `None` = the cold cows stay unseen (the same honesty the other
+    /// variants keep).
+    pub fn load(root: &Path) -> Option<ColdCowModel> {
+        let bytes = std::fs::read(root.join(skin::COW_COLD_RUNTIME_PATH)).ok()?;
+        let digest = sha1::Sha1::digest(&bytes);
+        if hex::encode(digest) != skin::COW_COLD_PNG_SHA1 {
+            return None;
+        }
+        let (w, h, rgba) = decode_rgba(&bytes).ok()?;
+        if w != 64 || h != 64 || rgba.len() != 64 * 64 * 4 {
+            return None;
+        }
+        Some(ColdCowModel { rgba })
+    }
+
+    /// The skin pixel at (u, v) — the same 64x64 layout's own stride.
+    pub fn pixel(&self, u: f32, v: f32) -> [u8; 4] {
+        let (uu, vv) = (u.clamp(0.0, 63.999_9), v.clamp(0.0, 63.999_9));
+        let x = uu as usize;
+        let y = vv as usize;
+        let o = (y * 64 + x) * 4;
+        [self.rgba[o], self.rgba[o + 1], self.rgba[o + 2], self.rgba[o + 3]]
+    }
+
+    /// THE POSED RENDER: the cold cow's own parts (the coat + the
+    /// horn-less head the cold arms speak) beneath the same chain
+    /// fold.
+    pub fn quads(
+        &self,
+        state: &QuadrupedState,
+        feet: Vec3,
+        cam_yaw: f32,
+        cam_pitch: f32,
+    ) -> Vec<AvatarQuad> {
+        let parts = build_cow_parts(state, crate::mob::ChickenVariantKind::Cold);
+        let (fold_point, fold_normal) = entity_folds(state.yaw_deg, state.death_time, 0.0, feet);
+        let mut out: Vec<AvatarQuad> = Vec::with_capacity(6 * 6);
+        let ident = Mat4::IDENT;
+        for part in &parts {
+            collect_part(part, &ident, &fold_point, &fold_normal, cam_yaw, cam_pitch, &mut out);
+        }
+        out
+    }
+}
+
+impl WarmCowModel {
+    /// Load + sha1-verify the COW's warm skin (warm.json's asset_id).
+    /// `None` = the warm cows stay unseen.
+    pub fn load(root: &Path) -> Option<WarmCowModel> {
+        let bytes = std::fs::read(root.join(skin::COW_WARM_RUNTIME_PATH)).ok()?;
+        let digest = sha1::Sha1::digest(&bytes);
+        if hex::encode(digest) != skin::COW_WARM_PNG_SHA1 {
+            return None;
+        }
+        let (w, h, rgba) = decode_rgba(&bytes).ok()?;
+        if w != 64 || h != 64 || rgba.len() != 64 * 64 * 4 {
+            return None;
+        }
+        Some(WarmCowModel { rgba })
+    }
+
+    /// The skin pixel at (u, v) — the same 64x64 layout's own stride.
+    pub fn pixel(&self, u: f32, v: f32) -> [u8; 4] {
+        let (uu, vv) = (u.clamp(0.0, 63.999_9), v.clamp(0.0, 63.999_9));
+        let x = uu as usize;
+        let y = vv as usize;
+        let o = (y * 64 + x) * 4;
+        [self.rgba[o], self.rgba[o + 1], self.rgba[o + 2], self.rgba[o + 3]]
+    }
+
+    /// THE POSED RENDER: the warm cow's own parts (the big horns the
+    /// warm arm speaks) beneath the same chain fold.
+    pub fn quads(
+        &self,
+        state: &QuadrupedState,
+        feet: Vec3,
+        cam_yaw: f32,
+        cam_pitch: f32,
+    ) -> Vec<AvatarQuad> {
+        let parts = build_cow_parts(state, crate::mob::ChickenVariantKind::Warm);
         let (fold_point, fold_normal) = entity_folds(state.yaw_deg, state.death_time, 0.0, feet);
         let mut out: Vec<AvatarQuad> = Vec::with_capacity(6 * 6);
         let ident = Mat4::IDENT;
@@ -796,7 +1009,7 @@ impl CowModel {
 /// mirror rides). THE WALK: the same `QuadrupedModel.setupAnim`
 /// diagonal fold the pig speaks — right-hind + left-front in phase,
 /// the other pair +PI (the cow never overrides it).
-fn build_cow_parts(state: &QuadrupedState) -> Vec<Part> {
+fn build_cow_parts(state: &QuadrupedState, variant: crate::mob::ChickenVariantKind) -> Vec<Part> {
     let pos = state.walk_pos;
     let speed = state.walk_speed;
     let leg_rh = mth_cos(pos * 0.6662) * 1.4 * speed;
@@ -812,68 +1025,164 @@ fn build_cow_parts(state: &QuadrupedState) -> Vec<Part> {
     };
     vec![
         // head (+ the muzzle + the two horns — the same part's fluent
-        // chain the bytecode's addBox walk speaks)
+        // chain the bytecode's addBox walk speaks). THE VARIANT ARMS
+        // the 26.2 replaces keep: the COLD arm the tuft (9, 33) the
+        // horns DROPS (the cold replace's head = the base + the
+        // (9, 33) 6x3x1 pair the bytecode speaks), the WARM arm the
+        // BIG horns (27, 0) 4x2x2 + (39, 0) 2x2x2 pairs the mirrored
+        // walk rides (the base's 1x3x1 pair the replace never names)
         Part {
             pivot: [0.0, 4.0, -8.0],
             x_rot: head_x,
             y_rot: head_y,
             z_rot: 0.0,
-            cubes: vec![
-                Cube {
-                    tex: (0.0, 0.0),
-                    origin: [-4.0, -4.0, -6.0],
-                    size: [8.0, 8.0, 6.0],
-                    inflate: 0.0,
-                    mirror: false,
-                },
-                Cube {
-                    tex: (1.0, 33.0),
-                    origin: [-3.0, 1.0, -7.0],
-                    size: [6.0, 3.0, 1.0],
-                    inflate: 0.0,
-                    mirror: false,
-                },
-                Cube {
-                    tex: (22.0, 0.0),
-                    origin: [-5.0, -5.0, -5.0],
-                    size: [1.0, 3.0, 1.0],
-                    inflate: 0.0,
-                    mirror: false,
-                },
-                Cube {
-                    tex: (22.0, 0.0),
-                    origin: [4.0, -5.0, -5.0],
-                    size: [1.0, 3.0, 1.0],
-                    inflate: 0.0,
-                    mirror: false,
-                },
-            ],
+            cubes: match variant {
+                crate::mob::ChickenVariantKind::Cold => vec![
+                    Cube {
+                        tex: (0.0, 0.0),
+                        origin: [-4.0, -4.0, -6.0],
+                        size: [8.0, 8.0, 6.0],
+                        inflate: 0.0,
+                        mirror: false,
+                    },
+                    Cube {
+                        tex: (9.0, 33.0),
+                        origin: [-3.0, 1.0, -7.0],
+                        size: [6.0, 3.0, 1.0],
+                        inflate: 0.0,
+                        mirror: false,
+                    },
+                ],
+                crate::mob::ChickenVariantKind::Warm => vec![
+                    Cube {
+                        tex: (0.0, 0.0),
+                        origin: [-4.0, -4.0, -6.0],
+                        size: [8.0, 8.0, 6.0],
+                        inflate: 0.0,
+                        mirror: false,
+                    },
+                    Cube {
+                        tex: (1.0, 33.0),
+                        origin: [-3.0, 1.0, -7.0],
+                        size: [6.0, 3.0, 1.0],
+                        inflate: 0.0,
+                        mirror: false,
+                    },
+                    Cube {
+                        tex: (27.0, 0.0),
+                        origin: [-8.0, -3.0, -5.0],
+                        size: [4.0, 2.0, 2.0],
+                        inflate: 0.0,
+                        mirror: false,
+                    },
+                    Cube {
+                        tex: (39.0, 0.0),
+                        origin: [-8.0, -5.0, -5.0],
+                        size: [2.0, 2.0, 2.0],
+                        inflate: 0.0,
+                        mirror: false,
+                    },
+                    Cube {
+                        tex: (27.0, 0.0),
+                        origin: [4.0, -3.0, -5.0],
+                        size: [4.0, 2.0, 2.0],
+                        inflate: 0.0,
+                        mirror: true,
+                    },
+                    Cube {
+                        tex: (39.0, 0.0),
+                        origin: [6.0, -5.0, -5.0],
+                        size: [2.0, 2.0, 2.0],
+                        inflate: 0.0,
+                        mirror: true,
+                    },
+                ],
+                crate::mob::ChickenVariantKind::Temperate => vec![
+                    Cube {
+                        tex: (0.0, 0.0),
+                        origin: [-4.0, -4.0, -6.0],
+                        size: [8.0, 8.0, 6.0],
+                        inflate: 0.0,
+                        mirror: false,
+                    },
+                    Cube {
+                        tex: (1.0, 33.0),
+                        origin: [-3.0, 1.0, -7.0],
+                        size: [6.0, 3.0, 1.0],
+                        inflate: 0.0,
+                        mirror: false,
+                    },
+                    Cube {
+                        tex: (22.0, 0.0),
+                        origin: [-5.0, -5.0, -5.0],
+                        size: [1.0, 3.0, 1.0],
+                        inflate: 0.0,
+                        mirror: false,
+                    },
+                    Cube {
+                        tex: (22.0, 0.0),
+                        origin: [4.0, -5.0, -5.0],
+                        size: [1.0, 3.0, 1.0],
+                        inflate: 0.0,
+                        mirror: false,
+                    },
+                ],
+            },
             children: vec![],
         },
         // body (the horizontal barrel — the rotX PI/2 the PartPose
         // offsetAndRotation speaks) + the udder (the same part's
-        // second cube)
+        // second cube). THE COLD ARM the ColdCowModel's own replace
+        // keeps: the thick hide coat (texOffs (20, 32) — the SAME
+        // 12x18x10 box the CubeDeformation(0.5) inflate the bytecode's
+        // addBox speaks) rides the base barrel
         Part {
             pivot: [0.0, 5.0, 2.0],
             x_rot: std::f32::consts::FRAC_PI_2,
             y_rot: 0.0,
             z_rot: 0.0,
-            cubes: vec![
-                Cube {
-                    tex: (18.0, 4.0),
-                    origin: [-6.0, -10.0, -7.0],
-                    size: [12.0, 18.0, 10.0],
-                    inflate: 0.0,
-                    mirror: false,
-                },
-                Cube {
-                    tex: (52.0, 0.0),
-                    origin: [-2.0, 2.0, -8.0],
-                    size: [4.0, 6.0, 1.0],
-                    inflate: 0.0,
-                    mirror: false,
-                },
-            ],
+            cubes: if variant == crate::mob::ChickenVariantKind::Cold {
+                vec![
+                    Cube {
+                        tex: (20.0, 32.0),
+                        origin: [-6.0, -10.0, -7.0],
+                        size: [12.0, 18.0, 10.0],
+                        inflate: 0.5,
+                        mirror: false,
+                    },
+                    Cube {
+                        tex: (18.0, 4.0),
+                        origin: [-6.0, -10.0, -7.0],
+                        size: [12.0, 18.0, 10.0],
+                        inflate: 0.0,
+                        mirror: false,
+                    },
+                    Cube {
+                        tex: (52.0, 0.0),
+                        origin: [-2.0, 2.0, -8.0],
+                        size: [4.0, 6.0, 1.0],
+                        inflate: 0.0,
+                        mirror: false,
+                    },
+                ]
+            } else {
+                vec![
+                    Cube {
+                        tex: (18.0, 4.0),
+                        origin: [-6.0, -10.0, -7.0],
+                        size: [12.0, 18.0, 10.0],
+                        inflate: 0.0,
+                        mirror: false,
+                    },
+                    Cube {
+                        tex: (52.0, 0.0),
+                        origin: [-2.0, 2.0, -8.0],
+                        size: [4.0, 6.0, 1.0],
+                        inflate: 0.0,
+                        mirror: false,
+                    },
+                ]
+            },
             children: vec![],
         },
         // right hind leg (the plain builder's own unwrap — no mirror)
@@ -1520,9 +1829,40 @@ impl BabyCowModel {
     /// temperate variant table's `_baby` entry). `None` = the baby
     /// never renders (the same honesty the adult lane speaks).
     pub fn load(root: &Path) -> Option<BabyCowModel> {
-        let bytes = std::fs::read(root.join(skin::COW_TEMPERATE_BABY_RUNTIME_PATH)).ok()?;
+        Self::load_skin(
+            root,
+            skin::COW_TEMPERATE_BABY_RUNTIME_PATH,
+            skin::COW_TEMPERATE_BABY_PNG_SHA1,
+        )
+    }
+
+    /// THE COLD VARIANT'S OWN BABY SKIN (cold.json's baby_asset_id —
+    /// the same 64x64 calf geometry the cold texture wears). `None` =
+    /// the cold calves stay unseen.
+    pub fn load_cold(root: &Path) -> Option<BabyCowModel> {
+        Self::load_skin(
+            root,
+            skin::COW_COLD_BABY_RUNTIME_PATH,
+            skin::COW_COLD_BABY_PNG_SHA1,
+        )
+    }
+
+    /// THE WARM VARIANT'S OWN BABY SKIN (warm.json's baby_asset_id).
+    /// `None` = the warm calves stay unseen.
+    pub fn load_warm(root: &Path) -> Option<BabyCowModel> {
+        Self::load_skin(
+            root,
+            skin::COW_WARM_BABY_RUNTIME_PATH,
+            skin::COW_WARM_BABY_PNG_SHA1,
+        )
+    }
+
+    /// The variant skin's own load walk (the path + sha1 pair the
+    /// caller names, the 64x64 layout the decode verifies).
+    fn load_skin(root: &Path, path: &str, sha1_hex: &str) -> Option<BabyCowModel> {
+        let bytes = std::fs::read(root.join(path)).ok()?;
         let digest = sha1::Sha1::digest(&bytes);
-        if hex::encode(digest) != skin::COW_TEMPERATE_BABY_PNG_SHA1 {
+        if hex::encode(digest) != sha1_hex {
             return None;
         }
         let (w, h, rgba) = decode_rgba(&bytes).ok()?;
@@ -1582,9 +1922,40 @@ impl BabyPigModel {
     /// temperate variant table's `_baby` entry). `None` = the baby
     /// never renders (the same honesty the adult lane speaks).
     pub fn load(root: &Path) -> Option<BabyPigModel> {
-        let bytes = std::fs::read(root.join(skin::PIG_TEMPERATE_BABY_RUNTIME_PATH)).ok()?;
+        Self::load_skin(
+            root,
+            skin::PIG_TEMPERATE_BABY_RUNTIME_PATH,
+            skin::PIG_TEMPERATE_BABY_PNG_SHA1,
+        )
+    }
+
+    /// THE COLD VARIANT'S OWN BABY SKIN (cold.json's baby_asset_id —
+    /// the SAME 32x32 chick geometry the cold texture wears).
+    /// `None` = the cold piglets stay unseen.
+    pub fn load_cold(root: &Path) -> Option<BabyPigModel> {
+        Self::load_skin(
+            root,
+            skin::PIG_COLD_BABY_RUNTIME_PATH,
+            skin::PIG_COLD_BABY_PNG_SHA1,
+        )
+    }
+
+    /// THE WARM VARIANT'S OWN BABY SKIN (warm.json's baby_asset_id).
+    /// `None` = the warm piglets stay unseen.
+    pub fn load_warm(root: &Path) -> Option<BabyPigModel> {
+        Self::load_skin(
+            root,
+            skin::PIG_WARM_BABY_RUNTIME_PATH,
+            skin::PIG_WARM_BABY_PNG_SHA1,
+        )
+    }
+
+    /// The variant skin's own load walk (the path + sha1 pair the
+    /// caller names, the 32x32 layout the decode verifies).
+    fn load_skin(root: &Path, path: &str, sha1_hex: &str) -> Option<BabyPigModel> {
+        let bytes = std::fs::read(root.join(path)).ok()?;
         let digest = sha1::Sha1::digest(&bytes);
-        if hex::encode(digest) != skin::PIG_TEMPERATE_BABY_PNG_SHA1 {
+        if hex::encode(digest) != sha1_hex {
             return None;
         }
         let (w, h, rgba) = decode_rgba(&bytes).ok()?;
@@ -5724,6 +6095,21 @@ mod tests {
             BabyChickenModel::load_cold(&root).expect("the cold baby chicken loads");
         let warm_baby =
             BabyChickenModel::load_warm(&root).expect("the warm baby chicken loads");
+        // THE PIG/COW VARIANTS' OWN LOADS (the same sha1 walk the
+        // chicken's pairs keep — the cold/warm skins + the babies)
+        let cold_pig = ColdPigModel::load(&root).expect("the cold pig loads");
+        let warm_pig = PigModel::load_warm(&root).expect("the warm pig loads");
+        let cold_pig_baby = BabyPigModel::load_cold(&root).expect("the cold piglet loads");
+        let warm_pig_baby = BabyPigModel::load_warm(&root).expect("the warm piglet loads");
+        let cold_cow = ColdCowModel::load(&root).expect("the cold cow loads");
+        let warm_cow = WarmCowModel::load(&root).expect("the warm cow loads");
+        let cold_cow_baby = BabyCowModel::load_cold(&root).expect("the cold calf loads");
+        let warm_cow_baby = BabyCowModel::load_warm(&root).expect("the warm calf loads");
+        // the pig/cow loads' own sha1 verdicts ARE the content pins
+        // (the 64x64 layouts the decode verifies — the per-texel
+        // probes the pig/cow unwrap rects the existing loads tests
+        // each name); the cold pig's hide coat the quad walk reads
+        // below the mesh difference speaks
         // the variant texels: the loads' own sha1 verdicts the pixel
         // reads re-speak (the opaque words the layouts keep)
         assert_eq!(cold.pixel(3.0, 3.0)[3], 255, "the cold texel is opaque");
@@ -5774,6 +6160,44 @@ mod tests {
             v
         };
         assert_ne!(verts(&cold_quads), verts(&base), "the cold mesh's plates the temperate never draws");
+        // THE PIG/COW VARIANTS' OWN MESHES (the coat boxes the cold
+        // pair keeps, the big horns the warm cow wears — the vertex
+        // sets the temperate meshes never speak)
+        let quad_state = QuadrupedState {
+            yaw_deg: 0.0,
+            pitch_deg: 0.0,
+            head_yaw_off_deg: 0.0,
+            walk_pos: 0.0,
+            walk_speed: 0.0,
+            age_ticks: 40.0,
+            death_time: 0.0,
+        };
+        let pig_state = PigState {
+            yaw_deg: 0.0,
+            pitch_deg: 0.0,
+            head_yaw_off_deg: 0.0,
+            walk_pos: 0.0,
+            walk_speed: 0.0,
+            age_ticks: 40.0,
+            death_time: 0.0,
+        };
+        let base_pig = PigModel::load(&root).expect("the temperate pig loads");
+        assert_ne!(
+            verts(&cold_pig.quads(&pig_state, feet, 0.0, 0.0)),
+            verts(&base_pig.quads(&pig_state, feet, 0.0, 0.0)),
+            "the cold pig's coat the temperate never draws"
+        );
+        let base_cow = CowModel::load(&root).expect("the temperate cow loads");
+        assert_ne!(
+            verts(&cold_cow.quads(&quad_state, feet, 0.0, 0.0)),
+            verts(&base_cow.quads(&quad_state, feet, 0.0, 0.0)),
+            "the cold cow's coat the temperate never draws"
+        );
+        assert_ne!(
+            verts(&warm_cow.quads(&quad_state, feet, 0.0, 0.0)),
+            verts(&base_cow.quads(&quad_state, feet, 0.0, 0.0)),
+            "the warm cow's big horns the temperate never draws"
+        );
     }
 
     /// THE COW LOADS — the real runtime cache (the generator's

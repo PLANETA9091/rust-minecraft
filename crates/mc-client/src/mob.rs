@@ -509,6 +509,46 @@ pub const SHEEP_DATA_WOOL_ID: u8 = 18;
 /// configuration phase's arrival-order table resolves).
 pub const CHICKEN_DATA_VARIANT_ID: u8 = 18;
 
+/// THE PIG'S OWN VARIANT WIRE INDEX — the class-tree walk the pig's
+/// own clinit wears (javap Pig's defineId walk: the DATA_BOOST_TIME
+/// INT the 18 slot keeps, the PIG_VARIANT holder the 19 slot names,
+/// the PIG_SOUND_VARIANT the 20th — Entity 8 + LivingEntity 7 + Mob 1
+/// + the AgeableMob pair 16/17, then the pig's OWN trio 18/19/20 the
+/// autopush-333 walk banked). The wire rides it as the PIG_VARIANT
+/// holder lane (the bias-zero registry id the decode keeps).
+pub const PIG_DATA_VARIANT_ID: u8 = 19;
+
+/// THE COW'S OWN VARIANT WIRE INDEX — the same walk the cow's clinit
+/// wears (javap Cow's defineId walk: the COW_VARIANT holder the 18
+/// slot names, the COW_SOUND_VARIANT the 19th — the pig's BOOST slot
+/// the cow never defines). The wire rides it as the COW_VARIANT
+/// holder lane.
+pub const COW_DATA_VARIANT_ID: u8 = 18;
+
+/// THE PIG'S OWN VARIANT WORD (the minecraft:pig_variant registry's
+/// own trio — the SAME temperate/cold/warm words the chicken's table
+/// keeps, the decode the shared law wears).
+pub type PigVariantKind = ChickenVariantKind;
+
+/// THE COW'S OWN VARIANT WORD (the minecraft:cow_variant registry's
+/// own trio — the same walk the pig's table keeps).
+pub type CowVariantKind = ChickenVariantKind;
+
+/// THE PIG'S OWN PICK LAW (pig_variant cold.json/warm.json's
+/// spawn_conditions — the SAME #spawns_cold/warm_variant_farm_animals
+/// tag pair the chicken's tables predicate, the shared farm-animal
+/// tags the jar's data walk re-confirms).
+pub fn pig_variant_for_biome(biome: &str) -> PigVariantKind {
+    chicken_variant_for_biome(biome)
+}
+
+/// THE COW'S OWN PICK LAW (cow_variant cold.json/warm.json's
+/// spawn_conditions — the same shared tag pair the pig's tables
+/// predicate).
+pub fn cow_variant_for_biome(biome: &str) -> CowVariantKind {
+    chicken_variant_for_biome(biome)
+}
+
 /// THE CHICKEN VARIANT'S OWN WORDS (javap ChickenVariant$ModelType's
 /// clinit — the `NORMAL`/`COLD` pair the enum arms speak, the data
 /// table's three variants the minecraft:chicken_variant registry
@@ -2518,16 +2558,18 @@ pub struct Zombie {
     pub boost_time: i32,
     pub boost_time_total: i32,
     pub wool_color: u8,
-    /// THE CHICKEN VARIANT'S OWN WORD (the CHICKEN_VARIANT holder
-    /// lane's decode — the synced registry id the wire's slot-18
-    /// entry carried, the name the configuration table resolves):
-    /// `None` while the accessor never spoke or the body is another
-    /// kind's — the honest Temperate default the variant table's
-    /// priority-0 no-condition arm keeps (the vanilla client's own
-    /// ctor default the silence answers). The offline spawn/breed
-    /// walk the same word wears (the pick law the biome tables
-    /// speak).
-    pub chicken_variant: Option<ChickenVariantKind>,
+    /// THE FARM VARIANT'S OWN WORD (the variant holder lanes the
+    /// three animals' own slots keep — the chicken's CHICKEN_VARIANT
+    /// 18, the cow's COW_VARIANT 18, the pig's PIG_VARIANT 19: the
+    /// kind gates which slot fed it — the synced registry id the
+    /// wire's entry carried, the name the configuration table
+    /// resolves): `None` while the accessor never spoke or the body
+    /// is another kind's — the honest Temperate default the variant
+    /// tables' priority-0 no-condition arms keep (the vanilla
+    /// client's own ctor default the silence answers). The offline
+    /// spawn/breed walk the same word wears (the pick laws the biome
+    /// tables speak).
+    pub farm_variant: Option<ChickenVariantKind>,
     /// THE GRAZE'S OWN CLOCK (Sheep.eatAnimationTick — the goal's
     /// start() the 40 window arms, the tick's decrement the window
     /// drains, the handleEntityEvent(10) the client copy re-arms: the
@@ -2815,7 +2857,7 @@ impl Zombie {
             boost_time: 0,
             boost_time_total: 0,
             wool_color: 0,
-            chicken_variant: None,
+            farm_variant: None,
             eat_animation_tick: 0,
             custom_name: None,
             name_visible: false,
@@ -12385,6 +12427,19 @@ mod tests {
         // 18; the cow's VARIANT 18 the same base the autopush-333
         // walk banked)
         assert_eq!(CHICKEN_DATA_VARIANT_ID, 18);
+        // THE FAMILY'S OWN SLOTS (the pig's BOOST the variant index
+        // keeps apart — 19 the variant wears, 18 the boost; the cow's
+        // variant the pig's BOOST slot keeps)
+        assert_eq!(PIG_DATA_VARIANT_ID, 19);
+        assert_eq!(COW_DATA_VARIANT_ID, 18);
+        // THE SHARED TRIO (the three registries the same three words
+        // name — the aliases the family walk wears)
+        assert_eq!(pig_variant_for_biome("minecraft:desert"), PigVariantKind::Warm);
+        assert_eq!(pig_variant_for_biome("minecraft:snowy_plains"), PigVariantKind::Cold);
+        assert_eq!(pig_variant_for_biome("minecraft:plains"), PigVariantKind::Temperate);
+        assert_eq!(cow_variant_for_biome("minecraft:jungle"), CowVariantKind::Warm);
+        assert_eq!(cow_variant_for_biome("minecraft:taiga"), CowVariantKind::Cold);
+        assert_eq!(cow_variant_for_biome("minecraft:forest"), CowVariantKind::Temperate);
 
         // THE NAME WALK (the synced table's own words — the three
         // variants the minecraft:chicken_variant registry names, the
