@@ -646,6 +646,13 @@ pub fn roll_drops(kind: u16, rng: &mut Lcg) -> Vec<(i32, i32)> {
     if !crate::dig::DigState::correct_tool(kind) {
         return Vec::new();
     }
+    // THE HARVEST'S FAMILY GATE — the wheat ladder's age law the
+    // generated table's clean-room flatten never wore (the
+    // alternatives' state condition the flat row keeps): the harvest
+    // arm's own verdict speaks.
+    if crate::world::is_wheat(kind) {
+        return roll_wheat_drops(kind, rng);
+    }
     let Some(pools) = mc_registry::generated::block_drops::drops(name) else {
         return Vec::new();
     };
@@ -665,6 +672,62 @@ pub fn roll_drops(kind: u16, rng: &mut Lcg) -> Vec<(i32, i32)> {
             }
             break; // the pool spoke
         }
+    }
+    out
+}
+
+/// THE HARVEST'S OWN VERDICT — `data/minecraft/loot_table/blocks/wheat.json`
+/// (the official 26.2 jar, sha 2dc72797) the two pools speak:
+///
+/// POOL 1 the ALTERNATIVES walk — the first child whose condition
+/// passes wins (javap AlternativesEntry): the age-7 arm the WHEAT
+/// item wears, the ELSE arm the bare wheat_seeds speaks (no
+/// set_count — the count 1 the entry's own default keeps; no roll —
+/// the definite pass no draw consumes).
+///
+/// POOL 2 the age-7 CONDITION rides (`block_state_property` age=7 —
+/// the immature break the pool never rolls, no draw) — the
+/// apply_bonus binomial_with_bonus_count the hand's fortune-0 lane
+/// keeps: the javap calculateNewCount the `nextFloat() < probability`
+/// comparison walks, the rounds `extraRounds + enchantmentLevel`
+/// speak (0 + the json's extra=3 — the three draws the parameters
+/// wear), the probability 0.5714286 the 4/7 rounds, the initial
+/// count 1 the no-set_count law keeps — the mature harvest the
+/// 1..4 seeds wears.
+///
+/// THE GENERATED ROW THE FLATTEN EXPLAINS — the clean-room walk
+/// (scripts/gen_block_drops.py) the alternatives' ELSE arm alone
+/// carried (DROPS_WHEAT = seeds ×1): the age law the state condition
+/// the flat table never expressed — the stage kinds the client's own
+/// kind ladder carries, the family gate roll_drops routes here
+/// BEFORE the flat row's verdict (the harvest the real json's rows
+/// answer).
+pub fn roll_wheat_drops(kind: u16, rng: &mut Lcg) -> Vec<(i32, i32)> {
+    let Some(age) = crate::world::wheat_age(kind) else {
+        return Vec::new();
+    };
+    if age < 7 {
+        // pool 1's ELSE arm: the bare seed — the definite pass, no draw
+        return mc_registry::item_id_by_name("wheat_seeds")
+            .map(|id| vec![(id, 1)])
+            .unwrap_or_default();
+    }
+    let mut out = Vec::new();
+    // pool 1's age-7 arm: the grain — the definite item, no draw
+    if let Some(id) = mc_registry::item_id_by_name("wheat") {
+        out.push((id, 1));
+    }
+    // pool 2's bonus walk: the seed + the three-draw binomial
+    // (nextFloat() < 4/7 the javap comparison keeps, extra=3 the
+    // fortune-0 hand lane's own rounds)
+    if let Some(sid) = mc_registry::item_id_by_name("wheat_seeds") {
+        let mut count = 1i32;
+        for _ in 0..3 {
+            if rng.next_f32() < 0.5714286 {
+                count += 1;
+            }
+        }
+        out.push((sid, count));
     }
     out
 }
@@ -1275,5 +1338,81 @@ mod tests {
         assert!((pickup_pitch(1.0, 0.0) - (1.4 + 2.0)).abs() < 1e-6);
         assert!((pickup_pitch(0.0, 1.0) - (-1.4 + 2.0)).abs() < 1e-6);
         assert!((PICKUP_VOLUME - 0.2).abs() < 1e-6);
+    }
+
+    // ---------- the harvest's own verdict (wheat.json's two pools) ----------
+
+    #[test]
+    fn the_harvest_the_mature_the_grain_wears() {
+        // pool 1's age-7 arm: the WHEAT item, the definite pass; pool 2's
+        // binomial: 1 + Bin(3, 4/7) seeds — the 1..4 span the fortune-0
+        // hand lane keeps
+        let wheat = mc_registry::item_id_by_name("wheat").unwrap();
+        let seeds = mc_registry::item_id_by_name("wheat_seeds").unwrap();
+        let mut rng = Lcg::new(26_2);
+        let drops = roll_wheat_drops(crate::world::WHEAT_STAGE7, &mut rng);
+        assert_eq!(drops.len(), 2, "the two pools the two stacks speak");
+        assert_eq!(drops[0], (wheat, 1), "the grain the definite arm wears");
+        assert_eq!(drops[1].0, seeds);
+        assert!((1..=4).contains(&drops[1].1), "the binomial span: {}", drops[1].1);
+        // the same seed the same field: the replay's own determinism
+        let mut rng = Lcg::new(26_2);
+        assert_eq!(roll_wheat_drops(crate::world::WHEAT_STAGE7, &mut rng), drops);
+        // the seed sweep: the span holds everywhere, BOTH extremes the
+        // three draws speak (P(4) = (4/7)^3, P(1) = (3/7)^3 — the 200
+        // fixed seeds the walk the extremes virtually guarantee)
+        let mut saw_one = false;
+        let mut saw_four = false;
+        for seed in 1..=200u64 {
+            let mut rng = Lcg::new(seed);
+            let drops = roll_wheat_drops(crate::world::WHEAT_STAGE7, &mut rng);
+            assert_eq!(drops[0], (wheat, 1));
+            assert!((1..=4).contains(&drops[1].1), "seed {seed}: count {}", drops[1].1);
+            saw_one |= drops[1].1 == 1;
+            saw_four |= drops[1].1 == 4;
+        }
+        assert!(saw_one && saw_four, "the binomial's both ends the sweep speaks");
+    }
+
+    #[test]
+    fn the_harvest_the_immature_the_seed_keeps() {
+        // pool 1's ELSE arm the bare seed wears, pool 2's age-7 condition
+        // the immature break never rolls — ZERO draws the mirror pins
+        let seeds = mc_registry::item_id_by_name("wheat_seeds").unwrap();
+        for stage in crate::world::WHEAT..=crate::world::WHEAT_STAGE6 {
+            let mut rng = Lcg::new(stage as u64 * 7 + 1);
+            let mut probe = rng.clone();
+            // the FAMILY GATE the roll_drops' own early verdict rides —
+            // the whole ladder the flat DROPS_WHEAT row's blanket the
+            // arm replaces
+            let drops = roll_drops(stage, &mut rng);
+            assert_eq!(drops, vec![(seeds, 1)], "stage kind {stage}: the bare seed");
+            // the zero-draw law: the probe's next draw the arm's own
+            // untouched stream answers (a draw the mirror would split)
+            assert_eq!(rng.next_f64(), probe.next_f64(), "stage kind {stage}: no draw");
+        }
+    }
+
+    #[test]
+    fn the_harvest_the_bonus_the_three_draws_keep() {
+        // the mature break's own draw count: pool 1 the definite arm no
+        // draw consumes, pool 2 the THREE nextFloat rounds the extra=3
+        // keeps — the mirror replay the count pairs
+        let mut rng = Lcg::new(505);
+        let mut probe = rng.clone();
+        let _ = roll_wheat_drops(crate::world::WHEAT_STAGE7, &mut rng);
+        for _ in 0..3 {
+            let _ = probe.next_f32();
+        }
+        assert_eq!(rng.next_f64(), probe.next_f64(), "the arm's own three draws");
+        // the generic rows the gate never moved: the dirt row the flat
+        // table keeps, the stone's tool refusal the gate's own verdict
+        let mut rng = Lcg::new(9);
+        assert_eq!(
+            roll_drops(crate::world::DIRT, &mut rng),
+            vec![(mc_registry::item_id_by_name("dirt").unwrap(), 1)],
+            "the generic table the non-crop kinds keep"
+        );
+        assert!(roll_drops(crate::world::STONE, &mut Lcg::new(9)).is_empty());
     }
 }
