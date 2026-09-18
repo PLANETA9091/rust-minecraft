@@ -8919,6 +8919,10 @@ impl App {
                 // spawn the hand the render lane draws from tick one,
                 // the never-spoken slot the honest unarmed keeps)
                 m.held_weapon = w.held_weapon;
+                // THE OFFHAND WORD rides the spawn (the store's slot 1
+                // the same projection keeps — the left hand the
+                // vanilla client renders, the silence the honest empty)
+                m.held_offhand = w.held_offhand;
                 // THE NAME WORD rides the spawn (the accessor 2 the
                 // projection carried — the jeb_ arm the rainbow gate
                 // reads, the silence the honest unnamed)
@@ -8991,6 +8995,10 @@ impl App {
             // arms the hand, the drop the packet's empty stack the
             // honest unarmed keeps)
             m.held_weapon = w.held_weapon;
+            // THE OFFHAND WORD rides with the pose (the same binary
+            // assign the mainhand's own lane speaks — the left hand's
+            // state the server's word owns)
+            m.held_offhand = w.held_offhand;
             // THE VISIBILITY BIT rides with the name (the same binary
             // assign — the server's rename/visibility word replaces
             // the arm the spawn spoke)
@@ -12648,6 +12656,10 @@ impl App {
             // the body wears): the other kinds the None keeps — the
             // vanilla animals the no-equipment law the spawn fn speaks
             let mut held_weapon_quads: Option<Vec<crate::avatar::HeadBlockQuad>> = None;
+            // THE OFFHAND's own quads (the zombie arm sets — the
+            // ItemInHandLayer's SECOND submitArmWithItem the LEFT arm
+            // renders, the draw the mainhand's own follows)
+            let mut held_offhand_quads: Option<Vec<crate::avatar::HeadBlockQuad>> = None;
             // THE MODEL KIND'S OWN BRANCH (the renderer's variant
             // table): the zombie rides the humanoid avatar, the pig
             // the quadruped mesh — both through the SAME entity chain
@@ -12945,6 +12957,26 @@ impl App {
                                 )
                             });
                     }
+                    // THE OFFHAND's own walk (the SECOND submitArmWithItem
+                    // the LEFT arm renders — the leftArm chain the getArm
+                    // branch answers, the -1/16 the sign branch keeps, the
+                    // THIRDPERSON_LEFTHAND context the mirrored stanza
+                    // application the left-hand flag speaks, the SAME
+                    // state the mainhand's own walk wears)
+                    if let Some(name) = mob.held_offhand {
+                        held_offhand_quads = mc_registry::item_id_by_name(name)
+                            .and_then(mc_registry::item_model_layers)
+                            .and_then(|layers| layers.first().map(|l| l.model))
+                            .and_then(|model_id| {
+                                crate::avatar::offhand_item_quads(
+                                    &state,
+                                    feet,
+                                    cam.yaw,
+                                    cam.pitch,
+                                    model_id,
+                                )
+                            });
+                    }
                     (quads, Box::new(move |u, v| model.pixel(u, v)))
                 }
             };
@@ -13004,6 +13036,29 @@ impl App {
             // first-person hand's sampler speaks), the unknown texture
             // the honest skip keeps
             if let Some(hq) = held_weapon_quads.take() {
+                let held_sampled: Vec<crate::raster::SampledQuad> = hq
+                    .iter()
+                    .map(|q| crate::raster::SampledQuad {
+                        pts: q.pts,
+                        uv: q.uv,
+                        tex: q.texture,
+                        tint: [q.shade * shade, q.shade * shade, q.shade * shade],
+                    })
+                    .collect();
+                fb.draw_sampled_quads(ctx.proj.mul(&ctx.view), &held_sampled, &mut |tex, u, v| {
+                    match mc_registry::sprite_uv::sample_uv(tex, u, v) {
+                        mc_registry::sprite_uv::Sample::Pixel(c) => Some(c),
+                        mc_registry::sprite_uv::Sample::Missing(c) => Some(c),
+                        mc_registry::sprite_uv::Sample::Unknown => None,
+                    }
+                });
+            }
+            // THE OFFHAND's own draw (ItemInHandLayer's SECOND
+            // submitArmWithItem — the left hand the main hand's own
+            // render order follows, the SAME depth space the occlusion
+            // keeps, the hurt shade the same 0.7 mix the quads
+            // multiply, the same sampler the texture table reads)
+            if let Some(hq) = held_offhand_quads.take() {
                 let held_sampled: Vec<crate::raster::SampledQuad> = hq
                     .iter()
                     .map(|q| crate::raster::SampledQuad {
@@ -18229,19 +18284,31 @@ mod tests {
         // replaces (the same binary assign the name/crouch lanes speak)
         let mut swapped = wire_zombie(20, 15.0, 64.0, 10.0);
         swapped.held_weapon = Some("iron_shovel");
+        swapped.held_offhand = Some("shield");
         app.live_mobs_updated(vec![swapped]);
         assert_eq!(
             app.net_mobs[0].held_weapon,
             Some("iron_shovel"),
             "the pickup the server speaks replaces"
         );
+        assert_eq!(
+            app.net_mobs[0].held_offhand,
+            Some("shield"),
+            "the left hand the slot-1 word wears"
+        );
         // the drop: the word's None the honest unarmed keeps (the
-        // empty stack the packet's own clear the store merged)
+        // empty stack the packet's own clear the store merged) — the
+        // offhand's own word the OTHER slot the drop never touches
         app.live_mobs_updated(vec![wire_zombie(20, 16.0, 64.0, 10.0)]);
         assert_eq!(
             app.net_mobs[0].held_weapon,
             None,
             "the drop the packet's empty stack speaks"
+        );
+        assert_eq!(
+            app.net_mobs[0].held_offhand,
+            None,
+            "the never-spoken slot the projection the honest empty keeps"
         );
         // the never-armed id: the honest unarmed (the arm rides its
         // own lane only)
@@ -18268,6 +18335,7 @@ mod tests {
             crouching: false,
             wool_byte: 0,
             held_weapon: None,
+            held_offhand: None,
             custom_name: None,
             name_visible: false,
             score_text: None,
@@ -18296,6 +18364,7 @@ mod tests {
             crouching: false,
             wool_byte: 0,
             held_weapon: None,
+            held_offhand: None,
             custom_name: None,
             name_visible: false,
             score_text: None,

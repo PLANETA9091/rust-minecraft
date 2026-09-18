@@ -815,6 +815,13 @@ pub struct WireMob {
     /// the empty stack the packet cleared it with) — the honest
     /// unarmed, the silence never arms.
     pub held_weapon: Option<&'static str>,
+    /// THE OFFHAND WORD (the Set Equipment store's slot 1 — javap
+    /// ItemInHandLayer.submit's SECOND submitArmWithItem the LEFT arm
+    /// the vanilla client renders): the same bare-name walk the
+    /// mainhand's own word keeps. `None` while the server never spoke
+    /// the slot — the natural spawn the slot never fills, the honest
+    /// empty the silence keeps.
+    pub held_offhand: Option<&'static str>,
     /// The metadata's own CUSTOM NAME (Entity's DATA_CUSTOM_NAME 2 —
     /// the accessor the class tree lands at 2, the component's plain
     /// text the projection extracts: the TAG_String verbatim, the
@@ -2016,6 +2023,10 @@ impl LiveView {
                     // own chain reads it, the never-spoken slot the
                     // honest None keeps
                     held_weapon: self.model.entity_mainhand_word(id),
+                    // THE OFFHAND WORD (the store's slot 1 — the LEFT
+                    // arm the vanilla client renders, the same walk
+                    // the mainhand's own read keeps)
+                    held_offhand: self.model.entity_offhand_word(id),
                     // THE CUSTOM NAME (Entity's DATA_CUSTOM_NAME 2 —
                     // the OPTIONAL_COMPONENT the store keeps, the
                     // plain text the projection extracts: the
@@ -2572,6 +2583,33 @@ mod tests {
             Some("iron_sword"),
             "the armed spawn the word rides"
         );
+        // the offhand the store's slot 1: the never-spoken slot the
+        // honest empty keeps, the packet the LEFT hand's word rides
+        assert_eq!(z.held_offhand, None, "the silence never arms the left");
+        let shield_id = mc_registry::item_id_by_name("shield").expect("the registry names");
+        view.model.apply(PlayEvent::EntityEquipped(EntityEquipment {
+            entity_id: 7,
+            slots: vec![EquipmentEntry {
+                slot: EquipmentSlot::Offhand,
+                stack: ItemStack {
+                    count: 1,
+                    item_id: shield_id,
+                    patch: Default::default(),
+                },
+            }],
+        }));
+        let upd = view.refresh(example_mapper);
+        let z = upd.mobs.iter().find(|m| m.id == 7).unwrap();
+        assert_eq!(
+            z.held_weapon,
+            Some("iron_sword"),
+            "the offhand packet the other slot never touches"
+        );
+        assert_eq!(
+            z.held_offhand,
+            Some("shield"),
+            "the left hand the slot-1 word rides"
+        );
         // the empty stack the slot clears — the word the None speaks
         view.model.apply(PlayEvent::EntityEquipped(EntityEquipment {
             entity_id: 7,
@@ -2587,6 +2625,11 @@ mod tests {
         let upd = view.refresh(example_mapper);
         let z = upd.mobs.iter().find(|m| m.id == 7).unwrap();
         assert_eq!(z.held_weapon, None, "the drop the empty stack speaks");
+        assert_eq!(
+            z.held_offhand,
+            Some("shield"),
+            "the other slot the mainhand's own clear never touches"
+        );
     }
 
     /// The mob projection: the Add Entity store's zombies, pigs, cows

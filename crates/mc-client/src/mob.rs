@@ -1149,6 +1149,13 @@ pub struct Zombie {
     /// vanilla client's own: the spawned zombie the empty MAINHAND carries
     /// (the gate the 99% of spawns the bare hand keeps).
     pub held_weapon: Option<&'static str>,
+    /// THE OFFHAND'S OWN WORD (the Set Equipment store's slot 1 the
+    /// wire merges — javap ItemInHandLayer.submit's SECOND
+    /// submitArmWithItem the LEFT arm the vanilla client renders: the
+    /// mob the server dresses the gear the left hand wears, the
+    /// natural spawn the slot never fills — the ctor's None the
+    /// vanilla client's own empty OFFHAND keeps).
+    pub held_offhand: Option<&'static str>,
     /// `ZombieAttackGoal.raiseArmTicks`
     raise_arm_ticks: i32,
     /// THE BODY'S OWN KIND (the renderer's variant table): which mesh
@@ -1302,6 +1309,7 @@ impl Zombie {
             name_visible: false,
             score_text: None,
             held_weapon: None,
+            held_offhand: None,
             kind: MobKind::Zombie,
             raise_arm_ticks: 0,
             ticks_until_attack: 0,

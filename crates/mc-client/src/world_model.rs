@@ -793,6 +793,20 @@ impl WorldModel {
         mc_registry::item_name(item_id).filter(|name| *name != "air")
     }
 
+    /// THE OFFHAND WORD (the store's slot-1 read — javap
+    /// ItemInHandLayer.submit's SECOND submitArmWithItem the LEFT arm
+    /// the vanilla client renders): the same non-empty gate the
+    /// mainhand's own walk keeps, the bare name the registry's wire
+    /// order resolves. The never-spoken (or cleared) slot the honest
+    /// None keeps — the natural spawn the slot never fills.
+    pub fn entity_offhand_word(&self, id: i32) -> Option<&'static str> {
+        let (item_id, count) = *self.entity_equipment.get(&id)?.get(&1)?;
+        if count <= 0 || item_id == 0 {
+            return None;
+        }
+        mc_registry::item_name(item_id).filter(|name| *name != "air")
+    }
+
     /// The mobs' voice mailbox's own drain (`std::mem::take` — the
     /// vanilla `handleEntitySound` plays the voice the moment the
     /// packet lands; the client's lane ships each voice exactly once,
@@ -4602,6 +4616,63 @@ mod tests {
         assert!(
             m.entity_equipment.is_empty(),
             "the swap the store dies with"
+        );
+    }
+
+    /// THE OFFHAND WORD (the store's slot-1 read — the LEFT arm the
+    /// vanilla client renders): the shield the slot arms, the mainhand
+    /// the same packet the OTHER slot keeps (the two words the two
+    /// readers split), the offhand's own clear the mainhand never
+    /// touches, the never-spoken slot the honest None keeps.
+    #[test]
+    fn the_offhand_word_the_slot_one_reads() {
+        use mc_protocol::play::{EntityEquipment, EquipmentEntry, EquipmentSlot, ItemStack};
+        let mut m = WorldModel::new();
+        assert_eq!(m.entity_offhand_word(7), None, "the silence the honest empty");
+        let sword_id = mc_registry::item_id_by_name("iron_sword").expect("the registry names");
+        let shield_id = mc_registry::item_id_by_name("shield").expect("the registry names");
+        // the ONE packet, BOTH hands: the slots the merge splits
+        assert!(m.apply(PlayEvent::EntityEquipped(EntityEquipment {
+            entity_id: 7,
+            slots: vec![
+                EquipmentEntry {
+                    slot: EquipmentSlot::Mainhand,
+                    stack: ItemStack { count: 1, item_id: sword_id, patch: Default::default() },
+                },
+                EquipmentEntry {
+                    slot: EquipmentSlot::Offhand,
+                    stack: ItemStack { count: 1, item_id: shield_id, patch: Default::default() },
+                },
+            ],
+        })));
+        assert_eq!(
+            m.entity_mainhand_word(7),
+            Some("iron_sword"),
+            "the mainhand its own slot reads"
+        );
+        assert_eq!(
+            m.entity_offhand_word(7),
+            Some("shield"),
+            "the offhand the slot 1 reads"
+        );
+        // the offhand's own clear: the mainhand rides (the slots the
+        // merges split — the drop the packet's own slot speaks)
+        assert!(m.apply(PlayEvent::EntityEquipped(EntityEquipment {
+            entity_id: 7,
+            slots: vec![EquipmentEntry {
+                slot: EquipmentSlot::Offhand,
+                stack: ItemStack { count: 0, item_id: 0, patch: Default::default() },
+            }],
+        })));
+        assert_eq!(
+            m.entity_offhand_word(7),
+            None,
+            "the drop the empty stack speaks"
+        );
+        assert_eq!(
+            m.entity_mainhand_word(7),
+            Some("iron_sword"),
+            "the other slot the clear never touches"
         );
     }
 

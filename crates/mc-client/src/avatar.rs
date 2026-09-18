@@ -6745,6 +6745,80 @@ mod tests {
         );
     }
 
+    /// THE ZOMBIE'S OWN LEFT HAND (the offhand lane the mob render
+    /// wears — ItemInHandLayer's SECOND submitArmWithItem the LEFT arm
+    /// renders): the same item both hands the x-mirror the sign
+    /// branch keeps (the world -x side the mainhand's +x box the
+    /// mirror pairs), the aggressive raise the LEFT arm the weapon
+    /// follows (the animateZombieArms the BOTH arms the inverted bob
+    /// speaks), the feet the same world fold rides.
+    #[test]
+    fn the_zombie_offhand_rides_the_left_arm() {
+        let mut rest = AvatarState::rest(180.0, 0.0, 0.0);
+        rest.zombie = true;
+        let box_of = |qs: &Vec<HeadBlockQuad>| -> ([f32; 3], [f32; 3]) {
+            let mut lo = [f32::MAX; 3];
+            let mut hi = [f32::MIN; 3];
+            for q in qs {
+                for p in q.pts.iter() {
+                    for k in 0..3 {
+                        lo[k] = lo[k].min(p[k]);
+                        hi[k] = hi[k].max(p[k]);
+                    }
+                }
+            }
+            (lo, hi)
+        };
+        // the SAME item both hands: the boxes the mirror pairs
+        let main = held_item_quads(&rest, Vec3::ZERO, 0.0, 0.0, "item/iron_sword")
+            .expect("the mainhand's bake speaks");
+        let off = offhand_item_quads(&rest, Vec3::ZERO, 0.0, 0.0, "item/iron_sword")
+            .expect("the offhand's bake speaks");
+        let (mlo, mhi) = box_of(&main);
+        let (olo, ohi) = box_of(&off);
+        // the x-mirror the sign branch keeps (the left arm the -1/16
+        // the mainhand's +1/16 the world mirror answers)
+        assert!(
+            (ohi[0] + mlo[0]).abs() < 1e-3,
+            "the offhand's +x edge the mainhand's -x edge mirrors"
+        );
+        assert!(
+            (olo[0] + mhi[0]).abs() < 1e-3,
+            "the offhand's -x edge the mainhand's +x edge mirrors"
+        );
+        // the y/z bands the arms share (the same translate Y/Z the
+        // sign branch never touches)
+        assert!(
+            (olo[1] - mlo[1]).abs() < 1e-3 && (ohi[1] - mhi[1]).abs() < 1e-3,
+            "the y band the branch keeps"
+        );
+        assert!(
+            (olo[2] - mlo[2]).abs() < 1e-3 && (ohi[2] - mhi[2]).abs() < 1e-3,
+            "the z band the branch keeps"
+        );
+        // THE AGGRESSIVE RAISE the LEFT arm follows (the both-arms
+        // assignment the zombie walk speaks)
+        let mut aggro = rest;
+        aggro.zombie_aggressive = true;
+        let aggro_off = offhand_item_quads(&aggro, Vec3::ZERO, 0.0, 0.0, "item/iron_sword")
+            .expect("the aggressive bake speaks");
+        assert_ne!(
+            box_of(&aggro_off),
+            (olo, ohi),
+            "the raised left arm the weapon rides"
+        );
+        // THE FEET the same world fold rides (the (5,64,-3) the exact
+        // shift the mainhand's own test speaks)
+        let moved = offhand_item_quads(&rest, Vec3::new(5.0, 64.0, -3.0), 0.0, 0.0, "item/iron_sword")
+            .expect("the moved bake speaks");
+        let (mvlo, mvhi) = box_of(&moved);
+        let feet = [5.0f32, 64.0, -3.0];
+        for k in 0..3 {
+            assert!((mvlo[k] - (olo[k] + feet[k])).abs() < 1e-4, "lo[{k}] the feet's shift keeps");
+            assert!((mvhi[k] - (ohi[k] + feet[k])).abs() < 1e-4, "hi[{k}] the feet's shift keeps");
+        }
+    }
+
     /// THE OFFHAND'S LEFT-ARM CHAIN (the oracle walk
     /// `scripts/offhand_item_oracle.py` speaks — the RIGHT chain's
     /// honesty gate reproduces the main-hand pins first, the LEFT
