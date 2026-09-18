@@ -3287,6 +3287,10 @@ impl App {
                 // (event, volume, pitch) the kind's own law answers —
                 // the zombie's flat override, the animals' block law)
                 let mut mob_steps: Vec<(&'static str, f32, f32, f64)> = Vec::new();
+                // the egg lay's own beat (the CHICKEN_EGG voice + the
+                // egg item the caller spawns — the tuples the lay's
+                // pitch + the feet the event carries)
+                let mut egg_lays: Vec<(f32, f64, f64, f64)> = Vec::new();
                 // the day tick the burn lane's tracks read (the same
                 // clock the sky samples)
                 let day_time = (self.day_time_base + self.frame) as i64;
@@ -3405,6 +3409,19 @@ impl App {
                                 fizzes.push((
                                     pitch,
                                     ear_distance(ear, mob.x, mob.y, mob.z),
+                                ));
+                            }
+                            if let Some(pitch) = ev.egg_laid {
+                                // THE EGG'S OWN LAY (the gift table's
+                                // zero crossing the tick armed — the
+                                // voice + the feet the caller speaks,
+                                // the pitch the entity's own stream
+                                // drew)
+                                egg_lays.push((
+                                    pitch,
+                                    mob.x,
+                                    mob.y,
+                                    mob.z,
                                 ));
                             }
                             if ev.step {
@@ -3593,6 +3610,37 @@ impl App {
                             id,
                             item,
                             count,
+                            mx,
+                            my,
+                            mz,
+                            &mut self.mob_rng,
+                        ));
+                    }
+                }
+                for (pitch, mx, my, mz) in egg_lays {
+                    // THE EGG'S OWN VOICE (the CHICKEN_EGG sound the
+                    // playSound walk speaks — the volume the 1.0F keeps,
+                    // the pitch the entity's own stream drew, the gain
+                    // the lay spot's own distance folds)
+                    self.sounds.play_voice_at(
+                        self.frame,
+                        "entity.chicken.egg",
+                        1.0,
+                        pitch,
+                        ear_distance(ear, mx, my, mz),
+                    );
+                    // THE GIFT'S OWN DROP (the dropFromGiftLootTable's
+                    // temperate arm — the egg the count-1 entry the
+                    // alternatives gate picks, NO random the roll
+                    // draws, the feet the spawnAtLocation law keeps,
+                    // the pickup delay the default 10 rides)
+                    if let Some(item) = crate::mob::wire_id("egg") {
+                        let id = self.next_drop_id;
+                        self.next_drop_id += 1;
+                        self.drops.push(crate::drops::ItemDrop::spawn_entity_loot(
+                            id,
+                            item,
+                            1,
                             mx,
                             my,
                             mz,
@@ -25370,6 +25418,45 @@ mod tests {
         // own clock speaks — the rider the dying pose the animation
         // rides)
         assert!(app.offline_ride.is_some(), "the ride the animation holds");
+    }
+
+    /// THE HEN'S OWN EGG THE WORLD KEEPS (the gift table's zero
+    /// crossing the tick arms — the CHICKEN_EGG voice the lay spot
+    /// plays, the egg item the feet the spawnAtLocation law drops,
+    /// the count-1 entry the temperate alternatives gate picks, the
+    /// refill the same walk arms — the hen the 6000..12000 the next
+    /// lay waits).
+    #[test]
+    fn the_chicken_lays_the_egg_at_the_feet() {
+        let mut app = App::new(3);
+        app.enter_world();
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let top = app.spawn_y;
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, top as f32 + 4.0, c as f32 + 0.5),
+            yaw: 0.0,
+            pitch: -std::f32::consts::FRAC_PI_2,
+        });
+        let mut hen = crate::mob::Zombie::new(9, c as f64 + 0.5, top as f64, c as f64 + 0.5, 3);
+        hen.kind = crate::mob::MobKind::Chicken;
+        hen.on_ground = true;
+        hen.egg_time = 1; // the lay the crossing the next tick arms
+        app.mobs.push(hen);
+        let before = app.drops.len();
+        app.update();
+        let egg_id = crate::mob::wire_id("egg").expect("the egg rides the wire");
+        assert!(
+            app.drops[before..]
+                .iter()
+                .any(|d| d.item == egg_id && d.count == 1),
+            "the egg the lay drops at the feet"
+        );
+        assert!(
+            (6000..=12000).contains(&app.mobs[0].egg_time),
+            "the refill the tail arms: {}",
+            app.mobs[0].egg_time
+        );
     }
 
     /// THE VEHICLE'S OWN EJECT (Entity.remove(RemovalReason.KILLED)'s

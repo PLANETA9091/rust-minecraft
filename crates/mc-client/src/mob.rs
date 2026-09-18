@@ -957,6 +957,17 @@ pub struct MobEvents {
     /// ate() walk the tick answers IN the mob — the wool regrow and
     /// the baby's ageUp the event never carries.
     pub eat_block: Option<(i32, i32, i32, u16)>,
+    /// THE EGG'S OWN LAY (javap `Chicken.aiStep`'s gift fold — the
+    /// clock the zero crossing arms this tick: the CHICKEN_EGG voice
+    /// `1.0F + (nextFloat() - nextFloat()) * 0.2F` the pitch rides
+    /// (the entity's OWN stream the two draws speak, the refill the
+    /// tail arms — the caller's order the same walk keeps), the egg
+    /// the temperate gift table's alternatives gate picks — the
+    /// count-1 entry the json keeps, NO random the roll draws), the
+    /// drop the caller spawns at the feet the spawnAtLocation law
+    /// speaks. The baby the gate refuses, the jockey the jockey-less
+    /// lane never carries, the other kinds the fold never reads.
+    pub egg_laid: Option<f32>,
 }
 
 /// The zombie's attack out-edge (the doHurtTarget the melee goal
@@ -1201,6 +1212,17 @@ pub struct Zombie {
     pub flap: f32,
     pub flap_speed: f32,
     pub flapping: f32,
+    /// THE EGG CLOCK (javap `Chicken.eggTime` — the public int the
+    /// ctor arms at `nextInt(6000) + 6000`, the aiStep's gated fold
+    /// the `--eggTime` decrement walks: the lay the zero crossing
+    /// fires, the refill the same draw the tail keeps. The ZERO the
+    /// lazy arm's sentinel holds — the shared ctor the extra draw
+    /// every kind's stream would spend never rides, the chicken's
+    /// first gated tick the ctor's own value the same distribution
+    /// arms, the baby the gate the countdown pauses the childhood
+    /// keeps — the vanilla law the held value through childhood
+    /// speaks, the same 6000..12000 the adult's first tick draws).
+    pub egg_time: i32,
 }
 
 impl Zombie {
@@ -1268,6 +1290,7 @@ impl Zombie {
             flap: 0.0,
             flap_speed: 0.0,
             flapping: 0.0,
+            egg_time: 0,
         }
     }
 
@@ -1540,6 +1563,33 @@ impl Zombie {
             }
             self.flapping *= 0.9;
             self.flap += self.flapping * 2.0;
+        }
+        // THE EGG'S OWN CLOCK (javap `Chicken.aiStep`'s tail fold the
+        // 26.2 bytecode speaks: the gate `level instanceof ServerLevel
+        // && isAlive() && !isBaby() && !isChickenJockey()` the
+        // jockey-less lane the alive-adult word folds to — the
+        // countdown the gate WRAPS, the baby the pause the vanilla
+        // childhood speaks; `if (--this.eggTime > 0) skip` the
+        // dup_x1/ifgt idiom keeps; the lay the temperate gift table's
+        // alternatives gate answers (the egg the count-1 entry the
+        // json keeps, NO random the roll draws), the CHICKEN_EGG
+        // voice `1.0F + (nextFloat() - nextFloat()) * 0.2F` the
+        // entity's OWN stream speaks, the refill `nextInt(6000) +
+        // 6000` the tail arms — the draw order the vanilla walk
+        // keeps: the two pitches, then the refill). The ZERO the lazy
+        // arm's sentinel holds (the shared ctor's stream the extra
+        // draw the other kinds never spend).
+        if self.kind == MobKind::Chicken && self.health > 0.0 && !self.is_baby() {
+            if self.egg_time == 0 {
+                self.egg_time = self.rng.next_int(6000) + 6000;
+            } else {
+                self.egg_time -= 1;
+                if self.egg_time <= 0 {
+                    let pitch = 1.0 + (self.rng.next_f32() - self.rng.next_f32()) * 0.2;
+                    self.egg_time = self.rng.next_int(6000) + 6000;
+                    events.egg_laid = Some(pitch);
+                }
+            }
         }
         // THE FEED'S OWN SPARKLES (javap `AgeableMob.aiStep`'s client
         // arm verbatim: the `forcedAgeTimer > 0` gate the ageUp's
@@ -7612,6 +7662,69 @@ mod tests {
                 "the {name} band {band}"
             );
         }
+    }
+
+    /// THE EGG'S OWN CLOCK THE LAY CROSSES (javap `Chicken.aiStep`'s
+    /// tail fold: the lazy arm the shared ctor's stream keeps, the
+    /// gate the baby and the other kinds the countdown never rides,
+    /// the zero crossing the pitch + the refill speaks, the dying the
+    /// early return the fold never reaches).
+    #[test]
+    fn the_chicken_egg_the_clock_walks() {
+        let world = ground_world();
+        // THE LAZY ARM (the sentinel the shared ctor's draw keeps —
+        // the first gated tick the 6000..12000 the ctor's own value
+        // arms, the same distribution the vanilla ctor speaks)
+        let mut hen = Zombie::new(1, 2.0, 5.0, 2.0, 7);
+        hen.kind = MobKind::Chicken;
+        hen.on_ground = true;
+        assert_eq!(hen.egg_time, 0, "the ctor the draw never spends");
+        hen.tick(&world, None, NIGHT);
+        assert!(
+            (6000..=12000).contains(&hen.egg_time),
+            "the first gated tick the clock arms: {}",
+            hen.egg_time
+        );
+        // the zombie the fold never reads (the sentinel the other
+        // kinds keep)
+        let mut z = Zombie::new(2, 2.0, 5.0, 2.0, 7);
+        z.tick(&world, None, NIGHT);
+        assert_eq!(z.egg_time, 0, "the zombie the egg clock never arms");
+        // THE BABY GATE (the childhood the countdown pauses — the
+        // vanilla law the held value through childhood speaks)
+        let mut chick = Zombie::new(3, 2.0, 5.0, 2.0, 7);
+        chick.kind = MobKind::Chicken;
+        chick.set_age(BABY_START_AGE);
+        chick.on_ground = true;
+        chick.tick(&world, None, NIGHT);
+        assert_eq!(chick.egg_time, 0, "the baby the gate never arms");
+        // THE LAY'S OWN CROSSING (eggTime 1 -> the --eggTime the zero
+        // crossing fires: the pitch the (0.8, 1.2) the (f1-f2)*0.2 law
+        // keeps, the refill the 6000..12000 the tail arms, the draw
+        // order the vanilla walk keeps — the pitches, then the refill)
+        let mut ready = Zombie::new(4, 2.0, 5.0, 2.0, 7);
+        ready.kind = MobKind::Chicken;
+        ready.on_ground = true;
+        ready.egg_time = 1;
+        let ev = ready.tick(&world, None, NIGHT);
+        let pitch = ev.egg_laid.expect("the lay the event speaks");
+        assert!(
+            (0.8..=1.2).contains(&pitch),
+            "the pitch the (f1-f2)*0.2 law keeps: {pitch}"
+        );
+        assert!(
+            (6000..=12000).contains(&ready.egg_time),
+            "the refill the tail arms: {}",
+            ready.egg_time
+        );
+        // THE DEAD HEN THE GATE REFUSES (the isAlive arm the early
+        // return the fold never reaches)
+        let mut dead = Zombie::new(5, 2.0, 5.0, 2.0, 7);
+        dead.kind = MobKind::Chicken;
+        dead.egg_time = 1;
+        dead.hurt(1000.0);
+        let ev = dead.tick(&world, None, NIGHT);
+        assert!(ev.egg_laid.is_none(), "the dying the lay refuses");
     }
 }
 
