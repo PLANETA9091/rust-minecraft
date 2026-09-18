@@ -155,6 +155,18 @@ pub const ARROW_TRIANGLE_SPREAD: f64 = 0.017_227_5;
 /// imul isub`: 14 − difficultyId × 4 (the client's NORMAL world the
 /// id 1 keeps — the 10.0 the triangle draws scale).
 pub const SKELETON_ARROW_INACCURACY: f64 = 14.0 - 1.0 * 4.0;
+/// `BowItem.releaseUsing`'s own `ldc #46 // float 3.0f` — the full
+/// power's velocity multiplier the `f * 3.0F` shootFromRotation arg
+/// speaks (the draw's own power the scale carries).
+pub const BOW_FULL_POWER_SHOOT_VELOCITY: f32 = 3.0;
+/// `BowItem.releaseUsing`'s own `fconst_1` — the shootFromRotation's
+/// inaccuracy arg (the PLAYER's own shot the 1.0 spread speaks — the
+/// skeleton's 10.0 the mob lane never shares).
+pub const PLAYER_ARROW_INACCURACY: f64 = 1.0;
+/// `Mob.dropCustomDeathLoot`'s own chance — `DropChances`' default the
+/// `byEquipment(slot)` answers for every slot the mob's own table
+/// never overrides (the 0.085 the nextFloat draw gates).
+pub const EQUIPMENT_DROP_CHANCE: f32 = 0.085;
 /// `AbstractArrow.lerpRotation`'s own `Mth.lerp(0.2F, ...)` — the
 /// flight rotation's own ease.
 pub const ARROW_ROTATION_LERP: f32 = 0.2;
@@ -1217,6 +1229,12 @@ pub struct Arrow {
     /// `AbstractArrow.pickup` — DISALLOWED the mob-shot ctor keeps
     /// (the hit's own discard the flag's law answers)
     pub dead: bool,
+    /// THE OWNER'S OWN LANE — false the mob-shot arrows speak (the
+    /// player's box the hit walk answers), true the player's own bow
+    /// shot keeps (the MOBS the hit walk answers, the owner the
+    /// leftOwner walk never hits — the vanilla's own checkLeftOwner
+    /// law the self-hit speaks)
+    pub player_shot: bool,
     /// the entity's own random (the hit pitch's draw the
     /// onHitBlock's nextFloat speaks — the id-mixed seed the
     /// entity_voice_seed law keeps)
@@ -1234,6 +1252,35 @@ pub struct ArrowEvents {
     /// 0.9F)` the onHitBlock's draw keeps — entity.arrow.hit the
     /// caller plays at the stick's own spot)
     pub hit_block: Option<f32>,
+    /// the MOB hit's own verdict — the (mob id, damage) pair the
+    /// player-shot's onHitEntity walk answers (the ceil(|v| × 2.0)
+    /// formula + the crit arm the nextInt(i/2 + 2) bonus speaks —
+    /// the caller's own lanes the hurt pipeline answers: the voice,
+    /// the death loot, the XP the player-kill gate arms)
+    pub hit_mob: Option<(i32, f64)>,
+}
+
+/// THE DRAW'S OWN POWER (javap `BowItem.getPowerForTime` the 26.2
+/// bytecode speaks: `f = t / 20.0F; f = (f * f + f * 2.0F) / 3.0F;
+/// if (f > 1.0F) f = 1.0F` — the draw ticks the ratio speaks, the
+/// quadratic ease the full-draw cap arms, the 0.1 gate the release's
+/// own shot law keeps).
+pub fn bow_power_for_time(ticks: u32) -> f32 {
+    let t = ticks as f32 / 20.0;
+    let f = (t * t + t * 2.0) / 3.0;
+    if f > 1.0 {
+        1.0
+    } else {
+        f
+    }
+}
+
+/// THE ARROW'S OWN SEED (the entity's random the id-mixed law seeds —
+/// the voice draws the shot's own stream spends, the from_spawn walk
+/// re-arms the same state; the SAME law every entity's own random
+/// keeps).
+pub fn arrow_entity_seed(id: i32) -> u64 {
+    0x5EED ^ ((id as i64 as u64).wrapping_mul(0x9E37_79B9_7F4A_7C15))
 }
 
 impl Arrow {
@@ -1254,7 +1301,7 @@ impl Arrow {
         // draws the seed's own stream spends, the from_spawn walk
         // re-arms the same state)
         let id = shooter.id.wrapping_mul(31) + 9_001;
-        let seed = 0x5EED ^ ((id as i64 as u64).wrapping_mul(0x9E37_79B9_7F4A_7C15));
+        let seed = arrow_entity_seed(id);
         let mut rng = Lcg::new(seed);
         let (ax, ay, az) = (
             shooter.x,
@@ -1335,6 +1382,71 @@ impl Arrow {
             shake_time: 0,
             crit: shot.crit,
             dead: false,
+            player_shot: false,
+            rng,
+        }
+    }
+
+    /// THE PLAYER'S OWN SHOT (javap `BowItem.releaseUsing` →
+    /// `Projectile.shootFromRotation` the 26.2 bytecode speaks: the
+    /// direction the rotation angles' own look vector builds —
+    /// `−sin(yaw)·cos(pitch), −sin(pitch), cos(yaw)·cos(pitch)` the
+    /// Mth folds speak, the camera's own forward the same vector the
+    /// wire-angle conversion answers; the shoot `Projectile.shoot`:
+    /// normalize + the per-axis triangle spread (0.0172275 × the
+    /// 1.0 inaccuracy) scaled by the draw's own `f × 3.0F`; the CRIT
+    /// the full-draw power 1.0 arms — the fcmpl/ifne gate speaks; the
+    /// spawn position the AbstractArrow ctor's own eye-minus-0.1
+    /// walk rides).
+    #[allow(clippy::too_many_arguments)]
+    pub fn player_shot(
+        id: i32,
+        ox: f64,
+        oy: f64,
+        oz: f64,
+        dir: (f64, f64, f64),
+        power: f32,
+    ) -> Arrow {
+        let seed = arrow_entity_seed(id);
+        let mut rng = Lcg::new(seed);
+        // THE SHOOT (Projectile.shoot): normalize FIRST, the spread
+        // adds, the power scale multiplies — the walk's own order
+        let (dx, dy, dz) = dir;
+        let len = (dx * dx + dy * dy + dz * dz).sqrt().max(1e-9);
+        let (nx, ny, nz) = (dx / len, dy / len, dz / len);
+        let spread = ARROW_TRIANGLE_SPREAD * PLAYER_ARROW_INACCURACY;
+        let (mx, my, mz) = (
+            nx + rng.triangle(spread),
+            ny + rng.triangle(spread),
+            nz + rng.triangle(spread),
+        );
+        let v = (power * BOW_FULL_POWER_SHOOT_VELOCITY) as f64;
+        let (vx, vy, vz) = (mx * v, my * v, mz * v);
+        let horiz = (vx * vx + vz * vz).sqrt();
+        let y_rot = ((vx).atan2(vz) * 57.295_776_367_187_5) as f32;
+        let x_rot = ((vy).atan2(horiz) * 57.295_776_367_187_5) as f32;
+        Arrow {
+            id,
+            x: ox,
+            y: oy,
+            z: oz,
+            prev_x: ox,
+            prev_y: oy,
+            prev_z: oz,
+            vx,
+            vy,
+            vz,
+            y_rot,
+            x_rot,
+            y_rot_o: y_rot,
+            x_rot_o: x_rot,
+            life: 0,
+            in_ground: false,
+            shake_time: 0,
+            // the full-draw's own 1.0 the fcmpl gate arms
+            crit: power == 1.0,
+            dead: false,
+            player_shot: true,
             rng,
         }
     }
@@ -1347,7 +1459,7 @@ impl Arrow {
     /// walk, the 0.99 inertia, the 0.05 gravity), the hits (the
     /// entity's damage the discard answers, the block's back-off the
     /// stick speaks).
-    pub fn tick(&mut self, world: &World, player: Option<&PlayerView>) -> ArrowEvents {
+    pub fn tick(&mut self, world: &World, player: Option<&PlayerView>, mobs: &[Zombie]) -> ArrowEvents {
         let mut events = ArrowEvents::default();
         self.prev_x = self.x;
         self.prev_y = self.y;
@@ -1418,9 +1530,56 @@ impl Arrow {
             }
         }
         // THE ENTITY HIT (the findHitEntities walk — the segment vs
-        // the inflated bbox the player's own box answers, the FIRST
-        // hit the distance order keeps)
-        if let Some(p) = player {
+        // the inflated bbox the nearest box answers, the FIRST hit
+        // the distance order keeps)
+        if self.player_shot {
+            // THE PLAYER'S OWN SHOT (the mob boxes the canHitEntity
+            // law answers — the isAlive gate the health keeps, the
+            // nearest hit the distance order speaks, the OWNER's own
+            // player the leftOwner walk never hits); the damage the
+            // onHitEntity formula speaks — ceil(clamp(velocity.length()
+            // * baseDamage)) — the CRIT arm the nextInt(i / 2 + 2)
+            // bonus rides (the arrow's own stream the draw spends),
+            // the punch-0 bow the knockback never carries
+            let speed = (self.vx * self.vx + self.vy * self.vy + self.vz * self.vz).sqrt();
+            let mut best: Option<(f64, i32, f64)> = None;
+            for m in mobs {
+                // the isAlive gate (the LivingEntity.isAlive the
+                // health speaks — the dying body the arrows pass)
+                if m.health <= 0.0 {
+                    continue;
+                }
+                let (bx0, by0, bz0, bx1, by1, bz1) = m.box_for();
+                const INF: f64 = 0.3;
+                if let Some(t) = self.segment_hit_param(
+                    (bx0 - INF, by0 - INF, bz0 - INF),
+                    (bx1 + INF, by1 + INF, bz1 + INF),
+                ) {
+                    if best.map_or(true, |(bt, _, _)| t < bt) {
+                        best = Some((t, m.id, speed));
+                    }
+                }
+            }
+            if let Some((_, mob_id, speed)) = best {
+                let mut dmg = (speed * ARROW_BASE_DAMAGE)
+                    .clamp(0.0, 2_147_483_647.0)
+                    .ceil() as i64;
+                // THE CRIT ARM (the isCritArrow branch the bytecode
+                // speaks — `i += random.nextInt(i / 2 + 2)` the
+                // uniform 0..=i/2+1 draw keeps)
+                if self.crit {
+                    let bonus = self
+                        .rng
+                        .next_int_inclusive(0, (dmg as i32) / 2 + 1) as i64;
+                    dmg = (dmg + bonus).min(2_147_483_647);
+                }
+                events.hit_mob = Some((mob_id, dmg as f64));
+                // THE DISCARD (the Pickup.DISALLOWED the ctor keeps —
+                // the hit the own removal speaks)
+                self.dead = true;
+                return events;
+            }
+        } else if let Some(p) = player {
             if !p.dead && self.segment_hits_player(p) {
                 // THE DAMAGE (the onHitEntity formula: ceil(clamp(
                 // velocity.length() * baseDamage, 0, 2.147483647E9)) —
@@ -1479,38 +1638,49 @@ impl Arrow {
         // the feet-to-head the height carries), the 0.3 inflate the
         // vanilla's own margin keeps
         let (hw, inf) = (p.width / 2.0, 0.3);
-        let (x0, y0, z0) = (p.x - hw - inf, p.y - inf, p.z - hw - inf);
-        let (x1, y1, z1) = (p.x + hw + inf, p.y + p.height + inf, p.z + hw + inf);
-        // THE SLAB WALK (the ray-AABB intersection the
-        // ClipContext's own box law speaks): the param window the
-        // t-min/t-max the slabs clamp
+        self.segment_hit_param(
+            (p.x - hw - inf, p.y - inf, p.z - hw - inf),
+            (p.x + hw + inf, p.y + p.height + inf, p.z + hw + inf),
+        )
+        .is_some()
+    }
+
+    /// THE SEGMENT'S OWN SLAB WALK (the ray-AABB intersection the
+    /// ClipContext's own box law speaks): the param window the
+    /// t-min/t-max the slabs clamp — the hit's own t the distance
+    /// order answers (the vanilla's nearest-hit law), None the MISS.
+    fn segment_hit_param(
+        &self,
+        lo: (f64, f64, f64),
+        hi: (f64, f64, f64),
+    ) -> Option<f64> {
         let (from, to) = ((self.prev_x, self.prev_y, self.prev_z), (self.x, self.y, self.z));
         let (dx, dy, dz) = (to.0 - from.0, to.1 - from.1, to.2 - from.2);
         let mut tmin = 0.0f64;
         let mut tmax = 1.0f64;
-        for (o, dd, lo, hi) in [
-            (from.0, dx, x0, x1),
-            (from.1, dy, y0, y1),
-            (from.2, dz, z0, z1),
+        for (o, dd, blo, bhi) in [
+            (from.0, dx, lo.0, hi.0),
+            (from.1, dy, lo.1, hi.1),
+            (from.2, dz, lo.2, hi.2),
         ] {
             if dd.abs() < 1e-9 {
-                if o < lo || o > hi {
-                    return false;
+                if o < blo || o > bhi {
+                    return None;
                 }
             } else {
-                let mut t0 = (lo - o) / dd;
-                let mut t1 = (hi - o) / dd;
+                let mut t0 = (blo - o) / dd;
+                let mut t1 = (bhi - o) / dd;
                 if t0 > t1 {
                     std::mem::swap(&mut t0, &mut t1);
                 }
                 tmin = tmin.max(t0);
                 tmax = tmax.min(t1);
                 if tmin > tmax {
-                    return false;
+                    return None;
                 }
             }
         }
-        true
+        Some(tmin)
     }
 
     /// THE 0.06-INFLATED POINT BOX's own collision read (the
@@ -3783,6 +3953,42 @@ impl Zombie {
                 }
             }
         }
+        // THE EQUIPMENT'S OWN DROP (javap `Mob.dropCustomDeathLoot`
+        // the 26.2 bytecode speaks — the walk the loot table's rows
+        // FOLLOW, the dropAllDeathLoot order the table first keeps):
+        // the EquipmentSlot.values() walk the HEAD/CHEST/LEGS/FEET
+        // armor rows then the MAINHAND/OFFHAND hands answer, the
+        // EMPTY slot the isEmpty gate skips BEFORE the draw, the
+        // chance the DropChances' own 0.085 default gates (`nextFloat()
+        // < chance` the fcmpg keeps), the RECENTLY-HIT gate the
+        // killed_by_player arg rides (the no-player kill the
+        // equipment keeps — the isPreserved arm the client's mobs
+        // never speak), the drop the spawnAtLocation law speaks and
+        // the slot CLEARS. The damage roll the dropped damageable
+        // stack speaks (`maxDamage - 1 - nextInt(max(1, maxDamage-3))`
+        // the bytecode keeps) the id-only stack model NEVER carries —
+        // the (id, count) pair the full-stack stand-in keeps.
+        if killed_by_player {
+            // the store's own FEET/LEGS/CHEST/HEAD walk order the
+            // values() REVERSE answers
+            for word in [
+                self.armor[3],
+                self.armor[2],
+                self.armor[1],
+                self.armor[0],
+                self.held_weapon,
+                self.held_offhand,
+            ]
+            .into_iter()
+            .flatten()
+            {
+                if self.rng.next_f32() < EQUIPMENT_DROP_CHANCE {
+                    if let Some(item) = wire_id(word) {
+                        out.push((item, 1));
+                    }
+                }
+            }
+        }
         out
     }
 }
@@ -5810,7 +6016,7 @@ mod tests {
             pitch: 1.0,
             seed: 5,
         });
-        a.tick(&world, None);
+        a.tick(&world, None, &[]);
         assert!((a.x - 11.0).abs() < 1e-9, "the free fly the velocity adds");
         assert!(a.vy < 0.0, "the gravity the y rides");
         assert!((a.vx - 0.99).abs() < 1e-9, "the drag the x keeps");
@@ -5839,7 +6045,7 @@ mod tests {
         // crossing answers within the loop (the fly-till-stick walk)
         let mut ev = crate::mob::ArrowEvents::default();
         for _ in 0..20 {
-            ev = b.tick(&wall, None);
+            ev = b.tick(&wall, None, &[]);
             if b.in_ground {
                 break;
             }
@@ -5867,9 +6073,9 @@ mod tests {
             pitch: 1.0,
             seed: 9,
         });
-        c.tick(&wall, None);
+        c.tick(&wall, None, &[]);
         while !c.dead {
-            c.tick(&wall, None);
+            c.tick(&wall, None, &[]);
         }
         assert!(
             c.life >= ARROW_GROUND_LIFE,
@@ -5895,11 +6101,264 @@ mod tests {
         d.prev_x = 30.0;
         d.x = 31.0; // the segment the player's own box (31.6 center) crosses
         let victim = player_at(31.5, 10.0, 32.0);
-        let ev = d.tick(&world, Some(&victim));
+        let ev = d.tick(&world, Some(&victim), &[]);
         let dmg = ev.hit_player.expect("the player hit the damage speaks");
         let want = ((1.5f64 * ARROW_BASE_DAMAGE).ceil()) as i64;
         assert_eq!(dmg as i64, want, "the ceil(|v| * 2.0) the formula keeps");
         assert!(d.dead, "the DISALLOWED pickup the hit discards");
+    }
+
+    /// THE DRAW'S OWN POWER (javap `BowItem.getPowerForTime` the 26.2
+    /// bytecode speaks): `t / 20` the ratio speaks, the quadratic ease
+    /// `(f² + 2f) / 3` the draw answers, the full-draw cap the
+    /// `f > 1.0` clamp arms — the 0.1 release gate the 3-tick crossing
+    /// keeps (the 2-tick draw the honest silence speaks).
+    #[test]
+    fn the_bow_power_the_get_power_for_time_law_speaks() {
+        assert_eq!(crate::mob::bow_power_for_time(0), 0.0, "the rest no power");
+        // the 2-tick draw: (0.01 + 0.2) / 3 = 0.07 — the 0.1 gate
+        // refuses (the release the honest silence keeps)
+        let t2 = crate::mob::bow_power_for_time(2);
+        let want2 = ((2.0f32 / 20.0) * (2.0f32 / 20.0) + (2.0f32 / 20.0) * 2.0) / 3.0;
+        assert_eq!(t2, want2, "the 2-tick draw the quadratic speaks");
+        assert!(t2 < 0.1, "the release gate the silence keeps ({t2})");
+        // the 3-tick draw: (0.0225 + 0.3) / 3 = 0.1075 — the gate
+        // passes (the shot the weak draw speaks)
+        let t3 = crate::mob::bow_power_for_time(3);
+        let want3 = ((3.0f32 / 20.0) * (3.0f32 / 20.0) + (3.0f32 / 20.0) * 2.0) / 3.0;
+        assert_eq!(t3, want3, "the 3-tick draw the quadratic speaks");
+        assert!(t3 >= 0.1, "the release gate the shot speaks ({t3})");
+        // the full draw: t = 1.0 the exact cap (the crit's own gate —
+        // the fcmpl/ifne equality the 1.0 arms)
+        assert_eq!(crate::mob::bow_power_for_time(20), 1.0, "the full draw exact");
+        // the overdraw: the cap the 1.0 clamp keeps
+        assert_eq!(crate::mob::bow_power_for_time(30), 1.0, "the cap the clamp keeps");
+        assert_eq!(crate::mob::bow_power_for_time(72000), 1.0, "the hold the cap keeps");
+    }
+
+    /// THE PLAYER'S OWN SHOT (javap `BowItem.releaseUsing` →
+    /// `Projectile.shootFromRotation` → `Projectile.shoot` the 26.2
+    /// bytecode speaks): the direction the camera's own look vector
+    /// (the −sin(yaw)·cos(pitch), −sin(pitch), cos(yaw)·cos(pitch)
+    /// fold the Mth angles answer), the velocity the normalize +
+    /// triangle spread (0.0172275 × 1.0 the PLAYER's own inaccuracy)
+    /// the f × 3.0 scale carries, the CRIT the full-draw power 1.0
+    /// arms, the spawn position the eye-minus-0.1 ctor walk rides.
+    #[test]
+    fn the_player_shot_the_shoot_from_rotation_law_flies() {
+        // the level aim toward -z (the camera's own yaw-0 look), the
+        // full draw's 3.0 velocity the spread window keeps
+        let dir = (0.0f64, 0.0f64, -1.0f64);
+        let a = Arrow::player_shot(1, 10.0, 20.0, 30.0, dir, 1.0);
+        // the spawn position the eye-minus-0.1 law keeps (the caller's
+        // own oy the −0.1 walk already spoke)
+        assert_eq!((a.x, a.y, a.z), (10.0, 20.0, 30.0), "the spawn the ctor walk keeps");
+        assert!((a.prev_z - 30.0).abs() < 1e-9, "the prev the same spot keeps");
+        // the spread window: ±0.0172275 per axis × the 3.0 scale —
+        // the mean the 3.0 magnitude speaks
+        assert!(a.vz < -2.948, "the -z the aim speaks ({})", a.vz);
+        assert!(a.vz > -3.052, "the -z the aim speaks ({})", a.vz);
+        assert!(a.vx.abs() < 0.052, "the x the spread window keeps ({})", a.vx);
+        assert!(a.vy.abs() < 0.052, "the y the spread window keeps ({})", a.vy);
+        // the CRIT the full-draw power 1.0 arms
+        assert!(a.crit, "the full draw the crit arms");
+        assert!(a.player_shot, "the owner lane the player speaks");
+        // the replay: the same id the same seed the same shot speaks
+        let b = Arrow::player_shot(1, 10.0, 20.0, 30.0, dir, 1.0);
+        assert_eq!((a.vx, a.vy, a.vz), (b.vx, b.vy, b.vz), "the replay the seed keeps");
+        // the weak draw: the 0.5 power the 1.5 velocity the crit
+        // NEVER arms (the fcmpl gate the partial draw refuses)
+        let c = Arrow::player_shot(2, 0.0, 0.0, 0.0, dir, 0.5);
+        assert!(c.vz < -1.474 && c.vz > -1.526, "the weak draw the half power ({})", c.vz);
+        assert!(!c.crit, "the partial draw the crit refuses");
+        assert!(!a.dead && !c.dead, "the shot the alive keeps");
+        // the up aim: the pitch's own component the y carries (the
+        // camera's own +pitch the up speaks)
+        let up = Arrow::player_shot(3, 0.0, 0.0, 0.0, (0.0, 1.0, 0.0), 1.0);
+        assert!(up.vy > 2.9, "the up aim the y speaks ({})", up.vy);
+        assert!(up.vx.abs() < 0.052 && up.vz.abs() < 0.052, "the horizontal the spread keeps");
+    }
+
+    /// THE PLAYER'S ARROW THE MOB HITS (javap `AbstractArrow.
+    /// onHitEntity` the 26.2 bytecode speaks): the mob boxes the
+    /// canHitEntity walk answers (the isAlive gate the health keeps —
+    /// the dying body the arrows pass), the nearest hit the distance
+    /// order speaks, the damage the ceil(|v| × 2.0) formula answers
+    /// and the CRIT arm the nextInt(i / 2 + 2) bonus rides — the
+    /// 6-damage full draw the 6..10 window keeps, the OWNER's own
+    /// player the hit walk never answers (the leftOwner law).
+    #[test]
+    fn the_player_arrow_the_mob_hit_the_crit_law_speaks() {
+        let world = arrow_air_world();
+        // the flight toward -z: the spawn at (10, 10.5, 10) the
+        // velocity (0, 0, -3) the segment the boxes cross
+        let shot = ArrowShot {
+            id: 99,
+            x: 10.0,
+            y: 10.5,
+            z: 10.0,
+            vx: 0.0,
+            vy: 0.0,
+            vz: -3.0,
+            y_rot: 180.0,
+            x_rot: 0.0,
+            crit: true,
+            pitch: 1.0,
+            seed: 5,
+        };
+        // THE HIT: the living zombie 1.5-2.0 blocks out the segment
+        // crosses (the box the 0.3 inflate the hit answers)
+        let mut victim = Zombie::new(7, 10.2, 10.0, 8.5, 11);
+        victim.kind = MobKind::Zombie;
+        let mut a = Arrow::from_spawn(&shot);
+        a.player_shot = true;
+        let ev = a.tick(&world, Some(&player_at(100.0, 10.0, 100.0)), &[victim]);
+        let (mob_id, dmg) = ev.hit_mob.expect("the mob hit the verdict speaks");
+        assert_eq!(mob_id, 7, "the hit the living victim answers");
+        // the base the ceil(3.0 × 2.0) = 6, the crit arm the
+        // nextInt(6/2 + 2 = 5) the 6..=10 window keeps
+        assert!(
+            (6.0..=10.0).contains(&dmg),
+            "the crit window the formula keeps ({dmg})"
+        );
+        assert!(a.dead, "the hit the discard answers");
+        assert!(ev.hit_player.is_none(), "the owner the player never hits");
+        // THE DYING BODY: the health 0 the isAlive gate refuses — the
+        // arrow the flight continues (the nearer corpse the arrows
+        // pass)
+        let mut corpse = Zombie::new(8, 10.2, 10.0, 8.5, 11);
+        corpse.kind = MobKind::Zombie;
+        corpse.health = 0.0;
+        let mut b = Arrow::from_spawn(&shot);
+        b.player_shot = true;
+        let ev = b.tick(&world, Some(&player_at(100.0, 10.0, 100.0)), &[corpse]);
+        assert!(ev.hit_mob.is_none(), "the dying body the arrows pass");
+        assert!(!b.dead, "the flight the miss keeps");
+        // THE NEAREST WINS: two living boxes the segment crosses —
+        // the ray the -z flight walks (the arrow the z-10 start
+        // speaks): the 8.5-box the FIRST crossing the hit answers
+        // (the distance order the vanilla law keeps)
+        let mut first = Zombie::new(22, 10.2, 10.0, 8.5, 13);
+        let mut second = Zombie::new(21, 10.2, 10.0, 8.0, 17);
+        first.kind = MobKind::Zombie;
+        second.kind = MobKind::Zombie;
+        let mut c = Arrow::from_spawn(&shot);
+        c.player_shot = true;
+        let ev = c.tick(&world, None, &[second, first]);
+        let (mob_id, _) = ev.hit_mob.expect("the nearest the hit answers");
+        assert_eq!(mob_id, 22, "the nearest the distance order keeps");
+        // THE SUB-DRAW: the non-crit arrow the bare formula speaks
+        // (the crit arm the flag's absence never rides)
+        let mut bare = shot;
+        bare.crit = false;
+        let mut victim2 = Zombie::new(7, 10.2, 10.0, 8.5, 11);
+        victim2.kind = MobKind::Zombie;
+        let mut d = Arrow::from_spawn(&bare);
+        d.player_shot = true;
+        let ev = d.tick(&world, None, &[victim2]);
+        let (_, dmg) = ev.hit_mob.expect("the bare hit the verdict speaks");
+        assert_eq!(dmg, 6.0, "the non-crit the bare ceil keeps");
+    }
+
+    /// THE EQUIPMENT'S OWN DROP (javap `Mob.dropCustomDeathLoot` the
+    /// 26.2 bytecode speaks): the walk the loot table's rows FOLLOW
+    /// (the arrow/bone first the order keeps), the held equipment the
+    /// 0.085 chance gates (`nextFloat() < chance` the fcmpg keeps),
+    /// the RECENTLY-HIT gate the killed_by_player arg rides — the
+    /// no-player kill the equipment keeps (the draws never spend),
+    /// the empty slot the isEmpty gate skips BEFORE the draw.
+    #[test]
+    fn the_skeleton_bow_the_equipment_drop_law_rolls() {
+        // THE NO-PLAYER KILL: the gate closed — the equipment NEVER
+        // drops (2000 seeds the same verdict speaks)
+        for seed in 0..2000u64 {
+            let mut z = Zombie::new(1, 0.0, 0.0, 0.0, seed);
+            z.kind = MobKind::Skeleton;
+            z.health = 0.0;
+            z.held_weapon = Some("bow");
+            let loot = z.death_loot(false);
+            assert!(
+                !loot.iter().any(|&(id, _)| {
+                    mc_registry::generated::item_order::ITEM_WIRE_ORDER
+                        .get(id as usize)
+                        .copied()
+                        == Some("bow")
+                }),
+                "seed {seed}: the no-player kill the bow keeps"
+            );
+        }
+        // THE PLAYER KILL: the gate open — the bow the 0.085 roll
+        // speaks (2000 seeds the fraction the window keeps), the
+        // arrow/bone rows the equipment walk FOLLOWs (the bow the
+        // tail keeps), the count the 1 the single stack speaks
+        let bow_id = mc_registry::item_id_by_name("bow");
+        let arrow_id = mc_registry::item_id_by_name("arrow");
+        let bone_id = mc_registry::item_id_by_name("bone");
+        let (mut bows, mut last_checked) = (0usize, 0usize);
+        for seed in 0..2000u64 {
+            let mut z = Zombie::new(1, 0.0, 0.0, 0.0, seed);
+            z.kind = MobKind::Skeleton;
+            z.health = 0.0;
+            z.held_weapon = Some("bow");
+            let loot = z.death_loot(true);
+            if let Some((id, count)) = loot.iter().rev().find(|&&(id, _)| Some(id) == bow_id) {
+                bows += 1;
+                assert_eq!(*count, 1, "the bow the single stack speaks");
+                // the bow the tail: the table's rows the walk follows
+                // (the equipment NEVER precedes — the dropAllDeathLoot
+                // order the table first keeps; the 0-count rolls the
+                // lone bow the honest loot keeps)
+                let last = loot.last().expect("the loot the entries keep");
+                assert_eq!(last.0, *id, "the equipment the table rows follow");
+                assert!(
+                    loot[..loot.len() - 1]
+                        .iter()
+                        .all(|&(lid, _)| Some(lid) == arrow_id || Some(lid) == bone_id),
+                    "the table's own rows the bow precedes"
+                );
+            }
+            last_checked += 1;
+        }
+        assert_eq!(last_checked, 2000, "the seeds the walk keeps");
+        let rate = bows as f64 / 2000.0;
+        assert!(
+            (0.03..0.15).contains(&rate),
+            "the 0.085 chance the window keeps ({rate})"
+        );
+        // THE EMPTY SLOTS: the bare skeleton the draws never spend —
+        // the same seed's loot the equipment-less verdict keeps
+        let mut bare = Zombie::new(1, 0.0, 0.0, 0.0, 42);
+        bare.kind = MobKind::Skeleton;
+        bare.health = 0.0;
+        let bare_loot = bare.death_loot(true);
+        assert!(
+            !bare_loot
+                .iter()
+                .any(|&(id, _)| Some(id) == bow_id),
+            "the bare skeleton the bow never carries"
+        );
+        // THE ZOMBIE'S OWN SWORD (the same walk the 1% spawn roll's
+        // iron word answers): the player kill the 0.085 roll the
+        // window keeps
+        let sword_id = mc_registry::item_id_by_name("iron_sword");
+        let mut sword_drops = 0usize;
+        for seed in 0..2000u64 {
+            let mut z = Zombie::new(1, 0.0, 0.0, 0.0, seed);
+            z.kind = MobKind::Zombie;
+            z.health = 0.0;
+            z.held_weapon = Some("iron_sword");
+            if z.death_loot(true)
+                .iter()
+                .any(|&(id, _)| Some(id) == sword_id)
+            {
+                sword_drops += 1;
+            }
+        }
+        let sword_rate = sword_drops as f64 / 2000.0;
+        assert!(
+            (0.03..0.15).contains(&sword_rate),
+            "the sword's own 0.085 the window keeps ({sword_rate})"
+        );
     }
 
 

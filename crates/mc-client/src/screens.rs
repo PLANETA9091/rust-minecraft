@@ -3439,6 +3439,11 @@ impl App {
                 // the block's voice the stick's own pitch keeps)
                 let mut arrow_player_hits: Vec<f64> = Vec::new();
                 let mut arrow_block_hits: Vec<(f64, f64, f64, f32)> = Vec::new();
+                // THE PLAYER'S OWN HITS (the mob verdicts the flight
+                // tick carried — the (mob id, damage) pairs the caller
+                // lanes answer: the hurt, the voice, the death loot +
+                // XP the player-kill gate arms)
+                let mut arrow_mob_hits: Vec<(i32, f64)> = Vec::new();
                 // THE GRAZE'S OWN SWAPS (the EatBlockGoal's `== 4`
                 // landing the events carry — the caller applies the
                 // id the tick's &World read the immutable borrow
@@ -3642,9 +3647,12 @@ impl App {
                         // discards; the vecs the caller's scope
                         // declared, the fills the flight answers)
                         for arrow in self.arrows.iter_mut() {
-                            let aev = arrow.tick(world, player.as_ref());
+                            let aev = arrow.tick(world, player.as_ref(), &self.mobs);
                             if let Some(dmg) = aev.hit_player {
                                 arrow_player_hits.push(dmg);
+                            }
+                            if let Some((mob_id, dmg)) = aev.hit_mob {
+                                arrow_mob_hits.push((mob_id, dmg));
                             }
                             if let Some(pitch) = aev.hit_block {
                                 arrow_block_hits.push((arrow.x, arrow.y, arrow.z, pitch));
@@ -3742,6 +3750,69 @@ impl App {
                         pitch,
                         ear_distance(ear, ax, ay, az),
                     );
+                }
+                // THE PLAYER'S OWN ARROWS (the mob hits the onHitEntity
+                // verdict answers — the hurt pipeline the melee kill's
+                // own aftermath speaks: the kind's own hurt/death
+                // voice, the death loot the player-kill gate arms (the
+                // equipment drop the same gate rides — the skeleton's
+                // own bow the 0.085 roll keeps), the XP the kill
+                // awards; the damage indicators the melee walk owns
+                // the arrow hit never speaks, the sweep the AoE the
+                // melee lane never shares)
+                for (mob_id, dmg) in arrow_mob_hits {
+                    let Some(i) = self.mobs.iter().position(|m| m.id == mob_id) else {
+                        continue;
+                    };
+                    let mob = &mut self.mobs[i];
+                    let (kind, pitch) = (mob.kind, mob.voice_pitch());
+                    let (mx, my, mz) = (mob.x, mob.y, mob.z);
+                    mob.hurt(dmg);
+                    let died = mob.health <= 0.0;
+                    if died {
+                        self.sounds.play_voice_at(
+                            self.frame,
+                            kind.voice_event(crate::mob::VoiceSlot::Death),
+                            1.0,
+                            pitch,
+                            ear_distance(ear, mx, my, mz),
+                        );
+                    } else {
+                        self.sounds.play_voice_at(
+                            self.frame,
+                            kind.voice_event(crate::mob::VoiceSlot::Hurt),
+                            1.0,
+                            pitch,
+                            ear_distance(ear, mx, my, mz),
+                        );
+                    }
+                    // THE DEATH LOOT (dropAllDeathLoot's own order —
+                    // the loot table's rows the equipment walk
+                    // follows, the drops the spawnAtLocation law
+                    // speaks at the mob's own feet, the player-kill
+                    // gate the arrow's own shot arms)
+                    if died {
+                        let target_loot = self.mobs[i].death_loot(true);
+                        for (item, count) in target_loot {
+                            let id = self.next_drop_id;
+                            self.next_drop_id += 1;
+                            self.drops.push(crate::drops::ItemDrop::spawn_entity_loot(
+                                id,
+                                item,
+                                count,
+                                mx,
+                                my,
+                                mz,
+                                &mut self.mob_rng,
+                            ));
+                        }
+                        // THE KILL'S OWN XP (javap LivingEntity.
+                        // dropExperience — the player-kill gate the
+                        // arrow's own shot arms, the orbs the award
+                        // spawns)
+                        let xp = self.mobs[i].base_xp_reward();
+                        self.spawn_xp_orbs(mx, my + 0.5, mz, xp);
+                    }
                 }
                 // THE GRAZE'S OWN SWAPS (the caller's setBlock walk —
                 // the tick's reads the immutable borrow keeps, the
@@ -7545,6 +7616,22 @@ impl App {
                     }
                     return true;
                 }
+                // THE BOW'S OWN USE GATE (javap `BowItem.use` the 26.2
+                // bytecode speaks: `canShoot = !getProjectile(stack).
+                // isEmpty(); if (hasInfiniteMaterials() || canShoot)
+                // startUsingItem → CONSUME; else FAIL` — the empty
+                // quiver the draw never starts, the survival conjunct
+                // the offline arc keeps). The OFFLINE lane's own
+                // inventory the scan answers — the LIVE session's
+                // store the worker owns (the server's own verdict the
+                // echo answers, no local belief the gate refuses).
+                if self.live_clicks.is_none()
+                    && !self.world_is_network
+                    && self.held_word_of(id) == Some("bow")
+                    && self.inventory_arrow_slot().is_none()
+                {
+                    return false; // the FAIL the empty quiver speaks
+                }
                 if let Some(def) = mc_registry::item_using_def(id) {
                     let state = mc_registry::using_state_index(def, 0.0);
                     self.using_item = Some(UseActive { item: id, ticks: 0, state });
@@ -7597,6 +7684,80 @@ impl App {
             && mc_registry::item_charge_def(active.item).is_some()
         {
             self.held_charge = Some(mc_registry::ChargeKind::Arrow);
+        }
+        // THE BOW'S OWN RELEASE (javap `BowItem.releaseUsing` the 26.2
+        // bytecode speaks: the power the getPowerForTime walk answers —
+        // `f < 0.1` the honest silence the release keeps (no shot, no
+        // sound, no consume); the getProjectile scan the arrow names —
+        // the EMPTY the early return keeps; the survival draw the
+        // stack shrinks (the `draw` walk's own consume); the shot the
+        // shootFromRotation law flies (the direction the camera's own
+        // look vector speaks, the velocity the f × 3.0 scale carries,
+        // the CRIT the full-draw power 1.0 arms); the ARROW_SHOOT
+        // voice the `1.0 / (nextFloat() * 0.4F + 1.2F) + f * 0.5F`
+        // pitch the PLAYERS source draws — the playSound at the
+        // player's own spot the ear answers). The OFFLINE lane's own
+        // walk — the LIVE session the server's own arrow the
+        // ReleaseUse echo speaks (the client predicts NO arrow the
+        // vanilla never predicts).
+        if self.live_clicks.is_none()
+            && !self.world_is_network
+            && self.held_word_of(active.item) == Some("bow")
+        {
+            let power = crate::mob::bow_power_for_time(active.ticks);
+            if power >= 0.1 {
+                if let Some(slot) = self.inventory_arrow_slot() {
+                    // THE CONSUME (the survival draw's shrink — the
+                    // empty count the clear keeps, the HUD row the
+                    // every-mutation law syncs)
+                    self.consume_arrow_at(slot);
+                    // THE OWNER'S OWN EYE (the AbstractArrow ctor's
+                    // spawn law — getX, getEyeY - 0.10000000149011612,
+                    // getZ; the body's own coords the camera's
+                    // authority keeps, the flight camera the headless
+                    // fallback answers)
+                    let (ox, oy, oz, dir) = match self.body.as_ref() {
+                        Some(b) => {
+                            let cam = b.camera();
+                            (
+                                b.x,
+                                b.y + b.eye_height() - 0.1,
+                                b.z,
+                                cam.forward(),
+                            )
+                        }
+                        None => {
+                            let cam = self.world_camera();
+                            (
+                                cam.pos.x as f64,
+                                cam.pos.y as f64 - 0.1,
+                                cam.pos.z as f64,
+                                cam.forward(),
+                            )
+                        }
+                    };
+                    // THE LEVEL'S OWN ENTITY COUNTER (the next_drop_id
+                    // the shared id space keeps — every spawned entity
+                    // the same walk answers)
+                    let id = self.next_drop_id;
+                    self.next_drop_id += 1;
+                    self.arrows.push(crate::mob::Arrow::player_shot(
+                        id,
+                        ox,
+                        oy,
+                        oz,
+                        (dir.x as f64, dir.y as f64, dir.z as f64),
+                        power,
+                    ));
+                    // THE VOICE (the level's own random the pitch draw
+                    // rides — the playSound's own stream the mob_rng
+                    // stands for)
+                    let pitch =
+                        1.0 / (self.mob_rng.next_f32() * 0.4 + 1.2) + power * 0.5;
+                    self.sounds
+                        .play_voice(self.frame, "entity.arrow.shoot", 1.0, pitch);
+                }
+            }
         }
         self.load_held_payload(active.item, None);
         if let Some(sink) = self.live_clicks.as_ref() {
@@ -10008,6 +10169,56 @@ impl App {
             return Some(sel.0);
         }
         self.offline_held
+    }
+
+    /// THE HELD WORD (the wire order's own resolution — the item id
+    /// the registry's name walk answers; the attack lane's own lookup
+    /// the same walk reuses).
+    fn held_word_of(&self, id: i32) -> Option<&'static str> {
+        mc_registry::generated::item_order::ITEM_WIRE_ORDER
+            .get(id as usize)
+            .copied()
+    }
+
+    /// THE PROJECTILE'S OWN SCAN (javap `Player.getProjectile` the 26.2
+    /// walk speaks — the ARROW_ONLY predicate the `getAllSupportedProjectiles`
+    /// answers, the container order the findMatchingItem keeps: the
+    /// items 0..36 the main list carries, the armor rows the mayPlace
+    /// gate never holds arrows, the offhand container 40 the tail
+    /// answers). The first matching stack the container index speaks —
+    /// None the empty quiver the FAIL keeps.
+    fn inventory_arrow_slot(&self) -> Option<usize> {
+        let arrow_id = mc_registry::item_id_by_name("arrow")?;
+        if let Some(i) = self
+            .inventory
+            .items
+            .iter()
+            .position(|&(id, count)| count > 0 && id == arrow_id)
+        {
+            return Some(i);
+        }
+        if self.inventory.offhand[0].1 > 0 && self.inventory.offhand[0].0 == arrow_id {
+            return Some(crate::drops::OFFHAND_CONTAINER);
+        }
+        None
+    }
+
+    /// THE PROJECTILE'S OWN CONSUME (the survival draw's shrink — the
+    /// stack count walks down, the empty the (0, 0) sentinel clears,
+    /// the HUD hotbar row the every-mutation law syncs).
+    fn consume_arrow_at(&mut self, slot: usize) {
+        if slot == crate::drops::OFFHAND_CONTAINER {
+            self.inventory.offhand[0].1 -= 1;
+            if self.inventory.offhand[0].1 <= 0 {
+                self.inventory.offhand[0] = (0, 0);
+            }
+        } else {
+            self.inventory.items[slot].1 -= 1;
+            if self.inventory.items[slot].1 <= 0 {
+                self.inventory.items[slot] = (0, 0);
+            }
+        }
+        self.hotbar_slots = self.inventory.hotbar();
     }
 
     /// The block-use lane's world — the screen's OWN terrain: the
@@ -20779,6 +20990,131 @@ mod tests {
                 "the SHOVEL_FLATTEN voice the useOn's own order rode"
             );
         }
+    }
+
+    /// THE BOW'S OWN LANE (javap `BowItem.use` + `releaseUsing` the
+    /// 26.2 bytecode speaks): the EMPTY quiver the use gate FAILS
+    /// (the draw never starts), the loaded quiver the draw arms, the
+    /// full draw the 20-tick clock speaks and the RELEASE the shot
+    /// answers — the arrow the eye-minus-0.1 spawn rides, the -z aim
+    /// the 3.0 velocity keeps, the CRIT the full-draw power arms, the
+    /// stack the survival draw shrinks — and the FLIGHT the mob hit
+    /// answers (the hurt the arrow's own damage speaks, the discard
+    /// the hit removal keeps).
+    #[test]
+    fn the_bow_lane_the_use_gate_the_release_shot_speaks() {
+        let mut app = App::new(3);
+        app.enter_world();
+        let wire = |name: &str| {
+            mc_registry::generated::item_order::ITEM_WIRE_ORDER
+                .iter()
+                .position(|&n| n == name)
+                .expect("the item rides the wire") as i32
+        };
+        let bow_id = wire("bow");
+        let arrow_id = wire("arrow");
+        let slot = app.selected_hotbar;
+        let quiver = (slot + 1) % 9;
+        // the spawn band's air (the terrain's own tops never reach),
+        // the level -z look the camera's own forward keeps
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let eye_y = app.spawn_y + 7;
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, eye_y as f32, c as f32 + 0.5),
+            yaw: 0.0,
+            pitch: 0.0,
+        });
+        // THE EMPTY QUIVER: the use gate the FAIL speaks (the draw
+        // never starts, the press the false verdict keeps)
+        app.inventory.items[slot] = (bow_id, 1);
+        app.hotbar_slots = app.inventory.hotbar();
+        assert!(
+            !app.on_right_press(0, 0),
+            "the empty quiver the FAIL keeps"
+        );
+        assert!(app.using_item.is_none(), "the draw the gate refuses");
+        // THE QUIVER RESTORED: the draw arms (the use-item the bow
+        // speaks)
+        app.inventory.items[quiver] = (arrow_id, 3);
+        app.hotbar_slots = app.inventory.hotbar();
+        assert!(app.on_right_press(0, 0), "the draw the arrow speaks");
+        assert!(app.using_item.is_some(), "the draw starts");
+        assert_eq!(
+            app.using_item.as_ref().unwrap().item,
+            bow_id,
+            "the draw the held bow carries"
+        );
+        // THE FULL DRAW: the use clock the 20 ticks the cap speaks
+        for _ in 0..21 {
+            app.update();
+        }
+        assert!(
+            app.using_item.as_ref().unwrap().ticks >= 20,
+            "the draw clock the update advances"
+        );
+        // THE RELEASE: the shot the full power speaks
+        app.on_right_release();
+        assert!(app.using_item.is_none(), "the release the use ends");
+        assert_eq!(app.arrows.len(), 1, "the shot the arrow speaks");
+        let a = &app.arrows[0];
+        assert!(a.player_shot, "the owner lane the player speaks");
+        assert!(a.crit, "the full draw the crit arms");
+        // the spawn position the eye-minus-0.1 walk keeps (the
+        // camera's own pos the headless fallback answers)
+        assert!(
+            (a.x - (c as f64 + 0.5)).abs() < 1e-6
+                && (a.y - (eye_y as f64 - 0.1)).abs() < 1e-6
+                && (a.z - (c as f64 + 0.5)).abs() < 1e-6,
+            "the spawn the eye walk keeps ({},{},{})",
+            a.x,
+            a.y,
+            a.z
+        );
+        // the velocity the -z aim the 3.0 scale keeps (the spread
+        // window the ±0.0172275 × 3.0 speaks)
+        assert!(
+            a.vz < -2.948 && a.vz > -3.052,
+            "the -z the aim speaks ({})",
+            a.vz
+        );
+        assert!(
+            a.vx.abs() < 0.052 && a.vy.abs() < 0.052,
+            "the spread the window keeps ({},{})",
+            a.vx,
+            a.vy
+        );
+        // THE CONSUME: the stack the survival draw shrinks (the 3 the
+        // 2 speaks, the HUD row the every-mutation law syncs)
+        assert_eq!(
+            app.inventory.items[quiver],
+            (arrow_id, 2),
+            "the survival draw the stack shrinks"
+        );
+        // THE FLIGHT + THE MOB HIT (the full loop the vanilla speaks):
+        // the cow 2.5 blocks out the path carries — the next update
+        // the hurt speaks, the discard the removal answers
+        let mut cow = crate::mob::Zombie::new(101, c as f64 + 0.5, (eye_y - 1) as f64, c as f64 - 2.0, 21);
+        cow.kind = crate::mob::MobKind::Cow;
+        let pre = cow.health;
+        app.mobs.push(cow);
+        app.update();
+        assert!(
+            app.arrows.is_empty(),
+            "the hit the discard answers (the miss the flight keeps)"
+        );
+        let hit = app.mobs.iter().find(|m| m.id == 101).unwrap();
+        assert!(
+            hit.health < pre,
+            "the hurt the arrow's own damage speaks ({} -> {})",
+            pre,
+            hit.health
+        );
+        // THE EMPTY QUIVER AGAIN: the spent stack the gate refuses
+        // (the shot the next draw never arms)
+        app.inventory.items[quiver] = (0, 0);
+        app.hotbar_slots = app.inventory.hotbar();
+        assert!(!app.on_right_press(0, 0), "the spent quiver the FAIL keeps");
     }
 
     /// THE FLATTEN'S OWN DOWN-FACE REFUSAL — the useOn's
