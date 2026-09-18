@@ -513,6 +513,31 @@ pub const SHEEP_DATA_WOOL_ID: u8 = 18;
 /// state is the honest store the render never draws from.
 pub const SPIDER_DATA_FLAGS_ID: u8 = 16;
 
+/// THE BABY WORD'S OWN INDEX — the accessor the TWO families' own
+/// walks land at the SAME slot 16, the serializers the families keep
+/// apart: the zombie's own `DATA_BABY_ID` Boolean the monster branch's
+/// walk wears (Entity 8 + LivingEntity 7 + Mob 1 = 16 — the AgeableMob
+/// pair the branch NEVER takes, the reflection probe the loaded jar's
+/// id answered verbatim: BABY 16, then SPECIAL_TYPE 17 and
+/// DROWNED_CONVERSION 18 the zombie's own walk banks), and the
+/// AgeableMob pair's first Boolean the animals' branch wears (Pig's
+/// own accessors land at 18 BOOST / 19 VARIANT / 20 SOUND, Cow's at 18
+/// VARIANT / 19 SOUND — the pair the family inherits at 16/17, the
+/// wool's own 18 the dev walk re-confirmed). THE SPIDER'S OWN BYTE the
+/// slot shares: the DATA_FLAGS_ID flags byte the climb word decodes is
+/// the Byte serializer's entry, the Boolean match never reads it —
+/// the kind gate the projection keeps the families honest. THE CLIENT
+/// SIDE'S OWN VERDICT the age split speaks (javap AgeableMob.getAge —
+/// `level().isClientSide ? entityData.get(DATA_BABY_ID) ? -1 : 1 :
+/// age` the iconst_m1/iconst_1 pair wears, and `isBaby()` the
+/// `canBeABaby() && getAge() < 0` pair answers): the wire's bit the
+/// client's -1/1 words translate, the sim's own `age < 0` law the
+/// same verdicts keep — the -1 the baby wears, the 1 the adult wears.
+/// THE RENDER'S OWN WORD rides the verdict (javap LivingEntity
+/// .getAgeScale — `isBaby() ? 0.5f : 1.0f` the ldc the
+/// BABY_RENDER_SCALE const's own law keeps).
+pub const AGEABLE_DATA_BABY_ID: u8 = 16;
+
 /// THE CUSTOM NAME'S OWN INDEX — the SynchedEntityData id the class
 /// tree speaks: Entity's clinit defineId walk lands DATA_CUSTOM_NAME
 /// at 2 (SHARED_FLAGS 0, AIR_SUPPLY 1, CUSTOM_NAME 2, NAME_VISIBLE 3,

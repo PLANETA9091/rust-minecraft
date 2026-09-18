@@ -10034,6 +10034,16 @@ impl App {
                 // the lerpTo law never runs), the decoded state the
                 // honest mirror keeps.
                 m.climbing = w.climbing;
+                // THE BABY WORD rides the spawn (the slot-16 Boolean
+                // the zombie's and the animals' own accessors wear):
+                // the vanilla CLIENT's own getAge split the
+                // translation wears (javap AgeableMob.getAge — the
+                // synched bit the -1 the baby answers, the 1 the
+                // adult), the sim's own `age < 0` law the same
+                // verdicts keeps — the scale lane's 0.5 the verdict
+                // arms (the getAgeScale's own ldc the
+                // BABY_RENDER_SCALE const banks)
+                m.age = if w.baby { -1 } else { 1 };
                 // THE WOOL WORD (Sheep's DATA_WOOL_ID byte the
                 // projection carried raw — the isSheared/getColor laws
                 // the merge decodes: the bit 0x10 the sheared gate
@@ -10120,6 +10130,10 @@ impl App {
             // STATE, the wall's press the wire arms, the open air the
             // wire disarms)
             m.climbing = w.climbing;
+            // THE BABY WORD rides with the pose (the same -1/1 split
+            // the fresh spawn wears — the growth is STATE the server
+            // owns, the small one's word the verdict re-arms)
+            m.age = if w.baby { -1 } else { 1 };
             // THE WOOL WORD rides with the pose (the same decode the
             // fresh spawn speaks — state not countdown, the shear and
             // the dye both ride the same binary assign)
@@ -20757,6 +20771,51 @@ mod tests {
         );
     }
 
+    /// THE WIRE BABY'S OWN VERDICT (the slot-16 Boolean the merge
+    /// translates — the vanilla CLIENT's own getAge split the -1/1
+    /// words wear): the small one's word the sim's `age < 0` law
+    /// answers (the scale lane's 0.5 the verdict arms), the grow-up's
+    /// own word the same binary assign keeps, the fresh spawn AND the
+    /// lerpTo arm the same lane speaks.
+    #[test]
+    fn the_wire_baby_word_the_age_verdict_wears() {
+        let mut app = App::new(3);
+        app.open(ScreenKind::Connect);
+        app.net_world = Some(air_net_world(2, 0));
+        app.enter_network_world(None, Skybox::Overworld, None, None);
+        // the baby lamb: the word rides the FRESH spawn (the -1 the
+        // client's own split wears, the verdict the age law answers)
+        let mut lamb = wire_mob_named(40, 10.0, 64.0, 10.0, "minecraft:sheep");
+        lamb.baby = true;
+        app.live_mobs_updated(vec![lamb]);
+        assert_eq!(app.net_mobs[0].age, -1, "the client's own -1 the split wears");
+        assert!(app.net_mobs[0].is_baby(), "the small one the verdict names");
+        // the verdict stands between the ships (the own tick owns NO
+        // growth clock for the wire body — the server owns the age)
+        app.tick_net_mobs();
+        assert!(app.net_mobs[0].is_baby(), "the verdict stands between the ships");
+        // the lerpTo arm: the grow-up's own word the same lane wears
+        // (the 1 the adult word speaks)
+        app.live_mobs_updated(vec![wire_mob_named(
+            40,
+            12.0,
+            64.0,
+            10.0,
+            "minecraft:sheep",
+        )]);
+        assert_eq!(app.net_mobs[0].age, 1, "the client's own 1 the adult wears");
+        assert!(!app.net_mobs[0].is_baby(), "the grown-up the verdict keeps");
+        // the zombie's own accessor rides the SAME slot (the monster
+        // branch's own DATA_BABY_ID the 16 the probe answered): the
+        // baby zombie the same verdict wears
+        let mut baby_z = wire_zombie(41, 14.0, 64.0, 10.0);
+        baby_z.baby = true;
+        app.live_mobs_updated(vec![baby_z]);
+        let z = app.net_mobs.iter().find(|m| m.id == 41).unwrap();
+        assert!(z.is_baby(), "the baby zombie the same verdict wears");
+        assert_eq!(z.age, -1, "the same -1 the split keeps");
+    }
+
     /// THE WIRE'S OWN HAND (the equipment word the live lane carries —
     /// the armed zombie the record the render lane draws): the wire
     /// mob's word the fresh spawn rides (the projection resolved the
@@ -20920,6 +20979,7 @@ mod tests {
             crouching: false,
             climbing: false,
             wool_byte: 0,
+            baby: false,
             held_weapon: None,
             held_offhand: None,
             armor: [None; 4],
@@ -20951,6 +21011,7 @@ mod tests {
             crouching: false,
             climbing: false,
             wool_byte: 0,
+            baby: false,
             held_weapon: None,
             held_offhand: None,
             armor: [None; 4],

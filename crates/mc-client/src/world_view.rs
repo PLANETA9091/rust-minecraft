@@ -929,6 +929,16 @@ pub struct WireMob {
     /// bodies' projections carry (the wool word never asks for their
     /// index-18 traffic).
     pub wool_byte: u8,
+    /// THE BABY WORD (the accessor the TWO families' own walks land at
+    /// the SAME slot 16 — the zombie's own DATA_BABY_ID Boolean the
+    /// monster branch wears, the AgeableMob pair's first Boolean the
+    /// animals wear; the SPIDER's own flags byte the slot shares and
+    /// the kind gate keeps apart): true while the server says the body
+    /// is the small one, false while the accessor never spoke or the
+    /// body is the spider's (the honest adult the silence keeps). The
+    /// render's own scale lane reads the verdict the age law answers —
+    /// the -1/1 words the client's own getAge split wears.
+    pub baby: bool,
     /// THE EQUIPMENT WORD (the Set Equipment store's MAINHAND slot —
     /// the item id the registry's wire order resolves to the BARE
     /// name): the weapon the mob's own hand wears, the same word the
@@ -2170,6 +2180,20 @@ impl LiveView {
                     } else {
                         0
                     },
+                    // THE BABY WORD (the slot-16 Boolean the zombie's
+                    // own DATA_BABY_ID and the AgeableMob pair's first
+                    // accessor wear — the SPIDER's own flags byte the
+                    // gate keeps apart, the Byte entry the Boolean
+                    // match never reads): the bit the verdict rides,
+                    // the never-spoken accessor the honest adult keeps
+                    baby: if type_name != "minecraft:spider" {
+                        matches!(
+                            e.data.get(&crate::mob::AGEABLE_DATA_BABY_ID),
+                            Some(mc_protocol::play::EntityDataEntry::Bool(true))
+                        )
+                    } else {
+                        false
+                    },
                     // THE EQUIPMENT WORD (the store's MAINHAND slot 0 —
                     // the Set Equipment packet the model merged, the
                     // registry walk the bare name speaks): the render's
@@ -3256,6 +3280,127 @@ mod tests {
         let upd = view.refresh(example_mapper);
         let s = upd.mobs.iter().find(|m| m.id == 11).unwrap();
         assert!(!s.climbing, "the open air the flag dies");
+    }
+
+    /// THE BABY WORD'S OWN RIDE (the slot-16 Boolean the zombie's own
+    /// DATA_BABY_ID and the AgeableMob pair's first accessor wear —
+    /// the TWO families' walks the SAME slot lands, the SPIDER's own
+    /// flags byte the gate keeps apart): the wire bit the projection
+    /// decodes, the never-spoken accessor the honest adult keeps.
+    #[test]
+    fn the_baby_word_the_wire_bit_rides() {
+        use mc_protocol::play::EntitySpawn;
+        let mut m = WorldModel::new();
+        // the synced registry: type id 0 = zombie, id 1 = sheep,
+        // id 2 = spider (the slot's own THIRD wearer the gate names)
+        m.registry.entity_types = vec![
+            "minecraft:zombie".to_string(),
+            "minecraft:sheep".to_string(),
+            "minecraft:spider".to_string(),
+        ];
+        m.apply(PlayEvent::Spawn(EntitySpawn {
+            id: 21,
+            uuid: 1,
+            type_id: 0,
+            x: 10.0,
+            y: 64.0,
+            z: 12.0,
+            movement: [0.0; 3],
+            x_rot: 0.0,
+            y_rot: 90.0,
+            y_head_rot: 90.0,
+            data: 0,
+        }));
+        m.apply(PlayEvent::Spawn(EntitySpawn {
+            id: 22,
+            uuid: 2,
+            type_id: 1,
+            x: 30.0,
+            y: 64.0,
+            z: 32.0,
+            movement: [0.0; 3],
+            x_rot: 0.0,
+            y_rot: 0.0,
+            y_head_rot: 0.0,
+            data: 0,
+        }));
+        m.apply(PlayEvent::Spawn(EntitySpawn {
+            id: 23,
+            uuid: 3,
+            type_id: 2,
+            x: 50.0,
+            y: 64.0,
+            z: 52.0,
+            movement: [0.0; 3],
+            x_rot: 0.0,
+            y_rot: 180.0,
+            y_head_rot: 180.0,
+            data: 0,
+        }));
+        let mut view = LiveView { model: m, side: 1 };
+        // the never-spoken accessor: the honest adult all three wear
+        let upd = view.refresh(example_mapper);
+        assert_eq!(upd.mobs.len(), 3, "the zombie AND the sheep AND the spider project v2");
+        for id in [21, 22, 23] {
+            assert!(
+                !upd.mobs.iter().find(|m| m.id == id).unwrap().baby,
+                "the silence the adult keeps for {id}"
+            );
+        }
+        // the baby word: the zombie's own accessor AND the animals'
+        // pair's first both ride the slot-16 Boolean true
+        for id in [21, 22] {
+            view.model.apply(PlayEvent::EntityData(mc_protocol::play::EntityDataSet {
+                id,
+                entries: vec![mc_protocol::play::SetEntityDataEntry {
+                    index: crate::mob::AGEABLE_DATA_BABY_ID,
+                    serializer: 1,
+                    value: mc_protocol::play::EntityDataEntry::Bool(true),
+                }],
+            }));
+        }
+        // the spider's slot-16 word is its OWN FLAGS BYTE (the Byte
+        // serializer the climb word decodes): the Boolean match never
+        // reads it, the honest adult the gate keeps
+        view.model.apply(PlayEvent::EntityData(mc_protocol::play::EntityDataSet {
+            id: 23,
+            entries: vec![mc_protocol::play::SetEntityDataEntry {
+                index: crate::mob::SPIDER_DATA_FLAGS_ID,
+                serializer: 0,
+                value: mc_protocol::play::EntityDataEntry::Byte(0x01),
+            }],
+        }));
+        let upd = view.refresh(example_mapper);
+        assert!(
+            upd.mobs.iter().find(|m| m.id == 21).unwrap().baby,
+            "the zombie's own accessor the bit arms"
+        );
+        assert!(
+            upd.mobs.iter().find(|m| m.id == 22).unwrap().baby,
+            "the animals' pair's first the bit arms"
+        );
+        assert!(
+            !upd.mobs.iter().find(|m| m.id == 23).unwrap().baby,
+            "the spider's flags byte the baby word never asks for"
+        );
+        assert!(
+            upd.mobs.iter().find(|m| m.id == 23).unwrap().climbing,
+            "the spider's own byte the climb word still wears"
+        );
+        // the false bit: the grow-up's own word the wire re-speaks
+        view.model.apply(PlayEvent::EntityData(mc_protocol::play::EntityDataSet {
+            id: 21,
+            entries: vec![mc_protocol::play::SetEntityDataEntry {
+                index: crate::mob::AGEABLE_DATA_BABY_ID,
+                serializer: 1,
+                value: mc_protocol::play::EntityDataEntry::Bool(false),
+            }],
+        }));
+        let upd = view.refresh(example_mapper);
+        assert!(
+            !upd.mobs.iter().find(|m| m.id == 21).unwrap().baby,
+            "the grown-up the false bit wears"
+        );
     }
 
     /// THE WIRE ARROWS' PROJECTION (the Add Entity store's
