@@ -713,11 +713,17 @@ pub const INSIDE_SWEEP_BUDGET: i32 = 16;
 /// segment ends the floor keeps — the layers the box's continuous
 /// travel covers, the ε=1e-5 insets the static pass keeps) × the
 /// fixed axes' footprint (the box at the SEGMENT END — the chained
-/// segments the earlier axes' moves the fixed coords already carry),
-/// in the travel order the DDA's own crossings keep (the start pose's
-/// layers first, the end pose's last), stepped 0, 1, 2… per layer —
-/// the step index the budget's gate reads. The lane's z→y→x loop
-/// order the moving axis' own position respects.
+/// segments the earlier axes' moves the fixed coords already carry;
+/// the single-axis segment the fixed axes never move — the START
+/// pose's footprint the same cells keep), in the travel order the
+/// DDA's own crossings keep (the start pose's layers first, the end
+/// pose's last). THE EXACT STEP INDICES the betweenCorners machinery
+/// keeps (javap the corner-set walk): the start pose's overlapped
+/// layers the ONE step-0 visit shares (the corner set the step-0 walk
+/// speaks), the leading edge's crossings the +1 each — the
+/// layer-batch simplification the exact indices refine (the straddled
+/// start the budget's own word the share shifts). The lane's z→y→x
+/// loop order the moving axis' own position respects.
 fn sweep_segment_cells(
     cur: (f64, f64, f64),
     nxt: (f64, f64, f64),
@@ -752,34 +758,51 @@ fn sweep_segment_cells(
         (nxt.1 + HULL_HEIGHT - e).floor() as i32,
     );
     let (z0, z1) = ((nxt.2 - hw + e).floor() as i32, (nxt.2 + hw - e).floor() as i32);
+    // THE START CORNERS' OWN SPAN (the start pose's overlapped layers
+    // — the swept span's own head BOTH directions keep: the travel
+    // begins at the start pose, the first `start_count` entries the
+    // layers vec carries are the corner set's own cells)
+    let start_lo = (cur_a + rel_lo + e).floor() as i32;
+    let start_hi = (cur_a + rel_hi - e).floor() as i32;
+    let start_count = (start_hi - start_lo + 1).max(0) as usize;
     let mut out = Vec::new();
+    // THE STEP THE CORNER SET SHARES (the start layers the ONE step-0
+    // visit keeps, the crossings the +1 each — the exact indices the
+    // budget's gate reads)
+    let step_of = |i: usize| -> i32 {
+        if i < start_count {
+            0
+        } else {
+            (i - start_count + 1) as i32
+        }
+    };
     match axis {
-        // THE STEP THE CROSSING'S OWN BATCH KEEPS (one boundary
-        // crossing = one step — the footprint's cells the step's own
-        // visit speaks, the lane's z→y→x order the fixed axes keep)
         0 => {
-            for (step, wx) in layers.iter().enumerate() {
+            for (i, wx) in layers.iter().enumerate() {
+                let step = step_of(i);
                 for cz in z0..=z1 {
                     for cy in y0..=y1 {
-                        out.push(([*wx, cy, cz], step as i32));
+                        out.push(([*wx, cy, cz], step));
                     }
                 }
             }
         }
         1 => {
-            for (step, wy) in layers.iter().enumerate() {
+            for (i, wy) in layers.iter().enumerate() {
+                let step = step_of(i);
                 for cz in z0..=z1 {
                     for cx in x0..=x1 {
-                        out.push(([cx, *wy, cz], step as i32));
+                        out.push(([cx, *wy, cz], step));
                     }
                 }
             }
         }
         _ => {
-            for (step, wz) in layers.iter().enumerate() {
+            for (i, wz) in layers.iter().enumerate() {
+                let step = step_of(i);
                 for cy in y0..=y1 {
                     for cx in x0..=x1 {
-                        out.push(([cx, cy, *wz], step as i32));
+                        out.push(([cx, cy, *wz], step));
                     }
                 }
             }
@@ -992,6 +1015,62 @@ mod tests {
         // THE ZERO DISPLACEMENT (the static pass's own word — the empty
         // walk the degenerate segment returns)
         assert!(hull_sweep_cells((10.5, 20.0, 10.5), (10.5, 20.0, 10.5)).is_empty());
+    }
+
+    #[test]
+    fn the_start_corners_share_the_zero_step() {
+        // THE STRADDLED START (the box the boundary sits across): the
+        // start pose's TWO layers the ONE step-0 visit shares (the
+        // corner set the betweenCorners walk speaks), the leading
+        // edge's crossing the +1 keeps — the travel order the layers
+        // ascend
+        let seg = sweep_segment_cells((10.5, 20.9, 10.5), (10.5, 22.3, 10.5), 1);
+        assert_eq!(seg.len(), 27, "the 3 layers × the 3×3 footprint");
+        assert!(
+            seg[..18].iter().all(|(_, s)| *s == 0),
+            "the start pose's own two layers the zero step shares: {:?}",
+            &seg[..18]
+        );
+        assert!(
+            seg[18..].iter().all(|(_, s)| *s == 1),
+            "the crossing's own +1 the walk keeps"
+        );
+        assert_eq!(seg[0].0, [9, 20, 9], "the travel order the start keeps");
+        assert_eq!(seg[18].0, [9, 22, 9], "the crossing's own layer");
+        // THE DOWNWARD STRADDLE (the dive's own start the boundary sits
+        // across — the start span the travel's head keeps in the
+        // descending order, the descent the crossings the +1 walks)
+        let dive = sweep_segment_cells((10.5, 21.9, 10.5), (10.5, 20.3, 10.5), 1);
+        assert_eq!(dive.len(), 27, "the 3 layers × the 3×3 footprint");
+        assert!(
+            dive[..18].iter().all(|(_, s)| *s == 0),
+            "the downward start's own two layers the zero step shares"
+        );
+        assert!(
+            dive[18..].iter().all(|(_, s)| *s == 1),
+            "the descent's own crossing the +1 keeps"
+        );
+        assert_eq!(dive[0].0, [9, 22, 9], "the descent's own first layer (the top)");
+        assert_eq!(dive[18].0, [9, 20, 9], "the descent's crossing the bottom keeps");
+    }
+
+    #[test]
+    fn the_start_sharing_shifts_the_budget_word() {
+        // THE LONG STRADDLED TRAVEL (the 2-layer start the budget's own
+        // arithmetic shifts): the step-0 batch the TWO layers carries,
+        // the crossings 22..=41 the steps 1..=20 walk, the gate the
+        // step 16 stops (the layers 20..=36 the 17 the batch keeps —
+        // 153 cells), the counter+1 the budget zeroes, and the FINAL
+        // DEGENERATE WALK the gated layers 40..=41 fresh pushes (the
+        // batch shape's 162 the exact indices retire)
+        let cells = hull_sweep_cells((10.5, 20.9, 10.5), (10.5, 40.9, 10.5));
+        assert_eq!(cells.len(), 153 + 18, "the shared start's own budget word");
+        assert_eq!(cells[152], [11, 36, 11], "the last budgeted layer");
+        assert!(
+            cells[153..].contains(&[9, 40, 9]),
+            "the final walk's own fresh cells: {:?}",
+            &cells[153..]
+        );
     }
 
     #[test]
