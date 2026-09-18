@@ -158,6 +158,22 @@ pub const CHICKEN_TEMPERATE_RUNTIME_PATH: &str = "entity/chicken/chicken_tempera
 pub const CHICKEN_TEMPERATE_BABY_PNG_SHA1: &str = "3e245cc963cf1262a094ea88b8f0b6580b7afd19";
 pub const CHICKEN_TEMPERATE_BABY_RUNTIME_PATH: &str = "entity/chicken/chicken_temperate_baby.png";
 
+/// The CHICKEN VARIANT skins (the cold/warm pairs the 26.2 variant
+/// table added — data/minecraft/chicken_variant/{cold,warm}.json's
+/// asset_id/baby_asset_id the ChickenRenderer's pair picks by the
+/// variant's model type: the cold pair rides the ColdChickenModel,
+/// the warm pair the plain adult geometry wears): the source sha1s
+/// the variant loads verify before they draw. The same 64x32 adult /
+/// 16x16 baby layouts the temperate pair keeps.
+pub const CHICKEN_COLD_PNG_SHA1: &str = "6fbdacddd7209a8e08b87b28bc1587041c6aa95a";
+pub const CHICKEN_COLD_RUNTIME_PATH: &str = "entity/chicken/chicken_cold.png";
+pub const CHICKEN_COLD_BABY_PNG_SHA1: &str = "673d5419ec52a4be17168a96ba06a374a6a78348";
+pub const CHICKEN_COLD_BABY_RUNTIME_PATH: &str = "entity/chicken/chicken_cold_baby.png";
+pub const CHICKEN_WARM_PNG_SHA1: &str = "db235e88a332da796d9571fb563745cabf703fde";
+pub const CHICKEN_WARM_RUNTIME_PATH: &str = "entity/chicken/chicken_warm.png";
+pub const CHICKEN_WARM_BABY_PNG_SHA1: &str = "9b13e45538daf87b93db3915e18e1863a823e8c1";
+pub const CHICKEN_WARM_BABY_RUNTIME_PATH: &str = "entity/chicken/chicken_warm_baby.png";
+
 /// The FLAME strips (the burn lane's pixel sources), generated from
 /// the same jar: the source sha1s the burning mob's renderer verifies
 /// before it draws (javap: `FlameFeatureRenderer.buildGroup`'s

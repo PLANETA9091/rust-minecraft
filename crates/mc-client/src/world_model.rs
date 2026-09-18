@@ -2821,6 +2821,7 @@ mod tests {
             world_clocks: Vec::new(),
             entity_types: Vec::new(),
             sound_events: Vec::new(),
+            chicken_variants: Vec::new(),
             timelines: Vec::new(),
             timeline_tags: Vec::new(),
         };
@@ -3220,6 +3221,7 @@ mod tests {
             world_clocks: vec!["minecraft:overworld".to_string(), "minecraft:the_end".to_string()],
             entity_types: Vec::new(),
             sound_events: Vec::new(),
+            chicken_variants: Vec::new(),
             timelines: Vec::new(),
             timeline_tags: Vec::new(),
         };
@@ -3285,6 +3287,7 @@ mod tests {
             world_clocks: vec!["minecraft:overworld".to_string()],
             entity_types: Vec::new(),
             sound_events: Vec::new(),
+            chicken_variants: Vec::new(),
             timelines: vec![
                 // id 0: carries a curve but is NOT in the dimension's
                 // tag — vanilla merges only the tag's members, so this
@@ -3571,6 +3574,7 @@ mod tests {
                 world_clocks: Vec::new(),
                 entity_types: Vec::new(),
                 sound_events: Vec::new(),
+                chicken_variants: Vec::new(),
                 timelines: Vec::new(),
                 timeline_tags: Vec::new(),
             },
@@ -3659,6 +3663,7 @@ mod tests {
                 world_clocks: Vec::new(),
                 entity_types: Vec::new(),
                 sound_events: Vec::new(),
+                chicken_variants: Vec::new(),
                 timelines: Vec::new(),
                 timeline_tags: Vec::new(),
             },
@@ -3763,6 +3768,7 @@ mod tests {
                 world_clocks: Vec::new(),
                 entity_types: Vec::new(),
                 sound_events: Vec::new(),
+                chicken_variants: Vec::new(),
                 timelines: Vec::new(),
                 timeline_tags: Vec::new(),
             },
@@ -3794,6 +3800,7 @@ mod tests {
             world_clocks: Vec::new(),
             entity_types: Vec::new(),
             sound_events: Vec::new(),
+            chicken_variants: Vec::new(),
             timelines: Vec::new(),
             timeline_tags: Vec::new(),
         };
@@ -5737,6 +5744,7 @@ mod tests {
             world_clocks: Vec::new(),
             entity_types: Vec::new(),
             sound_events: Vec::new(),
+            chicken_variants: Vec::new(),
             timelines: Vec::new(),
             timeline_tags: Vec::new(),
         };
@@ -5860,6 +5868,7 @@ mod tests {
             world_clocks: Vec::new(),
             entity_types: Vec::new(),
             sound_events: Vec::new(),
+            chicken_variants: Vec::new(),
             timelines: Vec::new(),
             timeline_tags: Vec::new(),
         };
@@ -5942,6 +5951,7 @@ mod tests {
             world_clocks: Vec::new(),
             entity_types: Vec::new(),
             sound_events: Vec::new(),
+            chicken_variants: Vec::new(),
             timelines: Vec::new(),
             timeline_tags: Vec::new(),
         };
@@ -6011,6 +6021,7 @@ mod tests {
             world_clocks: Vec::new(),
             entity_types: Vec::new(),
             sound_events: Vec::new(),
+            chicken_variants: Vec::new(),
             timelines: Vec::new(),
             timeline_tags: Vec::new(),
         };
@@ -6072,6 +6083,7 @@ mod tests {
             world_clocks: Vec::new(),
             entity_types: Vec::new(),
             sound_events: Vec::new(),
+            chicken_variants: Vec::new(),
             timelines: Vec::new(),
             timeline_tags: Vec::new(),
         };
@@ -6151,6 +6163,7 @@ mod tests {
             world_clocks: vec!["minecraft:overworld".to_string()],
             entity_types: Vec::new(),
             sound_events: Vec::new(),
+            chicken_variants: Vec::new(),
             timelines: Vec::new(),
             timeline_tags: Vec::new(),
         };
@@ -6243,6 +6256,7 @@ mod tests {
             world_clocks: Vec::new(),
             entity_types: Vec::new(),
             sound_events: Vec::new(),
+            chicken_variants: Vec::new(),
             timelines: Vec::new(),
             timeline_tags: Vec::new(),
         };
@@ -6325,6 +6339,7 @@ mod tests {
             world_clocks: Vec::new(),
             entity_types: Vec::new(),
             sound_events: Vec::new(),
+            chicken_variants: Vec::new(),
             timelines: Vec::new(),
             timeline_tags: Vec::new(),
         };

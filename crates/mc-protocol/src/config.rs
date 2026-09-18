@@ -388,6 +388,15 @@ pub struct RegistryData {
     /// shape) are walked past — the voice lane needs the NAME, nothing
     /// more.
     pub sound_events: Vec<String>,
+    /// The `minecraft:chicken_variant` entries in ARRIVAL ORDER — the
+    /// id table the Set Entity Data's CHICKEN_VARIANT holder varint
+    /// resolves through (the slot-18 entry the chicken projection
+    /// reads — `ByteBufCodecs.holder(Registries.CHICKEN_VARIANT, ...)`
+    /// the same tagged holder the voice lane reads). Names only: the
+    /// element payloads (the spawn_conditions the SERVER's own spawn
+    /// roll consumes — the client never re-runs the pick) are walked
+    /// past — the render lane needs the NAME, nothing more.
+    pub chicken_variants: Vec<String>,
     /// The `minecraft:timeline` entries in ARRIVAL ORDER (javap:
     /// `Registries.TIMELINE` = the "minecraft:timeline" registry key,
     /// in `RegistryDataLoader`'s synced list). The sky-light curve the
@@ -425,6 +434,14 @@ impl RegistryData {
         self.biomes.get(id as usize).map(|b| b.name.as_str())
     }
 
+    /// The registry name of one synced chicken-variant id (the slot-18
+    /// CHICKEN_VARIANT holder the projection resolves through this) —
+    /// `None` for an id the server never streamed (the honest
+    /// "unknown variant", the Temperate default the silence keeps).
+    pub fn chicken_variant_name(&self, id: u32) -> Option<&str> {
+        self.chicken_variants.get(id as usize).map(|s| s.as_str())
+    }
+
     /// One synced biome element, by network id — the tint path's
     /// lookup (palette id -> element -> effects colors).
     pub fn biome(&self, id: u32) -> Option<&BiomeEntry> {
@@ -460,6 +477,7 @@ impl RegistryData {
         self.world_clocks.extend(other.world_clocks);
         self.entity_types.extend(other.entity_types);
         self.sound_events.extend(other.sound_events);
+        self.chicken_variants.extend(other.chicken_variants);
         self.timelines.extend(other.timelines);
         self.timeline_tags.extend(other.timeline_tags);
     }
@@ -832,6 +850,21 @@ pub fn parse_registry_data(payload: &[u8]) -> Result<RegistryData> {
             // (the holder's direct lane carries the range, the registry
             // element rides nothing decodable)
             out.sound_events.push(entry_id);
+            if present {
+                crate::play::skip_network_nbt(&mut c)
+                    .with_context(|| format!("skip {registry_name} entry nbt"))?;
+            }
+            continue;
+        }
+        if registry_name == "minecraft:chicken_variant" {
+            // same arrival-order id table (the CHICKEN_VARIANT holder
+            // varint the slot-18 entity data entry resolves through it
+            // — the chicken projection reads the NAME,
+            // `minecraft:cold`/`temperate`/`warm` the variant table's
+            // own assets speak); the element payloads (the
+            // spawn_conditions the server's own spawn roll consumes)
+            // are walked past
+            out.chicken_variants.push(entry_id);
             if present {
                 crate::play::skip_network_nbt(&mut c)
                     .with_context(|| format!("skip {registry_name} entry nbt"))?;
@@ -1473,6 +1506,30 @@ pub mod test_support {
         p
     }
 
+    /// A `minecraft:chicken_variant` Registry Data packet: THREE
+    /// entries in arrival order — `minecraft:cold`, `minecraft:warm`,
+    /// `minecraft:temperate` (the slot-18 CHICKEN_VARIANT holder the
+    /// projection resolves through this table; every entry rides a
+    /// tag id the walk-past consumes — the real entries'
+    /// spawn_conditions shape the client needs nothing from).
+    pub fn chicken_variant_packet() -> Vec<u8> {
+        let mut p = Vec::new();
+        write_varint(&mut p, clientbound::REGISTRY_DATA);
+        write_string(&mut p, "minecraft:chicken_variant");
+        write_varint(&mut p, 3);
+        write_string(&mut p, "minecraft:cold");
+        p.push(1); // a tag rides — walked past
+        p.push(0x0A); // the network NBT's root compound
+        p.push(0x00); // the end tag — an empty element payload
+        write_string(&mut p, "minecraft:warm");
+        p.push(1);
+        p.push(0x0A);
+        p.push(0x00);
+        write_string(&mut p, "minecraft:temperate");
+        p.push(0); // the temperate's no-condition entry rides tagless
+        p
+    }
+
     /// A `minecraft:timeline` Registry Data packet: the FOUR built-in
     /// overworld timelines in the in_overworld tag's id reality —
     /// `minecraft:day` (overworld clock, period 24000, the REAL
@@ -1616,8 +1673,8 @@ pub mod test_support {
 mod tests {
     use super::*;
     use super::test_support::{
-        entity_type_packet, registry_packet, sound_event_packet, timeline_packet,
-        update_tags_packet, world_clock_packet,
+        chicken_variant_packet, entity_type_packet, registry_packet, sound_event_packet,
+        timeline_packet, update_tags_packet, world_clock_packet,
     };
     use crate::login::{encode_login_disconnect, encode_login_success, encode_set_compression};
     use crate::varint::write_varint;
@@ -2062,6 +2119,32 @@ mod tests {
             ]
         );
         assert!(sounds.entity_types.is_empty(), "no type knowledge rides the sound packet");
+        // the chicken_variant registry: the arrival-order id table the
+        // slot-18 CHICKEN_VARIANT holder resolves through (the render
+        // lane reads the NAME, nothing more — the spawn_conditions the
+        // server's own spawn roll consumes are walked past); the
+        // accessor the network id -> name walk answers
+        let variants = parse_registry_data(&chicken_variant_packet())
+            .expect("chicken_variant parses");
+        assert_eq!(
+            variants.chicken_variants,
+            vec![
+                "minecraft:cold".to_string(),
+                "minecraft:warm".to_string(),
+                "minecraft:temperate".to_string()
+            ]
+        );
+        assert_eq!(
+            variants.chicken_variant_name(0),
+            Some("minecraft:cold"),
+            "the arrival order IS the id table"
+        );
+        assert_eq!(variants.chicken_variant_name(2), Some("minecraft:temperate"));
+        assert_eq!(variants.chicken_variant_name(3), None, "the unsynced id the honest None keeps");
+        assert!(
+            variants.entity_types.is_empty(),
+            "no type knowledge rides the variant packet"
+        );
         // the timeline registry: FOUR entries in arrival order, only
         // `minecraft:day` carrying the visual/sky_light_factor track —
         // the string/bool tracks and the ease field are walked past

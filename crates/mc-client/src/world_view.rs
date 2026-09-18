@@ -939,6 +939,17 @@ pub struct WireMob {
     /// render's own scale lane reads the verdict the age law answers —
     /// the -1/1 words the client's own getAge split wears.
     pub baby: bool,
+    /// THE CHICKEN VARIANT'S OWN WORD (the CHICKEN_VARIANT holder
+    /// lane the slot-18 entry carries — `ChickenVariant(registry_id)`
+    /// the bias-zero varint the decode keeps, the name the synced
+    /// registry's arrival-order table resolves): `Some("minecraft:cold")`
+    /// the synced cold variant wears, `None` while the accessor never
+    /// spoke or the body is another kind's (the read is the CHICKEN's
+    /// own gate — the honest Temperate default the variant table's
+    /// priority-0 arm keeps). The render's own model pick reads the
+    /// verdict the model-type law answers (cold.json's `"model":
+    /// "cold"` the ColdChickenModel names).
+    pub chicken_variant: Option<String>,
     /// THE EQUIPMENT WORD (the Set Equipment store's MAINHAND slot —
     /// the item id the registry's wire order resolves to the BARE
     /// name): the weapon the mob's own hand wears, the same word the
@@ -2104,6 +2115,7 @@ impl LiveView {
                     && type_name != "minecraft:cow"
                     && type_name != "minecraft:sheep"
                     && type_name != "minecraft:spider"
+                    && type_name != "minecraft:chicken"
                 {
                     return None; // not-yet-drawn types stay honest data
                 }
@@ -2193,6 +2205,25 @@ impl LiveView {
                         )
                     } else {
                         false
+                    },
+                    // THE CHICKEN VARIANT'S OWN WORD (the CHICKEN_VARIANT
+                    // holder the slot-18 entry carries — the read is the
+                    // CHICKEN's own gate, the registry id the synced
+                    // table's name resolves, the never-spoken accessor
+                    // the honest None keeps): the model pick's own
+                    // verdict the render lane reads
+                    chicken_variant: if type_name == "minecraft:chicken" {
+                        match e.data.get(&crate::mob::CHICKEN_DATA_VARIANT_ID) {
+                            Some(mc_protocol::play::EntityDataEntry::ChickenVariant(vid)) => {
+                                self.model
+                                    .registry
+                                    .chicken_variant_name(*vid as u32)
+                                    .map(String::from)
+                            }
+                            _ => None,
+                        }
+                    } else {
+                        None
                     },
                     // THE EQUIPMENT WORD (the store's MAINHAND slot 0 —
                     // the Set Equipment packet the model merged, the
@@ -3187,6 +3218,99 @@ mod tests {
         view.model.drain_entity_sounds();
         let upd = view.refresh(example_mapper);
         assert!(upd.voices.is_empty(), "the shipped voice never re-ships");
+    }
+
+    /// THE CHICKEN VARIANT'S OWN RIDE (the CHICKEN_VARIANT holder the
+    /// slot-18 entry carries — the CHICKEN's own gate the read speaks,
+    /// the synced registry's id the name resolves): the zombie's
+    /// index-18 traffic is data the variant word never asks for, the
+    /// chicken's own holder id rides the arrival-order table's name,
+    /// the never-spoken accessor the honest None keeps
+    #[test]
+    fn the_projection_carries_the_chicken_variant_word() {
+        use mc_protocol::play::EntitySpawn;
+        let mut m = WorldModel::new();
+        // the synced registry: type id 1 = zombie, id 2 = chicken; the
+        // variant table's arrival order (the ids the wire's holder
+        // varints reference) — cold 0, warm 1, temperate 2
+        m.registry.entity_types = vec![
+            "minecraft:pig".to_string(),
+            "minecraft:zombie".to_string(),
+            "minecraft:chicken".to_string(),
+        ];
+        m.registry.chicken_variants = vec![
+            "minecraft:cold".to_string(),
+            "minecraft:warm".to_string(),
+            "minecraft:temperate".to_string(),
+        ];
+        m.apply(PlayEvent::Spawn(EntitySpawn {
+            id: 7,
+            uuid: 1,
+            type_id: 1, // the zombie — the index-18 traffic the gate refuses
+            x: 10.0,
+            y: 64.0,
+            z: 12.0,
+            movement: [0.0; 3],
+            x_rot: 0.0,
+            y_rot: 0.0,
+            y_head_rot: 0.0,
+            data: 0,
+        }));
+        m.apply(PlayEvent::Spawn(EntitySpawn {
+            id: 11,
+            uuid: 3,
+            type_id: 2, // the chicken — the variant's own body
+            x: 30.0,
+            y: 64.0,
+            z: 32.0,
+            movement: [0.0; 3],
+            x_rot: 0.0,
+            y_rot: 0.0,
+            y_head_rot: 0.0,
+            data: 0,
+        }));
+        let mut view = LiveView { model: m, side: 1 };
+        // the never-spoken accessor: the honest Temperate default both
+        // bodies' silence keeps
+        let upd = view.refresh(example_mapper);
+        let c = upd.mobs.iter().find(|m| m.id == 11).unwrap();
+        assert_eq!(
+            c.chicken_variant, None,
+            "the silence the honest temperate default keeps"
+        );
+        // THE HOLDER'S OWN RIDE (the CHICKEN_VARIANT serializer the
+        // wire id 30 names — the bias-zero registry id the decode
+        // keeps, the synced table's name the projection resolves):
+        // the zombie's slot-18 traffic the gate refuses, the chicken's
+        // own holder rides verbatim
+        view.model.apply(PlayEvent::EntityData(mc_protocol::play::EntityDataSet {
+            id: 7,
+            entries: vec![mc_protocol::play::SetEntityDataEntry {
+                index: crate::mob::CHICKEN_DATA_VARIANT_ID,
+                serializer: mc_protocol::play::entity_data_serializers::CHICKEN_VARIANT,
+                value: mc_protocol::play::EntityDataEntry::ChickenVariant(0),
+            }],
+        }));
+        view.model.apply(PlayEvent::EntityData(mc_protocol::play::EntityDataSet {
+            id: 11,
+            entries: vec![mc_protocol::play::SetEntityDataEntry {
+                index: crate::mob::CHICKEN_DATA_VARIANT_ID,
+                serializer: mc_protocol::play::entity_data_serializers::CHICKEN_VARIANT,
+                value: mc_protocol::play::EntityDataEntry::ChickenVariant(0),
+            }],
+        }));
+        let upd = view.refresh(example_mapper);
+        let z = upd.mobs.iter().find(|m| m.id == 7).unwrap();
+        assert_eq!(
+            z.chicken_variant, None,
+            "the zombie's index-18 traffic the variant word never asks for"
+        );
+        let c = upd.mobs.iter().find(|m| m.id == 11).unwrap();
+        assert_eq!(
+            c.chicken_variant.as_deref(),
+            Some("minecraft:cold"),
+            "the holder id the synced table's name resolves"
+        );
     }
 
     /// THE SPIDER'S OWN CLIMB WORD (the DATA_FLAGS_ID 16 byte's bit 0x1
@@ -4394,6 +4518,7 @@ mod tests {
             world_clocks: Vec::new(),
             entity_types: Vec::new(),
             sound_events: Vec::new(),
+            chicken_variants: Vec::new(),
             timelines: Vec::new(),
             timeline_tags: Vec::new(),
         };
@@ -4540,6 +4665,7 @@ mod tests {
             world_clocks: Vec::new(),
             entity_types: Vec::new(),
             sound_events: Vec::new(),
+            chicken_variants: Vec::new(),
             timelines: Vec::new(),
             timeline_tags: Vec::new(),
         };

@@ -495,6 +495,149 @@ pub const SHEEP_WOOL_COLOR_MASK: u8 = 0x0F;
 /// silence kept was the WHITE sheep the real server never dyed).
 pub const SHEEP_DATA_WOOL_ID: u8 = 18;
 
+/// THE CHICKEN'S OWN VARIANT WIRE INDEX — the same class-tree walk the
+/// animals' branch wears: Entity's 8 + LivingEntity's 7 + Mob's 1 +
+/// the AgeableMob pair (BABY 16, AGE_LOCKED 17) land the Chicken's
+/// own clinit walk at 18 (javap Chicken's clinit — the
+/// `defineId(Chicken.class, EntityDataSerializers.CHICKEN_VARIANT)`
+/// the FIRST defineId keeps, the `CHICKEN_SOUND_VARIANT` the second
+/// defineId the 19 slot wears — the cow's VARIANT 18 the same base
+/// the autopush-333 walk banked). The wire rides it as the
+/// CHICKEN_VARIANT holder lane (wire serializer id 30 — the
+/// `holderRegistry` bias-zero varint the variant-id walk decodes),
+/// the value the chicken_variant REGISTRY's network id (the
+/// configuration phase's arrival-order table resolves).
+pub const CHICKEN_DATA_VARIANT_ID: u8 = 18;
+
+/// THE CHICKEN VARIANT'S OWN WORDS (javap ChickenVariant$ModelType's
+/// clinit — the `NORMAL`/`COLD` pair the enum arms speak, the data
+/// table's three variants the minecraft:chicken_variant registry
+/// names: `temperate` the no-condition fallback the priority-0 arm
+/// keeps, `cold` the #minecraft:spawns_cold_variant_farm_animals
+/// predicate the priority-1 arm wears, `warm` the
+/// #minecraft:spawns_warm_variant_farm_animals pair the same priority
+/// speaks). The decode the synced registry's own names answer.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ChickenVariantKind {
+    /// `minecraft:temperate` — the plain hen (the default the
+    /// variant table's priority-0 no-condition arm keeps).
+    Temperate,
+    /// `minecraft:cold` — the fluffy cold chicken (the
+    /// ColdChickenModel's own geometry the model-type arm picks).
+    Cold,
+    /// `minecraft:warm` — the warm hen (the plain adult geometry, the
+    /// warm skin the asset_id names).
+    Warm,
+}
+
+impl ChickenVariantKind {
+    /// The synced name's own decode (`minecraft:{name}` — the
+    /// registry id the wire carried the arrival-order table resolves).
+    pub fn from_variant_name(name: &str) -> Option<ChickenVariantKind> {
+        match name {
+            "minecraft:temperate" => Some(ChickenVariantKind::Temperate),
+            "minecraft:cold" => Some(ChickenVariantKind::Cold),
+            "minecraft:warm" => Some(ChickenVariantKind::Warm),
+            _ => None,
+        }
+    }
+
+    pub fn name(self) -> &'static str {
+        match self {
+            ChickenVariantKind::Temperate => "minecraft:temperate",
+            ChickenVariantKind::Cold => "minecraft:cold",
+            ChickenVariantKind::Warm => "minecraft:warm",
+        }
+    }
+}
+
+/// THE COLD VARIANT'S OWN BIOME TABLE (data/minecraft/tags/worldgen/
+/// biome/spawns_cold_variant_farm_animals.json's values verbatim —
+/// the `#minecraft:is_end` tag entry the jar's own tag table
+/// expands, the five end biomes the expansion banks).
+pub const CHICKEN_COLD_BIOMES: [&str; 26] = [
+    "minecraft:snowy_plains",
+    "minecraft:ice_spikes",
+    "minecraft:frozen_peaks",
+    "minecraft:jagged_peaks",
+    "minecraft:snowy_slopes",
+    "minecraft:frozen_ocean",
+    "minecraft:deep_frozen_ocean",
+    "minecraft:grove",
+    "minecraft:deep_dark",
+    "minecraft:frozen_river",
+    "minecraft:snowy_taiga",
+    "minecraft:snowy_beach",
+    // `#minecraft:is_end` expanded (the tag's own values the jar
+    // keeps: the_end, end_highlands, end_midlands, small_end_islands,
+    // end_barrens)
+    "minecraft:the_end",
+    "minecraft:end_highlands",
+    "minecraft:end_midlands",
+    "minecraft:small_end_islands",
+    "minecraft:end_barrens",
+    "minecraft:cold_ocean",
+    "minecraft:deep_cold_ocean",
+    "minecraft:old_growth_pine_taiga",
+    "minecraft:old_growth_spruce_taiga",
+    "minecraft:taiga",
+    "minecraft:windswept_forest",
+    "minecraft:windswept_gravelly_hills",
+    "minecraft:windswept_hills",
+    "minecraft:stony_peaks",
+];
+
+/// THE WARM VARIANT'S OWN BIOME TABLE (data/minecraft/tags/worldgen/
+/// biome/spawns_warm_variant_farm_animals.json's values verbatim —
+/// the `#minecraft:is_jungle` / `#minecraft:is_savanna` /
+/// `#minecraft:is_nether` / `#minecraft:is_badlands` tag entries the
+/// jar's own tag tables expand).
+pub const CHICKEN_WARM_BIOMES: [&str; 19] = [
+    "minecraft:desert",
+    "minecraft:warm_ocean",
+    // `#minecraft:is_jungle` expanded (bamboo_jungle, jungle,
+    // sparse_jungle)
+    "minecraft:bamboo_jungle",
+    "minecraft:jungle",
+    "minecraft:sparse_jungle",
+    // `#minecraft:is_savanna` expanded (savanna, savanna_plateau,
+    // windswept_savanna)
+    "minecraft:savanna",
+    "minecraft:savanna_plateau",
+    "minecraft:windswept_savanna",
+    // `#minecraft:is_nether` expanded (nether_wastes, soul_sand_valley,
+    // crimson_forest, warped_forest, basalt_deltas)
+    "minecraft:nether_wastes",
+    "minecraft:soul_sand_valley",
+    "minecraft:crimson_forest",
+    "minecraft:warped_forest",
+    "minecraft:basalt_deltas",
+    // `#minecraft:is_badlands` expanded (badlands, eroded_badlands,
+    // wooded_badlands)
+    "minecraft:badlands",
+    "minecraft:eroded_badlands",
+    "minecraft:wooded_badlands",
+    "minecraft:mangrove_swamp",
+    "minecraft:deep_lukewarm_ocean",
+    "minecraft:lukewarm_ocean",
+];
+
+/// THE OFFLINE VARIANT'S OWN PICK LAW (the 26.2 spawn_conditions
+/// walk the variant tables keep — the cold predicate the priority-1
+/// arm answers first, the warm pair the same priority speaks, the
+/// no-condition temperate the priority-0 fallback wears): the biome
+/// name the cold table matches the Cold word wears, the warm table
+/// the Warm word, everything else the Temperate default keeps.
+pub fn chicken_variant_for_biome(biome: &str) -> ChickenVariantKind {
+    if CHICKEN_COLD_BIOMES.contains(&biome) {
+        ChickenVariantKind::Cold
+    } else if CHICKEN_WARM_BIOMES.contains(&biome) {
+        ChickenVariantKind::Warm
+    } else {
+        ChickenVariantKind::Temperate
+    }
+}
+
 /// THE SPIDER'S OWN CLIMB FLAG'S WIRE INDEX — the same class-tree
 /// walk the OTHER branch wears: `Spider extends Monster extends
 /// PathfinderMob` the javap extends chain speaks (the AgeableMob pair
@@ -2375,6 +2518,16 @@ pub struct Zombie {
     pub boost_time: i32,
     pub boost_time_total: i32,
     pub wool_color: u8,
+    /// THE CHICKEN VARIANT'S OWN WORD (the CHICKEN_VARIANT holder
+    /// lane's decode — the synced registry id the wire's slot-18
+    /// entry carried, the name the configuration table resolves):
+    /// `None` while the accessor never spoke or the body is another
+    /// kind's — the honest Temperate default the variant table's
+    /// priority-0 no-condition arm keeps (the vanilla client's own
+    /// ctor default the silence answers). The offline spawn/breed
+    /// walk the same word wears (the pick law the biome tables
+    /// speak).
+    pub chicken_variant: Option<ChickenVariantKind>,
     /// THE GRAZE'S OWN CLOCK (Sheep.eatAnimationTick — the goal's
     /// start() the 40 window arms, the tick's decrement the window
     /// drains, the handleEntityEvent(10) the client copy re-arms: the
@@ -2662,6 +2815,7 @@ impl Zombie {
             boost_time: 0,
             boost_time_total: 0,
             wool_color: 0,
+            chicken_variant: None,
             eat_animation_tick: 0,
             custom_name: None,
             name_visible: false,
@@ -12221,6 +12375,88 @@ mod tests {
             (cow_ratio - PANIC_SPEED_COW).abs() < 1e-9,
             "the 2.0 the AbstractCow speaks ({cow_ratio})"
         );
+    }
+
+    #[test]
+    fn the_chicken_variant_word_the_biome_tables_pick() {
+        // THE WIRE INDEX'S OWN PIN (the class-tree walk the animals'
+        // branch wears — Entity 8 + LivingEntity 7 + Mob 1 + the
+        // AgeableMob pair 16/17 land the Chicken's first defineId at
+        // 18; the cow's VARIANT 18 the same base the autopush-333
+        // walk banked)
+        assert_eq!(CHICKEN_DATA_VARIANT_ID, 18);
+
+        // THE NAME WALK (the synced table's own words — the three
+        // variants the minecraft:chicken_variant registry names, the
+        // unknown name the honest None keeps)
+        assert_eq!(
+            ChickenVariantKind::from_variant_name("minecraft:temperate"),
+            Some(ChickenVariantKind::Temperate)
+        );
+        assert_eq!(
+            ChickenVariantKind::from_variant_name("minecraft:cold"),
+            Some(ChickenVariantKind::Cold)
+        );
+        assert_eq!(
+            ChickenVariantKind::from_variant_name("minecraft:warm"),
+            Some(ChickenVariantKind::Warm)
+        );
+        assert_eq!(ChickenVariantKind::from_variant_name("minecraft:plains"), None);
+
+        // THE COLD TABLE'S OWN WORDS (the tag JSON's values verbatim —
+        // the snowy pair the direct members keep, the END biomes the
+        // #minecraft:is_end expansion adds, the plain biomes the
+        // temperate fallback keeps)
+        assert_eq!(CHICKEN_COLD_BIOMES.len(), 26);
+        assert_eq!(CHICKEN_WARM_BIOMES.len(), 19);
+        for biome in [
+            "minecraft:snowy_plains",
+            "minecraft:ice_spikes",
+            "minecraft:taiga",
+            "minecraft:the_end",
+            "minecraft:end_barrens",
+        ] {
+            assert_eq!(
+                chicken_variant_for_biome(biome),
+                ChickenVariantKind::Cold,
+                "{biome}"
+            );
+        }
+        // THE WARM TABLE'S OWN WORDS (the desert the direct member
+        // keeps, the jungle/savanna/badlands biomes the #tag
+        // expansions add, the nether's wastes the is_nether
+        // expansion banks)
+        for biome in [
+            "minecraft:desert",
+            "minecraft:jungle",
+            "minecraft:sparse_jungle",
+            "minecraft:savanna",
+            "minecraft:badlands",
+            "minecraft:wooded_badlands",
+            "minecraft:nether_wastes",
+            "minecraft:mangrove_swamp",
+            "minecraft:lukewarm_ocean",
+        ] {
+            assert_eq!(
+                chicken_variant_for_biome(biome),
+                ChickenVariantKind::Warm,
+                "{biome}"
+            );
+        }
+        // THE TEMPERATE'S OWN FALLBACK (the no-condition priority-0
+        // arm — everything the tables never name the plain hen keeps)
+        for biome in [
+            "minecraft:plains",
+            "minecraft:forest",
+            "minecraft:swamp",
+            "minecraft:river",
+        ] {
+            assert_eq!(
+                chicken_variant_for_biome(biome),
+                ChickenVariantKind::Temperate,
+                "{biome}"
+            );
+        }
     }
 
     #[test]

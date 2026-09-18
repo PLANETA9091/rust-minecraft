@@ -1885,9 +1885,32 @@ impl ChickenModel {
     /// pig/cow/sheep paths speak: the renderer must not lie about its
     /// data).
     pub fn load(root: &Path) -> Option<ChickenModel> {
-        let bytes = std::fs::read(root.join(skin::CHICKEN_TEMPERATE_RUNTIME_PATH)).ok()?;
+        Self::load_skin(
+            root,
+            skin::CHICKEN_TEMPERATE_RUNTIME_PATH,
+            skin::CHICKEN_TEMPERATE_PNG_SHA1,
+        )
+    }
+
+    /// THE WARM VARIANT'S OWN SKIN (the warm.json asset_id the
+    /// ChickenRenderer's pair picks — the plain adult GEOMETRY the
+    /// warm texture wears, the warm.json's model field the normal
+    /// arm keeps): the same load walk, the variant table's own
+    /// sha1-verdict. `None` = the warm hens stay unseen.
+    pub fn load_warm(root: &Path) -> Option<ChickenModel> {
+        Self::load_skin(
+            root,
+            skin::CHICKEN_WARM_RUNTIME_PATH,
+            skin::CHICKEN_WARM_PNG_SHA1,
+        )
+    }
+
+    /// The variant skin's own load walk (the path + sha1 pair the
+    /// caller names, the 64x32 layout the decode verifies).
+    fn load_skin(root: &Path, path: &str, sha1_hex: &str) -> Option<ChickenModel> {
+        let bytes = std::fs::read(root.join(path)).ok()?;
         let digest = sha1::Sha1::digest(&bytes);
-        if hex::encode(digest) != skin::CHICKEN_TEMPERATE_PNG_SHA1 {
+        if hex::encode(digest) != sha1_hex {
             return None;
         }
         let (w, h, rgba) = decode_rgba(&bytes).ok()?;
@@ -1917,7 +1940,7 @@ impl ChickenModel {
         cam_yaw: f32,
         cam_pitch: f32,
     ) -> Vec<AvatarQuad> {
-        let parts = build_chicken_parts(state);
+        let parts = build_chicken_parts(state, false);
         let (fold_point, fold_normal) = entity_folds(state.yaw_deg, state.death_time, 0.0, feet);
         let mut out: Vec<AvatarQuad> = Vec::with_capacity(6 * 6);
         let ident = Mat4::IDENT;
@@ -1937,7 +1960,7 @@ impl ChickenModel {
 /// diagonal pair the bird's two-leg walk replaces), and the wings the
 /// flap angle MIRRORS (right +zRot, left -zRot — the putfield pair
 /// the setupAnim's own tail speaks).
-fn build_chicken_parts(state: &ChickenState) -> Vec<Part> {
+fn build_chicken_parts(state: &ChickenState, cold: bool) -> Vec<Part> {
     let pos = state.walk_pos;
     let speed = state.walk_speed;
     // THE FLAP ANGLE (ChickenModel.setupAnim's own head: `flapAngle =
@@ -1965,51 +1988,96 @@ fn build_chicken_parts(state: &ChickenState) -> Vec<Part> {
         // head (+ the beak and the red_thing — the ZERO-pose children
         // the head's own cube list folds, the same fold the pig's
         // snout rides; NO x_rot/y_rot — the setupAnim the 26.2
-        // ChickenModel keeps speaks no head arm)
+        // ChickenModel keeps speaks no head arm). THE COLD ARM the
+        // ColdChickenModel.createBodyLayer's own replace keeps: the
+        // fluffy face plate (texOffs 44,0 — the 6x3x4 box at
+        // (-3, -7, -2.015) the bytecode's addBox speaks) REPLACES the
+        // beak and the red_thing the cold pair never names
         Part {
             pivot: [0.0, 15.0, -4.0],
             x_rot: 0.0,
             y_rot: 0.0,
             z_rot: 0.0,
-            cubes: vec![
-                Cube {
-                    tex: (0.0, 0.0),
-                    origin: [-2.0, -6.0, -2.0],
-                    size: [4.0, 6.0, 3.0],
-                    inflate: 0.0,
-                    mirror: false,
-                },
-                Cube {
-                    tex: (14.0, 0.0),
-                    origin: [-2.0, -4.0, -4.0],
-                    size: [4.0, 2.0, 2.0],
-                    inflate: 0.0,
-                    mirror: false,
-                },
-                Cube {
-                    tex: (14.0, 4.0),
-                    origin: [-1.0, -2.0, -3.0],
-                    size: [2.0, 2.0, 2.0],
-                    inflate: 0.0,
-                    mirror: false,
-                },
-            ],
+            cubes: if cold {
+                vec![
+                    Cube {
+                        tex: (0.0, 0.0),
+                        origin: [-2.0, -6.0, -2.0],
+                        size: [4.0, 6.0, 3.0],
+                        inflate: 0.0,
+                        mirror: false,
+                    },
+                    Cube {
+                        tex: (44.0, 0.0),
+                        origin: [-3.0, -7.0, -2.015000104904175],
+                        size: [6.0, 3.0, 4.0],
+                        inflate: 0.0,
+                        mirror: false,
+                    },
+                ]
+            } else {
+                vec![
+                    Cube {
+                        tex: (0.0, 0.0),
+                        origin: [-2.0, -6.0, -2.0],
+                        size: [4.0, 6.0, 3.0],
+                        inflate: 0.0,
+                        mirror: false,
+                    },
+                    Cube {
+                        tex: (14.0, 0.0),
+                        origin: [-2.0, -4.0, -4.0],
+                        size: [4.0, 2.0, 2.0],
+                        inflate: 0.0,
+                        mirror: false,
+                    },
+                    Cube {
+                        tex: (14.0, 4.0),
+                        origin: [-1.0, -2.0, -3.0],
+                        size: [2.0, 2.0, 2.0],
+                        inflate: 0.0,
+                        mirror: false,
+                    },
+                ]
+            },
             children: vec![],
         },
         // body (the rotX PI/2 barrel — the PartPose.offsetAndRotation
-        // the bytecode keeps: offset(0, 16, 0), xRot 1.5707964)
+        // the bytecode keeps: offset(0, 16, 0), xRot 1.5707964). THE
+        // COLD ARM the cold layer's own replace keeps: the flat tail
+        // plate (texOffs 38,9 — the 0-wide 0x3x5 box at (0, 3, -1)
+        // the bytecode's addBox speaks) rides the same barrel
         Part {
             pivot: [0.0, 16.0, 0.0],
             x_rot: std::f32::consts::FRAC_PI_2,
             y_rot: 0.0,
             z_rot: 0.0,
-            cubes: vec![Cube {
-                tex: (0.0, 9.0),
-                origin: [-3.0, -4.0, -3.0],
-                size: [6.0, 8.0, 6.0],
-                inflate: 0.0,
-                mirror: false,
-            }],
+            cubes: if cold {
+                vec![
+                    Cube {
+                        tex: (0.0, 9.0),
+                        origin: [-3.0, -4.0, -3.0],
+                        size: [6.0, 8.0, 6.0],
+                        inflate: 0.0,
+                        mirror: false,
+                    },
+                    Cube {
+                        tex: (38.0, 9.0),
+                        origin: [0.0, 3.0, -1.0],
+                        size: [0.0, 3.0, 5.0],
+                        inflate: 0.0,
+                        mirror: false,
+                    },
+                ]
+            } else {
+                vec![Cube {
+                    tex: (0.0, 9.0),
+                    origin: [-3.0, -4.0, -3.0],
+                    size: [6.0, 8.0, 6.0],
+                    inflate: 0.0,
+                    mirror: false,
+                }]
+            },
             children: vec![],
         },
         // right leg (the shared 0.6662/1.4 swing)
@@ -2051,6 +2119,70 @@ fn build_chicken_parts(state: &ChickenState) -> Vec<Part> {
     ]
 }
 
+/// THE COLD CHICKEN'S OWN MODEL — the 26.2 `ColdChickenModel
+/// .createBodyLayer`'s own replace walk, bytecode-proven: the cold
+/// layer builds the base mesh (`createBaseChickenModel` the shared
+/// walk keeps) then REPLACES the body and the head — the body gains
+/// the flat tail plate (texOffs (38, 9), the 0-wide 0x3x5 box at
+/// (0, 3, -1) the addBox speaks) and the head gains the fluffy face
+/// plate (texOffs (44, 0), the 6x3x4 box at (-3, -7, -2.015) the
+/// addBox speaks) INSTEAD of the beak and the red_thing the cold
+/// pair's cube list never names; `LayerDefinition.create(mesh, 64,
+/// 32)` the same half-height layout keeps. The setupAnim the
+/// AdultChickenModel parent inherits rides UNCHANGED (the same leg
+/// swing + wing flap the base folds).
+pub struct ChickenColdModel {
+    rgba: Vec<u8>,
+}
+
+impl ChickenColdModel {
+    /// Load + sha1-verify the CHICKEN's cold skin (cold.json's
+    /// asset_id — the variant table's own pair). The `None` = the
+    /// cold hens stay unseen (the same honesty the other variants
+    /// keep).
+    pub fn load(root: &Path) -> Option<ChickenColdModel> {
+        let bytes =
+            std::fs::read(root.join(skin::CHICKEN_COLD_RUNTIME_PATH)).ok()?;
+        let digest = sha1::Sha1::digest(&bytes);
+        if hex::encode(digest) != skin::CHICKEN_COLD_PNG_SHA1 {
+            return None;
+        }
+        let (w, h, rgba) = decode_rgba(&bytes).ok()?;
+        if w != 64 || h != 32 || rgba.len() != 64 * 32 * 4 {
+            return None;
+        }
+        Some(ChickenColdModel { rgba })
+    }
+
+    /// The skin pixel at (u, v) — the same 64x32 layout's own stride.
+    pub fn pixel(&self, u: f32, v: f32) -> [u8; 4] {
+        let (uu, vv) = (u.clamp(0.0, 63.999_9), v.clamp(0.0, 31.999_9));
+        let x = uu as usize;
+        let y = vv as usize;
+        let o = (y * 64 + x) * 4;
+        [self.rgba[o], self.rgba[o + 1], self.rgba[o + 2], self.rgba[o + 3]]
+    }
+
+    /// THE POSED RENDER: the cold hen's own parts (the replace walk
+    /// the builder's cold arm speaks) beneath the same chain fold.
+    pub fn quads(
+        &self,
+        state: &ChickenState,
+        feet: Vec3,
+        cam_yaw: f32,
+        cam_pitch: f32,
+    ) -> Vec<AvatarQuad> {
+        let parts = build_chicken_parts(state, true);
+        let (fold_point, fold_normal) = entity_folds(state.yaw_deg, state.death_time, 0.0, feet);
+        let mut out: Vec<AvatarQuad> = Vec::with_capacity(6 * 6);
+        let ident = Mat4::IDENT;
+        for part in &parts {
+            collect_part(part, &ident, &fold_point, &fold_normal, cam_yaw, cam_pitch, &mut out);
+        }
+        out
+    }
+}
+
 /// The full BABY chicken model — the 26.2 `BabyChickenModel.
 /// createBodyLayer`'s own numbers, bytecode-proven: the TWO-cube body
 /// (uv 0,0 4x4x4 over uv 10,8 2x1x1 — the head-less chick the layer
@@ -2071,9 +2203,42 @@ impl BabyChickenModel {
     /// = the chick never renders (the same honesty the other baby
     /// lanes speak).
     pub fn load(root: &Path) -> Option<BabyChickenModel> {
-        let bytes = std::fs::read(root.join(skin::CHICKEN_TEMPERATE_BABY_RUNTIME_PATH)).ok()?;
+        Self::load_skin(
+            root,
+            skin::CHICKEN_TEMPERATE_BABY_RUNTIME_PATH,
+            skin::CHICKEN_TEMPERATE_BABY_PNG_SHA1,
+        )
+    }
+
+    /// THE COLD VARIANT'S OWN BABY SKIN (cold.json's baby_asset_id —
+    /// the SAME 16x16 chick geometry the cold texture wears; the
+    /// cold.json's model field names the ADULT geometry only). `None`
+    /// = the cold chicks stay unseen.
+    pub fn load_cold(root: &Path) -> Option<BabyChickenModel> {
+        Self::load_skin(
+            root,
+            skin::CHICKEN_COLD_BABY_RUNTIME_PATH,
+            skin::CHICKEN_COLD_BABY_PNG_SHA1,
+        )
+    }
+
+    /// THE WARM VARIANT'S OWN BABY SKIN (warm.json's baby_asset_id —
+    /// the same 16x16 chick geometry the warm texture wears). `None`
+    /// = the warm chicks stay unseen.
+    pub fn load_warm(root: &Path) -> Option<BabyChickenModel> {
+        Self::load_skin(
+            root,
+            skin::CHICKEN_WARM_BABY_RUNTIME_PATH,
+            skin::CHICKEN_WARM_BABY_PNG_SHA1,
+        )
+    }
+
+    /// The variant skin's own load walk (the path + sha1 pair the
+    /// caller names, the 16x16 layout the decode verifies).
+    fn load_skin(root: &Path, path: &str, sha1_hex: &str) -> Option<BabyChickenModel> {
+        let bytes = std::fs::read(root.join(path)).ok()?;
         let digest = sha1::Sha1::digest(&bytes);
-        if hex::encode(digest) != skin::CHICKEN_TEMPERATE_BABY_PNG_SHA1 {
+        if hex::encode(digest) != sha1_hex {
             return None;
         }
         let (w, h, rgba) = decode_rgba(&bytes).ok()?;
@@ -5534,6 +5699,81 @@ mod tests {
             BabyChickenModel::load(&root).expect("the baby chicken loads from the runtime cache");
         let bpx = baby.pixel(8.0, 8.0);
         assert_eq!(bpx[3], 255, "the baby texel is opaque");
+    }
+
+    /// THE CHICKEN VARIANT MODELS LOAD — the real runtime cache (the
+    /// generator's extraction) decodes the cold/warm pairs the sha1s
+    /// the generated table pins (cold.json/warm.json's asset_id pair
+    /// the ChickenRenderer's model pick wears); the cold model's own
+    /// replace walk the quad count speaks (the tail plate + the fluff
+    /// plate the temperate mesh never carries)
+    #[test]
+    #[ignore = "needs runtime assets (assets-cache/jar) from mc2rs-gen generate"]
+    fn the_chicken_variant_models_load_sha1_verified() {
+        let mut dir = std::env::current_dir().unwrap();
+        let root = loop {
+            let cand = dir.join("assets-cache/jar");
+            if cand.exists() {
+                break cand;
+            }
+            dir = dir.parent().expect("the runtime root above").to_path_buf();
+        };
+        let cold = ChickenColdModel::load(&root).expect("the cold chicken loads");
+        let warm = ChickenModel::load_warm(&root).expect("the warm chicken loads");
+        let cold_baby =
+            BabyChickenModel::load_cold(&root).expect("the cold baby chicken loads");
+        let warm_baby =
+            BabyChickenModel::load_warm(&root).expect("the warm baby chicken loads");
+        // the variant texels: the loads' own sha1 verdicts the pixel
+        // reads re-speak (the opaque words the layouts keep)
+        assert_eq!(cold.pixel(3.0, 3.0)[3], 255, "the cold texel is opaque");
+        assert_eq!(warm.pixel(3.0, 3.0)[3], 255, "the warm texel is opaque");
+        assert_eq!(cold_baby.pixel(8.0, 8.0)[3], 255, "the cold baby texel is opaque");
+        assert_eq!(warm_baby.pixel(8.0, 8.0)[3], 255, "the warm baby texel is opaque");
+        // THE COLD MESH'S OWN EXTRAS (the replace walk the builder's
+        // cold arm keeps — the tail plate + the face plate the
+        // temperate's cube lists never carry): the quad count the
+        // extra boxes speak
+        let feet = Vec3::new(0.0, 64.0, 0.0);
+        let state = ChickenState {
+            yaw_deg: 0.0,
+            walk_pos: 0.0,
+            walk_speed: 0.0,
+            flap: 0.0,
+            flap_speed: 0.0,
+            age_ticks: 40.0,
+            death_time: 0.0,
+        };
+        let temperate = ChickenModel::load(&root).expect("the temperate loads");
+        let base = temperate.quads(&state, feet, 0.0, 0.0);
+        let cold_quads = cold.quads(&state, feet, 0.0, 0.0);
+        // THE REPLACE WALK'S OWN BUDGET (the beak + the red_thing pair
+        // the fluff + the tail pair replaces — the same cube-face
+        // count, the DIFFERENT mesh): the vertex sets disagree, the
+        // cold plates' geometry the temperate never draws
+        assert_eq!(
+            cold_quads.len(),
+            base.len(),
+            "the face budget the replace walk keeps"
+        );
+        let verts = |quads: &[AvatarQuad]| {
+            let mut v: Vec<[i32; 3]> = quads
+                .iter()
+                .flat_map(|q| {
+                    q.pts.iter().map(|p| {
+                        [
+                            (p[0] * 16.0).round() as i32,
+                            (p[1] * 16.0).round() as i32,
+                            (p[2] * 16.0).round() as i32,
+                        ]
+                    })
+                })
+                .collect();
+            v.sort_unstable();
+            v.dedup();
+            v
+        };
+        assert_ne!(verts(&cold_quads), verts(&base), "the cold mesh's plates the temperate never draws");
     }
 
     /// THE COW LOADS — the real runtime cache (the generator's

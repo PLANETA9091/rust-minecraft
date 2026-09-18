@@ -1736,6 +1736,18 @@ pub struct App {
     /// its own lane).
     pub chicken_model: Option<crate::avatar::ChickenModel>,
     pub baby_chicken_model: Option<crate::avatar::BabyChickenModel>,
+    /// THE CHICKEN VARIANTS' OWN SKINS (the cold/warm pairs the 26.2
+    /// variant table keeps — cold.json/warm.json's asset_id pair the
+    /// ChickenRenderer's model pick wears; the cold ADULT the
+    /// ColdChickenModel's own geometry draws, the warm pair the plain
+    /// geometry + the warm skins). Loaded lazily beside the
+    /// temperate's, `None` = that variant's hens stay unseen while the
+    /// other bodies keep drawing (each load's honesty is its own
+    /// lane).
+    pub chicken_cold_model: Option<crate::avatar::ChickenColdModel>,
+    pub chicken_warm_model: Option<crate::avatar::ChickenModel>,
+    pub baby_chicken_cold_model: Option<crate::avatar::BabyChickenModel>,
+    pub baby_chicken_warm_model: Option<crate::avatar::BabyChickenModel>,
     /// THE SIXTH MOB's own skin (the spider's 64x32 arachnid hide —
     /// the SpiderRenderer's SPIDER_LOCATION the sha1 pins) — loaded
     /// lazily beside the others', `None` = the SPIDERS stay unseen
@@ -2451,6 +2463,10 @@ impl App {
             baby_pig_model: None,
             chicken_model: None,
             baby_chicken_model: None,
+            chicken_cold_model: None,
+            chicken_warm_model: None,
+            baby_chicken_cold_model: None,
+            baby_chicken_warm_model: None,
             spider_model: None,
             fire_strips: None,
             orb_sheet: None,
@@ -4070,7 +4086,17 @@ impl App {
                 // the meet the 3.0 the ring answers)
                 let spawns =
                     crate::mob::try_breed(&mut self.mobs, &mut self.next_mob_id, &mut self.mob_rng);
-                for spawn in spawns {
+                for mut spawn in spawns {
+                    // THE CHILD'S OWN VARIANT (the 26.2 spawn_conditions
+                    // walk the offline lane wears — the chick the
+                    // breeding spawns the WORLD's own biome word picks:
+                    // the cold/warm tag tables the pick law expands,
+                    // the temperate the no-condition fallback keeps —
+                    // the same word the F3 Biome row reads)
+                    if spawn.child.kind == crate::mob::MobKind::Chicken {
+                        spawn.child.chicken_variant =
+                            Some(crate::mob::chicken_variant_for_biome(spawn_biome(self.seed)));
+                    }
                     for heart in crate::particles::heart_burst(spawn.heart_bbox, &mut self.mob_rng)
                     {
                         self.particles.push(heart);
@@ -10268,6 +10294,14 @@ impl App {
                 // client's own (unsheared, WHITE).
                 m.sheared = w.wool_byte & crate::mob::SHEEP_WOOL_SHEARED_BIT != 0;
                 m.wool_color = w.wool_byte & crate::mob::SHEEP_WOOL_COLOR_MASK;
+                // THE CHICKEN VARIANT'S OWN WORD rides the spawn (the
+                // slot-18 holder the projection resolved — the synced
+                // name the kind decode wears, the never-spoken accessor
+                // the honest Temperate default keeps)
+                m.chicken_variant = w
+                    .chicken_variant
+                    .as_deref()
+                    .and_then(crate::mob::ChickenVariantKind::from_variant_name);
                 // THE EQUIPMENT WORD rides the spawn (the Set Equipment
                 // store's MAINHAND the projection resolved — the armed
                 // spawn the hand the render lane draws from tick one,
@@ -10355,6 +10389,14 @@ impl App {
             // the dye both ride the same binary assign)
             m.sheared = w.wool_byte & crate::mob::SHEEP_WOOL_SHEARED_BIT != 0;
             m.wool_color = w.wool_byte & crate::mob::SHEEP_WOOL_COLOR_MASK;
+            // THE CHICKEN VARIANT'S OWN WORD rides with the pose (the
+            // same binary assign the fresh spawn speaks — the variant
+            // is STATE the server owns, the unknown name the honest
+            // Temperate default keeps)
+            m.chicken_variant = w
+                .chicken_variant
+                .as_deref()
+                .and_then(crate::mob::ChickenVariantKind::from_variant_name);
             // THE NAME WORD rides with the pose (the same binary
             // assign the fresh spawn speaks — the name is STATE, the
             // rename the server speaks replaces, the silence unnamed)
@@ -14466,6 +14508,28 @@ impl App {
             self.baby_chicken_model =
                 crate::avatar::BabyChickenModel::load(std::path::Path::new("assets-cache/jar"));
         }
+        // THE VARIANT SKINS' OWN LAZY WALK (the cold/warm pairs the
+        // same cache keeps — each load's sha1 verdict its own lane,
+        // the failed variant the honest unseen keeps while the others
+        // draw)
+        if self.chicken_cold_model.is_none() {
+            self.chicken_cold_model =
+                crate::avatar::ChickenColdModel::load(std::path::Path::new("assets-cache/jar"));
+        }
+        if self.chicken_warm_model.is_none() {
+            self.chicken_warm_model =
+                crate::avatar::ChickenModel::load_warm(std::path::Path::new("assets-cache/jar"));
+        }
+        if self.baby_chicken_cold_model.is_none() {
+            self.baby_chicken_cold_model = crate::avatar::BabyChickenModel::load_cold(
+                std::path::Path::new("assets-cache/jar"),
+            );
+        }
+        if self.baby_chicken_warm_model.is_none() {
+            self.baby_chicken_warm_model = crate::avatar::BabyChickenModel::load_warm(
+                std::path::Path::new("assets-cache/jar"),
+            );
+        }
         // THE SPIDER LANE's own lazy load (the same honesty: a failed
         // spider skin keeps only the spiders unseen)
         if self.spider_model.is_none() {
@@ -14500,6 +14564,13 @@ impl App {
         // keeps only the birds unseen, the other bodies keep drawing
         let chicken_model = self.chicken_model.as_ref();
         let baby_chicken_model = self.baby_chicken_model.as_ref();
+        // the variants' honesty is ITS OWN lane: a failed variant skin
+        // keeps only that variant's birds unseen, the temperate keeps
+        // drawing
+        let chicken_cold_model = self.chicken_cold_model.as_ref();
+        let chicken_warm_model = self.chicken_warm_model.as_ref();
+        let baby_chicken_cold_model = self.baby_chicken_cold_model.as_ref();
+        let baby_chicken_warm_model = self.baby_chicken_warm_model.as_ref();
         // the spider's honesty is ITS OWN lane: a failed spider skin
         // keeps only the arachnids unseen, the other bodies keep drawing
         let spider_model = self.spider_model.as_ref();
@@ -14816,9 +14887,26 @@ impl App {
                     // THE AGEABLE MOB'S OWN BRANCH (the ChickenRenderer's
                     // AdultAndBabyModelPair.getModel(isBaby) word the
                     // javap dump speaks — the chick's own geometry over
-                    // its own 16x16 _baby texture)
+                    // its own 16x16 _baby texture). THE VARIANT'S OWN
+                    // MODEL PICK (the 26.2 ChickenRenderer's
+                    // getModel's variant walk — cold.json's `"model":
+                    // "cold"` the ColdChickenModel's own geometry
+                    // names, the warm pair the plain geometry + the
+                    // warm skins wears, the temperate the default
+                    // pair keeps; the failed variant skin the honest
+                    // unseen keeps while the other variants draw)
+                    let variant = mob.chicken_variant;
                     if mob.is_baby() {
-                        let Some(baby) = baby_chicken_model else {
+                        let model = match variant {
+                            Some(crate::mob::ChickenVariantKind::Cold) => {
+                                baby_chicken_cold_model.or(baby_chicken_model)
+                            }
+                            Some(crate::mob::ChickenVariantKind::Warm) => {
+                                baby_chicken_warm_model.or(baby_chicken_model)
+                            }
+                            _ => baby_chicken_model,
+                        };
+                        let Some(baby) = model else {
                             continue; // the baby skin failed its sha1 — this body stays unseen
                         };
                         let state = crate::avatar::ChickenState {
@@ -14832,8 +14920,32 @@ impl App {
                         };
                         let quads = baby.quads(&state, feet, cam.yaw, cam.pitch);
                         (quads, Box::new(move |u, v| baby.pixel(u, v)))
+                    } else if variant == Some(crate::mob::ChickenVariantKind::Cold) {
+                        let Some(chicken) = chicken_cold_model else {
+                            continue; // the cold skin failed its sha1 — this body stays unseen
+                        };
+                        let state = crate::avatar::ChickenState {
+                            yaw_deg: mob.yaw,
+                            walk_pos: mob.walk.position_at(self.partial_tick),
+                            walk_speed: mob.walk.speed_at(self.partial_tick),
+                            flap: mob.flap,
+                            flap_speed: mob.flap_speed,
+                            age_ticks: mob.age_ticks as f32 + 0.5,
+                            death_time: mob.death_time_at(self.partial_tick),
+                        };
+                        let quads = chicken.quads(&state, feet, cam.yaw, cam.pitch);
+                        (quads, Box::new(move |u, v| chicken.pixel(u, v)))
                     } else {
-                        let Some(chicken) = chicken_model else {
+                        // the warm arm the plain geometry wears (the
+                        // warm.json's model field the normal arm keeps —
+                        // only the skin swaps), the temperate the
+                        // default model keeps
+                        let model = if variant == Some(crate::mob::ChickenVariantKind::Warm) {
+                            chicken_warm_model.or(chicken_model)
+                        } else {
+                            chicken_model
+                        };
+                        let Some(chicken) = model else {
                             continue; // the chicken skin failed its sha1 — this body stays unseen
                         };
                         // THE AVIAN STATE (the 26.2 ChickenModel.setupAnim
@@ -21555,6 +21667,7 @@ mod tests {
             climbing: false,
             wool_byte: 0,
             baby: false,
+            chicken_variant: None,
             held_weapon: None,
             held_offhand: None,
             armor: [None; 4],
@@ -21587,6 +21700,7 @@ mod tests {
             climbing: false,
             wool_byte: 0,
             baby: false,
+            chicken_variant: None,
             held_weapon: None,
             held_offhand: None,
             armor: [None; 4],
