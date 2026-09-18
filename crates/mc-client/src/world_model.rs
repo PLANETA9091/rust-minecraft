@@ -169,6 +169,20 @@ pub struct WorldModel {
     /// fresh packet re-arms. Dies with the level (the dimension
     /// swap's population does not cross).
     pub entity_hurts: std::collections::BTreeMap<i32, i32>,
+    /// The wire mobs' EQUIPMENT STATE (the Set Equipment packets —
+    /// the slot snapshots the server broadcasts:
+    /// `ClientPacketListener.handleSetEquipment`'s own walk merges
+    /// the packet's slots into the entity's gear, the ABSENT slots
+    /// the snapshot never spoke keep their word): the id → the slot
+    /// ordinal (the wire's own declaration index — mainhand 0, the
+    /// enum's `as u8` the packet's own order speaks) → the (item id,
+    /// count) the stack carries. The store is STATE, not a mailbox —
+    /// the merge replaces only the packet's slots (the OPTIONAL
+    /// codec's empty stack — count <= 0, item 0 — the slot CLEARS),
+    /// the never-spoken entity the honest empty. Dies with the level
+    /// (the dimension swap's population does not cross).
+    pub entity_equipment:
+        std::collections::BTreeMap<i32, std::collections::BTreeMap<u8, (i32, i32)>>,
     /// The mobs' PENDING VOICES (the Entity Sound packets — the
     /// ambient/hurt/death sounds the SERVER plays and broadcasts:
     /// `Mob.baseTick`'s playAmbientSound, `LivingEntity.hurt`'s
@@ -701,6 +715,7 @@ impl WorldModel {
             hurt: None,
             death_message: None,
             entity_hurts: std::collections::BTreeMap::new(),
+            entity_equipment: std::collections::BTreeMap::new(),
             entity_sounds: Vec::new(),
             world_sounds: Vec::new(),
             objectives: std::collections::HashMap::new(),
@@ -761,6 +776,21 @@ impl WorldModel {
     /// own window already spent. A fresh packet re-arms.
     pub fn drain_entity_hurts(&mut self) -> std::collections::BTreeMap<i32, i32> {
         std::mem::take(&mut self.entity_hurts)
+    }
+
+    /// THE MOB-HELD WORD (the MAINHAND slot's own read — the record's
+    /// `held_weapon` the render lane draws): the equipment state's
+    /// slot-0 stack, the count>0/item!=air gate the non-empty law
+    /// keeps, the item id the registry's wire order resolves to the
+    /// BARE name (the same word the spawn roll's equipment speaks —
+    /// the render's own model walk reads it). The never-spoken entity
+    /// (or the cleared slot) the honest None keeps.
+    pub fn entity_mainhand_word(&self, id: i32) -> Option<&'static str> {
+        let (item_id, count) = *self.entity_equipment.get(&id)?.get(&0)?;
+        if count <= 0 || item_id == 0 {
+            return None;
+        }
+        mc_registry::item_name(item_id).filter(|name| *name != "air")
     }
 
     /// The mobs' voice mailbox's own drain (`std::mem::take` — the
@@ -939,6 +969,10 @@ impl WorldModel {
                 // arms name the OLD population's ids — the new level's
                 // entities never read them)
                 self.entity_hurts.clear();
+                // the equipment state dies with the level too (the
+                // same ids — the new level's entities never wear the
+                // old one's gear)
+                self.entity_equipment.clear();
                 // the voices' mailbox dies with the level too (the same
                 // ids — the new level's population speaks its own)
                 self.entity_sounds.clear();
@@ -1278,13 +1312,26 @@ impl WorldModel {
                     false
                 }
             }
-            PlayEvent::EntityEquipped(_) => {
-                // the gear snapshot decodes and is RETAINED on the
-                // wire; the model's equipment store arrives with mob
-                // rendering (no surface exists yet — the no-surface
-                // skip, the consumer's act separate from the wire's
-                // truth)
-                false
+            PlayEvent::EntityEquipped(eq) => {
+                // THE EQUIPMENT STATE (ClientPacketListener.
+                // handleSetEquipment's own walk — the snapshot's slots
+                // the store MERGES: each pair replaces its own slot,
+                // the OPTIONAL codec's empty stack — count <= 0, item
+                // 0 — the slot CLEARS, the absent slots the packet
+                // never spoke keep their word, the partial snapshot
+                // the vanilla client wears). The entity's own map the
+                // entry arms (the ids the Add Entity never spoke the
+                // store keeps — the spawn the later word wears).
+                let slots = self.entity_equipment.entry(eq.entity_id).or_default();
+                for entry in &eq.slots {
+                    let ordinal = entry.slot as u8;
+                    if entry.stack.count <= 0 || entry.stack.item_id == 0 {
+                        slots.remove(&ordinal);
+                    } else {
+                        slots.insert(ordinal, (entry.stack.item_id, entry.stack.count));
+                    }
+                }
+                true
             }
             PlayEvent::ContainerFilled(c) => {
                 // The audited consumer split (javap of the 26.2
@@ -4444,6 +4491,118 @@ mod tests {
         assert_eq!(MOB_EFFECT_ORDER[0], "minecraft:speed");
         assert_eq!(MOB_EFFECT_ORDER[28], "minecraft:conduit_power");
         assert_eq!(MOB_EFFECT_ORDER[39], "minecraft:breath_of_the_nautilus");
+    }
+
+    /// THE EQUIPMENT PACKET THE STORE MERGES (the Set Equipment lane's
+    /// own model walk): the snapshot's slots the merge REPLACES, the
+    /// absent slots the partial packet KEEPS (the vanilla client's own
+    /// merge — the gear the snapshot never spoke rides), the empty
+    /// stack the slot CLEARS (the drop the wire speaks), the MAINHAND
+    /// word the registry walk resolves (the iron sword the bare name
+    /// speaks — the render's own model walk reads it), the
+    /// never-spoken entity the honest None keeps.
+    #[test]
+    fn the_equipment_packet_the_store_merges() {
+        use mc_protocol::play::{EntityEquipment, EquipmentEntry, EquipmentSlot, ItemStack};
+        let mut m = WorldModel::new();
+        // the never-spoken entity the honest None keeps
+        assert_eq!(m.entity_mainhand_word(7), None);
+        // the FIRST packet: the mainhand the iron sword arms (the id
+        // the registry's wire order names — the packet decode's own
+        // byIdOrThrow table the reader's walk shares)
+        let sword_id = mc_registry::item_id_by_name("iron_sword").expect("the registry names");
+        assert!(m.apply(PlayEvent::EntityEquipped(EntityEquipment {
+            entity_id: 7,
+            slots: vec![EquipmentEntry {
+                slot: EquipmentSlot::Mainhand,
+                stack: ItemStack {
+                    count: 1,
+                    item_id: sword_id,
+                    patch: Default::default(),
+                },
+            }],
+        })));
+        assert_eq!(m.entity_mainhand_word(7), Some("iron_sword"));
+        // the PARTIAL packet: the offhand alone — the mainhand the
+        // merge KEEPS (the absent slots the snapshot never spoke ride)
+        let shield_id = mc_registry::item_id_by_name("shield").expect("the registry names");
+        assert!(m.apply(PlayEvent::EntityEquipped(EntityEquipment {
+            entity_id: 7,
+            slots: vec![EquipmentEntry {
+                slot: EquipmentSlot::Offhand,
+                stack: ItemStack {
+                    count: 3,
+                    item_id: shield_id,
+                    patch: Default::default(),
+                },
+            }],
+        })));
+        assert_eq!(
+            m.entity_mainhand_word(7),
+            Some("iron_sword"),
+            "the absent slot the merge keeps"
+        );
+        // the REPLACE: the mainhand the second packet's own word
+        // overrides (the slot the snapshot spoke replaces)
+        let shovel_id = mc_registry::item_id_by_name("iron_shovel").expect("the registry names");
+        assert!(m.apply(PlayEvent::EntityEquipped(EntityEquipment {
+            entity_id: 7,
+            slots: vec![EquipmentEntry {
+                slot: EquipmentSlot::Mainhand,
+                stack: ItemStack {
+                    count: 1,
+                    item_id: shovel_id,
+                    patch: Default::default(),
+                },
+            }],
+        })));
+        assert_eq!(
+            m.entity_mainhand_word(7),
+            Some("iron_shovel"),
+            "the spoken slot the merge replaces"
+        );
+        // the EMPTY stack the slot CLEARS (the drop the wire speaks —
+        // the OPTIONAL codec's count<=0 the empty ItemStack decodes)
+        assert!(m.apply(PlayEvent::EntityEquipped(EntityEquipment {
+            entity_id: 7,
+            slots: vec![EquipmentEntry {
+                slot: EquipmentSlot::Mainhand,
+                stack: ItemStack {
+                    count: 0,
+                    item_id: 0,
+                    patch: Default::default(),
+                },
+            }],
+        })));
+        assert_eq!(
+            m.entity_mainhand_word(7),
+            None,
+            "the drop the empty stack speaks"
+        );
+        // the DIMENSION SWAP the store dies with (the same ids — the
+        // new level's entities never wear the old one's gear)
+        let zombie_id = mc_registry::item_id_by_name("rotten_flesh").expect("the registry names");
+        assert!(m.apply(PlayEvent::EntityEquipped(EntityEquipment {
+            entity_id: 9,
+            slots: vec![EquipmentEntry {
+                slot: EquipmentSlot::Mainhand,
+                stack: ItemStack {
+                    count: 2,
+                    item_id: zombie_id,
+                    patch: Default::default(),
+                },
+            }],
+        })));
+        assert_eq!(m.entity_mainhand_word(9), Some("rotten_flesh"));
+        m.apply(PlayEvent::Respawn(mc_protocol::play::SpawnInfo {
+            dimension_type_id: 0,
+            dimension: "minecraft:overworld".to_string(),
+            portal_cooldown: 0,
+        }));
+        assert!(
+            m.entity_equipment.is_empty(),
+            "the swap the store dies with"
+        );
     }
 
     #[test]

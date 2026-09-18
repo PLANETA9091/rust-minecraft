@@ -8914,6 +8914,11 @@ impl App {
                 // client's own (unsheared, WHITE).
                 m.sheared = w.wool_byte & crate::mob::SHEEP_WOOL_SHEARED_BIT != 0;
                 m.wool_color = w.wool_byte & crate::mob::SHEEP_WOOL_COLOR_MASK;
+                // THE EQUIPMENT WORD rides the spawn (the Set Equipment
+                // store's MAINHAND the projection resolved — the armed
+                // spawn the hand the render lane draws from tick one,
+                // the never-spoken slot the honest unarmed keeps)
+                m.held_weapon = w.held_weapon;
                 // THE NAME WORD rides the spawn (the accessor 2 the
                 // projection carried — the jeb_ arm the rainbow gate
                 // reads, the silence the honest unnamed)
@@ -8981,6 +8986,11 @@ impl App {
             // assign the fresh spawn speaks — the name is STATE, the
             // rename the server speaks replaces, the silence unnamed)
             m.custom_name = w.custom_name.clone();
+            // THE EQUIPMENT WORD rides with the pose (the same binary
+            // assign — the gear is STATE, the pickup the server speaks
+            // arms the hand, the drop the packet's empty stack the
+            // honest unarmed keeps)
+            m.held_weapon = w.held_weapon;
             // THE VISIBILITY BIT rides with the name (the same binary
             // assign — the server's rename/visibility word replaces
             // the arm the spawn spoke)
@@ -18192,6 +18202,57 @@ mod tests {
         );
     }
 
+    /// THE WIRE'S OWN HAND (the equipment word the live lane carries —
+    /// the armed zombie the record the render lane draws): the wire
+    /// mob's word the fresh spawn rides (the projection resolved the
+    /// Set Equipment store's MAINHAND), the lerpTo lane the STATE
+    /// replace speaks (the pickup the word arms, the empty-stack drop
+    /// the honest unarmed keeps), the offline lane the wire's word
+    /// never touches.
+    #[test]
+    fn the_wire_equipment_the_record_wears() {
+        let mut app = App::new(3);
+        app.open(ScreenKind::Connect);
+        app.net_world = Some(air_net_world(2, 0));
+        app.enter_network_world(None, Skybox::Overworld, None, None);
+        // the armed zombie: the word rides the FRESH spawn (the render
+        // lane's held chain reads the record from tick one)
+        let mut armed = wire_zombie(20, 14.0, 64.0, 10.0);
+        armed.held_weapon = Some("iron_sword");
+        app.live_mobs_updated(vec![armed]);
+        assert_eq!(
+            app.net_mobs[0].held_weapon,
+            Some("iron_sword"),
+            "the armed spawn the hand wears"
+        );
+        // the lerpTo lane: the STATE assign — the pickup the word
+        // replaces (the same binary assign the name/crouch lanes speak)
+        let mut swapped = wire_zombie(20, 15.0, 64.0, 10.0);
+        swapped.held_weapon = Some("iron_shovel");
+        app.live_mobs_updated(vec![swapped]);
+        assert_eq!(
+            app.net_mobs[0].held_weapon,
+            Some("iron_shovel"),
+            "the pickup the server speaks replaces"
+        );
+        // the drop: the word's None the honest unarmed keeps (the
+        // empty stack the packet's own clear the store merged)
+        app.live_mobs_updated(vec![wire_zombie(20, 16.0, 64.0, 10.0)]);
+        assert_eq!(
+            app.net_mobs[0].held_weapon,
+            None,
+            "the drop the packet's empty stack speaks"
+        );
+        // the never-armed id: the honest unarmed (the arm rides its
+        // own lane only)
+        app.live_mobs_updated(vec![wire_zombie(21, 18.0, 64.0, 12.0)]);
+        assert_eq!(
+            app.net_mobs[0].held_weapon,
+            None,
+            "the silence never arms"
+        );
+    }
+
     fn wire_zombie(id: i32, x: f64, y: f64, z: f64) -> crate::world_view::WireMob {
         crate::world_view::WireMob {
             id,
@@ -18206,6 +18267,7 @@ mod tests {
             on_fire: false,
             crouching: false,
             wool_byte: 0,
+            held_weapon: None,
             custom_name: None,
             name_visible: false,
             score_text: None,
@@ -18233,6 +18295,7 @@ mod tests {
             on_fire: false,
             crouching: false,
             wool_byte: 0,
+            held_weapon: None,
             custom_name: None,
             name_visible: false,
             score_text: None,

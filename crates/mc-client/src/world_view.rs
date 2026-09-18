@@ -807,6 +807,14 @@ pub struct WireMob {
     /// bodies' projections carry (the wool word never asks for their
     /// index-17 traffic).
     pub wool_byte: u8,
+    /// THE EQUIPMENT WORD (the Set Equipment store's MAINHAND slot —
+    /// the item id the registry's wire order resolves to the BARE
+    /// name): the weapon the mob's own hand wears, the same word the
+    /// offline spawn roll's record carries, the render lane's held
+    /// chain reads. `None` while the server never spoke the slot (or
+    /// the empty stack the packet cleared it with) — the honest
+    /// unarmed, the silence never arms.
+    pub held_weapon: Option<&'static str>,
     /// The metadata's own CUSTOM NAME (Entity's DATA_CUSTOM_NAME 2 —
     /// the accessor the class tree lands at 2, the component's plain
     /// text the projection extracts: the TAG_String verbatim, the
@@ -2002,6 +2010,12 @@ impl LiveView {
                     } else {
                         0
                     },
+                    // THE EQUIPMENT WORD (the store's MAINHAND slot 0 —
+                    // the Set Equipment packet the model merged, the
+                    // registry walk the bare name speaks): the render's
+                    // own chain reads it, the never-spoken slot the
+                    // honest None keeps
+                    held_weapon: self.model.entity_mainhand_word(id),
                     // THE CUSTOM NAME (Entity's DATA_CUSTOM_NAME 2 —
                     // the OPTIONAL_COMPONENT the store keeps, the
                     // plain text the projection extracts: the
@@ -2500,6 +2514,79 @@ mod tests {
         // and a cell in an UNSENT window column: unknown (the grid's fresh state)
         let (sky, _) = light.cell(1, 20, 5, 20);
         assert_eq!(sky, None, "unsent column: unknown");
+    }
+
+    /// THE EQUIPMENT WORD THE PROJECTION CARRIES (the Set Equipment
+    /// store's MAINHAND the render's own chain reads): the armed
+    /// zombie the wire mob the word rides (the registry walk the bare
+    /// name speaks — the same word the offline spawn roll carries),
+    /// the never-spoken slot the honest None keeps, the empty-stack
+    /// drop the word the None speaks again.
+    #[test]
+    fn the_projection_carries_the_equipment_word() {
+        use mc_protocol::play::{EntityEquipment, EntitySpawn, EquipmentEntry, EquipmentSlot, ItemStack};
+        let mut m = WorldModel::new();
+        // the synced registry: type id 0 = pig, id 1 = zombie
+        m.registry.entity_types = vec![
+            "minecraft:pig".to_string(),
+            "minecraft:zombie".to_string(),
+        ];
+        m.apply(PlayEvent::Spawn(EntitySpawn {
+            id: 7,
+            uuid: 1,
+            type_id: 1,
+            x: 10.0,
+            y: 64.0,
+            z: 12.0,
+            movement: [0.0; 3],
+            x_rot: 5.0,
+            y_rot: 90.0,
+            y_head_rot: 60.0,
+            data: 0,
+        }));
+        let mut view = LiveView { model: m, side: 1 };
+        // the never-spoken slot: the honest unarmed (the silence the
+        // vanilla client's own empty MAINHAND keeps)
+        let upd = view.refresh(example_mapper);
+        let z = upd.mobs.iter().find(|m| m.id == 7).unwrap();
+        assert_eq!(z.held_weapon, None, "the silence never arms");
+        // the packet arms the mainhand — the NEXT refresh the word
+        // rides (the store is STATE, the merge the model's own walk
+        // keeps, the projection the read speaks)
+        let sword_id = mc_registry::item_id_by_name("iron_sword").expect("the registry names");
+        view.model.apply(PlayEvent::EntityEquipped(EntityEquipment {
+            entity_id: 7,
+            slots: vec![EquipmentEntry {
+                slot: EquipmentSlot::Mainhand,
+                stack: ItemStack {
+                    count: 1,
+                    item_id: sword_id,
+                    patch: Default::default(),
+                },
+            }],
+        }));
+        let upd = view.refresh(example_mapper);
+        let z = upd.mobs.iter().find(|m| m.id == 7).unwrap();
+        assert_eq!(
+            z.held_weapon,
+            Some("iron_sword"),
+            "the armed spawn the word rides"
+        );
+        // the empty stack the slot clears — the word the None speaks
+        view.model.apply(PlayEvent::EntityEquipped(EntityEquipment {
+            entity_id: 7,
+            slots: vec![EquipmentEntry {
+                slot: EquipmentSlot::Mainhand,
+                stack: ItemStack {
+                    count: 0,
+                    item_id: 0,
+                    patch: Default::default(),
+                },
+            }],
+        }));
+        let upd = view.refresh(example_mapper);
+        let z = upd.mobs.iter().find(|m| m.id == 7).unwrap();
+        assert_eq!(z.held_weapon, None, "the drop the empty stack speaks");
     }
 
     /// The mob projection: the Add Entity store's zombies, pigs, cows
