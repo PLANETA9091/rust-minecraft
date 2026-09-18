@@ -113,6 +113,16 @@ pub const ZOMBIE_HEIGHT: f64 = 1.95;
 /// second drawn body's own bbox (the flame ring's dims the render asks).
 pub const PIG_WIDTH: f64 = 0.9;
 pub const PIG_HEIGHT: f64 = 0.9;
+/// THE PIG REGISTRATION'S OWN MOVEMENT_SPEED (Pig.createAttributes — the
+/// `ldc2_w #105 0.25` the bytecode's add(MOVEMENT_SPEED, 0.25) keeps;
+/// the MAX_HEALTH 10.0 the same builder speaks the health field's own
+/// constant the zombie's 20 never rides)
+pub const PIG_MOVEMENT_SPEED: f64 = 0.25;
+/// THE RIDDEN SPEED'S OWN 0.225 (Pig.getRiddenSpeed — the `ldc2_w #483
+/// 0.225` the attribute-multiply keeps: the ridden pig the speed the
+/// multiplier halves-and-halves speaks, the boostFactor the window's
+/// own word rides)
+pub const PIG_RIDDEN_SPEED_MULTIPLIER: f64 = 0.225;
 /// The COW registration's own `sized(0.9F, 1.4F)` (EntityTypes clinit's
 /// javap block — the third drawn body's own bbox the flame ring asks).
 pub const COW_WIDTH: f64 = 0.9;
@@ -1037,6 +1047,15 @@ pub struct Zombie {
     /// honest default = the vanilla client's own: the spawned pig
     /// the empty SADDLE slot carries).
     pub saddled: bool,
+    /// THE STEERING'S OWN STORE (the ItemBasedSteering the tickRidden
+    /// walk keeps — the boosting bit the boost arms, the time/total the
+    /// window ticks keep: the SynchedEntityData accessor the
+    /// boostTimeTotal reads, the 140-980 the nextInt(841)+140 arms). The
+    /// ctor's honest default = the vanilla client's own: the un-boosted
+    /// pig the zero window carries.
+    pub steering_boosting: bool,
+    pub boost_time: i32,
+    pub boost_time_total: i32,
     pub wool_color: u8,
     /// THE GRAZE'S OWN CLOCK (Sheep.eatAnimationTick — the goal's
     /// start() the 40 window arms, the tick's decrement the window
@@ -1163,6 +1182,9 @@ impl Zombie {
             crouching: false,
             sheared: false,
             saddled: false,
+            steering_boosting: false,
+            boost_time: 0,
+            boost_time_total: 0,
             wool_color: 0,
             eat_animation_tick: 0,
             custom_name: None,
@@ -2300,6 +2322,61 @@ impl Zombie {
             // own PASS the walk returns
             _ => MobInteract::Pass,
         }
+    }
+
+    /// THE STEERING'S OWN BOOST (javap `ItemBasedSteering.boost` — the
+    /// 26.2 bytecode the pig's own `boost()` wrapper keeps: the
+    /// `boosting` bit the re-press refuses (the iconst_0 return), the
+    /// `boostTime` the zero resets, the `set(accessor, nextInt(841) +
+    /// 140)` the window arms — 140-980 ticks the 7-14s the seconds
+    /// speak). The item's own use walk the caller speaks (the ridden
+    /// press the carrot-on-a-stick answers).
+    pub fn boost(&mut self, rng: &mut Lcg) -> bool {
+        if self.steering_boosting {
+            return false;
+        }
+        self.steering_boosting = true;
+        self.boost_time = 0;
+        self.boost_time_total = rng.next_int(841) + 140;
+        true
+    }
+
+    /// THE BOOST'S OWN DRAIN (javap `ItemBasedSteering.tickBoost` — the
+    /// tickRidden's own tail the controlled walk calls each tick: the
+    /// `++boostTime > total` the bit un-arms). The un-controlled pig
+    /// the drain never walks (the tickRidden the controlling pass the
+    /// gate keeps).
+    pub fn tick_boost(&mut self) {
+        if self.steering_boosting {
+            self.boost_time += 1;
+            if self.boost_time > self.boost_time_total {
+                self.steering_boosting = false;
+            }
+        }
+    }
+
+    /// THE BOOST'S OWN FACTOR (javap `ItemBasedSteering.boostFactor` —
+    /// the `1.0 + 1.15 * sin(PI * boostTime / total)` the bytecode's
+    /// fconst/ldc pair keeps: the 1.0 the un-boosted walk returns, the
+    /// sin ramp the 2.15 peak the mid-window speaks, the ends the 1.0
+    /// the ramp's own zeros keep).
+    pub fn boost_factor(&self) -> f32 {
+        if !self.steering_boosting {
+            return 1.0;
+        }
+        1.0 + 1.15
+            * (std::f32::consts::PI * self.boost_time as f32
+                / self.boost_time_total as f32)
+                .sin()
+    }
+
+    /// THE RIDDEN SPEED'S OWN WORD (javap `Pig.getRiddenSpeed` — the
+    /// attribute-multiply the 0.225 keeps, the boostFactor the
+    /// steering's own factor rides: `0.25 * 0.225 * factor` — the
+    /// 0.05625/tick accel the un-boosted walk speaks, the 2.15x peak
+    /// the mid-boost window carries).
+    pub fn ridden_speed(&self) -> f64 {
+        PIG_MOVEMENT_SPEED * PIG_RIDDEN_SPEED_MULTIPLIER * self.boost_factor() as f64
     }
 
     /// THE FOOD TAG TABLES (javap `Sheep.isFood` / `AbstractCow.isFood`

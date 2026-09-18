@@ -2346,6 +2346,27 @@ impl App {
                 self.tick_offline_paddle_voices();
             }
             let using = self.using_item.is_some();
+            // THE REINS' OWN WORD (the controlling pass the held stack
+            // speaks — the &self read the body's mut borrow must
+            // precede: the disjoint fields the borrow checker splits)
+            let reins = self
+                .held_id()
+                .and_then(mc_registry::item_name)
+                .map(|n| n == "carrot_on_a_stick")
+                .unwrap_or(false);
+            // THE RIDE TICK'S OWN CONTEXT (the player view the mob
+            // tick's AI gates read, the day clock the burn lane keeps —
+            // the hoist the body's mut borrow precedes, the ride branch's
+            // own pig tick the same words the mob loop speaks)
+            let player_view = self.body.as_ref().map(|b| crate::mob::PlayerView {
+                x: b.x,
+                y: b.y,
+                z: b.z,
+                eye_y: b.y + b.eye_height(),
+                dead: self.dead,
+                width: crate::body::WIDTH,
+            });
+            let day_time = (self.day_time_base + self.frame) as i64;
             // the disjoint field borrows: the body mutates while the
             // level reads (the borrow checker splits the fields)
             if let Some(b) = self.body.as_mut() {
@@ -2419,6 +2440,96 @@ impl App {
                     // y adds. The hull's silence (the world enter's
                     // prune the belief outlives) the carried pose holds.
                     let r = self.offline_ride.as_ref().expect("ride checked above");
+                    let vid = r.vehicle_id;
+                    let rider_yaw = b.yaw;
+                    // THE CONTROLLING PASSENGER'S OWN GATE (javap
+                    // Pig.getControllingPassenger — the isSaddled the bit
+                    // reads, the first passenger the player IS, the
+                    // carrot-on-a-stick the held stack speaks: the
+                    // gate's miss the pig's own stand keeps — the
+                    // tickRidden the walk never runs, the boost the
+                    // drain pauses). The reins' word the hoist spoke
+                    // (the &self read the body's mut borrow precedes).
+                    if reins {
+                        if let Some(pig) =
+                            self.mobs.iter_mut().find(|m| m.id == vid && m.saddled)
+                        {
+                            // THE TICKRIDDEN SNAP (javap Pig.tickRidden
+                            // 6-37 — the setRot the RIDER's own look
+                            // carries: the yaw the body's word, the
+                            // pitch the 0.5 the multiply keeps, the
+                            // head/body the same word snaps)
+                            pig.yaw = rider_yaw;
+                            pig.head_yaw_off = 0.0;
+                            // THE RIDDEN IMPULSE (javap travelRidden ->
+                            // Pig.getRiddenInput — the Vec3(0, 0, 1)
+                            // CONSTANT the input speaks: the pig the
+                            // FULL forward walks, the WASD the speed
+                            // never steers — the LOOK the direction
+                            // IS; getRiddenSpeed the 0.25*0.225*factor
+                            // the moveRelative arms): the impulse the
+                            // pig's OWN tick the travel walk integrates
+                            // (the collide sweep the feet keeps, the
+                            // drags the ground speaks, the walk
+                            // animation the legs swing — the mob loop's
+                            // own law the ride branch's tick here
+                            // speaks)
+                            let a = pig.ridden_speed();
+                            let rad = pig.yaw as f64 * std::f64::consts::PI / 180.0;
+                            let (s, c) = rad.sin_cos();
+                            pig.vx += (0.0f64 * c - 1.0f64 * s) * a;
+                            pig.vz += (1.0f64 * c + 0.0f64 * s) * a;
+                            // THE BOOST'S OWN DRAIN (tickRidden's own
+                            // tail — tickBoost the controlled walk
+                            // calls each tick)
+                            pig.tick_boost();
+                        }
+                    }
+                    // THE PIG'S OWN TRAVEL (the Mob.tick's own walk the
+                    // ride branch speaks BEFORE the carry — the vanilla
+                    // vehicle-moves-then-passenger order the loop's
+                    // after-the-fact tick the order's own law refuses:
+                    // the impulse the travel integrates, the collide
+                    // sweep the feet keeps, the FOOTSTEP the cadence
+                    // arms, the ride the double tick the skip below
+                    // refuses)
+                    let mut step_ev = false;
+                    let mut step_at: Option<(f64, f64, f64)> = None;
+                    if let Some(w) = world {
+                        if let Some(pig) = self.mobs.iter_mut().find(|m| m.id == vid) {
+                            let ev = pig.tick(w, player_view.as_ref(), day_time);
+                            step_ev = ev.step;
+                            step_at = Some((pig.x, pig.y, pig.z));
+                        }
+                    }
+                    if let (true, Some((px, py, pz))) = (step_ev, step_at) {
+                        // THE FOOTSTEP'S OWN VOICE (the kind's step_voice
+                        // the block law rides — the same play_voice_at
+                        // the mob loop's own steps speak)
+                        let under = crate::world::NAME_OF[world
+                            .map(|w| {
+                                w.get(
+                                    px.floor() as i32,
+                                    (py - 0.2).floor() as i32,
+                                    pz.floor() as i32,
+                                )
+                            })
+                            .unwrap_or(crate::world::AIR) as usize];
+                        if let Some(pig) = self.mobs.iter().find(|m| m.id == vid) {
+                            if let Some((event, volume, pitch)) =
+                                pig.kind.step_voice(Some(under))
+                            {
+                                let ear = Some((b.x, b.y + b.eye_height(), b.z));
+                                self.sounds.play_voice_at(
+                                    self.frame,
+                                    event,
+                                    volume,
+                                    pitch,
+                                    ear_distance(ear, pig.x, pig.y, pig.z),
+                                );
+                            }
+                        }
+                    }
                     let (mut fx, mut fy, mut fz) = (b.x, b.y, b.z);
                     if let Some(v) = self.offline_boats.iter().find(|bb| bb.id == r.vehicle_id)
                     {
@@ -3067,7 +3178,17 @@ impl App {
                         // the same fold the follow round speaks)
                         crate::mob::arm_breeders(&mut self.mobs);
                         crate::mob::arm_follow_parents(&mut self.mobs);
+                        // THE RIDE'S OWN AUTHORITY (the ridden vehicle the
+                        // ride branch's own tick spoke — the double tick
+                        // the skip refuses: the vanilla order the
+                        // vehicle-moves-then-passenger keeps, the carry
+                        // the ride branch's FRESH pose read)
+                        let ridden_id =
+                            self.offline_ride.as_ref().map(|r| r.vehicle_id);
                         for mob in self.mobs.iter_mut() {
+                            if Some(mob.id) == ridden_id {
+                                continue;
+                            }
                             let ev = mob.tick(world, player.as_ref(), day_time);
                             // THE AISTEP'S OWN AMBIENT GATE (javap
                             // `Animal.aiStep`: the tick's own decrement
@@ -6679,9 +6800,16 @@ impl App {
                         // sides the return carries — the swing the
                         // SUCCESS verdict starts
                         let mob_id = self.mobs[i].id;
-                        self.mount_offline_pig(mob_id);
-                        self.swing.start();
-                        return true;
+                        if self.mount_offline_pig(mob_id) {
+                            self.swing.start();
+                            return true;
+                        }
+                        // THE ISVEHICLE'S OWN REFUSE (bytecode 21-25:
+                        // isVehicle ifne -> 55 — the ridden hull the
+                        // ride arm never takes): the press the item
+                        // lane's use walk answers (the carrot-on-a-
+                        // stick's own boost the reins speak)
+                        entity_pass = true;
                     }
                     if let crate::mob::MobInteract::Feed { love, grow } = verdict {
                         // THE FOOD ARM'S OWN WALK (the Animal
@@ -6834,6 +6962,37 @@ impl App {
                 // own verdict speaks.
                 if let Some(consumed) = self.on_right_press_boat_lane(id) {
                     return consumed;
+                }
+                // THE CARROT-ON-A-STICK'S OWN USE (the 26.2's data-driven
+                // item walk the ride speaks): the ridden pig the vehicle
+                // answers — the ItemBasedSteering.boost the window arms
+                // (the nextInt(841)+140 the RandomSource keeps), the
+                // CONSUME the swing speaks (the hurtAndBreak durability
+                // the repo's item vocabulary never speaks — the honest
+                // skip the shears arm keeps); the re-press the boosting
+                // bit refuses (the false the PASS keeps), the un-ridden
+                // press the PASS the walk returns
+                if let Some(name) = mc_registry::item_name(id) {
+                    if name == "carrot_on_a_stick" {
+                        let vid = self.offline_ride.as_ref().map(|r| r.vehicle_id);
+                        let boosted = if let Some(vid) = vid {
+                            let Some(mob) = self
+                                .mobs
+                                .iter_mut()
+                                .find(|m| m.id == vid && m.kind == crate::mob::MobKind::Pig)
+                            else {
+                                return false;
+                            };
+                            mob.boost(&mut self.mob_rng)
+                        } else {
+                            false
+                        };
+                        if boosted {
+                            self.swing.start();
+                            return true;
+                        }
+                        return false;
+                    }
                 }
                 // THE EAT LANE FIRST (the vanilla startUseItem's own
                 // order — the item's use() speaks: the CONSUMABLE's
@@ -24445,6 +24604,253 @@ mod tests {
         assert!(
             app.offline_ride.is_none(),
             "the ride the stand-down never arms"
+        );
+    }
+
+    /// THE REINS' OWN WALK (javap Pig.getControllingPassenger +
+    /// tickRidden + travelRidden — the 26.2 bytecode the controlled pig
+    /// keeps): the carrot-on-a-stick the held stack speaks, the
+    /// TICKRIDDEN SNAP the pig's yaw the rider's own look carries, the
+    /// RIDDEN TRAVEL the Vec3(0,0,1) CONSTANT the input keeps (the pig
+    /// the FULL forward walks — the WASD the speed never steers, the
+    /// LOOK the direction IS) at the getRiddenSpeed 0.25*0.225 word,
+    /// the drag the ground law applies, the CARRY the pig's fresh pose
+    /// the rider's feet keeps, the WALK ANIMATION the legs swing.
+    #[test]
+    fn the_reins_walk_the_pig_forward() {
+        let mut app = App::new(3);
+        app.enter_world();
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let top = app.spawn_y;
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, top as f32 + 4.0, c as f32 + 0.5),
+            yaw: 0.0,
+            pitch: -std::f32::consts::FRAC_PI_2,
+        });
+        let mut pig =
+            crate::mob::Zombie::new(7, c as f64 + 0.5, top as f64, c as f64 + 0.5, 3);
+        pig.kind = crate::mob::MobKind::Pig;
+        // THE SETTLED STAND (the ground the pig's own ticks keep — the
+        // on_ground the drag's friction word reads: the BLOCK 0.546 the
+        // ground law speaks, the AIR 0.8281 the never-ticked fall
+        // keeps)
+        pig.on_ground = true;
+        app.mobs.push(pig);
+        // THE SADDLE-AND-MOUNT ARC (the count-1 saddle the split
+        // empties, the empty hand the ride the mount arms)
+        let saddle_id =
+            mc_registry::item_id_by_name("saddle").expect("saddle the table draws");
+        app.inventory.items[app.selected_hotbar] = (saddle_id, 1);
+        assert!(app.on_right_press(0, 0), "the saddle arm consumed");
+        assert!(app.on_right_press(0, 0), "the ride arm consumed");
+        // THE REINS (the carrot-on-a-stick the held stack speaks — the
+        // controlling pass the gate opens)
+        let reins_id = mc_registry::item_id_by_name("carrot_on_a_stick")
+            .expect("carrot_on_a_stick the table draws");
+        app.inventory.items[app.selected_hotbar] = (reins_id, 1);
+        app.body = Some(crate::body::PlayerBody::new(
+            c as f64 + 0.5,
+            top as f64 + crate::mob::PIG_HEIGHT as f32 as f64,
+            c as f64 + 0.5,
+            0.0,
+            0.0,
+        ));
+        // THE FIRST TICK'S OWN WORD (the impulse the exact fold keeps:
+        // a = 0.25 * 0.225 = 0.05625, the yaw 0 the z the cos carries,
+        // the MOVE the pre-drag velocity walks, the drag the carried
+        // word scales after)
+        let a = crate::mob::PIG_MOVEMENT_SPEED * crate::mob::PIG_RIDDEN_SPEED_MULTIPLIER;
+        let want_z = c as f64 + 0.5 + a;
+        app.update();
+        let pig = &app.mobs[0];
+        assert_eq!(pig.yaw, 0.0, "the tickRidden snap the rider's look keeps");
+        assert!(
+            (pig.z - want_z).abs() < 1.0e-9,
+            "the first tick's own move the pre-drag impulse walks (pig.z {} vs want {})",
+            pig.z,
+            want_z
+        );
+        assert!(
+            (pig.vz - a * (crate::body::BLOCK_FRICTION * crate::body::GROUND_DRAG) as f64)
+                .abs()
+                < 1.0e-9,
+            "the drag the carried velocity scales (the f32 word the friction fold keeps)"
+        );
+        // THE CARRY (the positionRider the pig's FRESH pose keeps — the
+        // vehicle-moves-then-passenger order the block's own shape
+        // speaks) + THE WALK ANIMATION (the legs the dist speaks)
+        let b = app.body.as_ref().unwrap();
+        assert!(
+            (b.z - pig.z).abs() < 1.0e-9,
+            "the rider the pig's fresh pose carries"
+        );
+        assert!(
+            (b.y - (top as f64 + crate::mob::PIG_HEIGHT as f32 as f64)).abs() < 1.0e-9,
+            "the FULL height the attachment keeps"
+        );
+        assert!(
+            pig.walk.speed > 0.0,
+            "the walk animation the dist arms (the legs the swing speaks)"
+        );
+        // THE LOOK'S OWN STEER (the yaw 90 the x the −sin carries — the
+        // pig the rider's own look turns, the WASD the speed never
+        // steers)
+        let b = app.body.as_mut().unwrap();
+        b.yaw = 90.0;
+        let want_x = app.mobs[0].x - a;
+        app.update();
+        let pig = &app.mobs[0];
+        assert_eq!(pig.yaw, 90.0, "the pig the rider's own look turns");
+        assert!(
+            (pig.x - want_x).abs() < 1.0e-9,
+            "the −sin fold the x carries (the look the direction IS)"
+        );
+    }
+
+    /// THE GATE'S OWN MISS (javap Pig.getControllingPassenger — the
+    /// carrot-on-a-stick the held stack the gate REQUIRES: the bare
+    /// hand the controlling pass never names, the tickRidden the walk
+    /// never runs — the pig's own stand the pose keeps, the boost the
+    /// drain pauses).
+    #[test]
+    fn the_bare_hands_stand_the_pig() {
+        let mut app = App::new(3);
+        app.enter_world();
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let top = app.spawn_y;
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, top as f32 + 4.0, c as f32 + 0.5),
+            yaw: 0.0,
+            pitch: -std::f32::consts::FRAC_PI_2,
+        });
+        let mut pig =
+            crate::mob::Zombie::new(7, c as f64 + 0.5, top as f64, c as f64 + 0.5, 3);
+        pig.kind = crate::mob::MobKind::Pig;
+        pig.saddled = true;
+        pig.steering_boosting = true;
+        pig.boost_time = 3;
+        pig.boost_time_total = 140;
+        app.mobs.push(pig);
+        app.body = Some(crate::body::PlayerBody::new(
+            c as f64 + 0.5,
+            top as f64 + crate::mob::PIG_HEIGHT as f32 as f64,
+            c as f64 + 0.5,
+            0.0,
+            0.0,
+        ));
+        // THE BARE HAND (no stack the held lane speaks — the gate's
+        // miss): the ride carries (the pig's pose the rider follows),
+        // the WALK the pig's own stand keeps
+        app.update();
+        let pig = &app.mobs[0];
+        assert_eq!(pig.x, c as f64 + 0.5, "the pig's own x the stand keeps");
+        assert_eq!(pig.z, c as f64 + 0.5, "the pig's own z the stand keeps");
+        assert_eq!(pig.vx + pig.vz, 0.0, "the impulse the gate never arms");
+        // THE BOOST'S OWN PAUSE (the tickRidden the walk never ran —
+        // the drain the un-controlled pig keeps)
+        assert!(
+            pig.steering_boosting && pig.boost_time == 3,
+            "the boost the un-controlled pig pauses"
+        );
+    }
+
+    /// THE CARROT'S OWN BOOST PRESS (the 26.2's data-driven item walk
+    /// the ride speaks): the ridden pig the vehicle answers — the
+    /// ItemBasedSteering.boost the window arms (the nextInt(841)+140
+    /// the Lcg roll keeps), the CONSUME the swing speaks; the re-press
+    /// the boosting bit refuses. The ISVEHICLE'S OWN REFUSE the mob
+    /// arm's fall-through keeps (the ridden hull the ride arm never
+    /// takes — the press the item lane's use walk answers).
+    #[test]
+    fn the_carrot_press_boosts_the_ridden_pig() {
+        let mut app = App::new(3);
+        app.enter_world();
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let top = app.spawn_y;
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, top as f32 + 4.0, c as f32 + 0.5),
+            yaw: 0.0,
+            pitch: -std::f32::consts::FRAC_PI_2,
+        });
+        let mut pig =
+            crate::mob::Zombie::new(7, c as f64 + 0.5, top as f64, c as f64 + 0.5, 3);
+        pig.kind = crate::mob::MobKind::Pig;
+        pig.saddled = true;
+        pig.on_ground = true;
+        app.mobs.push(pig);
+        // THE FLAT WALKWAY (the +Z corridor the boosted travel walks —
+        // the floor the feet keep, the air the body crosses: the
+        // terrain's own hills the walkway's own words replace)
+        for dz in 0..8 {
+            app.offline_world
+                .as_mut()
+                .unwrap()
+                .set(c, top - 1, c + dz, crate::world::STONE);
+            for dy in 0..3 {
+                app.offline_world
+                    .as_mut()
+                    .unwrap()
+                    .set(c, top + dy, c + dz, crate::world::AIR);
+            }
+        }
+        let reins_id = mc_registry::item_id_by_name("carrot_on_a_stick")
+            .expect("carrot_on_a_stick the table draws");
+        app.inventory.items[app.selected_hotbar] = (reins_id, 1);
+        // THE BODY (the ride branch's own seat — the body block the
+        // update's walk enters, the carry the rider's pose keeps; the
+        // PITCH the body's own look word speaks — the world_camera the
+        // body's pose rides once the body stands, the pick's ray the
+        // DOWN look keeps)
+        app.body = Some(crate::body::PlayerBody::new(
+            c as f64 + 0.5,
+            top as f64 + crate::mob::PIG_HEIGHT as f32 as f64,
+            c as f64 + 0.5,
+            0.0,
+            90.0,
+        ));
+        // THE RIDE (the empty-hand... the carrot IS the held stack —
+        // the ride arm the non-food held answers, the mount the belief
+        // arms)
+        assert!(app.on_right_press(0, 0), "the ride arm consumed");
+        assert!(app.offline_ride.is_some(), "the ride belief armed");
+        // THE BOOST PRESS (the ridden hull the mob arm's Ride verdict
+        // the isVehicle refuse stands down — the item lane's use walk
+        // the boost arms)
+        assert!(
+            app.on_right_press(0, 0),
+            "the carrot's own use consumed the press"
+        );
+        let pig = &app.mobs[0];
+        assert!(pig.steering_boosting, "the boost the item's use arms");
+        assert!(
+            (140..=980).contains(&pig.boost_time_total),
+            "the nextInt(841)+140 the window keeps, got {}",
+            pig.boost_time_total
+        );
+        assert!(app.swing.swinging, "the CONSUME the swing speaks");
+        // THE RE-PRESS (the boosting bit the ItemBasedSteering.boost's
+        // own false keeps — the press the PASS the walk returns)
+        assert!(
+            !app.on_right_press(0, 0),
+            "the boosting bit the re-press refuses"
+        );
+        assert!(app.mobs[0].steering_boosting, "the first window stands");
+        // THE BOOSTED TRAVEL (the factor the sin ramp speaks — the
+        // accel the un-boosted word EXCEEDS: the window's ticks the
+        // sin the positive keeps, the pig the faster walk rides)
+        let a0 = crate::mob::PIG_MOVEMENT_SPEED * crate::mob::PIG_RIDDEN_SPEED_MULTIPLIER;
+        let z0 = app.mobs[0].z;
+        for _ in 0..5 {
+            app.update();
+        }
+        let gained = app.mobs[0].z - z0;
+        assert!(
+            gained > 5.0 * a0,
+            "the boost the un-boosted walk exceeds (gained {gained} vs {})",
+            5.0 * a0
         );
     }
 
