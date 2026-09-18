@@ -78,14 +78,30 @@ pub const FARMLAND: u16 = 27;
 /// cube the vocabulary speaks (the vanilla 15/16 height the generic path
 /// folds — the same documented simplification the farmland kind keeps).
 pub const DIRT_PATH: u16 = 28;
+/// Kind 29 (the thirtieth entry, the autopush-313 round): the seeds' own
+/// planting arm's product (javap BlockItem.place + CropBlock.canSurvive
+/// over the real 26.2 jar — the SUPPORTS_CROPS tag's sole
+/// `minecraft:farmland` row the VegetationBlock.canSurvive below-check
+/// speaks, the `getRawBrightness(pos, 0) >= 8` the hasSufficientLight's
+/// bipush/if_icmplt pair keeps). The SECOND non-cube member: block/crop's
+/// four zero-thickness vertical planes (x=4/12 spanning z, z=4/12
+/// spanning x, each y -1..15 — the sprite sinks one pixel into the
+/// farmland), `shade: false` + `ambientocclusion: false` — the mesher's
+/// wheat path meshes the four planes' eight quads. The `.noCollision()`
+/// row the Blocks clinit speaks: the body/hull/mob collision walks pass
+/// the crop, the CLIP targets it (the vanilla outline's full-cube fold —
+/// the harvest lane the dig arm rides). The vanilla `Items.WHEAT` is no
+/// BlockItem — the harvest item never plants, the placeable lookup
+/// refuses the kind (the seeds' own product the plant arm alone wears).
+pub const WHEAT: u16 = 29;
 
 /// Block -> texture-group mapping used by the real-colors LUT.
-pub const NAME_OF: [&str; 29] = [
+pub const NAME_OF: [&str; 30] = [
     "air", "stone", "dirt", "grass_block", "oak_log", "oak_leaves", "water", "sand",
     "granite", "diorite", "andesite", "deepslate", "cobbled_deepslate", "gravel",
     "bedrock", "coal_ore", "copper_ore", "iron_ore", "gold_ore", "redstone_ore",
     "lapis_ore", "diamond_ore", "emerald_ore", "netherrack", "pale_oak_leaves",
-    "leaf_litter", "lava", "farmland", "dirt_path",
+    "leaf_litter", "lava", "farmland", "dirt_path", "wheat",
 ];
 
 /// The block interaction reach — the `Attributes.BLOCK_INTERACTION_RANGE`
@@ -464,6 +480,13 @@ impl World {
     pub fn placeable_block(item_name: &str) -> Option<u16> {
         let id = NAME_OF.iter().position(|n| *n == item_name)? as u16;
         if id == AIR || id == WATER {
+            return None;
+        }
+        // THE WHEAT REFUSAL (javap Items: the harvest item is no
+        // BlockItem — the right-press the use lane's PASS keeps): the
+        // crop kind the seeds' own plant arm alone wears, the generic
+        // placement lane never speaks it
+        if id == WHEAT {
             return None;
         }
         Some(id)

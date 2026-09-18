@@ -44,12 +44,27 @@ use zip::ZipArchive;
 /// full-cube face walk — the element's six faces name the dirt bottom +
 /// the path top/sides, the 15/16 height the generic path folds (the same
 /// documented simplification).
-pub const RUNTIME_PALETTE: [&str; 29] = [
+/// wheat is kind 29 (the thirtieth entry, the autopush-313 round): the
+/// seeds' own planting arm's product (javap BlockItem.place over the
+/// real 26.2 jar — the SUPPORTS_CROPS tag's sole farmland row the
+/// CropBlock.canSurvive speaks). The crop model is the SECOND non-cube
+/// member: blockstates/wheat.json age=0 -> block/wheat_stage0 ->
+/// block/crop, whose elements are FOUR zero-thickness vertical planes
+/// (x=4 and x=12 spanning z 0..16, z=4 and z=12 spanning x 0..16, each
+/// y -1..15 — the sprite sinks one pixel into the farmland below),
+/// `shade: false` on every face and `ambientocclusion: false` on the
+/// model — the full-cube six-face requirement cannot apply, so the
+/// build loop special-cases it to the age=0 texture stem through the
+/// REAL chain (the generator's own blockstate -> model -> texture-ref
+/// walk, never a hardcoded name). The faces carry NO tintindex — the
+/// wheat_stage0 master renders as authored (the pre-colored pixels the
+/// probe verifies).
+pub const RUNTIME_PALETTE: [&str; 30] = [
     "air", "stone", "dirt", "grass_block", "oak_log", "oak_leaves", "water", "sand",
     "granite", "diorite", "andesite", "deepslate", "cobbled_deepslate", "gravel",
     "bedrock", "coal_ore", "copper_ore", "iron_ore", "gold_ore", "redstone_ore",
     "lapis_ore", "diamond_ore", "emerald_ore", "netherrack", "pale_oak_leaves",
-    "leaf_litter", "lava", "farmland", "dirt_path",
+    "leaf_litter", "lava", "farmland", "dirt_path", "wheat",
 ];
 
 /// Renderer face order: 0:+X 1:-X 2:+Y 3:-Y 4:+Z 5:-Z.
@@ -334,6 +349,41 @@ pub fn build(jar_bytes: &[u8], version: &str, client_sha1: &str) -> Result<Strin
             faces.push(resolve_flat_stem("leaf_litter", true));
             continue;
         }
+        if block == "wheat" {
+            // THE FIFTEENTH AUDIT (official 26.2 jar): the blockstate is a
+            // plain variants map (age=0..7), age=0 -> block/wheat_stage0 ->
+            // block/crop — and the crop model's elements are FOUR
+            // zero-thickness vertical planes (x=4, x=12, z=4, z=12, each
+            // y -1..15 with `shade: false` faces and model-level
+            // `ambientocclusion: false`), so resolve_block's full-cube
+            // six-face requirement cannot apply. The age=0 texture stem
+            // resolves through the REAL chain (the blockstate variant's
+            // model ref -> the merged texture map's `crop` ref), tinted =
+            // false (the faces carry NO tintindex — the pre-colored
+            // master renders as authored).
+            let bs_bytes = read_jar(&mut archive, "assets/minecraft/blockstates/wheat.json")?;
+            let bs: Value = serde_json::from_slice(&bs_bytes)
+                .with_context(|| "blockstate wheat: json parse")?;
+            let model_ref = bs
+                .get("variants")
+                .and_then(|v| v.get("age=0"))
+                .and_then(|v| v.get("model"))
+                .and_then(|m| m.as_str())
+                .with_context(|| "blockstate wheat: no age=0 model")?
+                .trim_start_matches("minecraft:")
+                .to_string();
+            let (tex_map, _) = load_model_chain(&mut archive, &model_ref)
+                .with_context(|| format!("block wheat: model chain {model_ref}"))?;
+            let tex = tex_map
+                .get("crop")
+                .with_context(|| format!("model {model_ref}: no crop texture ref"))?;
+            let stem = tex
+                .trim_start_matches("minecraft:")
+                .trim_start_matches("block/")
+                .to_string();
+            faces.push(resolve_flat_stem(&stem, false));
+            continue;
+        }
         faces.push(resolve_block(&mut archive, block)?);
     }
 
@@ -552,6 +602,9 @@ mod tests {
         // the SECOND fluid member (the lava lane): the still-texture
         // special case the water arm speaks, tint-free
         assert_eq!(RUNTIME_PALETTE[26], "lava");
+        // the SECOND non-cube member (the 15th audit): the crop's four
+        // plane elements the client's wheat path meshes
+        assert_eq!(RUNTIME_PALETTE[29], "wheat");
         assert_eq!(FACE_KEYS, ["east", "west", "up", "down", "south", "north"]);
     }
 

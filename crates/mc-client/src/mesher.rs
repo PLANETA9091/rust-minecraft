@@ -72,9 +72,18 @@ fn is_transparent(kind: u16) -> bool {
     // leaf_litter is the flat ground cover (the 13th audit — non-cube,
     // non-occluding, casts no AO, exactly the blockstate models' verdict);
     // LAVA is the SECOND fluid member (the lava lane) — non-occluding
-    // like the water it mirrors (the pool walls' faces draw against it)
-    kind == AIR || kind == WATER || kind == LEAVES || kind == PALE_LEAVES || kind == LEAF_LITTER
+    // like the water it mirrors (the pool walls' faces draw against it);
+    // WHEAT is the crop (the 15th audit — the four-plane cross the
+    // block/crop model speaks, `.noCollision()` the Blocks clinit's own
+    // row keeps): the farmland's top face under it draws, the crop casts
+    // no AO (the is_opaque walk the same verdict keeps)
+    kind == AIR
+        || kind == WATER
+        || kind == LEAVES
+        || kind == PALE_LEAVES
+        || kind == LEAF_LITTER
         || kind == LAVA
+        || kind == crate::world::WHEAT
 }
 
 /// Only opaque blocks cast ambient occlusion (air/water/leaves never darken
@@ -645,6 +654,144 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                                 // only, NO AO_CURVE term.
                                 let m = [shade * lm[0], shade * lm[1], shade * lm[2]];
                                 colors[i] = [base[0] * m[0], base[1] * m[1], base[2] * m[2]];
+                            }
+                            out.push(Quad {
+                                pts,
+                                colors,
+                                uvs,
+                                tile,
+                                translucent: false,
+                            });
+                        }
+                    }
+                    continue;
+                }
+                // THE 15TH-AUDIT WHEAT PATH: the crop is the SECOND
+                // non-cube member. blockstates/wheat.json age=0 ->
+                // block/wheat_stage0 -> block/crop, whose FOUR
+                // zero-thickness vertical planes (x=4 and x=12 spanning
+                // z 0..16, z=4 and z=12 spanning x 0..16, each y -1..15
+                // — the sprite sinks one pixel into the farmland below)
+                // carry `shade: false` faces under a model-level
+                // `ambientocclusion: false` — the vanilla tesselateWithoutAO
+                // shape: no AO, no FACE_SHADE, every corner sampling the
+                // CELL's own light (getLightColor(state, pos) the
+                // withoutAO walk speaks). No cullface anywhere in the
+                // model — the planes draw unconditionally; each plane's
+                // two faces ride the cube path's own winding convention
+                // (FACE_CORNERS per face direction, the raster
+                // backface-culls each to its own side). The explicit uvs
+                // pair per plane (west/east and north/south, one row
+                // [0,0,16,16] the other [16,0,0,16]) folds to ONE u
+                // convention per plane — the mirrored row cancels the
+                // mirrored face walk, the texture reads the same from
+                // both sides; v stays the side-face law (1 - y).
+                if id == crate::world::WHEAT {
+                    let tile = if (id as usize) < atlas::N_KINDS {
+                        atlas::FACE_TILES[id as usize][2]
+                    } else {
+                        atlas::TILE_NONE
+                    };
+                    let base = if tile == atlas::TILE_NONE {
+                        // the no-atlas boot's own defaults (the palette
+                        // speaks no wheat row — the kind's pixels the
+                        // generated atlas alone carries)
+                        crate::colors::palette_color(id, 2)
+                            .or_else(|| lut.and_then(|l| l.color(id, 2)))
+                            .unwrap_or_else(|| default_color(id, 2))
+                    } else {
+                        [1.0; 3] // the tile's own pixels speak (no tintindex — pre-colored)
+                    };
+                    // The attribute-system fold (the shared per-mesh
+                    // uniforms both existing paths speak — see the flat
+                    // path's own walk for the javap-proven arithmetic).
+                    let sky_factor = world.sky_light_factor.unwrap_or(1.0)
+                        * world
+                            .day_tick
+                            .map(crate::timeline::sky_light_factor)
+                            .unwrap_or(1.0);
+                    let sky_tint = match world.sky_light_color {
+                        None => world
+                            .day_tick
+                            .map(crate::timeline::sky_light_color)
+                            .unwrap_or([1.0; 3]),
+                        Some(stated) => {
+                            let track = world
+                                .day_tick
+                                .map(crate::timeline::sky_light_color_bytes)
+                                .unwrap_or([255; 3]);
+                            [
+                                ((stated[0] as u32 * track[0] as u32) / 255) as f32 / 255.0,
+                                ((stated[1] as u32 * track[1] as u32) / 255) as f32 / 255.0,
+                                ((stated[2] as u32 * track[2] as u32) / 255) as f32 / 255.0,
+                            ]
+                        }
+                    };
+                    let ambient = world.ambient_light.map_or([0.0f32; 3], |a| {
+                        [a[0] as f32 / 255.0, a[1] as f32 / 255.0, a[2] as f32 / 255.0]
+                    });
+                    let block_tint = world.block_light_tint.map(|a| {
+                        [a[0] as f32 / 255.0, a[1] as f32 / 255.0, a[2] as f32 / 255.0]
+                    });
+                    let night_vision = world.night_vision_color.map(|a| {
+                        [a[0] as f32 / 255.0, a[1] as f32 / 255.0, a[2] as f32 / 255.0]
+                    });
+                    // THE CELL'S OWN LIGHT — the withoutAO walk's
+                    // getLightColor(state, pos): both layers sampled AT
+                    // the crop cell, all four corners the same sample
+                    // (no smoothing, no AO diagonals). The grid absent
+                    // (the procedural lane) keeps the legacy unshaded
+                    // look — the same None convention both paths speak.
+                    let (cell_sky, cell_block) = match light {
+                        Some(l) => {
+                            let (s, b) = cell_layers(l, world.chunks_per_side, wx, wy, wz);
+                            (s.map(|v| v as f32), b.map(|v| v as f32))
+                        }
+                        None => (None, None),
+                    };
+                    // The audited model rows: (axis, fixed_pos/16,
+                    // u-flipped) — x=4 speaks u=z, x=12 speaks u=1-z,
+                    // z=4 speaks u=1-x, z=12 speaks u=x. Each plane's
+                    // faces: the pair of cube-face directions its normal
+                    // axis carries (x-planes: west+east; z-planes:
+                    // north+south), the y extent the -1/16 shift keeps.
+                    let planes: [(u8, f32, bool); 4] = [
+                        (0, 4.0 / 16.0, false),
+                        (0, 12.0 / 16.0, true),
+                        (2, 4.0 / 16.0, true),
+                        (2, 12.0 / 16.0, false),
+                    ];
+                    for &(axis, fixed, flip) in &planes {
+                        let (fa, fb) = if axis == 0 { (1usize, 0usize) } else { (5usize, 4usize) };
+                        for &face in &[fa, fb] {
+                            let mut pts = [[0f32; 3]; 4];
+                            let mut colors = [[0f32; 3]; 4];
+                            let mut uvs = [[0f32; 2]; 4];
+                            for (i, c) in FACE_CORNERS[face].iter().enumerate() {
+                                let (fx, fy, fz) = if axis == 0 {
+                                    (fixed, c[1] - 1.0 / 16.0, c[2])
+                                } else {
+                                    (c[0], c[1] - 1.0 / 16.0, fixed)
+                                };
+                                pts[i] = [wx as f32 + fx, wy as f32 + fy, wz as f32 + fz];
+                                let u_raw = if axis == 0 { c[2] } else { c[0] };
+                                uvs[i] = [
+                                    if flip { 1.0 - u_raw } else { u_raw },
+                                    1.0 - c[1],
+                                ];
+                                let lm = lightmap_combine(
+                                    cell_sky,
+                                    cell_block,
+                                    sky_factor,
+                                    sky_tint,
+                                    ambient,
+                                    block_tint,
+                                    night_vision,
+                                    world.night_vision_factor,
+                                );
+                                // `shade: false` — no FACE_SHADE term,
+                                // the lightmap alone multiplies
+                                colors[i] = [base[0] * lm[0], base[1] * lm[1], base[2] * lm[2]];
                             }
                             out.push(Quad {
                                 pts,

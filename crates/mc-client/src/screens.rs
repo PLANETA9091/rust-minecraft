@@ -10169,6 +10169,14 @@ impl App {
                     {
                         return flattened;
                     }
+                } else if held == "wheat_seeds" {
+                    // THE SEEDS' OWN PLANT ARM (javap BlockItem.place —
+                    // the wheat_seeds item the vanilla's own BlockItem
+                    // walk speaks): the farmland's above cell the crop
+                    // wears, the canSurvive law the placement pos keeps
+                    if let Some(planted) = self.on_right_press_plant_arm(&hit) {
+                        return planted;
+                    }
                 }
             }
         }
@@ -10308,6 +10316,111 @@ impl App {
             world.set(hit.pos.0, hit.pos.1, hit.pos.2, result);
             self.world_quads = Some(crate::mesher::mesh_world(world, None));
         }
+        Some(true)
+    }
+
+    /// THE SEEDS' OWN PLANT ARM — javap BlockItem.place over the real
+    /// 26.2 jar (the wheat_seeds item's own BlockItem walk): the
+    /// placement pos the context's own relative walk keeps (the clicked
+    /// cell + the entry face's normal — the farmland the
+    /// non-replaceable clicked block the vanilla's own BlockPlaceContext
+    /// ctor speaks, the offset pos the standard context rides), then
+    /// the canPlace law: the cell replaceable (the AIR and the WATER —
+    /// the same canBeReplaced walk the placement lane speaks), the
+    /// canSurvive (CropBlock: the `hasSufficientLight(pos)`
+    /// `getRawBrightness(pos, 0) >= 8` bipush/if_icmplt pair ANDed with
+    /// the VegetationBlock.canSurvive below-check — the SUPPORTS_CROPS
+    /// tag's sole `minecraft:farmland` row the mayPlaceOn's
+    /// `floor.is(SUPPORTS_CROPS)` speaks). THE LIGHT ARM'S OWN FOLD: the
+    /// grid the canSurvive reads — the offline procedural lane carries
+    /// none, the mayPlaceOn arm alone the no-grid world keeps (the
+    /// documented simplification the vocabulary's own light query never
+    /// answered); the synced grid speaks, the raw-brightness gate rides.
+    /// THE VERDICT'S OWN ORDER (the placeBlock -> playSound -> consume
+    /// walk the bytecode offsets 63-271 keep): the setBlock FIRST, the
+    /// place sound AFTER (the `item.crop.plant` event the
+    /// SoundType.CROP's getPlaceSound row names — CROP_PLANTED, the
+    /// (v+1)/2 and p*0.8 fold the generated wheat row's 1.0/1.0 base
+    /// rides), the stack's own consume(1) the survival shrink speaks.
+    /// The offline world predicts the crop in place (the mesh
+    /// re-speaks, the cross quads the mesher's wheat path emits); the
+    /// networked world's plant is the server's own chunk refresh (the
+    /// echo already rode the lane head). Returns the press's own
+    /// verdict: the Some(true) the SUCCESS speaks, the canPlace
+    /// refusals the vanilla's own FAIL -> the caller's fall-through the
+    /// None keeps.
+    fn on_right_press_plant_arm(&mut self, hit: &crate::world::ClipHit) -> Option<bool> {
+        // THE PLACEMENT POS: the clicked cell + the entry face's normal
+        // (the context's own relative walk — the same cell the placement
+        // lane computes)
+        let normal = crate::world::World::DIRECTION_NORMAL[hit.face as usize];
+        let cell = (
+            hit.pos.0 + normal.0,
+            hit.pos.1 + normal.1,
+            hit.pos.2 + normal.2,
+        );
+        // THE CANPLACE WALK (one immutable borrow — the mutable
+        // prediction never crosses): the cell replaceable, the below
+        // cell farmland, the light grid's raw-brightness gate
+        {
+            let world = self.active_world()?;
+            let replaceable = matches!(
+                world.get(cell.0, cell.1, cell.2),
+                crate::world::AIR | crate::world::WATER
+            );
+            if !replaceable {
+                return None; // the canBeReplaced refusal — the FAIL keeps
+            }
+            // THE SUPPORTS_CROPS LAW: the below cell the mayPlaceOn's
+            // `floor.is(SUPPORTS_CROPS)` reads — the tag's sole
+            // minecraft:farmland row the offline vocabulary speaks
+            // directly
+            let below = world.get(cell.0, cell.1 - 1, cell.2);
+            if below != crate::world::FARMLAND {
+                return None; // the canSurvive floor refusal — the FAIL keeps
+            }
+            // THE LIGHT ARM (hasSufficientLight: getRawBrightness(pos,
+            // 0) >= 8): the synced grid speaks, the gate rides; the
+            // procedural lane's no-grid world the mayPlaceOn arm alone
+            // keeps (the documented fold)
+            if let Some(light) = world.light.as_ref() {
+                let (s, b) = light.cell(world.chunks_per_side, cell.0, cell.1, cell.2);
+                let raw = s.unwrap_or(0).max(b.unwrap_or(0));
+                if raw < 8 {
+                    return None; // the hasSufficientLight refusal — the FAIL keeps
+                }
+            }
+        }
+        // THE OFFLINE PREDICTION: the crop lands in the App's own
+        // terrain and the mesh re-speaks (the cross quads the mesher's
+        // wheat path emits; the networked world's plant rides the
+        // server's chunk refresh — no local edit)
+        if let (Some(world), false) = (self.offline_world.as_mut(), self.world_is_network) {
+            world.set(cell.0, cell.1, cell.2, crate::world::WHEAT);
+            self.world_quads = Some(crate::mesher::mesh_world(world, None));
+            // THE SURVIVAL CONSUME (BlockItem.place's own
+            // ItemStack.consume(1)): the seeds' own stack rides down,
+            // the empty slot clears — the `--held-item` stand-in (the
+            // golden scenes' lane) speaks no stack: the consume is the
+            // honest no-op it always was
+            let id = self.held_id();
+            let sel = self.selected_hotbar;
+            if let Some(id) = id {
+                let stack = self.inventory.items[sel];
+                if stack.1 > 0 && stack.0 == id {
+                    self.inventory.items[sel].1 -= 1;
+                    if self.inventory.items[sel].1 <= 0 {
+                        self.inventory.items[sel] = (0, 0);
+                    }
+                    self.hotbar_slots = self.inventory.hotbar();
+                }
+            }
+        }
+        // THE PLACE SOUND AFTER THE SET (the BlockItem.place's own
+        // order — the playSound the placeBlock's verdict fruit speaks):
+        // the wheat row the generated block_sounds table carries —
+        // `item.crop.plant` at the (v+1)/2, p*0.8 fold
+        self.sounds.play(self.frame, "wheat", crate::sound::Lane::Place);
         Some(true)
     }
 
@@ -10658,6 +10771,10 @@ impl App {
                         Some(cid) if cid != crate::world::AIR
                             && cid != crate::world::WATER
                             && cid != crate::world::LAVA
+                            // the crop's own pass (the 15th audit — the
+                            // `.noCollision()` row the spawn box scan the
+                            // vanilla's own empty shapes keep)
+                            && cid != crate::world::WHEAT
                     );
                     if solid_cell {
                         return Some(true); // the FAIL — consumed, silent
@@ -19494,6 +19611,164 @@ mod tests {
             app.offline_world.as_ref().unwrap().get(c, surface, c),
             crate::world::FARMLAND,
             "the dirt cell wears the farmland"
+        );
+    }
+
+    /// THE SEEDS' OWN PLANT ARM — the straight-down aim the vanilla
+    /// BlockItem.place's SUCCESS speaks (javap BlockItem.place +
+    /// CropBlock.canSurvive over the real 26.2 jar): the held
+    /// wheat_seeds the surface farmland looks up (the SUPPORTS_CROPS
+    /// tag's sole farmland row the below-check keeps), the WHEAT lands
+    /// IN the above cell (the context's own relative walk), the mesh
+    /// re-speaks with the four planes' eight quads (the block/crop
+    /// model's own row the mesher's wheat path meshes), the
+    /// `item.crop.plant` voice the place-after-set order rides, the
+    /// press consumed.
+    #[test]
+    fn the_seeds_plant_the_farmland_the_wheat_wears() {
+        let mut app = App::new(3);
+        app.enter_world();
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let surface = app.spawn_y - 1;
+        // the hit cell the FARMLAND row keeps (the till arm's own
+        // product the seeds never re-till — the plant arm's floor)
+        app.offline_world
+            .as_mut()
+            .unwrap()
+            .set(c, surface, c, crate::world::FARMLAND);
+        app.offline_held_updated(Some("item/wheat_seeds"));
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, app.spawn_y as f32 + 4.0, c as f32 + 0.5),
+            yaw: 0.0,
+            pitch: -std::f32::consts::FRAC_PI_2,
+        });
+        let quads_before = app.world_quads.as_ref().unwrap().clone();
+        assert!(app.on_right_press(0, 0), "the plant consumed the press");
+        assert_eq!(
+            app.offline_world.as_ref().unwrap().get(c, surface + 1, c),
+            crate::world::WHEAT,
+            "the above cell wears the wheat crop"
+        );
+        // THE MESH RE-SPOKE: the AIR cell the crop's own quads wear —
+        // the four zero-thickness planes' eight quads (2 faces x 4
+        // planes, the audited block/crop model's own count) the vec
+        // grows; the farmland's own top face the transparent-wheat walk
+        // keeps (is_transparent the non-occluding verdict speaks)
+        let after = app.world_quads.as_ref().unwrap();
+        assert_eq!(
+            after.len() - quads_before.len(),
+            8,
+            "the four planes' eight quads the crop cell wears"
+        );
+        // THE PLANT'S VOICE (the assert computes the expected from the
+        // ACTUAL loaded state — the cache-absent boot the silent lane
+        // keeps): the SoundType.CROP's own place event
+        if sounds_loaded() {
+            assert!(
+                app.sounds
+                    .events
+                    .iter()
+                    .any(|e| e.starts_with("item.crop.plant @")),
+                "the CROP_PLANTED voice the place-after-set order rode"
+            );
+        }
+    }
+
+    /// THE PLANT'S OWN FLOOR GUARD — the SUPPORTS_CROPS refusal (javap
+    /// VegetationBlock.canSurvive -> CropBlock.mayPlaceOn:
+    /// `floor.is(SUPPORTS_CROPS)` — the tag json's sole farmland member
+    /// the probe speaks): the held seeds the dirt floor looks up, the
+    /// below cell the DIRT the tag never carries, the canSurvive false
+    /// the FAIL -> the PASS fall-through keeps — no crop, no voice, the
+    /// press never consumed.
+    #[test]
+    fn the_plant_the_farmland_below_refuses() {
+        let mut app = App::new(3);
+        app.enter_world();
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let surface = app.spawn_y - 1;
+        app.offline_world
+            .as_mut()
+            .unwrap()
+            .set(c, surface, c, crate::world::DIRT); // the tillable, never the croppable
+        app.offline_held_updated(Some("item/wheat_seeds"));
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, app.spawn_y as f32 + 4.0, c as f32 + 0.5),
+            yaw: 0.0,
+            pitch: -std::f32::consts::FRAC_PI_2,
+        });
+        assert!(!app.on_right_press(0, 0), "the dirt floor the PASS keeps");
+        assert_eq!(
+            app.offline_world.as_ref().unwrap().get(c, surface + 1, c),
+            crate::world::AIR,
+            "the above cell stays air"
+        );
+        if sounds_loaded() {
+            assert!(
+                !app.sounds
+                    .events
+                    .iter()
+                    .any(|e| e.starts_with("item.crop.plant")),
+                "the refused plant the voice never speaks"
+            );
+        }
+    }
+
+    /// THE PLANT'S OWN GATE — the seeds' exact id the arm's held walk
+    /// reads (javap Items: the harvest `wheat` item is no BlockItem —
+    /// the right-press the use lane's PASS keeps; the placeable lookup
+    /// the crop kind never wears): the held wheat the farmland aims
+    /// DOWN at, the arm never arms, the generic placement lane the
+    /// WHEAT refusal keeps (the crop kind the seeds' own product the
+    /// plant arm alone wears), the STONE floor the second aim the
+    /// below-refusal keeps (the SUPPORTS_CROPS tag the stone never
+    /// carried) — the farmland stays farmland, the above cell stays
+    /// air, no voice.
+    #[test]
+    fn the_plant_the_seeds_gate_the_harvest_never_wears() {
+        let mut app = App::new(3);
+        app.enter_world();
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let surface = app.spawn_y - 1;
+        app.offline_world
+            .as_mut()
+            .unwrap()
+            .set(c, surface, c, crate::world::FARMLAND);
+        // THE HARVEST ITEM: the arm's gate never arms, the placeable
+        // refusal the crop kind keeps
+        app.offline_held_updated(Some("item/wheat"));
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, app.spawn_y as f32 + 4.0, c as f32 + 0.5),
+            yaw: 0.0,
+            pitch: -std::f32::consts::FRAC_PI_2,
+        });
+        assert!(
+            !app.on_right_press(0, 0),
+            "the harvest item the PASS keeps"
+        );
+        assert_eq!(
+            app.offline_world.as_ref().unwrap().get(c, surface + 1, c),
+            crate::world::AIR,
+            "no crop the harvest item wears"
+        );
+        // THE STONE FLOOR: the below cell the tag never carries — the
+        // same refusal the dirt floor spoke
+        app.offline_world
+            .as_mut()
+            .unwrap()
+            .set(c, surface, c, crate::world::STONE);
+        app.offline_held_updated(Some("item/wheat_seeds"));
+        assert!(
+            !app.on_right_press(0, 0),
+            "the stone floor the PASS keeps"
+        );
+        assert_eq!(
+            app.offline_world.as_ref().unwrap().get(c, surface + 1, c),
+            crate::world::AIR,
+            "the above cell stays air over stone"
         );
     }
 

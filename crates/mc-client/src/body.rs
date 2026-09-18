@@ -228,10 +228,15 @@ fn box_at(x: f64, y: f64, z: f64, height: f64) -> (f64, f64, f64, f64, f64, f64)
 /// The solid predicate — the clip lane's own (the fluids never decide
 /// the hit, the air is the air). The drop lane's un-stuck and the
 /// item physics speak the same law. LAVA joins the fluids (the lava
-/// lane: the body wades INTO it, the fire laws answer).
+/// lane: the body wades INTO it, the fire laws answer). WHEAT passes
+/// (the 15th audit — the `.noCollision()` row the Blocks clinit
+/// speaks: the body walks THROUGH the crop, the vanilla's own law).
 pub fn solid(world: &World, x: i32, y: i32, z: i32) -> bool {
     let id = world.get(x, y, z);
-    id != AIR && id != WATER && id != crate::world::LAVA
+    id != AIR
+        && id != WATER
+        && id != crate::world::LAVA
+        && id != crate::world::WHEAT
 }
 
 /// The per-axis clip (the classic AABB clipXCollide law the VoxelShape
