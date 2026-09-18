@@ -2695,6 +2695,24 @@ impl Zombie {
         }
     }
 
+    /// THE KIND'S OWN BASE XP (javap `getBaseExperienceReward` — the
+    /// 26.2 bytecode): the ANIMAL's override `1 + this.random.
+    /// nextInt(3)` the cow/pig/sheep kills answer — the subclasses
+    /// the override never name (Cow/Pig/Sheep the method list never
+    /// carries, AgeableMob the walk never touches), the Animal arm
+    /// the three kinds inherit; the ZOMBIE's own `xpReward` 5 the
+    /// bare body keeps clean (the equipment-slot walk the
+    /// none-wearing body skips, the isBaby's ×2.5 fold the client's
+    /// no-baby lane never rides). The roll rides the mob's own random
+    /// — the same stream the loot's own draws speak, the vanilla
+    /// dropAllDeathLoot-then-dropExperience order the caller keeps.
+    pub fn base_xp_reward(&mut self) -> i32 {
+        match self.kind {
+            MobKind::Zombie => ZOMBIE_XP_REWARD,
+            _ => 1 + self.rng.next_int(3),
+        }
+    }
+
     /// THE DEATH LOOT (javap `dropAllDeathLoot` — the tables the four
     /// drawn kinds speak, `data/minecraft/loot_table/entities/*.json`
     /// verbatim): THE ZOMBIE's own json — POOL 1 always rolls the
@@ -4293,6 +4311,44 @@ mod tests {
             ((half - 400)..=(half + 400)).contains(&sheep_twos),
             "the sheep two band {sheep_twos}"
         );
+    }
+
+    /// THE KINDS' OWN BASE XP (javap `getBaseExperienceReward` — the
+    /// 26.2 bytecode): the Animal's override `1 + nextInt(3)` the
+    /// cow/pig/sheep kills inherit — the three values the uniform
+    /// band splits evenly — and the zombie's flat `xpReward` 5 the
+    /// bare body keeps (the equipment walk the none-wearing body
+    /// never rides, the roll the zombie's arm never draws).
+    #[test]
+    fn the_animal_kills_roll_their_own_xp() {
+        // THE ZOMBIE'S OWN ROW: the flat 5, no draw
+        let mut z = Zombie::new(1, 0.0, 0.0, 0.0, 7);
+        z.health = 0.0;
+        assert_eq!(z.base_xp_reward(), ZOMBIE_XP_REWARD, "the zombie's flat 5");
+        assert_eq!(z.base_xp_reward(), ZOMBIE_XP_REWARD, "the constant never draws");
+        // THE ANIMALS' BAND: uniform 1..3 over each kind's own stream
+        let n = 4000u32;
+        for kind in [MobKind::Cow, MobKind::Pig, MobKind::Sheep] {
+            let (mut ones, mut twos, mut threes) = (0i32, 0i32, 0i32);
+            for seed in 0..n {
+                let mut z = Zombie::new(1, 0.0, 0.0, 0.0, 20_000 + seed as u64);
+                z.kind = kind;
+                z.health = 0.0;
+                match z.base_xp_reward() {
+                    1 => ones += 1,
+                    2 => twos += 1,
+                    3 => threes += 1,
+                    v => panic!("the {kind:?} xp {v} escapes 1..3"),
+                }
+            }
+            let third = (n / 3) as i32;
+            for (name, band) in [("ones", ones), ("twos", twos), ("threes", threes)] {
+                assert!(
+                    ((third - 500)..=(third + 500)).contains(&band),
+                    "the {kind:?} {name} band {band}"
+                );
+            }
+        }
     }
 
     /// THE BURNING MEAT'S OWN SMELT (the loot table's furnace_smelt

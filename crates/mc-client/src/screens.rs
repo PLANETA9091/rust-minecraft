@@ -4162,6 +4162,11 @@ impl App {
         // order the die-then-sweep call site speaks)
         let (mx, my, mz) = (mob.x, mob.y, mob.z);
         let target_loot = if died { mob.death_loot(true) } else { Vec::new() };
+        // THE KILL'S OWN ROLL (the entity's own stream — the loot's
+        // own draws the death walk speaks first, the base_xp_reward
+        // roll the dropExperience order follows; captured while the
+        // borrow lives)
+        let target_xp = if died { Some(mob.base_xp_reward()) } else { None };
         if died {
             self.sounds.play_voice_at(
                 self.frame,
@@ -4201,17 +4206,19 @@ impl App {
             // THE KILL'S OWN XP (javap LivingEntity.dropExperience — the
             // `lastHurtByPlayerMemoryTime > 0` gate the fist's hit arms,
             // the wasExperienceConsumed/isAlwaysExperienceDropper gates
-            // the bare mob never speaks): the bare zombie's flat
-            // `xpReward` 5 (Mob.getBaseExperienceReward walks the
-            // equipment slots — the bare body wears none, the 5 rides
-            // clean), the award now spawns the PHYSICAL orbs (the
-            // `awardWithDirection` while loop — the split the
-            // getExperienceValue bands speak, the [3, 1, 1] walk the
-            // flat 5 fragments into) and the pickup's grant rides the
-            // touch.
+            // the bare mob never speaks): the KIND'S OWN BASE ROW the
+            // getBaseExperienceReward override answers — the bare
+            // zombie's flat `xpReward` 5 (the equipment walk the bare
+            // body never rides), the animals' `1 + nextInt(3)` the
+            // Animal arm speaks (the cow/pig/sheep the subclasses the
+            // override never name), the award spawning the PHYSICAL
+            // orbs (the `awardWithDirection` while loop — the split
+            // the getExperienceValue bands speak, the [3, 1, 1] walk
+            // the flat 5 fragments into) and the pickup's grant rides
+            // the touch.
             // The FIRE kill's site speaks the CLOSED gate — no player
             // memory behind an onFire dose, no reward there either.
-            self.spawn_xp_orbs(mx, my + 0.5, mz, crate::mob::ZOMBIE_XP_REWARD);
+            self.spawn_xp_orbs(mx, my + 0.5, mz, target_xp.unwrap_or(0));
         }
         // THE SWEEP'S OWN ARM (javap doSweepAttack verbatim — the arm
         // the successful hurt runs: the SWEEP voice the offset-0
@@ -4308,7 +4315,11 @@ impl App {
                             &mut self.mob_rng,
                         ));
                     }
-                    self.spawn_xp_orbs(nx, ny + 0.5, nz, crate::mob::ZOMBIE_XP_REWARD);
+                    // THE KIND'S OWN XP (the base_xp_reward row the
+                    // swept kill's own stream answers — the Animal's
+                    // 1..3 the zombie's flat 5 the override keeps)
+                    let nxp = self.mobs[j].base_xp_reward();
+                    self.spawn_xp_orbs(nx, ny + 0.5, nz, nxp);
                 } else {
                     self.sounds.play_voice_at(
                         self.frame,
@@ -25508,6 +25519,137 @@ mod tests {
             app.drops.iter().all(|d| d.item != flesh),
             "the flesh the cow's death never drops"
         );
+    }
+
+    /// THE FIST'S OWN KIND XP (the attack lane's direct kill the
+    /// kind's own base row speaks): the punched cow's kill spawns the
+    /// orbs the Animal override rolls — the 1..3 band the zombie's
+    /// flat 5 the animal kill never names — the award the touch's
+    /// grant never pre-empts (the xp.total the kill keeps at zero).
+    #[test]
+    fn the_fist_kills_the_cow_its_own_xp() {
+        for seed in [13u64, 14, 15] {
+            let mut app = App::new(seed);
+            app.enter_world();
+            let size = app.offline_world.as_ref().unwrap().size_blocks();
+            let c = size / 2;
+            let top = app.spawn_y;
+            app.body = Some(crate::body::PlayerBody::new(
+                c as f64 + 0.5,
+                top as f64,
+                c as f64 + 0.5,
+                0.0,
+                0.0,
+            ));
+            let mut cow =
+                crate::mob::Zombie::new(7, c as f64 + 3.0, top as f64 + 1.62, c as f64 + 0.5, 31);
+            cow.kind = crate::mob::MobKind::Cow;
+            cow.health = 0.2; // the one punch the charge kills on
+            app.mobs.push(cow);
+            {
+                let (tx, ty, tz) = {
+                    let m = &app.mobs[0];
+                    (m.x, m.y + crate::mob::ZOMBIE_HEIGHT * 0.5, m.z)
+                };
+                let b = app.body.as_mut().unwrap();
+                let (dx, dy, dz) = (tx - b.x, ty - (b.y + b.eye_height()), tz - b.z);
+                let horiz = (dx * dx + dz * dz).sqrt().max(1e-9);
+                let len3 = (dx * dx + dy * dy + dz * dz).sqrt().max(1e-9);
+                b.yaw =
+                    ((dx / horiz).atan2(-dz / horiz) - std::f64::consts::PI).to_degrees() as f32;
+                b.pitch = -(dy / len3).asin().to_degrees() as f32;
+            }
+            assert_eq!(app.pick_mob(&app.mobs), Some(0), "the cow the reach keeps");
+            app.attack_mob(0);
+            assert!(
+                !app.orbs.is_empty(),
+                "the kill's own award spawns the orbs (seed {seed})"
+            );
+            let total: i32 = app.orbs.iter().map(|o| o.value).sum();
+            assert!(
+                (1..=3).contains(&total),
+                "the cow's own band the kill rolls: {total} (seed {seed})"
+            );
+            assert_eq!(
+                app.xp.total, 0,
+                "the grant rides the touch, not the kill (seed {seed})"
+            );
+        }
+    }
+
+    /// THE SWEEP'S OWN KIND XP (doSweepAttack's neighbor walk the
+    /// outcomes lane speaks): the swept cow's death rolls the same
+    /// base row — the orbs the Animal override answers — while the
+    /// surviving zombie target the kill's gate never awards (the
+    /// closed `lastHurtByPlayerMemoryTime` lane the live body keeps).
+    #[test]
+    fn the_sweep_kills_the_cow_its_own_xp() {
+        let mut app = App::new(3);
+        app.enter_world();
+        crate::headless::seed_scene(
+            &mut app,
+            &crate::headless::SceneOpts {
+                body: true,
+                zombie: true,
+                ..crate::headless::SceneOpts::default()
+            },
+        )
+        .unwrap();
+        let idx = 0;
+        // the stage's own geometry: the target exactly 2.0 out along
+        // the facing (full health — the swept lane's own survivor),
+        // the cow beside it 0.7 lateral (inside the inflated box +
+        // the 9.0 ring, the 0.2 health the swept total kills)
+        let (nx, ny, nz) = {
+            let b = app.body.as_ref().unwrap();
+            let vyaw = b.yaw as f64 * std::f64::consts::PI / 180.0;
+            let fx = -vyaw.sin();
+            let fz = vyaw.cos();
+            let m = &mut app.mobs[idx];
+            m.x = b.x + fx * 2.0;
+            m.z = b.z + fz * 2.0;
+            (m.x + fz * 0.7, m.y, m.z - fx * 0.7)
+        };
+        let mut cow = crate::mob::Zombie::new(2, nx, ny, nz, 311);
+        cow.kind = crate::mob::MobKind::Cow;
+        cow.health = 0.2;
+        app.mobs.push(cow);
+        // aim at the zombie's mid height (AFTER the staging sits)
+        {
+            let (tx, ty, tz) = {
+                let m = &app.mobs[idx];
+                (m.x, m.y + crate::mob::ZOMBIE_HEIGHT * 0.5, m.z)
+            };
+            let b = app.body.as_mut().unwrap();
+            let (dx, dy, dz) = (tx - b.x, ty - (b.y + b.eye_height()), tz - b.z);
+            let horiz = (dx * dx + dz * dz).sqrt().max(1e-9);
+            let len3 = (dx * dx + dy * dy + dz * dz).sqrt().max(1e-9);
+            b.yaw = ((dx / horiz).atan2(-dz / horiz) - std::f64::consts::PI).to_degrees() as f32;
+            b.pitch = -(dy / len3).asin().to_degrees() as f32;
+        }
+        // the sword + the full charge + the grounded swing
+        let sword = crate::mob::wire_id("iron_sword").expect("the sword rides the wire");
+        app.inventory.items[app.selected_hotbar] = (sword, 1);
+        app.attack_ticker = 20;
+        app.on_attack();
+        // the cow's death the sweep's own award answers
+        assert!(
+            app.mobs[1].health <= 0.0,
+            "the swept total the 0.2 cow kills"
+        );
+        assert!(
+            !app.orbs.is_empty(),
+            "the swept kill's own award spawns the orbs"
+        );
+        let total: i32 = app.orbs.iter().map(|o| o.value).sum();
+        assert!(
+            (1..=3).contains(&total),
+            "the cow's own band the swept kill rolls: {total}"
+        );
+        // the zombie target survived — the kill's gate the live body
+        // never opens (no orbs the survivor's site speaks)
+        assert!(app.mobs[0].health > 0.0, "the target the sword wounds");
+        assert_eq!(app.mobs[0].id, app.mobs[idx].id, "the target the lane keeps");
     }
 
     #[test]
