@@ -413,6 +413,23 @@ pub const DATA_CUSTOM_NAME_ID: u8 = 2;
 /// renderer draws.
 pub const DATA_CUSTOM_NAME_VISIBLE: u8 = 3;
 
+/// THE ARROW'S OWN FLAGS BYTE INDEX — the SynchedEntityData id the
+/// class tree speaks: Entity's clinit defines 8 accessors (0..7),
+/// LivingEntity's clinit defines 7 more in order FLAGS(8), HEALTH(9),
+/// EFFECT_PARTICLES(10), EFFECT_AMBIENCE(11), ARROWS(12), STINGERS(13),
+/// SLEEPING(14) — the walk the repo's health read already rides — and
+/// AbstractArrow's own clinit defines 3 in order ID_FLAGS(15) then
+/// PIERCE_LEVEL(16) then IN_GROUND(17) (the javap walk: BYTE, BYTE,
+/// BOOLEAN — the projectile's own byte rides accessor 15).
+pub const ARROW_DATA_FLAGS_ID: u8 = 15;
+
+/// THE CRIT'S OWN BIT — AbstractArrow's flag words are MASKS, not
+/// shifts (javap `setFlag(int, boolean)`: `value ? b | mask : b &
+/// ~mask` — the OR folds the arg VERBATIM): `setCritArrow(b)` passes
+/// the literal 1 (`iconst_1; setFlag`), `isCritArrow()` answers
+/// `(byte & 1) != 0` — the wire's byte bit 0x01 IS the crit word.
+pub const ARROW_FLAG_CRIT: u8 = 1;
+
 /// THE WOOL TINT'S OWN WORD (javap ColorLerper$Type.SHEEP.getColor's
 /// law — the colorByDye map the ctor's lambda pre-speaks through
 /// ColorLerper.getModifiedColor(dye, 0.75F)): WHITE never multiplies —
@@ -1242,8 +1259,9 @@ pub struct Arrow {
 }
 
 /// The arrow's own tick out-edges — the hits the caller's own lanes
-/// answer (the player's hurt, the block's voice).
-#[derive(Debug, Clone, Copy, Default)]
+/// answer (the player's hurt, the block's voice). The trail's own Vec
+/// broke the old Copy — the events the callers move-field anyway.
+#[derive(Debug, Clone, Default)]
 pub struct ArrowEvents {
     /// the player hit's own damage (the ceil(clamp(|v| * 2.0)) the
     /// onHitEntity formula speaks — the arrow the discard answers)
@@ -1258,6 +1276,16 @@ pub struct ArrowEvents {
     /// the caller's own lanes the hurt pipeline answers: the voice,
     /// the death loot, the XP the player-kill gate arms)
     pub hit_mob: Option<(i32, f64)>,
+    /// THE CRIT TRAIL'S OWN WORDS (javap AbstractArrow.tick the 26.2's
+    /// flight-lane block — the isCritArrow loop the caller's particle
+    /// engine answers): the (x, y, z, vx, vy, vz) six-pack per spawned
+    /// crit star, the position the pre-move pose + the tick-start
+    /// velocity's j/4 span speaks, the velocity the backward drift
+    /// (-v, the y's own +0.2 lift) carries — the words ride as DATA
+    /// (the sim's own walk is deterministic, the javap block never
+    /// draws), the caller's engine spends ITS OWN rng the ctor walks
+    /// (the life/size floats the SingleQuadParticle ctor draws).
+    pub trail: Vec<(f64, f64, f64, f64, f64, f64)>,
 }
 
 /// THE DRAW'S OWN POWER (javap `BowItem.getPowerForTime` the 26.2
@@ -1458,13 +1486,16 @@ impl Arrow {
     /// own fields keep, the client's `AbstractArrow.tick` the flight
     /// simulates from there). The seed the id-mixed law keeps (the
     /// SAME stream every ctor arms — the server's id names the
-    /// entity, the client's random the same mix rides); the CRIT the
-    /// wire never spoke stays false (the accessor byte the server's
-    /// own setCritArrow arms is v1's honest silence — the trail
-    /// particles the flag gates are the wire's own lane to speak
-    /// later); `player_shot` stays false (the owner shard the Add
-    /// Entity `data` field carries is v1's unread word — the visual
-    /// lane never hits).
+    /// entity, the client's random the same mix rides). The CRIT the
+    /// wire's own Set Entity Data byte speaks (the Add Entity `data`
+    /// field carries the OWNER id, never the flags — the accessor
+    /// byte the tracker's first metadata sync rides is the word:
+    /// `e.data[ARROW_DATA_FLAGS_ID]` bit 0x01, the server's own
+    /// setCritArrow arm the arrows_view projection reads) — the
+    /// player's full draw AND the skeleton's luckiest shots the flag
+    /// arms, the trail particles the flight lane spawns from it.
+    /// `player_shot` stays false (the owner shard is still v1's
+    /// unread word — the visual lane never hits).
     #[allow(clippy::too_many_arguments)]
     pub fn from_wire(
         id: i32,
@@ -1476,6 +1507,7 @@ impl Arrow {
         vz: f64,
         y_rot: f32,
         x_rot: f32,
+        crit: bool,
     ) -> Arrow {
         let seed = arrow_entity_seed(id);
         Arrow {
@@ -1496,7 +1528,7 @@ impl Arrow {
             life: 0,
             in_ground: false,
             shake_time: 0,
-            crit: false,
+            crit,
             dead: false,
             player_shot: false,
             rng: Lcg::new(seed),
@@ -1545,6 +1577,31 @@ impl Arrow {
                     self.dead = true;
                 }
                 return events;
+            }
+        }
+        // THE CRIT TRAIL (javap AbstractArrow.tick the 26.2's flight
+        // lane — the isCritArrow block rides BETWEEN the stuck return
+        // and the move, bytecode 294: the 4-particle loop j = 0..4,
+        // the position the PRE-MOVE pose + the tick-start velocity's
+        // `j / 4.0` span speaks (slot 5 = position() before the move,
+        // slot 2 = the deltaMovement the ctor's capture keeps — the
+        // water inertia the earlier lane applies never re-reads it),
+        // the velocity the backward drift `(-vx, -vy + 0.2, -vz)`
+        // carries — NO random the block's own determinism keeps, NO
+        // j factor the raw dneg/0.2 walk speaks). The words ride the
+        // events as data; the caller's particle engine spawns the
+        // crit stars (the engine's own rng the ctor draws spend).
+        if self.crit {
+            for j in 0..4i32 {
+                let jf = j as f64;
+                events.trail.push((
+                    self.x + self.vx * jf / 4.0,
+                    self.y + self.vy * jf / 4.0,
+                    self.z + self.vz * jf / 4.0,
+                    -self.vx,
+                    -self.vy + 0.2,
+                    -self.vz,
+                ));
             }
         }
         // THE FLIGHT LANE
@@ -6158,6 +6215,47 @@ mod tests {
         let want = ((1.5f64 * ARROW_BASE_DAMAGE).ceil()) as i64;
         assert_eq!(dmg as i64, want, "the ceil(|v| * 2.0) the formula keeps");
         assert!(d.dead, "the DISALLOWED pickup the hit discards");
+    }
+
+    /// THE CRIT TRAIL'S OWN FLIGHT (javap AbstractArrow.tick the
+    /// 26.2's flight-lane crit block the wire's flags byte arms): the
+    /// 4 words the tick emits — the span the pre-move pose + the
+    /// tick-start velocity's `j / 4.0` speaks, the backward drift
+    /// `(-vx, -vy + 0.2, -vz)` the raw dneg/+0.2 fold carries, NO
+    /// random the block's own determinism keeps — the plain shot and
+    /// the stuck arrow the honest silence keeps.
+    #[test]
+    fn the_crit_arrow_the_flight_the_trail_words_speak() {
+        let world = arrow_air_world();
+        // THE CRIT FLIGHT: 4 words, the span + the drift exact
+        let mut a = Arrow::from_wire(300, 10.0, 20.0, 10.0, 2.4, 0.0, 0.0, -90.0, 0.0, true);
+        let aev = a.tick(&world, None, &[]);
+        assert_eq!(aev.trail.len(), 4, "the 4-particle loop the flight speaks");
+        for (j, w) in aev.trail.iter().enumerate() {
+            let jf = j as f64;
+            assert!(
+                (w.0 - (10.0 + 2.4 * jf / 4.0)).abs() < 1e-9,
+                "the span the j/4 keeps (x @ {j})"
+            );
+            assert!((w.1 - 20.0).abs() < 1e-9, "the level flight the y keeps (@ {j})");
+            assert!((w.2 - 10.0).abs() < 1e-9, "the still z the flight keeps (@ {j})");
+            assert!((w.3 + 2.4).abs() < 1e-9, "the backward drift the -vx speaks (@ {j})");
+            assert!((w.4 - 0.2).abs() < 1e-9, "the +0.2 lift the y drift rides (@ {j})");
+            assert!(w.5.abs() < 1e-9, "the still vz the drift keeps (@ {j})");
+        }
+        // THE PLAIN SHOT: the flags byte's silence the trail never arms
+        let mut b = Arrow::from_wire(301, 10.0, 20.0, 10.0, 2.4, 0.0, 0.0, -90.0, 0.0, false);
+        let bev = b.tick(&world, None, &[]);
+        assert!(bev.trail.is_empty(), "the plain shot trails nothing");
+        // THE STUCK SHOT: the stuck lane's early return the trail
+        // never passes (the head check the in-ground arm rides — the
+        // javap walk the stuck branch returns BEFORE the flight lane)
+        let mut stuck = arrow_air_world();
+        stuck.set(10, 20, 10, crate::world::STONE);
+        let mut c = Arrow::from_wire(302, 10.5, 20.5, 10.5, 2.4, 0.0, 0.0, -90.0, 0.0, true);
+        let cev = c.tick(&stuck, None, &[]);
+        assert!(c.in_ground, "the head check the stick arms");
+        assert!(cev.trail.is_empty(), "the stuck lane returns before the trail");
     }
 
     /// THE DRAW'S OWN POWER (javap `BowItem.getPowerForTime` the 26.2

@@ -3460,6 +3460,11 @@ impl App {
                 // lanes answer: the hurt, the voice, the death loot +
                 // XP the player-kill gate arms)
                 let mut arrow_mob_hits: Vec<(i32, f64)> = Vec::new();
+                // THE CRIT TRAIL'S OWN WORDS (the flight lane's 4-pack
+                // per tick the crit arrows emit — the (x, y, z, vx, vy,
+                // vz) six-packs the particle engine spawns after, the
+                // stars the crit() ctor rides)
+                let mut arrow_trails: Vec<(f64, f64, f64, f64, f64, f64)> = Vec::new();
                 // THE GRAZE'S OWN SWAPS (the EatBlockGoal's `== 4`
                 // landing the events carry — the caller applies the
                 // id the tick's &World read the immutable borrow
@@ -3663,7 +3668,7 @@ impl App {
                         // discards; the vecs the caller's scope
                         // declared, the fills the flight answers)
                         for arrow in self.arrows.iter_mut() {
-                            let aev = arrow.tick(world, player.as_ref(), &self.mobs);
+                            let mut aev = arrow.tick(world, player.as_ref(), &self.mobs);
                             if let Some(dmg) = aev.hit_player {
                                 arrow_player_hits.push(dmg);
                             }
@@ -3673,6 +3678,7 @@ impl App {
                             if let Some(pitch) = aev.hit_block {
                                 arrow_block_hits.push((arrow.x, arrow.y, arrow.z, pitch));
                             }
+                            arrow_trails.append(&mut aev.trail);
                         }
                         self.arrows.retain(|a| !a.dead);
                     }
@@ -3757,6 +3763,18 @@ impl App {
                 // the stick's own spot)
                 for dmg in arrow_player_hits {
                     self.hurt(dmg as f32);
+                }
+                // THE CRIT TRAIL'S OWN SPAWNS (the words the flight
+                // ticks carried — the crit() ctor each six-pack answers,
+                // the engine's own rng the life/size draws spend: the
+                // ParticleEngine's stream the mob_rng lane keeps, the
+                // star's bloom the CritParticle law rides)
+                for (tx, ty, tz, tvx, tvy, tvz) in arrow_trails {
+                    let r_life = self.mob_rng.next_f32();
+                    let r_size = self.mob_rng.next_f32();
+                    self.particles.push(crate::particles::crit(
+                        tx, ty, tz, tvx, tvy, tvz, r_life, r_size,
+                    ));
                 }
                 for (ax, ay, az, pitch) in arrow_block_hits {
                     self.sounds.play_voice_at(
@@ -9323,17 +9341,11 @@ impl App {
             }
             // THE FRESH SPAWN: the packet's own word becomes the
             // client-side entity (the pose AND the motion — the
-            // flight's initial velocity the LP Vec3 carried)
+            // flight's initial velocity the LP Vec3 carried); the
+            // CRIT the wire's own metadata byte spoke rides (the
+            // arrows_view projection the accessor 15 bit 0x01 read)
             self.net_arrows.push(crate::mob::Arrow::from_wire(
-                w.id,
-                w.x,
-                w.y,
-                w.z,
-                w.vx,
-                w.vy,
-                w.vz,
-                w.yaw,
-                w.pitch,
+                w.id, w.x, w.y, w.z, w.vx, w.vy, w.vz, w.yaw, w.pitch, w.crit,
             ));
         }
         // the ids the wire no longer names never re-enter net_arrows —
@@ -9813,10 +9825,22 @@ impl App {
         let Some(world) = self.net_world.as_ref() else {
             return;
         };
+        // THE CRIT TRAIL'S OWN WORDS (the flight ticks the shots
+        // carried — the words the caller's engine spawns after the
+        // mutable borrow ends, the SAME lane the offline loop rides)
+        let mut trails: Vec<(f64, f64, f64, f64, f64, f64)> = Vec::new();
         for arrow in self.net_arrows.iter_mut() {
-            let _ = arrow.tick(world, None, &self.net_mobs);
+            let mut aev = arrow.tick(world, None, &self.net_mobs);
+            trails.append(&mut aev.trail);
         }
         self.net_arrows.retain(|a| !a.dead);
+        for (tx, ty, tz, tvx, tvy, tvz) in trails {
+            let r_life = self.mob_rng.next_f32();
+            let r_size = self.mob_rng.next_f32();
+            self.particles.push(crate::particles::crit(
+                tx, ty, tz, tvx, tvy, tvz, r_life, r_size,
+            ));
+        }
     }
 
     pub fn live_view_updated(
@@ -18246,6 +18270,7 @@ mod tests {
             vz: 0.0,
             yaw: -90.0,
             pitch: 0.0,
+            crit: false,
         }]);
         assert_eq!(app.net_arrows.len(), 1, "the shot rendered v1");
         assert_eq!(app.net_arrows[0].id, 300);
@@ -18280,6 +18305,7 @@ mod tests {
             vz: 0.0,
             yaw: 0.0,
             pitch: 0.0,
+            crit: false,
         }]);
         assert_eq!(app.net_arrows.len(), 1, "no duplicate spawn");
         assert!((app.net_arrows[0].x - 12.4).abs() < 1e-9, "the sim's own truth stands");
@@ -18300,8 +18326,80 @@ mod tests {
             vz: 0.0,
             yaw: 0.0,
             pitch: 0.0,
+            crit: false,
         }]);
         assert!(offline.net_arrows.is_empty(), "the offline lane never mixes");
+    }
+
+    /// THE WIRE ARROW'S CRIT TRAIL (the flags byte the projection
+    /// rides → the from_wire word the shot arms → the flight the
+    /// 4-star-per-tick the particle engine spawns): the crit star the
+    /// tick's span positions answer, the plain shot the trail never
+    /// arms, the stars the CritParticle law ticks.
+    #[test]
+    fn the_wire_arrow_the_crit_byte_the_trail_stars_speak() {
+        let mut app = App::new(3);
+        app.open(ScreenKind::Connect);
+        app.net_world = Some(air_net_world(2, 0));
+        app.enter_network_world(None, Skybox::Overworld, None, None);
+        // THE CRIT SPAWN: the metadata byte the projection read
+        app.live_net_arrows_updated(vec![crate::world_view::WireArrow {
+            id: 300,
+            x: 10.0,
+            y: 66.0,
+            z: 10.0,
+            vx: 2.4,
+            vy: 0.0,
+            vz: 0.0,
+            yaw: -90.0,
+            pitch: 0.0,
+            crit: true,
+        }]);
+        assert!(app.net_arrows[0].crit, "the wire's byte the shot arms");
+        // THE FLIGHT TICK: the 4 stars the trail words spawn (the
+        // engine's own rng the life/size draws spend)
+        app.tick_net_arrows();
+        let crits: Vec<&crate::particles::Particle> = app
+            .particles
+            .iter()
+            .filter(|p| matches!(p.kind, crate::particles::ParticleKind::Crit))
+            .collect();
+        assert_eq!(crits.len(), 4, "the 4-particle loop the tick speaks");
+        for (j, p) in crits.iter().enumerate() {
+            let jf = j as f64;
+            assert!(
+                (p.x - (10.0 + 2.4 * jf / 4.0)).abs() < 1e-9,
+                "the span the j/4 keeps (x @ {j})"
+            );
+            assert!(
+                (p.vx + 2.4).abs() < 1e-9 && (p.vy - 0.2).abs() < 1e-9,
+                "the backward drift the star rides (@ {j})"
+            );
+        }
+        // THE PLAIN SHOT: the silent byte the trail never arms
+        let mut bare = App::new(3);
+        bare.open(ScreenKind::Connect);
+        bare.net_world = Some(air_net_world(2, 0));
+        bare.enter_network_world(None, Skybox::Overworld, None, None);
+        bare.live_net_arrows_updated(vec![crate::world_view::WireArrow {
+            id: 301,
+            x: 10.0,
+            y: 66.0,
+            z: 10.0,
+            vx: 2.4,
+            vy: 0.0,
+            vz: 0.0,
+            yaw: -90.0,
+            pitch: 0.0,
+            crit: false,
+        }]);
+        bare.tick_net_arrows();
+        let bare_crits = bare
+            .particles
+            .iter()
+            .filter(|p| matches!(p.kind, crate::particles::ParticleKind::Crit))
+            .count();
+        assert_eq!(bare_crits, 0, "the plain shot trails nothing");
     }
 
     /// THE WIRE MOBS' DEATH CLOCK (LivingEntity.tickDeath's own law

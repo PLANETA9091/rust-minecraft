@@ -2018,6 +2018,11 @@ pub fn render_gui_screen_opts(
                                 vz,
                                 yaw: y_rot,
                                 pitch: x_rot,
+                                // the staged shot's own flags word (the
+                                // Set Entity Data the tracker sync rides —
+                                // the full-draw crit the trail's smoke
+                                // exercises, the stars the flight draws)
+                                crit: true,
                             },
                         ]);
                         for _ in 0..ticks {

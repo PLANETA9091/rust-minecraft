@@ -790,6 +790,14 @@ pub struct WireArrow {
     /// submit fold the same degrees walk).
     pub yaw: f32,
     pub pitch: f32,
+    /// THE CRIT'S OWN BYTE — the Set Entity Data accessor
+    /// `ARROW_DATA_FLAGS_ID` (AbstractArrow.ID_FLAGS, 15) bit
+    /// `ARROW_FLAG_CRIT` (0x01, the mask the setFlag OR folds): the
+    /// server's own setCritArrow arm the tracker's first metadata
+    /// sync ships, the trail particles the flight lane spawns. The
+    /// byte's absence the honest silence keeps (false — the plain
+    /// shot trails nothing).
+    pub crit: bool,
 }
 
 /// THE ARROW PROJECTION: the entity store's `minecraft:arrow` bodies,
@@ -806,6 +814,15 @@ pub fn arrows_view(model: &WorldModel) -> Vec<WireArrow> {
             if name != "minecraft:arrow" {
                 return None; // not-yet-drawn types stay honest data
             }
+            // THE FLAGS BYTE (the accessor 15 the class tree speaks —
+            // the Byte serializer the crit bit rides; any other entry
+            // shape or the byte's ABSENCE the plain-shot silence keeps)
+            let crit = match e.data.get(&crate::mob::ARROW_DATA_FLAGS_ID) {
+                Some(mc_protocol::play::EntityDataEntry::Byte(b)) => {
+                    *b as u8 & crate::mob::ARROW_FLAG_CRIT != 0
+                }
+                _ => false,
+            };
             Some(WireArrow {
                 id,
                 x: e.x,
@@ -816,6 +833,7 @@ pub fn arrows_view(model: &WorldModel) -> Vec<WireArrow> {
                 vz: e.motion[2],
                 yaw: e.y_rot,
                 pitch: e.x_rot,
+                crit,
             })
         })
         .collect()
@@ -3126,6 +3144,79 @@ mod tests {
             .apply(PlayEvent::EntitiesRemoved(vec![300]));
         let upd = view.refresh(example_mapper);
         assert!(upd.arrows.is_empty(), "the removed shot never re-ships");
+    }
+
+    /// THE CRIT BYTE'S OWN PROJECTION (AbstractArrow.ID_FLAGS — the
+    /// accessor 15 the class tree lands, the BYTE serializer, bit
+    /// 0x01 the setFlag-mask law speaks): the server's setCritArrow
+    /// arm rides the projection verbatim, the OTHER bit and the
+    /// byte's ABSENCE the plain-shot silence keep.
+    #[test]
+    fn the_arrows_view_reads_the_crit_byte() {
+        use mc_protocol::play::{EntityDataEntry, EntityDataSet, EntitySpawn, SetEntityDataEntry};
+        let mut m = WorldModel::new();
+        m.registry.entity_types = vec!["minecraft:arrow".to_string()];
+        m.apply(PlayEvent::Spawn(EntitySpawn {
+            id: 300,
+            uuid: 2,
+            type_id: 0,
+            x: 15.0,
+            y: 66.4,
+            z: 12.0,
+            movement: [-2.4, 0.05, 0.0],
+            x_rot: -1.2,
+            y_rot: -90.0,
+            y_head_rot: -90.0,
+            data: 0,
+        }));
+        let mut view = LiveView {
+            model: m,
+            side: 1,
+        };
+        // THE BYTE'S ABSENCE: the plain shot the metadata never spoke
+        let upd = view.refresh(example_mapper);
+        assert_eq!(upd.arrows.len(), 1);
+        assert!(
+            !upd.arrows[0].crit,
+            "the silent byte the plain shot keeps"
+        );
+        // THE CRIT ARM: the tracker's sync the setCritArrow bit rides
+        view.model.apply(PlayEvent::EntityData(EntityDataSet {
+            id: 300,
+            entries: vec![SetEntityDataEntry {
+                index: crate::mob::ARROW_DATA_FLAGS_ID,
+                serializer: mc_protocol::play::entity_data_serializers::BYTE,
+                value: EntityDataEntry::Byte(0x01),
+            }],
+        }));
+        let upd = view.refresh(example_mapper);
+        assert!(upd.arrows[0].crit, "the crit bit the projection arms");
+        // THE OTHER BIT: the 0x02 noPhysics mask the trail never arms
+        view.model.apply(PlayEvent::EntityData(EntityDataSet {
+            id: 300,
+            entries: vec![SetEntityDataEntry {
+                index: crate::mob::ARROW_DATA_FLAGS_ID,
+                serializer: mc_protocol::play::entity_data_serializers::BYTE,
+                value: EntityDataEntry::Byte(0x02),
+            }],
+        }));
+        let upd = view.refresh(example_mapper);
+        assert!(
+            !upd.arrows[0].crit,
+            "the noPhysics bit the trail never arms"
+        );
+        // THE CLEARED BYTE: the server's own setCritArrow(false) —
+        // the plain shot the projection speaks again
+        view.model.apply(PlayEvent::EntityData(EntityDataSet {
+            id: 300,
+            entries: vec![SetEntityDataEntry {
+                index: crate::mob::ARROW_DATA_FLAGS_ID,
+                serializer: mc_protocol::play::entity_data_serializers::BYTE,
+                value: EntityDataEntry::Byte(0x00),
+            }],
+        }));
+        let upd = view.refresh(example_mapper);
+        assert!(!upd.arrows[0].crit, "the cleared byte the plain shot speaks");
     }
 
     /// THE BURNING WORD'S PROJECTION (the shared-flags accessor —
