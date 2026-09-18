@@ -55,6 +55,25 @@
 //!   the y the ctor's yd rides; the canContinueToUse's `!onGround`
 //!   the flight the landing's own drop keeps; the JUMP+MOVE flags
 //!   the prio-4 melee's own stop law preempts while the leap runs.
+//! - `RestrictSunGoal`/`FleeSunGoal` — the skeleton's own day lanes
+//!   (AbstractSkeleton.registerGoals prio 2/3 the 26.2 bytecode keeps:
+//!   `addGoal(2, new RestrictSunGoal(this))`, `addGoal(3, new
+//!   FleeSunGoal(this, 1.0))` the dconst_1 speaks; the ZOMBIE's own
+//!   registerGoals the sun goals never fill): the RestrictSun the
+//!   canUse's `isBrightOutside && HEAD.isEmpty &&
+//!   hasGroundPathNavigation` the setAvoidSun(true) the navigator's
+//!   own word arms (the no-navigator lane the lifecycle pins, the
+//!   sun-avoiding pathing the honest aside keeps), the FleeSun the
+//!   burning sky's own retreat — the five gates the bytecode's order
+//!   keeps (the target null, the isBrightOutside's `skyDarken < 4`,
+//!   the isOnFire, the FEET cell's canSeeSky, the HEAD row's isEmpty),
+//!   the ten-try hide walk `nextInt(20)-10, nextInt(6)-3,
+//!   nextInt(20)-10` accepts the covered-bright cell the
+//!   `!canSeeSky(cell) && getWalkTargetValue(cell) < 0.0F` pair names
+//!   (the Monster's own override the `-(getLightLevelDependent-
+//!   MagicValue - 0.5F)` the walk-target value folds — the bright
+//!   shade the negativity answers, the deep dark the positive
+//!   refuses), the MOVE flag the stroll's prio-5 conflict stills.
 //! - `Mob.isAggressive` — the DATA_MOB_FLAGS_ID byte's bit 0x4.
 //! - `LivingEntity.tickDeath` — deathTime++ per tick, removal (the
 //!   broadcast 60 event) at deathTime >= 20.
@@ -1267,6 +1286,18 @@ pub const EXTINGUISH_PITCH_SPREAD: f32 = 0.4;
 /// getStepSound(), 0.15F, 1.0F)` — the ZOMBIE_STEP voice, no randoms).
 pub const ZOMBIE_STEP_VOLUME: f32 = 0.15;
 pub const ZOMBIE_STEP_PITCH: f32 = 1.0;
+/// THE FLEESUNGOAL'S OWN NUMBERS (javap the 26.2 jar — the getHidePos
+/// walk the bytecode keeps): the ten-try loop's bipush 10, the offset
+/// draws' nextInt(20) xz / nextInt(6) y bounds, the goal's own
+/// speedModifier (the ctor's dconst_1), the isBrightOutside gate's
+/// iconst_4 (the `skyDarken < 4` the Level.isBrightOutside law
+/// speaks — the overworld's hasFixedTime false the dimension gate
+/// never trips).
+pub const FLEE_SUN_SHADE_TRIES: i32 = 10;
+pub const FLEE_SUN_XZ_BOUND: u64 = 20;
+pub const FLEE_SUN_Y_BOUND: u64 = 6;
+pub const FLEE_SUN_SPEED_MODIFIER: f64 = 1.0;
+pub const BRIGHT_OUTSIDE_DARKEN_GATE: i32 = 4;
 
 /// The wire id the plain item name rides (the ITEM_WIRE_ORDER's own
 /// reverse lookup — `None` when the name misses the table: the honest
@@ -2309,6 +2340,17 @@ pub struct Zombie {
     pub strafe_backwards: bool,
     /// the stroll's target (the navigation's own destination stand-in)
     stroll_target: Option<(f64, f64)>,
+    /// THE FLEESUNGOAL'S OWN ARM (the goal's wantedX/Y/Z the
+    /// setWantedPos walk banks — the hide cell's bottom center the
+    /// straight-line stand-in steers to, the arrival the
+    /// canContinueToUse's own isDone slack answers, the None the
+    /// disarmed goal keeps)
+    flee_sun_target: Option<(f64, f64, f64)>,
+    /// THE RESTRICTSUNGOAL'S OWN FLAG (GroundPathNavigation.setAvoidSun
+    /// — the goal's start() the true arms, the stop() the false keeps;
+    /// the navigator's own sun-avoiding pathing the repo's no-navigator
+    /// stand-in never reads — the honest aside the lane documents)
+    avoid_sun: bool,
     /// THE FOLLOWPARENTGOAL'S OWN ARM (the goal's own `parent` field
     /// the canUse walk stores): the parent's id + the position
     /// snapshot the tick's straight-line stand-in steers to — the
@@ -2507,6 +2549,8 @@ impl Zombie {
             strafe_clockwise: false,
             strafe_backwards: false,
             stroll_target: None,
+            flee_sun_target: None,
+            avoid_sun: false,
             follow_parent: None,
             breed_partner: None,
             breed_love_time: 0,
@@ -2970,6 +3014,24 @@ impl Zombie {
         // re-resolves — the armed follow the 1.1 speaks, every other
         // goal the plain attribute keeps)
         self.move_speed_modifier = 1.0;
+
+        // THE RESTRICTSUNGOAL'S OWN LANE (prio 2 — AbstractSkeleton's
+        // registerGoals the `addGoal(2, new RestrictSunGoal(this))` the
+        // bytecode keeps, the ZOMBIE's own registerGoals the goal never
+        // fills): the canUse's three gates the per-tick verdict folds —
+        // the isBrightOutside's `skyDarken < 4` (the iconst_4 the
+        // Level.isBrightOutside law keeps), the HEAD row's isEmpty (the
+        // armor store's own row the equipment walk keeps), the
+        // hasGroundPathNavigation the skeleton's own ground navigator
+        // answers true — the start's `setAvoidSun(true)` the flag arms,
+        // the stop's the false keeps. THE NAVIGATOR'S OWN WORD the
+        // repo's no-navigator stand-in never reads (the sun-avoiding
+        // pathing the GroundPathNavigation keeps — the honest aside the
+        // byte-level lane documents: the flag the lifecycle pins, the
+        // pathing the straight-line walk never asks).
+        self.avoid_sun = self.kind == MobKind::Skeleton
+            && crate::timeline::sky_darken(day_time) < BRIGHT_OUTSIDE_DARKEN_GATE
+            && self.armor[3].is_none();
 
         // THE TARGET LANES' OWN WALK (the targetSelector the zombie's
         // AND the skeleton's registerGoals fill — javap the dumps keep:
@@ -3459,6 +3521,61 @@ impl Zombie {
                     // the breed goal's own stop the court's clock zeroes
                     self.breed_love_time = 0;
                 }
+            } else if let Some((tx, _ty, tz)) = self.flee_sun_target {
+                // THE FLEESUNGOAL'S OWN TICK (prio 3 — the
+                // canContinueToUse's `!navigation.isDone()` the arrival
+                // slack the stroll's own law speaks): the straight-line
+                // stand-in walks the armed hide cell, the goal's own
+                // speedModifier 1.0 (the ctor's dconst_1) the impulse
+                // rides, the MOVE flag's own conflict the stroll's
+                // prio-5 walk stills.
+                let dx = tx - self.x;
+                let dz = tz - self.z;
+                if dx * dx + dz * dz < STROLL_ARRIVAL * STROLL_ARRIVAL {
+                    // the navigation's isDone — the goal stops, the
+                    // burning sky the next canUse re-arms
+                    self.flee_sun_target = None;
+                } else {
+                    let len = (dx * dx + dz * dz).sqrt();
+                    self.yaw = (-(dx / len)).atan2(dz / len).to_degrees() as f32;
+                    ix = 0.0;
+                    iz = 1.0;
+                    want_move = true;
+                    self.move_speed_modifier = FLEE_SUN_SPEED_MODIFIER;
+                    self.stroll_target = None;
+                }
+            } else if self.kind == MobKind::Skeleton
+                && crate::timeline::sky_darken(day_time) < BRIGHT_OUTSIDE_DARKEN_GATE
+                && self.fire_ticks > 0
+                && self.cell_can_see_sky(
+                    world,
+                    self.x.floor() as i32,
+                    self.y.floor() as i32,
+                    self.z.floor() as i32,
+                )
+                && self.armor[3].is_none()
+                && self.flee_sun_arm(world, day_time)
+            {
+                // THE FLEESUNGOAL'S OWN CANUSE+START (prio 3 —
+                // AbstractSkeleton's registerGoals the `addGoal(3, new
+                // FleeSunGoal(this, 1.0))` the dconst_1 keeps, the
+                // ZOMBIE's own registerGoals the goal never fills —
+                // javap the 26.2 dump: the prio-4 egg goal, the prio-8
+                // look pair the sun goals never name). The five gates
+                // the bytecode's own order keeps: the getTarget != null
+                // the FIRST gate the target lane's own else answers,
+                // the !isBrightOutside the skyDarken < 4 word, the
+                // !isOnFire the burning brand the fire_ticks speaks,
+                // the !canSeeSky(blockPosition) the FEET cell's column,
+                // the !HEAD.isEmpty the armor store's own row — the
+                // setWantedPos's ten-try walk the last gate folds (the
+                // flee_sun_arm's own hit the field banks, the miss the
+                // canUse's false the goal never takes — the lower arms
+                // the branch never swallows). THE MOVE FLAG the
+                // EnumSet.of(MOVE) the ctor keeps — the walk arm above
+                // the running goal owns, the stroll the conflict never
+                // joins.
+                self.stroll_target = None;
             } else if let Some((_id, px, py, pz)) = self.breed_partner {
                 // THE BREEDGOAL'S OWN TICK (prio 2 — the Sheep's own
                 // registerGoals clinit speaks `addGoal(2, new
@@ -4017,6 +4134,96 @@ impl Zombie {
     fn can_see_sky(&self, world: &World) -> bool {
         let (sky, _) = self.eye_light(world);
         sky >= 15
+    }
+
+    /// The CELL's own light read — the eye_light's walk at an arbitrary
+    /// cell (the wire grid's stored levels, the column word where no
+    /// layer rides — the same fallback law the eye read keeps).
+    fn cell_light(&self, world: &World, cx: i32, cy: i32, cz: i32) -> (u8, u8) {
+        if let Some(grid) = &world.light {
+            let (s, b) = grid.cell(world.chunks_per_side, cx, cy, cz);
+            let fallback = self.sky_column(world, cx, cy, cz);
+            return (s.unwrap_or(fallback), b.unwrap_or(0));
+        }
+        (self.sky_column(world, cx, cy, cz), 0)
+    }
+
+    /// `Level.canSeeSky(cell)` — the cell's own column word (the sky
+    /// channel at 15 the unbroken column speaks).
+    fn cell_can_see_sky(&self, world: &World, cx: i32, cy: i32, cz: i32) -> bool {
+        let (sky, _) = self.cell_light(world, cx, cy, cz);
+        sky >= 15
+    }
+
+    /// `LevelReader.getLightLevelDependentMagicValue(cell)` — the burn
+    /// lane's own ramp at an arbitrary cell (the raw = max(block, sky -
+    /// darken) the raw-brightness engine speaks, the f/(4-3f) fold the
+    /// same consts keep, the overworld's ambient-light lerp the 0.0
+    /// identity rides).
+    fn cell_magic(&self, world: &World, cx: i32, cy: i32, cz: i32, day_time: i64) -> f32 {
+        let (sky, block) = self.cell_light(world, cx, cy, cz);
+        let darken = crate::timeline::sky_darken(day_time);
+        let raw = (block as i32).max(sky as i32 - darken).clamp(0, 15) as f32;
+        let f = raw / 15.0;
+        f / (BURN_MAGIC_DIVISOR_BASE - BURN_MAGIC_DIVISOR_GAIN * f)
+    }
+
+    /// `PathfinderMob.getWalkTargetValue(cell)` — the MONSTER's own
+    /// override the skeleton inherits (javap: `-(getPathfindingCostFrom-
+    /// LightLevels)` the fneg keeps; the LevelReader default the
+    /// `getLightLevelDependentMagicValue(pos) - 0.5F` the ldc 0.5f
+    /// speaks): the DARK cell the positive value answers (the monsters'
+    /// own dark-preferring pathing the stroll lane rides), the bright
+    /// cell the negative — the FleeSun's own `< 0.0F` acceptance the
+    /// brightness's negativity names.
+    fn monster_walk_target_value(
+        &self,
+        world: &World,
+        cx: i32,
+        cy: i32,
+        cz: i32,
+        day_time: i64,
+    ) -> f32 {
+        0.5 - self.cell_magic(world, cx, cy, cz, day_time)
+    }
+
+    /// `FleeSunGoal.getHidePos` — the ten-try shade walk verbatim: the
+    /// offset draws `nextInt(20)-10, nextInt(6)-3, nextInt(20)-10` the
+    /// three bipushes keep, the acceptance the pair `!canSeeSky(cell)
+    /// && getWalkTargetValue(cell) < 0.0F` answers (the covered cell
+    /// the bright sky's residual light still lights — the shade the
+    /// walk-target value's own negativity names), the hit the
+    /// `Vec3.atBottomCenterOf` the +0.5 xz answers, the misses the
+    /// null the None keeps.
+    fn flee_sun_hide_pos(&mut self, world: &World, day_time: i64) -> Option<(f64, f64, f64)> {
+        let (fx, fy, fz) =
+            (self.x.floor() as i32, self.y.floor() as i32, self.z.floor() as i32);
+        for _ in 0..FLEE_SUN_SHADE_TRIES {
+            let cx = fx + self.rng.next_int(FLEE_SUN_XZ_BOUND) - 10;
+            let cy = fy + self.rng.next_int(FLEE_SUN_Y_BOUND) - 3;
+            let cz = fz + self.rng.next_int(FLEE_SUN_XZ_BOUND) - 10;
+            let covered = !self.cell_can_see_sky(world, cx, cy, cz);
+            let bright = self.monster_walk_target_value(world, cx, cy, cz, day_time) < 0.0;
+            if covered && bright {
+                return Some((cx as f64 + 0.5, cy as f64, cz as f64 + 0.5));
+            }
+        }
+        None
+    }
+
+    /// THE FLEESUNGOAL'S OWN CANUSE TAIL (setWantedPos — the canUse's
+    /// own last gate the bytecode's order keeps): the ten-try hide walk
+    /// the hit banks into the field (the start()'s moveTo the next
+    /// chain arm speaks), the miss the canUse's own false answers —
+    /// the lower goals the branch never swallows.
+    fn flee_sun_arm(&mut self, world: &World, day_time: i64) -> bool {
+        match self.flee_sun_hide_pos(world, day_time) {
+            Some(hide) => {
+                self.flee_sun_target = Some(hide);
+                true
+            }
+            None => false,
+        }
     }
 
     /// The head's look law: the yaw offset rides the +-75° clamp the
@@ -11273,6 +11480,219 @@ mod tests {
                 "the {kind:?} the fire hurt never speaks"
             );
         }
+    }
+
+    /// THE FLEESUNGOAL'S OWN GATES (javap the 26.2 dump — the five
+    /// canUse gates the bytecode's own order keeps): the cold body the
+    /// burning brand never arms, the night sky the isBrightOutside the
+    /// gate refuses, the worn head the isEmpty gate refuses, the
+    /// covered feet the canSeeSky gate refuses, the target the FIRST
+    /// gate the lane's own else answers — and the ZOMBIE the sun goals
+    /// never fill (the registerGoals' own honesty the javap walk pins).
+    #[test]
+    fn the_flee_sun_gates_the_bytecode_order_keeps() {
+        // the leaf shade east — the search's own acceptance rides
+        let mut world = wide_flat_world();
+        for x in 36..44 {
+            for z in 28..36 {
+                world.set(x, 8, z, crate::world::LEAVES);
+            }
+        }
+        // THE COLD BODY (gate 3 — the !isOnFire the burning brand arms):
+        // the first tick's goal chain the unlit brand the goal never
+        // arms (the burn roll the chain's own tail speaks — the brand
+        // the NEXT tick's lane would answer)
+        let mut s = Zombie::new(1, 32.0, 5.0, 32.0, 262);
+        s.kind = MobKind::Skeleton;
+        s.on_ground = true;
+        s.tick(&world, None, NOON);
+        assert!(s.flee_sun_target.is_none(), "the cold body never flees");
+        // THE NIGHT SKY (gate 2 — the isBrightOutside the skyDarken < 4
+        // word): the burning brand the dark heaven never arms
+        let mut s = Zombie::new(1, 32.0, 5.0, 32.0, 262);
+        s.kind = MobKind::Skeleton;
+        s.on_ground = true;
+        s.fire_ticks = 200;
+        s.tick(&world, None, NIGHT);
+        assert!(s.flee_sun_target.is_none(), "the night sky never arms");
+        // THE WORN HEAD (gate 5 — the HEAD row's isEmpty)
+        let mut s = Zombie::new(1, 32.0, 5.0, 32.0, 262);
+        s.kind = MobKind::Skeleton;
+        s.on_ground = true;
+        s.fire_ticks = 200;
+        s.armor[3] = Some("iron_helmet");
+        s.tick(&world, None, NOON);
+        assert!(s.flee_sun_target.is_none(), "the worn head never flees");
+        // THE COVERED FEET (gate 4 — the FEET cell's own column): the
+        // leaf overhead the sky channel the 14 the unbroken 15 never
+        // keeps
+        let mut s = Zombie::new(1, 32.0, 5.0, 32.0, 262);
+        s.kind = MobKind::Skeleton;
+        s.on_ground = true;
+        s.fire_ticks = 200;
+        world.set(32, 7, 32, crate::world::LEAVES);
+        s.tick(&world, None, NOON);
+        assert!(s.flee_sun_target.is_none(), "the covered feet never flee");
+        world.set(32, 7, 32, crate::world::AIR);
+        // THE TARGET THE FIRST GATE (getTarget != null): the ranged
+        // lane's own else the goal never reaches — the archer the draw
+        // holds, the flee never arms
+        let mut s = Zombie::new(1, 32.0, 5.0, 32.0, 262);
+        s.kind = MobKind::Skeleton;
+        s.on_ground = true;
+        s.fire_ticks = 200;
+        let player = player_at(34.0, 5.0, 32.0);
+        s.tick(&world, Some(&player), NOON);
+        assert!(s.flee_sun_target.is_none(), "the target the flee refuses");
+        // THE ZOMBIE THE SUN GOALS NEVER FILL (the registerGoals' own
+        // honesty): the burning walker the noon sky the goal never arms
+        let mut z = Zombie::new(2, 32.0, 5.0, 32.0, 262);
+        z.kind = MobKind::Zombie;
+        z.on_ground = true;
+        z.fire_ticks = 200;
+        z.tick(&world, None, NOON);
+        assert!(
+            z.flee_sun_target.is_none(),
+            "the zombie the sun goals never fill"
+        );
+    }
+
+    /// THE SHADE SEARCH'S OWN ACCEPTANCE (javap getHidePos — the pair
+    /// `!canSeeSky(cell) && getWalkTargetValue(cell) < 0.0F` the
+    /// bytecode keeps, the Monster's own override the
+    /// `-(getLightLevelDependentMagicValue - 0.5F)` the walk-target
+    /// value folds): the covered-bright leaf cell the pair accepts (sky
+    /// 14 under one attenuating layer the magic 0.7778 the bright half
+    /// speaks), the bottom-center the atBottomCenterOf answers, the
+    /// open plains the ten tries refuse (the open cells the canSeeSky
+    /// half, the solid cells the dark half).
+    #[test]
+    fn the_shade_search_the_covered_bright_cell_accepts() {
+        let day = NOON;
+        // the FULL leaf roof — every candidate air cell the pair's own
+        // words answers
+        let mut world = wide_flat_world();
+        for x in 20..44 {
+            for z in 20..44 {
+                world.set(x, 8, z, crate::world::LEAVES);
+            }
+        }
+        let mut s = Zombie::new(1, 32.0, 5.0, 32.0, 262);
+        let (hx, hy, hz) =
+            s.flee_sun_hide_pos(&world, day).expect("the roof the search accepts");
+        // THE BOTTOM CENTER (Vec3.atBottomCenterOf): the fractional
+        // parts the +0.5 xz answers, the y the cell's own floor keeps
+        assert_eq!(hx.fract(), 0.5, "the x the bottom center keeps");
+        assert_eq!(hy.fract(), 0.0, "the y the cell's floor keeps");
+        assert_eq!(hz.fract(), 0.5, "the z the bottom center keeps");
+        // THE ACCEPTED CELL'S OWN WORDS: the column covered (the leaf
+        // above the sky channel the 14 speaks), the walk-target value
+        // the bright shade's negative answers
+        let (cx, cy, cz) = ((hx - 0.5) as i32, hy as i32, (hz - 0.5) as i32);
+        let (sky, _) = s.cell_light(&world, cx, cy, cz);
+        assert!(sky < 15, "the cell the leaf covers (sky {sky})");
+        assert!(
+            s.monster_walk_target_value(&world, cx, cy, cz, day) < 0.0,
+            "the walk-target value the bright shade's negativity keeps"
+        );
+        // THE OPEN PLAINS THE TEN TRIES REFUSE: the open air cells the
+        // canSeeSky half refuses (sky 15), the solid cells the dark
+        // half refuses (the walk-target value 0.5 the stone's darkness
+        // answers) — the None the ten-try miss keeps
+        let mut world = wide_flat_world();
+        let mut s = Zombie::new(1, 32.0, 5.0, 32.0, 262);
+        assert!(
+            s.flee_sun_hide_pos(&world, day).is_none(),
+            "the open plains the search refuses"
+        );
+    }
+
+    /// THE FLEE'S OWN WALK (the canContinueToUse's `!navigation.isDone()`
+    /// the arrival slack the stroll's own law speaks, the MOVE flag the
+    /// stroll's prio-5 conflict stills): the burning archer the armed
+    /// hide cell the straight-line stand-in walks, the yaw the target's
+    /// own bearing speaks, the arrival the goal's own stop answers, the
+    /// stroll the whole walk the conflict never joins.
+    #[test]
+    fn the_flee_sun_the_walk_the_arrival_the_flags_keep() {
+        // the leaf shade east — the open feet the gate 4 keeps, the
+        // shade within the +-10 ring the search answers
+        let mut world = wide_flat_world();
+        for x in 36..44 {
+            for z in 28..36 {
+                world.set(x, 8, z, crate::world::LEAVES);
+            }
+        }
+        // the seed sweep the arming seed finds (the ten-try walk the
+        // random offsets draw — the armed seed the loop keeps)
+        let mut s = Zombie::new(1, 32.0, 5.0, 32.0, 262);
+        s.kind = MobKind::Skeleton;
+        s.on_ground = true;
+        s.fire_ticks = 200;
+        for seed in 263..363 {
+            s = Zombie::new(1, 32.0, 5.0, 32.0, seed);
+            s.kind = MobKind::Skeleton;
+            s.on_ground = true;
+            s.fire_ticks = 200;
+            s.tick(&world, None, NOON);
+            if s.flee_sun_target.is_some() {
+                break;
+            }
+        }
+        let (tx, _ty, tz) = s
+            .flee_sun_target
+            .expect("the sweep the armed seed finds");
+        // THE WALK: the yaw the target's bearing speaks, the stroll the
+        // conflict never joins, the arrival the goal's own stop answers
+        let mut arrived = false;
+        for _ in 0..400 {
+            s.tick(&world, None, NOON);
+            if s.flee_sun_target.is_none() {
+                arrived = true;
+                break;
+            }
+            assert!(s.stroll_target.is_none(), "the stroll the flee stills");
+            let dx = tx - s.x;
+            let dz = tz - s.z;
+            let yaw = (-(dx / (dx * dx + dz * dz).sqrt()))
+                .atan2(dz / (dx * dx + dz * dz).sqrt())
+                .to_degrees() as f32;
+            assert!(
+                (s.yaw - yaw).abs() < 1.0,
+                "the yaw the target's bearing speaks ({})",
+                s.yaw
+            );
+        }
+        assert!(arrived, "the walk the arrival the slack answers");
+        // THE BODY THE SHADE REACHES (the burn the walk's own doses the
+        // vanilla fire keeps — the arrival the health's survivor keeps)
+        assert!(s.health > 0.0, "the archer the shade reaches");
+    }
+
+    /// THE RESTRICTSUNGOAL'S OWN LANE (prio 2 — the canUse's three
+    /// gates the per-tick verdict folds, the setAvoidSun the lifecycle
+    /// the flag keeps): the bare head the bright sky the flag arms, the
+    /// worn head the gate refuses, the night sky the gate refuses, the
+    /// zombie the goal never fills.
+    #[test]
+    fn the_restrict_sun_the_bare_head_bright_word_holds() {
+        let world = wide_flat_world();
+        let mut s = Zombie::new(1, 32.0, 5.0, 32.0, 262);
+        s.kind = MobKind::Skeleton;
+        s.on_ground = true;
+        s.tick(&world, None, NOON);
+        assert!(s.avoid_sun, "the bare head the bright sky the flag arms");
+        s.armor[3] = Some("iron_helmet");
+        s.tick(&world, None, NOON);
+        assert!(!s.avoid_sun, "the worn head the gate refuses");
+        s.armor[3] = None;
+        s.tick(&world, None, NIGHT);
+        assert!(!s.avoid_sun, "the night sky the gate refuses");
+        let mut z = Zombie::new(2, 32.0, 5.0, 32.0, 262);
+        z.kind = MobKind::Zombie;
+        z.on_ground = true;
+        z.tick(&world, None, NOON);
+        assert!(!z.avoid_sun, "the zombie the goal never fills");
     }
 
     /// THE FED SHEEP'S COURT THE PEACE KEEPS (the staging lane's own
