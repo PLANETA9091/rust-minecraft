@@ -44,6 +44,17 @@
 //!   pins: x `nextInt(2x+1)-x`, y `nextInt(2z+1)-z`, z `nextInt(2x+1)-x`).
 //! - `LookAtPlayerGoal` — the ctor's 8.0 range, the 0.02 probability
 //!   ldc, the 40-tick look clock (the two bipush 40s).
+//! - `LeapAtTargetGoal` — the spider's prio-3 leap the registerGoals
+//!   clinit arms (`new LeapAtTargetGoal(this, 0.4F)` the ldc keeps):
+//!   the canUse the distanceToSqr [4,16] band (dcmpg 4.0 / dcmpl 16.0,
+//!   INCLUSIVE both ends) + the onGround gate + the
+//!   `nextInt(reducedTickDelay(5)) == 0` roll (the Goal's own
+//!   positiveCeilDiv(5,2) answers 3); the start() the delta arms —
+//!   the flat `normalize().scale(0.4).add(current.scale(0.2))` the
+//!   two-double law keeps (the 1e-7 zero-flat the pure hop answers),
+//!   the y the ctor's yd rides; the canContinueToUse's `!onGround`
+//!   the flight the landing's own drop keeps; the JUMP+MOVE flags
+//!   the prio-4 melee's own stop law preempts while the leap runs.
 //! - `Mob.isAggressive` — the DATA_MOB_FLAGS_ID byte's bit 0x4.
 //! - `LivingEntity.tickDeath` — deathTime++ per tick, removal (the
 //!   broadcast 60 event) at deathTime >= 20.
@@ -1083,6 +1094,29 @@ pub const SPIDER_MAX_HEALTH: f32 = 16.0;
 /// heart deals; the zombie's own 3.0 the override the same base
 /// rides).
 pub const SPIDER_ATTACK_DAMAGE: f64 = 2.0;
+/// THE LEAP'S OWN LAW (javap `LeapAtTargetGoal` the 26.2 jar speaks):
+/// the ctor `new LeapAtTargetGoal(this, 0.4F)` the Spider
+/// registerGoals' prio-3 ldc keeps — the yd the start()'s vertical
+/// setDeltaMovement arms. The band the canUse's own pair gates — the
+/// dcmpg 4.0 the too-close refusal speaks, the dcmpl 16.0 the too-far
+/// refusal keeps, the distanceToSqr the 3D square INCLUSIVE both
+/// ends wears (the 2-block floor the melee's own range echoes, the
+/// 4-block ceiling the flight never crosses).
+pub const SPIDER_LEAP_BAND_MIN: f64 = 4.0;
+pub const SPIDER_LEAP_BAND_MAX: f64 = 16.0;
+/// The start()'s own two doubles — the horizontal the
+/// `normalize().scale(0.4).add(current.scale(0.2))` fold speaks (the
+/// toward-target 0.4 + the current delta's 0.2 carry), the yd the
+/// setDeltaMovement's f2d keeps.
+pub const SPIDER_LEAP_HORIZONTAL: f64 = 0.4;
+pub const SPIDER_LEAP_CARRY: f64 = 0.2;
+pub const SPIDER_LEAP_YD: f64 = 0.4;
+/// The roll's own bound — `nextInt(reducedTickDelay(5))` the canUse's
+/// tail draws, the `Goal.reducedTickDelay` the
+/// `Mth.positiveCeilDiv(5, 2)` answer 3 keeps (the armed ground tick
+/// rolls one-in-three, the earlier gates' passing alone the draw
+/// spends).
+pub const SPIDER_LEAP_ROLL: u64 = 3;
 /// `Mob.createMobAttributes`' own `ldc2_w 16.0d` — the FOLLOW_RANGE
 /// default the base builder arms. The AbstractSkeleton's own
 /// `createAttributes` the MOVEMENT_SPEED alone adds (javap the 26.2
@@ -2365,6 +2399,15 @@ pub struct Zombie {
     /// `TargetGoal.unseenTicks` under the scan's run (the base 60 the
     /// ctor's bipush keeps).
     scan_unseen_ticks: i32,
+    /// THE LEAP'S OWN AIRBORNE LATCH (javap `LeapAtTargetGoal`'s own
+    /// run — the start() the JUMP+MOVE flags arm, the
+    /// canContinueToUse's `!onGround` word the landing's own drop
+    /// keeps): the armed hop the flight the latch speaks, the ground's
+    /// return the flags release — the melee's re-arm the next
+    /// goalUpdate answers. The target's presence the law never reads
+    /// (the mid-air target loss the flight the same word keeps
+    /// flying).
+    leap_airborne: bool,
 }
 
 impl Zombie {
@@ -2452,6 +2495,7 @@ impl Zombie {
             retaliation_unseen_ticks: 0,
             scan_target: false,
             scan_unseen_ticks: 0,
+            leap_airborne: false,
         }
     }
 
@@ -2867,6 +2911,20 @@ impl Zombie {
         self.swing.tick();
         self.age_ticks = self.age_ticks.wrapping_add(1);
 
+        // THE LEAP GOAL'S OWN CONTINUE (javap `LeapAtTargetGoal
+        // .canContinueToUse` — the `!onGround` word the landing's own
+        // drop keeps: the JUMP+MOVE flags release wherever the ground
+        // returns, the target's presence the law never reads — the
+        // mid-air target loss the flight the same word keeps flying)
+        let mut leap_holds = false;
+        if self.kind == MobKind::Spider && self.leap_airborne {
+            if self.on_ground {
+                self.leap_airborne = false;
+            } else {
+                leap_holds = true;
+            }
+        }
+
         let mut want_move = false;
         let (mut ix, mut iz) = (0.0f64, 0.0f64);
         // THE GOALS' OWN SPEED (the moveTo's speedModifier the tick
@@ -3023,6 +3081,51 @@ impl Zombie {
         };
 
         if let Some(p) = target {
+            // THE SPIDER'S OWN LEAP (javap `LeapAtTargetGoal` the 26.2
+            // jar speaks — the Spider registerGoals' prio-3
+            // `new LeapAtTargetGoal(this, 0.4F)` the ldc 0.4f the ctor
+            // keeps, the flags the EnumSet.of(JUMP, MOVE) the goal's
+            // own word holds): the GOALSELECTOR'S OWN PREEMPTION the
+            // running melee's MOVE flag steals — the prio-3 start the
+            // prio-4 goal's stop() arms, the tick() the pause keeps.
+            // THE CANUSE the chain's own short-circuit folds (the
+            // controlling passenger the gate never reads — the spider
+            // the rider never carries; the target the melee branch's
+            // own Some keeps; the distanceToSqr the 3D square the
+            // [4,16] band the dcmpg/dcmpl pair gates INCLUSIVE; the
+            // onGround the hop's ground law keeps; the roll LAST — the
+            // nextInt(3) draw the earlier gates' passing alone spends).
+            if self.kind == MobKind::Spider && !leap_holds && self.on_ground {
+                let dx3 = p.x - self.x;
+                let dy3 = p.y - self.y;
+                let dz3 = p.z - self.z;
+                let d2 = dx3 * dx3 + dy3 * dy3 + dz3 * dz3;
+                if d2 >= SPIDER_LEAP_BAND_MIN
+                    && d2 <= SPIDER_LEAP_BAND_MAX
+                    && self.rng.next_int(SPIDER_LEAP_ROLL) == 0
+                {
+                    // THE START (javap verbatim — the flat the
+                    // target-minus-mob keeps, the 1e-7 lengthSqr the
+                    // zero-flat the pure hop answers, the
+                    // normalize().scale(0.4).add(current.scale(0.2))
+                    // the carried law speaks, the y the ctor's yd the
+                    // setDeltaMovement's f2d keeps)
+                    let flat2 = dx3 * dx3 + dz3 * dz3;
+                    if flat2 > 1.0e-7 {
+                        let flat = flat2.sqrt();
+                        self.vx = dx3 / flat * SPIDER_LEAP_HORIZONTAL
+                            + self.vx * SPIDER_LEAP_CARRY;
+                        self.vz = dz3 / flat * SPIDER_LEAP_HORIZONTAL
+                            + self.vz * SPIDER_LEAP_CARRY;
+                    } else {
+                        self.vx = 0.0;
+                        self.vz = 0.0;
+                    }
+                    self.vy = SPIDER_LEAP_YD;
+                    self.leap_airborne = true;
+                    leap_holds = true;
+                }
+            }
             // THE SKELETON'S OWN GOAL (javap `RangedBowAttackGoal` the
             // 26.2 bytecode speaks — the bowGoal the reassessWeaponGoal
             // adds prio 2 the ctor `RangedBowAttackGoal(this, 1.0, 20,
@@ -3157,6 +3260,17 @@ impl Zombie {
                         self.using_ticks = 0;
                     }
                 }
+            } else if leap_holds {
+                // THE MELEE'S OWN STOP LAW (MeleeAttackGoal.stop — the
+                // setAggressive(false) the arms lower, the raise clock
+                // the frozen tick keeps, the approach the impulse's
+                // silence keeps, the cooldown the decrement never
+                // spends, the attack the stopped goal never lands; the
+                // head the LookAtPlayerGoal prio 6's own 8-ring the
+                // same player answers — the LOOK flag the leap's
+                // JUMP+MOVE pair never conflicts)
+                self.aggressive = false;
+                self.look_at(p.x, p.eye_y, p.z);
             } else {
                 // ZOMBIEATTACKGOAL (prio 3): the canUse re-check rides the
                 // 20-tick gate; the goal's own tick runs every tick while
@@ -3414,10 +3528,13 @@ impl Zombie {
                 self.eat_animation_tick = EAT_ANIMATION_TICKS;
                 self.stroll_target = None;
                 self.look_ticks = 0;
-            } else if let Some((tx, tz)) = self.stroll_target {
+            } else if let Some((tx, tz)) = self.stroll_target.filter(|_| !leap_holds) {
                 // THE STROLL GOAL (prio 7): the canUse gate rides the
                 // 120-tick interval (the RandomStrollGoal's own), the
-                // target walks until the arrival slack speaks
+                // target walks until the arrival slack speaks. THE
+                // LEAP'S OWN FLAG the running walk stills (the
+                // JUMP+MOVE pair the prio-5 goal's MOVE conflict
+                // blocks — the flight the stroll's impulse never adds)
                 let dx = tx - self.x;
                 let dz = tz - self.z;
                 let d2 = dx * dx + dz * dz;
@@ -3430,7 +3547,7 @@ impl Zombie {
                     iz = 1.0;
                     want_move = true;
                 }
-            } else if self.rng.next() % STROLL_INTERVAL_TICKS as u64 == 0 {
+            } else if !leap_holds && self.rng.next() % STROLL_INTERVAL_TICKS as u64 == 0 {
                 // THE WATER-AVOIDING PICK (javap
                 // `WaterAvoidingRandomStrollGoal.getPosition` the 26.2
                 // jar speaks): the in-water arm rides the 15/7 land
@@ -6702,6 +6819,171 @@ mod tests {
         // the 1/3 of the -1..1 band the clamp answers (mean 100 over
         // 300 — the loose band the flake never rides)
         assert!(eye_hits >= 60, "eye hits {eye_hits} the band arms");
+    }
+
+    /// THE SPIDER'S OWN LEAP (javap `LeapAtTargetGoal` the 26.2 jar
+    /// speaks): the canUse the band the 3D distanceToSqr gates — the
+    /// [4,16] square band INCLUSIVE both ends the dcmpg/dcmpl pair
+    /// keeps — the onGround the hop's law, the roll the
+    /// nextInt(reducedTickDelay(5)) == 0 the armed ground tick draws;
+    /// the start() the delta arms — the flat the
+    /// normalize().scale(0.4).add(current.scale(0.2)) law keeps, the y
+    /// the ctor's 0.4F rides — and the armed tick the melee's own stop
+    /// law wears (the aggressive flag the preemption lowers).
+    #[test]
+    fn the_spider_leaps_the_band_the_law_wears() {
+        let world = wide_flat_world();
+        // THE BAND'S OWN REFUSALS (the short-circuit the draw never
+        // spends): the 1.5-cell floor (d2 2.25 < 4) the too-close arm
+        // refuses, the 5-cell ceiling (d2 25 > 16) the too-far arm
+        // refuses — the leap the band's outside never arms, ONE tick
+        // per seed the approach the distance the walk never closes.
+        for seed in 0u64..60 {
+            for (px, why) in [(12.0, "too close"), (15.5, "too far")] {
+                let mut s = Zombie::new(seed as i32 + 1, 10.5, 5.0, 10.5, seed * 3 + 1);
+                s.kind = MobKind::Spider;
+                s.on_ground = true;
+                let p = player_at(px, 5.0, 10.5);
+                s.tick(&world, Some(&p), NIGHT);
+                assert!(
+                    !s.leap_airborne,
+                    "seed {seed} the {why} arm the band refuses"
+                );
+                // the second tick the gravity the ground contact settles
+                // (the zero-vy head the first tick the sweep's vertical
+                // word never reads — the settle the on_ground answers)
+                s.tick(&world, Some(&p), NIGHT);
+                assert!(
+                    !s.leap_airborne,
+                    "seed {seed} the {why} arm the second tick refuses"
+                );
+                assert!(
+                    s.on_ground,
+                    "seed {seed} the refused hop the ground keeps",
+                );
+            }
+        }
+        // THE IN-BAND ARM + THE START'S OWN LAW: the 3-cell player the
+        // d2 9 the band arms — the seed sweep the roll the arm answers,
+        // the armed tick's OWN tail the full fold pins (the vx the
+        // normalize*0.4 + the zero carry the fresh body speaks, the
+        // tail's drag the ground friction folds, the vy the yd the
+        // gravity fold spends, the lift the collide answers).
+        let mut armed = false;
+        for seed in 0u64..400 {
+            let mut s = Zombie::new(seed as i32 + 1, 10.5, 5.0, 10.5, seed * 7 + 3);
+            s.kind = MobKind::Spider;
+            s.on_ground = true;
+            let p = player_at(13.5, 5.0, 10.5); // d2 = 9.0
+            s.tick(&world, Some(&p), NIGHT);
+            if s.leap_airborne {
+                // THE START LAW the tick's own tail keeps: the fresh
+                // body's delta the zero carry speaks — vx = the flat's
+                // normalize * 0.4 (dx/flat = 1.0, dz = 0) the grounded
+                // drag folds, the vy the (yd - gravity) * drag the tail
+                // answers, the lift the collide's own dy wears.
+                let drag = (crate::body::BLOCK_FRICTION * crate::body::GROUND_DRAG) as f64;
+                let expected_vx = 0.4 * drag;
+                let expected_vy = (0.4 - crate::body::GRAVITY) * crate::body::VERTICAL_DRAG as f64;
+                assert!(
+                    (s.vx - expected_vx).abs() < 1e-9,
+                    "seed {seed} the start's x law: {} vs {expected_vx}",
+                    s.vx
+                );
+                assert!(
+                    s.vz.abs() < 1e-9,
+                    "seed {seed} the start's z law: {} vs 0",
+                    s.vz
+                );
+                assert!(
+                    (s.vy - expected_vy).abs() < 1e-9,
+                    "seed {seed} the start's y law: {} vs {expected_vy}",
+                    s.vy
+                );
+                assert!(s.y > 5.0, "seed {seed} the lift the collide answers");
+                assert!(!s.on_ground, "seed {seed} the armed hop leaves the ground");
+                assert!(!s.aggressive, "seed {seed} the preemption the arms lower");
+                assert!(
+                    (s.x - 10.5).abs() > 0.05,
+                    "seed {seed} the horizontal carry the x moves"
+                );
+                armed = true;
+                break;
+            }
+        }
+        assert!(armed, "the 400-seed sweep the roll never armed");
+        // THE 3D SQUARE'S OWN WORD (the distanceToSqr the dy rides):
+        // the 1.9-cell flat (3.61 — the flat-only gate would refuse)
+        // + the 1.5-cell lift (2.25) the 3D 5.86 the band arms — the
+        // sweep's SOME seed the arm answers, the flat-only simplify
+        // the lie never speaks.
+        let mut armed3d = false;
+        for seed in 0u64..400 {
+            let mut s = Zombie::new(seed as i32 + 1, 10.5, 5.0, 10.5, seed * 11 + 5);
+            s.kind = MobKind::Spider;
+            s.on_ground = true;
+            let p = player_at(12.4, 6.5, 10.5); // flat 1.9, lift 1.5
+            s.tick(&world, Some(&p), NIGHT);
+            if s.leap_airborne {
+                armed3d = true;
+                break;
+            }
+        }
+        assert!(armed3d, "the 3D square the band's arm the sweep answers");
+    }
+
+    /// THE LEAP'S OWN FLIGHT AND RESUME (the canContinueToUse's
+    /// !onGround word the landing's own drop keeps): the flight the
+    /// melee's stop law wears (the arms the preemption lowered, the
+    /// approach the silence keeps), the landing the flags release —
+    /// the melee's re-arm the raise law answers.
+    #[test]
+    fn the_spider_leap_the_flight_the_resume_keeps() {
+        let world = wide_flat_world();
+        // the armed seed the sweep finds (the same law the first test
+        // pins — the flight the armed tick's own next speaks)
+        for seed in 0u64..400 {
+            let mut s = Zombie::new(seed as i32 + 1, 10.5, 5.0, 10.5, seed * 7 + 3);
+            s.kind = MobKind::Spider;
+            s.on_ground = true;
+            let p = player_at(13.5, 5.0, 10.5);
+            s.tick(&world, Some(&p), NIGHT);
+            if s.leap_airborne {
+                // THE FLIGHT: the next tick the air the suppression
+                // keeps — the leap holds, the melee's stop law the arms
+                // keep low, the body the carried delta flies
+                s.tick(&world, Some(&p), NIGHT);
+                assert!(
+                    s.leap_airborne,
+                    "seed {seed} the flight the continue keeps"
+                );
+                assert!(!s.aggressive, "seed {seed} the flight the arms stay low");
+                // THE RESUME: the landing the flags release — the latch
+                // the ground's return clears
+                let mut landed = false;
+                for _ in 0..30 {
+                    s.tick(&world, Some(&p), NIGHT);
+                    if s.on_ground && !s.leap_airborne {
+                        landed = true;
+                        break;
+                    }
+                }
+                assert!(landed, "seed {seed} the landing the flight reaches");
+                // the melee's re-arm the raise law answers (the 5-tick
+                // delay + the half-interval gate the aggressive wears)
+                let mut rearmed = false;
+                for _ in 0..30 {
+                    s.tick(&world, Some(&p), NIGHT);
+                    if s.aggressive {
+                        rearmed = true;
+                        break;
+                    }
+                }
+                assert!(rearmed, "seed {seed} the landing the melee re-arms");
+                return;
+            }
+        }
+        panic!("the 400-seed sweep the roll never armed");
     }
 
     /// THE SPIDER'S OWN REGISTRATION WORDS (javap `EntityTypes` clinit

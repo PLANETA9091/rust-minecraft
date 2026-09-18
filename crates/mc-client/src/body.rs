@@ -250,7 +250,17 @@ pub fn solid(world: &World, x: i32, y: i32, z: i32) -> bool {
 /// verdict); the touching contact still moves.
 fn clip_axis(world: &World, b: (f64, f64, f64, f64, f64, f64), axis: usize, d: f64) -> f64 {
     if d.abs() < COLLISION_EPSILON {
-        return 0.0;
+        // THE EPSILON-TINY MOVE THE DELTA ITSELF KEEPS (the caller's
+        // own flags the honest fold reads — the 0.0 substitute the
+        // delta's residue never equals: the due-east walk's
+        // cos(-pi/2) 1.8e-17 vz the axis sweep early-returns, the
+        // substituted zero the horizontal_collision flag the caller's
+        // `allowed != mv` compare FALSELY arms — the grounded walker
+        // the auto-jump's own word never stops hopping). The vanilla
+        // collide the sub-epsilon move the real delta applies — the
+        // return the delta itself speaks, the flags the honest
+        // no-collision keep.
+        return d;
     }
     let (bm, bx) = match axis {
         0 => (b.0, b.3),
