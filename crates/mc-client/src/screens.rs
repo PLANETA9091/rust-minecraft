@@ -8461,19 +8461,30 @@ impl App {
                     }
                 }
                 if mouths > 0 && !boat_under_water(net_world, boat) {
-                    for _ in 0..mouths {
-                        if self.mob_rng.next_int(100) == 0 {
-                            bubble_splash_arm(
-                                &mut self.mob_rng,
-                                &mut self.level_ambient_rng,
-                                &mut self.sounds,
-                                &mut self.particles,
-                                self.frame,
-                                boat.x,
-                                boat.y,
-                                boat.z,
-                                ear,
-                            );
+                    // THE TWO PASSES (javap AbstractBoat.tick 212/216 —
+                    // the applyEffectsFromBlocks pair the client's own
+                    // tick runs: the non-authoritative branch the move
+                    // never records, BOTH calls the fallback
+                    // Movement(oldPosition, position) build — the same
+                    // segment twice, the fresh visited set each pass
+                    // keeps — and the client arm's 1/100 the per-visit
+                    // shape rolls: TWO rolls per mouth per tick the
+                    // wire hull speaks)
+                    for _ in 0..2 {
+                        for _ in 0..mouths {
+                            if self.mob_rng.next_int(100) == 0 {
+                                bubble_splash_arm(
+                                    &mut self.mob_rng,
+                                    &mut self.level_ambient_rng,
+                                    &mut self.sounds,
+                                    &mut self.particles,
+                                    self.frame,
+                                    boat.x,
+                                    boat.y,
+                                    boat.z,
+                                    ear,
+                                );
+                            }
                         }
                     }
                 }
@@ -19238,6 +19249,28 @@ mod tests {
             .filter(|p| matches!(p.kind, crate::particles::ParticleKind::Splash { .. }))
             .count();
         assert!(droplets >= 1, "the droplet the arm births: {droplets}");
+    }
+
+    /// THE TWO PASSES' OWN STREAM (the vanilla boat's double
+    /// applyEffectsFromBlocks the wire hull speaks — both calls the
+    /// fallback Movement(oldPosition, position) build, the fresh set
+    /// each pass keeps, the 1/100 the per-visit shape rolls): the
+    /// settled mouth's single tick the TWO draws consume (2 passes ×
+    /// the one mouth the fixture overlaps), the reference stream the
+    /// same two draws the position keeps.
+    #[test]
+    fn the_wire_mouth_rolls_the_two_passes() {
+        let settled_y = (10.0f64 + 1.0) - 0.65 * crate::hull::HULL_HEIGHT;
+        let mut app = wire_column_app(settled_y, Some(1));
+        app.tick_paddles();
+        let mut reference = crate::drops::Lcg::new(0x5EED_10CA);
+        let _ = reference.next_int(100); // the first pass's roll
+        let _ = reference.next_int(100); // the second pass's roll
+        assert_eq!(
+            app.mob_rng.next_int(100),
+            reference.next_int(100),
+            "the two passes' own stream position"
+        );
     }
 
     /// THE UNDER GATE'S OWN SILENCE (the `!isUnderWater` band the
