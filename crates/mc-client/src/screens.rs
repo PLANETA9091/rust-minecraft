@@ -720,6 +720,71 @@ fn debug_right_lines(gui_width: i32, gui_height: i32) -> Vec<String> {
     lines
 }
 
+/// THE BOTTOM BLOCK'S OWN KEYBIND WORD (javap DebugScreenOverlay
+/// .formatKeybind's own pair — the modifier's isUnbound lane the
+/// empty-string slot keeps (`ldc ""` the ifeq branch banks), the
+/// bound lane the translated message + the `makeConcatWithConstants
+/// '\u0001+'` recipe the `F3+` word wears, and the bracket wrapper
+/// the `'[\\u0001\\u0001]'` recipe the pair closes: `[F3+1]` the
+/// Options clinit's own KEYSYM defaults (292 the F3 modifier, 49-52
+/// the 1/2/3/4 chart keys) the word speaks).
+fn debug_keybind_word(modifier: Option<&str>, key: &str) -> String {
+    let mut s = String::from("[");
+    if let Some(m) = modifier {
+        s.push_str(m);
+        s.push('+');
+    }
+    s.push_str(key);
+    s.push(']');
+    s
+}
+
+/// THE BOTTOM BLOCK'S OWN CHART ROW (javap DebugScreenOverlay
+/// .formatChart's own fold — the keybind pair the formatKeybind law
+/// keeps, the chart name and the render flag's own visibility word
+/// the `'\u0001 \u0001 \u0001'` recipe spaces: `[F3+1] Profiler
+/// hidden` the all-false client owns, `visible` the raised flag's
+/// word wears).
+fn debug_chart_row(modifier: Option<&str>, key: &str, name: &str, visible: bool) -> String {
+    format!(
+        "{} {} {}",
+        debug_keybind_word(modifier, key),
+        name,
+        if visible { "visible" } else { "hidden" }
+    )
+}
+
+/// THE BOTTOM BLOCK'S OWN ROWS (javap DebugScreenOverlay
+/// .extractRenderState's isOverlayVisible lane — the empty spacer
+/// the isNullOrEmpty law skips-but-spends, then the three rows the
+/// `makeConcatWithConstants` recipes bank: `'Debug charts: \u0001;
+/// \u0001;'` the profiler+fps pair prefixes, `'\u0001; \u0001'` the
+/// network+lightmap pair the separator-only word wears, `'To edit:
+/// press \u0001'` the debug-options row closes. The FPS slot's name
+/// the integrated-server probe keeps (`FPS + TPS` the some lane,
+/// `FPS` the none), the network slot's name the isLocalServer probe
+/// keeps (`Ping` the local lane, `Bandwidth + Ping` the remote);
+/// the client's own honest lane the no-integrated-server false
+/// wears — the four chart flags the all-false hidden words keep
+/// (no profiler pie, no fps/tps chart, no ping/bandwidth chart, no
+/// lightmap viewer the client owns), the modifier/chart/debug
+/// words the Options clinit's own KEYSYM defaults (F3, 1/2/3/4,
+/// F6) speak).
+fn debug_bottom_lines(integrated: bool) -> Vec<String> {
+    let modifier = Some("F3");
+    let profiler = debug_chart_row(modifier, "1", "Profiler", false);
+    let fps = debug_chart_row(modifier, "2", if integrated { "FPS + TPS" } else { "FPS" }, false);
+    let network = debug_chart_row(modifier, "3", if integrated { "Ping" } else { "Bandwidth + Ping" }, false);
+    let lightmap = debug_chart_row(modifier, "4", "Lightmap", false);
+    let debug_options = debug_keybind_word(modifier, "F6");
+    vec![
+        String::new(),
+        format!("Debug charts: {profiler}; {fps};"),
+        format!("{network}; {lightmap}"),
+        format!("To edit: press {debug_options}"),
+    ]
+}
+
 /// THE RIDER'S YAW WALK (AbstractBoat.positionRider's own words — the
 /// drag `passenger.setYRot(getYRot() + deltaRotation)` the caller
 /// speaks, then clampRotation's `f = wrapDegrees(rider - boat)`,
@@ -11219,12 +11284,20 @@ impl App {
     /// skip preserves; the RIGHT column the extractLines' right
     /// branch wears (`guiWidth - 2 - lineWidth` the x anchor, the
     /// memory group's process-probe rows and the system group's
-    /// CPU/Display rows the same law draws).
+    /// CPU/Display rows the same law draws); the BOTTOM block the
+    /// same left list's tail the chart-keys rows keep (the spacer +
+    /// `Debug charts: ...` / `... ; ...` / `To edit: press [F3+F6]`
+    /// the extractRenderState's isOverlayVisible lane banks).
     fn draw_debug_overlay(&self, g: &mut Gui, a: &mut GuiAssets, w: i32, h: i32) {
         let _ = h; // the rows' own 9px stride the top origin owns
         // THE LEFT COLUMN (the extractLines' left branch — the
-        // MARGIN_LEFT x=2 the same walk dev-16 banked)
-        let lines = self.debug_lines();
+        // MARGIN_LEFT x=2 the same walk dev-16 banked; the BOTTOM
+        // BLOCK the same list's tail the 26.2 extractRenderState
+        // keeps — the entries' lines, then the empty spacer and the
+        // three chart-words rows the ONE extractLines(..., true)
+        // call draws, the 9px stride the shared index walk owns)
+        let mut lines = self.debug_lines();
+        lines.extend(debug_bottom_lines(false));
         let (x, mut y) = (2i32, 2i32);
         for line in &lines {
             // the spacer's own law (the isNullOrEmpty gate the band
@@ -19259,6 +19332,58 @@ mod tests {
         // = 752, the narrow gui the same law answers)
         assert_eq!(right_column_x(854, 100), 752);
         assert_eq!(right_column_x(320, 300), 18);
+    }
+
+    #[test]
+    fn the_f3_bottom_block_the_chart_keys_speak() {
+        // THE KEYBIND WORD (formatKeybind's own pair — the bound
+        // modifier the `[F3+1]` bracket word wears (the '\u0001+'
+        // and '[\u0001\u0001]' recipes the concat bootstraps bank),
+        // the unbound modifier the empty slot keeps (`[1]` the
+        // ifeq-branch word wears))
+        assert_eq!(debug_keybind_word(Some("F3"), "1"), "[F3+1]");
+        assert_eq!(debug_keybind_word(Some("F3"), "F6"), "[F3+F6]");
+        assert_eq!(debug_keybind_word(None, "1"), "[1]");
+
+        // THE CHART ROW (formatChart's own fold — the keybind pair,
+        // the chart name, the render flag's own visibility word the
+        // '\u0001 \u0001 \u0001' recipe spaces)
+        assert_eq!(
+            debug_chart_row(Some("F3"), "1", "Profiler", false),
+            "[F3+1] Profiler hidden"
+        );
+        assert_eq!(
+            debug_chart_row(Some("F3"), "2", "FPS", true),
+            "[F3+2] FPS visible"
+        );
+
+        // THE BOTTOM BLOCK (extractRenderState's isOverlayVisible
+        // lane — the empty spacer the isNullOrEmpty law skips-but-
+        // spends first, then the three rows the concat recipes bank)
+        let block = debug_bottom_lines(false);
+        assert_eq!(block.len(), 4);
+        assert_eq!(block[0], "", "the spacer row the cursor still walks");
+        assert_eq!(
+            block[1],
+            "Debug charts: [F3+1] Profiler hidden; [F3+2] FPS hidden;"
+        );
+        assert_eq!(
+            block[2],
+            "[F3+3] Bandwidth + Ping hidden; [F3+4] Lightmap hidden"
+        );
+        assert_eq!(block[3], "To edit: press [F3+F6]");
+
+        // THE INTEGRATED LANES (the FPS slot's name the integrated-
+        // server probe keeps — `FPS + TPS` the some lane; the network
+        // slot's name the isLocalServer probe keeps — `Ping` the
+        // local lane, `Bandwidth + Ping` the remote the client's own
+        // honest lane wears)
+        let local = debug_bottom_lines(true);
+        assert_eq!(
+            local[1],
+            "Debug charts: [F3+1] Profiler hidden; [F3+2] FPS + TPS hidden;"
+        );
+        assert_eq!(local[2], "[F3+3] Ping hidden; [F3+4] Lightmap hidden");
     }
 
     #[test]
