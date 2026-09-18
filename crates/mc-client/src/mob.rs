@@ -243,12 +243,24 @@ pub const PIG_MOVEMENT_SPEED: f64 = 0.25;
 /// multiplier halves-and-halves speaks, the boostFactor the window's
 /// own word rides)
 pub const PIG_RIDDEN_SPEED_MULTIPLIER: f64 = 0.225;
+/// THE PIG REGISTRATION'S OWN MAX_HEALTH (javap `Pig.createAttributes`
+/// the 26.2 jar speaks — the `ldc2_w #94 10.0` the builder's
+/// `add(MAX_HEALTH, 10.0)` keeps: the createAnimalAttributes base the
+/// TEMPT_RANGE 10.0 alone arms, the explicit add the pig's own ten
+/// hearts wears — the movement-speed row's own "the MAX_HEALTH 10.0
+/// the same builder speaks" the constant finally wears).
+pub const PIG_MAX_HEALTH: f32 = 10.0;
 /// The COW registration's own `sized(0.9F, 1.4F)` (EntityTypes clinit's
 /// javap block — the third drawn body's own bbox the flame ring asks).
 pub const COW_WIDTH: f64 = 0.9;
 pub const COW_HEIGHT: f64 = 1.4;
 /// The COW registration's own `eyeHeight(1.3F)` (the same block).
 pub const COW_EYE_HEIGHT: f64 = 1.3;
+/// THE COW REGISTRATION'S OWN MAX_HEALTH (javap `AbstractCow.
+/// createAttributes` the 26.2 jar speaks — the `ldc2_w #86 10.0` the
+/// builder's `add(MAX_HEALTH, 10.0)` keeps, the MOVEMENT_SPEED
+/// 0.20000000298023224 the same chain wears).
+pub const COW_MAX_HEALTH: f32 = 10.0;
 
 /// The SHEEP registration's own `sized(0.8999999761581421F,
 /// 1.2999999523162842F)` (EntityTypes clinit's own builder chain — the
@@ -258,6 +270,12 @@ pub const SHEEP_HEIGHT: f64 = 1.3;
 /// The SHEEP registration's own `eyeHeight(1.2350000143051147F)` (the
 /// same chain).
 pub const SHEEP_EYE_HEIGHT: f64 = 1.235;
+/// THE SHEEP REGISTRATION'S OWN MAX_HEALTH (javap `Sheep.
+/// createAttributes` the 26.2 jar speaks — the `ldc2_w #127 8.0` the
+/// builder's `add(MAX_HEALTH, 8.0)` keeps, the MOVEMENT_SPEED
+/// 0.23000000417232513 the same chain wears — the eight hearts the
+/// woolly body carries).
+pub const SHEEP_MAX_HEALTH: f32 = 8.0;
 /// The CHICKEN registration's own `sized(0.4F, 0.7F)` (EntityTypes
 /// clinit's javap block — the avian body's own bbox the flame ring
 /// asks: `ldc_w #384 0.4f`, `ldc #208 0.7f`, the sized(FF) the builder
@@ -266,6 +284,12 @@ pub const CHICKEN_WIDTH: f64 = 0.4;
 pub const CHICKEN_HEIGHT: f64 = 0.7;
 /// The CHICKEN registration's own `eyeHeight(0.644F)` (the same block).
 pub const CHICKEN_EYE_HEIGHT: f64 = 0.644;
+/// THE CHICKEN REGISTRATION'S OWN MAX_HEALTH (javap `Chicken.
+/// createAttributes` the 26.2 jar speaks — the `ldc2_w #158 4.0` the
+/// builder's `add(MAX_HEALTH, 4.0)` keeps, the MOVEMENT_SPEED 0.25
+/// the same chain wears — the four hearts the avian body carries,
+/// the jockey's mount the same frail word wears).
+pub const CHICKEN_MAX_HEALTH: f32 = 4.0;
 /// THE CHICKEN'S OWN PANIC (javap `Chicken.registerGoals` the 26.2 jar
 /// speaks: `addGoal(1, new PanicGoal(this, 1.4))` — the `ldc2_w #61
 /// 1.4d` the arm keeps, the prio-1 walk the other animals' rows ride).
@@ -863,15 +887,21 @@ impl MobKind {
         }
     }
 
-    /// THE REGISTRATION'S OWN HEALTH (javap `Spider.createAttributes` —
-    /// `Monster.createMonsterAttributes()` + `add(MAX_HEALTH, 16.0)`
-    /// the ldc2_w keeps). The other kinds the ctor's shared 20.0 the
-    /// LivingEntity base keeps (the lanes' existing word — each kind's
-    /// own attribute correction another round's lead).
+    /// THE REGISTRATION'S OWN HEALTH (javap the per-kind
+    /// createAttributes chains the 26.2 jar speaks — the four animals'
+    /// and the spider's own explicit `add(MAX_HEALTH, N)` the builders
+    /// keep, the zombie's and the skeleton's own chains the explicit
+    /// add never makes: the Monster base the single-arg ATTACK_DAMAGE
+    /// alone arms, the attribute's registered default 20.0 the
+    /// RangedAttribute clinit keeps the base value both speak).
     pub fn max_health(self) -> f32 {
         match self {
             MobKind::Spider => SPIDER_MAX_HEALTH,
-            _ => ZOMBIE_MAX_HEALTH,
+            MobKind::Pig => PIG_MAX_HEALTH,
+            MobKind::Cow => COW_MAX_HEALTH,
+            MobKind::Sheep => SHEEP_MAX_HEALTH,
+            MobKind::Chicken => CHICKEN_MAX_HEALTH,
+            MobKind::Zombie | MobKind::Skeleton => ZOMBIE_MAX_HEALTH,
         }
     }
 
@@ -1029,7 +1059,16 @@ pub fn entity_voice_seed(id: i32) -> u64 {
     0x5EED ^ (id as i64 as u64).wrapping_mul(0x9E37_79B9_7F4A_7C15)
 }
 
-/// The LivingEntity base MAX_HEALTH (the monster base adds none).
+/// THE MAX_HEALTH ATTRIBUTE'S OWN REGISTERED DEFAULT (javap the
+/// Attributes clinit the 26.2 jar speaks — the `RangedAttribute(
+/// "attribute.name.max_health", 20.0, 1.0, 1024.0)` the register call
+/// keeps): the zombie's and the skeleton's own createAttributes chains
+/// the explicit MAX_HEALTH add NEVER makes (the Monster base the
+/// single-arg `add(Attributes.ATTACK_DAMAGE)` the `create(Holder)`
+/// call alone arms — the attribute's own registered default the base
+/// value speaks), the LivingEntity base 20.0 both words wear (the
+/// dev-13 record's "skeleton 16.0" lead the round's own audit
+/// disproved — no 16.0 the chains keep).
 pub const ZOMBIE_MAX_HEALTH: f32 = 20.0;
 /// `Zombie.createAttributes` — ATTACK_DAMAGE 3.0.
 pub const ZOMBIE_ATTACK_DAMAGE: f64 = 3.0;
@@ -4930,6 +4969,11 @@ pub fn try_spawn(
                                 (*next_id as u64) << 16 ^ rng.next(),
                             );
                             c.kind = MobKind::Chicken;
+                            // THE JOCKEY'S OWN HEALTH (the chicken's
+                            // `add(MAX_HEALTH, 4.0)` the mount the
+                            // four hearts wears — the ctor's shared
+                            // 20.0 the avian word never keeps)
+                            c.health = MobKind::Chicken.max_health();
                             c.yaw = z.yaw;
                             if rng.next_f32() < 0.05 {
                                 c.set_age(BABY_START_AGE);
@@ -5254,6 +5298,12 @@ pub fn try_spawn_creatures(
                 (*next_id as u64) << 16 ^ rng.next(),
             );
             m.kind = kind;
+            // THE HEALTH'S OWN ATTRIBUTE (the per-kind createAttributes
+            // the javap walks keep — the kind's own max the spawn the
+            // ctor's shared 20.0 replaces: the pig's 10.0 the sheep's
+            // 8.0 the chicken's 4.0 the cow's 10.0 the monsters' 20.0
+            // the attribute's own default speaks)
+            m.health = m.kind.max_health();
             // THE SNAP-TO'S OWN YAW (397-406: `nextFloat() * 360.0`
             // the random heading speaks)
             m.yaw = rng.next_f32() * 360.0;
@@ -5424,6 +5474,10 @@ pub fn try_breed(mobs: &mut [Zombie], next_id: &mut i32, rng: &mut Lcg) -> Vec<B
             let mut child = Zombie::new(*next_id, mobs[i].x, mobs[i].y, mobs[i].z, rng.next());
             *next_id += 1;
             child.kind = mobs[i].kind;
+            // THE OFFSPRING'S OWN HEALTH (the kind's own attribute the
+            // newborn the ctor's shared 20.0 wears — the parent's max
+            // the child's own word speaks)
+            child.health = child.kind.max_health();
             child.set_age(BABY_START_AGE);
             child.on_ground = true;
             // THE OFFSPRING'S OWN COLOR (javap `Sheep.getBreedOffspring`:
@@ -6984,6 +7038,138 @@ mod tests {
             }
         }
         panic!("the 400-seed sweep the roll never armed");
+    }
+
+    /// THE PER-KIND MAX_HEALTH THE ATTRIBUTE CHAINS WEAR (javap the
+    /// 26.2 jar's createAttributes the round's own audit speaks): the
+    /// four animals' explicit `add(MAX_HEALTH, N)` the builders keep
+    /// (Pig 10.0, AbstractCow 10.0, Sheep 8.0, Chicken 4.0), the
+    /// spider's own 16.0 the Monster base rides, and the zombie's and
+    /// the skeleton's own chains the explicit MAX_HEALTH add NEVER
+    /// makes — the attribute's registered default 20.0 the
+    /// RangedAttribute clinit keeps the base value both wear (the
+    /// dev-13 record's "skeleton 16.0" lead the audit disproved).
+    #[test]
+    fn the_kinds_own_max_health_the_attribute_chains_wear() {
+        assert_eq!(PIG_MAX_HEALTH, 10.0);
+        assert_eq!(COW_MAX_HEALTH, 10.0);
+        assert_eq!(SHEEP_MAX_HEALTH, 8.0);
+        assert_eq!(CHICKEN_MAX_HEALTH, 4.0);
+        assert_eq!(MobKind::Pig.max_health(), PIG_MAX_HEALTH);
+        assert_eq!(MobKind::Cow.max_health(), COW_MAX_HEALTH);
+        assert_eq!(MobKind::Sheep.max_health(), SHEEP_MAX_HEALTH);
+        assert_eq!(MobKind::Chicken.max_health(), CHICKEN_MAX_HEALTH);
+        assert_eq!(MobKind::Spider.max_health(), SPIDER_MAX_HEALTH);
+        assert_eq!(MobKind::Zombie.max_health(), ZOMBIE_MAX_HEALTH);
+        assert_eq!(
+            MobKind::Skeleton.max_health(),
+            ZOMBIE_MAX_HEALTH,
+            "the skeleton the attribute's own default 20.0 wears — no explicit add the chain makes"
+        );
+    }
+
+    /// THE SPAWN LANES THE OWN HEALTH WEAR (the three ctor-after-kind
+    /// walks the per-kind attribute replace — the ctor's shared 20.0
+    /// the honest spawns never keep): the creature pack the own max
+    /// wears, the night attempt the same invariant answers, the
+    /// breeding child the parent's kind the own max speaks.
+    #[test]
+    fn the_spawn_lanes_the_own_max_health_wear() {
+        // THE CREATURE PACK'S OWN GROUND (the grass top the passive
+        // lane's spawn law reads — the stone-top world the pack the
+        // 256-seed sweep never lands)
+        let mut world = World::new(4, 7);
+        let size = world.size_blocks();
+        for x in 0..size {
+            for z in 0..size {
+                for y in 0..8 {
+                    world.set(x, y, z, crate::world::STONE);
+                }
+                world.set(x, 8, z, crate::world::GRASS);
+                for y in 9..size {
+                    world.set(x, y, z, crate::world::AIR);
+                }
+            }
+        }
+        let (px, pz) = (32.0, 32.0);
+        // THE CREATURE PACK (try_spawn_creatures the kind's own max
+        // each body wears — the pig the 10.0, the sheep the 8.0, the
+        // chicken the 4.0, the cow the 10.0)
+        let mut landed = None;
+        for seed in 0u64..256 {
+            let mut mobs = Vec::new();
+            let mut next_id = 1;
+            let n = try_spawn_creatures(
+                &mut mobs,
+                &mut next_id,
+                px,
+                pz,
+                &world,
+                &mut Lcg::new(seed),
+            );
+            if n > 0 {
+                landed = Some(mobs);
+                break;
+            }
+        }
+        let pack = landed.expect("a creature pack lands within 256 seeds");
+        for m in &pack {
+            assert_eq!(
+                m.health,
+                m.kind.max_health(),
+                "the {:?} the spawn the own attribute wears",
+                m.kind
+            );
+        }
+        // THE NIGHT ATTEMPT (try_spawn the monsters' lane the same
+        // invariant keeps — the zombies the 20.0 the default wears)
+        let mut night_landed = None;
+        for seed in 0u64..64 {
+            let mut mobs = Vec::new();
+            let mut next_id = 1;
+            if try_spawn(
+                &mut mobs,
+                &mut next_id,
+                px,
+                pz,
+                &world,
+                &mut Lcg::new(seed),
+                true,
+            ) {
+                night_landed = Some(mobs);
+                break;
+            }
+        }
+        let night = night_landed.expect("a night attempt lands within 64 seeds");
+        for m in &night {
+            assert_eq!(
+                m.health,
+                m.kind.max_health(),
+                "the {:?} the night spawn the own attribute wears",
+                m.kind
+            );
+        }
+        // THE BREEDING CHILD (try_breed the offspring the parent's
+        // kind the own max speaks — the cow the 10.0 the calf wears)
+        let mut a = Zombie::new(1, 10.0, 64.0, 10.0, 262);
+        a.kind = MobKind::Cow;
+        a.health = MobKind::Cow.max_health();
+        a.in_love = 600;
+        a.breed_love_time = BREED_COURT_TICKS;
+        let mut b = Zombie::new(2, 12.0, 64.0, 10.0, 263);
+        b.kind = MobKind::Cow;
+        b.health = MobKind::Cow.max_health();
+        b.in_love = 600;
+        b.breed_love_time = BREED_COURT_TICKS;
+        let mut mobs = vec![a, b];
+        let mut next_id = 3;
+        let spawns = try_breed(&mut mobs, &mut next_id, &mut Lcg::new(42));
+        assert_eq!(spawns.len(), 1, "the pair the canMate law answers");
+        assert_eq!(
+            spawns[0].child.health,
+            MobKind::Cow.max_health(),
+            "the calf the own attribute wears"
+        );
     }
 
     /// THE SPIDER'S OWN REGISTRATION WORDS (javap `EntityTypes` clinit
@@ -11073,13 +11259,17 @@ mod tests {
         for kind in [MobKind::Sheep, MobKind::Cow, MobKind::Pig] {
             let mut animal = Zombie::new(1, 32.0, 5.0, 32.0, 262);
             animal.kind = kind;
+            // THE SPAWN'S OWN HEALTH (the per-kind attribute the spawn
+            // lane the ctor's shared 20.0 replaces)
+            animal.health = kind.max_health();
             animal.on_ground = true;
             for _ in 0..600 {
                 animal.tick(&world, None, NOON);
                 assert_eq!(animal.fire_ticks, 0, "the {kind:?} the noon never brands");
             }
             assert_eq!(
-                animal.health, ZOMBIE_MAX_HEALTH,
+                animal.health,
+                kind.max_health(),
                 "the {kind:?} the fire hurt never speaks"
             );
         }
