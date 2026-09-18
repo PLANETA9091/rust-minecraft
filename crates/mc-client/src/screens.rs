@@ -1563,6 +1563,16 @@ pub struct App {
     /// eases through, no AI, no physics). The offline lane's own
     /// `mobs` stay the client's authority — the two never mix.
     pub net_mobs: Vec<crate::mob::Zombie>,
+    /// THE WIRE'S OWN SHOTS (the Add Entity arrows the server spawned
+    /// — the projectiles the flight lane renders): the client-side
+    /// entities the `from_wire` spawn built, the flight the client's
+    /// own AbstractArrow tick simulates from the spawn word's motion
+    /// (the vanilla client's own law — the smooth 20 Hz flight the
+    /// server never paces). The damage out-edges the wire's own lanes
+    /// speak (the server's Health/hurt words) — the visual lane never
+    /// hits. The offline lane's own `arrows` stay the client's
+    /// authority — the two never mix.
+    pub net_arrows: Vec<crate::mob::Arrow>,
     /// The spawner's clock (the client's own cadence the mob lane
     /// speaks) and the id counter (the entity ids the drops ride).
     pub spawn_clock: i64,
@@ -2172,6 +2182,7 @@ impl App {
             arrows: Vec::new(),
             arrow_model: None,
             net_mobs: Vec::new(),
+            net_arrows: Vec::new(),
             spawn_clock: 0,
             next_mob_id: 1,
             mob_rng: crate::drops::Lcg::new(0x5EED_10CA),
@@ -3342,6 +3353,11 @@ impl App {
             // pair the render's lerp walks, the age the bob speaks):
             if self.world_is_network {
                 self.tick_net_mobs();
+                // THE WIRE SHOTS' OWN FLIGHT (the vanilla ClientLevel's
+                // projectile lane — the client-side arrows the spawn
+                // words built, the physics the client's own tick
+                // simulates, the hits the wire's own lanes speak)
+                self.tick_net_arrows();
                 self.tick_paddles();
                 self.tick_ride_yaw();
             }
@@ -9274,6 +9290,57 @@ impl App {
         // the moved-out map drops them (the server's truth, no ghosts)
     }
 
+    /// THE WIRE'S OWN ARROW LANE (the Add Entity arrows the refresh's
+    /// projection ships — the server's shots the flight lane renders):
+    /// fresh ids spawn the CLIENT-SIDE projectile the `from_wire`
+    /// word builds (the vanilla `recreateFromPacket` law — the
+    /// position and the motion the packet's own fields keep, the
+    /// flight the client's own AbstractArrow tick simulates from
+    /// there); ids the wire still names ride their own sim untouched
+    /// (the between-sync flight the client's physics owns — the
+    /// vanilla client never re-teleports a projectile the syncs
+    /// didn't re-pose); the ids the wire no longer names drop (the
+    /// server's Remove Entities truth, no ghost shots). The offline
+    /// lane's arrows are never touched.
+    pub fn live_net_arrows_updated(&mut self, arrows: Vec<crate::world_view::WireArrow>) {
+        if !self.world_is_network {
+            return;
+        }
+        let mut old: std::collections::HashMap<i32, crate::mob::Arrow> = std::mem::take(
+            &mut self.net_arrows,
+        )
+        .into_iter()
+        .map(|a| (a.id, a))
+        .collect();
+        for w in arrows {
+            if let Some(a) = old.remove(&w.id) {
+                // THE STILL-NAMED SHOT: the client's own flight IS the
+                // between-sync truth (the position syncs the server
+                // didn't speak never re-pose a projectile — the same
+                // honest leave the mobs' lerp law never shortcuts)
+                self.net_arrows.push(a);
+                continue;
+            }
+            // THE FRESH SPAWN: the packet's own word becomes the
+            // client-side entity (the pose AND the motion — the
+            // flight's initial velocity the LP Vec3 carried)
+            self.net_arrows.push(crate::mob::Arrow::from_wire(
+                w.id,
+                w.x,
+                w.y,
+                w.z,
+                w.vx,
+                w.vy,
+                w.vz,
+                w.yaw,
+                w.pitch,
+            ));
+        }
+        // the ids the wire no longer names never re-enter net_arrows —
+        // the moved-out map drops them (the despawn the Remove
+        // Entities spoke, no ghosts)
+    }
+
     /// THE WIRE MOBS' VOICE LANE (the vanilla ClientLevel's own
     /// handleEntitySound): the Entity Sound mailbox's shipped voices
     /// land at the ENTITIES the level names — an id outside the mob
@@ -9724,6 +9791,32 @@ impl App {
         for (clip, pitch, dist) in deaths {
             self.sounds.play_voice_at(self.frame, clip, 1.0, pitch, dist);
         }
+    }
+
+    /// THE WIRE SHOTS' OWN FLIGHT (the vanilla ClientLevel's own
+    /// projectile law — the client-side AbstractArrow the
+    /// recreateFromPacket spawn built ticks its OWN physics): the
+    /// prev trio arms the render's lerp FROM, the flight the same
+    /// AbstractArrow.tick walk the offline lane rides (the 0.99
+    /// inertia, the 0.05 gravity, the clip walk the walls stick,
+    /// the 1200-tick despawn the stuck shot discards). The out-edges
+    /// the wire's own lanes speak — the damage the server's Health
+    /// and hurt words own, the block-hit voice the server's Sound
+    /// packet plays — the visual lane's `let _` the honest discard
+    /// keeps (a client-side arrow the vanilla client never hurts
+    /// with). No world yet (the swap the network arm speaks hasn't
+    /// landed): the shots rest a tick — never a guessed flight.
+    pub fn tick_net_arrows(&mut self) {
+        if self.net_arrows.is_empty() {
+            return;
+        }
+        let Some(world) = self.net_world.as_ref() else {
+            return;
+        };
+        for arrow in self.net_arrows.iter_mut() {
+            let _ = arrow.tick(world, None, &self.net_mobs);
+        }
+        self.net_arrows.retain(|a| !a.dead);
     }
 
     pub fn live_view_updated(
@@ -12837,7 +12930,12 @@ impl App {
         ctx: &RenderCtx,
         cam: &crate::camera::Camera,
     ) {
-        if self.arrows.is_empty() {
+        let shots: Vec<&crate::mob::Arrow> = self
+            .arrows
+            .iter()
+            .chain(self.net_arrows.iter())
+            .collect();
+        if shots.is_empty() {
             return; // the deterministic scenes carry no projectiles — the goldens stay
         }
         if self.arrow_model.is_none() {
@@ -12849,7 +12947,7 @@ impl App {
             return; // the arrow texture failed its sha1 — the shots stay unseen
         };
         let mut sampled: Vec<crate::raster::SampledQuad> = Vec::new();
-        for arrow in &self.arrows {
+        for arrow in &shots {
             // THE EXTRACT'S OWN LERP (the render state's own sampling —
             // the position and the rotation ride the O pairs the
             // frame's own partial_tick now)
@@ -18119,6 +18217,91 @@ mod tests {
         // the despawn: the wire stops naming id 7 — no ghost
         app.live_mobs_updated(vec![]);
         assert!(app.net_mobs.is_empty(), "the server's truth, no ghosts");
+    }
+
+    /// THE WIRE ARROWS' FLIGHT LANE (javap `AbstractArrow.
+    /// recreateFromPacket` the 26.2 walk the vanilla client speaks):
+    /// the Add Entity word becomes the CLIENT-SIDE projectile (the
+    /// pose AND the motion the packet's own fields keep), the flight
+    /// the client's own tick simulates (the move the velocity speaks,
+    /// the drag the 0.99 keeps, the gravity the 0.05 rides), the
+    /// still-named id rides its OWN sim untouched (the between-sync
+    /// truth the client's physics owns), the wire's silence drops the
+    /// shot (no ghosts), the offline lane never enters the lane.
+    #[test]
+    fn the_wire_arrows_fly_the_client_sim() {
+        let mut app = App::new(3);
+        app.open(ScreenKind::Connect);
+        app.net_world = Some(air_net_world(2, 0));
+        app.enter_network_world(None, Skybox::Overworld, None, None);
+        // the spawn lands at the word (the prev trio arms at it — the
+        // render's first lerp never moves)
+        app.live_net_arrows_updated(vec![crate::world_view::WireArrow {
+            id: 300,
+            x: 10.0,
+            y: 66.0,
+            z: 10.0,
+            vx: 2.4,
+            vy: 0.0,
+            vz: 0.0,
+            yaw: -90.0,
+            pitch: 0.0,
+        }]);
+        assert_eq!(app.net_arrows.len(), 1, "the shot rendered v1");
+        assert_eq!(app.net_arrows[0].id, 300);
+        assert_eq!(
+            (app.net_arrows[0].x, app.net_arrows[0].y, app.net_arrows[0].z),
+            (10.0, 66.0, 10.0),
+            "the spawn IS the packet's word"
+        );
+        assert_eq!(
+            (app.net_arrows[0].prev_x, app.net_arrows[0].prev_y, app.net_arrows[0].prev_z),
+            (10.0, 66.0, 10.0),
+            "the prev trio arms at the spawn"
+        );
+        // THE FLIGHT (the client's own AbstractArrow.tick): the move
+        // the velocity speaks (x += vx), then the drag and the
+        // gravity ride the velocity's own tail (0.99, 0.05)
+        app.tick_net_arrows();
+        assert!((app.net_arrows[0].x - 12.4).abs() < 1e-9, "the move the velocity speaks");
+        assert!((app.net_arrows[0].vx - 2.376).abs() < 1e-9, "the drag the 0.99 keeps");
+        assert!((app.net_arrows[0].vy + 0.05).abs() < 1e-9, "the gravity the 0.05 rides");
+        assert!((app.net_arrows[0].prev_x - 10.0).abs() < 1e-9, "the prev trio armed");
+        // THE STILL-NAMED ID: the refresh ships the id again (a NEW
+        // pose the server's own word would carry) — the client's own
+        // sim rides untouched (the projectile the syncs never re-pose)
+        app.live_net_arrows_updated(vec![crate::world_view::WireArrow {
+            id: 300,
+            x: 99.0,
+            y: 99.0,
+            z: 99.0,
+            vx: 0.0,
+            vy: 0.0,
+            vz: 0.0,
+            yaw: 0.0,
+            pitch: 0.0,
+        }]);
+        assert_eq!(app.net_arrows.len(), 1, "no duplicate spawn");
+        assert!((app.net_arrows[0].x - 12.4).abs() < 1e-9, "the sim's own truth stands");
+        // THE WIRE'S SILENCE: the Remove Entities truth drops the shot
+        app.live_net_arrows_updated(vec![]);
+        assert!(app.net_arrows.is_empty(), "the server's truth, no ghosts");
+        // THE OFFLINE GATE: the lane the network arm never opened
+        // stays the offline lane's own (the word lands nothing)
+        let mut offline = App::new(3);
+        offline.open(ScreenKind::World);
+        offline.live_net_arrows_updated(vec![crate::world_view::WireArrow {
+            id: 400,
+            x: 1.0,
+            y: 1.0,
+            z: 1.0,
+            vx: 1.0,
+            vy: 0.0,
+            vz: 0.0,
+            yaw: 0.0,
+            pitch: 0.0,
+        }]);
+        assert!(offline.net_arrows.is_empty(), "the offline lane never mixes");
     }
 
     /// THE WIRE MOBS' DEATH CLOCK (LivingEntity.tickDeath's own law

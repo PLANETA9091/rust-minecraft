@@ -79,6 +79,14 @@ pub struct EntitySnapshot {
     /// starts it empty; each packet's entries REPLACE the listed
     /// accessors and leave the unmentioned ones (the assignValues walk).
     pub data: BTreeMap<u8, EntityDataEntry>,
+    /// THE SPAWN'S OWN MOTION WORD — the low-precision Vec3 the Add
+    /// Entity packet carries (the projectile's initial velocity the
+    /// vanilla `ClientboundAddEntityPacket.getVelocity` speaks, the
+    /// decode's 1/32766 fold the LP lane answers). The arrow's own
+    /// flight law consumes it (the client-side sim the vanilla client
+    /// runs from the server's spawn word); the mobs' lanes never read
+    /// it (the lerpTo walk the position syncs pace instead).
+    pub motion: [f64; 3],
 }
 
 /// The client's view of ONE server world: loaded chunk columns, the
@@ -1178,6 +1186,10 @@ impl WorldModel {
                         x_rot: e.x_rot,
                         y_head_rot: e.y_head_rot,
                         data: BTreeMap::new(),
+                        // the spawn's own motion word rides (the LP Vec3
+                        // the packet carries — the projectile's initial
+                        // velocity the flight lane consumes)
+                        motion: e.movement,
                     },
                 );
                 true

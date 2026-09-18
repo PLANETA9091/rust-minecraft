@@ -328,6 +328,14 @@ struct Cli {
     /// default). Requires --net-sheep.
     #[arg(long)]
     net_wool: Option<u8>,
+    /// THE WIRE SHOT: stage ONE arrow the server's Add Entity word
+    /// carries — 5.0 cells ahead of the camera's facing line at eye
+    /// height + 0.8, the skeleton's own 2.4-cell velocity toward the
+    /// eye — and walk N flight ticks through the REAL tick_net_arrows
+    /// lane (the frame frozen mid-approach). Works standalone (the
+    /// network world swaps in for it) or beside --net-mobs.
+    #[arg(long)]
+    net_arrow: Option<u32>,
     /// Stage the CUSTOM NAME on the first wire sheep — the name the
     /// Set Entity Data store keeps on the accessor 2 ("jeb_" arms the
     /// rainbow the isJebSheep gate speaks, any other name rides the
@@ -483,6 +491,7 @@ fn main() -> Result<()> {
             net_cow: cli.net_cow,
             net_sheep: cli.net_sheep,
             net_wool: cli.net_wool,
+            net_arrow: cli.net_arrow,
             net_name: cli.net_name,
             net_crosshair: cli.net_crosshair,
             net_attack: cli.net_attack,

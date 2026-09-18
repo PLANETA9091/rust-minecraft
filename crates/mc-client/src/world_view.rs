@@ -300,6 +300,12 @@ pub struct SnapshotView {
     /// The empty list the honest silence (no boat the server spawned),
     /// the shape every lane rides.
     pub boats: Vec<WireBoat>,
+    /// The wire's ARROW population (see [`WireArrow`]) — the
+    /// projectile entities the registry named `minecraft:arrow`, the
+    /// server's own shots the flight lane renders (the empty list the
+    /// honest silence: no arrow the server spawned, the shape every
+    /// lane rides).
+    pub arrows: Vec<WireArrow>,
     /// The wire mobs' PENDING VOICES — the Entity Sound mailbox the
     /// model resolved (see [`WireVoice`]): the sounds the SERVER
     /// played for its mobs, shipped once with the refresh that
@@ -753,6 +759,63 @@ pub fn boats_view(model: &WorldModel) -> Vec<WireBoat> {
                     Some(mc_protocol::EntityDataEntry::Float(v)) => *v,
                     _ => 0.0,
                 },
+            })
+        })
+        .collect()
+}
+
+/// One wire arrow as the flight lane consumes it — the Add Entity
+/// snapshot's pose AND motion verbatim (the server's own word, the
+/// same lane the mobs and the hulls ride). The vanilla client's own
+/// law the projection serves: the projectile the server spawned
+/// becomes a CLIENT-SIDE entity (`recreateFromPacket`) whose flight
+/// the client's own `AbstractArrow.tick` simulates from the spawn
+/// word's initial velocity — the smooth 20 Hz flight the 250 ms
+/// refresh never paces (the mobs' lerpTo walk the syncs speak, the
+/// arrow's own physics the spawn word arms).
+#[derive(Debug, Clone, PartialEq)]
+pub struct WireArrow {
+    pub id: i32,
+    pub x: f64,
+    pub y: f64,
+    pub z: f64,
+    /// The spawn word's own motion — the LP Vec3 the Add Entity
+    /// packet carried (the shoot's velocity the server's
+    /// shootFromRotation spoke, the decode's 1/32766 fold the LP lane
+    /// answers). The flight sim's initial `deltaMovement`.
+    pub vx: f64,
+    pub vy: f64,
+    pub vz: f64,
+    /// The flight rotation the spawn byte unpacked (the render's
+    /// submit fold the same degrees walk).
+    pub yaw: f32,
+    pub pitch: f32,
+}
+
+/// THE ARROW PROJECTION: the entity store's `minecraft:arrow` bodies,
+/// the flight lane's own spawn words. Every other type id stays honest
+/// data the screen doesn't draw (the mob and boat filters' own shape).
+/// The other projectile types (spear/trident, spectral, tipped) stay
+/// outside v1 — the arrow the skeleton's bow and the player's own
+/// release speak is the projectile the lanes already render.
+pub fn arrows_view(model: &WorldModel) -> Vec<WireArrow> {
+    model
+        .entities()
+        .filter_map(|(id, e)| {
+            let name = model.entity_type_name(e.type_id)?;
+            if name != "minecraft:arrow" {
+                return None; // not-yet-drawn types stay honest data
+            }
+            Some(WireArrow {
+                id,
+                x: e.x,
+                y: e.y,
+                z: e.z,
+                vx: e.motion[0],
+                vy: e.motion[1],
+                vz: e.motion[2],
+                yaw: e.y_rot,
+                pitch: e.x_rot,
             })
         })
         .collect()
@@ -1889,6 +1952,9 @@ pub fn materialize_snapshot_view(
         // and no boats (a fresh join carries no spawned hulls — the
         // empty lane the render skips)
         boats: Vec::new(),
+        // and no arrows (a fresh join carries no shots in flight — the
+        // empty lane the flight render skips)
+        arrows: Vec::new(),
         // and no voices yet (the join snapshot carries no played sounds
         // — the empty mailbox the projection walks)
         voices: Vec::new(),
@@ -2149,6 +2215,9 @@ impl LiveView {
                 // hulls are the connection's own population, not the
                 // pose's
                 boats: boats_view(&self.model),
+                // the arrows' belief rides the same arm — the shots are
+                // the connection's own population, not the pose's
+                arrows: arrows_view(&self.model),
                 voices,
                 world_voices,
                 // the scoreboard's belief rides the pose-less arm too —
@@ -2189,6 +2258,9 @@ impl LiveView {
             // the hulls ride with the population — the boats the server
             // spawned follow the store exactly like the mobs do
             boats: boats_view(&self.model),
+            // the shots ride with the population — the arrows the server
+            // spawned follow the store exactly like the boats do
+            arrows: arrows_view(&self.model),
             voices,
             world_voices,
             // the scoreboard's belief rides every refresh too — the
@@ -2987,6 +3059,73 @@ mod tests {
         view.model.drain_entity_sounds();
         let upd = view.refresh(example_mapper);
         assert!(upd.voices.is_empty(), "the shipped voice never re-ships");
+    }
+
+    /// THE WIRE ARROWS' PROJECTION (the Add Entity store's
+    /// `minecraft:arrow` bodies — the flight lane's own spawn words):
+    /// the pose AND the motion ride the snapshot verbatim, the
+    /// non-arrow types stay outside the lane (the mobs' own word),
+    /// the arrow-less refresh ships the honest empty.
+    #[test]
+    fn refresh_projects_the_wire_arrows() {
+        use mc_protocol::play::EntitySpawn;
+        let mut m = WorldModel::new();
+        // the synced registry: type id 0 = zombie (the drawn body the
+        // mob lane keeps), id 1 = arrow (the shot the flight lane
+        // serves)
+        m.registry.entity_types = vec![
+            "minecraft:zombie".to_string(),
+            "minecraft:arrow".to_string(),
+        ];
+        // the zombie rides the MOB lane (never the shots')
+        m.apply(PlayEvent::Spawn(EntitySpawn {
+            id: 7,
+            uuid: 1,
+            type_id: 0,
+            x: 10.0,
+            y: 64.0,
+            z: 12.0,
+            movement: [0.0; 3],
+            x_rot: 0.0,
+            y_rot: 90.0,
+            y_head_rot: 90.0,
+            data: 0,
+        }));
+        // the arrow rides the SHOT lane — the pose AND the motion the
+        // spawn word's own fields keep (the LP Vec3 the server's
+        // shootFromRotation spoke)
+        m.apply(PlayEvent::Spawn(EntitySpawn {
+            id: 300,
+            uuid: 2,
+            type_id: 1,
+            x: 15.0,
+            y: 66.4,
+            z: 12.0,
+            movement: [-2.4, 0.05, 0.0],
+            x_rot: -1.2,
+            y_rot: -90.0,
+            y_head_rot: -90.0,
+            data: 7,
+        }));
+        let mut view = LiveView {
+            model: m,
+            side: 1,
+        };
+        let upd = view.refresh(example_mapper);
+        assert_eq!(upd.mobs.len(), 1, "the zombie rides the mob lane");
+        assert_eq!(upd.arrows.len(), 1, "the arrow rides the shot lane");
+        let a = &upd.arrows[0];
+        assert_eq!(a.id, 300);
+        assert_eq!((a.x, a.y, a.z), (15.0, 66.4, 12.0));
+        assert_eq!((a.vx, a.vy, a.vz), (-2.4, 0.05, 0.0));
+        assert_eq!((a.yaw, a.pitch), (-90.0, -1.2));
+        // THE DESPAWN: the Remove Entities truth drops the shot — the
+        // next refresh ships the honest empty (the flight lane's own
+        // missing-id walk the caller speaks)
+        view.model
+            .apply(PlayEvent::EntitiesRemoved(vec![300]));
+        let upd = view.refresh(example_mapper);
+        assert!(upd.arrows.is_empty(), "the removed shot never re-ships");
     }
 
     /// THE BURNING WORD'S PROJECTION (the shared-flags accessor —

@@ -522,7 +522,7 @@ pub fn clip_ray(world: &World, from: Vec3, to: Vec3) -> Option<Vec3> {
         } else {
             (t_max_z, 2)
         };
-        if t_next > len || !t_next.is_finite() {
+        if t_next > 1.0 || !t_next.is_finite() {
             return None; // the ray ended inside the last open cell
         }
         match axis {
@@ -1658,6 +1658,27 @@ mod tests {
         for _ in 0..4 {
             b.tick(w, false);
         }
+    }
+
+    /// THE SEGMENT'S OWN HONESTY (the t parameter the walk serves —
+    /// the hit's own comment speaks t=1 IS the full from->to span):
+    /// a wall BEYOND the segment's end never clips (the walk stops
+    /// at t=1 — the len-compare the march spoke ran the ray |delta|
+    /// times its own length, the arrow the wall two segments away
+    /// "hit" mid-flight). The wall at x=5 stands 0.5 past the first
+    /// segment's end: the honest walk answers None; the reaching
+    /// segment clips AT the wall's own face.
+    #[test]
+    fn clip_ray_never_marches_past_the_segment_end() {
+        let w = walled_world();
+        let short = clip_ray(&w, Vec3::new(0.5, 1.5, 5.5), Vec3::new(4.5, 1.5, 5.5));
+        assert_eq!(short, None, "the wall beyond the segment never clips");
+        let reaching = clip_ray(&w, Vec3::new(0.5, 1.5, 5.5), Vec3::new(5.5, 1.5, 5.5));
+        let h = reaching.expect("the wall within the segment clips");
+        assert!(
+            (h.x - 5.0).abs() < 1e-6,
+            "the hit rides the wall's own face, got x={}"
+        , h.x);
     }
 
     /// THE FOOTSTEP CADENCE (Entity.move's own law): the walk distance

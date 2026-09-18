@@ -1451,6 +1451,58 @@ impl Arrow {
         }
     }
 
+    /// THE WIRE'S OWN SPAWN (javap `AbstractArrow.recreateFromPacket`
+    /// the 26.2 walk speaks — the vanilla client's own law: the Add
+    /// Entity packet's word BECOMES the client-side projectile, the
+    /// position and the velocity and the flight rotation the packet's
+    /// own fields keep, the client's `AbstractArrow.tick` the flight
+    /// simulates from there). The seed the id-mixed law keeps (the
+    /// SAME stream every ctor arms — the server's id names the
+    /// entity, the client's random the same mix rides); the CRIT the
+    /// wire never spoke stays false (the accessor byte the server's
+    /// own setCritArrow arms is v1's honest silence — the trail
+    /// particles the flag gates are the wire's own lane to speak
+    /// later); `player_shot` stays false (the owner shard the Add
+    /// Entity `data` field carries is v1's unread word — the visual
+    /// lane never hits).
+    #[allow(clippy::too_many_arguments)]
+    pub fn from_wire(
+        id: i32,
+        x: f64,
+        y: f64,
+        z: f64,
+        vx: f64,
+        vy: f64,
+        vz: f64,
+        y_rot: f32,
+        x_rot: f32,
+    ) -> Arrow {
+        let seed = arrow_entity_seed(id);
+        Arrow {
+            id,
+            x,
+            y,
+            z,
+            prev_x: x,
+            prev_y: y,
+            prev_z: z,
+            vx,
+            vy,
+            vz,
+            y_rot,
+            x_rot,
+            y_rot_o: y_rot,
+            x_rot_o: x_rot,
+            life: 0,
+            in_ground: false,
+            shake_time: 0,
+            crit: false,
+            dead: false,
+            player_shot: false,
+            rng: Lcg::new(seed),
+        }
+    }
+
     /// THE FLIGHT (javap `AbstractArrow.tick` the 26.2 bytecode
     /// speaks): the head's own ground check (the shape containing the
     /// position the velocity zeroes + the flag arms), the shake clock,

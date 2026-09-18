@@ -298,6 +298,15 @@ pub struct SceneOpts {
     /// the vanilla default (unsheared, WHITE); 14 = RED; 30 = red AND
     /// sheared.
     pub net_wool: Option<u8>,
+    /// THE WIRE SHOT's own stage (the --net-arrow word): ONE wire
+    /// arrow the server's Add Entity word carries, spawned 5.0 cells
+    /// ahead of the camera's facing line at eye height + 0.8 with the
+    /// skeleton's own 2.4-cell velocity TOWARD the eye (the night's
+    /// own shot the wire speaks), N flight ticks walked through the
+    /// REAL tick_net_arrows lane — the frame frozen mid-approach (the
+    /// render's lerp the prev trio keeps). Requires the network arm
+    /// (works alone — the network world swaps in for it).
+    pub net_arrow: Option<u32>,
     /// THE NAME WORD's own stage (the --net-wool mirror: the custom
     /// name the Set Entity Data store keeps on the accessor 2): lands
     /// on the FIRST wire sheep through the merge's own carry. "jeb_"
@@ -1571,6 +1580,7 @@ pub fn render_gui_screen_opts(
                 || opts.net_pig.is_some()
                 || opts.net_cow.is_some()
                 || opts.net_sheep.is_some()
+                || opts.net_arrow.is_some()
             {
                 // THE WIRE'S OWN LANE: the network world swaps in — the
                 // server's Set Time opinion re-bases the day clock, the
@@ -1938,6 +1948,82 @@ pub fn render_gui_screen_opts(
                         }
                     }
                 }
+                    // THE WIRE SHOT's own stage (the --net-arrow word —
+                    // standalone: the network world swaps in for it
+                    // alone): ONE arrow the server's Add Entity word
+                    // carries, spawned 5.0 cells ahead of the camera's
+                    // facing line at eye height + 0.8 with the
+                    // skeleton's own 2.4-cell velocity TOWARD the eye —
+                    // through the REAL live_net_arrows_updated lane
+                    // (the recreateFromPacket law the session's
+                    // refresh rides), N flight ticks walked (the frame
+                    // frozen mid-approach, the render's lerp the prev
+                    // trio keeps)
+                    if let Some(ticks) = opts.net_arrow {
+                        let yaw_cam = opts.body_yaw.unwrap_or(-90.0);
+                        let (fx, fz) = (
+                            (-yaw_cam.to_radians().sin()) as f64,
+                            yaw_cam.to_radians().cos() as f64,
+                        );
+                        let (b_x, b_z) = app
+                            .body
+                            .as_ref()
+                            .map(|b| (b.x, b.z))
+                            .unwrap_or((
+                                app.world_size as f64 / 2.0,
+                                app.world_size as f64 / 2.0,
+                            ));
+                        // THE SURFACE SCAN (the mob ring's own law — at
+                        // the BODY's column the fallback mirrors, the
+                        // DOWN walk the terrain's real skin speaks: the
+                        // shooter shares the body's ground the flat-
+                        // clearing story keeps, the eye level the real
+                        // skin answers — never a guessed 64)
+                        let b_y = app.body.as_ref().map(|b| b.y as i32).unwrap_or(64);
+                        let w = app.net_world.as_ref().unwrap();
+                        let mut b_gy = b_y;
+                        while b_gy > 0
+                            && w.get(b_x.floor() as i32, b_gy, b_z.floor() as i32)
+                                == crate::world::AIR
+                        {
+                            b_gy -= 1;
+                        }
+                        let eye_y = (b_gy + 1) as f64 + 1.62;
+                        let (ox, oy, oz) = (
+                            b_x + fx * 5.0,
+                            eye_y + 0.8,
+                            b_z + fz * 5.0,
+                        );
+                        // THE SHOT'S OWN VECTOR (toward the eye — the
+                        // skeleton's own aim the getY walk answers, the
+                        // 2.4 magnitude the flight's first seconds
+                        // speak; the rotation the same atan2 degrees
+                        // the player_shot ctor walks)
+                        let (dx, dy, dz) = (b_x - ox, eye_y - 0.2 - oy, b_z - oz);
+                        let len = (dx * dx + dy * dy + dz * dz).sqrt();
+                        let (vx, vy, vz) =
+                            (dx / len * 2.4, dy / len * 2.4, dz / len * 2.4);
+                        let horiz = (vx * vx + vz * vz).sqrt();
+                        let y_rot = (vx.atan2(vz) * 57.295_776_367_187_5) as f32;
+                        let x_rot =
+                            (vy.atan2(horiz) * 57.295_776_367_187_5) as f32;
+                        app.live_net_arrows_updated(vec![
+                            crate::world_view::WireArrow {
+                                id: 300,
+                                x: ox,
+                                y: oy,
+                                z: oz,
+                                vx,
+                                vy,
+                                vz,
+                                yaw: y_rot,
+                                pitch: x_rot,
+                            },
+                        ]);
+                        for _ in 0..ticks {
+                            app.tick_net_arrows();
+                        }
+                    }
             }
         }
         "worldnight" => {
