@@ -5,7 +5,7 @@
 //! App's own tick rides; the wire's hulls the server's snapshots own —
 //! the walk never touches them.
 
-use crate::world::{AIR, LAVA, WATER, WHEAT};
+use crate::world::{AIR, LAVA, WATER};
 
 /// THE BOAT FAMILY'S OWN BOX (the same EntityType constants the ride
 /// height's doc speaks — the 1.375 x 0.562 the makeBoundingBox centers
@@ -113,11 +113,12 @@ impl Default for HullPhys {
 }
 
 /// the collision vocabulary the move's clamp walks (the fluids never
-/// block — the vanilla's own empty collision shapes; WHEAT joins the
-/// pass — the 15th audit: the `.noCollision()` row the Blocks clinit
-/// speaks, the hull floats THROUGH the crop)
+/// block — the vanilla's own empty collision shapes; the WHEAT AGE
+/// LADDER joins the pass — the 15th audit + the growth round: the
+/// `.noCollision()` row the Blocks clinit speaks, the hull floats
+/// THROUGH the crop's every stage)
 fn solid(id: u16) -> bool {
-    id != AIR && id != WATER && id != LAVA && id != WHEAT
+    id != AIR && id != WATER && id != LAVA && !crate::world::is_wheat(id)
 }
 
 /// the strict intersect the block lane's own shape keeps (the AABB

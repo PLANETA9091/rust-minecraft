@@ -59,12 +59,14 @@ use zip::ZipArchive;
 /// walk, never a hardcoded name). The faces carry NO tintindex — the
 /// wheat_stage0 master renders as authored (the pre-colored pixels the
 /// probe verifies).
-pub const RUNTIME_PALETTE: [&str; 30] = [
+pub const RUNTIME_PALETTE: [&str; 37] = [
     "air", "stone", "dirt", "grass_block", "oak_log", "oak_leaves", "water", "sand",
     "granite", "diorite", "andesite", "deepslate", "cobbled_deepslate", "gravel",
     "bedrock", "coal_ore", "copper_ore", "iron_ore", "gold_ore", "redstone_ore",
     "lapis_ore", "diamond_ore", "emerald_ore", "netherrack", "pale_oak_leaves",
     "leaf_litter", "lava", "farmland", "dirt_path", "wheat",
+    "wheat_stage1", "wheat_stage2", "wheat_stage3", "wheat_stage4",
+    "wheat_stage5", "wheat_stage6", "wheat_stage7",
 ];
 
 /// Renderer face order: 0:+X 1:-X 2:+Y 3:-Y 4:+Z 5:-Z.
@@ -349,27 +351,39 @@ pub fn build(jar_bytes: &[u8], version: &str, client_sha1: &str) -> Result<Strin
             faces.push(resolve_flat_stem("leaf_litter", true));
             continue;
         }
-        if block == "wheat" {
-            // THE FIFTEENTH AUDIT (official 26.2 jar): the blockstate is a
-            // plain variants map (age=0..7), age=0 -> block/wheat_stage0 ->
-            // block/crop — and the crop model's elements are FOUR
-            // zero-thickness vertical planes (x=4, x=12, z=4, z=12, each
-            // y -1..15 with `shade: false` faces and model-level
-            // `ambientocclusion: false`), so resolve_block's full-cube
-            // six-face requirement cannot apply. The age=0 texture stem
-            // resolves through the REAL chain (the blockstate variant's
-            // model ref -> the merged texture map's `crop` ref), tinted =
-            // false (the faces carry NO tintindex — the pre-colored
-            // master renders as authored).
+        if block == "wheat" || block.starts_with("wheat_stage") {
+            // THE FIFTEENTH AUDIT + THE GROWTH ROUND (official 26.2 jar):
+            // the blockstate is a plain variants map (age=0..7) — "wheat"
+            // resolves the age=0 row and "wheat_stageN" the age=N row,
+            // each -> block/wheat_stageN -> block/crop (the SAME four
+            // zero-thickness vertical plane elements — x=4, x=12, z=4,
+            // z=12, each y -1..15 with `shade: false` faces and
+            // model-level `ambientocclusion: false`), so resolve_block's
+            // full-cube six-face requirement cannot apply. The stage
+            // texture stem resolves through the REAL chain (the
+            // blockstate variant's model ref -> the merged texture map's
+            // `crop` ref), tinted = false (the faces carry NO tintindex —
+            // the pre-colored masters render as authored). The AGE
+            // LADDER the client's kinds wear: WHEAT = age 0,
+            // WHEAT_STAGE1..7 = ages 1..7 — the growth walk's own art.
+            let age: u8 = if block == "wheat" {
+                0
+            } else {
+                block
+                    .trim_start_matches("wheat_stage")
+                    .parse()
+                    .with_context(|| format!("palette {block}: bad stage number"))?
+            };
             let bs_bytes = read_jar(&mut archive, "assets/minecraft/blockstates/wheat.json")?;
             let bs: Value = serde_json::from_slice(&bs_bytes)
                 .with_context(|| "blockstate wheat: json parse")?;
+            let age_key = format!("age={age}");
             let model_ref = bs
                 .get("variants")
-                .and_then(|v| v.get("age=0"))
+                .and_then(|v| v.get(&age_key))
                 .and_then(|v| v.get("model"))
                 .and_then(|m| m.as_str())
-                .with_context(|| "blockstate wheat: no age=0 model")?
+                .with_context(|| format!("blockstate wheat: no {age_key} model"))?
                 .trim_start_matches("minecraft:")
                 .to_string();
             let (tex_map, _) = load_model_chain(&mut archive, &model_ref)
@@ -605,6 +619,16 @@ mod tests {
         // the SECOND non-cube member (the 15th audit): the crop's four
         // plane elements the client's wheat path meshes
         assert_eq!(RUNTIME_PALETTE[29], "wheat");
+        // the AGE LADDER (the growth round): the blockstate's own stage
+        // rows the kinds wear — the same block/crop elements, the
+        // wheat_stageN master each row's own texture speaks
+        assert_eq!(RUNTIME_PALETTE[30], "wheat_stage1");
+        assert_eq!(RUNTIME_PALETTE[31], "wheat_stage2");
+        assert_eq!(RUNTIME_PALETTE[32], "wheat_stage3");
+        assert_eq!(RUNTIME_PALETTE[33], "wheat_stage4");
+        assert_eq!(RUNTIME_PALETTE[34], "wheat_stage5");
+        assert_eq!(RUNTIME_PALETTE[35], "wheat_stage6");
+        assert_eq!(RUNTIME_PALETTE[36], "wheat_stage7");
         assert_eq!(FACE_KEYS, ["east", "west", "up", "down", "south", "north"]);
     }
 

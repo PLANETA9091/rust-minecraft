@@ -233,10 +233,13 @@ fn box_at(x: f64, y: f64, z: f64, height: f64) -> (f64, f64, f64, f64, f64, f64)
 /// speaks: the body walks THROUGH the crop, the vanilla's own law).
 pub fn solid(world: &World, x: i32, y: i32, z: i32) -> bool {
     let id = world.get(x, y, z);
+    // the whole AGE LADDER the pass keeps (the farmer walks through
+    // his field's every stage — the noCollision family the growth
+    // round extends)
     id != AIR
         && id != WATER
         && id != crate::world::LAVA
-        && id != crate::world::WHEAT
+        && !crate::world::is_wheat(id)
 }
 
 /// The per-axis clip (the classic AABB clipXCollide law the VoxelShape

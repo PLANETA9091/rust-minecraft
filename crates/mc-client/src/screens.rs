@@ -1546,6 +1546,12 @@ pub struct App {
     pub next_mob_id: i32,
     /// The mob lane's own RNG (the goal clocks + the spawn draws).
     pub mob_rng: crate::drops::Lcg,
+    /// THE CROP WALK'S OWN STREAM (the random-tick lane's RNG the
+    /// stream-split the determinism pins ask — the mob_rng's spawn/crit
+    /// draws the crop picks never perturb, the vanilla level.random the
+    /// one stream the server shares, the client's per-lane streams the
+    /// existing seeds' own pins keep)
+    pub crop_rng: crate::drops::Lcg,
     /// THE AMBIENT WALK'S TWO STREAMS (javap `ClientLevel.animateTick`
     /// — the pair the walk's bytecode speaks): the LEVEL random (the
     /// position jitter's six draws per sample, the particle ctors' own
@@ -2143,6 +2149,7 @@ impl App {
             spawn_clock: 0,
             next_mob_id: 1,
             mob_rng: crate::drops::Lcg::new(0x5EED_10CA),
+            crop_rng: crate::drops::Lcg::new(0x5EED_C909),
             ambient_rng: crate::drops::Lcg::new(0x5EED_1ABA),
             level_ambient_rng: crate::drops::Lcg::new(0x5EED_7E11),
             attack_ticker: 0,
@@ -3369,6 +3376,24 @@ impl App {
                             );
                         }
                     }
+                }
+                // THE CROP'S OWN RANDOM TICKS (the ServerLevel walk the
+                // game's own clock keeps — randomTickSpeed=3 the
+                // three-picks-per-16³-section budget the gamerule's
+                // default speaks, every game tick the walk wears): the
+                // planted fields the ladder climbs (the CropBlock
+                // .randomTick law the growth round's javap audit speaks),
+                // the networked world the SERVER ticks (the same split
+                // the mob lane's own authority keeps). The remesh the
+                // batch's growth speaks ONCE per tick (the walk's own
+                // setBlocks the single re-speak answers — the placement
+                // arm's per-press rhythm the cheaper batched shape keeps).
+                let mut crops_grew = false;
+                if let Some(world) = self.offline_world.as_mut() {
+                    crops_grew = world.random_tick_walk(&mut self.crop_rng);
+                }
+                if crops_grew {
+                    self.remesh_offline();
                 }
                 // THE MOB TICKS (the vanilla Minecraft.tick's entity
                 // lane): each zombie thinks on the active world's
@@ -10773,8 +10798,9 @@ impl App {
                             && cid != crate::world::LAVA
                             // the crop's own pass (the 15th audit — the
                             // `.noCollision()` row the spawn box scan the
-                            // vanilla's own empty shapes keep)
-                            && cid != crate::world::WHEAT
+                            // vanilla's own empty shapes keep) — the whole
+                            // AGE LADDER the same empty shapes speak
+                            && !crate::world::is_wheat(cid)
                     );
                     if solid_cell {
                         return Some(true); // the FAIL — consumed, silent

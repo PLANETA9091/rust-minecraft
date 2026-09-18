@@ -888,11 +888,11 @@ fn stroll_cell_solid(world: &World, x: i32, y: i32, z: i32) -> bool {
     let id = world.get(x, y, z);
     // WHEAT passes (the 15th audit — the `.noCollision()` row: the mobs
     // stroll THROUGH the crop, the vanilla's own walk the farmland's
-    // fields keep)
+    // fields keep — the whole AGE LADDER the pass keeps)
     id != crate::world::AIR
         && id != crate::world::WATER
         && id != crate::world::LAVA
-        && id != crate::world::WHEAT
+        && !crate::world::is_wheat(id)
 }
 /// `EatBlockGoal.IS_EDIBLE`'s own test (the lambda the <clinit> folds:
 /// `state.is(EDIBLE_FOR_SHEEP)` — the tag json's four members the

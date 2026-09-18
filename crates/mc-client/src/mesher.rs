@@ -83,7 +83,10 @@ fn is_transparent(kind: u16) -> bool {
         || kind == PALE_LEAVES
         || kind == LEAF_LITTER
         || kind == LAVA
-        || kind == crate::world::WHEAT
+        // the whole AGE LADDER the non-occluding verdict keeps (the
+        // farmland's top face under ANY stage draws — the same
+        // noCollision family the 15th audit and the growth round speak)
+        || crate::world::is_wheat(kind)
 }
 
 /// Only opaque blocks cast ambient occlusion (air/water/leaves never darken
@@ -686,7 +689,11 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                 // convention per plane — the mirrored row cancels the
                 // mirrored face walk, the texture reads the same from
                 // both sides; v stays the side-face law (1 - y).
-                if id == crate::world::WHEAT {
+                // THE WHOLE AGE LADDER the path keeps — the per-kind
+                // FACE_TILES row the stage's own wheat_stageN tile
+                // speaks (the growth walk's setBlock the re-mesh
+                // answers, the stage's pixels the ladder's art carries)
+                if crate::world::is_wheat(id) {
                     let tile = if (id as usize) < atlas::N_KINDS {
                         atlas::FACE_TILES[id as usize][2]
                     } else {

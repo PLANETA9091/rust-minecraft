@@ -94,15 +94,71 @@ pub const DIRT_PATH: u16 = 28;
 /// BlockItem — the harvest item never plants, the placeable lookup
 /// refuses the kind (the seeds' own product the plant arm alone wears).
 pub const WHEAT: u16 = 29;
+/// Kinds 30..36 (the thirty-first..thirty-seventh entries, the
+/// autopush-314 round): the crop's own AGE LADDER — the blockstate
+/// property the kinds model the farmland's moisture=0 precedent keeps
+/// (the state variants the kind list wears). The vanilla ladder is
+/// `age=0..7` on `minecraft:wheat` (the CropBlock.AGE property the
+/// getMaxAge 7 law speaks); the repo wears each stage as its own kind:
+/// WHEAT (29) is age=0, WHEAT_STAGE1..7 (30..36) are ages 1..7 — the
+/// names the blockstates/wheat.json's `age=N` rows speak
+/// (block/wheat_stage1..7, each model the block/crop parent's own
+/// texture ref carries). The growth law (javap CropBlock.randomTick:
+/// the nextInt roll the getStateForAge(age + 1) setBlock wears) climbs
+/// the ladder kind by kind; every non-cube lane the WHEAT kind speaks
+/// the whole family keeps (the four zero-thickness planes the mesher's
+/// wheat path meshes per-kind tile, the `.noCollision()` row the
+/// body/hull/mob/spawn walks pass, the CLIP targets the stalks the
+/// outline's full-cube fold keeps, the placeable refusal the harvest
+/// item's no-BlockItem law the whole family wears).
+pub const WHEAT_STAGE1: u16 = 30;
+pub const WHEAT_STAGE2: u16 = 31;
+pub const WHEAT_STAGE3: u16 = 32;
+pub const WHEAT_STAGE4: u16 = 33;
+pub const WHEAT_STAGE5: u16 = 34;
+pub const WHEAT_STAGE6: u16 = 35;
+pub const WHEAT_STAGE7: u16 = 36;
 
 /// Block -> texture-group mapping used by the real-colors LUT.
-pub const NAME_OF: [&str; 30] = [
+pub const NAME_OF: [&str; 37] = [
     "air", "stone", "dirt", "grass_block", "oak_log", "oak_leaves", "water", "sand",
     "granite", "diorite", "andesite", "deepslate", "cobbled_deepslate", "gravel",
     "bedrock", "coal_ore", "copper_ore", "iron_ore", "gold_ore", "redstone_ore",
     "lapis_ore", "diamond_ore", "emerald_ore", "netherrack", "pale_oak_leaves",
     "leaf_litter", "lava", "farmland", "dirt_path", "wheat",
+    "wheat_stage1", "wheat_stage2", "wheat_stage3", "wheat_stage4",
+    "wheat_stage5", "wheat_stage6", "wheat_stage7",
 ];
+
+/// The crop's own AGE FAMILY — the wheat kinds the ladder wears
+/// (WHEAT..=WHEAT_STAGE7, the ages 0..7 the blockstate property
+/// speaks). Every non-cube lane the WHEAT kind taught the whole
+/// family keeps: the mesher's transparent verdict, the four-plane
+/// path's gate, the body/hull/mob collision passes, the spawn-box
+/// scan, the clip's own generic predicate (the stalks the ray
+/// targets — the outline's full-cube fold), the placeable refusal.
+pub fn is_wheat(id: u16) -> bool {
+    (WHEAT..=WHEAT_STAGE7).contains(&id)
+}
+
+/// The kind's own age — `Some(0..7)` the wheat family answers,
+/// `None` everywhere else (the ladder the growth walk reads). The
+/// lazy closure the subtraction orders (the eager `then_some` the
+/// non-wheat id's own underflow would evaluate — the debug build's
+/// overflow panic the lane refuses).
+pub fn wheat_age(id: u16) -> Option<u8> {
+    is_wheat(id).then(|| (id - WHEAT) as u8)
+}
+
+/// THE GROWS_CROPS TAG (javap CropBlock.getGrowthSpeed: the 3x3
+/// below-scan's `state.is(BlockTags.GROWS_CROPS)` the tag walk
+/// speaks — NOT the older `is(Blocks.FARMLAND)` the symbolic fold
+/// never printed). The tag json's values are EXACTLY
+/// `["minecraft:farmland"]` — the sole member the offline
+/// vocabulary's FARMLAND kind wears.
+pub fn grows_crops(id: u16) -> bool {
+    id == FARMLAND
+}
 
 /// The block interaction reach — the `Attributes.BLOCK_INTERACTION_RANGE`
 /// attribute's own default (javap of the real 26.2 class: `4.5d` for
@@ -485,11 +541,134 @@ impl World {
         // THE WHEAT REFUSAL (javap Items: the harvest item is no
         // BlockItem — the right-press the use lane's PASS keeps): the
         // crop kind the seeds' own plant arm alone wears, the generic
-        // placement lane never speaks it
-        if id == WHEAT {
+        // placement lane never speaks it — the whole AGE LADDER the
+        // same law keeps (no stage's kind the item vocabulary names,
+        // the ladder the growth walk's own setBlock alone wears)
+        if is_wheat(id) {
             return None;
         }
         Some(id)
+    }
+
+    /// THE GROWTH SPEED (javap CropBlock.getGrowthSpeed(Block, BlockGetter,
+    /// BlockPos)F over the real 26.2 jar — the audited formula the fields'
+    /// rhythm keeps):
+    ///
+    /// 1. `f = 1.0`;
+    /// 2. the 3x3 scan AT `pos.below()`'s layer (the `below.offset(i, 0, j)`
+    ///    walk, i/j in -1..=1): each GROWS_CROPS hit speaks `f1 = 1.0`, the
+    ///    moisture read `getValueOrElse(FarmlandBlock.MOISTURE, 0) > 0` the
+    ///    `f1 = 3.0` wet arm names — the arm the offline vocabulary never
+    ///    wears (the palette's farmland IS the moisture=0 variant the dry
+    ///    model resolves, the wet rows the wire world's server answers — the
+    ///    documented fold the plant arm's own light-fold precedent keeps);
+    ///    every NON-CENTER cell the `f1 /= 4.0` quartering speaks
+    ///    (`i != 0 || j != 0`); `f += f1`;
+    /// 3. the SAME-LAYER crop neighbors (the `pos.north()/south()/west()/
+    ///    east()` reads — the crop's own layer the symbolic trace's loc2
+    ///    annotations name, NOT the below plane): any cardinal wheat hit
+    ///    the `(f + 1.0) / 2.0` halving speaks, then any diagonal hit
+    ///    (`north().west()` etc.) the second halving — the two sequential
+    ///    `(f+1)/2` steps the javap tail's fold chain
+    ///    `((1.0 + 3.0/4.0) / 2.0) / 2.0` keeps.
+    ///
+    /// The dyadic anchors the tests pin: isolated dry farmland = 2.0 (the
+    /// center 1.0 + the below hit 1.0), the 3x3 farmland ring = 4.0, one
+    /// cardinal neighbor = 2.5, + diagonal = 1.75, no farmland below = 1.0.
+    pub fn crop_growth_speed(&self, x: i32, y: i32, z: i32) -> f32 {
+        let mut f = 1.0f32;
+        for di in -1i32..=1 {
+            for dj in -1i32..=1 {
+                let below = self.get(x + di, y - 1, z + dj);
+                // the GROWS_CROPS hit's f1 — the moisture>0 arm the dry
+                // farmland kind never wears (the documented fold above)
+                let mut f1 = if grows_crops(below) { 1.0 } else { 0.0 };
+                if di != 0 || dj != 0 {
+                    f1 /= 4.0;
+                }
+                f += f1;
+            }
+        }
+        // the same-layer neighbor reads (the crop's own layer): the
+        // cardinal OR-chain the first (f+1)/2 speaks, the diagonal the
+        // second — the vanilla's own two sequential halvings
+        let is_crop =
+            |dx: i32, dz: i32| is_wheat(self.get(x + dx, y, z + dz));
+        if is_crop(0, -1) || is_crop(0, 1) || is_crop(-1, 0) || is_crop(1, 0) {
+            f = (f + 1.0) / 2.0;
+        }
+        if is_crop(-1, -1) || is_crop(1, -1) || is_crop(1, 1) || is_crop(-1, 1) {
+            f = (f + 1.0) / 2.0;
+        }
+        f
+    }
+
+    /// THE CROP'S OWN RANDOM TICK (javap CropBlock.randomTick over the
+    /// real 26.2 jar — the growth roll one law speaks):
+    ///
+    /// 1. `getRawBrightness(pos, 0) >= 9` — the bipush 9 + if_icmplt the
+    ///    raw walk keeps; the grid ABSENT the procedural lane keeps the
+    ///    documented fold (the sky-exposed field the outdoor farms speak —
+    ///    the plant arm's own `>= 8` fold the same lane rides, the wire
+    ///    world's server the real light engine answers);
+    /// 2. `getAge(state) < getMaxAge()` (the 7 the ladder's ceiling
+    ///    speaks) — the max-age cell the branch REFUSES with ZERO draws
+    ///    (the if_icmpge the roll never reaches);
+    /// 3. `nextInt((int)(25.0f / getGrowthSpeed(...)) + 1) == 0` — the
+    ///    f2i TRUNCATION the javap's fdiv/f2i/iconst_1 pair keeps
+    ///    (25.0/2.0 = 12.5 -> 12 -> 13 the isolated field speaks);
+    /// 4. `setBlock(pos, getStateForAge(age + 1), 2)` — the ladder's
+    ///    own step (the flag-2 the client's mesh re-speak answers, the
+    ///    kind+1 the age family wears).
+    ///
+    /// Returns whether the crop GREW (the caller's remesh batch rides).
+    pub fn crop_random_tick(&mut self, rng: &mut crate::drops::Lcg, x: i32, y: i32, z: i32) -> bool {
+        let Some(age) = wheat_age(self.get(x, y, z)) else {
+            return false; // the isRandomlyTicking gate — the non-crop cell draws nothing
+        };
+        if age >= 7 {
+            return false; // the getMaxAge branch — the ceiling draws nothing
+        }
+        // the light gate the procedural sky's fold passes (the doc above)
+        let f = self.crop_growth_speed(x, y, z);
+        let modulus = (25.0f32 / f) as i32 + 1;
+        if rng.next_int(modulus as u64) == 0 {
+            self.set(x, y, z, WHEAT + age as u16 + 1);
+            true
+        } else {
+            false
+        }
+    }
+
+    /// THE RANDOM TICK WALK (the ServerLevel's per-tick lane the vanilla
+    /// game law speaks: `randomTickSpeed = 3` — THREE random cells per
+    /// 16³ chunk section per game tick, each the block's
+    /// isRandomlyTicking/randomTick the crop lane answers). The offline
+    /// world's own authority (the networked world the server ticks —
+    /// the same split the mob lane speaks): every section the walk
+    /// sweeps (the chunk-major order the tickChunk walk keeps), three
+    /// `nextInt(16)` draws per axis the pick wears, the wheat cell the
+    /// [`World::crop_random_tick`] law answers. Returns whether ANY
+    /// crop grew (the caller's remesh the batch grew speaks once).
+    pub fn random_tick_walk(&mut self, rng: &mut crate::drops::Lcg) -> bool {
+        let mut grew = false;
+        let sections_y = CHUNK_Y / 16;
+        for cx in 0..self.chunks_per_side {
+            for cz in 0..self.chunks_per_side {
+                for sy in 0..sections_y {
+                    for _ in 0..3 {
+                        let lx = rng.next_int(16);
+                        let ly = rng.next_int(16);
+                        let lz = rng.next_int(16);
+                        let wx = cx as i32 * CHUNK_X as i32 + lx;
+                        let wy = sy as i32 * 16 + ly;
+                        let wz = cz as i32 * CHUNK_Z as i32 + lz;
+                        grew |= self.crop_random_tick(rng, wx, wy, wz);
+                    }
+                }
+            }
+        }
+        grew
     }
 
     /// The block clip — the vanilla `Level.clip` COLLIDER law over full
@@ -913,5 +1092,186 @@ mod tests {
         // the UNKNOWN cell: the baked look
         w.biomes.as_mut().unwrap().ids[0][0] = BIOME_UNKNOWN;
         assert_eq!(w.face_tint(GRASS, 2, 0, 0, 0), None);
+    }
+
+    /// THE GROWTH LADDER — the CropBlock.randomTick law over chosen
+    /// seeds: the isolated field's modulus 13 the mirror pair pins
+    /// (the fresh-seed replay speaks the roll the tick consumed), the
+    /// ladder climbs one kind per success to the stage-7 ceiling, the
+    /// max-age branch and the non-crop cell draw NOTHING (the clone
+    /// probe the draw-count discipline keeps).
+    #[test]
+    fn the_crop_grows_the_ladder_climbs() {
+        // THE CONTROLLED FIELD: the cleared volume the formula's own
+        // reads isolate — farmland center + the air ring below, the
+        // same-layer neighbors air (the isolated field f = 2.0 keeps)
+        let mut w = World::new(1, 42);
+        for x in 0..16 {
+            for z in 0..16 {
+                for y in 16..32 {
+                    w.set(x, y, z, AIR);
+                }
+            }
+        }
+        w.set(8, 19, 8, FARMLAND);
+        w.set(8, 20, 8, WHEAT);
+        // THE SEED WALK (the sheep round's own discipline): a seed the
+        // roll lands within the isolated field's modulus 13
+        let mut landed = None;
+        for s in 0..8192u64 {
+            let mut rng = crate::drops::Lcg::new(s);
+            if w.crop_random_tick(&mut rng, 8, 20, 8) {
+                landed = Some(s);
+                break;
+            }
+        }
+        let s = landed.expect("a modulus-13 seed within the walk");
+        assert_eq!(w.get(8, 20, 8), WHEAT_STAGE1, "the ladder's first rung");
+        // THE MIRROR PAIR: the fresh-seed replay's first draw IS the
+        // roll — nextInt(13) == 0 the tick spoke (the f2i truncation
+        // 25.0/2.0 -> 12 -> 13 the javap law keeps)
+        let mut mirror = crate::drops::Lcg::new(s);
+        assert_eq!(mirror.next_int(13), 0, "the isolated field's own modulus");
+        // THE LADDER CLIMBS: one kind per success — the audited
+        // getStateForAge(age + 1) setBlock the walk re-wears
+        for stage in 1..7u16 {
+            let mut hit = false;
+            for s in 0..8192u64 {
+                let mut rng = crate::drops::Lcg::new(s);
+                if w.crop_random_tick(&mut rng, 8, 20, 8) {
+                    hit = true;
+                    break;
+                }
+            }
+            assert!(hit, "the stage {stage} cell grew");
+            assert_eq!(w.get(8, 20, 8), WHEAT + stage + 1, "the next rung");
+        }
+        assert_eq!(w.get(8, 20, 8), WHEAT_STAGE7, "the ceiling reached");
+        // THE CEILING DRAWS NOTHING (the if_icmpge branch the roll
+        // never reaches — the clone probe the zero-draw verdict keeps)
+        let mut rng = crate::drops::Lcg::new(7);
+        let mut probe = rng.clone();
+        assert!(!w.crop_random_tick(&mut rng, 8, 20, 8), "the max age refuses");
+        assert_eq!(rng.next_int(1000), probe.next_int(1000), "zero draws at 7");
+        // THE NON-CROP CELL DRAWS NOTHING (the isRandomlyTicking gate)
+        let mut rng = crate::drops::Lcg::new(7);
+        let mut probe = rng.clone();
+        assert!(!w.crop_random_tick(&mut rng, 8, 20, 9), "the air cell refuses");
+        assert_eq!(rng.next_int(1000), probe.next_int(1000), "zero draws on air");
+    }
+
+    /// THE GROWTH SPEED — the audited getGrowthSpeed formula's dyadic
+    /// anchors: the isolated dry farmland 2.0, the 3x3 farmland ring
+    /// 4.0 (the quartered non-center cells), one cardinal crop
+    /// neighbor 2.5 then one diagonal 1.75 (the two sequential
+    /// (f+1)/2 halvings the javap tail's fold chain keeps), the
+    /// farmland-less below-plane 1.0; the family helpers the ladder's
+    /// own vocabulary wears.
+    #[test]
+    fn the_growth_speed_the_neighbors_keep() {
+        let mut w = World::new(1, 42);
+        for x in 0..16 {
+            for z in 0..16 {
+                for y in 16..32 {
+                    w.set(x, y, z, AIR);
+                }
+            }
+        }
+        // the isolated dry farmland: 1.0 + the center hit 1.0
+        w.set(8, 19, 8, FARMLAND);
+        w.set(8, 20, 8, WHEAT);
+        assert_eq!(w.crop_growth_speed(8, 20, 8), 2.0);
+        // the 3x3 farmland ring: 1.0 + 1.0 + 8 quarters = 4.0
+        for x in 7..=9 {
+            for z in 7..=9 {
+                w.set(x, 19, z, FARMLAND);
+            }
+        }
+        assert_eq!(w.crop_growth_speed(8, 20, 8), 4.0);
+        // one cardinal crop neighbor (a mid-ladder stage — the .is
+        // law the age never gates): (4.0 + 1.0) / 2.0
+        w.set(7, 20, 8, WHEAT_STAGE3);
+        assert_eq!(w.crop_growth_speed(8, 20, 8), 2.5);
+        // + one diagonal: (2.5 + 1.0) / 2.0
+        w.set(7, 20, 7, WHEAT_STAGE5);
+        assert_eq!(w.crop_growth_speed(8, 20, 8), 1.75);
+        // the farmland-less below-plane (the floating crop's own law —
+        // randomTick never re-checks survival, the speed the bare 1.0
+        // keeps): modulus (int)(25.0/1.0)+1 = 26
+        w.set(12, 20, 12, WHEAT);
+        assert_eq!(w.crop_growth_speed(12, 20, 12), 1.0);
+        // THE FAMILY HELPERS: the ages 0..7 the kinds name, the
+        // GROWS_CROPS tag the sole farmland row the json speaks
+        assert_eq!(wheat_age(WHEAT), Some(0));
+        assert_eq!(wheat_age(WHEAT_STAGE7), Some(7));
+        assert_eq!(wheat_age(FARMLAND), None);
+        assert!(grows_crops(FARMLAND));
+        assert!(!grows_crops(DIRT), "the tag json's sole row is farmland");
+        // THE PLACEABLE REFUSAL the whole family keeps (the harvest
+        // item's no-BlockItem law — no stage the item lane plants)
+        assert_eq!(World::placeable_block("wheat"), None);
+        assert_eq!(World::placeable_block("wheat_stage1"), None);
+        assert_eq!(World::placeable_block("wheat_stage7"), None);
+    }
+
+    /// THE RANDOM TICK WALK — the ServerLevel's per-tick lane: the
+    /// wheat-less world's exact 27-draw budget the mirror pair pins
+    /// (3 sections x 3 picks x 3 axis draws the one chunk speaks), the
+    /// field the walk lives on (growth events the family law keeps),
+    /// the pre-worn stage-7 cells the ceiling holds, the farmland
+    /// floor the walk never eats.
+    #[test]
+    fn the_walk_the_field_the_ceiling_keeps() {
+        // THE BUDGET MIRROR: one chunk = 3 sections (CHUNK_Y 48), the
+        // randomTickSpeed=3 the 9 picks speak, the 27 draws the clone
+        // replays — the streams re-join on the next draw
+        let mut bare = World::new(1, 5);
+        let mut rng = crate::drops::Lcg::new(99);
+        let mut probe = rng.clone();
+        assert!(!bare.random_tick_walk(&mut rng), "no crop, no growth");
+        for _ in 0..27 {
+            probe.next_int(16);
+        }
+        assert_eq!(
+            rng.next_int(16),
+            probe.next_int(16),
+            "the walk's exact 27-draw budget"
+        );
+        // THE FIELD: the 16x16 farmland plane the stage-0 crops wear,
+        // two pre-worn stage-7 cells the ceiling pin asks
+        let mut w = World::new(1, 0xC709);
+        for x in 0..16 {
+            for z in 0..16 {
+                w.set(x, 24, z, FARMLAND);
+                w.set(x, 25, z, WHEAT);
+            }
+        }
+        w.set(3, 25, 3, WHEAT_STAGE7);
+        w.set(12, 25, 12, WHEAT_STAGE7);
+        let mut rng = crate::drops::Lcg::new(0xC709_10CA);
+        let mut grew_any = false;
+        for _ in 0..6000 {
+            grew_any |= w.random_tick_walk(&mut rng);
+        }
+        assert!(grew_any, "the walk lived — the field grew");
+        // THE FAMILY LAW: every field cell wears a stage kind — the
+        // ladder never leaves the family, the max-age cells the
+        // ceiling holds
+        for x in 0..16 {
+            for z in 0..16 {
+                let id = w.get(x, 25, z);
+                assert!(
+                    is_wheat(id),
+                    "the cell {x},{z} left the family: {id}"
+                );
+                if (x, z) == (3, 3) || (x, z) == (12, 12) {
+                    assert_eq!(id, WHEAT_STAGE7, "the stage-7 cell stayed");
+                }
+            }
+        }
+        // THE FLOOR THE WALK NEVER EATS (the randomTick the crop cell
+        // alone mutates — the setBlock's own pos the soil keeps)
+        assert_eq!(w.get(0, 24, 0), FARMLAND);
+        assert_eq!(w.get(15, 24, 15), FARMLAND);
     }
 }
