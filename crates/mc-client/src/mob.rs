@@ -416,6 +416,22 @@ pub enum MobInteract {
     /// rides the shearing/sheep/<color> table's roll, each entry one
     /// single-item entity (the lambda$0's copyWithCount(1) law)
     Shear(Vec<i32>),
+    /// THE ABSTRACTCOW'S OWN MILK ARM (javap `AbstractCow.mobInteract`
+    /// 13-55 — the 26.2 bytecode the subclass's own override keeps,
+    /// BEFORE the `Animal.mobInteract` super the food arm lives in:
+    /// `item.is(Items.BUCKET) && !isBaby()` the gate reads, then
+    /// `player.playSound(SoundEvents.COW_MILK, 1.0F, 1.0F)` the voice
+    /// speaks, `ItemUtils.createFilledResult(stack, player,
+    /// MILK_BUCKET.getDefaultInstance())` the fill walks,
+    /// `player.setItemInHand(hand, filled)` the hand the answer
+    /// keeps, the `InteractionResult.SUCCESS` return — the swing the
+    /// SUCCESS verdict speaks; the baby the super's food chain
+    /// falls to, the bucket the milk never takes). The fill's own
+    /// walk the caller speaks (the inventory the offline lane's
+    /// stack truth keeps — the consume(1) shrink, the empty hand the
+    /// filled instance REPLACES, the taller stack the shrink keeps +
+    /// the fill the add-or-drop lands).
+    Milk,
     /// the FOOD arm the `Animal.mobInteract` super speaks (the 26.2
     /// bytecode: `isFood(item)` hit, the ADULT arm `getAge() == 0 &&
     /// canFallInLove()` — `usePlayerItem` + `setInLove(player)` +
@@ -2181,6 +2197,11 @@ impl Zombie {
             "shears" if self.kind == MobKind::Sheep && self.ready_for_shearing() => {
                 MobInteract::Shear(self.shear(rng))
             }
+            // THE ABSTRACTCOW'S OWN MILK ARM (the chain's own order the
+            // subclass override keeps — the milk arm BEFORE the
+            // Animal super's food walk, the baby the gate refuses):
+            // the bucket the gate reads, the grown-up the milk takes
+            "bucket" if self.kind == MobKind::Cow && !self.is_baby() => MobInteract::Milk,
             // the FOOD arm the Animal super walks (the miss the
             // Sheep's own shears gate speaks falls here — the vanilla
             // order the chain keeps): the isFood tag tables, the

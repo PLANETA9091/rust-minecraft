@@ -6491,6 +6491,91 @@ impl App {
                         self.swing.start();
                         return true;
                     }
+                    if let crate::mob::MobInteract::Milk = verdict {
+                        // THE ABSTRACTCOW'S OWN WALK (javap mobInteract
+                        // 23-55 — the 26.2 bytecode the subclass's own
+                        // override speaks): the playSound(COW_MILK,
+                        // 1.0F, 1.0F) the gate's own voice opens with,
+                        // the createFilledResult the survival walk
+                        // answers (the setItemInHand the walk's own
+                        // tail speaks), the InteractionResult.SUCCESS
+                        // return — the swing the SUCCESS verdict
+                        // starts
+                        self.sounds
+                            .play_voice(self.frame, "entity.cow.milk", 1.0, 1.0);
+                        // THE FILLED RESULT (javap ItemUtils
+                        // .createFilledResult the 4-arg walk the
+                        // 3-arg call keeps — the survival arm: the
+                        // `consume(1)` the shrink speaks, the EMPTY
+                        // hand the filled instance REPLACES, the
+                        // taller stack the shrink keeps + the fill
+                        // the `Inventory.add` walk lands — the false
+                        // the `player.drop(filledStack, false)` drops;
+                        // the infinite-materials arm the offline lane
+                        // never walks). The held lane's own fallback
+                        // the held_id walk keeps: the live store's
+                        // word the swap never touches, the inventory's
+                        // selected stack the count read answers, the
+                        // `--held-item` stand-in the filled instance
+                        // replaces the same walk speaks.
+                        let Some(milk_id) = mc_registry::item_id_by_name("milk_bucket") else {
+                            return true;
+                        };
+                        if self.live_held.is_some() {
+                            // THE WIRE'S OWN STORE (the server's stack
+                            // truth the client never predicts — the
+                            // voice+swing the client's own words, the
+                            // fill the server's answer carries)
+                        } else {
+                            let sel = self.selected_hotbar;
+                            let held_count = self.inventory.items[sel].1;
+                            if held_count > 1 {
+                                // THE TALLER STACK (the consume(1) the
+                                // shrink speaks, the shrunken stack the
+                                // hand keeps)
+                                self.inventory.items[sel].1 = held_count - 1;
+                                let leftover = self.inventory.add(sel, milk_id, 1);
+                                if leftover > 0 {
+                                    // THE OVERFLOW'S OWN DROP (the
+                                    // `!add` arm the player.drop walk
+                                    // speaks — the entity at the
+                                    // player's own feet)
+                                    let (px, py, pz) = self
+                                        .body
+                                        .as_ref()
+                                        .map(|b| (b.x, b.y, b.z))
+                                        .unwrap_or_else(|| {
+                                            let c = self.world_camera();
+                                            (c.pos.x as f64, c.pos.y as f64, c.pos.z as f64)
+                                        });
+                                    let id = self.next_drop_id;
+                                    self.next_drop_id += 1;
+                                    self.drops.push(crate::drops::ItemDrop::spawn_entity_loot(
+                                        id,
+                                        milk_id,
+                                        leftover,
+                                        px,
+                                        py,
+                                        pz,
+                                        &mut self.mob_rng,
+                                    ));
+                                }
+                            } else if held_count > 0 {
+                                // THE EMPTY HAND (the consume the
+                                // stack's last speaks — the filled
+                                // instance the setItemInHand REPLACES)
+                                self.inventory.items[sel] = (milk_id, 1);
+                            } else if self.offline_held.is_some() {
+                                // THE STAND-IN'S OWN SWAP (the held
+                                // stack the golden lane simulates —
+                                // the filled instance the same walk
+                                // replaces)
+                                self.offline_held = Some(milk_id);
+                            }
+                        }
+                        self.swing.start();
+                        return true;
+                    }
                     if let crate::mob::MobInteract::Feed { love, grow } = verdict {
                         // THE FOOD ARM'S OWN WALK (the Animal
                         // mobInteract the 26.2 bytecode speaks): the
@@ -23805,6 +23890,201 @@ mod tests {
             !app.on_right_press(0, 0),
             "the sheared sheep the gate closed"
         );
+    }
+
+    /// THE ABSTRACTCOW'S OWN MILK ARM (javap mobInteract 13-55 — the
+    /// 26.2 bytecode the subclass's own override keeps, BEFORE the
+    /// Animal super's food walk): the grown-up cow the pick lands, the
+    /// empty bucket the held stack speaks — the Milk verdict the
+    /// InteractionResult.SUCCESS consumes (the voice the
+    /// playSound(COW_MILK, 1.0F, 1.0F) law rides, the swing the
+    /// SUCCESS verdict starts, the createFilledResult the survival
+    /// walk answers — the count-1 stack the `consume(1)` empties, the
+    /// filled instance the setItemInHand REPLACES).
+    #[test]
+    fn the_right_press_milks_the_offline_cow() {
+        let mut app = App::new(3);
+        app.enter_world();
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let top = app.spawn_y;
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, top as f32 + 4.0, c as f32 + 0.5),
+            yaw: 0.0,
+            pitch: -std::f32::consts::FRAC_PI_2,
+        });
+        let mut cow =
+            crate::mob::Zombie::new(7, c as f64 + 0.5, top as f64, c as f64 + 0.5, 3);
+        cow.kind = crate::mob::MobKind::Cow;
+        app.mobs.push(cow);
+        assert_eq!(
+            app.pick_mob(&app.mobs),
+            Some(0),
+            "the offline cow the verdict speaks"
+        );
+        // THE HELD STACK (the inventory's selected slot the held_id
+        // walk speaks first — the count-1 bucket the hand carries)
+        let bucket_id = mc_registry::item_id_by_name("bucket").expect("bucket the table draws");
+        let milk_id =
+            mc_registry::item_id_by_name("milk_bucket").expect("milk_bucket the table draws");
+        app.inventory.items[app.selected_hotbar] = (bucket_id, 1);
+        assert!(
+            app.on_right_press(0, 0),
+            "the Milk verdict consumed the press"
+        );
+        // THE VOICE: the playSound(COW_MILK, 1.0F, 1.0F) the walk
+        // opens with
+        assert!(
+            app.sounds
+                .events
+                .iter()
+                .any(|e| e.starts_with("entity.cow.milk ")),
+            "the milk's own voice the lane carries"
+        );
+        // THE FILLED RESULT: the count-1 stack the consume(1) empties,
+        // the filled instance the setItemInHand REPLACES
+        assert_eq!(
+            app.inventory.items[app.selected_hotbar],
+            (milk_id, 1),
+            "the filled instance the hand keeps"
+        );
+        // THE SWING: the InteractionResult.SUCCESS the verdict carries
+        assert!(app.swing.swinging, "the press swung the arm");
+    }
+
+    /// THE TALLER STACK'S OWN FILL (the createFilledResult survival
+    /// walk's tail — the `consume(1)` the shrink speaks, the shrunken
+    /// stack the hand keeps, the filled instance the `Inventory.add`
+    /// walk lands — a free slot takes it, the drop the overflow never
+    /// speaks while a home exists).
+    #[test]
+    fn the_cow_milk_keeps_the_taller_stack() {
+        let mut app = App::new(3);
+        app.enter_world();
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let top = app.spawn_y;
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, top as f32 + 4.0, c as f32 + 0.5),
+            yaw: 0.0,
+            pitch: -std::f32::consts::FRAC_PI_2,
+        });
+        let mut cow =
+            crate::mob::Zombie::new(7, c as f64 + 0.5, top as f64, c as f64 + 0.5, 3);
+        cow.kind = crate::mob::MobKind::Cow;
+        app.mobs.push(cow);
+        let bucket_id = mc_registry::item_id_by_name("bucket").expect("bucket the table draws");
+        let milk_id =
+            mc_registry::item_id_by_name("milk_bucket").expect("milk_bucket the table draws");
+        app.inventory.items[app.selected_hotbar] = (bucket_id, 5);
+        assert!(app.on_right_press(0, 0), "the Milk verdict consumed");
+        // THE SHRINK: the shrunken stack the hand keeps, the filled
+        // instance the free slot takes (the getFreeSlot walk — the
+        // first empty the items order keeps), NO drop the home speaks
+        assert_eq!(
+            app.inventory.items[app.selected_hotbar],
+            (bucket_id, 4),
+            "the consume(1) the shrunken stack keeps"
+        );
+        let free = app
+            .inventory
+            .items
+            .iter()
+            .position(|&s| s == (milk_id, 1))
+            .expect("the filled instance the inventory takes");
+        assert_ne!(free, app.selected_hotbar, "the fill the OTHER slot keeps");
+        assert!(
+            app.drops.is_empty(),
+            "the overflow the home's existence silences"
+        );
+    }
+
+    /// THE BABY'S OWN REFUSAL (the `!isBaby()` band the gate keeps —
+    /// the bytecode 16-20 the `ifne -> 56` speaks): the baby cow the
+    /// bucket's press the super's chain falls to — the food arm the
+    /// bucket never answers, the milk the walk never speaks, the
+    /// stack the walk never touches.
+    #[test]
+    fn the_baby_cow_refuses_the_milk_arm() {
+        let mut app = App::new(3);
+        app.enter_world();
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let top = app.spawn_y;
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, top as f32 + 4.0, c as f32 + 0.5),
+            yaw: 0.0,
+            pitch: -std::f32::consts::FRAC_PI_2,
+        });
+        let mut cow =
+            crate::mob::Zombie::new(7, c as f64 + 0.5, top as f64, c as f64 + 0.5, 3);
+        cow.kind = crate::mob::MobKind::Cow;
+        cow.age = crate::mob::BABY_START_AGE + 1600;
+        app.mobs.push(cow);
+        let bucket_id = mc_registry::item_id_by_name("bucket").expect("bucket the table draws");
+        app.inventory.items[app.selected_hotbar] = (bucket_id, 1);
+        // THE PRESS: the verdict the super's PASS speaks — the walk
+        // falls to the item lane (the empty bucket no use def carries,
+        // the press the lane's own verdict answers whatever it says)
+        let _ = app.on_right_press(0, 0);
+        assert!(
+            !app.sounds
+                .events
+                .iter()
+                .any(|e| e.starts_with("entity.cow.milk ")),
+            "the baby the milk voice silences"
+        );
+        assert_eq!(
+            app.inventory.items[app.selected_hotbar],
+            (bucket_id, 1),
+            "the stack the refused walk never touches"
+        );
+        assert!(!app.swing.swinging, "no verdict the swing never starts");
+    }
+
+    /// THE OVERFLOW'S OWN DROP (the `!Inventory.add` arm the
+    /// createFilledResult tail speaks — `player.drop(filledStack,
+    /// false)` the entity at the player's own feet): the full
+    /// inventory the fill no home answers, the leftover the drop walk
+    /// spawns, the shrunken stack the hand keeps.
+    #[test]
+    fn the_full_inventory_drops_the_cow_milk() {
+        let mut app = App::new(3);
+        app.enter_world();
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let top = app.spawn_y;
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, top as f32 + 4.0, c as f32 + 0.5),
+            yaw: 0.0,
+            pitch: -std::f32::consts::FRAC_PI_2,
+        });
+        let mut cow =
+            crate::mob::Zombie::new(7, c as f64 + 0.5, top as f64, c as f64 + 0.5, 3);
+        cow.kind = crate::mob::MobKind::Cow;
+        app.mobs.push(cow);
+        let bucket_id = mc_registry::item_id_by_name("bucket").expect("bucket the table draws");
+        let milk_id =
+            mc_registry::item_id_by_name("milk_bucket").expect("milk_bucket the table draws");
+        // THE FULL INVENTORY (every slot the filler's full stack keeps
+        // — no home the fill's add walk ever finds)
+        let filler_id = mc_registry::item_id_by_name("wheat").expect("wheat the table draws");
+        for slot in app.inventory.items.iter_mut() {
+            *slot = (filler_id, 64);
+        }
+        app.inventory.items[app.selected_hotbar] = (bucket_id, 2);
+        assert!(app.on_right_press(0, 0), "the Milk verdict consumed");
+        // THE SHRINK + THE DROP: the shrunken stack the hand keeps,
+        // the fill no home found — the entity the drop walk spawns at
+        // the player's own feet
+        assert_eq!(
+            app.inventory.items[app.selected_hotbar],
+            (bucket_id, 1),
+            "the consume(1) the shrunken stack keeps"
+        );
+        assert_eq!(app.drops.len(), 1, "the overflow the drop speaks");
+        assert_eq!(app.drops[0].item, milk_id, "the filled instance drops");
+        assert_eq!(app.drops[0].count, 1, "the single fill the drop carries");
     }
 
     #[test]

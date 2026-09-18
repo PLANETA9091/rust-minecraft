@@ -188,6 +188,7 @@ fn test_fixture_table() -> SoundTable {
         "entity.cow.ambient",
         "entity.cow.death",
         "entity.cow.hurt",
+        "entity.cow.milk",
         "entity.experience_orb.pickup",
         "entity.generic.burn",
         "entity.generic.drink",
