@@ -3118,6 +3118,34 @@ impl App {
                                 true,
                             );
                         }
+                    } else {
+                        // THE CREATURE'S OWN ATTEMPT (the day arm the
+                        // sun's own sign speaks — checkAnimalSpawnRules'
+                        // isBrightEnoughToSpawn the rawBrightness > 8
+                        // fold: the sky-exposed spot the night's own
+                        // darkness refuses, the day the same law
+                        // passes; the chunk-gen placement pass
+                        // (spawnMobsForChunkGeneration) the procedural
+                        // world never ran, the beat the CREATURE
+                        // lane's stand-in arms)
+                        if let (Some(world), Some(b)) =
+                            (self.offline_world.as_ref(), self.body.as_ref())
+                        {
+                            let (px, pz) = (b.x, b.z);
+                            // the disjoint field borrows (the monster
+                            // arm's own split the checker repeats)
+                            let mobs = &mut self.mobs;
+                            let rng = &mut self.mob_rng;
+                            let next_id = &mut self.next_mob_id;
+                            crate::mob::try_spawn_creatures(
+                                mobs,
+                                next_id,
+                                px,
+                                pz,
+                                world,
+                                rng,
+                            );
+                        }
                     }
                 }
                 // THE MOB TICKS (the vanilla Minecraft.tick's entity
@@ -3141,7 +3169,7 @@ impl App {
                     .body
                     .as_ref()
                     .map(|b| (b.x, b.y + b.eye_height(), b.z));
-                let mut groans: Vec<(f32, f64)> = Vec::new();
+                let mut groans: Vec<(crate::mob::MobKind, f32, f64)> = Vec::new();
                 let mut fire_hurts: Vec<(f32, f64)> = Vec::new();
                 let mut fire_deaths: Vec<(f64, f64, f64, f32, Vec<(i32, i32)>)> = Vec::new();
                 let mut fizzes: Vec<(f32, f64)> = Vec::new();
@@ -3232,6 +3260,7 @@ impl App {
                             }
                             if ev.ambient {
                                 groans.push((
+                                    mob.kind,
                                     mob.voice_pitch(),
                                     ear_distance(ear, mob.x, mob.y, mob.z),
                                 ));
@@ -3381,14 +3410,16 @@ impl App {
                         }
                     }
                 }
-                for (pitch, dist) in groans {
+                for (kind, pitch, dist) in groans {
                     // the ambient groan (makeSound's own call — the
                     // volume rides the base 1.0 folded by THE DISTANCE
                     // LAW the wire lane speaks, the pitch the law; the
-                    // voice table the kinds' own rows keep)
+                    // voice table the KIND'S own row keeps — the
+                    // creature lane's own animals the zombie's row
+                    // never names)
                     self.sounds.play_voice_at(
                         self.frame,
-                        crate::mob::MobKind::Zombie.voice_event(crate::mob::VoiceSlot::Ambient),
+                        kind.voice_event(crate::mob::VoiceSlot::Ambient),
                         1.0,
                         pitch,
                         dist,
@@ -20683,6 +20714,96 @@ mod tests {
         assert!(
             app.particles.iter().any(|p| p.kind == crate::particles::ParticleKind::Heart),
             "the burst the broadcast owes"
+        );
+    }
+
+    /// THE DAY BEAT'S OWN CREATURE ARM (the spawner's else arm the
+    /// sun's own sign arms — the pack the beat lands, the monster lane
+    /// the night gate keeps, the procedural world the animals now
+    /// graze).
+    #[test]
+    fn the_day_beat_walks_the_creatures() {
+        let mut app = App::new(9);
+        app.enter_world();
+        // THE FLAT GRASS PLATFORM (the world's own voxels the test
+        // sets — the walk's every spot the platform keeps)
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        {
+            let w = app.offline_world.as_mut().unwrap();
+            for x in 0..size {
+                for z in 0..size {
+                    for y in 0..8 {
+                        w.set(x, y, z, crate::world::STONE);
+                    }
+                    w.set(x, 8, z, crate::world::GRASS);
+                    for y in 9..size {
+                        w.set(x, y, z, crate::world::AIR);
+                    }
+                }
+            }
+        }
+        app.body = Some(crate::body::PlayerBody::new(40.0, 9.0, 40.0, 0.0, 0.0));
+        // THE DAY BAND (the sampler's own law — the sun the +0.1
+        // margin the horizon's f32 folds avoid)
+        let day_tick = (0..24_000i64)
+            .find(|t| crate::sky::sample(*t).sun_angle.sin() > 0.1)
+            .expect("a day band the sky keeps");
+        app.day_time_base = day_tick as u64;
+        // THE BEAT (the spawn_clock the 40th update the % SPAWN_CYCLE
+        // arm — the beats the walk repeats, the cap the lane stops)
+        for _ in 0..400 {
+            app.update();
+        }
+        // THE PACK THE BEAT LANDED (the friendly kinds the walk
+        // speaks, the feet the platform's top rides — the ring the
+        // SPAWN-time law the mob.rs unit pins, the AI's own stroll the
+        // landed spot the vanilla drift walks)
+        let creatures: Vec<&crate::mob::Zombie> =
+            app.mobs.iter().filter(|m| !m.kind.is_monster()).collect();
+        assert!(
+            !creatures.is_empty(),
+            "the day beat the creatures land"
+        );
+        for m in &creatures {
+            assert_ne!(m.kind, crate::mob::MobKind::Zombie, "the friendly lane");
+            assert_eq!(m.y, 9.0, "the feet the platform's top keeps");
+        }
+    }
+
+    /// THE AMBIENT GROAN'S OWN KIND (the voice table the KIND's own
+    /// row keeps — the cow's moo the zombie's row never named, the
+    /// lane the creature census now arms).
+    #[test]
+    fn the_ambient_groan_speaks_the_kind_voice() {
+        let mut app = App::new(11);
+        app.enter_world();
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let mut cow = crate::mob::Zombie::new(
+            7,
+            c as f64 + 0.5,
+            app.spawn_y as f64,
+            c as f64 + 0.5,
+            3,
+        );
+        cow.kind = crate::mob::MobKind::Cow;
+        cow.on_ground = true;
+        cow.ambient_time = 2000; // the draw the gate's own bound exceeds
+        app.body = Some(crate::body::PlayerBody::new(
+            c as f64 + 0.5,
+            app.spawn_y as f64,
+            c as f64 + 0.5,
+            0.0,
+            0.0,
+        ));
+        app.mobs.push(cow);
+        app.update();
+        assert!(
+            app.sounds
+                .events
+                .iter()
+                .any(|e| e.starts_with("entity.cow.ambient ")),
+            "the cow's own row the groan speaks"
         );
     }
 

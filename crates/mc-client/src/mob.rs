@@ -1130,7 +1130,7 @@ pub struct Zombie {
     pub age_ticks: u32,
     /// the ambient voice's clock (the Mob.baseTick's own
     /// ambientSoundTime — starts at -80, walks up, fires + resets)
-    ambient_time: i32,
+    pub ambient_time: i32,
     /// the entity's own RNG (the vanilla RandomSource's stand-in the
     /// loot lane speaks — the same LCG constants)
     rng: Lcg,
@@ -2788,6 +2788,148 @@ pub fn try_spawn(
     true
 }
 
+/// THE CREATURE'S OWN CAP (javap `MobCategory.<clinit>` — the CREATURE
+/// constant's ctor args the bytecode keeps: the `bipush 10` the max
+/// field loads, the friendly + persistent bits the same word arms;
+/// the client's MONSTER_CAP the MONSTER 70 the same walk mirrors).
+pub const CREATURE_CAP: usize = 10;
+
+/// THE PACK'S OWN SIZE DRAW (javap `NaturalSpawner.spawnCategoryForPosition`
+/// 295-323 — `minCount + nextInt(1 + maxCount - minCount)` the drawn
+/// walk speaks: the plains rows the classic animals keep min=max=4,
+/// the `+nextInt(1)` zero the draw answers — the pack the 4 walks).
+pub const CREATURE_PACK_MIN: i32 = 4;
+pub const CREATURE_PACK_MAX: i32 = 4;
+
+/// THE CLUSTER'S OWN TAIL (javap `Mob.getMaxSpawnClusterSize` — the
+/// `iconst_4` the walk's own cap speaks: `spawned >= 4` the return
+/// arms, the 468-478 fold the spawned counter rides).
+pub const CREATURE_CLUSTER_SIZE: i32 = 4;
+
+/// THE BIOME'S OWN WEIGHTED ROWS (the plains `MobSpawnSettings` the
+/// classic table keeps: sheep 12, pig 10, cow 8 — the chicken 10 the
+/// drawn set never carries, the three the registry admits the roll
+/// draws; the weighted pick the cumulative fold speaks, the vanilla
+/// list order the ranges' own walk keeps).
+fn pick_creature_kind(rng: &mut Lcg) -> MobKind {
+    let roll = rng.next_int(30);
+    if roll < 12 {
+        MobKind::Sheep
+    } else if roll < 22 {
+        MobKind::Pig
+    } else {
+        MobKind::Cow
+    }
+}
+
+/// THE CREATURE LANE'S OWN COUNT (the category cap the `!is_monster`
+/// filter reads — the mobs vec the monsters and the creatures share,
+/// the animals the friendly lane's own census keeps).
+pub fn creature_count(mobs: &[Zombie]) -> usize {
+    mobs.iter().filter(|m| !m.kind.is_monster()).count()
+}
+
+/// THE CREATURE ATTEMPT (javap `NaturalSpawner.spawnCategoryForPosition`
+/// — the 6-arg overload the beat stands in for, the chunk-gen
+/// placement pass (`spawnMobsForChunkGeneration`) the procedural
+/// world never ran): the 3 tries the loc12 loop speaks, the pack
+/// size the spawnerData draw arms, the `nextInt(6) - nextInt(6)`
+/// scatter per axis the 112-166 fold speaks, the FIXED anchor Y the
+/// walk never rescans, the `d2 > 576.0` the isRightDistance law's
+/// own strict arm, the `checkAnimalSpawnRules` the below-grass +
+/// isBright gates (the day arm the caller speaks — `getRawBrightness
+/// > 8` the sky-exposed spot the night's own darkness refuses), the
+/// snapTo's `nextFloat() * 360.0` yaw, the `spawned >=
+/// getMaxSpawnClusterSize()` the iconst_4 tail. Returns the pack the
+/// attempt landed.
+pub fn try_spawn_creatures(
+    mobs: &mut Vec<Zombie>,
+    next_id: &mut i32,
+    px: f64,
+    pz: f64,
+    world: &World,
+    rng: &mut Lcg,
+) -> usize {
+    // the category's own cap (the CREATURE max the bipush 10 speaks)
+    if creature_count(mobs) >= CREATURE_CAP {
+        return 0;
+    }
+    // THE ANCHOR (getRandomPosWithin's stand-in — the ring the monster
+    // lane's own draw keeps, the topmost solid + 1 the surface law's
+    // own scan)
+    let ang = rng.next_f64() * std::f64::consts::TAU;
+    let dist = SPAWN_MIN_DIST + rng.next_f64() * (SPAWN_MAX_DIST - SPAWN_MIN_DIST);
+    let ax = (px + ang.cos() * dist).floor() as i32;
+    let az = (pz + ang.sin() * dist).floor() as i32;
+    let mut ay: Option<i32> = None;
+    for y in (0..world.size_blocks()).rev() {
+        if crate::body::solid(world, ax, y, az) {
+            ay = Some(y + 1);
+            break;
+        }
+    }
+    let Some(ay) = ay else {
+        return 0;
+    };
+    // THE BIOME'S OWN PICK (getRandomSpawnMobAt's weighted fold)
+    let kind = pick_creature_kind(rng);
+    // THE PACK'S OWN DRAW (295-323 — min=max=4 the +nextInt(1) answers)
+    let attempts =
+        CREATURE_PACK_MIN + rng.next_int((1 + CREATURE_PACK_MAX - CREATURE_PACK_MIN) as u64);
+    let mut spawned: i32 = 0;
+    // THE 3 TRIES (loc12's own loop — each re-arms the anchor x/z)
+    for _ in 0..3 {
+        let mut x = ax;
+        let mut z = az;
+        // THE SCATTER WALK (112-166: `nextInt(6) - nextInt(6)` per
+        // axis per attempt, the FIXED y the walk never rescans)
+        for _ in 0..attempts {
+            x += rng.next_int(6) - rng.next_int(6);
+            z += rng.next_int(6) - rng.next_int(6);
+            // THE DISTANCE LAW (isRightDistanceToPlayerAndSpawnPoint's
+            // `d2 > 576.0` — the dcmpg's own strict arm: the <= ring
+            // the spot refuses)
+            let dx = x as f64 + 0.5 - px;
+            let dz = z as f64 + 0.5 - pz;
+            if dx * dx + dz * dz <= 576.0 {
+                continue;
+            }
+            // THE SPOT'S OWN RULES (checkAnimalSpawnRules: the below
+            // the ANIMALS_SPAWNABLE_ON tag the grass block answers,
+            // the two free cells the head-room keeps — the fixed y
+            // the spot never rescans, the slope the same honesty
+            // refuses)
+            if world.get(x, ay - 1, z) != crate::world::GRASS
+                || crate::body::solid(world, x, ay, z)
+                || crate::body::solid(world, x, ay + 1, z)
+            {
+                continue;
+            }
+            let id = *next_id;
+            *next_id += 1;
+            let mut m = Zombie::new(
+                id,
+                x as f64 + 0.5,
+                ay as f64,
+                z as f64 + 0.5,
+                (*next_id as u64) << 16 ^ rng.next(),
+            );
+            m.kind = kind;
+            // THE SNAP-TO'S OWN YAW (397-406: `nextFloat() * 360.0`
+            // the random heading speaks)
+            m.yaw = rng.next_f32() * 360.0;
+            mobs.push(m);
+            spawned += 1;
+            // THE CLUSTER'S OWN TAIL (468-478: `spawned >=
+            // getMaxSpawnClusterSize()` the return arms)
+            if spawned >= CREATURE_CLUSTER_SIZE {
+                return spawned as usize;
+            }
+        }
+    }
+    spawned as usize
+}
+
 /// THE DYE-PAIR MIX TABLE (javap DyeColor.getMixedColor — the 26.2
 /// jar's Sheep.getBreedOffspring walk the sheep_262 dump keeps: the
 /// parents' dyes the crafting grid pairs, the recipe the result dye
@@ -3762,6 +3904,163 @@ mod tests {
             false
         ));
         assert!(mobs.is_empty());
+    }
+
+    /// THE CREATURE ATTEMPT'S OWN PACK (the flat grass the world keeps:
+    /// the 4 the pack draw walks, the kind the roll names, the ids the
+    /// order speaks, the feet the anchor's y keeps, the ring the spots
+    /// never cross, the determinism the same seed speaks).
+    #[test]
+    fn the_creature_attempt_walks_the_grass_pack() {
+        // THE FLAT GRASS PLATFORM (the world's own voxels the test
+        // sets: the stone base, the grass top, the sky the rest)
+        let mut world = World::new(4, 7);
+        let size = world.size_blocks();
+        for x in 0..size {
+            for z in 0..size {
+                for y in 0..8 {
+                    world.set(x, y, z, crate::world::STONE);
+                }
+                world.set(x, 8, z, crate::world::GRASS);
+                for y in 9..size {
+                    world.set(x, y, z, crate::world::AIR);
+                }
+            }
+        }
+        let (px, pz) = (32.0, 32.0);
+        // THE SEED WALK (the anchor the ring draw lands inside the
+        // world — the flat platform the walk's every spot keeps)
+        let mut landed = None;
+        for seed in 0u64..256 {
+            let mut mobs = Vec::new();
+            let mut next_id = 1;
+            let mut rng = Lcg::new(seed);
+            let n = try_spawn_creatures(&mut mobs, &mut next_id, px, pz, &world, &mut rng);
+            if n > 0 {
+                landed = Some((seed, mobs, next_id, n));
+                break;
+            }
+        }
+        let (seed, mobs, next_id, n) = landed.expect("a pack lands within 256 seeds");
+        // THE CLUSTER'S OWN CAP (the iconst_4 the tail speaks)
+        assert_eq!(n, 4, "the pack the cap walks");
+        assert_eq!(mobs.len(), 4, "the vec the walk feeds");
+        assert_eq!(next_id, 5, "the ids the order speaks");
+        // THE KIND THE ROLL NAMES (the pack the one pick shares)
+        let kind = mobs[0].kind;
+        assert_ne!(kind, MobKind::Zombie, "the friendly lane the roll keeps");
+        assert!(
+            mobs.iter().all(|m| m.kind == kind),
+            "the pack the kind shares"
+        );
+        // THE SPOT'S OWN LAWS (the grass below, the fixed y, the ring)
+        for m in &mobs {
+            assert_eq!(m.y, 9.0, "the feet the anchor's y keeps");
+            let bx = m.x.floor() as i32;
+            let bz = m.z.floor() as i32;
+            assert_eq!(world.get(bx, 8, bz), crate::world::GRASS, "the grass below");
+            let dx = m.x - px;
+            let dz = m.z - pz;
+            assert!(dx * dx + dz * dz > 576.0, "the ring the spot keeps");
+        }
+        // THE DETERMINISM (the same seed the same pack walks)
+        let mut mobs2 = Vec::new();
+        let mut next_id2 = 1;
+        let mut rng2 = Lcg::new(seed);
+        let n2 = try_spawn_creatures(&mut mobs2, &mut next_id2, px, pz, &world, &mut rng2);
+        assert_eq!(n2, n, "the same seed the same count walks");
+        for (a, b) in mobs.iter().zip(mobs2.iter()) {
+            assert_eq!((a.x, a.y, a.z, a.kind), (b.x, b.y, b.z, b.kind));
+        }
+    }
+
+    /// THE CAP THE CREATURE LANE REFUSES (the CREATURE max the bipush
+    /// 10 speaks — the filled census the attempt returns, the monster
+    /// the filter never counts).
+    #[test]
+    fn the_creature_cap_the_lane_refuses() {
+        let mut world = World::new(4, 7);
+        let size = world.size_blocks();
+        for x in 0..size {
+            for z in 0..size {
+                for y in 0..8 {
+                    world.set(x, y, z, crate::world::STONE);
+                }
+                world.set(x, 8, z, crate::world::GRASS);
+                for y in 9..size {
+                    world.set(x, y, z, crate::world::AIR);
+                }
+            }
+        }
+        let mut mobs: Vec<Zombie> = (0..10)
+            .map(|i| {
+                let mut m = Zombie::new(i, 60.0, 9.0, 60.0, i as u64);
+                m.kind = MobKind::Cow;
+                m
+            })
+            .collect();
+        let mut next_id = 100;
+        let mut rng = Lcg::new(3);
+        assert_eq!(
+            try_spawn_creatures(&mut mobs, &mut next_id, 32.0, 32.0, &world, &mut rng),
+            0,
+            "the filled cap the attempt refuses"
+        );
+        assert_eq!(mobs.len(), 10, "the vec the refusal keeps");
+        // THE MONSTER THE CENSUS NEVER COUNTS (the zombie the filter
+        // keeps out — the lane the 9-friendly census walks; the seed
+        // loop the anchor draw's own spread answers)
+        let mut walked = false;
+        for seed in 0u64..256 {
+            let mut mobs2: Vec<Zombie> = (0..9)
+                .map(|i| {
+                    let mut m = Zombie::new(i, 60.0, 9.0, 60.0, i as u64);
+                    m.kind = MobKind::Cow;
+                    m
+                })
+                .collect();
+            mobs2.push(Zombie::new(99, 60.0, 9.0, 60.0, 5));
+            let mut next_id = 100;
+            let mut rng = Lcg::new(seed);
+            let n = try_spawn_creatures(&mut mobs2, &mut next_id, 32.0, 32.0, &world, &mut rng);
+            if n > 0 {
+                walked = true;
+                break;
+            }
+        }
+        assert!(
+            walked,
+            "the monster the census excludes, the lane walks"
+        );
+    }
+
+    /// THE STONE FLOOR THE PACK REFUSES (the below the
+    /// ANIMALS_SPAWNABLE_ON tag the grass answers — the stone the rule
+    /// refuses, the attempt the empty census speaks).
+    #[test]
+    fn the_stone_floor_the_pack_refuses() {
+        let mut world = World::new(4, 7);
+        let size = world.size_blocks();
+        for x in 0..size {
+            for z in 0..size {
+                for y in 0..9 {
+                    world.set(x, y, z, crate::world::STONE);
+                }
+                for y in 10..size {
+                    world.set(x, y, z, crate::world::AIR);
+                }
+            }
+        }
+        for seed in 0u64..64 {
+            let mut mobs = Vec::new();
+            let mut next_id = 1;
+            let mut rng = Lcg::new(seed);
+            assert_eq!(
+                try_spawn_creatures(&mut mobs, &mut next_id, 32.0, 32.0, &world, &mut rng),
+                0,
+                "the stone the below rule refuses (seed {seed})"
+            );
+        }
     }
 
     /// THE DEATH LOOT's own distribution (the zombie table's pools:
