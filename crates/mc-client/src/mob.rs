@@ -180,6 +180,27 @@ pub const ARROW_DRAW_TICKS: i32 = 20;
 /// the inside-ring arm reads, the `bipush -60` the draw arms read.
 pub const ARROW_SEE_TIME_GATE: i32 = 20;
 pub const ARROW_SEE_TIME_MEMORY: i32 = -60;
+/// `RangedBowAttackGoal.tick`'s own flip gate — the `bipush 20` the
+/// strafingTime counter reads (the two 0.3-odds flips the crossing
+/// arms, the zero the reset stores).
+pub const ARROW_STRAFE_FLIP_TICKS: i32 = 20;
+/// `RangedBowAttackGoal.tick`'s own flip odds — the `ldc2_w 0.3d` the
+/// nextFloat draws gate. THE DRAW ORDER the bytecode 194→241 keeps:
+/// the CLOCKWISE flip the FIRST draw gates, the BACKWARDS flip the
+/// second (the older sources' backwards-first order is NOT this jar's
+/// walk — the mob's own stream the determinism pins).
+pub const ARROW_STRAFE_FLIP_ODDS: f64 = 0.3;
+/// `RangedBowAttackGoal.tick`'s own ring forces — the `0.75f` /
+/// `0.25f` the attackRadiusSqr multiplies (the too-far the
+/// strafingBackwards=false arms, the too-close the true keeps — the
+/// strafe arm's own re-aim the stand ticks speak).
+pub const ARROW_STRAFE_RING_FAR: f64 = 0.75;
+pub const ARROW_STRAFE_RING_NEAR: f64 = 0.25;
+/// `RangedBowAttackGoal.tick`'s own `±0.5f` pair — the MoveControl.strafe
+/// args the strafingBackwards/Clockwise words speak (the forward the
+/// backwards flag negates, the LEFT impulse the clockwise +0.5 carries
+/// — the xxa the left-positive fold the travel walk answers).
+pub const ARROW_STRAFE_SPEED: f64 = 0.5;
 /// `RangedBowAttackGoal.tick`'s own arc term — the `dy + dist * 0.2`
 /// fold the spawnProjectileUsingShoot arg walk speaks.
 pub const ARROW_AIM_ARC: f64 = 0.2;
@@ -2048,6 +2069,19 @@ pub struct Zombie {
     /// startUsingItem zero arms, the 20-tick full draw the shoot
     /// speaks, the −1 the not-using lane keeps)
     pub using_ticks: i32,
+    /// `RangedBowAttackGoal.strafingTime` (the ctor's own −1 — the
+    /// approach arm's reset the bytecode's iconst_m1 keeps, the stand
+    /// arm's counter the strafe move gates, the 20-tick flip the odds
+    /// draw spends)
+    pub strafe_time: i32,
+    /// `RangedBowAttackGoal.strafingClockwise` (the ctor's own false —
+    /// the FIRST draw's 0.3 flip gates, the LEFT impulse the true
+    /// carries — the orbit the clockwise word names)
+    pub strafe_clockwise: bool,
+    /// `RangedBowAttackGoal.strafingBackwards` (the SECOND draw's 0.3
+    /// flip gates, the forward impulse the true negates — the ring
+    /// forces the too-far/too-close re-aim keeps)
+    pub strafe_backwards: bool,
     /// the stroll's target (the navigation's own destination stand-in)
     stroll_target: Option<(f64, f64)>,
     /// THE FOLLOWPARENTGOAL'S OWN ARM (the goal's own `parent` field
@@ -2200,6 +2234,9 @@ impl Zombie {
             see_time: 0,
             bow_attack_time: -1,
             using_ticks: -1,
+            strafe_time: -1,
+            strafe_clockwise: false,
+            strafe_backwards: false,
             stroll_target: None,
             follow_parent: None,
             breed_partner: None,
@@ -2653,12 +2690,63 @@ impl Zombie {
                 }
                 // the approach/stand split (the ring + the 20-tick
                 // seeing the stop keeps — the navigation's moveTo the
-                // out arm walks)
+                // out arm walks, the strafingTime = −1 the reset the
+                // bytecode's iconst_m1 keeps, the stand arm the
+                // counter's own increment arms)
                 if d2 > SKELETON_ATTACK_RADIUS_SQR || self.see_time < ARROW_SEE_TIME_GATE {
                     let len = d2.sqrt().max(1e-9);
                     self.yaw = (-(dx / len)).atan2(dz / len).to_degrees() as f32;
                     ix = 0.0;
                     iz = 1.0; // the forward impulse rides the body's own yaw
+                    want_move = true;
+                    self.strafe_time = -1;
+                } else {
+                    // the navigation STOP (the impulse's silence the
+                    // want_move never arms) — the strafe counter the
+                    // stand tick increments
+                    self.strafe_time += 1;
+                }
+                // THE FLIP BLOCK (javap RangedBowAttackGoal.tick the
+                // strafingTime >= 20 walk — the TWO nextFloat draws the
+                // counter's crossing spends: the CLOCKWISE flip the
+                // FIRST draw gates, the BACKWARDS flip the second — the
+                // bytecode's own order 194→241 keeps — each the < 0.3
+                // odds the dcmpg speaks, the reset the zero stores)
+                if self.strafe_time >= ARROW_STRAFE_FLIP_TICKS {
+                    if (self.rng.next_f32() as f64) < ARROW_STRAFE_FLIP_ODDS {
+                        self.strafe_clockwise = !self.strafe_clockwise;
+                    }
+                    if (self.rng.next_f32() as f64) < ARROW_STRAFE_FLIP_ODDS {
+                        self.strafe_backwards = !self.strafe_backwards;
+                    }
+                    self.strafe_time = 0;
+                }
+                // THE STRAFE MOVE (javap the strafingTime > −1 walk —
+                // the stand lane's own movement the MoveControl.strafe
+                // speaks): the ring FORCES the backwards word (the
+                // 0.75× the too-far the false arms, the 0.25× the
+                // too-close the true keeps), the ±0.5 pair the
+                // strafingBackwards/Clockwise fields carry — the LEFT
+                // impulse the clockwise +0.5 rides (the xxa the
+                // left-positive fold the travel walk answers). The
+                // approach lane the gate's own −1 never strafes.
+                if self.strafe_time > -1 {
+                    if d2 > SKELETON_ATTACK_RADIUS_SQR * ARROW_STRAFE_RING_FAR {
+                        self.strafe_backwards = false;
+                    }
+                    if d2 < SKELETON_ATTACK_RADIUS_SQR * ARROW_STRAFE_RING_NEAR {
+                        self.strafe_backwards = true;
+                    }
+                    ix = if self.strafe_clockwise {
+                        ARROW_STRAFE_SPEED
+                    } else {
+                        -ARROW_STRAFE_SPEED
+                    };
+                    iz = if self.strafe_backwards {
+                        -ARROW_STRAFE_SPEED
+                    } else {
+                        ARROW_STRAFE_SPEED
+                    };
                     want_move = true;
                 }
                 self.look_at(p.x, p.eye_y, p.z);
@@ -5965,11 +6053,24 @@ mod tests {
             let ev = s.tick(&world, Some(&near), NIGHT);
             assert!(ev.attack.is_none(), "the settled stand never deals");
         }
+        // THE STRAFE THE STAND NOW WALKS (javap RangedBowAttackGoal the
+        // strafingTime > −1 arm): the ±0.5 pair the stand ticks ride —
+        // the body DRIFTS the orbit speaks (the near force the
+        // backwards word arms at the 7-cell start the 0.25× band
+        // crosses — the skeleton backs OFF, the distance the band
+        // keeps), the approach the drift never resumes (the melee
+        // range the orbit never closes)
         let moved = ((s.x - sx).powi(2) + (s.z - sz).powi(2)).sqrt();
         assert!(
-            moved < 0.25,
-            "the in-ring stand the approach refuses ({})",
+            moved > 0.5,
+            "the in-ring stand the strafe walks ({})",
             moved
+        );
+        let dist_target = ((s.x - near.x).powi(2) + (s.z - near.z).powi(2)).sqrt();
+        assert!(
+            dist_target > 6.5,
+            "the strafe the melee range never closes ({})",
+            dist_target
         );
         assert!(s.aggressive, "the goal the stand's own run keeps armed");
         // THE ADJACENT PLAYER: the melee range the zombie's goal would
@@ -5997,6 +6098,145 @@ mod tests {
         p.dead = true;
         s.tick(&world, Some(&p), NIGHT);
         assert!(!s.aggressive, "the dead target the goal's stop speaks");
+    }
+
+    /// THE STRAFE LANES (javap `RangedBowAttackGoal.tick` the 26.2's
+    /// own stand walk the strafingTime counter rides): the approach
+    /// arm the −1 reset keeps (the bytecode's iconst_m1), the stand
+    /// arm the counter increments, the 20-tick crossing the TWO draws
+    /// spends (the CLOCKWISE flip the FIRST draw gates, the BACKWARDS
+    /// the second — the bytecode's own 194→241 order, each the < 0.3
+    /// odds), the ±0.5 pair the MoveControl.strafe speaks (the LEFT
+    /// impulse the clockwise +0.5 carries), the ring forces the
+    /// backwards word re-aims (the 0.75× the too-far, the 0.25× the
+    /// too-close), the approach lane the gate never strafes.
+    #[test]
+    fn the_skeleton_strafe_the_stand_walk_keeps() {
+        let world = jockey_flat_world();
+        let mut s = Zombie::new(1, 32.0, 9.0, 32.0, 7);
+        s.kind = MobKind::Skeleton;
+        s.held_weapon = Some("bow");
+        let target = player_at(32.0, 9.0, 22.0); // 10 cells: mid-ring
+        // THE APPROACH ARM: the first seeing tick the forward walk
+        // rides, the counter the −1 reset keeps (the approach's own
+        // 20-tick walk the hunt test pins)
+        let ev = s.tick(&world, Some(&target), NIGHT);
+        assert!(ev.arrow_shot.is_none());
+        assert_eq!(s.see_time, 1, "the seeing tick the counter arms");
+        assert_eq!(s.strafe_time, -1, "the approach arm the −1 keeps");
+        // THE STAND ARM (the see_time the pre-arm crosses — the
+        // approach the drift the hunt test's own walk answers): the
+        // 10-cell stand the mid-ring keeps (no force the band
+        // crosses) — the counter the increment arms, the FIRST stand
+        // tick the strafe impulse rides: the ctor defaults' own pair
+        // (backwards false → forward +0.5 — the NORTH drift the
+        // facing speaks; clockwise false → LEFT −0.5 — the EAST the
+        // counter-orbit speaks; the body faces north — yaw 180 — the
+        // fold the pair answers)
+        let mut s1b = Zombie::new(5, 32.0, 9.0, 32.0, 17);
+        s1b.kind = MobKind::Skeleton;
+        s1b.held_weapon = Some("bow");
+        s1b.yaw = 180.0; // the facing the approach's last walk keeps
+        s1b.see_time = 20;
+        s1b.vx = 0.0;
+        s1b.vz = 0.0;
+        s1b.tick(&world, Some(&target), NIGHT);
+        assert_eq!(s1b.see_time, 21, "the pre-arm the seeing tick rides");
+        assert_eq!(s1b.strafe_time, 0, "the stand arm the counter increments");
+        assert!(
+            s1b.vx > 0.0 && s1b.vz < 0.0,
+            "the strafe pair the east/north drift speaks ({}, {})",
+            s1b.vx,
+            s1b.vz
+        );
+        assert!(
+            (s1b.vx + s1b.vz).abs() < 1e-6,
+            "the ±0.5 pair the equal-magnitude fold keeps ({}, {})",
+            s1b.vx,
+            s1b.vz
+        );
+        // THE FLIP BLOCK (the 20-tick crossing the two draws spends):
+        // the crossing tick the flips ride — the probe stream the
+        // order pins (the ambient's own draw the tick's head keeps,
+        // the CLOCKWISE gate the FIRST flip draw answers, the
+        // BACKWARDS the second; the draw lane the armed clock the
+        // probe tick keeps silent)
+        s1b.strafe_time = ARROW_STRAFE_FLIP_TICKS - 1;
+        s1b.using_ticks = -1;
+        s1b.bow_attack_time = 30;
+        let was_cw = s1b.strafe_clockwise;
+        let was_bw = s1b.strafe_backwards;
+        let mut probe = s1b.rng.clone();
+        s1b.tick(&world, Some(&target), NIGHT);
+        probe.next(); // the ambient gate's draw the tick's head keeps
+        let d_cw = probe.next_f32() as f64;
+        let d_bw = probe.next_f32() as f64;
+        assert_eq!(s1b.strafe_time, 0, "the crossing the reset stores");
+        assert_eq!(
+            s1b.strafe_clockwise,
+            was_cw != (d_cw < ARROW_STRAFE_FLIP_ODDS),
+            "the clockwise flip the FIRST draw gates ({d_cw})"
+        );
+        assert_eq!(
+            s1b.strafe_backwards,
+            was_bw != (d_bw < ARROW_STRAFE_FLIP_ODDS),
+            "the backwards flip the SECOND draw gates ({d_bw})"
+        );
+        // THE RING FORCES (the strafe arm's own re-aim — the stand
+        // state the see_time pre-arm keeps, the stale words the
+        // forces overwrite): the too-close player the backwards=true
+        // forces (the 0.25× band the 4-cell start crosses), the
+        // backing pair the away drift the distance growth speaks
+        let mut s2 = Zombie::new(2, 32.0, 9.0, 32.0, 9);
+        s2.kind = MobKind::Skeleton;
+        s2.held_weapon = Some("bow");
+        let close = player_at(32.0, 9.0, 28.0); // 4 cells: 16 < 56.25
+        s2.yaw = 180.0; // the facing the approach's last walk keeps
+        s2.see_time = 20; // the stand arm the first tick arms
+        s2.strafe_backwards = false; // the stale word the force arms
+        s2.tick(&world, Some(&close), NIGHT);
+        assert_eq!(s2.strafe_time, 0, "the stand arm the counter arms");
+        assert!(
+            s2.strafe_backwards,
+            "the near force the backwards word arms"
+        );
+        let d0 = ((s2.x - close.x).powi(2) + (s2.z - close.z).powi(2)).sqrt();
+        s2.vx = 0.0;
+        s2.vz = 0.0; // the momentum the clean radial keeps
+        s2.tick(&world, Some(&close), NIGHT);
+        let d1 = ((s2.x - close.x).powi(2) + (s2.z - close.z).powi(2)).sqrt();
+        assert!(
+            d1 > d0,
+            "the backing pair the distance grows ({} -> {})",
+            d0,
+            d1
+        );
+        // the far side: 14 cells (196 > 168.75) — the stale true the
+        // force CLEARS (the forward pair the approach lane resumes)
+        let mut s3 = Zombie::new(3, 32.0, 9.0, 32.0, 11);
+        s3.kind = MobKind::Skeleton;
+        s3.held_weapon = Some("bow");
+        let far = player_at(32.0, 9.0, 18.0); // 14 cells: 196
+        s3.yaw = 180.0; // the facing the approach's last walk keeps
+        s3.see_time = 20; // the stand arm the first tick arms
+        s3.strafe_backwards = true; // the stale word the force clears
+        s3.tick(&world, Some(&far), NIGHT);
+        assert_eq!(s3.strafe_time, 0, "the stand arm the counter arms");
+        assert!(
+            !s3.strafe_backwards,
+            "the far force the backwards word clears"
+        );
+        let d0 = ((s3.x - far.x).powi(2) + (s3.z - far.z).powi(2)).sqrt();
+        s3.vx = 0.0;
+        s3.vz = 0.0;
+        s3.tick(&world, Some(&far), NIGHT);
+        let d1 = ((s3.x - far.x).powi(2) + (s3.z - far.z).powi(2)).sqrt();
+        assert!(
+            d1 < d0,
+            "the forward pair the distance closes ({} -> {})",
+            d0,
+            d1
+        );
     }
 
     /// THE SKELETON'S OWN LOOT (the jar's
