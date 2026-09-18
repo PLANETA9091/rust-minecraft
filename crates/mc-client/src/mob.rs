@@ -480,9 +480,38 @@ pub const SHEEP_WOOL_COLOR_MASK: u8 = 0x0F;
 /// tree speaks: Entity's ctor defines 8 accessors (0..7, the shared
 /// flags 0), LivingEntity's clinit definesId 7 more in order FLAGS(8),
 /// HEALTH(9), EFFECT_PARTICLES(10), EFFECT_AMBIENCE(11), ARROWS(12),
-/// STINGERS(13), SLEEPING(14), AgeableMob BABY(15) + AGE_LOCKED(16),
-/// and Sheep's own defineId lands the wool byte at 17.
-pub const SHEEP_DATA_WOOL_ID: u8 = 17;
+/// STINGERS(13), SLEEPING(14), Mob's own DATA_MOB_FLAGS_ID the 15th
+/// accessor arms, AgeableMob BABY(16) + AGE_LOCKED(17) the pair the
+/// 26.2 jar's own clinit wears, and Sheep's own defineId lands the
+/// wool byte at 18. THE PRIOR WALK'S OWN CORRECTION the runtime
+/// registry speaks: the walk the 17 index wore SKIPPED the Mob level
+/// (the DATA_MOB_FLAGS_ID accessor every Mob subclass's own data
+/// carries) and predated the AGE_LOCKED pair — the
+/// ClassTreeIdRegistry.define the defineId bytecode routes through
+/// the per-class-tree counter, the reflection probe the loaded jar's
+/// ids answered verbatim (BABY 16, AGE_LOCKED 17, WOOL 18): the wire
+/// the 18 index carries, the 17 slot the AGE_LOCKED Boolean wears
+/// (the word the old read never matched — the honest default the
+/// silence kept was the WHITE sheep the real server never dyed).
+pub const SHEEP_DATA_WOOL_ID: u8 = 18;
+
+/// THE SPIDER'S OWN CLIMB FLAG'S WIRE INDEX — the same class-tree
+/// walk the OTHER branch wears: `Spider extends Monster extends
+/// PathfinderMob` the javap extends chain speaks (the AgeableMob pair
+/// the monster branch NEVER takes — the animals' BABY/AGE_LOCKED the
+/// sibling family wears), so Entity's 8 + LivingEntity's 7 + Mob's 1
+/// land the Spider's own DATA_FLAGS_ID at 16. The bit 0x1 the
+/// isClimbing get speaks (javap: `entityData.get(DATA_FLAGS_ID) & 1`
+/// the iand the accessor's byte answers — the setClimbing's
+/// `b | 1` / `b & -2` pair the same bit arms and disarms). THE WIRE
+/// LANE the dev walk banks: the local sim the flag wears, the
+/// projection's decode the byte rides. THE VANILLA CLIENT'S RENDER
+/// NEVER READS IT (javap SpiderModel/SpiderRenderer/SpiderEyesLayer —
+/// zero isClimbing references): the accessor's client-side consumption
+/// is the client-tick physics the repo's no-extrapolation walk never
+/// runs (the positions the server's own syncs speak), so the decoded
+/// state is the honest store the render never draws from.
+pub const SPIDER_DATA_FLAGS_ID: u8 = 16;
 
 /// THE CUSTOM NAME'S OWN INDEX — the SynchedEntityData id the class
 /// tree speaks: Entity's clinit defineId walk lands DATA_CUSTOM_NAME
@@ -2381,10 +2410,13 @@ pub struct Zombie {
     /// flag wears, the open air the flag dies). The climb the travel's
     /// own folds ride: the component clamps the handleOnClimbable walk
     /// banks, the 0.2 climb-up the horizontal-collision word arms. THE
-    /// WIRE'S OWN SYNCHED BIT the Spider accessor's defineId walk owes
-    /// (the lane's own next candidate — the local sim the flag wears,
-    /// the wire merge the byte's decode never reads yet).
-    climbing: bool,
+    /// WIRE'S OWN SYNCHED BIT the merge now decodes (the SPIDER
+    /// DATA_FLAGS_ID 16 const the class-tree walk banks — the
+    /// projection's spider-gated read the view wears, the
+    /// live_mobs_updated merge the binary assign both arms speak: the
+    /// fresh spawn AND the lerpTo lane, the vanilla render never
+    /// drawing from it).
+    pub climbing: bool,
     /// THE FOLLOWPARENTGOAL'S OWN ARM (the goal's own `parent` field
     /// the canUse walk stores): the parent's id + the position
     /// snapshot the tick's straight-line stand-in steers to — the

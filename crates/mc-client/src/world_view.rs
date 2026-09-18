@@ -905,14 +905,29 @@ pub struct WireMob {
     /// says the mob bends, false while the accessor never spoke (the
     /// honest stand — the silence never crouches).
     pub crouching: bool,
-    /// The metadata's own WOOL BYTE (Sheep's DATA_WOOL_ID 17 — the
-    /// accessor the class tree lands there, the raw byte verbatim):
+    /// THE SPIDER'S OWN CLIMB WORD (the Spider's DATA_FLAGS_ID 16 byte
+    /// the same class-tree walk the wool's own correction wears — the
+    /// monster branch the AgeableMob pair never takes, the bit 0x1 the
+    /// isClimbing get speaks): true while the server says the arachnid
+    /// presses the wall, false while the accessor never spoke or the
+    /// body is another kind's (the read is the SPIDER's own gate — the
+    /// index belongs to the byte's own class — and the honest flat
+    /// crawl the silence keeps). THE RENDER NEVER READS IT (the
+    /// vanilla client's own consumption is the client-tick physics the
+    /// repo's no-extrapolation walk never runs — the positions the
+    /// server's own syncs speak), the decoded state the honest store
+    /// the view wears.
+    pub climbing: bool,
+    /// The metadata's own WOOL BYTE (Sheep's DATA_WOOL_ID 18 — the
+    /// accessor the class tree lands there, the raw byte verbatim;
+    /// the walk the 17 index wore skipped the Mob's own flags accessor
+    /// and predated the AGE_LOCKED pair the 26.2 jar defines at 17):
     /// the sheared bit + the dye nibble the merge decodes through the
     /// Sheep.isSheared/getColor laws. 0 = the SynchedEntityData ctor's
     /// own default (unsheared, WHITE) — the silence the vanilla
     /// client's local default speaks, and the honest 0 the other
     /// bodies' projections carry (the wool word never asks for their
-    /// index-17 traffic).
+    /// index-18 traffic).
     pub wool_byte: u8,
     /// THE EQUIPMENT WORD (the Set Equipment store's MAINHAND slot —
     /// the item id the registry's wire order resolves to the BARE
@@ -2078,6 +2093,7 @@ impl LiveView {
                     && type_name != "minecraft:pig"
                     && type_name != "minecraft:cow"
                     && type_name != "minecraft:sheep"
+                    && type_name != "minecraft:spider"
                 {
                     return None; // not-yet-drawn types stay honest data
                 }
@@ -2117,12 +2133,29 @@ impl LiveView {
                         e.data.get(&0),
                         Some(mc_protocol::play::EntityDataEntry::Byte(b)) if b & 2 != 0
                     ),
-                    // THE WOOL BYTE (Sheep's own DATA_WOOL_ID 17 — the
-                    // accessor the class tree lands at 17): the RAW
+                    // THE SPIDER'S OWN CLIMB WORD (Spider's DATA_FLAGS_ID
+                    // 16 — the class-tree walk the monster branch wears,
+                    // the bit 0x1 the isClimbing get speaks): the read is
+                    // the SPIDER's own gate (the index belongs to the
+                    // byte's own class — the animals' index-16 traffic is
+                    // the BABY Boolean the climb word never asks for),
+                    // the never-spoken accessor the honest flat crawl
+                    // keeps
+                    climbing: if type_name == "minecraft:spider" {
+                        matches!(
+                            e.data.get(&crate::mob::SPIDER_DATA_FLAGS_ID),
+                            Some(mc_protocol::play::EntityDataEntry::Byte(b)) if b & 1 != 0
+                        )
+                    } else {
+                        false
+                    },
+                    // THE WOOL BYTE (Sheep's own DATA_WOOL_ID 18 — the
+                    // accessor the class tree lands at 18, the walk the
+                    // 17 index wore the Mob level skipped): the RAW
                     // word the merge decodes through the
                     // isSheared/getColor laws. The read is the SHEEP's
                     // OWN gate (the index belongs to the byte's own
-                    // class — other bodies' index-17 traffic is data
+                    // class — other bodies' index-18 traffic is data
                     // the wool word never asks for), the silence the
                     // SynchedEntityData ctor's own default (byte 0:
                     // unsheared, WHITE).
@@ -2955,14 +2988,14 @@ mod tests {
         let upd = view.refresh(example_mapper);
         let z = upd.mobs.iter().find(|m| m.id == 7).unwrap();
         assert_eq!(z.health, Some(6.0), "the server's word rides");
-        // THE WOOL BYTE'S OWN RIDE (Sheep's DATA_WOOL_ID 17 — the raw
+        // THE WOOL BYTE'S OWN RIDE (Sheep's DATA_WOOL_ID 18 — the raw
         // byte the projection carries, the SHEEP's own gate the read
-        // speaks): the zombie's index-17 traffic is data the wool word
+        // speaks): the zombie's index-18 traffic is data the wool word
         // never asks for, the sheep's own byte rides verbatim
         view.model.apply(PlayEvent::EntityData(mc_protocol::play::EntityDataSet {
             id: 7,
             entries: vec![mc_protocol::play::SetEntityDataEntry {
-                index: 17,
+                index: 18,
                 serializer: 0,
                 value: mc_protocol::play::EntityDataEntry::Byte(0x7F),
             }],
@@ -2970,14 +3003,14 @@ mod tests {
         view.model.apply(PlayEvent::EntityData(mc_protocol::play::EntityDataSet {
             id: 10,
             entries: vec![mc_protocol::play::SetEntityDataEntry {
-                index: 17,
+                index: 18,
                 serializer: 0,
                 value: mc_protocol::play::EntityDataEntry::Byte(0x1E),
             }],
         }));
         let upd = view.refresh(example_mapper);
         let z = upd.mobs.iter().find(|m| m.id == 7).unwrap();
-        assert_eq!(z.wool_byte, 0, "the zombie's index-17 traffic the wool never asks for");
+        assert_eq!(z.wool_byte, 0, "the zombie's index-18 traffic the wool never asks for");
         let s = upd.mobs.iter().find(|m| m.id == 10).unwrap();
         assert_eq!(s.wool_byte, 0x1E, "the sheep's own byte rides verbatim");
         // THE CUSTOM NAME'S OWN RIDE (Entity's DATA_CUSTOM_NAME 2 — the
@@ -3130,6 +3163,99 @@ mod tests {
         view.model.drain_entity_sounds();
         let upd = view.refresh(example_mapper);
         assert!(upd.voices.is_empty(), "the shipped voice never re-ships");
+    }
+
+    /// THE SPIDER'S OWN CLIMB WORD (the DATA_FLAGS_ID 16 byte's bit 0x1
+    /// the isClimbing get speaks — the class-tree walk the monster
+    /// branch wears, the AgeableMob pair the branch never takes): the
+    /// wire byte the projection decodes, the SPIDER's own gate the
+    /// read keeps (the animals' index-16 traffic is the BABY Boolean
+    /// the climb word never asks for), the never-spoken accessor the
+    /// honest flat crawl keeps.
+    #[test]
+    fn the_spider_climb_word_the_wire_byte_rides() {
+        use mc_protocol::play::EntitySpawn;
+        let mut m = WorldModel::new();
+        // the synced registry: type id 0 = spider, id 1 = sheep
+        m.registry.entity_types = vec![
+            "minecraft:spider".to_string(),
+            "minecraft:sheep".to_string(),
+        ];
+        m.apply(PlayEvent::Spawn(EntitySpawn {
+            id: 11,
+            uuid: 1,
+            type_id: 0,
+            x: 10.0,
+            y: 64.0,
+            z: 12.0,
+            movement: [0.0; 3],
+            x_rot: 0.0,
+            y_rot: 90.0,
+            y_head_rot: 90.0,
+            data: 0,
+        }));
+        // a sheep: the OTHER branch's body (the index-16 traffic the
+        // climb word never asks for — the gate the decode keeps)
+        m.apply(PlayEvent::Spawn(EntitySpawn {
+            id: 12,
+            uuid: 2,
+            type_id: 1,
+            x: 30.0,
+            y: 64.0,
+            z: 32.0,
+            movement: [0.0; 3],
+            x_rot: 0.0,
+            y_rot: 0.0,
+            y_head_rot: 0.0,
+            data: 0,
+        }));
+        let mut view = LiveView { model: m, side: 1 };
+        // the never-spoken accessor: the honest flat crawl both bodies
+        // wear
+        let upd = view.refresh(example_mapper);
+        assert_eq!(upd.mobs.len(), 2, "the spider AND the sheep project v1");
+        let s = upd.mobs.iter().find(|m| m.id == 11).unwrap();
+        assert_eq!(s.type_name, "minecraft:spider", "the fifth wire body rides");
+        assert!(!s.climbing, "the silence the flat crawl keeps");
+        // the wall's press: the flags byte's bit 0x1 the climb word
+        // arms; the sheep's index-16 traffic (the AgeableMob BABY
+        // Boolean the monster branch never carries) the climb gate
+        // never reads
+        view.model.apply(PlayEvent::EntityData(mc_protocol::play::EntityDataSet {
+            id: 11,
+            entries: vec![mc_protocol::play::SetEntityDataEntry {
+                index: crate::mob::SPIDER_DATA_FLAGS_ID,
+                serializer: 0,
+                value: mc_protocol::play::EntityDataEntry::Byte(0x01),
+            }],
+        }));
+        view.model.apply(PlayEvent::EntityData(mc_protocol::play::EntityDataSet {
+            id: 12,
+            entries: vec![mc_protocol::play::SetEntityDataEntry {
+                index: crate::mob::SPIDER_DATA_FLAGS_ID,
+                serializer: 1,
+                value: mc_protocol::play::EntityDataEntry::Bool(true),
+            }],
+        }));
+        let upd = view.refresh(example_mapper);
+        let s = upd.mobs.iter().find(|m| m.id == 11).unwrap();
+        assert!(s.climbing, "the wall's press the flag arms");
+        assert!(
+            !upd.mobs.iter().find(|m| m.id == 12).unwrap().climbing,
+            "the animals' index-16 traffic the climb word never asks for"
+        );
+        // the flag dies: the open air the byte's cleared bit wears
+        view.model.apply(PlayEvent::EntityData(mc_protocol::play::EntityDataSet {
+            id: 11,
+            entries: vec![mc_protocol::play::SetEntityDataEntry {
+                index: crate::mob::SPIDER_DATA_FLAGS_ID,
+                serializer: 0,
+                value: mc_protocol::play::EntityDataEntry::Byte(0x00),
+            }],
+        }));
+        let upd = view.refresh(example_mapper);
+        let s = upd.mobs.iter().find(|m| m.id == 11).unwrap();
+        assert!(!s.climbing, "the open air the flag dies");
     }
 
     /// THE WIRE ARROWS' PROJECTION (the Add Entity store's

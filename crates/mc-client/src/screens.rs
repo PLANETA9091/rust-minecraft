@@ -10025,6 +10025,15 @@ impl App {
                 // server's word, the binary assign the state speaks —
                 // the silence is the honest stand
                 m.crouching = w.crouching;
+                // THE SPIDER'S OWN CLIMB WORD rides the spawn (the
+                // DATA_FLAGS_ID 16 byte's bit 0x1 the projection
+                // decoded — the spider-gated read the view wears, the
+                // other kinds' honest false the gate keeps). The
+                // vanilla render never draws from it (the accessor's
+                // client-side consumption is the client-tick physics
+                // the lerpTo law never runs), the decoded state the
+                // honest mirror keeps.
+                m.climbing = w.climbing;
                 // THE WOOL WORD (Sheep's DATA_WOOL_ID byte the
                 // projection carried raw — the isSheared/getColor laws
                 // the merge decodes: the bit 0x10 the sheared gate
@@ -10106,6 +10115,11 @@ impl App {
             // — no clock, no floor, the bend and the stand both ride
             // the same binary assign
             m.crouching = w.crouching;
+            // THE SPIDER'S OWN CLIMB WORD rides with the pose (the
+            // same binary assign the fresh spawn speaks — the flag is
+            // STATE, the wall's press the wire arms, the open air the
+            // wire disarms)
+            m.climbing = w.climbing;
             // THE WOOL WORD rides with the pose (the same decode the
             // fresh spawn speaks — state not countdown, the shear and
             // the dye both ride the same binary assign)
@@ -20691,6 +20705,58 @@ mod tests {
         );
     }
 
+    /// THE SPIDER'S OWN CLIMB WORD (the wire lane's fifth body — the
+    /// `minecraft:spider` the projection now names): the byte's bit
+    /// 0x1 the projection decoded, the merge the state carries (the
+    /// fresh spawn AND the lerpTo arm the same binary assign speaks —
+    /// the flag is STATE, the own tick owns no clock for it), the
+    /// never-spoken accessor the honest flat crawl keeps.
+    #[test]
+    fn the_wire_spider_climb_word_rides() {
+        let mut app = App::new(3);
+        app.open(ScreenKind::Connect);
+        app.net_world = Some(air_net_world(2, 0));
+        app.enter_network_world(None, Skybox::Overworld, None, None);
+        // the climbing spider: the word rides the FRESH spawn (the
+        // kind the name arms — the arachnid body the mesh bakes)
+        let mut climber = wire_mob_named(30, 10.0, 64.0, 10.0, "minecraft:spider");
+        climber.climbing = true;
+        app.live_mobs_updated(vec![climber]);
+        assert_eq!(
+            app.net_mobs[0].kind,
+            crate::mob::MobKind::Spider,
+            "the spider's own kind"
+        );
+        assert!(
+            app.net_mobs[0].climbing,
+            "the wall's press the fresh spawn wears"
+        );
+        // the state stands between the ships (the server owns the
+        // climb word the flag summarizes)
+        app.tick_net_mobs();
+        assert!(
+            app.net_mobs[0].climbing,
+            "the flag stands between the ships"
+        );
+        // the open air: the word's drop disarms (the same binary
+        // assign the crouch lane speaks)
+        app.live_mobs_updated(vec![wire_mob_named(
+            30,
+            12.0,
+            64.0,
+            10.0,
+            "minecraft:spider",
+        )]);
+        assert!(!app.net_mobs[0].climbing, "the open air the flag dies");
+        // the other kinds' own lane: the honest false the never-spoken
+        // accessor keeps (the spider-gated decode the view wears)
+        app.live_mobs_updated(vec![wire_zombie(31, 14.0, 64.0, 10.0)]);
+        assert!(
+            !app.net_mobs.iter().find(|m| m.id == 31).unwrap().climbing,
+            "the zombie's honest false the gate keeps"
+        );
+    }
+
     /// THE WIRE'S OWN HAND (the equipment word the live lane carries —
     /// the armed zombie the record the render lane draws): the wire
     /// mob's word the fresh spawn rides (the projection resolved the
@@ -20852,6 +20918,7 @@ mod tests {
             hurt_time: 0,
             on_fire: false,
             crouching: false,
+            climbing: false,
             wool_byte: 0,
             held_weapon: None,
             held_offhand: None,
@@ -20882,6 +20949,7 @@ mod tests {
             hurt_time: 0,
             on_fire: false,
             crouching: false,
+            climbing: false,
             wool_byte: 0,
             held_weapon: None,
             held_offhand: None,
