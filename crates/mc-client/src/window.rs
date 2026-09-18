@@ -858,6 +858,14 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
             if window.is_key_pressed(Key::F5, minifb::KeyRepeat::No) {
                 app.on_perspective_key();
             }
+            // THE F3 DEBUG OVERLAY (vanilla handleKeybinds's
+            // keyToggleDebugScreen lane — the rising edge the toggle's
+            // own flip answers, the panel the HUD's top stratum draws
+            // while the flag holds): minifb has no edge API, the press
+            // is read per frame like the F5/Q pair above
+            if window.is_key_pressed(Key::F3, minifb::KeyRepeat::No) {
+                app.on_debug_key();
+            }
             // THE MIDDLE-CLICK PICK (vanilla handleKeybinds's keyPickItem
             // lane — the middle button the keybind maps, the
             // `Minecraft.pickBlockOrEntity` walk the loop answers): the

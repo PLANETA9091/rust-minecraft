@@ -165,6 +165,16 @@ pub const TAB_SPECTATOR_NAME: [f32; 3] =
 /// THE TAB'S ROW PITCH (javap — the `bipush 9` the row stride and the
 /// band heights keep: 9px per row, the font's own line).
 pub const TAB_ROW_PITCH: i32 = 9;
+/// THE DEBUG PANEL'S OWN BAND (javap `DebugScreenOverlay.extractLines`
+/// — the `ldc_w -1873784752` = 0x90505050 the fill the per-line
+/// rectangle keeps: the rgb-0x50 gray at the 0x90 alpha the band
+/// paints, the [f32; 4] the house's raster lane speaks).
+pub const DEBUG_BAND_BG: [f32; 4] =
+    [80.0 / 255.0, 80.0 / 255.0, 80.0 / 255.0, 144.0 / 255.0];
+/// THE DEBUG PANEL'S OWN TEXT (the `ldc_w -2039584` = 0xFFE0E0E0 the
+/// text call's own color keeps — the rgb-0xE0 light gray the lines
+/// draw at, the shadowed pass the boolean-true ride arms).
+pub const DEBUG_TEXT: [f32; 3] = [224.0 / 255.0, 224.0 / 255.0, 224.0 / 255.0];
 /// THE TAB'S HEADER SPACING (javap — the `bipush 10` the y cursor
 /// starts at, the band gap the header's `iinc += 1` and the body's
 /// own margins ride).
@@ -526,6 +536,34 @@ pub fn wrap_degrees(value: f32) -> f32 {
         f += 360.0;
     }
     f
+}
+
+/// THE DEBUG PANEL'S OWN EYE LIGHT (javap ClientLevel.getBrightness's
+/// own pair — the light grid's stored levels the eye cell reads, the
+/// no-grid scene the column walk the mob's own eye_light fallback
+/// keeps: 15 through the open air, one level per attenuating block —
+/// the water/leaves opacity the WORLD's own table answers — zero
+/// under anything opaque; the block half the no-engine scene's
+/// honest 0 keeps).
+fn debug_eye_light(world: &crate::world::World, ex: i32, ey: i32, ez: i32) -> (u8, u8) {
+    if let Some(grid) = &world.light {
+        let (s, b) = grid.cell(world.chunks_per_side, ex, ey, ez);
+        return (s.unwrap_or(15), b.unwrap_or(0));
+    }
+    let mut light = 15u8;
+    let mut wy = ey + 1;
+    while wy < crate::world::CHUNK_Y as i32 {
+        let id = world.get(ex, wy, ez);
+        if id != crate::world::AIR {
+            if id == crate::world::WATER || id == crate::world::LEAVES {
+                light = light.saturating_sub(1);
+            } else {
+                return (0, 0);
+            }
+        }
+        wy += 1;
+    }
+    (light, 0)
 }
 
 /// THE RIDER'S YAW WALK (AbstractBoat.positionRider's own words — the
@@ -1972,6 +2010,26 @@ pub struct App {
     /// headless scenes never raise it (the goldens never see the
     /// overlay).
     pub tab_held: bool,
+    /// THE F3 DEBUG OVERLAY (the vanilla keyPress's keyToggleDebugScreen
+    /// lane — the rising edge the window loop reads, the toggle the
+    /// DebugScreenEntryList.isOverlayVisible gate keeps): true while the
+    /// F3 key has flipped the overlay on — the left column draws the
+    /// 26.2 entries' lines over the HUD (the extractLines walk the
+    /// DebugScreenOverlay carries), the headless scenes never press F3
+    /// (the goldens never see the panel).
+    pub debug_held: bool,
+    /// THE FPS WINDOW (the DebugEntryFps's `%d fps` word — the
+    /// Minecraft.getFps walk the sliding count keeps): the frames the
+    /// 1000ms window carries, the average the display row speaks.
+    pub fps_frames: u32,
+    /// The window's own clock head (the Instant the count opened at —
+    /// the headless scenes never read the value, the None the fresh
+    /// App keeps).
+    pub fps_window_start: Option<std::time::Instant>,
+    /// The last completed window's average (the `--` the zero-frames
+    /// boot keeps — the honest no-opinion the pre-first-window row
+    /// wears).
+    pub fps_value: Option<u32>,
     /// The spawn pose the body materialized at (the offline spawn law's
     /// own feet/angles, the network teleport's pose) — the respawn's
     /// own re-anchor (the vanilla respawn teleports the player to the
@@ -2326,6 +2384,10 @@ impl App {
                 rows: Vec::new(),
             },
             tab_held: false,
+            debug_held: false,
+            fps_frames: 0,
+            fps_window_start: None,
+            fps_value: None,
             spawn_pose: None,
         }
     }
@@ -10347,6 +10409,15 @@ impl App {
         self.tab_held = down;
     }
 
+    /// THE F3 KEY'S OWN TOGGLE (the vanilla keyPress's
+    /// keyToggleDebugScreen lane — the consumeClick's rising edge the
+    /// window loop reads, the DebugScreenEntryList.isOverlayVisible
+    /// flip the gate keeps): the overlay's visibility the bool owns,
+    /// the next press the flip re-answers.
+    pub fn on_debug_key(&mut self) {
+        self.debug_held = !self.debug_held;
+    }
+
     /// THE WIRE MOBS' OWN TICK (javap LivingEntity's remote walk —
     /// no AI, no physics: the server owns both): the tick head saves
     /// the prev feet + the head pair (the render's lerps walk them at
@@ -10851,6 +10922,164 @@ impl App {
         // multiply × the fade keeps)
         g.fill(tx - 2, ty - 2, tw + 4, 13, [0.0, 0.0, 0.0, 0.25 * fade]);
         g.text_faded(a, tx, ty, s, WHITE, fade, true);
+    }
+
+    /// THE FPS WINDOW (the DebugEntryFps's `%d fps` word the
+    /// Minecraft.getFps walk banks — the frames the 1000ms window
+    /// carries, the average the completed window speaks): the count
+    /// the frame each render spends, the 1s boundary the value folds
+    /// and the clock re-opens. The headless scenes ride the same
+    /// count (the value the panel only reads, the pixels the
+    /// never-raised flag never draws).
+    fn record_fps_window(&mut self) {
+        self.fps_frames += 1;
+        match self.fps_window_start {
+            Some(t) => {
+                let ms = t.elapsed().as_millis();
+                if ms >= 1000 {
+                    self.fps_value =
+                        Some(((self.fps_frames as u64 * 1000) / ms as u64) as u32);
+                    self.fps_frames = 0;
+                    self.fps_window_start = Some(std::time::Instant::now());
+                }
+            }
+            None => self.fps_window_start = Some(std::time::Instant::now()),
+        }
+    }
+
+    /// THE F3 DEBUG PANEL (javap DebugScreenOverlay — the 26.2 jar's
+    /// own entries the left column speaks, the extractLines walk the
+    /// per-line band + text the bytecode verbatim keeps: the row
+    /// stride `bipush 9`, the origin `iconst_2` the 2px top/left
+    /// margin, the fill `(x-1, y-1, x+w+1, y+8)` the 1px gutters the
+    /// band's own args speak, the `ldc_w -1873784752` = 0x90505050
+    /// band and the `ldc_w -2039584` = 0xFFE0E0E0 shadowed text; the
+    /// isNullOrEmpty line the band-and-text SKIPS — the spacer row
+    /// the y cursor still walks): the left column's core lines the
+    /// DebugEntryVersion / DebugEntryFps / DebugEntryPosition /
+    /// DebugEntryBiome / DebugEntryLight the jar's own constants
+    /// keep, the no-opinion line (the biome the seed-less lane never
+    /// named, the light the world-less frame never read) the honest
+    /// skip preserves.
+    fn draw_debug_overlay(&self, g: &mut Gui, a: &mut GuiAssets, w: i32, h: i32) {
+        let _ = (w, h); // the column's own geometry the top-left origin owns
+        let lines = self.debug_lines();
+        let (x, mut y) = (2i32, 2i32);
+        for line in &lines {
+            // the spacer's own law (the isNullOrEmpty gate the band
+            // and the text both skip — the 9px row the cursor spends)
+            if !line.is_empty() {
+                let tw = g.text_width(line);
+                // the band (the fill's four args the bytecode's own
+                // walk speaks: x-1, y-1, w+2, 9)
+                g.fill(x - 1, y - 1, tw + 2, 9, DEBUG_BAND_BG);
+                g.text(a, x, y, line, DEBUG_TEXT, true);
+            }
+            y += 9;
+        }
+    }
+
+    /// THE LEFT COLUMN'S LINES (the 26.2 entries the jar's own string
+    /// constants keep — each format the javap ldc verbatim banks).
+    fn debug_lines(&self) -> Vec<String> {
+        // DebugEntryVersion — `Minecraft \u0001 (\u0001/\u0001)`: the
+        // WorldVersion.name the build info keeps, the launched version
+        // the same tracked word, the client brand the vanilla lane
+        // names (addPriorityLine's own first row).
+        let mut lines = vec![format!(
+            "Minecraft {} ({}/vanilla)",
+            crate::build_info::MINECRAFT_VERSION,
+            crate::build_info::MINECRAFT_VERSION,
+        )];
+        // DebugEntryFps — `%d fps T: %s%s`: the fps the 1s window's
+        // average speaks, the T: limit the no-tracker lane keeps at
+        // the `inf` word (vanilla's own 260 = unlimited), the present
+        // word the no-GPU-surface lane keeps empty.
+        lines.push(match self.fps_value {
+            Some(v) => format!("{v} fps T: inf"),
+            None => "-- fps T: inf".to_string(),
+        });
+        let Some(b) = self.body.as_ref() else {
+            return lines;
+        };
+        // DebugEntryPosition — `XYZ: %.3f / %.5f / %.3f`: the camera
+        // entity's getX/getY/getZ the body's own feet speak (the Y
+        // the five-decimal word the bytecode keeps).
+        lines.push(format!("XYZ: {:.3} / {:.5} / {:.3}", b.x, b.y, b.z));
+        // `Block: %d %d %d` — the blockPosition's own floor.
+        let (bx, by, bz) = (b.x.floor() as i32, b.y.floor() as i32, b.z.floor() as i32);
+        lines.push(format!("Block: {bx} {by} {bz}"));
+        // `Chunk: %d %d %d [%d %d in r.%d.%d.mca]` — the seven args
+        // the bytecode banks: the ChunkPos pair, the
+        // SectionPos.blockToSectionCoord Y, then the region-local X/Z
+        // (`& 31`) and the region X/Z (`>> 5`) the ChunkPos walk
+        // speaks.
+        let (cx, cz) = (bx >> 4, bz >> 4);
+        lines.push(format!(
+            "Chunk: {cx} {} {cz} [{} {} in r.{}.{}.mca]",
+            by >> 4,
+            cx & 31,
+            cz & 31,
+            cx >> 5,
+            cz >> 5
+        ));
+        // `Facing: %s (%s) (%.1f / %.1f)` — the getDirection word the
+        // Direction.fromYRot's quadrant walk keeps (`floor(yaw/90 +
+        // 0.5) & 3` over the HORIZONTALS table), the Towards word the
+        // switchmap's own table banks, the wrapDegrees pair the
+        // Mth's own fold speaks.
+        let yaw = b.yaw as f64;
+        let dir = ((yaw / 90.0 + 0.5).floor() as i32) & 3;
+        let (name, towards) = match dir {
+            0 => ("south", "Towards positive Z"),
+            1 => ("west", "Towards negative X"),
+            2 => ("north", "Towards negative Z"),
+            _ => ("east", "Towards positive X"),
+        };
+        lines.push(format!(
+            "Facing: {name} ({towards}) ({:.1} / {:.1})",
+            wrap_degrees(b.yaw),
+            wrap_degrees(b.pitch)
+        ));
+        // DebugEntryBiome — `Biome: \u0001`: the registry id the
+        // world's own opinion keeps (the synced table's name the
+        // networked lane banks, the seed-derived word the procedural
+        // world's spawn opinion speaks); the no-opinion lane the
+        // honest skip preserves.
+        let biome = if self.world_is_network {
+            self.net_biome.clone()
+        } else {
+            Some(spawn_biome(self.seed).to_string())
+        };
+        if let Some(name) = biome {
+            if !name.is_empty() {
+                lines.push(format!("Biome: {name}"));
+            }
+        }
+        // DebugEntryLight — `Client Light: \u0001 (\u0001 sky, \u0001
+        // block)`: the eye cell's own pair the world's light lane
+        // keeps (the grid's stored levels, the column walk the
+        // no-grid procedural scene's fallback law wears — the mob's
+        // own eye_light walk), the combined the max the raw
+        // brightness fold speaks.
+        let world = if self.world_is_network {
+            self.net_world.as_ref()
+        } else {
+            self.offline_world.as_ref()
+        };
+        if let Some(world) = world {
+            let ex = b.x.floor() as i32;
+            let ey = (b.y + b.eye_height()).floor() as i32;
+            let ez = b.z.floor() as i32;
+            let (sky, block) = debug_eye_light(world, ex, ey, ez);
+            lines.push(format!(
+                "Client Light: {} ({} sky, {} block)",
+                block.max(sky),
+                sky,
+                block
+            ));
+        }
+        lines
     }
 
     /// THE RIDE'S LANE (the refresh's own carry — the Set Passengers
@@ -16227,6 +16456,16 @@ impl App {
         // mount's "Press Left Shift to Dismount" the 60-tick life the
         // fade walks, the stratum the HUD's own layers close with)
         self.draw_overlay_message(g, a, w, h);
+        // THE DEBUG PANEL (the DebugScreenOverlay's own layer — the
+        // vanilla renders it OVER the HUD's whole stack, the last
+        // stratum the Hud's own render closes with): the F3 gate the
+        // visibility owns, the FPS window the frame count re-fills
+        // (the headless scenes never raise the flag — the goldens
+        // never see the panel, the count the idle walk still spends)
+        self.record_fps_window();
+        if self.debug_held {
+            self.draw_debug_overlay(g, a, w, h);
+        }
     }
 
     /// THE DEATH SCREEN (javap DeathScreen, the vanilla's own layout):
@@ -18376,6 +18615,95 @@ mod tests {
         app.open(ScreenKind::Title);
         app.on_escape();
         assert_eq!(app.screen, ScreenKind::Title);
+    }
+
+    #[test]
+    fn the_f3_words_the_vanilla_entries_speak() {
+        let mut app = App::new(3);
+        app.enter_world();
+        // THE TOGGLE (the F3 key's own flip — the rising edge the
+        // press answers, the next press re-answers)
+        assert!(!app.debug_held);
+        app.on_debug_key();
+        assert!(app.debug_held);
+        app.on_debug_key();
+        assert!(!app.debug_held);
+        app.on_debug_key();
+        assert!(app.debug_held);
+
+        // THE BODY'S OWN LINES (the offline body the spawn law
+        // materializes — the entries the camera entity's own words
+        // speak, each format the javap ldc verbatim keeps): the pose
+        // the ZERO rotation re-arms (the spawn yaw the world's own
+        // facing wears — the quadrant rows the canonical zeros speak)
+        app.spawn_offline_body();
+        {
+            let w = app.body.as_mut().unwrap();
+            w.yaw = 0.0;
+            w.pitch = 0.0;
+        }
+        let b = app.body.as_ref().unwrap().clone();
+        let lines = app.debug_lines();
+        // DebugEntryVersion's `Minecraft \u0001 (\u0001/\u0001)` — the
+        // tracked version the name and the launched word both keep
+        assert_eq!(lines[0], "Minecraft 26.2 (26.2/vanilla)");
+        // DebugEntryFps's `%d fps T: %s%s` — the no-tracker lane the
+        // inf word keeps (the window never closed the "--" the
+        // pre-first-window row wears)
+        assert!(lines[1].ends_with(" fps T: inf"), "{}", lines[1]);
+        // `XYZ: %.3f / %.5f / %.3f` — the Y the five-decimal word keeps
+        assert_eq!(
+            lines[2],
+            format!("XYZ: {:.3} / {:.5} / {:.3}", b.x, b.y, b.z)
+        );
+        // `Block: %d %d %d` — the blockPosition's own floor
+        let (bx, by, bz) =
+            (b.x.floor() as i32, b.y.floor() as i32, b.z.floor() as i32);
+        assert_eq!(lines[3], format!("Block: {bx} {by} {bz}"));
+        // `Chunk: %d %d %d [%d %d in r.%d.%d.mca]` — the region math
+        // the (& 31, >> 5) pair keeps
+        let (cx, cz) = (bx >> 4, bz >> 4);
+        assert_eq!(
+            lines[4],
+            format!(
+                "Chunk: {cx} {} {cz} [{} {} in r.{}.{}.mca]",
+                by >> 4,
+                cx & 31,
+                cz & 31,
+                cx >> 5,
+                cz >> 5
+            )
+        );
+        // `Facing: %s (%s) (%.1f / %.1f)` — the spawn yaw the south
+        // quadrant wears, the wrapDegrees pair the 0.0 the zero
+        // rotation speaks
+        assert!(
+            lines[5].starts_with("Facing: south (Towards positive Z) (0.0 / 0.0)"),
+            "{}",
+            lines[5]
+        );
+        // `Biome: \u0001` — the seed word the full registry id keeps
+        assert!(lines[6].starts_with("Biome: minecraft:"), "{}", lines[6]);
+        // `Client Light: \u0001 (\u0001 sky, \u0001 block)` — the eye
+        // cell's own pair the open-sky column walk speaks
+        assert!(lines[7].starts_with("Client Light: "), "{}", lines[7]);
+
+        // THE FACING QUADRANTS (Direction.fromYRot's own four-way fold
+        // — `floor(yaw/90 + 0.5) & 3` over the HORIZONTALS table: the
+        // 90/180/-90 yaws the west/north/east words wear, the Towards
+        // words the switchmap's own table banks)
+        for (yaw, word) in [
+            (90.0f32, "west (Towards negative X)"),
+            (180.0, "north (Towards negative Z)"),
+            (-90.0, "east (Towards positive X)"),
+        ] {
+            app.body.as_mut().unwrap().yaw = yaw;
+            let line = app.debug_lines()[5].clone();
+            assert!(
+                line.starts_with(&format!("Facing: {word}")),
+                "yaw {yaw}: {line}"
+            );
+        }
     }
 
     #[test]
