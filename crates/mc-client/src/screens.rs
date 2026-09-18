@@ -815,6 +815,60 @@ fn ear_distance(ear: Option<(f64, f64, f64)>, x: f64, y: f64, z: f64) -> f64 {
     }
 }
 
+/// THE PLAYER'S OWN ATTACK BASE (javap `Player.createAttributes` 3-7 —
+/// the ATTACK_DAMAGE attribute the `dconst_1` base keeps: the vanilla
+/// 1.0 the fist's own floor speaks. The client's own scale the 2.0
+/// keeps — the mob health lane's own stand-in the round's honesty
+/// names: the base the client's combat balance rides, the ITEM's
+/// ADD_VALUE modifier the vanilla law the addend rides unchanged).
+pub const PLAYER_ATTACK_DAMAGE: f64 = 2.0;
+
+/// THE SWORD'S OWN MATERIAL TABLE (javap `ToolMaterial.<clinit>` —
+/// the attackDamageBonus field each tier's ctor order keeps: WOOD
+/// fconst_0 0.0, STONE ldc 1.0 (the `fconst_1`), COPPER fconst_1
+/// 1.0, IRON fconst_2 2.0, DIAMOND ldc 3.0, GOLD fconst_0 0.0,
+/// NETHERITE ldc 4.0; javap `Items.<clinit>` — every sword the SAME
+/// `sword(material, 3.0f, -2.4f)` call registers (the WOODEN_SWORD
+/// 9919-9943 the IRON_SWORD 10299-10323 the COPPER/STONE/GOLD/
+/// DIAMOND/NETHERITE rows the same ldc pair keeps); javap
+/// `createSwordAttributes` 0-59 — the ATTACK_DAMAGE modifier the
+/// `fload_1 + attackDamageBonus` fadd speaks (the ADD_VALUE the
+/// mainhand group rides), the ATTACK_SPEED the `fload_2` (-2.4) the
+/// plain addend keeps). The non-sword the zero addend returns (the
+/// fist the base's own floor rides).
+fn held_attack_addend(held: Option<&str>) -> f64 {
+    const SWORD_BASE: f64 = 3.0;
+    let tier = match held {
+        Some("wooden_sword") | Some("golden_sword") => 0.0,
+        Some("stone_sword") | Some("copper_sword") => 1.0,
+        Some("iron_sword") => 2.0,
+        Some("diamond_sword") => 3.0,
+        Some("netherite_sword") => 4.0,
+        _ => return 0.0,
+    };
+    SWORD_BASE + tier
+}
+
+/// THE MAINHAND'S OWN SPEED (javap `createSwordAttributes` 32-53 —
+/// the ATTACK_SPEED modifier the sword's -2.4 addend speaks over the
+/// attribute's own 4.0 default the `Player.createAttributes` 19-22
+/// adds bare: the sword the 1.6 rides, the bare hand the 4.0 keeps).
+fn held_attack_speed(held: Option<&str>) -> f64 {
+    match held {
+        Some(n) if n.ends_with("_sword") => 4.0 - 2.4,
+        _ => 4.0,
+    }
+}
+
+/// THE CHARGE'S OWN DELAY (javap `getCurrentItemAttackStrengthDelay` —
+/// the `(1.0 / ATTACK_SPEED) * 20.0` law the client's own doc cites:
+/// the fist the 5.0 keeps, the sword the 12.5 rides — the ticker the
+/// full charge the 12 ticks the sword's own rhythm asks).
+fn held_charge_delay(held: Option<&str>) -> f64 {
+    (1.0 / held_attack_speed(held)) * 20.0
+}
+
+
 /// THE ROCK'S OWN STEP (javap `tickBubbleColumn`'s client arm — the
 /// walk BOTH lanes speak: the multiplier the bubbleTime's presence
 /// ramps (+0.05 the armed word, -0.1 the decay) through the 0..1
@@ -4090,8 +4144,13 @@ impl App {
 
     /// THE ATTACK EXECUTION (javap `Player.attack` over the zombie:
     /// the charge clock (`getAttackStrengthScale(0.5)` = the ticker
-    /// + 0.5 over the `(1/ATTACK_SPEED 4.0)·20 = 5.0` delay, clamped),
-    /// the base damage the ATTACK_DAMAGE 2.0 attribute speaks scaled
+    /// + 0.5 over the `getCurrentItemAttackStrengthDelay()` the
+    /// `(1/ATTACK_SPEED)·20` law speaks — the fist the 4.0 attribute
+    /// the 5.0 delay keeps, the sword the -2.4 modifier the 1.6 the
+    /// 12.5 delay rides), the base damage the attribute read speaks
+    /// — the ATTACK_DAMAGE base the mainhand's ADD_VALUE modifier
+    /// rides (the sword rows the createSwordAttributes walk keeps:
+    /// the 3.0 the tool material's attackDamageBonus adds) — scaled
     /// by `baseDamageScaleFactor`'s `0.2 + 0.8·charge²` law, the CRIT
     /// the full-charge (f5 > 0.9) + falling + not-sprinting law speaks
     /// (the 1.5x — canCriticalAttack's own gates), the hurt + the
@@ -4100,10 +4159,21 @@ impl App {
     /// attackVisualEffects branch picks (crit → CRIT, full charge →
     /// STRONG, else WEAK) and the zombie's own hurt/death voice.
     fn attack_mob(&mut self, i: usize) {
-        // the ATTACKER'S FACTS first (the body's own read — the borrow
-        // ends before the mob's mutates)
-        let charge = ((self.attack_ticker as f32 + 0.5) / 5.0).clamp(0.0, 1.0);
-        let mut dmg = 2.0 * (0.2 + 0.8 * charge * charge);
+        // THE ATTACKER'S FACTS first (the body's own read — the borrow
+        // ends before the mob's mutates); the MAINHAND'S OWN NAME the
+        // attribute reads the wire order resolves (the sweep's own
+        // gate the same lookup reuses)
+        let held_name = self
+            .held_id()
+            .and_then(|id| {
+                mc_registry::generated::item_order::ITEM_WIRE_ORDER.get(id as usize)
+            })
+            .copied();
+        let charge = ((self.attack_ticker as f32 + 0.5)
+            / held_charge_delay(held_name) as f32)
+            .clamp(0.0, 1.0);
+        let mut dmg = (PLAYER_ATTACK_DAMAGE + held_attack_addend(held_name)) as f32
+            * (0.2 + 0.8 * charge * charge);
         let full = charge > 0.9;
         let (on_ground, eye_water) = self.body_state();
         let (falling, sprinting, bx, by, bz, bvx, bvz, vyaw, by_mid) = self
@@ -4143,11 +4213,7 @@ impl App {
         // getSpeed() * 2.5)` — the walk passes under the 0.25 block
         // band, the sprint's own speed refuses — and the SWORDS tag
         // the main hand holds)
-        let holding_sword = self
-            .held_id()
-            .and_then(|id| {
-                mc_registry::generated::item_order::ITEM_WIRE_ORDER.get(id as usize)
-            })
+        let holding_sword = held_name
             .map(|n| n.ends_with("_sword"))
             .unwrap_or(false);
         let sweep = full
@@ -23587,6 +23653,158 @@ mod tests {
         assert!(
             !app.mobs.iter().any(|m| m.id == 999),
             "the corpse left the world"
+        );
+    }
+
+    /// THE SWORD'S OWN ATTRIBUTE ROWS (the ToolMaterial clinit the
+    /// tiers keep, the createSwordAttributes the 3.0 + bonus addend
+    /// speaks — the seven rows the registry's own wire order carries,
+    /// the non-sword the zero addend the fist's floor keeps).
+    #[test]
+    fn the_sword_rows_the_addends_keep() {
+        assert_eq!(
+            super::held_attack_addend(Some("wooden_sword")),
+            3.0,
+            "the wood tier's own 0.0 bonus"
+        );
+        assert_eq!(
+            super::held_attack_addend(Some("golden_sword")),
+            3.0,
+            "the gold tier the wood's 0.0 keeps"
+        );
+        assert_eq!(
+            super::held_attack_addend(Some("stone_sword")),
+            4.0,
+            "the stone tier's 1.0 bonus"
+        );
+        assert_eq!(
+            super::held_attack_addend(Some("copper_sword")),
+            4.0,
+            "the copper tier the stone's 1.0 keeps"
+        );
+        assert_eq!(
+            super::held_attack_addend(Some("iron_sword")),
+            5.0,
+            "the iron tier's 2.0 bonus"
+        );
+        assert_eq!(
+            super::held_attack_addend(Some("diamond_sword")),
+            6.0,
+            "the diamond tier's 3.0 bonus"
+        );
+        assert_eq!(
+            super::held_attack_addend(Some("netherite_sword")),
+            7.0,
+            "the netherite tier's 4.0 bonus"
+        );
+        // THE NON-SWORD THE FLOOR KEEPS (the fist, the food, the
+        // bucket, the None — the zero addend the bare hand rides)
+        assert_eq!(super::held_attack_addend(None), 0.0);
+        assert_eq!(super::held_attack_addend(Some("wheat")), 0.0);
+        assert_eq!(super::held_attack_addend(Some("bucket")), 0.0);
+        // THE SPEED'S OWN ROWS (the sword the -2.4 addend the 1.6
+        // rides, the bare hand the 4.0 keeps)
+        assert_eq!(super::held_attack_speed(Some("iron_sword")), 1.6);
+        assert_eq!(super::held_attack_speed(Some("netherite_sword")), 1.6);
+        assert_eq!(super::held_attack_speed(None), 4.0);
+        // THE CHARGE'S OWN DELAY (the (1/speed)·20 law: the fist the
+        // 5.0 keeps, the sword the 12.5 rides)
+        assert_eq!(super::held_charge_delay(None), 5.0);
+        assert_eq!(super::held_charge_delay(Some("iron_sword")), 12.5);
+    }
+
+    /// THE SWORD HIT'S OWN PAYOFF (the attack lane the mainhand's
+    /// attribute read keeps: the iron sword the (base + 5.0) the full
+    /// charge speaks, the bare fist the base's own floor rides, the
+    /// immediate re-hit the 12.5-delay's 0.04 charge the weak law
+    /// keeps — the sword's weak band the fist's own 0.4 never names).
+    #[test]
+    fn the_sword_hit_the_addend_rides() {
+        let mut app = App::new(4);
+        app.enter_world();
+        app.spawn_offline_body();
+        // THE CONTROLLED TARGET (the same walk the mob lane's test
+        // speaks — the 2.5-east zombie the surface scan lands)
+        let (bx, bz) = {
+            let b = app.body.as_ref().unwrap();
+            (b.x, b.z)
+        };
+        let world = app.offline_world.as_ref().unwrap().size_blocks();
+        let (sx, sz) = ((bx + 2.5).floor() as i32, bz.floor() as i32);
+        let mut sy = 0;
+        let wref = app.offline_world.as_ref().unwrap();
+        for y in (0..world).rev() {
+            if crate::body::solid(wref, sx, y, sz) {
+                sy = y + 1;
+                break;
+            }
+        }
+        let mut z = crate::mob::Zombie::new(4242, bx + 2.5, sy as f64, bz as f64, 5);
+        z.health = crate::mob::ZOMBIE_MAX_HEALTH;
+        app.mobs.push(z);
+        let idx = app.mobs.len() - 1;
+        {
+            let (mx, my, mz) = {
+                let m = &app.mobs[idx];
+                (m.x, m.y + 1.0, m.z)
+            };
+            let b = app.body.as_mut().unwrap();
+            let (dx, dy, dz) = (mx - b.x, my - (b.y + b.eye_height()), mz - b.z);
+            let horiz = (dx * dx + dz * dz).sqrt().max(1e-9);
+            let len3 = (dx * dx + dy * dy + dz * dz).sqrt().max(1e-9);
+            let cam_yaw = (dx / horiz).atan2(-dz / horiz);
+            let cam_pitch = (dy / len3).asin();
+            b.yaw = (cam_yaw - std::f64::consts::PI).to_degrees() as f32;
+            b.pitch = -cam_pitch.to_degrees() as f32;
+        }
+        // THE IRON SWORD'S OWN HAND (the live lane's id the held read
+        // keeps — the wire order the name resolves)
+        app.live_held = Some(crate::mob::wire_id("iron_sword").unwrap());
+        // THE FULL CHARGE (the ticker the 12.5-delay sword rides —
+        // 20 ticks the clamp's 1.0 keeps)
+        app.attack_ticker = 20;
+        app.on_attack();
+        // THE RAW + THE ARMOR'S OWN FOLD (the raw (2.0 + 5.0) the
+        // full charge's 1.0 scale speaks — the zombie's own 2.0 armor
+        // the CombatRules.getDamageAfterAbsorb walk keeps: the f6 the
+        // (armor - raw/2) the 0.4 floor the subtraction falls to, the
+        // (1 - f6/25) the health subtraction rides — the 6.888 the
+        // fold's own answer speaks)
+        let raw = (super::PLAYER_ATTACK_DAMAGE + super::held_attack_addend(Some("iron_sword"))) as f32;
+        let f6 = (crate::mob::ZOMBIE_ARMOR as f32 - raw / 2.0)
+            .clamp(crate::mob::ZOMBIE_ARMOR as f32 * 0.2, 20.0);
+        let dealt = crate::mob::ZOMBIE_MAX_HEALTH - app.mobs[idx].health;
+        // the health-subtraction roundtrip the f32's own last-ULP the
+        // fold's direct product never pairs — the 1e-4 band the
+        // mirror's own honesty keeps
+        assert!(
+            (dealt - raw * (1.0 - f6 / 25.0)).abs() < 1e-4,
+            "the iron sword's full charge the (2.0 + 5.0) raw the armor fold speaks"
+        );
+        // THE RAW'S OWN PAYOFF (the fold's own answer the fist's 2.0
+        // raw never rides — the dealt the ~6.888 the fist's 1.968
+        // never names)
+        assert!(
+            (dealt - 6.888).abs() < 1e-3,
+            "the fold's own value the sword's raw keeps ({dealt})"
+        );
+        // THE SWORD'S OWN CLOCK (the onAttack reset the re-hit the
+        // 0.5/12.5 = 0.04 charge speaks — the raw 7.0 x 0.20128 the
+        // armor fold rides, the weak band the fist's own 0.4 never
+        // names)
+        app.on_attack();
+        let raw_weak = (super::PLAYER_ATTACK_DAMAGE
+            + super::held_attack_addend(Some("iron_sword"))) as f32
+            * (0.2 + 0.8 * (0.5f32 / 12.5) * (0.5f32 / 12.5));
+        let f6w = (crate::mob::ZOMBIE_ARMOR as f32 - raw_weak / 2.0)
+            .clamp(crate::mob::ZOMBIE_ARMOR as f32 * 0.2, 20.0);
+        let weak = crate::mob::ZOMBIE_MAX_HEALTH
+            - (raw * (1.0 - f6 / 25.0))
+            - app.mobs[idx].health;
+        assert!(
+            weak > 1.0 && weak < 2.0,
+            "the sword's weak charge the 12.5 delay keeps ({weak}; raw {raw_weak} folded {})",
+            raw_weak * (1.0 - f6w / 25.0)
         );
     }
 
