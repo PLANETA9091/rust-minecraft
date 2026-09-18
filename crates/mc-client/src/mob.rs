@@ -1143,6 +1143,12 @@ pub struct Zombie {
     /// entity's UUID-keyed row). The ctor's None = the honest silent
     /// slot; the merge carries the projection's every-refresh word.
     pub score_text: Option<String>,
+    /// THE HELD WEAPON'S OWN WORD (javap `Zombie.populateDefaultEquipmentSlots`
+    /// the 26.2 jar speaks — the MAINHAND the setItemSlot arms: the spawn
+    /// roll's own verdict the natural lane writes). The ctor's None = the
+    /// vanilla client's own: the spawned zombie the empty MAINHAND carries
+    /// (the gate the 99% of spawns the bare hand keeps).
+    pub held_weapon: Option<&'static str>,
     /// `ZombieAttackGoal.raiseArmTicks`
     raise_arm_ticks: i32,
     /// THE BODY'S OWN KIND (the renderer's variant table): which mesh
@@ -1295,6 +1301,7 @@ impl Zombie {
             custom_name: None,
             name_visible: false,
             score_text: None,
+            held_weapon: None,
             kind: MobKind::Zombie,
             raise_arm_ticks: 0,
             ticks_until_attack: 0,
@@ -3039,6 +3046,37 @@ impl Zombie {
     }
 }
 
+/// THE EQUIPMENT'S OWN ROLL — javap `Zombie.populateDefaultEquipmentSlots`
+/// the 26.2 jar speaks: the gate `nextFloat() < (level.getDifficulty() ==
+/// HARD ? 0.05 : 0.01)` the LEVEL's own random rides (the finalizeSpawn's
+/// loc5 the walk feeds — the client's offline world the NORMAL word wears,
+/// the 0.01 the gate keeps, the HARD 0.05 arm the bytecodes keep), the
+/// armed pick the `nextInt(6)` split keeps: 0 the IRON_SWORD the first arm
+/// speaks, 1 the IRON_SPEAR the 26.2's own new item rides, the 2..=5 the
+/// four arms the IRON_SHOVEL keeps (the ldc/fconst pairs the offsets 38-110
+/// wear); the ONE gate draw the unarmed spawn spends, the armed the pick
+/// the second draw answers. The super's armor walk the regional-difficulty
+/// state the client never carries — the honest PASS the deferral keeps;
+/// the enchantment walk the client jar's no-enchant world the identity
+/// speaks (the populateDefaultEquipmentEnchantments the server's own
+/// table rides). The weapon's own damage ride the doHurtTarget walk
+/// answers: `Item.getAttackDamageBonus` the base fconst_0 the three
+/// weapons all keep — the client jar the server-side attribute bootstrap
+/// never carries (the honest zero the melee law keeps until the amounts
+/// the server jar pins).
+pub fn spawn_equipment(rng: &mut Lcg) -> Option<&'static str> {
+    // the gate (offsets 6-35: nextFloat, the HARD acmp, the fcmpg + ifge)
+    if rng.next_f32() >= 0.01 {
+        return None;
+    }
+    // the pick (offsets 38-110: nextInt(6), the 0/1/else the three arms)
+    Some(match rng.next_int(6) {
+        0 => "iron_sword",
+        1 => "iron_spear",
+        _ => "iron_shovel",
+    })
+}
+
 /// THE SPAWNER'S ATTEMPT — the MONSTER category's own surface law: a
 /// random ring point, the topmost solid's head-room read, the spawn
 /// lands on the surface (the light/night gate rides the caller — the
@@ -3105,9 +3143,13 @@ pub fn try_spawn(
     // finalizeSpawn the AgeableMob group-data arm speaks (the
     // `(true)` ctor the 0.05 chance carries, draw D the baby roll the
     // same `< 0.05` window draws), `setChickenJockey(true)` +
-    // `startRiding` + `addFreshEntity` the tail arms; the
-    // canBreakDoors and the equipment draws the client's lanes never
-    // carry — no draws, the honest notes the doc keeps).
+    // `startRiding` + `addFreshEntity` the tail arms; the canBreakDoors
+    // draw the client's lane never carries — no draw, the honest note
+    // the doc keeps; the EQUIPMENT draw the populateDefaultEquipmentSlots
+    // walk rides — the natural spawn's own roll the stream spends
+    // (the gate + the armed pick the spawn_equipment law keeps —
+    // offsets 329-333 the finalizeSpawn's own call order speaks: the
+    // jockey block's tail the roll follows).
     if rng.next_f32() < 0.05 {
         z.set_age(BABY_START_AGE);
         if rng.next_f32() < 0.05 {
@@ -3153,6 +3195,10 @@ pub fn try_spawn(
             }
         }
     }
+    // THE EQUIPMENT'S OWN DRAW (the vanilla order the finalizeSpawn
+    // walk keeps — the canBreakDoors skip the note above speaks, the
+    // gate + the armed pick the same stream the roll spends)
+    z.held_weapon = spawn_equipment(rng);
     mobs.push(z);
     true
 }
@@ -4467,6 +4513,149 @@ mod tests {
             false
         ));
         assert!(mobs.is_empty());
+    }
+
+    /// THE EQUIPMENT'S OWN GATE the draw counts keep (javap
+    /// `populateDefaultEquipmentSlots` the mirror pair speaks): the
+    /// verdict the ONE gate draw the unarmed spawn spends, the armed
+    /// the nextInt(6) pick the second draw answers — the post-call
+    /// streams the same count consumed the re-join keeps (the mirror
+    /// stream the identical walk replays, the next() the fork's own
+    /// word re-speaks).
+    #[test]
+    fn the_equipment_the_gate_the_draw_counts_keep() {
+        for seed in 0u64..300 {
+            let mut d = Lcg::new(seed);
+            let got = spawn_equipment(&mut d);
+            // the mirror: the gate nextFloat, the armed the nextInt(6)
+            let mut m = Lcg::new(seed);
+            let want = if m.next_f32() < 0.01 {
+                Some(match m.next_int(6) {
+                    0 => "iron_sword",
+                    1 => "iron_spear",
+                    _ => "iron_shovel",
+                })
+            } else {
+                None
+            };
+            assert_eq!(got, want, "seed {seed} the verdict the mirror keeps");
+            // the draw-count law: the streams re-join (the unarmed the
+            // ONE draw spent, the armed the TWO)
+            assert_eq!(d.next(), m.next(), "seed {seed} the stream re-joins");
+        }
+    }
+
+    /// THE EQUIPMENT'S OWN SPLIT the arms keep: the armed seeds the
+    /// three words all speak — the 0 the sword, the 1 the spear (the
+    /// 26.2's own new item), the 2..=5 the four arms the shovel keeps;
+    /// the 1% band the binomial's own 3-sigma the seed scan keeps.
+    #[test]
+    fn the_equipment_the_split_the_arms_keep() {
+        let mut sword = 0;
+        let mut spear = 0;
+        let mut shovel = 0;
+        for seed in 0u64..20000 {
+            let mut d = Lcg::new(seed);
+            if let Some(w) = spawn_equipment(&mut d) {
+                // the pick the mirror re-speaks
+                let mut m = Lcg::new(seed);
+                m.next_f32();
+                let pick = m.next_int(6);
+                match (w, pick) {
+                    ("iron_sword", 0) => sword += 1,
+                    ("iron_spear", 1) => spear += 1,
+                    ("iron_shovel", 2..=5) => shovel += 1,
+                    _ => panic!("seed {seed} the word {w} the pick {pick} never pairs"),
+                }
+            }
+        }
+        assert!(sword > 0 && spear > 0 && shovel > 0, "the three arms speak");
+        // the 1% band: 20000 * 0.01 = 200, sigma ~14 — the 3-sigma walk
+        let armed = sword + spear + shovel;
+        assert!(
+            (110..=290).contains(&armed),
+            "armed {armed} the 1% band keeps"
+        );
+        // the split law: the four shovel arms the sword/spear pair leads
+        // (the 4:1:1 the nextInt(6) split speaks — the counts the ratio
+        // the loose band keeps)
+        assert!(shovel > sword * 2, "shovel {shovel} the 4:1 lead keeps");
+        assert!(shovel > spear * 2, "shovel {shovel} the 4:1 lead keeps");
+    }
+
+    /// THE SPAWN'S OWN LEDGER the weapon writes (try_spawn the wire the
+    /// order pin keeps): the ang, the dist, the ctor seed, the baby A,
+    /// the jockey B, the empty-search's chicken C, the chicken baby D,
+    /// the EQUIPMENT gate the tail rides — the mirror walk the identical
+    /// draws replays, the verdict the spawned zombie's own word pairs.
+    #[test]
+    fn the_spawn_the_weapon_the_natural_writes() {
+        let world = World::new(4, 42);
+        let (px, pz) = (32.0, 32.0);
+        let mut armed = 0;
+        let mut pinned = 0;
+        for seed in 0u64..400 {
+            let mut mobs = Vec::new();
+            let mut next_id = 1;
+            let mut rng = Lcg::new(seed);
+            if !try_spawn(&mut mobs, &mut next_id, px, pz, &world, &mut rng, true) {
+                continue;
+            }
+            let z = mobs.pop().unwrap();
+            if z.held_weapon.is_some() {
+                armed += 1;
+            }
+            // the mirror walk: the ring point, the ctor seed, the
+            // baby/jockey/chicken draws the empty vec's search keeps,
+            // the equipment gate the tail rides
+            let mut m = Lcg::new(seed);
+            let _ang = m.next_f64();
+            let _dist = m.next_f64();
+            let _ctor_seed = m.next();
+            if m.next_f32() < 0.05 {
+                if m.next_f32() < 0.05 {
+                    // the empty world's search the None arm keeps: the
+                    // chicken spawn gate C, the chicken's own ctor seed
+                    // the one next() the between arms, the baby roll D
+                    // the armed gate consumes (the verdict the walk
+                    // never branches — the D draw the C armed spends)
+                    if m.next_f32() < 0.05 {
+                        m.next();
+                        m.next_f32();
+                    }
+                }
+            }
+            let want = if m.next_f32() < 0.01 {
+                Some(match m.next_int(6) {
+                    0 => "iron_sword",
+                    1 => "iron_spear",
+                    _ => "iron_shovel",
+                })
+            } else {
+                None
+            };
+            assert_eq!(
+                z.held_weapon, want,
+                "seed {seed} the weapon the ledger keeps"
+            );
+            pinned += 1;
+        }
+        assert!(pinned >= 100, "pinned {pinned} the spawn band keeps");
+        // the 1% gate the 400-seed band arms (mean 4, sigma 2 — the
+        // loose 1 the flake never rides)
+        assert!(armed >= 1, "armed {armed} the gate the band arms");
+        // the replay: the same seed the same word (the determinism the
+        // spawn law keeps)
+        let mut mobs = Vec::new();
+        let mut next_id = 1;
+        let mut rng = Lcg::new(7);
+        try_spawn(&mut mobs, &mut next_id, px, pz, &world, &mut rng, true);
+        let a = mobs[0].held_weapon;
+        let mut mobs = Vec::new();
+        let mut next_id = 1;
+        let mut rng = Lcg::new(7);
+        try_spawn(&mut mobs, &mut next_id, px, pz, &world, &mut rng, true);
+        assert_eq!(a, mobs[0].held_weapon, "the replay the word keeps");
     }
 
     /// THE FLAT GRASS PLATFORM the jockey walks' own stage (the stone
