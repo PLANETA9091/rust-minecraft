@@ -1477,6 +1477,12 @@ pub struct App {
     /// stay unseen while the zombies keep drawing (each model's
     /// honesty is its own lane).
     pub pig_model: Option<crate::avatar::PigModel>,
+    /// THE SKELETON's own skin (the thin humanoid's 64x32 HALF-HEIGHT
+    /// texture — the AbstractSkeletonRenderer's SKELETON_LOCATION, the
+    /// sha1 the generator table pins) — loaded lazily beside the
+    /// zombie's, `None` = the SKELETONS stay unseen while the other
+    /// bodies keep drawing (each model's honesty is its own lane).
+    pub skeleton_avatar: Option<crate::avatar::AvatarModel>,
     /// THE THIRD MOB's own skin (the cow's temperate 64x64 texture —
     /// the CowRenderer's variant default, the sha1 the generator
     /// pinned) — loaded lazily beside the pig's, `None` = the COWS
@@ -2137,6 +2143,7 @@ impl App {
             avatar: None,
             armor_textures: std::collections::HashMap::new(),
             zombie_avatar: None,
+            skeleton_avatar: None,
             pig_model: None,
             cow_model: None,
             sheep_model: None,
@@ -12331,6 +12338,9 @@ impl App {
             age_ticks: self.frame as f32 + 0.5,
             zombie: false,
             zombie_aggressive: false,
+            skeleton: false,
+            skeleton_aggressive: false,
+            skeleton_bow: false,
             head_yaw_off_deg: 0.0,
             death_time: 0.0,
         };
@@ -12996,6 +13006,9 @@ impl App {
                         age_ticks: mob.age_ticks as f32 + 0.5,
                         zombie: true,
                         zombie_aggressive: mob.aggressive,
+                        skeleton: false,
+                        skeleton_aggressive: false,
+                        skeleton_bow: false,
                         head_yaw_off_deg: head_yaw,
                         death_time: mob.death_time_at(self.partial_tick),
                     };
@@ -13089,6 +13102,109 @@ impl App {
                     }
                     (quads, Box::new(move |u, v| model.pixel(u, v)))
                 }
+                crate::mob::MobKind::Skeleton => {
+                    // THE SKELETON's own lazy load (the AbstractSkeleton
+                    // renderer's own lane — a failed skeleton skin keeps
+                    // only the skeletons unseen, the honesty the other
+                    // kinds' lanes speak)
+                    if self.skeleton_avatar.is_none() {
+                        self.skeleton_avatar = crate::avatar::AvatarModel::load_skeleton(
+                            std::path::Path::new("assets-cache/jar"),
+                        );
+                    }
+                    let Some(skeleton) = &self.skeleton_avatar else {
+                        continue; // the skeleton skin failed its sha1 — this body stays unseen
+                    };
+                    // THE RENDER STATE (extractRenderState's own
+                    // sampling — the SkeletonRenderState's own two words
+                    // the renderer's extract walk fills: isAggressive
+                    // the goal's start/stop law carries, isHoldingBow
+                    // the mainhand item answers — the spawn roll's own
+                    // BOW the record's held word keeps, the wire's Set
+                    // Equipment word the same law reads)
+                    let state = crate::avatar::AvatarState {
+                        yaw_deg: mob.yaw,
+                        pitch_deg: head_pitch,
+                        walk_pos: mob.walk.position_at(self.partial_tick),
+                        walk_speed: mob.walk.speed_at(self.partial_tick),
+                        crouching: mob.crouching,
+                        attack_time: mob.swing.get_attack_anim(self.partial_tick),
+                        attack_right: true,
+                        age_ticks: mob.age_ticks as f32 + 0.5,
+                        zombie: false,
+                        zombie_aggressive: false,
+                        skeleton: true,
+                        skeleton_aggressive: mob.aggressive,
+                        skeleton_bow: mob.held_weapon == Some("bow"),
+                        head_yaw_off_deg: head_yaw,
+                        death_time: mob.death_time_at(self.partial_tick),
+                    };
+                    // THE THIN MESH (SkeletonModel's own
+                    // createDefaultSkeletonMesh — the 2x12x2 limbs the
+                    // (40,16)/(0,16) rows unwrap, the leg pivots the ±2
+                    // PartPose keeps, the setupAnim branches the state's
+                    // words gate — the BOW_AND_ARROW aim the aggressive
+                    // bow arms, the bare-arms raise the no-bow branch
+                    // speaks, the plain humanoid walk the calm keeps)
+                    let quads = skeleton.quads(&state, feet, cam.yaw, cam.pitch);
+                    // THE HELD BOW (ItemInHandLayer.
+                    // submitArmWithItem — the populateDefaultEquipmentSlots
+                    // walk the MAINHAND BOW arms, the model the
+                    // item_model_layers walk names — the layered row the
+                    // registry's RESOLVED walk answers, the item/bow
+                    // display json the thirdperson stanza carries), the
+                    // SAME right-arm chain the player's third-person
+                    // lane rides — the posed rightArm matrix the aim
+                    // pose wears, the bow the aiming arm follows
+                    if let Some(name) = mob.held_weapon {
+                        held_weapon_quads = mc_registry::item_id_by_name(name)
+                            .and_then(mc_registry::item_model_layers)
+                            .and_then(|layers| layers.first().map(|l| l.model))
+                            .and_then(|model_id| {
+                                crate::avatar::held_item_quads(
+                                    &state,
+                                    feet,
+                                    cam.yaw,
+                                    cam.pitch,
+                                    model_id,
+                                )
+                            });
+                    }
+                    // THE ARMOR LANE (HumanoidArmorLayer.renderArmorPiece
+                    // — the AbstractSkeletonRenderer the humanoid
+                    // renderer extends: the SAME armor rows the Set
+                    // Equipment store keeps, the ZOMBIE_ARMOR_WALK the
+                    // values() order speaks, the pre-pass textures the
+                    // map the two kinds share)
+                    for &(row, slot) in crate::mob::ZOMBIE_ARMOR_WALK.iter() {
+                        let Some(word) = mob.armor[row] else { continue };
+                        let Some(asset) = crate::mob::armor_piece_asset(word) else {
+                            continue;
+                        };
+                        let Some(entry) = mc_registry::generated::equipment::find(asset) else {
+                            continue;
+                        };
+                        let dir = if slot == crate::avatar::ARMOR_SLOT_LEGS {
+                            mc_registry::generated::equipment::LEGGINGS_DIR
+                        } else {
+                            mc_registry::generated::equipment::HUMANOID_DIR
+                        };
+                        let base_key = format!("{dir}/{}", entry.name);
+                        if !matches!(self.armor_textures.get(&base_key), Some(Some(_))) {
+                            continue; // the layer failed its verify — the piece stays bare
+                        }
+                        let key = if asset == "leather" {
+                            format!("{base_key}+overlay")
+                        } else {
+                            base_key
+                        };
+                        armor_layers.push((
+                            crate::avatar::armor_quads(&state, feet, cam.yaw, cam.pitch, slot),
+                            key,
+                        ));
+                    }
+                    (quads, Box::new(move |u, v| skeleton.pixel(u, v)))
+                }
             };
             // THE FLAME FEATURE's own bbox ask — the registration's
             // dims the kind's own EntityTypes speaks (the zombie
@@ -13116,6 +13232,10 @@ impl App {
                 crate::mob::MobKind::Zombie => (
                     crate::mob::ZOMBIE_WIDTH as f32,
                     crate::mob::ZOMBIE_HEIGHT as f32,
+                ),
+                crate::mob::MobKind::Skeleton => (
+                    crate::mob::SKELETON_WIDTH as f32,
+                    crate::mob::SKELETON_HEIGHT as f32,
                 ),
             };
             let (bbox_w, bbox_h) = if mob.is_baby() {
@@ -18507,6 +18627,63 @@ mod tests {
             app.net_mobs[0].armor,
             [None; 4],
             "the silence the bare keeps"
+        );
+    }
+
+    /// THE WIRE SKELETON the record lane wears (the Add Entity type
+    /// name the from_wire_name walk arms, the held bow the Set
+    /// Equipment store's own MAINHAND word rides): the kind the merge
+    /// arms, the bow the record keeps both ways (the fresh spawn the
+    /// hand arms from tick one, the lerpTo the pickup/drop the server
+    /// speaks replaces — the same binary law the zombie's own lane
+    /// wears), the armor rows the same store walk keeps.
+    #[test]
+    fn the_wire_skeleton_the_bow_lane_wears() {
+        let mut app = App::new(3);
+        app.open(ScreenKind::Connect);
+        app.net_world = Some(air_net_world(2, 0));
+        app.enter_network_world(None, Skybox::Overworld, None, None);
+        // the kind the type name arms (the from_wire_name walk the
+        // merge speaks)
+        let mut archer = wire_mob_named(30, 20.0, 64.0, 10.0, "minecraft:skeleton");
+        archer.held_weapon = Some("bow");
+        app.live_mobs_updated(vec![archer]);
+        assert_eq!(
+            app.net_mobs[0].kind,
+            crate::mob::MobKind::Skeleton,
+            "the type name the skeleton kind arms"
+        );
+        assert_eq!(
+            app.net_mobs[0].held_weapon,
+            Some("bow"),
+            "the equipment store's MAINHAND the bow the hand wears"
+        );
+        // the lerpTo lane: the pickup the server speaks replaces (the
+        // same STATE assign the zombie's own word wears)
+        let mut disarmed = wire_mob_named(30, 21.0, 64.0, 10.0, "minecraft:skeleton");
+        disarmed.held_weapon = Some("iron_sword");
+        app.live_mobs_updated(vec![disarmed]);
+        assert_eq!(
+            app.net_mobs[0].held_weapon,
+            Some("iron_sword"),
+            "the pickup the STATE assign speaks"
+        );
+        // the drop: the None the honest unarmed keeps
+        app.live_mobs_updated(vec![wire_mob_named(30, 22.0, 64.0, 10.0, "minecraft:skeleton")]);
+        assert_eq!(
+            app.net_mobs[0].held_weapon,
+            None,
+            "the empty stack the packet's own clear keeps"
+        );
+        // the armor rows the same store walk keeps (the
+        // AbstractSkeletonRenderer the humanoid layers render)
+        let mut dressed = wire_mob_named(31, 24.0, 64.0, 12.0, "minecraft:skeleton");
+        dressed.armor = [Some("iron_boots"), None, None, Some("iron_helmet")];
+        app.live_mobs_updated(vec![dressed]);
+        assert_eq!(
+            app.net_mobs[0].armor,
+            [Some("iron_boots"), None, None, Some("iron_helmet")],
+            "the dressed skeleton the rows wear"
         );
     }
 

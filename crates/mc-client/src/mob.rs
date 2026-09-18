@@ -109,6 +109,21 @@ use crate::world::World;
 /// The ZOMBIE registration's own `sized(0.6F, 1.95F)` (EntityTypes).
 pub const ZOMBIE_WIDTH: f64 = 0.6;
 pub const ZOMBIE_HEIGHT: f64 = 1.95;
+/// `EntityTypes.SKELETON`'s own registration (javap the EntityTypes
+/// clinit the sized(0.6F, 1.99F) pair speaks — the eyeHeight 1.74 the
+/// ldc rides the ZOMBIE_EYE_HEIGHT's own value the zombie's row keeps,
+/// the ridingOffset -0.7 the pair's own shared word).
+pub const SKELETON_WIDTH: f64 = 0.6;
+pub const SKELETON_HEIGHT: f64 = 1.99;
+/// `AbstractSkeleton.createAttributes` — MOVEMENT_SPEED 0.25 (the
+/// `ldc2_w 0.25d` the bytecode keeps; the RangedBowAttackGoal's own
+/// speedModifier 1.0 multiplies nothing).
+pub const SKELETON_MOVEMENT_SPEED: f64 = 0.25;
+/// `RangedBowAttackGoal`'s ctor `ldc 15.0F` — the attackRadius the
+/// goal's own square walks (the approach the ring's OUTSIDE keeps, the
+/// stand the inside arms — the strafe the later rounds carry).
+pub const SKELETON_ATTACK_RADIUS: f64 = 15.0;
+pub const SKELETON_ATTACK_RADIUS_SQR: f64 = SKELETON_ATTACK_RADIUS * SKELETON_ATTACK_RADIUS;
 /// The PIG registration's own `sized(0.9F, 0.9F)` (EntityTypes) — the
 /// second drawn body's own bbox (the flame ring's dims the render asks).
 pub const PIG_WIDTH: f64 = 0.9;
@@ -620,6 +635,16 @@ pub enum MobKind {
     /// the 1x4x6 wings the flap law swings) PLUS the flap clock the
     /// own aiStep speaks (the wing's air beat the ground never keeps)
     Chicken,
+    /// the thin humanoid (javap `SkeletonModel.createDefaultSkeletonMesh`
+    /// the 26.2 bytecode speaks — the HumanoidModel.createMesh defaults
+    /// the head/body/hat keep, the limbs the 2x12x2 cubes and the
+    /// (40,16)/(0,16) tex rows the addOrReplaceChild REPLACES, the leg
+    /// pivots the ±2 PartPose.offset speaks) PLUS the bow lane the
+    /// RangedBowAttackGoal arms (the 15-ring the ctor's ldc 15.0 keeps,
+    /// the BOW_AND_ARROW aim the renderer's getArmPose walk speaks —
+    /// the mainhand BOW the populateDefaultEquipmentSlots unconditionally
+    /// arms)
+    Skeleton,
 }
 
 impl MobKind {
@@ -636,6 +661,8 @@ impl MobKind {
             MobKind::Sheep
         } else if name == "minecraft:chicken" {
             MobKind::Chicken
+        } else if name == "minecraft:skeleton" {
+            MobKind::Skeleton
         } else {
             MobKind::Zombie
         }
@@ -653,19 +680,25 @@ impl MobKind {
     /// 7 look, 8 look-around — every addGoal the goalSelector's own
     /// field rides) speaks no target goal at all. The scan the monster
     /// kinds gate; the animals the goal-else chain's own peace keeps.
+    /// THE SKELETON's own chain (javap `AbstractSkeleton extends
+    /// Monster` — the targetSelector the AbstractSkeleton.registerGoals
+    /// fills: HurtByTargetGoal prio 1, NearestAttackableTargetGoal
+    /// Player prio 2, the golem/turtle prios 3) the same branch rides.
     pub fn is_monster(self) -> bool {
-        matches!(self, MobKind::Zombie)
+        matches!(self, MobKind::Zombie | MobKind::Skeleton)
     }
 
     /// THE PANIC GOAL'S OWN PER-KIND WORD (the registerGoals clinits
     /// the dumps keep: the Sheep's and the Pig's own `addGoal(1, new
     /// PanicGoal(this, 1.25))`, the AbstractCow's own `addGoal(1, new
     /// PanicGoal(this, 2.0))` — the cow's goals the parent class
-    /// fills; the zombie's own registerGoals speaks no panic goal —
-    /// the None the monster's lane keeps).
+    /// fills; the zombie's and the skeleton's own registerGoals speak
+    /// no panic goal — the None the monsters' lanes keep; the
+    /// AbstractSkeleton's goals the FleeSunGoal's day lane arms, the
+    /// PanicGoal's hurt-flee never).
     pub fn panic_speed(self) -> Option<f64> {
         match self {
-            MobKind::Zombie => None,
+            MobKind::Zombie | MobKind::Skeleton => None,
             MobKind::Sheep => Some(PANIC_SPEED_SHEEP),
             MobKind::Cow => Some(PANIC_SPEED_COW),
             MobKind::Pig => Some(PANIC_SPEED_PIG),
@@ -673,13 +706,29 @@ impl MobKind {
         }
     }
 
-    /// THE VOICE TABLE (the vanilla rows the four drawn kinds speak —
+    /// THE MOVE ATTRIBUTE'S OWN PER-KIND WORD (javap the createAttributes
+    /// clinits the dumps keep: the zombie's `Zombie.createAttributes` 0.23,
+    /// the skeleton's `AbstractSkeleton.createAttributes` the `ldc2_w
+    /// 0.25d` the bytecode keeps — the RangedBowAttackGoal's own
+    /// speedModifier 1.0 the ctor's dconst_1 speaks multiplies; the
+    /// animals the walk's existing ride keeps — the lane's own
+    /// simplification the quadruped rounds pinned).
+    pub fn movement_speed(self) -> f64 {
+        match self {
+            MobKind::Zombie | MobKind::Sheep | MobKind::Cow | MobKind::Pig | MobKind::Chicken => {
+                ZOMBIE_MOVEMENT_SPEED
+            }
+            MobKind::Skeleton => SKELETON_MOVEMENT_SPEED,
+        }
+    }
+
+    /// THE VOICE TABLE (the vanilla rows the five drawn kinds speak —
     /// each the class's own `getAmbientSound` / `getHurtSound` /
     /// `getDeathSound` return: the zombie's groan, the sheep's baa,
-    /// the cow's moo, the pig's oink). The registry names the audio
-    /// lane's clip table answers; the honest pairing: the voice only
-    /// where the body draws (`from_wire_name` admits these four — an
-    /// undrawn kind never reaches the table).
+    /// the cow's moo, the pig's oink, the skeleton's rattle). The
+    /// registry names the audio lane's clip table answers; the honest
+    /// pairing: the voice only where the body draws (`from_wire_name`
+    /// admits these five — an undrawn kind never reaches the table).
     pub fn voice_event(self, slot: VoiceSlot) -> &'static str {
         match (self, slot) {
             (MobKind::Zombie, VoiceSlot::Ambient) => "entity.zombie.ambient",
@@ -700,6 +749,12 @@ impl MobKind {
             (MobKind::Chicken, VoiceSlot::Ambient) => "entity.chicken.ambient",
             (MobKind::Chicken, VoiceSlot::Hurt) => "entity.chicken.hurt",
             (MobKind::Chicken, VoiceSlot::Death) => "entity.chicken.death",
+            // the skeleton's own rows (the AbstractSkeleton's getSoundSet
+            // — the ENTITY_SKELETON events the cache's sounds.json keeps:
+            // the ambient's rattle, the hurt, the death)
+            (MobKind::Skeleton, VoiceSlot::Ambient) => "entity.skeleton.ambient",
+            (MobKind::Skeleton, VoiceSlot::Hurt) => "entity.skeleton.hurt",
+            (MobKind::Skeleton, VoiceSlot::Death) => "entity.skeleton.death",
         }
     }
 
@@ -721,6 +776,12 @@ impl MobKind {
     pub fn step_voice(self, under: Option<&str>) -> Option<(&'static str, f32, f32)> {
         match self {
             MobKind::Zombie => Some(("entity.zombie.step", ZOMBIE_STEP_VOLUME, ZOMBIE_STEP_PITCH)),
+            // THE SKELETON'S OWN FLAT FOLD (javap `AbstractSkeleton.
+            // playStepSound` the 26.2 bytecode speaks: `getStepSound()`
+            // the `playSound(..., 0.15F, 1.0F)` the ldc/fconst keep —
+            // no block state the voice reads, the same law the zombie's
+            // own override speaks)
+            MobKind::Skeleton => Some(("entity.skeleton.step", 0.15, 1.0)),
             // THE CHICKEN'S OWN FLAT FOLD (javap `Chicken.playStepSound`
             // — the ONE animal override the 26.2 classfile keeps: the
             // `getSoundSet().stepSound()` the variant's own word plays
@@ -1406,6 +1467,7 @@ impl Zombie {
             MobKind::Pig => (PIG_WIDTH, PIG_HEIGHT),
             MobKind::Chicken => (CHICKEN_WIDTH, CHICKEN_HEIGHT),
             MobKind::Zombie => (ZOMBIE_WIDTH, ZOMBIE_HEIGHT),
+            MobKind::Skeleton => (SKELETON_WIDTH, SKELETON_HEIGHT),
         };
         // THE BABY'S OWN DIMENSIONS (javap `Sheep.getDefaultDimensions`
         // the isBaby arm the dump names — the half-sized box the baby
@@ -1762,66 +1824,105 @@ impl Zombie {
         };
 
         if let Some(p) = target {
-            // ZOMBIEATTACKGOAL (prio 3): the canUse re-check rides the
-            // 20-tick gate; the goal's own tick runs every tick while
-            // the target lives in range.
-            self.ticks_until_attack -= 1;
-            // the melee approach: the navigation's straight-line stand-in
-            // walks the mob at its attribute speed toward the target
-            let dx = p.x - self.x;
-            let dz = p.z - self.z;
-            let len = (dx * dx + dz * dz).sqrt().max(1e-9);
-            self.yaw = (-(dx / len)).atan2(dz / len).to_degrees() as f32;
-            ix = 0.0;
-            iz = 1.0; // the forward impulse rides the body's own yaw
-            want_move = true;
-            // THE HEAD (the mob's own look-at-target law — the body
-            // faces and the head rides the clamp)
-            self.look_at(p.x, p.eye_y, p.z);
-            // THE ATTACK (canPerformAttack: isTimeToAttack &&
-            // isWithinMeleeAttackRange && hasLineOfSight) — the hit
-            // lands, the swing rides, the cooldown refills 20.
-            let los = crate::body::clip_ray(
-                world,
-                crate::math::Vec3::new(
-                    self.x as f32,
-                    (self.y + ZOMBIE_EYE_HEIGHT) as f32,
-                    self.z as f32,
-                ),
-                crate::math::Vec3::new(p.x as f32, p.eye_y as f32, p.z as f32),
-            )
-            .is_none();
-            if self.ticks_until_attack <= 0 && self.within_melee_range(p) && los {
-                // doHurtTarget: the damage speaks the ATTACK_DAMAGE
-                // attribute — the base the createAttributes keeps PLUS
-                // the weapon's own modifier the attribute pipeline
-                // rides (the item's mainhand ATTACK_DAMAGE ADD_VALUE
-                // ANY holder's attribute carries — the SAME table the
-                // player's first-person lane walks): the armed zombie
-                // the sword's own bonus deals, the bare hand the 3.0
-                // floor keeps, the offhand word the modifier never
-                // rides (the MAINHAND slot the modifiers tag to), the
-                // swing rides the main hand, the knockback direction
-                // runs victim-minus-attacker
-                let (kx, kz) = (p.x - self.x, p.z - self.z);
-                events.attack = Some(MobAttack {
-                    damage: ZOMBIE_ATTACK_DAMAGE
-                        + crate::screens::held_attack_addend(self.held_weapon),
-                    dir_x: kx,
-                    dir_z: kz,
-                });
-                self.swing.start();
-                self.ticks_until_attack = ATTACK_INTERVAL_TICKS;
+            // THE SKELETON'S OWN GOAL (javap `RangedBowAttackGoal` the
+            // 26.2 bytecode speaks — the bowGoal the reassessWeaponGoal
+            // adds prio 2 the ctor `RangedBowAttackGoal(this, 1.0, 20,
+            // 15.0F)` keeps, the canUse the target != null && the
+            // mainhand BOW the isHoldingBow walk arms, the start() the
+            // setAggressive(true) the flag arms): the tick's
+            // approach arm — `d > attackRadiusSqr || !sees` the
+            // navigation's moveTo target keeps, the INSIDE ring + the
+            // seeing eye the navigation STOP keeps (the strafe the
+            // later rounds carry — the honest stand the stop speaks).
+            // The melee arm the skeleton's goal list never fills (the
+            // AbstractSkeleton$1 the reassessWeaponGoal's NON-bow
+            // branch alone adds — the mainhand BOW the branch never
+            // enters): no doHurtTarget the skeleton ever deals.
+            if self.kind == MobKind::Skeleton {
+                self.aggressive = true;
+                let dx = p.x - self.x;
+                let dz = p.z - self.z;
+                let d2 = dx * dx + dz * dz;
+                let los = crate::body::clip_ray(
+                    world,
+                    crate::math::Vec3::new(
+                        self.x as f32,
+                        (self.y + ZOMBIE_EYE_HEIGHT) as f32,
+                        self.z as f32,
+                    ),
+                    crate::math::Vec3::new(p.x as f32, p.eye_y as f32, p.z as f32),
+                )
+                .is_none();
+                if d2 > SKELETON_ATTACK_RADIUS_SQR || !los {
+                    let len = d2.sqrt().max(1e-9);
+                    self.yaw = (-(dx / len)).atan2(dz / len).to_degrees() as f32;
+                    ix = 0.0;
+                    iz = 1.0; // the forward impulse rides the body's own yaw
+                    want_move = true;
+                }
+                self.look_at(p.x, p.eye_y, p.z);
+            } else {
+                // ZOMBIEATTACKGOAL (prio 3): the canUse re-check rides the
+                // 20-tick gate; the goal's own tick runs every tick while
+                // the target lives in range.
+                self.ticks_until_attack -= 1;
+                // the melee approach: the navigation's straight-line stand-in
+                // walks the mob at its attribute speed toward the target
+                let dx = p.x - self.x;
+                let dz = p.z - self.z;
+                let len = (dx * dx + dz * dz).sqrt().max(1e-9);
+                self.yaw = (-(dx / len)).atan2(dz / len).to_degrees() as f32;
+                ix = 0.0;
+                iz = 1.0; // the forward impulse rides the body's own yaw
+                want_move = true;
+                // THE HEAD (the mob's own look-at-target law — the body
+                // faces and the head rides the clamp)
+                self.look_at(p.x, p.eye_y, p.z);
+                // THE ATTACK (canPerformAttack: isTimeToAttack &&
+                // isWithinMeleeAttackRange && hasLineOfSight) — the hit
+                // lands, the swing rides, the cooldown refills 20.
+                let los = crate::body::clip_ray(
+                    world,
+                    crate::math::Vec3::new(
+                        self.x as f32,
+                        (self.y + ZOMBIE_EYE_HEIGHT) as f32,
+                        self.z as f32,
+                    ),
+                    crate::math::Vec3::new(p.x as f32, p.eye_y as f32, p.z as f32),
+                )
+                .is_none();
+                if self.ticks_until_attack <= 0 && self.within_melee_range(p) && los {
+                    // doHurtTarget: the damage speaks the ATTACK_DAMAGE
+                    // attribute — the base the createAttributes keeps PLUS
+                    // the weapon's own modifier the attribute pipeline
+                    // rides (the item's mainhand ATTACK_DAMAGE ADD_VALUE
+                    // ANY holder's attribute carries — the SAME table the
+                    // player's first-person lane walks): the armed zombie
+                    // the sword's own bonus deals, the bare hand the 3.0
+                    // floor keeps, the offhand word the modifier never
+                    // rides (the MAINHAND slot the modifiers tag to), the
+                    // swing rides the main hand, the knockback direction
+                    // runs victim-minus-attacker
+                    let (kx, kz) = (p.x - self.x, p.z - self.z);
+                    events.attack = Some(MobAttack {
+                        damage: ZOMBIE_ATTACK_DAMAGE
+                            + crate::screens::held_attack_addend(self.held_weapon),
+                        dir_x: kx,
+                        dir_z: kz,
+                    });
+                    self.swing.start();
+                    self.ticks_until_attack = ATTACK_INTERVAL_TICKS;
+                }
+                // THE RAISED ARMS (ZombieAttackGoal.tick's own law: the
+                // raiseArmTicks gate 5, then the half-interval compare —
+                // getTicksUntilNextAttack() < getAttackInterval()/2)
+                self.raise_arm_ticks += 1;
+                self.aggressive = self.raise_arm_ticks >= RAISE_ARM_DELAY
+                    && self.ticks_until_attack < ATTACK_INTERVAL_TICKS / 2;
+                // the goal's own start() zeroes the raise clock when the
+                // target changes — the fresh scan re-arms it (the stop()
+                // clears the aggressive flag on the way out)
             }
-            // THE RAISED ARMS (ZombieAttackGoal.tick's own law: the
-            // raiseArmTicks gate 5, then the half-interval compare —
-            // getTicksUntilNextAttack() < getAttackInterval()/2)
-            self.raise_arm_ticks += 1;
-            self.aggressive = self.raise_arm_ticks >= RAISE_ARM_DELAY
-                && self.ticks_until_attack < ATTACK_INTERVAL_TICKS / 2;
-            // the goal's own start() zeroes the raise clock when the
-            // target changes — the fresh scan re-arms it (the stop()
-            // clears the aggressive flag on the way out)
         } else {
             // the goal's stop(): the arms lower, the raise clock resets
             self.aggressive = false;
@@ -2120,11 +2221,14 @@ impl Zombie {
             } else {
                 AIR_FRICTION
             };
+            // the attribute speed the kind's own createAttributes keeps
+            // (the skeleton's 0.25 the AbstractSkeleton clinit speaks,
+            // the other kinds the lane's existing ride keeps)
+            let attr = self.kind.movement_speed();
             let speed = if friction > 0.6 {
-                ZOMBIE_MOVEMENT_SPEED * CUBE_SPEED_NUMERATOR as f64
-                    / (friction * friction * friction) as f64
+                attr * CUBE_SPEED_NUMERATOR as f64 / (friction * friction * friction) as f64
             } else {
-                ZOMBIE_MOVEMENT_SPEED
+                attr
             } * self.move_speed_modifier;
             let rad = self.yaw as f64 * std::f64::consts::PI / 180.0;
             let (s, c) = (rad.sin(), rad.cos());
@@ -2653,7 +2757,7 @@ impl Zombie {
             MobKind::Chicken => CHICKEN_FOOD.contains(&held_item),
             // the monster (and the kinds the mesh lane never drew) —
             // the food gate closed
-            MobKind::Zombie => false,
+            MobKind::Zombie | MobKind::Skeleton => false,
         }
     }
 
@@ -2840,7 +2944,7 @@ impl Zombie {
                 held_item == "golden_dandelion" && self.age < 0
                     && self.age_lock_particle_timer == 0
             }
-            MobKind::Zombie => false,
+            MobKind::Zombie | MobKind::Skeleton => false,
         }
     }
 
@@ -3099,6 +3203,28 @@ impl Zombie {
                     }
                 }
             }
+            MobKind::Skeleton => {
+                // skeleton.json's own pools (the jar's
+                // data/minecraft/loot_table/entities/skeleton.json the
+                // verbatim reads): POOL 1 the arrow uniform 0..2, POOL 2
+                // the bone uniform 0..2 — the json's own order the
+                // arrow first keeps, the furnace_smelt function the
+                // table never names (the bone and the arrow the fire
+                // never cooks), the player-kill rare the pools never
+                // carry
+                let count = self.rng.next_int_inclusive(0, 2);
+                if count > 0 {
+                    if let Some(item) = wire_id("arrow") {
+                        out.push((item, count));
+                    }
+                }
+                let count = self.rng.next_int_inclusive(0, 2);
+                if count > 0 {
+                    if let Some(item) = wire_id("bone") {
+                        out.push((item, count));
+                    }
+                }
+            }
         }
         out
     }
@@ -3174,6 +3300,24 @@ pub fn try_spawn(
             return false;
         }
     }
+    // THE KIND'S OWN WEIGHTED DRAW (javap `NaturalSpawner.
+    // spawnCategoryForPosition` the 26.2 bytecode speaks the ORDER:
+    // the position draws the ring's own randoms keep, the distance
+    // check rides, THEN the `getRandomSpawnMobAt` walk —
+    // `mobsAt(...).getRandom(random)` the WeightedList's cumulative
+    // fold answers; the 26.2 plains table the jar's own worldgen json
+    // keeps — spider 100, zombie 90, zombie_villager 5, zombie_horse
+    // 5, skeleton 100, creeper 100, slime 100, enderman 10, witch 5 —
+    // the rows the client's renderer vocabulary ADMITS the zombie and
+    // the skeleton alone are (the creature lane's own precedent the
+    // roll mirrors), the total 190 the nextInt(190) draws, the vanilla
+    // list order the ranges keep: the zombie row FIRST, the skeleton
+    // the [90, 190) range rides)
+    let kind = if rng.next_int(190) < 90 {
+        MobKind::Zombie
+    } else {
+        MobKind::Skeleton
+    };
     let mut id = *next_id;
     *next_id += 1;
     let mut z = Zombie::new(
@@ -3183,6 +3327,18 @@ pub fn try_spawn(
         sz as f64 + 0.5,
         (*next_id as u64) << 16 ^ rng.next(),
     );
+    z.kind = kind;
+    // THE SKELETON'S OWN EQUIPMENT (javap `AbstractSkeleton.
+    // populateDefaultEquipmentSlots` the 26.2 bytecode speaks: the
+    // super's walk the Monster base keeps — NO draw — then the
+    // `setItemSlot(EquipmentSlot.MAINHAND, new ItemStack(Items.BOW))`
+    // the getstatic/invoke pair arms UNCONDITIONALLY — no randoms the
+    // skeleton's own roll spends, the bow the hand always wears; the
+    // finalizeSpawn the populate call the reassessWeaponGoal follows
+    // speaks — the bow goal the mainhand item arms)
+    if kind == MobKind::Skeleton {
+        z.held_weapon = Some("bow");
+    }
     // THE FINALIZE SPAWN'S OWN WALK (javap `Zombie.finalizeSpawn` the
     // 26.2 bytecode speaks: the canPickUpLoot draw the client's lane
     // never carries — no draw; the null group data the ctor `new
@@ -3207,56 +3363,76 @@ pub fn try_spawn(
     // walk rides — the natural spawn's own roll the stream spends
     // (the gate + the armed pick the spawn_equipment law keeps —
     // offsets 329-333 the finalizeSpawn's own call order speaks: the
-    // jockey block's tail the roll follows).
-    if rng.next_f32() < 0.05 {
-        z.set_age(BABY_START_AGE);
+    // jockey block's tail the roll follows). THE ZOMBIE'S OWN WALK THE
+    // KIND GATES (the Skeleton's own finalizeSpawn — javap
+    // `AbstractSkeleton.finalizeSpawn` — the group-data baby/jockey
+    // rolls the Monster super never carries: the baby draws the
+    // zombie's ZombieGroupData lane alone keeps, the skeleton the
+    // draws never spends).
+    if kind == MobKind::Zombie {
         if rng.next_f32() < 0.05 {
-            let (zx0, zy0, zz0, zx1, zy1, zz1) = z.box_at();
-            let (bx0, by0, bz0, bx1, by1, bz1) =
-                (zx0 - 5.0, zy0 - 3.0, zz0 - 5.0, zx1 + 5.0, zy1 + 3.0, zz1 + 5.0);
-            let found = mobs.iter_mut().find(|m| {
-                m.kind == MobKind::Chicken
-                    && m.passenger.is_none()
-                    && {
-                        let (x0, y0, z0, x1, y1, z1) = m.box_at();
-                        x0 <= bx1 && x1 >= bx0 && y0 <= by1 && y1 >= by0 && z0 <= bz1 && z1 >= bz0
-                    }
-            });
-            match found {
-                Some(chicken) => {
-                    chicken.chicken_jockey = true;
-                    chicken.passenger = Some(z.id);
-                    z.vehicle = Some(chicken.id);
-                }
-                None => {
-                    if rng.next_f32() < 0.05 {
-                        let cid = *next_id;
-                        *next_id += 1;
-                        let mut c = Zombie::new(
-                            cid,
-                            z.x,
-                            z.y,
-                            z.z,
-                            (*next_id as u64) << 16 ^ rng.next(),
-                        );
-                        c.kind = MobKind::Chicken;
-                        c.yaw = z.yaw;
-                        if rng.next_f32() < 0.05 {
-                            c.set_age(BABY_START_AGE);
+            z.set_age(BABY_START_AGE);
+            if rng.next_f32() < 0.05 {
+                let (zx0, zy0, zz0, zx1, zy1, zz1) = z.box_at();
+                let (bx0, by0, bz0, bx1, by1, bz1) = (
+                    zx0 - 5.0,
+                    zy0 - 3.0,
+                    zz0 - 5.0,
+                    zx1 + 5.0,
+                    zy1 + 3.0,
+                    zz1 + 5.0,
+                );
+                let found = mobs.iter_mut().find(|m| {
+                    m.kind == MobKind::Chicken
+                        && m.passenger.is_none()
+                        && {
+                            let (x0, y0, z0, x1, y1, z1) = m.box_at();
+                            x0 <= bx1
+                                && x1 >= bx0
+                                && y0 <= by1
+                                && y1 >= by0
+                                && z0 <= bz1
+                                && z1 >= bz0
                         }
-                        c.chicken_jockey = true;
-                        c.passenger = Some(z.id);
-                        z.vehicle = Some(c.id);
-                        mobs.push(c);
+                });
+                match found {
+                    Some(chicken) => {
+                        chicken.chicken_jockey = true;
+                        chicken.passenger = Some(z.id);
+                        z.vehicle = Some(chicken.id);
+                    }
+                    None => {
+                        if rng.next_f32() < 0.05 {
+                            let cid = *next_id;
+                            *next_id += 1;
+                            let mut c = Zombie::new(
+                                cid,
+                                z.x,
+                                z.y,
+                                z.z,
+                                (*next_id as u64) << 16 ^ rng.next(),
+                            );
+                            c.kind = MobKind::Chicken;
+                            c.yaw = z.yaw;
+                            if rng.next_f32() < 0.05 {
+                                c.set_age(BABY_START_AGE);
+                            }
+                            c.chicken_jockey = true;
+                            c.passenger = Some(z.id);
+                            z.vehicle = Some(c.id);
+                            mobs.push(c);
+                        }
                     }
                 }
             }
         }
+        // THE EQUIPMENT'S OWN DRAW (the vanilla order the finalizeSpawn
+        // walk keeps — the canBreakDoors skip the note above speaks, the
+        // gate + the armed pick the same stream the roll spends; the
+        // SKELETON's own populate the unconditional BOW the no-draw
+        // law keeps — the roll the zombie's lane alone spends)
+        z.held_weapon = spawn_equipment(rng);
     }
-    // THE EQUIPMENT'S OWN DRAW (the vanilla order the finalizeSpawn
-    // walk keeps — the canBreakDoors skip the note above speaks, the
-    // gate + the armed pick the same stream the roll spends)
-    z.held_weapon = spawn_equipment(rng);
     mobs.push(z);
     true
 }
@@ -4729,14 +4905,26 @@ mod tests {
             if z.held_weapon.is_some() {
                 armed += 1;
             }
-            // the mirror walk: the ring point, the ctor seed, the
-            // baby/jockey/chicken draws the empty vec's search keeps,
-            // the equipment gate the tail rides
+            // the mirror walk: the ring point, the KIND's own weighted
+            // draw (the 26.2 plains monster rows the NaturalSpawner
+            // order speaks), the ctor seed, the baby/jockey/chicken
+            // draws the zombie lane keeps (the skeleton's finalizeSpawn
+            // the group-data rolls never carries), the equipment gate
+            // the zombie's tail rides (the skeleton's unconditional BOW
+            // the no-draw law keeps)
             let mut m = Lcg::new(seed);
             let _ang = m.next_f64();
             let _dist = m.next_f64();
+            let skeleton = m.next_int(190) >= 90;
             let _ctor_seed = m.next();
-            if m.next_f32() < 0.05 {
+            let want = if skeleton {
+                // THE SKELETON's own populate (javap
+                // `AbstractSkeleton.populateDefaultEquipmentSlots` —
+                // the super the no-draw base keeps, the
+                // setItemSlot(MAINHAND, Items.BOW) the unconditional
+                // word speaks)
+                Some("bow")
+            } else if m.next_f32() < 0.05 {
                 if m.next_f32() < 0.05 {
                     // the empty world's search the None arm keeps: the
                     // chicken spawn gate C, the chicken's own ctor seed
@@ -4748,8 +4936,16 @@ mod tests {
                         m.next_f32();
                     }
                 }
-            }
-            let want = if m.next_f32() < 0.01 {
+                if m.next_f32() < 0.01 {
+                    Some(match m.next_int(6) {
+                        0 => "iron_sword",
+                        1 => "iron_spear",
+                        _ => "iron_shovel",
+                    })
+                } else {
+                    None
+                }
+            } else if m.next_f32() < 0.01 {
                 Some(match m.next_int(6) {
                     0 => "iron_sword",
                     1 => "iron_spear",
@@ -4780,6 +4976,208 @@ mod tests {
         let mut rng = Lcg::new(7);
         try_spawn(&mut mobs, &mut next_id, px, pz, &world, &mut rng, true);
         assert_eq!(a, mobs[0].held_weapon, "the replay the word keeps");
+    }
+
+    /// THE PLAINS MONSTER TABLE'S OWN ROWS (the jar's worldgen json the
+    /// 26.2 keeps — zombie 90, skeleton 100, the admitted total 190 the
+    /// NaturalSpawner's WeightedList.getRandom draws): the night's own
+    /// roll the two kinds split, the vanilla list order the ranges keep
+    /// (the zombie row FIRST, the skeleton the [90, 190) range rides),
+    /// the skeleton's own populate the unconditional BOW the no-draw
+    /// law keeps (javap `AbstractSkeleton.populateDefaultEquipmentSlots`
+    /// — the super the Monster base keeps, the setItemSlot(MAINHAND,
+    /// Items.BOW) the getstatic/invoke pair arms), the group-data
+    /// baby/jockey rolls the skeleton's finalizeSpawn never carries —
+    /// the spawned bone-bag the ADULT the bow the hand always wears.
+    #[test]
+    fn the_skeleton_rows_the_plains_table_names() {
+        let world = jockey_flat_world();
+        let (px, pz) = (32.0, 32.0);
+        let mut zombies = 0;
+        let mut skeletons = 0;
+        for seed in 0u64..600 {
+            let mut mobs = Vec::new();
+            let mut next_id = 1;
+            if !try_spawn(&mut mobs, &mut next_id, px, pz, &world, &mut Lcg::new(seed), true) {
+                continue;
+            }
+            let z = mobs.pop().unwrap();
+            match z.kind {
+                MobKind::Zombie => zombies += 1,
+                MobKind::Skeleton => {
+                    skeletons += 1;
+                    // THE BOW THE HAND ALWAYS WEARS (the populate's own
+                    // unconditional law the roll never splits)
+                    assert_eq!(
+                        z.held_weapon,
+                        Some("bow"),
+                        "seed {seed} the bow the skeleton's own populate arms"
+                    );
+                    // THE GROUP-DATA ROLLS THE SKELETON NEVER SPENDS —
+                    // no baby the ZombieGroupData lane could arm, no
+                    // jockey the chicken search could link
+                    assert!(!z.is_baby(), "the baby rolls the zombie lane alone keeps");
+                    assert!(z.vehicle.is_none(), "the jockey search the skeleton never speaks");
+                }
+                _ => panic!("the plains monster roll the two admitted kinds alone speak"),
+            }
+            // the same seed the same body (the determinism the spawner keeps)
+            let mut mobs = Vec::new();
+            let mut next_id = 1;
+            try_spawn(&mut mobs, &mut next_id, px, pz, &world, &mut Lcg::new(seed), true);
+            assert_eq!(mobs.pop().unwrap().kind, z.kind, "seed {seed} the replay the kind keeps");
+        }
+        // the 90/190 split the spawned band arms (the flat world's own
+        // bounds the ring's far half refuses — the FRACTION the roll
+        // tracks: 0.4737 the mean, sigma ~2.6% over ~360 spawns — the
+        // loose band the flake never rides)
+        let total = zombies + skeletons;
+        let pct = if total > 0 { skeletons * 100 / total } else { 0 };
+        assert!(total > 200, "spawns {total} the band arms");
+        assert!(
+            pct > 38 && pct < 57,
+            "skeleton share {pct}% the skeleton row the [90, 190) range rides"
+        );
+    }
+
+    /// THE SKELETON'S OWN HUNT (javap `RangedBowAttackGoal` the 26.2
+    /// bytecode speaks): the target scan the FOLLOW_RANGE 35 ring the
+    /// Monster base keeps arms the goal, the approach arm the
+    /// `d > attackRadiusSqr || !sees` walk keeps (the ctor's ldc 15.0
+    /// the ring speaks), the INSIDE ring + the seeing eye the
+    /// navigation STOP keeps (the strafe the later rounds carry — the
+    /// honest stand the stop law speaks), the setAggressive(true) the
+    /// goal's start arms / the stop() the flag clears — and the MELEE
+    /// arm the goal list never fills (the AbstractSkeleton$1 the
+    /// non-bow branch alone adds): no doHurtTarget the skeleton ever
+    /// deals, the adjacent player the aim the bow's own law keeps.
+    #[test]
+    fn the_skeleton_hunts_the_bows_own_ring_keeps() {
+        let world = jockey_flat_world();
+        // the surface spawn (the top solid 8 the flat world keeps —
+        // the feet the +1 the try_spawn's own law rides): the eyes the
+        // open air the LOS ray clears
+        let mut s = Zombie::new(1, 32.0, 9.0, 32.0, 7);
+        s.kind = MobKind::Skeleton;
+        s.held_weapon = Some("bow");
+        // OUTSIDE the 15-ring (24 blocks north): the approach walks
+        let far = player_at(32.0, 9.0, 8.0);
+        let mut dist = 0.0f64;
+        for _ in 0..40 {
+            let ev = s.tick(&world, Some(&far), NIGHT);
+            assert!(ev.attack.is_none(), "the ranged lane the melee never deals");
+            dist = (s.x - 32.0).powi(2) + (s.z - 32.0).powi(2);
+        }
+        assert!(
+            dist.sqrt() > 0.5,
+            "the approach the out-of-ring player walks ({})",
+            dist.sqrt()
+        );
+        assert!(s.aggressive, "the goal's start the flag arms");
+        // INSIDE the ring (7 blocks, the flat world's own LOS): the
+        // navigation stops — the stand the goal's own law speaks
+        let mut s = Zombie::new(2, 32.0, 9.0, 32.0, 9);
+        s.kind = MobKind::Skeleton;
+        s.held_weapon = Some("bow");
+        let near = player_at(32.0, 9.0, 25.0);
+        let mut moved = 0.0f64;
+        for _ in 0..40 {
+            let ev = s.tick(&world, Some(&near), NIGHT);
+            assert!(ev.attack.is_none(), "the in-ring stand never deals");
+            moved = moved.max((s.x - 32.0).powi(2) + (s.z - 32.0).powi(2));
+        }
+        assert!(
+            moved.sqrt() < 0.25,
+            "the in-ring stand the approach refuses ({})",
+            moved.sqrt()
+        );
+        assert!(s.aggressive, "the goal the stand's own run keeps armed");
+        // THE ADJACENT PLAYER: the melee range the zombie's goal would
+        // hit — the skeleton's goal list the melee never fills, the
+        // aim the bow's own lane keeps
+        let mut s = Zombie::new(3, 32.0, 9.0, 32.0, 11);
+        s.kind = MobKind::Skeleton;
+        s.held_weapon = Some("bow");
+        let close = player_at(32.5, 9.0, 33.0);
+        for _ in 0..40 {
+            let ev = s.tick(&world, Some(&close), NIGHT);
+            assert!(
+                ev.attack.is_none(),
+                "the adjacent player the melee the skeleton never deals"
+            );
+        }
+        assert_eq!(s.health, ZOMBIE_MAX_HEALTH, "the hunter the hurt never takes");
+        // THE TARGET'S DEATH: the goal's stop() the flag clears (the
+        // arms lower, the stand the target-less walk releases)
+        let mut s = Zombie::new(4, 32.0, 9.0, 32.0, 13);
+        s.kind = MobKind::Skeleton;
+        s.held_weapon = Some("bow");
+        let dead = player_at(40.0, 9.0, 40.0);
+        let mut p = dead;
+        p.dead = true;
+        s.tick(&world, Some(&p), NIGHT);
+        assert!(!s.aggressive, "the dead target the goal's stop speaks");
+    }
+
+    /// THE SKELETON'S OWN LOOT (the jar's
+    /// data/minecraft/loot_table/entities/skeleton.json the verbatim
+    /// reads): POOL 1 the arrow uniform 0..2, POOL 2 the bone uniform
+    /// 0..2 — the json's own order the arrow first keeps, the count-0
+    /// draw the pool's own empty keeps, the furnace_smelt function the
+    /// table never names (the burning body the arrow/bone the raw
+    /// items keep), the player-kill rare the pools never carry.
+    #[test]
+    fn the_skeleton_death_the_arrow_and_the_bone_drops() {
+        let mut arrows = 0;
+        let mut bones = 0;
+        for seed in 0u64..120 {
+            let mut s = Zombie::new(seed as i32 + 1, 32.0, 5.0, 32.0, seed * 7 + 1);
+            s.kind = MobKind::Skeleton;
+            s.held_weapon = Some("bow");
+            s.health = 0.0;
+            let loot = s.death_loot(false);
+            // the order law: every arrow entry precedes the bone entry
+            let mut seen_bone = false;
+            for (id, count) in &loot {
+                let name = mc_registry::generated::item_order::ITEM_WIRE_ORDER
+                    .get(*id as usize)
+                    .copied()
+                    .unwrap_or("?");
+                match name {
+                    "arrow" => {
+                        assert!(!seen_bone, "seed {seed} the arrow the POOL 1 first keeps");
+                        assert!((*count as i32) >= 1 && (*count as i32) <= 2);
+                        arrows += 1;
+                    }
+                    "bone" => {
+                        seen_bone = true;
+                        assert!((*count as i32) >= 1 && (*count as i32) <= 2);
+                        bones += 1;
+                    }
+                    other => panic!("seed {seed} the loot the table never names: {other}"),
+                }
+            }
+        }
+        // the uniform 0..2 the 120-seed band arms (the empty draw 1/3
+        // per pool — the drops the loose floor keeps)
+        assert!(arrows >= 40, "arrow pools {arrows} the band arms");
+        assert!(bones >= 40, "bone pools {bones} the band arms");
+        // THE BURNING BODY: the smelt the arrow/bone never touches
+        let mut s = Zombie::new(999, 32.0, 5.0, 32.0, 3);
+        s.kind = MobKind::Skeleton;
+        s.health = 0.0;
+        s.fire_ticks = 100;
+        let loot = s.death_loot(false);
+        for (id, _) in &loot {
+            let name = mc_registry::generated::item_order::ITEM_WIRE_ORDER
+                .get(*id as usize)
+                .copied()
+                .unwrap_or("?");
+            assert!(
+                name == "arrow" || name == "bone",
+                "the fire the skeleton's own drops never cooks: {name}"
+            );
+        }
     }
 
     /// THE EQUIPMENT WORDS THE RENDER'S OWN WALK RESOLVES (the
@@ -4905,24 +5303,29 @@ mod tests {
 
     /// THE SPAWN WALK'S OWN MIRROR (javap `Zombie.finalizeSpawn` the
     /// draw chain the bytecode speaks): the ring's two doubles, the
-    /// ctor's own next(), the group data's baby odds (draw A), the
-    /// jockey search's roll (draw B), the jockey spawn's roll (draw C),
-    /// the created hen's ctor next() and the AgeableMob group-data
-    /// baby odds (draw D). Returns the landed spot + every draw the
-    /// walk speaks.
-    fn jockey_mirror(seed: u64) -> (i32, i32, f32, f32, f32, f32, bool) {
+    /// KIND'S OWN WEIGHTED DRAW (the 26.2 plains monster rows the
+    /// NaturalSpawner order speaks — zombie 90, skeleton 100, the
+    /// nextInt(190) the admitted total draws), the ctor's own next(),
+    /// the group data's baby odds (draw A), the jockey search's roll
+    /// (draw B), the jockey spawn's roll (draw C), the created hen's
+    /// ctor next() and the AgeableMob group-data baby odds (draw D).
+    /// The A/B/C/D draws the ZOMBIE lane alone spends (the skeleton's
+    /// finalizeSpawn the group-data rolls never carries). Returns the
+    /// landed spot + the kind word + every draw the walk speaks.
+    fn jockey_mirror(seed: u64) -> (i32, i32, bool, f32, f32, f32, f32, bool) {
         let mut p = Lcg::new(seed);
         let ang = p.next_f64() * std::f64::consts::TAU;
         let dist = SPAWN_MIN_DIST + p.next_f64() * (SPAWN_MAX_DIST - SPAWN_MIN_DIST);
         let sx = ((32.0 + ang.cos() * dist).floor()) as i32;
         let sz = ((32.0 + ang.sin() * dist).floor()) as i32;
+        let zombie = p.next_int(190) < 90;
         let _zombie_seed = p.next();
         let a = p.next_f32();
         let b = p.next_f32();
         let c = p.next_f32();
         let _hen_seed = p.next();
         let d = p.next_f32();
-        (sx, sz, a, b, c, d, a < 0.05 && b < 0.05 && c < 0.05)
+        (sx, sz, zombie, a, b, c, d, zombie && a < 0.05 && b < 0.05 && c < 0.05)
     }
 
     /// THE GROUP DATA'S OWN BABY ODDS (javap `ZombieGroupData` the
@@ -4934,9 +5337,9 @@ mod tests {
         let world = jockey_flat_world();
         let mut landed = false;
         for seed in 0u64..65536 {
-            let (sx, sz, a, b, _c, _d, _triple) = jockey_mirror(seed);
-            if a >= 0.05 || b >= 0.05 {
-                continue; // the baby roll the walk keeps — the seed skips
+            let (sx, sz, zombie, a, b, _c, _d, _triple) = jockey_mirror(seed);
+            if !zombie || a >= 0.05 || b >= 0.05 {
+                continue; // the kind roll or the baby roll the walk keeps — the seed skips
             }
             let mut mobs = Vec::new();
             let mut next_id = 1;
@@ -4945,7 +5348,7 @@ mod tests {
             }
             // the search the empty world refuses — the jockey spawn the
             // roll C decides; the mirror the same draws replays
-            let (_sx2, _sz2, _a2, _b2, c, d, _t) = jockey_mirror(seed);
+            let (_sx2, _sz2, _z2, _a2, _b2, c, d, _t) = jockey_mirror(seed);
             let z = mobs.last().expect("the spawner pushed the body");
             assert!(z.is_baby(), "the baby roll the age arms");
             assert_eq!(z.age, BABY_START_AGE, "the baby the start age speaks");
@@ -4982,8 +5385,8 @@ mod tests {
         let world = jockey_flat_world();
         let mut landed = false;
         for seed in 0u64..1_048_576 {
-            let (_sx, _sz, a, b, _c, _d, _t) = jockey_mirror(seed);
-            if a >= 0.05 || b >= 0.05 {
+            let (_sx, _sz, zombie, a, b, _c, _d, _t) = jockey_mirror(seed);
+            if !zombie || a >= 0.05 || b >= 0.05 {
                 continue;
             }
             // the DRY RUN the spot's own pose answers (the draws the
@@ -5033,8 +5436,8 @@ mod tests {
         let world = jockey_flat_world();
         let mut landed = false;
         for seed in 0u64..1_048_576 {
-            let (_sx, _sz, _a, _b, _c, _d, triple) = jockey_mirror(seed);
-            if !triple {
+            let (_sx, _sz, zombie, _a, _b, _c, _d, triple) = jockey_mirror(seed);
+            if !zombie || !triple {
                 continue;
             }
             let mut mobs = Vec::new();
@@ -5555,6 +5958,7 @@ mod tests {
             MobKind::Pig => (PIG_WIDTH, PIG_HEIGHT),
             MobKind::Chicken => (CHICKEN_WIDTH, CHICKEN_HEIGHT),
             MobKind::Zombie => (ZOMBIE_WIDTH, ZOMBIE_HEIGHT),
+            MobKind::Skeleton => (SKELETON_WIDTH, SKELETON_HEIGHT),
         };
         for (k, m) in mobs.iter().enumerate() {
             let (w, h) = dims(m.kind);

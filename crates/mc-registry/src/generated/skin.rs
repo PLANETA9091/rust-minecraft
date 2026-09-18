@@ -74,6 +74,14 @@ pub const SLIM_RUNTIME_PATH: &str = "entity/player/slim/alex.png";
 pub const ZOMBIE_PNG_SHA1: &str = "3d28d27b5388a7c2a296586649e98d068a795c2d";
 pub const ZOMBIE_RUNTIME_PATH: &str = "entity/zombie/zombie.png";
 
+/// The SKELETON skin (the thin humanoid's own), generated from the
+/// same jar: the source sha1 the avatar renderer verifies before
+/// drawing (javap: `AbstractSkeletonRenderer`'s SKELETON_LOCATION —
+/// the SkeletonModel's own `LayerDefinition.create(64, 32)` the
+/// bytecode speaks — the HALF-HEIGHT layout the thin boxes unwrap).
+pub const SKELETON_PNG_SHA1: &str = "70e4a0698bd83bf1370d1fe7e72c082448df1ff7";
+pub const SKELETON_RUNTIME_PATH: &str = "entity/skeleton/skeleton.png";
+
 /// The PIG skin (the temperate variant the PigRenderer's variant
 /// table defaults to), generated from the same jar: the source sha1
 /// the pig renderer verifies before it draws (javap PigModel:

@@ -161,6 +161,22 @@ pub struct AvatarState {
     /// `ZombieRenderState.isAggressive` (the render state's own field —
     /// the attack goal's raiseArmTicks law drives it).
     pub zombie_aggressive: bool,
+    /// THE THIN HUMANOID's branch (javap `SkeletonModel.setupAnim` the
+    /// 26.2 bytecode speaks): the skeleton's own thin boxes ride the
+    /// humanoid walk the flag arms — the arms/legs swap the 2x12x2
+    /// cubes and the (40,16)/(0,16) tex rows the
+    /// createDefaultSkeletonMesh keeps, the leg pivots the ±2 the
+    /// PartPose.offset speaks (the wide ±1.9 the humanoid never
+    /// shares).
+    pub skeleton: bool,
+    /// `SkeletonRenderState.isAggressive` (the RangedBowAttackGoal's
+    /// own start()/stop() law — the goal runs while the target lives).
+    pub skeleton_aggressive: bool,
+    /// `SkeletonRenderState.isHoldingBow` (the main-hand item the BOW
+    /// is — the gate the setupAnim branch reads: the aggressive body
+    /// holding the bow never raises the bare arms, the BOW_AND_ARROW
+    /// aim the HumanoidModel's own pose speaks instead).
+    pub skeleton_bow: bool,
     /// The head's yaw offset from the body (the netHeadYaw the
     /// LivingEntityRenderer extraction clamps to +-75°; the player
     /// avatar's body rides the look yaw so the offset stays 0).
@@ -185,6 +201,9 @@ impl AvatarState {
             age_ticks,
             zombie: false,
             zombie_aggressive: false,
+            skeleton: false,
+            skeleton_aggressive: false,
+            skeleton_bow: false,
             head_yaw_off_deg: 0.0,
             death_time: 0.0,
         }
@@ -240,6 +259,11 @@ impl Part {
 /// createMesh bytecode speaks.
 pub struct AvatarModel {
     rgba: Vec<u8>,
+    /// The texture's own height (the humanoid's 64x64 and the
+    /// skeleton's 64x32 the two LayerDefinition.create calls speak —
+    /// the pixel read clamps v to the model's OWN height the layout
+    /// keeps, the 64x32 rows the shared 64-wide stride walks).
+    side_v: u32,
 }
 
 impl AvatarModel {
@@ -259,7 +283,10 @@ impl AvatarModel {
         {
             return None;
         }
-        Some(AvatarModel { rgba })
+        Some(AvatarModel {
+            rgba,
+            side_v: skin::SKIN_SIDE,
+        })
     }
 
     /// Load + sha1-verify the ZOMBIE skin (the first mob's own runtime
@@ -279,13 +306,38 @@ impl AvatarModel {
         {
             return None;
         }
-        Some(AvatarModel { rgba })
+        Some(AvatarModel {
+            rgba,
+            side_v: skin::SKIN_SIDE,
+        })
+    }
+
+    /// Load + sha1-verify the SKELETON skin (the thin humanoid's own
+    /// runtime file — javap `AbstractSkeletonRenderer`'s SKELETON_
+    /// LOCATION, the 64x32 HALF-HEIGHT layout the SkeletonModel's own
+    /// `LayerDefinition.create(64, 32)` speaks). `None` = the mob never
+    /// renders (the same honesty the other kinds keep).
+    pub fn load_skeleton(root: &Path) -> Option<AvatarModel> {
+        let bytes = std::fs::read(root.join(skin::SKELETON_RUNTIME_PATH)).ok()?;
+        let digest = sha1::Sha1::digest(&bytes);
+        if hex::encode(digest) != skin::SKELETON_PNG_SHA1 {
+            return None;
+        }
+        let (w, h, rgba) = decode_rgba(&bytes).ok()?;
+        if w != skin::SKIN_SIDE
+            || h != 32
+            || rgba.len() != (skin::SKIN_SIDE as usize) * 32 * 4
+        {
+            return None;
+        }
+        Some(AvatarModel { rgba, side_v: 32 })
     }
 
     /// The skin pixel at (u, v) — the RGBA row-major words, v down.
     pub fn pixel(&self, u: f32, v: f32) -> [u8; 4] {
         let side = skin::SKIN_SIDE as f32;
-        let (uu, vv) = (u.clamp(0.0, side - 1e-4), v.clamp(0.0, side - 1e-4));
+        let side_v = self.side_v as f32;
+        let (uu, vv) = (u.clamp(0.0, side - 1e-4), v.clamp(0.0, side_v - 1e-4));
         let x = uu as usize;
         let y = vv as usize;
         let o = (y * skin::SKIN_SIDE as usize + x) * 4;
@@ -2201,13 +2253,18 @@ fn build_posed_parts(state: &AvatarState) -> Vec<Part> {
     let leg_r_z = 0.005f32;
     let mut leg_l_y = -0.005f32;
     let leg_l_z = -0.005f32;
-    // the pivot nudges the crouch speaks (model texels)
+    // the pivot nudges the crouch speaks (model texels). THE THIN
+    // HUMANOID's leg pivot x (javap `SkeletonModel.
+    // createDefaultSkeletonMesh` the PartPose.offset(±2, 12, 0) the
+    // bytecode speaks — the wide ±1.9 the humanoid keeps) — the crouch
+    // z nudge below the same array shares.
+    let leg_pivot_x: f32 = if state.skeleton { 2.0 } else { 1.9 };
     let mut arm_r_pivot = [-5.0f32, 2.0, 0.0];
     let mut arm_l_pivot = [5.0f32, 2.0, 0.0];
     let mut body_pivot = [0.0f32, 0.0, 0.0];
     let mut head_pivot = [0.0f32, 0.0, 0.0];
-    let mut leg_r_pivot = [-1.9f32, 12.0, 0.0];
-    let mut leg_l_pivot = [1.9f32, 12.0, 0.0];
+    let mut leg_r_pivot = [-leg_pivot_x, 12.0, 0.0];
+    let mut leg_l_pivot = [leg_pivot_x, 12.0, 0.0];
     if state.crouching {
         body_x = 0.5;
         arm_r_x += 0.4;
@@ -2266,9 +2323,77 @@ fn build_posed_parts(state: &AvatarState) -> Vec<Part> {
         arm_l_y = f8;
         arm_l_z = zb_l;
     }
+    // THE SKELETON'S OWN POSES (javap `SkeletonModel.setupAnim` the
+    // 26.2 bytecode speaks — the super's humanoid walk ran above, the
+    // branch the render state's two words gate). THE AGGRESSIVE BOW
+    // (isAggressive && isHoldingBow — the SkeletonModel's own branch
+    // never runs, the BOW_AND_ARROW ArmPose the renderer's getArmPose
+    // arms — mainArm == RIGHT the default keeps, isTwoHanded() the
+    // equal-flag branch keeps, affectsOffhandPose() the poseLeftArm
+    // skip rides): the aim overwrites BOTH arms' xRot/yRot the
+    // poseRightArm case-3 body assigns (head.xRot the pitch rides,
+    // head.yRot the yaw offset — the head terms the +0.4 left yRot
+    // shares), the zRot the walk's bob keeps (the pose never touches).
+    if state.skeleton && state.skeleton_aggressive && state.skeleton_bow {
+        let hy = head_y;
+        let hx = head_x;
+        arm_r_x = -1.5707964 + hx;
+        arm_r_y = -0.1 + hy;
+        arm_l_x = -1.5707964 + hx;
+        arm_l_y = 0.1 + hy + 0.4;
+    }
+    // THE AGGRESSIVE BARE (isAggressive && !isHoldingBow — the
+    // SkeletonModel's OWN branch the bytecode assigns: the f1 the
+    // attackTime's sin(πt), the f2 the sin((1 - (1-t)²)·π) —
+    // `fconst_1 fsub fconst_1 fsub` the (1-t)(1-t) fold — the zRot
+    // ZEROED, the yRot the ∓(0.1 - f1·0.6) mirror arms, the xRot
+    // -π/2 - f1·1.2 - f2·0.4 the dup-getfield-sub-sub walks, then the
+    // bobArms(right, left, age) the NORMAL sign order adds (the right
+    // +1, the left −1 — the zombie's INVERTED second bob the call
+    // never shares)).
+    if state.skeleton && state.skeleton_aggressive && !state.skeleton_bow {
+        let f1 = mth_sin(at * std::f32::consts::PI);
+        let f2 = mth_sin((1.0 - (1.0 - at) * (1.0 - at)) * std::f32::consts::PI);
+        let raise = -1.5707964 - f1 * 1.2 - f2 * 0.4;
+        let (bz_r, bx_r) = bob(1.0);
+        let (bz_l, bx_l) = bob(-1.0);
+        arm_r_z = bz_r;
+        arm_l_z = bz_l;
+        arm_r_y = -(0.1 - f1 * 0.6);
+        arm_l_y = 0.1 - f1 * 0.6;
+        arm_r_x = raise + bx_r;
+        arm_l_x = raise + bx_l;
+    }
     // THE PARTS (createMesh, verbatim). The overlays are CHILDREN
     // (PartPose.ZERO — the parent's pivot space) with the SAME box
-    // inflated by the extend.
+    // inflated by the extend. THE THIN HUMANOID's boxes (javap
+    // `SkeletonModel.createDefaultSkeletonMesh` the 26.2 bytecode
+    // speaks): the arms 2x12x2 at tex (40,16) — the LEFT the builder's
+    // own .mirror() the u flip rides (the Cube.mirror flag the
+    // quadruped legs speak) — the legs 2x12x2 at (0,16) the same
+    // mirror law keeps, the sleeve/pants overlay children the thin
+    // builder never fills (the addOrReplaceChild REPLACES the limb —
+    // no child the half-height layout could unwrap). The wide limbs
+    // the humanoid's own rows keep (the left pair the modern 64x64
+    // rects unwrapped — no mirror the own rect never asks).
+    // the RIGHT arm the wide layout's own row keeps (the box spans
+    // x -3..1 the wide right arm speaks — the LEFT the -1..3 row — the
+    // thin limbs the symmetric ±1 both sides share).
+    let (arm_r_box, arm_w) = if state.skeleton {
+        ([-1.0f32, -2.0, -1.0], [2.0f32, 12.0, 2.0])
+    } else {
+        ([-3.0f32, -2.0, -2.0], [4.0f32, 12.0, 4.0])
+    };
+    let arm_l_box: [f32; 3] = if state.skeleton {
+        [-1.0, -2.0, -1.0]
+    } else {
+        [-1.0, -2.0, -2.0]
+    };
+    let (leg_box, leg_w) = if state.skeleton {
+        ([-1.0f32, 0.0, -1.0], [2.0f32, 12.0, 2.0])
+    } else {
+        ([-2.0f32, 0.0, -2.0], [4.0f32, 12.0, 4.0])
+    };
     vec![
         // head (+ hat child)
         Part {
@@ -2326,7 +2451,7 @@ fn build_posed_parts(state: &AvatarState) -> Vec<Part> {
                 children: vec![],
             }],
         },
-        // right arm (+ right sleeve child)
+        // right arm (+ right sleeve child — the thin limb never fills)
         Part {
             pivot: arm_r_pivot,
             x_rot: arm_r_x,
@@ -2334,55 +2459,64 @@ fn build_posed_parts(state: &AvatarState) -> Vec<Part> {
             z_rot: arm_r_z,
             cubes: vec![Cube {
                 tex: (40.0, 16.0),
-                origin: [-3.0, -2.0, -2.0],
-                size: [4.0, 12.0, 4.0],
+                origin: arm_r_box,
+                size: arm_w,
                 inflate: 0.0,
                         mirror: false,
                         }],
-            children: vec![Part {
-                pivot: [0.0, 0.0, 0.0],
-                x_rot: 0.0,
-                y_rot: 0.0,
-                z_rot: 0.0,
-                cubes: vec![Cube {
-                    tex: (40.0, 32.0),
-                    origin: [-3.0, -2.0, -2.0],
-                    size: [4.0, 12.0, 4.0],
-                    inflate: 0.25,
-                                mirror: false,
-                                }],
-                children: vec![],
-            }],
+            children: if state.skeleton {
+                vec![]
+            } else {
+                vec![Part {
+                    pivot: [0.0, 0.0, 0.0],
+                    x_rot: 0.0,
+                    y_rot: 0.0,
+                    z_rot: 0.0,
+                    cubes: vec![Cube {
+                        tex: (40.0, 32.0),
+                        origin: [-3.0, -2.0, -2.0],
+                        size: [4.0, 12.0, 4.0],
+                        inflate: 0.25,
+                                    mirror: false,
+                                    }],
+                    children: vec![],
+                }]
+            },
         },
-        // left arm (+ left sleeve child)
+        // left arm (+ left sleeve child — the thin limb rides the
+        // builder's own .mirror() at the SHARED (40,16) row)
         Part {
             pivot: arm_l_pivot,
             x_rot: arm_l_x,
             y_rot: arm_l_y,
             z_rot: arm_l_z,
             cubes: vec![Cube {
-                tex: (32.0, 48.0),
-                origin: [-1.0, -2.0, -2.0],
-                size: [4.0, 12.0, 4.0],
+                tex: if state.skeleton { (40.0, 16.0) } else { (32.0, 48.0) },
+                origin: if state.skeleton { arm_l_box } else { [-1.0, -2.0, -2.0] },
+                size: arm_w,
                 inflate: 0.0,
-                        mirror: false,
+                        mirror: state.skeleton,
                         }],
-            children: vec![Part {
-                pivot: [0.0, 0.0, 0.0],
-                x_rot: 0.0,
-                y_rot: 0.0,
-                z_rot: 0.0,
-                cubes: vec![Cube {
-                    tex: (48.0, 48.0),
-                    origin: [-1.0, -2.0, -2.0],
-                    size: [4.0, 12.0, 4.0],
-                    inflate: 0.25,
-                                mirror: false,
-                                }],
-                children: vec![],
-            }],
+            children: if state.skeleton {
+                vec![]
+            } else {
+                vec![Part {
+                    pivot: [0.0, 0.0, 0.0],
+                    x_rot: 0.0,
+                    y_rot: 0.0,
+                    z_rot: 0.0,
+                    cubes: vec![Cube {
+                        tex: (48.0, 48.0),
+                        origin: [-1.0, -2.0, -2.0],
+                        size: [4.0, 12.0, 4.0],
+                        inflate: 0.25,
+                                    mirror: false,
+                                    }],
+                    children: vec![],
+                }]
+            },
         },
-        // right leg (+ right pants child)
+        // right leg (+ right pants child — the thin limb never fills)
         Part {
             pivot: leg_r_pivot,
             x_rot: leg_r_x,
@@ -2390,53 +2524,62 @@ fn build_posed_parts(state: &AvatarState) -> Vec<Part> {
             z_rot: leg_r_z,
             cubes: vec![Cube {
                 tex: (0.0, 16.0),
-                origin: [-2.0, 0.0, -2.0],
-                size: [4.0, 12.0, 4.0],
+                origin: leg_box,
+                size: leg_w,
                 inflate: 0.0,
                         mirror: false,
                         }],
-            children: vec![Part {
-                pivot: [0.0, 0.0, 0.0],
-                x_rot: 0.0,
-                y_rot: 0.0,
-                z_rot: 0.0,
-                cubes: vec![Cube {
-                    tex: (0.0, 32.0),
-                    origin: [-2.0, 0.0, -2.0],
-                    size: [4.0, 12.0, 4.0],
-                    inflate: 0.25,
-                                mirror: false,
-                                }],
-                children: vec![],
-            }],
+            children: if state.skeleton {
+                vec![]
+            } else {
+                vec![Part {
+                    pivot: [0.0, 0.0, 0.0],
+                    x_rot: 0.0,
+                    y_rot: 0.0,
+                    z_rot: 0.0,
+                    cubes: vec![Cube {
+                        tex: (0.0, 32.0),
+                        origin: [-2.0, 0.0, -2.0],
+                        size: [4.0, 12.0, 4.0],
+                        inflate: 0.25,
+                                    mirror: false,
+                                    }],
+                    children: vec![],
+                }]
+            },
         },
-        // left leg (+ left pants child)
+        // left leg (+ left pants child — the thin limb rides the
+        // builder's own .mirror() at the SHARED (0,16) row)
         Part {
             pivot: leg_l_pivot,
             x_rot: leg_l_x,
             y_rot: leg_l_y,
             z_rot: leg_l_z,
             cubes: vec![Cube {
-                tex: (16.0, 48.0),
-                origin: [-2.0, 0.0, -2.0],
-                size: [4.0, 12.0, 4.0],
+                tex: if state.skeleton { (0.0, 16.0) } else { (16.0, 48.0) },
+                origin: if state.skeleton { leg_box } else { [-2.0, 0.0, -2.0] },
+                size: leg_w,
                 inflate: 0.0,
-                        mirror: false,
+                        mirror: state.skeleton,
                         }],
-            children: vec![Part {
-                pivot: [0.0, 0.0, 0.0],
-                x_rot: 0.0,
-                y_rot: 0.0,
-                z_rot: 0.0,
-                cubes: vec![Cube {
-                    tex: (0.0, 48.0),
-                    origin: [-2.0, 0.0, -2.0],
-                    size: [4.0, 12.0, 4.0],
-                    inflate: 0.25,
-                                mirror: false,
-                                }],
-                children: vec![],
-            }],
+            children: if state.skeleton {
+                vec![]
+            } else {
+                vec![Part {
+                    pivot: [0.0, 0.0, 0.0],
+                    x_rot: 0.0,
+                    y_rot: 0.0,
+                    z_rot: 0.0,
+                    cubes: vec![Cube {
+                        tex: (0.0, 48.0),
+                        origin: [-2.0, 0.0, -2.0],
+                        size: [4.0, 12.0, 4.0],
+                        inflate: 0.25,
+                                    mirror: false,
+                                    }],
+                    children: vec![],
+                }]
+            },
         },
     ]
 }
@@ -5539,6 +5682,7 @@ mod tests {
     fn the_rest_pose_lands_where_the_entity_chain_speaks() {
         let model = AvatarModel {
             rgba: vec![255; 64 * 64 * 4],
+            side_v: 64,
         };
         let feet = Vec3::new(10.0, 0.0, 20.0);
         let quads = model.quads(&AvatarState::rest(0.0, 0.0, 0.0), feet, 0.0, 0.0);
@@ -5581,6 +5725,7 @@ mod tests {
     fn the_models_north_face_becomes_the_worlds_facing_side() {
         let model = AvatarModel {
             rgba: vec![255; 64 * 64 * 4],
+            side_v: 64,
         };
         let feet = Vec3::new(0.0, 0.0, 0.0);
         let quads = model.quads(&AvatarState::rest(0.0, 0.0, 0.0), feet, 0.0, 0.0);
@@ -5609,6 +5754,7 @@ mod tests {
     fn the_walk_cosines_swing_the_legs() {
         let model = AvatarModel {
             rgba: vec![255; 64 * 64 * 4],
+            side_v: 64,
         };
         let feet = Vec3::new(0.0, 0.0, 0.0);
         let mut state = AvatarState::rest(0.0, 0.0, 0.0);
@@ -5629,6 +5775,7 @@ mod tests {
     fn the_crouch_drops_and_tilts_the_model() {
         let model = AvatarModel {
             rgba: vec![255; 64 * 64 * 4],
+            side_v: 64,
         };
         let feet = Vec3::new(0.0, 0.0, 0.0);
         let mut state = AvatarState::rest(0.0, 0.0, 0.0);
@@ -5671,6 +5818,7 @@ mod tests {
     fn the_swing_bends_the_attacking_arm() {
         let model = AvatarModel {
             rgba: vec![255; 64 * 64 * 4],
+            side_v: 64,
         };
         let feet = Vec3::new(0.0, 0.0, 0.0);
         let mut state = AvatarState::rest(0.0, 0.0, 0.0);
@@ -5692,6 +5840,7 @@ mod tests {
     fn the_death_flip_lays_the_model_flat() {
         let model = AvatarModel {
             rgba: vec![255; 64 * 64 * 4],
+            side_v: 64,
         };
         let feet = Vec3::new(0.0, 0.0, 0.0);
         let mut state = AvatarState::rest(0.0, 0.0, 0.0);
@@ -5723,6 +5872,7 @@ mod tests {
     fn the_zombie_arms_hold_the_outstretched_pose() {
         let model = AvatarModel {
             rgba: vec![255; 64 * 64 * 4],
+            side_v: 64,
         };
         let feet = Vec3::new(0.0, 0.0, 0.0);
         let rest = model.quads(&AvatarState::rest(0.0, 0.0, 0.0), feet, 0.0, 0.0);
@@ -6743,6 +6893,120 @@ mod tests {
             rest_box,
             "the spear's own stanza the sword's box never shares"
         );
+    }
+
+    /// THE SKELETON'S OWN MESH (javap `SkeletonModel.
+    /// createDefaultSkeletonMesh` the 26.2 bytecode speaks): the thin
+    /// 2x12x2 limbs the (40,16)/(0,16) rows unwrap — the LEFT pair the
+    /// builder's own .mirror() the u flip rides — the leg pivots the
+    /// ±2 PartPose.offset keeps (the wide ±1.9 never shares), the
+    /// sleeve/pants children the addOrReplaceChild REPLACE never
+    /// fills, the wide limbs the humanoid's own rows the same builder
+    /// keeps. THE AIM POSE (isAggressive && isHoldingBow — the
+    /// BOW_AND_ARROW the poseRightArm case-3 body assigns): the xRot
+    /// -π/2 + head.xRot, the yRot the ∓0.1 + head.yRot the +0.4 left
+    /// rides. THE AGGRESSIVE BARE (isAggressive && !isHoldingBow — the
+    /// SkeletonModel's OWN branch): at attack_time 0 / age 0 the f1,
+    /// f2 and the bob's sin terms all zero — the xRot -π/2 the raise
+    /// keeps, the zRot the bobArms' cos term the +1/−1 signs split,
+    /// the attackTime the f1/f2 the raise deepens. THE 64x32 SKIN: the
+    /// load's sha1 gate the missing file the None keeps, the pixel's
+    /// own height clamp the v-beyond-32 the half row keeps.
+    #[test]
+    fn the_skeleton_mesh_the_thin_laws_speak() {
+        let mut sk = AvatarState::rest(180.0, 0.0, 0.0);
+        sk.skeleton = true;
+        let parts = build_posed_parts(&sk);
+        // parts order: head, body, right arm, left arm, right leg, left leg
+        assert_eq!(parts.len(), 6, "the thin mesh the same six parts keeps");
+        let ra = &parts[2];
+        let la = &parts[3];
+        let rl = &parts[4];
+        let ll = &parts[5];
+        // the arms: 2x12x2 at (40,16) — the LEFT the .mirror() the u
+        // flip rides — the pivot x ±5 the humanoid shares, NO children
+        assert_eq!(ra.cubes[0].tex, (40.0, 16.0));
+        assert_eq!(ra.cubes[0].origin, [-1.0, -2.0, -1.0]);
+        assert_eq!(ra.cubes[0].size, [2.0, 12.0, 2.0]);
+        assert!(!ra.cubes[0].mirror);
+        assert!(ra.children.is_empty(), "the thin limb the sleeve never fills");
+        assert_eq!(ra.pivot[0], -5.0);
+        assert_eq!(la.cubes[0].tex, (40.0, 16.0));
+        assert!(la.cubes[0].mirror, "the LEFT arm the builder's own .mirror() speaks");
+        assert_eq!(la.pivot[0], 5.0);
+        assert!(la.children.is_empty());
+        // the legs: 2x12x2 at (0,16), the pivots ±2 the PartPose.offset
+        // speaks, the LEFT the same mirror law rides
+        assert_eq!(rl.cubes[0].tex, (0.0, 16.0));
+        assert_eq!(rl.cubes[0].origin, [-1.0, 0.0, -1.0]);
+        assert_eq!(rl.cubes[0].size, [2.0, 12.0, 2.0]);
+        assert_eq!(rl.pivot, [-2.0, 12.0, 0.0], "the thin leg pivot the ±2 keeps");
+        assert!(rl.children.is_empty());
+        assert_eq!(ll.pivot, [2.0, 12.0, 0.0]);
+        assert!(ll.cubes[0].mirror, "the LEFT leg the builder's own .mirror() speaks");
+        // the WIDE humanoid the same builder never shares (the ±1.9
+        // pivots, the 4x12x4 limbs, the left pair the own rects unwrap)
+        let wide = build_posed_parts(&AvatarState::rest(180.0, 0.0, 0.0));
+        assert_eq!(wide[4].pivot[0], -1.9);
+        assert_eq!(wide[2].cubes[0].size, [4.0, 12.0, 4.0]);
+        assert!(!wide[5].cubes[0].mirror, "the wide left leg the own rect unwraps");
+        assert!(!wide[5].children.is_empty(), "the wide limb the pants child keeps");
+
+        // THE AIM POSE (isAggressive && isHoldingBow): the head terms
+        // the pitch/yaw-offset the case-3 body adds
+        let mut aim = AvatarState::rest(180.0, 30.0, 0.0);
+        aim.skeleton = true;
+        aim.skeleton_aggressive = true;
+        aim.skeleton_bow = true;
+        aim.head_yaw_off_deg = 20.0;
+        let parts = build_posed_parts(&aim);
+        let hx = 30.0f32.to_radians();
+        let hy = 20.0f32.to_radians();
+        assert!((parts[2].x_rot - (-1.5707964 + hx)).abs() < 1e-6);
+        assert!((parts[2].y_rot - (-0.1 + hy)).abs() < 1e-6);
+        assert!((parts[3].x_rot - (-1.5707964 + hx)).abs() < 1e-6);
+        assert!(
+            (parts[3].y_rot - (0.1 + hy + 0.4)).abs() < 1e-6,
+            "the +0.4 the left arm's own yRot keeps"
+        );
+
+        // THE AGGRESSIVE BARE (isAggressive && !isHoldingBow): the
+        // zero-clock the xRot -π/2, the yRot the ∓0.1, the zRot the
+        // bobArms' cos term the +1/−1 signs split
+        let mut bare = AvatarState::rest(180.0, 0.0, 0.0);
+        bare.skeleton = true;
+        bare.skeleton_aggressive = true;
+        let parts = build_posed_parts(&bare);
+        assert!((parts[2].x_rot - -1.5707964).abs() < 1e-6);
+        assert!((parts[2].y_rot - -0.1).abs() < 1e-6);
+        assert!((parts[3].y_rot - 0.1).abs() < 1e-6);
+        assert!((parts[2].z_rot - 0.1).abs() < 1e-6, "the bobArms the +1 right rides");
+        assert!((parts[3].z_rot - -0.1).abs() < 1e-6, "the bobArms the −1 left rides");
+        // the swing the attackTime rides: the f1/f2 the raise deepens
+        let mut shooting = bare;
+        shooting.attack_time = 0.5;
+        let parts = build_posed_parts(&shooting);
+        assert!(parts[2].x_rot < -1.5707964, "the f1/f2 the raise deepens");
+
+        // THE 64x32 SKIN (the load's sha1 gate + the pixel's own
+        // height clamp): the missing root the None keeps, the
+        // in-memory half-height texture the v-beyond-32 the 31 row
+        // clamps (no panic, no drift)
+        assert!(
+            AvatarModel::load_skeleton(std::path::Path::new("no-such-root-for-the-test"))
+                .is_none(),
+            "the missing file the honest None keeps"
+        );
+        let model = AvatarModel {
+            rgba: vec![7; 64 * 32 * 4],
+            side_v: 32,
+        };
+        let px = model.pixel(0.0, 31.9);
+        let clamped = model.pixel(0.0, 63.9);
+        assert_eq!(px, clamped, "the v beyond 32 the half-height row clamps");
+        // the bake: the thin body the quads speak
+        let quads = model.quads(&sk, Vec3::ZERO, 0.0, 0.0);
+        assert!(!quads.is_empty(), "the thin mesh bakes");
     }
 
     /// THE ZOMBIE'S OWN ARMOR (the HumanoidArmorLayer the mob render
