@@ -836,7 +836,14 @@ pub const PLAYER_ATTACK_DAMAGE: f64 = 2.0;
 /// mainhand group rides), the ATTACK_SPEED the `fload_2` (-2.4) the
 /// plain addend keeps). The non-sword the zero addend returns (the
 /// fist the base's own floor rides).
-fn held_attack_addend(held: Option<&str>) -> f64 {
+///
+/// THE HOLDER'S OWN LAW (the attribute pipeline the equipment walk
+/// speaks — the item's mainhand ATTACK_DAMAGE modifier ANY holder's
+/// attribute rides): the player's first-person lane AND the armed
+/// zombie's `doHurtTarget` the SAME table walk — the armed mob the
+/// sword's own bonus deals, the bare hand the base's own floor
+/// keeps. `pub(crate)` the mob lane's own hit rides.
+pub(crate) fn held_attack_addend(held: Option<&str>) -> f64 {
     let Some(name) = held else { return 0.0 };
     // THE TOOL'S OWN ROWS FIRST (the axe/shovel/pickaxe/hoe the
     // dmg_arg + bonus the lambda bodies keep — the sword the tool

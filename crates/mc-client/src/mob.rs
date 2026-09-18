@@ -1793,11 +1793,20 @@ impl Zombie {
             .is_none();
             if self.ticks_until_attack <= 0 && self.within_melee_range(p) && los {
                 // doHurtTarget: the damage speaks the ATTACK_DAMAGE
-                // attribute, the swing rides the main hand, the
-                // knockback direction runs victim-minus-attacker
+                // attribute — the base the createAttributes keeps PLUS
+                // the weapon's own modifier the attribute pipeline
+                // rides (the item's mainhand ATTACK_DAMAGE ADD_VALUE
+                // ANY holder's attribute carries — the SAME table the
+                // player's first-person lane walks): the armed zombie
+                // the sword's own bonus deals, the bare hand the 3.0
+                // floor keeps, the offhand word the modifier never
+                // rides (the MAINHAND slot the modifiers tag to), the
+                // swing rides the main hand, the knockback direction
+                // runs victim-minus-attacker
                 let (kx, kz) = (p.x - self.x, p.z - self.z);
                 events.attack = Some(MobAttack {
-                    damage: ZOMBIE_ATTACK_DAMAGE,
+                    damage: ZOMBIE_ATTACK_DAMAGE
+                        + crate::screens::held_attack_addend(self.held_weapon),
                     dir_x: kx,
                     dir_z: kz,
                 });
@@ -4337,6 +4346,72 @@ mod tests {
             }
         }
         assert!(raised, "the arms raise on the wind-up");
+    }
+
+    /// THE ARMED HIT'S OWN PIN (the attribute pipeline the equipment
+    /// walk speaks — the item's mainhand ATTACK_DAMAGE modifier ANY
+    /// holder's attribute rides): the iron sword the 3.0 + 5.0 the
+    /// hit deals (the sword's own base + the IRON tier's bonus — the
+    /// same amounts the player's first-person lane walks), the iron
+    /// axe the tool row's 8.0 modifier the 11.0 total deals, the
+    /// non-weapon word the 0.0 addend the bare 3.0 keeps, the
+    /// OFFHAND sword the mainhand slot the modifier tags to the bare
+    /// floor keeps.
+    #[test]
+    fn the_armed_zombies_hit_the_weapons_own_bonus_deals() {
+        let world = flat_world();
+        // the arms-length pad: the melee range the first tick lands
+        let land = |z: &mut Zombie| -> f64 {
+            let player = player_at(z.x - 1.0, z.y, z.z);
+            for _ in 0..40 {
+                if let Some(atk) = z.tick(&world, Some(&player), NIGHT).attack {
+                    return atk.damage;
+                }
+            }
+            panic!("the melee hit never landed");
+        };
+        // the BARE hand the 3.0 floor keeps (the createAttributes' own
+        // value — the same pin the chase test walks)
+        let mut bare = Zombie::new(1, 8.0, 5.0, 8.0, 7);
+        bare.on_ground = true;
+        assert!((land(&mut bare) - 3.0).abs() < 1e-9, "the bare the floor keeps");
+        // the IRON SWORD the 8.0 total deals (the modifier 5.0: the
+        // sword's 3.0 base + the IRON tier's 2.0 bonus)
+        let mut sword = Zombie::new(2, 8.0, 5.0, 8.0, 7);
+        sword.on_ground = true;
+        sword.held_weapon = Some("iron_sword");
+        assert!(
+            (land(&mut sword) - 8.0).abs() < 1e-9,
+            "the iron sword the 3+5 the hit deals"
+        );
+        // the IRON AXE the tool row's own modifier deals (6.0 + 2.0 —
+        // the 11.0 total the tool table's dmg_arg keeps)
+        let mut axe = Zombie::new(3, 8.0, 5.0, 8.0, 7);
+        axe.on_ground = true;
+        axe.held_weapon = Some("iron_axe");
+        assert!(
+            (land(&mut axe) - 11.0).abs() < 1e-9,
+            "the iron axe the 3+8 the hit deals"
+        );
+        // the NON-WEAPON word the honest bare keeps (the helmet the
+        // attack table never rows — the 0.0 addend the 3.0 floor keeps)
+        let mut helmeted = Zombie::new(4, 8.0, 5.0, 8.0, 7);
+        helmeted.on_ground = true;
+        helmeted.held_weapon = Some("iron_helmet");
+        assert!(
+            (land(&mut helmeted) - 3.0).abs() < 1e-9,
+            "the non-weapon the bare keeps"
+        );
+        // the OFFHAND sword the modifier never rides (the MAINHAND slot
+        // the attribute modifiers tag to — the left hand the damage
+        // never arms)
+        let mut lefty = Zombie::new(5, 8.0, 5.0, 8.0, 7);
+        lefty.on_ground = true;
+        lefty.held_offhand = Some("iron_sword");
+        assert!(
+            (land(&mut lefty) - 3.0).abs() < 1e-9,
+            "the offhand the modifier never rides"
+        );
     }
 
     /// THE FOOTSTEP CADENCE (Entity.move's own law over the walking
