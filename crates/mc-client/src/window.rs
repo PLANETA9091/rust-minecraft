@@ -130,8 +130,10 @@ fn run_join(
                 crate::world_view::HealthView,
                 Vec<crate::world_view::WireMob>,
                 Vec<crate::world_view::WireBoat>,
+                Vec<crate::world_view::WireArrow>,
                 Vec<crate::world_view::WireVoice>,
                 Vec<crate::world_view::WireWorldVoice>,
+                Vec<crate::world_view::WireArrowSync>,
                 Option<crate::world_view::WireSidebar>,
                 crate::world_view::WirePlayerList,
                 Option<crate::world_view::WireRide>,
@@ -196,6 +198,7 @@ fn run_join(
             view.model.drain_entity_hurts();
             view.model.drain_entity_sounds();
             view.model.drain_world_sounds();
+            view.model.drain_arrow_syncs();
             let spawn_biome = first.biome.clone();
             let shipped = tx.send((
                 id,
@@ -510,6 +513,7 @@ fn run_join(
                             view.model.drain_entity_hurts();
                             view.model.drain_entity_sounds();
                             view.model.drain_world_sounds();
+                            view.model.drain_arrow_syncs();
                             if live_tx
                                 .send(Ok((
                                     upd.world,
@@ -540,6 +544,12 @@ fn run_join(
                                     // the boats the server spawned stream to
                                     // the boat lane
                                     upd.boats,
+                                    // the shots ride with the population —
+                                    // the arrows the server spawned stream to
+                                    // the net-arrow lane (the spawns, the
+                                    // despawns — the sim the client's own
+                                    // tick owns between them)
+                                    upd.arrows,
                                     // the mobs' voices ride with the
                                     // population — the sounds the server
                                     // played stream to the voice lane
@@ -549,6 +559,12 @@ fn run_join(
                                     // played at a world spot stream to
                                     // the positioned lane
                                     upd.world_voices,
+                                    // the arrows' sync words ride with the
+                                    // voices — the Entity Position Sync
+                                    // corrections stream to the net-arrow
+                                    // lane's re-pose law (each word rides
+                                    // exactly one shipped refresh)
+                                    upd.arrow_syncs,
                                     // the scoreboard's belief rides with
                                     // them — the sidebar the wire trio
                                     // keeps streams to the HUD's lane
@@ -673,8 +689,10 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
                 crate::world_view::HealthView,
                 Vec<crate::world_view::WireMob>,
                 Vec<crate::world_view::WireBoat>,
+                Vec<crate::world_view::WireArrow>,
                 Vec<crate::world_view::WireVoice>,
                 Vec<crate::world_view::WireWorldVoice>,
+                Vec<crate::world_view::WireArrowSync>,
                 Option<crate::world_view::WireSidebar>,
                 crate::world_view::WirePlayerList,
                 Option<crate::world_view::WireRide>,
@@ -959,8 +977,10 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
                     health,
                     mobs,
                     boats,
+                    arrows,
                     voices,
                     world_voices,
+                    arrow_syncs,
                     sidebar,
                     player_list,
                     ride,
@@ -996,6 +1016,17 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
                     // models the submit render draws — the ride lane's
                     // own vehicle the camera sits in)
                     app.live_boats_updated(boats);
+                    // the net-arrow lane beside the boat lane's: the
+                    // spawns and the despawns the wire's own population
+                    // speaks (the fresh id the spawn word builds, the
+                    // missing id drops — the sim the client's own tick
+                    // owns between the refreshes)
+                    app.live_net_arrows_updated(arrows);
+                    // the arrows' sync lane beside it: the Entity
+                    // Position Sync corrections re-pose the sim shots
+                    // at the server's word (the near band the transit
+                    // keeps, the far band the snap answers)
+                    app.live_arrow_syncs_updated(arrow_syncs);
                     // the voice lane beside the mob lane's: the sounds
                     // the SERVER played for its mobs land at the named
                     // entities (the entity lookup's own gate — the

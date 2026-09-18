@@ -201,6 +201,16 @@ pub struct WorldModel {
     /// no-voice) + the volume/pitch. A MAILBOX like the hurts' — the
     /// refresh ships each voice exactly once, the drain empties it.
     pub entity_sounds: Vec<EntityVoiceArm>,
+    /// The arrows' PENDING SYNC MAILBOX — the Entity Position Sync
+    /// packets' words for `minecraft:arrow` entities (see
+    /// [`ArrowSyncArm`]): the server's authoritative corrections the
+    /// client-side sim lane re-poses at, shipped once with the refresh
+    /// that carried them (the worker's own drain empties the mailbox
+    /// after — each word rides exactly one ship). The OTHER entity
+    /// types never enter it: the mobs and the hulls ride the store's
+    /// own projection law (the lerp the refresh serves), the arrows
+    /// are the lane whose client-side sim never reads the store back.
+    pub arrow_syncs: Vec<ArrowSyncArm>,
     /// The world's PENDING VOICES (the Sound packets — the GLOBAL
     /// sounds the SERVER plays at a world spot: the doors and the
     /// machines the block-use lanes trigger, the weather, the
@@ -338,6 +348,27 @@ pub struct WorldVoiceArm {
     pub volume: f32,
     /// The pitch, verbatim from the packet.
     pub pitch: f32,
+}
+
+/// One pending ARROW position sync — the Entity Position Sync packet's
+/// word for an `minecraft:arrow` entity the model keeps until the
+/// refresh ships it (see [`WorldModel::arrow_syncs`]). The position and
+/// the exact float angles ride verbatim; the DELTA (velocity) word is
+/// deliberately absent — the 26.2 handler's raw walk never reads it
+/// (no `setDeltaMovement` call the whole method speaks), the client
+/// sim's own flight keeps its physics.
+#[derive(Debug, Clone, PartialEq)]
+pub struct ArrowSyncArm {
+    /// The synced arrow's id (the net-arrow lane's own match key).
+    pub id: i32,
+    /// The synced position (full-precision doubles, verbatim).
+    pub x: f64,
+    pub y: f64,
+    pub z: f64,
+    /// The synced yaw, verbatim.
+    pub y_rot: f32,
+    /// The synced pitch, verbatim.
+    pub x_rot: f32,
 }
 
 /// The model's view of ONE active mob effect on the LOCAL player — the
@@ -725,6 +756,7 @@ impl WorldModel {
             entity_hurts: std::collections::BTreeMap::new(),
             entity_equipment: std::collections::BTreeMap::new(),
             entity_sounds: Vec::new(),
+            arrow_syncs: Vec::new(),
             world_sounds: Vec::new(),
             objectives: std::collections::HashMap::new(),
             display_slots: std::collections::HashMap::new(),
@@ -852,6 +884,14 @@ impl WorldModel {
     /// the gain from the arm's own spot.
     pub fn drain_world_sounds(&mut self) -> Vec<WorldVoiceArm> {
         std::mem::take(&mut self.world_sounds)
+    }
+
+    /// The arrows' sync mailbox's own drain (the same walk the voices'
+    /// speak — each word ships exactly once): the Entity Position Sync
+    /// corrections the net-arrow lane re-poses at, the delta word the
+    /// 26.2 handler never read stays absent from the arms.
+    pub fn drain_arrow_syncs(&mut self) -> Vec<ArrowSyncArm> {
+        std::mem::take(&mut self.arrow_syncs)
     }
 
     /// One entity type's registry name, by the synced-registry id the
@@ -1021,6 +1061,9 @@ impl WorldModel {
                 // the voices' mailbox dies with the level too (the same
                 // ids — the new level's population speaks its own)
                 self.entity_sounds.clear();
+                // the arrows' sync mailbox dies with the level too (the
+                // same ids — the new level's shots speak their own)
+                self.arrow_syncs.clear();
                 // the world sounds' mailbox dies with the level (the
                 // same walk — the old level's spots never speak again)
                 self.world_sounds.clear();
@@ -1261,6 +1304,26 @@ impl WorldModel {
                 e.z = sync.z;
                 e.y_rot = sync.y_rot;
                 e.x_rot = sync.x_rot;
+                let type_id = e.type_id;
+                drop(e);
+                // THE ARROW SYNC'S OWN MAILBOX (the client-side sim
+                // lane's wire word): the projectile entities the net-
+                // arrow lane simulates never read the store back, so
+                // the server's correction reaches them through this
+                // mailbox — the refresh ships it, the drain empties it,
+                // each word rides exactly one ship. The OTHER types stay
+                // outside: the mobs and the hulls ride the store's own
+                // projection law the refresh serves.
+                if self.entity_type_name(type_id) == Some("minecraft:arrow") {
+                    self.arrow_syncs.push(ArrowSyncArm {
+                        id: sync.id,
+                        x: sync.x,
+                        y: sync.y,
+                        z: sync.z,
+                        y_rot: sync.y_rot,
+                        x_rot: sync.x_rot,
+                    });
+                }
                 true
             }
             PlayEvent::EntityDeltaPos(m) => {
@@ -3982,6 +4045,113 @@ mod tests {
             portal_cooldown: 60,
         })));
         assert_eq!(m.vehicle_of(1), None, "the ride belief dies with the level");
+    }
+
+    /// THE ARROW SYNC'S OWN MAILBOX (the EntityMoved walk's arrow arm):
+    /// the arrow-type sync arms the mailbox (the drain ships the word
+    /// once, the second drain the spent silence keeps), the non-arrow
+    /// sync stays outside (the mobs ride the store's own projection
+    /// law), the unknown id is refused AND arms nothing, and the level
+    /// change empties the box (the same-ids law the voices' own walk
+    /// keeps).
+    #[test]
+    fn the_arrow_sync_words_the_mailbox() {
+        let mut m = WorldModel::new();
+        // the synced registry: type id 0 = zombie (the mob lane's own
+        // body), id 1 = arrow (the shot the sim lane serves)
+        m.registry.entity_types = vec![
+            "minecraft:zombie".to_string(),
+            "minecraft:arrow".to_string(),
+        ];
+        // the arrow rides the store beside a zombie (the lane's own
+        // contrast)
+        for (id, type_id) in [(7, 0), (8, 1)] {
+            assert!(m.apply(PlayEvent::Spawn(EntitySpawn {
+                id,
+                uuid: id as u128,
+                type_id,
+                x: 10.0,
+                y: 64.0,
+                z: 10.0,
+                movement: [0.0; 3],
+                x_rot: 0.0,
+                y_rot: 0.0,
+                y_head_rot: 0.0,
+                data: 0,
+            })));
+        }
+        // THE ZOMBIE'S SYNC: the store re-poses, the mailbox stays
+        // silent (the mobs never enter the arrows' own lane)
+        assert!(m.apply(PlayEvent::EntityMoved(EntityPositionSync {
+            id: 7,
+            x: 12.0,
+            y: 64.0,
+            z: 10.0,
+            delta: [0.0; 3],
+            y_rot: 0.0,
+            x_rot: 0.0,
+            on_ground: true,
+        })));
+        assert!(m.arrow_syncs.is_empty(), "the mob stays outside");
+        // THE ARROW'S SYNC: the store re-poses AND the mailbox arms
+        // (the sim lane's wire word — the position and the exact
+        // float angles; the delta word never rides)
+        assert!(m.apply(PlayEvent::EntityMoved(EntityPositionSync {
+            id: 8,
+            x: 14.5,
+            y: 65.25,
+            z: 9.75,
+            delta: [0.1, 0.2, 0.3],
+            y_rot: -45.5,
+            x_rot: 10.0,
+            on_ground: false,
+        })));
+        assert_eq!(m.entity(8).unwrap().x, 14.5, "the store's own truth");
+        assert_eq!(m.arrow_syncs.len(), 1, "the word armed");
+        assert_eq!(m.arrow_syncs[0].id, 8);
+        assert_eq!(m.arrow_syncs[0].x, 14.5);
+        assert_eq!(m.arrow_syncs[0].y_rot, -45.5);
+        // THE DRAIN: the word ships exactly once, the spent silence
+        // ships nothing
+        let drained = m.drain_arrow_syncs();
+        assert_eq!(drained.len(), 1, "the drain ships the word");
+        assert!(m.arrow_syncs.is_empty(), "the mailbox spent");
+        assert!(
+            m.drain_arrow_syncs().is_empty(),
+            "the drained silence ships nothing"
+        );
+        // THE UNKNOWN ID: refused AND armed nothing (the spawn packet
+        // stays the only creator)
+        assert!(!m.apply(PlayEvent::EntityMoved(EntityPositionSync {
+            id: 999,
+            x: 1.0,
+            y: 1.0,
+            z: 1.0,
+            delta: [0.0; 3],
+            y_rot: 0.0,
+            x_rot: 0.0,
+            on_ground: false,
+        })));
+        assert!(m.arrow_syncs.is_empty(), "no phantom word");
+        // THE LEVEL CHANGE: the mailbox dies with the old level (the
+        // same-ids law the voices' own walk keeps)
+        assert!(m.apply(PlayEvent::EntityMoved(EntityPositionSync {
+            id: 8,
+            x: 15.0,
+            y: 65.0,
+            z: 9.0,
+            delta: [0.0; 3],
+            y_rot: 0.0,
+            x_rot: 0.0,
+            on_ground: false,
+        })));
+        assert_eq!(m.arrow_syncs.len(), 1, "the word armed again");
+        assert!(m.apply(PlayEvent::Respawn(SpawnInfo {
+            dimension_type_id: 0,
+            dimension: "minecraft:overworld".to_string(),
+            portal_cooldown: 60,
+        })));
+        assert!(m.arrow_syncs.is_empty(), "the box dies with the level");
     }
 
     #[test]

@@ -9353,6 +9353,57 @@ impl App {
         // Entities spoke, no ghosts)
     }
 
+    /// THE WIRE ARROWS' SYNC LANE (the vanilla ClientPacketListener's
+    /// own handleEntityPositionSync walk — the raw disasm the 26.2 jar
+    /// speaks): the server's authoritative correction re-poses the
+    /// client-side sim shot. The lookup names the id the client tracks
+    /// (an unknown id drops — the spawn packet stays the only creator,
+    /// the phantom law the model's own store keeps); the DISTANCE the
+    /// snap-vs-interpolate word speaks (the dcmpg 4096.0 the raw
+    /// disasm reads — 64 cells squared): inside the band the current
+    /// pose rides the word while the prev trio keeps the OLD pose (the
+    /// render's own lerp walks the transit — the interpolation law the
+    /// repo's render lane paces) and the rotation ease-from keeps the
+    /// old angles; beyond it the snap arms the prev trio AND the
+    /// rotation ease-from AT the word (the vanilla snapTo's
+    /// setOldPosAndRot — the render never streaks through a teleport).
+    /// The DELTA (velocity) word never enters the lane (no
+    /// setDeltaMovement call the whole handler speaks — the sim's own
+    /// flight keeps its physics), the on-ground byte the visual lane
+    /// never carries. The offline lane's arrows are never touched.
+    pub fn live_arrow_syncs_updated(&mut self, syncs: Vec<crate::world_view::WireArrowSync>) {
+        if !self.world_is_network {
+            return;
+        }
+        for s in syncs {
+            let Some(a) = self.net_arrows.iter_mut().find(|a| a.id == s.id) else {
+                continue; // the lookup's own gate — no phantom shots
+            };
+            let (dx, dy, dz) = (s.x - a.x, s.y - a.y, s.z - a.z);
+            if dx * dx + dy * dy + dz * dz > 4096.0 {
+                // THE SNAP ARM (the vanilla snapTo walk): the prev
+                // trio AND the rotation ease-from arm AT the word —
+                // the render's first lerp never moves
+                a.prev_x = s.x;
+                a.prev_y = s.y;
+                a.prev_z = s.z;
+                a.y_rot_o = s.yaw;
+                a.x_rot_o = s.pitch;
+            }
+            // THE POSE LANDS VERBATIM (both walks end at the word —
+            // the exact float angles ride; the near arm's prev and
+            // ease-from keep the OLD pose so the render's own lerp
+            // walks the transit)
+            a.x = s.x;
+            a.y = s.y;
+            a.z = s.z;
+            a.y_rot = s.yaw;
+            a.x_rot = s.pitch;
+            // THE VELOCITY'S OWN SILENCE: the handler never reads the
+            // delta word — the sim's own flight keeps its physics
+        }
+    }
+
     /// THE WIRE MOBS' VOICE LANE (the vanilla ClientLevel's own
     /// handleEntitySound): the Entity Sound mailbox's shipped voices
     /// land at the ENTITIES the level names — an id outside the mob
@@ -18327,6 +18378,105 @@ mod tests {
             yaw: 0.0,
             pitch: 0.0,
             crit: false,
+        }]);
+        assert!(offline.net_arrows.is_empty(), "the offline lane never mixes");
+    }
+
+    /// THE WIRE ARROWS' SYNC LANE (the handleEntityPositionSync walk
+    /// the raw disasm speaks): the near correction re-poses the sim at
+    /// the word with the prev trio keeping the OLD pose (the render's
+    /// own transit), the far correction snaps (the prev trio AND the
+    /// rotation ease-from arm AT the word — the teleport never
+    /// streaks), the velocity keeps its physics (the delta word the
+    /// handler never read), the unknown id drops (no phantom), and the
+    /// offline gate holds.
+    #[test]
+    fn the_arrow_sync_reposes_the_client_shot() {
+        let mut app = App::new(3);
+        app.open(ScreenKind::Connect);
+        app.net_world = Some(air_net_world(2, 0));
+        app.enter_network_world(None, Skybox::Overworld, None, None);
+        // the spawn lands at the word, one tick flies the sim's own law
+        app.live_net_arrows_updated(vec![crate::world_view::WireArrow {
+            id: 300,
+            x: 10.0,
+            y: 66.0,
+            z: 10.0,
+            vx: 2.4,
+            vy: 0.0,
+            vz: 0.0,
+            yaw: -90.0,
+            pitch: 0.0,
+            crit: false,
+        }]);
+        app.tick_net_arrows();
+        assert!((app.net_arrows[0].x - 12.4).abs() < 1e-9, "the flight's own spot");
+        // THE NEAR SYNC (0.5 out — inside the 64-cell band): the pose
+        // and the exact angles land, the prev trio AND the rotation
+        // ease-from keep the OLD pose (the render walks the transit)
+        app.live_arrow_syncs_updated(vec![crate::world_view::WireArrowSync {
+            id: 300,
+            x: 12.9,
+            y: 66.0,
+            z: 10.0,
+            yaw: -85.0,
+            pitch: 0.0,
+        }]);
+        assert!((app.net_arrows[0].x - 12.9).abs() < 1e-9, "the word lands");
+        assert!((app.net_arrows[0].prev_x - 10.0).abs() < 1e-9, "the transit keeps");
+        assert!(
+            (app.net_arrows[0].y_rot_o + 90.0).abs() < 1e-4,
+            "the ease-from keeps"
+        );
+        assert!((app.net_arrows[0].y_rot + 85.0).abs() < 1e-4, "the angles land");
+        // THE VELOCITY'S OWN SILENCE: the drag's word stands (the
+        // delta the handler never read)
+        assert!((app.net_arrows[0].vx - 2.376).abs() < 1e-9, "the physics keeps");
+        // THE NEXT TICK re-arms the prev trio at the synced pose (the
+        // tick's own head) and the flight resumes from the word
+        app.tick_net_arrows();
+        assert!((app.net_arrows[0].prev_x - 12.9).abs() < 1e-9, "the tick's own head");
+        // THE FAR SYNC (100 cells out — beyond the 64 band): the snap
+        // arms the prev trio AND the ease-from AT the word
+        app.live_arrow_syncs_updated(vec![crate::world_view::WireArrowSync {
+            id: 300,
+            x: 112.9,
+            y: 66.0,
+            z: 10.0,
+            yaw: -80.0,
+            pitch: 0.0,
+        }]);
+        assert!((app.net_arrows[0].x - 112.9).abs() < 1e-9, "the teleport lands");
+        assert!(
+            (app.net_arrows[0].prev_x - 112.9).abs() < 1e-9,
+            "the snap's own arm — no streak"
+        );
+        assert!(
+            (app.net_arrows[0].y_rot_o + 80.0).abs() < 1e-4,
+            "the ease-from armed at the word"
+        );
+        // THE UNKNOWN ID: the lookup's own gate — no phantom shot
+        app.live_arrow_syncs_updated(vec![crate::world_view::WireArrowSync {
+            id: 999,
+            x: 1.0,
+            y: 1.0,
+            z: 1.0,
+            yaw: 0.0,
+            pitch: 0.0,
+        }]);
+        assert_eq!(app.net_arrows.len(), 1, "no phantom");
+        assert!((app.net_arrows[0].x - 112.9).abs() < 1e-9, "the neighbor untouched");
+        // THE OFFLINE GATE: the lane the network arm never opened
+        // lands nothing
+        let mut offline = App::new(3);
+        offline.open(ScreenKind::World);
+        offline.live_arrow_syncs_updated(vec![crate::world_view::WireArrowSync {
+            id: 400,
+            x: 1.0,
+            y: 1.0,
+            z: 1.0,
+            yaw: 0.0,
+            pitch: 0.0,
         }]);
         assert!(offline.net_arrows.is_empty(), "the offline lane never mixes");
     }

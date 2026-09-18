@@ -306,6 +306,12 @@ pub struct SnapshotView {
     /// honest silence: no arrow the server spawned, the shape every
     /// lane rides).
     pub arrows: Vec<WireArrow>,
+    /// The wire arrows' PENDING SYNC WORDS — the Entity Position Sync
+    /// mailbox the model resolved (see [`WireArrowSync`]): the server's
+    /// corrections for the shots in flight, shipped once with the
+    /// refresh that carried them (the worker's own drain empties the
+    /// mailbox after — each word rides exactly one ship).
+    pub arrow_syncs: Vec<WireArrowSync>,
     /// The wire mobs' PENDING VOICES — the Entity Sound mailbox the
     /// model resolved (see [`WireVoice`]): the sounds the SERVER
     /// played for its mobs, shipped once with the refresh that
@@ -837,6 +843,26 @@ pub fn arrows_view(model: &WorldModel) -> Vec<WireArrow> {
             })
         })
         .collect()
+}
+
+/// One wire ARROW position sync — the Entity Position Sync packet's
+/// own word for a `minecraft:arrow` entity, projected from the model's
+/// pending-sync mailbox (see [`crate::world_model::ArrowSyncArm`]): the
+/// server's authoritative correction the net-arrow lane re-poses at
+/// (the 26.2 handler's near/far law — interpolate inside the 64-cell
+/// band, snap beyond it). The velocity word is deliberately absent —
+/// the handler's raw walk never reads it, the sim's own physics keeps.
+#[derive(Debug, Clone, PartialEq)]
+pub struct WireArrowSync {
+    pub id: i32,
+    pub x: f64,
+    pub y: f64,
+    pub z: f64,
+    /// The synced yaw, verbatim (the cross's own rotation the render
+    /// walk reads).
+    pub yaw: f32,
+    /// The synced pitch, verbatim.
+    pub pitch: f32,
 }
 
 /// One wire mob as the renderer consumes it — the Add Entity
@@ -1973,6 +1999,9 @@ pub fn materialize_snapshot_view(
         // and no arrows (a fresh join carries no shots in flight — the
         // empty lane the flight render skips)
         arrows: Vec::new(),
+        // and no arrow syncs (the join snapshot carries no corrections
+        // — the empty mailbox the projection walks)
+        arrow_syncs: Vec::new(),
         // and no voices yet (the join snapshot carries no played sounds
         // — the empty mailbox the projection walks)
         voices: Vec::new(),
@@ -2203,6 +2232,24 @@ impl LiveView {
         // hand and the HUD's row do (the pose-less arm included)
         let (inventory_slots, inventory_bundles, inventory_state_id, inventory_carried) =
             live_inventory_view(&self.model);
+        // the arrows' sync mailbox's own projection (the words in wire
+        // order — the worker's drain empties the mailbox after the
+        // ship, each word rides exactly one refresh; the SAME arms both
+        // the pose and the pose-less walk serve — the corrections are
+        // the connection's own word, not the pose's)
+        let arrow_syncs = self
+            .model
+            .arrow_syncs
+            .iter()
+            .map(|arm| WireArrowSync {
+                id: arm.id,
+                x: arm.x,
+                y: arm.y,
+                z: arm.z,
+                yaw: arm.y_rot,
+                pitch: arm.x_rot,
+            })
+            .collect();
         let Some(player) = self.model.player.as_ref() else {
             return SnapshotView {
                 world: materialize(
@@ -2236,6 +2283,9 @@ impl LiveView {
                 // the arrows' belief rides the same arm — the shots are
                 // the connection's own population, not the pose's
                 arrows: arrows_view(&self.model),
+                // the sync words ride the pose-less arm too — the
+                // corrections are the connection's own word
+                arrow_syncs,
                 voices,
                 world_voices,
                 // the scoreboard's belief rides the pose-less arm too —
@@ -2279,6 +2329,9 @@ impl LiveView {
             // the shots ride with the population — the arrows the server
             // spawned follow the store exactly like the boats do
             arrows: arrows_view(&self.model),
+            // the sync words ride every refresh too — the corrections
+            // follow the mailbox exactly like the voices do
+            arrow_syncs,
             voices,
             world_voices,
             // the scoreboard's belief rides every refresh too — the

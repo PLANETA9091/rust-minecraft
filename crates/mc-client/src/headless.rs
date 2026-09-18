@@ -2028,6 +2028,26 @@ pub fn render_gui_screen_opts(
                         for _ in 0..ticks {
                             app.tick_net_arrows();
                         }
+                        // THE WIRE'S OWN CORRECTION (the Entity Position
+                        // Sync the server's tracker speaks mid-flight —
+                        // the raw disasm the 26.2 jar speaks): one sync
+                        // lands the shot 1.2 cells off the flight line
+                        // at yaw 0 (the sim re-poses at the word, the
+                        // near band the prev trio's transit keeps — the
+                        // frame the corrected spot shows)
+                        let spot = app.net_arrows.first().map(|a| (a.x, a.y, a.z));
+                        if let Some((sx, sy, sz)) = spot {
+                            app.live_arrow_syncs_updated(vec![
+                                crate::world_view::WireArrowSync {
+                                    id: 300,
+                                    x: sx + 1.2,
+                                    y: sy,
+                                    z: sz,
+                                    yaw: 0.0,
+                                    pitch: 0.0,
+                                },
+                            ]);
+                        }
                     }
             }
         }
