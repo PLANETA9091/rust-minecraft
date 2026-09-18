@@ -6665,6 +6665,86 @@ mod tests {
         assert!(held_item_quads(&rest, Vec3::ZERO, 0.0, 0.0, "item/no_such_model").is_none());
     }
 
+    /// THE ZOMBIE'S OWN HAND (the mob-held weapon lane the render round
+    /// wires): the spawn roll's word the registry walk names, the SAME
+    /// third-person chain the player's lane speaks — the aggressive
+    /// arms-up pose the weapon follows (the animateZombieArms law the
+    /// right arm raises, the item rides the posed arm chain), the world
+    /// feet the fold rides (the box the feet translate shifts by the
+    /// exact offset), the spear's own in-hand model the layered def
+    /// answers (the 26.2's own item the RESOLVED_ITEM_LAYERS row
+    /// speaks — item/iron_spear_in_hand, the item/spear_in_hand
+    /// display json the stanza carries).
+    #[test]
+    fn the_zombie_held_weapon_rides_the_arm_and_the_feet() {
+        let mut rest = AvatarState::rest(180.0, 0.0, 0.0);
+        rest.zombie = true;
+        let box_of =
+            |qs: &Vec<HeadBlockQuad>| -> ([f32; 3], [f32; 3]) {
+                let mut lo = [f32::MAX; 3];
+                let mut hi = [f32::MIN; 3];
+                for q in qs {
+                    for p in q.pts.iter() {
+                        for k in 0..3 {
+                            lo[k] = lo[k].min(p[k]);
+                            hi[k] = hi[k].max(p[k]);
+                        }
+                    }
+                }
+                (lo, hi)
+            };
+        let quads = held_item_quads(&rest, Vec3::ZERO, 0.0, 0.0, "item/iron_sword")
+            .expect("the zombie's sword bake speaks");
+        assert!(!quads.is_empty(), "the extrusion's quads");
+        assert!(
+            quads.iter().all(|q| q.texture.ends_with("item/iron_sword")),
+            "the sword's own layer texture"
+        );
+        let rest_box = box_of(&quads);
+        // THE AGGRESSIVE RAISE the weapon follows: the arms-up pose the
+        // rightArm matrix speaks — the weapon's box MOVES (the rest and
+        // the aggressive the same walk never keeps)
+        let mut aggro = rest;
+        aggro.zombie_aggressive = true;
+        let aq = held_item_quads(&aggro, Vec3::ZERO, 0.0, 0.0, "item/iron_sword")
+            .expect("the aggressive bake speaks");
+        let aggro_box = box_of(&aq);
+        assert_ne!(rest_box, aggro_box, "the raised arm the weapon rides");
+        // THE FEET FOLD the world rides: the standing zombie's box the
+        // (5, 64, -3) offset shifts by the EXACT feet (the entity
+        // chain's own translate the fold speaks)
+        let moved = held_item_quads(&rest, Vec3::new(5.0, 64.0, -3.0), 0.0, 0.0, "item/iron_sword")
+            .expect("the moved bake speaks");
+        let (mlo, mhi) = box_of(&moved);
+        let feet = [5.0f32, 64.0, -3.0];
+        for k in 0..3 {
+            assert!(
+                (mlo[k] - (rest_box.0[k] + feet[k])).abs() < 1e-4,
+                "lo[{k}] the feet's own shift keeps"
+            );
+            assert!(
+                (mhi[k] - (rest_box.1[k] + feet[k])).abs() < 1e-4,
+                "hi[{k}] the feet's own shift keeps"
+            );
+        }
+        // THE SPEAR the layered def answers: the in-hand model's bake
+        // speaks (the item/spear_in_hand stanza's thirdperson the walk
+        // resolves — the 26.2's own rotation/scale/translation the
+        // quads wear), the texture the spear's own layer names
+        let spear = held_item_quads(&rest, Vec3::ZERO, 0.0, 0.0, "item/iron_spear_in_hand")
+            .expect("the spear's in-hand bake speaks");
+        assert!(!spear.is_empty(), "the spear's quads");
+        assert!(
+            spear.iter().all(|q| q.texture.ends_with("item/iron_spear_in_hand")),
+            "the spear's own layer texture"
+        );
+        assert_ne!(
+            box_of(&spear),
+            rest_box,
+            "the spear's own stanza the sword's box never shares"
+        );
+    }
+
     /// THE OFFHAND'S LEFT-ARM CHAIN (the oracle walk
     /// `scripts/offhand_item_oracle.py` speaks — the RIGHT chain's
     /// honesty gate reproduces the main-hand pins first, the LEFT

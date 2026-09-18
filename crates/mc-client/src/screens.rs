@@ -12633,6 +12633,11 @@ impl App {
             // rings ride the same fold (the bbox they climb).
             let (mx, my, mz) = mob.lerped_pos(self.partial_tick);
             let feet = Vec3::new(mx as f32, my as f32, mz as f32);
+            // THE MOB-HELD ITEM's own quads (the zombie arm sets — the
+            // vanilla ItemInHandLayer's own render order the draw after
+            // the body wears): the other kinds the None keeps — the
+            // vanilla animals the no-equipment law the spawn fn speaks
+            let mut held_weapon_quads: Option<Vec<crate::avatar::HeadBlockQuad>> = None;
             // THE MODEL KIND'S OWN BRANCH (the renderer's variant
             // table): the zombie rides the humanoid avatar, the pig
             // the quadruped mesh — both through the SAME entity chain
@@ -12900,6 +12905,36 @@ impl App {
                         death_time: mob.death_time_at(self.partial_tick),
                     };
                     let quads = model.quads(&state, feet, cam.yaw, cam.pitch);
+                    // THE MOB-HELD ITEM LANE (ItemInHandLayer.
+                    // submitArmWithItem — the zombie's own equipment the
+                    // spawn roll wrote, the MAINHAND stack the extraction
+                    // fills): the model the item_model_layers walk names
+                    // (the registry's own canonical walk — the plain defs
+                    // the sword/shovel speak, the layered def the 26.2's
+                    // own spear answers: item/iron_spear_in_hand), the
+                    // SAME right-arm chain the player's third-person lane
+                    // rides (the posed rightArm matrix the aggressive
+                    // arms-up pose the weapon follows, the layer's
+                    // rotX(-90)+rotY(180)+(1/16, 2/16, -10/16) the
+                    // bytecode speaks, the spear's own stanza the
+                    // item/spear_in_hand display json carries), the world
+                    // feet the fold rides. The wire's remote zombies the
+                    // ctor's None keeps (the equipment packet the wire
+                    // never spoke — the honest unarmed keep)
+                    if let Some(name) = mob.held_weapon {
+                        held_weapon_quads = mc_registry::item_id_by_name(name)
+                            .and_then(mc_registry::item_model_layers)
+                            .and_then(|layers| layers.first().map(|l| l.model))
+                            .and_then(|model_id| {
+                                crate::avatar::held_item_quads(
+                                    &state,
+                                    feet,
+                                    cam.yaw,
+                                    cam.pitch,
+                                    model_id,
+                                )
+                            });
+                    }
                     (quads, Box::new(move |u, v| model.pixel(u, v)))
                 }
             };
@@ -12951,6 +12986,31 @@ impl App {
                 let [r, g, b, a] = pixel(u, v);
                 Some([r, g, b, a])
             });
+            // THE MOB-HELD ITEM's own draw (ItemInHandLayer's own render
+            // order — the layer draws AFTER the body, the SAME depth
+            // space the body's pixels speak): the hurt shade the body's
+            // mix rides the item's quads multiply, the sampler the
+            // registry's own texture table reads (the sprite_uv the
+            // first-person hand's sampler speaks), the unknown texture
+            // the honest skip keeps
+            if let Some(hq) = held_weapon_quads.take() {
+                let held_sampled: Vec<crate::raster::SampledQuad> = hq
+                    .iter()
+                    .map(|q| crate::raster::SampledQuad {
+                        pts: q.pts,
+                        uv: q.uv,
+                        tex: q.texture,
+                        tint: [q.shade * shade, q.shade * shade, q.shade * shade],
+                    })
+                    .collect();
+                fb.draw_sampled_quads(ctx.proj.mul(&ctx.view), &held_sampled, &mut |tex, u, v| {
+                    match mc_registry::sprite_uv::sample_uv(tex, u, v) {
+                        mc_registry::sprite_uv::Sample::Pixel(c) => Some(c),
+                        mc_registry::sprite_uv::Sample::Missing(c) => Some(c),
+                        mc_registry::sprite_uv::Sample::Unknown => None,
+                    }
+                });
+            }
             // THE UNDERCOAT LAYER's own draw (the vanilla layer order —
             // SheepRenderer's ctor bytecode adds the undercoat FIRST, the
             // wool fur SECOND, so the body-shaped coat draws after the

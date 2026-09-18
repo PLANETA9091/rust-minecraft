@@ -4658,6 +4658,34 @@ mod tests {
         assert_eq!(a, mobs[0].held_weapon, "the replay the word keeps");
     }
 
+    /// THE EQUIPMENT WORDS THE RENDER'S OWN WALK RESOLVES (the
+    /// ItemInHandLayer lane the render round wires): the spawn roll's
+    /// three words the registry's canonical walk answers — the plain
+    /// defs the sword/shovel speak (the ITEM_MODEL_DEFS rows), the
+    /// 26.2's own spear the layered def answers (item/iron_spear_in_
+    /// hand — the RESOLVED_ITEM_LAYERS row the first-person hand's own
+    /// walk rides), and the roll's whole word set the walk never
+    /// refuses (the armed spawn the unseen model the honest miss never
+    /// serves).
+    #[test]
+    fn the_equipment_words_the_render_walk_resolves() {
+        for (word, want_model) in [
+            ("iron_sword", "item/iron_sword"),
+            ("iron_shovel", "item/iron_shovel"),
+            ("iron_spear", "item/iron_spear_in_hand"),
+        ] {
+            let id = mc_registry::item_id_by_name(word)
+                .unwrap_or_else(|| panic!("{word} the registry names"));
+            let mut layers = mc_registry::item_model_layers(id)
+                .unwrap_or_else(|| panic!("{word} the walk resolves"));
+            assert_eq!(layers.len(), 1, "{word} the ONE layer the def keeps");
+            assert_eq!(
+                layers.remove(0).model, want_model,
+                "{word} the model the walk names"
+            );
+        }
+    }
+
     /// THE FLAT GRASS PLATFORM the jockey walks' own stage (the stone
     /// base, the grass top at 8, the sky the rest — the feet the y 9
     /// the surface law keeps).
