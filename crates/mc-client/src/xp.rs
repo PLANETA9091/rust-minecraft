@@ -585,6 +585,7 @@ mod tests {
             eye_y: 41.62,
             dead: false,
             width: 0.6,
+            height: crate::body::STANDING_HEIGHT,
         };
         // far past the scan: the pull never speaks, the gravity does
         let mut far = orb.clone();

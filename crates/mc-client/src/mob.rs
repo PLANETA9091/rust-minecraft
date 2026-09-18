@@ -124,6 +124,62 @@ pub const SKELETON_MOVEMENT_SPEED: f64 = 0.25;
 /// stand the inside arms — the strafe the later rounds carry).
 pub const SKELETON_ATTACK_RADIUS: f64 = 15.0;
 pub const SKELETON_ATTACK_RADIUS_SQR: f64 = SKELETON_ATTACK_RADIUS * SKELETON_ATTACK_RADIUS;
+/// `RangedBowAttackGoal.tick`'s own refill — `attackTime =
+/// attackIntervalMin` the full-draw shoot speaks (the setMinAttackInterval(40)
+/// the NORMAL difficulty's own interval keeps, the goal's ctor bipush 20
+/// the HARD arm the subclass overrides).
+pub const SKELETON_ATTACK_INTERVAL: i32 = 40;
+/// `AbstractArrow`'s own ctor `ldc2_w 2.0d` — the baseDamage the
+/// formula multiplies.
+pub const ARROW_BASE_DAMAGE: f64 = 2.0;
+/// `AbstractArrow.getDefaultGravity`'s own `ldc2_w 0.05d`.
+pub const ARROW_GRAVITY: f64 = 0.05;
+/// `AbstractArrow.getAirDrag`'s own `ldc_w 0.99f` — the air the
+/// inertia scales (the water the 0.5 arm the getWaterInertia keeps).
+pub const ARROW_AIR_DRAG: f64 = 0.99;
+pub const ARROW_WATER_INERTIA: f64 = 0.5;
+/// `AbstractArrow.tickDespawn`'s own `sipush 1200` — the stuck arrow's
+/// own clock (the life++ the in-ground tick speaks, the discard the
+/// ceiling arms).
+pub const ARROW_GROUND_LIFE: i32 = 1200;
+/// `AbstractArrow.onHitBlock`'s own `bipush 7` — the stuck arrow's
+/// shake clock.
+pub const ARROW_SHAKE_TIME: i32 = 7;
+/// `AbstractSkeleton.performRangedAttack`'s own `ldc_w 1.6f` — the
+/// shoot's velocity the spawnProjectileUsingShoot walk scales.
+pub const ARROW_SHOOT_VELOCITY: f32 = 1.6;
+/// `Projectile.getMovementToShoot`'s own `ldc2_w 0.0172275d` — the
+/// spread the triangle draws scale (the inaccuracy multiplier).
+pub const ARROW_TRIANGLE_SPREAD: f64 = 0.017_227_5;
+/// `performRangedAttack`'s own inaccuracy — `bipush 14 ... iconst_4
+/// imul isub`: 14 − difficultyId × 4 (the client's NORMAL world the
+/// id 1 keeps — the 10.0 the triangle draws scale).
+pub const SKELETON_ARROW_INACCURACY: f64 = 14.0 - 1.0 * 4.0;
+/// `AbstractArrow.lerpRotation`'s own `Mth.lerp(0.2F, ...)` — the
+/// flight rotation's own ease.
+pub const ARROW_ROTATION_LERP: f32 = 0.2;
+/// `AbstractArrow.onHitBlock`'s own `ldc2_w 0.05000000074505806d` —
+/// the wall's back-off step the signum fold scales.
+pub const ARROW_HIT_BACKOFF: f64 = 0.050_000_000_745_058_06;
+/// `RangedBowAttackGoal.tick`'s own `bipush 20` — the full draw the
+/// getTicksUsingItem gate speaks (the shoot fires at the crossing).
+pub const ARROW_DRAW_TICKS: i32 = 20;
+/// `RangedBowAttackGoal.tick`'s own seeTime gates — the `bipush 20`
+/// the inside-ring arm reads, the `bipush -60` the draw arms read.
+pub const ARROW_SEE_TIME_GATE: i32 = 20;
+pub const ARROW_SEE_TIME_MEMORY: i32 = -60;
+/// `RangedBowAttackGoal.tick`'s own arc term — the `dy + dist * 0.2`
+/// fold the spawnProjectileUsingShoot arg walk speaks.
+pub const ARROW_AIM_ARC: f64 = 0.2;
+/// The aim's own height term — `target.getY(0.3333333333333333)` the
+/// LivingEntity base speaks: position.y + bbHeight × 1/3.
+pub const ARROW_AIM_HEIGHT_FRACTION: f64 = 0.333_333_333_333_333_3;
+/// The arrow's own eye offset — the AbstractArrow owner ctor's
+/// `getEyeY() - 0.10000000149011612` the spawn position rides.
+pub const ARROW_SPAWN_EYE_OFFSET: f64 = 0.100_000_001_490_116_12;
+/// The hurt pipeline's own arrow row (the arrow's hit the player's
+/// hurt walk answers — the knockback the punch-0 bow never carries).
+pub const ARROW_HIT_VOLUME: f32 = 1.0;
 /// The PIG registration's own `sized(0.9F, 0.9F)` (EntityTypes) — the
 /// second drawn body's own bbox (the flame ring's dims the render asks).
 pub const PIG_WIDTH: f64 = 0.9;
@@ -1012,6 +1068,11 @@ pub const SPAWN_MAX_DIST: f64 = 48.0;
 #[derive(Debug, Clone, Copy, PartialEq, Default)]
 pub struct MobEvents {
     pub attack: Option<MobAttack>,
+    /// THE SKELETON'S OWN SHOT (the RangedBowAttackGoal's full-draw
+    /// crossing — the arrow the performRangedAttack walk created and
+    /// the shoot voice's own pitch draw; the caller pushes the arrow
+    /// to the flight lane and plays entity.skeleton.shoot)
+    pub arrow_shot: Option<ArrowShot>,
     /// the ambient groan's own beat (the baseTick gate fired this tick)
     pub ambient: bool,
     /// the fire clock's own onFire hurt LANDED this tick (the armor
@@ -1079,6 +1140,432 @@ pub struct MobAttack {
     pub dir_z: f64,
 }
 
+/// The skeleton's own out-edge — the shot the RangedBowAttackGoal's
+/// full-draw crossing speaks: the ARROW's own spawn law the
+/// spawnProjectileUsingShoot walk created (the performRangedAttack's
+/// own walk the mob tick carried) and the SHOOT voice's pitch (the
+/// `1.0 / (nextFloat() * 0.4F + 0.8F)` the playSound's draw keeps —
+/// the SKELETON_SHOOT event the shooter's own stream answers). The
+/// copy-able spawn record the caller's flight lane consumes — the
+/// [`Arrow::from_spawn`] walk builds the flying entity from it.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct ArrowShot {
+    pub id: i32,
+    /// the spawn position (the owner ctor's own eye-minus-0.1 walk)
+    pub x: f64,
+    pub y: f64,
+    pub z: f64,
+    /// the shoot's own velocity (the normalize + triangle spread the
+    /// 1.6 scale answers)
+    pub vx: f64,
+    pub vy: f64,
+    pub vz: f64,
+    /// the shoot's own rotation (the atan2 degrees the Projectile
+    /// shoot speaks)
+    pub y_rot: f32,
+    pub x_rot: f32,
+    /// the full-draw crit the power 1.0 arms (setCritArrow(true))
+    pub crit: bool,
+    /// the shoot voice's own pitch draw
+    pub pitch: f32,
+    /// the arrow's own entity-random seed (the id-mixed law the voice
+    /// seeds keep — the triangle draws the shot's own stream spends,
+    /// the from_spawn walk re-arms)
+    pub seed: u64,
+}
+
+/// THE ARROW ENTITY (javap `AbstractArrow` the 26.2 bytecode speaks —
+/// the Projectile base's own state the mob-shot lane keeps: the
+/// position, the velocity, the flight rotation, the in-ground clock).
+/// The skeleton's own projectile — the full-draw shot the goal speaks,
+/// the flight the gravity/drag law flies, the hit the hurt pipeline
+/// answers, the stuck wall the 1200-tick despawn discards.
+#[derive(Clone)]
+pub struct Arrow {
+    pub id: i32,
+    pub x: f64,
+    pub y: f64,
+    pub z: f64,
+    /// the pre-move feet the render's lerp walks FROM (the Entity
+    /// tick's own `xo = x` fold)
+    pub prev_x: f64,
+    pub prev_y: f64,
+    pub prev_z: f64,
+    /// `Entity.deltaMovement` — the shoot's 1.6-scale vector the
+    /// triangle spread perturbs, the flight the 0.99 drag / 0.05
+    /// gravity flies
+    pub vx: f64,
+    pub vy: f64,
+    pub vz: f64,
+    /// the flight rotation (the shoot's own atan2 degrees the
+    /// lerpRotation walk eases toward the velocity's own angles)
+    pub y_rot: f32,
+    pub x_rot: f32,
+    pub y_rot_o: f32,
+    pub x_rot_o: f32,
+    /// `AbstractArrow.life` — the stuck arrow's own clock
+    pub life: i32,
+    /// `AbstractArrow.inGround` (the block hit the flag arms, the
+    /// shouldFall walk the moved-block re-drop keeps)
+    pub in_ground: bool,
+    /// `AbstractArrow.shakeTime` (the block hit's 7 — the render's
+    /// shake the clock ticks)
+    pub shake_time: i32,
+    /// `AbstractArrow.isCritArrow` (the full-draw power 1.0 the
+    /// setCritArrow(true) speaks — the block hit the flag clears)
+    pub crit: bool,
+    /// `AbstractArrow.pickup` — DISALLOWED the mob-shot ctor keeps
+    /// (the hit's own discard the flag's law answers)
+    pub dead: bool,
+    /// the entity's own random (the hit pitch's draw the
+    /// onHitBlock's nextFloat speaks — the id-mixed seed the
+    /// entity_voice_seed law keeps)
+    rng: Lcg,
+}
+
+/// The arrow's own tick out-edges — the hits the caller's own lanes
+/// answer (the player's hurt, the block's voice).
+#[derive(Debug, Clone, Copy, Default)]
+pub struct ArrowEvents {
+    /// the player hit's own damage (the ceil(clamp(|v| * 2.0)) the
+    /// onHitEntity formula speaks — the arrow the discard answers)
+    pub hit_player: Option<f64>,
+    /// the block hit's own pitch (the `1.2F / (nextFloat() * 0.2F +
+    /// 0.9F)` the onHitBlock's draw keeps — entity.arrow.hit the
+    /// caller plays at the stick's own spot)
+    pub hit_block: Option<f32>,
+}
+
+impl Arrow {
+    /// THE SHOT (javap `AbstractSkeleton.performRangedAttack` the 26.2
+    /// bytecode speaks: the spawn position the owner ctor rides —
+    /// `owner.getX(), owner.getEyeY() - 0.10000000149011612,
+    /// owner.getZ()`; the deltas the target's own `getY(0.3333333333333333)`
+    /// minus the arrow's own y; the arc `dy + dist * 0.2` the
+    /// spawnProjectileUsingShoot arg walk adds; the shoot `Projectile.
+    /// getMovementToShoot`: normalize + the triangle spread
+    /// (0.0172275 × inaccuracy, the 14 − difficulty × 4 the client's
+    /// NORMAL 10.0 keeps) scaled by the ctor's 1.6; the CRIT the full
+    /// draw's power 1.0 arms — `BowItem.getPowerForTime(20)` the 1.0
+    /// the setCritArrow(true) speaks).
+    pub fn shoot(shooter: &Zombie, target: &PlayerView) -> ArrowShot {
+        // the arrow's own entity random — the id-mixed seed the
+        // entity_voice_seed law keeps (the triangle spread's three
+        // draws the seed's own stream spends, the from_spawn walk
+        // re-arms the same state)
+        let id = shooter.id.wrapping_mul(31) + 9_001;
+        let seed = 0x5EED ^ ((id as i64 as u64).wrapping_mul(0x9E37_79B9_7F4A_7C15));
+        let mut rng = Lcg::new(seed);
+        let (ax, ay, az) = (
+            shooter.x,
+            shooter.y + ZOMBIE_EYE_HEIGHT - ARROW_SPAWN_EYE_OFFSET,
+            shooter.z,
+        );
+        let dx = target.x - ax;
+        let dy = target.y + target.height * ARROW_AIM_HEIGHT_FRACTION - ay;
+        let dz = target.z - az;
+        let dist = (dx * dx + dz * dz).sqrt();
+        // THE SHOOT (Projectile.getMovementToShoot): normalize + the
+        // per-axis triangle spread, scaled by the ctor's 1.6
+        let (mut mx, mut my, mut mz) = (dx, dy + dist * ARROW_AIM_ARC, dz);
+        let len = (mx * mx + my * my + mz * mz).sqrt().max(1e-9);
+        mx /= len;
+        my /= len;
+        mz /= len;
+        let spread = ARROW_TRIANGLE_SPREAD * SKELETON_ARROW_INACCURACY;
+        mx += rng.triangle(spread);
+        my += rng.triangle(spread);
+        mz += rng.triangle(spread);
+        let (vx, vy, vz) = (
+            mx * ARROW_SHOOT_VELOCITY as f64,
+            my * ARROW_SHOOT_VELOCITY as f64,
+            mz * ARROW_SHOOT_VELOCITY as f64,
+        );
+        let horiz = (vx * vx + vz * vz).sqrt();
+        // the vanilla's own degrees: atan2(vx, vz) * 57.2957763671875
+        let y_rot = ((vx).atan2(vz) * 57.295_776_367_187_5) as f32;
+        let x_rot = ((vy).atan2(horiz) * 57.295_776_367_187_5) as f32;
+        ArrowShot {
+            id,
+            x: ax,
+            y: ay,
+            z: az,
+            vx,
+            vy,
+            vz,
+            y_rot,
+            x_rot,
+            // the full-draw shot the power 1.0 speaks
+            crit: true,
+            // the pitch the GOAL's own tail draws (the shooter's own
+            // stream the performRangedAttack's playSound answers) —
+            // the zero here the caller's field set replaces
+            pitch: 0.0,
+            seed,
+        }
+    }
+
+    /// THE SPAWN RECORD'S OWN ENTITY (the flight lane's ctor — the
+    /// spawn record the state the tick's laws wear; the seed re-arms
+    /// the triangle-drawn state the shoot spent).
+    pub fn from_spawn(shot: &ArrowShot) -> Arrow {
+        let mut rng = Lcg::new(shot.seed);
+        // the shoot's own three triangle draws the seed's stream spent
+        let spread = ARROW_TRIANGLE_SPREAD * SKELETON_ARROW_INACCURACY;
+        let _ = rng.triangle(spread);
+        let _ = rng.triangle(spread);
+        let _ = rng.triangle(spread);
+        Arrow {
+            id: shot.id,
+            x: shot.x,
+            y: shot.y,
+            z: shot.z,
+            prev_x: shot.x,
+            prev_y: shot.y,
+            prev_z: shot.z,
+            vx: shot.vx,
+            vy: shot.vy,
+            vz: shot.vz,
+            y_rot: shot.y_rot,
+            x_rot: shot.x_rot,
+            y_rot_o: shot.y_rot,
+            x_rot_o: shot.x_rot,
+            life: 0,
+            in_ground: false,
+            shake_time: 0,
+            crit: shot.crit,
+            dead: false,
+            rng,
+        }
+    }
+
+    /// THE FLIGHT (javap `AbstractArrow.tick` the 26.2 bytecode
+    /// speaks): the head's own ground check (the shape containing the
+    /// position the velocity zeroes + the flag arms), the shake clock,
+    /// the in-ground lane (the shouldFall re-drop, the tickDespawn's
+    /// 1200 ceiling), the flight lane (the rotation lerp, the clip
+    /// walk, the 0.99 inertia, the 0.05 gravity), the hits (the
+    /// entity's damage the discard answers, the block's back-off the
+    /// stick speaks).
+    pub fn tick(&mut self, world: &World, player: Option<&PlayerView>) -> ArrowEvents {
+        let mut events = ArrowEvents::default();
+        self.prev_x = self.x;
+        self.prev_y = self.y;
+        self.prev_z = self.z;
+        self.x_rot_o = self.x_rot;
+        self.y_rot_o = self.y_rot;
+        // THE HEAD'S OWN GROUND CHECK (the current block's collision
+        // shape containing the position — the velocity ZERO + the flag)
+        if !self.in_ground && crate::body::solid(world, self.x.floor() as i32, self.y.floor() as i32, self.z.floor() as i32) {
+            self.vx = 0.0;
+            self.vy = 0.0;
+            self.vz = 0.0;
+            self.in_ground = true;
+        }
+        // the shake clock
+        if self.shake_time > 0 {
+            self.shake_time -= 1;
+        }
+        // THE IN-GROUND LANE (the stuck arrow's own walk)
+        if self.in_ground {
+            // THE SHOULDFALL WALK (javap `shouldFall`: the position's
+            // own 0.06-inflated point-box the noCollision read speaks
+            // — the back-off's 0.05 the 0.06 margin still overlaps the
+            // wall, the stuck arrow the vacated ground re-drops)
+            if !self.touches_any_solid(world) {
+                self.in_ground = false;
+            } else {
+                // THE TICKDESPAWN (the life++ the 1200 ceiling discards)
+                self.life += 1;
+                if self.life >= ARROW_GROUND_LIFE {
+                    self.dead = true;
+                }
+                return events;
+            }
+        }
+        // THE FLIGHT LANE
+        // THE ROTATION (the lerpRotation walk — the velocity's own
+        // angles the 0.2 lerp eases; the yRot target the NEGATED atan2
+        // the noPhysics branch keeps)
+        let horiz = (self.vx * self.vx + self.vz * self.vz).sqrt();
+        let target_x = ((self.vy).atan2(horiz) * 57.295_776_367_187_5) as f32;
+        let target_y = ((-self.vx).atan2(-self.vz) * 57.295_776_367_187_5) as f32;
+        self.x_rot = lerp_rotation(self.x_rot, target_x);
+        self.y_rot = lerp_rotation(self.y_rot, target_y);
+        // THE CLIP (the Level.clipIncludingBorder COLLIDER/NONE walk —
+        // the position to the position+velocity the segment clips)
+        let hit_block = crate::body::clip_ray(
+            world,
+            crate::math::Vec3::new(self.x as f32, self.y as f32, self.z as f32),
+            crate::math::Vec3::new(
+                (self.x + self.vx) as f32,
+                (self.y + self.vy) as f32,
+                (self.z + self.vz) as f32,
+            ),
+        );
+        // THE MOVE (the stepMoveAndHit's setPos — the hit point the
+        // block's own walk keeps, the free fly the velocity adds)
+        match hit_block {
+            Some(h) => {
+                self.x = h.x as f64;
+                self.y = h.y as f64;
+                self.z = h.z as f64;
+            }
+            None => {
+                self.x += self.vx;
+                self.y += self.vy;
+                self.z += self.vz;
+            }
+        }
+        // THE ENTITY HIT (the findHitEntities walk — the segment vs
+        // the inflated bbox the player's own box answers, the FIRST
+        // hit the distance order keeps)
+        if let Some(p) = player {
+            if !p.dead && self.segment_hits_player(p) {
+                // THE DAMAGE (the onHitEntity formula: ceil(clamp(
+                // velocity.length() * baseDamage, 0, 2.147483647E9)) —
+                // the punch-0 bow the knockback never carries)
+                let speed = (self.vx * self.vx + self.vy * self.vy + self.vz * self.vz).sqrt();
+                let dmg = (speed * ARROW_BASE_DAMAGE).clamp(0.0, 2_147_483_647.0).ceil();
+                events.hit_player = Some(dmg);
+                // THE DISCARD (the Pickup.DISALLOWED the mob-shot ctor
+                // keeps — the hit the own removal speaks)
+                self.dead = true;
+                return events;
+            }
+        }
+        // THE BLOCK HIT (the onHitBlock walk — the signum back-off
+        // 0.05, the velocity ZERO, the stick + the shake + the hit
+        // voice's pitch draw)
+        if hit_block.is_some() {
+            // the back-off step (the signum fold the bytecode keeps —
+            // the position minus the signs' own 0.05)
+            let step = ARROW_HIT_BACKOFF;
+            self.x -= self.vx.signum() * step;
+            self.y -= self.vy.signum() * step;
+            self.z -= self.vz.signum() * step;
+            self.vx = 0.0;
+            self.vy = 0.0;
+            self.vz = 0.0;
+            self.in_ground = true;
+            self.shake_time = ARROW_SHAKE_TIME;
+            self.crit = false;
+            events.hit_block = Some(1.2 / (self.rng.next_f32() * 0.2 + 0.9));
+        }
+        // THE INERTIA + THE GRAVITY (the water the 0.5 arm speaks, the
+        // air the 0.99; the applyGravity's own 0.05 the y rides — the
+        // !inGround gate the vanilla's own tick keeps, the stuck arrow
+        // the gravity never touches)
+        let inertia = if self.in_water(world) {
+            ARROW_WATER_INERTIA
+        } else {
+            ARROW_AIR_DRAG
+        };
+        self.vx *= inertia;
+        self.vy *= inertia;
+        self.vz *= inertia;
+        if !self.in_ground {
+            self.vy -= ARROW_GRAVITY;
+        }
+        events
+    }
+
+    /// THE ENTITY HIT'S OWN TEST (javap `ProjectileUtil.
+    /// getEntityHitResult` the 26.2 walk: the segment vs the bbox
+    /// `inflate(0.3)` — the ray's own param the hit distance answers,
+    /// the seg-vs-box the slab law speaks).
+    fn segment_hits_player(&self, p: &PlayerView) -> bool {
+        // the player's own box (the x/z the width half-spans, the y
+        // the feet-to-head the height carries), the 0.3 inflate the
+        // vanilla's own margin keeps
+        let (hw, inf) = (p.width / 2.0, 0.3);
+        let (x0, y0, z0) = (p.x - hw - inf, p.y - inf, p.z - hw - inf);
+        let (x1, y1, z1) = (p.x + hw + inf, p.y + p.height + inf, p.z + hw + inf);
+        // THE SLAB WALK (the ray-AABB intersection the
+        // ClipContext's own box law speaks): the param window the
+        // t-min/t-max the slabs clamp
+        let (from, to) = ((self.prev_x, self.prev_y, self.prev_z), (self.x, self.y, self.z));
+        let (dx, dy, dz) = (to.0 - from.0, to.1 - from.1, to.2 - from.2);
+        let mut tmin = 0.0f64;
+        let mut tmax = 1.0f64;
+        for (o, dd, lo, hi) in [
+            (from.0, dx, x0, x1),
+            (from.1, dy, y0, y1),
+            (from.2, dz, z0, z1),
+        ] {
+            if dd.abs() < 1e-9 {
+                if o < lo || o > hi {
+                    return false;
+                }
+            } else {
+                let mut t0 = (lo - o) / dd;
+                let mut t1 = (hi - o) / dd;
+                if t0 > t1 {
+                    std::mem::swap(&mut t0, &mut t1);
+                }
+                tmin = tmin.max(t0);
+                tmax = tmax.min(t1);
+                if tmin > tmax {
+                    return false;
+                }
+            }
+        }
+        true
+    }
+
+    /// THE 0.06-INFLATED POINT BOX's own collision read (the
+    /// shouldFall walk's `AABB.inflate(0.06)` + noCollision the
+    /// bytecode speaks — the overlapped cells the ±0.06 span keeps).
+    fn touches_any_solid(&self, world: &World) -> bool {
+        const MARGIN: f64 = 0.06;
+        let xs = [
+            (self.x - MARGIN).floor() as i32,
+            (self.x + MARGIN).floor() as i32,
+        ];
+        let ys = [
+            (self.y - MARGIN).floor() as i32,
+            (self.y + MARGIN).floor() as i32,
+        ];
+        let zs = [
+            (self.z - MARGIN).floor() as i32,
+            (self.z + MARGIN).floor() as i32,
+        ];
+        for &cx in &xs {
+            for &cy in &ys {
+                for &cz in &zs {
+                    if crate::body::solid(world, cx, cy, cz) {
+                        return true;
+                    }
+                }
+            }
+        }
+        false
+    }
+
+    fn in_water(&self, world: &World) -> bool {
+        crate::world::WATER == world.get(
+            self.x.floor() as i32,
+            self.y.floor() as i32,
+            self.z.floor() as i32,
+        )
+    }
+}
+
+/// THE FLIGHT ROTATION'S OWN EASE (javap `AbstractArrow.lerpRotation`
+/// the classic walk keeps: the target's angle unwrap the ±180 fold
+/// speaks, the Mth.lerp(0.2F, ...) the ease answers).
+fn lerp_rotation(current: f32, target: f32) -> f32 {
+    let mut cur = current;
+    let tgt = target;
+    while tgt - cur < -180.0 {
+        cur -= 360.0;
+    }
+    while tgt - cur >= 180.0 {
+        cur += 360.0;
+    }
+    cur + (tgt - cur) * ARROW_ROTATION_LERP
+}
+
 /// The player slice the zombie's AI reads (the NearestAttackableTarget
 /// goal's own view).
 #[derive(Debug, Clone, Copy)]
@@ -1090,6 +1577,10 @@ pub struct PlayerView {
     pub dead: bool,
     /// the player's own bbox width (the melee range law's target term)
     pub width: f64,
+    /// the player's own bbox HEIGHT (the aim walk's getY(0.3333) the
+    /// LivingEntity base speaks — position.y + bbHeight * 0.3333333333333333
+    /// the arrow's arc rides; the crouch's 1.5 the caller's own law keeps)
+    pub height: f64,
 }
 
 /// THE ZOMBIE — the fields the vanilla entity's own state speaks.
@@ -1267,6 +1758,17 @@ pub struct Zombie {
     ticks_until_attack: i32,
     /// the canUse re-check clock (lastCanUseCheck)
     attack_recheck: i64,
+    /// `RangedBowAttackGoal.seeTime` (the skeleton's own draw — the
+    /// LOS walked the goal's own counter: +1 the seeing tick, −1 the
+    /// blind one, the flag-flip zero the reset keeps)
+    pub see_time: i32,
+    /// `RangedBowAttackGoal.attackTime` (the ctor's own −1 — the
+    /// pre-draw gate's countdown the goal's tick decrements)
+    pub bow_attack_time: i32,
+    /// `Mob.useItemRemaining` (the bow DRAW's own clock — the
+    /// startUsingItem zero arms, the 20-tick full draw the shoot
+    /// speaks, the −1 the not-using lane keeps)
+    pub using_ticks: i32,
     /// the stroll's target (the navigation's own destination stand-in)
     stroll_target: Option<(f64, f64)>,
     /// THE FOLLOWPARENTGOAL'S OWN ARM (the goal's own `parent` field
@@ -1416,6 +1918,9 @@ impl Zombie {
             raise_arm_ticks: 0,
             ticks_until_attack: 0,
             attack_recheck: 0,
+            see_time: 0,
+            bow_attack_time: -1,
+            using_ticks: -1,
             stroll_target: None,
             follow_parent: None,
             breed_partner: None,
@@ -1829,15 +2334,20 @@ impl Zombie {
             // adds prio 2 the ctor `RangedBowAttackGoal(this, 1.0, 20,
             // 15.0F)` keeps, the canUse the target != null && the
             // mainhand BOW the isHoldingBow walk arms, the start() the
-            // setAggressive(true) the flag arms): the tick's
-            // approach arm — `d > attackRadiusSqr || !sees` the
-            // navigation's moveTo target keeps, the INSIDE ring + the
-            // seeing eye the navigation STOP keeps (the strafe the
-            // later rounds carry — the honest stand the stop speaks).
-            // The melee arm the skeleton's goal list never fills (the
-            // AbstractSkeleton$1 the reassessWeaponGoal's NON-bow
-            // branch alone adds — the mainhand BOW the branch never
-            // enters): no doHurtTarget the skeleton ever deals.
+            // setAggressive(true) the flag arms): the tick's own walk —
+            // the seeTime counter (the flag-flip zero the reset keeps,
+            // the +1 seeing / −1 blind), the approach arm the
+            // `d > attackRadiusSqr || seeTime < 20` walk keeps (the
+            // inside ring + the 20-tick seeing the navigation STOP
+            // keeps — the strafe the later rounds carry), the DRAW
+            // (the isUsingItem branch: the blind-memory stop the
+            // seeTime < -60 arm keeps, the full-draw crossing the
+            // 20-tick getTicksUsingItem gate speaks — the shoot + the
+            // attackTime = 40 refill), the pre-draw gate (--attackTime
+            // <= 0 && seeTime >= -60 the startUsingItem arms). The
+            // melee arm the skeleton's goal list never fills (the
+            // AbstractSkeleton$1 the non-bow branch alone adds): no
+            // doHurtTarget the skeleton ever deals.
             if self.kind == MobKind::Skeleton {
                 self.aggressive = true;
                 let dx = p.x - self.x;
@@ -1853,7 +2363,19 @@ impl Zombie {
                     crate::math::Vec3::new(p.x as f32, p.eye_y as f32, p.z as f32),
                 )
                 .is_none();
-                if d2 > SKELETON_ATTACK_RADIUS_SQR || !los {
+                // the seeTime counter (the flag-flip zero the reset keeps)
+                if los != (self.see_time > 0) {
+                    self.see_time = 0;
+                }
+                if los {
+                    self.see_time += 1;
+                } else {
+                    self.see_time -= 1;
+                }
+                // the approach/stand split (the ring + the 20-tick
+                // seeing the stop keeps — the navigation's moveTo the
+                // out arm walks)
+                if d2 > SKELETON_ATTACK_RADIUS_SQR || self.see_time < ARROW_SEE_TIME_GATE {
                     let len = d2.sqrt().max(1e-9);
                     self.yaw = (-(dx / len)).atan2(dz / len).to_degrees() as f32;
                     ix = 0.0;
@@ -1861,6 +2383,35 @@ impl Zombie {
                     want_move = true;
                 }
                 self.look_at(p.x, p.eye_y, p.z);
+                // THE DRAW (the isUsingItem branch the goal's tail
+                // speaks — the full-draw crossing the shoot rides)
+                if self.using_ticks >= 0 {
+                    if !los && self.see_time < ARROW_SEE_TIME_MEMORY {
+                        // the blind-memory stop (the stopUsingItem)
+                        self.using_ticks = -1;
+                    } else if los {
+                        self.using_ticks += 1;
+                        if self.using_ticks >= ARROW_DRAW_TICKS {
+                            self.using_ticks = -1;
+                            // the shoot + the interval refill (the
+                            // performRangedAttack + attackTime = 40
+                            // the goal's own tail arms); the SHOOT
+                            // VOICE's own pitch draw (the shooter's
+                            // own stream the playSound answers)
+                            let mut shot = Arrow::shoot(self, p);
+                            shot.pitch = 1.0 / (self.rng.next_f32() * 0.4 + 0.8);
+                            events.arrow_shot = Some(shot);
+                            self.bow_attack_time = SKELETON_ATTACK_INTERVAL;
+                        }
+                    }
+                } else {
+                    // THE PRE-DRAW GATE (--attackTime <= 0 && seeTime
+                    // >= -60 the startUsingItem arms)
+                    self.bow_attack_time -= 1;
+                    if self.bow_attack_time <= 0 && self.see_time >= ARROW_SEE_TIME_MEMORY {
+                        self.using_ticks = 0;
+                    }
+                }
             } else {
                 // ZOMBIEATTACKGOAL (prio 3): the canUse re-check rides the
                 // 20-tick gate; the goal's own tick runs every tick while
@@ -1927,6 +2478,12 @@ impl Zombie {
             // the goal's stop(): the arms lower, the raise clock resets
             self.aggressive = false;
             self.raise_arm_ticks = 0;
+            // THE RANGED GOAL'S OWN STOP (javap the RangedBowAttackGoal
+            // stop(): setAggressive(false), seeTime = 0, attackTime =
+            // -1, the stopUsingItem — the draw clock the flag clears)
+            self.see_time = 0;
+            self.bow_attack_time = -1;
+            self.using_ticks = -1;
             // THE PANICGOAL'S OWN FLEE (prio 1 — the Sheep's and the
             // Pig's own registerGoals clinit speaks `addGoal(1, new
             // PanicGoal(this, 1.25))`, the AbstractCow's own
@@ -4224,6 +4781,7 @@ mod tests {
             eye_y: y + crate::body::STANDING_EYE,
             dead: false,
             width: crate::body::WIDTH,
+            height: crate::body::STANDING_HEIGHT,
         }
     }
 
@@ -5075,21 +5633,28 @@ mod tests {
         );
         assert!(s.aggressive, "the goal's start the flag arms");
         // INSIDE the ring (7 blocks, the flat world's own LOS): the
-        // navigation stops — the stand the goal's own law speaks
+        // seeTime's 20-tick confirmation the approach's tail keeps,
+        // then the navigation stops — the stand the goal's own law
+        // speaks (the position the settled walk holds)
         let mut s = Zombie::new(2, 32.0, 9.0, 32.0, 9);
         s.kind = MobKind::Skeleton;
         s.held_weapon = Some("bow");
         let near = player_at(32.0, 9.0, 25.0);
-        let mut moved = 0.0f64;
         for _ in 0..40 {
             let ev = s.tick(&world, Some(&near), NIGHT);
             assert!(ev.attack.is_none(), "the in-ring stand never deals");
-            moved = moved.max((s.x - 32.0).powi(2) + (s.z - 32.0).powi(2));
         }
+        assert!(s.see_time >= ARROW_SEE_TIME_GATE, "the seeing walk the gate crossed");
+        let (sx, sz) = (s.x, s.z);
+        for _ in 0..25 {
+            let ev = s.tick(&world, Some(&near), NIGHT);
+            assert!(ev.attack.is_none(), "the settled stand never deals");
+        }
+        let moved = ((s.x - sx).powi(2) + (s.z - sz).powi(2)).sqrt();
         assert!(
-            moved.sqrt() < 0.25,
+            moved < 0.25,
             "the in-ring stand the approach refuses ({})",
-            moved.sqrt()
+            moved
         );
         assert!(s.aggressive, "the goal the stand's own run keeps armed");
         // THE ADJACENT PLAYER: the melee range the zombie's goal would
@@ -5178,6 +5743,219 @@ mod tests {
                 "the fire the skeleton's own drops never cooks: {name}"
             );
         }
+    }
+
+    /// THE ARROW'S OWN SHOT (javap `AbstractSkeleton.performRangedAttack`
+    /// + `AbstractArrow` the owner ctor the 26.2 bytecode speaks): the
+    /// spawn position the eye-minus-0.1 walk rides, the velocity the
+    /// 1.6-scale triangle-perturbed normalize keeps (the |v| the 1.6
+    /// mean answers), the aim the target's getY(1/3) arc rides, the
+    /// CRIT the full-draw power 1.0 arms, the shoot pitch the
+    /// `1.0 / (nextFloat() * 0.4F + 0.8F)` window keeps, the replay
+    /// the same shooter the same record speaks.
+    #[test]
+    fn the_arrow_shot_the_perform_ranged_attack_law_speaks() {
+        let shooter = Zombie::new(7, 32.0, 9.0, 32.0, 11);
+        let target = player_at(40.0, 9.0, 32.0);
+        let shot = Arrow::shoot(&shooter, &target);
+        // the spawn position (the owner ctor's own law)
+        assert_eq!(shot.x, 32.0);
+        assert!((shot.y - (9.0 + ZOMBIE_EYE_HEIGHT - ARROW_SPAWN_EYE_OFFSET)).abs() < 1e-9);
+        assert_eq!(shot.z, 32.0);
+        // the aim: the +x direction the target's own delta keeps (the
+        // triangle spread the ±spread window perturbs)
+        assert!(shot.vx > 0.0, "the +x aim the target rides");
+        assert!(shot.vz.abs() < 0.2, "the z spread the small draw keeps");
+        // the speed: the 1.6 base the triangle spread perturbs (the
+        // per-axis ±0.172 delta the normalized vector rides — the
+        // |v| the ±0.28 window the perturbation's own law keeps)
+        let speed = (shot.vx * shot.vx + shot.vy * shot.vy + shot.vz * shot.vz).sqrt();
+        assert!(
+            (speed - ARROW_SHOOT_VELOCITY as f64).abs() < 0.28,
+            "speed {speed} the spread window keeps"
+        );
+        // the crit the full draw arms
+        assert!(shot.crit, "the power 1.0 the setCritArrow(true) speaks");
+        // (the shoot pitch the GOAL's own tail draws — the shooter's
+        // own stream the performRangedAttack's playSound answers — the
+        // draw-cadence test the event's own record pins)
+        // the replay: the same shooter the same record (the
+        // determinism the spawn law keeps)
+        let again = Arrow::shoot(&Zombie::new(7, 32.0, 9.0, 32.0, 11), &target);
+        assert_eq!(again.vx, shot.vx, "the replay the velocity keeps");
+        assert_eq!(again.seed, shot.seed, "the replay the seed keeps");
+    }
+
+    /// THE ARROW'S OWN FLIGHT (javap `AbstractArrow.tick` the 26.2
+    /// bytecode speaks): the free fly the velocity + the 0.05 gravity
+    /// + the 0.99 drag answers, the wall the stick + the shake 7 +
+    /// the zero velocity + the hit pitch speaks, the stuck wall the
+    /// 1200-tick despawn discards, the player's own box the
+    /// ceil(|v|·2.0) damage the discard answers.
+    #[test]
+    fn the_arrow_flight_the_abstract_arrow_tick_speaks() {
+        let world = arrow_air_world();
+        // THE FREE FLY: the position + the gravity + the drag
+        let mut a = Arrow::from_spawn(&ArrowShot {
+            id: 1,
+            x: 10.0,
+            y: 20.0,
+            z: 10.0,
+            vx: 1.0,
+            vy: 0.0,
+            vz: 0.0,
+            y_rot: 90.0,
+            x_rot: 0.0,
+            crit: true,
+            pitch: 1.0,
+            seed: 5,
+        });
+        a.tick(&world, None);
+        assert!((a.x - 11.0).abs() < 1e-9, "the free fly the velocity adds");
+        assert!(a.vy < 0.0, "the gravity the y rides");
+        assert!((a.vx - 0.99).abs() < 1e-9, "the drag the x keeps");
+        assert!(!a.dead);
+        // THE WALL: the stone column the segment clips (the air world
+        // the wall's own cells the set arms)
+        let mut wall = arrow_air_world();
+        for y in 10..14 {
+            wall.set(15, y, 10, crate::world::STONE);
+        }
+        let mut b = Arrow::from_spawn(&ArrowShot {
+            id: 2,
+            x: 10.5,
+            y: 11.5,
+            z: 10.5,
+            vx: 1.2,
+            vy: 0.0,
+            vz: 0.0,
+            y_rot: 90.0,
+            x_rot: 0.0,
+            crit: true,
+            pitch: 1.0,
+            seed: 7,
+        });
+        // the wall sits 4.5 blocks out — the 1.2/tick flight the
+        // crossing answers within the loop (the fly-till-stick walk)
+        let mut ev = crate::mob::ArrowEvents::default();
+        for _ in 0..20 {
+            ev = b.tick(&wall, None);
+            if b.in_ground {
+                break;
+            }
+        }
+        assert!(b.in_ground, "the wall the stick arms");
+        assert_eq!(b.shake_time, ARROW_SHAKE_TIME, "the shake the block hit keeps");
+        assert_eq!((b.vx, b.vy, b.vz), (0.0, 0.0, 0.0), "the stick the velocity zeroes");
+        assert!(!b.crit, "the block hit the crit clears");
+        assert!(ev.hit_block.is_some(), "the hit voice the stick speaks");
+        // the position backed off the wall's face (the signum 0.05
+        // fold — the x the 15.0 face keeps minus the step)
+        assert!(b.x < 15.0 && b.x > 14.9, "the back-off the face keeps ({})", b.x);
+        // THE DESPAWN (the stuck arrow's own 1200 ceiling)
+        let mut c = Arrow::from_spawn(&ArrowShot {
+            id: 3,
+            x: 10.5,
+            y: 11.5,
+            z: 10.5,
+            vx: 1.2,
+            vy: 0.0,
+            vz: 0.0,
+            y_rot: 90.0,
+            x_rot: 0.0,
+            crit: true,
+            pitch: 1.0,
+            seed: 9,
+        });
+        c.tick(&wall, None);
+        while !c.dead {
+            c.tick(&wall, None);
+        }
+        assert!(
+            c.life >= ARROW_GROUND_LIFE,
+            "the despawn the ceiling crossing speaks ({})",
+            c.life
+        );
+        // THE PLAYER HIT: the segment the box crosses — the damage the
+        // ceil(|v|·2.0) formula speaks, the arrow the discard answers
+        let mut d = Arrow::from_spawn(&ArrowShot {
+            id: 4,
+            x: 30.0,
+            y: 10.5,
+            z: 32.0,
+            vx: 1.5,
+            vy: 0.0,
+            vz: 0.0,
+            y_rot: 90.0,
+            x_rot: 0.0,
+            crit: true,
+            pitch: 1.0,
+            seed: 11,
+        });
+        d.prev_x = 30.0;
+        d.x = 31.0; // the segment the player's own box (31.6 center) crosses
+        let victim = player_at(31.5, 10.0, 32.0);
+        let ev = d.tick(&world, Some(&victim));
+        let dmg = ev.hit_player.expect("the player hit the damage speaks");
+        let want = ((1.5f64 * ARROW_BASE_DAMAGE).ceil()) as i64;
+        assert_eq!(dmg as i64, want, "the ceil(|v| * 2.0) the formula keeps");
+        assert!(d.dead, "the DISALLOWED pickup the hit discards");
+    }
+
+
+    /// THE SKELETON'S OWN DRAW CADENCE (javap `RangedBowAttackGoal.tick`
+    /// the 26.2 bytecode speaks): the pre-draw gate the first eligible
+    /// tick arms (attackTime's own −1 the --<=0 crossing speaks), the
+    /// full draw the 20-tick getTicksUsingItem gate speaks — the SHOOT
+    /// fires at the crossing (the arrow event + the crit the power 1.0
+    /// keeps), the interval the 40 the refill speaks (the next draw
+    /// the --<=0 crossing re-arms 40 ticks later), the seeTime gates
+    /// the goal's own counters keep.
+    #[test]
+    fn the_skeleton_draw_the_ranged_goal_cadence_keeps() {
+        let world = jockey_flat_world();
+        let mut s = Zombie::new(1, 32.0, 9.0, 32.0, 7);
+        s.kind = MobKind::Skeleton;
+        s.held_weapon = Some("bow");
+        let target = player_at(32.0, 9.0, 25.0); // inside the ring, the flat world's own LOS
+        // the first tick: the draw arms (the attackTime's own -1 the
+        // pre-draw gate crosses)
+        let ev = s.tick(&world, Some(&target), NIGHT);
+        assert!(s.using_ticks >= 0, "the pre-draw gate the draw arms");
+        assert!(ev.arrow_shot.is_none(), "no shot before the full draw");
+        // the full-draw crossing: the 20-tick gate the shoot speaks
+        let mut shots = 0;
+        for i in 0..40 {
+            let ev = s.tick(&world, Some(&target), NIGHT);
+            if let Some(shot) = ev.arrow_shot {
+                shots += 1;
+                assert!(shot.crit, "the full draw the crit speaks");
+                assert!(shot.pitch > 0.833_3 && shot.pitch < 1.250_1);
+                assert_eq!(
+                    s.bow_attack_time, SKELETON_ATTACK_INTERVAL,
+                    "the shoot the interval refills"
+                );
+                break;
+            }
+            assert!(i < 30, "the full draw the crossing never spoke");
+        }
+        assert_eq!(shots, 1, "the first crossing one shot speaks");
+        assert_eq!(s.using_ticks, -1, "the shoot the draw releases");
+        // the next shot: the 40-tick interval + the 20-tick draw the
+        // cadence keeps (no shot inside the interval's own window)
+        let mut second = None;
+        for i in 0..80 {
+            let ev = s.tick(&world, Some(&target), NIGHT);
+            if ev.arrow_shot.is_some() {
+                second = Some(i);
+                break;
+            }
+        }
+        let at = second.expect("the second shot the cadence speaks");
+        assert!(
+            (40..=62).contains(&at),
+            "the cadence the interval+draw window keeps ({at})"
+        );
     }
 
     /// THE EQUIPMENT WORDS THE RENDER'S OWN WALK RESOLVES (the
@@ -5284,6 +6062,22 @@ mod tests {
     /// THE FLAT GRASS PLATFORM the jockey walks' own stage (the stone
     /// base, the grass top at 8, the sky the rest — the feet the y 9
     /// the surface law keeps).
+    fn arrow_air_world() -> World {
+        // the all-air world the flight tests speak (the procedural
+        // terrain the generator's own seed carries — the corridor the
+        // explicit clear answers)
+        let mut w = World::new(4, 42);
+        let size = w.size_blocks();
+        for x in 0..size {
+            for y in 0..size {
+                for z in 0..size {
+                    w.set(x, y, z, crate::world::AIR);
+                }
+            }
+        }
+        w
+    }
+
     fn jockey_flat_world() -> World {
         let mut world = World::new(4, 7);
         let size = world.size_blocks();
@@ -6603,6 +7397,7 @@ mod tests {
             eye_y: 6.0,
             dead: false,
             width: 0.6,
+            height: crate::body::STANDING_HEIGHT,
         };
         let _ = z.tick(&world, Some(&pv), NOON);
         assert_eq!(z.prev_x, 32.0, "the pre-move feet the head saved");

@@ -1547,6 +1547,16 @@ pub struct App {
     /// deterministic headless scenes never spawn one: the pixel
     /// goldens stay.
     pub mobs: Vec<crate::mob::Zombie>,
+    /// THE ARROW FLIGHT LANE (the offline world's projectiles — the
+    /// skeleton's own shots the RangedBowAttackGoal's full-draw
+    /// crossing speaks): the flight the AbstractArrow tick's own laws
+    /// ride, the hits the caller's own lanes answer. The headless
+    /// scenes never spawn one: the goldens stay.
+    pub arrows: Vec<crate::mob::Arrow>,
+    /// THE ARROW's own lazy texture (the entity/projectiles/arrow.png
+    /// the sha1 the ArrowModel load verifies) — `None` = the arrows
+    /// never render (the honesty the other kinds keep).
+    pub arrow_model: Option<crate::avatar::ArrowModel>,
     /// THE WIRE'S OWN MOB LANE (the networked world's population —
     /// the Add Entity store's projection the live refresh ships): the
     /// remote zombies the SERVER owns (the lerpTo walk the pose
@@ -2159,6 +2169,8 @@ impl App {
             orb_sheet: None,
             underwater_screen: None,
             mobs: Vec::new(),
+            arrows: Vec::new(),
+            arrow_model: None,
             net_mobs: Vec::new(),
             spawn_clock: 0,
             next_mob_id: 1,
@@ -2516,6 +2528,7 @@ impl App {
                 eye_y: b.y + b.eye_height(),
                 dead: self.dead,
                 width: crate::body::WIDTH,
+                            height: b.height(),
             });
             let day_time = (self.day_time_base + self.frame) as i64;
             // the disjoint field borrows: the body mutates while the
@@ -3267,6 +3280,7 @@ impl App {
                             eye_y: b.y + b.eye_height(),
                             dead: self.dead,
                             width: crate::body::WIDTH,
+                            height: b.height(),
                         });
                         for o in self.orbs.iter_mut() {
                             o.tick(world, player.as_ref());
@@ -3416,6 +3430,15 @@ impl App {
                 // dealDefaultKnockback law speaks), the ambient groans
                 // draw their pitch from the entity's own stream.
                 let mut hit_events: Vec<(f64, f64, f64)> = Vec::new();
+                // THE SKELETON'S OWN SHOTS (the full-draw crossings the
+                // events carry — the arrows the caller's flight lane
+                // pushes, the shoot voice the draw's own pitch speaks)
+                let mut arrow_shots: Vec<crate::mob::ArrowShot> = Vec::new();
+                // THE ARROW'S OWN OUT-EDGES (the hits the flight tick
+                // carried — the player's damage the hurt walk answers,
+                // the block's voice the stick's own pitch keeps)
+                let mut arrow_player_hits: Vec<f64> = Vec::new();
+                let mut arrow_block_hits: Vec<(f64, f64, f64, f32)> = Vec::new();
                 // THE GRAZE'S OWN SWAPS (the EatBlockGoal's `== 4`
                 // landing the events carry — the caller applies the
                 // id the tick's &World read the immutable borrow
@@ -3463,6 +3486,7 @@ impl App {
                             eye_y: b.y + b.eye_height(),
                             dead: self.dead,
                             width: crate::body::WIDTH,
+                            height: b.height(),
                         });
                         // THE GOALS' OWN PRE-PASS (the scans the
                         // callers' moment answer before the ticks):
@@ -3521,6 +3545,9 @@ impl App {
                             }
                             if let Some(atk) = ev.attack {
                                 hit_events.push((atk.damage, atk.dir_x, atk.dir_z));
+                            }
+                            if let Some(shot) = ev.arrow_shot {
+                                arrow_shots.push(shot);
                             }
                             if let Some(swap) = ev.eat_block {
                                 eat_swaps.push(swap);
@@ -3607,7 +3634,38 @@ impl App {
                                 }
                             }
                         }
+                        // THE ARROW FLIGHTS (the vanilla's own
+                        // projectile lane — the shots the skeletons
+                        // speak, the flight the AbstractArrow tick's
+                        // own laws ride: the hits the caller's own
+                        // lanes answer, the stuck walls the despawn
+                        // discards; the vecs the caller's scope
+                        // declared, the fills the flight answers)
+                        for arrow in self.arrows.iter_mut() {
+                            let aev = arrow.tick(world, player.as_ref());
+                            if let Some(dmg) = aev.hit_player {
+                                arrow_player_hits.push(dmg);
+                            }
+                            if let Some(pitch) = aev.hit_block {
+                                arrow_block_hits.push((arrow.x, arrow.y, arrow.z, pitch));
+                            }
+                        }
+                        self.arrows.retain(|a| !a.dead);
                     }
+                }
+                // THE SHOT'S OWN SPAWNS (the events the mob ticks
+                // queued — the arrows the flight lane pushes, the
+                // shoot voice the SKELETON_SHOOT event plays at the
+                // skeleton's own spot)
+                for shot in arrow_shots {
+                    self.arrows.push(crate::mob::Arrow::from_spawn(&shot));
+                    self.sounds.play_voice_at(
+                        self.frame,
+                        "entity.skeleton.shoot",
+                        1.0,
+                        shot.pitch,
+                        ear_distance(ear, shot.x, shot.y, shot.z),
+                    );
                 }
                 // THE RIDE'S OWN PASS (the jockey's caller-side walk —
                 // the ticks' AFTER the links the walk resolves: the
@@ -3667,6 +3725,23 @@ impl App {
                             }
                         }
                     }
+                }
+                // THE ARROW'S OWN HITS (the player's hurt the onHitEntity
+                // damage answers — the punch-0 bow the knockback NEVER
+                // carries, the honest no-push the vanilla law keeps;
+                // the block's own voice the onHitBlock draw plays at
+                // the stick's own spot)
+                for dmg in arrow_player_hits {
+                    self.hurt(dmg as f32);
+                }
+                for (ax, ay, az, pitch) in arrow_block_hits {
+                    self.sounds.play_voice_at(
+                        self.frame,
+                        "entity.arrow.hit",
+                        1.0,
+                        pitch,
+                        ear_distance(ear, ax, ay, az),
+                    );
                 }
                 // THE GRAZE'S OWN SWAPS (the caller's setBlock walk —
                 // the tick's reads the immutable borrow keeps, the
@@ -11891,6 +11966,7 @@ impl App {
         // tick feeds the flame feature's frame law)
         let render_day_time = (self.day_time_base + self.frame) as i64;
         self.render_mobs(fb, &ctx, &cam, render_day_time, a);
+        self.render_arrows(fb, &ctx, &cam);
         // THE EAT ARC's pieces (the BreakingItemParticle pass — the
         // vanilla's own particle layer rides the entity pass): the
         // mouth's debris as camera-facing quads
@@ -12540,6 +12616,67 @@ impl App {
     /// texel pixel packs (0, 0, 0, 0.7) and the entity shader's
     /// `mix(overlay.rgb, color.rgb, overlay.a)` folds the model to
     /// 70% brightness while hurtTime > 0.
+    /// THE ARROWS' OWN PASS (javap `ArrowRenderer.submit` the 26.2
+    /// bytecode speaks — the entity pass the mobs' own lane rides):
+    /// the flight quads the ArrowModel's own chain bakes, the stuck
+    /// walls the shake the clock keeps, the lerp the O pairs walk.
+    fn render_arrows(
+        &mut self,
+        fb: &mut crate::raster::Framebuf,
+        ctx: &RenderCtx,
+        cam: &crate::camera::Camera,
+    ) {
+        if self.arrows.is_empty() {
+            return; // the deterministic scenes carry no projectiles — the goldens stay
+        }
+        if self.arrow_model.is_none() {
+            self.arrow_model = crate::avatar::ArrowModel::load(std::path::Path::new(
+                "assets-cache/jar",
+            ));
+        }
+        let Some(model) = &self.arrow_model else {
+            return; // the arrow texture failed its sha1 — the shots stay unseen
+        };
+        let mut sampled: Vec<crate::raster::SampledQuad> = Vec::new();
+        for arrow in &self.arrows {
+            // THE EXTRACT'S OWN LERP (the render state's own sampling —
+            // the position and the rotation ride the O pairs the
+            // frame's own partial_tick now)
+            let px = arrow.prev_x + (arrow.x - arrow.prev_x) * self.partial_tick as f64;
+            let py = arrow.prev_y + (arrow.y - arrow.prev_y) * self.partial_tick as f64;
+            let pz = arrow.prev_z + (arrow.z - arrow.prev_z) * self.partial_tick as f64;
+            let yr = arrow.y_rot_o + (arrow.y_rot - arrow.y_rot_o) * self.partial_tick;
+            let xr = arrow.x_rot_o + (arrow.x_rot - arrow.x_rot_o) * self.partial_tick;
+            let shake = if arrow.shake_time > 0 {
+                arrow.shake_time as f32 - self.partial_tick
+            } else {
+                0.0
+            };
+            let quads =
+                model.quads(
+                    crate::math::Vec3::new(px as f32, py as f32, pz as f32),
+                    yr,
+                    xr,
+                    shake,
+                    cam.yaw,
+                    cam.pitch,
+                );
+            for q in quads {
+                sampled.push(crate::raster::SampledQuad {
+                    pts: q.pts,
+                    uv: q.uv,
+                    tex: "",
+                    tint: [q.shade, q.shade, q.shade],
+                });
+            }
+        }
+        let pixel = |u: f32, v: f32| model.pixel(u, v);
+        fb.draw_sampled_quads(ctx.proj.mul(&ctx.view), &sampled, &mut |_tex, u, v| {
+            let [r, g, b, a] = pixel(u, v);
+            Some([r, g, b, a])
+        });
+    }
+
     fn render_mobs(
         &mut self,
         fb: &mut crate::raster::Framebuf,

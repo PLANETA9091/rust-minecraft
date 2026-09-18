@@ -425,6 +425,118 @@ fn entity_folds(
     (fold_point, fold_normal)
 }
 
+/// THE ARROW MODEL (javap `ArrowModel.createBodyLayer` +
+/// `ArrowRenderer.submit` the 26.2 bytecode speaks): the flat
+/// cross-quads the 32x32 arrow texture unwraps — the root the 0.9
+/// scale the transformed mesh keeps, the `back` plane the 5x5
+/// zero-width box (0,-2.5,-2.5) the pivot (-11,0,0) + the 0.8 scale
+/// rides, the two `cross` planes the 16x4 zero-depth boxes the ±45°
+/// /135° X rotations swing (the texScale (1, 0.8) the addBox's own
+/// delta pair speaks — the sampled rects the (1,1) default the rest
+/// of the models keep). The renderer's own chain: RotY(yRot − 90°)
+/// then RotZ(xRot), the shake the root's zRot the setupAnim adds.
+pub struct ArrowModel {
+    rgba: Vec<u8>,
+}
+
+impl ArrowModel {
+    /// Load + sha1-verify the arrow's own texture (javap
+    /// `TippableArrowRenderer`'s TEXTURE_0 — the 32x32 the
+    /// LayerDefinition.create mesh speaks). `None` = the arrows never
+    /// render (the honesty the other kinds keep).
+    pub fn load(root: &Path) -> Option<ArrowModel> {
+        let bytes = std::fs::read(root.join("entity/projectiles/arrow.png")).ok()?;
+        let digest = sha1::Sha1::digest(&bytes);
+        if hex::encode(digest) != "38d8df11d81c579d0f4b3b9c900f604dc9bb784a" {
+            return None;
+        }
+        let (w, h, rgba) = decode_rgba(&bytes).ok()?;
+        if w != 32 || h != 32 || rgba.len() != 32 * 32 * 4 {
+            return None;
+        }
+        Some(ArrowModel { rgba })
+    }
+
+    /// The texture pixel at (u, v) — the RGBA row-major words, v down.
+    pub fn pixel(&self, u: f32, v: f32) -> [u8; 4] {
+        let (uu, vv) = (u.clamp(0.0, 31.999_9), v.clamp(0.0, 31.999_9));
+        let x = uu as usize;
+        let y = vv as usize;
+        let o = (y * 32 + x) * 4;
+        [self.rgba[o], self.rgba[o + 1], self.rgba[o + 2], self.rgba[o + 3]]
+    }
+
+    /// THE POSED RENDER: the world-space textured quads the flat
+    /// cross speaks at the arrow's own pose — `pos` the lerped
+    /// position, `y_rot/x_rot` the flight rotation the extract's
+    /// partial read carries, `shake` the stuck arrow's own clock.
+    pub fn quads(
+        &self,
+        pos: Vec3,
+        y_rot: f32,
+        x_rot: f32,
+        shake: f32,
+        cam_yaw: f32,
+        cam_pitch: f32,
+    ) -> Vec<AvatarQuad> {
+        // THE RENDERER'S OWN CHAIN (javap ArrowRenderer.submit: the
+        // YP yaw (yRot − 90°) then the ZP pitch) + the shake the
+        // ArrowModel.setupAnim's own zRot adds (-sin(shake·3)·shake
+        // degrees the 0.017453292 fold rides)
+        let shake_rad = if shake > 0.0 {
+            -mth_sin(shake * 3.0) * shake * 0.017_453_292
+        } else {
+            0.0
+        };
+        let base = Mat4::translation(pos.x, pos.y, pos.z)
+            .mul(&Mat4::rot_y((y_rot - 90.0).to_radians()))
+            .mul(&Mat4::rot_z(x_rot.to_radians()))
+            .mul(&Mat4::rot_z(shake_rad));
+        // THE PARTS (createBodyLayer's own numbers — the boxes the
+        // UNSCALED texel dims keep: the UV rects the box dims answer
+        // BEFORE the model transform's scale the geometry folds, the
+        // texScale the rect's own division speaks)
+        let back_cube = Cube {
+            tex: (0.0, 0.0),
+            origin: [0.0, -2.5, -2.5],
+            size: [0.0, 5.0, 5.0],
+            inflate: 0.0,
+            mirror: false,
+        };
+        let cross_cube = Cube {
+            tex: (0.0, 0.0),
+            origin: [-12.0, -2.0, 0.0],
+            size: [16.0, 4.0, 0.0],
+            inflate: 0.0,
+            mirror: false,
+        };
+        // the transform chain: the ROOT's 0.9 scale the base carries,
+        // the back's own pivot (-11, 0, 0) + the 0.8 part scale the
+        // PartPose.offsetAndRotation.withScale ride, the cross pair's
+        // ±45°/135° X rotations the PartPose.rotation speaks
+        let root = base.mul(&Mat4::scale_3d(0.9, 0.9, 0.9));
+        let back_m = root
+            .mul(&Mat4::translation(-11.0 / 16.0, 0.0, 0.0))
+            .mul(&Mat4::scale_3d(0.8, 0.8, 0.8));
+        let cross1_m = root.mul(&Mat4::rot_x(0.785_398_2));
+        let cross2_m = root.mul(&Mat4::rot_x(2.356_194_5));
+        let parts = [
+            (&back_cube, &back_m, (1.0f32, 1.0f32)),
+            (&cross_cube, &cross1_m, (1.0f32, 0.8f32)),
+            (&cross_cube, &cross2_m, (1.0f32, 0.8f32)),
+        ];
+        // THE IDENTITY FOLD (the matrix the world transform carries —
+        // the projectile the LivingEntity's own S/flip chain never
+        // rides)
+        let identity = |p: [f32; 3]| -> [f32; 3] { p };
+        let mut out: Vec<AvatarQuad> = Vec::with_capacity(18);
+        for (cube, m, tex_scale) in &parts {
+            emit_cube(cube, m, &identity, &identity, cam_yaw, cam_pitch, *tex_scale, &mut out);
+        }
+        out
+    }
+}
+
 /// The QUADRUPED's pose inputs — the pig render state's own fields
 /// (javap `QuadrupedModel.setupAnim(LivingEntityRenderState)`: the
 /// walk fold + the head's degree->radian pair the pool's 0.017453
@@ -3631,7 +3743,7 @@ fn collect_part(
 ) {
     let m = part.matrix(parent);
     for cube in &part.cubes {
-        emit_cube(cube, &m, fold_point, fold_normal, cam_yaw, cam_pitch, out);
+        emit_cube(cube, &m, fold_point, fold_normal, cam_yaw, cam_pitch, (1.0, 1.0), out);
     }
     for child in &part.children {
         collect_part(child, &m, fold_point, fold_normal, cam_yaw, cam_pitch, out);
@@ -3641,6 +3753,7 @@ fn collect_part(
 /// One cube's six faces — the `ModelPart$Cube` corner/uv table the
 /// first-person arm already speaks (hand.rs's own decode), inflated by
 /// the `CubeDeformation` extend, folded into world space.
+#[allow(clippy::too_many_arguments)]
 fn emit_cube(
     cube: &Cube,
     m: &Mat4,
@@ -3648,6 +3761,7 @@ fn emit_cube(
     fold_normal: &dyn Fn([f32; 3]) -> [f32; 3],
     cam_yaw: f32,
     cam_pitch: f32,
+    tex_scale: (f32, f32),
     out: &mut Vec<AvatarQuad>,
 ) {
     let (u0, v0) = cube.tex;
@@ -3705,10 +3819,14 @@ fn emit_cube(
         // 1 -> (u0,v0), 2 -> (u0,v1), 3 -> (u1,v1); the MIRROR flag
         // (javap ModelPart$Cube's own `mirror` branch) flips every
         // face rect's u axis — the polygon corners sample it reversed
+        // the Polygon ctor's own texScale fold — the UV corners the
+        // (texScaleU, texScaleV) pair divides (the arrow's shaft the
+        // (1, 0.8) row speaks, the other models the (1,1) default keeps)
+        let (tu, tv) = tex_scale;
         let uv = if cube.mirror {
-            [[ru, rv], [ru1, rv], [ru1, rv1], [ru, rv1]]
+            [[ru / tu, rv / tv], [ru1 / tu, rv / tv], [ru1 / tu, rv1 / tv], [ru / tu, rv1 / tv]]
         } else {
-            [[ru1, rv], [ru, rv], [ru, rv1], [ru1, rv1]]
+            [[ru1 / tu, rv / tv], [ru / tu, rv / tv], [ru / tu, rv1 / tv], [ru1 / tu, rv1 / tv]]
         };
         let pts = [
             fold_point(px(corners[0])),
@@ -6893,6 +7011,73 @@ mod tests {
             rest_box,
             "the spear's own stanza the sword's box never shares"
         );
+    }
+
+    /// THE ARROW MODEL's own flat cross (javap `ArrowModel.
+    /// createBodyLayer` + `ArrowRenderer.submit` the 26.2 bytecode
+    /// speaks): the three parts' quads the 32x32 texture unwraps, the
+    /// texScale (1, 0.8) the cross rects' v divides (the 4-texel face
+    /// samples 5 rows), the back's own 5x5 the (1,1) default keeps,
+    /// the load's sha1 gate the missing file the None keeps.
+    #[test]
+    fn the_arrow_model_the_flat_cross_speaks() {
+        assert!(
+            ArrowModel::load(std::path::Path::new("no-such-root-for-the-test")).is_none(),
+            "the missing file the honest None keeps"
+        );
+        let model = ArrowModel {
+            rgba: vec![9; 32 * 32 * 4],
+        };
+        // the rest pose: the identity rotations the flat cross holds
+        let quads = model.quads(
+            Vec3::ZERO,
+            90.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+        );
+        // the 6-face unwrap the three parts keep (the degenerate
+        // zero-area faces the table never skips — the raster the
+        // empty span never paints)
+        assert_eq!(quads.len(), 18, "the three parts' six faces each");
+        // THE CROSS's NORTH face (the front): the rect (0,0,16,4) the
+        // texScale (1, 0.8) divides — the v corners the 0..5 span
+        // keeps (the sampled rows the division answers)
+        let north = &quads[4 * 3 + 3]; // part 1 (cross_1), face index 3 (NORTH)
+        let vs: Vec<f32> = north.uv.iter().map(|uv| uv[1]).collect();
+        assert!(
+            vs.iter().all(|v| (*v - 0.0).abs() < 1e-4 || (*v - 5.0).abs() < 1e-4),
+            "the texScale's own division the v rows keep: {vs:?}"
+        );
+        let us: Vec<f32> = north.uv.iter().map(|uv| uv[0]).collect();
+        assert!(
+            us.iter().all(|u| (*u - 0.0).abs() < 1e-4 || (*u - 16.0).abs() < 1e-4),
+            "the cross front's u span the rect keeps: {us:?}"
+        );
+        // THE BACK's WEST face: the rect (0,5,5,5) the (1,1) default
+        // keeps — the sampled span the plain rect answers
+        let west = &quads[2]; // part 0 (back), face index 2 (WEST)
+        let us: Vec<f32> = west.uv.iter().map(|uv| uv[0]).collect();
+        let vs: Vec<f32> = west.uv.iter().map(|uv| uv[1]).collect();
+        assert!(
+            us.iter().all(|u| (*u - 0.0).abs() < 1e-4 || (*u - 5.0).abs() < 1e-4),
+            "the back's west u span keeps: {us:?}"
+        );
+        assert!(
+            vs.iter().all(|v| (*v - 5.0).abs() < 1e-4 || (*v - 10.0).abs() < 1e-4),
+            "the back's west v span keeps: {vs:?}"
+        );
+        // THE CROSS's SOUTH face: the rect (16,0,16,4) the texScale
+        // divides — the u the 16..32 span keeps
+        let south = &quads[4 * 3 + 5]; // part 1 (cross_1), face index 5 (SOUTH)
+        let us: Vec<f32> = south.uv.iter().map(|uv| uv[0]).collect();
+        assert!(
+            us.iter().all(|u| (*u - 16.0).abs() < 1e-4 || (*u - 32.0).abs() < 1e-4),
+            "the cross south's u span keeps: {us:?}"
+        );
+        // the pixel read: the 32x32 the clamp keeps
+        assert_eq!(model.pixel(0.0, 31.9), [9u8, 9, 9, 9]);
     }
 
     /// THE SKELETON'S OWN MESH (javap `SkeletonModel.

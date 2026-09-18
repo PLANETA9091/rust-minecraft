@@ -157,6 +157,13 @@ impl Lcg {
         min + self.next_f64() * (max - min)
     }
 
+    /// `RandomSource.triangle(mode, delta)` (javap the default method
+    /// verbatim: `mode + delta * (nextDouble() - nextDouble())` — the
+    /// two-draw triangular spread the arrow's inaccuracy scales).
+    pub fn triangle(&mut self, delta: f64) -> f64 {
+        delta * (self.next_f64() - self.next_f64())
+    }
+
     /// `RandomSource.nextInt(bound)` — the bound-draw law the ambient
     /// walk's gates speak (the 16/32/100/200 bounds the fluid's own
     /// ticks ride). The stand-in convention the audio lane's weighted
