@@ -138,6 +138,30 @@ pub const SHEEP_HEIGHT: f64 = 1.3;
 /// The SHEEP registration's own `eyeHeight(1.2350000143051147F)` (the
 /// same chain).
 pub const SHEEP_EYE_HEIGHT: f64 = 1.235;
+/// The CHICKEN registration's own `sized(0.4F, 0.7F)` (EntityTypes
+/// clinit's javap block — the avian body's own bbox the flame ring
+/// asks: `ldc_w #384 0.4f`, `ldc #208 0.7f`, the sized(FF) the builder
+/// keeps, the CREATURE category the same block names).
+pub const CHICKEN_WIDTH: f64 = 0.4;
+pub const CHICKEN_HEIGHT: f64 = 0.7;
+/// The CHICKEN registration's own `eyeHeight(0.644F)` (the same block).
+pub const CHICKEN_EYE_HEIGHT: f64 = 0.644;
+/// THE CHICKEN'S OWN PANIC (javap `Chicken.registerGoals` the 26.2 jar
+/// speaks: `addGoal(1, new PanicGoal(this, 1.4))` — the `ldc2_w #61
+/// 1.4d` the arm keeps, the prio-1 walk the other animals' rows ride).
+pub const PANIC_SPEED_CHICKEN: f64 = 1.4;
+/// THE CHICKEN'S OWN FOOD TAG (the jar's
+/// `data/minecraft/tags/item/chicken_food.json` verbatim — the six
+/// seed rows the tag keeps; the Chicken.isFood the `is(ItemTags.
+/// CHICKEN_FOOD)` walk speaks).
+pub const CHICKEN_FOOD: [&str; 6] = [
+    "wheat_seeds",
+    "melon_seeds",
+    "pumpkin_seeds",
+    "beetroot_seeds",
+    "torchflower_seeds",
+    "pitcher_pod",
+];
 
 /// `AgeableMob.getBabyStartAge` (javap: `return -24000` — the grow-up
 /// countdown the child's birth arms; the age walks UP toward 0 the
@@ -589,6 +613,13 @@ pub enum MobKind {
     /// fold the own setupAnim speaks (the head the *9.0 drop and the
     /// eat-angle replacement the cow never carried)
     Sheep,
+    /// the avian mesh (javap AdultChickenModel.createBaseChickenModel's
+    /// own numbers — the head 4x6x3 at pivot (0, 15, -4) with the beak
+    /// 4x2x2 + red_thing 2x2x2 children the ZERO pose folds into the
+    /// head's cube list, the rotX barrel body 6x8x6, the 3x5x3 legs,
+    /// the 1x4x6 wings the flap law swings) PLUS the flap clock the
+    /// own aiStep speaks (the wing's air beat the ground never keeps)
+    Chicken,
 }
 
 impl MobKind {
@@ -603,6 +634,8 @@ impl MobKind {
             MobKind::Cow
         } else if name == "minecraft:sheep" {
             MobKind::Sheep
+        } else if name == "minecraft:chicken" {
+            MobKind::Chicken
         } else {
             MobKind::Zombie
         }
@@ -636,6 +669,7 @@ impl MobKind {
             MobKind::Sheep => Some(PANIC_SPEED_SHEEP),
             MobKind::Cow => Some(PANIC_SPEED_COW),
             MobKind::Pig => Some(PANIC_SPEED_PIG),
+            MobKind::Chicken => Some(PANIC_SPEED_CHICKEN),
         }
     }
 
@@ -660,6 +694,12 @@ impl MobKind {
             (MobKind::Pig, VoiceSlot::Ambient) => "entity.pig.ambient",
             (MobKind::Pig, VoiceSlot::Hurt) => "entity.pig.hurt",
             (MobKind::Pig, VoiceSlot::Death) => "entity.pig.death",
+            // the chicken's own rows (the classic sound variant json's
+            // adult_sounds the ChickenSoundSet answers — the ambient,
+            // the hurt, the death the variant's own files keep)
+            (MobKind::Chicken, VoiceSlot::Ambient) => "entity.chicken.ambient",
+            (MobKind::Chicken, VoiceSlot::Hurt) => "entity.chicken.hurt",
+            (MobKind::Chicken, VoiceSlot::Death) => "entity.chicken.death",
         }
     }
 
@@ -681,6 +721,12 @@ impl MobKind {
     pub fn step_voice(self, under: Option<&str>) -> Option<(&'static str, f32, f32)> {
         match self {
             MobKind::Zombie => Some(("entity.zombie.step", ZOMBIE_STEP_VOLUME, ZOMBIE_STEP_PITCH)),
+            // THE CHICKEN'S OWN FLAT FOLD (javap `Chicken.playStepSound`
+            // — the ONE animal override the 26.2 classfile keeps: the
+            // `getSoundSet().stepSound()` the variant's own word plays
+            // at `0.15F, 1.0F` — no block state the voice reads, the
+            // classic variant the entity.chicken.step name carries)
+            MobKind::Chicken => Some(("entity.chicken.step", 0.15, 1.0)),
             MobKind::Sheep | MobKind::Cow | MobKind::Pig => {
                 use mc_registry::generated::block_sounds as bs;
                 let idx = bs::sound_index(under?)?;
@@ -1144,6 +1190,17 @@ pub struct Zombie {
     /// 1.0F store) over the solid block under the feet.
     pub move_dist: f32,
     pub next_step: f32,
+    /// THE WING CLOCK (javap `Chicken.flap` / `flapSpeed` / `flapping`
+    /// — the three public floats the aiStep's own walk advances: the
+    /// speed the ground drains and the air arms, the flapping the
+    /// airborne beat holds, the flap the sin source the render's
+    /// wing zRot reads — the model setupAnim's `(sin(flap)+1)*
+    /// flapSpeed` the flapAngle folds). The o-pairs the vanilla's
+    /// state extraction keeps are the lerp the render never reads —
+    /// the flap clock the direct sample draws.
+    pub flap: f32,
+    pub flap_speed: f32,
+    pub flapping: f32,
 }
 
 impl Zombie {
@@ -1208,6 +1265,9 @@ impl Zombie {
             fire_ticks: 0,
             move_dist: 0.0,
             next_step: 1.0,
+            flap: 0.0,
+            flap_speed: 0.0,
+            flapping: 0.0,
         }
     }
 
@@ -1236,6 +1296,7 @@ impl Zombie {
             MobKind::Sheep => (SHEEP_WIDTH, SHEEP_HEIGHT),
             MobKind::Cow => (COW_WIDTH, COW_HEIGHT),
             MobKind::Pig => (PIG_WIDTH, PIG_HEIGHT),
+            MobKind::Chicken => (CHICKEN_WIDTH, CHICKEN_HEIGHT),
             MobKind::Zombie => (ZOMBIE_WIDTH, ZOMBIE_HEIGHT),
         };
         // THE BABY'S OWN DIMENSIONS (javap `Sheep.getDefaultDimensions`
@@ -1460,6 +1521,25 @@ impl Zombie {
             self.set_age(self.age + 1);
         } else if self.age > 0 {
             self.set_age(self.age - 1);
+        }
+        // THE WING CLOCK (javap `Chicken.aiStep`'s own tail the 26.2
+        // bytecode speaks verbatim: `oFlap = flap; oFlapSpeed =
+        // flapSpeed` the pre-move pairs the lerp-less draw skips;
+        // `flapSpeed += (onGround ? -1.0F : 4.0F) * 0.3F` — the ifeq
+        // the onGround read branches, the false arm the +4.0f keeps —
+        // `Mth.clamp(flapSpeed, 0.0F, 1.0F)`; `if (!onGround &&
+        // flapping < 1.0F) flapping = 1.0F`; `flapping *= 0.9F`; and
+        // `flap += flapping * 2.0F` — the sin source the wings read.
+        // The grounded bird the clock drains to stillness, the
+        // airborne one the beat the clamp's ceiling keeps).
+        if self.kind == MobKind::Chicken {
+            self.flap_speed += (if self.on_ground { -1.0 } else { 4.0 }) * 0.3;
+            self.flap_speed = self.flap_speed.clamp(0.0, 1.0);
+            if !self.on_ground && self.flapping < 1.0 {
+                self.flapping = 1.0;
+            }
+            self.flapping *= 0.9;
+            self.flap += self.flapping * 2.0;
         }
         // THE FEED'S OWN SPARKLES (javap `AgeableMob.aiStep`'s client
         // arm verbatim: the `forcedAgeTimer > 0` gate the ageUp's
@@ -1904,7 +1984,19 @@ impl Zombie {
             self.vz += (iz * c + ix * s) * speed;
         }
         // THE COLLIDE (the same sweep the player's law speaks)
-        let col = collide(world, self.box_at(), (self.vx, self.vy, self.vz));
+        let col = {
+            // THE CHICKEN'S OWN SLOW FALL (javap `Chicken.aiStep`'s
+            // mid-body fold the 26.2 bytecode speaks: `if (!onGround()
+            // && deltaMovement.y < 0.0) setDeltaMovement(
+            // deltaMovement.multiply(1.0, 0.6, 1.0))` — the falling
+            // hen the y the 0.6 fold brakes, the aiStep's own place
+            // BEFORE the travel's move the order keeps — the same
+            // delta the collide consumes here)
+            if self.kind == MobKind::Chicken && !self.on_ground && self.vy < 0.0 {
+                self.vy *= 0.6;
+            }
+            collide(world, self.box_at(), (self.vx, self.vy, self.vz))
+        };
         self.x += col.dx;
         self.y += col.dy;
         self.z += col.dz;
@@ -2394,6 +2486,10 @@ impl Zombie {
             MobKind::Pig => {
                 held_item == "carrot" || held_item == "potato" || held_item == "beetroot"
             }
+            // the chicken's own seed tag — the six rows the json
+            // keeps, the `is(ItemTags.CHICKEN_FOOD)` walk the class
+            // speaks
+            MobKind::Chicken => CHICKEN_FOOD.contains(&held_item),
             // the monster (and the kinds the mesh lane never drew) —
             // the food gate closed
             MobKind::Zombie => false,
@@ -2576,7 +2672,10 @@ impl Zombie {
     /// the chain's own walk speaks).
     pub fn can_use_golden_dandelion(&self, held_item: &str) -> bool {
         match self.kind {
-            MobKind::Sheep | MobKind::Cow | MobKind::Pig => {
+            // the chicken the same always-pass keeps (the tag json the
+            // jar speaks — zombie_horse/skeleton_horse/villager only —
+            // the avian the lock the zoo's kinds ride)
+            MobKind::Sheep | MobKind::Cow | MobKind::Pig | MobKind::Chicken => {
                 held_item == "golden_dandelion" && self.age < 0
                     && self.age_lock_particle_timer == 0
             }
@@ -2709,6 +2808,10 @@ impl Zombie {
     pub fn base_xp_reward(&mut self) -> i32 {
         match self.kind {
             MobKind::Zombie => ZOMBIE_XP_REWARD,
+            // the animals' shared arm — the Chicken's own override the
+            // javap dump names (`isChickenJockey() ? 10 : super`) the
+            // jockey-less lane never rides (no chicken jockey this
+            // world's vocabulary speaks)
             _ => 1 + self.rng.next_int(3),
         }
     }
@@ -2814,6 +2917,26 @@ impl Zombie {
                     out.push((item, count));
                 }
             }
+            MobKind::Chicken => {
+                // chicken.json POOL 1: the feather uniform 0..2 (the
+                // count 0 the pool's own empty keeps)
+                let count = self.rng.next_int_inclusive(0, 2);
+                if count > 0 {
+                    if let Some(item) = wire_id("feather") {
+                        out.push((item, count));
+                    }
+                }
+                // POOL 2: the raw chicken uniform 0..1 (the json's
+                // `uniform min 0.0 max 1.0` the Mth.nextInt(0, 1) fold
+                // keeps), the smelt the cooked variant speaks
+                let count = self.rng.next_int_inclusive(0, 1);
+                let name = if smelt { "cooked_chicken" } else { "chicken" };
+                if count > 0 {
+                    if let Some(item) = wire_id(name) {
+                        out.push((item, count));
+                    }
+                }
+            }
         }
         out
     }
@@ -2889,16 +3012,19 @@ pub const CREATURE_PACK_MAX: i32 = 4;
 pub const CREATURE_CLUSTER_SIZE: i32 = 4;
 
 /// THE BIOME'S OWN WEIGHTED ROWS (the plains `MobSpawnSettings` the
-/// classic table keeps: sheep 12, pig 10, cow 8 — the chicken 10 the
-/// drawn set never carries, the three the registry admits the roll
-/// draws; the weighted pick the cumulative fold speaks, the vanilla
-/// list order the ranges' own walk keeps).
+/// classic table keeps: sheep 12, pig 10, chicken 10, cow 8 — the
+/// chicken row the drawn set NOW carries, the four the registry admits
+/// the roll draws; the weighted pick the cumulative fold speaks, the
+/// vanilla list order the ranges' own walk keeps — sheep, pig,
+/// chicken, cow, the nextInt(40) the total the sum speaks).
 fn pick_creature_kind(rng: &mut Lcg) -> MobKind {
-    let roll = rng.next_int(30);
+    let roll = rng.next_int(40);
     if roll < 12 {
         MobKind::Sheep
     } else if roll < 22 {
         MobKind::Pig
+    } else if roll < 32 {
+        MobKind::Chicken
     } else {
         MobKind::Cow
     }
@@ -7173,6 +7299,319 @@ mod tests {
             cow.eat_animation_tick, 0,
             "the cow the EatBlockGoal never fills — the kind gate keeps"
         );
+    }
+
+    /// THE CHICKEN'S OWN ROWS THE TABLES SPEAK (the wire name the
+    /// from_wire_name admits, the classic sound variant's own voice
+    /// rows, the playStepSound override's FLAT fold — the ONE animal
+    /// the 26.2 classfile keeps — and the PanicGoal 1.4 the
+    /// registerGoals' ldc2_w arms).
+    #[test]
+    fn the_chicken_rows_the_tables_speak() {
+        // the wire name's own round trip
+        assert_eq!(
+            MobKind::from_wire_name("minecraft:chicken"),
+            MobKind::Chicken,
+            "the registry name the avian answers"
+        );
+        // the voice rows (the classic variant json's adult_sounds)
+        assert_eq!(
+            MobKind::Chicken.voice_event(VoiceSlot::Ambient),
+            "entity.chicken.ambient"
+        );
+        assert_eq!(
+            MobKind::Chicken.voice_event(VoiceSlot::Hurt),
+            "entity.chicken.hurt"
+        );
+        assert_eq!(
+            MobKind::Chicken.voice_event(VoiceSlot::Death),
+            "entity.chicken.death"
+        );
+        // THE STEP'S OWN FLAT FOLD (the playStepSound override — the
+        // block state the variant's stepSound never reads, 0.15F/1.0F
+        // the bytecode keeps; the under block the None the flat arm
+        // ignores)
+        let (event, volume, pitch) =
+            MobKind::Chicken.step_voice(Some("grass_block")).expect("the step voice speaks");
+        assert_eq!(event, "entity.chicken.step");
+        assert_eq!((volume, pitch), (0.15, 1.0));
+        let (event2, volume2, pitch2) =
+            MobKind::Chicken.step_voice(Some("stone")).expect("the step voice the block ignores");
+        assert_eq!((event2, volume2, pitch2), (event, volume, pitch));
+        // the monster gate the friendly lane keeps
+        assert!(!MobKind::Chicken.is_monster());
+    }
+
+    /// THE PLAINS WEIGHTS THE CHICKEN BAND CARRIES (the classic table
+    /// sheep 12 / pig 10 / chicken 10 / cow 8 — the nextInt(40) the
+    /// sum speaks, the vanilla list order the cumulative ranges keep;
+    /// the 4000-seed walk the quarter band the chicken's 10/40 draws).
+    #[test]
+    fn the_plains_weights_the_chicken_band_carries() {
+        let n = 4000u32;
+        let (mut sheep, mut pig, mut chicken, mut cow) = (0i32, 0i32, 0i32, 0i32);
+        for seed in 0..n {
+            let mut rng = Lcg::new(seed as u64);
+            match pick_creature_kind(&mut rng) {
+                MobKind::Sheep => sheep += 1,
+                MobKind::Pig => pig += 1,
+                MobKind::Chicken => chicken += 1,
+                MobKind::Cow => cow += 1,
+                other => panic!("the creature lane the zombie never draws: {other:?}"),
+            }
+        }
+        // the bands the weights speak: 12/40, 10/40, 10/40, 8/40 —
+        // the quarter band the chicken's own share, +-400 the random
+        // walk's tolerance the other tests keep
+        let quarter = (n / 4) as i32;
+        for (name, band, lo, hi) in [
+            ("sheep", sheep, (n * 12 / 40) as i32 - 400, (n * 12 / 40) as i32 + 400),
+            ("pig", pig, (n * 10 / 40) as i32 - 400, (n * 10 / 40) as i32 + 400),
+            ("chicken", chicken, quarter - 400, quarter + 400),
+            ("cow", cow, (n * 8 / 40) as i32 - 400, (n * 8 / 40) as i32 + 400),
+        ] {
+            assert!(
+                (lo..=hi).contains(&band),
+                "the {name} band {band} escapes [{lo}, {hi}]"
+            );
+        }
+    }
+
+    /// THE CHICKEN DROPS ITS OWN ROWS (the chicken.json the jar keeps:
+    /// the feather pool uniform 0..2, the raw chicken pool uniform
+    /// 0..1 — the json's `uniform min 0.0 max 1.0` the nextInt(0, 1)
+    /// fold keeps — and the furnace_smelt the burning body's cooked
+    /// variant speaks; the flesh the chicken's table never names).
+    #[test]
+    fn the_chicken_drops_its_own_rows() {
+        let feather = wire_id("feather").expect("the feather rides the wire");
+        let raw = wire_id("chicken").expect("the chicken rides the wire");
+        let cooked = wire_id("cooked_chicken").expect("the cooked rides the wire");
+        let flesh = wire_id("rotten_flesh").expect("the flesh rides the wire");
+        let n = 4000u32;
+        let (mut feather_zeros, mut meat_zeros, mut meat_ones) = (0i32, 0i32, 0i32);
+        for seed in 0..n {
+            let mut z = Zombie::new(1, 0.0, 0.0, 0.0, 30_000 + seed as u64);
+            z.kind = MobKind::Chicken;
+            z.health = 0.0;
+            let loot = z.death_loot(false);
+            assert!(loot.len() <= 2, "the chicken's two pools");
+            let mut saw_feather = false;
+            let mut saw_meat = false;
+            for (item, count) in &loot {
+                assert!(*item != flesh, "the chicken the flesh never drops");
+                if *item == feather {
+                    saw_feather = true;
+                    assert!(
+                        (1..=2).contains(count),
+                        "the feather count {count} the nonzero keeps"
+                    );
+                } else if *item == raw {
+                    saw_meat = true;
+                    assert_eq!(*count, 1, "the raw chicken the one the band keeps");
+                    meat_ones += 1;
+                } else {
+                    panic!("the chicken's table the foreign item never drops");
+                }
+            }
+            if !saw_feather {
+                feather_zeros += 1; // the 0..2 zero roll
+            }
+            if !saw_meat {
+                meat_zeros += 1; // the 0..1 zero roll
+            }
+        }
+        // the feather zero band the third keeps, the meat zero band the
+        // half keeps (the uniform 0..1 the coin flip draws)
+        let third = (n / 3) as i32;
+        assert!(
+            ((third - 500)..=(third + 500)).contains(&feather_zeros),
+            "the feather zero band {feather_zeros}"
+        );
+        let half = (n / 2) as i32;
+        assert!(
+            ((half - 500)..=(half + 500)).contains(&meat_zeros),
+            "the meat zero band {meat_zeros}"
+        );
+        assert!(
+            ((half - 500)..=(half + 500)).contains(&meat_ones),
+            "the meat one band {meat_ones}"
+        );
+        // THE SMELT FOLD: the burning body the cooked variant drops,
+        // the raw the fire never names
+        let mut z = Zombie::new(1, 0.0, 0.0, 0.0, 77);
+        z.kind = MobKind::Chicken;
+        z.health = 0.0;
+        z.fire_ticks = 1;
+        let loot = z.death_loot(false);
+        assert!(
+            loot.iter().any(|&(item, _)| item == cooked),
+            "the burning hen the cooked meat drops"
+        );
+        assert!(
+            !loot.iter().any(|&(item, _)| item == raw),
+            "the burning hen the raw never drops"
+        );
+        // the feather the smelt never touches (the raw item the fold
+        // never cooks)
+        assert!(
+            loot.iter().any(|&(item, _)| item == feather || item == raw || item == cooked),
+            "the pools the walk keeps"
+        );
+    }
+
+    /// THE CHICKEN FOOD THE SEEDS SPEAK (the CHICKEN_FOOD tag json the
+    /// six rows keep — the isFood gate the feed walk arms: the adult
+    /// the love 600 the press rides, the wheat the tag never names the
+    /// gate refuses).
+    #[test]
+    fn the_chicken_food_the_seeds_speak() {
+        // the tag rows the is_food gate keeps
+        for seed_item in ["wheat_seeds", "melon_seeds", "pumpkin_seeds", "beetroot_seeds", "torchflower_seeds", "pitcher_pod"] {
+            let mut z = Zombie::new(1, 0.0, 0.0, 0.0, 7);
+            z.kind = MobKind::Chicken;
+            assert!(z.is_food(seed_item), "the tag row {seed_item} feeds");
+        }
+        for foreign in ["wheat", "carrot", "rotten_flesh", "feather"] {
+            let mut z = Zombie::new(1, 0.0, 0.0, 0.0, 7);
+            z.kind = MobKind::Chicken;
+            assert!(!z.is_food(foreign), "the foreign {foreign} the gate refuses");
+        }
+        // THE FEED'S OWN LOVE WALK (the Animal.mobInteract super's
+        // adult arm the shared walk keeps — the wheat_seeds press the
+        // in_love 600 arms, the baby the age the same press grows)
+        let mut adult = Zombie::new(1, 2.0, 5.0, 2.0, 7);
+        adult.kind = MobKind::Chicken;
+        let verdict = adult.mob_interact("wheat_seeds", &mut Lcg::new(9));
+        assert!(matches!(verdict, MobInteract::Feed { love: true, grow: false }), "{verdict:?}");
+        assert_eq!(adult.in_love, 600, "the setInLove walk arms");
+        // the wheat press the gate refuses (the tag the wheat never
+        // rides) — the same press the cow's food names
+        let mut picky = Zombie::new(2, 2.0, 5.0, 2.0, 7);
+        picky.kind = MobKind::Chicken;
+        let verdict2 = picky.mob_interact("wheat", &mut Lcg::new(9));
+        assert!(
+            !matches!(verdict2, MobInteract::Feed { .. }),
+            "the wheat the chicken's gate refuses: {verdict2:?}"
+        );
+        // the golden dandelion the avian's baby locks (the tag json
+        // the chicken never rides — the same always-pass the zoo keeps)
+        let mut baby = Zombie::new(3, 2.0, 5.0, 2.0, 7);
+        baby.kind = MobKind::Chicken;
+        baby.set_age(BABY_START_AGE);
+        assert!(
+            baby.can_use_golden_dandelion("golden_dandelion"),
+            "the lock the avian's baby accepts"
+        );
+    }
+
+    /// THE WING CLOCK THE SETUP ANIM FEEDS (javap `Chicken.aiStep`'s
+    /// own tail: the ground the flapSpeed drains, the air the clamp's
+    /// ceiling arms it, the flapping the airborne beat holds, the flap
+    /// the sin source the flapping*2 walk advances).
+    #[test]
+    fn the_chicken_flap_the_clocks_law() {
+        let world = ground_world();
+        // THE GROUNDED BIRD: the speed the -1.0*0.3 fold drains, the
+        // flapping the 0.9 decay folds to stillness
+        let mut ground = Zombie::new(1, 2.0, 5.0, 2.0, 7);
+        ground.kind = MobKind::Chicken;
+        ground.on_ground = true;
+        ground.flap_speed = 1.0;
+        ground.flapping = 1.0;
+        ground.flap = 10.0;
+        ground.tick(&world, None, NIGHT);
+        assert!(
+            ground.flap_speed < 1.0,
+            "the ground the speed drains: {}",
+            ground.flap_speed
+        );
+        assert!(ground.flapping < 1.0, "the ground the beat decays");
+        assert!(
+            (ground.flap - (10.0 + ground.flapping * 2.0)).abs() < 1e-4,
+            "the flap the flapping*2 walk advances"
+        );
+        // THE AIRBORNE BIRD: the speed the +4.0*0.3 fold rises, the
+        // clamp the 1.0 ceiling keeps, the flapping the 1.0 arms
+        let mut air = Zombie::new(2, 2.0, 30.0, 2.0, 7);
+        air.kind = MobKind::Chicken;
+        air.on_ground = false;
+        air.vy = -0.5;
+        for _ in 0..40 {
+            air.tick(&world, None, NIGHT);
+        }
+        assert_eq!(air.flap_speed, 1.0, "the air the speed clamps at 1");
+        assert!(air.flap > 0.0, "the sin source the beat advances");
+        // the zombie the clock never runs (the chicken's own walk)
+        let mut z = Zombie::new(3, 2.0, 30.0, 2.0, 7);
+        z.on_ground = false;
+        z.tick(&world, None, NIGHT);
+        assert_eq!((z.flap, z.flap_speed, z.flapping), (0.0, 0.0, 0.0));
+    }
+
+    /// THE SLOW FALL THE HEN BRAKES (javap `Chicken.aiStep`'s
+    /// mid-body fold: the falling body's y the 0.6 multiply brakes
+    /// BEFORE the travel's move the order keeps — the zombie the fold
+    /// never rides, the same drop the two bodies fall).
+    #[test]
+    fn the_chicken_falls_the_slow_law() {
+        let world = ground_world();
+        let mut hen = Zombie::new(1, 2.0, 30.0, 2.0, 7);
+        hen.kind = MobKind::Chicken;
+        hen.on_ground = false;
+        hen.vy = -1.0;
+        hen.vx = 0.0;
+        hen.vz = 0.0;
+        hen.tick(&world, None, NIGHT);
+        // the move consumed the BRAKED delta: the collide walked
+        // -1.0*0.6 = -0.6, then the gravity fold set the next tick's
+        // vy = (-0.6 - 0.08) * 0.98
+        let expected_hen = (-1.0 * 0.6 - crate::body::GRAVITY) * crate::body::VERTICAL_DRAG as f64;
+        assert!(
+            (hen.vy - expected_hen).abs() < 1e-9,
+            "the hen's vy {} the 0.6 fold speaks",
+            hen.vy
+        );
+        let mut z = Zombie::new(2, 2.0, 30.0, 2.0, 7);
+        z.on_ground = false;
+        z.vy = -1.0;
+        z.vx = 0.0;
+        z.vz = 0.0;
+        z.tick(&world, None, NIGHT);
+        let expected_z = (-1.0 - crate::body::GRAVITY) * crate::body::VERTICAL_DRAG as f64;
+        assert!(
+            (z.vy - expected_z).abs() < 1e-9,
+            "the zombie's vy the fold never rides",
+        );
+        assert!(hen.vy > z.vy, "the falling hen the slower fall keeps");
+    }
+
+    /// THE CHICKEN XP THE ANIMAL BAND KEEPS (the Animal arm the three
+    /// kinds inherit — the Chicken's own override the jockey arm the
+    /// jockey-less lane never rides; the flat 5 the zombie's row the
+    /// avian never draws).
+    #[test]
+    fn the_chicken_xp_the_animal_band() {
+        let n = 4000u32;
+        let (mut ones, mut twos, mut threes) = (0i32, 0i32, 0i32);
+        for seed in 0..n {
+            let mut z = Zombie::new(1, 0.0, 0.0, 0.0, 40_000 + seed as u64);
+            z.kind = MobKind::Chicken;
+            let xp = z.base_xp_reward();
+            match xp {
+                1 => ones += 1,
+                2 => twos += 1,
+                3 => threes += 1,
+                other => panic!("the chicken's xp {other} escapes 1..3"),
+            }
+        }
+        let third = (n / 3) as i32;
+        for (name, band) in [("ones", ones), ("twos", twos), ("threes", threes)] {
+            assert!(
+                ((third - 500)..=(third + 500)).contains(&band),
+                "the {name} band {band}"
+            );
+        }
     }
 }
 

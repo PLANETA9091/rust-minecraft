@@ -71,6 +71,23 @@ pub const SHEEP_WOOL_BABY_JAR_PATH: &str = "assets/minecraft/textures/entity/she
 pub const COW_TEMPERATE_BABY_JAR_PATH: &str = "assets/minecraft/textures/entity/cow/cow_temperate_baby.png";
 pub const PIG_TEMPERATE_BABY_JAR_PATH: &str = "assets/minecraft/textures/entity/pig/pig_temperate_baby.png";
 
+/// The jar entry the CHICKEN's temperate skin lives at (the
+/// ChickenRenderer's variant table's default — the plain hen; the 26.2
+/// chicken variants replaced the single chicken.png). The avian mesh
+/// rides `LayerDefinition.create(mesh, 64, 32)` (javap
+/// AdultChickenModel.createBodyLayer — the HALF-HEIGHT layout).
+pub const CHICKEN_TEMPERATE_JAR_PATH: &str =
+    "assets/minecraft/textures/entity/chicken/chicken_temperate.png";
+
+/// The jar entry the CHICKEN's baby skin lives at (the
+/// ChickenRenderer's AdultAndBabyModelPair's baby arm —
+/// `chicken_temperate_baby.png`). The chick's own mesh rides
+/// `LayerDefinition.create(mesh, 16, 16)` (javap BabyChickenModel.
+/// createBodyLayer — the SQUARE 16x16 layout, the smallest the baby
+/// lanes keep).
+pub const CHICKEN_TEMPERATE_BABY_JAR_PATH: &str =
+    "assets/minecraft/textures/entity/chicken/chicken_temperate_baby.png";
+
 /// The flame feature's two animated strips (`FlameFeatureRenderer`'s
 /// ModelBakery.FIRE_0 / FIRE_1 sprite sources) — the burn lane reads
 /// their frames off the blocks atlas path the runtime cache mirrors.
@@ -223,6 +240,8 @@ pub const SHEEP_BABY_RUNTIME_PATH: &str = "entity/sheep/sheep_baby.png";
 pub const SHEEP_WOOL_BABY_RUNTIME_PATH: &str = "entity/sheep/sheep_wool_baby.png";
 pub const COW_TEMPERATE_BABY_RUNTIME_PATH: &str = "entity/cow/cow_temperate_baby.png";
 pub const PIG_TEMPERATE_BABY_RUNTIME_PATH: &str = "entity/pig/pig_temperate_baby.png";
+pub const CHICKEN_TEMPERATE_RUNTIME_PATH: &str = "entity/chicken/chicken_temperate.png";
+pub const CHICKEN_TEMPERATE_BABY_RUNTIME_PATH: &str = "entity/chicken/chicken_temperate_baby.png";
 
 /// The vanilla `PlayerModel` arm box for the wide model: texOffs (40, 16),
 /// box 4x12x4 texels (w, h, d).
@@ -277,6 +296,12 @@ pub struct SkinData {
     pub sheep_wool_baby_png_sha1: String,
     pub cow_baby_png_sha1: String,
     pub pig_baby_png_sha1: String,
+    /// sha1 of the CHICKEN's temperate source PNG bytes (jar-verbatim
+    /// integrity) — the avian's texture the chicken renderer verifies.
+    pub chicken_png_sha1: String,
+    /// sha1 of the chicken's baby source PNG bytes (jar-verbatim
+    /// integrity) — the chick's texture the baby lane verifies.
+    pub chicken_baby_png_sha1: String,
     /// sha1 of the flame feature's fire_0 strip (jar-verbatim integrity)
     /// — the burn lane's pixel source (the 16x512, 32-frame strip).
     pub fire_0_png_sha1: String,
@@ -505,6 +530,36 @@ pub fn generate<R: std::io::Read + std::io::Seek>(archive: &mut zip::ZipArchive<
         pbh
     );
     std::mem::drop(_pig_baby_rgba);
+    // THE CHICKEN SKIN (the fifth mob's own): the temperate variant the
+    // ChickenRenderer's variant table defaults to (the 26.2 chicken
+    // variants replaced the single chicken.png). The avian mesh rides
+    // `LayerDefinition.create(mesh, 64, 32)` (javap
+    // AdultChickenModel.createBodyLayer) — the HALF-HEIGHT layout, its
+    // own UV layout the chicken model unwraps. The integrity sha1 the
+    // chicken lane verifies before it draws.
+    let chicken_bytes =
+        read_entry(archive, CHICKEN_TEMPERATE_JAR_PATH).context("read the chicken temperate skin")?;
+    let chicken_png_sha1 = crate::util::sha1_hex(&chicken_bytes);
+    let (chw, chh, _chicken_rgba) = decode_rgba(&chicken_bytes).context("decode the chicken temperate skin")?;
+    anyhow::ensure!(
+        (chw, chh) == (64, 32),
+        "the chicken skin must be the 64x32 layout (javap AdultChickenModel LayerDefinition.create(64, 32)), got {}x{}",
+        chw,
+        chh
+    );
+    std::mem::drop(_chicken_rgba);
+    let chicken_baby_bytes = read_entry(archive, CHICKEN_TEMPERATE_BABY_JAR_PATH)
+        .context("read the chicken temperate baby skin")?;
+    let chicken_baby_png_sha1 = crate::util::sha1_hex(&chicken_baby_bytes);
+    let (cbw2, cbh2, _chicken_baby_rgba) = decode_rgba(&chicken_baby_bytes)
+        .context("decode the chicken temperate baby skin")?;
+    anyhow::ensure!(
+        (cbw2, cbh2) == (16, 16),
+        "the chicken baby skin must be the 16x16 layout (javap BabyChickenModel LayerDefinition.create(16, 16)), got {}x{}",
+        cbw2,
+        cbh2
+    );
+    std::mem::drop(_chicken_baby_rgba);
     // THE FIRE STRIPS: the flame feature's two animated pixel sources
     // (javap `FlameFeatureRenderer.buildGroup`: ModelBakery.FIRE_0 /
     // FIRE_1) — 16x512 = 32 stacked 16x16 frames each, the mcmeta
@@ -678,6 +733,8 @@ pub fn generate<R: std::io::Read + std::io::Seek>(archive: &mut zip::ZipArchive<
         sheep_wool_baby_png_sha1,
         cow_baby_png_sha1,
         pig_baby_png_sha1,
+        chicken_png_sha1,
+        chicken_baby_png_sha1,
         fire_0_png_sha1,
         fire_1_png_sha1,
         underwater_png_sha1,
@@ -840,6 +897,22 @@ pub fn emit(data: &SkinData) -> Result<String> {
     ));
     out.push_str(&format!(
         "pub const PIG_TEMPERATE_BABY_RUNTIME_PATH: &str = \"{PIG_TEMPERATE_BABY_RUNTIME_PATH}\";\n"
+    ));
+    out.push_str("\n/// The CHICKEN skins (the avian's own textures), generated from the\n/// same jar: the source sha1s the chicken renderer verifies before it\n/// draws (javap ChickenRenderer's AdultAndBabyModelPair — the adult\n/// the AdultChickenModel bakes, the baby the BabyChickenModel — each\n/// the OWN layout the baby layer defs speak: 64x32 adult, 16x16\n/// baby).
+");
+    out.push_str(&format!(
+        "pub const CHICKEN_TEMPERATE_PNG_SHA1: &str = \"{}\";\n",
+        data.chicken_png_sha1
+    ));
+    out.push_str(&format!(
+        "pub const CHICKEN_TEMPERATE_RUNTIME_PATH: &str = \"{CHICKEN_TEMPERATE_RUNTIME_PATH}\";\n"
+    ));
+    out.push_str(&format!(
+        "pub const CHICKEN_TEMPERATE_BABY_PNG_SHA1: &str = \"{}\";\n",
+        data.chicken_baby_png_sha1
+    ));
+    out.push_str(&format!(
+        "pub const CHICKEN_TEMPERATE_BABY_RUNTIME_PATH: &str = \"{CHICKEN_TEMPERATE_BABY_RUNTIME_PATH}\";\n"
     ));
     out.push_str("\n/// The FLAME strips (the burn lane's pixel sources), generated from\n/// the same jar: the source sha1s the burning mob's renderer verifies\n/// before it draws (javap: `FlameFeatureRenderer.buildGroup`'s\n/// ModelBakery.FIRE_0 / FIRE_1 — the 16x512, 32-frame strips; fire_0's\n/// mcmeta playlist [16..31, 0..15], fire_1 sequential).\n");
     out.push_str(&format!(
@@ -1142,6 +1215,10 @@ mod tests {
         let expected_cow_baby_sha1 = crate::util::sha1_hex(&cow_baby);
         let pig_baby = sweep_png();
         let expected_pig_baby_sha1 = crate::util::sha1_hex(&pig_baby);
+        let chicken = sheep_png();
+        let expected_chicken_sha1 = crate::util::sha1_hex(&chicken);
+        let chicken_baby = underwater_png();
+        let expected_chicken_baby_sha1 = crate::util::sha1_hex(&chicken_baby);
         let damage = tiny_png();
         let expected_damage_sha1 = crate::util::sha1_hex(&damage);
         let heart = tiny_png();
@@ -1165,6 +1242,8 @@ mod tests {
             (SHEEP_WOOL_BABY_JAR_PATH, sheep_wool_baby.clone()),
             (COW_TEMPERATE_BABY_JAR_PATH, cow_baby.clone()),
             (PIG_TEMPERATE_BABY_JAR_PATH, pig_baby.clone()),
+            (CHICKEN_TEMPERATE_JAR_PATH, sheep.clone()),
+            (CHICKEN_TEMPERATE_BABY_JAR_PATH, underwater.clone()),
             (FIRE_0_JAR_PATH, strip.clone()),
             (FIRE_1_JAR_PATH, strip),
             (UNDERWATER_JAR_PATH, underwater),
@@ -1247,6 +1326,14 @@ mod tests {
             "the baby pig's own sha1 (the baby lane's 32x32)"
         );
         assert_eq!(
+            data.chicken_png_sha1, expected_chicken_sha1,
+            "the chicken's own sha1 (the avian lane's 64x32)"
+        );
+        assert_eq!(
+            data.chicken_baby_png_sha1, expected_chicken_baby_sha1,
+            "the baby chicken's own sha1 (the baby lane's 16x16)"
+        );
+        assert_eq!(
             data.particle_crit_png_sha1, expected_crit_sha1,
             "the crit star's own sha1"
         );
@@ -1305,6 +1392,18 @@ mod tests {
         // the pig: the sha1 and the runtime path land verbatim
         assert!(emitted.contains(&format!("pub const PIG_TEMPERATE_PNG_SHA1: &str = \"{expected_png_sha1}\";")));
         assert!(emitted.contains("pub const PIG_TEMPERATE_RUNTIME_PATH: &str = \"entity/pig/pig_temperate.png\";"));
+        assert!(emitted.contains(&format!(
+            "pub const CHICKEN_TEMPERATE_PNG_SHA1: &str = \"{expected_chicken_sha1}\";"
+        )));
+        assert!(emitted.contains(
+            "pub const CHICKEN_TEMPERATE_RUNTIME_PATH: &str = \"entity/chicken/chicken_temperate.png\";"
+        ));
+        assert!(emitted.contains(&format!(
+            "pub const CHICKEN_TEMPERATE_BABY_PNG_SHA1: &str = \"{expected_chicken_baby_sha1}\";"
+        )));
+        assert!(emitted.contains(
+            "pub const CHICKEN_TEMPERATE_BABY_RUNTIME_PATH: &str = \"entity/chicken/chicken_temperate_baby.png\";"
+        ));
         // the cow: the sha1 and the runtime path land verbatim
         assert!(emitted.contains(&format!("pub const COW_TEMPERATE_PNG_SHA1: &str = \"{expected_png_sha1}\";")));
         assert!(emitted.contains("pub const COW_TEMPERATE_RUNTIME_PATH: &str = \"entity/cow/cow_temperate.png\";"));

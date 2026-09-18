@@ -1391,6 +1391,14 @@ pub struct App {
     pub baby_sheep_wool_model: Option<crate::avatar::BabySheepWoolModel>,
     pub baby_cow_model: Option<crate::avatar::BabyCowModel>,
     pub baby_pig_model: Option<crate::avatar::BabyPigModel>,
+    /// THE FIFTH MOB's own skins (the chicken's temperate 64x32 adult
+    /// over the 16x16 baby — the ChickenRenderer's AdultAndBabyModelPair
+    /// the isBaby word picks, the sha1s the generator pinned) — loaded
+    /// lazily beside the sheep's, `None` = the CHICKENS stay unseen
+    /// while the other bodies keep drawing (each model's honesty is
+    /// its own lane).
+    pub chicken_model: Option<crate::avatar::ChickenModel>,
+    pub baby_chicken_model: Option<crate::avatar::BabyChickenModel>,
     /// The flame feature's two strips (the burn lane's pixel source —
     /// lazy-loaded and sha1-verified the zombie skin's way).
     pub fire_strips: Option<crate::avatar::FireStrips>,
@@ -2005,6 +2013,8 @@ impl App {
             baby_sheep_wool_model: None,
             baby_cow_model: None,
             baby_pig_model: None,
+            chicken_model: None,
+            baby_chicken_model: None,
             fire_strips: None,
             orb_sheet: None,
             underwater_screen: None,
@@ -12042,6 +12052,17 @@ impl App {
             self.baby_pig_model =
                 crate::avatar::BabyPigModel::load(std::path::Path::new("assets-cache/jar"));
         }
+        // THE CHICKEN LANE's own lazy loads (the adult + the baby —
+        // the same honesty: a failed chicken skin keeps only the
+        // chickens unseen)
+        if self.chicken_model.is_none() {
+            self.chicken_model =
+                crate::avatar::ChickenModel::load(std::path::Path::new("assets-cache/jar"));
+        }
+        if self.baby_chicken_model.is_none() {
+            self.baby_chicken_model =
+                crate::avatar::BabyChickenModel::load(std::path::Path::new("assets-cache/jar"));
+        }
         // the pig's honesty is its OWN lane: a failed pig skin keeps
         // only the pigs unseen, the zombies keep drawing
         let pig_model = self.pig_model.as_ref();
@@ -12066,6 +12087,10 @@ impl App {
         let baby_sheep_wool_model = self.baby_sheep_wool_model.as_ref();
         let baby_cow_model = self.baby_cow_model.as_ref();
         let baby_pig_model = self.baby_pig_model.as_ref();
+        // the chicken's honesty is ITS OWN lane: a failed chicken skin
+        // keeps only the birds unseen, the other bodies keep drawing
+        let chicken_model = self.chicken_model.as_ref();
+        let baby_chicken_model = self.baby_chicken_model.as_ref();
         // the two lanes' own union (the offline AI bodies + the wire's
         // remote bodies — the SAME lerp folds speak both, the model
         // kind the registry's name arms at the merge)
@@ -12311,6 +12336,48 @@ impl App {
                         (quads, Box::new(move |u, v| pig.pixel(u, v)))
                     }
                 }
+                crate::mob::MobKind::Chicken => {
+                    // THE AGEABLE MOB'S OWN BRANCH (the ChickenRenderer's
+                    // AdultAndBabyModelPair.getModel(isBaby) word the
+                    // javap dump speaks — the chick's own geometry over
+                    // its own 16x16 _baby texture)
+                    if mob.is_baby() {
+                        let Some(baby) = baby_chicken_model else {
+                            continue; // the baby skin failed its sha1 — this body stays unseen
+                        };
+                        let state = crate::avatar::ChickenState {
+                            yaw_deg: mob.yaw,
+                            walk_pos: mob.walk.position_at(self.partial_tick),
+                            walk_speed: mob.walk.speed_at(self.partial_tick),
+                            flap: mob.flap,
+                            flap_speed: mob.flap_speed,
+                            age_ticks: mob.age_ticks as f32 + 0.5,
+                            death_time: mob.death_time_at(self.partial_tick),
+                        };
+                        let quads = baby.quads(&state, feet, cam.yaw, cam.pitch);
+                        (quads, Box::new(move |u, v| baby.pixel(u, v)))
+                    } else {
+                        let Some(chicken) = chicken_model else {
+                            continue; // the chicken skin failed its sha1 — this body stays unseen
+                        };
+                        // THE AVIAN STATE (the 26.2 ChickenModel.setupAnim
+                        // reads the walk pair + the flap pair ONLY — the
+                        // head arm the class never carried the state
+                        // never carries; the flap clock the direct
+                        // sample draws, no lerp the o-pair keeps)
+                        let state = crate::avatar::ChickenState {
+                            yaw_deg: mob.yaw,
+                            walk_pos: mob.walk.position_at(self.partial_tick),
+                            walk_speed: mob.walk.speed_at(self.partial_tick),
+                            flap: mob.flap,
+                            flap_speed: mob.flap_speed,
+                            age_ticks: mob.age_ticks as f32 + 0.5,
+                            death_time: mob.death_time_at(self.partial_tick),
+                        };
+                        let quads = chicken.quads(&state, feet, cam.yaw, cam.pitch);
+                        (quads, Box::new(move |u, v| chicken.pixel(u, v)))
+                    }
+                }
                 crate::mob::MobKind::Zombie => {
                     // THE RENDER STATE (extractRenderState's own sampling — the
                     // head rides the netHeadYaw the AI's clamp speaks, the
@@ -12352,6 +12419,10 @@ impl App {
                 crate::mob::MobKind::Pig => (
                     crate::mob::PIG_WIDTH as f32,
                     crate::mob::PIG_HEIGHT as f32,
+                ),
+                crate::mob::MobKind::Chicken => (
+                    crate::mob::CHICKEN_WIDTH as f32,
+                    crate::mob::CHICKEN_HEIGHT as f32,
                 ),
                 crate::mob::MobKind::Zombie => (
                     crate::mob::ZOMBIE_WIDTH as f32,

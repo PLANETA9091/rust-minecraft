@@ -1668,6 +1668,403 @@ fn build_baby_cow_parts(state: &QuadrupedState) -> Vec<Part> {
     ]
 }
 
+// ===========================================================================
+// THE CHICKEN (the fifth drawn body — the avian's own chain)
+// ===========================================================================
+
+/// The AVIAN's pose inputs — the 26.2 `ChickenModel.setupAnim`'s own
+/// field list: the walk fold the legs read, the flap pair the wings'
+/// zRot folds (`(sin(flap)+1)*flapSpeed` the flapAngle the bytecode's
+/// f2d/sin/fadd/fmul walk keeps), and NO head arm — the setupAnim the
+/// classfile keeps speaks legs and wings ONLY (the head the PartPose
+/// holds, the look the whole-body yaw carries; the QuadrupedModel's
+/// own head fold the pig/cow/sheep ride the chicken's class never
+/// inherited — the javap dump the honest pose keeps). The baby model
+/// inherits the same setupAnim (BabyChickenModel extends
+/// ChickenModel), the same state drives both.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct ChickenState {
+    /// vanilla yaw degrees (the body's own)
+    pub yaw_deg: f32,
+    /// walkAnimationPos (the backward-extrapolated walk phase)
+    pub walk_pos: f32,
+    /// walkAnimationSpeed (the min(abs, 1) blend)
+    pub walk_speed: f32,
+    /// `ChickenRenderState.flap` — the wing clock's sin source
+    pub flap: f32,
+    /// `ChickenRenderState.flapSpeed` — the wing clock's speed
+    pub flap_speed: f32,
+    /// ageInTicks (the chicken's idle owns no bob — carried for parity)
+    pub age_ticks: f32,
+    /// `LivingEntityRenderState.deathTime` (the same flip law's clock
+    /// the avatar fold speaks — one chain, every living model)
+    pub death_time: f32,
+}
+
+/// The full ADULT chicken model — the 26.2
+/// `AdultChickenModel.createBaseChickenModel`'s own numbers,
+/// bytecode-proven off the official jar: the head 4x6x3 at pivot
+/// (0, 15, -4) with the beak 4x2x2 (uv 14,0) and the red_thing 2x2x2
+/// (uv 14,4) ZERO-pose children the head's own cube list folds (the
+/// same fold the pig's snout rides), the rotX PI/2 barrel body 6x8x6
+/// (uv 0,9), the 3x5x3 legs (uv 26,0) at pivots (-2, 19, 1) /
+/// (1, 19, 1), the 1x4x6 wings (uv 24,13) at pivots (∓4, 13, 0),
+/// `LayerDefinition.create(mesh, 64, 32)`.
+pub struct ChickenModel {
+    rgba: Vec<u8>,
+}
+
+impl ChickenModel {
+    /// Load + sha1-verify the CHICKEN's temperate skin (the
+    /// ChickenRenderer's variant table's default — the plain hen). The
+    /// `None` = the chicken never renders (the same honesty the
+    /// pig/cow/sheep paths speak: the renderer must not lie about its
+    /// data).
+    pub fn load(root: &Path) -> Option<ChickenModel> {
+        let bytes = std::fs::read(root.join(skin::CHICKEN_TEMPERATE_RUNTIME_PATH)).ok()?;
+        let digest = sha1::Sha1::digest(&bytes);
+        if hex::encode(digest) != skin::CHICKEN_TEMPERATE_PNG_SHA1 {
+            return None;
+        }
+        let (w, h, rgba) = decode_rgba(&bytes).ok()?;
+        if w != 64 || h != 32 || rgba.len() != 64 * 32 * 4 {
+            return None;
+        }
+        Some(ChickenModel { rgba })
+    }
+
+    /// The skin pixel at (u, v) — the RGBA row-major words, v down
+    /// (the 64x32 layout's own stride the load verified).
+    pub fn pixel(&self, u: f32, v: f32) -> [u8; 4] {
+        let (uu, vv) = (u.clamp(0.0, 63.999_9), v.clamp(0.0, 31.999_9));
+        let x = uu as usize;
+        let y = vv as usize;
+        let o = (y * 64 + x) * 4;
+        [self.rgba[o], self.rgba[o + 1], self.rgba[o + 2], self.rgba[o + 3]]
+    }
+
+    /// THE POSED RENDER: the world-space textured quads of the hen at
+    /// `state` — the SAME entity chain fold the avatar speaks (one
+    /// law, every living model), the avian's own parts beneath.
+    pub fn quads(
+        &self,
+        state: &ChickenState,
+        feet: Vec3,
+        cam_yaw: f32,
+        cam_pitch: f32,
+    ) -> Vec<AvatarQuad> {
+        let parts = build_chicken_parts(state);
+        let (fold_point, fold_normal) = entity_folds(state.yaw_deg, state.death_time, 0.0, feet);
+        let mut out: Vec<AvatarQuad> = Vec::with_capacity(6 * 6);
+        let ident = Mat4::IDENT;
+        for part in &parts {
+            collect_part(part, &ident, &fold_point, &fold_normal, cam_yaw, cam_pitch, &mut out);
+        }
+        out
+    }
+}
+
+/// The avian's parts, posed by `state` — the javap-proven mesh: the
+/// head the PartPose holds (NO setupAnim arm the chicken's class
+/// speaks), the body the rotX PI/2 barrel lays, the legs the shared
+/// 0.6662/1.4 law swings (the ChickenModel.setupAnim's own
+/// cos(walkAnimationPos * 0.6662) * 1.4 * walkAnimationSpeed the
+/// bytecode keeps — BOTH legs the +PI mirror rides, the quadruped's
+/// diagonal pair the bird's two-leg walk replaces), and the wings the
+/// flap angle MIRRORS (right +zRot, left -zRot — the putfield pair
+/// the setupAnim's own tail speaks).
+fn build_chicken_parts(state: &ChickenState) -> Vec<Part> {
+    let pos = state.walk_pos;
+    let speed = state.walk_speed;
+    // THE FLAP ANGLE (ChickenModel.setupAnim's own head: `flapAngle =
+    // (Mth.sin(flap) + 1.0F) * flapSpeed` — the sin the f2d the
+    // Mth.sin(double) call keeps, the +1.0 the fadd folds, the speed
+    // the fmul speaks)
+    let flap_angle = (state.flap.sin() + 1.0) * state.flap_speed;
+    let leg_r = mth_cos(pos * 0.6662) * 1.4 * speed;
+    let leg_l = mth_cos(pos * 0.6662 + std::f32::consts::PI) * 1.4 * speed;
+    let leg_cube = || Cube {
+        tex: (26.0, 0.0),
+        origin: [-1.0, 0.0, -3.0],
+        size: [3.0, 5.0, 3.0],
+        inflate: 0.0,
+        mirror: false,
+    };
+    let wing_cube = |mirror_x: f32| Cube {
+        tex: (24.0, 13.0),
+        origin: [mirror_x, 0.0, -3.0],
+        size: [1.0, 4.0, 6.0],
+        inflate: 0.0,
+        mirror: false,
+    };
+    vec![
+        // head (+ the beak and the red_thing — the ZERO-pose children
+        // the head's own cube list folds, the same fold the pig's
+        // snout rides; NO x_rot/y_rot — the setupAnim the 26.2
+        // ChickenModel keeps speaks no head arm)
+        Part {
+            pivot: [0.0, 15.0, -4.0],
+            x_rot: 0.0,
+            y_rot: 0.0,
+            z_rot: 0.0,
+            cubes: vec![
+                Cube {
+                    tex: (0.0, 0.0),
+                    origin: [-2.0, -6.0, -2.0],
+                    size: [4.0, 6.0, 3.0],
+                    inflate: 0.0,
+                    mirror: false,
+                },
+                Cube {
+                    tex: (14.0, 0.0),
+                    origin: [-2.0, -4.0, -4.0],
+                    size: [4.0, 2.0, 2.0],
+                    inflate: 0.0,
+                    mirror: false,
+                },
+                Cube {
+                    tex: (14.0, 4.0),
+                    origin: [-1.0, -2.0, -3.0],
+                    size: [2.0, 2.0, 2.0],
+                    inflate: 0.0,
+                    mirror: false,
+                },
+            ],
+            children: vec![],
+        },
+        // body (the rotX PI/2 barrel — the PartPose.offsetAndRotation
+        // the bytecode keeps: offset(0, 16, 0), xRot 1.5707964)
+        Part {
+            pivot: [0.0, 16.0, 0.0],
+            x_rot: std::f32::consts::FRAC_PI_2,
+            y_rot: 0.0,
+            z_rot: 0.0,
+            cubes: vec![Cube {
+                tex: (0.0, 9.0),
+                origin: [-3.0, -4.0, -3.0],
+                size: [6.0, 8.0, 6.0],
+                inflate: 0.0,
+                mirror: false,
+            }],
+            children: vec![],
+        },
+        // right leg (the shared 0.6662/1.4 swing)
+        Part {
+            pivot: [-2.0, 19.0, 1.0],
+            x_rot: leg_r,
+            y_rot: 0.0,
+            z_rot: 0.0,
+            cubes: vec![leg_cube()],
+            children: vec![],
+        },
+        // left leg (the +PI mirror)
+        Part {
+            pivot: [1.0, 19.0, 1.0],
+            x_rot: leg_l,
+            y_rot: 0.0,
+            z_rot: 0.0,
+            cubes: vec![leg_cube()],
+            children: vec![],
+        },
+        // right wing (the +flap zRot — the setupAnim's putfield)
+        Part {
+            pivot: [-4.0, 13.0, 0.0],
+            x_rot: 0.0,
+            y_rot: 0.0,
+            z_rot: flap_angle,
+            cubes: vec![wing_cube(0.0)],
+            children: vec![],
+        },
+        // left wing (the NEGATED zRot — the fneg the bytecode keeps)
+        Part {
+            pivot: [4.0, 13.0, 0.0],
+            x_rot: 0.0,
+            y_rot: 0.0,
+            z_rot: -flap_angle,
+            cubes: vec![wing_cube(-1.0)],
+            children: vec![],
+        },
+    ]
+}
+
+/// The full BABY chicken model — the 26.2 `BabyChickenModel.
+/// createBodyLayer`'s own numbers, bytecode-proven: the TWO-cube body
+/// (uv 0,0 4x4x4 over uv 10,8 2x1x1 — the head-less chick the layer
+/// keeps, the body cube the whole silhouette draws) at pivot
+/// (0, 20.25, -1.25), the flat-plate legs (the 1x2x0 shin over the
+/// 1x0x1 foot the two texOffs speak) at pivots (∓1, 22, 0.5), the
+/// flat 1x0x2 wings at pivots (∓2, 20, 0), `LayerDefinition.create(
+/// mesh, 16, 16)` — the SQUARE 16x16 layout the smallest baby lane
+/// keeps. The setupAnim the ChickenModel parent speaks rides
+/// UNCHANGED (the same leg swing + wing flap the adult folds).
+pub struct BabyChickenModel {
+    rgba: Vec<u8>,
+}
+
+impl BabyChickenModel {
+    /// Load + sha1-verify the CHICKEN's baby skin (the
+    /// ChickenRenderer's AdultAndBabyModelPair's baby arm). The `None`
+    /// = the chick never renders (the same honesty the other baby
+    /// lanes speak).
+    pub fn load(root: &Path) -> Option<BabyChickenModel> {
+        let bytes = std::fs::read(root.join(skin::CHICKEN_TEMPERATE_BABY_RUNTIME_PATH)).ok()?;
+        let digest = sha1::Sha1::digest(&bytes);
+        if hex::encode(digest) != skin::CHICKEN_TEMPERATE_BABY_PNG_SHA1 {
+            return None;
+        }
+        let (w, h, rgba) = decode_rgba(&bytes).ok()?;
+        if w != 16 || h != 16 || rgba.len() != 16 * 16 * 4 {
+            return None;
+        }
+        Some(BabyChickenModel { rgba })
+    }
+
+    /// The skin pixel at (u, v) — the 16x16 layout's own stride.
+    pub fn pixel(&self, u: f32, v: f32) -> [u8; 4] {
+        let (uu, vv) = (u.clamp(0.0, 15.999_9), v.clamp(0.0, 15.999_9));
+        let x = uu as usize;
+        let y = vv as usize;
+        let o = (y * 16 + x) * 4;
+        [self.rgba[o], self.rgba[o + 1], self.rgba[o + 2], self.rgba[o + 3]]
+    }
+
+    /// THE POSED RENDER: the chick's own parts beneath the same chain
+    /// fold (the inherited setupAnim the parent's law rides).
+    pub fn quads(
+        &self,
+        state: &ChickenState,
+        feet: Vec3,
+        cam_yaw: f32,
+        cam_pitch: f32,
+    ) -> Vec<AvatarQuad> {
+        let parts = build_baby_chicken_parts(state);
+        let (fold_point, fold_normal) = entity_folds(state.yaw_deg, state.death_time, 0.0, feet);
+        let mut out: Vec<AvatarQuad> = Vec::with_capacity(6 * 6);
+        let ident = Mat4::IDENT;
+        for part in &parts {
+            collect_part(part, &ident, &fold_point, &fold_normal, cam_yaw, cam_pitch, &mut out);
+        }
+        out
+    }
+}
+
+/// The chick's parts — the SAME pose law the adult speaks (the
+/// inherited setupAnim: legs 0.6662/1.4, wings ±flap angle), the
+/// baby's own flat-plate geometry beneath.
+fn build_baby_chicken_parts(state: &ChickenState) -> Vec<Part> {
+    let pos = state.walk_pos;
+    let speed = state.walk_speed;
+    let flap_angle = (state.flap.sin() + 1.0) * state.flap_speed;
+    let leg_r = mth_cos(pos * 0.6662) * 1.4 * speed;
+    let leg_l = mth_cos(pos * 0.6662 + std::f32::consts::PI) * 1.4 * speed;
+    vec![
+        // body (the two-cube chick — the 4x4x4 barrel over the 2x1x1
+        // tail the second texOffs speaks; NO head part the layer
+        // keeps)
+        Part {
+            pivot: [0.0, 20.25, -1.25],
+            x_rot: 0.0,
+            y_rot: 0.0,
+            z_rot: 0.0,
+            cubes: vec![
+                Cube {
+                    tex: (0.0, 0.0),
+                    origin: [-2.0, -2.25, -0.75],
+                    size: [4.0, 4.0, 4.0],
+                    inflate: 0.0,
+                    mirror: false,
+                },
+                Cube {
+                    tex: (10.0, 8.0),
+                    origin: [-1.0, -0.25, -1.75],
+                    size: [2.0, 1.0, 1.0],
+                    inflate: 0.0,
+                    mirror: false,
+                },
+            ],
+            children: vec![],
+        },
+        // left leg (the flat-plate shin + the foot plate)
+        Part {
+            pivot: [1.0, 22.0, 0.5],
+            x_rot: leg_l,
+            y_rot: 0.0,
+            z_rot: 0.0,
+            cubes: vec![
+                Cube {
+                    tex: (2.0, 2.0),
+                    origin: [-0.5, 0.0, 0.0],
+                    size: [1.0, 2.0, 0.0],
+                    inflate: 0.0,
+                    mirror: false,
+                },
+                Cube {
+                    tex: (0.0, 1.0),
+                    origin: [-0.5, -2.0, -1.0],
+                    size: [1.0, 0.0, 1.0],
+                    inflate: 0.0,
+                    mirror: false,
+                },
+            ],
+            children: vec![],
+        },
+        // right leg (the same plates, the other texOffs pair)
+        Part {
+            pivot: [-1.0, 22.0, 0.5],
+            x_rot: leg_r,
+            y_rot: 0.0,
+            z_rot: 0.0,
+            cubes: vec![
+                Cube {
+                    tex: (0.0, 2.0),
+                    origin: [-0.5, 0.0, 0.0],
+                    size: [1.0, 2.0, 0.0],
+                    inflate: 0.0,
+                    mirror: false,
+                },
+                Cube {
+                    tex: (0.0, 0.0),
+                    origin: [-0.5, -2.0, -1.0],
+                    size: [1.0, 0.0, 1.0],
+                    inflate: 0.0,
+                    mirror: false,
+                },
+            ],
+            children: vec![],
+        },
+        // right wing (the +flap zRot the inherited setupAnim keeps)
+        Part {
+            pivot: [2.0, 20.0, 0.0],
+            x_rot: 0.0,
+            y_rot: 0.0,
+            z_rot: flap_angle,
+            cubes: vec![Cube {
+                tex: (6.0, 8.0),
+                origin: [0.0, 0.0, -1.0],
+                size: [1.0, 0.0, 2.0],
+                inflate: 0.0,
+                mirror: false,
+            }],
+            children: vec![],
+        },
+        // left wing (the negated zRot)
+        Part {
+            pivot: [-2.0, 20.0, 0.0],
+            x_rot: 0.0,
+            y_rot: 0.0,
+            z_rot: -flap_angle,
+            cubes: vec![Cube {
+                tex: (4.0, 8.0),
+                origin: [-1.0, 0.0, -1.0],
+                size: [1.0, 0.0, 2.0],
+                inflate: 0.0,
+                mirror: false,
+            }],
+            children: vec![],
+        },
+    ]
+}
+
 /// the porcine BABY's parts, posed by `state` — the BabyPigModel's own
 /// bytecode-proven mesh (the 7x6x9 horizontal body, the two-cube head
 /// with its inflate deformations, the four 2x2x2 stub legs on four
@@ -4453,6 +4850,178 @@ mod tests {
         });
         assert!(plain_front, "the right legs' own unwrap rides");
         assert!(mirrored_front, "the left legs' mirror flips the u axis");
+    }
+
+    /// THE AVIAN'S OWN EXTENTS (javap AdultChickenModel's own numbers):
+    /// the mesh spans the ground (model y 24 — the 5-texel legs ride
+    /// the same 24px plane every quadruped speaks) to the head's crown
+    /// (model y 9 — the 6-texel head above its y-15 pivot; the drawn
+    /// bird the 0.9375 the 15/16 world span keeps, taller than the
+    /// 0.7 hitbox the EntityTypes speaks — the model the model's own
+    /// truth draws, the bbox the registration's own).
+    #[test]
+    fn the_chicken_mesh_spans_the_avian_height() {
+        let chicken = ChickenModel {
+            rgba: vec![255u8; 64 * 32 * 4],
+        };
+        let feet = Vec3::new(10.0, 64.0, 20.0);
+        let state = ChickenState {
+            yaw_deg: 0.0,
+            walk_pos: 0.0,
+            walk_speed: 0.0,
+            flap: 0.0,
+            flap_speed: 0.0,
+            age_ticks: 40.0,
+            death_time: 0.0,
+        };
+        let quads = chicken.quads(&state, feet, 0.0, 0.0);
+        assert!(!quads.is_empty(), "the mesh speaks quads");
+        let mut min_y = f32::MAX;
+        let mut max_y = f32::MIN;
+        let mut min_x = f32::MAX;
+        let mut max_x = f32::MIN;
+        for q in &quads {
+            for p in q.pts {
+                min_y = min_y.min(p[1]);
+                max_y = max_y.max(p[1]);
+                min_x = min_x.min(p[0]);
+                max_x = max_x.max(p[0]);
+            }
+        }
+        // model y 24 (the legs' ground) -> feet + 0.001 (the fold's own
+        // epsilon); model y 9 (the head's crown) -> feet + 0.9385
+        assert!(
+            (min_y - (feet.y as f32 + 0.001)).abs() < 1e-4,
+            "the feet ride the ground: {min_y}"
+        );
+        assert!(
+            (max_y - (feet.y as f32 + 0.9385)).abs() < 1e-4,
+            "the head's crown rides 0.9375 above the feet: {max_y}"
+        );
+        // the wings' rest reach: the pivots +-4/16 the widest word
+        // speaks (the body's barrel only +-3/16)
+        assert!(
+            (min_x - (feet.x as f32 - 4.0 / 16.0)).abs() < 1e-4,
+            "the right wing's rest reach: {min_x}"
+        );
+        assert!(
+            (max_x - (feet.x as f32 + 4.0 / 16.0)).abs() < 1e-4,
+            "the left wing's rest reach: {max_x}"
+        );
+    }
+
+    /// THE AVIAN FLAP (the ChickenModel.setupAnim's own law the 26.2
+    /// bytecode keeps: `flapAngle = (sin(flap)+1) * flapSpeed`, the
+    /// right wing the +zRot the left the NEGATED — the beat the
+    /// mirrored pair swings, the rest the speed zero never lifts).
+    #[test]
+    fn the_chicken_flap_swing_mirrors_the_wings() {
+        let chicken = ChickenModel {
+            rgba: vec![255u8; 64 * 32 * 4],
+        };
+        let feet = Vec3::new(0.0, 64.0, 0.0);
+        let rest = ChickenState {
+            yaw_deg: 0.0,
+            walk_pos: 0.0,
+            walk_speed: 0.0,
+            flap: 0.0,
+            flap_speed: 0.0,
+            age_ticks: 40.0,
+            death_time: 0.0,
+        };
+        // flap = PI/2 (sin = 1), speed 1 -> the flapAngle 2.0 rad the
+        // wings' zRot folds
+        let flapping = ChickenState {
+            flap: std::f32::consts::FRAC_PI_2,
+            flap_speed: 1.0,
+            ..rest
+        };
+        let rest_quads = chicken.quads(&rest, feet, 0.0, 0.0);
+        let flap_quads = chicken.quads(&flapping, feet, 0.0, 0.0);
+        assert_eq!(rest_quads.len(), flap_quads.len(), "same mesh, moved wings");
+        let rest_x: f32 = rest_quads
+            .iter()
+            .flat_map(|q| q.pts.iter().map(|p| p[0]))
+            .fold(f32::MIN, f32::max);
+        let flap_x: f32 = flap_quads
+            .iter()
+            .flat_map(|q| q.pts.iter().map(|p| p[0]))
+            .fold(f32::MIN, f32::max);
+        // the left wing's tip the 2-rad lift swings PAST the rest
+        // reach (the +x wing the -zRot rotates, the y extent the
+        // sin(2) fold carries into x)
+        assert!(
+            flap_x > rest_x + 0.1,
+            "the flap swing lifts the wing tip: {flap_x} vs {rest_x}"
+        );
+    }
+
+    /// THE CHICK'S OWN EXTENTS (javap BabyChickenModel's own numbers):
+    /// the head-less chick the 16x16 layout draws — the two-cube body
+    /// (model y 18..22) over the flat-plate legs (22..24), the whole
+    /// silhouette the 6-texel span keeps.
+    #[test]
+    fn the_baby_chicken_mesh_spans_the_chick_height() {
+        let baby = BabyChickenModel {
+            rgba: vec![255u8; 16 * 16 * 4],
+        };
+        let feet = Vec3::new(0.0, 64.0, 0.0);
+        let state = ChickenState {
+            yaw_deg: 0.0,
+            walk_pos: 0.0,
+            walk_speed: 0.0,
+            flap: 0.0,
+            flap_speed: 0.0,
+            age_ticks: 40.0,
+            death_time: 0.0,
+        };
+        let quads = baby.quads(&state, feet, 0.0, 0.0);
+        assert!(!quads.is_empty(), "the mesh speaks quads");
+        let mut min_y = f32::MAX;
+        let mut max_y = f32::MIN;
+        for q in &quads {
+            for p in q.pts {
+                min_y = min_y.min(p[1]);
+                max_y = max_y.max(p[1]);
+            }
+        }
+        // model y 24 (the legs' ground) -> feet + 0.001; model y 18
+        // (the body's crown) -> feet + 6/16 + 0.001 = 0.376
+        assert!(
+            (min_y - (feet.y as f32 + 0.001)).abs() < 1e-4,
+            "the chick's feet ride the ground: {min_y}"
+        );
+        assert!(
+            (max_y - (feet.y as f32 + 0.376)).abs() < 1e-4,
+            "the chick's crown rides 0.375 above the feet: {max_y}"
+        );
+    }
+
+    /// THE CHICKEN LOADS — the real runtime cache (the generator's
+    /// extraction) decodes the 64x32 temperate skin over the 16x16
+    /// baby skin the sha1s the generated table pins (the
+    /// ChickenRenderer's AdultAndBabyModelPair the isBaby word picks).
+    #[test]
+    #[ignore = "needs runtime assets (assets-cache/jar) from mc2rs-gen generate"]
+    fn the_chicken_model_loads_sha1_verified() {
+        let mut dir = std::env::current_dir().unwrap();
+        let root = loop {
+            let cand = dir.join("assets-cache/jar");
+            if cand.exists() {
+                break cand;
+            }
+            dir = dir.parent().expect("the runtime root above").to_path_buf();
+        };
+        let chicken = ChickenModel::load(&root).expect("the chicken loads from the runtime cache");
+        // the temperate hen's white: the head's front face (the unwrap
+        // rect (2,2)-(6,5) the 4x6x3 head speaks) reads the pale rows
+        // the opaque texel keeps
+        let px = chicken.pixel(3.0, 3.0);
+        assert_eq!(px[3], 255, "the texel is opaque");
+        let baby =
+            BabyChickenModel::load(&root).expect("the baby chicken loads from the runtime cache");
+        let bpx = baby.pixel(8.0, 8.0);
+        assert_eq!(bpx[3], 255, "the baby texel is opaque");
     }
 
     /// THE COW LOADS — the real runtime cache (the generator's

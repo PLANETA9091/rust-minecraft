@@ -130,6 +130,17 @@ pub const COW_TEMPERATE_BABY_RUNTIME_PATH: &str = "entity/cow/cow_temperate_baby
 pub const PIG_TEMPERATE_BABY_PNG_SHA1: &str = "f65f53388b9779d103b34d90a6cc8e154d6820fa";
 pub const PIG_TEMPERATE_BABY_RUNTIME_PATH: &str = "entity/pig/pig_temperate_baby.png";
 
+/// The CHICKEN skins (the avian's own textures), generated from the
+/// same jar: the source sha1s the chicken renderer verifies before it
+/// draws (javap ChickenRenderer's AdultAndBabyModelPair — the adult
+/// the AdultChickenModel bakes, the baby the BabyChickenModel — each
+/// the OWN layout the baby layer defs speak: 64x32 adult, 16x16
+/// baby).
+pub const CHICKEN_TEMPERATE_PNG_SHA1: &str = "0a830137e1fa297cc3e3f93393461c5ff8cf5e9f";
+pub const CHICKEN_TEMPERATE_RUNTIME_PATH: &str = "entity/chicken/chicken_temperate.png";
+pub const CHICKEN_TEMPERATE_BABY_PNG_SHA1: &str = "3e245cc963cf1262a094ea88b8f0b6580b7afd19";
+pub const CHICKEN_TEMPERATE_BABY_RUNTIME_PATH: &str = "entity/chicken/chicken_temperate_baby.png";
+
 /// The FLAME strips (the burn lane's pixel sources), generated from
 /// the same jar: the source sha1s the burning mob's renderer verifies
 /// before it draws (javap: `FlameFeatureRenderer.buildGroup`'s
