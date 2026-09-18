@@ -447,6 +447,87 @@ pub fn build(jar_bytes: &[u8], version: &str, client_sha1: &str) -> Result<Strin
         face_tints.push(tt);
     }
 
+    // THE FARMLAND'S WET FACE — the moisture=7 variant's own model the
+    // blockstates/farmland.json's second arm names (moisture=0..6 the
+    // block/farmland dry arms keep, moisture=7 the block/farmland_moist
+    // wet arm speaks). The REAL chain walk the generator's own law keeps
+    // (blockstates -> model -> texture ref, never a hardcoded name): the
+    // template_farmland element's `up` face the farmland_moist texture
+    // ref resolves. APPENDED after the block tiles — the block palette's
+    // tile indices stay byte-identical (the deterministic scenes keep
+    // their exact pixels), the destroy stages renumber +1, the client's
+    // mesher the farmland top-face verdict the named const reads.
+    let wet_idx: u16 = {
+        let bs_bytes = read_jar(
+            &mut archive,
+            "assets/minecraft/blockstates/farmland.json",
+        )?;
+        let bs: Value = serde_json::from_slice(&bs_bytes)
+            .with_context(|| "blockstate farmland: json parse")?;
+        let wet_model_ref = bs
+            .get("variants")
+            .and_then(|v| v.get("moisture=7"))
+            .and_then(|m| m.get("model"))
+            .and_then(|m| m.as_str())
+            .with_context(|| "blockstate farmland: no moisture=7 arm")?
+            .trim_start_matches("minecraft:")
+            .to_string();
+        let (tex_map, geometry) = load_model_chain(&mut archive, &wet_model_ref)
+            .with_context(|| format!("block farmland: wet model chain {wet_model_ref}"))?;
+        let elements = geometry
+            .get("elements")
+            .and_then(|e| e.as_array())
+            .with_context(|| format!("model {wet_model_ref}: no elements"))?;
+        let mut top_ref = None;
+        for el in elements {
+            if let Some(f) = el.get("faces").and_then(|f| f.as_object()) {
+                if FACE_KEYS.iter().all(|k| f.contains_key(*k)) {
+                    let tref = f
+                        .get("up")
+                        .and_then(|u| u.get("texture"))
+                        .and_then(|t| t.as_str())
+                        .with_context(|| {
+                            format!("model {wet_model_ref}: up face without texture")
+                        })?;
+                    let tex = tex_map
+                        .get(tref.trim_start_matches('#'))
+                        .with_context(|| {
+                            format!("model {wet_model_ref}: unresolved ref {tref}")
+                        })?;
+                    top_ref = Some(
+                        tex
+                            .trim_start_matches("minecraft:")
+                            .trim_start_matches("block/")
+                            .to_string(),
+                    );
+                    break;
+                }
+            }
+        }
+        let stem =
+            top_ref.with_context(|| format!("model {wet_model_ref}: no full-cube element"))?;
+        match tile_names.iter().position(|n| *n == stem) {
+            Some(i) => i as u16,
+            None => {
+                let raw = read_jar(
+                    &mut archive,
+                    &format!("assets/minecraft/textures/block/{stem}.png"),
+                )
+                .with_context(|| format!("texture block/{stem}.png"))?;
+                let (w, h, rgba) = decode_rgba(&raw)?;
+                let (w, h, rgba) = first_frame(w, h, &rgba);
+                if w != 16 || h != 16 {
+                    bail!("texture {stem}: expected 16x16 (first frame), got {w}x{h}");
+                }
+                let mut bytes = rgba;
+                bake_tint(&mut bytes, tint_for_texture(&stem));
+                tile_names.push(stem.clone());
+                tile_bytes.push(bytes);
+                (tile_names.len() - 1) as u16
+            }
+        }
+    };
+
     // THE DIG LANE's destroy stages: the crack textures the vanilla
     // breaking overlay speaks (`assets/minecraft/textures/block/
     // destroy_stage_0..9.png`, the DestroyStage destructor's own 10
@@ -531,6 +612,14 @@ pub fn build(jar_bytes: &[u8], version: &str, client_sha1: &str) -> Result<Strin
         "\npub static TILE_NAMES: [&str; {}] = {:?};\n",
         tile_names.len(),
         tile_names
+    ));
+    src.push_str(&format!(
+        "\n/// THE FARMLAND'S WET FACE — the moisture=7 variant's own tile the\n\
+         \x20    /// blockstates/farmland.json's second arm resolves (block/farmland_moist\n\
+         \x20    /// -> the farmland_moist texture the template_farmland's up face names).\n\
+         \x20    /// The mesher's farmland top-face verdict the named const reads.\n\
+         \x20    pub const TILE_FARMLAND_MOIST: u16 = {};\n",
+        wet_idx
     ));
     src.push_str(&format!(
         "\n/// The destroy_stage_0..9 tile indices (the breaking overlay's own\n\

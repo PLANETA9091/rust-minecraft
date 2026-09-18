@@ -824,8 +824,22 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                     }
                     // Real texture tile from the generated atlas when present;
                     // otherwise the flat palette path (avg color or defaults).
+                    // THE FARMLAND'S OWN WET FACE (the blockstates/farmland.
+                    // json's moisture=7 arm the tile atlas speaks — javap
+                    // FarmlandBlock.isNearWater the hydration verdict the
+                    // vanilla texture the moisture property picks): the top
+                    // face the near-water cell the farmland_moist master
+                    // wears, the dry the farmland keeps (the sides/bottom
+                    // the dirt the both models name)
                     let tile = if (id as usize) < atlas::N_KINDS {
-                        atlas::FACE_TILES[id as usize][face]
+                        if id == crate::world::FARMLAND
+                            && face == 2
+                            && world.is_near_water(wx, wy, wz)
+                        {
+                            atlas::TILE_FARMLAND_MOIST
+                        } else {
+                            atlas::FACE_TILES[id as usize][face]
+                        }
                     } else {
                         atlas::TILE_NONE
                     };
@@ -2146,6 +2160,79 @@ mod tests {
                 assert_eq!(c[1], c[2]);
             }
         }
+    }
+
+    #[test]
+    fn the_farmland_the_dry_top_the_master_wears() {
+        let mut w = empty_world();
+        put(&mut w, 8, 8, 8, crate::world::FARMLAND);
+        let q = mesh_chunk(&w, 0, 0, None);
+        let dry_top = atlas::FACE_TILES[crate::world::FARMLAND as usize][2];
+        // the top quad the dry master wears (the moisture=0 variant the
+        // model chain resolves)
+        assert!(
+            q.iter()
+                .any(|quad| quad.pts[0][1] == 9.0 && quad.tile == dry_top),
+            "the dry farmland the FACE_TILES top master wears"
+        );
+        // the wet verdict the no-water world never picks
+        assert!(
+            !q.iter()
+                .any(|quad| quad.tile == atlas::TILE_FARMLAND_MOIST),
+            "the dry world the wet tile never speaks"
+        );
+    }
+
+    #[test]
+    fn the_farmland_the_wet_top_the_moist_wears() {
+        let mut w = empty_world();
+        put(&mut w, 8, 8, 8, crate::world::FARMLAND);
+        put(&mut w, 4, 8, 8, WATER); // the dx=-4 edge the box scans
+        let q = mesh_chunk(&w, 0, 0, None);
+        let dry_top = atlas::FACE_TILES[crate::world::FARMLAND as usize][2];
+        // the top quad the wet master wears (the moisture=7 variant's own
+        // tile the real chain resolves — the is_near_water verdict the
+        // vanilla texture pick rides)
+        assert!(
+            q.iter().any(
+                |quad| quad.pts[0][1] == 9.0 && quad.tile == atlas::TILE_FARMLAND_MOIST
+            ),
+            "the near-water farmland the farmland_moist master wears"
+        );
+        assert!(
+            !q.iter().any(|quad| quad.tile == dry_top),
+            "the wet cell the dry master never wears"
+        );
+        // THE BOUNDARY: the water one-past the box the dry arm keeps
+        put(&mut w, 4, 8, 8, AIR);
+        put(&mut w, 2, 8, 8, WATER);
+        let q2 = mesh_chunk(&w, 0, 0, None);
+        assert!(
+            q2.iter()
+                .any(|quad| quad.pts[0][1] == 9.0 && quad.tile == dry_top),
+            "the far water the dry master keeps"
+        );
+        assert!(
+            !q2.iter()
+                .any(|quad| quad.tile == atlas::TILE_FARMLAND_MOIST),
+            "the far water the wet tile never speaks"
+        );
+        // THE SIDES: the dirt the both models name (the wet verdict the
+        // top face alone picks — the farmland_wet model the sides share)
+        put(&mut w, 2, 8, 8, AIR);
+        put(&mut w, 4, 8, 8, WATER);
+        let q3 = mesh_chunk(&w, 0, 0, None);
+        let dirt_tile = atlas::FACE_TILES[crate::world::FARMLAND as usize][0];
+        assert!(
+            q3.iter().any(|quad| quad.tile == dirt_tile),
+            "the side quads the dirt master wears"
+        );
+        assert!(
+            q3.iter().any(
+                |quad| quad.pts[0][1] == 9.0 && quad.tile == atlas::TILE_FARMLAND_MOIST
+            ),
+            "the wet top the second fill wears"
+        );
     }
 
     #[test]
