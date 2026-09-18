@@ -8430,48 +8430,79 @@ impl App {
             // server-owned — the SYNCED bubble_time the rock's word is —
             // and the countdown/launch the server's own motion the
             // snapshots carry; the splash the client's OWN word is, the
-            // pose the snapshot's raw word keeps — the same word the
-            // paddle voices' medium reads). The box's overlapped cells
-            // the offline lane's scan mirrors, the per-mouth-cell gate
-            // the vanilla entityInside fires, the under gate the
-            // client's own fluid read speaks.
+            // pose the ease walk's EASED word keeps — the same word the
+            // paddle voices' medium reads). The walk the fallback
+            // Movement's own segment speaks — the lerp's displacement the
+            // eased lane sweeps, the resting hull the static box keeps —
+            // the per-mouth-cell gate the vanilla entityInside fires, the
+            // under gate the client's own fluid read speaks.
             if let Some(net_world) = self.net_world.as_ref() {
                 let e = 1e-5f64;
                 let hw = crate::hull::HULL_WIDTH / 2.0;
-                let mut mouths = 0usize;
-                for wz in ((boat.z - hw + e).floor() as i32)
-                    ..=((boat.z + hw - e).floor() as i32)
-                {
-                    for wy in ((boat.y + e).floor() as i32)
-                        ..=((boat.y + crate::hull::HULL_HEIGHT - e).floor() as i32)
+                // THE MOVEMENT BOTH PASSES BUILD (javap AbstractBoat.tick
+                // 119-123 + 213/217 — the InterpolationHandler.interpolate()
+                // the tick speaks BETWEEN the super walk and the passes, the
+                // non-authoritative branch the move() never records): the
+                // oldPosition the setOldPosAndRot's PRE-TICK capture keeps
+                // (the l.prev the ease walk stores before the step) -> the
+                // position the inside-tick interpolate reached (the eased
+                // pose the scan reads). The lerp's own displacement the DDA's
+                // own branch answers (the real movement the swept walk
+                // keeps), the resting hull the degenerate length the static
+                // box overlap speaks (the betweenClosed branch's own word —
+                // the lengthSqr < square(1e-5) band the vanilla walk reads).
+                let from = self
+                    .net_boat_lerp
+                    .get(&boat.id)
+                    .map(|l| l.prev)
+                    .unwrap_or((boat.x, boat.y, boat.z));
+                let to = (boat.x, boat.y, boat.z);
+                let (dx, dy, dz) = (to.0 - from.0, to.1 - from.1, to.2 - from.2);
+                let swept = dx * dx + dy * dy + dz * dz >= 1e-10;
+                // THE VISIT ORDER (the deduped cells the fresh set keeps):
+                // the degenerate length the static box's z→y→x loops speak,
+                // the real displacement the swept walk's DDA order carries —
+                // the start corners the step-0 visit shares, the crossings
+                // the +1 each, the end pose the walk's own layers keep
+                let cells: Vec<[i32; 3]> = if !swept {
+                    let mut v = Vec::new();
+                    for wz in ((to.2 - hw + e).floor() as i32)
+                        ..=((to.2 + hw - e).floor() as i32)
                     {
-                        for wx in ((boat.x - hw + e).floor() as i32)
-                            ..=((boat.x + hw - e).floor() as i32)
+                        for wy in ((to.1 + e).floor() as i32)
+                            ..=((to.1 + crate::hull::HULL_HEIGHT - e).floor() as i32)
                         {
-                            let c = net_world.get(wx, wy, wz);
-                            let variant =
-                                crate::world_view::column_variant_at(net_world, wx, wy, wz, c);
-                            if variant == 0 {
-                                continue;
-                            }
-                            if net_world.get(wx, wy + 1, wz) == crate::world::AIR {
-                                mouths += 1;
+                            for wx in ((to.0 - hw + e).floor() as i32)
+                                ..=((to.0 + hw - e).floor() as i32)
+                            {
+                                v.push([wx, wy, wz]);
                             }
                         }
                     }
-                }
-                if mouths > 0 && !boat_under_water(net_world, boat) {
-                    // THE TWO PASSES (javap AbstractBoat.tick 212/216 —
-                    // the applyEffectsFromBlocks pair the client's own
-                    // tick runs: the non-authoritative branch the move
-                    // never records, BOTH calls the fallback
-                    // Movement(oldPosition, position) build — the same
-                    // segment twice, the fresh visited set each pass
-                    // keeps — and the client arm's 1/100 the per-visit
-                    // shape rolls: TWO rolls per mouth per tick the
-                    // wire hull speaks)
+                    v
+                } else {
+                    crate::hull::hull_sweep_cells(from, to)
+                };
+                if !boat_under_water(net_world, boat) {
+                    // THE TWO PASSES (javap AbstractBoat.tick 213/217 — the
+                    // empty movementThisTick the non-authoritative branch
+                    // keeps, BOTH calls the SAME fallback build, the fresh
+                    // visited set each pass keeps) × THE PER-VISIT SHAPE
+                    // (the 1/100 the entityInside's client arm rolls — the
+                    // mouth the variant+AIR-above read speaks, the visit
+                    // the walk's own order keeps)
                     for _ in 0..2 {
-                        for _ in 0..mouths {
+                        for [wx, wy, wz] in &cells {
+                            let c = net_world.get(*wx, *wy, *wz);
+                            let variant = crate::world_view::column_variant_at(
+                                net_world, *wx, *wy, *wz, c,
+                            );
+                            if variant == 0 {
+                                continue;
+                            }
+                            if net_world.get(*wx, *wy + 1, *wz) != crate::world::AIR {
+                                continue;
+                            }
                             if self.mob_rng.next_int(100) == 0 {
                                 bubble_splash_arm(
                                     &mut self.mob_rng,
@@ -19389,6 +19420,96 @@ mod tests {
             app.mob_rng.next_int(100),
             reference.next_int(100),
             "the two passes' own stream position"
+        );
+    }
+
+    /// THE WIRE LANE'S OWN SWEPT WALK (the lerp's own displacement the
+    /// client's baseTick reads — javap AbstractBoat.tick 119-123: the
+    /// InterpolationHandler.interpolate() the tick speaks BETWEEN the
+    /// super walk and the passes, the non-authoritative branch the
+    /// move() never records, BOTH applyEffectsFromBlocks calls the
+    /// fallback Movement(oldPosition, position) build — the lerp's real
+    /// displacement the DDA's own branch answers, the resting hull the
+    /// degenerate length the static box keeps): the hull easing OFF the
+    /// column's mouth the START corner's own visit keeps — the mouth
+    /// the static box at the landing pose never overlaps — the 1/100
+    /// the two passes' per-visit shape rolls, the stream the reference's
+    /// own position proves.
+    #[test]
+    fn the_wire_lerp_sweeps_the_leaving_mouth() {
+        let settled_y = (10.0f64 + 1.0) - 0.65 * crate::hull::HULL_HEIGHT;
+        let mut app = wire_column_app(settled_y, Some(1));
+        // THE EASE'S OWN ARM (the live_boats_updated walk's shape): the
+        // hull's prev AT the column's mouth cell (x 8.5), the sync's
+        // word two blocks east (x 10.5), the 3 steps the vanilla
+        // lerpSteps speaks
+        app.net_boat_lerp.insert(
+            700,
+            crate::hull::HullLerp {
+                prev: (8.5, settled_y, 8.5),
+                target: (10.5, settled_y, 8.5),
+                steps: 3,
+            },
+        );
+        let mut reference = app.mob_rng.clone();
+        // TICK 1: the ease 8.5 -> 9.1667 (the l.prev the pre-tick
+        // capture keeps), the swept walk the segment's x layers {8,9}
+        // yields — the start corner's (8,10,8) mouth the step-0 visit
+        // speaks, the landing box (cell 9) the mouth never overlaps —
+        // TWO passes × the one mouth = the TWO draws (the hits the
+        // arm's own three draws the replay mirrors)
+        for _ in 0..2 {
+            if reference.next_int(100) == 0 {
+                let _ = reference.next_f32();
+                let _ = reference.next_f32();
+                let _ = reference.next_f32();
+            }
+        }
+        app.tick_net_boats();
+        app.tick_paddles();
+        assert_eq!(
+            app.mob_rng.next_int(100),
+            reference.next_int(100),
+            "the leaving mouth's own two draws the swept walk speaks"
+        );
+        // TICK 2: the ease 9.1667 -> 9.8333 — the start box the cell 8's
+        // edge still straddles (8.854 in [8,9)) the mouth the corner
+        // set keeps AGAIN (the step-0 visit's own word), two more draws
+        for _ in 0..2 {
+            if reference.next_int(100) == 0 {
+                let _ = reference.next_f32();
+                let _ = reference.next_f32();
+                let _ = reference.next_f32();
+            }
+        }
+        app.tick_net_boats();
+        app.tick_paddles();
+        assert_eq!(
+            app.mob_rng.next_int(100),
+            reference.next_int(100),
+            "the straddled departure's own two draws"
+        );
+        // TICK 3: the ease 9.8333 -> 10.5 — the box the column's cell
+        // the departure completes (the start box [9.52,10.146] the cell
+        // 9 keeps), the swept walk the zero mouths the silence keeps —
+        // the stream the position the silence holds
+        app.tick_net_boats();
+        app.tick_paddles();
+        assert_eq!(
+            app.mob_rng.next_int(100),
+            reference.next_int(100),
+            "the cleared departure the stream's silence keeps"
+        );
+        // THE EASED POSE'S OWN REST (the exhausted walk the steps keep:
+        // the l.prev the pose's own word equals, the segment the
+        // degenerate length the static box's branch answers — the
+        // settled lane's shape the walk returns to)
+        app.tick_net_boats();
+        app.tick_paddles();
+        assert_eq!(
+            app.mob_rng.next_int(100),
+            reference.next_int(100),
+            "the rest the static branch's silence keeps"
         );
     }
 
