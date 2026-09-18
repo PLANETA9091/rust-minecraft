@@ -3450,6 +3450,14 @@ impl App {
                         }
                     }
                 }
+                // THE RIDE'S OWN PASS (the jockey's caller-side walk —
+                // the ticks' AFTER the links the walk resolves: the
+                // rider's realized chase the mount carries, the seat
+                // the FULL-height attachment keeps, the unlink the
+                // death lane speaks — the vanilla order the
+                // vehicle-moves-then-passenger the pass's own tail
+                // keeps, the breeding scan the settled poses read)
+                crate::mob::walk_ride_links(&mut self.mobs);
                 // THE BREEDING WALK'S OWN PAIR (the canMate law the two
                 // in-love same-kind mobs answer — the child the
                 // spawnChildFromBreeding walk leaves, the parents the

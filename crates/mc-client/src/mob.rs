@@ -1223,6 +1223,26 @@ pub struct Zombie {
     /// keeps — the vanilla law the held value through childhood
     /// speaks, the same 6000..12000 the adult's first tick draws).
     pub egg_time: i32,
+    /// THE JOCKEY'S OWN FLAG (javap `Chicken.isChickenJockey` — the
+    /// synched bool the jockey spawn's `setChickenJockey(true)` arms:
+    /// the found hull the search branch flags, the jockey-spawned
+    /// body the create branch flags; the ctor's honest default = the
+    /// vanilla client's own — the plain hen the false bit carries).
+    /// The egg gate's `!isChickenJockey()` the countdown refuses, the
+    /// `getBaseExperienceReward`'s `bipush 10` the jockey kill speaks.
+    pub chicken_jockey: bool,
+    /// THE PASSENGER'S OWN LINK (javap `Entity.vehicle` — the rider's
+    /// own word the startRiding walk arms: the jockey zombie the
+    /// mount's id carries, the walk-alone lane the None keeps). The
+    /// ride's own pass the caller walks — the mount the rider's
+    /// realized chase carries, the seat the FULL-height attachment
+    /// keeps, the unlink the death lane speaks.
+    pub vehicle: Option<i32>,
+    /// THE VEHICLE'S OWN WORD (javap `Entity.passengers` — the
+    /// single-rider lane the boolean stand-in keeps: the ridden hull
+    /// the passenger's id carries, the ENTITY_NOT_BEING_RIDDEN
+    /// predicate the search's own gate reads).
+    pub passenger: Option<i32>,
 }
 
 impl Zombie {
@@ -1291,6 +1311,9 @@ impl Zombie {
             flap_speed: 0.0,
             flapping: 0.0,
             egg_time: 0,
+            chicken_jockey: false,
+            vehicle: None,
+            passenger: None,
         }
     }
 
@@ -1579,7 +1602,11 @@ impl Zombie {
         // keeps: the two pitches, then the refill). The ZERO the lazy
         // arm's sentinel holds (the shared ctor's stream the extra
         // draw the other kinds never spend).
-        if self.kind == MobKind::Chicken && self.health > 0.0 && !self.is_baby() {
+        if self.kind == MobKind::Chicken
+            && self.health > 0.0
+            && !self.is_baby()
+            && !self.chicken_jockey
+        {
             if self.egg_time == 0 {
                 self.egg_time = self.rng.next_int(6000) + 6000;
             } else {
@@ -2065,8 +2092,13 @@ impl Zombie {
         // walker, and the swim branch never fires: the zombie never
         // isSwimming). The reset rides nextStep() = (int)moveDist + 1.0F
         // — one footstep per ~1.667 blocks, the first one spoken the
-        // moment the walk crosses the ctor's 1.0F.
-        self.move_dist += ((col.dx * col.dx + col.dz * col.dz).sqrt() * 0.6) as f32;
+        // moment the walk crosses the ctor's 1.0F. THE RIDER THE GATE
+        // REFUSES (the jockey the Entity.rideTick's own delta-zero the
+        // vanilla law keeps — the passenger's own walk the move_dist
+        // never grows, the step the mount's own cadence speaks).
+        if self.vehicle.is_none() {
+            self.move_dist += ((col.dx * col.dx + col.dz * col.dz).sqrt() * 0.6) as f32;
+        }
         if self.move_dist > self.next_step {
             let under = world.get(
                 self.x.floor() as i32,
@@ -2105,11 +2137,19 @@ impl Zombie {
         self.vx *= drag;
         self.vz *= drag;
         // THE WALK ANIMATION (calculateEntityAnimation's own law — the
-        // same 4.0 scale and 0.4 blend the player's store speaks)
-        let dist = ((self.x - x0) * (self.x - x0)
-            + (self.y - y0) * (self.y - y0)
-            + (self.z - z0) * (self.z - z0))
-            .sqrt() as f32;
+        // same 4.0 scale and 0.4 blend the player's store speaks).
+        // THE RIDER THE STILL WALK KEEPS (the jockey's legs the
+        // rideTick's own zero-delta the vanilla law stills — the
+        // passenger the no-move anim decays, the mount's own legs the
+        // pass's re-feed the realized walk carries)
+        let dist = if self.vehicle.is_some() {
+            0.0
+        } else {
+            ((self.x - x0) * (self.x - x0)
+                + (self.y - y0) * (self.y - y0)
+                + (self.z - z0) * (self.z - z0))
+                .sqrt() as f32
+        };
         if dist.is_finite() {
             self.walk
                 .update((dist * WALK_DISTANCE_SCALE).min(1.0), WALK_BLEND, 1.0);
@@ -2855,13 +2895,14 @@ impl Zombie {
     /// no-baby lane never rides). The roll rides the mob's own random
     /// — the same stream the loot's own draws speak, the vanilla
     /// dropAllDeathLoot-then-dropExperience order the caller keeps.
+    /// THE CHICKEN'S OWN OVERRIDE the javap dump names (`isChickenJockey()
+    /// ? bipush 10 : super` — the jockey kill the flat 10 the branch
+    /// speaks, the plain hen the Animal's own band the fall-through
+    /// keeps — the match guard the override's own ifeq orders).
     pub fn base_xp_reward(&mut self) -> i32 {
         match self.kind {
             MobKind::Zombie => ZOMBIE_XP_REWARD,
-            // the animals' shared arm — the Chicken's own override the
-            // javap dump names (`isChickenJockey() ? 10 : super`) the
-            // jockey-less lane never rides (no chicken jockey this
-            // world's vocabulary speaks)
+            MobKind::Chicken if self.chicken_jockey => 10,
             _ => 1 + self.rng.next_int(3),
         }
     }
@@ -3033,14 +3074,182 @@ pub fn try_spawn(
     }
     let mut id = *next_id;
     *next_id += 1;
-    mobs.push(Zombie::new(
+    let mut z = Zombie::new(
         id,
         sx as f64 + 0.5,
         fy as f64,
         sz as f64 + 0.5,
         (*next_id as u64) << 16 ^ rng.next(),
-    ));
+    );
+    // THE FINALIZE SPAWN'S OWN WALK (javap `Zombie.finalizeSpawn` the
+    // 26.2 bytecode speaks: the canPickUpLoot draw the client's lane
+    // never carries — no draw; the null group data the ctor `new
+    // ZombieGroupData(getSpawnAsBabyOdds(random), iconst_1)` arms —
+    // draw A the baby odds speaks; the isBabyZ setBaby(true) the
+    // -24000 the client's age word keeps; the canSpawnJockeyZ branch
+    // draw B `nextFloat() < 0.05` — the SEARCH the
+    // `getBoundingBox().inflate(5.0, 3.0, 5.0)` +
+    // ENTITY_NOT_BEING_RIDDEN scan keeps, `list.get(0)` the vec's own
+    // order answers, the found hull `setChickenJockey(true)` +
+    // `startRiding(chicken, false, false)` the link arms (NO setBaby —
+    // the bytecode never re-babies the found hen); the empty search
+    // the SECOND draw `nextFloat() < 0.05` keeps — the JOCKEY spawn
+    // `EntityTypes.CHICKEN.create(level, JOCKEY)` the zombie's own
+    // pose `snapTo(x, y, z, yRot, 0.0F)` rides, the chicken's own
+    // finalizeSpawn the AgeableMob group-data arm speaks (the
+    // `(true)` ctor the 0.05 chance carries, draw D the baby roll the
+    // same `< 0.05` window draws), `setChickenJockey(true)` +
+    // `startRiding` + `addFreshEntity` the tail arms; the
+    // canBreakDoors and the equipment draws the client's lanes never
+    // carry — no draws, the honest notes the doc keeps).
+    if rng.next_f32() < 0.05 {
+        z.set_age(BABY_START_AGE);
+        if rng.next_f32() < 0.05 {
+            let (zx0, zy0, zz0, zx1, zy1, zz1) = z.box_at();
+            let (bx0, by0, bz0, bx1, by1, bz1) =
+                (zx0 - 5.0, zy0 - 3.0, zz0 - 5.0, zx1 + 5.0, zy1 + 3.0, zz1 + 5.0);
+            let found = mobs.iter_mut().find(|m| {
+                m.kind == MobKind::Chicken
+                    && m.passenger.is_none()
+                    && {
+                        let (x0, y0, z0, x1, y1, z1) = m.box_at();
+                        x0 <= bx1 && x1 >= bx0 && y0 <= by1 && y1 >= by0 && z0 <= bz1 && z1 >= bz0
+                    }
+            });
+            match found {
+                Some(chicken) => {
+                    chicken.chicken_jockey = true;
+                    chicken.passenger = Some(z.id);
+                    z.vehicle = Some(chicken.id);
+                }
+                None => {
+                    if rng.next_f32() < 0.05 {
+                        let cid = *next_id;
+                        *next_id += 1;
+                        let mut c = Zombie::new(
+                            cid,
+                            z.x,
+                            z.y,
+                            z.z,
+                            (*next_id as u64) << 16 ^ rng.next(),
+                        );
+                        c.kind = MobKind::Chicken;
+                        c.yaw = z.yaw;
+                        if rng.next_f32() < 0.05 {
+                            c.set_age(BABY_START_AGE);
+                        }
+                        c.chicken_jockey = true;
+                        c.passenger = Some(z.id);
+                        z.vehicle = Some(c.id);
+                        mobs.push(c);
+                    }
+                }
+            }
+        }
+    }
+    mobs.push(z);
     true
+}
+
+/// THE RIDE'S OWN PASS — the jockey's caller-side walk (the per-mob
+/// tick's own head the caller's vec the pass answers): the rider's
+/// realized chase the MOUNT carries (the vanilla pair the rider's AI
+/// steers — the mount's own wander step the override discards), the
+/// seat the FULL-height attachment the pig ride's own law keeps
+/// (`Vec3(0, height, 0)` — the chicken's 0.7 the positionRider's
+/// super speaks), the rider's body the mount's yaw the
+/// `positionRider`'s own `yBodyRot` copy answers, the render prev
+/// pairs the mount's own segment the lerp walks (the smooth ride the
+/// boat carry law keeps), the realized walk the mount's own anim the
+/// re-feed carries and the move_dist the step cadence keeps (the
+/// mount's own voice the next crossing speaks — one tick the honest
+/// note shifts). THE DYING MOUNT THE CARRIED POSE KEEPS (the vanilla
+/// death anim the ride the corpse holds — the ejectPassengers the
+/// REMOVAL's own walk speaks, the 20-tick clock the pair rides out),
+/// the eject the removal's own lane speaks (the mount the caller's
+/// retain dropped — the dangling word the guard answers, the standing
+/// walk the next tick resumes), and the rider-less mount's own
+/// passenger word the tail sweep clears (the removal the riders' ids
+/// the vec answers — the ENTITY_NOT_BEING_RIDDEN gate the stale word
+/// never poisons).
+pub fn walk_ride_links(mobs: &mut [Zombie]) {
+    let links: Vec<(usize, usize)> = {
+        let mut v = Vec::new();
+        for (ri, r) in mobs.iter().enumerate() {
+            if let Some(vid) = r.vehicle {
+                if let Some(mi) = mobs.iter().position(|m| m.id == vid) {
+                    v.push((ri, mi));
+                } else {
+                    // the dangling word the guard heals (the mount the
+                    // removal's own sweep dropped)
+                    v.push((ri, usize::MAX));
+                }
+            }
+        }
+        v
+    };
+    for (ri, mi) in links {
+        if mi == usize::MAX {
+            // THE EJECT (Entity.remove's own ejectPassengers — the gone
+            // mount the ride belief drops)
+            mobs[ri].vehicle = None;
+            continue;
+        }
+        // THE DYING MOUNT THE RIDE KEEPS (the death anim the corpse
+        // carries the rider — the carry the frozen walk refuses, the
+        // seat the snap keeps)
+        let mount_dying = mobs[mi].health <= 0.0 || mobs[mi].death_time > 0;
+        // the rider's realized chase (the tick's own collide consumed
+        // the intent — the rider's box the STRICTER dims the path
+        // keeps, the mount the same walk never clips)
+        let (rdx, rdz) = (
+            mobs[ri].x - mobs[ri].prev_x,
+            mobs[ri].z - mobs[ri].prev_z,
+        );
+        {
+            let m = &mut mobs[mi];
+            if !mount_dying {
+                m.x = m.prev_x + rdx;
+                m.z = m.prev_z + rdz;
+                // the mount's own anim the realized walk re-feeds (the
+                // tick's own feed the discarded wander step spoke — the
+                // second update the blend's own law absorbs)
+                let dist = ((m.x - m.prev_x) * (m.x - m.prev_x)
+                    + (m.y - m.prev_y) * (m.y - m.prev_y)
+                    + (m.z - m.prev_z) * (m.z - m.prev_z))
+                    .sqrt() as f32;
+                if dist.is_finite() {
+                    m.walk
+                        .update((dist * WALK_DISTANCE_SCALE).min(1.0), WALK_BLEND, 1.0);
+                }
+                // the step cadence the realized walk carries
+                m.move_dist += ((rdx * rdx + rdz * rdz).sqrt() * 0.6) as f32;
+            }
+        }
+        // the seat: the mount's own pose the FULL-height attachment
+        // lifts, the prev pairs the mount's own segment the render
+        // walks, the body the mount's yaw the positionRider keeps
+        let (mx, my, mz, myaw) = (mobs[mi].x, mobs[mi].y, mobs[mi].z, mobs[mi].yaw);
+        let (mpx, mpy, mpz) = (mobs[mi].prev_x, mobs[mi].prev_y, mobs[mi].prev_z);
+        let r = &mut mobs[ri];
+        r.x = mx;
+        r.y = my + CHICKEN_HEIGHT;
+        r.z = mz;
+        r.yaw = myaw;
+        r.prev_x = mpx;
+        r.prev_y = mpy + CHICKEN_HEIGHT;
+        r.prev_z = mpz;
+    }
+    // THE RIDER-LESS MOUNT'S OWN SWEEP (the removal the passengers'
+    // ids the vec answers — the gone rider the word drops)
+    let ids: Vec<i32> = mobs.iter().map(|m| m.id).collect();
+    for m in mobs.iter_mut() {
+        if let Some(pid) = m.passenger {
+            if !ids.contains(&pid) {
+                m.passenger = None;
+            }
+        }
+    }
 }
 
 /// THE CREATURE'S OWN CAP (javap `MobCategory.<clinit>` — the CREATURE
@@ -4162,6 +4371,300 @@ mod tests {
             false
         ));
         assert!(mobs.is_empty());
+    }
+
+    /// THE FLAT GRASS PLATFORM the jockey walks' own stage (the stone
+    /// base, the grass top at 8, the sky the rest — the feet the y 9
+    /// the surface law keeps).
+    fn jockey_flat_world() -> World {
+        let mut world = World::new(4, 7);
+        let size = world.size_blocks();
+        for x in 0..size {
+            for z in 0..size {
+                for y in 0..8 {
+                    world.set(x, y, z, crate::world::STONE);
+                }
+                world.set(x, 8, z, crate::world::GRASS);
+                for y in 9..size {
+                    world.set(x, y, z, crate::world::AIR);
+                }
+            }
+        }
+        world
+    }
+
+    /// THE SPAWN WALK'S OWN MIRROR (javap `Zombie.finalizeSpawn` the
+    /// draw chain the bytecode speaks): the ring's two doubles, the
+    /// ctor's own next(), the group data's baby odds (draw A), the
+    /// jockey search's roll (draw B), the jockey spawn's roll (draw C),
+    /// the created hen's ctor next() and the AgeableMob group-data
+    /// baby odds (draw D). Returns the landed spot + every draw the
+    /// walk speaks.
+    fn jockey_mirror(seed: u64) -> (i32, i32, f32, f32, f32, f32, bool) {
+        let mut p = Lcg::new(seed);
+        let ang = p.next_f64() * std::f64::consts::TAU;
+        let dist = SPAWN_MIN_DIST + p.next_f64() * (SPAWN_MAX_DIST - SPAWN_MIN_DIST);
+        let sx = ((32.0 + ang.cos() * dist).floor()) as i32;
+        let sz = ((32.0 + ang.sin() * dist).floor()) as i32;
+        let _zombie_seed = p.next();
+        let a = p.next_f32();
+        let b = p.next_f32();
+        let c = p.next_f32();
+        let _hen_seed = p.next();
+        let d = p.next_f32();
+        (sx, sz, a, b, c, d, a < 0.05 && b < 0.05 && c < 0.05)
+    }
+
+    /// THE GROUP DATA'S OWN BABY ODDS (javap `ZombieGroupData` the
+    /// `getSpawnAsBabyOdds` draw A the ctor arms): the `< 0.05` the
+    /// -24000 the setBaby speaks, the missed roll the walk-alone adult
+    /// keeps — the mirror the same seed replays.
+    #[test]
+    fn the_zombie_baby_roll_the_group_data_odds_keep() {
+        let world = jockey_flat_world();
+        let mut landed = false;
+        for seed in 0u64..65536 {
+            let (sx, sz, a, b, _c, _d, _triple) = jockey_mirror(seed);
+            if a >= 0.05 || b >= 0.05 {
+                continue; // the baby roll the walk keeps — the seed skips
+            }
+            let mut mobs = Vec::new();
+            let mut next_id = 1;
+            if !try_spawn(&mut mobs, &mut next_id, 32.0, 32.0, &world, &mut Lcg::new(seed), true) {
+                continue;
+            }
+            // the search the empty world refuses — the jockey spawn the
+            // roll C decides; the mirror the same draws replays
+            let (_sx2, _sz2, _a2, _b2, c, d, _t) = jockey_mirror(seed);
+            let z = mobs.last().expect("the spawner pushed the body");
+            assert!(z.is_baby(), "the baby roll the age arms");
+            assert_eq!(z.age, BABY_START_AGE, "the baby the start age speaks");
+            if c >= 0.05 {
+                assert!(z.vehicle.is_none(), "the missed spawn roll the walk keeps");
+                assert_eq!(mobs.len(), 1, "the walk-alone lane the lone body keeps");
+            } else {
+                assert_eq!(mobs.len(), 2, "the jockey spawn the pair pushes");
+                assert_eq!(z.vehicle, Some(2), "the created hen the id order names");
+                let hen = &mobs[0];
+                assert!(hen.chicken_jockey, "the created hen the flag arms");
+                assert_eq!(hen.passenger, Some(1), "the rider's word the link keeps");
+                assert_eq!(
+                    hen.is_baby(),
+                    d < 0.05,
+                    "the AgeableMob group-data draw the hen's childhood decides"
+                );
+            }
+            assert_eq!((z.x.floor() as i32, z.z.floor() as i32), (sx, sz), "the ring the spot lands");
+            landed = true;
+            break;
+        }
+        assert!(landed, "a baby roll lands within 65536 seeds");
+    }
+
+    /// THE SEARCH'S OWN BOX LAW (javap the `getBoundingBox().inflate(5.0,
+    /// 3.0, 5.0)` + ENTITY_NOT_BEING_RIDDEN scan): the found hull the
+    /// `list.get(0)` the vec's own order keeps, `setChickenJockey(true)`
+    /// the flag arms, `startRiding` the link speaks — NO setBaby the
+    /// bytecode never re-babies the found hen, NO jockey hen the found
+    /// lane never spawns.
+    #[test]
+    fn the_jockey_search_the_box_the_found_hen_links() {
+        let world = jockey_flat_world();
+        let mut landed = false;
+        for seed in 0u64..1_048_576 {
+            let (_sx, _sz, a, b, _c, _d, _t) = jockey_mirror(seed);
+            if a >= 0.05 || b >= 0.05 {
+                continue;
+            }
+            // the DRY RUN the spot's own pose answers (the draws the
+            // mobs vec never shifts)
+            let mut dry: Vec<Zombie> = Vec::new();
+            let mut next_id = 1;
+            if !try_spawn(&mut dry, &mut next_id, 32.0, 32.0, &world, &mut Lcg::new(seed), true) {
+                continue;
+            }
+            let z0 = dry.last().unwrap();
+            if z0.vehicle.is_some() {
+                continue; // the triple roll this seed walks — the search test skips
+            }
+            // the hen the zombie's OWN block keeps (the box the inflate
+            // the same spot holds), the vec the hen the first speaks
+            let (zx, zy, zz) = (z0.x, z0.y, z0.z);
+            let mut mobs = Vec::new();
+            let mut hen = Zombie::new(50, zx, zy, zz, 9);
+            hen.kind = MobKind::Chicken;
+            mobs.push(hen);
+            let mut next_id = 1;
+            assert!(try_spawn(&mut mobs, &mut next_id, 32.0, 32.0, &world, &mut Lcg::new(seed), true));
+            assert_eq!(mobs.len(), 2, "the found lane the jockey hen never spawns");
+            let z = mobs.last().unwrap();
+            assert_eq!(z.vehicle, Some(50), "the found hull the ride links");
+            let hen = &mobs[0];
+            assert!(hen.chicken_jockey, "the found hull the flag arms");
+            assert_eq!(hen.passenger, Some(1), "the rider's word the hen keeps");
+            assert!(
+                !hen.is_baby(),
+                "the bytecode never re-babies the found hen"
+            );
+            assert_eq!((hen.x, hen.y, hen.z), (zx, zy, zz), "the found hull the spot keeps");
+            landed = true;
+            break;
+        }
+        assert!(landed, "a search roll lands within 1M seeds");
+    }
+
+    /// THE JOCKEY SPAWN'S OWN HEN (javap the empty-search branch:
+    /// `EntityTypes.CHICKEN.create(level, JOCKEY)` the zombie's own
+    /// pose `snapTo(x, y, z, yRot, 0.0F)` rides, the AgeableMob
+    /// group-data draw the hen's childhood decides, `setChickenJockey`
+    /// + `startRiding` + `addFreshEntity` the tail arms).
+    #[test]
+    fn the_jockey_spawn_the_hen_the_zombie_pose_keeps() {
+        let world = jockey_flat_world();
+        let mut landed = false;
+        for seed in 0u64..1_048_576 {
+            let (_sx, _sz, _a, _b, _c, _d, triple) = jockey_mirror(seed);
+            if !triple {
+                continue;
+            }
+            let mut mobs = Vec::new();
+            let mut next_id = 1;
+            if !try_spawn(&mut mobs, &mut next_id, 32.0, 32.0, &world, &mut Lcg::new(seed), true) {
+                continue;
+            }
+            assert_eq!(mobs.len(), 2, "the jockey spawn the pair keeps");
+            let z = mobs.last().unwrap();
+            let hen = &mobs[0];
+            assert_eq!(hen.kind, MobKind::Chicken, "the created body the kind speaks");
+            assert!(hen.chicken_jockey, "the jockey hen the flag arms");
+            assert_eq!(z.vehicle, Some(hen.id), "the ride the link arms");
+            assert_eq!(hen.passenger, Some(z.id), "the rider's word the hen keeps");
+            assert_eq!(
+                (hen.x, hen.y, hen.z),
+                (z.x, z.y, z.z),
+                "the snapTo the zombie's own pose keeps"
+            );
+            assert_eq!(hen.yaw, z.yaw, "the snapTo the zombie's own yaw keeps");
+            assert_eq!(hen.id, 2, "the id the counter order speaks");
+            landed = true;
+            break;
+        }
+        assert!(landed, "a triple roll lands within 1M seeds");
+    }
+
+    /// THE RIDE'S OWN PASS (the caller-side walk the jockey's pair
+    /// answers): the mount the rider's realized chase carries, the seat
+    /// the FULL-height attachment lifts, the body the mount's yaw
+    /// keeps, the prev pairs the mount's own segment the render walks,
+    /// the anim the realized walk re-feeds, the cadence the mount's
+    /// own move_dist keeps.
+    #[test]
+    fn the_ride_pass_the_mount_the_riders_chase_carries() {
+        let mut rider = Zombie::new(1, 0.0, 9.0, 0.0, 7);
+        rider.kind = MobKind::Zombie;
+        rider.vehicle = Some(2);
+        // the realized chase the tick's own collide answered (the prev
+        // the tick-head pose keeps, the pose the walked spot)
+        rider.x = 0.3;
+        rider.z = 0.1;
+        let mut hen = Zombie::new(2, 5.0, 9.0, 5.0, 8);
+        hen.kind = MobKind::Chicken;
+        hen.passenger = Some(1);
+        let mut mobs = vec![hen, rider];
+        walk_ride_links(&mut mobs);
+        // the mount the rider's realized walk carries (its own wander
+        // step the override discards)
+        assert!((mobs[0].x - 5.3).abs() < 1e-9, "the mount the rider's x carries");
+        assert!((mobs[0].z - 5.1).abs() < 1e-9, "the mount the rider's z carries");
+        // the seat: the FULL-height attachment + the body yaw
+        assert!((mobs[1].x - 5.3).abs() < 1e-9);
+        assert!(
+            (mobs[1].y - (9.0 + CHICKEN_HEIGHT)).abs() < 1e-9,
+            "the seat the FULL-height attachment lifts"
+        );
+        assert!((mobs[1].z - 5.1).abs() < 1e-9);
+        assert_eq!(mobs[1].yaw, mobs[0].yaw, "the body the mount's yaw keeps");
+        // the prev pairs the mount's own segment the render lerp walks
+        assert!((mobs[1].prev_x - 5.0).abs() < 1e-9);
+        assert!(
+            (mobs[1].prev_y - (9.0 + CHICKEN_HEIGHT)).abs() < 1e-9,
+            "the rider's own prev the mount-based pose replaces"
+        );
+        assert!((mobs[1].prev_z - 5.0).abs() < 1e-9);
+        // the anim the realized walk re-feeds + the cadence the mount keeps
+        assert!(mobs[0].walk.speed > 0.0, "the mount's legs the chase walks");
+        assert!(mobs[0].move_dist > 0.0, "the step cadence the realized walk grows");
+    }
+
+    /// THE JOCKEY'S OWN GATES (javap `Chicken.aiStep`'s
+    /// `!isChickenJockey()` ifne the egg countdown refuses, and
+    /// `getBaseExperienceReward`'s `isChickenJockey() ? bipush 10 :
+    /// super` the flat row the stream never spends).
+    #[test]
+    fn the_jockey_chicken_the_egg_and_xp_gates_speak() {
+        let world = jockey_flat_world();
+        // the egg gate: the jockey hen the countdown never walks
+        let mut jockey = Zombie::new(1, 32.0, 9.0, 32.0, 262);
+        jockey.kind = MobKind::Chicken;
+        jockey.chicken_jockey = true;
+        jockey.egg_time = 1;
+        let ev = jockey.tick(&world, None, NIGHT);
+        assert!(ev.egg_laid.is_none(), "the jockey the lay refuses");
+        assert_eq!(jockey.egg_time, 1, "the countdown the gate freezes");
+        // the plain hen the same clock the lay speaks
+        let mut hen = Zombie::new(2, 40.0, 9.0, 40.0, 263);
+        hen.kind = MobKind::Chicken;
+        hen.egg_time = 1;
+        let ev = hen.tick(&world, None, NIGHT);
+        assert!(ev.egg_laid.is_some(), "the plain hen the zero crossing fires");
+        // the XP: the jockey the flat 10 the draws never shift
+        assert_eq!(jockey.base_xp_reward(), 10, "the bipush 10 the jockey speaks");
+        assert_eq!(jockey.base_xp_reward(), 10, "the flat row the stream never spends");
+        // the plain hen the Animal's own band the mirror replay answers
+        let expect = 1 + Lcg::new(262).next_int(3);
+        assert_eq!(jockey.base_xp_reward(), 10, "the flag the band never falls to");
+        let mut plain = Zombie::new(3, 48.0, 9.0, 48.0, 262);
+        plain.kind = MobKind::Chicken;
+        assert_eq!(plain.base_xp_reward(), expect, "the Animal's band the fresh stream draws");
+    }
+
+    /// THE RIDE'S OWN UNLINK (the removal the ejectPassengers walk
+    /// speaks — the gone mount the guard answers, the gone rider the
+    /// tail sweep drops, the dying mount the ride the corpse keeps).
+    #[test]
+    fn the_ride_links_the_removal_and_dangle_unlink() {
+        // the gone mount: the dangling vehicle the guard heals
+        let mut rider = Zombie::new(1, 0.0, 9.7, 0.0, 7);
+        rider.vehicle = Some(999);
+        let mut mobs = vec![rider];
+        walk_ride_links(&mut mobs);
+        assert!(mobs[0].vehicle.is_none(), "the gone mount the rider pops");
+        // the gone rider: the passenger word the tail sweep clears
+        let mut hen = Zombie::new(2, 0.0, 9.0, 0.0, 8);
+        hen.kind = MobKind::Chicken;
+        hen.passenger = Some(77);
+        let mut mobs = vec![hen];
+        walk_ride_links(&mut mobs);
+        assert!(mobs[0].passenger.is_none(), "the gone rider the word drops");
+        // the dying mount the ride the corpse keeps (the seat the snap
+        // holds, the frozen walk the carry refuses)
+        let mut rider = Zombie::new(1, 0.3, 9.7, 0.1, 7);
+        rider.prev_x = 0.0;
+        rider.prev_z = 0.0;
+        rider.vehicle = Some(2);
+        let mut hen = Zombie::new(2, 5.0, 9.0, 5.0, 8);
+        hen.kind = MobKind::Chicken;
+        hen.passenger = Some(1);
+        hen.health = 0.0;
+        let mut mobs = vec![hen, rider];
+        walk_ride_links(&mut mobs);
+        assert_eq!(mobs[1].vehicle, Some(2), "the death anim the ride keeps");
+        assert_eq!(mobs[0].passenger, Some(1), "the corpse the rider's word keeps");
+        assert!((mobs[0].x - 5.0).abs() < 1e-9, "the frozen walk the carry refuses");
+        assert!(
+            (mobs[1].y - (9.0 + CHICKEN_HEIGHT)).abs() < 1e-9,
+            "the seat the dying corpse still holds"
+        );
     }
 
     /// THE CREATURE ATTEMPT'S OWN PACK (the flat grass the world keeps:
