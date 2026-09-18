@@ -703,6 +703,174 @@ pub fn hull_bubble_tail(
     fired
 }
 
+/// THE SWEPT INSIDE-BLOCKS WALK'S OWN BUDGET (the bipush 16 the outer
+/// walk's own word keeps — the crossing steps the pass's segments
+/// share, the `step >= budget` gate the visitor lambda speaks).
+pub const INSIDE_SWEEP_BUDGET: i32 = 16;
+
+/// ONE SEGMENT'S OWN CELLS (the per-axis yield the deflated sweep
+/// walks): the moving axis' swept layers (the deflated edges at BOTH
+/// segment ends the floor keeps — the layers the box's continuous
+/// travel covers, the ε=1e-5 insets the static pass keeps) × the
+/// fixed axes' footprint (the box at the SEGMENT END — the chained
+/// segments the earlier axes' moves the fixed coords already carry),
+/// in the travel order the DDA's own crossings keep (the start pose's
+/// layers first, the end pose's last), stepped 0, 1, 2… per layer —
+/// the step index the budget's gate reads. The lane's z→y→x loop
+/// order the moving axis' own position respects.
+fn sweep_segment_cells(
+    cur: (f64, f64, f64),
+    nxt: (f64, f64, f64),
+    axis: usize,
+) -> Vec<([i32; 3], i32)> {
+    let e = 1e-5f64;
+    let hw = HULL_WIDTH / 2.0;
+    let (cur_a, nxt_a) = match axis {
+        0 => (cur.0, nxt.0),
+        1 => (cur.1, nxt.1),
+        _ => (cur.2, nxt.2),
+    };
+    let (rel_lo, rel_hi) = match axis {
+        0 | 2 => (-hw, hw),
+        _ => (0.0, HULL_HEIGHT),
+    };
+    // THE TRAVEL ORDER (the leading edge's own walk: the ascending
+    // layers the upward segment speaks, the descending the downward
+    // keeps — the swept span the deflated edges at both ends cover)
+    let layers: Vec<i32> = if nxt_a >= cur_a {
+        (((cur_a + rel_lo + e).floor() as i32)..=((nxt_a + rel_hi - e).floor() as i32)).collect()
+    } else {
+        (((nxt_a + rel_lo + e).floor() as i32)..=((cur_a + rel_hi - e).floor() as i32))
+            .rev()
+            .collect()
+    };
+    // THE FIXED AXES' FOOTPRINT (the box at the segment end, the same
+    // ε the static pass insets)
+    let (x0, x1) = ((nxt.0 - hw + e).floor() as i32, (nxt.0 + hw - e).floor() as i32);
+    let (y0, y1) = (
+        (nxt.1 + e).floor() as i32,
+        (nxt.1 + HULL_HEIGHT - e).floor() as i32,
+    );
+    let (z0, z1) = ((nxt.2 - hw + e).floor() as i32, (nxt.2 + hw - e).floor() as i32);
+    let mut out = Vec::new();
+    match axis {
+        // THE STEP THE CROSSING'S OWN BATCH KEEPS (one boundary
+        // crossing = one step — the footprint's cells the step's own
+        // visit speaks, the lane's z→y→x order the fixed axes keep)
+        0 => {
+            for (step, wx) in layers.iter().enumerate() {
+                for cz in z0..=z1 {
+                    for cy in y0..=y1 {
+                        out.push(([*wx, cy, cz], step as i32));
+                    }
+                }
+            }
+        }
+        1 => {
+            for (step, wy) in layers.iter().enumerate() {
+                for cz in z0..=z1 {
+                    for cx in x0..=x1 {
+                        out.push(([cx, *wy, cz], step as i32));
+                    }
+                }
+            }
+        }
+        _ => {
+            for (step, wz) in layers.iter().enumerate() {
+                for cy in y0..=y1 {
+                    for cx in x0..=x1 {
+                        out.push(([cx, cy, *wz], step as i32));
+                    }
+                }
+            }
+        }
+    }
+    out
+}
+
+/// THE SWEPT INSIDE-BLOCKS WALK (javap `Entity.checkInsideBlocks(List)`
+/// — the outer pass the boat's own tick runs AFTER the move: the
+/// Movement's from→to the `Direction.axisStepOrder` decomposes — Y
+/// ALWAYS first, then the horizontal pair the `|x| < |z|` test orders
+/// (YZX when the z's absolute leads, YXZ else) —, the per-axis
+/// segments the box's deflated sweep walks, the fresh set the pass's
+/// own dedup keeps, the 16 the budget caps (the `step >= budget` gate
+/// the visitor speaks, the counter+1 the inner walk returns), the
+/// exhausted budget the FINAL degenerate walk at `to` guarantees (the
+/// static box overlap the landing pose keeps). The bubble column's
+/// full-block `getEntityInsideCollisionShape` shape arms the apply
+/// for EVERY yielded cell — the `moved` flag the OR keeps never gates
+/// the lane's own words (the launch's 2.7 jump the static pass skips
+/// the swept layers fold). The degenerate segment (no displacement)
+/// the static pass's own word keeps — the empty walk returns.
+pub fn hull_sweep_cells(from: (f64, f64, f64), to: (f64, f64, f64)) -> Vec<[i32; 3]> {
+    let d = (to.0 - from.0, to.1 - from.1, to.2 - from.2);
+    if d.0 == 0.0 && d.1 == 0.0 && d.2 == 0.0 {
+        return Vec::new();
+    }
+    // THE AXIS STEP ORDER (the |x| < |z| test the YZX order arms, the
+    // YXZ the else keeps — the Y the both orders lead)
+    let axes: [usize; 3] = if d.0.abs() < d.2.abs() { [1, 2, 0] } else { [1, 0, 2] };
+    let mut seen: std::collections::HashSet<[i32; 3]> = std::collections::HashSet::new();
+    let mut out = Vec::new();
+    let mut budget = INSIDE_SWEEP_BUDGET;
+    let mut cur = from;
+    for axis in axes {
+        let dv = match axis {
+            0 => d.0,
+            1 => d.1,
+            _ => d.2,
+        };
+        if dv == 0.0 {
+            continue;
+        }
+        let nxt = match axis {
+            0 => (cur.0 + dv, cur.1, cur.2),
+            1 => (cur.0, cur.1 + dv, cur.2),
+            _ => (cur.0, cur.1, cur.2 + dv),
+        };
+        let mut max_step = -1i32;
+        for (cell, step) in sweep_segment_cells(cur, nxt, axis) {
+            if step >= budget {
+                break;
+            }
+            if seen.insert(cell) {
+                out.push(cell);
+            }
+            if step > max_step {
+                max_step = step;
+            }
+        }
+        // THE COUNTER+1 THE INNER WALK RETURNS (the AtomicInteger the
+        // max step keeps — the +1 the called segment's own word adds)
+        budget -= max_step.max(0) + 1;
+        cur = nxt;
+    }
+    if budget <= 0 {
+        // THE FINAL DEGENERATE WALK (the budget<=0 branch — the static
+        // box overlap at `to`, the fresh 1 the call passes)
+        let e = 1e-5f64;
+        let hw = HULL_WIDTH / 2.0;
+        let (x0, x1) = ((to.0 - hw + e).floor() as i32, (to.0 + hw - e).floor() as i32);
+        let (y0, y1) = (
+            (to.1 + e).floor() as i32,
+            (to.1 + HULL_HEIGHT - e).floor() as i32,
+        );
+        let (z0, z1) = ((to.2 - hw + e).floor() as i32, (to.2 + hw - e).floor() as i32);
+        for cz in z0..=z1 {
+            for cy in y0..=y1 {
+                for cx in x0..=x1 {
+                    let cell = [cx, cy, cz];
+                    if seen.insert(cell) {
+                        out.push(cell);
+                    }
+                }
+            }
+        }
+    }
+    out
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -746,6 +914,84 @@ mod tests {
             return crate::world::STONE;
         }
         AIR
+    }
+
+    #[test]
+    fn the_sweep_walks_the_launch_layers() {
+        // THE 2.7 JUMP (the launch's own displacement the static pass
+        // skips): from y 20.3 to y 23.0 — the swept layers 20..=23
+        // (the deflated edges at both ends the floor keeps) × the 3×3
+        // footprint the 1.375-wide box keeps — the travel order the
+        // ascending layers speak
+        let cells = hull_sweep_cells((10.5, 20.3, 10.5), (10.5, 23.0, 10.5));
+        assert_eq!(cells.len(), 36, "the 4 layers × the 3×3 footprint");
+        assert_eq!(cells[0], [9, 20, 9], "the lowest layer's own first cell");
+        assert_eq!(cells.last(), Some(&[11, 23, 11]), "the top layer's own last cell");
+        // THE PURE VERTICAL (the x/z the zero displacement keeps — the
+        // single Y segment the axis order leads)
+        let mut seen = std::collections::HashSet::new();
+        for c in &cells {
+            assert!(seen.insert(*c), "the dup the pass's dedup keeps: {c:?}");
+        }
+    }
+
+    #[test]
+    fn the_sweep_decomposes_the_axis_order() {
+        // THE |x| >= |z| WORD (dx 1.5, dz 0.4 → the YXZ order the else
+        // keeps — the Y the zero skip, the X the first mover)
+        let cells = hull_sweep_cells((10.5, 20.0, 10.5), (12.0, 20.0, 10.9));
+        // THE X SEGMENT (the first mover): the x layers 9..=12 (one
+        // step per layer, the footprint's cells the step's batch
+        // keeps), the y/z footprint at the segment end (y 20, z 9..=11)
+        assert_eq!(cells[0], [9, 20, 9], "the X segment's own first cell");
+        assert_eq!(cells[3], [10, 20, 9], "the second step's own first cell");
+        assert_eq!(cells[9], [12, 20, 9], "the x layers ascend 9..=12");
+        // THE Z SEGMENT (the second mover): the z layers 9..=11, the x
+        // footprint at the segment end 11..=12 (the earlier x cells the
+        // dedup keeps silent)
+        let z_cells: Vec<[i32; 3]> = cells.iter().copied().filter(|c| c[0] >= 11).collect();
+        assert!(
+            z_cells.iter().any(|c| *c == [12, 20, 11]),
+            "the Z segment's own far corner: {z_cells:?}"
+        );
+        let mut seen = std::collections::HashSet::new();
+        for c in &cells {
+            assert!(seen.insert(*c), "the dup the dedup keeps: {c:?}");
+        }
+        // THE |x| < |z| WORD (dx 0.4, dz 1.5 → the YZX order arms — the
+        // Z the first horizontal mover)
+        let flipped = hull_sweep_cells((10.5, 20.0, 10.5), (10.9, 20.0, 12.0));
+        assert_eq!(flipped[0], [9, 20, 9], "the Z segment leads the horizontal pair");
+    }
+
+    #[test]
+    fn the_sweep_budgets_the_steps_and_walks_the_final_pose() {
+        // THE 30-BLOCK TRAVEL (the synthetic long sweep the budget's
+        // gate arms): the steps 0..=15 push (the 16 the budget keeps),
+        // the step 16 the gate stops, the counter+1 the budget zeroes,
+        // the FINAL DEGENERATE WALK the to-pose cells pushes
+        let cells = hull_sweep_cells((10.5, 20.3, 10.5), (10.5, 50.3, 10.5));
+        // the pushed: 16 layers (20..=35) × the 3×3 footprint = 144;
+        // the final walk: the to-pose box (y 50 only) — 9 fresh cells
+        assert_eq!(cells.len(), 144 + 9, "the budget's cap + the final walk");
+        assert_eq!(cells[143], [11, 35, 11], "the last budgeted layer");
+        assert!(
+            cells[144..].contains(&[9, 50, 9]),
+            "the final walk's own cells: {:?}",
+            &cells[144..]
+        );
+        // THE DOWNWARD TRAVEL (the dive's own descending order — the
+        // leading edge the top layers first)
+        let dive = hull_sweep_cells((10.5, 23.0, 10.5), (10.5, 20.3, 10.5));
+        assert_eq!(dive[0], [9, 23, 9], "the dive's own first layer (the top)");
+        assert_eq!(dive.last(), Some(&[11, 20, 11]), "the dive's own last layer");
+    }
+
+    #[test]
+    fn the_sweep_the_degenerate_silence_keeps() {
+        // THE ZERO DISPLACEMENT (the static pass's own word — the empty
+        // walk the degenerate segment returns)
+        assert!(hull_sweep_cells((10.5, 20.0, 10.5), (10.5, 20.0, 10.5)).is_empty());
     }
 
     #[test]

@@ -9478,6 +9478,9 @@ impl App {
             // THE FLOAT'S OWN FOLD (the vanilla `floatBoat()` the
             // baseTick's walk follows — the gravity/lift/friction the
             // status law speaks, the y the move's own axis consumes)
+            // — the FROM POSE the swept pass captures first (the
+            // move's own from: the pose the float's y-move starts)
+            let from = (boat.x, boat.y, boat.z);
             boat.y = crate::hull::hull_tick(phys, boat.x, boat.y, boat.z, &cell);
             // THE CONTROL (javap controlBoat — the `!isVehicle` gate the
             // Option's None keeps: the ridden hull the walk arms, the
@@ -9506,6 +9509,57 @@ impl App {
             let (nx, nz) = crate::hull::hull_move_xz(phys, boat.x, boat.y, boat.z, &cell);
             boat.x = nx;
             boat.z = nz;
+            // THE SWEPT PASS (javap Entity.checkInsideBlocks(List) —
+            // the applyEffectsFromBlocks walk the boat's own tick runs
+            // AFTER the move, BEFORE the tail's countdown the vanilla
+            // order keeps: the Movement's from→to the axisStepOrder
+            // decomposes (Y always first), the per-axis segments the
+            // box's deflated sweep walks, the fresh set the pass's
+            // dedup keeps, the 16 the budget caps, the exhausted
+            // budget the final degenerate walk at `to` guarantees.
+            // The bubble column's full-block entityInside shape arms
+            // the apply for EVERY yielded cell — the launch's 2.7 jump
+            // the static pass skips the swept layers fold. The wire
+            // lane's remote hulls the delta's ZERO keeps degenerate —
+            // the static scan the snapshot pose walks already speaks
+            // their word.)
+            let swept = crate::hull::hull_sweep_cells(from, (boat.x, boat.y, boat.z));
+            if !swept.is_empty() {
+                let swept_cells: Vec<crate::hull::BubbleCell> = swept
+                    .iter()
+                    .filter_map(|&[wx, wy, wz]| {
+                        let c = world.get(wx, wy, wz);
+                        let variant =
+                            crate::world_view::column_variant_at(world, wx, wy, wz, c);
+                        if variant == 0 {
+                            return None;
+                        }
+                        let mouth = world.get(wx, wy + 1, wz) == crate::world::AIR;
+                        Some(crate::hull::BubbleCell {
+                            drag: variant == 1,
+                            mouth,
+                        })
+                    })
+                    .collect();
+                let swept_mouth = crate::hull::hull_bubble_inside(phys, bubble, &swept_cells);
+                let swept_under = matches!(
+                    phys.status,
+                    crate::hull::HullStatus::UnderWater | crate::hull::HullStatus::UnderFlowingWater
+                );
+                if swept_mouth && !swept_under && self.mob_rng.next_int(100) == 0 {
+                    bubble_splash_arm(
+                        &mut self.mob_rng,
+                        &mut self.level_ambient_rng,
+                        &mut self.sounds,
+                        &mut self.particles,
+                        self.frame,
+                        boat.x,
+                        boat.y,
+                        boat.z,
+                        ear,
+                    );
+                }
+            }
             // THE COLUMN'S OWN TAIL (the vanilla tick's LAST call — the
             // launch the NEXT tick's move consumes, the above-bit the
             // tail's own false keeps) + THE EJECT the DOWN arm speaks
@@ -18997,17 +19051,15 @@ mod tests {
         });
         assert!(app.on_right_press(0, 0), "the placed hull at the surface");
         assert!(app.mount_offline_hull(1), "the rider aboard");
-        // THE ARM'S OWN BEAT (the spawn pose rides the air band — the
-        // box the water cell never names; the dip the second tick arms)
-        app.tick_offline_hulls();
-        assert!(
-            app.offline_bubbles.get(&1).map(|b| b.bubble_time).unwrap_or(0) == 0,
-            "the spawn pose the mouth never names"
-        );
+        // THE ARM'S OWN BEAT (the spawn pose the static scan's air band
+        // keeps — the box's bottom edge the FIRST tick's fall crosses:
+        // the swept pass the crossing speaks, the mouth the 60 arms,
+        // the tail the first count walks — the vanilla post-move walk
+        // the same word keeps)
         app.tick_offline_hulls();
         assert_eq!(
             app.offline_bubbles[&1].bubble_time, 59,
-            "the armed clock's first count"
+            "the swept crossing's first count"
         );
         let rock = app.bubble_state[&1];
         assert!(
@@ -19058,8 +19110,7 @@ mod tests {
             pitch: -std::f32::consts::FRAC_PI_2,
         });
         assert!(app.on_right_press(0, 0), "the placed hull at the surface");
-        app.tick_offline_hulls(); // the fall
-        app.tick_offline_hulls(); // the arm
+        app.tick_offline_hulls(); // the fall — the swept crossing the mouth arms
         for _ in 0..58 {
             app.tick_offline_hulls();
         }
@@ -19104,8 +19155,7 @@ mod tests {
         });
         assert!(app2.on_right_press(0, 0), "the placed hull at the surface");
         assert!(app2.mount_offline_hull(1), "the rider aboard");
-        app2.tick_offline_hulls();
-        app2.tick_offline_hulls();
+        app2.tick_offline_hulls(); // the fall — the swept crossing the mouth arms
         for _ in 0..58 {
             app2.tick_offline_hulls();
         }
