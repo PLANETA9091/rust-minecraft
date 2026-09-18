@@ -4509,6 +4509,24 @@ impl App {
             self.paddle_positions.clear();
             self.bubble_state.clear();
             self.offline_bubbles.clear();
+            // THE FRESH WORLD'S OWN ENTITIES (the vanilla world swap
+            // the ClientLevel's own entity map answers — the entities
+            // the old level carried DROP WITH the level: the offline
+            // mobs the old voxels raised, the wire's lane the server's
+            // own bodies, the ride belief the gone hulls never honor,
+            // the drops the orbs the particles the old world's own
+            // weather, the dig the old voxels' progress, the pick the
+            // old terrain named — the fresh terrain none of them
+            // speaks, the same honesty the voxel rebuild's own reset
+            // keeps)
+            self.mobs.clear();
+            self.net_mobs.clear();
+            self.net_ride = None;
+            self.drops.clear();
+            self.orbs.clear();
+            self.particles.clear();
+            self.dig = crate::dig::DigState::new();
+            self.frame_pick = None;
             // the dig lane predicts locally on the offline terrain (the
             // singleplayer behavior — the machine's own default re-armed)
             self.dig.apply_locally = true;
@@ -20804,6 +20822,79 @@ mod tests {
                 .iter()
                 .any(|e| e.starts_with("entity.cow.ambient ")),
             "the cow's own row the groan speaks"
+        );
+    }
+
+    /// THE FRESH WORLD'S OWN ENTITY SWAP (the rebuild's own sweep the
+    /// ClientLevel's map answers — the old session's entities the new
+    /// terrain never inherits; the second entry the same world's own
+    /// cargo the guard keeps).
+    #[test]
+    fn the_world_rebuild_sweeps_the_stale_entities() {
+        let mut app = App::new(13);
+        app.enter_world();
+        // THE OLD SESSION'S OWN CARGO (the entities the stale world
+        // carried: the mobs the wire's lane, the ride belief, the
+        // drops the orbs the particles, the dig the pick)
+        let mut z = crate::mob::Zombie::new(1, 40.5, 9.0, 40.5, 7);
+        z.kind = crate::mob::MobKind::Pig;
+        app.mobs.push(z);
+        app.net_mobs.push(crate::mob::Zombie::new(2, 41.5, 9.0, 41.5, 8));
+        app.net_ride = Some(crate::world_view::WireRide {
+            vehicle_id: 9,
+            feet_x: 40.0,
+            feet_y: 9.0,
+            feet_z: 40.0,
+            vehicle_yaw: 0.0,
+            seat_x: 0.0,
+            ride_height: 0.9,
+        });
+        let stick_id =
+            mc_registry::item_id_by_name("stick").expect("the stick the table draws");
+        app.drops.push(crate::drops::ItemDrop::spawn_entity_loot(
+            1,
+            stick_id,
+            1,
+            40.0,
+            9.0,
+            40.0,
+            &mut app.mob_rng,
+        ));
+        app.orbs.push(crate::xp::ExperienceOrb::spawn(1, 40.0, 9.0, 40.0, 3));
+        app.particles.push(crate::particles::heart(
+            1.0, 2.0, 3.0, 0.02, -0.03, 0.04, 0.5, 0.0,
+        ));
+        app.dig.is_destroying = true;
+        app.dig.pos = (1, 2, 3);
+        app.frame_pick = Some(crate::world::ClipHit {
+            pos: (1, 2, 3),
+            face: 1,
+            location: (1.0, 2.0, 3.0),
+            inside: false,
+        });
+        // THE REBUILD (the wire flag the swap's own guard arms — the
+        // sweep the fresh terrain's own honesty speaks)
+        app.world_is_network = true;
+        app.enter_world();
+        assert!(app.mobs.is_empty(), "the mobs the level drop keeps");
+        assert!(app.net_mobs.is_empty(), "the wire bodies the swap drops");
+        assert!(app.net_ride.is_none(), "the gone hull the ride belief drops");
+        assert!(app.drops.is_empty(), "the items the old world drops");
+        assert!(app.orbs.is_empty(), "the orbs the old world drops");
+        assert!(app.particles.is_empty(), "the weather the old world drops");
+        assert!(!app.dig.is_destroying, "the dig the old voxels reset");
+        assert!(app.frame_pick.is_none(), "the pick the old terrain drops");
+        // THE SECOND ENTRY KEEPS THE LIVING WORLD (the chest flow's own
+        // return — the guard the rebuild never re-arms, the entities
+        // the same world's own session carries)
+        let mut z2 = crate::mob::Zombie::new(3, 40.5, 9.0, 40.5, 9);
+        z2.kind = crate::mob::MobKind::Cow;
+        app.mobs.push(z2);
+        app.enter_world();
+        assert_eq!(
+            app.mobs.len(),
+            1,
+            "the same world the entities keep"
         );
     }
 
