@@ -36,12 +36,20 @@ use zip::ZipArchive;
 /// meshes it as the cube the vocabulary speaks (the vanilla 15/16 height
 /// the generic full-cube path folds — the documented simplification the
 /// offline world's own shape keeps).
-pub const RUNTIME_PALETTE: [&str; 28] = [
+/// dirt_path is kind 28 (the twenty-ninth entry, the autopush-312 round):
+/// the shovel's own flatten arm's product (javap ShovelItem.useOn — the
+/// FLATTENABLES map's `Blocks.DIRT_PATH.defaultBlockState()` the
+/// GRASS_BLOCK/DIRT rows speak). The model chain (blockstates/dirt_path.json
+/// -> block/dirt_path -> template_dirt_path) resolves through the SAME
+/// full-cube face walk — the element's six faces name the dirt bottom +
+/// the path top/sides, the 15/16 height the generic path folds (the same
+/// documented simplification).
+pub const RUNTIME_PALETTE: [&str; 29] = [
     "air", "stone", "dirt", "grass_block", "oak_log", "oak_leaves", "water", "sand",
     "granite", "diorite", "andesite", "deepslate", "cobbled_deepslate", "gravel",
     "bedrock", "coal_ore", "copper_ore", "iron_ore", "gold_ore", "redstone_ore",
     "lapis_ore", "diamond_ore", "emerald_ore", "netherrack", "pale_oak_leaves",
-    "leaf_litter", "lava", "farmland",
+    "leaf_litter", "lava", "farmland", "dirt_path",
 ];
 
 /// Renderer face order: 0:+X 1:-X 2:+Y 3:-Y 4:+Z 5:-Z.

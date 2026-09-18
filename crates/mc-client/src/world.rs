@@ -70,14 +70,22 @@ pub const LAVA: u16 = 26;
 /// the vocabulary speaks (the vanilla 15/16 height the generic path folds
 /// — the documented simplification).
 pub const FARMLAND: u16 = 27;
+/// Kind 28 (the twenty-ninth entry, the autopush-312 round): the shovel's
+/// own flatten arm's product (javap ShovelItem.useOn — the FLATTENABLES
+/// map's `Blocks.DIRT_PATH.defaultBlockState()` the GRASS_BLOCK/DIRT rows
+/// speak). The atlas generator's full-cube face walk resolves the model
+/// chain (dirt bottom + the path top/sides); the mesher meshes it as the
+/// cube the vocabulary speaks (the vanilla 15/16 height the generic path
+/// folds — the same documented simplification the farmland kind keeps).
+pub const DIRT_PATH: u16 = 28;
 
 /// Block -> texture-group mapping used by the real-colors LUT.
-pub const NAME_OF: [&str; 28] = [
+pub const NAME_OF: [&str; 29] = [
     "air", "stone", "dirt", "grass_block", "oak_log", "oak_leaves", "water", "sand",
     "granite", "diorite", "andesite", "deepslate", "cobbled_deepslate", "gravel",
     "bedrock", "coal_ore", "copper_ore", "iron_ore", "gold_ore", "redstone_ore",
     "lapis_ore", "diamond_ore", "emerald_ore", "netherrack", "pale_oak_leaves",
-    "leaf_litter", "lava", "farmland",
+    "leaf_litter", "lava", "farmland", "dirt_path",
 ];
 
 /// The block interaction reach — the `Attributes.BLOCK_INTERACTION_RANGE`
