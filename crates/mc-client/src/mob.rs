@@ -3296,6 +3296,60 @@ pub fn creature_count(mobs: &[Zombie]) -> usize {
     mobs.iter().filter(|m| !m.kind.is_monster()).count()
 }
 
+/// THE SPAWN SHEEP'S OWN COLOR (javap `Sheep.finalizeSpawn` 0-9 —
+/// the color the super's walk never rescinds: the
+/// `getRandomSheepColor(level, blockPosition())` the `setColor`
+/// arms BEFORE the `Animal.finalizeSpawn` super the group data
+/// speaks — the yaw the snapTo's own draw precedes the whole
+/// finalize, the childhood roll the super's walk answers after;
+/// javap `Sheep.getRandomSheepColor` 0-18 — the biome's own holder
+/// the `SheepColorSpawnRules.getSheepColor(biome, random)` walk
+/// keeps; javap `getSheepColorConfiguration` 0-35 — the WARM the
+/// `SPAWNS_WARM_VARIANT_FARM_ANIMALS` tag answers, the COLD the
+/// `SPAWNS_COLD_VARIANT_FARM_ANIMALS` the else speaks, the
+/// TEMPERATE the untagged biome the plains keeps; the <clinit>'s
+/// own weighted rows the three configurations speak — TEMPERATE:
+/// BLACK 5, GRAY 5, LIGHT_GRAY 5, BROWN 3, WHITE-common 82 (the
+/// 100 the total the ranges name), WARM: GRAY 5, LIGHT_GRAY 5,
+/// WHITE 5, BLACK 3, BROWN-common 82, COLD: LIGHT_GRAY 5, GRAY 5,
+/// WHITE 5, BROWN 3, BLACK-common 82; javap `commonColors` 0-29 —
+/// the common dye the 499 weight keeps, the PINK the 1 the easter
+/// egg speaks — the nested `{common: 499, PINK: 1}` list the
+/// 82-weight slot's own BODY (the weighted provider the
+/// `weighted(WeightedList)` lambda answers); javap
+/// `WeightedList.getRandom` 11-32 — the `nextInt(totalWeight)` the
+/// cumulative walk keeps, the insertion order the ranges name, the
+/// `single` lambda the constant the zero-draw answer speaks). The
+/// offline terrain the plains the TEMPERATE lane keeps (the
+/// warm/cold rows the tags' biomes the wire world could carry —
+/// the same SHAPE the different dyes the structure never changes,
+/// the no-draw count the variant swap never alters); the
+/// `single` entries the one-draw span keep, the common slot the
+/// nested list the second draw speaks — the WHITE the 499/500 the
+/// common slot's own fold answers, the PINK the 1/500 the slot
+/// nests (the vanilla's own ~81.836% white the 0.164% pink the
+/// flocks' odds keep). The DyeColor ids the byte law keeps (the
+/// `DyeColor.byId(byteValue() & 0xF)` the low nibble speaks):
+/// WHITE 0, PINK 6, GRAY 7, LIGHT_GRAY 8, BROWN 12, BLACK 15 —
+/// the wool byte the render's `sheep_wool_tint` the shear loot's
+/// `getColor` keys answer).
+pub fn sheep_spawn_color(rng: &mut Lcg) -> u8 {
+    let roll = rng.next_int(100);
+    if roll < 5 {
+        15 // BLACK
+    } else if roll < 10 {
+        7 // GRAY
+    } else if roll < 15 {
+        8 // LIGHT_GRAY
+    } else if roll < 18 {
+        12 // BROWN
+    } else if rng.next_int(500) == 499 {
+        6 // PINK — the nested list's 1-weight slot the [499, 500) range
+    } else {
+        0 // WHITE — the nested list's 499-weight common
+    }
+}
+
 /// THE CREATURE ATTEMPT (javap `NaturalSpawner.spawnCategoryForPosition`
 /// — the 6-arg overload the beat stands in for, the chunk-gen
 /// placement pass (`spawnMobsForChunkGeneration`) the procedural
@@ -3307,7 +3361,11 @@ pub fn creature_count(mobs: &[Zombie]) -> usize {
 /// isBright gates (the day arm the caller speaks — `getRawBrightness
 /// > 8` the sky-exposed spot the night's own darkness refuses), the
 /// snapTo's `nextFloat() * 360.0` yaw, the GROUP DATA the
-/// finalizeSpawn's own arm walks (the null the `(true)` ctor the ldc
+/// finalizeSpawn's own arm walks (the color the Sheep's own
+/// finalize 0-9 the super's group data PRECEDES — the sheep the
+/// `sheep_spawn_color` the temperate rows the wool byte wears, the
+/// other kinds the registry's no-draw variant picks the lane never
+/// spends), the null the `(true)` ctor the ldc
 /// 0.05 chance fills, the groupSize the members the count walks, the
 /// SHARED body the whole call never resets — the first member the size
 /// gate never rolls, the members 2+ the 1/20 the childhood speaks), the
@@ -3396,6 +3454,16 @@ pub fn try_spawn_creatures(
             // THE SNAP-TO'S OWN YAW (397-406: `nextFloat() * 360.0`
             // the random heading speaks)
             m.yaw = rng.next_f32() * 360.0;
+            // THE SHEEP'S OWN COLOR (finalizeSpawn 0-9: the
+            // getRandomSheepColor the setColor arms BEFORE the
+            // Animal super — the yaw the snapTo's own draw precedes,
+            // the group data's childhood roll the super's walk
+            // answers after; the temperate rows the plains world
+            // keeps, the cow/pig/chicken the variant picks the
+            // registry's no-draw notes the stream never spends)
+            if kind == MobKind::Sheep {
+                m.wool_color = sheep_spawn_color(rng);
+            }
             // THE GROUP DATA'S OWN ARM (finalizeSpawn 15-66): the SIZE
             // gate the first member never rolls — groupSize 0 the ifle
             // short-circuits BEFORE the nextFloat (the && chain the
@@ -4755,6 +4823,152 @@ mod tests {
         for (a, b) in mobs.iter().zip(mobs2.iter()) {
             assert_eq!((a.x, a.y, a.z, a.kind), (b.x, b.y, b.z, b.kind));
         }
+    }
+
+    /// THE SPAWN SHEEP'S OWN COAT (the finalizeSpawn 0-9 the color
+    /// roll the wool byte wears — the temperate rows the plains the
+    /// pack shares, the non-sheep the field the lane never touches,
+    /// the same seed the same coats the determinism speaks).
+    #[test]
+    fn the_spawn_sheep_wears_the_temperate_coat() {
+        let mut world = World::new(4, 7);
+        let size = world.size_blocks();
+        for x in 0..size {
+            for z in 0..size {
+                for y in 0..8 {
+                    world.set(x, y, z, crate::world::STONE);
+                }
+                world.set(x, 8, z, crate::world::GRASS);
+                for y in 9..size {
+                    world.set(x, y, z, crate::world::AIR);
+                }
+            }
+        }
+        let (px, pz) = (32.0, 32.0);
+        // THE SHEEP SEED WALK (the kind roll the <12 the sheep names —
+        // the seeds the sheep pack lands the search keeps)
+        let mut landed = None;
+        for seed in 0u64..4096 {
+            let mut mobs = Vec::new();
+            let mut next_id = 1;
+            let mut rng = Lcg::new(seed);
+            let n = try_spawn_creatures(&mut mobs, &mut next_id, px, pz, &world, &mut rng);
+            if n > 0 && mobs[0].kind == MobKind::Sheep {
+                landed = Some((seed, mobs));
+                break;
+            }
+        }
+        let (seed, mobs) = landed.expect("a sheep pack lands within 4096 seeds");
+        // THE TEMPERATE PALETTE (the clinit's own rows the byte keeps:
+        // WHITE 0, PINK 6, GRAY 7, LIGHT_GRAY 8, BROWN 12, BLACK 15 —
+        // the warm/cold dyes the other configurations the plains
+        // never wears)
+        const TEMPERATE: [u8; 6] = [0, 6, 7, 8, 12, 15];
+        for m in &mobs {
+            assert!(
+                TEMPERATE.contains(&m.wool_color),
+                "the temperate rows the coat {} the palette keeps",
+                m.wool_color
+            );
+        }
+        // THE PACK THE KIND SHARES (the color the sheep the members
+        // draw — the independent rolls the coats differ, the shared
+        // kind the palette never leaves)
+        assert!(mobs.iter().all(|m| m.kind == MobKind::Sheep));
+        // THE NON-SHEEP THE FIELD NEVER TOUCHES (the ctor's own zero
+        // the cow the coat keeps — the variant picks the registry's
+        // no-draw notes the stream never spends)
+        let mut mobs2 = Vec::new();
+        let mut next_id2 = 1;
+        let mut rng2 = Lcg::new(seed);
+        let _ = try_spawn_creatures(&mut mobs2, &mut next_id2, px, pz, &world, &mut rng2);
+        for (a, b) in mobs.iter().zip(mobs2.iter()) {
+            assert_eq!(a.wool_color, b.wool_color, "the same seed the same coat");
+        }
+        // THE COW'S OWN ZERO (the direct body the field's ctor speaks)
+        let cow = Zombie::new(99, 60.0, 9.0, 60.0, 7);
+        assert_eq!(cow.wool_color, 0, "the cow the field never wears");
+    }
+
+    /// THE COLOR ROLL'S OWN DRAW SPAN (the WeightedList.getRandom the
+    /// one-draw law keeps — the `single` entries the [0,18) buckets
+    /// the nested list never reaches, the common slot the SECOND
+    /// nextInt(500) speaks; the boundaries the seed walk finds, the
+    /// mirror the same span the third draw pairs).
+    #[test]
+    fn the_sheep_color_roll_the_draw_counts_keep() {
+        // THE BUCKET WALK (the first nextInt(100) the seed names —
+        // each bucket one seed the search keeps, the color the
+        // clinit's rows answer)
+        let buckets: [(u64, u64, u8); 4] = [
+            (0, 5, 15),    // BLACK [0,5)
+            (5, 10, 7),    // GRAY [5,10)
+            (10, 15, 8),   // LIGHT_GRAY [10,15)
+            (15, 18, 12),  // BROWN [15,18)
+        ];
+        for (lo, hi, want) in buckets {
+            let mut found = None;
+            for seed in 0u64..65_536 {
+                let mut probe = Lcg::new(seed);
+                let roll = probe.next_int(100);
+                if roll >= lo as i32 && roll < hi as i32 {
+                    found = Some(seed);
+                    break;
+                }
+            }
+            let seed = found.expect("a seed the bucket lands");
+            let mut rng = Lcg::new(seed);
+            let mut mirror = rng.clone();
+            let coat = sheep_spawn_color(&mut rng);
+            assert_eq!(coat, want, "the bucket the clinit's row keeps");
+            // THE ONE-DRAW SPAN (the nested list the [0,18) bucket
+            // never reaches — the next draw the streams pair)
+            let a = rng.next_int(999_983);
+            mirror.next_int(100);
+            let b = mirror.next_int(999_983);
+            assert_eq!(a, b, "the one-draw span the bucket keeps");
+        }
+        // THE COMMON SLOT'S OWN SPAN (the [18,100) bucket the nested
+        // nextInt(500) speaks — the WHITE the 499-slot answers, the
+        // two-draw span the next draw pairs)
+        let mut found = None;
+        for seed in 0u64..65_536 {
+            let mut probe = Lcg::new(seed);
+            if probe.next_int(100) >= 18 {
+                found = Some(seed);
+                break;
+            }
+        }
+        let seed = found.expect("a seed the common slot lands");
+        let mut rng = Lcg::new(seed);
+        let mut mirror = rng.clone();
+        let coat = sheep_spawn_color(&mut rng);
+        assert_eq!(coat, 0, "the common slot the WHITE keeps (the seed walk the pink never draws)");
+        let a = rng.next_int(999_983);
+        mirror.next_int(100);
+        mirror.next_int(500);
+        let b = mirror.next_int(999_983);
+        assert_eq!(a, b, "the two-draw span the common slot keeps");
+    }
+
+    /// THE PINK'S OWN EASTER EGG (the nested list's 1-weight slot the
+    /// [499, 500) range keeps — the common slot's 1/500 the vanilla
+    /// ~0.164% the seed walk finds, the mirror the two draws the
+    /// coat pairs).
+    #[test]
+    fn the_spawn_pink_the_500th_keeps() {
+        let mut found = None;
+        for seed in 0u64..200_000 {
+            let mut probe = Lcg::new(seed);
+            if probe.next_int(100) >= 18 && probe.next_int(500) == 499 {
+                found = Some(seed);
+                break;
+            }
+        }
+        let seed = found.expect("a pink seed lands within 200k (the 1/500 the slot's own odds)");
+        let mut rng = Lcg::new(seed);
+        let coat = sheep_spawn_color(&mut rng);
+        assert_eq!(coat, 6, "the pink the nested slot speaks");
     }
 
     /// THE CAP THE CREATURE LANE REFUSES (the CREATURE max the bipush
