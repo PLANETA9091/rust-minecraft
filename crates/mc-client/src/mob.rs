@@ -74,6 +74,19 @@
 //!   MagicValue - 0.5F)` the walk-target value folds — the bright
 //!   shade the negativity answers, the deep dark the positive
 //!   refuses), the MOVE flag the stroll's prio-5 conflict stills.
+//! - `Spider.tick`/`handleOnClimbable` — the arachnid's own climb (the
+//!   Spider's own `DATA_FLAGS_ID` bit 0x1 the
+//!   `setClimbing(this.horizontalCollision)` the tick's unconditional
+//!   tail arms — any wall the body presses the flag wears, the open
+//!   air the flag dies; the travel's own folds ride: the
+//!   handleOnClimbable's component clamps the +-0.15 x/z bounds and
+//!   the max(y, -0.15) the falling slow-slide keeps, the
+//!   resetFallDistance the mob's fall-less lane never tracks, the
+//!   climb word the horizontal collision && the flag the 0.2 the y
+//!   answers — the delta the gravity folds, the next move the ~0.12
+//!   rise speaks; the onClimbable the isClimbing the override answers
+//!   — no ladder/vine the vocabulary draws, the base's block read the
+//!   spider's override skips).
 //! - `Mob.isAggressive` — the DATA_MOB_FLAGS_ID byte's bit 0x4.
 //! - `LivingEntity.tickDeath` — deathTime++ per tick, removal (the
 //!   broadcast 60 event) at deathTime >= 20.
@@ -1298,6 +1311,15 @@ pub const FLEE_SUN_XZ_BOUND: u64 = 20;
 pub const FLEE_SUN_Y_BOUND: u64 = 6;
 pub const FLEE_SUN_SPEED_MODIFIER: f64 = 1.0;
 pub const BRIGHT_OUTSIDE_DARKEN_GATE: i32 = 4;
+/// THE SPIDER'S OWN CLIMB NUMBERS (javap the 26.2 jar — the travel
+/// folds the bytecode keeps): the climb-up delta (the
+/// handleRelativeFrictionAndCalculateMovement's ldc2_w 0.2d the
+/// horizontal-collision climb word speaks), the handleOnClimbable's
+/// component clamp (the ldc_w 0.15f the fstore keeps, the f32 value
+/// the f64 clamp pair the promoted literals speak — the same number
+/// the x/z bounds and the falling y's max() both read).
+pub const SPIDER_CLIMB_UP_DELTA: f64 = 0.2;
+pub const CLIMB_CLAMP_XZ: f64 = 0.15_f32 as f64;
 
 /// The wire id the plain item name rides (the ITEM_WIRE_ORDER's own
 /// reverse lookup — `None` when the name misses the table: the honest
@@ -2351,6 +2373,18 @@ pub struct Zombie {
     /// the navigator's own sun-avoiding pathing the repo's no-navigator
     /// stand-in never reads — the honest aside the lane documents)
     avoid_sun: bool,
+    /// THE SPIDER'S OWN CLIMB FLAG (javap the 26.2 jar — Spider's own
+    /// `DATA_FLAGS_ID` byte the bit 0x1 the isClimbing get walk keeps,
+    /// the `setClimbing(this.horizontalCollision)` the Spider.tick's
+    /// unconditional tail speaks, the `onClimbable()` the isClimbing
+    /// the override answers — the spider any wall the body presses the
+    /// flag wears, the open air the flag dies). The climb the travel's
+    /// own folds ride: the component clamps the handleOnClimbable walk
+    /// banks, the 0.2 climb-up the horizontal-collision word arms. THE
+    /// WIRE'S OWN SYNCHED BIT the Spider accessor's defineId walk owes
+    /// (the lane's own next candidate — the local sim the flag wears,
+    /// the wire merge the byte's decode never reads yet).
+    climbing: bool,
     /// THE FOLLOWPARENTGOAL'S OWN ARM (the goal's own `parent` field
     /// the canUse walk stores): the parent's id + the position
     /// snapshot the tick's straight-line stand-in steers to — the
@@ -2551,6 +2585,7 @@ impl Zombie {
             stroll_target: None,
             flee_sun_target: None,
             avoid_sun: false,
+            climbing: false,
             follow_parent: None,
             breed_partner: None,
             breed_love_time: 0,
@@ -3822,6 +3857,18 @@ impl Zombie {
             self.vx += (ix * c - iz * s) * speed;
             self.vz += (iz * c + ix * s) * speed;
         }
+        // THE CLIMB CLAMPS (LivingEntity.handleOnClimbable verbatim — the
+        // onClimbable body the delta's own components clamp: the x/z the
+        // +-0.15 pair bounds, the falling y the max(y, -0.15) the slow
+        // slide keeps; the resetFallDistance the mob's own lane never
+        // tracks (the fall damage the honest aside — no field the fold
+        // reads), the scaffold/sneak arm the Player-only instanceof the
+        // mob lanes never take)
+        if self.climbing {
+            self.vx = self.vx.clamp(-CLIMB_CLAMP_XZ, CLIMB_CLAMP_XZ);
+            self.vz = self.vz.clamp(-CLIMB_CLAMP_XZ, CLIMB_CLAMP_XZ);
+            self.vy = self.vy.max(-CLIMB_CLAMP_XZ);
+        }
         // THE COLLIDE (the same sweep the player's law speaks)
         let col = {
             // THE CHICKEN'S OWN SLOW FALL (javap `Chicken.aiStep`'s
@@ -3889,6 +3936,16 @@ impl Zombie {
         if col.collided_z {
             self.vz = 0.0;
         }
+        // THE CLIMB WORD (travelInAir's own tail — the
+        // handleRelativeFrictionAndCalculateMovement's return fold the
+        // bytecode keeps: the horizontal collision && the climbing flag
+        // the 0.2 the y answers — the delta the gravity then folds, the
+        // next move the ~0.12 rise speaks; the powder-snow arm the
+        // lane's vocabulary never names, the jumping arm the goal
+        // flags never arm here)
+        if col.horizontal_collision && self.climbing {
+            self.vy = SPIDER_CLIMB_UP_DELTA;
+        }
         let friction = if was_on_ground {
             BLOCK_FRICTION
         } else {
@@ -3917,6 +3974,15 @@ impl Zombie {
                 .update((dist * WALK_DISTANCE_SCALE).min(1.0), WALK_BLEND, 1.0);
         } else {
             self.walk.stop();
+        }
+        // THE SPIDER TICK'S OWN TAIL (Spider.tick verbatim — the
+        // `setClimbing(this.horizontalCollision)` the unconditional word
+        // speaks: the wall the move pressed the climb flag arms, the
+        // open air the flag dies; the OTHER KINDS the tick never asks —
+        // the zombie's and the skeleton's own classes the override
+        // never name)
+        if self.kind == MobKind::Spider {
+            self.climbing = col.horizontal_collision;
         }
         events
     }
@@ -11693,6 +11759,123 @@ mod tests {
         z.on_ground = true;
         z.tick(&world, None, NOON);
         assert!(!z.avoid_sun, "the zombie the goal never fills");
+    }
+
+    /// THE SPIDER'S OWN CLIMB (javap the 26.2 jar — Spider.tick's
+    /// `setClimbing(this.horizontalCollision)` the unconditional tail
+    /// speaks, the travel's handleOnClimbable the clamps the delta
+    /// bounds, the climb word the horizontal collision && the flag the
+    /// 0.2 the y answers): the wall the walk presses the flag arms, the
+    /// body the wall's own face the sustained climb rides, the open
+    /// air the flag dies, the zombie the climb flag never wears.
+    #[test]
+    fn the_spider_the_wall_the_climb_word_rides() {
+        // the flat world + the five-tall wall east — the hop the
+        // arc's own peak the wall never crests, the climb the face
+        // the whole walk rides
+        let mut world = wide_flat_world();
+        for y in 5..10 {
+            for z in 26..38 {
+                world.set(34, y, z, crate::world::STONE);
+            }
+        }
+        // THE SPIDER: the stroll's walk arm the east wall the body
+        // presses (the target behind the wall the arrival never
+        // speaks)
+        let mut s = Zombie::new(1, 32.5, 5.0, 32.0, 262);
+        s.kind = MobKind::Spider;
+        s.on_ground = true;
+        s.stroll_target = Some((36.0, 32.0));
+        let mut climbed = false;
+        for t in 0..40 {
+            s.tick(&world, None, NOON);
+            if s.climbing {
+                climbed = true;
+                // THE CLIMB'S OWN RISE: the 0.2 word the gravity folds,
+                // the next move the ~0.12 the y grows past the hop's
+                // own reach
+                if t > 25 {
+                    assert!(s.y > 6.5, "the climb the y carries (t{t}: {})", s.y);
+                }
+            }
+        }
+        assert!(climbed, "the wall the climb flag arms");
+        assert!(s.y > 6.5, "the sustained climb the wall rides ({})", s.y);
+        // THE OPEN AIR THE FLAG DIES: the walk disarmed the body the
+        // wall never presses
+        s.stroll_target = None;
+        s.tick(&world, None, NOON);
+        assert!(!s.climbing, "the open air the flag dies");
+        // THE ZOMBIE THE CLIMB FLAG NEVER WEARS (the tick's own kind
+        // gate): the same walk the wall the hop's arc answers, the
+        // flag the body never wears
+        let mut z = Zombie::new(2, 32.5, 5.0, 32.0, 262);
+        z.kind = MobKind::Zombie;
+        z.on_ground = true;
+        z.stroll_target = Some((36.0, 32.0));
+        for _ in 0..40 {
+            z.tick(&world, None, NOON);
+            assert!(!z.climbing, "the zombie the climb flag never wears");
+        }
+        assert!(z.y < 7.0, "the hop's arc the wall never crests ({})", z.y);
+    }
+
+    /// THE CLIMB CLAMPS THE DELTA BOUNDS (javap
+    /// handleOnClimbable — the +-0.15 the x/z pair, the max(y, -0.15)
+    /// the falling slow-slide keeps): the climbing body the
+    /// knockback-scale delta the clamp bounds, the not-climbing body
+    /// the same delta the fold never touches.
+    #[test]
+    fn the_climb_clamps_the_delta_bounds_keep() {
+        let mut world = wide_flat_world();
+        for y in 5..10 {
+            for z in 26..38 {
+                world.set(34, y, z, crate::world::STONE);
+            }
+        }
+        // THE CLIMBING BODY: the wall walk the flag arms, the
+        // knockback-scale vx the clamp bounds
+        let mut s = Zombie::new(1, 32.5, 5.0, 32.0, 262);
+        s.kind = MobKind::Spider;
+        s.on_ground = true;
+        s.stroll_target = Some((36.0, 32.0));
+        for _ in 0..20 {
+            s.tick(&world, None, NOON);
+        }
+        assert!(s.climbing, "the wall the climb flag armed");
+        s.vx = 1.0;
+        let z_before = s.z;
+        s.tick(&world, None, NOON);
+        assert!(
+            (s.z - z_before).abs() < 0.16,
+            "the clamp the z delta bounds ({})",
+            s.z - z_before
+        );
+        // THE FALLING SLOW SLIDE: the climbing body the gravity's
+        // fall the max(y, -0.15) bounds — the free fall the one-tick
+        // drop the clamp never lets speak
+        s.stroll_target = None;
+        s.vy = -1.0;
+        let y_before = s.y;
+        s.tick(&world, None, NOON);
+        assert!(
+            s.y - y_before >= -0.151,
+            "the fall the slow slide keeps ({})",
+            s.y - y_before
+        );
+        // THE NOT-CLIMBING BODY the fold never touches: the same
+        // knockback-scale delta the move the full magnitude rides
+        let mut z = Zombie::new(2, 32.5, 5.0, 32.0, 262);
+        z.kind = MobKind::Zombie;
+        z.on_ground = true;
+        z.vz = 1.0;
+        let z_before = z.z;
+        z.tick(&world, None, NOON);
+        assert!(
+            (z.z - z_before).abs() > 0.5,
+            "the unclamped fold the full delta rides ({})",
+            z.z - z_before
+        );
     }
 
     /// THE FED SHEEP'S COURT THE PEACE KEEPS (the staging lane's own
