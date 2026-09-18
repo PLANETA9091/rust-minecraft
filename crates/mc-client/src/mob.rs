@@ -1032,6 +1032,33 @@ impl MobKind {
         }
     }
 
+    /// THE STROLL GOAL'S OWN SPEED MODIFIER (the RandomStrollGoal's
+    /// ctor double the goal's own moveTo ride — the
+    /// WaterAvoidingRandomStrollGoal(this, D) the registerGoals
+    /// clinits speak, the navigation's setWantedPosition the modifier
+    /// multiplies): the spider's own prio-5 goal the 0.8 the ldc2_w
+    /// keeps, the OTHER kinds the 1.0 the dconst_1 answers — the
+    /// animals' own ctors and the monster stand-in lane the same
+    /// plain walk the honest table banks.
+    pub fn stroll_speed(self) -> f64 {
+        match self {
+            // the Spider's own registerGoals prio 5 — the
+            // WaterAvoidingRandomStrollGoal(this, 0.8d) the ldc2_w
+            // #51 the bytecode keeps
+            MobKind::Spider => SPIDER_STROLL_SPEED_MODIFIER,
+            // the animals' own WaterAvoidingRandomStrollGoal(this,
+            // 1.0d) the dconst_1 keeps, the zombie's and the
+            // skeleton's own registerGoals the stroll goal never
+            // fills (the shared walk lane the plain 1.0 wears)
+            MobKind::Zombie
+            | MobKind::Skeleton
+            | MobKind::Sheep
+            | MobKind::Cow
+            | MobKind::Pig
+            | MobKind::Chicken => 1.0,
+        }
+    }
+
     /// THE VOICE TABLE (the vanilla rows the five drawn kinds speak —
     /// each the class's own `getAmbientSound` / `getHurtSound` /
     /// `getDeathSound` return: the zombie's groan, the sheep's baa,
@@ -1207,6 +1234,19 @@ pub const SPIDER_EYE_HEIGHT: f64 = 0.65;
 /// `Spider.createAttributes` — MOVEMENT_SPEED 0.30000001192092896 (the
 /// f32 0.3 promoted).
 pub const SPIDER_MOVEMENT_SPEED: f64 = 0.300_000_011_920_928_96;
+/// THE SPIDER'S OWN STROLL WORD (javap `Spider.registerGoals` the
+/// 26.2 jar speaks — the prio-5 `addGoal(5, new
+/// WaterAvoidingRandomStrollGoal(this, 0.8d))` the `ldc2_w #51 //
+/// double 0.8d` the ctor's speedModifier keeps): the spider's stroll
+/// the 0.8 walks (the moveTo's speedModifier the goal's own ctor
+/// banks, the travel's impulse the modifier multiplies), the OTHER
+/// kinds' own ctors the `dconst_1` 1.0 speaks — the animals'
+/// WaterAvoidingRandomStrollGoal(this, 1.0d) the registerGoals
+/// clinits keep, the monster stand-in lane the same 1.0 the honest
+/// default wears (the zombie's and the skeleton's own registerGoals
+/// the stroll goal never fills — the repo's shared walk lane the
+/// plain modifier keeps).
+pub const SPIDER_STROLL_SPEED_MODIFIER: f64 = 0.8;
 /// `Spider.createAttributes` — MAX_HEALTH 16.0 (the ldc2_w the builder
 /// keeps — the Monster base's own createMonsterAttributes the first
 /// link of the chain speaks).
@@ -3794,6 +3834,12 @@ impl Zombie {
                     ix = 0.0;
                     iz = 1.0;
                     want_move = true;
+                    // THE STROLL'S OWN SPEED (the goal's ctor double
+                    // the moveTo ride speaks): the kind's own word
+                    // the impulse multiplies — the spider's 0.8 the
+                    // ldc2_w keeps, the other kinds' dconst_1 the
+                    // plain walk answers
+                    self.move_speed_modifier = self.kind.stroll_speed();
                 }
             } else if !leap_holds && self.rng.next() % STROLL_INTERVAL_TICKS as u64 == 0 {
                 // THE WATER-AVOIDING PICK (javap
@@ -12174,6 +12220,62 @@ mod tests {
         assert!(
             (cow_ratio - PANIC_SPEED_COW).abs() < 1e-9,
             "the 2.0 the AbstractCow speaks ({cow_ratio})"
+        );
+    }
+
+    #[test]
+    fn the_spider_stroll_word_the_speed_modifier_wears() {
+        // THE REGISTERGOALS' OWN PRIO-5 WORD (javap the 26.2 jar —
+        // `addGoal(5, new WaterAvoidingRandomStrollGoal(this, 0.8d))`
+        // the `ldc2_w #51 // double 0.8d` the ctor's speedModifier
+        // keeps): the spider's stroll the 0.8 the table wears, the
+        // OTHER kinds' own ctors the dconst_1 1.0 speaks — the
+        // animals' WaterAvoidingRandomStrollGoal(this, 1.0d) the
+        // registerGoals clinits keep, the monster stand-in lane the
+        // same plain walk the honest table banks
+        assert_eq!(SPIDER_STROLL_SPEED_MODIFIER, 0.8);
+        assert_eq!(MobKind::Spider.stroll_speed(), SPIDER_STROLL_SPEED_MODIFIER);
+        for kind in [
+            MobKind::Zombie,
+            MobKind::Skeleton,
+            MobKind::Sheep,
+            MobKind::Cow,
+            MobKind::Pig,
+            MobKind::Chicken,
+        ] {
+            assert_eq!(
+                kind.stroll_speed(),
+                1.0,
+                "the {kind:?}'s own stroll the plain modifier keeps"
+            );
+        }
+
+        // THE WALK'S OWN RE-RESOLVE (the tick's per-goal lane the
+        // moveTo's modifier re-banks — the tick-head reset the plain
+        // 1.0 speaks, the stroll's own branch the kind's word wears):
+        // the armed stroll the 0.8 speaks, the pig's armed stroll the
+        // 1.0 the dconst_1 keeps — the flat world the walk the east
+        // the impulse both ride
+        let world = wide_flat_world();
+        let mut spider = Zombie::new(1, 8.0, 5.0, 8.0, 262);
+        spider.kind = MobKind::Spider;
+        spider.on_ground = true;
+        spider.stroll_target = Some((13.0, 8.0));
+        spider.tick(&world, None, NOON);
+        assert_eq!(
+            spider.move_speed_modifier, 0.8,
+            "the spider's stroll the 0.8 the walk wears"
+        );
+        assert!(spider.x - 8.0 > 0.0, "the stroll's own walk the east speaks");
+
+        let mut pig = Zombie::new(2, 8.0, 5.0, 8.0, 262);
+        pig.kind = MobKind::Pig;
+        pig.on_ground = true;
+        pig.stroll_target = Some((13.0, 8.0));
+        pig.tick(&world, None, NOON);
+        assert_eq!(
+            pig.move_speed_modifier, 1.0,
+            "the pig's stroll the plain modifier keeps"
         );
     }
 
