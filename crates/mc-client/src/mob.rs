@@ -10,6 +10,11 @@
 //!   0.23000000417232513 (the f32 0.23 promoted), ATTACK_DAMAGE 3.0,
 //!   ARMOR 2.0 (the Monster base adds only ATTACK_DAMAGE; the health
 //!   rides the LivingEntity base's 20.0 MAX_HEALTH).
+//! - `AbstractSkeleton.createAttributes()` — the MOVEMENT_SPEED 0.25
+//!   alone adds (javap the 26.2 jar: `Monster.createMonsterAttributes`
+//!   the base keeps, NO FOLLOW_RANGE override the archer ever speaks —
+//!   the skeleton's real ring the `Mob.createMobAttributes` default
+//!   16.0 the base builder's own ldc2_w arms).
 //! - `registerGoals()`/`addBehaviourGoals()` — the goal machine: prio 3
 //!   `ZombieAttackGoal(this, 1.0, false)`, prio 7
 //!   `WaterAvoidingRandomStrollGoal(this, 1.0)`, prio 8
@@ -966,6 +971,15 @@ pub fn armor_piece_asset(word: &str) -> Option<&'static str> {
 
 /// `Zombie.createAttributes` — FOLLOW_RANGE 35.0 (the target scan).
 pub const ZOMBIE_FOLLOW_RANGE: f64 = 35.0;
+/// `Mob.createMobAttributes`' own `ldc2_w 16.0d` — the FOLLOW_RANGE
+/// default the base builder arms. The AbstractSkeleton's own
+/// `createAttributes` the MOVEMENT_SPEED alone adds (javap the 26.2
+/// jar speaks: `Monster.createMonsterAttributes` the base keeps, no
+/// FOLLOW_RANGE override the archer ever writes) — the skeleton's
+/// real ring the 16-square the scan's arming and the retaliation's
+/// far drop both count (the 35-for-both the old pinned simplify the
+/// per-kind lanes correct).
+pub const SKELETON_FOLLOW_RANGE: f64 = 16.0;
 /// `TargetGoal`'s own ctor `bipush 60` — the unseenMemoryTicks default
 /// the NearestAttackable's continue walk counts (the mustSee memory the
 /// blind ticks spend; the HurtBy start's own 300 the retaliation
@@ -2764,7 +2778,22 @@ impl Zombie {
                 let dx = p.x - self.x;
                 let dz = p.z - self.z;
                 let d2 = dx * dx + dz * dz;
-                let in_range = d2 <= ZOMBIE_FOLLOW_RANGE * ZOMBIE_FOLLOW_RANGE;
+                // THE PER-KIND RING (the attribute the mob's own
+                // createAttributes wears — javap the 26.2 jar: the
+                // zombie's own override the 35-square speaks, the
+                // AbstractSkeleton's createAttributes the
+                // MOVEMENT_SPEED alone adds — the
+                // `Mob.createMobAttributes`' own ldc2_w 16.0d the
+                // archer's real ring keeps; the TargetGoal's
+                // getFollowDistance the attribute the per-mob word
+                // reads, the scan's arming AND the continue's far
+                // drop the same square count)
+                let follow_range = if self.kind == MobKind::Skeleton {
+                    SKELETON_FOLLOW_RANGE
+                } else {
+                    ZOMBIE_FOLLOW_RANGE
+                };
+                let in_range = d2 <= follow_range * follow_range;
                 // THE SENSING'S OWN LINE (the TargetingConditions'
                 // checkLineOfSight the scan's canUse rides, the mustSee
                 // memory the continue walks count — the eye-to-eye ray
@@ -5515,7 +5544,10 @@ mod tests {
     /// `distanceToSqr > followRange²` the far drop answers): the
     /// beyond-ring snipe the same-tick drop keeps — the vanilla
     /// honesty the no-aggro law speaks (the hurt word the memory
-    /// carries, the chase the 35² ring alone grants).
+    /// carries, the chase the mob's OWN ring alone grants — the
+    /// zombie's 35-square the override speaks, the skeleton's
+    /// `Mob.createMobAttributes` default 16 the archer's real ring
+    /// keeps).
     #[test]
     fn the_retaliation_the_far_ring_drops() {
         let world = wide_flat_world();
@@ -5528,6 +5560,33 @@ mod tests {
         // tick (40 > 35) — the scan's own ring the same law keeps
         assert!(!z.has_target(), "the far ring the continue drops");
         assert!(!z.aggressive);
+        // THE ARCHER'S OWN RING (the per-kind word): the skeleton at
+        // 20 cells — INSIDE the zombie's 35 the old simplify shared,
+        // OUTSIDE the Mob default 16 the jar speaks — the hurt the
+        // retaliation arms, the continue's gate the SAME-tick drop
+        // answers (20 > 16); the in-ring punch the chase keeps
+        let mut s = Zombie::new(2, 10.5, 5.0, 10.5, 9);
+        s.kind = MobKind::Skeleton;
+        s.held_weapon = Some("bow");
+        let far = player_at(30.5, 5.0, 10.5); // 20 cells: 400 > 256
+        s.hurt(2.0, true);
+        s.tick(&world, Some(&far), NIGHT);
+        assert!(
+            !s.has_target(),
+            "the archer's 16-ring the far drop keeps"
+        );
+        assert!(!s.aggressive);
+        let near = player_at(18.5, 5.0, 10.5); // 8 cells: inside 16
+        let mut s2 = Zombie::new(3, 10.5, 5.0, 10.5, 11);
+        s2.kind = MobKind::Skeleton;
+        s2.held_weapon = Some("bow");
+        s2.hurt(2.0, true);
+        s2.tick(&world, Some(&near), NIGHT);
+        assert!(
+            s2.has_target(),
+            "the in-ring punch the retaliation rides"
+        );
+        assert!(s2.aggressive);
     }
 
     /// `LivingEntity.knockback` verbatim: the impulse rides the minus
@@ -6287,16 +6346,19 @@ mod tests {
     }
 
     /// THE SKELETON'S OWN HUNT (javap `RangedBowAttackGoal` the 26.2
-    /// bytecode speaks): the target scan the FOLLOW_RANGE 35 ring the
-    /// Monster base keeps arms the goal, the approach arm the
-    /// `d > attackRadiusSqr || !sees` walk keeps (the ctor's ldc 15.0
-    /// the ring speaks), the INSIDE ring + the seeing eye the
-    /// navigation STOP keeps (the strafe the later rounds carry — the
-    /// honest stand the stop law speaks), the setAggressive(true) the
-    /// goal's start arms / the stop() the flag clears — and the MELEE
-    /// arm the goal list never fills (the AbstractSkeleton$1 the
-    /// non-bow branch alone adds): no doHurtTarget the skeleton ever
-    /// deals, the adjacent player the aim the bow's own law keeps.
+    /// bytecode speaks): the target scan the PER-KIND ring the
+    /// attributes wear — the skeleton's own `Mob.createMobAttributes`
+    /// default 16 the jar's ldc2_w speaks (the AbstractSkeleton's
+    /// createAttributes the MOVEMENT_SPEED alone adds) — arms the
+    /// goal, the approach arm the `d > attackRadiusSqr || !sees` walk
+    /// keeps (the ctor's ldc 15.0 the ring speaks), the INSIDE ring +
+    /// the seeing eye the navigation STOP keeps (the strafe the
+    /// later rounds carry — the honest stand the stop law speaks),
+    /// the setAggressive(true) the goal's start arms / the stop() the
+    /// flag clears — and the MELEE arm the goal list never fills (the
+    /// AbstractSkeleton$1 the non-bow branch alone adds): no
+    /// doHurtTarget the skeleton ever deals, the adjacent player the
+    /// aim the bow's own law keeps.
     #[test]
     fn the_skeleton_hunts_the_bows_own_ring_keeps() {
         let world = jockey_flat_world();
@@ -6306,20 +6368,51 @@ mod tests {
         let mut s = Zombie::new(1, 32.0, 9.0, 32.0, 7);
         s.kind = MobKind::Skeleton;
         s.held_weapon = Some("bow");
-        // OUTSIDE the 15-ring (24 blocks north): the approach walks
+        // OUTSIDE the 16-ring (24 blocks north): the scan the PER-KIND
+        // ring refuses — the skeleton never arms (the Mob default the
+        // honest ring the 35-for-both the old simplify wore is NOT):
+        // the goal the target-less walk keeps (the STROLL's own
+        // wander the idler body drifts — the position the stroll
+        // owns, the HUNT the goal state alone speaks)
         let far = player_at(32.0, 9.0, 8.0);
-        let mut dist = 0.0f64;
         for _ in 0..40 {
             let ev = s.tick(&world, Some(&far), NIGHT);
             assert!(ev.attack.is_none(), "the ranged lane the melee never deals");
-            dist = (s.x - 32.0).powi(2) + (s.z - 32.0).powi(2);
+            assert!(
+                ev.arrow_shot.is_none(),
+                "the scanless archer the bow never draws"
+            );
         }
+        assert!(
+            !s.has_target(),
+            "the beyond-ring player the scan never arms"
+        );
+        assert!(
+            !s.aggressive,
+            "the scanless archer the flag never arms"
+        );
+        // THE HUNT BAND (15 < d <= 16): the scan the 16-square arms,
+        // the 15-ring the approach speaks — the narrow band the real
+        // hunt the vanilla law keeps (the 15.5-cell player the
+        // approach walks, the goal the start arms)
+        let mut s = Zombie::new(5, 32.0, 9.0, 32.0, 15);
+        s.kind = MobKind::Skeleton;
+        s.held_weapon = Some("bow");
+        let band = player_at(32.0, 9.0, 16.5); // 15.5 cells: 240.25
+        for _ in 0..40 {
+            let ev = s.tick(&world, Some(&band), NIGHT);
+            assert!(ev.attack.is_none(), "the ranged lane the melee never deals");
+        }
+        assert!(
+            s.aggressive,
+            "the in-band player the scan arms the goal"
+        );
+        let dist = (s.x - 32.0).powi(2) + (s.z - 32.0).powi(2);
         assert!(
             dist.sqrt() > 0.5,
             "the approach the out-of-ring player walks ({})",
             dist.sqrt()
         );
-        assert!(s.aggressive, "the goal's start the flag arms");
         // INSIDE the ring (7 blocks, the flat world's own LOS): the
         // seeTime's 20-tick confirmation the approach's tail keeps,
         // then the navigation stops — the stand the goal's own law
