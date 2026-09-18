@@ -2229,6 +2229,257 @@ fn build_baby_chicken_parts(state: &ChickenState) -> Vec<Part> {
     ]
 }
 
+/// THE SPIDER'S POSE STATE (the LivingEntityRenderState fields the
+/// 26.2 `SpiderModel.setupAnim` reads — the head pair rides the
+/// SAME netHeadYaw/pitch words the quadruped's own state wears, the
+/// walk pair the WalkAnimationState feeds, the death clock the
+/// entity fold's own input): the arachnid carries NO age lane (the
+/// Monster base is no AgeableMob — no baby model the kind keeps).
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct SpiderState {
+    pub yaw_deg: f32,
+    pub pitch_deg: f32,
+    pub head_yaw_off_deg: f32,
+    pub walk_pos: f32,
+    pub walk_speed: f32,
+    pub death_time: f32,
+}
+
+/// The full spider model — the 26.2 `SpiderModel.createSpiderBodyLayer`'s
+/// own numbers, bytecode-proven off the official jar
+/// (scripts/full_disasm.py: the createSpiderBodyLayer walk + the
+/// setupAnim fold): the head 8x8x8 (uv 32,4) at pivot (0, 15, -3)
+/// with the box reaching -8 z (the fangs' forward reach the PartPose
+/// keeps), the neck cube 6x6x6 (uv 0,0) at pivot (0, 15, 0), the
+/// abdomen 10x8x12 (uv 0,12) at pivot (0, 15, 9), and the EIGHT
+/// 16x2x2 legs (uv 18,0) — the right boxes origin (-15,-1,-1) the
+/// plain builder speaks, the LEFT pair's origin (-1,-1,-1) the
+/// `.mirror()` u-flip rides — at pivots (∓4, 15, 2/1/0/-1) with the
+/// PartPose.offsetAndRotation's diagonal stances
+/// (±0.7853981852531433 / ±0.39269909262657166 y, the ±0.5811946392059326
+/// middle z the bytecodes keep), `LayerDefinition.create(mesh, 64, 32)`.
+pub struct SpiderModel {
+    rgba: Vec<u8>,
+}
+
+impl SpiderModel {
+    /// Load + sha1-verify the SPIDER's skin (the SpiderRenderer's
+    /// SPIDER_LOCATION). The `None` = the spider never renders (the
+    /// same honesty the other bodies speak: the renderer must not lie
+    /// about its data).
+    pub fn load(root: &Path) -> Option<SpiderModel> {
+        let bytes = std::fs::read(root.join(skin::SPIDER_RUNTIME_PATH)).ok()?;
+        let digest = sha1::Sha1::digest(&bytes);
+        if hex::encode(digest) != skin::SPIDER_PNG_SHA1 {
+            return None;
+        }
+        let (w, h, rgba) = decode_rgba(&bytes).ok()?;
+        if w != 64 || h != 32 || rgba.len() != 64 * 32 * 4 {
+            return None;
+        }
+        Some(SpiderModel { rgba })
+    }
+
+    /// The skin pixel at (u, v) — the RGBA row-major words, v down
+    /// (the 64x32 layout's own stride the load verified).
+    pub fn pixel(&self, u: f32, v: f32) -> [u8; 4] {
+        let (uu, vv) = (u.clamp(0.0, 63.999_9), v.clamp(0.0, 31.999_9));
+        let x = uu as usize;
+        let y = vv as usize;
+        let o = (y * 64 + x) * 4;
+        [self.rgba[o], self.rgba[o + 1], self.rgba[o + 2], self.rgba[o + 3]]
+    }
+
+    /// THE POSED RENDER: the world-space textured quads of the spider
+    /// at `state` — the SAME entity chain fold the avatar speaks (one
+    /// law, every living model), the arachnid's own parts beneath.
+    pub fn quads(
+        &self,
+        state: &SpiderState,
+        feet: Vec3,
+        cam_yaw: f32,
+        cam_pitch: f32,
+    ) -> Vec<AvatarQuad> {
+        let parts = build_spider_parts(state);
+        let (fold_point, fold_normal) = entity_folds(state.yaw_deg, state.death_time, 0.0, feet);
+        let mut out: Vec<AvatarQuad> = Vec::with_capacity(6 * 11);
+        let ident = Mat4::IDENT;
+        for part in &parts {
+            collect_part(part, &ident, &fold_point, &fold_normal, cam_yaw, cam_pitch, &mut out);
+        }
+        out
+    }
+}
+
+/// THE SPIDER'S PARTS — the 26.2 `SpiderModel.setupAnim`'s own walk
+/// the bytecode folds verbatim: the head rides the look pair (the
+/// yRot/xRot * PI/180 the ldcs speak), and the eight legs swing the
+/// TWO-CLOCK law the fstores keep — the yRot deltas
+/// `-cos(2*f2 + phase) * 0.4 * f3` with the phases 0 / PI / PI/2 /
+/// 3PI/2 across the hind→front pairs (the right legs +delta, the
+/// left -delta), and the zRot curls `|sin(f2 + phase)| * 0.4 * f3`
+/// with the SAME phases (the right +, the left -) — where
+/// `f2 = walkAnimationPos * 0.6661999821662903` and
+/// `f3 = walkAnimationSpeed` the state fields feed. The read-modify
+/// write the dup/fadd walk speaks: the deltas ADD to the
+/// PartPose.offsetAndRotation's base stances.
+fn build_spider_parts(state: &SpiderState) -> Vec<Part> {
+    let f2 = state.walk_pos * 0.666_199_98;
+    let f3 = state.walk_speed;
+    // THE YROT SWINGS (the four cos folds — the phases the ldc
+    // constants 3.1415927410125732 / 1.5707963705062866 /
+    // 4.71238899230957 keep)
+    let dy_hind = -mth_cos(f2 * 2.0) * 0.4 * f3;
+    let dy_mid_hind = -mth_cos(f2 * 2.0 + std::f32::consts::PI) * 0.4 * f3;
+    let dy_mid_front = -mth_cos(f2 * 2.0 + std::f32::consts::FRAC_PI_2) * 0.4 * f3;
+    let dy_front = -mth_cos(f2 * 2.0 + 3.0 * std::f32::consts::FRAC_PI_2) * 0.4 * f3;
+    // THE ZROT CURLS (the four |sin| folds — the same phases, the
+    // abs() the invokestatic answers)
+    let dz_hind = mth_sin(f2).abs() * 0.4 * f3;
+    let dz_mid_hind = mth_sin(f2 + std::f32::consts::PI).abs() * 0.4 * f3;
+    let dz_mid_front = mth_sin(f2 + std::f32::consts::FRAC_PI_2).abs() * 0.4 * f3;
+    let dz_front = mth_sin(f2 + 3.0 * std::f32::consts::FRAC_PI_2).abs() * 0.4 * f3;
+    let head_x = state.pitch_deg.to_radians();
+    let head_y = state.head_yaw_off_deg.to_radians();
+    // THE LEG BOXES (the right pair's plain builder vs the left
+    // pair's `.mirror()` — the u-flip the flag rides, the box
+    // origins the bytecodes keep: right (-15,-1,-1) reaches +x
+    // from the pivot, left (-1,-1,-1) the mirrored reach)
+    let right_leg_cube = Cube {
+        tex: (18.0, 0.0),
+        origin: [-15.0, -1.0, -1.0],
+        size: [16.0, 2.0, 2.0],
+        inflate: 0.0,
+        mirror: false,
+    };
+    let left_leg_cube = Cube {
+        tex: (18.0, 0.0),
+        origin: [-1.0, -1.0, -1.0],
+        size: [16.0, 2.0, 2.0],
+        inflate: 0.0,
+        mirror: true,
+    };
+    vec![
+        // head (the look pair — the fangs' cube the forward reach)
+        Part {
+            pivot: [0.0, 15.0, -3.0],
+            x_rot: head_x,
+            y_rot: head_y,
+            z_rot: 0.0,
+            cubes: vec![Cube {
+                tex: (32.0, 4.0),
+                origin: [-4.0, -4.0, -8.0],
+                size: [8.0, 8.0, 8.0],
+                inflate: 0.0,
+                mirror: false,
+            }],
+            children: vec![],
+        },
+        // neck body (the zero-pose cube the walk never touches)
+        Part {
+            pivot: [0.0, 15.0, 0.0],
+            x_rot: 0.0,
+            y_rot: 0.0,
+            z_rot: 0.0,
+            cubes: vec![Cube {
+                tex: (0.0, 0.0),
+                origin: [-3.0, -3.0, -3.0],
+                size: [6.0, 6.0, 6.0],
+                inflate: 0.0,
+                mirror: false,
+            }],
+            children: vec![],
+        },
+        // abdomen (the zero-pose barrel)
+        Part {
+            pivot: [0.0, 15.0, 9.0],
+            x_rot: 0.0,
+            y_rot: 0.0,
+            z_rot: 0.0,
+            cubes: vec![Cube {
+                tex: (0.0, 12.0),
+                origin: [-5.0, -4.0, -6.0],
+                size: [10.0, 8.0, 12.0],
+                inflate: 0.0,
+                mirror: false,
+            }],
+            children: vec![],
+        },
+        // right hind leg (base y +0.7853981852531433, z -0.7853981852531433)
+        Part {
+            pivot: [-4.0, 15.0, 2.0],
+            x_rot: 0.0,
+            y_rot: 0.785_398_2 + dy_hind,
+            z_rot: -0.785_398_2 + dz_hind,
+            cubes: vec![right_leg_cube.clone()],
+            children: vec![],
+        },
+        // left hind leg (the mirrored stance — the deltas subtract)
+        Part {
+            pivot: [4.0, 15.0, 2.0],
+            x_rot: 0.0,
+            y_rot: -0.785_398_2 - dy_hind,
+            z_rot: 0.785_398_2 - dz_hind,
+            cubes: vec![left_leg_cube.clone()],
+            children: vec![],
+        },
+        // right middle-hind leg (base y +0.39269909262657166, z -0.5811946392059326)
+        Part {
+            pivot: [-4.0, 15.0, 1.0],
+            x_rot: 0.0,
+            y_rot: 0.392_699_1 + dy_mid_hind,
+            z_rot: -0.581_194_64 + dz_mid_hind,
+            cubes: vec![right_leg_cube.clone()],
+            children: vec![],
+        },
+        // left middle-hind leg
+        Part {
+            pivot: [4.0, 15.0, 1.0],
+            x_rot: 0.0,
+            y_rot: -0.392_699_1 - dy_mid_hind,
+            z_rot: 0.581_194_64 - dz_mid_hind,
+            cubes: vec![left_leg_cube.clone()],
+            children: vec![],
+        },
+        // right middle-front leg (base y -0.39269909262657166, z -0.5811946392059326)
+        Part {
+            pivot: [-4.0, 15.0, 0.0],
+            x_rot: 0.0,
+            y_rot: -0.392_699_1 + dy_mid_front,
+            z_rot: -0.581_194_64 + dz_mid_front,
+            cubes: vec![right_leg_cube.clone()],
+            children: vec![],
+        },
+        // left middle-front leg
+        Part {
+            pivot: [4.0, 15.0, 0.0],
+            x_rot: 0.0,
+            y_rot: 0.392_699_1 - dy_mid_front,
+            z_rot: 0.581_194_64 - dz_mid_front,
+            cubes: vec![left_leg_cube.clone()],
+            children: vec![],
+        },
+        // right front leg (base y -0.7853981852531433, z -0.7853981852531433)
+        Part {
+            pivot: [-4.0, 15.0, -1.0],
+            x_rot: 0.0,
+            y_rot: -0.785_398_2 + dy_front,
+            z_rot: -0.785_398_2 + dz_front,
+            cubes: vec![right_leg_cube],
+            children: vec![],
+        },
+        // left front leg
+        Part {
+            pivot: [4.0, 15.0, -1.0],
+            x_rot: 0.0,
+            y_rot: 0.785_398_2 - dy_front,
+            z_rot: 0.785_398_2 - dz_front,
+            cubes: vec![left_leg_cube],
+            children: vec![],
+        },
+    ]
+}
+
 /// the porcine BABY's parts, posed by `state` — the BabyPigModel's own
 /// bytecode-proven mesh (the 7x6x9 horizontal body, the two-cube head
 /// with its inflate deformations, the four 2x2x2 stub legs on four
@@ -5306,6 +5557,99 @@ mod tests {
         let px = cow.pixel(10.0, 10.0);
         assert!(px[0] > px[2], "the brown reads red-over-blue: {px:?}");
         assert_eq!(px[3], 255, "the texel is opaque");
+    }
+
+    /// THE ARACHNID'S OWN EXTENTS (javap SpiderModel.createSpiderBodyLayer's
+    /// own numbers): 11 parts — the head, the neck cube, the abdomen,
+    /// the EIGHT legs — each one cube, 66 quads the bake speaks; the
+    /// rest crown rides the head's top (model y 11 — the 8x8x8 head at
+    /// pivot y 15 the box's +4 reach speaks — world 0.8125 above the
+    /// feet), the walk clock swings the legs (the phase law the
+    /// setupAnim fold keeps), and the head's look turns the fangs.
+    #[test]
+    fn the_spider_mesh_bakes_the_eight_legs() {
+        let spider = SpiderModel {
+            rgba: vec![255u8; 64 * 32 * 4],
+        };
+        let feet = Vec3::new(10.0, 64.0, 20.0);
+        let rest = SpiderState {
+            yaw_deg: 0.0,
+            pitch_deg: 0.0,
+            head_yaw_off_deg: 0.0,
+            walk_pos: 0.0,
+            walk_speed: 0.0,
+            death_time: 0.0,
+        };
+        let quads = spider.quads(&rest, feet, 0.0, 0.0);
+        assert_eq!(quads.len(), 66, "11 parts x 6 faces the bake speaks");
+        let mut max_y = f32::MIN;
+        let mut min_y = f32::MAX;
+        for q in &quads {
+            for p in q.pts {
+                max_y = max_y.max(p[1]);
+                min_y = min_y.min(p[1]);
+            }
+        }
+        // the head's crown: model y 11 -> world 13/16 above the feet
+        // (the zero-pose head the look never lifts — the entity
+        // fold's own 0.001 epsilon the top surface rides)
+        assert!(
+            (max_y - (feet.y as f32 + 0.8135)).abs() < 1e-4,
+            "the crown rides the head box's +4 reach: {max_y}"
+        );
+        // the legs' tips dip well below the bodies' underside (model
+        // y 19 — world 0.3125): the diagonal stances the zRot folds
+        // speak reach the ground's neighborhood
+        assert!(
+            min_y < feet.y as f32 + 0.25 && min_y > feet.y as f32 - 0.25,
+            "the legs' tips the ground's neighborhood reach: {min_y}"
+        );
+        // THE WALK CLOCK: the speed-1 stride the legs swing (the rest
+        // pose the speed zero keeps — the pose fold the sums differ)
+        let pose_sum = |qs: &[AvatarQuad]| -> f64 {
+            qs.iter()
+                .flat_map(|q| q.pts.iter().flatten())
+                .map(|v| *v as f64)
+                .sum()
+        };
+        let walking = SpiderState { walk_pos: 1.0, walk_speed: 1.0, ..rest };
+        let walk_quads = spider.quads(&walking, feet, 0.0, 0.0);
+        assert_ne!(pose_sum(&quads), pose_sum(&walk_quads), "the walk clock the legs swing");
+        // THE HEAD'S LOOK: the yaw offset turns the fangs' cube
+        let looking = SpiderState { head_yaw_off_deg: 30.0, ..rest };
+        let look_quads = spider.quads(&looking, feet, 0.0, 0.0);
+        assert_ne!(pose_sum(&quads), pose_sum(&look_quads), "the head's look the fangs turn");
+        // THE DEATH FOLD: the topple the death clock speaks
+        let dying = SpiderState { death_time: 5.0, ..rest };
+        let die_quads = spider.quads(&dying, feet, 0.0, 0.0);
+        assert_ne!(pose_sum(&quads), pose_sum(&die_quads), "the death fold the body topples");
+    }
+
+    /// THE SPIDER LOADS — the real runtime cache (the generator's
+    /// extraction) decodes the 64x32 skin the sha1 the generated table
+    /// pins (the SpiderRenderer's SPIDER_LOCATION).
+    #[test]
+    fn the_spider_model_loads_sha1_verified() {
+        let mut dir = std::env::current_dir().unwrap();
+        let root = loop {
+            let cand = dir.join("assets-cache/jar");
+            if cand.exists() {
+                break cand;
+            }
+            dir = dir.parent().expect("the runtime root above").to_path_buf();
+        };
+        let spider = SpiderModel::load(&root).expect("the spider loads from the runtime cache");
+        // the arachnid's dark hide: the census the opaque rows keep
+        // (the body texels the 64x32 canvas paints)
+        let mut opaque = 0;
+        for y in 0..32 {
+            for x in 0..64 {
+                if spider.pixel(x as f32, y as f32)[3] == 255 {
+                    opaque += 1;
+                }
+            }
+        }
+        assert!(opaque > 500, "the hide's texels the canvas keeps: {opaque}");
     }
 
     /// THE OVINE'S OWN EXTENTS (javap SheepModel.createBodyLayer's own

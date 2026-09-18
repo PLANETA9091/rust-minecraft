@@ -1544,6 +1544,12 @@ pub struct App {
     /// its own lane).
     pub chicken_model: Option<crate::avatar::ChickenModel>,
     pub baby_chicken_model: Option<crate::avatar::BabyChickenModel>,
+    /// THE SIXTH MOB's own skin (the spider's 64x32 arachnid hide —
+    /// the SpiderRenderer's SPIDER_LOCATION the sha1 pins) — loaded
+    /// lazily beside the others', `None` = the SPIDERS stay unseen
+    /// while the other bodies keep drawing (the model's honesty is
+    /// its own lane).
+    pub spider_model: Option<crate::avatar::SpiderModel>,
     /// The flame feature's two strips (the burn lane's pixel source —
     /// lazy-loaded and sha1-verified the zombie skin's way).
     pub fire_strips: Option<crate::avatar::FireStrips>,
@@ -2233,6 +2239,7 @@ impl App {
             baby_pig_model: None,
             chicken_model: None,
             baby_chicken_model: None,
+            spider_model: None,
             fire_strips: None,
             orb_sheet: None,
             underwater_screen: None,
@@ -9980,6 +9987,12 @@ impl App {
                 // Entity spoke): the model the render lane draws —
                 // the zombie's humanoid, the pig's quadruped
                 m.kind = crate::mob::MobKind::from_wire_name(&w.type_name);
+                // THE HEALTH'S OWN ATTRIBUTE (the kind's own
+                // createAttributes chain the max_health word keeps —
+                // the spider's 16.0 the Monster clinit speaks; the
+                // server's own metadata word the None arm the ctor
+                // answers)
+                m.health = m.kind.max_health();
                 m.yaw = w.yaw;
                 let mut off = w.head_yaw - w.yaw;
                 while off > 180.0 {
@@ -14023,6 +14036,12 @@ impl App {
             self.baby_chicken_model =
                 crate::avatar::BabyChickenModel::load(std::path::Path::new("assets-cache/jar"));
         }
+        // THE SPIDER LANE's own lazy load (the same honesty: a failed
+        // spider skin keeps only the spiders unseen)
+        if self.spider_model.is_none() {
+            self.spider_model =
+                crate::avatar::SpiderModel::load(std::path::Path::new("assets-cache/jar"));
+        }
         // the pig's honesty is its OWN lane: a failed pig skin keeps
         // only the pigs unseen, the zombies keep drawing
         let pig_model = self.pig_model.as_ref();
@@ -14051,6 +14070,9 @@ impl App {
         // keeps only the birds unseen, the other bodies keep drawing
         let chicken_model = self.chicken_model.as_ref();
         let baby_chicken_model = self.baby_chicken_model.as_ref();
+        // the spider's honesty is ITS OWN lane: a failed spider skin
+        // keeps only the arachnids unseen, the other bodies keep drawing
+        let spider_model = self.spider_model.as_ref();
         // the two lanes' own union (the offline AI bodies + the wire's
         // remote bodies — the SAME lerp folds speak both, the model
         // kind the registry's name arms at the merge)
@@ -14617,6 +14639,27 @@ impl App {
                     }
                     (quads, Box::new(move |u, v| skeleton.pixel(u, v)))
                 }
+                crate::mob::MobKind::Spider => {
+                    // THE ARACHNID STATE (the 26.2 SpiderModel.setupAnim
+                    // reads the look pair + the walk pair ONLY — the
+                    // head rides the netHeadYaw/pitch words the
+                    // quadruped's own state wears, the eight legs the
+                    // walk clock swings; no age lane the Monster chain
+                    // never carries)
+                    let Some(spider) = spider_model else {
+                        continue; // the spider skin failed its sha1 — this body stays unseen
+                    };
+                    let state = crate::avatar::SpiderState {
+                        yaw_deg: mob.yaw,
+                        pitch_deg: head_pitch,
+                        head_yaw_off_deg: head_yaw,
+                        walk_pos: mob.walk.position_at(self.partial_tick),
+                        walk_speed: mob.walk.speed_at(self.partial_tick),
+                        death_time: mob.death_time_at(self.partial_tick),
+                    };
+                    let quads = spider.quads(&state, feet, cam.yaw, cam.pitch);
+                    (quads, Box::new(move |u, v| spider.pixel(u, v)))
+                }
             };
             // THE FLAME FEATURE's own bbox ask — the registration's
             // dims the kind's own EntityTypes speaks (the zombie
@@ -14648,6 +14691,10 @@ impl App {
                 crate::mob::MobKind::Skeleton => (
                     crate::mob::SKELETON_WIDTH as f32,
                     crate::mob::SKELETON_HEIGHT as f32,
+                ),
+                crate::mob::MobKind::Spider => (
+                    crate::mob::SPIDER_WIDTH as f32,
+                    crate::mob::SPIDER_HEIGHT as f32,
                 ),
             };
             let (bbox_w, bbox_h) = if mob.is_baby() {

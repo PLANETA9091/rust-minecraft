@@ -82,6 +82,15 @@ pub const ZOMBIE_RUNTIME_PATH: &str = "entity/zombie/zombie.png";
 pub const SKELETON_PNG_SHA1: &str = "70e4a0698bd83bf1370d1fe7e72c082448df1ff7";
 pub const SKELETON_RUNTIME_PATH: &str = "entity/skeleton/skeleton.png";
 
+/// The SPIDER skin (the arachnid's own), generated from the
+/// same jar: the source sha1 the spider renderer verifies before
+/// drawing (javap: `SpiderRenderer`'s SPIDER_LOCATION — the
+/// SpiderModel's own `LayerDefinition.create(mesh, 64, 32)` the
+/// bytecode speaks — the half-height layout the eight-leg chain
+/// unwraps).
+pub const SPIDER_PNG_SHA1: &str = "587ae86f6c714ec429301fcfea1b3c2a45fbaf54";
+pub const SPIDER_RUNTIME_PATH: &str = "entity/spider/spider.png";
+
 /// The PIG skin (the temperate variant the PigRenderer's variant
 /// table defaults to), generated from the same jar: the source sha1
 /// the pig renderer verifies before it draws (javap PigModel:

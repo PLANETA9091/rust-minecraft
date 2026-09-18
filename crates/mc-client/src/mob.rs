@@ -756,6 +756,17 @@ pub enum MobKind {
     /// the mainhand BOW the populateDefaultEquipmentSlots unconditionally
     /// arms)
     Skeleton,
+    /// THE ARACHNID (javap `SpiderModel.createSpiderBodyLayer` the 26.2
+    /// bytecode speaks — the head 8x8x8 + the neck cube + the abdomen
+    /// barrel + the EIGHT 16x2x2 legs the diagonal stances wear) PLUS
+    /// the darkness gate the SpiderTargetGoal arms (the
+    /// getLightLevelDependentMagicValue 0.5 the bytecode keeps — the
+    /// bright ground the scan refuses, the retaliation the light
+    /// never gates), the Monster base's own attributes the clinit
+    /// speaks (MAX_HEALTH 16, MOVEMENT_SPEED 0.3, the ATTACK_DAMAGE
+    /// the base add's registered default keeps), and the STRING the
+    /// loot's own pool drops (the bow's craft the ingredient feeds)
+    Spider,
 }
 
 impl MobKind {
@@ -774,6 +785,8 @@ impl MobKind {
             MobKind::Chicken
         } else if name == "minecraft:skeleton" {
             MobKind::Skeleton
+        } else if name == "minecraft:spider" {
+            MobKind::Spider
         } else {
             MobKind::Zombie
         }
@@ -795,8 +808,60 @@ impl MobKind {
     /// Monster` — the targetSelector the AbstractSkeleton.registerGoals
     /// fills: HurtByTargetGoal prio 1, NearestAttackableTargetGoal
     /// Player prio 2, the golem/turtle prios 3) the same branch rides.
+    /// THE SPIDER's own chain (javap `Spider extends Monster` — the
+    /// targetSelector the Spider.registerGoals fills: HurtByTargetGoal
+    /// prio 1 the bare varargs ctor, SpiderTargetGoal prios 2/3 the
+    /// darkness gate arms) the same branch rides.
     pub fn is_monster(self) -> bool {
+        matches!(self, MobKind::Zombie | MobKind::Skeleton | MobKind::Spider)
+    }
+
+    /// THE UNDEAD'S OWN BRAND (javap `shouldBurnInDay` — the Mob base
+    /// speaks false, the Zombie's and the AbstractSkeleton's own
+    /// overrides the true the sun's brand rides; THE SPIDER the base's
+    /// own false keeps — no override the class dumps name, the noon
+    /// sky the arachnid never brands). The burn roll the monster
+    /// category's own gate no longer reads — the kind's own word it
+    /// does (the category the spider joins, the burn it never wears).
+    pub fn should_burn_in_day(self) -> bool {
         matches!(self, MobKind::Zombie | MobKind::Skeleton)
+    }
+
+    /// THE REGISTRATION'S OWN EYE (javap `EntityTypes` clinit the 26.2
+    /// jar speaks — the explicit `eyeHeight(F)` the builder chain
+    /// keeps: the spider's `ldc #209 0.6499999761581421` the
+    /// registration region pins, the zombie's/skeleton's 1.74 the
+    /// shared lane's existing word, the cow's 1.3 / the sheep's 1.235
+    /// / the chicken's 0.644 the consts carry; THE PIG the explicit
+    /// call never makes — the `EntityDimensions.defaultEyeHeight`'s
+    /// own `f * 0.85` the scalable default keeps: 0.9 * 0.85 = 0.765).
+    /// The AI lanes' eye-to-eye rays and the light gate the per-kind
+    /// word now reads — the spider's LOW eye the zombie's 1.74 never
+    /// stands in for.
+    pub fn eye_height(self) -> f64 {
+        match self {
+            MobKind::Spider => SPIDER_EYE_HEIGHT,
+            MobKind::Cow => COW_EYE_HEIGHT,
+            MobKind::Sheep => SHEEP_EYE_HEIGHT,
+            MobKind::Chicken => CHICKEN_EYE_HEIGHT,
+            // the pig's scalable default (the h * 0.85 law the
+            // EntityDimensions bytecode speaks — no explicit eyeHeight
+            // the clinit's own builder chain makes)
+            MobKind::Pig => PIG_HEIGHT * 0.85,
+            MobKind::Zombie | MobKind::Skeleton => ZOMBIE_EYE_HEIGHT,
+        }
+    }
+
+    /// THE REGISTRATION'S OWN HEALTH (javap `Spider.createAttributes` —
+    /// `Monster.createMonsterAttributes()` + `add(MAX_HEALTH, 16.0)`
+    /// the ldc2_w keeps). The other kinds the ctor's shared 20.0 the
+    /// LivingEntity base keeps (the lanes' existing word — each kind's
+    /// own attribute correction another round's lead).
+    pub fn max_health(self) -> f32 {
+        match self {
+            MobKind::Spider => SPIDER_MAX_HEALTH,
+            _ => ZOMBIE_MAX_HEALTH,
+        }
     }
 
     /// THE PANIC GOAL'S OWN PER-KIND WORD (the registerGoals clinits
@@ -809,7 +874,11 @@ impl MobKind {
     /// PanicGoal's hurt-flee never).
     pub fn panic_speed(self) -> Option<f64> {
         match self {
-            MobKind::Zombie | MobKind::Skeleton => None,
+            // the spider's own registerGoals the AvoidEntityGoal prio 2
+            // arms (the armadillo class the lambda names — no armadillo
+            // this client draws, the goal the empty vocabulary
+            // honest-skips) and NO panic goal the monster gate keeps
+            MobKind::Zombie | MobKind::Skeleton | MobKind::Spider => None,
             MobKind::Sheep => Some(PANIC_SPEED_SHEEP),
             MobKind::Cow => Some(PANIC_SPEED_COW),
             MobKind::Pig => Some(PANIC_SPEED_PIG),
@@ -830,6 +899,9 @@ impl MobKind {
                 ZOMBIE_MOVEMENT_SPEED
             }
             MobKind::Skeleton => SKELETON_MOVEMENT_SPEED,
+            // the Spider.createAttributes' own add(MOVEMENT_SPEED,
+            // 0.30000001192092896) the ldc2_w keeps
+            MobKind::Spider => SPIDER_MOVEMENT_SPEED,
         }
     }
 
@@ -866,6 +938,15 @@ impl MobKind {
             (MobKind::Skeleton, VoiceSlot::Ambient) => "entity.skeleton.ambient",
             (MobKind::Skeleton, VoiceSlot::Hurt) => "entity.skeleton.hurt",
             (MobKind::Skeleton, VoiceSlot::Death) => "entity.skeleton.death",
+            // the spider's own rows (javap `Spider.getAmbientSound` /
+            // `getHurtSound` / `getDeathSound` — the SPIDER_AMBIENT /
+            // SPIDER_HURT / SPIDER_DEATH getstatics the bytecode keeps:
+            // the ambient and the hurt the same say-clip set the
+            // sounds.json's entity.spider rows name, the death the
+            // own file answers)
+            (MobKind::Spider, VoiceSlot::Ambient) => "entity.spider.ambient",
+            (MobKind::Spider, VoiceSlot::Hurt) => "entity.spider.hurt",
+            (MobKind::Spider, VoiceSlot::Death) => "entity.spider.death",
         }
     }
 
@@ -893,6 +974,12 @@ impl MobKind {
             // no block state the voice reads, the same law the zombie's
             // own override speaks)
             MobKind::Skeleton => Some(("entity.skeleton.step", 0.15, 1.0)),
+            // THE SPIDER'S OWN FLAT FOLD (javap `Spider.playStepSound`
+            // — the getstatic SPIDER_STEP the playSound(..., 0.15F,
+            // 1.0F) the ldc/fconst keeps — no block state the voice
+            // reads, the same law the zombie's and the skeleton's own
+            // overrides speak)
+            MobKind::Spider => Some(("entity.spider.step", 0.15, 1.0)),
             // THE CHICKEN'S OWN FLAT FOLD (javap `Chicken.playStepSound`
             // — the ONE animal override the 26.2 classfile keeps: the
             // `getSoundSet().stepSound()` the variant's own word plays
@@ -971,6 +1058,31 @@ pub fn armor_piece_asset(word: &str) -> Option<&'static str> {
 
 /// `Zombie.createAttributes` — FOLLOW_RANGE 35.0 (the target scan).
 pub const ZOMBIE_FOLLOW_RANGE: f64 = 35.0;
+/// THE SPIDER REGISTRATION'S OWN `sized(1.3999999761581421F,
+/// 0.8999999761581421F)` (javap `EntityTypes` clinit — the spider
+/// region's `ldc_w #428 1.399999976158142` / `ldc_w #263
+/// 0.8999999761581421` the sized(FF) the builder keeps, the MONSTER
+/// category the same block names, the notInPeaceful the chain ends).
+pub const SPIDER_WIDTH: f64 = 1.4;
+pub const SPIDER_HEIGHT: f64 = 0.9;
+/// THE SPIDER REGISTRATION'S OWN `eyeHeight(0.6499999761581421F)` (the
+/// same clinit — the `ldc #209` the eyeHeight(F) builder call keeps).
+pub const SPIDER_EYE_HEIGHT: f64 = 0.65;
+/// `Spider.createAttributes` — MOVEMENT_SPEED 0.30000001192092896 (the
+/// f32 0.3 promoted).
+pub const SPIDER_MOVEMENT_SPEED: f64 = 0.300_000_011_920_928_96;
+/// `Spider.createAttributes` — MAX_HEALTH 16.0 (the ldc2_w the builder
+/// keeps — the Monster base's own createMonsterAttributes the first
+/// link of the chain speaks).
+pub const SPIDER_MAX_HEALTH: f32 = 16.0;
+/// THE MONSTER BASE'S OWN MELEE WORD (javap `Monster.
+/// createMonsterAttributes` — the `add(Attributes.ATTACK_DAMAGE)`
+/// single-arg overload the attribute's REGISTERED default keeps: the
+/// generic.attack_damage RangedAttribute's own 2.0 — no override the
+/// Spider.createAttributes makes, the bare fangs the 2.0 the one
+/// heart deals; the zombie's own 3.0 the override the same base
+/// rides).
+pub const SPIDER_ATTACK_DAMAGE: f64 = 2.0;
 /// `Mob.createMobAttributes`' own `ldc2_w 16.0d` — the FOLLOW_RANGE
 /// default the base builder arms. The AbstractSkeleton's own
 /// `createAttributes` the MOVEMENT_SPEED alone adds (javap the 26.2
@@ -1394,7 +1506,7 @@ impl Arrow {
         let mut rng = Lcg::new(seed);
         let (ax, ay, az) = (
             shooter.x,
-            shooter.y + ZOMBIE_EYE_HEIGHT - ARROW_SPAWN_EYE_OFFSET,
+            shooter.y + shooter.kind.eye_height() - ARROW_SPAWN_EYE_OFFSET,
             shooter.z,
         );
         let dx = target.x - ax;
@@ -2371,6 +2483,7 @@ impl Zombie {
             MobKind::Chicken => (CHICKEN_WIDTH, CHICKEN_HEIGHT),
             MobKind::Zombie => (ZOMBIE_WIDTH, ZOMBIE_HEIGHT),
             MobKind::Skeleton => (SKELETON_WIDTH, SKELETON_HEIGHT),
+            MobKind::Spider => (SPIDER_WIDTH, SPIDER_HEIGHT),
         };
         // THE BABY'S OWN DIMENSIONS (javap `Sheep.getDefaultDimensions`
         // the isBaby arm the dump names — the half-sized box the baby
@@ -2787,8 +2900,13 @@ impl Zombie {
                 // archer's real ring keeps; the TargetGoal's
                 // getFollowDistance the attribute the per-mob word
                 // reads, the scan's arming AND the continue's far
-                // drop the same square count)
-                let follow_range = if self.kind == MobKind::Skeleton {
+                // drop the same square count — the SPIDER the Mob
+                // base's own default the skeleton's ring shares (no
+                // FOLLOW_RANGE override the Spider.createAttributes
+                // makes)
+                let follow_range = if self.kind == MobKind::Skeleton
+                    || self.kind == MobKind::Spider
+                {
                     SKELETON_FOLLOW_RANGE
                 } else {
                     ZOMBIE_FOLLOW_RANGE
@@ -2797,12 +2915,15 @@ impl Zombie {
                 // THE SENSING'S OWN LINE (the TargetingConditions'
                 // checkLineOfSight the scan's canUse rides, the mustSee
                 // memory the continue walks count — the eye-to-eye ray
-                // the Sensing.hasLineOfSight walk answers)
+                // the Sensing.hasLineOfSight walk answers — FROM THE
+                // MOB'S OWN EYE the per-kind registration keeps: the
+                // spider's low 0.65 the zombie's 1.74 never stands in
+                // for)
                 let los = crate::body::clip_ray(
                     world,
                     crate::math::Vec3::new(
                         self.x as f32,
-                        (self.y + ZOMBIE_EYE_HEIGHT) as f32,
+                        (self.y + self.kind.eye_height()) as f32,
                         self.z as f32,
                     ),
                     crate::math::Vec3::new(p.x as f32, p.eye_y as f32, p.z as f32),
@@ -2873,7 +2994,20 @@ impl Zombie {
                         {
                             self.scan_target = false;
                         }
-                    } else if in_range && los {
+                    } else if in_range && los && !self.spider_dark_gate(world, day_time) {
+                        // THE SPIDER'S OWN CANUSE (javap
+                        // `SpiderTargetGoal.canUse` — the
+                        // `getLightLevelDependentMagicValue() >= 0.5F`
+                        // the fcmpl/iflt pair arms: the bright eye
+                        // the nearest-player scan REFUSES, the darkness
+                        // the super's own walk arms; the RETALIATION
+                        // the gate never reads — the HurtByTargetGoal
+                        // prio 1 the light's word never asks, the
+                        // punch through the noon the same revenge
+                        // answers; the CONTINUE the gate never reads
+                        // either — the TargetGoal's own law the
+                        // distance/memory keeps, the target the day
+                        // break never drops)
                         self.scan_target = true;
                         self.scan_unseen_ticks = 0;
                     }
@@ -2917,7 +3051,7 @@ impl Zombie {
                     world,
                     crate::math::Vec3::new(
                         self.x as f32,
-                        (self.y + ZOMBIE_EYE_HEIGHT) as f32,
+                        (self.y + self.kind.eye_height()) as f32,
                         self.z as f32,
                     ),
                     crate::math::Vec3::new(p.x as f32, p.eye_y as f32, p.z as f32),
@@ -3047,7 +3181,7 @@ impl Zombie {
                     world,
                     crate::math::Vec3::new(
                         self.x as f32,
-                        (self.y + ZOMBIE_EYE_HEIGHT) as f32,
+                        (self.y + self.kind.eye_height()) as f32,
                         self.z as f32,
                     ),
                     crate::math::Vec3::new(p.x as f32, p.eye_y as f32, p.z as f32),
@@ -3064,10 +3198,19 @@ impl Zombie {
                     // floor keeps, the offhand word the modifier never
                     // rides (the MAINHAND slot the modifiers tag to), the
                     // swing rides the main hand, the knockback direction
-                    // runs victim-minus-attacker
+                    // runs victim-minus-attacker. THE SPIDER's own bare
+                    // fangs the Monster base's registered default keeps
+                    // (the 2.0 the add(ATTACK_DAMAGE) single-arg
+                    // overload answers — no override the
+                    // Spider.createAttributes makes)
+                    let attack_base = if self.kind == MobKind::Spider {
+                        SPIDER_ATTACK_DAMAGE
+                    } else {
+                        ZOMBIE_ATTACK_DAMAGE
+                    };
                     let (kx, kz) = (p.x - self.x, p.z - self.z);
                     events.attack = Some(MobAttack {
-                        damage: ZOMBIE_ATTACK_DAMAGE
+                        damage: attack_base
                             + crate::screens::held_attack_addend(self.held_weapon),
                         dir_x: kx,
                         dir_z: kz,
@@ -3361,13 +3504,16 @@ impl Zombie {
         // short-circuit order the bytecode speaks: THE KIND'S OWN WORD
         // first — the Mob base speaks false, the undead classes'
         // override the true the sun's brand rides (the animals the
-        // base's own false keeps: the noon sky the sheep never
-        // brands), then the track gate, the water gate, the light
-        // gate, THE DRAW, the sky gate — the helmet branch never fires
-        // on this lane's bare-headed zombie, so the hit ignites):
+        // base's own false keeps: the noon sky the sheep never brands,
+        // THE SPIDER the same base word the arachnid never brands —
+        // the category the Monster join makes, the burn the should-
+        // BurnInDay's own word gates)), then the track gate, the water
+        // gate, the light gate, THE DRAW, the sky gate — the helmet
+        // branch never fires on this lane's bare-headed zombie, so the
+        // hit ignites):
         // igniteForSeconds(8.0) = remainingFireTicks = max(remaining,
         // 160).
-        if self.kind.is_monster()
+        if self.kind.should_burn_in_day()
             && crate::timeline::monsters_burn(day_time)
             && !self.in_water(world)
             && self.burn_light_gate(world, day_time)
@@ -3648,7 +3794,7 @@ impl Zombie {
     /// unknown beats an invented grid.
     fn eye_light(&self, world: &World) -> (u8, u8) {
         let ex = self.x.floor() as i32;
-        let ey = (self.y + ZOMBIE_EYE_HEIGHT).floor() as i32;
+        let ey = (self.y + self.kind.eye_height()).floor() as i32;
         let ez = self.z.floor() as i32;
         if let Some(grid) = &world.light {
             let (s, b) = grid.cell(world.chunks_per_side, ex, ey, ez);
@@ -3697,6 +3843,19 @@ impl Zombie {
         self.burn_magic(world, day_time) > BURN_LIGHT_GATE
     }
 
+    /// THE SPIDER'S OWN CANUSE GATE (javap `SpiderTargetGoal.canUse` —
+    /// the `fcmpl 0.5 / iflt` pair speaks: `getLightLevelDependent-
+    /// MagicValue() >= 0.5F -> false`, else the super's
+    /// NearestAttackableTargetGoal walk). The SAME light law the burn
+    /// lane folds (the f/(4-3f) ramp the LevelReader identity keeps —
+    /// the overworld's ambient-light lerp lands on 0.0), read at the
+    /// mob's OWN eye (the spider's low 0.65 the registration pins).
+    /// The non-spider kinds the gate never asks — the honest false the
+    /// shared arming arm keeps.
+    fn spider_dark_gate(&self, world: &World, day_time: i64) -> bool {
+        self.kind == MobKind::Spider && self.burn_magic(world, day_time) >= 0.5
+    }
+
     /// `BlockAndLightGetter.canSeeSky(eye)` — the SKY channel at 15
     /// (the direct column unbroken).
     fn can_see_sky(&self, world: &World) -> bool {
@@ -3710,7 +3869,7 @@ impl Zombie {
     fn look_at(&mut self, tx: f64, ty: f64, tz: f64) {
         let dx = tx - self.x;
         let dz = tz - self.z;
-        let dy = ty - (self.y + ZOMBIE_EYE_HEIGHT);
+        let dy = ty - (self.y + self.kind.eye_height());
         let horiz = (dx * dx + dz * dz).sqrt();
         let head_abs = (-(dx.max(1e-9) / horiz.max(1e-9)))
             .atan2(dz / horiz.max(1e-9))
@@ -3924,8 +4083,9 @@ impl Zombie {
             // speaks
             MobKind::Chicken => CHICKEN_FOOD.contains(&held_item),
             // the monster (and the kinds the mesh lane never drew) —
-            // the food gate closed
-            MobKind::Zombie | MobKind::Skeleton => false,
+            // the food gate closed (the spider the monster chain's
+            // newest body the same refusal keeps)
+            MobKind::Zombie | MobKind::Skeleton | MobKind::Spider => false,
         }
     }
 
@@ -4112,7 +4272,7 @@ impl Zombie {
                 held_item == "golden_dandelion" && self.age < 0
                     && self.age_lock_particle_timer == 0
             }
-            MobKind::Zombie | MobKind::Skeleton => false,
+            MobKind::Zombie | MobKind::Skeleton | MobKind::Spider => false,
         }
     }
 
@@ -4393,6 +4553,33 @@ impl Zombie {
                     }
                 }
             }
+            MobKind::Spider => {
+                // spider.json's own pools (the jar's
+                // data/minecraft/loot_table/entities/spider.json the
+                // verbatim reads): POOL 1 the STRING uniform 0..2 —
+                // the bow's craft the ingredient the arachnid's own
+                // death feeds (the sticks-and-string recipe the table
+                // screen serves the craft the loop closes); POOL 2 the
+                // player-kill rare — the `killed_by_player` condition
+                // gates, the spider_eye uniform -1..1 the set_count's
+                // own band keeps (the sub-one rolls the vanilla clamp
+                // silences — the eye the 1/3 of the player kills
+                // lands, the non-player kill the pool never spends)
+                let count = self.rng.next_int_inclusive(0, 2);
+                if count > 0 {
+                    if let Some(item) = wire_id("string") {
+                        out.push((item, count));
+                    }
+                }
+                if killed_by_player {
+                    let count = self.rng.next_int_inclusive(-1, 1);
+                    if count > 0 {
+                        if let Some(item) = wire_id("spider_eye") {
+                            out.push((item, count));
+                        }
+                    }
+                }
+            }
         }
         // THE EQUIPMENT'S OWN DROP (javap `Mob.dropCustomDeathLoot`
         // the 26.2 bytecode speaks — the walk the loot table's rows
@@ -4512,12 +4699,16 @@ pub fn try_spawn(
     // fold answers; the 26.2 plains table the jar's own worldgen json
     // keeps — spider 100, zombie 90, zombie_villager 5, zombie_horse
     // 5, skeleton 100, creeper 100, slime 100, enderman 10, witch 5 —
-    // the rows the client's renderer vocabulary ADMITS the zombie and
-    // the skeleton alone are (the creature lane's own precedent the
-    // roll mirrors), the total 190 the nextInt(190) draws, the vanilla
-    // list order the ranges keep: the zombie row FIRST, the skeleton
-    // the [90, 190) range rides)
-    let kind = if rng.next_int(190) < 90 {
+    // the rows the client's renderer vocabulary ADMITS the spider, the
+    // zombie and the skeleton are (the creature lane's own precedent
+    // the roll mirrors), the total 290 the nextInt(290) draws, the
+    // vanilla list order the ranges keep: the SPIDER row FIRST (the
+    // [0, 100) range rides), the zombie the [100, 190) band answers,
+    // the skeleton the [190, 290) tail keeps)
+    let roll = rng.next_int(290);
+    let kind = if roll < 100 {
+        MobKind::Spider
+    } else if roll < 190 {
         MobKind::Zombie
     } else {
         MobKind::Skeleton
@@ -4532,6 +4723,11 @@ pub fn try_spawn(
         (*next_id as u64) << 16 ^ rng.next(),
     );
     z.kind = kind;
+    // THE HEALTH'S OWN ATTRIBUTE (javap the per-kind createAttributes
+    // chains the jars speak — the spider's own `add(MAX_HEALTH, 16.0)`
+    // the Spider clinit keeps, the other kinds the ctor's shared
+    // LivingEntity base 20.0 the lanes' existing word keeps)
+    z.health = kind.max_health();
     // THE SKELETON'S OWN EQUIPMENT (javap `AbstractSkeleton.
     // populateDefaultEquipmentSlots` the 26.2 bytecode speaks: the
     // super's walk the Monster base keeps — NO draw — then the
@@ -5698,6 +5894,21 @@ mod tests {
             MobKind::Pig.voice_event(VoiceSlot::Death),
             "entity.pig.death"
         );
+        // the spider's own rows (the getstatics the classfile dumps
+        // keep — the ambient and the hurt the say-clip set, the death
+        // the own file)
+        assert_eq!(
+            MobKind::Spider.voice_event(VoiceSlot::Ambient),
+            "entity.spider.ambient"
+        );
+        assert_eq!(
+            MobKind::Spider.voice_event(VoiceSlot::Hurt),
+            "entity.spider.hurt"
+        );
+        assert_eq!(
+            MobKind::Spider.voice_event(VoiceSlot::Death),
+            "entity.spider.death"
+        );
         // the round trip: the wire spawn's own walk (the registry name
         // the Add Entity spoke -> the kind -> the voice)
         for (name, kind) in [
@@ -5705,6 +5916,7 @@ mod tests {
             ("minecraft:sheep", MobKind::Sheep),
             ("minecraft:cow", MobKind::Cow),
             ("minecraft:pig", MobKind::Pig),
+            ("minecraft:spider", MobKind::Spider),
         ] {
             assert_eq!(MobKind::from_wire_name(name), kind);
             assert_eq!(
@@ -6214,34 +6426,48 @@ mod tests {
             // draw (the 26.2 plains monster rows the NaturalSpawner
             // order speaks), the ctor seed, the baby/jockey/chicken
             // draws the zombie lane keeps (the skeleton's finalizeSpawn
-            // the group-data rolls never carries), the equipment gate
+            // the group-data rolls never carries, the SPIDER's own
+            // walk the NORMAL world the effect arm never spends — no
+            // draw the lane asks), the equipment gate
             // the zombie's tail rides (the skeleton's unconditional BOW
             // the no-draw law keeps)
             let mut m = Lcg::new(seed);
             let _ang = m.next_f64();
             let _dist = m.next_f64();
-            let skeleton = m.next_int(190) >= 90;
+            let roll = m.next_int(290);
             let _ctor_seed = m.next();
-            let want = if skeleton {
-                // THE SKELETON's own populate (javap
-                // `AbstractSkeleton.populateDefaultEquipmentSlots` —
-                // the super the no-draw base keeps, the
-                // setItemSlot(MAINHAND, Items.BOW) the unconditional
-                // word speaks)
-                Some("bow")
-            } else if m.next_f32() < 0.05 {
-                if m.next_f32() < 0.05 {
-                    // the empty world's search the None arm keeps: the
-                    // chicken spawn gate C, the chicken's own ctor seed
-                    // the one next() the between arms, the baby roll D
-                    // the armed gate consumes (the verdict the walk
-                    // never branches — the D draw the C armed spends)
+            let want = if roll < 100 {
+                // THE SPIDER's own finalizeSpawn — the NORMAL world the
+                // HARD-gated effect arm never spends, the group data no
+                // draw carries — the bare arachnid the string pool
+                // alone answers at the death
+                None
+            } else if roll < 190 {
+                // THE ZOMBIE's own group-data walk — draw A the baby
+                // odds, draw B the jockey search (the empty world's
+                // search the None arm keeps: the chicken spawn gate C,
+                // the chicken's own ctor seed the one next() the
+                // between arms, the baby roll D the armed gate
+                // consumes — the verdict the walk never branches, the
+                // D draw the C armed spends), the equipment gate the
+                // tail rides
+                let zombie_want = if m.next_f32() < 0.05 {
                     if m.next_f32() < 0.05 {
-                        m.next();
-                        m.next_f32();
+                        if m.next_f32() < 0.05 {
+                            m.next();
+                            m.next_f32();
+                        }
                     }
-                }
-                if m.next_f32() < 0.01 {
+                    if m.next_f32() < 0.01 {
+                        Some(match m.next_int(6) {
+                            0 => "iron_sword",
+                            1 => "iron_spear",
+                            _ => "iron_shovel",
+                        })
+                    } else {
+                        None
+                    }
+                } else if m.next_f32() < 0.01 {
                     Some(match m.next_int(6) {
                         0 => "iron_sword",
                         1 => "iron_spear",
@@ -6249,15 +6475,15 @@ mod tests {
                     })
                 } else {
                     None
-                }
-            } else if m.next_f32() < 0.01 {
-                Some(match m.next_int(6) {
-                    0 => "iron_sword",
-                    1 => "iron_spear",
-                    _ => "iron_shovel",
-                })
+                };
+                zombie_want
             } else {
-                None
+                // THE SKELETON's own populate (javap
+                // `AbstractSkeleton.populateDefaultEquipmentSlots` —
+                // the super the no-draw base keeps, the
+                // setItemSlot(MAINHAND, Items.BOW) the unconditional
+                // word speaks — the [190, 290) band the roll keeps)
+                Some("bow")
             };
             assert_eq!(
                 z.held_weapon, want,
@@ -6284,22 +6510,28 @@ mod tests {
     }
 
     /// THE PLAINS MONSTER TABLE'S OWN ROWS (the jar's worldgen json the
-    /// 26.2 keeps — zombie 90, skeleton 100, the admitted total 190 the
-    /// NaturalSpawner's WeightedList.getRandom draws): the night's own
-    /// roll the two kinds split, the vanilla list order the ranges keep
-    /// (the zombie row FIRST, the skeleton the [90, 190) range rides),
-    /// the skeleton's own populate the unconditional BOW the no-draw
-    /// law keeps (javap `AbstractSkeleton.populateDefaultEquipmentSlots`
-    /// — the super the Monster base keeps, the setItemSlot(MAINHAND,
+    /// 26.2 keeps — spider 100, zombie 90, skeleton 100, the admitted
+    /// total 290 the NaturalSpawner's WeightedList.getRandom draws): the
+    /// night's own roll the three kinds split, the vanilla list order
+    /// the ranges keep (the SPIDER row FIRST — the [0, 100) range
+    /// rides — the zombie the [100, 190) band answers, the skeleton
+    /// the [190, 290) tail keeps), the skeleton's own populate the
+    /// unconditional BOW the no-draw law keeps (javap
+    /// `AbstractSkeleton.populateDefaultEquipmentSlots` — the super
+    /// the Monster base keeps, the setItemSlot(MAINHAND,
     /// Items.BOW) the getstatic/invoke pair arms), the group-data
     /// baby/jockey rolls the skeleton's finalizeSpawn never carries —
-    /// the spawned bone-bag the ADULT the bow the hand always wears.
+    /// the spawned bone-bag the ADULT the bow the hand always wears —
+    /// and the SPIDER the same draw-free lane keeps (the NORMAL world
+    /// the HARD-gated effect arm never spends): the bare arachnid the
+    /// string pool alone answers at the death.
     #[test]
     fn the_skeleton_rows_the_plains_table_names() {
         let world = jockey_flat_world();
         let (px, pz) = (32.0, 32.0);
         let mut zombies = 0;
         let mut skeletons = 0;
+        let mut spiders = 0;
         for seed in 0u64..600 {
             let mut mobs = Vec::new();
             let mut next_id = 1;
@@ -6324,7 +6556,24 @@ mod tests {
                     assert!(!z.is_baby(), "the baby rolls the zombie lane alone keeps");
                     assert!(z.vehicle.is_none(), "the jockey search the skeleton never speaks");
                 }
-                _ => panic!("the plains monster roll the two admitted kinds alone speak"),
+                MobKind::Spider => {
+                    spiders += 1;
+                    // THE BARE ARACHNID (the draw-free finalize the
+                    // NORMAL world keeps — no equipment the lane
+                    // could arm, no baby the Monster chain never
+                    // carries, the MAX_HEALTH 16.0 the clinit keeps)
+                    assert_eq!(
+                        z.held_weapon, None,
+                        "seed {seed} the spider the no-draw lane keeps bare"
+                    );
+                    assert!(!z.is_baby(), "the spider the baby lane never carries");
+                    assert!(z.vehicle.is_none(), "the jockey search the spider never speaks");
+                    assert_eq!(
+                        z.health, SPIDER_MAX_HEALTH,
+                        "the spider's own MAX_HEALTH the clinit keeps"
+                    );
+                }
+                _ => panic!("the plains monster roll the three admitted kinds alone speak"),
             }
             // the same seed the same body (the determinism the spawner keeps)
             let mut mobs = Vec::new();
@@ -6332,17 +6581,158 @@ mod tests {
             try_spawn(&mut mobs, &mut next_id, px, pz, &world, &mut Lcg::new(seed), true);
             assert_eq!(mobs.pop().unwrap().kind, z.kind, "seed {seed} the replay the kind keeps");
         }
-        // the 90/190 split the spawned band arms (the flat world's own
-        // bounds the ring's far half refuses — the FRACTION the roll
-        // tracks: 0.4737 the mean, sigma ~2.6% over ~360 spawns — the
-        // loose band the flake never rides)
-        let total = zombies + skeletons;
-        let pct = if total > 0 { skeletons * 100 / total } else { 0 };
+        // the 100/90/100 split the spawned band arms (the flat world's
+        // own bounds the ring's far half refuses — the FRACTION the
+        // roll tracks: 0.345 the spider and the skeleton means, the
+        // zombie's 0.310, sigma ~2.7% over ~350 spawns — the loose
+        // bands the flake never rides)
+        let total = zombies + skeletons + spiders;
+        let skel_pct = if total > 0 { skeletons * 100 / total } else { 0 };
+        let spider_pct = if total > 0 { spiders * 100 / total } else { 0 };
         assert!(total > 200, "spawns {total} the band arms");
         assert!(
-            pct > 38 && pct < 57,
-            "skeleton share {pct}% the skeleton row the [90, 190) range rides"
+            skel_pct > 26 && skel_pct < 44,
+            "skeleton share {skel_pct}% the skeleton row the [190, 290) range rides"
         );
+        assert!(
+            spider_pct > 26 && spider_pct < 44,
+            "spider share {spider_pct}% the spider row the [0, 100) range rides"
+        );
+    }
+
+    /// THE SPIDER'S OWN DARKNESS GATE (javap `SpiderTargetGoal.canUse` —
+    /// the `getLightLevelDependentMagicValue() >= 0.5F` the fcmpl/iflt
+    /// pair arms): the noon eye the nearest-player scan REFUSES, the
+    /// night eye the super's walk arms, and the RETALIATION the gate
+    /// never reads (the HurtByTargetGoal prio 1 the light's word never
+    /// asks — the noon punch the same revenge answers).
+    #[test]
+    fn the_spider_targets_the_darkness_only() {
+        let world = wide_flat_world();
+        let mut s = Zombie::new(1, 10.5, 5.0, 10.5, 7);
+        s.kind = MobKind::Spider;
+        s.on_ground = true;
+        let p = player_at(13.5, 5.0, 10.5); // 3 cells: inside the 16 ring
+                                            // the noon eye the gate refuses (the open sky the magic 1.0 keeps)
+        for _ in 0..40 {
+            s.tick(&world, Some(&p), NOON);
+        }
+        assert!(!s.has_target(), "the noon eye the spider's canUse refuses");
+        assert!(!s.aggressive, "the bright ground the arms never raise");
+        // the night eye the gate arms (the darkness the scan answers)
+        for _ in 0..40 {
+            s.tick(&world, Some(&p), NIGHT);
+        }
+        assert!(s.has_target(), "the night eye the scan arms");
+        // THE RETALIATION THE LIGHT NEVER GATES: the fresh spider the
+        // noon punch re-arms — the prio-1 goal the canUse the
+        // timestamp walk alone keeps (the age-1 tick first: the
+        // timestamp the SAME-event refuse the zero-tick boundary
+        // never trips)
+        let mut s2 = Zombie::new(2, 10.5, 5.0, 10.5, 9);
+        s2.kind = MobKind::Spider;
+        s2.on_ground = true;
+        s2.tick(&world, Some(&p), NOON);
+        s2.hurt(2.0, true);
+        for _ in 0..40 {
+            s2.tick(&world, Some(&p), NOON);
+        }
+        assert!(s2.has_target(), "the noon punch the retaliation arms");
+    }
+
+    /// THE SPIDER'S OWN DEATH LOOT (the jar's
+    /// data/minecraft/loot_table/entities/spider.json verbatim): POOL 1
+    /// the string uniform 0..2 — THE BOW'S CRAFT the ingredient the
+    /// arachnid's own death feeds — and POOL 2 the spider_eye the
+    /// killed_by_player condition gates (the -1..1 set_count the
+    /// sub-one rolls the clamp silences — only the 1 lands, and the
+    /// non-player kill the pool never spends).
+    #[test]
+    fn the_spider_drops_the_bow_ingredient() {
+        let mut string_pools = 0;
+        let mut saw_two = false;
+        for seed in 0u64..120 {
+            let mut s = Zombie::new(seed as i32 + 1, 32.0, 5.0, 32.0, seed * 7 + 1);
+            s.kind = MobKind::Spider;
+            s.health = 0.0;
+            let loot = s.death_loot(false);
+            let mut seen_string = false;
+            for (id, count) in &loot {
+                let name = mc_registry::generated::item_order::ITEM_WIRE_ORDER
+                    .get(*id as usize)
+                    .copied()
+                    .unwrap_or("?");
+                match name {
+                    "string" => {
+                        assert!(!seen_string, "seed {seed} the string the POOL 1 alone keeps");
+                        seen_string = true;
+                        string_pools += 1;
+                        assert!((*count as i32) >= 1 && (*count as i32) <= 2);
+                        if *count == 2 {
+                            saw_two = true;
+                        }
+                    }
+                    other => panic!("seed {seed} the non-player kill the table never names: {other}"),
+                }
+            }
+        }
+        // the uniform 0..2 the 120-seed band arms (the empty draw 1/3
+        // per roll — the landed pools the loose floor keeps, the
+        // two-string roll the sweep hits)
+        assert!(string_pools >= 40, "string pools {string_pools} the band arms");
+        assert!(saw_two, "the two-string roll the sweep arms");
+        // THE PLAYER-KILL RARE: the eye pool the -1..1 band answers —
+        // only the count-1 rolls land, the -1/0 the clamp silences
+        let mut eye_hits = 0;
+        for seed in 0u64..300 {
+            let mut s = Zombie::new(seed as i32 + 501, 32.0, 5.0, 32.0, seed * 13 + 5);
+            s.kind = MobKind::Spider;
+            s.health = 0.0;
+            for (id, count) in s.death_loot(true) {
+                let name = mc_registry::generated::item_order::ITEM_WIRE_ORDER
+                    .get(id as usize)
+                    .copied()
+                    .unwrap_or("?");
+                if name == "spider_eye" {
+                    assert_eq!(count, 1, "seed {seed} the eye the clamp keeps");
+                    eye_hits += 1;
+                }
+            }
+        }
+        // the 1/3 of the -1..1 band the clamp answers (mean 100 over
+        // 300 — the loose band the flake never rides)
+        assert!(eye_hits >= 60, "eye hits {eye_hits} the band arms");
+    }
+
+    /// THE SPIDER'S OWN REGISTRATION WORDS (javap `EntityTypes` clinit
+    /// the 26.2 jar speaks): the `sized(1.4F, 0.9F)` box the
+    /// box_for answers, the `eyeHeight(0.6499999761581421F)` the
+    /// per-kind eye the AI lanes read, the `Spider.createAttributes`'s
+    /// own MAX_HEALTH 16.0 and MOVEMENT_SPEED 0.3 the constants keep,
+    /// the step voice the flat 0.15/1.0 fold plays, and the
+    /// fire-proof body the shouldBurnInDay base word keeps.
+    #[test]
+    fn the_spider_registration_the_dims_and_the_folds_wear() {
+        let s = Zombie::new(1, 0.0, 0.0, 0.0, 7);
+        let mut spider = s;
+        spider.kind = MobKind::Spider;
+        let (x0, y0, _z0, x1, y1, _z1) = spider.box_for();
+        assert!(((x1 - x0) - SPIDER_WIDTH).abs() < 1e-9, "the 1.4 width");
+        assert!(((y1 - y0) - SPIDER_HEIGHT).abs() < 1e-9, "the 0.9 height");
+        assert_eq!(y0, 0.0, "the feet the box's own floor keeps");
+        assert_eq!(spider.kind.eye_height(), SPIDER_EYE_HEIGHT);
+        assert_eq!(spider.kind.max_health(), SPIDER_MAX_HEALTH);
+        assert_eq!(spider.kind.movement_speed(), SPIDER_MOVEMENT_SPEED);
+        assert!(spider.kind.is_monster());
+        assert!(!spider.kind.should_burn_in_day());
+        // the step voice the flat fold — the surface the law never reads
+        for under in [None, Some("grass_block"), Some("stone")] {
+            assert_eq!(
+                spider.kind.step_voice(under),
+                Some(("entity.spider.step", 0.15, 1.0)),
+                "the spider's flat fold answers every surface"
+            );
+        }
     }
 
     /// THE SKELETON'S OWN HUNT (javap `RangedBowAttackGoal` the 26.2
@@ -7339,7 +7729,8 @@ mod tests {
         let dist = SPAWN_MIN_DIST + p.next_f64() * (SPAWN_MAX_DIST - SPAWN_MIN_DIST);
         let sx = ((32.0 + ang.cos() * dist).floor()) as i32;
         let sz = ((32.0 + ang.sin() * dist).floor()) as i32;
-        let zombie = p.next_int(190) < 90;
+        let roll = p.next_int(290);
+        let zombie = (100..190).contains(&roll);
         let _zombie_seed = p.next();
         let a = p.next_f32();
         let b = p.next_f32();
@@ -7980,6 +8371,7 @@ mod tests {
             MobKind::Chicken => (CHICKEN_WIDTH, CHICKEN_HEIGHT),
             MobKind::Zombie => (ZOMBIE_WIDTH, ZOMBIE_HEIGHT),
             MobKind::Skeleton => (SKELETON_WIDTH, SKELETON_HEIGHT),
+            MobKind::Spider => (SPIDER_WIDTH, SPIDER_HEIGHT),
         };
         for (k, m) in mobs.iter().enumerate() {
             let (w, h) = dims(m.kind);
@@ -10340,8 +10732,13 @@ mod tests {
     #[test]
     fn the_animals_own_peace_gates_the_target_scan() {
         let world = flat_world();
-        // the is_monster table (the class chain the dumps keep)
+        // the is_monster table (the class chain the dumps keep — the
+        // spider the Monster branch's newest body, the burn the
+        // shouldBurnInDay word alone arms)
         assert!(MobKind::Zombie.is_monster());
+        assert!(MobKind::Spider.is_monster());
+        assert!(MobKind::Spider.should_burn_in_day() == false);
+        assert!(MobKind::Zombie.should_burn_in_day());
         assert!(!MobKind::Sheep.is_monster());
         assert!(!MobKind::Cow.is_monster());
         assert!(!MobKind::Pig.is_monster());
