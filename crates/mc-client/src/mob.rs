@@ -525,6 +525,19 @@ pub const PIG_DATA_VARIANT_ID: u8 = 19;
 /// holder lane.
 pub const COW_DATA_VARIANT_ID: u8 = 18;
 
+/// THE FARM ANIMALS' OWN SOUND-VARIANT WIRE INDICES — the same
+/// class-tree walk the visual variants' slots wear (javap the 26.2
+/// clinit walks speak: the chicken's CHICKEN_SOUND_VARIANT serializer
+/// the 19 slot names, the pig's PIG_SOUND_VARIANT the 20th — the
+/// BOOST 18 + VARIANT 19 pair rides before it — the cow's
+/// COW_SOUND_VARIANT the 19th). The wire rides each as the
+/// *_SOUND_VARIANT holder lane (the same bias-zero registry id the
+/// variant decode keeps, the minecraft:*_sound_variant registry the
+/// configuration phase's arrival-order table resolves).
+pub const CHICKEN_DATA_SOUND_VARIANT_ID: u8 = 19;
+pub const PIG_DATA_SOUND_VARIANT_ID: u8 = 20;
+pub const COW_DATA_SOUND_VARIANT_ID: u8 = 19;
+
 /// THE PIG'S OWN VARIANT WORD (the minecraft:pig_variant registry's
 /// own trio — the SAME temperate/cold/warm words the chicken's table
 /// keeps, the decode the shared law wears).
@@ -1323,7 +1336,17 @@ impl MobKind {
             // at `0.15F, 1.0F` — no block state the voice reads, the
             // classic variant the entity.chicken.step name carries)
             MobKind::Chicken => Some(("entity.chicken.step", 0.15, 1.0)),
-            MobKind::Sheep | MobKind::Cow | MobKind::Pig => {
+            // THE PIG'S AND THE COW'S OWN FLAT FOLDS (javap the 26.2
+            // classfiles speak — `Pig.playStepSound` and
+            // `AbstractCow.playStepSound` the `getSoundSet().stepSound()`
+            // overrides keep: the `playSound(..., 0.15F, 1.0F)` walk
+            // plays the set's own step word, the block state the voice
+            // never reads — the classic set the kind-level default
+            // answers, the variant words the Mob's own step_voice lane
+            // picks)
+            MobKind::Pig => Some(("entity.pig.step", 0.15, 1.0)),
+            MobKind::Cow => Some(("entity.cow.step", 0.15, 1.0)),
+            MobKind::Sheep => {
                 use mc_registry::generated::block_sounds as bs;
                 let idx = bs::sound_index(under?)?;
                 let (volume, pitch) =
@@ -1331,6 +1354,145 @@ impl MobKind {
                 Some((crate::sound::Lane::Step.event_of(idx), volume, pitch))
             }
         }
+    }
+}
+
+/// THE SOUND VARIANT'S OWN VOICE TABLE (javap the 26.2 jar's own
+/// sound-variant jsons the data/ verbatim banks — the set the synced
+/// name picks, the isBaby split the getSoundSet walk keeps for the
+/// pig and the chicken, the cow's flat set the baby lane never
+/// splits; the ambient/hurt/death getters ALL THREE animals ride the
+/// set's own rows): the word the slot asks for, the classic the
+/// unknown name's honest lane never plays (None).
+pub fn farm_sound_variant_word(
+    kind: MobKind,
+    variant: &str,
+    baby: bool,
+    slot: VoiceSlot,
+) -> Option<&'static str> {
+    let v = variant.strip_prefix("minecraft:")?;
+    match (kind, v) {
+        // THE PIG'S OWN PAIR (pig_sound_variant/classic.json +
+        // big.json — the adult sets the pig_big prefix speaks, the
+        // step_sound the BOTH sets' entity.pig.step keeps, the
+        // baby_sounds the baby_pig rows both variants share)
+        (MobKind::Pig, "classic" | "big") => {
+            let big = v == "big";
+            match (slot, baby) {
+                (VoiceSlot::Ambient, false) => Some(if big {
+                    "entity.pig_big.ambient"
+                } else {
+                    "entity.pig.ambient"
+                }),
+                (VoiceSlot::Hurt, false) => Some(if big {
+                    "entity.pig_big.hurt"
+                } else {
+                    "entity.pig.hurt"
+                }),
+                (VoiceSlot::Death, false) => Some(if big {
+                    "entity.pig_big.death"
+                } else {
+                    "entity.pig.death"
+                }),
+                (VoiceSlot::Ambient, true) => Some("entity.baby_pig.ambient"),
+                (VoiceSlot::Hurt, true) => Some("entity.baby_pig.hurt"),
+                (VoiceSlot::Death, true) => Some("entity.baby_pig.death"),
+            }
+        }
+        // THE CHICKEN'S OWN PAIR (chicken_sound_variant/classic.json
+        // + picky.json — the picky's own ambient/death/hurt rows the
+        // chicken_picky prefix speaks, the step_sound the both sets'
+        // entity.chicken.step keeps, the baby the baby_chicken rows)
+        (MobKind::Chicken, "classic" | "picky") => {
+            let picky = v == "picky";
+            match (slot, baby) {
+                (VoiceSlot::Ambient, false) => Some(if picky {
+                    "entity.chicken_picky.ambient"
+                } else {
+                    "entity.chicken.ambient"
+                }),
+                (VoiceSlot::Hurt, false) => Some(if picky {
+                    "entity.chicken_picky.hurt"
+                } else {
+                    "entity.chicken.hurt"
+                }),
+                (VoiceSlot::Death, false) => Some(if picky {
+                    "entity.chicken_picky.death"
+                } else {
+                    "entity.chicken.death"
+                }),
+                (VoiceSlot::Ambient, true) => Some("entity.baby_chicken.ambient"),
+                (VoiceSlot::Hurt, true) => Some("entity.baby_chicken.hurt"),
+                (VoiceSlot::Death, true) => Some("entity.baby_chicken.death"),
+            }
+        }
+        // THE COW'S OWN PAIR (cow_sound_variant/classic.json +
+        // moody.json — the FLAT set the json shape keeps, no
+        // adult/baby nesting the baby lane never splits)
+        (MobKind::Cow, "classic" | "moody") => {
+            let moody = v == "moody";
+            match slot {
+                VoiceSlot::Ambient => Some(if moody {
+                    "entity.cow_moody.ambient"
+                } else {
+                    "entity.cow.ambient"
+                }),
+                VoiceSlot::Hurt => Some(if moody {
+                    "entity.cow_moody.hurt"
+                } else {
+                    "entity.cow.hurt"
+                }),
+                VoiceSlot::Death => Some(if moody {
+                    "entity.cow_moody.death"
+                } else {
+                    "entity.cow.death"
+                }),
+            }
+        }
+        _ => None,
+    }
+}
+
+/// THE SOUND VARIANT'S OWN STEP WORD (javap the playStepSound
+/// overrides the 26.2 bytecode keeps — AbstractCow's, Chicken's and
+/// Pig's own `getSoundSet().stepSound()` the `playSound(..., 0.15F,
+/// 1.0F)` walk plays, the block state the voice never reads): the
+/// set's step row the variant names, the classic the both pig sets'
+/// entity.pig.step and the both chicken sets' entity.chicken.step
+/// and the cow's classic row keep. (The old audit's `the animals
+/// override NOTHING` walk the 26.2 jar's own classfiles refute —
+/// ALL THREE farm animals override.)
+pub fn farm_sound_variant_step(kind: MobKind, variant: &str, baby: bool) -> Option<&'static str> {
+    let v = variant.strip_prefix("minecraft:")?;
+    match (kind, v) {
+        (MobKind::Pig, "classic" | "big") => Some(if baby {
+            "entity.baby_pig.step"
+        } else {
+            "entity.pig.step"
+        }),
+        (MobKind::Chicken, "classic" | "picky") => Some(if baby {
+            "entity.baby_chicken.step"
+        } else {
+            "entity.chicken.step"
+        }),
+        (MobKind::Cow, "classic") => Some("entity.cow.step"),
+        (MobKind::Cow, "moody") => Some("entity.cow_moody.step"),
+        _ => None,
+    }
+}
+
+/// THE PIG'S OWN EAT WORD (javap `Pig.playEatingSound` — the
+/// `getSoundSet().eatSound()` the makeSound walk plays, the ONLY eat
+/// row the three sound sets keep): the set's eat row the variant
+/// names, the classic the both sets' entity.pig.eat and the baby's
+/// entity.baby_pig.eat keep.
+pub fn farm_sound_variant_eat(variant: &str, baby: bool) -> Option<&'static str> {
+    let v = variant.strip_prefix("minecraft:")?;
+    match (v, baby) {
+        (_, true) => Some("entity.baby_pig.eat"),
+        ("big", false) => Some("entity.pig_big.eat"),
+        ("classic", false) => Some("entity.pig.eat"),
+        _ => None,
     }
 }
 
@@ -2570,6 +2732,19 @@ pub struct Zombie {
     /// spawn/breed walk the same word wears (the pick laws the biome
     /// tables speak).
     pub farm_variant: Option<ChickenVariantKind>,
+    /// THE FARM SOUND VARIANT'S OWN WORD (the synced
+    /// *_SOUND_VARIANT holder the sound slots carry — the kind gates
+    /// which animal's slot fed it, the configuration table the name
+    /// resolves): the voice lanes' ambient/hurt/death/step and the
+    /// pig's eat all read the set the word names — the jar's own
+    /// sound-variant jsons the tables bank (classic/big the pig,
+    /// classic/picky the chicken, classic/moody the cow; the pig's
+    /// and the chicken's baby_sounds the isBaby split keeps, the
+    /// cow's flat set the baby lane never splits). `None` while the
+    /// accessor never spoke — the classic set the honest default
+    /// keeps (the vanilla client's own ctor default the silence
+    /// answers).
+    pub farm_sound_variant: Option<String>,
     /// THE GRAZE'S OWN CLOCK (Sheep.eatAnimationTick — the goal's
     /// start() the 40 window arms, the tick's decrement the window
     /// drains, the handleEntityEvent(10) the client copy re-arms: the
@@ -2858,6 +3033,7 @@ impl Zombie {
             boost_time_total: 0,
             wool_color: 0,
             farm_variant: None,
+            farm_sound_variant: None,
             eat_animation_tick: 0,
             custom_name: None,
             name_visible: false,
@@ -4640,6 +4816,59 @@ impl Zombie {
         } else {
             false
         }
+    }
+
+    /// THE MOB'S OWN VOICE WORD (javap the getters' own walk —
+    /// getAmbientSound/getHurtSound/getDeathSound ALL ride the synced
+    /// sound variant's set the 26.2 jar speaks: the `getSoundSet()`
+    /// walk the isBaby split keeps for the pig and the chicken, the
+    /// flat set the cow wears; the synced word the entity data's
+    /// sound slots carry, the classic rows the never-spoken slot's
+    /// honest default keeps — the kind's own table the None lane
+    /// answers, the same words the old walks banked).
+    pub fn voice_event(&self, slot: VoiceSlot) -> &'static str {
+        self.farm_sound_variant
+            .as_deref()
+            .and_then(|v| farm_sound_variant_word(self.kind, v, self.is_baby(), slot))
+            .unwrap_or_else(|| self.kind.voice_event(slot))
+    }
+
+    /// THE MOB'S OWN STEP WORD (javap the playStepSound overrides the
+    /// 26.2 bytecode keeps — AbstractCow's, Chicken's and Pig's own
+    /// `getSoundSet().stepSound()` the `playSound(..., 0.15F, 1.0F)`
+    /// walk plays, the block state the voice never reads; the synced
+    /// word the set picks, the classic the never-spoken slot's
+    /// honest default keeps — the same law the voice trio rides).
+    /// The other kinds the block walk keeps (the zombie's and the
+    /// skeleton's and the spider's own flat overrides, the sheep the
+    /// base's block law wears — no sound variant those kinds carry).
+    pub fn step_voice(&self, under: Option<&str>) -> Option<(&'static str, f32, f32)> {
+        match self.kind {
+            MobKind::Chicken | MobKind::Pig | MobKind::Cow => {
+                let v = self
+                    .farm_sound_variant
+                    .as_deref()
+                    .unwrap_or("minecraft:classic");
+                Some((farm_sound_variant_step(self.kind, v, self.is_baby())?, 0.15, 1.0))
+            }
+            _ => self.kind.step_voice(under),
+        }
+    }
+
+    /// THE PIG'S OWN EAT WORD (javap `Pig.playEatingSound` — the
+    /// `getSoundSet().eatSound()` the makeSound walk plays; the synced
+    /// word the set picks, the classic the never-spoken slot's honest
+    /// default keeps). The non-pig kinds the kind's own silence keeps
+    /// (the Sheep/Cow the base's own empty playEatingSound law speaks —
+    /// no eat row the sound sets name).
+    pub fn eat_voice(&self) -> Option<&'static str> {
+        if self.kind != MobKind::Pig {
+            return None;
+        }
+        Some(match self.farm_sound_variant.as_deref() {
+            Some(v) => farm_sound_variant_eat(v, self.is_baby()).unwrap_or("entity.pig.eat"),
+            None => "entity.pig.eat",
+        })
     }
 
     /// `LivingEntity.getVoicePitch` — the hurt/death/ambient voices'
@@ -6934,13 +7163,14 @@ mod tests {
     /// THE STEP VOICE'S OWN SPLIT (javap the 26.2 jar's playStepSound
     /// pair): the zombie's own override the FLAT fold keeps — every
     /// surface (even the air the caller never passes) the same voice,
-    /// no block state the fold reads; the animals override NOTHING —
-    /// the Entity base impl the state's SoundType speaks (the
-    /// getStepSound() event at getVolume() * 0.15F / getPitch()), the
-    /// grass pad (1.0, 1.0) the fold walks to block.grass.step at
-    /// 0.15/1.0, the stone pad the same base pair answers. The air
-    /// and the unknown block the None keeps — the vanilla never
-    /// hears them either.
+    /// no block state the fold reads; the farm animals' own overrides
+    /// the 26.2 classfiles speak (Pig/Chicken/AbstractCow the
+    /// `getSoundSet().stepSound()` walks keep — the flat 0.15F/1.0F
+    /// pairs the classic sets' own step words name), the sheep the
+    /// base's block law wears (no sound variant, no override the
+    /// classfile keeps) — the grass pad (1.0, 1.0) the fold walks to
+    /// block.grass.step at 0.15/1.0. The air and the unknown block
+    /// the None keeps — the vanilla never hears them either.
     #[test]
     fn the_step_voice_splits_the_kinds_the_block_law_speaks() {
         // the zombie's flat override — two surfaces, one voice
@@ -6951,26 +7181,214 @@ mod tests {
                 "the zombie's flat fold answers every surface"
             );
         }
-        // the animals' block law — the SoundType's own base the fold walks
-        for kind in [MobKind::Sheep, MobKind::Cow, MobKind::Pig] {
-            let (event, v, p) = kind
-                .step_voice(Some("grass_block"))
-                .expect("the grass pad's voice");
-            assert_eq!(event, "block.grass.step", "the grass pad's event");
-            assert_eq!((v, p), (0.15, 1.0), "the grass base pair the fold walks");
-            let (event, v, p) = kind
-                .step_voice(Some("stone"))
-                .expect("the stone pad's voice");
-            assert_eq!(event, "block.stone.step", "the stone pad's event");
-            assert_eq!((v, p), (0.15, 1.0), "the stone base pair the fold walks");
-            // the silent lanes the None keeps
-            assert_eq!(kind.step_voice(None), None, "the air never speaks");
-            assert_eq!(
-                kind.step_voice(Some("not_a_block")),
-                None,
-                "the unknown block the table never names"
-            );
-        }
+        // THE FARM ANIMALS' OWN FLAT OVERRIDES (the 26.2 jar's own
+        // classfiles — the set's step word the block state never
+        // bends)
+        assert_eq!(
+            MobKind::Chicken.step_voice(Some("grass_block")),
+            Some(("entity.chicken.step", 0.15, 1.0))
+        );
+        assert_eq!(
+            MobKind::Pig.step_voice(Some("stone")),
+            Some(("entity.pig.step", 0.15, 1.0))
+        );
+        assert_eq!(
+            MobKind::Cow.step_voice(None),
+            Some(("entity.cow.step", 0.15, 1.0)),
+            "the flat fold answers the air too"
+        );
+        // THE SHEEP'S BLOCK LAW — the SoundType's own base the fold walks
+        let (event, v, p) = MobKind::Sheep
+            .step_voice(Some("grass_block"))
+            .expect("the grass pad's voice");
+        assert_eq!(event, "block.grass.step", "the grass pad's event");
+        assert_eq!((v, p), (0.15, 1.0), "the grass base pair the fold walks");
+        let (event, v, p) = MobKind::Sheep
+            .step_voice(Some("stone"))
+            .expect("the stone pad's voice");
+        assert_eq!(event, "block.stone.step", "the stone pad's event");
+        assert_eq!((v, p), (0.15, 1.0), "the stone base pair the fold walks");
+        // the silent lanes the None keeps
+        assert_eq!(MobKind::Sheep.step_voice(None), None, "the air never speaks");
+        assert_eq!(
+            MobKind::Sheep.step_voice(Some("not_a_block")),
+            None,
+            "the unknown block the table never names"
+        );
+    }
+
+    /// THE SOUND VARIANTS' OWN TABLES (javap the 26.2 jar's own
+    /// sound-variant jsons the data/ verbatim banks — the slots the
+    /// class-tree walk lands, the sets the isBaby split keeps for the
+    /// pig and the chicken, the cow's flat set the baby lane never
+    /// splits, the step/eat rows the overrides speak).
+    #[test]
+    fn the_sound_variants_the_jar_jsons_speak() {
+        // THE WIRE INDICES' OWN PINS (the clinit walks the 26.2 jar
+        // speaks: the chicken's sound variant the 19th, the pig's the
+        // 20th — the BOOST 18 + VARIANT 19 pair rides before it — the
+        // cow's the 19th)
+        assert_eq!(CHICKEN_DATA_SOUND_VARIANT_ID, 19);
+        assert_eq!(PIG_DATA_SOUND_VARIANT_ID, 20);
+        assert_eq!(COW_DATA_SOUND_VARIANT_ID, 19);
+
+        // THE PIG'S OWN PAIR (pig_sound_variant/classic.json +
+        // big.json — the big's ambient/hurt/death rows the pig_big
+        // prefix speaks, the step rows BOTH sets' entity.pig.step
+        // keeps, the baby rows the baby_pig prefix names)
+        assert_eq!(
+            farm_sound_variant_word(MobKind::Pig, "minecraft:classic", false, VoiceSlot::Ambient),
+            Some("entity.pig.ambient")
+        );
+        assert_eq!(
+            farm_sound_variant_word(MobKind::Pig, "minecraft:big", false, VoiceSlot::Ambient),
+            Some("entity.pig_big.ambient")
+        );
+        assert_eq!(
+            farm_sound_variant_word(MobKind::Pig, "minecraft:big", false, VoiceSlot::Hurt),
+            Some("entity.pig_big.hurt")
+        );
+        assert_eq!(
+            farm_sound_variant_word(MobKind::Pig, "minecraft:big", false, VoiceSlot::Death),
+            Some("entity.pig_big.death")
+        );
+        assert_eq!(
+            farm_sound_variant_word(MobKind::Pig, "minecraft:big", true, VoiceSlot::Ambient),
+            Some("entity.baby_pig.ambient"),
+            "the baby set the isBaby split keeps"
+        );
+        assert_eq!(
+            farm_sound_variant_step(MobKind::Pig, "minecraft:big", false),
+            Some("entity.pig.step"),
+            "the step rows both sets' classic word keeps"
+        );
+        assert_eq!(
+            farm_sound_variant_step(MobKind::Pig, "minecraft:big", true),
+            Some("entity.baby_pig.step")
+        );
+        // THE PIG'S EAT ROWS (playEatingSound's own set read — the
+        // big adult the pig_big row speaks, the baby the baby_pig row)
+        assert_eq!(farm_sound_variant_eat("minecraft:classic", false), Some("entity.pig.eat"));
+        assert_eq!(farm_sound_variant_eat("minecraft:big", false), Some("entity.pig_big.eat"));
+        assert_eq!(farm_sound_variant_eat("minecraft:big", true), Some("entity.baby_pig.eat"));
+
+        // THE CHICKEN'S OWN PAIR (chicken_sound_variant/classic.json
+        // + picky.json — the picky's ambient/hurt/death rows the
+        // chicken_picky prefix speaks, the step the both sets'
+        // entity.chicken.step keeps, the baby the baby_chicken rows)
+        assert_eq!(
+            farm_sound_variant_word(
+                MobKind::Chicken,
+                "minecraft:picky",
+                false,
+                VoiceSlot::Ambient
+            ),
+            Some("entity.chicken_picky.ambient")
+        );
+        assert_eq!(
+            farm_sound_variant_word(MobKind::Chicken, "minecraft:picky", false, VoiceSlot::Hurt),
+            Some("entity.chicken_picky.hurt")
+        );
+        assert_eq!(
+            farm_sound_variant_word(
+                MobKind::Chicken,
+                "minecraft:picky",
+                true,
+                VoiceSlot::Death
+            ),
+            Some("entity.baby_chicken.death")
+        );
+        assert_eq!(
+            farm_sound_variant_step(MobKind::Chicken, "minecraft:picky", false),
+            Some("entity.chicken.step")
+        );
+
+        // THE COW'S OWN PAIR (cow_sound_variant/classic.json +
+        // moody.json — the FLAT set the json shape keeps, the moody
+        // rows the cow_moody prefix speaks, the baby the split never
+        // takes)
+        assert_eq!(
+            farm_sound_variant_word(MobKind::Cow, "minecraft:moody", true, VoiceSlot::Ambient),
+            Some("entity.cow_moody.ambient"),
+            "the flat set the baby split never bends"
+        );
+        assert_eq!(
+            farm_sound_variant_word(MobKind::Cow, "minecraft:classic", false, VoiceSlot::Hurt),
+            Some("entity.cow.hurt")
+        );
+        assert_eq!(
+            farm_sound_variant_step(MobKind::Cow, "minecraft:moody", false),
+            Some("entity.cow_moody.step")
+        );
+
+        // THE HONEST LANES THE SILENCE KEEPS (the unknown variant name,
+        // the kind the sound slot never feeds, the sheep the no-variant
+        // family keeps)
+        assert_eq!(
+            farm_sound_variant_word(MobKind::Pig, "minecraft:plains", false, VoiceSlot::Ambient),
+            None
+        );
+        assert_eq!(
+            farm_sound_variant_word(MobKind::Zombie, "minecraft:classic", false, VoiceSlot::Ambient),
+            None
+        );
+        assert_eq!(farm_sound_variant_step(MobKind::Sheep, "minecraft:classic", false), None);
+    }
+
+    /// THE MOB'S OWN VOICE WORDS (javap the getters' walk the synced
+    /// set feeds — the big pig's ambient/hurt/death rows the
+    /// pig_big prefix speaks, the baby the baby_pig rows answer, the
+    /// never-spoken slot the classic kind rows keep; the step the
+    /// flat 0.15/1.0 pair the overrides play, the eat the pig's own
+    /// lane keeps).
+    #[test]
+    fn the_mob_voice_words_the_synced_set_speaks() {
+        let mut m = Zombie::new(1, 0.0, 64.0, 0.0, 7);
+        m.kind = MobKind::Pig;
+        // the never-spoken slot: the classic kind rows the honest
+        // default keeps
+        assert_eq!(m.voice_event(VoiceSlot::Ambient), "entity.pig.ambient");
+        assert_eq!(m.step_voice(Some("stone")), Some(("entity.pig.step", 0.15, 1.0)));
+        assert_eq!(m.eat_voice(), Some("entity.pig.eat"));
+        // THE BIG SET'S OWN RIDE (the synced word the entity data
+        // carries — the adult rows the pig_big prefix speaks, the eat
+        // the set's own row wears)
+        m.farm_sound_variant = Some("minecraft:big".to_string());
+        assert_eq!(m.voice_event(VoiceSlot::Ambient), "entity.pig_big.ambient");
+        assert_eq!(m.voice_event(VoiceSlot::Hurt), "entity.pig_big.hurt");
+        assert_eq!(m.voice_event(VoiceSlot::Death), "entity.pig_big.death");
+        assert_eq!(m.eat_voice(), Some("entity.pig_big.eat"));
+        // THE BABY'S OWN SPLIT (the isBaby gate the getSoundSet walk
+        // keeps — the baby rows both variants share)
+        m.set_age(crate::mob::BABY_START_AGE);
+        assert_eq!(m.voice_event(VoiceSlot::Ambient), "entity.baby_pig.ambient");
+        assert_eq!(m.step_voice(None), Some(("entity.baby_pig.step", 0.15, 1.0)));
+        assert_eq!(m.eat_voice(), Some("entity.baby_pig.eat"));
+        // THE NON-PIG'S OWN SILENCE (the eat lane the pig only owns)
+        let mut c = Zombie::new(2, 0.0, 64.0, 0.0, 8);
+        c.kind = MobKind::Chicken;
+        assert_eq!(c.eat_voice(), None);
+        c.farm_sound_variant = Some("minecraft:picky".to_string());
+        assert_eq!(c.voice_event(VoiceSlot::Ambient), "entity.chicken_picky.ambient");
+        assert_eq!(c.step_voice(None), Some(("entity.chicken.step", 0.15, 1.0)));
+        // the cow's flat set — the moody word the baby split never bends
+        let mut cw = Zombie::new(3, 0.0, 64.0, 0.0, 9);
+        cw.kind = MobKind::Cow;
+        cw.farm_sound_variant = Some("minecraft:moody".to_string());
+        cw.set_age(crate::mob::BABY_START_AGE);
+        assert_eq!(cw.voice_event(VoiceSlot::Ambient), "entity.cow_moody.ambient");
+        assert_eq!(cw.step_voice(Some("grass_block")), Some(("entity.cow_moody.step", 0.15, 1.0)));
+        // THE SHEEP'S OWN KIND LANE (no sound variant the family
+        // carries — the voice rows the kind's table keeps, the step
+        // the block law walks)
+        let mut s = Zombie::new(4, 0.0, 64.0, 0.0, 10);
+        s.kind = MobKind::Sheep;
+        s.farm_sound_variant = Some("minecraft:moody".to_string());
+        assert_eq!(s.voice_event(VoiceSlot::Ambient), "entity.sheep.ambient");
+        assert_eq!(
+            s.step_voice(Some("grass_block")),
+            Some(("block.grass.step", 0.15, 1.0))
+        );
     }
 
     /// THE PICK's own slab test (javap `AABB.clip`): the ray through

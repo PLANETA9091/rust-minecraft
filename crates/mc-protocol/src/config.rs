@@ -405,6 +405,20 @@ pub struct RegistryData {
     /// table the COW_VARIANT holder varint (the slot-18 entry) resolves
     /// through. Names only: the spawn_conditions payloads walked past.
     pub cow_variants: Vec<String>,
+    /// The `minecraft:chicken_sound_variant` entries in ARRIVAL ORDER —
+    /// the id table the CHICKEN_SOUND_VARIANT holder varint (the
+    /// slot-19 entry) resolves through. Names only: the sound-set
+    /// payloads (the jar's own jsons the voice tables bank) walked
+    /// past.
+    pub chicken_sound_variants: Vec<String>,
+    /// The `minecraft:pig_sound_variant` entries in ARRIVAL ORDER — the
+    /// id table the PIG_SOUND_VARIANT holder varint (the slot-20
+    /// entry) resolves through.
+    pub pig_sound_variants: Vec<String>,
+    /// The `minecraft:cow_sound_variant` entries in ARRIVAL ORDER — the
+    /// id table the COW_SOUND_VARIANT holder varint (the slot-19
+    /// entry) resolves through.
+    pub cow_sound_variants: Vec<String>,
     /// The `minecraft:timeline` entries in ARRIVAL ORDER (javap:
     /// `Registries.TIMELINE` = the "minecraft:timeline" registry key,
     /// in `RegistryDataLoader`'s synced list). The sky-light curve the
@@ -462,6 +476,28 @@ impl RegistryData {
         self.cow_variants.get(id as usize).map(|s| s.as_str())
     }
 
+    /// The registry name of one synced chicken-sound-variant id (the
+    /// slot-19 CHICKEN_SOUND_VARIANT holder the projection resolves
+    /// through this) — `None` for an id the server never streamed (the
+    /// honest unknown, the classic set the silence keeps).
+    pub fn chicken_sound_variant_name(&self, id: u32) -> Option<&str> {
+        self.chicken_sound_variants.get(id as usize).map(|s| s.as_str())
+    }
+
+    /// The registry name of one synced pig-sound-variant id (the
+    /// slot-20 PIG_SOUND_VARIANT holder the projection resolves
+    /// through this).
+    pub fn pig_sound_variant_name(&self, id: u32) -> Option<&str> {
+        self.pig_sound_variants.get(id as usize).map(|s| s.as_str())
+    }
+
+    /// The registry name of one synced cow-sound-variant id (the
+    /// slot-19 COW_SOUND_VARIANT holder the projection resolves
+    /// through this).
+    pub fn cow_sound_variant_name(&self, id: u32) -> Option<&str> {
+        self.cow_sound_variants.get(id as usize).map(|s| s.as_str())
+    }
+
     /// One synced biome element, by network id — the tint path's
     /// lookup (palette id -> element -> effects colors).
     pub fn biome(&self, id: u32) -> Option<&BiomeEntry> {
@@ -500,6 +536,9 @@ impl RegistryData {
         self.chicken_variants.extend(other.chicken_variants);
         self.pig_variants.extend(other.pig_variants);
         self.cow_variants.extend(other.cow_variants);
+        self.chicken_sound_variants.extend(other.chicken_sound_variants);
+        self.pig_sound_variants.extend(other.pig_sound_variants);
+        self.cow_sound_variants.extend(other.cow_sound_variants);
         self.timelines.extend(other.timelines);
         self.timeline_tags.extend(other.timeline_tags);
     }
@@ -907,6 +946,40 @@ pub fn parse_registry_data(payload: &[u8]) -> Result<RegistryData> {
             // same arrival-order id table (the COW_VARIANT holder
             // varint the slot-18 entity data entry resolves through)
             out.cow_variants.push(entry_id);
+            if present {
+                crate::play::skip_network_nbt(&mut c)
+                    .with_context(|| format!("skip {registry_name} entry nbt"))?;
+            }
+            continue;
+        }
+        if registry_name == "minecraft:chicken_sound_variant" {
+            // same arrival-order id table (the CHICKEN_SOUND_VARIANT
+            // holder varint the slot-19 entity data entry resolves
+            // through — the sound set the voice tables' own jsons
+            // bank, the payload walked past)
+            out.chicken_sound_variants.push(entry_id);
+            if present {
+                crate::play::skip_network_nbt(&mut c)
+                    .with_context(|| format!("skip {registry_name} entry nbt"))?;
+            }
+            continue;
+        }
+        if registry_name == "minecraft:pig_sound_variant" {
+            // same arrival-order id table (the PIG_SOUND_VARIANT
+            // holder varint the slot-20 entity data entry resolves
+            // through)
+            out.pig_sound_variants.push(entry_id);
+            if present {
+                crate::play::skip_network_nbt(&mut c)
+                    .with_context(|| format!("skip {registry_name} entry nbt"))?;
+            }
+            continue;
+        }
+        if registry_name == "minecraft:cow_sound_variant" {
+            // same arrival-order id table (the COW_SOUND_VARIANT
+            // holder varint the slot-19 entity data entry resolves
+            // through)
+            out.cow_sound_variants.push(entry_id);
             if present {
                 crate::play::skip_network_nbt(&mut c)
                     .with_context(|| format!("skip {registry_name} entry nbt"))?;
@@ -2224,6 +2297,31 @@ mod tests {
         assert_eq!(cows.cow_variants[0], "minecraft:cold");
         assert_eq!(cows.cow_variant_name(0), Some("minecraft:cold"));
         assert_eq!(cows.cow_variant_name(9), None, "the unsynced id the honest None keeps");
+        // the SOUND variant registries: the SAME arrival-order law the
+        // visual variants' tables speak (the *_SOUND_VARIANT holder
+        // varints the sound slots carry resolve through these — the
+        // sound-set payloads the voice tables' own jsons bank are
+        // walked past; the helper's cold/warm/temperate rows the
+        // name-only law reads verbatim)
+        let ps = parse_registry_data(&farm_variant_packet("minecraft:pig_sound_variant"))
+            .expect("pig_sound_variant parses");
+        assert_eq!(ps.pig_sound_variants[0], "minecraft:cold");
+        assert_eq!(ps.pig_sound_variants[2], "minecraft:temperate");
+        assert_eq!(ps.pig_sound_variant_name(1), Some("minecraft:warm"));
+        assert_eq!(ps.pig_sound_variant_name(3), None, "the unsynced id the honest None keeps");
+        let cs = parse_registry_data(&farm_variant_packet("minecraft:chicken_sound_variant"))
+            .expect("chicken_sound_variant parses");
+        assert_eq!(cs.chicken_sound_variants[0], "minecraft:cold");
+        assert_eq!(cs.chicken_sound_variant_name(1), Some("minecraft:warm"));
+        let vs = parse_registry_data(&farm_variant_packet("minecraft:cow_sound_variant"))
+            .expect("cow_sound_variant parses");
+        assert_eq!(vs.cow_sound_variants[0], "minecraft:cold");
+        assert_eq!(vs.cow_sound_variant_name(0), Some("minecraft:cold"));
+        assert_eq!(vs.cow_sound_variant_name(1), Some("minecraft:warm"));
+        assert!(
+            ps.pig_variants.is_empty() && cs.chicken_variants.is_empty(),
+            "no visual-variant knowledge rides the sound packets"
+        );
         // the timeline registry: FOUR entries in arrival order, only
         // `minecraft:day` carrying the visual/sky_light_factor track —
         // the string/bool tracks and the ease field are walked past

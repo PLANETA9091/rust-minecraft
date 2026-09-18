@@ -3219,12 +3219,16 @@ impl App {
                     let mut ride_fire_death = false;
                     let mut ride_fizz = None::<f32>;
                     let mut ride_loot: Vec<(i32, i32)> = Vec::new();
-                    let mut ride_kind = crate::mob::MobKind::Zombie;
+                    let mut ride_words = None::<[&'static str; 3]>;
                     let mut ride_pitch = 1.0f32;
                     let mut ride_pose = (0.0f64, 0.0f64, 0.0f64);
                     if let Some(w) = world {
                         if let Some(pig) = self.mobs.iter_mut().find(|m| m.id == vid) {
-                            ride_kind = pig.kind;
+                            ride_words = Some([
+                                pig.voice_event(crate::mob::VoiceSlot::Ambient),
+                                pig.voice_event(crate::mob::VoiceSlot::Hurt),
+                                pig.voice_event(crate::mob::VoiceSlot::Death),
+                            ]);
                             let ev = pig.tick(w, player_view.as_ref(), day_time);
                             step_ev = ev.step;
                             step_at = Some((pig.x, pig.y, pig.z));
@@ -3254,7 +3258,7 @@ impl App {
                             .unwrap_or(crate::world::AIR) as usize];
                         if let Some(pig) = self.mobs.iter().find(|m| m.id == vid) {
                             if let Some((event, volume, pitch)) =
-                                pig.kind.step_voice(Some(under))
+                                pig.step_voice(Some(under))
                             {
                                 let ear = Some((b.x, b.y + b.eye_height(), b.z));
                                 self.sounds.play_voice_at(
@@ -3275,7 +3279,7 @@ impl App {
                     if ride_ambient {
                         self.sounds.play_voice_at(
                             self.frame,
-                            ride_kind.voice_event(crate::mob::VoiceSlot::Ambient),
+                            ride_words.expect("the ride tick named the words")[0],
                             1.0,
                             ride_pitch,
                             ear_distance(ear, ride_pose.0, ride_pose.1, ride_pose.2),
@@ -3284,7 +3288,7 @@ impl App {
                     if ride_fire_hurt {
                         self.sounds.play_voice_at(
                             self.frame,
-                            ride_kind.voice_event(crate::mob::VoiceSlot::Hurt),
+                            ride_words.expect("the ride tick named the words")[1],
                             1.0,
                             ride_pitch,
                             ear_distance(ear, ride_pose.0, ride_pose.1, ride_pose.2),
@@ -3308,7 +3312,7 @@ impl App {
                         // spawnAtLocation law pops at the feet)
                         self.sounds.play_voice_at(
                             self.frame,
-                            ride_kind.voice_event(crate::mob::VoiceSlot::Death),
+                            ride_words.expect("the ride tick named the words")[2],
                             1.0,
                             ride_pitch,
                             ear_distance(ear, ride_pose.0, ride_pose.1, ride_pose.2),
@@ -4009,11 +4013,9 @@ impl App {
                     .body
                     .as_ref()
                     .map(|b| (b.x, b.y + b.eye_height(), b.z));
-                let mut groans: Vec<(crate::mob::MobKind, f32, f64)> = Vec::new();
-                let mut fire_hurts: Vec<(crate::mob::MobKind, f32, f64)> = Vec::new();
-                let mut fire_deaths: Vec<
-                    (crate::mob::MobKind, f64, f64, f64, f32, Vec<(i32, i32)>),
-                > = Vec::new();
+                let mut groans: Vec<(&'static str, f32, f64)> = Vec::new();
+                let mut fire_hurts: Vec<(&'static str, f32, f64)> = Vec::new();
+                let mut fire_deaths: Vec<(&'static str, f64, f64, f64, f32, Vec<(i32, i32)>)> = Vec::new();
                 let mut fizzes: Vec<(f32, f64)> = Vec::new();
                 // THE HURTBY GOAL'S OWN ALERTS (the start()'s
                 // alertOthers walk the events queue — the same-kind
@@ -4130,7 +4132,11 @@ impl App {
                             }
                             if ev.ambient {
                                 groans.push((
-                                    mob.kind,
+                                    // THE MOB'S OWN ROW (the synced
+                                    // sound variant's set the word
+                                    // picks, the classic the honest
+                                    // default keeps)
+                                    mob.voice_event(crate::mob::VoiceSlot::Ambient),
                                     mob.voice_pitch(),
                                     ear_distance(ear, mob.x, mob.y, mob.z),
                                 ));
@@ -4141,7 +4147,7 @@ impl App {
                                 // mob's own table the zombie's row never
                                 // names for the animals)
                                 fire_hurts.push((
-                                    mob.kind,
+                                    mob.voice_event(crate::mob::VoiceSlot::Hurt),
                                     mob.voice_pitch(),
                                     ear_distance(ear, mob.x, mob.y, mob.z),
                                 ));
@@ -4159,7 +4165,7 @@ impl App {
                                 // animal's own table the zombie's groan
                                 // never plays for)
                                 fire_deaths.push((
-                                    mob.kind,
+                                    mob.voice_event(crate::mob::VoiceSlot::Death),
                                     mob.x,
                                     mob.y,
                                     mob.z,
@@ -4199,7 +4205,7 @@ impl App {
                                     mob.z.floor() as i32,
                                 ) as usize];
                                 if let Some((event, volume, pitch)) =
-                                    mob.kind.step_voice(Some(under))
+                                    mob.step_voice(Some(under))
                                 {
                                     mob_steps.push((
                                         event,
@@ -4416,14 +4422,16 @@ impl App {
                         continue;
                     };
                     let mob = &mut self.mobs[i];
-                    let (kind, pitch) = (mob.kind, mob.voice_pitch());
+                    let pitch = mob.voice_pitch();
+                    let mob_word = mob.voice_event(crate::mob::VoiceSlot::Hurt);
+                    let death_word = mob.voice_event(crate::mob::VoiceSlot::Death);
                     let (mx, my, mz) = (mob.x, mob.y, mob.z);
                     mob.hurt(dmg, by_player);
                     let died = mob.health <= 0.0;
                     if died {
                         self.sounds.play_voice_at(
                             self.frame,
-                            kind.voice_event(crate::mob::VoiceSlot::Death),
+                            death_word,
                             1.0,
                             pitch,
                             ear_distance(ear, mx, my, mz),
@@ -4431,7 +4439,7 @@ impl App {
                     } else {
                         self.sounds.play_voice_at(
                             self.frame,
-                            kind.voice_event(crate::mob::VoiceSlot::Hurt),
+                            mob_word,
                             1.0,
                             pitch,
                             ear_distance(ear, mx, my, mz),
@@ -4511,33 +4519,21 @@ impl App {
                         }
                     }
                 }
-                for (kind, pitch, dist) in groans {
+                for (word, pitch, dist) in groans {
                     // the ambient groan (makeSound's own call — the
                     // volume rides the base 1.0 folded by THE DISTANCE
                     // LAW the wire lane speaks, the pitch the law; the
                     // voice table the KIND'S own row keeps — the
                     // creature lane's own animals the zombie's row
                     // never names)
-                    self.sounds.play_voice_at(
-                        self.frame,
-                        kind.voice_event(crate::mob::VoiceSlot::Ambient),
-                        1.0,
-                        pitch,
-                        dist,
-                    );
+                    self.sounds.play_voice_at(self.frame, word, 1.0, pitch, dist);
                 }
-                for (kind, pitch, dist) in fire_hurts {
+                for (word, pitch, dist) in fire_hurts {
                     // the onFire hurt's own voice (the hurt pipeline's
                     // makeSound — the same law the fist's hit speaks,
                     // the fold the burn spot's own distance speaks;
                     // the KIND'S OWN ROW the table keeps)
-                    self.sounds.play_voice_at(
-                        self.frame,
-                        kind.voice_event(crate::mob::VoiceSlot::Hurt),
-                        1.0,
-                        pitch,
-                        dist,
-                    );
+                    self.sounds.play_voice_at(self.frame, word, 1.0, pitch, dist);
                 }
                 for (pitch, dist) in fizzes {
                     // the extinguish transition (javap
@@ -4553,14 +4549,14 @@ impl App {
                         dist,
                     );
                 }
-                for (kind, mx, my, mz, pitch, loot) in fire_deaths {
+                for (word, mx, my, mz, pitch, loot) in fire_deaths {
                     // the death voice (the die() tail's makeSound — the
                     // pitch the entity's own law speaks, the gain the
-                    // death spot's own distance folds; the KIND'S OWN
-                    // ROW the table keeps)
+                    // death spot's own distance folds; the MOB'S OWN
+                    // ROW the synced sound variant's set keeps)
                     self.sounds.play_voice_at(
                         self.frame,
-                        kind.voice_event(crate::mob::VoiceSlot::Death),
+                        word,
                         1.0,
                         pitch,
                         ear_distance(ear, mx, my, mz),
@@ -8710,9 +8706,8 @@ impl App {
                             let burst =
                                 crate::particles::heart_burst(bbox, &mut self.mob_rng);
                             self.particles.extend(burst);
-                            if self.mobs[i].kind == crate::mob::MobKind::Pig {
-                                self.sounds
-                                    .play_voice(self.frame, "entity.pig.eat", 1.0, 1.0);
+                            if let Some(eat_word) = self.mobs[i].eat_voice() {
+                                self.sounds.play_voice(self.frame, eat_word, 1.0, 1.0);
                             }
                             self.swing.start();
                         }
@@ -8726,9 +8721,8 @@ impl App {
                             // heart burst the setInLove arm the baby
                             // never rides, the sparkles the forcedAge
                             // window the aiStep walk drains)
-                            if self.mobs[i].kind == crate::mob::MobKind::Pig {
-                                self.sounds
-                                    .play_voice(self.frame, "entity.pig.eat", 1.0, 1.0);
+                            if let Some(eat_word) = self.mobs[i].eat_voice() {
+                                self.sounds.play_voice(self.frame, eat_word, 1.0, 1.0);
                             }
                             self.swing.start();
                         }
@@ -10555,6 +10549,18 @@ impl App {
                         .and_then(crate::mob::ChickenVariantKind::from_variant_name),
                     _ => None,
                 };
+                // THE SOUND VARIANT'S OWN WORD rides the spawn (the
+                // sound slots the projection resolved — the SAME kind
+                // gates the visual variant's word keeps, the voice set
+                // the synced name picks: classic/big the pig,
+                // classic/picky the chicken, classic/moody the cow;
+                // the never-spoken slot the honest classic keeps)
+                m.farm_sound_variant = match m.kind {
+                    crate::mob::MobKind::Chicken => w.chicken_sound_variant.clone(),
+                    crate::mob::MobKind::Pig => w.pig_sound_variant.clone(),
+                    crate::mob::MobKind::Cow => w.cow_sound_variant.clone(),
+                    _ => None,
+                };
                 // THE EQUIPMENT WORD rides the spawn (the Set Equipment
                 // store's MAINHAND the projection resolved — the armed
                 // spawn the hand the render lane draws from tick one,
@@ -10659,6 +10665,16 @@ impl App {
                     .cow_variant
                     .as_deref()
                     .and_then(crate::mob::ChickenVariantKind::from_variant_name),
+                _ => None,
+            };
+            // THE SOUND VARIANT'S OWN WORD rides with the pose (the
+            // same kind-matched fold the fresh spawn speaks — the
+            // sound set is STATE the server owns, the never-spoken
+            // slot the honest classic keeps)
+            m.farm_sound_variant = match m.kind {
+                crate::mob::MobKind::Chicken => w.chicken_sound_variant.clone(),
+                crate::mob::MobKind::Pig => w.pig_sound_variant.clone(),
+                crate::mob::MobKind::Cow => w.cow_sound_variant.clone(),
                 _ => None,
             };
             // THE NAME WORD rides with the pose (the same binary
@@ -11255,7 +11271,7 @@ impl App {
             if m.health <= 0.0 {
                 if m.death_time == 0 {
                     deaths.push((
-                        m.kind.voice_event(crate::mob::VoiceSlot::Death),
+                        m.voice_event(crate::mob::VoiceSlot::Death),
                         m.voice_pitch(),
                         ear_distance(ear, m.x, m.y, m.z),
                     ));
@@ -11268,7 +11284,7 @@ impl App {
             // the id-seeded spawn law arms)
             if m.health > 0.0 && m.ambient_voice() {
                 groans.push((
-                    m.kind.voice_event(crate::mob::VoiceSlot::Ambient),
+                    m.voice_event(crate::mob::VoiceSlot::Ambient),
                     m.voice_pitch(),
                     ear_distance(ear, m.x, m.y, m.z),
                 ));
@@ -11282,7 +11298,7 @@ impl App {
             // reads at the frame
             if m.hurt_time == crate::mob::HURT_DURATION_TICKS {
                 hurts.push((
-                    m.kind.voice_event(crate::mob::VoiceSlot::Hurt),
+                    m.voice_event(crate::mob::VoiceSlot::Hurt),
                     m.voice_pitch(),
                     ear_distance(ear, m.x, m.y, m.z),
                 ));
@@ -22388,6 +22404,9 @@ mod tests {
             chicken_variant: None,
             pig_variant: None,
             cow_variant: None,
+chicken_sound_variant: None,
+pig_sound_variant: None,
+cow_sound_variant: None,
             held_weapon: None,
             held_offhand: None,
             armor: [None; 4],
@@ -22423,6 +22442,9 @@ mod tests {
             chicken_variant: None,
             pig_variant: None,
             cow_variant: None,
+chicken_sound_variant: None,
+pig_sound_variant: None,
+cow_sound_variant: None,
             held_weapon: None,
             held_offhand: None,
             armor: [None; 4],

@@ -960,6 +960,18 @@ pub struct WireMob {
     /// own kind gate): `Some("minecraft:warm")` the synced warm cow
     /// wears, `None` the honest Temperate keeps.
     pub cow_variant: Option<String>,
+    /// THE CHICKEN SOUND VARIANT'S OWN WORD (the
+    /// CHICKEN_SOUND_VARIANT holder the slot-19 entry carries — the
+    /// voice set the synced name picks, the classic the never-spoken
+    /// slot's honest default keeps).
+    pub chicken_sound_variant: Option<String>,
+    /// THE PIG SOUND VARIANT'S OWN WORD (the PIG_SOUND_VARIANT holder
+    /// the slot-20 entry carries — the same law the chicken's word
+    /// keeps, the PIG's own kind gate).
+    pub pig_sound_variant: Option<String>,
+    /// THE COW SOUND VARIANT'S OWN WORD (the COW_SOUND_VARIANT holder
+    /// the slot-19 entry carries — the same law the pair keeps).
+    pub cow_sound_variant: Option<String>,
     /// THE EQUIPMENT WORD (the Set Equipment store's MAINHAND slot —
     /// the item id the registry's wire order resolves to the BARE
     /// name): the weapon the mob's own hand wears, the same word the
@@ -2268,6 +2280,53 @@ impl LiveView {
                     } else {
                         None
                     },
+                    // THE SOUND VARIANTS' OWN WORDS (the *_SOUND_VARIANT
+                    // holders the sound slots carry — the SAME kind
+                    // gates the visual variants' words keep, the synced
+                    // names the configuration tables resolve, the
+                    // voice set the name picks: classic/big the pig,
+                    // classic/picky the chicken, classic/moody the
+                    // cow — the never-spoken slots the honest None
+                    // keeps, the classic set the voice lanes wear)
+                    chicken_sound_variant: if type_name == "minecraft:chicken" {
+                        match e.data.get(&crate::mob::CHICKEN_DATA_SOUND_VARIANT_ID) {
+                            Some(mc_protocol::play::EntityDataEntry::ChickenSoundVariant(vid)) => {
+                                self.model
+                                    .registry
+                                    .chicken_sound_variant_name(*vid as u32)
+                                    .map(String::from)
+                            }
+                            _ => None,
+                        }
+                    } else {
+                        None
+                    },
+                    pig_sound_variant: if type_name == "minecraft:pig" {
+                        match e.data.get(&crate::mob::PIG_DATA_SOUND_VARIANT_ID) {
+                            Some(mc_protocol::play::EntityDataEntry::PigSoundVariant(vid)) => {
+                                self.model
+                                    .registry
+                                    .pig_sound_variant_name(*vid as u32)
+                                    .map(String::from)
+                            }
+                            _ => None,
+                        }
+                    } else {
+                        None
+                    },
+                    cow_sound_variant: if type_name == "minecraft:cow" {
+                        match e.data.get(&crate::mob::COW_DATA_SOUND_VARIANT_ID) {
+                            Some(mc_protocol::play::EntityDataEntry::CowSoundVariant(vid)) => {
+                                self.model
+                                    .registry
+                                    .cow_sound_variant_name(*vid as u32)
+                                    .map(String::from)
+                            }
+                            _ => None,
+                        }
+                    } else {
+                        None
+                    },
                     // THE EQUIPMENT WORD (the store's MAINHAND slot 0 —
                     // the Set Equipment packet the model merged, the
                     // registry walk the bare name speaks): the render's
@@ -3261,6 +3320,97 @@ mod tests {
         view.model.drain_entity_sounds();
         let upd = view.refresh(example_mapper);
         assert!(upd.voices.is_empty(), "the shipped voice never re-ships");
+    }
+
+    /// THE SOUND VARIANTS' OWN WORDS the wire slots carry (the
+    /// *_SOUND_VARIANT holders the sound slots resolve through the
+    /// synced tables — the kind gates the visual variants' words keep,
+    /// the never-spoken slots the honest classic the voice lanes wear).
+    #[test]
+    fn the_sound_variant_words_the_wire_slots_speak() {
+        use mc_protocol::play::{EntitySpawn, SetEntityDataEntry};
+        let mut m = WorldModel::new();
+        m.registry.entity_types = vec![
+            "minecraft:pig".to_string(),
+            "minecraft:zombie".to_string(),
+            "minecraft:chicken".to_string(),
+            "minecraft:cow".to_string(),
+        ];
+        m.registry.pig_sound_variants = vec!["minecraft:classic".to_string(), "minecraft:big".to_string()];
+        m.registry.chicken_sound_variants = vec!["minecraft:classic".to_string(), "minecraft:picky".to_string()];
+        m.registry.cow_sound_variants = vec!["minecraft:classic".to_string(), "minecraft:moody".to_string()];
+        for (id, uuid, type_id, z) in [
+            (7, 1u128, 1i32, 12.0),  // the zombie — the gate refuses
+            (11, 3u128, 2i32, 32.0), // the chicken — the slot-19 word
+            (12, 4u128, 0i32, 52.0), // the pig — the slot-20 word
+            (13, 5u128, 3i32, 72.0), // the cow — the slot-19 word
+        ] {
+            m.apply(PlayEvent::Spawn(EntitySpawn {
+                id,
+                uuid,
+                type_id,
+                x: 10.0,
+                y: 64.0,
+                z,
+                movement: [0.0; 3],
+                x_rot: 0.0,
+                y_rot: 0.0,
+                y_head_rot: 0.0,
+                data: 0,
+            }));
+        }
+        let mut view = LiveView { model: m, side: 1 };
+        // the never-spoken slots: the honest classic the silence keeps
+        let upd = view.refresh(example_mapper);
+        assert!(
+            upd.mobs.iter().all(|m| m.pig_sound_variant.is_none()
+                && m.chicken_sound_variant.is_none()
+                && m.cow_sound_variant.is_none()),
+            "the fresh spawns the sound slots never spoke"
+        );
+        // THE SOUND SLOTS' OWN RIDE (the holder ids the synced tables
+        // resolve — the index-1 word the big/picky/moody names wear)
+        for (id, index, serializer, value) in [
+            (7, crate::mob::PIG_DATA_SOUND_VARIANT_ID, mc_protocol::play::entity_data_serializers::PIG_SOUND_VARIANT, mc_protocol::play::EntityDataEntry::PigSoundVariant(1)),
+            (11, crate::mob::CHICKEN_DATA_SOUND_VARIANT_ID, mc_protocol::play::entity_data_serializers::CHICKEN_SOUND_VARIANT, mc_protocol::play::EntityDataEntry::ChickenSoundVariant(1)),
+            (12, crate::mob::PIG_DATA_SOUND_VARIANT_ID, mc_protocol::play::entity_data_serializers::PIG_SOUND_VARIANT, mc_protocol::play::EntityDataEntry::PigSoundVariant(1)),
+            (13, crate::mob::COW_DATA_SOUND_VARIANT_ID, mc_protocol::play::entity_data_serializers::COW_SOUND_VARIANT, mc_protocol::play::EntityDataEntry::CowSoundVariant(1)),
+        ] {
+            view.model.apply(PlayEvent::EntityData(mc_protocol::play::EntityDataSet {
+                id,
+                entries: vec![SetEntityDataEntry {
+                    index,
+                    serializer,
+                    value,
+                }],
+            }));
+        }
+        let upd = view.refresh(example_mapper);
+        let z = upd.mobs.iter().find(|m| m.id == 7).unwrap();
+        assert!(
+            z.pig_sound_variant.is_none(),
+            "the zombie's pig-slot traffic the gate refuses"
+        );
+        let c = upd.mobs.iter().find(|m| m.id == 11).unwrap();
+        assert_eq!(
+            c.chicken_sound_variant.as_deref(),
+            Some("minecraft:picky"),
+            "the chicken's slot-19 holder the synced table resolves"
+        );
+        assert_eq!(c.pig_sound_variant, None, "the chicken's body the pig word never asks for");
+        let pg = upd.mobs.iter().find(|m| m.id == 12).unwrap();
+        assert_eq!(
+            pg.pig_sound_variant.as_deref(),
+            Some("minecraft:big"),
+            "the pig's slot-20 holder the synced table resolves"
+        );
+        assert_eq!(pg.cow_sound_variant, None, "the pig's body the cow word never asks for");
+        let cw = upd.mobs.iter().find(|m| m.id == 13).unwrap();
+        assert_eq!(
+            cw.cow_sound_variant.as_deref(),
+            Some("minecraft:moody"),
+            "the cow's slot-19 holder the synced table resolves"
+        );
     }
 
     /// THE CHICKEN VARIANT'S OWN RIDE (the CHICKEN_VARIANT holder the
@@ -4634,6 +4784,9 @@ mod tests {
             chicken_variants: Vec::new(),
             pig_variants: Vec::new(),
             cow_variants: Vec::new(),
+            chicken_sound_variants: Vec::new(),
+            pig_sound_variants: Vec::new(),
+            cow_sound_variants: Vec::new(),
             timelines: Vec::new(),
             timeline_tags: Vec::new(),
         };
@@ -4783,6 +4936,9 @@ mod tests {
             chicken_variants: Vec::new(),
             pig_variants: Vec::new(),
             cow_variants: Vec::new(),
+            chicken_sound_variants: Vec::new(),
+            pig_sound_variants: Vec::new(),
+            cow_sound_variants: Vec::new(),
             timelines: Vec::new(),
             timeline_tags: Vec::new(),
         };
