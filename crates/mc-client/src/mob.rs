@@ -432,6 +432,47 @@ pub enum MobInteract {
     /// filled instance REPLACES, the taller stack the shrink keeps +
     /// the fill the add-or-drop lands).
     Milk,
+    /// THE PIG'S OWN RIDE ARM (javap `Pig.mobInteract` 14-54 — the
+    /// 26.2 bytecode the subclass's own override keeps, the isFood
+    /// gate the FOOD hand the super speaks first: the non-food held
+    /// the gate lets through, the `isSaddled()` the saddle arm's own
+    /// bit reads, the `isVehicle()` the single rider the gate
+    /// reserves, the `player.isSecondaryUseActive()` the sneak the
+    /// stand-down the dispatch speaks, then the server arm
+    /// `player.startRiding(this)` — the client arm the
+    /// `level().isClientSide()` ifne the mount skips (the SUCCESS
+    /// both sides the return carries); the saddle-held stack the
+    /// same arm the saddled hull answers — the isFood false the
+    /// equip arm the ride's own verdict never lets reach). The
+    /// mount's own walk the caller speaks (the OfflineRide the
+    /// PASSENGER attachment the EntityAttachments fallback
+    /// lambda$static$1 keeps verbatim — Vec3(0, height, 0), the
+    /// FULL height the PIG_HEIGHT 0.9 carries, no boat's height/3
+    /// the AbstractBoat override rides; the pig's deltaRotation the
+    /// zero the no-steering walk keeps — the positionRider's
+    /// setYRot(getYRot() + deltaRotation) the fold the rider's own
+    /// look never drags).
+    Ride,
+    /// THE PIG'S OWN SADDLE ARM (javap `Pig.mobInteract` 73-100 →
+    /// `ItemStack.interactLivingEntity` → `Equippable.equipOnTarget`
+    /// 34-82 — the 26.2 bytecode the post-super arm keeps: the
+    /// `isEquippableInSlot(stack, EquipmentSlot.SADDLE)` the
+    /// EQUIPPABLE component's canBeEquippedBy(pigs) tag reads, the
+    /// `!hasItemInSlot(SADDLE)` the already-saddled hull the gate
+    /// refuses (the re-press the ride arm the saddled bit speaks
+    /// catches first), the `isAlive()` the corpse the gate refuses;
+    /// the server arm `setItemSlot(SADDLE, stack.split(1))` the
+    /// split speaks — the one the stack's tail keeps, the last the
+    /// hand empties — the `setGuaranteedDrop(SADDLE)` the Mob cast
+    /// speaks, the `InteractionResult.SUCCESS` both sides the
+    /// return carries (the client arm isClientSide ifne -> 79 the
+    /// same SUCCESS keeps)). The split's own walk the caller
+    /// speaks (the inventory the offline lane's stack truth keeps —
+    /// the shrink the taller stack the tail keeps, the empty hand
+    /// the last saddle the (0,0) speaks); the equip voice the
+    /// onEquipItem walk plays — entity.pig.saddle the sounds.json
+    /// keeps (mob/horse/leather, v0.5 the entry rides).
+    Saddle,
     /// the FOOD arm the `Animal.mobInteract` super speaks (the 26.2
     /// bytecode: `isFood(item)` hit, the ADULT arm `getAge() == 0 &&
     /// canFallInLove()` — `usePlayerItem` + `setInLove(player)` +
@@ -990,6 +1031,12 @@ pub struct Zombie {
     /// default = the SynchedEntityData's own (byte 0: unsheared, WHITE
     /// — the vanilla client's local default the define speaks).
     pub sheared: bool,
+    /// THE SADDLE'S OWN BIT (the EQUIPPABLE's SADDLE slot the
+    /// hasItemInSlot gate reads — the equip walk's setItemSlot the
+    /// bit arms, the ride arm's isSaddled the bit reads. The ctor's
+    /// honest default = the vanilla client's own: the spawned pig
+    /// the empty SADDLE slot carries).
+    pub saddled: bool,
     pub wool_color: u8,
     /// THE GRAZE'S OWN CLOCK (Sheep.eatAnimationTick — the goal's
     /// start() the 40 window arms, the tick's decrement the window
@@ -1115,6 +1162,7 @@ impl Zombie {
             aggressive: false,
             crouching: false,
             sheared: false,
+            saddled: false,
             wool_color: 0,
             eat_animation_tick: 0,
             custom_name: None,
@@ -2202,6 +2250,20 @@ impl Zombie {
             // Animal super's food walk, the baby the gate refuses):
             // the bucket the gate reads, the grown-up the milk takes
             "bucket" if self.kind == MobKind::Cow && !self.is_baby() => MobInteract::Milk,
+            // THE PIG'S OWN RIDE ARM (the subclass's own first arm
+            // the bytecode order keeps — the isFood gate the FOOD
+            // hand the super speaks BEFORE the ride reads: the
+            // isSaddled the bit requires, the non-food held the gate
+            // lets through, the sneak the dispatch's own stand-down
+            // speaks): the saddle-held stack the same arm answers
+            // (the isFood false the equip arm the ride never lets
+            // reach)
+            _ if self.kind == MobKind::Pig
+                && self.saddled
+                && !self.is_food(held_item) =>
+            {
+                MobInteract::Ride
+            }
             // the FOOD arm the Animal super walks (the miss the
             // Sheep's own shears gate speaks falls here — the vanilla
             // order the chain keeps): the isFood tag tables, the
@@ -2221,6 +2283,17 @@ impl Zombie {
             // the ZOMBIE the monster chain the AgeableMob super never
             // reaches, the kind gate the monster's own chain speaks)
             _ if self.can_use_golden_dandelion(held_item) => self.use_golden_dandelion(),
+            // THE PIG'S OWN SADDLE ARM (the post-super arm the
+            // bytecode order keeps — the super's non-consuming miss
+            // the chain's tail falls to, the SADDLE slot's emptiness
+            // the hasItemInSlot gate reads, the re-press the ride
+            // arm the saddled bit speaks catches first)
+            _ if self.kind == MobKind::Pig
+                && held_item == "saddle"
+                && !self.saddled =>
+            {
+                MobInteract::Saddle
+            }
             // the miss arms: the wrong stack, the wrong body, the
             // already-sheared wool (readyForShearing's own false), the
             // food the monster's chain never reaches — the super's
@@ -4117,6 +4190,44 @@ mod tests {
             mob.mob_interact("shears", &mut Lcg::new(42)),
             MobInteract::Pass,
             "the sheared sheep the gate refuses"
+        );
+    }
+
+    #[test]
+    fn the_pig_chain_walks_the_saddle_order() {
+        // Pig.mobInteract's own chain the 26.2 bytecode keeps: the
+        // saddle arm the unsaddled hull the post-super tail speaks,
+        // the ride arm the saddled hull the subclass's own first arm
+        // answers — the saddle-held stack the same arm takes (the
+        // isFood false the equip arm the ride never lets reach), the
+        // empty hand the same gate rides, the food hand the isFood
+        // gate the super speaks (the carrot the FEEDING lane answers,
+        // the ride the gate never arms)
+        let mut pig = Zombie::new(9, 0.0, 64.0, 0.0, 262);
+        pig.kind = MobKind::Pig;
+        assert_eq!(
+            pig.mob_interact("saddle", &mut Lcg::new(1)),
+            MobInteract::Saddle,
+            "the unsaddled hull the equip arm speaks"
+        );
+        pig.saddled = true;
+        assert_eq!(
+            pig.mob_interact("saddle", &mut Lcg::new(1)),
+            MobInteract::Ride,
+            "the re-press the ride arm the saddled bit speaks"
+        );
+        assert_eq!(
+            pig.mob_interact("", &mut Lcg::new(1)),
+            MobInteract::Ride,
+            "the empty hand the same gate rides"
+        );
+        assert_eq!(
+            pig.mob_interact("carrot", &mut Lcg::new(1)),
+            MobInteract::Feed {
+                love: true,
+                grow: false
+            },
+            "the food hand the isFood gate the super keeps"
         );
     }
 

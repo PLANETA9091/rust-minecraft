@@ -2441,6 +2441,21 @@ impl App {
                             .map(|p| p.delta_rotation)
                             .unwrap_or(0.0);
                         b.yaw = boat_rider_yaw_after(b.yaw, v.yaw, dr);
+                    } else if let Some(m) = self.mobs.iter().find(|mm| mm.id == r.vehicle_id)
+                    {
+                        // THE MOB'S OWN CARRY (the PASSENGER attachment
+                        // the fallback lambda$static$1 speaks —
+                        // Vec3(0, height, 0) the ride_height carries:
+                        // the pig's pose the offset adds). The yaw the
+                        // ride keeps — the pig's deltaRotation the
+                        // zero the no-steering walk speaks, the
+                        // positionRider's setYRot fold the rider's own
+                        // look never drags (the boat's
+                        // boat_rider_yaw_after the steering's own law
+                        // the pig's 0 never rides)
+                        fx = m.x;
+                        fy = m.y + r.ride_height as f64;
+                        fz = m.z;
                     }
                     // THE PREV TRIO (the carried path's own trail — the
                     // render's partial-tick lerp anchors at the pose
@@ -6455,12 +6470,26 @@ impl App {
                     // case it never reaches (the vanilla never
                     // places through the body the crosshair picked)
                     let held = self.held_id().and_then(mc_registry::item_name);
-                    let verdict = match held {
-                        Some(name) => {
-                            self.mobs[i].mob_interact(name, &mut self.mob_rng)
-                        }
-                        None => crate::mob::MobInteract::Pass,
-                    };
+                    // THE EMPTY HAND'S OWN WORD (the ride arm the empty
+                    // stack speaks — Pig.mobInteract's
+                    // `player.getItemInHand(hand)` the EMPTY stack
+                    // carries, the isFood false the gate opens): the
+                    // sentinel the held lane's miss rides, the chain's
+                    // own gates the word answers
+                    let held = held.as_deref().unwrap_or("");
+                    let mut verdict =
+                        self.mobs[i].mob_interact(held, &mut self.mob_rng);
+                    // THE SECONDARY-USE STAND-DOWN (bytecode 28-32:
+                    // `player.isSecondaryUseActive()` ifne -> 55 — the
+                    // sneak the ride arm refuses, the super's miss the
+                    // walk falls to: the already-saddled hull the
+                    // equip arm's hasItemInSlot gate closes, the PASS
+                    // the chain's own tail speaks)
+                    if matches!(verdict, crate::mob::MobInteract::Ride)
+                        && self.shift_down
+                    {
+                        verdict = crate::mob::MobInteract::Pass;
+                    }
                     if let crate::mob::MobInteract::Shear(wool) = verdict {
                         // the playSound(SHEEP_SHEAR, PLAYERS, 1.0, 1.0)
                         // the shear's own walk opens with
@@ -6573,6 +6602,84 @@ impl App {
                                 self.offline_held = Some(milk_id);
                             }
                         }
+                        self.swing.start();
+                        return true;
+                    }
+                    if let crate::mob::MobInteract::Saddle = verdict {
+                        // THE PIG'S OWN SADDLE ARM (javap Pig.mobInteract
+                        // 73-100 -> ItemStack.interactLivingEntity ->
+                        // Equippable.equipOnTarget 34-82 — the 26.2
+                        // bytecode the post-super arm speaks): the
+                        // isEquippableInSlot(SADDLE) +
+                        // !hasItemInSlot(SADDLE) + isAlive the gate the
+                        // mob's own chain arms kept, the server arm
+                        // `setItemSlot(SADDLE, stack.split(1))` the
+                        // split speaks, the setGuaranteedDrop the Mob
+                        // cast answers, the InteractionResult.SUCCESS
+                        // both sides the return carries (the client
+                        // arm isClientSide ifne -> 79 the same SUCCESS
+                        // keeps — the voice+swing the client's own
+                        // words). The equip voice the onEquipItem walk
+                        // plays — entity.pig.saddle the sounds.json
+                        // keeps (mob/horse/leather, the v0.5 the entry
+                        // rides).
+                        self.mobs[i].saddled = true;
+                        self.sounds
+                            .play_voice(self.frame, "entity.pig.saddle", 1.0, 1.0);
+                        // THE SPLIT'S OWN WALK (stack.split(1) the
+                        // survival arm speaks): the held lane's own
+                        // fallback the milk walk keeps — the live
+                        // store's word the swap NEVER touches (the
+                        // server's stack truth, the voice+swing the
+                        // client's own words), the inventory's
+                        // selected stack the count read answers, the
+                        // `--held-item` stand-in the split takes
+                        // (nothing replaces — the hand the leave
+                        // empties)
+                        if self.live_held.is_some() {
+                            // THE WIRE'S OWN STORE (the server's split
+                            // the truth carries)
+                        } else {
+                            let sel = self.selected_hotbar;
+                            let held_count = self.inventory.items[sel].1;
+                            if held_count > 1 {
+                                // THE TALLER STACK (the split(1) the
+                                // one takes — the tail the hand keeps)
+                                self.inventory.items[sel].1 = held_count - 1;
+                            } else if held_count > 0 {
+                                // THE LAST SADDLE (the split the whole
+                                // stack speaks — the hand the (0,0)
+                                // empty keeps)
+                                self.inventory.items[sel] = (0, 0);
+                            } else if self.offline_held.is_some() {
+                                // THE STAND-IN'S OWN LEAVE (the split
+                                // takes the simulated stack — nothing
+                                // replaces it)
+                                self.offline_held = None;
+                            }
+                        }
+                        // THE SUCCESS'S OWN SWING (the verdict the
+                        // client arm's same SUCCESS keeps)
+                        self.swing.start();
+                        return true;
+                    }
+                    if let crate::mob::MobInteract::Ride = verdict {
+                        // THE PIG'S OWN RIDE ARM (javap Pig.mobInteract
+                        // 14-54 — the 26.2 bytecode the subclass's own
+                        // override keeps): the non-food held the isFood
+                        // gate let through, the isSaddled bit the
+                        // saddle arm armed, the isVehicle the single
+                        // rider the mount's own guard reserves, the
+                        // isSecondaryUseActive the sneak the stand-down
+                        // spoke — the startRiding the server arm the
+                        // mount rides (the client arm isClientSide
+                        // ifne -> 51 the mount skips, the offline
+                        // client IS the authority the singleplayer law
+                        // keeps), the InteractionResult.SUCCESS both
+                        // sides the return carries — the swing the
+                        // SUCCESS verdict starts
+                        let mob_id = self.mobs[i].id;
+                        self.mount_offline_pig(mob_id);
                         self.swing.start();
                         return true;
                     }
@@ -8921,6 +9028,41 @@ impl App {
         if let Some(b) = self.body.as_mut() {
             b.yaw = yaw;
         }
+        // THE MOUNT'S OWN MESSAGE (the fresh-mount arm the packet
+        // handler speaks — the same translatable the wire lane folds)
+        self.set_overlay_message(&MOUNT_ONBOARD_FORMAT.replace("%1$s", SHIFT_KEY_DISPLAY));
+        true
+    }
+
+    /// THE PIG'S OWN MOUNT (the startRiding the Pig.mobInteract 45-50
+    /// walk speaks — the OfflineRide the hull's own lane keeps, the
+    /// PASSENGER attachment the EntityAttachments fallback
+    /// lambda$static$1 speaks verbatim: `Vec3(0, height, 0)` — the
+    /// FULL height the PIG_HEIGHT 0.9 carries, no boat's height/3 the
+    /// AbstractBoat override rides). The isVehicle the single rider
+    /// the guard reserves, the isSaddled the bit the gate requires
+    /// (the unsaddled hull the arm never arms). The rider's own yaw
+    /// the ride keeps — the pig's deltaRotation the zero the
+    /// no-steering walk speaks (the positionRider's
+    /// `setYRot(getYRot() + deltaRotation)` the fold the boat's
+    /// steering drives, the pig the 0 keeps — the look lane the
+    /// rider's own word stays).
+    pub fn mount_offline_pig(&mut self, id: i32) -> bool {
+        if self.net_ride.is_some() || self.offline_ride.is_some() {
+            return false;
+        }
+        let present = self
+            .mobs
+            .iter()
+            .any(|m| m.id == id && m.saddled);
+        if !present {
+            return false;
+        }
+        self.offline_ride = Some(crate::world_view::OfflineRide {
+            vehicle_id: id,
+            seat_x: 0.0,
+            ride_height: crate::mob::PIG_HEIGHT as f32,
+        });
         // THE MOUNT'S OWN MESSAGE (the fresh-mount arm the packet
         // handler speaks — the same translatable the wire lane folds)
         self.set_overlay_message(&MOUNT_ONBOARD_FORMAT.replace("%1$s", SHIFT_KEY_DISPLAY));
@@ -24085,6 +24227,225 @@ mod tests {
         assert_eq!(app.drops.len(), 1, "the overflow the drop speaks");
         assert_eq!(app.drops[0].item, milk_id, "the filled instance drops");
         assert_eq!(app.drops[0].count, 1, "the single fill the drop carries");
+    }
+
+    /// THE PIG'S OWN SADDLE PRESS (javap Pig.mobInteract 73-100 — the
+    /// post-super arm the 26.2 bytecode keeps): the saddle the held
+    /// stack speaks, the unsaddled hull the gate opens — the Saddle
+    /// verdict the InteractionResult.SUCCESS consumes (the equip voice
+    /// the onEquipItem walk rides — entity.pig.saddle the sounds.json
+    /// keeps, the swing the SUCCESS verdict starts, the
+    /// setItemSlot(SADDLE, stack.split(1)) the taller stack the tail
+    /// keeps — the one the split takes).
+    #[test]
+    fn the_right_press_saddles_the_pig() {
+        let mut app = App::new(3);
+        app.enter_world();
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let top = app.spawn_y;
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, top as f32 + 4.0, c as f32 + 0.5),
+            yaw: 0.0,
+            pitch: -std::f32::consts::FRAC_PI_2,
+        });
+        let mut pig =
+            crate::mob::Zombie::new(7, c as f64 + 0.5, top as f64, c as f64 + 0.5, 3);
+        pig.kind = crate::mob::MobKind::Pig;
+        app.mobs.push(pig);
+        assert_eq!(
+            app.pick_mob(&app.mobs),
+            Some(0),
+            "the offline pig the verdict speaks"
+        );
+        // THE HELD STACK (the taller saddle the split(1) the tail keeps
+        // — the one the walk takes)
+        let saddle_id =
+            mc_registry::item_id_by_name("saddle").expect("saddle the table draws");
+        app.inventory.items[app.selected_hotbar] = (saddle_id, 2);
+        assert!(
+            app.on_right_press(0, 0),
+            "the Saddle verdict consumed the press"
+        );
+        // THE EQUIP'S OWN WORD: the bit the setItemSlot arms, the voice
+        // the onEquipItem walk plays, the tail the split keeps
+        assert!(app.mobs[0].saddled, "the equipped SADDLE the bit arms");
+        assert!(
+            app.sounds
+                .events
+                .iter()
+                .any(|e| e.starts_with("entity.pig.saddle ")),
+            "the equip's own voice the lane carries"
+        );
+        assert_eq!(
+            app.inventory.items[app.selected_hotbar],
+            (saddle_id, 1),
+            "the split(1) the stack's tail keeps"
+        );
+        assert!(app.swing.swinging, "the press swung the arm");
+    }
+
+    /// THE SADDLED PIG'S OWN RIDE (javap Pig.mobInteract 14-54 — the
+    /// subclass's own first arm the 26.2 bytecode keeps): the empty
+    /// hand the isFood gate lets through, the isSaddled bit the
+    /// saddle arm armed — the Ride verdict the InteractionResult
+    /// .SUCCESS consumes (the startRiding the server arm the OfflineRide
+    /// arms — the PASSENGER attachment the fallback lambda speaks:
+    /// the FULL height the PIG_HEIGHT 0.9 carries, no boat's height/3;
+    /// the positionRider the body's feet the pig's own pose carries,
+    /// the yaw the rider's own look keeps), the shift edge the
+    /// dismount's own drop speaks.
+    #[test]
+    fn the_saddled_pig_takes_the_empty_hand_rider() {
+        let mut app = App::new(3);
+        app.enter_world();
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let top = app.spawn_y;
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, top as f32 + 4.0, c as f32 + 0.5),
+            yaw: 0.0,
+            pitch: -std::f32::consts::FRAC_PI_2,
+        });
+        let mut pig =
+            crate::mob::Zombie::new(7, c as f64 + 0.5, top as f64, c as f64 + 0.5, 3);
+        pig.kind = crate::mob::MobKind::Pig;
+        app.mobs.push(pig);
+        // THE SADDLE ARM (the count-1 stack the split the whole speaks
+        // — the hand the (0,0) empty keeps, the bit the walk arms)
+        let saddle_id =
+            mc_registry::item_id_by_name("saddle").expect("saddle the table draws");
+        app.inventory.items[app.selected_hotbar] = (saddle_id, 1);
+        assert!(app.on_right_press(0, 0), "the saddle arm consumed");
+        assert_eq!(
+            app.inventory.items[app.selected_hotbar],
+            (0, 0),
+            "the last saddle the split empties"
+        );
+        // THE RIDE ARM (the empty hand the held_id's None the sentinel
+        // rides — the isFood false the gate opens)
+        assert!(app.on_right_press(0, 0), "the Ride verdict consumed");
+        let r = app.offline_ride.as_ref().expect("the ride belief armed");
+        assert_eq!(r.vehicle_id, 7, "the pig's own id");
+        assert_eq!(
+            r.ride_height,
+            crate::mob::PIG_HEIGHT as f32,
+            "the FULL height the fallback lambda speaks"
+        );
+        assert_eq!(
+            app.overlay_message.as_deref(),
+            Some("Press Left Shift to Dismount"),
+            "the mount's own overlay word"
+        );
+        // THE CARRY (the positionRider law the local mob's own pose
+        // keeps): the body's feet the pig's pose + the FULL height, the
+        // yaw the rider's own look keeps (the pig's deltaRotation the
+        // zero the no-steering walk speaks), the body's physics sleep
+        let px = c as f64 + 0.5;
+        app.body = Some(crate::body::PlayerBody::new(
+            px,
+            top as f64 + crate::mob::PIG_HEIGHT,
+            px,
+            42.0,
+            0.0,
+        ));
+        app.update();
+        let b = app.body.as_ref().unwrap();
+        // THE ATTACHMENT'S OWN F32 WORD (the ride_height the OfflineRide
+        // keeps — the f64 the cast re-widens: the 0.899999976… the
+        // f32's own word speaks, the exact fold the carry walks)
+        let want_y = top as f64 + crate::mob::PIG_HEIGHT as f32 as f64;
+        assert!(
+            (b.y - want_y).abs() < 1.0e-9,
+            "the carried feet the FULL height the attachment keeps (b.y {} vs want {})",
+            b.y,
+            want_y
+        );
+        assert_eq!(b.x, px, "the pig's own x the carry keeps");
+        assert_eq!(b.z, px, "the pig's own z the carry keeps");
+        assert_eq!(b.yaw, 42.0, "the rider's own look the pig never drags");
+        assert_eq!(b.vx, 0.0, "the body's own sleep");
+        // THE SHIFT EDGE (the dismount's own ask): the ride drops, the
+        // body the carried pose keeps
+        app.on_movement_input(0.0, 0.0, false, true, false);
+        assert!(app.offline_ride.is_none(), "the edge's own drop");
+    }
+
+    /// THE FOOD HAND'S OWN GATE (javap Pig.mobInteract 0-11 — the
+    /// isFood ifne -> 55 the FOOD hand the super speaks FIRST: the
+    /// carrot the FEEDING lane answers, the ride the gate never arms
+    /// — the saddled hull the food hand the same law keeps).
+    #[test]
+    fn the_food_hand_feeds_the_saddled_pig() {
+        let mut app = App::new(3);
+        app.enter_world();
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let top = app.spawn_y;
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, top as f32 + 4.0, c as f32 + 0.5),
+            yaw: 0.0,
+            pitch: -std::f32::consts::FRAC_PI_2,
+        });
+        let mut pig =
+            crate::mob::Zombie::new(7, c as f64 + 0.5, top as f64, c as f64 + 0.5, 3);
+        pig.kind = crate::mob::MobKind::Pig;
+        pig.saddled = true;
+        app.mobs.push(pig);
+        let carrot_id =
+            mc_registry::item_id_by_name("carrot").expect("carrot the table draws");
+        app.inventory.items[app.selected_hotbar] = (carrot_id, 3);
+        assert!(
+            app.on_right_press(0, 0),
+            "the Feed verdict consumed the press"
+        );
+        // THE FEED'S OWN TRUTH: the love clock the 600 arms, the eat
+        // voice the playEatingSound override speaks (the PIG only), the
+        // ride the gate never arms, the stack the usePlayerItem's own
+        // walk the food arm speaks — the consume the caller's lane
+        // keeps
+        assert_eq!(app.mobs[0].in_love, 600, "setInLove's own 600");
+        assert!(
+            app.sounds
+                .events
+                .iter()
+                .any(|e| e.starts_with("entity.pig.eat ")),
+            "the pig's own eat voice the override speaks"
+        );
+        assert!(app.offline_ride.is_none(), "the food hand the ride never arms");
+    }
+
+    /// THE SECONDARY-USE STAND-DOWN (javap Pig.mobInteract 28-32 —
+    /// `player.isSecondaryUseActive()` ifne -> 55 the sneak the ride
+    /// arm refuses): the shift-held press the walk falls to the
+    /// super's miss — the PASS the item lane the walk returns, the
+    /// ride the belief never arms.
+    #[test]
+    fn the_shift_hand_mounts_nothing() {
+        let mut app = App::new(3);
+        app.enter_world();
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let top = app.spawn_y;
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, top as f32 + 4.0, c as f32 + 0.5),
+            yaw: 0.0,
+            pitch: -std::f32::consts::FRAC_PI_2,
+        });
+        let mut pig =
+            crate::mob::Zombie::new(7, c as f64 + 0.5, top as f64, c as f64 + 0.5, 3);
+        pig.kind = crate::mob::MobKind::Pig;
+        pig.saddled = true;
+        app.mobs.push(pig);
+        app.shift_down = true;
+        assert!(
+            !app.on_right_press(0, 0),
+            "the sneak's stand-down the PASS keeps"
+        );
+        assert!(
+            app.offline_ride.is_none(),
+            "the ride the stand-down never arms"
+        );
     }
 
     #[test]

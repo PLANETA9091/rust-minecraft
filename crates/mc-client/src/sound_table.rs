@@ -199,6 +199,7 @@ fn test_fixture_table() -> SoundTable {
         "entity.pig.death",
         "entity.pig.eat",
         "entity.pig.hurt",
+        "entity.pig.saddle",
         "entity.player.attack.crit",
         "entity.player.attack.strong",
         "entity.player.attack.sweep",
