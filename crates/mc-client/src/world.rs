@@ -150,6 +150,42 @@ pub fn wheat_age(id: u16) -> Option<u8> {
     is_wheat(id).then(|| (id - WHEAT) as u8)
 }
 
+/// THE BONE MEAL'S OWN AGE JUMP — javap CropBlock.getBonemealAgeIncrease
+/// over the real 26.2 jar: the `Mth.nextInt(level.getRandom(), 2, 5)`
+/// ride the performBonemeal's growCrops walk speaks (iconst_2, iconst_5
+/// the min/max pair the invokestatic wears), the unfold the Mth.nextInt
+/// bytecode keeps — the `min >= max` guard ireturns, the live arm
+/// `min + random.nextInt(max - min + 1)` the ONE draw speaks — so the
+/// increase `2 + rng.next_int(4)` the uniform {2,3,4,5} the four
+/// outcomes wear.
+pub fn bonemeal_age_increase(rng: &mut crate::drops::Lcg) -> u8 {
+    (2 + rng.next_int(4)) as u8
+}
+
+/// THE BONE MEAL'S OWN GROW WALK — javap BoneMealItem.growCrop +
+/// CropBlock over the real 26.2 jar: the `instanceof BonemealableBlock`
+/// gate the wheat family's own membership wears (the vocabulary's
+/// other kinds the growCrop miss keeps — the water-plant arm the
+/// caller's fall-through speaks, the vocabulary's no-water-plants the
+/// PASS answers), the `isValidBonemealTarget` the `!isMaxAge(state)`
+/// law keeps (the mature crop the false verdict the PASS speaks — NO
+/// draw the stream spends, the stack never shrinks), the
+/// `isBonemealSuccess` the constant true the zero-draw verdict wears
+/// (iconst_1, ireturn), and the `performBonemeal`'s growCrops the
+/// `Math.min(getMaxAge(), getAge(state) + getBonemealAgeIncrease())`
+/// climb speaks — the `setBlock(pos, getStateForAge(new), 2)` the same
+/// ladder the random tick wears (`WHEAT + age`, the ages 0..7). Returns
+/// the new kind + the increase the ONE draw rode, `None` the PASS keeps.
+pub fn bonemeal_grow(id: u16, rng: &mut crate::drops::Lcg) -> Option<(u16, u8)> {
+    let age = wheat_age(id)?;
+    if age >= 7 {
+        return None; // the isValidBonemealTarget refusal — the mature PASS
+    }
+    let increase = bonemeal_age_increase(rng);
+    let new_age = 7u8.min(age + increase);
+    Some((WHEAT + new_age as u16, increase))
+}
+
 /// THE GROWS_CROPS TAG (javap CropBlock.getGrowthSpeed: the 3x3
 /// below-scan's `state.is(BlockTags.GROWS_CROPS)` the tag walk
 /// speaks — NOT the older `is(Blocks.FARMLAND)` the symbolic fold

@@ -10202,6 +10202,17 @@ impl App {
                     if let Some(planted) = self.on_right_press_plant_arm(&hit) {
                         return planted;
                     }
+                } else if held == "bone_meal" {
+                    // THE BONE MEAL'S OWN GROW ARM (javap BoneMealItem.
+                    // useOn + growCrop — the right-press's third verb the
+                    // farming's ladder wears): the clicked crop the
+                    // growCrop walk reads, the SUCCESS the press
+                    // consumes, the mature crop the PASS the fall-through
+                    // keeps (the placement's bone_meal refusal the press
+                    // never consumes)
+                    if let Some(grew) = self.on_right_press_bonemeal_arm(&hit) {
+                        return grew;
+                    }
                 }
             }
         }
@@ -10446,6 +10457,62 @@ impl App {
         // the wheat row the generated block_sounds table carries —
         // `item.crop.plant` at the (v+1)/2, p*0.8 fold
         self.sounds.play(self.frame, "wheat", crate::sound::Lane::Place);
+        Some(true)
+    }
+
+    /// THE BONE MEAL'S OWN GROW ARM — javap BoneMealItem.useOn +
+    /// growCrop over the real 26.2 jar (the right-press's third verb
+    /// the farming's ladder wears): the held bone_meal the clicked
+    /// cell's growCrop walk reads, the pure law the
+    /// [`crate::world::bonemeal_grow`] answers (the `instanceof
+    /// BonemealableBlock` the wheat family wears, the
+    /// `isValidBonemealTarget` the mature PASS keeps — the fall-through
+    /// the placement lane's bone_meal refusal the press never
+    /// consumes), the SUCCESS the press consumes. THE VERDICT'S OWN
+    /// ORDER (the growCrop's offsets keep): the performBonemeal's
+    /// setBlock FIRST, the stack's shrink(1) AFTER (the offsets 85-87
+    /// the same order wears), the levelEvent(1505, pos, 15) the server
+    /// branch speaks — the particle event the client vocabulary never
+    /// renders, the honest skip the no-SoundEvent law keeps (the
+    /// vanilla's own bone meal the sound row never carries — the
+    /// ITEM_INTERACT_FINISH vibration the vocabulary never speaks).
+    /// THE OFFLINE PREDICTION: the advanced crop lands in the App's
+    /// own terrain and the mesh re-speaks (the crop's four planes the
+    /// per-stage tile wears; the networked world's grow rides the
+    /// server's chunk refresh — no local edit). THE RNG: the vanilla's
+    /// own level.getRandom() the same source the random tick walk
+    /// wears — the repo's crop stream the same family keeps (the
+    /// getBonemealAgeIncrease the ONE draw spends).
+    fn on_right_press_bonemeal_arm(&mut self, hit: &crate::world::ClipHit) -> Option<bool> {
+        // THE GROWCROP WALK (one immutable borrow — the mutable
+        // prediction and the stream never cross)
+        let cell = {
+            let world = self.active_world()?;
+            world.get(hit.pos.0, hit.pos.1, hit.pos.2)
+        };
+        let (kind, _increase) = crate::world::bonemeal_grow(cell, &mut self.crop_rng)?;
+        // THE OFFLINE PREDICTION: the advanced crop lands in the App's
+        // own terrain and the mesh re-speaks (the networked world's
+        // grow rides the server's chunk refresh — no local edit)
+        if let (Some(world), false) = (self.offline_world.as_mut(), self.world_is_network) {
+            world.set(hit.pos.0, hit.pos.1, hit.pos.2, kind);
+            self.world_quads = Some(crate::mesher::mesh_world(world, None));
+        }
+        // THE STACK'S OWN SHRINK (growCrop's offsets 85-87 — the
+        // `--held-item` stand-in speaks no stack: the consume is the
+        // honest no-op it always was)
+        let id = self.held_id();
+        let sel = self.selected_hotbar;
+        if let Some(id) = id {
+            let stack = self.inventory.items[sel];
+            if stack.1 > 0 && stack.0 == id {
+                self.inventory.items[sel].1 -= 1;
+                if self.inventory.items[sel].1 <= 0 {
+                    self.inventory.items[sel] = (0, 0);
+                }
+                self.hotbar_slots = self.inventory.hotbar();
+            }
+        }
         Some(true)
     }
 
@@ -19795,6 +19862,172 @@ mod tests {
             app.offline_world.as_ref().unwrap().get(c, surface + 1, c),
             crate::world::AIR,
             "the above cell stays air over stone"
+        );
+    }
+
+    /// THE BONE MEAL'S OWN LADDER JUMP — the pure law the
+    /// [`crate::world::bonemeal_grow`] speaks (javap
+    /// CropBlock.getBonemealAgeIncrease + growCrops over the real 26.2
+    /// jar): every immature stage the ONE-draw jump wears (the increase
+    /// the uniform 2..=5 band speaks, the min(7) ceiling the top
+    /// stages clamp), the same seed the same jump the replay wears.
+    #[test]
+    fn the_bone_meal_the_ladder_jumps() {
+        for age in 0u8..7 {
+            let seed = 0x1_0000 + age as u64;
+            let mut rng = crate::drops::Lcg::new(seed);
+            let (kind, increase) = crate::world::bonemeal_grow(
+                crate::world::WHEAT + age as u16,
+                &mut rng,
+            )
+            .unwrap_or_else(|| panic!("the immature stage {age} the grow answers"));
+            assert!(
+                (2..=5).contains(&increase),
+                "the increase the 2..=5 band wears — got {increase}"
+            );
+            let expected = 7u8.min(age + increase);
+            assert_eq!(
+                kind,
+                crate::world::WHEAT + expected as u16,
+                "the climb the min-ceiling law wears at stage {age}"
+            );
+            // THE SAME SEED THE SAME JUMP: the replay the determinism keeps
+            let mut replay = crate::drops::Lcg::new(seed);
+            assert_eq!(
+                crate::world::bonemeal_grow(crate::world::WHEAT + age as u16, &mut replay),
+                Some((kind, increase)),
+                "the same seed the same jump the replay wears at stage {age}"
+            );
+        }
+    }
+
+    /// THE BONE MEAL'S OWN DRAWS THE MIRROR PAIRS — the zero-draw laws
+    /// the mature and the non-crop PASSes keep (javap: the
+    /// isValidBonemealTarget false the stream never touches, the
+    /// instanceof miss the growCrop's own keeps) and the success arm's
+    /// ONE draw the replay pairs (the nextInt(4) modulus the increase
+    /// wears — the post-jump streams the paired draws never split).
+    #[test]
+    fn the_bone_meal_the_draw_counts_keep() {
+        // THE MATURE PASS + THE NON-CROP MISS: the zero-draw law the
+        // paired streams keep
+        let mut a = crate::drops::Lcg::new(7);
+        let mut b = crate::drops::Lcg::new(7);
+        assert_eq!(
+            crate::world::bonemeal_grow(crate::world::WHEAT_STAGE7, &mut a),
+            None,
+            "the mature the isValidBonemealTarget PASS keeps"
+        );
+        assert_eq!(
+            crate::world::bonemeal_grow(crate::world::DIRT, &mut b),
+            None,
+            "the non-crop the growCrop miss keeps"
+        );
+        // the streams the PASSes never touched — the paired draws still speak
+        assert_eq!(
+            a.next_int(1000),
+            b.next_int(1000),
+            "the zero draws the paired streams keep"
+        );
+        // THE SUCCESS ARM: the ONE draw the mirror pairs (the same seed
+        // the same nextInt(4) the increase wears, the post-jump pairing
+        // the second draw the law never spends)
+        let mut c = crate::drops::Lcg::new(31);
+        let mut d = crate::drops::Lcg::new(31);
+        let (_, increase) =
+            crate::world::bonemeal_grow(crate::world::WHEAT_STAGE2, &mut c).unwrap();
+        let mirror = (2 + d.next_int(4)) as u8;
+        assert_eq!(
+            increase, mirror,
+            "the increase the ONE nextInt(4) draw wears"
+        );
+        assert_eq!(
+            c.next_int(97),
+            d.next_int(97),
+            "the post-jump streams the ONE-draw law pairs"
+        );
+    }
+
+    /// THE BONE MEAL'S OWN PRESS — the client arm the vanilla useOn's
+    /// SUCCESS speaks (javap BoneMealItem.useOn + growCrop): the held
+    /// bone_meal the immature crop looks up (the straight-down aim the
+    /// crop cell the clip targets), the kind the ladder's legal band
+    /// climbs (the stage-2 start + the 2..=5 jump the
+    /// WHEAT_STAGE4..=WHEAT_STAGE7 band wears), the stack the shrink(1)
+    /// rides, the mesh re-spoke; the mature crop the press never
+    /// consumes (the isValidBonemealTarget the PASS keeps — the
+    /// fall-through the placement's bone_meal refusal the press never
+    /// consumes, the stack the zero draws never touch).
+    #[test]
+    fn the_bone_meal_the_press_the_crop_advances() {
+        let mut app = App::new(3);
+        app.enter_world();
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let surface = app.spawn_y - 1;
+        {
+            let w = app.offline_world.as_mut().unwrap();
+            w.set(c, surface, c, crate::world::FARMLAND);
+            w.set(c, surface + 1, c, crate::world::WHEAT + 2); // the stage-2 crop
+        }
+        // THE STACK THE INVENTORY'S OWN SELECTION SPEAKS (the held id
+        // the stack's lane answers before the `--held-item` stand-in)
+        let bone_meal = mc_registry::item_id_by_name("bone_meal")
+            .expect("the bone_meal item row the registry carries");
+        app.inventory.items[app.selected_hotbar] = (bone_meal, 5);
+        // THE AIM: the eye above the crop, the straight-down walk the
+        // crop cell the clip targets (the stalk the ray hits first)
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, surface as f32 + 3.0, c as f32 + 0.5),
+            yaw: 0.0,
+            pitch: -std::f32::consts::FRAC_PI_2,
+        });
+        let quads_before = app.world_quads.as_ref().unwrap().clone();
+        assert!(app.on_right_press(0, 0), "the grow consumed the press");
+        let grown = app
+            .offline_world
+            .as_ref()
+            .unwrap()
+            .get(c, surface + 1, c);
+        assert!(
+            (crate::world::WHEAT_STAGE4..=crate::world::WHEAT_STAGE7).contains(&grown),
+            "the stage-2 crop the legal band climbed — got {grown}"
+        );
+        assert_eq!(
+            app.inventory.items[app.selected_hotbar].1,
+            4,
+            "the stack the shrink(1) rode"
+        );
+        assert_ne!(
+            app.world_quads.as_ref().unwrap(),
+            &quads_before,
+            "the mesh re-spoke with the advanced crop"
+        );
+        // THE MATURE REFUSAL: the ceiling the PASS keeps — the press
+        // never consumed, the mature cell never moves, the stack the
+        // zero draws never touch
+        app.offline_world
+            .as_mut()
+            .unwrap()
+            .set(c, surface + 2, c, crate::world::WHEAT_STAGE7);
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, surface as f32 + 4.0, c as f32 + 0.5),
+            yaw: 0.0,
+            pitch: -std::f32::consts::FRAC_PI_2,
+        });
+        assert!(
+            !app.on_right_press(0, 0),
+            "the mature crop the isValidBonemealTarget PASS keeps"
+        );
+        assert_eq!(
+            app.offline_world.as_ref().unwrap().get(c, surface + 2, c),
+            crate::world::WHEAT_STAGE7,
+            "the mature cell the PASS never moves"
+        );
+        assert_eq!(
+            app.inventory.items[app.selected_hotbar].1,
+            4,
+            "the refused grow the stack never shrinks"
         );
     }
 
