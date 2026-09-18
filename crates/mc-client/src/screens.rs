@@ -1053,13 +1053,11 @@ pub enum ScreenKind {
     /// centered panel, the 3x3 grid + result + the player's store rows
     /// the menu's own ctor numbers place (addCraftingGridSlots(30, 17),
     /// addResultSlot(124, 35), addStandardInventorySlots(8, 84)), the
-    /// offline click walks over the player's OWN store (the wire lane
-    /// sleeps — the live session's table the server's OpenScreen word
-    /// opens, the packet lane the follow-up names). The TRANSIENT menu:
-    /// the open builds a fresh grid, the close the clearContainer walk
-    /// speaks (the alive player's placeItemBackInInventory — the grid
-    /// contents + the carried stack ride home, the full store the
-    /// remainder drops).
+    /// offline click walks over the player's OWN store. The WIRE lane
+    /// rides the server's OpenScreen word (the menu type id 12 the
+    /// live_container_updated lane routes — the window-1 store's own
+    /// projection the belief feeds, the clicks the ServerboundContainer
+    /// ClickPacket the chest's lane shares speak).
     Crafting,
 }
 
@@ -1750,6 +1748,31 @@ pub struct App {
     /// pattern; the static layout needs no per-slot rects). The (0, 0)
     /// sentinel refuses the click before the first render spoke.
     pub table_panel: (i32, i32),
+    /// THE TABLE'S OWN WIRE BELIEF (the live lane the chest's own
+    /// store projection rides — the menu type id 12 the
+    /// live_container_updated route arms): the full 46-slot shape in
+    /// the CraftingMenu's own numbering (result 0, the 3x3 cells
+    /// 1..9, the main grid 10..36, the hotbar row 37..45 — the jar's
+    /// own constants the ctor walk keeps), the index IS the menu id.
+    /// A slot the store never spoke stays `(0, 0)` — the wire's own
+    /// emptiness the render and the hover walk both skip. The OFFLINE
+    /// world carries no belief — the offline `table_grid` field stays
+    /// the truth there (the two lanes never mix).
+    pub live_table_slots: [(i32, i32); 46],
+    /// The table window's last-seen identity (the window id the
+    /// server's OpenScreen assigned + the stateId the Set Content
+    /// packets keep) — the wire click lane's echo input (the packet's
+    /// windowId the live window's id speaks).
+    pub table_live_window: Option<(i32, i32)>,
+    /// The live flag the projection arms and the close kills — the
+    /// wire lane's own ownership gate (the offline walks the false
+    /// keeps).
+    pub table_is_live: bool,
+    /// The window-1 store's believed GUI cursor (the Set Content
+    /// packet's carriedItem) — the wire click lane's cursor the
+    /// prediction walks mutate (the offline world's `inv_carried`
+    /// stays the offline truth — the two lanes never mix).
+    pub live_table_carried: (i32, i32),
     /// The keyboard lane's shift state the LAST loop tick tracked —
     /// the vanilla `Screen.hasShiftDown()` query: the press's rising
     /// edge reads it to route the shift-click's QUICK_MOVE lane. Fed
@@ -2245,6 +2268,10 @@ impl App {
             table_grid: [(0, 0); 9],
             table_result: (0, 0),
             table_panel: (0, 0),
+            live_table_slots: [(0, 0); 46],
+            table_live_window: None,
+            table_is_live: false,
+            live_table_carried: (0, 0),
             live_held: None,
             drops: Vec::new(),
             inventory: crate::drops::Inventory::default(),
@@ -5364,6 +5391,25 @@ impl App {
     ///    arm — the offline stand-in always alive, the add-back speaks;
     /// 3. the screen back to the world.
     pub fn close_crafting_table(&mut self) {
+        // THE WIRE LANE'S OWN ARM (the live window the server's
+        // Container Close packet owns): the player's OWN close echoes
+        // the serverbound Container Close packet through the live
+        // session's send lane (the chest's close walk the window-1 id
+        // speaks), the belief resets with the window — the carried
+        // stack the server's own close returns (the belief never
+        // guesses). The offline walk below the false gate keeps.
+        if self.table_is_live {
+            if let (Some((window_id, _)), Some(sink)) =
+                (self.table_live_window, self.live_clicks.as_ref())
+            {
+                let _ = sink.send(crate::world_view::ContainerCommand::Close { window_id });
+            }
+            self.table_is_live = false;
+            self.table_live_window = None;
+            self.live_table_carried = (0, 0);
+            self.open(ScreenKind::World);
+            return;
+        }
         // the carried's own return (the super.removed walk)
         if self.inv_carried.1 > 0 {
             let (id, count) = self.inv_carried;
@@ -5561,10 +5607,17 @@ impl App {
     /// click lane the table's geometry answers): the result slot 0,
     /// the 3x3 cells 1..9, the store rows the SAME origins the
     /// inventory panel paints (the standard (8, 84) / (8, 142) walks),
-    /// the outside press the THROW input. The wire lane sleeps — the
-    /// live session's table the server's own menu owns (the doc the
-    /// screen variant keeps).
+    /// the outside press the THROW input. The WIRE session's route
+    /// rides first — the window-1 belief the [`Self::click_wire_table_slot`]
+    /// lane feeds (the offline store is NOT the truth there).
     fn click_table_slot(&mut self, mx: i32, my: i32, button: i8) {
+        if self.world_is_network {
+            // THE WINDOW-1 WIRE LANE: the live session's own clicks
+            // speak the ServerboundContainerClickPacket the chest's
+            // lane shares — the offline store is NOT the truth there.
+            self.click_wire_table_slot(mx, my, button);
+            return;
+        }
         if self.table_panel == (0, 0) {
             return; // no render spoke yet — no geometry to hit
         }
@@ -5586,7 +5639,9 @@ impl App {
         }
         // THE STORE ROWS (the standard slots the ctor's
         // addStandardInventorySlots(8, 84) places — the SAME origins
-        // the inventory screen's own rows speak).
+        // the inventory screen's own rows speak). The wire's own menu
+        // numbering: the hotbar row i<9 rides menu 37+i, the main grid
+        // menu 10+(i-9) — the CraftingMenu constants' layout.
         let Some((_, _, store)) = (0..36)
             .map(|i| {
                 let (ox, oy) = inventory_slot_origin(panel, i);
@@ -5627,6 +5682,203 @@ impl App {
         self.inventory.items[store] = new_slot;
         self.inv_carried = new_carried;
         self.hotbar_slots = self.inventory.hotbar();
+    }
+
+    /// The store index's own TABLE menu id (the CraftingMenu's own
+    /// numbering the ctor walk keeps — INV_SLOT_START 10: the main
+    /// grid store 9..35 rides menu 10..36, the hotbar row store 0..8
+    /// the menu 37..45 speaks).
+    fn table_store_menu_id(store: usize) -> i32 {
+        if store < 9 {
+            37 + store as i32
+        } else {
+            10 + (store as i32 - 9)
+        }
+    }
+
+    /// THE TABLE'S OWN WIRE CLICK LANE (the vanilla AbstractContainer-
+    /// Screen's own mouseClicked over the window-1 menu — the chest's
+    /// wire lane the crafting menu's own numbering answers): the press
+    /// finds the 16x16 hit box the last render laid out (the SAME
+    /// geometry walk the offline lane speaks), the LIVE belief (the
+    /// window-1 projection — the slots, the cursor, the revision the
+    /// syncs keep) feeds the local prediction, the belief mutates IN
+    /// PLACE (the server's next sync replaces it wholesale — the
+    /// chest's own contract), and the ServerboundContainerClickPacket
+    /// rides the live session (the window id the OpenScreen assigned,
+    /// the stateId the revision field speaks). The HUD row's belief
+    /// follows the hotbar's menu ids the sync corrects.
+    fn click_wire_table_slot(&mut self, mx: i32, my: i32, button: i8) {
+        let Some(sink) = self.live_clicks.as_ref() else {
+            return; // no live session — the command dies on the frame thread
+        };
+        if self.table_panel == (0, 0) {
+            return; // no render spoke yet — no geometry to hit
+        }
+        let Some((window_id, state_id)) = self.table_live_window else {
+            return; // no window — the belief never armed
+        };
+        let panel = self.table_panel;
+        // THE RESULT SLOT FIRST (the menu's own slot order — result 0,
+        // the craft cells 1..9). The PLAIN press on the result rides
+        // THE RESULT SLOT'S OWN TAKE (the mayPlace-false walk — the
+        // whole/half take, the onTake's ingredient decrement + the
+        // recipe recompute the belief keeps between the syncs). The
+        // SHIFT press rides THE QUICK-MOVE BATCH (the quickMoveStack
+        // loop the offline walk models — the believed result the
+        // store rows take, the onTake the loop keeps answering, the
+        // leftover the SERVER drops).
+        let (rx, ry) = table_craft_origin(panel, 9);
+        if mx >= rx + 1 && mx < rx + 17 && my >= ry + 1 && my < ry + 17 {
+            if self.shift_down {
+                wire_table_result_quick_move(
+                    sink,
+                    &mut self.live_table_slots,
+                    &mut self.hotbar_slots,
+                    self.live_table_carried,
+                    button,
+                    state_id,
+                    window_id,
+                );
+            } else {
+                wire_table_result_take(
+                    sink,
+                    &mut self.live_table_slots,
+                    &mut self.live_table_carried,
+                    button,
+                    state_id,
+                    window_id,
+                );
+            }
+            return;
+        }
+        for cell in 0..9 {
+            let (cx, cy) = table_craft_origin(panel, cell);
+            if mx >= cx + 1 && mx < cx + 17 && my >= cy + 1 && my < cy + 17 {
+                let menu: i32 = 1 + cell as i32;
+                if self.shift_down {
+                    // THE QUICK-MOVE-INTO-CRAFT LANE (the window-0
+                    // craft cells' own silence — the quickMoveStack's
+                    // grid arm the later round names; the command the
+                    // VANILLA client would speak rides, the belief the
+                    // sync's truth replaces)
+                    let _ = sink.send(crate::world_view::ContainerCommand::Click(
+                        crate::world_view::ContainerClick {
+                            window_id,
+                            state_id,
+                            slot: menu as i16,
+                            button,
+                            input: crate::world_view::ContainerInput::QuickMove,
+                            changed: Vec::new(),
+                            carried: self.live_table_carried,
+                        },
+                    ));
+                } else {
+                    // THE CELLS' PICKUP + THE SLOTSCHANGED PREVIEW (the
+                    // cell's mutation the recipe verdict answers — the
+                    // instant preview the vanilla screen shows)
+                    wire_table_cell_pickup(
+                        sink,
+                        &mut self.live_table_slots,
+                        &mut self.live_table_carried,
+                        menu,
+                        button,
+                        state_id,
+                        window_id,
+                    );
+                }
+                return;
+            }
+        }
+        let Some(store) = (0..36)
+            .map(|i| {
+                let (ox, oy) = inventory_slot_origin(panel, i);
+                (ox + 1, oy + 1, i)
+            })
+            .find(|&(x, y, _)| mx >= x && mx < x + 16 && my >= y && my < y + 16)
+            .map(|(_, _, i)| i)
+        else {
+            // THE THROW LANE (the outside press — the slot -999 the
+            // doClick THROW arm speaks): the carried stack rides the
+            // packet (the whole stack the LEFT press drops, the one
+            // item the RIGHT splits), the belief clears or splits —
+            // the drop entity the SERVER spawns (the wire's own Add
+            // Entity lane — the offline stand-in's local spawn never
+            // rides here). The EMPTY cursor's press stays silent (the
+            // doClick THROW arm's own isEmpty guard — no packet).
+            if mx < panel.0 || my < panel.1 || mx >= panel.0 + 176 || my >= panel.1 + 166 {
+                let carried = self.live_table_carried;
+                if carried.1 > 0 {
+                    let new_carried =
+                        if button == 0 { (0, 0) } else { (carried.0, carried.1 - 1) };
+                    self.live_table_carried = new_carried;
+                    let _ = sink.send(crate::world_view::ContainerCommand::Click(
+                        crate::world_view::ContainerClick {
+                            window_id,
+                            state_id,
+                            slot: -999,
+                            button,
+                            input: crate::world_view::ContainerInput::Throw,
+                            changed: Vec::new(),
+                            carried: new_carried,
+                        },
+                    ));
+                }
+            }
+            return;
+        };
+        // THE STORE ROWS (menu 10..36 main, 37..45 hotbar). The SHIFT
+        // press rides the to-store walk over the belief's store pairs
+        // (the merge-then-empty reverse order the quickMoveStack's
+        // [10, 46) arm speaks — the crafting menu the armor/offhand
+        // columns never carry), the PLAIN presses the uniform pickup
+        // tables.
+        let menu: i32 = Self::table_store_menu_id(store);
+        if self.shift_down {
+            let (id, count) = self.live_table_slots[menu as usize];
+            if count <= 0 {
+                return; // the empty source — nothing to move
+            }
+            let mut items = [(0, 0); 36];
+            for (i, slot) in items.iter_mut().enumerate() {
+                *slot = self.live_table_slots[Self::table_store_menu_id(i) as usize];
+            }
+            items[store] = (0, 0); // the source's own stack the walk carries
+            let (changed, rest) =
+                crate::world_view::predict_quick_move_to_store(&items, id, count);
+            for (i, pair) in &changed {
+                self.live_table_slots[Self::table_store_menu_id(*i) as usize] = *pair;
+            }
+            self.live_table_slots[menu as usize] = if rest > 0 { (id, rest) } else { (0, 0) };
+            let mut row = [(0, 0); 9];
+            row.copy_from_slice(&self.live_table_slots[37..46]);
+            self.hotbar_slots = row;
+            let _ = sink.send(crate::world_view::ContainerCommand::Click(
+                crate::world_view::ContainerClick {
+                    window_id,
+                    state_id,
+                    slot: menu as i16,
+                    button,
+                    input: crate::world_view::ContainerInput::QuickMove,
+                    changed: changed
+                        .iter()
+                        .map(|(i, p)| (Self::table_store_menu_id(*i) as i16, *p))
+                        .collect(),
+                    carried: self.live_table_carried,
+                },
+            ));
+        } else {
+            wire_table_store_pickup(
+                sink,
+                &mut self.live_table_slots,
+                &mut self.hotbar_slots,
+                &mut self.live_table_carried,
+                menu,
+                button,
+                state_id,
+                window_id,
+            );
+        }
     }
 
     /// The recompute law (the InventoryMenu.slotsChanged walk — the
@@ -7031,6 +7283,10 @@ impl App {
         let panel = inventory_panel_origin(w, h);
         self.table_panel = panel;
         g.sprite_file_region(a, "gui/container/crafting_table.png", 0, 0, 176, 166, panel.0, panel.1);
+        // THE LANE'S OWN TRUTH (the two lanes never mix): the wire
+        // session's window-1 belief (the live_table_slots projection
+        // the store's syncs feed), the offline store's own fields
+        let live = self.world_is_network && self.table_is_live;
         // THE TITLE (the init's own titleLabelX 29 — the
         // extractLabels walk the base class defaults ride)
         let label = [0.251, 0.251, 0.251];
@@ -7042,9 +7298,13 @@ impl App {
         }
         // THE 3x3 GRID + THE RESULT SLOT (the menu's own slot order —
         // the icons the store's own draw keeps, the recompute verdict
-        // the slotsChanged walk speaks)
+        // the offline walk speaks / the sync's belief the wire keeps)
         for cell in 0..9 {
-            let (id, count) = self.table_grid[cell];
+            let (id, count) = if live {
+                self.live_table_slots[1 + cell]
+            } else {
+                self.table_grid[cell]
+            };
             if count <= 0 {
                 continue;
             }
@@ -7057,7 +7317,11 @@ impl App {
             }
         }
         {
-            let (id, count) = self.table_result;
+            let (id, count) = if live {
+                self.live_table_slots[0]
+            } else {
+                self.table_result
+            };
             if count > 0 {
                 let (sx, sy) = table_craft_origin(panel, 9);
                 draw_item_icon(g, id, sx + 1, sy + 1);
@@ -7069,10 +7333,15 @@ impl App {
             }
         }
         // THE STORE ROWS (the same geometry the inventory screen's own
-        // rows speak — the ctor's addStandardInventorySlots(8, 84))
+        // rows speak — the ctor's addStandardInventorySlots(8, 84); the
+        // wire's own menu numbering rides the belief: the hotbar row
+        // i<9 the menu 37+i speaks, the main grid the menu 10+(i-9))
         let hotbar = self.inventory.hotbar();
         for i in 0..36usize {
-            let (id, count) = if i < 9 {
+            let (id, count) = if live {
+                let menu = if i < 9 { 37 + i as i32 } else { 10 + (i as i32 - 9) };
+                self.live_table_slots[menu as usize]
+            } else if i < 9 {
                 hotbar[i]
             } else {
                 self.inventory.items[i]
@@ -7089,12 +7358,18 @@ impl App {
             }
         }
         // THE HELD STACK follows the cursor (the vanilla carried render,
-        // the offline carried the LOCAL store's own state)
-        if self.inv_carried.1 > 0 {
+        // the wire's own cursor the belief keeps, the offline carried
+        // the LOCAL store's own state)
+        let carried = if live {
+            self.live_table_carried
+        } else {
+            self.inv_carried
+        };
+        if carried.1 > 0 {
             if let Some((mx, my)) = self.mouse_pos {
-                draw_item_icon(g, self.inv_carried.0, mx - 8, my - 8);
-                if self.inv_carried.1 > 1 {
-                    let s = self.inv_carried.1.to_string();
+                draw_item_icon(g, carried.0, mx - 8, my - 8);
+                if carried.1 > 1 {
+                    let s = carried.1.to_string();
                     let tw = g.text_width(&s);
                     g.text(a, mx - 8 + 17 - tw, my - 8 + 9, &s, WHITE, true);
                 }
@@ -8620,29 +8895,47 @@ impl App {
                 None // the press between the slots — the hover's own miss
             }
             ScreenKind::Crafting => {
-                // THE TABLE'S OWN ARM (the offline walk — the wire lane
-                // sleeps): the menu's own order — result 0, the 3x3
+                // THE TABLE'S OWN ARM (the offline walk, the wire's
+                // own belief the live lane reads — the two lanes never
+                // mix): the menu's own order — result 0, the 3x3
                 // cells 1..9, the store rows the standard ids keep.
                 if self.table_panel == (0, 0) {
                     return None; // no render spoke yet — no geometry to ride
                 }
+                let live = self.world_is_network && self.table_is_live;
                 let panel = self.table_panel;
                 let (rx, ry) = table_craft_origin(panel, 9);
                 if mx >= rx + 1 && mx < rx + 17 && my >= ry + 1 && my < ry + 17 {
-                    return Some((self.table_result.0, self.table_result.1, 0));
+                    let s = if live {
+                        self.live_table_slots[0]
+                    } else {
+                        self.table_result
+                    };
+                    return Some((s.0, s.1, 0));
                 }
                 for cell in 0..9 {
                     let (cx, cy) = table_craft_origin(panel, cell);
                     if mx >= cx + 1 && mx < cx + 17 && my >= cy + 1 && my < cy + 17 {
-                        let s = self.table_grid[cell];
+                        let s = if live {
+                            self.live_table_slots[1 + cell]
+                        } else {
+                            self.table_grid[cell]
+                        };
                         return Some((s.0, s.1, 1 + cell as i32));
                     }
                 }
                 for i in 0..36 {
                     let (sx, sy) = inventory_slot_origin(panel, i);
                     if mx >= sx + 1 && mx < sx + 17 && my >= sy + 1 && my < sy + 17 {
-                        let slot_id = if i < 9 { 37 + i as i32 } else { 10 + (i as i32 - 9) };
-                        let s = self.inventory.items[i];
+                        // the menu's own store numbering: the array's
+                        // 0..8 the HOTBAR row speaks (menu 37..45), the
+                        // 9..35 the main grid (menu 10..36)
+                        let slot_id = Self::table_store_menu_id(i);
+                        let s = if live {
+                            self.live_table_slots[slot_id as usize]
+                        } else {
+                            self.inventory.items[i]
+                        };
                         return Some((s.0, s.1, slot_id));
                     }
                 }
@@ -12469,21 +12762,51 @@ impl App {
     }
 
     /// The networked container lane: the live store's projection drives
-    /// the chest screen exactly like the vanilla client's — the Open
-    /// Screen packet SHOWS the window over the world (from the World
-    /// screen; a window arriving under other screens — pause, chat —
-    /// waits honestly, no yank), the Set Content / Set Slot packets
-    /// update its slots IN PLACE while it shows, and the store's drop
-    /// (the Container Close packet) returns to the world. Menu types
-    /// other than the chest (generic_9x3 = 2) are honest drops for
-    /// now — their screens are their own rounds' lines; the store
-    /// itself keeps them (the model lane is menu-agnostic).
+    /// the container screens exactly like the vanilla client's — the
+    /// Open Screen packet SHOWS the window over the world (from the
+    /// World screen; a window arriving under other screens — pause,
+    /// chat — waits honestly, no yank), the Set Content / Set Slot
+    /// packets update its slots IN PLACE while it shows, and the
+    /// store's drop (the Container Close packet) returns to the world.
+    /// The WIRED menus: the chest (generic_9x3 = 2, the grid+mirror
+    /// store) and the crafting table (crafting = 12 — the autopush-329
+    /// round, the window-1 store the 46-slot belief feeds); the OTHER
+    /// menu types are honest drops for now — their screens are their
+    /// own rounds' lines; the store itself keeps them (the model lane
+    /// is menu-agnostic).
     fn live_container_updated(
         &mut self,
         container: Option<crate::world_view::LiveContainer>,
     ) {
         match container {
             Some(c) => {
+                if c.menu_type_id == crate::world_model::MENU_TYPE_CRAFTING {
+                    // THE TABLE'S OWN WIRE LANE (the menu type id 12 the
+                    // server's OpenScreen speaks — the store's own
+                    // projection the chest's lane mirrors): the menu's
+                    // own numbering — result 0, the 3x3 cells 1..9, the
+                    // main grid 10..36, the hotbar row 37..45 — padded
+                    // to the layout's full shape, the wire's own (0, 0)
+                    // emptiness riding verbatim
+                    let mut slots = [(0i32, 0i32); 46];
+                    for (i, &(id, count)) in c.slots.iter().take(46).enumerate() {
+                        slots[i] = (id, count);
+                    }
+                    self.live_table_slots = slots;
+                    self.table_is_live = true;
+                    // the window's identity rides in: the clicks echo
+                    // against THIS id and revision (the stateId lane)
+                    self.table_live_window = Some((c.id, c.state_id));
+                    // the AUTHORITATIVE carried lands too: the server's
+                    // own cursor replaces whatever the prediction
+                    // believed (the wholesale replacement the chest's
+                    // lane speaks)
+                    self.live_table_carried = c.carried;
+                    if self.screen == ScreenKind::World {
+                        self.open(ScreenKind::Crafting);
+                    }
+                    return;
+                }
                 if c.menu_type_id != crate::world_model::MENU_TYPE_CHEST {
                     return; // not the wired menu — the honest drop
                 }
@@ -12545,6 +12868,15 @@ impl App {
                 self.bundle_scroll_acc_y = 0.0;
             }
             None => {
+                // the store dropped: a LIVE table closes back to the
+                // world (the same vanilla closeContainer return — the
+                // wire lane's own window the belief dies with)
+                if self.screen == ScreenKind::Crafting && self.table_is_live {
+                    self.table_is_live = false;
+                    self.open(ScreenKind::World);
+                }
+                self.table_live_window = None;
+                self.live_table_carried = (0, 0); // no window, no held stack
                 // the store dropped: a LIVE chest closes back to the
                 // world (the vanilla closeContainer's return); the
                 // offline stand-in is not the live lane's to close
@@ -16725,6 +17057,239 @@ fn wire_craft_cell_pickup(
     ));
 }
 
+/// THE TABLE'S ON-TAKE WALK (javap 26.2 ResultSlot.onTake — the
+/// positioned 3x3's per-cell removeItem(i, 1) over the window-1
+/// belief): every non-empty cell one off, then the recipe recompute
+/// the slotsChanged chain speaks (the belief's own preview the sync
+/// corrects — [`craft_result_for_table`] over the cells 1..9 into the
+/// result slot 0). The changed vec the mutations name — one entry per
+/// slot, the pair the final state keeps.
+fn wire_table_on_take(live_slots: &mut [(i32, i32); 46]) -> Vec<(i16, (i32, i32))> {
+    let mut changed = Vec::new();
+    for cell in 1..10 {
+        let (cid, ccount) = live_slots[cell];
+        if ccount > 0 {
+            live_slots[cell] = if ccount > 1 { (cid, ccount - 1) } else { (0, 0) };
+            changed.push((cell as i16, live_slots[cell]));
+        }
+    }
+    let cells: [(i32, i32); 9] = [
+        live_slots[1], live_slots[2], live_slots[3],
+        live_slots[4], live_slots[5], live_slots[6],
+        live_slots[7], live_slots[8], live_slots[9],
+    ];
+    let result = craft_result_for_table(&cells);
+    if result != live_slots[0] {
+        live_slots[0] = result;
+        changed.push((0, result));
+    }
+    changed
+}
+
+/// THE TABLE RESULT'S OWN TAKE (the doClick PICKUP arm over the
+/// mayPlace-false slot 0 — the window-0 helper the crafting menu's
+/// own window speaks): the carried-empty arm takes the WHOLE or the
+/// HALF rounded up, the merge arm the carried's space caps, the
+/// refusals no mutation speak (the packet still rides the lane — the
+/// server's verdict the sync's truth replaces the belief with).
+fn wire_table_result_take(
+    sink: &std::sync::mpsc::Sender<crate::world_view::ContainerCommand>,
+    live_slots: &mut [(i32, i32); 46],
+    carried: &mut (i32, i32),
+    button: i8,
+    state_id: i32,
+    window_id: i32,
+) {
+    let (id, count) = live_slots[0];
+    let mut changed: Vec<(i16, (i32, i32))> = Vec::new();
+    if count > 0 && carried.1 <= 0 {
+        let taken = if button == 0 { count } else { (count + 1) / 2 };
+        *carried = (id, taken);
+        changed = wire_table_on_take(live_slots);
+    } else if count > 0 && carried.0 == id {
+        let space = crate::world_view::ITEM_MAX_STACK_DEFAULT - carried.1;
+        if space > 0 {
+            carried.1 += space.min(count);
+            changed = wire_table_on_take(live_slots);
+        }
+    }
+    let _ = sink.send(crate::world_view::ContainerCommand::Click(
+        crate::world_view::ContainerClick {
+            window_id,
+            state_id,
+            slot: 0,
+            button,
+            input: crate::world_view::ContainerInput::Pickup,
+            changed,
+            carried: *carried,
+        },
+    ));
+}
+
+/// THE TABLE'S OWN QUICK-MOVE BATCH (doClick's QUICK_MOVE arm over
+/// the result slot — the window-0 helper the crafting menu's own
+/// store range answers): the quickMoveStack LOOP the while-same-item
+/// guard keeps — each iteration moves the believed result over the
+/// store rows (the [10, 46) REVERSE range the CraftingMenu's own
+/// constants keep — the hotbar END-first 45..37, the main rows 36..10
+/// after: the merge pass over the whole range FIRST, the first-empty
+/// pass after), the nothing-moved EMPTY return breaks the loop, the
+/// count-changed gate fires the onTake ([`wire_table_on_take`]), and
+/// the index-0 LEFTOVER the stack part the store never held rides the
+/// SERVER's drop (the belief never holds it, the loop CONTINUES).
+fn wire_table_result_quick_move(
+    sink: &std::sync::mpsc::Sender<crate::world_view::ContainerCommand>,
+    live_slots: &mut [(i32, i32); 46],
+    hotbar: &mut [(i32, i32); 9],
+    carried: (i32, i32),
+    button: i8,
+    state_id: i32,
+    window_id: i32,
+) {
+    let max = crate::world_view::ITEM_MAX_STACK_DEFAULT;
+    let order: Vec<usize> = (37..46).rev().chain((10..37).rev()).collect();
+    let mut changed: Vec<(i16, (i32, i32))> = Vec::new();
+    loop {
+        let (id, count) = live_slots[0];
+        if count <= 0 {
+            break;
+        }
+        let mut rest = count;
+        for &s in &order {
+            if rest == 0 {
+                break;
+            }
+            let (sid, sc) = live_slots[s];
+            if sc > 0 && sid == id && sc < max {
+                let take = (max - sc).min(rest);
+                live_slots[s] = (sid, sc + take);
+                note_batch_change(&mut changed, s as i16, live_slots[s]);
+                rest -= take;
+            }
+        }
+        for &s in &order {
+            if rest == 0 {
+                break;
+            }
+            if live_slots[s].1 <= 0 {
+                let take = rest.min(max);
+                live_slots[s] = (id, take);
+                note_batch_change(&mut changed, s as i16, live_slots[s]);
+                rest -= take;
+            }
+        }
+        if rest == count {
+            break; // the nothing-moved EMPTY the loop break keeps
+        }
+        for (slot, pair) in wire_table_on_take(live_slots) {
+            note_batch_change(&mut changed, slot, pair);
+        }
+    }
+    let mut row = [(0, 0); 9];
+    row.copy_from_slice(&live_slots[37..46]);
+    *hotbar = row;
+    let _ = sink.send(crate::world_view::ContainerCommand::Click(
+        crate::world_view::ContainerClick {
+            window_id,
+            state_id,
+            slot: 0,
+            button,
+            input: crate::world_view::ContainerInput::QuickMove,
+            changed,
+            carried,
+        },
+    ));
+}
+
+/// THE TABLE CELL'S PICKUP + THE SLOTSCHANGED PREVIEW (the doClick
+/// PICKUP walk the uniform table speaks over the believed cell, the
+/// mutation's recipe ask the menu's own chain keeps — the window-0
+/// helper the 3-wide grid answers): after the cell mutates, the
+/// believed result recomputes ([`craft_result_for_table`] over the
+/// window-1 projection's OWN cells — the instant preview the vanilla
+/// screen shows before the server's sync lands), the changed cell +
+/// the CHANGED verdict the one packet names.
+fn wire_table_cell_pickup(
+    sink: &std::sync::mpsc::Sender<crate::world_view::ContainerCommand>,
+    live_slots: &mut [(i32, i32); 46],
+    carried: &mut (i32, i32),
+    menu: i32,
+    button: i8,
+    state_id: i32,
+    window_id: i32,
+) {
+    let believed = live_slots[menu as usize];
+    let (new_slot, new_carried) = if button == 0 {
+        crate::world_view::predict_pickup(believed, *carried)
+    } else {
+        crate::world_view::predict_pickup_right(believed, *carried)
+    };
+    live_slots[menu as usize] = new_slot;
+    *carried = new_carried;
+    let mut changed = vec![(menu as i16, new_slot)];
+    let cells: [(i32, i32); 9] = [
+        live_slots[1], live_slots[2], live_slots[3],
+        live_slots[4], live_slots[5], live_slots[6],
+        live_slots[7], live_slots[8], live_slots[9],
+    ];
+    let result = craft_result_for_table(&cells);
+    if result != live_slots[0] {
+        live_slots[0] = result;
+        changed.push((0, result));
+    }
+    let _ = sink.send(crate::world_view::ContainerCommand::Click(
+        crate::world_view::ContainerClick {
+            window_id,
+            state_id,
+            slot: menu as i16,
+            button,
+            input: crate::world_view::ContainerInput::Pickup,
+            changed,
+            carried: new_carried,
+        },
+    ));
+}
+
+/// THE TABLE'S STORE-ROW PICKUP (the doClick PICKUP arm over the
+/// standard slot — the window-0 helper the menu-id mapping answers):
+/// the uniform pickup table mutates the believed slot + the cursor,
+/// the packet rides the lane (the changed entry the slot's final pair
+/// names), the HUD row's belief follows the hotbar's menu ids the
+/// mutation may have touched.
+fn wire_table_store_pickup(
+    sink: &std::sync::mpsc::Sender<crate::world_view::ContainerCommand>,
+    live_slots: &mut [(i32, i32); 46],
+    hotbar: &mut [(i32, i32); 9],
+    carried: &mut (i32, i32),
+    menu: i32,
+    button: i8,
+    state_id: i32,
+    window_id: i32,
+) {
+    let believed = live_slots[menu as usize];
+    let (new_slot, new_carried) = if button == 0 {
+        crate::world_view::predict_pickup(believed, *carried)
+    } else {
+        crate::world_view::predict_pickup_right(believed, *carried)
+    };
+    live_slots[menu as usize] = new_slot;
+    *carried = new_carried;
+    let mut row = [(0, 0); 9];
+    row.copy_from_slice(&live_slots[37..46]);
+    *hotbar = row;
+    let _ = sink.send(crate::world_view::ContainerCommand::Click(
+        crate::world_view::ContainerClick {
+            window_id,
+            state_id,
+            slot: menu as i16,
+            button,
+            input: crate::world_view::ContainerInput::Pickup,
+            changed: vec![(menu as i16, new_slot)],
+            carried: new_carried,
+        },
+    ));
+}
+
 /// THE PACK LAW (javap 26.2 CraftingInput.ofPositioned — the walk the
 /// asCraftInput lane keeps before every recipe ask): the grid's
 /// non-empty cells' bounding box folds to its own minimal input —
@@ -20801,6 +21366,219 @@ mod tests {
         assert!(app.chest_is_live, "the live lane took the screen over");
         assert_eq!(app.chest_slots[4], (926, 12), "the live slots replaced the loadout");
         assert_eq!(app.chest_mirror[0], (921, 5), "the live mirror filled in");
+    }
+
+    /// THE WIRE TABLE'S OWN WINDOW (the menu type id 12 the OpenScreen
+    /// word carries — the autopush-329 round): the store's projection
+    /// opens the Crafting screen over the world (the window-1 belief
+    /// the 46-slot shape feeds), a NEWER snapshot updates IN PLACE,
+    /// the foreign menu stays the honest drop, the store's drop
+    /// returns to the world, and the offline stand-in is never the
+    /// live lane's to close.
+    #[test]
+    fn the_wire_crafting_menu_drives_the_table_screen() {
+        use crate::world_view::LiveContainer;
+        let mut app = App::new(3);
+        app.open(ScreenKind::Connect);
+        app.net_world = Some(air_net_world(2, 0));
+        app.enter_network_world(None, Skybox::Overworld, None, None);
+        assert_eq!(app.screen, ScreenKind::World);
+
+        // the server opens a crafting table (Open Screen menu 12 →
+        // the store, the Set Content fills it — here the store's
+        // PROJECTION arrives): the screen SHOWS over the world, the
+        // slots ride the CraftingMenu's own numbering into the belief
+        let table = LiveContainer {
+            id: 9,
+            menu_type_id: crate::world_model::MENU_TYPE_CRAFTING,
+            slots: {
+                let mut s = vec![(0i32, 0i32); 46];
+                s[0] = (925, 4); // the result slot: stick x4
+                s[1] = (926, 7); // the grid's cell 1: diamond x7 (demo cargo)
+                s[4] = (926, 7); // the grid's cell 4 (row 1)
+                s[10] = (921, 5); // the main grid's head: apple x5
+                s[37] = (932, 64); // the hotbar row's head: iron_ingot x64
+                s
+            },
+            carried: (0, 0),
+            state_id: 3,
+            bundle_rows: Vec::new(),
+        };
+        app.live_view_updated(air_net_world(2, 1), None, None, Some(table.clone()));
+        assert_eq!(app.screen, ScreenKind::Crafting, "the window shows over the world");
+        assert!(app.table_is_live, "the live lane owns the screen now");
+        assert_eq!(app.live_table_slots[0], (925, 4), "the result slot rode in");
+        assert_eq!(app.live_table_slots[1], (926, 7), "the grid's cell 1 rode in");
+        assert_eq!(app.live_table_slots[4], (926, 7), "the grid's cell 4 rode in");
+        assert_eq!(app.live_table_slots[10], (921, 5), "the main grid's head = menu slot 10");
+        assert_eq!(app.live_table_slots[37], (932, 64), "the hotbar's head = menu slot 37");
+        assert_eq!(app.table_live_window, Some((9, 3)), "the window's identity rode in");
+
+        // a NEWER snapshot of the same window updates IN PLACE (the
+        // Set Content packet's replacement — no re-open flicker)
+        let mut table2 = table.clone();
+        table2.slots[0] = (0, 0); // the result was taken
+        table2.slots[11] = (981, 3);
+        table2.state_id = 4;
+        app.live_view_updated(air_net_world(2, 2), None, None, Some(table2));
+        assert_eq!(app.screen, ScreenKind::Crafting, "the update is in place");
+        assert_eq!(app.live_table_slots[0], (0, 0), "the taken result emptied");
+        assert_eq!(app.live_table_slots[11], (981, 3), "the new stack landed");
+        assert_eq!(app.table_live_window, Some((9, 4)), "the revision followed");
+
+        // a NON-wired menu is the honest drop: the store keeps it, the
+        // screen machinery does not move
+        let hopper = LiveContainer { id: 6, menu_type_id: 15, slots: vec![], carried: (0, 0), state_id: 0, bundle_rows: Vec::new() };
+        app.live_view_updated(air_net_world(2, 3), None, None, Some(hopper));
+        assert_eq!(app.screen, ScreenKind::Crafting, "the wired screen stays");
+        assert_eq!(app.live_table_slots[11], (981, 3), "the hopper touched nothing");
+
+        // the store DROPPED (the server's Container Close): the live
+        // table returns to the world — the vanilla closeContainer's own
+        app.live_view_updated(air_net_world(2, 4), None, None, None);
+        assert_eq!(app.screen, ScreenKind::World, "the close returns to the world");
+        assert!(!app.table_is_live, "the live flag dropped with the window");
+        assert_eq!(app.table_live_window, None, "the window's identity died");
+
+        // the OFFLINE stand-in is never the live lane's to close: the
+        // deterministic table stays up (the is_live flag the close
+        // walk's wire arm reads)
+        app.open_crafting_table();
+        assert_eq!(app.screen, ScreenKind::Crafting);
+        assert!(!app.table_is_live);
+        app.live_view_updated(air_net_world(2, 6), None, None, None);
+        assert_eq!(app.screen, ScreenKind::Crafting, "the offline table survives");
+        // and the lane re-arms on a NEW window: the live menu opens
+        // over the world again (the fresh menu's slots — the vanilla
+        // open is a fresh screen)
+        app.net_world = Some(air_net_world(2, 8));
+        app.enter_network_world(None, Skybox::Overworld, None, None);
+        assert_eq!(app.screen, ScreenKind::World);
+        app.live_view_updated(air_net_world(2, 9), None, None, Some(table));
+        assert_eq!(app.screen, ScreenKind::Crafting);
+        assert!(app.table_is_live, "the live lane took the screen over");
+        assert_eq!(app.live_table_slots[0], (925, 4), "the live slots replaced the fresh grid");
+        assert_eq!(app.live_table_slots[10], (921, 5), "the store rows filled in");
+    }
+
+    /// THE WIRE TABLE'S OWN CLICK ARC (the window-1 identity the
+    /// ServerboundContainerClickPacket speaks — the chest's send lane
+    /// the crafting menu's own numbering rides): the store row's
+    /// pickup carries the window's id + revision, the result slot's
+    /// take the onTake's changed entries name (the cells' decrement +
+    /// the recompute), the outside press the THROW input speaks, and
+    /// the close echoes the Container Close packet.
+    #[test]
+    fn the_wire_table_clicks_speak_the_window() {
+        use crate::world_view::{ContainerCommand, ContainerInput, LiveContainer};
+        // the REAL recipe ids the preview's recompute needs (the sticks
+        // column the cells keep — the belief's own verdict the onTake
+        // re-speaks; a non-recipe cargo the honest EMPTY verdict gives)
+        let planks = mc_registry::item_id_by_name("oak_planks").unwrap();
+        let stick = mc_registry::item_id_by_name("stick").unwrap();
+        let mut app = App::new(3);
+        app.open(ScreenKind::Connect);
+        app.net_world = Some(air_net_world(2, 0));
+        app.enter_network_world(None, Skybox::Overworld, None, None);
+        let (click_tx, click_rx) = std::sync::mpsc::channel::<ContainerCommand>();
+        app.attach_live_clicks(click_tx);
+        let table = LiveContainer {
+            id: 9,
+            menu_type_id: crate::world_model::MENU_TYPE_CRAFTING,
+            slots: {
+                let mut s = vec![(0i32, 0i32); 46];
+                s[0] = (stick, 4); // the result: stick x4
+                s[1] = (planks, 7); // the grid's cell 1 — the sticks column
+                s[4] = (planks, 7); // the grid's cell 4 keeps
+                s[10] = (921, 5); // the main grid's head: apple x5
+                s
+            },
+            carried: (0, 0),
+            state_id: 3,
+            bundle_rows: Vec::new(),
+        };
+        let table2 = table.clone(); // the re-arm's own fresh window
+        app.live_view_updated(air_net_world(2, 1), None, None, Some(table));
+        app.table_panel = inventory_panel_origin(640, 360);
+        let (px, py) = inventory_panel_origin(640, 360);
+        // THE STORE ROW'S PICKUP (menu slot 10 = the main grid's
+        // head): the whole stack rides the cursor, the packet the
+        // window's own identity names
+        app.on_press(px + 8 + 1 + 8, py + 84 + 1 + 8);
+        match click_rx.try_recv().expect("the store click rode the lane") {
+            ContainerCommand::Click(c) => {
+                assert_eq!(c.window_id, 9, "the window's own id");
+                assert_eq!(c.state_id, 3, "the revision rides");
+                assert_eq!(c.slot, 10, "the menu's own numbering");
+                assert_eq!(c.input, ContainerInput::Pickup);
+                assert_eq!(c.changed, vec![(10, (0, 0))], "the taken slot emptied");
+                assert_eq!(c.carried, (921, 5), "the cursor carries the stack");
+            }
+            _ => panic!("the click command's own shape"),
+        }
+        assert_eq!(app.live_table_carried, (921, 5), "the belief's cursor follows");
+        // the SECOND press places the stack back (the pickup walk's
+        // own place arm the uniform table keeps)
+        app.on_press(px + 8 + 1 + 8, py + 84 + 1 + 8);
+        match click_rx.try_recv().expect("the place click rode the lane") {
+            ContainerCommand::Click(c) => {
+                assert_eq!(c.changed, vec![(10, (921, 5))], "the stack landed back");
+                assert_eq!(c.carried, (0, 0), "the cursor emptied");
+            }
+            _ => panic!("the click command's own shape"),
+        }
+        // THE RESULT SLOT'S TAKE (menu slot 0 — the mayPlace-false
+        // walk): the carried receives, the cells one off, the
+        // recompute the preview speaks (the sticks recipe the column
+        // keeps — the result's own verdict no changed entry names)
+        app.on_press(px + 124 + 1 + 8, py + 35 + 1 + 8);
+        match click_rx.try_recv().expect("the result click rode the lane") {
+            ContainerCommand::Click(c) => {
+                assert_eq!(c.slot, 0, "the result slot's own id");
+                assert_eq!(c.input, ContainerInput::Pickup);
+                assert_eq!(c.carried, (stick, 4), "the whole result taken");
+                assert_eq!(
+                    c.changed,
+                    vec![(1, (planks, 6)), (4, (planks, 6))],
+                    "the cells' decrement the onTake names"
+                );
+            }
+            _ => panic!("the click command's own shape"),
+        }
+        assert_eq!(app.live_table_slots[1], (planks, 6), "the belief's cell spent");
+        assert_eq!(app.live_table_slots[0], (stick, 4), "the recipe re-spoke");
+        // THE THROW (the outside press — slot -999): the carried stack
+        // the packet names, the belief clears (the drop entity the
+        // SERVER spawns)
+        app.on_press(10, 10);
+        match click_rx.try_recv().expect("the throw rode the lane") {
+            ContainerCommand::Click(c) => {
+                assert_eq!(c.slot, -999, "the THROW slot");
+                assert_eq!(c.input, ContainerInput::Throw);
+                assert_eq!(c.carried, (0, 0), "the whole stack thrown");
+            }
+            _ => panic!("the click command's own shape"),
+        }
+        // THE CLOSE (the Escape's own arm): the Container Close packet
+        // echoes, the belief resets with the window, the world stands
+        app.on_escape();
+        match click_rx.try_recv().expect("the close echo rode the lane") {
+            ContainerCommand::Close { window_id } => {
+                assert_eq!(window_id, 9, "the window's own close");
+            }
+            _ => panic!("the close command's own shape"),
+        }
+        assert_eq!(app.screen, ScreenKind::World, "the menu closed");
+        assert!(!app.table_is_live, "the live flag dropped");
+        assert_eq!(app.table_live_window, None, "the window died");
+        // the lane RE-ARMS (the server's window back) and the
+        // BETWEEN-SLOTS press is the honest no-op (inside the panel,
+        // no slot — the wire lane's own gate)
+        app.live_view_updated(air_net_world(2, 10), None, None, Some(table2));
+        assert_eq!(app.screen, ScreenKind::Crafting, "the window re-opened");
+        app.table_panel = inventory_panel_origin(640, 360);
+        app.on_press(px + 2, py + 70);
+        assert!(click_rx.try_recv().is_err(), "no slot, no click");
     }
 
     /// The slot click's whole arc: the live chest's press rides the

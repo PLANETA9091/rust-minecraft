@@ -489,6 +489,12 @@ pub const SHIELD_SLOT: usize = 45;
 /// registry — vanilla-to-vanilla pins this number).
 pub const MENU_TYPE_CHEST: i32 = 2;
 
+/// `MenuType`'s crafting — the CraftingMenu's registry id (the SAME
+/// clinit order speaks: generic_9x6 5, generic_3x3 6, crafter_3x3 7,
+/// anvil 8, beacon 9, blast_furnace 10, brewing_stand 11, CRAFTING
+/// lands at 12 — the wire's own word the live table lane routes on).
+pub const MENU_TYPE_CRAFTING: i32 = 12;
+
 /// An OPEN container window — the `containerMenu` lane the audited
 /// consumer routes foreign-window container packets through (javap of
 /// the 26.2 `ClientPacketListener`): the Open Screen packet BIRTHS the
