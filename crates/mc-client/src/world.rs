@@ -118,16 +118,24 @@ pub const WHEAT_STAGE4: u16 = 33;
 pub const WHEAT_STAGE5: u16 = 34;
 pub const WHEAT_STAGE6: u16 = 35;
 pub const WHEAT_STAGE7: u16 = 36;
+/// THE CRAFTING TABLE'S OWN KIND (the autopush-328 round — the atlas
+/// RUNTIME_PALETTE's 37 index): the placement arm's own product, the
+/// plain opaque cube the full-cube face walk meshes (front/side/top +
+/// the oak_planks down face the vanilla model speaks), and the USE
+/// lane's own door — the right-press on its cell opens the 3x3 screen
+/// (`on_right_press_block_lane`'s interactive arm). The vanilla facing
+/// rotation the generic full-cube fold keeps axis-aligned.
+pub const CRAFTING_TABLE: u16 = 37;
 
 /// Block -> texture-group mapping used by the real-colors LUT.
-pub const NAME_OF: [&str; 37] = [
+pub const NAME_OF: [&str; 38] = [
     "air", "stone", "dirt", "grass_block", "oak_log", "oak_leaves", "water", "sand",
     "granite", "diorite", "andesite", "deepslate", "cobbled_deepslate", "gravel",
     "bedrock", "coal_ore", "copper_ore", "iron_ore", "gold_ore", "redstone_ore",
     "lapis_ore", "diamond_ore", "emerald_ore", "netherrack", "pale_oak_leaves",
     "leaf_litter", "lava", "farmland", "dirt_path", "wheat",
     "wheat_stage1", "wheat_stage2", "wheat_stage3", "wheat_stage4",
-    "wheat_stage5", "wheat_stage6", "wheat_stage7",
+    "wheat_stage5", "wheat_stage6", "wheat_stage7", "crafting_table",
 ];
 
 /// The crop's own AGE FAMILY — the wheat kinds the ladder wears

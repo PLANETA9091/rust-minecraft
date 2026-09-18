@@ -59,14 +59,22 @@ use zip::ZipArchive;
 /// walk, never a hardcoded name). The faces carry NO tintindex — the
 /// wheat_stage0 master renders as authored (the pre-colored pixels the
 /// probe verifies).
-pub const RUNTIME_PALETTE: [&str; 37] = [
+/// crafting_table is kind 37 (the thirty-eighth entry, the autopush-328
+/// round): the placement arm's own product (javap BlockItem.place — the
+/// crafting_table item the world's vocabulary wears). The model chain
+/// (blockstates/crafting_table.json -> block/crafting_table) resolves
+/// through the SAME full-cube face walk — the element's six faces name
+/// crafting_table_front/side/top, the plain opaque cube the generic
+/// path meshes (the vanilla's facing rotation the generic fold keeps —
+/// the axis-aligned placement the offline world speaks).
+pub const RUNTIME_PALETTE: [&str; 38] = [
     "air", "stone", "dirt", "grass_block", "oak_log", "oak_leaves", "water", "sand",
     "granite", "diorite", "andesite", "deepslate", "cobbled_deepslate", "gravel",
     "bedrock", "coal_ore", "copper_ore", "iron_ore", "gold_ore", "redstone_ore",
     "lapis_ore", "diamond_ore", "emerald_ore", "netherrack", "pale_oak_leaves",
     "leaf_litter", "lava", "farmland", "dirt_path", "wheat",
     "wheat_stage1", "wheat_stage2", "wheat_stage3", "wheat_stage4",
-    "wheat_stage5", "wheat_stage6", "wheat_stage7",
+    "wheat_stage5", "wheat_stage6", "wheat_stage7", "crafting_table",
 ];
 
 /// Renderer face order: 0:+X 1:-X 2:+Y 3:-Y 4:+Z 5:-Z.
@@ -718,6 +726,10 @@ mod tests {
         assert_eq!(RUNTIME_PALETTE[34], "wheat_stage5");
         assert_eq!(RUNTIME_PALETTE[35], "wheat_stage6");
         assert_eq!(RUNTIME_PALETTE[36], "wheat_stage7");
+        // the crafting table's own kind (the autopush-328 round): the
+        // plain opaque cube the full-cube face walk resolves (front/
+        // side/top + the oak_planks down face the vanilla model speaks)
+        assert_eq!(RUNTIME_PALETTE[37], "crafting_table");
         assert_eq!(FACE_KEYS, ["east", "west", "up", "down", "south", "north"]);
     }
 

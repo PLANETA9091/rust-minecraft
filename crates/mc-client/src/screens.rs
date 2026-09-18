@@ -1047,6 +1047,20 @@ pub enum ScreenKind {
     /// FollowsMouse's own atan law), the offline click walks (the pickup /
     /// split / quick-move predictions over the player's own store).
     Inventory,
+    /// THE CRAFTING TABLE'S OWN SCREEN (javap 26.2 CraftingScreen — the
+    /// right-press on the placed table the use lane opens): the real
+    /// `container/crafting_table.png` background blitted 176x166 at the
+    /// centered panel, the 3x3 grid + result + the player's store rows
+    /// the menu's own ctor numbers place (addCraftingGridSlots(30, 17),
+    /// addResultSlot(124, 35), addStandardInventorySlots(8, 84)), the
+    /// offline click walks over the player's OWN store (the wire lane
+    /// sleeps — the live session's table the server's OpenScreen word
+    /// opens, the packet lane the follow-up names). The TRANSIENT menu:
+    /// the open builds a fresh grid, the close the clearContainer walk
+    /// speaks (the alive player's placeItemBackInInventory — the grid
+    /// contents + the carried stack ride home, the full store the
+    /// remainder drops).
+    Crafting,
 }
 
 /// THE HURT VOICE THE DAMAGE TYPE'S EFFECTS NAME (javap the 26.2
@@ -1715,6 +1729,27 @@ pub struct App {
     /// own verdict, assemble or EMPTY), [`Self::refresh_craft_result`]
     /// the offline answer keeps.
     pub craft_result: (i32, i32),
+    /// THE TABLE'S OWN 3x3 GRID (the CraftingMenu's own 9
+    /// `craftSlots` — the TransientCraftingContainer the ctor's
+    /// AbstractCraftingMenu walk builds width-3/height-3): the nine
+    /// cells the table screen's texture paints chrome for, the
+    /// (id, count) stack shape the store speaks. The TRANSIENT menu
+    /// (the vanilla openMenu builds a fresh CraftingMenu per use) —
+    /// the open resets the grid, the close the clearContainer walk
+    /// speaks (the contents ride home — see
+    /// [`Self::close_crafting_table`]).
+    pub table_grid: [(i32, i32); 9],
+    /// The table grid's computed result slot (the CraftingMenu's slot
+    /// 0 — the ctor's `addResultSlot(124, 35)`): the recompute law the
+    /// slotsChanged walk keeps, [`Self::refresh_table_result`] the
+    /// offline answer speaks (the SHARED recipe walk —
+    /// [`craft_result_for_table`] over the 3-wide pack).
+    pub table_result: (i32, i32),
+    /// The table panel's GUI origin the LAST render laid out — the
+    /// click lane's own geometry (the inventory's render-then-hit
+    /// pattern; the static layout needs no per-slot rects). The (0, 0)
+    /// sentinel refuses the click before the first render spoke.
+    pub table_panel: (i32, i32),
     /// The keyboard lane's shift state the LAST loop tick tracked —
     /// the vanilla `Screen.hasShiftDown()` query: the press's rising
     /// edge reads it to route the shift-click's QUICK_MOVE lane. Fed
@@ -2207,6 +2242,9 @@ impl App {
             inv_panel: (0, 0),
             craft_grid: [(0, 0); 4],
             craft_result: (0, 0),
+            table_grid: [(0, 0); 9],
+            table_result: (0, 0),
+            table_panel: (0, 0),
             live_held: None,
             drops: Vec::new(),
             inventory: crate::drops::Inventory::default(),
@@ -5217,6 +5255,7 @@ impl App {
         match self.screen {
             ScreenKind::World if !self.dead => self.open_inventory(),
             ScreenKind::Inventory => self.close_inventory(),
+            ScreenKind::Crafting => self.close_crafting_table(),
             _ => {}
         }
     }
@@ -5291,6 +5330,303 @@ impl App {
             self.hotbar_slots = self.inventory.hotbar();
         }
         self.open(ScreenKind::World);
+    }
+
+    /// THE CRAFTING TABLE'S OWN OPEN (the vanilla Minecraft.handleKeybinds
+    /// → the use lane's openMenu(new CraftingMenu(...)) — the interactive
+    /// arm [`Self::on_right_press_block_lane`]'s door): the screen swap
+    /// over the frozen world, the TRANSIENT menu's fresh state — the
+    /// grid empties (the new CraftingMenu ctor's own TransientCrafting-
+    /// Container the vanilla use speaks per open), the carried stack
+    /// fresh-empty (the offline world's screen opens from the standing
+    /// use — no carried stack survives a world press). The store rows
+    /// ride the panel below (the same 36 the inventory screen paints).
+    pub fn open_crafting_table(&mut self) {
+        self.table_grid = [(0, 0); 9];
+        self.table_result = (0, 0);
+        self.inv_carried = (0, 0);
+        self.open(ScreenKind::Crafting);
+    }
+
+    /// THE TABLE'S OWN CLOSE (the vanilla CraftingMenu.removed walk —
+    /// javap 26.2: the super.removed's carried return, then the
+    /// clearContainer lambda over the craftSlots):
+    /// 1. THE CARRIED STACK rides home first (the AbstractContainerMenu
+    ///    resetCarried's own placeItemBackInInventory the alive player
+    ///    speaks — the same add-back walk [`Self::close_inventory`]
+    ///    models: the same-item merges, the first-empty pass, the full
+    ///    store the remainder drops);
+    /// 2. THE GRID CONTENTS the clearContainer walk serves — each
+    ///    non-empty cell `removeItemNoUpdate(i)` → `dropOrPlaceIn-
+    ///    Inventory(player, stack)`: the ALIVE + CONNECTED player the
+    ///    placeItemBackInInventory branch answers (the same add-back
+    ///    walk per cell), the removed/disconnected one the Player.drop
+    ///    arm — the offline stand-in always alive, the add-back speaks;
+    /// 3. the screen back to the world.
+    pub fn close_crafting_table(&mut self) {
+        // the carried's own return (the super.removed walk)
+        if self.inv_carried.1 > 0 {
+            let (id, count) = self.inv_carried;
+            let mut rest = count;
+            for it in self.inventory.items.iter_mut() {
+                if rest == 0 {
+                    break;
+                }
+                if it.1 > 0 && it.0 == id && it.1 < crate::world_view::ITEM_MAX_STACK_DEFAULT {
+                    let take = (crate::world_view::ITEM_MAX_STACK_DEFAULT - it.1).min(rest);
+                    it.1 += take;
+                    rest -= take;
+                }
+            }
+            for it in self.inventory.items.iter_mut() {
+                if rest == 0 {
+                    break;
+                }
+                if it.1 <= 0 {
+                    *it = (id, rest);
+                    rest = 0;
+                }
+            }
+            if rest > 0 {
+                self.spawn_drop_at_player(id, rest);
+            }
+            self.inv_carried = (0, 0);
+        }
+        // the grid's own clearContainer walk (each cell rides home):
+        // the contents the take-first drain collects (the
+        // removeItemNoUpdate walk the vanilla loop speaks), the
+        // add-back the borrowed store answers after
+        let contents: Vec<(i32, i32)> = self
+            .table_grid
+            .iter_mut()
+            .map(std::mem::take)
+            .filter(|c| c.1 > 0)
+            .collect();
+        for (id, count) in contents {
+            let mut rest = count;
+            for it in self.inventory.items.iter_mut() {
+                if rest == 0 {
+                    break;
+                }
+                if it.1 > 0 && it.0 == id && it.1 < crate::world_view::ITEM_MAX_STACK_DEFAULT {
+                    let take = (crate::world_view::ITEM_MAX_STACK_DEFAULT - it.1).min(rest);
+                    it.1 += take;
+                    rest -= take;
+                }
+            }
+            for it in self.inventory.items.iter_mut() {
+                if rest == 0 {
+                    break;
+                }
+                if it.1 <= 0 {
+                    *it = (id, rest);
+                    rest = 0;
+                }
+            }
+            if rest > 0 {
+                self.spawn_drop_at_player(id, rest);
+            }
+        }
+        self.hotbar_slots = self.inventory.hotbar();
+        self.table_result = (0, 0);
+        self.open(ScreenKind::World);
+    }
+
+    /// The drop-at-the-player walk (the Player.drop(stack, false) the
+    /// close walks' remainder arm speaks — the spawn lane the dig's
+    /// own drop walk keeps, the entity's own deterministic jitter the
+    /// Lcg spends).
+    fn spawn_drop_at_player(&mut self, id: i32, count: i32) {
+        if let Some(b) = self.body.as_ref() {
+            let (dx, dy, dz) = (b.x, b.y + 1.0, b.z);
+            let did = self.next_drop_id;
+            self.next_drop_id += 1;
+            self.drops.push(crate::drops::ItemDrop::spawn_entity_loot(
+                did,
+                id,
+                count,
+                dx,
+                dy,
+                dz,
+                &mut self.mob_rng,
+            ));
+        }
+    }
+
+    /// The table grid's recompute law (the CraftingMenu.slotsChanged
+    /// walk — the container mutation the 3x3 cells ride every time):
+    /// the SHARED recipe walk over the 3-wide pack.
+    pub fn refresh_table_result(&mut self) {
+        self.table_result = craft_result_for_table(&self.table_grid);
+    }
+
+    /// THE TABLE'S ON-TAKE WALK (javap 26.2 ResultSlot.onTake — the
+    /// positioned 3x3's per-cell removeItem(i, 1)): every non-empty
+    /// cell one off, then the slotsChanged recompute the chain fires
+    /// (the recipe may fire AGAIN — the three-log planks the real
+    /// game crafts).
+    fn table_on_take(&mut self) {
+        for cell in self.table_grid.iter_mut() {
+            if cell.1 > 0 {
+                cell.1 -= 1;
+                if cell.1 == 0 {
+                    *cell = (0, 0);
+                }
+            }
+        }
+        self.refresh_table_result();
+    }
+
+    /// The table cell's click (the doClick PICKUP/QUICK_MOVE walk's
+    /// own shape — the TransientCraftingContainer cells the mayPlace
+    /// default TRUE keeps): the left press picks up / places / merges /
+    /// swaps (the predict_pickup walk verbatim), the right press
+    /// splits and places one. The shift-click's quick-move INTO the
+    /// grid rides later (silence here — the inventory's own craft
+    /// cells keep the same shape).
+    fn click_table_cell(&mut self, cell: usize, button: i8) {
+        if self.shift_down {
+            return; // the quick-move-into-craft lane rides later
+        }
+        let believed = self.table_grid[cell];
+        let (new_cell, new_carried) = if button == 0 {
+            crate::world_view::predict_pickup(believed, self.inv_carried)
+        } else {
+            crate::world_view::predict_pickup_right(believed, self.inv_carried)
+        };
+        self.table_grid[cell] = new_cell;
+        self.inv_carried = new_carried;
+        self.refresh_table_result();
+    }
+
+    /// The TABLE RESULT slot's click (the CraftingMenu's slot 0 — the
+    /// doClick PICKUP arm over the mayPlace-false slot, the inventory
+    /// result's own walk the 3x3 grid answers verbatim): the
+    /// whole/half take, the merge arm the carried's space caps, the
+    /// different-item silence, the SHIFT press the quick-move batch
+    /// (the quickMoveStack loop over the [10, 46) store range — the
+    /// same reverse-order walk the inventory's batch speaks, folded to
+    /// the store's own indexing).
+    fn click_table_result(&mut self, button: i8) {
+        if self.shift_down {
+            self.table_result_quick_move();
+            return;
+        }
+        let (id, count) = self.table_result;
+        if count <= 0 {
+            return; // the result slot's own emptiness
+        }
+        if self.inv_carried.1 <= 0 {
+            let taken = if button == 0 { count } else { (count + 1) / 2 };
+            self.inv_carried = (id, taken);
+            self.table_on_take();
+        } else if self.inv_carried.0 == id {
+            let space = crate::world_view::ITEM_MAX_STACK_DEFAULT - self.inv_carried.1;
+            if space > 0 {
+                let taken = space.min(count);
+                self.inv_carried.1 += taken;
+                self.table_on_take();
+            }
+        }
+    }
+
+    /// THE TABLE'S QUICK-MOVE BATCH (doClick's QUICK_MOVE arm — the
+    /// quickMoveStack loop the inventory's own batch models, the
+    /// CraftingMenu's index-0 arm the same walk speaks): each
+    /// iteration one quickMoveStack over the result (the store rows
+    /// the reverse order serves — the hotbar END-first, the main
+    /// rows after), the nothing-moved EMPTY break, the onTake the
+    /// count-changed gate fires, the leftover the aimed drop rides.
+    fn table_result_quick_move(&mut self) {
+        loop {
+            let (id, count) = self.table_result;
+            if count <= 0 {
+                break; // the result slot's own emptiness
+            }
+            let moved = self.move_result_stack_to_store(id, count);
+            if moved == 0 {
+                break; // the nothing-moved EMPTY the loop break keeps
+            }
+            let leftover = count - moved;
+            self.table_on_take();
+            if leftover > 0 {
+                self.drop_item_entity_aimed(id, leftover);
+            }
+        }
+        self.hotbar_slots = self.inventory.hotbar();
+    }
+
+    /// The TABLE SCREEN's own click walk (the vanilla AbstractContainer-
+    /// Screen's mouseClicked over the offline store — the inventory's
+    /// click lane the table's geometry answers): the result slot 0,
+    /// the 3x3 cells 1..9, the store rows the SAME origins the
+    /// inventory panel paints (the standard (8, 84) / (8, 142) walks),
+    /// the outside press the THROW input. The wire lane sleeps — the
+    /// live session's table the server's own menu owns (the doc the
+    /// screen variant keeps).
+    fn click_table_slot(&mut self, mx: i32, my: i32, button: i8) {
+        if self.table_panel == (0, 0) {
+            return; // no render spoke yet — no geometry to hit
+        }
+        let panel = self.table_panel;
+        // THE RESULT SLOT FIRST (the menu's own slot order — result 0
+        // the ctor's addResultSlot(124, 35) places, the grid cells
+        // next).
+        let (rx, ry) = table_craft_origin(panel, 9);
+        if mx >= rx + 1 && mx < rx + 17 && my >= ry + 1 && my < ry + 17 {
+            self.click_table_result(button);
+            return;
+        }
+        for cell in 0..9 {
+            let (cx, cy) = table_craft_origin(panel, cell);
+            if mx >= cx + 1 && mx < cx + 17 && my >= cy + 1 && my < cy + 17 {
+                self.click_table_cell(cell, button);
+                return;
+            }
+        }
+        // THE STORE ROWS (the standard slots the ctor's
+        // addStandardInventorySlots(8, 84) places — the SAME origins
+        // the inventory screen's own rows speak).
+        let Some((_, _, store)) = (0..36)
+            .map(|i| {
+                let (ox, oy) = inventory_slot_origin(panel, i);
+                (ox + 1, oy + 1, i)
+            })
+            .find(|&(x, y, _)| mx >= x && mx < x + 16 && my >= y && my < y + 16)
+        else {
+            // THE DROP-OUTSIDE LANE (the 26.2 mouseClicked's own walk —
+            // the strict rect compare the imageWidth/imageHeight speaks)
+            if mx < panel.0 || my < panel.1 || mx >= panel.0 + 176 || my >= panel.1 + 166 {
+                self.throw_carried_outside(button);
+            }
+            return;
+        };
+        if self.shift_down {
+            let changed = crate::world_view::predict_quick_move_inventory(
+                &self.inventory.items,
+                &self.inventory.armor,
+                &self.inventory.offhand[0],
+                store,
+            );
+            for (i, pair) in &changed {
+                if *i >= 36 {
+                    self.inventory.armor[*i - 36] = *pair;
+                } else {
+                    self.inventory.items[*i] = *pair;
+                }
+            }
+            self.hotbar_slots = self.inventory.hotbar();
+            return;
+        }
+        let believed = self.inventory.items[store];
+        let (new_slot, new_carried) = if button == 0 {
+            crate::world_view::predict_pickup(believed, self.inv_carried)
+        } else {
+            crate::world_view::predict_pickup_right(believed, self.inv_carried)
+        };
+        self.inventory.items[store] = new_slot;
+        self.inv_carried = new_carried;
+        self.hotbar_slots = self.inventory.hotbar();
     }
 
     /// The recompute law (the InventoryMenu.slotsChanged walk — the
@@ -6681,6 +7017,92 @@ impl App {
         self.render_bundle_tooltip(g, a);
     }
 
+    /// THE CRAFTING TABLE'S OWN RENDER (javap 26.2 CraftingScreen —
+    /// the frozen world dimmed, then the REAL background texture the
+    /// CRAFTING_TABLE_LOCATION blit speaks: the 176x166 region of the
+    /// 256x256 canvas at leftPos/topPos). The title label the init's
+    /// own titleLabelX 29 places (the default titleLabelY 6), the
+    /// 3x3 grid + result + the store rows the ctor's numbers order,
+    /// the carried stack the cursor follows — the SAME icon/count
+    /// treatment every container lane speaks. The headless scenes
+    /// track no mouse — the pixel goldens never see this pass.
+    fn render_crafting_table(&mut self, g: &mut Gui, a: &mut GuiAssets, w: i32, h: i32) {
+        g.fill(0, 0, w, h, [0.0, 0.0, 0.0, 0.35]);
+        let panel = inventory_panel_origin(w, h);
+        self.table_panel = panel;
+        g.sprite_file_region(a, "gui/container/crafting_table.png", 0, 0, 176, 166, panel.0, panel.1);
+        // THE TITLE (the init's own titleLabelX 29 — the
+        // extractLabels walk the base class defaults ride)
+        let label = [0.251, 0.251, 0.251];
+        if let Some(t) = tr("container.crafting") {
+            g.text(a, panel.0 + 29, panel.1 + 6, t, label, false);
+        }
+        if let Some(t) = tr("container.inventory") {
+            g.text(a, panel.0 + 8, panel.1 + 166 - 94, t, label, false);
+        }
+        // THE 3x3 GRID + THE RESULT SLOT (the menu's own slot order —
+        // the icons the store's own draw keeps, the recompute verdict
+        // the slotsChanged walk speaks)
+        for cell in 0..9 {
+            let (id, count) = self.table_grid[cell];
+            if count <= 0 {
+                continue;
+            }
+            let (sx, sy) = table_craft_origin(panel, cell);
+            draw_item_icon(g, id, sx + 1, sy + 1);
+            if count > 1 {
+                let s = count.to_string();
+                let tw = g.text_width(&s);
+                g.text(a, sx + 17 - tw, sy + 9, &s, WHITE, true);
+            }
+        }
+        {
+            let (id, count) = self.table_result;
+            if count > 0 {
+                let (sx, sy) = table_craft_origin(panel, 9);
+                draw_item_icon(g, id, sx + 1, sy + 1);
+                if count > 1 {
+                    let s = count.to_string();
+                    let tw = g.text_width(&s);
+                    g.text(a, sx + 17 - tw, sy + 9, &s, WHITE, true);
+                }
+            }
+        }
+        // THE STORE ROWS (the same geometry the inventory screen's own
+        // rows speak — the ctor's addStandardInventorySlots(8, 84))
+        let hotbar = self.inventory.hotbar();
+        for i in 0..36usize {
+            let (id, count) = if i < 9 {
+                hotbar[i]
+            } else {
+                self.inventory.items[i]
+            };
+            if count <= 0 {
+                continue;
+            }
+            let (sx, sy) = inventory_slot_origin(panel, i);
+            draw_item_icon(g, id, sx + 1, sy + 1);
+            if count > 1 {
+                let s = count.to_string();
+                let tw = g.text_width(&s);
+                g.text(a, sx + 17 - tw, sy + 9, &s, WHITE, true);
+            }
+        }
+        // THE HELD STACK follows the cursor (the vanilla carried render,
+        // the offline carried the LOCAL store's own state)
+        if self.inv_carried.1 > 0 {
+            if let Some((mx, my)) = self.mouse_pos {
+                draw_item_icon(g, self.inv_carried.0, mx - 8, my - 8);
+                if self.inv_carried.1 > 1 {
+                    let s = self.inv_carried.1.to_string();
+                    let tw = g.text_width(&s);
+                    g.text(a, mx - 8 + 17 - tw, my - 8 + 9, &s, WHITE, true);
+                }
+            }
+        }
+        self.render_bundle_tooltip(g, a);
+    }
+
     /// Enter the world screen with the NETWORK world — the vanilla
     /// ConnectScreen → world handoff after a successful join. The screen
     /// machinery (sky, celestials, fog, clouds, HUD, pause) is shared
@@ -6795,6 +7217,12 @@ impl App {
             // the E-key screen): the carried's add-back walk rides, the
             // screen back to the world
             self.close_inventory();
+        } else if self.screen == ScreenKind::Crafting {
+            // THE TABLE'S OWN CLOSE (the vanilla Escape/E on the
+            // table's screen): the clearContainer walk the
+            // CraftingMenu.removed speaks — the grid contents + the
+            // carried stack ride home, the screen back to the world
+            self.close_crafting_table();
         } else if matches!(self.screen, ScreenKind::Connect | ScreenKind::Disconnect) {
             self.open(ScreenKind::Servers);
         }
@@ -7117,6 +7545,10 @@ impl App {
             self.click_inventory_slot(mx, my, 0);
             return;
         }
+        if self.screen == ScreenKind::Crafting {
+            self.click_table_slot(mx, my, 0);
+            return;
+        }
         self.on_attack();
     }
 
@@ -7145,6 +7577,10 @@ impl App {
         }
         if self.screen == ScreenKind::Inventory {
             self.click_inventory_slot(mx, my, 1);
+            return false;
+        }
+        if self.screen == ScreenKind::Crafting {
+            self.click_table_slot(mx, my, 1);
             return false;
         }
         if self.screen == ScreenKind::World && !self.paused {
@@ -8178,6 +8614,35 @@ impl App {
                         } else {
                             self.inventory.items[i]
                         };
+                        return Some((s.0, s.1, slot_id));
+                    }
+                }
+                None // the press between the slots — the hover's own miss
+            }
+            ScreenKind::Crafting => {
+                // THE TABLE'S OWN ARM (the offline walk — the wire lane
+                // sleeps): the menu's own order — result 0, the 3x3
+                // cells 1..9, the store rows the standard ids keep.
+                if self.table_panel == (0, 0) {
+                    return None; // no render spoke yet — no geometry to ride
+                }
+                let panel = self.table_panel;
+                let (rx, ry) = table_craft_origin(panel, 9);
+                if mx >= rx + 1 && mx < rx + 17 && my >= ry + 1 && my < ry + 17 {
+                    return Some((self.table_result.0, self.table_result.1, 0));
+                }
+                for cell in 0..9 {
+                    let (cx, cy) = table_craft_origin(panel, cell);
+                    if mx >= cx + 1 && mx < cx + 17 && my >= cy + 1 && my < cy + 17 {
+                        let s = self.table_grid[cell];
+                        return Some((s.0, s.1, 1 + cell as i32));
+                    }
+                }
+                for i in 0..36 {
+                    let (sx, sy) = inventory_slot_origin(panel, i);
+                    if mx >= sx + 1 && mx < sx + 17 && my >= sy + 1 && my < sy + 17 {
+                        let slot_id = if i < 9 { 37 + i as i32 } else { 10 + (i as i32 - 9) };
+                        let s = self.inventory.items[i];
                         return Some((s.0, s.1, slot_id));
                     }
                 }
@@ -10721,6 +11186,25 @@ impl App {
                 inside: hit.inside,
             });
         }
+        // THE INTERACTIVE BLOCK'S OWN ARM (javap 26.2 GameType.useItemOn —
+        // the block.use state walk the item.useOn dispatch PRECEDES:
+        // CraftingTableBlock.use's openMenu the CONSUME verdict carries,
+        // the sneaking player the arm SKIPS — `player.isShiftKeyDown()`
+        // the vanilla's own gate, the item lanes fall through): the
+        // hit cell's table kind the OFFLINE world answers — the 3x3
+        // screen the openMenu walk speaks. The WIRE session the local
+        // screen never opens (the server's own OpenScreen word owns
+        // the container — the echo's reply the follow-up lane names);
+        // the press stays unconsumed there, the item lanes follow.
+        if !self.shift_down
+            && !self.world_is_network
+            && self
+                .active_world()
+                .is_some_and(|w| w.get(hit.pos.0, hit.pos.1, hit.pos.2) == crate::world::CRAFTING_TABLE)
+        {
+            self.open_crafting_table();
+            return true;
+        }
         // THE TOOL ARMS' OWN USE-ON-BLOCK WALK (javap HoeItem.useOn +
         // ShovelItem.useOn — the vanilla's own Item.useOn dispatch the
         // two tool maps the same verdict shape rides, the held suffix
@@ -12219,6 +12703,17 @@ impl App {
                 self.render_inventory_mannequin(fb, gs as f32);
                 let mut g = Gui::new(fb, gs);
                 self.render_inventory_slots(&mut g, a);
+            }
+            ScreenKind::Crafting => {
+                // THE TABLE'S OWN ROUND (the vanilla CraftingScreen over
+                // the frozen world): world underneath, dimmed, the REAL
+                // background texture, the grid/result/store icons, the
+                // carried follow — no mannequin (the CraftingScreen the
+                // vanilla PiP never renders).
+                self.render_world_3d(fb, a);
+                let mut g = Gui::new(fb, Gui::auto_scale(fb.w, fb.h));
+                let (gw, gh) = (g.w(), g.h());
+                self.render_crafting_table(&mut g, a, gw, gh);
             }
         }
     }
@@ -15896,6 +16391,21 @@ fn craft_slot_origin(panel: (i32, i32), kind: usize) -> (i32, i32) {
     (panel.0 + x, panel.1 + y)
 }
 
+/// THE TABLE GRID'S SLOT ORIGINS by CONTAINER index (the 26.2
+/// CraftingMenu ctor's own numbers — `addCraftingGridSlots(30, 17)`:
+/// cell i at panel-relative (30 + (i % 3) * 18, 17 + (i / 3) * 18), and
+/// the result slot the ctor's `addResultSlot(124, 35)` (kind 9)). The
+/// texture paints the chrome; the icons land at the +1 inset the
+/// inventory's own draw speaks.
+fn table_craft_origin(panel: (i32, i32), kind: usize) -> (i32, i32) {
+    let (x, y) = if kind == 9 {
+        (124, 35)
+    } else {
+        (30 + (kind % 3) as i32 * 18, 17 + (kind / 3) as i32 * 18)
+    };
+    (panel.0 + x, panel.1 + y)
+}
+
 /// The armor column's slot origins by LOOP index k (the 26.2 ctor's
 /// own walk — `ArmorSlot(inv, owner, SLOT_IDS[k], 39 - k, 8,
 /// 8 + k * 18, TEXTURE_EMPTY_SLOTS.get(...))`): the SLOT_IDS order
@@ -16220,51 +16730,80 @@ fn wire_craft_cell_pickup(
 /// non-empty cells' bounding box folds to its own minimal input —
 /// min/max x and y over the non-empty cells (the Math.min/Math.max
 /// pair each cell walk speaks), width' = max_x - min_x + 1, height' =
-/// max_y - min_y + 1, left = min_x, top = min_y. Returns the packed
-/// ROW-MAJOR cell ids (0 = the empty sentinel the list walk keeps) and
-/// the packed (width, height) — (0, 0) for the all-empty grid (the
-/// Positioned.EMPTY the early return keeps).
-fn pack_craft_cells(cells: &[(i32, i32); 4]) -> ([i32; 4], i32, i32) {
-    let mut min_x = 2;
-    let mut max_x = -1;
-    let mut min_y = 2;
-    let mut max_y = -1;
-    for i in 0..4 {
+/// max_y - min_y + 1, left = min_x, top = min_y. `gw` names the grid's
+/// own width (the 2x2 inventory grid 2, the table's 3x3 grid 3 — the
+/// AbstractCraftingMenu ctor's width the two menus speak). Returns the
+/// packed ROW-MAJOR cell ids (0 = the empty sentinel the list walk
+/// keeps) and the packed (width, height) — (0, 0) for the all-empty
+/// grid (the Positioned.EMPTY the early return keeps).
+fn pack_craft_cells(cells: &[(i32, i32)], gw: usize) -> (Vec<i32>, i32, i32) {
+    let count = cells.len();
+    let mut min_x = gw as i32;
+    let mut max_x = -1i64;
+    let mut min_y = gw as i32;
+    let mut max_y = -1i64;
+    for i in 0..count {
         if cells[i].1 > 0 {
-            let (x, y) = (i % 2, i / 2);
+            let (x, y) = ((i % gw) as i32, (i / gw) as i32);
             min_x = min_x.min(x);
-            max_x = max_x.max(x as i32);
+            max_x = max_x.max(x as i64);
             min_y = min_y.min(y);
-            max_y = max_y.max(y as i32);
+            max_y = max_y.max(y as i64);
         }
     }
     if max_x < 0 {
-        return ([0; 4], 0, 0);
+        return (Vec::new(), 0, 0);
     }
-    let w = (max_x - min_x as i32 + 1) as usize;
-    let h = (max_y - min_y as i32 + 1) as usize;
-    let mut packed = [0i32; 4];
-    for i in 0..4 {
-        let (x, y) = (i % 2, i / 2);
-        if x >= min_x && x as i32 <= max_x && y >= min_y && y as i32 <= max_y {
-            packed[(y - min_y) * w + (x - min_x)] = cells[i].0;
+    let w = (max_x - min_x as i64 + 1) as usize;
+    let h = (max_y - min_y as i64 + 1) as usize;
+    let mut packed = vec![0i32; w * h];
+    for i in 0..count {
+        let (x, y) = ((i % gw) as i32, (i / gw) as i32);
+        if x >= min_x && (x as i64) <= max_x && y >= min_y && (y as i64) <= max_y {
+            let slot = &mut packed[(y - min_y) as usize * w + (x - min_x) as usize];
+            *slot = cells[i].0;
         }
     }
     (packed, w as i32, h as i32)
 }
 
-/// THE 2x2 RECIPE SET (the vanilla datapack's crafting recipes the
-/// 26.2 recipe manager loads — the minimal set the registry's own
-/// items speak): the shapeless log->planks quartet the single-item
-/// fast path serves (ShapelessRecipe.matches: input.size() == 1 &&
-/// ingredients.size() == 1 -> Ingredient.test), and the shaped walks
-/// (ShapedRecipePattern.matches: the ingredient count, the packed
-/// w/h equality, the cell-by-cell test — the mirror arm the
-/// symmetrical flag holds, every pattern here symmetrical or 1-wide).
-/// The planks tag (#minecraft:planks) the mixed stacks answer — each
-/// cell tests the tag INDEPENDENTLY (the oak+spruce table the real
-/// game crafts).
+/// THE 2x2 ENTRY (the InventoryMenu's own ask — the 2-wide grid the
+/// ctor's addCraftingGridSlots(98, 18) builds): the shared packed walk
+/// [`craft_result_packed`] answers — the grid's own 2-cell width the
+/// pack law bounds (a 3-wide recipe can never fit the 2x2 the packed
+/// w/h equality refuses).
 fn craft_result_for(cells: &[(i32, i32); 4]) -> (i32, i32) {
+    let (packed, w, h) = pack_craft_cells(cells, 2);
+    craft_result_packed(&packed, w, h)
+}
+
+/// THE 3x3 ENTRY (the CraftingMenu's own ask — the table's grid the
+/// ctor's addCraftingGridSlots(30, 17) builds width-3/height-3): the
+/// SAME shared packed walk answers (the recipe manager is ONE table —
+/// the 3x3 crafts everything the 2x2 does and the taller/wider rows
+/// the smaller grid could never fit).
+pub fn craft_result_for_table(cells: &[(i32, i32); 9]) -> (i32, i32) {
+    let (packed, w, h) = pack_craft_cells(cells, 3);
+    craft_result_packed(&packed, w, h)
+}
+
+/// THE RECIPE SET (the vanilla datapack's crafting recipes the 26.2
+/// recipe manager loads — the minimal set the registry's own items
+/// speak, jar-extracted verbatim: data/minecraft/recipe/*.json): the
+/// shapeless log->planks singles the one-cell fast path serves
+/// (ShapelessRecipe.matches: input.size() == 1 && ingredients.size()
+/// == 1 -> Ingredient.test), and the shaped walks
+/// (ShapedRecipePattern.matches: the ingredient count, the packed w/h
+/// equality, the cell-by-cell test — the MIRROR arm the
+/// `!symmetrical` flag keeps, each row reversed — the axe's own
+/// handedness the vanilla try-match speaks). The planks tag
+/// (#minecraft:planks, the wooden_tool_materials tag's sole member)
+/// the mixed stacks answer — each cell tests the tag INDEPENDENTLY
+/// (the oak+spruce table the real game crafts).
+fn craft_result_packed(packed: &[i32], w: i32, h: i32) -> (i32, i32) {
+    if w == 0 || h == 0 {
+        return (0, 0);
+    }
     let id = |name: &str| mc_registry::item_id_by_name(name).unwrap_or(0);
     let log = id("oak_log");
     let spruce_log = id("spruce_log");
@@ -16278,10 +16817,12 @@ fn craft_result_for(cells: &[(i32, i32); 4]) -> (i32, i32) {
     let stick = id("stick");
     let torch = id("torch");
     let table = id("crafting_table");
-    let (packed, w, h) = pack_craft_cells(cells);
-    if w == 0 || h == 0 {
-        return (0, 0);
-    }
+    let string = id("string");
+    let bow = id("bow");
+    let pick = id("wooden_pickaxe");
+    let axe = id("wooden_axe");
+    let shovel = id("wooden_shovel");
+    let sword = id("wooden_sword");
     // THE SHAPELESS SINGLES (the fast path the one-cell input rides —
     // ShapelessRecipe.matches's input.size() == 1 arm)
     if w == 1 && h == 1 {
@@ -16300,13 +16841,34 @@ fn craft_result_for(cells: &[(i32, i32); 4]) -> (i32, i32) {
     // THE SHAPED WALKS (ShapedRecipePattern.matches — the packed w/h
     // equality, then each packed cell against its ingredient SET, the
     // tag law the #minecraft:planks cells speak independently; the
-    // mirror arm the symmetrical flag holds — every pattern here
-    // symmetrical or 1-wide, the w=1 mirror the identity keeps).
-    // wants = row-major ingredient sets.
+    // MIRROR arm the symmetrical flag holds — the axe's ["XX","X#"," #"]
+    // the reversed rows answer, the symmetrical or 1-wide patterns the
+    // mirror the identity keeps). wants = row-major ingredient sets,
+    // 0 = the empty cell the pattern's ' ' keeps.
     let planks: &[i32] = &[oak, spruce, birch];
     let sand_l: &[i32] = &[sand];
     let coal_l: &[i32] = &[coal];
     let stick_l: &[i32] = &[stick];
+    let empty_l: &[i32] = &[0];
+    let string_l: &[i32] = &[string];
+    // the pattern rows, quoted from the jar's recipe JSONs verbatim
+    let bow_rows = vec![
+        empty_l, stick_l, string_l,
+        stick_l, empty_l, string_l,
+        empty_l, stick_l, string_l,
+    ]; // [" #X", "# X", " #X"]
+    let pick_rows = vec![
+        planks, planks, planks,
+        empty_l, stick_l, empty_l,
+        empty_l, stick_l, empty_l,
+    ]; // ["XXX", " # ", " # "]
+    let axe_rows = vec![
+        planks, planks,
+        planks, stick_l,
+        empty_l, stick_l,
+    ]; // ["XX", "X#", " #"]
+    let shovel_rows = vec![planks, stick_l, stick_l]; // ["X", "#", "#"]
+    let sword_rows = vec![planks, planks, stick_l]; // ["X", "X", "#"]
     let patterns: Vec<(i32, i32, Vec<&[i32]>, i32, i32)> = {
         let mut v = Vec::new();
         // the sticks ([P, P] — the vertical column the pack law
@@ -16327,13 +16889,46 @@ fn craft_result_for(cells: &[(i32, i32); 4]) -> (i32, i32) {
         if sandstone != 0 && sand != 0 {
             v.push((2, 2, vec![sand_l, sand_l, sand_l, sand_l], sandstone, 1));
         }
+        // THE BOW (the jar's own recipe — [" #X", "# X", " #X"]: the
+        // sticks' diagonal spine, the string column the right edge
+        // keeps)
+        if bow != 0 && string != 0 && stick != 0 {
+            v.push((3, 3, bow_rows, bow, 1));
+        }
+        // THE WOODEN TOOLS (the jar's own rows, the planks tag the X
+        // ingredient answers)
+        if pick != 0 && stick != 0 {
+            v.push((3, 3, pick_rows, pick, 1));
+        }
+        if axe != 0 && stick != 0 {
+            v.push((2, 3, axe_rows, axe, 1));
+        }
+        if shovel != 0 && stick != 0 {
+            v.push((1, 3, shovel_rows, shovel, 1));
+        }
+        if sword != 0 && stick != 0 {
+            v.push((1, 3, sword_rows, sword, 1));
+        }
         v
     };
+    let n = (w * h) as usize;
     for (pw, ph, wants, out, count) in &patterns {
         if w == *pw && h == *ph {
-            let n = (*pw * *ph) as usize;
-            if (0..n).all(|i| wants[i].contains(&packed[i])) {
+            let fits = (0..n).all(|i| wants[i].contains(&packed[i]));
+            if fits {
                 return (*out, *count);
+            }
+            // THE MIRROR ARM (the symmetrical flag's own second try —
+            // each row reversed; the 1-wide patterns the identity
+            // keeps, the walk skips them)
+            if *pw > 1 {
+                let mirrors = (0..n).all(|i| {
+                    let (r, c) = (i / *pw as usize, i % *pw as usize);
+                    wants[(r + 1) * *pw as usize - 1 - c].contains(&packed[i])
+                });
+                if mirrors {
+                    return (*out, *count);
+                }
             }
         }
     }
@@ -30638,6 +31233,289 @@ mod tests {
         app.on_press(338, 123);
         assert_eq!(app.craft_grid[0], (planks, 4), "the wire refusal holds");
         assert_eq!(app.inv_carried, (log, 1), "the hand whole on the wire");
+    }
+
+    /// THE TABLE'S OWN KIND (the atlas RUNTIME_PALETTE's 37 index —
+    /// the autopush-328 round): the world's vocabulary speaks the
+    /// name, the placement arm's reverse lookup answers, the atlas
+    /// row carries the four real tiles the vanilla cube model names
+    /// (front/side/top + the oak_planks down face), the dig/drop/item
+    /// lanes the registry's own tables serve.
+    #[test]
+    fn the_table_block_rides_the_world_kind() {
+        let kind = crate::world::CRAFTING_TABLE;
+        assert_eq!(
+            crate::world::NAME_OF[kind as usize],
+            "crafting_table",
+            "the vocabulary's own name"
+        );
+        assert_eq!(
+            crate::world::World::placeable_block("crafting_table"),
+            Some(kind),
+            "the placement's reverse lookup"
+        );
+        // the atlas row: the six faces all ride REAL tiles (the
+        // textured path the goldens' own lane speaks)
+        let row = mc_registry::generated::atlas::FACE_TILES[kind as usize];
+        assert!(
+            row.iter().all(|t| *t != mc_registry::generated::atlas::TILE_NONE),
+            "the table's faces ride real tiles: {:?}",
+            row
+        );
+        // the four distinct tiles the vanilla model names (front/
+        // side/top + the oak_planks down face)
+        let mut distinct = row.to_vec();
+        distinct.sort();
+        distinct.dedup();
+        assert_eq!(distinct.len(), 4, "front/side/top/planks-down: {:?}", distinct);
+        // the registry's own lanes: the dig row, the drop pools, the
+        // item the pickup and the placement speak
+        assert!(
+            mc_registry::generated::block_dig::dig_row("crafting_table").is_some(),
+            "the dig row the registry keeps"
+        );
+        assert!(
+            mc_registry::generated::block_drops::drops("crafting_table").is_some(),
+            "the drop pools the registry keeps"
+        );
+        assert!(mc_registry::item_id_by_name("crafting_table").is_some(), "the item rides");
+        // THE MESH: the placed table's cube the full-cube path meshes,
+        // the quads the table's own tiles carry
+        let mut w = crate::world::World::new(2, 42);
+        w.set(8, 20, 8, kind);
+        let q = crate::mesher::mesh_world(&w, None);
+        assert!(
+            q.iter()
+                .any(|quad| row.contains(&quad.tile)),
+            "the table's faces meshed with the atlas tiles"
+        );
+    }
+
+    /// THE TABLE'S OWN 3x3 RECIPE WALK (the shared packed matcher the
+    /// jar's recipe JSONs speak — the bow's diagonal spine, the wooden
+    /// tools' rows, the mirror arm the axe's handedness keeps): the
+    /// bounding-box pack the CraftingInput.ofPositioned law keeps, the
+    /// w/h equality the shaped walk refuses on, the EMPTY verdict the
+    /// wrong arrangements speak.
+    #[test]
+    fn the_table_crafts_the_bow_and_the_wooden_tools() {
+        let id = |name: &str| mc_registry::item_id_by_name(name).unwrap();
+        let (stick, string) = (id("stick"), id("string"));
+        let (oak, spruce, birch) = (id("oak_planks"), id("spruce_planks"), id("birch_planks"));
+        let zero = (0, 0);
+        // THE BOW ([" #X", "# X", " #X"] — the sticks' diagonal spine,
+        // the string column the right edge keeps)
+        let bow = id("bow");
+        let cells: [(i32, i32); 9] = [
+            zero, (stick, 1), (string, 1),
+            (stick, 1), zero, (string, 1),
+            zero, (stick, 1), (string, 1),
+        ];
+        assert_eq!(craft_result_for_table(&cells), (bow, 1), "the jar's own row");
+        // the mirrored arrangement (the string column LEFT) — the
+        // MIRROR ARM answers (the bow's pattern the symmetrical flag
+        // keeps false — the jar's own try-both-orientations walk the
+        // mirrored rows serve)
+        let mirrored: [(i32, i32); 9] = [
+            (string, 1), (stick, 1), zero,
+            (string, 1), zero, (stick, 1),
+            (string, 1), (stick, 1), zero,
+        ];
+        assert_eq!(craft_result_for_table(&mirrored), (bow, 1), "the mirror arm answers");
+        // THE WRONG STRING COUNT — the w/h equality's own refusal (the
+        // two strings the ingredient count refuses)
+        let cells: [(i32, i32); 9] = [
+            zero, (stick, 1), (string, 1),
+            (stick, 1), zero, zero,
+            zero, (stick, 1), (string, 1),
+        ];
+        assert_eq!(craft_result_for_table(&cells), (0, 0), "the gap refuses");
+        // THE WOODEN PICKAXE (["XXX", " # ", " # "])
+        let pick = id("wooden_pickaxe");
+        let cells: [(i32, i32); 9] = [
+            (oak, 1), (spruce, 1), (birch, 1),
+            zero, (stick, 1), zero,
+            zero, (stick, 1), zero,
+        ];
+        assert_eq!(craft_result_for_table(&cells), (pick, 1), "the mixed planks the tag answers");
+        // THE WOODEN AXE BOTH HANDEDNESS (["XX", "X#", " #"] + the
+        // mirror arm the symmetrical flag keeps)
+        let axe = id("wooden_axe");
+        let cells: [(i32, i32); 9] = [
+            (oak, 1), (oak, 1), zero,
+            (oak, 1), (stick, 1), zero,
+            zero, (stick, 1), zero,
+        ];
+        assert_eq!(craft_result_for_table(&cells), (axe, 1), "the jar's own row");
+        let cells: [(i32, i32); 9] = [
+            (oak, 1), (oak, 1), zero,
+            (stick, 1), (oak, 1), zero,
+            (stick, 1), zero, zero,
+        ];
+        assert_eq!(craft_result_for_table(&cells), (axe, 1), "the mirror arm answers");
+        // THE SHOVEL + THE SWORD (the 1-wide columns)
+        let cells: [(i32, i32); 9] = [
+            (oak, 1), zero, zero,
+            (stick, 1), zero, zero,
+            (stick, 1), zero, zero,
+        ];
+        assert_eq!(craft_result_for_table(&cells), (id("wooden_shovel"), 1), "the shovel column");
+        let cells: [(i32, i32); 9] = [
+            (oak, 1), zero, zero,
+            (oak, 1), zero, zero,
+            (stick, 1), zero, zero,
+        ];
+        assert_eq!(craft_result_for_table(&cells), (id("wooden_sword"), 1), "the sword column");
+        // THE SHIFTED COLUMN — the pack law the recipe's own position
+        // answers (the shovel column in the MIDDLE cell rides home the
+        // same verdict — the bounding box folds to the same input)
+        let cells: [(i32, i32); 9] = [
+            zero, (oak, 1), zero,
+            zero, (stick, 1), zero,
+            zero, (stick, 1), zero,
+        ];
+        assert_eq!(craft_result_for_table(&cells), (id("wooden_shovel"), 1), "the shifted column");
+        // THE 2x2's OWN BOUND — the inventory grid can never fit the
+        // 3-wide rows (the packed w/h equality the smaller grid
+        // refuses): the full planks row + the stick column IS the
+        // pickaxe in the table, but the 2x2's four cells hold at most
+        // a 2x2 input — the pickaxe never speaks there
+        let cells: [(i32, i32); 4] = [(oak, 1), (oak, 1), (stick, 1), (stick, 1)];
+        assert_eq!(craft_result_for(&cells), (0, 0), "no 2x2 recipe names these");
+    }
+
+    /// THE TABLE SCREEN'S OWN LANES (the open's fresh grid, the cell
+    /// clicks' place/take walks, the result's recompute, the close's
+    /// clearContainer ride-home): the transient menu the vanilla use
+    /// speaks per open, the contents the alive player's
+    /// placeItemBackInInventory answers.
+    #[test]
+    fn the_table_screen_clicks_speak_the_grid_lanes() {
+        let id = |name: &str| mc_registry::item_id_by_name(name).unwrap();
+        let (planks, stick) = (id("oak_planks"), id("stick"));
+        let mut app = App::new(3);
+        app.enter_world();
+        app.spawn_offline_body();
+        // THE OPEN: the fresh grid, the Crafting screen
+        app.open_crafting_table();
+        assert_eq!(app.screen, ScreenKind::Crafting, "the menu opens");
+        assert!(
+            app.table_grid.iter().all(|c| c.1 == 0),
+            "the transient menu's own fresh grid"
+        );
+        app.table_panel = inventory_panel_origin(640, 360);
+        let (px, py) = inventory_panel_origin(640, 360);
+        // THE CELL CLICKS place the carried whole (the predict_pickup
+        // walk the store slots speak) and the recompute follows — the
+        // sticks recipe ([P / P] the left column keeps)
+        app.inv_carried = (planks, 6);
+        app.on_press(px + 30 + 1 + 8, py + 17 + 1 + 8); // cell 0
+        assert_eq!(app.table_grid[0], (planks, 6), "the whole stack places");
+        assert_eq!(app.inv_carried, (0, 0), "the hand emptied");
+        app.inv_carried = (planks, 6);
+        app.on_press(px + 30 + 1 + 8, py + 17 + 18 + 1 + 8); // cell 3 (row 1)
+        assert_eq!(app.table_grid[3], (planks, 6), "the second cell places");
+        assert_eq!(app.table_result, (stick, 4), "the sticks recipe speaks");
+        // THE RESULT TAKE (the mayPlace-false slot's own walk): the
+        // carried receives, the cells one off, the recipe RE-SPEAKS
+        let (rx, ry) = table_craft_origin(app.table_panel, 9);
+        app.on_press(rx + 1 + 8, ry + 1 + 8);
+        assert_eq!(app.inv_carried, (stick, 4), "the whole result taken");
+        assert_eq!(app.table_grid[0], (planks, 5), "the cell one off");
+        assert_eq!(app.table_result, (stick, 4), "the recipe re-speaks");
+        // THE SECOND CRAFT the merge arm serves (the same-item carried
+        // the carried's space caps — 4 + 4 = 8)
+        app.on_press(rx + 1 + 8, ry + 1 + 8);
+        assert_eq!(app.inv_carried, (stick, 8), "the merge arm answers");
+        assert_eq!(app.table_grid[0], (planks, 4), "the cells keep spending");
+        // THE CLOSE (the clearContainer walk): the grid's 8 planks and
+        // the carried's 8 sticks ride home, the store keeps them
+        app.close_crafting_table();
+        assert_eq!(app.screen, ScreenKind::World, "the menu closes");
+        assert_eq!(app.inv_carried, (0, 0), "the carried rode home");
+        assert!(
+            app.table_grid.iter().all(|c| c.1 == 0),
+            "the grid emptied (the removeItemNoUpdate walk)"
+        );
+        let planks_in_store: i32 = app
+            .inventory
+            .items
+            .iter()
+            .filter(|(i, _)| *i == planks)
+            .map(|(_, c)| c)
+            .sum();
+        let sticks_in_store: i32 = app
+            .inventory
+            .items
+            .iter()
+            .filter(|(i, _)| *i == stick)
+            .map(|(_, c)| c)
+            .sum();
+        assert_eq!(planks_in_store, 8, "the grid contents rode home");
+        assert_eq!(sticks_in_store, 8, "the carried rode home");
+        assert_eq!(app.table_result, (0, 0), "the result slot's own reset");
+        // THE E KEY'S OWN LANE (the toggle the container screen
+        // answers): the reopened table the key closes back
+        app.open_crafting_table();
+        app.on_inventory_key();
+        assert_eq!(app.screen, ScreenKind::World, "the E key closes the table");
+        // THE ESCAPE'S OWN LANE mirrors (the open + the on_escape walk)
+        app.open_crafting_table();
+        app.on_escape();
+        assert_eq!(app.screen, ScreenKind::World, "the Escape closes the table");
+    }
+
+    /// THE TABLE'S OWN USE LANE (javap 26.2 GameType.useItemOn — the
+    /// block.use dispatch the item.useOn walk precedes): the
+    /// non-sneaking right-press on the placed table the CONSUME
+    /// verdict opens the 3x3 screen, the SNEAKING press the gate
+    /// skips — the item lanes fall through and the held block PLACES.
+    #[test]
+    fn the_table_screen_opens_on_the_use_and_the_sneak_bypasses() {
+        let mut app = App::new(3);
+        app.enter_world();
+        // NO BODY (the spawn's own box the placement's entity law
+        // refuses — the placement cell the straight-down ray names IS
+        // the standing cell): the bare world the vanilla's own
+        // no-intersection guard keeps honest
+        app.offline_held_updated(Some("item/dirt"));
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let top = app.spawn_y;
+        // THE SNEAK BYPASS FIRST (the isShiftKeyDown gate the vanilla's
+        // own arm keeps): the shift-down press the table-use walk
+        // never arms — the held dirt the placement lane places on the
+        // surface
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, top as f32 + 4.0, c as f32 + 0.5),
+            yaw: 0.0,
+            pitch: -std::f32::consts::FRAC_PI_2,
+        });
+        app.shift_down = true;
+        assert!(app.on_right_press(0, 0), "the sneak placement consumed");
+        assert_eq!(
+            app.offline_world.as_ref().unwrap().get(c, top, c),
+            crate::world::DIRT,
+            "the dirt placed (the bypass spoke)"
+        );
+        assert_eq!(app.screen, ScreenKind::World, "no screen opened on the sneak");
+        app.shift_down = false;
+        // THE USE (the non-sneaking press on the table cell): the
+        // interactive arm opens the 3x3 screen and CONSUMES the press
+        app.offline_world
+            .as_mut()
+            .unwrap()
+            .set(c, top, c, crate::world::CRAFTING_TABLE);
+        assert!(app.on_right_press(0, 0), "the table's use consumes");
+        assert_eq!(app.screen, ScreenKind::Crafting, "the 3x3 screen opened");
+        assert_eq!(
+            app.offline_world.as_ref().unwrap().get(c, top, c),
+            crate::world::CRAFTING_TABLE,
+            "the world cell untouched"
+        );
+        // THE ESCAPE back — the world screen stands
+        app.on_escape();
+        assert_eq!(app.screen, ScreenKind::World);
     }
 
     /// THE SHIFT-CLICK BATCH (the doClick QUICK_MOVE arm over the

@@ -2082,8 +2082,24 @@ pub fn render_gui_screen_opts(
             app.open_inventory();
             app.frame = frame;
         }
+        "crafting" => {
+            // THE TABLE SCREEN'S OWN STAGING (the autopush-328 round):
+            // the offline world stands first, the store's demo loadout
+            // (the panel's rows below the grid the store paints), the
+            // grid's own demo contents — the sticks recipe the left
+            // column keeps, the result slot the recompute speaks — and
+            // the screen opens (the use lane's own door).
+            stage_inventory_loadout(&mut app);
+            app.hotbar_slots = app.inventory.hotbar();
+            app.open_crafting_table();
+            let planks = mc_registry::item_id_by_name("oak_planks").unwrap_or(0);
+            app.table_grid[0] = (planks, 7);
+            app.table_grid[3] = (planks, 7);
+            app.refresh_table_result();
+            app.frame = frame;
+        }
         other => anyhow::bail!(
-            "unknown screen {other} (loading|title|servers|options|world|worldnight|pause|chest|inventory)"
+            "unknown screen {other} (loading|title|servers|options|world|worldnight|pause|chest|inventory|crafting)"
         ),
     }
 
