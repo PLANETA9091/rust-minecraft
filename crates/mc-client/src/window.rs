@@ -666,6 +666,16 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
     // frame's render as the partial tick the interpolation folds read
     let mut tick_acc_ms = 0.0f64;
     let mut t_clock = std::time::Instant::now();
+    // THE FRAME-TIME SAMPLE'S OWN CLOCK (the vanilla runTick's
+    // logFrameDuration ride — the inter-frame delta the previous
+    // frame's close keeps, the nanosecond duration the LocalSampleLogger
+    // ring appends, the FPS chart's own column data)
+    let mut prev_frame_instant: Option<std::time::Instant> = None;
+    // THE F3 MODIFIER'S OWN DOWN STATE (the KeyboardHandler.keyPress's
+    // release lane — the bare release the overlay toggle answers, the
+    // chord-spent release the usedDebugKeyAsModifier flag swallows;
+    // minifb has no key event, the edge the down-state pair tracks)
+    let mut f3_was_down = false;
     // offline-mode joins ride the same architecture: the "join" button
     // records the request, a detached worker runs the live join (login +
     // configuration + the play state pumped to the world-load milestone,
@@ -706,6 +716,15 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
     >();
 
     while window.is_open() {
+        // THE FRAME-TIME SAMPLE (the vanilla runTick's own ride — the
+        // inter-frame delta the LocalSampleLogger ring keeps, one
+        // sample per frame the chart's columns speak; the first
+        // frame the None re-arm skips)
+        let t_frame = std::time::Instant::now();
+        if let Some(prev) = prev_frame_instant {
+            app.log_frame_duration((t_frame - prev).as_nanos() as i64);
+        }
+        prev_frame_instant = Some(t_frame);
         if window.is_key_pressed(Key::Escape, minifb::KeyRepeat::No) {
             app.on_escape();
         }
@@ -858,14 +877,29 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
             if window.is_key_pressed(Key::F5, minifb::KeyRepeat::No) {
                 app.on_perspective_key();
             }
-            // THE F3 DEBUG OVERLAY (vanilla handleKeybinds's
-            // keyToggleDebugScreen lane — the rising edge the toggle's
-            // own flip answers, the panel the HUD's top stratum draws
-            // while the flag holds): minifb has no edge API, the press
-            // is read per frame like the F5/Q pair above
-            if window.is_key_pressed(Key::F3, minifb::KeyRepeat::No) {
-                app.on_debug_key();
+            // THE F3 DEBUG MODIFIER (javap KeyboardHandler.keyPress's
+            // own walk — the chords the isDown gate keeps, the
+            // RELEASE lane the toggle answers: the bare release the
+            // usedDebugKeyAsModifier flag clears-and-flips, the
+            // chord-spent release swallows — the flag the
+            // `usedDebugKeyAsModifier |= consumed` walk the keyPress
+            // tail keeps). minifb has no key event, the edges the
+            // down-state pair tracks. The F3+2 chord (the
+            // handleDebugKeys' keyDebugFpsCharts lane — the toggle
+            // the getDebugOverlay().toggleFpsCharts() walk answers)
+            // the F3-held gate reads; the F3+1/3/4 chords the
+            // chart-less client keeps silent (no profiler pie, no
+            // ping/bandwidth chart, no lightmap viewer — the flags
+            // the all-false constants stay, the rows the honest
+            // hidden words wear)
+            let f3_down = window.is_key_down(Key::F3);
+            if f3_down && window.is_key_pressed(Key::Key2, minifb::KeyRepeat::No) {
+                app.on_fps_charts_key();
             }
+            if f3_was_down && !f3_down {
+                app.on_debug_modifier_released();
+            }
+            f3_was_down = f3_down;
             // THE MIDDLE-CLICK PICK (vanilla handleKeybinds's keyPickItem
             // lane — the middle button the keybind maps, the
             // `Minecraft.pickBlockOrEntity` walk the loop answers): the

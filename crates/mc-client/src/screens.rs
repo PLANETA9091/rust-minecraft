@@ -766,14 +766,21 @@ fn debug_chart_row(modifier: Option<&str>, key: &str, name: &str, visible: bool)
 /// keeps (`Ping` the local lane, `Bandwidth + Ping` the remote);
 /// the client's own honest lane the no-integrated-server false
 /// wears — the four chart flags the all-false hidden words keep
-/// (no profiler pie, no fps/tps chart, no ping/bandwidth chart, no
-/// lightmap viewer the client owns), the modifier/chart/debug
-/// words the Options clinit's own KEYSYM defaults (F3, 1/2/3/4,
-/// F6) speak).
-fn debug_bottom_lines(integrated: bool) -> Vec<String> {
+/// (no profiler pie, no ping/bandwidth chart, no lightmap viewer the
+/// client owns), the modifier/chart/debug words the Options clinit's
+/// own KEYSYM defaults (F3, 1/2/3/4, F6) speak). The FPS slot's
+/// visibility word the raised flag's own lane keeps — the F3+2
+/// toggle's real state the row re-speaks, the FPS chart the one
+/// chart the client's own frame ring draws.
+fn debug_bottom_lines(integrated: bool, fps_charts: bool) -> Vec<String> {
     let modifier = Some("F3");
     let profiler = debug_chart_row(modifier, "1", "Profiler", false);
-    let fps = debug_chart_row(modifier, "2", if integrated { "FPS + TPS" } else { "FPS" }, false);
+    let fps = debug_chart_row(
+        modifier,
+        "2",
+        if integrated { "FPS + TPS" } else { "FPS" },
+        fps_charts,
+    );
     let network = debug_chart_row(modifier, "3", if integrated { "Ping" } else { "Bandwidth + Ping" }, false);
     let lightmap = debug_chart_row(modifier, "4", "Lightmap", false);
     let debug_options = debug_keybind_word(modifier, "F6");
@@ -784,6 +791,110 @@ fn debug_bottom_lines(integrated: bool) -> Vec<String> {
         format!("To edit: press {debug_options}"),
     ]
 }
+
+/// THE FPS CHART'S OWN CAPACITY (javap LocalSampleLogger.<init> —
+/// the `sipush 240` the multianewarray's row count keeps: the ring
+/// holds 240 one-column samples, the frame-time logger the
+/// DebugScreenOverlay ctor's `new LocalSampleLogger(1)` wears).
+pub const FPS_CHART_CAPACITY: usize = 240;
+
+/// THE SAMPLE'S OWN WORD (FpsDebugChart.toDisplayString's own walk —
+/// `String.format('%d ms', Math.round(ms))` the toMilliseconds /
+/// 1e6 the sample's nanosecond unit keeps, the Math.round the
+/// floor(x+0.5) half-up law Java speaks).
+fn java_round(x: f64) -> i64 {
+    (x + 0.5).floor() as i64
+}
+
+fn fps_display_word(ns: f64) -> String {
+    format!("{} ms", java_round(ns / 1_000_000.0))
+}
+
+/// THE BAR'S OWN HEIGHT (FpsDebugChart.getSampleHeight's own walk —
+/// `Math.round(ms * 60.0 / 33.333333333333336)` the ldc2_w pair the
+/// jar's constant pool keeps: 30fps the 60px full-height bar wears,
+/// 60fps the 30px half, the slow frames the box top's own ride
+/// pokes above — no clamp the bytecode keeps).
+fn fps_sample_height(ns: i64) -> i32 {
+    java_round((ns as f64 / 1_000_000.0) * 60.0 / 33.333333333333336) as i32
+}
+
+/// THE CHANNEL'S OWN LERP (Mth.lerpInt's own law — `start +
+/// floor(delta * (end - start))` the i2f/fmul/floor walk keeps: the
+/// floor the half-down word speaks, the f32 the d2f narrowing
+/// wears).
+fn lerp_int(delta: f32, start: i32, end: i32) -> i32 {
+    start + (delta * (end - start) as f32).floor() as i32
+}
+
+/// THE RGB LERP (ARGB.srgbLerp's own walk — the four channels the
+/// `Mth.lerpInt(delta, from.c, to.c)` fold carries, the ARGB.color
+/// `<<24|<<16|<<8|` packing the word closes).
+fn srgb_lerp(delta: f32, from: i32, to: i32) -> i32 {
+    let a = lerp_int(delta, (from >> 24) & 0xFF, (to >> 24) & 0xFF);
+    let r = lerp_int(delta, (from >> 16) & 0xFF, (to >> 16) & 0xFF);
+    let g = lerp_int(delta, (from >> 8) & 0xFF, (to >> 8) & 0xFF);
+    let b = lerp_int(delta, from & 0xFF, to & 0xFF);
+    (a << 24) | (r << 16) | (g << 8) | b
+}
+
+/// THE SAMPLE'S OWN COLOR (FpsDebugChart.getSampleColor's own walk —
+/// the `Mth.clamp(v, 0.0, 56.0)` bound first, then the two arms the
+/// `dcmpg ifge` branch keeps: below 28ms the green→yellow
+/// `srgbLerp((v-0)/28, -16711936, -256)` lerp wears, above the
+/// yellow→red `srgbLerp((v-28)/28, -256, -65536)` — the stops the
+/// jar's own ldc pair banks: 0xFF00FF00 green, 0xFFFFFF00 yellow,
+/// 0xFFFF0000 red).
+fn fps_sample_color(ns: i64) -> i32 {
+    let v = {
+        let raw = ns as f64 / 1_000_000.0;
+        if raw < 0.0 {
+            0.0
+        } else {
+            raw.min(56.0)
+        }
+    };
+    if v < 28.0 {
+        let t = ((v - 0.0) / (28.0 - 0.0)) as f32;
+        srgb_lerp(t, -16711936, -256)
+    } else {
+        let t = ((v - 28.0) / (56.0 - 28.0)) as f32;
+        srgb_lerp(t, -256, -65536)
+    }
+}
+
+/// THE CHART'S OWN WIDTH (FpsDebugChart.getWidth's own walk —
+/// `min(capacity, arg)` the DSO call site's `guiWidth / 2` arg
+/// keeps: the left half the chart's own lane wears, the 240-sample
+/// cap the full-width screens bound).
+fn fps_chart_width(gui_width: i32) -> i32 {
+    (FPS_CHART_CAPACITY as i32).min(gui_width / 2)
+}
+
+/// THE BAR LOOP'S OWN SKIP (AbstractDebugChart.extractRenderState's
+/// `Math.max(0, capacity - (width - 2))` walk — the two border
+/// columns the bar columns exclude, the older samples the fuller
+/// ring's width overflow drops).
+fn fps_chart_skip(width: i32) -> usize {
+    (FPS_CHART_CAPACITY as i32).saturating_sub(width - 2).max(0) as usize
+}
+
+/// THE ARGB'S OWN FILL (the i32 color the house raster's [f32; 4]
+/// lane wears — the channels the shifts unfold, the alpha the
+/// blend's own weight keeps).
+fn fps_argb_fill(c: i32) -> [f32; 4] {
+    let u = c as u32;
+    [
+        ((u >> 16) & 0xFF) as f32 / 255.0,
+        ((u >> 8) & 0xFF) as f32 / 255.0,
+        (u & 0xFF) as f32 / 255.0,
+        ((u >> 24) & 0xFF) as f32 / 255.0,
+    ]
+}
+
+/// THE FPS CHART'S OWN LINE (the `iconst_m1` white the border/grid
+/// lines' ldc keeps — 0xFFFFFFFF the four-channel full word wears).
+const FPS_CHART_LINE: [f32; 4] = [1.0, 1.0, 1.0, 1.0];
 
 /// THE RIDER'S YAW WALK (AbstractBoat.positionRider's own words — the
 /// drag `passenger.setYRot(getYRot() + deltaRotation)` the caller
@@ -2275,6 +2386,29 @@ pub struct App {
     /// boot keeps — the honest no-opinion the pre-first-window row
     /// wears).
     pub fps_value: Option<u32>,
+    /// THE FPS CHARTS' OWN FLAG (javap DebugScreenOverlay's
+    /// renderFpsCharts — the toggleFpsCharts walk's own field: the
+    /// F3+2 chord flips it, the raised state the bottom row's
+    /// `visible` word and the chart draw's own gate both speak).
+    pub fps_charts: bool,
+    /// THE DEBUG MODIFIER'S OWN USED LANE (javap KeyboardHandler's
+    /// usedDebugKeyAsModifier — the chord-consumed F3 gesture the
+    /// release lane swallows: the flag the toggle's plain flip keeps
+    /// off, the F3+2 press sets, the F3 release clears without the
+    /// overlay toggle the bare release answers).
+    pub debug_modifier_used: bool,
+    /// THE FRAME-TIME RING (javap LocalSampleLogger(1)'s own grid —
+    /// the 240 one-column rows the `sipush 240` ctor keeps, the
+    /// append at (start+size)%240 the useSample walk banks, the
+    /// nanosecond frame durations the window loop's own clock
+    /// measures).
+    pub frame_samples: [i64; FPS_CHART_CAPACITY],
+    /// The ring's own head (the oldest sample's index once full —
+    /// the `start` field the get(II) wrapIndex walk reads).
+    pub frame_sample_start: usize,
+    /// The ring's own fill (the `size` field the useSample's
+    /// `if (size < 240) size++ else start++` law keeps).
+    pub frame_sample_size: usize,
     /// The spawn pose the body materialized at (the offline spawn law's
     /// own feet/angles, the network teleport's pose) — the respawn's
     /// own re-anchor (the vanilla respawn teleports the player to the
@@ -2645,6 +2779,11 @@ impl App {
             fps_frames: 0,
             fps_window_start: None,
             fps_value: None,
+            fps_charts: false,
+            debug_modifier_used: false,
+            frame_samples: [0; FPS_CHART_CAPACITY],
+            frame_sample_start: 0,
+            frame_sample_size: 0,
             spawn_pose: None,
         }
     }
@@ -10739,6 +10878,64 @@ impl App {
         self.debug_held = !self.debug_held;
     }
 
+    /// THE F3+2 CHORD'S OWN TOGGLE (javap DebugScreenOverlay
+    /// .toggleFpsCharts's own walk — the flag's law the bytecode
+    /// 8-26 keeps: `renderFpsCharts = !(isOverlayVisible &&
+    /// renderFpsCharts)` — the closed panel or the lowered flag
+    /// raises, the raised chart on the visible panel lowers; the
+    /// raised state then forces the overlay visible (the
+    /// setOverlayVisible(true) lane the bytecode 29-44 keeps) and
+    /// zeroes the network/lightmap flags (the constants the
+    /// chart-less client already keeps). The used-as-modifier lane
+    /// rides: the consumed gesture the F3 release reads (the
+    /// KeyboardHandler.keyPress's `usedDebugKeyAsModifier |=
+    /// consumed` walk) — the release the bare toggle answers only
+    /// when no chord spent the modifier).
+    pub fn on_fps_charts_key(&mut self) {
+        self.fps_charts = !(self.debug_held && self.fps_charts);
+        if self.fps_charts {
+            self.debug_held = true;
+        }
+        self.debug_modifier_used = true;
+    }
+
+    /// THE F3 RELEASE'S OWN LANE (javap KeyboardHandler.keyPress's
+    /// bytecode 795-824 — the keyDebugModifier release event the
+    /// `action == 0` arm answers: the used-as-modifier flag set
+    /// clears itself and the overlay keeps its state, the bare
+    /// release the toggleDebugOverlay flip answers).
+    pub fn on_debug_modifier_released(&mut self) {
+        if self.debug_modifier_used {
+            self.debug_modifier_used = false;
+        } else {
+            self.on_debug_key();
+        }
+    }
+
+    /// THE FRAME-TIME SAMPLE'S OWN APPEND (javap LocalSampleLogger
+    /// .useSample's own walk — the pending sample lands at
+    /// `samples[wrapIndex(start + size)]`, then `size < 240` grows
+    /// the fill else the head advances: the oldest column the
+    /// full-ring write overwrites, the order the get(II)'s
+    /// `samples[wrapIndex(start + idx)]` read keeps — idx 0 the
+    /// oldest, size-1 the newest the chart's rightmost bar wears).
+    pub fn log_frame_duration(&mut self, ns: i64) {
+        let slot = (self.frame_sample_start + self.frame_sample_size) % FPS_CHART_CAPACITY;
+        self.frame_samples[slot] = ns;
+        if self.frame_sample_size < FPS_CHART_CAPACITY {
+            self.frame_sample_size += 1;
+        } else {
+            self.frame_sample_start = (self.frame_sample_start + 1) % FPS_CHART_CAPACITY;
+        }
+    }
+
+    /// THE RING'S OWN READ (javap LocalSampleLogger.get(II)'s own
+    /// walk — the bounds the `0 <= idx < size` check keeps, the
+    /// column-0 value the wrapIndex(start + idx) row carries).
+    fn frame_sample(&self, idx: usize) -> i64 {
+        self.frame_samples[(self.frame_sample_start + idx) % FPS_CHART_CAPACITY]
+    }
+
     /// THE WIRE MOBS' OWN TICK (javap LivingEntity's remote walk —
     /// no AI, no physics: the server owns both): the tick head saves
     /// the prev feet + the head pair (the render's lerps walk them at
@@ -11297,7 +11494,7 @@ impl App {
         // three chart-words rows the ONE extractLines(..., true)
         // call draws, the 9px stride the shared index walk owns)
         let mut lines = self.debug_lines();
-        lines.extend(debug_bottom_lines(false));
+        lines.extend(debug_bottom_lines(false, self.fps_charts));
         let (x, mut y) = (2i32, 2i32);
         for line in &lines {
             // the spacer's own law (the isNullOrEmpty gate the band
@@ -11325,6 +11522,101 @@ impl App {
             }
             ry += 9;
         }
+        // THE FPS CHART (the DSO extractRenderState's showFpsCharts
+        // lane — the F3+2 chord's own chart the LEFT half draws over
+        // the panel's own text, the x=0 anchor the `iconst_0` arg
+        // keeps and the width the min(240, guiWidth/2) law bounds)
+        if self.fps_charts {
+            self.draw_fps_chart(g, a, w, h);
+        }
+    }
+
+    /// THE FPS CHART'S OWN DRAW (javap FpsDebugChart + the
+    /// AbstractDebugChart parent's extractRenderState walk — the
+    /// exact strata the bytecode's draw order keeps: the
+    /// `fill(x, h-60, x+width, h, 0x90505050)` background first,
+    /// then the one-per-column sample bars the
+    /// `fill(col, h-height, col+1, h, getSampleColor(sample))` walk
+    /// paints (the skip law `max(0, 240 - (width - 2))` the older
+    /// samples' width overflow drops, the newest sample the
+    /// rightmost drawn column wears), then the white frame the four
+    /// line calls keep (the top h-60, the bottom h-1, the side
+    /// pair the 60px box bounds), then the three min/avg/max ms
+    /// labels the drawn samples' own fold speaks (the left x+2, the
+    /// centeredText x+width/2, the right x+width-tw-2 — all at
+    /// h-69, the 9px strip the 69px getFullHeight owns above the
+    /// 60px box), then the additional lines the FpsDebugChart
+    /// override banks: the '30 FPS'/'60 FPS' band+text pairs at
+    /// (x+1, h-59)/(x+1, h-29) the extractStringWithShade walk
+    /// paints (band fill then NO-SHADOW 0xFFE0E0E0 text) and the
+    /// white 60fps grid line at h-30; the framerate-limit cyan
+    /// line the `0 < limit <= 250` gate keeps — the client owns no
+    /// limit option, the honest skip the unbound lane wears).
+    fn draw_fps_chart(&self, g: &mut Gui, a: &mut GuiAssets, w: i32, h: i32) {
+        let width = fps_chart_width(w);
+        let x = 0i32;
+        let top = h - 60;
+        // THE BACKGROUND (the extractRenderState's first fill — the
+        // band color the panel's own rows wear)
+        g.fill(x, top, width, 60, DEBUG_BAND_BG);
+        // THE SAMPLE BARS (the per-column loop the skip law keeps —
+        // the bar's own fill `col, h - height, col + 1, h` the
+        // 1px-wide column paints, the color the green→yellow→red
+        // stops lerp)
+        let skip = fps_chart_skip(width);
+        let count = self.frame_sample_size.saturating_sub(skip);
+        if count > 0 {
+            let mut mn = i64::MAX;
+            let mut mx = i64::MIN;
+            let mut sum = 0i64;
+            for i in 0..count {
+                let s = self.frame_sample(skip + i);
+                mn = mn.min(s);
+                mx = mx.max(s);
+                sum += s;
+                let bar_h = fps_sample_height(s);
+                g.fill(
+                    x + i as i32 + 1,
+                    h - bar_h,
+                    1,
+                    bar_h,
+                    fps_argb_fill(fps_sample_color(s)),
+                );
+            }
+            // THE THREE LABELS (the min/avg/max ms words the drawn
+            // samples speak — the avg the `sum (l2d) / count (i2d)`
+            // f64 fold keeps, the positions the x+2 / x+width/2
+            // centered / x+width-tw-2 trio the offsets 256-348 bank)
+            g.text(a, x + 2, h - 69, &fps_display_word(mn as f64), DEBUG_TEXT, false);
+            let avg = fps_display_word(sum as f64 / count as f64);
+            g.text_centered(a, x + width / 2, h - 69, &avg, DEBUG_TEXT, false);
+            let mx_word = fps_display_word(mx as f64);
+            let mx_tw = g.text_width(&mx_word);
+            g.text(a, x + width - mx_tw - 2, h - 69, &mx_word, DEBUG_TEXT, false);
+        }
+        // THE WHITE FRAME (the four line calls the offsets 144-202
+        // keep — horizontalLine(x, x+width-1, y) the 1px row paints,
+        // verticalLine the 60px side column pairs)
+        g.fill(x, top, width, 1, FPS_CHART_LINE);
+        g.fill(x, h - 1, width, 1, FPS_CHART_LINE);
+        g.fill(x, top, 1, 60, FPS_CHART_LINE);
+        g.fill(x + width - 1, top, 1, 60, FPS_CHART_LINE);
+        // THE '30 FPS' LABEL (extractStringWithShade's own walk — the
+        // band `fill(ax, ay, ax + tw + 1, ay + 9)` then the NO-SHADOW
+        // text at (ax+1, ay+1); the y the h-60+1 / h-30+1 pair keeps)
+        let w30 = g.text_width("30 FPS");
+        g.fill(x + 1, h - 59, w30 + 2, 9, DEBUG_BAND_BG);
+        g.text(a, x + 2, h - 58, "30 FPS", DEBUG_TEXT, false);
+        let w60 = g.text_width("60 FPS");
+        g.fill(x + 1, h - 29, w60 + 2, 9, DEBUG_BAND_BG);
+        g.text(a, x + 2, h - 28, "60 FPS", DEBUG_TEXT, false);
+        // THE 60FPS GRID LINE (the white horizontalLine at h-30 the
+        // bytecode 34-47 keeps — the 30fps line the box's own top
+        // border wears)
+        g.fill(x, h - 30, width, 1, FPS_CHART_LINE);
+        // THE FRAMERATE-LIMIT LINE (the cyan `0 < limit <= 250`
+        // gate the bytecode 68-106 keeps — the client owns no limit
+        // option, the honest skip the unbound lane wears)
     }
 
     /// THE LEFT COLUMN'S LINES (the 26.2 entries the jar's own string
@@ -19359,8 +19651,10 @@ mod tests {
 
         // THE BOTTOM BLOCK (extractRenderState's isOverlayVisible
         // lane — the empty spacer the isNullOrEmpty law skips-but-
-        // spends first, then the three rows the concat recipes bank)
-        let block = debug_bottom_lines(false);
+        // spends first, then the three rows the concat recipes bank;
+        // the FPS row's word the REAL flag lane keeps — the all-false
+        // boot the hidden word wears)
+        let block = debug_bottom_lines(false, false);
         assert_eq!(block.len(), 4);
         assert_eq!(block[0], "", "the spacer row the cursor still walks");
         assert_eq!(
@@ -19378,12 +19672,115 @@ mod tests {
         // slot's name the isLocalServer probe keeps — `Ping` the
         // local lane, `Bandwidth + Ping` the remote the client's own
         // honest lane wears)
-        let local = debug_bottom_lines(true);
+        let local = debug_bottom_lines(true, false);
         assert_eq!(
             local[1],
             "Debug charts: [F3+1] Profiler hidden; [F3+2] FPS + TPS hidden;"
         );
         assert_eq!(local[2], "[F3+3] Ping hidden; [F3+4] Lightmap hidden");
+
+        // THE RAISED FLAG'S OWN WORD (the formatChart's render arg
+        // the real renderFpsCharts state carries — the F3+2 toggle's
+        // `visible` word the raised lane speaks, the row the jar's
+        // own fold re-answers)
+        let raised = debug_bottom_lines(false, true);
+        assert_eq!(
+            raised[1],
+            "Debug charts: [F3+1] Profiler hidden; [F3+2] FPS visible;"
+        );
+    }
+
+    #[test]
+    fn the_frame_ring_the_use_sample_walk_keeps() {
+        // THE RING'S OWN LAWS (javap LocalSampleLogger — the append
+        // at (start+size)%240 the useSample walk banks, the `size <
+        // 240` grow else the start advance, the get(idx) the
+        // wrapIndex(start+idx) row reads: idx 0 the oldest, size-1
+        // the newest)
+        let mut app = App::new(3);
+        assert_eq!(app.frame_sample_size, 0);
+        for i in 1..=240 {
+            app.log_frame_duration(1_000_000 * i as i64);
+        }
+        assert_eq!(app.frame_sample_size, 240);
+        assert_eq!(app.frame_sample(0), 1_000_000, "the oldest kept");
+        assert_eq!(app.frame_sample(239), 240_000_000, "the newest kept");
+        // THE 241ST SAMPLE (the full ring's own ride — the start
+        // advances, the oldest column the write overwrites)
+        app.log_frame_duration(999);
+        assert_eq!(app.frame_sample_size, 240, "the cap holds");
+        assert_eq!(app.frame_sample(0), 2_000_000, "the first dropped");
+        assert_eq!(app.frame_sample(239), 999, "the newest lands");
+    }
+
+    #[test]
+    fn the_fps_chart_the_jar_math_keeps() {
+        // THE BAR HEIGHTS (getSampleHeight's `Math.round(ms * 60.0 /
+        // 33.333333333333336)` walk — 30fps the 60px full box, 60fps
+        // the 30px half, 20fps the 90px poke-above the no-clamp lane
+        // keeps)
+        assert_eq!(fps_sample_height(33_333_333), 60);
+        assert_eq!(fps_sample_height(16_666_667), 30);
+        assert_eq!(fps_sample_height(50_000_000), 90);
+        // THE COLORS (getSampleColor's clamp + two-arm lerp — the
+        // exact f32 stops the half-deltas pin: 0ms the pure green,
+        // 14ms the half green→yellow (red floor(127.5)=127), 28ms
+        // the pure yellow (the arm boundary), 42ms the half
+        // yellow→red (green floor(-127.5)=-128 → 127), 56ms+ the
+        // pure red the clamp's own cap keeps)
+        assert_eq!(fps_sample_color(0), -16711936, "0xFF00FF00 green");
+        assert_eq!(fps_sample_color(14_000_000), -8388864, "0xFF7FFF00 half");
+        assert_eq!(fps_sample_color(28_000_000), -256, "0xFFFFFF00 yellow");
+        assert_eq!(fps_sample_color(42_000_000), -33024, "0xFFFF7F00 half");
+        assert_eq!(fps_sample_color(56_000_000), -65536, "0xFFFF0000 red");
+        assert_eq!(fps_sample_color(500_000_000), -65536, "the clamp caps");
+        // THE WORDS (toDisplayString's `%d ms` — the Math.round the
+        // floor(x+0.5) law keeps)
+        assert_eq!(fps_display_word(16_666_667.0), "17 ms");
+        assert_eq!(fps_display_word(0.0), "0 ms");
+        // THE WIDTH + SKIP (getWidth's min(240, guiWidth/2) and the
+        // bar loop's max(0, 240 - (width-2)) — the half-screen arg
+        // the DSO call site keeps)
+        assert_eq!(fps_chart_width(854), 240);
+        assert_eq!(fps_chart_width(400), 200);
+        assert_eq!(fps_chart_skip(240), 2);
+        assert_eq!(fps_chart_skip(100), 142);
+        assert_eq!(fps_chart_skip(2), 240, "the two-column box the bars never fill");
+    }
+
+    #[test]
+    fn the_fps_charts_key_the_toggle_and_release_laws_keep() {
+        // THE TOGGLE'S OWN LAW (toggleFpsCharts's `!(visible &&
+        // flag)` — the fresh app's closed panel the raise answers,
+        // the raise the overlay's own forced-visible keeps)
+        let mut app = App::new(3);
+        assert!(!app.fps_charts && !app.debug_held);
+        app.on_fps_charts_key();
+        assert!(app.fps_charts, "the closed panel's chord raises");
+        assert!(app.debug_held, "the raise forces the overlay visible");
+        app.on_fps_charts_key();
+        assert!(!app.fps_charts, "the visible raised chart lowers");
+        assert!(app.debug_held, "the lower never closes the panel");
+        // THE USED-AS-MODIFIER LANE (the chord's own ride — the F3
+        // release the flag swallows, the next bare release the
+        // toggleDebugOverlay flip answers)
+        app.on_fps_charts_key();
+        assert!(app.debug_modifier_used);
+        app.on_debug_modifier_released();
+        assert!(app.debug_held, "the consumed release keeps the panel");
+        assert!(!app.debug_modifier_used, "the flag the release clears");
+        app.on_debug_modifier_released();
+        assert!(!app.debug_held, "the bare release toggles");
+        assert!(app.fps_charts, "the chart flag the panel's toggle never touches");
+        // THE ROW'S OWN RE-SPEAK (the drawn panel's bottom block the
+        // live flag carries — the visible word the raised lane wears)
+        app.on_debug_modifier_released();
+        assert!(app.debug_held);
+        let block = debug_bottom_lines(false, app.fps_charts);
+        assert_eq!(
+            block[1],
+            "Debug charts: [F3+1] Profiler hidden; [F3+2] FPS visible;"
+        );
     }
 
     #[test]
