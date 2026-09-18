@@ -71,6 +71,9 @@ pub const LANDING_BOUNCE: f64 = -0.5;
 /// RandomSource stand-in the whole audio lane already speaks). Each
 /// ItemDrop world carries ONE generator: the spawn spreads, the loot
 /// rolls and the pickup pitches draw from it in tick order.
+/// `Clone` the tests' own stream-position probes keep (the reference
+/// replay the clone's state rides).
+#[derive(Clone)]
 pub struct Lcg {
     state: u64,
     /// The Marsaglia polar method's cached pair (javap

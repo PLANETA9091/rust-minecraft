@@ -9468,23 +9468,31 @@ impl App {
                 phys.status,
                 crate::hull::HullStatus::UnderWater | crate::hull::HullStatus::UnderFlowingWater
             );
-            let mouth = crate::hull::hull_bubble_inside(phys, bubble, &cells);
+            crate::hull::hull_bubble_inside(phys, bubble, &cells);
             // THE 1/100 SPLASH (the onAboveBubbleColumn's client arm —
-            // the `!isUnderWater && random.nextInt(100) == 0` band: the
-            // shared arm the free fn folds — the entity stream the
-            // gate's own draw rides)
-            if mouth && !under && self.mob_rng.next_int(100) == 0 {
-                bubble_splash_arm(
-                    &mut self.mob_rng,
-                    &mut self.level_ambient_rng,
-                    &mut self.sounds,
-                    &mut self.particles,
-                    self.frame,
-                    boat.x,
-                    boat.y,
-                    boat.z,
-                    ear,
-                );
+            // the `!isUnderWater && random.nextInt(100) == 0` band the
+            // PER-VISIT shape speaks: each mouth cell the visit's own
+            // roll draws — the wire lane's two-pass loop the twin shape
+            // already speaks, the batch simplification the per-visit
+            // count retires. The folds the stream never touches — the
+            // rolls the visit order's own sequence keeps, the under
+            // verdict the pass's own constant the hoisted gate reads.)
+            if !under {
+                for cell in &cells {
+                    if cell.mouth && self.mob_rng.next_int(100) == 0 {
+                        bubble_splash_arm(
+                            &mut self.mob_rng,
+                            &mut self.level_ambient_rng,
+                            &mut self.sounds,
+                            &mut self.particles,
+                            self.frame,
+                            boat.x,
+                            boat.y,
+                            boat.z,
+                            ear,
+                        );
+                    }
+                }
             }
             // THE FLOAT'S OWN FOLD (the vanilla `floatBoat()` the
             // baseTick's walk follows — the gravity/lift/friction the
@@ -9552,23 +9560,30 @@ impl App {
                         })
                     })
                     .collect();
-                let swept_mouth = crate::hull::hull_bubble_inside(phys, bubble, &swept_cells);
+                crate::hull::hull_bubble_inside(phys, bubble, &swept_cells);
                 let swept_under = matches!(
                     phys.status,
                     crate::hull::HullStatus::UnderWater | crate::hull::HullStatus::UnderFlowingWater
                 );
-                if swept_mouth && !swept_under && self.mob_rng.next_int(100) == 0 {
-                    bubble_splash_arm(
-                        &mut self.mob_rng,
-                        &mut self.level_ambient_rng,
-                        &mut self.sounds,
-                        &mut self.particles,
-                        self.frame,
-                        boat.x,
-                        boat.y,
-                        boat.z,
-                        ear,
-                    );
+                // THE SWEPT PASS'S OWN PER-VISIT SHAPE (the same law the
+                // static pass speaks — each swept mouth cell the visit's
+                // own roll draws, the travel order the sequence keeps)
+                if !swept_under {
+                    for cell in &swept_cells {
+                        if cell.mouth && self.mob_rng.next_int(100) == 0 {
+                            bubble_splash_arm(
+                                &mut self.mob_rng,
+                                &mut self.level_ambient_rng,
+                                &mut self.sounds,
+                                &mut self.particles,
+                                self.frame,
+                                boat.x,
+                                boat.y,
+                                boat.z,
+                                ear,
+                            );
+                        }
+                    }
                 }
             }
             // THE COLUMN'S OWN TAIL (the vanilla tick's LAST call — the
@@ -19178,6 +19193,110 @@ mod tests {
         assert!(
             app2.offline_ride.is_some(),
             "the rider the UP launch carries"
+        );
+    }
+
+    /// THE PER-VISIT ROLL SHAPE (the offline lane's own count — the
+    /// vanilla visit law the batch simplification retired): the 2×2
+    /// column's four mouths the static pass rolls PER CELL (the wire
+    /// lane's two-pass loop the twin shape speaks), the settled rest
+    /// the sweep's empty walk keeps (the zero displacement the
+    /// degenerate silence returns), the reference stream the same
+    /// four draws the position proves, and the four-rolls-per-tick
+    /// drive the 1/100 the splash voice speaks.
+    #[test]
+    fn the_offline_mouths_roll_the_per_visit_shape() {
+        let mut app = App::new(3);
+        app.enter_world();
+        let c = app.offline_world.as_ref().unwrap().size_blocks() / 2;
+        let pool_y = app.spawn_y + 8;
+        // THE 2×2 STAMP (the four mouths the box's own span overlaps —
+        // the variant layer the four cells carry, the above AIR the
+        // mouth's word keeps)
+        {
+            let w = app.offline_world.as_mut().unwrap();
+            for dx in 0..2 {
+                for dz in 0..2 {
+                    w.set(c + dx, pool_y, c + dz, crate::world::WATER);
+                }
+            }
+            w.variants = Some(vec![vec![0u8; 16 * 48 * 16]; WORLD_CHUNKS * WORLD_CHUNKS]);
+            for dx in 0..2 {
+                for dz in 0..2 {
+                    let (wx, wz) = (c + dx, c + dz);
+                    let vi = ((wx % 16) + (wz % 16) * 16) as usize
+                        + (pool_y as usize) * (16 * 16);
+                    w.variants.as_mut().unwrap()
+                        [((wx / 16) + (wz / 16) * WORLD_CHUNKS as i32) as usize][vi] = 1;
+                }
+            }
+        }
+        let settled_y = (pool_y + 1) as f64 - 0.65 * crate::hull::HULL_HEIGHT;
+        app.offline_boats.push(crate::world_view::WireBoat {
+            id: 1,
+            x: c as f64 + 1.0,
+            y: settled_y,
+            z: c as f64 + 1.0,
+            yaw: 0.0,
+            raft: false,
+            chest: false,
+            wood: "oak".to_string(),
+            paddle_left: false,
+            paddle_right: false,
+            bubble_time: 0,
+            hurt_time: 0,
+            hurt_dir: 1,
+            damage: 0.0,
+        });
+        // THE SETTLE (the first tick the float's own line the y
+        // converges to, the second the bob the buoyancy keeps — the
+        // tiny oscillation the displacement speaks, the sweep the
+        // footprint's own walk returns: the FOUR mouths both passes
+        // visit, the eight rolls the tick speaks)
+        app.tick_offline_hulls();
+        let floated_y = app.offline_boats[0].y;
+        app.tick_offline_hulls();
+        assert!(
+            (app.offline_boats[0].y - floated_y).abs() < 0.05,
+            "the float's own bob the settle keeps: {}",
+            app.offline_boats[0].y - floated_y
+        );
+        assert_eq!(app.offline_boats[0].x, c as f64 + 1.0, "the rest the x keeps");
+        assert_eq!(app.offline_boats[0].z, c as f64 + 1.0, "the rest the z keeps");
+        // THE PROBE (the four mouths' per-visit stream — the clone the
+        // reference replays, the EIGHT rolls the two passes speak —
+        // four the static scan visits, four the swept footprint's own
+        // walk yields; the hit the arm's own three draws the replay
+        // mirrors, the position the alignment proves)
+        let mut reference = app.mob_rng.clone();
+        for _ in 0..8 {
+            if reference.next_int(100) == 0 {
+                let _ = reference.next_f32();
+                let _ = reference.next_f32();
+                let _ = reference.next_f32();
+            }
+        }
+        app.tick_offline_hulls();
+        assert_eq!(
+            app.mob_rng.next_int(100),
+            reference.next_int(100),
+            "the eight per-visit rolls' stream position"
+        );
+        // THE SPLASH THE DRIVE SPEAKS (the four rolls per tick the
+        // 1/100 the long drive hits — the batch shape's one roll the
+        // count retired)
+        for _ in 0..400 {
+            app.tick_offline_hulls();
+        }
+        let splashes = app
+            .sounds
+            .events
+            .iter()
+            .filter(|e| e.starts_with("entity.generic.splash @"))
+            .count();
+        assert!(
+            splashes >= 1,
+            "the four-mouth drive the splash speaks: {splashes}"
         );
     }
 
