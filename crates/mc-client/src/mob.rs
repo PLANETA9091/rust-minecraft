@@ -3306,7 +3306,12 @@ pub fn creature_count(mobs: &[Zombie]) -> usize {
 /// own strict arm, the `checkAnimalSpawnRules` the below-grass +
 /// isBright gates (the day arm the caller speaks — `getRawBrightness
 /// > 8` the sky-exposed spot the night's own darkness refuses), the
-/// snapTo's `nextFloat() * 360.0` yaw, the `spawned >=
+/// snapTo's `nextFloat() * 360.0` yaw, the GROUP DATA the
+/// finalizeSpawn's own arm walks (the null the `(true)` ctor the ldc
+/// 0.05 chance fills, the groupSize the members the count walks, the
+/// SHARED body the whole call never resets — the first member the size
+/// gate never rolls, the members 2+ the 1/20 the childhood speaks), the
+/// `spawned >=
 /// getMaxSpawnClusterSize()` the iconst_4 tail. Returns the pack the
 /// attempt landed.
 pub fn try_spawn_creatures(
@@ -3344,6 +3349,12 @@ pub fn try_spawn_creatures(
     let attempts =
         CREATURE_PACK_MIN + rng.next_int((1 + CREATURE_PACK_MAX - CREATURE_PACK_MIN) as u64);
     let mut spawned: i32 = 0;
+    // THE GROUP DATA THE CALL CARRIES (AgeableMob.finalizeSpawn's loc4 —
+    // the null the FIRST member's arm fills with the `(true)` ctor the
+    // ldc 0.05000000074505806 chance keeps, the groupSizeI the members
+    // the count walks, the SHARED body the 3-tries loop never resets —
+    // the vanilla variable the loop OUTSIDE declares)
+    let mut group_size: i32 = 0;
     // THE 3 TRIES (loc12's own loop — each re-arms the anchor x/z)
     for _ in 0..3 {
         let mut x = ax;
@@ -3385,6 +3396,17 @@ pub fn try_spawn_creatures(
             // THE SNAP-TO'S OWN YAW (397-406: `nextFloat() * 360.0`
             // the random heading speaks)
             m.yaw = rng.next_f32() * 360.0;
+            // THE GROUP DATA'S OWN ARM (finalizeSpawn 15-66): the SIZE
+            // gate the first member never rolls — groupSize 0 the ifle
+            // short-circuits BEFORE the nextFloat (the && chain the
+            // stream keeps), the later members the shouldSpawnBaby the
+            // 0.05 chance the one f32 roll speaks, the hit the
+            // setAge(getBabyStartAge()) childhood names — and the
+            // increaseGroupSizeByOne the tail EVERY member walks
+            if group_size > 0 && rng.next_f32() < 0.05 {
+                m.set_age(m.baby_start_age());
+            }
+            group_size += 1;
             mobs.push(m);
             spawned += 1;
             // THE CLUSTER'S OWN TAIL (468-478: `spawned >=
@@ -4822,6 +4844,209 @@ mod tests {
                 "the stone the below rule refuses (seed {seed})"
             );
         }
+    }
+
+    /// THE PACK'S OWN BABY ROLL (AgeableMob.finalizeSpawn's group arm
+    /// the spawn walk now keeps: the SIZE gate the FIRST member never
+    /// rolls — groupSize 0 the ifle short-circuits BEFORE the
+    /// nextFloat — the members 2+ the 1/20 the childhood speaks, the
+    /// hit the setAge(getBabyStartAge()) the -24000 names, the box the
+    /// baby's own half speaks, the kind the group data shares).
+    #[test]
+    fn the_pack_baby_roll_the_size_gate_walks() {
+        // THE FLAT GRASS PLATFORM (the pack test's own voxels)
+        let mut world = World::new(4, 7);
+        let size = world.size_blocks();
+        for x in 0..size {
+            for z in 0..size {
+                for y in 0..8 {
+                    world.set(x, y, z, crate::world::STONE);
+                }
+                world.set(x, 8, z, crate::world::GRASS);
+                for y in 9..size {
+                    world.set(x, y, z, crate::world::AIR);
+                }
+            }
+        }
+        // THE SWEEP (the 256 seeds the landed packs the roll walks —
+        // the first member the gate keeps across EVERY pack, the ages
+        // the two words the roll's own writer speaks)
+        let mut packs = 0usize;
+        let mut baby_hit: Option<u64> = None;
+        for seed in 0u64..256 {
+            let mut mobs = Vec::new();
+            let mut next_id = 1;
+            let mut rng = Lcg::new(seed);
+            let n = try_spawn_creatures(&mut mobs, &mut next_id, 32.0, 32.0, &world, &mut rng);
+            if n == 0 {
+                continue;
+            }
+            packs += 1;
+            assert!(
+                !mobs[0].is_baby() && mobs[0].age == 0,
+                "the first member the size gate keeps (seed {seed})"
+            );
+            for (k, m) in mobs.iter().enumerate() {
+                assert!(
+                    m.age == 0 || m.age == -24000,
+                    "the age the roll's own writer speaks (seed {seed}, member {k})"
+                );
+                if k > 0 && m.is_baby() {
+                    assert_eq!(
+                        m.age, -24000,
+                        "the childhood the getBabyStartAge names (seed {seed})"
+                    );
+                    assert_eq!(
+                        m.kind, mobs[0].kind,
+                        "the kind the group data shares (seed {seed})"
+                    );
+                    if baby_hit.is_none() {
+                        baby_hit = Some(seed);
+                    }
+                }
+            }
+        }
+        assert!(packs > 0, "the sweep the packs walk");
+        let seed = baby_hit.expect("the 1/20 the wide sweep hits");
+        // THE HIT'S OWN BOX (the spawn-time ask the is_baby fold keeps:
+        // the baby the half box occupies, the adult the full body —
+        // the same getScale 0.5 the bbox lane rides)
+        let mut mobs = Vec::new();
+        let mut next_id = 1;
+        let mut rng = Lcg::new(seed);
+        try_spawn_creatures(&mut mobs, &mut next_id, 32.0, 32.0, &world, &mut rng);
+        let dims = |kind: MobKind| match kind {
+            MobKind::Sheep => (SHEEP_WIDTH, SHEEP_HEIGHT),
+            MobKind::Cow => (COW_WIDTH, COW_HEIGHT),
+            MobKind::Pig => (PIG_WIDTH, PIG_HEIGHT),
+            MobKind::Chicken => (CHICKEN_WIDTH, CHICKEN_HEIGHT),
+            MobKind::Zombie => (ZOMBIE_WIDTH, ZOMBIE_HEIGHT),
+        };
+        for (k, m) in mobs.iter().enumerate() {
+            let (w, h) = dims(m.kind);
+            let (x0, y0, _, x1, y1, _) = m.box_for();
+            let (want_w, want_h) = if m.is_baby() {
+                (w * 0.5, h * 0.5)
+            } else {
+                (w, h)
+            };
+            assert!(
+                ((x1 - x0) - want_w).abs() < 1e-9 && ((y1 - y0) - want_h).abs() < 1e-9,
+                "the box the age's own half speaks (seed {seed}, member {k})"
+            );
+        }
+        assert!(
+            mobs.iter().skip(1).any(|m| m.is_baby()),
+            "the hit seed the baby keeps"
+        );
+        assert!(
+            !mobs[0].is_baby(),
+            "the first member the box the adult keeps"
+        );
+    }
+
+    /// THE BABY ROLL'S OWN STREAM (the mirror-replay the same seed
+    /// walks: the anchor's two doubles, the kind's nextInt(40), the
+    /// pack's nextInt(1), the scatter's four nextInt(6) per attempt,
+    /// the landed member the ctor seed's next() + the yaw's
+    /// nextFloat(), the GROUP the members 2+ the ONE f32 roll speaks —
+    /// the first member the gate the short-circuit keeps; the yaw the
+    /// roll BEFORE rides, the final state the exact count the replay
+    /// refuses to shift).
+    #[test]
+    fn the_pack_baby_roll_the_stream_the_order_keeps() {
+        // THE FLAT GRASS PLATFORM (the pack test's own voxels)
+        let mut world = World::new(4, 7);
+        let size = world.size_blocks();
+        for x in 0..size {
+            for z in 0..size {
+                for y in 0..8 {
+                    world.set(x, y, z, crate::world::STONE);
+                }
+                world.set(x, 8, z, crate::world::GRASS);
+                for y in 9..size {
+                    world.set(x, y, z, crate::world::AIR);
+                }
+            }
+        }
+        // THE HIT SEED (the first the sweep the roll speaks)
+        let mut seed = None;
+        for s in 0u64..256 {
+            let mut mobs = Vec::new();
+            let mut next_id = 1;
+            let mut rng = Lcg::new(s);
+            let n = try_spawn_creatures(&mut mobs, &mut next_id, 32.0, 32.0, &world, &mut rng);
+            if n > 0 && mobs.iter().skip(1).any(|m| m.is_baby()) {
+                seed = Some(s);
+                break;
+            }
+        }
+        let seed = seed.expect("the 1/20 the sweep names");
+        // THE MIRROR (the chain the walk keeps — the flat grass the
+        // spot rules the replay's every scatter keeps, the ring the
+        // same strict arm speaks)
+        let mut probe = Lcg::new(seed);
+        let ang = probe.next_f64() * std::f64::consts::TAU;
+        let dist = SPAWN_MIN_DIST + probe.next_f64() * (SPAWN_MAX_DIST - SPAWN_MIN_DIST);
+        let ax = (32.0 + ang.cos() * dist).floor() as i32;
+        let az = (32.0 + ang.sin() * dist).floor() as i32;
+        let _kind_roll = probe.next_int(40);
+        let attempts = CREATURE_PACK_MIN
+            + probe.next_int((1 + CREATURE_PACK_MAX - CREATURE_PACK_MIN) as u64);
+        let mut yaws: Vec<f32> = Vec::new();
+        let mut group_size = 0i32;
+        let mut spawned = 0i32;
+        'outer: for _ in 0..3 {
+            let mut x = ax;
+            let mut z = az;
+            for _ in 0..attempts {
+                x += probe.next_int(6) - probe.next_int(6);
+                z += probe.next_int(6) - probe.next_int(6);
+                let dx = x as f64 + 0.5 - 32.0;
+                let dz = z as f64 + 0.5 - 32.0;
+                if dx * dx + dz * dz <= 576.0 {
+                    continue;
+                }
+                // the flat grass the spot rules keep (no draws — the
+                // ctor seed + the yaw + the group roll the landed
+                // member's own chain speaks)
+                let _seed_draw = probe.next();
+                yaws.push(probe.next_f32() * 360.0);
+                if group_size > 0 {
+                    let _roll = probe.next_f32();
+                }
+                group_size += 1;
+                spawned += 1;
+                if spawned >= CREATURE_CLUSTER_SIZE {
+                    break 'outer;
+                }
+            }
+        }
+        // THE WALK (the same seed the same chain)
+        let mut mobs = Vec::new();
+        let mut next_id = 1;
+        let mut rng = Lcg::new(seed);
+        let n = try_spawn_creatures(&mut mobs, &mut next_id, 32.0, 32.0, &world, &mut rng);
+        assert_eq!(n, yaws.len(), "the pack the chain walks");
+        // THE YAWS THE ORDER SPEAKS (a roll drawn before the yaw the
+        // member's own heading the different word speaks)
+        for (m, y) in mobs.iter().zip(yaws.iter()) {
+            assert!(
+                (m.yaw - y).abs() < 1e-9,
+                "the yaw the roll BEFORE keeps"
+            );
+        }
+        // THE FIRST MEMBER THE GATE KEEPS (the replay's groupSize the
+        // same zero the walk's own first arm holds)
+        assert!(!mobs[0].is_baby(), "the first member never rolls");
+        assert!(
+            mobs.iter().skip(1).any(|m| m.is_baby()),
+            "the hit seed the baby keeps"
+        );
+        // THE FINAL STATE (the roll the members 2+ ONE f32 per speaks —
+        // an extra or a skipped roll the draw count shifts, the state
+        // the replay refuses)
+        assert_eq!(rng.next(), probe.next(), "the stream the chain keeps");
     }
 
     /// THE DEATH LOOT's own distribution (the zombie table's pools:
