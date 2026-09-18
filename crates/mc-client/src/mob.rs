@@ -966,6 +966,24 @@ pub fn armor_piece_asset(word: &str) -> Option<&'static str> {
 
 /// `Zombie.createAttributes` — FOLLOW_RANGE 35.0 (the target scan).
 pub const ZOMBIE_FOLLOW_RANGE: f64 = 35.0;
+/// `TargetGoal`'s own ctor `bipush 60` — the unseenMemoryTicks default
+/// the NearestAttackable's continue walk counts (the mustSee memory the
+/// blind ticks spend; the HurtBy start's own 300 the retaliation
+/// refills over this base word).
+pub const TARGET_UNSEEN_MEMORY_TICKS: i32 = 60;
+/// `HurtByTargetGoal.start()`'s own `sipush 300` — the
+/// unseenMemoryTicks the retaliation's start write arms (the 15-second
+/// blind memory the hurt memory speaks over the base 60).
+pub const HURT_BY_UNSEEN_MEMORY_TICKS: i32 = 300;
+/// `LivingEntity.tick`'s own `bipush 100` — the lastHurtByMob memory
+/// the tick's clear walk speaks (`tickCount - lastHurtByMobTimestamp >
+/// 100` the null write arms; the fresh hurt the timestamp refreshes).
+pub const LAST_HURT_BY_MOB_MEMORY_TICKS: u32 = 100;
+/// `HurtByTargetGoal`'s own `ALERT_RANGE_Y` — the vertical half the
+/// alertOthers' `AABB.inflate(d, 10.0, d)` walk keeps (the horizontal
+/// the follow-range attribute carries, the ±1 the unit cube's own
+/// shape adds).
+pub const ALERT_RANGE_Y: f64 = 10.0;
 /// THE KILL'S OWN REWARD (javap `LivingEntity.dropExperience` →
 /// `Mob.getBaseExperienceReward`): the bare zombie's flat `xpReward` 5 —
 /// the equipment-slot walk adds nothing (the bare body wears none), the
@@ -1118,6 +1136,14 @@ pub const SPAWN_MAX_DIST: f64 = 48.0;
 #[derive(Debug, Clone, Copy, PartialEq, Default)]
 pub struct MobEvents {
     pub attack: Option<MobAttack>,
+    /// THE HURTBY GOAL'S OWN START EVENT (the alertSameType the
+    /// zombie's `.setAlertOthers(...)` arms — the start()'s
+    /// `alertOthers()` walk the caller's sibling pass serves: the
+    /// same-kind box the follow-range/±10 inflate keeps, the no-target
+    /// gate the getTarget null arm speaks). The skeleton's bare ctor
+    /// the event never fires — the archer's retaliation the lone walk
+    /// keeps.
+    pub retaliation_alert: bool,
     /// THE SKELETON'S OWN SHOT (the RangedBowAttackGoal's full-draw
     /// crossing — the arrow the performRangedAttack walk created and
     /// the shoot voice's own pitch draw; the caller pushes the arrow
@@ -2178,6 +2204,41 @@ pub struct Zombie {
     /// the passenger's id carries, the ENTITY_NOT_BEING_RIDDEN
     /// predicate the search's own gate reads).
     pub passenger: Option<i32>,
+    /// LIVINGENTITY'S OWN LAST-HURT-BY WORD (javap
+    /// `LivingEntity.lastHurtByMob` — the EntityReference the hurt
+    /// walk's `source.getEntity() instanceof LivingEntity` +
+    /// `!NO_ANGER` arms write): the client's own vocabulary the PLAYER
+    /// alone speaks — the melee mob_attack, the sweep's AoE, the
+    /// player's arrows the only LivingEntity sources the lanes keep
+    /// (the fire's own dose the null source never arms). The word the
+    /// HurtByTargetGoal's own canUse reads.
+    last_hurt_by_player: bool,
+    /// `LivingEntity.lastHurtByMobTimestamp` — the tickCount the
+    /// setLastHurtByMob walk stores beside the reference (the event's
+    /// own word the 100-tick clear and the goal's reacted-arm read).
+    last_hurt_by_mob_timestamp: u32,
+    /// `HurtByTargetGoal.timestamp` — the goal's own reacted-event
+    /// word (the canUse's `timestamp != getLastHurtByMobTimestamp()`
+    /// the SAME event's re-arm refuses).
+    hurt_by_goal_timestamp: u32,
+    /// THE HURTBY GOAL'S OWN RUN WORD (the start()'s
+    /// `mob.setTarget(getLastHurtByMob())` — the target the prio-1
+    /// goal keeps while TargetGoal.canContinueToUse answers: the
+    /// follow-range gate + the mustSee's 300-tick memory the start's
+    /// sipush arms). The alertOthers' sibling write arms the same word.
+    retaliation_target: bool,
+    /// `TargetGoal.unseenTicks` under the retaliation's run (the
+    /// mustSee memory's own clock — the 300 the HurtBy start keeps).
+    retaliation_unseen_ticks: i32,
+    /// THE NEARESTATTACKABLE'S OWN RUN WORD (the prio-2 goal's target
+    /// — the canUse's range + checkLineOfSight conditions the arm
+    /// speaks, the mustSee's 60-tick memory the continue counts; the
+    /// prio-1 run's TARGET flag the GoalSelector's own conflict law
+    /// blocks — the scan the retaliation's run never arms).
+    scan_target: bool,
+    /// `TargetGoal.unseenTicks` under the scan's run (the base 60 the
+    /// ctor's bipush keeps).
+    scan_unseen_ticks: i32,
 }
 
 impl Zombie {
@@ -2258,6 +2319,13 @@ impl Zombie {
             chicken_jockey: false,
             vehicle: None,
             passenger: None,
+            last_hurt_by_player: false,
+            last_hurt_by_mob_timestamp: 0,
+            hurt_by_goal_timestamp: 0,
+            retaliation_target: false,
+            retaliation_unseen_ticks: 0,
+            scan_target: false,
+            scan_unseen_ticks: 0,
         }
     }
 
@@ -2369,7 +2437,15 @@ impl Zombie {
     /// — `f5 = 2.0 + toughness/4` (the zombie's toughness rides the
     /// base 0.0), `f6 = clamp(armor - dmg/f5, armor*0.2, 20)`, the
     /// survivor `dmg * (1 - f6/25)`), 0 -> dying).
-    pub fn hurt(&mut self, amount: f64) {
+    /// THE ATTACKER'S OWN WORD (`by_player` — javap `LivingEntity.hurt`'s
+    /// `source.getEntity() instanceof LivingEntity` + `!is(NO_ANGER)`
+    /// walk: the setLastHurtByMob the direct attacker's reference + the
+    /// tickCount timestamp arms — the client's own vocabulary the
+    /// player's melee / sweep / arrows the true words speak, the fire's
+    /// own null source the false keeps; the word the HurtByTargetGoal's
+    /// prio-1 canUse reads, the 100-tick window the tick's own clear
+    /// walk closes).
+    pub fn hurt(&mut self, amount: f64, by_player: bool) {
         // the dying never re-hurt (the vanilla's own `dead` gate — the
         // isDeadOrDying body the hurt pipeline refuses)
         if self.death_time > 0 || self.health <= 0.0 {
@@ -2389,6 +2465,37 @@ impl Zombie {
         // melee the mob_attack/#is_player_attack members ride, the
         // fire lane the in_fire/on_fire members keep)
         self.panic_memory_ticks = PANIC_DAMAGE_MEMORY_TICKS;
+        // THE LAST-HURT-BY WORD (javap `LivingEntity.hurt` the
+        // resolve walk's tail — the LivingEntity source the
+        // setLastHurtByMob(attacker) arms, the reference AND the
+        // tickCount timestamp the setter stores; the fire's own dose
+        // the null source never reaches)
+        if by_player {
+            self.last_hurt_by_player = true;
+            self.last_hurt_by_mob_timestamp = self.age_ticks;
+        }
+    }
+
+    /// THE ALERTOTHERS' OWN SIBLING WRITE (javap
+    /// `HurtByTargetGoal.alertOther` — the `m.setTarget(attacker)` the
+    /// box's same-kind walk speaks): the sibling the hurt zombie's own
+    /// start event arms — the run word the prio-1 goal's own shape
+    /// keeps (the 300-tick memory the start's sipush arms, the
+    /// follow-range gate the canContinueToUse counts), the TARGET flag
+    /// the sibling's own prio-2 scan's conflict law clears.
+    pub fn alert_hurt_by(&mut self) {
+        self.retaliation_target = true;
+        self.retaliation_unseen_ticks = 0;
+        self.scan_target = false;
+    }
+
+    /// THE NOTARGET GATE THE ALERTOTHERS READS (javap the alertOthers
+    /// walk's `m.getTarget() != null -> skip` arm — the sibling the
+    /// target already keeps the alert refuses): the run words BOTH
+    /// goals' own shapes speak (the prio-1 retaliation OR the prio-2
+    /// scan).
+    pub fn has_target(&self) -> bool {
+        self.retaliation_target || self.scan_target
     }
 
     /// THE ISPANICKING WORD (javap `PathfinderMob.isPanicking` the
@@ -2439,6 +2546,20 @@ impl Zombie {
         // a new target)
         self.prev_head_yaw_off = self.head_yaw_off;
         self.prev_head_pitch = self.head_pitch;
+        // THE LAST-HURT-BY MEMORY'S OWN CLEAR (javap `LivingEntity.tick`
+        // the walk bytecode 560-600 speaks — the dead attacker the null
+        // write keeps, the `tickCount - lastHurtByMobTimestamp > 100`
+        // window the timestamp compare closes; the attacker's own life
+        // the goal lanes' alive gates answer, the window the word's own
+        // clock closes)
+        if self.last_hurt_by_player
+            && self
+                .age_ticks
+                .wrapping_sub(self.last_hurt_by_mob_timestamp)
+                > LAST_HURT_BY_MOB_MEMORY_TICKS
+        {
+            self.last_hurt_by_player = false;
+        }
         // THE FIRE CLOCK (Entity.baseTick's own block, run BEFORE the
         // death gate — the corpse keeps its clock but the dying refuse
         // the hurt): remainingFireTicks > 0 && !fireImmune -> the %20
@@ -2447,7 +2568,7 @@ impl Zombie {
         if self.fire_ticks > 0 {
             let alive = self.death_time == 0 && self.health > 0.0;
             if self.fire_ticks % FIRE_DAMAGE_INTERVAL == 0 && alive {
-                self.hurt(FIRE_DAMAGE);
+                self.hurt(FIRE_DAMAGE, false);
                 events.fire_hurt = true;
                 events.fire_death = self.health <= 0.0;
             }
@@ -2626,19 +2747,113 @@ impl Zombie {
         // goal the plain attribute keeps)
         self.move_speed_modifier = 1.0;
 
-        // THE TARGET SCAN (NearestAttackableTargetGoal(Player, mustSee)
-        // — the FOLLOW_RANGE 35 ring, the dead never retarget). THE
-        // ANIMALS' OWN PEACE: the targetSelector the zombie's
-        // registerGoals fills the sheep's/cow's/pig's own registerGoals
-        // never fills — the scan the monster kinds gate, the animals
-        // the goal-else chain's own rest keeps (the fed sheep the
-        // in-range player no longer charges — the empty targetSelector
-        // the animal chain speaks)
+        // THE TARGET LANES' OWN WALK (the targetSelector the zombie's
+        // AND the skeleton's registerGoals fill — javap the dumps keep:
+        // prio 1 `new HurtByTargetGoal(this)` the zombie's
+        // `.setAlertOthers(ZombifiedPiglin.class)` arms (the piglin's
+        // own anger the ignore list names — no piglin this client
+        // speaks, the same-kind siblings the box's walk serves), the
+        // skeleton's the bare ctor keeps (NO alertOthers — the
+        // archer's retaliation the lone walk serves); prio 2
+        // `new NearestAttackableTargetGoal(Player, mustSee=true)`. THE
+        // ANIMALS' OWN PEACE: the targetSelector the sheep's/cow's/pig's
+        // own registerGoals never fills — the lanes the monster kinds
+        // gate, the animals the goal-else chain's own rest keeps).
         let target = if self.kind.is_monster() {
-            player.filter(|p| !p.dead).filter(|p| {
+            player.filter(|p| !p.dead).and_then(|p| {
                 let dx = p.x - self.x;
                 let dz = p.z - self.z;
-                dx * dx + dz * dz <= ZOMBIE_FOLLOW_RANGE * ZOMBIE_FOLLOW_RANGE
+                let d2 = dx * dx + dz * dz;
+                let in_range = d2 <= ZOMBIE_FOLLOW_RANGE * ZOMBIE_FOLLOW_RANGE;
+                // THE SENSING'S OWN LINE (the TargetingConditions'
+                // checkLineOfSight the scan's canUse rides, the mustSee
+                // memory the continue walks count — the eye-to-eye ray
+                // the Sensing.hasLineOfSight walk answers)
+                let los = crate::body::clip_ray(
+                    world,
+                    crate::math::Vec3::new(
+                        self.x as f32,
+                        (self.y + ZOMBIE_EYE_HEIGHT) as f32,
+                        self.z as f32,
+                    ),
+                    crate::math::Vec3::new(p.x as f32, p.eye_y as f32, p.z as f32),
+                )
+                .is_none();
+                // THE HURTBY GOAL'S OWN CANUSE (javap the 26.2 dump —
+                // `timestamp != getLastHurtByMobTimestamp()` the SAME
+                // event's re-arm refuses, `getLastHurtByMob() != null`
+                // the word's life the canUse reads, the
+                // HURT_BY_TARGETING's own `.ignoreLineOfSight()` +
+                // range=-1 the honest law keeps — NO LOS, NO range in
+                // the arming; the follow-range gate the
+                // canContinueToUse's own walk carries, the PLAYER
+                // attacker's life the conditions' own alive test keeps)
+                if self.last_hurt_by_player
+                    && self.last_hurt_by_mob_timestamp != self.hurt_by_goal_timestamp
+                {
+                    // THE START (javap the goal's own walk — the
+                    // setTarget + the timestamp's store + the
+                    // unseenMemoryTicks = 300 write; the alertSameType
+                    // the zombie's setAlertOthers arms — the
+                    // alertOthers walk the caller's sibling pass
+                    // serves, the skeleton's bare ctor the event
+                    // never fires)
+                    self.retaliation_target = true;
+                    self.retaliation_unseen_ticks = 0;
+                    self.hurt_by_goal_timestamp = self.last_hurt_by_mob_timestamp;
+                    // THE FLAG CONFLICT (the GoalSelector's own law —
+                    // the higher-prio goal's start the lower-prio
+                    // running goal's TARGET flag steals: the scan the
+                    // preemption stops, the re-arm the retaliation's
+                    // drop re-answers)
+                    self.scan_target = false;
+                    events.retaliation_alert = self.kind == MobKind::Zombie;
+                }
+                // THE HURTBY GOAL'S OWN CONTINUE (javap
+                // `TargetGoal.canContinueToUse` — `canAttack` the alive
+                // word keeps, `distanceToSqr > followRange²` the far
+                // drop speaks, the mustSee's unseen memory the
+                // 300-tick sipush counts: the LOS the zero keeps, the
+                // blind tick the count spends)
+                if self.retaliation_target {
+                    if los {
+                        self.retaliation_unseen_ticks = 0;
+                    } else {
+                        self.retaliation_unseen_ticks += 1;
+                    }
+                    if !in_range
+                        || self.retaliation_unseen_ticks > HURT_BY_UNSEEN_MEMORY_TICKS
+                    {
+                        self.retaliation_target = false;
+                    }
+                }
+                // THE SCAN'S OWN WALK (javap NearestAttackableTargetGoal
+                // — the canUse's conditions the range + the
+                // checkLineOfSight keep, the continue's mustSee memory
+                // the base 60 counts; the prio-1 run's flag the start
+                // blocks — the GoalSelector's own conflict law the
+                // blocked canUse keeps)
+                if !self.retaliation_target {
+                    if self.scan_target {
+                        if los {
+                            self.scan_unseen_ticks = 0;
+                        } else {
+                            self.scan_unseen_ticks += 1;
+                        }
+                        if !in_range || self.scan_unseen_ticks > TARGET_UNSEEN_MEMORY_TICKS
+                        {
+                            self.scan_target = false;
+                        }
+                    } else if in_range && los {
+                        self.scan_target = true;
+                        self.scan_unseen_ticks = 0;
+                    }
+                }
+                if self.retaliation_target || self.scan_target {
+                    Some(p)
+                } else {
+                    None
+                }
             })
         } else {
             None
@@ -5232,7 +5447,7 @@ mod tests {
     #[test]
     fn the_armor_law_speaks_combat_rules() {
         let mut z = Zombie::new(1, 0.0, 0.0, 0.0, 7);
-        z.hurt(2.0);
+        z.hurt(2.0, true);
         assert!(
             (z.health - (20.0 - 1.92)).abs() < 1e-4,
             "health {}",
@@ -5243,6 +5458,76 @@ mod tests {
         // law banks — the sampler's own min(.., 1.0) clamp rides the
         // render read, the STORE carries the kick verbatim)
         assert_eq!(z.walk.speed, crate::body::HURT_WALK_SPEED);
+    }
+
+    /// THE HURTBY GOAL'S OWN LANES (javap the 26.2 dump — the canUse
+    /// the NEW timestamp + the word's life the conditions'
+    /// ignoreLineOfSight speaks, the continue's follow-range gate + the
+    /// 300-tick memory the start's sipush keeps): the wall the scan's
+    /// own LOS refuses — the punch THROUGH it the retaliation arms
+    /// (the fence-hider's own revenge the vanilla honesty answers),
+    /// the blind ticks the memory spends, the drop the 300 crossing
+    /// speaks.
+    #[test]
+    fn the_hurt_by_goal_the_wall_the_memory_speaks() {
+        let mut world = wide_flat_world();
+        // the wall between the zombie (west) and the player (east) —
+        // the eye-to-eye ray the column crosses (y 5..8 covers the
+        // 6.7 -> 6.62 span, the z 19..22 the ray's own column)
+        for y in 5..=8 {
+            for z in 19..=22 {
+                world.set(24, y, z, crate::world::STONE);
+            }
+        }
+        let mut z = Zombie::new(1, 20.5, 5.0, 20.5, 7);
+        let p = player_at(28.5, 5.0, 20.5);
+        // PHASE 1 — the scan's own LOS refuses: 8 blocks inside the
+        // ring, the wall the canUse's checkLineOfSight refuses (the
+        // dead never targeted, the hidden never scanned)
+        let ev = z.tick(&world, Some(&p), NIGHT);
+        assert!(!z.has_target(), "the wall the scan refuses");
+        assert!(ev.attack.is_none() && !z.aggressive);
+        // PHASE 2 — THE PUNCH THROUGH THE WALL (the hurt walk's own
+        // word: the player source the timestamp arms): the canUse's
+        // ignoreLineOfSight the wall IGNORES — the start arms, the
+        // melee approach the charge rides
+        z.hurt(2.0, true);
+        for _ in 0..5 {
+            z.tick(&world, Some(&p), NIGHT);
+        }
+        assert!(z.has_target(), "the retaliation the wall ignores");
+        assert!(z.aggressive, "the raised arms the target rides");
+        assert!(z.x > 20.5, "the charge walks east {}", z.x);
+        // PHASE 3 — THE 300-TICK MEMORY (the start's sipush — the
+        // unseen ticks the blind walk spends, the drop the crossing
+        // speaks; the 100-tick hurt word the clear walk closes under
+        // it, the run word the goal's own state keeps)
+        for _ in 0..305 {
+            z.tick(&world, Some(&p), NIGHT);
+        }
+        assert!(!z.has_target(), "the memory the 300 crossing drops");
+        assert!(!z.aggressive, "the arms the drop lowers");
+    }
+
+    /// THE RANGE GATE THE RETALIATION KEEPS (javap
+    /// `TargetGoal.canContinueToUse` — the arming the conditions'
+    /// range=-1 speaks range-FREE, the continue the
+    /// `distanceToSqr > followRange²` the far drop answers): the
+    /// beyond-ring snipe the same-tick drop keeps — the vanilla
+    /// honesty the no-aggro law speaks (the hurt word the memory
+    /// carries, the chase the 35² ring alone grants).
+    #[test]
+    fn the_retaliation_the_far_ring_drops() {
+        let world = wide_flat_world();
+        let mut z = Zombie::new(1, 10.5, 5.0, 10.5, 7);
+        let p = player_at(50.5, 5.0, 10.5);
+        // the punch lands (the conditions' range=-1 the arming speaks)
+        z.hurt(2.0, true);
+        z.tick(&world, Some(&p), NIGHT);
+        // the continue's follow-range gate drops the target the SAME
+        // tick (40 > 35) — the scan's own ring the same law keeps
+        assert!(!z.has_target(), "the far ring the continue drops");
+        assert!(!z.aggressive);
     }
 
     /// `LivingEntity.knockback` verbatim: the impulse rides the minus
@@ -5272,11 +5557,11 @@ mod tests {
     fn the_death_clock_walks_to_removal() {
         let mut z = Zombie::new(1, 0.0, 0.0, 0.0, 7);
         let world = ground_world();
-        z.hurt(1000.0);
+        z.hurt(1000.0, true);
         assert!(z.health <= 0.0, "the hit kills");
         // the dying never re-hurt (the isDeadOrDying gate)
         let health_after = z.health;
-        z.hurt(5.0);
+        z.hurt(5.0, true);
         assert_eq!(z.health, health_after);
         // the clock walks 1, 2, ... and the corpse never attacks
         let ev = z.tick(&world, Some(&player_at(1.0, 0.0, 0.0)), NIGHT);
@@ -10126,7 +10411,7 @@ mod tests {
             sheep.panic_memory_ticks, 0,
             "the peace the unhurt body keeps"
         );
-        sheep.hurt(2.0);
+        sheep.hurt(2.0, true);
         assert_eq!(
             sheep.panic_memory_ticks, PANIC_DAMAGE_MEMORY_TICKS,
             "the 40 the stamp arms"
@@ -10148,7 +10433,7 @@ mod tests {
         let mut corpse = Zombie::new(2, 8.0, 5.0, 8.0, 263);
         corpse.kind = MobKind::Sheep;
         corpse.health = 0.0;
-        corpse.hurt(2.0);
+        corpse.hurt(2.0, true);
         assert_eq!(
             corpse.panic_memory_ticks, 0,
             "the dead the hurt gate refuses"
@@ -10165,7 +10450,7 @@ mod tests {
         let mut sheep = Zombie::new(1, 10.0, 5.0, 10.0, 262);
         sheep.kind = MobKind::Sheep;
         sheep.on_ground = true;
-        sheep.hurt(2.0);
+        sheep.hurt(2.0, true);
         sheep.tick(&world, None, NOON);
         let (tx, ty, tz) = sheep
             .panic_target
@@ -10180,7 +10465,7 @@ mod tests {
         // the zombie's own registerGoals speaks no panic goal — the
         // memory the hurt stamp arms never draws
         let mut zombie = Zombie::new(2, 10.0, 5.0, 10.0, 262);
-        zombie.hurt(2.0);
+        zombie.hurt(2.0, true);
         zombie.tick(&world, None, NOON);
         assert!(
             zombie.panic_target.is_none(),
@@ -11132,7 +11417,7 @@ mod tests {
         let mut dead = Zombie::new(5, 2.0, 5.0, 2.0, 7);
         dead.kind = MobKind::Chicken;
         dead.egg_time = 1;
-        dead.hurt(1000.0);
+        dead.hurt(1000.0, true);
         let ev = dead.tick(&world, None, NIGHT);
         assert!(ev.egg_laid.is_none(), "the dying the lay refuses");
     }

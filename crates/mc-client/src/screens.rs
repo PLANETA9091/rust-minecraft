@@ -3459,7 +3459,7 @@ impl App {
                 // tick carried — the (mob id, damage) pairs the caller
                 // lanes answer: the hurt, the voice, the death loot +
                 // XP the player-kill gate arms)
-                let mut arrow_mob_hits: Vec<(i32, f64)> = Vec::new();
+                let mut arrow_mob_hits: Vec<(i32, f64, bool)> = Vec::new();
                 // THE CRIT TRAIL'S OWN WORDS (the flight lane's 4-pack
                 // per tick the crit arrows emit — the (x, y, z, vx, vy,
                 // vz) six-packs the particle engine spawns after, the
@@ -3485,6 +3485,13 @@ impl App {
                     (crate::mob::MobKind, f64, f64, f64, f32, Vec<(i32, i32)>),
                 > = Vec::new();
                 let mut fizzes: Vec<(f32, f64)> = Vec::new();
+                // THE HURTBY GOAL'S OWN ALERTS (the start()'s
+                // alertOthers walk the events queue — the same-kind
+                // box the sibling pass answers AFTER the loop the
+                // disjoint-borrow pattern keeps: the (kind, id, feet)
+                // tuple the box's own shape reads)
+                let mut retaliation_alerts: Vec<(crate::mob::MobKind, i32, f64, f64, f64)> =
+                    Vec::new();
                 // the love walk's own boxes (the aiStep's ambient gate
                 // the in-love mobs arm — the spawns land AFTER the
                 // loop the disjoint-borrow pattern keeps)
@@ -3535,6 +3542,19 @@ impl App {
                                 continue;
                             }
                             let ev = mob.tick(world, player.as_ref(), day_time);
+                            // THE HURTBY GOAL'S OWN START (the event the
+                            // goal's alertSameType arm queues — the
+                            // zombie's setAlertOthers alone speaks it,
+                            // the caller's sibling pass the box serves)
+                            if ev.retaliation_alert {
+                                retaliation_alerts.push((
+                                    mob.kind,
+                                    mob.id,
+                                    mob.x,
+                                    mob.y,
+                                    mob.z,
+                                ));
+                            }
                             // THE AISTEP'S OWN AMBIENT GATE (javap
                             // `Animal.aiStep`: the tick's own decrement
                             // the love clock walks, then the spawn the
@@ -3660,6 +3680,41 @@ impl App {
                                 }
                             }
                         }
+                        // THE ALERTOTHERS' OWN SIBLING PASS (javap
+                        // `HurtByTargetGoal.alertOthers` — the
+                        // `getEntitiesOfClass(mob.getClass())` the
+                        // SAME-CLASS filter speaks, the
+                        // `AABB.unitCubeFromLowerCorner(position())
+                        // .inflate(followRange, 10.0, followRange)` box
+                        // the walk serves, the `m == mob` self-skip +
+                        // the `getTarget() != null` no-target skip the
+                        // arms keep, the `alertOther(m,
+                        // getLastHurtByMob())` the setTarget write
+                        // answers): the pass runs AFTER the ticks the
+                        // disjoint-borrow pattern keeps — the alerted
+                        // sibling the NEXT tick's own lanes answer (the
+                        // follow-range gate the canContinueToUse's own
+                        // walk counts, the 300-tick memory the start's
+                        // sipush arms)
+                        for (kind, id, ax, ay, az) in retaliation_alerts {
+                            for m in self.mobs.iter_mut() {
+                                if m.id == id || m.kind != kind {
+                                    continue;
+                                }
+                                if m.death_time > 0 || m.health <= 0.0 || m.has_target() {
+                                    continue;
+                                }
+                                let in_box = m.x >= ax - crate::mob::ZOMBIE_FOLLOW_RANGE
+                                    && m.x <= ax + 1.0 + crate::mob::ZOMBIE_FOLLOW_RANGE
+                                    && m.y >= ay - crate::mob::ALERT_RANGE_Y
+                                    && m.y <= ay + 1.0 + crate::mob::ALERT_RANGE_Y
+                                    && m.z >= az - crate::mob::ZOMBIE_FOLLOW_RANGE
+                                    && m.z <= az + 1.0 + crate::mob::ZOMBIE_FOLLOW_RANGE;
+                                if in_box {
+                                    m.alert_hurt_by();
+                                }
+                            }
+                        }
                         // THE ARROW FLIGHTS (the vanilla's own
                         // projectile lane — the shots the skeletons
                         // speak, the flight the AbstractArrow tick's
@@ -3673,7 +3728,16 @@ impl App {
                                 arrow_player_hits.push(dmg);
                             }
                             if let Some((mob_id, dmg)) = aev.hit_mob {
-                                arrow_mob_hits.push((mob_id, dmg));
+                                // THE SHOOTER'S OWN WORD (the arrow's
+                                // player_shot the hurt's by_player arg
+                                // carries — the mob-shot arrows the
+                                // skeleton's own lane speaks the FALSE
+                                // keeps: the mob-vs-mob hurt the
+                                // lastHurtByMob the vanilla write arms
+                                // but the client's target lanes the
+                                // player alone speak — the honest
+                                // silence the no-word law keeps)
+                                arrow_mob_hits.push((mob_id, dmg, arrow.player_shot));
                             }
                             if let Some(pitch) = aev.hit_block {
                                 arrow_block_hits.push((arrow.x, arrow.y, arrow.z, pitch));
@@ -3794,14 +3858,14 @@ impl App {
                 // awards; the damage indicators the melee walk owns
                 // the arrow hit never speaks, the sweep the AoE the
                 // melee lane never shares)
-                for (mob_id, dmg) in arrow_mob_hits {
+                for (mob_id, dmg, by_player) in arrow_mob_hits {
                     let Some(i) = self.mobs.iter().position(|m| m.id == mob_id) else {
                         continue;
                     };
                     let mob = &mut self.mobs[i];
                     let (kind, pitch) = (mob.kind, mob.voice_pitch());
                     let (mx, my, mz) = (mob.x, mob.y, mob.z);
-                    mob.hurt(dmg);
+                    mob.hurt(dmg, by_player);
                     let died = mob.health <= 0.0;
                     if died {
                         self.sounds.play_voice_at(
@@ -4535,7 +4599,7 @@ impl App {
         // the pre-hit health the stats law reads (the dealt the
         // indicator's gate speaks)
         let pre_health = mob.health;
-        mob.hurt(dmg as f64);
+        mob.hurt(dmg as f64, true);
         // THE DAMAGE INDICATOR (javap `Player.damageStatsAndHearts`
         // verbatim — the call site the attack speaks AFTER the hurt:
         // the dealt `pre - post` gates `> 2.0F` and counts
@@ -4695,7 +4759,7 @@ impl App {
                 // minus law pushes the neighbor along the facing, the
                 // subtraction the delta walk speaks)
                 let pre = m.health;
-                m.hurt(dmg as f64);
+                m.hurt(dmg as f64, true);
                 if pre - m.health <= 0.0 {
                     continue;
                 }
@@ -19040,6 +19104,108 @@ mod tests {
         }
     }
 
+    /// THE ALERTOTHERS' OWN SIBLING PASS (javap `HurtByTargetGoal`
+    /// the 26.2 dump — the zombie's `.setAlertOthers(...)` the
+    /// alertSameType arms, the skeleton's bare ctor the alert NEVER
+    /// fires, the `getEntitiesOfClass(getClass())` the same-kind
+    /// filter speaks, the box the unit-cube inflate keeps, the
+    /// `getTarget() != null` skip the no-target gate answers): the
+    /// wall-hidden sibling the punched zombie's own event arms — the
+    /// pack the punch through the fence answers; the archer's
+    /// retaliation the lone walk keeps.
+    #[test]
+    fn the_zombie_alerts_the_box_siblings_the_skeleton_lone_keeps() {
+        let mut app = App::new(3);
+        app.enter_world();
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        // THE REAL SURFACE the top-solid scan speaks (the spawn_y the
+        // body's own flight height keeps — the mobs the GROUND level
+        // stand: the probe walk the floating wall taught)
+        {
+            let world = app.offline_world.as_mut().unwrap();
+            // THE FLAT PAD the test's own law speaks (the offline
+            // terrain's own undulation the probe walk caught — the
+            // pad the columns' honest level keeps): stone 0..11, air
+            // 11..20 over the whole band the lanes walk
+            for x in (c as i32)..=(c as i32 + 24) {
+                for z in ((c as i32) - 10)..=((c as i32) + 10) {
+                    for y in 0..11 {
+                        world.set(x, y, z, crate::world::STONE);
+                    }
+                    for y in 11..20 {
+                        world.set(x, y, z, crate::world::AIR);
+                    }
+                }
+            }
+            // THE WALL between the body (west) and the hidden pair
+            // (east): the zombie A BETWEEN the body and the wall (the
+            // scan's own LOS clear), the zombie B + the skeleton S2
+            // BEHIND it (the scan refuses both), the skeleton S1
+            // beside A (the box's own reach)
+            for y in 12..=15 {
+                for z in ((c as i32) - 8)..=((c as i32) + 8) {
+                    world.set(c as i32 + 14, y, z, crate::world::STONE);
+                    world.set(c as i32 + 15, y, z, crate::world::STONE);
+                }
+            }
+        }
+        let surface: i32 = 11;
+        app.body = Some(crate::body::PlayerBody::new(
+            c as f64 + 0.5,
+            surface as f64,
+            c as f64 + 0.5,
+            0.0,
+            0.0,
+        ));
+        let za = crate::mob::Zombie::new(10, c as f64 + 8.5, surface as f64, c as f64 + 0.5, 7);
+        let zb = crate::mob::Zombie::new(11, c as f64 + 20.5, surface as f64, c as f64 + 0.5, 8);
+        let s1 = crate::mob::Zombie::new(12, c as f64 + 8.5, surface as f64, c as f64 + 1.5, 9);
+        let s2 = crate::mob::Zombie::new(13, c as f64 + 20.5, surface as f64, c as f64 + 1.5, 10);
+        app.mobs = vec![za, zb, s1, s2];
+        // S1 and S2 the SKELETON kind (the lone-retaliation law's own
+        // pair), A and B the zombies the default ctor keeps
+        app.mobs[2].kind = crate::mob::MobKind::Skeleton;
+        app.mobs[3].kind = crate::mob::MobKind::Skeleton;
+        // the settle walk: A's scan targets (open line), B's and S2's
+        // refuse (the wall), S1's scan the open line keeps (the same
+        // clear band A rides — the 1-cell z offset)
+        for _ in 0..3 {
+            app.update();
+        }
+        // THE PUNCH on the zombie A (the direct hurt walk — the melee
+        // lane's own word): the canUse's NEW timestamp the start arms,
+        // the alertOthers the zombie's own setAlertOthers fires
+        app.mobs[0].hurt(2.0, true);
+        for _ in 0..12 {
+            app.update();
+        }
+        // THE ZOMBIE PACK: B the wall behind — the scan still refuses,
+        // the ALERT the box's own reach arms: the sibling the next
+        // tick's own lanes answer (the 300-tick memory the blind walk
+        // spends), the charge the melee approach rides
+        assert!(
+            app.mobs[1].has_target(),
+            "the wall-hidden zombie the alert arms"
+        );
+        assert!(app.mobs[1].aggressive, "the hidden pack the charge rides");
+        // THE ARCHER'S OWN LONE WALK: S1 punched? no — S1 stands beside
+        // A UNPUNCHED: the alert the skeleton kind never fires (the
+        // bare ctor), S1's own scan the open line arms — the two
+        // skeletons the zombie punch never re-targets THROUGH the
+        // alert lane: S2 the wall behind stays blind (no scan, no
+        // alert)
+        assert!(
+            !app.mobs[3].has_target(),
+            "the wall-hidden skeleton the alert never arms"
+        );
+        assert!(!app.mobs[3].aggressive);
+        // THE PUNCHED ZOMBIE'S OWN RETALIATION (the solo arm — the
+        // start the canUse's timestamp arms): A the open line the scan
+        // already kept — the hurt word the same target re-speaks
+        assert!(app.mobs[0].has_target() && app.mobs[0].aggressive);
+    }
+
     /// THE ANIMALS' OWN STEP VOICE (Entity.playStepSound the base impl
     /// the animals inherit — the state's SoundType speaks, NOT the
     /// zombie's flat override): the hurt-stamped sheep the panic walk
@@ -19068,7 +19234,7 @@ mod tests {
         // the damage the sheep's 20-health body survives)
         for _ in 0..5 {
             if let Some(m) = app.mobs.iter_mut().find(|m| m.id == 7) {
-                m.hurt(1.0);
+                m.hurt(1.0, true);
             }
             for _ in 0..30 {
                 app.update();
@@ -26115,7 +26281,7 @@ mod tests {
 
         // THE REMOVAL: the death clock's 20-tick walk discards the
         // corpse through the same update loop (the retain law)
-        app.mobs[idx].hurt(1000.0);
+        app.mobs[idx].hurt(1000.0, true);
         assert!(app.mobs[idx].health <= 0.0, "the finishing hit kills");
         for _ in 0..25 {
             app.update();
