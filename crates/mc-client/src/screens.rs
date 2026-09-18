@@ -10135,6 +10135,18 @@ impl App {
                 inside: hit.inside,
             });
         }
+        // THE HOE'S OWN TILL ARM (javap HoeItem.useOn — the held hoe the
+        // map's block lookup rides BEFORE the placement's own guard, the
+        // useOn the vanilla walks unconditionally): the SUCCESS the press
+        // consumes, the PASS the fall-through keeps (the placement's
+        // placeable lookup the hoe never answers, the item lanes follow)
+        if let Some(id) = self.held_id() {
+            if mc_registry::item_name(id).is_some_and(|n| n.ends_with("_hoe")) {
+                if let Some(tilled) = self.on_right_press_till_arm(&hit) {
+                    return tilled;
+                }
+            }
+        }
         // THE PLACEMENT: the block item's CONSUME branch (the eye-inside
         // hit never places — the vanilla's own guard)
         if hit.inside {
@@ -10205,6 +10217,56 @@ impl App {
         let name = crate::world::NAME_OF[block as usize];
         self.sounds.play(self.frame, name, crate::sound::Lane::Place);
         true
+    }
+
+    /// THE HOE'S OWN TILL ARM — javap HoeItem.useOn over the real 26.2
+    /// jar: the TILLABLE map (`Map<Block, Pair<Predicate, Consumer>>`,
+    /// the clinit's own rows) looks the CLICKED block up — the miss the
+    /// PASS keeps; the pair's predicate the `onlyIfAirAbove` law speaks
+    /// (getClickedPos().above().isAir() — the strict air, the water the
+    /// air never is), its refusal the PASS keeps; then the verdict the
+    /// vanilla's own order rides: `playSound(player, pos, HOE_TILL,
+    /// BLOCKS, 1.0, 1.0)` BEFORE the set, the `!isClientSide` gate the
+    /// singleplayer's fused shape always answers, the consumer's
+    /// `setBlock(pos, FARMLAND, 11)` + the BLOCK_CHANGE gameEvent, the
+    /// hurtAndBreak(1) the repo's item vocabulary never speaks (the
+    /// honest skip the shears/carrot rounds keep). The offline world
+    /// predicts the farmland in place (the mesh re-speaks); the
+    /// networked world's till is the server's own chunk refresh (the
+    /// echo already rode the lane). Returns the press's own verdict: the
+    /// Some(true) the SUCCESS speaks, the map miss and the predicate's
+    /// refusal BOTH the vanilla's own PASS — the None the caller's
+    /// fall-through keeps.
+    fn on_right_press_till_arm(&mut self, hit: &crate::world::ClipHit) -> Option<bool> {
+        // THE MAP'S LOOKUP + THE PREDICATE (one immutable walk — the
+        // borrow the mutable prediction never crosses): the GRASS_BLOCK
+        // and the DIRT rows the vocabulary's tillable set keeps (the
+        // DIRT_PATH/COARSE_DIRT/ROOTED_DIRT rows the palette never
+        // speaks — the 28-kind vocabulary the honest subset names)
+        {
+            let world = self.active_world()?;
+            let cell = world.get(hit.pos.0, hit.pos.1, hit.pos.2);
+            let above = world.get(hit.pos.0, hit.pos.1 + 1, hit.pos.2);
+            let tillable = matches!(cell, crate::world::GRASS | crate::world::DIRT);
+            if !tillable {
+                return None; // the map miss — the vanilla's own PASS
+            }
+            if above != crate::world::AIR {
+                return None; // onlyIfAirAbove's refusal — the PASS
+            }
+        }
+        // THE SOUND BEFORE THE SET (the useOn's own order — the
+        // playSound the verdict's first fruit speaks)
+        self.sounds
+            .play_voice(self.frame, "item.hoe.till", 1.0, 1.0);
+        // THE OFFLINE PREDICTION: the farmland lands in the App's own
+        // terrain and the mesh re-speaks (the networked world's till
+        // rides the server's chunk refresh — no local edit)
+        if let (Some(world), false) = (self.offline_world.as_mut(), self.world_is_network) {
+            world.set(hit.pos.0, hit.pos.1, hit.pos.2, crate::world::FARMLAND);
+            self.world_quads = Some(crate::mesher::mesh_world(world, None));
+        }
+        Some(true)
     }
 
     /// THE OFFLINE HULLS' OWN TICK — the AbstractBoat.tick's
@@ -19237,6 +19299,159 @@ mod tests {
             app.offline_world.as_ref().unwrap().get(c, top + 2, c),
             crate::world::AIR,
             "the refused cell stays air"
+        );
+    }
+
+    /// THE HOE'S OWN TILL ARM — the straight-down aim the vanilla useOn's
+    /// SUCCESS speaks (javap HoeItem.useOn over the real 26.2 jar): the
+    /// held hoe the surface grass looks up (the TILLABLE map's own
+    /// GRASS_BLOCK row), the onlyIfAirAbove the standing cell's air
+    /// answers, the farmland lands IN the clicked cell (the useOn's own
+    /// setBlock(pos, FARMLAND, 11) — not the face's adjacent cell the
+    /// placement fills), the mesh re-speaks, the HOE_TILL voice the log
+    /// rides, the press consumed.
+    #[test]
+    fn the_hoe_tills_the_grass_the_farmland_wears() {
+        let mut app = App::new(3);
+        app.enter_world();
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let surface = app.spawn_y - 1;
+        // the hit cell the GRASS row keeps (the beach's sand never
+        // speaks — the test pins the tillable kind itself)
+        app.offline_world
+            .as_mut()
+            .unwrap()
+            .set(c, surface, c, crate::world::GRASS);
+        app.offline_held_updated(Some("item/wooden_hoe"));
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, app.spawn_y as f32 + 4.0, c as f32 + 0.5),
+            yaw: 0.0,
+            pitch: -std::f32::consts::FRAC_PI_2,
+        });
+        let quads_before = app.world_quads.as_ref().unwrap().clone();
+        assert!(app.on_right_press(0, 0), "the till consumed the press");
+        assert_eq!(
+            app.offline_world.as_ref().unwrap().get(c, surface, c),
+            crate::world::FARMLAND,
+            "the grass cell wears the farmland"
+        );
+        // THE MESH RE-SPOKE: the same cube footprint the quad COUNT keeps
+        // (grass->farmland the geometry never changes), the TILES the uv
+        // baked content moves — the top face's farmland master the
+        // grass's tinted top never was
+        assert_ne!(
+            app.world_quads.as_ref().unwrap(),
+            &quads_before,
+            "the mesh re-spoke with the tilled voxel"
+        );
+        // THE TILL'S VOICE (the assert computes the expected from the
+        // ACTUAL loaded state — the cache-absent boot the silent lane keeps)
+        if sounds_loaded() {
+            assert!(
+                app.sounds
+                    .events
+                    .iter()
+                    .any(|e| e.starts_with("item.hoe.till @")),
+                "the HOE_TILL voice the useOn's own order rode"
+            );
+        }
+    }
+
+    /// THE TILL'S OWN AIR-ABOVE GUARD — the onlyIfAirAbove predicate's
+    /// refusal (javap: getClickedPos().above().isAir() the strict air
+    /// speaks): the held hoe the side ray rides at the dirt's own layer,
+    /// the hit voxel the dirt cell keeps (the occupied above never
+    /// blocks the horizontal walk), the predicate's false the PASS —
+    /// no farmland, no sound, the press never consumed.
+    #[test]
+    fn the_till_the_air_above_refuses() {
+        let mut app = App::new(3);
+        app.enter_world();
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let surface = app.spawn_y - 1;
+        {
+            let w = app.offline_world.as_mut().unwrap();
+            w.set(c, surface, c, crate::world::DIRT); // the tillable hit
+            w.set(c, surface + 1, c, crate::world::STONE); // the occupied above
+            // the trench the side ray's own layer clears (the ray's
+            // path the camera-to-face walk keeps solid-free)
+            for dz in -3..0 {
+                w.set(c, surface, c + dz, crate::world::AIR);
+            }
+        }
+        app.offline_held_updated(Some("item/wooden_hoe"));
+        // THE SIDE AIM: the eye the dirt's own layer rides, the yaw PI
+        // the forward's +Z speaks — the hit voxel the dirt cell, the
+        // NORTH face the entry speaks
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, surface as f32 + 0.5, (c - 3) as f32 + 0.5),
+            yaw: std::f32::consts::PI,
+            pitch: 0.0,
+        });
+        assert!(!app.on_right_press(0, 0), "the occupied above the PASS keeps");
+        assert_eq!(
+            app.offline_world.as_ref().unwrap().get(c, surface, c),
+            crate::world::DIRT,
+            "the dirt cell stays dirt"
+        );
+    }
+
+    /// THE TILL'S OWN MAP-MISS PASS — the TILLABLE lookup's other rows
+    /// (javap: the clinit's Map<Block, Pair> the GRASS_BLOCK/DIRT rows
+    /// name, every other block the PASS keeps): the stone the hoe
+    /// never tills, the fist the arm never even arms (the held id the
+    /// `_hoe` suffix the arm's own gate reads), the DIRT row the
+    /// second tillable the farmland wears.
+    #[test]
+    fn the_till_the_map_miss_passes() {
+        let mut app = App::new(3);
+        app.enter_world();
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let surface = app.spawn_y - 1;
+        app.offline_world
+            .as_mut()
+            .unwrap()
+            .set(c, surface, c, crate::world::STONE);
+        app.offline_held_updated(Some("item/wooden_hoe"));
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, app.spawn_y as f32 + 4.0, c as f32 + 0.5),
+            yaw: 0.0,
+            pitch: -std::f32::consts::FRAC_PI_2,
+        });
+        assert!(!app.on_right_press(0, 0), "the stone the map miss the PASS keeps");
+        assert_eq!(
+            app.offline_world.as_ref().unwrap().get(c, surface, c),
+            crate::world::STONE,
+            "the stone stays stone"
+        );
+        // THE FIST: the held id the `_hoe` gate never arms — the grass
+        // stays grass, the press never consumed (the item lanes the
+        // fist's PASS keep)
+        app.offline_world
+            .as_mut()
+            .unwrap()
+            .set(c, surface, c, crate::world::GRASS);
+        app.offline_held_updated(Some("item/stick"));
+        assert!(!app.on_right_press(0, 0), "the non-hoe the arm never arms");
+        assert_eq!(
+            app.offline_world.as_ref().unwrap().get(c, surface, c),
+            crate::world::GRASS,
+            "the grass stays grass"
+        );
+        // THE DIRT ROW: the second tillable the farmland wears
+        app.offline_world
+            .as_mut()
+            .unwrap()
+            .set(c, surface, c, crate::world::DIRT);
+        app.offline_held_updated(Some("item/iron_hoe"));
+        assert!(app.on_right_press(0, 0), "the dirt row the SUCCESS speaks");
+        assert_eq!(
+            app.offline_world.as_ref().unwrap().get(c, surface, c),
+            crate::world::FARMLAND,
+            "the dirt cell wears the farmland"
         );
     }
 

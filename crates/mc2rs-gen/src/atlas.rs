@@ -29,12 +29,19 @@ use zip::ZipArchive;
 /// quads (template_leaf_litter_1..4), so the full-cube resolution chain
 /// doesn't apply — the build loop special-cases it to the flat stem, and
 /// the client's mesher meshes it as the dry-fold ground cover it is.
-pub const RUNTIME_PALETTE: [&str; 27] = [
+/// farmland is kind 27 (the twenty-eighth entry, the autopush-311 round): its model
+/// chain (blockstates/farmland.json moisture=0 variant -> block/farmland
+/// -> template_farmland) resolves through the SAME full-cube face walk —
+/// the element's six faces name dirt sides + the farmland top, the mesher
+/// meshes it as the cube the vocabulary speaks (the vanilla 15/16 height
+/// the generic full-cube path folds — the documented simplification the
+/// offline world's own shape keeps).
+pub const RUNTIME_PALETTE: [&str; 28] = [
     "air", "stone", "dirt", "grass_block", "oak_log", "oak_leaves", "water", "sand",
     "granite", "diorite", "andesite", "deepslate", "cobbled_deepslate", "gravel",
     "bedrock", "coal_ore", "copper_ore", "iron_ore", "gold_ore", "redstone_ore",
     "lapis_ore", "diamond_ore", "emerald_ore", "netherrack", "pale_oak_leaves",
-    "leaf_litter", "lava",
+    "leaf_litter", "lava", "farmland",
 ];
 
 /// Renderer face order: 0:+X 1:-X 2:+Y 3:-Y 4:+Z 5:-Z.

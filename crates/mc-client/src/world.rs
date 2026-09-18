@@ -62,14 +62,22 @@ pub const LEAF_LITTER: u16 = 25;
 /// meshes it as the non-occluding fluid (the water shape, the opaque
 /// lava_still pixels), the collision never stands on it.
 pub const LAVA: u16 = 26;
+/// Kind 27 (the twenty-eighth entry, the autopush-311 round): the hoe's
+/// own till arm's product (javap HoeItem.useOn — the TILLABLE map's
+/// `Blocks.FARMLAND.defaultBlockState()` the GRASS_BLOCK/DIRT rows speak).
+/// The model chain resolves through the atlas generator's full-cube face
+/// walk (dirt sides + the farmland top), the mesher meshes it as the cube
+/// the vocabulary speaks (the vanilla 15/16 height the generic path folds
+/// — the documented simplification).
+pub const FARMLAND: u16 = 27;
 
 /// Block -> texture-group mapping used by the real-colors LUT.
-pub const NAME_OF: [&str; 27] = [
+pub const NAME_OF: [&str; 28] = [
     "air", "stone", "dirt", "grass_block", "oak_log", "oak_leaves", "water", "sand",
     "granite", "diorite", "andesite", "deepslate", "cobbled_deepslate", "gravel",
     "bedrock", "coal_ore", "copper_ore", "iron_ore", "gold_ore", "redstone_ore",
     "lapis_ore", "diamond_ore", "emerald_ore", "netherrack", "pale_oak_leaves",
-    "leaf_litter", "lava",
+    "leaf_litter", "lava", "farmland",
 ];
 
 /// The block interaction reach — the `Attributes.BLOCK_INTERACTION_RANGE`

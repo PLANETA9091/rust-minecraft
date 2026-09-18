@@ -225,6 +225,7 @@ fn test_fixture_table() -> SoundTable {
         "entity.zombie.step",
         "item.golden_dandelion.unuse",
         "item.golden_dandelion.use",
+        "item.hoe.till",
         "music.game",
         "music.menu",
         "music.overworld.swamp",
