@@ -8923,6 +8923,12 @@ impl App {
                 // the same projection keeps — the left hand the
                 // vanilla client renders, the silence the honest empty)
                 m.held_offhand = w.held_offhand;
+                // THE ARMOR WORDS ride the spawn (the store's
+                // FEET/LEGS/CHEST/HEAD rows the projection resolved —
+                // the dressed spawn the pieces the render lane draws
+                // from tick one, the never-spoken rows the honest bare
+                // keeps)
+                m.armor = w.armor;
                 // THE NAME WORD rides the spawn (the accessor 2 the
                 // projection carried — the jeb_ arm the rainbow gate
                 // reads, the silence the honest unnamed)
@@ -8999,6 +9005,11 @@ impl App {
             // assign the mainhand's own lane speaks — the left hand's
             // state the server's word owns)
             m.held_offhand = w.held_offhand;
+            // THE ARMOR WORDS ride with the pose (the same binary
+            // assign the hands' lanes speak — the armor is STATE, the
+            // dress the server speaks arms the rows, the empty stack's
+            // clear the honest bare keeps)
+            m.armor = w.armor;
             // THE VISIBILITY BIT rides with the name (the same binary
             // assign — the server's rename/visibility word replaces
             // the arm the spawn spoke)
@@ -12633,6 +12644,55 @@ impl App {
         // baby never, the white adult never, the dyed/jeb_ adult
         // ALWAYS (the sheared bit no gate reads)
         let mut undercoat_overlay: Option<(Vec<crate::avatar::AvatarQuad>, [f32; 3])> = None;
+        // THE MOB ARMOR LANE's own lazy loads (the HumanoidArmorLayer's
+        // own textures — the SAME sha1-verified cache the mannequin's
+        // walk fills, the same honesty: a failed verify keeps the piece
+        // bare): the wanted (dir, name) pairs the armor words speak —
+        // the LEGS slot the leggings dir's own texture asks, the
+        // leather the overlay's pair the composite folds — collected
+        // BEFORE the draw loop, loaded once, the map the lanes share.
+        {
+            let mut wanted: Vec<(&'static str, &'static str)> = Vec::new();
+            for m in self.mobs.iter().chain(self.net_mobs.iter()) {
+                if m.kind != crate::mob::MobKind::Zombie {
+                    continue;
+                }
+                for &(row, slot) in crate::mob::ZOMBIE_ARMOR_WALK.iter() {
+                    let Some(word) = m.armor[row] else { continue };
+                    let Some(asset) = crate::mob::armor_piece_asset(word) else {
+                        continue;
+                    };
+                    let Some(entry) = mc_registry::generated::equipment::find(asset) else {
+                        continue;
+                    };
+                    let dir = if slot == crate::avatar::ARMOR_SLOT_LEGS {
+                        mc_registry::generated::equipment::LEGGINGS_DIR
+                    } else {
+                        mc_registry::generated::equipment::HUMANOID_DIR
+                    };
+                    wanted.push((dir, entry.name));
+                    if asset == "leather" {
+                        wanted.push((dir, "leather_overlay"));
+                    }
+                }
+            }
+            wanted.sort_unstable();
+            wanted.dedup();
+            for (dir, name) in wanted {
+                let key = format!("{dir}/{name}");
+                if self.armor_textures.contains_key(&key) {
+                    continue;
+                }
+                let loaded = mc_registry::generated::equipment::find(name).and_then(|e| {
+                    crate::avatar::ArmorTex::load(
+                        std::path::Path::new("assets-cache/jar"),
+                        dir,
+                        e,
+                    )
+                });
+                self.armor_textures.insert(key, loaded);
+            }
+        }
         // THE CROSSHAIR'S OWN VERDICT (the per-frame pick the
         // Minecraft.pick arms — crosshairPickEntity the shouldShowName's
         // second arm reads): ONE verdict per frame over the SAME chain
@@ -12660,6 +12720,12 @@ impl App {
             // ItemInHandLayer's SECOND submitArmWithItem the LEFT arm
             // renders, the draw the mainhand's own follows)
             let mut held_offhand_quads: Option<Vec<crate::avatar::HeadBlockQuad>> = None;
+            // THE ARMOR LAYERS' own carry (the zombie arm sets — the
+            // HumanoidArmorLayer the vanilla ctor arms BEFORE the
+            // item-in-hand layer: the pieces draw after the body,
+            // BEFORE the hands' items; the tuple (quads, texture key)
+            // the draw below walks)
+            let mut armor_layers: Vec<(Vec<crate::avatar::AvatarQuad>, String)> = Vec::new();
             // THE MODEL KIND'S OWN BRANCH (the renderer's variant
             // table): the zombie rides the humanoid avatar, the pig
             // the quadruped mesh — both through the SAME entity chain
@@ -12977,6 +13043,43 @@ impl App {
                                 )
                             });
                     }
+                    // THE ARMOR LANE (HumanoidArmorLayer.renderArmorPiece
+                    // — the store's armor rows the projection carried,
+                    // the ZOMBIE_ARMOR_WALK the values() order speaks):
+                    // each row's word the asset walk names (the same
+                    // prefix fold the mannequin's own lane wears), the
+                    // mesh the avatar lane's armor_parts speaks (the
+                    // SAME pose the skin's state wears — the aggressive
+                    // raise the arms' armor follows, the death flip the
+                    // pieces ride), the texture the pre-pass loaded (the
+                    // failed verify the honest bare keeps)
+                    for &(row, slot) in crate::mob::ZOMBIE_ARMOR_WALK.iter() {
+                        let Some(word) = mob.armor[row] else { continue };
+                        let Some(asset) = crate::mob::armor_piece_asset(word) else {
+                            continue;
+                        };
+                        let Some(entry) = mc_registry::generated::equipment::find(asset) else {
+                            continue;
+                        };
+                        let dir = if slot == crate::avatar::ARMOR_SLOT_LEGS {
+                            mc_registry::generated::equipment::LEGGINGS_DIR
+                        } else {
+                            mc_registry::generated::equipment::HUMANOID_DIR
+                        };
+                        let base_key = format!("{dir}/{}", entry.name);
+                        if !matches!(self.armor_textures.get(&base_key), Some(Some(_))) {
+                            continue; // the layer failed its verify — the piece stays bare
+                        }
+                        let key = if asset == "leather" {
+                            format!("{base_key}+overlay")
+                        } else {
+                            base_key
+                        };
+                        armor_layers.push((
+                            crate::avatar::armor_quads(&state, feet, cam.yaw, cam.pitch, slot),
+                            key,
+                        ));
+                    }
                     (quads, Box::new(move |u, v| model.pixel(u, v)))
                 }
             };
@@ -13028,6 +13131,58 @@ impl App {
                 let [r, g, b, a] = pixel(u, v);
                 Some([r, g, b, a])
             });
+            // THE ARMOR LAYERS' own draw (HumanoidArmorLayer's own
+            // render order — the vanilla ctor arms the armor layers
+            // BEFORE the item-in-hand layer, the pieces the body's
+            // pixels underpaint, the hands' items overpaint them; the
+            // SAME depth space the occlusion keeps, the hurt shade the
+            // same 0.7 mix the quads multiply): the sampler the
+            // sha1-verified layer textures read — the leather's
+            // composite the mannequin's own law speaks (the overlay's
+            // opaque texel paints first, the dye-tinted base fills the
+            // holes)
+            for (aq, key) in armor_layers.iter() {
+                let armor_sampled: Vec<crate::raster::SampledQuad> = aq
+                    .iter()
+                    .map(|q| crate::raster::SampledQuad {
+                        pts: q.pts,
+                        uv: q.uv,
+                        tex: key.as_str(),
+                        tint: [q.shade * shade, q.shade * shade, q.shade * shade],
+                    })
+                    .collect();
+                fb.draw_sampled_quads(ctx.proj.mul(&ctx.view), &armor_sampled, &mut |tex, u, v| {
+                    if let Some(base_key) = tex.strip_suffix("+overlay") {
+                        // THE LEATHER COMPOSITE (the mannequin's own
+                        // walk): the overlay's opaque texel first, the
+                        // undyed-tinted base fills the holes
+                        let base = self.armor_textures.get(base_key).and_then(|o| o.as_ref());
+                        let overlay_key = format!("{base_key}_overlay");
+                        let overlay =
+                            self.armor_textures.get(&overlay_key).and_then(|o| o.as_ref());
+                        if let (Some(base), Some(overlay)) = (base, overlay) {
+                            let [r, g, b, al] = overlay.pixel(u, v);
+                            if al >= 128 {
+                                return Some([r, g, b, al]);
+                            }
+                            let [r, g, b, al] = base.pixel(u, v);
+                            let t = crate::tint::unpack(crate::avatar::LEATHER_UNDYED_COLOR);
+                            return Some([
+                                (r as f32 / 255.0 * t[0] * 255.0).round() as u8,
+                                (g as f32 / 255.0 * t[1] * 255.0).round() as u8,
+                                (b as f32 / 255.0 * t[2] * 255.0).round() as u8,
+                                al,
+                            ]);
+                        }
+                        return None;
+                    }
+                    if let Some(layer) = self.armor_textures.get(tex).and_then(|o| o.as_ref()) {
+                        let [r, g, b, al] = layer.pixel(u, v);
+                        return Some([r, g, b, al]);
+                    }
+                    None
+                });
+            }
             // THE MOB-HELD ITEM's own draw (ItemInHandLayer's own render
             // order — the layer draws AFTER the body, the SAME depth
             // space the body's pixels speak): the hurt shade the body's
@@ -18318,6 +18473,34 @@ mod tests {
             None,
             "the silence never arms"
         );
+        // THE ARMOR WORDS ride BOTH lanes (the same binary assign the
+        // hands' lanes speak — the dress the fresh spawn arms, the
+        // lerpTo the STATE assign the re-dress speaks, the silence the
+        // honest bare keeps)
+        let mut dressed = wire_zombie(22, 20.0, 64.0, 14.0);
+        dressed.armor = [Some("diamond_boots"), None, Some("iron_chestplate"), None];
+        app.live_mobs_updated(vec![dressed]);
+        assert_eq!(
+            app.net_mobs[0].armor,
+            [Some("diamond_boots"), None, Some("iron_chestplate"), None],
+            "the dressed spawn the rows wear"
+        );
+        // the re-dress: the rows the STATE assign replaces (the undress
+        // the server speaks the rows bare keep)
+        let mut redressed = wire_zombie(22, 21.0, 64.0, 14.0);
+        redressed.armor = [None, None, None, Some("golden_helmet")];
+        app.live_mobs_updated(vec![redressed]);
+        assert_eq!(
+            app.net_mobs[0].armor,
+            [None, None, None, Some("golden_helmet")],
+            "the re-dress the STATE assign speaks"
+        );
+        app.live_mobs_updated(vec![wire_zombie(22, 22.0, 64.0, 14.0)]);
+        assert_eq!(
+            app.net_mobs[0].armor,
+            [None; 4],
+            "the silence the bare keeps"
+        );
     }
 
     fn wire_zombie(id: i32, x: f64, y: f64, z: f64) -> crate::world_view::WireMob {
@@ -18336,6 +18519,7 @@ mod tests {
             wool_byte: 0,
             held_weapon: None,
             held_offhand: None,
+            armor: [None; 4],
             custom_name: None,
             name_visible: false,
             score_text: None,
@@ -18365,6 +18549,7 @@ mod tests {
             wool_byte: 0,
             held_weapon: None,
             held_offhand: None,
+            armor: [None; 4],
             custom_name: None,
             name_visible: false,
             score_text: None,

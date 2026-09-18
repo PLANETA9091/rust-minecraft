@@ -766,6 +766,37 @@ pub const ZOMBIE_ATTACK_DAMAGE: f64 = 3.0;
 /// `Zombie.createAttributes` — ARMOR 2.0 (the hurt pipeline's own
 /// reduction; the zombie never wears anything).
 pub const ZOMBIE_ARMOR: f64 = 2.0;
+
+/// THE ARMOR RENDER WALK (javap `HumanoidArmorLayer.render`'s own
+/// loop — `EquipmentSlot.values()` the HUMANOID_ARMOR filter keeps:
+/// FEET, LEGS, CHEST, HEAD — each slot its renderArmorPiece arms):
+/// the record's armor rows the store's own walk order carries, the
+/// avatar lane's own slot consts the mesh ask (`armor_quads`) speaks
+/// — the tuple (record row, avatar slot) the render lane walks.
+pub const ZOMBIE_ARMOR_WALK: [(usize, usize); 4] = [
+    (0, super::avatar::ARMOR_SLOT_FEET),
+    (1, super::avatar::ARMOR_SLOT_LEGS),
+    (2, super::avatar::ARMOR_SLOT_CHEST),
+    (3, super::avatar::ARMOR_SLOT_HEAD),
+];
+
+/// THE ARMOR WORD'S OWN GATE (javap `HumanoidArmorLayer.
+/// renderArmorPiece`'s EQUIPPABLE check — the piece renders only the
+/// item whose EQUIPPABLE component arms THAT slot; a sword the
+/// helmet slot the server could store the vanilla client never
+/// textures): the word the armor family's own name keeps
+/// (<material>_{helmet,chestplate,leggings,boots} — the turtle
+/// helmet's scute the special case rides), the asset the mannequin
+/// lane's own prefix fold resolves. `None` for the words the armor
+/// family never speaks — the honest bare the lie never paints.
+pub fn armor_piece_asset(word: &str) -> Option<&'static str> {
+    let kind = word.split_once('_')?.1;
+    if !matches!(kind, "helmet" | "chestplate" | "leggings" | "boots") {
+        return None;
+    }
+    super::avatar::armor_asset_name(Some(word))
+}
+
 /// `Zombie.createAttributes` — FOLLOW_RANGE 35.0 (the target scan).
 pub const ZOMBIE_FOLLOW_RANGE: f64 = 35.0;
 /// THE KILL'S OWN REWARD (javap `LivingEntity.dropExperience` →
@@ -1156,6 +1187,15 @@ pub struct Zombie {
     /// natural spawn the slot never fills — the ctor's None the
     /// vanilla client's own empty OFFHAND keeps).
     pub held_offhand: Option<&'static str>,
+    /// THE ARMOR WORDS (the Set Equipment store's FEET/LEGS/CHEST/HEAD
+    /// rows, IN THE STORE'S OWN WALK ORDER — `EquipmentSlot.values()`
+    /// the HUMANOID_ARMOR filter keeps, the two hand slots the hands'
+    /// own words carry): each row the bare name the registry's wire
+    /// order resolved, the render lane's armor walk draws. The ctor's
+    /// four Nones the vanilla client's own bare spawn keeps — the
+    /// natural lane the armor rows never fills, the wire's server-dress
+    /// the rows the merge arms.
+    pub armor: [Option<&'static str>; 4],
     /// `ZombieAttackGoal.raiseArmTicks`
     raise_arm_ticks: i32,
     /// THE BODY'S OWN KIND (the renderer's variant table): which mesh
@@ -1310,6 +1350,7 @@ impl Zombie {
             score_text: None,
             held_weapon: None,
             held_offhand: None,
+            armor: [None; 4],
             kind: MobKind::Zombie,
             raise_arm_ticks: 0,
             ticks_until_attack: 0,
@@ -4692,6 +4733,79 @@ mod tests {
                 "{word} the model the walk names"
             );
         }
+    }
+
+    /// THE ARMOR WORDS' OWN WALK (the render lane's gate — the
+    /// EQUIPPABLE law `armor_piece_asset` the vanilla client speaks):
+    /// the four materials' words the equipment table's assets name,
+    /// the LEGS slot the leggings dir's own texture asks (the
+    /// `usesInnerModel` verdict the bytecode speaks), the non-legs
+    /// slots the humanoid dir keep, the turtle helmet its own scute,
+    /// the non-armor words the honest None keeps (the sword the armor
+    /// slot the vanilla client never textures), the WALK the values()
+    /// order the vanilla render loop keeps (FEET, LEGS, CHEST, HEAD).
+    #[test]
+    fn the_armor_words_the_asset_walk_resolves() {
+        for (word, want_asset) in [
+            ("iron_helmet", "iron"),
+            ("golden_chestplate", "gold"),
+            ("chainmail_leggings", "chainmail"),
+            ("diamond_boots", "diamond"),
+            ("netherite_chestplate", "netherite"),
+            ("copper_leggings", "copper"),
+            ("leather_helmet", "leather"),
+            ("turtle_helmet", "turtle_scute"),
+        ] {
+            let asset = crate::mob::armor_piece_asset(word)
+                .unwrap_or_else(|| panic!("{word} the asset walk names"));
+            let entry = mc_registry::generated::equipment::find(asset)
+                .unwrap_or_else(|| panic!("{asset} the equipment table keeps"));
+            assert_eq!(entry.name, want_asset, "{word} the asset the table rows");
+        }
+        // the non-armor words the honest None keeps (the EQUIPPABLE
+        // gate the vanilla render speaks — the sword the helmet slot
+        // the client never textures, the pumpkin's empty-asset
+        // shouldRender verdict the same gate refuses)
+        for word in ["rotten_flesh", "carved_pumpkin", "shield", "iron_sword", "leather_horse_armor"] {
+            assert_eq!(
+                crate::mob::armor_piece_asset(word),
+                None,
+                "{word} the armor never wears"
+            );
+        }
+        // the DIR LAW: the LEGS slot the leggings dir asks, the other
+        // three the humanoid dir keep (the record row the WALK's own
+        // second slot carries, the avatar lane's consts the ask speaks)
+        for (row, want_dir) in [
+            (0, "entity/equipment/humanoid"),
+            (1, "entity/equipment/humanoid_leggings"),
+            (2, "entity/equipment/humanoid"),
+            (3, "entity/equipment/humanoid"),
+        ] {
+            let (_, slot) = ZOMBIE_ARMOR_WALK[row];
+            let dir = if slot == crate::avatar::ARMOR_SLOT_LEGS {
+                mc_registry::generated::equipment::LEGGINGS_DIR
+            } else {
+                mc_registry::generated::equipment::HUMANOID_DIR
+            };
+            assert_eq!(dir, want_dir, "row {row} the dir the slot law picks");
+        }
+        // the WALK's own order: FEET, LEGS, CHEST, HEAD (the values()
+        // walk the HUMANOID_ARMOR filter keeps — the draw order the
+        // vanilla render loop speaks)
+        assert_eq!(
+            ZOMBIE_ARMOR_WALK
+                .iter()
+                .map(|&(_, slot)| slot)
+                .collect::<Vec<_>>(),
+            vec![
+                crate::avatar::ARMOR_SLOT_FEET,
+                crate::avatar::ARMOR_SLOT_LEGS,
+                crate::avatar::ARMOR_SLOT_CHEST,
+                crate::avatar::ARMOR_SLOT_HEAD,
+            ],
+            "the walk the vanilla order keeps"
+        );
     }
 
     /// THE FLAT GRASS PLATFORM the jockey walks' own stage (the stone

@@ -6745,6 +6745,86 @@ mod tests {
         );
     }
 
+    /// THE ZOMBIE'S OWN ARMOR (the HumanoidArmorLayer the mob render
+    /// wears — the store's armor rows the render lane's walk draws):
+    /// the four slots' meshes the armor_parts fold speaks, the helmet
+    /// the head rides, the chestplate the body + arms the CHEST set
+    /// keeps, the aggressive raise the ARMS' armor follows (the
+    /// animateZombieArms the posed matrix the pieces wear), the feet
+    /// the same world fold rides, the LEGS slot the leggings inflate
+    /// the inner deformation keeps.
+    #[test]
+    fn the_zombie_armor_rides_the_pose_and_the_feet() {
+        let mut rest = AvatarState::rest(180.0, 0.0, 0.0);
+        rest.zombie = true;
+        let box_of = |qs: &Vec<AvatarQuad>| -> ([f32; 3], [f32; 3]) {
+            let mut lo = [f32::MAX; 3];
+            let mut hi = [f32::MIN; 3];
+            for q in qs {
+                for p in q.pts.iter() {
+                    for k in 0..3 {
+                        lo[k] = lo[k].min(p[k]);
+                        hi[k] = hi[k].max(p[k]);
+                    }
+                }
+            }
+            (lo, hi)
+        };
+        // the FOUR slots' meshes non-empty (the ADULT_ARMOR_PARTS_PER_SLOT
+        // the <clinit>'s own Set.of walk keeps: HEAD {head}, CHEST
+        // {body, right_arm, left_arm}, LEGS {body, legs}, FEET {legs})
+        let head = armor_quads(&rest, Vec3::ZERO, 0.0, 0.0, ARMOR_SLOT_HEAD);
+        let chest = armor_quads(&rest, Vec3::ZERO, 0.0, 0.0, ARMOR_SLOT_CHEST);
+        let legs = armor_quads(&rest, Vec3::ZERO, 0.0, 0.0, ARMOR_SLOT_LEGS);
+        let feet = armor_quads(&rest, Vec3::ZERO, 0.0, 0.0, ARMOR_SLOT_FEET);
+        assert!(!head.is_empty(), "the helmet's mesh");
+        assert!(!chest.is_empty(), "the chestplate's mesh");
+        assert!(!legs.is_empty(), "the leggings' mesh");
+        assert!(!feet.is_empty(), "the boots' mesh");
+        // THE AGGRESSIVE RAISE the arms' armor follows: the chestplate
+        // rides the body + arms (the CHEST set the posed matrices
+        // speak) — the arms-up pose the piece's box MOVES; the helmet
+        // the head's own pose the raise never touches (the head stays)
+        let mut aggro = rest;
+        aggro.zombie_aggressive = true;
+        let aggro_chest = armor_quads(&aggro, Vec3::ZERO, 0.0, 0.0, ARMOR_SLOT_CHEST);
+        let aggro_head = armor_quads(&aggro, Vec3::ZERO, 0.0, 0.0, ARMOR_SLOT_HEAD);
+        assert_ne!(
+            box_of(&chest),
+            box_of(&aggro_chest),
+            "the raised arms the chestplate rides"
+        );
+        assert_eq!(
+            box_of(&head),
+            box_of(&aggro_head),
+            "the raise the helmet never moves"
+        );
+        // THE FEET FOLD the world rides: the standing zombie's helmet
+        // box the (5, 64, -3) offset shifts by the EXACT feet (the
+        // entity chain's own translate the fold speaks)
+        let moved = armor_quads(&rest, Vec3::new(5.0, 64.0, -3.0), 0.0, 0.0, ARMOR_SLOT_HEAD);
+        let (mlo, mhi) = box_of(&moved);
+        let (rlo, rhi) = box_of(&head);
+        let feet_shift = [5.0f32, 64.0, -3.0];
+        for k in 0..3 {
+            assert!(
+                (mlo[k] - (rlo[k] + feet_shift[k])).abs() < 1e-4,
+                "lo[{k}] the feet's own shift keeps"
+            );
+            assert!(
+                (mhi[k] - (rhi[k] + feet_shift[k])).abs() < 1e-4,
+                "hi[{k}] the feet's own shift keeps"
+            );
+        }
+        // THE INFLATE LAW the slots speak: the LEGS mesh the INNER
+        // deformation 0.5 keeps (the usesInnerModel verdict), the
+        // helmet the OUTER 1.0 — the leggings' box the helmet's own
+        // never shares (the deformation the meshes' own widths speak)
+        let (_, lhi) = box_of(&legs);
+        let (_, hhi) = box_of(&head);
+        assert_ne!(lhi, hhi, "the inflate the slots' own boxes speak");
+    }
+
     /// THE ZOMBIE'S OWN LEFT HAND (the offhand lane the mob render
     /// wears — ItemInHandLayer's SECOND submitArmWithItem the LEFT arm
     /// renders): the same item both hands the x-mirror the sign

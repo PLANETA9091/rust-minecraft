@@ -807,6 +807,29 @@ impl WorldModel {
         mc_registry::item_name(item_id).filter(|name| *name != "air")
     }
 
+    /// THE ARMOR WORDS (the store's FEET/LEGS/CHEST/HEAD ordinals 2..5
+    /// — `EquipmentSlot.values()`'s own declaration order the wire's
+    /// slot bytes index, the two hand slots the mainhand/offhand reads
+    /// own): the four rows the record's armor lane carries IN THE
+    /// STORE'S OWN WALK ORDER, each the same non-empty gate the hands'
+    /// reads keep, the bare name the registry's wire order resolves.
+    /// The never-spoken entity (or the cleared slot) the honest None
+    /// keeps — the vanilla server the bare mobs' armor rows never
+    /// speaks.
+    pub fn entity_armor_words(&self, id: i32) -> [Option<&'static str>; 4] {
+        let Some(rows) = self.entity_equipment.get(&id) else {
+            return [None; 4];
+        };
+        let word = |ordinal: u8| -> Option<&'static str> {
+            let (item_id, count) = *rows.get(&ordinal)?;
+            if count <= 0 || item_id == 0 {
+                return None;
+            }
+            mc_registry::item_name(item_id).filter(|name| *name != "air")
+        };
+        [word(2), word(3), word(4), word(5)]
+    }
+
     /// The mobs' voice mailbox's own drain (`std::mem::take` — the
     /// vanilla `handleEntitySound` plays the voice the moment the
     /// packet lands; the client's lane ships each voice exactly once,
@@ -4674,6 +4697,98 @@ mod tests {
             Some("iron_sword"),
             "the other slot the clear never touches"
         );
+    }
+
+    /// THE ARMOR WORDS (the store's FEET/LEGS/CHEST/HEAD ordinals 2..5
+    /// — `EquipmentSlot.values()`'s own declaration order): the one
+    /// packet the FOUR rows the merge arms (the reader's own walk
+    /// order the array speaks), the partial packet the spoken slot
+    /// alone REPLACES, the empty stack the slot CLEARS, the
+    /// never-spoken rows the honest None keeps, the dimension swap the
+    /// store dies with.
+    #[test]
+    fn the_armor_rows_the_store_merges() {
+        use mc_protocol::play::{EntityEquipment, EquipmentEntry, EquipmentSlot, ItemStack};
+        let mut m = WorldModel::new();
+        // the never-spawned entity the honest bare keeps
+        assert_eq!(m.entity_armor_words(7), [None; 4], "the silence the bare");
+        // the FIRST packet: the boots + the chestplate arm (the ids the
+        // registry's wire order names, the two rows the reader's array
+        // carries IN THE STORE'S OWN WALK ORDER — FEET row 0, HEAD row 3)
+        let boots_id = mc_registry::item_id_by_name("iron_boots").expect("the registry names");
+        let chest_id =
+            mc_registry::item_id_by_name("golden_chestplate").expect("the registry names");
+        assert!(m.apply(PlayEvent::EntityEquipped(EntityEquipment {
+            entity_id: 7,
+            slots: vec![
+                EquipmentEntry {
+                    slot: EquipmentSlot::Feet,
+                    stack: ItemStack { count: 1, item_id: boots_id, patch: Default::default() },
+                },
+                EquipmentEntry {
+                    slot: EquipmentSlot::Chest,
+                    stack: ItemStack { count: 1, item_id: chest_id, patch: Default::default() },
+                },
+            ],
+        })));
+        let words = m.entity_armor_words(7);
+        assert_eq!(words[0], Some("iron_boots"), "the FEET row the wire 2 reads");
+        assert_eq!(words[1], None, "the LEGS row the silence keeps bare");
+        assert_eq!(
+            words[2],
+            Some("golden_chestplate"),
+            "the CHEST row the wire 4 reads"
+        );
+        assert_eq!(words[3], None, "the HEAD row the silence keeps bare");
+        // the REPLACE: the boots the second packet's own word overrides
+        let diamond_boots_id =
+            mc_registry::item_id_by_name("diamond_boots").expect("the registry names");
+        assert!(m.apply(PlayEvent::EntityEquipped(EntityEquipment {
+            entity_id: 7,
+            slots: vec![EquipmentEntry {
+                slot: EquipmentSlot::Feet,
+                stack: ItemStack {
+                    count: 1,
+                    item_id: diamond_boots_id,
+                    patch: Default::default(),
+                },
+            }],
+        })));
+        let words = m.entity_armor_words(7);
+        assert_eq!(
+            words[0],
+            Some("diamond_boots"),
+            "the spoken slot the merge replaces"
+        );
+        assert_eq!(
+            words[2],
+            Some("golden_chestplate"),
+            "the absent row the partial packet keeps"
+        );
+        // the EMPTY stack the slot CLEARS (the drop the wire speaks)
+        assert!(m.apply(PlayEvent::EntityEquipped(EntityEquipment {
+            entity_id: 7,
+            slots: vec![EquipmentEntry {
+                slot: EquipmentSlot::Chest,
+                stack: ItemStack { count: 0, item_id: 0, patch: Default::default() },
+            }],
+        })));
+        let words = m.entity_armor_words(7);
+        assert_eq!(words[2], None, "the drop the empty stack speaks");
+        assert_eq!(
+            words[0],
+            Some("diamond_boots"),
+            "the other row the clear never touches"
+        );
+        // the DIMENSION SWAP the store dies with (the same ids — the
+        // new level's entities never wear the old one's armor)
+        m.apply(PlayEvent::Respawn(mc_protocol::play::SpawnInfo {
+            dimension_type_id: 0,
+            dimension: "minecraft:overworld".to_string(),
+            portal_cooldown: 0,
+        }));
+        assert!(m.entity_equipment.is_empty(), "the swap the store dies with");
+        assert_eq!(m.entity_armor_words(7), [None; 4], "the swap the rows bare keep");
     }
 
     #[test]

@@ -822,6 +822,13 @@ pub struct WireMob {
     /// the slot — the natural spawn the slot never fills, the honest
     /// empty the silence keeps.
     pub held_offhand: Option<&'static str>,
+    /// THE ARMOR WORDS (the Set Equipment store's FEET/LEGS/CHEST/HEAD
+    /// rows — `EquipmentSlot.values()`'s own walk order the store's
+    /// ordinals 2..5 index, IN THE STORE'S OWN ORDER): each row the
+    /// same bare-name law the hands' words keep, the render lane's
+    /// armor walk draws. The never-spoken slot the honest None keeps —
+    /// the vanilla server the bare mobs' armor rows never speaks.
+    pub armor: [Option<&'static str>; 4],
     /// The metadata's own CUSTOM NAME (Entity's DATA_CUSTOM_NAME 2 —
     /// the accessor the class tree lands at 2, the component's plain
     /// text the projection extracts: the TAG_String verbatim, the
@@ -2027,6 +2034,11 @@ impl LiveView {
                     // arm the vanilla client renders, the same walk
                     // the mainhand's own read keeps)
                     held_offhand: self.model.entity_offhand_word(id),
+                    // THE ARMOR WORDS (the store's FEET/LEGS/CHEST/HEAD
+                    // rows 2..5 — the same non-empty gate the hands'
+                    // reads keep, the store's own walk order the
+                    // record's armor lane carries)
+                    armor: self.model.entity_armor_words(id),
                     // THE CUSTOM NAME (Entity's DATA_CUSTOM_NAME 2 —
                     // the OPTIONAL_COMPONENT the store keeps, the
                     // plain text the projection extracts: the
@@ -2629,6 +2641,56 @@ mod tests {
             z.held_offhand,
             Some("shield"),
             "the other slot the mainhand's own clear never touches"
+        );
+        // THE ARMOR ROWS the projection carries (the store's
+        // FEET/LEGS/CHEST/HEAD ordinals 2..5 — the never-spoken rows
+        // the honest bare keeps, the packet the rows IN THE STORE'S
+        // OWN WALK ORDER ride: FEET row 0, LEGS row 1, CHEST row 2,
+        // HEAD row 3)
+        assert_eq!(z.armor, [None; 4], "the silence the bare keeps");
+        let helmet_id = mc_registry::item_id_by_name("iron_helmet").expect("the registry names");
+        let boots_id = mc_registry::item_id_by_name("diamond_boots").expect("the registry names");
+        view.model.apply(PlayEvent::EntityEquipped(EntityEquipment {
+            entity_id: 7,
+            slots: vec![
+                EquipmentEntry {
+                    slot: EquipmentSlot::Head,
+                    stack: ItemStack { count: 1, item_id: helmet_id, patch: Default::default() },
+                },
+                EquipmentEntry {
+                    slot: EquipmentSlot::Feet,
+                    stack: ItemStack { count: 1, item_id: boots_id, patch: Default::default() },
+                },
+            ],
+        }));
+        let upd = view.refresh(example_mapper);
+        let z = upd.mobs.iter().find(|m| m.id == 7).unwrap();
+        assert_eq!(
+            z.armor,
+            [Some("diamond_boots"), None, None, Some("iron_helmet")],
+            "the armor rows the store's own walk order ride"
+        );
+        // the hands' words the armor packet never touches (the slots
+        // the merges split)
+        assert_eq!(
+            z.held_offhand,
+            Some("shield"),
+            "the armor packet the hands never touches"
+        );
+        // the armor row's own clear: the other rows ride
+        view.model.apply(PlayEvent::EntityEquipped(EntityEquipment {
+            entity_id: 7,
+            slots: vec![EquipmentEntry {
+                slot: EquipmentSlot::Head,
+                stack: ItemStack { count: 0, item_id: 0, patch: Default::default() },
+            }],
+        }));
+        let upd = view.refresh(example_mapper);
+        let z = upd.mobs.iter().find(|m| m.id == 7).unwrap();
+        assert_eq!(
+            z.armor,
+            [Some("diamond_boots"), None, None, None],
+            "the drop the own row clears"
         );
     }
 
