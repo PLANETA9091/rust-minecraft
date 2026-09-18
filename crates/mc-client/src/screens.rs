@@ -2448,12 +2448,16 @@ impl App {
                     // carrot-on-a-stick the held stack speaks: the
                     // gate's miss the pig's own stand keeps — the
                     // tickRidden the walk never runs, the boost the
-                    // drain pauses). The reins' word the hoist spoke
-                    // (the &self read the body's mut borrow precedes).
+                    // drain pauses). The DYING HULL the gate's own
+                    // aliveness fold refuses (LivingEntity.tick's
+                    // isDeadOrDying law — the dead body the control
+                    // never steers, the death clock the walk owns).
+                    // The reins' word the hoist spoke (the &self read
+                    // the body's mut borrow precedes).
                     if reins {
-                        if let Some(pig) =
-                            self.mobs.iter_mut().find(|m| m.id == vid && m.saddled)
-                        {
+                        if let Some(pig) = self.mobs.iter_mut().find(
+                            |m| m.id == vid && m.saddled && m.health > 0.0,
+                        ) {
                             // THE TICKRIDDEN SNAP (javap Pig.tickRidden
                             // 6-37 — the setRot the RIDER's own look
                             // carries: the yaw the body's word, the
@@ -2495,11 +2499,39 @@ impl App {
                     // refuses)
                     let mut step_ev = false;
                     let mut step_at: Option<(f64, f64, f64)> = None;
+                    // THE RIDE'S OWN EVENT BAG (the mob loop's own
+                    // consumption the ride branch mirrors — the loop's
+                    // ridden-id skip the double tick refuses, so the
+                    // vehicle's own events the ride branch speaks or
+                    // they never play): the ambient the groan row
+                    // keeps, the fire lanes the hurt/death rows speak,
+                    // the extinguish the fizz plays — the LOOT the
+                    // death walk rolls AT the pig (the entity's own
+                    // stream the rolls ride, the caller's health
+                    // crossing contract keeps)
+                    let mut ride_ambient = false;
+                    let mut ride_fire_hurt = false;
+                    let mut ride_fire_death = false;
+                    let mut ride_fizz = None::<f32>;
+                    let mut ride_loot: Vec<(i32, i32)> = Vec::new();
+                    let mut ride_kind = crate::mob::MobKind::Zombie;
+                    let mut ride_pitch = 1.0f32;
+                    let mut ride_pose = (0.0f64, 0.0f64, 0.0f64);
                     if let Some(w) = world {
                         if let Some(pig) = self.mobs.iter_mut().find(|m| m.id == vid) {
+                            ride_kind = pig.kind;
                             let ev = pig.tick(w, player_view.as_ref(), day_time);
                             step_ev = ev.step;
                             step_at = Some((pig.x, pig.y, pig.z));
+                            ride_ambient = ev.ambient;
+                            ride_fire_hurt = ev.fire_hurt;
+                            ride_fire_death = ev.fire_death;
+                            ride_fizz = ev.extinguished;
+                            ride_pitch = pig.voice_pitch();
+                            ride_pose = (pig.x, pig.y, pig.z);
+                            if ride_fire_death {
+                                ride_loot = pig.death_loot(false);
+                            }
                         }
                     }
                     if let (true, Some((px, py, pz))) = (step_ev, step_at) {
@@ -2528,6 +2560,66 @@ impl App {
                                     ear_distance(ear, pig.x, pig.y, pig.z),
                                 );
                             }
+                        }
+                    }
+                    // THE RIDE'S OWN VOICES (the loop's own consumption
+                    // the mirrored walk speaks — the KIND'S OWN ROW
+                    // each event the voice table keeps, the distance
+                    // law the rider's own ear folds)
+                    let ear = Some((b.x, b.y + b.eye_height(), b.z));
+                    if ride_ambient {
+                        self.sounds.play_voice_at(
+                            self.frame,
+                            ride_kind.voice_event(crate::mob::VoiceSlot::Ambient),
+                            1.0,
+                            ride_pitch,
+                            ear_distance(ear, ride_pose.0, ride_pose.1, ride_pose.2),
+                        );
+                    }
+                    if ride_fire_hurt {
+                        self.sounds.play_voice_at(
+                            self.frame,
+                            ride_kind.voice_event(crate::mob::VoiceSlot::Hurt),
+                            1.0,
+                            ride_pitch,
+                            ear_distance(ear, ride_pose.0, ride_pose.1, ride_pose.2),
+                        );
+                    }
+                    if let Some(fizz_pitch) = ride_fizz {
+                        self.sounds.play_voice_at(
+                            self.frame,
+                            "entity.generic.extinguish_fire",
+                            crate::mob::EXTINGUISH_VOLUME,
+                            fizz_pitch,
+                            ear_distance(ear, ride_pose.0, ride_pose.1, ride_pose.2),
+                        );
+                    }
+                    if ride_fire_death {
+                        // THE DEATH'S OWN WALK (the die() tail's
+                        // makeSound the kind's row speaks + the loot
+                        // the death rolls — the cooked meat the burning
+                        // body's smelt fold speaks, the saddle the
+                        // custom drop rides, the drops the
+                        // spawnAtLocation law pops at the feet)
+                        self.sounds.play_voice_at(
+                            self.frame,
+                            ride_kind.voice_event(crate::mob::VoiceSlot::Death),
+                            1.0,
+                            ride_pitch,
+                            ear_distance(ear, ride_pose.0, ride_pose.1, ride_pose.2),
+                        );
+                        for (item, count) in ride_loot {
+                            let id = self.next_drop_id;
+                            self.next_drop_id += 1;
+                            self.drops.push(crate::drops::ItemDrop::spawn_entity_loot(
+                                id,
+                                item,
+                                count,
+                                ride_pose.0,
+                                ride_pose.1,
+                                ride_pose.2,
+                                &mut self.mob_rng,
+                            ));
                         }
                     }
                     let (mut fx, mut fy, mut fz) = (b.x, b.y, b.z);
@@ -3170,8 +3262,10 @@ impl App {
                     .as_ref()
                     .map(|b| (b.x, b.y + b.eye_height(), b.z));
                 let mut groans: Vec<(crate::mob::MobKind, f32, f64)> = Vec::new();
-                let mut fire_hurts: Vec<(f32, f64)> = Vec::new();
-                let mut fire_deaths: Vec<(f64, f64, f64, f32, Vec<(i32, i32)>)> = Vec::new();
+                let mut fire_hurts: Vec<(crate::mob::MobKind, f32, f64)> = Vec::new();
+                let mut fire_deaths: Vec<
+                    (crate::mob::MobKind, f64, f64, f64, f32, Vec<(i32, i32)>),
+                > = Vec::new();
                 let mut fizzes: Vec<(f32, f64)> = Vec::new();
                 // the love walk's own boxes (the aiStep's ambient gate
                 // the in-love mobs arm — the spawns land AFTER the
@@ -3266,7 +3360,12 @@ impl App {
                                 ));
                             }
                             if ev.fire_hurt {
+                                // THE KIND'S OWN ROW (the hurt sound the
+                                // hurt pipeline's makeSound speaks — the
+                                // mob's own table the zombie's row never
+                                // names for the animals)
                                 fire_hurts.push((
+                                    mob.kind,
                                     mob.voice_pitch(),
                                     ear_distance(ear, mob.x, mob.y, mob.z),
                                 ));
@@ -3279,7 +3378,18 @@ impl App {
                                 // behind an onFire dose
                                 let loot = mob.death_loot(false);
                                 let pitch = mob.voice_pitch();
-                                fire_deaths.push((mob.x, mob.y, mob.z, pitch, loot));
+                                // THE KIND'S OWN ROW (the death sound the
+                                // die() tail's makeSound speaks — the
+                                // animal's own table the zombie's groan
+                                // never plays for)
+                                fire_deaths.push((
+                                    mob.kind,
+                                    mob.x,
+                                    mob.y,
+                                    mob.z,
+                                    pitch,
+                                    loot,
+                                ));
                             }
                             if let Some(pitch) = ev.extinguished {
                                 fizzes.push((
@@ -3425,13 +3535,14 @@ impl App {
                         dist,
                     );
                 }
-                for (pitch, dist) in fire_hurts {
+                for (kind, pitch, dist) in fire_hurts {
                     // the onFire hurt's own voice (the hurt pipeline's
                     // makeSound — the same law the fist's hit speaks,
-                    // the fold the burn spot's own distance speaks)
+                    // the fold the burn spot's own distance speaks;
+                    // the KIND'S OWN ROW the table keeps)
                     self.sounds.play_voice_at(
                         self.frame,
-                        crate::mob::MobKind::Zombie.voice_event(crate::mob::VoiceSlot::Hurt),
+                        kind.voice_event(crate::mob::VoiceSlot::Hurt),
                         1.0,
                         pitch,
                         dist,
@@ -3451,13 +3562,14 @@ impl App {
                         dist,
                     );
                 }
-                for (mx, my, mz, pitch, loot) in fire_deaths {
+                for (kind, mx, my, mz, pitch, loot) in fire_deaths {
                     // the death voice (the die() tail's makeSound — the
                     // pitch the entity's own law speaks, the gain the
-                    // death spot's own distance folds)
+                    // death spot's own distance folds; the KIND'S OWN
+                    // ROW the table keeps)
                     self.sounds.play_voice_at(
                         self.frame,
-                        crate::mob::MobKind::Zombie.voice_event(crate::mob::VoiceSlot::Death),
+                        kind.voice_event(crate::mob::VoiceSlot::Death),
                         1.0,
                         pitch,
                         ear_distance(ear, mx, my, mz),
@@ -3499,6 +3611,21 @@ impl App {
                 {
                     let cloud = crate::particles::poof_cloud(mob.box_at(), &mut self.mob_rng);
                     self.particles.extend(cloud);
+                }
+                // THE VEHICLE'S OWN EJECT (Entity.remove(RemovalReason.KILLED)'s
+                // own ejectPassengers — the death clock's removal the
+                // 20 the walk speaks): the gone mob the ride belief
+                // drops — the body keeps the last carried pose, the
+                // standing walk the next tick resumes. The boat hulls
+                // the belief the prune law keeps — only a MOB's removal
+                // the eject speaks (the boats the mobs vec never
+                // carries, the check the boat id never matches).
+                if let Some(r) = self.offline_ride.as_ref() {
+                    if self.mobs.iter().any(|m| {
+                        m.id == r.vehicle_id && m.death_time >= crate::mob::DEATH_DURATION_TICKS
+                    }) {
+                        self.offline_ride = None;
+                    }
                 }
                 self.mobs
                     .retain(|m| m.death_time < crate::mob::DEATH_DURATION_TICKS);
@@ -4022,9 +4149,12 @@ impl App {
         // the target's own box (the inflated form the sweep's AoE
         // intersection reads — captured while the borrow lives)
         let target_box = mob.box_at();
-        // THE ZOMBIE'S OWN VOICE (hurtServer's makeSound — the hurt
-        // sound while alive, the death sound the die() tail speaks)
+        // THE KIND'S OWN VOICE (hurtServer's makeSound — the hurt
+        // sound while alive, the death sound the die() tail speaks;
+        // the mob's own table the zombie's row never names for the
+        // animals — captured while the borrow lives)
         let pitch = mob.voice_pitch();
+        let kind = mob.kind;
         let died = mob.health <= 0.0;
         // the facts the tail speaks (captured while the borrow lives —
         // the loot roll the die() walk speaks AT the hurt call, the
@@ -4035,7 +4165,7 @@ impl App {
         if died {
             self.sounds.play_voice_at(
                 self.frame,
-                crate::mob::MobKind::Zombie.voice_event(crate::mob::VoiceSlot::Death),
+                kind.voice_event(crate::mob::VoiceSlot::Death),
                 1.0,
                 pitch,
                 ear_distance(ear, mx, my, mz),
@@ -4043,7 +4173,7 @@ impl App {
         } else {
             self.sounds.play_voice_at(
                 self.frame,
-                crate::mob::MobKind::Zombie.voice_event(crate::mob::VoiceSlot::Hurt),
+                kind.voice_event(crate::mob::VoiceSlot::Hurt),
                 1.0,
                 pitch,
                 ear_distance(ear, mx, my, mz),
@@ -4106,7 +4236,8 @@ impl App {
             // THE AOE (the two-pass split the borrow checker's own
             // order speaks — the hits walk first, the voices + the
             // death loot beside them)
-            let mut outcomes: Vec<(usize, f64, f64, f64, bool, f32)> = Vec::new();
+            let mut outcomes: Vec<(usize, f64, f64, f64, bool, f32, crate::mob::MobKind)> =
+                Vec::new();
             for j in 0..self.mobs.len() {
                 if j == i {
                     continue;
@@ -4147,16 +4278,19 @@ impl App {
                 m.knockback(0.4, sy, -cy);
                 let mp = m.voice_pitch();
                 let mdied = m.health <= 0.0;
-                outcomes.push((j, m.x, m.y, m.z, mdied, mp));
+                // THE KIND'S OWN ROW (the neighbor's own voice the table
+                // speaks — captured while the borrow lives)
+                let mkind = m.kind;
+                outcomes.push((j, m.x, m.y, m.z, mdied, mp, mkind));
             }
             // the neighbors' own voices + the death laws (the same
             // spawnAtLocation/dropExperience walk the direct kill
             // speaks)
-            for (j, nx, ny, nz, ndied, npitch) in outcomes {
+            for (j, nx, ny, nz, ndied, npitch, nkind) in outcomes {
                 if ndied {
                     self.sounds.play_voice_at(
                         self.frame,
-                        crate::mob::MobKind::Zombie.voice_event(crate::mob::VoiceSlot::Death),
+                        nkind.voice_event(crate::mob::VoiceSlot::Death),
                         1.0,
                         npitch,
                         ear_distance(ear, nx, ny, nz),
@@ -4178,7 +4312,7 @@ impl App {
                 } else {
                     self.sounds.play_voice_at(
                         self.frame,
-                        crate::mob::MobKind::Zombie.voice_event(crate::mob::VoiceSlot::Hurt),
+                        nkind.voice_event(crate::mob::VoiceSlot::Hurt),
                         1.0,
                         npitch,
                         ear_distance(ear, nx, ny, nz),
@@ -10711,6 +10845,14 @@ impl App {
             .set_absorption(self.effects.absorption() - health_share);
         if self.health <= 0.0 && !self.dead {
             self.dead = true;
+            // THE DEATH'S OWN DISMOUNT (the ServerPlayer's removal the
+            // vanilla death speaks — the passenger entity discarded,
+            // the fresh respawn the seat never inherits): the ride
+            // beliefs the death crossing drops, the body the carried
+            // pose keeps (the death camera the spot freezes), the
+            // respawn the spawn pose walks
+            self.offline_ride = None;
+            self.net_ride = None;
             self.sounds.play_death_voice(self.frame);
         }
     }
@@ -25063,6 +25205,308 @@ mod tests {
             gained > 5.0 * a0,
             "the boost the un-boosted walk exceeds (gained {gained} vs {})",
             5.0 * a0
+        );
+    }
+
+    /// THE RIDDEN PIG'S OWN FIRE DEATH (the ride branch's own event
+    /// consumption the loop's ridden-id skip demands — the vehicle's
+    /// events the ride branch speaks or they never play): the burning
+    /// dose the health kills, the DEATH VOICE the pig's own row plays,
+    /// the LOOT the death walk rolls at the pig — the cooked porkchop
+    /// the burning body's smelt fold speaks, the saddle the custom
+    /// drop rides — and the ride belief the death animation the
+    /// removal's own clock keeps (the eject the 20 the walk owns).
+    #[test]
+    fn the_ridden_pig_burns_its_own_loot() {
+        let mut app = App::new(3);
+        app.enter_world();
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let top = app.spawn_y;
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, top as f32 + 4.0, c as f32 + 0.5),
+            yaw: 0.0,
+            pitch: -std::f32::consts::FRAC_PI_2,
+        });
+        let mut pig = crate::mob::Zombie::new(7, c as f64 + 0.5, top as f64, c as f64 + 0.5, 3);
+        pig.kind = crate::mob::MobKind::Pig;
+        pig.saddled = true;
+        pig.on_ground = true;
+        pig.health = 0.5; // the one dose the fire kills on
+        app.mobs.push(pig);
+        let carried_y = top as f64 + crate::mob::PIG_HEIGHT as f32 as f64;
+        app.body = Some(crate::body::PlayerBody::new(
+            c as f64 + 0.5,
+            carried_y,
+            c as f64 + 0.5,
+            0.0,
+            90.0,
+        ));
+        assert!(app.mount_offline_pig(7), "the ride armed");
+        // THE BURN'S OWN DOSE (fire_ticks = 20 the interval's own
+        // crossing — the hurt the health crosses, the death the event
+        // speaks)
+        app.mobs[0].fire_ticks = 20;
+        app.update();
+        let dead = app
+            .mobs
+            .iter()
+            .find(|m| m.id == 7)
+            .expect("the corpse the death animation keeps")
+            .health
+            <= 0.0;
+        assert!(dead, "the dose the fire killed");
+        // THE RIDE'S OWN DEATH VOICE (the kind's row the ride branch's
+        // consumption plays — the pig's own death the zombie's groan
+        // never names)
+        assert!(
+            app.sounds
+                .events
+                .iter()
+                .any(|e| e.starts_with("entity.pig.death ")),
+            "the pig's own row the ride's death speaks"
+        );
+        // THE LOOT'S OWN WALK (the cooked meat the smelt fold speaks,
+        // the saddle the custom drop rides, the raw the burning death
+        // never names)
+        let cooked = crate::mob::wire_id("cooked_porkchop").expect("the cooked rides the wire");
+        let raw = crate::mob::wire_id("porkchop").expect("the raw rides the wire");
+        let saddle = crate::mob::wire_id("saddle").expect("the saddle rides the wire");
+        assert!(
+            app.drops.iter().any(|d| d.item == cooked && (1..=3).contains(&d.count)),
+            "the cooked porkchop the burning death drops"
+        );
+        assert!(
+            app.drops.iter().any(|d| d.item == saddle && d.count == 1),
+            "the saddle the custom drop pops"
+        );
+        assert!(
+            app.drops.iter().all(|d| d.item != raw),
+            "the raw meat the burning body never drops"
+        );
+        // THE BELIEF THE DEATH ANIMATION KEEPS (the eject the removal's
+        // own clock speaks — the rider the dying pose the animation
+        // rides)
+        assert!(app.offline_ride.is_some(), "the ride the animation holds");
+    }
+
+    /// THE VEHICLE'S OWN EJECT (Entity.remove(RemovalReason.KILLED)'s
+    /// own ejectPassengers — the death clock's removal the 20 the walk
+    /// speaks): the gone mob the ride belief drops, the body the last
+    /// carried pose keeps, and the standing walk the next tick's own
+    /// gravity resumes (the rider the pig's death spot lands).
+    #[test]
+    fn the_vehicle_death_ejects_the_rider() {
+        let mut app = App::new(3);
+        app.enter_world();
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let top = app.spawn_y;
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, top as f32 + 4.0, c as f32 + 0.5),
+            yaw: 0.0,
+            pitch: -std::f32::consts::FRAC_PI_2,
+        });
+        let mut pig = crate::mob::Zombie::new(7, c as f64 + 0.5, top as f64, c as f64 + 0.5, 3);
+        pig.kind = crate::mob::MobKind::Pig;
+        pig.saddled = true;
+        pig.on_ground = true;
+        pig.health = 0.5;
+        app.mobs.push(pig);
+        let carried_y = top as f64 + crate::mob::PIG_HEIGHT as f32 as f64;
+        app.body = Some(crate::body::PlayerBody::new(
+            c as f64 + 0.5,
+            carried_y,
+            c as f64 + 0.5,
+            0.0,
+            90.0,
+        ));
+        assert!(app.mount_offline_pig(7), "the ride armed");
+        app.mobs[0].fire_ticks = 20;
+        app.update();
+        // THE DEATH CLOCK'S OWN WALK (the animation the 20 ticks ride —
+        // the corpse the ride branch's own tick the clock walks)
+        for _ in 0..25 {
+            app.update();
+        }
+        assert!(
+            app.offline_ride.is_none(),
+            "the gone mob the ride belief drops"
+        );
+        assert!(
+            !app.mobs.iter().any(|m| m.id == 7),
+            "the corpse the removal walk clears"
+        );
+        // THE STANDING WALK'S OWN RESUME (the gravity the carried pose
+        // pulls — the rider the pig's death spot lands, the ride
+        // branch's zero-vy hold the standing tick never keeps)
+        for _ in 0..3 {
+            app.update();
+        }
+        let b = app.body.as_ref().expect("the body stands");
+        assert!(
+            b.y < carried_y - 0.2,
+            "the gravity the eject's spot resumes (y {} vs carried {carried_y})",
+            b.y
+        );
+    }
+
+    /// THE PLAYER'S OWN DEATH DISMOUNT (the ServerPlayer's removal the
+    /// vanilla death speaks — the passenger entity discarded, the fresh
+    /// respawn the seat never inherits): the death crossing the ride
+    /// beliefs drops — both lanes the same word keeps — and the respawn
+    /// the spawn pose walks (the respawned body the pig's back never
+    /// re-mounts).
+    #[test]
+    fn the_player_death_drops_the_rides() {
+        let mut app = App::new(5);
+        app.enter_world();
+        app.offline_ride = Some(crate::world_view::OfflineRide {
+            vehicle_id: 7,
+            seat_x: 0.0,
+            ride_height: 0.9,
+        });
+        app.net_ride = Some(crate::world_view::WireRide {
+            vehicle_id: 9,
+            feet_x: 40.0,
+            feet_y: 9.0,
+            feet_z: 40.0,
+            vehicle_yaw: 0.0,
+            seat_x: 0.0,
+            ride_height: 0.9,
+        });
+        // THE FATAL DOSE (the health the 0.0 crossing speaks)
+        app.actually_hurt(100.0);
+        assert!(app.dead, "the dose the player kills");
+        assert!(
+            app.offline_ride.is_none(),
+            "the offline hull the death discards"
+        );
+        assert!(
+            app.net_ride.is_none(),
+            "the wire hull the death discards"
+        );
+        // THE RESPAWN'S OWN WALK (the vitals the reset speaks, the seat
+        // the fresh body never inherits)
+        app.respawn();
+        assert!(!app.dead, "the respawn the vitals reset");
+        assert!(app.offline_ride.is_none() && app.net_ride.is_none());
+    }
+
+    /// THE FIRE LANES' OWN KIND ROWS (the loop's own consumption the
+    /// kind fix speaks): the burning cow's death the cow's own row
+    /// plays, the burning sheep's hurt the sheep's own row — the
+    /// zombie's hardcoded groan the animal lanes never play again.
+    #[test]
+    fn the_kind_voices_the_fire_rows() {
+        let mut app = App::new(11);
+        app.enter_world();
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let top = app.spawn_y;
+        app.body = Some(crate::body::PlayerBody::new(
+            c as f64 + 0.5,
+            top as f64,
+            c as f64 + 0.5,
+            0.0,
+            0.0,
+        ));
+        let mut cow = crate::mob::Zombie::new(7, c as f64 + 2.5, top as f64, c as f64 + 0.5, 3);
+        cow.kind = crate::mob::MobKind::Cow;
+        cow.on_ground = true;
+        cow.health = 0.5; // the one dose the fire kills on
+        cow.fire_ticks = 20;
+        app.mobs.push(cow);
+        let mut sheep =
+            crate::mob::Zombie::new(8, c as f64 - 2.5, top as f64, c as f64 + 0.5, 4);
+        sheep.kind = crate::mob::MobKind::Sheep;
+        sheep.on_ground = true;
+        sheep.fire_ticks = 20; // the hurt the dose speaks (the health holds)
+        app.mobs.push(sheep);
+        app.update();
+        assert!(
+            app.sounds
+                .events
+                .iter()
+                .any(|e| e.starts_with("entity.cow.death ")),
+            "the cow's own row the fire death speaks"
+        );
+        assert!(
+            app.sounds
+                .events
+                .iter()
+                .any(|e| e.starts_with("entity.sheep.hurt ")),
+            "the sheep's own row the fire hurt speaks"
+        );
+        assert!(
+            app.sounds
+                .events
+                .iter()
+                .all(|e| !e.starts_with("entity.zombie.")),
+            "the zombie's row the animal lanes never play"
+        );
+    }
+
+    /// THE FIST'S OWN KIND ROW (the attack lane's direct kill the kind
+    /// fix speaks): the punched cow's death the cow's own row plays —
+    /// the zombie's groan the animal's kill never names — and the
+    /// loot the cow's own table rolls (the beef the flesh never is).
+    #[test]
+    fn the_fist_kills_the_cow_its_own_row() {
+        let mut app = App::new(13);
+        app.enter_world();
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let top = app.spawn_y;
+        app.body = Some(crate::body::PlayerBody::new(
+            c as f64 + 0.5,
+            top as f64,
+            c as f64 + 0.5,
+            0.0,
+            0.0,
+        ));
+        let mut cow = crate::mob::Zombie::new(7, c as f64 + 3.0, top as f64 + 1.62, c as f64 + 0.5, 3);
+        cow.kind = crate::mob::MobKind::Cow;
+        cow.health = 0.2; // the one punch the charge kills on
+        app.mobs.push(cow);
+        // THE CROSSHAIR'S OWN AIM (the mid-height the ray walks)
+        {
+            let (tx, ty, tz) = {
+                let m = &app.mobs[0];
+                (m.x, m.y + crate::mob::ZOMBIE_HEIGHT * 0.5, m.z)
+            };
+            let b = app.body.as_mut().unwrap();
+            let (dx, dy, dz) = (tx - b.x, ty - (b.y + b.eye_height()), tz - b.z);
+            let horiz = (dx * dx + dz * dz).sqrt().max(1e-9);
+            let len3 = (dx * dx + dy * dy + dz * dz).sqrt().max(1e-9);
+            b.yaw = ((dx / horiz).atan2(-dz / horiz) - std::f64::consts::PI).to_degrees() as f32;
+            b.pitch = -(dy / len3).asin().to_degrees() as f32;
+        }
+        assert_eq!(app.pick_mob(&app.mobs), Some(0), "the cow the reach keeps");
+        app.attack_mob(0);
+        assert!(
+            app.sounds
+                .events
+                .iter()
+                .any(|e| e.starts_with("entity.cow.death ")),
+            "the cow's own row the punch speaks"
+        );
+        assert!(
+            app.sounds
+                .events
+                .iter()
+                .all(|e| !e.starts_with("entity.zombie.")),
+            "the zombie's groan the cow's kill never plays"
+        );
+        let beef = crate::mob::wire_id("beef").expect("the beef rides the wire");
+        let flesh = crate::mob::wire_id("rotten_flesh").expect("the flesh rides the wire");
+        assert!(
+            app.drops.iter().any(|d| d.item == beef),
+            "the beef the cow's own table rolls"
+        );
+        assert!(
+            app.drops.iter().all(|d| d.item != flesh),
+            "the flesh the cow's death never drops"
         );
     }
 

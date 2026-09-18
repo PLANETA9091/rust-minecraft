@@ -2695,20 +2695,29 @@ impl Zombie {
         }
     }
 
-    /// THE DEATH LOOT (javap `dropAllDeathLoot` — the
-    /// `lastHurtByPlayerMemoryTime > 0` flag rides killed_by_player,
-    /// the table `data/minecraft/loot_table/entities/zombie.json`
-    /// speaks the pools verbatim): POOL 1 always rolls the
+    /// THE DEATH LOOT (javap `dropAllDeathLoot` — the tables the four
+    /// drawn kinds speak, `data/minecraft/loot_table/entities/*.json`
+    /// verbatim): THE ZOMBIE's own json — POOL 1 always rolls the
     /// rotten_flesh (`set_count` uniform 0.0..2.0 —
     /// `Mth.nextInt(random, 0, 2)` over the ConstantNumberProvider
-    /// getInts, the looting bonus absent from the bare fist); POOL 3
-    /// speaks the player-kill rare (`killed_by_player` +
+    /// getInts, the looting bonus absent from the bare fist), POOL 3
+    /// the player-kill rare (`killed_by_player` +
     /// `random_chance_with_enchanted_bonus`'s 0.025 unenchanced, one
     /// of the THREE unweighted entries — iron_ingot / carrot /
-    /// potato); the zombie_horse and baby-chicken pools never fire in
+    /// potato; the zombie_horse and baby-chicken pools never fire in
     /// this lane's vocabulary, and the potato's furnace_smelt branch
-    /// never does either (the zombie never burns here). The draws
-    /// ride the entity's own random stream, in the pools' own order.
+    /// never does either — the honest skip the doc's own law keeps).
+    /// THE ANIMALS' own jsons — the pig's porkchop uniform 1..3, the
+    /// cow's leather 0..2 over the beef's 1..3, the sheep's mutton
+    /// 1..2: the `furnace_smelt` function the `is_on_fire` condition
+    /// speaks (the burning body's meat the COOKED variant drops — the
+    /// fire_ticks > 0 the death crossing keeps), the player-kill rare
+    /// the animal pools never carry. THE PIG'S OWN CUSTOM DROP
+    /// (dropCustomDeathLoot's subclass walk — `if (this.isSaddled())
+    /// spawnAtLocation(new ItemStack(Items.SADDLE))`): the saddle the
+    /// saddled hull's death pops, the raw item the smelt never
+    /// touches, the loot-table pool the drop follows. The draws ride
+    /// the entity's own random stream, in the pools' own order.
     /// Returns (wire item id, count) pairs — the caller spawns them
     /// at the entity's feet through the spawnAtLocation law.
     pub fn death_loot(&mut self, killed_by_player: bool) -> Vec<(i32, i32)> {
@@ -2718,19 +2727,74 @@ impl Zombie {
             return Vec::new();
         }
         let mut out: Vec<(i32, i32)> = Vec::new();
-        // POOL 1: the flesh — the uniform count 0..2
-        if let Some(flesh) = wire_id("rotten_flesh") {
-            let count = self.rng.next_int_inclusive(0, 2);
-            if count > 0 {
-                out.push((flesh, count));
+        // THE FURNACE SMELT'S OWN FOLD (the loot table's
+        // `minecraft:furnace_smelt` function the `this.isOnFire()`
+        // condition speaks): the burning body's meat the cooked
+        // variant answers, the leather and the saddle the raw items
+        // the fold never touches
+        let smelt = self.fire_ticks > 0;
+        match self.kind {
+            MobKind::Zombie => {
+                // POOL 1: the flesh — the uniform count 0..2
+                if let Some(flesh) = wire_id("rotten_flesh") {
+                    let count = self.rng.next_int_inclusive(0, 2);
+                    if count > 0 {
+                        out.push((flesh, count));
+                    }
+                }
+                // POOL 3: the player-kill rare — the 0.025 chance, then
+                // one of the three unweighted entries (the pool's own
+                // rolls 1)
+                if killed_by_player && self.rng.next_f32() < RARE_DROP_CHANCE {
+                    let pick = self.rng.next_int_inclusive(0, 2);
+                    if let Some(item) = wire_id(RARE_DROP_ITEMS[pick as usize]) {
+                        out.push((item, 1));
+                    }
+                }
             }
-        }
-        // POOL 3: the player-kill rare — the 0.025 chance, then one of
-        // the three unweighted entries (the pool's own rolls 1)
-        if killed_by_player && self.rng.next_f32() < RARE_DROP_CHANCE {
-            let pick = self.rng.next_int_inclusive(0, 2);
-            if let Some(item) = wire_id(RARE_DROP_ITEMS[pick as usize]) {
-                out.push((item, 1));
+            MobKind::Pig => {
+                // pig.json's own pool: the porkchop uniform 1..3, the
+                // smelt the cooked variant speaks
+                let count = self.rng.next_int_inclusive(1, 3);
+                let name = if smelt { "cooked_porkchop" } else { "porkchop" };
+                if let Some(item) = wire_id(name) {
+                    out.push((item, count));
+                }
+                // dropCustomDeathLoot's own walk: the saddle the
+                // saddled hull drops (the raw item, the table's pool
+                // the drop follows)
+                if self.saddled {
+                    if let Some(saddle) = wire_id("saddle") {
+                        out.push((saddle, 1));
+                    }
+                }
+            }
+            MobKind::Cow => {
+                // cow.json POOL 1: the leather uniform 0..2 (the count
+                // 0 the pool's own empty keeps)
+                let count = self.rng.next_int_inclusive(0, 2);
+                if count > 0 {
+                    if let Some(item) = wire_id("leather") {
+                        out.push((item, count));
+                    }
+                }
+                // POOL 2: the beef uniform 1..3, the smelt the cooked
+                // variant speaks
+                let count = self.rng.next_int_inclusive(1, 3);
+                let name = if smelt { "cooked_beef" } else { "beef" };
+                if let Some(item) = wire_id(name) {
+                    out.push((item, count));
+                }
+            }
+            MobKind::Sheep => {
+                // sheep.json's own pool: the mutton uniform 1..2, the
+                // smelt the cooked variant speaks (the wool the shears
+                // lane owns — the death the vanilla table never names)
+                let count = self.rng.next_int_inclusive(1, 2);
+                let name = if smelt { "cooked_mutton" } else { "mutton" };
+                if let Some(item) = wire_id(name) {
+                    out.push((item, count));
+                }
             }
         }
         out
@@ -4132,6 +4196,205 @@ mod tests {
         // the living body never rolls (the caller's contract)
         let mut z = Zombie::new(1, 0.0, 0.0, 0.0, 7);
         assert!(z.death_loot(true).is_empty());
+    }
+
+    /// THE ANIMALS' OWN DEATH TABLES (pig.json / cow.json / sheep.json
+    /// — the pools the vanilla files speak): the pig's porkchop
+    /// uniform 1..3, the cow's leather 0..2 over the beef's 1..3, the
+    /// sheep's mutton 1..2 — the rotten flesh the animal tables never
+    /// name, the player-kill rare the animal pools never carry.
+    #[test]
+    fn the_animals_drops_speak_their_own_tables() {
+        let porkchop = wire_id("porkchop").expect("the porkchop rides the wire");
+        let leather = wire_id("leather").expect("the leather rides the wire");
+        let beef = wire_id("beef").expect("the beef rides the wire");
+        let mutton = wire_id("mutton").expect("the mutton rides the wire");
+        let flesh = wire_id("rotten_flesh").expect("the flesh rides the wire");
+        let n = 4000u32;
+        // THE PIG'S BAND (uniform 1..3 — the three counts split evenly)
+        let (mut ones, mut twos, mut threes) = (0i32, 0i32, 0i32);
+        for seed in 0..n {
+            let mut z = Zombie::new(1, 0.0, 0.0, 0.0, seed as u64);
+            z.kind = MobKind::Pig;
+            z.health = 0.0;
+            let loot = z.death_loot(true);
+            assert_eq!(loot.len(), 1, "the pig's own pool one entry");
+            let (item, count) = loot[0];
+            assert_eq!(item, porkchop, "the pig's own meat");
+            assert!(item != flesh, "the animal's table the flesh never names");
+            match count {
+                1 => ones += 1,
+                2 => twos += 1,
+                3 => threes += 1,
+                _ => panic!("the porkchop count {count} escapes 1..3"),
+            }
+        }
+        let third = (n / 3) as i32;
+        for (name, band) in [("ones", ones), ("twos", twos), ("threes", threes)] {
+            assert!(
+                ((third - 500)..=(third + 500)).contains(&band),
+                "the {name} band {band}"
+            );
+        }
+        // THE COW'S BAND (the leather 0..2 the zero speaks, the beef
+        // 1..3 — the pools' own order the leather first keeps)
+        let mut leather_zeros = 0i32;
+        for seed in 0..n {
+            let mut z = Zombie::new(1, 0.0, 0.0, 0.0, 10_000 + seed as u64);
+            z.kind = MobKind::Cow;
+            z.health = 0.0;
+            let loot = z.death_loot(false);
+            assert!(loot.len() <= 2, "the cow's two pools");
+            if let Some(&(item, count)) = loot.first() {
+                if item == leather {
+                    assert!(
+                        (1..=2).contains(&count),
+                        "the leather count {count} the nonzero keeps"
+                    );
+                } else {
+                    leather_zeros += 1; // the zero roll — the beef leads
+                    assert_eq!(item, beef, "the beef the second pool speaks");
+                    assert!((1..=3).contains(&count), "the beef count {count}");
+                }
+            } else {
+                leather_zeros += 1; // the zero roll — no leather lands
+            }
+            for (item, _) in &loot {
+                assert!(*item != flesh, "the cow the flesh never drops");
+            }
+        }
+        let zero_third = (n / 3) as i32;
+        assert!(
+            ((zero_third - 500)..=(zero_third + 500)).contains(&leather_zeros),
+            "the leather zero band {leather_zeros}"
+        );
+        // THE SHEEP'S BAND (uniform 1..2 — the two counts split evenly)
+        let (mut sheep_ones, mut sheep_twos) = (0i32, 0i32);
+        for seed in 0..n {
+            let mut z = Zombie::new(1, 0.0, 0.0, 0.0, 20_000 + seed as u64);
+            z.kind = MobKind::Sheep;
+            z.health = 0.0;
+            let loot = z.death_loot(false);
+            assert_eq!(loot.len(), 1, "the sheep's own pool one entry");
+            let (item, count) = loot[0];
+            assert_eq!(item, mutton, "the sheep's own meat");
+            match count {
+                1 => sheep_ones += 1,
+                2 => sheep_twos += 1,
+                _ => panic!("the mutton count {count} escapes 1..2"),
+            }
+        }
+        let half = (n / 2) as i32;
+        assert!(
+            ((half - 400)..=(half + 400)).contains(&sheep_ones),
+            "the sheep one band {sheep_ones}"
+        );
+        assert!(
+            ((half - 400)..=(half + 400)).contains(&sheep_twos),
+            "the sheep two band {sheep_twos}"
+        );
+    }
+
+    /// THE BURNING MEAT'S OWN SMELT (the loot table's furnace_smelt
+    /// function the is_on_fire condition speaks): the burning body's
+    /// meat the COOKED variant drops — the porkchop the cooked form,
+    /// the beef the same, the mutton the same, the leather the raw
+    /// item the fold never touches, the raw meat the burning death
+    /// never names.
+    #[test]
+    fn the_burning_meat_drops_cooked() {
+        let cooked_porkchop =
+            wire_id("cooked_porkchop").expect("the cooked porkchop rides the wire");
+        let cooked_beef = wire_id("cooked_beef").expect("the cooked beef rides the wire");
+        let cooked_mutton =
+            wire_id("cooked_mutton").expect("the cooked mutton rides the wire");
+        let raw_porkchop = wire_id("porkchop").expect("the porkchop rides the wire");
+        let raw_beef = wire_id("beef").expect("the beef rides the wire");
+        let raw_mutton = wire_id("mutton").expect("the mutton rides the wire");
+        let leather = wire_id("leather").expect("the leather rides the wire");
+        // THE PIG: the brand lit at the death crossing — the cooked
+        // meat only
+        let mut pig = Zombie::new(1, 0.0, 0.0, 0.0, 7);
+        pig.kind = MobKind::Pig;
+        pig.health = 0.0;
+        pig.fire_ticks = 100; // the brand burns (isOnFire the fold keeps)
+        let loot = pig.death_loot(true);
+        assert_eq!(loot.len(), 1, "the cooked porkchop the only meat");
+        assert_eq!(loot[0].0, cooked_porkchop, "the smelt the burning speaks");
+        // THE COW: the leather the raw item stays, the beef the cooked
+        // form takes
+        let mut cow = Zombie::new(2, 0.0, 0.0, 0.0, 7);
+        cow.kind = MobKind::Cow;
+        cow.health = 0.0;
+        cow.fire_ticks = 100;
+        let loot = cow.death_loot(false);
+        assert_eq!(loot.len(), 2, "the leather and the cooked beef");
+        assert_eq!(loot[0].0, leather, "the leather the smelt never touches");
+        assert_eq!(loot[1].0, cooked_beef, "the beef the cooked form");
+        // THE SHEEP: the cooked mutton
+        let mut sheep = Zombie::new(3, 0.0, 0.0, 0.0, 7);
+        sheep.kind = MobKind::Sheep;
+        sheep.health = 0.0;
+        sheep.fire_ticks = 100;
+        let loot = sheep.death_loot(false);
+        assert_eq!(loot.len(), 1, "the cooked mutton the only meat");
+        assert_eq!(loot[0].0, cooked_mutton, "the smelt the burning speaks");
+        // THE COLD BODIES the raw items keep (the smelt the unlit
+        // brand never arms) — the same seeds the cooked walk spoke
+        let mut pig = Zombie::new(1, 0.0, 0.0, 0.0, 7);
+        pig.kind = MobKind::Pig;
+        pig.health = 0.0;
+        assert_eq!(pig.death_loot(true)[0].0, raw_porkchop);
+        let mut cow = Zombie::new(2, 0.0, 0.0, 0.0, 7);
+        cow.kind = MobKind::Cow;
+        cow.health = 0.0;
+        let loot = cow.death_loot(false);
+        assert_eq!(loot.len(), 2);
+        assert_eq!(loot[1].0, raw_beef, "the cold beef the raw form");
+        let mut sheep = Zombie::new(3, 0.0, 0.0, 0.0, 7);
+        sheep.kind = MobKind::Sheep;
+        sheep.health = 0.0;
+        assert_eq!(sheep.death_loot(false)[0].0, raw_mutton);
+    }
+
+    /// THE SADDLE'S OWN DEATH DROP (Pig.dropCustomDeathLoot's own
+    /// walk — `if (this.isSaddled()) this.spawnAtLocation(Items.SADDLE)`
+    /// the javap speaks): the saddled hull's death pops the saddle
+    /// after the meat, the unsaddled hull the drop never names, and
+    /// the other kinds the pig's own custom drop never takes (the
+    /// cow's saddled bit the fold never reads).
+    #[test]
+    fn the_saddle_drops_with_the_pig() {
+        let porkchop = wire_id("porkchop").expect("the porkchop rides the wire");
+        let saddle = wire_id("saddle").expect("the saddle rides the wire");
+        // THE SADDLED HULL: the meat the pool rolls, the saddle the
+        // custom drop follows (the pools' own order)
+        let mut pig = Zombie::new(1, 0.0, 0.0, 0.0, 7);
+        pig.kind = MobKind::Pig;
+        pig.saddled = true;
+        pig.health = 0.0;
+        let loot = pig.death_loot(true);
+        assert_eq!(loot.len(), 2, "the porkchop and the saddle");
+        assert_eq!(loot[0].0, porkchop, "the table's pool the drop precedes");
+        assert_eq!(loot[1], (saddle, 1), "the custom drop the raw item");
+        // THE UN-SADDLED HULL: the meat only
+        let mut bare = Zombie::new(2, 0.0, 0.0, 0.0, 7);
+        bare.kind = MobKind::Pig;
+        bare.health = 0.0;
+        let loot = bare.death_loot(true);
+        assert_eq!(loot.len(), 1, "the meat the bare hull drops");
+        assert_eq!(loot[0].0, porkchop);
+        // THE OTHER KINDS the pig's own custom drop never takes — the
+        // saddled bit the cow's death never reads
+        let mut cow = Zombie::new(3, 0.0, 0.0, 0.0, 7);
+        cow.kind = MobKind::Cow;
+        cow.saddled = true;
+        cow.health = 0.0;
+        let loot = cow.death_loot(false);
+        assert!(
+            loot.iter().all(|(item, _)| *item != saddle),
+            "the cow's death the saddle never drops"
+        );
     }
 
     /// THE SUN'S BRAND (Mob.aiStep's BURN_IN_DAYLIGHT ->
