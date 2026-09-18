@@ -837,27 +837,93 @@ pub const PLAYER_ATTACK_DAMAGE: f64 = 2.0;
 /// plain addend keeps). The non-sword the zero addend returns (the
 /// fist the base's own floor rides).
 fn held_attack_addend(held: Option<&str>) -> f64 {
+    let Some(name) = held else { return 0.0 };
+    // THE TOOL'S OWN ROWS FIRST (the axe/shovel/pickaxe/hoe the
+    // dmg_arg + bonus the lambda bodies keep — the sword the tool
+    // table never carries, the suffix the sword arm answers)
+    if let Some((dmg_arg, _spd_arg)) = held_tool_args(name) {
+        return dmg_arg + material_bonus(name);
+    }
     const SWORD_BASE: f64 = 3.0;
-    let tier = match held {
-        Some("wooden_sword") | Some("golden_sword") => 0.0,
-        Some("stone_sword") | Some("copper_sword") => 1.0,
-        Some("iron_sword") => 2.0,
-        Some("diamond_sword") => 3.0,
-        Some("netherite_sword") => 4.0,
-        _ => return 0.0,
+    match name {
+        "wooden_sword" | "golden_sword" | "stone_sword" | "copper_sword"
+        | "iron_sword" | "diamond_sword" | "netherite_sword" => {
+            SWORD_BASE + material_bonus(name)
+        }
+        _ => 0.0,
+    }
+}
+
+/// THE TIER'S OWN BONUS (javap `ToolMaterial.<clinit>` — the
+/// attackDamageBonus the material's own prefix speaks: WOOD 0.0,
+/// STONE 1.0, COPPER 1.0, IRON 2.0, DIAMOND 3.0, GOLD 0.0,
+/// NETHERITE 4.0 — the unknown the 0.0 the honest default keeps).
+fn material_bonus(name: &str) -> f64 {
+    if name.starts_with("wooden_") || name.starts_with("golden_") {
+        0.0
+    } else if name.starts_with("stone_") || name.starts_with("copper_") {
+        1.0
+    } else if name.starts_with("iron_") {
+        2.0
+    } else if name.starts_with("diamond_") {
+        3.0
+    } else if name.starts_with("netherite_") {
+        4.0
+    } else {
+        0.0
+    }
+}
+
+/// THE TOOL'S OWN REGISTRATION ROWS (the Items clinit's own lambda
+/// bodies the AxeItem/ShovelItem/HoeItem ctor calls keep + the
+/// `pickaxe(material, 1.0f, -2.8f)` direct rows the Properties
+/// builder speaks — the (damage_arg, speed_arg) each row carries,
+/// the (class, material) pair the 28 rows the extraction keeps):
+/// the axes the WOOD/GOLD 6.0 the STONE/COPPER 7.0 the IRON 6.0 the
+/// DIAMOND/NETHERITE 5.0 the dmg args name (the speeds the
+/// -3.2/-3.1/-3.0 the tier ladder keeps), the shovels the 1.5/-3.0
+/// the seven rows share, the pickaxes the 1.0/-2.8 the same, the
+/// hoes the WEAK law the dmg args the bonus cancels (the 0.0
+/// addend every hoe speaks, the speeds the -3.0/-2.0/-1.0/0.0 the
+/// fast-but-weak ladder keeps). The `scripts/extract_tool_rows.py`
+/// the disasm's own walk carries.
+fn held_tool_args(held: &str) -> Option<(f64, f64)> {
+    let row = match held {
+        "wooden_axe" => (6.0, -3.2),
+        "golden_axe" => (6.0, -3.0),
+        "stone_axe" | "copper_axe" => (7.0, -3.2),
+        "iron_axe" => (6.0, -3.1),
+        "diamond_axe" | "netherite_axe" => (5.0, -3.0),
+        "wooden_shovel" | "golden_shovel" | "stone_shovel" | "copper_shovel"
+        | "iron_shovel" | "diamond_shovel" | "netherite_shovel" => (1.5, -3.0),
+        "wooden_pickaxe" | "golden_pickaxe" | "stone_pickaxe" | "copper_pickaxe"
+        | "iron_pickaxe" | "diamond_pickaxe" | "netherite_pickaxe" => (1.0, -2.8),
+        "wooden_hoe" | "golden_hoe" => (0.0, -3.0),
+        "stone_hoe" | "copper_hoe" => (-1.0, -2.0),
+        "iron_hoe" => (-2.0, -1.0),
+        "diamond_hoe" => (-3.0, 0.0),
+        "netherite_hoe" => (-4.0, 0.0),
+        _ => return None,
     };
-    SWORD_BASE + tier
+    Some(row)
 }
 
 /// THE MAINHAND'S OWN SPEED (javap `createSwordAttributes` 32-53 —
 /// the ATTACK_SPEED modifier the sword's -2.4 addend speaks over the
 /// attribute's own 4.0 default the `Player.createAttributes` 19-22
-/// adds bare: the sword the 1.6 rides, the bare hand the 4.0 keeps).
+/// adds bare: the sword the 1.6 rides; the tool rows the lambda
+/// bodies' own speed args keep — the axe the -3.2/-3.1/-3.0 the
+/// shovel/pickaxe the -3.0/-2.8, the hoe the -3.0..0.0 ladder —
+/// the bare hand the 4.0 keeps).
 fn held_attack_speed(held: Option<&str>) -> f64 {
-    match held {
-        Some(n) if n.ends_with("_sword") => 4.0 - 2.4,
-        _ => 4.0,
+    let Some(name) = held else { return 4.0 };
+    if let Some((_dmg_arg, spd_arg)) = held_tool_args(name) {
+        return 4.0 + spd_arg;
     }
+    if name.ends_with("_sword") {
+        return 4.0 - 2.4;
+    }
+    4.0
 }
 
 /// THE CHARGE'S OWN DELAY (javap `getCurrentItemAttackStrengthDelay` —
@@ -23711,6 +23777,134 @@ mod tests {
         // 5.0 keeps, the sword the 12.5 rides)
         assert_eq!(super::held_charge_delay(None), 5.0);
         assert_eq!(super::held_charge_delay(Some("iron_sword")), 12.5);
+    }
+
+    /// THE TOOL'S OWN ROWS (the Items clinit's lambda bodies the
+    /// axe/shovel/hoe keep, the pickaxe() direct rows the same walk
+    /// extracts — the addend the dmg_arg + bonus the law keeps, the
+    /// speed the 4.0 + spd_arg the modifier rides, the hoes the
+    /// CANCEL law the weak tools speak).
+    #[test]
+    fn the_tool_rows_the_addends_keep() {
+        // THE AXES (the addend the dmg_arg + bonus: wooden/golden 6.0,
+        // stone/copper 8.0, iron 8.0, diamond 8.0, netherite 9.0)
+        assert_eq!(super::held_attack_addend(Some("wooden_axe")), 6.0);
+        assert_eq!(super::held_attack_addend(Some("golden_axe")), 6.0);
+        assert_eq!(super::held_attack_addend(Some("stone_axe")), 8.0);
+        assert_eq!(super::held_attack_addend(Some("copper_axe")), 8.0);
+        assert_eq!(super::held_attack_addend(Some("iron_axe")), 8.0);
+        assert_eq!(super::held_attack_addend(Some("diamond_axe")), 8.0);
+        assert_eq!(super::held_attack_addend(Some("netherite_axe")), 9.0);
+        // THE SHOVELS (1.5 + bonus the seven rows share)
+        assert_eq!(super::held_attack_addend(Some("wooden_shovel")), 1.5);
+        assert_eq!(super::held_attack_addend(Some("golden_shovel")), 1.5);
+        assert_eq!(super::held_attack_addend(Some("stone_shovel")), 2.5);
+        assert_eq!(super::held_attack_addend(Some("iron_shovel")), 3.5);
+        assert_eq!(super::held_attack_addend(Some("diamond_shovel")), 4.5);
+        assert_eq!(super::held_attack_addend(Some("netherite_shovel")), 5.5);
+        // THE PICKAXES (1.0 + bonus the direct rows keep)
+        assert_eq!(super::held_attack_addend(Some("wooden_pickaxe")), 1.0);
+        assert_eq!(super::held_attack_addend(Some("stone_pickaxe")), 2.0);
+        assert_eq!(super::held_attack_addend(Some("iron_pickaxe")), 3.0);
+        assert_eq!(super::held_attack_addend(Some("netherite_pickaxe")), 5.0);
+        // THE HOES' OWN CANCEL (the dmg arg the bonus the zero addend
+        // every hoe speaks — the weak tool the vanilla law keeps)
+        assert_eq!(super::held_attack_addend(Some("wooden_hoe")), 0.0);
+        assert_eq!(super::held_attack_addend(Some("stone_hoe")), 0.0);
+        assert_eq!(super::held_attack_addend(Some("iron_hoe")), 0.0);
+        assert_eq!(super::held_attack_addend(Some("netherite_hoe")), 0.0);
+        // THE SPEEDS (the 4.0 + spd_arg the modifier rides — the axes
+        // the 0.8/0.9/1.0 ladder, the shovels the 1.0, the pickaxes
+        // the 1.2, the hoes the 1..4 fast-but-weak ladder; the
+        // (4.0 + arg) shape the f64's own rounding the mirror pairs)
+        assert_eq!(super::held_attack_speed(Some("wooden_axe")), 4.0 + (-3.2));
+        assert_eq!(super::held_attack_speed(Some("iron_axe")), 4.0 + (-3.1));
+        assert_eq!(super::held_attack_speed(Some("netherite_axe")), 4.0 + (-3.0));
+        assert_eq!(super::held_attack_speed(Some("iron_shovel")), 4.0 + (-3.0));
+        assert_eq!(super::held_attack_speed(Some("iron_pickaxe")), 4.0 + (-2.8));
+        assert_eq!(super::held_attack_speed(Some("wooden_hoe")), 4.0 + (-3.0));
+        assert_eq!(super::held_attack_speed(Some("stone_hoe")), 4.0 + (-2.0));
+        assert_eq!(super::held_attack_speed(Some("iron_hoe")), 4.0 + (-1.0));
+        assert_eq!(super::held_attack_speed(Some("diamond_hoe")), 4.0 + 0.0);
+        // THE CHARGE'S OWN DELAYS (the wooden axe the 25-tick rhythm
+        // the 0.8 speed speaks, the pickaxe the ~16.67 the 1.2 keeps)
+        assert_eq!(
+            super::held_charge_delay(Some("wooden_axe")),
+            (1.0 / (4.0 + (-3.2))) * 20.0
+        );
+        assert_eq!(
+            super::held_charge_delay(Some("iron_pickaxe")),
+            (1.0 / (4.0 + (-2.8))) * 20.0
+        );
+    }
+
+    /// THE AXE HIT'S OWN PAYOFF (the attack lane the tool row the
+    /// iron axe rides: the raw (base + 8.0) the full charge speaks —
+    /// the ticker the 22.22-delay the 30 ticks the clamp's 1.0
+    /// keeps — the armor fold the zombie's own 2.0 the sword's walk
+    /// mirrors, the axe the sword's 7.0 raw the +3 the tool ladder
+    /// speaks).
+    #[test]
+    fn the_axe_hit_the_addend_rides() {
+        let mut app = App::new(4);
+        app.enter_world();
+        app.spawn_offline_body();
+        let (bx, bz) = {
+            let b = app.body.as_ref().unwrap();
+            (b.x, b.z)
+        };
+        let world = app.offline_world.as_ref().unwrap().size_blocks();
+        let (sx, sz) = ((bx + 2.5).floor() as i32, bz.floor() as i32);
+        let mut sy = 0;
+        let wref = app.offline_world.as_ref().unwrap();
+        for y in (0..world).rev() {
+            if crate::body::solid(wref, sx, y, sz) {
+                sy = y + 1;
+                break;
+            }
+        }
+        let mut z = crate::mob::Zombie::new(4243, bx + 2.5, sy as f64, bz as f64, 5);
+        z.health = crate::mob::ZOMBIE_MAX_HEALTH;
+        app.mobs.push(z);
+        let idx = app.mobs.len() - 1;
+        {
+            let (mx, my, mz) = {
+                let m = &app.mobs[idx];
+                (m.x, m.y + 1.0, m.z)
+            };
+            let b = app.body.as_mut().unwrap();
+            let (dx, dy, dz) = (mx - b.x, my - (b.y + b.eye_height()), mz - b.z);
+            let horiz = (dx * dx + dz * dz).sqrt().max(1e-9);
+            let len3 = (dx * dx + dy * dy + dz * dz).sqrt().max(1e-9);
+            let cam_yaw = (dx / horiz).atan2(-dz / horiz);
+            let cam_pitch = (dy / len3).asin();
+            b.yaw = (cam_yaw - std::f64::consts::PI).to_degrees() as f32;
+            b.pitch = -cam_pitch.to_degrees() as f32;
+        }
+        // THE IRON AXE'S OWN HAND (the live lane's id the held read
+        // keeps)
+        app.live_held = Some(crate::mob::wire_id("iron_axe").unwrap());
+        // THE FULL CHARGE (the axe's own 22.22-delay the 30 ticks the
+        // clamp's 1.0 keeps)
+        app.attack_ticker = 30;
+        app.on_attack();
+        // THE RAW + THE ARMOR'S OWN FOLD (the raw (2.0 + 8.0) the full
+        // charge's 1.0 scale speaks — the fold the sword's own walk
+        // mirrors: the f6 the 0.4 floor the subtraction falls to, the
+        // (1 - f6/25) the health subtraction rides — the 9.84 the
+        // fold's own answer speaks)
+        let raw = (super::PLAYER_ATTACK_DAMAGE + super::held_attack_addend(Some("iron_axe"))) as f32;
+        let f6 = (crate::mob::ZOMBIE_ARMOR as f32 - raw / 2.0)
+            .clamp(crate::mob::ZOMBIE_ARMOR as f32 * 0.2, 20.0);
+        let dealt = crate::mob::ZOMBIE_MAX_HEALTH - app.mobs[idx].health;
+        assert!(
+            (dealt - raw * (1.0 - f6 / 25.0)).abs() < 1e-4,
+            "the iron axe's full charge the (2.0 + 8.0) raw the armor fold speaks"
+        );
+        assert!(
+            (dealt - 9.84).abs() < 1e-3,
+            "the fold's own value the axe's raw keeps ({dealt})"
+        );
     }
 
     /// THE SWORD HIT'S OWN PAYOFF (the attack lane the mainhand's
