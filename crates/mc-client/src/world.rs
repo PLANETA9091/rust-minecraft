@@ -340,6 +340,14 @@ pub struct World {
     /// tint). The effect state's wire transport is the Update/Remove
     /// Mob Effect packets (the model's own-entity-filtered store).
     pub night_vision_factor: f32,
+    /// THE WEATHER'S OWN LEVELS (javap `Level` — the rain/thunder state
+    /// the Game Event packets keep: `setRainLevel`/`setThunderLevel` the
+    /// `Mth.clamp(param, 0.0, 1.0)` pair answers, the same value BOTH
+    /// the old and the current slots store). The snapshot rides the
+    /// model's levels (`materialize`); `0.0` for the procedural scene —
+    /// the dry world the goldens render, the sun/moon at full alpha.
+    pub rain_level: f32,
+    pub thunder_level: f32,
 }
 
 /// A biome cell with no opinion — the server never answered for the
@@ -449,6 +457,8 @@ impl World {
             sky_light_color: None, // the procedural scene: the -1 default's white identity
             night_vision_color: None, // the procedural scene: the #999999 default, factor 0.0
             night_vision_factor: 0.0, // the procedural scene: no effect store, the golden floor
+            rain_level: 0.0,  // the procedural scene: the dry world the goldens keep
+            thunder_level: 0.0, // the procedural scene: no storm the clouds speak
         };
         w.generate();
         w

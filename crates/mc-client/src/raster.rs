@@ -483,10 +483,15 @@ impl Framebuf {
                             let xi = ((u * s).floor() as isize).clamp(0, side as isize - 1) as usize;
                             let yi = ((v * s).floor() as isize).clamp(0, side as isize - 1) as usize;
                             let off = (yi * side as usize + xi) * 4;
-                            let a = rgba[off + 3] as f32 / 255.0;
                             // Official CELESTIAL pipeline = BlendFunction.OVERLAY:
                             // additive color (src.rgb * src.a + dst) — the black
                             // surroundings of the sun/moon textures add nothing.
+                            // src.a = texture.a x ColorModulator.a — the vertex
+                            // colors' alpha the DynamicTransforms color carries
+                            // (the rain fade the 26.2 renderSun/renderMoon walks
+                            // keep; the dry identity the 1.0 alpha never bends).
+                            let a = rgba[off + 3] as f32 / 255.0 * c0[3];
+                            // src.a = texture.a x ColorModulator.a
                             for ch in 0..3 {
                                 let src = c0[ch] * (rgba[off + ch] as f32 / 255.0) * a;
                                 let bg = self.color[o + ch] as f32 / 255.0;

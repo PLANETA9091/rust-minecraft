@@ -450,6 +450,12 @@ pub fn render_sunrise_disc(
 /// key defaults there). `flash` is the current dimension's end-flash state
 /// (deterministic in game time — see [`crate::end_flash`]); the END branch
 /// draws it through [`render_end_flash`], the extract's own discipline.
+/// `rain_brightness` is the SkyRenderState's own `rainBrightness =
+/// 1.0 - rainLevel` word (the putfield the 26.2 extract keeps) — the
+/// sun/moon alpha the renderSun/renderMoon walks multiply; the disc, the
+/// sunrise glow and the stars the pass keeps unfaded (the argument list
+/// the bytecode banks is the proof). Pass `1.0` for the dry world — every
+/// procedural/golden scene rides that identity.
 pub fn render_celestials(
     fb: &mut crate::raster::Framebuf,
     ctx: &RenderCtx,
@@ -457,6 +463,7 @@ pub fn render_celestials(
     day_time: i64,
     skybox: Skybox,
     flash: &crate::end_flash::EndFlashState,
+    rain_brightness: f32,
 ) {
     let mut quads: Vec<FlatQuad> = Vec::new();
     match skybox {
@@ -473,23 +480,38 @@ pub fn render_celestials(
             // sunrise/sunset glow (drawn first, official render order)
             render_sunrise_disc(&mut quads, cam, day_time);
 
-            // sun
+            // sun — the RAIN FADE (javap SkyRenderer.renderSun, the 26.2
+            // bytecode: `writeTransform(pose, Vector4f(1.0, 1.0, 1.0,
+            // rainBrightness))` — the DynamicTransforms color the
+            // CELESTIAL pipeline's ColorModulator multiplies, the WHITE
+            // rgb the ALPHA the rain state carries). The
+            // `rainBrightness = 1.0 - rainLevel` walk the state's own
+            // putfield keeps (SkyRenderer.extractRenderState, the dsub
+            // the bytecode banks). The sky disc and the sunrise glow
+            // the 26.2 pass keeps UNFADED (renderSkyDisc/renderSunriseAndSunset
+            // take NO rain argument — the argument list is the proof).
             let sun = celestial_quad(&celestial(st.sun_angle), cam, 30.0);
             quads.push(FlatQuad {
                 pts: sun,
-                colors: [[1.0, 1.0, 1.0, 1.0]; 4],
+                colors: [[1.0, 1.0, 1.0, rain_brightness]; 4],
                 rgba: Some((&S::SUN_RGBA, S::CELESTIAL_SIZE)),
                 blend: crate::raster::FlatBlend::Additive,
             });
-            // moon (phase-selected texture, mirrored UVs like the official buffer)
+            // moon (phase-selected texture, mirrored UVs like the official
+            // buffer) — the same rain-faded alpha the renderMoon walk
+            // keeps (`Vector4f(1.0, 1.0, 1.0, rainBrightness)`)
             let moon = celestial_quad(&celestial(st.moon_angle), cam, 20.0);
             quads.push(FlatQuad {
                 pts: moon,
-                colors: [[1.0, 1.0, 1.0, 1.0]; 4],
+                colors: [[1.0, 1.0, 1.0, rain_brightness]; 4],
                 rgba: Some((&S::MOON_RGBA[st.moon_phase as usize], S::CELESTIAL_SIZE)),
                 blend: crate::raster::FlatBlend::Additive,
             });
-            // stars: brightness-tinted, additive (official STARS pipeline = OVERLAY).
+            // stars: brightness-tinted, additive (official STARS pipeline =
+            // OVERLAY). The 26.2 renderStars walk keeps its OWN scalar —
+            // `Vector4f(b, b, b, b)` the starBrightness state speaks, NO
+            // rain argument the call carries — the stars keep their word
+            // while the sun and the moon fade.
             let m = celestial(st.star_angle);
             let b = st.star_brightness;
             for star in stars() {
@@ -1125,6 +1147,7 @@ mod tests {
                 midnight,
                 skybox,
                 &crate::end_flash::EndFlashState::new(),
+                1.0,
             );
             fb.color
         };
@@ -1160,7 +1183,7 @@ mod tests {
         let render = |skybox: Skybox, flash: &crate::end_flash::EndFlashState| {
             let mut fb = crate::raster::Framebuf::new(32, 32);
             fb.clear([0.004, 0.008, 0.012], [0.0; 3]);
-            render_celestials(&mut fb, &ctx, &cam, 888, skybox, flash);
+            render_celestials(&mut fb, &ctx, &cam, 888, skybox, flash, 1.0);
             fb.color
         };
         let cleared = {
@@ -1183,6 +1206,81 @@ mod tests {
             render(Skybox::Overworld, &active),
             render(Skybox::Overworld, &quiet),
             "the flash is the END extract's alone"
+        );
+    }
+
+    #[test]
+    fn the_rain_fade_the_sun_and_moon_wear() {
+        // THE 26.2 SKY-PASS LAW (javap): the extract puts `rainBrightness
+        // = 1.0 - rainLevel` on the state, the pass hands it to
+        // renderSunMoonAndStars ONLY — renderSun/renderMoon multiply it
+        // into their DynamicTransforms alpha (`Vector4f(1.0, 1.0, 1.0,
+        // rainBrightness)`), the disc, the sunrise glow and the stars
+        // take NO rain argument (the argument list is the proof). The
+        // witness frames: noon with an up-facing camera catches the sun
+        // quad; the additive blend at alpha 0 IS the cleared frame.
+        let cam = Camera { pos: Vec3::new(0.0, 80.0, 0.0), yaw: 0.0, pitch: -1.4 };
+        let ctx = RenderCtx {
+            view: cam.view(),
+            proj: Mat4::perspective(70.0f32.to_radians(), 320.0 / 180.0, 0.1, 512.0),
+            fog_color: [0.0; 3],
+            fog_near: 1.0,
+            fog_far: 2.0,
+        };
+        let noon = 6_000i64;
+        let render = |rain: f32| {
+            let mut fb = crate::raster::Framebuf::new(32, 32);
+            fb.clear([0.004, 0.008, 0.012], [0.0; 3]);
+            render_celestials(
+                &mut fb,
+                &ctx,
+                &cam,
+                noon,
+                Skybox::Overworld,
+                &crate::end_flash::EndFlashState::new(),
+                rain,
+            );
+            fb.color
+        };
+        let cleared = {
+            let mut fb = crate::raster::Framebuf::new(32, 32);
+            fb.clear([0.004, 0.008, 0.012], [0.0; 3]);
+            fb.color
+        };
+        // the dry sky paints the sun; the full-rain sky (brightness 0.0)
+        // provably does not — the alpha the DynamicTransforms carry
+        assert_ne!(render(1.0), cleared, "the dry noon paints the sun");
+        assert_eq!(render(0.0), cleared, "the rain-faded sun paints nothing");
+        // THE STARS KEEP THEIR WORD: the 26.2 renderStars takes its OWN
+        // scalar — a midnight frame is byte-identical dry or raining
+        // (the sun/moon both sit outside this horizontal view; the
+        // star quads' `Vector4f(b, b, b, b)` never reads the rain)
+        let flat = Camera { pos: Vec3::new(0.0, 80.0, 0.0), yaw: 0.0, pitch: 0.0 };
+        let night_ctx = RenderCtx {
+            view: flat.view(),
+            proj: Mat4::perspective(70.0f32.to_radians(), 320.0 / 180.0, 0.1, 512.0),
+            fog_color: [0.0; 3],
+            fog_near: 1.0,
+            fog_far: 2.0,
+        };
+        let night = |rain: f32| {
+            let mut fb = crate::raster::Framebuf::new(32, 32);
+            fb.clear([0.004, 0.008, 0.012], [0.0; 3]);
+            render_celestials(
+                &mut fb,
+                &night_ctx,
+                &flat,
+                18_000,
+                Skybox::Overworld,
+                &crate::end_flash::EndFlashState::new(),
+                rain,
+            );
+            fb.color
+        };
+        assert_eq!(
+            night(1.0),
+            night(0.0),
+            "the stars keep their word while the sun and the moon fade"
         );
     }
 }

@@ -1607,6 +1607,11 @@ pub struct App {
     /// [`crate::sky::render_celestials`]. Deterministic in game time
     /// (see [`crate::end_flash`]); an Overworld/Nether sky never reads it.
     pub end_flash: crate::end_flash::EndFlashState,
+    /// THE RAIN SPLASH'S OWN CLOCK (javap `ClientLevel.rainSoundTime` —
+    /// the field the tickWeatherEffects walk post-increments each raining
+    /// tick and RESETS to 0 when the nextInt(3) compare fires the splash).
+    /// The dry world keeps it at 0 (the reset the fired arm speaks).
+    rain_sound_time: u32,
     /// UI one-shot sound log ("ui.button.click @<frame>"), mirroring the
     /// vanilla rule that EVERY activated button plays the click; consumed by
     /// the audio backend (audio.rs) like the music event log.
@@ -2618,6 +2623,7 @@ impl App {
             day_time_base: 0,
             partial_tick: 1.0,
             end_flash: crate::end_flash::EndFlashState::new(),
+            rain_sound_time: 0,
             ui_sounds: Vec::new(),
             net_requests: Vec::new(),
             next_ping_id: 0,
@@ -10297,6 +10303,79 @@ impl App {
         self.live_clicks = Some(clicks);
     }
 
+    /// THE RAIN SPLASH'S OWN WALK (javap `ClientLevel.tickWeatherEffects`,
+    /// the 26.2 bytecode tail the raw disasm keeps): while the rain level
+    /// holds, the splash clock counts UP each tick and the sound fires
+    /// when `nextInt(3) < rainSoundTime++` — the post-increment compare
+    /// the dup_x1 walk keeps, the `rainSoundTime = 0` reset the fired arm
+    /// speaks. The fired tick probes the camera column's surface — the
+    /// heightmap's first-air-above-the-top walk the MOTION_BLOCKING type
+    /// keeps, the client's own grid scanning the first non-air cell — and
+    /// the variant the two compares name: the surface above the camera
+    /// floor + 1 AND above the camera floor plays the muffled ABOVE word,
+    /// the exposed camera the full one. The words, the volumes and the
+    /// pitches are the playLocalSound pairs verbatim (`weather.rain.above`
+    /// 0.1F/0.5F, `weather.rain` 0.2F/1.0F, the WEATHER source, no
+    /// delay). The splash roll's random is the vanilla
+    /// `RandomSource.createThreadLocalInstance(getGameTime())` stand-in —
+    /// the day clock's own LCG the mob voice seed mixes (the same
+    /// per-tick determinism the wire's stand-in keeps). The dry tick
+    /// resets the clock and keeps the silence.
+    fn tick_weather_splash(&mut self, day_time: i64) {
+        let rain = self
+            .active_world()
+            .map(|w| w.rain_level)
+            .unwrap_or(0.0);
+        if rain <= 0.0 {
+            // the dry world: the early return the getRainLevel gate
+            // keeps, the clock the reset holds
+            self.rain_sound_time = 0;
+            return;
+        }
+        // the post-increment compare: nextInt(3) < rainSoundTime++
+        let old = self.rain_sound_time;
+        self.rain_sound_time = old + 1;
+        let mut rng = crate::drops::Lcg::new(crate::mob::entity_voice_seed(day_time as i32));
+        if (rng.next() % 3) as u32 >= old {
+            return;
+        }
+        self.rain_sound_time = 0;
+        // the camera column's surface: the heightmap's first-air-above
+        // word, the client's own grid the probe reads (an unloaded
+        // column — the grid's all-air answer — the null heightmap's
+        // honest skip keeps)
+        let cam = self.world_camera();
+        let cx = cam.pos.x.floor() as i32;
+        let cz = cam.pos.z.floor() as i32;
+        let cam_floor_y = cam.pos.y.floor() as i32;
+        let surface_y = self.active_world().and_then(|w| {
+            (0..crate::world::CHUNK_Y as i32)
+                .rev()
+                .find(|y| w.get(cx, *y, cz) != crate::world::AIR)
+                .map(|top| top + 1)
+        });
+        let Some(surface_y) = surface_y else {
+            return;
+        };
+        // the two compares the bytecode keeps (the raw disasm's
+        // if_icmple pair): the surface above the camera floor + 1 AND
+        // above the camera floor -> the ABOVE arm; the exposed camera
+        // the full one
+        let above = surface_y > cam_floor_y + 1 && surface_y > cam_floor_y;
+        let (word, volume, pitch) = if above {
+            ("weather.rain.above", 0.1, 0.5)
+        } else {
+            ("weather.rain", 0.2, 1.0)
+        };
+        let ear = self
+            .body
+            .as_ref()
+            .map(|b| (b.x, b.y + b.eye_height(), b.z));
+        let dist = ear_distance(ear, cx as f64, surface_y as f64, cz as f64);
+        self.sounds
+            .play_voice_at(self.frame, word, volume, pitch, dist);
+    }
+
     /// The live view refreshed: the play session's stream landed in the
     /// SAME model the screen renders and the worker shipped the new
     /// window — swap the network world in place (a re-sent chunk
@@ -14064,6 +14143,10 @@ impl App {
         // time); tick() is idempotent per tick, so the per-frame call is
         // the vanilla cadence under the frame == tick model
         self.end_flash.tick(day_time);
+        // THE WEATHER'S OWN TICK (the rain splash the 26.2
+        // tickWeatherEffects walk speaks — the frame == tick model the
+        // end-flash lane keeps; the vanilla cadence the same law banks)
+        self.tick_weather_splash(day_time);
         let sky = crate::sky::sample(day_time);
         // THE WATER FOG (javap WaterFogEnvironment.setupFog, the 26.2
         // jar): the camera-in-water cell arms the murk — the pair the
@@ -14131,7 +14214,25 @@ impl App {
             None => fb.clear(sky.sky_color, sky.fog_color),
         }
         if fluid_fog.is_none() {
-            crate::sky::render_celestials(fb, &ctx, &cam, day_time, self.world_skybox, &self.end_flash);
+            // THE RAIN BRIGHTNESS (javap SkyRenderer.extractRenderState,
+            // the 26.2 putfield the dsub keeps: `rainBrightness = 1.0 -
+            // rainLevel`): the active world's synced rain level the
+            // snapshot carries, the dry worlds the 1.0 identity (every
+            // procedural/golden scene, no weather word ever arrived)
+            let rain = self
+                .active_world()
+                .map(|w| w.rain_level)
+                .unwrap_or(0.0);
+            let rain_brightness = 1.0 - rain;
+            crate::sky::render_celestials(
+                fb,
+                &ctx,
+                &cam,
+                day_time,
+                self.world_skybox,
+                &self.end_flash,
+                rain_brightness,
+            );
         }
         if let Some(quads) = &self.world_quads {
             fb.draw_quads(&ctx, quads);
@@ -20342,6 +20443,8 @@ mod tests {
             sky_light_color: None, // no dimension opinion — the -1 default's white identity
             night_vision_color: None, // no dimension opinion — the #999999 default, factor 0.0
             night_vision_factor: 0.0, // no effect store rides these scenes — the golden floor
+            rain_level: 0.0,  // the dry test world — no weather word rides
+            thunder_level: 0.0, // the dry test world — no storm speaks
                 },
                 camera: None,
                 spawn_biome: Some("minecraft:plains".into()),
@@ -20772,6 +20875,8 @@ mod tests {
             sky_light_color: None, // no dimension opinion — the -1 default's white identity
             night_vision_color: None, // no dimension opinion — the #999999 default, factor 0.0
             night_vision_factor: 0.0, // no effect store rides these scenes — the golden floor
+            rain_level: 0.0,  // the dry test world — no weather word rides
+            thunder_level: 0.0, // the dry test world — no storm speaks
         });
         app.enter_network_world(None, Skybox::Overworld, None, None);
         assert_eq!(app.screen, ScreenKind::World);
@@ -20832,6 +20937,8 @@ mod tests {
             sky_light_color: None, // no dimension opinion — the -1 default's white identity
             night_vision_color: None, // no dimension opinion — the #999999 default, factor 0.0
             night_vision_factor: 0.0, // no effect store rides these scenes — the golden floor
+            rain_level: 0.0,  // the dry test world — no weather word rides
+            thunder_level: 0.0, // the dry test world — no storm speaks
         });
         app.enter_network_world(None, Skybox::Overworld, None, None);
         let flight = app.world_camera();
@@ -20894,6 +21001,8 @@ mod tests {
             sky_light_color: None, // no dimension opinion — the -1 default's white identity
             night_vision_color: None, // no dimension opinion — the #999999 default, factor 0.0
             night_vision_factor: 0.0, // no effect store rides these scenes — the golden floor
+            rain_level: 0.0,  // the dry test world — no weather word rides
+            thunder_level: 0.0, // the dry test world — no storm speaks
                 },
                 camera: None,
                 spawn_biome: None,
@@ -20931,6 +21040,8 @@ mod tests {
             sky_light_color: None, // no dimension opinion — the -1 default's white identity
             night_vision_color: None, // no dimension opinion — the #999999 default, factor 0.0
             night_vision_factor: 0.0, // no effect store rides these scenes — the golden floor
+            rain_level: 0.0,  // the dry test world — no weather word rides
+            thunder_level: 0.0, // the dry test world — no storm speaks
         }
     }
 
@@ -28406,6 +28517,8 @@ cow_sound_variant: None,
             sky_light_color: None,
             night_vision_color: None,
             night_vision_factor: 0.0,
+            rain_level: 0.0,
+            thunder_level: 0.0,
         });
         app.net_world.as_mut().unwrap().set(8, 0, 8, crate::world::STONE);
         app.enter_network_world(None, Skybox::Overworld, None, None);
@@ -37638,6 +37751,91 @@ cow_sound_variant: None,
         // the firstTick clear is UNCONDITIONAL (the every-tick arm the
         // bytecode's own tail keeps — even the absent ticks clear it)
         assert!(!h.first_tick, "the birth gate spent");
+    }
+
+    #[test]
+    fn the_rain_splash_the_tick_walk_speaks() {
+        // THE CADENCE + THE VARIANT GATE (javap ClientLevel.
+        // tickWeatherEffects, the 26.2 tail): the splash clock counts up
+        // while raining, the nextInt(3) < old compare fires (the
+        // guaranteed fire by old == 3 — the ramp the post-increment
+        // keeps), the fired tick resets the clock and plays the column's
+        // variant: the exposed camera the full weather.rain word, the
+        // under-roof camera the muffled weather.rain.above one, each the
+        // playLocalSound pair verbatim (0.1F/0.5F above, 0.2F/1.0F plain
+        // — the ear-less scenes the 0.0 distance answers, the unfaded
+        // gain the log records). The dry world the reset + the silence
+        // keeps.
+        let mut app = App::new(1);
+        app.ensure_world();
+        let world = app.offline_world.as_mut().unwrap();
+        world.rain_level = 1.0;
+        // the controlled column: the whole column cleared, the stone
+        // floor at y=9 -> the heightmap's first-air-above word is y=10
+        for y in 0..crate::world::CHUNK_Y as i32 {
+            world.set(8, y, 8, crate::world::AIR);
+        }
+        world.set(8, 9, 8, crate::world::STONE);
+        // THE EXPOSED CAMERA: the eye in the surface air (the floor at
+        // 11.62 -> 11) — the surface (10) never clears camera floor + 1,
+        // the PLAIN arm the two compares keep
+        app.offline_camera = Some(crate::camera::Camera {
+            pos: Vec3::new(
+                8.5,
+                10.0 + crate::world_view::PLAYER_EYE_HEIGHT,
+                8.5,
+            ),
+            yaw: 0.0,
+            pitch: 0.0,
+        });
+        for t in 0..40u64 {
+            app.tick_weather_splash(100 + t as i64);
+        }
+        let dry = &app.sounds.events;
+        assert!(!dry.is_empty(), "the ramp guarantees a fire within 3 ticks");
+        assert!(
+            dry.iter().all(|e| e.starts_with("weather.rain ")),
+            "the exposed camera speaks the plain word: {dry:?}"
+        );
+        assert!(
+            dry.iter().all(|e| e.contains(" v0.200000 p1.000000")),
+            "the playLocalSound pair verbatim: {dry:?}"
+        );
+        assert!(app.rain_sound_time <= 3, "the reset the fired arm keeps");
+
+        // THE UNDER-ROOF ARM: the stone cap puts the surface above the
+        // camera floor + 1 — the muffled ABOVE word the compares name
+        app.sounds.events.clear();
+        app.rain_sound_time = 0;
+        {
+            let world = app.offline_world.as_mut().unwrap();
+            for y in 14..crate::world::CHUNK_Y as i32 {
+                world.set(8, y, 8, crate::world::STONE);
+            }
+        }
+        for t in 0..40u64 {
+            app.tick_weather_splash(200 + t as i64);
+        }
+        let roofed = &app.sounds.events;
+        assert!(!roofed.is_empty(), "the roofed column still splashes");
+        assert!(
+            roofed.iter().all(|e| e.starts_with("weather.rain.above ")),
+            "the under-roof camera speaks the muffled word: {roofed:?}"
+        );
+        assert!(
+            roofed.iter().all(|e| e.contains(" v0.100000 p0.500000")),
+            "the above pair verbatim: {roofed:?}"
+        );
+
+        // THE DRY SILENCE: the reset the early return keeps, the log
+        // the silence keeps
+        app.offline_world.as_mut().unwrap().rain_level = 0.0;
+        app.sounds.events.clear();
+        for t in 0..40u64 {
+            app.tick_weather_splash(300 + t as i64);
+        }
+        assert!(app.sounds.events.is_empty(), "the dry world never splashes");
+        assert_eq!(app.rain_sound_time, 0, "the dry tick resets the clock");
     }
 }
 

@@ -105,6 +105,7 @@ pub mod clientbound {
         CB_CONTAINER_SET_SLOT as CONTAINER_SET_SLOT, CB_SET_HELD_SLOT as SET_HELD_SLOT,
         CB_OPEN_SCREEN as OPEN_SCREEN, CB_CONTAINER_CLOSE as CONTAINER_CLOSE,
         CB_SET_TIME as SET_TIME,
+        CB_GAME_EVENT as GAME_EVENT,
         CB_UPDATE_MOB_EFFECT as UPDATE_MOB_EFFECT,
         CB_SET_HEALTH as SET_HEALTH, CB_HURT_ANIMATION as HURT_ANIMATION,
         CB_PLAYER_COMBAT_KILL as PLAYER_COMBAT_KILL,
@@ -144,6 +145,71 @@ pub mod serverbound {
 /// value keeps real servers streaming without pretending to have a batch
 /// timing model yet.
 pub const DESIRED_CHUNKS_PER_TICK: f32 = 50.0;
+
+/// THE GAME EVENT'S OWN WORD (javap `ClientboundGameEventPacket` — the
+/// wire shape the FriendlyByteBuf read walk keeps: `readUnsignedByte`
+/// event id, `readFloat` param; the $Type ids the outer clinit's
+/// `new Type(i)` + `putstatic` pair names field by field). The client
+/// answers the weather family through the rain/thunder levels the
+/// ClientLevel state keeps; the rest the honest no-opinion skip (the
+/// arms' vanilla walk names what each would do — the client owns no
+/// such surface yet).
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct GameEvent {
+    /// The event's own id (the `$Type.id` the write walk sends).
+    pub event: u8,
+    /// The event's float param (the rain level, the game mode id, the
+    /// border size — the event's own law reads it).
+    pub param: f32,
+}
+
+/// The `$Type` ids — the 26.2 outer clinit's putstatic walk verbatim
+/// (raw disasm `scripts/raw_disasm.py`, the NO_RESPAWN_BLOCK_AVAILABLE
+/// .. LEVEL_CHUNKS_LOAD_START field order the ids 0..13 wear).
+pub mod game_event {
+    /// `NO_RESPAWN_BLOCK_AVAILABLE` — the clinit's `new Type(0)`.
+    pub const NO_RESPAWN_BLOCK_AVAILABLE: u8 = 0;
+    /// `START_RAINING` — the client answers `setRainLevel(1.0F)`.
+    pub const START_RAINING: u8 = 1;
+    /// `STOP_RAINING` — the client answers `setRainLevel(0.0F)`.
+    pub const STOP_RAINING: u8 = 2;
+    /// `CHANGE_GAME_MODEL` — `GameType.byId(floor(param + 0.5))`.
+    pub const CHANGE_GAME_MODEL: u8 = 3;
+    /// `WIN_GAME` — the WinScreen the vanilla client opens.
+    pub const WIN_GAME: u8 = 4;
+    /// `DEMO_EVENT` — the demo screens the options drive.
+    pub const DEMO_EVENT: u8 = 5;
+    /// `PLAY_ARROW_HIT_SOUND` — the arrow's hit word at the param pos.
+    pub const PLAY_ARROW_HIT_SOUND: u8 = 6;
+    /// `RAIN_LEVEL_CHANGE` — `setRainLevel(param)` the clamp walk keeps.
+    pub const RAIN_LEVEL_CHANGE: u8 = 7;
+    /// `THUNDER_LEVEL_CHANGE` — `setThunderLevel(param)`.
+    pub const THUNDER_LEVEL_CHANGE: u8 = 8;
+    /// `PUFFER_FISH_STING` — the mob-effect world the client mirrors.
+    pub const PUFFER_FISH_STING: u8 = 9;
+    /// `GUARDIAN_ELDER_EFFECT` — the MiningFatigue arm.
+    pub const GUARDIAN_ELDER_EFFECT: u8 = 10;
+    /// `IMMEDIATE_RESPAWN` — the client's respawn-screen flag.
+    pub const IMMEDIATE_RESPAWN: u8 = 11;
+    /// `LIMITED_CRAFTING` — the crafting gate the client flags.
+    pub const LIMITED_CRAFTING: u8 = 12;
+    /// `LEVEL_CHUNKS_LOAD_START` — the loading-screen word.
+    pub const LEVEL_CHUNKS_LOAD_START: u8 = 13;
+}
+
+/// Parse Game Event (clientbound play, `minecraft:game_event` id 38):
+/// u8 event id, f32 param — the FriendlyByteBuf walk the read ctor
+/// keeps (`readUnsignedByte` for the TYPES.get lookup, `readFloat` for
+/// the param).
+pub fn parse_game_event(payload: &[u8]) -> Result<GameEvent> {
+    let mut c: &[u8] = payload;
+    let id = read_varint(&mut c)?;
+    anyhow::ensure!(id == clientbound::GAME_EVENT, "not a game event packet (0x{id:02X})");
+    anyhow::ensure!(c.len() >= 5, "game event truncated");
+    let event = read_u8(&mut c)?;
+    let param = read_f32(&mut c)?;
+    Ok(GameEvent { event, param })
+}
 
 /// Entries per section side: 16 for blocks, 4 for biomes.
 const SECTION_BLOCKS: usize = 4096;
@@ -6837,6 +6903,14 @@ pub enum PlayEvent {
     /// (the day/night timeline driver — the renderer's sky factor is a
     /// pure function of the clock's day tick).
     Time(TimeSync),
+    /// Game Event: the server's one-byte world-opinion word (the
+    /// weather the client cannot otherwise learn — the rain the sky
+    /// renders, the thunder the clouds speak) plus a float param the
+    /// event's own law reads. The event byte's own vocabulary the
+    /// [`game_event`] module's consts name — the
+    /// ClientboundGameEventPacket$Type ids the 26.2 clinit's
+    /// `new Type(0)..new Type(13)` walk banks verbatim.
+    GameEvent(GameEvent),
     /// Keep-alive probe answered.
     KeepAlive(i64),
     /// Ping probe answered.
@@ -7010,6 +7084,7 @@ impl<S: Read + Write> PlaySession<S> {
                 self.conn.send_packet(&encode_play_keep_alive_response(probe))?;
                 Ok(PlayEvent::KeepAlive(probe))
             }
+            clientbound::GAME_EVENT => Ok(PlayEvent::GameEvent(parse_game_event(&pkt)?)),
             clientbound::PING => {
                 let probe = parse_play_ping(&pkt)?;
                 self.conn.send_packet(&encode_play_pong(probe))?;
@@ -7896,6 +7971,7 @@ mod tests {
     use super::*;
     use crate::login::{encode_login_success, encode_login_success_with_properties, encode_set_compression};
     use crate::varint::write_string;
+    use crate::varint::write_varint;
     use std::net::TcpListener;
     use std::thread::JoinHandle;
 
@@ -7906,6 +7982,65 @@ mod tests {
         let mut p = Vec::new();
         write_hashed_stack(&mut p, stack)?;
         Ok(p)
+    }
+
+    #[test]
+    fn game_event_wire_word_the_clinit_order_pins() {
+        // THE PACKET ID: the generated table's runtime fact (the 26.2
+        // bootstrapped protocol dump) — `minecraft:game_event` id 38.
+        assert_eq!(clientbound::GAME_EVENT, 38);
+        // THE $Type VOCABULARY: the outer clinit's `new Type(i)` +
+        // putstatic walk banks the field order verbatim — ids 0..13 in
+        // the NO_RESPAWN_BLOCK_AVAILABLE .. LEVEL_CHUNKS_LOAD_START
+        // order the raw disasm keeps.
+        assert_eq!(game_event::NO_RESPAWN_BLOCK_AVAILABLE, 0);
+        assert_eq!(game_event::START_RAINING, 1);
+        assert_eq!(game_event::STOP_RAINING, 2);
+        assert_eq!(game_event::CHANGE_GAME_MODEL, 3);
+        assert_eq!(game_event::WIN_GAME, 4);
+        assert_eq!(game_event::DEMO_EVENT, 5);
+        assert_eq!(game_event::PLAY_ARROW_HIT_SOUND, 6);
+        assert_eq!(game_event::RAIN_LEVEL_CHANGE, 7);
+        assert_eq!(game_event::THUNDER_LEVEL_CHANGE, 8);
+        assert_eq!(game_event::PUFFER_FISH_STING, 9);
+        assert_eq!(game_event::GUARDIAN_ELDER_EFFECT, 10);
+        assert_eq!(game_event::IMMEDIATE_RESPAWN, 11);
+        assert_eq!(game_event::LIMITED_CRAFTING, 12);
+        assert_eq!(game_event::LEVEL_CHUNKS_LOAD_START, 13);
+        // THE WIRE SHAPE: varint id + u8 event + f32 param — the
+        // FriendlyByteBuf read walk (`readUnsignedByte` for the TYPES
+        // lookup, `readFloat` for the param). The rain-level change the
+        // ClientLevel state answers: event 7, param 0.6875.
+        let mut p = Vec::new();
+        write_varint(&mut p, clientbound::GAME_EVENT as i32);
+        p.push(game_event::RAIN_LEVEL_CHANGE);
+        p.extend_from_slice(&0.6875f32.to_be_bytes());
+        let ev = parse_game_event(&p).expect("the weather word decodes");
+        assert_eq!(ev.event, game_event::RAIN_LEVEL_CHANGE);
+        assert!((ev.param - 0.6875).abs() < 1e-9);
+        // the pump answers the same word (the dispatch arm the match
+        // keeps) — a stop-rain event the model's setRainLevel(0.0F)
+        // walk consumes
+        let mut s = Vec::new();
+        write_varint(&mut s, clientbound::GAME_EVENT as i32);
+        s.push(game_event::STOP_RAINING);
+        s.extend_from_slice(&0.0f32.to_be_bytes());
+        match parse_game_event(&s).expect("stop-rain decodes") {
+            GameEvent { event, param } => {
+                assert_eq!(event, game_event::STOP_RAINING);
+                assert_eq!(param, 0.0);
+            }
+        }
+        // THE TRUNCATED BODY the ensure keeps: the id alone is not the
+        // packet — the five-byte tail the read ctor demands
+        let mut t = Vec::new();
+        write_varint(&mut t, clientbound::GAME_EVENT as i32);
+        t.push(game_event::START_RAINING);
+        assert!(parse_game_event(&t).is_err(), "the float tail missing");
+        // THE WRONG ID the honest refusal keeps
+        let mut w = Vec::new();
+        write_varint(&mut w, clientbound::KEEP_ALIVE as i32);
+        assert!(parse_game_event(&w).is_err(), "not a game event");
     }
 
     #[test]

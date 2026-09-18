@@ -1047,6 +1047,8 @@ mod tests {
             // the effect-absent floor: no effect store rides the test
             // scenes, the golden identity holds
             night_vision_factor: 0.0,
+            rain_level: 0.0,  // the air-window scene: the dry world
+            thunder_level: 0.0,
         }
     }
 

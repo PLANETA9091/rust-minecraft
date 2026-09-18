@@ -114,6 +114,16 @@ pub struct WorldModel {
     /// The latest Set Time: the world's monotonic game time (0 until
     /// the server's first sync).
     pub game_time: i64,
+    /// THE WEATHER'S OWN LEVELS (javap `Level` — the rain/thunder state
+    /// the Game Event packets speak: the `setRainLevel`/`setThunderLevel`
+    /// walks keep the `Mth.clamp(param, 0.0, 1.0)` pair and store the
+    /// SAME value into the old/current slots — no easing on the client,
+    /// the server's incremental RAIN_LEVEL_CHANGE stream IS the ease).
+    /// The renderer's `rainBrightness = 1.0 - rainLevel` reads the rain
+    /// lane; the `getThunderLevel` walk multiplies the thunder value by
+    /// the rain level (the effective thunder the splash walk speaks).
+    rain_level: f32,
+    thunder_level: f32,
     /// The latest Set Time's clock states, keyed by order of arrival
     /// (a vanilla overworld server syncs its dimension's default
     /// clock). Multi-clock worlds need the WORLD_CLOCK registry names
@@ -749,6 +759,8 @@ impl WorldModel {
             current_dimension: None,
             registry: RegistryData::default(),
             game_time: 0,
+            rain_level: 0.0,
+            thunder_level: 0.0,
             clocks: Vec::new(),
             columns: HashMap::new(),
             entities: HashMap::new(),
@@ -1802,6 +1814,38 @@ impl WorldModel {
             }
             // probes and skipped packets carry no world state
             PlayEvent::KeepAlive(_) | PlayEvent::Ping(_) | PlayEvent::ChunkBatch => false,
+            PlayEvent::GameEvent(g) => {
+                // THE GAME EVENT'S OWN WALK (javap
+                // ClientPacketListener.handleGameEvent + Level, the 26.2
+                // bytecode): the weather family answers through the
+                // Level setters — START_RAINING the `setRainLevel(1.0F)`
+                // arm speaks, STOP_RAINING the `setRainLevel(0.0F)` one,
+                // the two LEVEL_CHANGE packets the param arms carry, each
+                // `Mth.clamp(param, 0.0, 1.0)` the setter keeps. The rest
+                // of the vocabulary the honest no-opinion skip (the
+                // game-mode / win-screen / border arms name surfaces this
+                // client does not own yet — the decode never lies about
+                // them, the arms simply keep no state).
+                match g.event {
+                    mc_protocol::play::game_event::START_RAINING => {
+                        self.rain_level = 1.0;
+                        true
+                    }
+                    mc_protocol::play::game_event::STOP_RAINING => {
+                        self.rain_level = 0.0;
+                        true
+                    }
+                    mc_protocol::play::game_event::RAIN_LEVEL_CHANGE => {
+                        self.rain_level = g.param.clamp(0.0, 1.0);
+                        true
+                    }
+                    mc_protocol::play::game_event::THUNDER_LEVEL_CHANGE => {
+                        self.thunder_level = g.param.clamp(0.0, 1.0);
+                        true
+                    }
+                    _ => false,
+                }
+            }
             PlayEvent::PlayerInfoUpdate(u) => {
                 // THE HANDLER'S OWN WALK (javap
                 // ClientPacketListener.handlePlayerInfoUpdate): the
@@ -2304,6 +2348,24 @@ impl WorldModel {
                 .first()
                 .map(|c| c.total_ticks.rem_euclid(crate::timeline::DAY_PERIOD_TICKS)),
         }
+    }
+
+    /// THE RAIN LEVEL'S OWN ANSWER (javap `Level.getRainLevel` — the
+    /// `Mth.lerp(partial, oRainLevel, rainLevel)` walk with BOTH slots
+    /// holding the same clamped value the setter stores; the Game
+    /// Event stream the state keeps). `0.0` before any weather word —
+    /// the dry world the golden scenes render.
+    pub fn rain_level(&self) -> f32 {
+        self.rain_level
+    }
+
+    /// THE EFFECTIVE THUNDER'S OWN ANSWER (javap `Level.getThunderLevel`
+    /// — the lerp walk MULTIPLIED BY the rain level the same method's
+    /// tail keeps: `(lerp(oThunder, thunder) * getRainLevel(partial))`).
+    /// The effective value the rain gates — the dry world's thunder
+    /// word is 0.0 whatever the state holds.
+    pub fn thunder_level(&self) -> f32 {
+        self.thunder_level * self.rain_level
     }
 
     /// The renderer's sky factor for the current clock state — the day
@@ -3179,6 +3241,76 @@ mod tests {
         assert!(m.apply(PlayEvent::Time(ts2)));
         assert_eq!(m.day_tick(), Some(6_000), "noon after the re-sync");
         assert_eq!(m.sky_factor(), 1.0, "noon is full day");
+    }
+
+    #[test]
+    fn the_game_event_words_the_weather_levels_speak() {
+        // THE DRY FLOOR: the world with no weather opinion is dry — the
+        // golden scenes' honest default
+        let mut m = WorldModel::new();
+        assert_eq!(m.rain_level(), 0.0);
+        assert_eq!(m.thunder_level(), 0.0);
+        // THE START/STOP PAIR (javap handleGameEvent: the two arms the
+        // `setRainLevel(1.0F)` / `setRainLevel(0.0F)` calls keep — the
+        // param those events carry the client never reads)
+        assert!(m.apply(PlayEvent::GameEvent(mc_protocol::play::GameEvent {
+            event: mc_protocol::play::game_event::START_RAINING,
+            param: 0.25,
+        })), "start-rain touches state");
+        assert_eq!(m.rain_level(), 1.0, "the 1.0F arm speaks");
+        assert!(m.apply(PlayEvent::GameEvent(mc_protocol::play::GameEvent {
+            event: mc_protocol::play::game_event::STOP_RAINING,
+            param: 0.9,
+        })));
+        assert_eq!(m.rain_level(), 0.0, "the 0.0F arm speaks");
+        // THE LEVEL-CHANGE PAIR (the param arms — each
+        // `Mth.clamp(param, 0.0, 1.0)` the setter keeps; the out-of-range
+        // params the clamp folds)
+        assert!(m.apply(PlayEvent::GameEvent(mc_protocol::play::GameEvent {
+            event: mc_protocol::play::game_event::RAIN_LEVEL_CHANGE,
+            param: 0.6875,
+        })));
+        assert_eq!(m.rain_level(), 0.6875);
+        assert!(m.apply(PlayEvent::GameEvent(mc_protocol::play::GameEvent {
+            event: mc_protocol::play::game_event::RAIN_LEVEL_CHANGE,
+            param: 1.7,
+        })));
+        assert_eq!(m.rain_level(), 1.0, "the clamp's ceiling");
+        assert!(m.apply(PlayEvent::GameEvent(mc_protocol::play::GameEvent {
+            event: mc_protocol::play::game_event::RAIN_LEVEL_CHANGE,
+            param: -0.3,
+        })));
+        assert_eq!(m.rain_level(), 0.0, "the clamp's floor");
+        // THE THUNDER LEVEL (the setter's own clamp; the EFFECTIVE value
+        // the getThunderLevel walk multiplies by the rain level — the
+        // dry world's thunder is 0.0 whatever the state stores)
+        assert!(m.apply(PlayEvent::GameEvent(mc_protocol::play::GameEvent {
+            event: mc_protocol::play::game_event::THUNDER_LEVEL_CHANGE,
+            param: 0.5,
+        })));
+        assert_eq!(m.thunder_level(), 0.0, "the rain multiply gates it");
+        assert!(m.apply(PlayEvent::GameEvent(mc_protocol::play::GameEvent {
+            event: mc_protocol::play::game_event::RAIN_LEVEL_CHANGE,
+            param: 1.0,
+        })));
+        assert_eq!(m.thunder_level(), 0.5, "the rain arms the thunder");
+        // THE HONEST SKIPS: the vocabulary's other words keep no state —
+        // the game-mode / win-screen arms this client does not own
+        assert!(!m.apply(PlayEvent::GameEvent(mc_protocol::play::GameEvent {
+            event: mc_protocol::play::game_event::WIN_GAME,
+            param: 0.0,
+        })), "the win arm is no-opinion");
+        assert!(!m.apply(PlayEvent::GameEvent(mc_protocol::play::GameEvent {
+            event: mc_protocol::play::game_event::CHANGE_GAME_MODEL,
+            param: 1.0,
+        })), "the game-mode arm is no-opinion");
+        // an UNDEFINED event id the server could still send: the same
+        // honest skip (the decode admits the word, the state keeps none)
+        assert!(!m.apply(PlayEvent::GameEvent(mc_protocol::play::GameEvent {
+            event: 99,
+            param: 1.0,
+        })));
+        assert_eq!(m.rain_level(), 1.0, "the skips never touch the rain");
     }
 
     #[test]

@@ -137,6 +137,12 @@ pub fn materialize(
         // 0.0 with the effect absent (every golden scene) and the 1.0
         // plateau with it riding
         night_vision_factor: model.night_vision_factor(),
+        // THE WEATHER'S OWN LEVELS ride the SAME snapshot (javap
+        // `Level` — the rain/thunder state the Game Event packets
+        // speak): the model's clamped levels copy verbatim, 0.0 while
+        // no weather word ever arrived (every procedural/golden scene)
+        rain_level: model.rain_level(),
+        thunder_level: model.thunder_level(),
     };
     let side_i = side as i32;
     for gz in 0..side_i {
