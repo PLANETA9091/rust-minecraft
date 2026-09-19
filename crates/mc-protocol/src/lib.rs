@@ -53,6 +53,8 @@ pub use play::{
     PlayerEntryPatch, PlayerInfoUpdate, PlayerInfoRemove, TabListUpdate,
     parse_player_info_update, parse_player_info_remove, parse_tab_list,
     DESIRED_CHUNKS_PER_TICK, encode_client_command, encode_container_click, encode_container_close, pack_entries,
+    CommandSuggestionsMatch, CommandSuggestionsReply, encode_command_suggestion,
+    parse_command_suggestions,
     encode_player_input, encode_paddle_boat, parse_set_passengers,
     HurtAnimation, PlayerCombatKill, EntitySoundPacket, WorldSoundPacket,
 };

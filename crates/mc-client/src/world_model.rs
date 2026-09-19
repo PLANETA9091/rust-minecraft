@@ -1949,6 +1949,10 @@ impl WorldModel {
             PlayEvent::SystemChat(_)
             | PlayEvent::PlayerChat(_)
             | PlayEvent::DisguisedChat(_) => false,
+            // THE SUGGESTION REPLY (the chat screen's own lane — the
+            // world model the reply never touches, the UI the gate's
+            // own false keeps)
+            PlayEvent::CommandSuggestions(_) => false,
             PlayEvent::Disconnected { .. } | PlayEvent::Skipped => false,
         }
     }

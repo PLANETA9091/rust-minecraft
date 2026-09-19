@@ -2906,6 +2906,29 @@ pub struct App {
     pub recent_chat: Vec<String>,
     pub chat_history_pos: usize,
     pub chat_draft: String,
+    /// THE COMMAND SUGGESTIONS' OWN STATE (javap CommandSuggestions +
+    /// SuggestionsList — the ChatScreen's typing lane): `chat_suggestions`
+    /// the current reply's rows (the
+    /// `mc_protocol::play::CommandSuggestionsMatch` list the ask-server
+    /// walk answered), `chat_suggestion_range` the (start, length)
+    /// replace range the reply carries (offsets into the sent input —
+    /// the `/` included, the server's own skip walk the parse keeps),
+    /// `chat_suggestion_sel`/`chat_suggestion_offset` the
+    /// SuggestionsList's current row and the 10-row window's scroll,
+    /// `chat_suggestion_tx` the pendingSuggestionsId counter's own
+    /// increment, `chat_suggestion_pending` the awaited transaction id
+    /// (the stale replies the gate drops), `chat_suggestion_tab_cycles`
+    /// the SuggestionsList's tabCycles flag (the FIRST Tab the use
+    /// speaks, the next the cycle), `chat_suggestion_original` the
+    /// originalContents the list captured (the apply walk's own base).
+    pub chat_suggestions: Vec<mc_protocol::play::CommandSuggestionsMatch>,
+    pub chat_suggestion_range: (i32, i32),
+    pub chat_suggestion_sel: usize,
+    pub chat_suggestion_offset: usize,
+    pub chat_suggestion_tx: i32,
+    pub chat_suggestion_pending: Option<i32>,
+    pub chat_suggestion_tab_cycles: bool,
+    pub chat_suggestion_original: String,
     /// THE F2 SCREENSHOT'S OWN REQUEST (javap Minecraft.handleKeybinds's
     /// keyScreenshot lane — the rising edge the Screenshot.grab walk
     /// answers): true while the key's edge asked for the frame — the
@@ -3365,6 +3388,14 @@ impl App {
             recent_chat: Vec::new(),
             chat_history_pos: 0,
             chat_draft: String::new(),
+            chat_suggestions: Vec::new(),
+            chat_suggestion_range: (0, 0),
+            chat_suggestion_sel: 0,
+            chat_suggestion_offset: 0,
+            chat_suggestion_tx: 0,
+            chat_suggestion_pending: None,
+            chat_suggestion_tab_cycles: false,
+            chat_suggestion_original: String::new(),
             screenshot_request: false,
             debug_held: false,
             fps_frames: 0,
@@ -11684,6 +11715,9 @@ impl App {
         self.chat_input.clear();
         self.chat_draft.clear();
         self.chat_history_pos = self.recent_chat.len();
+        // the fresh open the clear walk answers — the old suggestions
+        // the screen never keeps (the vanilla init's fresh walk)
+        self.refresh_command_suggestions();
     }
 
     /// THE CHAT SCREEN'S OWN CLOSE (javap onClose's walk — the Escape
@@ -11693,6 +11727,9 @@ impl App {
         self.chat_open = false;
         self.chat_input.clear();
         self.chat_history_pos = self.recent_chat.len();
+        // the close the clear walk answers (the vanilla removed()'s own
+        // suggestions hide — the next open the fresh list speaks)
+        self.refresh_command_suggestions();
     }
 
     /// THE EDITBOX'S OWN CHAR (the window's input callback the
@@ -11705,6 +11742,10 @@ impl App {
         if self.chat_input.chars().count() < 256 {
             self.chat_input.push(c);
         }
+        // THE RESPONDER'S OWN WALK (the EditBox.setResponder lane — the
+        // edit the suggestions refresh answers, the '/'-typed text the
+        // ask-server request rides)
+        self.refresh_command_suggestions();
     }
 
     /// THE EDITBOX'S OWN BACKSPACE (the EditBox's deleteText walk —
@@ -11714,6 +11755,7 @@ impl App {
             return;
         }
         self.chat_input.pop();
+        self.refresh_command_suggestions();
     }
 
     /// THE HISTORY ARROWS (javap ChatScreen.moveInHistory — the Up the
@@ -11750,6 +11792,184 @@ impl App {
         } else {
             self.recent_chat[self.chat_history_pos].clone()
         };
+        self.refresh_command_suggestions();
+    }
+
+    /// THE SUGGESTIONS' OWN REFRESH (javap ChatScreen.onEdited →
+    /// CommandSuggestions.updateCommandInfo's walk — the responder the
+    /// EVERY edit fires, the '/'-prefixed input the ask-server lane
+    /// answers: the transaction id the pendingSuggestionsId counter
+    /// increments, ONE ServerboundCommandSuggestionPacket the full
+    /// input rides (the leading '/' the server's own skip walk keeps),
+    /// the reply the pending gate remembers; the non-command edits the
+    /// clear walk answers — the suggestions the list forgets, the
+    /// pending id the gate drops). The LIVE lane only: the offline
+    /// world the no-server walk keeps silent (no connection the
+    /// request rides).
+    fn refresh_command_suggestions(&mut self) {
+        let active = self.chat_open
+            && self.live_clicks.is_some()
+            && self.chat_input.starts_with('/')
+            && !self.chat_input.is_empty();
+        if !active {
+            self.chat_suggestions.clear();
+            self.chat_suggestion_pending = None;
+            self.chat_suggestion_tab_cycles = false;
+            return;
+        }
+        self.chat_suggestion_tx = self.chat_suggestion_tx.wrapping_add(1);
+        self.chat_suggestion_pending = Some(self.chat_suggestion_tx);
+        if let Some(tx) = &self.live_clicks {
+            let _ = tx.send(crate::world_view::ContainerCommand::RequestCommandSuggestions {
+                id: self.chat_suggestion_tx,
+                command: self.chat_input.clone(),
+            });
+        }
+    }
+
+    /// THE ARROWS' OWN FOLD (the vanilla ChatScreen.keyPressed's walk —
+    /// the shown suggestions the SuggestionsList.keyPressed arm answers
+    /// FIRST (the Up the cycle(-1), the Down the cycle(+1), the
+    /// tabCycles flag the arms reset), the hidden list the
+    /// moveInHistory recall walk keeps).
+    pub fn on_chat_arrow(&mut self, older: bool) {
+        if !self.chat_open {
+            return;
+        }
+        if !self.chat_suggestions.is_empty() {
+            self.cycle_chat_suggestion(if older { -1 } else { 1 });
+            return;
+        }
+        self.on_chat_history_key(older);
+    }
+
+    /// THE SUGGESTION CYCLE (javap SuggestionsList.cycle + select — the
+    /// current the ±1 walk moves, the wrap the select's own clamps
+    /// speak (below zero → the last row, past the end → the first),
+    /// the offset the 10-row window's scroll the same walk keeps: the
+    /// selection above the window's top the offset follows, past the
+    /// bottom the same fold answers; the tabCycles flag the arrow's
+    /// own reset keeps).
+    fn cycle_chat_suggestion(&mut self, dir: i32) {
+        let len = self.chat_suggestions.len();
+        if len == 0 {
+            return;
+        }
+        let next = self.chat_suggestion_sel as i32 + dir;
+        self.chat_suggestion_sel = if next < 0 {
+            len - 1
+        } else if next as usize >= len {
+            0
+        } else {
+            next as usize
+        };
+        self.chat_suggestion_tab_cycles = false;
+        let limit = 10.min(len);
+        let sel = self.chat_suggestion_sel;
+        if sel < self.chat_suggestion_offset {
+            self.chat_suggestion_offset = sel;
+        } else if sel >= self.chat_suggestion_offset + limit {
+            self.chat_suggestion_offset = sel + 1 - limit;
+        }
+    }
+
+    /// THE TAB'S OWN WALK (javap SuggestionsList.keyPressed's
+    /// isCycleFocus arm — the FIRST Tab the useSuggestion walk speaks:
+    /// the selected suggestion's apply over the ORIGINAL the list
+    /// captured, the replace range `[start, start + length)` the
+    /// Brigadier StringRange law keeps, the EditBox value the result
+    /// wears, the tabCycles flag the next Tab's cycle answers; the
+    /// shown list only — the hidden walk the no-op keeps). The range
+    /// offsets the CHARS the Rust string speaks (the ASCII commands the
+    /// real servers' walks name match the Java char indices 1:1; the
+    /// astral rows the divergence honestly wears).
+    pub fn on_chat_tab_key(&mut self) {
+        if !self.chat_open || self.chat_suggestions.is_empty() {
+            return;
+        }
+        if self.chat_suggestion_tab_cycles {
+            self.cycle_chat_suggestion(1);
+            return;
+        }
+        let (start, length) = self.chat_suggestion_range;
+        let Some(m) = self.chat_suggestions.get(self.chat_suggestion_sel) else {
+            return;
+        };
+        let text = m.text.clone();
+        let original: Vec<char> = self.chat_suggestion_original.chars().collect();
+        let s = start.max(0) as usize;
+        let e = (start + length).max(0) as usize;
+        if s > original.len() || e > original.len() || s > e {
+            return;
+        }
+        let mut completed: String = original[..s].iter().collect();
+        completed.push_str(&text);
+        completed.extend(original[e..].iter());
+        self.chat_input = completed;
+        self.chat_suggestion_tab_cycles = true;
+        // the EditBox.setValue's own responder walk — the applied value
+        // the refresh re-asks (the narrowed list the server's answer
+        // keeps, the same onEdited lane the vanilla types through)
+        self.refresh_command_suggestions();
+    }
+
+    /// THE SUGGESTION REPLY'S OWN LANDING (javap
+    /// ClientPacketListener.handleCommandSuggestions →
+    /// ClientSuggestionProvider.completeCustomSuggestions — the pending
+    /// id the completion's own equality gate keeps: the STALE replies
+    /// the dropped lane answers, the matching id the fresh list wears —
+    /// the rows, the replace range, the originalContents capture, the
+    /// selection and scroll the new SuggestionsList's own defaults
+    /// speak (row 0, window 0, tabCycles false)).
+    pub fn on_command_suggestions(
+        &mut self,
+        reply: mc_protocol::play::CommandSuggestionsReply,
+    ) {
+        if !self.chat_open || self.chat_suggestion_pending != Some(reply.id) {
+            return;
+        }
+        self.chat_suggestion_pending = None;
+        self.chat_suggestion_original = self.chat_input.clone();
+        self.chat_suggestion_range = (reply.start, reply.length);
+        self.chat_suggestions = reply.matches;
+        self.chat_suggestion_sel = 0;
+        self.chat_suggestion_offset = 0;
+        self.chat_suggestion_tab_cycles = false;
+    }
+
+    /// THE GHOST SUFFIX (javap SuggestionsList.select's EditBox
+    /// .setSuggestion + CommandSuggestions.calculateSuggestionSuffix —
+    /// the gray completion hint the selected row speaks: the selected
+    /// suggestion's apply over the ORIGINAL the list captured, the
+    /// common prefix with the typed value the trim keeps — the part
+    /// the cursor's end-parked lane never typed yet).
+    pub fn chat_ghost_suffix(&self) -> String {
+        if self.chat_suggestions.is_empty() {
+            return String::new();
+        }
+        let Some(m) = self.chat_suggestions.get(self.chat_suggestion_sel) else {
+            return String::new();
+        };
+        let (start, length) = self.chat_suggestion_range;
+        let original: Vec<char> = self.chat_suggestion_original.chars().collect();
+        let s = start.max(0) as usize;
+        let e = (start + length).max(0) as usize;
+        if s > original.len() || e > original.len() || s > e {
+            return String::new();
+        }
+        let completed: Vec<char> = original[..s]
+            .iter()
+            .copied()
+            .chain(m.text.chars())
+            .chain(original[e..].iter().copied())
+            .collect();
+        let typed: Vec<char> = self.chat_input.chars().collect();
+        let common = typed
+            .iter()
+            .zip(completed.iter())
+            .take_while(|(a, b)| a == b)
+            .count();
+        completed[common..].iter().collect()
     }
 
     /// THE SUBMIT'S OWN WALK (javap ChatScreen.keyPressed's
@@ -12525,7 +12745,11 @@ impl App {
     /// input text the EditBox's `(4, height - 12, width - 4, 12)`
     /// borderless box draws (the text at y + 2 the 12-tall box's
     /// center keeps, the 0xE0E0E0 the shadowed glyph law wears), the
-    /// cursor the `(millis / 500) % 2` blink the EditBox keeps).
+    /// cursor the `(millis / 500) % 2` blink the EditBox keeps). The
+    /// SHOWN SUGGESTIONS the SuggestionsList's own layer answers (the
+    /// ghost suffix the select's setSuggestion lane draws, the list
+    /// the extractRenderState walk speaks — see
+    /// [`Self::draw_chat_suggestions`]).
     fn render_chat_screen(&self, g: &mut Gui, a: &mut GuiAssets, w: i32, h: i32) {
         self.draw_chat_history(g, a, w, h, true);
         // THE INPUT BAND (the ChatScreen.extractBackground's own fill)
@@ -12542,7 +12766,80 @@ impl App {
             % 2
             == 0;
         let cursor = if blink { "_" } else { "" };
-        g.text_faded(a, 4, h - 10, &format!("{shown}{cursor}"), [0.878, 0.878, 0.878], 1.0, true);
+        let typed = format!("{shown}{cursor}");
+        g.text_faded(a, 4, h - 10, &typed, [0.878, 0.878, 0.878], 1.0, true);
+        // THE GHOST SUFFIX (the EditBox's setSuggestion lane — the
+        // selected suggestion's completion the cursor's tail speaks,
+        // the -8355712 = 0x808080 gray the EditBox's own draw keeps,
+        // the shadowless glyph law the vanilla suggestion never wears)
+        let ghost = self.chat_ghost_suffix();
+        if !ghost.is_empty() {
+            let gx = 4 + g.text_width(&typed);
+            g.text_faded(a, gx, h - 10, &ghost, [0.502, 0.502, 0.502], 1.0, false);
+        }
+        // THE SUGGESTION LIST (the shown rows the reply carries — the
+        // hidden list the empty vec never draws)
+        if !self.chat_suggestions.is_empty() {
+            self.draw_chat_suggestions(g, a, w, h);
+        }
+    }
+
+    /// THE SUGGESTION LIST'S OWN DRAW (javap SuggestionsList
+    /// .extractRenderState — the rows the 10-row window speaks, the
+    /// rect the input's left edge - 1 the x anchor keeps (the -1 the
+    /// bytecode's own Rect2i law wears), the list the input band's top
+    /// - 1 the bottom anchor keeps (the list the input line ABOVE
+    /// grows), the 12-tall rows the `i * 12` stride speaks, the text
+    /// at y + 2 the row's own center answers; the fill the -805306368
+    /// = 0xD0000000 the ChatScreen's constructor arg banks; the
+    /// SELECTED row the white ring wears — the -1 fills the bytecode's
+    /// own border walk speaks (the 1px outline the row's bounds
+    /// circle), the inner fill the same 0xD0000000 the bg law keeps;
+    /// the text the ternary colors speak: the selected -256 = yellow,
+    /// the rest -5592406 = 0xFFAAAAAA, the shadowless draw the vanilla
+    /// suggestion renders; the width the widest row + 1 the fill spans,
+    /// the screen's own -12 margin the clamp keeps).
+    fn draw_chat_suggestions(&self, g: &mut Gui, a: &mut GuiAssets, w: i32, h: i32) {
+        const ROW_H: i32 = 12;
+        const LIMIT: usize = 10;
+        let len = self.chat_suggestions.len();
+        let visible = len.min(LIMIT);
+        let offset = self.chat_suggestion_offset.min(len - visible);
+        let list_w = self
+            .chat_suggestions
+            .iter()
+            .map(|m| g.text_width(&m.text))
+            .max()
+            .unwrap_or(0)
+            + 1;
+        let list_w = list_w.min((w - 3 - 12).max(0)).max(1);
+        let x = 3; // the input's 4 - 1 (the Rect2i's own x law)
+        let bottom = h - 15; // the input band's top - 1
+        let top = bottom - visible as i32 * ROW_H;
+        // THE BACKGROUND (the two fills the bytecode speaks — the whole
+        // list the 0xD0000000 black the fill color keeps)
+        g.fill(x, top, list_w + 1, visible as i32 * ROW_H, [0.0, 0.0, 0.0, 0.8157]);
+        for i in 0..visible {
+            let idx = offset + i;
+            let Some(m) = self.chat_suggestions.get(idx) else {
+                continue;
+            };
+            let row_y = top + i as i32 * ROW_H;
+            let selected = idx == self.chat_suggestion_sel;
+            if selected {
+                // THE WHITE RING (the -1 fills the bytecode's own
+                // border walk — the 1px outline the row's bounds
+                // circle, the inner fill the inset speaks)
+                g.fill(x - 1, row_y - 1, list_w + 3, ROW_H + 2, [1.0, 1.0, 1.0, 1.0]);
+                g.fill(x, row_y, list_w + 1, ROW_H, [0.0, 0.0, 0.0, 0.8157]);
+            }
+            let color: [f32; 3] = if selected {
+                [1.0, 1.0, 0.0] // the -256 yellow the ternary speaks
+            } else {
+                [0.667, 0.667, 0.667] // the -5592406 gray
+            };
+            g.text_faded(a, x + 1, row_y + 2, &m.text, color, 1.0, false);
+        }
     }
 
     /// THE FPS WINDOW (the DebugEntryFps's `%d fps` word the
@@ -21366,7 +21663,9 @@ mod tests {
     fn the_slash_submit_the_command_body_rides() {
         // THE COMMAND WALK (the ChatScreen's startsWith("/") +
         // substring(1) law — the BODY the command packet carries, the
-        // slash never rides)
+        // slash never rides). The TYPING lane the suggestion requests
+        // ride first (the ask-server walk the '/'-edits answer — the
+        // drain the submit's own packet asserts past).
         let mut app = App::new(3);
         app.enter_world();
         let (chat_tx, chat_rx) = std::sync::mpsc::channel::<crate::world_view::ContainerCommand>();
@@ -21374,6 +21673,12 @@ mod tests {
         app.on_chat_key();
         for c in "/time set day".chars() {
             app.on_chat_char(c);
+        }
+        for cmd in chat_rx.try_iter() {
+            match cmd {
+                crate::world_view::ContainerCommand::RequestCommandSuggestions { .. } => {}
+                other => panic!("the typing lane rode the wrong packet: {other:?}"),
+            }
         }
         app.on_chat_submit();
         match chat_rx.try_recv().expect("the command rode the lane") {
@@ -21386,6 +21691,180 @@ mod tests {
             app.recent_chat.last().map(String::as_str) == Some("/time set day"),
             "the history the typed word keeps"
         );
+    }
+
+    /// THE SUGGESTION TYPING'S OWN WALK (javap ChatScreen.onEdited's
+    /// responder lane — the '/'-typed edits the ask-server request
+    /// rides on EVERY keystroke: the transaction id the counter
+    /// increments, the FULL input the '/' rides, the non-command text
+    /// the silent lane keeps, the OFFLINE world the no-connection walk
+    /// never asks).
+    #[test]
+    fn the_suggestion_typing_the_ask_server_rides() {
+        let mut app = App::new(3);
+        app.enter_world();
+        let (tx, rx) = std::sync::mpsc::channel::<crate::world_view::ContainerCommand>();
+        app.attach_live_clicks(tx);
+        app.on_chat_key();
+        // THE NON-COMMAND TEXT (the no-slash edits the silent lane keeps)
+        for c in "hello".chars() {
+            app.on_chat_char(c);
+        }
+        assert!(
+            rx.try_recv().is_err(),
+            "the plain text the no-request lane keeps"
+        );
+        assert!(app.chat_suggestions.is_empty());
+        // THE CLEAR (the pops the typed word answers — the fresh input
+        // the '/'-first walk wears)
+        for _ in 0..5 {
+            app.on_chat_backspace();
+        }
+        assert_eq!(app.chat_input, "");
+        // THE SLASH (the request the first '/' keystroke rides)
+        app.on_chat_char('/');
+        match rx.try_recv().expect("the '/' rides the request") {
+            crate::world_view::ContainerCommand::RequestCommandSuggestions { id, command } => {
+                assert_eq!(id, 1, "the counter's own increment");
+                assert_eq!(command, "/", "the FULL input the '/' rides");
+            }
+            other => panic!("the wrong command rode the lane: {other:?}"),
+        }
+        // EVERY EDIT ASKS (the responder the keystroke walk fires)
+        app.on_chat_char('t');
+        match rx.try_recv().expect("the 't' edit rides") {
+            crate::world_view::ContainerCommand::RequestCommandSuggestions { id, command } => {
+                assert_eq!(id, 2, "the next edit the next id speaks");
+                assert_eq!(command, "/t");
+            }
+            other => panic!("the wrong command rode the lane: {other:?}"),
+        }
+        // THE CLEAR (the backspace past the '/' the non-command gate
+        // answers — the empty input the active law refuses)
+        app.on_chat_backspace();
+        assert!(rx.try_recv().is_ok(), "the '/t'→'/' edit still asks");
+        app.on_chat_backspace();
+        assert!(rx.try_recv().is_err(), "the empty input never asks");
+        assert!(app.chat_suggestions.is_empty(), "the clear the list forgets");
+        assert_eq!(app.chat_suggestion_pending, None, "the pending the gate drops");
+    }
+
+    /// THE SUGGESTION REPLY'S OWN LANDING (the pending id the equality
+    /// gate keeps — the STALE replies the dropped lane answers, the
+    /// matching id the fresh list wears: the rows, the range, the
+    /// original capture, the row-0 selection).
+    #[test]
+    fn the_suggestion_reply_the_pending_gate_speaks() {
+        let mut app = App::new(3);
+        app.enter_world();
+        let (tx, _rx) = std::sync::mpsc::channel::<crate::world_view::ContainerCommand>();
+        app.attach_live_clicks(tx);
+        app.on_chat_key();
+        for c in "/tp".chars() {
+            app.on_chat_char(c);
+        }
+        // the typing walk's own request: pending = Some(1)
+        // THE STALE REPLY (the older id the gate drops)
+        app.on_command_suggestions(mc_protocol::play::CommandSuggestionsReply {
+            id: 0,
+            start: 1,
+            length: 2,
+            matches: vec![mc_protocol::play::CommandSuggestionsMatch {
+                text: "old".to_string(),
+                tooltip: None,
+            }],
+        });
+        assert!(app.chat_suggestions.is_empty(), "the stale id the list refuses");
+        // THE MATCHING REPLY (the fresh list lands)
+        app.on_command_suggestions(mc_protocol::play::CommandSuggestionsReply {
+            id: app.chat_suggestion_pending.unwrap(),
+            start: 1,
+            length: 2,
+            matches: vec![
+                mc_protocol::play::CommandSuggestionsMatch {
+                    text: "teleport".to_string(),
+                    tooltip: None,
+                },
+                mc_protocol::play::CommandSuggestionsMatch {
+                    text: "time".to_string(),
+                    tooltip: None,
+                },
+            ],
+        });
+        assert_eq!(app.chat_suggestions.len(), 2, "the matching id the list wears");
+        assert_eq!(app.chat_suggestion_range, (1, 2));
+        assert_eq!(app.chat_suggestion_original, "/tp", "the original the list captures");
+        assert_eq!(app.chat_suggestion_sel, 0, "the row-0 the fresh list speaks");
+        assert_eq!(app.chat_suggestion_pending, None, "the landing the pending clears");
+    }
+
+    /// THE TAB + ARROWS' OWN WALK (javap SuggestionsList.keyPressed —
+    /// the FIRST Tab the useSuggestion applies (the range the
+    /// original's own [start, start+length) speaks), the tabCycles the
+    /// next Tab's cycle answers, the arrows the SHOWN list the cycle
+    /// keeps and the HIDDEN list the history recall wears, the wrap
+    /// the select's own clamps speak).
+    #[test]
+    fn the_suggestion_tab_and_arrows_the_selection_laws_speak() {
+        let mut app = App::new(3);
+        app.enter_world();
+        let (tx, _rx) = std::sync::mpsc::channel::<crate::world_view::ContainerCommand>();
+        app.attach_live_clicks(tx);
+        app.on_chat_key();
+        for c in "/tp".chars() {
+            app.on_chat_char(c);
+        }
+        app.on_command_suggestions(mc_protocol::play::CommandSuggestionsReply {
+            id: app.chat_suggestion_pending.unwrap(),
+            start: 1,
+            length: 2,
+            matches: vec![
+                mc_protocol::play::CommandSuggestionsMatch {
+                    text: "teleport".to_string(),
+                    tooltip: None,
+                },
+                mc_protocol::play::CommandSuggestionsMatch {
+                    text: "time".to_string(),
+                    tooltip: None,
+                },
+                mc_protocol::play::CommandSuggestionsMatch {
+                    text: "trigger".to_string(),
+                    tooltip: None,
+                },
+            ],
+        });
+        // THE GHOST (the calculateSuggestionSuffix walk — the completed
+        // '/teleport' minus the typed '/tp' common prefix)
+        assert_eq!(app.chat_ghost_suffix(), "eleport");
+        // THE FIRST TAB (the apply — the replace range the completed
+        // input speaks, the tabCycles flag the next Tab's cycle keeps)
+        app.on_chat_tab_key();
+        assert_eq!(app.chat_input, "/teleport", "the range the apply replaces");
+        assert!(app.chat_suggestion_tab_cycles, "the flag the use raises");
+        // THE SECOND TAB (the cycle — the selection the +1 walk moves)
+        app.on_chat_tab_key();
+        assert_eq!(app.chat_suggestion_sel, 1, "the cycle the selection moves");
+        // THE ARROWS WHILE SHOWN (the cycle the Up/Down answers, the
+        // history the walk never reaches)
+        app.on_chat_arrow(true); // Up from 1 → 0
+        assert_eq!(app.chat_suggestion_sel, 0);
+        app.on_chat_arrow(true); // Up from 0 → the WRAP to the last row
+        assert_eq!(app.chat_suggestion_sel, 2, "the wrap the clamp speaks");
+        app.on_chat_arrow(false); // Down from 2 → the WRAP to row 0
+        assert_eq!(app.chat_suggestion_sel, 0);
+        // THE OFFLINE WALK (no live lane — the '/' never asks, the
+        // arrows the plain history laws keep)
+        let mut offline = App::new(3);
+        offline.enter_world();
+        offline.on_chat_key();
+        for c in "hello".chars() {
+            offline.on_chat_char(c);
+        }
+        offline.on_chat_submit();
+        offline.on_chat_key();
+        offline.on_chat_arrow(true);
+        assert_eq!(offline.chat_input, "hello", "the history the hidden list recalls");
+        assert!(offline.chat_suggestions.is_empty(), "the offline the list never lands");
     }
 
     #[test]

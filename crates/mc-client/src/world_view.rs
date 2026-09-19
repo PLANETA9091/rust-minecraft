@@ -1314,6 +1314,17 @@ pub enum ContainerCommand {
     /// fields dropped). The server's answer rides the system/player
     /// chat lanes back.
     SendChatCommand { command: String },
+    /// THE SUGGESTION REQUEST'S WIRE HALF (the vanilla
+    /// ClientSuggestionProvider.customSuggestion's own lane — the
+    /// ServerboundCommandSuggestionPacket the ChatScreen's '/'-typing
+    /// walk sends on EVERY edit the responder fires: the incrementing
+    /// transaction id the pending gate remembers, the FULL input the
+    /// leading '/' rides (the server's own `if (peek == '/') skip()`
+    /// the strip keeps — see `mc_protocol::play
+    /// ::encode_command_suggestion`). The reply rides the
+    /// CommandSuggestions event back through the pump — the list the
+    /// chat screen renders, the Tab/arrow walk the selection speaks.
+    RequestCommandSuggestions { id: i32, command: String },
 }
 
 /// The camera's pose in the VANILLA wire degrees — the inverse of

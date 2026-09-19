@@ -117,6 +117,7 @@ pub mod clientbound {
         CB_SET_SCORE as SET_SCORE, CB_RESET_SCORE as RESET_SCORE,
         CB_PLAYER_INFO_REMOVE as PLAYER_INFO_REMOVE, CB_PLAYER_INFO_UPDATE as PLAYER_INFO_UPDATE,
         CB_TAB_LIST as TAB_LIST,
+        CB_COMMAND_SUGGESTIONS as COMMAND_SUGGESTIONS,
         CB_SYSTEM_CHAT as SYSTEM_CHAT, CB_PLAYER_CHAT as PLAYER_CHAT,
         CB_DISGUISED_CHAT as DISGUISED_CHAT,
     };
@@ -144,6 +145,7 @@ pub mod serverbound {
         SB_PICK_ITEM_FROM_ENTITY as PICK_ITEM_FROM_ENTITY,
         SB_BUNDLE_ITEM_SELECTED as BUNDLE_ITEM_SELECTED,
         SB_CHAT as CHAT, SB_CHAT_COMMAND as CHAT_COMMAND,
+        SB_COMMAND_SUGGESTION as COMMAND_SUGGESTION,
     };
 }
 
@@ -5586,6 +5588,106 @@ pub fn encode_chat_command(command: &str) -> Vec<u8> {
     p
 }
 
+/// The SUGGESTION REQUEST wire (javap of the real 26.2
+/// `ServerboundCommandSuggestionPacket` — the clinit's composite the
+/// `Packet.codec` walk speaks): the record `(int id, String command)` —
+/// `writeVarInt(id)` FIRST, then `writeUtf(command, 32500)`. The 26.2
+/// packet the 1.20.x has-position fields DROPPED (the looked-at block
+/// pos the request no longer carries) — the dump's write walk answers:
+/// TWO fields, the transaction id the pendingSuggestionsId counter
+/// speaks (the client's own increment the stale-reply gate answers),
+/// the command the FULL input INCLUDING the leading '/' (the server's
+/// `handleCustomCommandSuggestions` `if (peek == '/') skip()` walk the
+/// strip keeps). The customSuggestion lane sends the parsed context's
+/// input — the slash the StringReader skip never removed from the
+/// string, the cursor it only advanced.
+pub fn encode_command_suggestion(id: i32, command: &str) -> Result<Vec<u8>> {
+    anyhow::ensure!(
+        command.len() <= 32500,
+        "suggestion command {} utf-8 bytes past the 32500 writeUtf cap",
+        command.len()
+    );
+    let mut p = Vec::with_capacity(4 + command.len());
+    write_varint(&mut p, serverbound::COMMAND_SUGGESTION);
+    write_varint(&mut p, id);
+    write_string(&mut p, command);
+    Ok(p)
+}
+
+/// One suggestion row the reply's list carries (the 26.2
+/// `ClientboundCommandSuggestionsPacket$Entry` record): the
+/// `STRING_UTF8` text and the `TRUSTED_OPTIONAL_STREAM_CODEC` tooltip —
+/// the optional the flag byte speaks (0 = absent; else the bare NBT
+/// component, the text the [`flatten_component_text`] walk keeps).
+#[derive(Debug, Clone, PartialEq)]
+pub struct CommandSuggestionsMatch {
+    /// The suggestion's own text — the replacement fragment the
+    /// `Suggestion.getText` walk carries (a command word, a player
+    /// name, an argument's option).
+    pub text: String,
+    /// The optional tooltip's flattened plain text (the hover the
+    /// vanilla render's `setTooltipForNextFrame` lane keeps).
+    pub tooltip: Option<String>,
+}
+
+/// The SUGGESTION REPLY (javap of the real 26.2
+/// `ClientboundCommandSuggestionsPacket` — the clinit's
+/// `composite(VAR_INT, VAR_INT, VAR_INT, list(Entry.STREAM_CODEC))` the
+/// bytecode speaks): the transaction id (the request's own echo — the
+/// stale-response gate the pendingSuggestionsFuture's id check keeps),
+/// the replace range (start + length, offsets into the FULL input
+/// string the client sent — the slash the server's parse keeps), and
+/// the rows (the server caps `getList().subList(0, 1000)` the same
+/// walk answers).
+#[derive(Debug, Clone, PartialEq)]
+pub struct CommandSuggestionsReply {
+    /// The transaction id — the request packet's own `id` echo.
+    pub id: i32,
+    /// The replace range's start offset (chars into the sent input).
+    pub start: i32,
+    /// The replace range's length (the chars the text replaces).
+    pub length: i32,
+    /// The suggestion rows (the server's 1000-entry cap the walk keeps).
+    pub matches: Vec<CommandSuggestionsMatch>,
+}
+
+/// The SUGGESTION REPLY's own read walk (see
+/// [`CommandSuggestionsReply`] — the composite order the clinit
+/// speaks): id, start, length, then the count + the rows (each the
+/// capped utf + the flag-byte optional NBT tooltip — the same
+/// TRUSTED_OPTIONAL walk the painting variant's title/author keeps).
+pub fn parse_command_suggestions(payload: &[u8]) -> Result<CommandSuggestionsReply> {
+    let mut c: &[u8] = payload;
+    let id = read_varint(&mut c)?;
+    anyhow::ensure!(
+        id == clientbound::COMMAND_SUGGESTIONS,
+        "not a command suggestions packet (0x{id:02X})"
+    );
+    let tx_id = read_varint(&mut c)?;
+    let start = read_varint(&mut c)?;
+    let length = read_varint(&mut c)?;
+    let count = read_varint(&mut c)?;
+    anyhow::ensure!(
+        count >= 0 && count <= 1000,
+        "suggestion count {count} outside the server's subList(0, 1000) walk"
+    );
+    let mut matches = Vec::with_capacity(count as usize);
+    for _ in 0..count {
+        let text = read_capped_string(&mut c, 32767)?;
+        let tooltip = match read_u8(&mut c)? {
+            0 => None,
+            _ => Some(flatten_component_text(&read_bare_nbt(&mut c)?)),
+        };
+        matches.push(CommandSuggestionsMatch { text, tooltip });
+    }
+    Ok(CommandSuggestionsReply {
+        id: tx_id,
+        start,
+        length,
+        matches,
+    })
+}
+
 /// The ATTACK wire (the vanilla `MultiPlayerGameMode.attack`'s own
 /// echo — the 26.2's dedicated ServerboundAttackPacket, generated id
 /// 1, `minecraft:attack`, the generated table's SB_ATTACK). THE WIRE
@@ -7725,6 +7827,13 @@ pub enum PlayEvent {
     /// bound) — the same decoration walk the player chat answers
     /// (see [`DisguisedChatMessage`]).
     DisguisedChat(DisguisedChatMessage),
+    /// Command Suggestions: the server's answer to the chat screen's
+    /// ask-server walk (the
+    /// [`encode_command_suggestion`] request the typing lane sends on
+    /// every '/' edit, the reply's replace range + rows the
+    /// suggestion list renders — see [`CommandSuggestionsReply`]).
+    /// The stale transaction ids the consumer's pending gate drops.
+    CommandSuggestions(CommandSuggestionsReply),
     /// Any packet without a client surface yet (skipped silently).
     Skipped,
 }
@@ -7881,6 +7990,9 @@ impl<S: Read + Write> PlaySession<S> {
             }
             clientbound::TAB_LIST => Ok(PlayEvent::TabList(parse_tab_list(&pkt)?)),
             clientbound::SYSTEM_CHAT => Ok(PlayEvent::SystemChat(parse_system_chat(&pkt)?)),
+            clientbound::COMMAND_SUGGESTIONS => Ok(PlayEvent::CommandSuggestions(
+                parse_command_suggestions(&pkt)?,
+            )),
             clientbound::PLAYER_CHAT => Ok(PlayEvent::PlayerChat(parse_player_chat(
                 &pkt,
                 &self.registry.chat_types,
@@ -8038,6 +8150,20 @@ impl<S: Read + Write> PlaySession<S> {
         self.conn
             .send_packet(&encode_chat_command(command))
             .context("send chat command")
+    }
+
+    /// The SUGGESTION REQUEST send (the vanilla
+    /// ClientSuggestionProvider.customSuggestion's own wire — the
+    /// ServerboundCommandSuggestionPacket the ask-server node's parse
+    /// lane sends: the incrementing transaction id the pending gate
+    /// remembers, the FULL input the `/`-prefixed command the server's
+    /// own skip walk answers — see [`encode_command_suggestion`]). The
+    /// reply rides the CommandSuggestions event back through the pump.
+    pub fn send_command_suggestion(&mut self, id: i32, command: &str) -> Result<()> {
+        let pkt = encode_command_suggestion(id, command).context("encode command suggestion")?;
+        self.conn
+            .send_packet(&pkt)
+            .context("send command suggestion")
     }
 
     /// The ATTACK wire (the vanilla gameMode.attack's own echo — the
@@ -15095,5 +15221,96 @@ mod tests {
             ("bold".to_string(), Nbt::String("true".to_string())),
         ]);
         assert_eq!(flatten_component_colored(&strflag), "\u{a7}lA");
+    }
+
+    /// THE SUGGESTION REQUEST'S OWN WIRE (javap of the real 26.2
+    /// ServerboundCommandSuggestionPacket — the generated id 15 the
+    /// packet_ids table banks, the write walk `writeVarInt(id)` FIRST
+    /// then `writeUtf(command, 32500)`): the bytes the encode answers,
+    /// the transaction id the prefix speaks, the FULL input the
+    /// '/'-prefixed command the server's own skip walk keeps, the cap
+    /// the 32500 writeUtf law answers.
+    #[test]
+    fn the_suggestion_request_ride_the_write_walk_speaks() {
+        // THE GENERATED IDS (the bootstrapped protocol's runtime facts)
+        assert_eq!(serverbound::COMMAND_SUGGESTION, 15);
+        assert_eq!(clientbound::COMMAND_SUGGESTIONS, 15);
+        // THE BYTES (the id prefix, the transaction, the slash-ful utf)
+        let p = encode_command_suggestion(7, "/tp ").unwrap();
+        let mut want = Vec::new();
+        write_varint(&mut want, serverbound::COMMAND_SUGGESTION);
+        write_varint(&mut want, 7);
+        write_string(&mut want, "/tp ");
+        assert_eq!(p, want);
+        // the id the FIRST field rides (the write walk's own order)
+        assert_eq!(&p[0..2], &[15, 7], "the id prefix + tx id");
+        assert_eq!(&p[2..3], b"\x04", "the utf length first");
+        assert_eq!(&p[3..], b"/tp ", "the FULL input the '/' rides");
+        // THE CAP (the 32500 writeUtf law — the past-cap command the
+        // honest refusal keeps)
+        assert!(encode_command_suggestion(0, "/").is_ok());
+        assert!(
+            encode_command_suggestion(0, &"x".repeat(32501)).is_err(),
+            "the 32501-byte utf the cap refuses"
+        );
+    }
+
+    /// THE SUGGESTION REPLY'S OWN READ WALK (javap of the real 26.2
+    /// ClientboundCommandSuggestionsPacket — the composite the clinit
+    /// speaks: id/start/length VarInts + the Entry list, each Entry
+    /// the capped utf + the TRUSTED_OPTIONAL tooltip the flag byte
+    /// wears): the parse the fixture's own bytes answer, the tooltip
+    /// the flatten keeps, the count the 1000 walk guards, the wrong
+    /// id the honest refusal keeps.
+    #[test]
+    fn the_suggestion_reply_walk_the_composite_speaks() {
+        // THE FIXTURE (id 15, tx 3, start 1, length 2, two rows: the
+        // bare "tp" and the tooltip-ful "teleport")
+        let mut p = Vec::new();
+        write_varint(&mut p, clientbound::COMMAND_SUGGESTIONS);
+        write_varint(&mut p, 3);
+        write_varint(&mut p, 1);
+        write_varint(&mut p, 2);
+        write_varint(&mut p, 2);
+        write_string(&mut p, "tp");
+        p.push(0); // the tooltip: absent (the flag byte)
+        write_string(&mut p, "teleport");
+        p.push(1); // the flag byte: present
+        let tooltip = Nbt::Compound(vec![(
+            "text".to_string(),
+            Nbt::String("Teleports things".to_string()),
+        )]);
+        crate::nbt::write_bare_nbt(&tooltip, &mut p).unwrap();
+        let m = parse_command_suggestions(&p).unwrap();
+        assert_eq!(m.id, 3, "the transaction id the echo keeps");
+        assert_eq!(m.start, 1);
+        assert_eq!(m.length, 2);
+        assert_eq!(m.matches.len(), 2);
+        assert_eq!(m.matches[0].text, "tp");
+        assert_eq!(m.matches[0].tooltip, None, "the absent flag the None keeps");
+        assert_eq!(m.matches[1].text, "teleport");
+        assert_eq!(
+            m.matches[1].tooltip.as_deref(),
+            Some("Teleports things"),
+            "the NBT component the flatten keeps"
+        );
+        // THE COUNT GUARD (the server's subList(0, 1000) walk — the
+        // past-cap count the honest refusal keeps)
+        let mut big = Vec::new();
+        write_varint(&mut big, clientbound::COMMAND_SUGGESTIONS);
+        write_varint(&mut big, 1);
+        write_varint(&mut big, 0);
+        write_varint(&mut big, 0);
+        write_varint(&mut big, 1001);
+        assert!(
+            parse_command_suggestions(&big).is_err(),
+            "the 1001-row reply the cap refuses"
+        );
+        // THE WRONG ID (the not-a-suggestions bytes the guard drops)
+        let mut wrong = Vec::new();
+        write_varint(&mut wrong, clientbound::SYSTEM_CHAT);
+        assert!(parse_command_suggestions(&wrong).is_err());
+        // THE STALE-ID CONSUMER WALK rides the screens' tests — the
+        // wire's own law the parse's tx echo answers.
     }
 }

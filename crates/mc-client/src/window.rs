@@ -168,6 +168,7 @@ fn run_join(
     >,
     clicks: std::sync::mpsc::Receiver<crate::world_view::ContainerCommand>,
     chat_tx: std::sync::mpsc::Sender<String>,
+    suggestion_tx: std::sync::mpsc::Sender<mc_protocol::play::CommandSuggestionsReply>,
     run: std::sync::Arc<std::sync::atomic::AtomicBool>,
 ) {
     // the REAL protocol number (login tolerates no 0-ping) and the
@@ -595,6 +596,21 @@ fn run_join(
                             // system/player chat lanes back.
                             session.send_chat_command(&command)
                         }
+                        crate::world_view::ContainerCommand::RequestCommandSuggestions {
+                            id,
+                            command,
+                        } => {
+                            // THE SUGGESTION REQUEST SEND (the vanilla
+                            // ClientSuggestionProvider.customSuggestion's
+                            // own wire — the ServerboundCommandSuggestionPacket
+                            // the '/'-typing lane sends on every edit:
+                            // the transaction id the pending gate
+                            // remembers, the FULL input the leading '/'
+                            // rides). The reply rides the
+                            // CommandSuggestions event back through the
+                            // pump into the suggestion channel.
+                            session.send_command_suggestion(id, &command)
+                        }
                     };
                     if let Err(e) = sent {
                         // a send failure is a transport error: a framed
@@ -746,6 +762,16 @@ fn run_join(
                                     m.target_name.as_deref(),
                                     &m.content,
                                 ));
+                            }
+                            mc_protocol::PlayEvent::CommandSuggestions(m) => {
+                                // THE SUGGESTION REPLY'S OWN LANE (the
+                                // vanilla ClientPacketListener
+                                // .handleCommandSuggestions's walk — the
+                                // completeCustomSuggestions completion the
+                                // pending id the consumer's gate answers:
+                                // the stale replies the dropped lane keeps,
+                                // the fresh list the chat screen renders)
+                                let _ = suggestion_tx.send(m.clone());
                             }
                             _ => {}
                         }
@@ -930,6 +956,12 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
     // carries — the frame thread's drain lands each line into the App's
     // display queue, the same addMessage walk the local messages ride)
     let (chat_tx, chat_rx) = std::sync::mpsc::channel::<String>();
+    // the command suggestion replies: ONE shared channel the per-join
+    // workers clone the sender of (the pump's CommandSuggestions arm —
+    // the frame thread's drain lands each reply into the App's pending
+    // gate, the stale ids the gate drops)
+    let (suggestion_tx, suggestion_rx) =
+        std::sync::mpsc::channel::<mc_protocol::play::CommandSuggestionsReply>();
     let mut net_seen = 0usize; // cursor into the append-only request log
     let mut was_left_down = false; // the attack edge detector (vanilla left-click = swing)
     let mut was_right_down = false; // the right press's edge detector (the split-stack lane)
@@ -1172,11 +1204,23 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
             if window.is_key_pressed(Key::Backspace, minifb::KeyRepeat::No) {
                 app.on_chat_backspace();
             }
+            // THE ARROWS' OWN BRANCH (the vanilla keyPressed walk — the
+            // shown suggestions the Up/Down cycle answers FIRST
+            // (SuggestionsList.keyPressed's own arm), the hidden list
+            // the history arrows recall): the App's one arrow walk the
+            // two laws fold
             if window.is_key_pressed(Key::Up, minifb::KeyRepeat::No) {
-                app.on_chat_history_key(true);
+                app.on_chat_arrow(true);
             }
             if window.is_key_pressed(Key::Down, minifb::KeyRepeat::No) {
-                app.on_chat_history_key(false);
+                app.on_chat_arrow(false);
+            }
+            // THE TAB'S OWN ACCEPT (the vanilla isCycleFocus arm — the
+            // shown list the first Tab applies the selected row to, the
+            // tabCycles flag the next Tab's cycle speaks, the cycle the
+            // useSuggestion/cycle walk keeps)
+            if window.is_key_pressed(Key::Tab, minifb::KeyRepeat::No) {
+                app.on_chat_tab_key();
             }
         } else if app.screen == crate::screens::ScreenKind::World
             && !app.paused
@@ -1368,8 +1412,9 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
             // same 200-tick law rides), the view cadence never gates
             // the promptness the chat lane keeps
             let chat_tx = chat_tx.clone();
+            let suggestion_tx = suggestion_tx.clone();
             std::thread::spawn(move || {
-                run_join(id, host, port, tx, live_tx, click_rx, chat_tx, run)
+                run_join(id, host, port, tx, live_tx, click_rx, chat_tx, suggestion_tx, run)
             });
         }
         while let Ok((id, res)) = net_rx.try_recv() {
@@ -1507,6 +1552,13 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
         // vanilla client displays the server's copy, never its own.)
         while let Ok(line) = chat_rx.try_recv() {
             app.push_chat_message(line);
+        }
+        // THE SUGGESTION REPLY DRAIN (the frame thread's own walk — the
+        // pump's CommandSuggestions lane ships each reply here, the App's
+        // pending gate the matching-id answers, the stale ids the gate
+        // drops)
+        while let Ok(reply) = suggestion_rx.try_recv() {
+            app.on_command_suggestions(reply);
         }
         music.sync(&app.music);
         // UI one-shots (ui.button.click) ride the independent UI channel
