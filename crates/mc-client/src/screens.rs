@@ -1369,6 +1369,98 @@ fn selector_suggestion(name: &str, key: &str, fallback: &str) -> mc_protocol::pl
     }
 }
 
+/// THE SELECTOR OPTIONS' OWN TABLE (javap
+/// `EntitySelectorOptions.bootStrap` — the 21 `register` calls the
+/// 26.2 bytecode banks, the keys in the registration order the
+/// constant pool speaks; the tooltip the `Option.description`
+/// translatable carries, the en_us inline fallback the cache-absent
+/// boot keeps). The option-NAME lane the `suggestNames` walk answers:
+/// the text the key + '=' pair rides, the prefix fold the
+/// `key.toLowerCase(ROOT).startsWith(remaining)` law keeps, the
+/// `canUse` gates the house's minimal walk skips (all 21 suggest for
+/// every selector kind — the '@p[type=' players-only refusal the
+/// server's own error answers).
+const SELECTOR_OPTIONS: [(&str, &str); 21] = [
+    ("name", "Entity name"),
+    ("distance", "Distance to entity"),
+    ("level", "Experience level"),
+    ("x", "x position"),
+    ("y", "y position"),
+    ("z", "z position"),
+    ("dx", "Entities between x and x + dx"),
+    ("dy", "Entities between y and y + dy"),
+    ("dz", "Entities between z and z + dz"),
+    ("x_rotation", "Entity's x rotation"),
+    ("y_rotation", "Entity's y rotation"),
+    ("limit", "Maximum number of entities to return"),
+    ("sort", "Sort the entities"),
+    ("gamemode", "Players with game mode"),
+    ("team", "Entities on team"),
+    ("type", "Entities of type"),
+    ("tag", "Entities with tag"),
+    ("nbt", "Entities with NBT"),
+    ("scores", "Entities with scores"),
+    ("advancements", "Players with advancements"),
+    ("predicate", "Custom predicate"),
+];
+
+/// THE OPTIONS' OWN NAME LANE (javap `EntitySelectorParser
+/// .parseOptions` + `EntitySelectorOptions.suggestNames` — the '['
+/// entry and every ',' continuation the suggestNames state installs,
+/// the option names the `key + '='` texts wear, the tooltip the
+/// `Option.description` translatable carries, the lowercase-prefix
+/// fold the remaining_lc law keeps; the '{'/quoted value states and
+/// the '=' value states the honest ask keeps — the house speaks no
+/// value providers; the 26.2 suggestNames the '!' prefix the no-match
+/// silence answers — the keys the '!' never starts-with).
+fn local_selector_options_suggestions(
+    sel_chars: &str,
+    bracket_idx: usize,
+    token_start: usize,
+) -> ChatSuggestionSource {
+    // the region after the '[' — the parseOptions walk's own ground
+    let region = &sel_chars[bracket_idx + 1..];
+    if region.contains('{') || region.contains('"') {
+        // the map/quoted value states the honest ask keeps
+        return ChatSuggestionSource::AskServer;
+    }
+    // the fresh-name position: the region's tail after the last ','
+    // (the comma state the walk re-installs suggestNames at); a tail
+    // carrying '=' the value state speaks — the honest ask
+    let tail = match region.rfind(',') {
+        Some(i) => &region[i + 1..],
+        None => region,
+    };
+    if tail.contains('=') {
+        return ChatSuggestionSource::AskServer;
+    }
+    // the tail's own span in the FULL input ('/' + the consumed
+    // prefix + the '@' + the selector chars + the '[')
+    let start = token_start + 1 + bracket_idx + 1 + (region.len() - tail.len());
+    let tail_lc = tail.to_lowercase();
+    let mut matches: Vec<mc_protocol::play::CommandSuggestionsMatch> = SELECTOR_OPTIONS
+        .iter()
+        .filter(|(key, _)| key.to_lowercase().starts_with(&tail_lc))
+        .map(|(key, tooltip)| {
+            mc_protocol::play::CommandSuggestionsMatch {
+                text: format!("{key}="),
+                tooltip: Some(
+                    tr(&format!("argument.entity.options.{key}.description"))
+                        .unwrap_or(tooltip)
+                        .to_string(),
+                ),
+            }
+        })
+        .collect();
+    // the Suggestions.merge sort (the compareToIgnoreCase law)
+    matches.sort_by(|a, b| a.text.to_lowercase().cmp(&b.text.to_lowercase()));
+    ChatSuggestionSource::Local {
+        start: start as i32,
+        length: tail.len() as i32,
+        matches,
+    }
+}
+
 /// THE NAME FOLD'S OWN WALK (javap `SharedSuggestionProvider
 /// .matchesSubStr` — the `startsWith(input, i)` probe the loop keeps,
 /// the `MATCH_SPLITTER` anyOf("._/") the `indexIn(seq, i)` walk
@@ -1530,8 +1622,10 @@ pub fn local_command_suggestions(
 /// `matchesSubStr` splitter walk) and the `Suggestions.merge` sort
 /// orders; the selectors the six the walk suggests UNFILTERED (the
 /// re-pick UX the cycle law speaks — '@a' typed still lists all
-/// six). The options walk ('[') the honest ask keeps (the house
-/// speaks no `EntitySelectorOptions` providers). The no-selector
+/// six). The '[' the options walk opens — the option-NAME positions
+/// (the '[' entry, the ',' continuations) the `suggestNames` lane
+/// answers locally, the '{'/quoted/'=' value states the honest ask
+/// keeps (the house speaks no value providers). The no-selector
 /// belief (the 26.2 atom-permission lane the house never reads — the
 /// server's own refusal the honest error) the `allow_selectors` gate
 /// keeps: false the '@' partial the empty local list answers (the
@@ -1549,9 +1643,10 @@ fn local_entity_suggestions(
     let token_start = 1 + rest_len - partial.len();
     let mut matches: Vec<mc_protocol::play::CommandSuggestionsMatch> = Vec::new();
     let (start, length) = if let Some(sel_chars) = partial_str.strip_prefix('@') {
-        // the '@' walk: the options the honest ask keeps
-        if sel_chars.contains('[') {
-            return ChatSuggestionSource::AskServer;
+        // the '@' walk: the '[' the options walk opens — the name
+        // positions the local lane answers, the value states the ask
+        if let Some(bracket_idx) = sel_chars.find('[') {
+            return local_selector_options_suggestions(sel_chars, bracket_idx, token_start);
         }
         if !allow_selectors {
             // the selectors the permission gate never names — the '@'
@@ -22752,12 +22847,15 @@ mod tests {
         };
         assert_eq!((start, length), (6, 2), "the whole token the range replaces");
         assert_eq!(matches.len(), 6, "the six the rewind state still speaks");
-        // THE OPTIONS WALK (the '[' the honest ask keeps — the house
-        // speaks no EntitySelectorOptions providers)
-        assert_eq!(
-            local_command_suggestions(&tree, "/kill @a[", &[], true),
-            Src::AskServer,
-            "the options walk the ask lane answers"
+        // THE OPTIONS WALK (the '[' the name lane opens — the option
+        // names the local answer speaks, the value states the ask
+        // keeps — the dedicated test walks them)
+        assert!(
+            matches!(
+                local_command_suggestions(&tree, "/kill @a[", &[], true),
+                Src::Local { .. }
+            ),
+            "the '[' entry the option-name lane answers"
         );
         // THE NO-SELECTOR BELIEF (the atom-permission lane the house
         // never reads — false the '@' the EMPTY local answers, no
@@ -22769,6 +22867,113 @@ mod tests {
         };
         assert_eq!((start, length), (6, 1));
         assert!(matches.is_empty(), "the selectors the gate never names");
+    }
+
+    /// THE OPTIONS' OWN NAME LANE (javap `EntitySelectorParser
+    /// .parseOptions` + `EntitySelectorOptions.suggestNames` — the '['
+    /// entry and every ',' continuation the suggestNames state
+    /// installs, the 21 `bootStrap` keys the `key + '='` texts wear,
+    /// the tooltip the `Option.description` translatable carries, the
+    /// lowercase-prefix fold the remaining_lc law keeps, the merge
+    /// sort the case-insensitive law orders; the '{'/quoted/'=' value
+    /// states the honest ask keeps — the house speaks no value
+    /// providers; the '!' prefix the no-match silence answers — the
+    /// 26.2 keys the '!' never starts-with).
+    #[test]
+    fn the_selector_options_the_name_lane_speaks() {
+        use crate::screens::ChatSuggestionSource as Src;
+        let tree = test_provider_tree();
+        // THE '[' ENTRY (the suggestNames state — the empty tail the
+        // 21 keys answer, the '=' suffix each text wears, the range
+        // the tail's own span names)
+        let Src::Local { start, length, matches } =
+            local_command_suggestions(&tree, "/kill @a[", &[], true)
+        else {
+            panic!("/kill @a[ the option-name lane answers");
+        };
+        assert_eq!((start, length), (9, 0), "the empty tail's own span");
+        assert_eq!(matches.len(), 21, "the bootStrap keys the lane answers");
+        assert_eq!(
+            matches[0].text, "advancements=",
+            "the merge sort the case-insensitive law orders"
+        );
+        assert_eq!(
+            matches[0].tooltip.as_deref(),
+            Some("Players with advancements"),
+            "the lang table's own lookup the en_us text answers"
+        );
+        // THE PREFIX FOLD (the remaining_lc law — 'so' the sort answers,
+        // the '=' suffix the text carries)
+        let Src::Local { start, length, matches } =
+            local_command_suggestions(&tree, "/kill @a[so", &[], true)
+        else {
+            panic!("/kill @a[so the prefix fold answers");
+        };
+        assert_eq!((start, length), (9, 2), "the typed prefix's own span");
+        assert_eq!(
+            matches.iter().map(|m| m.text.as_str()).collect::<Vec<_>>(),
+            vec!["sort="],
+            "the 'so' prefix the sort option answers"
+        );
+        assert_eq!(
+            matches[0].tooltip.as_deref(),
+            Some("Sort the entities")
+        );
+        // THE COMMA CONTINUATION (the fresh-name position the ',' state
+        // installs — the empty tail the 21 keys answer again)
+        let Src::Local { start, length, matches } =
+            local_command_suggestions(&tree, "/kill @a[sort=nearest,", &[], true)
+        else {
+            panic!("/kill @a[sort=nearest, the comma state answers");
+        };
+        assert_eq!((start, length), (22, 0), "the fresh tail's own span");
+        assert_eq!(matches.len(), 21, "the fresh names the state re-answers");
+        // THE VALUE STATES (the '=' tail, the '{' map value, the quoted
+        // value the honest ask keeps — the house speaks no value
+        // providers)
+        assert_eq!(
+            local_command_suggestions(&tree, "/kill @a[so=", &[], true),
+            Src::AskServer,
+            "the '=' tail the value state speaks"
+        );
+        assert_eq!(
+            local_command_suggestions(&tree, "/kill @a[scores={foo:1}", &[], true),
+            Src::AskServer,
+            "the '{{' map value the honest ask keeps"
+        );
+        assert_eq!(
+            local_command_suggestions(&tree, "/kill @a[name=\"St", &[], true),
+            Src::AskServer,
+            "the quoted value the honest ask keeps"
+        );
+        // THE '!' PREFIX (the 26.2 suggestNames the keys the '!'
+        // never starts-with — the empty local the silence keeps)
+        let Src::Local { matches, .. } =
+            local_command_suggestions(&tree, "/kill @a[!x", &[], true)
+        else {
+            panic!("/kill @a[!x the no-match lane answers");
+        };
+        assert!(matches.is_empty(), "the '!' prefix the silence keeps");
+        // THE TAB APPLY (the selected 'sort=' the replace lands — the
+        // input the '=' suffix wears)
+        let mut app = App::new(3);
+        app.enter_world();
+        app.on_command_tree(test_provider_tree());
+        let (tx, _rx) = std::sync::mpsc::channel::<crate::world_view::ContainerCommand>();
+        app.attach_live_clicks(tx);
+        app.on_chat_key();
+        for c in "/kill @a[so".chars() {
+            app.on_chat_char(c);
+        }
+        assert!(
+            _rx.try_recv().is_err(),
+            "the option-name lane no request spends"
+        );
+        app.on_chat_tab_key();
+        assert_eq!(
+            app.chat_input, "/kill @a[sort=",
+            "the apply the '=' suffix wears"
+        );
     }
 
     /// THE PARSERS' OWN SPLIT LAW (brigadier
