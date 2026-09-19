@@ -361,8 +361,13 @@ pub const BIOME_UNKNOWN: u32 = u32::MAX;
 /// queries — the SAME index conventions as [`World::chunks`]) plus the
 /// per-biome tint quad resolved from the synced registry table
 /// (slot order: grass top override / foliage override / water color /
-/// dry-foliage color — see [`crate::tint`]).
-#[derive(Debug, Clone, PartialEq, Eq)]
+/// dry-foliage color — see [`crate::tint`]) and the per-biome CLIMATE
+/// pair the weather renderer's precipitation pick consumes (`Biome
+/// .getPrecipitationAt`'s own inputs: the `hasPrecipitation` gate and
+/// the `temperature` the 0.15 snow threshold reads — the synced
+/// `BiomeEntry` fields, or the built-in jar tables in the skip-sync
+/// fallback; an empty vec = no climate opinion, no rain anywhere).
+#[derive(Debug, Clone, PartialEq)]
 pub struct BiomeLayer {
     /// per-chunk per-voxel registry biome ids; [`BIOME_UNKNOWN`] where unsent
     pub ids: Vec<Vec<u32>>,
@@ -370,6 +375,37 @@ pub struct BiomeLayer {
     /// quad [grass override, foliage override, water color, dry-foliage
     /// color]
     pub tints: Vec<[Option<u32>; 4]>,
+    /// per registry id (the SAME arrival-order table): the climate pair
+    /// the precipitation pick reads — [`BiomeClimate::NONE`] where the
+    /// table never answered
+    pub climates: Vec<BiomeClimate>,
+}
+
+/// The climate pair `Biome.getPrecipitationAt` consumes — the synced
+/// `BiomeEntry`'s `hasPrecipitation` boolean and `temperature` float.
+/// The `temperature_modifier`'s noise-gated FROZEN patchwork (the
+/// `TemperatureModifier$2` walk: two PerlinSimplexNoise samples gate a
+/// 0.2F override) stays this round's honest skip — the noise streams
+/// are a separate port; frozen biomes keep their base temperature
+/// (frozen_ocean 0.0, frozen_river 0.0 — the snow answer the base
+/// already gives, the dominant vanilla verdict for the frozen set).
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct BiomeClimate {
+    /// the synced `has_precipitation` — the gate the jar's own walk
+    /// returns NONE through
+    pub has_precipitation: bool,
+    /// the synced `temperature` — the base the 0.15 threshold and the
+    /// height adjustment read
+    pub temperature: f32,
+}
+
+impl BiomeClimate {
+    /// The no-opinion word: no precipitation, the temperature the gate
+    /// never reaches (the `None` pick renders no rain).
+    pub const NONE: BiomeClimate = BiomeClimate {
+        has_precipitation: false,
+        temperature: 0.0,
+    };
 }
 
 /// A light cell with no opinion — the server never answered for it
@@ -540,6 +576,27 @@ impl World {
         } else {
             AIR
         }
+    }
+
+    /// The column the grid CARRIES — the client's own `hasChunk` word
+    /// (the jar's `ClientLevel.getPrecipitationAt` gate: an unloaded
+    /// column's precipitation pick is NONE before any biome reads).
+    /// The weather renderer's extraction walks this gate.
+    pub fn column_sent(&self, wx: i32, wz: i32) -> bool {
+        let cx = wx.div_euclid(CHUNK_X as i32);
+        let cz = wz.div_euclid(CHUNK_Z as i32);
+        self.chunk_index(cx, cz).is_some()
+    }
+
+    /// The voxel's biome CLIMATE pair (the synced registry's
+    /// `has_precipitation`/`temperature` through the layer's
+    /// arrival-order table) — `None` outside the grid, an unsent
+    /// column, a [`BIOME_UNKNOWN`] voxel, or an id the table never
+    /// answered: the honest no-opinion, never a guessed climate.
+    pub fn biome_climate_at(&self, wx: i32, wy: i32, wz: i32) -> Option<BiomeClimate> {
+        let layer = self.biomes.as_ref()?;
+        let id = self.biome_id(layer, wx, wy, wz)?;
+        layer.climates.get(id as usize).copied()
     }
 
     /// The per-cell STATE-VARIANT byte (the network world's
@@ -975,7 +1032,11 @@ mod tests {
     /// One biome layer over a single chunk: every voxel resolved id 0,
     /// the tint table given.
     fn layer(tints: Vec<[Option<u32>; 4]>) -> BiomeLayer {
-        BiomeLayer { ids: vec![vec![0; CHUNK_X * CHUNK_Y * CHUNK_Z]], tints }
+        BiomeLayer {
+            ids: vec![vec![0; CHUNK_X * CHUNK_Y * CHUNK_Z]],
+            tints,
+            climates: Vec::new(), // the tint law's own tests: no climate opinion
+        }
     }
 
     #[test]

@@ -79,8 +79,12 @@ pub fn materialize(
     // through the model's accessor (the synced registry's elements, or
     // the built-in wire-order tables when no sync arrived — the
     // skip-sync fallback) and the per-voxel ids copy during the walk
-    // below; the layer lands on the world after it
+    // below; the layer lands on the world after it. THE CLIMATE PAIRS
+    // ride the SAME table (the weather renderer's precipitation pick —
+    // the synced `has_precipitation`/`temperature` elements, the
+    // built-in jar tables in the skip-sync fallback).
     let tints: Vec<[Option<u32>; 4]> = model.biome_tints();
+    let climates: Vec<crate::world::BiomeClimate> = model.biome_climates();
     let mut biome_ids = vec![vec![BIOME_UNKNOWN; CHUNK_X * CHUNK_Y * CHUNK_Z]; side * side];
     let mut world = World {
         chunks_per_side: side,
@@ -216,7 +220,7 @@ pub fn materialize(
             }
         }
     }
-    world.biomes = Some(BiomeLayer { ids: biome_ids, tints });
+    world.biomes = Some(BiomeLayer { ids: biome_ids, tints, climates });
     world
 }
 

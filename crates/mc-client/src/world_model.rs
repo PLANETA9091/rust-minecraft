@@ -2288,6 +2288,42 @@ impl WorldModel {
         }
     }
 
+    /// The climate pairs the biome layer indexes — one per registry id,
+    /// the SAME arrival-order table [`Self::biome_tints`] serves. The
+    /// SYNCED registry's own elements speak (the `has_precipitation`
+    /// boolean + the `temperature` float the wire's biome NBT carried —
+    /// `Biome.getPrecipitationAt`'s own inputs, the weather renderer's
+    /// precipitation pick). The skip-sync fallback walks the BUILT-IN
+    /// jar tables through the same name chain the tint slice runs
+    /// (`BIOME_ORDER` -> `worldgen::biome`); a name the built-in tables
+    /// do not carry resolves to [`BiomeClimate::NONE`] — the honest
+    /// no-opinion word, never a guess (no rain from an unknown climate).
+    pub fn biome_climates(&self) -> Vec<crate::world::BiomeClimate> {
+        use mc_registry::generated::registry_order::BIOME_ORDER;
+        if self.registry.biomes.is_empty() {
+            BIOME_ORDER
+                .iter()
+                .map(|name| {
+                    mc_registry::generated::worldgen::biome(name)
+                        .map(|d| crate::world::BiomeClimate {
+                            has_precipitation: d.has_precipitation,
+                            temperature: d.temperature,
+                        })
+                        .unwrap_or(crate::world::BiomeClimate::NONE)
+                })
+                .collect()
+        } else {
+            self.registry
+                .biomes
+                .iter()
+                .map(|e| crate::world::BiomeClimate {
+                    has_precipitation: e.has_precipitation,
+                    temperature: e.temperature,
+                })
+                .collect()
+        }
+    }
+
     /// The current dimension's day tick — the synced clock's total
     /// ticks mod the day timeline's period — or `None` before the
     /// server's first Set Time (the honest state: no opinion, the

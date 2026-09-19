@@ -1126,6 +1126,7 @@ mod tests {
             // grass slot carries an extreme color on every cell — if
             // pale leaves wrongly selected a slot, some face would fold
             tints: vec![[Some(0xFF0000), Some(0xFF0000), Some(0xFF0000), Some(0xFF0000)]],
+            climates: Vec::new(), // the tint law's own tests: no climate opinion
         });
         let quads = mesh_chunk(&w, 0, 0, None);
         // the stone top face at y 9 (under the pale leaves) DRAWS —
@@ -1393,6 +1394,7 @@ mod tests {
             // ONLY the dry slot speaks: the pale-garden override from the
             // 12th-audit probe; grass/foliage/water stay silent
             tints: vec![[None, None, None, Some(0xA0A69C)]],
+            climates: Vec::new(), // the tint law's own tests: no climate opinion
         });
         let quads = mesh_chunk(&w, 0, 0, None);
         let up = quads
@@ -1434,6 +1436,7 @@ mod tests {
         plains.biomes = Some(BiomeLayer {
             ids: vec![vec![0; CHUNK_X * CHUNK_Y * CHUNK_Z]],
             tints: vec![[None, None, Some(baked), None]],
+            climates: Vec::new(), // the tint law's own tests: no climate opinion
         });
         assert_eq!(
             water_top_corner(&plains),
@@ -1446,6 +1449,7 @@ mod tests {
         red.biomes = Some(BiomeLayer {
             ids: vec![vec![0; CHUNK_X * CHUNK_Y * CHUNK_Z]],
             tints: vec![[None, None, Some(0xFF0000), None]],
+            climates: Vec::new(), // the tint law's own tests: no climate opinion
         });
         let tinted = water_top_corner(&red);
         assert_eq!(tinted[1], 0.0, "green killed by the tint");

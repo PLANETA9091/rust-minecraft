@@ -2407,6 +2407,12 @@ pub struct App {
     /// The crit star's sprite (the lazy runtime load the orb sheet's
     /// own pattern speaks).
     pub crit_sprite: Option<crate::avatar::CritSprite>,
+    /// THE WEATHER'S OWN TEXTURES (the lazy loads the sprite lanes
+    /// keep — the jar's `textures/environment/rain.png` / `snow.png`
+    /// the RAIN_LOCATION/SNOW_LOCATION constants name; a missing file
+    /// keeps its kind invisible, the sprite lane's own rule).
+    pub weather_rain: Option<crate::weather::WeatherSprite>,
+    pub weather_snow: Option<crate::weather::WeatherSprite>,
     /// The poof cloud's 8 frames (the same lazy load).
     pub poof_frames: Option<crate::avatar::PoofFrames>,
     /// The drown bubble's sprite (the same lazy load — the bubble
@@ -2888,6 +2894,8 @@ impl App {
             particles: Vec::new(),
             crit_emitters: Vec::new(),
             crit_sprite: None,
+            weather_rain: None,
+            weather_snow: None,
             poof_frames: None,
             bubble_sprite: None,
             splash_frames: None,
@@ -10523,6 +10531,97 @@ impl App {
             .play_voice_at(self.frame, word, volume, pitch, dist);
     }
 
+    /// THE WEATHER'S OWN PASS (javap `WeatherEffectRenderer.render`, the
+    /// 26.2 jar — the splash lane's sound now has its water): the
+    /// extracted columns the render walks — the rain quads FIRST with
+    /// the `textures/environment/rain.png` sprite (baseAlpha 1.0), then
+    /// the snow quads with snow.png (baseAlpha 0.8, the fconst
+    /// 0.800000011920929 pair the bytecode keeps) — one translucent
+    /// depth-tested pass, NO depth write (the WEATHER_NO_DEPTH_WRITE
+    /// pipeline the jar renders through). The dry gate first (the
+    /// intensity `<= 0` early return the extractRenderState keeps —
+    /// every procedural/golden scene, the dry world the goldens keep);
+    /// the lazy texture loads the sprite lanes' pattern speaks (a
+    /// missing file keeps its kind invisible).
+    fn render_weather(
+        &mut self,
+        fb: &mut crate::raster::Framebuf,
+        ctx: &RenderCtx,
+        cam: &crate::camera::Camera,
+        day_time: i64,
+    ) {
+        let rain_level = self.active_world().map(|w| w.rain_level).unwrap_or(0.0);
+        if rain_level <= 0.0 {
+            return;
+        }
+        if self.weather_rain.is_none() {
+            self.weather_rain = crate::weather::WeatherSprite::load(
+                std::path::Path::new("assets-cache/jar"),
+                "environment/rain.png",
+            );
+        }
+        if self.weather_snow.is_none() {
+            self.weather_snow = crate::weather::WeatherSprite::load(
+                std::path::Path::new("assets-cache/jar"),
+                "environment/snow.png",
+            );
+        }
+        // the extraction reads the world alone — the borrow ends before
+        // the draw (the columns land owned)
+        let columns = self
+            .active_world()
+            .map(|w| {
+                crate::weather::extract_columns(w, cam.pos, day_time, self.partial_tick, rain_level)
+            })
+            .unwrap_or(crate::weather::WeatherColumns {
+                rain: Vec::new(),
+                snow: Vec::new(),
+                intensity: rain_level,
+                radius: crate::weather::WEATHER_RADIUS,
+            });
+        let vp = ctx.proj.mul(&ctx.view);
+        if !columns.rain.is_empty() {
+            if let Some(sprite) = &self.weather_rain {
+                let (quads, alphas) = crate::weather::build_weather_quads(
+                    &columns.rain,
+                    cam.pos,
+                    1.0,
+                    columns.radius,
+                    columns.intensity,
+                    "weather_rain",
+                );
+                if !quads.is_empty() {
+                    fb.draw_translucent_sampled_quads_alphas(
+                        vp,
+                        &quads,
+                        &alphas,
+                        &mut |_t, u, v| Some(sprite.pixel_wrapped(u, v)),
+                    );
+                }
+            }
+        }
+        if !columns.snow.is_empty() {
+            if let Some(sprite) = &self.weather_snow {
+                let (quads, alphas) = crate::weather::build_weather_quads(
+                    &columns.snow,
+                    cam.pos,
+                    0.8,
+                    columns.radius,
+                    columns.intensity,
+                    "weather_snow",
+                );
+                if !quads.is_empty() {
+                    fb.draw_translucent_sampled_quads_alphas(
+                        vp,
+                        &quads,
+                        &alphas,
+                        &mut |_t, u, v| Some(sprite.pixel_wrapped(u, v)),
+                    );
+                }
+            }
+        }
+    }
+
     /// The live view refreshed: the play session's stream landed in the
     /// SAME model the screen renders and the worker shipped the new
     /// window — swap the network world in place (a re-sent chunk
@@ -14649,6 +14748,11 @@ impl App {
         if !self.particles.is_empty() {
             self.render_particles(fb, &ctx, &cam);
         }
+        // THE WEATHER'S OWN PASS (the vanilla frame graph's own lane —
+        // after the particles, before the clouds): the rain/snow
+        // columns the WeatherEffectRenderer's walk banks, the dry
+        // worlds the intensity gate keeps silent
+        self.render_weather(fb, &ctx, &cam, day_time);
         crate::sky::render_clouds(fb, &ctx, &cam, day_time, 0.0, cloud_fog_end);
         // THE DIG LANE's frame render (the vanilla LevelRenderer's own
         // pair, both after the terrain and before the hand): the hit

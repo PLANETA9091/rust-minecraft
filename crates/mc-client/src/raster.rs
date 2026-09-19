@@ -926,9 +926,45 @@ impl Framebuf {
         alpha_scale: f32,
         sample: &mut dyn FnMut(&str, f32, f32) -> Option<[u8; 4]>,
     ) {
+        self.draw_translucent_sampled_quads_impl(proj, quads, &|_| alpha_scale, sample);
+    }
+
+    /// THE PER-QUAD ALPHA WALK (the weather renderer's own entry — the
+    /// jar's `renderInstances` folds ONE vertex color per column: the
+    /// `ARGB.white(alphaF)` the distance-fade lerp speaks, so every
+    /// quad carries its own alpha and the translucent blend scales the
+    /// texel's alpha by THAT quad's word — the per-call scalar's
+    /// per-quad twin, everything else identical). The alphas slice
+    /// indexes with the quad; a missing entry keeps the 1.0 identity.
+    pub fn draw_translucent_sampled_quads_alphas(
+        &mut self,
+        proj: Mat4,
+        quads: &[SampledQuad],
+        alphas: &[f32],
+        sample: &mut dyn FnMut(&str, f32, f32) -> Option<[u8; 4]>,
+    ) {
+        self.draw_translucent_sampled_quads_impl(
+            proj,
+            quads,
+            &|i| alphas.get(i).copied().unwrap_or(1.0),
+            sample,
+        );
+    }
+
+    /// The shared translucent core — `alpha_of` picks the quad's vertex
+    /// alpha (the constant scalar the screen overlays speak, the
+    /// per-column word the weather lane folds).
+    fn draw_translucent_sampled_quads_impl(
+        &mut self,
+        proj: Mat4,
+        quads: &[SampledQuad],
+        alpha_of: &dyn Fn(usize) -> f32,
+        sample: &mut dyn FnMut(&str, f32, f32) -> Option<[u8; 4]>,
+    ) {
         let w_px = self.w as f32;
         let h_px = self.h as f32;
-        for quad in quads {
+        for (quad_index, quad) in quads.iter().enumerate() {
+            let alpha_scale = alpha_of(quad_index);
             let clip: Vec<[f32; 4]> = quad
                 .pts
                 .iter()

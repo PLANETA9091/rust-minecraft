@@ -41,6 +41,7 @@ mod sound_table;
 mod textures;
 mod timeline;
 mod tint;
+mod weather;
 mod world;
 mod world_model;
 mod world_view;
