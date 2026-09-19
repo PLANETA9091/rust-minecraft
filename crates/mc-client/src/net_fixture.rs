@@ -32,6 +32,7 @@ use mc_registry::generated::block_ids::BLOCK_RANGES;
 /// The grid the CPU goldens frame: 5x5 chunks = 80x80 blocks (the
 /// default `--chunks`), so the orbit camera/frustum/fog match the
 /// procedural goldens' geometry exactly.
+#[cfg_attr(not(test), expect(dead_code))]
 pub const FIXTURE_SIDE: usize = 5;
 
 /// The torch cell (grid x, world y, grid z): under the shelf, mid-gap

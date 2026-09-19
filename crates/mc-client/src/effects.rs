@@ -215,6 +215,7 @@ impl EffectsStore {
         self.effects.is_empty()
     }
 
+    #[cfg_attr(not(test), expect(dead_code))]
     pub fn get(&self, effect_id: i32) -> Option<&EffectInstance> {
         self.effects.get(&effect_id)
     }
@@ -263,6 +264,7 @@ impl EffectsStore {
 
     /// `LivingEntity.removeEffect` — the map's removal; the absorption
     /// value persists (no removal hook — the module head's law).
+    #[cfg_attr(not(test), expect(dead_code))]
     pub fn remove_effect(&mut self, effect_id: i32) -> bool {
         self.effects.remove(&effect_id).is_some()
     }

@@ -527,6 +527,7 @@ pub fn extract_columns(
 /// `as8BitChannel = Mth.floor(alpha * 255.0)` (the floor law the raw
 /// disasm keeps — never a round).
 #[inline]
+#[cfg_attr(not(test), expect(dead_code))]
 pub fn argb_white(alpha: f32) -> u32 {
     ((alpha * 255.0).floor() as i64 as u32) << 24 | 0xFFFFFF
 }

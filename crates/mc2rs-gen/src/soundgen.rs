@@ -18,17 +18,20 @@ use serde_json::Value;
 pub struct SoundFile {
     /// path as given by sounds.json ("music/menu/menu1")
     pub name: String,
+    #[cfg_attr(not(test), expect(dead_code))]
     pub volume: f32,
     #[expect(dead_code)] // the sound json's own pitch column — the report keeps
     pub pitch: f32,
     #[expect(dead_code)] // the sound json's own weight column — the report keeps
     pub weight: u32,
+    #[cfg_attr(not(test), expect(dead_code))]
     pub stream: bool,
 }
 
 #[derive(Debug, Clone)]
 pub struct SoundEvent {
     pub id: String,
+    #[cfg_attr(not(test), expect(dead_code))]
     pub subtitle: Option<String>,
     pub files: Vec<SoundFile>,
 }
@@ -39,11 +42,13 @@ pub struct SoundData {
 }
 
 impl SoundData {
+    #[cfg_attr(not(test), expect(dead_code))]
     pub fn event(&self, id: &str) -> Option<&SoundEvent> {
         self.events.get(id)
     }
 
     /// All events under a namespace prefix, sorted ("music.menu." etc).
+    #[cfg_attr(not(test), expect(dead_code))]
     pub fn events_with_prefix(&self, prefix: &str) -> Vec<&SoundEvent> {
         self.events
             .values()

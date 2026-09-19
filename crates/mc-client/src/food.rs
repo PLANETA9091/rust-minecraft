@@ -82,7 +82,9 @@ pub const STARVE_DAMAGE: f32 = 1.0;
 pub const FOOD_SATURATION_POOR: f32 = 0.1;
 #[expect(dead_code)] // the 26.2 FoodConstants rank — the exhaustion/saturation ledger keeps
 pub const FOOD_SATURATION_LOW: f32 = 0.3;
+#[cfg_attr(not(test), expect(dead_code))]
 pub const FOOD_SATURATION_NORMAL: f32 = 0.6;
+#[cfg_attr(not(test), expect(dead_code))]
 pub const FOOD_SATURATION_GOOD: f32 = 0.8;
 #[expect(dead_code)] // the 26.2 FoodConstants rank — the exhaustion/saturation ledger keeps
 pub const FOOD_SATURATION_MAX: f32 = 1.0;
@@ -91,6 +93,7 @@ pub const FOOD_SATURATION_SUPERNATURAL: f32 = 1.2;
 
 /// `FoodConstants.saturationByModifier` (javap: `food * modifier *
 /// 2.0` — the eat lane's own saturation math).
+#[cfg_attr(not(test), expect(dead_code))]
 pub fn saturation_by_modifier(nutrition: i32, modifier: f32) -> f32 {
     nutrition as f32 * modifier * 2.0
 }
@@ -100,6 +103,7 @@ pub fn saturation_by_modifier(nutrition: i32, modifier: f32) -> f32 {
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Difficulty {
     Peaceful,
+    #[cfg_attr(not(test), expect(dead_code))]
     Easy,
     Normal,
     Hard,
@@ -174,6 +178,7 @@ impl FoodData {
         self.saturation
     }
 
+    #[cfg_attr(not(test), expect(dead_code))]
     pub fn exhaustion(&self) -> f32 {
         self.exhaustion
     }
@@ -199,6 +204,7 @@ impl FoodData {
 
     /// `eat(int, float)` (javap: `add(food, saturationByModifier(food,
     /// modifier))` — the eat arc's own entry).
+    #[cfg_attr(not(test), expect(dead_code))]
     pub fn eat(&mut self, nutrition: i32, modifier: f32) {
         self.add(nutrition, saturation_by_modifier(nutrition, modifier));
     }

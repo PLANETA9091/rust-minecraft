@@ -111,11 +111,17 @@ pub const WHEAT: u16 = 29;
 /// body/hull/mob/spawn walks pass, the CLIP targets the stalks the
 /// outline's full-cube fold keeps, the placeable refusal the harvest
 /// item's no-BlockItem law the whole family wears).
+#[cfg_attr(not(test), expect(dead_code))]
 pub const WHEAT_STAGE1: u16 = 30;
+#[cfg_attr(not(test), expect(dead_code))]
 pub const WHEAT_STAGE2: u16 = 31;
+#[cfg_attr(not(test), expect(dead_code))]
 pub const WHEAT_STAGE3: u16 = 32;
+#[cfg_attr(not(test), expect(dead_code))]
 pub const WHEAT_STAGE4: u16 = 33;
+#[cfg_attr(not(test), expect(dead_code))]
 pub const WHEAT_STAGE5: u16 = 34;
+#[cfg_attr(not(test), expect(dead_code))]
 pub const WHEAT_STAGE6: u16 = 35;
 pub const WHEAT_STAGE7: u16 = 36;
 /// THE CRAFTING TABLE'S OWN KIND (the autopush-328 round — the atlas

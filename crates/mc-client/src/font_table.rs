@@ -154,12 +154,14 @@ pub fn font_textures() -> &'static [String] {
 
 /// Providers skipped by the generator (ttf/legacy, unifont is empty in
 /// current versions).
+#[cfg_attr(not(test), expect(dead_code))]
 pub fn skipped_providers() -> usize {
     table().skipped_providers
 }
 
 /// True when the real measured table loaded (the test gates the jar-value
 /// pins on it — the no-cache CI boot the honest arms walk).
+#[cfg_attr(not(test), expect(dead_code))]
 pub fn real() -> bool {
     table().real
 }

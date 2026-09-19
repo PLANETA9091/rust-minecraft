@@ -45,6 +45,7 @@ pub struct HandQuad {
 pub struct ArmModel {
     /// decoded RGBA8 (64*64*4), the runtime file's verbatim pixels
     rgba: Vec<u8>,
+    #[cfg_attr(not(test), expect(dead_code))]
     quads: Vec<HandQuad>,
     /// which skin variant this model carries (the quads were built for)
     kind: ArmKind,
@@ -84,6 +85,7 @@ fn arm_box(kind: ArmKind) -> ([f32; 3], [f32; 3]) {
 
 /// Load + sha1-verify the WIDE skin from the runtime asset root, then
 /// build the vanilla arm geometry. `None` = not drawn.
+#[cfg_attr(not(test), expect(dead_code))]
 pub fn load(root: &Path) -> Option<ArmModel> {
     load_kind(root, ArmKind::Wide)
 }
@@ -319,12 +321,14 @@ fn mth_sqrt(x: f32) -> f32 {
 /// (x0,y1,z1) over (u+d+w+d, v+d). Each face's corner k takes the
 /// Polygon constructor's fixed rect corner: k=0 -> (u1,v0), 1 -> (u0,v0),
 /// 2 -> (u0,v1), 3 -> (u1,v1).
+#[cfg_attr(not(test), expect(dead_code))]
 fn build_quads() -> Vec<HandQuad> {
     build_quads_kind(ArmKind::Wide)
 }
 
 /// The WIDE quads at an arbitrary progress — the pre-variant name the
 /// bit-identity and sweep tests ride (the default arm kind).
+#[cfg_attr(not(test), expect(dead_code))]
 fn build_quads_at(swing: f32, equip: f32) -> Vec<HandQuad> {
     build_quads_kind_at(ArmKind::Wide, swing, equip)
 }
@@ -575,12 +579,14 @@ fn item_swing_terms(swing: f32) -> [f32; 5] {
 impl HeldItem {
     /// The loaded quad count — the tests' honest size probe (the
     /// geometry's own shape, no internals exposed).
+    #[cfg_attr(not(test), expect(dead_code))]
     pub fn quad_len(&self) -> usize {
         self.quads.len()
     }
 
     /// Whether ANY quad binds the named texture — the tests' honest
     /// texture-binding probe.
+    #[cfg_attr(not(test), expect(dead_code))]
     pub fn binds_texture(&self, tex: &str) -> bool {
         self.quads.iter().any(|q| q.texture == tex)
     }
@@ -589,6 +595,7 @@ impl HeldItem {
     /// (the pose's own shape: the using branch's stanza moves the
     /// payload, the probe reads WHERE it moved without exposing
     /// internals).
+    #[cfg_attr(not(test), expect(dead_code))]
     pub fn centroid(&self) -> [f32; 3] {
         let mut c = [0.0f64; 3];
         let mut n = 0.0f64;
@@ -612,6 +619,7 @@ impl HeldItem {
     /// which hold no item — never see a nonzero one). The eat pose rides
     /// AFTER the anchor (the vanilla renderArmWithItem's own order: the
     /// applyEatTransform folds over the item-arm transform chain).
+    #[cfg_attr(not(test), expect(dead_code))]
     fn sampled(&self, swing: f32) -> Vec<crate::raster::SampledQuad<'_>> {
         self.sampled_with_pose(swing, None)
     }
@@ -652,6 +660,7 @@ impl HeldItem {
     /// under the world's projection (the hand fov follows the world's).
     /// Vanilla also equips/swings here — the swing terms ride
     /// `item_hand_anchor` above; the equip progress is always 0.
+    #[cfg_attr(not(test), expect(dead_code))]
     pub fn draw(&self, fb: &mut crate::raster::Framebuf, proj: Mat4, swing: f32) {
         self.draw_with_pose(fb, proj, swing, None);
     }

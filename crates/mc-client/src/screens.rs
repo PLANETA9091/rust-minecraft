@@ -1679,6 +1679,7 @@ impl BundleContents {
 
     /// A contents row with NOTHING selected (the component's own
     /// construction law — the selected index starts at -1).
+    #[cfg_attr(not(test), expect(dead_code))]
     pub fn new(items: Vec<(i32, i32)>) -> Self {
         Self {
             items,
@@ -9704,6 +9705,7 @@ impl App {
 
     /// The hovered slot's stack — the walk the click lane keeps, the
     /// menu id the tuple's tail carries dropped.
+    #[cfg_attr(not(test), expect(dead_code))]
     fn hovered_container_stack(&self, mx: i32, my: i32) -> Option<(i32, i32)> {
         self.hovered_container(mx, my)
             .map(|(id, count, _)| (id, count))
@@ -12669,6 +12671,7 @@ impl App {
     /// own set (the vanilla teleport/pose shape the net side speaks: the
     /// pose lands, the world renders from it). The placement lane's clip
     /// aims through the same pose.
+    #[cfg_attr(not(test), expect(dead_code))]
     pub fn offline_camera_updated(&mut self, cam: crate::camera::Camera) {
         self.offline_camera = Some(cam);
     }
@@ -14057,6 +14060,7 @@ impl App {
 
     /// Whether a use is active (the vanilla isUsingItem's own query —
     /// the tests' honest probe).
+    #[cfg_attr(not(test), expect(dead_code))]
     pub fn is_using(&self) -> bool {
         self.using_item.is_some()
     }

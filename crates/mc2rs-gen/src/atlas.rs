@@ -95,6 +95,7 @@ pub const TINT_DRY: u32 = 0xA37546;
 #[derive(Debug, Clone)]
 struct ResolvedFace {
     texture: String,   // e.g. "block/grass_block_top"
+    #[cfg_attr(not(test), expect(dead_code))]
     tinted: bool,      // model face carried a tintindex
 }
 
@@ -654,6 +655,7 @@ pub const COLORMAP_STEMS: [&str; 3] = ["grass", "foliage", "dry_foliage"];
 /// Committed fallback source: compiles everywhere, maps every face to
 /// TILE_NONE so the renderer uses its palette path until the real atlas
 /// is generated from the jar.
+#[cfg_attr(not(test), expect(dead_code))]
 pub fn fallback_source(version: &str) -> String {
     format!(
         "// @generated fallback — run `cargo run -p mc2rs-gen -- atlas --version {version}`\n\

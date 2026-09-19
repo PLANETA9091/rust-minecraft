@@ -368,6 +368,7 @@ pub fn emit_cache(data: &TextureData) -> Result<Vec<u8>> {
 /// compiles everywhere; the pixel accessors live on the loader (whose honest
 /// empty table keeps the TILE_NONE-style degraded mode at every boot of
 /// this shape).
+#[cfg_attr(not(test), expect(dead_code))]
 pub fn fallback_source(version: &str) -> String {
     format!(
         "// @generated fallback — run `cargo run -p mc2rs-gen -- textures --version {version}`\n\

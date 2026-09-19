@@ -58,7 +58,9 @@
 //!   opinion and stays on the baked plains look.
 
 use crate::colormap;
-use crate::world::{GRASS, LEAF_LITTER, LEAVES, PALE_LEAVES, WATER};
+use crate::world::{GRASS, LEAF_LITTER, LEAVES, WATER};
+#[cfg(test)]
+use crate::world::PALE_LEAVES;
 use mc_protocol::{BiomeEntry, GrassColorModifier};
 
 /// Slot order of the per-biome tint quad: the grass_block_top color

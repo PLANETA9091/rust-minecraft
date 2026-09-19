@@ -862,6 +862,7 @@ pub fn dump_mob_effects(
 /// Parse the DumpMobEffects output (`id|name` lines) into the ordered name
 /// list. Ids must be dense from 0 (the built-in registries are dense) and
 /// names unique — the same honesty checks the registry-order parser runs.
+#[cfg_attr(not(test), expect(dead_code))]
 pub fn parse_mob_effect_dump(text: &str) -> Result<Vec<String>> {
     Ok(parse_mob_effect_rows(text)?
         .into_iter()

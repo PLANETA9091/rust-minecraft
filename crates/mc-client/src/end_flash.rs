@@ -129,6 +129,7 @@ impl EndFlashState {
 
     /// `getIntensity(partialTick)`: the last-tick fade,
     /// `old + partial * (current - old)` (Mth.lerp, f32 ops).
+    #[cfg_attr(not(test), expect(dead_code))]
     pub fn intensity(&self, partial_tick: f32) -> f32 {
         self.old_intensity + partial_tick * (self.intensity - self.old_intensity)
     }

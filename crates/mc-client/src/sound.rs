@@ -91,6 +91,7 @@ pub fn beat_due(ticks: f32) -> bool {
 /// (javap Entity.nextStep: f2i, iconst_1, iadd) — the reset after each
 /// step; the step itself fires when `moveDist > nextStep` with the block
 /// under the feet (getOnPos: floor(x), floor(y - 0.2), floor(z)) not air.
+#[cfg_attr(not(test), expect(dead_code))]
 pub fn next_step(move_dist: f32) -> f32 {
     (move_dist as i32) as f32 + 1.0
 }

@@ -6,4 +6,5 @@ pub const CLIENT_SHA1: &str = "2dc72797acbc1b63fc16a11c4ac393605f453754";
 /// True when the official jar is still obfuscated (pre-unobfuscation era).
 pub const OBFUSCATED: bool = false;
 /// Protocol version for the network layer (login handshake); -1 unknown.
+#[cfg_attr(not(test), expect(dead_code))]
 pub const PROTOCOL_VERSION: i32 = 776;

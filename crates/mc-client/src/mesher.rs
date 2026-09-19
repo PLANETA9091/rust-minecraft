@@ -194,6 +194,7 @@ const DEFAULT_NIGHT_VISION_COLOR: [f32; 3] = [153.0 / 255.0; 3];
 /// is the documented non-goal (same verdict as the torch shimmer);
 /// the conduit-power branch needs the underwater state the model
 /// does not track and stays 0.0.
+#[cfg_attr(not(test), expect(dead_code))]
 const NIGHT_VISION_FACTOR: f32 = 0.0;
 
 /// The vanilla lightmap's `BlockFactor` — the extractor's bytecode

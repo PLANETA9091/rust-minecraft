@@ -26,6 +26,7 @@ pub struct Track {
     pub sample_rate: u32,
     pub channels: usize,
     /// frames == samples.len() / channels (one frame = one sample per channel)
+    #[cfg_attr(not(test), expect(dead_code))]
     pub frames: u64,
     pub samples: Vec<f32>,
 }
@@ -161,9 +162,11 @@ pub fn probe_frames(bytes: &[u8]) -> Result<(u32, u64)> {
 pub trait AudioOutput {
     fn play(&mut self, track: Track);
     fn stop(&mut self);
+    #[cfg_attr(not(test), expect(dead_code))]
     fn playing(&self) -> bool;
     /// Fire-and-forget UI one-shot (ui.button.click), overlapping music.
     fn play_ui(&mut self, track: Track);
+    #[cfg_attr(not(test), expect(dead_code))]
     fn ui_playing(&self) -> bool;
 }
 

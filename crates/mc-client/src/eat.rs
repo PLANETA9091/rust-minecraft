@@ -413,6 +413,7 @@ pub fn can_eat(can_always_eat: bool, invulnerable: bool, needs_food: bool) -> bo
 
 /// The default consumable seconds (the table's fallback the codec
 /// speaks).
+#[cfg_attr(not(test), expect(dead_code))]
 pub const DEFAULT_SECONDS: f32 = DEFAULT_CONSUME_SECONDS;
 
 #[cfg(test)]

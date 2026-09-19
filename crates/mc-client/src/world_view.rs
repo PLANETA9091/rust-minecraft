@@ -2055,6 +2055,7 @@ fn player_biome(model: &WorldModel) -> Option<String> {
 /// thread and ships all three parts in the join result — the world screen
 /// renders the grid FROM the pose and the two can never disagree about
 /// where the player stands.
+#[cfg_attr(not(test), expect(dead_code))]
 pub fn materialize_snapshot_view(
     snap: WorldSnapshot,
     side: usize,

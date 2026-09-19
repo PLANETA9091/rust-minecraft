@@ -640,6 +640,7 @@ pub fn cloud_drift(game_time: i64, partial_ticks: f32) -> f64 {
 /// drift? The pattern is the 256x256 cell map tiled over the world, sampled
 /// at `floor((w + offset) / 12) mod 256` (camera cancels out of the game's
 /// mesh anchoring — derived from the CloudInfo UBO offsets).
+#[cfg_attr(not(test), expect(dead_code))]
 pub fn is_cloud_cell(wx: f64, wz: f64, drift: f64) -> bool {
     let size = S::CLOUDS_SIZE as f64;
     let tx = (((wx + drift) / CLOUD_CELL).floor().rem_euclid(size)) as usize;

@@ -39,10 +39,11 @@
 use std::collections::{BTreeMap, HashMap};
 
 use mc_protocol::{
-    ChunkColumn, ChunkLight, ClockUpdate, ComponentPatch, EntityDataEntry, EntityDataSet,
-    ItemStack, LightData, MobEffectRemove, MobEffectUpdate, PlayEvent, PlayerPosition,
-    RegistryData, SetHealth, WorldInfo, WorldSnapshot,
+    ChunkColumn, ChunkLight, ClockUpdate, ComponentPatch, EntityDataEntry, ItemStack, LightData,
+    PlayEvent, PlayerPosition, RegistryData, SetHealth, WorldInfo, WorldSnapshot,
 };
+#[cfg(test)]
+use mc_protocol::{EntityDataSet, MobEffectRemove, MobEffectUpdate};
 
 /// The model's view of ONE entity — the facts the entity packets have
 /// actually delivered (the spawn's registry-typed existence, the latest
@@ -557,6 +558,7 @@ pub struct OpenContainerState {
 /// SLICE is the layout's `USE_ROW_SLOT_START..USE_ROW_SLOT_END`; the
 /// HELPER is the helper — both facts kept separate, the wiki-era
 /// `36..45` claim describing only one of them.
+#[cfg_attr(not(test), expect(dead_code))]
 pub fn is_hotbar_slot(slot: i32) -> bool {
     (36..45).contains(&slot) || slot == 45
 }

@@ -100,10 +100,12 @@ impl MusicScheduler {
             .collect()
     }
 
+    #[cfg_attr(not(test), expect(dead_code))]
     pub fn state(&self) -> &MusicState {
         &self.state
     }
 
+    #[cfg_attr(not(test), expect(dead_code))]
     pub fn mode(&self) -> MusicMode {
         self.mode
     }
@@ -157,6 +159,7 @@ impl MusicScheduler {
     /// music on situation change) and the in-game music waits out a
     /// randomized delay before its first track. The situation is the vanilla
     /// in-game default `music.game` with its official 12000–24000 gap.
+    #[cfg_attr(not(test), expect(dead_code))]
     pub fn on_world_enter(&mut self) {
         self.enter_game_situation(
             Self::tracks_for("music.game"),

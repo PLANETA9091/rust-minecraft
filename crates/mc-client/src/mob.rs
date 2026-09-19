@@ -1002,6 +1002,7 @@ impl MobInteract {
     /// SUCCESS_SERVER verdict carries (the swing the
     /// SwingSource.SERVER starts, the heart burst the event 18
     /// broadcast speaks), the CONSUME fallback the false keeps.
+    #[cfg_attr(not(test), expect(dead_code))]
     pub fn love(&self) -> bool {
         matches!(self, MobInteract::Feed { love: true, .. })
     }
