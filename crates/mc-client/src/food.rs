@@ -50,10 +50,13 @@ pub const EXHAUSTION_SPRINT_JUMP: f32 = 0.2;
 pub const EXHAUSTION_MINE: f32 = 0.005;
 /// `FoodConstants.EXHAUSTION_ATTACK` — Player.attack's own inlined 0.1
 /// (the damageStatsAndHearts tail, both attack variants).
+#[expect(dead_code)] // the 26.2 FoodConstants rank — the exhaustion/saturation ledger keeps
 pub const EXHAUSTION_ATTACK: f32 = 0.1;
 /// `FoodConstants.EXHAUSTION_WALK` — the modern law's honest 0.0.
+#[expect(dead_code)] // the 26.2 FoodConstants rank — the exhaustion/saturation ledger keeps
 pub const EXHAUSTION_WALK: f32 = 0.0;
 /// `FoodConstants.EXHAUSTION_CROUCH` — the modern law's honest 0.0.
+#[expect(dead_code)] // the 26.2 FoodConstants rank — the exhaustion/saturation ledger keeps
 pub const EXHAUSTION_CROUCH: f32 = 0.0;
 /// `FoodConstants.EXHAUSTION_SPRINT` — the on-ground sprint lane's
 /// rate per block (0.1 * cm * 0.01 over the stats' own cm walk).
@@ -67,6 +70,7 @@ pub const EXHAUSTION_SWIM: f32 = 0.01;
 /// gone; the modern data says 0.0).
 pub const FALL_DAMAGE_EXHAUSTION: f32 = 0.0;
 /// The `damage_type/starve.json`'s own `exhaustion` field (0.0).
+#[expect(dead_code)] // the 26.2 FoodConstants rank — the exhaustion/saturation ledger keeps
 pub const STARVE_DAMAGE_EXHAUSTION: f32 = 0.0;
 /// The starve bite's own damage (javap tick: `hurtServer(level,
 /// damageSources.starve(), 1.0f)`).
@@ -74,11 +78,15 @@ pub const STARVE_DAMAGE: f32 = 1.0;
 
 /// The saturation modifier table (`FoodConstants`' own ranks — the
 /// Foods' builder rows speak them per item).
+#[expect(dead_code)] // the 26.2 FoodConstants rank — the exhaustion/saturation ledger keeps
 pub const FOOD_SATURATION_POOR: f32 = 0.1;
+#[expect(dead_code)] // the 26.2 FoodConstants rank — the exhaustion/saturation ledger keeps
 pub const FOOD_SATURATION_LOW: f32 = 0.3;
 pub const FOOD_SATURATION_NORMAL: f32 = 0.6;
 pub const FOOD_SATURATION_GOOD: f32 = 0.8;
+#[expect(dead_code)] // the 26.2 FoodConstants rank — the exhaustion/saturation ledger keeps
 pub const FOOD_SATURATION_MAX: f32 = 1.0;
+#[expect(dead_code)] // the 26.2 FoodConstants rank — the exhaustion/saturation ledger keeps
 pub const FOOD_SATURATION_SUPERNATURAL: f32 = 1.2;
 
 /// `FoodConstants.saturationByModifier` (javap: `food * modifier *

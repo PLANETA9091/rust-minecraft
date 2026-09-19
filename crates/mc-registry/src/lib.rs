@@ -563,7 +563,7 @@ pub mod meta {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use generated::item_models::{COMPLEX_ITEM_MODELS, RESOLVED_ITEM_LAYERS};
+    
     use generated::models::MODELS;
 
     #[test]
@@ -2151,7 +2151,7 @@ mod tests {
             for layer in &render.layers {
                 let idx = texture_index(layer.texture)
                     .unwrap_or_else(|| panic!("{id}: texture {} absent", layer.texture));
-                let (w, h) = texture_size(idx);
+                let (w, _h) = texture_size(idx);
                 assert!(w > 0, "{id}: texture {} missing", layer.texture);
             }
         }

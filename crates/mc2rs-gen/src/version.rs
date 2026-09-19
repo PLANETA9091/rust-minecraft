@@ -14,6 +14,7 @@ pub struct VersionJson {
     #[serde(default)]
     pub release_time: String,
     #[serde(default)]
+    #[expect(dead_code)] // the version manifest's assets index url — the json's own column
     pub assets: Option<String>,
     #[serde(default)]
     pub asset_index: Option<AssetIndexRef>,
@@ -32,6 +33,7 @@ pub struct AssetIndexRef {
     #[serde(default)]
     pub sha1: Option<String>,
     #[serde(default)]
+    #[expect(dead_code)] // the version manifest's totalSize — the json's own column
     pub total_size: u64,
 }
 
@@ -41,8 +43,10 @@ pub struct Downloads {
     #[serde(default)]
     pub client_mappings: Option<DirectDownload>,
     #[serde(default)]
+    #[expect(dead_code)] // the server jar's own download column — the client lane never reads
     pub server: Option<DirectDownload>,
     #[serde(default)]
+    #[expect(dead_code)] // the server mappings' own column — the client lane never reads
     pub server_mappings: Option<DirectDownload>,
 }
 
@@ -61,6 +65,7 @@ pub struct JavaVersion {
     #[serde(default)]
     pub major_version: u32,
     #[serde(default)]
+    #[expect(dead_code)] // the java-runtime component column — the json's own word
     pub component: String,
 }
 
@@ -68,6 +73,7 @@ pub struct JavaVersion {
 pub struct LibraryRef {
     pub name: String,
     #[serde(default)]
+    #[expect(dead_code)] // the rule's own url column — the json's own word
     pub url: Option<String>,
     /// Vanilla launcher rule list (os/action); absent = unconditional.
     #[serde(default)]

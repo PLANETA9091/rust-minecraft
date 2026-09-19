@@ -254,6 +254,7 @@ pub const ARM_BOX_PX: [u16; 3] = [4, 12, 4];
 /// wide model), `addBox(-2, -2, -2, 3, 12, 4)`, pivot `offset(-5, 2, 0)`
 /// (UNCHANGED — the transform chain in the client is kind-independent).
 pub const SLIM_ARM_BOX_PX: [u16; 3] = [3, 12, 4];
+#[expect(dead_code)] // the slim box's own origin — the generator's local copy; the emitted client line the string lane keeps
 pub const SLIM_ARM_BOX_ORIGIN_PX: [i16; 3] = [-2, -2, -2];
 
 /// The extracted skin facts the generated table carries.

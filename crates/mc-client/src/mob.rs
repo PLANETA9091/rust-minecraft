@@ -260,6 +260,7 @@ pub const ARROW_AIM_HEIGHT_FRACTION: f64 = 0.333_333_333_333_333_3;
 pub const ARROW_SPAWN_EYE_OFFSET: f64 = 0.100_000_001_490_116_12;
 /// The hurt pipeline's own arrow row (the arrow's hit the player's
 /// hurt walk answers — the knockback the punch-0 bow never carries).
+#[expect(dead_code)] // the arrow-hit sound's own volume — the projectile lanes keep
 pub const ARROW_HIT_VOLUME: f32 = 1.0;
 /// The PIG registration's own `sized(0.9F, 0.9F)` (EntityTypes) — the
 /// second drawn body's own bbox (the flame ring's dims the render asks).
@@ -595,6 +596,7 @@ impl ChickenVariantKind {
         }
     }
 
+    #[expect(dead_code)] // the kind-name word the renderer lanes pick from tables
     pub fn name(self) -> &'static str {
         match self {
             ChickenVariantKind::Temperate => "minecraft:temperate",
@@ -1688,6 +1690,7 @@ pub const WOLF_AVOID_WALK_MODIFIER: f64 = 1.0;
 pub const WOLF_AVOID_SPRINT_MODIFIER: f64 = 1.2;
 pub const WOLF_AVOID_BOX_INFLATE_Y: f64 = 3.0;
 pub const WOLF_AVOID_POSAWAY_XZ: i64 = 16;
+#[expect(dead_code)] // the getPosAway(16, 7) y-span — the straight-line stand-in keeps
 pub const WOLF_AVOID_POSAWAY_Y: i64 = 7;
 pub const WOLF_AVOID_TRIES: usize = 10;
 /// THE MONSTER BASE'S OWN MELEE WORD (javap `Monster.
@@ -1757,6 +1760,7 @@ pub const ZOMBIE_XP_REWARD: i32 = 5;
 /// `MeleeAttackGoal`'s ctor bipush 20 — the attack cadence.
 pub const ATTACK_INTERVAL_TICKS: i32 = 20;
 /// `MeleeAttackGoal.canUse`'s own 20-tick re-check gate.
+#[expect(dead_code)] // the canUse 20-tick re-check gate — the armed clock walks it
 pub const ATTACK_RECHECK_TICKS: i64 = 20;
 /// `ZombieAttackGoal.tick`'s `raiseArmTicks >= 5`.
 pub const RAISE_ARM_DELAY: i32 = 5;
@@ -2893,6 +2897,7 @@ pub struct Zombie {
     /// `MeleeAttackGoal.ticksUntilNextAttack`
     ticks_until_attack: i32,
     /// the canUse re-check clock (lastCanUseCheck)
+    #[expect(dead_code)] // the lastCanUseCheck clock — the goal's own ledger keeps
     attack_recheck: i64,
     /// `RangedBowAttackGoal.seeTime` (the skeleton's own draw — the
     /// LOS walked the goal's own counter: +1 the seeing tick, −1 the
@@ -5902,7 +5907,7 @@ pub fn try_spawn(
     } else {
         MobKind::Skeleton
     };
-    let mut id = *next_id;
+    let id = *next_id;
     *next_id += 1;
     let mut z = Zombie::new(
         id,
@@ -7746,7 +7751,7 @@ mod tests {
         near.y = 0.0;
         let mobs = vec![near, far];
         let eye = (0.0, 1.0, 0.0);
-        let view = (1.0, -0.2 / 2.0, 0.0); // level-out: the boxes at y 0..1.95
+        let _view = (1.0, -0.2 / 2.0, 0.0); // level-out: the boxes at y 0..1.95
                                            // aim level at the bodies' middle (y 1.0 eye, the ray rides x)
         let view = (1.0, 0.0, 0.0);
         let picked = pick_entity(&mobs, eye, view, 4.5);
@@ -11107,7 +11112,7 @@ mod tests {
         cow.kind = MobKind::Cow;
         let mut pig = Zombie::new(10, 0.0, 64.0, 0.0, 262);
         pig.kind = MobKind::Pig;
-        let mut zombie = Zombie::new(8, 0.0, 64.0, 0.0, 262);
+        let zombie = Zombie::new(8, 0.0, 64.0, 0.0, 262);
         assert!(sheep.is_food("wheat"), "SHEEP_FOOD the wheat speaks");
         assert!(
             !sheep.is_food("carrot"),
@@ -11693,7 +11698,7 @@ mod tests {
         };
         assert!(!locked, "the unlock walk the RESET pick speaks");
         let (_, _, _, _, y1, _) = mob.box_for();
-        let adult_band = (mob.y + (y1 - mob.y) - 0.2..mob.y + (y1 - mob.y) + 0.2);
+        let adult_band = mob.y + (y1 - mob.y) - 0.2..mob.y + (y1 - mob.y) + 0.2;
         assert!(
             adult_band.contains(&ly),
             "the RESET lift the 0.0 arm keeps: {ly}"
@@ -12164,7 +12169,7 @@ mod tests {
             }
         }
         let (seed, (tx, tz)) = found.expect("the seed walk the stroll gate arms within");
-        let mut z = Zombie::new(1, 24.5, 5.0, 24.5, seed);
+        let z = Zombie::new(1, 24.5, 5.0, 24.5, seed);
         assert!(z.in_water(&world), "the pooled body the arm rides");
         let (itx, itz) = (tx.floor() as i32, tz.floor() as i32);
         // the dry column the land ring keeps (the pool the gate
@@ -12708,7 +12713,7 @@ mod tests {
         // canSeeSky half refuses (sky 15), the solid cells the dark
         // half refuses (the walk-target value 0.5 the stone's darkness
         // answers) — the None the ten-try miss keeps
-        let mut world = wide_flat_world();
+        let world = wide_flat_world();
         let mut s = Zombie::new(1, 32.0, 5.0, 32.0, 262);
         assert!(
             s.flee_sun_hide_pos(&world, day).is_none(),
@@ -14204,7 +14209,7 @@ mod tests {
         assert!(!w.is_monster(), "the Animal chain the Monster branch never reaches");
         let mut body = Zombie::new(7, 0.5, 5.0, 0.5, 9);
         body.kind = MobKind::Wolf;
-        let (x0, y0, z0, x1, y1, z1) = body.box_for();
+        let (x0, y0, _z0, x1, y1, _z1) = body.box_for();
         let (bw, bh) = (x1 - x0, y1 - y0);
         assert!((bw - WOLF_WIDTH).abs() < 1e-9, "the sized 0.6");
         assert!((bh - WOLF_HEIGHT).abs() < 1e-9, "the sized 0.85 — the 26.2 word");

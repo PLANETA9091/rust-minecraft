@@ -24,6 +24,7 @@ pub struct VEntry {
     #[serde(rename = "type")]
     pub kind: String,
     pub url: String,
+    #[expect(dead_code)] // the manifest's upload timestamp — the json's own column
     pub time: String,
     pub release_time: String,
     #[serde(default)]

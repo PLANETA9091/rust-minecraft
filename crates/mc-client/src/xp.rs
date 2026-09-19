@@ -16,6 +16,7 @@ use crate::world;
 pub struct ExperienceOrb {
     /// the entity id (the client's own counter — the wire ids stay the
     /// server's)
+    #[expect(dead_code)] // the client's own counter — the wire ids stay the server's
     pub id: i32,
     /// the orb's own XP (ONE `getExperienceValue` step of the award)
     pub value: i32,

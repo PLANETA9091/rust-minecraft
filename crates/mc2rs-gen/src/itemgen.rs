@@ -66,6 +66,7 @@ pub struct TransformComponents {
 }
 
 impl TransformComponents {
+    #[expect(dead_code)] // the no-op transform the chain folds to when no item data speaks
     fn identity() -> Self {
         Self {
             translation: [0.0; 3],

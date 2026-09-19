@@ -135,6 +135,7 @@ pub const FALL_ACCUM_VY_GATE: f64 = -0.5;
 /// `Entity.lavaIgnite`'s own `igniteForSeconds(15.0F)` — the lava's
 /// brand. javap: fireImmune aside (the bare player never is), the
 /// float 15.0f rides igniteForSeconds.
+#[expect(dead_code)] // the FireImmune check's own 15s — the client's honest lane never burns
 pub const LAVA_IGNITE_SECONDS: f32 = 15.0;
 /// `igniteForSeconds(15.0F)`'s own fold — `igniteForTicks(Mth.floor(
 /// 15.0F * 20.0F))` = 300 ticks (the precomputed floor the constant
@@ -501,17 +502,17 @@ pub fn clip_ray(world: &World, from: Vec3, to: Vec3) -> Option<Vec3> {
     let step_z = if dz > 0.0 { 1 } else { -1 };
     // t to the next x/y/z boundary, and the t span per whole cell
     let mut t_max_x = if dx != 0.0 {
-        ((if dx > 0.0 { cx as f64 + 1.0 - fx } else { fx - cx as f64 }) / dx.abs())
+        (if dx > 0.0 { cx as f64 + 1.0 - fx } else { fx - cx as f64 }) / dx.abs()
     } else {
         f64::INFINITY
     };
     let mut t_max_y = if dy != 0.0 {
-        ((if dy > 0.0 { cy as f64 + 1.0 - fy } else { fy - cy as f64 }) / dy.abs())
+        (if dy > 0.0 { cy as f64 + 1.0 - fy } else { fy - cy as f64 }) / dy.abs()
     } else {
         f64::INFINITY
     };
     let mut t_max_z = if dz != 0.0 {
-        ((if dz > 0.0 { cz as f64 + 1.0 - fz } else { fz - cz as f64 }) / dz.abs())
+        (if dz > 0.0 { cz as f64 + 1.0 - fz } else { fz - cz as f64 }) / dz.abs()
     } else {
         f64::INFINITY
     };
@@ -3278,7 +3279,7 @@ mod tests {
         for y in 8..=11 {
             w.set(8, y, 8, crate::world::WATER);
             w.variants.as_mut().expect("built above")[0]
-                [(8 + 8 * 16 + (y as usize) * 256)] = 2;
+                [8 + 8 * 16 + (y as usize) * 256] = 2;
         }
         let mut b = PlayerBody::new(8.0, 9.0, 8.0, 90.0, 0.0);
         b.apply_bubble_column_drag(&w);

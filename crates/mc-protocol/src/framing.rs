@@ -213,7 +213,7 @@ mod tests {
         // `onReceive(frameLen + VarInt.getByteSize(frameLen))` walk —
         // the length varint + the frame the read keeps, the
         // accumulation the two packets' pair pins)
-        let mut writer = PacketConn::new(Cursor::new(Vec::new()));
+        let writer = PacketConn::new(Cursor::new(Vec::new()));
         let f1 = writer.encode_packet(&[0x01, 0x02, 0x03]).unwrap(); // len 3 + 1 varint byte
         let f2 = writer.encode_packet(&vec![7u8; 300]).unwrap(); // len 300 + 2 varint bytes
         let mut reader = PacketConn::new(Cursor::new([f1, f2].concat()));

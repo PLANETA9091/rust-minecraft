@@ -54,7 +54,7 @@ fn parse_font(bytes: &[u8]) -> Option<FontTable> {
         return None;
     }
     let mut o = 10usize;
-    let mut u32_at = |o: &mut usize| -> Option<u32> {
+    let u32_at = |o: &mut usize| -> Option<u32> {
         let end = *o + 4;
         if end > bytes.len() {
             return None;
@@ -263,7 +263,9 @@ mod tests {
         // fallback pen advance (the same degraded mode the absent font
         // pixels already drove).
         if real() {
-            assert!(skipped_providers() >= 0);
+            // the skipped count the loader reports (usize — the
+            // u32 wire value the section header read)
+            assert!(skipped_providers() <= u32::MAX as usize);
             assert!(!font_textures().is_empty());
             assert!(glyph('A').is_some());
         } else {

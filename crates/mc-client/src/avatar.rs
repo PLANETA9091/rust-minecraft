@@ -3658,9 +3658,9 @@ fn build_posed_parts(state: &AvatarState) -> Vec<Part> {
     let mut body_x = 0.0f32;
     let head_x = state.pitch_deg.to_radians();
     let head_y = state.head_yaw_off_deg.to_radians();
-    let mut leg_r_y = 0.005f32;
+    let leg_r_y = 0.005f32;
     let leg_r_z = 0.005f32;
-    let mut leg_l_y = -0.005f32;
+    let leg_l_y = -0.005f32;
     let leg_l_z = -0.005f32;
     // the pivot nudges the crouch speaks (model texels). THE THIN
     // HUMANOID's leg pivot x (javap `SkeletonModel.
@@ -4504,7 +4504,7 @@ fn armor_inflate(slot: usize) -> f32 {
 /// the boots/leggings stack's own clearance speaks), the LEFT pair the
 /// mirror flag speaks (the 64x32 armor layout the skin's dedicated
 /// left-side UVs never shared).
-pub fn armor_parts(state: &AvatarState, slot: usize) -> Vec<Part> {
+fn armor_parts(state: &AvatarState, slot: usize) -> Vec<Part> {
     let def = armor_inflate(slot);
     let leg_def = def - 0.1;
     // the posed walk's own index law: 0 head, 1 body, 2 right_arm,
@@ -4724,8 +4724,8 @@ fn block_face_shade(direction: mc_registry::generated::elements::Cull, shade: bo
 pub fn head_block_quads(
     state: &AvatarState,
     feet: Vec3,
-    cam_yaw: f32,
-    cam_pitch: f32,
+    _cam_yaw: f32,
+    _cam_pitch: f32,
     model_id: &str,
 ) -> Option<Vec<HeadBlockQuad>> {
     let quads = mc_registry::element_quads::derive_model_inherited(model_id)?;
@@ -5293,6 +5293,7 @@ pub struct OrbSheet {
 /// The sheet's own layout (javap the submit's `/ 64.0F` folds — the
 /// 4x4 grid of 16x16 icons over the 64x64 sheet).
 pub const ORB_SHEET_SIDE: u32 = 64;
+#[expect(dead_code)] // the 26.2 ledger's icon tile side — the HUD rows read their own
 pub const ORB_ICON_SIDE: u32 = 16;
 
 impl OrbSheet {
@@ -6608,13 +6609,13 @@ mod tests {
         // THE PIG/COW VARIANTS' OWN LOADS (the same sha1 walk the
         // chicken's pairs keep — the cold/warm skins + the babies)
         let cold_pig = ColdPigModel::load(&root).expect("the cold pig loads");
-        let warm_pig = PigModel::load_warm(&root).expect("the warm pig loads");
-        let cold_pig_baby = BabyPigModel::load_cold(&root).expect("the cold piglet loads");
-        let warm_pig_baby = BabyPigModel::load_warm(&root).expect("the warm piglet loads");
+        let _warm_pig = PigModel::load_warm(&root).expect("the warm pig loads");
+        let _cold_pig_baby = BabyPigModel::load_cold(&root).expect("the cold piglet loads");
+        let _warm_pig_baby = BabyPigModel::load_warm(&root).expect("the warm piglet loads");
         let cold_cow = ColdCowModel::load(&root).expect("the cold cow loads");
         let warm_cow = WarmCowModel::load(&root).expect("the warm cow loads");
-        let cold_cow_baby = BabyCowModel::load_cold(&root).expect("the cold calf loads");
-        let warm_cow_baby = BabyCowModel::load_warm(&root).expect("the warm calf loads");
+        let _cold_cow_baby = BabyCowModel::load_cold(&root).expect("the cold calf loads");
+        let _warm_cow_baby = BabyCowModel::load_warm(&root).expect("the warm calf loads");
         // the pig/cow loads' own sha1 verdicts ARE the content pins
         // (the 64x64 layouts the decode verifies — the per-texel
         // probes the pig/cow unwrap rects the existing loads tests
@@ -8364,7 +8365,7 @@ mod tests {
         let pig = skull_quads(&rest, Vec3::ZERO, 0.0, 0.0, id("piglin_head"))
             .expect("the piglin speaks");
         assert_eq!(pig.len(), 36);
-        let (plo, phi) = bbox(&pig);
+        let (_plo, phi) = bbox(&pig);
         assert!(phi[0] > 0.33, "the ears widen the box: {}", phi[0]);
         // THE DRAGON'S JAW (the head pose + the jaw part — the snout
         // juts the face side past a block's own length)

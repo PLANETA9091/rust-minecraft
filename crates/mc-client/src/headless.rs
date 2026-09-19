@@ -1468,6 +1468,7 @@ fn stage_inventory_loadout(app: &mut crate::screens::App) {
 /// `slim_arm` selects the slim (Alex) skin variant for the empty-hand
 /// arm — the deterministic stand-in for the profile's texture metadata
 /// (the goldens never set it: the default stays the wide classic).
+#[expect(dead_code)] // the default-opts delegate — the opts lane main.rs rides
 pub fn render_gui_screen(
     screen: &str,
     frame: u64,

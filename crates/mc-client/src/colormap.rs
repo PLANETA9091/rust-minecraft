@@ -297,7 +297,7 @@ mod tests {
         // THE happy path: a 256x256 RGB PNG (the jar's own colormap
         // shape), three of the four corners pinned, the pack row-major.
         let mut px = vec![0u8; 256 * 256 * 3];
-        let mut set = |px: &mut [u8], x: usize, y: usize, rgb: [u8; 3]| {
+        let set = |px: &mut [u8], x: usize, y: usize, rgb: [u8; 3]| {
             let o = (y * 256 + x) * 3;
             px[o] = rgb[0];
             px[o + 1] = rgb[1];

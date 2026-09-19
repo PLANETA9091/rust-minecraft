@@ -2693,6 +2693,7 @@ const HOTBAR_W: i32 = 182;
 const HOTBAR_H: i32 = 22;
 const HEART: i32 = 9;
 const HEART_SPACING: i32 = 8;
+#[expect(dead_code)] // the 26.2 ledger's bar full-value — the HUD rows read their own
 pub const HEALTH: i32 = 20;
 /// `Attributes.MAX_HEALTH`'s default — the setHealth clamp's own
 /// ceiling (javap LivingEntity.setHealth: `Mth.clamp(health, 0,
@@ -4999,7 +5000,7 @@ impl App {
                 let charge = ((self.attack_ticker as f32 + 0.5) / 5.0).clamp(0.0, 1.0);
                 let full = charge > 0.9;
                 let (on_ground, eye_water) = self.body_state();
-                let (falling, sprinting, bx, by, bz, bvx, bvz, vyaw, by_mid) = self
+                let (falling, sprinting, bx, _by, bz, bvx, bvz, vyaw, by_mid) = self
                     .body
                     .as_ref()
                     .map(|b| {
@@ -5099,7 +5100,7 @@ impl App {
         let hit = self.clip_crosshair();
         let kind = hit
             .as_ref()
-            .and_then(|h| self.active_world())
+            .and_then(|_h| self.active_world())
             .map(|w| {
                 let h = hit.as_ref().unwrap();
                 w.get(h.pos.0, h.pos.1, h.pos.2)
@@ -5930,7 +5931,7 @@ impl App {
         // stale procedural mesh is also rebuilt — the guard keeps each
         // terrain source out of the other's screen)
         if self.world_is_network || self.world_quads.is_none() {
-            let mut world = crate::world::World::new(WORLD_CHUNKS, self.seed);
+            let world = crate::world::World::new(WORLD_CHUNKS, self.seed);
             self.world_size = world.size_blocks();
             self.spawn_y = top_solid_y(&world, self.world_size / 2, self.world_size / 2);
             self.world_quads = Some(crate::mesher::mesh_world(&world, None));
@@ -8950,8 +8951,10 @@ impl App {
                         // isVehicle ifne -> 55 — the ridden hull the
                         // ride arm never takes): the press the item
                         // lane's use walk answers (the carrot-on-a-
-                        // stick's own boost the reins speak)
-                        entity_pass = true;
+                        // stick's own boost the reins speak). The
+                        // entity_pass word the vanilla arm sets the
+                        // later lanes re-arm before any read — the
+                        // dead store the offline walk never carries.
                     }
                     if let crate::mob::MobInteract::Feed { love, grow } = verdict {
                         // THE FOOD ARM'S OWN WALK (the Animal
@@ -12962,6 +12965,7 @@ impl App {
     /// The dig lane's mutable world accessor (the ACTIVE world's own
     /// voxels — the machine reads them either way; the writes ride the
     /// apply_locally flag the entry lanes set).
+    #[expect(dead_code)] // the accessor the wire-entry lanes arm — the ledger keeps
     fn active_world_mut(&mut self) -> Option<&mut crate::world::World> {
         if self.world_is_network {
             self.net_world.as_mut()
@@ -17810,7 +17814,7 @@ impl App {
         // arithmetic)
         let mut rng = ((self.frame as i64).wrapping_mul(312871) ^ 0x5DEECE66D)
             & ((1i64 << 48) - 1);
-        let mut next_jitter = |rng: &mut i64| -> i32 {
+        let next_jitter = |rng: &mut i64| -> i32 {
             *rng = rng.wrapping_mul(0x5DEECE66D).wrapping_add(0xB) & ((1i64 << 48) - 1);
             let next31 = (*rng >> 17) as u32;
             ((2u64.wrapping_mul(next31 as u64)) >> 31) as i32
@@ -19640,8 +19644,8 @@ fn mannequin_vp(
     pitch_deg: f32,
 ) -> crate::math::Mat4 {
     let (x1, y1, x2, y2) = MANNEQUIN_RECT;
-    let w = (x2 - x1) as f32 * gs;
-    let h = (y2 - y1) as f32 * gs;
+    let _w = (x2 - x1) as f32 * gs;
+    let _h = (y2 - y1) as f32 * gs;
     let s = 30.0 * gs;
     // the rect's center in FB px (the texture blit's own placement)
     let cx = (left as f32 + (x1 + x2) as f32 / 2.0) * gs;
@@ -19915,7 +19919,7 @@ fn food_origin(gui_w: i32, gui_h: i32) -> (i32, i32) {
 /// Hud.getAirBubbleYLine with the vehicle-less call the status extract
 /// speaks — `getVisibleVehicleHeartRows(0)` folds 0, the rowOffset -1,
 /// the yLineAir `height - 39 - 10` the caller arms lifts +10 back).
-fn bubbles_origin(gui_w: i32, gui_h: i32) -> i32 {
+fn bubbles_origin(_gui_w: i32, gui_h: i32) -> i32 {
     gui_h - 49
 }
 
@@ -24440,7 +24444,7 @@ cow_sound_variant: None,
         // the press at the box's center clicks the MENU's slot number
         app.render_title_buttons_for_test();
         assert_eq!(app.chest_slot_rects.len(), 63, "27 grid + 36 mirror boxes");
-        let &(sx, sy, slot) = app
+        let &(sx, sy, _slot) = app
             .chest_slot_rects
             .iter()
             .find(|&&(_, _, s)| s == 4)
@@ -24771,7 +24775,7 @@ cow_sound_variant: None,
         app.live_view_updated(air_net_world(2, 1), None, None, Some(chest));
         assert_eq!(app.screen, ScreenKind::Chest);
         app.render_title_buttons_for_test();
-        let &(sx, sy, slot) = app
+        let &(sx, sy, _slot) = app
             .chest_slot_rects
             .iter()
             .find(|&&(_, _, s)| s == 4)
@@ -31261,7 +31265,7 @@ cow_sound_variant: None,
             },
         )
         .unwrap();
-        let mut aim_at_first = |app: &mut App| {
+        let aim_at_first = |app: &mut App| {
             let (tx, ty, tz) = {
                 let m = &app.mobs[0];
                 (m.x, m.y + crate::mob::ZOMBIE_HEIGHT * 0.5, m.z)
@@ -34501,7 +34505,7 @@ cow_sound_variant: None,
     #[test]
     fn the_armor_slots_take_the_matching_piece_and_refuse_the_rest() {
         let helmet = mc_registry::item_id_by_name("iron_helmet").unwrap();
-        let chest = mc_registry::item_id_by_name("iron_chestplate").unwrap();
+        let _chest = mc_registry::item_id_by_name("iron_chestplate").unwrap();
         let diamond = mc_registry::item_id_by_name("diamond_helmet").unwrap();
         let planks = mc_registry::item_id_by_name("oak_planks").unwrap();
         let mut app = App::new(3);
@@ -36345,7 +36349,7 @@ cow_sound_variant: None,
         app.inv_panel = inventory_panel_origin(640, 360);
         let dirt = mc_registry::item_id_by_name("dirt").unwrap();
         // the LEFT press outside the panel: the whole stack rides
-        let mut slots = [(0, 0); crate::world_view::INVENTORY_MENU_SLOTS];
+        let slots = [(0, 0); crate::world_view::INVENTORY_MENU_SLOTS];
         app.live_inventory_updated(slots, Vec::new(), 11, (dirt, 5));
         app.on_press(app.inv_panel.0 - 12, app.inv_panel.1 + 90);
         assert_eq!(app.live_inv_carried, (0, 0), "the whole stack's own drop");
@@ -36359,7 +36363,7 @@ cow_sound_variant: None,
             other => panic!("expected a container click, got {other:?}"),
         }
         // THE RIGHT press: the ONE item the split speaks
-        let mut slots = [(0, 0); crate::world_view::INVENTORY_MENU_SLOTS];
+        let slots = [(0, 0); crate::world_view::INVENTORY_MENU_SLOTS];
         app.live_inventory_updated(slots, Vec::new(), 12, (dirt, 5));
         app.on_right_press(app.inv_panel.0 - 12, app.inv_panel.1 + 90);
         assert_eq!(app.live_inv_carried, (dirt, 4), "the one the split kept");
@@ -36372,7 +36376,7 @@ cow_sound_variant: None,
             other => panic!("expected a container click, got {other:?}"),
         }
         // THE EMPTY CURSOR: the press stays silent (no packet)
-        let mut slots = [(0, 0); crate::world_view::INVENTORY_MENU_SLOTS];
+        let slots = [(0, 0); crate::world_view::INVENTORY_MENU_SLOTS];
         app.live_inventory_updated(slots, Vec::new(), 13, (0, 0));
         app.on_press(app.inv_panel.0 - 12, app.inv_panel.1 + 90);
         assert!(
@@ -36592,7 +36596,7 @@ cow_sound_variant: None,
         // (b) THE PLACE REFUSAL: the empty result the carried dirt
         // never takes — no mutation, the packet rides with the empty
         // changed (the mayPlace-false slot's own law)
-        let mut slots = [(0, 0); crate::world_view::INVENTORY_MENU_SLOTS];
+        let slots = [(0, 0); crate::world_view::INVENTORY_MENU_SLOTS];
         app.live_inventory_updated(slots, Vec::new(), 12, (dirt, 3));
         let (rx, ry) = craft_slot_origin(app.inv_panel, 4);
         app.on_press(rx + 8, ry + 8);
@@ -37285,7 +37289,8 @@ cow_sound_variant: None,
         b.forward = 1.0; // the W impulse the ride must silence
         b.on_ground = true; // the ground's stale claim
         b.vx = 0.3; // the drift the ride must zero
-        drop(b);
+        // (the borrow ends here — the no-op drop(&mut) the old form
+        // kept the NLL loan already speaks)
         app.update();
         let b = app.body.as_ref().unwrap();
         assert_eq!(

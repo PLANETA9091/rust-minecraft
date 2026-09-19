@@ -68,6 +68,7 @@ pub enum HullStatus {
     /// the flowing arm our full-cube vocabulary never speaks (the
     /// source's own word IS the whole family) — the honest dead arm
     /// the walk still encodes
+    #[expect(dead_code)] // the flowing arm the full-cube vocabulary never speaks
     UnderFlowingWater,
     OnLand,
     InAir,
@@ -150,7 +151,7 @@ pub fn hull_status(
     // THE UNDER BAND (isUnderwater's own walk): the top band's cells
     // floor(maxY)..ceil(maxY + 0.001) exclusive
     let d2 = max_y + 0.001;
-    'top: for cy in (max_y.floor() as i32)..(d2.ceil() as i32) {
+    for cy in (max_y.floor() as i32)..(d2.ceil() as i32) {
         for cx in x_span.clone() {
             for cz in z_span.clone() {
                 // the water's own surface (the full-cube cell the
@@ -362,10 +363,12 @@ pub fn hull_tick(
 
     // THE FLOAT'S OWN FOLDS (the bytecode's own locals: the gravity
     // the -getGravity() speaks, the lift the 0.0 rest keeps, the
-    // friction the 0.05 the clinit's default arms)
+    // friction the 0.05 the clinit's default arms — every arm of the
+    // status match re-arms the friction before the common tail reads
+    // it, so the local stays un-armed here)
     let mut d0 = -HULL_GRAVITY;
     let mut d2 = 0.0f64;
-    let mut f5 = 0.05f32;
+    let f5;
 
     if old_status == HullStatus::InAir
         && status != HullStatus::InAir

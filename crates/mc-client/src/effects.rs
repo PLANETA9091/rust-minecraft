@@ -127,6 +127,7 @@ impl EffectInstance {
         self.flags & FLAG_AMBIENT != 0
     }
 
+    #[expect(dead_code)] // the effect-row's own visibility word — the honest-skip lane keeps
     pub fn is_visible(&self) -> bool {
         self.flags & FLAG_VISIBLE != 0
     }

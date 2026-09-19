@@ -56,10 +56,12 @@ pub struct TextureData {
     pub texels: Vec<u8>,
     /// Census stats for the command's report line.
     pub n_model_files: usize,
+    #[expect(dead_code)] // the census's ref counter — the report's own column
     pub n_refs: usize,
     pub n_present: usize,
     pub n_missing: usize,
     pub n_first_frame: usize,
+    #[expect(dead_code)] // the census's mcmeta counter — the report's own column
     pub n_mcmeta: usize,
 }
 

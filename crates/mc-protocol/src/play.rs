@@ -12877,7 +12877,7 @@ mod tests {
         write_varint(&mut p, clientbound::SET_OBJECTIVE);
         write_string(&mut p, "money");
         p.push(0); // method ADD
-        write_bare_nbt(&Nbt::String("Coins".into()), &mut p);
+        write_bare_nbt(&Nbt::String("Coins".into()), &mut p).unwrap();
         write_varint(&mut p, 0); // render type INTEGER
         p.push(0); // optional number format: absent
         let o = parse_set_objective(&p).unwrap();
@@ -12898,11 +12898,12 @@ mod tests {
                 ("extra".into(), Nbt::List(vec![Nbt::String("B".into())])),
             ]),
             &mut p,
-        );
+        )
+        .unwrap();
         write_varint(&mut p, 1); // render type HEARTS
         p.push(1); // optional number format: PRESENT
         write_varint(&mut p, 1); // ... styled — ONE bare style tag
-        write_bare_nbt(&Nbt::Compound(vec![]), &mut p);
+        write_bare_nbt(&Nbt::Compound(vec![]), &mut p).unwrap();
         let o = parse_set_objective(&p).unwrap();
         assert_eq!(o.display.as_deref(), Some("AB"), "the text+extra flatten");
         assert_eq!(o.render_type, RENDER_TYPE_HEARTS, "the readEnum ordinal");
@@ -12914,7 +12915,7 @@ mod tests {
         write_varint(&mut p, clientbound::SET_OBJECTIVE);
         write_string(&mut p, "money");
         p.push(2); // method UPDATE
-        write_bare_nbt(&Nbt::String("Coins!".into()), &mut p);
+        write_bare_nbt(&Nbt::String("Coins!".into()), &mut p).unwrap();
         write_varint(&mut p, 2); // OUTSIDE the enum
         assert!(parse_set_objective(&p).is_err(), "render type 2 refuses");
 
@@ -12951,10 +12952,10 @@ mod tests {
         write_string(&mut p, "money");
         write_varint(&mut p, 42);
         p.push(1); // display present
-        write_bare_nbt(&Nbt::String("Zed Inc.".into()), &mut p);
+        write_bare_nbt(&Nbt::String("Zed Inc.".into()), &mut p).unwrap();
         p.push(1); // number format present
         write_varint(&mut p, 2); // ... fixed
-        write_bare_nbt(&Nbt::String("42 coins".into()), &mut p);
+        write_bare_nbt(&Nbt::String("42 coins".into()), &mut p).unwrap();
         let s = parse_set_score(&p).unwrap();
         assert_eq!(s.owner, "Zed");
         assert_eq!(s.objective, "money");
@@ -13107,14 +13108,15 @@ mod tests {
         // string form and the compound form the flatten walks
         let mut p = Vec::new();
         write_varint(&mut p, clientbound::TAB_LIST);
-        write_bare_nbt(&Nbt::String("Welcome".into()), &mut p);
+        write_bare_nbt(&Nbt::String("Welcome".into()), &mut p).unwrap();
         write_bare_nbt(
             &Nbt::Compound(vec![(
                 "text".into(),
                 Nbt::String("server ip".into()),
             )]),
             &mut p,
-        );
+        )
+        .unwrap();
         let t = parse_tab_list(&p).unwrap();
         assert_eq!(t.header, "Welcome");
         assert_eq!(t.footer, "server ip");

@@ -19,7 +19,9 @@ pub struct SoundFile {
     /// path as given by sounds.json ("music/menu/menu1")
     pub name: String,
     pub volume: f32,
+    #[expect(dead_code)] // the sound json's own pitch column — the report keeps
     pub pitch: f32,
+    #[expect(dead_code)] // the sound json's own weight column — the report keeps
     pub weight: u32,
     pub stream: bool,
 }

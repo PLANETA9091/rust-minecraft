@@ -1082,10 +1082,14 @@ pub struct LiveContainer {
 pub enum ContainerInput {
     Pickup,
     QuickMove,
+    #[expect(dead_code)] // the 26.2 ClickType set's own line — the menu rounds' lane
     Swap,
+    #[expect(dead_code)] // the 26.2 ClickType set's own line — the menu rounds' lane
     Clone,
     Throw,
+    #[expect(dead_code)] // the 26.2 ClickType set's own line — the menu rounds' lane
     QuickCraft,
+    #[expect(dead_code)] // the 26.2 ClickType set's own line — the menu rounds' lane
     PickupAll,
 }
 
@@ -4108,6 +4112,7 @@ mod tests {
         assert!(!upd.mobs[0].crouching, "the stand rides the same lane");
     }
 
+    #[test]
     fn materialize_carries_the_models_day_tick() {
         let mut m = WorldModel::new();
         m.apply(PlayEvent::Chunk(ChunkColumn {
@@ -5818,7 +5823,7 @@ mod tests {
         }));
         let ride = ride_view(&model).expect("the boat carries two");
         let theta = -90.0f64 * std::f64::consts::PI / 180.0;
-        let (sin, cos) = theta.sin_cos();
+        let (sin, _cos) = theta.sin_cos();
         let lx = BOAT_BACK_SEAT_OFFSET as f64;
         assert!(
             (ride.feet_x - 10.0).abs() < 1e-9,

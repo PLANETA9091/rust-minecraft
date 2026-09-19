@@ -123,7 +123,7 @@ pub fn derive_model_inherited(model_id: &str) -> Option<Vec<Quad>> {
             _ => return None, // the chain ended element-less
         }
     };
-    let slots = crate::texture_slots::resolve_model(model_id)?;
+    let _slots = crate::texture_slots::resolve_model(model_id)?;
     let mut quads = derive_elements(elements);
     for q in &mut quads {
         if let Some(tex) = crate::texture_slots::resolve_ref(model_id, q.texture) {

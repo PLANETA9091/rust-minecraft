@@ -64,6 +64,7 @@ use mc_registry::generated::foods::{FoodDef, DEFAULT_CONSUME_SECONDS};
 /// `emitParticlesAndSounds(random, entity, stack, 5)`).
 pub const CHEW_BURST_COUNT: u32 = 5;
 /// The completion's own burst (javap Consumable.onConsume: `..., 16`).
+#[expect(dead_code)] // the eat-finish burst's own 16-crumb word — the crunch lanes keep
 pub const FINISH_BURST_COUNT: u32 = 16;
 /// The chew cadence's own stride (`shouldEmitParticlesAndSounds`:
 /// `arg % 4 == 0`).

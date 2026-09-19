@@ -77,7 +77,7 @@ use crate::element_quads::{
 };
 use crate::generated::models::MODELS;
 use crate::generated::textures::texture_index;
-use crate::textures_table::{is_missing, texture_rgba, texture_size};
+use crate::textures_table::{texture_rgba, texture_size};
 use crate::texture_slots;
 
 /// The extrusion depth (ItemModelGenerator's MIN_Z/MAX_Z constants).

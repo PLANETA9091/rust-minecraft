@@ -1707,7 +1707,7 @@ mod tests {
         let quads = special_layer_quads(layer.layer, layer.texture);
         assert_eq!(quads.len(), 12);
         let plate = layer.layer.parts.iter().find(|p| p.name == "plate").unwrap();
-        let up = &plate.cubes[0].faces[1]; // the vanilla face order: down, up, ...
+        let _up = &plate.cubes[0].faces[1]; // the vanilla face order: down, up, ...
         let v0 = quads[6].vertices[0]; // part 0 = root (6 faces), part 1 = plate -> quad 6 = its first face (down), quad 6+? -- pin via the raw polygon instead
         let _ = v0;
         // find the plate's UP-face quad by its first vertex matching the

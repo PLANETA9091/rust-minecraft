@@ -20,6 +20,7 @@ pub fn read_entry<R: std::io::Read + std::io::Seek>(archive: &mut ZipArchive<R>,
 }
 
 /// Optionally read a file from the jar.
+#[expect(dead_code)] // the optional-entry lane — the extract menu's ledger keeps
 pub fn try_read_entry<R: std::io::Read + std::io::Seek>(archive: &mut ZipArchive<R>, name: &str) -> Option<Vec<u8>> {
     read_entry(archive, name).ok()
 }

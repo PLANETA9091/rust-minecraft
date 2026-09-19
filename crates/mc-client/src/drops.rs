@@ -92,6 +92,7 @@ impl Lcg {
     }
 
     /// The cached-pair second draw (the flag's own truth).
+    #[expect(dead_code)] // the RNG's own reseed lane — the deterministic seed law keeps
     pub fn reset_gaussian(&mut self) {
         self.next_gaussian_cache = None;
     }

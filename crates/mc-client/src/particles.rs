@@ -2308,7 +2308,7 @@ mod tests {
         let bbox = (1.0, 2.0, 3.0, 1.9, 3.3, 3.9); // the sheep's 0.9 x 1.3
         let burst = heart_burst(bbox, &mut rng());
         assert_eq!(burst.len(), 7, "the event-18 arm's own count");
-        let (bw, bh) = ((bbox.3 - bbox.0) * 0.5, bbox.4 - bbox.1);
+        let (bw, _bh) = ((bbox.3 - bbox.0) * 0.5, bbox.4 - bbox.1);
         let (cx, cz) = (bbox.0 + bw, bbox.2 + bw);
         for p in &burst {
             assert_eq!(p.lifetime, 16);

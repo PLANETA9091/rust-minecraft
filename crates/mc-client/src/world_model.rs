@@ -1323,7 +1323,8 @@ impl WorldModel {
                 e.y_rot = sync.y_rot;
                 e.x_rot = sync.x_rot;
                 let type_id = e.type_id;
-                drop(e);
+                // (the borrow ends here — the no-op drop(&mut) the
+                // NLL loan already speaks)
                 // THE ARROW SYNC'S OWN MAILBOX (the client-side sim
                 // lane's wire word): the projectile entities the net-
                 // arrow lane simulates never read the store back, so
