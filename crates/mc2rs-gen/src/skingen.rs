@@ -182,8 +182,49 @@ pub const PARTICLE_SWEEP_JAR_PATHS: [&str; 8] = [
     "assets/minecraft/textures/particle/sweep_6.png",
     "assets/minecraft/textures/particle/sweep_7.png",
 ];
+
+/// THE VARIANT TABLE'S JAR ENTRIES (the regen-gap closure): the skins
+/// the earlier rounds hand-added to the GENERATED file — the generator's
+/// emit template never learned them, so every regeneration silently
+/// dropped the set. Each entry the jar's own PNG carries (the sha1 the
+/// emit pins), the runtime path the client's loader reads.
+pub const SKELETON_JAR_PATH: &str = "assets/minecraft/textures/entity/skeleton/skeleton.png";
+pub const SPIDER_JAR_PATH: &str = "assets/minecraft/textures/entity/spider/spider.png";
+pub const CHICKEN_COLD_JAR_PATH: &str = "assets/minecraft/textures/entity/chicken/chicken_cold.png";
+pub const CHICKEN_COLD_BABY_JAR_PATH: &str = "assets/minecraft/textures/entity/chicken/chicken_cold_baby.png";
+pub const CHICKEN_WARM_JAR_PATH: &str = "assets/minecraft/textures/entity/chicken/chicken_warm.png";
+pub const CHICKEN_WARM_BABY_JAR_PATH: &str = "assets/minecraft/textures/entity/chicken/chicken_warm_baby.png";
+pub const PIG_COLD_JAR_PATH: &str = "assets/minecraft/textures/entity/pig/pig_cold.png";
+pub const PIG_COLD_BABY_JAR_PATH: &str = "assets/minecraft/textures/entity/pig/pig_cold_baby.png";
+pub const PIG_WARM_JAR_PATH: &str = "assets/minecraft/textures/entity/pig/pig_warm.png";
+pub const PIG_WARM_BABY_JAR_PATH: &str = "assets/minecraft/textures/entity/pig/pig_warm_baby.png";
+pub const COW_COLD_JAR_PATH: &str = "assets/minecraft/textures/entity/cow/cow_cold.png";
+pub const COW_COLD_BABY_JAR_PATH: &str = "assets/minecraft/textures/entity/cow/cow_cold_baby.png";
+pub const COW_WARM_JAR_PATH: &str = "assets/minecraft/textures/entity/cow/cow_warm.png";
+pub const COW_WARM_BABY_JAR_PATH: &str = "assets/minecraft/textures/entity/cow/cow_warm_baby.png";
+pub const WOLF_JAR_PATH: &str = "assets/minecraft/textures/entity/wolf/wolf.png";
+pub const WOLF_BABY_JAR_PATH: &str = "assets/minecraft/textures/entity/wolf/wolf_baby.png";
 /// The runtime-cache paths the client's loader reads (the same
 /// textures/ prefix strip the other lanes speak).
+/// THE VARIANT TABLE'S RUNTIME PATHS (the client's loader reads them
+/// under the runtime asset root — the same entity/ prefix the mob
+/// skins' lanes speak).
+pub const SKELETON_RUNTIME_PATH: &str = "entity/skeleton/skeleton.png";
+pub const SPIDER_RUNTIME_PATH: &str = "entity/spider/spider.png";
+pub const CHICKEN_COLD_RUNTIME_PATH: &str = "entity/chicken/chicken_cold.png";
+pub const CHICKEN_COLD_BABY_RUNTIME_PATH: &str = "entity/chicken/chicken_cold_baby.png";
+pub const CHICKEN_WARM_RUNTIME_PATH: &str = "entity/chicken/chicken_warm.png";
+pub const CHICKEN_WARM_BABY_RUNTIME_PATH: &str = "entity/chicken/chicken_warm_baby.png";
+pub const PIG_COLD_RUNTIME_PATH: &str = "entity/pig/pig_cold.png";
+pub const PIG_COLD_BABY_RUNTIME_PATH: &str = "entity/pig/pig_cold_baby.png";
+pub const PIG_WARM_RUNTIME_PATH: &str = "entity/pig/pig_warm.png";
+pub const PIG_WARM_BABY_RUNTIME_PATH: &str = "entity/pig/pig_warm_baby.png";
+pub const COW_COLD_RUNTIME_PATH: &str = "entity/cow/cow_cold.png";
+pub const COW_COLD_BABY_RUNTIME_PATH: &str = "entity/cow/cow_cold_baby.png";
+pub const COW_WARM_RUNTIME_PATH: &str = "entity/cow/cow_warm.png";
+pub const COW_WARM_BABY_RUNTIME_PATH: &str = "entity/cow/cow_warm_baby.png";
+pub const WOLF_RUNTIME_PATH: &str = "entity/wolf/wolf.png";
+pub const WOLF_BABY_RUNTIME_PATH: &str = "entity/wolf/wolf_baby.png";
 pub const FIRE_0_RUNTIME_PATH: &str = "block/fire_0.png";
 pub const FIRE_1_RUNTIME_PATH: &str = "block/fire_1.png";
 pub const UNDERWATER_RUNTIME_PATH: &str = "misc/underwater.png";
@@ -341,6 +382,26 @@ pub struct SkinData {
     /// the sword's own swing's pixel sources (the 32x32 sweep frames
     /// the json's ascending list orders).
     pub particle_sweep_png_sha1s: [String; 8],
+    /// THE VARIANT TABLE'S SHA1S (jar-verbatim integrity): the skins
+    /// the variant lanes verify before they draw — the thin/arachnid/
+    /// canine pair + the 26.2 temperature variants' adult/baby rows
+    /// (each the OWN layout the model family's LayerDefinition keeps).
+    pub skeleton_png_sha1: String,
+    pub spider_png_sha1: String,
+    pub chicken_cold_png_sha1: String,
+    pub chicken_cold_baby_png_sha1: String,
+    pub chicken_warm_png_sha1: String,
+    pub chicken_warm_baby_png_sha1: String,
+    pub pig_cold_png_sha1: String,
+    pub pig_cold_baby_png_sha1: String,
+    pub pig_warm_png_sha1: String,
+    pub pig_warm_baby_png_sha1: String,
+    pub cow_cold_png_sha1: String,
+    pub cow_cold_baby_png_sha1: String,
+    pub cow_warm_png_sha1: String,
+    pub cow_warm_baby_png_sha1: String,
+    pub wolf_png_sha1: String,
+    pub wolf_baby_png_sha1: String,
 }
 
 /// One UV rect in the skin texture, in texels: (u, v, w, h).
@@ -718,6 +779,62 @@ pub fn generate<R: std::io::Read + std::io::Seek>(archive: &mut zip::ZipArchive<
             sh
         );
     }
+    // THE VARIANT TABLE READS (the regen-gap closure): each entry the
+    // jar's own PNG carries, the sha1 the emit pins, the layout the
+    // model family's LayerDefinition.create keeps — the thin humanoid's
+    // 64x32, the arachnid's 64x32, the canine's 64x32 adult + 32x32
+    // baby, the avian variants' 64x32 adult + 16x16 baby, the swine/
+    // bovine variants' 64x64 adult + 32x32 baby (the dims the committed
+    // ledger's doc rows speak).
+    let variant_reads: [(&str, (u32, u32)); 16] = [
+        (SKELETON_JAR_PATH, (64, 32)),
+        (SPIDER_JAR_PATH, (64, 32)),
+        (CHICKEN_COLD_JAR_PATH, (64, 32)),
+        (CHICKEN_COLD_BABY_JAR_PATH, (16, 16)),
+        (CHICKEN_WARM_JAR_PATH, (64, 32)),
+        (CHICKEN_WARM_BABY_JAR_PATH, (16, 16)),
+        (PIG_COLD_JAR_PATH, (64, 64)),
+        (PIG_COLD_BABY_JAR_PATH, (32, 32)),
+        (PIG_WARM_JAR_PATH, (64, 64)),
+        (PIG_WARM_BABY_JAR_PATH, (32, 32)),
+        (COW_COLD_JAR_PATH, (64, 64)),
+        // the cold/warm CALVES the 64x64 container keeps (the 32x32 UV
+        // layout the padded tile never shrinks — the jar's own bytes
+        // the check verifies)
+        (COW_COLD_BABY_JAR_PATH, (64, 64)),
+        (COW_WARM_JAR_PATH, (64, 64)),
+        (COW_WARM_BABY_JAR_PATH, (64, 64)),
+        (WOLF_JAR_PATH, (64, 32)),
+        (WOLF_BABY_JAR_PATH, (32, 32)),
+    ];
+    let mut variant_png_sha1s: Vec<String> = Vec::with_capacity(16);
+    for (path, (ew, eh)) in &variant_reads {
+        let bytes = read_entry(archive, path)
+            .with_context(|| format!("read the variant skin {path}"))?;
+        let (vw, vh, _v_rgba) = decode_rgba(&bytes)
+            .with_context(|| format!("decode the variant skin {path}"))?;
+        anyhow::ensure!(
+            (vw, vh) == (*ew, *eh),
+            "the variant skin {path} must be the {ew}x{eh} layout, got {vw}x{vh}"
+        );
+        variant_png_sha1s.push(crate::util::sha1_hex(&bytes));
+    }
+    let skeleton_png_sha1 = variant_png_sha1s[0].clone();
+    let spider_png_sha1 = variant_png_sha1s[1].clone();
+    let chicken_cold_png_sha1 = variant_png_sha1s[2].clone();
+    let chicken_cold_baby_png_sha1 = variant_png_sha1s[3].clone();
+    let chicken_warm_png_sha1 = variant_png_sha1s[4].clone();
+    let chicken_warm_baby_png_sha1 = variant_png_sha1s[5].clone();
+    let pig_cold_png_sha1 = variant_png_sha1s[6].clone();
+    let pig_cold_baby_png_sha1 = variant_png_sha1s[7].clone();
+    let pig_warm_png_sha1 = variant_png_sha1s[8].clone();
+    let pig_warm_baby_png_sha1 = variant_png_sha1s[9].clone();
+    let cow_cold_png_sha1 = variant_png_sha1s[10].clone();
+    let cow_cold_baby_png_sha1 = variant_png_sha1s[11].clone();
+    let cow_warm_png_sha1 = variant_png_sha1s[12].clone();
+    let cow_warm_baby_png_sha1 = variant_png_sha1s[13].clone();
+    let wolf_png_sha1 = variant_png_sha1s[14].clone();
+    let wolf_baby_png_sha1 = variant_png_sha1s[15].clone();
     Ok(SkinData {
         png_sha1,
         rgba_sha1: crate::util::sha1_hex(&rgba),
@@ -749,6 +866,22 @@ pub fn generate<R: std::io::Read + std::io::Seek>(archive: &mut zip::ZipArchive<
         particle_heart_png_sha1,
         particle_glint_png_sha1,
         particle_sweep_png_sha1s,
+        skeleton_png_sha1,
+        spider_png_sha1,
+        chicken_cold_png_sha1,
+        chicken_cold_baby_png_sha1,
+        chicken_warm_png_sha1,
+        chicken_warm_baby_png_sha1,
+        pig_cold_png_sha1,
+        pig_cold_baby_png_sha1,
+        pig_warm_png_sha1,
+        pig_warm_baby_png_sha1,
+        cow_cold_png_sha1,
+        cow_cold_baby_png_sha1,
+        cow_warm_png_sha1,
+        cow_warm_baby_png_sha1,
+        wolf_png_sha1,
+        wolf_baby_png_sha1,
     })
 }
 
@@ -829,6 +962,22 @@ pub fn emit(data: &SkinData) -> Result<String> {
     ));
     out.push_str(&format!(
         "pub const ZOMBIE_RUNTIME_PATH: &str = \"{ZOMBIE_RUNTIME_PATH}\";\n"
+    ));
+    out.push_str("\n/// The SKELETON skin (the thin humanoid's own), generated from the\n/// same jar: the source sha1 the avatar renderer verifies before\n/// drawing (javap: `AbstractSkeletonRenderer`'s SKELETON_LOCATION —\n/// the SkeletonModel's own `LayerDefinition.create(64, 32)` the\n/// bytecode speaks — the HALF-HEIGHT layout the thin boxes unwrap).\n");
+    out.push_str(&format!(
+        "pub const SKELETON_PNG_SHA1: &str = \"{}\";\n",
+        data.skeleton_png_sha1
+    ));
+    out.push_str(&format!(
+        "pub const SKELETON_RUNTIME_PATH: &str = \"{SKELETON_RUNTIME_PATH}\";\n"
+    ));
+    out.push_str("\n/// The SPIDER skin (the arachnid's own), generated from the\n/// same jar: the source sha1 the spider renderer verifies before\n/// drawing (javap: `SpiderRenderer`'s SPIDER_LOCATION — the\n/// SpiderModel's own `LayerDefinition.create(mesh, 64, 32)` the\n/// bytecode speaks — the half-height layout the eight-leg chain\n/// unwraps).\n");
+    out.push_str(&format!(
+        "pub const SPIDER_PNG_SHA1: &str = \"{}\";\n",
+        data.spider_png_sha1
+    ));
+    out.push_str(&format!(
+        "pub const SPIDER_RUNTIME_PATH: &str = \"{SPIDER_RUNTIME_PATH}\";\n"
     ));
     out.push_str("\n/// The PIG skin (the temperate variant the PigRenderer's variant\n/// table defaults to), generated from the same jar: the source sha1\n/// the pig renderer verifies before it draws (javap PigModel:\n/// `LayerDefinition.create(64, 64)` — the quadruped's own UV layout).\n");
     out.push_str(&format!(
@@ -914,6 +1063,93 @@ pub fn emit(data: &SkinData) -> Result<String> {
     ));
     out.push_str(&format!(
         "pub const CHICKEN_TEMPERATE_BABY_RUNTIME_PATH: &str = \"{CHICKEN_TEMPERATE_BABY_RUNTIME_PATH}\";\n"
+    ));
+    out.push_str("\n/// The CHICKEN VARIANT skins (the cold/warm pairs the 26.2 variant\n/// table added — data/minecraft/chicken_variant/{cold,warm}.json's\n/// asset_id/baby_asset_id the ChickenRenderer's pair picks by the\n/// variant's model type: the cold pair rides the ColdChickenModel,\n/// the warm pair the plain adult geometry wears): the source sha1s\n/// the variant loads verify before they draw. The same 64x32 adult /\n/// 16x16 baby layouts the temperate pair keeps.\n");
+    out.push_str(&format!(
+        "pub const CHICKEN_COLD_PNG_SHA1: &str = \"{}\";\n",
+        data.chicken_cold_png_sha1
+    ));
+    out.push_str(&format!(
+        "pub const CHICKEN_COLD_RUNTIME_PATH: &str = \"{CHICKEN_COLD_RUNTIME_PATH}\";\n"
+    ));
+    out.push_str(&format!(
+        "pub const CHICKEN_COLD_BABY_PNG_SHA1: &str = \"{}\";\n",
+        data.chicken_cold_baby_png_sha1
+    ));
+    out.push_str(&format!(
+        "pub const CHICKEN_COLD_BABY_RUNTIME_PATH: &str = \"{CHICKEN_COLD_BABY_RUNTIME_PATH}\";\n"
+    ));
+    out.push_str(&format!(
+        "pub const CHICKEN_WARM_PNG_SHA1: &str = \"{}\";\n",
+        data.chicken_warm_png_sha1
+    ));
+    out.push_str(&format!(
+        "pub const CHICKEN_WARM_RUNTIME_PATH: &str = \"{CHICKEN_WARM_RUNTIME_PATH}\";\n"
+    ));
+    out.push_str(&format!(
+        "pub const CHICKEN_WARM_BABY_PNG_SHA1: &str = \"{}\";\n",
+        data.chicken_warm_baby_png_sha1
+    ));
+    out.push_str(&format!(
+        "pub const CHICKEN_WARM_BABY_RUNTIME_PATH: &str = \"{CHICKEN_WARM_BABY_RUNTIME_PATH}\";\n"
+    ));
+    out.push_str("\n/// THE PIG VARIANT SKINS (the cold/warm pairs the 26.2 variant table\n/// added — data/minecraft/pig_variant/{cold,warm}.json's asset_id\n/// pair the PigRenderer's model pick wears: the cold pair rides the\n/// ColdPigModel's coat walk, the warm pair the plain geometry — the\n/// pig's warm.json the model field never names): the source sha1s\n/// the variant loads verify before they draw. The same 64x64 adult /\n/// 32x32 baby layouts the temperate pair keeps.\n");
+    out.push_str(&format!(
+        "pub const PIG_COLD_PNG_SHA1: &str = \"{}\";\n",
+        data.pig_cold_png_sha1
+    ));
+    out.push_str(&format!(
+        "pub const PIG_COLD_RUNTIME_PATH: &str = \"{PIG_COLD_RUNTIME_PATH}\";\n"
+    ));
+    out.push_str(&format!(
+        "pub const PIG_COLD_BABY_PNG_SHA1: &str = \"{}\";\n",
+        data.pig_cold_baby_png_sha1
+    ));
+    out.push_str(&format!(
+        "pub const PIG_COLD_BABY_RUNTIME_PATH: &str = \"{PIG_COLD_BABY_RUNTIME_PATH}\";\n"
+    ));
+    out.push_str(&format!(
+        "pub const PIG_WARM_PNG_SHA1: &str = \"{}\";\n",
+        data.pig_warm_png_sha1
+    ));
+    out.push_str(&format!(
+        "pub const PIG_WARM_RUNTIME_PATH: &str = \"{PIG_WARM_RUNTIME_PATH}\";\n"
+    ));
+    out.push_str(&format!(
+        "pub const PIG_WARM_BABY_PNG_SHA1: &str = \"{}\";\n",
+        data.pig_warm_baby_png_sha1
+    ));
+    out.push_str(&format!(
+        "pub const PIG_WARM_BABY_RUNTIME_PATH: &str = \"{PIG_WARM_BABY_RUNTIME_PATH}\";\n"
+    ));
+    out.push_str("\n/// THE COW VARIANT SKINS (the cold/warm pairs the 26.2 variant table\n/// added — data/minecraft/cow_variant/{cold,warm}.json's asset_id\n/// pair the CowRenderer's model pick wears: the cold pair rides the\n/// ColdCowModel's coat walk, the warm pair the WarmCowModel's horn\n/// walk — the cow's warm.json the 'model': 'warm' field names): the\n/// source sha1s the variant loads verify before they draw. The same\n/// 64x64 adult / 32x32 baby layouts the temperate pair keeps.\n");
+    out.push_str(&format!(
+        "pub const COW_COLD_PNG_SHA1: &str = \"{}\";\n",
+        data.cow_cold_png_sha1
+    ));
+    out.push_str(&format!(
+        "pub const COW_COLD_RUNTIME_PATH: &str = \"{COW_COLD_RUNTIME_PATH}\";\n"
+    ));
+    out.push_str(&format!(
+        "pub const COW_COLD_BABY_PNG_SHA1: &str = \"{}\";\n",
+        data.cow_cold_baby_png_sha1
+    ));
+    out.push_str(&format!(
+        "pub const COW_COLD_BABY_RUNTIME_PATH: &str = \"{COW_COLD_BABY_RUNTIME_PATH}\";\n"
+    ));
+    out.push_str(&format!(
+        "pub const COW_WARM_PNG_SHA1: &str = \"{}\";\n",
+        data.cow_warm_png_sha1
+    ));
+    out.push_str(&format!(
+        "pub const COW_WARM_RUNTIME_PATH: &str = \"{COW_WARM_RUNTIME_PATH}\";\n"
+    ));
+    out.push_str(&format!(
+        "pub const COW_WARM_BABY_PNG_SHA1: &str = \"{}\";\n",
+        data.cow_warm_baby_png_sha1
+    ));
+    out.push_str(&format!(
+        "pub const COW_WARM_BABY_RUNTIME_PATH: &str = \"{COW_WARM_BABY_RUNTIME_PATH}\";\n"
     ));
     out.push_str("\n/// The FLAME strips (the burn lane's pixel sources), generated from\n/// the same jar: the source sha1s the burning mob's renderer verifies\n/// before it draws (javap: `FlameFeatureRenderer.buildGroup`'s\n/// ModelBakery.FIRE_0 / FIRE_1 — the 16x512, 32-frame strips; fire_0's\n/// mcmeta playlist [16..31, 0..15], fire_1 sequential).\n");
     out.push_str(&format!(
@@ -1035,6 +1271,22 @@ pub fn emit(data: &SkinData) -> Result<String> {
             .map(|s| format!("\"{s}\""))
             .collect::<Vec<_>>()
             .join(", ")
+    ));
+    out.push_str("\n/// The WOLF skin (the wild default the WolfRenderer's extractRenderState\n/// `wolf.getTexture()` answers — the variant table's PALE word the\n/// no-variant lane keeps), generated from the same jar: the source sha1\n/// the wolf renderer verifies before it draws (javap AdultWolfModel:\n/// the createBodyLayer mesh the `LayerDefinition.create(mesh, 64, 32)`\n/// layout unwraps — the head+ears+muzzle/body/upper_body/4-legs/tail\n/// chain the bytecode speaks).\n");
+    out.push_str(&format!(
+        "pub const WOLF_PNG_SHA1: &str = \"{}\";\n",
+        data.wolf_png_sha1
+    ));
+    out.push_str(&format!(
+        "pub const WOLF_RUNTIME_PATH: &str = \"{WOLF_RUNTIME_PATH}\";\n"
+    ));
+    out.push_str("\n/// The WOLF BABY skin (the dedicated baby lane's own texture), generated\n/// from the same jar: the source sha1 the baby model verifies before it\n/// draws (javap WolfRenderer's babyModel = BabyWolfModel(bakeLayer(WOLF_BABY))\n/// — the AgeableMobRenderer's babyModel field the isBaby word picks, the\n/// OWN 32x32 layout the BabyWolfModel's `createBodyLayer` create keeps).\n");
+    out.push_str(&format!(
+        "pub const WOLF_BABY_PNG_SHA1: &str = \"{}\";\n",
+        data.wolf_baby_png_sha1
+    ));
+    out.push_str(&format!(
+        "pub const WOLF_BABY_RUNTIME_PATH: &str = \"{WOLF_BABY_RUNTIME_PATH}\";\n"
     ));
     Ok(out)
 }
@@ -1229,6 +1481,42 @@ mod tests {
         let sweeps = [sweep_png(), sweep_png(), sweep_png(), sweep_png(), sweep_png(), sweep_png(), sweep_png(), sweep_png()];
         let expected_sweep_sha1s: Vec<String> =
             sweeps.iter().map(|p| crate::util::sha1_hex(p)).collect();
+        // THE VARIANT TABLE'S SYNTHETICS (the dims the layout asserts
+        // demand — the thin/arachnid/canine 64x32, the canine baby's
+        // 32x32, the avian variants' 64x32 + 16x16, the swine/bovine
+        // variants' 64x64 + 32x32): the sha1s the emit pins.
+        let skeleton = sheep_png();
+        let expected_skeleton_sha1 = crate::util::sha1_hex(&skeleton);
+        let spider = sheep_png();
+        let expected_spider_sha1 = crate::util::sha1_hex(&spider);
+        let chicken_cold = sheep_png();
+        let expected_chicken_cold_sha1 = crate::util::sha1_hex(&chicken_cold);
+        let chicken_cold_baby = underwater_png();
+        let expected_chicken_cold_baby_sha1 = crate::util::sha1_hex(&chicken_cold_baby);
+        let chicken_warm = sheep_png();
+        let expected_chicken_warm_sha1 = crate::util::sha1_hex(&chicken_warm);
+        let chicken_warm_baby = underwater_png();
+        let expected_chicken_warm_baby_sha1 = crate::util::sha1_hex(&chicken_warm_baby);
+        let pig_cold = skin_png();
+        let expected_pig_cold_sha1 = crate::util::sha1_hex(&pig_cold);
+        let pig_cold_baby = sweep_png();
+        let expected_pig_cold_baby_sha1 = crate::util::sha1_hex(&pig_cold_baby);
+        let pig_warm = skin_png();
+        let expected_pig_warm_sha1 = crate::util::sha1_hex(&pig_warm);
+        let pig_warm_baby = sweep_png();
+        let expected_pig_warm_baby_sha1 = crate::util::sha1_hex(&pig_warm_baby);
+        let cow_cold = skin_png();
+        let expected_cow_cold_sha1 = crate::util::sha1_hex(&cow_cold);
+        let cow_cold_baby = skin_png();
+        let expected_cow_cold_baby_sha1 = crate::util::sha1_hex(&cow_cold_baby);
+        let cow_warm = skin_png();
+        let expected_cow_warm_sha1 = crate::util::sha1_hex(&cow_warm);
+        let cow_warm_baby = skin_png();
+        let expected_cow_warm_baby_sha1 = crate::util::sha1_hex(&cow_warm_baby);
+        let wolf = sheep_png();
+        let expected_wolf_sha1 = crate::util::sha1_hex(&wolf);
+        let wolf_baby = sweep_png();
+        let expected_wolf_baby_sha1 = crate::util::sha1_hex(&wolf_baby);
 
         let mut zip = zip_of(&[
             (WIDE_STEVE_JAR_PATH, png.clone()),
@@ -1245,6 +1533,22 @@ mod tests {
             (PIG_TEMPERATE_BABY_JAR_PATH, pig_baby.clone()),
             (CHICKEN_TEMPERATE_JAR_PATH, sheep.clone()),
             (CHICKEN_TEMPERATE_BABY_JAR_PATH, underwater.clone()),
+            (SKELETON_JAR_PATH, skeleton),
+            (SPIDER_JAR_PATH, spider),
+            (CHICKEN_COLD_JAR_PATH, chicken_cold),
+            (CHICKEN_COLD_BABY_JAR_PATH, chicken_cold_baby),
+            (CHICKEN_WARM_JAR_PATH, chicken_warm),
+            (CHICKEN_WARM_BABY_JAR_PATH, chicken_warm_baby),
+            (PIG_COLD_JAR_PATH, pig_cold),
+            (PIG_COLD_BABY_JAR_PATH, pig_cold_baby),
+            (PIG_WARM_JAR_PATH, pig_warm),
+            (PIG_WARM_BABY_JAR_PATH, pig_warm_baby),
+            (COW_COLD_JAR_PATH, cow_cold),
+            (COW_COLD_BABY_JAR_PATH, cow_cold_baby),
+            (COW_WARM_JAR_PATH, cow_warm),
+            (COW_WARM_BABY_JAR_PATH, cow_warm_baby),
+            (WOLF_JAR_PATH, wolf),
+            (WOLF_BABY_JAR_PATH, wolf_baby),
             (FIRE_0_JAR_PATH, strip.clone()),
             (FIRE_1_JAR_PATH, strip),
             (UNDERWATER_JAR_PATH, underwater),
@@ -1373,8 +1677,49 @@ mod tests {
             expected_sweep_sha1s.as_slice(),
             "the sweep frames' own sha1s"
         );
+        // THE VARIANT TABLE'S SHA1S (the regen-gap closure's own pins —
+        // the generator reads the same jar rows the hand-added ledger
+        // carried, the emit never loses them again)
+        assert_eq!(data.skeleton_png_sha1, expected_skeleton_sha1, "the skeleton skin's own sha1");
+        assert_eq!(data.spider_png_sha1, expected_spider_sha1, "the spider skin's own sha1");
+        assert_eq!(data.chicken_cold_png_sha1, expected_chicken_cold_sha1, "the cold chicken's own sha1");
+        assert_eq!(data.chicken_cold_baby_png_sha1, expected_chicken_cold_baby_sha1, "the cold chick's own sha1");
+        assert_eq!(data.chicken_warm_png_sha1, expected_chicken_warm_sha1, "the warm chicken's own sha1");
+        assert_eq!(data.chicken_warm_baby_png_sha1, expected_chicken_warm_baby_sha1, "the warm chick's own sha1");
+        assert_eq!(data.pig_cold_png_sha1, expected_pig_cold_sha1, "the cold pig's own sha1");
+        assert_eq!(data.pig_cold_baby_png_sha1, expected_pig_cold_baby_sha1, "the cold piglet's own sha1");
+        assert_eq!(data.pig_warm_png_sha1, expected_pig_warm_sha1, "the warm pig's own sha1");
+        assert_eq!(data.pig_warm_baby_png_sha1, expected_pig_warm_baby_sha1, "the warm piglet's own sha1");
+        assert_eq!(data.cow_cold_png_sha1, expected_cow_cold_sha1, "the cold cow's own sha1");
+        assert_eq!(data.cow_cold_baby_png_sha1, expected_cow_cold_baby_sha1, "the cold calf's own sha1");
+        assert_eq!(data.cow_warm_png_sha1, expected_cow_warm_sha1, "the warm cow's own sha1");
+        assert_eq!(data.cow_warm_baby_png_sha1, expected_cow_warm_baby_sha1, "the warm calf's own sha1");
+        assert_eq!(data.wolf_png_sha1, expected_wolf_sha1, "the wolf's own sha1");
+        assert_eq!(data.wolf_baby_png_sha1, expected_wolf_baby_sha1, "the wolf pup's own sha1");
 
         let emitted = emit(&data).unwrap();
+        // THE VARIANT TABLE'S EMIT (the blocks land verbatim — the
+        // regeneration now speaks the full committed set)
+        assert!(emitted.contains(&format!("pub const SKELETON_PNG_SHA1: &str = \"{expected_skeleton_sha1}\";")));
+        assert!(emitted.contains("pub const SKELETON_RUNTIME_PATH: &str = \"entity/skeleton/skeleton.png\";"));
+        assert!(emitted.contains(&format!("pub const SPIDER_PNG_SHA1: &str = \"{expected_spider_sha1}\";")));
+        assert!(emitted.contains("pub const SPIDER_RUNTIME_PATH: &str = \"entity/spider/spider.png\";"));
+        assert!(emitted.contains(&format!("pub const CHICKEN_COLD_PNG_SHA1: &str = \"{expected_chicken_cold_sha1}\";")));
+        assert!(emitted.contains("pub const CHICKEN_COLD_BABY_RUNTIME_PATH: &str = \"entity/chicken/chicken_cold_baby.png\";"));
+        assert!(emitted.contains(&format!("pub const CHICKEN_WARM_PNG_SHA1: &str = \"{expected_chicken_warm_sha1}\";")));
+        assert!(emitted.contains("pub const CHICKEN_WARM_BABY_RUNTIME_PATH: &str = \"entity/chicken/chicken_warm_baby.png\";"));
+        assert!(emitted.contains(&format!("pub const PIG_COLD_PNG_SHA1: &str = \"{expected_pig_cold_sha1}\";")));
+        assert!(emitted.contains("pub const PIG_COLD_BABY_RUNTIME_PATH: &str = \"entity/pig/pig_cold_baby.png\";"));
+        assert!(emitted.contains(&format!("pub const PIG_WARM_PNG_SHA1: &str = \"{expected_pig_warm_sha1}\";")));
+        assert!(emitted.contains("pub const PIG_WARM_BABY_RUNTIME_PATH: &str = \"entity/pig/pig_warm_baby.png\";"));
+        assert!(emitted.contains(&format!("pub const COW_COLD_PNG_SHA1: &str = \"{expected_cow_cold_sha1}\";")));
+        assert!(emitted.contains("pub const COW_COLD_BABY_RUNTIME_PATH: &str = \"entity/cow/cow_cold_baby.png\";"));
+        assert!(emitted.contains(&format!("pub const COW_WARM_PNG_SHA1: &str = \"{expected_cow_warm_sha1}\";")));
+        assert!(emitted.contains("pub const COW_WARM_BABY_RUNTIME_PATH: &str = \"entity/cow/cow_warm_baby.png\";"));
+        assert!(emitted.contains(&format!("pub const WOLF_PNG_SHA1: &str = \"{expected_wolf_sha1}\";")));
+        assert!(emitted.contains("pub const WOLF_RUNTIME_PATH: &str = \"entity/wolf/wolf.png\";"));
+        assert!(emitted.contains(&format!("pub const WOLF_BABY_PNG_SHA1: &str = \"{expected_wolf_baby_sha1}\";")));
+        assert!(emitted.contains("pub const WOLF_BABY_RUNTIME_PATH: &str = \"entity/wolf/wolf_baby.png\";"));
         assert!(emitted.contains(&format!("pub const SKIN_SIDE: u32 = 64;")));
         assert!(emitted.contains(&format!("pub const STEVE_WIDE_PNG_SHA1: &str = \"{expected_png_sha1}\";")));
         assert!(emitted.contains(&format!("pub const SLIM_ALEX_PNG_SHA1: &str = \"{expected_png_sha1}\";")));
