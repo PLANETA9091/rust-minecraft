@@ -863,6 +863,39 @@ mod tests {
     }
 
     #[test]
+    fn the_temperature_modifier_the_generated_rows_own_word() {
+        use generated::worldgen::{biome, BIOMES};
+        // the 26.2 jar speaks exactly TWO carriers of the optional
+        // top-level `temperature_modifier` codec field (the frozen
+        // oceans); the other 64 rows the field's absence — the codec's
+        // NONE default the None word wears
+        let frozen: Vec<&str> = BIOMES
+            .iter()
+            .filter(|b| b.temperature_modifier.is_some())
+            .map(|b| b.name)
+            .collect();
+        assert_eq!(frozen, ["minecraft:deep_frozen_ocean", "minecraft:frozen_ocean"]);
+        assert_eq!(
+            biome("minecraft:frozen_ocean").unwrap().temperature_modifier,
+            Some("frozen")
+        );
+        assert_eq!(
+            biome("minecraft:deep_frozen_ocean").unwrap().temperature_modifier,
+            Some("frozen")
+        );
+        assert_eq!(
+            biome("minecraft:plains").unwrap().temperature_modifier,
+            None,
+            "the absence IS the codec's default — no invented word"
+        );
+        assert_eq!(
+            biome("minecraft:snowy_plains").unwrap().temperature_modifier,
+            None,
+            "the cold biomes' cold IS the plain temperature — the modifier never rides"
+        );
+    }
+
+    #[test]
     fn the_tint_extras_join_the_biome_table_with_the_jar_values() {
         use generated::worldgen::{biome, biome_tint_extra, BIOME_TINT_EXTRAS};
         // the four real 26.2 carriers, verbatim from the biome JSONs

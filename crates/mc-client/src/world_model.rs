@@ -2296,7 +2296,10 @@ impl WorldModel {
     /// `Biome.getPrecipitationAt`'s own inputs, the weather renderer's
     /// precipitation pick). The skip-sync fallback walks the BUILT-IN
     /// jar tables through the same name chain the tint slice runs
-    /// (`BIOME_ORDER` -> `worldgen::biome`); a name the built-in tables
+    /// (`BIOME_ORDER` -> `worldgen::biome`) — the `temperature_modifier`
+    /// word the generated rows now carry rides the same mapping the
+    /// synced arm keeps (the frozen oceans' patchwork the fallback too
+    /// speaks); a name the built-in tables
     /// do not carry resolves to [`BiomeClimate::NONE`] — the honest
     /// no-opinion word, never a guess (no rain from an unknown climate).
     pub fn biome_climates(&self) -> Vec<crate::world::BiomeClimate> {
@@ -2309,10 +2312,17 @@ impl WorldModel {
                         .map(|d| crate::world::BiomeClimate {
                             has_precipitation: d.has_precipitation,
                             temperature: d.temperature,
-                            // the generator's table predates the
-                            // modifier field — the fallback's honest
-                            // None (the doc the struct keeps)
-                            temperature_modifier: crate::world::TemperatureModifier::None,
+                            // the generated table's own word (the jar's
+                            // optional codec field, "frozen" the one
+                            // non-default string) drives the enum — the
+                            // same mapping the synced arm below keeps;
+                            // the table predates nothing any more, the
+                            // frozen oceans' patchwork the fallback too
+                            // speaks
+                            temperature_modifier: match d.temperature_modifier {
+                                Some("frozen") => crate::world::TemperatureModifier::Frozen,
+                                _ => crate::world::TemperatureModifier::None,
+                            },
                         })
                         .unwrap_or(crate::world::BiomeClimate::NONE)
                 })
@@ -6912,5 +6922,61 @@ mod tests {
         }));
         assert_eq!(m.players.get(&steve).unwrap().name, "Steve", "the tab rides the swap");
         assert_eq!(m.tab_header, "The Top", "the band rides too");
+    }
+
+    #[test]
+    fn the_built_in_fallback_speaks_the_frozen_oceans_modifier() {
+        // THE SKIP-SYNC FALLBACK's own climate slice: the registry
+        // empty (no sync at all), the BUILT-IN jar tables serve — the
+        // generated rows' temperature_modifier word the SAME mapping
+        // the synced arm keeps now drives (the limitation the 344
+        // round documented, the generator field the round retires).
+        let m = WorldModel::new();
+        assert!(m.registry.biomes.is_empty(), "the mock boot ships no sync");
+        let climates = m.biome_climates();
+        // the WIRE order the slice indexes: find the frozen pair by
+        // the registry-order name chain the fallback itself walks
+        use mc_registry::generated::registry_order::BIOME_ORDER;
+        use mc_registry::generated::worldgen::biome as built_in;
+        for (i, name) in BIOME_ORDER.iter().enumerate() {
+            let def = built_in(name).expect("the built-in chain resolves every order row");
+            let climate = climates[i];
+            assert_eq!(climate.has_precipitation, def.has_precipitation);
+            assert_eq!(climate.temperature, def.temperature);
+            match def.temperature_modifier {
+                Some("frozen") => {
+                    assert_eq!(
+                        climate.temperature_modifier,
+                        crate::world::TemperatureModifier::Frozen,
+                        "{name}: the frozen word the table carries the enum wears"
+                    );
+                }
+                _ => assert_eq!(
+                    climate.temperature_modifier,
+                    crate::world::TemperatureModifier::None,
+                    "{name}: the absence IS the codec's default"
+                ),
+            }
+        }
+        // THE RAIN-IN-FROZEN ANSWER the fallback too speaks: the
+        // built-in frozen_ocean climate through the weather lane's
+        // precipitation pick — the 0.2F patchwork's opened gate at
+        // (0, 0) warmens the 0.0 base past the 0.15F snow line, the
+        // same word the modifier's own test pins end to end
+        use mc_registry::generated::registry_order::BIOME_ORDER as ORDER;
+        let idx = ORDER
+            .iter()
+            .position(|n| *n == "minecraft:frozen_ocean")
+            .expect("the wire order carries the frozen ocean");
+        let frozen = climates[idx];
+        assert_eq!(
+            frozen.temperature_modifier,
+            crate::world::TemperatureModifier::Frozen
+        );
+        assert_eq!(
+            crate::weather::precipitation(frozen, 0, 64, 0, 63),
+            crate::weather::Precipitation::Rain,
+            "the fallback climate's patchwork RAINS at the warm patch"
+        );
     }
 }
