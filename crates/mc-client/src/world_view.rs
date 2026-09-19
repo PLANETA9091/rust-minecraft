@@ -1281,6 +1281,18 @@ pub enum ContainerCommand {
     /// disarms it — the pong responses the worker logs into the
     /// chart's own sample ring).
     NetworkCharts(bool),
+    /// THE FPS CHARTS' OWN SUBSCRIPTION (the vanilla
+    /// ClientDebugSubscriber.tick's `showFpsCharts()` lane — the
+    /// remote-subscription set the flag answers: {DEDICATED_SERVER_
+    /// TICK_TIME} the raised lane speaks, the empty set the lowered
+    /// one): the frame thread's toggle state rides the command
+    /// channel, the worker's own loop walks the equality gate the
+    /// subscriber's tick keeps and sends the
+    /// ServerboundDebugSubscriptionRequestPacket ONLY on the set's
+    /// change (the tick-time debug samples the subscription arms —
+    /// the ClientboundDebugSamplePacket broadcasts the TPS chart's
+    /// columns speak).
+    FpsCharts(bool),
 }
 
 /// The camera's pose in the VANILLA wire degrees — the inverse of

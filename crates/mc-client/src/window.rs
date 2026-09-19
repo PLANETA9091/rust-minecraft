@@ -161,6 +161,7 @@ fn run_join(
                 (i32, i32),
                 Vec<i64>,
                 Vec<i64>,
+                Vec<[i64; 4]>,
             ),
             String,
         >,
@@ -273,6 +274,20 @@ fn run_join(
             let mut bw_bytes: u64 = 0;
             let mut last_bw_tick: Option<std::time::Instant> = None;
             let mut bw_ring: std::collections::VecDeque<i64> =
+                std::collections::VecDeque::with_capacity(crate::screens::FPS_CHART_CAPACITY);
+            // THE DEBUG SUBSCRIBER'S OWN STATE (the vanilla
+            // ClientDebugSubscriber's own lane): the F3+2 flag the
+            // frame thread's toggle rides (the command channel the
+            // requestedSubscriptions walk answers), the last-SENT set
+            // the equality gate compares (the ctor's `Set.of()`
+            // initial state the charts-off word keeps — the connect
+            // speaks NO empty request the vanilla equality swallows),
+            // and the tick-sample ring the debug-sample lane logs
+            // into (the LocalSampleLogger(4) law — 240 four-dimension
+            // rows, the TpsDebugDimensions slots each row carries)
+            let mut fps_charts = false;
+            let mut subs_sent = false;
+            let mut tick_ring: std::collections::VecDeque<[i64; 4]> =
                 std::collections::VecDeque::with_capacity(crate::screens::FPS_CHART_CAPACITY);
             loop {
                 if !run.load(std::sync::atomic::Ordering::Relaxed) {
@@ -545,6 +560,17 @@ fn run_join(
                             }
                             Ok(())
                         }
+                        crate::world_view::ContainerCommand::FpsCharts(on) => {
+                            // THE FPS CHARTS' OWN GATE (the vanilla
+                            // ClientDebugSubscriber.tick's
+                            // showFpsCharts() lane): no packet rides
+                            // HERE — the flag arms the subscription the
+                            // loop's own equality gate speaks (the
+                            // request the set's change sends; the
+                            // charts-off set the lowered flag answers)
+                            fps_charts = on;
+                            Ok(())
+                        }
                     };
                     if let Err(e) = sent {
                         // a send failure is a transport error: a framed
@@ -553,6 +579,20 @@ fn run_join(
                         let _ = live_tx.send(Err(format!("container send: {e:#}")));
                         return;
                     }
+                }
+                // THE DEBUG SUBSCRIBER'S OWN TICK (the vanilla
+                // ClientDebugSubscriber.tick's equality gate — the
+                // requested set the showFpsCharts flag answers, the
+                // request ONLY the set's change sends: {DEDICATED_
+                // SERVER_TICK_TIME} the raised lane speaks, the empty
+                // set the lowered one)
+                if fps_charts != subs_sent {
+                    let sent = session.send_debug_subscription(fps_charts);
+                    if let Err(e) = sent {
+                        let _ = live_tx.send(Err(format!("debug subscription send: {e:#}")));
+                        return;
+                    }
+                    subs_sent = fps_charts;
                 }
                 // THE PING MONITOR'S OWN TICK (the vanilla
                 // ClientPacketListener.tick's showNetworkCharts gate —
@@ -622,7 +662,37 @@ fn run_join(
                         } else {
                             false
                         };
-                        if view.apply(event) || ping_changed || bw_changed {
+                        // THE DEBUG SAMPLE'S OWN LOG (the vanilla
+                        // DebugScreenOverlay.logRemoteSample's own walk —
+                        // the ClientboundDebugSamplePacket the
+                        // RemoteSampleLogger.useSample broadcast rides,
+                        // the remoteSupportingLoggers map the TICK_TIME
+                        // type's own logger answers: the FOUR
+                        // TpsDebugDimensions slots the logFullSample
+                        // row carries — the off-width sample the
+                        // honest skip keeps, the 4-dim logger's own
+                        // shape the wire's one type speaks)
+                        let tick_changed = if let
+                            mc_protocol::PlayEvent::DebugSample(ds) = &event
+                        {
+                            if ds.sample.len() == 4 {
+                                if tick_ring.len() >= crate::screens::FPS_CHART_CAPACITY {
+                                    tick_ring.pop_front();
+                                }
+                                tick_ring.push_back([
+                                    ds.sample[0],
+                                    ds.sample[1],
+                                    ds.sample[2],
+                                    ds.sample[3],
+                                ]);
+                                true
+                            } else {
+                                false
+                            }
+                        } else {
+                            false
+                        };
+                        if view.apply(event) || ping_changed || bw_changed || tick_changed {
                             // THE SHIP GATE (the cadence the world
                             // updates ride — a logged ping or bandwidth
                             // sample ALONE paces its refresh too, the
@@ -632,6 +702,8 @@ fn run_join(
                             if last_ship.elapsed() >= VIEW_CADENCE {
                                 let ping_snapshot: Vec<i64> = ping_ring.iter().copied().collect();
                                 let bw_snapshot: Vec<i64> = bw_ring.iter().copied().collect();
+                                let tick_snapshot: Vec<[i64; 4]> =
+                                    tick_ring.iter().copied().collect();
                                 let upd = view.refresh(crate::world_view::runtime_mapper);
                             // the mobs' hurt + voice mailboxes ship with
                             // this view — the drains empty them (each
@@ -733,6 +805,11 @@ fn run_join(
                                     // drain logs (the log-scale bars the
                                     // wire's own traffic speaks)
                                     bw_snapshot,
+                                    // and the TPS chart's own — the
+                                    // four-dimension tick-sample ring the
+                                    // debug-sample lane logs (the stacked
+                                    // bars the wire's own tick speaks)
+                                    tick_snapshot,
                                 )))
                                 .is_err()
                             {
@@ -853,6 +930,7 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
                 (i32, i32),
                 Vec<i64>,
                 Vec<i64>,
+                Vec<[i64; 4]>,
             ),
             String,
         >,
@@ -1174,6 +1252,7 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
                     inv_carried,
                     ping_samples,
                     bw_samples,
+                    tick_samples,
                 )) => {
                     app.live_view_updated(world, camera, biome, container);
                     // the ping chart's lane beside the world's: the RTT
@@ -1185,6 +1264,11 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
                     // lands verbatim (the log-scale bars the wire's own
                     // traffic speaks)
                     app.live_bandwidth_updated(bw_samples);
+                    // the TPS chart's lane beside them: the
+                    // four-dimension tick snapshot the debug-sample
+                    // lane's ring keeps lands verbatim (the stacked
+                    // bars the wire's own tick re-draws)
+                    app.live_tick_samples_updated(tick_samples);
                     // the ride's lane beside the world's: the carried
                     // position the vehicle's own snapshot keeps (the
                     // mount snap + the seat the projection walked)

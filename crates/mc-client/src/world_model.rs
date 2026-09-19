@@ -1817,6 +1817,7 @@ impl WorldModel {
             | PlayEvent::Ping(_)
             | PlayEvent::PongResponse(_)
             | PlayEvent::ChunkBatch => false,
+            PlayEvent::DebugSample(_) => false,
             PlayEvent::GameEvent(g) => {
                 // THE GAME EVENT'S OWN WALK (javap
                 // ClientPacketListener.handleGameEvent + Level, the 26.2

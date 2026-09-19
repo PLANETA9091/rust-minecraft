@@ -1003,6 +1003,95 @@ fn bw_display_word(bps: f64) -> String {
     }
 }
 
+/// THE TPS CHART'S OWN DIMENSION BARS (TpsDebugChart
+/// .extractAdditionalSampleBars's own fill colors — the jar's own ldc
+/// triple the cp probe banks verbatim: 0xFF991111 the
+/// TICK_SERVER_METHOD slot's dark-red column, 0xFFBA995F the
+/// SCHEDULED_TASKS slot's tan one, 0xFF5F0E8C the remainder's
+/// purple — the bottom-up repaint the main bar's gradient column
+/// wears, the IDLE band the untouched top keeps).
+const TPS_BAR_SERVER_METHOD: i32 = -6745839;
+const TPS_BAR_SCHEDULED: i32 = -4548257;
+const TPS_BAR_OTHER: i32 = -10547572;
+
+/// THE MSPT'S OWN SUPPLIER (DebugScreenOverlay's lambda$new$0 walk —
+/// `minecraft.level.tickRateManager().millisecondsPerTick()` the
+/// TickRateManager's own field the ctor banks: 50.0F the vanilla
+/// pace keeps — one tick per 50 ms the 20 TPS the label speaks. The
+/// client's own level the /tick command never slows: the default the
+/// honest word wears).
+pub const TICK_RATE_MSPT: f32 = 50.0;
+
+/// THE SAMPLE'S OWN MILLIS (TpsDebugChart.toMilliseconds's own walk —
+/// `dload; ldc2_w 1000000.0; ddiv` the raw disasm keeps: the
+/// nanosecond sample the milliseconds unit wears).
+fn tps_to_milliseconds(ns: f64) -> f64 {
+    ns / 1_000_000.0
+}
+
+/// THE TPS BAR'S OWN HEIGHT (TpsDebugChart.getSampleHeight's own
+/// walk — the raw disasm's `toMilliseconds; ldc2_w 60.0; dmul;
+/// mspt f2d; ddiv; Math.round` chain keeps: the tick's share of the
+/// 60px box the MSPT RELATIVE law answers — 50ms the full box at the
+/// vanilla pace, the same walk the fps lane's fixed-ms law never
+/// speaks).
+fn tps_sample_height(ns: i64) -> i32 {
+    java_round(tps_to_milliseconds(ns as f64) * 60.0 / TICK_RATE_MSPT as f64) as i32
+}
+
+/// THE TPS SAMPLE'S OWN COLOR (TpsDebugChart.getSampleColor's own
+/// walk — the `getSampleColor(DDIDIDI)` helper call the raw disasm
+/// banks: `(toMilliseconds(sample), mspt, -16711936, mspt*1.125,
+/// -256, mspt*1.25, -65536)` the push order the f2d/dmul pair keeps
+/// — the stops the MSPT-RELATIVE thresholds answer: at-or-below the
+/// mspt line the full green wears, the green→yellow lerp across
+/// (mspt, mspt*1.125], the yellow→red across (mspt*1.125,
+/// mspt*1.25], the over-cap red — the abstract's own
+/// clamp-then-two-arms walk the fps/ping lanes' ports keep).
+fn tps_sample_color(ns: i64) -> i32 {
+    let ms = tps_to_milliseconds(ns as f64);
+    let mspt = TICK_RATE_MSPT as f64;
+    let t1 = mspt;
+    let t2 = mspt * 1.125;
+    let t3 = mspt * 1.25;
+    let v = {
+        if ms < t1 {
+            t1
+        } else {
+            ms.min(t3)
+        }
+    };
+    if v < t2 {
+        let t = ((v - t1) / (t2 - t1)) as f32;
+        srgb_lerp(t, -16711936, -256)
+    } else {
+        let t = ((v - t2) / (t3 - t2)) as f32;
+        srgb_lerp(t, -256, -65536)
+    }
+}
+
+/// THE AGGREGATION'S OWN VALUE (TpsDebugChart.getValueForAggregation's
+/// own walk — `get(index); get(index, IDLE); lsub` the raw disasm
+/// keeps: the min/avg/max labels the FULL-MINUS-IDLE value the
+/// parent's own fold wears, the idle time the labels' law excludes).
+fn tps_aggregated_value(sample: &[i64; 4]) -> i64 {
+    sample[0] - sample[3]
+}
+
+/// THE TPS LABEL'S OWN WORD (TpsDebugChart
+/// .extractAdditionalLinesAndLabels's own walk — the raw disasm's
+/// `TimeUtil.MILLISECONDS_PER_SECOND l2f; mspt fdiv;
+/// String.format(Locale.ROOT, '%.1f TPS', ...)` chain keeps: the
+/// f32 division the boxings' word wears, the one decimal the
+/// String.format's HALF_UP rounding keeps — floor(x*10 + 0.5) the
+/// java law speaks, the Rust {:.1}'s own half-even wrap the jar's
+/// word never wears).
+fn tps_label_word(mspt: f32) -> String {
+    let tps = 1000.0f32 / mspt;
+    let t = java_round(tps as f64 * 10.0);
+    format!("{}.{} TPS", t / 10, t % 10)
+}
+
 /// THE ARGB'S OWN FILL (the i32 color the house raster's [f32; 4]
 /// lane wears — the channels the shifts unfold, the alpha the
 /// blend's own weight keeps).
@@ -2546,6 +2635,16 @@ pub struct App {
     /// size-1 the newest the rightmost bar wears). Empty until the
     /// first tick lands.
     pub bw_samples: Vec<i64>,
+    /// THE TPS CHART'S OWN SAMPLES (the tickTimeLogger's
+    /// LocalSampleLogger(4) law — the wire's ClientboundDebugSample
+    /// Packet the net worker's debug-sample lane logs, the FOUR
+    /// TpsDebugDimensions nanosecond slots each row carries
+    /// [FULL_TICK, TICK_SERVER_METHOD, SCHEDULED_TASKS, IDLE], the
+    /// chart-ordered snapshot the shipped refresh carries: idx 0 the
+    /// oldest, size-1 the newest the rightmost bar wears). Empty
+    /// until the first debug sample lands — the size()>0 gate the
+    /// chart's own draw keeps.
+    pub tick_samples: Vec<[i64; 4]>,
     /// THE DEBUG MODIFIER'S OWN USED LANE (javap KeyboardHandler's
     /// usedDebugKeyAsModifier — the chord-consumed F3 gesture the
     /// release lane swallows: the flag the toggle's plain flip keeps
@@ -2941,6 +3040,7 @@ impl App {
             network_charts: false,
             ping_samples: Vec::new(),
             bw_samples: Vec::new(),
+            tick_samples: Vec::new(),
             debug_modifier_used: false,
             frame_samples: [0; FPS_CHART_CAPACITY],
             frame_sample_start: 0,
@@ -11238,6 +11338,15 @@ impl App {
             self.debug_held = true;
         }
         self.debug_modifier_used = true;
+        // THE WIRE HALF (the command the flag rides — the vanilla
+        // ClientDebugSubscriber's requestedSubscriptions walk answers
+        // the showFpsCharts() flag; the worker's own equality gate
+        // the request's send keeps, the set-changes word the
+        // subscription's law speaks)
+        if let Some(sink) = self.live_clicks.as_ref() {
+            let _ = sink
+                .send(crate::world_view::ContainerCommand::FpsCharts(self.fps_charts));
+        }
     }
 
     /// THE F3+3 CHORD'S OWN TOGGLE (javap DebugScreenOverlay
@@ -11281,6 +11390,15 @@ impl App {
     /// Vec carries, the same law the ping lane's landing keeps).
     pub fn live_bandwidth_updated(&mut self, samples: Vec<i64>) {
         self.bw_samples = samples;
+    }
+
+    /// THE TPS CHART'S OWN SNAPSHOT LANDING (the shipped refresh's
+    /// own ride — the net worker's tick-sample ring the chart-ordered
+    /// Vec carries, the same law the ping/bandwidth lanes' landings
+    /// keep: idx 0 the oldest, size-1 the newest the rightmost bar
+    /// wears).
+    pub fn live_tick_samples_updated(&mut self, samples: Vec<[i64; 4]>) {
+        self.tick_samples = samples;
     }
 
     /// THE F3 RELEASE'S OWN LANE (javap KeyboardHandler.keyPress's
@@ -11912,6 +12030,16 @@ impl App {
         // keeps and the width the min(240, guiWidth/2) law bounds)
         if self.fps_charts {
             self.draw_fps_chart(g, a, w, h);
+            // THE TPS CHART (the tickTimeLogger.size() > 0 gate the
+            // bytecode 807-817 keeps — the samples the wire's debug
+            // sample lane logs, the chart the empty ring never
+            // draws; the RIGHT half the `guiWidth - width` anchor
+            // the bytecode 828-840 keeps — the `iload 13; iload 15;
+            // isub` walk — and the width the same min(240,
+            // guiWidth/2) law the fps lane bounds)
+            if !self.tick_samples.is_empty() {
+                self.draw_tps_chart(g, a, w, h);
+            }
         }
         // THE NETWORK CHARTS (the DSO extractRenderState's
         // showNetworkCharts lane — the F3+3 chord's own pair the
@@ -12184,6 +12312,127 @@ impl App {
         let y = h - bw_height_internal(1_048_576.0) + 1;
         g.fill(x + 1, y, tw + 2, 9, DEBUG_BAND_BG);
         g.text(a, x + 2, y + 1, &word, DEBUG_TEXT, false);
+    }
+
+    /// THE TPS CHART'S OWN DRAW (javap TpsDebugChart + the
+    /// AbstractDebugChart parent's extractRenderState walk — the SAME
+    /// strata the fps/ping/bandwidth lanes bank, the mspt-relative
+    /// lane's own words keep: the `fill(x, h-60, x+width, h,
+    /// 0x90505050)` background first, then the per-column walk the
+    /// MAIN bar + the STACKED trio the overrides paint — the main
+    /// bar the FULL tick's gradient column the getSampleColor walk
+    /// paints (the mspt-relative stops: green at-or-below the mspt
+    /// line, the green→yellow lerp across ×1.125, the yellow→red
+    /// across ×1.25), then the THREE dimension fills the
+    /// extractAdditionalSampleBars walk repaints bottom-up (the
+    /// TICK_SERVER_METHOD dark-red column from the floor, the
+    /// SCHEDULED_TASKS tan one stacked above, the FULL−IDLE−both
+    /// purple remainder above — the IDLE band the untouched top
+    /// keeps, the main bar's gradient the idle region shows
+    /// through), then the white frame the four line calls keep, then
+    /// the three min/avg/max ms labels the AGGREGATED values' own
+    /// fold speaks (the FULL−IDLE the getValueForAggregation walk
+    /// answers, the `'%d ms'` word the parent's toDisplayString
+    /// walk wears), then the additional line the TpsDebugChart
+    /// override banks: the ONE '%.1f TPS' band+text pair at (x+1,
+    /// h-60+1) the extractStringWithShade walk paints (the f32
+    /// 1000/mspt division the HALF_UP rounding speaks); the grid
+    /// lines the fps lane's override never names, the honest skip
+    /// wears).
+    fn draw_tps_chart(&self, g: &mut Gui, a: &mut GuiAssets, w: i32, h: i32) {
+        let width = fps_chart_width(w);
+        let x = w - width; // the RIGHT anchor (the bytecode 828-840 walk)
+        let top = h - 60;
+        // THE BACKGROUND (the extractRenderState's first fill)
+        g.fill(x, top, width, 60, DEBUG_BAND_BG);
+        // THE SAMPLE COLUMNS (the per-column loop the skip law keeps —
+        // the snapshot IS chart-ordered: idx 0 the oldest, the
+        // rightmost the newest the vanilla get(idx) law speaks)
+        let skip = fps_chart_skip(width);
+        let count = self.tick_samples.len().saturating_sub(skip);
+        if count > 0 {
+            let mut mn = i64::MAX;
+            let mut mx = i64::MIN;
+            let mut sum = 0i64;
+            for i in 0..count {
+                let s = &self.tick_samples[skip + i];
+                let agg = tps_aggregated_value(s);
+                mn = mn.min(agg);
+                mx = mx.max(agg);
+                sum += agg;
+                // THE MAIN BAR (extractMainSampleBar's own walk — the
+                // FULL tick's gradient column the getSampleColor
+                // paints, the height the mspt-relative law answers)
+                let h0 = tps_sample_height(s[0]);
+                g.fill(
+                    x + i as i32 + 1,
+                    h - h0,
+                    1,
+                    h0,
+                    fps_argb_fill(tps_sample_color(s[0])),
+                );
+                // THE STACKED TRIO (extractAdditionalSampleBars's own
+                // fills — the bottom-up repaint the three dimension
+                // heights keep, the remainder the FULL−IDLE−both law
+                // answers, the negative-height fill the empty range
+                // never paints)
+                let h1 = tps_sample_height(s[1]);
+                g.fill(
+                    x + i as i32 + 1,
+                    h - h1,
+                    1,
+                    h1,
+                    fps_argb_fill(TPS_BAR_SERVER_METHOD),
+                );
+                let h2 = tps_sample_height(s[2]);
+                g.fill(
+                    x + i as i32 + 1,
+                    h - h1 - h2,
+                    1,
+                    h2,
+                    fps_argb_fill(TPS_BAR_SCHEDULED),
+                );
+                let other = agg - s[1] - s[2];
+                let h3 = tps_sample_height(other);
+                g.fill(
+                    x + i as i32 + 1,
+                    h - h1 - h2 - h3,
+                    1,
+                    h3,
+                    fps_argb_fill(TPS_BAR_OTHER),
+                );
+            }
+            // THE THREE LABELS (the min/avg/max ms words the
+            // AGGREGATED values speak — the positions the x+2 /
+            // x+width/2 centered / x+width-tw-2 trio the abstract's
+            // own walk banks, all at h-69)
+            g.text(
+                a,
+                x + 2,
+                h - 69,
+                &fps_display_word(mn as f64),
+                DEBUG_TEXT,
+                false,
+            );
+            let avg = fps_display_word(sum as f64 / count as f64);
+            g.text_centered(a, x + width / 2, h - 69, &avg, DEBUG_TEXT, false);
+            let mx_word = fps_display_word(mx as f64);
+            let mx_tw = g.text_width(&mx_word);
+            g.text(a, x + width - mx_tw - 2, h - 69, &mx_word, DEBUG_TEXT, false);
+        }
+        // THE WHITE FRAME (the four line calls the abstract keeps)
+        g.fill(x, top, width, 1, FPS_CHART_LINE);
+        g.fill(x, h - 1, width, 1, FPS_CHART_LINE);
+        g.fill(x, top, 1, 60, FPS_CHART_LINE);
+        g.fill(x + width - 1, top, 1, 60, FPS_CHART_LINE);
+        // THE '%.1f TPS' LABEL (extractAdditionalLinesAndLabels's own
+        // walk — the ONE extractStringWithShade call the raw disasm
+        // banks: the band `fill(x+1, h-60+1, tw+2, 9)` then the
+        // NO-SHADOW text at (x+2, h-60+2))
+        let word = tps_label_word(TICK_RATE_MSPT);
+        let tw = g.text_width(&word);
+        g.fill(x + 1, h - 59, tw + 2, 9, DEBUG_BAND_BG);
+        g.text(a, x + 2, h - 58, &word, DEBUG_TEXT, false);
     }
 
     /// THE LEFT COLUMN'S LINES (the 26.2 entries the jar's own string
@@ -20570,6 +20819,126 @@ mod tests {
         assert_eq!(app.bw_samples, vec![0, 64, 524288]);
         app.live_bandwidth_updated(Vec::new());
         assert!(app.bw_samples.is_empty(), "the empty ring the empty draw keeps");
+    }
+
+    #[test]
+    fn the_tps_chart_the_jar_math_keeps() {
+        // THE HEIGHT'S OWN LAW (TpsDebugChart.getSampleHeight's
+        // `round(ms * 60.0 / mspt)` walk — the mspt-RELATIVE law the
+        // fps/ping lanes' fixed-ms walks never wear: 50ms the full
+        // 60px box at the vanilla pace, the over-mspt tick the
+        // no-clamp top pokes above)
+        assert_eq!(tps_sample_height(50_000_000), 60);
+        assert_eq!(tps_sample_height(25_000_000), 30);
+        assert_eq!(tps_sample_height(0), 0);
+        assert_eq!(
+            tps_sample_height(62_500_000),
+            75,
+            "the no-clamp poke-above (the 62.5ms tick the 75px column wears)"
+        );
+        assert_eq!(tps_sample_height(500_000), 1, "0.6ms the round lifts");
+        // THE COLOR'S OWN STOPS (getSampleColor's (ms, mspt, green,
+        // mspt*1.125, yellow, mspt*1.25, red) walk — the clamp the
+        // LOW end the mspt line itself bounds: a sub-mspt tick the
+        // full green wears, the green→yellow lerp across
+        // (mspt, mspt*1.125], the yellow→red across (mspt*1.125,
+        // mspt*1.25], the over-cap red)
+        assert_eq!(
+            tps_sample_color(30_000_000),
+            -16711936,
+            "the below-mspt clamp the full green wears"
+        );
+        assert_eq!(
+            tps_sample_color(50_000_000),
+            -16711936,
+            "the mspt line the green boundary wears"
+        );
+        assert_eq!(
+            tps_sample_color(53_125_000),
+            0xFF7FFF00u32 as i32,
+            "the green→yellow half lerp (the 53.125ms midpoint)"
+        );
+        assert_eq!(
+            tps_sample_color(56_250_000),
+            -256,
+            "yellow the ×1.125 boundary wears"
+        );
+        assert_eq!(
+            tps_sample_color(59_375_000),
+            0xFFFF7F00u32 as i32,
+            "the yellow→red half lerp (the 59.375ms midpoint)"
+        );
+        assert_eq!(
+            tps_sample_color(62_500_000),
+            -65536,
+            "red the ×1.25 cap wears"
+        );
+        assert_eq!(
+            tps_sample_color(200_000_000),
+            -65536,
+            "the clamp the over-cap keeps red"
+        );
+        // THE AGGREGATION'S OWN VALUE (getValueForAggregation's
+        // `get(i) - get(i, IDLE)` walk — the labels the
+        // FULL-MINUS-IDLE value speak)
+        assert_eq!(
+            tps_aggregated_value(&[50_000_000, 41_000_000, 2_000_000, 1_000_000]),
+            49_000_000
+        );
+        // THE LABEL'S OWN WORD (extractAdditionalLinesAndLabels's
+        // `String.format(Locale.ROOT, '%.1f TPS', 1000.0f / mspt)`
+        // walk — the f32 division the HALF_UP rounding speaks; 50ms
+        // the vanilla pace the 20.0 TPS word wears)
+        assert_eq!(tps_label_word(50.0), "20.0 TPS");
+        assert_eq!(
+            tps_label_word(25.0),
+            "40.0 TPS",
+            "the 25ms pace the 40.0 word wears"
+        );
+        // THE SNAPSHOT LANDING (the shipped refresh's own ride — the
+        // ring's chart order the App's belief keeps verbatim)
+        let mut app = App::new(3);
+        app.live_tick_samples_updated(vec![[50_000_000, 41_000_000, 2_000_000, 1_000_000]]);
+        assert_eq!(app.tick_samples.len(), 1);
+        assert_eq!(app.tick_samples[0][0], 50_000_000);
+        app.live_tick_samples_updated(Vec::new());
+        assert!(
+            app.tick_samples.is_empty(),
+            "the empty ring the empty draw keeps"
+        );
+        // THE DRAW'S OWN GATE (the DSO extractRenderState's
+        // showFpsCharts + tickTimeLogger.size() > 0 pair — the chart
+        // the F3+2 chord's raised flag arms, the empty ring never
+        // draws; the default App both lanes keep)
+        assert!(!app.fps_charts && app.tick_samples.is_empty());
+    }
+
+    #[test]
+    fn the_fps_charts_key_the_subscription_word_rides() {
+        // THE WIRE HALF (the command the F3+2 toggle's raise/lower
+        // rides — the vanilla ClientDebugSubscriber's
+        // requestedSubscriptions walk answers the showFpsCharts()
+        // flag, the worker's own equality gate the request's send
+        // keeps; the frame thread's half the command channel speaks)
+        let mut app = App::new(3);
+        let (tx, rx) = std::sync::mpsc::channel();
+        app.live_clicks = Some(tx);
+        app.on_fps_charts_key();
+        assert!(
+            matches!(
+                rx.try_recv().expect("the raise's command"),
+                crate::world_view::ContainerCommand::FpsCharts(true)
+            ),
+            "the raised flag rides the subscription's command"
+        );
+        app.on_fps_charts_key();
+        assert!(
+            matches!(
+                rx.try_recv().expect("the lower's command"),
+                crate::world_view::ContainerCommand::FpsCharts(false)
+            ),
+            "the lowered flag the empty-set word wears"
+        );
     }
 
     #[test]

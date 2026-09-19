@@ -108,6 +108,7 @@ pub mod clientbound {
         CB_SET_TIME as SET_TIME,
         CB_GAME_EVENT as GAME_EVENT,
         CB_UPDATE_MOB_EFFECT as UPDATE_MOB_EFFECT,
+        CB_DEBUG_SAMPLE as DEBUG_SAMPLE,
         CB_SET_HEALTH as SET_HEALTH, CB_HURT_ANIMATION as HURT_ANIMATION,
         CB_PLAYER_COMBAT_KILL as PLAYER_COMBAT_KILL,
         CB_SOUND_ENTITY as SOUND_ENTITY, CB_SOUND as SOUND,
@@ -131,6 +132,7 @@ pub mod serverbound {
         SB_PING_REQUEST as PING_REQUEST, SB_PONG as PONG,
         SB_MOVE_PLAYER_POS as MOVE_PLAYER_POS, SB_MOVE_PLAYER_POS_ROT as MOVE_PLAYER_POS_ROT,
         SB_MOVE_PLAYER_ROT as MOVE_PLAYER_ROT, SB_MOVE_PLAYER_STATUS_ONLY as MOVE_PLAYER_STATUS_ONLY,
+        SB_DEBUG_SUBSCRIPTION_REQUEST as DEBUG_SUBSCRIPTION_REQUEST,
         SB_PLAYER_ACTION as PLAYER_ACTION, SB_SET_CARRIED_ITEM as SET_CARRIED_ITEM,
         SB_SWING as SWING, SB_USE_ITEM as USE_ITEM, SB_USE_ITEM_ON as USE_ITEM_ON,
         SB_CLIENT_COMMAND as CLIENT_COMMAND, SB_INTERACT as INTERACT,
@@ -886,6 +888,94 @@ pub fn encode_ping_request(time: i64) -> Vec<u8> {
     let mut p = Vec::with_capacity(9);
     write_varint(&mut p, serverbound::PING_REQUEST);
     p.extend_from_slice(&time.to_be_bytes());
+    p
+}
+
+/// The remote sample's own type (the 26.2 RemoteDebugSampleType enum's
+/// own vocabulary — ONE value the `$values` walk banks: TICK_TIME,
+/// ordinal 0, the DebugSubscriptions.DEDICATED_SERVER_TICK_TIME
+/// subscription word riding its ctor). The wire rides the ordinal the
+/// `readEnum` decode keeps; an out-of-range ordinal the readEnum's own
+/// out-of-bounds law refuses.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum RemoteSampleType {
+    TickTime,
+}
+
+/// Debug Sample (clientbound play 30, `minecraft:debug_sample`): the
+/// ClientboundDebugSamplePacket record's own walk — `readLongArray()`
+/// the sample (the FriendlyByteBuf read: VarInt length + length×i64
+/// BE) and `readEnum(RemoteDebugSampleType.class)` the type (VarInt
+/// ordinal). The dedicated server's RemoteSampleLogger.useSample
+/// broadcasts ONE per tick to the subscribers the subscription request
+/// named — the tick-time nanoseconds the TPS chart's columns speak
+/// (the sample's four TpsDebugDimensions slots: FULL_TICK,
+/// TICK_SERVER_METHOD, SCHEDULED_TASKS, IDLE).
+#[derive(Debug, Clone, PartialEq)]
+pub struct DebugSample {
+    pub sample: Vec<i64>,
+    pub sample_type: RemoteSampleType,
+}
+
+/// Parse Debug Sample (clientbound play 30, `minecraft:debug_sample`):
+/// the ClientboundDebugSamplePacket read ctor's own walk — the
+/// varint-framed id, `readLongArray()` the sample longs, `readEnum`
+/// the type ordinal (0 the TICK_TIME word; anything else the enum's
+/// own out-of-range refusal keeps).
+pub fn parse_debug_sample(payload: &[u8]) -> Result<DebugSample> {
+    let mut c: &[u8] = payload;
+    let id = read_varint(&mut c)?;
+    anyhow::ensure!(
+        id == clientbound::DEBUG_SAMPLE,
+        "not a play debug sample packet (0x{id:02X})"
+    );
+    let count = read_varint(&mut c)?;
+    anyhow::ensure!(count >= 0, "negative debug sample length {count}");
+    anyhow::ensure!(
+        c.len() >= count as usize * 8 + 1,
+        "debug sample truncated ({count} longs, {} bytes)",
+        c.len()
+    );
+    let mut sample = Vec::with_capacity(count as usize);
+    for _ in 0..count {
+        let mut b = [0u8; 8];
+        b.copy_from_slice(&c[..8]);
+        c = &c[8..];
+        sample.push(i64::from_be_bytes(b));
+    }
+    let ordinal = read_varint(&mut c)?;
+    let sample_type = match ordinal {
+        0 => RemoteSampleType::TickTime,
+        _ => anyhow::bail!("unknown debug sample type ordinal {ordinal}"),
+    };
+    Ok(DebugSample { sample, sample_type })
+}
+
+/// Debug Subscription Request (serverbound play 23,
+/// `minecraft:debug_subscription_request`): the
+/// ServerboundDebugSubscriptionRequestPacket's own walk —
+/// `ByteBufCodecs.collection(IntFunction, 32)` over
+/// `ByteBufCodecs.registry(Registries.DEBUG_SUBSCRIPTION)` the SET
+/// codec: VarInt count (the 32 cap the collection's own bound keeps)
+/// + one VarInt registry id per subscription. The client's own
+/// vocabulary ONE subscription speaks — DEDICATED_SERVER_TICK_TIME,
+/// the FIRST registration the DebugSubscriptions clinit banks
+/// (`registerSimple("dedicated_server_tick_time")` at clinit offset 2
+/// — registry id 0). The F3+2 fps charts' raised lane the set arms,
+/// the empty set the lowered flag's own word wears (the vanilla
+/// ClientDebugSubscriber's `Set.of()` initial state the empty
+/// equality keeps).
+pub fn encode_debug_subscription_request(subscribe: bool) -> Vec<u8> {
+    let mut p = Vec::with_capacity(4);
+    write_varint(&mut p, serverbound::DEBUG_SUBSCRIPTION_REQUEST);
+    if subscribe {
+        // {DEDICATED_SERVER_TICK_TIME} — count 1, registry id 0
+        write_varint(&mut p, 1);
+        write_varint(&mut p, 0);
+    } else {
+        // Set.of() — the empty set the unsubscribe word speaks
+        write_varint(&mut p, 0);
+    }
     p
 }
 
@@ -6951,6 +7041,13 @@ pub enum PlayEvent {
     /// monitor's sample speaks). The answer the debug chart's own
     /// wire pair carries — see [`encode_ping_request`].
     PongResponse(i64),
+    /// Debug Sample: the server's tick-time broadcast (the TPS chart's
+    /// own wire lane — the ClientboundDebugSamplePacket the dedicated
+    /// server's RemoteSampleLogger broadcasts to the subscribers the
+    /// subscription request named; the four TpsDebugDimensions
+    /// nanosecond slots the sample carries, the chart's stacked
+    /// columns the dims speak).
+    DebugSample(DebugSample),
     /// Chunk batch started; the pacing reply was sent.
     ChunkBatch,
     /// The server closed the play session (flattened reason).
@@ -7128,6 +7225,9 @@ impl<S: Read + Write> PlaySession<S> {
             }
             clientbound::PONG_RESPONSE => {
                 Ok(PlayEvent::PongResponse(parse_pong_response(&pkt)?))
+            }
+            clientbound::DEBUG_SAMPLE => {
+                Ok(PlayEvent::DebugSample(parse_debug_sample(&pkt)?))
             }
             clientbound::BATCH_START => {
                 self.conn
@@ -7418,6 +7518,18 @@ impl<S: Read + Write> PlaySession<S> {
         self.conn
             .send_packet(&encode_ping_request(time))
             .context("send ping request")
+    }
+
+    /// The debug subscription request (the vanilla
+    /// ClientDebugSubscriber.onSubscriptionsChanged's own send): the
+    /// Set<DebugSubscription> the F3+2 fps charts' state answers —
+    /// {DEDICATED_SERVER_TICK_TIME} the raised lane speaks, the empty
+    /// set the lowered one (the equality gate the caller's own state
+    /// walk keeps — the request rides ONLY the set's change).
+    pub fn send_debug_subscription(&mut self, subscribe: bool) -> Result<()> {
+        self.conn
+            .send_packet(&encode_debug_subscription_request(subscribe))
+            .context("send debug subscription request")
     }
 
     /// The bandwidth monitor's own drain (the vanilla
@@ -13809,5 +13921,58 @@ mod tests {
         write_varint(&mut wrong, clientbound::PING);
         wrong.extend_from_slice(&1i64.to_be_bytes());
         assert!(parse_pong_response(&wrong).is_err());
+    }
+
+    #[test]
+    fn debug_sample_wire_the_subscription_pair_speaks() {
+        // THE ID PINS (the generated table's runtime facts — the
+        // debug_sample the clientbound play table names 30, the
+        // debug_subscription_request the serverbound one 23)
+        assert_eq!(clientbound::DEBUG_SAMPLE, 30);
+        assert_eq!(serverbound::DEBUG_SUBSCRIPTION_REQUEST, 23);
+
+        // THE DECODE WALK (ClientboundDebugSamplePacket read ctor —
+        // `readLongArray()` the VarInt-length longs, `readEnum` the
+        // type ordinal): the 26.2 tick sample's own shape — FOUR
+        // TpsDebugDimensions nanosecond slots, TICK_TIME the type
+        let mut pkt = Vec::new();
+        write_varint(&mut pkt, clientbound::DEBUG_SAMPLE);
+        write_varint(&mut pkt, 4);
+        for v in [50_000_000i64, 41_000_000, 2_000_000, 1_000_000] {
+            pkt.extend_from_slice(&v.to_be_bytes());
+        }
+        write_varint(&mut pkt, 0); // RemoteDebugSampleType.TICK_TIME
+        let ds = parse_debug_sample(&pkt).unwrap();
+        assert_eq!(ds.sample, vec![50_000_000, 41_000_000, 2_000_000, 1_000_000]);
+        assert_eq!(ds.sample_type, RemoteSampleType::TickTime);
+
+        // the UNKNOWN ORDINAL the readEnum's own out-of-range law
+        // refuses (the enum's one-value vocabulary the wire keeps)
+        let mut bad = pkt.clone();
+        *bad.last_mut().unwrap() = 1;
+        assert!(parse_debug_sample(&bad).is_err());
+
+        // the strict refusals (the truncated longs the ensure keeps,
+        // the wrong id the walk refuses)
+        assert!(parse_debug_sample(&pkt[..pkt.len() - 2]).is_err());
+        let mut wrong = Vec::new();
+        write_varint(&mut wrong, clientbound::PING);
+        write_varint(&mut wrong, 0);
+        assert!(parse_debug_sample(&wrong).is_err());
+
+        // THE ENCODE WALK (ServerboundDebugSubscriptionRequestPacket
+        // — the `ByteBufCodecs.collection(..., 32)` SET codec: VarInt
+        // count + one registry id per subscription; the client's ONE
+        // word DEDICATED_SERVER_TICK_TIME the FIRST registration the
+        // DebugSubscriptions clinit banks — registry id 0)
+        let p = encode_debug_subscription_request(true);
+        assert_eq!(p, vec![23, 1, 0], "varint id + count 1 + registry id 0");
+        let mut c: &[u8] = &p;
+        assert_eq!(read_varint(&mut c).unwrap(), 23);
+        assert_eq!(read_varint(&mut c).unwrap(), 1);
+        assert_eq!(read_varint(&mut c).unwrap(), 0);
+        // THE EMPTY SET (the lowered flag's unsubscribe word —
+        // count 0, no ids)
+        assert_eq!(encode_debug_subscription_request(false), vec![23, 0]);
     }
 }
