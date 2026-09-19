@@ -933,6 +933,76 @@ fn ping_display_word(ms: f64) -> String {
     format!("{} ms", java_round(ms))
 }
 
+/// THE BANDWIDTH HEIGHT'S OWN LAW (BandwidthDebugChart
+/// .getSampleHeightInternal's own walk — the raw disasm's `dload;
+/// dconst_1; dadd; Math.log; ldc2_w 60.0; dmul; ldc2_w 1048576.0;
+/// Math.log; ddiv; Math.round` chain keeps: the LOG-SCALE bar the
+/// fps/ping lanes' linear laws never wear — log(bps + 1.0) * 60.0 /
+/// log(1MiB), 1MiB/s the 60px full box wears, zero the zero bar,
+/// the log curve the small values lift)
+fn bw_height_internal(bps: f64) -> i32 {
+    java_round((bps + 1.0).ln() * 60.0 / (1_048_576.0f64).ln()) as i32
+}
+
+/// THE BANDWIDTH BAR'S OWN HEIGHT (getSampleHeight's own walk — the
+/// `getSampleHeightInternal(toBytesPerSecond(sample))` composite
+/// keeps: toBytesPerSecond's `d * 20.0` the bytes-per-tick sample
+/// the bytes-per-second unit wears, the log law the height
+/// answers)
+fn bw_sample_height(sample: i64) -> i32 {
+    bw_height_internal(sample as f64 * 20.0)
+}
+
+/// THE BANDWIDTH SAMPLE'S OWN COLOR (getSampleColor's own walk — the
+/// `getSampleColor(DDIDIDI)` helper call the cp fold banks:
+/// `(toBytesPerSecond(sample), 0.0, -16711681, 8192.0, -6250241,
+/// 10485760.0, -65536)` the stop pair carries — the clamp the
+/// 10MiB/s cap keeps, the two arms the srgbLerp pair carries: below
+/// 8KiB/s the cyan→lavender lerp wears, above the lavender→red —
+/// the stops the jar's own ldc pair banks: 0xFF00FFFF cyan,
+/// 0xFFA0A0FF lavender, 0xFFFF0000 red)
+fn bw_sample_color(sample: i64) -> i32 {
+    let v = {
+        let raw = sample as f64 * 20.0;
+        if raw < 0.0 {
+            0.0
+        } else {
+            raw.min(10_485_760.0)
+        }
+    };
+    if v < 8_192.0 {
+        let t = ((v - 0.0) / (8_192.0 - 0.0)) as f32;
+        srgb_lerp(t, -16711681, -6250241)
+    } else {
+        let t = ((v - 8_192.0) / (10_485_760.0 - 8_192.0)) as f32;
+        srgb_lerp(t, -6250241, -65536)
+    }
+}
+
+/// THE BANDWIDTH WORD'S OWN FOLD (toDisplayStringInternal's own walk
+/// — the raw disasm's three arms the dcmpl/iflt pairs keep: `bps >=
+/// 1048576.0` the `'%.1f MiB/s'` format the Locale.ROOT divide
+/// wears, `>= 1024.0` the `'%.1f KiB/s'` one, else the `'%d B/s'`
+/// the Mth.floor(bps) int answers; the fractional digit the
+/// String.format's HALF_UP rounding keeps — floor(x*10 + 0.5) the
+/// java law speaks, the Rust {:.1}'s own half-even wrap the jar's
+/// word never wears — 1.25 the "1.3" word proves)
+fn bw_display_word(bps: f64) -> String {
+    // the Java String.format("%.1f", x) HALF_UP law for the
+    // non-negative bps the three arms keep
+    let frac = |x: f64| -> String {
+        let t = java_round(x * 10.0);
+        format!("{}.{}", t / 10, t % 10)
+    };
+    if bps >= 1_048_576.0 {
+        format!("{} MiB/s", frac(bps / 1_048_576.0))
+    } else if bps >= 1_024.0 {
+        format!("{} KiB/s", frac(bps / 1_024.0))
+    } else {
+        format!("{} B/s", bps.floor() as i64)
+    }
+}
+
 /// THE ARGB'S OWN FILL (the i32 color the house raster's [f32; 4]
 /// lane wears — the channels the shifts unfold, the alpha the
 /// blend's own weight keeps).
@@ -2463,6 +2533,13 @@ pub struct App {
     /// refresh carries: idx 0 the oldest, size-1 the newest the
     /// rightmost bar wears). Empty until the first pong lands.
     pub ping_samples: Vec<i64>,
+    /// THE BANDWIDTH CHART'S OWN SAMPLES (the BandwidthDebugMonitor's
+    /// LocalSampleLogger law — the bytes-per-tick the wire frames
+    /// accumulate and the tick's drain logs, the chart-ordered
+    /// snapshot the shipped refresh carries: idx 0 the oldest,
+    /// size-1 the newest the rightmost bar wears). Empty until the
+    /// first tick lands.
+    pub bw_samples: Vec<i64>,
     /// THE DEBUG MODIFIER'S OWN USED LANE (javap KeyboardHandler's
     /// usedDebugKeyAsModifier — the chord-consumed F3 gesture the
     /// release lane swallows: the flag the toggle's plain flip keeps
@@ -2855,6 +2932,7 @@ impl App {
             fps_charts: false,
             network_charts: false,
             ping_samples: Vec::new(),
+            bw_samples: Vec::new(),
             debug_modifier_used: false,
             frame_samples: [0; FPS_CHART_CAPACITY],
             frame_sample_start: 0,
@@ -11099,6 +11177,13 @@ impl App {
         self.ping_samples = samples;
     }
 
+    /// THE BANDWIDTH CHART'S OWN SNAPSHOT LANDING (the shipped
+    /// refresh's own ride — the net worker's ring the chart-ordered
+    /// Vec carries, the same law the ping lane's landing keeps).
+    pub fn live_bandwidth_updated(&mut self, samples: Vec<i64>) {
+        self.bw_samples = samples;
+    }
+
     /// THE F3 RELEASE'S OWN LANE (javap KeyboardHandler.keyPress's
     /// bytecode 795-824 — the keyDebugModifier release event the
     /// `action == 0` arm answers: the used-as-modifier flag set
@@ -11729,18 +11814,19 @@ impl App {
         if self.fps_charts {
             self.draw_fps_chart(g, a, w, h);
         }
-        // THE PING CHART (the DSO extractRenderState's
-        // showNetworkCharts lane — the F3+3 chord's own chart the
-        // RIGHT half draws: the x the `guiWidth - width` anchor the
-        // bytecode 925-937 keeps (`iload 13; iload 15; isub` the walk
-        // banks) and the width the same min(240, guiWidth/2) law
-        // bounds; the bandwidth half the lane's bytecode 886-911
-        // names BEFORE the ping — the client owns no bandwidth
-        // logger yet (the received-bytes surface the session's byte
-        // count lane owes), the honest skip the left half wears, the
-        // ping chart the one network chart the client's own RTT
-        // ring draws)
-        if self.network_charts {
+        // THE NETWORK CHARTS (the DSO extractRenderState's
+        // showNetworkCharts lane — the F3+3 chord's own pair the
+        // getConnection() != null gate guards: the OFFLINE world the
+        // no-connection lane keeps, the charts the empty rings never
+        // draw; the REMOTE lane (the no-integrated-server client's
+        // own) the bytecode 886-937 keeps: the BANDWIDTH chart the
+        // LEFT half draws FIRST (the iconst_0 arg the bytecode 894-901
+        // banks), the PING chart the RIGHT half answers (the x the
+        // `guiWidth - width` anchor the bytecode 925-937 keeps — the
+        // `iload 13; iload 15; isub` walk), the width BOTH the
+        // min(240, guiWidth/2) law bounds)
+        if self.network_charts && self.world_is_network {
+            self.draw_bandwidth_chart(g, a, w, h);
             self.draw_ping_chart(g, a, w, h);
         }
     }
@@ -11902,6 +11988,103 @@ impl App {
         let w500 = g.text_width("500 ms");
         g.fill(x + 1, h - 59, w500 + 2, 9, DEBUG_BAND_BG);
         g.text(a, x + 2, h - 58, "500 ms", DEBUG_TEXT, false);
+    }
+
+    /// THE BANDWIDTH CHART'S OWN DRAW (javap BandwidthDebugChart +
+    /// the AbstractDebugChart parent's extractRenderState walk — the
+    /// same strata the fps/ping lanes bank, the log-scale lane's own
+    /// words keep: the `fill(x, h-60, x+width, h, 0x90505050)`
+    /// background first, then the one-per-column traffic bars the
+    /// `fill(col, h-height, col+1, h)` walk paints (the height the
+    /// LOG law `round(log(bps + 1.0) * 60.0 / log(1MiB))` keeps —
+    /// bps the sample's *20 the toBytesPerSecond conversion wears;
+    /// the color the cyan→lavender→red stops at 0/8KiB/10MiB lerp),
+    /// then the white frame the four line calls keep, then the
+    /// three min/avg/max labels the drawn samples' own fold speaks
+    /// (the toBytesPerSecond conversion the word call FIRST — the
+    /// `'%.1f MiB/s'` / `'%.1f KiB/s'` / `'%d B/s'` formats the cp
+    /// banks), then the additional lines the BandwidthDebugChart
+    /// override banks: the THREE labeled grid lines the
+    /// extractLabeledLineAtValue walk paints at 64/1024/16384 B/s —
+    /// the white horizontalLine(x, x+width-1, h-height) and the
+    /// band+text pair at (x+1, h-height+1) — and the ONE '1.0
+    /// MiB/s' label the extractStringWithShade walk at (x+1,
+    /// h-60+1) answers, the full-box word the line never wears (the
+    /// box's own top edge the same row keeps))
+    fn draw_bandwidth_chart(&self, g: &mut Gui, a: &mut GuiAssets, w: i32, h: i32) {
+        let width = fps_chart_width(w);
+        let x = 0i32; // the LEFT anchor (the iconst_0 arg the bytecode 894-901 keeps)
+        let top = h - 60;
+        // THE BACKGROUND (the extractRenderState's first fill)
+        g.fill(x, top, width, 60, DEBUG_BAND_BG);
+        // THE SAMPLE BARS (the per-column loop the skip law keeps —
+        // the snapshot IS chart-ordered: idx 0 the oldest, the
+        // rightmost the newest the vanilla get(idx) law speaks)
+        let skip = fps_chart_skip(width);
+        let count = self.bw_samples.len().saturating_sub(skip);
+        if count > 0 {
+            let mut mn = i64::MAX;
+            let mut mx = i64::MIN;
+            let mut sum = 0i64;
+            for i in 0..count {
+                let s = self.bw_samples[skip + i];
+                mn = mn.min(s);
+                mx = mx.max(s);
+                sum += s;
+                let bar_h = bw_sample_height(s);
+                g.fill(
+                    x + i as i32 + 1,
+                    h - bar_h,
+                    1,
+                    bar_h,
+                    fps_argb_fill(bw_sample_color(s)),
+                );
+            }
+            // THE THREE LABELS (the min/avg/max words — the
+            // toBytesPerSecond conversion the *20 the bps unit wears,
+            // the positions the x+2 / x+width/2 centered /
+            // x+width-tw-2 trio the abstract's own walk banks, all at
+            // h-69)
+            g.text(
+                a,
+                x + 2,
+                h - 69,
+                &bw_display_word(mn as f64 * 20.0),
+                DEBUG_TEXT,
+                false,
+            );
+            let avg = bw_display_word(sum as f64 / count as f64 * 20.0);
+            g.text_centered(a, x + width / 2, h - 69, &avg, DEBUG_TEXT, false);
+            let mx_word = bw_display_word(mx as f64 * 20.0);
+            let mx_tw = g.text_width(&mx_word);
+            g.text(a, x + width - mx_tw - 2, h - 69, &mx_word, DEBUG_TEXT, false);
+        }
+        // THE WHITE FRAME (the four line calls the abstract keeps)
+        g.fill(x, top, width, 1, FPS_CHART_LINE);
+        g.fill(x, h - 1, width, 1, FPS_CHART_LINE);
+        g.fill(x, top, 1, 60, FPS_CHART_LINE);
+        g.fill(x + width - 1, top, 1, 60, FPS_CHART_LINE);
+        // THE THREE LABELED GRID LINES (the extractLabeledLineAtValue
+        // walk at 64/1024/16384 B/s — the white horizontalLine at
+        // h-height the extractLineWithLabel call keeps, the band+text
+        // pair at (x+1, h-height+1) the extractStringWithShade walk
+        // paints)
+        for v in [64i64, 1024, 16384] {
+            let y = h - bw_height_internal(v as f64);
+            g.fill(x, y, width, 1, FPS_CHART_LINE);
+            let word = bw_display_word(v as f64);
+            let tw = g.text_width(&word);
+            g.fill(x + 1, y + 1, tw + 2, 9, DEBUG_BAND_BG);
+            g.text(a, x + 2, y + 2, &word, DEBUG_TEXT, false);
+        }
+        // THE '1.0 MiB/S' LABEL (the extractStringWithShade walk at
+        // (x+1, h - height(1MiB) + 1) — the full-box word the LINE
+        // never wears, the box's own top edge the same row keeps)
+        let word = bw_display_word(1_048_576.0);
+        let tw = g.text_width(&word);
+        let y = h - bw_height_internal(1_048_576.0) + 1;
+        g.fill(x + 1, y, tw + 2, 9, DEBUG_BAND_BG);
+        g.text(a, x + 2, y + 1, &word, DEBUG_TEXT, false);
     }
 
     /// THE LEFT COLUMN'S LINES (the 26.2 entries the jar's own string
@@ -20207,6 +20390,82 @@ mod tests {
         assert_eq!(app.ping_samples, vec![10, 42, 250]);
         app.live_ping_updated(Vec::new());
         assert!(app.ping_samples.is_empty(), "the empty ring the empty draw keeps");
+    }
+
+    #[test]
+    fn the_bandwidth_chart_the_jar_math_keeps() {
+        // THE LOG HEIGHT'S OWN LAW (getSampleHeightInternal's
+        // `round(log(bps + 1.0) * 60.0 / log(1MiB))` walk — the
+        // three grid lines the labeled pairs wear, the full box the
+        // 1MiB word answers, the zero the zero bar)
+        assert_eq!(bw_height_internal(64.0), 18);
+        assert_eq!(bw_height_internal(1024.0), 30);
+        assert_eq!(bw_height_internal(16384.0), 42);
+        assert_eq!(bw_height_internal(1_048_576.0), 60);
+        assert_eq!(bw_sample_height(0), 0, "ln(1) the zero bar keeps");
+        // the sample's *20 conversion (toBytesPerSecond's own walk)
+        // the log curve the full-box poke above answers
+        assert_eq!(bw_sample_height(65536), 61, "1.25 MiB/s the 61px poke wears");
+        // THE COLOR'S OWN STOPS (getSampleColor's (bps, 0.0,
+        // -16711681, 8192.0, -6250241, 10485760.0, -65536) walk — the
+        // clamp the 10MiB/s cap keeps, the cyan→lavender→red two-arm
+        // lerp the srgbLerp pair carries)
+        assert_eq!(bw_sample_color(0), -16711681, "cyan the zero wears");
+        assert_eq!(
+            bw_sample_color(1),
+            0xFF00FEFFu32 as i32,
+            "the tiny-t floor the g channel's -1 lifts"
+        );
+        assert_eq!(
+            bw_sample_color(409),
+            0xFF9FA0FFu32 as i32,
+            "the near-boundary t the lavender approaches"
+        );
+        assert_eq!(
+            bw_sample_color(410),
+            0xFFA09FFEu32 as i32,
+            "the second arm's tiny-t the red approaches"
+        );
+        assert_eq!(
+            bw_sample_color(524_288),
+            -65536,
+            "the exact 10MiB/s cap the red wears"
+        );
+        assert_eq!(
+            bw_sample_color(1_000_000),
+            -65536,
+            "the clamp the over-cap keeps red"
+        );
+        // THE WORD'S OWN THREE ARMS (toDisplayStringInternal's
+        // dcmpl/iflt pairs — the '%.1f' HALF_UP rounding the java law
+        // keeps: 1.25 the "1.3" word the Rust half-even wrap never
+        // speaks)
+        assert_eq!(bw_display_word(0.0), "0 B/s");
+        assert_eq!(bw_display_word(63.9), "63 B/s");
+        assert_eq!(bw_display_word(1024.0), "1.0 KiB/s");
+        assert_eq!(bw_display_word(2047.0), "2.0 KiB/s");
+        assert_eq!(bw_display_word(1_048_576.0), "1.0 MiB/s");
+        assert_eq!(
+            bw_display_word(1_500_000.0),
+            "1.4 MiB/s",
+            "the half-down fraction the floor law keeps"
+        );
+        assert_eq!(
+            bw_display_word(1.25 * 1_048_576.0),
+            "1.3 MiB/s",
+            "the HALF_UP rounding the java format keeps"
+        );
+        // THE SAMPLE-WORD CONVERSION (toDisplayString's own walk —
+        // the raw sample's *20 the bps word wears, the min/avg/max
+        // labels the conversion call FIRST)
+        assert_eq!(bw_display_word(65536.0 * 20.0), "1.3 MiB/s");
+        // THE SNAPSHOT LANDING (the shipped refresh's own ride — the
+        // ring's chart order the App's belief keeps verbatim)
+        let mut app = App::new(3);
+        app.live_bandwidth_updated(vec![0, 64, 524288]);
+        assert_eq!(app.bw_samples, vec![0, 64, 524288]);
+        app.live_bandwidth_updated(Vec::new());
+        assert!(app.bw_samples.is_empty(), "the empty ring the empty draw keeps");
     }
 
     #[test]

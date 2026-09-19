@@ -7420,6 +7420,17 @@ impl<S: Read + Write> PlaySession<S> {
             .context("send ping request")
     }
 
+    /// The bandwidth monitor's own drain (the vanilla
+    /// `BandwidthDebugMonitor.tick`'s `bytesReceived.getAndSet(0)`
+    /// walk): the wire bytes the frames accumulated since the last
+    /// drain return ONCE and the counter zeroes — the bytes-per-tick
+    /// sample the bandwidth chart's columns speak. The connection
+    /// tick's own unconditional lane (no chart gate the ping
+    /// request's raised lane keeps).
+    pub fn take_received_bytes(&mut self) -> u64 {
+        std::mem::take(&mut self.conn.bytes_received)
+    }
+
     /// The client command (the vanilla `LocalPlayer`'s own
     /// serverbound echo): the action's VarInt ordinal rides the
     /// generated-id-12 packet — action 0 = PERFORM_RESPAWN (the

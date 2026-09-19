@@ -160,6 +160,7 @@ fn run_join(
                 i32,
                 (i32, i32),
                 Vec<i64>,
+                Vec<i64>,
             ),
             String,
         >,
@@ -258,6 +259,20 @@ fn run_join(
             let mut network_charts = false;
             let mut last_ping_request: Option<std::time::Instant> = None;
             let mut ping_ring: std::collections::VecDeque<i64> =
+                std::collections::VecDeque::with_capacity(crate::screens::FPS_CHART_CAPACITY);
+            // THE BANDWIDTH MONITOR'S OWN STATE (the vanilla
+            // BandwidthDebugMonitor's own lane): the wire-byte
+            // accumulation the frames' counter feeds, the tick clock
+            // the 50ms cadence arms, and the ring the tick's drain
+            // logs into (the LocalSampleLogger law — 240 one-column
+            // samples, the oldest the full-ring write drops; the
+            // snapshot the chart-ordered Vec carries). The tick the
+            // CONNECTION tick's own unconditional lane keeps — NO
+            // chart gate the ping request's raised lane wears (the
+            // Connection.tick walk's tail the monitor tick answers)
+            let mut bw_bytes: u64 = 0;
+            let mut last_bw_tick: Option<std::time::Instant> = None;
+            let mut bw_ring: std::collections::VecDeque<i64> =
                 std::collections::VecDeque::with_capacity(crate::screens::FPS_CHART_CAPACITY);
             loop {
                 if !run.load(std::sync::atomic::Ordering::Relaxed) {
@@ -567,6 +582,28 @@ fn run_join(
                         break;
                     }
                     Ok(event) => {
+                        // THE BANDWIDTH MONITOR'S OWN DRAIN (the vanilla
+                        // Connection.tick's unconditional walk — the
+                        // frames' wire-byte counter the monitor's
+                        // getAndAdd accumulates, the tick's getAndSet(0)
+                        // the sample speaks; the drain EVERY event the
+                        // loop's own wake keeps, the tick the 50ms
+                        // cadence gates)
+                        bw_bytes += session.take_received_bytes();
+                        let bw_changed =
+                            if last_bw_tick.map_or(true, |t| t.elapsed() >= PING_REQUEST_CADENCE)
+                            {
+                                let sample = bw_bytes.min(i64::MAX as u64) as i64;
+                                if bw_ring.len() >= crate::screens::FPS_CHART_CAPACITY {
+                                    bw_ring.pop_front();
+                                }
+                                bw_ring.push_back(sample);
+                                bw_bytes = 0;
+                                last_bw_tick = Some(std::time::Instant::now());
+                                true
+                            } else {
+                                false
+                            };
                         // THE PONG'S OWN LOG (the PingDebugMonitor
                         // .onPongReceived's own walk — `Util.getMillis() -
                         // packet.time()` the difference the
@@ -585,15 +622,16 @@ fn run_join(
                         } else {
                             false
                         };
-                        if view.apply(event) || ping_changed {
+                        if view.apply(event) || ping_changed || bw_changed {
                             // THE SHIP GATE (the cadence the world
-                            // updates ride — a logged pong ALONE paces
-                            // its refresh too, the chart's columns
-                            // stream while the world sleeps; the
-                            // snapshot rides EVERY ship, the ping
-                            // belief the newest one keeps)
+                            // updates ride — a logged ping or bandwidth
+                            // sample ALONE paces its refresh too, the
+                            // charts' columns stream while the world
+                            // sleeps; the snapshots ride EVERY ship, the
+                            // beliefs the newest one keeps)
                             if last_ship.elapsed() >= VIEW_CADENCE {
                                 let ping_snapshot: Vec<i64> = ping_ring.iter().copied().collect();
+                                let bw_snapshot: Vec<i64> = bw_ring.iter().copied().collect();
                                 let upd = view.refresh(crate::world_view::runtime_mapper);
                             // the mobs' hurt + voice mailboxes ship with
                             // this view — the drains empty them (each
@@ -690,6 +728,11 @@ fn run_join(
                                     // oldest, the chart's columns the
                                     // newest belief re-draws)
                                     ping_snapshot,
+                                    // and the bandwidth chart's own — the
+                                    // bytes-per-tick ring the monitor's
+                                    // drain logs (the log-scale bars the
+                                    // wire's own traffic speaks)
+                                    bw_snapshot,
                                 )))
                                 .is_err()
                             {
@@ -808,6 +851,7 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
                 Vec<(i32, Vec<(i32, i32)>)>,
                 i32,
                 (i32, i32),
+                Vec<i64>,
                 Vec<i64>,
             ),
             String,
@@ -1129,12 +1173,18 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
                     inv_state_id,
                     inv_carried,
                     ping_samples,
+                    bw_samples,
                 )) => {
                     app.live_view_updated(world, camera, biome, container);
                     // the ping chart's lane beside the world's: the RTT
                     // snapshot the net worker's ring keeps lands verbatim
                     // (the chart's columns the newest belief re-draws)
                     app.live_ping_updated(ping_samples);
+                    // the bandwidth chart's lane beside it: the
+                    // bytes-per-tick snapshot the monitor's drain logs
+                    // lands verbatim (the log-scale bars the wire's own
+                    // traffic speaks)
+                    app.live_bandwidth_updated(bw_samples);
                     // the ride's lane beside the world's: the carried
                     // position the vehicle's own snapshot keeps (the
                     // mount snap + the seat the projection walked)

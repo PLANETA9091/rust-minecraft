@@ -14,11 +14,19 @@ pub struct PacketConn<S: Read + Write> {
     pub stream: S,
     /// Compression threshold in bytes; `None` = compression disabled.
     pub compression_threshold: Option<i32>,
+    /// THE BANDWIDTH MONITOR'S OWN COUNTER (the vanilla
+    /// BandwidthDebugMonitor.bytesReceived AtomicInteger's own lane —
+    /// the Varint21FrameDecoder's `onReceive(frameLen +
+    /// VarInt.getByteSize(frameLen))` call the received wire bytes
+    /// accumulate: the length varint + the frame the socket
+    /// delivered). The tick's own drain zeroes it — see the
+    /// session's `take_received_bytes`.
+    pub bytes_received: u64,
 }
 
 impl<S: Read + Write> PacketConn<S> {
     pub fn new(stream: S) -> Self {
-        Self { stream, compression_threshold: None }
+        Self { stream, compression_threshold: None, bytes_received: 0 }
     }
 
     /// Enable compression with the threshold sent by the server.
@@ -74,6 +82,14 @@ impl<S: Read + Write> PacketConn<S> {
         }
         let mut buf = vec![0u8; pkt_len];
         self.stream.read_exact(&mut buf)?;
+        // THE DECODER'S OWN COUNT (the Varint21FrameDecoder's
+        // `onReceive(frameLen + VarInt.getByteSize(frameLen))` walk —
+        // the frame's payload bytes + the length varint's own size
+        // the wire delivered, the monitor's counter the getAndAdd
+        // accumulates)
+        let varint_size =
+            ((32 - (pkt_len as u32).leading_zeros()) as usize).div_ceil(7).max(1);
+        self.bytes_received += (varint_size + pkt_len) as u64;
 
         match self.compression_threshold {
             None => Ok(buf),
@@ -189,5 +205,28 @@ mod tests {
         let framed = writer.encode_packet(&[0x00]).unwrap();
         // marker 0 + payload, length 2
         assert_eq!(framed, vec![0x02, 0x00, 0x00]);
+    }
+
+    #[test]
+    fn framing_counts_the_received_wire_bytes() {
+        // THE MONITOR'S OWN COUNTER (the Varint21FrameDecoder's
+        // `onReceive(frameLen + VarInt.getByteSize(frameLen))` walk —
+        // the length varint + the frame the read keeps, the
+        // accumulation the two packets' pair pins)
+        let mut writer = PacketConn::new(Cursor::new(Vec::new()));
+        let f1 = writer.encode_packet(&[0x01, 0x02, 0x03]).unwrap(); // len 3 + 1 varint byte
+        let f2 = writer.encode_packet(&vec![7u8; 300]).unwrap(); // len 300 + 2 varint bytes
+        let mut reader = PacketConn::new(Cursor::new([f1, f2].concat()));
+        assert_eq!(reader.bytes_received, 0);
+        let got = reader.read_packet().unwrap();
+        assert_eq!(got, vec![0x01, 0x02, 0x03]);
+        assert_eq!(reader.bytes_received, 4, "1 varint byte (len 3) + the 3-byte frame");
+        let got = reader.read_packet().unwrap();
+        assert_eq!(got, vec![7u8; 300]);
+        assert_eq!(
+            reader.bytes_received,
+            306,
+            "the pair's accumulation (4 + 302): the getAndAdd law the tick's getAndSet(0) drains"
+        );
     }
 }
