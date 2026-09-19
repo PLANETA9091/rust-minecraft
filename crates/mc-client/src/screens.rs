@@ -1274,19 +1274,28 @@ pub fn chat_line_y(gui_h: i32, index: i32) -> i32 {
 /// speaks: the pair the walk consumes, the mapped code the state
 /// wears, the color the flags clear, the §r the reset answers; the
 /// orphaned code char the §-less prefix never changes — the literal
-/// the draw renders).
+/// the draw renders; the `x` the TRUE-HEX walk answers — the fourteen
+/// chars the exact rgb the state wears).
 fn carry_code_state(state: crate::gui::StyleState, part: &str) -> crate::gui::StyleState {
+    let chars: Vec<char> = part.chars().collect();
     let mut st = state;
-    let mut in_code = false;
-    for ch in part.chars() {
-        if in_code {
-            st.apply_code(ch);
-            in_code = false;
+    let mut i = 0usize;
+    while i < chars.len() {
+        if chars[i] == '\u{a7}' {
+            if let Some(&next) = chars.get(i + 1) {
+                if next == 'x' || next == 'X' {
+                    if let Some((rgb, end)) = crate::gui::legacy_hex_walk(&chars, i + 1) {
+                        st.apply_rgb(rgb);
+                        i = end;
+                        continue;
+                    }
+                }
+                st.apply_code(next);
+            }
+            i += 2;
             continue;
         }
-        if ch == '\u{a7}' {
-            in_code = true;
-        }
+        i += 1;
     }
     st
 }
@@ -1295,9 +1304,12 @@ fn carry_code_state(state: crate::gui::StyleState, part: &str) -> crate::gui::St
 /// the draw's own consumption order the emission keeps: the color
 /// FIRST (the clear the color switch kills), the flags AFTER (the
 /// accumulate the effect codes speak, the ChatFormatting enum order
-/// k/l/m/n/o the emission walks); the base state no code wears).
+/// k/l/m/n/o the emission walks); the base state no code wears; the
+/// TRUE HEX the §x form the draw's own walk re-consumes).
 fn write_reopen_codes(st: &crate::gui::StyleState, line: &mut String) {
-    if let Some(c) = st.color {
+    if let Some(v) = st.rgb {
+        crate::gui::push_legacy_hex(v, line);
+    } else if let Some(c) = st.color {
         line.push('\u{a7}');
         line.push(c);
     }
@@ -22843,6 +22855,145 @@ mod tests {
             shadow_only > 10,
             "the shadow pixels the same glyphs paint: {shadow_only}"
         );
+    }
+
+    /// THE TRUE HEX'S OWN WALK (the `§x§r§r§g§g§b§b` form the legacy
+    /// alphabet's RGB lane speaks — the scan the strict six pairs
+    /// walks, the exact value the draw paints, the width the fourteen
+    /// code chars never grows, the malformed form the unknown-code
+    /// law's own consumption answers, the wrap the §x re-open carries,
+    /// the scaled lane the SAME resolved rgb paints).
+    #[test]
+    fn the_true_hex_the_exact_rgb_walk_speaks() {
+        const PINK: &str = "\u{a7}x\u{a7}f\u{a7}f\u{a7}0\u{a7}0\u{a7}8\u{a7}0";
+        // THE WIDTH'S OWN LAW (the 14 code chars the draw never paints —
+        // the hex walk the zero advance keeps)
+        assert_eq!(
+            crate::gui::font_text_width(&format!("{PINK}A")),
+            crate::gui::font_text_width("A")
+        );
+        // THE MALFORMED (the pairs the strict form never completes —
+        // the §x the unknown-code law consumes, the trailing pairs the
+        // named codes the old walk answers, the width the glyph's own
+        // advance keeps)
+        assert_eq!(
+            crate::gui::font_text_width("\u{a7}x\u{a7}f\u{a7}fA"),
+            crate::gui::font_text_width("A")
+        );
+        // THE WRAP'S OWN RE-OPEN (the wrapped line the §x form re-opens
+        // — the style the line break never strips)
+        let hexed = format!("{PINK}{}", "the quick brown fox jumps ".repeat(12));
+        let wrapped = wrap_chat_text(&hexed, 320);
+        assert!(wrapped.len() > 1, "the hex line the wrap splits");
+        for seg in &wrapped[1..] {
+            assert!(
+                seg.starts_with(PINK),
+                "the wrapped line the §x re-opens: {seg}"
+            );
+        }
+
+        // THE PIXELS' OWN VERDICTS (the harness the style tests keep)
+        let root = ["assets-cache/jar", "../assets-cache/jar", "../../assets-cache/jar"]
+            .iter()
+            .map(std::path::Path::new)
+            .find(|p| p.join("gui/container/inventory.png").exists());
+        let Some(root) = root else { return };
+        let mut assets = GuiAssets::open(&root);
+        let px = |fb: &crate::raster::Framebuf, x: usize, y: usize| -> [f32; 3] {
+            let o = (y * 200 + x) * 3;
+            [
+                fb.color[o] as f32 / 255.0,
+                fb.color[o + 1] as f32 / 255.0,
+                fb.color[o + 2] as f32 / 255.0,
+            ]
+        };
+        // THE EXACT RGB (the 0xFF0080 the glyph's ink wears — the
+        // blends over the black ground the alpha scale ONLY, the g the
+        // zero the every ink pixel keeps, the full-alpha core the exact
+        // triple speaks; the named palette the 16 codes never speak it)
+        let draw = |assets: &mut GuiAssets, s: &str, shadow: bool| {
+            let mut fb = crate::raster::Framebuf::new(200, 40);
+            let mut g = Gui::new(&mut fb, 1);
+            g.text_faded(assets, 5, 5, s, [1.0, 1.0, 1.0], 1.0, shadow);
+            fb
+        };
+        let hexed = draw(&mut assets, &format!("{PINK}HHHH"), false);
+        let mut ink = 0usize;
+        let mut exact = 0usize;
+        for y in 0..40usize {
+            for x in 0..200usize {
+                let p = px(&hexed, x, y);
+                if p[0] > 0.02 || p[1] > 0.02 || p[2] > 0.02 {
+                    ink += 1;
+                    assert!(
+                        p[1] <= 0.02,
+                        "the hex the green channel never wears: ({x},{y}) {p:?}"
+                    );
+                    if (p[0] - 1.0).abs() < 1.0 / 255.0
+                        && (p[2] - 128.0 / 255.0).abs() <= 1.0 / 255.0
+                    {
+                        exact += 1;
+                    }
+                }
+            }
+        }
+        assert!(ink > 20, "the HHHH the hex paints: {ink}");
+        assert!(
+            exact > 5,
+            "the full-alpha core the exact 0xFF0080 paints: {exact}"
+        );
+        // THE FRESH-CLEAR (the bold BEFORE the hex the switch kills —
+        // the frame the plain hex line's own bytes wears; the flag
+        // AFTER the hex the accumulation keeps)
+        let cleared = draw(&mut assets, &format!("\u{a7}l{PINK}H"), false);
+        let plain = draw(&mut assets, &format!("{PINK}H"), false);
+        assert_eq!(cleared.color, plain.color, "the hex switch the bold clears");
+        let flagged = draw(&mut assets, &format!("{PINK}\u{a7}lH"), false);
+        assert_ne!(flagged.color, plain.color, "the flag after the hex rides");
+        // THE NAMED SWITCH (the §c after the hex the palette answers —
+        // the frame the plain colored line's own bytes wears)
+        let named = draw(&mut assets, &format!("{PINK}\u{a7}cH"), false);
+        let red = draw(&mut assets, "\u{a7}cH", false);
+        assert_eq!(named.color, red.color, "the named switch the rgb clears");
+        // THE SHADOW (the dim the hex color also wears — the
+        // shadow-only pixel the 0.25 fold darkens, the green the zero
+        // the blend keeps)
+        let shadowed = draw(&mut assets, &format!("{PINK}HHHH"), true);
+        let mut shadow_only = 0usize;
+        for y in 1..40usize {
+            for x in 1..200usize {
+                let p = px(&shadowed, x, y);
+                let m = px(&hexed, x, y);
+                let inked = p[0] > 0.02 || p[2] > 0.02;
+                let main_inked = m[0] > 0.02 || m[2] > 0.02;
+                if inked && !main_inked {
+                    shadow_only += 1;
+                    assert!(
+                        p[0] < 0.35 && p[2] < 0.2,
+                        "the shadow the 0.25 dim keeps: {p:?}"
+                    );
+                }
+            }
+        }
+        assert!(
+            shadow_only > 5,
+            "the shadow pixels the hex paints: {shadow_only}"
+        );
+        // THE SCALED LANE (the k-block the SAME resolved rgb paints)
+        let mut fb = crate::raster::Framebuf::new(200, 40);
+        let mut g = Gui::new(&mut fb, 1);
+        g.text_scaled(&mut assets, 5, 5, &format!("{PINK}H"), [1.0, 1.0, 1.0], false, 2);
+        let mut scaled_ink = 0usize;
+        for y in 0..40usize {
+            for x in 0..200usize {
+                let p = px(&fb, x, y);
+                if p[0] > 0.02 || p[2] > 0.02 {
+                    scaled_ink += 1;
+                    assert!(p[1] <= 0.02, "the scaled lane the green keeps: {p:?}");
+                }
+            }
+        }
+        assert!(scaled_ink > 20, "the scaled H the hex paints: {scaled_ink}");
     }
 
     #[test]

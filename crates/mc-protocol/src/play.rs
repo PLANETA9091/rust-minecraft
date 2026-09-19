@@ -6735,13 +6735,44 @@ const CHAT_FORMAT_CODES: [(&str, char); 16] = [
     ("white", 'f'),
 ];
 
-/// The component's own color the walk resolves: `Some(code)` a named
-/// color carries, `None` the default (the base color the draw call
-/// passes — the chat's white) or the "reset" the legacy law keeps;
-/// the hex form the 16-code palette cannot speak renders in the
-/// inherited color (the honest skip — the draw lane's alphabet is the
-/// sixteen codes, the true-hex walk the later round owes).
-fn chat_format_code(color: &str) -> Option<Option<char>> {
+/// The component's own color the walk resolves: the named code the
+/// sixteen `ChatFormatting` constants speak, the true-hex RGB the
+/// legacy `§x` alphabet carries, the "reset" the base the legacy law
+/// keeps.
+#[derive(Clone, Copy, PartialEq)]
+enum ChatColor {
+    /// The named palette code (`§0`..`§f` — the draw lane's own
+    /// `COLOR_CODES` lookup the char carries).
+    Code(char),
+    /// THE TRUE HEX (the `#RRGGBB` the 16-code palette cannot name —
+    /// the legacy `§x§r§r§g§g§b§b` form the real servers' plugin
+    /// strings speak, the `CraftChatMessage` convention the ecosystem
+    /// de-facto walks; vanilla's own `StringDecomposer` the raw §x
+    /// never parses — the house draw lane the exact-RGB consumption
+    /// the SAME alphabet answers).
+    Rgb(u32),
+}
+
+/// The `#rrggbb` form the parse accepts: exactly six hex digits after
+/// the hash, the case the ascii fold answers; any other string the
+/// `None` the named/reset lanes keep walking.
+fn hex_color_value(color: &str) -> Option<u32> {
+    let hex = color.strip_prefix('#')?;
+    if hex.len() != 6 || !hex.chars().all(|c| c.is_ascii_hexdigit()) {
+        return None;
+    }
+    u32::from_str_radix(hex, 16).ok()
+}
+
+/// The component's own color the wire names: `Some(explicit)` the
+/// field carries (a named code, the true-hex rgb, or the "reset" the
+/// legacy law keeps — the reset the `None` the base returns to),
+/// `None` the field names nothing the walk recognizes (the inherited
+/// color rides — the vanilla Style resolution's own omission law).
+fn chat_format_color(color: &str) -> Option<Option<ChatColor>> {
+    if let Some(rgb) = hex_color_value(color) {
+        return Some(Some(ChatColor::Rgb(rgb)));
+    }
     let lower = color.to_ascii_lowercase();
     if lower == "reset" {
         return Some(None);
@@ -6749,17 +6780,38 @@ fn chat_format_code(color: &str) -> Option<Option<char>> {
     CHAT_FORMAT_CODES
         .iter()
         .find(|(name, _)| *name == lower)
-        .map(|(_, code)| Some(*code))
+        .map(|(_, code)| Some(ChatColor::Code(*code)))
 }
 
-/// THE RESOLVED STYLE THE WALK CARRIES (the color the §-code speaks,
-/// the flags the effect codes answer — the inheritance the component
-/// chain walks, the obfuscated the chain keeps AND the emission now
-/// carries: the draw lane's random-glyph walk the §k answer keeps —
-/// the pick the 26.2 getRandomGlyph bytecode speaks).
+/// THE LEGACY HEX EMISSION (the `CraftChatMessage` walk's own form —
+/// the `§x` prefix the SIX (§, hexdigit) pairs follow, one pair per
+/// nibble high-to-low R R G G B B, the lowercase digits
+/// `Integer.toHexString` speaks).
+fn push_legacy_hex(rgb: u32, out: &mut String) {
+    const HEX: [char; 16] = [
+        '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f',
+    ];
+    out.push('\u{a7}');
+    out.push('x');
+    for shift in [20u32, 16, 12, 8, 4, 0] {
+        out.push('\u{a7}');
+        out.push(HEX[((rgb >> shift) & 0xF) as usize]);
+    }
+}
+
+/// THE RESOLVED STYLE THE WALK CARRIES (the color the §-code speaks —
+/// the named code OR the true-hex rgb the discriminated pair keeps,
+/// at most one Some the invariant banks), the flags the effect codes
+/// answer — the inheritance the component chain walks, the obfuscated
+/// the chain keeps AND the emission now carries: the draw lane's
+/// random-glyph walk the §k answer keeps — the pick the 26.2
+/// getRandomGlyph bytecode speaks).
 #[derive(Clone, Copy, PartialEq, Default)]
 struct ChatStyleState {
     color: Option<char>,
+    /// THE TRUE HEX (the `§x` walk's own RGB — the `Some` the named
+    /// code's palette overrides, the paired `color` the None keeps).
+    rgb: Option<u32>,
     bold: bool,
     italic: bool,
     underline: bool,
@@ -6786,16 +6838,24 @@ fn emit_chat_state(target: ChatStyleState, cur: &mut ChatStyleState, out: &mut S
         out.push('r');
         *cur = ChatStyleState::default();
     }
-    if target.color != cur.color {
-        out.push('§');
-        match target.color {
-            Some(code) => out.push(code),
-            None => out.push('r'),
+    // THE COLOR'S OWN SWITCH (the discriminated pair the equality
+    // walks — the named code and the true-hex rgb never co-carry)
+    if target.color != cur.color || target.rgb != cur.rgb {
+        match target.rgb {
+            Some(rgb) => push_legacy_hex(rgb, out),
+            None => {
+                out.push('§');
+                match target.color {
+                    Some(code) => out.push(code),
+                    None => out.push('r'),
+                }
+            }
         }
         // THE COLOR'S OWN CLEAR (javap Style.applyLegacyFormat — the
         // fresh style the color arm builds, the five Boolean.valueOf(0)
         // the flags wear)
         cur.color = target.color;
+        cur.rgb = target.rgb;
         cur.bold = false;
         cur.italic = false;
         cur.underline = false;
@@ -6838,17 +6898,22 @@ fn flatten_component_colored_walk(
     out: &mut String,
     cur: &mut ChatStyleState,
 ) {
-    // The component's OWN color the field carries: `Some(Some(code))`
-    // a named color speaks, `Some(None)` the "reset" the base returns,
-    // `None` the field the component omits (or the hex the palette
-    // skips) — the inherited color rides.
+    // The component's OWN color the field carries: `Some(explicit)` a
+    // named code / the true-hex rgb / the "reset" speaks, `None` the
+    // field the component omits (or the unknown string) — the
+    // inherited color rides.
     let own_color = match tag.get("color").and_then(Nbt::as_str) {
-        Some(c) => chat_format_code(c),
+        Some(c) => chat_format_color(c),
         None => None,
     };
-    let resolved_color = match own_color {
-        Some(explicit) => explicit,
-        None => inherit.color,
+    // THE DISCRIMINATED PAIR (the explicit field the own walk names,
+    // the omission the parent's pair inherits — the two fields at
+    // most one Some the invariant keeps)
+    let resolved_pair = match own_color {
+        Some(Some(ChatColor::Code(c))) => (Some(c), None),
+        Some(Some(ChatColor::Rgb(v))) => (None, Some(v)),
+        Some(None) => (None, None),
+        None => (inherit.color, inherit.rgb),
     };
     // The component's OWN FLAG the field carries (the explicit true/
     // false the Byte/String booleans speak, the omission the parent's
@@ -6863,7 +6928,8 @@ fn flatten_component_colored_walk(
     // THE SUBTREE'S OWN RESOLVED STYLE (the vanilla chain fold: the
     // explicit fields override, the omissions inherit)
     let resolved = ChatStyleState {
-        color: resolved_color,
+        color: resolved_pair.0,
+        rgb: resolved_pair.1,
         bold: flag("bold", inherit.bold),
         italic: flag("italic", inherit.italic),
         underline: flag("underlined", inherit.underline),
@@ -6913,8 +6979,11 @@ fn flatten_component_colored_walk(
 /// entry-base law answers, the child the color field omits the
 /// PARENT's color wears (the vanilla Style resolution), the siblings
 /// the common parent wears (never each other — the extra walk's own
-/// law), the hex form the 16-code palette cannot speak renders in the
-/// inherited color (the honest skip). THE STYLE FLAGS the same walk
+/// law), the TRUE HEX the `#RRGGBB` field the legacy `§x§r§r§g§g§b§b`
+/// emission speaks (the `CraftChatMessage` convention the real
+/// servers' plugin strings carry, the rgb switch the SAME
+/// state-machine law walks the named codes answer, the rgb child the
+/// field omits the PARENT's rgb inherits). THE STYLE FLAGS the same walk
 /// emits: the bold/underlined/strikethrough/italic fields the `§l`/
 /// `§n`/`§m`/`§o` codes speak (the effect accumulation the
 /// `applyLegacyFormat` law banks), the flag the child omits the
@@ -14938,7 +15007,7 @@ mod tests {
     /// flat emission wears, the child the field omits the PARENT's
     /// color inherits, the SIBLINGS the common parent wears (never
     /// each other — the extra walk's own law), the "reset" the base
-    /// the §r answers, the hex the 16-code palette honestly skips,
+    /// the §r answers, the hex the §x emission speaks,
     /// the bold flag the draw lane's no-variant ignore keeps, the
     /// LIST root the component-array form the sibling walk renders,
     /// the uncolored tree the plain flatten's own bytes wears).
@@ -14997,13 +15066,16 @@ mod tests {
             ),
         ]);
         assert_eq!(flatten_component_colored(&reset), "\u{a7}ca\u{a7}rb\u{a7}cc");
-        // THE HEX SKIP (the #RRGGBB the 16-code palette cannot speak —
-        // the inherited color the honest lane keeps)
+        // THE TRUE HEX (the #RRGGBB the legacy §x form speaks — the
+        // six nibble pairs the CraftChatMessage convention walks)
         let hex = Nbt::Compound(vec![
             ("text".to_string(), Nbt::String("x".to_string())),
             ("color".to_string(), Nbt::String("#55FFFF".to_string())),
         ]);
-        assert_eq!(flatten_component_colored(&hex), "x");
+        assert_eq!(
+            flatten_component_colored(&hex),
+            "\u{a7}x\u{a7}5\u{a7}5\u{a7}f\u{a7}f\u{a7}f\u{a7}fx"
+        );
         // THE BOLD+COLOR ORDER (the draw's own consumption — the color
         // switch the flags clear, the §l the re-emission restores)
         let bold = Nbt::Compound(vec![
@@ -15054,6 +15126,157 @@ mod tests {
         p.push(0);
         let m = parse_system_chat(&p).unwrap();
         assert_eq!(m.content, "\u{a7}eHi there", "the color the content carries");
+    }
+
+    /// THE TRUE HEX'S OWN WALK (the `#RRGGBB` field the legacy
+    /// `§x§r§r§g§g§b§b` emission speaks — the six nibble pairs the
+    /// `CraftChatMessage` convention walks, the lowercase digits
+    /// `Integer.toHexString` banks): the rgb the SAME state machine
+    /// the named codes answer (the switch the flags clear, the §r the
+    /// flag-loss re-opens), the rgb→rgb the re-emission only when the
+    /// VALUE differs, the rgb→named / named→rgb the cross walks, the
+    /// rgb child the field omits the PARENT's rgb inherits, the
+    /// malformed hex the inherit law keeps, the case-insensitive
+    /// parse the fold speaks.
+    #[test]
+    fn the_true_hex_the_legacy_emission_speaks() {
+        // THE CANONICAL FORM (the six pairs, one per nibble, the
+        // lowercase digits — 0x55FFFF the §5 §5 §f §f §f §f wears)
+        let hex = |color: &str| {
+            Nbt::Compound(vec![
+                ("text".to_string(), Nbt::String("x".to_string())),
+                ("color".to_string(), Nbt::String(color.to_string())),
+            ])
+        };
+        assert_eq!(
+            flatten_component_colored(&hex("#55FFFF")),
+            "\u{a7}x\u{a7}5\u{a7}5\u{a7}f\u{a7}f\u{a7}f\u{a7}fx"
+        );
+        // THE UPPERCASE FIELD (the parse the ascii fold answers — the
+        // emission the SAME lowercase digits speaks)
+        assert_eq!(
+            flatten_component_colored(&hex("#55ffff")),
+            flatten_component_colored(&hex("#55FFFF"))
+        );
+        // THE MALFORMED (the five digits the palette's names never
+        // speak — the field the inherit law keeps)
+        assert_eq!(flatten_component_colored(&hex("#55FFF")), "x");
+        assert_eq!(flatten_component_colored(&hex("55FFFF")), "x");
+        assert_eq!(flatten_component_colored(&hex("#GGGGGG")), "x");
+        // THE RGB→RGB SWITCH (the re-emission only when the VALUE
+        // differs — the equal rgb the sibling law skips)
+        let two_rgb = Nbt::Compound(vec![
+            ("text".to_string(), Nbt::String("a".to_string())),
+            ("color".to_string(), Nbt::String("#FF0080".to_string())),
+            (
+                "extra".to_string(),
+                Nbt::List(vec![
+                    Nbt::Compound(vec![
+                        ("text".to_string(), Nbt::String("b".to_string())),
+                        ("color".to_string(), Nbt::String("#00FF00".to_string())),
+                    ]),
+                    Nbt::Compound(vec![
+                        ("text".to_string(), Nbt::String("c".to_string())),
+                        ("color".to_string(), Nbt::String("#FF0080".to_string())),
+                    ]),
+                ]),
+            ),
+        ]);
+        assert_eq!(
+            flatten_component_colored(&two_rgb),
+            // #FF0080 → §f§f §0§0 §8§0, #00FF00 → §0§0 §f§f §0§0
+            "\u{a7}x\u{a7}f\u{a7}f\u{a7}0\u{a7}0\u{a7}8\u{a7}0a\
+             \u{a7}x\u{a7}0\u{a7}0\u{a7}f\u{a7}f\u{a7}0\u{a7}0b\
+             \u{a7}x\u{a7}f\u{a7}f\u{a7}0\u{a7}0\u{a7}8\u{a7}0c"
+        );
+        // THE CROSS WALKS (the rgb→named the code emits, the named→rgb
+        // the hex emits — the switch the fresh-style clear always wears)
+        let cross = Nbt::Compound(vec![
+            ("text".to_string(), Nbt::String("a".to_string())),
+            ("color".to_string(), Nbt::String("#FF0080".to_string())),
+            (
+                "extra".to_string(),
+                Nbt::List(vec![Nbt::Compound(vec![
+                    ("text".to_string(), Nbt::String("b".to_string())),
+                    ("color".to_string(), Nbt::String("red".to_string())),
+                ])]),
+            ),
+        ]);
+        assert_eq!(
+            flatten_component_colored(&cross),
+            "\u{a7}x\u{a7}f\u{a7}f\u{a7}0\u{a7}0\u{a7}8\u{a7}0a\u{a7}cb"
+        );
+        let cross_back = Nbt::Compound(vec![
+            ("text".to_string(), Nbt::String("a".to_string())),
+            ("color".to_string(), Nbt::String("red".to_string())),
+            (
+                "extra".to_string(),
+                Nbt::List(vec![Nbt::Compound(vec![
+                    ("text".to_string(), Nbt::String("b".to_string())),
+                    ("color".to_string(), Nbt::String("#FF0080".to_string())),
+                ])]),
+            ),
+        ]);
+        assert_eq!(
+            flatten_component_colored(&cross_back),
+            "\u{a7}ca\u{a7}x\u{a7}f\u{a7}f\u{a7}0\u{a7}0\u{a7}8\u{a7}0b"
+        );
+        // THE INHERITANCE (the rgb child the field omits the PARENT's
+        // rgb wears — one hex walk the whole subtree speaks)
+        let inherit = Nbt::Compound(vec![
+            ("text".to_string(), Nbt::String("a".to_string())),
+            ("color".to_string(), Nbt::String("#FF0080".to_string())),
+            (
+                "extra".to_string(),
+                Nbt::List(vec![text_component("b")]),
+            ),
+        ]);
+        assert_eq!(
+            flatten_component_colored(&inherit),
+            "\u{a7}x\u{a7}f\u{a7}f\u{a7}0\u{a7}0\u{a7}8\u{a7}0ab"
+        );
+        // THE FLAG-LOSS RE-OPEN (the bold then the EXPLICITLY
+        // flag-less sibling — the inherited bold the omission keeps,
+        // the child's bold:false the §r eraser answers, the rgb the
+        // fresh style re-emits)
+        let flag_loss = Nbt::Compound(vec![
+            ("text".to_string(), Nbt::String("a".to_string())),
+            ("color".to_string(), Nbt::String("#FF0080".to_string())),
+            ("bold".to_string(), Nbt::Byte(1)),
+            (
+                "extra".to_string(),
+                Nbt::List(vec![Nbt::Compound(vec![
+                    ("text".to_string(), Nbt::String("b".to_string())),
+                    ("bold".to_string(), Nbt::Byte(0)),
+                ])]),
+            ),
+        ]);
+        assert_eq!(
+            flatten_component_colored(&flag_loss),
+            "\u{a7}x\u{a7}f\u{a7}f\u{a7}0\u{a7}0\u{a7}8\u{a7}0\u{a7}la\
+             \u{a7}r\u{a7}x\u{a7}f\u{a7}f\u{a7}0\u{a7}0\u{a7}8\u{a7}0b"
+        );
+        // THE RESET FROM RGB (the child's "reset" the base returns to,
+        // the NEXT sibling the PARENT's rgb still wears)
+        let reset = Nbt::Compound(vec![
+            ("text".to_string(), Nbt::String("a".to_string())),
+            ("color".to_string(), Nbt::String("#FF0080".to_string())),
+            (
+                "extra".to_string(),
+                Nbt::List(vec![
+                    Nbt::Compound(vec![
+                        ("text".to_string(), Nbt::String("b".to_string())),
+                        ("color".to_string(), Nbt::String("reset".to_string())),
+                    ]),
+                    text_component("c"),
+                ]),
+            ),
+        ]);
+        assert_eq!(
+            flatten_component_colored(&reset),
+            "\u{a7}x\u{a7}f\u{a7}f\u{a7}0\u{a7}0\u{a7}8\u{a7}0a\u{a7}rb\
+             \u{a7}x\u{a7}f\u{a7}f\u{a7}0\u{a7}0\u{a7}8\u{a7}0c"
+        );
     }
 
     /// THE CHAT STYLES' OWN WALK (the effect codes the `applyLegacyFormat`

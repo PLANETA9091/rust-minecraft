@@ -80,12 +80,20 @@ pub struct Sprite {
 /// an EFFECT code the flag accumulates (the one `Boolean.valueOf(1)` the
 /// matching arm carries, the others preserved), the `r` the `Style.EMPTY`
 /// full reset wears; the `k` the obfuscated flag wears — the random-glyph
-/// walk the draw lane answers).
+/// walk the draw lane answers). THE TRUE HEX the `§x` walk's own RGB the
+/// `rgb` field wears — the named code the palette lookup answers, the
+/// hex the exact value paints, the TWO the discriminated pair the
+/// at-most-one-Some invariant banks.
 #[derive(Clone, Copy, PartialEq, Default, Debug)]
 pub(crate) struct StyleState {
     /// The resolved color code (`None` = the entry base the draw call
     /// passes — the chat's white).
     pub color: Option<char>,
+    /// THE TRUE HEX (the `§x§r§r§g§g§b§b` walk's own RGB — the `Some`
+    /// the named code's palette overrides, the paired `color` the None
+    /// keeps; the `CraftChatMessage` convention the real servers'
+    /// plugin strings speak, the exact value the draw paints).
+    pub rgb: Option<u32>,
     pub bold: bool,
     pub italic: bool,
     pub underline: bool,
@@ -102,6 +110,9 @@ impl StyleState {
     pub fn apply_code(&mut self, ch: char) {
         if let Some(i) = code_index(ch) {
             self.color = Some(char::from_digit(i as u32, 16).unwrap_or('f'));
+            // THE PAIR'S OWN DISCIPLINE (the named code the rgb clears —
+            // the discriminated union the invariant keeps)
+            self.rgb = None;
             // THE COLOR'S OWN CLEAR (the fresh-style constructor's five
             // Boolean.valueOf(0) — the flags the color switch kills)
             self.bold = false;
@@ -122,6 +133,36 @@ impl StyleState {
         }
     }
 
+    /// THE TRUE HEX'S OWN APPLY (the `§x` walk the exact-RGB wear —
+    /// the SAME fresh-style law the named code speaks: the flags the
+    /// switch clears, the named code the None keeps).
+    pub fn apply_rgb(&mut self, v: u32) {
+        self.color = None;
+        self.rgb = Some(v);
+        self.bold = false;
+        self.italic = false;
+        self.underline = false;
+        self.strike = false;
+        self.obfuscated = false;
+    }
+
+    /// THE RESOLVED RGB (0..1) the draw paints: the true-hex the own
+    /// value wears, the named code the palette lookup answers, the
+    /// default the entry base the call passes.
+    pub fn resolved_color(&self, base: [f32; 3]) -> [f32; 3] {
+        if let Some(v) = self.rgb {
+            return [
+                ((v >> 16) & 0xFF) as f32 / 255.0,
+                ((v >> 8) & 0xFF) as f32 / 255.0,
+                (v & 0xFF) as f32 / 255.0,
+            ];
+        }
+        match self.color {
+            Some(c) => COLOR_CODES[code_index(c).unwrap_or(15)],
+            None => base,
+        }
+    }
+
     /// THE ITALIC'S OWN SHEAR (javap `BakedSheetGlyph.render` — the top
     /// vertices the `shearTop()` = `1.0 - 0.25 * up` offset carries, the
     /// bottom the `shearBottom()` = `1.0 - 0.25 * down`; the per-row
@@ -135,25 +176,74 @@ impl StyleState {
     }
 }
 
+/// THE TRUE-HEX SCAN (the legacy alphabet's own RGB form — the `§x`
+/// prefix the SIX (§, hexdigit) pairs follow, one pair per nibble
+/// high-to-low R R G G B B, the `CraftChatMessage` convention the real
+/// servers' plugin strings speak; vanilla's own `StringDecomposer` the
+/// raw §x never parses — the house lane the exact-RGB consumption the
+/// SAME alphabet answers). `x_at` the index OF the `x`/`X` (the § the
+/// caller consumed); the ANY-mismatch the `None` the unknown-code law
+/// keeps (the pair the strict form never completes the old walk's own
+/// consumption answers); the digit parse the case the ascii fold
+/// answers. Returns the rgb + the index AFTER the last pair.
+pub(crate) fn legacy_hex_walk(chars: &[char], x_at: usize) -> Option<(u32, usize)> {
+    let mut i = x_at + 1;
+    let mut rgb: u32 = 0;
+    for _ in 0..6 {
+        if chars.get(i).copied() != Some('\u{a7}') {
+            return None;
+        }
+        rgb = rgb * 16 + chars.get(i + 1)?.to_digit(16)?;
+        i += 2;
+    }
+    Some((rgb, i))
+}
+
+/// THE LEGACY HEX EMISSION (the scan's own writer — the `§x` prefix
+/// the six nibble pairs carry, the lowercase digits
+/// `Integer.toHexString` banks; the wrap's re-open lane the SAME form
+/// the draw's own walk re-consumes).
+pub(crate) fn push_legacy_hex(rgb: u32, out: &mut String) {
+    const HEX: [char; 16] = [
+        '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f',
+    ];
+    out.push('\u{a7}');
+    out.push('x');
+    for shift in [20u32, 16, 12, 8, 4, 0] {
+        out.push('\u{a7}');
+        out.push(HEX[((rgb >> shift) & 0xF) as usize]);
+    }
+}
+
 /// The advance walk the text lanes share (the vanilla Font.width's own
 /// rule the GUI lane speaks: glyph + 1px spacing, the space its own
 /// advance, the missing glyph the honest 4 — the BOLD the second-glyph
 /// law's own +1 advance wears: javap `GlyphInfo.getAdvance(bold)` =
 /// `advance + getBoldOffset()` = `advance + 1.0`). Free so the
 /// world-space lanes (the name-tag planes) walk the SAME metric the
-/// HUD draws.
+/// HUD draws. THE §-PAIRS the index walk consumes (the code char the
+/// next position carries, the `x` the true-hex walk answers — the
+/// fourteen chars the zero advance keeps, the any-mismatch the
+/// unknown-code law's own consumption answers).
 pub(crate) fn font_text_width(s: &str) -> i32 {
+    let chars: Vec<char> = s.chars().collect();
     let mut w = 0i32;
-    let mut in_code = false;
+    let mut i = 0usize;
     let mut st = StyleState::default();
-    for ch in s.chars() {
-        if in_code {
-            st.apply_code(ch);
-            in_code = false;
-            continue;
-        }
-        if ch == '§' {
-            in_code = true;
+    while i < chars.len() {
+        let ch = chars[i];
+        if ch == '\u{a7}' {
+            if let Some(&next) = chars.get(i + 1) {
+                if next == 'x' || next == 'X' {
+                    if let Some((rgb, end)) = legacy_hex_walk(&chars, i + 1) {
+                        st.apply_rgb(rgb);
+                        i = end;
+                        continue;
+                    }
+                }
+                st.apply_code(next);
+            }
+            i += 2;
             continue;
         }
         let adv = match font_table::glyph(ch) {
@@ -162,6 +252,7 @@ pub(crate) fn font_text_width(s: &str) -> i32 {
             None => 4,
         };
         w += adv + if st.bold { 1 } else { 0 };
+        i += 1;
     }
     w
 }
@@ -639,23 +730,34 @@ impl<'a> Gui<'a> {
         alpha: f32,
         dim: f32,
     ) -> i32 {
+        let chars: Vec<char> = s.chars().collect();
         let mut cx = x;
         let mut st = StyleState::default();
-        let mut in_code = false;
         // THE PICK STREAM'S OWN POSITION (the codepoints the accept walk
         // sees — the § pairs the decomposer consumes before the walk, the
         // counter the shadow pass's SAME sequence keeps)
         let mut pos = 0u64;
-        for ch in s.chars() {
-            if in_code {
-                st.apply_code(ch);
-                in_code = false;
+        let mut i = 0usize;
+        while i < chars.len() {
+            let ch = chars[i];
+            if ch == '\u{a7}' {
+                // THE §-PAIR (the code char the next position carries —
+                // the x the true-hex walk answers, the fourteen chars the
+                // zero advance AND zero pick-stream step keep)
+                if let Some(&next) = chars.get(i + 1) {
+                    if next == 'x' || next == 'X' {
+                        if let Some((rgb, end)) = legacy_hex_walk(&chars, i + 1) {
+                            st.apply_rgb(rgb);
+                            i = end;
+                            continue;
+                        }
+                    }
+                    st.apply_code(next);
+                }
+                i += 2;
                 continue;
             }
-            if ch == '§' {
-                in_code = true;
-                continue;
-            }
+            i += 1;
             pos += 1;
             // THE GLYPH RESOLUTION (javap `Font.getGlyph(I, Style)` — the
             // obfuscated style the SAME-width random pick wears: the class
@@ -676,10 +778,7 @@ impl<'a> Gui<'a> {
             } else {
                 orig
             };
-            let color = match st.color {
-                Some(c) => COLOR_CODES[code_index(c).unwrap_or(15)],
-                None => base,
-            };
+            let color = st.resolved_color(base);
             let Some(g) = picked else {
                 // THE MISSING GLYPH (the honest 4 the advance keeps —
                 // the effects the style's own bars still ride)
@@ -797,22 +896,32 @@ impl<'a> Gui<'a> {
         k: i32,
         dim: f32,
     ) -> i32 {
+        let chars: Vec<char> = s.chars().collect();
         let mut cx = x;
         let mut st = StyleState::default();
-        let mut in_code = false;
         // THE PICK STREAM'S OWN POSITION (the draw_raw twin — the same
         // (seed, position) fold the scaled lane's blocks answer)
         let mut pos = 0u64;
-        for ch in s.chars() {
-            if in_code {
-                st.apply_code(ch);
-                in_code = false;
+        let mut i = 0usize;
+        while i < chars.len() {
+            let ch = chars[i];
+            if ch == '\u{a7}' {
+                // THE §-PAIR (the draw_raw twin — the x the true-hex walk
+                // answers, the fourteen chars the zero step keeps)
+                if let Some(&next) = chars.get(i + 1) {
+                    if next == 'x' || next == 'X' {
+                        if let Some((rgb, end)) = legacy_hex_walk(&chars, i + 1) {
+                            st.apply_rgb(rgb);
+                            i = end;
+                            continue;
+                        }
+                    }
+                    st.apply_code(next);
+                }
+                i += 2;
                 continue;
             }
-            if ch == '§' {
-                in_code = true;
-                continue;
-            }
+            i += 1;
             pos += 1;
             // THE GLYPH RESOLUTION (the obfuscated pick the scaled lane
             // also answers — the same class walk, the same roll fold)
@@ -829,10 +938,7 @@ impl<'a> Gui<'a> {
             } else {
                 orig
             };
-            let color = match st.color {
-                Some(c) => COLOR_CODES[code_index(c).unwrap_or(15)],
-                None => base,
-            };
+            let color = st.resolved_color(base);
             let Some(g) = picked else {
                 if st.strike {
                     self.fill(cx, y + 3 * k, 4 * k, k, [color[0] * dim, color[1] * dim, color[2] * dim, 1.0]);
