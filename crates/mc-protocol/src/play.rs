@@ -97,7 +97,8 @@ pub mod clientbound {
         CB_LEVEL_CHUNK_WITH_LIGHT as CHUNK_DATA, CB_LIGHT_UPDATE as UPDATE_LIGHT,
         CB_LOGIN as LOGIN, CB_MOVE_ENTITY_POS as MOVE_ENTITY_POS,
         CB_MOVE_ENTITY_POS_ROT as MOVE_ENTITY_POS_ROT, CB_MOVE_ENTITY_ROT as MOVE_ENTITY_ROT,
-        CB_PING as PING, CB_PLAYER_POSITION as SYNCHRONIZE_POSITION, CB_ROTATE_HEAD as ROTATE_HEAD,
+        CB_PING as PING, CB_PONG_RESPONSE as PONG_RESPONSE,
+        CB_PLAYER_POSITION as SYNCHRONIZE_POSITION, CB_ROTATE_HEAD as ROTATE_HEAD,
         CB_REMOVE_ENTITIES as REMOVE_ENTITIES, CB_REMOVE_MOB_EFFECT as REMOVE_MOB_EFFECT,
         CB_RESPAWN as RESPAWN, CB_SECTION_BLOCKS_UPDATE as SECTION_BLOCKS_UPDATE,
         CB_SET_CHUNK_CACHE_CENTER as CENTER_CHUNK, CB_SET_ENTITY_DATA as SET_ENTITY_DATA,
@@ -126,7 +127,8 @@ pub mod serverbound {
     pub use crate::generated::packet_ids::{
         SB_ACCEPT_TELEPORTATION as CONFIRM_TELEPORTATION, SB_ATTACK as ATTACK,
         SB_CHUNK_BATCH_RECEIVED as CHUNK_BATCH_RECEIVED, SB_CONTAINER_CLICK as CONTAINER_CLICK,
-        SB_CONTAINER_CLOSE as CONTAINER_CLOSE, SB_KEEP_ALIVE as KEEP_ALIVE, SB_PONG as PONG,
+        SB_CONTAINER_CLOSE as CONTAINER_CLOSE, SB_KEEP_ALIVE as KEEP_ALIVE,
+        SB_PING_REQUEST as PING_REQUEST, SB_PONG as PONG,
         SB_MOVE_PLAYER_POS as MOVE_PLAYER_POS, SB_MOVE_PLAYER_POS_ROT as MOVE_PLAYER_POS_ROT,
         SB_MOVE_PLAYER_ROT as MOVE_PLAYER_ROT, SB_MOVE_PLAYER_STATUS_ONLY as MOVE_PLAYER_STATUS_ONLY,
         SB_PLAYER_ACTION as PLAYER_ACTION, SB_SET_CARRIED_ITEM as SET_CARRIED_ITEM,
@@ -857,6 +859,34 @@ pub fn parse_play_ping(payload: &[u8]) -> Result<i32> {
     anyhow::ensure!(id == clientbound::PING, "not a play ping packet (0x{id:02X})");
     anyhow::ensure!(c.len() >= 4, "play ping truncated");
     Ok(i32::from_be_bytes(c[..4].try_into()?))
+}
+
+/// Parse Pong Response (clientbound play 0x3E, `minecraft:pong_response`):
+/// the ClientboundPongResponsePacket read ctor's own walk — `readLong()`
+/// the FriendlyByteBuf read keeps (the sent-time long the client's
+/// PingDebugMonitor subtracts from ITS Util.getMillis() — the RTT sample
+/// the ping chart's columns speak).
+pub fn parse_pong_response(payload: &[u8]) -> Result<i64> {
+    let mut c: &[u8] = payload;
+    let id = read_varint(&mut c)?;
+    anyhow::ensure!(
+        id == clientbound::PONG_RESPONSE,
+        "not a play pong response packet (0x{id:02X})"
+    );
+    anyhow::ensure!(c.len() >= 8, "play pong response truncated");
+    Ok(i64::from_be_bytes(c[..8].try_into()?))
+}
+
+/// Ping Request (serverbound play 0x26, `minecraft:ping_request`): the
+/// ServerboundPingRequestPacket's own walk — `writeLong(time)` the ONE
+/// long the wire carries (the sent-time millis the server echoes
+/// verbatim through the ClientboundPongResponsePacket; the difference
+/// at the receive instant the RTT sample speaks).
+pub fn encode_ping_request(time: i64) -> Vec<u8> {
+    let mut p = Vec::with_capacity(9);
+    write_varint(&mut p, serverbound::PING_REQUEST);
+    p.extend_from_slice(&time.to_be_bytes());
+    p
 }
 
 /// Parse Synchronize Player Position (clientbound: generated id 72) —
@@ -6915,6 +6945,12 @@ pub enum PlayEvent {
     KeepAlive(i64),
     /// Ping probe answered.
     Ping(i32),
+    /// Pong Response: the server's echo of the client's OWN ping
+    /// request (the PingDebugMonitor's RTT lane — the sent-time long
+    /// the roundtrip echoes verbatim; the receive-time difference the
+    /// monitor's sample speaks). The answer the debug chart's own
+    /// wire pair carries — see [`encode_ping_request`].
+    PongResponse(i64),
     /// Chunk batch started; the pacing reply was sent.
     ChunkBatch,
     /// The server closed the play session (flattened reason).
@@ -7089,6 +7125,9 @@ impl<S: Read + Write> PlaySession<S> {
                 let probe = parse_play_ping(&pkt)?;
                 self.conn.send_packet(&encode_play_pong(probe))?;
                 Ok(PlayEvent::Ping(probe))
+            }
+            clientbound::PONG_RESPONSE => {
+                Ok(PlayEvent::PongResponse(parse_pong_response(&pkt)?))
             }
             clientbound::BATCH_START => {
                 self.conn
@@ -7367,6 +7406,18 @@ impl<S: Read + Write> PlaySession<S> {
         self.conn
             .send_packet(&encode_paddle_boat(left, right))
             .context("send paddle boat")
+    }
+
+    /// The ping request (the vanilla `PingDebugMonitor.tick`'s own
+    /// send): the sent-time long rides the generated-id-38 packet —
+    /// the server echoes it verbatim through the Clientbound
+    /// PongResponsePacket, the receive-instant difference the RTT
+    /// sample the ping chart's columns speak. The F3+3 network
+    /// charts' raised lane the monitor's cadence arms.
+    pub fn send_ping_request(&mut self, time: i64) -> Result<()> {
+        self.conn
+            .send_packet(&encode_ping_request(time))
+            .context("send ping request")
     }
 
     /// The client command (the vanilla `LocalPlayer`'s own
@@ -13713,5 +13764,39 @@ mod tests {
         let out = connect_and_join_world("127.0.0.1", port, 776, "mc2rs").expect("join flow");
         assert_eq!(out, WorldOutcome::Disconnected { reason: "You died!".to_string() });
         srv.join().unwrap();
+    }
+
+    #[test]
+    fn pong_response_wire_the_ping_request_pair_speaks() {
+        // THE ID PIN (the generated table's runtime fact — the
+        // ping_request the serverbound play table names 38, the
+        // pong_response the clientbound one names 62)
+        assert_eq!(serverbound::PING_REQUEST, 38);
+        assert_eq!(clientbound::PONG_RESPONSE, 62);
+
+        // THE ENCODE WALK (ServerboundPingRequestPacket.write —
+        // `writeLong(time)` the ONE long after the id varint): the
+        // sent-time millis the wire carries verbatim
+        let p = encode_ping_request(777);
+        let mut c: &[u8] = &p;
+        assert_eq!(read_varint(&mut c).unwrap(), serverbound::PING_REQUEST);
+        assert_eq!(i64::from_be_bytes(c[..8].try_into().unwrap()), 777);
+        assert_eq!(p.len(), 9, "one varint byte (777 = 0x0309 fits one) + the one long");
+
+        // THE DECODE WALK (ClientboundPongResponsePacket read ctor —
+        // `readLong()` the FriendlyByteBuf read keeps): the echoed
+        // sent-time the monitor subtracts from ITS receive instant
+        let mut pkt = Vec::new();
+        write_varint(&mut pkt, clientbound::PONG_RESPONSE);
+        pkt.extend_from_slice(&(-5_000_000_000i64).to_be_bytes());
+        assert_eq!(parse_pong_response(&pkt).unwrap(), -5_000_000_000);
+
+        // the strict refusals (the truncation the ensure keeps, the
+        // wrong id the walk refuses)
+        assert!(parse_pong_response(&pkt[..pkt.len() - 4]).is_err());
+        let mut wrong = Vec::new();
+        write_varint(&mut wrong, clientbound::PING);
+        wrong.extend_from_slice(&1i64.to_be_bytes());
+        assert!(parse_pong_response(&wrong).is_err());
     }
 }

@@ -1267,6 +1267,16 @@ pub enum ContainerCommand {
     /// into the boat's entity data (the echo the Set Entity Data
     /// lane speaks back to every viewer).
     PaddleBoat { left: bool, right: bool },
+    /// THE NETWORK CHARTS' OWN GATE (the vanilla
+    /// ClientPacketListener.tick's `showNetworkCharts()` lane — the
+    /// ping request the monitor's tick sends EVERY client tick while
+    /// the F3+3 chart shows): the frame thread's toggle state rides
+    /// the command channel, the worker's own loop ticks the
+    /// ServerboundPingRequestPacket send at the vanilla cadence while
+    /// the flag sleeps (the raise arms the monitor, the lower
+    /// disarms it — the pong responses the worker logs into the
+    /// chart's own sample ring).
+    NetworkCharts(bool),
 }
 
 /// The camera's pose in the VANILLA wire degrees — the inverse of

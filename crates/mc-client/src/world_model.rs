@@ -1813,7 +1813,10 @@ impl WorldModel {
                 }
             }
             // probes and skipped packets carry no world state
-            PlayEvent::KeepAlive(_) | PlayEvent::Ping(_) | PlayEvent::ChunkBatch => false,
+            PlayEvent::KeepAlive(_)
+            | PlayEvent::Ping(_)
+            | PlayEvent::PongResponse(_)
+            | PlayEvent::ChunkBatch => false,
             PlayEvent::GameEvent(g) => {
                 // THE GAME EVENT'S OWN WALK (javap
                 // ClientPacketListener.handleGameEvent + Level, the 26.2

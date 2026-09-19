@@ -772,7 +772,7 @@ fn debug_chart_row(modifier: Option<&str>, key: &str, name: &str, visible: bool)
 /// visibility word the raised flag's own lane keeps — the F3+2
 /// toggle's real state the row re-speaks, the FPS chart the one
 /// chart the client's own frame ring draws.
-fn debug_bottom_lines(integrated: bool, fps_charts: bool) -> Vec<String> {
+fn debug_bottom_lines(integrated: bool, fps_charts: bool, network_charts: bool) -> Vec<String> {
     let modifier = Some("F3");
     let profiler = debug_chart_row(modifier, "1", "Profiler", false);
     let fps = debug_chart_row(
@@ -781,7 +781,12 @@ fn debug_bottom_lines(integrated: bool, fps_charts: bool) -> Vec<String> {
         if integrated { "FPS + TPS" } else { "FPS" },
         fps_charts,
     );
-    let network = debug_chart_row(modifier, "3", if integrated { "Ping" } else { "Bandwidth + Ping" }, false);
+    let network = debug_chart_row(
+        modifier,
+        "3",
+        if integrated { "Ping" } else { "Bandwidth + Ping" },
+        network_charts,
+    );
     let lightmap = debug_chart_row(modifier, "4", "Lightmap", false);
     let debug_options = debug_keybind_word(modifier, "F6");
     vec![
@@ -877,6 +882,55 @@ fn fps_chart_width(gui_width: i32) -> i32 {
 /// ring's width overflow drops).
 fn fps_chart_skip(width: i32) -> usize {
     (FPS_CHART_CAPACITY as i32).saturating_sub(width - 2).max(0) as usize
+}
+
+/// THE PING BAR'S OWN HEIGHT (PingDebugChart.getSampleHeight's own
+/// walk — the raw disasm's `dload; ldc2_w 60.0; dmul; ldc2_w 500.0;
+/// ddiv; Math.round` chain keeps: the sample IS the RTT millis (the
+/// monitor logs `Util.getMillis() - packet.time()` directly — the
+/// fps lane's toMilliseconds conversion the ping chart never needs),
+/// 500ms the 60px full box wears, 100ms the 12px one, the slow
+/// roundtrips the no-clamp box top pokes above — the clamp the
+/// COLOR path alone keeps).
+fn ping_sample_height(ms: i64) -> i32 {
+    java_round((ms as f64) * 60.0 / 500.0) as i32
+}
+
+/// THE PING SAMPLE'S OWN COLOR (PingDebugChart.getSampleColor's own
+/// walk — the `getSampleColor(DDIDIDI)` helper call the cp fold
+/// banks: `(value, 0.0, -16711936, 250.0, -256, 500.0, -65536)` the
+/// stop pair carries — the abstract's `Mth.clamp(v, 0.0, 500.0)`
+/// bound first, then the two arms the fps lane's walk mirrors:
+/// below 250ms the green→yellow `srgbLerp((v-0)/250,
+/// -16711936, -256)` lerp wears, above the yellow→red
+/// `srgbLerp((v-250)/250, -256, -65536)` — the stops the jar's own
+/// ldc pair banks: 0xFF00FF00 green, 0xFFFFFF00 yellow, 0xFFFF0000
+/// red — the SAME words the fps chart's stops speak, the thresholds
+/// the ping lane's own pair keeps).
+fn ping_sample_color(ms: i64) -> i32 {
+    let v = {
+        let raw = ms as f64;
+        if raw < 0.0 {
+            0.0
+        } else {
+            raw.min(500.0)
+        }
+    };
+    if v < 250.0 {
+        let t = ((v - 0.0) / (250.0 - 0.0)) as f32;
+        srgb_lerp(t, -16711936, -256)
+    } else {
+        let t = ((v - 250.0) / (500.0 - 250.0)) as f32;
+        srgb_lerp(t, -256, -65536)
+    }
+}
+
+/// THE PING SAMPLE'S OWN WORD (PingDebugChart.toDisplayString's own
+/// walk — the cp's `'%d ms'` format the `Math.round` fold wears: the
+/// sample IS the millis, the fps lane's /1e6 conversion the ping
+/// chart never speaks).
+fn ping_display_word(ms: f64) -> String {
+    format!("{} ms", java_round(ms))
 }
 
 /// THE ARGB'S OWN FILL (the i32 color the house raster's [f32; 4]
@@ -2396,6 +2450,19 @@ pub struct App {
     /// F3+2 chord flips it, the raised state the bottom row's
     /// `visible` word and the chart draw's own gate both speak).
     pub fps_charts: bool,
+    /// THE NETWORK CHARTS' OWN FLAG (javap DebugScreenOverlay's
+    /// renderNetworkCharts — the toggleNetworkCharts walk's own
+    /// field: the F3+3 chord flips it, the raise the setOverlayVisible
+    /// ride takes AND zeroes the fps flag (the toggle law's own
+    /// pair), the raised state the bottom row's `visible` word and
+    /// the ping chart draw's own gate both speak).
+    pub network_charts: bool,
+    /// THE PING CHART'S OWN SAMPLES (the PingDebugMonitor's
+    /// LocalSampleLogger law — the RTT millis the net worker's
+    /// pong lane logs, the chart-ordered snapshot the shipped
+    /// refresh carries: idx 0 the oldest, size-1 the newest the
+    /// rightmost bar wears). Empty until the first pong lands.
+    pub ping_samples: Vec<i64>,
     /// THE DEBUG MODIFIER'S OWN USED LANE (javap KeyboardHandler's
     /// usedDebugKeyAsModifier — the chord-consumed F3 gesture the
     /// release lane swallows: the flag the toggle's plain flip keeps
@@ -2786,6 +2853,8 @@ impl App {
             fps_window_start: None,
             fps_value: None,
             fps_charts: false,
+            network_charts: false,
+            ping_samples: Vec::new(),
             debug_modifier_used: false,
             frame_samples: [0; FPS_CHART_CAPACITY],
             frame_sample_start: 0,
@@ -10994,6 +11063,42 @@ impl App {
         self.debug_modifier_used = true;
     }
 
+    /// THE F3+3 CHORD'S OWN TOGGLE (javap DebugScreenOverlay
+    /// .toggleNetworkCharts's bytecode walk — the law the fps lane
+    /// banks mirrors verbatim: `renderNetworkCharts =
+    /// !(isOverlayVisible && renderNetworkCharts)` the flip keeps,
+    /// the raise the setOverlayVisible(true) forced-visible ride
+    /// takes AND zeroes the fps flag (the renderFpsCharts=false
+    /// putfield the raise's tail banks — the lightmap flag the
+    /// chart-less client keeps no surface for, the all-false
+    /// constant the honest skip wears). The raised state's wire
+    /// half rides the command channel: the worker's monitor the
+    /// ping-request cadence arms (the ClientPacketListener.tick's
+    /// showNetworkCharts gate the flag answers).
+    pub fn on_network_charts_key(&mut self) {
+        self.network_charts = !(self.debug_held && self.network_charts);
+        if self.network_charts {
+            self.debug_held = true;
+            self.fps_charts = false;
+        }
+        self.debug_modifier_used = true;
+        if let Some(sink) = self.live_clicks.as_ref() {
+            let _ = sink.send(crate::world_view::ContainerCommand::NetworkCharts(
+                self.network_charts,
+            ));
+        }
+    }
+
+    /// THE PING CHART'S OWN SNAPSHOT LANDING (the shipped refresh's
+    /// own ride — the net worker's ring the chart-ordered Vec
+    /// carries: idx 0 the oldest, size-1 the newest. The whole
+    /// snapshot replaces the old belief — the logger's own
+    /// storage the chart reads live in vanilla, the refresh the
+    /// split-thread client's honest stand-in).
+    pub fn live_ping_updated(&mut self, samples: Vec<i64>) {
+        self.ping_samples = samples;
+    }
+
     /// THE F3 RELEASE'S OWN LANE (javap KeyboardHandler.keyPress's
     /// bytecode 795-824 — the keyDebugModifier release event the
     /// `action == 0` arm answers: the used-as-modifier flag set
@@ -11589,7 +11694,7 @@ impl App {
         // three chart-words rows the ONE extractLines(..., true)
         // call draws, the 9px stride the shared index walk owns)
         let mut lines = self.debug_lines();
-        lines.extend(debug_bottom_lines(false, self.fps_charts));
+        lines.extend(debug_bottom_lines(false, self.fps_charts, self.network_charts));
         let (x, mut y) = (2i32, 2i32);
         for line in &lines {
             // the spacer's own law (the isNullOrEmpty gate the band
@@ -11623,6 +11728,20 @@ impl App {
         // keeps and the width the min(240, guiWidth/2) law bounds)
         if self.fps_charts {
             self.draw_fps_chart(g, a, w, h);
+        }
+        // THE PING CHART (the DSO extractRenderState's
+        // showNetworkCharts lane — the F3+3 chord's own chart the
+        // RIGHT half draws: the x the `guiWidth - width` anchor the
+        // bytecode 925-937 keeps (`iload 13; iload 15; isub` the walk
+        // banks) and the width the same min(240, guiWidth/2) law
+        // bounds; the bandwidth half the lane's bytecode 886-911
+        // names BEFORE the ping — the client owns no bandwidth
+        // logger yet (the received-bytes surface the session's byte
+        // count lane owes), the honest skip the left half wears, the
+        // ping chart the one network chart the client's own RTT
+        // ring draws)
+        if self.network_charts {
+            self.draw_ping_chart(g, a, w, h);
         }
     }
 
@@ -11712,6 +11831,77 @@ impl App {
         // THE FRAMERATE-LIMIT LINE (the cyan `0 < limit <= 250`
         // gate the bytecode 68-106 keeps — the client owns no limit
         // option, the honest skip the unbound lane wears)
+    }
+
+    /// THE PING CHART'S OWN DRAW (javap PingDebugChart + the
+    /// AbstractDebugChart parent's extractRenderState walk — the
+    /// SAME strata the fps lane's draw banks, the ping lane's own
+    /// anchors keep: the `fill(x, h-60, x+width, h, 0x90505050)`
+    /// background first, then the one-per-column RTT bars the
+    /// `fill(col, h-height, col+1, h)` walk paints (the height the
+    /// `round(ms * 60.0 / 500.0)` law keeps — 500ms the full box,
+    /// the slow roundtrips the no-clamp top pokes above; the color
+    /// the green→yellow→red stops at 0/250/500 lerp), then the
+    /// white frame the four line calls keep, then the three
+    /// min/avg/max ms labels the drawn samples' own fold speaks
+    /// (the sample IS the millis — the `'%d ms'` word the round
+    /// answers, no conversion the fps lane's /1e6 walk keeps), then
+    /// the additional line the PingDebugChart override banks: the
+    /// ONE '500 ms' band+text pair at (x+1, h-59) the raw disasm's
+    /// `x+1, h-60+1` walk paints; the 60fps grid line the fps lane's
+    /// extra the ping chart never names, the honest skip wears).
+    fn draw_ping_chart(&self, g: &mut Gui, a: &mut GuiAssets, w: i32, h: i32) {
+        let width = fps_chart_width(w);
+        let x = w - width; // the RIGHT anchor (the bytecode 925-937 walk)
+        let top = h - 60;
+        // THE BACKGROUND (the extractRenderState's first fill)
+        g.fill(x, top, width, 60, DEBUG_BAND_BG);
+        // THE SAMPLE BARS (the per-column loop the skip law keeps —
+        // the snapshot IS chart-ordered: idx 0 the oldest, the
+        // rightmost the newest the vanilla get(idx) law speaks)
+        let skip = fps_chart_skip(width);
+        let count = self.ping_samples.len().saturating_sub(skip);
+        if count > 0 {
+            let mut mn = i64::MAX;
+            let mut mx = i64::MIN;
+            let mut sum = 0i64;
+            for i in 0..count {
+                let s = self.ping_samples[skip + i];
+                mn = mn.min(s);
+                mx = mx.max(s);
+                sum += s;
+                let bar_h = ping_sample_height(s);
+                g.fill(
+                    x + i as i32 + 1,
+                    h - bar_h,
+                    1,
+                    bar_h,
+                    fps_argb_fill(ping_sample_color(s)),
+                );
+            }
+            // THE THREE LABELS (the min/avg/max ms words — the
+            // positions the x+2 / x+width/2 centered / x+width-tw-2
+            // trio the abstract's own walk banks, all at h-69)
+            g.text(a, x + 2, h - 69, &ping_display_word(mn as f64), DEBUG_TEXT, false);
+            let avg = ping_display_word(sum as f64 / count as f64);
+            g.text_centered(a, x + width / 2, h - 69, &avg, DEBUG_TEXT, false);
+            let mx_word = ping_display_word(mx as f64);
+            let mx_tw = g.text_width(&mx_word);
+            g.text(a, x + width - mx_tw - 2, h - 69, &mx_word, DEBUG_TEXT, false);
+        }
+        // THE WHITE FRAME (the four line calls the abstract keeps)
+        g.fill(x, top, width, 1, FPS_CHART_LINE);
+        g.fill(x, h - 1, width, 1, FPS_CHART_LINE);
+        g.fill(x, top, 1, 60, FPS_CHART_LINE);
+        g.fill(x + width - 1, top, 1, 60, FPS_CHART_LINE);
+        // THE '500 MS' LABEL (extractAdditionalLinesAndLabels's own
+        // walk — the ONE extractStringWithShade call the raw disasm
+        // banks: the band `fill(ax, ay, ax + tw + 2, 9)` then the
+        // NO-SHADOW text at (ax+1, ay+1); the label the chart's own
+        // full-box word wears)
+        let w500 = g.text_width("500 ms");
+        g.fill(x + 1, h - 59, w500 + 2, 9, DEBUG_BAND_BG);
+        g.text(a, x + 2, h - 58, "500 ms", DEBUG_TEXT, false);
     }
 
     /// THE LEFT COLUMN'S LINES (the 26.2 entries the jar's own string
@@ -19771,7 +19961,7 @@ mod tests {
         // spends first, then the three rows the concat recipes bank;
         // the FPS row's word the REAL flag lane keeps — the all-false
         // boot the hidden word wears)
-        let block = debug_bottom_lines(false, false);
+        let block = debug_bottom_lines(false, false, false);
         assert_eq!(block.len(), 4);
         assert_eq!(block[0], "", "the spacer row the cursor still walks");
         assert_eq!(
@@ -19789,7 +19979,7 @@ mod tests {
         // slot's name the isLocalServer probe keeps — `Ping` the
         // local lane, `Bandwidth + Ping` the remote the client's own
         // honest lane wears)
-        let local = debug_bottom_lines(true, false);
+        let local = debug_bottom_lines(true, false, false);
         assert_eq!(
             local[1],
             "Debug charts: [F3+1] Profiler hidden; [F3+2] FPS + TPS hidden;"
@@ -19800,7 +19990,7 @@ mod tests {
         // the real renderFpsCharts state carries — the F3+2 toggle's
         // `visible` word the raised lane speaks, the row the jar's
         // own fold re-answers)
-        let raised = debug_bottom_lines(false, true);
+        let raised = debug_bottom_lines(false, true, false);
         assert_eq!(
             raised[1],
             "Debug charts: [F3+1] Profiler hidden; [F3+2] FPS visible;"
@@ -19893,11 +20083,130 @@ mod tests {
         // live flag carries — the visible word the raised lane wears)
         app.on_debug_modifier_released();
         assert!(app.debug_held);
-        let block = debug_bottom_lines(false, app.fps_charts);
+        let block = debug_bottom_lines(false, app.fps_charts, app.network_charts);
         assert_eq!(
             block[1],
             "Debug charts: [F3+1] Profiler hidden; [F3+2] FPS visible;"
         );
+    }
+
+    #[test]
+    fn the_network_charts_key_the_toggle_and_zero_laws_keep() {
+        // THE TOGGLE'S OWN LAW (toggleNetworkCharts's `!(visible &&
+        // flag)` — the bytecode the fps lane's walk mirrors verbatim:
+        // the raise forces the overlay visible AND zeroes the fps
+        // flag (the renderFpsCharts=false putfield the raise's tail
+        // keeps), the lower keeps the panel)
+        let mut app = App::new(3);
+        assert!(!app.network_charts && !app.fps_charts && !app.debug_held);
+        // THE FPS RAISE FIRST — the F3+3 chord's raise then ZEROES it
+        // (the renderFpsCharts=false putfield the raise's tail keeps:
+        // the two charts the toggle law never shows together)
+        app.on_fps_charts_key();
+        assert!(app.fps_charts && app.debug_held);
+        app.on_network_charts_key();
+        assert!(app.network_charts, "the closed flag's chord raises");
+        assert!(app.debug_held, "the raise forces the overlay visible");
+        assert!(
+            !app.fps_charts,
+            "the network raise zeroes the fps flag (the toggle law's own pair)"
+        );
+        // the raised flag + the visible panel the jar's own law
+        // lowers (`!(visible && flag)` — the flip the second press
+        // answers), the panel the lower never closes
+        app.on_network_charts_key();
+        assert!(!app.network_charts, "the visible raised chart lowers");
+        assert!(app.debug_held, "the lower never closes the panel");
+        // the down flag + the visible panel the law RAISES back (the
+        // `!(true && false)` arm the closed flag's press answers)
+        app.on_network_charts_key();
+        assert!(app.network_charts, "the re-raise the law answers");
+        app.on_network_charts_key();
+        assert!(!app.network_charts, "the lower again");
+        // THE WIRE HALF (the command the flag rides — the worker's
+        // monitor the ping-request cadence arms, the lower disarms)
+        let (tx, rx) = std::sync::mpsc::channel();
+        app.live_clicks = Some(tx);
+        app.on_network_charts_key();
+        assert!(
+            matches!(
+                rx.try_recv().expect("the raise's command"),
+                crate::world_view::ContainerCommand::NetworkCharts(true)
+            ),
+            "the raised flag rides the command channel"
+        );
+        // THE ROW'S OWN RE-SPEAK (the bottom block's network row the
+        // live flag carries — the visible word the raised lane wears,
+        // the fps row's hidden word the zeroed flag keeps)
+        let block = debug_bottom_lines(false, app.fps_charts, app.network_charts);
+        assert_eq!(
+            block[1],
+            "Debug charts: [F3+1] Profiler hidden; [F3+2] FPS hidden;"
+        );
+        assert_eq!(
+            block[2],
+            "[F3+3] Bandwidth + Ping visible; [F3+4] Lightmap hidden"
+        );
+        app.on_network_charts_key();
+        assert!(matches!(
+            rx.try_recv().expect("the lower's command"),
+            crate::world_view::ContainerCommand::NetworkCharts(false)
+        ));
+        assert_eq!(
+            debug_bottom_lines(false, app.fps_charts, app.network_charts)[2],
+            "[F3+3] Bandwidth + Ping hidden; [F3+4] Lightmap hidden",
+            "the lowered flag the hidden word wears"
+        );
+    }
+
+    #[test]
+    fn the_ping_chart_the_jar_math_keeps() {
+        // THE HEIGHT'S OWN LAW (PingDebugChart.getSampleHeight's
+        // `round(ms * 60.0 / 500.0)` walk — 500ms the 60px full box,
+        // 100ms the 12px one, the slow roundtrip the no-clamp top
+        // pokes above, the sub-pixel the round answers)
+        assert_eq!(ping_sample_height(500), 60);
+        assert_eq!(ping_sample_height(250), 30);
+        assert_eq!(ping_sample_height(100), 12);
+        assert_eq!(ping_sample_height(0), 0);
+        assert_eq!(ping_sample_height(600), 72, "the no-clamp poke-above");
+        assert_eq!(ping_sample_height(5), 1, "0.6 the round lifts");
+        // THE COLOR'S OWN STOPS (getSampleColor's (0.0, -16711936,
+        // 250.0, -256, 500.0, -65536) walk — the clamp the 500 cap
+        // keeps, the two arms the srgbLerp pair carries)
+        assert_eq!(ping_sample_color(0), -16711936, "green the zero wears");
+        assert_eq!(
+            ping_sample_color(125),
+            0xFF7FFF00u32 as i32,
+            "the green→yellow half lerp"
+        );
+        assert_eq!(ping_sample_color(250), -256, "yellow the boundary wears");
+        assert_eq!(
+            ping_sample_color(375),
+            0xFFFF7F00u32 as i32,
+            "the yellow→red half lerp (the r channel the 255 pair keeps)"
+        );
+        assert_eq!(ping_sample_color(500), -65536, "red the cap wears");
+        assert_eq!(
+            ping_sample_color(900),
+            -65536,
+            "the clamp the over-cap keeps red"
+        );
+        // THE WORD'S OWN FOLD (toDisplayString's `'%d ms'` walk — the
+        // sample IS the millis, no conversion the fps lane keeps)
+        assert_eq!(ping_display_word(87.4), "87 ms");
+        assert_eq!(ping_display_word(0.4), "0 ms");
+        // THE RIGHT ANCHOR (the DSO's `guiWidth - width` walk — the
+        // width the min(240, guiWidth/2) law keeps)
+        assert_eq!(fps_chart_width(854), 240);
+        assert_eq!(854 - fps_chart_width(854), 614, "the ping chart's own x");
+        // THE SNAPSHOT LANDING (the shipped refresh's own ride — the
+        // ring's chart order the App's belief keeps verbatim)
+        let mut app = App::new(3);
+        app.live_ping_updated(vec![10, 42, 250]);
+        assert_eq!(app.ping_samples, vec![10, 42, 250]);
+        app.live_ping_updated(Vec::new());
+        assert!(app.ping_samples.is_empty(), "the empty ring the empty draw keeps");
     }
 
     #[test]

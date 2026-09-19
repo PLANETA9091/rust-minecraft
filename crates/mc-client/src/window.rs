@@ -23,6 +23,24 @@ const LOOK_SPEED: f32 = 1.6;
 /// window in a few ms — the same work the join frame already paid.
 const VIEW_CADENCE: std::time::Duration = std::time::Duration::from_millis(250);
 
+/// THE PING MONITOR'S OWN CADENCE (the vanilla client tick's own
+/// period — ClientPacketListener.tick() runs every 50ms, and the
+/// `showNetworkCharts()` gate's raised lane sends ONE
+/// ServerboundPingRequestPacket per tick the PingDebugMonitor.tick
+/// walk keeps). The net worker's loop the tick lane stands in for:
+/// the request re-arms at this cadence while the F3+3 chart shows.
+const PING_REQUEST_CADENCE: std::time::Duration = std::time::Duration::from_millis(50);
+
+/// THE MONITOR'S OWN CLOCK (the Util.getMillis() walk — the unix
+/// millis the sent-time long carries, the echo the RTT difference
+/// answers).
+fn now_millis() -> i64 {
+    std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map(|d| d.as_millis() as i64)
+        .unwrap_or(0)
+}
+
 pub fn run_windowed(world: &World, lut: Option<&TextureLut>, width: usize, height: usize) -> anyhow::Result<()> {
     let mut window = Window::new(
         &format!("mc2rs — Minecraft {} in Rust", crate::build_info::MINECRAFT_VERSION),
@@ -141,6 +159,7 @@ fn run_join(
                 Vec<(i32, Vec<(i32, i32)>)>,
                 i32,
                 (i32, i32),
+                Vec<i64>,
             ),
             String,
         >,
@@ -228,6 +247,18 @@ fn run_join(
             // next number — the server matches its block-change acks
             // against it)
             let mut use_sequence = 0i32;
+            // THE PING MONITOR'S OWN STATE (the vanilla PingDebugMonitor's
+            // own lane): the F3+3 flag the frame thread's toggle rides
+            // (the command channel the gate speaks), the request clock
+            // the 50ms tick cadence arms, and the RTT ring the pong lane
+            // logs into (the LocalSampleLogger law — 240 one-column
+            // samples, the oldest the full-ring write drops; the
+            // snapshot the chart-ordered Vec carries, idx 0 the
+            // oldest)
+            let mut network_charts = false;
+            let mut last_ping_request: Option<std::time::Instant> = None;
+            let mut ping_ring: std::collections::VecDeque<i64> =
+                std::collections::VecDeque::with_capacity(crate::screens::FPS_CHART_CAPACITY);
             loop {
                 if !run.load(std::sync::atomic::Ordering::Relaxed) {
                     break; // the App closed the session (quit/cancel)
@@ -485,6 +516,20 @@ fn run_join(
                             // server stores them into the boat's entity data
                             session.paddle_boat(left, right)
                         }
+                        crate::world_view::ContainerCommand::NetworkCharts(on) => {
+                            // THE NETWORK CHARTS' OWN GATE (the vanilla
+                            // ClientPacketListener.tick's
+                            // showNetworkCharts() lane): no packet rides
+                            // HERE — the flag arms the monitor the loop's
+                            // own cadence speaks (the ping request the
+                            // raised lane sends at the vanilla tick pace;
+                            // the lower disarms it)
+                            network_charts = on;
+                            if !on {
+                                last_ping_request = None;
+                            }
+                            Ok(())
+                        }
                     };
                     if let Err(e) = sent {
                         // a send failure is a transport error: a framed
@@ -494,6 +539,26 @@ fn run_join(
                         return;
                     }
                 }
+                // THE PING MONITOR'S OWN TICK (the vanilla
+                // ClientPacketListener.tick's showNetworkCharts gate —
+                // the raised lane sends ONE ServerboundPingRequestPacket
+                // per client tick the PingDebugMonitor.tick walk keeps:
+                // the sent-time long the Util.getMillis() instant
+                // carries, the echo the RTT sample answers). The loop's
+                // own cadence the tick lane stands in for; a quiet
+                // server's blocking read the request waits behind (the
+                // honest silence the wire keeps)
+                if network_charts
+                    && last_ping_request
+                        .map_or(true, |t| t.elapsed() >= PING_REQUEST_CADENCE)
+                {
+                    let sent = session.send_ping_request(now_millis());
+                    if let Err(e) = sent {
+                        let _ = live_tx.send(Err(format!("ping request send: {e:#}")));
+                        return;
+                    }
+                    last_ping_request = Some(std::time::Instant::now());
+                }
                 match session.pump() {
                     Ok(mc_protocol::PlayEvent::Disconnected { reason }) => {
                         // the server ended the session: report it (the App
@@ -502,8 +567,34 @@ fn run_join(
                         break;
                     }
                     Ok(event) => {
-                        if view.apply(event) && last_ship.elapsed() >= VIEW_CADENCE {
-                            let upd = view.refresh(crate::world_view::runtime_mapper);
+                        // THE PONG'S OWN LOG (the PingDebugMonitor
+                        // .onPongReceived's own walk — `Util.getMillis() -
+                        // packet.time()` the difference the
+                        // LocalSampleLogger.logSample stores: the RTT
+                        // millis the chart's columns speak; the ring the
+                        // LocalSampleLogger law keeps — 240 samples, the
+                        // oldest the full-ring write drops)
+                        let ping_changed = if let mc_protocol::PlayEvent::PongResponse(t) = &event
+                        {
+                            let rtt = now_millis() - t;
+                            if ping_ring.len() >= crate::screens::FPS_CHART_CAPACITY {
+                                ping_ring.pop_front();
+                            }
+                            ping_ring.push_back(rtt);
+                            true
+                        } else {
+                            false
+                        };
+                        if view.apply(event) || ping_changed {
+                            // THE SHIP GATE (the cadence the world
+                            // updates ride — a logged pong ALONE paces
+                            // its refresh too, the chart's columns
+                            // stream while the world sleeps; the
+                            // snapshot rides EVERY ship, the ping
+                            // belief the newest one keeps)
+                            if last_ship.elapsed() >= VIEW_CADENCE {
+                                let ping_snapshot: Vec<i64> = ping_ring.iter().copied().collect();
+                                let upd = view.refresh(crate::world_view::runtime_mapper);
                             // the mobs' hurt + voice mailboxes ship with
                             // this view — the drains empty them (each
                             // arm rides exactly one refresh, the mob
@@ -593,12 +684,19 @@ fn run_join(
                                     // inputs the packets speak
                                     upd.inventory_state_id,
                                     upd.inventory_carried,
+                                    // the ping chart's own snapshot rides
+                                    // with them — the RTT ring the net
+                                    // worker's pong lane logs (idx 0 the
+                                    // oldest, the chart's columns the
+                                    // newest belief re-draws)
+                                    ping_snapshot,
                                 )))
                                 .is_err()
                             {
                                 break; // receiver gone at shutdown
                             }
                             last_ship = std::time::Instant::now();
+                            }
                         }
                     }
                     Err(e) => {
@@ -710,6 +808,7 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
                 Vec<(i32, Vec<(i32, i32)>)>,
                 i32,
                 (i32, i32),
+                Vec<i64>,
             ),
             String,
         >,
@@ -877,24 +976,23 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
             if window.is_key_pressed(Key::F5, minifb::KeyRepeat::No) {
                 app.on_perspective_key();
             }
-            // THE F3 DEBUG MODIFIER (javap KeyboardHandler.keyPress's
-            // own walk — the chords the isDown gate keeps, the
-            // RELEASE lane the toggle answers: the bare release the
-            // usedDebugKeyAsModifier flag clears-and-flips, the
-            // chord-spent release swallows — the flag the
-            // `usedDebugKeyAsModifier |= consumed` walk the keyPress
-            // tail keeps). minifb has no key event, the edges the
-            // down-state pair tracks. The F3+2 chord (the
-            // handleDebugKeys' keyDebugFpsCharts lane — the toggle
-            // the getDebugOverlay().toggleFpsCharts() walk answers)
-            // the F3-held gate reads; the F3+1/3/4 chords the
-            // chart-less client keeps silent (no profiler pie, no
-            // ping/bandwidth chart, no lightmap viewer — the flags
-            // the all-false constants stay, the rows the honest
-            // hidden words wear)
+            // THE F3+2 CHORD (the handleDebugKeys' keyDebugFpsCharts
+            // lane — the toggle the getDebugOverlay().toggleFpsCharts()
+            // walk answers); the F3+3 chord (the keyDebugNetworkCharts
+            // lane — the toggleNetworkCharts walk the getDebugOverlay()
+            // answers) the same gate reads: the raise arms the net
+            // worker's ping monitor (the command the flag rides), the
+            // ping chart the client's own RTT ring draws. The
+            // F3+1/4 chords the chart-less client keeps silent (no
+            // profiler pie, no lightmap viewer — the flags the
+            // all-false constants stay, the rows the honest hidden
+            // words wear)
             let f3_down = window.is_key_down(Key::F3);
             if f3_down && window.is_key_pressed(Key::Key2, minifb::KeyRepeat::No) {
                 app.on_fps_charts_key();
+            }
+            if f3_down && window.is_key_pressed(Key::Key3, minifb::KeyRepeat::No) {
+                app.on_network_charts_key();
             }
             if f3_was_down && !f3_down {
                 app.on_debug_modifier_released();
@@ -1030,8 +1128,13 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
                     inv_bundles,
                     inv_state_id,
                     inv_carried,
+                    ping_samples,
                 )) => {
                     app.live_view_updated(world, camera, biome, container);
+                    // the ping chart's lane beside the world's: the RTT
+                    // snapshot the net worker's ring keeps lands verbatim
+                    // (the chart's columns the newest belief re-draws)
+                    app.live_ping_updated(ping_samples);
                     // the ride's lane beside the world's: the carried
                     // position the vehicle's own snapshot keeps (the
                     // mount snap + the seat the projection walked)
