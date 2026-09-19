@@ -1276,6 +1276,127 @@ pub fn chat_line_y(gui_h: i32, index: i32) -> i32 {
 /// orphaned code char the §-less prefix never changes — the literal
 /// the draw renders; the `x` the TRUE-HEX walk answers — the fourteen
 /// chars the exact rgb the state wears).
+/// THE LOCAL SUGGESTIONS' OWN WALK (javap ChatScreen.updateCommandInfo's
+/// local half — the Brigadier parse the dispatcher the Commands packet
+/// built answers): the '/'-typed input walks the tree's literals. The
+/// COMPLETED tokens the child-literal equality consumes (the
+/// `LiteralCommandNode.parse` case-sensitive `substring.equals` walk —
+/// an empty token from a double space the equality refuses), the
+/// matched node's own redirect the continuation follows (the
+/// `/tp`-aliases-`/teleport` graph — the parse context the target
+/// speaks); the PARTIAL tail the `listSuggestions` lowercase-prefix
+/// fold filters (`literal.toLowerCase(Locale.ROOT)
+/// .startsWith(remainingLowerCase)`), the matches the
+/// `Suggestions.merge` sort orders (`compareToIgnoreCase`).
+/// Where the walk lands in an ARGUMENT slot (a completed token no
+/// literal names, or a final node whose candidates are argument slots)
+/// the ASK-SERVER lane answers — the vanilla `ask_server` provider's
+/// own transport the ask-server rounds' wire walk speaks. The unknown
+/// literal at a literal-only node the empty list keeps (the server's
+/// own tree refuses the command anyway — no round-trip the honest
+/// silence spends). The cursor is the END-PARKED one the house EditBox
+/// keeps (`push`/`pop` the only edits — the mid-string carets the
+/// vanilla EditBox allows the honest divergence keeps).
+pub enum ChatSuggestionSource {
+    /// The tree answered locally: the (start, length) replace range
+    /// (offsets into the FULL input, the '/' included — the same
+    /// coordinates the server replies ride) and the sorted rows.
+    Local {
+        start: i32,
+        length: i32,
+        matches: Vec<mc_protocol::play::CommandSuggestionsMatch>,
+    },
+    /// The walk landed in an argument slot (or the input never named a
+    /// literal) — the ask-server lane the pending-gate walk owns.
+    AskServer,
+}
+
+pub fn local_command_suggestions(
+    tree: &mc_protocol::play::CommandTree,
+    input: &str,
+) -> ChatSuggestionSource {
+    let Some(rest) = input.strip_prefix('/') else {
+        return ChatSuggestionSource::AskServer;
+    };
+    let rest_chars: Vec<char> = rest.chars().collect();
+    // the space-split the StringReader's own token walk keeps: every
+    // space-terminated span is a COMPLETED token, the unterminated tail
+    // the partial one (a trailing space's empty tail the empty partial
+    // speaks; a double space's empty token the literal equality refuses)
+    let mut tokens: Vec<Vec<char>> = Vec::new();
+    let mut partial = Vec::new();
+    for &c in &rest_chars {
+        if c == ' ' {
+            tokens.push(std::mem::take(&mut partial));
+        } else {
+            partial.push(c);
+        }
+    }
+    // the completed-token walk (the case-sensitive literal equality)
+    let mut ctx = tree.root_index as usize;
+    for token in &tokens {
+        let Some(node) = tree.nodes.get(ctx) else {
+            return ChatSuggestionSource::AskServer;
+        };
+        let matched = node.children.iter().copied().find_map(|c| {
+            let child = tree.nodes.get(c as usize)?;
+            (child.kind == mc_protocol::play::CommandNodeKind::Literal
+                && child.name.chars().eq(token.iter().copied()))
+            .then_some(c as usize)
+        });
+        let Some(child_idx) = matched else {
+            // no literal names the token — the argument slot the server
+            // lane answers
+            return ChatSuggestionSource::AskServer;
+        };
+        let child = &tree.nodes[child_idx];
+        // the matched node's own redirect the continuation follows
+        ctx = match child.redirect {
+            Some(r) => r as usize,
+            None => child_idx,
+        };
+    }
+    let Some(node) = tree.nodes.get(ctx) else {
+        return ChatSuggestionSource::AskServer;
+    };
+    // the candidate literals (the lowercase-prefix fold) beside the
+    // argument slots
+    let partial_lc = partial.iter().collect::<String>().to_lowercase();
+    let mut matches: Vec<mc_protocol::play::CommandSuggestionsMatch> = Vec::new();
+    let mut has_argument_children = false;
+    for &child_idx in &node.children {
+        let Some(child) = tree.nodes.get(child_idx as usize) else {
+            continue;
+        };
+        match child.kind {
+            mc_protocol::play::CommandNodeKind::Argument => has_argument_children = true,
+            mc_protocol::play::CommandNodeKind::Literal => {
+                if child.name.to_lowercase().starts_with(&partial_lc) {
+                    matches.push(mc_protocol::play::CommandSuggestionsMatch {
+                        text: child.name.clone(),
+                        tooltip: None,
+                    });
+                }
+            }
+            mc_protocol::play::CommandNodeKind::Root => {}
+        }
+    }
+    if matches.is_empty() && has_argument_children {
+        // the argument slot's dynamic suggestions the server answers
+        return ChatSuggestionSource::AskServer;
+    }
+    // the Suggestions.merge sort (the compareToIgnoreCase law)
+    matches.sort_by(|a, b| a.text.to_lowercase().cmp(&b.text.to_lowercase()));
+    // the partial token's own span in the FULL input ('/' + the consumed
+    // prefix — the same coordinates the server replies ride)
+    let start = 1 + rest_chars.len() - partial.len();
+    ChatSuggestionSource::Local {
+        start: start as i32,
+        length: partial.len() as i32,
+        matches,
+    }
+}
+
 fn carry_code_state(state: crate::gui::StyleState, part: &str) -> crate::gui::StyleState {
     let chars: Vec<char> = part.chars().collect();
     let mut st = state;
@@ -2941,6 +3062,16 @@ pub struct App {
     pub chat_suggestion_pending: Option<i32>,
     pub chat_suggestion_tab_cycles: bool,
     pub chat_suggestion_original: String,
+    /// THE COMMANDS TREE'S OWN STORE (javap ClientPacketListener
+    /// .handleCommands — the Brigadier dispatcher the login-time packet
+    /// builds): the server's whole command graph the LOCAL suggestion
+    /// lane walks — the literals' names the '/'-typed prompt suggests
+    /// without a server round-trip (the vanilla updateCommandInfo's own
+    /// parse walk; the argument slots' dynamic suggestions the ask-server
+    /// lane still answers). `None` = the tree never rode (an offline
+    /// world, or the packet the unknown-skip lane used to swallow) —
+    /// every '/' edit the ask-server lane answers exactly as before.
+    pub command_tree: Option<mc_protocol::play::CommandTree>,
     /// THE SHOWN LIST'S OWN RECT (the SuggestionsList constructor's
     /// Rect2i law — `(inputX - 1, y, width + 1, rows * 12 + 1)` the
     /// ring margins the bounds speak): the DRAWN list's hit box the
@@ -3415,6 +3546,7 @@ impl App {
             chat_suggestion_pending: None,
             chat_suggestion_tab_cycles: false,
             chat_suggestion_original: String::new(),
+            command_tree: None,
             chat_suggestion_rect: None,
             screenshot_request: false,
             debug_held: false,
@@ -11825,15 +11957,20 @@ impl App {
 
     /// THE SUGGESTIONS' OWN REFRESH (javap ChatScreen.onEdited →
     /// CommandSuggestions.updateCommandInfo's walk — the responder the
-    /// EVERY edit fires, the '/'-prefixed input the ask-server lane
-    /// answers: the transaction id the pendingSuggestionsId counter
-    /// increments, ONE ServerboundCommandSuggestionPacket the full
-    /// input rides (the leading '/' the server's own skip walk keeps),
-    /// the reply the pending gate remembers; the non-command edits the
-    /// clear walk answers — the suggestions the list forgets, the
-    /// pending id the gate drops). The LIVE lane only: the offline
-    /// world the no-server walk keeps silent (no connection the
-    /// request rides).
+    /// EVERY edit fires, the '/'-prefixed input the LOCAL parse answers
+    /// FIRST: the commands tree the login-time packet built suggests
+    /// the literals' names without a server round-trip, the argument
+    /// slots (and the tree-less world) the ask-server lane answers —
+    /// the transaction id the pendingSuggestionsId counter increments,
+    /// ONE ServerboundCommandSuggestionPacket the full input rides (the
+    /// leading '/' the server's own skip walk keeps), the reply the
+    /// pending gate remembers; the non-command edits the clear walk
+    /// answers — the suggestions the list forgets, the pending id the
+    /// gate drops). The local list the SAME fields fills (the sel/offset
+    /// fresh defaults, the original capture the apply walk wears, no
+    /// pending id the in-flight asks the tx increment invalidates).
+    /// The LIVE lane only: the offline world the no-server walk keeps
+    /// silent (no connection the request rides).
     fn refresh_command_suggestions(&mut self) {
         let active = self.chat_open
             && self.live_clicks.is_some()
@@ -11846,7 +11983,40 @@ impl App {
             self.chat_suggestion_tab_cycles = false;
             return;
         }
+        // the tx increment invalidates any in-flight ask — the stale
+        // reply the gate's own equality drops (the local list's own
+        // freshness the same law keeps)
         self.chat_suggestion_tx = self.chat_suggestion_tx.wrapping_add(1);
+        if let Some(tree) = self.command_tree.clone() {
+            match local_command_suggestions(&tree, &self.chat_input) {
+                ChatSuggestionSource::Local {
+                    start,
+                    length,
+                    matches,
+                } => {
+                    // the local landing (the reply's own walk the same
+                    // fields fill — row 0 / window 0 the fresh list's
+                    // defaults speak; the tabCycles flag the apply's
+                    // own raise the walk never touches — the vanilla
+                    // updateCommandInfo's own law). No pending id the
+                    // gate waits on; the tx increment above already
+                    // invalidated any in-flight ask.
+                    self.chat_suggestion_pending = None;
+                    self.chat_suggestion_original = self.chat_input.clone();
+                    self.chat_suggestion_range = (start, length);
+                    self.chat_suggestions = matches;
+                    self.chat_suggestion_rect = None; // the fresh list the render re-speaks
+                    self.chat_suggestion_sel = 0;
+                    self.chat_suggestion_offset = 0;
+                    return;
+                }
+                ChatSuggestionSource::AskServer => {
+                    // the tree refused — the ask lane answers below (the
+                    // shown list the fresh reply's landing replaces — the
+                    // old walk's own law the async gap keeps)
+                }
+            }
+        }
         self.chat_suggestion_pending = Some(self.chat_suggestion_tx);
         if let Some(tx) = &self.live_clicks {
             let _ = tx.send(crate::world_view::ContainerCommand::RequestCommandSuggestions {
@@ -12040,6 +12210,15 @@ impl App {
         self.chat_input = completed;
         self.chat_suggestion_tab_cycles = true;
         self.refresh_command_suggestions();
+    }
+
+    /// THE COMMANDS TREE'S OWN LANDING (javap ClientPacketListener
+    /// .handleCommands — the Brigadier graph the packet's own walk
+    /// builds: the local dispatcher the field REPLACES — a re-send the
+    /// server's own /reload answers, the wholesale replace the same
+    /// law every synced table wears).
+    pub fn on_command_tree(&mut self, tree: mc_protocol::play::CommandTree) {
+        self.command_tree = Some(tree);
     }
 
     /// THE SUGGESTION REPLY'S OWN LANDING (javap
@@ -21878,6 +22057,256 @@ mod tests {
         assert!(
             app.recent_chat.last().map(String::as_str) == Some("/time set day"),
             "the history the typed word keeps"
+        );
+    }
+
+    /// A hand-built Brigadier graph mirroring the real servers' own:
+    /// root(0) → time(1) → set(3)/query(4); tp(2) redirect→teleport(5)
+    /// → the targets argument(7); tick(6). The structure the local
+    /// walk's verdicts ride.
+    fn test_tree() -> mc_protocol::play::CommandTree {
+        use mc_protocol::play::{CommandNode, CommandNodeKind};
+        let node = |kind: CommandNodeKind,
+                    name: &str,
+                    children: Vec<u32>,
+                    redirect: Option<u32>| CommandNode {
+            kind,
+            executable: false,
+            restricted: false,
+            children,
+            redirect,
+            name: name.to_string(),
+            parser: None,
+            suggestion_id: None,
+        };
+        let mut nodes = vec![
+            node(CommandNodeKind::Root, "", vec![1, 2, 6], None),
+            node(CommandNodeKind::Literal, "time", vec![3, 4], None),
+            node(CommandNodeKind::Literal, "tp", vec![], Some(5)),
+            node(CommandNodeKind::Literal, "set", vec![], None),
+            node(CommandNodeKind::Literal, "query", vec![], None),
+            node(CommandNodeKind::Literal, "teleport", vec![7], None),
+            node(CommandNodeKind::Literal, "tick", vec![], None),
+        ];
+        nodes.push(CommandNode {
+            kind: CommandNodeKind::Argument,
+            executable: false,
+            restricted: false,
+            children: vec![],
+            redirect: None,
+            name: "targets".to_string(),
+            parser: Some((6, "minecraft:entity".to_string())),
+            suggestion_id: Some("minecraft:ask_server".to_string()),
+        });
+        mc_protocol::play::CommandTree {
+            root_index: 0,
+            nodes,
+        }
+    }
+
+    /// THE LOCAL SUGGESTIONS' OWN WALK (the Brigadier parse the tree's
+    /// literals answer — the sorted prefix matches, the redirect the
+    /// alias hop follows, the argument slot the ask-server lane keeps,
+    /// the lowercase fold the case-insensitive filter wears).
+    #[test]
+    fn the_local_walk_the_tree_literals_speak() {
+        use crate::screens::ChatSuggestionSource as Src;
+        let tree = test_tree();
+        // THE ROOT PREFIX (the '/' the parse strips — the partial 't'
+        // the lowercase fold filters, the sort the merge law keeps)
+        let Src::Local { start, length, matches } = local_command_suggestions(&tree, "/t")
+        else {
+            panic!("/t the local lane answers");
+        };
+        assert_eq!((start, length), (1, 1));
+        let names: Vec<&str> = matches.iter().map(|m| m.text.as_str()).collect();
+        assert_eq!(names, vec!["tick", "time", "tp"], "the sorted literals");
+        // THE BARE SLASH (the empty partial the whole root answers)
+        let Src::Local { start, length, matches } = local_command_suggestions(&tree, "/") else {
+            panic!("/ the local lane answers");
+        };
+        assert_eq!((start, length), (1, 0));
+        let names: Vec<&str> = matches.iter().map(|m| m.text.as_str()).collect();
+        assert_eq!(
+            names,
+            vec!["tick", "time", "tp"],
+            "the ROOT'S OWN children only — the teleport alias the redirect's target rides, no child of the root"
+        );
+        // THE CASE FOLD (the uppercase partial the lowercase law answers)
+        let Src::Local { matches, .. } = local_command_suggestions(&tree, "/TIME") else {
+            panic!("/TIME the case-insensitive lane answers");
+        };
+        let names: Vec<&str> = matches.iter().map(|m| m.text.as_str()).collect();
+        assert_eq!(names, vec!["time"]);
+        // THE SUB-COMMAND (the completed 'time' the equality consumes,
+        // the trailing space the empty partial speaks — the sorted
+        // children the range [6,0) wears)
+        let Src::Local { start, length, matches } = local_command_suggestions(&tree, "/time ")
+        else {
+            panic!("/time␠ the sub-literals answer");
+        };
+        assert_eq!((start, length), (6, 0));
+        let names: Vec<&str> = matches.iter().map(|m| m.text.as_str()).collect();
+        assert_eq!(names, vec!["query", "set"]);
+        // THE NARROWED TAIL (the partial 's' the set alone answers)
+        let Src::Local { start, length, matches } = local_command_suggestions(&tree, "/time s")
+        else {
+            panic!("/time␠s the narrowed lane answers");
+        };
+        assert_eq!((start, length), (6, 1));
+        assert_eq!(matches.len(), 1);
+        assert_eq!(matches[0].text, "set");
+        // THE REDIRECT'S OWN SLOT (the consumed 'tp' the alias hop
+        // follows — the teleport node's argument children the ask
+        // lane answers)
+        assert!(matches!(
+            local_command_suggestions(&tree, "/tp "),
+            Src::AskServer
+        ));
+        // THE ARGUMENT CHILD WHOLE (the teleport node's own name typed
+        // whole: the trailing space the argument slot the ask lane
+        // answers)
+        assert!(matches!(
+            local_command_suggestions(&tree, "/teleport "),
+            Src::AskServer
+        ));
+        // THE UNKNOWN LITERAL (the root's literal-only children the
+        // empty list keeps — no round-trip the honest silence spends)
+        let Src::Local { matches, .. } = local_command_suggestions(&tree, "/zz") else {
+            panic!("/zz the empty local list keeps");
+        };
+        assert!(matches.is_empty());
+        // THE LEAF WITH NO CHILDREN (the tick node's own silence)
+        let Src::Local { matches, .. } = local_command_suggestions(&tree, "/tick ") else {
+            panic!("/tick␠ the empty local list keeps");
+        };
+        assert!(matches.is_empty());
+        // THE NO-SLASH TEXT (the plain message the ask lane keeps)
+        assert!(matches!(
+            local_command_suggestions(&tree, "hello"),
+            Src::AskServer
+        ));
+        // THE DOUBLE SPACE (the empty token the literal equality
+        // refuses — the ask lane answers)
+        assert!(matches!(
+            local_command_suggestions(&tree, "/time  s"),
+            Src::AskServer
+        ));
+    }
+
+    /// THE LOCAL LIST'S OWN LANES (the refresh the tree answers: the
+    /// '/' edit the LOCAL list lands — no request the lane spends, no
+    /// pending id the gate waits on, the fresh defaults the fields
+    /// wear; the argument slot the ask-server request rides; the Tab
+    /// apply the narrowed local walk re-answers; the stale reply the
+    /// None-pending gate drops).
+    #[test]
+    fn the_local_list_the_refresh_and_lanes_speak() {
+        let mut app = App::new(3);
+        app.enter_world();
+        app.on_command_tree(test_tree());
+        let (tx, rx) = std::sync::mpsc::channel::<crate::world_view::ContainerCommand>();
+        app.attach_live_clicks(tx);
+        app.on_chat_key();
+        // THE SLASH (the local list lands — no request, no pending)
+        app.on_chat_char('/');
+        assert!(
+            rx.try_recv().is_err(),
+            "the local lane the request never spends"
+        );
+        assert_eq!(app.chat_suggestion_pending, None, "the gate no id waits on");
+        assert_eq!(
+            app.chat_suggestions
+                .iter()
+                .map(|m| m.text.as_str())
+                .collect::<Vec<_>>(),
+            vec!["tick", "time", "tp"],
+            "the bare slash the root's own children answer"
+        );
+        assert_eq!(app.chat_suggestion_range, (1, 0));
+        assert_eq!(app.chat_suggestion_original, "/");
+        // THE TYPE-AHEAD (the partial 't' the narrowed sort answers)
+        app.on_chat_char('t');
+        assert_eq!(
+            app.chat_suggestions
+                .iter()
+                .map(|m| m.text.as_str())
+                .collect::<Vec<_>>(),
+            vec!["tick", "time", "tp"]
+        );
+        assert_eq!(app.chat_suggestion_range, (1, 1));
+        // THE TAB APPLY (the selected 'tick' the replace range lands —
+        // the input the completion wears, the narrowed list the local
+        // walk re-answers)
+        app.on_chat_tab_key();
+        assert_eq!(app.chat_input, "/tick", "the apply the range keeps");
+        assert!(app.chat_suggestion_tab_cycles, "the cycle flag the apply raises");
+        assert_eq!(
+            app.chat_suggestions
+                .iter()
+                .map(|m| m.text.as_str())
+                .collect::<Vec<_>>(),
+            vec!["tick"],
+            "the narrowed list the fresh walk answers"
+        );
+        // THE ARGUMENT SLOT (the '/tp ' the alias hop lands in — the
+        // request the ask lane rides, the pending id the gate banks)
+        for _ in 0..4 {
+            app.on_chat_backspace(); // "/tick" → "/" (the '/' the pops keep)
+        }
+        app.on_chat_char('t');
+        app.on_chat_char('p');
+        app.on_chat_char(' ');
+        assert_eq!(app.chat_input, "/tp ");
+        match rx.try_recv().expect("the argument slot rides the request") {
+            crate::world_view::ContainerCommand::RequestCommandSuggestions { id, command } => {
+                assert_eq!(command, "/tp ", "the FULL input the request carries");
+                assert_eq!(app.chat_suggestion_pending, Some(id), "the gate the id waits on");
+            }
+            other => panic!("the wrong command rode the lane: {other:?}"),
+        }
+        assert!(
+            !app.chat_suggestions.is_empty(),
+            "the shown list the fresh reply's landing replaces — the async gap the old law keeps"
+        );
+        // THE LOCAL LIST'S OWN FRESHNESS (the literal tail the local
+        // walk answers again — a reply the None-pending gate drops)
+        app.on_chat_backspace(); // "/tp" — the redirect alias's own name
+        let src_reply = mc_protocol::play::CommandSuggestionsReply {
+            id: 9999,
+            start: 0,
+            length: 0,
+            matches: vec![mc_protocol::play::CommandSuggestionsMatch {
+                text: "server_row".to_string(),
+                tooltip: None,
+            }],
+        };
+        app.on_command_suggestions(src_reply);
+        assert!(
+            !app.chat_suggestions.iter().any(|m| m.text == "server_row"),
+            "the stale reply the gate drops"
+        );
+    }
+
+    /// THE TREE'S OWN LANDING (the handleCommands walk — the field the
+    /// packet replaces, the wholesale replace the re-send answers).
+    #[test]
+    fn the_commands_tree_the_landing_speaks() {
+        let mut app = App::new(3);
+        assert!(app.command_tree.is_none(), "the offline world no tree carries");
+        app.on_command_tree(test_tree());
+        let tree = app.command_tree.as_ref().expect("the tree the landing banks");
+        assert_eq!(tree.root_index, 0);
+        assert_eq!(tree.nodes.len(), 8);
+        // the re-send the replace law answers (a /reload the server's
+        // own re-sync speaks)
+        let mut re_sent = test_tree();
+        re_sent.nodes[1].name = "time2".to_string();
+        app.on_command_tree(re_sent);
+        assert_eq!(
+            app.command_tree.as_ref().unwrap().nodes[1].name,
+            "time2",
+            "the wholesale replace the landing keeps"
         );
     }
 

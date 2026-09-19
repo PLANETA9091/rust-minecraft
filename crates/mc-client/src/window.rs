@@ -169,6 +169,7 @@ fn run_join(
     clicks: std::sync::mpsc::Receiver<crate::world_view::ContainerCommand>,
     chat_tx: std::sync::mpsc::Sender<String>,
     suggestion_tx: std::sync::mpsc::Sender<mc_protocol::play::CommandSuggestionsReply>,
+    commands_tx: std::sync::mpsc::Sender<mc_protocol::play::CommandTree>,
     run: std::sync::Arc<std::sync::atomic::AtomicBool>,
 ) {
     // the REAL protocol number (login tolerates no 0-ping) and the
@@ -773,6 +774,16 @@ fn run_join(
                                 // the fresh list the chat screen renders)
                                 let _ = suggestion_tx.send(m.clone());
                             }
+                            mc_protocol::PlayEvent::Commands(m) => {
+                                // THE COMMANDS TREE'S OWN LANE (the vanilla
+                                // handleCommands walk — the Brigadier graph
+                                // the local dispatcher wears, the chat
+                                // screen's LOCAL suggestions the literals
+                                // answer). The re-send the replace walk
+                                // answers (a /reload the server's own tree
+                                // re-syncs).
+                                let _ = commands_tx.send(m.clone());
+                            }
                             _ => {}
                         }
                         if view.apply(event) || ping_changed || bw_changed || tick_changed {
@@ -962,6 +973,12 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
     // gate, the stale ids the gate drops)
     let (suggestion_tx, suggestion_rx) =
         std::sync::mpsc::channel::<mc_protocol::play::CommandSuggestionsReply>();
+    // the commands tree: ONE shared channel the per-join workers clone
+    // the sender of (the pump's Commands arm — the login-time Brigadier
+    // graph the frame thread's drain hands the App's local suggestion
+    // lane, the re-send the replace walk answers)
+    let (commands_tx, commands_rx) =
+        std::sync::mpsc::channel::<mc_protocol::play::CommandTree>();
     let mut net_seen = 0usize; // cursor into the append-only request log
     let mut was_left_down = false; // the attack edge detector (vanilla left-click = swing)
     let mut was_right_down = false; // the right press's edge detector (the split-stack lane)
@@ -1429,8 +1446,20 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
             // the promptness the chat lane keeps
             let chat_tx = chat_tx.clone();
             let suggestion_tx = suggestion_tx.clone();
+            let commands_tx = commands_tx.clone();
             std::thread::spawn(move || {
-                run_join(id, host, port, tx, live_tx, click_rx, chat_tx, suggestion_tx, run)
+                run_join(
+                    id,
+                    host,
+                    port,
+                    tx,
+                    live_tx,
+                    click_rx,
+                    chat_tx,
+                    suggestion_tx,
+                    commands_tx,
+                    run,
+                )
             });
         }
         while let Ok((id, res)) = net_rx.try_recv() {
@@ -1575,6 +1604,12 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
         // drops)
         while let Ok(reply) = suggestion_rx.try_recv() {
             app.on_command_suggestions(reply);
+        }
+        // THE COMMANDS TREE DRAIN (the pump's Commands lane ships the
+        // login-time Brigadier graph here — the App's local suggestion
+        // lane the literals answer from now on)
+        while let Ok(tree) = commands_rx.try_recv() {
+            app.on_command_tree(tree);
         }
         music.sync(&app.music);
         // UI one-shots (ui.button.click) ride the independent UI channel

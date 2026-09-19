@@ -118,6 +118,7 @@ pub mod clientbound {
         CB_PLAYER_INFO_REMOVE as PLAYER_INFO_REMOVE, CB_PLAYER_INFO_UPDATE as PLAYER_INFO_UPDATE,
         CB_TAB_LIST as TAB_LIST,
         CB_COMMAND_SUGGESTIONS as COMMAND_SUGGESTIONS,
+        CB_COMMANDS as COMMANDS,
         CB_SYSTEM_CHAT as SYSTEM_CHAT, CB_PLAYER_CHAT as PLAYER_CHAT,
         CB_DISGUISED_CHAT as DISGUISED_CHAT,
     };
@@ -5688,6 +5689,344 @@ pub fn parse_command_suggestions(payload: &[u8]) -> Result<CommandSuggestionsRep
     })
 }
 
+// ---------------------------------------------------------------------------
+// the commands tree (the server's own Brigadier graph — the local
+// suggestions the chat screen's '/' lane answers)
+// ---------------------------------------------------------------------------
+
+/// The node's own kind — the flags byte's low two bits (javap
+/// `ClientboundCommandsPacket.createEntry`'s tableswitch walk: the
+/// RootCommandNode branch ORs `iconst_0`, the LiteralCommandNode branch
+/// ORs `iconst_1`, the ArgumentCommandNode branch ORs `iconst_2` — the
+/// unknown class the `UnsupportedOperationException` throw refuses).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum CommandNodeKind {
+    /// The tree's own entry point (type 0) — rides NO stub at all (the
+    /// `aconst_null` the root branch stores).
+    Root,
+    /// A literal word (type 1) — `/time`'s own `time`.
+    Literal,
+    /// An argument slot (type 2) — `<targets>`'s own parser ride.
+    Argument,
+}
+
+/// One node of the [`CommandTree`] — the 26.2 `Entry` record's decoded
+/// shape (javap: the record `(NodeStub stub, int flags, int redirect,
+/// int[] children)`; the stub's THREE shapes the inner classes speak).
+#[derive(Debug, Clone, PartialEq)]
+pub struct CommandNode {
+    /// The kind the flags' low bits carry.
+    pub kind: CommandNodeKind,
+    /// `isExecutable` the flags' 0x04 bit (the node a command's own
+    /// execution may land on).
+    pub executable: bool,
+    /// `isRestricted` the flags' 0x20 bit (the 26.2's own flag — the
+    /// requires(src.hasPermission(2)) walk the owner-only nodes wear).
+    pub restricted: bool,
+    /// The children's entry indices (the `writeVarIntArray` walk).
+    pub children: Vec<u32>,
+    /// The redirect target's entry index (the flags' 0x08 bit — the
+    /// `/tp`-aliases-`/teleport` graph the Brigadier walk keeps).
+    pub redirect: Option<u32>,
+    /// The literal's word or the argument's name — the stub's own utf
+    /// (empty for the root, the only stub-less node).
+    pub name: String,
+    /// The argument's parser: the registry id + the synced name it
+    /// resolved through (the `serializeCap` varint the
+    /// command_argument_type registry answers; `None` for root/literal).
+    pub parser: Option<(u32, String)>,
+    /// The argument's suggestion provider id (the flags' 0x10 bit — the
+    /// `writeIdentifier` walk; `minecraft:ask_server` the server's own
+    /// dynamic lane rides, `None` for root/literal too).
+    pub suggestion_id: Option<String>,
+}
+
+/// The server's whole command graph — the `ClientboundCommandsPacket`
+/// record (readList(entries), readVarInt(rootIndex)) decoded. The chat
+/// screen's local suggestions walk consumes the literals; the argument
+/// slots' dynamic suggestions the ask-server lane still answers.
+#[derive(Debug, Clone, PartialEq, Default)]
+pub struct CommandTree {
+    /// The root entry's index (the `getRoot` resolver's own walk).
+    pub root_index: u32,
+    /// The nodes in wire order — the index IS the id the children /
+    /// redirect varints reference.
+    pub nodes: Vec<CommandNode>,
+}
+
+/// The BUILT-IN command_argument_type registration order — the 26.2
+/// jar's own `ArgumentTypeInfos` bootstrap verbatim (the `register`
+/// calls' string order IS the registry id order the skip-sync path
+/// answers; a server that streamed the registry REPLACES this table —
+/// the arrival-order law every synced table wears). The namespaced
+/// forms the registry sync carries (the `minecraft:` prefix the
+/// `ResourceKey.create` walk speaks).
+pub const BUILTIN_COMMAND_ARGUMENT_TYPES: &[&str] = &[
+    "minecraft:brigadier:bool",
+    "minecraft:brigadier:float",
+    "minecraft:brigadier:double",
+    "minecraft:brigadier:integer",
+    "minecraft:brigadier:long",
+    "minecraft:brigadier:string",
+    "minecraft:entity",
+    "minecraft:game_profile",
+    "minecraft:block_pos",
+    "minecraft:column_pos",
+    "minecraft:block_state",
+    "minecraft:block_predicate",
+    "minecraft:item_stack",
+    "minecraft:item_predicate",
+    "minecraft:team_color",
+    "minecraft:hex_color",
+    "minecraft:component",
+    "minecraft:style",
+    "minecraft:message",
+    "minecraft:nbt_compound_tag",
+    "minecraft:nbt_tag",
+    "minecraft:nbt_path",
+    "minecraft:objective",
+    "minecraft:objective_criteria",
+    "minecraft:operation",
+    "minecraft:particle",
+    "minecraft:angle",
+    "minecraft:rotation",
+    "minecraft:scoreboard_slot",
+    "minecraft:score_holder",
+    "minecraft:swizzle",
+    "minecraft:team",
+    "minecraft:item_slot",
+    "minecraft:item_slots",
+    "minecraft:resource_location",
+    "minecraft:function",
+    "minecraft:entity_anchor",
+    "minecraft:int_range",
+    "minecraft:float_range",
+    "minecraft:dimension",
+    "minecraft:gamemode",
+    "minecraft:time",
+    "minecraft:resource_or_tag",
+    "minecraft:resource_or_tag_key",
+    "minecraft:resource",
+    "minecraft:resource_key",
+    "minecraft:resource_selector",
+    "minecraft:template_mirror",
+    "minecraft:template_rotation",
+    "minecraft:heightmap",
+    "minecraft:loot_table",
+    "minecraft:loot_predicate",
+    "minecraft:loot_modifier",
+    "minecraft:dialog",
+    "minecraft:uuid",
+];
+
+/// One parser id's registry name — the synced table the lookup answers,
+/// the built-in order the skip-sync fallback keeps (`None` for an id
+/// the server never named — the honest unknown).
+pub fn command_argument_type_name(
+    id: u32,
+    synced: &[String],
+) -> Option<&'static str> {
+    if let Some(name) = synced.get(id as usize) {
+        // the synced table is the server's truth — resolve THROUGH it,
+        // folding back into the built-in spelling space when the entry
+        // matches one of its names (the extra-payload walk keys on the
+        // built-in consts)
+        let stripped = name.strip_prefix("minecraft:").unwrap_or(name);
+        BUILTIN_COMMAND_ARGUMENT_TYPES
+            .iter()
+            .copied()
+            .find(|b| b.strip_prefix("minecraft:") == Some(stripped))
+    } else {
+        // the skip-sync path: the built-in order IS the id space
+        BUILTIN_COMMAND_ARGUMENT_TYPES.get(id as usize).copied()
+    }
+}
+
+/// Consume one argument node's parser EXTRA payload — the
+/// `serializeToNetwork` template walk each ArgumentTypeInfo speaks
+/// (javap-audited, the 13 shapes the jar's own custom infos carry; the
+/// SingletonArgumentInfo templates the `return` alone keeps). The
+/// UNKNOWN name is the refusal the desync the walk cannot survive
+/// answers (the vanilla client's own unknown-id throw — the buffer the
+/// following entries share can never realign).
+fn skip_argument_extra(name: &str, c: &mut &[u8]) -> Result<()> {
+    let stripped = name.strip_prefix("minecraft:").unwrap_or(name);
+    match stripped {
+        // brigadier:float/double/integer/long — the
+        // ArgumentUtils.createNumberFlags byte (bit 1 = min rides,
+        // bit 2 = max), the values the flag answers
+        "brigadier:float" => {
+            let flags = read_u8(c)?;
+            if flags & 0x01 != 0 {
+                read_f32(c)?;
+            }
+            if flags & 0x02 != 0 {
+                read_f32(c)?;
+            }
+        }
+        "brigadier:double" => {
+            let flags = read_u8(c)?;
+            if flags & 0x01 != 0 {
+                read_f64(c)?;
+            }
+            if flags & 0x02 != 0 {
+                read_f64(c)?;
+            }
+        }
+        "brigadier:integer" => {
+            let flags = read_u8(c)?;
+            if flags & 0x01 != 0 {
+                read_i32(c)?;
+            }
+            if flags & 0x02 != 0 {
+                read_i32(c)?;
+            }
+        }
+        "brigadier:long" => {
+            let flags = read_u8(c)?;
+            if flags & 0x01 != 0 {
+                read_i64(c)?;
+            }
+            if flags & 0x02 != 0 {
+                read_i64(c)?;
+            }
+        }
+        // brigadier:string — the writeEnum(StringType) varint (the
+        // SINGLE_WORD/QUOTABLE_PHRASE/GREEDY_STRING ordinals)
+        "brigadier:string" => {
+            read_varint(c)?;
+        }
+        // entity / score_holder — the one flag byte (the single /
+        // multiple booleans the templates carry)
+        "entity" | "score_holder" => {
+            read_u8(c)?;
+        }
+        // time — the writeInt(min) the template's own floor wears
+        "time" => {
+            read_i32(c)?;
+        }
+        // the resource family — the writeResourceKey identifier (the
+        // registry key the template resolves through)
+        "resource_or_tag" | "resource_or_tag_key" | "resource" | "resource_key"
+        | "resource_selector" => {
+            read_capped_string(c, 32767)?;
+        }
+        // every other synced name the SingletonArgumentInfo template
+        // answers — `serializeToNetwork` is the bare `return` walk
+        _ if BUILTIN_COMMAND_ARGUMENT_TYPES.iter().any(|b| {
+            b.strip_prefix("minecraft:") == Some(stripped)
+        }) => {}
+        _ => {
+            anyhow::bail!(
+                "unknown argument type '{name}' — the extra payload the node walk cannot consume"
+            );
+        }
+    }
+    Ok(())
+}
+
+/// Parse the Commands packet (clientbound play, `minecraft:commands`
+/// id 16) — the server's whole Brigadier graph, the login-time packet
+/// `ClientPacketListener.handleCommands` builds the local dispatcher
+/// from. THE WIRE (javap of the 26.2 class + the `Entry` record's own
+/// write walk): VarInt entry count, then per entry — the flags byte,
+/// the children as a VarInt array, the redirect VarInt (the 0x08 bit),
+/// the stub (root: nothing; literal: the bare utf; argument: the utf
+/// name, the parser registry varint, the suggestion id identifier when
+/// the 0x10 bit rides, the parser's own extra payload the
+/// [`skip_argument_extra`] walk consumes) — then the root index
+/// VarInt. The parser ids resolve through the synced
+/// command_argument_type table the caller passes ([`RegistryData`]'s
+/// own arrival order; empty = the built-in order answers).
+pub fn parse_commands(payload: &[u8], parser_names: &[String]) -> Result<CommandTree> {
+    let mut c: &[u8] = payload;
+    let id = read_varint(&mut c)?;
+    anyhow::ensure!(
+        id == clientbound::COMMANDS,
+        "not a commands packet (0x{id:02X})"
+    );
+    let count = read_varint(&mut c)?;
+    anyhow::ensure!(
+        count >= 0 && count <= 8192,
+        "commands tree carries {count} nodes (past any sane graph)"
+    );
+    let mut nodes = Vec::with_capacity(count as usize);
+    for i in 0..count {
+        let flags = read_u8(&mut c)?;
+        let kind = match flags & 0x03 {
+            0 => CommandNodeKind::Root,
+            1 => CommandNodeKind::Literal,
+            _ => CommandNodeKind::Argument,
+        };
+        let child_count = read_varint(&mut c)?;
+        anyhow::ensure!(
+            child_count >= 0,
+            "node {i} carries a negative child count"
+        );
+        let mut children = Vec::with_capacity(child_count as usize);
+        for _ in 0..child_count {
+            let child = read_varint(&mut c)?;
+            anyhow::ensure!(child >= 0, "node {i} carries a negative child id");
+            children.push(child as u32);
+        }
+        let redirect = if flags & 0x08 != 0 {
+            let r = read_varint(&mut c)?;
+            anyhow::ensure!(r >= 0, "node {i} redirects to a negative id");
+            Some(r as u32)
+        } else {
+            None
+        };
+        let (name, parser, suggestion_id) = match kind {
+            CommandNodeKind::Root => (String::new(), None, None),
+            CommandNodeKind::Literal => (read_capped_string(&mut c, 32767)?, None, None),
+            CommandNodeKind::Argument => {
+                let name = read_capped_string(&mut c, 32767)?;
+                let parser_id = read_varint(&mut c)?;
+                anyhow::ensure!(parser_id >= 0, "node {i} names a negative parser id");
+                let parser_id = parser_id as u32;
+                let suggestion_id = if flags & 0x10 != 0 {
+                    Some(read_capped_string(&mut c, 32767)?)
+                } else {
+                    None
+                };
+                // the parser's name first (the extra walk keys on it),
+                // the resolution the synced table / built-in order
+                // answers — an unknown id the honest refusal keeps
+                let parser_name = command_argument_type_name(parser_id, parser_names)
+                    .with_context(|| {
+                        format!(
+                            "node {i} ('{name}') names parser id {parser_id} — \
+                             no synced entry and past the built-in order"
+                        )
+                    })?;
+                skip_argument_extra(parser_name, &mut c)
+                    .with_context(|| format!("node {i} ('{name}') extra payload"))?;
+                (name, Some((parser_id, parser_name.to_string())), suggestion_id)
+            }
+        };
+        nodes.push(CommandNode {
+            kind,
+            executable: flags & 0x04 != 0,
+            restricted: flags & 0x20 != 0,
+            children,
+            redirect,
+            name,
+            parser,
+            suggestion_id,
+        });
+    }
+    let root_index = read_varint(&mut c)?;
+    anyhow::ensure!(root_index >= 0, "negative root index");
+    anyhow::ensure!(
+        c.is_empty(),
+        "trailing bytes after the commands tree"
+    );
+    Ok(CommandTree {
+        root_index: root_index as u32,
+        nodes,
+    })
+}
+
 /// The ATTACK wire (the vanilla `MultiPlayerGameMode.attack`'s own
 /// echo — the 26.2's dedicated ServerboundAttackPacket, generated id
 /// 1, `minecraft:attack`, the generated table's SB_ATTACK). THE WIRE
@@ -7903,6 +8242,12 @@ pub enum PlayEvent {
     /// suggestion list renders — see [`CommandSuggestionsReply`]).
     /// The stale transaction ids the consumer's pending gate drops.
     CommandSuggestions(CommandSuggestionsReply),
+    /// Commands: the server's whole Brigadier tree — the login-time
+    /// packet `ClientPacketListener.handleCommands` builds the local
+    /// dispatcher from (the chat screen's LOCAL suggestion lane the
+    /// literals answer; the argument slots' dynamic suggestions the
+    /// ask-server walk still owns). See [`parse_commands`].
+    Commands(CommandTree),
     /// Any packet without a client surface yet (skipped silently).
     Skipped,
 }
@@ -8062,6 +8407,10 @@ impl<S: Read + Write> PlaySession<S> {
             clientbound::COMMAND_SUGGESTIONS => Ok(PlayEvent::CommandSuggestions(
                 parse_command_suggestions(&pkt)?,
             )),
+            clientbound::COMMANDS => Ok(PlayEvent::Commands(parse_commands(
+                &pkt,
+                &self.registry.command_argument_types,
+            )?)),
             clientbound::PLAYER_CHAT => Ok(PlayEvent::PlayerChat(parse_player_chat(
                 &pkt,
                 &self.registry.chat_types,
@@ -15535,5 +15884,314 @@ mod tests {
         assert!(parse_command_suggestions(&wrong).is_err());
         // THE STALE-ID CONSUMER WALK rides the screens' tests — the
         // wire's own law the parse's tx echo answers.
+    }
+
+    /// A minimal hand-built commands-tree fixture: root(0) with the
+    /// literals `time`(1, executable) and `tp`(2, redirect→3), the
+    /// `teleport` node(3, literal) carrying ONE argument child(4, the
+    /// `minecraft:entity` parser, the ask_server suggestion id).
+    fn commands_fixture() -> Vec<u8> {
+        let mut p = Vec::new();
+        write_varint(&mut p, clientbound::COMMANDS);
+        write_varint(&mut p, 6); // six entries: root, time, tp, teleport, targets, add
+        // entry 0: the root (flags 0, no children yet — filled below)
+        p.push(0x00);
+        write_varint(&mut p, 2); // children: time, tp
+        write_varint(&mut p, 1);
+        write_varint(&mut p, 2);
+        // entry 1: literal "time" — executable, child = add(5)
+        p.push(0x01 | 0x04);
+        write_varint(&mut p, 1);
+        write_varint(&mut p, 5);
+        write_string(&mut p, "time");
+        // entry 2: literal "tp" — redirect to 3
+        p.push(0x01 | 0x08);
+        write_varint(&mut p, 0);
+        write_varint(&mut p, 3);
+        write_string(&mut p, "tp");
+        // entry 3: literal "teleport" — restricted (0x20), child = arg 4
+        p.push(0x01 | 0x20);
+        write_varint(&mut p, 1);
+        write_varint(&mut p, 4);
+        write_string(&mut p, "teleport");
+        // entry 4: argument "targets" — parser 6 (minecraft:entity,
+        // the built-in order's 7th id), suggestion id ask_server,
+        // the entity extra's one flag byte
+        p.push(0x02 | 0x10);
+        write_varint(&mut p, 0);
+        write_string(&mut p, "targets");
+        write_varint(&mut p, 6); // minecraft:entity (built-in id 6)
+        write_string(&mut p, "minecraft:ask_server");
+        p.push(0x01); // the entity template's single-entity flag byte
+        // entry 5: literal "add" (the time sub-command) — executable
+        p.push(0x01 | 0x04);
+        write_varint(&mut p, 0);
+        write_string(&mut p, "add");
+        // the root index
+        write_varint(&mut p, 0);
+        p
+    }
+
+    /// THE COMMANDS TREE'S OWN READ WALK (javap of the real 26.2
+    /// ClientboundCommandsPacket + the Entry record's write — the
+    /// flags bits the createEntry composition banks: 0x01 literal /
+    /// 0x02 argument / 0x04 executable / 0x08 redirect / 0x10 has-
+    /// suggestions / 0x20 restricted): the fixture's graph the parse
+    /// answers node by node, the stub shapes the kinds speak, the
+    /// parser id the built-in order resolves, the redirect the
+    /// varint walk keeps, the root index the tail names.
+    #[test]
+    fn the_commands_tree_the_brigadier_walk_speaks() {
+        assert_eq!(clientbound::COMMANDS, 16, "the generated id");
+        let t = parse_commands(&commands_fixture(), &[]).unwrap();
+        assert_eq!(t.root_index, 0, "the root index the tail carries");
+        assert_eq!(t.nodes.len(), 6);
+        // the root: no stub, no name
+        assert_eq!(t.nodes[0].kind, CommandNodeKind::Root);
+        assert_eq!(t.nodes[0].name, "");
+        assert_eq!(t.nodes[0].children, vec![1, 2]);
+        // the literal: executable, the name the utf keeps
+        assert_eq!(t.nodes[1].kind, CommandNodeKind::Literal);
+        assert!(t.nodes[1].executable, "the 0x04 bit the walk keeps");
+        assert_eq!(t.nodes[1].name, "time");
+        assert_eq!(t.nodes[1].children, vec![5]);
+        // the redirect: the 0x08 bit the varint follows
+        assert_eq!(t.nodes[2].name, "tp");
+        assert_eq!(t.nodes[2].redirect, Some(3), "the /tp→/teleport walk");
+        // the restricted literal: the 0x20 bit
+        assert_eq!(t.nodes[3].name, "teleport");
+        assert!(t.nodes[3].restricted, "the owner-only node the flag banks");
+        // the argument: the parser the built-in order resolves, the
+        // suggestion id the 0x10 flag keeps, the extra byte the
+        // entity template consumes
+        assert_eq!(t.nodes[4].kind, CommandNodeKind::Argument);
+        assert_eq!(
+            t.nodes[4].parser,
+            Some((6, "minecraft:entity".to_string())),
+            "the built-in id 6 the entity speaks"
+        );
+        assert_eq!(
+            t.nodes[4].suggestion_id.as_deref(),
+            Some("minecraft:ask_server"),
+            "the provider id the identifier walk keeps"
+        );
+        assert_eq!(t.nodes[4].name, "targets");
+        // THE TRAILING BYTES (the aligned walk the guard keeps)
+        let mut trailing = commands_fixture();
+        trailing.push(0xFF);
+        assert!(parse_commands(&trailing, &[]).is_err());
+        // THE WRONG ID (the not-a-commands bytes the guard drops)
+        let mut wrong = Vec::new();
+        write_varint(&mut wrong, clientbound::SYSTEM_CHAT);
+        assert!(parse_commands(&wrong, &[]).is_err());
+    }
+
+    /// THE ARGUMENT EXTRAS' OWN SHAPES (javap of the 13 custom
+    /// serializeToNetwork walks — the number-flag bytes the
+    /// ArgumentUtils.createNumberFlags law keeps (bit 1 = min, bit 2
+    /// = max, the sentinel comparisons the MIN_VALUE/0 folds speak),
+    /// the string's writeEnum varint, the resource family's
+    /// identifier): the shapes the parse consumes byte-aligned — the
+    /// nodes AFTER an extra-ful argument the alignment verdicts.
+    #[test]
+    fn the_commands_extra_payloads_the_template_walks_speak() {
+        // the builder: one argument entry with the named parser, then
+        // a sentinel literal; the sentinel's PARSE answers alignment
+        fn build(parser_name: &str, extra: &[u8]) -> Vec<u8> {
+            let idx = BUILTIN_COMMAND_ARGUMENT_TYPES
+                .iter()
+                .position(|b| b.strip_prefix("minecraft:") == Some(parser_name))
+                .expect("the built-in table names the parser");
+            let mut p = Vec::new();
+            write_varint(&mut p, clientbound::COMMANDS);
+            write_varint(&mut p, 3);
+            // 0: root with child 1
+            p.push(0x00);
+            write_varint(&mut p, 1);
+            write_varint(&mut p, 1);
+            // 1: argument "x", parser idx, NO suggestion id, the extra
+            p.push(0x02);
+            write_varint(&mut p, 0);
+            write_string(&mut p, "x");
+            write_varint(&mut p, idx as i32);
+            p.extend_from_slice(extra);
+            // 2: the sentinel literal
+            p.push(0x01);
+            write_varint(&mut p, 0);
+            write_string(&mut p, "sentinel");
+            write_varint(&mut p, 0);
+            p
+        }
+        let assert_aligned = |p: &[u8]| {
+            let t = parse_commands(p, &[]).unwrap_or_else(|e| {
+                panic!("the walk misaligned on {e}");
+            });
+            assert_eq!(t.nodes[2].name, "sentinel", "the sentinel the alignment speaks");
+        };
+        // brigadier:integer — min-only (flag 1), max-only (flag 2),
+        // both (flag 3), neither (flag 0 — the sentinel defaults)
+        let int_extra = |flags: u8| -> Vec<u8> {
+            let mut e = vec![flags];
+            if flags & 1 != 0 {
+                e.extend_from_slice(&42i32.to_be_bytes());
+            }
+            if flags & 2 != 0 {
+                e.extend_from_slice(&7i32.to_be_bytes());
+            }
+            e
+        };
+        for flags in [0u8, 1, 2, 3] {
+            assert_aligned(&build("brigadier:integer", &int_extra(flags)));
+        }
+        // brigadier:float — the f32 pair the flags answer
+        let mut f = vec![3u8];
+        f.extend_from_slice(&1.5f32.to_be_bytes());
+        f.extend_from_slice(&2.5f32.to_be_bytes());
+        assert_aligned(&build("brigadier:float", &f));
+        // brigadier:double — the f64 pair
+        let mut d = vec![1u8];
+        d.extend_from_slice(&1.5f64.to_be_bytes());
+        assert_aligned(&build("brigadier:double", &d));
+        // brigadier:long — the i64 pair
+        let mut l = vec![2u8];
+        l.extend_from_slice(&77i64.to_be_bytes());
+        assert_aligned(&build("brigadier:long", &l));
+        // brigadier:string — the writeEnum varint (GREEDY_STRING = 2)
+        assert_aligned(&build("brigadier:string", &[2]));
+        // entity / score_holder — the one flag byte
+        assert_aligned(&build("entity", &[1]));
+        assert_aligned(&build("score_holder", &[3]));
+        // time — the writeInt(min)
+        let mut ti = Vec::new();
+        ti.extend_from_slice(&1i32.to_be_bytes());
+        assert_aligned(&build("time", &ti));
+        // the resource family — the registry-key identifier
+        assert_aligned(&build(
+            "resource",
+            {
+                let mut e = Vec::new();
+                write_string(&mut e, "minecraft:item");
+                e
+            }
+            .as_slice(),
+        ));
+        assert_aligned(&build(
+            "resource_selector",
+            {
+                let mut e = Vec::new();
+                write_string(&mut e, "minecraft:entity");
+                e
+            }
+            .as_slice(),
+        ));
+        // the SINGLETON names — the bare return walk (no extra bytes)
+        assert_aligned(&build("game_profile", &[]));
+        assert_aligned(&build("block_pos", &[]));
+        assert_aligned(&build("uuid", &[]));
+        // THE SYNCED TABLE (a server's own registry order the id
+        // resolves through — the same name the walk keys on)
+        let synced = vec![
+            "minecraft:custom_one".to_string(),
+            "minecraft:entity".to_string(),
+        ];
+        let mut p2 = Vec::new();
+        write_varint(&mut p2, clientbound::COMMANDS);
+        write_varint(&mut p2, 3);
+        p2.push(0x00);
+        write_varint(&mut p2, 1);
+        write_varint(&mut p2, 1);
+        p2.push(0x02);
+        write_varint(&mut p2, 0);
+        write_string(&mut p2, "x");
+        write_varint(&mut p2, 1); // id 1 in the SYNCED order = entity
+        p2.push(9); // the entity flag byte
+        p2.push(0x01);
+        write_varint(&mut p2, 0);
+        write_string(&mut p2, "sentinel");
+        write_varint(&mut p2, 0);
+        let t2 = parse_commands(&p2, &synced).unwrap();
+        assert_eq!(
+            t2.nodes[1].parser,
+            Some((1, "minecraft:entity".to_string())),
+            "the synced table the resolution wears"
+        );
+        // THE UNKNOWN NAME (a synced entry no built-in const names —
+        // the extra the walk cannot consume, the refusal the desync
+        // answers)
+        let unknown = vec!["minecraft:plugin_magic".to_string()];
+        let mut p3 = Vec::new();
+        write_varint(&mut p3, clientbound::COMMANDS);
+        write_varint(&mut p3, 2);
+        p3.push(0x00);
+        write_varint(&mut p3, 1);
+        write_varint(&mut p3, 1);
+        p3.push(0x02);
+        write_varint(&mut p3, 0);
+        write_string(&mut p3, "x");
+        write_varint(&mut p3, 0); // id 0 = plugin_magic in the synced order
+        p3.push(0x01);
+        write_varint(&mut p3, 0);
+        assert!(
+            parse_commands(&p3, &unknown).is_err(),
+            "the unknown parser the honest refusal keeps"
+        );
+        // THE UNKNOWN ID (past both tables)
+        let mut p4 = Vec::new();
+        write_varint(&mut p4, clientbound::COMMANDS);
+        write_varint(&mut p4, 2);
+        p4.push(0x00);
+        write_varint(&mut p4, 1);
+        write_varint(&mut p4, 1);
+        p4.push(0x02);
+        write_varint(&mut p4, 0);
+        write_string(&mut p4, "x");
+        write_varint(&mut p4, 9999);
+        write_varint(&mut p4, 0);
+        assert!(parse_commands(&p4, &[]).is_err());
+    }
+
+    /// THE BUILT-IN ARGUMENT TABLE'S OWN ORDER (the 26.2
+    /// ArgumentTypeInfos bootstrap verbatim — the registration order
+    /// IS the registry id space the skip-sync path answers): the
+    /// uniqueness, the bookends, the resolution helper's two laws
+    /// (the synced entry the name-fold answers, the out-of-table id
+    /// the built-in slice keeps).
+    #[test]
+    fn the_argument_type_table_the_builtin_order_speaks() {
+        assert_eq!(BUILTIN_COMMAND_ARGUMENT_TYPES.len(), 55);
+        assert_eq!(
+            BUILTIN_COMMAND_ARGUMENT_TYPES[0], "minecraft:brigadier:bool",
+            "the bool the registration's first walk banks"
+        );
+        assert_eq!(
+            BUILTIN_COMMAND_ARGUMENT_TYPES[54], "minecraft:uuid",
+            "the uuid the bootstrap's tail keeps"
+        );
+        assert_eq!(BUILTIN_COMMAND_ARGUMENT_TYPES[6], "minecraft:entity");
+        assert_eq!(
+            BUILTIN_COMMAND_ARGUMENT_TYPES[41], "minecraft:time",
+            "the time the resource family's predecessor rides"
+        );
+        // the names unique (a duplicate would fold two ids into one)
+        let mut sorted: Vec<&str> = BUILTIN_COMMAND_ARGUMENT_TYPES.to_vec();
+        sorted.sort_unstable();
+        sorted.dedup();
+        assert_eq!(sorted.len(), BUILTIN_COMMAND_ARGUMENT_TYPES.len());
+        // THE RESOLUTION HELPER: the synced entry (a reordered table —
+        // id 0 = entity) the name-fold answers
+        let synced = vec!["minecraft:entity".to_string()];
+        assert_eq!(
+            command_argument_type_name(0, &synced),
+            Some("minecraft:entity"),
+            "the synced table the lookup wears"
+        );
+        // the out-of-synced-table id the built-in slice keeps
+        assert_eq!(
+            command_argument_type_name(6, &synced),
+            Some("minecraft:entity"),
+            "the built-in order the skip-sync law answers"
+        );
+        // the past-both id the None keeps
+        assert_eq!(command_argument_type_name(999, &[]), None);
     }
 }

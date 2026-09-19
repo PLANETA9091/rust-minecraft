@@ -4826,6 +4826,7 @@ mod tests {
         snap.info.dimensions = vec!["minecraft:overworld".to_string()];
         snap.info.current_dimension = "minecraft:overworld".to_string();
         snap.registry = RegistryData {
+            command_argument_types: Vec::new(),
             chat_types: Vec::new(),
             dimension_types: vec![mc_protocol::DimensionTypeEntry {
                 name: "minecraft:overworld".to_string(),
@@ -4979,6 +4980,7 @@ mod tests {
         snap.info.dimensions = vec!["minecraft:overworld".to_string()];
         snap.info.current_dimension = "minecraft:overworld".to_string();
         snap.registry = RegistryData {
+            command_argument_types: Vec::new(),
             chat_types: Vec::new(),
             dimension_types: vec![mc_protocol::DimensionTypeEntry {
                 name: "minecraft:overworld".to_string(),

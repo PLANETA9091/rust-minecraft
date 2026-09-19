@@ -494,6 +494,20 @@ pub struct RegistryData {
     /// decoration's translation key + the parameter list the display
     /// walk fills (see [`ChatTypeEntry`]).
     pub chat_types: Vec<ChatTypeEntry>,
+    /// The `minecraft:command_argument_type` entries in ARRIVAL ORDER —
+    /// the id table the ClientboundCommandsPacket's argument nodes
+    /// resolve their parser varints through (javap: the 26.2
+    /// ArgumentNodeStub.serializeCap writes
+    /// `BuiltInRegistries.COMMAND_ARGUMENT_TYPE.getId(info)`; the same
+    /// synced registry the configuration phase streams). Names only:
+    /// the element payloads (the ArgumentTypeInfo codecs' templates —
+    /// the SERVER's own unpack lane) are walked past — the commands
+    /// tree needs the NAME, nothing more (the parser's extra wire
+    /// payload the node parse walks by name — see
+    /// `crate::play::parse_commands`). An EMPTY table is the honest
+    /// skip-sync state: the built-in registration order
+    /// (`play::builtin_command_argument_type_name`) answers.
+    pub command_argument_types: Vec<String>,
 }
 
 impl RegistryData {
@@ -603,6 +617,7 @@ impl RegistryData {
         self.cow_sound_variants.extend(other.cow_sound_variants);
         self.timelines.extend(other.timelines);
         self.timeline_tags.extend(other.timeline_tags);
+        self.command_argument_types.extend(other.command_argument_types);
     }
 }
 
@@ -999,6 +1014,20 @@ pub fn parse_registry_data(payload: &[u8]) -> Result<RegistryData> {
             let entry = parse_chat_type_element(&element, &entry_id)
                 .with_context(|| format!("decode chat_type {entry_id} decoration"))?;
             out.chat_types.push(entry);
+            continue;
+        }
+        if registry_name == "minecraft:command_argument_type" {
+            // same arrival-order id table (the Commands packet's argument
+            // nodes' parser varints resolve through it — the local
+            // suggestions walk reads the NAME, `minecraft:brigadier:float`
+            // the extra-payload table's own key speaks); the element
+            // payloads (the ArgumentTypeInfo templates the SERVER's own
+            // unpack lane consumes) are walked past
+            out.command_argument_types.push(entry_id);
+            if present {
+                crate::play::skip_network_nbt(&mut c)
+                    .with_context(|| format!("skip {registry_name} entry nbt"))?;
+            }
             continue;
         }
         if registry_name == "minecraft:chicken_variant" {
@@ -1688,6 +1717,26 @@ pub mod test_support {
         p
     }
 
+    /// A `minecraft:command_argument_type` Registry Data packet: two
+    /// entries in arrival order — the bool singleton then the entity
+    /// info (the Commands packet's argument nodes' parser varints
+    /// resolve through this table; the element payloads — the
+    /// ArgumentTypeInfo templates the SERVER's own unpack lane
+    /// consumes — are walked past, one tagless + one tag-ful).
+    pub fn command_argument_type_packet() -> Vec<u8> {
+        let mut p = Vec::new();
+        write_varint(&mut p, clientbound::REGISTRY_DATA);
+        write_string(&mut p, "minecraft:command_argument_type");
+        write_varint(&mut p, 2);
+        write_string(&mut p, "minecraft:brigadier:bool");
+        p.push(0); // no tag
+        write_string(&mut p, "minecraft:entity");
+        p.push(1); // a tag rides — walked past
+        p.push(0x0A); // the network NBT's root compound
+        p.push(0x00); // the end tag — an empty element payload
+        p
+    }
+
     /// A `minecraft:sound_event` Registry Data packet: two entries in
     /// arrival order — the zombie's ambient groan then its hurt voice
     /// (the Entity Sound packet's holder varint resolves through this
@@ -1894,9 +1943,9 @@ pub mod test_support {
 mod tests {
     use super::*;
     use super::test_support::{
-        chicken_variant_packet, entity_type_packet, farm_variant_packet, registry_packet,
-        sound_event_packet,
-        timeline_packet, update_tags_packet, world_clock_packet,
+        chicken_variant_packet, command_argument_type_packet, entity_type_packet,
+        farm_variant_packet, registry_packet, sound_event_packet, timeline_packet,
+        update_tags_packet, world_clock_packet,
     };
     use crate::login::{encode_login_disconnect, encode_login_success, encode_set_compression};
     use crate::varint::write_varint;
@@ -2329,6 +2378,23 @@ mod tests {
         );
         assert!(clocks.entity_types.is_empty(), "no type knowledge rides the clock packet");
         assert!(ents.world_clocks.is_empty(), "no clock knowledge rides the type packet");
+        // the command_argument_type registry: the arrival-order id table
+        // the Commands packet's parser varints resolve through (the
+        // element templates walked past — the names the local
+        // suggestions walk keys the extra-payload table on)
+        let parsers = parse_registry_data(&command_argument_type_packet())
+            .expect("command_argument_type parses");
+        assert_eq!(
+            parsers.command_argument_types,
+            vec![
+                "minecraft:brigadier:bool".to_string(),
+                "minecraft:entity".to_string()
+            ]
+        );
+        assert!(
+            ents.command_argument_types.is_empty(),
+            "no parser knowledge rides the entity packet"
+        );
         // the sound_event registry: the arrival-order id table the
         // Entity Sound packet's holder varint resolves through (the
         // voice lane reads the NAME, nothing more)
