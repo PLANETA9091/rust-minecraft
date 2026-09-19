@@ -2596,6 +2596,20 @@ pub struct App {
     /// headless scenes never raise it (the goldens never see the
     /// overlay).
     pub tab_held: bool,
+    /// THE F1 HIDE-HUD FLAG (javap Hud.isHidden — the
+    /// Gui.handleKeybinds keyToggleGui lane's own state): true while
+    /// the F1 key has hidden the whole HUD layer — the extract's
+    /// `Hud.isHidden` field the `toggle()` flip owns, the hidden
+    /// groups the extractRenderState's two ifne branches keep (the
+    /// camera overlays + crosshair + hotbar + effects + boss the
+    /// first, the demo + scoreboard + overlay message + title + chat
+    /// + tab list the second), the debug overlay the
+    /// DebugScreenOverlay.extractRenderState's own
+    /// `hud.isHidden() && gui.screen() == null` gate hides. The
+    /// window loop's F1 rising edge flips it (the in_world lane the
+    /// screen-null keybind law keeps), the headless scenes never
+    /// press F1 (the goldens never see the bare frame).
+    pub hud_hidden: bool,
     /// THE F3 DEBUG OVERLAY (the vanilla keyPress's keyToggleDebugScreen
     /// lane — the rising edge the window loop reads, the toggle the
     /// DebugScreenEntryList.isOverlayVisible gate keeps): true while the
@@ -3041,6 +3055,7 @@ impl App {
                 rows: Vec::new(),
             },
             tab_held: false,
+            hud_hidden: false,
             debug_held: false,
             fps_frames: 0,
             fps_window_start: None,
@@ -11335,6 +11350,19 @@ impl App {
         self.debug_held = !self.debug_held;
     }
 
+    /// THE F1 KEY'S OWN TOGGLE (javap Gui.handleKeybinds's keyToggleGui
+    /// lane — the `Options.keyToggleGui.consumeClick()` rising edge the
+    /// window loop reads, the `Hud.toggle()` walk the bytecode 9-16
+    /// keeps: `this.isHidden = !this.isHidden`): the whole HUD layer
+    /// the flip hides or restores, the next press the flip re-answers.
+    /// The in_world lane the caller keeps (the vanilla keybind walk
+    /// runs with screen == null — the menus and the modal screens the
+    /// lane never reads, the flag the open screen's frame still
+    /// honors).
+    pub fn on_toggle_gui_key(&mut self) {
+        self.hud_hidden = !self.hud_hidden;
+    }
+
     /// THE F3+2 CHORD'S OWN TOGGLE (javap DebugScreenOverlay
     /// .toggleFpsCharts's own walk — the flag's law the bytecode
     /// 8-26 keeps: `renderFpsCharts = !(isOverlayVisible &&
@@ -17705,6 +17733,27 @@ impl App {
     /// official `hud/*` sprites at vanilla positions and sizes.
     fn render_hud(&mut self, g: &mut Gui, a: &mut GuiAssets) {
         let (w, h) = (g.w(), g.h());
+        // THE F1 GATE (javap Hud.extractRenderState's isHidden law — the
+        // `GuiRenderState.isHudHidden = this.isHidden` copy the bytecode
+        // 13-17 keeps, then the hidden groups the TWO ifne branches
+        // speak: the camera overlays + crosshair + hotbar + effects +
+        // boss the first skips (bc 41/78), the demo + scoreboard +
+        // overlay message + title + chat + tab list the second (bc
+        // 88/169); the sleep overlay + the screen-open subtitles the
+        // bytecode keeps drawing the Hud-less client honestly lacks):
+        // the whole HUD layer sleeps while the flag holds — the world
+        // renders bare beneath, the vanilla F1 look. The FPS window's
+        // own bookkeeping the gate keeps counting (the DebugEntryFps
+        // ring the hidden panel's truth still fills — the un-hide the
+        // value's continuity keeps), the debug panel the
+        // DebugScreenOverlay.extractRenderState's own gate hides
+        // (`hud.isHidden() && gui.screen() == null` → return — the
+        // world screen the null-screen shape keeps, the bare world the
+        // F3-open frame still shows).
+        self.record_fps_window();
+        if self.hud_hidden {
+            return;
+        }
         // THE EXPERIENCE BAR (javap `Hud`'s contextual-bar extract: the
         // `gameMode.hasExperience()` gate the survival client speaks —
         // this App IS the survival lane — then `ExperienceBar.
@@ -18221,9 +18270,11 @@ impl App {
         // vanilla renders it OVER the HUD's whole stack, the last
         // stratum the Hud's own render closes with): the F3 gate the
         // visibility owns, the FPS window the frame count re-fills
-        // (the headless scenes never raise the flag — the goldens
-        // never see the panel, the count the idle walk still spends)
-        self.record_fps_window();
+        // (the record walk the F1 gate's top keeps counting — the
+        // hidden frame the ring still fills), the F1 gate the whole
+        // walk above already answered (the debug lane the hidden
+        // frame never reaches — the DebugScreenOverlay's own
+        // `isHidden && screen == null` gate the return re-speaks).
         if self.debug_held {
             self.draw_debug_overlay(g, a, w, h);
         }
@@ -20539,6 +20590,107 @@ mod tests {
         // = 752, the narrow gui the same law answers)
         assert_eq!(right_column_x(854, 100), 752);
         assert_eq!(right_column_x(320, 300), 18);
+    }
+
+    #[test]
+    fn the_f1_key_hides_the_whole_hud_layer() {
+        // THE TOGGLE'S OWN LAW (Gui.handleKeybinds's keyToggleGui lane —
+        // the `Hud.toggle()` flip the bytecode 9-16 keeps:
+        // `isHidden = !isHidden`, the fresh App the false the field
+        // init keeps)
+        let mut app = App::new(3);
+        app.enter_world();
+        assert!(!app.hud_hidden);
+        app.on_toggle_gui_key();
+        assert!(app.hud_hidden);
+        app.on_toggle_gui_key();
+        assert!(!app.hud_hidden);
+
+        // THE PIXELS' OWN VERDICT (the extractRenderState's hidden
+        // groups the bare world the frame keeps — the hotbar chrome,
+        // the crosshair, the XP bar's dark background the hidden frame
+        // all skip): the shown render paints, the hidden render the
+        // bare 3D world answers, the HUD regions the diff count speaks
+        let root = ["assets-cache/jar", "../assets-cache/jar", "../../assets-cache/jar"]
+            .iter()
+            .map(std::path::Path::new)
+            .find(|p| p.join("gui/container/inventory.png").exists());
+        let Some(root) = root else { return };
+        let mut app = App::new(3);
+        app.enter_world();
+        app.spawn_offline_body();
+        let mut assets = GuiAssets::open(&root);
+        let mut fb = crate::raster::Framebuf::new(640, 360);
+        app.render(&mut fb, &mut assets);
+        let shown = fb.color.clone();
+        // 640x360 the scale-1 gui keeps (auto_scale's 240-floor the
+        // 360 height refuses past 1) — the gui space the fb space is
+        let (hx, hy) = hotbar_rect(640, 360);
+        let diff_count = |a: &[u8], b: &[u8], x0: i32, y0: i32, w: i32, h: i32| -> usize {
+            let mut n = 0usize;
+            for y in y0..y0 + h {
+                for x in x0..x0 + w {
+                    let o = ((y as usize) * 640 + x as usize) * 3;
+                    if a[o..o + 3] != b[o..o + 3] {
+                        n += 1;
+                    }
+                }
+            }
+            n
+        };
+        // THE HIDDEN RENDER (the same App the F1 flip answers — the
+        // whole HUD layer the early return skips, the bare 3D world
+        // the frame keeps)
+        app.on_toggle_gui_key();
+        app.render(&mut fb, &mut assets);
+        let hidden = fb.color.clone();
+        // THE HOTBAR + XP ROW (the hotbar 182x22 chrome + the bar's
+        // own 182x5 the hidden frame skips — the terrain the diff
+        // speaks)
+        let hud_bottom_diff = diff_count(&shown, &hidden, hx, hy - 8, 182, 30);
+        assert!(
+            hud_bottom_diff > 500,
+            "the hidden HUD's bottom row the bare world answers: {hud_bottom_diff}"
+        );
+        // THE CROSSHAIR (the 15x15 the first-person frame paints, the
+        // hidden frame the world's own pixels keeps)
+        let cross_diff = diff_count(&shown, &hidden, 640 / 2 - 7, 360 / 2 - 7, 15, 15);
+        assert!(cross_diff > 20, "the crosshair the bare frame skips: {cross_diff}");
+
+        // THE DEBUG OVERLAY'S OWN GATE (DebugScreenOverlay
+        // .extractRenderState's `hud.isHidden() && gui.screen() == null`
+        // → return — the world screen the null-screen shape keeps): the
+        // F3-open + hidden frame the hidden no-debug frame's own bytes
+        // answers — the two renders byte-identical, the panel the
+        // hidden gate never draws
+        let mut fb_debug = crate::raster::Framebuf::new(640, 360);
+        app.on_toggle_gui_key(); // the flag drops — the HUD + the open panel return
+        app.debug_held = true;
+        app.render(&mut fb_debug, &mut assets);
+        let debug_shown = fb_debug.color.clone();
+        let mut fb_hidden_debug = crate::raster::Framebuf::new(640, 360);
+        app.on_toggle_gui_key(); // the flag raises over the open panel
+        app.render(&mut fb_hidden_debug, &mut assets);
+        assert_ne!(
+            shown, debug_shown,
+            "the F3-open frame the shown HUD's own bands + text wears"
+        );
+        assert_eq!(
+            hidden, fb_hidden_debug.color,
+            "the hidden frame the F3-open panel never draws — the bare world twice"
+        );
+
+        // THE PAUSE SCREEN'S OWN LAYER (the vanilla Screen the
+        // isHidden flag never gates — the pause the dim + the title +
+        // the buttons the hidden frame still wears)
+        app.paused = true;
+        let mut fb_pause = crate::raster::Framebuf::new(640, 360);
+        app.render(&mut fb_pause, &mut assets);
+        let pause_diff = diff_count(&hidden, &fb_pause.color, 0, 0, 640, 360);
+        assert!(
+            pause_diff > 10_000,
+            "the pause screen the hidden HUD's frame still paints: {pause_diff}"
+        );
     }
 
     #[test]

@@ -1091,6 +1091,17 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
             if window.is_key_pressed(Key::Q, minifb::KeyRepeat::No) {
                 app.on_drop_key(window.is_key_down(Key::LeftCtrl));
             }
+            // THE F1 HIDE-HUD TOGGLE (vanilla Gui.handleKeybinds's
+            // keyToggleGui lane — the `Options.keyToggleGui
+            // .consumeClick()` rising edge the `Hud.toggle()` flip
+            // answers): the whole HUD layer the flag hides, the world
+            // the bare frame the vanilla F1 look keeps. The in_world
+            // gate the screen-null keybind law keeps (the menus and
+            // the modal screens the vanilla lane never reads, the
+            // flag the later frames still honor).
+            if window.is_key_pressed(Key::F1, minifb::KeyRepeat::No) {
+                app.on_toggle_gui_key();
+            }
             // THE F5 PERSPECTIVE (vanilla handleKeybinds's
             // keyTogglePerspective lane): the rising edge cycles the
             // three views — first person, third-person back, third-person
