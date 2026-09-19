@@ -2162,6 +2162,11 @@ pub struct App {
     /// while the other bodies keep drawing (the model's honesty is
     /// its own lane).
     pub spider_model: Option<crate::avatar::SpiderModel>,
+    /// THE CANINE'S OWN LANES (the AgeableMobRenderer's pair the
+    /// WolfRenderer ctor keeps — the adult the WOLF layer bakes, the
+    /// baby the WOLF_BABY layer, the isBaby word the render arm picks).
+    pub wolf_model: Option<crate::avatar::WolfModel>,
+    pub baby_wolf_model: Option<crate::avatar::BabyWolfModel>,
     /// The flame feature's two strips (the burn lane's pixel source —
     /// lazy-loaded and sha1-verified the zombie skin's way).
     pub fire_strips: Option<crate::avatar::FireStrips>,
@@ -2944,6 +2949,8 @@ impl App {
             baby_cow_cold_model: None,
             baby_cow_warm_model: None,
             spider_model: None,
+            wolf_model: None,
+            baby_wolf_model: None,
             fire_strips: None,
             orb_sheet: None,
             underwater_screen: None,
@@ -4323,6 +4330,10 @@ impl App {
                         // the same fold the follow round speaks)
                         crate::mob::arm_breeders(&mut self.mobs);
                         crate::mob::arm_follow_parents(&mut self.mobs);
+                        // THE AVOIDENTITYGOAL'S OWN SCAN (the skeleton's
+                        // prio-3 wolf flee the caller's pre-pass arms —
+                        // the same moment the breed/follow scans keep)
+                        crate::mob::arm_skeleton_wolf_avoid(&mut self.mobs);
                         // THE RIDE'S OWN AUTHORITY (the ridden vehicle the
                         // ride branch's own tick spoke — the double tick
                         // the skip refuses: the vanilla order the
@@ -15843,6 +15854,17 @@ impl App {
             self.spider_model =
                 crate::avatar::SpiderModel::load(std::path::Path::new("assets-cache/jar"));
         }
+        // THE WOLF LANES' own lazy load (the same honesty: a failed
+        // wolf skin keeps only the canines unseen — the adult and the
+        // baby the two OWN shas the loads verify)
+        if self.wolf_model.is_none() {
+            self.wolf_model =
+                crate::avatar::WolfModel::load(std::path::Path::new("assets-cache/jar"));
+        }
+        if self.baby_wolf_model.is_none() {
+            self.baby_wolf_model =
+                crate::avatar::BabyWolfModel::load(std::path::Path::new("assets-cache/jar"));
+        }
         // the pig's honesty is its OWN lane: a failed pig skin keeps
         // only the pigs unseen, the zombies keep drawing
         let pig_model = self.pig_model.as_ref();
@@ -15892,6 +15914,11 @@ impl App {
         // the spider's honesty is ITS OWN lane: a failed spider skin
         // keeps only the arachnids unseen, the other bodies keep drawing
         let spider_model = self.spider_model.as_ref();
+        // the wolf lanes' honesty is THEIR OWN lane: a failed wolf
+        // skin keeps only the canines unseen (the adult and the baby
+        // the pair's own shas verify)
+        let wolf_model = self.wolf_model.as_ref();
+        let baby_wolf_model = self.baby_wolf_model.as_ref();
         // the two lanes' own union (the offline AI bodies + the wire's
         // remote bodies — the SAME lerp folds speak both, the model
         // kind the registry's name arms at the merge)
@@ -16606,6 +16633,39 @@ impl App {
                     let quads = spider.quads(&state, feet, cam.yaw, cam.pitch);
                     (quads, Box::new(move |u, v| spider.pixel(u, v)))
                 }
+                crate::mob::MobKind::Wolf => {
+                    // THE CANINE'S OWN PAIR (the WolfRenderer ctor's
+                    // AgeableMobRenderer walk — the adult the WOLF
+                    // layer, the baby the WOLF_BABY, the isBaby word
+                    // the model pick wears — NOT a scaled adult, the
+                    // dedicated baby mesh the field arms). The
+                    // setupAnim's own words the state carries: the
+                    // look pair, the walk pair, the death clock — the
+                    // tail angle the WILD word the model bakes (the
+                    // angry/tame lanes the metadata the client never
+                    // reads — the honest skip the doc keeps)
+                    let state = crate::avatar::WolfState {
+                        yaw_deg: mob.yaw,
+                        pitch_deg: head_pitch,
+                        head_yaw_off_deg: head_yaw,
+                        walk_pos: mob.walk.position_at(self.partial_tick),
+                        walk_speed: mob.walk.speed_at(self.partial_tick),
+                        death_time: mob.death_time_at(self.partial_tick),
+                    };
+                    if mob.is_baby() {
+                        let Some(baby) = baby_wolf_model else {
+                            continue; // the baby skin failed its sha1 — this body stays unseen
+                        };
+                        let quads = baby.quads(&state, feet, cam.yaw, cam.pitch);
+                        (quads, Box::new(move |u, v| baby.pixel(u, v)))
+                    } else {
+                        let Some(wolf) = wolf_model else {
+                            continue; // the wolf skin failed its sha1 — this body stays unseen
+                        };
+                        let quads = wolf.quads(&state, feet, cam.yaw, cam.pitch);
+                        (quads, Box::new(move |u, v| wolf.pixel(u, v)))
+                    }
+                }
             };
             // THE FLAME FEATURE's own bbox ask — the registration's
             // dims the kind's own EntityTypes speaks (the zombie
@@ -16641,6 +16701,10 @@ impl App {
                 crate::mob::MobKind::Spider => (
                     crate::mob::SPIDER_WIDTH as f32,
                     crate::mob::SPIDER_HEIGHT as f32,
+                ),
+                crate::mob::MobKind::Wolf => (
+                    crate::mob::WOLF_WIDTH as f32,
+                    crate::mob::WOLF_HEIGHT as f32,
                 ),
             };
             let (bbox_w, bbox_h) = if mob.is_baby() {

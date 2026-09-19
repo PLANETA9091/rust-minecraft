@@ -259,3 +259,21 @@ pub const PARTICLE_GLINT_PNG_SHA1: &str = "1ecd0e75fb6baa092f277178545b9aa49a755
 pub const PARTICLE_GLINT_RUNTIME_PATH: &str = "particle/glint.png";
 pub const PARTICLE_SWEEP_PNG_SHA1S: [&str; 8] = ["8c7d923d146cad394c8caaf1a4badf68ca29753e", "ef57d3910c34c4d76e8baa6acd50e43d3da985bc", "bf99457c805323fb7733d11be2f9d61f03ff8ca4", "4785e75fc3f22d0452d42b8905f0fe6b3ec60f54", "f0d3509efe3e0f068eac9f0bc7dff0fce2758b17", "f0945f4c7e7dd0433d411ec31814ad6067f212c9", "8dfa2cdc7d0288f52a193ff70610628cee836c91", "276ae2fcc4d436e35ba8f61afb1adc7149b8eb4e"];
 pub const PARTICLE_SWEEP_RUNTIME_PATHS: [&str; 8] = ["particle/sweep_0.png", "particle/sweep_1.png", "particle/sweep_2.png", "particle/sweep_3.png", "particle/sweep_4.png", "particle/sweep_5.png", "particle/sweep_6.png", "particle/sweep_7.png"];
+
+/// The WOLF skin (the wild default the WolfRenderer's extractRenderState
+/// `wolf.getTexture()` answers — the variant table's PALE word the
+/// no-variant lane keeps), generated from the same jar: the source sha1
+/// the wolf renderer verifies before it draws (javap AdultWolfModel:
+/// the createBodyLayer mesh the `LayerDefinition.create(mesh, 64, 32)`
+/// layout unwraps — the head+ears+muzzle/body/upper_body/4-legs/tail
+/// chain the bytecode speaks).
+pub const WOLF_PNG_SHA1: &str = "f3719d108a4db82936aed30bfa7dc77bc83a903f";
+pub const WOLF_RUNTIME_PATH: &str = "entity/wolf/wolf.png";
+
+/// The WOLF BABY skin (the dedicated baby lane's own texture), generated
+/// from the same jar: the source sha1 the baby model verifies before it
+/// draws (javap WolfRenderer's babyModel = BabyWolfModel(bakeLayer(WOLF_BABY))
+/// — the AgeableMobRenderer's babyModel field the isBaby word picks, the
+/// OWN 32x32 layout the BabyWolfModel's `createBodyLayer` create keeps).
+pub const WOLF_BABY_PNG_SHA1: &str = "c30f5f4c2811b5169c6be18fa2bfb126f7d837c1";
+pub const WOLF_BABY_RUNTIME_PATH: &str = "entity/wolf/wolf_baby.png";

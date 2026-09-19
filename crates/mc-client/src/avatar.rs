@@ -3016,6 +3016,516 @@ fn build_spider_parts(state: &SpiderState) -> Vec<Part> {
     ]
 }
 
+/// 26.2 `WolfModel.setupAnim` reads — the head pair rides the
+/// netHeadYaw/pitch words the quadruped's own state wears, the walk
+/// pair the WalkAnimationState feeds, the death clock the entity
+/// fold's own input. THE WILD WOLF's own tail: the state carries no
+/// tail-angle lane — the `Wolf.getTailAngle()` bytecode's OWN WILD
+/// word (0.6283185482025146, the non-angry non-tame return) the
+/// model bakes; the ANGRY word (1.539380431175232) and the TAME
+/// health-fold ((0.55 - lost/maxHealth * 0.4) * PI) the client's
+/// metadata lanes never read — the honest skip the doc keeps (the
+/// anger byte the wolf-specific synched-data id carries, the tame
+/// the owner the client never owns).
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct WolfState {
+    pub yaw_deg: f32,
+    pub pitch_deg: f32,
+    pub head_yaw_off_deg: f32,
+    pub walk_pos: f32,
+    pub walk_speed: f32,
+    pub death_time: f32,
+}
+
+/// THE WILD WOLF'S OWN TAIL ANGLE (javap `Wolf.getTailAngle` the 26.2
+/// bytecode keeps: the isAngry arm returns 1.539380431175232, the
+/// isTame arm the health fold speaks, the WILD tail the base word
+/// wears — the SAME number the createBodyLayer's tail PartPose
+/// base xRot speaks, the setupAnim's override the value never
+/// moves for the wild body).
+pub const WILD_TAIL_ANGLE: f32 = 0.628_318_55;
+
+/// The full adult wolf model — the 26.2 `AdultWolfModel.createBodyLayer`'s
+/// own numbers, bytecode-proven off the official jar (classfile_dump +
+/// raw_disasm: the createBodyLayer walk + the WolfModel.setupAnim fold):
+/// the head pivot (-1, 13.5, -7) with the CHILD real_head (PartPose.ZERO
+/// — the four cubes: the 6x6x4 skull (uv 0,0), the two 2x2x1 ears (uv
+/// 16,14) at ±2 x, the 3x3x4 muzzle (uv 0,10) at the -0.001 y the
+/// ldc's epsilon keeps), the body 6x9x6 (uv 18,14) at pivot (0, 14, 2)
+/// rotated 1.5707963705062866 x, the upper_body 8x6x7 (uv 21,0) at
+/// pivot (-1, 14, -3) with the SAME x-rot, the FOUR 2x8x2 legs (uv
+/// 0,18) — the right pair's `.mirror()` u-flip, the pivots
+/// (-2.5/0.5, 16, 7/-4) — and the tail pivot (-1, 12, 8) with the
+/// base 0.6283185482025146 x-rot, the child real_tail (uv 9,18) the
+/// 2x8x2 brush wears.
+pub struct WolfModel {
+    rgba: Vec<u8>,
+}
+
+impl WolfModel {
+    /// Load + sha1-verify the WOLF's skin (the WolfRenderer's
+    /// getTextureLocation the variant table's pale word). The `None` =
+    /// the wolf never renders (the same honesty the other bodies speak:
+    /// the renderer must not lie about its data).
+    pub fn load(root: &Path) -> Option<WolfModel> {
+        let bytes = std::fs::read(root.join(skin::WOLF_RUNTIME_PATH)).ok()?;
+        let digest = sha1::Sha1::digest(&bytes);
+        if hex::encode(digest) != skin::WOLF_PNG_SHA1 {
+            return None;
+        }
+        let (w, h, rgba) = decode_rgba(&bytes).ok()?;
+        if w != 64 || h != 32 || rgba.len() != 64 * 32 * 4 {
+            return None;
+        }
+        Some(WolfModel { rgba })
+    }
+
+    /// The skin pixel at (u, v) — the RGBA row-major words, v down
+    /// (the 64x32 layout's own stride the load verified).
+    pub fn pixel(&self, u: f32, v: f32) -> [u8; 4] {
+        let (uu, vv) = (u.clamp(0.0, 63.999_9), v.clamp(0.0, 31.999_9));
+        let x = uu as usize;
+        let y = vv as usize;
+        let o = (y * 64 + x) * 4;
+        [self.rgba[o], self.rgba[o + 1], self.rgba[o + 2], self.rgba[o + 3]]
+    }
+
+    /// THE POSED RENDER: the world-space textured quads of the wolf
+    /// at `state` — the SAME entity chain fold the avatar speaks (one
+    /// law, every living model), the canine's own parts beneath.
+    pub fn quads(
+        &self,
+        state: &WolfState,
+        feet: Vec3,
+        cam_yaw: f32,
+        cam_pitch: f32,
+    ) -> Vec<AvatarQuad> {
+        let parts = build_wolf_parts(state);
+        let (fold_point, fold_normal) = entity_folds(state.yaw_deg, state.death_time, 0.0, feet);
+        let mut out: Vec<AvatarQuad> = Vec::with_capacity(6 * 9);
+        let ident = Mat4::IDENT;
+        for part in &parts {
+            collect_part(part, &ident, &fold_point, &fold_normal, cam_yaw, cam_pitch, &mut out);
+        }
+        out
+    }
+}
+
+/// THE WOLF'S PARTS — the 26.2 `WolfModel.setupAnim`'s own walk the
+/// bytecode folds verbatim: the head rides the look pair (the
+/// 0.01745329238474369 PI/180 fold), the tail yaws the wag
+/// `cos(f2 * 0.6661999821662903) * 1.399999976158142 * f3` the ldc
+/// pair keeps, the four legs swing the SAME multiplier (the diagonal
+/// pairs the +3.1415927410125732 phase splits: the right-hind and
+/// the left-front in phase, the left-hind and the right-front
+/// counter-phase), the tail's xRot the WILD TAIL ANGLE the
+/// getTailAngle word wears, and the body's zRot the shakeOffWater's
+/// `getBodyRollAngle(-0.1599999964237213)` the NO-WETNESS lane's 0.0
+/// answers (the wet-shake the client's water lane never tracks).
+fn build_wolf_parts(state: &WolfState) -> Vec<Part> {
+    let f2 = state.walk_pos;
+    let f3 = state.walk_speed;
+    // THE WAG + THE LEG SWINGS (the four cos folds — the diagonal
+    // phases the ldc 3.1415927410125732 keeps)
+    let wag = mth_cos(f2 * 0.666_199_98) * 1.399_999_98 * f3;
+    let leg_rh = mth_cos(f2 * 0.666_199_98) * 1.399_999_98 * f3;
+    let leg_lh = mth_cos(f2 * 0.666_199_98 + 3.141_592_7) * 1.399_999_98 * f3;
+    let leg_rf = mth_cos(f2 * 0.666_199_98 + 3.141_592_7) * 1.399_999_98 * f3;
+    let leg_lf = mth_cos(f2 * 0.666_199_98) * 1.399_999_98 * f3;
+    let head_x = state.pitch_deg.to_radians();
+    let head_y = state.head_yaw_off_deg.to_radians();
+    // THE LEG BOXES (the right pair's `.mirror()` u-flip the builder
+    // walk keeps, the box (0,0,-1) 2x8x2 the four share)
+    let leg_cube = |mirror: bool| Cube {
+        tex: (0.0, 18.0),
+        origin: [0.0, 0.0, -1.0],
+        size: [2.0, 8.0, 2.0],
+        inflate: 0.0,
+        mirror,
+    };
+    vec![
+        // head (the look pair rides; the child real_head the four
+        // cubes wears — the ZERO offset the parent matrix carries)
+        Part {
+            pivot: [-1.0, 13.5, -7.0],
+            x_rot: head_x,
+            y_rot: head_y,
+            z_rot: 0.0,
+            cubes: vec![],
+            children: vec![Part {
+                pivot: [0.0, 0.0, 0.0],
+                x_rot: 0.0,
+                y_rot: 0.0,
+                z_rot: 0.0,
+                cubes: vec![
+                    // the skull (uv 0,0)
+                    Cube {
+                        tex: (0.0, 0.0),
+                        origin: [-2.0, -3.0, -2.0],
+                        size: [6.0, 6.0, 4.0],
+                        inflate: 0.0,
+                        mirror: false,
+                    },
+                    // the left ear (uv 16,14)
+                    Cube {
+                        tex: (16.0, 14.0),
+                        origin: [-2.0, -5.0, 0.0],
+                        size: [2.0, 2.0, 1.0],
+                        inflate: 0.0,
+                        mirror: false,
+                    },
+                    // the right ear (uv 16,14)
+                    Cube {
+                        tex: (16.0, 14.0),
+                        origin: [2.0, -5.0, 0.0],
+                        size: [2.0, 2.0, 1.0],
+                        inflate: 0.0,
+                        mirror: false,
+                    },
+                    // the muzzle (uv 0,10 — the y epsilon the ldc keeps)
+                    Cube {
+                        tex: (0.0, 10.0),
+                        origin: [-0.5, -0.001_000_000_5, -5.0],
+                        size: [3.0, 3.0, 4.0],
+                        inflate: 0.0,
+                        mirror: false,
+                    },
+                ],
+                children: vec![],
+            }],
+        },
+        // body (the 90-degree x-rot the ctor's PartPose speaks —
+        // the barrel lies along the spine; the shake-off roll the
+        // no-wetness word zeroes)
+        Part {
+            pivot: [0.0, 14.0, 2.0],
+            x_rot: 1.570_796_4,
+            y_rot: 0.0,
+            z_rot: 0.0,
+            cubes: vec![Cube {
+                tex: (18.0, 14.0),
+                origin: [-3.0, -2.0, -3.0],
+                size: [6.0, 9.0, 6.0],
+                inflate: 0.0,
+                mirror: false,
+            }],
+            children: vec![],
+        },
+        // upper body (the chest, the SAME x-rot)
+        Part {
+            pivot: [-1.0, 14.0, -3.0],
+            x_rot: 1.570_796_4,
+            y_rot: 0.0,
+            z_rot: 0.0,
+            cubes: vec![Cube {
+                tex: (21.0, 0.0),
+                origin: [-3.0, -3.0, -3.0],
+                size: [8.0, 6.0, 7.0],
+                inflate: 0.0,
+                mirror: false,
+            }],
+            children: vec![],
+        },
+        // right hind leg (the mirror u-flip; the plain phase)
+        Part {
+            pivot: [-2.5, 16.0, 7.0],
+            x_rot: leg_rh,
+            y_rot: 0.0,
+            z_rot: 0.0,
+            cubes: vec![leg_cube(true)],
+            children: vec![],
+        },
+        // left hind leg (the plain builder; the counter phase)
+        Part {
+            pivot: [0.5, 16.0, 7.0],
+            x_rot: leg_lh,
+            y_rot: 0.0,
+            z_rot: 0.0,
+            cubes: vec![leg_cube(false)],
+            children: vec![],
+        },
+        // right front leg (the mirror; the counter phase)
+        Part {
+            pivot: [-2.5, 16.0, -4.0],
+            x_rot: leg_rf,
+            y_rot: 0.0,
+            z_rot: 0.0,
+            cubes: vec![leg_cube(true)],
+            children: vec![],
+        },
+        // left front leg (the plain; the plain phase)
+        Part {
+            pivot: [0.5, 16.0, -4.0],
+            x_rot: leg_lf,
+            y_rot: 0.0,
+            z_rot: 0.0,
+            cubes: vec![leg_cube(false)],
+            children: vec![],
+        },
+        // tail (the wag yaws, the WILD angle the xRot wears; the
+        // child real_tail the brush carries)
+        Part {
+            pivot: [-1.0, 12.0, 8.0],
+            x_rot: WILD_TAIL_ANGLE,
+            y_rot: wag,
+            z_rot: 0.0,
+            cubes: vec![],
+            children: vec![Part {
+                pivot: [0.0, 0.0, 0.0],
+                x_rot: 0.0,
+                y_rot: 0.0,
+                z_rot: 0.0,
+                cubes: vec![Cube {
+                    tex: (9.0, 18.0),
+                    origin: [0.0, 0.0, -1.0],
+                    size: [2.0, 8.0, 2.0],
+                    inflate: 0.0,
+                    mirror: false,
+                }],
+                children: vec![],
+            }],
+        },
+    ]
+}
+
+/// THE WOLF BABY'S OWN MODEL — the 26.2 `BabyWolfModel(bakeLayer(WOLF_BABY))`
+/// the AgeableMobRenderer's babyModel field the isBaby word picks (NOT a
+/// scaled adult — the renderer's own second model the 0.5 age scale
+/// pairs). The mesh the BabyWolfModel.createBodyLayer's
+/// `LayerDefinition.create(mesh, 32, 32)` keeps: the bigger-looking head
+/// (the 6x5x5 skull uv (0,12) with the 0.02500000037252903 deformation,
+/// the 3x2x2 muzzle uv (17,12)), the two 2x2x1 ears as the head's
+/// CHILDREN (uv (0,5)/(20,5) at the ±2 x, -4.25 y pivots), the 6x4x8
+/// body (uv 0,0), the four 2x3x2 stub legs (the four DIFFERENT uv
+/// origins (0,22)/(8,22)/(0,0)/(20,0) the plain builder keeps), the
+/// tail pivot (0, 19, 3) with the base -0.5235999822616577 x-rot — the
+/// base the INHERITED setupAnim's tailAngle override swallows (the
+/// BabyWolfModel extends WolfModel: the same walk/wag/look law runs,
+/// the wild 0.6283185482025146 the xRot wears) — and the tail_r1 child
+/// (the pivot (0, -0.6, 0.2), the x-rot -3.0999999046325684, the
+/// 2x6x2 brush uv (22,16)).
+pub struct BabyWolfModel {
+    rgba: Vec<u8>,
+}
+
+impl BabyWolfModel {
+    /// Load + sha1-verify the BABY wolf's skin (the wolf_baby.png the
+    /// variant table's baby entry). `None` = the baby never renders.
+    pub fn load(root: &Path) -> Option<BabyWolfModel> {
+        let bytes = std::fs::read(root.join(skin::WOLF_BABY_RUNTIME_PATH)).ok()?;
+        let digest = sha1::Sha1::digest(&bytes);
+        if hex::encode(digest) != skin::WOLF_BABY_PNG_SHA1 {
+            return None;
+        }
+        let (w, h, rgba) = decode_rgba(&bytes).ok()?;
+        if w != 32 || h != 32 || rgba.len() != 32 * 32 * 4 {
+            return None;
+        }
+        Some(BabyWolfModel { rgba })
+    }
+
+    /// The baby skin pixel at (u, v) — the 32x32 layout's own stride.
+    pub fn pixel(&self, u: f32, v: f32) -> [u8; 4] {
+        let (uu, vv) = (u.clamp(0.0, 31.999_9), v.clamp(0.0, 31.999_9));
+        let x = uu as usize;
+        let y = vv as usize;
+        let o = (y * 32 + x) * 4;
+        [self.rgba[o], self.rgba[o + 1], self.rgba[o + 2], self.rgba[o + 3]]
+    }
+
+    /// THE POSED RENDER: the baby's quads — the SAME walk/wag/look
+    /// law the adult's build runs (the BabyWolfModel extends
+    /// WolfModel: no override the class keeps), the baby's own mesh
+    /// beneath.
+    pub fn quads(
+        &self,
+        state: &WolfState,
+        feet: Vec3,
+        cam_yaw: f32,
+        cam_pitch: f32,
+    ) -> Vec<AvatarQuad> {
+        let parts = build_baby_wolf_parts(state);
+        let (fold_point, fold_normal) = entity_folds(state.yaw_deg, state.death_time, 0.0, feet);
+        let mut out: Vec<AvatarQuad> = Vec::with_capacity(6 * 10);
+        let ident = Mat4::IDENT;
+        for part in &parts {
+            collect_part(part, &ident, &fold_point, &fold_normal, cam_yaw, cam_pitch, &mut out);
+        }
+        out
+    }
+}
+
+/// the wolf BABY's parts, posed by `state` — the BabyWolfModel's own
+/// bytecode-proven mesh (the deform head, the child ears, the stub
+/// legs on four distinct uvs, the curled tail the child pivot
+/// carries), the SAME anim law the adult speaks.
+fn build_baby_wolf_parts(state: &WolfState) -> Vec<Part> {
+    let f2 = state.walk_pos;
+    let f3 = state.walk_speed;
+    let wag = mth_cos(f2 * 0.666_199_98) * 1.399_999_98 * f3;
+    let leg_rh = mth_cos(f2 * 0.666_199_98) * 1.399_999_98 * f3;
+    let leg_lh = mth_cos(f2 * 0.666_199_98 + 3.141_592_7) * 1.399_999_98 * f3;
+    let leg_rf = mth_cos(f2 * 0.666_199_98 + 3.141_592_7) * 1.399_999_98 * f3;
+    let leg_lf = mth_cos(f2 * 0.666_199_98) * 1.399_999_98 * f3;
+    let head_x = state.pitch_deg.to_radians();
+    let head_y = state.head_yaw_off_deg.to_radians();
+    vec![
+        // head (the deform skull + the muzzle; the two ears ride as
+        // the children the pivots carry)
+        Part {
+            pivot: [0.0, 18.25, -4.0],
+            x_rot: head_x,
+            y_rot: head_y,
+            z_rot: 0.0,
+            cubes: vec![
+                Cube {
+                    tex: (0.0, 12.0),
+                    origin: [-2.990_000_0, -3.25, -3.0],
+                    size: [6.0, 5.0, 5.0],
+                    inflate: 0.025_000_000,
+                    mirror: false,
+                },
+                Cube {
+                    tex: (17.0, 12.0),
+                    origin: [-1.5, -0.239_999_99, -5.0],
+                    size: [3.0, 2.0, 2.0],
+                    inflate: 0.0,
+                    mirror: false,
+                },
+            ],
+            children: vec![
+                Part {
+                    pivot: [-2.0, -4.25, -0.5],
+                    x_rot: 0.0,
+                    y_rot: 0.0,
+                    z_rot: 0.0,
+                    cubes: vec![Cube {
+                        tex: (0.0, 5.0),
+                        origin: [-1.0, -1.0, -0.5],
+                        size: [2.0, 2.0, 1.0],
+                        inflate: 0.0,
+                        mirror: false,
+                    }],
+                    children: vec![],
+                },
+                Part {
+                    pivot: [2.0, -4.25, -0.5],
+                    x_rot: 0.0,
+                    y_rot: 0.0,
+                    z_rot: 0.0,
+                    cubes: vec![Cube {
+                        tex: (20.0, 5.0),
+                        origin: [-1.0, -1.0, -0.5],
+                        size: [2.0, 2.0, 1.0],
+                        inflate: 0.0,
+                        mirror: false,
+                    }],
+                    children: vec![],
+                },
+            ],
+        },
+        // body
+        Part {
+            pivot: [0.0, 19.0, 0.0],
+            x_rot: 0.0,
+            y_rot: 0.0,
+            z_rot: 0.0,
+            cubes: vec![Cube {
+                tex: (0.0, 0.0),
+                origin: [-3.0, -2.0, -4.0],
+                size: [6.0, 4.0, 8.0],
+                inflate: 0.0,
+                mirror: false,
+            }],
+            children: vec![],
+        },
+        // right hind leg (uv (0,22))
+        Part {
+            pivot: [-1.5, 21.0, 3.0],
+            x_rot: leg_rh,
+            y_rot: 0.0,
+            z_rot: 0.0,
+            cubes: vec![Cube {
+                tex: (0.0, 22.0),
+                origin: [-1.0, 0.0, -1.0],
+                size: [2.0, 3.0, 2.0],
+                inflate: 0.0,
+                mirror: false,
+            }],
+            children: vec![],
+        },
+        // left hind leg (uv (8,22))
+        Part {
+            pivot: [1.5, 21.0, 3.0],
+            x_rot: leg_lh,
+            y_rot: 0.0,
+            z_rot: 0.0,
+            cubes: vec![Cube {
+                tex: (8.0, 22.0),
+                origin: [-1.0, 0.0, -1.0],
+                size: [2.0, 3.0, 2.0],
+                inflate: 0.0,
+                mirror: false,
+            }],
+            children: vec![],
+        },
+        // right front leg (uv (0,0))
+        Part {
+            pivot: [-1.5, 21.0, -3.0],
+            x_rot: leg_rf,
+            y_rot: 0.0,
+            z_rot: 0.0,
+            cubes: vec![Cube {
+                tex: (0.0, 0.0),
+                origin: [-1.0, 0.0, -1.0],
+                size: [2.0, 3.0, 2.0],
+                inflate: 0.0,
+                mirror: false,
+            }],
+            children: vec![],
+        },
+        // left front leg (uv (20,0))
+        Part {
+            pivot: [1.5, 21.0, -3.0],
+            x_rot: leg_lf,
+            y_rot: 0.0,
+            z_rot: 0.0,
+            cubes: vec![Cube {
+                tex: (20.0, 0.0),
+                origin: [-1.0, 0.0, -1.0],
+                size: [2.0, 3.0, 2.0],
+                inflate: 0.0,
+                mirror: false,
+            }],
+            children: vec![],
+        },
+        // tail (the base -0.5235999822616577 the INHERITED tailAngle
+        // override swallows — the wild word the xRot wears; the
+        // curled brush the tail_r1 child carries)
+        Part {
+            pivot: [0.0, 19.0, 3.0],
+            x_rot: WILD_TAIL_ANGLE,
+            y_rot: wag,
+            z_rot: 0.0,
+            cubes: vec![],
+            children: vec![Part {
+                pivot: [0.0, -0.600_000_02, 0.200_000_00],
+                x_rot: -3.099_999_9,
+                y_rot: 0.0,
+                z_rot: 0.0,
+                cubes: vec![Cube {
+                    tex: (22.0, 16.0),
+                    origin: [-1.0, -5.699_999_8, -1.0],
+                    size: [2.0, 6.0, 2.0],
+                    inflate: 0.0,
+                    mirror: false,
+                }],
+                children: vec![],
+            }],
+        },
+    ]
+}
+
 /// the porcine BABY's parts, posed by `state` — the BabyPigModel's own
 /// bytecode-proven mesh (the 7x6x9 horizontal body, the two-cube head
 /// with its inflate deformations, the four 2x2x2 stub legs on four
@@ -8494,5 +9004,116 @@ mod tests {
             ArmorTex::load(&root, equipment::LEGGINGS_DIR, turtle).is_none(),
             "the turtle scute has no leggings layer — the load refuses"
         );
+    }
+
+    /// THE CANINE'S OWN MESH (javap AdultWolfModel.createBodyLayer +
+    /// WolfModel.setupAnim the 26.2 bytecode speaks): the ELEVEN cubes
+    /// the bake folds (the real_head's skull/ears/muzzle, the body,
+    /// the upper_body, the four legs, the real_tail brush), the rest
+    /// pose the WILD TAIL ANGLE keeps, the walk the diagonal pairs
+    /// swing, the look the head turns, the death the body topples.
+    #[test]
+    fn the_wolf_mesh_bakes_the_canine_parts() {
+        let wolf = WolfModel {
+            rgba: vec![255u8; 64 * 32 * 4],
+        };
+        let feet = Vec3::new(10.0, 64.0, 20.0);
+        let rest = WolfState {
+            yaw_deg: 0.0,
+            pitch_deg: 0.0,
+            head_yaw_off_deg: 0.0,
+            walk_pos: 0.0,
+            walk_speed: 0.0,
+            death_time: 0.0,
+        };
+        let quads = wolf.quads(&rest, feet, 0.0, 0.0);
+        assert_eq!(quads.len(), 66, "11 cubes x 6 faces the bake speaks");
+        let pose_sum = |qs: &[AvatarQuad]| -> f64 {
+            qs.iter()
+                .flat_map(|q| q.pts.iter().flatten())
+                .map(|v| *v as f64)
+                .sum()
+        };
+        // THE WALK CLOCK (the 0.6661999821662903 fold the legs swing;
+        // the diagonal pairs the phase law splits — the sum alone the
+        // change wears, the same evidence the spider's walk keeps)
+        let walking = WolfState { walk_pos: 1.0, walk_speed: 1.0, ..rest };
+        assert_ne!(pose_sum(&quads), pose_sum(&wolf.quads(&walking, feet, 0.0, 0.0)));
+        // THE HEAD'S LOOK: the pitch turns the skull
+        let looking = WolfState { pitch_deg: 25.0, ..rest };
+        assert_ne!(pose_sum(&quads), pose_sum(&wolf.quads(&looking, feet, 0.0, 0.0)));
+        // THE DEATH FOLD
+        let dying = WolfState { death_time: 5.0, ..rest };
+        assert_ne!(pose_sum(&quads), pose_sum(&wolf.quads(&dying, feet, 0.0, 0.0)));
+    }
+
+    /// THE CANINE BABY'S OWN MESH (javap BabyWolfModel.createBodyLayer
+    /// the 32x32 layer the byte dims keep): the TEN cubes the bake
+    /// folds (the deform skull + the muzzle, the two child ears, the
+    /// body, the four stub legs, the curled tail_r1), the INHERITED
+    /// walk law the same swing wears (the BabyWolfModel extends
+    /// WolfModel — no override the class keeps).
+    #[test]
+    fn the_baby_wolf_mesh_bakes_the_stub_parts() {
+        let baby = BabyWolfModel {
+            rgba: vec![255u8; 32 * 32 * 4],
+        };
+        let feet = Vec3::new(10.0, 64.0, 20.0);
+        let rest = WolfState {
+            yaw_deg: 0.0,
+            pitch_deg: 0.0,
+            head_yaw_off_deg: 0.0,
+            walk_pos: 0.0,
+            walk_speed: 0.0,
+            death_time: 0.0,
+        };
+        let quads = baby.quads(&rest, feet, 0.0, 0.0);
+        assert_eq!(quads.len(), 60, "10 cubes x 6 faces the bake speaks");
+        let pose_sum = |qs: &[AvatarQuad]| -> f64 {
+            qs.iter()
+                .flat_map(|q| q.pts.iter().flatten())
+                .map(|v| *v as f64)
+                .sum()
+        };
+        let walking = WolfState { walk_pos: 1.0, walk_speed: 1.0, ..rest };
+        assert_ne!(pose_sum(&quads), pose_sum(&baby.quads(&walking, feet, 0.0, 0.0)));
+        let looking = WolfState { head_yaw_off_deg: 40.0, ..rest };
+        assert_ne!(pose_sum(&quads), pose_sum(&baby.quads(&looking, feet, 0.0, 0.0)));
+    }
+
+    /// THE WOLF MODELS LOAD — the real runtime cache (the generator's
+    /// extraction) decodes the 64x32 adult + the 32x32 baby the shas
+    /// the generated table pins (the WolfRenderer's getTextureLocation
+    /// the pale variant's own words).
+    #[test]
+    fn the_wolf_models_load_sha1_verified() {
+        let mut dir = std::env::current_dir().unwrap();
+        let root = loop {
+            let cand = dir.join("assets-cache/jar");
+            if cand.exists() {
+                break cand;
+            }
+            dir = dir.parent().expect("the runtime root above").to_path_buf();
+        };
+        let wolf = WolfModel::load(&root).expect("the wolf loads from the runtime cache");
+        let mut opaque = 0;
+        for y in 0..32 {
+            for x in 0..64 {
+                if wolf.pixel(x as f32, y as f32)[3] == 255 {
+                    opaque += 1;
+                }
+            }
+        }
+        assert!(opaque > 400, "the hide's texels the canvas keeps: {opaque}");
+        let baby = BabyWolfModel::load(&root).expect("the baby loads from the runtime cache");
+        let mut baby_opaque = 0;
+        for y in 0..32 {
+            for x in 0..32 {
+                if baby.pixel(x as f32, y as f32)[3] == 255 {
+                    baby_opaque += 1;
+                }
+            }
+        }
+        assert!(baby_opaque > 100, "the baby hide's texels keep: {baby_opaque}");
     }
 }

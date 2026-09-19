@@ -1084,6 +1084,21 @@ pub enum MobKind {
     /// the base add's registered default keeps), and the STRING the
     /// loot's own pool drops (the bow's craft the ingredient feeds)
     Spider,
+    /// THE CANINE (javap `AdultWolfModel.createBodyLayer` +
+    /// `BabyWolfModel.createBodyLayer` the 26.2 bytecode speaks — the
+    /// head/ears/muzzle + the rotX body + upper_body + the four 2x8x2
+    /// legs + the tail/real_tail chain the adult wears, the stub-leg
+    /// deform-head mesh the baby keeps; the AgeableMobRenderer's
+    /// babyModel field the isBaby word picks). The wild body the
+    /// EntityTypes clinit speaks (sized 0.6x0.85, eyeHeight 0.68, the
+    /// CREATURE category), the `Wolf.createAttributes`' own triple
+    /// (MOVEMENT_SPEED 0.30000001192092896, MAX_HEALTH 8.0, the
+    /// ATTACK_DAMAGE 4.0 the melee the target goals own), and the
+    /// `Wolf.registerGoals`' own machine the doc banks — the
+    /// TamableAnimalPanicGoal's PANIC_ENVIRONMENTAL_CAUSES tag the
+    /// hurt-driven flee the client never wears, the target half the
+    /// prey lanes the round's own honest skip keeps.
+    Wolf,
 }
 
 impl MobKind {
@@ -1104,6 +1119,11 @@ impl MobKind {
             MobKind::Skeleton
         } else if name == "minecraft:spider" {
             MobKind::Spider
+        } else if name == "minecraft:wolf" {
+            // THE CANINE'S OWN ADMISSION (the 346 round's misrender the
+            // kind retires — a server-spawned wolf the zombie fallback
+            // wore, the canine body the wire name now draws)
+            MobKind::Wolf
         } else {
             MobKind::Zombie
         }
@@ -1166,6 +1186,9 @@ impl MobKind {
             // the clinit's own builder chain makes)
             MobKind::Pig => PIG_HEIGHT * 0.85,
             MobKind::Zombie | MobKind::Skeleton => ZOMBIE_EYE_HEIGHT,
+            // the wolf's own explicit eyeHeight(0.6800000071525574F) —
+            // the EntityTypeIds.WOLF block's ldc_w the 26.2 clinit keeps
+            MobKind::Wolf => WOLF_EYE_HEIGHT,
         }
     }
 
@@ -1184,6 +1207,9 @@ impl MobKind {
             MobKind::Sheep => SHEEP_MAX_HEALTH,
             MobKind::Chicken => CHICKEN_MAX_HEALTH,
             MobKind::Zombie | MobKind::Skeleton => ZOMBIE_MAX_HEALTH,
+            // the wolf's own createAttributes MAX_HEALTH 8.0 — the
+            // Animal.createAnimalAttributes chain's second add speaks
+            MobKind::Wolf => WOLF_MAX_HEALTH,
         }
     }
 
@@ -1206,6 +1232,13 @@ impl MobKind {
             MobKind::Cow => Some(PANIC_SPEED_COW),
             MobKind::Pig => Some(PANIC_SPEED_PIG),
             MobKind::Chicken => Some(PANIC_SPEED_CHICKEN),
+            // the wolf's OWN registerGoals the prio-1 panic fills — but
+            // the TamableAnimalPanicGoal's second ctor arg the
+            // PANIC_ENVIRONMENTAL_CAUSES tag names: the flee the
+            // ENVIRONMENTAL damage arms (the fire, the lightning), the
+            // HURT-driven flee the client's panic lane wears the tag
+            // never arms — the None the honest word keeps
+            MobKind::Wolf => None,
         }
     }
 
@@ -1225,6 +1258,9 @@ impl MobKind {
             // the Spider.createAttributes' own add(MOVEMENT_SPEED,
             // 0.30000001192092896) the ldc2_w keeps
             MobKind::Spider => SPIDER_MOVEMENT_SPEED,
+            // the Wolf.createAttributes' own add(MOVEMENT_SPEED,
+            // 0.30000001192092896) the same word the canine speaks
+            MobKind::Wolf => WOLF_MOVEMENT_SPEED,
         }
     }
 
@@ -1252,6 +1288,10 @@ impl MobKind {
             | MobKind::Cow
             | MobKind::Pig
             | MobKind::Chicken => 1.0,
+            // the wolf's own registerGoals prio-8
+            // WaterAvoidingRandomStrollGoal(this, 1.0) the dconst_1
+            // the dump keeps — the shared plain walk rides
+            MobKind::Wolf => 1.0,
         }
     }
 
@@ -1297,6 +1337,17 @@ impl MobKind {
             (MobKind::Spider, VoiceSlot::Ambient) => "entity.spider.ambient",
             (MobKind::Spider, VoiceSlot::Hurt) => "entity.spider.hurt",
             (MobKind::Spider, VoiceSlot::Death) => "entity.spider.death",
+            // the wolf's own rows (the 26.2 wolf_sound_variant/classic.json's
+            // adult_sounds the DATA_SOUND_VARIANT_ID's CLASSIC default
+            // speaks — the ambient, the hurt, the death the variant's
+            // own files keep; the variant lane the client's metadata
+            // never reads, the classic default the sync's define arms).
+            // The audio table's own id list the rows never join yet —
+            // the table's unknown-id refusal the silent word wears (the
+            // variant-directories' ogg mapping the audio round owes)
+            (MobKind::Wolf, VoiceSlot::Ambient) => "entity.wolf.ambient",
+            (MobKind::Wolf, VoiceSlot::Hurt) => "entity.wolf.hurt",
+            (MobKind::Wolf, VoiceSlot::Death) => "entity.wolf.death",
         }
     }
 
@@ -1346,6 +1397,12 @@ impl MobKind {
             // picks)
             MobKind::Pig => Some(("entity.pig.step", 0.15, 1.0)),
             MobKind::Cow => Some(("entity.cow.step", 0.15, 1.0)),
+            // THE WOLF'S OWN FLAT FOLD (javap `Wolf.playStepSound` the
+            // 26.2 bytecode speaks — the `getSoundSet().stepSound()`
+            // the variant's own word plays at `0.15000000596046448,
+            // 1.0` — no block state the voice reads, the classic
+            // variant the entity.wolf.step name carries)
+            MobKind::Wolf => Some(("entity.wolf.step", 0.15, 1.0)),
             MobKind::Sheep => {
                 use mc_registry::generated::block_sounds as bs;
                 let idx = bs::sound_index(under?)?;
@@ -1596,6 +1653,43 @@ pub const SPIDER_STROLL_SPEED_MODIFIER: f64 = 0.8;
 /// keeps — the Monster base's own createMonsterAttributes the first
 /// link of the chain speaks).
 pub const SPIDER_MAX_HEALTH: f32 = 16.0;
+/// THE WOLF REGISTRATION'S OWN WORDS (javap `EntityTypes` clinit the
+/// 26.2 jar speaks — the EntityTypeIds.WOLF block: the
+/// `sized(0.6000000238418579F, 0.8500000238418579F)` the two ldc
+/// pairs keep, the `eyeHeight(0.6800000071525574F)` the ldc_w names,
+/// the CREATURE category the MobCategory.getstatic speaks, the
+/// passengerAttachments Vec3(0, 0.81875, -0.0625) + the
+/// clientTrackingRange(10) the chain's own tail banks).
+pub const WOLF_WIDTH: f64 = 0.6;
+pub const WOLF_HEIGHT: f64 = 0.85;
+/// THE WOLF REGISTRATION'S OWN `eyeHeight(0.6800000071525574F)` (the
+/// same block — the 26.2 word the classic 0.53 memory never wears).
+pub const WOLF_EYE_HEIGHT: f64 = 0.68;
+/// `Wolf.createAttributes` — the Animal.createAnimalAttributes chain's
+/// own triple: MOVEMENT_SPEED 0.30000001192092896 (the f32 0.3
+/// promoted), MAX_HEALTH 8.0, ATTACK_DAMAGE 4.0.
+pub const WOLF_MOVEMENT_SPEED: f64 = 0.300_000_011_920_928_96;
+pub const WOLF_MAX_HEALTH: f32 = 8.0;
+/// THE AVOID GOAL'S OWN WORDS (javap `AbstractSkeleton.registerGoals`
+/// + `AvoidEntityGoal` the 26.2 bytecode keeps — the 346 round's
+/// audit the ledger banks): the goalSelector prio-3
+/// `new AvoidEntityGoal(this, Wolf.class, 6.0F, 1.0, 1.2)` the
+/// cp#60 Wolf class the iconst_3 names — the maxDist 6.0 the
+/// TargetingConditions.forCombat().range((double)6.0F) walk + the
+/// getEntitiesOfClass box inflate(6.0, 3.0, 6.0) speak, the
+/// walkSpeedModifier 1.0 the moveTo wears, the sprintSpeedModifier
+/// 1.2 the tick's sprint lane multiplies, the 49.0 the dcmpg/ifge
+/// law's own threshold (distanceToSqr < 49.0 — the 7-block ring the
+/// sprint arms), and the DefaultRandomPos.getPosAway(mob, 16, 7,
+/// threat.position()) the bipush pair keeps.
+pub const WOLF_AVOID_MAX_DIST: f64 = 6.0;
+pub const WOLF_AVOID_SPRINT_SQR: f64 = 49.0;
+pub const WOLF_AVOID_WALK_MODIFIER: f64 = 1.0;
+pub const WOLF_AVOID_SPRINT_MODIFIER: f64 = 1.2;
+pub const WOLF_AVOID_BOX_INFLATE_Y: f64 = 3.0;
+pub const WOLF_AVOID_POSAWAY_XZ: i64 = 16;
+pub const WOLF_AVOID_POSAWAY_Y: i64 = 7;
+pub const WOLF_AVOID_TRIES: usize = 10;
 /// THE MONSTER BASE'S OWN MELEE WORD (javap `Monster.
 /// createMonsterAttributes` — the `add(Attributes.ATTACK_DAMAGE)`
 /// single-arg overload the attribute's REGISTERED default keeps: the
@@ -2880,6 +2974,20 @@ pub struct Zombie {
     /// the Some the goal's isRunning word stands for (the
     /// isPanicking fallback's own read), the None the stop law keeps
     pub panic_target: Option<(f64, f64, f64)>,
+    /// THE AVOIDENTITYGOAL'S OWN FIELDS (javap the 26.2 goal the 346
+    /// round's audit banks — the skeleton's prio-3
+    /// AvoidEntityGoal(Wolf, 6.0F, 1.0, 1.2) the goalSelector keeps).
+    /// `live_wolf_seen` the canUse's getNearestEntity raw material the
+    /// pre-pass scan arms (the nearest wolf through the inflate(6, 3, 6)
+    /// box + the 6.0 range gates); `avoid_threat` the RUNNING goal's
+    /// own toAvoid (the entity the goal holds across ticks, the id +
+    /// live pos the pre-pass refreshes, the stop's null write the
+    /// clear keeps); `avoid_target` the getPosAway result the
+    /// createPath moveTo arms — the straight-line stand-in the
+    /// client's goal machine walks.
+    pub live_wolf_seen: Option<(i32, f64, f64, f64)>,
+    pub avoid_threat: Option<(i32, f64, f64, f64)>,
+    pub avoid_target: Option<(f64, f64, f64)>,
     /// THE LAST DAMAGE SOURCE'S OWN WINDOW (the shouldPanic gate the
     /// `getLastDamageSource` 40-tick law keeps — the hurt stamp arms,
     /// the tick's own drain closes)
@@ -3060,6 +3168,9 @@ impl Zombie {
             breed_love_time: 0,
             move_speed_modifier: 1.0,
             panic_target: None,
+            live_wolf_seen: None,
+            avoid_threat: None,
+            avoid_target: None,
             panic_memory_ticks: 0,
             look_ticks: 0,
             age_ticks: 0,
@@ -3115,6 +3226,9 @@ impl Zombie {
             MobKind::Zombie => (ZOMBIE_WIDTH, ZOMBIE_HEIGHT),
             MobKind::Skeleton => (SKELETON_WIDTH, SKELETON_HEIGHT),
             MobKind::Spider => (SPIDER_WIDTH, SPIDER_HEIGHT),
+            // the wolf's own sized(0.6, 0.85) — the EntityTypeIds.WOLF
+            // block's ldc pair the 26.2 clinit keeps
+            MobKind::Wolf => (WOLF_WIDTH, WOLF_HEIGHT),
         };
         // THE BABY'S OWN DIMENSIONS (javap `Sheep.getDefaultDimensions`
         // the isBaby arm the dump names — the half-sized box the baby
@@ -4080,6 +4194,107 @@ impl Zombie {
                 // the running goal owns, the stroll the conflict never
                 // joins.
                 self.stroll_target = None;
+            } else if self.kind == MobKind::Skeleton && self.avoid_target.is_some() {
+                // THE AVOIDENTITYGOAL'S OWN CONTINUE (prio 3 — the
+                // AbstractSkeleton.registerGoals' iconst_3 the 26.2
+                // bytecode keeps, the canContinueToUse's
+                // `!pathNav.isDone()` walk the straight-line stand-in
+                // holds): the flee walk the armed cell keeps, the
+                // SPRINT LAW the tick's own dcmpg/ifge wears —
+                // `mob.distanceToSqr(toAvoid) < 49.0` the
+                // sprintSpeedModifier 1.2 multiplies, else the
+                // walkSpeedModifier 1.0 (the gone wolf the stale pos
+                // the distance law reads, the 49-crossing the walk
+                // arm answers). The arrival the isDone law stops —
+                // the target the stop()'s null write clears, the
+                // threat the NEXT canUse re-scans.
+                let (tx, _ty, tz) = self.avoid_target.unwrap();
+                let sprint = self
+                    .avoid_threat
+                    .map(|(_, ax, ay, az)| {
+                        let ddx = self.x - ax;
+                        let ddy = self.y - ay;
+                        let ddz = self.z - az;
+                        ddx * ddx + ddy * ddy + ddz * ddz < WOLF_AVOID_SPRINT_SQR
+                    })
+                    .unwrap_or(false);
+                self.move_speed_modifier = if sprint {
+                    WOLF_AVOID_SPRINT_MODIFIER
+                } else {
+                    WOLF_AVOID_WALK_MODIFIER
+                };
+                let dx = tx - self.x;
+                let dz = tz - self.z;
+                if dx * dx + dz * dz < STROLL_ARRIVAL * STROLL_ARRIVAL {
+                    self.avoid_target = None;
+                    self.avoid_threat = None;
+                } else {
+                    let len = (dx * dx + dz * dz).sqrt();
+                    self.yaw = (-(dx / len)).atan2(dz / len).to_degrees() as f32;
+                    ix = 0.0;
+                    iz = 1.0;
+                    want_move = true;
+                    self.stroll_target = None;
+                }
+            } else if self.kind == MobKind::Skeleton
+                && self.avoid_target.is_none()
+                && self.live_wolf_seen.is_some()
+            {
+                // THE AVOIDENTITYGOAL'S OWN CANUSE+START (prio 3 —
+                // registered AFTER the FleeSunGoal the same priority
+                // wears: the sun lane the flag conflict owns, the
+                // avoid the night's own lane the else keeps). The
+                // canUse's getPosAway(mob, 16, 7, threat.position())
+                // walk the AWAY-biased roll stands in for — the 10-try
+                // loop the DefaultRandomPos generateRandomPos walk
+                // keeps, each candidate the threat->mob direction's
+                // own ring arms (the spread the away vector ±120°
+                // swings, the range the 16-ring the bipush speaks, the
+                // y the flat lane keeps), the FARTHER GATE the canUse's
+                // own dcmp law wears — the candidate closer to the
+                // threat than the mob already is the goal refuses
+                // (`toAvoid.distanceToSqr(vec3) < toAvoid.distanceToSqr
+                // (mob)` the return-false word). The first passing
+                // candidate the createPath().moveTo(start) arms — the
+                // straight-line stand-in the target field keeps; the
+                // 10 misses the canUse's false the goal wastes (the
+                // NEXT tick the re-roll rides, the stroll the conflict
+                // never owns this tick).
+                let Some((_, ax, ay, az)) = self.live_wolf_seen else {
+                    unreachable!("the lane's own gate keeps the Some");
+                };
+                // the AWAY direction (the threat->mob vector the
+                // getPosAway's own subtract keeps — the flee ring's
+                // own center the atan2 fold names)
+                let away_dx = self.x - ax;
+                let away_dz = self.z - az;
+                // the threat's own distance law (the canUse's compare
+                // the mob's CURRENT distance² the baseline keeps)
+                let cur2 = (self.x - ax) * (self.x - ax)
+                    + (self.y - ay) * (self.y - ay)
+                    + (self.z - az) * (self.z - az);
+                let base_ang = away_dz.atan2(away_dx);
+                let mut picked = None;
+                for _ in 0..WOLF_AVOID_TRIES {
+                    let spread = (self.rng.next_f64() - 0.5) * (4.0 * std::f64::consts::FRAC_PI_3);
+                    let dist = self.rng.next_f64() * WOLF_AVOID_POSAWAY_XZ as f64;
+                    let cand_x = self.x + (base_ang + spread).cos() * dist;
+                    let cand_z = self.z + (base_ang + spread).sin() * dist;
+                    let cand2 = (cand_x - ax) * (cand_x - ax)
+                        + (self.y - ay) * (self.y - ay)
+                        + (cand_z - az) * (cand_z - az);
+                    if cand2 >= cur2 {
+                        picked = Some((cand_x, self.y, cand_z));
+                        break;
+                    }
+                }
+                if let Some(target) = picked {
+                    // the goal's own toAvoid (the entity the id holds)
+                    // + the moveTo the start() speaks
+                    self.avoid_threat = self.live_wolf_seen;
+                    self.avoid_target = Some(target);
+                    self.stroll_target = None;
+                }
             } else if let Some((_id, px, py, pz)) = self.breed_partner {
                 // THE BREEDGOAL'S OWN TICK (prio 2 — the Sheep's own
                 // registerGoals clinit speaks `addGoal(2, new
@@ -5041,8 +5256,12 @@ impl Zombie {
             MobKind::Chicken => CHICKEN_FOOD.contains(&held_item),
             // the monster (and the kinds the mesh lane never drew) —
             // the food gate closed (the spider the monster chain's
-            // newest body the same refusal keeps)
+            // newest body the same refusal keeps). THE WOLF the same
+            // closed gate keeps — the vanilla isFood the TAME word
+            // gates (the owner's hand the client never reads), the
+            // wild body no food accepts
             MobKind::Zombie | MobKind::Skeleton | MobKind::Spider => false,
+            MobKind::Wolf => false,
         }
     }
 
@@ -5229,7 +5448,10 @@ impl Zombie {
                 held_item == "golden_dandelion" && self.age < 0
                     && self.age_lock_particle_timer == 0
             }
+            // the wolf the same lock keeps — the vanilla's zoo tag the
+            // canine never names, the age-lock the kind refuses
             MobKind::Zombie | MobKind::Skeleton | MobKind::Spider => false,
+            MobKind::Wolf => false,
         }
     }
 
@@ -5536,6 +5758,16 @@ impl Zombie {
                         }
                     }
                 }
+            }
+            MobKind::Wolf => {
+                // wolf.json's own shape (the jar's
+                // data/minecraft/loot_table/entities/wolf.json the
+                // verbatim read): the table the TYPE header alone
+                // keeps — the `random_sequence` name "minecraft:
+                // entities/wolf" the jar's data tree never banks a
+                // sequence file for, the EMPTY pool the absent rows
+                // speak — the canine's death nothing drops, the
+                // honest zero-word the pool keeps
             }
         }
         // THE EQUIPMENT'S OWN DROP (javap `Mob.dropCustomDeathLoot`
@@ -6301,6 +6533,99 @@ pub fn try_breed(mobs: &mut [Zombie], next_id: &mut i32, rng: &mut Lcg) -> Vec<B
         }
     }
     out
+}
+
+/// THE AVOIDENTITYGOAL'S OWN SCAN (javap the 26.2 `AvoidEntityGoal.
+/// canUse` the 346 round's audit banks — the getNearestEntity walk the
+/// caller's pre-pass answers before the ticks, the goals' own moment):
+/// every SKELETON (`kind == Skeleton` the goalSelector's own goal the
+/// registerGoals' iconst_3 arms, `isAlive` the `health > 0.0` word)
+/// scans the LIVE WOLVES (`kind == Wolf`, `health > 0.0` — the
+/// getEntitiesOfClass(Wolf.class, ...) list the two gates filter) whose
+/// box intersects the skeleton's own bbox `inflate(6.0, 3.0, 6.0)` (the
+/// AABB.intersects inclusive law the same walk keeps) AND whose
+/// center-to-center `distanceToSqr` stays within the
+/// `TargetingConditions.forCombat().range(6.0)` ring (the squared law
+/// the f2d promotion keeps), the nearest the d1 > d0 fold picks. The
+/// running goal's own toAvoid the LIVE pos the id refresh keeps (the
+/// vanilla entity read the distanceToSqr speaks — the wolf the goal
+/// holds across ticks, the stop the null write clears). The raw
+/// material the `live_wolf_seen` field arms — the TICK's canUse arm
+/// (the getPosAway roll + the farther gate) the goal's own start
+/// keeps, the canUse's false the raw material alone wastes. Returns
+/// the armed count (the caller's evidence).
+pub fn arm_skeleton_wolf_avoid(mobs: &mut [Zombie]) -> usize {
+    // the wolves' own snapshot (the level query's stand-in — the read
+    // the per-entity walk's borrow keeps)
+    let wolves: Vec<(i32, f64, f64, f64, (f64, f64, f64, f64, f64, f64))> = mobs
+        .iter()
+        .filter(|m| m.kind == MobKind::Wolf && m.health > 0.0)
+        .map(|m| (m.id, m.x, m.y, m.z, m.box_for()))
+        .collect();
+    let mut armed = 0;
+    for i in 0..mobs.len() {
+        // the goal's own kind gate — the skeleton's goalSelector the
+        // AvoidEntityGoal alone wears; the dying body the goal's stop
+        // law clears (the canUse the dead the scan never arms)
+        if mobs[i].kind != MobKind::Skeleton || mobs[i].health <= 0.0 {
+            mobs[i].live_wolf_seen = None;
+            mobs[i].avoid_threat = None;
+            mobs[i].avoid_target = None;
+            continue;
+        }
+        // THE RUNNING GOAL'S OWN ENTITY READ (the toAvoid field the
+        // goal holds — the live pos the distanceToSqr law reads: the
+        // id's own wolf the refresh keeps, the gone wolf the stale
+        // pos the vanilla's dead-entity read stands in for — the
+        // distance the sprint law's else arm answers anyway)
+        if let Some((id, _, _, _)) = mobs[i].avoid_threat {
+            if let Some(w) = wolves.iter().find(|w| w.0 == id) {
+                mobs[i].avoid_threat = Some((w.0, w.1, w.2, w.3));
+            }
+        }
+        // THE CANUSE'S SCAN (the getNearestEntity walk the two gates
+        // keep: the inflate(6, 3, 6) box intersect + the 6.0 range ring)
+        let skeleton = &mobs[i];
+        let (sx0, sy0, sz0, sx1, sy1, sz1) = skeleton.box_for();
+        let (minx, miny, minz) = (
+            sx0 - WOLF_AVOID_MAX_DIST,
+            sy0 - WOLF_AVOID_BOX_INFLATE_Y,
+            sz0 - WOLF_AVOID_MAX_DIST,
+        );
+        let (maxx, maxy, maxz) = (
+            sx1 + WOLF_AVOID_MAX_DIST,
+            sy1 + WOLF_AVOID_BOX_INFLATE_Y,
+            sz1 + WOLF_AVOID_MAX_DIST,
+        );
+        let mut best: Option<(i32, f64, f64, f64, f64)> = None;
+        for w in &wolves {
+            let (wx0, wy0, wz0, wx1, wy1, wz1) = w.4;
+            let box_hit = wx0 <= maxx
+                && wx1 >= minx
+                && wy0 <= maxy
+                && wy1 >= miny
+                && wz0 <= maxz
+                && wz1 >= minz;
+            if !box_hit {
+                continue;
+            }
+            let dx = w.1 - skeleton.x;
+            let dy = w.2 - skeleton.y;
+            let dz = w.3 - skeleton.z;
+            let d2 = dx * dx + dy * dy + dz * dz;
+            if d2 > WOLF_AVOID_MAX_DIST * WOLF_AVOID_MAX_DIST {
+                continue;
+            }
+            if best.is_none() || d2 < best.unwrap().4 {
+                best = Some((w.0, w.1, w.2, w.3, d2));
+            }
+        }
+        mobs[i].live_wolf_seen = best.map(|(id, x, y, z, _)| (id, x, y, z));
+        if mobs[i].live_wolf_seen.is_some() {
+            armed += 1;
+        }
+    }
+    armed
 }
 
 /// THE FOLLOWPARENTGOAL'S OWN SCAN (javap `canUse` the followparentgoal
@@ -9830,6 +10155,7 @@ mod tests {
             MobKind::Zombie => (ZOMBIE_WIDTH, ZOMBIE_HEIGHT),
             MobKind::Skeleton => (SKELETON_WIDTH, SKELETON_HEIGHT),
             MobKind::Spider => (SPIDER_WIDTH, SPIDER_HEIGHT),
+            MobKind::Wolf => (WOLF_WIDTH, WOLF_HEIGHT),
         };
         for (k, m) in mobs.iter().enumerate() {
             let (w, h) = dims(m.kind);
@@ -13853,6 +14179,153 @@ mod tests {
         dead.hurt(1000.0, true);
         let ev = dead.tick(&world, None, NIGHT);
         assert!(ev.egg_laid.is_none(), "the dying the lay refuses");
+    }
+
+    #[test]
+    fn the_wolf_kind_the_jar_words_speak() {
+        // THE CANINE'S OWN PER-KIND TABLE (javap the 26.2 jar the
+        // round's audits bank): the wire admission, the EntityTypes
+        // block's dims + eye, the createAttributes triple's walk +
+        // health, the registerGoals' stroll + the
+        // TamableAnimalPanicGoal's environmental tag word, the
+        // shouldBurnInDay base's false, the Animal chain's
+        // not-a-monster, and the classic sound variant's voice rows
+        let w = MobKind::from_wire_name("minecraft:wolf");
+        assert_eq!(w, MobKind::Wolf);
+        assert_eq!(w.eye_height(), WOLF_EYE_HEIGHT);
+        assert!((WOLF_EYE_HEIGHT - 0.68).abs() < 1e-9, "the 0.68 the clinit keeps");
+        assert_eq!(w.max_health(), WOLF_MAX_HEALTH);
+        assert_eq!(WOLF_MAX_HEALTH, 8.0);
+        assert_eq!(w.movement_speed(), WOLF_MOVEMENT_SPEED);
+        assert!((WOLF_MOVEMENT_SPEED - 0.300_000_011_920_928_96).abs() < 1e-15);
+        assert_eq!(w.stroll_speed(), 1.0, "the prio-8 stroll the dconst_1 keeps");
+        assert_eq!(w.panic_speed(), None, "the environmental tag the hurt-flee never arms");
+        assert!(!w.should_burn_in_day(), "the Mob base's own false the canine keeps");
+        assert!(!w.is_monster(), "the Animal chain the Monster branch never reaches");
+        let mut body = Zombie::new(7, 0.5, 5.0, 0.5, 9);
+        body.kind = MobKind::Wolf;
+        let (x0, y0, z0, x1, y1, z1) = body.box_for();
+        let (bw, bh) = (x1 - x0, y1 - y0);
+        assert!((bw - WOLF_WIDTH).abs() < 1e-9, "the sized 0.6");
+        assert!((bh - WOLF_HEIGHT).abs() < 1e-9, "the sized 0.85 — the 26.2 word");
+        assert_eq!(
+            w.voice_event(VoiceSlot::Ambient),
+            "entity.wolf.ambient",
+            "the classic variant's own adult word"
+        );
+        assert_eq!(w.voice_event(VoiceSlot::Hurt), "entity.wolf.hurt");
+        assert_eq!(w.voice_event(VoiceSlot::Death), "entity.wolf.death");
+        assert_eq!(
+            w.step_voice(None),
+            Some(("entity.wolf.step", 0.15, 1.0)),
+            "the playStepSound's flat fold the variant step wears"
+        );
+        // the loot: the empty pool the header-only table keeps
+        let mut dying = Zombie::new(8, 0.5, 5.0, 0.5, 3);
+        dying.kind = MobKind::Wolf;
+        dying.health = 0.0;
+        assert!(dying.death_loot(false).is_empty(), "the wolf drops nothing");
+    }
+
+    #[test]
+    fn the_avoid_goal_the_scan_the_gates_keep() {
+        // THE AVOIDENTITYGOAL'S OWN CANUSE RAW MATERIAL (the pre-pass
+        // the caller's walk arms): the in-range wolf the nearest fold
+        // arms, the 6.0-ring escape the range gate refuses, the
+        // inflate(6, 3, 6) box the y law keeps, the dying wolf the
+        // alive gate skips, the non-skeleton the kind gate never arms
+        let mut mobs = Vec::new();
+        // skeleton at the origin cell
+        let mut skel = Zombie::new(1, 20.5, 5.0, 20.5, 11);
+        skel.kind = MobKind::Skeleton;
+        mobs.push(skel);
+        // wolf IN range (5 blocks east)
+        let mut w1 = Zombie::new(2, 25.5, 5.0, 20.5, 12);
+        w1.kind = MobKind::Wolf;
+        mobs.push(w1);
+        assert_eq!(arm_skeleton_wolf_avoid(&mut mobs), 1);
+        assert_eq!(mobs[0].live_wolf_seen.map(|(id, _, _, _)| id), Some(2));
+        // the wolf OUT of the 6.0 ring (10 blocks north — the box gate
+        // passes, the range law refuses)
+        mobs[1].z = 30.5;
+        assert_eq!(arm_skeleton_wolf_avoid(&mut mobs), 0);
+        assert!(mobs[0].live_wolf_seen.is_none());
+        // the DYING wolf the alive gate skips (in range, dead)
+        mobs[1].z = 20.5;
+        mobs[1].health = 0.0;
+        assert_eq!(arm_skeleton_wolf_avoid(&mut mobs), 0);
+        // the ZOMBIE the kind gate never arms (the AvoidEntityGoal the
+        // skeleton's goalSelector alone wears)
+        mobs[0].kind = MobKind::Zombie;
+        mobs[1].health = 8.0;
+        assert_eq!(arm_skeleton_wolf_avoid(&mut mobs), 0);
+        assert!(
+            mobs[0].avoid_target.is_none() && mobs[0].avoid_threat.is_none(),
+            "the non-skeleton the fields never carry"
+        );
+    }
+
+    #[test]
+    fn the_avoid_goal_the_flee_the_sprint_law_wears() {
+        // THE FLEE WALK (the straight-line stand-in the goal machine
+        // keeps): the armed canUse the AWAY-biased roll arms (the
+        // farther gate the 10-try walk passes on the open flat), the
+        // skeleton walks AWAY from the wolf, the SPRINT the <49 ring
+        // wears (the 1.2 the tick's dcmpg keeps), the arrival the
+        // isDone law stops
+        let world = wide_flat_world();
+        let mut skel = Zombie::new(1, 20.5, 5.0, 20.5, 21);
+        skel.kind = MobKind::Skeleton;
+        let mut wolf = Zombie::new(2, 24.5, 5.0, 20.5, 22);
+        wolf.kind = MobKind::Wolf;
+        // the canUse arm: the pre-pass arms the scan, the tick's
+        // canUse+start the AWAY roll keeps (the east wolf, the west
+        // flee — the away direction the subtract speaks)
+        let mut mobs = vec![skel, wolf];
+        assert_eq!(arm_skeleton_wolf_avoid(&mut mobs), 1);
+        // the threat's own distance law (the canUse's compare the
+        // mob's CURRENT distance² the baseline keeps — the wolf the
+        // east 4 the test keeps)
+        let threat_d2 = |m: &Zombie| {
+            let ddx = m.x - 24.5;
+            let ddy = m.y - 5.0;
+            let ddz = m.z - 20.5;
+            ddx * ddx + ddy * ddy + ddz * ddz
+        };
+        let threat_d2_start = threat_d2(&mobs[0]);
+        for _ in 0..10 {
+            arm_skeleton_wolf_avoid(&mut mobs);
+            mobs[0].tick(&world, None, NIGHT);
+        }
+        // THE CANUSE'S OWN WORD (the farther gate the canUse's compare
+        // keeps): the skeleton the flee leaves FARTHER from the threat
+        // than the walk began — the x-component the away ring's own
+        // spread may keep (the vanilla law the total distance wears,
+        // the axis the stand-in never promises)
+        let threat_d2_end = threat_d2(&mobs[0]);
+        assert!(
+            threat_d2_end > threat_d2_start,
+            "the flee walks AWAY (d2 {} -> {})",
+            threat_d2_start,
+            threat_d2_end
+        );
+        // the threat's id the goal holds (the toAvoid the running
+        // goal keeps, the live pos the pre-pass refreshes)
+        assert_eq!(mobs[0].avoid_threat.map(|(id, _, _, _)| id), Some(2));
+        // THE SPRINT LAW (the tick's own dcmpg/ifge — the 49.0 the
+        // threshold keeps: the 4-block ring the 1.2 sprint arms, the
+        // 8-block ring the 1.0 walk answers — the squared law the
+        // constants pin)
+        assert!(4.0 * 4.0 < WOLF_AVOID_SPRINT_SQR);
+        assert!(8.0 * 8.0 > WOLF_AVOID_SPRINT_SQR);
+        // the arrival stop: the flee target reached, the stop()'s null
+        // write the fields clear
+        mobs[0].avoid_target = Some((mobs[0].x, mobs[0].y, mobs[0].z));
+        let _ = mobs[0].tick(&world, None, NIGHT);
+        assert!(
+            mobs[0].avoid_target.is_none(),
+            "the arrival the isDone law stops"
+        );
     }
 }
 
