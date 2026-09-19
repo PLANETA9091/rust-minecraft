@@ -733,6 +733,20 @@ fn run_join(
                                 let _ = chat_tx
                                     .send(crate::screens::format_player_chat_line(m));
                             }
+                            mc_protocol::PlayEvent::DisguisedChat(m) => {
+                                // THE DISGUISED WALK (the /say, /me and
+                                // the plugin broadcasts' own lane — the
+                                // same decoration fill the player chat
+                                // answers, the server's own bound the
+                                // sources name)
+                                let _ = chat_tx.send(crate::screens::format_decoration_line(
+                                    &m.chat_key,
+                                    &m.parameters,
+                                    &m.sender_name,
+                                    m.target_name.as_deref(),
+                                    &m.content,
+                                ));
+                            }
                             _ => {}
                         }
                         if view.apply(event) || ping_changed || bw_changed || tick_changed {

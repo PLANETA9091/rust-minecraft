@@ -118,6 +118,7 @@ pub mod clientbound {
         CB_PLAYER_INFO_REMOVE as PLAYER_INFO_REMOVE, CB_PLAYER_INFO_UPDATE as PLAYER_INFO_UPDATE,
         CB_TAB_LIST as TAB_LIST,
         CB_SYSTEM_CHAT as SYSTEM_CHAT, CB_PLAYER_CHAT as PLAYER_CHAT,
+        CB_DISGUISED_CHAT as DISGUISED_CHAT,
     };
 }
 
@@ -6741,33 +6742,11 @@ pub fn parse_player_chat(
         }
         other => anyhow::bail!("unknown filter mask type {other} (the enum's 0..=2 walk)"),
     };
-    // the chat type bound: the tagged holder + the names
-    let holder = read_varint(&mut c)?;
-    let (chat_key, parameters) = if holder == 0 {
-        let element = read_network_nbt(&mut c).context("player chat direct chat-type element")?;
-        let entry = crate::config::parse_chat_type_element(&element, "<direct>")
-            .context("player chat direct chat-type decoration")?;
-        (entry.chat_key, entry.parameters)
-    } else {
-        let idx = (holder - 1) as usize;
-        let entry = chat_types.get(idx).with_context(|| {
-            format!(
-                "player chat chat-type id {} past the synced {}-entry table (the byIdOrThrow direction)",
-                holder - 1,
-                chat_types.len()
-            )
-        })?;
-        (entry.chat_key.clone(), entry.parameters.clone())
-    };
-    let sender_name =
-        flatten_component_text(&read_bare_nbt(&mut c).context("player chat sender name")?);
-    let target_name = if read_bool(&mut c)? {
-        Some(flatten_component_text(
-            &read_bare_nbt(&mut c).context("player chat target name")?,
-        ))
-    } else {
-        None
-    };
+    // the chat type bound: the tagged holder + the names (the walk the
+    // [`read_chat_type_bound`] helper speaks — the same record the
+    // disguised chat's bound carries)
+    let (chat_key, parameters, sender_name, target_name) =
+        read_chat_type_bound(&mut c, chat_types)?;
     let content = if fully_filtered {
         String::new()
     } else {
@@ -6778,6 +6757,100 @@ pub fn parse_player_chat(
         sender_name,
         target_name,
         content,
+        chat_key,
+        parameters,
+    })
+}
+
+/// THE BOUND'S OWN WALK (javap of the real 26.2
+/// `ChatType$Bound.STREAM_CODEC` — the clinit's composite: the
+/// `ChatType.STREAM_CODEC` holder + the sender name component + the
+/// OPTIONAL target name component, the two TRUSTED_STREAM_CODEC reads
+/// the composite speaks). The tagged-holder law the house's own
+/// sound-event lane banks: wire tag 0 the DIRECT element NBT (the
+/// `{chat:{translation_key, parameters}}` record the same
+/// [`crate::config::parse_chat_type_element`] walk answers), n >= 1 the
+/// `(n - 1)` registry id the synced chat_types table resolves — the
+/// unknown id the byIdOrThrow direction refuses. The player chat and
+/// the disguised chat packets carry the SAME bound record.
+fn read_chat_type_bound<'a>(
+    c: &mut &'a [u8],
+    chat_types: &[crate::config::ChatTypeEntry],
+) -> Result<(String, Vec<String>, String, Option<String>)> {
+    let holder = read_varint(c)?;
+    let (chat_key, parameters) = if holder == 0 {
+        let element = read_network_nbt(c).context("chat-type direct element")?;
+        let entry = crate::config::parse_chat_type_element(&element, "<direct>")
+            .context("chat-type direct decoration")?;
+        (entry.chat_key, entry.parameters)
+    } else {
+        let idx = (holder - 1) as usize;
+        let entry = chat_types.get(idx).with_context(|| {
+            format!(
+                "chat-type id {} past the synced {}-entry table (the byIdOrThrow direction)",
+                holder - 1,
+                chat_types.len()
+            )
+        })?;
+        (entry.chat_key.clone(), entry.parameters.clone())
+    };
+    let sender_name =
+        flatten_component_text(&read_bare_nbt(c).context("chat bound sender name")?);
+    let target_name = if read_bool(c)? {
+        Some(flatten_component_text(&read_bare_nbt(c).context("chat bound target name")?))
+    } else {
+        None
+    };
+    Ok((chat_key, parameters, sender_name, target_name))
+}
+
+/// THE DISGUISED CHAT'S OWN FACTS (javap of the real 26.2
+/// `ClientboundDisguisedChatPacket` — the clinit's composite: the
+/// `ComponentSerialization.TRUSTED_STREAM_CODEC` content + the
+/// `ChatType$Bound.STREAM_CODEC` bound; NO sender UUID, NO index, NO
+/// signed body — the server-authored words the /say, /me, /tellraw and
+/// the plugin broadcasts speak). The display the same decoration walk
+/// the player chat answers — the bound's key + parameters the format
+/// fills, the component text the content slot carries.
+#[derive(Debug, Clone, PartialEq)]
+pub struct DisguisedChatMessage {
+    /// The component flattened to plain text (the content slot the
+    /// decoration's "content" parameter fills).
+    pub content: String,
+    /// The bound's sender name component flattened (the "sender"
+    /// parameter's source — the /say command source's display name).
+    pub sender_name: String,
+    /// The bound's optional target name component flattened.
+    pub target_name: Option<String>,
+    /// The chat type's decoration translation key (the registry
+    /// entry's `chat.translation_key` — "chat.type.announcement" the
+    /// say-command entry speaks).
+    pub chat_key: String,
+    /// The chat type's decoration parameter names in order.
+    pub parameters: Vec<String>,
+}
+
+/// Parse the Disguised Chat packet (generated id 33): the flattened
+/// component + the chat type bound. The id the chat wire round's
+/// unknown-skip lane used to swallow — the plugin words the real
+/// servers' /say and /tellraw broadcast.
+pub fn parse_disguised_chat(
+    payload: &[u8],
+    chat_types: &[crate::config::ChatTypeEntry],
+) -> Result<DisguisedChatMessage> {
+    let mut c: &[u8] = payload;
+    let id = read_varint(&mut c)?;
+    anyhow::ensure!(
+        id == clientbound::DISGUISED_CHAT,
+        "not a disguised chat packet (0x{id:02X})"
+    );
+    let content =
+        flatten_component_text(&read_bare_nbt(&mut c).context("disguised chat content")?);
+    let (chat_key, parameters, sender_name, target_name) = read_chat_type_bound(&mut c, chat_types)?;
+    Ok(DisguisedChatMessage {
+        content,
+        sender_name,
+        target_name,
         chat_key,
         parameters,
     })
@@ -7414,6 +7487,12 @@ pub enum PlayEvent {
     /// speaks none of — the unsigned display the wire honestly
     /// carries.
     PlayerChat(PlayerChatMessage),
+    /// Disguised Chat: the SERVER-authored word (the /say, /me,
+    /// /tellraw and the plugin broadcasts the real servers speak —
+    /// no sender UUID, no signed body, just the component + the
+    /// bound) — the same decoration walk the player chat answers
+    /// (see [`DisguisedChatMessage`]).
+    DisguisedChat(DisguisedChatMessage),
     /// Any packet without a client surface yet (skipped silently).
     Skipped,
 }
@@ -7571,6 +7650,10 @@ impl<S: Read + Write> PlaySession<S> {
             clientbound::TAB_LIST => Ok(PlayEvent::TabList(parse_tab_list(&pkt)?)),
             clientbound::SYSTEM_CHAT => Ok(PlayEvent::SystemChat(parse_system_chat(&pkt)?)),
             clientbound::PLAYER_CHAT => Ok(PlayEvent::PlayerChat(parse_player_chat(
+                &pkt,
+                &self.registry.chat_types,
+            )?)),
+            clientbound::DISGUISED_CHAT => Ok(PlayEvent::DisguisedChat(parse_disguised_chat(
                 &pkt,
                 &self.registry.chat_types,
             )?)),
@@ -14422,5 +14505,73 @@ mod tests {
         let m = parse_player_chat(&p, &chat_types_table()).unwrap();
         assert_eq!(m.chat_key, "chat.type.text");
         assert_eq!(m.parameters, vec!["sender", "content"]);
+    }
+
+    #[test]
+    fn the_disguised_chat_the_say_lane_the_bound_answers() {
+        // THE WIRE (id 33 + the bare-NBT content + the bound — NO uuid,
+        // NO signed body, the server-authored record the /say and the
+        // plugin broadcasts speak): the holder 2 resolves the say-type's
+        // announcement key, the parameters the format's sources name
+        let mut p = Vec::new();
+        write_varint(&mut p, clientbound::DISGUISED_CHAT);
+        write_bare_nbt(&text_component("the server spoke"), &mut p).unwrap();
+        // the bound: holder 2 -> the second table entry, sender name,
+        // target absent
+        write_varint(&mut p, 2);
+        write_bare_nbt(&text_component("Server"), &mut p).unwrap();
+        p.push(0);
+        let types = vec![
+            crate::config::ChatTypeEntry {
+                name: "minecraft:chat".to_string(),
+                chat_key: "chat.type.text".to_string(),
+                parameters: vec!["sender".to_string(), "content".to_string()],
+            },
+            crate::config::ChatTypeEntry {
+                name: "minecraft:say_command".to_string(),
+                chat_key: "chat.type.announcement".to_string(),
+                parameters: vec!["sender".to_string(), "content".to_string()],
+            },
+        ];
+        let m = parse_disguised_chat(&p, &types).unwrap();
+        assert_eq!(m.content, "the server spoke");
+        assert_eq!(m.sender_name, "Server");
+        assert_eq!(m.target_name, None);
+        assert_eq!(m.chat_key, "chat.type.announcement");
+        assert_eq!(m.parameters, vec!["sender", "content"]);
+        // THE TRUNCATION (a bound-less payload refuses)
+        let mut q = Vec::new();
+        write_varint(&mut q, clientbound::DISGUISED_CHAT);
+        write_bare_nbt(&text_component("word"), &mut q).unwrap();
+        assert!(parse_disguised_chat(&q, &types).is_err());
+    }
+
+    #[test]
+    fn the_player_chat_the_shared_bound_the_same_verdicts_keeps() {
+        // THE REFACTOR'S OWN GUARD (the bound walk the helper speaks —
+        // the player chat's verdicts ride the SAME read the disguised
+        // lane answers: the unknown id the refusal keeps, the target
+        // the optional walk banks)
+        let mut p = player_chat_fixture(2, None, 0);
+        // rewrite the fixture's holder: the fixture builder's walk
+        // already wrote holder 2's table entry — the SECOND entry the
+        // say-command's announcement key resolves
+        let types = vec![
+            crate::config::ChatTypeEntry {
+                name: "minecraft:chat".to_string(),
+                chat_key: "chat.type.text".to_string(),
+                parameters: vec!["sender".to_string(), "content".to_string()],
+            },
+            crate::config::ChatTypeEntry {
+                name: "minecraft:say_command".to_string(),
+                chat_key: "chat.type.announcement".to_string(),
+                parameters: vec!["sender".to_string(), "content".to_string()],
+            },
+        ];
+        let m = parse_player_chat(&p, &types).unwrap();
+        assert_eq!(m.chat_key, "chat.type.announcement");
+        assert_eq!(m.sender_name, "Steve");
+        p = player_chat_fixture(9, None, 0);
+        assert!(parse_player_chat(&p, &types).is_err(), "the unknown id refuses");
     }
 }

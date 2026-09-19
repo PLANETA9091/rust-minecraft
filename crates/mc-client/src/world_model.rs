@@ -1946,7 +1946,9 @@ impl WorldModel {
             // pump (the display queue's dedicated channel ships the lines
             // straight to the frame thread) — the model's world belief
             // never carries them, the honest no-op answers here
-            PlayEvent::SystemChat(_) | PlayEvent::PlayerChat(_) => false,
+            PlayEvent::SystemChat(_)
+            | PlayEvent::PlayerChat(_)
+            | PlayEvent::DisguisedChat(_) => false,
             PlayEvent::Disconnected { .. } | PlayEvent::Skipped => false,
         }
     }

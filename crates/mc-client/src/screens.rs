@@ -141,25 +141,43 @@ pub(crate) fn format_chat_decoration(key: &str, args: &[&str]) -> String {
     out
 }
 
-/// THE PLAYER CHAT LINE'S OWN WALK (vanilla `ChatType.Bound.decorate`'s
-/// consumer tail — the decoration's `parameters` list names each `%s`'s
-/// SOURCE: "sender" the bound's sender name, "target" the bound's target
-/// name (the absent target the empty string fills), "content" the
-/// message text; the unknown parameter the empty string fills — the
+/// THE DECORATION LINE'S OWN FILL (the parameter walk BOTH chat
+/// packets' display answers — the bound's `parameters` list names each
+/// %s's SOURCE: "sender" the bound's sender name, "target" the bound's
+/// target name (the absent target the empty string fills), "content"
+/// the message text; the unknown parameter the empty string fills — the
 /// vanilla walk's own null-fold). The format key + the filled args the
 /// display line answers.
-pub(crate) fn format_player_chat_line(m: &mc_protocol::play::PlayerChatMessage) -> String {
-    let args: Vec<&str> = m
-        .parameters
+pub(crate) fn format_decoration_line(
+    chat_key: &str,
+    parameters: &[String],
+    sender_name: &str,
+    target_name: Option<&str>,
+    content: &str,
+) -> String {
+    let args: Vec<&str> = parameters
         .iter()
         .map(|p| match p.as_str() {
-            "sender" => m.sender_name.as_str(),
-            "target" => m.target_name.as_deref().unwrap_or(""),
-            "content" => m.content.as_str(),
+            "sender" => sender_name,
+            "target" => target_name.unwrap_or(""),
+            "content" => content,
             _ => "",
         })
         .collect();
-    format_chat_decoration(&m.chat_key, &args)
+    format_chat_decoration(chat_key, &args)
+}
+
+/// THE PLAYER CHAT LINE'S OWN WALK (vanilla `ChatType.Bound.decorate`'s
+/// consumer tail — the parameter walk the shared
+/// [`format_decoration_line`] speaks).
+pub(crate) fn format_player_chat_line(m: &mc_protocol::play::PlayerChatMessage) -> String {
+    format_decoration_line(
+        &m.chat_key,
+        &m.parameters,
+        &m.sender_name,
+        m.target_name.as_deref(),
+        &m.content,
+    )
 }
 
 pub const WHITE: [f32; 3] = [1.0, 1.0, 1.0];
