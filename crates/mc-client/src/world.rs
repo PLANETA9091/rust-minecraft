@@ -381,14 +381,34 @@ pub struct BiomeLayer {
     pub climates: Vec<BiomeClimate>,
 }
 
-/// The climate pair `Biome.getPrecipitationAt` consumes — the synced
-/// `BiomeEntry`'s `hasPrecipitation` boolean and `temperature` float.
-/// The `temperature_modifier`'s noise-gated FROZEN patchwork (the
-/// `TemperatureModifier$2` walk: two PerlinSimplexNoise samples gate a
-/// 0.2F override) stays this round's honest skip — the noise streams
-/// are a separate port; frozen biomes keep their base temperature
-/// (frozen_ocean 0.0, frozen_river 0.0 — the snow answer the base
-/// already gives, the dominant vanilla verdict for the frozen set).
+/// The `Biome$TemperatureModifier` enum the synced entry's optional
+/// string drives — `none` the identity (`TemperatureModifier$1` returns
+/// the temperature unchanged), `frozen` the noise-gated 0.2F patchwork
+/// (`TemperatureModifier$2`, the weather module's
+/// `modify_temperature` walk). An unknown string the jar's own registry
+/// codec would have refused at load (the StringRepresentable
+/// fromEnum law) — the entry would never reach a vanilla client, so
+/// the port's honest word maps anything but `frozen` to `None` (never
+/// a guess, the no-opinion convention).
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub enum TemperatureModifier {
+    /// the identity — the base temperature rides
+    #[default]
+    None,
+    /// the frozen patchwork — the three-noise gate the 0.2F override
+    /// wears
+    Frozen,
+}
+
+/// The climate trio `Biome.getPrecipitationAt` consumes — the synced
+/// `BiomeEntry`'s `hasPrecipitation` boolean, `temperature` float and
+/// optional `temperature_modifier` string. The modifier's noise-gated
+/// FROZEN patchwork (the `TemperatureModifier$2` walk: two
+/// PerlinSimplexNoise samples gate a 0.2F override) rides through the
+/// synced path; the built-in jar tables the generator emits predate the
+/// modifier field — that fallback keeps [`TemperatureModifier::None`]
+/// (the documented limitation, frozen biomes' base temperature 0.0 the
+/// snow answer either way).
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct BiomeClimate {
     /// the synced `has_precipitation` — the gate the jar's own walk
@@ -397,6 +417,9 @@ pub struct BiomeClimate {
     /// the synced `temperature` — the base the 0.15 threshold and the
     /// height adjustment read
     pub temperature: f32,
+    /// the synced `temperature_modifier` — the frozen patchwork's
+    /// gate key
+    pub temperature_modifier: TemperatureModifier,
 }
 
 impl BiomeClimate {
@@ -405,6 +428,7 @@ impl BiomeClimate {
     pub const NONE: BiomeClimate = BiomeClimate {
         has_precipitation: false,
         temperature: 0.0,
+        temperature_modifier: TemperatureModifier::None,
     };
 }
 

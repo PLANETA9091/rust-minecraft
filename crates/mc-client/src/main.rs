@@ -32,6 +32,7 @@ mod math;
 mod mesher;
 mod net_fixture;
 mod music;
+mod noise;
 mod png_io;
 mod raster;
 mod screens;

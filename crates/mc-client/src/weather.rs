@@ -41,11 +41,16 @@
 //!   (`getHeightAdjustedTemperature`): the modifier applies, then for
 //!   `y > seaLevel + 17` the height chill
 //!   `temp - (noise*8 + y - (seaLevel+17)) * 0.05 / 40` — the
-//!   PerlinSimplexNoise term rides at its EXPECTATION 0 (the ±0.01
-//!   marginal the documented stand-in keeps, the BLOCK_FACTOR flicker
-//!   precedent); the FROZEN modifier's noise-gated 0.2F patchwork is
-//!   the same honest skip (frozen biomes keep their base temperature —
-//!   0.0, the snow answer the base already gives).
+//!   PerlinSimplexNoise term is the REAL `TEMPERATURE_NOISE` (seed
+//!   1234, octaves `{0}` — the `noise.rs` synth module the port owns;
+//!   the ±0.01 expectation-0 marginal the earlier stand-in kept the
+//!   port retires); the FROZEN modifier's noise-gated 0.2F patchwork
+//!   rides through the synced `temperature_modifier` word (`frozen`
+//!   the only non-identity string — unknown names the jar's own
+//!   registry codec would have refused; the built-in jar tables the
+//!   generator emits predate the modifier field, that fallback keeps
+//!   NONE — the documented limitation, frozen biomes' base 0.0 the
+//!   snow answer either way).
 //! - `createRainColumnInstance`: `t = (int)(gameTime & 131071L)` (the
 //!   17-bit time mask the cp #452 bank keeps), the & 255 hash
 //!   `x*x*3121 + x*45238971 + z*z*418711 + z*13761` (the IADD chain —
@@ -124,71 +129,11 @@ const SNOW_THRESHOLD: f32 = 0.15;
 
 /// The vanilla `SingleThreadedRandomSource` port — the java.util.Random
 /// LCG the LegacyRandomSource laws keep, the MarsagliaPolarGaussian
-/// cached-pair gaussian on top.
-#[derive(Debug, Clone)]
-pub struct VanillaRandom {
-    state: u64,
-    /// The polar method's cached second draw; `None` = none cached.
-    gaussian_cache: Option<f64>,
-}
-
-impl VanillaRandom {
-    /// `setSeed`: the scramble `(seed ^ 0x5DEECE66D) & ((1<<48)-1)` — the
-    /// int hash sign-extends into the long first (the jar's `i2l`), the
-    /// gaussian cache resets.
-    pub fn set_seed(&mut self, seed: i64) {
-        self.state = ((seed as u64) ^ 0x5DEECE66D) & ((1u64 << 48) - 1);
-        self.gaussian_cache = None;
-    }
-
-    /// `next(bits)`: the LCG step `seed * 0x5DEECE66D + 0xB` masked to
-    /// 48 bits, then the top `bits` of the new state.
-    fn next(&mut self, bits: u32) -> i32 {
-        self.state = self
-            .state
-            .wrapping_mul(0x5DEECE66D)
-            .wrapping_add(0xB)
-            & ((1u64 << 48) - 1);
-        (self.state >> (48 - bits)) as i32
-    }
-
-    /// `nextFloat = next(24) / 2^24` — the [0, 1) band.
-    pub fn next_f32(&mut self) -> f32 {
-        self.next(24) as f32 / (1u32 << 24) as f32
-    }
-
-    /// `nextDouble`: the two-draw law — `((next(26) << 27) + next(27)) *
-    /// 2^-53` (the java.util.Random double law the BitRandomSource
-    /// default keeps). The 26-bit draw widens to i64 BEFORE the shift —
-    /// the 53-bit sum the int overflow would truncate.
-    pub fn next_f64(&mut self) -> f64 {
-        let hi = self.next(26) as i64;
-        let lo = self.next(27) as i64;
-        (((hi << 27) + lo) as f64) / (1u64 << 53) as f64
-    }
-
-    /// `nextGaussian` — the `MarsagliaPolarGaussian` polar walk the jar's
-    /// gaussianSource carries: two doubles mapped to [-1, 1), the
-    /// `s >= 1 || s == 0` reject, the `sqrt(-2 * ln(s) / s)` fold, the
-    /// second value cached for the next call.
-    pub fn next_gaussian(&mut self) -> f64 {
-        if let Some(cached) = self.gaussian_cache.take() {
-            return cached;
-        }
-        let (mut v1, mut v2, mut s);
-        loop {
-            v1 = 2.0 * self.next_f64() - 1.0;
-            v2 = 2.0 * self.next_f64() - 1.0;
-            s = v1 * v1 + v2 * v2;
-            if s < 1.0 && s != 0.0 {
-                break;
-            }
-        }
-        let mult = (-2.0 * s.ln() / s).sqrt();
-        self.gaussian_cache = Some(v2 * mult);
-        v1 * mult
-    }
-}
+/// cached-pair gaussian on top. NOW the synth module's own word (the
+/// jar's `SimplexNoise` ctor argument chain) — the port moved to
+/// [`crate::noise`] when the PerlinSimplexNoise trio landed; this
+/// re-export keeps the weather lane's stream law one name away.
+pub use crate::noise::VanillaRandom;
 
 /// The `WeatherEffectRenderer$ColumnInstance` record — the field order
 /// the ctor walk banks: `(x, z, bottomY, topY, uOffset, vOffset,
@@ -374,25 +319,81 @@ pub enum Precipitation {
     Snow,
 }
 
+/// `Biome$TemperatureModifier$2.modifyTemperature` — the FROZEN
+/// patchwork the synced modifier word drives: the frozen-temperature
+/// noise at `x*0.05, z*0.05` (the i2d·0.05 f64 lane) times 7.0 PLUS
+/// the biome-info noise at `x*0.2, z*0.2`; the sum `d0` below 0.3 (the
+/// dcmpg/ifge law — the `!(d0 >= 0.3)` form keeps even the NaN lane's
+/// verdict) and the biome-info noise at `x*0.09, z*0.09` below 0.8
+/// pins the temperature to 0.2F; otherwise the base rides. The NONE
+/// modifier is the identity (`TemperatureModifier$1` returns f).
+pub fn modify_temperature(climate: crate::world::BiomeClimate, x: i32, z: i32) -> f32 {
+    let temperature = climate.temperature;
+    if climate.temperature_modifier != crate::world::TemperatureModifier::Frozen {
+        return temperature;
+    }
+    let d0 = crate::noise::frozen_temperature_noise().get_value(
+        x as f64 * 0.05,
+        z as f64 * 0.05,
+        false,
+    ) * 7.0
+        + crate::noise::biome_info_noise().get_value(x as f64 * 0.2, z as f64 * 0.2, false);
+    if !(d0 >= 0.3) {
+        let d2 = crate::noise::biome_info_noise().get_value(x as f64 * 0.09, z as f64 * 0.09, false);
+        if !(d2 >= 0.8) {
+            return 0.2;
+        }
+    }
+    temperature
+}
+
+/// `Biome.getHeightAdjustedTemperature` — the modifier's word first,
+/// then the height chill: for `y > seaLevel + 17` (the if_icmple gate)
+/// the temperature drops `(noiseTerm + y - (seaLevel + 17)) * 0.05F /
+/// 40.0F`. THE LANES the bytecode keeps: the noise sample feeds
+/// through the f32 divide — `(x / 8.0F) as f64` (the i2f/fdiv/f2d
+/// walk), the f64 value times 8.0 narrows with d2f, and the whole band
+/// `f1 + y - j` multiplied by f32 0.05 and divided by f32 40.0 stays
+/// f32 arithmetic end to end. The noise term is the REAL
+/// `TEMPERATURE_NOISE` (seed 1234, octaves `{0}`) — the ±0.01
+/// expectation-0 marginal the earlier stand-in kept the port retires.
+pub fn height_adjusted_temperature(
+    climate: crate::world::BiomeClimate,
+    x: i32,
+    probe_y: i32,
+    z: i32,
+    sea_level: i32,
+) -> f32 {
+    let f = modify_temperature(climate, x, z);
+    let j = sea_level + 17;
+    if probe_y > j {
+        let noise = crate::noise::temperature_noise().get_value(
+            (x as f32 / 8.0f32) as f64,
+            (z as f32 / 8.0f32) as f64,
+            false,
+        );
+        let f1 = (noise * 8.0) as f32;
+        f - (f1 + probe_y as f32 - j as f32) * 0.05f32 / 40.0f32
+    } else {
+        f
+    }
+}
+
 /// `Biome.getPrecipitationAt` — the gate, the threshold and the height
 /// chill: `hasPrecipitation()` or NONE; the temperature
-/// (`getHeightAdjustedTemperature`'s law with the noise at its
-/// expectation 0 — see the module docs) drops
-/// `(y - (seaLevel + 17)) * 0.05 / 40` above the y0 band; `>= 0.15`
-/// rains, below snows.
+/// (`height_adjusted_temperature`'s law) `>= 0.15` rains (the fcmpl
+/// word the warmEnoughToRain walk keeps), below snows.
 pub fn precipitation(
     climate: crate::world::BiomeClimate,
+    x: i32,
     probe_y: i32,
+    z: i32,
     sea_level: i32,
 ) -> Precipitation {
     if !climate.has_precipitation {
         return Precipitation::None;
     }
-    let mut temp = climate.temperature;
-    let y0 = sea_level + 17;
-    if probe_y > y0 {
-        temp -= (probe_y - y0) as f32 * 0.05 / 40.0;
-    }
+    let temp = height_adjusted_temperature(climate, x, probe_y, z, sea_level);
     if temp >= SNOW_THRESHOLD {
         Precipitation::Rain
     } else {
@@ -480,7 +481,7 @@ pub fn extract_columns(
             let Some(climate) = world.biome_climate_at(x, cam_floor.1, z) else {
                 continue; // the no-opinion voxel — never a guessed climate
             };
-            let precip = precipitation(climate, cam_floor.1, SEA_LEVEL);
+            let precip = precipitation(climate, x, cam_floor.1, z, SEA_LEVEL);
             if precip == Precipitation::None {
                 continue;
             }
@@ -488,11 +489,7 @@ pub fn extract_columns(
             // setSeed BEFORE the constructor draws (the stream discipline
             // the bytecode order keeps), and ONLY the precipitating
             // columns ever seed
-            let mut random = VanillaRandom {
-                state: 0,
-                gaussian_cache: None,
-            };
-            random.set_seed(rain_seed_hash(x, z) as i64);
+            let mut random = VanillaRandom::new(rain_seed_hash(x, z) as i64);
             let light_y = cam_floor.1.max(height);
             let (light_block, light_sky) = column_light(world, x, light_y, z);
             match precip {
@@ -672,11 +669,7 @@ mod tests {
     /// words, bit for bit).
     #[test]
     fn the_vanilla_random_the_java_law_speaks() {
-        let mut r = VanillaRandom {
-            state: 0,
-            gaussian_cache: None,
-        };
-        r.set_seed(0);
+        let mut r = VanillaRandom::new(0);
         let words = [r.next_f32(), r.next_f32(), r.next_f32()];
         assert_eq!(words[0], 0.7309677600860596);
         assert_eq!(words[1], 0.8314409852027893);
@@ -719,11 +712,7 @@ mod tests {
         assert_eq!(rain_seed_hash(0, 0), 0);
         assert_eq!(rain_seed_hash(-7, 9), -282776364);
         // the full walk at the reference vector's inputs
-        let mut r = VanillaRandom {
-            state: 0,
-            gaussian_cache: None,
-        };
-        r.set_seed(rain_seed_hash(5, -3) as i64);
+        let mut r = VanillaRandom::new(rain_seed_hash(5, -3) as i64);
         let col = create_rain_column(&mut r, 1000, 5, 60, 90, -3, 12, 15, 0.5);
         assert_eq!(col.u_offset, 0.0, "the rain's u is the CONSTANT 0.0");
         assert_eq!(col.v_offset, -2.042724609375);
@@ -742,17 +731,9 @@ mod tests {
         assert!(col.v_offset > -32.0 && col.v_offset <= 0.0);
         // the stream discipline: a rain column consumes EXACTLY one
         // nextFloat — replaying the seed and drawing once matches
-        let mut r1 = VanillaRandom {
-            state: 0,
-            gaussian_cache: None,
-        };
-        r1.set_seed(rain_seed_hash(5, -3) as i64);
+        let mut r1 = VanillaRandom::new(rain_seed_hash(5, -3) as i64);
         let col1 = create_rain_column(&mut r1, 1000, 5, 0, 1, -3, 0, 0, 0.5);
-        let mut r2 = VanillaRandom {
-            state: 0,
-            gaussian_cache: None,
-        };
-        r2.set_seed(rain_seed_hash(5, -3) as i64);
+        let mut r2 = VanillaRandom::new(rain_seed_hash(5, -3) as i64);
         let rolled = r2.next_f32();
         let col2 = ColumnInstance {
             u_offset: 0.0,
@@ -769,11 +750,7 @@ mod tests {
     /// brightened light pair.
     #[test]
     fn the_snow_column_the_gaussian_wander_speaks() {
-        let mut r = VanillaRandom {
-            state: 0,
-            gaussian_cache: None,
-        };
-        r.set_seed(rain_seed_hash(1, 2) as i64);
+        let mut r = VanillaRandom::new(rain_seed_hash(1, 2) as i64);
         let col = create_snow_column(&mut r, 709, 1, 60, 90, 2, 8, 12, 0.25);
         assert_eq!(col.u_offset, 1.1125444173812866);
         assert_eq!(col.v_offset, 0.6242645978927612);
@@ -782,11 +759,7 @@ mod tests {
         assert_eq!(col.light_sky, (12 * 3 + 15) / 4);
         // the zero tick: the v base lands on NEGATIVE zero (the fneg
         // the fneg/fdiv chain keeps)
-        let mut r = VanillaRandom {
-            state: 0,
-            gaussian_cache: None,
-        };
-        r.set_seed(rain_seed_hash(0, 0) as i64);
+        let mut r = VanillaRandom::new(rain_seed_hash(0, 0) as i64);
         let col = create_snow_column(&mut r, 0, 0, 0, 1, 0, 0, 0, 0.0);
         assert_eq!(col.u_offset, 0.7309677600860596);
         assert_eq!(col.v_offset, -0.0 + 0.5504370331764221);
@@ -813,43 +786,139 @@ mod tests {
     }
 
     /// The precipitation pick: the gate, the threshold boundary and the
-    /// height chill above the seaLevel+17 band.
+    /// height chill above the seaLevel+17 band — at x=z=0 the origin's
+    /// noise is EXACTLY 0.0 (the twin's word), so the band math reads
+    /// bit-for-bit like the no-noise walk; then the REAL noise words at
+    /// the twin's end-to-end vectors.
     #[test]
     fn the_precipitation_the_registry_word_speaks() {
+        use crate::world::TemperatureModifier;
         let rain = crate::world::BiomeClimate {
             has_precipitation: true,
             temperature: 0.5,
+            temperature_modifier: TemperatureModifier::None,
         };
         let cold = crate::world::BiomeClimate {
             has_precipitation: true,
             temperature: 0.0,
+            temperature_modifier: TemperatureModifier::None,
         };
         let dry = crate::world::BiomeClimate {
             has_precipitation: false,
             temperature: 2.0,
+            temperature_modifier: TemperatureModifier::None,
         };
         // the gate first: no precipitation is NONE whatever the temp
-        assert_eq!(precipitation(dry, 64, SEA_LEVEL), Precipitation::None);
+        assert_eq!(precipitation(dry, 0, 64, 0, SEA_LEVEL), Precipitation::None);
         // the threshold: 0.5 rains at the surface, 0.0 snows
-        assert_eq!(precipitation(rain, 64, SEA_LEVEL), Precipitation::Rain);
-        assert_eq!(precipitation(cold, 64, SEA_LEVEL), Precipitation::Snow);
+        assert_eq!(precipitation(rain, 0, 64, 0, SEA_LEVEL), Precipitation::Rain);
+        assert_eq!(precipitation(cold, 0, 64, 0, SEA_LEVEL), Precipitation::Snow);
         // the boundary word: EXACTLY 0.15 rains (the >= the fcmpl keeps)
         let boundary = crate::world::BiomeClimate {
             has_precipitation: true,
             temperature: 0.15,
+            temperature_modifier: TemperatureModifier::None,
         };
-        assert_eq!(precipitation(boundary, 64, SEA_LEVEL), Precipitation::Rain);
-        // the height chill: 0.5 at y = 63+17+70 drops exactly
-        // 70 * 0.05/40 = 0.0875 -> 0.4125, still rain; at +280: 0.5 -
-        // 0.35 = 0.15 — the exact-boundary rain; one higher snows
-        let y_chill = SEA_LEVEL + 17 + 280;
-        assert_eq!(precipitation(rain, y_chill, SEA_LEVEL), Precipitation::Rain);
         assert_eq!(
-            precipitation(rain, y_chill + 1, SEA_LEVEL),
+            precipitation(boundary, 0, 64, 0, SEA_LEVEL),
+            Precipitation::Rain
+        );
+        // the height chill at the silent origin: 0.5 at y = 63+17+280
+        // drops exactly 280 * 0.05/40 = 0.35 -> 0.15 — the
+        // exact-boundary rain; one higher snows
+        let y_chill = SEA_LEVEL + 17 + 280;
+        assert_eq!(
+            precipitation(rain, 0, y_chill, 0, SEA_LEVEL),
+            Precipitation::Rain
+        );
+        assert_eq!(
+            precipitation(rain, 0, y_chill + 1, 0, SEA_LEVEL),
             Precipitation::Snow
         );
         // below the y0 band the chill never applies
-        assert_eq!(precipitation(rain, SEA_LEVEL + 17, SEA_LEVEL), Precipitation::Rain);
+        assert_eq!(
+            precipitation(rain, 0, SEA_LEVEL + 17, 0, SEA_LEVEL),
+            Precipitation::Rain
+        );
+        // THE REAL NOISE the twin's end-to-end vectors pin (base 0.5,
+        // NONE, sea 63): the f32/f64 lanes bit-exactly
+        assert_eq!(
+            height_adjusted_temperature(rain, 0, 100, 0, SEA_LEVEL),
+            0.4749999940395355
+        );
+        assert_eq!(
+            height_adjusted_temperature(rain, 17, 81, -9, SEA_LEVEL),
+            0.5036682486534119
+        );
+        assert_eq!(
+            height_adjusted_temperature(rain, -333, 264, 2077, SEA_LEVEL),
+            0.2756045162677765
+        );
+        assert_eq!(
+            height_adjusted_temperature(rain, 1024, 401, -4096, SEA_LEVEL),
+            0.09546956419944763
+        );
+        // the chill's word the temperature answers: 401 high at
+        // (1024, -4096) the noise band drags below the threshold
+        assert_eq!(
+            precipitation(rain, 1024, 401, -4096, SEA_LEVEL),
+            Precipitation::Snow
+        );
+    }
+
+    /// The FROZEN modifier's patchwork the twin's gate table pins: the
+    /// d0/d2 sums, the 0.2F override where the gate opens, the base
+    /// where it stays shut — and the end-to-end rain-in-frozen answer.
+    #[test]
+    fn the_frozen_patchwork_the_noise_gate_speaks() {
+        use crate::world::TemperatureModifier;
+        let frozen = crate::world::BiomeClimate {
+            has_precipitation: true,
+            temperature: 0.0,
+            temperature_modifier: TemperatureModifier::Frozen,
+        };
+        // the identity word: the NONE modifier returns the base
+        let plain = crate::world::BiomeClimate {
+            has_precipitation: true,
+            temperature: 0.42,
+            temperature_modifier: TemperatureModifier::None,
+        };
+        assert_eq!(modify_temperature(plain, 0, 0), 0.42);
+        // the gate table the twin pins (d0 = frozen*7 + info(0.2),
+        // d2 = info(0.09))
+        // (0, 0): d0 = 0.0 < 0.3, d2 = 0.0 < 0.8 -> the 0.2F override
+        assert_eq!(modify_temperature(frozen, 0, 0), 0.2);
+        // (11, -3): d0 = 2.7683931904963615 >= 0.3 -> the base rides
+        assert_eq!(modify_temperature(frozen, 11, -3), 0.0);
+        // (-47, 13): d0 = 0.9094131382952035 >= 0.3 -> the base
+        assert_eq!(modify_temperature(frozen, -47, 13), 0.0);
+        // (100, 100): d0 = 1.217791342213207 >= 0.3 -> the base
+        assert_eq!(modify_temperature(frozen, 100, 100), 0.0);
+        // (-2000, 700): d0 = -3.100928759135157 < 0.3,
+        // d2 = 0.7482012446965214 < 0.8 -> the override
+        assert_eq!(modify_temperature(frozen, -2000, 700), 0.2);
+        // (12345, -54321): d0 = 2.3117244753223445 >= 0.3 -> the base
+        assert_eq!(modify_temperature(frozen, 12345, -54321), 0.0);
+        // end-to-end at y 64 (below the chill band, the sea 63): the
+        // opened gate WARMENS the frozen biome to rain — the classic
+        // vanilla "sometimes it rains in frozen biomes" word
+        assert_eq!(
+            precipitation(frozen, 0, 64, 0, SEA_LEVEL),
+            Precipitation::Rain
+        );
+        assert_eq!(
+            precipitation(frozen, -2000, 64, 700, SEA_LEVEL),
+            Precipitation::Rain
+        );
+        // the shut gate keeps the 0.0 base — snow
+        assert_eq!(
+            precipitation(frozen, 11, 64, -3, SEA_LEVEL),
+            Precipitation::Snow
+        );
+        assert_eq!(
+            precipitation(frozen, 100, 64, 100, SEA_LEVEL),
+            Precipitation::Snow
+        );
     }
 
     /// The extraction walk on a synthetic world: the sent gate, the
@@ -877,6 +946,7 @@ mod tests {
             climates: vec![BiomeClimate {
                 has_precipitation: true,
                 temperature: 0.5,
+                temperature_modifier: crate::world::TemperatureModifier::None,
             }],
         });
         // the camera over the middle chunk, at the floor's level

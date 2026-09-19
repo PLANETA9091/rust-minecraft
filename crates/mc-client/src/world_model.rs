@@ -2308,6 +2308,10 @@ impl WorldModel {
                         .map(|d| crate::world::BiomeClimate {
                             has_precipitation: d.has_precipitation,
                             temperature: d.temperature,
+                            // the generator's table predates the
+                            // modifier field — the fallback's honest
+                            // None (the doc the struct keeps)
+                            temperature_modifier: crate::world::TemperatureModifier::None,
                         })
                         .unwrap_or(crate::world::BiomeClimate::NONE)
                 })
@@ -2319,6 +2323,15 @@ impl WorldModel {
                 .map(|e| crate::world::BiomeClimate {
                     has_precipitation: e.has_precipitation,
                     temperature: e.temperature,
+                    // the synced string drives the enum — `frozen` the
+                    // only non-identity word; anything else the jar's
+                    // own registry codec would have refused at load
+                    // (the StringRepresentable fromEnum law), so the
+                    // honest word maps it to None, never a guess
+                    temperature_modifier: match e.temperature_modifier.as_deref() {
+                        Some("frozen") => crate::world::TemperatureModifier::Frozen,
+                        _ => crate::world::TemperatureModifier::None,
+                    },
                 })
                 .collect()
         }
