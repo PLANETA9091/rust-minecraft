@@ -1152,6 +1152,14 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
         if left_down && !was_left_down && !app.chat_open {
             app.on_press(gmx, gmy);
         }
+        // THE CHAT SUGGESTIONS' OWN CLICK (the SuggestionsList
+        // .mouseClicked walk — the open chat's rising edge the list's
+        // contains gate answers: the contained row the apply speaks,
+        // the outside the false keeps; the open chat's other lanes the
+        // world gates above keep silent)
+        if left_down && !was_left_down && app.chat_open {
+            app.on_chat_click(gmx, gmy);
+        }
         // the LEFT press's falling edge (the vanilla's own release lane):
         // the dig's hold flag drops and the destroy state ABORTs (the
         // continueAttack(false) tail — the crack overlay clears)
@@ -1340,7 +1348,15 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
         // the law honest (the screen-open wheel never leaks a stale
         // hotbar step).
         if let Some((sdx, sdy)) = window.get_scroll_wheel() {
-            if in_world {
+            if app.chat_open {
+                // THE CHAT SUGGESTIONS' OWN SCROLL (the
+                // SuggestionsList.mouseScrolled walk — the contained
+                // rect the offset window folds, the outside the false
+                // keeps; the open chat the hotbar/container arms never
+                // reach — the in_world gate the chat-open exclude
+                // already keeps)
+                app.on_chat_scroll(sdx as f64, sdy as f64, gmx, gmy);
+            } else if in_world {
                 app.on_hotbar_scroll(sdx as f64, sdy as f64);
             } else if matches!(
                 app.screen,

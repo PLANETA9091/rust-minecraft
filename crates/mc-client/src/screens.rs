@@ -2929,6 +2929,13 @@ pub struct App {
     pub chat_suggestion_pending: Option<i32>,
     pub chat_suggestion_tab_cycles: bool,
     pub chat_suggestion_original: String,
+    /// THE SHOWN LIST'S OWN RECT (the SuggestionsList constructor's
+    /// Rect2i law — `(inputX - 1, y, width + 1, rows * 12 + 1)` the
+    /// ring margins the bounds speak): the DRAWN list's hit box the
+    /// render caches, the hover/click/scroll lanes the same geometry
+    /// read (the chest_slot_rects precedent — the draw's own numbers
+    /// the hit tests carry, the hidden list the None keeps).
+    pub chat_suggestion_rect: Option<(i32, i32, i32, i32)>,
     /// THE F2 SCREENSHOT'S OWN REQUEST (javap Minecraft.handleKeybinds's
     /// keyScreenshot lane — the rising edge the Screenshot.grab walk
     /// answers): true while the key's edge asked for the frame — the
@@ -3396,6 +3403,7 @@ impl App {
             chat_suggestion_pending: None,
             chat_suggestion_tab_cycles: false,
             chat_suggestion_original: String::new(),
+            chat_suggestion_rect: None,
             screenshot_request: false,
             debug_held: false,
             fps_frames: 0,
@@ -9736,7 +9744,15 @@ impl App {
     /// own honesty — minifb's Discard mode reports no position when the
     /// cursor leaves, and the carried render follows it out.
     pub fn on_mouse_move(&mut self, mx: i32, my: i32) {
+        // THE MOVED GATE (the extractRenderState's lastMouse fold — the
+        // Vec2 the frame's own compare keeps: the UNCHANGED cursor the
+        // hover never re-fires, the keyboard's own selection the resting
+        // mouse never fights; the moved frames only the select rides)
+        let moved = self.mouse_pos != Some((mx, my));
         self.mouse_pos = Some((mx, my));
+        if moved {
+            self.chat_suggestion_hover(mx, my);
+        }
     }
 
     /// The keyboard lane's shift state (the windowed loop's per-frame
@@ -11813,6 +11829,7 @@ impl App {
             && !self.chat_input.is_empty();
         if !active {
             self.chat_suggestions.clear();
+            self.chat_suggestion_rect = None;
             self.chat_suggestion_pending = None;
             self.chat_suggestion_tab_cycles = false;
             return;
@@ -11873,6 +11890,95 @@ impl App {
         }
     }
 
+    /// THE HOVER'S OWN SELECT (javap SuggestionsList.extractRenderState's
+    /// row walk — the mouse the row's OPEN band answers: `mouseX >
+    /// rect.getX() && mouseX < rect.getX() + rect.getWidth() &&
+    /// mouseY > rect.getY() + 12*i && mouseY < rect.getY() + 12*i + 12`
+    /// the strict bytecode comparisons keep — the boundary rows the
+    /// `rel % 12` dead line never names, the offset the walk never
+    /// touches (the hovered row the visible window's own member
+    /// speaks)). The moved frames only the select() call rides (the
+    /// lastMouse fold the [`Self::on_mouse_move`] gate keeps — the
+    /// resting cursor the keyboard's own selection never fights). The
+    /// ghost the draw's own derive answers (the select's setSuggestion
+    /// lane the sel-relative walk wears).
+    fn chat_suggestion_hover(&mut self, mx: i32, my: i32) {
+        if !self.chat_open {
+            return;
+        }
+        let Some((rx, ry, rw, _rh)) = self.chat_suggestion_rect else {
+            return; // the drawn list the rect's own speak — hidden, no hover
+        };
+        if mx <= rx || mx >= rx + rw {
+            return; // the x band the strict comparisons keep
+        }
+        let rel = my - ry;
+        let visible = 10usize.min(self.chat_suggestions.len()) as i32;
+        if rel <= 0 || rel % 12 == 0 || rel >= visible * 12 {
+            return; // the dead boundary rows / the band's own end
+        }
+        let idx = self.chat_suggestion_offset + (rel / 12) as usize;
+        if idx < self.chat_suggestions.len() && idx != self.chat_suggestion_sel {
+            // THE SELECT (the wrap arms the visible window's own
+            // membership never needs — the clamp the cycle walk wears)
+            self.chat_suggestion_sel = idx;
+        }
+    }
+
+    /// THE SUGGESTIONS' OWN CLICK (javap SuggestionsList.mouseClicked —
+    /// the Rect2i.contains gate first (`!contains → return 0` the
+    /// iconst_0 the bytecode 9-13 keeps), the row index the
+    /// `(mouseY - rect.getY()) / 12 + offset` division speaks, the
+    /// `[0, size)` gate the select+useSuggestion pair answers, the
+    /// CONTAINED walk ALWAYS the 1 returns (bytecode 58 — even the
+    /// out-of-list tail pixel the true keeps)). The useSuggestion the
+    /// shared apply walk answers (the tab's own tail — see
+    /// [`Self::apply_chat_suggestion`]).
+    pub fn on_chat_click(&mut self, mx: i32, my: i32) -> bool {
+        if !self.chat_open {
+            return false;
+        }
+        let Some((rx, ry, rw, rh)) = self.chat_suggestion_rect else {
+            return false;
+        };
+        if mx < rx || mx >= rx + rw || my < ry || my >= ry + rh {
+            return false; // the contains refusal — the walk never fires
+        }
+        let idx = self.chat_suggestion_offset + ((my - ry) / 12) as usize;
+        if idx < self.chat_suggestions.len() {
+            self.chat_suggestion_sel = idx; // the select half
+            self.apply_chat_suggestion(); // the useSuggestion tail
+        }
+        true
+    }
+
+    /// THE SUGGESTIONS' OWN SCROLL (javap SuggestionsList.mouseScrolled —
+    /// the scaled mouse the rect.contains gate answers, the offset the
+    /// `Mth.clamp((int)((double)offset - delta), 0,
+    /// Math.max(size - lineLimit, 0))` fold keeps: the dsub/d2i pair
+    /// the whole-notch walk speaks (the sub-notch delta the trunc's own
+    /// remainder keeps — the whole expression truncates, the offset
+    /// never fractional), the wheel-down the later rows show (the
+    /// delta's own sign the fold inverts)). The CONTAINED walk answers
+    /// 1 (bytecode 101), the outside the 0 keeps.
+    pub fn on_chat_scroll(&mut self, dx: f64, dy: f64, mx: i32, my: i32) -> bool {
+        let _ = dx; // the Y wheel wins — the x tilt the bytecode ignores
+        if !self.chat_open {
+            return false;
+        }
+        let Some((rx, ry, rw, rh)) = self.chat_suggestion_rect else {
+            return false;
+        };
+        if mx < rx || mx >= rx + rw || my < ry || my >= ry + rh {
+            return false;
+        }
+        let visible = 10usize.min(self.chat_suggestions.len()) as i32;
+        let max_off = (self.chat_suggestions.len() as i32 - visible).max(0);
+        let next = (self.chat_suggestion_offset as f64 - dy) as i32;
+        self.chat_suggestion_offset = next.clamp(0, max_off) as usize;
+        true
+    }
+
     /// THE TAB'S OWN WALK (javap SuggestionsList.keyPressed's
     /// isCycleFocus arm — the FIRST Tab the useSuggestion walk speaks:
     /// the selected suggestion's apply over the ORIGINAL the list
@@ -11891,6 +11997,20 @@ impl App {
             self.cycle_chat_suggestion(1);
             return;
         }
+        self.apply_chat_suggestion();
+    }
+
+    /// THE USE WALK (javap SuggestionsList.useSuggestion — the selected
+    /// suggestion's apply over the ORIGINAL the list captured, the
+    /// replace range `[start, start + length)` the Brigadier StringRange
+    /// law keeps, the EditBox value the result wears, the tabCycles
+    /// flag the walk raises, the keepSuggestions pair the apply's own
+    /// frame spans). The CLICK rides the same walk (the mouseClicked's
+    /// own useSuggestion tail) — the ONE apply law both lanes speak.
+    /// The EditBox.setValue's own responder walk — the applied value
+    /// the refresh re-asks (the narrowed list the server's answer
+    /// keeps, the same onEdited lane the vanilla types through).
+    fn apply_chat_suggestion(&mut self) {
         let (start, length) = self.chat_suggestion_range;
         let Some(m) = self.chat_suggestions.get(self.chat_suggestion_sel) else {
             return;
@@ -11907,9 +12027,6 @@ impl App {
         completed.extend(original[e..].iter());
         self.chat_input = completed;
         self.chat_suggestion_tab_cycles = true;
-        // the EditBox.setValue's own responder walk — the applied value
-        // the refresh re-asks (the narrowed list the server's answer
-        // keeps, the same onEdited lane the vanilla types through)
         self.refresh_command_suggestions();
     }
 
@@ -11932,6 +12049,7 @@ impl App {
         self.chat_suggestion_original = self.chat_input.clone();
         self.chat_suggestion_range = (reply.start, reply.length);
         self.chat_suggestions = reply.matches;
+        self.chat_suggestion_rect = None; // the fresh list the next render re-speaks
         self.chat_suggestion_sel = 0;
         self.chat_suggestion_offset = 0;
         self.chat_suggestion_tab_cycles = false;
@@ -12750,7 +12868,7 @@ impl App {
     /// ghost suffix the select's setSuggestion lane draws, the list
     /// the extractRenderState walk speaks — see
     /// [`Self::draw_chat_suggestions`]).
-    fn render_chat_screen(&self, g: &mut Gui, a: &mut GuiAssets, w: i32, h: i32) {
+    fn render_chat_screen(&mut self, g: &mut Gui, a: &mut GuiAssets, w: i32, h: i32) {
         self.draw_chat_history(g, a, w, h, true);
         // THE INPUT BAND (the ChatScreen.extractBackground's own fill)
         g.fill(2, h - 14, w - 4, 12, [0.0, 0.0, 0.0, 0.5]);
@@ -12798,8 +12916,16 @@ impl App {
     /// the text the ternary colors speak: the selected -256 = yellow,
     /// the rest -5592406 = 0xFFAAAAAA, the shadowless draw the vanilla
     /// suggestion renders; the width the widest row + 1 the fill spans,
-    /// the screen's own -12 margin the clamp keeps).
-    fn draw_chat_suggestions(&self, g: &mut Gui, a: &mut GuiAssets, w: i32, h: i32) {
+    /// the screen's own -12 margin the clamp keeps). The DRAWN
+    /// geometry the hit-box cache carries (the constructor's
+    /// `(inputX - 1, y, width + 1, rows * 12 + 1)` Rect2i the
+    /// hover/click/scroll lanes read — see
+    /// [`Self::chat_suggestion_rect`]); the TOOLTIP the hover band's
+    /// own frame speaks (the loc10 flag the row walk raises — the
+    /// CURRENT row's Message the setTooltipForNextFrame lane paints,
+    /// the box the renderTooltipBackground law and the positioner the
+    /// bundle walk keep).
+    fn draw_chat_suggestions(&mut self, g: &mut Gui, a: &mut GuiAssets, w: i32, h: i32) {
         const ROW_H: i32 = 12;
         const LIMIT: usize = 10;
         let len = self.chat_suggestions.len();
@@ -12816,6 +12942,10 @@ impl App {
         let x = 3; // the input's 4 - 1 (the Rect2i's own x law)
         let bottom = h - 15; // the input band's top - 1
         let top = bottom - visible as i32 * ROW_H;
+        // THE HIT BOX (the constructor's Rect2i — the ring margins the
+        // bounds speak, the hover/click/scroll lanes the same numbers
+        // read)
+        self.chat_suggestion_rect = Some((x - 1, top, list_w + 1, visible as i32 * ROW_H + 1));
         // THE BACKGROUND (the two fills the bytecode speaks — the whole
         // list the 0xD0000000 black the fill color keeps)
         g.fill(x, top, list_w + 1, visible as i32 * ROW_H, [0.0, 0.0, 0.0, 0.8157]);
@@ -12839,6 +12969,52 @@ impl App {
                 [0.667, 0.667, 0.667] // the -5592406 gray
             };
             g.text_faded(a, x + 1, row_y + 2, &m.text, color, 1.0, false);
+        }
+        // THE TOOLTIP (the extractRenderState's tail — the loc10 flag
+        // the row walk raises only on a hovered-band frame the gate
+        // speaks, the CURRENT row's Message the setTooltipForNextFrame
+        // lane carries, the mouse the positioner's own origin keeps):
+        // the box the renderTooltipBackground law paints (the 0xF0100010
+        // fill, the gradient ring), the text the §-codes the shared
+        // draw consumes (the server's own styled tips the walk
+        // answers), the 3px margins the 9px line +6 tall the house
+        // tooltip boxes keep.
+        if let Some((mx, my)) = self.mouse_pos {
+            let Some((rx, ry, rw, _rh)) = self.chat_suggestion_rect else {
+                return;
+            };
+            let rel = my - ry;
+            let hovered = mx > rx
+                && mx < rx + rw
+                && rel > 0
+                && rel % 12 != 0
+                && rel < visible as i32 * ROW_H;
+            if hovered {
+                if let Some(m) = self.chat_suggestions.get(self.chat_suggestion_sel) {
+                    if let Some(tt) = &m.tooltip {
+                        if !tt.is_empty() {
+                            // THE BOX (the DefaultTooltipPositioner law
+                            // the bundle walk keeps — the +12/-12 cursor
+                            // offset, the right overflow the 24-flip the
+                            // max-4 clamp holds, the vertical the
+                            // screen's own edges keep)
+                            let tw = g.text_width(tt);
+                            let (bw, bh) = (tw + 6, 9 + 6);
+                            let mut tx = mx + 12;
+                            let mut ty = my - 12;
+                            if tx + bw > g.w() {
+                                tx = (mx - 24 - bw).max(4);
+                            }
+                            ty = ty.max(4);
+                            if ty + bh > g.h() {
+                                ty = g.h() - bh;
+                            }
+                            Self::paint_tooltip_background(g, tx, ty, bw, bh);
+                            g.text(a, tx + 3, ty + 3, tt, WHITE, true);
+                        }
+                    }
+                }
+            }
         }
     }
 
@@ -21865,6 +22041,209 @@ mod tests {
         offline.on_chat_arrow(true);
         assert_eq!(offline.chat_input, "hello", "the history the hidden list recalls");
         assert!(offline.chat_suggestions.is_empty(), "the offline the list never lands");
+    }
+
+    /// THE SUGGESTIONS' OWN MOUSE LANES (javap SuggestionsList's
+    /// extractRenderState hover + mouseClicked + mouseScrolled walks —
+    /// the drawn rect the hit lanes read, the moved gate the resting
+    /// cursor's honesty keeps, the click the apply tail speaks, the
+    /// scroll the offset window's clamp holds).
+    #[test]
+    fn the_suggestion_mouse_lanes_the_rect_laws_speak() {
+        let mut app = App::new(3);
+        app.enter_world();
+        let (tx, _rx) = std::sync::mpsc::channel::<crate::world_view::ContainerCommand>();
+        app.attach_live_clicks(tx);
+        app.on_chat_key();
+        for c in "/tp".chars() {
+            app.on_chat_char(c);
+        }
+        app.on_command_suggestions(mc_protocol::play::CommandSuggestionsReply {
+            id: app.chat_suggestion_pending.unwrap(),
+            start: 1,
+            length: 2,
+            matches: vec![
+                mc_protocol::play::CommandSuggestionsMatch {
+                    text: "teleport".to_string(),
+                    tooltip: None,
+                },
+                mc_protocol::play::CommandSuggestionsMatch {
+                    text: "time".to_string(),
+                    tooltip: Some("§aTeleports or sets the time".to_string()),
+                },
+                mc_protocol::play::CommandSuggestionsMatch {
+                    text: "trigger".to_string(),
+                    tooltip: None,
+                },
+            ],
+        });
+        // THE RECT THE DRAW OWNS (the hidden list the None keeps — the
+        // render the hit-box cache fills)
+        assert!(app.chat_suggestion_rect.is_none(), "the rect the render owns");
+        let mut fb = crate::raster::Framebuf::new(320, 180);
+        let mut assets = GuiAssets::open("assets-cache/jar");
+        app.render(&mut fb, &mut assets);
+        let (rx, ry, rw, rh) = app.chat_suggestion_rect.expect("the drawn list's rect");
+        // the constructor's Rect2i margins the bounds speak (the x - 1
+        // / rows * 12 + 1 the ring pixels cover; the width the widest
+        // row + 1 the fill spans)
+        assert_eq!(rx, 2, "the input's 4 - 1 the x law keeps");
+        assert_eq!(rh, 3 * 12 + 1, "the rows * 12 + 1 the height keeps");
+        assert!(rw > 3, "the widest row + 1 the width carries");
+        // THE HOVER'S OWN SELECT (the row 1 band the moved frame answers)
+        app.on_mouse_move(rx + 4, ry + 12 + 5);
+        assert_eq!(app.chat_suggestion_sel, 1, "the hover selects the row");
+        // THE MOVED GATE (the keyboard the resting cursor never fights)
+        app.on_chat_arrow(true); // Up — the keyboard moves sel to 0
+        assert_eq!(app.chat_suggestion_sel, 0);
+        app.on_mouse_move(rx + 4, ry + 12 + 5); // the SAME pos — no move
+        assert_eq!(app.chat_suggestion_sel, 0, "the resting cursor never re-selects");
+        // THE DEAD BOUNDARY (the strict bands the rel % 12 line keeps)
+        app.on_mouse_move(rx + 4, ry + 12); // the row boundary — dead
+        assert_eq!(app.chat_suggestion_sel, 0, "the boundary row the band never names");
+        // THE X BAND (the outside the walk refuses)
+        app.on_mouse_move(rx + rw + 2, ry + 12 + 5);
+        assert_eq!(app.chat_suggestion_sel, 0, "the x outside the band refuses");
+        // THE CLICK'S OWN GATES (the outside the false keeps, the
+        // contained row the apply tail answers)
+        assert!(!app.on_chat_click(rx + 4, ry - 5), "the outside the false keeps");
+        assert!(app.on_chat_click(rx + 4, ry + 12 + 5), "the contained walk answers 1");
+        assert_eq!(app.chat_input, "/time", "the selected row the apply wears");
+        assert!(app.chat_suggestion_tab_cycles, "the flag the use raises");
+        // THE BOTTOM RING (the h + 1 the constructor keeps — the tail
+        // pixel the out-of-list gate the apply skips, the true keeps)
+        let sel_before = app.chat_suggestion_sel;
+        let input_before = app.chat_input.clone();
+        assert!(app.on_chat_click(rx + 4, ry + rh - 1), "the ring the rect contains");
+        assert_eq!(app.chat_input, input_before, "the tail pixel the gate skips");
+        assert_eq!(app.chat_suggestion_sel, sel_before);
+    }
+
+    /// THE SUGGESTIONS' OWN SCROLL WINDOW (javap mouseScrolled — the
+    /// clamp fold the 15-row list speaks: the down the later rows
+    /// show, the up the earlier, the max the size - limit keeps, the
+    /// sub-notch the whole-expression trunc never spends).
+    #[test]
+    fn the_suggestion_scroll_the_window_walk_speaks() {
+        let mut app = App::new(3);
+        app.enter_world();
+        let (tx, _rx) = std::sync::mpsc::channel::<crate::world_view::ContainerCommand>();
+        app.attach_live_clicks(tx);
+        app.on_chat_key();
+        for c in "/tp".chars() {
+            app.on_chat_char(c);
+        }
+        let row = |n: usize| mc_protocol::play::CommandSuggestionsMatch {
+            text: format!("teleport_to_target_{n}"),
+            tooltip: None,
+        };
+        app.on_command_suggestions(mc_protocol::play::CommandSuggestionsReply {
+            id: app.chat_suggestion_pending.unwrap(),
+            start: 1,
+            length: 2,
+            matches: (0..15).map(row).collect(),
+        });
+        let mut fb = crate::raster::Framebuf::new(320, 180);
+        let mut assets = GuiAssets::open("assets-cache/jar");
+        app.render(&mut fb, &mut assets);
+        let (rx, ry, _rw, _rh) = app.chat_suggestion_rect.expect("the drawn list's rect");
+        assert_eq!(app.chat_suggestion_offset, 0);
+        // THE OUTSIDE (the contains refusal — the false keeps)
+        assert!(!app.on_chat_scroll(0.0, -1.0, rx + 4, ry - 4), "the above refuses");
+        // THE DOWN SCROLL (the dsub fold — offset - (-1) the later rows show)
+        assert!(app.on_chat_scroll(0.0, -1.0, rx + 4, ry + 5), "the contained answers 1");
+        assert_eq!(app.chat_suggestion_offset, 1, "the down the later rows show");
+        // THE UP SCROLL
+        app.on_chat_scroll(0.0, 1.0, rx + 4, ry + 5);
+        assert_eq!(app.chat_suggestion_offset, 0, "the up the earlier rows show");
+        // THE MAX CLAMP (the size - limit the fold keeps — 15 - 10 = 5)
+        for _ in 0..8 {
+            app.on_chat_scroll(0.0, -1.0, rx + 4, ry + 5);
+        }
+        assert_eq!(app.chat_suggestion_offset, 5, "the max the clamp keeps");
+        // THE SUB-NOTCH (the whole-expression trunc — 5 - (-0.5) = 5.5
+        // → 5: the remainder the offset never spends)
+        app.on_chat_scroll(0.0, -0.5, rx + 4, ry + 5);
+        assert_eq!(app.chat_suggestion_offset, 5, "the sub-notch the remainder keeps");
+    }
+
+    /// THE TOOLTIP'S OWN PAINT (the extractRenderState tail — the
+    /// hovered band the gate speaks, the current row's tooltip the box
+    /// carries: the 0xF0100010 fill the gradient ring paints, the
+    /// text the §-codes the shared draw consumes, the tooltip-less row
+    /// the box never paints).
+    #[test]
+    fn the_suggestion_tooltip_the_hover_band_paints() {
+        let build = |tip: Option<&str>| {
+            let mut app = App::new(3);
+            app.enter_world();
+            let (tx, _rx) = std::sync::mpsc::channel::<crate::world_view::ContainerCommand>();
+            app.attach_live_clicks(tx);
+            app.on_chat_key();
+            for c in "/tp".chars() {
+                app.on_chat_char(c);
+            }
+            app.on_command_suggestions(mc_protocol::play::CommandSuggestionsReply {
+                id: app.chat_suggestion_pending.unwrap(),
+                start: 1,
+                length: 2,
+                matches: vec![
+                    mc_protocol::play::CommandSuggestionsMatch {
+                        text: "teleport".to_string(),
+                        tooltip: None,
+                    },
+                    mc_protocol::play::CommandSuggestionsMatch {
+                        text: "time".to_string(),
+                        tooltip: tip.map(|s| s.to_string()),
+                    },
+                ],
+            });
+            app
+        };
+        let mut app = build(Some("§aTeleports or sets"));
+        let mut fb = crate::raster::Framebuf::new(320, 180);
+        let mut assets = GuiAssets::open("assets-cache/jar");
+        app.render(&mut fb, &mut assets);
+        let (rx, ry, _rw, _rh) = app.chat_suggestion_rect.expect("the drawn list's rect");
+        // THE HOVER (the move the row 1 selects — the tooltip's own row)
+        app.on_mouse_move(rx + 4, ry + 12 + 5);
+        assert_eq!(app.chat_suggestion_sel, 1, "the hover the tip row selects");
+        app.render(&mut fb, &mut assets);
+        // THE BOX (the positioner's +12/-12 the no-flip walk keeps —
+        // the box the gradient ring paints over the list's ground)
+        let (bx, by) = (rx + 4 + 12 - 1, ry + 12 + 5 - 12 - 1);
+        let px = |fb: &crate::raster::Framebuf, x: i32, y: i32| {
+            let i = (y as usize * 320 + x as usize) * 3;
+            [fb.color[i], fb.color[i + 1], fb.color[i + 2]]
+        };
+        // THE RING (the 0x505000FF start strip — the blue the red
+        // dominates, the same law the blue_wins probe keeps)
+        let ring = px(&fb, bx, by);
+        assert!(ring[2] > ring[0], "the start strip the blue speaks: {ring:?}");
+        // THE FILL (the 0xF0100010 — the dark red-tinted ground the
+        // alpha carries over the list's black: the red the raw list's
+        // pure-black ground speaks)
+        let fill = px(&fb, bx + 4, by + 4);
+        assert!(fill[0] > 0 || fill[2] > 0, "the fill the tinted ground speaks: {fill:?}");
+        // THE TOOLTIP-LESS WALK (the None tip the box never paints —
+        // the same walk the fill/ring pixels keep silent)
+        let mut plain = build(None);
+        let mut fb2 = crate::raster::Framebuf::new(320, 180);
+        plain.render(&mut fb2, &mut assets);
+        plain.on_mouse_move(rx + 4, ry + 12 + 5);
+        plain.render(&mut fb2, &mut assets);
+        // the honest check: the box's region DIFFERS between the tip
+        // and the plain frames (the rows beneath the same pixels paint
+        // — the box the diff's own law carries)
+        let mut diff = 0usize;
+        for dy in 0..15i32 {
+            for dx in 0..40i32 {
+                if px(&fb, bx + dx, by + dy) != px(&fb2, bx + dx, by + dy) {
+                    diff += 1;
+                }
+            }
+        }
+        assert!(diff > 0, "the box the frame diff speaks: {diff}");
     }
 
     #[test]
