@@ -73,15 +73,77 @@ pub struct Sprite {
     pub rgba: Vec<u8>,
 }
 
+/// THE LEGACY STYLE STATE (javap `StringDecomposer` → `Style
+/// .applyLegacyFormat` — the §-code consumption law the 26.2 bytecode
+/// verbatim keeps: a COLOR code the fresh style wears (`Style(loc2, ..,
+/// Boolean.valueOf(0) x 5, ..)` — the flags the color switch CLEARS),
+/// an EFFECT code the flag accumulates (the one `Boolean.valueOf(1)` the
+/// matching arm carries, the others preserved), the `r` the `Style.EMPTY`
+/// full reset wears; the `k` the obfuscated arm banks — the random-glyph
+/// walk the later round owes, the code the state machine consumes).
+#[derive(Clone, Copy, PartialEq, Default, Debug)]
+pub(crate) struct StyleState {
+    /// The resolved color code (`None` = the entry base the draw call
+    /// passes — the chat's white).
+    pub color: Option<char>,
+    pub bold: bool,
+    pub italic: bool,
+    pub underline: bool,
+    pub strike: bool,
+}
+
+impl StyleState {
+    /// One §-code char the walk consumes (the applyLegacyFormat law —
+    /// the pair the caller's in_code branch answers).
+    pub fn apply_code(&mut self, ch: char) {
+        if let Some(i) = code_index(ch) {
+            self.color = Some(char::from_digit(i as u32, 16).unwrap_or('f'));
+            // THE COLOR'S OWN CLEAR (the fresh-style constructor's five
+            // Boolean.valueOf(0) — the flags the color switch kills)
+            self.bold = false;
+            self.italic = false;
+            self.underline = false;
+            self.strike = false;
+        } else {
+            match ch {
+                'l' | 'L' => self.bold = true,
+                'm' | 'M' => self.strike = true,
+                'n' | 'N' => self.underline = true,
+                'o' | 'O' => self.italic = true,
+                'k' | 'K' => {} // obfuscated: consumed, the random-glyph walk owed
+                'r' | 'R' => *self = StyleState::default(),
+                _ => {} // the unknown code: consumed, the state untouched
+            }
+        }
+    }
+
+    /// THE ITALIC'S OWN SHEAR (javap `BakedSheetGlyph.render` — the top
+    /// vertices the `shearTop()` = `1.0 - 0.25 * up` offset carries, the
+    /// bottom the `shearBottom()` = `1.0 - 0.25 * down`; the per-row
+    /// fold `1.0 - 0.25 * (up + gy)` the linear walk speaks, the Java
+    /// `Math.round` half-up law the integer rasterizer honors). `gy` the
+    /// row within the glyph CELL (0 = the cell top), `up` = `ascent -
+    /// gh` the cell's own top offset the draw's baseline law carries.
+    pub fn italic_row_shift(up: i32, gy: i32) -> i32 {
+        let f = 1.0 - 0.25 * ((up + gy) as f32);
+        (f + 0.5).floor() as i32 // the Math.round half-up law
+    }
+}
+
 /// The advance walk the text lanes share (the vanilla Font.width's own
 /// rule the GUI lane speaks: glyph + 1px spacing, the space its own
-/// advance, the missing glyph the honest 4). Free so the world-space
-/// lanes (the name-tag planes) walk the SAME metric the HUD draws.
+/// advance, the missing glyph the honest 4 — the BOLD the second-glyph
+/// law's own +1 advance wears: javap `GlyphInfo.getAdvance(bold)` =
+/// `advance + getBoldOffset()` = `advance + 1.0`). Free so the
+/// world-space lanes (the name-tag planes) walk the SAME metric the
+/// HUD draws.
 pub(crate) fn font_text_width(s: &str) -> i32 {
     let mut w = 0i32;
     let mut in_code = false;
+    let mut st = StyleState::default();
     for ch in s.chars() {
         if in_code {
+            st.apply_code(ch);
             in_code = false;
             continue;
         }
@@ -89,11 +151,12 @@ pub(crate) fn font_text_width(s: &str) -> i32 {
             in_code = true;
             continue;
         }
-        w += match font_table::glyph(ch) {
+        let adv = match font_table::glyph(ch) {
             Some(g) if g.space_advance != 0 => g.space_advance as i32,
             Some(g) => g.gw as i32 + 1,
             None => 4,
         };
+        w += adv + if st.bold { 1 } else { 0 };
     }
     w
 }
@@ -557,18 +620,11 @@ impl<'a> Gui<'a> {
         dim: f32,
     ) -> i32 {
         let mut cx = x;
-        let mut color = base;
+        let mut st = StyleState::default();
         let mut in_code = false;
         for ch in s.chars() {
             if in_code {
-                if let Some(i) = code_index(ch) {
-                    color = COLOR_CODES[i];
-                } else if ch == 'r' || ch == 'R' {
-                    // THE §r RESET (the StringDecomposer's own law —
-                    // the entry base the reset returns to, the code
-                    // state the legacy reset clears)
-                    color = base;
-                }
+                st.apply_code(ch);
                 in_code = false;
                 continue;
             }
@@ -576,39 +632,79 @@ impl<'a> Gui<'a> {
                 in_code = true;
                 continue;
             }
+            let color = match st.color {
+                Some(c) => COLOR_CODES[code_index(c).unwrap_or(15)],
+                None => base,
+            };
             let Some(g) = font_table::glyph(ch) else {
+                // THE MISSING GLYPH (the honest 4 the advance keeps —
+                // the effects the style's own bars still ride)
+                if st.strike {
+                    self.fill(cx, y + 3, 4, 1, [color[0] * dim, color[1] * dim, color[2] * dim, alpha]);
+                }
+                if st.underline {
+                    self.fill(cx, y + 8, 4, 1, [color[0] * dim, color[1] * dim, color[2] * dim, alpha]);
+                }
                 cx += 4;
                 continue;
             };
-            if g.space_advance != 0 {
-                cx += g.space_advance as i32;
-                continue;
-            }
-            if g.gw > 0 {
+            let adv = if g.space_advance != 0 {
+                g.space_advance as i32
+            } else {
+                g.gw as i32 + 1
+            };
+            if g.space_advance == 0 && g.gw > 0 {
                 if let Some(tex) = a.font_texture(g.tex).cloned() {
                     // baseline: glyph cell top = y + ascent - cell height
                     let top = y + g.ascent as i32 - g.gh as i32;
+                    let up = g.ascent as i32 - g.gh as i32;
                     let rgb = [color[0] * dim, color[1] * dim, color[2] * dim];
-                    for gy in 0..g.gh {
-                        for gx in 0..g.gw {
-                            let c = tex.sample(
-                                g.u as u32 + gx as u32,
-                                g.v as u32 + gy as u32,
-                            );
-                            if c[3] <= 0.1 {
-                                continue;
+                    // THE BOLD'S SECOND PASS (javap BakedSheetGlyph
+                    // .renderChar — the glyph the +boldOffset (= 1.0)
+                    // copy answers, the z+0.001 the later draw wins)
+                    let passes = if st.bold { 2 } else { 1 };
+                    for pass in 0..passes {
+                        let px_base = cx + pass;
+                        for gy in 0..g.gh {
+                            // THE ITALIC'S OWN SHEAR (the per-row offset
+                            // the linear walk speaks — the upright rows
+                            // the 0 shift keeps)
+                            let shift = if st.italic {
+                                StyleState::italic_row_shift(up, gy as i32)
+                            } else {
+                                0
+                            };
+                            for gx in 0..g.gw {
+                                let c = tex.sample(
+                                    g.u as u32 + gx as u32,
+                                    g.v as u32 + gy as u32,
+                                );
+                                if c[3] <= 0.1 {
+                                    continue;
+                                }
+                                let a = c[3] * alpha;
+                                self.px(
+                                    px_base + shift + gx as i32,
+                                    top + gy as i32,
+                                    [rgb[0], rgb[1], rgb[2], a],
+                                );
                             }
-                            let a = c[3] * alpha;
-                            self.px(
-                                cx + gx as i32,
-                                top + gy as i32,
-                                [rgb[0], rgb[1], rgb[2], a],
-                            );
                         }
                     }
                 }
             }
-            cx += g.gw as i32 + 1;
+            // THE STYLE'S OWN BARS (javap PreparedTextBuilder.accept —
+            // the effect quads the CURRENT glyph's full advance span:
+            // the strikethrough the [y+3.5, y+4.5) band's floor fold
+            // speaks, the underline the [y+8, y+9) row wears; the color
+            // the text's own rgb the dim keeps, the SPACES the bars ride)
+            if st.strike {
+                self.fill(cx, y + 3, adv, 1, [color[0] * dim, color[1] * dim, color[2] * dim, alpha]);
+            }
+            if st.underline {
+                self.fill(cx, y + 8, adv, 1, [color[0] * dim, color[1] * dim, color[2] * dim, alpha]);
+            }
+            cx += adv + if st.bold { 1 } else { 0 };
         }
         cx
     }
@@ -658,17 +754,11 @@ impl<'a> Gui<'a> {
         dim: f32,
     ) -> i32 {
         let mut cx = x;
-        let mut color = base;
+        let mut st = StyleState::default();
         let mut in_code = false;
         for ch in s.chars() {
             if in_code {
-                if let Some(i) = code_index(ch) {
-                    color = COLOR_CODES[i];
-                } else if ch == 'r' || ch == 'R' {
-                    // THE §r RESET (the draw_raw twin — the entry base
-                    // the reset returns to)
-                    color = base;
-                }
+                st.apply_code(ch);
                 in_code = false;
                 continue;
             }
@@ -676,43 +766,77 @@ impl<'a> Gui<'a> {
                 in_code = true;
                 continue;
             }
+            let color = match st.color {
+                Some(c) => COLOR_CODES[code_index(c).unwrap_or(15)],
+                None => base,
+            };
             let Some(g) = font_table::glyph(ch) else {
+                if st.strike {
+                    self.fill(cx, y + 3 * k, 4 * k, k, [color[0] * dim, color[1] * dim, color[2] * dim, 1.0]);
+                }
+                if st.underline {
+                    self.fill(cx, y + 8 * k, 4 * k, k, [color[0] * dim, color[1] * dim, color[2] * dim, 1.0]);
+                }
                 cx += 4 * k;
                 continue;
             };
-            if g.space_advance != 0 {
-                cx += g.space_advance as i32 * k;
-                continue;
-            }
-            if g.gw > 0 {
+            let adv = if g.space_advance != 0 {
+                g.space_advance as i32
+            } else {
+                g.gw as i32 + 1
+            };
+            if g.space_advance == 0 && g.gw > 0 {
                 if let Some(tex) = a.font_texture(g.tex).cloned() {
                     // baseline: glyph cell top = y + ascent*k - cell height*k
                     let top = y + g.ascent as i32 * k - g.gh as i32 * k;
+                    let up = g.ascent as i32 - g.gh as i32;
                     let rgb = [color[0] * dim, color[1] * dim, color[2] * dim];
-                    for gy in 0..g.gh {
-                        for gx in 0..g.gw {
-                            let c = tex.sample(
-                                g.u as u32 + gx as u32,
-                                g.v as u32 + gy as u32,
-                            );
-                            if c[3] <= 0.1 {
-                                continue;
-                            }
-                            let al = c[3];
-                            for sy in 0..k {
-                                for sx in 0..k {
-                                    self.px(
-                                        cx + gx as i32 * k + sx,
-                                        top + gy as i32 * k + sy,
-                                        [rgb[0], rgb[1], rgb[2], al],
-                                    );
+                    // THE BOLD'S SECOND PASS (the draw_raw twin — the
+                    // +boldOffset copy the scaled lane also answers)
+                    let passes = if st.bold { 2 } else { 1 };
+                    for pass in 0..passes {
+                        let px_base = cx + pass * k;
+                        for gy in 0..g.gh {
+                            // THE ITALIC'S OWN SHEAR (the per-row offset
+                            // the GUI units speak, the k the block law
+                            // scales)
+                            let shift = if st.italic {
+                                StyleState::italic_row_shift(up, gy as i32) * k
+                            } else {
+                                0
+                            };
+                            for gx in 0..g.gw {
+                                let c = tex.sample(
+                                    g.u as u32 + gx as u32,
+                                    g.v as u32 + gy as u32,
+                                );
+                                if c[3] <= 0.1 {
+                                    continue;
+                                }
+                                let al = c[3];
+                                for sy in 0..k {
+                                    for sx in 0..k {
+                                        self.px(
+                                            px_base + shift + gx as i32 * k + sx,
+                                            top + gy as i32 * k + sy,
+                                            [rgb[0], rgb[1], rgb[2], al],
+                                        );
+                                    }
                                 }
                             }
                         }
                     }
                 }
             }
-            cx += (g.gw as i32 + 1) * k;
+            // THE STYLE'S OWN BARS (the scaled twins — the same rows the
+            // GUI units speak, the k the block law scales)
+            if st.strike {
+                self.fill(cx, y + 3 * k, adv * k, k, [color[0] * dim, color[1] * dim, color[2] * dim, 1.0]);
+            }
+            if st.underline {
+                self.fill(cx, y + 8 * k, adv * k, k, [color[0] * dim, color[1] * dim, color[2] * dim, 1.0]);
+            }
+            cx += (adv + if st.bold { 1 } else { 0 }) * k;
         }
         cx
     }

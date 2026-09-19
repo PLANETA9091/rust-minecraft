@@ -1269,19 +1269,18 @@ pub fn chat_line_y(gui_h: i32, index: i32) -> i32 {
     chat_bottom - 9 * (index + 1) + 8
 }
 
-/// THE WRAP'S OWN COLOR CARRIER (the §-code state the consumed text
-/// carries: the pair the walk consumes, the mapped palette code the
-/// state speaks, the §r the base returns — the same consumption law
-/// the draw's own walk keeps; the orphaned code char the §-less
-/// prefix never changes — the literal the draw renders).
-fn carry_code_state(state: Option<char>, part: &str) -> Option<char> {
+/// THE WRAP'S OWN STYLE CARRIER (the §-code state the consumed text
+/// carries — the shared `StyleState` the draw's own consumption walk
+/// speaks: the pair the walk consumes, the mapped code the state
+/// wears, the color the flags clear, the §r the reset answers; the
+/// orphaned code char the §-less prefix never changes — the literal
+/// the draw renders).
+fn carry_code_state(state: crate::gui::StyleState, part: &str) -> crate::gui::StyleState {
     let mut st = state;
     let mut in_code = false;
     for ch in part.chars() {
         if in_code {
-            if let Some(i) = crate::gui::code_index(ch) {
-                st = Some(char::from_digit(i as u32, 16).unwrap_or('f'));
-            }
+            st.apply_code(ch);
             in_code = false;
             continue;
         }
@@ -1290,6 +1289,29 @@ fn carry_code_state(state: Option<char>, part: &str) -> Option<char> {
         }
     }
     st
+}
+
+/// THE RE-OPEN'S OWN CODES (the active style the fresh line wears —
+/// the draw's own consumption order the emission keeps: the color
+/// FIRST (the clear the color switch kills), the flags AFTER (the
+/// accumulate the effect codes speak); the base state no code wears).
+fn write_reopen_codes(st: &crate::gui::StyleState, line: &mut String) {
+    if let Some(c) = st.color {
+        line.push('\u{a7}');
+        line.push(c);
+    }
+    if st.bold {
+        line.push_str("\u{a7}l");
+    }
+    if st.strike {
+        line.push_str("\u{a7}m");
+    }
+    if st.underline {
+        line.push_str("\u{a7}n");
+    }
+    if st.italic {
+        line.push_str("\u{a7}o");
+    }
 }
 
 /// THE CHAT TEXT'S OWN WRAP (the refreshTrimmedMessages walk — the
@@ -1305,12 +1327,12 @@ pub fn wrap_chat_text(s: &str, width: i32) -> Vec<String> {
     let mut out: Vec<String> = Vec::new();
     let mut line = String::new();
     let mut line_w = 0i32;
-    // THE COLOR STATE (the code the finished words left open — the
-    // next line the SAME color re-opens)
-    let mut state: Option<char> = None;
+    // THE STYLE STATE (the style the finished words left open — the
+    // next line the SAME style re-opens)
+    let mut state = crate::gui::StyleState::default();
     for w in s.split(' ') {
         let mut word = w;
-        // THE STATE THE WORD'S FIRST CONTENT RIDES (the re-open code
+        // THE STYLE THE WORD'S FIRST CONTENT RIDES (the re-open codes
         // the fresh line carries)
         let mut entering = state;
         loop {
@@ -1318,13 +1340,10 @@ pub fn wrap_chat_text(s: &str, width: i32) -> Vec<String> {
             let sep = if line.is_empty() { 0 } else { space_w };
             if line_w + sep + word_w <= width {
                 if line.is_empty() {
-                    // THE LINE'S RE-OPEN (the active code the wrapped
-                    // line wears — the redundant code the draw's own
+                    // THE LINE'S RE-OPEN (the active style the wrapped
+                    // line wears — the redundant codes the draw's own
                     // state machine absorbs)
-                    if let Some(c) = entering {
-                        line.push('\u{a7}');
-                        line.push(c);
-                    }
+                    write_reopen_codes(&entering, &mut line);
                 } else {
                     line.push(' ');
                     line_w += sep;
@@ -1341,7 +1360,7 @@ pub fn wrap_chat_text(s: &str, width: i32) -> Vec<String> {
             }
             // THE TOO-LONG WORD (the hard clip): the chars the width
             // takes line up, the overflow the next line carries —
-            // the tail the CONSUMED prefix's color state rides
+            // the tail the CONSUMED prefix's style state rides
             let mut used = 0usize;
             for (i, ch) in word.char_indices() {
                 let cw = crate::gui::font_text_width(&word[i..i + ch.len_utf8()]);
@@ -21723,6 +21742,120 @@ mod tests {
             base_shadow_pixels > 3,
             "the base shadow pixels the same copy paints: {base_shadow_pixels}"
         );
+    }
+
+    /// THE TEXT STYLES' OWN VERDICTS (the effect laws the 26.2
+    /// bytecode speaks: the bold the second-glyph advance +1 wears,
+    /// the color switch the flags clear, the obfuscated the consumed
+    /// skip keeps, the italic the per-row shear speaks, the bars the
+    /// strikethrough/underline rows wear, the wrap the bold re-opens).
+    #[test]
+    fn the_text_styles_the_flags_the_jar_laws_speak() {
+        // THE WIDTH'S OWN LAW (the GlyphInfo.getAdvance(bold) the +1
+        // boldOffset speaks; the color switch the flags clear — the
+        // second glyph the unbolded advance wears; the obfuscated the
+        // consumed skip keeps)
+        assert_eq!(
+            crate::gui::font_text_width("\u{a7}lA"),
+            crate::gui::font_text_width("A") + 1
+        );
+        assert_eq!(
+            crate::gui::font_text_width("\u{a7}lA\u{a7}cB"),
+            crate::gui::font_text_width("A") + 1 + crate::gui::font_text_width("B")
+        );
+        assert_eq!(
+            crate::gui::font_text_width("\u{a7}kA"),
+            crate::gui::font_text_width("A")
+        );
+        // THE ITALIC'S OWN SHEAR (the per-row fold the linear walk
+        // speaks: up = -1 the standard cell carries — the top rows the
+        // +1 lean wears, the bottom rows the upright keeps)
+        let expected = [1, 1, 1, 1, 0, 0, 0, 0];
+        for (gy, shift) in expected.iter().enumerate() {
+            assert_eq!(
+                crate::gui::StyleState::italic_row_shift(-1, gy as i32),
+                *shift,
+                "the italic row {gy} the shear law keeps"
+            );
+        }
+        // THE WRAP'S OWN RE-OPEN (the bold the wrapped line carries —
+        // the style the line break never strips)
+        let bolded = "\u{a7}l".to_string() + &"the quick brown fox jumps over the lazy dog".repeat(3);
+        let wrapped = wrap_chat_text(&bolded, 320);
+        assert!(wrapped.len() > 1, "the bolded line the wrap splits");
+        for seg in &wrapped[1..] {
+            assert!(
+                seg.starts_with("\u{a7}l"),
+                "the wrapped line the bold re-opens: {seg}"
+            );
+        }
+
+        // THE PIXELS' OWN VERDICT (the harness the chat lane keeps —
+        // the bold's doubled column, the bars' rows, the lean's
+        // half-split the integer fold speaks)
+        fn diff_count(a: &[u8], b: &[u8], x0: i32, y0: i32, w: i32, h: i32) -> usize {
+            let mut n = 0usize;
+            for y in y0..y0 + h {
+                for x in x0..x0 + w {
+                    let o = ((y as usize) * 640 + x as usize) * 3;
+                    if a[o..o + 3] != b[o..o + 3] {
+                        n += 1;
+                    }
+                }
+            }
+            n
+        }
+        let root = ["assets-cache/jar", "../assets-cache/jar", "../../assets-cache/jar"]
+            .iter()
+            .map(std::path::Path::new)
+            .find(|p| p.join("gui/container/inventory.png").exists());
+        let Some(root) = root else { return };
+        let mut app = App::new(3);
+        app.enter_world();
+        let mut assets = GuiAssets::open(&root);
+        let mut fb = crate::raster::Framebuf::new(640, 360);
+        let y = chat_line_y(360, 0);
+        // THE BOLD (the second-glyph copy the +1 offset wears — the
+        // columns the plain line never paints)
+        app.push_chat_message("\u{a7}lIIII".to_string());
+        app.render(&mut fb, &mut assets);
+        let bold_frame = fb.color.clone();
+        app.chat_messages[0].0 = "IIII".to_string();
+        app.render(&mut fb, &mut assets);
+        let plain_frame = fb.color.clone();
+        let bold_diff = diff_count(&bold_frame, &plain_frame, 2, y - 1, 120, 10);
+        assert!(bold_diff > 8, "the bold the second pass paints: {bold_diff}");
+        // THE UNDERLINE (the [y+8, y+9) row the effect quad wears —
+        // the row the text's own baseline gap keeps bare)
+        app.chat_messages[0].0 = "\u{a7}nAAAA".to_string();
+        app.render(&mut fb, &mut assets);
+        let underlined = fb.color.clone();
+        app.chat_messages[0].0 = "AAAA".to_string();
+        app.render(&mut fb, &mut assets);
+        let plain2 = fb.color.clone();
+        let under_diff = diff_count(&underlined, &plain2, 2, y + 8, 120, 1);
+        assert!(under_diff > 20, "the underline the row paints: {under_diff}");
+        let gap_diff = diff_count(&underlined, &plain2, 2, y + 7, 120, 1);
+        assert_eq!(gap_diff, 0, "the gap row the underline never touches");
+        // THE STRIKETHROUGH (the [y+3.5, y+4.5) band's floor fold —
+        // the row the glyph bodies and the bar both paint)
+        app.chat_messages[0].0 = "\u{a7}mAAAA".to_string();
+        app.render(&mut fb, &mut assets);
+        let struck = fb.color.clone();
+        let strike_diff = diff_count(&struck, &plain2, 2, y + 3, 120, 1);
+        assert!(strike_diff > 10, "the strikethrough the row paints: {strike_diff}");
+        // THE ITALIC (the lean the per-row shear speaks — the top
+        // rows the +1 shift wears, the bottom rows the upright keeps)
+        app.chat_messages[0].0 = "\u{a7}oMMMMM".to_string();
+        app.render(&mut fb, &mut assets);
+        let italic = fb.color.clone();
+        app.chat_messages[0].0 = "MMMMM".to_string();
+        app.render(&mut fb, &mut assets);
+        let plain3 = fb.color.clone();
+        let top_diff = diff_count(&italic, &plain3, 2, y - 1, 200, 4);
+        assert!(top_diff > 10, "the italic top rows the shear shifts: {top_diff}");
+        let bottom_diff = diff_count(&italic, &plain3, 2, y + 3, 200, 4);
+        assert_eq!(bottom_diff, 0, "the italic bottom rows the upright keeps");
     }
 
     #[test]

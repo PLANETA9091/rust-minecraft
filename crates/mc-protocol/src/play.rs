@@ -6650,50 +6650,135 @@ fn chat_format_code(color: &str) -> Option<Option<char>> {
         .map(|(_, code)| Some(*code))
 }
 
+/// THE RESOLVED STYLE THE WALK CARRIES (the color the §-code speaks,
+/// the flags the effect codes answer — the inheritance the component
+/// chain walks, the obfuscated the chain keeps but the emission
+/// honestly skips: the random-glyph walk the draw lane owes).
+#[derive(Clone, Copy, PartialEq, Default)]
+struct ChatStyleState {
+    color: Option<char>,
+    bold: bool,
+    italic: bool,
+    underline: bool,
+    strike: bool,
+    #[allow(dead_code)] // the chain's own field — the emission skips it
+    obfuscated: bool,
+}
+
+/// The flat emission's own state machine (the draw walk's OWN
+/// consumption law the emission models: the §-code sequence the draw
+/// resolves to the target state speaks): the flag-loss the §r answers
+/// (the legacy alphabet's only eraser — no per-flag off code exists),
+/// the color switch the fresh-style law wears (the flags it kills the
+/// re-emission restores), the effect codes the accumulate law speaks.
+fn emit_chat_state(target: ChatStyleState, cur: &mut ChatStyleState, out: &mut String) {
+    // THE FLAG-LOSS RESET (the flags cur wears the target lacks —
+    // the §r the only eraser the alphabet carries)
+    if (cur.bold && !target.bold)
+        || (cur.italic && !target.italic)
+        || (cur.underline && !target.underline)
+        || (cur.strike && !target.strike)
+    {
+        out.push('§');
+        out.push('r');
+        *cur = ChatStyleState::default();
+    }
+    if target.color != cur.color {
+        out.push('§');
+        match target.color {
+            Some(code) => out.push(code),
+            None => out.push('r'),
+        }
+        // THE COLOR'S OWN CLEAR (javap Style.applyLegacyFormat — the
+        // fresh style the color arm builds, the five Boolean.valueOf(0)
+        // the flags wear)
+        cur.color = target.color;
+        cur.bold = false;
+        cur.italic = false;
+        cur.underline = false;
+        cur.strike = false;
+    }
+    if target.bold && !cur.bold {
+        out.push_str("\u{a7}l");
+        cur.bold = true;
+    }
+    if target.strike && !cur.strike {
+        out.push_str("\u{a7}m");
+        cur.strike = true;
+    }
+    if target.underline && !cur.underline {
+        out.push_str("\u{a7}n");
+        cur.underline = true;
+    }
+    if target.italic && !cur.italic {
+        out.push_str("\u{a7}o");
+        cur.italic = true;
+    }
+    *cur = target;
+}
+
 /// The colored flatten's own recursion: `inherit` the style the
 /// component's PARENT chain carries (the vanilla Style resolution's
 /// own direction — a child the field omits wears the parent's color,
 /// the SIBLINGS the COMMON parent wears, never each other), `cur` the
-/// code the flat emission currently speaks (the draw walk's linear
-/// state — a code the text only changes when the resolved color
+/// state the flat emission currently speaks (the draw walk's linear
+/// state — a code the text only emits when the resolved state
 /// differs).
 fn flatten_component_colored_walk(
     tag: &Nbt,
-    inherit: Option<char>,
+    inherit: ChatStyleState,
     out: &mut String,
-    cur: &mut Option<char>,
+    cur: &mut ChatStyleState,
 ) {
-    // The component's OWN style the field carries: `Some(Some(code))`
+    // The component's OWN color the field carries: `Some(Some(code))`
     // a named color speaks, `Some(None)` the "reset" the base returns,
     // `None` the field the component omits (or the hex the palette
     // skips) — the inherited color rides.
-    let own = match tag.get("color").and_then(Nbt::as_str) {
+    let own_color = match tag.get("color").and_then(Nbt::as_str) {
         Some(c) => chat_format_code(c),
         None => None,
     };
-    // THE SUBTREE'S OWN RESOLVED COLOR (the vanilla chain fold: the
-    // explicit field overrides, the omission inherits)
-    let resolved = match own {
+    let resolved_color = match own_color {
         Some(explicit) => explicit,
-        None => inherit,
+        None => inherit.color,
+    };
+    // The component's OWN FLAG the field carries (the explicit true/
+    // false the Byte/String booleans speak, the omission the parent's
+    // flag inherits).
+    let flag = |key: &str, inherited: bool| -> bool {
+        match tag.get(key) {
+            Some(Nbt::Byte(b)) => *b != 0,
+            Some(Nbt::String(s)) => s == "true",
+            _ => inherited,
+        }
+    };
+    // THE SUBTREE'S OWN RESOLVED STYLE (the vanilla chain fold: the
+    // explicit fields override, the omissions inherit)
+    let resolved = ChatStyleState {
+        color: resolved_color,
+        bold: flag("bold", inherit.bold),
+        italic: flag("italic", inherit.italic),
+        underline: flag("underlined", inherit.underline),
+        strike: flag("strikethrough", inherit.strike),
+        obfuscated: flag("obfuscated", inherit.obfuscated),
     };
     if let Nbt::String(s) = tag {
-        // THE BARE LEAF (the string IS the text — the inherited color
+        // THE BARE LEAF (the string IS the text — the inherited style
         // the parent chain carries)
-        emit_color(resolved, out, cur);
+        emit_chat_state(resolved, cur, out);
         out.push_str(s);
         return;
     }
     match tag {
         Nbt::String(_) => unreachable!("the bare leaf the arm above answers"),
         Nbt::Compound(_) => {
-            emit_color(resolved, out, cur);
+            emit_chat_state(resolved, cur, out);
             if let Some(Nbt::String(s)) = tag.get("text") {
                 out.push_str(s);
             }
             // THE EXTRA WALK (the vanilla component's own sibling law:
             // each child's parent style IS this component's — the
-            // resolved color the subtree carries)
+            // resolved style the subtree carries)
             if let Some(Nbt::List(children)) = tag.get("extra") {
                 for child in children {
                     flatten_component_colored_walk(child, resolved, out, cur);
@@ -6712,24 +6797,8 @@ fn flatten_component_colored_walk(
     }
 }
 
-/// The flat emission's own switch: the resolved color the run wears
-/// only when the currently spoken code differs (a redundant code the
-/// state never re-emits; the reset the `§r` the draw's own law
-/// answers — the entry base the reset returns to).
-fn emit_color(resolved: Option<char>, out: &mut String, cur: &mut Option<char>) {
-    if *cur == resolved {
-        return;
-    }
-    out.push('§');
-    match resolved {
-        Some(code) => out.push(code),
-        None => out.push('r'),
-    }
-    *cur = resolved;
-}
-
 /// The component tag's own COLORED text (the chat display's flatten —
-/// the walk [`flatten_component_text`] speaks PLUS the colors: the
+/// the walk [`flatten_component_text`] speaks PLUS the styles: the
 /// structured compound's "color" field the sixteen `ChatFormatting`
 /// codes emit (`§0`..`§f`, the palette the font renderer's own
 /// `StringDecomposer` walk wears), the "reset" the `§r` the draw's
@@ -6737,18 +6806,25 @@ fn emit_color(resolved: Option<char>, out: &mut String, cur: &mut Option<char>) 
 /// PARENT's color wears (the vanilla Style resolution), the siblings
 /// the common parent wears (never each other — the extra walk's own
 /// law), the hex form the 16-code palette cannot speak renders in the
-/// inherited color (the honest skip). The bold/italic/underline/
-/// strikethrough/obfuscated flags the draw lane has no variant for —
-/// the flags the later round owes, the colors the chat already
-/// speaks. The bare TAG_String IS the text (the codes inside it the
-/// draw's own inline walk answers); the LIST root the component-array
-/// form the sibling walk renders. The sidebar/tab lanes keep the
-/// monochrome [`flatten_component_text`] — the colored walk the CHAT
-/// display's law wears.
+/// inherited color (the honest skip). THE STYLE FLAGS the same walk
+/// emits: the bold/underlined/strikethrough/italic fields the `§l`/
+/// `§n`/`§m`/`§o` codes speak (the effect accumulation the
+/// `applyLegacyFormat` law banks), the flag the child omits the
+/// PARENT's flag wears, the flag-loss the `§r` reset answers (the
+/// legacy alphabet's only eraser), the color switch the flag-clear
+/// law wears (the fresh style the applyLegacyFormat's own
+/// `Boolean.valueOf(0)` walk builds — the flags the re-emission
+/// restores), the obfuscated the chain keeps but the emission
+/// honestly skips (the random-glyph walk the draw lane owes). The
+/// bare TAG_String IS the text (the codes inside it the draw's own
+/// inline walk answers); the LIST root the component-array form the
+/// sibling walk renders. The sidebar/tab lanes keep the monochrome
+/// [`flatten_component_text`] — the colored walk the CHAT display's
+/// law wears.
 pub fn flatten_component_colored(tag: &Nbt) -> String {
     let mut out = String::new();
-    let mut cur: Option<char> = None; // the draw call's own base (the chat's white)
-    flatten_component_colored_walk(tag, None, &mut out, &mut cur);
+    let mut cur = ChatStyleState::default(); // the draw call's own base (the chat's white)
+    flatten_component_colored_walk(tag, ChatStyleState::default(), &mut out, &mut cur);
     out
 }
 
@@ -14795,14 +14871,14 @@ mod tests {
             ("color".to_string(), Nbt::String("#55FFFF".to_string())),
         ]);
         assert_eq!(flatten_component_colored(&hex), "x");
-        // THE BOLD IGNORE (the flag the draw lane has no variant for —
-        // the COLOR the only emission the walk speaks)
+        // THE BOLD+COLOR ORDER (the draw's own consumption — the color
+        // switch the flags clear, the §l the re-emission restores)
         let bold = Nbt::Compound(vec![
             ("text".to_string(), Nbt::String("A".to_string())),
             ("color".to_string(), Nbt::String("gold".to_string())),
             ("bold".to_string(), Nbt::Byte(1)),
         ]);
-        assert_eq!(flatten_component_colored(&bold), "\u{a7}6A");
+        assert_eq!(flatten_component_colored(&bold), "\u{a7}6\u{a7}lA");
         // THE LIST ROOT (the component-array form — the bare-String
         // element the default the chain-less root wears, the §r the
         // state's own switch answers)
@@ -14845,5 +14921,96 @@ mod tests {
         p.push(0);
         let m = parse_system_chat(&p).unwrap();
         assert_eq!(m.content, "\u{a7}eHi there", "the color the content carries");
+    }
+
+    /// THE CHAT STYLES' OWN WALK (the effect codes the `applyLegacyFormat`
+    /// law speaks: the bold/underlined/strikethrough/italic fields the
+    /// `§l`/`§n`/`§m`/`§o` codes emit, the flag the child omits the
+    /// PARENT's flag wears, the flag-loss the §r the only eraser answers,
+    /// the color switch the flag-clear law wears — the fresh style the
+    /// `Boolean.valueOf(0)` walk builds, the flags the re-emission
+    /// restores, the obfuscated the honest skip keeps).
+    #[test]
+    fn the_chat_styles_the_flags_the_legacy_alphabet_speaks() {
+        // THE BOLD (the flag the §l code speaks)
+        let bold = Nbt::Compound(vec![
+            ("text".to_string(), Nbt::String("A".to_string())),
+            ("bold".to_string(), Nbt::Byte(1)),
+        ]);
+        assert_eq!(flatten_component_colored(&bold), "\u{a7}lA");
+        // THE COLOR-THEN-FLAG ORDER (the draw's own consumption — the
+        // color switch the flags clear, the re-emission restores)
+        let red_bold = Nbt::Compound(vec![
+            ("text".to_string(), Nbt::String("A".to_string())),
+            ("color".to_string(), Nbt::String("red".to_string())),
+            ("bold".to_string(), Nbt::Byte(1)),
+        ]);
+        assert_eq!(flatten_component_colored(&red_bold), "\u{a7}c\u{a7}lA");
+        // THE INHERITANCE (the child the flag field omits the PARENT's
+        // bold wears — one §l the whole subtree speaks)
+        let inherit = Nbt::Compound(vec![
+            ("text".to_string(), Nbt::String("a".to_string())),
+            ("bold".to_string(), Nbt::Byte(1)),
+            (
+                "extra".to_string(),
+                Nbt::List(vec![text_component("b")]),
+            ),
+        ]);
+        assert_eq!(flatten_component_colored(&inherit), "\u{a7}lab");
+        // THE FLAG-LOSS RESET (the child's explicit false — the §r the
+        // only eraser the legacy alphabet carries)
+        let loss = Nbt::Compound(vec![
+            ("text".to_string(), Nbt::String("a".to_string())),
+            ("bold".to_string(), Nbt::Byte(1)),
+            (
+                "extra".to_string(),
+                Nbt::List(vec![Nbt::Compound(vec![
+                    ("text".to_string(), Nbt::String("b".to_string())),
+                    ("bold".to_string(), Nbt::Byte(0)),
+                ])]),
+            ),
+        ]);
+        assert_eq!(flatten_component_colored(&loss), "\u{a7}la\u{a7}rb");
+        // THE COLOR-CLEARS-FLAGS INTERACTION (the color switch the
+        // fresh style wears — the bold the re-emission restores)
+        let both = Nbt::Compound(vec![
+            ("text".to_string(), Nbt::String("a".to_string())),
+            ("color".to_string(), Nbt::String("red".to_string())),
+            ("bold".to_string(), Nbt::Byte(1)),
+            (
+                "extra".to_string(),
+                Nbt::List(vec![Nbt::Compound(vec![
+                    ("text".to_string(), Nbt::String("b".to_string())),
+                    ("color".to_string(), Nbt::String("blue".to_string())),
+                    ("bold".to_string(), Nbt::Byte(1)),
+                ])]),
+            ),
+        ]);
+        assert_eq!(
+            flatten_component_colored(&both),
+            "\u{a7}c\u{a7}la\u{a7}9\u{a7}lb"
+        );
+        // THE EFFECT TRIO (the strike/underline/italic codes the
+        // accumulation speaks — the machine's own emission order)
+        let trio = Nbt::Compound(vec![
+            ("text".to_string(), Nbt::String("x".to_string())),
+            ("strikethrough".to_string(), Nbt::Byte(1)),
+            ("underlined".to_string(), Nbt::Byte(1)),
+            ("italic".to_string(), Nbt::Byte(1)),
+        ]);
+        assert_eq!(flatten_component_colored(&trio), "\u{a7}m\u{a7}n\u{a7}ox");
+        // THE OBFUSCATED SKIP (the chain the field keeps — no code the
+        // honest emission speaks, the random-glyph walk the draw owes)
+        let obf = Nbt::Compound(vec![
+            ("text".to_string(), Nbt::String("A".to_string())),
+            ("obfuscated".to_string(), Nbt::Byte(1)),
+        ]);
+        assert_eq!(flatten_component_colored(&obf), "A");
+        // THE STRING BOOLEAN (the JSON-ish form the field also wears)
+        let strflag = Nbt::Compound(vec![
+            ("text".to_string(), Nbt::String("A".to_string())),
+            ("bold".to_string(), Nbt::String("true".to_string())),
+        ]);
+        assert_eq!(flatten_component_colored(&strflag), "\u{a7}lA");
     }
 }
