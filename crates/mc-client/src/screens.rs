@@ -132,7 +132,16 @@ pub(crate) fn format_chat_decoration(key: &str, args: &[&str]) -> String {
     while let Some(c) = chars.next() {
         if c == '%' && chars.peek() == Some(&'s') {
             chars.next();
-            out.push_str(args.get(arg_i).copied().unwrap_or(""));
+            let arg = args.get(arg_i).copied().unwrap_or("");
+            out.push_str(arg);
+            // THE SIBLING RESET (the TranslatableContents' own law — the
+            // template's literals wear the TEMPLATE's style, never the
+            // argument's: the §-codes the arg carried the §r closes,
+            // the draw's entry-base law answers; the code-less arg the
+            // state never left — no code the honest walk emits)
+            if arg.contains('\u{a7}') {
+                out.push_str("\u{a7}r");
+            }
             arg_i += 1;
         } else {
             out.push(c);
@@ -1260,27 +1269,69 @@ pub fn chat_line_y(gui_h: i32, index: i32) -> i32 {
     chat_bottom - 9 * (index + 1) + 8
 }
 
+/// THE WRAP'S OWN COLOR CARRIER (the §-code state the consumed text
+/// carries: the pair the walk consumes, the mapped palette code the
+/// state speaks, the §r the base returns — the same consumption law
+/// the draw's own walk keeps; the orphaned code char the §-less
+/// prefix never changes — the literal the draw renders).
+fn carry_code_state(state: Option<char>, part: &str) -> Option<char> {
+    let mut st = state;
+    let mut in_code = false;
+    for ch in part.chars() {
+        if in_code {
+            if let Some(i) = crate::gui::code_index(ch) {
+                st = Some(char::from_digit(i as u32, 16).unwrap_or('f'));
+            }
+            in_code = false;
+            continue;
+        }
+        if ch == '\u{a7}' {
+            in_code = true;
+        }
+    }
+    st
+}
+
 /// THE CHAT TEXT'S OWN WRAP (the refreshTrimmedMessages walk — the
 /// message the 320px chat width the word-aware trim splits: the
 /// greedy space-fold the flush-then-retry keeps, the too-long word
-/// the hard clip answers).
+/// the hard clip answers). THE COLOR CARRY: the wrapped line the
+/// ACTIVE §-code re-opens (the vanilla StringSplitter's own law —
+/// each line the style the split carried wears, the color the line
+/// break never strips), the hard-clip tail the consumed prefix's
+/// state rides.
 pub fn wrap_chat_text(s: &str, width: i32) -> Vec<String> {
     let space_w = crate::gui::font_text_width(" ");
     let mut out: Vec<String> = Vec::new();
     let mut line = String::new();
     let mut line_w = 0i32;
+    // THE COLOR STATE (the code the finished words left open — the
+    // next line the SAME color re-opens)
+    let mut state: Option<char> = None;
     for w in s.split(' ') {
         let mut word = w;
+        // THE STATE THE WORD'S FIRST CONTENT RIDES (the re-open code
+        // the fresh line carries)
+        let mut entering = state;
         loop {
             let word_w = crate::gui::font_text_width(word);
             let sep = if line.is_empty() { 0 } else { space_w };
             if line_w + sep + word_w <= width {
-                if !line.is_empty() {
+                if line.is_empty() {
+                    // THE LINE'S RE-OPEN (the active code the wrapped
+                    // line wears — the redundant code the draw's own
+                    // state machine absorbs)
+                    if let Some(c) = entering {
+                        line.push('\u{a7}');
+                        line.push(c);
+                    }
+                } else {
                     line.push(' ');
                     line_w += sep;
                 }
                 line.push_str(word);
                 line_w += word_w;
+                state = carry_code_state(entering, word);
                 break;
             }
             if !line.is_empty() {
@@ -1289,7 +1340,8 @@ pub fn wrap_chat_text(s: &str, width: i32) -> Vec<String> {
                 continue;
             }
             // THE TOO-LONG WORD (the hard clip): the chars the width
-            // takes line up, the overflow the next line carries
+            // takes line up, the overflow the next line carries —
+            // the tail the CONSUMED prefix's color state rides
             let mut used = 0usize;
             for (i, ch) in word.char_indices() {
                 let cw = crate::gui::font_text_width(&word[i..i + ch.len_utf8()]);
@@ -1302,7 +1354,9 @@ pub fn wrap_chat_text(s: &str, width: i32) -> Vec<String> {
             }
             out.push(std::mem::take(&mut line));
             line_w = 0;
+            entering = carry_code_state(entering, &word[..used]);
             if used >= word.len() {
+                state = entering;
                 break;
             }
             word = &word[used..];
@@ -21478,6 +21532,197 @@ mod tests {
         app.render(&mut fb, &mut assets);
         let band_diff = diff_count(&hidden_bare, &fb.color, 2, 360 - 14, 636, 12);
         assert!(band_diff > 400, "the input band the open chat paints: {band_diff}");
+    }
+
+    /// THE CHAT COLORS' OWN VERDICTS (the component walk the wire's
+    /// `color` field speaks, the wrap the ACTIVE §-code re-opens, the
+    /// decoration the §r tail the template's own style wears, the
+    /// draw the §r reset the entry-base law answers — the pixels the
+    /// colored line paints).
+    #[test]
+    fn the_chat_colors_the_walk_the_lines_re_speak() {
+        // THE WRAP'S OWN CARRY (the StringSplitter's own law — every
+        // wrapped line the active code re-opens, the color the line
+        // break never strips)
+        let colored = "\u{a7}c".to_string()
+            + &"the quick brown fox jumps over the lazy dog".repeat(3);
+        let wrapped = wrap_chat_text(&colored, 320);
+        assert!(wrapped.len() > 1, "the colored line the wrap splits");
+        for (i, seg) in wrapped.iter().enumerate() {
+            assert!(
+                crate::gui::font_text_width(seg) <= 320,
+                "the wrapped line the width cap keeps: {seg}"
+            );
+            if i > 0 {
+                assert!(
+                    seg.starts_with("\u{a7}c"),
+                    "the wrapped line the active code re-opens: {seg}"
+                );
+            }
+        }
+        // THE UNCOLORED PASSTHROUGH (the plain line no code wears —
+        // the wrap the source's own bytes keeps)
+        let long = "the quick brown fox jumps over the lazy dog again and again until the line wraps past the chat width the game keeps";
+        for seg in wrap_chat_text(long, 320) {
+            assert!(!seg.contains('\u{a7}'), "the plain line no code wears: {seg}");
+        }
+        // THE MID-STRING CODE (the lines BEFORE the code stay bare,
+        // the lines AFTER the code re-open it — the state the split
+        // position carries)
+        let mid = format!("{}\u{a7}9 {}", "word ".repeat(30), "tail ".repeat(30));
+        let wrapped = wrap_chat_text(mid.trim_end(), 320);
+        let mut seen_code = false;
+        for seg in &wrapped {
+            if seg.contains("\u{a7}9") {
+                seen_code = true;
+            } else if seen_code {
+                assert!(
+                    seg.starts_with("\u{a7}9"),
+                    "the post-code line the state re-opens: {seg}"
+                );
+            } else {
+                assert!(!seg.contains('\u{a7}'), "the pre-code line stays bare: {seg}");
+            }
+        }
+        assert!(seen_code, "the mid-string code the fixture wears");
+        // THE DECORATION'S OWN RESET (the arg the §-codes carries the
+        // §r tail wears — the template's literals the TEMPLATE's
+        // style speaks, never the argument's)
+        assert_eq!(
+            format_chat_decoration("chat.type.text", &["\u{a7}9Steve", "gg"]),
+            "<\u{a7}9Steve\u{a7}r> gg",
+            "the coded arg the \u{a7}r tail wears"
+        );
+        assert_eq!(
+            format_chat_decoration("chat.type.text", &["Steve", "gg"]),
+            "<Steve> gg",
+            "the code-less arg no tail wears"
+        );
+
+        // THE PIXELS' OWN VERDICT (the harness the chat lane keeps):
+        // the §c line the RED the white line's own bytes answers, the
+        // §r tail the BASE returns (the reset the draw's own law
+        // speaks), the reset's head the red run's own bytes keeps
+        fn diff_count(a: &[u8], b: &[u8], x0: i32, y0: i32, w: i32, h: i32) -> usize {
+            let mut n = 0usize;
+            for y in y0..y0 + h {
+                for x in x0..x0 + w {
+                    let o = ((y as usize) * 640 + x as usize) * 3;
+                    if a[o..o + 3] != b[o..o + 3] {
+                        n += 1;
+                    }
+                }
+            }
+            n
+        }
+        let root = ["assets-cache/jar", "../assets-cache/jar", "../../assets-cache/jar"]
+            .iter()
+            .map(std::path::Path::new)
+            .find(|p| p.join("gui/container/inventory.png").exists());
+        let Some(root) = root else { return };
+        let mut app = App::new(3);
+        app.enter_world();
+        let mut assets = GuiAssets::open(&root);
+        let mut fb = crate::raster::Framebuf::new(640, 360);
+        // THE COLORED LINE (the newest line's own region the fresh
+        // push's full alpha wears)
+        app.push_chat_message("\u{a7}cAAAAAA".to_string());
+        app.render(&mut fb, &mut assets);
+        let red_frame = fb.color.clone();
+        app.chat_messages[0].0 = "AAAAAA".to_string();
+        app.render(&mut fb, &mut assets);
+        let white_frame = fb.color.clone();
+        let y = chat_line_y(360, 0);
+        let color_diff = diff_count(&red_frame, &white_frame, 2, y - 1, 210, 10);
+        assert!(color_diff > 40, "the code the color paints: {color_diff}");
+        // THE RESET'S OWN TAIL (the §r the base returns — the tail
+        // the red line and the reset line differ, the HEAD the red
+        // run's own bytes keeps)
+        app.chat_messages[0].0 = "\u{a7}cAAA\u{a7}rAAA".to_string();
+        app.render(&mut fb, &mut assets);
+        let reset_frame = fb.color.clone();
+        let head_diff = diff_count(&red_frame, &reset_frame, 2, y - 1, 20, 10);
+        assert_eq!(head_diff, 0, "the reset's head the red run keeps");
+        let tail_diff = diff_count(&red_frame, &reset_frame, 20, y - 1, 190, 10);
+        assert!(tail_diff > 20, "the \u{a7}r the base returns: {tail_diff}");
+        // THE SHADOW'S OWN DIM (the §-code color the 0.25 fold
+        // darkens — the vanilla shadow's own law the bright-code bug
+        // the pre-walk draw wore; the shadow pixel the glyph's own
+        // (+1,+1) copy speaks)
+        let px = |fb: &crate::raster::Framebuf, x: usize, y: usize| -> [f32; 3] {
+            let o = (y * 640 + x) * 3;
+            [
+                fb.color[o] as f32 / 255.0,
+                fb.color[o + 1] as f32 / 255.0,
+                fb.color[o + 2] as f32 / 255.0,
+            ]
+        };
+        let mut base_fb = crate::raster::Framebuf::new(640, 360);
+        let mut base_no = crate::raster::Framebuf::new(640, 360);
+        let mut coded_fb = crate::raster::Framebuf::new(640, 360);
+        let mut coded_no = crate::raster::Framebuf::new(640, 360);
+        {
+            let mut g = Gui::new(&mut base_fb, 1);
+            g.text_faded(&mut assets, 10, 10, "A", [1.0, 1.0, 1.0], 1.0, true);
+        }
+        {
+            let mut g = Gui::new(&mut base_no, 1);
+            g.text_faded(&mut assets, 10, 10, "A", [1.0, 1.0, 1.0], 1.0, false);
+        }
+        {
+            let mut g = Gui::new(&mut coded_fb, 1);
+            g.text_faded(&mut assets, 10, 10, "\u{a7}cA", [1.0, 1.0, 1.0], 1.0, true);
+        }
+        {
+            let mut g = Gui::new(&mut coded_no, 1);
+            g.text_faded(&mut assets, 10, 10, "\u{a7}cA", [1.0, 1.0, 1.0], 1.0, false);
+        }
+        // THE CODED SHADOW (the shadow-only pixels the dim + the code
+        // color carry — red-tinted dark, never the full-bright the
+        // pre-dim draw wore)
+        let mut coded_shadow_pixels = 0usize;
+        for y in 0..360usize {
+            for x in 0..640usize {
+                let shadowed = px(&coded_fb, x, y);
+                let main = px(&coded_no, x, y);
+                if shadowed[0] > 0.02 && main[0] <= 0.02 {
+                    coded_shadow_pixels += 1;
+                    assert!(
+                        shadowed[0] < 0.6,
+                        "the shadow the 0.25 dim keeps: {shadowed:?}"
+                    );
+                    assert!(
+                        shadowed[0] > shadowed[1] + 0.03,
+                        "the code color the shadow carries: {shadowed:?}"
+                    );
+                }
+            }
+        }
+        assert!(
+            coded_shadow_pixels > 3,
+            "the shadow pixels the (+1,+1) copy paints: {coded_shadow_pixels}"
+        );
+        // THE BASE'S OWN SHADOW (the white text the gray shadow wears
+        // — the r==g the no-code shadow speaks, the same dim the
+        // reference verdict keeps)
+        let mut base_shadow_pixels = 0usize;
+        for y in 0..360usize {
+            for x in 0..640usize {
+                let shadowed = px(&base_fb, x, y);
+                let main = px(&base_no, x, y);
+                if shadowed[0] > 0.02 && main[0] <= 0.02 {
+                    base_shadow_pixels += 1;
+                    assert!(
+                        (shadowed[0] - shadowed[1]).abs() < 0.02,
+                        "the base shadow the gray speaks: {shadowed:?}"
+                    );
+                }
+            }
+        }
+        assert!(
+            base_shadow_pixels > 3,
+            "the base shadow pixels the same copy paints: {base_shadow_pixels}"
+        );
     }
 
     #[test]

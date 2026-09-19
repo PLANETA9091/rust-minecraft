@@ -527,7 +527,9 @@ impl<'a> Gui<'a> {
     /// THE FADED TEXT (the overlay message's own variant — the vanilla
     /// drawString's alpha the `ARGB.white(alpha)` color carries; the
     /// shadow's own pass the same fade folds, the glyph's own alpha
-    /// the multiply keeps).
+    /// the multiply keeps — the shadow the vanilla's own 0.25 dim
+    /// wears, the §-code colors the SAME fold darkens the
+    /// StringDecomposer walk's own law keeps).
     pub fn text_faded(
         &mut self,
         a: &mut GuiAssets,
@@ -538,11 +540,10 @@ impl<'a> Gui<'a> {
         alpha: f32,
         shadow: bool,
     ) -> i32 {
-        let dark = [color[0] * 0.25, color[1] * 0.25, color[2] * 0.25];
         if shadow {
-            self.draw_text_raw(a, x + 1, y + 1, s, dark, alpha);
+            self.draw_text_raw(a, x + 1, y + 1, s, color, alpha, 0.25);
         }
-        self.draw_text_raw(a, x, y, s, color, alpha)
+        self.draw_text_raw(a, x, y, s, color, alpha, 1.0)
     }
 
     fn draw_text_raw(
@@ -551,15 +552,22 @@ impl<'a> Gui<'a> {
         x: i32,
         y: i32,
         s: &str,
-        mut color: [f32; 3],
+        base: [f32; 3],
         alpha: f32,
+        dim: f32,
     ) -> i32 {
         let mut cx = x;
+        let mut color = base;
         let mut in_code = false;
         for ch in s.chars() {
             if in_code {
                 if let Some(i) = code_index(ch) {
                     color = COLOR_CODES[i];
+                } else if ch == 'r' || ch == 'R' {
+                    // THE §r RESET (the StringDecomposer's own law —
+                    // the entry base the reset returns to, the code
+                    // state the legacy reset clears)
+                    color = base;
                 }
                 in_code = false;
                 continue;
@@ -580,6 +588,7 @@ impl<'a> Gui<'a> {
                 if let Some(tex) = a.font_texture(g.tex).cloned() {
                     // baseline: glyph cell top = y + ascent - cell height
                     let top = y + g.ascent as i32 - g.gh as i32;
+                    let rgb = [color[0] * dim, color[1] * dim, color[2] * dim];
                     for gy in 0..g.gh {
                         for gx in 0..g.gw {
                             let c = tex.sample(
@@ -593,7 +602,7 @@ impl<'a> Gui<'a> {
                             self.px(
                                 cx + gx as i32,
                                 top + gy as i32,
-                                [color[0], color[1], color[2], a],
+                                [rgb[0], rgb[1], rgb[2], a],
                             );
                         }
                     }
@@ -632,11 +641,10 @@ impl<'a> Gui<'a> {
         shadow: bool,
         k: i32,
     ) -> i32 {
-        let dark = [color[0] * 0.25, color[1] * 0.25, color[2] * 0.25];
         if shadow {
-            self.draw_text_scaled_raw(a, x + k, y + k, s, dark, k);
+            self.draw_text_scaled_raw(a, x + k, y + k, s, color, k, 0.25);
         }
-        self.draw_text_scaled_raw(a, x, y, s, color, k)
+        self.draw_text_scaled_raw(a, x, y, s, color, k, 1.0)
     }
 
     fn draw_text_scaled_raw(
@@ -645,15 +653,21 @@ impl<'a> Gui<'a> {
         x: i32,
         y: i32,
         s: &str,
-        mut color: [f32; 3],
+        base: [f32; 3],
         k: i32,
+        dim: f32,
     ) -> i32 {
         let mut cx = x;
+        let mut color = base;
         let mut in_code = false;
         for ch in s.chars() {
             if in_code {
                 if let Some(i) = code_index(ch) {
                     color = COLOR_CODES[i];
+                } else if ch == 'r' || ch == 'R' {
+                    // THE §r RESET (the draw_raw twin — the entry base
+                    // the reset returns to)
+                    color = base;
                 }
                 in_code = false;
                 continue;
@@ -674,6 +688,7 @@ impl<'a> Gui<'a> {
                 if let Some(tex) = a.font_texture(g.tex).cloned() {
                     // baseline: glyph cell top = y + ascent*k - cell height*k
                     let top = y + g.ascent as i32 * k - g.gh as i32 * k;
+                    let rgb = [color[0] * dim, color[1] * dim, color[2] * dim];
                     for gy in 0..g.gh {
                         for gx in 0..g.gw {
                             let c = tex.sample(
@@ -689,7 +704,7 @@ impl<'a> Gui<'a> {
                                     self.px(
                                         cx + gx as i32 * k + sx,
                                         top + gy as i32 * k + sy,
-                                        [color[0], color[1], color[2], al],
+                                        [rgb[0], rgb[1], rgb[2], al],
                                     );
                                 }
                             }
@@ -717,7 +732,7 @@ impl<'a> Gui<'a> {
     }
 }
 
-fn code_index(ch: char) -> Option<usize> {
+pub(crate) fn code_index(ch: char) -> Option<usize> {
     match ch {
         '0'..='9' => Some(ch as usize - '0' as usize),
         'a'..='f' | 'A'..='F' => {

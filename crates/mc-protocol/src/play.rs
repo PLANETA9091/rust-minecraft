@@ -6609,6 +6609,149 @@ pub fn flatten_component_text(tag: &Nbt) -> String {
     }
 }
 
+/// THE CHAT COMPONENT'S OWN COLOR PALETTE (the vanilla `ChatFormatting`
+/// enum's own sixteen — the `§0`..`§f` legacy codes the font renderer's
+/// `StringDecomposer` walk speaks, the exact hex the enum's constants
+/// carry). The walk's emission alphabet: a color the wire names the
+/// matching code char wears.
+const CHAT_FORMAT_CODES: [(&str, char); 16] = [
+    ("black", '0'),
+    ("dark_blue", '1'),
+    ("dark_green", '2'),
+    ("dark_aqua", '3'),
+    ("dark_red", '4'),
+    ("dark_purple", '5'),
+    ("gold", '6'),
+    ("gray", '7'),
+    ("dark_gray", '8'),
+    ("blue", '9'),
+    ("green", 'a'),
+    ("aqua", 'b'),
+    ("red", 'c'),
+    ("light_purple", 'd'),
+    ("yellow", 'e'),
+    ("white", 'f'),
+];
+
+/// The component's own color the walk resolves: `Some(code)` a named
+/// color carries, `None` the default (the base color the draw call
+/// passes — the chat's white) or the "reset" the legacy law keeps;
+/// the hex form the 16-code palette cannot speak renders in the
+/// inherited color (the honest skip — the draw lane's alphabet is the
+/// sixteen codes, the true-hex walk the later round owes).
+fn chat_format_code(color: &str) -> Option<Option<char>> {
+    let lower = color.to_ascii_lowercase();
+    if lower == "reset" {
+        return Some(None);
+    }
+    CHAT_FORMAT_CODES
+        .iter()
+        .find(|(name, _)| *name == lower)
+        .map(|(_, code)| Some(*code))
+}
+
+/// The colored flatten's own recursion: `inherit` the style the
+/// component's PARENT chain carries (the vanilla Style resolution's
+/// own direction — a child the field omits wears the parent's color,
+/// the SIBLINGS the COMMON parent wears, never each other), `cur` the
+/// code the flat emission currently speaks (the draw walk's linear
+/// state — a code the text only changes when the resolved color
+/// differs).
+fn flatten_component_colored_walk(
+    tag: &Nbt,
+    inherit: Option<char>,
+    out: &mut String,
+    cur: &mut Option<char>,
+) {
+    // The component's OWN style the field carries: `Some(Some(code))`
+    // a named color speaks, `Some(None)` the "reset" the base returns,
+    // `None` the field the component omits (or the hex the palette
+    // skips) — the inherited color rides.
+    let own = match tag.get("color").and_then(Nbt::as_str) {
+        Some(c) => chat_format_code(c),
+        None => None,
+    };
+    // THE SUBTREE'S OWN RESOLVED COLOR (the vanilla chain fold: the
+    // explicit field overrides, the omission inherits)
+    let resolved = match own {
+        Some(explicit) => explicit,
+        None => inherit,
+    };
+    if let Nbt::String(s) = tag {
+        // THE BARE LEAF (the string IS the text — the inherited color
+        // the parent chain carries)
+        emit_color(resolved, out, cur);
+        out.push_str(s);
+        return;
+    }
+    match tag {
+        Nbt::String(_) => unreachable!("the bare leaf the arm above answers"),
+        Nbt::Compound(_) => {
+            emit_color(resolved, out, cur);
+            if let Some(Nbt::String(s)) = tag.get("text") {
+                out.push_str(s);
+            }
+            // THE EXTRA WALK (the vanilla component's own sibling law:
+            // each child's parent style IS this component's — the
+            // resolved color the subtree carries)
+            if let Some(Nbt::List(children)) = tag.get("extra") {
+                for child in children {
+                    flatten_component_colored_walk(child, resolved, out, cur);
+                }
+            }
+        }
+        // THE LIST FORM (the component-array root the wire speaks —
+        // the elements the SIBLING walk renders, the empty root style
+        // the inherited color keeps)
+        Nbt::List(children) => {
+            for child in children {
+                flatten_component_colored_walk(child, inherit, out, cur);
+            }
+        }
+        _ => {}
+    }
+}
+
+/// The flat emission's own switch: the resolved color the run wears
+/// only when the currently spoken code differs (a redundant code the
+/// state never re-emits; the reset the `§r` the draw's own law
+/// answers — the entry base the reset returns to).
+fn emit_color(resolved: Option<char>, out: &mut String, cur: &mut Option<char>) {
+    if *cur == resolved {
+        return;
+    }
+    out.push('§');
+    match resolved {
+        Some(code) => out.push(code),
+        None => out.push('r'),
+    }
+    *cur = resolved;
+}
+
+/// The component tag's own COLORED text (the chat display's flatten —
+/// the walk [`flatten_component_text`] speaks PLUS the colors: the
+/// structured compound's "color" field the sixteen `ChatFormatting`
+/// codes emit (`§0`..`§f`, the palette the font renderer's own
+/// `StringDecomposer` walk wears), the "reset" the `§r` the draw's
+/// entry-base law answers, the child the color field omits the
+/// PARENT's color wears (the vanilla Style resolution), the siblings
+/// the common parent wears (never each other — the extra walk's own
+/// law), the hex form the 16-code palette cannot speak renders in the
+/// inherited color (the honest skip). The bold/italic/underline/
+/// strikethrough/obfuscated flags the draw lane has no variant for —
+/// the flags the later round owes, the colors the chat already
+/// speaks. The bare TAG_String IS the text (the codes inside it the
+/// draw's own inline walk answers); the LIST root the component-array
+/// form the sibling walk renders. The sidebar/tab lanes keep the
+/// monochrome [`flatten_component_text`] — the colored walk the CHAT
+/// display's law wears.
+pub fn flatten_component_colored(tag: &Nbt) -> String {
+    let mut out = String::new();
+    let mut cur: Option<char> = None; // the draw call's own base (the chat's white)
+    flatten_component_colored_walk(tag, None, &mut out, &mut cur);
+    out
+}
+
 /// THE SYSTEM CHAT'S OWN FACTS (javap of the real 26.2
 /// `ClientboundSystemChatPacket` — the clinit's composite: the
 /// `ComponentSerialization.TRUSTED_STREAM_CODEC` component + the
@@ -6619,9 +6762,10 @@ pub fn flatten_component_text(tag: &Nbt) -> String {
 /// chat history.
 #[derive(Debug, Clone, PartialEq)]
 pub struct SystemChatMessage {
-    /// The component flattened to plain text (the `text` + `extra`
-    /// walk [`flatten_component_text`] speaks — the formatting the
-    /// colored walk the later round owes).
+    /// The component flattened to text with the colors the inline §
+    /// codes carry (the `text` + `extra` + `color` walk
+    /// [`flatten_component_colored`] speaks — the colored chat the
+    /// real servers' own words wear).
     pub content: String,
     /// The overlay flag (false = the chat history, true = the HUD
     /// overlay message).
@@ -6637,7 +6781,8 @@ pub fn parse_system_chat(payload: &[u8]) -> Result<SystemChatMessage> {
         id == clientbound::SYSTEM_CHAT,
         "not a system chat packet (0x{id:02X})"
     );
-    let content = flatten_component_text(&read_bare_nbt(&mut c).context("system chat component")?);
+    let content =
+        flatten_component_colored(&read_bare_nbt(&mut c).context("system chat component")?);
     anyhow::ensure!(!c.is_empty(), "system chat truncated (overlay flag)");
     let overlay = read_bool(&mut c)?;
     Ok(SystemChatMessage { content, overlay })
@@ -6724,7 +6869,9 @@ pub fn parse_player_chat(
     c = &c[seen as usize * 256..];
     // the unsigned content: nullable component
     let unsigned = if read_bool(&mut c)? {
-        Some(flatten_component_text(&read_bare_nbt(&mut c).context("player chat unsigned content")?))
+        Some(flatten_component_colored(
+            &read_bare_nbt(&mut c).context("player chat unsigned content")?,
+        ))
     } else {
         None
     };
@@ -6795,9 +6942,11 @@ fn read_chat_type_bound<'a>(
         (entry.chat_key.clone(), entry.parameters.clone())
     };
     let sender_name =
-        flatten_component_text(&read_bare_nbt(c).context("chat bound sender name")?);
+        flatten_component_colored(&read_bare_nbt(c).context("chat bound sender name")?);
     let target_name = if read_bool(c)? {
-        Some(flatten_component_text(&read_bare_nbt(c).context("chat bound target name")?))
+        Some(flatten_component_colored(
+            &read_bare_nbt(c).context("chat bound target name")?,
+        ))
     } else {
         None
     };
@@ -6845,7 +6994,7 @@ pub fn parse_disguised_chat(
         "not a disguised chat packet (0x{id:02X})"
     );
     let content =
-        flatten_component_text(&read_bare_nbt(&mut c).context("disguised chat content")?);
+        flatten_component_colored(&read_bare_nbt(&mut c).context("disguised chat content")?);
     let (chat_key, parameters, sender_name, target_name) = read_chat_type_bound(&mut c, chat_types)?;
     Ok(DisguisedChatMessage {
         content,
@@ -14573,5 +14722,128 @@ mod tests {
         assert_eq!(m.sender_name, "Steve");
         p = player_chat_fixture(9, None, 0);
         assert!(parse_player_chat(&p, &types).is_err(), "the unknown id refuses");
+    }
+
+    /// THE CHAT COLORS' OWN WALK (the `ChatFormatting` sixteen the
+    /// `§0`..`§f` codes speak — the component's `color` field the
+    /// flat emission wears, the child the field omits the PARENT's
+    /// color inherits, the SIBLINGS the common parent wears (never
+    /// each other — the extra walk's own law), the "reset" the base
+    /// the §r answers, the hex the 16-code palette honestly skips,
+    /// the bold flag the draw lane's no-variant ignore keeps, the
+    /// LIST root the component-array form the sibling walk renders,
+    /// the uncolored tree the plain flatten's own bytes wears).
+    #[test]
+    fn the_chat_colors_the_component_walk_speaks() {
+        // THE NAMED COLOR (the code the palette names)
+        let red = Nbt::Compound(vec![
+            ("text".to_string(), Nbt::String("A".to_string())),
+            ("color".to_string(), Nbt::String("red".to_string())),
+        ]);
+        assert_eq!(flatten_component_colored(&red), "\u{a7}cA");
+        // THE INHERITANCE (the child the field omits the PARENT's
+        // color wears — one code the whole subtree speaks)
+        let inherit = Nbt::Compound(vec![
+            ("text".to_string(), Nbt::String("a".to_string())),
+            ("color".to_string(), Nbt::String("red".to_string())),
+            (
+                "extra".to_string(),
+                Nbt::List(vec![text_component("b")]),
+            ),
+        ]);
+        assert_eq!(flatten_component_colored(&inherit), "\u{a7}cab");
+        // THE SIBLING LAW (the second child the PARENT's red wears,
+        // never the previous sibling's blue — the extra walk's own
+        // resolution; the code the state re-emits when it differs)
+        let siblings = Nbt::Compound(vec![
+            ("text".to_string(), Nbt::String("a".to_string())),
+            ("color".to_string(), Nbt::String("red".to_string())),
+            (
+                "extra".to_string(),
+                Nbt::List(vec![
+                    Nbt::Compound(vec![
+                        ("text".to_string(), Nbt::String("b".to_string())),
+                        ("color".to_string(), Nbt::String("blue".to_string())),
+                    ]),
+                    text_component("c"),
+                ]),
+            ),
+        ]);
+        assert_eq!(flatten_component_colored(&siblings), "\u{a7}ca\u{a7}9b\u{a7}cc");
+        // THE RESET (the child's "reset" the BASE returns to — the
+        // §r the draw's entry-base law answers; the NEXT sibling the
+        // PARENT's red still wears — the chain the reset never strips)
+        let reset = Nbt::Compound(vec![
+            ("text".to_string(), Nbt::String("a".to_string())),
+            ("color".to_string(), Nbt::String("red".to_string())),
+            (
+                "extra".to_string(),
+                Nbt::List(vec![
+                    Nbt::Compound(vec![
+                        ("text".to_string(), Nbt::String("b".to_string())),
+                        ("color".to_string(), Nbt::String("reset".to_string())),
+                    ]),
+                    text_component("c"),
+                ]),
+            ),
+        ]);
+        assert_eq!(flatten_component_colored(&reset), "\u{a7}ca\u{a7}rb\u{a7}cc");
+        // THE HEX SKIP (the #RRGGBB the 16-code palette cannot speak —
+        // the inherited color the honest lane keeps)
+        let hex = Nbt::Compound(vec![
+            ("text".to_string(), Nbt::String("x".to_string())),
+            ("color".to_string(), Nbt::String("#55FFFF".to_string())),
+        ]);
+        assert_eq!(flatten_component_colored(&hex), "x");
+        // THE BOLD IGNORE (the flag the draw lane has no variant for —
+        // the COLOR the only emission the walk speaks)
+        let bold = Nbt::Compound(vec![
+            ("text".to_string(), Nbt::String("A".to_string())),
+            ("color".to_string(), Nbt::String("gold".to_string())),
+            ("bold".to_string(), Nbt::Byte(1)),
+        ]);
+        assert_eq!(flatten_component_colored(&bold), "\u{a7}6A");
+        // THE LIST ROOT (the component-array form — the bare-String
+        // element the default the chain-less root wears, the §r the
+        // state's own switch answers)
+        let list = Nbt::List(vec![
+            red.clone(),
+            Nbt::String("b".to_string()),
+        ]);
+        assert_eq!(flatten_component_colored(&list), "\u{a7}cA\u{a7}rb");
+        // THE PASSTHROUGH (the uncolored tree the plain flatten's own
+        // bytes wears — the two walks the color-less verdict twins)
+        let plain = Nbt::Compound(vec![
+            ("text".to_string(), Nbt::String("Hello ".to_string())),
+            (
+                "extra".to_string(),
+                Nbt::List(vec![text_component("world")]),
+            ),
+        ]);
+        assert_eq!(
+            flatten_component_colored(&plain),
+            flatten_component_text(&plain)
+        );
+        assert_eq!(flatten_component_colored(&plain), "Hello world");
+        // THE WIRE (the parse lane the colored component's content
+        // carries — the yellow the system chat speaks, the codes the
+        // player chat's unsigned content rides)
+        let mut p = Vec::new();
+        write_varint(&mut p, clientbound::SYSTEM_CHAT);
+        write_bare_nbt(
+            &Nbt::Compound(vec![
+                ("text".to_string(), Nbt::String("Hi ".to_string())),
+                ("color".to_string(), Nbt::String("yellow".to_string())),
+                (
+                    "extra".to_string(),
+                    Nbt::List(vec![text_component("there")]),
+                ),
+            ]),
+            &mut p,
+        )
+        .unwrap();
+        p.push(0);
+        let m = parse_system_chat(&p).unwrap();
+        assert_eq!(m.content, "\u{a7}eHi there", "the color the content carries");
     }
 }
