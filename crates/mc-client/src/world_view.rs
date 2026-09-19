@@ -472,6 +472,16 @@ pub struct WirePlayerList {
     pub header: String,
     pub footer: String,
     pub rows: Vec<WirePlayerRow>,
+    /// THE ONLINE POPULATION'S OWN ROSTER (the
+    /// `ClientSuggestionProvider.getOnlinePlayerNames` walk's own
+    /// source — the connection's `PlayerInfo` map EVERY entry names,
+    /// the LISTED filter the overlay's rows wear never rides this
+    /// lane): the profile names the chat's local argument suggestions
+    /// consume (the entity / game-profile slots the vanilla client
+    /// answers from its own tab belief, no round-trip). The map's own
+    /// unordered walk the list verbatim keeps — the
+    /// `Suggestions.merge` sort the consumer's own law answers.
+    pub names: Vec<String>,
 }
 
 /// THE RIDE ANCHOR (the vanilla rideTick's own word — the position the
@@ -1951,10 +1961,17 @@ fn player_list_view(model: &WorldModel) -> WirePlayerList {
             .then_with(|| a.name.cmp(&b.name))
     });
     rows.truncate(PLAYER_ROW_CAP);
+    // THE NAME ROSTER beside the rows (the getOnlinePlayerNames walk —
+    // the map's EVERY entry, the LISTED filter the rows' lane wears
+    // never rides, the order the map's own walk keeps — the consumer's
+    // Suggestions.merge sort the law answers)
+    let mut names: Vec<String> = model.players.values().map(|e| e.name.clone()).collect();
+    names.sort();
     WirePlayerList {
         header: model.tab_header.clone(),
         footer: model.tab_footer.clone(),
         rows,
+        names,
     }
 }
 
@@ -2135,7 +2152,7 @@ pub fn materialize_snapshot_view(
         // the join snapshot carries no tab belief either — the
         // player-info packets are the only source (the empty overlay:
         // no rows, no bands — the render's gate keeps it silent)
-        player_list: WirePlayerList { header: String::new(), footer: String::new(), rows: Vec::new() },
+        player_list: WirePlayerList { header: String::new(), footer: String::new(), rows: Vec::new(), names: Vec::new() },
         // and no ride belief — the Set Passengers packets are the only
         // source (the join's feet stand on their own, nothing carries)
         ride: None,
@@ -6375,5 +6392,56 @@ mod tests {
         }
         model.apply(PlayEvent::PlayerInfoUpdate(PlayerInfoUpdate { entries: flood }));
         assert_eq!(player_list_view(&model).rows.len(), 80, "the stream's own limit");
+    }
+
+    #[test]
+    fn the_player_roster_the_tab_belief_speaks() {
+        use mc_protocol::{PlayEvent, PlayerEntryPatch, PlayerInfoUpdate};
+        let mut model = WorldModel::new();
+        // the silent roster: the join's own empty shape
+        let empty = player_list_view(&model);
+        assert_eq!(empty.names.len(), 0, "no entries, no names");
+        // the roster the EVERY-entry law keeps — the LISTED filter the
+        // overlay's rows wear never rides this lane (the
+        // getOnlinePlayerNames walk: the connection's own map, the
+        // suggestions' source)
+        let patch = |uuid: u128, name: &str, listed: bool| PlayerEntryPatch {
+            uuid,
+            name: Some(name.into()),
+            game_mode: None,
+            listed: Some(listed),
+            latency: None,
+            display_name: None,
+            list_order: Some(0),
+        };
+        assert!(model.apply(PlayEvent::PlayerInfoUpdate(PlayerInfoUpdate {
+            entries: vec![
+                patch(1, "Zed", true),
+                patch(2, "Hidden", false),
+                patch(3, "Alice", true),
+            ],
+        })));
+        let list = player_list_view(&model);
+        assert_eq!(
+            list.names,
+            vec!["Alice", "Hidden", "Zed"],
+            "the unlisted entry the roster still banks — the map's every name the walk sorts"
+        );
+        assert_eq!(
+            list.rows.iter().map(|r| r.name.as_str()).collect::<Vec<_>>(),
+            vec!["Alice", "Zed"],
+            "the rows the LISTED filter keeps"
+        );
+        // the removal the roster's own shrink answers (the
+        // handlePlayerInfoRemove walk the map's drop keeps)
+        assert!(model.apply(PlayEvent::PlayerInfoRemove(mc_protocol::PlayerInfoRemove {
+            uuids: vec![2],
+        })));
+        let list = player_list_view(&model);
+        assert_eq!(
+            list.names,
+            vec!["Alice", "Zed"],
+            "the removal the roster drops"
+        );
     }
 }

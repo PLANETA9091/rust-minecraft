@@ -1288,15 +1288,25 @@ pub fn chat_line_y(gui_h: i32, index: i32) -> i32 {
 /// fold filters (`literal.toLowerCase(Locale.ROOT)
 /// .startsWith(remainingLowerCase)`), the matches the
 /// `Suggestions.merge` sort orders (`compareToIgnoreCase`).
-/// Where the walk lands in an ARGUMENT slot (a completed token no
-/// literal names, or a final node whose candidates are argument slots)
-/// the ASK-SERVER lane answers — the vanilla `ask_server` provider's
-/// own transport the ask-server rounds' wire walk speaks. The unknown
-/// literal at a literal-only node the empty list keeps (the server's
-/// own tree refuses the command anyway — no round-trip the honest
-/// silence spends). The cursor is the END-PARKED one the house EditBox
-/// keeps (`push`/`pop` the only edits — the mid-string carets the
-/// vanilla EditBox allows the honest divergence keeps).
+/// Where the walk lands in an ARGUMENT slot the VANILLA SPLIT speaks
+/// (brigadier `ArgumentCommandNode.listSuggestions` — the node's own
+/// custom provider the ask-server lane answers, the type's own
+/// `listSuggestions` the LOCAL lane answers): the entity /
+/// game-profile slots (no custom provider) the vanilla client answers
+/// from its OWN tab belief — the online player names (+
+/// `SharedSuggestionProvider.getSelectedEntities`' crosshair entity
+/// the house's no-entity-name lane keeps empty — the no-hit walk the
+/// vanilla crosses answer) plus the six `@` selectors — no
+/// round-trip; a node carrying the 0x10 suggestion id (the custom
+/// provider) the ask-server lane answers exactly as before; every
+/// other parser the ask lane keeps too (the house speaks no other
+/// argument type's local providers yet). The unknown literal at a
+/// literal-only node the empty list keeps (the server's own tree
+/// refuses the command anyway — no round-trip the honest silence
+/// spends). The cursor is the END-PARKED one the house EditBox keeps
+/// (`push`/`pop` the only edits — the mid-string carets the vanilla
+/// EditBox allows the honest divergence keeps).
+#[derive(Debug, Clone, PartialEq)]
 pub enum ChatSuggestionSource {
     /// The tree answered locally: the (start, length) replace range
     /// (offsets into the FULL input, the '/' included — the same
@@ -1306,14 +1316,98 @@ pub enum ChatSuggestionSource {
         length: i32,
         matches: Vec<mc_protocol::play::CommandSuggestionsMatch>,
     },
-    /// The walk landed in an argument slot (or the input never named a
-    /// literal) — the ask-server lane the pending-gate walk owns.
+    /// The walk landed in an argument slot whose node carries a
+    /// custom suggestion provider (the 0x10 id — the vanilla
+    /// `customSuggestions` law), a parser the house speaks no local
+    /// provider for, or an input that never named a literal — the
+    /// ask-server lane the pending-gate walk owns.
     AskServer,
+}
+
+/// THE ENTITY SLOTS' OWN SELECTOR TABLE (javap
+/// `EntitySelectorParser.fillSelectorSuggestions` — the six
+/// `suggest(name, Component.translatable(key))` calls the 26.2
+/// bytecode banks, the pairs in the walk's own order; the tooltip the
+/// lang table's own lookup answers, the en_us inline fallback the
+/// cache-absent boot keeps).
+const SELECTOR_SUGGESTIONS: [(&str, &str, &str); 6] = [
+    (
+        "@p",
+        "argument.entity.selector.nearestPlayer",
+        "Nearest player",
+    ),
+    (
+        "@a",
+        "argument.entity.selector.allPlayers",
+        "All players",
+    ),
+    (
+        "@e",
+        "argument.entity.selector.allEntities",
+        "All entities",
+    ),
+    (
+        "@r",
+        "argument.entity.selector.randomPlayer",
+        "Random player",
+    ),
+    ("@s", "argument.entity.selector.self", "Current entity"),
+    (
+        "@n",
+        "argument.entity.selector.nearestEntity",
+        "Nearest entity",
+    ),
+];
+
+/// The one selector suggestion's own shape (the tooltip the lang
+/// table's own law resolves, the en_us inline fallback the
+/// cache-absent boot answers).
+fn selector_suggestion(name: &str, key: &str, fallback: &str) -> mc_protocol::play::CommandSuggestionsMatch {
+    mc_protocol::play::CommandSuggestionsMatch {
+        text: name.to_string(),
+        tooltip: Some(tr(key).unwrap_or(fallback).to_string()),
+    }
+}
+
+/// THE NAME FOLD'S OWN WALK (javap `SharedSuggestionProvider
+/// .matchesSubStr` — the `startsWith(input, i)` probe the loop keeps,
+/// the `MATCH_SPLITTER` anyOf("._/") the `indexIn(seq, i)` walk
+/// answers: no prefix at `i`, the scan hops to the NEXT splitter AT
+/// OR AFTER `i` and the probe re-fires one past it — the word
+/// boundaries the `.`/`_`/`/` chars speak, the splitter itself never
+/// inside the match). Both strings the caller lowercases (the
+/// Locale.ROOT fold the suggest walk wears).
+fn suggestion_matches_sub_str(remaining_lc: &str, candidate_lc: &str) -> bool {
+    let cand: Vec<char> = candidate_lc.chars().collect();
+    let rem: Vec<char> = remaining_lc.chars().collect();
+    let mut i = 0usize;
+    loop {
+        if cand[i..].starts_with(&rem) {
+            return true;
+        }
+        match cand[i..].iter().position(|&c| c == '.' || c == '_' || c == '/') {
+            Some(j) => i = i + j + 1,
+            None => return false,
+        }
+    }
+}
+
+/// The one local provider's own verdict — the argument slots' parser
+/// name the 26.2 walk speaks: the entity / game-profile types the
+/// EntitySelectorParser lane answers, every other name the honest
+/// None keeps (the house speaks no other argument type's providers).
+fn local_argument_provider(parser: Option<&str>) -> bool {
+    matches!(
+        parser,
+        Some("minecraft:entity") | Some("minecraft:game_profile")
+    )
 }
 
 pub fn local_command_suggestions(
     tree: &mc_protocol::play::CommandTree,
     input: &str,
+    online_names: &[String],
+    allow_selectors: bool,
 ) -> ChatSuggestionSource {
     let Some(rest) = input.strip_prefix('/') else {
         return ChatSuggestionSource::AskServer;
@@ -1364,12 +1458,29 @@ pub fn local_command_suggestions(
     let partial_lc = partial.iter().collect::<String>().to_lowercase();
     let mut matches: Vec<mc_protocol::play::CommandSuggestionsMatch> = Vec::new();
     let mut has_argument_children = false;
+    let mut has_custom_provider = false;
+    let mut has_local_provider = false;
     for &child_idx in &node.children {
         let Some(child) = tree.nodes.get(child_idx as usize) else {
             continue;
         };
         match child.kind {
-            mc_protocol::play::CommandNodeKind::Argument => has_argument_children = true,
+            mc_protocol::play::CommandNodeKind::Argument => {
+                has_argument_children = true;
+                // the brigadier split (the ArgumentCommandNode
+                // listSuggestions walk): the node's own custom provider
+                // (the 0x10 id) the ask-server lane answers FIRST, the
+                // type's own listSuggestions the local lanes speak —
+                // the entity / game-profile types the house's tab
+                // belief answers
+                if child.suggestion_id.is_some() {
+                    has_custom_provider = true;
+                } else if local_argument_provider(
+                    child.parser.as_ref().map(|(_, name)| name.as_str()),
+                ) {
+                    has_local_provider = true;
+                }
+            }
             mc_protocol::play::CommandNodeKind::Literal => {
                 if child.name.to_lowercase().starts_with(&partial_lc) {
                     matches.push(mc_protocol::play::CommandSuggestionsMatch {
@@ -1381,8 +1492,16 @@ pub fn local_command_suggestions(
             mc_protocol::play::CommandNodeKind::Root => {}
         }
     }
-    if matches.is_empty() && has_argument_children {
-        // the argument slot's dynamic suggestions the server answers
+    if matches.is_empty() && (has_argument_children || has_local_provider) {
+        // the argument slots' own walk: the custom providers the ask
+        // lane keeps, the local providers the tab belief answers
+        if has_custom_provider {
+            return ChatSuggestionSource::AskServer;
+        }
+        if has_local_provider {
+            return local_entity_suggestions(&partial, rest_chars.len(), online_names, allow_selectors);
+        }
+        // no local provider speaks the slot — the ask lane answers
         return ChatSuggestionSource::AskServer;
     }
     // the Suggestions.merge sort (the compareToIgnoreCase law)
@@ -1393,6 +1512,104 @@ pub fn local_command_suggestions(
     ChatSuggestionSource::Local {
         start: start as i32,
         length: partial.len() as i32,
+        matches,
+    }
+}
+
+/// THE ENTITY SLOTS' OWN LOCAL ANSWER (javap `EntitySelectorParser`
+/// .fillSuggestions's three states the 26.2 bytecode banks — the
+/// `suggestions` BiFunction the parse's LAST state names): the EMPTY
+/// partial the `suggestNameOrSelector` state answers (the names
+/// consumer + the `fillSelectorSuggestions` walk the allowSelectors
+/// gate keeps), the NAME partial the `suggestName` state answers (the
+/// names consumer only — the range the parser's own `startPosition`
+/// names), the '@' partial the `suggestSelector` state answers (the
+/// six selectors only — the offset the `createOffset(getStart() - 1)`
+/// walk keeps, the '@' span the suggestions' own text replaces). The
+/// names the `SharedSuggestionProvider.suggest` fold filters (the
+/// `matchesSubStr` splitter walk) and the `Suggestions.merge` sort
+/// orders; the selectors the six the walk suggests UNFILTERED (the
+/// re-pick UX the cycle law speaks — '@a' typed still lists all
+/// six). The options walk ('[') the honest ask keeps (the house
+/// speaks no `EntitySelectorOptions` providers). The no-selector
+/// belief (the 26.2 atom-permission lane the house never reads — the
+/// server's own refusal the honest error) the `allow_selectors` gate
+/// keeps: false the '@' partial the empty local list answers (the
+/// parse's own throw the catch swallows, the names the '@' never
+/// matches — no round-trip the vanilla's own empty keeps).
+fn local_entity_suggestions(
+    partial: &[char],
+    rest_len: usize,
+    online_names: &[String],
+    allow_selectors: bool,
+) -> ChatSuggestionSource {
+    let partial_str: String = partial.iter().collect();
+    let partial_lc = partial_str.to_lowercase();
+    // the token's own start in the FULL input ('/' + the consumed prefix)
+    let token_start = 1 + rest_len - partial.len();
+    let mut matches: Vec<mc_protocol::play::CommandSuggestionsMatch> = Vec::new();
+    let (start, length) = if let Some(sel_chars) = partial_str.strip_prefix('@') {
+        // the '@' walk: the options the honest ask keeps
+        if sel_chars.contains('[') {
+            return ChatSuggestionSource::AskServer;
+        }
+        if !allow_selectors {
+            // the selectors the permission gate never names — the '@'
+            // matches no name either, the empty local the vanilla's
+            // own catch-swallowed parse keeps
+            return ChatSuggestionSource::Local {
+                start: token_start as i32,
+                length: partial.len() as i32,
+                matches,
+            };
+        }
+        // the offset the suggestSelector's createOffset(getStart() - 1)
+        // walk keeps: the '@' state (nothing consumed after the skip —
+        // the empty tail, or the unknown-kind read the
+        // `reader.setCursor(i)` rewind un-does) the WHOLE token span
+        // names, the parsed state (a selector char consumed) the span
+        // AFTER the '@' — the suggestions' own text carries the '@'
+        for (name, key, fallback) in SELECTOR_SUGGESTIONS {
+            matches.push(selector_suggestion(name, key, fallback));
+        }
+        let parsed = sel_chars.as_bytes().first().is_some_and(|&c| {
+            matches!(c, b'a' | b'e' | b'n' | b'p' | b'r' | b's')
+        });
+        if parsed {
+            (token_start + 1, partial.len() - 1)
+        } else {
+            (token_start, partial.len())
+        }
+    } else {
+        // the names consumer (the SharedSuggestionProvider.suggest
+        // fold — the matchesSubStr splitter walk the candidates keep;
+        // the getSelectedEntities lane the house's no-entity-name
+        // belief keeps empty — the crosshair-on-no-entity walk the
+        // vanilla crosses answer)
+        for name in online_names {
+            let name_lc = name.to_lowercase();
+            if suggestion_matches_sub_str(&partial_lc, &name_lc) {
+                matches.push(mc_protocol::play::CommandSuggestionsMatch {
+                    text: name.clone(),
+                    tooltip: None,
+                });
+            }
+        }
+        if partial.is_empty() && allow_selectors {
+            // the suggestNameOrSelector state — the empty partial the
+            // names AND the selectors both answer (the merged sort the
+            // consumer's own law orders)
+            for (name, key, fallback) in SELECTOR_SUGGESTIONS {
+                matches.push(selector_suggestion(name, key, fallback));
+            }
+        }
+        (token_start, partial.len())
+    };
+    // the Suggestions.merge sort (the compareToIgnoreCase law)
+    matches.sort_by(|a, b| a.text.to_lowercase().cmp(&b.text.to_lowercase()));
+    ChatSuggestionSource::Local {
+        start: start as i32,
+        length: length as i32,
         matches,
     }
 }
@@ -3529,6 +3746,7 @@ impl App {
                 header: String::new(),
                 footer: String::new(),
                 rows: Vec::new(),
+                names: Vec::new(),
             },
             tab_held: false,
             hud_hidden: false,
@@ -11988,7 +12206,20 @@ impl App {
         // freshness the same law keeps)
         self.chat_suggestion_tx = self.chat_suggestion_tx.wrapping_add(1);
         if let Some(tree) = self.command_tree.clone() {
-            match local_command_suggestions(&tree, &self.chat_input) {
+            // the SOURCE the vanilla suggestions ride (the
+            // SharedSuggestionProvider's own role): the tab belief's
+            // roster the live refresh ships (the getOnlinePlayerNames
+            // walk — every entry the connection keeps, the LISTED
+            // filter the overlay's rows wear never rides) + the
+            // selector allowance (the 26.2 atom-permission lane the
+            // house never reads — the server's own refusal the honest
+            // error, the walk the allowed default keeps)
+            match local_command_suggestions(
+                &tree,
+                &self.chat_input,
+                &self.player_list.names,
+                true,
+            ) {
                 ChatSuggestionSource::Local {
                     start,
                     length,
@@ -22114,7 +22345,7 @@ mod tests {
         let tree = test_tree();
         // THE ROOT PREFIX (the '/' the parse strips — the partial 't'
         // the lowercase fold filters, the sort the merge law keeps)
-        let Src::Local { start, length, matches } = local_command_suggestions(&tree, "/t")
+        let Src::Local { start, length, matches } = local_command_suggestions(&tree, "/t", &[], true)
         else {
             panic!("/t the local lane answers");
         };
@@ -22122,7 +22353,7 @@ mod tests {
         let names: Vec<&str> = matches.iter().map(|m| m.text.as_str()).collect();
         assert_eq!(names, vec!["tick", "time", "tp"], "the sorted literals");
         // THE BARE SLASH (the empty partial the whole root answers)
-        let Src::Local { start, length, matches } = local_command_suggestions(&tree, "/") else {
+        let Src::Local { start, length, matches } = local_command_suggestions(&tree, "/", &[], true) else {
             panic!("/ the local lane answers");
         };
         assert_eq!((start, length), (1, 0));
@@ -22133,7 +22364,7 @@ mod tests {
             "the ROOT'S OWN children only — the teleport alias the redirect's target rides, no child of the root"
         );
         // THE CASE FOLD (the uppercase partial the lowercase law answers)
-        let Src::Local { matches, .. } = local_command_suggestions(&tree, "/TIME") else {
+        let Src::Local { matches, .. } = local_command_suggestions(&tree, "/TIME", &[], true) else {
             panic!("/TIME the case-insensitive lane answers");
         };
         let names: Vec<&str> = matches.iter().map(|m| m.text.as_str()).collect();
@@ -22141,7 +22372,7 @@ mod tests {
         // THE SUB-COMMAND (the completed 'time' the equality consumes,
         // the trailing space the empty partial speaks — the sorted
         // children the range [6,0) wears)
-        let Src::Local { start, length, matches } = local_command_suggestions(&tree, "/time ")
+        let Src::Local { start, length, matches } = local_command_suggestions(&tree, "/time ", &[], true)
         else {
             panic!("/time␠ the sub-literals answer");
         };
@@ -22149,7 +22380,7 @@ mod tests {
         let names: Vec<&str> = matches.iter().map(|m| m.text.as_str()).collect();
         assert_eq!(names, vec!["query", "set"]);
         // THE NARROWED TAIL (the partial 's' the set alone answers)
-        let Src::Local { start, length, matches } = local_command_suggestions(&tree, "/time s")
+        let Src::Local { start, length, matches } = local_command_suggestions(&tree, "/time s", &[], true)
         else {
             panic!("/time␠s the narrowed lane answers");
         };
@@ -22160,36 +22391,36 @@ mod tests {
         // follows — the teleport node's argument children the ask
         // lane answers)
         assert!(matches!(
-            local_command_suggestions(&tree, "/tp "),
+            local_command_suggestions(&tree, "/tp ", &[], true),
             Src::AskServer
         ));
         // THE ARGUMENT CHILD WHOLE (the teleport node's own name typed
         // whole: the trailing space the argument slot the ask lane
         // answers)
         assert!(matches!(
-            local_command_suggestions(&tree, "/teleport "),
+            local_command_suggestions(&tree, "/teleport ", &[], true),
             Src::AskServer
         ));
         // THE UNKNOWN LITERAL (the root's literal-only children the
         // empty list keeps — no round-trip the honest silence spends)
-        let Src::Local { matches, .. } = local_command_suggestions(&tree, "/zz") else {
+        let Src::Local { matches, .. } = local_command_suggestions(&tree, "/zz", &[], true) else {
             panic!("/zz the empty local list keeps");
         };
         assert!(matches.is_empty());
         // THE LEAF WITH NO CHILDREN (the tick node's own silence)
-        let Src::Local { matches, .. } = local_command_suggestions(&tree, "/tick ") else {
+        let Src::Local { matches, .. } = local_command_suggestions(&tree, "/tick ", &[], true) else {
             panic!("/tick␠ the empty local list keeps");
         };
         assert!(matches.is_empty());
         // THE NO-SLASH TEXT (the plain message the ask lane keeps)
         assert!(matches!(
-            local_command_suggestions(&tree, "hello"),
+            local_command_suggestions(&tree, "hello", &[], true),
             Src::AskServer
         ));
         // THE DOUBLE SPACE (the empty token the literal equality
         // refuses — the ask lane answers)
         assert!(matches!(
-            local_command_suggestions(&tree, "/time  s"),
+            local_command_suggestions(&tree, "/time  s", &[], true),
             Src::AskServer
         ));
     }
@@ -22286,6 +22517,371 @@ mod tests {
             !app.chat_suggestions.iter().any(|m| m.text == "server_row"),
             "the stale reply the gate drops"
         );
+    }
+
+    /// THE PROVIDER TREE'S OWN FIXTURE (the argument slots' split the
+    /// parser names speak: the game-profile slot the no-id tab belief
+    /// answers, the entity slot the same, the score-holder slot no
+    /// local provider names, the entity slot the 0x10 id the custom
+    /// provider's own ask lane keeps).
+    fn test_provider_tree() -> mc_protocol::play::CommandTree {
+        use mc_protocol::play::{CommandNode, CommandNodeKind};
+        let node = |kind: CommandNodeKind,
+                    name: &str,
+                    children: Vec<u32>,
+                    redirect: Option<u32>| CommandNode {
+            kind,
+            executable: false,
+            restricted: false,
+            children,
+            redirect,
+            name: name.to_string(),
+            parser: None,
+            suggestion_id: None,
+        };
+        let mut nodes = vec![
+            // 0: the root — kick, kill, score, give ride (the pushed
+            // arguments below land at 4, 5, 6)
+            node(CommandNodeKind::Root, "", vec![1, 2, 3, 7], None),
+            // 1: /kick <targets: game_profile> (no custom provider)
+            node(CommandNodeKind::Literal, "kick", vec![4], None),
+            // 2: /kill <targets: entity> (no custom provider)
+            node(CommandNodeKind::Literal, "kill", vec![5], None),
+            // 3: /score <holders: score_holder> (no local provider)
+            node(CommandNodeKind::Literal, "score", vec![6], None),
+        ];
+        // the argument slots the parsers name — the game-profile slot
+        // the tab belief answers, the entity slot the same, the
+        // score-holder slot no local provider speaks
+        nodes.push(CommandNode {
+            kind: CommandNodeKind::Argument,
+            executable: false,
+            restricted: false,
+            children: vec![],
+            redirect: None,
+            name: "targets".to_string(),
+            parser: Some((0, "minecraft:game_profile".to_string())),
+            suggestion_id: None,
+        });
+        nodes.push(CommandNode {
+            kind: CommandNodeKind::Argument,
+            executable: false,
+            restricted: false,
+            children: vec![],
+            redirect: None,
+            name: "targets".to_string(),
+            parser: Some((6, "minecraft:entity".to_string())),
+            suggestion_id: None,
+        });
+        nodes.push(CommandNode {
+            kind: CommandNodeKind::Argument,
+            executable: false,
+            restricted: false,
+            children: vec![],
+            redirect: None,
+            name: "holders".to_string(),
+            parser: Some((22, "minecraft:score_holder".to_string())),
+            suggestion_id: None,
+        });
+        // 7, 8: /give <player: entity + the ask_server id> (the custom
+        // provider the ask lane keeps)
+        nodes.push(node(CommandNodeKind::Literal, "give", vec![8], None));
+        nodes.push(CommandNode {
+            kind: CommandNodeKind::Argument,
+            executable: false,
+            restricted: false,
+            children: vec![],
+            redirect: None,
+            name: "player".to_string(),
+            parser: Some((6, "minecraft:entity".to_string())),
+            suggestion_id: Some("minecraft:ask_server".to_string()),
+        });
+        mc_protocol::play::CommandTree {
+            root_index: 0,
+            nodes,
+        }
+    }
+
+    /// THE ENTITY SLOTS' OWN TAB BELIEF (javap EntityArgument /
+    /// GameProfileArgument listSuggestions → EntitySelectorParser
+    /// .fillSuggestions — the names consumer the online roster
+    /// answers: the SharedSuggestionProvider.suggest fold the
+    /// matchesSubStr splitter walk filters, the Suggestions.merge sort
+    /// the case-insensitive law keeps, the EMPTY partial the
+    /// suggestNameOrSelector state the names AND the six selectors
+    /// both answer).
+    #[test]
+    fn the_entity_slots_the_tab_belief_answers() {
+        use crate::screens::ChatSuggestionSource as Src;
+        let tree = test_provider_tree();
+        let names: Vec<String> = ["Alice", "bob", "Zed_1"]
+            .iter()
+            .map(|s| s.to_string())
+            .collect();
+        // THE EMPTY PARTIAL (the suggestNameOrSelector state — the
+        // selectors first ('@' < 'a' the compareToIgnoreCase fold
+        // keeps), the names after, the range the whole token span
+        // names)
+        let Src::Local { start, length, matches } =
+            local_command_suggestions(&tree, "/kick ", &names, true)
+        else {
+            panic!("/kick the tab belief answers");
+        };
+        assert_eq!((start, length), (6, 0), "the empty partial's own span");
+        let texts: Vec<&str> = matches.iter().map(|m| m.text.as_str()).collect();
+        assert_eq!(
+            texts,
+            vec!["@a", "@e", "@n", "@p", "@r", "@s", "Alice", "bob", "Zed_1"],
+            "the merged sort — the selectors before the names, the case fold the order keeps"
+        );
+        assert!(
+            matches.iter().take(6).all(|m| m.tooltip.is_some()),
+            "the selectors the vanilla tooltips ride"
+        );
+        assert!(
+            matches.iter().skip(6).all(|m| m.tooltip.is_none()),
+            "the names no tooltip carry"
+        );
+        // THE NAME FOLD (the prefix the lowercase law filters — the
+        // matchesSubStr walk the splitter never inside the match)
+        let Src::Local { matches, .. } =
+            local_command_suggestions(&tree, "/kick ali", &names, true)
+        else {
+            panic!("/kick ali the name fold answers");
+        };
+        assert_eq!(
+            matches.iter().map(|m| m.text.as_str()).collect::<Vec<_>>(),
+            vec!["Alice"],
+            "the case fold the prefix matches"
+        );
+        // THE SPLITTER WALK (javap matchesSubStr — the startsWith at i
+        // the loop keeps, the anyOf("._/") the hop past the next
+        // splitter answers: 'x' the tail after Steve_x's '_' the walk
+        // matches)
+        let steve = vec!["Steve_x".to_string()];
+        let Src::Local { matches, .. } =
+            local_command_suggestions(&tree, "/kick x", &steve, true)
+        else {
+            panic!("/kick x the splitter walk answers");
+        };
+        assert_eq!(
+            matches.iter().map(|m| m.text.as_str()).collect::<Vec<_>>(),
+            vec!["Steve_x"],
+            "the '_' boundary the splitter walk crosses"
+        );
+        // THE NO-MATCH LAW (a prefix no splitter walk rescues — the
+        // empty LOCAL the honest silence keeps, no round-trip)
+        let Src::Local { matches, .. } =
+            local_command_suggestions(&tree, "/kick zz", &names, true)
+        else {
+            panic!("/kick zz the empty local answers");
+        };
+        assert!(matches.is_empty(), "the silence the local list keeps");
+        // THE ROSTER'S OWN EMPTINESS (no names the six selectors the
+        // empty partial still answers — the suggestNameOrSelector walk
+        // the consumer's empty fold rides)
+        let Src::Local { matches, .. } =
+            local_command_suggestions(&tree, "/kick ", &[], true)
+        else {
+            panic!("/kick the empty roster answers");
+        };
+        assert_eq!(
+            matches.iter().map(|m| m.text.as_str()).collect::<Vec<_>>(),
+            vec!["@a", "@e", "@n", "@p", "@r", "@s"],
+            "the selectors the empty roster still speaks"
+        );
+        // THE PROFILE SLOT (the GameProfileArgument lambda's own walk —
+        // the getOnlinePlayerNames consumer the same lane rides)
+        let Src::Local { matches, .. } =
+            local_command_suggestions(&tree, "/kick bob", &names, true)
+        else {
+            panic!("/kick bob answers");
+        };
+        assert_eq!(matches[0].text, "bob");
+    }
+
+    /// THE SELECTOR LANE'S OWN WALK (javap EntitySelectorParser — the
+    /// '@' partial the suggestSelector state answers: the six
+    /// `fillSelectorSuggestions` calls the offset's own span replaces,
+    /// the '@'-state the createOffset(getStart() - 1) walk keeps, the
+    /// parsed state the span AFTER the '@' names, the unknown-kind
+    /// read the setCursor(i) rewind un-does, the options walk ('[')
+    /// the honest ask keeps, the list the six UNFILTERED — the re-pick
+    /// UX '@a' typed still lists all six).
+    #[test]
+    fn the_selector_lane_the_six_speak() {
+        use crate::screens::ChatSuggestionSource as Src;
+        let tree = test_provider_tree();
+        // THE BARE '@' (the suggestSelector state — the whole token
+        // span the suggestions' own text replaces)
+        let Src::Local { start, length, matches } =
+            local_command_suggestions(&tree, "/kill @", &[], true)
+        else {
+            panic!("/kill @ the selector lane answers");
+        };
+        assert_eq!((start, length), (6, 1), "the '@' span the replace range keeps");
+        let texts: Vec<&str> = matches.iter().map(|m| m.text.as_str()).collect();
+        assert_eq!(
+            texts,
+            vec!["@a", "@e", "@n", "@p", "@r", "@s"],
+            "the six the merged sort orders"
+        );
+        assert_eq!(
+            matches[0].tooltip.as_deref(),
+            Some("All players"),
+            "the lang table's own lookup the en_us text answers"
+        );
+        assert_eq!(matches[2].tooltip.as_deref(), Some("Nearest entity"));
+        assert_eq!(matches[5].tooltip.as_deref(), Some("Current entity"));
+        // THE PARSED STATE (a kind char consumed — the span AFTER the
+        // '@', the six the re-pick UX still lists, no filter the walk
+        // wears)
+        let Src::Local { start, length, matches } =
+            local_command_suggestions(&tree, "/kill @a", &[], true)
+        else {
+            panic!("/kill @a the parsed state answers");
+        };
+        assert_eq!((start, length), (7, 1), "the after-'@' span the range keeps");
+        assert_eq!(matches.len(), 6, "the six the no-filter law keeps");
+        // THE UNKNOWN KIND (the 'x' read the rewind un-does — the '@'
+        // state the whole token span answers again)
+        let Src::Local { start, length, matches } =
+            local_command_suggestions(&tree, "/kill @x", &[], true)
+        else {
+            panic!("/kill @x the rewind state answers");
+        };
+        assert_eq!((start, length), (6, 2), "the whole token the range replaces");
+        assert_eq!(matches.len(), 6, "the six the rewind state still speaks");
+        // THE OPTIONS WALK (the '[' the honest ask keeps — the house
+        // speaks no EntitySelectorOptions providers)
+        assert_eq!(
+            local_command_suggestions(&tree, "/kill @a[", &[], true),
+            Src::AskServer,
+            "the options walk the ask lane answers"
+        );
+        // THE NO-SELECTOR BELIEF (the atom-permission lane the house
+        // never reads — false the '@' the EMPTY local answers, no
+        // round-trip the vanilla's own catch-swallowed parse keeps)
+        let Src::Local { start, length, matches } =
+            local_command_suggestions(&tree, "/kill @", &[], false)
+        else {
+            panic!("/kill @ the gated walk answers");
+        };
+        assert_eq!((start, length), (6, 1));
+        assert!(matches.is_empty(), "the selectors the gate never names");
+    }
+
+    /// THE PARSERS' OWN SPLIT LAW (brigadier
+    /// ArgumentCommandNode.listSuggestions — the node's custom
+    /// provider (the 0x10 id) the ask-server lane answers FIRST, the
+    /// argument type's own listSuggestions the local lane answers:
+    /// entity / game-profile the house's tab belief speaks,
+    /// score-holder the 26.2 class no listSuggestions carries — the
+    /// honest ask, every other parser the same).
+    #[test]
+    fn the_argument_parsers_the_split_law_speaks() {
+        use crate::screens::ChatSuggestionSource as Src;
+        let tree = test_provider_tree();
+        // THE SCORE-HOLDER SLOT (no local provider, no custom id — the
+        // 26.2 ScoreHolderArgument no listSuggestions carries, the ask
+        // lane the honest keep)
+        assert_eq!(
+            local_command_suggestions(&tree, "/score ", &["Alice".to_string()], true),
+            Src::AskServer,
+            "the score-holder slot the ask lane keeps"
+        );
+        // THE CUSTOM PROVIDER (the entity slot WITH the 0x10 id — the
+        // ask lane wins, the local tab belief the custom provider
+        // never replaces)
+        assert_eq!(
+            local_command_suggestions(&tree, "/give ", &["Alice".to_string()], true),
+            Src::AskServer,
+            "the custom provider the ask lane answers"
+        );
+        // THE NO-TREE WORLD (the command tree never landed — the ask
+        // lane the old walk keeps verbatim)
+        assert_eq!(
+            local_command_suggestions(
+                &mc_protocol::play::CommandTree::default(),
+                "/kick ",
+                &["Alice".to_string()],
+                true
+            ),
+            Src::AskServer,
+            "the tree-less world the ask lane keeps"
+        );
+    }
+
+    /// THE REFRESH'S OWN ENTITY LANE (the App's own walk — the tab
+    /// belief the player_list field carries, the '/kick ' edit the
+    /// LOCAL list lands, no request the lane spends, no pending id the
+    /// gate waits on).
+    #[test]
+    fn the_refresh_the_entity_slot_lands_local() {
+        let mut app = App::new(3);
+        app.enter_world();
+        app.on_command_tree(test_provider_tree());
+        let (tx, rx) = std::sync::mpsc::channel::<crate::world_view::ContainerCommand>();
+        app.attach_live_clicks(tx);
+        app.on_chat_key();
+        // THE ROSTER'S OWN ARRIVAL (the live refresh the tab lane
+        // ships — the names the App's own belief banks)
+        app.live_player_list_updated(crate::world_view::WirePlayerList {
+            header: String::new(),
+            footer: String::new(),
+            rows: vec![crate::world_view::WirePlayerRow {
+                name: "Alice".to_string(),
+                game_mode: 0,
+                latency: 0,
+                list_order: 0,
+                score: None,
+            }],
+            names: vec!["Alice".to_string(), "bob".to_string()],
+        });
+        for c in "/kick ".chars() {
+            app.on_chat_char(c);
+        }
+        assert!(
+            rx.try_recv().is_err(),
+            "the entity slot the LOCAL lane answers — no request the walk spends"
+        );
+        assert_eq!(app.chat_suggestion_pending, None, "the gate no id waits on");
+        assert_eq!(
+            app.chat_suggestions
+                .iter()
+                .map(|m| m.text.as_str())
+                .collect::<Vec<_>>(),
+            vec!["@a", "@e", "@n", "@p", "@r", "@s", "Alice", "bob"],
+            "the merged sort the merged list keeps"
+        );
+        assert_eq!(app.chat_suggestion_range, (6, 0));
+        // THE TAB APPLY (the selected '@a' the replace lands — the
+        // input the selector wears, the narrowed state the fresh walk
+        // re-answers)
+        app.on_chat_tab_key();
+        assert_eq!(app.chat_input, "/kick @a", "the apply the range keeps");
+        assert_eq!(
+            app.chat_suggestions.len(),
+            6,
+            "the parsed state the six still speaks"
+        );
+        // THE SERVER'S OWN WORD (the '/give ' slot the ask lane
+        // answers — the pops walk back to the bare slash, the fresh
+        // typing the custom provider's slot reaches)
+        for _ in 0..7 {
+            app.on_chat_backspace(); // "/kick @a" → "/" (the pops the walk keeps)
+        }
+        for c in "give ".chars() {
+            app.on_chat_char(c);
+        }
+        assert_eq!(app.chat_input, "/give ");
+        let got = rx
+            .try_recv()
+            .expect("the give slot's custom provider rides the request");
+        assert!(matches!(
+            got,
+            crate::world_view::ContainerCommand::RequestCommandSuggestions { .. }
+        ));
     }
 
     /// THE TREE'S OWN LANDING (the handleCommands walk — the field the
