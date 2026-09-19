@@ -936,6 +936,21 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
         >,
     >();
 
+    // THE CHAT CHAR SINK (the minifb input callback's own lane — the
+    // set_input_callback trait the per-char push feeds, the shared
+    // queue the frame walk drains; minifb has no polling char API,
+    // the Rc<RefCell> hand-off the callback's own ownership keeps)
+    let chat_chars: std::rc::Rc<std::cell::RefCell<Vec<char>>> = Default::default();
+    struct ChatCharSink(std::rc::Rc<std::cell::RefCell<Vec<char>>>);
+    impl minifb::InputCallback for ChatCharSink {
+        fn add_char(&mut self, uni_char: u32) {
+            if let Some(c) = char::from_u32(uni_char) {
+                self.0.borrow_mut().push(c);
+            }
+        }
+    }
+    window.set_input_callback(Box::new(ChatCharSink(chat_chars.clone())));
+
     while window.is_open() {
         // THE FRAME-TIME SAMPLE (the vanilla runTick's own ride — the
         // inter-frame delta the LocalSampleLogger ring keeps, one
@@ -946,14 +961,29 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
             app.log_frame_duration((t_frame - prev).as_nanos() as i64);
         }
         prev_frame_instant = Some(t_frame);
+        // THE CHAT CHAR DRAIN (the ChatScreen's own typing lane — the
+        // chars the open screen's EditBox answers, the closed screen
+        // the on_chat_char gate keeps silent)
+        for c in chat_chars.borrow_mut().drain(..) {
+            app.on_chat_char(c);
+        }
         if window.is_key_pressed(Key::Escape, minifb::KeyRepeat::No) {
-            app.on_escape();
+            // THE ESCAPE'S OWN ROUTE (the ChatScreen's onClose law —
+            // the open chat the draft-discard close answers, the
+            // world the pause lane keeps)
+            if app.chat_open {
+                app.close_chat();
+            } else {
+                app.on_escape();
+            }
         }
         // THE E KEY'S OWN LANE (the vanilla keyPress's key.inventory
         // toggle): the world screen opens the survival inventory, the
         // inventory screen closes it back — the App's own death gate
-        // keeps the DeathScreen modal
-        if window.is_key_pressed(Key::E, minifb::KeyRepeat::No) {
+        // keeps the DeathScreen modal. The open chat the vanilla
+        // Screen's own key-consumption law keeps silent (the
+        // ChatScreen the world keys never reads)
+        if !app.chat_open && window.is_key_pressed(Key::E, minifb::KeyRepeat::No) {
             app.on_inventory_key();
         }
         // THE INVENTORY'S OWN Q (the AbstractContainerScreen.keyPressed's
@@ -965,29 +995,31 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
         // screen gates keep the two chains honest (the world Q the
         // inventory walk never passes, the container Q the handleKeybinds
         // gate never did)
-        if window.is_key_pressed(Key::Q, minifb::KeyRepeat::No) {
+        if !app.chat_open && window.is_key_pressed(Key::Q, minifb::KeyRepeat::No) {
             app.on_inventory_drop_key(window.is_key_down(Key::LeftCtrl));
         }
         // the number keys' hotbar selection (the vanilla keyPress's own
         // lane): 1..9 move the selection, the live session's belief
         // rides the command channel (the worker echoes the wire AND
         // moves the store — the hand follows the keys)
-        for (i, key) in [
-            Key::Key1,
-            Key::Key2,
-            Key::Key3,
-            Key::Key4,
-            Key::Key5,
-            Key::Key6,
-            Key::Key7,
-            Key::Key8,
-            Key::Key9,
-        ]
-        .iter()
-        .enumerate()
-        {
-            if window.is_key_pressed(*key, minifb::KeyRepeat::No) {
-                app.on_number_key(i);
+        if !app.chat_open {
+            for (i, key) in [
+                Key::Key1,
+                Key::Key2,
+                Key::Key3,
+                Key::Key4,
+                Key::Key5,
+                Key::Key6,
+                Key::Key7,
+                Key::Key8,
+                Key::Key9,
+            ]
+            .iter()
+            .enumerate()
+            {
+                if window.is_key_pressed(*key, minifb::KeyRepeat::No) {
+                    app.on_number_key(i);
+                }
             }
         }
         let (mx, my) = window.get_mouse_pos(minifb::MouseMode::Discard).unwrap_or((0.0, 0.0));
@@ -1011,7 +1043,10 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
         // sleeps on the keyboard, hides the frame the key lifts
         app.on_tab_key(window.is_key_down(Key::Tab));
         let left_down = window.get_mouse_down(minifb::MouseButton::Left);
-        if left_down {
+        // THE CHAT SCREEN'S OWN MOUSE GATE (the vanilla Screen the world
+        // clicks never pass — the open chat the attack/use lanes keep
+        // silent, the edge-state tracking the close's honesty keeps)
+        if left_down && !app.chat_open {
             app.on_click(gmx, gmy);
         }
         // the LEFT press's rising edge routes the press WITH its
@@ -1020,7 +1055,7 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
         // prediction + the wire echo), every other screen falls through
         // to the attack swing inside — minifb has no edge API, the
         // previous frame's state is tracked here
-        if left_down && !was_left_down {
+        if left_down && !was_left_down && !app.chat_open {
             app.on_press(gmx, gmy);
         }
         // the LEFT press's falling edge (the vanilla's own release lane):
@@ -1037,7 +1072,7 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
         // the rest honest). The FALLING edge releases the use (the
         // vanilla rightClickStop — the shield lowers, the bow looses)
         let right_down = window.get_mouse_down(minifb::MouseButton::Right);
-        if right_down && !was_right_down {
+        if right_down && !was_right_down && !app.chat_open {
             app.on_right_press(gmx, gmy);
         }
         if !right_down && was_right_down {
@@ -1052,12 +1087,40 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
         // OFFLINE world spawns its body at the surface once the screen
         // stands (the networked body rides the teleport re-anchor). The
         // pause and every menu show the cursor and freeze the lanes —
-        // the vanilla's own pause law.
-        let in_world = app.screen == crate::screens::ScreenKind::World && !app.paused;
+        // the vanilla's own pause law. The open chat the same freeze
+        // wears (the ChatScreen a Screen the in-world keys never read,
+        // the cursor the typing lane shows)
+        let in_world =
+            app.screen == crate::screens::ScreenKind::World && !app.paused && !app.chat_open;
         if in_world != was_in_world {
             window.set_cursor_visibility(!in_world);
             prev_mouse = None; // re-arm the delta stream (no jump on entry)
             was_in_world = in_world;
+        }
+        // THE CHAT KEYS' OWN LANE (the ChatScreen.keyPressed walk — the
+        // open screen the Enter/Backspace/Arrows answers, the
+        // isConfirmation the submit fires, the history the Up/Down
+        // recall walks; the T key the CLOSED world answers — the
+        // Gui.handleKeybinds keyChat lane the screen-open walk never
+        // reads)
+        if app.chat_open {
+            if window.is_key_pressed(Key::Enter, minifb::KeyRepeat::No) {
+                app.on_chat_submit();
+            }
+            if window.is_key_pressed(Key::Backspace, minifb::KeyRepeat::No) {
+                app.on_chat_backspace();
+            }
+            if window.is_key_pressed(Key::Up, minifb::KeyRepeat::No) {
+                app.on_chat_history_key(true);
+            }
+            if window.is_key_pressed(Key::Down, minifb::KeyRepeat::No) {
+                app.on_chat_history_key(false);
+            }
+        } else if app.screen == crate::screens::ScreenKind::World
+            && !app.paused
+            && window.is_key_pressed(Key::T, minifb::KeyRepeat::No)
+        {
+            app.on_chat_key();
         }
         if in_world && app.body.is_none() && !app.world_is_network {
             app.spawn_offline_body();

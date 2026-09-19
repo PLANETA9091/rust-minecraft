@@ -1159,6 +1159,98 @@ pub fn overlay_message_origin(gui_w: i32, gui_h: i32, text_w: i32) -> (i32, i32)
     (gui_w / 2 - text_w / 2, gui_h - 68 - 4)
 }
 
+/// THE CHAT LINE'S OWN FADE (javap ChatComponent$AlphaCalculator
+/// lambda$timeBased$0 — the bytecode verbatim: `age = now -
+/// addedTime; d = age / 200.0; d = 1.0 - d; d *= 10.0;
+/// clamp(d, 0.0, 1.0); d *= d`): the line fully visible until the
+/// 180th tick, the fade the last 20 walks, the 200th tick the zero
+/// answers.
+pub fn chat_line_alpha(age: u32) -> f32 {
+    let d = 1.0 - age as f64 / 200.0;
+    let d = (d * 10.0).clamp(0.0, 1.0);
+    (d * d) as f32
+}
+
+/// THE CHAT'S OWN PAGE (javap ChatComponent.getHeight(D) +
+/// getLineHeight + getLinesPerPage — the `floor(160.0 * h + 20.0)`
+/// fold the focused 1.0 / unfocused 0.5 defaults keep: 180/9 = 20
+/// lines focused, 100/9 = 11 unfocused; the line height the
+/// `9 + round(4.0 * spacing)` fold the zero-spacing default keeps).
+pub fn chat_lines_per_page(focused: bool) -> usize {
+    let h: f64 = 160.0 * (if focused { 1.0 } else { 0.5 }) + 20.0;
+    (h.floor() as usize) / 9
+}
+
+/// THE CHAT'S OWN BOTTOM ANCHOR (javap ChatComponent.extractRenderState
+/// bc 70-81 — `chatBottom = Mth.floor((guiHeight - 40) / scale)` the
+/// scale-1 default keeps) and the per-line Y fold (the
+/// ChatComponent$1.accept walk: `chatBottom - entryHeight * (i + 1)
+/// + entryBottomToMessageY`, the entryHeight `9 * (spacing + 1)` = 9
+/// and the entryBottomToMessageY `round(8 - 4*spacing)` = 8 the
+/// zero-spacing defaults speak → the newest line's text top at
+/// `guiHeight - 41`).
+pub fn chat_line_y(gui_h: i32, index: i32) -> i32 {
+    let chat_bottom = ((gui_h - 40) as f64).floor() as i32;
+    chat_bottom - 9 * (index + 1) + 8
+}
+
+/// THE CHAT TEXT'S OWN WRAP (the refreshTrimmedMessages walk — the
+/// message the 320px chat width the word-aware trim splits: the
+/// greedy space-fold the flush-then-retry keeps, the too-long word
+/// the hard clip answers).
+pub fn wrap_chat_text(s: &str, width: i32) -> Vec<String> {
+    let space_w = crate::gui::font_text_width(" ");
+    let mut out: Vec<String> = Vec::new();
+    let mut line = String::new();
+    let mut line_w = 0i32;
+    for w in s.split(' ') {
+        let mut word = w;
+        loop {
+            let word_w = crate::gui::font_text_width(word);
+            let sep = if line.is_empty() { 0 } else { space_w };
+            if line_w + sep + word_w <= width {
+                if !line.is_empty() {
+                    line.push(' ');
+                    line_w += sep;
+                }
+                line.push_str(word);
+                line_w += word_w;
+                break;
+            }
+            if !line.is_empty() {
+                out.push(std::mem::take(&mut line));
+                line_w = 0;
+                continue;
+            }
+            // THE TOO-LONG WORD (the hard clip): the chars the width
+            // takes line up, the overflow the next line carries
+            let mut used = 0usize;
+            for (i, ch) in word.char_indices() {
+                let cw = crate::gui::font_text_width(&word[i..i + ch.len_utf8()]);
+                if line_w + cw > width {
+                    break;
+                }
+                line.push(ch);
+                line_w += cw;
+                used = i + ch.len_utf8();
+            }
+            out.push(std::mem::take(&mut line));
+            line_w = 0;
+            if used >= word.len() {
+                break;
+            }
+            word = &word[used..];
+        }
+    }
+    if !line.is_empty() {
+        out.push(line);
+    }
+    if out.is_empty() {
+        out.push(String::new());
+    }
+    out
+}
+
 /// THE BLOCK SCREEN TINT (javap `ScreenEffectRenderer.submit`'s own
 /// `ldc -15132391` = 0xFF191919): the rgb 25/255 the head-in-block
 /// quad's dark multiply speaks, the alpha 0xFF the opaque cover rides.
@@ -2610,6 +2702,26 @@ pub struct App {
     /// screen-null keybind law keeps), the headless scenes never
     /// press F1 (the goldens never see the bare frame).
     pub hud_hidden: bool,
+    /// THE CHAT SCREEN'S OWN STATE (javap ChatScreen + ChatComponent —
+    /// the Gui.handleKeybinds keyChat lane's own walk): `chat_open`
+    /// the ChatScreen presence the T key's rising edge opens (the
+    /// handleChatInput's Enter submit and the onClose's Escape discard
+    /// the lane), `chat_input` the EditBox's value the 256
+    /// setMaxLength caps, `chat_messages` the ChatComponent's
+    /// trimmedMessages walk (the (text, addedTime) pair the
+    /// GuiMessage law keeps — the wrapped lines the
+    /// refreshTrimmedMessages re-trim answers, the 100-message cap
+    /// the clearMessages walk banks), `recent_chat` the
+    /// addRecentChat deque the history arrows recall (the
+    /// moveInHistory walk, `chat_history_pos` the offset from the
+    /// newest speaks, `chat_draft` the isDraft value the walk
+    /// preserves).
+    pub chat_open: bool,
+    pub chat_input: String,
+    pub chat_messages: Vec<(String, u32)>,
+    pub recent_chat: Vec<String>,
+    pub chat_history_pos: usize,
+    pub chat_draft: String,
     /// THE F3 DEBUG OVERLAY (the vanilla keyPress's keyToggleDebugScreen
     /// lane — the rising edge the window loop reads, the toggle the
     /// DebugScreenEntryList.isOverlayVisible gate keeps): true while the
@@ -3056,6 +3168,12 @@ impl App {
             },
             tab_held: false,
             hud_hidden: false,
+            chat_open: false,
+            chat_input: String::new(),
+            chat_messages: Vec::new(),
+            recent_chat: Vec::new(),
+            chat_history_pos: 0,
+            chat_draft: String::new(),
             debug_held: false,
             fps_frames: 0,
             fps_window_start: None,
@@ -11363,6 +11481,130 @@ impl App {
         self.hud_hidden = !self.hud_hidden;
     }
 
+    /// THE T KEY'S OWN LANE (javap Gui.handleKeybinds's keyChat lane —
+    /// the `Options.keyChat.consumeClick()` rising edge the
+    /// `openChatScreen(ChatMethod.MESSAGE)` walk answers): the
+    /// ChatScreen the world opens (the draft the open preserves —
+    /// the isDraft law the ChatScreen.init's historyPos reset keeps,
+    /// the input the empty value the fresh EditBox wears).
+    pub fn on_chat_key(&mut self) {
+        self.chat_open = true;
+        self.chat_input.clear();
+        self.chat_draft.clear();
+        self.chat_history_pos = self.recent_chat.len();
+    }
+
+    /// THE CHAT SCREEN'S OWN CLOSE (javap onClose's walk — the Escape
+    /// the screen answers, the draft the discard keeps: the input the
+    /// empty value the next open wears).
+    pub fn close_chat(&mut self) {
+        self.chat_open = false;
+        self.chat_input.clear();
+        self.chat_history_pos = self.recent_chat.len();
+    }
+
+    /// THE EDITBOX'S OWN CHAR (the window's input callback the
+    /// set_input_callback lane feeds — the char the 256 setMaxLength
+    /// cap gates, the open screen the lane only answers).
+    pub fn on_chat_char(&mut self, c: char) {
+        if !self.chat_open || c.is_control() {
+            return;
+        }
+        if self.chat_input.chars().count() < 256 {
+            self.chat_input.push(c);
+        }
+    }
+
+    /// THE EDITBOX'S OWN BACKSPACE (the EditBox's deleteText walk —
+    /// the last char the empty gate keeps).
+    pub fn on_chat_backspace(&mut self) {
+        if !self.chat_open {
+            return;
+        }
+        self.chat_input.pop();
+    }
+
+    /// THE HISTORY ARROWS (javap ChatScreen.moveInHistory — the Up the
+    /// -1 walk (keyPressed's 265 arm), the Down the +1, the pos the
+    /// [0..len] band the clamps keep, the pos == len arm the free
+    /// draft answers; the recalled entry the prepend-order
+    /// `get(j - pos - 1)` the bytecode speaks — the append-order deque
+    /// the same entry at index `pos` keeps); the isDraft value the
+    /// leaving walk preserves (the typed word the scroll's return
+    /// restores — the real-client feel).
+    pub fn on_chat_history_key(&mut self, older: bool) {
+        if !self.chat_open || self.recent_chat.is_empty() {
+            return;
+        }
+        let len = self.recent_chat.len();
+        let mut pos = self.chat_history_pos as i32;
+        if older {
+            if pos as usize == len {
+                self.chat_draft = self.chat_input.clone();
+            }
+            pos -= 1;
+            if pos < 0 {
+                pos = 0;
+            }
+        } else {
+            pos += 1;
+            if pos as usize > len {
+                pos = len as i32;
+            }
+        }
+        self.chat_history_pos = pos as usize;
+        self.chat_input = if self.chat_history_pos == len {
+            self.chat_draft.clone()
+        } else {
+            self.recent_chat[self.chat_history_pos].clone()
+        };
+    }
+
+    /// THE SUBMIT'S OWN WALK (javap ChatScreen.keyPressed's
+    /// isConfirmation arm — the `handleChatInput(input, true)` the
+    /// normalizeChatMessage trim keeps: the empty the silent close
+    /// answers, the non-empty `addRecentChat` + the send lane rides;
+    /// the OFFLINE world the sendChat wire the no-connection lane
+    /// skips — the local echo the addMessage display queue answers,
+    /// the wire the networked worlds' later round owes). The close +
+    /// resetChatScroll tail the keyPressed walk keeps.
+    pub fn on_chat_submit(&mut self) {
+        if !self.chat_open {
+            return;
+        }
+        let normalized = self.chat_input.trim().to_string();
+        self.close_chat();
+        if normalized.is_empty() {
+            return;
+        }
+        self.add_recent_chat(normalized.clone());
+        self.push_chat_message(normalized);
+    }
+
+    /// THE RECENT DEQUE (javap ChatComponent.addRecentChat — the
+    /// consecutive duplicate the skip keeps, the 100 cap the
+    /// removeFirst overflow answers).
+    pub fn add_recent_chat(&mut self, s: String) {
+        if self.recent_chat.last().map(|l| l == &s) != Some(true) {
+            self.recent_chat.push(s);
+        }
+        while self.recent_chat.len() > 100 {
+            self.recent_chat.remove(0);
+        }
+    }
+
+    /// THE DISPLAY QUEUE (javap ChatComponent.addMessage →
+    /// addMessageToDisplayQueue → refreshTrimmedMessages — the
+    /// (text, addedTime) pair the GuiMessage law keeps, the wrap the
+    /// 320px chat width the draw re-walks, the 100-message cap the
+    /// trim overflow answers).
+    pub fn push_chat_message(&mut self, s: String) {
+        self.chat_messages.push((s, self.frame as u32));
+        while self.chat_messages.len() > 100 {
+            self.chat_messages.remove(0);
+        }
+    }
+
     /// THE F3+2 CHORD'S OWN TOGGLE (javap DebugScreenOverlay
     /// .toggleFpsCharts's own walk — the flag's law the bytecode
     /// 8-26 keeps: `renderFpsCharts = !(isOverlayVisible &&
@@ -11986,6 +12228,85 @@ impl App {
         // multiply × the fade keeps)
         g.fill(tx - 2, ty - 2, tw + 4, 13, [0.0, 0.0, 0.0, 0.25 * fade]);
         g.text_faded(a, tx, ty, s, WHITE, fade, true);
+    }
+
+    /// THE CHAT HISTORY'S OWN DRAW (javap ChatComponent.extractRenderState
+    /// — the per-line walk the ChatComponent$1.accept fold keeps: the
+    /// lines the 320px width re-wrapped (the refreshTrimmedMessages
+    /// lane), the newest at the BOTTOM the chatBottom - 9*(i+1) + 8
+    /// y-fold speaks (`chat_line_y` — the newest line's text top at
+    /// guiHeight - 41 the scale-1 defaults bank), the page the
+    /// focused 20 / unfocused 11 lines the getHeight defaults keep,
+    /// the alpha the FULLY_VISIBLE flag the foreground mode banks or
+    /// the timeBased fold `clamp((1 - age/200) * 10, 0, 1)^2` walks,
+    /// the text opacity `chatOpacity * 0.9 + 0.1` = 1.0 the default
+    /// options keep; the BAND the DrawingBackgroundGraphicsAccess's
+    /// own fill the text width hugs (`fill(2, y - 1, tw + 4, 10)` —
+    /// the local -2..tw+2 the translate(4, 0) origin shifts, the 10
+    /// the 9px line + the 1px pads speak, the black at
+    /// textBackgroundOpacity 0.5 the ARGB.black fold keeps) — the
+    /// shadowless white the drawString's 0xFFFFFF law wears).
+    fn draw_chat_history(&self, g: &mut Gui, a: &mut GuiAssets, w: i32, h: i32, focused: bool) {
+        let _ = w;
+        // THE WRAPPED LINES (the newest LAST — the walk reads the tail
+        // first)
+        let mut lines: Vec<(String, u32)> = Vec::new();
+        for (text, added) in self.chat_messages.iter().rev() {
+            for seg in wrap_chat_text(text, 320) {
+                lines.push((seg, *added));
+            }
+        }
+        let page = chat_lines_per_page(focused);
+        let shown = lines.len().min(page);
+        let first = lines.len() - shown;
+        for (i, (text, added)) in lines[first..].iter().enumerate() {
+            let alpha = if focused {
+                1.0 // THE FULLY_VISIBLE FLAG (the foreground mode's own
+                    // calculator — the ChatScreen the faded history
+                    // never wears)
+            } else {
+                chat_line_alpha((self.frame as u32).wrapping_sub(*added))
+            };
+            if alpha <= 0.0 {
+                continue;
+            }
+            let y = chat_line_y(h, i as i32);
+            if y < 0 {
+                continue;
+            }
+            let tw = g.text_width(text);
+            g.fill(2, y - 1, tw + 4, 10, [0.0, 0.0, 0.0, 0.5 * alpha]);
+            g.text_faded(a, 4, y, text, WHITE, alpha, false);
+        }
+    }
+
+    /// THE CHAT SCREEN'S OWN LAYER (javap ChatScreen.extractBackground +
+    /// extractRenderState — the Screen the isHidden flag never gates:
+    /// the focused history the FULLY_VISIBLE mode draws (the 20-line
+    /// page), the input band the `fill(2, height - 14, width - 2,
+    /// height - 2, getBackgroundColor(0x80000000))` walk keeps (the
+    /// black at textBackgroundOpacity 0.5 the same fold speaks), the
+    /// input text the EditBox's `(4, height - 12, width - 4, 12)`
+    /// borderless box draws (the text at y + 2 the 12-tall box's
+    /// center keeps, the 0xE0E0E0 the shadowed glyph law wears), the
+    /// cursor the `(millis / 500) % 2` blink the EditBox keeps).
+    fn render_chat_screen(&self, g: &mut Gui, a: &mut GuiAssets, w: i32, h: i32) {
+        self.draw_chat_history(g, a, w, h, true);
+        // THE INPUT BAND (the ChatScreen.extractBackground's own fill)
+        g.fill(2, h - 14, w - 4, 12, [0.0, 0.0, 0.0, 0.5]);
+        // THE INPUT TEXT (the EditBox's borderless draw — the text at
+        // x + 0 the borderless law keeps, the y + 2 the 12-tall band
+        // centers, the blink the millis/500 fold answers)
+        let shown: String = self.chat_input.chars().collect();
+        let blink = (std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .map(|d| d.as_millis())
+            .unwrap_or(0)
+            / 500)
+            % 2
+            == 0;
+        let cursor = if blink { "_" } else { "" };
+        g.text_faded(a, 4, h - 10, &format!("{shown}{cursor}"), [0.878, 0.878, 0.878], 1.0, true);
     }
 
     /// THE FPS WINDOW (the DebugEntryFps's `%d fps` word the
@@ -14772,6 +15093,14 @@ impl App {
                     self.render_death(&mut g, a, gw, gh);
                 } else {
                     self.render_hud(&mut g, a);
+                    // THE CHAT SCREEN'S OWN LAYER (the vanilla Screen the
+                    // HUD's own stack draws after — the ChatScreen the
+                    // isHidden flag never gates, the F1-hidden world the
+                    // open input still wears)
+                    if self.chat_open {
+                        let (gw, gh) = (g.w(), g.h());
+                        self.render_chat_screen(&mut g, a, gw, gh);
+                    }
                     if self.paused {
                         let (gw, gh) = (g.w(), g.h());
                         self.render_pause(&mut g, a, gw, gh);
@@ -18266,6 +18595,15 @@ impl App {
         // mount's "Press Left Shift to Dismount" the 60-tick life the
         // fade walks, the stratum the HUD's own layers close with)
         self.draw_overlay_message(g, a, w, h);
+        // THE CHAT HISTORY (the extractChat's own unfocused lane — the
+        // ChatComponent the Hud's second hidden group draws: the
+        // 11-line unfocused page the time-based fade walks, the
+        // F1-hidden gate the whole walk above already answered, the
+        // open screen's own lane the focused draw takes over — the
+        // double-draw the isChatFocused gate keeps silent)
+        if !self.chat_open {
+            self.draw_chat_history(g, a, w, h, false);
+        }
         // THE DEBUG PANEL (the DebugScreenOverlay's own layer — the
         // vanilla renders it OVER the HUD's whole stack, the last
         // stratum the Hud's own render closes with): the F3 gate the
@@ -20691,6 +21029,157 @@ mod tests {
             pause_diff > 10_000,
             "the pause screen the hidden HUD's frame still paints: {pause_diff}"
         );
+    }
+
+    #[test]
+    fn the_t_key_opens_the_chat_lane() {
+        // THE PURE LAWS' OWN VERDICTS (the AlphaCalculator.timeBased
+        // lambda the bytecode verbatim speaks: age 0 → 1.0, the 180th
+        // tick the full keeps, the 190th the 0.25 fold wears
+        // ((1-0.95)*10 = 0.5 → 0.25), the 200th the zero answers; the
+        // page the focused 180/9 = 20 / unfocused 100/9 = 11 keep; the
+        // y-fold the newest line at guiHeight - 41 speaks)
+        assert_eq!(chat_line_alpha(0), 1.0);
+        assert_eq!(chat_line_alpha(180), 1.0);
+        assert!((chat_line_alpha(190) - 0.25).abs() < 1e-6);
+        assert_eq!(chat_line_alpha(200), 0.0);
+        assert_eq!(chat_line_alpha(300), 0.0);
+        assert_eq!(chat_lines_per_page(true), 20);
+        assert_eq!(chat_lines_per_page(false), 11);
+        assert_eq!(chat_line_y(360, 0), 360 - 41);
+        assert_eq!(chat_line_y(360, 1), 360 - 50);
+
+        // THE STATE WALK (the handleKeybinds keyChat lane the T edge
+        // opens, the EditBox the chars the 256 cap feeds, the
+        // backspace the pop keeps, the handleChatInput the trim +
+        // empty-close law wears, the non-empty the addRecentChat +
+        // the local echo pushes, the consecutive duplicate the skip
+        // keeps)
+        let mut app = App::new(3);
+        app.enter_world();
+        assert!(!app.chat_open);
+        app.on_chat_key();
+        assert!(app.chat_open);
+        for c in "hello".chars() {
+            app.on_chat_char(c);
+        }
+        assert_eq!(app.chat_input, "hello");
+        app.on_chat_backspace();
+        assert_eq!(app.chat_input, "hell");
+        app.on_chat_history_key(true);
+        assert_eq!(app.chat_input, "hell", "the empty recent the walk keeps");
+        for _ in 0..4 {
+            app.on_chat_backspace();
+        }
+        assert_eq!(app.chat_input, "", "the pops the empty input answers");
+        app.on_chat_submit();
+        assert!(!app.chat_open, "the empty-trim close the silent law keeps");
+        assert!(app.chat_messages.is_empty(), "the empty submit no echo rides");
+        assert!(app.recent_chat.is_empty(), "the empty submit no history keeps");
+
+        app.on_chat_key();
+        app.chat_input.clear();
+        for c in "  hello world  ".chars() {
+            app.on_chat_char(c);
+        }
+        app.on_chat_submit();
+        assert_eq!(app.recent_chat, ["hello world"], "the trim the normalize law keeps");
+        assert_eq!(app.chat_messages.len(), 1, "the local echo the push speaks");
+        assert_eq!(app.chat_messages[0].1, app.frame as u32, "the addedTime the frame law keeps");
+        app.on_chat_key();
+        for c in "hello world".chars() {
+            app.on_chat_char(c);
+        }
+        app.on_chat_submit();
+        assert_eq!(app.recent_chat.len(), 1, "the consecutive dup the skip keeps");
+
+        // THE HISTORY RECALL (the moveInHistory walk — the Up the
+        // OLDER walks, the draft the leaving keeps, the Down the
+        // newer returns, the free pos the draft restores)
+        app.on_chat_key();
+        app.chat_input.clear();
+        for c in "draft word".chars() {
+            app.on_chat_char(c);
+        }
+        app.on_chat_history_key(true);
+        assert_eq!(app.chat_input, "hello world", "the Up the older entry recalls");
+        app.on_chat_history_key(false);
+        assert_eq!(app.chat_input, "draft word", "the Down the draft restores");
+        app.close_chat();
+
+        // THE WRAP'S OWN LAW (the refreshTrimmedMessages walk — the
+        // short the one line keeps, the long the 320px width splits)
+        assert_eq!(wrap_chat_text("hi there", 320).len(), 1);
+        let long = "the quick brown fox jumps over the lazy dog again and again until the line wraps past the chat width the game keeps";
+        let wrapped = wrap_chat_text(long, 320);
+        assert!(wrapped.len() > 1, "the long message the wrap splits");
+        for seg in &wrapped {
+            assert!(
+                crate::gui::font_text_width(seg) <= 320,
+                "the wrapped line the width cap keeps: {} ({}px)",
+                seg,
+                crate::gui::font_text_width(seg)
+            );
+        }
+
+        // THE PIXELS' OWN VERDICT (the cache-root walk the inventory
+        // test keeps): the fresh message the bottom-left band + text
+        // the bare world answers, the 200-tick age the fade zeroes,
+        // the open chat the input band paints — even over the F1
+        // hidden HUD the Screen the isHidden flag never gates
+        fn diff_count(a: &[u8], b: &[u8], x0: i32, y0: i32, w: i32, h: i32) -> usize {
+            let mut n = 0usize;
+            for y in y0..y0 + h {
+                for x in x0..x0 + w {
+                    let o = ((y as usize) * 640 + x as usize) * 3;
+                    if a[o..o + 3] != b[o..o + 3] {
+                        n += 1;
+                    }
+                }
+            }
+            n
+        }
+        let root = ["assets-cache/jar", "../assets-cache/jar", "../../assets-cache/jar"]
+            .iter()
+            .map(std::path::Path::new)
+            .find(|p| p.join("gui/container/inventory.png").exists());
+        let Some(root) = root else { return };
+        let mut app = App::new(3);
+        app.enter_world();
+        let mut assets = GuiAssets::open(&root);
+        let mut fb = crate::raster::Framebuf::new(640, 360);
+        app.render(&mut fb, &mut assets);
+        let bare = fb.color.clone();
+        // THE UNFOCUSED HISTORY (the fresh message the fade's full
+        // alpha wears — the newest line's band at (2, y-1) the
+        // chat_line_y law keeps)
+        app.push_chat_message("chat hello".to_string());
+        app.render(&mut fb, &mut assets);
+        let y = chat_line_y(360, 0);
+        let hist_diff = diff_count(&bare, &fb.color, 2, y - 1, 200, 10);
+        assert!(hist_diff > 40, "the chat line the band + text paints: {hist_diff}");
+        // THE 200-TICK AGE (the fade's zero the line skips — the bare
+        // world's own bytes return)
+        app.frame += 201;
+        app.render(&mut fb, &mut assets);
+        assert_eq!(
+            bare, fb.color,
+            "the aged line the fade never draws — the bare world twice"
+        );
+        app.frame -= 201;
+        // THE FOCUSED INPUT (the ChatScreen's own layer — the band the
+        // hidden HUD's frame still paints, the F1 law the Screen never
+        // gates)
+        app.hud_hidden = true;
+        app.render(&mut fb, &mut assets);
+        let hidden_bare = fb.color.clone();
+        app.on_chat_key();
+        for c in "typing".chars() {
+            app.on_chat_char(c);
+        }
+        app.render(&mut fb, &mut assets);
+        let band_diff = diff_count(&hidden_bare, &fb.color, 2, 360 - 14, 636, 12);
+        assert!(band_diff > 400, "the input band the open chat paints: {band_diff}");
     }
 
     #[test]
