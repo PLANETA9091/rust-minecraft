@@ -1409,10 +1409,12 @@ const SELECTOR_OPTIONS: [(&str, &str); 21] = [
 /// entry and every ',' continuation the suggestNames state installs,
 /// the option names the `key + '='` texts wear, the tooltip the
 /// `Option.description` translatable carries, the lowercase-prefix
-/// fold the remaining_lc law keeps; the '{'/quoted value states and
-/// the '=' value states the honest ask keeps — the house speaks no
-/// value providers; the 26.2 suggestNames the '!' prefix the no-match
-/// silence answers — the keys the '!' never starts-with).
+/// fold the remaining_lc law keeps; the '=' tails the option's own
+/// VALUE walk answers where the 26.2 modifiers install one — sort /
+/// gamemode the dedicated lanes speak — the '{'/quoted values and
+/// the unspoken keys the honest ask keeps; the 26.2 suggestNames the
+/// '!' prefix the no-match silence answers — the keys the '!' never
+/// starts-with).
 fn local_selector_options_suggestions(
     sel_chars: &str,
     bracket_idx: usize,
@@ -1426,17 +1428,20 @@ fn local_selector_options_suggestions(
     }
     // the fresh-name position: the region's tail after the last ','
     // (the comma state the walk re-installs suggestNames at); a tail
-    // carrying '=' the value state speaks — the honest ask
+    // carrying '=' the value state speaks
     let tail = match region.rfind(',') {
         Some(i) => &region[i + 1..],
         None => region,
     };
-    if tail.contains('=') {
-        return ChatSuggestionSource::AskServer;
-    }
     // the tail's own span in the FULL input ('/' + the consumed
     // prefix + the '@' + the selector chars + the '[')
     let start = token_start + 1 + bracket_idx + 1 + (region.len() - tail.len());
+    if let Some(eq_idx) = tail.find('=') {
+        // the value position: the option's own walk the 26.2
+        // modifiers install (sort / gamemode the audited lanes speak,
+        // the rest the honest ask keeps)
+        return local_selector_value_suggestions(tail, eq_idx, start);
+    }
     let tail_lc = tail.to_lowercase();
     let mut matches: Vec<mc_protocol::play::CommandSuggestionsMatch> = SELECTOR_OPTIONS
         .iter()
@@ -1457,6 +1462,153 @@ fn local_selector_options_suggestions(
     ChatSuggestionSource::Local {
         start: start as i32,
         length: tail.len() as i32,
+        matches,
+    }
+}
+
+/// THE SORT VALUE WALK'S OWN LIST (javap `EntitySelectorOptions
+/// lambda$bootStrap$26` — the modifier's setSuggestions the walk
+/// installs, the four literals `Arrays.asList` banks, the
+/// `SharedSuggestionProvider.suggest` fold filters — the
+/// matchesSubStr splitter law the house's helper speaks — no
+/// tooltips the plain `builder.suggest` wears).
+const SORT_VALUE_SUGGESTIONS: [&str; 4] = ["nearest", "furthest", "random", "arbitrary"];
+
+/// THE GAMEMODE VALUE WALK'S OWN LIST (javap `EntitySelectorOptions
+/// lambda$bootStrap$29` — the `GameType.values()` iteration the walk
+/// banks, the enum order the values() array wears, the
+/// `GameType.getName` lowercase ids the texts speak).
+const GAMEMODE_VALUE_SUGGESTIONS: [&str; 4] = ["survival", "creative", "adventure", "spectator"];
+
+/// THE OPTIONS' OWN VALUE LANE (javap `EntitySelectorParser
+/// .parseOptions` + `EntitySelectorOptions lambda$bootStrap$25/26/28/29`
+/// — the '=' the parse consumes, the SUGGEST_NOTHING the value
+/// position starts at, the modifier's own setSuggestions the walk
+/// installs; the ROLLBACK the throw law keeps — an invalid element
+/// the cursor rewinds to the element's own start, the suggestions'
+/// span the element text wears, the leading whitespace the
+/// skipWhitespace walk between '=' and the value never counts; the
+/// SORT walk the `SharedSuggestionProvider.suggest` fold answers
+/// (the matchesSubStr filter, no '!' arms — the SetOnceOptionState
+/// single element), the GAMEMODE walk the `$29` state machine keeps:
+/// the empty element BOTH arms suggests (`!name` + name), the typed
+/// '!' the positive arm clears (the substring the walk spends), the
+/// `name_lc.startsWith(remaining)` filter the String.startsWith law
+/// speaks, the trailing whitespace the remaining rides (the
+/// rollback cursor the element start names); the VALID complete
+/// element the parseOptions continuation answers — the post-value
+/// state the ',' + ']' punctuation suggests (suggestOptionsNextOrClose);
+/// the unknown keys / the internal-whitespace tails the honest ask
+/// keeps).
+fn local_selector_value_suggestions(
+    tail: &str,
+    eq_idx: usize,
+    tail_start: usize,
+) -> ChatSuggestionSource {
+    // the key the readString walk banks (the whitespace the
+    // skipWhitespace between key and '=' never counts), the value
+    // region the '=' skip leaves
+    let key = tail[..eq_idx].trim();
+    let value_region = &tail[eq_idx + 1..];
+    // the parseOptions skipWhitespace law — the leading whitespace
+    // between '=' and the value the rollback cursor never covers
+    let element = value_region.trim_start_matches([' ', '\t']);
+    let ws_len = value_region.len() - element.len();
+    let elem_start = tail_start + eq_idx + 1 + ws_len;
+    // the trailing-trimmed element the post-value membership asks
+    // (the byName/switch lookups the case-sensitive law keeps); an
+    // INTERNAL whitespace the parse's own ERROR_EXPECTED_END_OF_OPTIONS
+    // lane wears — the honest ask
+    let trimmed = element.trim_end_matches([' ', '\t']);
+    if trimmed.contains([' ', '\t']) {
+        return ChatSuggestionSource::AskServer;
+    }
+    let punctuation = || -> Vec<mc_protocol::play::CommandSuggestionsMatch> {
+        vec![
+            mc_protocol::play::CommandSuggestionsMatch {
+                text: ",".to_string(),
+                tooltip: None,
+            },
+            mc_protocol::play::CommandSuggestionsMatch {
+                text: "]".to_string(),
+                tooltip: None,
+            },
+        ]
+    };
+    let complete = match key {
+        // the sort modifier's switch (the case-sensitive walk)
+        "sort" => SORT_VALUE_SUGGESTIONS.contains(&trimmed),
+        // the gamemode modifier's byName (the '!' the
+        // shouldInvertValue consumes first)
+        "gamemode" => {
+            let value = trimmed.strip_prefix('!').unwrap_or(trimmed);
+            GAMEMODE_VALUE_SUGGESTIONS.contains(&value)
+        }
+        // the unspoken value walks the honest ask keeps (name / type /
+        // team / tag / the numeric parses — the next rounds' lanes)
+        _ => return ChatSuggestionSource::AskServer,
+    };
+    if complete {
+        // the post-value state — the parseOptions continuation the
+        // successful value parse installs (suggestOptionsNextOrClose:
+        // the ',' separator + the ']' close, the span the parse
+        // cursor's own end names)
+        return ChatSuggestionSource::Local {
+            start: (tail_start + tail.len()) as i32,
+            length: 0,
+            matches: punctuation(),
+        };
+    }
+    let mut matches: Vec<mc_protocol::play::CommandSuggestionsMatch> = Vec::new();
+    if key == "sort" {
+        // the SharedSuggestionProvider.suggest fold (the
+        // matchesSubStr law — the remaining the rollback cursor
+        // carries INCLUDING any trailing whitespace, the lowercase
+        // fold both sides wear)
+        let remaining_lc = element.to_lowercase();
+        for value in SORT_VALUE_SUGGESTIONS {
+            if suggestion_matches_sub_str(&remaining_lc, &value.to_lowercase()) {
+                matches.push(mc_protocol::play::CommandSuggestionsMatch {
+                    text: value.to_string(),
+                    tooltip: None,
+                });
+            }
+        }
+    } else {
+        // the gamemode walk's own arm law: the empty element BOTH
+        // arms wears, the typed '!' the positive arm clears (the
+        // substring the walk spends), the plain element the negative
+        // arm clears; the filter the String.startsWith law speaks
+        let remaining_lc = element.to_lowercase();
+        let (neg_arm, plain_arm, remaining) = if remaining_lc.is_empty() {
+            (true, true, "")
+        } else if let Some(stripped) = remaining_lc.strip_prefix('!') {
+            (true, false, stripped)
+        } else {
+            (false, true, remaining_lc.as_str())
+        };
+        for value in GAMEMODE_VALUE_SUGGESTIONS {
+            if value.starts_with(remaining) {
+                if neg_arm {
+                    matches.push(mc_protocol::play::CommandSuggestionsMatch {
+                        text: format!("!{value}"),
+                        tooltip: None,
+                    });
+                }
+                if plain_arm {
+                    matches.push(mc_protocol::play::CommandSuggestionsMatch {
+                        text: value.to_string(),
+                        tooltip: None,
+                    });
+                }
+            }
+        }
+    }
+    // the Suggestions.merge sort (the compareToIgnoreCase law)
+    matches.sort_by(|a, b| a.text.to_lowercase().cmp(&b.text.to_lowercase()));
+    ChatSuggestionSource::Local {
+        start: elem_start as i32,
+        length: (value_region.len() - ws_len) as i32,
         matches,
     }
 }
@@ -1624,8 +1776,9 @@ pub fn local_command_suggestions(
 /// re-pick UX the cycle law speaks — '@a' typed still lists all
 /// six). The '[' the options walk opens — the option-NAME positions
 /// (the '[' entry, the ',' continuations) the `suggestNames` lane
-/// answers locally, the '{'/quoted/'=' value states the honest ask
-/// keeps (the house speaks no value providers). The no-selector
+/// answers locally, the sort/gamemode VALUE walks the 26.2 modifiers
+/// install the value lane speaks, the '{'/quoted/unspoken-key value
+/// states the honest ask keeps. The no-selector
 /// belief (the 26.2 atom-permission lane the house never reads — the
 /// server's own refusal the honest error) the `allow_selectors` gate
 /// keeps: false the '@' partial the empty local list answers (the
@@ -22973,6 +23126,222 @@ mod tests {
         assert_eq!(
             app.chat_input, "/kill @a[sort=",
             "the apply the '=' suffix wears"
+        );
+    }
+
+    /// THE OPTIONS' OWN VALUE LANE (javap `EntitySelectorOptions
+    /// lambda$bootStrap$25/26/28/29` + `EntitySelectorParser
+    /// .parseOptions` — the sort walk the SharedSuggestionProvider
+    /// .suggest fold answers, the gamemode walk the `$29` arm law
+    /// keeps, the valid complete element the post-value ',' + ']'
+    /// punctuation answers, the unspoken keys the honest ask keeps,
+    /// no tooltip the plain suggest texts wear).
+    #[test]
+    fn the_selector_options_the_value_lane_speaks() {
+        use crate::screens::ChatSuggestionSource as Src;
+        let tree = test_provider_tree();
+        // THE SORT WALK (the empty element the four literals answer —
+        // the merge sort the compareToIgnoreCase law orders, the span
+        // the element's own tail names)
+        let Src::Local { start, length, matches } =
+            local_command_suggestions(&tree, "/kill @a[sort=", &[], true)
+        else {
+            panic!("/kill @a[sort= the value lane answers");
+        };
+        assert_eq!((start, length), (14, 0), "the after-'=' element span");
+        assert_eq!(
+            matches.iter().map(|m| m.text.as_str()).collect::<Vec<_>>(),
+            vec!["arbitrary", "furthest", "nearest", "random"],
+            "the four sorts the merge sort orders"
+        );
+        assert!(
+            matches.iter().all(|m| m.tooltip.is_none()),
+            "the plain suggest no tooltip wears"
+        );
+        // THE PREFIX FOLD (the matchesSubStr law — 'ne' the nearest
+        // answers, the span the typed element wears)
+        let Src::Local { start, length, matches } =
+            local_command_suggestions(&tree, "/kill @a[sort=ne", &[], true)
+        else {
+            panic!("/kill @a[sort=ne the fold answers");
+        };
+        assert_eq!((start, length), (14, 2), "the typed element's span");
+        assert_eq!(
+            matches.iter().map(|m| m.text.as_str()).collect::<Vec<_>>(),
+            vec!["nearest"],
+            "the 'ne' prefix the nearest answers"
+        );
+        // THE CASE-INSENSITIVE FOLD (the lowercase fold both sides
+        // wear — 'NE' the nearest answers, the unknown value the
+        // case-sensitive membership never completes)
+        let Src::Local { matches, .. } =
+            local_command_suggestions(&tree, "/kill @a[sort=NE", &[], true)
+        else {
+            panic!("/kill @a[sort=NE the fold answers");
+        };
+        assert_eq!(
+            matches.iter().map(|m| m.text.as_str()).collect::<Vec<_>>(),
+            vec!["nearest"],
+            "the case fold the nearest answers"
+        );
+        // THE UNKNOWN ELEMENT (the throw the rollback keeps, the walk
+        // the empty merge answers — no round-trip the silence spends)
+        let Src::Local { start, length, matches } =
+            local_command_suggestions(&tree, "/kill @a[sort=xyz", &[], true)
+        else {
+            panic!("/kill @a[sort=xyz the empty lane answers");
+        };
+        assert_eq!((start, length), (14, 3));
+        assert!(matches.is_empty(), "the unknown element the silence keeps");
+        // THE VALID COMPLETE ELEMENT (the parseOptions continuation
+        // the post-value state installs — the ',' separator + the ']'
+        // close, the span the input's own end names)
+        let Src::Local { start, length, matches } =
+            local_command_suggestions(&tree, "/kill @a[sort=nearest", &[], true)
+        else {
+            panic!("/kill @a[sort=nearest the post-value state answers");
+        };
+        assert_eq!((start, length), (21, 0), "the parse cursor's own end");
+        assert_eq!(
+            matches.iter().map(|m| m.text.as_str()).collect::<Vec<_>>(),
+            vec![",", "]"],
+            "the punctuation the post-value state suggests"
+        );
+        // THE GAMEMODE WALK (the empty element BOTH arms wears — the
+        // '!' forms the negative arm rides, the enum the GameType
+        // values() banks, the merge sort the compareToIgnoreCase law
+        // orders the '!' forms first)
+        let Src::Local { start, length, matches } =
+            local_command_suggestions(&tree, "/kill @a[gamemode=", &[], true)
+        else {
+            panic!("/kill @a[gamemode= the value lane answers");
+        };
+        assert_eq!((start, length), (18, 0), "the after-'=' element span");
+        assert_eq!(
+            matches.iter().map(|m| m.text.as_str()).collect::<Vec<_>>(),
+            vec![
+                "!adventure",
+                "!creative",
+                "!spectator",
+                "!survival",
+                "adventure",
+                "creative",
+                "spectator",
+                "survival",
+            ],
+            "the both-arms walk the eight answers wear"
+        );
+        // THE TYPED '!' (the positive arm the strip clears — the
+        // negative arm only, the span the '!' includes)
+        let Src::Local { start, length, matches } =
+            local_command_suggestions(&tree, "/kill @a[gamemode=!", &[], true)
+        else {
+            panic!("/kill @a[gamemode=! the negative arm answers");
+        };
+        assert_eq!((start, length), (18, 1), "the '!' the span includes");
+        assert_eq!(
+            matches.iter().map(|m| m.text.as_str()).collect::<Vec<_>>(),
+            vec!["!adventure", "!creative", "!spectator", "!survival"],
+            "the negative arm the four answers wear"
+        );
+        // THE '!'-PREFIXED FOLD (the substring the walk spends — 'cr'
+        // the !creative answers)
+        let Src::Local { start, length, matches } =
+            local_command_suggestions(&tree, "/kill @a[gamemode=!cr", &[], true)
+        else {
+            panic!("/kill @a[gamemode=!cr the fold answers");
+        };
+        assert_eq!((start, length), (18, 3));
+        assert_eq!(
+            matches.iter().map(|m| m.text.as_str()).collect::<Vec<_>>(),
+            vec!["!creative"],
+            "the '!cr' prefix the !creative answers"
+        );
+        // THE PLAIN FOLD (no '!' typed — the positive arm only)
+        let Src::Local { start, length, matches } =
+            local_command_suggestions(&tree, "/kill @a[gamemode=cr", &[], true)
+        else {
+            panic!("/kill @a[gamemode=cr the fold answers");
+        };
+        assert_eq!((start, length), (18, 2));
+        assert_eq!(
+            matches.iter().map(|m| m.text.as_str()).collect::<Vec<_>>(),
+            vec!["creative"],
+            "the plain arm the creative answers"
+        );
+        // THE UNKNOWN GAMEMODE (the byName null the rollback keeps —
+        // the empty merge the silence answers)
+        let Src::Local { matches, .. } =
+            local_command_suggestions(&tree, "/kill @a[gamemode=xyz", &[], true)
+        else {
+            panic!("/kill @a[gamemode=xyz the empty lane answers");
+        };
+        assert!(matches.is_empty(), "the unknown mode the silence keeps");
+        // THE VALID COMPLETE GAMEMODE (the post-value state the parse
+        // continuation installs)
+        let Src::Local { start, length, matches } =
+            local_command_suggestions(&tree, "/kill @a[gamemode=creative", &[], true)
+        else {
+            panic!("/kill @a[gamemode=creative the post-value state answers");
+        };
+        assert_eq!((start, length), (26, 0));
+        assert_eq!(
+            matches.iter().map(|m| m.text.as_str()).collect::<Vec<_>>(),
+            vec![",", "]"],
+            "the punctuation the successful value wears"
+        );
+        // THE UNSPOKEN KEYS (the name / limit value walks the honest
+        // ask keeps — the next rounds' lanes)
+        assert_eq!(
+            local_command_suggestions(&tree, "/kill @a[name=Steve", &[], true),
+            Src::AskServer,
+            "the name value walk the honest ask keeps"
+        );
+        assert_eq!(
+            local_command_suggestions(&tree, "/kill @a[limit=5", &[], true),
+            Src::AskServer,
+            "the limit value walk the honest ask keeps"
+        );
+        assert_eq!(
+            local_command_suggestions(&tree, "/kill @a[so=", &[], true),
+            Src::AskServer,
+            "the unknown key the honest ask keeps"
+        );
+        // THE INTERNAL WHITESPACE (the parse's own
+        // ERROR_EXPECTED_END_OF_OPTIONS lane — the honest ask)
+        assert_eq!(
+            local_command_suggestions(&tree, "/kill @a[sort=nearest x", &[], true),
+            Src::AskServer,
+            "the mid-tail garbage the honest ask keeps"
+        );
+        // THE COMMA AFTER THE VALUE (the key state the parseOptions
+        // ',' consumes — the 21 keys re-answer, the value lane never)
+        let Src::Local { start, length, matches } =
+            local_command_suggestions(&tree, "/kill @a[gamemode=creative,", &[], true)
+        else {
+            panic!("/kill @a[gamemode=creative, the key state answers");
+        };
+        assert_eq!((start, length), (27, 0), "the fresh tail's own span");
+        assert_eq!(matches.len(), 21, "the key state the 21 keys re-answer");
+        // THE TAB APPLY (the selected '!creative' the replace lands —
+        // the '!' the text carries, the span the input wears)
+        let mut app = App::new(3);
+        app.enter_world();
+        app.on_command_tree(test_provider_tree());
+        let (tx, _rx) = std::sync::mpsc::channel::<crate::world_view::ContainerCommand>();
+        app.attach_live_clicks(tx);
+        app.on_chat_key();
+        for c in "/kill @a[gamemode=!cr".chars() {
+            app.on_chat_char(c);
+        }
+        assert!(
+            _rx.try_recv().is_err(),
+            "the value lane no request spends"
+        );
+        app.on_chat_tab_key();
+        assert_eq!(
+            app.chat_input, "/kill @a[gamemode=!creative",
+            "the apply the '!'-text lands"
         );
     }
 
