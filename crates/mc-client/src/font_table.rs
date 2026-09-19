@@ -146,6 +146,66 @@ pub fn glyph(ch: char) -> Option<&'static GlyphDef> {
         .map(|i| &table().glyphs[i])
 }
 
+/// THE UNBOLDED ADVANCE (javap `GlyphInfo.getAdvance(false)` the port's
+/// integer law speaks: the space the provider's explicit advance keeps,
+/// the bitmap glyph the width+1 wear — the same law the draw/width
+/// lanes already walk).
+pub fn glyph_advance(d: &GlyphDef) -> i32 {
+    if d.space_advance != 0 {
+        d.space_advance as i32
+    } else {
+        d.gw as i32 + 1
+    }
+}
+
+/// THE MISSING GLYPH'S OWN ADVANCE (javap `FontSet$1.info` =
+/// `SpecialGlyphs.MISSING` — the 5x8 image the `getWidth() + 1 = 6`
+/// advance wears (the raw walk: `getWidth(); iconst_1; iadd; i2f`),
+/// the `createGlyph` the null render keeps — the INVISIBLE missing
+/// glyph the 26.2 clinit banks). The obfuscated walk's width class
+/// when the ORIGINAL codepoint the table misses: vanilla still picks
+/// a random glyph from the missing glyph's own class.
+pub const MISSING_GLYPH_ADVANCE: i32 = 6;
+
+/// THE WIDTH-CLASS MAP (javap `lambda$selectProviders$0` — every
+/// codepoint the active providers answer joins `glyphsByWidth[Mth.ceil
+/// (info.getAdvance(false))]`, the list the bake order keeps; the
+/// port's codepoint-sorted table the same membership wears — integer
+/// advances make ceil the identity). THE OBFUSCATED WALK'S OWN POOL:
+/// the random pick the class list draws.
+fn glyphs_by_width_map() -> std::collections::HashMap<i32, Vec<u32>> {
+    let mut map: std::collections::HashMap<i32, Vec<u32>> = std::collections::HashMap::new();
+    for d in &table().glyphs {
+        map.entry(glyph_advance(d)).or_default().push(d.ch);
+    }
+    map
+}
+
+/// The loaded map (the OnceLock the load-once law keeps — the font
+/// table's own shape the static borrow answers).
+pub fn glyphs_by_width() -> &'static std::collections::HashMap<i32, Vec<u32>> {
+    static MAP: std::sync::OnceLock<std::collections::HashMap<i32, Vec<u32>>> =
+        std::sync::OnceLock::new();
+    MAP.get_or_init(glyphs_by_width_map)
+}
+
+/// THE OBFUSCATED PICK (javap `FontSet.getRandomGlyph(RandomSource, I)`
+/// — the class list the `random.nextInt(loc3.size())` draw walks, the
+/// `getInt` the codepoint answers, the `getGlyph(cp).nonFishy().get()`
+/// re-resolution the pick wears; the EMPTY class the missing glyph
+/// returns — the port's None the degraded empty-table boot keeps; the
+/// nonFishy filter the default font's plain bitmap set the honest
+/// no-op keeps — every glyph's bold advance the +1 offset wears, no
+/// fishy advance the bake sees). `roll` the uniform draw — the caller
+/// folds (seed, position) into it, the pure derivation the shadow
+/// pass's SAME glyphs answer (the vanilla preparation's ONE pick the
+/// shadow copy renders).
+pub fn obfuscated_pick(class: i32, roll: u64) -> Option<&'static GlyphDef> {
+    let list = glyphs_by_width().get(&class)?;
+    let cp = list[(roll % list.len() as u64) as usize];
+    glyph(char::from_u32(cp)?)
+}
+
 /// The referenced font textures, in provider order (the short paths the
 /// renderer's cache walk joins — `font/ascii.png` under the runtime root).
 pub fn font_textures() -> &'static [String] {
@@ -311,5 +371,72 @@ mod tests {
             "'ω' (the nonlatin_european provider's row, codepoint 969)"
         );
         assert_eq!(skipped_providers(), 0, "ttf/legacy providers the 26.2 chain skips none of");
+    }
+
+    /// THE WIDTH-CLASS MAP'S OWN VERDICTS (javap `lambda$selectProviders$0`
+    /// + `getRandomGlyph` — the membership the ceil-advance class keeps,
+    /// the pick the uniform draw answers, the determinism the (class,
+    /// roll) purity speaks). Cache-present boots only (the empty-table
+    /// boot the None arm walks — the degraded mode the draw's fallback
+    /// answers).
+    #[test]
+    fn the_width_classes_the_obfuscated_pool_keeps() {
+        if !real() {
+            return;
+        }
+        // THE ADVANCE LAW (the same walk the draw lane speaks — the
+        // space the explicit 4 keeps, the bitmap the width+1 wears)
+        assert_eq!(glyph_advance(glyph(' ').unwrap()), 4, "space");
+        assert_eq!(glyph_advance(glyph('A').unwrap()), 6, "'A' (gw 5)");
+        // THE MEMBERSHIP LAW (every codepoint the table carries its
+        // class list holds, the list the codepoint order keeps)
+        let map = glyphs_by_width();
+        let six = map.get(&6).unwrap();
+        assert!(!six.is_empty());
+        assert!(six.contains(&(65)), "'A' the class-6 pool joins");
+        assert!(map.get(&4).unwrap().contains(&(32)), "space the class-4 pool joins");
+        // THE CLASS PINS THE ADVANCE (integer advances: every member of
+        // class c the advance c wears — the ceil the identity walks)
+        for d in &table().glyphs {
+            assert_eq!(
+                map.get(&glyph_advance(d)).unwrap().contains(&d.ch),
+                true,
+                "cp {} its own class {} joins",
+                d.ch,
+                glyph_advance(d)
+            );
+        }
+        // THE MISSING-GLYPH CLASS (SpecialGlyphs.MISSING's 6 — the pool
+        // the table's own class-6 glyphs answer, the pick never starves)
+        assert!(
+            map.contains_key(&MISSING_GLYPH_ADVANCE),
+            "the missing glyph's class the real table keeps"
+        );
+        // THE PICK'S OWN LAWS (the determinism the same roll speaks, the
+        // coverage the rolls' walk answers, the member the class keeps)
+        for class in [4, 6, 7] {
+            let Some(first) = obfuscated_pick(class, 0) else {
+                continue; // the class the real table may honestly skip
+            };
+            assert_eq!(
+                obfuscated_pick(class, 0).map(glyph_advance),
+                Some(glyph_advance(first)),
+                "the same roll the same pick wears"
+            );
+            assert_eq!(
+                glyph_advance(first),
+                class,
+                "the pick the class's own advance wears"
+            );
+            let mut distinct = std::collections::HashSet::new();
+            for roll in 0..256u64 {
+                if let Some(d) = obfuscated_pick(class, roll) {
+                    distinct.insert(d.ch);
+                }
+            }
+            assert!(distinct.len() >= 2, "class {class} the rolls cover: {distinct:?}");
+        }
+        // THE EMPTY CLASS (the honest None the degraded boot keeps)
+        assert_eq!(obfuscated_pick(9999, 0), None, "the starved class the None keeps");
     }
 }

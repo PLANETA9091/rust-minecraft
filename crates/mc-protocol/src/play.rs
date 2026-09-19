@@ -6652,8 +6652,9 @@ fn chat_format_code(color: &str) -> Option<Option<char>> {
 
 /// THE RESOLVED STYLE THE WALK CARRIES (the color the §-code speaks,
 /// the flags the effect codes answer — the inheritance the component
-/// chain walks, the obfuscated the chain keeps but the emission
-/// honestly skips: the random-glyph walk the draw lane owes).
+/// chain walks, the obfuscated the chain keeps AND the emission now
+/// carries: the draw lane's random-glyph walk the §k answer keeps —
+/// the pick the 26.2 getRandomGlyph bytecode speaks).
 #[derive(Clone, Copy, PartialEq, Default)]
 struct ChatStyleState {
     color: Option<char>,
@@ -6661,7 +6662,6 @@ struct ChatStyleState {
     italic: bool,
     underline: bool,
     strike: bool,
-    #[allow(dead_code)] // the chain's own field — the emission skips it
     obfuscated: bool,
 }
 
@@ -6678,6 +6678,7 @@ fn emit_chat_state(target: ChatStyleState, cur: &mut ChatStyleState, out: &mut S
         || (cur.italic && !target.italic)
         || (cur.underline && !target.underline)
         || (cur.strike && !target.strike)
+        || (cur.obfuscated && !target.obfuscated)
     {
         out.push('§');
         out.push('r');
@@ -6697,6 +6698,11 @@ fn emit_chat_state(target: ChatStyleState, cur: &mut ChatStyleState, out: &mut S
         cur.italic = false;
         cur.underline = false;
         cur.strike = false;
+        cur.obfuscated = false;
+    }
+    if target.obfuscated && !cur.obfuscated {
+        out.push_str("\u{a7}k");
+        cur.obfuscated = true;
     }
     if target.bold && !cur.bold {
         out.push_str("\u{a7}l");
@@ -6814,8 +6820,9 @@ fn flatten_component_colored_walk(
 /// legacy alphabet's only eraser), the color switch the flag-clear
 /// law wears (the fresh style the applyLegacyFormat's own
 /// `Boolean.valueOf(0)` walk builds — the flags the re-emission
-/// restores), the obfuscated the chain keeps but the emission
-/// honestly skips (the random-glyph walk the draw lane owes). The
+/// restores), the obfuscated the `§k` code speaks (the draw lane's
+/// random-glyph walk the pick answers — the 26.2 `getRandomGlyph`
+/// class law the font table's width-class pool wears). The
 /// bare TAG_String IS the text (the codes inside it the draw's own
 /// inline walk answers); the LIST root the component-array form the
 /// sibling walk renders. The sidebar/tab lanes keep the monochrome
@@ -14929,7 +14936,7 @@ mod tests {
     /// PARENT's flag wears, the flag-loss the §r the only eraser answers,
     /// the color switch the flag-clear law wears — the fresh style the
     /// `Boolean.valueOf(0)` walk builds, the flags the re-emission
-    /// restores, the obfuscated the honest skip keeps).
+    /// restores, the obfuscated the §k code the draw's pick answers).
     #[test]
     fn the_chat_styles_the_flags_the_legacy_alphabet_speaks() {
         // THE BOLD (the flag the §l code speaks)
@@ -14999,13 +15006,89 @@ mod tests {
             ("italic".to_string(), Nbt::Byte(1)),
         ]);
         assert_eq!(flatten_component_colored(&trio), "\u{a7}m\u{a7}n\u{a7}ox");
-        // THE OBFUSCATED SKIP (the chain the field keeps — no code the
-        // honest emission speaks, the random-glyph walk the draw owes)
+        // THE OBFUSCATED CARRY (the §k code the field's flag speaks —
+        // the draw lane's random-glyph pick the 26.2 getRandomGlyph law
+        // answers; the enum order the k FIRST the k/l/m/n/o walk keeps)
         let obf = Nbt::Compound(vec![
             ("text".to_string(), Nbt::String("A".to_string())),
             ("obfuscated".to_string(), Nbt::Byte(1)),
         ]);
-        assert_eq!(flatten_component_colored(&obf), "A");
+        assert_eq!(flatten_component_colored(&obf), "\u{a7}kA");
+        // THE OBF+TRIO ORDER (the four effect fields the enum-order
+        // codes speak — k before l/m/n/o)
+        let obf_trio = Nbt::Compound(vec![
+            ("text".to_string(), Nbt::String("x".to_string())),
+            ("obfuscated".to_string(), Nbt::Byte(1)),
+            ("strikethrough".to_string(), Nbt::Byte(1)),
+            ("underlined".to_string(), Nbt::Byte(1)),
+            ("italic".to_string(), Nbt::Byte(1)),
+        ]);
+        assert_eq!(
+            flatten_component_colored(&obf_trio),
+            "\u{a7}k\u{a7}m\u{a7}n\u{a7}ox"
+        );
+        // THE INHERIT (the child the obfuscated field omits the PARENT's
+        // flag wears — one §k the whole subtree speaks)
+        let obf_inherit = Nbt::Compound(vec![
+            ("text".to_string(), Nbt::String("a".to_string())),
+            ("obfuscated".to_string(), Nbt::Byte(1)),
+            (
+                "extra".to_string(),
+                Nbt::List(vec![text_component("b")]),
+            ),
+        ]);
+        assert_eq!(flatten_component_colored(&obf_inherit), "\u{a7}kab");
+        // THE OBF FLAG-LOSS (the child's explicit false — the §r the
+        // only eraser answers, the reset the child's own state carries)
+        let obf_loss = Nbt::Compound(vec![
+            ("text".to_string(), Nbt::String("a".to_string())),
+            ("obfuscated".to_string(), Nbt::Byte(1)),
+            (
+                "extra".to_string(),
+                Nbt::List(vec![Nbt::Compound(vec![
+                    ("text".to_string(), Nbt::String("b".to_string())),
+                    ("obfuscated".to_string(), Nbt::Byte(0)),
+                ])]),
+            ),
+        ]);
+        assert_eq!(flatten_component_colored(&obf_loss), "\u{a7}ka\u{a7}rb");
+        // THE COLOR-CLEARS-OBF INTERACTION (the color switch the fresh
+        // style wears — the obfuscated flag the five valueOf(0) kill;
+        // the child the field omits the PARENT's flag INHERITS, the
+        // re-emission the §k the fresh clear killed restores)
+        let obf_color = Nbt::Compound(vec![
+            ("text".to_string(), Nbt::String("a".to_string())),
+            ("obfuscated".to_string(), Nbt::Byte(1)),
+            (
+                "extra".to_string(),
+                Nbt::List(vec![Nbt::Compound(vec![
+                    ("text".to_string(), Nbt::String("b".to_string())),
+                    ("color".to_string(), Nbt::String("blue".to_string())),
+                ])]),
+            ),
+        ]);
+        assert_eq!(
+            flatten_component_colored(&obf_color),
+            "\u{a7}ka\u{a7}9\u{a7}kb"
+        );
+        // THE OBF FLAG-LOSS + COLOR (the child's EXPLICIT false the §r
+        // eraser answers, the color the re-walk emits)
+        let obf_loss_color = Nbt::Compound(vec![
+            ("text".to_string(), Nbt::String("a".to_string())),
+            ("obfuscated".to_string(), Nbt::Byte(1)),
+            (
+                "extra".to_string(),
+                Nbt::List(vec![Nbt::Compound(vec![
+                    ("text".to_string(), Nbt::String("b".to_string())),
+                    ("color".to_string(), Nbt::String("blue".to_string())),
+                    ("obfuscated".to_string(), Nbt::Byte(0)),
+                ])]),
+            ),
+        ]);
+        assert_eq!(
+            flatten_component_colored(&obf_loss_color),
+            "\u{a7}ka\u{a7}r\u{a7}9b"
+        );
         // THE STRING BOOLEAN (the JSON-ish form the field also wears)
         let strflag = Nbt::Compound(vec![
             ("text".to_string(), Nbt::String("A".to_string())),

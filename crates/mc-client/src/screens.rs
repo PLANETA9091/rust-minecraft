@@ -1294,11 +1294,15 @@ fn carry_code_state(state: crate::gui::StyleState, part: &str) -> crate::gui::St
 /// THE RE-OPEN'S OWN CODES (the active style the fresh line wears —
 /// the draw's own consumption order the emission keeps: the color
 /// FIRST (the clear the color switch kills), the flags AFTER (the
-/// accumulate the effect codes speak); the base state no code wears).
+/// accumulate the effect codes speak, the ChatFormatting enum order
+/// k/l/m/n/o the emission walks); the base state no code wears).
 fn write_reopen_codes(st: &crate::gui::StyleState, line: &mut String) {
     if let Some(c) = st.color {
         line.push('\u{a7}');
         line.push(c);
+    }
+    if st.obfuscated {
+        line.push_str("\u{a7}k");
     }
     if st.bold {
         line.push_str("\u{a7}l");
@@ -15302,7 +15306,7 @@ impl App {
 
     /// Render the current screen.
     pub fn render(&mut self, fb: &mut crate::raster::Framebuf, a: &mut GuiAssets) {
-        let mut g = Gui::new(fb, Gui::auto_scale(fb.w, fb.h));
+        let mut g = Gui::new(fb, Gui::auto_scale(fb.w, fb.h)).with_scramble(self.frame);
         let (w, h) = (g.w(), g.h());
         self.buttons.clear();
         match self.screen {
@@ -15319,7 +15323,7 @@ impl App {
                 // player's HUD sleeps and the DeathScreen renders
                 // instead — the world stays beneath the red gradient.
                 self.render_world_3d(fb, a);
-                let mut g = Gui::new(fb, Gui::auto_scale(fb.w, fb.h));
+                let mut g = Gui::new(fb, Gui::auto_scale(fb.w, fb.h)).with_scramble(self.frame);
                 if self.dead {
                     let (gw, gh) = (g.w(), g.h());
                     self.render_death(&mut g, a, gw, gh);
@@ -15344,7 +15348,7 @@ impl App {
                 // over the hotbar's ground): world underneath, dimmed,
                 // then the generic_9x3 chrome — the pause flow's shape.
                 self.render_world_3d(fb, a);
-                let mut g = Gui::new(fb, Gui::auto_scale(fb.w, fb.h));
+                let mut g = Gui::new(fb, Gui::auto_scale(fb.w, fb.h)).with_scramble(self.frame);
                 let (gw, gh) = (g.w(), g.h());
                 self.render_chest(&mut g, a, gw, gh);
             }
@@ -15360,14 +15364,14 @@ impl App {
                 let gs = Gui::auto_scale(fb.w, fb.h);
                 let (gw, gh) = (fb.w / gs as usize, fb.h / gs as usize);
                 {
-                    let mut g = Gui::new(fb, gs);
+                    let mut g = Gui::new(fb, gs).with_scramble(self.frame);
                     self.render_inventory_base(&mut g, a, gw as i32, gh as i32);
                 }
                 // the mannequin pass (the frame buffer's own draw — the
                 // vanilla's offscreen PiP texture blitted between the
                 // background and the slot pass)
                 self.render_inventory_mannequin(fb, gs as f32);
-                let mut g = Gui::new(fb, gs);
+                let mut g = Gui::new(fb, gs).with_scramble(self.frame);
                 self.render_inventory_slots(&mut g, a);
             }
             ScreenKind::Crafting => {
@@ -15377,7 +15381,7 @@ impl App {
                 // carried follow — no mannequin (the CraftingScreen the
                 // vanilla PiP never renders).
                 self.render_world_3d(fb, a);
-                let mut g = Gui::new(fb, Gui::auto_scale(fb.w, fb.h));
+                let mut g = Gui::new(fb, Gui::auto_scale(fb.w, fb.h)).with_scramble(self.frame);
                 let (gw, gh) = (g.w(), g.h());
                 self.render_crafting_table(&mut g, a, gw, gh);
             }
@@ -21856,6 +21860,131 @@ mod tests {
         assert!(top_diff > 10, "the italic top rows the shear shifts: {top_diff}");
         let bottom_diff = diff_count(&italic, &plain3, 2, y + 3, 200, 4);
         assert_eq!(bottom_diff, 0, "the italic bottom rows the upright keeps");
+    }
+
+    /// THE OBFUSCATED WALK'S OWN VERDICTS (javap `Font.getGlyph` +
+    /// `FontSet.getRandomGlyph` — the 26.2 random-glyph law the draw
+    /// answers: the pick the SAME-width class draws, the (seed,
+    /// position) fold the frame re-rolls, the shadow the SAME glyphs'
+    /// dimmed copy wears (the vanilla preparation's ONE pick), the
+    /// color switch the obfuscated flag kills, the wrap the §k
+    /// re-opens).
+    #[test]
+    fn the_obfuscated_walk_the_random_glyphs_speak() {
+        // THE WIDTH'S OWN PIN (the class the advance never changes —
+        // integer advances make the ceil the identity, the pick the
+        // SAME advance class draws)
+        assert_eq!(
+            crate::gui::font_text_width("\u{a7}kAA"),
+            crate::gui::font_text_width("AA")
+        );
+        // THE WRAP'S OWN RE-OPEN (the wrapped line the §k carries —
+        // the style the line break never strips)
+        let obfed = "\u{a7}k".to_string()
+            + &"the quick brown fox jumps over the lazy dog".repeat(3);
+        let wrapped = wrap_chat_text(&obfed, 320);
+        assert!(wrapped.len() > 1, "the obfuscated line the wrap splits");
+        for seg in &wrapped[1..] {
+            assert!(
+                seg.starts_with("\u{a7}k"),
+                "the wrapped line the §k re-opens: {seg}"
+            );
+        }
+
+        // THE PIXELS' OWN VERDICTS (the harness the style tests keep)
+        let root = ["assets-cache/jar", "../assets-cache/jar", "../../assets-cache/jar"]
+            .iter()
+            .map(std::path::Path::new)
+            .find(|p| p.join("gui/container/inventory.png").exists());
+        let Some(root) = root else { return };
+        let mut assets = GuiAssets::open(&root);
+        fn draw(
+            assets: &mut GuiAssets,
+            s: &str,
+            seed: u64,
+            shadow: bool,
+        ) -> crate::raster::Framebuf {
+            let mut fb = crate::raster::Framebuf::new(200, 40);
+            let mut g = Gui::new(&mut fb, 1).with_scramble(seed);
+            g.text_faded(assets, 5, 5, s, [1.0, 1.0, 1.0], 1.0, shadow);
+            fb
+        }
+        // THE DETERMINISM LAW (the same seed the same glyphs paint —
+        // the pure (seed, position) fold, never a leaked stream)
+        let a = draw(&mut assets, "\u{a7}kAAAAA", 7, false);
+        let b = draw(&mut assets, "\u{a7}kAAAAA", 7, false);
+        assert_eq!(a.color, b.color, "the same seed the same glyphs wear");
+        // THE SCRAMBLE + ADVANCE LAWS (the seeds the picks re-roll —
+        // the vanilla shared stream the frame counter answers; the
+        // end-x the class pins — the integer advance the pick never
+        // changes)
+        let mut end_xs = std::collections::HashSet::new();
+        let mut frames: Vec<Vec<u8>> = Vec::new();
+        for seed in 0..4u64 {
+            let mut fb = crate::raster::Framebuf::new(200, 40);
+            let mut g = Gui::new(&mut fb, 1).with_scramble(seed);
+            let end = g.text_faded(&mut assets, 5, 5, "\u{a7}kAAAAA", [1.0, 1.0, 1.0], 1.0, false);
+            end_xs.insert(end);
+            frames.push(fb.color.clone());
+        }
+        assert_eq!(end_xs.len(), 1, "the class the advance pins: {end_xs:?}");
+        let mut differing_pairs = 0usize;
+        for i in 0..frames.len() {
+            for j in (i + 1)..frames.len() {
+                let diff = (0..40).any(|y| {
+                    (0..200).any(|x| {
+                        let o = (y * 200 + x) * 3;
+                        frames[i][o..o + 3] != frames[j][o..o + 3]
+                    })
+                });
+                if diff {
+                    differing_pairs += 1;
+                }
+            }
+        }
+        assert!(
+            differing_pairs >= 3,
+            "the seeds the scramble re-rolls: {differing_pairs}"
+        );
+        // THE COLOR-CLEAR LAW (the §c the obfuscated flag kills — the
+        // fresh style's five valueOf(0) — the frame the plain colored
+        // line's own bytes keeps)
+        let cleared = draw(&mut assets, "\u{a7}k\u{a7}cA", 3, false);
+        let plain = draw(&mut assets, "\u{a7}cA", 3, false);
+        assert_eq!(cleared.color, plain.color, "the color switch the obf clears");
+        // THE SHADOW'S SAME-GLYPH LAW (the shadow pass the SAME picks
+        // walks — every shadow-only pixel the main glyph's (+1,+1) copy
+        // answers; a mismatched pick would paint shadows the main line
+        // never carries)
+        let shadowed = draw(&mut assets, "\u{a7}kAAAAA", 7, true);
+        let main = draw(&mut assets, "\u{a7}kAAAAA", 7, false);
+        let px = |fb: &crate::raster::Framebuf, x: usize, y: usize| -> [f32; 3] {
+            let o = (y * 200 + x) * 3;
+            [
+                fb.color[o] as f32 / 255.0,
+                fb.color[o + 1] as f32 / 255.0,
+                fb.color[o + 2] as f32 / 255.0,
+            ]
+        };
+        let ink = |p: [f32; 3]| p[0] > 0.02 || p[1] > 0.02 || p[2] > 0.02;
+        let mut shadow_only = 0usize;
+        for y in 1..40usize {
+            for x in 1..200usize {
+                let sh = px(&shadowed, x, y);
+                if ink(sh) && !ink(px(&main, x, y)) {
+                    shadow_only += 1;
+                    assert!(
+                        ink(px(&main, x - 1, y - 1)),
+                        "the shadow pixel ({x},{y}) the main glyph's copy answers"
+                    );
+                    assert!(sh[0] < 0.6, "the shadow the 0.25 dim keeps: {sh:?}");
+                }
+            }
+        }
+        assert!(
+            shadow_only > 10,
+            "the shadow pixels the same glyphs paint: {shadow_only}"
+        );
     }
 
     #[test]
@@ -39359,6 +39488,7 @@ cow_sound_variant: None,
             let mut g = Gui {
                 fb: &mut fb,
                 scale: 1,
+                scramble: 0,
             };
             let mut assets = crate::gui::GuiAssets::open(std::env::temp_dir());
             let mut app = App::new(3);

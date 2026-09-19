@@ -79,8 +79,8 @@ pub struct Sprite {
 /// Boolean.valueOf(0) x 5, ..)` — the flags the color switch CLEARS),
 /// an EFFECT code the flag accumulates (the one `Boolean.valueOf(1)` the
 /// matching arm carries, the others preserved), the `r` the `Style.EMPTY`
-/// full reset wears; the `k` the obfuscated arm banks — the random-glyph
-/// walk the later round owes, the code the state machine consumes).
+/// full reset wears; the `k` the obfuscated flag wears — the random-glyph
+/// walk the draw lane answers).
 #[derive(Clone, Copy, PartialEq, Default, Debug)]
 pub(crate) struct StyleState {
     /// The resolved color code (`None` = the entry base the draw call
@@ -90,6 +90,10 @@ pub(crate) struct StyleState {
     pub italic: bool,
     pub underline: bool,
     pub strike: bool,
+    /// THE OBFUSCATED WALK (javap `Style.applyLegacyFormat` — the `k`
+    /// arm the `Boolean.valueOf(1)` obfuscated flag wears, the fresh
+    /// style's five `valueOf(0)` the color switch also kills).
+    pub obfuscated: bool,
 }
 
 impl StyleState {
@@ -104,13 +108,14 @@ impl StyleState {
             self.italic = false;
             self.underline = false;
             self.strike = false;
+            self.obfuscated = false;
         } else {
             match ch {
                 'l' | 'L' => self.bold = true,
                 'm' | 'M' => self.strike = true,
                 'n' | 'N' => self.underline = true,
                 'o' | 'O' => self.italic = true,
-                'k' | 'K' => {} // obfuscated: consumed, the random-glyph walk owed
+                'k' | 'K' => self.obfuscated = true,
                 'r' | 'R' => *self = StyleState::default(),
                 _ => {} // the unknown code: consumed, the state untouched
             }
@@ -285,11 +290,26 @@ impl GuiAssets {
 pub struct Gui<'a> {
     pub fb: &'a mut Framebuf,
     pub scale: u32,
+    /// THE OBFUSCATED WALK'S OWN SEED (the vanilla `Font.random`'s
+    /// unseeded `RandomSource.create()` stream the frame re-rolls — the
+    /// App render site folds its frame counter in, the tests the 0
+    /// default keeps). Each obfuscated glyph position derives its pick
+    /// from (seed, position) — the PURE fold the shadow pass's SAME
+    /// glyphs answer (the vanilla preparation's ONE pick per position,
+    /// the shadow the same glyph's dimmed copy renders).
+    pub scramble: u64,
 }
 
 impl<'a> Gui<'a> {
     pub fn new(fb: &'a mut Framebuf, scale: u32) -> Self {
-        Self { fb, scale }
+        Self { fb, scale, scramble: 0 }
+    }
+
+    /// The frame seed (the App render site's own fold — the chainable
+    /// builder the existing call sites' shape keeps).
+    pub fn with_scramble(mut self, seed: u64) -> Self {
+        self.scramble = seed;
+        self
     }
 
     /// Vanilla auto GUI scale: the largest s (1..=4) where the framebuffer
@@ -622,6 +642,10 @@ impl<'a> Gui<'a> {
         let mut cx = x;
         let mut st = StyleState::default();
         let mut in_code = false;
+        // THE PICK STREAM'S OWN POSITION (the codepoints the accept walk
+        // sees — the § pairs the decomposer consumes before the walk, the
+        // counter the shadow pass's SAME sequence keeps)
+        let mut pos = 0u64;
         for ch in s.chars() {
             if in_code {
                 st.apply_code(ch);
@@ -632,11 +656,31 @@ impl<'a> Gui<'a> {
                 in_code = true;
                 continue;
             }
+            pos += 1;
+            // THE GLYPH RESOLUTION (javap `Font.getGlyph(I, Style)` — the
+            // obfuscated style the SAME-width random pick wears: the class
+            // the ORIGINAL glyph's ceil-advance keeps, the missing glyph
+            // the SpecialGlyphs.MISSING's 6 class answers, the pick the
+            // (seed, position) fold re-rolls per frame — the vanilla's
+            // shared unseeded stream the frame counter answers)
+            let orig = font_table::glyph(ch);
+            let picked = if st.obfuscated {
+                let class = match orig {
+                    Some(d) => font_table::glyph_advance(d),
+                    None => font_table::MISSING_GLYPH_ADVANCE,
+                };
+                let mut rng = crate::drops::Lcg::new(
+                    self.scramble ^ (pos as u64).wrapping_mul(0x9E37_79B9_7F4A_7C15),
+                );
+                font_table::obfuscated_pick(class, rng.next())
+            } else {
+                orig
+            };
             let color = match st.color {
                 Some(c) => COLOR_CODES[code_index(c).unwrap_or(15)],
                 None => base,
             };
-            let Some(g) = font_table::glyph(ch) else {
+            let Some(g) = picked else {
                 // THE MISSING GLYPH (the honest 4 the advance keeps —
                 // the effects the style's own bars still ride)
                 if st.strike {
@@ -756,6 +800,9 @@ impl<'a> Gui<'a> {
         let mut cx = x;
         let mut st = StyleState::default();
         let mut in_code = false;
+        // THE PICK STREAM'S OWN POSITION (the draw_raw twin — the same
+        // (seed, position) fold the scaled lane's blocks answer)
+        let mut pos = 0u64;
         for ch in s.chars() {
             if in_code {
                 st.apply_code(ch);
@@ -766,11 +813,27 @@ impl<'a> Gui<'a> {
                 in_code = true;
                 continue;
             }
+            pos += 1;
+            // THE GLYPH RESOLUTION (the obfuscated pick the scaled lane
+            // also answers — the same class walk, the same roll fold)
+            let orig = font_table::glyph(ch);
+            let picked = if st.obfuscated {
+                let class = match orig {
+                    Some(d) => font_table::glyph_advance(d),
+                    None => font_table::MISSING_GLYPH_ADVANCE,
+                };
+                let mut rng = crate::drops::Lcg::new(
+                    self.scramble ^ (pos as u64).wrapping_mul(0x9E37_79B9_7F4A_7C15),
+                );
+                font_table::obfuscated_pick(class, rng.next())
+            } else {
+                orig
+            };
             let color = match st.color {
                 Some(c) => COLOR_CODES[code_index(c).unwrap_or(15)],
                 None => base,
             };
-            let Some(g) = font_table::glyph(ch) else {
+            let Some(g) = picked else {
                 if st.strike {
                     self.fill(cx, y + 3 * k, 4 * k, k, [color[0] * dim, color[1] * dim, color[2] * dim, 1.0]);
                 }
@@ -873,7 +936,7 @@ mod tests {
 
     #[test]
     fn text_width_uses_real_metrics() {
-        let g = Gui { fb: &mut Framebuf::new(64, 64), scale: 2 };
+        let g = Gui { fb: &mut Framebuf::new(64, 64), scale: 2, scramble: 0 };
         // space advance is 4 per the official space provider
         assert_eq!(g.text_width(" "), 4);
         assert_eq!(g.text_width("  "), 8);
@@ -894,7 +957,7 @@ mod tests {
     #[test]
     fn gui_space_matches_scale() {
         let fb = Framebuf::new(320, 180);
-        let g = Gui { fb: &mut Framebuf::new(320, 180), scale: 2 };
+        let g = Gui { fb: &mut Framebuf::new(320, 180), scale: 2, scramble: 0 };
         assert_eq!(g.w(), 160);
         assert_eq!(g.h(), 90);
         drop(fb);
