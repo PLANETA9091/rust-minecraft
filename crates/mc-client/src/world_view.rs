@@ -1297,6 +1297,23 @@ pub enum ContainerCommand {
     /// the ClientboundDebugSamplePacket broadcasts the TPS chart's
     /// columns speak).
     FpsCharts(bool),
+    /// THE CHAT SEND'S WIRE HALF (the vanilla `ClientPacketListener
+    /// .sendChat`'s own lane): the trimmed message the ChatScreen's
+    /// submit speaks (the 256-char EditBox cap the input walk keeps),
+    /// the ServerboundChatPacket the worker's send path rides (the
+    /// unsigned session's zero-salt / absent-signature / empty
+    /// last-seen walk — see `mc_protocol::play::encode_chat`). The
+    /// LOCAL echo the submit skips on this lane — the server's own
+    /// Player Chat echo rides back through the pump into the display
+    /// queue, exactly like the real client's.
+    SendChat { message: String },
+    /// THE COMMAND SEND'S WIRE HALF (the vanilla `sendCommand`'s own
+    /// lane — the ChatScreen's `string.substring(1)` strip the submit
+    /// already speaks): the command BODY the ServerboundChatCommand
+    /// Packet carries (the 26.2 packet ONE bare utf — the signed-era
+    /// fields dropped). The server's answer rides the system/player
+    /// chat lanes back.
+    SendChatCommand { command: String },
 }
 
 /// The camera's pose in the VANILLA wire degrees — the inverse of
@@ -4798,6 +4815,7 @@ mod tests {
         snap.info.dimensions = vec!["minecraft:overworld".to_string()];
         snap.info.current_dimension = "minecraft:overworld".to_string();
         snap.registry = RegistryData {
+            chat_types: Vec::new(),
             dimension_types: vec![mc_protocol::DimensionTypeEntry {
                 name: "minecraft:overworld".to_string(),
                 min_y: -64,
@@ -4950,6 +4968,7 @@ mod tests {
         snap.info.dimensions = vec!["minecraft:overworld".to_string()];
         snap.info.current_dimension = "minecraft:overworld".to_string();
         snap.registry = RegistryData {
+            chat_types: Vec::new(),
             dimension_types: vec![mc_protocol::DimensionTypeEntry {
                 name: "minecraft:overworld".to_string(),
                 min_y: -64,

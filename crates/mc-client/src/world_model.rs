@@ -1942,6 +1942,11 @@ impl WorldModel {
                 self.tab_footer = u.footer;
                 changed
             }
+            // the chat lines' surface: the WORKER intercepts them at the
+            // pump (the display queue's dedicated channel ships the lines
+            // straight to the frame thread) — the model's world belief
+            // never carries them, the honest no-op answers here
+            PlayEvent::SystemChat(_) | PlayEvent::PlayerChat(_) => false,
             PlayEvent::Disconnected { .. } | PlayEvent::Skipped => false,
         }
     }
@@ -2923,6 +2928,7 @@ mod tests {
     fn biome_queries_walk_the_4x4x4_cell_grid() {
         let mut m = WorldModel::new();
         m.registry = RegistryData {
+            chat_types: Vec::new(),
             dimension_types: vec![DimensionTypeEntry {
                 name: "minecraft:overworld".into(),
                 min_y: -64,
@@ -3384,6 +3390,7 @@ mod tests {
         let mut m = WorldModel::new();
         m.current_dimension = Some("minecraft:overworld".into());
         m.registry = RegistryData {
+            chat_types: Vec::new(),
             dimension_types: vec![
                 DimensionTypeEntry {
                     name: "minecraft:overworld".into(),
@@ -3474,6 +3481,7 @@ mod tests {
         // with an OFF-TAG curve-carrier FIRST (a clock-name filter
         // would wrongly take it); the tag names ids 1..=3 only
         m.registry = RegistryData {
+            chat_types: Vec::new(),
             dimension_types: vec![DimensionTypeEntry {
                 name: "minecraft:overworld".into(),
                 min_y: -64,
@@ -3766,6 +3774,7 @@ mod tests {
             player: player.clone(),
             chunks: vec![col],
             registry: RegistryData {
+                chat_types: Vec::new(),
                 dimension_types: vec![DimensionTypeEntry {
                     name: "minecraft:overworld".to_string(),
                     min_y: -64,
@@ -3857,6 +3866,7 @@ mod tests {
             },
             chunks: vec![],
             registry: RegistryData {
+                chat_types: Vec::new(),
                 dimension_types: names
                     .iter()
                     .map(|(n, min_y, height)| DimensionTypeEntry {
@@ -3967,6 +3977,7 @@ mod tests {
             },
             chunks: vec![],
             registry: RegistryData {
+                chat_types: Vec::new(),
                 dimension_types: names
                     .iter()
                     .map(|(n, min_y, height)| DimensionTypeEntry {
@@ -4019,6 +4030,7 @@ mod tests {
     fn dimension_pins_at_login_and_respawn_repins_min_y() {
         let mut m = WorldModel::new();
         m.registry = RegistryData {
+            chat_types: Vec::new(),
             dimension_types: vec![
                 DimensionTypeEntry { name: "minecraft:overworld".into(), min_y: -64, height: 384, default_clock: Some("minecraft:overworld".into()) , timelines: None, ambient_light_color: None, skybox: None, fog_start_distance: None, fog_end_distance: None, cloud_fog_end_distance: None, block_light_tint: None, sky_light_color: None, sky_light_factor: None, night_vision_color: None },
                 DimensionTypeEntry { name: "minecraft:the_nether".into(), min_y: 0, height: 256, default_clock: None , timelines: None, ambient_light_color: None, skybox: None, fog_start_distance: None, fog_end_distance: None, cloud_fog_end_distance: None, block_light_tint: None, sky_light_color: None, sky_light_factor: None, night_vision_color: None },
@@ -5956,6 +5968,7 @@ mod tests {
         // the sync arrives WITH the attribute: its value wins, even
         // where it differs from the built-in
         m.registry = RegistryData {
+            chat_types: Vec::new(),
             dimension_types: vec![DimensionTypeEntry {
                 name: "minecraft:overworld".into(),
                 min_y: -64,
@@ -6085,6 +6098,7 @@ mod tests {
         // differs from the built-in (a custom overworld whose element
         // states the nether's none)
         m.registry = RegistryData {
+            chat_types: Vec::new(),
             dimension_types: vec![DimensionTypeEntry {
                 name: "minecraft:overworld".into(),
                 min_y: -64,
@@ -6173,6 +6187,7 @@ mod tests {
         );
         // the synced truth wins: a custom server's own stated pair
         m.registry = RegistryData {
+            chat_types: Vec::new(),
             dimension_types: vec![DimensionTypeEntry {
                 name: "minecraft:the_nether".into(),
                 min_y: 0,
@@ -6248,6 +6263,7 @@ mod tests {
         );
         // the synced truth wins: a custom server's own stated FLOAT
         m.registry = RegistryData {
+            chat_types: Vec::new(),
             dimension_types: vec![DimensionTypeEntry {
                 name: "minecraft:the_nether".into(),
                 min_y: 0,
@@ -6315,6 +6331,7 @@ mod tests {
         );
         // the synced truth wins: a custom server's own stated rgb_color
         m.registry = RegistryData {
+            chat_types: Vec::new(),
             dimension_types: vec![DimensionTypeEntry {
                 name: "minecraft:the_nether".into(),
                 min_y: 0,
@@ -6400,6 +6417,7 @@ mod tests {
         // a CUSTOM server's stated 0.5: the multiply-BASE under the day
         // curve — noon 0.5 x 1.0, midnight 0.5 x 0.24 = 0.12
         m.registry = RegistryData {
+            chat_types: Vec::new(),
             dimension_types: vec![DimensionTypeEntry {
                 name: "minecraft:overworld".into(),
                 min_y: -64,
@@ -6498,6 +6516,7 @@ mod tests {
         assert_eq!(m.sky_light_color(), None);
         // the synced truth wins: a custom server's own stated rgb_color
         m.registry = RegistryData {
+            chat_types: Vec::new(),
             dimension_types: vec![DimensionTypeEntry {
                 name: "minecraft:overworld".into(),
                 min_y: -64,
@@ -6586,6 +6605,7 @@ mod tests {
         assert_eq!(m.night_vision_color(), None);
         // the synced truth wins: a custom server's own stated rgb_color
         m.registry = RegistryData {
+            chat_types: Vec::new(),
             dimension_types: vec![DimensionTypeEntry {
                 name: "minecraft:overworld".into(),
                 min_y: -64,

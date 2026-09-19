@@ -75,7 +75,7 @@ use std::net::TcpStream;
 
 use crate::config::{join_play_conn, PlayOutcome, RegistryData};
 use crate::framing::PacketConn;
-use crate::nbt::{read_bare_nbt, write_bare_nbt, Nbt};
+use crate::nbt::{read_bare_nbt, read_network_nbt, write_bare_nbt, Nbt};
 use crate::varint::{
     read_string, read_varint, read_varlong, write_string, write_varint, write_varlong,
 };
@@ -117,6 +117,7 @@ pub mod clientbound {
         CB_SET_SCORE as SET_SCORE, CB_RESET_SCORE as RESET_SCORE,
         CB_PLAYER_INFO_REMOVE as PLAYER_INFO_REMOVE, CB_PLAYER_INFO_UPDATE as PLAYER_INFO_UPDATE,
         CB_TAB_LIST as TAB_LIST,
+        CB_SYSTEM_CHAT as SYSTEM_CHAT, CB_PLAYER_CHAT as PLAYER_CHAT,
     };
 }
 
@@ -141,6 +142,7 @@ pub mod serverbound {
         SB_PICK_ITEM_FROM_BLOCK as PICK_ITEM_FROM_BLOCK,
         SB_PICK_ITEM_FROM_ENTITY as PICK_ITEM_FROM_ENTITY,
         SB_BUNDLE_ITEM_SELECTED as BUNDLE_ITEM_SELECTED,
+        SB_CHAT as CHAT, SB_CHAT_COMMAND as CHAT_COMMAND,
     };
 }
 
@@ -5534,6 +5536,55 @@ pub fn encode_swing(hand: u8) -> Vec<u8> {
     p
 }
 
+/// The CHAT wire (javap of the real 26.2 `ServerboundChatPacket.write` —
+/// the FriendlyByteBuf walk verbatim): the message `writeUtf(msg, 256)`
+/// (the VarInt BYTE length + the utf-8 bytes, the 256 the encoded-length
+/// cap the write refuses past), the `writeInstant` = the
+/// `Instant.toEpochMilli()` ONE long (the read side folds
+/// `Instant.ofEpochMilli`), the salt long (the unsigned session's zero —
+/// the house speaks no signed chat), the signature `writeNullable` (the
+/// boolean first — `false` the absent lane), then the
+/// `LastSeenMessages$Update.write` UNCONDITIONALLY (the read side's
+/// direct `new Update(buf)` — the record `(int offset, BitSet
+/// acknowledged, byte checksum)` the 26.2 class speaks: `writeVarInt(0)`
+/// the no-offset walk, `writeFixedBitSet(empty, 20)` = THREE zero bytes
+/// (the `(bits + 8) >> 3` fold: 20 bits -> 3), the checksum byte zero).
+/// The vanilla server accepts the unsigned chat (the insecure badge the
+/// signed-era machinery wears) — the wire the OFFLINE session's chat
+/// lane honestly rides.
+pub fn encode_chat(message: &str, epoch_millis: i64) -> Result<Vec<u8>> {
+    anyhow::ensure!(
+        message.len() <= 256,
+        "chat message {} utf-8 bytes past the 256 writeUtf cap",
+        message.len()
+    );
+    let mut p = Vec::with_capacity(4 + message.len() + 8 + 8 + 1 + 6);
+    write_varint(&mut p, serverbound::CHAT);
+    write_string(&mut p, message);
+    p.extend_from_slice(&epoch_millis.to_be_bytes());
+    p.extend_from_slice(&0i64.to_be_bytes()); // the salt: the unsigned session's zero
+    p.push(0); // the signature: nullable absent
+    write_varint(&mut p, 0); // the last-seen offset: none
+    p.extend_from_slice(&[0u8; 3]); // the acknowledged bitset: 20 bits, empty
+    p.push(0); // the checksum byte
+    Ok(p)
+}
+
+/// The COMMAND wire (javap of the real 26.2 `ServerboundChatCommandPacket`
+/// — the clinit's composite loads `ByteBufCodecs.UTF8` ALONE): the record
+/// `(String command)` rides ONE bare utf — the signed-era
+/// timestamp/salt/argument-signature fields the 1.21.x packet carried the
+/// 26.2 protocol DROPPED (the signed commands the server-side history
+/// walks no longer wear). The slash prefix the ChatScreen's own
+/// `string.substring(1)` walk strips — the wire carries the command BODY
+/// ("time set day"), never the '/'.
+pub fn encode_chat_command(command: &str) -> Vec<u8> {
+    let mut p = Vec::with_capacity(4 + command.len());
+    write_varint(&mut p, serverbound::CHAT_COMMAND);
+    write_string(&mut p, command);
+    p
+}
+
 /// The ATTACK wire (the vanilla `MultiPlayerGameMode.attack`'s own
 /// echo — the 26.2's dedicated ServerboundAttackPacket, generated id
 /// 1, `minecraft:attack`, the generated table's SB_ATTACK). THE WIRE
@@ -6557,6 +6608,181 @@ pub fn flatten_component_text(tag: &Nbt) -> String {
     }
 }
 
+/// THE SYSTEM CHAT'S OWN FACTS (javap of the real 26.2
+/// `ClientboundSystemChatPacket` — the clinit's composite: the
+/// `ComponentSerialization.TRUSTED_STREAM_CODEC` component + the
+/// `ByteBufCodecs.BOOL` overlay). The component rides one bare NBT tag
+/// (the house's own component read the entity-data lane already walks);
+/// the overlay boolean says the HUD-center overlay message the death
+/// screen's word wears (`extractOverlayMessage`'s lane) instead of the
+/// chat history.
+#[derive(Debug, Clone, PartialEq)]
+pub struct SystemChatMessage {
+    /// The component flattened to plain text (the `text` + `extra`
+    /// walk [`flatten_component_text`] speaks — the formatting the
+    /// colored walk the later round owes).
+    pub content: String,
+    /// The overlay flag (false = the chat history, true = the HUD
+    /// overlay message).
+    pub overlay: bool,
+}
+
+/// Parse the System Chat packet (generated id 121): ONE bare-NBT
+/// component + the overlay boolean. Truncation refuses.
+pub fn parse_system_chat(payload: &[u8]) -> Result<SystemChatMessage> {
+    let mut c: &[u8] = payload;
+    let id = read_varint(&mut c)?;
+    anyhow::ensure!(
+        id == clientbound::SYSTEM_CHAT,
+        "not a system chat packet (0x{id:02X})"
+    );
+    let content = flatten_component_text(&read_bare_nbt(&mut c).context("system chat component")?);
+    anyhow::ensure!(!c.is_empty(), "system chat truncated (overlay flag)");
+    let overlay = read_bool(&mut c)?;
+    Ok(SystemChatMessage { content, overlay })
+}
+
+/// THE PLAYER CHAT'S OWN FACTS (javap of the real 26.2
+/// `ClientboundPlayerChatPacket` — the RegistryFriendlyByteBuf read
+/// verbatim): globalIndex VarInt, sender UUID, index VarInt, the
+/// signature `readNullable` (bool + 256 raw bytes when present — the
+/// `MessageSignature.read`'s fixed array), the `SignedMessageBody$Packed`
+/// (content Utf(256) + Instant long + salt long + the last-seen
+/// `readCollection` limit 20 = VarInt count x 256-byte entries), the
+/// unsigned content `readNullable` component, the `FilterMask.read`
+/// (the readEnum Type ordinal — PASS_THROUGH 0 / FULLY_FILTERED 1 /
+/// PARTIALLY_FILTERED 2 the clinit's `new Type(.., 0..2)` walk banks;
+/// the partial lane's `readBitSet` = VarInt length + bytes), then the
+/// `ChatType$Bound.STREAM_CODEC`: the holder varint (the house's own
+/// tagged-holder law — 0 the direct NBT lane, n >= 1 the `(n - 1)`
+/// registry id), the sender name component, the optional target name
+/// component.
+///
+/// The display the CLIENT's own decoration walk answers: the
+/// unsigned content when present else the signed body content (the
+/// vanilla `PlayerChatMessage.decode` walk), the FULLY_FILTERED mask
+/// the empty string wears (the filtered-out message the client never
+/// speaks), the chat type's `translation_key` + `parameters` the
+/// format fills (the registry table the configuration phase synced).
+#[derive(Debug, Clone, PartialEq)]
+pub struct PlayerChatMessage {
+    /// The sender's profile UUID (the tab-list population the same
+    /// ids speak).
+    pub sender: [u8; 16],
+    /// The sender name component flattened (the bound's own display
+    /// name).
+    pub sender_name: String,
+    /// The optional target name component flattened (the team-msg /
+    /// msg-command decorations' target slot).
+    pub target_name: Option<String>,
+    /// The displayed text: the unsigned content when present else the
+    /// signed body content; the FULLY_FILTERED mask the empty string.
+    pub content: String,
+    /// The chat type's decoration translation key (the registry
+    /// entry's `chat.translation_key` — "chat.type.text" the vanilla
+    /// chat entry speaks).
+    pub chat_key: String,
+    /// The chat type's decoration parameter names in order ("sender",
+    /// "content", "target").
+    pub parameters: Vec<String>,
+}
+
+/// Parse the Player Chat packet (generated id 65). The chat-type id
+/// resolves through the synced registry table (`chat_types` — the
+/// configuration phase's arrival order); an id the table never synced
+/// is the drift it is — refused, the byIdOrThrow direction. The
+/// direct-holder lane (wire tag 0) reads the element NBT itself.
+pub fn parse_player_chat(
+    payload: &[u8],
+    chat_types: &[crate::config::ChatTypeEntry],
+) -> Result<PlayerChatMessage> {
+    let mut c: &[u8] = payload;
+    let id = read_varint(&mut c)?;
+    anyhow::ensure!(
+        id == clientbound::PLAYER_CHAT,
+        "not a player chat packet (0x{id:02X})"
+    );
+    let _global_index = read_varint(&mut c)?;
+    let sender = read_uuid(&mut c)?;
+    let _index = read_varint(&mut c)?;
+    // the signature: nullable, 256 raw bytes when present
+    if read_bool(&mut c)? {
+        anyhow::ensure!(c.len() >= 256, "player chat signature truncated");
+        c = &c[256..];
+    }
+    // the SignedMessageBody$Packed: content + instant + salt + last-seen
+    let body_content = read_string(&mut c)?;
+    let _time_millis = read_i64(&mut c)?;
+    let _salt = read_i64(&mut c)?;
+    let seen = read_varint(&mut c)?;
+    anyhow::ensure!(seen <= 20, "player chat last-seen {seen} past the 20 cap");
+    anyhow::ensure!(
+        c.len() >= seen as usize * 256,
+        "player chat last-seen entries truncated"
+    );
+    c = &c[seen as usize * 256..];
+    // the unsigned content: nullable component
+    let unsigned = if read_bool(&mut c)? {
+        Some(flatten_component_text(&read_bare_nbt(&mut c).context("player chat unsigned content")?))
+    } else {
+        None
+    };
+    // the filter mask: the Type ordinal + the partial lane's bitset
+    let mask = read_varint(&mut c)?;
+    let fully_filtered = match mask {
+        0 => false,        // PASS_THROUGH
+        1 => true,         // FULLY_FILTERED
+        2 => {
+            // PARTIALLY_FILTERED: readBitSet = the VarInt length + bytes
+            let len = read_varint(&mut c)?;
+            anyhow::ensure!(c.len() >= len as usize, "player chat filter mask truncated");
+            c = &c[len as usize..];
+            false
+        }
+        other => anyhow::bail!("unknown filter mask type {other} (the enum's 0..=2 walk)"),
+    };
+    // the chat type bound: the tagged holder + the names
+    let holder = read_varint(&mut c)?;
+    let (chat_key, parameters) = if holder == 0 {
+        let element = read_network_nbt(&mut c).context("player chat direct chat-type element")?;
+        let entry = crate::config::parse_chat_type_element(&element, "<direct>")
+            .context("player chat direct chat-type decoration")?;
+        (entry.chat_key, entry.parameters)
+    } else {
+        let idx = (holder - 1) as usize;
+        let entry = chat_types.get(idx).with_context(|| {
+            format!(
+                "player chat chat-type id {} past the synced {}-entry table (the byIdOrThrow direction)",
+                holder - 1,
+                chat_types.len()
+            )
+        })?;
+        (entry.chat_key.clone(), entry.parameters.clone())
+    };
+    let sender_name =
+        flatten_component_text(&read_bare_nbt(&mut c).context("player chat sender name")?);
+    let target_name = if read_bool(&mut c)? {
+        Some(flatten_component_text(
+            &read_bare_nbt(&mut c).context("player chat target name")?,
+        ))
+    } else {
+        None
+    };
+    let content = if fully_filtered {
+        String::new()
+    } else {
+        unsigned.unwrap_or(body_content)
+    };
+    Ok(PlayerChatMessage {
+        sender,
+        sender_name,
+        target_name,
+        content,
+        chat_key,
+        parameters,
+    })
+}
+
 /// One number format's payload walk (the dispatch the registry ids
 /// speak — 26.2's own bootstrap order: blank, styled, fixed; the
 /// FIXED-WIDTH format the 1.21 era spoke is GONE from 26.2). The
@@ -7174,6 +7400,20 @@ pub enum PlayEvent {
     /// Tab List: the header + footer components the TAB overlay draws
     /// (see [`TabListUpdate`]).
     TabList(TabListUpdate),
+    /// System Chat: the server's OWN line (the join/leave/death of the
+    /// unsigned worlds, the plugin words, the advancement toasts'
+    /// text lane) — the component flattened + the overlay flag (see
+    /// [`SystemChatMessage`]). The chat history the display queue
+    /// answers; the overlay flag the HUD-center lane's word.
+    SystemChat(SystemChatMessage),
+    /// Player Chat: one player's said word — the bound decoration's
+    /// key + parameters the client's own format walk fills (the
+    /// en_us table the `<%s> %s` chat.type.text speaks), the sender
+    /// + content the display line carries (see
+    /// [`PlayerChatMessage`]). The signed-era machinery the house
+    /// speaks none of — the unsigned display the wire honestly
+    /// carries.
+    PlayerChat(PlayerChatMessage),
     /// Any packet without a client surface yet (skipped silently).
     Skipped,
 }
@@ -7329,6 +7569,11 @@ impl<S: Read + Write> PlaySession<S> {
                 Ok(PlayEvent::PlayerInfoRemove(parse_player_info_remove(&pkt)?))
             }
             clientbound::TAB_LIST => Ok(PlayEvent::TabList(parse_tab_list(&pkt)?)),
+            clientbound::SYSTEM_CHAT => Ok(PlayEvent::SystemChat(parse_system_chat(&pkt)?)),
+            clientbound::PLAYER_CHAT => Ok(PlayEvent::PlayerChat(parse_player_chat(
+                &pkt,
+                &self.registry.chat_types,
+            )?)),
             _ => Ok(PlayEvent::Skipped),
         }
     }
@@ -7456,6 +7701,28 @@ impl<S: Read + Write> PlaySession<S> {
         self.conn
             .send_packet(&encode_swing(hand))
             .context("send swing")
+    }
+
+    /// The CHAT send (the vanilla `ServerGamePacketListener`-bound
+    /// `sendChat`'s own wire — [`encode_chat`] the byte law speaks):
+    /// the message + the wall-clock millis, the unsigned session's
+    /// zero-salt / absent-signature / empty last-seen walk. The server's
+    /// own echo (the clientbound Player Chat) rides back through the
+    /// pump — the vanilla client displays the SERVER's copy, never its
+    /// own.
+    pub fn send_chat(&mut self, message: &str, epoch_millis: i64) -> Result<()> {
+        let pkt = encode_chat(message, epoch_millis).context("encode chat")?;
+        self.conn.send_packet(&pkt).context("send chat")
+    }
+
+    /// The COMMAND send (the vanilla `sendCommand`'s own wire —
+    /// [`encode_chat_command`] the bare-utf law speaks; the 26.2 packet
+    /// the signed-era fields dropped). The command body rides WITHOUT
+    /// the slash — the strip the ChatScreen's substring walk speaks.
+    pub fn send_chat_command(&mut self, command: &str) -> Result<()> {
+        self.conn
+            .send_packet(&encode_chat_command(command))
+            .context("send chat command")
     }
 
     /// The ATTACK wire (the vanilla gameMode.attack's own echo — the
@@ -8144,6 +8411,7 @@ fn read_bool(r: &mut &[u8]) -> std::io::Result<bool> {
 mod tests {
     use super::*;
     use crate::login::{encode_login_success, encode_login_success_with_properties, encode_set_compression};
+    use crate::nbt::write_network_nbt;
     use crate::varint::write_string;
     use crate::varint::write_varint;
     use std::net::TcpListener;
@@ -13976,5 +14244,183 @@ mod tests {
         // THE EMPTY SET (the lowered flag's unsubscribe word —
         // count 0, no ids)
         assert_eq!(encode_debug_subscription_request(false), vec![23, 0]);
+    }
+
+    // ---- THE CHAT WIRE (javap of the real 26.2 packet classes — the
+    // byte laws the dumps spoke) ----
+
+    fn chat_types_table() -> Vec<crate::config::ChatTypeEntry> {
+        vec![crate::config::ChatTypeEntry {
+            name: "minecraft:chat".to_string(),
+            chat_key: "chat.type.text".to_string(),
+            parameters: vec!["sender".to_string(), "content".to_string()],
+        }]
+    }
+
+    fn text_component(text: &str) -> Nbt {
+        Nbt::Compound(vec![("text".to_string(), Nbt::String(text.to_string()))])
+    }
+
+    /// The Player Chat fixture: the full audited field walk, the
+    /// caller pins the interesting lanes (unsigned content, filter
+    /// mask, chat-type holder).
+    fn player_chat_fixture(holder: i32, unsigned: Option<&str>, mask: i32) -> Vec<u8> {
+        let mut p = Vec::new();
+        write_varint(&mut p, clientbound::PLAYER_CHAT);
+        write_varint(&mut p, 0); // globalIndex
+        p.extend_from_slice(&[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]); // sender uuid
+        write_varint(&mut p, 0); // index
+        p.push(0); // signature absent
+        write_string(&mut p, "gg"); // the signed body content
+        p.extend_from_slice(&1234567890123i64.to_be_bytes()); // the body instant
+        p.extend_from_slice(&42i64.to_be_bytes()); // the body salt
+        write_varint(&mut p, 0); // the last-seen entries: none
+        match unsigned {
+            Some(text) => {
+                p.push(1);
+                write_bare_nbt(&text_component(text), &mut p).unwrap();
+            }
+            None => p.push(0),
+        }
+        write_varint(&mut p, mask);
+        if mask == 2 {
+            write_varint(&mut p, 0); // the partial lane's empty bitset
+        }
+        write_varint(&mut p, holder);
+        if holder == 0 {
+            // the direct lane's element NBT: the {chat:{translation_key,
+            // parameters}} record the ChatType codec speaks
+            let element = Nbt::Compound(vec![(
+                "chat".to_string(),
+                Nbt::Compound(vec![
+                    ("translation_key".to_string(), Nbt::String("chat.type.text".to_string())),
+                    (
+                        "parameters".to_string(),
+                        Nbt::List(vec![
+                            Nbt::String("sender".to_string()),
+                            Nbt::String("content".to_string()),
+                        ]),
+                    ),
+                ]),
+            )]);
+            write_network_nbt(&element, &mut p).unwrap();
+        }
+        write_bare_nbt(&text_component("Steve"), &mut p).unwrap(); // sender name
+        p.push(0); // target name absent
+        p
+    }
+
+    #[test]
+    fn the_chat_packet_the_unsigned_walk_the_bytes_keep() {
+        // THE BYTE LAW (the audited write verbatim): varint id 9, the
+        // utf "hi" (varint byte-length 2 + the bytes), the instant
+        // 1234567890123 one long, the zero salt, the absent signature,
+        // the empty Update (offset 0 + three zero bitset bytes + the
+        // zero checksum) — 26 bytes total
+        let p = encode_chat("hi", 1234567890123).unwrap();
+        let mut expected = vec![9u8, 2, b'h', b'i'];
+        expected.extend_from_slice(&1234567890123i64.to_be_bytes());
+        expected.extend_from_slice(&[0u8; 8]); // salt
+        expected.push(0); // signature absent
+        expected.push(0); // last-seen offset
+        expected.extend_from_slice(&[0u8; 3]); // the 20-bit empty bitset
+        expected.push(0); // checksum
+        assert_eq!(p, expected, "the unsigned chat the byte law keeps");
+        // THE CAP (the writeUtf(256) law — 257 utf-8 bytes refuse)
+        assert!(encode_chat(&"x".repeat(256), 0).is_ok(), "256 rides");
+        assert!(encode_chat(&"x".repeat(257), 0).is_err(), "257 refuses");
+    }
+
+    #[test]
+    fn the_chat_command_the_bare_utf_walks() {
+        // THE 26.2 LAW (the clinit's composite: UTF8 ALONE — the
+        // signed-era fields dropped): varint id 7 + one bare utf
+        let p = encode_chat_command("time set day");
+        let mut expected = vec![7u8];
+        expected.push("time set day".len() as u8);
+        expected.extend_from_slice(b"time set day");
+        assert_eq!(p, expected, "the command the bare utf carries");
+    }
+
+    #[test]
+    fn the_system_chat_the_component_flattens() {
+        // THE WIRE (id 121 + one bare-NBT component + the overlay bool):
+        // the extra walk the flatten answers
+        let mut p = Vec::new();
+        write_varint(&mut p, clientbound::SYSTEM_CHAT);
+        let comp = Nbt::Compound(vec![
+            ("text".to_string(), Nbt::String("Hello ".to_string())),
+            (
+                "extra".to_string(),
+                Nbt::List(vec![text_component("world")]),
+            ),
+        ]);
+        write_bare_nbt(&comp, &mut p).unwrap();
+        p.push(0);
+        let m = parse_system_chat(&p).unwrap();
+        assert_eq!(m.content, "Hello world");
+        assert!(!m.overlay);
+        // the overlay lane
+        let mut q = Vec::new();
+        write_varint(&mut q, clientbound::SYSTEM_CHAT);
+        write_bare_nbt(&text_component("Word"), &mut q).unwrap();
+        q.push(1);
+        let m = parse_system_chat(&q).unwrap();
+        assert!(m.overlay, "the overlay flag rides");
+        // THE TRUNCATION (the missing overlay byte refuses)
+        let mut r = Vec::new();
+        write_varint(&mut r, clientbound::SYSTEM_CHAT);
+        write_bare_nbt(&text_component("Word"), &mut r).unwrap();
+        assert!(parse_system_chat(&r).is_err());
+    }
+
+    #[test]
+    fn the_player_chat_the_bound_the_display_walks() {
+        // THE FULL WALK (holder 1 -> the table's chat entry; the signed
+        // content the unsigned-absent lane displays)
+        let p = player_chat_fixture(1, None, 0);
+        let m = parse_player_chat(&p, &chat_types_table()).unwrap();
+        assert_eq!(m.sender, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]);
+        assert_eq!(m.sender_name, "Steve");
+        assert_eq!(m.target_name, None);
+        assert_eq!(m.content, "gg");
+        assert_eq!(m.chat_key, "chat.type.text");
+        assert_eq!(m.parameters, vec!["sender", "content"]);
+    }
+
+    #[test]
+    fn the_player_chat_the_unsigned_content_the_display_prefers() {
+        // THE DISPLAY WALK (the unsigned content when present — the
+        // vanilla PlayerChatMessage.decode's own preference)
+        let p = player_chat_fixture(1, Some("the unsigned word"), 0);
+        let m = parse_player_chat(&p, &chat_types_table()).unwrap();
+        assert_eq!(m.content, "the unsigned word");
+    }
+
+    #[test]
+    fn the_player_chat_the_full_filter_the_empty_speaks() {
+        // THE FILTERED WALK (the FULLY_FILTERED mask the empty content
+        // wears — the filtered-out message the client never speaks)
+        let p = player_chat_fixture(1, None, 1);
+        let m = parse_player_chat(&p, &chat_types_table()).unwrap();
+        assert_eq!(m.content, "");
+    }
+
+    #[test]
+    fn the_player_chat_the_unknown_chat_type_the_refusal_keeps() {
+        // THE BYIDTHROW DIRECTION (holder 5 past the 1-entry table —
+        // the drift refused, never guessed)
+        let p = player_chat_fixture(5, None, 0);
+        assert!(parse_player_chat(&p, &chat_types_table()).is_err());
+    }
+
+    #[test]
+    fn the_player_chat_the_direct_holder_the_element_walks() {
+        // THE DIRECT LANE (wire tag 0 — the element NBT itself the
+        // decoration's source)
+        let p = player_chat_fixture(0, None, 0);
+        let m = parse_player_chat(&p, &chat_types_table()).unwrap();
+        assert_eq!(m.chat_key, "chat.type.text");
+        assert_eq!(m.parameters, vec!["sender", "content"]);
     }
 }

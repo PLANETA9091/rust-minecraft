@@ -114,6 +114,54 @@ fn tr(key: &str) -> Option<&'static str> {
     LANG.get_or_init(load_lang).get(key).map(|s| s.as_str())
 }
 
+/// THE CHAT DECORATION'S OWN FORMAT (vanilla `TranslatableContents`
+/// .decompose's sequential `%s` walk — the pattern the en_us lang table's
+/// entry carries, each `%s` the NEXT argument replaces; the positional
+/// `%N$s` forms the later round owes, the honest sequential lane the
+/// vanilla chat decorations all wear). A MISSING key answers with the
+/// key ITSELF — the `Language.getOrDefault` law the real client's own
+/// lookup keeps (an untranslatable server-custom key displays as its
+/// key, the args the format never speaks).
+pub(crate) fn format_chat_decoration(key: &str, args: &[&str]) -> String {
+    let Some(fmt) = tr(key) else {
+        return key.to_string();
+    };
+    let mut out = String::with_capacity(fmt.len());
+    let mut chars = fmt.chars().peekable();
+    let mut arg_i = 0usize;
+    while let Some(c) = chars.next() {
+        if c == '%' && chars.peek() == Some(&'s') {
+            chars.next();
+            out.push_str(args.get(arg_i).copied().unwrap_or(""));
+            arg_i += 1;
+        } else {
+            out.push(c);
+        }
+    }
+    out
+}
+
+/// THE PLAYER CHAT LINE'S OWN WALK (vanilla `ChatType.Bound.decorate`'s
+/// consumer tail — the decoration's `parameters` list names each `%s`'s
+/// SOURCE: "sender" the bound's sender name, "target" the bound's target
+/// name (the absent target the empty string fills), "content" the
+/// message text; the unknown parameter the empty string fills — the
+/// vanilla walk's own null-fold). The format key + the filled args the
+/// display line answers.
+pub(crate) fn format_player_chat_line(m: &mc_protocol::play::PlayerChatMessage) -> String {
+    let args: Vec<&str> = m
+        .parameters
+        .iter()
+        .map(|p| match p.as_str() {
+            "sender" => m.sender_name.as_str(),
+            "target" => m.target_name.as_deref().unwrap_or(""),
+            "content" => m.content.as_str(),
+            _ => "",
+        })
+        .collect();
+    format_chat_decoration(&m.chat_key, &args)
+}
+
 pub const WHITE: [f32; 3] = [1.0, 1.0, 1.0];
 pub const YELLOW: [f32; 3] = [1.0, 1.0, 0.333];
 pub const GRAY: [f32; 3] = [0.667, 0.667, 0.667];
@@ -11612,11 +11660,17 @@ impl App {
     /// THE SUBMIT'S OWN WALK (javap ChatScreen.keyPressed's
     /// isConfirmation arm — the `handleChatInput(input, true)` the
     /// normalizeChatMessage trim keeps: the empty the silent close
-    /// answers, the non-empty `addRecentChat` + the send lane rides;
-    /// the OFFLINE world the sendChat wire the no-connection lane
-    /// skips — the local echo the addMessage display queue answers,
-    /// the wire the networked worlds' later round owes). The close +
-    /// resetChatScroll tail the keyPressed walk keeps.
+    /// answers, the non-empty `addRecentChat` + the send lane rides).
+    /// The LIVE world the wire honestly answers (the vanilla
+    /// `ClientPacketListener.sendChat`/`sendCommand` walk — the
+    /// ServerboundChatPacket / the 26.2's bare-utf command packet the
+    /// command channel carries): the LOCAL echo the send skips — the
+    /// server's own Player Chat echo rides back through the pump into
+    /// the display queue, exactly like the real client's display walk.
+    /// The OFFLINE world the no-connection lane keeps — the local echo
+    /// the addMessage display queue answers. The '/'-prefixed input the
+    /// ChatScreen's own `string.startsWith("/")` walk answers — the
+    /// `substring(1)` body the command packet carries.
     pub fn on_chat_submit(&mut self) {
         if !self.chat_open {
             return;
@@ -11627,6 +11681,18 @@ impl App {
             return;
         }
         self.add_recent_chat(normalized.clone());
+        if let Some(tx) = &self.live_clicks {
+            if let Some(command) = normalized.strip_prefix('/') {
+                let _ = tx.send(crate::world_view::ContainerCommand::SendChatCommand {
+                    command: command.to_string(),
+                });
+            } else {
+                let _ = tx.send(crate::world_view::ContainerCommand::SendChat {
+                    message: normalized,
+                });
+            }
+            return;
+        }
         self.push_chat_message(normalized);
     }
 
@@ -21103,6 +21169,145 @@ mod tests {
         assert!(
             pause_diff > 10_000,
             "the pause screen the hidden HUD's frame still paints: {pause_diff}"
+        );
+    }
+
+    #[test]
+    fn the_chat_decoration_the_lang_walk_speaks() {
+        // THE FORMAT LAW (the en_us table's chat.type.text the `<%s> %s`
+        // entry carries — the sequential %s walk the TranslatableContents
+        // decompose keeps)
+        assert_eq!(
+            format_chat_decoration("chat.type.text", &["Steve", "gg"]),
+            "<Steve> gg"
+        );
+        assert_eq!(
+            format_chat_decoration("chat.type.emote", &["Steve", "waves"]),
+            "* Steve waves"
+        );
+        // THE ARG SHORTFALL (the missing slot the empty string fills —
+        // the format the extra %s never speaks)
+        assert_eq!(
+            format_chat_decoration("chat.type.text", &["Steve"]),
+            "<Steve> "
+        );
+        // THE MISSING KEY (the getOrDefault law — the key itself the
+        // lookup answers, the args the format never speaks)
+        assert_eq!(
+            format_chat_decoration("server.custom.key", &["a", "b"]),
+            "server.custom.key"
+        );
+    }
+
+    #[test]
+    fn the_player_chat_line_the_decoration_walk_answers() {
+        // THE PARAMETER WALK (the bound's parameters name each %s's
+        // source: "sender" the name, "content" the text, "target" the
+        // absent slot the empty string fills)
+        let m = mc_protocol::play::PlayerChatMessage {
+            sender: [7u8; 16],
+            sender_name: "Steve".to_string(),
+            target_name: None,
+            content: "gg".to_string(),
+            chat_key: "chat.type.text".to_string(),
+            parameters: vec!["sender".to_string(), "content".to_string()],
+        };
+        assert_eq!(format_player_chat_line(&m), "<Steve> gg");
+        // THE TARGET SLOT (the team lane's three-%s key the target fills)
+        let m = mc_protocol::play::PlayerChatMessage {
+            sender: [7u8; 16],
+            sender_name: "Steve".to_string(),
+            target_name: Some("Red Team".to_string()),
+            content: "hi team".to_string(),
+            chat_key: "chat.type.team.text".to_string(),
+            parameters: vec![
+                "target".to_string(),
+                "sender".to_string(),
+                "content".to_string(),
+            ],
+        };
+        assert_eq!(format_player_chat_line(&m), "Red Team <Steve> hi team");
+    }
+
+    #[test]
+    fn the_live_submit_the_wire_lane_rides() {
+        // THE LIVE WALK (the submit's wire half — the trimmed message
+        // the command channel's SendChat carries, the LOCAL echo the
+        // send skips: the server's own Player Chat echo the display
+        // queue answers through the pump's dedicated channel)
+        let mut app = App::new(3);
+        app.enter_world();
+        let (chat_tx, chat_rx) = std::sync::mpsc::channel::<crate::world_view::ContainerCommand>();
+        app.attach_live_clicks(chat_tx);
+        app.on_chat_key();
+        for c in "hello world".chars() {
+            app.on_chat_char(c);
+        }
+        assert!(app.chat_open);
+        app.on_chat_submit();
+        assert!(!app.chat_open, "the close the submit keeps");
+        assert_eq!(
+            app.chat_input, "",
+            "the input the close clears"
+        );
+        assert_eq!(
+            app.recent_chat.last().map(String::as_str),
+            Some("hello world"),
+            "the history the submit keeps"
+        );
+        match chat_rx.try_recv().expect("the send rode the lane") {
+            crate::world_view::ContainerCommand::SendChat { message } => {
+                assert_eq!(message, "hello world");
+            }
+            other => panic!("the wrong command rode the lane: {other:?}"),
+        }
+        assert!(
+            app.chat_messages.iter().all(|m| m.0 != "hello world"),
+            "the LOCAL echo the wire send skips — the server's echo the display answers"
+        );
+    }
+
+    #[test]
+    fn the_slash_submit_the_command_body_rides() {
+        // THE COMMAND WALK (the ChatScreen's startsWith("/") +
+        // substring(1) law — the BODY the command packet carries, the
+        // slash never rides)
+        let mut app = App::new(3);
+        app.enter_world();
+        let (chat_tx, chat_rx) = std::sync::mpsc::channel::<crate::world_view::ContainerCommand>();
+        app.attach_live_clicks(chat_tx);
+        app.on_chat_key();
+        for c in "/time set day".chars() {
+            app.on_chat_char(c);
+        }
+        app.on_chat_submit();
+        match chat_rx.try_recv().expect("the command rode the lane") {
+            crate::world_view::ContainerCommand::SendChatCommand { command } => {
+                assert_eq!(command, "time set day", "the slash the strip keeps");
+            }
+            other => panic!("the wrong command rode the lane: {other:?}"),
+        }
+        assert!(
+            app.recent_chat.last().map(String::as_str) == Some("/time set day"),
+            "the history the typed word keeps"
+        );
+    }
+
+    #[test]
+    fn the_offline_submit_the_echo_keeps() {
+        // THE OFFLINE GUARD (no live lane — the local echo the
+        // display queue answers, the same law the chat round kept)
+        let mut app = App::new(3);
+        app.enter_world();
+        app.on_chat_key();
+        for c in "just me".chars() {
+            app.on_chat_char(c);
+        }
+        app.on_chat_submit();
+        assert_eq!(
+            app.chat_messages.last().map(|m| m.0.as_str()),
+            Some("just me"),
+            "the offline echo the display answers"
         );
     }
 

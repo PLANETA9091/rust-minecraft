@@ -346,6 +346,60 @@ pub struct BiomeEntry {
     pub effects: BiomeEffects,
 }
 
+/// One `minecraft:chat_type` element's CHAT decoration (javap:
+/// `ChatType.DIRECT_CODEC` = the `name` + `chat` + `narration`
+/// record — the `chat` compound's `translation_key` string and
+/// `parameters` string list the client's decoration walk reads; the
+/// `narration` half the client's TTS law owns, walked past). The
+/// ARRIVAL ORDER of [`RegistryData::chat_types`] is the id space the
+/// Player Chat holder varint resolves through.
+#[derive(Debug, Clone, PartialEq)]
+pub struct ChatTypeEntry {
+    /// The entry id ("minecraft:chat", "minecraft:say_command", ...).
+    pub name: String,
+    /// The chat decoration's translation key ("chat.type.text" the
+    /// vanilla chat entry speaks — the en_us table's `<%s> %s`).
+    pub chat_key: String,
+    /// The decoration's parameter names in ORDER ("sender",
+    /// "content", "target" the vanilla trio speaks) — the format
+    /// walk fills each `%s` from the bound + the message.
+    pub parameters: Vec<String>,
+}
+
+/// Parse ONE chat_type element NBT into its chat decoration (the
+/// `chat.translation_key` + `chat.parameters` walk; the element
+/// itself is the `{name, chat, narration}` record the data-driven
+/// registry syncs — the `name` the entry id already speaks, the
+/// `narration` the TTS law's own half). The direct-holder lane's NBT
+/// (the Player Chat packet's wire tag 0) carries the SAME element
+/// shape — this walk answers both.
+pub fn parse_chat_type_element(element: &crate::nbt::Nbt, entry_id: &str) -> Result<ChatTypeEntry> {
+    use crate::nbt::Nbt;
+    let chat = element
+        .get("chat")
+        .with_context(|| format!("chat_type {entry_id} without chat decoration"))?;
+    let chat_key = chat
+        .get("translation_key")
+        .and_then(Nbt::as_str)
+        .with_context(|| format!("chat_type {entry_id} without chat translation_key"))?;
+    let parameters = chat
+        .get("parameters")
+        .and_then(Nbt::as_list)
+        .with_context(|| format!("chat_type {entry_id} without chat parameters"))?
+        .iter()
+        .map(|p| {
+            p.as_str()
+                .map(String::from)
+                .with_context(|| format!("chat_type {entry_id} non-string parameter"))
+        })
+        .collect::<Result<Vec<String>>>()?;
+    Ok(ChatTypeEntry {
+        name: entry_id.to_string(),
+        chat_key: chat_key.to_string(),
+        parameters,
+    })
+}
+
 /// The registry knowledge the client retained from the configuration
 /// phase. `Default` is the honest empty table — a server that never sent
 /// Registry Data yields no entries.
@@ -432,6 +486,14 @@ pub struct RegistryData {
     /// `TagNetworkSerialization$NetworkPayload` = a readMap of tag
     /// name -> VarInt id list). Tag name -> member entry ids.
     pub timeline_tags: Vec<(String, Vec<i32>)>,
+    /// The `minecraft:chat_type` entries in ARRIVAL ORDER — the id
+    /// table the Player Chat packet's chat-type holder varint
+    /// resolves through (`ByteBufCodecs.holderRegistry(CHAT_TYPE)`,
+    /// the same tagged holder shape the sound-event lane reads —
+    /// wire tag >= 1 the `(tag - 1)` registry id). Names + the chat
+    /// decoration's translation key + the parameter list the display
+    /// walk fills (see [`ChatTypeEntry`]).
+    pub chat_types: Vec<ChatTypeEntry>,
 }
 
 impl RegistryData {
@@ -915,6 +977,28 @@ pub fn parse_registry_data(payload: &[u8]) -> Result<RegistryData> {
                 crate::play::skip_network_nbt(&mut c)
                     .with_context(|| format!("skip {registry_name} entry nbt"))?;
             }
+            continue;
+        }
+        if registry_name == "minecraft:chat_type" {
+            // same arrival-order id table (the Player Chat packet's
+            // chat-type holder varint resolves through it — the
+            // decoration walk reads the TRANSLATION KEY +
+            // PARAMETERS, `chat.type.text` + ["sender", "content"]
+            // the vanilla chat entry speaks). The element is the
+            // {name, chat, narration} record — the chat half decoded
+            // (see [`parse_chat_type_element`]), the narration half
+            // the TTS law's own half, walked past. A tagless entry is
+            // the drift it is — the ChatType codec's fields are all
+            // required.
+            anyhow::ensure!(
+                present,
+                "chat_type {entry_id} rides without its element tag (the codec requires chat + narration)"
+            );
+            let element = read_network_nbt(&mut c)
+                .with_context(|| format!("decode chat_type {entry_id} element nbt"))?;
+            let entry = parse_chat_type_element(&element, &entry_id)
+                .with_context(|| format!("decode chat_type {entry_id} decoration"))?;
+            out.chat_types.push(entry);
             continue;
         }
         if registry_name == "minecraft:chicken_variant" {
@@ -2408,6 +2492,86 @@ mod tests {
         write_string(&mut short, "minecraft:overworld");
         short.push(0);
         assert!(parse_registry_data(&short).is_err(), "count lies -> error");
+    }
+
+    #[test]
+    fn the_chat_type_registry_the_decoration_banks() {
+        // THE WIRE (the registry packet's own shape — "minecraft:chat_type"
+        // + two entries, each the {name, chat:{translation_key,
+        // parameters}, narration} element the data-driven registry
+        // syncs): the arrival order IS the id space the Player Chat
+        // holder resolves through
+        let mut p = Vec::new();
+        write_varint(&mut p, clientbound::REGISTRY_DATA);
+        write_string(&mut p, "minecraft:chat_type");
+        write_varint(&mut p, 2);
+        // entry 0: minecraft:chat — the vanilla element's own json
+        // (chat.parameters ["sender","content"], the chat.type.text key)
+        write_string(&mut p, "minecraft:chat");
+        p.push(1);
+        let chat_elem = Nbt::Compound(vec![
+            ("name".to_string(), Nbt::String("minecraft:chat".to_string())),
+            (
+                "chat".to_string(),
+                Nbt::Compound(vec![
+                    ("translation_key".to_string(), Nbt::String("chat.type.text".to_string())),
+                    (
+                        "parameters".to_string(),
+                        Nbt::List(vec![
+                            Nbt::String("sender".to_string()),
+                            Nbt::String("content".to_string()),
+                        ]),
+                    ),
+                ]),
+            ),
+            (
+                "narration".to_string(),
+                Nbt::Compound(vec![
+                    ("translation_key".to_string(), Nbt::String("chat.type.text.narrate".to_string())),
+                    (
+                        "parameters".to_string(),
+                        Nbt::List(vec![
+                            Nbt::String("sender".to_string()),
+                            Nbt::String("content".to_string()),
+                        ]),
+                    ),
+                ]),
+            ),
+        ]);
+        crate::nbt::write_network_nbt(&chat_elem, &mut p).expect("chat element writes");
+        // entry 1: minecraft:emote_command — the * %s %s walk
+        write_string(&mut p, "minecraft:emote_command");
+        p.push(1);
+        let emote_elem = Nbt::Compound(vec![(
+            "chat".to_string(),
+            Nbt::Compound(vec![
+                ("translation_key".to_string(), Nbt::String("chat.type.emote".to_string())),
+                (
+                    "parameters".to_string(),
+                    Nbt::List(vec![
+                        Nbt::String("sender".to_string()),
+                        Nbt::String("content".to_string()),
+                    ]),
+                ),
+            ]),
+        )]);
+        crate::nbt::write_network_nbt(&emote_elem, &mut p).expect("emote element writes");
+        let data = parse_registry_data(&p).expect("chat_type registry parses");
+        assert_eq!(data.chat_types.len(), 2, "both entries land in arrival order");
+        assert_eq!(data.chat_types[0].name, "minecraft:chat");
+        assert_eq!(data.chat_types[0].chat_key, "chat.type.text");
+        assert_eq!(data.chat_types[0].parameters, vec!["sender", "content"]);
+        assert_eq!(data.chat_types[1].name, "minecraft:emote_command");
+        assert_eq!(data.chat_types[1].chat_key, "chat.type.emote");
+        // THE DRIFT (the tagless chat_type entry — the codec's fields
+        // are all required, the refusal the loader keeps)
+        let mut q = Vec::new();
+        write_varint(&mut q, clientbound::REGISTRY_DATA);
+        write_string(&mut q, "minecraft:chat_type");
+        write_varint(&mut q, 1);
+        write_string(&mut q, "minecraft:chat");
+        q.push(0);
+        assert!(parse_registry_data(&q).is_err(), "tagless chat_type refuses");
     }
 
     #[test]

@@ -167,6 +167,7 @@ fn run_join(
         >,
     >,
     clicks: std::sync::mpsc::Receiver<crate::world_view::ContainerCommand>,
+    chat_tx: std::sync::mpsc::Sender<String>,
     run: std::sync::Arc<std::sync::atomic::AtomicBool>,
 ) {
     // the REAL protocol number (login tolerates no 0-ping) and the
@@ -571,6 +572,29 @@ fn run_join(
                             fps_charts = on;
                             Ok(())
                         }
+                        crate::world_view::ContainerCommand::SendChat { message } => {
+                            // THE CHAT SEND (the vanilla
+                            // ClientPacketListener.sendChat's own wire —
+                            // the ServerboundChatPacket the unsigned
+                            // session's walk speaks: the wall-clock
+                            // millis the Instant.toEpochMilli lane
+                            // carries, the zero salt / absent signature
+                            // / empty last-seen the no-signed-session
+                            // lane honestly rides). The server's own
+                            // echo comes back through the pump's Player
+                            // Chat arm — the display queue never sees
+                            // the LOCAL copy.
+                            session.send_chat(&message, now_millis())
+                        }
+                        crate::world_view::ContainerCommand::SendChatCommand { command } => {
+                            // THE COMMAND SEND (the vanilla sendCommand's
+                            // own wire — the 26.2 packet ONE bare utf,
+                            // the signed-era fields dropped; the slash
+                            // the submit's substring walk already
+                            // stripped). The server's answer rides the
+                            // system/player chat lanes back.
+                            session.send_chat_command(&command)
+                        }
                     };
                     if let Err(e) = sent {
                         // a send failure is a transport error: a framed
@@ -692,6 +716,25 @@ fn run_join(
                         } else {
                             false
                         };
+                        // THE CHAT WIRE'S OWN INTERCEPT (the vanilla
+                        // handleSystemChat/handlePlayerChat's own lane —
+                        // the display queue the addMessage walk answers:
+                        // the SYSTEM line the component flattened speaks,
+                        // the PLAYER line the bound decoration's format
+                        // walk fills — the en_us table the
+                        // `chat.type.text` `<%s> %s` law carries. The
+                        // lines ride the DEDICATED channel — the chat
+                        // promptness the view cadence never gates).
+                        match &event {
+                            mc_protocol::PlayEvent::SystemChat(m) => {
+                                let _ = chat_tx.send(m.content.clone());
+                            }
+                            mc_protocol::PlayEvent::PlayerChat(m) => {
+                                let _ = chat_tx
+                                    .send(crate::screens::format_player_chat_line(m));
+                            }
+                            _ => {}
+                        }
                         if view.apply(event) || ping_changed || bw_changed || tick_changed {
                             // THE SHIP GATE (the cadence the world
                             // updates ride — a logged ping or bandwidth
@@ -868,6 +911,11 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
     let (net_tx, net_rx) = std::sync::mpsc::channel::<
         (u64, Result<crate::screens::PingInfo, String>),
     >();
+    // the live chat lines: ONE shared channel the per-join workers clone
+    // the sender of (the system/player chat lines the pump intercept
+    // carries — the frame thread's drain lands each line into the App's
+    // display queue, the same addMessage walk the local messages ride)
+    let (chat_tx, chat_rx) = std::sync::mpsc::channel::<String>();
     let mut net_seen = 0usize; // cursor into the append-only request log
     let mut was_left_down = false; // the attack edge detector (vanilla left-click = swing)
     let mut was_right_down = false; // the right press's edge detector (the split-stack lane)
@@ -1299,7 +1347,16 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
                 crate::world_view::ContainerCommand,
             >();
             app.attach_live_clicks(click_tx);
-            std::thread::spawn(move || run_join(id, host, port, tx, live_tx, click_rx, run));
+            // the chat line lane: the worker's chat intercept (the
+            // system/player chat lines the pump carries) ships each
+            // display line through — the frame thread's drain lands
+            // every line into the App's display queue (the fade the
+            // same 200-tick law rides), the view cadence never gates
+            // the promptness the chat lane keeps
+            let chat_tx = chat_tx.clone();
+            std::thread::spawn(move || {
+                run_join(id, host, port, tx, live_tx, click_rx, chat_tx, run)
+            });
         }
         while let Ok((id, res)) = net_rx.try_recv() {
             app.ping_finished(id, res);
@@ -1427,6 +1484,15 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
                 }
                 Err(reason) => app.live_session_lost(reason),
             }
+        }
+        // THE CHAT LINE DRAIN (the worker's intercept the dedicated
+        // channel ships — each line the display queue's own addMessage
+        // walk answers: the (text, addedTime) pair the 200-tick fade
+        // law keeps, the wrap the draw re-walks. The SERVER's own echo
+        // of the player's own sends lands through this lane too — the
+        // vanilla client displays the server's copy, never its own.)
+        while let Ok(line) = chat_rx.try_recv() {
+            app.push_chat_message(line);
         }
         music.sync(&app.music);
         // UI one-shots (ui.button.click) ride the independent UI channel
