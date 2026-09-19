@@ -1251,6 +1251,47 @@ pub fn wrap_chat_text(s: &str, width: i32) -> Vec<String> {
     out
 }
 
+/// THE SCREENSHOT'S OWN NAME (javap Screenshot.getFile +
+/// getFilenameFormattedDateTime — the "screenshots" dir the caller
+/// keeps, the timestamp the `yyyy-MM-dd_HH.mm.ss` classic format
+/// speaks (the local-datetime formatter the newer jar localizes —
+/// the port the UTC epoch answers, the determinism the tests keep),
+/// the `_N` dedup the '\u0001\u0001.png' concat recipe banks: the
+/// existing file the suffix walks, the first free the name speaks).
+pub fn screenshot_file_name(now_secs: i64, exists: &dyn Fn(&str) -> bool) -> String {
+    // THE CIVIL CALENDAR (the epoch-days → y/m/d walk — Howard
+    // Hinnant's civil_from_days the date math folds)
+    let days = now_secs.div_euclid(86_400);
+    let secs_of_day = now_secs.rem_euclid(86_400);
+    let z = days + 719_468;
+    let era = z.div_euclid(146_097);
+    let doe = z.rem_euclid(146_097);
+    let yoe = (doe - doe / 1460 + doe / 36_524 - doe / 146_096) / 365;
+    let y = yoe + era * 400;
+    let doy = doe - (365 * yoe + yoe / 4 - yoe / 100);
+    let mp = (5 * doy + 2) / 153;
+    let d = doy - (153 * mp + 2) / 5 + 1;
+    let m = if mp < 10 { mp + 3 } else { mp - 9 };
+    let y = if m <= 2 { y + 1 } else { y };
+    let (hh, mm, ss) = (
+        secs_of_day / 3600,
+        secs_of_day % 3600 / 60,
+        secs_of_day % 60,
+    );
+    let base = format!("{y:04}-{m:02}-{d:02}_{hh:02}.{mm:02}.{ss:02}");
+    if !exists(&format!("{base}.png")) {
+        return format!("{base}.png");
+    }
+    let mut i = 1;
+    loop {
+        let candidate = format!("{base}_{i}.png");
+        if !exists(&candidate) {
+            return candidate;
+        }
+        i += 1;
+    }
+}
+
 /// THE BLOCK SCREEN TINT (javap `ScreenEffectRenderer.submit`'s own
 /// `ldc -15132391` = 0xFF191919): the rgb 25/255 the head-in-block
 /// quad's dark multiply speaks, the alpha 0xFF the opaque cover rides.
@@ -2722,6 +2763,13 @@ pub struct App {
     pub recent_chat: Vec<String>,
     pub chat_history_pos: usize,
     pub chat_draft: String,
+    /// THE F2 SCREENSHOT'S OWN REQUEST (javap Minecraft.handleKeybinds's
+    /// keyScreenshot lane — the rising edge the Screenshot.grab walk
+    /// answers): true while the key's edge asked for the frame — the
+    /// window's render site the grab answers (the PNG write + the
+    /// chat message the consumer tail keeps), the flag the answer
+    /// clears.
+    pub screenshot_request: bool,
     /// THE F3 DEBUG OVERLAY (the vanilla keyPress's keyToggleDebugScreen
     /// lane — the rising edge the window loop reads, the toggle the
     /// DebugScreenEntryList.isOverlayVisible gate keeps): true while the
@@ -3174,6 +3222,7 @@ impl App {
             recent_chat: Vec::new(),
             chat_history_pos: 0,
             chat_draft: String::new(),
+            screenshot_request: false,
             debug_held: false,
             fps_frames: 0,
             fps_window_start: None,
@@ -11603,6 +11652,32 @@ impl App {
         while self.chat_messages.len() > 100 {
             self.chat_messages.remove(0);
         }
+    }
+
+    /// THE F2 KEY'S OWN LANE (javap Minecraft.handleKeybinds's
+    /// keyScreenshot lane — the `Options.keyScreenshot.consumeClick()`
+    /// rising edge the `Screenshot.grab(...)` walk answers): the
+    /// request the flag raises, the window's render site the grab
+    /// answers (the frame the fresh render's own bytes keep), the
+    /// flag the answer clears.
+    pub fn on_screenshot_key(&mut self) {
+        self.screenshot_request = true;
+    }
+
+    /// THE SCREENSHOT'S CONSUMER TAIL (javap Screenshot.grab's
+    /// consumer — the success the `screenshot.success` translation
+    /// speaks (`Saved screenshot as %s`, the en_us lang the name
+    /// wears), the failure the `screenshot.failure` keeps
+    /// (`Couldn't save screenshot: %s`); the message the CHAT display
+    /// the addMessage lane answers — the chat history the grab's
+    /// own feedback rides).
+    pub fn take_screenshot(&mut self, outcome: Result<String, String>) {
+        self.screenshot_request = false;
+        let msg = match outcome {
+            Ok(name) => format!("Saved screenshot as {name}"),
+            Err(e) => format!("Couldn't save screenshot: {e}"),
+        };
+        self.push_chat_message(msg);
     }
 
     /// THE F3+2 CHORD'S OWN TOGGLE (javap DebugScreenOverlay
@@ -21180,6 +21255,69 @@ mod tests {
         app.render(&mut fb, &mut assets);
         let band_diff = diff_count(&hidden_bare, &fb.color, 2, 360 - 14, 636, 12);
         assert!(band_diff > 400, "the input band the open chat paints: {band_diff}");
+    }
+
+    #[test]
+    fn the_f2_key_grabs_the_frame() {
+        // THE NAME'S OWN LAW (the Screenshot.getFile walk — the
+        // yyyy-MM-dd_HH.mm.ss classic format the civil calendar
+        // speaks, the _N dedup the concat recipe banks)
+        assert_eq!(
+            screenshot_file_name(0, &|_| false),
+            "1970-01-01_00.00.00.png"
+        );
+        assert_eq!(
+            screenshot_file_name(1_000_000_000, &|_| false),
+            "2001-09-09_01.46.40.png"
+        );
+        assert_eq!(
+            screenshot_file_name(951_782_400, &|_| false),
+            "2000-02-29_00.00.00.png",
+            "the leap day the civil calendar keeps"
+        );
+        assert_eq!(
+            screenshot_file_name(1, &|n| n == "1970-01-01_00.00.01.png"),
+            "1970-01-01_00.00.01_1.png",
+            "the existing file the dedup suffix walks"
+        );
+        assert_eq!(
+            screenshot_file_name(
+                1,
+                &|n| n == "1970-01-01_00.00.01.png"
+                    || n == "1970-01-01_00.00.01_1.png"
+            ),
+            "1970-01-01_00.00.01_2.png",
+            "the walked suffix the next free answers"
+        );
+
+        // THE STATE WALK (the keyScreenshot lane the flag raises, the
+        // consumer tail the flag clears — the success the en_us
+        // translation speaks, the failure the error carries; the
+        // message the chat display the history answers)
+        let mut app = App::new(3);
+        app.enter_world();
+        assert!(!app.screenshot_request);
+        app.on_screenshot_key();
+        assert!(app.screenshot_request);
+        let frame_at = app.frame as u32;
+        app.take_screenshot(Ok("2001-09-09_01.46.40.png".to_string()));
+        assert!(!app.screenshot_request, "the grab the flag clears");
+        assert_eq!(
+            app.chat_messages.last().map(|(t, _)| t.as_str()),
+            Some("Saved screenshot as 2001-09-09_01.46.40.png"),
+            "the success the screenshot.success law speaks"
+        );
+        assert_eq!(
+            app.chat_messages.last().unwrap().1,
+            frame_at,
+            "the addedTime the push's own frame keeps"
+        );
+        app.take_screenshot(Err("disk full".to_string()));
+        assert_eq!(
+            app.chat_messages.last().map(|(t, _)| t.as_str()),
+            Some("Couldn't save screenshot: disk full"),
+            "the failure the screenshot.failure law speaks"
+        );
     }
 
     #[test]

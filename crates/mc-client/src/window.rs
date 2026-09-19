@@ -1165,6 +1165,16 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
             if window.is_key_pressed(Key::F1, minifb::KeyRepeat::No) {
                 app.on_toggle_gui_key();
             }
+            // THE F2 SCREENSHOT (vanilla Minecraft.handleKeybinds's
+            // keyScreenshot lane — the `Options.keyScreenshot
+            // .consumeClick()` rising edge the Screenshot.grab walk
+            // answers): the request the flag raises, the render site
+            // below the grab answers (the fresh frame the PNG writes,
+            // the chat message the consumer tail keeps). minifb has
+            // no edge API, the press is read per frame.
+            if window.is_key_pressed(Key::F2, minifb::KeyRepeat::No) {
+                app.on_screenshot_key();
+            }
             // THE F5 PERSPECTIVE (vanilla handleKeybinds's
             // keyTogglePerspective lane): the rising edge cycles the
             // three views — first person, third-person back, third-person
@@ -1427,6 +1437,31 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
         music.sync_block_sounds(&app.sounds.events);
         fb.clear(crate::headless::SKY_TOP, crate::headless::SKY_BOTTOM);
         app.render(&mut fb, &mut assets);
+        // THE F2 GRAB'S OWN ANSWER (the Screenshot.grab walk the
+        // request's flag answers — the "screenshots" dir the
+        // timestamp name fills, the PNG the fresh frame's own bytes
+        // write, the chat message the consumer tail keeps: the
+        // success the name speaks, the failure the error carries)
+        if app.screenshot_request {
+            let now = std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .map(|d| d.as_secs() as i64)
+                .unwrap_or(0);
+            let dir = std::path::Path::new("screenshots");
+            let _ = std::fs::create_dir_all(dir);
+            let name = crate::screens::screenshot_file_name(now, &|n| {
+                dir.join(n).exists()
+            });
+            let outcome = crate::png_io::write_rgb_png(
+                &dir.join(&name),
+                width,
+                height,
+                &fb.color,
+            )
+            .map(|_| name)
+            .map_err(|e| e.to_string());
+            app.take_screenshot(outcome);
+        }
         buf.iter_mut().zip(fb.to_argb()).for_each(|(o, c)| *o = c);
         window.update_with_buffer(&buf, width, height)?;
         std::thread::sleep(std::time::Duration::from_millis(16));
