@@ -1,0 +1,57 @@
+=== extractAction(Lnet/minecraft/client/gui/GuiGraphicsExtractor;)V max_stack=7 max_locals=8 ===
+      0: aload_0 
+      1: invokevirtual #8.getHotbarAlpha:()F
+      4: fstore_2 
+      5: fload_2 
+      6: fconst_0 
+      7: fcmpl 
+      8: ifle start+113
+     11: aload_0 
+     12: getfield #8.menu:Lnet/minecraft/client/gui/spectator/SpectatorMenu;
+     15: ifnull start+113
+     18: aload_0 
+     19: getfield #8.menu:Lnet/minecraft/client/gui/spectator/SpectatorMenu;
+     22: invokevirtual #28.getSelectedItem:()Lnet/minecraft/client/gui/spectator/SpectatorMenuItem;
+     25: astore_3 
+     26: aload_3 
+     27: getstatic #28.EMPTY_SLOT:Lnet/minecraft/client/gui/spectator/SpectatorMenuItem;
+     30: if_acmpne start+48
+     33: aload_0 
+     34: getfield #8.menu:Lnet/minecraft/client/gui/spectator/SpectatorMenu;
+     37: invokevirtual #28.getSelectedCategory:()Lnet/minecraft/client/gui/spectator/SpectatorMenuCategory;
+     40: invokeinterface #181.getPrompt:()Lnet/minecraft/network/chat/Component;
+     45: goto start+54
+     48: aload_3 
+     49: invokeinterface #127.getName:()Lnet/minecraft/network/chat/Component;
+     54: astore 4
+     56: aload_0 
+     57: getfield #8.minecraft:Lnet/minecraft/client/Minecraft;
+     60: getfield #141.font:Lnet/minecraft/client/gui/Font;
+     63: aload 4
+     65: invokevirtual #163.width:(Lnet/minecraft/network/chat/FormattedText;)I
+     68: istore 5
+     70: aload_1 
+     71: invokevirtual #53.guiWidth:()I
+     74: iload 5
+     76: isub 
+     77: iconst_2 
+     78: idiv 
+     79: istore 6
+     81: aload_1 
+     82: invokevirtual #53.guiHeight:()I
+     85: bipush 35
+     87: isub 
+     88: istore 7
+     90: aload_1 
+     91: aload_0 
+     92: getfield #8.minecraft:Lnet/minecraft/client/Minecraft;
+     95: getfield #141.font:Lnet/minecraft/client/gui/Font;
+     98: aload 4
+    100: iload 6
+    102: iload 7
+    104: iload 5
+    106: fload_2 
+    107: invokestatic #75.white:(F)I
+    110: invokevirtual #53.textWithBackdrop:(Lnet/minecraft/client/gui/Font;Lnet/minecraft/network/chat/Component;IIII)V
+    113: return 
+

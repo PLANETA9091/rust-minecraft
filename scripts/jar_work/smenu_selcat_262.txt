@@ -1,0 +1,84 @@
+=== selectCategory(Lnet/minecraft/client/gui/spectator/SpectatorMenuCategory;)V max_stack=2 max_locals=2 ===
+      0: aload_0 
+      1: aload_1 
+      2: putfield #10.category:Lnet/minecraft/client/gui/spectator/SpectatorMenuCategory;
+      5: aload_0 
+      6: iconst_m1 
+      7: putfield #10.selectedSlot:I
+     10: aload_0 
+     11: iconst_0 
+     12: putfield #10.page:I
+     15: return 
+
+=== extractIcon(Lnet/minecraft/client/gui/GuiGraphicsExtractor;FF)V max_stack=11 max_locals=4 ===
+      0: aload_1 
+      1: getstatic #17.GUI_TEXTURED:Lcom/mojang/blaze3d/pipeline/RenderPipeline;
+      4: getstatic #8.CLOSE_SPRITE:Lnet/minecraft/resources/Identifier;
+      7: iconst_0 
+      8: iconst_0 
+      9: bipush 16
+     11: bipush 16
+     13: fload_3 
+     14: fload_2 
+     15: fload_2 
+     16: fload_2 
+     17: invokestatic #27.colorFromFloat:(FFFF)I
+     20: invokevirtual #33.blitSprite:(Lcom/mojang/blaze3d/pipeline/RenderPipeline;Lnet/minecraft/resources/Identifier;IIIII)V
+     23: return 
+
+=== extractIcon(Lnet/minecraft/client/gui/GuiGraphicsExtractor;FF)V max_stack=8 max_locals=5 ===
+      0: fload_3 
+      1: fload_2 
+      2: fload_2 
+      3: fload_2 
+      4: invokestatic #30.colorFromFloat:(FFFF)I
+      7: istore 4
+      9: aload_0 
+     10: getfield #8.direction:I
+     13: ifge start+37
+     16: aload_1 
+     17: getstatic #36.GUI_TEXTURED:Lcom/mojang/blaze3d/pipeline/RenderPipeline;
+     20: getstatic #18.SCROLL_LEFT_SPRITE:Lnet/minecraft/resources/Identifier;
+     23: iconst_0 
+     24: iconst_0 
+     25: bipush 16
+     27: bipush 16
+     29: iload 4
+     31: invokevirtual #46.blitSprite:(Lcom/mojang/blaze3d/pipeline/RenderPipeline;Lnet/minecraft/resources/Identifier;IIIII)V
+     34: goto start+55
+     37: aload_1 
+     38: getstatic #36.GUI_TEXTURED:Lcom/mojang/blaze3d/pipeline/RenderPipeline;
+     41: getstatic #18.SCROLL_RIGHT_SPRITE:Lnet/minecraft/resources/Identifier;
+     44: iconst_0 
+     45: iconst_0 
+     46: bipush 16
+     48: bipush 16
+     50: iload 4
+     52: invokevirtual #46.blitSprite:(Lcom/mojang/blaze3d/pipeline/RenderPipeline;Lnet/minecraft/resources/Identifier;IIIII)V
+     55: return 
+
+=== getName()Lnet/minecraft/network/chat/Component; max_stack=1 max_locals=1 ===
+      0: aload_0 
+      1: getfield #8.direction:I
+      4: ifge start+13
+      7: getstatic #18.PREVIOUS_PAGE_TEXT:Lnet/minecraft/network/chat/Component;
+     10: goto start+16
+     13: getstatic #18.NEXT_PAGE_TEXT:Lnet/minecraft/network/chat/Component;
+     16: areturn 
+
+=== extractIcon(Lnet/minecraft/client/gui/GuiGraphicsExtractor;FF)V max_stack=11 max_locals=4 ===
+      0: aload_1 
+      1: getstatic #73.GUI_TEXTURED:Lcom/mojang/blaze3d/pipeline/RenderPipeline;
+      4: getstatic #24.TELEPORT_TO_TEAM_SPRITE:Lnet/minecraft/resources/Identifier;
+      7: iconst_0 
+      8: iconst_0 
+      9: bipush 16
+     11: bipush 16
+     13: fload_3 
+     14: fload_2 
+     15: fload_2 
+     16: fload_2 
+     17: invokestatic #83.colorFromFloat:(FFFF)I
+     20: invokevirtual #89.blitSprite:(Lcom/mojang/blaze3d/pipeline/RenderPipeline;Lnet/minecraft/resources/Identifier;IIIII)V
+     23: return 
+

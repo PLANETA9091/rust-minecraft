@@ -1389,7 +1389,22 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
             // like the left/right pair above
             let middle_down = window.get_mouse_down(minifb::MouseButton::Middle);
             if middle_down && !was_middle_down {
-                app.on_pick_block(window.is_key_down(Key::LeftCtrl));
+                // THE SPECTATOR'S ACTION KEY (javap Minecraft
+                // .handleKeybinds pcs 617-653 — the keySpectatorHotbar
+                // loop the `player.isSpectator()` verdict answers: the
+                // key the Options <init> bytecode 3208-3226 binds MOUSE
+                // button 2 — the MIDDLE button the keyPickItem maps
+                // TOO —, the `spectatorGui.onHotbarActionKeyPressed()`
+                // the loop speaks; the pick lane the spectator verdict
+                // keeps silent — the handlePickItemFromBlock walk the
+                // packet alone carries, the server the spectator's
+                // refusal answers, the offline prediction the
+                // spectator's own silence wears)
+                if app.game_mode == crate::screens::GameMode::Spectator {
+                    app.spectator_on_action_key();
+                } else {
+                    app.on_pick_block(window.is_key_down(Key::LeftCtrl));
+                }
             }
             was_middle_down = middle_down;
         }

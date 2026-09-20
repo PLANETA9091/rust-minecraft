@@ -1,0 +1,19 @@
+=== isEnabled()Z max_stack=1 max_locals=1 ===
+      0: aload_0 
+      1: getfield #18.items:Ljava/util/List;
+      4: invokeinterface #70.isEmpty:()Z
+      9: ifne start+16
+     12: iconst_1 
+     13: goto start+17
+     16: iconst_0 
+     17: ireturn 
+
+=== getItems()Ljava/util/List; max_stack=1 max_locals=1 ===
+      0: aload_0 
+      1: getfield #18.items:Ljava/util/List;
+      4: areturn 
+
+=== getName()Lnet/minecraft/network/chat/Component; max_stack=1 max_locals=1 ===
+      0: getstatic #18.TELEPORT_TEXT:Lnet/minecraft/network/chat/Component;
+      3: areturn 
+

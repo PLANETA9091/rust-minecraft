@@ -1,0 +1,19 @@
+=== <init>()V max_stack=1 max_locals=1 ===
+      0: aload_0 
+      1: invokespecial #2.<init>:()V
+      4: return 
+
+=== selectItem(Lnet/minecraft/client/gui/spectator/SpectatorMenu;)V max_stack=0 max_locals=2 ===
+      0: return 
+
+=== getName()Lnet/minecraft/network/chat/Component; max_stack=1 max_locals=1 ===
+      0: getstatic #8.EMPTY:Lnet/minecraft/network/chat/Component;
+      3: areturn 
+
+=== extractIcon(Lnet/minecraft/client/gui/GuiGraphicsExtractor;FF)V max_stack=0 max_locals=4 ===
+      0: return 
+
+=== isEnabled()Z max_stack=1 max_locals=1 ===
+      0: iconst_0 
+      1: ireturn 
+

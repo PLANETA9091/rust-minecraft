@@ -1,0 +1,43 @@
+=== onMouseScrolled(I)V max_stack=3 max_locals=3 ===
+      0: aload_0 
+      1: getfield #8.menu:Lnet/minecraft/client/gui/spectator/SpectatorMenu;
+      4: invokevirtual #28.getSelectedSlot:()I
+      7: iload_1 
+      8: iadd 
+      9: istore_2 
+     10: iload_2 
+     11: iflt start+57
+     14: iload_2 
+     15: bipush 8
+     17: if_icmpgt start+57
+     20: aload_0 
+     21: getfield #8.menu:Lnet/minecraft/client/gui/spectator/SpectatorMenu;
+     24: iload_2 
+     25: invokevirtual #28.getItem:(I)Lnet/minecraft/client/gui/spectator/SpectatorMenuItem;
+     28: getstatic #28.EMPTY_SLOT:Lnet/minecraft/client/gui/spectator/SpectatorMenuItem;
+     31: if_acmpeq start+50
+     34: aload_0 
+     35: getfield #8.menu:Lnet/minecraft/client/gui/spectator/SpectatorMenu;
+     38: iload_2 
+     39: invokevirtual #28.getItem:(I)Lnet/minecraft/client/gui/spectator/SpectatorMenuItem;
+     42: invokeinterface #127.isEnabled:()Z
+     47: ifne start+57
+     50: iload_2 
+     51: iload_1 
+     52: iadd 
+     53: istore_2 
+     54: goto start+10
+     57: iload_2 
+     58: iflt start+82
+     61: iload_2 
+     62: bipush 8
+     64: if_icmpgt start+82
+     67: aload_0 
+     68: getfield #8.menu:Lnet/minecraft/client/gui/spectator/SpectatorMenu;
+     71: iload_2 
+     72: invokevirtual #28.selectSlot:(I)V
+     75: aload_0 
+     76: invokestatic #14.getMillis:()J
+     79: putfield #8.lastSelectionTime:J
+     82: return 
+

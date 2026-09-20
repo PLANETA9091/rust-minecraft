@@ -1,0 +1,73 @@
+=== extractSlot(Lnet/minecraft/client/gui/GuiGraphicsExtractor;IIFFLnet/minecraft/client/gui/spectator/SpectatorMenuItem;)V max_stack=6 max_locals=9 ===
+      0: aload 6
+      2: getstatic #28.EMPTY_SLOT:Lnet/minecraft/client/gui/spectator/SpectatorMenuItem;
+      5: if_acmpeq start+145
+      8: aload_1 
+      9: invokevirtual #53.pose:()Lorg/joml/Matrix3x2fStack;
+     12: invokevirtual #118.pushMatrix:()Lorg/joml/Matrix3x2fStack;
+     15: pop 
+     16: aload_1 
+     17: invokevirtual #53.pose:()Lorg/joml/Matrix3x2fStack;
+     20: iload_3 
+     21: i2f 
+     22: fload 4
+     24: invokevirtual #118.translate:(FF)Lorg/joml/Matrix3x2f;
+     27: pop 
+     28: aload 6
+     30: invokeinterface #127.isEnabled:()Z
+     35: ifeq start+42
+     38: fconst_1 
+     39: goto start+44
+     42: ldc #132
+     44: fstore 7
+     46: aload 6
+     48: aload_1 
+     49: fload 7
+     51: fload 5
+     53: invokeinterface #127.extractIcon:(Lnet/minecraft/client/gui/GuiGraphicsExtractor;FF)V
+     58: aload_1 
+     59: invokevirtual #53.pose:()Lorg/joml/Matrix3x2fStack;
+     62: invokevirtual #118.popMatrix:()Lorg/joml/Matrix3x2fStack;
+     65: pop 
+     66: fload 5
+     68: fconst_0 
+     69: fcmpl 
+     70: ifle start+145
+     73: aload 6
+     75: invokeinterface #127.isEnabled:()Z
+     80: ifeq start+145
+     83: aload_0 
+     84: getfield #8.minecraft:Lnet/minecraft/client/Minecraft;
+     87: getfield #141.options:Lnet/minecraft/client/Options;
+     90: getfield #147.keyHotbarSlots:[Lnet/minecraft/client/KeyMapping;
+     93: iload_2 
+     94: aaload 
+     95: invokevirtual #153.getTranslatedKeyMessage:()Lnet/minecraft/network/chat/Component;
+     98: astore 8
+    100: aload_1 
+    101: aload_0 
+    102: getfield #8.minecraft:Lnet/minecraft/client/Minecraft;
+    105: getfield #141.font:Lnet/minecraft/client/gui/Font;
+    108: aload 8
+    110: iload_3 
+    111: bipush 19
+    113: iadd 
+    114: iconst_2 
+    115: isub 
+    116: aload_0 
+    117: getfield #8.minecraft:Lnet/minecraft/client/Minecraft;
+    120: getfield #141.font:Lnet/minecraft/client/gui/Font;
+    123: aload 8
+    125: invokevirtual #163.width:(Lnet/minecraft/network/chat/FormattedText;)I
+    128: isub 
+    129: fload 4
+    131: f2i 
+    132: bipush 6
+    134: iadd 
+    135: iconst_3 
+    136: iadd 
+    137: fload 5
+    139: invokestatic #75.white:(F)I
+    142: invokevirtual #53.text:(Lnet/minecraft/client/gui/Font;Lnet/minecraft/network/chat/Component;III)V
+    145: return 
+

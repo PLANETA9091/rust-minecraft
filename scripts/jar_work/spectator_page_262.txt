@@ -1,0 +1,71 @@
+=== extractPage(Lnet/minecraft/client/gui/GuiGraphicsExtractor;FIILnet/minecraft/client/gui/spectator/categories/SpectatorPage;)V max_stack=8 max_locals=8 ===
+      0: fload_2 
+      1: invokestatic #75.white:(F)I
+      4: istore 6
+      6: aload_1 
+      7: getstatic #80.GUI_TEXTURED:Lcom/mojang/blaze3d/pipeline/RenderPipeline;
+     10: getstatic #8.HOTBAR_SPRITE:Lnet/minecraft/resources/Identifier;
+     13: iload_3 
+     14: bipush 91
+     16: isub 
+     17: iload 4
+     19: sipush 182
+     22: bipush 22
+     24: iload 6
+     26: invokevirtual #53.blitSprite:(Lcom/mojang/blaze3d/pipeline/RenderPipeline;Lnet/minecraft/resources/Identifier;IIIII)V
+     29: aload 5
+     31: invokevirtual #94.getSelectedSlot:()I
+     34: iflt start+72
+     37: aload_1 
+     38: getstatic #80.GUI_TEXTURED:Lcom/mojang/blaze3d/pipeline/RenderPipeline;
+     41: getstatic #8.HOTBAR_SELECTION_SPRITE:Lnet/minecraft/resources/Identifier;
+     44: iload_3 
+     45: bipush 91
+     47: isub 
+     48: iconst_1 
+     49: isub 
+     50: aload 5
+     52: invokevirtual #94.getSelectedSlot:()I
+     55: bipush 20
+     57: imul 
+     58: iadd 
+     59: iload 4
+     61: iconst_1 
+     62: isub 
+     63: bipush 24
+     65: bipush 23
+     67: iload 6
+     69: invokevirtual #53.blitSprite:(Lcom/mojang/blaze3d/pipeline/RenderPipeline;Lnet/minecraft/resources/Identifier;IIIII)V
+     72: iconst_0 
+     73: istore 7
+     75: iload 7
+     77: bipush 9
+     79: if_icmpge start+125
+     82: aload_0 
+     83: aload_1 
+     84: iload 7
+     86: aload_1 
+     87: invokevirtual #53.guiWidth:()I
+     90: iconst_2 
+     91: idiv 
+     92: bipush 90
+     94: isub 
+     95: iload 7
+     97: bipush 20
+     99: imul 
+    100: iadd 
+    101: iconst_2 
+    102: iadd 
+    103: iload 4
+    105: iconst_3 
+    106: iadd 
+    107: i2f 
+    108: fload_2 
+    109: aload 5
+    111: iload 7
+    113: invokevirtual #94.getItem:(I)Lnet/minecraft/client/gui/spectator/SpectatorMenuItem;
+    116: invokevirtual #8.extractSlot:(Lnet/minecraft/client/gui/GuiGraphicsExtractor;IIFFLnet/minecraft/client/gui/spectator/SpectatorMenuItem;)V
+    119: iinc #1793
+    122: goto start+75
+    125: return 
+

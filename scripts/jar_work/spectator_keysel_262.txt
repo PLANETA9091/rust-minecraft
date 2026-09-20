@@ -1,0 +1,20 @@
+=== onHotbarSelected(I)V max_stack=4 max_locals=2 ===
+      0: aload_0 
+      1: invokestatic #14.getMillis:()J
+      4: putfield #8.lastSelectionTime:J
+      7: aload_0 
+      8: getfield #8.menu:Lnet/minecraft/client/gui/spectator/SpectatorMenu;
+     11: ifnull start+25
+     14: aload_0 
+     15: getfield #8.menu:Lnet/minecraft/client/gui/spectator/SpectatorMenu;
+     18: iload_1 
+     19: invokevirtual #28.selectSlot:(I)V
+     22: goto start+37
+     25: aload_0 
+     26: new net/minecraft/client/gui/spectator/SpectatorMenu
+     29: dup 
+     30: aload_0 
+     31: invokespecial #28.<init>:(Lnet/minecraft/client/gui/spectator/SpectatorMenuListener;)V
+     34: putfield #8.menu:Lnet/minecraft/client/gui/spectator/SpectatorMenu;
+     37: return 
+

@@ -1,0 +1,321 @@
+=== handleKeybinds()V max_stack=6 max_locals=4 ===
+      0: aload_0 
+      1: getfield #22.options:Lnet/minecraft/client/Options;
+      4: getfield #401.keyTogglePerspective:Lnet/minecraft/client/KeyMapping;
+      7: invokevirtual #3178.consumeClick:()Z
+     10: ifeq start+86
+     13: aload_0 
+     14: getfield #22.options:Lnet/minecraft/client/Options;
+     17: invokevirtual #401.getCameraType:()Lnet/minecraft/client/CameraType;
+     20: astore_1 
+     21: aload_0 
+     22: getfield #22.options:Lnet/minecraft/client/Options;
+     25: aload_0 
+     26: getfield #22.options:Lnet/minecraft/client/Options;
+     29: invokevirtual #401.getCameraType:()Lnet/minecraft/client/CameraType;
+     32: invokevirtual #3187.cycle:()Lnet/minecraft/client/CameraType;
+     35: invokevirtual #401.setCameraType:(Lnet/minecraft/client/CameraType;)V
+     38: aload_1 
+     39: invokevirtual #3187.isFirstPerson:()Z
+     42: aload_0 
+     43: getfield #22.options:Lnet/minecraft/client/Options;
+     46: invokevirtual #401.getCameraType:()Lnet/minecraft/client/CameraType;
+     49: invokevirtual #3187.isFirstPerson:()Z
+     52: if_icmpeq start+83
+     55: aload_0 
+     56: getfield #22.gameRenderer:Lnet/minecraft/client/renderer/GameRenderer;
+     59: aload_0 
+     60: getfield #22.options:Lnet/minecraft/client/Options;
+     63: invokevirtual #401.getCameraType:()Lnet/minecraft/client/CameraType;
+     66: invokevirtual #3187.isFirstPerson:()Z
+     69: ifeq start+79
+     72: aload_0 
+     73: invokevirtual #22.getCameraEntity:()Lnet/minecraft/world/entity/Entity;
+     76: goto start+80
+     79: aconst_null 
+     80: invokevirtual #1154.checkEntityPostEffect:(Lnet/minecraft/world/entity/Entity;)V
+     83: goto start+0
+     86: aload_0 
+     87: getfield #22.options:Lnet/minecraft/client/Options;
+     90: getfield #401.keySmoothCamera:Lnet/minecraft/client/KeyMapping;
+     93: invokevirtual #3178.consumeClick:()Z
+     96: ifeq start+124
+     99: aload_0 
+    100: getfield #22.options:Lnet/minecraft/client/Options;
+    103: aload_0 
+    104: getfield #22.options:Lnet/minecraft/client/Options;
+    107: getfield #401.smoothCamera:Z
+    110: ifne start+117
+    113: iconst_1 
+    114: goto start+118
+    117: iconst_0 
+    118: putfield #401.smoothCamera:Z
+    121: goto start+86
+    124: aload_0 
+    125: getfield #22.gui:Lnet/minecraft/client/gui/Gui;
+    128: invokevirtual #1224.handleKeybinds:()V
+    131: aload_0 
+    132: getfield #22.options:Lnet/minecraft/client/Options;
+    135: getfield #401.keyToggleSpectatorShaderEffects:Lnet/minecraft/client/KeyMapping;
+    138: invokevirtual #3178.consumeClick:()Z
+    141: ifeq start+154
+    144: aload_0 
+    145: getfield #22.gameRenderer:Lnet/minecraft/client/renderer/GameRenderer;
+    148: invokevirtual #1154.togglePostEffect:()V
+    151: goto start+131
+    154: iconst_0 
+    155: istore_1 
+    156: iload_1 
+    157: bipush 9
+    159: if_icmpge start+281
+    162: aload_0 
+    163: getfield #22.options:Lnet/minecraft/client/Options;
+    166: getfield #401.keySaveHotbarActivator:Lnet/minecraft/client/KeyMapping;
+    169: invokevirtual #3178.isDown:()Z
+    172: istore_2 
+    173: aload_0 
+    174: getfield #22.options:Lnet/minecraft/client/Options;
+    177: getfield #401.keyLoadHotbarActivator:Lnet/minecraft/client/KeyMapping;
+    180: invokevirtual #3178.isDown:()Z
+    183: istore_3 
+    184: aload_0 
+    185: getfield #22.options:Lnet/minecraft/client/Options;
+    188: getfield #401.keyHotbarSlots:[Lnet/minecraft/client/KeyMapping;
+    191: iload_1 
+    192: aaload 
+    193: invokevirtual #3178.consumeClick:()Z
+    196: ifeq start+275
+    199: aload_0 
+    200: getfield #22.player:Lnet/minecraft/client/player/LocalPlayer;
+    203: invokevirtual #2839.isSpectator:()Z
+    206: ifeq start+226
+    209: aload_0 
+    210: getfield #22.gui:Lnet/minecraft/client/gui/Gui;
+    213: getfield #1224.hud:Lnet/minecraft/client/gui/Hud;
+    216: invokevirtual #1226.getSpectatorGui:()Lnet/minecraft/client/gui/components/spectator/SpectatorGui;
+    219: iload_1 
+    220: invokevirtual #3240.onHotbarSelected:(I)V
+    223: goto start+275
+    226: aload_0 
+    227: getfield #22.player:Lnet/minecraft/client/player/LocalPlayer;
+    230: invokevirtual #2839.hasInfiniteMaterials:()Z
+    233: ifeq start+264
+    236: aload_0 
+    237: getfield #22.gui:Lnet/minecraft/client/gui/Gui;
+    240: invokevirtual #1224.screen:()Lnet/minecraft/client/gui/screens/Screen;
+    243: ifnonnull start+264
+    246: iload_3 
+    247: ifne start+254
+    250: iload_2 
+    251: ifeq start+264
+    254: aload_0 
+    255: iload_1 
+    256: iload_3 
+    257: iload_2 
+    258: invokestatic #3245.handleHotbarLoadOrSave:(Lnet/minecraft/client/Minecraft;IZZ)V
+    261: goto start+275
+    264: aload_0 
+    265: getfield #22.player:Lnet/minecraft/client/player/LocalPlayer;
+    268: invokevirtual #2839.getInventory:()Lnet/minecraft/world/entity/player/Inventory;
+    271: iload_1 
+    272: invokevirtual #3255.setSelectedSlot:(I)V
+    275: iinc #257
+    278: goto start+156
+    281: aload_0 
+    282: getfield #22.options:Lnet/minecraft/client/Options;
+    285: getfield #401.keyInventory:Lnet/minecraft/client/KeyMapping;
+    288: invokevirtual #3178.consumeClick:()Z
+    291: ifeq start+342
+    294: aload_0 
+    295: getfield #22.gameMode:Lnet/minecraft/client/multiplayer/MultiPlayerGameMode;
+    298: invokevirtual #2899.isServerControlledInventory:()Z
+    301: ifeq start+314
+    304: aload_0 
+    305: getfield #22.player:Lnet/minecraft/client/player/LocalPlayer;
+    308: invokevirtual #2839.sendOpenInventory:()V
+    311: goto start+281
+    314: aload_0 
+    315: getfield #22.tutorial:Lnet/minecraft/client/tutorial/Tutorial;
+    318: invokevirtual #428.onOpenInventory:()V
+    321: aload_0 
+    322: getfield #22.gui:Lnet/minecraft/client/gui/Gui;
+    325: new net/minecraft/client/gui/screens/inventory/InventoryScreen
+    328: dup 
+    329: aload_0 
+    330: getfield #22.player:Lnet/minecraft/client/player/LocalPlayer;
+    333: invokespecial #3271.<init>:(Lnet/minecraft/world/entity/player/Player;)V
+    336: invokevirtual #1224.setScreen:(Lnet/minecraft/client/gui/screens/Screen;)V
+    339: goto start+281
+    342: aload_0 
+    343: getfield #22.options:Lnet/minecraft/client/Options;
+    346: getfield #401.keyQuickActions:Lnet/minecraft/client/KeyMapping;
+    349: invokevirtual #3178.consumeClick:()Z
+    352: ifeq start+371
+    355: aload_0 
+    356: invokevirtual #22.getQuickActionsDialog:()Ljava/util/Optional;
+    359: aload_0 
+    360: invokedynamic #3282
+    365: invokevirtual #3284.ifPresent:(Ljava/util/function/Consumer;)V
+    368: goto start+342
+    371: aload_0 
+    372: getfield #22.options:Lnet/minecraft/client/Options;
+    375: getfield #401.keySwapOffhand:Lnet/minecraft/client/KeyMapping;
+    378: invokevirtual #3178.consumeClick:()Z
+    381: ifeq start+420
+    384: aload_0 
+    385: getfield #22.player:Lnet/minecraft/client/player/LocalPlayer;
+    388: invokevirtual #2839.isSpectator:()Z
+    391: ifne start+371
+    394: aload_0 
+    395: invokevirtual #22.getConnection:()Lnet/minecraft/client/multiplayer/ClientPacketListener;
+    398: new net/minecraft/network/protocol/game/ServerboundPlayerActionPacket
+    401: dup 
+    402: getstatic #3294.SWAP_ITEM_WITH_OFFHAND:Lnet/minecraft/network/protocol/game/ServerboundPlayerActionPacket$Action;
+    405: getstatic #3300.ZERO:Lnet/minecraft/core/BlockPos;
+    408: getstatic #3306.DOWN:Lnet/minecraft/core/Direction;
+    411: invokespecial #3291.<init>:(Lnet/minecraft/network/protocol/game/ServerboundPlayerActionPacket$Action;Lnet/minecraft/core/BlockPos;Lnet/minecraft/core/Direction;)V
+    414: invokevirtual #1636.send:(Lnet/minecraft/network/protocol/Packet;)V
+    417: goto start+371
+    420: aload_0 
+    421: getfield #22.options:Lnet/minecraft/client/Options;
+    424: getfield #401.keyDrop:Lnet/minecraft/client/KeyMapping;
+    427: invokevirtual #3178.consumeClick:()Z
+    430: ifeq start+470
+    433: aload_0 
+    434: getfield #22.player:Lnet/minecraft/client/player/LocalPlayer;
+    437: invokevirtual #2839.isSpectator:()Z
+    440: ifne start+420
+    443: aload_0 
+    444: getfield #22.player:Lnet/minecraft/client/player/LocalPlayer;
+    447: aload_0 
+    448: invokevirtual #22.hasControlDown:()Z
+    451: invokevirtual #2839.drop:(Z)Z
+    454: ifeq start+420
+    457: aload_0 
+    458: getfield #22.player:Lnet/minecraft/client/player/LocalPlayer;
+    461: getstatic #2844.MAIN_HAND:Lnet/minecraft/world/InteractionHand;
+    464: invokevirtual #2839.swing:(Lnet/minecraft/world/InteractionHand;)V
+    467: goto start+420
+    470: iconst_0 
+    471: istore_1 
+    472: aload_0 
+    473: getfield #22.player:Lnet/minecraft/client/player/LocalPlayer;
+    476: invokevirtual #2839.isUsingItem:()Z
+    479: ifeq start+554
+    482: aload_0 
+    483: getfield #22.options:Lnet/minecraft/client/Options;
+    486: getfield #401.keyUse:Lnet/minecraft/client/KeyMapping;
+    489: invokevirtual #3178.isDown:()Z
+    492: ifne start+506
+    495: aload_0 
+    496: getfield #22.gameMode:Lnet/minecraft/client/multiplayer/MultiPlayerGameMode;
+    499: aload_0 
+    500: getfield #22.player:Lnet/minecraft/client/player/LocalPlayer;
+    503: invokevirtual #2899.releaseUsingItem:(Lnet/minecraft/world/entity/player/Player;)V
+    506: aload_0 
+    507: getfield #22.options:Lnet/minecraft/client/Options;
+    510: getfield #401.keyAttack:Lnet/minecraft/client/KeyMapping;
+    513: invokevirtual #3178.consumeClick:()Z
+    516: ifeq start+522
+    519: goto start+506
+    522: aload_0 
+    523: getfield #22.options:Lnet/minecraft/client/Options;
+    526: getfield #401.keyUse:Lnet/minecraft/client/KeyMapping;
+    529: invokevirtual #3178.consumeClick:()Z
+    532: ifeq start+538
+    535: goto start+522
+    538: aload_0 
+    539: getfield #22.options:Lnet/minecraft/client/Options;
+    542: getfield #401.keyPickItem:Lnet/minecraft/client/KeyMapping;
+    545: invokevirtual #3178.consumeClick:()Z
+    548: ifeq start+656
+    551: goto start+538
+    554: aload_0 
+    555: getfield #22.options:Lnet/minecraft/client/Options;
+    558: getfield #401.keyAttack:Lnet/minecraft/client/KeyMapping;
+    561: invokevirtual #3178.consumeClick:()Z
+    564: ifeq start+577
+    567: iload_1 
+    568: aload_0 
+    569: invokevirtual #22.startAttack:()Z
+    572: ior 
+    573: istore_1 
+    574: goto start+554
+    577: aload_0 
+    578: getfield #22.options:Lnet/minecraft/client/Options;
+    581: getfield #401.keyUse:Lnet/minecraft/client/KeyMapping;
+    584: invokevirtual #3178.consumeClick:()Z
+    587: ifeq start+597
+    590: aload_0 
+    591: invokevirtual #22.startUseItem:()V
+    594: goto start+577
+    597: aload_0 
+    598: getfield #22.options:Lnet/minecraft/client/Options;
+    601: getfield #401.keyPickItem:Lnet/minecraft/client/KeyMapping;
+    604: invokevirtual #3178.consumeClick:()Z
+    607: ifeq start+617
+    610: aload_0 
+    611: invokevirtual #22.pickBlockOrEntity:()V
+    614: goto start+597
+    617: aload_0 
+    618: getfield #22.player:Lnet/minecraft/client/player/LocalPlayer;
+    621: invokevirtual #2839.isSpectator:()Z
+    624: ifeq start+656
+    627: aload_0 
+    628: getfield #22.options:Lnet/minecraft/client/Options;
+    631: getfield #401.keySpectatorHotbar:Lnet/minecraft/client/KeyMapping;
+    634: invokevirtual #3178.consumeClick:()Z
+    637: ifeq start+656
+    640: aload_0 
+    641: getfield #22.gui:Lnet/minecraft/client/gui/Gui;
+    644: getfield #1224.hud:Lnet/minecraft/client/gui/Hud;
+    647: invokevirtual #1226.getSpectatorGui:()Lnet/minecraft/client/gui/components/spectator/SpectatorGui;
+    650: invokevirtual #3240.onHotbarActionKeyPressed:()V
+    653: goto start+627
+    656: aload_0 
+    657: getfield #22.options:Lnet/minecraft/client/Options;
+    660: getfield #401.keyUse:Lnet/minecraft/client/KeyMapping;
+    663: invokevirtual #3178.isDown:()Z
+    666: ifeq start+690
+    669: aload_0 
+    670: getfield #22.rightClickDelay:I
+    673: ifne start+690
+    676: aload_0 
+    677: getfield #22.player:Lnet/minecraft/client/player/LocalPlayer;
+    680: invokevirtual #2839.isUsingItem:()Z
+    683: ifne start+690
+    686: aload_0 
+    687: invokevirtual #22.startUseItem:()V
+    690: aload_0 
+    691: aload_0 
+    692: getfield #22.gui:Lnet/minecraft/client/gui/Gui;
+    695: invokevirtual #1224.screen:()Lnet/minecraft/client/gui/screens/Screen;
+    698: ifnonnull start+732
+    701: iload_1 
+    702: ifne start+732
+    705: aload_0 
+    706: getfield #22.options:Lnet/minecraft/client/Options;
+    709: getfield #401.keyAttack:Lnet/minecraft/client/KeyMapping;
+    712: invokevirtual #3178.isDown:()Z
+    715: ifeq start+732
+    718: aload_0 
+    719: getfield #22.mouseHandler:Lnet/minecraft/client/MouseHandler;
+    722: invokevirtual #807.isMouseGrabbed:()Z
+    725: ifeq start+732
+    728: iconst_1 
+    729: goto start+733
+    732: iconst_0 
+    733: invokevirtual #22.continueAttack:(Z)V
+    736: return 
+
+=== lambda$handleKeybinds$0(Lnet/minecraft/core/Holder;)V max_stack=3 max_locals=2 ===
+      0: aload_0 
+      1: getfield #22.player:Lnet/minecraft/client/player/LocalPlayer;
+      4: getfield #2839.connection:Lnet/minecraft/client/multiplayer/ClientPacketListener;
+      7: aload_1 
+      8: aload_0 
+      9: getfield #22.gui:Lnet/minecraft/client/gui/Gui;
+     12: invokevirtual #1224.screen:()Lnet/minecraft/client/gui/screens/Screen;
+     15: invokevirtual #1636.showDialog:(Lnet/minecraft/core/Holder;Lnet/minecraft/client/gui/screens/Screen;)V
+     18: return 
+

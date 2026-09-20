@@ -1,0 +1,45 @@
+=== textWithBackdrop(Lnet/minecraft/client/gui/Font;Lnet/minecraft/network/chat/Component;IIII)V max_stack=7 max_locals=9 ===
+      0: aload_0 
+      1: getfield #14.minecraft:Lnet/minecraft/client/Minecraft;
+      4: getfield #34.options:Lnet/minecraft/client/Options;
+      7: fconst_0 
+      8: invokevirtual #287.getBackgroundColor:(F)I
+     11: istore 7
+     13: iload 7
+     15: ifeq start+57
+     18: iconst_2 
+     19: istore 8
+     21: aload_0 
+     22: iload_3 
+     23: iconst_2 
+     24: isub 
+     25: iload 4
+     27: iconst_2 
+     28: isub 
+     29: iload_3 
+     30: iload 5
+     32: iadd 
+     33: iconst_2 
+     34: iadd 
+     35: iload 4
+     37: aload_1 
+     38: invokestatic #277.requireNonNull:(Ljava/lang/Object;)Ljava/lang/Object;
+     41: pop 
+     42: bipush 9
+     44: iadd 
+     45: iconst_2 
+     46: iadd 
+     47: iload 7
+     49: iload 6
+     51: invokestatic #212.multiply:(II)I
+     54: invokevirtual #14.fill:(IIIII)V
+     57: aload_0 
+     58: aload_1 
+     59: aload_2 
+     60: iload_3 
+     61: iload 4
+     63: iload 6
+     65: iconst_1 
+     66: invokevirtual #14.text:(Lnet/minecraft/client/gui/Font;Lnet/minecraft/network/chat/Component;IIIZ)V
+     69: return 
+

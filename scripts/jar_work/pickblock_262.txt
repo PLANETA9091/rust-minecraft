@@ -1,0 +1,47 @@
+=== pickBlockOrEntity()V max_stack=3 max_locals=6 ===
+      0: aload_0 
+      1: getfield #22.hitResult:Lnet/minecraft/world/phys/HitResult;
+      4: ifnull start+20
+      7: aload_0 
+      8: getfield #22.hitResult:Lnet/minecraft/world/phys/HitResult;
+     11: invokevirtual #2870.getType:()Lnet/minecraft/world/phys/HitResult$Type;
+     14: getstatic #2876.MISS:Lnet/minecraft/world/phys/HitResult$Type;
+     17: if_acmpne start+21
+     20: return 
+     21: aload_0 
+     22: invokevirtual #22.hasControlDown:()Z
+     25: istore_1 
+     26: aload_0 
+     27: getfield #22.hitResult:Lnet/minecraft/world/phys/HitResult;
+     30: dup 
+     31: invokestatic #1143.requireNonNull:(Ljava/lang/Object;)Ljava/lang/Object;
+     34: pop 
+     35: astore_2 
+     36: iconst_0 
+     37: istore_3 
+     38: aload_2 
+     39: iload_3 
+     40: invokedynamic #3904
+     45: lookupswitch default=start+116 0->start+72 1->start+94
+     72: aload_2 
+     73: checkcast net/minecraft/world/phys/BlockHitResult
+     76: astore 4
+     78: aload_0 
+     79: getfield #22.gameMode:Lnet/minecraft/client/multiplayer/MultiPlayerGameMode;
+     82: aload 4
+     84: invokevirtual #2880.getBlockPos:()Lnet/minecraft/core/BlockPos;
+     87: iload_1 
+     88: invokevirtual #2899.handlePickItemFromBlock:(Lnet/minecraft/core/BlockPos;Z)V
+     91: goto start+116
+     94: aload_2 
+     95: checkcast net/minecraft/world/phys/EntityHitResult
+     98: astore 5
+    100: aload_0 
+    101: getfield #22.gameMode:Lnet/minecraft/client/multiplayer/MultiPlayerGameMode;
+    104: aload 5
+    106: invokevirtual #2927.getEntity:()Lnet/minecraft/world/entity/Entity;
+    109: iload_1 
+    110: invokevirtual #2899.handlePickItemFromEntity:(Lnet/minecraft/world/entity/Entity;Z)V
+    113: goto start+116
+    116: return 
+

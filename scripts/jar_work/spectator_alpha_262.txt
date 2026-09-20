@@ -1,0 +1,17 @@
+=== getHotbarAlpha()F max_stack=4 max_locals=3 ===
+      0: aload_0 
+      1: getfield #8.lastSelectionTime:J
+      4: invokestatic #14.getMillis:()J
+      7: lsub 
+      8: ldc2_w #36
+     11: ladd 
+     12: lstore_1 
+     13: lload_1 
+     14: l2f 
+     15: ldc #38
+     17: fdiv 
+     18: fconst_0 
+     19: fconst_1 
+     20: invokestatic #40.clamp:(FFF)F
+     23: freturn 
+

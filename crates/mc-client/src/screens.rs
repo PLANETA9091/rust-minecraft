@@ -5083,6 +5083,23 @@ pub struct App {
     /// deltas the container route speaks.
     pub bundle_scroll_acc_x: f64,
     pub bundle_scroll_acc_y: f64,
+    /// THE SPECTATOR MENU'S OWN STATE (javap `SpectatorGui.menu` — the
+    /// field the extractHotbar's own gate reads: null the closed lane
+    /// keeps, the open menu the extract walks the chrome rides — the
+    /// `Option` the null the JVM default answers). The model the
+    /// `SpectatorMenuState` shape carries, the audited walk the
+    /// `spectator_menu_item` function speaks.
+    pub spectator_menu: Option<SpectatorMenuState>,
+    /// THE SELECTION CLOCK (javap `SpectatorGui.lastSelectionTime` —
+    /// the `getMillis()` the onHotbarSelected/onHotbarActionKeyPressed
+    /// pairs bank fresh every ride, the `getHotbarAlpha` fold consumes:
+    /// `clamp((lastSelectionTime - now + 3000) / 1000.0, 0, 1)` — the
+    /// 3000ms the full-bright window speaks, the final 1000ms the fade
+    /// rides, the zero field the closed lane's own silence keeps — the
+    /// `None` the JVM default 0 answers). The `Instant` the
+    /// `hotbar_alpha_from` seam consumes, the tests the same fold the
+    /// wall clock rides.
+    pub spectator_last_selection: Option<std::time::Instant>,
     /// THE BUNDLE CONTENTS LANE (the `bundle_contents` component the
     /// client's stacks could carry — the model's own seam): the rows
     /// keyed by the hovered slot's MENU id (the chest's grid/mirror the
@@ -6360,6 +6377,8 @@ impl App {
             scroll_acc_y: 0.0,
             bundle_scroll_acc_x: 0.0,
             bundle_scroll_acc_y: 0.0,
+            spectator_menu: None,
+            spectator_last_selection: None,
             bundle_contents: std::collections::HashMap::new(),
             hotbar_slots: [(0, 0); 9],
             live_inv_slots: [(0, 0); crate::world_view::INVENTORY_MENU_SLOTS],
@@ -13079,6 +13098,16 @@ impl App {
     /// out-of-domain and the no-op repeat (the vanilla
     /// `Inventory.selected`'s own range).
     pub fn on_number_key(&mut self, selection: usize) {
+        if self.game_mode == GameMode::Spectator {
+            // THE SPECTATOR ROUTE (javap Minecraft.handleKeybinds pcs
+            // 183-223 — the keyHotbarSlots loop the `player
+            // .isSpectator()` verdict opens: the spectator arm the
+            // `spectatorGui.onHotbarSelected(i)` walk speaks — the
+            // menu the keys create/select, the hotbar selection the
+            // non-spectator lane keeps)
+            self.spectator_on_hotbar_selected(selection);
+            return;
+        }
         if selection > 8 || selection == self.selected_hotbar {
             return; // the gate: out-of-domain or the repeat
         }
@@ -13143,6 +13172,24 @@ impl App {
         // THE DIRECTION (the call site's own law: the Y wins, the X
         // tilt inverts)
         let i = if steps_y != 0 { steps_y } else { -steps_x };
+        // THE SPECTATOR ARM (javap MouseHandler.onScroll pcs 262-364 —
+        // the `player.isSpectator()` verdict the non-screen wheel
+        // answers: the MENU-ACTIVE lane the `-direction` the
+        // `spectatorGui.onMouseScrolled` walks — the negation the pc
+        // 309 `ineg` speaks —, the MENU-CLOSED lane the FLYING SPEED
+        // the `flyingSpeed + y * 0.005` fold adjusts — the `ldc_w
+        // #365` step the pool carries, the `clamp(0.0, 0.2)` the
+        // `fconst_0`/`ldc_w #366` pair speaks —, the hotbar selection
+        // the non-spectator lane keeps)
+        if self.game_mode == GameMode::Spectator {
+            if self.spectator_menu.is_some() {
+                self.spectator_on_mouse_scrolled(-i);
+            } else if let Some(b) = self.body.as_mut() {
+                let fs = b.flying_speed + steps_y as f32 * 0.005;
+                b.flying_speed = fs.clamp(0.0, 0.2);
+            }
+            return;
+        }
         // THE SELECTION (getNextScrollWheelSelection's own signum law —
         // ONE slot per event, the down-scroll toward the higher
         // numbers, the wrap the floor-mod keeps)
@@ -22773,6 +22820,420 @@ impl App {
             }
         }
     }
+}
+
+// THE SPECTATOR MENU'S OWN MODEL (javap net/minecraft/client/gui
+// /spectator/SpectatorMenu + categories/SpectatorPage + the categories
+// the root carries — the 26.2 walks the SpectatorGui's extract lane
+// rides). The audited shape the enum speaks: the EMPTY_SLOT the
+// SpectatorMenu$1 anonymous class carries (the disabled no-icon no-op
+// the extractSlot's own gate keeps silent), the CLOSE item the
+// CloseSpectatorItem walks (enabled always, the selectItem the
+// menu.exit() answers), the SCROLL items the ScrollMenuItem's pair
+// walks (the page shift the selectItem speaks, the disabled arm the
+// root page's own slot-7 verdict wears — `j >= items.size()` the getItem
+// fold answers), and the TWO teleport categories the
+// RootSpectatorMenuCategory's items list carries verbatim (javap
+// RootSpectatorMenuCategory <init> pcs 4-44: TeleportToPlayer, then
+// TeleportToTeam). The teleports' own verdicts the offline lane keeps
+// honest (javap TeleportToPlayerMenuCategory isEnabled pcs 0-17: `!
+// items.isEmpty()` — the items the <init> builds from the LISTED
+// online players the SPECTATOR filter excludes — javap lambda$new$0:
+// `getGameMode() != SPECTATOR` — the menu only exists while the local
+// body wears the SPECTATOR mode, the only listed player the filter's
+// own exclusion empties, the team lane the house's no-teams belief
+// keeps — the DISABLED verdicts the activations refuse, the icons the
+// 0.5 color the extractSlot fold paints).
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+pub(crate) enum SpectatorMenuItem {
+    EmptySlot,
+    Close,
+    ScrollLeft,
+    ScrollRightEnabled,
+    ScrollRightDisabled,
+    TeleportToPlayer,
+    TeleportToTeam,
+}
+
+/// THE ROOT PAGE'S OWN SIZE (the RootSpectatorMenuCategory's items
+/// list — the two teleport categories the <init> adds verbatim; the
+/// getItem walk's own bounds the list's size answers).
+const SPECTATOR_ROOT_ITEM_COUNT: i32 = 2;
+
+impl SpectatorMenuItem {
+    /// THE isEnabled WALK (javap the interface's own verdicts — the
+    /// EMPTY_SLOT's anonymous class answers false, the CLOSE item's
+    /// `iconst_1` answers true, the scroll items the enabled flag
+    /// carries, the teleport categories the `!items.isEmpty()` fold
+    /// the offline world's empty lists keeps — the disabled the
+    /// activations refuse and the icons the 0.5 color wear).
+    pub(crate) fn is_enabled(self) -> bool {
+        !matches!(
+            self,
+            SpectatorMenuItem::EmptySlot
+                | SpectatorMenuItem::ScrollRightDisabled
+                | SpectatorMenuItem::TeleportToPlayer
+                | SpectatorMenuItem::TeleportToTeam
+        )
+    }
+
+    /// THE getName WALK (javap the items' own constants — the
+    /// Component.translatable keys the en_us table answers:
+    /// "Close Menu", "Previous Page", "Next Page", "Teleport to
+    /// Player", "Teleport to Team Member" — the EMPTY_SLOT the
+    /// `Component.empty` answers, the prompt the category's own
+    /// getPrompt carries).
+    pub(crate) fn name_key(self) -> &'static str {
+        match self {
+            SpectatorMenuItem::EmptySlot => "",
+            SpectatorMenuItem::Close => "spectatorMenu.close",
+            SpectatorMenuItem::ScrollLeft => "spectatorMenu.previous_page",
+            SpectatorMenuItem::ScrollRightEnabled | SpectatorMenuItem::ScrollRightDisabled => {
+                "spectatorMenu.next_page"
+            }
+            SpectatorMenuItem::TeleportToPlayer => "spectatorMenu.teleport",
+            SpectatorMenuItem::TeleportToTeam => "spectatorMenu.team_teleport",
+        }
+    }
+
+    /// THE extractIcon WALK (javap the items' own sprite constants —
+    /// the CLOSE_SPRITE/SCROLL_LEFT_SPRITE/SCROLL_RIGHT_SPRITE the
+    /// SpectatorMenu <clinit> carries, the TELEPORT_TO_*_SPRITE the
+    /// categories keep — the 16x16 blit the colorFromFloat(A=alpha,
+    /// R=G=B=col) tint rides, the EMPTY_SLOT the no-op the
+    /// extractSlot's own gate keeps silent).
+    pub(crate) fn icon(self) -> &'static str {
+        match self {
+            SpectatorMenuItem::EmptySlot => "",
+            SpectatorMenuItem::Close => "spectator/close",
+            SpectatorMenuItem::ScrollLeft => "spectator/scroll_left",
+            SpectatorMenuItem::ScrollRightEnabled | SpectatorMenuItem::ScrollRightDisabled => {
+                "spectator/scroll_right"
+            }
+            SpectatorMenuItem::TeleportToPlayer => "spectator/teleport_to_player",
+            SpectatorMenuItem::TeleportToTeam => "spectator/teleport_to_team",
+        }
+    }
+}
+
+/// THE MENU STATE (javap SpectatorMenu's own two ints — `selectedSlot`
+/// the <init> pc 5-6 sets -1 (nothing highlighted the open's own first
+/// frame keeps), `page` the JVM default 0; the category the root the
+/// offline lane always wears — the sub-categories the disabled
+/// activations never reach).
+pub(crate) struct SpectatorMenuState {
+    pub(crate) selected_slot: i32,
+    pub(crate) page: i32,
+}
+
+/// THE getItem WALK (javap SpectatorMenu.getItem pcs 0-120 — the
+/// verbatim fold: `j = slot + page * 6`; the page>0 slot-0 arm the
+/// SCROLL_LEFT answers; the slot-7 arm the scroll-right the `j <
+/// items.size()` verdict arms — enabled within bounds, disabled past;
+/// the slot-8 arm the CLOSE item answers; the domain walk the
+/// EMPTY_SLOT the out-of-bounds arm keeps, the category item the
+/// firstNonNull answers — the root's own list the offline lane always
+/// carries). The negative slot the EMPTY_SLOT's own arm answers — the
+/// fresh menu's selectedSlot -1 the getSelectedItem walk reads (the
+/// extractAction's prompt arm the EMPTY_SLOT verdict wears).
+pub(crate) fn spectator_menu_item(page: i32, slot: i32) -> SpectatorMenuItem {
+    let j = slot + page * 6;
+    if page > 0 && slot == 0 {
+        return SpectatorMenuItem::ScrollLeft;
+    }
+    if slot == 7 {
+        return if j < SPECTATOR_ROOT_ITEM_COUNT {
+            SpectatorMenuItem::ScrollRightEnabled
+        } else {
+            SpectatorMenuItem::ScrollRightDisabled
+        };
+    }
+    if slot == 8 {
+        return SpectatorMenuItem::Close;
+    }
+    if j < 0 || j >= SPECTATOR_ROOT_ITEM_COUNT {
+        return SpectatorMenuItem::EmptySlot;
+    }
+    if j == 0 {
+        SpectatorMenuItem::TeleportToPlayer
+    } else {
+        SpectatorMenuItem::TeleportToTeam
+    }
+}
+
+/// THE ALPHA'S OWN PURE SEAM (javap SpectatorGui.getHotbarAlpha pcs
+/// 0-23 — `clamp((lastSelectionTime - getMillis() + 3000) / 1000.0,
+/// 0.0, 1.0)` the fold carries: the 3000ms the full-bright window
+/// speaks, the final 1000ms the fade rides, the stale clock the zero
+/// keeps). The elapsed the caller supplies — the tests the same fold
+/// the wall clock rides, the deterministic seam the 374 round's own
+/// law wears.
+pub(crate) fn hotbar_alpha_from(elapsed_ms: i64) -> f32 {
+    (((3000 - elapsed_ms) as f32) / 1000.0).clamp(0.0, 1.0)
+}
+
+impl App {
+    /// THE ALPHA'S OWN WRAPPER (the wall clock the Instant lane
+    /// carries — the None the closed menu's zero the fold keeps).
+    pub(crate) fn spectator_hotbar_alpha(&self) -> f32 {
+        match self.spectator_last_selection {
+            Some(t) => hotbar_alpha_from(t.elapsed().as_millis() as i64),
+            None => 0.0,
+        }
+    }
+
+    /// THE NUMBER-KEY LANE (javap SpectatorGui.onHotbarSelected pcs
+    /// 0-37 — the clock the BOTH arms bank fresh, the open menu the
+    /// selectSlot answers, the closed menu the CREATE answers — `new
+    /// SpectatorMenu(listener)`: the root category, the selectedSlot
+    /// -1, the page 0 the <init>'s own walk keeps).
+    pub(crate) fn spectator_on_hotbar_selected(&mut self, slot: usize) {
+        self.spectator_last_selection = Some(std::time::Instant::now());
+        if self.spectator_menu.is_some() {
+            self.spectator_menu_select_slot(slot as i32);
+        } else {
+            self.spectator_menu = Some(SpectatorMenuState {
+                selected_slot: -1,
+                page: 0,
+            });
+        }
+    }
+
+    /// THE ACTION KEY'S OWN LANE (javap
+    /// SpectatorGui.onHotbarActionKeyPressed pcs 0-50 — the clock the
+    /// BOTH arms bank fresh, the open menu the highlighted slot's
+    /// RE-select answers (the `-1` the silence keeps), the closed menu
+    /// the CREATE the number-key lane's own shape wears).
+    pub(crate) fn spectator_on_action_key(&mut self) {
+        self.spectator_last_selection = Some(std::time::Instant::now());
+        if self.spectator_menu.is_some() {
+            let sel = self.spectator_menu.as_ref().unwrap().selected_slot;
+            if sel != -1 {
+                self.spectator_menu_select_slot(sel);
+            }
+        } else {
+            self.spectator_menu = Some(SpectatorMenuState {
+                selected_slot: -1,
+                page: 0,
+            });
+        }
+    }
+
+    /// THE WHEEL'S MENU CYCLE (javap SpectatorGui.onMouseScrolled pcs
+    /// 0-82 — the walk the MouseHandler.onScroll's spectator arm feeds
+    /// the NEGATED direction (the pc 309 `ineg`): the skipped lane the
+    /// EMPTY_SLOT and the !isEnabled slots the `j += i` loop carries,
+    /// the landing the selectSlot + the clock refresh answers, the
+    /// out-of-domain the silence keeps).
+    pub(crate) fn spectator_on_mouse_scrolled(&mut self, dir: i32) {
+        let (page, start) = {
+            let m = self.spectator_menu.as_ref().unwrap();
+            (m.page, m.selected_slot)
+        };
+        let mut j = start + dir;
+        while j >= 0 && j <= 8 {
+            let item = spectator_menu_item(page, j);
+            if item == SpectatorMenuItem::EmptySlot || !item.is_enabled() {
+                j += dir;
+                continue;
+            }
+            break;
+        }
+        if j >= 0 && j <= 8 {
+            self.spectator_menu_select_slot(j);
+            self.spectator_last_selection = Some(std::time::Instant::now());
+        }
+    }
+
+    /// THE SELECT SLOT'S OWN WALK (javap SpectatorMenu.selectSlot pcs
+    /// 0-45 — the EMPTY_SLOT the refusal keeps, the ALREADY-
+    /// HIGHLIGHTED ENABLED slot the selectItem activation answers, the
+    /// highlight move the selectedSlot write carries).
+    fn spectator_menu_select_slot(&mut self, slot: i32) {
+        let (page, cur) = {
+            let m = self.spectator_menu.as_ref().unwrap();
+            (m.page, m.selected_slot)
+        };
+        let item = spectator_menu_item(page, slot);
+        if item == SpectatorMenuItem::EmptySlot {
+            return;
+        }
+        if cur == slot && item.is_enabled() {
+            self.spectator_menu_activate(item);
+        } else {
+            self.spectator_menu.as_mut().unwrap().selected_slot = slot;
+        }
+    }
+
+    /// THE ACTIVATION WALK (the items' own selectItem lanes — the
+    /// CLOSE item the menu.exit() speaks (javap
+    /// CloseSpectatorItem.selectItem pcs 0-4), the scroll items the
+    /// page shift (javap ScrollMenuItem.selectItem pcs 0-13: `page +=
+    /// direction`), the teleport categories the selectCategory
+    /// (javap SpectatorMenu.selectCategory pcs 0-15: the category
+    /// swap, the selectedSlot -1, the page 0 — the sub-page walk the
+    /// offline lane never reaches: the categories the empty-list
+    /// verdict disables, the activations the isEnabled arm refuses)).
+    fn spectator_menu_activate(&mut self, item: SpectatorMenuItem) {
+        match item {
+            SpectatorMenuItem::Close => self.spectator_menu_exit(),
+            SpectatorMenuItem::ScrollLeft => self.spectator_menu.as_mut().unwrap().page -= 1,
+            SpectatorMenuItem::ScrollRightEnabled => {
+                self.spectator_menu.as_mut().unwrap().page += 1
+            }
+            SpectatorMenuItem::TeleportToPlayer | SpectatorMenuItem::TeleportToTeam => {
+                let m = self.spectator_menu.as_mut().unwrap();
+                m.selected_slot = -1;
+                m.page = 0;
+            }
+            SpectatorMenuItem::EmptySlot | SpectatorMenuItem::ScrollRightDisabled => {}
+        }
+    }
+
+    /// THE EXIT (javap SpectatorMenu.exit -> the listener's
+    /// onSpectatorMenuClosed — javap SpectatorGui.onSpectatorMenuClosed
+    /// pcs 0-10: `menu = null; lastSelectionTime = 0` the closed lane
+    /// keeps).
+    fn spectator_menu_exit(&mut self) {
+        self.spectator_menu = None;
+        self.spectator_last_selection = None;
+    }
+
+    /// THE SPECTATOR HOTBAR'S OWN EXTRACT (javap SpectatorGui
+    /// .extractHotbar pcs 0-69 — the walk the
+    /// Hud.extractHotbarAndDecorations pcs 0-24 swap answers: the
+    /// SPECTATOR arm the `getPlayerMode() == SPECTATOR` acmp speaks —
+    /// `spectatorGui.extractHotbar(extractor)` the goto carries — the
+    /// extractItemHotbar walk the pc 27-30 lane the spectator frame
+    /// never rides, the item hotbar 182x22 + the LIVE store's icons +
+    /// the counts the spectator body the silence keeps). The
+    /// menu-null lane the pc 0-7 silence keeps, the faded lane the
+    /// pc 13-26 exit answers, the chrome the extractPage/extractSlot
+    /// walks below paint.
+    pub(crate) fn spectator_extract_hotbar(&mut self, g: &mut Gui, a: &mut GuiAssets, w: i32, h: i32) {
+        if self.spectator_menu.is_none() {
+            return; // the menu-null silence (extractHotbar pcs 0-7)
+        }
+        let alpha = self.spectator_hotbar_alpha();
+        if alpha <= 0.0 {
+            // THE FADED EXIT (pcs 13-26: `alpha <= 0` the menu.exit()
+            // the walk answers — the onSpectatorMenuClosed the clock
+            // zeroes the exit's own law carries)
+            self.spectator_menu_exit();
+            return;
+        }
+        // THE SLIDE (pcs 27-47: `y = floor(guiHeight - 61.0 * alpha)` —
+        // the 61.0f the ldc #61 carries, the menu's own rise the fade
+        // speaks)
+        let cx = w / 2;
+        let cy = (h as f32 - 61.0 * alpha).floor() as i32;
+        // THE PAGE WALK (pcs 49-66: getCurrentPage — the SpectatorPage
+        // the getItems + selectedSlot pair builds, the 9 slots the
+        // getItem walk carries)
+        let (page, sel) = {
+            let m = self.spectator_menu.as_ref().unwrap();
+            (m.page, m.selected_slot)
+        };
+        let items: [SpectatorMenuItem; 9] =
+            std::array::from_fn(|i| spectator_menu_item(page, i as i32));
+        // THE EXTRACT PAGE (javap SpectatorGui.extractPage pcs 0-26 —
+        // the hotbar sprite 182x22 at `guiWidth/2 - 91`, the
+        // white(alpha) tint the fade's own brightness carries)
+        g.sprite_at_tinted(a, "hud/hotbar", cx - 91, cy, 182, 22, [1.0, 1.0, 1.0, alpha]);
+        if sel >= 0 {
+            // THE HIGHLIGHT (javap extractPage pcs 37-69 — the
+            // selection sprite 24x23 at `x - 91 + sel * 20, y - 1`, the
+            // same alpha the fade keeps)
+            let sel_x = cx - 91 + sel * 20;
+            g.sprite_at_tinted(
+                a,
+                "hud/hotbar_selection",
+                sel_x,
+                cy - 1,
+                24,
+                23,
+                [1.0, 1.0, 1.0, alpha],
+            );
+        }
+        for i in 0..9usize {
+            // THE SLOT ORIGIN (javap extractPage pcs 82-116 —
+            // `guiWidth/2 - 90 + i * 20 + 2` the x, `y + 3` the y —
+            // the extractSlot walk below paints)
+            let sx = cx - 90 + i as i32 * 20 + 2;
+            let sy = cy + 3;
+            self.spectator_extract_slot(g, a, i, sx, sy, alpha, items[i]);
+        }
+    }
+
+    /// THE SLOT'S OWN EXTRACT (javap SpectatorGui.extractSlot pcs
+    /// 0-145 — the EMPTY_SLOT the silence keeps, the icon 16x16 the
+    /// colorFromFloat(A=alpha, R=G=B=col) tint rides (the col the
+    /// isEnabled verdict folds: enabled 1.0, disabled 0.5 the `ldc
+    /// #132` carries), the KEY LABEL the enabled slots the
+    /// `keyHotbarSlots[i].getTranslatedKeyMessage` carries — the
+    /// number the label answers, right-aligned `x + 17 - width(key)`
+    /// at `y + 9`, the white(alpha) the text rides, the shadowless
+    /// 5-arg text law the GuiGraphics.text keeps).
+    fn spectator_extract_slot(
+        &mut self,
+        g: &mut Gui,
+        a: &mut GuiAssets,
+        slot: usize,
+        sx: i32,
+        sy: i32,
+        alpha: f32,
+        item: SpectatorMenuItem,
+    ) {
+        if item == SpectatorMenuItem::EmptySlot {
+            return;
+        }
+        let col = if item.is_enabled() { 1.0 } else { 0.5 };
+        g.sprite_at_tinted(a, item.icon(), sx, sy, 16, 16, [col, col, col, alpha]);
+        if alpha > 0.0 && item.is_enabled() {
+            let label = (slot + 1).to_string();
+            let tw = g.text_width(&label);
+            g.text_faded(a, sx + 17 - tw, sy + 9, &label, [1.0, 1.0, 1.0], alpha, false);
+        }
+    }
+
+    /// THE ACTION'S OWN EXTRACT (javap SpectatorGui.extractAction pcs
+    /// 0-113 — the walk the Hud.extractHotbarAndDecorations pcs
+    /// 182-226 split answers: the SPECTATOR mode the
+    /// extractSelectedItemName lane the goto skips, the
+    /// `player.isSpectator()` arm the `spectatorGui.extractAction`
+    /// speaks). The gate the `alpha > 0 && menu != null` pair keeps
+    /// (pcs 5-15), the NAME the selected slot folds (pcs 18-54: the
+    /// EMPTY_SLOT the CATEGORY PROMPT answers — the root's own
+    /// `spectatorMenu.root.prompt` the RootSpectatorMenuCategory
+    /// .getPrompt carries —, the real item the item's own name), the
+    /// text centered `(guiWidth - width) / 2` at `guiHeight - 35`
+    /// (pcs 56-88), the textWithBackdrop the accessibility background
+    /// the default 0.0 keeps silent (javap
+    /// GuiGraphicsExtractor.textWithBackdrop pcs 13-15: `getBackgroundColor
+    /// (0.0F)` the zero the fill's own gate answers) — the text the
+    /// white(alpha) color + the shadow the 6-arg call carries (the pc
+    /// 65 `iconst_1`).
+    pub(crate) fn spectator_extract_action(&mut self, g: &mut Gui, a: &mut GuiAssets, w: i32, h: i32) {
+        let alpha = self.spectator_hotbar_alpha();
+        if alpha <= 0.0 || self.spectator_menu.is_none() {
+            return;
+        }
+        let (page, sel) = {
+            let m = self.spectator_menu.as_ref().unwrap();
+            (m.page, m.selected_slot)
+        };
+        let item = spectator_menu_item(page, sel);
+        let key = if item == SpectatorMenuItem::EmptySlot {
+            "spectatorMenu.root.prompt"
+        } else {
+            item.name_key()
+        };
+        let text = tr(key).unwrap_or(key);
+        let tw = g.text_width(text);
+        let x = (w - tw) / 2;
+        let y = h - 35;
+        g.text_faded(a, x, y, text, [1.0, 1.0, 1.0], alpha, true);
+    }
 
     /// Vanilla HUD: crosshair, hotbar + selection, hearts and hunger — all
     /// official `hud/*` sprites at vanilla positions and sizes.
@@ -22844,11 +23305,21 @@ impl App {
         if self.perspective.is_first_person() {
             g.sprite(a, "hud/crosshair", w / 2 - 7, h / 2 - 7);
         }
-        // hotbar: 182x22 centered at the bottom, selector around slot 0
+        // hotbar: 182x22 centered at the bottom, selector around slot 0.
+        // THE SPECTATOR SWAP (javap Hud.extractHotbarAndDecorations pcs
+        // 0-24 — the `getPlayerMode() == SPECTATOR` acmp the arm opens:
+        // `spectatorGui.extractHotbar(extractor)` the goto carries, the
+        // extractItemHotbar walk the pc 27-30 lane the spectator frame
+        // never rides — the item hotbar + the LIVE store's icons the
+        // SpectatorGui's own walk replaces, the menu-closed lane the
+        // pc 0-7 silence keeps)
         let (hx, hy) = hotbar_rect(w, h);
-        g.sprite(a, "hud/hotbar", hx, hy);
-        let sel_x = hx - 1 + self.selected_hotbar as i32 * (HEART_SPACING + 12);
-        g.sprite(a, "hud/hotbar_selection", sel_x, hy - 1);
+        if self.game_mode == GameMode::Spectator {
+            self.spectator_extract_hotbar(g, a, w, h);
+        } else {
+            g.sprite(a, "hud/hotbar", hx, hy);
+            let sel_x = hx - 1 + self.selected_hotbar as i32 * (HEART_SPACING + 12);
+            g.sprite(a, "hud/hotbar_selection", sel_x, hy - 1);
         // the LIVE store's row over the sprite (the vanilla
         // renderHotbarAndDecorations): each slot's icon at the vanilla
         // origin — 3px inset, the 20px pitch — and the count white and
@@ -22866,6 +23337,17 @@ impl App {
                 let tw = g.text_width(&s);
                 g.text(a, ix + 17 - tw, iy + 9, &s, WHITE, true);
             }
+        }
+        }
+        // THE SPECTATOR'S ACTION NAME (javap Hud.extractHotbarAndDecorations
+        // pcs 182-226 — the selected-item/spectator-action split the tail
+        // keeps: the SPECTATOR mode the extractSelectedItemName lane the
+        // acmp skips, the `player.isSpectator()` arm the
+        // `spectatorGui.extractAction(extractor)` speaks — the prompt or
+        // the item's own name the walk paints; the non-spectator lane
+        // the client's no-name vocabulary keeps honest)
+        if self.game_mode == GameMode::Spectator {
+            self.spectator_extract_action(g, a, w, h);
         }
         // THE DECORATIONS GATE (javap Hud.extractHotbarAndDecorations
         // pcs 33-50 — the `gameMode.canHurtPlayer()` verdict the
@@ -26193,6 +26675,357 @@ mod tests {
         assert!(
             resumed_diff > 500,
             "the flick back the hearts row resumes: {resumed_diff}"
+        );
+    }
+
+    #[test]
+    fn the_spectator_menu_item_walk_the_audited_slots_speak() {
+        // THE getItem WALK (javap SpectatorMenu.getItem pcs 0-120 — the
+        // verbatim fold the root page wears: the two teleport
+        // categories the root's own list carries, the EMPTY_SLOT the
+        // out-of-bounds arm keeps, the slot-7 scroll-right the `j <
+        // items.size()` verdict arms, the slot-8 the CLOSE item)
+        assert_eq!(
+            spectator_menu_item(0, 0),
+            SpectatorMenuItem::TeleportToPlayer,
+            "the root's first category"
+        );
+        assert_eq!(
+            spectator_menu_item(0, 1),
+            SpectatorMenuItem::TeleportToTeam,
+            "the root's second category"
+        );
+        for slot in 2..7 {
+            assert_eq!(
+                spectator_menu_item(0, slot),
+                SpectatorMenuItem::EmptySlot,
+                "the empty lane the out-of-bounds arm keeps: slot {slot}"
+            );
+        }
+        assert_eq!(
+            spectator_menu_item(0, 7),
+            SpectatorMenuItem::ScrollRightDisabled,
+            "the scroll-right the root page's 2-item verdict disables"
+        );
+        assert_eq!(
+            spectator_menu_item(0, 8),
+            SpectatorMenuItem::Close,
+            "the close the slot-8 arm carries"
+        );
+        // THE NEGATIVE SLOT the EMPTY_SLOT's own arm answers — the
+        // fresh menu's selectedSlot -1 the getSelectedItem walk reads
+        assert_eq!(
+            spectator_menu_item(0, -1),
+            SpectatorMenuItem::EmptySlot,
+            "the -1 the fresh menu's highlight keeps"
+        );
+        // THE PAGE-1 SHAPE (the walk the offline lane never rides —
+        // the scroll-left the page>0 slot-0 arm answers, the page
+        // shift the j = slot + page*6 fold carries)
+        assert_eq!(
+            spectator_menu_item(1, 0),
+            SpectatorMenuItem::ScrollLeft,
+            "the scroll-left the page>0 arm carries"
+        );
+        assert_eq!(
+            spectator_menu_item(1, 8),
+            SpectatorMenuItem::Close,
+            "the close the every-page arm carries"
+        );
+        // THE OFFLINE VERDICTS (javap TeleportToPlayerMenuCategory
+        // isEnabled pcs 0-17 + the lambda$new$0 filter — the listed
+        // players the SPECTATOR mode excludes, the only listed player
+        // the menu's own existence empties — the categories the empty
+        // lists keep DISABLED, the close the iconst_1 answers)
+        assert!(!SpectatorMenuItem::TeleportToPlayer.is_enabled());
+        assert!(!SpectatorMenuItem::TeleportToTeam.is_enabled());
+        assert!(SpectatorMenuItem::Close.is_enabled());
+        assert!(!SpectatorMenuItem::ScrollRightDisabled.is_enabled());
+        // THE NAME KEYS the en_us table answers (javap the items' own
+        // Component.translatable constants)
+        assert_eq!(SpectatorMenuItem::Close.name_key(), "spectatorMenu.close");
+        assert_eq!(
+            SpectatorMenuItem::TeleportToPlayer.name_key(),
+            "spectatorMenu.teleport"
+        );
+        assert_eq!(
+            SpectatorMenuItem::TeleportToTeam.name_key(),
+            "spectatorMenu.team_teleport"
+        );
+        // THE ICON SPRITES the generated table carries (javap the
+        // CLOSE_SPRITE/SCROLL/TELEPORT constants — the assets-cache
+        // the files answer)
+        assert_eq!(SpectatorMenuItem::Close.icon(), "spectator/close");
+        assert_eq!(
+            SpectatorMenuItem::TeleportToPlayer.icon(),
+            "spectator/teleport_to_player"
+        );
+        assert_eq!(
+            SpectatorMenuItem::TeleportToTeam.icon(),
+            "spectator/teleport_to_team"
+        );
+        // THE ALPHA SEAM (javap getHotbarAlpha pcs 0-23 — the
+        // clamp((3000 - elapsed) / 1000, 0, 1) fold)
+        assert_eq!(hotbar_alpha_from(0), 1.0, "the fresh clock the full answer");
+        assert_eq!(
+            hotbar_alpha_from(2500), 0.5,
+            "the final second's half the fade rides"
+        );
+        assert_eq!(hotbar_alpha_from(3000), 0.0, "the spent clock the zero");
+        assert_eq!(hotbar_alpha_from(9000), 0.0, "the stale clock the zero");
+    }
+
+    #[test]
+    fn the_spectator_swap_the_item_hotbar_sleeps() {
+        let root = ["assets-cache/jar", "../assets-cache/jar", "../../assets-cache/jar"]
+            .iter()
+            .map(std::path::Path::new)
+            .find(|p| p.join("gui/container/inventory.png").exists());
+        let Some(root) = root else { return };
+        let mut app = App::new(3);
+        app.enter_world();
+        app.spawn_offline_body();
+        let mut assets = GuiAssets::open(&root);
+        let mut fb = crate::raster::Framebuf::new(640, 360);
+        let (bx, by) = hotbar_rect(640, 360);
+        let diff_count = |a: &[u8], b: &[u8], x0: i32, y0: i32, w: i32, h: i32| -> usize {
+            let mut n = 0usize;
+            for y in y0..y0 + h {
+                for x in x0..x0 + w {
+                    let o = ((y as usize) * 640 + x as usize) * 3;
+                    if a[o..o + 3] != b[o..o + 3] {
+                        n += 1;
+                    }
+                }
+            }
+            n
+        };
+        // THE BARE FRAME (the F1-hidden render — the whole HUD layer
+        // the early return skips)
+        app.on_toggle_gui_key();
+        app.render(&mut fb, &mut assets);
+        let bare = fb.color.clone();
+        app.on_toggle_gui_key(); // the HUD returns
+        // THE SURVIVAL CONTROL: the item hotbar the non-spectator arm
+        // paints (the extractItemHotbar lane the pc 27-30 walk keeps)
+        app.render(&mut fb, &mut assets);
+        let survival = fb.color.clone();
+        assert!(
+            diff_count(&survival, &bare, bx, by, 182, 22) > 500,
+            "the survival hotbar the non-spectator arm paints"
+        );
+        // THE CREATIVE CONTROL: the item hotbar the swap never gates
+        // (the mode check the SPECTATOR arm alone opens)
+        app.game_mode = GameMode::Creative;
+        app.render(&mut fb, &mut assets);
+        let creative = fb.color.clone();
+        assert!(
+            diff_count(&creative, &bare, bx, by, 182, 22) > 500,
+            "the creative hotbar the swap never gates"
+        );
+        // THE SPECTATOR FRAME: the item hotbar the swap skips — the
+        // region the bare world's own bytes answer (the extractHotbar
+        // walk the pc 0-7 menu-null silence keeps, the menu the keys
+        // alone create)
+        app.game_mode = GameMode::Spectator;
+        app.render(&mut fb, &mut assets);
+        let spectator = fb.color.clone();
+        assert_eq!(
+            diff_count(&spectator, &bare, bx, by, 182, 22),
+            0,
+            "the spectator item hotbar the swap skips — the region the bare bytes answer"
+        );
+    }
+
+    #[test]
+    fn the_spectator_menu_chrome_the_widgets_draw() {
+        let root = ["assets-cache/jar", "../assets-cache/jar", "../../assets-cache/jar"]
+            .iter()
+            .map(std::path::Path::new)
+            .find(|p| p.join("gui/container/inventory.png").exists());
+        let Some(root) = root else { return };
+        let mut app = App::new(3);
+        app.enter_world();
+        app.spawn_offline_body();
+        let mut assets = GuiAssets::open(&root);
+        let mut fb = crate::raster::Framebuf::new(640, 360);
+        let diff_count = |a: &[u8], b: &[u8], x0: i32, y0: i32, w: i32, h: i32| -> usize {
+            let mut n = 0usize;
+            for y in y0..y0 + h {
+                for x in x0..x0 + w {
+                    let o = ((y as usize) * 640 + x as usize) * 3;
+                    if a[o..o + 3] != b[o..o + 3] {
+                        n += 1;
+                    }
+                }
+            }
+            n
+        };
+        // THE BARE FRAME
+        app.on_toggle_gui_key();
+        app.render(&mut fb, &mut assets);
+        let bare = fb.color.clone();
+        app.on_toggle_gui_key();
+        // THE SPECTATOR FLICK + THE MENU CREATE (the first press the
+        // create keeps — the selectedSlot -1 the <init>'s own law)
+        app.game_mode = GameMode::Spectator;
+        app.on_number_key(0);
+        assert!(app.spectator_menu.is_some(), "the first press creates");
+        assert_eq!(
+            app.spectator_menu.as_ref().unwrap().selected_slot,
+            -1,
+            "the fresh menu nothing highlights"
+        );
+        // THE SECOND PRESS the slot-0 highlight selects — the menu
+        // alpha the fresh clock's 1.0 keeps, the slide the floor
+        // (360 - 61) the 61.0f fold speaks
+        app.on_number_key(0);
+        assert_eq!(
+            app.spectator_menu.as_ref().unwrap().selected_slot,
+            0,
+            "the second press the slot selects"
+        );
+        assert!(
+            (app.spectator_hotbar_alpha() - 1.0).abs() < 1e-6,
+            "the fresh clock the full-bright window wears"
+        );
+        app.render(&mut fb, &mut assets);
+        let open = fb.color.clone();
+        // THE CHROME: the widgets the extractPage paints (the hotbar
+        // sprite 182x22 at cx-91, the slide's own y = floor(360 - 61) =
+        // 299, the selection 24x23 at the slot's own x, the icons the
+        // extractSlot carries, the key labels the enabled slots wear)
+        let (mx, my) = (640 / 2 - 91, 360 - 61);
+        assert!(
+            diff_count(&open, &bare, mx, my - 1, 182, 24) > 500,
+            "the menu chrome the extractPage paints"
+        );
+        // THE ACTION NAME (the extractAction walk — the selected
+        // TeleportToPlayer the item's own name answers, the text the
+        // centered row at h - 35 wears)
+        assert!(
+            diff_count(&open, &bare, 100, 360 - 36, 440, 10) > 0,
+            "the action name the selected item's own key carries"
+        );
+        // THE ITEM HOTBAR the swap still skips (the menu the slide's
+        // own y paints, the region the bare bytes keep)
+        let (bx, by) = hotbar_rect(640, 360);
+        assert_eq!(
+            diff_count(&open, &bare, bx, by, 182, 22),
+            0,
+            "the item hotbar region the menu-open frame never paints"
+        );
+        // THE FADED CLOCK the exit speaks (the stale selection the
+        // render's own walk closes — the extractHotbar's alpha<=0 arm
+        // the menu.exit() answers)
+        app.spectator_last_selection =
+            Some(std::time::Instant::now() - std::time::Duration::from_millis(4000));
+        app.render(&mut fb, &mut assets);
+        let closed = fb.color.clone();
+        assert!(app.spectator_menu.is_none(), "the faded clock the exit speaks");
+        assert!(app.spectator_last_selection.is_none(), "the clock the zero");
+        assert_eq!(
+            diff_count(&closed, &bare, mx, my - 1, 182, 24),
+            0,
+            "the closed menu the region the bare bytes answer"
+        );
+    }
+
+    #[test]
+    fn the_spectator_inputs_the_menu_walks_speak() {
+        let mut app = App::new(3);
+        app.enter_world();
+        app.spawn_offline_body();
+        // THE SURVIVAL CONTROL: the number keys the hotbar selection
+        // wear, the menu the lane never creates
+        app.on_number_key(0);
+        assert_eq!(app.selected_hotbar, 0, "the survival key the selection moves");
+        assert!(app.spectator_menu.is_none(), "the survival lane no menu");
+        // THE SPECTATOR CREATE + SELECT (the first press the create
+        // keeps, the second the slot-0 highlight answers)
+        app.game_mode = GameMode::Spectator;
+        app.on_number_key(0);
+        app.on_number_key(0);
+        assert_eq!(
+            app.spectator_menu.as_ref().unwrap().selected_slot,
+            0,
+            "the highlight the second press selects"
+        );
+        // THE DISABLED ACTIVATION the verdict refuses (the third press —
+        // the selectSlot's `cur == slot && enabled` gate the 0.5-color
+        // category fails, the move arm the same slot writes)
+        app.on_number_key(0);
+        assert!(
+            app.spectator_menu.is_some(),
+            "the disabled category the activation refuses — the menu stays"
+        );
+        assert_eq!(
+            app.spectator_menu.as_ref().unwrap().selected_slot,
+            0,
+            "the highlight the refusal keeps"
+        );
+        // THE WHEEL'S SKIP WALK (javap onMouseScrolled pcs 0-82 — the
+        // route the -direction the spectator arm feeds, the EMPTY and
+        // disabled slots the `j += i` loop skips, the CLOSE the slot-8
+        // landing selects): the up-scroll the +2 direction the negated
+        // fold feeds — the walk from slot 0 the close lands on
+        app.on_hotbar_scroll(0.0, -1.0);
+        assert_eq!(
+            app.spectator_menu.as_ref().unwrap().selected_slot,
+            8,
+            "the wheel the skip loop the close lands on"
+        );
+        // THE ACTION KEY THE CLOSE ACTIVATES (javap
+        // onHotbarActionKeyPressed pcs 14-32 — the highlighted slot the
+        // re-select answers, the CloseSpectatorItem's selectItem the
+        // menu.exit() speaks)
+        app.spectator_on_action_key();
+        assert!(app.spectator_menu.is_none(), "the close the exit speaks");
+        // THE WHEEL THE MENU-CLOSED LANE THE FLYING SPEED ADJUSTS (the
+        // test below the speed fold wears) — the menu the wheel alone
+        // never recreates
+        assert!(app.spectator_menu.is_none(), "the closed lane the wheel keeps");
+    }
+
+    #[test]
+    fn the_spectator_fade_the_speed_spins_the_survival_wears() {
+        let mut app = App::new(3);
+        app.enter_world();
+        app.spawn_offline_body();
+        // THE MENU-CLOSED WHEEL THE FLYING SPEED FOLDS (javap
+        // MouseHandler.onScroll pcs 316-364 — the spectator arm's own
+        // flying-speed lane: `flyingSpeed + y * 0.005` the step, the
+        // clamp(0.0, 0.2) the pair speaks — the y the folded steps'
+        // own 2x the sensitivity carries)
+        app.game_mode = GameMode::Spectator;
+        app.on_hotbar_scroll(0.0, 1.0);
+        let b = app.body.as_ref().unwrap();
+        assert!(
+            (b.flying_speed - 0.06).abs() < 1e-6,
+            "the two-step fold the +0.01 rides: {}",
+            b.flying_speed
+        );
+        // THE CLAMP the lower arm answers
+        app.on_hotbar_scroll(0.0, -100.0);
+        let b = app.body.as_ref().unwrap();
+        assert_eq!(b.flying_speed, 0.0, "the clamp the floor keeps");
+        // THE CLAMP the upper arm answers
+        app.on_hotbar_scroll(0.0, 100.0);
+        let b = app.body.as_ref().unwrap();
+        assert_eq!(b.flying_speed, 0.2, "the clamp the ceiling keeps");
+        // THE SURVIVAL CONTROL: the wheel the hotbar cycle wears, the
+        // speed the lane never touches
+        app.game_mode = GameMode::Survival;
+        let before = app.selected_hotbar;
+        app.on_hotbar_scroll(0.0, 1.0);
+        assert_ne!(
+            app.selected_hotbar, before,
+            "the survival wheel the selection cycles"
+        );
+        let b = app.body.as_ref().unwrap();
+        assert_eq!(
+            b.flying_speed, 0.2,
+            "the survival wheel the speed never touches"
         );
     }
 

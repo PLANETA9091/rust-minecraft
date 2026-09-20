@@ -1,0 +1,27 @@
+=== <init>(Lnet/minecraft/client/gui/spectator/SpectatorMenuListener;)V max_stack=3 max_locals=2 ===
+      0: aload_0 
+      1: invokespecial #2.<init>:()V
+      4: aload_0 
+      5: iconst_m1 
+      6: putfield #10.selectedSlot:I
+      9: aload_0 
+     10: new net/minecraft/client/gui/spectator/RootSpectatorMenuCategory
+     13: dup 
+     14: invokespecial #15.<init>:()V
+     17: putfield #10.category:Lnet/minecraft/client/gui/spectator/SpectatorMenuCategory;
+     20: aload_0 
+     21: aload_1 
+     22: putfield #10.listener:Lnet/minecraft/client/gui/spectator/SpectatorMenuListener;
+     25: return 
+
+=== <init>(Ljava/util/List;I)V max_stack=2 max_locals=3 ===
+      0: aload_0 
+      1: invokespecial #2.<init>:()V
+      4: aload_0 
+      5: aload_1 
+      6: putfield #8.items:Ljava/util/List;
+      9: aload_0 
+     10: iload_2 
+     11: putfield #8.selection:I
+     14: return 
+

@@ -1,0 +1,43 @@
+=== extractHotbar(Lnet/minecraft/client/gui/GuiGraphicsExtractor;)V max_stack=6 max_locals=6 ===
+      0: aload_0 
+      1: getfield #8.menu:Lnet/minecraft/client/gui/spectator/SpectatorMenu;
+      4: ifnonnull start+8
+      7: return 
+      8: aload_0 
+      9: invokevirtual #8.getHotbarAlpha:()F
+     12: fstore_2 
+     13: fload_2 
+     14: fconst_0 
+     15: fcmpg 
+     16: ifgt start+27
+     19: aload_0 
+     20: getfield #8.menu:Lnet/minecraft/client/gui/spectator/SpectatorMenu;
+     23: invokevirtual #28.exit:()V
+     26: return 
+     27: aload_1 
+     28: invokevirtual #53.guiWidth:()I
+     31: iconst_2 
+     32: idiv 
+     33: istore_3 
+     34: aload_1 
+     35: invokevirtual #53.guiHeight:()I
+     38: i2f 
+     39: ldc #61
+     41: fload_2 
+     42: fmul 
+     43: fsub 
+     44: invokestatic #40.floor:(F)I
+     47: istore 4
+     49: aload_0 
+     50: getfield #8.menu:Lnet/minecraft/client/gui/spectator/SpectatorMenu;
+     53: invokevirtual #28.getCurrentPage:()Lnet/minecraft/client/gui/spectator/categories/SpectatorPage;
+     56: astore 5
+     58: aload_0 
+     59: aload_1 
+     60: fload_2 
+     61: iload_3 
+     62: iload 4
+     64: aload 5
+     66: invokevirtual #8.extractPage:(Lnet/minecraft/client/gui/GuiGraphicsExtractor;FIILnet/minecraft/client/gui/spectator/categories/SpectatorPage;)V
+     69: return 
+

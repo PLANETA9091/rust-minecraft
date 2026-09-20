@@ -1,0 +1,26 @@
+=== <init>()V max_stack=2 max_locals=1 ===
+      0: aload_0 
+      1: invokestatic #2.getInstance:()Lnet/minecraft/client/Minecraft;
+      4: invokevirtual #2.getConnection:()Lnet/minecraft/client/multiplayer/ClientPacketListener;
+      7: invokevirtual #12.getListedOnlinePlayers:()Ljava/util/Collection;
+     10: invokespecial #18.<init>:(Ljava/util/Collection;)V
+     13: return 
+
+=== <init>(Ljava/util/Collection;)V max_stack=3 max_locals=2 ===
+      0: aload_0 
+      1: invokespecial #24.<init>:()V
+      4: aload_0 
+      5: aload_1 
+      6: invokeinterface #29.stream:()Ljava/util/stream/Stream;
+     11: invokedynamic #34
+     16: invokeinterface #39.filter:(Ljava/util/function/Predicate;)Ljava/util/stream/Stream;
+     21: getstatic #18.PROFILE_ORDER:Ljava/util/Comparator;
+     24: invokeinterface #39.sorted:(Ljava/util/Comparator;)Ljava/util/stream/Stream;
+     29: invokedynamic #52
+     34: invokeinterface #39.map:(Ljava/util/function/Function;)Ljava/util/stream/Stream;
+     39: invokestatic #61.toUnmodifiableList:()Ljava/util/stream/Collector;
+     42: invokeinterface #39.collect:(Ljava/util/stream/Collector;)Ljava/lang/Object;
+     47: checkcast java/util/List
+     50: putfield #18.items:Ljava/util/List;
+     53: return 
+

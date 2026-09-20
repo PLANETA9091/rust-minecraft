@@ -1,0 +1,9 @@
+=== isMenuActive()Z max_stack=1 max_locals=1 ===
+      0: aload_0 
+      1: getfield #8.menu:Lnet/minecraft/client/gui/spectator/SpectatorMenu;
+      4: ifnull start+11
+      7: iconst_1 
+      8: goto start+12
+     11: iconst_0 
+     12: ireturn 
+

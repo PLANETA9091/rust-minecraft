@@ -74,8 +74,10 @@ pub const FLY_SPEED: f32 = 0.05;
 /// THE SPRINT-FLY SPEED (javap Player.getFlyingSpeed the 26.2 jar —
 /// the flying branch's own split: `isSprinting() -> abilities
 /// .getFlyingSpeed() * 2.0` the fconst_2 fold carries, the plain fly
-/// 0.05 the else arm keeps).
-pub const SPRINT_FLY_SPEED: f32 = 0.1;
+/// 0.05 the else arm keeps — the FOLD the field the wheel's own
+/// adjustment rides, the 0.1 the DEFAULT field's ×2 value answers: the
+/// constant the fold's own shape the `flying_speed * 2.0` walk
+/// carries).
 /// THE SPRINT-AIR SPEED (javap Player.getFlyingSpeed the 26.2 jar —
 /// the NOT-flying branch's own split: `isSprinting() -> ldc #2292`
 /// = 0.026, the plain walk-air the #55 = 0.02 arm keeps — the
@@ -668,6 +670,21 @@ pub struct PlayerBody {
     /// pcs 258-280 — the player's arm `(!bl2 || !abilities.invulnerable)`
     /// folds, the invulnerable body the underwater refill arm rides).
     pub invulnerable: bool,
+    /// THE FLYING SPEED ABILITY (javap `Abilities.flyingSpeed` — the
+    /// field the <init> defaults 0.05, the `FLY_SPEED` const's own value
+    /// the default carries). The folds read the FIELD the
+    /// `Player.getFlyingSpeed` walk answers (the flying branch's own
+    /// split — the sprint-fly the ×2.0 fold carries, the plain fly the
+    /// field, the aiStep's vertical thrust the field × 3.0 the
+    /// `ldc_w #1270` fold multiplies), and the WHEEL adjusts it (javap
+    /// `MouseHandler.onScroll` pcs 316-364 — the spectator arm's own
+    /// flying-speed lane: `flyingSpeed + y * 0.005` the `ldc_w #365`
+    /// step carries, the `clamp(0.0, 0.2)` the `fconst_0`/`ldc_w #366`
+    /// pair speaks). The default the <init> keeps — the wheel's
+    /// adjustability the spectator body alone wears, the survival walk
+    /// byte-identical beneath (the field the default's own value
+    /// reads).
+    pub flying_speed: f32,
     /// THE CAMERA'S OWN FOV STATE (Camera's fovModifier/oldFovModifier
     /// pair — tickFov's own two fields): the modifier the projection's
     /// 70° option multiplies — the sprint's 1.15 the speed ratio speaks,
@@ -857,6 +874,7 @@ impl PlayerBody {
             flying: false,
             no_physics: false,
             invulnerable: false,
+            flying_speed: FLY_SPEED,
             fov_modifier: 1.0,
             prev_fov_modifier: 1.0,
             forward: 0.0,
@@ -1279,7 +1297,12 @@ impl PlayerBody {
         if self.flying {
             let thrust = (self.jumping as i32) - (self.want_crouch as i32);
             if thrust != 0 {
-                self.vy += thrust as f64 * FLY_SPEED as f64 * FLY_THRUST_SCALE;
+                // the abilities' own field the thrust multiplies (javap
+                // LocalPlayer.aiStep pcs 881-888 — the
+                // getFlyingSpeed the ldc_w #1270 fold carries, the
+                // wheel the field's own adjustment the spectator
+                // arm speaks — the thrust rides the ADJUSTED speed)
+                self.vy += thrust as f64 * self.flying_speed as f64 * FLY_THRUST_SCALE;
             }
         }
         // THE JUMP GATE (the aiStep's own): held jump + ground + the
@@ -1314,9 +1337,13 @@ impl PlayerBody {
                 }
             } else if self.flying {
                 if self.sprinting {
-                    SPRINT_FLY_SPEED
+                    // the field the sprint-fly's ×2 fold carries (the
+                    // getFlyingSpeed's own split — the default 0.05
+                    // the 0.10 arm doubles, the wheel the field's own
+                    // adjustment the sprint rides too)
+                    self.flying_speed * 2.0
                 } else {
-                    FLY_SPEED
+                    self.flying_speed
                 }
             } else if self.sprinting {
                 SPRINT_AIR_SPEED
@@ -2452,7 +2479,7 @@ mod tests {
             "the fly impulse"
         );
         assert!(
-            (vz_of(true, true) - SPRINT_FLY_SPEED as f64).abs() < 1e-9,
+            (vz_of(true, true) - FLY_SPEED as f64 * 2.0).abs() < 1e-9,
             "the sprint-fly impulse"
         );
         assert!(

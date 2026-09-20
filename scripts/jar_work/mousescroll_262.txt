@@ -1,0 +1,170 @@
+=== onScroll(JDD)V max_stack=9 max_locals=18 ===
+      0: lload_1 
+      1: aload_0 
+      2: getfield #10.minecraft:Lnet/minecraft/client/Minecraft;
+      5: invokevirtual #49.getWindow:()Lcom/mojang/blaze3d/platform/Window;
+      8: invokevirtual #55.handle:()J
+     11: lcmp 
+     12: ifne start+398
+     15: aload_0 
+     16: getfield #10.minecraft:Lnet/minecraft/client/Minecraft;
+     19: invokevirtual #49.getFramerateLimitTracker:()Lcom/mojang/blaze3d/platform/FramerateLimitTracker;
+     22: invokevirtual #65.onInputReceived:()V
+     25: aload_0 
+     26: getfield #10.minecraft:Lnet/minecraft/client/Minecraft;
+     29: getfield #49.options:Lnet/minecraft/client/Options;
+     32: invokevirtual #283.discreteMouseScroll:()Lnet/minecraft/client/OptionInstance;
+     35: invokevirtual #289.get:()Ljava/lang/Object;
+     38: checkcast java/lang/Boolean
+     41: invokevirtual #294.booleanValue:()Z
+     44: istore 7
+     46: aload_0 
+     47: getfield #10.minecraft:Lnet/minecraft/client/Minecraft;
+     50: getfield #49.options:Lnet/minecraft/client/Options;
+     53: invokevirtual #283.mouseWheelSensitivity:()Lnet/minecraft/client/OptionInstance;
+     56: invokevirtual #289.get:()Ljava/lang/Object;
+     59: checkcast java/lang/Double
+     62: invokevirtual #29.doubleValue:()D
+     65: dstore 8
+     67: iload 7
+     69: ifeq start+79
+     72: dload_3 
+     73: invokestatic #306.signum:(D)D
+     76: goto start+80
+     79: dload_3 
+     80: dload 8
+     82: dmul 
+     83: dstore 10
+     85: iload 7
+     87: ifeq start+98
+     90: dload 5
+     92: invokestatic #306.signum:(D)D
+     95: goto start+100
+     98: dload 5
+    100: dload 8
+    102: dmul 
+    103: dstore 12
+    105: aload_0 
+    106: getfield #10.minecraft:Lnet/minecraft/client/Minecraft;
+    109: getfield #49.gui:Lnet/minecraft/client/gui/Gui;
+    112: invokevirtual #74.overlay:()Lnet/minecraft/client/gui/screens/Overlay;
+    115: ifnull start+121
+    118: goto start+398
+    121: aload_0 
+    122: getfield #10.minecraft:Lnet/minecraft/client/Minecraft;
+    125: getfield #49.gui:Lnet/minecraft/client/gui/Gui;
+    128: invokevirtual #74.screen:()Lnet/minecraft/client/gui/screens/Screen;
+    131: ifnull start+198
+    134: aload_0 
+    135: aload_0 
+    136: getfield #10.minecraft:Lnet/minecraft/client/Minecraft;
+    139: invokevirtual #49.getWindow:()Lcom/mojang/blaze3d/platform/Window;
+    142: invokevirtual #10.getScaledXPos:(Lcom/mojang/blaze3d/platform/Window;)D
+    145: dstore 14
+    147: aload_0 
+    148: aload_0 
+    149: getfield #10.minecraft:Lnet/minecraft/client/Minecraft;
+    152: invokevirtual #49.getWindow:()Lcom/mojang/blaze3d/platform/Window;
+    155: invokevirtual #10.getScaledYPos:(Lcom/mojang/blaze3d/platform/Window;)D
+    158: dstore 16
+    160: aload_0 
+    161: getfield #10.minecraft:Lnet/minecraft/client/Minecraft;
+    164: getfield #49.gui:Lnet/minecraft/client/gui/Gui;
+    167: invokevirtual #74.screen:()Lnet/minecraft/client/gui/screens/Screen;
+    170: dload 14
+    172: dload 16
+    174: dload 10
+    176: dload 12
+    178: invokevirtual #150.mouseScrolled:(DDDD)Z
+    181: pop 
+    182: aload_0 
+    183: getfield #10.minecraft:Lnet/minecraft/client/Minecraft;
+    186: getfield #49.gui:Lnet/minecraft/client/gui/Gui;
+    189: invokevirtual #74.screen:()Lnet/minecraft/client/gui/screens/Screen;
+    192: invokevirtual #150.afterMouseAction:()V
+    195: goto start+398
+    198: aload_0 
+    199: getfield #10.minecraft:Lnet/minecraft/client/Minecraft;
+    202: getfield #49.player:Lnet/minecraft/client/player/LocalPlayer;
+    205: ifnull start+398
+    208: aload_0 
+    209: getfield #10.scrollWheelHandler:Lnet/minecraft/client/ScrollWheelHandler;
+    212: dload 10
+    214: dload 12
+    216: invokevirtual #41.onMouseScroll:(DD)Lorg/joml/Vector2i;
+    219: astore 14
+    221: aload 14
+    223: getfield #324.x:I
+    226: ifne start+238
+    229: aload 14
+    231: getfield #324.y:I
+    234: ifne start+238
+    237: return 
+    238: aload 14
+    240: getfield #324.y:I
+    243: ifne start+255
+    246: aload 14
+    248: getfield #324.x:I
+    251: ineg 
+    252: goto start+260
+    255: aload 14
+    257: getfield #324.y:I
+    260: istore 15
+    262: aload_0 
+    263: getfield #10.minecraft:Lnet/minecraft/client/Minecraft;
+    266: getfield #49.player:Lnet/minecraft/client/player/LocalPlayer;
+    269: invokevirtual #332.isSpectator:()Z
+    272: ifeq start+367
+    275: aload_0 
+    276: getfield #10.minecraft:Lnet/minecraft/client/Minecraft;
+    279: getfield #49.gui:Lnet/minecraft/client/gui/Gui;
+    282: getfield #74.hud:Lnet/minecraft/client/gui/Hud;
+    285: invokevirtual #341.getSpectatorGui:()Lnet/minecraft/client/gui/components/spectator/SpectatorGui;
+    288: invokevirtual #347.isMenuActive:()Z
+    291: ifeq start+316
+    294: aload_0 
+    295: getfield #10.minecraft:Lnet/minecraft/client/Minecraft;
+    298: getfield #49.gui:Lnet/minecraft/client/gui/Gui;
+    301: getfield #74.hud:Lnet/minecraft/client/gui/Hud;
+    304: invokevirtual #341.getSpectatorGui:()Lnet/minecraft/client/gui/components/spectator/SpectatorGui;
+    307: iload 15
+    309: ineg 
+    310: invokevirtual #347.onMouseScrolled:(I)V
+    313: goto start+398
+    316: aload_0 
+    317: getfield #10.minecraft:Lnet/minecraft/client/Minecraft;
+    320: getfield #49.player:Lnet/minecraft/client/player/LocalPlayer;
+    323: invokevirtual #332.getAbilities:()Lnet/minecraft/world/entity/player/Abilities;
+    326: invokevirtual #360.getFlyingSpeed:()F
+    329: aload 14
+    331: getfield #324.y:I
+    334: i2f 
+    335: ldc_w #365
+    338: fmul 
+    339: fadd 
+    340: fconst_0 
+    341: ldc_w #366
+    344: invokestatic #368.clamp:(FFF)F
+    347: fstore 16
+    349: aload_0 
+    350: getfield #10.minecraft:Lnet/minecraft/client/Minecraft;
+    353: getfield #49.player:Lnet/minecraft/client/player/LocalPlayer;
+    356: invokevirtual #332.getAbilities:()Lnet/minecraft/world/entity/player/Abilities;
+    359: fload 16
+    361: invokevirtual #360.setFlyingSpeed:(F)V
+    364: goto start+398
+    367: aload_0 
+    368: getfield #10.minecraft:Lnet/minecraft/client/Minecraft;
+    371: getfield #49.player:Lnet/minecraft/client/player/LocalPlayer;
+    374: invokevirtual #332.getInventory:()Lnet/minecraft/world/entity/player/Inventory;
+    377: astore 16
+    379: aload 16
+    381: iload 15
+    383: i2d 
+    384: aload 16
+    386: invokevirtual #382.getSelectedSlot:()I
+    389: invokestatic #382.getSelectionSize:()I
+    392: invokestatic #41.getNextScrollWheelSelection:(DII)I
+    395: invokevirtual #382.setSelectedSlot:(I)V
+    398: return 
+
