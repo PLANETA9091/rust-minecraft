@@ -1360,6 +1360,13 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
             if f3_down && window.is_key_pressed(Key::Key3, minifb::KeyRepeat::No) {
                 app.on_network_charts_key();
             }
+            // THE F3+G CHUNK BORDERS (the debug-entry toggle the audited
+            // refreshRendererList gate serves — the enabled entry the
+            // renderer list keeps independent of the overlay's own
+            // visibility, the borders the world draw persists)
+            if f3_down && window.is_key_pressed(Key::G, minifb::KeyRepeat::No) {
+                app.on_chunk_borders_key();
+            }
             if f3_was_down && !f3_down {
                 app.on_debug_modifier_released();
             }

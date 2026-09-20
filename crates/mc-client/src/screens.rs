@@ -826,6 +826,205 @@ fn debug_right_lines_from(
     lines
 }
 
+/// THE CHUNK BORDER'S OWN COLOR LAW (26.2 ChunkBorderRenderer's
+/// audited <clinit>: CELL_BORDER = ARGB.color(255, 0, 155, 155) — the
+/// opaque teal, YELLOW = ARGB.color(255, 255, 255, 0) — the opaque
+/// yellow the misnomer carries, MAJOR_LINES =
+/// ARGB.colorFromFloat(1.0, 0.25, 0.25, 1.0) — the blue the major
+/// strokes wear; the NEIGHBOR grid the emitGizmos head speaks —
+/// colorFromFloat(0.5, 1.0, 0.0, 0.0), the red the alpha 0.5 halves).
+pub(crate) const CHUNK_CELL_TEAL: [f32; 3] = [0.0, 155.0 / 255.0, 155.0 / 255.0];
+pub(crate) const CHUNK_CELL_YELLOW: [f32; 3] = [1.0, 1.0, 0.0];
+pub(crate) const CHUNK_MAJOR_BLUE: [f32; 3] = [0.25, 0.25, 1.0];
+pub(crate) const CHUNK_NEIGHBOR_RED: [f32; 3] = [1.0, 0.0, 0.0];
+
+/// THE F3+G CHUNK BORDER LINES (26.2 ChunkBorderRenderer.emitGizmos's
+/// audited walk — scripts/jar_work/chunkborder_262.txt — the seven
+/// layers the bytecode's own order keeps, the geometry the pure fold
+/// speaks and the raster pass only projects):
+/// 1. THE NEIGHBOR GRID (pcs 63-152): the vertical lines at every
+///    {-16, 0, 16, 32}² offset from the camera chunk's min corner,
+///    minY..maxY — the red alpha-0.5 wire the ARGB.colorFromFloat(
+///    0.5, 1, 0, 0) keeps;
+/// 2. THE X-INTERIOR VERTICALS (pcs 155-280): x = 2..15 step 2 on
+///    BOTH the minZ and the maxZ faces, the teal CELL_BORDER every
+///    4th (x % 4 == 0) the yellow misnomer colors;
+/// 3. THE Z-INTERIOR VERTICALS (pcs 283-408): the mirrored pair on
+///    the min/max X faces, the same color law;
+/// 4. THE HORIZONTAL RINGS (pcs 411-639): every y from minY to
+///    maxY+1 step 2, the 4-edge ring around the chunk, teal every
+///    4th ring (y % 8 == 0) else yellow;
+/// 5. THE CORNER VERTICALS (pcs 642-724): {0, 16}² offsets — the
+///    camera chunk's own four edges, MAJOR_LINES blue;
+/// 6. THE SECTION CUBOID (pcs 727-791): the camera's 16³ section
+///    box — AABB(min, minBlockY, min, max+1, maxBlockY+1, max+1) —
+///    the MAJOR_LINES stroke the setAlwaysOnTop call draws through
+///    the terrain;
+/// 7. THE SECTION-Y RINGS (pcs 792-1007): every 16th y, the 4-edge
+///    ring, MAJOR_LINES blue.
+pub(crate) fn chunk_border_lines(
+    cam_block: (i32, i32, i32),
+    min_y: i32,
+    max_y_incl: i32,
+) -> Vec<crate::raster::DebugLine> {
+    // SectionPos.of(blockPosition)'s own fold (the >> 4 pair the
+    // arithmetic shift keeps — the negative coords the floor law
+    // speaks) and the min corner the minBlockX/Z getters carry
+    let (sx, sy, sz) = (cam_block.0 >> 4, cam_block.1 >> 4, cam_block.2 >> 4);
+    let (mx, mz) = ((sx * 16) as f32, (sz * 16) as f32);
+    let sec_y = (sy * 16) as f32;
+    let y0 = min_y as f32; // the level.getMinY word
+    let y1 = max_y_incl as f32; // the level.getMaxY() + 1 word
+    let line = |a: [f32; 3], b: [f32; 3], rgb: [f32; 3], alpha: f32, top: bool| {
+        crate::raster::DebugLine {
+            a: Vec3::new(a[0], a[1], a[2]),
+            b: Vec3::new(b[0], b[1], b[2]),
+            rgb,
+            alpha,
+            always_on_top: top,
+        }
+    };
+    let mut out = Vec::new();
+    // LAYER 1 — the neighbor grid (the 4x4 verticals, red alpha 0.5)
+    for i in [-16i32, 0, 16, 32] {
+        for j in [-16i32, 0, 16, 32] {
+            out.push(line(
+                [mx + i as f32, y0, mz + j as f32],
+                [mx + i as f32, y1, mz + j as f32],
+                CHUNK_NEIGHBOR_RED,
+                0.5,
+                false,
+            ));
+        }
+    }
+    // LAYER 2 — the interior verticals (x and z walks, teal/yellow)
+    for i in (2..16).step_by(2) {
+        let rgb = if i % 4 == 0 {
+            CHUNK_CELL_TEAL
+        } else {
+            CHUNK_CELL_YELLOW
+        };
+        let fi = i as f32;
+        // the X walk: both the minZ and the maxZ faces
+        out.push(line([mx + fi, y0, mz], [mx + fi, y1, mz], rgb, 1.0, false));
+        out.push(line(
+            [mx + fi, y0, mz + 16.0],
+            [mx + fi, y1, mz + 16.0],
+            rgb,
+            1.0,
+            false,
+        ));
+        // the Z walk: both the minX and the maxX faces
+        out.push(line([mx, y0, mz + fi], [mx, y1, mz + fi], rgb, 1.0, false));
+        out.push(line(
+            [mx + 16.0, y0, mz + fi],
+            [mx + 16.0, y1, mz + fi],
+            rgb,
+            1.0,
+            false,
+        ));
+    }
+    // LAYER 3 — the horizontal rings (every 2nd y, teal every 4th)
+    let mut y = min_y;
+    while y <= max_y_incl {
+        let rgb = if y % 8 == 0 {
+            CHUNK_CELL_TEAL
+        } else {
+            CHUNK_CELL_YELLOW
+        };
+        let fy = y as f32;
+        out.push(line([mx, fy, mz], [mx, fy, mz + 16.0], rgb, 1.0, false));
+        out.push(line(
+            [mx, fy, mz + 16.0],
+            [mx + 16.0, fy, mz + 16.0],
+            rgb,
+            1.0,
+            false,
+        ));
+        out.push(line(
+            [mx + 16.0, fy, mz + 16.0],
+            [mx + 16.0, fy, mz],
+            rgb,
+            1.0,
+            false,
+        ));
+        out.push(line([mx + 16.0, fy, mz], [mx, fy, mz], rgb, 1.0, false));
+        y += 2;
+    }
+    // LAYER 4 — the corner verticals (the camera chunk's own four)
+    for i in [0i32, 16] {
+        for j in [0i32, 16] {
+            out.push(line(
+                [mx + i as f32, y0, mz + j as f32],
+                [mx + i as f32, y1, mz + j as f32],
+                CHUNK_MAJOR_BLUE,
+                1.0,
+                false,
+            ));
+        }
+    }
+    // LAYER 5 — the section cuboid (the camera's 16³ box,
+    // always-on-top the setAlwaysOnTop call speaks)
+    {
+        let corners = [
+            [mx, sec_y, mz],
+            [mx + 16.0, sec_y, mz],
+            [mx + 16.0, sec_y, mz + 16.0],
+            [mx, sec_y, mz + 16.0],
+            [mx, sec_y + 16.0, mz],
+            [mx + 16.0, sec_y + 16.0, mz],
+            [mx + 16.0, sec_y + 16.0, mz + 16.0],
+            [mx, sec_y + 16.0, mz + 16.0],
+        ];
+        const CUBOID_EDGES: [(usize, usize); 12] = [
+            (0, 1),
+            (1, 2),
+            (2, 3),
+            (3, 0),
+            (4, 5),
+            (5, 6),
+            (6, 7),
+            (7, 4),
+            (0, 4),
+            (1, 5),
+            (2, 6),
+            (3, 7),
+        ];
+        for (a, b) in CUBOID_EDGES {
+            out.push(line(corners[a], corners[b], CHUNK_MAJOR_BLUE, 1.0, true));
+        }
+    }
+    // LAYER 6 — the section-y rings (every 16th y, the major blue)
+    let mut y = min_y;
+    while y <= max_y_incl {
+        let fy = y as f32;
+        out.push(line([mx, fy, mz], [mx, fy, mz + 16.0], CHUNK_MAJOR_BLUE, 1.0, false));
+        out.push(line(
+            [mx, fy, mz + 16.0],
+            [mx + 16.0, fy, mz + 16.0],
+            CHUNK_MAJOR_BLUE,
+            1.0,
+            false,
+        ));
+        out.push(line(
+            [mx + 16.0, fy, mz + 16.0],
+            [mx + 16.0, fy, mz],
+            CHUNK_MAJOR_BLUE,
+            1.0,
+            false,
+        ));
+        out.push(line(
+            [mx + 16.0, fy, mz],
+            [mx, fy, mz],
+            CHUNK_MAJOR_BLUE,
+            1.0,
+            false,
+        ));
+        y += 16;
+    }
+    out
+}
+
 /// THE BOTTOM BLOCK'S OWN KEYBIND WORD (javap DebugScreenOverlay
 /// .formatKeybind's own pair — the modifier's isUnbound lane the
 /// empty-string slot keeps (`ldc ""` the ifeq branch banks), the
@@ -5617,6 +5816,15 @@ pub struct App {
     /// pair), the raised state the bottom row's `visible` word and
     /// the ping chart draw's own gate both speak).
     pub network_charts: bool,
+    /// THE CHUNK BORDERS' OWN ENTRY (26.2's debug-entry system — the
+    /// `DebugScreenEntryList.isCurrentlyEnabled(chunk_border)` gate
+    /// the audited DebugRenderer.refreshRendererList keeps: the F3+G
+    /// chord flips the entry, the ENABLED state the renderer list
+    /// keeps INDEPENDENT of the F3 overlay's own visibility — the
+    /// borders stay while the overlay closes, the vanilla entry
+    /// toggle's own persistence). False = the silent world the
+    /// fresh client keeps.
+    pub chunk_borders: bool,
     /// THE PING CHART'S OWN SAMPLES (the PingDebugMonitor's
     /// LocalSampleLogger law — the RTT millis the net worker's
     /// pong lane logs, the chart-ordered snapshot the shipped
@@ -6060,6 +6268,7 @@ impl App {
             fps_value: None,
             fps_charts: false,
             network_charts: false,
+            chunk_borders: false,
             ping_samples: Vec::new(),
             bw_samples: Vec::new(),
             tick_samples: Vec::new(),
@@ -14907,6 +15116,17 @@ impl App {
         }
     }
 
+    /// THE CHUNK BORDERS' OWN TOGGLE (the F3+G chord's own lane —
+    /// the debug-entry flip the audited refreshRendererList gate
+    /// serves, the persistence the entry system's own law keeps: no
+    /// overlay raise, the borders the world draw alone speaks). The
+    /// modifier-spent flag the bare F3 release gate reads rides —
+    /// the chord the F3 modifier's own family joins.
+    pub fn on_chunk_borders_key(&mut self) {
+        self.chunk_borders = !self.chunk_borders;
+        self.debug_modifier_used = true;
+    }
+
     /// THE F2 KEY'S OWN LANE (javap Minecraft.handleKeybinds's
     /// keyScreenshot lane — the `Options.keyScreenshot.consumeClick()`
     /// rising edge the `Screenshot.grab(...)` walk answers): the
@@ -18942,6 +19162,28 @@ impl App {
         // worlds the intensity gate keeps silent
         self.render_weather(fb, &ctx, &cam, day_time);
         crate::sky::render_clouds(fb, &ctx, &cam, day_time, 0.0, cloud_fog_end);
+        // THE F3+G CHUNK BORDERS (the audited 26.2 debug-entry render —
+        // the ChunkBorderRenderer.emitGizmos walk the pure
+        // chunk_border_lines builder speaks: the enabled entry the
+        // renderer list keeps INDEPENDENT of the F3 overlay, the
+        // camera entity's own block position the SectionPos fold
+        // reads, the level's min/max bounds the client world's own
+        // 0..CHUNK_Y span answers). The draw rides BEFORE the dig
+        // lane's wireframe (the debug gizmos the level render's own
+        // tail keeps).
+        if self.chunk_borders {
+            let cam_block = self
+                .body
+                .as_ref()
+                .map(|b| (b.x.floor() as i32, b.y.floor() as i32, b.z.floor() as i32))
+                .unwrap_or((cam.pos.x.floor() as i32, cam.pos.y.floor() as i32, cam.pos.z.floor() as i32));
+            let lines = chunk_border_lines(
+                cam_block,
+                0,
+                crate::world::CHUNK_Y as i32,
+            );
+            fb.draw_chunk_borders(&ctx, &lines);
+        }
         // THE DIG LANE's frame render (the vanilla LevelRenderer's own
         // pair, both after the terrain and before the hand): the hit
         // outline (the black wireframe on the crosshair's block — every
@@ -24522,6 +24764,117 @@ mod tests {
         // = 752, the narrow gui the same law answers)
         assert_eq!(right_column_x(854, 100), 752);
         assert_eq!(right_column_x(320, 300), 18);
+    }
+
+    /// THE F3+G CHUNK BORDER LINES' OWN LAW (the audited 26.2
+    /// ChunkBorderRenderer.emitGizmos walk the pure builder speaks —
+    /// the seven layers the counts, the endpoints and the ARGB
+    /// constants pin, the SectionPos fold the negative-coordinate
+    /// floor law keeps).
+    #[test]
+    fn the_chunk_border_lines_the_seven_layers_speak() {
+        // THE CAMERA SECTION (the >> 4 fold): block (5, 20, 7) rides
+        // section (0, 1, 0) — the min corner (0, 16, 0)
+        let lines = chunk_border_lines((5, 20, 7), 0, 48);
+        // THE COUNT (16 neighbors + 7*4 interior verticals + 25*4
+        // rings + 4 corners + 12 cuboid edges + 4*4 section rings)
+        assert_eq!(lines.len(), 16 + 28 + 100 + 4 + 12 + 16, "the layers");
+        // LAYER 1 (the neighbor grid, red alpha 0.5): the first line
+        // the (-16, -16) corner speaks, the last the (+32, +32) one
+        assert_eq!(
+            (lines[0].a.x, lines[0].a.y, lines[0].a.z),
+            (-16.0, 0.0, -16.0)
+        );
+        assert_eq!(lines[0].b.y, 48.0, "the vertical runs minY..maxY");
+        assert_eq!(lines[0].rgb, CHUNK_NEIGHBOR_RED);
+        assert!((lines[0].alpha - 0.5).abs() < 1e-6);
+        assert!(!lines[0].always_on_top);
+        let l15 = &lines[15];
+        assert_eq!((l15.a.x, l15.a.z), (32.0, 32.0), "the grid's own tail");
+        // LAYER 2 (the interior verticals): x = 2 the yellow speaks,
+        // x = 4 the teal every-4th wears, both the minZ and maxZ
+        // faces ride; the Z walk the mirrored pair keeps
+        let x2_min_z = &lines[16]; // i = 2, the minZ face
+        assert_eq!((x2_min_z.a.x, x2_min_z.a.z), (2.0, 0.0));
+        assert_eq!(x2_min_z.rgb, CHUNK_CELL_YELLOW);
+        let x4_min_z = &lines[20]; // i = 4 (the second walk), the minZ face
+        assert_eq!((x4_min_z.a.x, x4_min_z.a.z), (4.0, 0.0));
+        assert_eq!(x4_min_z.rgb, CHUNK_CELL_TEAL, "the every-4th teal");
+        let x2_max_z = &lines[17];
+        assert_eq!((x2_max_z.a.x, x2_max_z.a.z), (2.0, 16.0), "the maxZ face");
+        let z2_min_x = &lines[18]; // i = 2, the Z walk's own minX face
+        assert_eq!((z2_min_x.a.x, z2_min_x.a.z), (0.0, 2.0));
+        let z2_max_x = &lines[19];
+        assert_eq!((z2_max_x.a.x, z2_max_x.a.z), (16.0, 2.0), "the maxX face");
+        // LAYER 3 (the horizontal rings): y = 0 the teal the %8 law
+        // speaks, y = 2 the yellow, the step-2 walk the 25 rings keeps
+        let ring_y0 = &lines[44]; // 16 + 28 = 44 — the first ring
+        assert_eq!(ring_y0.a.y, 0.0);
+        assert_eq!(ring_y0.rgb, CHUNK_CELL_TEAL);
+        let ring_y2 = &lines[48];
+        assert_eq!(ring_y2.a.y, 2.0);
+        assert_eq!(ring_y2.rgb, CHUNK_CELL_YELLOW);
+        let ring_y8 = &lines[60];
+        assert_eq!(ring_y8.a.y, 8.0);
+        assert_eq!(ring_y8.rgb, CHUNK_CELL_TEAL);
+        // LAYER 4 (the corner verticals, the major blue): the four
+        // {0,16}² corners the camera chunk's own edges wear
+        let corner0 = &lines[144]; // 16 + 28 + 100 = 144
+        assert_eq!((corner0.a.x, corner0.a.z), (0.0, 0.0));
+        assert_eq!(corner0.rgb, CHUNK_MAJOR_BLUE);
+        let corner3 = &lines[147];
+        assert_eq!((corner3.a.x, corner3.a.z), (16.0, 16.0));
+        // LAYER 5 (the section cuboid, always-on-top): the camera's
+        // own 16³ box the min corner (0, 16, 0) keeps
+        let cuboid = &lines[148..160];
+        assert!(
+            cuboid.iter().all(|l| l.always_on_top),
+            "the setAlwaysOnTop stroke"
+        );
+        assert!(cuboid.iter().all(|l| l.rgb == CHUNK_MAJOR_BLUE));
+        let secs: Vec<(f32, f32, f32)> = cuboid.iter().map(|l| (l.a.x, l.a.y, l.a.z)).collect();
+        assert!(secs.contains(&(0.0, 16.0, 0.0)), "the section min corner");
+        assert!(
+            cuboid.iter().any(|l| (l.b.x, l.b.y, l.b.z) == (16.0, 32.0, 16.0)),
+            "the section max corner the +16 box wears"
+        );
+        // LAYER 6 (the section-y rings): y = 0, 16, 32, 48 the four
+        // blue rings the every-16th walk keeps
+        let rings = &lines[160..176];
+        let ys: Vec<f32> = rings.iter().step_by(4).map(|l| l.a.y).collect();
+        assert_eq!(ys, vec![0.0, 16.0, 32.0, 48.0]);
+        assert!(rings.iter().all(|l| l.rgb == CHUNK_MAJOR_BLUE));
+        assert!(rings.iter().all(|l| !l.always_on_top));
+
+        // THE NEGATIVE SECTION (the >> 4 arithmetic shift the floor
+        // law keeps): block (-3, 20, -3) rides section (-1, 1, -1) —
+        // the min corner (-16, 16, -16)
+        let neg = chunk_border_lines((-3, 20, -3), 0, 48);
+        assert_eq!((neg[0].a.x, neg[0].a.z), (-32.0, -32.0), "the -16 offset");
+        let neg_cuboid = &neg[148..160];
+        assert!(
+            neg_cuboid
+                .iter()
+                .any(|l| (l.a.x, l.a.y, l.a.z) == (-16.0, 16.0, -16.0)),
+            "the negative section's own min corner"
+        );
+    }
+
+    /// THE F3+G TOGGLE'S OWN LAW (the debug-entry flip the audited
+    /// refreshRendererList gate serves — the persistence the entry
+    /// system keeps: no overlay raise, the modifier-spent flag the
+    /// bare F3 release gate reads).
+    #[test]
+    fn the_f3_g_chord_toggles_the_chunk_border_entry() {
+        let mut app = App::new(3);
+        app.enter_world();
+        assert!(!app.chunk_borders, "the fresh entry sleeps");
+        app.on_chunk_borders_key();
+        assert!(app.chunk_borders, "the chord raises");
+        assert!(app.debug_modifier_used, "the F3 modifier spent");
+        assert!(!app.debug_held, "the overlay the entry never raises");
+        app.on_chunk_borders_key();
+        assert!(!app.chunk_borders, "the chord lowers");
     }
 
     #[test]

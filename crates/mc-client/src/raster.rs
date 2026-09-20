@@ -37,6 +37,20 @@ pub enum FlatBlend {
     Translucent,
 }
 
+/// ONE DEBUG GIZMO LINE (the audited 26.2 Gizmos.line fold's own
+/// tuple — the world-space endpoints, the rgb the ARGB constants
+/// speak, the alpha the colorFromFloat keep, the always-on-top arm
+/// the setAlwaysOnTop style flags). The `chunk_border_lines` builder
+/// owns the geometry law, the `draw_chunk_borders` pass only
+/// projects.
+pub struct DebugLine {
+    pub a: Vec3,
+    pub b: Vec3,
+    pub rgb: [f32; 3],
+    pub alpha: f32,
+    pub always_on_top: bool,
+}
+
 /// One celestial quad (sun / moon / star / sunrise disc) in world space.
 /// Rendered with the official sky-pipeline semantics: no depth test or
 /// write, no fog, no backface cull — drawn right after the sky-color clear,
@@ -116,6 +130,86 @@ impl Framebuf {
         self.draw_pass(ctx, quads, false, true);
     }
 
+    /// THE DEBUG LINE'S OWN CORE (the projected Bresenham walk the
+    /// hit outline and the F3+G chunk borders share — the near-plane
+    /// guard `pa[3] < 0.1`, the perspective divide, the 2x2 plot the
+    /// vanilla's ~2.5px GL line width proxies, the alpha blend
+    /// `bg*(1-a) + rgb*a` the hit outline's black fold rides verbatim
+    /// (rgb = the zero vector speaks its old math exactly), the depth
+    /// test the `<` pass keeps — the ALWAYS-ON-TOP arm the audited
+    /// setAlwaysOnTop gizmo style (ChunkBorderRenderer's section
+    /// cuboid, pcs 776-791) skips).
+    fn draw_debug_line(
+        &mut self,
+        vp: &Mat4,
+        a: Vec3,
+        b: Vec3,
+        rgb: [f32; 3],
+        alpha: f32,
+        always_on_top: bool,
+    ) {
+        let w_px = self.w as f32;
+        let h_px = self.h as f32;
+        let pa = vp.transform_point(a);
+        let pb = vp.transform_point(b);
+        // the near-plane guard: both endpoints must sit in front
+        if pa[3] < 0.1 || pb[3] < 0.1 {
+            return;
+        }
+        let ax = (pa[0] / pa[3] * 0.5 + 0.5) * w_px;
+        let ay = (1.0 - (pa[1] / pa[3] * 0.5 + 0.5)) * h_px;
+        let bx = (pb[0] / pb[3] * 0.5 + 0.5) * w_px;
+        let by = (1.0 - (pb[1] / pb[3] * 0.5 + 0.5)) * h_px;
+        let az = pa[3]; // the view-distance proxy the depth test speaks
+        let bz = pb[3];
+        // Bresenham over the projected edge, the depth interpolated
+        // linearly (the span is a few pixels — the proxy is honest)
+        let (x0, y0) = (ax.round() as i64, ay.round() as i64);
+        let (x1, y1) = (bx.round() as i64, by.round() as i64);
+        let dx = (x1 - x0).abs();
+        let dy = -(y1 - y0).abs();
+        let sx = if x0 < x1 { 1 } else { -1 };
+        let sy = if y0 < y1 { 1 } else { -1 };
+        let mut err = dx + dy;
+        let steps = dx.max(dy).max(1) as f32;
+        let mut step: f32 = 0.0;
+        let (mut cx, mut cy) = (x0, y0);
+        loop {
+            let t = step / steps;
+            let z = az + (bz - az) * t;
+            // the 2x2 plot: the vanilla's ~2.5px GL line width
+            for (ox, oy) in [(0, 0i64), (1, 0), (0, 1)] {
+                let px = cx + ox;
+                let py = cy + oy;
+                if px < 0 || py < 0 || px >= self.w as i64 || py >= self.h as i64 {
+                    continue;
+                }
+                let idx = py as usize * self.w + px as usize;
+                if always_on_top || z < self.depth[idx] {
+                    let o = idx * 3;
+                    for ch in 0..3 {
+                        let bg = self.color[o + ch] as f32 / 255.0;
+                        self.color[o + ch] =
+                            (bg * (1.0 - alpha) * 255.0 + rgb[ch] * alpha * 255.0 + 0.5) as u8;
+                    }
+                }
+            }
+            step += 1.0;
+            if cx == x1 && cy == y1 {
+                break;
+            }
+            let e2 = 2 * err;
+            if e2 >= dy {
+                err += dy;
+                cx += sx;
+            }
+            if e2 <= dx {
+                err += dx;
+                cy += sy;
+            }
+        }
+    }
+
     /// THE DIG LANE's hit outline — the vanilla
     /// `LevelRenderer.renderHitOutline`'s black wireframe around the
     /// crosshair's block: the 12 edges of the cell's box inflated 0.002
@@ -127,8 +221,6 @@ impl Framebuf {
     /// targeted box in front of the camera for every honest aim.
     pub fn draw_hit_outline(&mut self, ctx: &RenderCtx, pos: (i32, i32, i32)) {
         let vp = ctx.proj.mul(&ctx.view);
-        let w_px = self.w as f32;
-        let h_px = self.h as f32;
         const EPS: f32 = 0.002;
         const ALPHA: f32 = 0.4;
         let (x, y, z) = (pos.0 as f32 - EPS, pos.1 as f32 - EPS, pos.2 as f32 - EPS);
@@ -158,63 +250,28 @@ impl Framebuf {
             (3, 7), // the verticals
         ];
         for (a, b) in EDGES {
-            let pa = vp.transform_point(Vec3::new(corners[a][0], corners[a][1], corners[a][2]));
-            let pb = vp.transform_point(Vec3::new(corners[b][0], corners[b][1], corners[b][2]));
-            // the near-plane guard: both endpoints must sit in front
-            if pa[3] < 0.1 || pb[3] < 0.1 {
-                continue;
-            }
-            let ax = (pa[0] / pa[3] * 0.5 + 0.5) * w_px;
-            let ay = (1.0 - (pa[1] / pa[3] * 0.5 + 0.5)) * h_px;
-            let bx = (pb[0] / pb[3] * 0.5 + 0.5) * w_px;
-            let by = (1.0 - (pb[1] / pb[3] * 0.5 + 0.5)) * h_px;
-            let az = pa[3]; // the view-distance proxy the depth test speaks
-            let bz = pb[3];
-            // Bresenham over the projected edge, the depth interpolated
-            // linearly (the span is a few pixels — the proxy is honest)
-            let (x0, y0) = (ax.round() as i64, ay.round() as i64);
-            let (x1, y1) = (bx.round() as i64, by.round() as i64);
-            let dx = (x1 - x0).abs();
-            let dy = -(y1 - y0).abs();
-            let sx = if x0 < x1 { 1 } else { -1 };
-            let sy = if y0 < y1 { 1 } else { -1 };
-            let mut err = dx + dy;
-            let steps = dx.max(dy).max(1) as f32;
-            let mut step: f32 = 0.0;
-            let (mut cx, mut cy) = (x0, y0);
-            loop {
-                let t = step / steps;
-                let z = az + (bz - az) * t;
-                // the 2x2 plot: the vanilla's ~2.5px GL line width
-                for (ox, oy) in [(0, 0i64), (1, 0), (0, 1)] {
-                    let px = cx + ox;
-                    let py = cy + oy;
-                    if px < 0 || py < 0 || px >= self.w as i64 || py >= self.h as i64 {
-                        continue;
-                    }
-                    let idx = py as usize * self.w + px as usize;
-                    if z < self.depth[idx] {
-                        let o = idx * 3;
-                        for ch in 0..3 {
-                            let bg = self.color[o + ch] as f32 / 255.0;
-                            self.color[o + ch] = (bg * (1.0 - ALPHA) * 255.0 + 0.5) as u8;
-                        }
-                    }
-                }
-                step += 1.0;
-                if cx == x1 && cy == y1 {
-                    break;
-                }
-                let e2 = 2 * err;
-                if e2 >= dy {
-                    err += dy;
-                    cx += sx;
-                }
-                if e2 <= dx {
-                    err += dx;
-                    cy += sy;
-                }
-            }
+            self.draw_debug_line(
+                &vp,
+                Vec3::new(corners[a][0], corners[a][1], corners[a][2]),
+                Vec3::new(corners[b][0], corners[b][1], corners[b][2]),
+                [0.0, 0.0, 0.0],
+                ALPHA,
+                false,
+            );
+        }
+    }
+
+    /// THE F3+G CHUNK BORDERS' OWN DRAW (the audited 26.2
+    /// ChunkBorderRenderer.emitGizmos walk — scripts/jar_work/
+    /// chunkborder_262.txt — the seven layers the pure
+    /// `chunk_border_lines` builder speaks, the line list the geometry
+    /// law owns and this draw only projects): the debug lines ride the
+    /// shared Bresenham core, the gizmos' own colors the bytecode's
+    /// ARGB folds keep.
+    pub fn draw_chunk_borders(&mut self, ctx: &RenderCtx, lines: &[DebugLine]) {
+        let vp = ctx.proj.mul(&ctx.view);
+        for l in lines {
+            self.draw_debug_line(&vp, l.a, l.b, l.rgb, l.alpha, l.always_on_top);
         }
     }
 
