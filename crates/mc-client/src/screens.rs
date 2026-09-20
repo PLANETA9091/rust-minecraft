@@ -15742,7 +15742,10 @@ impl App {
     /// `setScreen(null)` the match serves): the same-mode arm the
     /// `icon.mode != current` gate keeps silent (the previous bank the
     /// change alone earns), the OFFLINE world the apply owns (the
-    /// server side runs locally — the drop lane's own law), and the
+    /// server side runs locally — the drop lane's own law: the mode
+    /// bank AND the full abilities re-grant the audited
+    /// `GameType.updatePlayerAbilities` walk speaks — the SEAM the
+    /// mode echo's wire lane shares), and the
     /// WIRE world the audited `switchToHoveredGameMode(Minecraft,
     /// GameModeIcon)` walk speaks (pcs 49-60): the
     /// ServerboundChangeGameModePacket the connection send ALONE
@@ -15769,16 +15772,19 @@ impl App {
             } else {
                 self.previous_game_mode = Some(self.game_mode);
                 self.game_mode = mode;
-                // THE ABILITIES REVOKE (the vanilla server's own
-                // onUpdateAbilities law — the mayFly the mode grant
-                // carries: creative/spectator the flight arms,
-                // survival/adventure the flying state folds — the
-                // mid-flight mode switch the ground asks)
-                if !matches!(mode, GameMode::Creative | GameMode::Spectator) {
-                    if let Some(b) = self.body.as_mut() {
-                        b.flying = false;
-                    }
-                }
+                // THE ABILITIES RE-GRANT (the vanilla server-side
+                // updatePlayerAbilities walk the local authority owns
+                // — the singleplayer's integrated server the same
+                // walk runs, the SEAM the mode echo's wire lane
+                // shares): the spectator arm the instant flight banks
+                // (pcs 21-35's `flying = 1` — the apply's own walk,
+                // no tick's sync the flight waits for), the creative
+                // arm the flying field untouched keeps, the
+                // survival/adventure arm the ground the revoke asks,
+                // the invulnerable word the hurt pipeline's head the
+                // grant answers (the offline world the bank None
+                // wears — the mode folds the consumers answer)
+                self.abilities_regrant(mode);
             }
         }
         self.screen = ScreenKind::World;
@@ -17281,6 +17287,44 @@ impl App {
         self.net_ride = ride;
     }
 
+    /// THE ABILITIES RE-GRANT'S OWN SEAM (javap 26.2
+    /// `GameType.updatePlayerAbilities` — the audited putfield walk
+    /// the ONE Abilities object wears, the BOTH lanes' shared word:
+    /// the wire world's game-mode echo the installer serves, the
+    /// offline world's F4 apply the local authority speaks — the
+    /// vanilla singleplayer's integrated server the same walk runs):
+    /// the flying fold the three arms keep (the SPECTATOR arm the
+    /// instant flight banks — pcs 21-35's `flying = 1`, the CREATIVE
+    /// arm the FLYING FIELD UNTOUCHED — the mid-flight creative
+    /// switch the flight preserves, the SURVIVAL/ADVENTURE arm the
+    /// ground the revoke asks), the invulnerable word the instant
+    /// bank keeps (the hurt pipeline's head the re-granted flag
+    /// answers), and the BANKED word the same walk re-pins (the
+    /// mayfly/instabuild/invulnerable trio the arms' own grants
+    /// bank, the flying fold the same three arms speak — the absent
+    /// bank the silence keeps, the offline world the None wears, the
+    /// mode folds the consumers answer).
+    fn abilities_regrant(&mut self, mode: GameMode) {
+        if let Some(b) = self.body.as_mut() {
+            match mode {
+                GameMode::Spectator => b.flying = true,
+                GameMode::Creative => {}
+                _ => b.flying = false,
+            }
+            b.invulnerable = mode.invulnerable();
+        }
+        if let Some(w) = self.abilities_word.as_mut() {
+            match mode {
+                GameMode::Spectator => w.flying = true,
+                GameMode::Creative => {}
+                _ => w.flying = false,
+            }
+            w.mayfly = matches!(mode, GameMode::Creative | GameMode::Spectator);
+            w.instabuild = mode == GameMode::Creative;
+            w.invulnerable = mode.invulnerable();
+        }
+    }
+
     /// THE GAME-MODE ECHO'S OWN BANK (javap 26.2
     /// `MultiPlayerGameMode.setLocalMode(GameType)` — the one-arg
     /// overload the `ClientPacketListener.handleGameEvent`'s
@@ -17320,37 +17364,11 @@ impl App {
         self.game_mode = mode;
         // THE ABILITIES RE-GRANT (pcs 21-35 + the audited
         // GameType.updatePlayerAbilities walk — unconditional): the
+        // SHARED SEAM the offline apply's own authority wears — the
         // flying fold the three arms speak, the invulnerable word the
         // instant bank keeps (the tick's own feed the same verdict
-        // re-answers)
-        if let Some(b) = self.body.as_mut() {
-            match mode {
-                GameMode::Spectator => b.flying = true,
-                GameMode::Creative => {}
-                _ => b.flying = false,
-            }
-            b.invulnerable = mode.invulnerable();
-        }
-        // THE BANK'S OWN RE-GRANT (the vanilla ONE Abilities object
-        // the same `updatePlayerAbilities` walk writes — the Body's
-        // putfields the physics fields mirror, the banked word the
-        // grant bits re-pin: the flying fold the same three arms
-        // speak, the mayfly/instabuild/invulnerable trio the arms'
-        // own grants bank — the CONSUMERS the accessors serve the
-        // re-granted bits read the next tick, the server's own echo
-        // the whole word re-pins when it lands). The absent bank the
-        // silence keeps (the pre-echo window the folds stand in —
-        // nothing the re-grant banks).
-        if let Some(w) = self.abilities_word.as_mut() {
-            match mode {
-                GameMode::Spectator => w.flying = true,
-                GameMode::Creative => {}
-                _ => w.flying = false,
-            }
-            w.mayfly = matches!(mode, GameMode::Creative | GameMode::Spectator);
-            w.instabuild = mode == GameMode::Creative;
-            w.invulnerable = mode.invulnerable();
-        }
+        // re-answers), the banked word the same walk re-pins
+        self.abilities_regrant(mode);
     }
 
     /// THE MAYFLY GATE'S OWN SOURCE (the vanilla
@@ -27198,6 +27216,94 @@ mod tests {
         app.live_abilities_updated(Some(ground.clone()));
         let w = app.abilities_word.as_ref().expect("the echo re-banks");
         assert_eq!(*w, ground, "the newest echo the word re-pins");
+    }
+
+    /// THE OFFLINE APPLY'S OWN RE-GRANT (the vanilla server-side
+    /// `GameType.updatePlayerAbilities` walk the local authority
+    /// owns — the singleplayer's integrated server the same walk
+    /// runs, the SEAM the mode echo's wire lane shares): the F4
+    /// apply the FULL walk speaks — the CREATIVE arm the
+    /// invulnerable word the hurt pipeline's head banks, the
+    /// SPECTATOR arm the instant flight banks (the apply's own
+    /// walk — no tick's sync the flight waits for), the CREATIVE
+    /// arm the flying field UNTOUCHED keeps (the mid-flight
+    /// creative switch the flight preserves), the SURVIVAL/ADVENTURE
+    /// arm the zero walk the fields folds, and the offline bank the
+    /// None keeps (the mode folds the consumers answer).
+    #[test]
+    fn the_offline_apply_the_re_grant_walk_completes() {
+        let mut app = App::new(3);
+        app.enter_world();
+        app.spawn_offline_body();
+        for _ in 0..3 {
+            app.update(); // the settle — the grounded body the collide banks
+        }
+        assert!(
+            !app.body.as_ref().expect("the body rides").invulnerable,
+            "the survival body the invulnerable keeps silent"
+        );
+        // THE CREATIVE APPLY (the trio's invulnerable word the hurt
+        // pipeline's head banks — the flying field the grounded body
+        // untouched keeps)
+        app.on_open_game_mode_switcher();
+        while GameMode::ICON_ORDER[app.gm_hovered] != GameMode::Creative {
+            app.on_game_mode_switcher_cycle();
+        }
+        app.on_debug_modifier_released();
+        assert_eq!(app.game_mode, GameMode::Creative, "the apply lands");
+        let b = app.body.as_ref().expect("the body rides");
+        assert!(b.invulnerable, "the creative apply the grant banks");
+        assert!(!b.flying, "the creative arm the grounded body untouched");
+        assert!(app.abilities_word.is_none(), "the offline bank the None keeps");
+        assert!(
+            app.abilities_mayfly() && app.abilities_instabuild(),
+            "the folds the consumers answer"
+        );
+        // THE SPECTATOR APPLY (the instant flight the apply's own
+        // walk banks — the sync arm the next tick the re-bank never
+        // double-speaks)
+        app.on_open_game_mode_switcher();
+        while GameMode::ICON_ORDER[app.gm_hovered] != GameMode::Spectator {
+            app.on_game_mode_switcher_cycle();
+        }
+        app.on_debug_modifier_released();
+        assert_eq!(app.game_mode, GameMode::Spectator, "the apply lands");
+        let b = app.body.as_ref().expect("the body rides");
+        assert!(b.flying, "the spectator apply the flight banks instantly");
+        assert!(b.invulnerable, "the spectator apply the invulnerable keeps");
+        // THE MID-FLIGHT CREATIVE SWITCH (the CREATIVE arm the
+        // flying field UNTOUCHED keeps — the flight the mode switch
+        // preserves)
+        app.on_open_game_mode_switcher();
+        while GameMode::ICON_ORDER[app.gm_hovered] != GameMode::Creative {
+            app.on_game_mode_switcher_cycle();
+        }
+        app.on_debug_modifier_released();
+        assert_eq!(app.game_mode, GameMode::Creative, "the apply lands");
+        assert!(
+            app.body.as_ref().expect("the body rides").flying,
+            "the creative arm the flight preserves"
+        );
+        // THE SURVIVAL APPLY (the zero walk the fields folds — the
+        // ground the revoke asks, the invulnerable grant retires)
+        app.on_open_game_mode_switcher();
+        while GameMode::ICON_ORDER[app.gm_hovered] != GameMode::Survival {
+            app.on_game_mode_switcher_cycle();
+        }
+        app.on_debug_modifier_released();
+        assert_eq!(app.game_mode, GameMode::Survival, "the apply lands");
+        let b = app.body.as_ref().expect("the body rides");
+        assert!(!b.flying, "the zero walk the flight folds");
+        assert!(!b.invulnerable, "the zero walk the grant retires");
+        assert_eq!(
+            app.previous_game_mode,
+            Some(GameMode::Creative),
+            "the previous bank the flick earns"
+        );
+        assert!(
+            !app.abilities_mayfly() && !app.abilities_instabuild(),
+            "the folds the revoked bits answer"
+        );
     }
 
     /// THE FLIGHT'S OWN APP LANES (the audited 26.2 walk the update
