@@ -1,0 +1,11 @@
+=== onUpdateAbilities()V max_stack=4 max_locals=1 ===
+      0: aload_0 
+      1: getfield #7.connection:Lnet/minecraft/client/multiplayer/ClientPacketListener;
+      4: new net/minecraft/network/protocol/game/ServerboundPlayerAbilitiesPacket
+      7: dup 
+      8: aload_0 
+      9: invokevirtual #7.getAbilities:()Lnet/minecraft/world/entity/player/Abilities;
+     12: invokespecial #493.<init>:(Lnet/minecraft/world/entity/player/Abilities;)V
+     15: invokevirtual #10.send:(Lnet/minecraft/network/protocol/Packet;)V
+     18: return 
+

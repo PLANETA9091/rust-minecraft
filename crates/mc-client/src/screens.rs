@@ -4765,6 +4765,22 @@ impl GameMode {
             .expect("the ICON_ORDER array carries every variant")
     }
 
+    /// The GameType WIRE id (javap GameType's own clinit — the
+    /// `new GameType(String, ordinal, id, String)` putstatic pairs
+    /// verbatim: SURVIVAL 0, CREATIVE 1, ADVENTURE 2, SPECTATOR 3,
+    /// the `ByteBufCodecs.idMapper(BY_ID, id)` codec the
+    /// ServerboundChangeGameModePacket's composite carries). NOT the
+    /// GameModeIcon ordinals the ICON_ORDER keeps — the switcher's
+    /// slot row the icons' own display order speaks.
+    pub(crate) fn wire_id(self) -> i32 {
+        match self {
+            GameMode::Survival => 0,
+            GameMode::Creative => 1,
+            GameMode::Adventure => 2,
+            GameMode::Spectator => 3,
+        }
+    }
+
     /// The name line's lang key (the GameModeIcon name field — the
     /// Component.translatable walk the en_us table answers:
     /// "Survival Mode" and the row's three siblings).
@@ -6903,7 +6919,7 @@ impl App {
                 // the super chain's own position the call site keeps
                 // (the law speaks BEFORE the decrement, the next
                 // tick's body reads the spent bank)
-                Self::fly_law_tick(
+                let fly_changed = Self::fly_law_tick(
                     b,
                     &mut self.fly_trigger_time,
                     &mut self.last_jump_key,
@@ -6912,6 +6928,21 @@ impl App {
                     self.game_mode == GameMode::Spectator,
                     self.net_ride.is_some() || self.offline_ride.is_some(),
                 );
+                // THE ABILITIES WIRE (the restored loc6 flag's own
+                // consumer — the vanilla `onUpdateAbilities()` walk
+                // the changed tick serves): the flying state the ONE
+                // byte banks, the live sink the lane rides (the
+                // offline world no wire keeps — the flag the offline
+                // ticks spend silently)
+                if fly_changed {
+                    if let Some(sink) = self.live_clicks.as_ref() {
+                        let _ = sink.send(
+                            crate::world_view::ContainerCommand::PlayerAbilities {
+                                flying: b.flying,
+                            },
+                        );
+                    }
+                }
                 if self.fly_trigger_time > 0 {
                     self.fly_trigger_time -= 1;
                 }
@@ -7267,10 +7298,16 @@ impl App {
                     // touched ground the flight retires, the
                     // spectator's own the terrain never claims; the
                     // onUpdateAbilities the packet lane rides — the
-                    // encoder-less client's refusal the fly law's own
-                    // note keeps)
+                    // abilities wire the changed tick speaks)
                     if b.flying && b.on_ground && self.game_mode != GameMode::Spectator {
                         b.flying = false;
+                        if let Some(sink) = self.live_clicks.as_ref() {
+                            let _ = sink.send(
+                                crate::world_view::ContainerCommand::PlayerAbilities {
+                                    flying: false,
+                                },
+                            );
+                        }
                     }
                     // THE FOOTSTEP: the body's own cadence law fired on a
                     // solid block under the feet — the block's step voice
@@ -15662,24 +15699,41 @@ impl App {
     /// `icon.mode != current` gate keeps silent (the previous bank the
     /// change alone earns), the OFFLINE world the apply owns (the
     /// server side runs locally — the drop lane's own law), and the
-    /// WIRE session the honest refusal keeps: the mode the SERVER's
-    /// belief owns, the ServerboundChangeGameModePacket the
-    /// encoder-less client cannot speak yet (the packet lane rides
-    /// later) — the close the refusal never blocks.
+    /// WIRE world the audited `switchToHoveredGameMode(Minecraft,
+    /// GameModeIcon)` walk speaks (pcs 49-60): the
+    /// ServerboundChangeGameModePacket the connection send ALONE
+    /// carries — the mode the SERVER's belief owns, the local
+    /// prediction the switcher's walk never keeps (the GameType id
+    /// the `wire_id` fold banks, the packet lane the encoder-less
+    /// refusal retired) — the close the send never blocks, the
+    /// server's own answer the clientbound echo rides back through
+    /// its gate.
     pub fn apply_gamemode_hovered(&mut self) {
         debug_assert_eq!(self.screen, ScreenKind::GameModeSwitcher);
         let mode = GameMode::ICON_ORDER[self.gm_hovered];
-        if !self.world_is_network && mode != self.game_mode {
-            self.previous_game_mode = Some(self.game_mode);
-            self.game_mode = mode;
-            // THE ABILITIES REVOKE (the vanilla server's own
-            // onUpdateAbilities law — the mayFly the mode grant
-            // carries: creative/spectator the flight arms,
-            // survival/adventure the flying state folds — the
-            // mid-flight mode switch the ground asks)
-            if !matches!(mode, GameMode::Creative | GameMode::Spectator) {
-                if let Some(b) = self.body.as_mut() {
-                    b.flying = false;
+        if mode != self.game_mode {
+            if self.world_is_network {
+                // THE WIRE APPLY (pcs 49-60 — the send ALONE; the
+                // PERMISSION_CHECK lane the client's no-permission
+                // vocabulary the constant-pass keeps, the swim-pose
+                // gate's own shape)
+                if let Some(sink) = self.live_clicks.as_ref() {
+                    let _ = sink.send(crate::world_view::ContainerCommand::ChangeGameMode {
+                        mode_id: mode.wire_id(),
+                    });
+                }
+            } else {
+                self.previous_game_mode = Some(self.game_mode);
+                self.game_mode = mode;
+                // THE ABILITIES REVOKE (the vanilla server's own
+                // onUpdateAbilities law — the mayFly the mode grant
+                // carries: creative/spectator the flight arms,
+                // survival/adventure the flying state folds — the
+                // mid-flight mode switch the ground asks)
+                if !matches!(mode, GameMode::Creative | GameMode::Spectator) {
+                    if let Some(b) = self.body.as_mut() {
+                        b.flying = false;
+                    }
                 }
             }
         }
@@ -17449,12 +17503,14 @@ impl App {
     /// pass), and the riding gate the unjumpable vehicles speak (the
     /// pcs 580-591 walk: a boat's `jumpableVehicle()` null the toggle
     /// refuses — every ride this client carries is unjumpable).
-    /// THE RETIRED CHANGED FLAG (loc6): the vanilla word's own
-    /// consumers — the `onUpdateAbilities()` packet walk and the
-    /// elytra lane — no vocabulary this client speaks (the
-    /// ServerboundPlayerAbilitiesPacket the encoder-less client
-    /// cannot send, the elytra the no-fall-flying world never arms),
-    /// the honest shape the flag omits.
+    /// THE RESTORED CHANGED FLAG (loc6): the vanilla word's own
+    /// consumer — the `onUpdateAbilities()` packet walk — the
+    /// ServerboundPlayerAbilitiesPacket the wire session now speaks
+    /// (the encoder the abilities wire banks): the RETURN the changed
+    /// tick earns — `true` only when this walk MOVED the flying state
+    /// (the spectator sync's bank, the double-tap's toggle), the
+    /// stable ticks the false keep. The elytra lane the vanilla flag
+    /// also feeds the no-fall-flying world never arms.
     fn fly_law_tick(
         b: &mut crate::body::PlayerBody,
         trigger: &mut i32,
@@ -17463,7 +17519,8 @@ impl App {
         mayfly: bool,
         spectator: bool,
         riding: bool,
-    ) {
+    ) -> bool {
+        let mut changed = false; // THE loc6 BANK (pcs 488's iconst_0)
         if mayfly {
             if spectator {
                 // THE SPECTATOR SYNC (pcs 508-532): the flight the
@@ -17471,6 +17528,7 @@ impl App {
                 // lane never reaches
                 if !b.flying {
                     b.flying = true;
+                    changed = true; // pc 526's istore 6
                 }
             } else if !*last_jump && jump_key {
                 // THE DOUBLE-TAP LANE (pcs 535-640): the autojump
@@ -17485,6 +17543,7 @@ impl App {
                     // pose-less world never wears, the vehicle gate
                     // the unjumpable rides speak
                     b.flying = !b.flying;
+                    changed = true; // pc 632's istore 6
                     if b.flying && b.on_ground {
                         // THE LAUNCH HOP (pc 628 — the same
                         // jumpFromGround the tick's jump gate calls)
@@ -17495,6 +17554,7 @@ impl App {
             }
         }
         *last_jump = jump_key;
+        changed
     }
 
     /// The movement keys (the windowed loop's per-frame feed): the
@@ -26212,9 +26272,11 @@ mod tests {
 
     #[test]
     fn the_f4_switcher_the_wire_session_the_server_belief_keeps() {
-        // THE WIRE'S OWN REFUSAL (the mode the SERVER's belief owns —
-        // the ServerboundChangeGameModePacket the encoder-less client
-        // cannot speak yet, the close the refusal never blocks)
+        // THE WIRE'S OWN SEND SHAPE (the mode the SERVER's belief owns
+        // — the ServerboundChangeGameModePacket the wire apply speaks,
+        // the sink-less App the send's own silence keeps: the packet
+        // lane the encoder-less refusal retired — and the LOCAL
+        // prediction the switcher's walk never keeps regardless)
         let mut app = App::new(3);
         app.enter_world();
         app.world_is_network = true;
@@ -26226,6 +26288,222 @@ mod tests {
         assert_eq!(app.screen, ScreenKind::World, "the release closes");
         assert_eq!(app.game_mode, GameMode::Survival, "the mode the server owns");
         assert!(app.previous_game_mode.is_none(), "the bank the wire never fills");
+    }
+
+    #[test]
+    fn the_f4_wire_apply_the_packet_alone_speaks() {
+        // THE WIRE APPLY'S OWN WALK (javap switchToHoveredGameMode
+        // pcs 49-60 — the send ALONE the live sink carries): the
+        // networked apply the GameType id speaks, the LOCAL mode the
+        // server's belief keeps (no prediction the walk predicts),
+        // the same-mode arm the acmp keeps silent, the offline
+        // control the local apply wears
+        let mut app = App::new(3);
+        app.net_world = Some(air_net_world(2, 0));
+        app.enter_network_world(None, Skybox::Overworld, None, None);
+        let (tx, rx) = std::sync::mpsc::channel::<crate::world_view::ContainerCommand>();
+        app.attach_live_clicks(tx);
+        assert_eq!(app.game_mode, GameMode::Survival, "the net world spawns survival");
+        // THE CHANGE APPLY (the hover banked to the CREATIVE icon —
+        // the wire id 1 the packet carries)
+        app.on_open_game_mode_switcher();
+        app.gm_hovered = GameMode::Creative.icon_index();
+        app.on_debug_modifier_released();
+        assert_eq!(app.screen, ScreenKind::World, "the release closes");
+        match rx
+            .try_recv()
+            .expect("the wire apply the packet carried")
+        {
+            crate::world_view::ContainerCommand::ChangeGameMode { mode_id } => {
+                assert_eq!(mode_id, 1, "the GameType CREATIVE id the clinit banks");
+            }
+            _ => panic!("the game-mode packet's own shape"),
+        }
+        assert_eq!(app.game_mode, GameMode::Survival, "the local mode the server owns");
+        assert!(app.previous_game_mode.is_none(), "the bank the wire never fills");
+        // THE SAME-MODE SILENCE (pcs 19-21's acmp — the hovered
+        // current the send never earns)
+        app.on_open_game_mode_switcher();
+        app.gm_hovered = GameMode::Survival.icon_index();
+        app.on_debug_modifier_released();
+        assert!(
+            rx.try_recv().is_err(),
+            "the same-mode apply the wire keeps silent"
+        );
+        // THE OFFLINE CONTROL (the local apply the offline branch
+        // keeps — the previous bank fills, the wire the packet never
+        // speaks)
+        app.world_is_network = false;
+        app.on_open_game_mode_switcher();
+        app.gm_hovered = GameMode::Creative.icon_index();
+        app.on_debug_modifier_released();
+        assert_eq!(app.game_mode, GameMode::Creative, "the offline apply the mode banks");
+        assert_eq!(
+            app.previous_game_mode,
+            Some(GameMode::Survival),
+            "the bank the change earns"
+        );
+        assert!(
+            rx.try_recv().is_err(),
+            "the offline apply no packet speaks"
+        );
+    }
+
+    /// THE ABILITIES WIRE'S OWN LANES (the restored loc6 flag the
+    /// ServerboundPlayerAbilitiesPacket feeds — the audited
+    /// `LocalPlayer.onUpdateAbilities` walk): the pure seam returns
+    /// the changed verdict the three arms earn (the double-tap
+    /// toggle, the spectator sync, the survival gate's silence), the
+    /// real App's toggle tick the live sink speaks, the stable ticks
+    /// the wire keeps silent, and the landing retire the grounded
+    /// body speaks (pcs 1098-1133 — the spectator's own the ground
+    /// never claims).
+    #[test]
+    fn the_flight_loc6_the_abilities_wire_speaks() {
+        // THE PURE SEAM (the loc6 flag the walk returns)
+        let mut b = crate::body::PlayerBody::new(0.0, 64.0, 0.0, 0.0, 0.0);
+        b.on_ground = true;
+        let mut trigger = 0;
+        let mut last = false;
+        // the survival body the mayfly gate never arms — no change
+        assert!(!App::fly_law_tick(
+            &mut b, &mut trigger, &mut last, false, false, false, false,
+        ));
+        assert!(!b.flying, "the gate refuses the toggle");
+        // the ARM (the first press — the window arms, the flight does
+        // NOT start, the changed flag the silence keeps)
+        assert!(!App::fly_law_tick(
+            &mut b, &mut trigger, &mut last, true, true, false, false,
+        ));
+        assert_eq!(trigger, FLY_WINDOW_TICKS, "the window arms");
+        assert!(!b.flying);
+        // the release: the edge the lane never re-speaks
+        assert!(!App::fly_law_tick(
+            &mut b, &mut trigger, &mut last, false, true, false, false,
+        ));
+        // the TOGGLE (the second press inside the window — the changed
+        // verdict the flight's own bank earns)
+        assert!(App::fly_law_tick(
+            &mut b, &mut trigger, &mut last, true, true, false, false,
+        ));
+        assert!(b.flying, "the toggle banked");
+        assert_eq!(trigger, 0, "the window spent");
+        // the STABLE FLYING tick: no change the false keeps
+        assert!(!App::fly_law_tick(
+            &mut b, &mut trigger, &mut last, false, true, false, false,
+        ));
+        assert!(b.flying);
+        // THE SPECTATOR SYNC (the grounded body the sync banks — the
+        // changed verdict the force speaks; the stable sync never
+        // re-speaks)
+        let mut b2 = crate::body::PlayerBody::new(0.0, 64.0, 0.0, 0.0, 0.0);
+        let mut trigger2 = 0;
+        let mut last2 = false;
+        assert!(App::fly_law_tick(
+            &mut b2, &mut trigger2, &mut last2, false, true, true, false,
+        ));
+        assert!(b2.flying, "the sync banks the flight");
+        assert!(!App::fly_law_tick(
+            &mut b2, &mut trigger2, &mut last2, false, true, true, false,
+        ));
+        // THE REAL APP'S TOGGLE TICK (the live sink the wire speaks —
+        // the net world the body's own walk rides; the body the test
+        // banks directly — the offline spawner the net world refuses)
+        let mut app = App::new(3);
+        app.net_world = Some(air_net_world(2, 0));
+        app.enter_network_world(None, Skybox::Overworld, None, None);
+        app.body = Some(crate::body::PlayerBody::new(0.0, 64.0, 0.0, 0.0, 0.0));
+        app.game_mode = GameMode::Creative;
+        let (tx, rx) = std::sync::mpsc::channel::<crate::world_view::ContainerCommand>();
+        app.attach_live_clicks(tx);
+        for _ in 0..2 {
+            app.update(); // the settle — the stable ticks the wire keeps silent
+        }
+        app.on_movement_input(0.0, 0.0, true, false, false);
+        app.update(); // THE ARM (the window banks, no packet)
+        app.on_movement_input(0.0, 0.0, false, false, false);
+        app.update(); // the release
+        app.on_movement_input(0.0, 0.0, true, false, false);
+        app.update(); // THE TOGGLE — the abilities wire speaks
+        assert!(
+            app.body.as_ref().expect("the body rides").flying,
+            "the flight the toggle banked"
+        );
+        let mut abilities_seen = false;
+        while let Ok(cmd) = rx.try_recv() {
+            if let crate::world_view::ContainerCommand::PlayerAbilities { flying } = cmd {
+                assert!(flying, "the toggled-ON state the packet banks");
+                abilities_seen = true;
+            }
+        }
+        assert!(abilities_seen, "the changed tick the abilities wire spoke");
+        // the STABLE ticks: the flying body the wire keeps silent
+        for _ in 0..3 {
+            app.on_movement_input(0.0, 0.0, false, false, false);
+            app.update();
+        }
+        while let Ok(cmd) = rx.try_recv() {
+            assert!(
+                !matches!(
+                    cmd,
+                    crate::world_view::ContainerCommand::PlayerAbilities { .. }
+                ),
+                "the stable tick no abilities packet speaks"
+            );
+        }
+    }
+
+    /// THE LANDING RETIRE'S OWN WIRE (javap LocalPlayer.aiStep
+    /// pcs 1098-1133 the tail the update walk wears): the grounded
+    /// flying body the retire flattens AND the abilities wire speaks
+    /// (the flying-false byte the changed tick banks), the
+    /// spectator's own the ground never claims (no retire — the
+    /// sync's own ON packet the only word the lane keeps), the
+    /// offline ground the real terrain speaks.
+    #[test]
+    fn the_landing_retire_the_abilities_wire_speaks() {
+        let mut app = App::new(3);
+        app.enter_world();
+        app.spawn_offline_body();
+        let (tx, rx) = std::sync::mpsc::channel::<crate::world_view::ContainerCommand>();
+        app.attach_live_clicks(tx);
+        for _ in 0..3 {
+            app.update(); // the settle — the resting body the ground keeps
+        }
+        // THE GROUNDED FLIGHT (the pre-drained bank — the body the
+        // retire lane reads): flying + on_ground the survival walk
+        // keeps
+        if let Some(b) = app.body.as_mut() {
+            b.flying = true;
+        }
+        app.update();
+        assert!(
+            !app.body.as_ref().expect("the body rides").flying,
+            "the retire flattens the flight"
+        );
+        let mut abilities_seen = false;
+        while let Ok(cmd) = rx.try_recv() {
+            if let crate::world_view::ContainerCommand::PlayerAbilities { flying } = cmd {
+                assert!(!flying, "the retired state the packet banks");
+                abilities_seen = true;
+            }
+        }
+        assert!(abilities_seen, "the retire the abilities wire spoke");
+        // THE SPECTATOR CONTROL (the gate's own refusal — the flight
+        // the terrain never claims; the SYNC's own ON packet the
+        // retire's silence accompanies — the flying-false byte the
+        // lane never speaks)
+        app.game_mode = GameMode::Spectator;
+        app.update();
+        assert!(
+            app.body.as_ref().expect("the body rides").flying,
+            "the spectator flight the sync banks"
+        );
+        while let Ok(cmd) = rx.try_recv() {
+            if let crate::world_view::ContainerCommand::PlayerAbilities { flying } = cmd {
+                assert!(flying, "the sync's own ON word the only packet speaks");
+            }
+        }
     }
 
     /// THE FLIGHT'S OWN APP LANES (the audited 26.2 walk the update

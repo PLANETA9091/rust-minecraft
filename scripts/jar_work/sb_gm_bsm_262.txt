@@ -1,0 +1,29 @@
+bootstrap 0: handle kind=6 -> #104.bootstrap
+    arg #8: tag 7 (10,)
+    arg #88: tag 8 (11,)
+    arg #89: MH kind=1 -> #8.mode
+bootstrap 1: handle kind=6 -> #111.metafactory
+    arg #90: tag 16 (91,)
+    arg #92: MH kind=5 -> #8.mode
+    arg #95: tag 16 (96,)
+bootstrap 2: handle kind=6 -> #111.metafactory
+    arg #90: tag 16 (91,)
+    arg #97: MH kind=8 -> #8.<init>
+    arg #100: tag 16 (101,)
+--- invokedynamic cp entries ---
+#29: bootstrap=0 name=?
+#33: bootstrap=0 name=?
+#37: bootstrap=0 name=?
+#47: bootstrap=1 name=?
+#51: bootstrap=2 name=?
+#2: class -> java/lang/Record
+#8: class -> net/minecraft/network/protocol/game/ServerboundChangeGameModePacket
+#14: class -> net/minecraft/network/protocol/game/GamePacketTypes
+#20: class -> net/minecraft/network/protocol/game/ServerGamePacketListener
+#42: class -> net/minecraft/world/level/GameType
+#53: class -> net/minecraft/network/codec/StreamCodec
+#59: class -> net/minecraft/network/protocol/Packet
+#104: class -> java/lang/runtime/ObjectMethods
+#111: class -> java/lang/invoke/LambdaMetafactory
+#117: class -> java/lang/invoke/MethodHandles$Lookup
+#119: class -> java/lang/invoke/MethodHandles

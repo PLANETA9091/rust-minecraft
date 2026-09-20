@@ -142,6 +142,8 @@ pub mod serverbound {
         SB_CLIENT_COMMAND as CLIENT_COMMAND, SB_INTERACT as INTERACT,
         SB_PLAYER_INPUT as PLAYER_INPUT,
         SB_PADDLE_BOAT as PADDLE_BOAT,
+        SB_PLAYER_ABILITIES as PLAYER_ABILITIES,
+        SB_CHANGE_GAME_MODE as CHANGE_GAME_MODE,
         SB_PICK_ITEM_FROM_BLOCK as PICK_ITEM_FROM_BLOCK,
         SB_PICK_ITEM_FROM_ENTITY as PICK_ITEM_FROM_ENTITY,
         SB_BUNDLE_ITEM_SELECTED as BUNDLE_ITEM_SELECTED,
@@ -6274,6 +6276,59 @@ pub fn encode_client_command(action: i32) -> Vec<u8> {
     p
 }
 
+/// The abilities wire (generated id 40 —
+/// `minecraft:player_abilities`). javap of the real 26.2
+/// `ServerboundPlayerAbilitiesPacket`: the STREAM_CODEC is
+/// `codec(write, <init>(FriendlyByteBuf))` (the clinit's two
+/// invokedynamic pair), the write walk `write(FriendlyByteBuf)` pcs
+/// 0-20 verbatim — local b0 = 0, `if (isFlying) b0 |= 2`
+/// (FLAG_FLYING, the cp's `#67 = Int 2` the constant banks), ONE
+/// `writeByte(b0)`. The OTHER flag bits — invulnerable 1, canFly 4,
+/// mayBuild 8, instabuild 16 — the SERVER-side Abilities carries;
+/// the CLIENT ctor `<init>(Abilities)` banks ONLY `isFlying`
+/// (pcs 4-9: the single getfield putfield pair), so the clientbound
+/// packet the flying verdict alone speaks. The send sites —
+/// `LocalPlayer.onUpdateAbilities()` (the ONLY send walk the class
+/// keeps: `connection.send(new ServerboundPlayerAbilitiesPacket(
+/// getAbilities()))` unconditional) — ride the flying CHANGED ticks
+/// the aiStep arms earn (the spectator sync pc 529, the jump toggle
+/// pc 635, the landing retire pc 1133) and the inbound
+/// handlePlayerAbilities echo.
+pub fn encode_player_abilities(flying: bool) -> Vec<u8> {
+    let mut p = Vec::with_capacity(2);
+    write_varint(&mut p, serverbound::PLAYER_ABILITIES);
+    let mut b0 = 0u8;
+    if flying {
+        b0 |= 2; // FLAG_FLYING — the write walk's `ior 2` the byte keeps
+    }
+    p.push(b0);
+    p
+}
+
+/// The game-mode wire (generated id 5 —
+/// `minecraft:change_game_mode`). javap of the real 26.2
+/// `ServerboundChangeGameModePacket`: the STREAM_CODEC is
+/// `composite(GameType.STREAM_CODEC, ::mode, ::new)` (the clinit's
+/// getstatic composite walk — the getter the `mode()` accessor, the
+/// from the `<init>(GameType)` newInvokeSpecial the bootstrap pair
+/// resolves), and `GameType.STREAM_CODEC` is
+/// `ByteBufCodecs.idMapper(BY_ID, id)` — the VarInt id codec the
+/// `ByIdMap.continuous(values(), ZERO)` fold keeps (an unknown id the
+/// values()[0] fallback speaks). The ids — the clinit's
+/// `new GameType(String, ordinal, id, String)` putstatic pairs
+/// verbatim: SURVIVAL 0, CREATIVE 1, ADVENTURE 2, SPECTATOR 3.
+/// The send site — `GameModeSwitcherScreen.switchToHoveredGameMode(
+/// Minecraft, GameModeIcon)` pcs 49-60: the F4 apply's
+/// `connection.send(new ServerboundChangeGameModePacket(icon.mode))`
+/// — the mode the SERVER's belief owns (the client's local mode the
+/// serverbound echo never predicts).
+pub fn encode_change_game_mode(mode_id: i32) -> Vec<u8> {
+    let mut p = Vec::with_capacity(2);
+    write_varint(&mut p, serverbound::CHANGE_GAME_MODE);
+    write_varint(&mut p, mode_id);
+    p
+}
+
 /// The movement wire — the four ServerboundMovePlayer packets (generated
 /// ids 30..=33: `minecraft:move_player_pos` 30, `move_player_pos_rot` 31,
 /// `move_player_rot` 32, `move_player_status_only` 33). THE WIRE (javap
@@ -8678,6 +8733,30 @@ impl<S: Read + Write> PlaySession<S> {
         self.conn
             .send_packet(&encode_client_command(action))
             .context("send client command")
+    }
+
+    /// The abilities wire (the vanilla `LocalPlayer.onUpdateAbilities`'s
+    /// own send — the ONLY ServerboundPlayerAbilitiesPacket walk the
+    /// class keeps): the flying state the body's changed tick banks,
+    /// the ONE byte the write's `ior 2` law keeps. The aiStep arms the
+    /// flying CHANGED verdict earns — the spectator sync, the jump
+    /// toggle, the landing retire — the caller's own lanes speak.
+    pub fn player_abilities(&mut self, flying: bool) -> Result<()> {
+        self.conn
+            .send_packet(&encode_player_abilities(flying))
+            .context("send player abilities")
+    }
+
+    /// The game-mode wire (the vanilla
+    /// `GameModeSwitcherScreen.switchToHoveredGameMode`'s own send —
+    /// the F4 apply's serverbound half): the hovered mode's GameType
+    /// id the VarInt codec carries, the mode the SERVER's belief owns
+    /// (the local prediction the switcher's walk never predicts — the
+    /// serverbound echo the server's own answer answers).
+    pub fn change_game_mode(&mut self, mode_id: i32) -> Result<()> {
+        self.conn
+            .send_packet(&encode_change_game_mode(mode_id))
+            .context("send change game mode")
     }
 
     /// The movement wire — the body's sendPosition dispatch speaks one
@@ -14134,6 +14213,22 @@ mod tests {
         let p = encode_client_command(0);
         assert_eq!(p, vec![0x0C, 0x00], "the respawn wire's own bytes");
         assert_eq!(encode_client_command(1), vec![0x0C, 0x01], "REQUEST_STATS");
+
+        // PLAYER ABILITIES encode: the generated id 40 + the ONE flag
+        // byte — the write walk's `b0 |= 2` law (FLAG_FLYING) the
+        // flying verdict alone wears; the grounded byte the 0x00 keeps
+        let p = encode_player_abilities(true);
+        assert_eq!(p, vec![0x28, 0x02], "the flying flag's own bytes");
+        assert_eq!(encode_player_abilities(false), vec![0x28, 0x00], "the grounded byte");
+
+        // CHANGE GAME MODE encode: the generated id 5 + the GameType
+        // id VarInt — the audited clinit's id pairs (SURVIVAL 0,
+        // CREATIVE 1, ADVENTURE 2, SPECTATOR 3) the four modes speak
+        let p = encode_change_game_mode(3);
+        assert_eq!(p, vec![0x05, 0x03], "the spectator wire's own bytes");
+        assert_eq!(encode_change_game_mode(0), vec![0x05, 0x00], "SURVIVAL");
+        assert_eq!(encode_change_game_mode(1), vec![0x05, 0x01], "CREATIVE");
+        assert_eq!(encode_change_game_mode(2), vec![0x05, 0x02], "ADVENTURE");
     }
 
     /// The player-info + tab-list lanes' wire walks (the TAB

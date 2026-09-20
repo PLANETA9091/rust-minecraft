@@ -1,0 +1,5 @@
+=== mode()Lnet/minecraft/world/level/GameType; max_stack=1 max_locals=1 ===
+      0: aload_0 
+      1: getfield #8.mode:Lnet/minecraft/world/level/GameType;
+      4: areturn 
+

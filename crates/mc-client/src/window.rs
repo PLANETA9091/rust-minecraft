@@ -578,6 +578,22 @@ fn run_join(
                             // server stores them into the boat's entity data
                             session.paddle_boat(left, right)
                         }
+                        crate::world_view::ContainerCommand::PlayerAbilities { flying } => {
+                            // THE ABILITIES WIRE (the vanilla
+                            // LocalPlayer.onUpdateAbilities's own echo): the
+                            // flying state the changed tick banks — the ONE
+                            // byte the write's `ior 2` law keeps
+                            session.player_abilities(flying)
+                        }
+                        crate::world_view::ContainerCommand::ChangeGameMode { mode_id } => {
+                            // THE GAME-MODE WIRE (the vanilla
+                            // GameModeSwitcherScreen.switchToHoveredGameMode's
+                            // own send — the F4 apply's serverbound half):
+                            // the GameType id the VarInt codec carries, the
+                            // mode the SERVER's belief owns (no local
+                            // prediction the walk keeps)
+                            session.change_game_mode(mode_id)
+                        }
                         crate::world_view::ContainerCommand::NetworkCharts(on) => {
                             // THE NETWORK CHARTS' OWN GATE (the vanilla
                             // ClientPacketListener.tick's

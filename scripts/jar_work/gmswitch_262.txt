@@ -1,0 +1,38 @@
+=== switchToHoveredGameMode()V max_stack=2 max_locals=1 ===
+      0: aload_0 
+      1: getfield #1.minecraft:Lnet/minecraft/client/Minecraft;
+      4: aload_0 
+      5: getfield #1.currentlyHovered:Lnet/minecraft/client/gui/screens/debug/GameModeSwitcherScreen$GameModeIcon;
+      8: invokestatic #1.switchToHoveredGameMode:(Lnet/minecraft/client/Minecraft;Lnet/minecraft/client/gui/screens/debug/GameModeSwitcherScreen$GameModeIcon;)V
+     11: return 
+
+=== switchToHoveredGameMode(Lnet/minecraft/client/Minecraft;Lnet/minecraft/client/gui/screens/debug/GameModeSwitcherScreen$GameModeIcon;)V max_stack=4 max_locals=3 ===
+      0: aload_0 
+      1: invokevirtual #43.canSwitchGameMode:()Z
+      4: ifne start+8
+      7: return 
+      8: aload_0 
+      9: getfield #43.gameMode:Lnet/minecraft/client/multiplayer/MultiPlayerGameMode;
+     12: invokevirtual #53.getPlayerMode:()Lnet/minecraft/world/level/GameType;
+     15: invokestatic #30.getFromGameType:(Lnet/minecraft/world/level/GameType;)Lnet/minecraft/client/gui/screens/debug/GameModeSwitcherScreen$GameModeIcon;
+     18: astore_2 
+     19: aload_1 
+     20: aload_2 
+     21: if_acmpeq start+63
+     24: getstatic #222.PERMISSION_CHECK:Lnet/minecraft/server/permissions/PermissionCheck;
+     27: aload_0 
+     28: getfield #43.player:Lnet/minecraft/client/player/LocalPlayer;
+     31: invokevirtual #232.permissions:()Lnet/minecraft/server/permissions/PermissionSet;
+     34: invokeinterface #238.check:(Lnet/minecraft/server/permissions/PermissionSet;)Z
+     39: ifeq start+63
+     42: aload_0 
+     43: getfield #43.player:Lnet/minecraft/client/player/LocalPlayer;
+     46: getfield #232.connection:Lnet/minecraft/client/multiplayer/ClientPacketListener;
+     49: new net/minecraft/network/protocol/game/ServerboundChangeGameModePacket
+     52: dup 
+     53: aload_1 
+     54: getfield #30.mode:Lnet/minecraft/world/level/GameType;
+     57: invokespecial #247.<init>:(Lnet/minecraft/world/level/GameType;)V
+     60: invokevirtual #256.send:(Lnet/minecraft/network/protocol/Packet;)V
+     63: return 
+

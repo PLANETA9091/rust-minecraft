@@ -1335,6 +1335,25 @@ pub enum ContainerCommand {
     /// CommandSuggestions event back through the pump — the list the
     /// chat screen renders, the Tab/arrow walk the selection speaks.
     RequestCommandSuggestions { id: i32, command: String },
+    /// THE ABILITIES WIRE (the vanilla `LocalPlayer.onUpdateAbilities`'s
+    /// own echo — the ServerboundPlayerAbilitiesPacket the flying
+    /// CHANGED tick sends): the body's flying state the aiStep arms
+    /// earned — the spectator sync (pc 529), the double-tap toggle
+    /// (pc 635), the landing retire (pc 1133) — the ONE byte the
+    /// write's `ior 2` law keeps (see
+    /// `mc_protocol::play::encode_player_abilities`). The vanilla
+    /// loc6 flag the walk banks is THIS lane's own trigger — the
+    /// changed tick speaks, the stable ticks the wire keeps silent.
+    PlayerAbilities { flying: bool },
+    /// THE GAME-MODE WIRE (the vanilla
+    /// `GameModeSwitcherScreen.switchToHoveredGameMode`'s own send —
+    /// the F4 apply's serverbound half): the hovered mode's GameType
+    /// id the ServerboundChangeGameModePacket carries, the mode the
+    /// SERVER's belief owns — the switcher's walk predicts NOTHING
+    /// locally (pcs 49-60: the send ALONE, the server's own answer
+    /// the clientbound echo rides back through its gate; see
+    /// `mc_protocol::play::encode_change_game_mode`).
+    ChangeGameMode { mode_id: i32 },
 }
 
 /// The camera's pose in the VANILLA wire degrees — the inverse of

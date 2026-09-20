@@ -1,0 +1,17 @@
+=== write(Lnet/minecraft/network/FriendlyByteBuf;)V max_stack=2 max_locals=3 ===
+      0: iconst_0 
+      1: istore_2 
+      2: aload_0 
+      3: getfield #14.isFlying:Z
+      6: ifeq start+14
+      9: iload_2 
+     10: iconst_2 
+     11: ior 
+     12: i2b 
+     13: istore_2 
+     14: aload_1 
+     15: iload_2 
+     16: invokevirtual #19.writeByte:(I)Lnet/minecraft/network/FriendlyByteBuf;
+     19: pop 
+     20: return 
+

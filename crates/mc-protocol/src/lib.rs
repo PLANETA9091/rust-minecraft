@@ -56,6 +56,7 @@ pub use play::{
     CommandSuggestionsMatch, CommandSuggestionsReply, encode_command_suggestion,
     parse_command_suggestions,
     encode_player_input, encode_paddle_boat, parse_set_passengers,
+    encode_player_abilities, encode_change_game_mode,
     HurtAnimation, PlayerCombatKill, EntitySoundPacket, WorldSoundPacket,
 };
 pub use login::{connect_and_login, login, LoginOutcome};

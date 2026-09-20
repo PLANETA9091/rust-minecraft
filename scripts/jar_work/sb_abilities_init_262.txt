@@ -1,0 +1,33 @@
+=== <init>(Lnet/minecraft/world/entity/player/Abilities;)V max_stack=2 max_locals=2 ===
+      0: aload_0 
+      1: invokespecial #2.<init>:()V
+      4: aload_0 
+      5: aload_1 
+      6: getfield #8.flying:Z
+      9: putfield #14.isFlying:Z
+     12: return 
+
+=== <init>(Lnet/minecraft/network/FriendlyByteBuf;)V max_stack=3 max_locals=3 ===
+      0: aload_0 
+      1: invokespecial #2.<init>:()V
+      4: aload_1 
+      5: invokevirtual #19.readByte:()B
+      8: istore_2 
+      9: aload_0 
+     10: iload_2 
+     11: iconst_2 
+     12: iand 
+     13: ifeq start+20
+     16: iconst_1 
+     17: goto start+21
+     20: iconst_0 
+     21: putfield #14.isFlying:Z
+     24: return 
+
+=== <clinit>()V max_stack=2 max_locals=0 ===
+      0: invokedynamic #44
+      5: invokedynamic #48
+     10: invokestatic #53.codec:(Lnet/minecraft/network/codec/StreamMemberEncoder;Lnet/minecraft/network/codec/StreamDecoder;)Lnet/minecraft/network/codec/StreamCodec;
+     13: putstatic #14.STREAM_CODEC:Lnet/minecraft/network/codec/StreamCodec;
+     16: return 
+
