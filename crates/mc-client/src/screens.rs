@@ -197,6 +197,13 @@ pub const WHITE: [f32; 3] = [1.0, 1.0, 1.0];
 /// arrive within; the option's slider the client's no-settings-UI
 /// world keeps at its own 7 default).
 pub const SPRINT_WINDOW_TICKS: i32 = 7;
+/// THE FLY WINDOW'S OWN SPAN (javap LocalPlayer.aiStep the 26.2 jar
+/// — pc 567: `jumpTriggerTime = 7` the bipush the double-tap-space
+/// arm carries — the same 7-tick shape the sprint window wears, the
+/// Player.aiStep pcs 0-14 decrement the super chain spends one a
+/// tick, the second space press inside it TOGGLES the flight and the
+/// toggle itself SPENDS the window to zero, pc 640).
+pub const FLY_WINDOW_TICKS: i32 = 7;
 pub const YELLOW: [f32; 3] = [1.0, 1.0, 0.333];
 pub const GRAY: [f32; 3] = [0.667, 0.667, 0.667];
 /// THE LEVEL NUMBER'S GREEN (javap `ContextualBar.extractExperienceLevel`
@@ -5108,6 +5115,19 @@ pub struct App {
     /// record the wire's PlayerInput packet speaks stays the same
     /// flags.walk the lane always carried).
     sprint_key_down: bool,
+    /// THE FLY TRIGGER'S OWN STATE (javap jumpTriggerTime the 26.2
+    /// law — the double-tap-space window the Player.aiStep head
+    /// decrements, the arm the fresh press speaks — 7 the
+    /// [`FLY_WINDOW_TICKS`] span keeps, the toggle the window spends
+    /// to zero — pc 640 the audited walk's own putfield): the App's
+    /// bank the [`Self::fly_law_tick`] alone writes.
+    fly_trigger_time: i32,
+    /// THE SPACE-PRESS EDGE'S OWN BANK (the audited pre-tick local —
+    /// `input.keyPresses.jump()` read at pcs 57-66 BEFORE
+    /// `input.tick()` at pc 161, so the toggle lane compares THIS
+    /// tick's space against LAST tick's: the fresh press the edge
+    /// arms or toggles, the held key the lanes never re-speak).
+    last_jump_key: bool,
     /// Server-list ping requests (append-only log, same protocol as
     /// ui_sounds/music events): the headless logic records WHAT to ping,
     /// the window backend performs the blocking network call off the
@@ -6291,6 +6311,8 @@ impl App {
             sprint_trigger_time: 0,
             sprint_last_forward: false,
             sprint_key_down: false,
+            fly_trigger_time: 0,
+            last_jump_key: false,
             ui_sounds: Vec::new(),
             net_requests: Vec::new(),
             next_ping_id: 0,
@@ -6787,6 +6809,32 @@ impl App {
                 } else {
                     self.offline_world.as_ref()
                 };
+                // THE FLY TRIGGER (the audited 26.2 abilities walk —
+                // the law's own doc the lanes wear): the mayfly the
+                // gamemode bank answers, the spectator sync the force
+                // lane speaks, the double-tap space the window arms
+                // and toggles, the toggle-on the ground hop rides —
+                // the walk the ride branches reach TOO (the vanilla
+                // aiStep's own order: the abilities walk precedes the
+                // passenger fork — the window decrements and the edge
+                // bank tick while riding, the toggle the unjumpable
+                // gate refuses), and the window decrement the
+                // Player.aiStep head (pcs 0-14) spends one a tick —
+                // the super chain's own position the call site keeps
+                // (the law speaks BEFORE the decrement, the next
+                // tick's body reads the spent bank)
+                Self::fly_law_tick(
+                    b,
+                    &mut self.fly_trigger_time,
+                    &mut self.last_jump_key,
+                    b.jumping,
+                    matches!(self.game_mode, GameMode::Creative | GameMode::Spectator),
+                    self.game_mode == GameMode::Spectator,
+                    self.net_ride.is_some() || self.offline_ride.is_some(),
+                );
+                if self.fly_trigger_time > 0 {
+                    self.fly_trigger_time -= 1;
+                }
                 // THE RIDE CARRY (the vanilla Entity.rideTick's own law):
                 // while a boat holds the player the body's physics never
                 // walk — no impulses (the input steers the VEHICLE
@@ -7117,6 +7165,18 @@ impl App {
                         using,
                     );
                     b.tick(w, using);
+                    // THE LANDING RETIRE (javap LocalPlayer.aiStep the
+                    // 26.2 jar — pcs 1098-1133, the tail AFTER the
+                    // super walk: `onGround() && abilities.flying &&
+                    // !gameMode.isSpectator() -> flying = false` — the
+                    // touched ground the flight retires, the
+                    // spectator's own the terrain never claims; the
+                    // onUpdateAbilities the packet lane rides — the
+                    // encoder-less client's refusal the fly law's own
+                    // note keeps)
+                    if b.flying && b.on_ground && self.game_mode != GameMode::Spectator {
+                        b.flying = false;
+                    }
                     // THE FOOTSTEP: the body's own cadence law fired on a
                     // solid block under the feet — the block's step voice
                     // at the SoundType's *0.15 fold (Entity.playStepSound)
@@ -15486,6 +15546,16 @@ impl App {
         if !self.world_is_network && mode != self.game_mode {
             self.previous_game_mode = Some(self.game_mode);
             self.game_mode = mode;
+            // THE ABILITIES REVOKE (the vanilla server's own
+            // onUpdateAbilities law — the mayFly the mode grant
+            // carries: creative/spectator the flight arms,
+            // survival/adventure the flying state folds — the
+            // mid-flight mode switch the ground asks)
+            if !matches!(mode, GameMode::Creative | GameMode::Spectator) {
+                if let Some(b) = self.body.as_mut() {
+                    b.flying = false;
+                }
+            }
         }
         self.screen = ScreenKind::World;
     }
@@ -17230,6 +17300,75 @@ impl App {
             }
         }
         *last_forward = forward_impulse;
+    }
+
+    /// THE DOUBLE-TAP SPACE'S OWN FLIGHT LAW (javap LocalPlayer.aiStep
+    /// the 26.2 jar — the audited abilities walk pcs 487-640 the
+    /// [`App::sprint_law_tick`] pattern carries): the mayfly gate the
+    /// gamemode speaks (creative/spectator — the vanilla server's own
+    /// abilities grant), the spectator sync the pcs 508-532 lane
+    /// wears (`isSpectator() && !flying -> flying = true` the force
+    /// the sync speaks), the DOUBLE-TAP the pcs 535-640 lanes answer
+    /// whole — the fresh press (the pre-tick space the edge bank
+    /// keeps silent, the post-tick key the held word carries, the
+    /// autojump local the no-autojump world never arms), the window
+    /// zero the ARM speaks (7 — [`FLY_WINDOW_TICKS`]), the window
+    /// armed the TOGGLE answers (`flying = !flying`, the launch hop
+    /// the toggle-on's `onGround` arm rides — pc 628's own
+    /// `jumpFromGround()`, [`crate::body::PlayerBody::jump_from_ground`]
+    /// the same fold the tick's jump gate calls) and the window the
+    /// toggle SPENDS (pc 640's zero), the swim-pose gate the
+    /// pose-less world never wears (the vanilla `isSwimming()` arm —
+    /// no swim-pose vocabulary the body keeps, the lane the constant
+    /// pass), and the riding gate the unjumpable vehicles speak (the
+    /// pcs 580-591 walk: a boat's `jumpableVehicle()` null the toggle
+    /// refuses — every ride this client carries is unjumpable).
+    /// THE RETIRED CHANGED FLAG (loc6): the vanilla word's own
+    /// consumers — the `onUpdateAbilities()` packet walk and the
+    /// elytra lane — no vocabulary this client speaks (the
+    /// ServerboundPlayerAbilitiesPacket the encoder-less client
+    /// cannot send, the elytra the no-fall-flying world never arms),
+    /// the honest shape the flag omits.
+    fn fly_law_tick(
+        b: &mut crate::body::PlayerBody,
+        trigger: &mut i32,
+        last_jump: &mut bool,
+        jump_key: bool,
+        mayfly: bool,
+        spectator: bool,
+        riding: bool,
+    ) {
+        if mayfly {
+            if spectator {
+                // THE SPECTATOR SYNC (pcs 508-532): the flight the
+                // spectator's own mode forces — the sync the toggle
+                // lane never reaches
+                if !b.flying {
+                    b.flying = true;
+                }
+            } else if !*last_jump && jump_key {
+                // THE DOUBLE-TAP LANE (pcs 535-640): the autojump
+                // local the pcs 552-554 gate reads never arms (no
+                // autojump vocabulary — the constant zero the lane
+                // passes)
+                if *trigger == 0 {
+                    // THE ARM (pcs 564-567)
+                    *trigger = FLY_WINDOW_TICKS;
+                } else if !riding {
+                    // THE TOGGLE (pcs 594-640): the swim-pose gate the
+                    // pose-less world never wears, the vehicle gate
+                    // the unjumpable rides speak
+                    b.flying = !b.flying;
+                    if b.flying && b.on_ground {
+                        // THE LAUNCH HOP (pc 628 — the same
+                        // jumpFromGround the tick's jump gate calls)
+                        b.jump_from_ground();
+                    }
+                    *trigger = 0; // THE WINDOW'S OWN SPEND (pc 640)
+                }
+            }
+        }
+        *last_jump = jump_key;
     }
 
     /// The movement keys (the windowed loop's per-frame feed): the
@@ -25422,6 +25561,85 @@ mod tests {
         assert_eq!(app.screen, ScreenKind::World, "the release closes");
         assert_eq!(app.game_mode, GameMode::Survival, "the mode the server owns");
         assert!(app.previous_game_mode.is_none(), "the bank the wire never fills");
+    }
+
+    /// THE FLIGHT'S OWN APP LANES (the audited 26.2 walk the update
+    /// loop wears whole): the F4 apply the mayFly revoke speaks (the
+    /// vanilla server's own onUpdateAbilities law — the mid-flight
+    /// mode switch the ground asks), the spectator apply the sync
+    /// forces (the next tick's abilities walk), and the landing
+    /// retire the touched ground speaks (LocalPlayer.aiStep's tail —
+    /// pcs 1098-1133 — the flight the terrain retires, the
+    /// spectator's own the ground never claims).
+    #[test]
+    fn the_flight_app_lanes_the_gamemode_and_ground_speak() {
+        let mut app = App::new(3);
+        app.enter_world();
+        app.spawn_offline_body();
+        assert!(app.body.is_some(), "the world the body carries");
+        // THE SETTLE (the spawn rhythm — the ground flag the second
+        // tick's own collide carries, the resting body the flag keeps)
+        for _ in 0..3 {
+            app.update();
+        }
+        // THE CREATIVE GRANT (the switcher's own walk — the mayFly
+        // the mode speaks) + THE MID-FLIGHT SURVIVAL SWITCH (the F4
+        // flick the two-mode feel): the apply the flying state folds —
+        // the mayFly the grant lost (the vanilla server's own
+        // onUpdateAbilities law)
+        app.on_open_game_mode_switcher();
+        while GameMode::ICON_ORDER[app.gm_hovered] != GameMode::Creative {
+            app.on_game_mode_switcher_cycle();
+        }
+        app.on_debug_modifier_released();
+        assert_eq!(app.game_mode, GameMode::Creative, "the grant lands");
+        if let Some(b) = app.body.as_mut() {
+            b.flying = true;
+        }
+        app.on_open_game_mode_switcher();
+        while GameMode::ICON_ORDER[app.gm_hovered] != GameMode::Survival {
+            app.on_game_mode_switcher_cycle();
+        }
+        app.on_debug_modifier_released();
+        assert_eq!(app.game_mode, GameMode::Survival, "the flick lands");
+        assert!(
+            !app.body.as_ref().expect("the body rides").flying,
+            "the revoke the apply speaks"
+        );
+        // THE SPECTATOR SYNC THROUGH THE REAL TICK (the mode's own
+        // abilities walk — the flight no press asks)
+        app.game_mode = GameMode::Spectator;
+        if let Some(b) = app.body.as_mut() {
+            b.flying = false;
+        }
+        app.update();
+        assert!(
+            app.body.as_ref().expect("the body rides").flying,
+            "the sync the tick speaks"
+        );
+        // THE LANDING RETIRE (LocalPlayer.aiStep's tail — pcs
+        // 1098-1133): the creative body's flight the touched ground
+        // retires
+        app.game_mode = GameMode::Creative;
+        if let Some(b) = app.body.as_mut() {
+            b.flying = true;
+        }
+        app.update();
+        assert!(
+            !app.body.as_ref().expect("the body rides").flying,
+            "the ground the flight retires"
+        );
+        // THE SPECTATOR'S GROUND THE RETIRE NEVER CLAIMS (the
+        // !isSpectator gate — the forced sync the terrain keeps)
+        app.game_mode = GameMode::Spectator;
+        if let Some(b) = app.body.as_mut() {
+            b.flying = true;
+        }
+        app.update();
+        assert!(
+            app.body.as_ref().expect("the body rides").flying,
+            "the spectator's flight the ground never claims"
+        );
     }
 
     #[test]
@@ -40823,6 +41041,120 @@ cow_sound_variant: None,
         // canStart gate the using lane wears)
         law(&mut b, &mut trigger, &mut last, true, true);
         assert!(!b.sprinting, "the using body walks");
+    }
+
+    /// THE DOUBLE-TAP SPACE'S OWN WINDOW (26.2 LocalPlayer.aiStep's
+    /// audited jumpTriggerTime law, the law's own state machine the
+    /// [`App::fly_law_tick`] wears): the FIRST space press ARMS the 7
+    /// window (pc 567's bipush), the SECOND press INSIDE it TOGGLES
+    /// the flight (the toggle-on the ground hop rides — pc 628's own
+    /// jumpFromGround) and SPENDS the window to zero (pc 640), the
+    /// spent window the fresh press re-arms, the survival body the
+    /// mayfly gate never arms, the spectator's flight the sync forces
+    /// without any press, and the riding gate the toggle refuses.
+    #[test]
+    fn the_double_tap_space_flight_window_speaks() {
+        // THE LAW'S OWN HARNESS (the call site's own shape — the law
+        // first, the Player.aiStep head decrement the super chain
+        // speaks after: pcs 0-14 the same tick's tail spends)
+        let law = |b: &mut crate::body::PlayerBody,
+                   trigger: &mut i32,
+                   last: &mut bool,
+                   jump: bool,
+                   mayfly: bool,
+                   spectator: bool,
+                   riding: bool| {
+            App::fly_law_tick(b, trigger, last, jump, mayfly, spectator, riding);
+            if *trigger > 0 {
+                *trigger -= 1;
+            }
+        };
+        let mut b = crate::body::PlayerBody::new(0.0, 64.0, 0.0, 0.0, 0.0);
+        b.on_ground = true;
+        let mut trigger = 0;
+        let mut last = false;
+        // THE FIRST PRESS (the space down tick): the window ARMS — the
+        // flight does NOT start (the vanilla's own single-press
+        // silence)
+        law(&mut b, &mut trigger, &mut last, true, true, false, false);
+        assert_eq!(trigger, FLY_WINDOW_TICKS - 1, "the window arms");
+        assert!(!b.flying, "the first press walks");
+        // THE HOLD (the held key the edge never re-speaks, the window
+        // the decrement spends)
+        law(&mut b, &mut trigger, &mut last, true, true, false, false);
+        assert_eq!(trigger, FLY_WINDOW_TICKS - 2, "the window spends");
+        assert!(!b.flying);
+        // THE SECOND PRESS INSIDE THE WINDOW (release first — the
+        // fresh down tick the edge re-speaks): the FLIGHT TOGGLES ON,
+        // the launch hop rides (the on-ground body), the window
+        // SPENDS
+        law(&mut b, &mut trigger, &mut last, false, true, false, false);
+        law(&mut b, &mut trigger, &mut last, true, true, false, false);
+        assert!(b.flying, "the double tap flies");
+        assert_eq!(trigger, 0, "the toggle spends the window");
+        assert!(
+            (b.vy - crate::body::JUMP_POWER as f64).abs() < 1e-9,
+            "the launch hop rides, vy={}",
+            b.vy
+        );
+        assert!(
+            (b.exhaustion_event - crate::food::EXHAUSTION_JUMP).abs() < 1e-6,
+            "the hop's own cost the plain jump banks"
+        );
+        // THE STICKY FLIGHT (the keys release, the flight the restore
+        // law keeps — the toggle lane's edge the silence never re-arms)
+        for _ in 0..3 {
+            law(&mut b, &mut trigger, &mut last, false, true, false, false);
+            assert!(b.flying, "the sticky flight rides");
+        }
+        // THE THIRD IMMEDIATE PRESS: the spent window RE-ARMS (no
+        // toggle the fresh arm speaks)
+        law(&mut b, &mut trigger, &mut last, true, true, false, false);
+        assert_eq!(trigger, FLY_WINDOW_TICKS - 1, "the spent window re-arms");
+        assert!(b.flying, "the flight keeps");
+        // THE TOGGLE OFF (the window armed, the next press inside it
+        // speaks the OFF): no hop the retirement never earns
+        let (vy_before, exhaust_before) = (b.vy, b.exhaustion_event);
+        law(&mut b, &mut trigger, &mut last, false, true, false, false);
+        law(&mut b, &mut trigger, &mut last, true, true, false, false);
+        assert!(!b.flying, "the second double tap retires");
+        assert!(
+            (b.vy - vy_before).abs() < 1e-9,
+            "the toggle-off never hops"
+        );
+        assert!(
+            (b.exhaustion_event - exhaust_before).abs() < 1e-6,
+            "the toggle-off never banks the jump cost"
+        );
+        // THE SURVIVAL REFUSAL (the mayfly gate — the vanilla server's
+        // own abilities grant): the double tap never arms, never flies
+        let mut sb = crate::body::PlayerBody::new(0.0, 64.0, 0.0, 0.0, 0.0);
+        sb.on_ground = true;
+        let mut st = 0;
+        let mut sl = false;
+        law(&mut sb, &mut st, &mut sl, true, false, false, false);
+        assert_eq!(st, 0, "the survival never arms");
+        law(&mut sb, &mut st, &mut sl, false, false, false, false);
+        law(&mut sb, &mut st, &mut sl, true, false, false, false);
+        assert!(!sb.flying, "the survival never flies");
+        // THE SPECTATOR SYNC (pcs 508-532): the flight the mode forces
+        // — no press the sync asks
+        let mut pb = crate::body::PlayerBody::new(0.0, 64.0, 0.0, 0.0, 0.0);
+        let mut pt = 0;
+        let mut pl = false;
+        law(&mut pb, &mut pt, &mut pl, false, true, true, false);
+        assert!(pb.flying, "the spectator's flight the sync forces");
+        // THE RIDING REFUSAL (the unjumpable vehicle's own gate — the
+        // armed window the toggle never speaks while the ride carries)
+        let mut rb = crate::body::PlayerBody::new(0.0, 64.0, 0.0, 0.0, 0.0);
+        rb.on_ground = true;
+        let mut rt = 0;
+        let mut rl = false;
+        law(&mut rb, &mut rt, &mut rl, true, true, false, false);
+        law(&mut rb, &mut rt, &mut rl, false, true, false, false);
+        law(&mut rb, &mut rt, &mut rl, true, true, false, true);
+        assert_eq!(rt, FLY_WINDOW_TICKS - 3, "the window the decrements keep spending");
+        assert!(!rb.flying, "the ride the toggle refuses");
     }
 
     /// THE SPRINT'S FOOD GATE (the hasEnoughFoodToDoExhaustiveManoeuvres

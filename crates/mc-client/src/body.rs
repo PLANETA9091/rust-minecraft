@@ -63,6 +63,41 @@ pub const GROUND_DRAG: f32 = 0.91; // the horizontal drag's constant part
 pub const VERTICAL_DRAG: f32 = 0.98;
 pub const GRAVITY: f64 = 0.08;
 pub const FLYING_SPEED: f32 = 0.02;
+/// THE FLY SPEED (javap Abilities <init> the 26.2 jar speaks — the
+/// `ldc #13` the flyingSpeed field's constructor default carries:
+/// 0.05). The air-control speed the flying body's horizontal impulse
+/// rides (Player.getFlyingSpeed's flying branch) AND the vertical
+/// thrust's own scale word (LocalPlayer.aiStep pcs 881-888 — the
+/// abilities' getFlyingSpeed the thrust multiplies, never the
+/// Player's override).
+pub const FLY_SPEED: f32 = 0.05;
+/// THE SPRINT-FLY SPEED (javap Player.getFlyingSpeed the 26.2 jar —
+/// the flying branch's own split: `isSprinting() -> abilities
+/// .getFlyingSpeed() * 2.0` the fconst_2 fold carries, the plain fly
+/// 0.05 the else arm keeps).
+pub const SPRINT_FLY_SPEED: f32 = 0.1;
+/// THE SPRINT-AIR SPEED (javap Player.getFlyingSpeed the 26.2 jar —
+/// the NOT-flying branch's own split: `isSprinting() -> ldc #2292`
+/// = 0.026, the plain walk-air the #55 = 0.02 arm keeps — the
+/// sprint-jump's longer arc the +30% air control speaks).
+pub const SPRINT_AIR_SPEED: f32 = 0.026;
+/// THE FLY THRUST SCALE (javap LocalPlayer.aiStep the 26.2 jar —
+/// pcs 815-894: the int local the shift/jump keys fold ±1, the
+/// `i2f * abilities.getFlyingSpeed() * ldc_w #1270` fold the delta
+/// y adds — the ×3.0 the constant pool speaks).
+pub const FLY_THRUST_SCALE: f64 = 3.0;
+/// THE FLY VY RESTORE (javap Player.travel the 26.2 jar — pcs
+/// 121-163: the pre-travel delta y the flying branch saves, the
+/// super walk the gravity+drag fold spends, the
+/// `with(Axis.Y, d2 * ldc2_w #1640)` the carried vy REPLACES —
+/// the ×0.6 the hover law speaks: the gravity the fold spent dies
+/// in the overwrite, the carried vy decays 0.6 a tick).
+pub const FLY_VY_RESTORE: f64 = 0.6;
+/// THE FLY FOV (javap AbstractClientPlayer.getFieldOfViewModifier the
+/// 26.2 jar — pcs 2-16: `f = 1.0; if abilities.flying f *= ldc #165`
+/// = 1.1, the walking-speed ratio fold the product continues — the
+/// flying camera's own zoom-out the sprint ratio multiplies).
+pub const FLY_FOV: f32 = 1.1;
 pub const JUMP_POWER: f32 = 0.42; // JUMP_STRENGTH
 pub const SPRINT_JUMP_BOOST: f32 = 0.2;
 pub const JUMP_REPEAT_TICKS: i32 = 10; // noJumpDelay
@@ -598,6 +633,14 @@ pub struct PlayerBody {
     /// the key releases when the standing box does not fit).
     pub want_crouch: bool,
     pub sprinting: bool,
+    /// THE ABILITIES' OWN FLIGHT STATE (javap Abilities.flying the
+    /// 26.2 law — the field the LocalPlayer.aiStep walk owns: the
+    /// double-tap toggle the App's fly law speaks, the spectator
+    /// sync forces, the landing retire clears, the Player.travel
+    /// restore the physics folds): true = the fly movement the tick
+    /// wears — the thrust lane, the fly speeds, the hover, the fall
+    /// distance the reset keeps silent, the fov the 1.1 fold speaks.
+    pub flying: bool,
     /// THE CAMERA'S OWN FOV STATE (Camera's fovModifier/oldFovModifier
     /// pair — tickFov's own two fields): the modifier the projection's
     /// 70° option multiplies — the sprint's 1.15 the speed ratio speaks,
@@ -784,6 +827,7 @@ impl PlayerBody {
             crouching: false,
             want_crouch: false,
             sprinting: false,
+            flying: false,
             fov_modifier: 1.0,
             prev_fov_modifier: 1.0,
             forward: 0.0,
@@ -838,6 +882,31 @@ impl PlayerBody {
         let k = look_gain(sensitivity);
         self.pitch = (self.pitch + (dy_px * k) as f32).clamp(-PITCH_LIMIT, PITCH_LIMIT);
         self.yaw += (dx_px * k) as f32;
+    }
+
+    /// `jumpFromGround`'s own fold (javap ServerPlayer.jumpFromGround /
+    /// LivingEntity.jumpFromGround the 26.2 law): the vy the
+    /// JUMP_STRENGTH floor raises, the sprint jump's directional boost
+    /// the yaw fold speaks, the exhaustion the isSprinting split banks
+    /// (the sprint jump's 0.2, the plain jump's 0.05 — FoodConstants'
+    /// inlined constants), and the noJumpDelay = 10 the repeat gate
+    /// wears. The tick's jump gate AND the App's fly law (the
+    /// double-tap toggle-on's launch hop — LocalPlayer.aiStep pc 628
+    /// the `jumpFromGround()` call the audited walk carries) both
+    /// speak it — the same method the vanilla's two lanes call.
+    pub fn jump_from_ground(&mut self) {
+        self.vy = (self.vy as f64).max(JUMP_POWER as f64);
+        if self.sprinting {
+            let rad = self.yaw as f64 * std::f64::consts::PI / 180.0;
+            self.vx += -(rad.sin()) * SPRINT_JUMP_BOOST as f64;
+            self.vz += rad.cos() * SPRINT_JUMP_BOOST as f64;
+        }
+        self.exhaustion_event += if self.sprinting {
+            crate::food::EXHAUSTION_SPRINT_JUMP
+        } else {
+            crate::food::EXHAUSTION_JUMP
+        };
+        self.no_jump_delay = JUMP_REPEAT_TICKS;
     }
 
     /// The pose's height (the POSES table's own numbers).
@@ -910,7 +979,12 @@ impl PlayerBody {
             return 1.0;
         }
         let ratio = self.speed(using_item) / MOVEMENT_SPEED;
-        (ratio + 1.0) / 2.0
+        // THE FLY FOLD (javap AbstractClientPlayer.getFieldOfViewModifier
+        // the 26.2 jar — pcs 2-16: `f = 1.0; if abilities.flying f *=
+        // 1.1`, the walking-speed ratio product the fold continues —
+        // the flying camera's own zoom-out the sprint ratio rides)
+        let fly = if self.flying { FLY_FOV } else { 1.0 };
+        fly * ((ratio + 1.0) / 2.0)
     }
 
     /// `Camera.tickFov`'s own beat (the scripts/camera_tickfov.txt
@@ -1021,6 +1095,15 @@ impl PlayerBody {
         // becomes the previous, the blend below then eases the crouch
         // the camera's lerp walks between
         self.prev_eye_height = self.eye_height;
+        // THE FLYING BODY'S OWN RESET (javap Player.aiStep the 26.2
+        // jar — pcs 28-46: `abilities.flying && !isPassenger() ->
+        // resetFallDistance()` — the flight the fall distance never
+        // banks, the landing hurt the fold never earns; the
+        // !passenger gate the ride lanes' own body-sleep speaks
+        // structurally — the ride branches never reach this tick)
+        if self.flying {
+            self.fall_distance = 0.0;
+        }
         // THE RISING BODY'S ACCUMULATION CLAMP (javap
         // LivingEntity.updateFallFlying's own first call —
         // checkFallDistanceAccumulation: `vy > -0.5 && fallDistance >
@@ -1143,32 +1226,40 @@ impl PlayerBody {
             STANDING_EYE
         };
         self.eye_height += (eye_target - self.eye_height) * EYE_HEIGHT_BLEND;
+        // THE FLYING THRUST (javap LocalPlayer.aiStep pcs 815-894 —
+        // the audited 26.2 walk: `abilities.flying &&
+        // isControlledCamera()` gates, the int local folds
+        // `shift -> -1 / jump -> +1` (the wide-iinc operands the raw
+        // bytes pack: local 7, consts -1/+1), and the non-zero fold
+        // adds `f * abilities.getFlyingSpeed() * 3.0` to the delta y —
+        // the ±0.15 a tick the 0.05 default speaks. The lane rides
+        // BEFORE the super's jump fold (the LocalPlayer body precedes
+        // the AbstractClientPlayer.aiStep call at pc 1095) — the raw
+        // keys the input record carries (jump the `jumping` field,
+        // shift the `want_crouch` key state), and the
+        // isControlledCamera gate the body's own stand answers: this
+        // body IS the camera while its physics walk (the ride lanes
+        // never reach the tick, the headless scenes never feed one).
+        if self.flying {
+            let thrust = (self.jumping as i32) - (self.want_crouch as i32);
+            if thrust != 0 {
+                self.vy += thrust as f64 * FLY_SPEED as f64 * FLY_THRUST_SCALE;
+            }
+        }
         // THE JUMP GATE (the aiStep's own): held jump + ground + the
         // delay elapsed -> jumpFromGround
         if self.jumping && self.on_ground && self.no_jump_delay == 0 {
-            self.vy = (self.vy as f64).max(JUMP_POWER as f64);
-            if self.sprinting {
-                let rad = self.yaw as f64 * std::f64::consts::PI / 180.0;
-                self.vx += -(rad.sin()) * SPRINT_JUMP_BOOST as f64;
-                self.vz += rad.cos() * SPRINT_JUMP_BOOST as f64;
-            }
-            // THE JUMP'S OWN COST (javap ServerPlayer.jumpFromGround: the
-            // super's arc, then the isSprinting split — the sprint
-            // jump's 0.2, the plain jump's 0.05, FoodConstants' own
-            // inlined constants the bytecode speaks)
-            self.exhaustion_event += if self.sprinting {
-                crate::food::EXHAUSTION_SPRINT_JUMP
-            } else {
-                crate::food::EXHAUSTION_JUMP
-            };
-            self.no_jump_delay = JUMP_REPEAT_TICKS;
+            self.jump_from_ground();
         }
         // THE MOVE IMPULSE (getInputVector's law): the input vector
         // (left, forward) normalized past 1.0, scaled by the
         // friction-influenced speed (the GROUND control is the
         // attribute — the cube correction only past friction 0.6, the
-        // ice law our vocabulary never speaks; the AIR control is the
-        // flyingSpeed 0.02), rotated by the yaw
+        // ice law our vocabulary never speaks; the AIR control is
+        // Player.getFlyingSpeed's own split the 26.2 jar speaks: the
+        // FLYING body the abilities' 0.05 wears — the sprint-fly the
+        // ×2 0.10 arm carries — the walking body the 0.02, the
+        // sprint-air the 0.026 arm), rotated by the yaw
         let mut ix = self.left as f64;
         let mut iz = self.forward as f64;
         let len_sq = ix * ix + iz * iz;
@@ -1185,6 +1276,14 @@ impl PlayerBody {
                 } else {
                     self.speed(using_item)
                 }
+            } else if self.flying {
+                if self.sprinting {
+                    SPRINT_FLY_SPEED
+                } else {
+                    FLY_SPEED
+                }
+            } else if self.sprinting {
+                SPRINT_AIR_SPEED
             } else {
                 FLYING_SPEED
             };
@@ -1194,6 +1293,11 @@ impl PlayerBody {
             self.vx += (ix * c - iz * s) * speed;
             self.vz += (iz * c + ix * s) * speed;
         }
+        // THE PRE-TRAVEL VY (javap Player.travel pcs 131-138 — the
+        // flying branch's own save: `d2 = getDeltaMovement().y` the
+        // super walk's fold the restore reads — the bank the thrust
+        // and the jump fold spoke, the move never yet consumed)
+        let vy_pre_travel = self.vy;
         // THE COLLIDE (maybeBackOffFromEdge first: the sneak never
         // walks off its ledge)
         let mut mv = (self.vx, self.vy, self.vz);
@@ -1394,6 +1498,17 @@ impl PlayerBody {
         let drag = (friction * GROUND_DRAG) as f64;
         self.vx *= drag;
         self.vz *= drag;
+        if self.flying {
+            // THE PLAYER.TRAVEL RESTORE (javap the 26.2 jar pcs
+            // 121-163 — the flying branch's own tail: `d2 = the saved
+            // pre-travel y` the super walk spent the gravity+drag fold
+            // through, then `setDeltaMovement(delta.with(Axis.Y, d2 *
+            // 0.6))` the carried vy REPLACES — the fold's own vy dies
+            // in the overwrite, the hover the restore alone speaks:
+            // the gravity never banks, the carried vy decays 0.6 a
+            // tick, the thrust the next tick's lane re-adds)
+            self.vy = vy_pre_travel * FLY_VY_RESTORE;
+        }
         // THE WALK ANIMATION (LivingEntity.calculateEntityAnimation(true)
         // + updateWalkAnimation, javap): the tick's 3D move distance,
         // `min(distance * 4.0, 1.0)` into the store's 0.4 blend.
@@ -2047,6 +2162,127 @@ mod tests {
             b.x - x0
         );
         assert!((b.z - z0).abs() < 1e-6);
+    }
+
+    /// THE FLY PHYSICS (the audited 26.2 flight laws the tick wears
+    /// whole — the thrust the LocalPlayer.aiStep pcs 815-894 lane
+    /// speaks, the hover the Player.travel pcs 121-163 restore keeps,
+    /// the fall distance the Player.aiStep pcs 28-46 reset retires,
+    /// the fly speeds the Player.getFlyingSpeed split carries, the
+    /// fov the getFieldOfViewModifier's 1.1 fold speaks, and the hop
+    /// the jumpFromGround fold rides).
+    #[test]
+    fn the_fly_physics_the_travel_restore_speaks() {
+        let w = flat_world();
+        // THE HOVER (the restore law): the flying body with no keys
+        // never falls — the gravity the drag fold spends dies in the
+        // `vy = pre * 0.6` overwrite, the carried rest stays rest
+        let mut b = PlayerBody::new(0.5, 3.0, 0.5, 0.0, 0.0);
+        b.flying = true;
+        for i in 0..20 {
+            b.tick(&w, false);
+            assert!(b.y > 2.9, "the hover never falls (tick {i}) y={}", b.y);
+            assert!(
+                b.vy.abs() < 1e-9,
+                "the hover decays to rest (tick {i}) vy={}",
+                b.vy
+            );
+        }
+        // THE ASCEND (the thrust lane): the space key folds +1, the
+        // delta y gains `+1 * 0.05 * 3.0` = 0.15 a tick BEFORE the
+        // move — the restore keeps the pre-travel vy * 0.6 — the
+        // climb the two ticks speak
+        let (y_before, vy_1) = (b.y, {
+            b.jumping = true;
+            b.tick(&w, false);
+            b.vy
+        });
+        assert!(y_before > 2.9);
+        assert!(
+            (vy_1 - (FLY_SPEED as f64 * FLY_THRUST_SCALE * FLY_VY_RESTORE)).abs() < 1e-9,
+            "the first tick's restore vy {vy_1}"
+        );
+        assert!(b.y > y_before, "the climb rides");
+        // THE BOTH-KEYS NET (the ±1 fold's own cancel): the space and
+        // the shift together the thrust never speaks — the fresh
+        // hover the exact rest keeps
+        let mut nb = PlayerBody::new(0.5, 3.0, 0.5, 0.0, 0.0);
+        nb.flying = true;
+        nb.jumping = true;
+        nb.want_crouch = true;
+        nb.tick(&w, false);
+        assert!(nb.vy.abs() < 1e-9, "the net thrust never speaks vy={}", nb.vy);
+        // THE DESCEND (the thrust lane's -1 arm): the shift key the
+        // want_crouch snapshot carries — the sink the symmetric fold
+        // speaks (the first thrust tick's restore: -0.15 * 0.6)
+        nb.jumping = false;
+        nb.tick(&w, false);
+        assert!(nb.vy < 0.0, "the shift sinks, vy={}", nb.vy);
+        // THE FALL DISTANCE (the reset law): the banked descent the
+        // flight never keeps — the head reset retires the 5.0 bank
+        // before the move, the only carry the tick's own descent the
+        // move may re-accumulate (the vanilla order: Player.aiStep's
+        // resetFallDistance precedes the super's accumulation walk)
+        nb.fall_distance = 5.0;
+        nb.tick(&w, false);
+        assert!(
+            nb.fall_distance < 1.0,
+            "the banked descent the reset retires, got {}",
+            nb.fall_distance
+        );
+        // THE FLY SPEED (Player.getFlyingSpeed's flying branch): the
+        // airborne impulse 0.05 forward, the sprint-fly the x2 0.10
+        // arm, the walk-air the 0.02 arm, the sprint-air the 0.026
+        // arm — the four splits the yaw-zero fold speaks as the PRE-DRAG
+        // position delta (the drag fold the tail speaks never touches
+        // the move the impulse rode)
+        let vz_of = |flying: bool, sprinting: bool| -> f64 {
+            let mut bb = PlayerBody::new(0.5, 3.0, 0.5, 0.0, 0.0);
+            bb.forward = 1.0;
+            bb.flying = flying;
+            bb.sprinting = sprinting;
+            let z0 = bb.z;
+            bb.tick(&w, false);
+            bb.z - z0
+        };
+        assert!(
+            (vz_of(true, false) - FLY_SPEED as f64).abs() < 1e-9,
+            "the fly impulse"
+        );
+        assert!(
+            (vz_of(true, true) - SPRINT_FLY_SPEED as f64).abs() < 1e-9,
+            "the sprint-fly impulse"
+        );
+        assert!(
+            (vz_of(false, false) - FLYING_SPEED as f64).abs() < 1e-9,
+            "the walk-air impulse"
+        );
+        assert!(
+            (vz_of(false, true) - SPRINT_AIR_SPEED as f64).abs() < 1e-9,
+            "the sprint-air impulse"
+        );
+        // THE FOV (getFieldOfViewModifier's own head): the flying
+        // modifier the 1.1 fold carries, the standing body the plain
+        // 1.0 keeps
+        let mut fb = PlayerBody::new(0.5, 3.0, 0.5, 0.0, 0.0);
+        assert!((fb.fov_target(false) - 1.0).abs() < 1e-6, "the walk fov");
+        fb.flying = true;
+        assert!(
+            (fb.fov_target(false) - FLY_FOV).abs() < 1e-6,
+            "the fly fov rides the 1.1"
+        );
+        // THE LAUNCH HOP (jumpFromGround's own fold — the toggle-on's
+        // ground arm the App's fly law calls): the vy the JUMP_POWER
+        // floor raises, the plain jump's 0.05 exhaustion the
+        // unsprinting body banks
+        let mut hb = PlayerBody::new(0.5, 3.0, 0.5, 0.0, 0.0);
+        hb.on_ground = true;
+        hb.jump_from_ground();
+        assert!((hb.vy - JUMP_POWER as f64).abs() < 1e-9, "the hop's vy");
+        assert!(
+            (hb.exhaustion_event - crate::food::EXHAUSTION_JUMP).abs() < 1e-6,
+            "the hop's own cost"
+        );
     }
 
     #[test]
