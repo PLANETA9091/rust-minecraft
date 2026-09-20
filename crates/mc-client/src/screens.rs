@@ -1520,6 +1520,141 @@ fn selector_unquoted_ok(c: char) -> bool {
     c.is_ascii_alphanumeric() || matches!(c, '_' | '-' | '.' | '+')
 }
 
+/// THE NUMBER CHARSET THE BRIGADIER READNUMBER WALK SPEAKS (jar
+/// audit: `StringReader.isAllowedInNumber` — the digit range + the
+/// `.`/`-` singles, NO peek-ahead law). The readInt/readDouble walks
+/// the numeric option modifiers run consume exactly this set
+/// greedily, then `Integer.parseInt`/`Double.parseDouble` the run —
+/// a non-empty run the parse rejects (`"-"`, `"5.5"` at readInt,
+/// `"5..10"`) the INVALID-NUMBER throw answers, the empty run the
+/// EXPECTED-NUMBER throw wears (both the parse-throw-catch's EMPTY
+/// local keep); a run the charset stops inside (`"5x"`) the parse's
+/// own ']' expectation dies at.
+fn selector_number_char_ok(c: char) -> bool {
+    c.is_ascii_digit() || c == '.' || c == '-'
+}
+
+/// THE BRIGADIER READINT LAW (the run + `Integer.parseInt`): the
+/// whole value the greedy number run consumes AND the parse accepts
+/// — `"5"`/`"-5"` the parse completes, `"5.5"`/`"5."`/`"5..10"` the
+/// INVALID-INT throw answers, `"5x"` the ']' expectation dies at,
+/// the empty/`"+5"` the EXPECTED-NUMBER throw wears; the int range
+/// the parse's own overflow law keeps.
+fn selector_int_ok(value: &str) -> bool {
+    !value.is_empty()
+        && value.chars().all(selector_number_char_ok)
+        && value.parse::<i32>().is_ok()
+}
+
+/// THE BRIGADIER READDOUBLE LAW (the run + `Double.parseDouble`):
+/// the same greedy charset, the parse the doubles accept — `"5."` →
+/// 5.0 and `".5"`/`"-.5"` the parse completes (the trailing-dot form
+/// the coordinate lanes ONLY wear), `"5..10"`/`"5.5.5"`/`"-"` the
+/// INVALID-DOUBLE throw answers.
+fn selector_double_ok(value: &str) -> bool {
+    !value.is_empty()
+        && value.chars().all(selector_number_char_ok)
+        && value.parse::<f64>().is_ok()
+}
+
+/// THE BOUNDS READNUMBER RUN LAW (javap
+/// `MinMaxBounds$Bounds.isAllowedInputChar` — the digit range + the
+/// `-` single the three compares bank, the `.` the PEEK-AHEAD law
+/// carries: consumed iff the next char EXISTS and is `>` `.` — the
+/// `..` separator the run never swallows, a trailing `.` at the
+/// input's end the run stops before... and the reader's own
+/// `canRead(1)`/`peek(1)` pair (the `cursor+1 <= len` / unguarded
+/// `charAt` law — empirically probed against the bundled brigadier
+/// 1.2.9) the `StringIndexOutOfBounds` throw wears when the `.` is
+/// the input's last char — the suggestions future the failure
+/// swallows, the EMPTY local the same silence answers). The side's
+/// remaining text the run covers fully speaks — a char the run stops
+/// at the parse's own ']' expectation dies at.
+fn selector_bounds_run_covers(side: &str) -> bool {
+    let b = side.as_bytes();
+    let mut i = 0;
+    while i < b.len() {
+        let c = b[i];
+        if c.is_ascii_digit() || c == b'-' {
+            i += 1;
+        } else if c == b'.' {
+            match b.get(i + 1) {
+                // the '.'-law: consumed iff the next char is > '.'
+                Some(&n) if n > b'.' => i += 1,
+                // the next char <= '.' (the '..' separator, the
+                // whitespace, ...) or END — the run stops here (the
+                // end-of-input form the vanilla crash lane wears)
+                _ => break,
+            }
+        } else {
+            break;
+        }
+    }
+    i == b.len()
+}
+
+/// THE BOUNDS FROMREADER LAW (javap `MinMaxBounds$Bounds.fromReader`
+/// + the `Ints`/`Doubles`/`FloatDegrees` wrappers — the walk the
+/// distance/level/x_rotation/y_rotation modifiers run): the empty
+/// value the ERROR-EMPTY throw answers, the min-side run then the
+/// optional `'..'` + the max-side run (the grammar the `'..'` the
+/// run's own stop positions — the '.'-law refuses a `.` followed by
+/// `.`), the both-sides-empty form the ERROR-EMPTY throw wears, the
+/// single-value form the `(min, min)` pair builds. The `Ints`/
+/// `Doubles` wrappers the `areSwapped` check adds (min > max → the
+/// cursor reset + rethrow) and the distance/level walks the
+/// `isPresent` PAIR adds (either side absent → the rollbackAndThrow)
+/// — the closed lanes; the `FloatDegrees` wrapper (the rotations)
+/// NEITHER carries — the open lane the empty side and the swapped
+/// bounds accept, the leftover chars still the ']' expectation dies
+/// at.
+fn selector_bounds_ok(value: &str, ints: bool, closed: bool) -> bool {
+    if value.is_empty() {
+        // the !canRead ERROR-EMPTY throw
+        return false;
+    }
+    let (min_side, max_side) = match value.split_once("..") {
+        Some((a, b)) => (a, Some(b)),
+        None => (value, None),
+    };
+    if !selector_bounds_run_covers(min_side) {
+        return false;
+    }
+    let min_v = if min_side.is_empty() { None } else { Some(min_side) };
+    let max_v = match max_side {
+        Some(s) => {
+            if !selector_bounds_run_covers(s) {
+                return false;
+            }
+            if s.is_empty() { None } else { Some(s) }
+        }
+        // the single-value form: the (min, min) pair the walk builds
+        None => min_v,
+    };
+    match (min_v, max_v) {
+        // the both-sides-empty ERROR-EMPTY throw
+        (None, None) => false,
+        (Some(a), Some(b)) => {
+            // the parse fns: Integer.parseInt / Double.parseDouble-shaped
+            let ok = if ints {
+                match (a.parse::<i32>(), b.parse::<i32>()) {
+                    (Ok(x), Ok(y)) => !closed || x <= y,
+                    _ => false,
+                }
+            } else {
+                match (a.parse::<f64>(), b.parse::<f64>()) {
+                    (Ok(x), Ok(y)) => !closed || x <= y,
+                    _ => false,
+                }
+            };
+            ok
+        }
+        // one side absent: the closed walk's isPresent pair the
+        // rollbackAndThrow answers, the open walk the bounds accepts
+        _ => !closed,
+    }
+}
+
 /// THE VALUE'S OWN DEFAULTED ID (the `ResourceLocation` constructor's
 /// no-colon form — the missing namespace the `minecraft` default
 /// wears, the `DefaultedRegistry.get` lookup the modifier's
@@ -1698,9 +1833,13 @@ fn local_selector_type_value_suggestions(
 /// remaining rides (the rollback cursor the element start names);
 /// the VALID complete element the parseOptions continuation
 /// answers — the post-value state the ',' + ']' punctuation
-/// suggests (suggestOptionsNextOrClose); the unknown keys (the
-/// numeric parses — the readInt walks the next rounds' lanes) /
-/// the internal-whitespace tails the honest ask keeps).
+/// suggests (suggestOptionsNextOrClose); the NUMERIC walks the same
+/// two-lane law wears (the readInt/readDouble/Bounds.fromReader
+/// grammars — the limit/coordinate/distance/level/rotation keys, no
+/// '!' invert the walks carry) — a fully-consumed valid number the
+/// punctuation answers, a failed parse the EMPTY local keeps; the
+/// unknown keys (the scores map, the nbt/advancements/predicate
+/// compounds) / the internal-whitespace tails the honest ask keeps).
 fn local_selector_value_suggestions(
     tail: &str,
     eq_idx: usize,
@@ -1777,8 +1916,29 @@ fn local_selector_value_suggestions(
             let value = trimmed.strip_prefix('!').unwrap_or(trimmed);
             value.chars().all(selector_unquoted_ok)
         }
-        // the unspoken value walks the honest ask keeps (the numeric
-        // parses — the readInt walks the next rounds' lanes)
+        // the NUMERIC walks (the audited lambda$bootStrap$3/$5/$7-17/
+        // $19/$21/$23 — distance, level, x/y/z/dx/dy/dz, the
+        // rotations, limit): NO modifier installs a suggestions
+        // provider (SUGGEST_NOTHING the value position keeps — the
+        // vanilla suggests NO values at the numeric options, the same
+        // law the string lanes wear) — the parse's own number grammar
+        // answers the completion: a fully-consumed valid value the
+        // post-value punctuation wears, a failed/stopped parse the
+        // EMPTY local keeps (no round-trip the throw spends). The
+        // LIMIT walk the readInt law keeps, the COORDINATE walks the
+        // readDouble law (the trailing-dot form the parse accepts),
+        // the distance/level walks the Bounds.fromReader grammar +
+        // the isPresent PAIR + the areSwapped check (the closed
+        // lanes), the rotations the same grammar WITHOUT the pair
+        // (the open lane — the empty side and the swapped bounds the
+        // walk accepts).
+        "limit" => selector_int_ok(trimmed),
+        "x" | "y" | "z" | "dx" | "dy" | "dz" => selector_double_ok(trimmed),
+        "distance" => selector_bounds_ok(trimmed, false, true),
+        "level" => selector_bounds_ok(trimmed, true, true),
+        "x_rotation" | "y_rotation" => selector_bounds_ok(trimmed, false, false),
+        // the unspoken value walks the honest ask keeps (the scores
+        // map, the nbt/advancements/predicate compounds)
         _ => return ChatSuggestionSource::AskServer,
     };
     if complete {
@@ -23638,14 +23798,21 @@ mod tests {
             vec![",", "]"],
             "the punctuation the successful value wears"
         );
-        // THE UNSPOKEN KEYS (the limit value walk the honest ask
-        // keeps — the numeric parses the next rounds' lanes; the name
-        // walk the STRING lanes the audited completion wears — see
-        // the_string_value_lanes test)
+        // THE UNSPOKEN KEYS (the limit value walk the NUMERIC lane
+        // the audited completion wears — the readInt law the "5"
+        // completes, the punctuation the post-value state suggests —
+        // see the_numeric_value_lanes test; the unknown key the
+        // honest ask keeps)
+        let Src::Local { start, matches, .. } =
+            local_command_suggestions(&tree, "/kill @a[limit=5", &[], true, &[])
+        else {
+            panic!("/kill @a[limit=5 the numeric completion answers");
+        };
+        assert_eq!(start, 16, "the consumed value's own end");
         assert_eq!(
-            local_command_suggestions(&tree, "/kill @a[limit=5", &[], true, &[]),
-            Src::AskServer,
-            "the limit value walk the honest ask keeps"
+            matches.iter().map(|m| m.text.as_str()).collect::<Vec<_>>(),
+            vec![",", "]"],
+            "the limit walk the numeric completion wears"
         );
         assert_eq!(
             local_command_suggestions(&tree, "/kill @a[so=", &[], true, &[]),
@@ -23830,18 +23997,24 @@ mod tests {
             Src::AskServer,
             "the internal whitespace the honest ask keeps"
         );
-        // THE NUMERIC PARSES (the readInt walks the next rounds'
-        // lanes — the honest ask keeps)
-        assert_eq!(
-            local_command_suggestions(&tree, "/kill @a[limit=", &[], true, &[]),
-            Src::AskServer,
-            "the numeric parse the honest ask keeps"
-        );
-        assert_eq!(
-            local_command_suggestions(&tree, "/kill @a[distance=", &[], true, &[]),
-            Src::AskServer,
-            "the range parse the honest ask keeps"
-        );
+        // THE NUMERIC PARSES (the readInt/readDouble/Bounds walks
+        // the numeric lanes now speak — the EMPTY value the
+        // EXPECTED-NUMBER/ERROR-EMPTY throws answer, the EMPTY local
+        // the parse-throw-catch's silence wears, the span the
+        // element's own text names)
+        let Src::Local { start, length, matches } =
+            local_command_suggestions(&tree, "/kill @a[limit=", &[], true, &[])
+        else {
+            panic!("/kill @a[limit= the numeric lane answers");
+        };
+        assert_eq!((start, length), (15, 0), "the empty value's own span");
+        assert!(matches.is_empty(), "the empty readInt the silence keeps");
+        let Src::Local { matches, .. } =
+            local_command_suggestions(&tree, "/kill @a[distance=", &[], true, &[])
+        else {
+            panic!("/kill @a[distance= the range lane answers");
+        };
+        assert!(matches.is_empty(), "the empty fromReader the silence keeps");
         // THE TAB APPLY (the selected ',' the zero-length insert
         // lands — the span the parse cursor's end wears)
         let mut app = App::new(3);
@@ -23860,6 +24033,286 @@ mod tests {
         app.on_chat_tab_key();
         assert_eq!(
             app.chat_input, "/kill @a[name=,",
+            "the apply the ',' insert lands"
+        );
+    }
+
+    /// THE NUMERIC VALUE WALKS (javap `EntitySelectorOptions
+    /// lambda$bootStrap$3/$5/$7-17/$19/$21/$23` + `MinMaxBounds$Bounds
+    /// .fromReader` — the distance/level/coordinate/rotation/limit
+    /// modifiers install NO suggestions provider, SUGGEST_NOTHING the
+    /// value position keeps, and the parse's own number grammar
+    /// answers the completion: a fully-consumed valid value the
+    /// post-value ',' + ']' punctuation wears, a failed/stopped parse
+    /// the EMPTY local keeps (no round-trip the throw spends). The
+    /// LIMIT walk the readInt law keeps (`"5"`/`"-5"` the parse
+    /// completes, `"5.5"` the INVALID-INT throw answers, `"5x"` the
+    /// ']' expectation dies at, the overflow the parse's own range
+    /// law wears); the COORDINATE walks the readDouble law (the
+    /// trailing-dot `"5."` the parse completes — the charset law the
+    /// '.' carries has NO peek-ahead); the distance/level walks the
+    /// Bounds.fromReader grammar (the '.'-law the
+    /// isAllowedInputChar walk speaks: a `.` consumed iff the next
+    /// char is `>` `.` — the `..` separator the run never swallows,
+    /// the trailing `.` the run stops before and the vanilla's own
+    /// end-of-input StringIndexOutOfBounds the suggestions future
+    /// swallows — the EMPTY local the same silence answers) + the
+    /// isPresent PAIR (either range side absent → the
+    /// rollbackAndThrow) + the areSwapped check (min > max → the
+    /// cursor reset + rethrow); the ROTATION walks the same grammar
+    /// WITHOUT the pair (the `FloatDegrees` wrapper — the empty side
+    /// and the swapped bounds the walk accepts, `"5.."` the open
+    /// range completes); the '!' the numeric walks never invert (the
+    /// read walks carry no shouldInvertValue — `limit=!5` the
+    /// EXPECTED-NUMBER throw answers); the scores/nbt/advancements/
+    /// predicate keys the honest ask keeps).
+    #[test]
+    fn the_selector_options_the_numeric_value_lanes_speak() {
+        use crate::screens::ChatSuggestionSource as Src;
+        let tree = test_provider_tree();
+        // THE LIMIT WALK (the readInt law — the TYPED value the
+        // parse completes, the punctuation the post-value state
+        // suggests, the span the parse cursor's own end names)
+        let Src::Local { start, length, matches } =
+            local_command_suggestions(&tree, "/kill @a[limit=5", &[], true, &[])
+        else {
+            panic!("/kill @a[limit=5 the readInt walk answers");
+        };
+        assert_eq!((start, length), (16, 0), "the consumed value's own end");
+        assert_eq!(
+            matches.iter().map(|m| m.text.as_str()).collect::<Vec<_>>(),
+            vec![",", "]"],
+            "the int consumed the punctuation wears"
+        );
+        // THE NEGATIVE INT (the '-' the number charset carries)
+        let Src::Local { matches, .. } =
+            local_command_suggestions(&tree, "/kill @a[limit=-5", &[], true, &[])
+        else {
+            panic!("/kill @a[limit=-5 the readInt walk answers");
+        };
+        assert_eq!(
+            matches.iter().map(|m| m.text.as_str()).collect::<Vec<_>>(),
+            vec![",", "]"],
+            "the negative int the completion wears"
+        );
+        // THE INVALID INT FORMS (the "5.5" the parseInt throw
+        // answers, the "5x" the ']' expectation dies at, the overflow
+        // the parse's own range law wears, the bare "-" the
+        // INVALID-INT throw answers, the '+' the charset refuses)
+        for (input, why) in [
+            ("/kill @a[limit=5.5", "the fraction the parseInt throw answers"),
+            ("/kill @a[limit=5x", "the leftover char the ']' expectation dies at"),
+            (
+                "/kill @a[limit=99999999999",
+                "the overflow the parse's range law wears",
+            ),
+            ("/kill @a[limit=-", "the bare sign the INVALID-INT throw answers"),
+            ("/kill @a[limit=+5", "the '+' the number charset refuses"),
+        ] {
+            let Src::Local { matches, .. } =
+                local_command_suggestions(&tree, input, &[], true, &[])
+            else {
+                panic!("{input} the numeric refusal answers");
+            };
+            assert!(matches.is_empty(), "{why}");
+        }
+        // THE COORDINATE WALKS (the readDouble law — the
+        // x/y/z/dx/dy/dz keys the same completion wear; the
+        // trailing-dot form the charset law ACCEPTS — the
+        // parseDouble walk the "5." completes)
+        for key in ["x", "y", "z", "dx", "dy", "dz"] {
+            let Src::Local { matches, .. } =
+                local_command_suggestions(&tree, &format!("/kill @a[{key}=5."), &[], true, &[])
+            else {
+                panic!("/kill @a[{key}=5. the readDouble walk answers");
+            };
+            assert_eq!(
+                matches.iter().map(|m| m.text.as_str()).collect::<Vec<_>>(),
+                vec![",", "]"],
+                "the trailing-dot double the completion wears"
+            );
+            let Src::Local { matches, .. } =
+                local_command_suggestions(&tree, &format!("/kill @a[{key}=-.5"), &[], true, &[])
+            else {
+                panic!("/kill @a[{key}=-.5 the readDouble walk answers");
+            };
+            assert_eq!(
+                matches.iter().map(|m| m.text.as_str()).collect::<Vec<_>>(),
+                vec![",", "]"],
+                "the negative fraction the completion wears"
+            );
+        }
+        // THE INVALID DOUBLE FORMS (the "5..10" the parseDouble
+        // throw answers — the coords carry NO range grammar)
+        let Src::Local { matches, .. } =
+            local_command_suggestions(&tree, "/kill @a[x=5..10", &[], true, &[])
+        else {
+            panic!("/kill @a[x=5..10 the readDouble refusal answers");
+        };
+        assert!(matches.is_empty(), "the range tail the coord walk refuses");
+        // THE DISTANCE WALK (the Bounds.fromReader grammar — the
+        // single value the (min, min) pair builds, the range the
+        // both-present law keeps, the swap the areSwapped check
+        // refuses)
+        for (input, why) in [
+            ("/kill @a[distance=5", "the single value the (min, min) pair builds"),
+            ("/kill @a[distance=5..10", "the range the both-present law keeps"),
+            (
+                "/kill @a[distance=5.5..10.5",
+                "the dotted sides the '.'-law run consumes",
+            ),
+            ("/kill @a[distance=5..5", "the equal bounds the swap law keeps"),
+        ] {
+            let Src::Local { matches, .. } =
+                local_command_suggestions(&tree, input, &[], true, &[])
+            else {
+                panic!("{input} the Bounds walk answers");
+            };
+            assert_eq!(
+                matches.iter().map(|m| m.text.as_str()).collect::<Vec<_>>(),
+                vec![",", "]"],
+                "{why}"
+            );
+        }
+        // THE INVALID BOUNDS FORMS (the open range the isPresent
+        // pair refuses — the closed walk the rollbackAndThrow
+        // answers; the swapped bounds the cursor reset + rethrow
+        // wears; the trailing dot the run stops before — the
+        // vanilla's own end-of-input crash the future swallows)
+        for (input, why) in [
+            (
+                "/kill @a[distance=5..",
+                "the open max the isPresent pair refuses",
+            ),
+            (
+                "/kill @a[distance=..5",
+                "the open min the isPresent pair refuses",
+            ),
+            (
+                "/kill @a[distance=10..5",
+                "the swapped bounds the areSwapped check refuses",
+            ),
+            (
+                "/kill @a[distance=..",
+                "the both-empty form the ERROR-EMPTY throw answers",
+            ),
+            (
+                "/kill @a[distance=abc",
+                "the unparseable form the both-empty throw answers",
+            ),
+            (
+                "/kill @a[distance=5..x",
+                "the unparseable max the isPresent pair refuses",
+            ),
+            (
+                "/kill @a[distance=5.",
+                "the trailing dot the run stops before — the crash lane the silence keeps",
+            ),
+            (
+                "/kill @a[level=5.5",
+                "the fraction the parseInt throw answers",
+            ),
+            (
+                "/kill @a[level=5..",
+                "the open max the level walk's pair refuses",
+            ),
+        ] {
+            let Src::Local { matches, .. } =
+                local_command_suggestions(&tree, input, &[], true, &[])
+            else {
+                panic!("{input} the Bounds refusal answers");
+            };
+            assert!(matches.is_empty(), "{why}");
+        }
+        // THE ROTATION WALKS (the FloatDegrees wrapper — NO
+        // isPresent pair the walk carries: the open range and the
+        // swapped bounds the parse accepts, the empty-min form
+        // completes)
+        for key in ["x_rotation", "y_rotation"] {
+            for (input, why) in [
+                (format!("/kill @a[{key}=45"), "the single value completes"),
+                (
+                    format!("/kill @a[{key}=45..90"),
+                    "the range the no-pair law keeps",
+                ),
+                (
+                    format!("/kill @a[{key}=45.."),
+                    "the open max the no-pair law accepts",
+                ),
+                (
+                    format!("/kill @a[{key}=..90"),
+                    "the open min the no-pair law accepts",
+                ),
+                (
+                    format!("/kill @a[{key}=90..45"),
+                    "the swapped bounds the no-areSwapped law accepts",
+                ),
+            ] {
+                let Src::Local { matches, .. } =
+                    local_command_suggestions(&tree, &input, &[], true, &[])
+                else {
+                    panic!("{input} the rotation walk answers");
+                };
+                assert_eq!(
+                    matches.iter().map(|m| m.text.as_str()).collect::<Vec<_>>(),
+                    vec![",", "]"],
+                    "{why}"
+                );
+            }
+            // the both-empty form the shared both-empty check refuses
+            let Src::Local { matches, .. } =
+                local_command_suggestions(&tree, &format!("/kill @a[{key}=.."), &[], true, &[])
+            else {
+                panic!("/kill @a[{key}=.. the both-empty refusal answers");
+            };
+            assert!(matches.is_empty(), "the empty range the throw keeps");
+            // the leftover char the ']' expectation dies at
+            let Src::Local { matches, .. } =
+                local_command_suggestions(&tree, &format!("/kill @a[{key}=45..x"), &[], true, &[])
+            else {
+                panic!("/kill @a[{key}=45..x the leftover refusal answers");
+            };
+            assert!(matches.is_empty(), "the unparseable max the ']' lane keeps");
+        }
+        // THE NO-INVERT LAW (the numeric walks carry NO
+        // shouldInvertValue — the '!' the read walks refuse)
+        let Src::Local { matches, .. } =
+            local_command_suggestions(&tree, "/kill @a[limit=!5", &[], true, &[])
+        else {
+            panic!("/kill @a[limit=!5 the no-invert refusal answers");
+        };
+        assert!(matches.is_empty(), "the '!' the read walk refuses");
+        // THE UNKNOWN KEYS (the scores map, the compound walks — the
+        // honest ask keeps)
+        assert_eq!(
+            local_command_suggestions(&tree, "/kill @a[scores=", &[], true, &[]),
+            Src::AskServer,
+            "the scores map the honest ask keeps"
+        );
+        assert_eq!(
+            local_command_suggestions(&tree, "/kill @a[nbt=", &[], true, &[]),
+            Src::AskServer,
+            "the nbt compound the honest ask keeps"
+        );
+        // THE TAB APPLY (the consumed value the ',' zero-length
+        // insert lands — the span the parse cursor's end wears, no
+        // request the lane spends)
+        let mut app = App::new(3);
+        app.enter_world();
+        app.on_command_tree(test_provider_tree());
+        let (tx, _rx) = std::sync::mpsc::channel::<crate::world_view::ContainerCommand>();
+        app.attach_live_clicks(tx);
+        app.on_chat_key();
+        for c in "/kill @a[limit=5".chars() {
+            app.on_chat_char(c);
+        }
+        assert!(
+            _rx.try_recv().is_err(),
+            "the numeric lane no request spends"
+        );
+        app.on_chat_tab_key();
+        assert_eq!(
+            app.chat_input, "/kill @a[limit=5,",
             "the apply the ',' insert lands"
         );
     }
