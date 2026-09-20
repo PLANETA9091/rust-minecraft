@@ -3159,9 +3159,11 @@ fn selector_option_value_walk(
 /// goto the head (98) }, the exit the expect '}' wears (101-104 — the
 /// INPUT-END exit the same expect throws, the unterminated compound
 /// the silence keeps), the empty map the addPredicate skips (107-113),
-/// the markParsed LAST (126-130). The consumed length the Junk
-/// verdict names — the chars after the '}' the parse's own junk
-/// lane wears.
+/// the markParsed LAST (126-130). The Junk verdict the post-close
+/// laws refine: the parse's OWN post-modifier skipWhitespace (the
+/// audited 146-150) rides before the canRead/']' checks — the junk
+/// cursor the ws the skip names — the chars after the ws the parse's
+/// own junk lane wears.
 fn selector_scores_compound_walk(value: &str) -> SelectorValueWalk {
     let b = value.as_bytes();
     let is_ws = |c: u8| matches!(c, b' ' | b'\t');
@@ -3186,10 +3188,25 @@ fn selector_scores_compound_walk(value: &str) -> SelectorValueWalk {
         // consumes (101-104), the mark the close wears
         if b[i] == b'}' {
             i += 1;
+            if i == b.len() {
+                return SelectorValueWalk::Complete;
+            }
+            // the parse's OWN post-modifier skipWhitespace (the
+            // audited 146-150) rides before the canRead/']' checks —
+            // the junk cursor the ws the skip names (the in-brace ws
+            // the compound's own loop consumed, the post-close ws the
+            // parse's own law answers — the earlier-element walk the
+            // refined verdict rides ungated)
+            while i < b.len() && is_ws(b[i]) {
+                i += 1;
+            }
             return if i == b.len() {
+                // the ws to the input end the skip consumes — the
+                // canRead FALSE exit the parse returns (the
+                // NextOrClose state at the input end)
                 SelectorValueWalk::Complete
             } else {
-                // the chars after the '}' the parse's own junk lane
+                // the chars after the ws the parse's own junk lane
                 // wears (the post-value death the NextOrClose pair
                 // answers)
                 SelectorValueWalk::Junk(i)
@@ -3269,13 +3286,31 @@ fn local_selector_value_suggestions(
     // lane wears — the honest ask — EXCEPT the name key's QUOTED form:
     // the readString walk consumes the whitespace INSIDE the quotes
     // (the value walk never stops there, the ']' expectation never
-    // sees it), so the quoted value rides the quote law instead
+    // sees it), so the quoted value rides the quote law instead —
+    // and EXCEPT the scores compound's OWN whitespace: the audited
+    // 15-16/35-36/44-45/54-55/74-75 loop positions the compound walk
+    // banks skip the whitespace INSIDE the braces (the earlier-element
+    // walk the same law rides ungated), so the '{'-led value the walk
+    // answers — the whitespace AFTER the close the compound never
+    // touches (the parseOptions' own post-value loop law — the same
+    // lane the OTHER keys' internal-ws forms wear, the sort walk's
+    // committed ask keeps) the honest ask keeps
     let trimmed = element.trim_end_matches([' ', '\t']);
     let name_quoted = key == "name" && {
         let v = trimmed.strip_prefix('!').unwrap_or(trimmed);
         v.starts_with('"') || v.starts_with('\'')
     };
-    if !name_quoted && trimmed.contains([' ', '\t']) {
+    let scores_ws_inside = key == "scores"
+        && trimmed.starts_with('{')
+        && match trimmed.find('}') {
+            // every ws AFTER the close the parse's own loop law
+            // answers — the exemption the compound's own ground only
+            Some(close) => !trimmed[close + 1..].contains([' ', '\t']),
+            // the unterminated compound the walk's own canRead-FALSE
+            // exit speaks — the in-brace ws the loop banks
+            None => true,
+        };
+    if !name_quoted && !scores_ws_inside && trimmed.contains([' ', '\t']) {
         return ChatSuggestionSource::AskServer;
     }
     let punctuation = selector_punctuation_matches;
@@ -3461,10 +3496,22 @@ pub fn local_command_suggestions_with_tags(
     // guards the spaces (the argument reads' own readStringUntil walk —
     // the entity value the selector quotes consume), the backslash the
     // NEXT char escapes inside the quotes only, an unterminated quote
-    // the partial carries whole
+    // the partial carries whole. The BRACE regions the split never
+    // breaks either: an unquoted `{` opens the depth-guard the `}`
+    // closes (the SNBT compounds the scores/nbt/advancements values
+    // own — the parse's own loop walks the compound WHOLE, the
+    // in-brace whitespace the audited 15-16/35-36/44-45/54-55/74-75
+    // positions the loop banks skip, the argument tokenization the
+    // StringReader's parse never applies inside), the quotes nest
+    // inside the braces (the SNBT quoted keys/values the ws carries),
+    // the braces never nest inside the quotes (the '{' the quoted
+    // text carries the depth never counts), the unbalanced `}` the
+    // depth floor keeps, the unterminated compound the partial
+    // carries whole
     let mut tokens: Vec<Vec<char>> = Vec::new();
     let mut partial = Vec::new();
     let mut quote: Option<char> = None;
+    let mut brace_depth = 0usize;
     let mut escaped = false;
     for &c in &rest_chars {
         if let Some(q) = quote {
@@ -3476,12 +3523,15 @@ pub fn local_command_suggestions_with_tags(
             } else if c == q {
                 quote = None;
             }
-        } else if c == ' ' {
+        } else if c == ' ' && brace_depth == 0 {
             tokens.push(std::mem::take(&mut partial));
         } else {
             partial.push(c);
-            if c == '"' || c == '\'' {
-                quote = Some(c);
+            match c {
+                '"' | '\'' => quote = Some(c),
+                '{' => brace_depth += 1,
+                '}' => brace_depth = brace_depth.saturating_sub(1),
+                _ => {}
             }
         }
     }
@@ -27160,13 +27210,156 @@ mod tests {
             Src::AskServer,
             "the lone nbt element the honest ask keeps"
         );
-        // THE INTERNAL-WS COMPOUND THE HONEST ASK KEEPS (the
-        // ws-free form the walk speaks, the ws-form the element
-        // check asks — the walk's own ws laws the ask shadows)
+        // THE INTERNAL-WS COMPOUND THE WALK'S OWN WS LAWS SPEAK (the
+        // audited 15-16/35-36/44-45/54-55/74-75 loop positions the
+        // in-brace ws banks — the element check the compound's own
+        // ground the exemption retires, the walk the '{'-led form
+        // answers): the '='-flanked ws the key-run/ws laws consume,
+        // the parse completes, the punctuation the input end wears
+        let Src::Local { start, length, matches } =
+            local_command_suggestions(&tree, "/kill @a[scores={a = 1}", &[], true, &[])
+        else {
+            panic!("/kill @a[scores={{a = 1}} the ws-form walk answers");
+        };
+        assert_eq!((start, length), (23, 0), "the input end the completion wears");
         assert_eq!(
-            local_command_suggestions(&tree, "/kill @a[scores={a = 1}", &[], true, &[]),
+            matches.iter().map(|m| m.text.as_str()).collect::<Vec<_>>(),
+            vec![",", "]"],
+            "the '='-flanked ws the loop consumes"
+        );
+        // THE PRE-HEAD WS THE LOOP'S OWN 15-16 POSITIONS SKIP (the '{'
+        // the expect consumed, the ws before the key run)
+        let Src::Local { start, length, matches } =
+            local_command_suggestions(&tree, "/kill @a[scores={ a=1}", &[], true, &[])
+        else {
+            panic!("/kill @a[scores={{ a=1}} the pre-head ws law answers");
+        };
+        assert_eq!((start, length), (22, 0), "the input end the completion wears");
+        assert_eq!(
+            matches.iter().map(|m| m.text.as_str()).collect::<Vec<_>>(),
+            vec![",", "]"],
+            "the pre-head ws the loop skips"
+        );
+        // THE 54-55 WS THE '=' CONSUMPTION SKIPS (the ws between '='
+        // and the range the fromReader never sees)
+        let Src::Local { start, length, matches } =
+            local_command_suggestions(&tree, "/kill @a[scores={a= 1}", &[], true, &[])
+        else {
+            panic!("/kill @a[scores={{a= 1}} the post-'=' ws law answers");
+        };
+        assert_eq!((start, length), (22, 0), "the input end the completion wears");
+        assert_eq!(
+            matches.iter().map(|m| m.text.as_str()).collect::<Vec<_>>(),
+            vec![",", "]"],
+            "the post-'=' ws the loop skips"
+        );
+        // THE 74-75 WS THE POST-RANGE POSITION SKIPS (the ws before
+        // the close the loop head's peek '}' exits at)
+        let Src::Local { start, length, matches } =
+            local_command_suggestions(&tree, "/kill @a[scores={a=1 }", &[], true, &[])
+        else {
+            panic!("/kill @a[scores={{a=1 }} the post-range ws law answers");
+        };
+        assert_eq!((start, length), (22, 0), "the input end the completion wears");
+        assert_eq!(
+            matches.iter().map(|m| m.text.as_str()).collect::<Vec<_>>(),
+            vec![",", "]"],
+            "the post-range ws the loop head exits past"
+        );
+        // THE WS BEFORE THE IN-BRACE ',' THE 74-75 POSITIONS SKIP (the
+        // consumed separator the head re-runs — the SECOND pair the
+        // loop walks)
+        let Src::Local { start, length, matches } =
+            local_command_suggestions(&tree, "/kill @a[scores={a=1 ,b=2}", &[], true, &[])
+        else {
+            panic!("/kill @a[scores={{a=1 ,b=2}} the in-brace ws law answers");
+        };
+        assert_eq!((start, length), (26, 0), "the input end the completion wears");
+        assert_eq!(
+            matches.iter().map(|m| m.text.as_str()).collect::<Vec<_>>(),
+            vec![",", "]"],
+            "the ws-led separator the loop consumes"
+        );
+        // THE '=' EXPECTATION THE WS-THEN-NON-'=' REFUSES (the 44-45
+        // ws the loop skips, the 'b' the expect-'=' throws at — the
+        // SUGGEST_NOTHING silence the modifier's own death keeps)
+        let Src::Local { start, length, matches } =
+            local_command_suggestions(&tree, "/kill @a[scores={a b=1}", &[], true, &[])
+        else {
+            panic!("/kill @a[scores={{a b=1}} the '=' expectation answers");
+        };
+        assert_eq!((start, length), (16, 7), "the value region's own span");
+        assert!(matches.is_empty(), "the missing '=' the throw silences");
+        // THE POST-CLOSE JUNK THE REFINED VERDICT NAMES (the in-brace
+        // ws the compound consumed, the 'x' after the '}' the parse's
+        // own death wears — the UNGATED pair AT the junk)
+        let Src::Local { start, length, matches } =
+            local_command_suggestions(&tree, "/kill @a[scores={a=1 ,b=2}x", &[], true, &[])
+        else {
+            panic!("/kill @a[scores={{a=1 ,b=2}}x the junk lane answers");
+        };
+        assert_eq!((start, length), (26, 1), "the span the junk cursor names");
+        assert_eq!(
+            matches.iter().map(|m| m.text.as_str()).collect::<Vec<_>>(),
+            vec![",", "]"],
+            "the post-close junk the pair wears"
+        );
+        // THE WS AFTER THE CLOSE THE PARSE'S OWN LOOP LAW ANSWERS (the
+        // compound never touches it — the same lane the OTHER keys'
+        // internal-ws forms wear, the sort walk's committed ask keeps)
+        assert_eq!(
+            local_command_suggestions(&tree, "/kill @a[scores={a=1 ,b=2} x", &[], true, &[]),
             Src::AskServer,
-            "the internal-ws compound the honest ask keeps"
+            "the post-close ws the honest ask keeps"
+        );
+        // THE UNTERMINATED WS-FORM THE EXPECT-'}' AT THE INPUT END
+        // SILENCES (the in-brace ws the loop banks, the canRead FALSE
+        // exit the same expect throws — the mark the throw never sees)
+        let Src::Local { start, length, matches } =
+            local_command_suggestions(&tree, "/kill @a[scores={a =1", &[], true, &[])
+        else {
+            panic!("/kill @a[scores={{a =1 the unterminated law answers");
+        };
+        assert_eq!((start, length), (16, 5), "the value region's own span");
+        assert!(matches.is_empty(), "the unterminated ws-form the silence keeps");
+        // THE WS-FORM COMPOUND THE PARSE MARKS (the successful close
+        // the markParsed wears — the scores row the continuation
+        // hides, the 's' tail the sort= row ALONE answers)
+        let Src::Local { start, length, matches } =
+            local_command_suggestions(&tree, "/kill @a[scores={a =1},s", &[], true, &[])
+        else {
+            panic!("/kill @a[scores={{a =1}},s the row gates answer");
+        };
+        assert_eq!((start, length), (23, 1), "the fresh tail's own span");
+        assert_eq!(
+            matches.iter().map(|m| m.text.as_str()).collect::<Vec<_>>(),
+            vec!["sort="],
+            "the ws-form close the mark wears"
+        );
+        // THE EARLIER WS-FORM COMPOUND THE PARSE WALKS (the element
+        // the parse consumes — the in-brace ws the audited positions
+        // the loop skips, the mark the close wears, the 'l' tail the
+        // level= + limit= rows the gates keep)
+        let Src::Local { start, length, matches } =
+            local_command_suggestions(&tree, "/kill @a[scores={a =1},l", &[], true, &[])
+        else {
+            panic!("/kill @a[scores={{a =1}},l the earlier ws-form answers");
+        };
+        assert_eq!((start, length), (23, 1), "the fresh tail's own span");
+        assert_eq!(
+            matches.iter().map(|m| m.text.as_str()).collect::<Vec<_>>(),
+            vec!["level=", "limit="],
+            "the ws-form close the mark wears, the other rows the 'l' tail keeps"
+        );
+        // THE POST-CLOSE WS THE TOKENIZER'S OWN SPLIT ANSWERS (the
+        // guard the '}' closes, the space the split spends — the
+        // partial tail the completed-token walk's literal-equality
+        // refuses — the same ask lane the OTHER keys' post-close ws
+        // forms wear)
+        assert_eq!(
+            local_command_suggestions(&tree, "/kill @a[scores={a=1} x,l", &[], true, &[]),
+            Src::AskServer,
+            "the post-close ws the honest ask keeps"
         );
     }
 
