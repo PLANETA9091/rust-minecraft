@@ -1520,6 +1520,12 @@ fn local_selector_options_suggestions(
         // the map value state the honest ask keeps
         return ChatSuggestionSource::AskServer;
     }
+    // THE CURRENT-ENTITY LAW (javap `parseSelector` — the 's' branch
+    // the offsets 233-249 bank: maxResults 1 + includesEntities +
+    // currentEntity=1 — the ONLY putfield the field wears — the '@s'
+    // selector the limit/sort ROWS the $24/$27 canUse gates hide;
+    // the 'p'/'r' branches the field never touch)
+    let current_entity = sel_chars.as_bytes().first() == Some(&b's');
     let region_start = token_start + 1 + bracket_idx + 1;
     let region_end = region_start + region.len();
     // THE MULTI-ELEMENT PARSE THE STATE MACHINE SPEAKS (javap 26.2
@@ -1601,6 +1607,7 @@ fn local_selector_options_suggestions(
                 entity_types,
                 entity_type_tags,
                 &mut states,
+                current_entity,
             );
         }
     }
@@ -1660,12 +1667,17 @@ fn local_selector_options_suggestions(
     }
     // the suggestNames forEach arm the prefix fold filters (the
     // lowercase law both sides wear), the canUse gates the
-    // registered `(parser)Z` predicates speak filter the four
-    // InvertableSetOptionState keys (the canParseAny the audited
-    // $2 name / $31 gamemode / $34 team / $41 type lambdas return —
-    // the SINGLE-marked state the key's own row never answers —
-    // `type=cow,t` the type row the gate hides, `type=!cow,t` the
-    // MULTIPLE state the row keeps), the merge sort the
+    // registered `(parser)Z` predicates speak filter the EIGHT state
+    // keys — the four InvertableSetOptionState keys (the canParseAny
+    // the audited $2 name / $31 gamemode / $34 team / $41 type
+    // lambdas return — the SINGLE-marked state the key's own row
+    // never answers — `type=cow,t` the type row the gate hides,
+    // `type=!cow,t` the MULTIPLE state the row keeps) AND the four
+    // SetOnceOptionState keys (the canParse the audited $24 limit /
+    // $27 sort / $48 scores / $54 advancements lambdas carry — the
+    // first-parse mark the row hides, the limit+sort rows the
+    // isCurrentEntity '@s' law ALSO hides — see
+    // [`selector_option_row_can_use`]), the merge sort the
     // case-insensitive law orders — the QUOTED-VALUE continuations
     // the region-level ask retired: the parse CONSUMED the earlier
     // quoted reads (the region's quotes the completed elements
@@ -1677,18 +1689,48 @@ fn local_selector_options_suggestions(
         .retain(|m| m.text.to_lowercase().starts_with(&tail_lc));
     matches.retain(|m| {
         let key = m.text.trim_end_matches('=');
-        match key {
-            "name" => states.name.can_parse_any(),
-            "team" => states.team.can_parse_any(),
-            "gamemode" => states.gamemode.can_parse_any(),
-            "type" => states.ty.can_parse_any(),
-            _ => true,
-        }
+        selector_option_row_can_use(key, &states, current_entity)
     });
     ChatSuggestionSource::Local {
         start: start as i32,
         length: tail.len() as i32,
         matches,
+    }
+}
+
+/// THE REGISTERED CANUSE GATES THE OPTION ROWS FILTER (javap 26.2 —
+/// the suggestNames `option.canUse.test(parser)` fold the key rows
+/// ride): the four InvertableSetOptionState keys the canParseAny
+/// lambdas speak ($2 name / $31 gamemode / $34 team / $41 type),
+/// the four SetOnceOptionState keys the canParse lambdas carry
+/// ($24 limit / $27 sort / $48 scores / $54 advancements — the
+/// first-parse mark the row hides), the limit+sort rows the
+/// isCurrentEntity single-target law ALSO hides (the audited $24
+/// and $27 both `isCurrentEntity()Z` FIRST — the parser's
+/// currentEntity field the parseSelector 's' branch sets, offsets
+/// 243-245, the ONLY putfield — the '@s' selector the rows never
+/// answer). The parse itself the modifiers never gate (the second
+/// element ACCEPTS) — the ROWS the gates wear.
+fn selector_option_row_can_use(
+    key: &str,
+    states: &SelectorOptionStates,
+    current_entity: bool,
+) -> bool {
+    match key {
+        "name" => states.name.can_parse_any(),
+        "team" => states.team.can_parse_any(),
+        "gamemode" => states.gamemode.can_parse_any(),
+        "type" => states.ty.can_parse_any(),
+        // the audited $24: `!isCurrentEntity() && limitedOption.canParse()`
+        "limit" => !current_entity && states.limit.can_parse(),
+        // the audited $27: `!isCurrentEntity() && sortedOption.canParse()`
+        "sort" => !current_entity && states.sort.can_parse(),
+        // the audited $48: `scoresOption.canParse()`
+        "scores" => states.scores.can_parse(),
+        // the audited $54: `advancementsOption.canParse()`
+        "advancements" => states.advancements.can_parse(),
+        // the shared p->true the other keys ride
+        _ => true,
     }
 }
 
@@ -1795,6 +1837,7 @@ fn local_selector_quoted_key_suggestions(
     entity_types: &[String],
     entity_type_tags: &[(String, Vec<String>)],
     states: &mut SelectorOptionStates,
+    current_entity: bool,
 ) -> ChatSuggestionSource {
     match selector_quoted_key_read(kt) {
         SelectorQuotedKeyRead::CleanUnterminated => {
@@ -1808,13 +1851,7 @@ fn local_selector_quoted_key_suggestions(
             let mut matches = selector_option_matches();
             matches.retain(|m| {
                 let key = m.text.trim_end_matches('=');
-                match key {
-                    "name" => states.name.can_parse_any(),
-                    "team" => states.team.can_parse_any(),
-                    "gamemode" => states.gamemode.can_parse_any(),
-                    "type" => states.ty.can_parse_any(),
-                    _ => true,
-                }
+                selector_option_row_can_use(key, states, current_entity)
             });
             ChatSuggestionSource::Local {
                 start: region_end as i32,
@@ -2149,18 +2186,58 @@ impl SelectorOptionSetState {
     }
 }
 
+/// THE SET-ONCE OPTION STATE (javap 26.2 `SetOnceOptionState` — the
+/// 604-byte classfile the audit disassembles: the single
+/// `hasValue:Z` field, `canParse()` the `!hasValue` compare the
+/// offsets 0-12 bank, `markParsed()` the iconst_1 putfield the
+/// offsets 0-5 bank — the parser's `limitedOption`/`sortedOption`/
+/// `scoresOption`/`advancementsOption` fields the constructor walk
+/// carries, ONE state per parse like the InvertableSetOptionState
+/// family). THE HEADLINE the modifier audits bank: the four
+/// SetOnce MODIFIERS never gate ($23 limit / $25 sort / $46 scores
+/// / $49 advancements — NO canParse call, NO
+/// ERROR_INAPPLICABLE_OPTION the bodies carry), the second
+/// `limit=5`/`sort=nearest`/`scores={}`/`advancements={}` element
+/// the parse ACCEPTS (the mark idempotent, setMaxResults/setOrder
+/// overwrite, addPredicate adds) — the single-parse law the
+/// REGISTERED canUse predicates speak instead: the option ROWS the
+/// gates hide (the key-suggestion lanes).
+#[derive(Debug)]
+struct SelectorOptionOnceState {
+    has_value: bool,
+}
+
+impl SelectorOptionOnceState {
+    fn new() -> Self {
+        Self { has_value: false }
+    }
+    /// javap `canParse` — the !hasValue compare
+    fn can_parse(&self) -> bool {
+        !self.has_value
+    }
+    /// javap `markParsed` — the flag the parse sets
+    fn mark_parsed(&mut self) {
+        self.has_value = true;
+    }
+}
+
 /// THE PARSER'S OWN OPTION STATES (javap 26.2
 /// `EntitySelectorParser.<init>` — the four `new
-/// InvertableSetOptionState()` fields the constructor walk banks;
-/// the SetOnceOptionState keys (limit/sort/scores/advancements)
-/// carry their own single-parse law the other rounds bank — this
-/// round the InvertableSetOptionState family speaks)
+/// InvertableSetOptionState()` fields the constructor walk banks AND
+/// the four `SetOnceOptionState` fields the same walk carries
+/// (limitedOption/sortedOption/scoresOption/advancementsOption) —
+/// BOTH families ONE instance per parse, the state persists across
+/// the ',' elements)
 #[derive(Debug)]
 struct SelectorOptionStates {
     name: SelectorOptionSetState,
     team: SelectorOptionSetState,
     gamemode: SelectorOptionSetState,
     ty: SelectorOptionSetState,
+    limit: SelectorOptionOnceState,
+    sort: SelectorOptionOnceState,
+    scores: SelectorOptionOnceState,
+    advancements: SelectorOptionOnceState,
 }
 
 impl SelectorOptionStates {
@@ -2170,6 +2247,10 @@ impl SelectorOptionStates {
             team: SelectorOptionSetState::new(),
             gamemode: SelectorOptionSetState::new(),
             ty: SelectorOptionSetState::new(),
+            limit: SelectorOptionOnceState::new(),
+            sort: SelectorOptionOnceState::new(),
+            scores: SelectorOptionOnceState::new(),
+            advancements: SelectorOptionOnceState::new(),
         }
     }
     /// the option's own state the exact-case key names (the get()
@@ -2285,18 +2366,6 @@ fn selector_quoted_walk(value: &str) -> SelectorValueWalk {
 /// own ']' expectation dies at.
 fn selector_number_char_ok(c: char) -> bool {
     c.is_ascii_digit() || c == '.' || c == '-'
-}
-
-/// THE BRIGADIER READINT LAW (the run + `Integer.parseInt`): the
-/// whole value the greedy number run consumes AND the parse accepts
-/// — `"5"`/`"-5"` the parse completes, `"5.5"`/`"5."`/`"5..10"` the
-/// INVALID-INT throw answers, `"5x"` the ']' expectation dies at,
-/// the empty/`"+5"` the EXPECTED-NUMBER throw wears; the int range
-/// the parse's own overflow law keeps.
-fn selector_int_ok(value: &str) -> bool {
-    !value.is_empty()
-        && value.chars().all(selector_number_char_ok)
-        && value.parse::<i32>().is_ok()
 }
 
 /// THE BRIGADIER READDOUBLE LAW (the run + `Double.parseDouble`):
@@ -2695,7 +2764,7 @@ fn selector_option_value_walk(
         // the fold lane the Refused arm speaks)
         "sort" => {
             let run = selector_unquoted_run_len(trimmed);
-            if run == trimmed.len() {
+            let walk = if run == trimmed.len() {
                 if SORT_VALUE_SUGGESTIONS.contains(&trimmed) {
                     SelectorValueWalk::Complete
                 } else {
@@ -2705,7 +2774,16 @@ fn selector_option_value_walk(
                 SelectorValueWalk::Junk(run)
             } else {
                 SelectorValueWalk::Refused
+            };
+            // the audited $25: the markParsed the HIT path wears
+            // (offsets 205-209 — after the setOrder; the unknown
+            // value the rollbackAndThrow answers, the state the
+            // throw never marks — the SetOnce law the ROWS speak on
+            // the continuation)
+            if !matches!(walk, SelectorValueWalk::Refused) {
+                states.sort.mark_parsed();
             }
+            walk
         }
         // the GAMEMODE modifier (the audited walk): the provider
         // install, the '!' the shouldInvertValue consumes first, the
@@ -2942,16 +3020,38 @@ fn selector_option_value_walk(
         // and the swapped bounds the walk accepts, the junk the walk's
         // own return wears)
         "limit" => {
-            if selector_int_ok(trimmed) {
-                SelectorValueWalk::Complete
-            } else {
-                let run = selector_number_run_len(trimmed);
-                if run > 0 && run < trimmed.len() && trimmed[..run].parse::<i32>().is_ok() {
-                    SelectorValueWalk::Junk(run)
-                } else {
-                    SelectorValueWalk::Refused
-                }
+            // THE LIMIT MODIFIER (the audited lambda$bootStrap$23):
+            // the readInt run the number charset speaks, the `< 1`
+            // check the ERROR_LIMIT_TOO_SMALL throw answers BEFORE
+            // setMaxResults (offsets 16-29 — the rollback cursor the
+            // pre-read value-start the saved istore_1 names), the
+            // markParsed LAST (36-40 — the SetOnce state the mark
+            // banks). The junked read the SAME <1 law rides — the
+            // modifier runs the check on the value the STOPPED read
+            // returns (`limit=0x` the throw answers, `limit=5x` the
+            // setMaxResults+mark the junk lane the parse's own death
+            // wears — the readInt RETURN the law splits on)
+            let run = selector_number_run_len(trimmed);
+            let walk = match trimmed.get(..run).and_then(|s| s.parse::<i32>().ok()) {
+                // the EXPECTED/INVALID-INT throw the read answers
+                None => SelectorValueWalk::Refused,
+                // the audited 16-29: the <1 check precedes
+                // setMaxResults AND the junk lane — the value the
+                // stopped read carries the same law speaks
+                Some(v) if v < 1 => SelectorValueWalk::Refused,
+                Some(_) if run == trimmed.len() => SelectorValueWalk::Complete,
+                // the stopped read RETURNS — the junk lane the
+                // post-value death wears
+                Some(_) => SelectorValueWalk::Junk(run),
+            };
+            // the audited 36-40: the markParsed the successful
+            // modifier wears (the Complete AND the Junk — the mark
+            // precedes the parse's own junk death, the throw the
+            // mark never sees)
+            if !matches!(walk, SelectorValueWalk::Refused) {
+                states.limit.mark_parsed();
             }
+            walk
         }
         "x" | "y" | "z" | "dx" | "dy" | "dz" => {
             if selector_double_ok(trimmed) {
@@ -24692,14 +24792,18 @@ mod tests {
             Some("Sort the entities")
         );
         // THE COMMA CONTINUATION (the fresh-name position the ',' state
-        // installs — the empty tail the 21 keys answer again)
+        // installs — the empty tail the keys the canUse gates answer:
+        // the sort element the state MARKED (the audited $25 — the
+        // markParsed the hit path wears), the sort row the canParse
+        // gate hides (the audited $27) — the 20 rows the merge sort
+        // orders)
         let Src::Local { start, length, matches } =
             local_command_suggestions(&tree, "/kill @a[sort=nearest,", &[], true, &[])
         else {
             panic!("/kill @a[sort=nearest, the comma state answers");
         };
         assert_eq!((start, length), (22, 0), "the fresh tail's own span");
-        assert_eq!(matches.len(), 21, "the fresh names the state re-answers");
+        assert_eq!(matches.len(), 20, "the parsed sort the own row hides");
         // THE VALUE STATES (the '=' tail the UNKNOWN-KEY lane the
         // audited order law wears — the get('so') null the
         // rollbackAndThrow answers, the '='-carrying remaining no key
@@ -26391,16 +26495,19 @@ mod tests {
             vec!["nbt="],
             "the name row the canUse gate hides — the 'n' prefix the nbt\n             row the same lane keeps"
         );
-        // THE NUMERIC KEYS THE STATE NEVER TOUCHES (the limit walk no
-        // InvertableSetOptionState carries — the fresh-key lane the
-        // ALL-21 the fresh states keep)
+        // THE NUMERIC KEY THE SET-ONCE STATE SPEAKS (the limit walk
+        // the modifier never gates — the SECOND element the parse
+        // ACCEPTS (the audited $23 — NO canParse the body carries) —
+        // but the ROW the state hides: the audited $24 canParse the
+        // first element's mark the row wears — the 20 rows the
+        // Invertable family's own law shadows)
         let Src::Local { start, length, matches } =
             local_command_suggestions(&tree, "/kill @a[limit=5,", &[], true, &[])
         else {
             panic!("/kill @a[limit=5, the untouched lane answers");
         };
         assert_eq!((start, length), (17, 0), "the input end the state wears");
-        assert_eq!(matches.len(), 21, "the ALL-21 fresh names the numeric key keeps");
+        assert_eq!(matches.len(), 20, "the parsed limit the own row hides");
         let Src::Local { start, length, matches } = local_command_suggestions(
             &tree,
             "/kill @a[type=cow,limit=5",
@@ -26453,6 +26560,232 @@ mod tests {
         );
     }
 
+    /// THE SET-ONCE SINGLE-PARSE GATES (javap 26.2 — the
+    /// `SetOnceOptionState` classfile + the parser's
+    /// limitedOption/sortedOption/scoresOption/advancementsOption
+    /// fields + the modifier/canUse lambdas the audit disassembles):
+    /// the SECOND limit=/sort= element the parse ACCEPTS (the audited
+    /// $23/$25 — NO canParse, NO ERROR_INAPPLICABLE_OPTION the
+    /// modifier bodies carry — the mark idempotent, setMaxResults/
+    /// setOrder overwrite — the name=/team= Invertable law the SetOnce
+    /// family NEVER wears), the ROWS the registered canUse predicates
+    /// hide instead ($24 limit / $27 sort / $48 scores / $54
+    /// advancements — the first-parse mark the own row wears, the
+    /// limit+sort rows the isCurrentEntity '@s' law ALSO hides — the
+    /// parseSelector 's' branch the offsets 243-245 bank the ONLY
+    /// currentEntity putfield), the LIMIT walk the `< 1` check the
+    /// ERROR_LIMIT_TOO_SMALL throw answers BEFORE setMaxResults (the
+    /// audited 16-29 — the junked read the same law rides, the value
+    /// the STOPPED read carries), the markParsed the hit path wears
+    /// (the Complete AND the Junk — the throw the mark never sees),
+    /// the '{' map values the honest ask keeps (the scores/
+    /// advancements state the map-value lane never reaches).
+    #[test]
+    fn the_selector_options_the_set_once_single_parse_gates_speak() {
+        use crate::screens::ChatSuggestionSource as Src;
+        let tree = test_provider_tree();
+        // THE SECOND LIMIT ELEMENT THE PARSE ACCEPTS (the headline —
+        // the Invertable SINGLE gate the name= law wears NEVER fires:
+        // the modifier runs setMaxResults+markParsed, the parse
+        // completes, the punctuation the post-value state wears)
+        let Src::Local { start, length, matches } =
+            local_command_suggestions(&tree, "/kill @a[limit=5,limit=5", &[], true, &[])
+        else {
+            panic!("/kill @a[limit=5,limit=5 the parse accepts");
+        };
+        assert_eq!((start, length), (24, 0), "the input end the completion wears");
+        assert_eq!(
+            matches.iter().map(|m| m.text.as_str()).collect::<Vec<_>>(),
+            vec![",", "]"],
+            "the second limit= the parse accepts"
+        );
+        // THE SECOND SORT ELEMENT THE PARSE ACCEPTS TOO (the audited
+        // $25 — the setOrder overwrite the mark rides)
+        let Src::Local { start, length, matches } =
+            local_command_suggestions(&tree, "/kill @a[limit=5,sort=nearest", &[], true, &[])
+        else {
+            panic!("/kill @a[limit=5,sort=nearest the parse accepts");
+        };
+        assert_eq!((start, length), (29, 0), "the input end the completion wears");
+        assert_eq!(
+            matches.iter().map(|m| m.text.as_str()).collect::<Vec<_>>(),
+            vec![",", "]"],
+            "the sort= element after the limit= the parse accepts"
+        );
+        // THE LIMIT ROW THE FIRST ELEMENT'S MARK HIDES (the audited
+        // $24 canParse — the 'l' tail the level= row ALONE answers)
+        let Src::Local { start, length, matches } =
+            local_command_suggestions(&tree, "/kill @a[limit=5,l", &[], true, &[])
+        else {
+            panic!("/kill @a[limit=5,l the row gates answer");
+        };
+        assert_eq!((start, length), (17, 1), "the fresh tail's own span");
+        assert_eq!(
+            matches.iter().map(|m| m.text.as_str()).collect::<Vec<_>>(),
+            vec!["level="],
+            "the parsed limit the own row hides"
+        );
+        // THE SORT ROW THE FIRST ELEMENT'S MARK HIDES (the audited
+        // $27 — the 'so' tail NO key the silence wears)
+        let Src::Local { start, length, matches } =
+            local_command_suggestions(&tree, "/kill @a[sort=nearest,so", &[], true, &[])
+        else {
+            panic!("/kill @a[sort=nearest,so the row gates answer");
+        };
+        assert_eq!((start, length), (22, 2), "the fresh tail's own span");
+        assert!(matches.is_empty(), "the parsed sort the own row hides");
+        // THE SCORES ROW THE 's' TAIL KEEPS (the audited $48 — no
+        // isCurrentEntity the lambda carries, the scores state the
+        // sort element never touches)
+        let Src::Local { start, length, matches } =
+            local_command_suggestions(&tree, "/kill @a[sort=nearest,s", &[], true, &[])
+        else {
+            panic!("/kill @a[sort=nearest,s the row gates answer");
+        };
+        assert_eq!((start, length), (22, 1), "the fresh tail's own span");
+        assert_eq!(
+            matches.iter().map(|m| m.text.as_str()).collect::<Vec<_>>(),
+            vec!["scores="],
+            "the unparsed scores the own row keeps"
+        );
+        // THE '@s' LAW THE LIMIT+SORT ROWS HIDE (the audited $24/$27
+        // isCurrentEntity FIRST — the currentEntity field the 's'
+        // branch sets, the rows the single-target law hides BEFORE
+        // the state ever speaks)
+        let Src::Local { start, length, matches } =
+            local_command_suggestions(&tree, "/kill @s[l", &[], true, &[])
+        else {
+            panic!("/kill @s[l the row gates answer");
+        };
+        assert_eq!((start, length), (9, 1), "the fresh tail's own span");
+        assert_eq!(
+            matches.iter().map(|m| m.text.as_str()).collect::<Vec<_>>(),
+            vec!["level="],
+            "the '@s' selector the limit row hides"
+        );
+        let Src::Local { start, length, matches } =
+            local_command_suggestions(&tree, "/kill @s[so", &[], true, &[])
+        else {
+            panic!("/kill @s[so the row gates answer");
+        };
+        assert_eq!((start, length), (9, 2), "the fresh tail's own span");
+        assert!(matches.is_empty(), "the '@s' selector the sort row hides");
+        let Src::Local { start, length, matches } =
+            local_command_suggestions(&tree, "/kill @s[s", &[], true, &[])
+        else {
+            panic!("/kill @s[s the row gates answer");
+        };
+        assert_eq!((start, length), (9, 1), "the fresh tail's own span");
+        assert_eq!(
+            matches.iter().map(|m| m.text.as_str()).collect::<Vec<_>>(),
+            vec!["scores="],
+            "the '@s' selector the scores row keeps"
+        );
+        // THE '@a' SELECTOR THE SAME TAILS THE LIMIT ROW KEEPS (the
+        // 'p'/'r'/'a' branches the currentEntity field never touch)
+        let Src::Local { start, length, matches } =
+            local_command_suggestions(&tree, "/kill @a[l", &[], true, &[])
+        else {
+            panic!("/kill @a[l the row gates answer");
+        };
+        assert_eq!((start, length), (9, 1), "the fresh tail's own span");
+        assert_eq!(
+            matches.iter().map(|m| m.text.as_str()).collect::<Vec<_>>(),
+            vec!["level=", "limit="],
+            "the '@a' selector the limit row keeps (the merge sort orders)"
+        );
+        // THE '@s' SELECTOR THE LIMIT VALUE WALK THE PARSE STILL
+        // SPEAKS (the modifiers the canUse gates NEVER carry — the
+        // row the law hides, the parse itself accepts)
+        let Src::Local { start, length, matches } =
+            local_command_suggestions(&tree, "/kill @s[limit=5", &[], true, &[])
+        else {
+            panic!("/kill @s[limit=5 the value walk answers");
+        };
+        assert_eq!((start, length), (16, 0), "the input end the completion wears");
+        assert_eq!(
+            matches.iter().map(|m| m.text.as_str()).collect::<Vec<_>>(),
+            vec![",", "]"],
+            "the '@s' limit= the parse accepts"
+        );
+        // THE TOO-SMALL LAW THE `< 1` CHECK ANSWERS (the audited 16-29
+        // — the rollbackAndThrow BEFORE setMaxResults — the
+        // SUGGEST_NOTHING silence the throw keeps)
+        let Src::Local { start, length, matches } =
+            local_command_suggestions(&tree, "/kill @a[limit=0", &[], true, &[])
+        else {
+            panic!("/kill @a[limit=0 the too-small law answers");
+        };
+        assert_eq!((start, length), (15, 1), "the value region's own span");
+        assert!(matches.is_empty(), "the zero limit the TOO-SMALL throw silences");
+        // THE JUNKED READ THE SAME `< 1` LAW RIDES (the modifier runs
+        // the check on the value the STOPPED read returns — the `0x`
+        // the throw answers BEFORE the junk lane the `5x` wears)
+        let Src::Local { start, length, matches } =
+            local_command_suggestions(&tree, "/kill @a[limit=0x", &[], true, &[])
+        else {
+            panic!("/kill @a[limit=0x the too-small law answers");
+        };
+        assert_eq!((start, length), (15, 2), "the value region's own span");
+        assert!(matches.is_empty(), "the zero-with-junk the TOO-SMALL throw silences");
+        // THE TOO-SMALL THROW THE STATE NEVER MARKS (the earlier
+        // `limit=0` element the parse throws AT — the next element
+        // the parse never reaches, the EMPTY local the silence wears)
+        let Src::Local { start, length, matches } =
+            local_command_suggestions(&tree, "/kill @a[limit=0,l", &[], true, &[])
+        else {
+            panic!("/kill @a[limit=0,l the earlier death answers");
+        };
+        assert_eq!((start, length), (9, 7), "the dead element's own span wears");
+        assert!(matches.is_empty(), "the too-small element the parse silences");
+        // THE CROSS-FAMILY ROWS (the Invertable name gate the name=
+        // element wears AND the SetOnce limit row the 'l' tail keeps
+        // — the eight gated keys the ONE canUse fold filters)
+        let Src::Local { start, length, matches } =
+            local_command_suggestions(&tree, "/kill @a[name=Steve,l", &[], true, &[])
+        else {
+            panic!("/kill @a[name=Steve,l the row gates answer");
+        };
+        assert_eq!((start, length), (20, 1), "the fresh tail's own span");
+        assert_eq!(
+            matches.iter().map(|m| m.text.as_str()).collect::<Vec<_>>(),
+            vec!["level=", "limit="],
+            "the name row hides, the limit row the 'l' tail keeps"
+        );
+        // THE QUOTED-KEY LANE THE '@s' GATES WEAR (the ALL-21 state
+        // the unterminated read wears — the limit+sort rows the
+        // isCurrentEntity law hides, the 19 rows the merge sort
+        // orders; the '@a' selector the FULL 21 keeps)
+        let Src::Local { start, length, matches } =
+            local_command_suggestions(&tree, "/kill @s[\"l", &[], true, &[])
+        else {
+            panic!("/kill @s[\"l the quoted-key lane answers");
+        };
+        assert_eq!((start, length), (11, 0), "the input end the ALL-21 state wears");
+        assert_eq!(matches.len(), 19, "the '@s' rows the two gates hide");
+        let Src::Local { start, length, matches } =
+            local_command_suggestions(&tree, "/kill @a[\"l", &[], true, &[])
+        else {
+            panic!("/kill @a[\"l the quoted-key lane answers");
+        };
+        assert_eq!((start, length), (11, 0), "the input end the ALL-21 state wears");
+        assert_eq!(matches.len(), 21, "the '@a' rows the FULL table keeps");
+        // THE MAP VALUES THE HONEST ASK KEEPS (the scores/
+        // advancements state the map-value lane never reaches — the
+        // region-level '{' the entry check answers before the state
+        // ever speaks)
+        assert_eq!(
+            local_command_suggestions(&tree, "/kill @a[scores={foo:1},l", &[], true, &[]),
+            Src::AskServer,
+            "the scores compound the honest ask keeps"
+        );
+        assert_eq!(
+            local_command_suggestions(&tree, "/kill @a[advancements=", &[], true, &[]),
+            Src::AskServer,
+            "the advancements value the unspoken walk the ask keeps"
+        );
+    }
+
     /// THE NUMERIC VALUE WALKS (javap `EntitySelectorOptions
     /// lambda$bootStrap$3/$5/$7-17/$19/$21/$23` + `MinMaxBounds$Bounds
     /// .fromReader` — the distance/level/coordinate/rotation/limit
@@ -26461,8 +26794,10 @@ mod tests {
     /// answers the completion: a fully-consumed valid value the
     /// post-value ',' + ']' punctuation wears, a failed/stopped parse
     /// the EMPTY local keeps (no round-trip the throw spends). The
-    /// LIMIT walk the readInt law keeps (`"5"`/`"-5"` the parse
-    /// completes, `"5.5"` the INVALID-INT throw answers, `"5x"` the
+    /// LIMIT walk the readInt law keeps (`"5"` the parse completes,
+    /// the `< 1` values the ERROR_LIMIT_TOO_SMALL throw the audited
+    /// $23 answers — `"-5"` the silence wears —, `"5.5"` the
+    /// INVALID-INT throw answers, `"5x"` the
     /// ']' expectation dies at, the overflow the parse's own range
     /// law wears); the COORDINATE walks the readDouble law (the
     /// trailing-dot `"5."` the parse completes — the charset law the
@@ -26500,17 +26835,16 @@ mod tests {
             vec![",", "]"],
             "the int consumed the punctuation wears"
         );
-        // THE NEGATIVE INT (the '-' the number charset carries)
+        // THE NEGATIVE INT THE LIMIT-TOO-SMALL THROW ANSWERS (the
+        // audited $23 — the `< 1` check the rollbackAndThrow carries
+        // BEFORE setMaxResults, the '-' the number charset parses —
+        // the SUGGEST_NOTHING silence the throw keeps)
         let Src::Local { matches, .. } =
             local_command_suggestions(&tree, "/kill @a[limit=-5", &[], true, &[])
         else {
             panic!("/kill @a[limit=-5 the readInt walk answers");
         };
-        assert_eq!(
-            matches.iter().map(|m| m.text.as_str()).collect::<Vec<_>>(),
-            vec![",", "]"],
-            "the negative int the completion wears"
-        );
+        assert!(matches.is_empty(), "the negative int the TOO-SMALL throw silences");
         // THE INVALID INT FORMS (the "5.5" the parseInt throw
         // answers, the overflow the parse's own range law wears, the
         // bare "-" the INVALID-INT throw answers, the '+' the charset
